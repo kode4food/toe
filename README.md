@@ -1,6 +1,8 @@
-# toe
+# toe <img src="./docs/img/logo.png" align="right" height="100"/>
 
-A modal terminal editor written in Go. Helix-inspired editing with normal, insert, and selection modes. Multiple buffers, split views, and a fuzzy picker for files, buffers, and search results.
+### Thom's Own Editor
+
+**toe** is a modal terminal editor written in Go. Helix-inspired editing with normal, insert, and selection modes. Multiple buffers, split views, and a fuzzy picker for files, buffers, and search results.
 
 Work in progress. Assume it will lose your edits.
 

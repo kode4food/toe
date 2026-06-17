@@ -1,0 +1,105 @@
+package tui
+
+type (
+	Style struct {
+		fg, bg, underlineColor Color
+		underlineStyle         UnderlineStyle
+		modifier               Modifier
+	}
+
+	Color struct {
+		kind    colorKind
+		r, g, b uint8
+	}
+
+	UnderlineStyle uint8
+	Modifier       uint16
+	colorKind      uint8
+)
+
+const (
+	UnderlineReset UnderlineStyle = iota
+	UnderlineLine
+	UnderlineCurl
+	UnderlineDotted
+	UnderlineDashed
+	UnderlineDoubleLine
+)
+
+const (
+	ModifierBold       Modifier = 0b0000_0000_0001
+	ModifierDim        Modifier = 0b0000_0000_0010
+	ModifierItalic     Modifier = 0b0000_0000_0100
+	ModifierSlowBlink  Modifier = 0b0000_0001_0000
+	ModifierRapidBlink Modifier = 0b0000_0010_0000
+	ModifierReversed   Modifier = 0b0000_0100_0000
+	ModifierHidden     Modifier = 0b0000_1000_0000
+	ModifierCrossedOut Modifier = 0b0001_0000_0000
+)
+
+const (
+	colorReset colorKind = iota
+	colorBlack
+	colorRed
+	colorGreen
+	colorYellow
+	colorBlue
+	colorMagenta
+	colorCyan
+	colorGray
+	colorLightRed
+	colorLightGreen
+	colorLightYellow
+	colorLightBlue
+	colorLightMagenta
+	colorLightCyan
+	colorLightGray
+	colorWhite
+	colorIndexed
+	colorRGB
+)
+
+var (
+	ColorReset        = Color{kind: colorReset}
+	ColorBlack        = Color{kind: colorBlack}
+	ColorRed          = Color{kind: colorRed}
+	ColorGreen        = Color{kind: colorGreen}
+	ColorYellow       = Color{kind: colorYellow}
+	ColorBlue         = Color{kind: colorBlue}
+	ColorMagenta      = Color{kind: colorMagenta}
+	ColorCyan         = Color{kind: colorCyan}
+	ColorGray         = Color{kind: colorGray}
+	ColorLightRed     = Color{kind: colorLightRed}
+	ColorLightGreen   = Color{kind: colorLightGreen}
+	ColorLightYellow  = Color{kind: colorLightYellow}
+	ColorLightBlue    = Color{kind: colorLightBlue}
+	ColorLightMagenta = Color{kind: colorLightMagenta}
+	ColorLightCyan    = Color{kind: colorLightCyan}
+	ColorLightGray    = Color{kind: colorLightGray}
+	ColorWhite        = Color{kind: colorWhite}
+)
+
+func ColorIndexed(idx uint8) Color { return Color{kind: colorIndexed, r: idx} }
+func ColorRGB(r, g, b uint8) Color {
+	return Color{kind: colorRGB, r: r, g: g, b: b}
+}
+
+func (s Style) Fg(c Color) Style { s.fg = c; return s }
+func (s Style) Bg(c Color) Style { s.bg = c; return s }
+func (s Style) UlColor(c Color) Style {
+	s.underlineColor = c
+	return s
+}
+
+func (s Style) UlStyle(u UnderlineStyle) Style {
+	s.underlineStyle = u
+	return s
+}
+func (s Style) Mod(m Modifier) Style   { s.modifier |= m; return s }
+func (s Style) FgColor() Color         { return s.fg }
+func (s Style) BgColor() Color         { return s.bg }
+func (s Style) HasMod(m Modifier) bool { return s.modifier&m == m }
+
+func (c Color) IsReset() bool { return c.kind == colorReset }
+
+func (m Modifier) has(bit Modifier) bool { return m&bit != 0 }

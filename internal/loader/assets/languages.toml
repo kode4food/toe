@@ -1,0 +1,346 @@
+# toe curated language runtime for modern Go repositories.
+use-grammars = { only = [
+  "go",
+  "gomod",
+  "bash",
+  "dockerfile",
+  "hcl",
+  "gitcommit",
+  "gitattributes",
+  "gitignore",
+  "toml",
+  "yaml",
+  "json",
+  "sql",
+  "proto",
+  "graphql",
+  "html",
+  "css",
+  "javascript",
+  "typescript",
+  "tsx",
+  "markdown",
+  "markdown_inline",
+] }
+
+[language-server]
+gopls = { command = "gopls" }
+bash-language-server = { command = "bash-language-server", args = ["start"] }
+docker-langserver = { command = "docker-langserver", args = ["--stdio"] }
+terraform-ls = { command = "terraform-ls", args = ["serve"] }
+json-language-server = { command = "vscode-json-language-server", args = ["--stdio"] }
+yaml-language-server = { command = "yaml-language-server", args = ["--stdio"] }
+taplo = { command = "taplo", args = ["lsp", "stdio"] }
+buf = { command = "buf", args = ["lsp", "serve", "--timeout", "0"] }
+graphql-language-service = { command = "graphql-lsp", args = ["server", "-m", "stream"] }
+marksman = { command = "marksman", args = ["server"] }
+typescript-language-server = { command = "typescript-language-server", args = ["--stdio"] }
+
+[[language]]
+name = "go"
+scope = "source.go"
+injection-regex = "go"
+file-types = ["go"]
+roots = ["go.work", "go.mod"]
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+language-servers = ["gopls"]
+auto-format = true
+formatter = { command = "gofmt" }
+indent = { tab-width = 4, unit = "\t" }
+
+[[language]]
+name = "gomod"
+scope = "source.gomod"
+injection-regex = "gomod|go.mod|go.sum|go.work"
+file-types = [
+  { glob = "go.mod" },
+  { glob = "go.sum" },
+  { glob = "go.work" },
+  { glob = "go.work.sum" },
+]
+roots = ["go.work", "go.mod"]
+comment-token = "//"
+language-servers = ["gopls"]
+indent = { tab-width = 4, unit = "\t" }
+
+[[language]]
+name = "bash"
+scope = "source.bash"
+injection-regex = "bash|sh|zsh"
+file-types = ["sh", "bash", "zsh", { glob = ".bashrc" }, { glob = ".zshrc" }]
+shebangs = ["sh", "bash", "zsh"]
+comment-token = "#"
+language-servers = ["bash-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "dockerfile"
+scope = "source.dockerfile"
+injection-regex = "dockerfile|containerfile"
+file-types = [
+  { glob = "Dockerfile" },
+  { glob = "Dockerfile.*" },
+  { glob = "Containerfile" },
+  { glob = "Containerfile.*" },
+]
+comment-token = "#"
+language-servers = ["docker-langserver"]
+indent = { tab-width = 4, unit = "    " }
+
+[[language]]
+name = "hcl"
+scope = "source.hcl"
+injection-regex = "hcl|terraform"
+file-types = ["hcl", "tf", "tfvars"]
+comment-token = "#"
+language-servers = ["terraform-ls"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "gitcommit"
+scope = "git.commitmsg"
+injection-regex = "git-commit"
+file-types = [{ glob = "COMMIT_EDITMSG" }, { glob = "MERGE_MSG" }]
+comment-token = "#"
+text-width = 72
+
+[[language]]
+name = "gitignore"
+scope = "source.gitignore"
+injection-regex = "gitignore"
+file-types = [
+  { glob = ".gitignore" },
+  { glob = ".git/info/exclude" },
+  { glob = ".ignore" },
+  { glob = "CODEOWNERS" },
+  { glob = ".config/toe/ignore" },
+  { glob = ".toe/ignore" },
+  { glob = ".*ignore" },
+  { glob = ".git-blame-ignore-revs" },
+]
+comment-token = "#"
+
+[[language]]
+name = "gitattributes"
+scope = "source.gitattributes"
+injection-regex = "gitattributes"
+file-types = [{ glob = ".gitattributes" }]
+comment-token = "#"
+
+[[language]]
+name = "env"
+scope = "source.env"
+injection-regex = "env"
+file-types = [{ glob = ".env" }, { glob = ".env.*" }]
+comment-token = "#"
+
+[[language]]
+name = "toml"
+scope = "source.toml"
+injection-regex = "toml"
+file-types = ["toml"]
+comment-token = "#"
+language-servers = ["taplo"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "yaml"
+scope = "source.yaml"
+injection-regex = "yaml|yml"
+file-types = ["yaml", "yml"]
+comment-token = "#"
+language-servers = ["yaml-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "json"
+scope = "source.json"
+injection-regex = "json"
+file-types = ["json", "lock"]
+language-servers = ["json-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "jsonc"
+scope = "source.json"
+injection-regex = "jsonc"
+file-types = ["jsonc", { glob = "tsconfig.json" }, { glob = "jsconfig.json" }]
+grammar = "json"
+comment-token = "//"
+language-servers = ["json-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "sql"
+scope = "source.sql"
+injection-regex = "sql"
+file-types = ["sql"]
+comment-token = "--"
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "protobuf"
+scope = "source.proto"
+injection-regex = "protobuf|proto"
+file-types = ["proto"]
+grammar = "proto"
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+language-servers = ["buf"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "graphql"
+scope = "source.graphql"
+injection-regex = "graphql"
+file-types = ["graphql", "gql"]
+comment-token = "#"
+language-servers = ["graphql-language-service"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "html"
+scope = "text.html.basic"
+injection-regex = "html"
+file-types = ["html", "tmpl"]
+block-comment-tokens = [{ start = "<!--", end = "-->" }]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "css"
+scope = "source.css"
+injection-regex = "css"
+file-types = ["css"]
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "javascript"
+scope = "source.js"
+injection-regex = "js|javascript"
+file-types = ["js", "mjs", "cjs"]
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+language-servers = ["typescript-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "typescript"
+scope = "source.ts"
+injection-regex = "ts|typescript"
+file-types = ["ts", "mts", "cts"]
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+language-servers = ["typescript-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "tsx"
+scope = "source.tsx"
+injection-regex = "tsx"
+file-types = ["tsx", "jsx"]
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+language-servers = ["typescript-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "markdown"
+scope = "source.md"
+injection-regex = "md|markdown"
+file-types = ["md", "markdown"]
+comment-token = "<!--"
+language-servers = ["marksman"]
+soft-wrap = { enable = true }
+
+[[language]]
+name = "markdown.inline"
+scope = "source.markdown.inline"
+injection-regex = "markdown\\.inline"
+grammar = "markdown_inline"
+
+[[grammar]]
+name = "go"
+source = { git = "https://github.com/tree-sitter/tree-sitter-go", rev = "64457ea6b73ef542914eadcb4768c920410798e1" }
+
+[[grammar]]
+name = "gomod"
+source = { git = "https://github.com/camdencheek/tree-sitter-go-mod", rev = "6efb59652d30e0e9cd5f3b3a669afd6f1a926d3c" }
+
+[[grammar]]
+name = "bash"
+source = { git = "https://github.com/tree-sitter/tree-sitter-bash", rev = "487734f87fd87118028a65a4599352fa99c9cde8" }
+
+[[grammar]]
+name = "dockerfile"
+source = { git = "https://github.com/camdencheek/tree-sitter-dockerfile", rev = "087daa20438a6cc01fa5e6fe6906d77c869d19fe" }
+
+[[grammar]]
+name = "hcl"
+source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-hcl", rev = "9e3ec9848f28d26845ba300fd73c740459b83e9b" }
+
+[[grammar]]
+name = "gitcommit"
+source = { git = "https://github.com/the-mikedavis/tree-sitter-gitcommit", rev = "318dd72d41e6e00529a13c91bb3bcc9f5a1512b1" }
+
+[[grammar]]
+name = "gitignore"
+source = { git = "https://github.com/shunsambongi/tree-sitter-gitignore", rev = "f4685bf11a494a906e918597ecdb78e6ad52fb14" }
+
+[[grammar]]
+name = "gitattributes"
+source = { git = "https://github.com/ObserverOfTime/tree-sitter-gitattributes", rev = "8e0317fb7fda1ee77e5a972ee80f769611c4dca4" }
+
+[[grammar]]
+name = "toml"
+source = { git = "https://github.com/tree-sitter/tree-sitter-toml", rev = "7cff70bbcbbc62001fdef1a3f3b4b5f5a2f72408" }
+
+[[grammar]]
+name = "yaml"
+source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-yaml", rev = "0e36bed171768908f331ff7dff9d956bae016efb" }
+
+[[grammar]]
+name = "json"
+source = { git = "https://github.com/tree-sitter/tree-sitter-json", rev = "3fef30de8aee74600f25ec2e319b62a1a870d51e" }
+
+[[grammar]]
+name = "sql"
+source = { git = "https://github.com/DerekStride/tree-sitter-sql", rev = "da2f75b74f75525e0cef18e692e0c792a48a5f3a" }
+
+[[grammar]]
+name = "proto"
+source = { git = "https://github.com/treywood/tree-sitter-proto", rev = "7420633c5ae7b6b0e2e0b3093497fb83c629d3a9" }
+
+[[grammar]]
+name = "graphql"
+source = { git = "https://github.com/bkegley/tree-sitter-graphql", rev = "5e66e961eee421786bdda8495ed1db045e06b5fe" }
+
+[[grammar]]
+name = "html"
+source = { git = "https://github.com/tree-sitter/tree-sitter-html", rev = "bfa075d83c6cea0c55b770e37b389221c1f3b119" }
+
+[[grammar]]
+name = "css"
+source = { git = "https://github.com/tree-sitter/tree-sitter-css", rev = "6e327db434fec0ee90f006697782e43ec855adf5" }
+
+[[grammar]]
+name = "javascript"
+source = { git = "https://github.com/tree-sitter/tree-sitter-javascript", rev = "f772967f7b7bc7c28f845be2420a38472b16a8ee" }
+
+[[grammar]]
+name = "typescript"
+source = { git = "https://github.com/tree-sitter/tree-sitter-typescript", rev = "b1bf4825d9eaa0f3bdeb1e52f099533328acfbdf", subpath = "typescript" }
+
+[[grammar]]
+name = "tsx"
+source = { git = "https://github.com/tree-sitter/tree-sitter-typescript", rev = "b1bf4825d9eaa0f3bdeb1e52f099533328acfbdf", subpath = "tsx" }
+
+[[grammar]]
+name = "markdown"
+source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-markdown", rev = "2dfd57f547f06ca5631a80f601e129d73fc8e9f0", subpath = "tree-sitter-markdown" }
+
+[[grammar]]
+name = "markdown_inline"
+source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-markdown", rev = "2dfd57f547f06ca5631a80f601e129d73fc8e9f0", subpath = "tree-sitter-markdown-inline" }

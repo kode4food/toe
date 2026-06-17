@@ -1,0 +1,301 @@
+package view_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/config"
+)
+
+func TestInsertChar(t *testing.T) {
+	e := editorWithText(t, "hllo")
+	setCursor(t, e, 1)
+	action.InsertChar(e, 'e')
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "hello", doc.Text().String())
+	assert.Equal(t, 2, cursorPos(t, e))
+}
+
+func TestInsertNewline(t *testing.T) {
+	e := editorWithText(t, "ab")
+	setCursor(t, e, 1)
+	action.InsertNewline(e)
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "a\nb", doc.Text().String())
+}
+
+func TestInsertNewlineAutoPair(t *testing.T) {
+	e := editorWithText(t, "()")
+	setCursor(t, e, 1)
+	action.InsertNewline(e)
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "(\n\t\n)", doc.Text().String())
+	assert.Equal(t, 3, cursorPos(t, e))
+}
+
+func TestAutoPairConfig(t *testing.T) {
+	t.Run("global false disables insert hook", func(t *testing.T) {
+		e := editorWithText(t, "")
+		cfg := e.Config()
+		cfg.Editor.AutoPairs = config.AutoPairConfig{
+			Present: true,
+			Enable:  new(false),
+		}
+		e.SetConfig(cfg)
+
+		action.InsertChar(e, '(')
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "(", doc.Text().String())
+		assert.Equal(t, 1, cursorPos(t, e))
+	})
+
+	t.Run("global false disables newline pair hook", func(t *testing.T) {
+		e := editorWithText(t, "()")
+		cfg := e.Config()
+		cfg.Editor.AutoPairs = config.AutoPairConfig{
+			Present: true,
+			Enable:  new(false),
+		}
+		e.SetConfig(cfg)
+		setCursor(t, e, 1)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "(\n)", doc.Text().String())
+		assert.Equal(t, 2, cursorPos(t, e))
+	})
+
+	t.Run("global false disables delete hook", func(t *testing.T) {
+		e := editorWithText(t, "()")
+		cfg := e.Config()
+		cfg.Editor.AutoPairs = config.AutoPairConfig{
+			Present: true,
+			Enable:  new(false),
+		}
+		e.SetConfig(cfg)
+		setCursor(t, e, 1)
+
+		action.DeleteCharBackward(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, ")", doc.Text().String())
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
+
+	t.Run("language table overrides editor default", func(t *testing.T) {
+		writeCommandLanguages(t, `
+[[language]]
+name = "custom"
+
+[language.auto-pairs]
+'<' = '>'
+`)
+		lang := config.LoadLanguage("custom")
+		pairs, ok := lang.AutoPairs.AutoPairs()
+		assert.True(t, ok)
+		pair, ok := pairs.Get('<')
+		assert.True(t, ok)
+		assert.Equal(t, core.Pair{Open: '<', Close: '>'}, pair)
+		e := editorWithText(t, "")
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("custom")
+
+		action.InsertChar(e, '(')
+		action.InsertChar(e, '<')
+
+		assert.Equal(t, "(<>", doc.Text().String())
+		assert.Equal(t, 2, cursorPos(t, e))
+	})
+}
+
+func TestContinueComments(t *testing.T) {
+	t.Run("insert newline continues line comment", func(t *testing.T) {
+		writeCommandLanguages(t, `
+[[language]]
+name = "custom"
+comment-token = "//"
+`)
+		e := editorWithText(t, "  // hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("custom")
+		setCursor(t, e, doc.Text().LenChars())
+
+		action.InsertNewline(e)
+
+		assert.Equal(t, "  // hello\n  // ", doc.Text().String())
+		assert.Equal(t, doc.Text().LenChars(), cursorPos(t, e))
+	})
+
+	t.Run("open below continues line comment", func(t *testing.T) {
+		writeCommandLanguages(t, `
+[[language]]
+name = "custom"
+comment-token = "//"
+`)
+		e := editorWithText(t, "  // hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("custom")
+
+		action.OpenBelow(e)
+
+		assert.Equal(t, "  // hello\n  // ", doc.Text().String())
+		assert.Equal(t, doc.Text().LenChars(), cursorPos(t, e))
+	})
+
+	t.Run("open above continues line comment", func(t *testing.T) {
+		writeCommandLanguages(t, `
+[[language]]
+name = "custom"
+comment-token = "//"
+`)
+		e := editorWithText(t, "  // hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("custom")
+
+		action.OpenAbove(e)
+
+		assert.Equal(t, "  // \n  // hello", doc.Text().String())
+		assert.Equal(t, 5, cursorPos(t, e))
+	})
+
+	t.Run("can disable continuation", func(t *testing.T) {
+		writeCommandLanguages(t, `
+[[language]]
+name = "custom"
+comment-token = "//"
+`)
+		e := editorWithText(t, "  // hello")
+		cfg := e.Config()
+		cfg.Editor.ContinueComments = new(false)
+		e.SetConfig(cfg)
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("custom")
+		setCursor(t, e, doc.Text().LenChars())
+
+		action.InsertNewline(e)
+
+		assert.Equal(t, "  // hello\n  ", doc.Text().String())
+	})
+
+	t.Run("open below count creates repeated cursors", func(t *testing.T) {
+		writeCommandLanguages(t, `
+[[language]]
+name = "custom"
+comment-token = "//"
+`)
+		e := editorWithText(t, "  // hello")
+		e.SetCount(2)
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("custom")
+
+		action.OpenBelow(e)
+
+		v, _ := e.FocusedView()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, "  // hello\n  // \n  // ", doc.Text().String())
+		assert.Equal(t, []core.Range{
+			core.PointRange(16),
+			core.PointRange(22),
+		}, sel.Ranges())
+	})
+
+	t.Run("open above count creates repeated cursors", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		e.SetCount(2)
+
+		action.OpenAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		v, _ := e.FocusedView()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, "\n\nhello", doc.Text().String())
+		assert.Equal(t, []core.Range{
+			core.PointRange(0),
+			core.PointRange(1),
+		}, sel.Ranges())
+	})
+}
+
+func TestDeleteCharBackward(t *testing.T) {
+	e := editorWithText(t, "hello")
+	setCursor(t, e, 3)
+	action.DeleteCharBackward(e)
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "helo", doc.Text().String())
+	assert.Equal(t, 2, cursorPos(t, e))
+}
+
+func TestDeleteCharBackwardAtStart(t *testing.T) {
+	e := editorWithText(t, "hi")
+	action.DeleteCharBackward(e)
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "hi", doc.Text().String())
+}
+
+func TestDeleteCharForward(t *testing.T) {
+	e := editorWithText(t, "hello")
+	action.DeleteCharForward(e)
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "ello", doc.Text().String())
+	assert.Equal(t, 0, cursorPos(t, e))
+}
+
+func TestDeleteCharForwardAtEnd(t *testing.T) {
+	e := editorWithText(t, "hi")
+	setCursor(t, e, 2)
+	action.DeleteCharForward(e)
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "hi", doc.Text().String())
+}
+
+func TestInsertCharMultiCursor(t *testing.T) {
+	e := editorWithText(t, "ab")
+	v, _ := e.FocusedView()
+	doc, _ := e.FocusedDocument()
+	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
+		core.PointRange(0),
+		core.PointRange(1),
+	}, 0))
+	action.InsertChar(e, 'x')
+	doc, _ = e.FocusedDocument()
+	assert.Equal(t, "xaxb", doc.Text().String())
+}
+
+func TestUndoRedo(t *testing.T) {
+	e := editorWithText(t, "hello")
+	setCursor(t, e, 5)
+	action.InsertChar(e, '!')
+	doc, _ := e.FocusedDocument()
+	assert.Equal(t, "hello!", doc.Text().String())
+
+	ok := e.Undo()
+	assert.True(t, ok)
+	doc, _ = e.FocusedDocument()
+	assert.Equal(t, "hello", doc.Text().String())
+
+	ok = e.Redo()
+	assert.True(t, ok)
+	doc, _ = e.FocusedDocument()
+	assert.Equal(t, "hello!", doc.Text().String())
+}
+
+func TestChangeSelection(t *testing.T) {
+	e := editorWithText(t, "hello world")
+	v, _ := e.FocusedView()
+	doc, _ := e.FocusedDocument()
+	doc.SetSelectionFor(
+		v.ID(), newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
+	)
+
+	action.ChangeSelection(e)
+
+	assert.Equal(t, " world", doc.Text().String())
+	assert.Equal(t, view.ModeInsert, e.Mode())
+	assert.Equal(t, "hello", registeredValue(t, e, '"'))
+}

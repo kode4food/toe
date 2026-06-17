@@ -1,0 +1,879 @@
+package view_test
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/config"
+)
+
+func TestNewDocument(t *testing.T) {
+	t.Run("creates scratch document with unique id", func(t *testing.T) {
+		e1 := view.NewEditor("/tmp")
+		e2 := view.NewEditor("/tmp")
+		d1, _ := e1.FocusedDocument()
+		d2, _ := e2.FocusedDocument()
+		assert.NotEqual(t, view.InvalidDocumentId, d1.ID())
+		assert.Equal(t, "", d1.Path())
+		assert.False(t, d1.Modified())
+		assert.Equal(t, view.ScratchBufferName, d1.DisplayName())
+		_ = d2
+	})
+
+	t.Run("text is empty rope", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "", d.Text().String())
+	})
+
+	t.Run("lang defaults to text", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "text", d.Lang())
+	})
+
+	t.Run("uses configured default line ending", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+default-line-ending = "crlf"
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		e := view.NewEditor("/tmp")
+
+		d, _ := e.FocusedDocument()
+
+		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
+	})
+
+	t.Run("uses live default line ending for scratch", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		cfg := e.Config()
+		cfg.Editor.DefaultLineEnding = core.LineEndingCRLF
+		e.SetConfig(cfg)
+
+		e.NewDocument()
+
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
+	})
+}
+
+func TestOpenDocument(t *testing.T) {
+	t.Run("opens existing file", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "hello.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello world"), 0o644))
+
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "hello world", d.Text().String())
+		assert.False(t, d.Modified())
+	})
+
+	t.Run("new file returns empty doc at path", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "new.txt")
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "", d.Text().String())
+		assert.Equal(t, path, d.Path())
+	})
+
+	t.Run("detects existing file line ending", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "hello.txt")
+		err := os.WriteFile(path, []byte("hello\r\nworld\r\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+
+		_, err = e.OpenFile(path)
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
+	})
+
+	t.Run("applies editor config on open", func(t *testing.T) {
+		tmp := t.TempDir()
+		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
+root = true
+
+[*.go]
+indent_style = space
+indent_size = 2
+tab_width = 8
+end_of_line = crlf
+`), 0o644)
+		assert.NoError(t, err)
+		path := filepath.Join(tmp, "main.go")
+		err = os.WriteFile(path, []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+
+		_, err = e.OpenFile(path)
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.False(t, d.IndentStyle().IsTabs())
+		assert.Equal(t, uint8(2), d.IndentStyle().Width())
+		assert.Equal(t, 8, d.TabWidth())
+		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
+	})
+
+	t.Run("uses language indent fallback on open", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewLanguages(t, root, `
+[[language]]
+name = "custom"
+file-types = ["foo"]
+indent = { tab-width = 8, unit = "  " }
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "main.foo")
+		err := os.WriteFile(path, []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+
+		_, err = e.OpenFile(path)
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.False(t, d.IndentStyle().IsTabs())
+		assert.Equal(t, uint8(2), d.IndentStyle().Width())
+		assert.Equal(t, 8, d.TabWidth())
+	})
+
+	t.Run("missing file uses language indent fallback", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewLanguages(t, root, `
+[[language]]
+name = "custom"
+file-types = ["foo"]
+indent = { tab-width = 8, unit = "  " }
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "new.foo")
+		e := view.NewEditor(tmp)
+
+		_, err := e.OpenFile(path)
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.False(t, d.IndentStyle().IsTabs())
+		assert.Equal(t, uint8(2), d.IndentStyle().Width())
+		assert.Equal(t, 8, d.TabWidth())
+	})
+
+	t.Run("can disable editor config on open", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+editor-config = false
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
+root = true
+
+[*.go]
+tab_width = 8
+end_of_line = crlf
+`), 0o644)
+		assert.NoError(t, err)
+		path := filepath.Join(tmp, "main.go")
+		err = os.WriteFile(path, []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+
+		_, err = e.OpenFile(path)
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, 4, d.TabWidth())
+		assert.Equal(t, core.LineEndingLF, d.LineEnding())
+	})
+
+	t.Run("new file uses default line ending", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+default-line-ending = "crlf"
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "new.txt")
+		e := view.NewEditor(tmp)
+
+		_, err := e.OpenFile(path)
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
+	})
+
+	t.Run("editorconfig max-line-length drives format", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
+root = true
+
+[*.md]
+max_line_length = 40
+`), 0o644)
+		assert.NoError(t, err)
+		path := filepath.Join(tmp, "note.md")
+		err = os.WriteFile(path, []byte("# title\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		enabled := true
+		cfg := config.DefaultConfig()
+		cfg.Editor.TextWidth = new(80)
+		cfg.Editor.SoftWrap.Enable = &enabled
+		cfg.Editor.SoftWrap.WrapAtTextWidth = &enabled
+
+		format := d.TextFormatForConfig(80, cfg)
+
+		assert.True(t, format.SoftWrap)
+		assert.True(t, format.SoftWrapAtTextWidth)
+		assert.Equal(t, 40, format.ViewportWidth)
+	})
+}
+
+func TestDocumentSave(t *testing.T) {
+	t.Run("saves content to disk", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, e.Save())
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "", string(data))
+	})
+
+	t.Run("inserts final newline by default", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		e := editorWithText(t, "hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello\n", string(data))
+		assert.Equal(t, "hello\n", doc.Text().String())
+	})
+
+	t.Run("uses document line ending for final newline", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		e := editorWithText(t, "hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+		doc.SetLineEnding(core.LineEndingCRLF)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello\r\n", string(data))
+	})
+
+	t.Run("applies configured save cleanup", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+trim-trailing-whitespace = true
+trim-final-newlines = true
+insert-final-newline = true
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		e := editorWithText(t, "a  \n\n\n")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "a\n", string(data))
+		assert.Equal(t, "a\n", doc.Text().String())
+	})
+
+	t.Run("can disable final newline insertion", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+insert-final-newline = false
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		e := editorWithText(t, "hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", string(data))
+	})
+
+	t.Run("editor config overrides save cleanup", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
+root = true
+
+[*.txt]
+insert_final_newline = false
+trim_trailing_whitespace = true
+`), 0o644)
+		assert.NoError(t, err)
+		path := filepath.Join(tmp, "out.txt")
+		err = os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, rope.LenChars(), "hello  "),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		assert.NoError(t, e.Apply(tx))
+
+		err = e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", string(data))
+	})
+
+	t.Run("scratch needs path to save", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		err := e.Save()
+		assert.Error(t, err)
+	})
+}
+
+func TestDocumentReload(t *testing.T) {
+	t.Run("reloads and clears modified", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "reload.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		err = os.WriteFile(path, []byte("new"), 0o644)
+		assert.NoError(t, err)
+
+		err = e.Reload()
+
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "new", d.Text().String())
+		assert.False(t, d.Modified())
+	})
+}
+
+func TestDocumentRelativeName(t *testing.T) {
+	t.Run("relative to basedir", func(t *testing.T) {
+		name := view.DocumentRelativeName("/a/b/c/file.txt", "/a/b")
+		assert.Equal(t, "c/file.txt", name)
+	})
+
+	t.Run("scratch buffer returns scratch name", func(t *testing.T) {
+		assert.Equal(t, view.ScratchBufferName, view.DocumentRelativeName("", "/any"))
+	})
+}
+
+func TestDocumentAccessors(t *testing.T) {
+	e := view.NewEditor("/tmp")
+	d, _ := e.FocusedDocument()
+
+	t.Run("SetLang", func(t *testing.T) {
+		d.SetLang("go")
+		assert.Equal(t, "go", d.Lang())
+	})
+
+	t.Run("Readonly defaults false", func(t *testing.T) {
+		assert.False(t, d.Readonly())
+	})
+
+	t.Run("IndentStyle defaults to tabs", func(t *testing.T) {
+		assert.True(t, d.IndentStyle().IsTabs())
+	})
+
+	t.Run("TabWidth defaults to 4", func(t *testing.T) {
+		assert.Equal(t, 4, d.TabWidth())
+	})
+
+	t.Run("LineEnding defaults to LF", func(t *testing.T) {
+		assert.Equal(t, d.LineEnding(), d.LineEnding())
+	})
+
+	t.Run("RelativeName delegates", func(t *testing.T) {
+		d.SetPath("/a/b/c.txt")
+		assert.Equal(t, "b/c.txt", d.RelativeName("/a"))
+	})
+}
+
+func TestDocumentBOM(t *testing.T) {
+	bom := []byte{0xef, 0xbb, 0xbf}
+
+	t.Run("BOM stripped on open, text excludes BOM", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "bom.txt")
+		err := os.WriteFile(path, append(bom, []byte("hello")...), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "hello", d.Text().String())
+	})
+
+	t.Run("BOM preserved on save", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "bom.txt")
+		err := os.WriteFile(path, append(bom, []byte("hello\n")...), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, e.Save())
+
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, append(bom, []byte("hello\n")...), data)
+	})
+
+	t.Run("no BOM when file has none", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "nobom.txt")
+		err := os.WriteFile(path, []byte("hello\n"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, e.Save())
+
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, []byte("hello\n"), data)
+	})
+
+	t.Run("BOM re-detected on reload", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "bom.txt")
+		err := os.WriteFile(path, append(bom, []byte("v1\n")...), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+
+		err = os.WriteFile(path, append(bom, []byte("v2\n")...), 0o644)
+		assert.NoError(t, err)
+		assert.NoError(t, e.Reload())
+
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "v2\n", d.Text().String())
+		assert.NoError(t, e.Save())
+
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, append(bom, []byte("v2\n")...), data)
+	})
+}
+
+func TestDocumentRestoreCursor(t *testing.T) {
+	t.Run("defaults to false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		assert.False(t, d.RestoreCursor())
+	})
+
+	t.Run("set and clear", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		d.SetRestoreCursor(true)
+		assert.True(t, d.RestoreCursor())
+		d.SetRestoreCursor(false)
+		assert.False(t, d.RestoreCursor())
+	})
+}
+
+func TestDocumentSetIndentStyle(t *testing.T) {
+	t.Run("updates indent style", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		spaces := core.ParseIndentStyle("  ")
+		d.SetIndentStyle(spaces)
+		assert.Equal(t, spaces, d.IndentStyle())
+	})
+}
+
+func TestDocumentTextFormat(t *testing.T) {
+	t.Run("returns format without error", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		f := d.TextFormat(80)
+		assert.NotNil(t, f)
+		assert.Equal(t, 4, f.TabWidth)
+	})
+}
+
+func TestDocumentRevisionAndLastEditPos(t *testing.T) {
+	t.Run("revision starts at zero", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, 0, d.Revision())
+	})
+
+	t.Run("revision increments on apply", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		d, _ := e.FocusedDocument()
+		assert.Greater(t, d.Revision(), 0)
+	})
+
+	t.Run("LastEditPos after edit", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		d, _ := e.FocusedDocument()
+		assert.GreaterOrEqual(t, d.LastEditPos(), 0)
+	})
+}
+
+func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
+	t.Run("accumulated changes become one revision", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+
+		d.BeginInsertGroup(v.ID())
+
+		rope := d.Text()
+		cs1, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "a"),
+		})
+		assert.NoError(t, err)
+		tx1 := core.NewTransaction(rope).WithChanges(cs1)
+		assert.NoError(t, d.Apply(tx1, v.ID()))
+
+		rope2 := d.Text()
+		cs2, err := core.NewChangeSetFromChanges(rope2, []core.Change{
+			core.TextChange(1, 1, "b"),
+		})
+		assert.NoError(t, err)
+		tx2 := core.NewTransaction(rope2).WithChanges(cs2)
+		assert.NoError(t, d.Apply(tx2, v.ID()))
+
+		d.CommitInsertHistory(v.ID())
+
+		assert.Equal(t, "ab", d.Text().String())
+		assert.True(t, d.Modified())
+	})
+
+	t.Run("begin is idempotent when already active", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.BeginInsertGroup(v.ID())
+		d.BeginInsertGroup(v.ID())
+		d.CommitInsertHistory(v.ID())
+	})
+
+	t.Run("commit with no accumulation is no-op", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.CommitInsertHistory(v.ID())
+		assert.Equal(t, 0, d.Revision())
+	})
+
+	t.Run("empty changeset commit is no-op", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.BeginInsertGroup(v.ID())
+		d.CommitInsertHistory(v.ID())
+		assert.Equal(t, 0, d.Revision())
+	})
+}
+
+func TestDocumentApplyBranches(t *testing.T) {
+	t.Run("apply with selection update", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		rope := d.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "xyz"),
+		})
+		assert.NoError(t, err)
+		sel := core.PointSelection(2)
+		tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(sel)
+		assert.NoError(t, d.Apply(tx, v.ID()))
+		assert.Equal(t, "xyz", d.Text().String())
+		assert.Equal(t, 2, d.SelectionFor(v.ID()).Primary().Head)
+	})
+
+	t.Run("apply in insert group with selection", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.BeginInsertGroup(v.ID())
+		rope := d.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "abc"),
+		})
+		assert.NoError(t, err)
+		sel := core.PointSelection(1)
+		tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(sel)
+		assert.NoError(t, d.Apply(tx, v.ID()))
+		d.CommitInsertHistory(v.ID())
+		assert.Equal(t, "abc", d.Text().String())
+	})
+
+	t.Run("mapOtherSelections on apply with two views", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "multi.txt")
+		err := os.WriteFile(path, []byte("hello"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v1, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		v2, ok := e.VSplit(v1.DocID())
+		assert.True(t, ok)
+		doc, _ := e.Document(v1.DocID())
+		doc.SetSelectionFor(v2.ID(), core.PointSelection(3))
+
+		rope := doc.Text()
+		cs, csErr := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "X"),
+		})
+		assert.NoError(t, csErr)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		assert.NoError(t, doc.Apply(tx, v1.ID()))
+		assert.Equal(t, 4, doc.SelectionFor(v2.ID()).Primary().Head)
+	})
+}
+
+func TestDocumentAtomicSave(t *testing.T) {
+	t.Run("atomic save writes content", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+atomic-save = true
+insert-final-newline = false
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "atomic.txt")
+		e := editorWithText(t, "atomic content")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+		err := e.Save()
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "atomic content", string(data))
+	})
+}
+
+func TestDocumentDetectLang(t *testing.T) {
+	t.Run("go file detected as go", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "main.go")
+		err := os.WriteFile(path, []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "go", d.Lang())
+	})
+
+	t.Run("unknown extension falls back to text", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "text", d.Lang())
+	})
+}
+
+func TestDocumentReloadScratch(t *testing.T) {
+	t.Run("reload scratch returns error", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		err := e.Reload()
+		assert.Error(t, err)
+	})
+}
+
+func TestDocumentReloadResetsSelections(t *testing.T) {
+	t.Run("reload resets per-view selections", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "sel.txt")
+		err := os.WriteFile(path, []byte("hello world"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v1, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		v2, ok := e.VSplit(v1.DocID())
+		assert.True(t, ok)
+		doc, _ := e.Document(v1.DocID())
+		doc.SetSelectionFor(v1.ID(), core.PointSelection(5))
+		doc.SetSelectionFor(v2.ID(), core.PointSelection(8))
+		err = doc.Reload()
+		assert.NoError(t, err)
+		assert.Equal(t, 0, doc.SelectionFor(v1.ID()).Primary().Head)
+		assert.Equal(t, 0, doc.SelectionFor(v2.ID()).Primary().Head)
+	})
+}
+
+func TestDocumentTrimTrailingWhitespaceWithCRLF(t *testing.T) {
+	t.Run("preserves crlf on trimmed lines", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+trim-trailing-whitespace = true
+insert-final-newline = false
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "crlf.txt")
+		e := editorWithText(t, "line  \r\nend  ")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+		doc.SetLineEnding(core.LineEndingCRLF)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "line\r\nend", string(data))
+	})
+}
+
+func TestDocumentDetectLangByContent(t *testing.T) {
+	t.Run("content-based shell detection", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "script")
+		content := "#!/bin/bash\necho hello\n"
+		err := os.WriteFile(path, []byte(content), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.NotEqual(t, "", d.Lang())
+	})
+}
+
+func TestDocumentTrimFinalNewlinesSingleEnding(t *testing.T) {
+	t.Run("single final newline is preserved", func(t *testing.T) {
+		root := t.TempDir()
+		writeViewConfig(t, root, `
+[editor]
+trim-final-newlines = true
+insert-final-newline = false
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "single.txt")
+		e := editorWithText(t, "hello\n")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello\n", string(data))
+	})
+}
+
+func TestDocumentOpenEditorConfigNewFileMissingEC(t *testing.T) {
+	t.Run("editorconfig line ending on new file", func(t *testing.T) {
+		tmp := t.TempDir()
+		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
+root = true
+
+[*.txt]
+end_of_line = crlf
+indent_style = space
+indent_size = 2
+tab_width = 2
+`), 0o644)
+		assert.NoError(t, err)
+		path := filepath.Join(tmp, "new.txt")
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
+		assert.False(t, d.IndentStyle().IsTabs())
+		assert.Equal(t, 2, d.TabWidth())
+	})
+}
+
+func writeViewConfig(t *testing.T, root, text string) {
+	t.Helper()
+	dir := filepath.Join(root, loader.DirName)
+	err := os.MkdirAll(dir, 0o755)
+	assert.NoError(t, err)
+	err = os.WriteFile(filepath.Join(dir, "config.toml"), []byte(text), 0o644)
+	assert.NoError(t, err)
+}
+
+func writeViewLanguages(t *testing.T, root, text string) {
+	t.Helper()
+	dir := filepath.Join(root, loader.DirName)
+	err := os.MkdirAll(dir, 0o755)
+	assert.NoError(t, err)
+	err = os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644)
+	assert.NoError(t, err)
+}

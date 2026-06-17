@@ -1,0 +1,222 @@
+package ui_test
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/command"
+
+	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/view"
+)
+
+type controlledDynamicSource struct {
+	ch    chan ui.PickerItem
+	query string
+}
+
+func newControlledDynamicSource() *controlledDynamicSource {
+	return &controlledDynamicSource{ch: make(chan ui.PickerItem, 1)}
+}
+
+func (c *controlledDynamicSource) Title() string { return "Dynamic" }
+
+func (c *controlledDynamicSource) Columns() []string { return []string{"path"} }
+
+func (c *controlledDynamicSource) Primary() int { return 0 }
+
+func (c *controlledDynamicSource) Search(query string) { c.query = query }
+
+func (c *controlledDynamicSource) Load(
+	_ *view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	if c.query == "" {
+		return nil, nil, func() {}
+	}
+	return nil, c.ch, func() {}
+}
+
+func (c *controlledDynamicSource) Accept(_ *view.Editor, _ ui.PickerItem) {}
+
+func TestPickerFiles(t *testing.T) {
+	t.Run("accepts file", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "main.go")
+		err := os.WriteFile(path, []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker",
+			m.PickerAction(ui.FilePickerInDir(tmp)),
+			[]command.KeyEvent{command.Char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		m = sendSpecial(m, tea.KeyEnter)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "main.go")
+		assert.Contains(t, out, "package main")
+		assert.NotContains(t, out, "┐┌")
+		assert.NotContains(t, out, "\x1b")
+	})
+
+	t.Run("respects ignore files", func(t *testing.T) {
+		tmp := t.TempDir()
+		cfgRoot := t.TempDir()
+		writeConfigIgnore(t, cfgRoot, "config_ignored.go\n")
+		path := filepath.Join(tmp, ".gitignore")
+		err := os.WriteFile(path, []byte("ignored.go\n"), 0o644)
+		assert.NoError(t, err)
+		path = filepath.Join(tmp, "ignored.go")
+		err = os.WriteFile(path, []byte("package ignored\n"), 0o644)
+		assert.NoError(t, err)
+		path = filepath.Join(tmp, "visible.go")
+		err = os.WriteFile(path, []byte("package visible\n"), 0o644)
+		assert.NoError(t, err)
+		path = filepath.Join(tmp, ".hidden.go")
+		err = os.WriteFile(path, []byte("package hidden\n"), 0o644)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(tmp, "archive.zip"), []byte("PK"), 0o644,
+		)
+		assert.NoError(t, err)
+		path = filepath.Join(tmp, "config_ignored.go")
+		err = os.WriteFile(path, []byte("package c\n"), 0o644)
+		assert.NoError(t, err)
+		sub := filepath.Join(tmp, "sub")
+		err = os.MkdirAll(sub, 0o755)
+		assert.NoError(t, err)
+		path = filepath.Join(sub, ".gitignore")
+		err = os.WriteFile(path, []byte("nested.go\n"), 0o644)
+		assert.NoError(t, err)
+		path = filepath.Join(sub, "nested.go")
+		err = os.WriteFile(path, []byte("package n\n"), 0o644)
+		assert.NoError(t, err)
+		path = filepath.Join(sub, "shown.go")
+		err = os.WriteFile(path, []byte("package s\n"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker",
+			m.PickerAction(ui.FilePickerInDir(tmp)),
+			[]command.KeyEvent{command.Char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "visible.go")
+		assert.NotContains(t, out, "ignored.go")
+		assert.NotContains(t, out, ".hidden.go")
+		assert.NotContains(t, out, "archive.zip")
+		assert.NotContains(t, out, "config_ignored.go")
+		assert.NotContains(t, out, "nested.go")
+		assert.Contains(t, out, "shown.go")
+	})
+
+	t.Run("dynamic feed displays first open batch", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		src := newControlledDynamicSource()
+		bindNormalTestAction(
+			km, "dynamic_picker",
+			m.PickerAction(func(e *view.Editor) *ui.Picker {
+				return ui.NewPicker(e, src)
+			}),
+			[]command.KeyEvent{command.Char('p')},
+		)
+
+		m = resize(m, 80, 20)
+		m = sendKey(m, 'p')
+		next, cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
+		m = next.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		msg := runTestCmd(t, cmd)
+		next, cmd = m.Update(msg)
+		m = next.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		src.ch <- ui.PickerItem{Display: "alpha.go:1"}
+		msg = runTestCmd(t, cmd)
+		next, _ = m.Update(msg)
+		m = next.(ui.Model)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "alpha.go:1")
+	})
+
+	t.Run("buffer picker highlights hidden cursor", func(t *testing.T) {
+		tmp := t.TempDir()
+		alpha := filepath.Join(tmp, "alpha.go")
+		beta := filepath.Join(tmp, "beta.go")
+		lines := make([]string, 30)
+		for i := range lines {
+			lines[i] = "line"
+		}
+		lines[0] = "line-00 start"
+		lines[18] = "line-18 target"
+		err := os.WriteFile(alpha, []byte(strings.Join(lines, "\n")), 0o644)
+		assert.NoError(t, err)
+		err = os.WriteFile(beta, []byte("package beta\n"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		v, err := e.OpenFile(alpha)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		pos, err := doc.Text().LineToChar(18)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(pos))
+
+		_, err = e.OpenFile(beta)
+		assert.NoError(t, err)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			[]command.KeyEvent{command.Char('b')},
+		)
+
+		m = resize(m, 100, 16)
+		m = sendKey(m, 'b')
+		for _, ch := range "alpha" {
+			m = sendKey(m, ch)
+		}
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "line-18 target")
+		assert.NotContains(t, out, "line-00 start")
+	})
+}
+
+func runTestCmd(t *testing.T, cmd tea.Cmd) tea.Msg {
+	t.Helper()
+	ch := make(chan tea.Msg, 1)
+	go func() { ch <- cmd() }()
+	select {
+	case msg := <-ch:
+		return msg
+	case <-time.After(time.Second):
+		t.Fatal("command did not return")
+		return nil
+	}
+}

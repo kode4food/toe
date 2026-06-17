@@ -1,0 +1,259 @@
+package view
+
+import (
+	"github.com/charmbracelet/x/ansi"
+
+	"github.com/kode4food/toe/internal/core"
+)
+
+// View is a viewport into a document
+type View struct {
+	id     Id
+	docID  DocumentId
+	offset Position
+	mode   Mode
+	jumps  JumpList
+	// area is the screen rectangle assigned by the layout engine
+	area Area
+}
+
+// ID returns the view identifier
+func (v *View) ID() Id { return v.id }
+
+// Area returns the screen rectangle assigned by the layout engine
+func (v *View) Area() Area { return v.area }
+
+// SetArea sets the screen rectangle (called by the layout engine)
+func (v *View) SetArea(a Area) { v.area = a }
+
+// DocID returns the document this view displays
+func (v *View) DocID() DocumentId { return v.docID }
+
+// Mode returns the current editing mode
+func (v *View) Mode() Mode { return v.mode }
+
+// SetMode sets the current editing mode
+func (v *View) SetMode(m Mode) { v.mode = m }
+
+// Offset returns the current scroll position
+func (v *View) Offset() Position { return v.offset }
+
+// SetOffset updates the scroll position
+func (v *View) SetOffset(p Position) { v.offset = p }
+
+// PushJump records a cursor position in the jump list
+func (v *View) PushJump(docID DocumentId, anchor int) {
+	v.jumps.Push(docID, anchor)
+}
+
+// JumpBackward moves to the previous position in the jump list
+func (v *View) JumpBackward() (DocumentId, int, bool) {
+	return v.jumps.Backward()
+}
+
+// JumpForward moves to the next position in the jump list
+func (v *View) JumpForward() (DocumentId, int, bool) {
+	return v.jumps.Forward()
+}
+
+// Jumps returns all entries in the jump history, oldest first
+func (v *View) Jumps() []JumpEntry { return v.jumps.Entries() }
+
+// EnsureCursorVisible adjusts the view offset so the cursor is visible within
+// height terminal rows, respecting the scrolloff margin. When vf describes an
+// active soft-wrap layout, visibility is measured in visual (wrapped) rows;
+// otherwise it falls back to text-line counting
+func (v *View) EnsureCursorVisible(
+	doc core.Rope, sel core.Selection, height, scrolloff int,
+	vf *core.VisualMoveFormat,
+) {
+	if height <= 0 {
+		return
+	}
+	if vf != nil && vf.ViewportWidth > 0 {
+		v.ensureCursorVisibleVisual(doc, sel, height, scrolloff, vf)
+		return
+	}
+	v.ensureCursorVisibleByLine(doc, sel, height, scrolloff)
+}
+
+func (v *View) ensureCursorVisibleByLine(
+	doc core.Rope, sel core.Selection, height, scrolloff int,
+) {
+	// Text-line scrolling never scrolls within a line
+	v.offset.VerticalOffset = 0
+	cursor := sel.Primary().Cursor(doc)
+	line, err := doc.CharToLine(cursor)
+	if err != nil {
+		return
+	}
+	anchorLine, err := doc.CharToLine(v.offset.Anchor)
+	if err != nil {
+		anchorLine = 0
+	}
+	nLines := doc.LenLines()
+
+	// Clamp scrolloff so there is always at least one line in the middle
+	so := min(scrolloff, max(height-1, 0)/2)
+
+	topEdge := anchorLine + so
+	bottomEdge := anchorLine + height - 1 - so
+
+	if line < topEdge {
+		// When EOF is within the viewport and the cursor is visible, skip
+		if anchorLine+height >= nLines && anchorLine <= line {
+			return
+		}
+		newFirstLine := max(line-so, 0)
+		newAnchor, err := doc.LineToChar(newFirstLine)
+		if err == nil {
+			v.offset.Anchor = newAnchor
+		}
+	} else if line > bottomEdge {
+		newFirstLine := max(line-height+1+so, 0)
+		newAnchor, err := doc.LineToChar(newFirstLine)
+		if err == nil {
+			v.offset.Anchor = newAnchor
+		}
+	}
+}
+
+// ensureCursorVisibleVisual keeps the cursor within the scrolloff margin
+// measured in visual rows. The view top is the anchor line plus a vertical
+// offset of visual rows scrolled into it, so a single soft-wrapped line taller
+// than the viewport can scroll within itself. Each walk is bounded by the
+// viewport height
+func (v *View) ensureCursorVisibleVisual(
+	doc core.Rope, sel core.Selection, height, scrolloff int,
+	vf *core.VisualMoveFormat,
+) {
+	cursor := sel.Primary().Cursor(doc)
+	cursorLine, err := doc.CharToLine(cursor)
+	if err != nil {
+		return
+	}
+	cursorLineStart, err := doc.LineToChar(cursorLine)
+	if err != nil {
+		return
+	}
+	cursorRow := vf.VisualRowOfOffset(doc, cursorLine, cursor-cursorLineStart)
+
+	anchorLine, err := doc.CharToLine(v.offset.Anchor)
+	if err != nil {
+		anchorLine = 0
+	}
+	vOff := max(v.offset.VerticalOffset, 0)
+
+	soTop := min(scrolloff, max(height-1, 0)/2)
+	soBottom := min(scrolloff, height/2)
+
+	// fromTop is the cursor's visual row measured from the current viewport top
+	// (anchor line top, minus the rows already scrolled past). ok is false when
+	// the cursor sits above the anchor line entirely
+	rows, ok := visualRowsToCursor(
+		doc, vf, anchorLine, cursorLine, cursorRow, height+vOff,
+	)
+	fromTop := rows - vOff
+
+	switch {
+	case !ok || fromTop < soTop:
+		anchorLine, vOff = vf.VisualScrollUp(doc, cursorLine, cursorRow, soTop)
+	case fromTop > height-1-soBottom:
+		anchorLine, vOff = vf.VisualScrollUp(
+			doc, cursorLine, cursorRow, height-1-soBottom,
+		)
+	default:
+		return
+	}
+	if newAnchor, err := doc.LineToChar(anchorLine); err == nil {
+		v.offset.Anchor = newAnchor
+		v.offset.VerticalOffset = vOff
+	}
+}
+
+// visualRowsToCursor returns the cursor's visual-row distance from the top of
+// anchorLine (sum of the wrapped row counts of the lines in between plus the
+// cursor's row within its own line). ok is false when the cursor is above
+// anchorLine. The walk stops once it exceeds cap, since callers only compare
+// against the viewport height
+func visualRowsToCursor(
+	doc core.Rope, vf *core.VisualMoveFormat,
+	anchorLine, cursorLine, cursorRow, limit int,
+) (int, bool) {
+	if cursorLine < anchorLine {
+		return 0, false
+	}
+	rows := cursorRow
+	for l := anchorLine; l < cursorLine; l++ {
+		rows += vf.VisualRows(doc, l)
+		if rows > limit {
+			return rows, true
+		}
+	}
+	return rows, true
+}
+
+// EnsureCursorVisibleHorizontal adjusts the horizontal scroll offset so the
+// cursor's visual column stays within width content columns, respecting the
+// scrolloff margin. The gutter is never shifted — width is the content area
+// (viewport minus gutter). A width <= 0 disables horizontal scrolling (used for
+// soft-wrapped views) and resets the offset to 0
+func (v *View) EnsureCursorVisibleHorizontal(
+	doc core.Rope, sel core.Selection, width, tabW, scrolloff int,
+) {
+	if width <= 0 {
+		v.offset.HorizontalOffset = 0
+		return
+	}
+	cursor := sel.Primary().Cursor(doc)
+	line, err := doc.CharToLine(cursor)
+	if err != nil {
+		return
+	}
+	lineStart, err := doc.LineToChar(line)
+	if err != nil {
+		return
+	}
+	col := visualColumn(doc, lineStart, cursor, tabW)
+
+	h := v.offset.HorizontalOffset
+	// Clamp scrolloff so there is always at least one column in the middle
+	so := min(scrolloff, max(width-1, 0)/2)
+
+	leftEdge := h + so
+	rightEdge := h + width - 1 - so
+
+	if col < leftEdge {
+		h = max(col-so, 0)
+	} else if col > rightEdge {
+		h = max(col-width+1+so, 0)
+	}
+	v.offset.HorizontalOffset = h
+}
+
+// RuneWidth returns the display width of ch at visual column col, expanding tabs
+// to the next tabW boundary. The ASCII fast path avoids a per-rune string
+// allocation in the render and cursor-positioning hot paths
+func RuneWidth(ch rune, col, tabW int) int {
+	switch {
+	case ch == '\t':
+		return tabW - col%tabW
+	case ch >= 0x20 && ch < 0x7f:
+		return 1
+	default:
+		return ansi.StringWidth(string(ch))
+	}
+}
+
+// visualColumn returns the display column of position to, measured from from,
+// expanding tabs to the next tabW boundary. It folds rune widths over the
+// range directly, allocating no intermediate substring
+func visualColumn(doc core.Rope, from, to, tabW int) int {
+	col := 0
+	doc.ForEachSegment(from, to, func(seg string) {
+		for _, ch := range seg {
+			col += RuneWidth(ch, col, tabW)
+		}
+	})
+	return col
+}

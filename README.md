@@ -1,4 +1,4 @@
-# toe <img src="./docs/img/logo.svg" align="right" height="100"/>
+# toe <img src="./docs/img/logo.png" align="right" height="100"/>
 
 ### Thom's Own Editor
 

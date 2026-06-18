@@ -1,6 +1,6 @@
-# toe <img src="./docs/img/logo.png" align="right" height="100"/>
+# Thom's Own Editor (toe) <img src="./docs/img/logo.png" align="right" height="100"/>
 
-### Thom's Own Editor
+![Build Status](https://github.com/kode4food/toe/actions/workflows/build.yml/badge.svg) [![Code Coverage](https://qlty.sh/gh/kode4food/projects/toe/coverage.svg)](https://qlty.sh/gh/kode4food/projects/toe) [![Maintainability](https://qlty.sh/gh/kode4food/projects/toe/maintainability.svg)](https://qlty.sh/gh/kode4food/projects/toe) [![GitHub](https://img.shields.io/github/license/kode4food/toe)](https://github.com/kode4food/toe/blob/main/LICENSE.md)
 
 **toe** is a modal terminal editor written in Go. Helix-inspired editing with normal, insert, and selection modes. Multiple buffers, split views, and a fuzzy picker for files, buffers, and search results.
 

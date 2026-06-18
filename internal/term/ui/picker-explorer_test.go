@@ -92,3 +92,18 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
 	})
 }
+
+// explorerModel opens a FileExplorer rooted at dir (the editor's cwd) and
+// returns the mounted model after one render-sized resize
+func explorerModel(t *testing.T, dir string) ui.Model {
+	t.Helper()
+	e := view.NewEditor(dir)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "explorer", m.PickerAction(ui.FileExplorer),
+		[]command.KeyEvent{command.Char('e')},
+	)
+	m = resize(m, 100, 30)
+	return sendKey(m, 'e')
+}

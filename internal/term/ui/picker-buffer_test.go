@@ -39,7 +39,7 @@ func TestBufferPicker(t *testing.T) {
 		for _, ch := range "a.txt" {
 			m = sendKey(m, ch)
 		}
-		m = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyEnter)
 
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)

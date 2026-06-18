@@ -17,34 +17,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type controlledDynamicSource struct {
-	ch    chan ui.PickerItem
-	query string
-}
-
-func newControlledDynamicSource() *controlledDynamicSource {
-	return &controlledDynamicSource{ch: make(chan ui.PickerItem, 1)}
-}
-
-func (c *controlledDynamicSource) Title() string { return "Dynamic" }
-
-func (c *controlledDynamicSource) Columns() []string { return []string{"path"} }
-
-func (c *controlledDynamicSource) Primary() int { return 0 }
-
-func (c *controlledDynamicSource) Search(query string) { c.query = query }
-
-func (c *controlledDynamicSource) Load(
-	_ *view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	if c.query == "" {
-		return nil, nil, func() {}
-	}
-	return nil, c.ch, func() {}
-}
-
-func (c *controlledDynamicSource) Accept(_ *view.Editor, _ ui.PickerItem) {}
-
 func TestPickerFiles(t *testing.T) {
 	t.Run("accepts file", func(t *testing.T) {
 		tmp := t.TempDir()
@@ -220,3 +192,31 @@ func runTestCmd(t *testing.T, cmd tea.Cmd) tea.Msg {
 		return nil
 	}
 }
+
+type controlledDynamicSource struct {
+	ch    chan ui.PickerItem
+	query string
+}
+
+func newControlledDynamicSource() *controlledDynamicSource {
+	return &controlledDynamicSource{ch: make(chan ui.PickerItem, 1)}
+}
+
+func (c *controlledDynamicSource) Title() string { return "Dynamic" }
+
+func (c *controlledDynamicSource) Columns() []string { return []string{"path"} }
+
+func (c *controlledDynamicSource) Primary() int { return 0 }
+
+func (c *controlledDynamicSource) Search(query string) { c.query = query }
+
+func (c *controlledDynamicSource) Load(
+	_ *view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	if c.query == "" {
+		return nil, nil, func() {}
+	}
+	return nil, c.ch, func() {}
+}
+
+func (c *controlledDynamicSource) Accept(_ *view.Editor, _ ui.PickerItem) {}

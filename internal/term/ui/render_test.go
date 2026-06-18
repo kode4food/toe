@@ -29,61 +29,6 @@ type bindTestActionArgs struct {
 	seqs [][]command.KeyEvent
 }
 
-// sendKey simulates a single typed character key press
-func sendKey(m ui.Model, ch rune) ui.Model {
-	m2, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
-	return m2.(ui.Model)
-}
-
-func openPickerAndFeed(m ui.Model, ch rune) ui.Model {
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
-	m = m2.(ui.Model)
-	for cmd != nil {
-		msg := cmd()
-		if msg == nil {
-			break
-		}
-		m2, cmd = m.Update(msg)
-		m = m2.(ui.Model)
-	}
-	return m
-}
-
-// sendSpecial simulates a special key press (Enter, Backspace, etc.)
-func sendSpecial(m ui.Model, k rune) ui.Model {
-	m2, _ := m.Update(tea.KeyPressMsg{Code: k})
-	return m2.(ui.Model)
-}
-
-func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
-	m2, _ := m.Update(tea.KeyPressMsg{Code: k, Text: text})
-	return m2.(ui.Model)
-}
-
-func resize(m ui.Model, w, h int) ui.Model {
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: w, Height: h})
-	return m2.(ui.Model)
-}
-
-func bindTestAction(args bindTestActionArgs) {
-	args.km.Register(args.name, command.Command{
-		Run: func(e *view.Editor, _ *command.Args) command.Result {
-			return command.Result{Continuation: args.fn(e)}
-		},
-		Modes: []string{args.mode},
-		Keys:  []command.KeyBinding{args.seqs},
-	})
-}
-
-func bindNormalTestAction(
-	km *command.Keymaps, name string, fn command.KeyAction,
-	seqs ...[]command.KeyEvent,
-) {
-	bindTestAction(bindTestActionArgs{
-		km: km, mode: "NOR", name: name, fn: fn, seqs: seqs,
-	})
-}
-
 func TestRenderCrash(t *testing.T) {
 	e := view.NewEditor("/tmp")
 	km := command.NewKeymaps()
@@ -427,4 +372,59 @@ func writeConfigIgnore(t *testing.T, root, text string) {
 	err = os.WriteFile(filepath.Join(dir, "ignore"), []byte(text), 0o644)
 	assert.NoError(t, err)
 	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+// sendKey simulates a single typed character key press
+func sendKey(m ui.Model, ch rune) ui.Model {
+	m2, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+	return m2.(ui.Model)
+}
+
+func openPickerAndFeed(m ui.Model, ch rune) ui.Model {
+	m2, cmd := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+	m = m2.(ui.Model)
+	for cmd != nil {
+		msg := cmd()
+		if msg == nil {
+			break
+		}
+		m2, cmd = m.Update(msg)
+		m = m2.(ui.Model)
+	}
+	return m
+}
+
+// sendSpecial simulates a special key press (Enter, Backspace, etc.)
+func sendSpecial(m ui.Model, k rune) ui.Model {
+	m2, _ := m.Update(tea.KeyPressMsg{Code: k})
+	return m2.(ui.Model)
+}
+
+func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
+	m2, _ := m.Update(tea.KeyPressMsg{Code: k, Text: text})
+	return m2.(ui.Model)
+}
+
+func resize(m ui.Model, w, h int) ui.Model {
+	m2, _ := m.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	return m2.(ui.Model)
+}
+
+func bindTestAction(args bindTestActionArgs) {
+	args.km.Register(args.name, command.Command{
+		Run: func(e *view.Editor, _ *command.Args) command.Result {
+			return command.Result{Continuation: args.fn(e)}
+		},
+		Modes: []string{args.mode},
+		Keys:  []command.KeyBinding{args.seqs},
+	})
+}
+
+func bindNormalTestAction(
+	km *command.Keymaps, name string, fn command.KeyAction,
+	seqs ...[]command.KeyEvent,
+) {
+	bindTestAction(bindTestActionArgs{
+		km: km, mode: "NOR", name: name, fn: fn, seqs: seqs,
+	})
 }

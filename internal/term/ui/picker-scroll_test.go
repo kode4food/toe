@@ -18,45 +18,6 @@ import (
 // the selected item reveals the selection, independent of the scroll position
 type fixedPickerSource struct{ items []ui.PickerItem }
 
-func (fixedPickerSource) Title() string     { return "fixed" }
-func (fixedPickerSource) Columns() []string { return []string{"name"} }
-func (fixedPickerSource) Primary() int      { return 0 }
-
-func (fixedPickerSource) Accept(*view.Editor, ui.PickerItem) {}
-
-func (s fixedPickerSource) Load(
-	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	return s.items, nil, func() {}
-}
-
-func fixedPicker(t *testing.T, n, w, h int) ui.Model {
-	t.Helper()
-	items := make([]ui.PickerItem, n)
-	for i := range n {
-		body := fmt.Sprintf("CONTENT-%02d", i)
-		items[i] = ui.PickerItem{
-			Display: fmt.Sprintf("item%02d", i),
-			Columns: []string{fmt.Sprintf("item%02d", i)},
-			Preview: func(int, int) string { return body },
-		}
-	}
-	e := view.NewEditor(t.TempDir())
-	km := command.NewKeymaps()
-	m := ui.New(e, km)
-	src := fixedPickerSource{items: items}
-	bindNormalTestAction(
-		km, "fixed_picker",
-		m.PickerAction(func(*view.Editor) *ui.Picker {
-			return ui.NewPicker(e, src)
-		}),
-		[]command.KeyEvent{command.Char('p')},
-	)
-	m = resize(m, w, h)
-	m = sendKey(m, 'p')
-	return m
-}
-
 func TestPickerScroll(t *testing.T) {
 	// At 120×20: areaW=108, areaH=16, left=6, top=1, preview layout active.
 	// listBounds: x=7, y=4, w=53, h=12  →  valid x range [7,59], y range [4,15]
@@ -123,4 +84,43 @@ func TestPickerScroll(t *testing.T) {
 		assert.Contains(t, out, "CONTENT-05")
 		assert.NotContains(t, out, "CONTENT-00")
 	})
+}
+
+func (fixedPickerSource) Title() string     { return "fixed" }
+func (fixedPickerSource) Columns() []string { return []string{"name"} }
+func (fixedPickerSource) Primary() int      { return 0 }
+
+func (fixedPickerSource) Accept(*view.Editor, ui.PickerItem) {}
+
+func (s fixedPickerSource) Load(
+	*view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	return s.items, nil, func() {}
+}
+
+func fixedPicker(t *testing.T, n, w, h int) ui.Model {
+	t.Helper()
+	items := make([]ui.PickerItem, n)
+	for i := range n {
+		body := fmt.Sprintf("CONTENT-%02d", i)
+		items[i] = ui.PickerItem{
+			Display: fmt.Sprintf("item%02d", i),
+			Columns: []string{fmt.Sprintf("item%02d", i)},
+			Preview: func(int, int) string { return body },
+		}
+	}
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	src := fixedPickerSource{items: items}
+	bindNormalTestAction(
+		km, "fixed_picker",
+		m.PickerAction(func(*view.Editor) *ui.Picker {
+			return ui.NewPicker(e, src)
+		}),
+		[]command.KeyEvent{command.Char('p')},
+	)
+	m = resize(m, w, h)
+	m = sendKey(m, 'p')
+	return m
 }

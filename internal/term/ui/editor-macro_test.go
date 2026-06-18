@@ -24,7 +24,7 @@ func TestEditorMacro(t *testing.T) {
 		m = sendKey(m, 'z')
 		// replay register 'a' once
 		m = sendKey(m, 'v')
-		m = sendKey(m, 'a')
+		_ = sendKey(m, 'a')
 
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)

@@ -91,30 +91,25 @@ func (v *View) ensureCursorVisibleByLine(
 	if err != nil {
 		anchorLine = 0
 	}
-	nLines := doc.LenLines()
 
-	// Clamp scrolloff so there is always at least one line in the middle
-	so := min(scrolloff, max(height-1, 0)/2)
+	// Asymmetric scrolloff: the top loses one row so a gap always remains in
+	// the middle, while the bottom keeps the full margin. The bottom margin
+	// holds even at end-of-file, so the view scrolls past the last line rather
+	// than pinning it to the bottom edge
+	soTop := min(scrolloff, max(height-1, 0)/2)
+	soBottom := min(scrolloff, height/2)
 
-	topEdge := anchorLine + so
-	bottomEdge := anchorLine + height - 1 - so
-
-	if line < topEdge {
-		// When EOF is within the viewport and the cursor is visible, skip
-		if anchorLine+height >= nLines && anchorLine <= line {
-			return
-		}
-		newFirstLine := max(line-so, 0)
-		newAnchor, err := doc.LineToChar(newFirstLine)
-		if err == nil {
-			v.offset.Anchor = newAnchor
-		}
-	} else if line > bottomEdge {
-		newFirstLine := max(line-height+1+so, 0)
-		newAnchor, err := doc.LineToChar(newFirstLine)
-		if err == nil {
-			v.offset.Anchor = newAnchor
-		}
+	var newFirstLine int
+	switch {
+	case line < anchorLine+soTop:
+		newFirstLine = max(line-soTop, 0)
+	case line > anchorLine+height-1-soBottom:
+		newFirstLine = max(line-(height-1-soBottom), 0)
+	default:
+		return
+	}
+	if newAnchor, err := doc.LineToChar(newFirstLine); err == nil {
+		v.offset.Anchor = newAnchor
 	}
 }
 

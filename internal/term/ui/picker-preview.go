@@ -43,6 +43,10 @@ type (
 		w, h   int
 		hlFrom int
 		hlTo   int
+		// scroll offsets the viewport by logical lines past the match anchor;
+		// the renderer clamps it to the document and writes the applied value
+		// back so the caller can persist a bounded scroll position
+		scroll int
 	}
 
 	pickerPreviewKind int
@@ -93,11 +97,13 @@ func (p *previewCtx) renderDocInto(
 		p.picker.spanCache[id] = entry
 	}
 	format := doc.TextFormatForConfig(p.w, p.cfg)
-	renderPreviewDocInto(buf, x0, y0, &previewDocRender{
+	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
 		format: format, cfg: p.cfg, th: p.th, w: p.w, h: p.h,
-		hlFrom: p.hlFrom, hlTo: p.hlTo,
-	})
+		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
+	}
+	renderPreviewDocInto(buf, x0, y0, r)
+	p.picker.previewScroll = r.scroll
 }
 
 func (p *previewCtx) renderFileInto(
@@ -118,11 +124,13 @@ func (p *previewCtx) renderFileInto(
 		p.picker.fileCache[path] = entry
 	}
 	format := config.TextFormatForLanguageWithConfig(entry.lang, p.cfg, p.w)
-	renderPreviewDocInto(buf, x0, y0, &previewDocRender{
+	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
 		format: format, cfg: p.cfg, th: p.th, w: p.w, h: p.h,
-		hlFrom: p.hlFrom, hlTo: p.hlTo,
-	})
+		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
+	}
+	renderPreviewDocInto(buf, x0, y0, r)
+	p.picker.previewScroll = r.scroll
 }
 
 // ANSI codes in callback preview strings are stripped so the popup style applies
@@ -278,12 +286,23 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 	anchorLine, vOff := previewAnchor(
 		args.text, args.format, softWrap, args.hlFrom, args.hlTo, args.h,
 	)
+	nLines := args.text.LenLines()
+	// apply the wheel scroll past the anchor, then write the applied delta back
+	// so the stored scroll stays bounded. The upper bound pins the last line to
+	// the bottom of the pane rather than letting content scroll off the top.
+	// ponytail: clamp counts logical lines; a tall soft-wrapped final line can
+	// still leave a gap — switch to visual-row pinning only if that matters
+	if args.scroll != 0 {
+		base := anchorLine
+		anchorLine = max(0, min(base+args.scroll, max(0, nLines-args.h)))
+		args.scroll = anchorLine - base
+		vOff = 0 // moving off the anchor line starts at its first visual row
+	}
 	var hlBg tui.Color
 	if args.hlFrom >= 0 {
 		hlBg = lipglossToTUIStyle(args.th.Get("ui.highlight")).BgColor()
 	}
 
-	nLines := args.text.LenLines()
 	bufRow := 0
 	logLine := anchorLine
 	for bufRow < args.h && logLine < nLines {

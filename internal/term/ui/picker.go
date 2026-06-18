@@ -21,12 +21,20 @@ type (
 		matched []pickerMatch
 		query   string
 		cursor  int
-		// scroll is the first visible row of the list, decoupled from cursor so
-		// the wheel can scroll without changing the selection
-		scroll    int
-		height    int
-		preview   bool
-		spanCache map[view.DocumentId]previewSpanEntry
+		// listScroll is the first visible row of the list, decoupled from the
+		// cursor so the wheel can scroll without changing the selection
+		listScroll int
+		// previewScroll offsets the preview viewport by logical lines on top of
+		// the match anchor; the wheel adjusts it and the renderer clamps it.
+		// previewScrollFor is the cursor index it applies to, so it resets to 0
+		// whenever the selection changes
+		previewScroll    int
+		previewScrollFor int
+		// listHeight is the number of result rows visible in the list pane,
+		// computed during render and used for paging and scroll clamping
+		listHeight int
+		preview    bool
+		spanCache  map[view.DocumentId]previewSpanEntry
 		// fileCache caches the rope and syntax spans for file-path previews,
 		// avoiding re-tokenization across frames (geometry-independent, valid
 		// until the picker is closed)
@@ -214,7 +222,8 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	p.items = nil
 	p.matched = nil
 	p.cursor = 0
-	p.scroll = 0
+	p.listScroll = 0
+	p.previewScroll = 0
 	p.dynamicGen++
 	gen := p.dynamicGen
 	q := p.query

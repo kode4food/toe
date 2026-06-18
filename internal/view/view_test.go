@@ -282,6 +282,20 @@ func TestViewEnsureCursorVisibleScrolloff(t *testing.T) {
 		v.EnsureCursorVisible(doc, sel2, 10, 0, nil)
 		assert.LessOrEqual(t, v.Offset().Anchor, offset)
 	})
+
+	t.Run("keeps bottom margin past EOF", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		// lines 0..29; cursor on the last line, height 10, scrolloff 5
+		doc := core.NewRope(strings.Repeat("x\n", 30))
+		last, _ := doc.LineToChar(29)
+		sel, _ := core.NewSelection([]core.Range{core.PointRange(last)}, 0)
+		v.EnsureCursorVisible(doc, sel, 10, 5, nil)
+		// Helix anchors so the cursor sits at height-soBottom-1=4, leaving the
+		// full bottom margin of blank rows below EOF (anchor = 29-4 = line 25)
+		anchorLine, _ := doc.CharToLine(v.Offset().Anchor)
+		assert.Equal(t, 25, anchorLine)
+	})
 }
 
 func TestSelectionPerView(t *testing.T) {

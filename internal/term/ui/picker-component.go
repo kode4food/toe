@@ -10,17 +10,16 @@ import (
 
 type (
 	PickerComponent struct {
-		state      *Picker
-		bounds     bounds
-		listBounds bounds
+		state         *Picker
+		bounds        bounds
+		listBounds    bounds
+		previewBounds bounds
 	}
 
 	bounds struct{ x, y, w, h int }
 )
 
-const (
-	pickerMinPreviewArea = 72
-)
+const pickerMinPreviewArea = 72
 
 func newPickerComponent(p *Picker) *PickerComponent {
 	return &PickerComponent{state: p}
@@ -82,7 +81,7 @@ func (p *PickerComponent) HandleEvent(
 			return p.dismiss()
 		}
 		if p.listBounds.contains(msg.X, msg.Y) {
-			idx := p.state.scroll + (msg.Y - p.listBounds.y)
+			idx := p.state.listScroll + (msg.Y - p.listBounds.y)
 			if idx >= 0 && idx < len(p.state.matched) {
 				p.state.cursor = idx
 			}
@@ -90,12 +89,22 @@ func (p *PickerComponent) HandleEvent(
 		return consumed(), nil
 
 	case tea.MouseWheelMsg:
-		if p.listBounds.contains(msg.X, msg.Y) {
-			step := cx.Editor.Config().ScrollLines()
-			if msg.Button == tea.MouseWheelUp {
+		step := cx.Editor.Config().ScrollLines()
+		switch {
+		case p.listBounds.contains(msg.X, msg.Y):
+			switch msg.Button {
+			case tea.MouseWheelUp:
 				p.state.scrollBy(-step)
-			} else if msg.Button == tea.MouseWheelDown {
+			case tea.MouseWheelDown:
 				p.state.scrollBy(step)
+			}
+		case p.previewBounds.contains(msg.X, msg.Y):
+			// clamped by the renderer, which knows the document length
+			switch msg.Button {
+			case tea.MouseWheelUp:
+				p.state.previewScroll -= step
+			case tea.MouseWheelDown:
+				p.state.previewScroll += step
 			}
 		}
 		return consumed(), nil
@@ -135,7 +144,7 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 		listW = areaW/2 - 1
 	}
 	p.listBounds = bounds{
-		x: left + 1, y: top + 3 + headerH, w: listW, h: ps.height,
+		x: left + 1, y: top + 3 + headerH, w: listW, h: ps.listHeight,
 	}
 }
 
@@ -252,7 +261,7 @@ func (p *PickerComponent) drawPickerBox(
 	if len(cols) > 1 {
 		headerH = 1
 	}
-	ps.height = max(innerH-2-headerH, 1)
+	ps.listHeight = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
 		border:       lipgloss.RoundedBorder(),
@@ -270,8 +279,8 @@ func (p *PickerComponent) drawPickerBox(
 		itemY++
 	}
 	ps.clampScroll()
-	for i := range ps.height {
-		idx := ps.scroll + i
+	for i := range ps.listHeight {
+		idx := ps.listScroll + i
 		if idx >= len(ps.matched) {
 			break
 		}
@@ -298,7 +307,7 @@ func (p *PickerComponent) drawPickerPane(
 	if len(cols) > 1 {
 		headerH = 1
 	}
-	ps.height = max(innerH-2-headerH, 1)
+	ps.listHeight = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
 		border:       lipgloss.RoundedBorder(),
@@ -314,8 +323,8 @@ func (p *PickerComponent) drawPickerPane(
 		itemY++
 	}
 	ps.clampScroll()
-	for i := 0; ps.scroll+i < len(ps.matched) && i < ps.height; i++ {
-		idx := ps.scroll + i
+	for i := 0; ps.listScroll+i < len(ps.matched) && i < ps.listHeight; i++ {
+		idx := ps.listScroll + i
 		writePickerItem(buf, area.x, itemY+i, area.w, &pickerItemRender{
 			p: ps, match: ps.matched[idx], w: area.w,
 			selected: idx == ps.cursor, cx: cx,
@@ -327,6 +336,11 @@ func (p *PickerComponent) drawPreviewInto(
 	buf *tui.Buffer, x0, y0, w, h int, cx *Context,
 ) {
 	ps := p.state
+	p.previewBounds = bounds{x: x0, y: y0, w: w, h: h}
+	if ps.cursor != ps.previewScrollFor {
+		ps.previewScroll = 0
+		ps.previewScrollFor = ps.cursor
+	}
 	item := ps.selection()
 	if item == nil {
 		return

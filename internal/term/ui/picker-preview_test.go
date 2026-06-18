@@ -1,12 +1,14 @@
 package ui_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/command"
@@ -369,5 +371,53 @@ wrap-indicator = "↪ "
 		for line := range strings.SplitSeq(out, "\n") {
 			assert.LessOrEqual(t, len([]rune(line)), narrow)
 		}
+	})
+
+	t.Run("wheel scrolls the preview and pins the bottom", func(t *testing.T) {
+		tmp := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		var b strings.Builder
+		for i := range 80 {
+			_, _ = fmt.Fprintf(&b, "LINE-%02d\n", i)
+		}
+		path := filepath.Join(tmp, "big.txt")
+		assert.NoError(t, os.WriteFile(path, []byte(b.String()), 0o644))
+
+		// file picker over a fresh editor: the scratch buffer behind the
+		// overlay is empty, so only the preview pane shows the LINE-NN lines
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(ui.FilePickerInDir(tmp)),
+			[]command.KeyEvent{command.Char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+
+		// X=90 is in the preview pane (list is on the left half)
+		wheel := func(dir tea.MouseButton, n int) {
+			for range n {
+				m2, _ := m.Update(tea.MouseWheelMsg{X: 90, Y: 10, Button: dir})
+				m = m2.(ui.Model)
+			}
+		}
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "LINE-00")
+		assert.NotContains(t, out, "LINE-79")
+
+		// scroll down hard: the last line is pinned to the bottom of the pane,
+		// the top has scrolled away, and content has not run off the top
+		wheel(tea.MouseWheelDown, 40)
+		out = stripANSI(m.View().Content)
+		assert.NotContains(t, out, "LINE-00")
+		assert.Contains(t, out, "LINE-79")
+
+		// scrolling back the same amount restores the top (no runaway offset)
+		wheel(tea.MouseWheelUp, 40)
+		out = stripANSI(m.View().Content)
+		assert.Contains(t, out, "LINE-00")
+		assert.NotContains(t, out, "LINE-79")
 	})
 }

@@ -1,0 +1,94 @@
+package ui_test
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	tea "charm.land/bubbletea/v2"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/view"
+)
+
+func TestFileExplorer(t *testing.T) {
+	t.Run("lists dirs and files", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "alpha.txt"), []byte("x"), 0o644,
+		))
+		out := stripANSI(explorerModel(t, dir).View().Content)
+		assert.Contains(t, out, "alpha.txt")
+		assert.Contains(t, out, "sub/")
+		assert.Contains(t, out, "../")
+	})
+
+	t.Run("accepts a file and opens it", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "alpha.txt"), []byte("ALPHACONTENT"), 0o644,
+		))
+		m := explorerModel(t, dir)
+		for _, ch := range "alpha" {
+			m = sendKey(m, ch)
+		}
+		m = sendSpecial(m, tea.KeyEnter)
+		assert.Contains(t, stripANSI(m.View().Content), "ALPHACONTENT")
+	})
+
+	t.Run("dir preview lists contents", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "sub", "inner.txt"), []byte("y"), 0o644,
+		))
+		m := explorerModel(t, dir)
+		for _, ch := range "sub" {
+			m = sendKey(m, ch)
+		}
+		// "sub/" is now selected; its preview pane lists the directory contents
+		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+	})
+
+	t.Run("navigates into a directory", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "sub", "inner.txt"), []byte("y"), 0o644,
+		))
+		m := explorerModel(t, dir)
+		for _, ch := range "sub" {
+			m = sendKey(m, ch)
+		}
+		m = sendSpecial(m, tea.KeyEnter)
+		// the explorer is now rooted in sub, listing its file
+		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+	})
+}
+
+func TestFileExplorerInBufferDir(t *testing.T) {
+	t.Run("roots at the focused buffer's directory", func(t *testing.T) {
+		dir := t.TempDir()
+		sub := filepath.Join(dir, "nested")
+		assert.NoError(t, os.Mkdir(sub, 0o755))
+		path := filepath.Join(sub, "sibling.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("x"), 0o644))
+
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "explorer_buf",
+			m.PickerAction(ui.FileExplorerInBufferDir),
+			[]command.KeyEvent{command.Char('e')},
+		)
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'e')
+		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
+	})
+}

@@ -1,13 +1,10 @@
 package defaults
 
 import (
-	"strconv"
-
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 type searchSection struct {
@@ -113,44 +110,22 @@ func searchModule(model ui.Model) command.Module {
 			},
 		},
 		Options: []command.Option{
-			{
-				Key: "editor.search.smart-case",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().SearchSmartCase), nil
+			editorBoolOption("editor.search.smart-case",
+				func(e *view.Editor) bool {
+					return e.Options().SearchSmartCase
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().SearchSmartCase = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().SearchSmartCase
-					e.Options().SearchSmartCase = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.search.wrap-around",
+				func(e *view.Editor) bool {
+					return e.Options().SearchWrapAround
 				},
-			},
-			{
-				Key: "editor.search.wrap-around",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().SearchWrapAround), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().SearchWrapAround = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().SearchWrapAround
-					e.Options().SearchWrapAround = v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 		},
 		Section: &command.Section{
 			Config: cfg,

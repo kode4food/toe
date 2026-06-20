@@ -165,7 +165,7 @@ func GotoLine(e *view.Editor, n int) {
 	if n <= 0 {
 		return
 	}
-	pushJump(e)
+	SaveSelection(e)
 	extend := e.Mode() == view.ModeSelect
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		nLines := doc.LenLines()

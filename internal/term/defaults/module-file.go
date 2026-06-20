@@ -1,12 +1,9 @@
 package defaults
 
 import (
-	"strconv"
-
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 type fileSection struct {
@@ -327,71 +324,42 @@ func fileModule() command.Module {
 			},
 		},
 		Options: []command.Option{
-			{
-				Key: "editor.insert-final-newline",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().InsertFinalNewline), nil
+			editorBoolOption("editor.insert-final-newline",
+				func(e *view.Editor) bool {
+					return e.Options().InsertFinalNewline
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().InsertFinalNewline = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().InsertFinalNewline
-					e.Options().InsertFinalNewline = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.trim-final-newlines",
+				func(e *view.Editor) bool {
+					return e.Options().TrimFinalNewlines
 				},
-			},
-			{
-				Key: "editor.trim-final-newlines",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().TrimFinalNewlines), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().TrimFinalNewlines = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().TrimFinalNewlines
-					e.Options().TrimFinalNewlines = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.trim-trailing-whitespace",
+				func(e *view.Editor) bool {
+					return e.Options().TrimTrailingWS
 				},
-			},
-			{
-				Key: "editor.trim-trailing-whitespace",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().TrimTrailingWS), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().TrimTrailingWS = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().TrimTrailingWS
-					e.Options().TrimTrailingWS = v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 		},
 		Section: &command.Section{
 			Config: cfg,
 			Reset:  func() { *cfg = fileSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.InsertFinalNewline = boolOr(cfg.Editor.InsertFinalNewline, true)
-				opts.TrimFinalNewlines = boolOr(cfg.Editor.TrimFinalNewlines, false)
+				opts.InsertFinalNewline = boolOr(
+					cfg.Editor.InsertFinalNewline, true,
+				)
+				opts.TrimFinalNewlines = boolOr(
+					cfg.Editor.TrimFinalNewlines, false,
+				)
 				opts.TrimTrailingWS = boolOr(cfg.Editor.TrimTrailingWS, false)
 			},
 		},

@@ -542,31 +542,19 @@ func HalfPageDown(e *view.Editor) {
 	scrollView(e, max(max(e.ViewHeight(), 1)/2, 1), false)
 }
 
-// PageCursorUp moves the cursor and scrolls the view up by one full page
-func PageCursorUp(e *view.Editor) {
-	h := max(e.ViewHeight(), 1)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveVertically(
-			doc, core.DirectionBackward, h, core.MovementMove,
-		)
-	})
-	scrollView(e, h, true)
-}
-
-// PageCursorDown moves the cursor and scrolls the view down by one full page
-func PageCursorDown(e *view.Editor) {
-	h := max(e.ViewHeight(), 1)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveVertically(
-			doc, core.DirectionForward, h, core.MovementMove,
-		)
-	})
-	scrollView(e, h, false)
-}
-
 // SaveSelection pushes the current cursor position to the view's jump list
 func SaveSelection(e *view.Editor) {
-	pushJump(e)
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	v.PushJump(v.DocID(), sel.Primary().Cursor(text))
 }
 
 // CommitUndoCheckpoint explicitly commits any pending insert-mode changes to
@@ -575,34 +563,22 @@ func CommitUndoCheckpoint(e *view.Editor) {
 	e.CommitInsertHistory()
 }
 
-// JumpBackward moves to the previous position in the jump list
+// JumpBackward navigates to the previous position in the view's jump list
 func JumpBackward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	_, pos, ok := v.JumpBackward()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	newSel, err := core.NewSelection([]core.Range{core.PointRange(pos)}, 0)
-	if err != nil {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), newSel)
+	jumpTo(e, (*view.View).JumpBackward)
 }
 
-// JumpForward moves to the next position in the jump list
+// JumpForward navigates to the next position in the view's jump list
 func JumpForward(e *view.Editor) {
+	jumpTo(e, (*view.View).JumpForward)
+}
+
+func jumpTo(e *view.Editor, fn func(*view.View) (view.DocumentId, int, bool)) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
 	}
-	_, pos, ok := v.JumpForward()
+	_, pos, ok := fn(v)
 	if !ok {
 		return
 	}
@@ -631,7 +607,7 @@ func GotoLastModification(e *view.Editor) {
 	pos := doc.LastEditPos()
 	text := doc.Text()
 	extend := e.Mode() == view.ModeSelect
-	pushJump(e)
+	SaveSelection(e)
 	newSel, err := core.NewSelection(
 		[]core.Range{core.PointRange(pos).PutCursor(text, pos, extend)},
 		0,
@@ -842,21 +818,6 @@ func applyMove(e *view.Editor, fn func(core.Rope, core.Range) core.Range) {
 		return
 	}
 	doc.SetSelectionFor(v.ID(), newSel)
-}
-
-// pushJump records the current primary cursor position in the view's jump list
-func pushJump(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	v.PushJump(v.DocID(), sel.Primary().Cursor(text))
 }
 
 func firstCommentToken(lang *language.Language) (string, bool) {

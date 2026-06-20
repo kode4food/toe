@@ -84,93 +84,13 @@ func ShellPipeTo(e *view.Editor, cmdStr string) error {
 // ShellInsertOutput runs a shell command and inserts its output before each
 // cursor position
 func ShellInsertOutput(e *view.Editor, cmdStr string) error {
-	out, err := runShell(e, cmdStr, "")
-	if err != nil {
-		return err
-	}
-	v, ok := e.FocusedView()
-	if !ok {
-		return nil
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return nil
-	}
-	if doc.Readonly() {
-		return view.ErrReadonly
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	changes := make([]core.Change, 0, len(ranges))
-	seen := map[int]bool{}
-	for _, r := range ranges {
-		pos := r.From()
-		if seen[pos] {
-			continue
-		}
-		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, out))
-	}
-	if len(changes) == 0 {
-		return nil
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return err
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return err
-	}
-	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
-	return e.Apply(tx)
+	return shellOutputAt(e, cmdStr, core.Range.From)
 }
 
 // ShellAppendOutput runs a shell command and appends its output after each
 // selection
 func ShellAppendOutput(e *view.Editor, cmdStr string) error {
-	out, err := runShell(e, cmdStr, "")
-	if err != nil {
-		return err
-	}
-	v, ok := e.FocusedView()
-	if !ok {
-		return nil
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return nil
-	}
-	if doc.Readonly() {
-		return view.ErrReadonly
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	changes := make([]core.Change, 0, len(ranges))
-	seen := map[int]bool{}
-	for _, r := range ranges {
-		pos := r.To()
-		if seen[pos] {
-			continue
-		}
-		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, out))
-	}
-	if len(changes) == 0 {
-		return nil
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return err
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return err
-	}
-	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
-	return e.Apply(tx)
+	return shellOutputAt(e, cmdStr, core.Range.To)
 }
 
 // ShellKeepPipe pipes each selection through a shell command and keeps only
@@ -271,6 +191,52 @@ func ShellRunCommand(e *view.Editor, cmdStr string) (string, error) {
 		return "", err
 	}
 	return strings.TrimRight(out.String(), "\n"), nil
+}
+
+func shellOutputAt(
+	e *view.Editor, cmdStr string, pos func(core.Range) int,
+) error {
+	out, err := runShell(e, cmdStr, "")
+	if err != nil {
+		return err
+	}
+	v, ok := e.FocusedView()
+	if !ok {
+		return nil
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	if doc.Readonly() {
+		return view.ErrReadonly
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	changes := make([]core.Change, 0, len(ranges))
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		p := pos(r)
+		if seen[p] {
+			continue
+		}
+		seen[p] = true
+		changes = append(changes, core.TextChange(p, p, out))
+	}
+	if len(changes) == 0 {
+		return nil
+	}
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
+		return err
+	}
+	newSel, err := sel.Map(cs)
+	if err != nil {
+		return err
+	}
+	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
+	return e.Apply(tx)
 }
 
 func makeShellCmd(e *view.Editor, cmdStr string) *exec.Cmd {

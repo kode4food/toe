@@ -12,27 +12,11 @@ func (b *Buffer) RenderToANSI() string {
 	sb.Grow(b.Width*b.Height + max(b.Height-1, 0))
 	e := &ansiEmitter{w: &sb}
 	style := Style{}
-
 	for y := range b.Height {
 		if y > 0 {
 			sb.WriteByte('\n')
 		}
-		row := b.cells[y*b.Width : (y+1)*b.Width]
-		for x := range b.Width {
-			c := row[x]
-			if c.Skip {
-				continue
-			}
-			if c.Style != style {
-				e.emitStyle(c.Style)
-				style = c.Style
-			}
-			sym := c.Symbol
-			if sym == "" {
-				sym = " "
-			}
-			sb.WriteString(sym)
-		}
+		style = emitRow(e, b.cells[y*b.Width:(y+1)*b.Width], style)
 	}
 	return sb.String()
 }
@@ -47,23 +31,7 @@ func (b *Buffer) RenderRowsToANSI() []string {
 	for y := range b.Height {
 		var sb strings.Builder
 		e := &ansiEmitter{w: &sb}
-		style := Style{}
-		row := b.cells[y*b.Width : (y+1)*b.Width]
-		for x := range b.Width {
-			c := row[x]
-			if c.Skip {
-				continue
-			}
-			if c.Style != style {
-				e.emitStyle(c.Style)
-				style = c.Style
-			}
-			sym := c.Symbol
-			if sym == "" {
-				sym = " "
-			}
-			sb.WriteString(sym)
-		}
+		style := emitRow(e, b.cells[y*b.Width:(y+1)*b.Width], Style{})
 		if style != (Style{}) {
 			sb.WriteString("\x1b[m")
 		}
@@ -179,105 +147,77 @@ func (a *ansiEmitter) emitUnderline(uc Color, us UnderlineStyle) {
 	a.ulStyle = us
 }
 
-func emitFgColor(w *strings.Builder, c Color) {
-	switch c.kind {
-	case colorReset:
-		_, _ = w.WriteString("\x1b[39m")
-	case colorBlack:
-		_, _ = w.WriteString("\x1b[30m")
-	case colorRed:
-		_, _ = w.WriteString("\x1b[31m")
-	case colorGreen:
-		_, _ = w.WriteString("\x1b[32m")
-	case colorYellow:
-		_, _ = w.WriteString("\x1b[33m")
-	case colorBlue:
-		_, _ = w.WriteString("\x1b[34m")
-	case colorMagenta:
-		_, _ = w.WriteString("\x1b[35m")
-	case colorCyan:
-		_, _ = w.WriteString("\x1b[36m")
-	case colorGray:
-		_, _ = w.WriteString("\x1b[90m")
-	case colorLightRed:
-		_, _ = w.WriteString("\x1b[91m")
-	case colorLightGreen:
-		_, _ = w.WriteString("\x1b[92m")
-	case colorLightYellow:
-		_, _ = w.WriteString("\x1b[93m")
-	case colorLightBlue:
-		_, _ = w.WriteString("\x1b[94m")
-	case colorLightMagenta:
-		_, _ = w.WriteString("\x1b[95m")
-	case colorLightCyan:
-		_, _ = w.WriteString("\x1b[96m")
-	case colorLightGray:
-		_, _ = w.WriteString("\x1b[37m")
-	case colorWhite:
-		_, _ = w.WriteString("\x1b[97m")
-	case colorIndexed:
-		w.WriteString("\x1b[38;5;")
-		writeUint8(w, c.r)
-		w.WriteString("m")
-	case colorRGB:
-		w.WriteString("\x1b[38;2;")
-		writeUint8(w, c.r)
-		w.WriteByte(';')
-		writeUint8(w, c.g)
-		w.WriteByte(';')
-		writeUint8(w, c.b)
-		w.WriteByte('m')
+var (
+	fgNamedEsc = [colorWhite + 1]string{
+		colorReset:        "\x1b[39m",
+		colorBlack:        "\x1b[30m",
+		colorRed:          "\x1b[31m",
+		colorGreen:        "\x1b[32m",
+		colorYellow:       "\x1b[33m",
+		colorBlue:         "\x1b[34m",
+		colorMagenta:      "\x1b[35m",
+		colorCyan:         "\x1b[36m",
+		colorGray:         "\x1b[90m",
+		colorLightRed:     "\x1b[91m",
+		colorLightGreen:   "\x1b[92m",
+		colorLightYellow:  "\x1b[93m",
+		colorLightBlue:    "\x1b[94m",
+		colorLightMagenta: "\x1b[95m",
+		colorLightCyan:    "\x1b[96m",
+		colorLightGray:    "\x1b[37m",
+		colorWhite:        "\x1b[97m",
 	}
+	bgNamedEsc = [colorWhite + 1]string{
+		colorReset:        "\x1b[49m",
+		colorBlack:        "\x1b[40m",
+		colorRed:          "\x1b[41m",
+		colorGreen:        "\x1b[42m",
+		colorYellow:       "\x1b[43m",
+		colorBlue:         "\x1b[44m",
+		colorMagenta:      "\x1b[45m",
+		colorCyan:         "\x1b[46m",
+		colorGray:         "\x1b[100m",
+		colorLightRed:     "\x1b[101m",
+		colorLightGreen:   "\x1b[102m",
+		colorLightYellow:  "\x1b[103m",
+		colorLightBlue:    "\x1b[104m",
+		colorLightMagenta: "\x1b[105m",
+		colorLightCyan:    "\x1b[106m",
+		colorLightGray:    "\x1b[47m",
+		colorWhite:        "\x1b[107m",
+	}
+)
+
+func emitFgColor(w *strings.Builder, c Color) {
+	emitColorTo(w, c, &fgNamedEsc, "\x1b[38;5;", "\x1b[38;2;")
 }
 
 func emitBgColor(w *strings.Builder, c Color) {
+	emitColorTo(w, c, &bgNamedEsc, "\x1b[48;5;", "\x1b[48;2;")
+}
+
+func emitColorTo(
+	w *strings.Builder, c Color, named *[colorWhite + 1]string,
+	indexedPfx, rgbPfx string,
+) {
+	if c.kind <= colorWhite {
+		_, _ = w.WriteString(named[c.kind])
+		return
+	}
 	switch c.kind {
-	case colorReset:
-		_, _ = w.WriteString("\x1b[49m")
-	case colorBlack:
-		_, _ = w.WriteString("\x1b[40m")
-	case colorRed:
-		_, _ = w.WriteString("\x1b[41m")
-	case colorGreen:
-		_, _ = w.WriteString("\x1b[42m")
-	case colorYellow:
-		_, _ = w.WriteString("\x1b[43m")
-	case colorBlue:
-		_, _ = w.WriteString("\x1b[44m")
-	case colorMagenta:
-		_, _ = w.WriteString("\x1b[45m")
-	case colorCyan:
-		_, _ = w.WriteString("\x1b[46m")
-	case colorGray:
-		_, _ = w.WriteString("\x1b[100m")
-	case colorLightRed:
-		_, _ = w.WriteString("\x1b[101m")
-	case colorLightGreen:
-		_, _ = w.WriteString("\x1b[102m")
-	case colorLightYellow:
-		_, _ = w.WriteString("\x1b[103m")
-	case colorLightBlue:
-		_, _ = w.WriteString("\x1b[104m")
-	case colorLightMagenta:
-		_, _ = w.WriteString("\x1b[105m")
-	case colorLightCyan:
-		_, _ = w.WriteString("\x1b[106m")
-	case colorLightGray:
-		_, _ = w.WriteString("\x1b[47m")
-	case colorWhite:
-		_, _ = w.WriteString("\x1b[107m")
 	case colorIndexed:
-		w.WriteString("\x1b[48;5;")
+		w.WriteString(indexedPfx)
 		writeUint8(w, c.r)
 		w.WriteString("m")
 	case colorRGB:
-		w.WriteString("\x1b[48;2;")
+		w.WriteString(rgbPfx)
 		writeUint8(w, c.r)
 		w.WriteByte(';')
 		writeUint8(w, c.g)
 		w.WriteByte(';')
 		writeUint8(w, c.b)
 		w.WriteByte('m')
+	default:
 	}
 }
 
@@ -302,6 +242,24 @@ func emitUlColor(w *strings.Builder, c Color) {
 	default:
 		_, _ = w.WriteString("\x1b[59m")
 	}
+}
+
+func emitRow(e *ansiEmitter, row []Cell, style Style) Style {
+	for _, c := range row {
+		if c.Skip {
+			continue
+		}
+		if c.Style != style {
+			e.emitStyle(c.Style)
+			style = c.Style
+		}
+		sym := c.Symbol
+		if sym == "" {
+			sym = " "
+		}
+		e.w.WriteString(sym)
+	}
+	return style
 }
 
 func writeUint8(w *strings.Builder, n uint8) {

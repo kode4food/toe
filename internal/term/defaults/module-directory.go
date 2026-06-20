@@ -21,16 +21,7 @@ func directoryModule() command.Module {
 			actChangeDirectory: {
 				DocString: "Change the current working directory",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
-						return command.Result{
-							Message: "error: no directory given",
-						}
-					}
-					path, _ := args.First()
-					if err := e.Chdir(path); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: "directory: " + e.Cwd()}
+					return cdResult(e, args, e.Chdir)
 				},
 				Aliases:   []string{"change-current-directory", "cd"},
 				Signature: minArgs(1),
@@ -57,16 +48,7 @@ func directoryModule() command.Module {
 			actPushDirectory: {
 				DocString: "Save and then change the current directory",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
-						return command.Result{
-							Message: "error: no directory given",
-						}
-					}
-					path, _ := args.First()
-					if err := e.PushDirectory(path); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: "directory: " + e.Cwd()}
+					return cdResult(e, args, e.PushDirectory)
 				},
 				Aliases:   []string{"push-directory", "pushd"},
 				Signature: minArgs(1),
@@ -85,4 +67,17 @@ func directoryModule() command.Module {
 			},
 		},
 	}
+}
+
+func cdResult(
+	e *view.Editor, args *command.Args, fn func(string) error,
+) command.Result {
+	if args == nil || args.Empty() {
+		return command.Result{Message: "error: no directory given"}
+	}
+	path, _ := args.First()
+	if err := fn(path); err != nil {
+		return command.Result{Message: "error: " + err.Error()}
+	}
+	return command.Result{Message: "directory: " + e.Cwd()}
 }

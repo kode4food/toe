@@ -185,14 +185,14 @@ func TestPageOperations(t *testing.T) {
 		assert.NotPanics(t, func() { action.PageCursorHalfDown(e) })
 	})
 
-	t.Run("PageCursorUp does not panic", func(t *testing.T) {
+	t.Run("PageUp does not panic", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd")
-		assert.NotPanics(t, func() { action.PageCursorUp(e) })
+		assert.NotPanics(t, func() { action.PageUp(e) })
 	})
 
-	t.Run("PageCursorDown does not panic", func(t *testing.T) {
+	t.Run("PageDown does not panic", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd")
-		assert.NotPanics(t, func() { action.PageCursorDown(e) })
+		assert.NotPanics(t, func() { action.PageDown(e) })
 	})
 
 	t.Run("ScrollUpLines does not panic", func(t *testing.T) {

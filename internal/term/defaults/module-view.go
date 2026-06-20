@@ -123,11 +123,11 @@ func viewModule() command.Module {
 			},
 			actPageCursorUp: {
 				DocString: "Move page and cursor up",
-				Run:       Runner(action.PageCursorUp),
+				Run:       Runner(action.PageUp),
 			},
 			actPageCursorDown: {
 				DocString: "Move page and cursor down",
-				Run:       Runner(action.PageCursorDown),
+				Run:       Runner(action.PageDown),
 			},
 			actCenterCursorLine: {
 				DocString: "Align view center",
@@ -358,121 +358,58 @@ func viewModule() command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.cursorline",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().Cursorline), nil
+			editorBoolOption("editor.cursorline",
+				func(e *view.Editor) bool {
+					return e.Options().Cursorline
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().Cursorline = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().Cursorline
-					e.Options().Cursorline = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.cursorcolumn",
+				func(e *view.Editor) bool {
+					return e.Options().Cursorcolumn
 				},
-			},
-			{
-				Key: "editor.cursorcolumn",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().Cursorcolumn), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().Cursorcolumn = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().Cursorcolumn
-					e.Options().Cursorcolumn = v
-					return strconv.FormatBool(v), nil
+			),
+			editorNullableIntOption("editor.text-width",
+				language.DefaultTextWidth,
+				func(e *view.Editor) *int {
+					return e.Options().TextWidth
 				},
-			},
-			{
-				Key: "editor.text-width",
-				Get: func(e *view.Editor) (string, error) {
-					tw := language.DefaultTextWidth
-					if e.Options().TextWidth != nil {
-						tw = *e.Options().TextWidth
-					}
-					return strconv.Itoa(tw), nil
+				func(e *view.Editor, v *int) {
+					e.Options().TextWidth = v
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParsePositiveInt(s)
-					if err != nil {
-						return err
-					}
-					e.Options().TextWidth = &v
-					return nil
+			),
+			editorBoolOption("editor.soft-wrap.enable",
+				func(e *view.Editor) bool {
+					sw := e.Options().SoftWrap.Enable
+					return sw != nil && *sw
 				},
-			},
-			{
-				Key: "editor.soft-wrap.enable",
-				Get: func(e *view.Editor) (string, error) {
-					v := e.Options().SoftWrap.Enable != nil &&
-						*e.Options().SoftWrap.Enable
-					return strconv.FormatBool(v), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().SoftWrap.Enable = &v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					cur := e.Options().SoftWrap.Enable != nil &&
-						*e.Options().SoftWrap.Enable
-					v := !cur
-					e.Options().SoftWrap.Enable = &v
-					return strconv.FormatBool(v), nil
+			),
+			editorNullableIntOption("editor.soft-wrap.max-wrap",
+				language.DefaultMaxWrap,
+				func(e *view.Editor) *int {
+					return e.Options().SoftWrap.MaxWrap
 				},
-			},
-			{
-				Key: "editor.soft-wrap.max-wrap",
-				Get: func(e *view.Editor) (string, error) {
-					mw := language.DefaultMaxWrap
-					if e.Options().SoftWrap.MaxWrap != nil {
-						mw = *e.Options().SoftWrap.MaxWrap
-					}
-					return strconv.Itoa(mw), nil
+				func(e *view.Editor, v *int) {
+					e.Options().SoftWrap.MaxWrap = v
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParsePositiveInt(s)
-					if err != nil {
-						return err
-					}
-					e.Options().SoftWrap.MaxWrap = &v
-					return nil
+			),
+			editorNullableIntOption("editor.soft-wrap.max-indent-retain",
+				language.DefaultMaxIndentRetain,
+				func(e *view.Editor) *int {
+					return e.Options().SoftWrap.MaxIndentRetain
 				},
-			},
-			{
-				Key: "editor.soft-wrap.max-indent-retain",
-				Get: func(e *view.Editor) (string, error) {
-					mir := language.DefaultMaxIndentRetain
-					if e.Options().SoftWrap.MaxIndentRetain != nil {
-						mir = *e.Options().SoftWrap.MaxIndentRetain
-					}
-					return strconv.Itoa(mir), nil
+				func(e *view.Editor, v *int) {
+					e.Options().SoftWrap.MaxIndentRetain = v
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParsePositiveInt(s)
-					if err != nil {
-						return err
-					}
-					e.Options().SoftWrap.MaxIndentRetain = &v
-					return nil
-				},
-			},
+			),
 			{
 				Key: "editor.soft-wrap.wrap-indicator",
 				Get: func(e *view.Editor) (string, error) {
@@ -491,29 +428,15 @@ func viewModule() command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.soft-wrap.wrap-at-text-width",
-				Get: func(e *view.Editor) (string, error) {
-					v := e.Options().SoftWrap.WrapAtTextWidth != nil &&
-						*e.Options().SoftWrap.WrapAtTextWidth
-					return strconv.FormatBool(v), nil
+			editorBoolOption("editor.soft-wrap.wrap-at-text-width",
+				func(e *view.Editor) bool {
+					v := e.Options().SoftWrap.WrapAtTextWidth
+					return v != nil && *v
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().SoftWrap.WrapAtTextWidth = &v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					cur := e.Options().SoftWrap.WrapAtTextWidth != nil &&
-						*e.Options().SoftWrap.WrapAtTextWidth
-					v := !cur
-					e.Options().SoftWrap.WrapAtTextWidth = &v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 			{
 				Key: "editor.rulers",
 				Get: func(e *view.Editor) (string, error) {
@@ -566,29 +489,19 @@ func viewModule() command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.indent-guides.render",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().IndentGuides.Render), nil
+			editorBoolOption("editor.indent-guides.render",
+				func(e *view.Editor) bool {
+					return e.Options().IndentGuides.Render
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().IndentGuides.Render = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().IndentGuides.Render
-					e.Options().IndentGuides.Render = v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 			{
 				Key: "editor.indent-guides.skip-levels",
 				Get: func(e *view.Editor) (string, error) {
-					return strconv.Itoa(e.Options().IndentGuides.GetSkipLevels()), nil
+					n := e.Options().IndentGuides.GetSkipLevels()
+					return strconv.Itoa(n), nil
 				},
 				Set: func(e *view.Editor, s string) error {
 					v, err := config.ParseNonNegInt(s)
@@ -619,7 +532,8 @@ func viewModule() command.Module {
 			{
 				Key: "editor.gutters.line-numbers.min-width",
 				Get: func(e *view.Editor) (string, error) {
-					return strconv.Itoa(e.Options().Gutters.LineNumberMinWidth()), nil
+					n := e.Options().Gutters.LineNumberMinWidth()
+					return strconv.Itoa(n), nil
 				},
 				Set: func(e *view.Editor, s string) error {
 					v, err := config.ParsePositiveInt(s)

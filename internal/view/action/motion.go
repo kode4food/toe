@@ -476,7 +476,7 @@ func ExtendToNonWhitespace(e *view.Editor) {
 
 // MoveFileStart moves all cursors to the start of the document
 func MoveFileStart(e *view.Editor) {
-	pushJump(e)
+	SaveSelection(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.PutCursor(doc, 0, false)
 	})
@@ -657,7 +657,7 @@ func ExtendToLineEnd(e *view.Editor) {
 
 // ExtendToFileStart extends the selection to the beginning of the document
 func ExtendToFileStart(e *view.Editor) {
-	pushJump(e)
+	SaveSelection(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.PutCursor(doc, 0, true)
 	})
@@ -671,7 +671,7 @@ func ExtendToLastLine(e *view.Editor) {
 // GotoFileEnd moves all cursors to the absolute end of the document
 // (past all characters, including any trailing newline)
 func GotoFileEnd(e *view.Editor) {
-	pushJump(e)
+	SaveSelection(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.PutCursor(doc, doc.LenChars(), false)
 	})
@@ -679,7 +679,7 @@ func GotoFileEnd(e *view.Editor) {
 
 // ExtendToFileEnd extends all selections to the absolute end of the document
 func ExtendToFileEnd(e *view.Editor) {
-	pushJump(e)
+	SaveSelection(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.PutCursor(doc, doc.LenChars(), true)
 	})
@@ -739,7 +739,7 @@ func moveToNonWhitespace(e *view.Editor, extend bool) {
 }
 
 func moveFileEnd(e *view.Editor, extend bool) {
-	pushJump(e)
+	SaveSelection(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		nLines := doc.LenLines()
 		lineIdx := nLines - 1

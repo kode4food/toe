@@ -378,82 +378,38 @@ func configModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.mouse",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().Mouse), nil
+			editorBoolOption("editor.mouse",
+				func(e *view.Editor) bool {
+					return e.Options().Mouse
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().Mouse = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().Mouse
-					e.Options().Mouse = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.middle-click-paste",
+				func(e *view.Editor) bool {
+					return e.Options().MiddleClickPaste
 				},
-			},
-			{
-				Key: "editor.middle-click-paste",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().MiddleClickPaste), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().MiddleClickPaste = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().MiddleClickPaste
-					e.Options().MiddleClickPaste = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.insecure",
+				func(e *view.Editor) bool {
+					return e.Options().Insecure
 				},
-			},
-			{
-				Key: "editor.insecure",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().Insecure), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().Insecure = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().Insecure
-					e.Options().Insecure = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.editor-config",
+				func(e *view.Editor) bool {
+					return e.Options().EditorConfig
 				},
-			},
-			{
-				Key: "editor.editor-config",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().EditorConfig), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().EditorConfig = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().EditorConfig
-					e.Options().EditorConfig = v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 			{
 				Key: "editor.default-line-ending",
 				Get: func(e *view.Editor) (string, error) {
@@ -475,48 +431,21 @@ func configModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.cursor-shape.normal",
-				Get: func(e *view.Editor) (string, error) {
-					return string(e.Options().CursorShapeForMode("NOR")), nil
+			cursorShapeOption("editor.cursor-shape.normal", "NOR",
+				func(o *view.Options, v view.CursorKind) {
+					o.CursorShape.Normal = v
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := view.ParseCursorKind(s)
-					if err != nil {
-						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
-					}
-					e.Options().CursorShape.Normal = v
-					return nil
+			),
+			cursorShapeOption("editor.cursor-shape.select", "SEL",
+				func(o *view.Options, v view.CursorKind) {
+					o.CursorShape.Select = v
 				},
-			},
-			{
-				Key: "editor.cursor-shape.select",
-				Get: func(e *view.Editor) (string, error) {
-					return string(e.Options().CursorShapeForMode("SEL")), nil
+			),
+			cursorShapeOption("editor.cursor-shape.insert", "INS",
+				func(o *view.Options, v view.CursorKind) {
+					o.CursorShape.Insert = v
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := view.ParseCursorKind(s)
-					if err != nil {
-						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
-					}
-					e.Options().CursorShape.Select = v
-					return nil
-				},
-			},
-			{
-				Key: "editor.cursor-shape.insert",
-				Get: func(e *view.Editor) (string, error) {
-					return string(e.Options().CursorShapeForMode("INS")), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := view.ParseCursorKind(s)
-					if err != nil {
-						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
-					}
-					e.Options().CursorShape.Insert = v
-					return nil
-				},
-			},
+			),
 			{
 				Key: "editor.statusline.separator",
 				Get: func(e *view.Editor) (string, error) {
@@ -527,36 +456,21 @@ func configModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.statusline.mode.normal",
-				Get: func(e *view.Editor) (string, error) {
-					return e.Options().ModeNameForMode("normal"), nil
+			statuslineModeOption("editor.statusline.mode.normal", "normal",
+				func(o *view.Options, s string) {
+					o.StatusLine.Mode.Normal = s
 				},
-				Set: func(e *view.Editor, s string) error {
-					e.Options().StatusLine.Mode.Normal = s
-					return nil
+			),
+			statuslineModeOption("editor.statusline.mode.insert", "insert",
+				func(o *view.Options, s string) {
+					o.StatusLine.Mode.Insert = s
 				},
-			},
-			{
-				Key: "editor.statusline.mode.insert",
-				Get: func(e *view.Editor) (string, error) {
-					return e.Options().ModeNameForMode("insert"), nil
+			),
+			statuslineModeOption("editor.statusline.mode.select", "select",
+				func(o *view.Options, s string) {
+					o.StatusLine.Mode.Select = s
 				},
-				Set: func(e *view.Editor, s string) error {
-					e.Options().StatusLine.Mode.Insert = s
-					return nil
-				},
-			},
-			{
-				Key: "editor.statusline.mode.select",
-				Get: func(e *view.Editor) (string, error) {
-					return e.Options().ModeNameForMode("select"), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					e.Options().StatusLine.Mode.Select = s
-					return nil
-				},
-			},
+			),
 		},
 		Section: &command.Section{
 			Config: cfg,
@@ -574,6 +488,40 @@ func configModule(r *command.Registry) command.Module {
 				opts.CursorShape = cfg.Editor.CursorShape
 				opts.StatusLine = cfg.Editor.StatusLine
 			},
+		},
+	}
+}
+
+func cursorShapeOption(
+	key, mode string, set func(*view.Options, view.CursorKind),
+) command.Option {
+	return command.Option{
+		Key: key,
+		Get: func(e *view.Editor) (string, error) {
+			return string(e.Options().CursorShapeForMode(mode)), nil
+		},
+		Set: func(e *view.Editor, s string) error {
+			v, err := view.ParseCursorKind(s)
+			if err != nil {
+				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
+			}
+			set(e.Options(), v)
+			return nil
+		},
+	}
+}
+
+func statuslineModeOption(
+	key, mode string, set func(*view.Options, string),
+) command.Option {
+	return command.Option{
+		Key: key,
+		Get: func(e *view.Editor) (string, error) {
+			return e.Options().ModeNameForMode(mode), nil
+		},
+		Set: func(e *view.Editor, s string) error {
+			set(e.Options(), s)
+			return nil
 		},
 	}
 }

@@ -483,29 +483,28 @@ func (t Transaction) WithSelection(s Selection) Transaction {
 }
 
 func (c ChangeSet) retain(n int) ChangeSet {
-	if n == 0 {
-		return c
-	}
-	c.len += n
-	c.lenAfter += n
-	if len(c.ops) > 0 && c.ops[len(c.ops)-1].kind == OperationRetain {
-		c.ops[len(c.ops)-1].n += n
-		return c
-	}
-	c.ops = append(c.ops, Operation{kind: OperationRetain, n: n})
-	return c
+	return c.appendCountOp(n, OperationRetain, true)
 }
 
 func (c ChangeSet) delete(n int) ChangeSet {
+	return c.appendCountOp(n, OperationDelete, false)
+}
+
+func (c ChangeSet) appendCountOp(
+	n int, kind OperationKind, updateLenAfter bool,
+) ChangeSet {
 	if n == 0 {
 		return c
 	}
 	c.len += n
-	if len(c.ops) > 0 && c.ops[len(c.ops)-1].kind == OperationDelete {
+	if updateLenAfter {
+		c.lenAfter += n
+	}
+	if len(c.ops) > 0 && c.ops[len(c.ops)-1].kind == kind {
 		c.ops[len(c.ops)-1].n += n
 		return c
 	}
-	c.ops = append(c.ops, Operation{kind: OperationDelete, n: n})
+	c.ops = append(c.ops, Operation{kind: kind, n: n})
 	return c
 }
 

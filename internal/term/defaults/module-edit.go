@@ -298,82 +298,38 @@ func editModule() command.Module {
 					return strconv.FormatBool(v), nil
 				},
 			},
-			{
-				Key: "editor.continue-comments",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().ContinueComments), nil
+			editorBoolOption("editor.continue-comments",
+				func(e *view.Editor) bool {
+					return e.Options().ContinueComments
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().ContinueComments = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().ContinueComments
-					e.Options().ContinueComments = v
-					return strconv.FormatBool(v), nil
+			),
+			editorBoolOption("editor.auto-save",
+				func(e *view.Editor) bool {
+					return e.Options().AutoSaveFocusLost
 				},
-			},
-			{
-				Key: "editor.auto-save",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().AutoSaveFocusLost), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().AutoSaveFocusLost = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().AutoSaveFocusLost
+			),
+			editorBoolOption("editor.auto-save.focus-lost",
+				func(e *view.Editor) bool {
+					return e.Options().AutoSaveFocusLost
+				},
+				func(e *view.Editor, v bool) {
 					e.Options().AutoSaveFocusLost = v
-					return strconv.FormatBool(v), nil
 				},
-			},
-			{
-				Key: "editor.auto-save.focus-lost",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().AutoSaveFocusLost), nil
+			),
+			editorBoolOption("editor.auto-save.after-delay.enable",
+				func(e *view.Editor) bool {
+					return e.Options().AutoSaveAfterDelay
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
-					e.Options().AutoSaveFocusLost = v
-					return nil
-				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().AutoSaveFocusLost
-					e.Options().AutoSaveFocusLost = v
-					return strconv.FormatBool(v), nil
-				},
-			},
-			{
-				Key: "editor.auto-save.after-delay.enable",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().AutoSaveAfterDelay), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().AutoSaveAfterDelay = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().AutoSaveAfterDelay
-					e.Options().AutoSaveAfterDelay = v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 			{
 				Key: "editor.auto-save.after-delay.timeout",
 				Get: func(e *view.Editor) (string, error) {
@@ -388,25 +344,14 @@ func editModule() command.Module {
 					return nil
 				},
 			},
-			{
-				Key: "editor.atomic-save",
-				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().AtomicSave), nil
+			editorBoolOption("editor.atomic-save",
+				func(e *view.Editor) bool {
+					return e.Options().AtomicSave
 				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
+				func(e *view.Editor, v bool) {
 					e.Options().AtomicSave = v
-					return nil
 				},
-				Toggle: func(e *view.Editor) (string, error) {
-					v := !e.Options().AtomicSave
-					e.Options().AtomicSave = v
-					return strconv.FormatBool(v), nil
-				},
-			},
+			),
 		},
 		Section: &command.Section{
 			Config: cfg,
@@ -416,9 +361,13 @@ func editModule() command.Module {
 				ap, ok := cfg.Editor.AutoPairs.OrDefault()
 				opts.AutoPairMap = ap
 				opts.HasAutoPairs = ok
-				opts.ContinueComments = boolOr(cfg.Editor.ContinueComments, true)
+				opts.ContinueComments = boolOr(
+					cfg.Editor.ContinueComments, true,
+				)
 				opts.AtomicSave = boolOr(cfg.Editor.AtomicSave, true)
-				opts.AutoSaveFocusLost = boolOr(cfg.Editor.AutoSave.FocusLost, false)
+				opts.AutoSaveFocusLost = boolOr(
+					cfg.Editor.AutoSave.FocusLost, false,
+				)
 				opts.AutoSaveAfterDelay = boolOr(
 					cfg.Editor.AutoSave.AfterDelay.Enable, false,
 				)

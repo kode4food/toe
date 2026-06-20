@@ -22,17 +22,17 @@ func TestPromptCompletion(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		km.Register("command_mode", command.Command{
+		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{[][]command.KeyEvent{
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
 				{command.Char(':')},
-			}},
+			}}},
 		})
-		km.Register("alpha", testCommand("alpha"))
-		km.Register("beta", testCommand("beta"))
+		_ = km.Register("alpha", testCommand("alpha"))
+		_ = km.Register("beta", testCommand("beta"))
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')
@@ -59,16 +59,16 @@ func TestPromptCompletion(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		km.Register("command_mode", command.Command{
+		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{[][]command.KeyEvent{
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
 				{command.Char(':')},
-			}},
+			}}},
 		})
-		km.Register("alpha", testCommand("alpha"))
+		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')
@@ -83,16 +83,16 @@ func TestPromptCompletion(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		km.Register("command_mode", command.Command{
+		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{[][]command.KeyEvent{
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
 				{command.Char(':')},
-			}},
+			}}},
 		})
-		km.Register("alpha", testCommand("alpha"))
+		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')
@@ -112,16 +112,16 @@ func TestPromptCompletion(t *testing.T) {
 		e.SetConfig(cfg)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		km.Register("command_mode", command.Command{
+		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{[][]command.KeyEvent{
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
 				{command.Char(':')},
-			}},
+			}}},
 		})
-		km.Register("alpha", testCommand("alpha"))
+		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')
@@ -146,7 +146,7 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Contains(t, m.View().Content, "alpha")
 	})
 
-	t.Run("completes file arguments after command name", func(t *testing.T) {
+	t.Run("completes file args", func(t *testing.T) {
 		root := t.TempDir()
 		err := os.WriteFile(
 			filepath.Join(root, "main.go"), []byte("package main\n"), 0o644,
@@ -155,7 +155,8 @@ func TestPromptCompletion(t *testing.T) {
 		e := view.NewEditor(root)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		defaults.RegisterDefaults(m, km)
+		_, err = defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')

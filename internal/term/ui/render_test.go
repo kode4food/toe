@@ -14,7 +14,6 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -95,9 +94,7 @@ func TestCursorShapeRender(t *testing.T) {
 	t.Run("bar cursor uses steady terminal cursor", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		cfg := e.Config()
-		cfg.Editor.CursorShape.Insert = config.CursorKindBar
-		e.SetConfig(cfg)
+		e.Options().CursorShape.Insert = view.CursorKindBar
 		e.SetMode(view.ModeInsert)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
@@ -129,9 +126,7 @@ func TestStatuslineConfigRender(t *testing.T) {
 	t.Run("uses configured mode label", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		cfg := e.Config()
-		cfg.Editor.StatusLine.Mode.Normal = "NORMAL"
-		e.SetConfig(cfg)
+		e.Options().StatusLine.Mode.Normal = "NORMAL"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
 		out := m.View().Content
@@ -195,9 +190,9 @@ func TestThemeRender(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		cfg := e.Config()
-		cfg.Editor.Rulers = []int{10}
 		cfg.Theme.Name = "mocha"
 		e.SetConfig(cfg)
+		e.Options().Rulers = []int{10}
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
 
 		out := m.View().Content
@@ -213,7 +208,7 @@ func TestThemeRender(t *testing.T) {
 		}
 	})
 
-	t.Run("renders rulers without wide glyph overflow", func(t *testing.T) {
+	t.Run("renders rulers cleanly", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		path := filepath.Join(root, "note.txt")
@@ -222,9 +217,7 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		cfg := e.Config()
-		cfg.Editor.Rulers = []int{2}
-		e.SetConfig(cfg)
+		e.Options().Rulers = []int{2}
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
 
 		out := stripANSI(m.View().Content)
@@ -235,15 +228,15 @@ func TestThemeRender(t *testing.T) {
 	t.Run("keeps wide popup within width", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
-		km.Register("wide_popup_item", command.Command{
+		_ = km.Register("wide_popup_item", command.Command{
 			DocString: "Wide 項目",
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{}
 			},
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{[][]command.KeyEvent{{
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{{
 				command.Char(' '), command.Char('界'),
-			}}},
+			}}}},
 		})
 		m := resize(ui.New(e, km), 40, 10)
 
@@ -411,12 +404,12 @@ func resize(m ui.Model, w, h int) ui.Model {
 }
 
 func bindTestAction(args bindTestActionArgs) {
-	args.km.Register(args.name, command.Command{
+	_ = args.km.Register(args.name, command.Command{
 		Run: func(e *view.Editor, _ *command.Args) command.Result {
 			return command.Result{Continuation: args.fn(e)}
 		},
 		Modes: []string{args.mode},
-		Keys:  []command.KeyBinding{args.seqs},
+		Keys:  map[string][]command.KeyBinding{"*": {args.seqs}},
 	})
 }
 

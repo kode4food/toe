@@ -15,7 +15,6 @@ import (
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
@@ -77,7 +76,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		}
 	}
 
-	cfg := r.cx.Editor.Config()
+	opts := r.cx.Editor.Options()
 	mode := v.Mode().String()
 
 	th := r.activeTheme()
@@ -105,54 +104,54 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	totalLines := text.LenLines()
 	reg := r.cx.Editor.ActiveRegister()
 	cwd := r.cx.Editor.Cwd()
-	sep := cfg.StatusLineSeparator()
+	sep := opts.StatusLineSeparator()
 
 	baseTUI := lipglossToTUIStyle(st)
 
-	renderElem := func(e config.StatusLineElement) statusElem {
+	renderElem := func(e view.StatusLineElement) statusElem {
 		switch e {
-		case config.StatusLineMode:
+		case view.StatusLineMode:
 			return statusElem{
-				text:  " " + cfg.ModeNameForMode(mode) + " ",
+				text:  " " + opts.ModeNameForMode(mode) + " ",
 				style: lipglossToTUIStyle(modeSt),
 			}
-		case config.StatusLineSeparator:
+		case view.StatusLineSeparator:
 			return statusElem{
 				text:  sep,
 				style: lipglossToTUIStyle(sepSt),
 			}
-		case config.StatusLineSpacer, config.StatusLineSpinner:
+		case view.StatusLineSpacer, view.StatusLineSpinner:
 			return statusElem{}
-		case config.StatusLineFileName:
+		case view.StatusLineFileName:
 			return statusElem{
 				text:  " " + doc.RelativeName(cwd) + " ",
 				style: baseTUI,
 			}
-		case config.StatusLineFileBaseName:
+		case view.StatusLineFileBaseName:
 			return statusElem{
 				text:  " " + filepath.Base(doc.Path()) + " ",
 				style: baseTUI,
 			}
-		case config.StatusLineFileAbsolutePath:
+		case view.StatusLineFileAbsolutePath:
 			return statusElem{
 				text:  " " + doc.Path() + " ",
 				style: baseTUI,
 			}
-		case config.StatusLineReadOnly:
+		case view.StatusLineReadOnly:
 			if doc.Readonly() {
 				return statusElem{
 					text: " [readonly]", style: baseTUI,
 				}
 			}
 			return statusElem{}
-		case config.StatusLineModified:
+		case view.StatusLineModified:
 			if doc.Modified() {
 				return statusElem{
 					text: "[modified] ", style: baseTUI,
 				}
 			}
 			return statusElem{}
-		case config.StatusLineSelections:
+		case view.StatusLineSelections:
 			if nSel == 1 {
 				return statusElem{text: " 1 sel ", style: baseTUI}
 			}
@@ -162,17 +161,17 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 				),
 				style: baseTUI,
 			}
-		case config.StatusLinePrimaryLen:
+		case view.StatusLinePrimaryLen:
 			return statusElem{
 				text:  fmt.Sprintf(" %d ", primLen),
 				style: baseTUI,
 			}
-		case config.StatusLinePosition:
+		case view.StatusLinePosition:
 			return statusElem{
 				text:  fmt.Sprintf(" %d:%d ", row, col),
 				style: baseTUI,
 			}
-		case config.StatusLinePercent:
+		case view.StatusLinePercent:
 			pct := 0
 			if totalLines > 0 {
 				pct = (row * 100) / totalLines
@@ -181,14 +180,14 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 				text:  fmt.Sprintf(" %d%% ", pct),
 				style: baseTUI,
 			}
-		case config.StatusLineTotalLines:
+		case view.StatusLineTotalLines:
 			return statusElem{
 				text:  fmt.Sprintf(" %d ", totalLines),
 				style: baseTUI,
 			}
-		case config.StatusLineFileEncoding:
+		case view.StatusLineFileEncoding:
 			return statusElem{} // UTF-8 omitted per reference
-		case config.StatusLineFileLineEnding:
+		case view.StatusLineFileLineEnding:
 			le := doc.LineEnding()
 			label := "lf"
 			if le == core.LineEndingCRLF {
@@ -197,7 +196,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 			return statusElem{
 				text: " " + label + " ", style: baseTUI,
 			}
-		case config.StatusLineFileIndentStyle:
+		case view.StatusLineFileIndentStyle:
 			indent := doc.IndentStyle()
 			var label string
 			if indent.IsTabs() {
@@ -208,13 +207,13 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 			return statusElem{
 				text: " " + label + " ", style: baseTUI,
 			}
-		case config.StatusLineFileType:
+		case view.StatusLineFileType:
 			lang := doc.Lang()
 			if lang == "" {
 				lang = "text"
 			}
 			return statusElem{text: " " + lang + " ", style: baseTUI}
-		case config.StatusLineRegister:
+		case view.StatusLineRegister:
 			if reg != 0 {
 				return statusElem{
 					text:  fmt.Sprintf(" reg=%c ", reg),
@@ -222,9 +221,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 				}
 			}
 			return statusElem{}
-		case config.StatusLineDiagnostics,
-			config.StatusLineWorkspaceDiag,
-			config.StatusLineVersionControl:
+		case view.StatusLineDiagnostics,
+			view.StatusLineWorkspaceDiag,
+			view.StatusLineVersionControl:
 			return statusElem{}
 		default:
 			return statusElem{}
@@ -232,7 +231,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	}
 
 	collectElems := func(
-		elems []config.StatusLineElement,
+		elems []view.StatusLineElement,
 	) []statusElem {
 		out := make([]statusElem, 0, len(elems))
 		for _, e := range elems {
@@ -243,9 +242,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		return out
 	}
 
-	left := collectElems(cfg.StatusLineLeft())
-	center := collectElems(cfg.StatusLineCenter())
-	right := collectElems(cfg.StatusLineRight())
+	left := collectElems(opts.StatusLineLeft())
+	center := collectElems(opts.StatusLineCenter())
+	right := collectElems(opts.StatusLineRight())
 
 	elemsWidth := func(elems []statusElem) int {
 		w := 0
@@ -429,11 +428,11 @@ func (r *renderPass) cmdlineStyle(errorMsg bool) lipgloss.Style {
 	return th.Get("ui.statusline")
 }
 
-func cursorKindToShape(kind config.CursorKind) tea.CursorShape {
+func cursorKindToShape(kind view.CursorKind) tea.CursorShape {
 	switch kind {
-	case config.CursorKindBar:
+	case view.CursorKindBar:
 		return tea.CursorBar
-	case config.CursorKindUnderline:
+	case view.CursorKindUnderline:
 		return tea.CursorUnderline
 	default:
 		return tea.CursorBlock

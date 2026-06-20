@@ -1195,7 +1195,7 @@ func gotoWindowImpl(e *view.Editor, align int) {
 	if height <= 0 {
 		height = 1
 	}
-	scrolloff := e.Config().Scrolloff()
+	scrolloff := e.Options().ScrollOff
 	offset := max(e.Count()-1, 0)
 	e.ResetCount()
 	lastLine := min(anchorLine+height-1, text.LenLines()-1)
@@ -1411,7 +1411,7 @@ func pasteImpl(e *view.Editor, before bool) {
 func SearchForward(e *view.Editor, pattern string) error {
 	return searchImpl(searchArgs{
 		editor: e, pattern: pattern,
-		forward: true, wrap: e.Config().SearchWrapAround(),
+		forward: true, wrap: e.Options().SearchWrapAround,
 	})
 }
 
@@ -1420,7 +1420,7 @@ func SearchForward(e *view.Editor, pattern string) error {
 func SearchBackward(e *view.Editor, pattern string) error {
 	return searchImpl(searchArgs{
 		editor: e, pattern: pattern,
-		wrap: e.Config().SearchWrapAround(),
+		wrap: e.Options().SearchWrapAround,
 	})
 }
 
@@ -1432,7 +1432,7 @@ func SearchNext(e *view.Editor) {
 	}
 	_ = searchImpl(searchArgs{
 		editor: e, pattern: pat, count: countOrOne(e), forward: true,
-		wrap: e.Config().SearchWrapAround(),
+		wrap: e.Options().SearchWrapAround,
 	})
 }
 
@@ -1444,7 +1444,7 @@ func SearchPrev(e *view.Editor) {
 	}
 	_ = searchImpl(searchArgs{
 		editor: e, pattern: pat, count: countOrOne(e),
-		wrap: e.Config().SearchWrapAround(),
+		wrap: e.Options().SearchWrapAround,
 	})
 }
 
@@ -1456,7 +1456,7 @@ func ExtendSearchNext(e *view.Editor) {
 	}
 	_ = searchImpl(searchArgs{
 		editor: e, pattern: pat, count: countOrOne(e), forward: true,
-		wrap: e.Config().SearchWrapAround(), extend: true,
+		wrap: e.Options().SearchWrapAround, extend: true,
 	})
 }
 
@@ -1468,7 +1468,7 @@ func ExtendSearchPrev(e *view.Editor) {
 	}
 	_ = searchImpl(searchArgs{
 		editor: e, pattern: pat, count: countOrOne(e),
-		wrap: e.Config().SearchWrapAround(), extend: true,
+		wrap: e.Options().SearchWrapAround, extend: true,
 	})
 }
 
@@ -1487,7 +1487,7 @@ func searchImpl(args searchArgs) error {
 	forward := args.forward
 	wrap := args.wrap
 	extend := args.extend
-	re, err := compileSearchRegexp(pattern, e.Config().SearchSmartCase())
+	re, err := compileSearchRegexp(pattern, e.Options().SearchSmartCase)
 	if err != nil {
 		return err
 	}

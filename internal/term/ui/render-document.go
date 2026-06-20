@@ -17,7 +17,7 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	act "github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -26,9 +26,9 @@ type (
 		lgStyles            *lipglossStyles
 		tuiStyles           *tuiStyles
 		hlStyle             func(string) tui.Style
-		format              *config.TextFormat
-		ws                  config.WhitespaceConfig
-		ig                  config.IndentGuidesConfig
+		format              *language.TextFormat
+		ws                  view.Whitespace
+		ig                  view.IndentGuides
 		hlSpans             []highlight.Span
 		searchMatches       []matchSpan
 		selSpans            []selectionSpan
@@ -85,16 +85,23 @@ const (
 	documentGlyphGuide
 )
 
-// asciiTable holds bytes 0x00..0x7f in order; asciiTable[ch:ch+1] yields a
-// single-byte string sharing this backing array, so ASCII grapheme rendering
-// produces cell symbols without allocation
-var asciiTable = func() string {
-	var b [128]byte
-	for i := range b {
-		b[i] = byte(i)
-	}
-	return string(b[:])
-}()
+const asciiTable = "" +
+	"\x00\x01\x02\x03\x04\x05\x06\x07" +
+	"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" +
+	"\x10\x11\x12\x13\x14\x15\x16\x17" +
+	"\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" +
+	" !\"#$%&'" +
+	"()*+,-./" +
+	"01234567" +
+	"89:;<=>?" +
+	"@ABCDEFG" +
+	"HIJKLMNO" +
+	"PQRSTUVW" +
+	"XYZ[\\]^_" +
+	"`abcdefg" +
+	"hijklmno" +
+	"pqrstuvw" +
+	"xyz{|}~\x7f"
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 	th := r.activeTheme()
@@ -139,25 +146,26 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 	if !ok {
 		return tea.Cursor{}, false
 	}
-	kind := r.cx.Editor.Config().CursorShapeForMode(r.cx.Editor.Mode().String())
+	opts := r.cx.Editor.Options()
+	kind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	switch kind {
-	case config.CursorKindHidden:
+	case view.CursorKindHidden:
 		return tea.Cursor{}, false
-	case config.CursorKindBlock:
+	case view.CursorKindBlock:
 		if r.ec.focused {
 			// block cursor drawn manually in content; terminal cursor hidden
 			return tea.Cursor{}, false
 		}
 		// terminal lost focus: use underline so position is still visible
-		kind = config.CursorKindUnderline
+		kind = view.CursorKindUnderline
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	cursor := sel.Primary().Cursor(text)
-	g0 := r.cx.Editor.Config().Gutters()
+	g0 := opts.Gutters
 	gutterW := max(lineNumberDigits(text), g0.LineNumberMinWidth()) + 1
 	area := v.Area()
-	if !g0.HasGutterType(config.GutterTypeLineNumbers) {
+	if !g0.HasGutterType(view.GutterTypeLineNumbers) {
 		gutterW = 0
 	}
 	xOff := area.X
@@ -200,9 +208,9 @@ func (r *renderPass) screenCharPos(
 	entry := rowMap[localY]
 
 	text := doc.Text()
-	g2 := r.cx.Editor.Config().Gutters()
+	g2 := r.cx.Editor.Options().Gutters
 	gutterW := 0
-	if g2.HasGutterType(config.GutterTypeLineNumbers) {
+	if g2.HasGutterType(view.GutterTypeLineNumbers) {
 		gutterW = max(lineNumberDigits(text), g2.LineNumberMinWidth()) + 1
 	}
 	// Add the horizontal scroll offset: screen column 0 of the content maps to
@@ -360,8 +368,8 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	doc := args.doc
 	v := args.view
 	a := v.Area()
-	cfg := r.cx.Editor.Config()
-	scrolloff := cfg.Scrolloff()
+	opts := r.cx.Editor.Options()
+	scrolloff := opts.ScrollOff
 	contentH := max(a.Height-1, 0)
 	editorX := a.X
 	editorW := a.Width
@@ -369,8 +377,8 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	// Build the soft-wrap layout so vertical visibility is measured in visual
 	// rows; nil keeps the text-line fallback when soft-wrap is off
 	text := doc.Text()
-	gutterW := gutterWidthFor(text, cfg.Gutters())
-	format := doc.TextFormatForConfig(editorW-gutterW, cfg)
+	gutterW := gutterWidthFor(text, opts.Gutters)
+	format := doc.TextFormatForConfig(editorW-gutterW, r.cx.Editor.Options())
 	var vf *core.VisualMoveFormat
 	if format.SoftWrap && gutterW < editorW {
 		vf = &core.VisualMoveFormat{
@@ -548,9 +556,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	vOff := max(v.Offset().VerticalOffset, 0)
 
 	nLines := text.LenLines()
-	g3 := r.cx.Editor.Config().Gutters()
+	g3 := r.cx.Editor.Options().Gutters
 	gutterMinDigits := g3.LineNumberMinWidth()
-	showLineNumbers := g3.HasGutterType(config.GutterTypeLineNumbers)
+	showLineNumbers := g3.HasGutterType(view.GutterTypeLineNumbers)
 	gutterW := 0
 	if showLineNumbers {
 		gutterW = max(lineNumberDigits(text), gutterMinDigits) + 1
@@ -646,18 +654,17 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		hlTUICache[scope] = st
 		return st
 	}
-	cursorKind := r.cx.Editor.Config().CursorShapeForMode(
-		r.cx.Editor.Mode().String(),
-	)
-	cursorIsBlock := cursorKind == config.CursorKindBlock && r.ec.focused &&
+	opts := r.cx.Editor.Options()
+	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
+	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
 		viewFocused
-	cursorlineEnabled := r.cx.Editor.Config().Cursorline()
-	ws := r.cx.Editor.Config().Whitespace()
-	ig := r.cx.Editor.Config().IndentGuides()
-	rulers := r.cx.Editor.Config().Rulers()
+	cursorlineEnabled := opts.Cursorline
+	ws := opts.Whitespace
+	ig := opts.IndentGuides
+	rulers := opts.Rulers
 
 	format := doc.TextFormatForConfig(
-		width-gutterW, r.cx.Editor.Config(),
+		width-gutterW, r.cx.Editor.Options(),
 	)
 	softWrap := format.SoftWrap && gutterW < width
 	contentW := width - gutterW
@@ -671,7 +678,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		hWidth = contentW
 	}
 	v.EnsureCursorVisibleHorizontal(
-		text, sel, hWidth, format.TabWidth, r.cx.Editor.Config().Scrolloff(),
+		text, sel, hWidth, format.TabWidth, opts.ScrollOff,
 	)
 	hOff := v.Offset().HorizontalOffset
 
@@ -732,8 +739,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			!isPrimaryCursorLine && isAnyCursorLine
 
 		if showLineNumbers {
-			relative := r.cx.Editor.Config().LineNumber() ==
-				config.LineNumberRelative
+			relative := opts.LineNumber == view.LineNumberRelative
 			insertMode := r.cx.Editor.Mode() == view.ModeInsert
 			var num int
 			var gutterTUI tui.Style
@@ -780,7 +786,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		tabW := format.TabWidth
 
 		var primaryCursorCols, secondaryCursorCols map[int]bool
-		if r.cx.Editor.Config().Cursorcolumn() {
+		if opts.Cursorcolumn {
 			for _, sp := range selSpans {
 				if sp.cur < lineStart || sp.cur > lineContentEnd {
 					continue
@@ -1038,7 +1044,7 @@ func (r *rowRender) rows() []renderedRow {
 		pos++
 	}
 
-	if wsRender.NewlineRender() == config.WhitespaceRenderAll &&
+	if wsRender.NewlineRender() == view.WhitespaceRenderAll &&
 		r.cursor != r.lineEnd {
 		writeRendered(string(wsChars.NewlineRune()), 1,
 			r.tuiStyles.whitespace)
@@ -1085,7 +1091,7 @@ func (r *rowRender) renderGrapheme(
 				strings.Repeat(string(wsChars.TabpadRune()), width-1)
 			return rendered, width, documentGlyphGuide
 		}
-		if wsRender.TabRender() == config.WhitespaceRenderAll {
+		if wsRender.TabRender() == view.WhitespaceRenderAll {
 			tabpad := strings.Repeat(string(wsChars.TabpadRune()), width-1)
 			return string(wsChars.TabRune()) + tabpad,
 				width, documentGlyphWhitespace
@@ -1095,17 +1101,17 @@ func (r *rowRender) renderGrapheme(
 		if guide {
 			return string(r.ig.CharRune()), 1, documentGlyphGuide
 		}
-		if wsRender.SpaceRender() == config.WhitespaceRenderAll {
+		if wsRender.SpaceRender() == view.WhitespaceRenderAll {
 			return string(wsChars.SpaceRune()), 1, documentGlyphWhitespace
 		}
 		return " ", 1, documentGlyphNone
 	case ' ':
-		if wsRender.NbspRender() == config.WhitespaceRenderAll {
+		if wsRender.NbspRender() == view.WhitespaceRenderAll {
 			return string(wsChars.NbspRune()), 1, documentGlyphWhitespace
 		}
 		return string(ch), 1, documentGlyphNone
 	case ' ':
-		if wsRender.NnbspRender() == config.WhitespaceRenderAll {
+		if wsRender.NnbspRender() == view.WhitespaceRenderAll {
 			return string(wsChars.NnbspRune()), 1, documentGlyphWhitespace
 		}
 		return string(ch), 1, documentGlyphNone
@@ -1176,7 +1182,7 @@ func lineString(text core.Rope, from, to int) string {
 }
 
 func softWrapContinuationRow(
-	format *config.TextFormat, indent int, lipglossStyles *lipglossStyles,
+	format *language.TextFormat, indent int, lipglossStyles *lipglossStyles,
 ) renderedRow {
 	prefix := softWrapPrefix(format, indent)
 	indentW := max(ansi.StringWidth(prefix)-
@@ -1334,8 +1340,8 @@ func lineNumberDigits(text core.Rope) int {
 
 // gutterWidthFor returns the gutter width for the given line-number config, or
 // 0 when line numbers are not shown
-func gutterWidthFor(text core.Rope, g config.GutterConfig) int {
-	if !g.HasGutterType(config.GutterTypeLineNumbers) {
+func gutterWidthFor(text core.Rope, g view.Gutter) int {
+	if !g.HasGutterType(view.GutterTypeLineNumbers) {
 		return 0
 	}
 	return max(lineNumberDigits(text), g.LineNumberMinWidth()) + 1

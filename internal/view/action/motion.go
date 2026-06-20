@@ -782,8 +782,7 @@ func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
 	if !ok {
 		return nil
 	}
-	cfg := e.Config()
-	format := doc.TextFormatForConfig(w, cfg)
+	format := doc.TextFormatForConfig(w, e.Options())
 	if !format.SoftWrap {
 		return nil
 	}

@@ -36,7 +36,7 @@ func (m Model) View() tea.View {
 	}
 	v := tea.NewView(m.compositor.Render(m.context))
 	v.AltScreen = true
-	if m.context.Editor.Config().Mouse() {
+	if m.context.Editor.Options().Mouse {
 		v.MouseMode = tea.MouseModeCellMotion
 	}
 	v.ReportFocus = true

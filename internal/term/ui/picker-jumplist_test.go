@@ -6,11 +6,14 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/stretchr/testify/assert"
 )
+
+const jumplistAnchor = 6
 
 func TestJumplistPicker(t *testing.T) {
 	t.Run("lists jumps with line contents", func(t *testing.T) {
@@ -43,8 +46,7 @@ func jumplistModel(t *testing.T) (ui.Model, *view.Editor, int) {
 	e := view.NewEditor(dir)
 	v, err := e.OpenFile(path)
 	assert.NoError(t, err)
-	const anchor = 6 // start of "TARGET"
-	v.PushJump(v.DocID(), anchor)
+	v.PushJump(v.DocID(), jumplistAnchor)
 
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
@@ -53,5 +55,5 @@ func jumplistModel(t *testing.T) (ui.Model, *view.Editor, int) {
 		[]command.KeyEvent{command.Char('j')},
 	)
 	m = resize(m, 120, 30)
-	return sendKey(m, 'j'), e, anchor
+	return sendKey(m, 'j'), e, jumplistAnchor
 }

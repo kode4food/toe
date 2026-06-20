@@ -4,13 +4,41 @@ package command
 import "github.com/kode4food/toe/internal/view"
 
 type (
+	// Module groups a set of commands, runtime options, and an optional
+	// config section. Options are registered into the editor option registry
+	// when the module is installed
+	Module struct {
+		Commands map[string]Command
+		Options  []Option
+		Section  *Section
+	}
+
+	// Option describes a runtime editor option owned by a module. Toggle is
+	// nil for options that are not boolean-toggleable
+	Option struct {
+		Key    string
+		Get    func(*view.Editor) (string, error)
+		Set    func(*view.Editor, string) error
+		Toggle func(*view.Editor) (string, error)
+	}
+
+	// Section declares a module's live config pointer and Apply hook.
+	// Config must be a non-nil pointer to a struct with toml tags matching the
+	// full config file shape. Reset restores Config to its default values before
+	// each config reload. Apply copies decoded values into Editor.Options.
+	Section struct {
+		Config any // *ConcreteConfig, pre-filled with defaults
+		Reset  func()
+		Apply  func(*view.Editor)
+	}
+
 	// Command describes one registered command: its runner, key bindings,
 	// mode applicability, typeable aliases, and argument signature
 	Command struct {
 		Run       Run
 		DocString string
 		Modes     []string
-		Keys      []KeyBinding
+		Keys      map[string][]KeyBinding
 		Aliases   []string
 		Signature Signature
 	}

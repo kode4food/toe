@@ -8,7 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 func TestInsertChar(t *testing.T) {
@@ -40,12 +40,7 @@ func TestInsertNewlineAutoPair(t *testing.T) {
 func TestAutoPairConfig(t *testing.T) {
 	t.Run("global false disables insert hook", func(t *testing.T) {
 		e := editorWithText(t, "")
-		cfg := e.Config()
-		cfg.Editor.AutoPairs = config.AutoPairConfig{
-			Present: true,
-			Enable:  new(false),
-		}
-		e.SetConfig(cfg)
+		e.Options().HasAutoPairs = false
 
 		action.InsertChar(e, '(')
 
@@ -56,12 +51,7 @@ func TestAutoPairConfig(t *testing.T) {
 
 	t.Run("global false disables newline pair hook", func(t *testing.T) {
 		e := editorWithText(t, "()")
-		cfg := e.Config()
-		cfg.Editor.AutoPairs = config.AutoPairConfig{
-			Present: true,
-			Enable:  new(false),
-		}
-		e.SetConfig(cfg)
+		e.Options().HasAutoPairs = false
 		setCursor(t, e, 1)
 
 		action.InsertNewline(e)
@@ -73,12 +63,7 @@ func TestAutoPairConfig(t *testing.T) {
 
 	t.Run("global false disables delete hook", func(t *testing.T) {
 		e := editorWithText(t, "()")
-		cfg := e.Config()
-		cfg.Editor.AutoPairs = config.AutoPairConfig{
-			Present: true,
-			Enable:  new(false),
-		}
-		e.SetConfig(cfg)
+		e.Options().HasAutoPairs = false
 		setCursor(t, e, 1)
 
 		action.DeleteCharBackward(e)
@@ -96,7 +81,7 @@ name = "custom"
 [language.auto-pairs]
 '<' = '>'
 `)
-		lang := config.LoadLanguage("custom")
+		lang := language.LoadLanguage("custom")
 		pairs, ok := lang.AutoPairs.AutoPairs()
 		assert.True(t, ok)
 		pair, ok := pairs.Get('<')
@@ -171,9 +156,7 @@ name = "custom"
 comment-token = "//"
 `)
 		e := editorWithText(t, "  // hello")
-		cfg := e.Config()
-		cfg.Editor.ContinueComments = new(false)
-		e.SetConfig(cfg)
+		e.Options().ContinueComments = false
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("custom")
 		setCursor(t, e, doc.Text().LenChars())
@@ -183,7 +166,7 @@ comment-token = "//"
 		assert.Equal(t, "  // hello\n  ", doc.Text().String())
 	})
 
-	t.Run("open below count creates repeated cursors", func(t *testing.T) {
+	t.Run("open below repeated cursors", func(t *testing.T) {
 		writeCommandLanguages(t, `
 [[language]]
 name = "custom"
@@ -205,7 +188,7 @@ comment-token = "//"
 		}, sel.Ranges())
 	})
 
-	t.Run("open above count creates repeated cursors", func(t *testing.T) {
+	t.Run("open above repeated cursors", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		e.SetCount(2)
 

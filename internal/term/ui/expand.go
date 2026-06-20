@@ -145,7 +145,7 @@ func expandUnicode(content string) (string, error) {
 }
 
 func expandShell(e *view.Editor, content string) (string, error) {
-	shell := e.Config().Shell()
+	shell := e.Options().Shell
 	if len(shell) == 0 {
 		shell = defaultShell()
 	}

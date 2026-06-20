@@ -10,7 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 func TestNewDocument(t *testing.T) {
@@ -39,24 +39,18 @@ func TestNewDocument(t *testing.T) {
 	})
 
 	t.Run("uses configured default line ending", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-default-line-ending = "crlf"
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		e := view.NewEditor("/tmp")
+		e.Options().DefaultLineEnding = core.LineEndingCRLF
+
+		e.NewDocument()
 
 		d, _ := e.FocusedDocument()
-
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 
 	t.Run("uses live default line ending for scratch", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		cfg := e.Config()
-		cfg.Editor.DefaultLineEnding = core.LineEndingCRLF
-		e.SetConfig(cfg)
+		e.Options().DefaultLineEnding = core.LineEndingCRLF
 
 		e.NewDocument()
 
@@ -178,12 +172,6 @@ indent = { tab-width = 8, unit = "  " }
 	})
 
 	t.Run("can disable editor config on open", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-editor-config = false
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
 root = true
@@ -197,6 +185,7 @@ end_of_line = crlf
 		err = os.WriteFile(path, []byte("package main\n"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
+		e.Options().EditorConfig = false
 
 		_, err = e.OpenFile(path)
 
@@ -207,15 +196,10 @@ end_of_line = crlf
 	})
 
 	t.Run("new file uses default line ending", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-default-line-ending = "crlf"
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "new.txt")
 		e := view.NewEditor(tmp)
+		e.Options().DefaultLineEnding = core.LineEndingCRLF
 
 		_, err := e.OpenFile(path)
 
@@ -242,12 +226,15 @@ max_line_length = 40
 		assert.NoError(t, err)
 		d, _ := e.FocusedDocument()
 		enabled := true
-		cfg := config.DefaultConfig()
-		cfg.Editor.TextWidth = new(80)
-		cfg.Editor.SoftWrap.Enable = &enabled
-		cfg.Editor.SoftWrap.WrapAtTextWidth = &enabled
+		opts := view.Options{
+			TextWidth: new(80),
+			SoftWrap: language.SoftWrap{
+				Enable:          &enabled,
+				WrapAtTextWidth: &enabled,
+			},
+		}
 
-		format := d.TextFormatForConfig(80, cfg)
+		format := d.TextFormatForConfig(80, &opts)
 
 		assert.True(t, format.SoftWrap)
 		assert.True(t, format.SoftWrapAtTextWidth)
@@ -303,17 +290,12 @@ func TestDocumentSave(t *testing.T) {
 	})
 
 	t.Run("applies configured save cleanup", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-trim-trailing-whitespace = true
-trim-final-newlines = true
-insert-final-newline = true
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		e := editorWithText(t, "a  \n\n\n")
+		e.Options().TrimTrailingWS = true
+		e.Options().TrimFinalNewlines = true
+		e.Options().InsertFinalNewline = true
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
@@ -327,15 +309,10 @@ insert-final-newline = true
 	})
 
 	t.Run("can disable final newline insertion", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-insert-final-newline = false
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		e := editorWithText(t, "hello")
+		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
@@ -703,16 +680,11 @@ func TestDocumentApplyBranches(t *testing.T) {
 
 func TestDocumentAtomicSave(t *testing.T) {
 	t.Run("atomic save writes content", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-atomic-save = true
-insert-final-newline = false
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "atomic.txt")
 		e := editorWithText(t, "atomic content")
+		e.Options().AtomicSave = true
+		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 		err := e.Save()
@@ -774,16 +746,11 @@ func TestDocumentReloadResetsSelections(t *testing.T) {
 
 func TestDocumentTrimTrailingWhitespaceWithCRLF(t *testing.T) {
 	t.Run("preserves crlf on trimmed lines", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-trim-trailing-whitespace = true
-insert-final-newline = false
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "crlf.txt")
 		e := editorWithText(t, "line  \r\nend  ")
+		e.Options().TrimTrailingWS = true
+		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 		doc.SetLineEnding(core.LineEndingCRLF)
@@ -814,16 +781,11 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 
 func TestDocumentTrimFinalNewlinesSingleEnding(t *testing.T) {
 	t.Run("single final newline is preserved", func(t *testing.T) {
-		root := t.TempDir()
-		writeViewConfig(t, root, `
-[editor]
-trim-final-newlines = true
-insert-final-newline = false
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "single.txt")
 		e := editorWithText(t, "hello\n")
+		e.Options().TrimFinalNewlines = true
+		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
@@ -858,15 +820,6 @@ tab_width = 2
 		assert.False(t, d.IndentStyle().IsTabs())
 		assert.Equal(t, 2, d.TabWidth())
 	})
-}
-
-func writeViewConfig(t *testing.T, root, text string) {
-	t.Helper()
-	dir := filepath.Join(root, loader.DirName)
-	err := os.MkdirAll(dir, 0o755)
-	assert.NoError(t, err)
-	err = os.WriteFile(filepath.Join(dir, "config.toml"), []byte(text), 0o644)
-	assert.NoError(t, err)
 }
 
 func writeViewLanguages(t *testing.T, root, text string) {

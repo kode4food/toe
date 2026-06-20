@@ -5,7 +5,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 func searchMatchStyle() lipgloss.Style {
@@ -50,7 +50,7 @@ func pickerFrameStyle(cx *Context) lipgloss.Style {
 		Background(popup.GetBackground())
 }
 
-func softWrapPrefix(format *config.TextFormat, indent int) string {
+func softWrapPrefix(format *language.TextFormat, indent int) string {
 	if indent > format.MaxIndentRetain {
 		indent = 0
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 func TestEdit(t *testing.T) {
@@ -179,7 +178,7 @@ func TestExtendLineBellow(t *testing.T) {
 }
 
 func TestExtendLineAbove(t *testing.T) {
-	t.Run("extends cursor to full line upward direction", func(t *testing.T) {
+	t.Run("extends upward to full line", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd")
 		setCursor(t, e, 0)
 
@@ -235,7 +234,7 @@ func TestSelectLineBelow(t *testing.T) {
 }
 
 func TestSelectLineAbove(t *testing.T) {
-	t.Run("extends selection to include previous line", func(t *testing.T) {
+	t.Run("includes previous line", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd\nef")
 		setCursor(t, e, 6)
 
@@ -534,7 +533,7 @@ func TestExitSelectMode(t *testing.T) {
 }
 
 func TestChangeSelectionNoyank(t *testing.T) {
-	t.Run("deletes and enters insert, skips register", func(t *testing.T) {
+	t.Run("skips register on insert", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 		setSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
 		e.Registers().Write('"', []string{"safe"})
@@ -549,7 +548,7 @@ func TestChangeSelectionNoyank(t *testing.T) {
 }
 
 func TestNormalModeRestoreCursor(t *testing.T) {
-	t.Run("AppendMode then NormalMode moves cursor back", func(t *testing.T) {
+	t.Run("append normal moves cursor back", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 		setCursor(t, e, 0)
 
@@ -562,7 +561,7 @@ func TestNormalModeRestoreCursor(t *testing.T) {
 		assert.True(t, posNormal <= posInsert)
 	})
 
-	t.Run("NormalMode strips auto-indent on blank line", func(t *testing.T) {
+	t.Run("normal strips blank indent", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		setCursor(t, e, 5)
 		action.InsertMode(e)
@@ -580,7 +579,7 @@ func TestNormalModeRestoreCursor(t *testing.T) {
 }
 
 func TestTryRestoreIndent(t *testing.T) {
-	t.Run("whitespace-only line is cleared on NormalMode", func(t *testing.T) {
+	t.Run("normal clears whitespace line", func(t *testing.T) {
 		// "a\n    \nb": a=0, \n=1, ' '=2..5, \n=6, b=7
 		// lineEnd for line 1 = lineStart(2) + LineEndCharIndex("    \n") = 2+4=6
 		e := editorWithText(t, "a\n    \nb")
@@ -634,7 +633,7 @@ func TestDeleteCharBackwardAtLineStart(t *testing.T) {
 }
 
 func TestInsertNewlineContinuedComment(t *testing.T) {
-	t.Run("bare newline when entire line is whitespace", func(t *testing.T) {
+	t.Run("bare newline whitespace line", func(t *testing.T) {
 		e := editorWithText(t, "   ")
 		setCursor(t, e, 0)
 		e.SetMode(view.ModeInsert)
@@ -659,7 +658,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 }
 
 func TestAddNewlineImplNoView(t *testing.T) {
-	t.Run("AddNewlineAbove does not panic with no text", func(t *testing.T) {
+	t.Run("add newline above empty text", func(t *testing.T) {
 		e := editorWithText(t, "")
 		setCursor(t, e, 0)
 
@@ -669,12 +668,8 @@ func TestAddNewlineImplNoView(t *testing.T) {
 
 func TestAutoPairsDisabled(t *testing.T) {
 	t.Run("auto-pairs disabled skips pair hook", func(t *testing.T) {
-		cfg := &config.Config{}
-		cfg.Editor.AutoPairs.Present = true
-		cfg.Editor.AutoPairs.Enable = new(false)
-
 		e := editorWithText(t, "")
-		e.SetConfig(cfg)
+		e.Options().HasAutoPairs = false
 		e.SetMode(view.ModeInsert)
 
 		action.InsertChar(e, '(')
@@ -763,7 +758,7 @@ func TestDeleteCharForwardDuplicate(t *testing.T) {
 }
 
 func TestInsertNewlineTrailingWhitespace(t *testing.T) {
-	t.Run("trailing whitespace is trimmed before newline", func(t *testing.T) {
+	t.Run("trims trailing whitespace", func(t *testing.T) {
 		// "hello  " — cursor at 7 (pos after 'o'), chars 5,6 are spaces
 		// firstTrailingWS=5, pos=7 → 5 < 7 hits the elif branch
 		e := editorWithText(t, "hello  ")
@@ -805,7 +800,7 @@ func TestDeleteCharBackwardDedent(t *testing.T) {
 }
 
 func TestChangeSelectionLinewiseTrue(t *testing.T) {
-	t.Run("linewise selection inserts blank line above", func(t *testing.T) {
+	t.Run("linewise inserts above", func(t *testing.T) {
 		e := editorWithText(t, "hello\nworld\n")
 		// Linewise: covers the full first line including newline
 		setSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)

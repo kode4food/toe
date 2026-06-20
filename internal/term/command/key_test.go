@@ -51,7 +51,7 @@ func TestCommandRegistry(t *testing.T) {
 		},
 	}
 
-	km.Register("open", registered)
+	_ = km.Register("open", registered)
 	cmd, ok := km.ResolveCommand("edit")
 	list := km.Commands()
 
@@ -67,7 +67,7 @@ func TestCommandRegistry(t *testing.T) {
 func TestSparseCommands(t *testing.T) {
 	t.Run("typed only", func(t *testing.T) {
 		km := command.NewKeymaps()
-		km.Register("write", command.Command{
+		_ = km.Register("write", command.Command{
 			Aliases: []string{"write", "w"},
 			Run: func(
 				*view.Editor, *command.Args,
@@ -91,15 +91,13 @@ func TestSparseCommands(t *testing.T) {
 	t.Run("key only", func(t *testing.T) {
 		called := false
 		km := command.NewKeymaps()
-		km.Register("move-left", command.Command{
+		_ = km.Register("move-left", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				called = true
 				return command.Result{}
 			},
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{{
-				{command.Char('h')},
-			}},
+			Keys:  map[string][]command.KeyBinding{"*": {{{command.Char('h')}}}},
 		})
 
 		cmd, ok := km.ResolveCommand("move-left")
@@ -118,15 +116,13 @@ func TestSparseCommands(t *testing.T) {
 	t.Run("typed and keyed", func(t *testing.T) {
 		called := false
 		km := command.NewKeymaps()
-		km.Register("quit", command.Command{
+		_ = km.Register("quit", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				called = true
 				return command.Result{Message: "quit"}
 			},
-			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{{
-				{command.Char('q')},
-			}},
+			Modes:   []string{"NOR"},
+			Keys:    map[string][]command.KeyBinding{"*": {{{command.Char('q')}}}},
 			Aliases: []string{"quit", "q"},
 		})
 
@@ -143,24 +139,17 @@ func TestSparseCommands(t *testing.T) {
 		assert.True(t, called)
 	})
 
-	t.Run("replaced runner handles key execution", func(t *testing.T) {
+	t.Run("keyed and aliased in one registration", func(t *testing.T) {
 		km := command.NewKeymaps()
-		km.Register("quit", command.Command{
-			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Message: "key"}
-			},
-			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{{
-				{command.Char('q')},
-			}},
-		})
-		km.Register("quit", command.Command{
+		_ = km.Register("quit", command.Command{
 			Run: func(_ *view.Editor, args *command.Args) command.Result {
 				if args == nil {
 					return command.Result{Message: "nil-safe"}
 				}
 				return command.Result{Message: "typed"}
 			},
+			Modes:   []string{"NOR"},
+			Keys:    map[string][]command.KeyBinding{"*": {{{command.Char('q')}}}},
 			Aliases: []string{"quit", "q"},
 		})
 
@@ -183,20 +172,13 @@ func TestModeIsolation(t *testing.T) {
 		run := func(*view.Editor, *command.Args) command.Result {
 			return command.Result{}
 		}
-		km.Register("move_char_left", command.Command{
+		_ = km.Register("move_char_left", command.Command{
 			Run:   run,
-			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{{
-				{command.Char('h')},
-				{command.Special("left")},
-			}},
-		})
-		km.Register("move_char_left", command.Command{
-			Run:   run,
-			Modes: []string{"INS"},
-			Keys: []command.KeyBinding{{
-				{command.Special("left")},
-			}},
+			Modes: []string{"NOR", "INS"},
+			Keys: map[string][]command.KeyBinding{
+				"*":   {{{command.Char('h')}, {command.Special("left")}}},
+				"INS": {{{command.Special("left")}}},
+			},
 		})
 
 		_, found, _ := km.Lookup(
@@ -245,15 +227,13 @@ func TestIsTypable(t *testing.T) {
 func TestKeyBind(t *testing.T) {
 	called := false
 	km := command.NewKeymaps()
-	km.Register("act", command.Command{
+	_ = km.Register("act", command.Command{
 		Run: func(_ *view.Editor, _ *command.Args) command.Result {
 			called = true
 			return command.Result{}
 		},
-		Modes: []string{"NOR"},
-		Keys: []command.KeyBinding{{
-			{command.Char('a')},
-		}},
+		Modes:   []string{"NOR"},
+		Keys:    map[string][]command.KeyBinding{"*": {{{command.Char('a')}}}},
 		Aliases: []string{"act"},
 	})
 
@@ -281,11 +261,9 @@ func TestKeyBind(t *testing.T) {
 
 	t.Run("Bind command without Run is no-op", func(t *testing.T) {
 		km2 := command.NewKeymaps()
-		km2.Register("norun", command.Command{
+		_ = km2.Register("norun", command.Command{
 			Modes: []string{"NOR"},
-			Keys: []command.KeyBinding{{
-				{command.Char('x')},
-			}},
+			Keys:  map[string][]command.KeyBinding{"*": {{{command.Char('x')}}}},
 		})
 		km2.Bind("NOR", "norun",
 			[]command.KeyEvent{command.Char('y')},
@@ -299,14 +277,14 @@ func TestKeyBind(t *testing.T) {
 
 func TestLabelNode(t *testing.T) {
 	km := command.NewKeymaps()
-	km.Register("goto-file", command.Command{
+	_ = km.Register("goto-file", command.Command{
 		Run: func(*view.Editor, *command.Args) command.Result {
 			return command.Result{}
 		},
 		Modes: []string{"NOR"},
-		Keys: []command.KeyBinding{{
-			{command.Char('g'), command.Char('f')},
-		}},
+		Keys: map[string][]command.KeyBinding{
+			"*": {{{command.Char('g'), command.Char('f')}}},
+		},
 	})
 
 	t.Run("sets label on prefix node", func(t *testing.T) {
@@ -341,19 +319,19 @@ func TestPendingHints(t *testing.T) {
 	run := func(*view.Editor, *command.Args) command.Result {
 		return command.Result{}
 	}
-	km.Register("ga", command.Command{
+	_ = km.Register("ga", command.Command{
 		Run:   run,
 		Modes: []string{"NOR"},
-		Keys: []command.KeyBinding{{
-			{command.Char('g'), command.Char('a')},
-		}},
+		Keys: map[string][]command.KeyBinding{
+			"*": {{{command.Char('g'), command.Char('a')}}},
+		},
 	})
-	km.Register("gb", command.Command{
+	_ = km.Register("gb", command.Command{
 		Run:   run,
 		Modes: []string{"NOR"},
-		Keys: []command.KeyBinding{{
-			{command.Char('g'), command.Char('b')},
-		}},
+		Keys: map[string][]command.KeyBinding{
+			"*": {{{command.Char('g'), command.Char('b')}}},
+		},
 	})
 
 	t.Run("returns hints for prefix", func(t *testing.T) {
@@ -418,26 +396,24 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 	}
 
 	km := command.NewKeymaps()
-	km.Register("quit", command.Command{
+	_ = km.Register("quit", command.Command{
 		Run:   run(cmdQuit),
 		Modes: []string{"normal"},
-		Keys: []command.KeyBinding{{
-			{command.Char('q')},
-		}},
+		Keys:  map[string][]command.KeyBinding{"*": {{{command.Char('q')}}}},
 	})
-	km.Register("save", command.Command{
+	_ = km.Register("save", command.Command{
 		Run:   run(cmdSave),
 		Modes: []string{"normal"},
-		Keys: []command.KeyBinding{{
-			{command.Char('w').WithMods(command.ModCtrl)},
-		}},
+		Keys: map[string][]command.KeyBinding{
+			"*": {{{command.Char('w').WithMods(command.ModCtrl)}}},
+		},
 	})
-	km.Register("goto", command.Command{
+	_ = km.Register("goto", command.Command{
 		Run:   run(cmdGoTo),
 		Modes: []string{"normal"},
-		Keys: []command.KeyBinding{{
-			{command.Char('g'), command.Char('g')},
-		}},
+		Keys: map[string][]command.KeyBinding{
+			"*": {{{command.Char('g'), command.Char('g')}}},
+		},
 	})
 
 	t.Run("single key binding found", func(t *testing.T) {

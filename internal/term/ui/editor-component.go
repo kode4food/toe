@@ -13,7 +13,6 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	act "github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 type (
@@ -87,7 +86,7 @@ func (e *EditorComponent) HandleEvent(
 
 	case tea.BlurMsg:
 		e.focused = false
-		if cx.Editor.Config().AutoSaveFocusLost() {
+		if cx.Editor.Options().AutoSaveFocusLost {
 			cx.Editor.SaveAll()
 		}
 		return ignored(), nil
@@ -100,21 +99,21 @@ func (e *EditorComponent) HandleEvent(
 
 	case tea.MouseClickMsg:
 		e.cancelPending(cx)
-		if cx.Editor.Config().Mouse() && msg.Button == tea.MouseLeft {
+		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			r.handleMouseClick(msg.X, msg.Y, msg.Mod)
 		}
 		return consumed(), nil
 
 	case tea.MouseMotionMsg:
-		if cx.Editor.Config().Mouse() && msg.Button == tea.MouseLeft {
+		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			r.handleMouseDrag(msg.X, msg.Y)
 		}
 		return consumed(), nil
 
 	case tea.MouseReleaseMsg:
-		if !cx.Editor.Config().Mouse() {
+		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
 		switch msg.Button {
@@ -132,7 +131,7 @@ func (e *EditorComponent) HandleEvent(
 				}
 			}
 		case tea.MouseMiddle:
-			if cx.Editor.Config().MiddleClickPaste() {
+			if cx.Editor.Options().MiddleClickPaste {
 				r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 				r.handleMouseMiddleRelease(msg.X, msg.Y, msg.Mod)
 			}
@@ -141,7 +140,7 @@ func (e *EditorComponent) HandleEvent(
 
 	case tea.MouseWheelMsg:
 		e.cancelPending(cx)
-		if !cx.Editor.Config().Mouse() {
+		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
 		up := msg.Button == tea.MouseWheelUp
@@ -150,7 +149,7 @@ func (e *EditorComponent) HandleEvent(
 		if !ok {
 			return consumed(), nil
 		}
-		act.ScrollViewLines(cx.Editor, v, cx.Editor.Config().ScrollLines(), up)
+		act.ScrollViewLines(cx.Editor, v, cx.Editor.Options().ScrollLines, up)
 		return consumed(), nil
 	}
 	return ignored(), nil
@@ -310,13 +309,13 @@ func (e *EditorComponent) resize(cx *Context) {
 }
 
 func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
-	cfg := cx.Editor.Config()
-	if !cfg.AutoSaveAfterDelay() {
+	opts := cx.Editor.Options()
+	if !opts.AutoSaveAfterDelay {
 		return nil
 	}
 	e.saveSlot.gen++
 	gen := e.saveSlot.gen
-	d := time.Duration(cfg.AutoSaveDelayTimeout()) * time.Millisecond
+	d := time.Duration(opts.AutoSaveDelayTimeout) * time.Millisecond
 	return tea.Tick(d, func(time.Time) tea.Msg {
 		return autoSaveMsg{gen: gen}
 	})
@@ -414,11 +413,10 @@ func (e *EditorComponent) MacroReplayAction(
 }
 
 func bufferlineVisible(cx *Context) bool {
-	cfg := cx.Editor.Config()
-	switch cfg.GetBufferLine() {
-	case config.BufferLineAlways:
+	switch cx.Editor.Options().BufferLine {
+	case view.BufferLineAlways:
 		return true
-	case config.BufferLineMultiple:
+	case view.BufferLineMultiple:
 		return len(cx.Editor.AllDocuments()) > 1
 	default:
 		return false

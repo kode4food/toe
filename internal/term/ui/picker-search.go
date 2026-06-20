@@ -38,7 +38,7 @@ func (g *globalSearchSource) Load(
 	if g.query == "" {
 		return nil, nil, func() {}
 	}
-	g.smartCase = e.Config().SearchSmartCase()
+	g.smartCase = e.Options().SearchSmartCase
 	g.openDocs = nil
 	for _, doc := range e.AllDocuments() {
 		if path := doc.Path(); path != "" {

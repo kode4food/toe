@@ -14,6 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -37,8 +38,9 @@ type (
 	previewDocRender struct {
 		text   core.Rope
 		spans  []highlight.Span
-		format *config.TextFormat
+		format *language.TextFormat
 		cfg    *config.Config
+		opts   *view.Options
 		th     *theme.Theme
 		w, h   int
 		hlFrom int
@@ -96,10 +98,11 @@ func (p *previewCtx) renderDocInto(
 		}
 		p.picker.spanCache[id] = entry
 	}
-	format := doc.TextFormatForConfig(p.w, p.cfg)
+	format := doc.TextFormatForConfig(p.w, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
-		format: format, cfg: p.cfg, th: p.th, w: p.w, h: p.h,
+		format: format, cfg: p.cfg, opts: p.editor.Options(),
+		th: p.th, w: p.w, h: p.h,
 		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
 	}
 	renderPreviewDocInto(buf, x0, y0, r)
@@ -123,17 +126,20 @@ func (p *previewCtx) renderFileInto(
 		}
 		p.picker.fileCache[path] = entry
 	}
-	format := config.TextFormatForLanguageWithConfig(entry.lang, p.cfg, p.w)
+	opts := p.editor.Options()
+	format := language.TextFormatForLanguageWithConfig(entry.lang, opts.TextWidth, opts.SoftWrap, p.w)
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
-		format: format, cfg: p.cfg, th: p.th, w: p.w, h: p.h,
+		format: format, cfg: p.cfg, opts: p.editor.Options(),
+		th: p.th, w: p.w, h: p.h,
 		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
 	}
 	renderPreviewDocInto(buf, x0, y0, r)
 	p.picker.previewScroll = r.scroll
 }
 
-// ANSI codes in callback preview strings are stripped so the popup style applies
+// ANSI codes in callback preview strings are stripped so the popup style
+// applies.
 func (p *previewCtx) blitPlaceholderInto(
 	buf *tui.Buffer, x0, y0 int, text string,
 ) {
@@ -227,7 +233,7 @@ func previewHlStyleFn(
 }
 
 func previewAnchor(
-	text core.Rope, format *config.TextFormat, softWrap bool, from, to, h int,
+	text core.Rope, format *language.TextFormat, softWrap bool, from, to, h int,
 ) (int, int) {
 	if from < 0 {
 		return 0, 0
@@ -269,9 +275,9 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 		hlCache[scope] = st
 		return st
 	}
-	ws := args.cfg.Whitespace()
-	ig := args.cfg.IndentGuides()
-	rulers := args.cfg.Rulers()
+	ws := args.opts.Whitespace
+	ig := args.opts.IndentGuides
+	rulers := args.opts.Rulers
 	rulerBg := lipglossToTUIStyle(lgStyles.ruler).BgColor()
 	// syntax spans have stripped backgrounds; patch popup bg onto every row
 	// so the pane provides it uniformly rather than showing terminal default
@@ -287,11 +293,11 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 		args.text, args.format, softWrap, args.hlFrom, args.hlTo, args.h,
 	)
 	nLines := args.text.LenLines()
-	// apply the wheel scroll past the anchor, then write the applied delta back
-	// so the stored scroll stays bounded. The upper bound pins the last line to
-	// the bottom of the pane rather than letting content scroll off the top.
-	// ponytail: clamp counts logical lines; a tall soft-wrapped final line can
-	// still leave a gap — switch to visual-row pinning only if that matters
+	// Apply wheel scroll past the anchor, then write the applied delta back
+	// so the stored scroll stays bounded. The upper bound pins the last line
+	// to the bottom of the pane rather than letting content scroll off top.
+	// The clamp counts logical lines; a tall soft-wrapped final line can still
+	// leave a gap. Use visual-row pinning if that becomes observable.
 	if args.scroll != 0 {
 		base := anchorLine
 		anchorLine = max(0, min(base+args.scroll, max(0, nLines-args.h)))

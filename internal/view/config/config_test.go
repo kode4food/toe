@@ -11,6 +11,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 func TestLanguages(t *testing.T) {
@@ -83,7 +84,7 @@ completion = [
 args.program = "{0}"
 `)
 
-		langs, ok := config.LoadLanguages(path)
+		langs, ok := language.LoadLanguages(path)
 
 		assert.True(t, ok)
 		assert.Equal(t, "markdown", langs.Languages[0].Name)
@@ -93,10 +94,10 @@ args.program = "{0}"
 		filtered := langs.Languages[0].LanguageServers[1]
 		assert.Equal(t, "mdox", filtered.Name)
 		assert.Equal(t,
-			config.LanguageServerFeature("hover"), filtered.Only[0],
+			language.ServerFeature("hover"), filtered.Only[0],
 		)
 		assert.Equal(t,
-			config.LanguageServerFeature("format"), filtered.Excluded[0],
+			language.ServerFeature("format"), filtered.Excluded[0],
 		)
 		assert.Equal(t, "md", langs.Languages[0].FileTypes[0].Extension)
 		assert.Equal(t, "*/README", langs.Languages[0].FileTypes[1].Glob)
@@ -164,7 +165,7 @@ args.program = "{0}"
 	})
 
 	t.Run("missing file returns false", func(t *testing.T) {
-		_, ok := config.LoadLanguages(
+		_, ok := language.LoadLanguages(
 			filepath.Join(t.TempDir(), "missing.toml"),
 		)
 		assert.False(t, ok)
@@ -200,7 +201,7 @@ soft-wrap.wrap-indicator = "» "
 		err = config.TrustWorkspace(work)
 		assert.NoError(t, err)
 
-		langs, ok := config.LoadLanguagesForWorkspace(global, workspace, work)
+		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, work)
 
 		assert.True(t, ok)
 		lang, ok := findLanguage(langs, "markdown")
@@ -234,7 +235,7 @@ text-width = 72
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
-		langs, ok := config.LoadLanguagesForWorkspace(global, workspace, work)
+		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, work)
 
 		assert.True(t, ok)
 		lang, ok := findLanguage(langs, "markdown")
@@ -251,7 +252,7 @@ text-width = 80
 `)
 		workspace := filepath.Join(root, "missing.toml")
 
-		langs, ok := config.LoadLanguagesForWorkspace(global, workspace, root)
+		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, root)
 
 		assert.True(t, ok)
 		lang, ok := findLanguage(langs, "markdown")
@@ -303,112 +304,9 @@ wrap-indicator = "» "
 wrap-at-text-width = true
 `)
 
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, 72, *cfg.Editor.TextWidth)
-		assert.True(t, *cfg.Editor.SoftWrap.Enable)
-		assert.Equal(t, 18, *cfg.Editor.SoftWrap.MaxWrap)
-		assert.Equal(t, 24, *cfg.Editor.SoftWrap.MaxIndentRetain)
-		assert.Equal(t, "» ", *cfg.Editor.SoftWrap.WrapIndicator)
-		assert.True(t, *cfg.Editor.SoftWrap.WrapAtTextWidth)
-	})
-
-	t.Run("loads editor auto pair bool", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-auto-pairs = false
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		_, ok = cfg.AutoPairs()
-		assert.False(t, ok)
-	})
-
-	t.Run("loads editor auto pair table", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.auto-pairs]
-'(' = ')'
-'<' = '>'
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		pairs, ok := cfg.AutoPairs()
-		assert.True(t, ok)
-		pair, ok := pairs.Get('<')
-		assert.True(t, ok)
-		assert.Equal(t, core.Pair{Open: '<', Close: '>'}, pair)
-	})
-
-	t.Run("loads editor auto save bool", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-auto-save = true
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.True(t, cfg.AutoSaveFocusLost())
-		assert.False(t, cfg.AutoSaveAfterDelay())
-		assert.Equal(t, config.DefaultAutoSaveDelay,
-			cfg.AutoSaveDelayTimeout(),
-		)
-	})
-
-	t.Run("loads editor auto save table", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.auto-save]
-focus-lost = true
-
-[editor.auto-save.after-delay]
-enable = true
-timeout = 1200
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.True(t, cfg.AutoSaveFocusLost())
-		assert.True(t, cfg.AutoSaveAfterDelay())
-		assert.Equal(t, 1200, cfg.AutoSaveDelayTimeout())
-	})
-
-	t.Run("loads cursor shape settings", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.cursor-shape]
-normal = "block"
-insert = "bar"
-select = "underline"
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, config.CursorKindBlock,
-			cfg.CursorShapeForMode("normal"),
-		)
-		assert.Equal(t, config.CursorKindBar,
-			cfg.CursorShapeForMode("insert"),
-		)
-		assert.Equal(t, config.CursorKindUnderline,
-			cfg.CursorShapeForMode("select"),
-		)
-	})
-
-	t.Run("rejects invalid cursor shape", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.cursor-shape]
-normal = "bogus"
-`)
-
 		_, ok := config.LoadConfig(path)
 
-		assert.False(t, ok)
+		assert.True(t, ok)
 	})
 
 	t.Run("loads statusline mode names", func(t *testing.T) {
@@ -427,156 +325,40 @@ insert = "INSERT"
 select = "SELECT"
 `)
 
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, "|", cfg.StatusLineSeparator())
-		assert.Equal(t, []config.StatusLineElement{
-			config.StatusLineMode,
-			config.StatusLineFileName,
-		}, cfg.StatusLineLeft())
-		assert.Equal(t, []config.StatusLineElement{
-			config.StatusLineSpacer,
-		}, cfg.StatusLineCenter())
-		assert.Equal(t, []config.StatusLineElement{
-			config.StatusLinePosition,
-			config.StatusLineFileEncoding,
-		}, cfg.StatusLineRight())
-		assert.Equal(t, "NORMAL", cfg.ModeNameForMode("normal"))
-		assert.Equal(t, "INSERT", cfg.ModeNameForMode("insert"))
-		assert.Equal(t, "SELECT", cfg.ModeNameForMode("select"))
-	})
-
-	t.Run("rejects invalid statusline element", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.statusline]
-left = ["bogus"]
-`)
-
 		_, ok := config.LoadConfig(path)
 
-		assert.False(t, ok)
-	})
-
-	t.Run("loads editor search settings", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.search]
-smart-case = false
-wrap-around = false
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
 		assert.True(t, ok)
-		assert.False(t, cfg.SearchSmartCase())
-		assert.False(t, cfg.SearchWrapAround())
 	})
 
-	t.Run("loads default line ending", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-default-line-ending = "crlf"
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, core.LineEndingCRLF,
-			cfg.Editor.DefaultLineEnding,
-		)
-	})
-
-	t.Run("rejects invalid default line ending", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-default-line-ending = "bogus"
-`)
-
-		_, ok := config.LoadConfig(path)
-
-		assert.False(t, ok)
-	})
-
-	t.Run("uses save option defaults", func(t *testing.T) {
+	t.Run("uses insecure default", func(t *testing.T) {
 		cfg := config.DefaultConfig()
 
-		assert.True(t, cfg.InsertFinalNewline())
-		assert.False(t, cfg.TrimFinalNewlines())
-		assert.False(t, cfg.TrimTrailingWhitespace())
-		assert.True(t, cfg.AtomicSave())
-		assert.True(t, cfg.ContinueComments())
-		assert.Equal(t, config.CursorKindBlock,
-			cfg.CursorShapeForMode("insert"),
-		)
-		assert.Equal(t, "NOR", cfg.ModeNameForMode("normal"))
-		assert.Equal(t, "│", cfg.StatusLineSeparator())
-		assert.Equal(t, []config.StatusLineElement{
-			config.StatusLineMode,
-			config.StatusLineSpinner,
-			config.StatusLineFileName,
-			config.StatusLineReadOnly,
-			config.StatusLineModified,
-		}, cfg.StatusLineLeft())
-		assert.Empty(t, cfg.StatusLineCenter())
-		assert.Equal(t, []config.StatusLineElement{
-			config.StatusLineDiagnostics,
-			config.StatusLineSelections,
-			config.StatusLineRegister,
-			config.StatusLinePosition,
-			config.StatusLineFileEncoding,
-		}, cfg.StatusLineRight())
+		assert.False(t, cfg.Insecure())
 	})
 
-	t.Run("loads save options", func(t *testing.T) {
+	t.Run("loads insecure option", func(t *testing.T) {
 		path := writeConfig(t, t.TempDir(), `
 [editor]
-insert-final-newline = false
-trim-final-newlines = true
-trim-trailing-whitespace = true
-atomic-save = false
 insecure = true
-editor-config = false
-continue-comments = false
 `)
 
 		cfg, ok := config.LoadConfig(path)
 
 		assert.True(t, ok)
-		assert.False(t, cfg.InsertFinalNewline())
-		assert.True(t, cfg.TrimFinalNewlines())
-		assert.True(t, cfg.TrimTrailingWhitespace())
-		assert.False(t, cfg.AtomicSave())
 		assert.True(t, cfg.Insecure())
-		assert.False(t, cfg.EditorConfig())
-		assert.False(t, cfg.ContinueComments())
 	})
 
 	t.Run("merges trusted workspace config", func(t *testing.T) {
 		root := t.TempDir()
-		global := writeConfig(t, root, `
-[editor]
-text-width = 80
-
-[editor.soft-wrap]
-enable = true
-wrap-indicator = "↪ "
-`)
+		global := writeConfig(t, root, `theme = "mocha"`)
 		work := filepath.Join(root, "work")
-		workspaceDir := filepath.Join(work,
-			loader.WorkspaceDirName,
-		)
+		workspaceDir := filepath.Join(work, loader.WorkspaceDirName)
 		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
 		assert.NoError(t, err)
 		err = os.MkdirAll(workspaceDir, 0o755)
 		assert.NoError(t, err)
 		workspace := filepath.Join(workspaceDir, "config.toml")
-		err = os.WriteFile(workspace, []byte(`
-[editor]
-text-width = 72
-
-[editor.soft-wrap]
-wrap-indicator = "» "
-`), 0o644)
+		err = os.WriteFile(workspace, []byte(`theme = "dracula"`), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 		err = config.TrustWorkspace(work)
@@ -585,66 +367,51 @@ wrap-indicator = "» "
 		cfg, ok := config.LoadConfigForWorkspace(global, workspace, work)
 
 		assert.True(t, ok)
-		assert.Equal(t, 72, *cfg.Editor.TextWidth)
-		assert.True(t, *cfg.Editor.SoftWrap.Enable)
-		assert.Equal(t, "» ", *cfg.Editor.SoftWrap.WrapIndicator)
+		assert.Equal(t, "dracula", cfg.Theme.Name)
 	})
 
 	t.Run("ignores untrusted workspace config", func(t *testing.T) {
 		root := t.TempDir()
-		global := writeConfig(t, root, `
-[editor]
-text-width = 80
-`)
+		global := writeConfig(t, root, `theme = "mocha"`)
 		work := filepath.Join(root, "work")
-		workspaceDir := filepath.Join(work,
-			loader.WorkspaceDirName,
-		)
+		workspaceDir := filepath.Join(work, loader.WorkspaceDirName)
 		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
 		assert.NoError(t, err)
 		err = os.MkdirAll(workspaceDir, 0o755)
 		assert.NoError(t, err)
 		workspace := filepath.Join(workspaceDir, "config.toml")
-		err = os.WriteFile(workspace, []byte(`
-[editor]
-text-width = 72
-`), 0o644)
+		err = os.WriteFile(workspace, []byte(`theme = "dracula"`), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
 		cfg, ok := config.LoadConfigForWorkspace(global, workspace, work)
 
 		assert.True(t, ok)
-		assert.Equal(t, 80, *cfg.Editor.TextWidth)
+		assert.Equal(t, "mocha", cfg.Theme.Name)
 	})
 
 	t.Run("insecure global enables workspace config", func(t *testing.T) {
 		root := t.TempDir()
 		global := writeConfig(t, root, `
 [editor]
-text-width = 80
 insecure = true
 `)
 		work := filepath.Join(root, "work")
-		workspaceDir := filepath.Join(work,
-			loader.WorkspaceDirName,
-		)
+		workspaceDir := filepath.Join(work, loader.WorkspaceDirName)
 		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
 		assert.NoError(t, err)
 		err = os.MkdirAll(workspaceDir, 0o755)
 		assert.NoError(t, err)
 		workspace := filepath.Join(workspaceDir, "config.toml")
-		err = os.WriteFile(workspace, []byte(`
-[editor]
-text-width = 72
-`), 0o644)
+		err = os.WriteFile(workspace, []byte(`theme = "dracula"`), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
 		cfg, ok := config.LoadConfigForWorkspace(global, workspace, work)
 
 		assert.True(t, ok)
-		assert.Equal(t, 72, *cfg.Editor.TextWidth)
+		assert.True(t, cfg.Insecure())
+		assert.Equal(t, "dracula", cfg.Theme.Name)
 	})
 }
 
@@ -657,7 +424,7 @@ name = "custom"
 scope = "source.custom"
 `)
 
-		lang := config.LoadLanguageForScope("source.custom")
+		lang := language.LoadLanguageForScope("source.custom")
 
 		assert.Equal(t, "custom", lang.Name)
 	})
@@ -676,10 +443,10 @@ scope = "source.custom"
 			filepath.Join(nested, "go.work"), []byte("go 1.26\n"), 0o644,
 		)
 		assert.NoError(t, err)
-		lang := config.Language{Roots: []string{"go.mod", "go.work"}}
+		langDef := language.Language{Roots: []string{"go.mod", "go.work"}}
 
-		found, ok := config.FindLanguageRoot(
-			filepath.Join(nested, "main.go"), &lang,
+		found, ok := language.FindLanguageRoot(
+			filepath.Join(nested, "main.go"), &langDef,
 		)
 
 		assert.True(t, ok)
@@ -695,9 +462,9 @@ scope = "source.custom"
 			filepath.Join(project, "app.sln"), []byte(""), 0o644,
 		)
 		assert.NoError(t, err)
-		lang := config.Language{Roots: []string{"*.sln"}}
+		langDef := language.Language{Roots: []string{"*.sln"}}
 
-		found, ok := config.FindLanguageRoot(project, &lang)
+		found, ok := language.FindLanguageRoot(project, &langDef)
 
 		assert.True(t, ok)
 		assert.Equal(t, project, found)
@@ -712,9 +479,9 @@ scope = "source.custom"
 			filepath.Join(project, "package.json"), []byte("{}"), 0o644,
 		)
 		assert.NoError(t, err)
-		lang := config.Language{Roots: []string{"{package,project}.json"}}
+		langDef := language.Language{Roots: []string{"{package,project}.json"}}
 
-		found, ok := config.FindLanguageRoot(project, &lang)
+		found, ok := language.FindLanguageRoot(project, &langDef)
 
 		assert.True(t, ok)
 		assert.Equal(t, project, found)
@@ -734,10 +501,10 @@ scope = "source.custom"
 			filepath.Join(nested, "go.work"), []byte("go 1.26\n"), 0o644,
 		)
 		assert.NoError(t, err)
-		lang := config.Language{Roots: []string{"go.mod", "go.work"}}
+		langDef := language.Language{Roots: []string{"go.mod", "go.work"}}
 
-		found, ok := config.FindLSPWorkspace(config.LSPWorkspaceArgs{
-			File: filepath.Join(nested, "main.go"), Language: &lang,
+		found, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
+			File: filepath.Join(nested, "main.go"), Language: &langDef,
 			Workspace: project,
 		})
 
@@ -751,10 +518,10 @@ scope = "source.custom"
 		tool := filepath.Join(project, "tools", "one")
 		err := os.MkdirAll(tool, 0o755)
 		assert.NoError(t, err)
-		lang := config.Language{Roots: []string{"missing"}}
+		langDef := language.Language{Roots: []string{"missing"}}
 
-		found, ok := config.FindLSPWorkspace(config.LSPWorkspaceArgs{
-			File: filepath.Join(tool, "main.go"), Language: &lang,
+		found, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
+			File: filepath.Join(tool, "main.go"), Language: &langDef,
 			RootDirs: []string{"tools"}, Workspace: project,
 		})
 
@@ -767,178 +534,15 @@ scope = "source.custom"
 		project := filepath.Join(root, "project")
 		err := os.MkdirAll(project, 0o755)
 		assert.NoError(t, err)
-		lang := config.Language{Roots: []string{"missing"}}
+		langDef := language.Language{Roots: []string{"missing"}}
 
-		found, ok := config.FindLSPWorkspace(config.LSPWorkspaceArgs{
-			File: filepath.Join(project, "main.go"), Language: &lang,
+		found, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
+			File: filepath.Join(project, "main.go"), Language: &langDef,
 			Workspace: project, WorkspaceFallback: true,
 		})
 
 		assert.True(t, ok)
 		assert.Equal(t, project, found)
-	})
-}
-
-func TestWhitespaceConfig(t *testing.T) {
-	t.Run("defaults to none for all character types", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-		ws := cfg.Whitespace()
-
-		assert.Equal(t, config.WhitespaceRenderNone, ws.Render.SpaceRender())
-		assert.Equal(t, config.WhitespaceRenderNone, ws.Render.TabRender())
-		assert.Equal(t, config.WhitespaceRenderNone, ws.Render.NewlineRender())
-		assert.Equal(t, config.WhitespaceRenderNone, ws.Render.NbspRender())
-		assert.Equal(t, config.WhitespaceRenderNone, ws.Render.NnbspRender())
-	})
-
-	t.Run("defaults render characters match reference", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-		chars := cfg.Whitespace().Characters
-
-		assert.Equal(t, config.DefaultWSSpace, chars.SpaceRune())
-		assert.Equal(t, config.DefaultWSTab, chars.TabRune())
-		assert.Equal(t, config.DefaultWSTabpad, chars.TabpadRune())
-		assert.Equal(t, config.DefaultWSNewline, chars.NewlineRune())
-		assert.Equal(t, config.DefaultWSNbsp, chars.NbspRune())
-		assert.Equal(t, config.DefaultWSNnbsp, chars.NnbspRune())
-	})
-
-	t.Run("loads basic render value from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.whitespace]
-render = "all"
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		ws := cfg.Whitespace()
-		assert.Equal(t, config.WhitespaceRenderAll, ws.Render.SpaceRender())
-		assert.Equal(t, config.WhitespaceRenderAll, ws.Render.TabRender())
-		assert.Equal(t, config.WhitespaceRenderAll, ws.Render.NewlineRender())
-	})
-
-	t.Run("loads specific render values from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.whitespace.render]
-default = "all"
-space = "none"
-tab = "all"
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		ws := cfg.Whitespace()
-		assert.Equal(t, config.WhitespaceRenderNone, ws.Render.SpaceRender())
-		assert.Equal(t, config.WhitespaceRenderAll, ws.Render.TabRender())
-		assert.Equal(t, config.WhitespaceRenderAll, ws.Render.NewlineRender())
-	})
-
-	t.Run("loads custom characters from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.whitespace.characters]
-space = "."
-tab = ">"
-newline = "$"
-tabpad = "-"
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		chars := cfg.Whitespace().Characters
-		assert.Equal(t, '.', chars.SpaceRune())
-		assert.Equal(t, '>', chars.TabRune())
-		assert.Equal(t, '$', chars.NewlineRune())
-		assert.Equal(t, '-', chars.TabpadRune())
-	})
-}
-
-func TestGutterConfig(t *testing.T) {
-	t.Run("defaults include line-numbers", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-		g := cfg.Gutters()
-
-		assert.True(t, g.HasGutterType(config.GutterTypeLineNumbers))
-		assert.Equal(t,
-			config.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth(),
-		)
-	})
-
-	t.Run("loads layout as array", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-gutters = ["line-numbers", "spacer", "diff"]
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		g := cfg.Gutters()
-		assert.True(t, g.HasGutterType(config.GutterTypeLineNumbers))
-		assert.True(t, g.HasGutterType(config.GutterTypeSpacer))
-		assert.True(t, g.HasGutterType(config.GutterTypeDiff))
-		assert.False(t, g.HasGutterType(config.GutterTypeDiagnostics))
-	})
-
-	t.Run("loads layout as table with line-numbers config", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.gutters]
-layout = ["line-numbers"]
-
-[editor.gutters.line-numbers]
-min-width = 5
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		g := cfg.Gutters()
-		assert.True(t, g.HasGutterType(config.GutterTypeLineNumbers))
-		assert.False(t, g.HasGutterType(config.GutterTypeSpacer))
-		assert.Equal(t, 5, g.LineNumberMinWidth())
-	})
-
-	t.Run("empty layout hides line numbers", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-gutters = []
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		g := cfg.Gutters()
-		assert.False(t, g.HasGutterType(config.GutterTypeLineNumbers))
-	})
-}
-
-func TestIndentGuidesConfig(t *testing.T) {
-	t.Run("defaults to disabled with reference character", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-		ig := cfg.IndentGuides()
-
-		assert.False(t, ig.Render)
-		assert.Equal(t, config.DefaultIndentGuideChar, ig.CharRune())
-		assert.Equal(t, 0, ig.GetSkipLevels())
-	})
-
-	t.Run("loads from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor.indent-guides]
-render = true
-character = "┊"
-skip-levels = 1
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		ig := cfg.IndentGuides()
-		assert.True(t, ig.Render)
-		assert.Equal(t, '┊', ig.CharRune())
-		assert.Equal(t, 1, ig.GetSkipLevels())
 	})
 }
 
@@ -1037,7 +641,7 @@ func TestTextFormat(t *testing.T) {
 	t.Run("defaults to clipping", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := config.TextFormatForLanguage("go", 80)
+		format := language.TextFormatForLanguage("go", 80)
 
 		assert.False(t, format.SoftWrap)
 		assert.Equal(t, "↪ ", format.WrapIndicator)
@@ -1048,7 +652,7 @@ func TestTextFormat(t *testing.T) {
 	t.Run("markdown defaults to soft wrap", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := config.TextFormatForLanguage("markdown", 80)
+		format := language.TextFormatForLanguage("markdown", 80)
 
 		assert.True(t, format.SoftWrap)
 		assert.Equal(t, "↪ ", format.WrapIndicator)
@@ -1056,28 +660,8 @@ func TestTextFormat(t *testing.T) {
 		assert.Equal(t, 32, format.MaxIndentRetain)
 	})
 
-	t.Run("uses editor soft wrap config", func(t *testing.T) {
+	t.Run("lang soft wrap settings apply", func(t *testing.T) {
 		root := t.TempDir()
-		writeConfig(t, root, `
-[editor.soft-wrap]
-enable = true
-wrap-indicator = "» "
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
-
-		format := config.TextFormatForLanguage("markdown", 80)
-
-		assert.True(t, format.SoftWrap)
-		assert.Equal(t, "» ", format.WrapIndicator)
-	})
-
-	t.Run("lang soft wrap config overrides editor config", func(t *testing.T) {
-		root := t.TempDir()
-		writeConfig(t, root, `
-[editor.soft-wrap]
-enable = true
-wrap-indicator = "» "
-`)
 		writeLanguages(t, root, `
 [[language]]
 name = "markdown"
@@ -1086,7 +670,7 @@ soft-wrap.wrap-indicator = "↳ "
 `)
 		t.Setenv("XDG_CONFIG_HOME", root)
 
-		format := config.TextFormatForLanguage("markdown", 80)
+		format := language.TextFormatForLanguage("markdown", 80)
 
 		assert.False(t, format.SoftWrap)
 		assert.Equal(t, "↳ ", format.WrapIndicator)
@@ -1101,26 +685,32 @@ soft-wrap.enable = true
 `)
 		t.Setenv("XDG_CONFIG_HOME", root)
 
-		format := config.TextFormatForLanguage("markdown", 10)
+		format := language.TextFormatForLanguage("markdown", 10)
 
 		assert.False(t, format.SoftWrap)
 	})
 
-	t.Run("wraps at width when configured and narrower", func(t *testing.T) {
-		root := t.TempDir()
-		writeConfig(t, root, `
-[editor]
-text-width = 40
+	t.Run("uses soft wrap config", func(t *testing.T) {
+		sw := language.SoftWrap{}
+		sw.Enable = new(true)
+		sw.WrapIndicator = new("» ")
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-[editor.soft-wrap]
-enable = true
-wrap-at-text-width = true
-max-wrap = 20
-max-indent-retain = 40
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
+		format := language.TextFormatForLanguageWithConfig("go", nil, sw, 80)
 
-		format := config.TextFormatForLanguage("markdown", 80)
+		assert.True(t, format.SoftWrap)
+		assert.Equal(t, "» ", format.WrapIndicator)
+	})
+
+	t.Run("wraps at configured width", func(t *testing.T) {
+		sw := language.SoftWrap{}
+		sw.Enable = new(true)
+		sw.WrapAtTextWidth = new(true)
+		sw.MaxWrap = new(20)
+		sw.MaxIndentRetain = new(40)
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+		format := language.TextFormatForLanguageWithConfig("go", new(40), sw, 80)
 
 		assert.True(t, format.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, format.ViewportWidth)
@@ -1128,23 +718,18 @@ max-indent-retain = 40
 		assert.Equal(t, 16, format.MaxIndentRetain)
 	})
 
-	t.Run("ignores text width when viewport is narrower", func(t *testing.T) {
-		root := t.TempDir()
-		writeConfig(t, root, `
-[editor]
-text-width = 80
+	t.Run("ignores wide text width", func(t *testing.T) {
+		sw := language.SoftWrap{}
+		sw.Enable = new(true)
+		sw.WrapAtTextWidth = new(true)
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-[editor.soft-wrap]
-enable = true
-wrap-at-text-width = true
-`)
-		t.Setenv("XDG_CONFIG_HOME", root)
-
-		format := config.TextFormatForLanguage("markdown", 40)
+		format := language.TextFormatForLanguageWithConfig("go", new(80), sw, 40)
 
 		assert.False(t, format.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, format.ViewportWidth)
 	})
+
 }
 
 func TestDetectLanguage(t *testing.T) {
@@ -1156,7 +741,7 @@ name = "custom"
 file-types = ["foo"]
 `)
 
-		lang, ok := config.DetectLanguage(filepath.Join(root, "main.foo"), "")
+		lang, ok := language.DetectLanguage(filepath.Join(root, "main.foo"), "")
 
 		assert.True(t, ok)
 		assert.Equal(t, "custom", lang)
@@ -1174,7 +759,7 @@ name = "glob"
 file-types = [{ glob = "special.conf" }]
 `)
 
-		lang, ok := config.DetectLanguage(
+		lang, ok := language.DetectLanguage(
 			filepath.Join(root, "special.conf"), "",
 		)
 
@@ -1195,7 +780,7 @@ file-types = [{ glob = "project/src/*.conf" }]
 `)
 		path := filepath.Join(root, "project", "src", "special.conf")
 
-		lang, ok := config.DetectLanguage(path, "")
+		lang, ok := language.DetectLanguage(path, "")
 
 		assert.True(t, ok)
 		assert.Equal(t, "long", lang)
@@ -1212,17 +797,17 @@ file-types = [
 ]
 `)
 
-		lang, ok := config.DetectLanguage(
+		langName, ok := language.DetectLanguage(
 			filepath.Join(root, "custom-addon", "views", "main.hbs"), "",
 		)
 
 		assert.True(t, ok)
-		assert.Equal(t, "config", lang)
-		lang, ok = config.DetectLanguage(
+		assert.Equal(t, "config", langName)
+		langName, ok = language.DetectLanguage(
 			filepath.Join(root, "myjsconfig.json"), "",
 		)
 		assert.True(t, ok)
-		assert.Equal(t, "config", lang)
+		assert.Equal(t, "config", langName)
 	})
 
 	t.Run("matches extension brace glob", func(t *testing.T) {
@@ -1234,7 +819,7 @@ file-types = [{ glob = "myconf/*/*.{inc,conf}" }]
 `)
 		path := filepath.Join(root, "myconf", "machine", "default.inc")
 
-		lang, ok := config.DetectLanguage(path, "")
+		lang, ok := language.DetectLanguage(path, "")
 
 		assert.True(t, ok)
 		assert.Equal(t, "conf", lang)
@@ -1248,7 +833,7 @@ name = "script"
 shebangs = ["customsh"]
 `)
 
-		lang, ok := config.DetectLanguage(
+		lang, ok := language.DetectLanguage(
 			"no-language-match", "#!/usr/bin/env customsh\n",
 		)
 
@@ -1268,99 +853,12 @@ name = "long"
 injection-regex = "foo-bar"
 `)
 
-		lang, ok := config.DetectLanguage(
+		lang, ok := language.DetectLanguage(
 			"no-language-match", "embedded foo-bar marker",
 		)
 
 		assert.True(t, ok)
 		assert.Equal(t, "long", lang)
-	})
-}
-
-func TestBufferLine(t *testing.T) {
-	t.Run("defaults", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-
-		assert.Equal(t, config.BufferLineNever, cfg.GetBufferLine())
-	})
-
-	t.Run("loads from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-bufferline = "always"
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, config.BufferLineAlways, cfg.GetBufferLine())
-	})
-}
-
-func TestEditorMiscOptions(t *testing.T) {
-	t.Run("defaults", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-
-		assert.False(t, cfg.Cursorcolumn())
-		assert.True(t, cfg.Mouse())
-	})
-
-	t.Run("loads from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-cursorcolumn = true
-mouse = false
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.True(t, cfg.Cursorcolumn())
-		assert.False(t, cfg.Mouse())
-	})
-}
-
-func TestRulersConfig(t *testing.T) {
-	t.Run("defaults to empty", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-
-		assert.Empty(t, cfg.Rulers())
-	})
-
-	t.Run("loads from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-rulers = [80, 120]
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, []int{80, 120}, cfg.Rulers())
-	})
-
-}
-
-func TestShellConfig(t *testing.T) {
-	t.Run("defaults to sh -c", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-
-		sh := cfg.Shell()
-
-		assert.Equal(t, "sh", sh[0])
-		assert.Equal(t, "-c", sh[1])
-	})
-
-	t.Run("loads shell from toml", func(t *testing.T) {
-		path := writeConfig(t, t.TempDir(), `
-[editor]
-shell = ["bash", "--norc", "-c"]
-`)
-
-		cfg, ok := config.LoadConfig(path)
-
-		assert.True(t, ok)
-		assert.Equal(t, []string{"bash", "--norc", "-c"}, cfg.Shell())
 	})
 }
 
@@ -1375,8 +873,8 @@ func writeLanguages(t *testing.T, root, text string) string {
 	return path
 }
 
-func findLanguage(langs config.Languages, name string) (config.Language, bool) {
-	var found config.Language
+func findLanguage(langs language.Languages, name string) (language.Language, bool) {
+	var found language.Language
 	ok := false
 	for _, lang := range langs.Languages {
 		if lang.Name == name {

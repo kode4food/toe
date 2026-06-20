@@ -10,7 +10,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 func TestMotion(t *testing.T) {
@@ -614,10 +613,8 @@ func TestVisualMoveFormat(t *testing.T) {
 	})
 
 	t.Run("MoveUp with soft-wrap width uses visual lines", func(t *testing.T) {
-		cfg := &config.Config{}
-		cfg.Editor.SoftWrap.Enable = new(true)
 		e := editorWithText(t, "abcdef\nghijkl")
-		e.SetConfig(cfg)
+		e.Options().SoftWrap.Enable = new(true)
 		e.SetViewContentWidth(20)
 		setCursor(t, e, 7)
 
@@ -627,10 +624,8 @@ func TestVisualMoveFormat(t *testing.T) {
 	})
 
 	t.Run("soft-wrap uses visual lines", func(t *testing.T) {
-		cfg := &config.Config{}
-		cfg.Editor.SoftWrap.Enable = new(true)
 		e := editorWithText(t, "abcdef\nghijkl")
-		e.SetConfig(cfg)
+		e.Options().SoftWrap.Enable = new(true)
 		e.SetViewContentWidth(20)
 		setCursor(t, e, 0)
 

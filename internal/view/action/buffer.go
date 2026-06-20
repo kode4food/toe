@@ -11,7 +11,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -746,7 +746,7 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	lang := config.LoadLanguage(doc.Lang())
+	lang := language.LoadLanguage(doc.Lang())
 	commentTokens := slices.Clone(lang.CommentTokens)
 	slices.SortFunc(commentTokens, func(a, b string) int {
 		return len(b) - len(a)
@@ -959,7 +959,7 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 		lines = 1
 	}
 	text := doc.Text()
-	so := min(e.Config().Scrolloff(), max(height-1, 0)/2)
+	so := min(e.Options().ScrollOff, max(height-1, 0)/2)
 
 	offset := v.Offset()
 	anchorLine, err := text.CharToLine(offset.Anchor)

@@ -13,12 +13,14 @@ import (
 // Editor holds the full state of the editor session: all open documents, the
 // view layout tree, and shared editor state
 type Editor struct {
-	docs      map[DocumentId]*Document
-	tree      *Tree
-	cwd       string
-	dirStack  []string
-	config    *config.Config
-	registers register.Registers
+	docs         map[DocumentId]*Document
+	tree         *Tree
+	cwd          string
+	dirStack     []string
+	cfg          *config.Config
+	opts         Options
+	configReload func() error
+	registers    register.Registers
 
 	nextDocID DocumentId
 
@@ -46,21 +48,22 @@ type Editor struct {
 }
 
 var (
-	ErrNoDocument     = errors.New("no document")
-	ErrNoView         = errors.New("no view")
-	ErrReadonly       = errors.New("document is readonly")
-	ErrDocumentNoPath = errors.New("document has no path")
-	ErrEmptyDirStack  = errors.New("directory stack is empty")
+	ErrNoDocument        = errors.New("no document")
+	ErrNoView            = errors.New("no view")
+	ErrReadonly          = errors.New("document is readonly")
+	ErrDocumentNoPath    = errors.New("document has no path")
+	ErrEmptyDirStack     = errors.New("directory stack is empty")
+	ErrConfigUnavailable = errors.New("config path unavailable")
 )
 
 // NewEditor creates an empty editor with one scratch document and view
 func NewEditor(cwd string) *Editor {
-	cfg := loadEditorConfig()
 	e := &Editor{
 		docs:      map[DocumentId]*Document{},
 		tree:      newTree(0, 0),
 		cwd:       cwd,
-		config:    cfg,
+		cfg:       loadEditorConfig(),
+		opts:      defaultOptions(),
 		registers: register.New(),
 	}
 	doc := e.newDocument()
@@ -328,11 +331,34 @@ func (e *Editor) PrevDocID() (DocumentId, bool) {
 }
 
 // Config returns the current live editor configuration
-func (e *Editor) Config() *config.Config { return e.config }
+func (e *Editor) Config() *config.Config { return e.cfg }
 
 // SetConfig replaces the current live editor configuration
 func (e *Editor) SetConfig(cfg *config.Config) {
-	e.config = cfg
+	e.cfg = cfg
+}
+
+// Options returns the typed runtime config values for the editor session
+func (e *Editor) Options() *Options { return &e.opts }
+
+// SetConfigReload registers the function called by ReloadConfig to reset
+// module section state and re-apply the merged TOML config
+func (e *Editor) SetConfigReload(fn func() error) {
+	e.configReload = fn
+}
+
+// ReloadConfig reloads the live editor config and resets module section state.
+// Falls back to loading user config only when no reload function is registered
+func (e *Editor) ReloadConfig() error {
+	if e.configReload != nil {
+		return e.configReload()
+	}
+	cfg, ok := config.LoadUserConfig()
+	if !ok {
+		return ErrConfigUnavailable
+	}
+	e.SetConfig(cfg)
+	return nil
 }
 
 // View returns a view by id
@@ -488,7 +514,7 @@ func (e *Editor) Save() error {
 	if !ok {
 		return ErrNoDocument
 	}
-	return doc.Save()
+	return doc.Save(&e.opts)
 }
 
 // NewDocument creates a new empty scratch document and makes it the focused
@@ -512,7 +538,7 @@ func (e *Editor) SaveAll() []error {
 	var errs []error
 	for _, doc := range e.docs {
 		if doc.Modified() {
-			if err := doc.Save(); err != nil {
+			if err := doc.Save(&e.opts); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -672,12 +698,12 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 
 func (e *Editor) newDocument() *Document {
 	e.nextDocID++
-	return newDocument(e.nextDocID, e.config)
+	return newDocument(e.nextDocID, &e.opts)
 }
 
 func (e *Editor) openFile(path string) (*Document, error) {
 	e.nextDocID++
-	return openDocument(e.nextDocID, path, e.config)
+	return openDocument(e.nextDocID, path, &e.opts)
 }
 
 func loadEditorConfig() *config.Config {

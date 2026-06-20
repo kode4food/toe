@@ -6,7 +6,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 // GotoLineEndNewline moves each cursor to the end of its current line,
@@ -383,7 +383,7 @@ func ToggleComments(e *view.Editor) {
 	if doc.Readonly() {
 		return
 	}
-	lang := config.LoadLanguage(doc.Lang())
+	lang := language.LoadLanguage(doc.Lang())
 	lineToken, hasLine := firstCommentToken(lang)
 	blockTokens := lang.BlockCommentTokens
 	if hasLine && len(blockTokens) == 0 {
@@ -426,7 +426,7 @@ func ToggleLineComments(e *view.Editor) {
 	if !ok {
 		return
 	}
-	lang := config.LoadLanguage(doc.Lang())
+	lang := language.LoadLanguage(doc.Lang())
 	lineToken, hasLine := firstCommentToken(lang)
 	if hasLine {
 		toggleLineCommentsWithToken(e, lineToken)
@@ -455,7 +455,7 @@ func ToggleBlockComments(e *view.Editor) {
 	if !ok {
 		return
 	}
-	lang := config.LoadLanguage(doc.Lang())
+	lang := language.LoadLanguage(doc.Lang())
 	switch {
 	case len(lang.BlockCommentTokens) > 0:
 		toggleBlockCommentsWithTokens(e, lang.BlockCommentTokens)
@@ -859,7 +859,7 @@ func pushJump(e *view.Editor) {
 	v.PushJump(v.DocID(), sel.Primary().Cursor(text))
 }
 
-func firstCommentToken(lang *config.Language) (string, bool) {
+func firstCommentToken(lang *language.Language) (string, bool) {
 	if len(lang.CommentTokens) == 0 {
 		return "", false
 	}

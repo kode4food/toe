@@ -20,9 +20,7 @@ func TestSearchConfig(t *testing.T) {
 
 	t.Run("disabled smart case is sensitive", func(t *testing.T) {
 		e := editorWithText(t, "zz Alpha")
-		cfg := e.Config()
-		cfg.Editor.Search.SmartCase = new(false)
-		e.SetConfig(cfg)
+		e.Options().SearchSmartCase = false
 
 		err := action.SearchForward(e, "alpha")
 
@@ -32,9 +30,7 @@ func TestSearchConfig(t *testing.T) {
 
 	t.Run("disabled wrap around stops at end", func(t *testing.T) {
 		e := editorWithText(t, "foo bar")
-		cfg := e.Config()
-		cfg.Editor.Search.WrapAround = new(false)
-		e.SetConfig(cfg)
+		e.Options().SearchWrapAround = false
 		doc, _ := e.FocusedDocument()
 		setCursor(t, e, doc.Text().LenChars())
 

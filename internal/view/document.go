@@ -10,6 +10,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -46,7 +47,7 @@ type (
 		// langDef holds the resolved language definition for lang, set whenever
 		// lang is, so the render path reads it directly instead of re-parsing
 		// the language config every frame
-		langDef       *config.Language
+		langDef       *language.Language
 		restoreCursor bool
 	}
 
@@ -66,7 +67,7 @@ func (d *Document) RestoreCursor() bool { return d.restoreCursor }
 // cursor one grapheme to the left
 func (d *Document) SetRestoreCursor(v bool) { d.restoreCursor = v }
 
-func newDocument(id DocumentId, cfg *config.Config) *Document {
+func newDocument(id DocumentId, opts *Options) *Document {
 	d := &Document{
 		id:         id,
 		text:       core.NewRope(""),
@@ -74,27 +75,27 @@ func newDocument(id DocumentId, cfg *config.Config) *Document {
 		history:    core.NewHistory(),
 		indent:     core.Tabs(),
 		tabWidth:   4,
-		lineEnding: cfg.DefaultLineEnding(),
+		lineEnding: defaultLineEnding(opts.DefaultLineEnding),
 	}
 	d.SetLang("text")
 	return d
 }
 
 func openDocument(
-	id DocumentId, path string, cfg *config.Config,
+	id DocumentId, path string, opts *Options,
 ) (*Document, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, &DocumentOpenError{Path: path, Err: err}
 	}
 	var ec *config.EditorConfig
-	if cfg.EditorConfig() {
+	if opts.EditorConfig {
 		ec = config.FindEditorConfig(absPath)
 	}
 	data, err := os.ReadFile(absPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			doc := newDocument(id, cfg)
+			doc := newDocument(id, opts)
 			doc.path = absPath
 			doc.editorConfig = ec
 			doc.SetLang(detectLang(absPath, ""))
@@ -129,7 +130,7 @@ func openDocument(
 		selections:   map[Id]core.Selection{},
 		history:      core.NewHistory(),
 		tabWidth:     4,
-		lineEnding:   cfg.DefaultLineEnding(),
+		lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
 		editorConfig: ec,
 		hasBOM:       hasBOM,
 	}
@@ -181,27 +182,25 @@ func (d *Document) Lang() string { return d.lang }
 // render path reads the cached *config.Language directly instead of re-parsing
 func (d *Document) SetLang(lang string) {
 	d.lang = lang
-	d.langDef = config.LoadLanguage(lang)
+	d.langDef = language.LoadLanguage(lang)
 }
 
 // TextFormat returns the display-time text layout options for this document
-func (d *Document) TextFormat(w int) *config.TextFormat {
-	cfg, _ := config.LoadUserConfig()
-	format := d.TextFormatForConfig(w, cfg)
-	return format
+func (d *Document) TextFormat(w int) *language.TextFormat {
+	return d.TextFormatForConfig(w, new(defaultOptions()))
 }
 
-// TextFormatForConfig returns layout options using the supplied editor config
+// TextFormatForConfig returns layout options using the supplied editor options
 func (d *Document) TextFormatForConfig(
-	w int, cfg *config.Config,
-) *config.TextFormat {
-	lang := d.langDef
+	w int, opts *Options,
+) *language.TextFormat {
+	langDef := d.langDef
 	if d.editorConfig != nil && d.editorConfig.MaxLineLength != nil {
-		cpy := *lang
+		cpy := *langDef
 		cpy.TextWidth = d.editorConfig.MaxLineLength
-		lang = &cpy
+		langDef = &cpy
 	}
-	format := config.TextFormatForConfig(lang, cfg, w)
+	format := language.TextFormatForConfig(langDef, opts.TextWidth, opts.SoftWrap, w)
 	format.TabWidth = d.tabWidth
 	return format
 }
@@ -380,7 +379,7 @@ func (d *Document) Redo(vid Id) bool {
 }
 
 // Save writes the document to its current path
-func (d *Document) Save() error {
+func (d *Document) Save(opts *Options) error {
 	if d.path == "" {
 		return ErrDocumentNoPath
 	}
@@ -388,8 +387,7 @@ func (d *Document) Save() error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	cfg, _ := config.LoadUserConfig()
-	text := prepareSaveText(d.text.String(), d.lineEnding, cfg, d.editorConfig)
+	text := prepareSaveText(d.text.String(), d.lineEnding, opts, d.editorConfig)
 	if text != d.text.String() {
 		d.text = core.NewRope(text)
 	}
@@ -400,7 +398,7 @@ func (d *Document) Save() error {
 		data = []byte(text)
 	}
 	var err error
-	if cfg.AtomicSave() {
+	if opts.AtomicSave {
 		err = atomicWrite(d.path, dir, data)
 	} else {
 		err = os.WriteFile(d.path, data, 0o644)
@@ -469,7 +467,7 @@ func (d *Document) mapOtherSelections(vid Id, cs core.ChangeSet) {
 // detectLang returns a Chroma-compatible language name for the given file path
 // and content. Falls back to "text" if no match is found
 func detectLang(path, content string) string {
-	if lang, ok := config.DetectLanguage(path, content); ok {
+	if lang, ok := language.DetectLanguage(path, content); ok {
 		return lang
 	}
 	if lex := lexers.Match(path); lex != nil {
@@ -481,21 +479,28 @@ func detectLang(path, content string) string {
 	return "text"
 }
 
+func defaultLineEnding(le core.LineEnding) core.LineEnding {
+	if le == "" {
+		return core.NativeLineEnding()
+	}
+	return le
+}
+
 func prepareSaveText(
-	s string, le core.LineEnding, cfg *config.Config, ec *config.EditorConfig,
+	s string, le core.LineEnding, opts *Options, ec *config.EditorConfig,
 ) string {
-	trim := cfg.TrimTrailingWhitespace()
+	trim := opts.TrimTrailingWS
 	if ec != nil && ec.TrimTrailingWhitespace != nil {
 		trim = *ec.TrimTrailingWhitespace
 	}
-	insert := cfg.InsertFinalNewline()
+	insert := opts.InsertFinalNewline
 	if ec != nil && ec.InsertFinalNewline != nil {
 		insert = *ec.InsertFinalNewline
 	}
 	if trim {
 		s = trimTrailingWhitespace(s)
 	}
-	if cfg.TrimFinalNewlines() {
+	if opts.TrimFinalNewlines {
 		s = trimFinalNewlines(s)
 	}
 	if insert && s != "" {

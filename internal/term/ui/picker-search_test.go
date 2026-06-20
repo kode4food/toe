@@ -7,10 +7,11 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobalSearch(t *testing.T) {
@@ -21,7 +22,7 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NotContains(t, out, "b.txt")
 	})
 
-	t.Run("accept opens the match and selects its line", func(t *testing.T) {
+	t.Run("accept opens match", func(t *testing.T) {
 		m, e := globalSearchModel(t, "findme")
 		_ = sendSpecial(m, tea.KeyEnter)
 		doc, ok := e.FocusedDocument()

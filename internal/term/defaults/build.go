@@ -5,27 +5,45 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 )
 
-// RegisterDefaults installs the default command registry for an editor
-func RegisterDefaults(model ui.Model, km *command.Keymaps) {
-	r := &registry{km: km}
-	registerDefaultCommands(r, model)
+// RegisterDefaults installs the default command registry for an editor and
+// returns the registry so callers can apply TOML config to module sections
+func RegisterDefaults(model ui.Model, km *command.Keymaps) (*Registry, error) {
+	r := &Registry{km: km}
+	if err := registerDefaultCommands(r, model); err != nil {
+		return nil, err
+	}
+	labelPrefixNodes(km)
+	return r, nil
 }
 
-func registerDefaultCommands(r *registry, model ui.Model) {
-	registerInsertCommands(r)
-	registerMotionCommands(r)
-	registerEditCommands(r)
-	registerSelectionCommands(r, model)
-	registerSearchCommands(r, model)
-	registerFileCommands(r)
-	registerBufferCommands(r)
-	registerDirectoryCommands(r)
-	registerConfigCommands(r)
-	registerClipboardCommands(r)
-	registerViewCommands(r, model)
-	registerShellCommands(r, model)
-	registerSupportCommands(r, model)
-	labelPrefixNodes(r.km)
+func registerDefaultCommands(r *Registry, model ui.Model) error {
+	modules := []command.Module{
+		insertModule(),
+		motionModule(),
+		editModule(),
+		selectionModule(model),
+		searchModule(model),
+		fileModule(),
+		bufferModule(),
+		directoryModule(),
+		configModule(r),
+		clipboardModule(),
+		viewModule(),
+		shellModule(model),
+		lifecycleModule(),
+		formatModule(),
+		supportModule(),
+		pickerModule(model),
+		commentModule(),
+		macroModule(model),
+	}
+	for _, m := range modules {
+		if err := r.registerModule(m); err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
 
 func labelPrefixNodes(km *command.Keymaps) {

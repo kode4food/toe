@@ -39,9 +39,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		testutil.WriteFakeClipboardTools(t, clipFile)
 		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := editorWithText(t, "abcd")
-		cfg := config.DefaultConfig()
-		cfg.Editor.MiddleClickPaste = new(false)
-		e.SetConfig(cfg)
+		e.Options().MiddleClickPaste = false
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
@@ -92,7 +90,7 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.Greater(t, v.Offset().Anchor, before)
 	})
 
-	t.Run("wheel over pane status bar does not scroll", func(t *testing.T) {
+	t.Run("status bar wheel ignored", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
 		e.SetViewHeight(6)
 		m := renderedModel(e)

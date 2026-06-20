@@ -23,7 +23,7 @@ func TestFileCompleter(t *testing.T) {
 		}
 		km := command.NewKeymaps()
 		e := view.NewEditor(dir)
-		defaults.RegisterDefaults(ui.New(e, km), km)
+		_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 
 		cmd, ok := km.ResolveCommand("open")
 		assert.True(t, ok)
@@ -41,7 +41,7 @@ func TestFileCompleter(t *testing.T) {
 	t.Run("unreadable base yields nothing", func(t *testing.T) {
 		km := command.NewKeymaps()
 		e := view.NewEditor(t.TempDir())
-		defaults.RegisterDefaults(ui.New(e, km), km)
+		_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 
 		cmd, ok := km.ResolveCommand("open")
 		assert.True(t, ok)

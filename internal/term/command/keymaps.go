@@ -1,6 +1,8 @@
 package command
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/kode4food/toe/internal/view"
@@ -23,7 +25,10 @@ type (
 	}
 )
 
-var allModes = []string{"NOR", "SEL", "INS"}
+var (
+	ErrDuplicateCommand = errors.New("duplicate command registration")
+	ErrUnknownMode      = errors.New("keys references mode not in modes")
+)
 
 // NewKeymaps creates an empty Keymaps
 func NewKeymaps() *Keymaps {
@@ -34,40 +39,49 @@ func NewKeymaps() *Keymaps {
 	}
 }
 
-// Register adds or updates a command entry and wires its key bindings
-func (k *Keymaps) Register(name string, cmd Command) {
-	idx, ok := k.byName[name]
-	if !ok {
-		idx = len(k.commands)
-		k.commands = append(k.commands, cmd)
-		k.byName[name] = idx
-	} else {
-		k.commands[idx] = mergeCommand(k.commands[idx], cmd)
+// Register adds a command entry and wires its key bindings.
+// Returns ErrDuplicateCommand if name is already registered — each
+// command must be fully declared once, in the module that owns it
+func (k *Keymaps) Register(name string, cmd Command) error {
+	if _, ok := k.byName[name]; ok {
+		return fmt.Errorf("%w: %s", ErrDuplicateCommand, name)
 	}
-	if k.commands[idx].Run != nil {
-		stored := k.commands[idx]
-		label := stored.DocString
-		if label == "" && len(stored.Aliases) > 0 {
-			label = stored.Aliases[0]
+	idx := len(k.commands)
+	k.commands = append(k.commands, cmd)
+	k.byName[name] = idx
+	if len(cmd.Modes) > 0 {
+		for mode := range cmd.Keys {
+			if mode != "*" && !slices.Contains(cmd.Modes, mode) {
+				return fmt.Errorf("%w: %s in %s", ErrUnknownMode, mode, name)
+			}
+		}
+	}
+	if cmd.Run != nil {
+		label := cmd.DocString
+		if label == "" && len(cmd.Aliases) > 0 {
+			label = cmd.Aliases[0]
 		}
 		action := func(e *view.Editor) Continuation {
 			return k.commands[idx].Run(e, nil).Continuation
 		}
 		modes := cmd.Modes
 		if len(modes) == 0 {
-			modes = allModes
+			modes = defaultModes()
 		}
 		for _, mode := range modes {
-			for _, binding := range cmd.Keys {
-				k.bindActionWithLabel(
-					mode, action, label, binding...,
-				)
+			bindings, ok := cmd.Keys[mode]
+			if !ok {
+				bindings = cmd.Keys["*"]
+			}
+			for _, binding := range bindings {
+				k.bindActionWithLabel(mode, action, label, binding...)
 			}
 		}
 	}
-	for _, alias := range k.commands[idx].Aliases {
+	for _, alias := range cmd.Aliases {
 		k.byAlias[alias] = idx
 	}
+	return nil
 }
 
 // ResolveCommand looks up a command by typeable alias
@@ -226,24 +240,6 @@ func (k *keyTrieNode) set(ev KeyEvent, child *keyTrieNode) {
 	k.children[ev] = child
 }
 
-func mergeCommand(a, b Command) Command {
-	if b.Run != nil {
-		a.Run = b.Run
-	}
-	if len(b.Aliases) > 0 {
-		a.Aliases = b.Aliases
-	}
-	if commandSignatureSet(b.Signature) {
-		a.Signature = b.Signature
-	}
-	return a
-}
-
-func commandSignatureSet(sig Signature) bool {
-	return sig.Positionals.Min != 0 ||
-		sig.Positionals.Max != 0 ||
-		sig.RawAfter != 0 ||
-		len(sig.Flags) > 0 ||
-		len(sig.Completer.Positionals) > 0 ||
-		sig.Completer.Raw != nil
+func defaultModes() []string {
+	return []string{"NOR", "SEL", "INS"}
 }

@@ -274,7 +274,7 @@ func ShellRunCommand(e *view.Editor, cmdStr string) (string, error) {
 }
 
 func makeShellCmd(e *view.Editor, cmdStr string) *exec.Cmd {
-	sh := e.Config().Shell()
+	sh := e.Options().Shell
 	args := append(sh[1:], cmdStr)
 	return exec.Command(sh[0], args...)
 }

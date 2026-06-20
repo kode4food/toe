@@ -18,7 +18,7 @@ func TestBufferNavigation(t *testing.T) {
 		dir := t.TempDir()
 		km := command.NewKeymaps()
 		e := view.NewEditor(dir)
-		defaults.RegisterDefaults(ui.New(e, km), km)
+		_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
 		_, ok = e.VSplit(v.DocID())

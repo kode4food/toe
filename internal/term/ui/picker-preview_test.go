@@ -195,20 +195,16 @@ func TestPickerPreview(t *testing.T) {
 
 	t.Run("retains indent on wrap", func(t *testing.T) {
 		tmp := t.TempDir()
-		cfgRoot := t.TempDir()
-		writeConfig(t, cfgRoot, `
-[editor.soft-wrap]
-enable = true
-wrap-indicator = "» "
-max-indent-retain = 8
-`)
 		text := "    " + strings.Repeat("word ", 20)
 		path := filepath.Join(tmp, "notes.md")
 		err := os.WriteFile(path, []byte(text), 0o644)
 		assert.NoError(t, err)
-		t.Setenv("XDG_CONFIG_HOME", cfgRoot)
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		e := view.NewEditor(tmp)
+		e.Options().SoftWrap.Enable = new(true)
+		e.Options().SoftWrap.WrapIndicator = new("» ")
+		e.Options().SoftWrap.MaxIndentRetain = new(8)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(

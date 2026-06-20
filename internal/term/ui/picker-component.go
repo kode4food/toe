@@ -89,7 +89,7 @@ func (p *PickerComponent) HandleEvent(
 		return consumed(), nil
 
 	case tea.MouseWheelMsg:
-		step := cx.Editor.Config().ScrollLines()
+		step := cx.Editor.Options().ScrollLines
 		switch {
 		case p.listBounds.contains(msg.X, msg.Y):
 			switch msg.Button {

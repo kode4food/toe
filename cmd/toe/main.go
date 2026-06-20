@@ -69,7 +69,36 @@ func run(args []string, out io.Writer) error {
 
 	km := command.NewKeymaps()
 	model := ui.New(editor, km)
-	defaults.RegisterDefaults(model, km)
+	reg, err := defaults.RegisterDefaults(model, km)
+	if err != nil {
+		return err
+	}
+	raw, _ := config.LoadRawUserConfig()
+	if raw == nil {
+		raw = map[string]any{}
+	}
+	if err := reg.ApplyTOML(editor, raw); err != nil {
+		return err
+	}
+	if configPath != "" {
+		if raw, ok := config.LoadRawConfig(configPath); ok {
+			if err := reg.ApplyTOML(editor, raw); err != nil {
+				return err
+			}
+		}
+	}
+	editor.SetConfigReload(func() error {
+		cfg, ok := config.LoadUserConfig()
+		if !ok {
+			return view.ErrConfigUnavailable
+		}
+		editor.SetConfig(cfg)
+		raw, _ := config.LoadRawUserConfig()
+		if raw == nil {
+			raw = map[string]any{}
+		}
+		return reg.ApplyTOML(editor, raw)
+	})
 	if pickerDir != "" {
 		abs, err := filepath.Abs(pickerDir)
 		if err != nil {

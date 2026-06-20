@@ -14,6 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
+	viewconfig "github.com/kode4food/toe/internal/view/config"
 )
 
 func TestConfigCommands(t *testing.T) {
@@ -21,7 +22,7 @@ func TestConfigCommands(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", root)
 		e := view.NewEditor(t.TempDir())
-		m := runTypable(newTestModel(e), "config-open")
+		m := runTypable(newTestModel(t, e), "config-open")
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 		doc, ok := e.FocusedDocument()
@@ -42,7 +43,7 @@ func TestConfigCommands(t *testing.T) {
 		assert.NoError(t, err)
 		e := view.NewEditor(cwd)
 		m := runTypable(
-			newTestModel(e),
+			newTestModel(t, e),
 			"config-open-workspace",
 		)
 
@@ -60,7 +61,7 @@ func TestConfigCommands(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CACHE_HOME", root)
 		e := view.NewEditor(t.TempDir())
-		m := runTypable(newTestModel(e), "log-open")
+		m := runTypable(newTestModel(t, e), "log-open")
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 		doc, ok := e.FocusedDocument()
@@ -84,7 +85,7 @@ func TestConfigCommands(t *testing.T) {
 		t.Setenv("XDG_DATA_HOME", dataRoot)
 		e := view.NewEditor(cwd)
 
-		_ = runTypable(newTestModel(e), "workspace-trust")
+		_ = runTypable(newTestModel(t, e), "workspace-trust")
 
 		path := filepath.Join(dataRoot, loader.DirName, "trusted_workspaces")
 		data, err := os.ReadFile(path)
@@ -103,7 +104,7 @@ func TestConfigCommands(t *testing.T) {
 		t.Setenv(loader.RuntimeEnv, rt)
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		m := runTypable(newTestModel(e), "tutor")
+		m := runTypable(newTestModel(t, e), "tutor")
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 		doc, ok := e.FocusedDocument()
@@ -117,44 +118,44 @@ func TestConfigCommands(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
 		_ = runTypable(
-			newTestModel(e),
+			newTestModel(t, e),
 			"set editor.text-width 72",
 		)
 
-		assert.Equal(t, 72, *e.Config().Editor.TextWidth)
+		assert.Equal(t, 72, *e.Options().TextWidth)
 	})
 
 	t.Run("set: quoted spaces", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
 		_ = runTypable(
-			newTestModel(e),
+			newTestModel(t, e),
 			"set editor.soft-wrap.wrap-indicator '» '",
 		)
 
-		assert.Equal(t, "» ", *e.Config().Editor.SoftWrap.WrapIndicator)
+		assert.Equal(t, "» ", *e.Options().SoftWrap.WrapIndicator)
 	})
 
 	t.Run("set: arrays", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		m := newTestModel(e)
+		m := newTestModel(t, e)
 
 		_ = runTypable(m, "set editor.rulers [80, 120]")
 		_ = runTypable(m, `set editor.shell ["bash", "--norc", "-c"]`)
 
-		assert.Equal(t, []int{80, 120}, e.Config().Rulers())
-		assert.Equal(t, []string{"bash", "--norc", "-c"}, e.Config().Shell())
+		assert.Equal(t, []int{80, 120}, e.Options().Rulers)
+		assert.Equal(t, []string{"bash", "--norc", "-c"}, e.Options().Shell)
 	})
 
 	t.Run("toggle", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
 		_ = runTypable(
-			newTestModel(e),
+			newTestModel(t, e),
 			"toggle editor.soft-wrap.enable",
 		)
 
-		assert.True(t, *e.Config().Editor.SoftWrap.Enable)
+		assert.True(t, *e.Options().SoftWrap.Enable)
 	})
 
 	t.Run("config-reload", func(t *testing.T) {
@@ -169,13 +170,11 @@ text-width = 72
 		assert.NoError(t, err)
 		t.Setenv("XDG_CONFIG_HOME", root)
 		e := view.NewEditor(t.TempDir())
-		cfg := e.Config()
-		cfg.Editor.TextWidth = new(80)
-		e.SetConfig(cfg)
+		e.Options().TextWidth = new(80)
 
-		_ = runTypable(newTestModel(e), "config-reload")
+		_ = runTypable(newTestModel(t, e), "config-reload")
 
-		assert.Equal(t, 72, *e.Config().Editor.TextWidth)
+		assert.Equal(t, 72, *e.Options().TextWidth)
 	})
 
 	t.Run("theme: set", func(t *testing.T) {
@@ -183,7 +182,7 @@ text-width = 72
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
 
-		_ = runTypable(newTestModel(e), "theme latte")
+		_ = runTypable(newTestModel(t, e), "theme latte")
 
 		assert.Equal(t, "latte", e.Config().Theme.Name)
 	})
@@ -192,7 +191,7 @@ text-width = 72
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
 
-		m := resize(newTestModel(e), 80, 24)
+		m := resize(newTestModel(t, e), 80, 24)
 		m = runTypable(m, "theme bad")
 
 		assert.NotEqual(t, "bad", e.Config().Theme.Name)
@@ -207,7 +206,7 @@ text-width = 72
 		cfg := e.Config()
 		cfg.Theme.Name = "latte"
 		e.SetConfig(cfg)
-		m := resize(newTestModel(e), 80, 24)
+		m := resize(newTestModel(t, e), 80, 24)
 
 		m = runTypable(m, "theme mocha")
 
@@ -222,7 +221,7 @@ text-width = 72
 		t.Setenv("WSL_DISTRO_NAME", "")
 		e := view.NewEditor(t.TempDir())
 
-		_ = runTypable(newTestModel(e), "theme mocha")
+		_ = runTypable(newTestModel(t, e), "theme mocha")
 
 		assert.Equal(t, "mocha", e.Config().Theme.Name)
 	})
@@ -233,7 +232,7 @@ text-width = 72
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
 
-		_ = runTypable(newTestModel(e), "theme default")
+		_ = runTypable(newTestModel(t, e), "theme default")
 
 		assert.Equal(t, "mocha", e.Config().Theme.Name)
 	})
@@ -242,7 +241,7 @@ text-width = 72
 		t.Setenv(loader.RuntimeEnv, t.TempDir())
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		m := resize(newTestModel(e), 80, 24)
+		m := resize(newTestModel(t, e), 80, 24)
 
 		m = runTypable(m, "theme")
 
@@ -254,9 +253,18 @@ func runTypable(m ui.Model, cmd string) ui.Model {
 	return m.ExecTypable(cmd)
 }
 
-func newTestModel(e *view.Editor) ui.Model {
+func newTestModel(t *testing.T, e *view.Editor) ui.Model {
+	t.Helper()
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	defaults.RegisterDefaults(m, km)
+	reg, err := defaults.RegisterDefaults(m, km)
+	assert.NoError(t, err)
+	e.SetConfigReload(func() error {
+		raw, _ := viewconfig.LoadRawUserConfig()
+		if raw == nil {
+			raw = map[string]any{}
+		}
+		return reg.ApplyTOML(e, raw)
+	})
 	return m
 }

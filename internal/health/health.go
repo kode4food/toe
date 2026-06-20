@@ -10,7 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/theme"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -82,7 +82,7 @@ func writeReport(w io.Writer, r Report) {
 }
 
 func checkLanguages() Check {
-	langs, ok := config.LoadBundledLanguages()
+	langs, ok := language.LoadBundledLanguages()
 	if !ok {
 		return failed("languages", "bundled languages.toml did not parse")
 	}
@@ -97,7 +97,7 @@ func checkLanguages() Check {
 }
 
 func checkGrammars() Check {
-	langs, ok := config.LoadBundledLanguages()
+	langs, ok := language.LoadBundledLanguages()
 	if !ok {
 		return failed("grammars", "bundled languages.toml did not parse")
 	}
@@ -153,7 +153,7 @@ func failed(name, msg string) Check {
 	return Check{Name: name, OK: false, Errors: []string{msg}}
 }
 
-func languageNames(langs []config.Language) []string {
+func languageNames(langs []language.Language) []string {
 	names := make([]string, 0, len(langs))
 	for _, l := range langs {
 		names = append(names, l.Name)
@@ -162,7 +162,7 @@ func languageNames(langs []config.Language) []string {
 	return names
 }
 
-func grammarNames(grams []config.Grammar) []string {
+func grammarNames(grams []language.Grammar) []string {
 	names := make([]string, 0, len(grams))
 	for _, g := range grams {
 		names = append(names, g.Name)

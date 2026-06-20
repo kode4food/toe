@@ -35,7 +35,7 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	km.Register("palette_probe", command.Command{
+	_ = km.Register("palette_probe", command.Command{
 		Run: func(e *view.Editor, _ *command.Args) command.Result {
 			e.SetMode(view.ModeInsert)
 			return command.Result{}

@@ -112,19 +112,3 @@ func TestSupportPickerCommands(t *testing.T) {
 		})
 	}
 }
-
-func TestSupportParagraphMotion(t *testing.T) {
-	t.Run("next paragraph moves the cursor down", func(t *testing.T) {
-		e, km := defaultsEnv(t, "a\n\nb\n")
-		setCursor(t, e, 0)
-		runCmd(t, km, e, "goto_next_paragraph")
-		assert.Greater(t, cursorPos(t, e), 0)
-	})
-
-	t.Run("prev paragraph runs from end", func(t *testing.T) {
-		e, km := defaultsEnv(t, "a\n\nb\n")
-		setCursor(t, e, 4)
-		runCmd(t, km, e, "goto_prev_paragraph")
-		assert.Less(t, cursorPos(t, e), 4)
-	})
-}

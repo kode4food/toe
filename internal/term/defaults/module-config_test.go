@@ -5,23 +5,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/kode4food/toe/internal/view/config"
 )
 
-func TestConfigOption(t *testing.T) {
-	boolKey := config.BoolOptionKeys()[0]
+const configOptionBoolKey = "editor.atomic-save"
 
+func TestConfigOption(t *testing.T) {
 	t.Run("set then get round-trips", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", boolKey+" true")
-		res := runCmdArgs(t, km, e, "get_option", boolKey)
+		runCmdArgs(t, km, e, "set_option", configOptionBoolKey+" true")
+		res := runCmdArgs(t, km, e, "get_option", configOptionBoolKey)
 		assert.Equal(t, "true", res.Message)
 	})
 
 	t.Run("toggle reports new value", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "toggle_option", boolKey)
+		res := runCmdArgs(t, km, e, "toggle_option", configOptionBoolKey)
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
@@ -62,7 +60,7 @@ func TestConfigDocumentOptions(t *testing.T) {
 		assert.Equal(t, "go", doc.Lang())
 	})
 
-	t.Run("set language reports current without args", func(t *testing.T) {
+	t.Run("set language reports current", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmd(t, km, e, "set_language")
 		assert.NotEmpty(t, res.Message)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -996,10 +996,10 @@ func continuedIndent(
 ) (string, bool) {
 	text := doc.Text()
 	indent := leadingWhitespace(text, pos)
-	if !e.Config().ContinueComments() {
+	if !e.Options().ContinueComments {
 		return indent, false
 	}
-	lang := config.LoadLanguage(doc.Lang())
+	lang := language.LoadLanguage(doc.Lang())
 	token, ok := core.GetCommentToken(text, lang.CommentTokens, line)
 	if !ok {
 		return indent, false
@@ -1093,11 +1093,11 @@ func applyDeletions(e *view.Editor, args applyDeletionsArgs) bool {
 func autoPairsForDocument(
 	e *view.Editor, doc *view.Document,
 ) (core.AutoPairs, bool) {
-	global, ok := e.Config().AutoPairs()
+	global, ok := e.Options().AutoPairs()
 	if !ok {
 		return core.AutoPairs{}, false
 	}
-	lang := config.LoadLanguage(doc.Lang())
+	lang := language.LoadLanguage(doc.Lang())
 	if pairs, ok := lang.AutoPairs.AutoPairs(); ok {
 		return pairs, true
 	}

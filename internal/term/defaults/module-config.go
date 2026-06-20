@@ -151,16 +151,9 @@ func configModule(r *command.Registry) command.Module {
 			actConfigOpen: {
 				DocString: "Open the user config.toml file",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					path, ok := config.UserConfigPath()
-					if !ok {
-						return command.Result{
-							Message: "error: config path unavailable",
-						}
-					}
-					if _, err := e.SwitchFile(path); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{}
+					return openFromPath(
+						e, config.UserConfigPath, "config path unavailable",
+					)
 				},
 				Aliases:   []string{"config-open"},
 				Signature: sig(),
@@ -191,16 +184,9 @@ func configModule(r *command.Registry) command.Module {
 			actLogOpen: {
 				DocString: "Open the editor log file",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					path, ok := config.LogFilePath()
-					if !ok {
-						return command.Result{
-							Message: "error: log path unavailable",
-						}
-					}
-					if _, err := e.SwitchFile(path); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{}
+					return openFromPath(
+						e, config.LogFilePath, "log path unavailable",
+					)
 				},
 				Aliases:   []string{"log-open"},
 				Signature: sig(),
@@ -539,4 +525,17 @@ func languageNames() []string {
 	}
 	names = append(names, "text")
 	return names
+}
+
+func openFromPath(
+	e *view.Editor, pathFn func() (string, bool), unavailMsg string,
+) command.Result {
+	path, ok := pathFn()
+	if !ok {
+		return command.Result{Message: "error: " + unavailMsg}
+	}
+	if _, err := e.SwitchFile(path); err != nil {
+		return command.Result{Message: "error: " + err.Error()}
+	}
+	return command.Result{}
 }

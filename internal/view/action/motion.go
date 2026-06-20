@@ -129,7 +129,8 @@ func AlignSelections(e *view.Editor) {
 			continue
 		}
 		pos := r.Cursor(text)
-		changes = append(changes, core.TextChange(pos, pos, strings.Repeat(" ", pad)))
+		changes = append(changes,
+			core.TextChange(pos, pos, strings.Repeat(" ", pad)))
 	}
 	if len(changes) == 0 {
 		return
@@ -225,16 +226,7 @@ func GotoNextParagraph(e *view.Editor) {
 				break
 			}
 			if isBlankLine(lr.String()) {
-				for l+1 < nLines {
-					next, err := doc.Line(l + 1)
-					if err != nil {
-						break
-					}
-					if !isBlankLine(next.String()) {
-						break
-					}
-					l++
-				}
+				l = skipConsecutiveBlanks(doc, l, nLines, 1)
 				l++
 				found++
 				if found >= n || l >= nLines {
@@ -247,7 +239,6 @@ func GotoNextParagraph(e *view.Editor) {
 				}
 			}
 		}
-		// No more paragraphs: go to last line
 		pos, err := doc.LineToChar(nLines - 1)
 		if err != nil {
 			return r
@@ -268,6 +259,7 @@ func GotoPrevParagraph(e *view.Editor) {
 		if err != nil {
 			return r
 		}
+		nLines := doc.LenLines()
 		found := 0
 		for l := line - 1; l >= 0; l-- {
 			lr, err := doc.Line(l)
@@ -275,17 +267,7 @@ func GotoPrevParagraph(e *view.Editor) {
 				break
 			}
 			if isBlankLine(lr.String()) {
-				// Skip consecutive blank lines upward
-				for l-1 >= 0 {
-					prev, err := doc.Line(l - 1)
-					if err != nil {
-						break
-					}
-					if !isBlankLine(prev.String()) {
-						break
-					}
-					l--
-				}
+				l = skipConsecutiveBlanks(doc, l, nLines, -1)
 				found++
 				if found >= n || l <= 0 {
 					target := max(l-1, 0)
@@ -297,13 +279,30 @@ func GotoPrevParagraph(e *view.Editor) {
 				}
 			}
 		}
-		// No more paragraphs: go to first line
 		pos, err := doc.LineToChar(0)
 		if err != nil {
 			return r
 		}
 		return r.PutCursor(doc, pos, extend)
 	})
+}
+
+func skipConsecutiveBlanks(doc core.Rope, l, nLines, step int) int {
+	for {
+		next := l + step
+		if next < 0 || next >= nLines {
+			break
+		}
+		lr, err := doc.Line(next)
+		if err != nil {
+			break
+		}
+		if !isBlankLine(lr.String()) {
+			break
+		}
+		l = next
+	}
+	return l
 }
 
 // MoveLeft moves all cursors one grapheme to the left

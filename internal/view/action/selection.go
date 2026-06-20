@@ -686,15 +686,7 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 			newHead := min(destHeadStart+headCol, destHeadLineEnd)
 
 			newRange := core.NewRange(newAnchor, newHead)
-			// Skip if this would duplicate an existing range
-			dup := false
-			for _, existing := range out {
-				if existing.Head == newRange.Head {
-					dup = true
-					break
-				}
-			}
-			if dup {
+			if hasDuplicateHead(out, newRange) {
 				break
 			}
 			out = append(out, newRange)
@@ -710,6 +702,15 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 		return
 	}
 	doc.SetSelectionFor(v.ID(), newSel)
+}
+
+func hasDuplicateHead(ranges []core.Range, r core.Range) bool {
+	for _, existing := range ranges {
+		if existing.Head == r.Head {
+			return true
+		}
+	}
+	return false
 }
 
 func alignViewImpl(e *view.Editor, relOffset int) {

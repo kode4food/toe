@@ -565,13 +565,8 @@ func countWordSuffix(s string) int {
 }
 
 func runeDropPrefix(s string, n int) string {
-	for i := range s {
-		if n == 0 {
-			return s[i:]
-		}
-		n--
-	}
-	return ""
+	_, after := runeSplitAt(s, n)
+	return after
 }
 
 func runeSplitAt(s string, n int) (string, string) {

@@ -126,6 +126,21 @@ func mustFocusedView(t *testing.T, e *view.Editor) *view.View {
 	return v
 }
 
+// envWithRegistry builds the same env as defaultsEnv but also returns the
+// command.Registry so tests can call ApplyTOML to exercise section Apply fns
+func envWithRegistry(t *testing.T, text string) (
+	*view.Editor, *command.Keymaps, *command.Registry,
+) {
+	t.Helper()
+	km := command.NewKeymaps()
+	e := view.NewEditor(t.TempDir())
+	reg, _ := defaults.RegisterDefaults(ui.New(e, km), km)
+	if text != "" {
+		setText(t, e, text)
+	}
+	return e, km, reg
+}
+
 // runCmdArgs resolves a command and runs it with positional args parsed from
 // input against the command's own signature
 func runCmdArgs(

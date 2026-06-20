@@ -126,6 +126,20 @@ func TestLineEnding(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("UnmarshalText parses lf/crlf/native", func(t *testing.T) {
+		var e core.LineEnding
+		assert.NoError(t, e.UnmarshalText([]byte("lf")))
+		assert.Equal(t, core.LineEndingLF, e)
+
+		assert.NoError(t, e.UnmarshalText([]byte("crlf")))
+		assert.Equal(t, core.LineEndingCRLF, e)
+
+		assert.NoError(t, e.UnmarshalText([]byte("native")))
+		assert.NotEmpty(t, string(e))
+
+		assert.Error(t, e.UnmarshalText([]byte("bad")))
+	})
+
 	t.Run("removes final line ending", func(t *testing.T) {
 		assert.Equal(t, "hello", core.StringWithoutLineEnding("hello\n"))
 		assert.Equal(t, "hello", core.StringWithoutLineEnding("hello\r\n"))

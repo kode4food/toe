@@ -99,6 +99,21 @@ func TestSupportSelectionOps(t *testing.T) {
 	})
 }
 
+func TestSupportEchoNilArgs(t *testing.T) {
+	t.Run("echo with nil args returns empty", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "echo")
+		assert.Empty(t, res.Message)
+	})
+}
+
+func TestSupportTutor(t *testing.T) {
+	t.Run("tutor runs without panic", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		runCmd(t, km, e, "tutor")
+	})
+}
+
 func TestSupportPickerCommands(t *testing.T) {
 	// each opens an overlay layer on the model and completes without chaining
 	for _, name := range []string{

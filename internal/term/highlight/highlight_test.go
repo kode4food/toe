@@ -138,18 +138,21 @@ import "fmt"
 func main() { fmt.Println("hello", 42, 3.14) }
 `},
 		{"python", `# comment
-class Foo:
+#: special doc comment
+@property
+def bar(self):
     """docstring"""
-    def bar(self):
-        x = 0xFF + 0b101
-        raise ValueError('err')
+    x = "hello\nworld"
+    y = True and False or None
+    raise ValueError('err')
 `},
 		{"javascript", `// comment
 function greet(name) {
-    const msg = ` + "`" + `Hello ${name}` + "`" + `;
+    const msg = ` + "`" + `Hello ${name + 1}` + "`" + `;
     return msg;
 }
 `},
+		{"ruby", `:symbol\nx = :foo\ny = \"hello\"\n`},
 		{"html", `<!DOCTYPE html>
 <html lang="en">
   <head><title>Test</title></head>
@@ -190,9 +193,10 @@ func TestDetectLanguage(t *testing.T) {
 		assert.Equal(t, "go", lang)
 	})
 
-	t.Run("detects by content", func(t *testing.T) {
+	t.Run("detects by content shebang", func(t *testing.T) {
 		lang := highlight.DetectLanguage(
-			"", "#!/usr/bin/env python3\nprint('hi')\n",
+			"script.xyz_unknown_ext",
+			"#!/usr/bin/env python3\nprint('hi')\n",
 		)
 		assert.NotEmpty(t, lang)
 	})

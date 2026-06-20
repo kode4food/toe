@@ -44,8 +44,9 @@ func TestTokenize(t *testing.T) {
 		{"toml", "[section]\nkey = \"value\"\n"},
 		{"css", "body { color: red; }\n"},
 		{"html", "<html><body>hi</body></html>\n"},
-		{"javascript", "function f() { return 1; }\n"},
+		{"javascript", "const f = (x) => `Hello ${x + 1}`;\n"},
 		{"typescript", "const x: number = 1;\n"},
+		{"tsx", "const El = () => <div className=\"foo\">{name}</div>;\n"},
 		{"markdown", "# Heading\n\nParagraph text.\n"},
 		{"sql", "SELECT id FROM users WHERE active = 1;\n"},
 	}
@@ -96,6 +97,48 @@ func TestTokenizeGoScopes(t *testing.T) {
 	// "package" and "func" are keywords — expect a keyword scope
 	assert.True(t, scopes["keyword"] || scopes["keyword.function"],
 		"expected keyword scope in go source")
+}
+
+func TestTokenizeGoRich(t *testing.T) {
+	// Rich source to trigger overlapping tree-sitter captures at different
+	// start positions (exercises buildSpans c.end <= pos branch)
+	src := `package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+// Greet returns a greeting string
+func Greet(name string) string {
+	if name == "" {
+		name = "world"
+	}
+	return fmt.Sprintf("Hello, %s!", strings.TrimSpace(name))
+}
+
+type Config struct {
+	Host string
+	Port int
+}
+
+const DefaultPort = 8080
+var _ = DefaultPort
+`
+	spans := syntax.Tokenize(src, "go")
+	assert.NotEmpty(t, spans)
+	for i := 1; i < len(spans); i++ {
+		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start,
+			"spans must not overlap")
+	}
+}
+
+func TestTokenizeCached(t *testing.T) {
+	// Second call for same language hits the rawQuery cache
+	src := "package main\n"
+	spans1 := syntax.Tokenize(src, "go")
+	spans2 := syntax.Tokenize(src, "go")
+	assert.Equal(t, len(spans1), len(spans2))
 }
 
 func TestTokenizeNonOverlapping(t *testing.T) {

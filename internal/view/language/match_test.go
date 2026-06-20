@@ -271,6 +271,48 @@ func TestLoadBundledLanguages(t *testing.T) {
 	})
 }
 
+func TestLoadLanguageForScope(t *testing.T) {
+	t.Run("unknown scope returns empty language", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		l := language.LoadLanguageForScope("source.xyz_unknown")
+		assert.NotNil(t, l)
+	})
+
+	t.Run("known scope from user langs", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "myscope"
+scope = "source.myscope"
+`)
+		l := language.LoadLanguageForScope("source.myscope")
+		assert.Equal(t, "myscope", l.Name)
+	})
+}
+
+func TestExpandGlobBraces(t *testing.T) {
+	t.Run("brace expansion detects c files", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "c"
+file-types = [{ glob = "*.{c,h}" }]
+`)
+		name, ok := language.DetectLanguage("main.c", "")
+		assert.True(t, ok)
+		assert.Equal(t, "c", name)
+	})
+
+	t.Run("brace expansion matches header", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "c"
+file-types = [{ glob = "*.{c,h}" }]
+`)
+		name, ok := language.DetectLanguage("types.h", "")
+		assert.True(t, ok)
+		assert.Equal(t, "c", name)
+	})
+}
+
 func writeLangToml(t *testing.T, text string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "languages.toml")

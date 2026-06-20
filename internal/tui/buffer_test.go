@@ -92,6 +92,75 @@ func TestBuffer(t *testing.T) {
 	})
 }
 
+func TestPatchBg(t *testing.T) {
+	t.Run("patches bg of existing cell", func(t *testing.T) {
+		b := tui.NewBuffer(3, 1)
+		b.SetString(0, 0, "abc", tui.Style{}.Fg(tui.ColorRed))
+		b.PatchBg(1, 0, tui.ColorBlue)
+		assert.Equal(t, tui.Style{}.Fg(tui.ColorRed).Bg(tui.ColorBlue),
+			b.Get(1, 0).Style)
+	})
+
+	t.Run("ignores out-of-bounds patch", func(t *testing.T) {
+		b := tui.NewBuffer(2, 1)
+		b.PatchBg(5, 0, tui.ColorRed)
+		b.PatchBg(-1, 0, tui.ColorRed)
+		assert.Equal(t, tui.Style{}, b.Get(0, 0).Style)
+	})
+}
+
+func TestPatchBgRange(t *testing.T) {
+	t.Run("patches a range of cells", func(t *testing.T) {
+		b := tui.NewBuffer(5, 1)
+		b.SetString(0, 0, "abcde", tui.Style{})
+		b.PatchBgRange(1, 0, 3, tui.ColorGreen)
+		assert.Equal(t, tui.ColorGreen, b.Get(1, 0).Style.BgColor())
+		assert.Equal(t, tui.ColorGreen, b.Get(2, 0).Style.BgColor())
+		assert.Equal(t, tui.ColorGreen, b.Get(3, 0).Style.BgColor())
+		assert.Equal(t, tui.Style{}, b.Get(0, 0).Style)
+	})
+}
+
+func TestSetRightAlignedInt(t *testing.T) {
+	t.Run("writes integer right-aligned", func(t *testing.T) {
+		b := tui.NewBuffer(5, 1)
+		b.SetRightAlignedInt(0, 0, 5, 42, tui.Style{})
+		out := b.RenderToANSI()
+		assert.Contains(t, out, "42")
+	})
+
+	t.Run("writes zero", func(t *testing.T) {
+		b := tui.NewBuffer(3, 1)
+		b.SetRightAlignedInt(0, 0, 3, 0, tui.Style{})
+		out := b.RenderToANSI()
+		assert.Contains(t, out, "0")
+	})
+
+	t.Run("ignores out-of-bounds row", func(t *testing.T) {
+		b := tui.NewBuffer(3, 1)
+		b.SetRightAlignedInt(0, 5, 3, 42, tui.Style{})
+		assert.Equal(t, " ", b.Get(0, 0).Symbol)
+	})
+}
+
+func TestRenderRowsToANSI(t *testing.T) {
+	t.Run("returns one string per row", func(t *testing.T) {
+		b := tui.NewBuffer(3, 2)
+		b.SetString(0, 0, "abc", tui.Style{})
+		b.SetString(0, 1, "xyz", tui.Style{})
+		rows := b.RenderRowsToANSI()
+		assert.Len(t, rows, 2)
+		assert.Contains(t, rows[0], "abc")
+		assert.Contains(t, rows[1], "xyz")
+	})
+
+	t.Run("zero-height returns empty slice", func(t *testing.T) {
+		b := tui.NewBuffer(3, 0)
+		rows := b.RenderRowsToANSI()
+		assert.Empty(t, rows)
+	})
+}
+
 func TestFill(t *testing.T) {
 	t.Run("fills all cells with style", func(t *testing.T) {
 		b := tui.NewBuffer(3, 2)

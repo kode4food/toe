@@ -99,6 +99,25 @@ func TestIncrementInteger(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("decimal saturation at overflow", func(t *testing.T) {
+		// saturatingAddI64 clamps at MaxInt64 on positive overflow
+		got, ok := core.IncrementInteger("9223372036854775807", 1)
+		assert.True(t, ok)
+		assert.Equal(t, "9223372036854775807", got)
+
+		// saturatingAddI64 clamps at MinInt64 on negative overflow
+		got, ok = core.IncrementInteger("-9223372036854775808", -1)
+		assert.True(t, ok)
+		assert.Equal(t, "-9223372036854775808", got)
+	})
+
+	t.Run("negative zero-padded decimal", func(t *testing.T) {
+		// Exercises -0 prefix branch in incrementDecimal
+		got, ok := core.IncrementInteger("-001", 1)
+		assert.True(t, ok)
+		assert.Equal(t, "000", got)
+	})
+
 	t.Run("empty string returns false", func(t *testing.T) {
 		_, ok := core.IncrementInteger("", 1)
 		assert.False(t, ok)

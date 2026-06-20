@@ -75,6 +75,36 @@ func TestRange(t *testing.T) {
 			core.NewRange(7, 2).Merge(core.NewRange(9, 4)),
 		)
 	})
+
+	t.Run("line range out of bounds errors", func(t *testing.T) {
+		doc := core.NewRope("hi")
+		_, err := core.NewRange(0, 100).LineRange(doc)
+		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
+	})
+
+	t.Run("fragment out of bounds errors", func(t *testing.T) {
+		doc := core.NewRope("hi")
+		_, err := core.NewRange(0, 100).Fragment(doc)
+		assert.Error(t, err)
+	})
+
+	t.Run("put cursor forward crossing anchor", func(t *testing.T) {
+		doc := core.NewRope("hello world")
+		// Forward range [3,7), move cursor to 1 (crosses anchor 3 backwards)
+		r := core.NewRange(3, 7)
+		result := r.PutCursor(doc, 1, true)
+		assert.Equal(t, 1, result.From())
+	})
+
+	t.Run("put cursor backward crossing anchor", func(t *testing.T) {
+		doc := core.NewRope("hello world")
+		// Backward range: anchor=7, head=3; move cursor to 9 (crosses anchor 7
+		// forwards). PrevGraphemeBoundary(7)=6, NextGraphemeBoundary(9)=10 →
+		// [6,10)
+		r := core.NewRange(7, 3)
+		result := r.PutCursor(doc, 9, true)
+		assert.Equal(t, 10, result.To())
+	})
 }
 
 func TestSelection(t *testing.T) {
@@ -117,6 +147,11 @@ func TestSelection(t *testing.T) {
 
 		assert.Equal(t, []core.Range{core.NewRange(4, 6)}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
+	})
+
+	t.Run("into single is no-op when already single", func(t *testing.T) {
+		s := core.SingleSelection(2, 5)
+		assert.Equal(t, s.Ranges(), s.IntoSingle().Ranges())
 	})
 
 	t.Run("pushes range as primary and normalizes", func(t *testing.T) {

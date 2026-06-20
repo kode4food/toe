@@ -613,3 +613,62 @@ func TestMoveVerticallyVisualIndented(t *testing.T) {
 		assert.Equal(t, 12, down.Head)
 	})
 }
+
+func TestVisualRows(t *testing.T) {
+	vf := &core.VisualMoveFormat{ViewportWidth: 10, TabWidth: 4, MaxWrap: 3}
+	doc := core.NewRope("short\nlonger than ten chars here\nend")
+
+	t.Run("single-row line returns 1", func(t *testing.T) {
+		assert.Equal(t, 1, vf.VisualRows(doc, 0))
+	})
+
+	t.Run("long line returns more than 1", func(t *testing.T) {
+		assert.Greater(t, vf.VisualRows(doc, 1), 1)
+	})
+
+	t.Run("nil format always returns 1", func(t *testing.T) {
+		var nilvf *core.VisualMoveFormat
+		assert.Equal(t, 1, nilvf.VisualRows(doc, 0))
+	})
+}
+
+func TestVisualRowOfOffset(t *testing.T) {
+	vf := &core.VisualMoveFormat{ViewportWidth: 5, TabWidth: 4, MaxWrap: 3}
+	doc := core.NewRope("abcdefghij\nend")
+
+	t.Run("offset 0 is row 0", func(t *testing.T) {
+		assert.Equal(t, 0, vf.VisualRowOfOffset(doc, 0, 0))
+	})
+
+	t.Run("offset past wrap is row 1", func(t *testing.T) {
+		assert.Equal(t, 1, vf.VisualRowOfOffset(doc, 0, 7))
+	})
+
+	t.Run("nil format always returns 0", func(t *testing.T) {
+		var nilvf *core.VisualMoveFormat
+		assert.Equal(t, 0, nilvf.VisualRowOfOffset(doc, 0, 5))
+	})
+}
+
+func TestVisualScrollUp(t *testing.T) {
+	vf := &core.VisualMoveFormat{ViewportWidth: 10, TabWidth: 4, MaxWrap: 3}
+	doc := core.NewRope("short\nlonger than ten chars\nend")
+
+	t.Run("scroll up within row stays on same line", func(t *testing.T) {
+		line, row := vf.VisualScrollUp(doc, 1, 2, 1)
+		assert.Equal(t, 1, line)
+		assert.Equal(t, 1, row)
+	})
+
+	t.Run("scroll up to previous line", func(t *testing.T) {
+		line, row := vf.VisualScrollUp(doc, 1, 0, 1)
+		assert.Equal(t, 0, line)
+		assert.GreaterOrEqual(t, row, 0)
+	})
+
+	t.Run("clamps at document start", func(t *testing.T) {
+		line, row := vf.VisualScrollUp(doc, 0, 0, 10)
+		assert.Equal(t, 0, line)
+		assert.Equal(t, 0, row)
+	})
+}

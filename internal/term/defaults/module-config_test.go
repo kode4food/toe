@@ -185,7 +185,73 @@ func TestConfigOptions(t *testing.T) {
 	})
 }
 
+func TestConfigOptionErrors(t *testing.T) {
+	t.Run("set_option nil args is usage error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "set_option")
+		assert.Contains(t, res.Message, "usage")
+	})
+
+	t.Run("set_option unknown key errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "set_option", "no_such_option true")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("toggle_option nil args is usage error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "toggle_option")
+		assert.Contains(t, res.Message, "usage")
+	})
+}
+
+func TestConfigThemeExtra(t *testing.T) {
+	t.Run("theme default alias loads mocha", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "theme", "default")
+		assert.NotContains(t, res.Message, "error")
+		assert.Equal(t, "mocha", e.Options().Theme)
+	})
+
+	t.Run("set_language text sets empty lang", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		runCmdArgs(t, km, e, "set_language", "text")
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "", doc.Lang())
+	})
+
+	t.Run("cursor-shape invalid value errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(
+			t, km, e, "set_option", "editor.cursor-shape.normal bogus_invalid",
+		)
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("get default-line-ending empty returns empty", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "get_option", "editor.default-line-ending")
+		assert.NotContains(t, res.Message, "error")
+	})
+}
+
 func TestConfigCommands(t *testing.T) {
+	t.Run("toggle non-toggleable option errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(
+			t, km, e, "toggle_option", "editor.default-line-ending",
+		)
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("line ending no args on crlf doc shows crlf", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc\r\n")
+		runCmdArgs(t, km, e, "set_line_ending", "crlf")
+		res := runCmd(t, km, e, "set_line_ending")
+		assert.Equal(t, "crlf", res.Message)
+	})
+
 	t.Run("encoding always returns utf-8", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmd(t, km, e, "encoding")

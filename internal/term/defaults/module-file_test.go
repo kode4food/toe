@@ -158,11 +158,58 @@ func TestFileWriteVariants(t *testing.T) {
 	})
 }
 
+func TestFileNoPath(t *testing.T) {
+	t.Run("write nil args hits no-path branch", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "write")
+		// scratch buffer with no path will error - we just want no panic
+		_ = res
+	})
+
+	t.Run("read nil args errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "read")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("move nil args errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "move")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("move! nil args errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "move!")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("move on modified doc warns", func(t *testing.T) {
+		e, km := defaultsEnv(t, "dirty")
+		res := runCmdArgs(t, km, e, "move", "/tmp/dest.txt")
+		assert.Contains(t, res.Message, "error")
+	})
+}
+
 func TestFileReloadAll(t *testing.T) {
 	t.Run("reloads all file-backed buffers", func(t *testing.T) {
 		e, km := twoBufferEnv(t)
 		res := runCmd(t, km, e, "reload_all")
 		assert.NotContains(t, res.Message, "error")
+	})
+}
+
+func TestFileReloadError(t *testing.T) {
+	t.Run("reload scratch buffer errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "hello")
+		res := runCmd(t, km, e, "reload")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("read bad path errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "read", "/no/such/dir/file_xyz.txt")
+		assert.Contains(t, res.Message, "error")
 	})
 }
 

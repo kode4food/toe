@@ -257,3 +257,29 @@ func TestLoad(t *testing.T) {
 		assert.True(t, errors.Is(err, loader.ErrThemeNotFound))
 	})
 }
+
+func TestThemeDefault(t *testing.T) {
+	t.Run("Default loads mocha theme", func(t *testing.T) {
+		th, warnings, err := theme.Default()
+		assert.NoError(t, err)
+		assert.NotNil(t, th)
+		assert.Equal(t, "mocha", th.Name())
+		_ = warnings
+	})
+}
+
+func TestThemeValidate(t *testing.T) {
+	t.Run("theme missing ui.selection fails", func(t *testing.T) {
+		th, _ := theme.Decode(map[string]any{
+			"keyword": "#ffffff",
+		})
+		assert.Error(t, th.Validate())
+	})
+
+	t.Run("theme with ui.selection passes", func(t *testing.T) {
+		th, _ := theme.Decode(map[string]any{
+			"ui.selection": "#ffffff",
+		})
+		assert.NoError(t, th.Validate())
+	})
+}

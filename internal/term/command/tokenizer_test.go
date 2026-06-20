@@ -45,7 +45,7 @@ func TestCommandLine(t *testing.T) {
 		assert.Equal(t, []string{"echo", "hello {x} world"}, args)
 	})
 
-	t.Run("allows incomplete tokens without validation", func(t *testing.T) {
+	t.Run("incomplete tokens without validation", func(t *testing.T) {
 		args, err := commandTokens(`echo %sh{echo "%{c`, false)
 
 		assert.NoError(t, err)

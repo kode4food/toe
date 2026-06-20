@@ -22,10 +22,10 @@ type (
 		Toggle func(*view.Editor) (string, error)
 	}
 
-	// Section declares a module's live config pointer and Apply hook.
-	// Config must be a non-nil pointer to a struct with toml tags matching the
-	// full config file shape. Reset restores Config to its default values before
-	// each config reload. Apply copies decoded values into Editor.Options.
+	// Section declares a module's live config pointer and Apply hook. Config
+	// must be a non-nil pointer to a struct with toml tags matching the full
+	// config file shape. Reset restores Config to its default values before
+	// each config reload. Apply copies decoded values into Editor.Options
 	Section struct {
 		Config any // *ConcreteConfig, pre-filled with defaults
 		Reset  func()

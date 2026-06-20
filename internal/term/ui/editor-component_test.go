@@ -13,7 +13,6 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 func TestMouseMiddlePaste(t *testing.T) {
@@ -71,7 +70,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 
 func TestMouseWheelScroll(t *testing.T) {
 	// renderedModel gives a 40×8 window; row 7 is the status/command line,
-	// which is outside all editor panes.
+	// which is outside all editor panes
 
 	t.Run("wheel over pane scrolls that pane", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
@@ -175,7 +174,7 @@ func renderedModel(e *view.Editor) ui.Model {
 func editorWithText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")
-	e.SetConfig(config.DefaultConfig())
+	e.Options().Theme = view.DefaultTheme
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 	rope := doc.Text()

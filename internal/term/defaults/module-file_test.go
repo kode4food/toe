@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/term/command"
 )
 
 func TestFileWrite(t *testing.T) {
@@ -20,13 +22,13 @@ func TestFileWrite(t *testing.T) {
 		assert.Equal(t, "hello\n", string(data))
 	})
 
-	t.Run("update without diff reports nothing to write", func(t *testing.T) {
+	t.Run("no diff reports nothing to write", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmd(t, km, e, "update")
 		assert.Contains(t, res.Message, "no changes")
 	})
 
-	t.Run("update writes a modified file-backed buffer", func(t *testing.T) {
+	t.Run("modified file-backed buffer is written", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		path := filepath.Join(e.Cwd(), "u.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("orig"), 0o644))
@@ -93,4 +95,99 @@ func TestFileMoveReadReload(t *testing.T) {
 		assert.Contains(t, res.Message, "reloaded")
 		assert.Equal(t, "DISK", docText(t, e))
 	})
+}
+
+func TestFileWriteVariants(t *testing.T) {
+	t.Run("write! force-writes to path", func(t *testing.T) {
+		e, km := defaultsEnv(t, "hello")
+		out := filepath.Join(e.Cwd(), "fw.txt")
+		res := runCmdArgs(t, km, e, "write!", out)
+		assert.Contains(t, res.Message, "written")
+	})
+
+	t.Run("write_all writes all buffers", func(t *testing.T) {
+		e, km := twoBufferEnv(t)
+		res := runCmd(t, km, e, "write_all")
+		assert.Contains(t, res.Message, "written")
+	})
+
+	t.Run("write-all! force-writes all buffers", func(t *testing.T) {
+		e, km := twoBufferEnv(t)
+		res := runCmd(t, km, e, "write-all!")
+		assert.Contains(t, res.Message, "written")
+	})
+
+	t.Run("write_quit saves and signals quit", func(t *testing.T) {
+		e, km := defaultsEnv(t, "hello")
+		out := filepath.Join(e.Cwd(), "wq.txt")
+		res := runCmdArgs(t, km, e, "write_quit", out)
+		assert.Equal(t, command.SignalQuit, res.Signal)
+	})
+
+	t.Run("write-quit! force-saves and signals quit", func(t *testing.T) {
+		e, km := defaultsEnv(t, "hello")
+		out := filepath.Join(e.Cwd(), "wq2.txt")
+		res := runCmdArgs(t, km, e, "write-quit!", out)
+		assert.Equal(t, command.SignalQuit, res.Signal)
+	})
+
+	t.Run("saves all and signals quit", func(t *testing.T) {
+		e, km := twoBufferEnv(t)
+		res := runCmd(t, km, e, "write_quit_all")
+		assert.Equal(t, command.SignalQuit, res.Signal)
+	})
+
+	t.Run("force-saves all and signals quit", func(t *testing.T) {
+		e, km := twoBufferEnv(t)
+		res := runCmd(t, km, e, "write-quit-all!")
+		assert.Equal(t, command.SignalQuit, res.Signal)
+	})
+
+	t.Run("write_buffer_close saves and closes", func(t *testing.T) {
+		e, km := defaultsEnv(t, "hello")
+		out := filepath.Join(e.Cwd(), "wbc.txt")
+		res := runCmdArgs(t, km, e, "write_buffer_close", out)
+		assert.Contains(t, res.Message, "written")
+	})
+
+	t.Run("force-saves and closes", func(t *testing.T) {
+		e, km := defaultsEnv(t, "hello")
+		out := filepath.Join(e.Cwd(), "wbc2.txt")
+		res := runCmdArgs(t, km, e, "write-buffer-close!", out)
+		assert.Contains(t, res.Message, "written")
+	})
+}
+
+func TestFileReloadAll(t *testing.T) {
+	t.Run("reloads all file-backed buffers", func(t *testing.T) {
+		e, km := twoBufferEnv(t)
+		res := runCmd(t, km, e, "reload_all")
+		assert.NotContains(t, res.Message, "error")
+	})
+}
+
+func TestFileMoveForce(t *testing.T) {
+	t.Run("move! relocates the file", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		src := filepath.Join(e.Cwd(), "src2.txt")
+		assert.NoError(t, os.WriteFile(src, []byte("M"), 0o644))
+		runCmdArgs(t, km, e, "open", src)
+		dst := filepath.Join(e.Cwd(), "dst2.txt")
+		res := runCmdArgs(t, km, e, "move!", dst)
+		assert.Contains(t, res.Message, "moved")
+	})
+}
+
+func TestFileOptions(t *testing.T) {
+	for _, tc := range []struct{ key, val string }{
+		{"editor.insert-final-newline", "true"},
+		{"editor.trim-final-newlines", "true"},
+		{"editor.trim-trailing-whitespace", "true"},
+	} {
+		t.Run("toggle "+tc.key, func(t *testing.T) {
+			e, km := defaultsEnv(t, "")
+			res := runCmdArgs(t, km, e, "toggle_option", tc.key)
+			assert.Contains(t, res.Message, "is now set to")
+		})
+	}
 }

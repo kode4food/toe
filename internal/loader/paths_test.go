@@ -30,8 +30,7 @@ func TestPaths(t *testing.T) {
 
 		assert.True(t, ok)
 		assert.Equal(t,
-			filepath.Join(root, loader.DirName, "languages.toml"), path,
-		)
+			filepath.Join(root, loader.DirName, "languages.toml"), path)
 	})
 
 	t.Run("resolves config ignore file", func(t *testing.T) {

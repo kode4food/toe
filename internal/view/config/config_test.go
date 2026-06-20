@@ -10,6 +10,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/config"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -94,11 +95,9 @@ args.program = "{0}"
 		filtered := langs.Languages[0].LanguageServers[1]
 		assert.Equal(t, "mdox", filtered.Name)
 		assert.Equal(t,
-			language.ServerFeature("hover"), filtered.Only[0],
-		)
+			language.ServerFeature("hover"), filtered.Only[0])
 		assert.Equal(t,
-			language.ServerFeature("format"), filtered.Excluded[0],
-		)
+			language.ServerFeature("format"), filtered.Excluded[0])
 		assert.Equal(t, "md", langs.Languages[0].FileTypes[0].Extension)
 		assert.Equal(t, "*/README", langs.Languages[0].FileTypes[1].Glob)
 		assert.Equal(t, "markdown", langs.Languages[0].Shebangs[0])
@@ -152,12 +151,10 @@ args.program = "{0}"
 		assert.Equal(t, []string{"skip"}, langs.GrammarSelection.Except)
 		assert.Equal(t, "markdown", langs.Grammars[0].Name)
 		assert.Equal(t,
-			"https://example.test/markdown", langs.Grammars[0].Source.Git,
-		)
+			"https://example.test/markdown", langs.Grammars[0].Source.Git)
 		assert.Equal(t, "abc", langs.Grammars[0].Source.Rev)
 		assert.Equal(t,
-			"tree-sitter-markdown", langs.Grammars[0].Source.Subpath,
-		)
+			"tree-sitter-markdown", langs.Grammars[0].Source.Subpath)
 		assert.Equal(t, "../skip", langs.Grammars[1].Source.Path)
 		selected := langs.SelectedGrammars()
 		assert.Equal(t, 1, len(selected))
@@ -268,11 +265,10 @@ func TestConfig(t *testing.T) {
 theme = "dark"
 `)
 
-		cfg, ok := config.LoadConfig(path)
+		raw, ok := config.LoadRawConfig(path)
 
 		assert.True(t, ok)
-		assert.Equal(t, "dark", cfg.Theme.Name)
-		assert.False(t, cfg.Theme.Adaptive)
+		assert.Equal(t, "dark", raw["theme"])
 	})
 
 	t.Run("loads adaptive theme", func(t *testing.T) {
@@ -283,12 +279,14 @@ dark = "dark"
 fallback = "base"
 `)
 
-		cfg, ok := config.LoadConfig(path)
+		raw, ok := config.LoadRawConfig(path)
 
 		assert.True(t, ok)
-		assert.True(t, cfg.Theme.Adaptive)
-		assert.Equal(t, "light", cfg.Theme.Choose(true))
-		assert.Equal(t, "dark", cfg.Theme.Choose(false))
+		theme, ok := raw["theme"].(map[string]any)
+		assert.True(t, ok)
+		assert.Equal(t, "light", theme["light"])
+		assert.Equal(t, "dark", theme["dark"])
+		assert.Equal(t, "base", theme["fallback"])
 	})
 
 	t.Run("loads editor soft wrap settings", func(t *testing.T) {
@@ -304,7 +302,7 @@ wrap-indicator = "» "
 wrap-at-text-width = true
 `)
 
-		_, ok := config.LoadConfig(path)
+		_, ok := config.LoadRawConfig(path)
 
 		assert.True(t, ok)
 	})
@@ -325,15 +323,13 @@ insert = "INSERT"
 select = "SELECT"
 `)
 
-		_, ok := config.LoadConfig(path)
+		_, ok := config.LoadRawConfig(path)
 
 		assert.True(t, ok)
 	})
 
 	t.Run("uses insecure default", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-
-		assert.False(t, cfg.Insecure())
+		assert.Equal(t, "mocha", view.DefaultTheme)
 	})
 
 	t.Run("loads insecure option", func(t *testing.T) {
@@ -342,10 +338,12 @@ select = "SELECT"
 insecure = true
 `)
 
-		cfg, ok := config.LoadConfig(path)
+		raw, ok := config.LoadRawConfig(path)
 
 		assert.True(t, ok)
-		assert.True(t, cfg.Insecure())
+		editor, ok := raw["editor"].(map[string]any)
+		assert.True(t, ok)
+		assert.Equal(t, true, editor["insecure"])
 	})
 
 	t.Run("merges trusted workspace config", func(t *testing.T) {
@@ -364,10 +362,12 @@ insecure = true
 		err = config.TrustWorkspace(work)
 		assert.NoError(t, err)
 
-		cfg, ok := config.LoadConfigForWorkspace(global, workspace, work)
+		raw, ok := config.LoadRawConfigForWorkspace(
+			global, workspace, work,
+		)
 
 		assert.True(t, ok)
-		assert.Equal(t, "dracula", cfg.Theme.Name)
+		assert.Equal(t, "dracula", raw["theme"])
 	})
 
 	t.Run("ignores untrusted workspace config", func(t *testing.T) {
@@ -384,10 +384,12 @@ insecure = true
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
-		cfg, ok := config.LoadConfigForWorkspace(global, workspace, work)
+		raw, ok := config.LoadRawConfigForWorkspace(
+			global, workspace, work,
+		)
 
 		assert.True(t, ok)
-		assert.Equal(t, "mocha", cfg.Theme.Name)
+		assert.Equal(t, "mocha", raw["theme"])
 	})
 
 	t.Run("insecure global enables workspace config", func(t *testing.T) {
@@ -407,11 +409,12 @@ insecure = true
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
-		cfg, ok := config.LoadConfigForWorkspace(global, workspace, work)
+		raw, ok := config.LoadRawConfigForWorkspace(
+			global, workspace, work,
+		)
 
 		assert.True(t, ok)
-		assert.True(t, cfg.Insecure())
-		assert.Equal(t, "dracula", cfg.Theme.Name)
+		assert.Equal(t, "dracula", raw["theme"])
 	})
 }
 
@@ -573,11 +576,8 @@ func TestWorkspaceConfigPath(t *testing.T) {
 		path := config.WorkspaceConfigPath(nested)
 
 		assert.Equal(t,
-			filepath.Join(work, loader.WorkspaceDirName,
-				"config.toml",
-			),
-			path,
-		)
+			filepath.Join(work, loader.WorkspaceDirName, "config.toml"),
+			path)
 	})
 
 	t.Run("falls back to start directory", func(t *testing.T) {
@@ -588,11 +588,8 @@ func TestWorkspaceConfigPath(t *testing.T) {
 		path := config.WorkspaceConfigPath(root)
 
 		assert.Equal(t,
-			filepath.Join(root, loader.WorkspaceDirName,
-				"config.toml",
-			),
-			path,
-		)
+			filepath.Join(root, loader.WorkspaceDirName, "config.toml"),
+			path)
 	})
 }
 
@@ -605,8 +602,7 @@ func TestLogFilePath(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t,
 		filepath.Join(root, loader.DirName, loader.LogFileName),
-		path,
-	)
+		path)
 }
 
 func TestWorkspaceTrust(t *testing.T) {
@@ -862,6 +858,77 @@ injection-regex = "foo-bar"
 	})
 }
 
+func TestConfigPaths(t *testing.T) {
+	t.Run("path under XDG_CONFIG_HOME", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", root)
+		path, ok := config.UserConfigPath()
+		assert.True(t, ok)
+		assert.Contains(t, path, root)
+	})
+
+	t.Run("IgnorePath returns non-empty string", func(t *testing.T) {
+		assert.NotEmpty(t, config.IgnorePath())
+	})
+}
+
+func TestLoadRawUserConfig(t *testing.T) {
+	t.Run("returns false when no config", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		_, ok := config.LoadRawUserConfig()
+		assert.False(t, ok)
+	})
+
+	t.Run("returns merged config", func(t *testing.T) {
+		root := t.TempDir()
+		writeConfig(t, root, `theme = "nord"`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		m, ok := config.LoadRawUserConfig()
+		assert.True(t, ok)
+		assert.Equal(t, "nord", m["theme"])
+	})
+}
+
+func TestAutoSaveUnmarshal(t *testing.T) {
+	t.Run("bool true sets FocusLost", func(t *testing.T) {
+		var a config.AutoSave
+		assert.NoError(t, a.UnmarshalTOML(true))
+		assert.True(t, *a.FocusLost)
+	})
+
+	t.Run("bool false sets FocusLost false", func(t *testing.T) {
+		var a config.AutoSave
+		assert.NoError(t, a.UnmarshalTOML(false))
+		assert.False(t, *a.FocusLost)
+	})
+
+	t.Run("map sets focus-lost and after-delay", func(t *testing.T) {
+		var a config.AutoSave
+		timeout := int64(2000)
+		err := a.UnmarshalTOML(map[string]any{
+			"focus-lost": true,
+			"after-delay": map[string]any{
+				"enable":  true,
+				"timeout": timeout,
+			},
+		})
+		assert.NoError(t, err)
+		assert.True(t, *a.FocusLost)
+		assert.True(t, *a.AfterDelay.Enable)
+	})
+
+	t.Run("nil input returns error", func(t *testing.T) {
+		var a config.AutoSave
+		assert.Error(t, a.UnmarshalTOML(nil))
+	})
+
+	t.Run("invalid type returns error", func(t *testing.T) {
+		var a config.AutoSave
+		assert.Error(t, a.UnmarshalTOML("bad"))
+	})
+}
+
 func writeLanguages(t *testing.T, root, text string) string {
 	t.Helper()
 	dir := filepath.Join(root, loader.DirName)
@@ -873,7 +940,9 @@ func writeLanguages(t *testing.T, root, text string) string {
 	return path
 }
 
-func findLanguage(langs language.Languages, name string) (language.Language, bool) {
+func findLanguage(
+	langs language.Languages, name string,
+) (language.Language, bool) {
 	var found language.Language
 	ok := false
 	for _, lang := range langs.Languages {

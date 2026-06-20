@@ -89,7 +89,7 @@ func TestRangeSliceAndFragment(t *testing.T) {
 		assert.Equal(t, 2, r2.Head)
 	})
 
-	t.Run("min_width_1 leaves non-empty range unchanged", func(t *testing.T) {
+	t.Run("min_width_1 non-empty range unchanged", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		r := core.NewRange(1, 3)
 		r2 := r.MinWidth1(doc)
@@ -490,7 +490,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 	// row 0: "0123456789"  (chars 0-9)
 	// row 1: "ab"           (chars 10-11), \n at 12
 	// line 1: "cd"          (chars 13-14)
-	t.Run("falls back to text-line when SoftWrap off", func(t *testing.T) {
+	t.Run("text-line fallback when SoftWrap off", func(t *testing.T) {
 		doc := core.NewRope("aaa\nbbb\nccc")
 		r := core.PointRange(0)
 		got := (*core.VisualMoveFormat)(nil).MoveVerticallyVisual(

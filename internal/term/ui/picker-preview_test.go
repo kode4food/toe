@@ -17,10 +17,13 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-const testPickerPreviewWidth = 100
+const (
+	testPickerPreviewWidth   = 100
+	narrowPickerPreviewWidth = 60
+)
 
 func TestPickerPreview(t *testing.T) {
-	t.Run("keeps themed background across short rows", func(t *testing.T) {
+	t.Run("keeps themed short rows", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
@@ -29,9 +32,7 @@ func TestPickerPreview(t *testing.T) {
 		assert.NoError(t, err)
 
 		e := view.NewEditor(tmp)
-		cfg := e.Config()
-		cfg.Theme.Name = "mocha"
-		e.SetConfig(cfg)
+		e.Options().Theme = "mocha"
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
@@ -66,9 +67,7 @@ func TestPickerPreview(t *testing.T) {
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
 
 		e := view.NewEditor(tmp)
-		cfg := e.Config()
-		cfg.Theme.Name = "mocha"
-		e.SetConfig(cfg)
+		e.Options().Theme = "mocha"
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
@@ -104,9 +103,7 @@ func TestPickerPreview(t *testing.T) {
 		assert.NoError(t, err)
 
 		e := view.NewEditor(tmp)
-		cfg := e.Config()
-		cfg.Theme.Name = "mocha"
-		e.SetConfig(cfg)
+		e.Options().Theme = "mocha"
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
@@ -295,9 +292,7 @@ wrap-indicator = "↪ "
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
 
 		e := view.NewEditor(tmp)
-		cfg := e.Config()
-		cfg.Theme.Name = "mocha"
-		e.SetConfig(cfg)
+		e.Options().Theme = "mocha"
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		km := command.NewKeymaps()
@@ -317,9 +312,9 @@ wrap-indicator = "↪ "
 		// On the highlighted preview row the "package" keyword keeps its mocha
 		// syntax foreground (mauve 203;166;247) with the highlight background
 		// (surface1 69;71;90) overlaid behind it. The old strip-and-restyle
-		// path could not produce a syntax foreground under the highlight.
-		// The two SGR codes may be separate escapes or combined — check both
-		// are present on a single line containing "package"
+		// path could not produce a syntax foreground under the highlight. The
+		// two SGR codes may be separate escapes or combined — check both are
+		// present on a single line containing "package"
 		found := false
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "package") &&
@@ -361,15 +356,14 @@ wrap-indicator = "↪ "
 		}
 		_ = m.View().Content // render wide, populating the span cache
 
-		const narrow = 60
-		m = resize(m, narrow, 30)
+		m = resize(m, narrowPickerPreviewWidth, 30)
 		out := stripANSI(m.View().Content)
 		for line := range strings.SplitSeq(out, "\n") {
-			assert.LessOrEqual(t, len([]rune(line)), narrow)
+			assert.LessOrEqual(t, len([]rune(line)), narrowPickerPreviewWidth)
 		}
 	})
 
-	t.Run("wheel scrolls the preview and pins the bottom", func(t *testing.T) {
+	t.Run("wheel pins bottom", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		var b strings.Builder

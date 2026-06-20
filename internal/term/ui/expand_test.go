@@ -48,7 +48,7 @@ func TestTokenExpander(t *testing.T) {
 		assert.Equal(t, "♥", result)
 	})
 
-	t.Run("unicode expansion rejects invalid codepoint", func(t *testing.T) {
+	t.Run("rejects invalid unicode codepoint", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		expand := ui.NewTokenExpander(e)
 		tok := command.Token{
@@ -115,7 +115,7 @@ func TestTokenExpander(t *testing.T) {
 		assert.Equal(t, dir, result)
 	})
 
-	t.Run("variable expansion rejects unknown variable", func(t *testing.T) {
+	t.Run("rejects unknown variable", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.NewDocument()
 		expand := ui.NewTokenExpander(e)
@@ -153,7 +153,7 @@ func TestTokenExpander(t *testing.T) {
 		assert.Equal(t, "100% done", result)
 	})
 
-	t.Run("shell expansion runs command and trims newline", func(t *testing.T) {
+	t.Run("runs command and trims newline", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		expand := ui.NewTokenExpander(e)
 		tok := command.Token{

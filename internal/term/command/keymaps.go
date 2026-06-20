@@ -39,9 +39,9 @@ func NewKeymaps() *Keymaps {
 	}
 }
 
-// Register adds a command entry and wires its key bindings.
-// Returns ErrDuplicateCommand if name is already registered — each
-// command must be fully declared once, in the module that owns it
+// Register adds a command entry and wires its key bindings. Returns
+// ErrDuplicateCommand if name is already registered - eachcommand must be fully
+// declared once, in the module that owns it
 func (k *Keymaps) Register(name string, cmd Command) error {
 	if _, ok := k.byName[name]; ok {
 		return fmt.Errorf("%w: %s", ErrDuplicateCommand, name)

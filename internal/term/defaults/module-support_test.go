@@ -45,7 +45,7 @@ func TestSupportEchoInfo(t *testing.T) {
 		assert.NotEmpty(t, runCmd(t, km, e, "character_info").Message)
 	})
 
-	t.Run("format reports no formatter for plain text", func(t *testing.T) {
+	t.Run("no formatter for plain text", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
 		assert.Contains(t, runCmd(t, km, e, "format").Message, "no formatter")
 	})

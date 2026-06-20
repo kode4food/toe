@@ -393,25 +393,25 @@ func TestJumpViews(t *testing.T) {
 }
 
 func TestSwapViews(t *testing.T) {
-	t.Run("SwapViewLeft does not panic with single view", func(t *testing.T) {
+	t.Run("left noop with single view", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 
 		assert.NotPanics(t, func() { action.SwapViewLeft(e) })
 	})
 
-	t.Run("SwapViewRight does not panic with single view", func(t *testing.T) {
+	t.Run("right noop with single view", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 
 		assert.NotPanics(t, func() { action.SwapViewRight(e) })
 	})
 
-	t.Run("SwapViewUp does not panic with single view", func(t *testing.T) {
+	t.Run("up noop with single view", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 
 		assert.NotPanics(t, func() { action.SwapViewUp(e) })
 	})
 
-	t.Run("SwapViewDown does not panic with single view", func(t *testing.T) {
+	t.Run("down noop with single view", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 
 		assert.NotPanics(t, func() { action.SwapViewDown(e) })
@@ -435,7 +435,7 @@ func TestGotoLastModifiedFile(t *testing.T) {
 }
 
 func TestSmartTabNotAllWhitespace(t *testing.T) {
-	t.Run("noop when cursor has non-whitespace to left", func(t *testing.T) {
+	t.Run("noop with non-whitespace to left", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		e.SetMode(view.ModeInsert)
 		setCursor(t, e, 5)
@@ -574,7 +574,7 @@ func TestCommentTokenAt(t *testing.T) {
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
-	t.Run("toggle comment on uncommented line adds token", func(t *testing.T) {
+	t.Run("uncommented line gets token added", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		setCursor(t, e, 0)
 
@@ -596,7 +596,7 @@ func TestSkipHorizontalWhitespace(t *testing.T) {
 		assert.Equal(t, 2, cursorPos(t, e))
 	})
 
-	t.Run("MoveLineNonWhitespace mixed spaces and tabs", func(t *testing.T) {
+	t.Run("mixed spaces and tabs skipped", func(t *testing.T) {
 		e := editorWithText(t, " \thello")
 		setCursor(t, e, 0)
 
@@ -662,20 +662,6 @@ func TestIncrementWithHashRegister(t *testing.T) {
 	})
 }
 
-func writeTextLangConfigBuf(t *testing.T, commentToken string) {
-	t.Helper()
-	dir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", dir)
-	configDir := filepath.Join(dir, "toe")
-	assert.NoError(t, os.MkdirAll(configDir, 0o755))
-	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
-		"comment-token = \"" + commentToken + "\"\n"
-	assert.NoError(t,
-		os.WriteFile(filepath.Join(configDir, "languages.toml"),
-			[]byte(content), 0o644),
-	)
-}
-
 func TestJoinSelectionsCommented(t *testing.T) {
 	t.Run("join merges commented lines into one", func(t *testing.T) {
 		e := editorWithText(t, "# foo\n# bar")
@@ -713,7 +699,7 @@ func TestJoinSelectionsCommented(t *testing.T) {
 }
 
 func TestSearchWithCount(t *testing.T) {
-	t.Run("SearchNext with count skips multiple matches", func(t *testing.T) {
+	t.Run("count skips multiple matches", func(t *testing.T) {
 		e := editorWithText(t, "foo foo foo")
 		err := action.SearchForward(e, "foo")
 		assert.NoError(t, err)
@@ -726,7 +712,7 @@ func TestSearchWithCount(t *testing.T) {
 }
 
 func TestGotoColumnEdge(t *testing.T) {
-	t.Run("column beyond line end clamps to line end", func(t *testing.T) {
+	t.Run("beyond line end clamps to line end", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd")
 		setCursor(t, e, 0)
 		e.SetCount(100)
@@ -829,7 +815,7 @@ func TestScrollView(t *testing.T) {
 }
 
 func TestClampSelectionToLine(t *testing.T) {
-	t.Run("GotoColumn with cursor at line end stays put", func(t *testing.T) {
+	t.Run("cursor at line end stays put", func(t *testing.T) {
 		e := editorWithText(t, "abc\ndef")
 		setCursor(t, e, 2)
 		e.SetCount(3)
@@ -862,4 +848,18 @@ func TestYankJoinSingleRange(t *testing.T) {
 
 		assert.Equal(t, "abc", registeredValue(t, e, '"'))
 	})
+}
+
+func writeTextLangConfigBuf(t *testing.T, commentToken string) {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	configDir := filepath.Join(dir, "toe")
+	assert.NoError(t, os.MkdirAll(configDir, 0o755))
+	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
+		"comment-token = \"" + commentToken + "\"\n"
+	assert.NoError(t,
+		os.WriteFile(filepath.Join(configDir, "languages.toml"),
+			[]byte(content), 0o644),
+	)
 }

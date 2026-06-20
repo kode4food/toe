@@ -166,7 +166,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 	// width 10, no scrolloff, tab width 4 throughout unless noted
-	t.Run("scrolls right when cursor past right edge", func(t *testing.T) {
+	t.Run("scrolls right past right edge", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
@@ -195,7 +195,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		assert.Equal(t, 0, v.Offset().HorizontalOffset)
 	})
 
-	t.Run("non-positive width disables and resets offset", func(t *testing.T) {
+	t.Run("non-positive width resets offset", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
@@ -271,7 +271,7 @@ func TestViewEnsureCursorVisibleScrolloff(t *testing.T) {
 		assert.Greater(t, v.Offset().Anchor, 0)
 	})
 
-	t.Run("scrolls up when cursor above visible area", func(t *testing.T) {
+	t.Run("scrolls up when cursor above visible", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		doc := core.NewRope("line1\nline2\nline3\nline4\nline5\n")

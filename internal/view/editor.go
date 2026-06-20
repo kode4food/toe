@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/view/config"
 	"github.com/kode4food/toe/internal/view/register"
 )
 
@@ -17,7 +16,6 @@ type Editor struct {
 	tree         *Tree
 	cwd          string
 	dirStack     []string
-	cfg          *config.Config
 	opts         Options
 	configReload func() error
 	registers    register.Registers
@@ -62,7 +60,6 @@ func NewEditor(cwd string) *Editor {
 		docs:      map[DocumentId]*Document{},
 		tree:      newTree(0, 0),
 		cwd:       cwd,
-		cfg:       loadEditorConfig(),
 		opts:      defaultOptions(),
 		registers: register.New(),
 	}
@@ -330,14 +327,6 @@ func (e *Editor) PrevDocID() (DocumentId, bool) {
 	return e.prevDocID, true
 }
 
-// Config returns the current live editor configuration
-func (e *Editor) Config() *config.Config { return e.cfg }
-
-// SetConfig replaces the current live editor configuration
-func (e *Editor) SetConfig(cfg *config.Config) {
-	e.cfg = cfg
-}
-
 // Options returns the typed runtime config values for the editor session
 func (e *Editor) Options() *Options { return &e.opts }
 
@@ -353,12 +342,7 @@ func (e *Editor) ReloadConfig() error {
 	if e.configReload != nil {
 		return e.configReload()
 	}
-	cfg, ok := config.LoadUserConfig()
-	if !ok {
-		return ErrConfigUnavailable
-	}
-	e.SetConfig(cfg)
-	return nil
+	return ErrConfigUnavailable
 }
 
 // View returns a view by id
@@ -704,11 +688,4 @@ func (e *Editor) newDocument() *Document {
 func (e *Editor) openFile(path string) (*Document, error) {
 	e.nextDocID++
 	return openDocument(e.nextDocID, path, &e.opts)
-}
-
-func loadEditorConfig() *config.Config {
-	if cfg, ok := config.LoadUserConfig(); ok {
-		return cfg
-	}
-	return config.DefaultConfig()
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func TestGrapheme(t *testing.T) {
-	t.Run("classifies newline as GraphemeKindNewline", func(t *testing.T) {
+	t.Run("newline is GraphemeKindNewline", func(t *testing.T) {
 		g := core.NewGrapheme("\n", 0, 4)
 		assert.Equal(t, core.GraphemeKindNewline, g.Kind())
 		assert.Equal(t, 1, g.Width())
@@ -26,7 +26,7 @@ func TestGrapheme(t *testing.T) {
 		assert.Equal(t, 2, g2.Width())
 	})
 
-	t.Run("classifies ascii letter as word non-boundary", func(t *testing.T) {
+	t.Run("ascii letter is non-boundary", func(t *testing.T) {
 		g := core.NewGrapheme("a", 0, 4)
 		assert.Equal(t, core.GraphemeKindOther, g.Kind())
 		assert.Equal(t, 1, g.Width())
@@ -34,7 +34,7 @@ func TestGrapheme(t *testing.T) {
 		assert.False(t, g.IsWordBoundary())
 	})
 
-	t.Run("classifies space as whitespace word boundary", func(t *testing.T) {
+	t.Run("space is whitespace word boundary", func(t *testing.T) {
 		g := core.NewGrapheme(" ", 0, 4)
 		assert.Equal(t, core.GraphemeKindOther, g.Kind())
 		assert.True(t, g.IsWhitespace())
@@ -66,7 +66,7 @@ func TestTabWidthAt(t *testing.T) {
 }
 
 func TestGraphemeDecoration(t *testing.T) {
-	t.Run("decoration grapheme exposes text and width", func(t *testing.T) {
+	t.Run("exposes text and width", func(t *testing.T) {
 		g := core.NewDecorationGrapheme("→")
 		assert.Equal(t, core.GraphemeKindOther, g.Kind())
 		assert.Equal(t, "→", g.Text())
@@ -82,7 +82,7 @@ func TestGraphemeBoundaries(t *testing.T) {
 		assert.Equal(t, 3, core.NextGraphemeBoundary(doc, 2))
 	})
 
-	t.Run("next boundary advances over multibyte char", func(t *testing.T) {
+	t.Run("advances over multibyte char", func(t *testing.T) {
 		doc := core.NewRope("a世b")
 		assert.Equal(t, 1, core.NextGraphemeBoundary(doc, 0))
 		assert.Equal(t, 2, core.NextGraphemeBoundary(doc, 1))

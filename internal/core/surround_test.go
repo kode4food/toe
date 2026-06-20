@@ -51,7 +51,7 @@ func TestFindNthPairsPos(t *testing.T) {
 		assert.True(t, errors.Is(err, core.ErrPairNotFound))
 	})
 
-	t.Run("returns RangeExceedsText when cursor past end", func(t *testing.T) {
+	t.Run("RangeExceedsText when cursor past end", func(t *testing.T) {
 		doc := core.NewRope("hi")
 		r := core.PointRange(2)
 		_, _, err := core.FindNthPairsPos(doc, '(', r, 1)

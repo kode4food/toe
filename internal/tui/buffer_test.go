@@ -72,7 +72,7 @@ func TestBuffer(t *testing.T) {
 		assert.Equal(t, 2, ansi.StringWidth(b.RenderToANSI()))
 	})
 
-	t.Run("SetString clips wide graphemes at right edge", func(t *testing.T) {
+	t.Run("clips wide graphemes at right edge", func(t *testing.T) {
 		b := tui.NewBuffer(1, 1)
 		b.SetString(0, 0, "コ", tui.Style{})
 		assert.Equal(t, " ", b.Get(0, 0).Symbol)
@@ -85,7 +85,7 @@ func TestBuffer(t *testing.T) {
 		assert.Equal(t, " ", b.Get(0, 0).Symbol)
 	})
 
-	t.Run("SetString ignores starting past right edge", func(t *testing.T) {
+	t.Run("ignores start past right edge", func(t *testing.T) {
 		b := tui.NewBuffer(3, 1)
 		b.SetString(3, 0, "abc", tui.Style{})
 		assert.Equal(t, " ", b.Get(0, 0).Symbol)

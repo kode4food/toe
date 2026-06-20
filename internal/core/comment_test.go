@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetCommentToken(t *testing.T) {
-	t.Run("returns nil when line has no matching token", func(t *testing.T) {
+	t.Run("nil when no matching token", func(t *testing.T) {
 		doc := core.NewRope("··") // multibyte, no comment
 		_, ok := core.GetCommentToken(doc, []string{"//", "///"}, 0)
 		assert.False(t, ok)
@@ -22,7 +22,7 @@ func TestGetCommentToken(t *testing.T) {
 		assert.Equal(t, "///", tok)
 	})
 
-	t.Run("returns shorter token when only it matches", func(t *testing.T) {
+	t.Run("shorter token when only it matches", func(t *testing.T) {
 		doc := core.NewRope("// hello")
 		tok, ok := core.GetCommentToken(doc, []string{"//", "///"}, 0)
 		assert.True(t, ok)
@@ -82,7 +82,7 @@ func TestToggleLineComments(t *testing.T) {
 		assert.Equal(t, "  1\n\n  2\n  3", doc.String())
 	})
 
-	t.Run("uncomment lone comment token with no space", func(t *testing.T) {
+	t.Run("lone token uncomments without space", func(t *testing.T) {
 		doc := core.NewRope("#")
 		sel, _ := core.NewSelection(
 			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
@@ -93,7 +93,7 @@ func TestToggleLineComments(t *testing.T) {
 		assert.Equal(t, "", doc.String())
 	})
 
-	t.Run("explicit token is used instead of default", func(t *testing.T) {
+	t.Run("explicit token overrides default", func(t *testing.T) {
 		doc := core.NewRope("hello")
 		sel, _ := core.NewSelection(
 			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
@@ -136,7 +136,7 @@ func TestFindBlockComments(t *testing.T) {
 		assert.Equal(t, core.CommentChangeCommented, changes[0].Kind)
 	})
 
-	t.Run("whitespace-only returns Whitespace and false", func(t *testing.T) {
+	t.Run("whitespace-only returns Whitespace", func(t *testing.T) {
 		doc := core.NewRope("   ")
 		sel, _ := core.NewSelection(
 			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
@@ -219,7 +219,7 @@ func TestToggleBlockComments(t *testing.T) {
 }
 
 func TestSplitLinesOfSelection(t *testing.T) {
-	t.Run("splits multi-line range into per-line ranges", func(t *testing.T) {
+	t.Run("multi-line range into per-line ranges", func(t *testing.T) {
 		doc := core.NewRope("abc\ndef\nghi")
 		sel, _ := core.NewSelection(
 			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,

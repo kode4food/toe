@@ -29,8 +29,7 @@ func TestConfigCommands(t *testing.T) {
 
 		assert.True(t, ok)
 		assert.Equal(t,
-			filepath.Join(root, loader.DirName, "config.toml"), doc.Path(),
-		)
+			filepath.Join(root, loader.DirName, "config.toml"), doc.Path())
 	})
 
 	t.Run("config-open-workspace", func(t *testing.T) {
@@ -53,8 +52,7 @@ func TestConfigCommands(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t,
 			filepath.Join(work, loader.WorkspaceDirName, "config.toml"),
-			doc.Path(),
-		)
+			doc.Path())
 	})
 
 	t.Run("log-open", func(t *testing.T) {
@@ -69,8 +67,7 @@ func TestConfigCommands(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t,
 			filepath.Join(root, loader.DirName, loader.LogFileName),
-			doc.Path(),
-		)
+			doc.Path())
 	})
 
 	t.Run("workspace-trust", func(t *testing.T) {
@@ -184,7 +181,7 @@ text-width = 72
 
 		_ = runTypable(newTestModel(t, e), "theme latte")
 
-		assert.Equal(t, "latte", e.Config().Theme.Name)
+		assert.Equal(t, "latte", e.Options().Theme)
 	})
 
 	t.Run("theme: unsupported theme", func(t *testing.T) {
@@ -194,7 +191,7 @@ text-width = 72
 		m := resize(newTestModel(t, e), 80, 24)
 		m = runTypable(m, "theme bad")
 
-		assert.NotEqual(t, "bad", e.Config().Theme.Name)
+		assert.NotEqual(t, "bad", e.Options().Theme)
 		assert.Contains(t, m.View().Content, "theme not found")
 	})
 
@@ -203,15 +200,13 @@ text-width = 72
 		t.Setenv("COLORTERM", "")
 		t.Setenv("WSL_DISTRO_NAME", "")
 		e := view.NewEditor(t.TempDir())
-		cfg := e.Config()
-		cfg.Theme.Name = "latte"
-		e.SetConfig(cfg)
+		e.Options().Theme = "latte"
 		m := resize(newTestModel(t, e), 80, 24)
 
 		m = runTypable(m, "theme mocha")
 
-		assert.NotEqual(t, "mocha", e.Config().Theme.Name)
-		assert.Equal(t, "latte", e.Config().Theme.Name)
+		assert.NotEqual(t, "mocha", e.Options().Theme)
+		assert.Equal(t, "latte", e.Options().Theme)
 		assert.Contains(t, m.View().Content, "theme requires true color")
 	})
 
@@ -223,7 +218,7 @@ text-width = 72
 
 		_ = runTypable(newTestModel(t, e), "theme mocha")
 
-		assert.Equal(t, "mocha", e.Config().Theme.Name)
+		assert.Equal(t, "mocha", e.Options().Theme)
 	})
 
 	t.Run("theme: default alias", func(t *testing.T) {
@@ -234,7 +229,7 @@ text-width = 72
 
 		_ = runTypable(newTestModel(t, e), "theme default")
 
-		assert.Equal(t, "mocha", e.Config().Theme.Name)
+		assert.Equal(t, "mocha", e.Options().Theme)
 	})
 
 	t.Run("theme: reports active", func(t *testing.T) {

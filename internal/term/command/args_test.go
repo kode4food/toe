@@ -203,7 +203,7 @@ func TestCommandArgs(t *testing.T) {
 		assert.Equal(t, []string{"hello", "world"}, args.Positionals())
 	})
 
-	t.Run("treats args after double dash as positionals", func(t *testing.T) {
+	t.Run("double dash args become positionals", func(t *testing.T) {
 		args, err := command.ParseArgs(
 			`hello --bar baz -- --foo`, sig, true, nil,
 		)
@@ -240,7 +240,7 @@ func TestCommandArgs(t *testing.T) {
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 	})
 
-	t.Run("parses raw after configured positional count", func(t *testing.T) {
+	t.Run("raw after configured positional count", func(t *testing.T) {
 		sig := command.Signature{
 			Positionals: command.Positionals{Min: 1, Max: 2},
 			RawAfter:    1,
@@ -253,7 +253,6 @@ func TestCommandArgs(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t,
 			[]string{"gutters", `["diff"] ["diff", "diagnostics"]`},
-			args.Positionals(),
-		)
+			args.Positionals())
 	})
 }

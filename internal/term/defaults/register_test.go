@@ -45,6 +45,22 @@ func TestDefaults(t *testing.T) {
 		}
 	})
 
+	t.Run("registers module options", func(t *testing.T) {
+		reg := defaultRegistry(t)
+		for _, key := range []string{
+			"editor.scrolloff",
+			"editor.search.smart-case",
+			"editor.auto-pairs",
+			"editor.shell",
+			"editor.cursorline",
+			"editor.mouse",
+			"theme",
+		} {
+			_, ok := reg.LookupOption(key)
+			assert.True(t, ok)
+		}
+	})
+
 	t.Run("binds window rotation", func(t *testing.T) {
 		km := defaultKeymaps(t)
 		for _, seq := range [][]command.KeyEvent{
@@ -145,96 +161,6 @@ func TestDefaults(t *testing.T) {
 	})
 }
 
-func TestRegistry(t *testing.T) {
-	t.Run("Keymaps returns the installed keymaps", func(t *testing.T) {
-		km := command.NewKeymaps()
-		e := view.NewEditor(t.TempDir())
-		reg, _ := defaults.RegisterDefaults(ui.New(e, km), km)
-		assert.Equal(t, km, reg.Keymaps())
-	})
-
-	t.Run("OptionKeys returns sorted option keys", func(t *testing.T) {
-		_, reg := registryEnv(t)
-		keys := reg.OptionKeys()
-		assert.True(t, len(keys) > 0)
-		for i := 1; i < len(keys); i++ {
-			assert.True(t, keys[i-1] < keys[i])
-		}
-	})
-
-	t.Run("only toggleable bool keys", func(t *testing.T) {
-		_, reg := registryEnv(t)
-		boolKeys := reg.BoolOptionKeys()
-		for _, k := range boolKeys {
-			o, ok := reg.LookupOption(k)
-			assert.True(t, ok)
-			assert.NotNil(t, o.Toggle)
-		}
-		for _, k := range boolKeys {
-			assert.NotEqual(t, "editor.scrolloff", k)
-		}
-	})
-
-	t.Run("LookupOption finds module-owned options", func(t *testing.T) {
-		_, reg := registryEnv(t)
-		for _, key := range []string{
-			"editor.scrolloff",         // motion
-			"editor.search.smart-case", // search
-			"editor.auto-pairs",        // edit
-			"editor.shell",             // shell
-			"editor.cursorline",        // view
-			"editor.mouse",             // config/ui
-			"theme",                    // config/ui
-		} {
-			_, ok := reg.LookupOption(key)
-			assert.True(t, ok)
-		}
-	})
-
-	t.Run("LookupOption is case-insensitive", func(t *testing.T) {
-		_, reg := registryEnv(t)
-		_, ok := reg.LookupOption("Editor.ScrollOff")
-		assert.True(t, ok)
-	})
-
-	t.Run("LookupOption misses unknown keys", func(t *testing.T) {
-		_, reg := registryEnv(t)
-		_, ok := reg.LookupOption("no.such.option")
-		assert.False(t, ok)
-	})
-
-	t.Run("decodes TOML sections", func(t *testing.T) {
-		e, reg := registryEnv(t)
-		raw := map[string]any{
-			"editor": map[string]any{"scrolloff": 8},
-		}
-		assert.NoError(t, reg.ApplyTOML(e, raw))
-	})
-
-	t.Run("rejects invalid statusline element", func(t *testing.T) {
-		e, reg := registryEnv(t)
-		raw := map[string]any{
-			"editor": map[string]any{
-				"statusline": map[string]any{"left": []any{"bogus"}},
-			},
-		}
-		assert.Error(t, reg.ApplyTOML(e, raw))
-	})
-
-	t.Run("rejects invalid default line ending", func(t *testing.T) {
-		e, reg := registryEnv(t)
-		raw := map[string]any{
-			"editor": map[string]any{"default-line-ending": "bogus"},
-		}
-		assert.Error(t, reg.ApplyTOML(e, raw))
-	})
-
-	t.Run("ResetSections runs without error", func(t *testing.T) {
-		_, reg := registryEnv(t)
-		reg.ResetSections()
-	})
-}
-
 func TestOptionCompleters(t *testing.T) {
 	t.Run("get completes all option keys", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
@@ -268,6 +194,15 @@ func defaultKeymaps(t *testing.T) *command.Keymaps {
 	e := view.NewEditor(t.TempDir())
 	_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 	return km
+}
+
+func defaultRegistry(t *testing.T) *command.Registry {
+	t.Helper()
+	km := command.NewKeymaps()
+	e := view.NewEditor(t.TempDir())
+	reg, err := defaults.RegisterDefaults(ui.New(e, km), km)
+	assert.NoError(t, err)
+	return reg
 }
 
 func ctrl(ch rune) command.KeyEvent {

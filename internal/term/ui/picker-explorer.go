@@ -55,8 +55,7 @@ func (f *fileExplorerSource) Title() string {
 func (f *fileExplorerSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
-	cfg := e.Config()
-	if th, _, err := theme.Load(cfg.Theme.Choose(false)); err == nil {
+	if th, _, err := theme.Load(e.Options().Theme); err == nil {
 		f.dirStyle = th.Get("ui.text.directory")
 	}
 	return f.readDir(), nil, func() {}

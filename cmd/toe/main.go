@@ -42,11 +42,6 @@ func run(args []string, out io.Writer) error {
 	}
 
 	editor := view.NewEditor(cwd)
-	if configPath != "" {
-		if cfg, ok := config.LoadConfig(configPath); ok {
-			editor.SetConfig(cfg)
-		}
-	}
 
 	var pickerDir string
 	if len(args) > 0 {
@@ -88,11 +83,6 @@ func run(args []string, out io.Writer) error {
 		}
 	}
 	editor.SetConfigReload(func() error {
-		cfg, ok := config.LoadUserConfig()
-		if !ok {
-			return view.ErrConfigUnavailable
-		}
-		editor.SetConfig(cfg)
 		raw, _ := config.LoadRawUserConfig()
 		if raw == nil {
 			raw = map[string]any{}

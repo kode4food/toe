@@ -43,7 +43,7 @@ type (
 	// WhitespaceRender holds per-character render settings. When set from a
 	// plain string in TOML, Default carries the value and all per-character
 	// fields remain nil. When set as a table, each field is independently
-	// nullable and falls back to Default then "none".
+	// nullable and falls back to Default then "none"
 	WhitespaceRender struct {
 		Default *WhitespaceRenderValue
 		Space   *WhitespaceRenderValue
@@ -70,9 +70,9 @@ type (
 		SkipLevels *int   `toml:"skip-levels"`
 	}
 
-	// Gutter controls which gutters are shown and in what order. In TOML
-	// it can be an array of type strings or a table with layout/line-numbers.
-	// Present tracks whether the config was explicitly set.
+	// Gutter controls which gutters are shown and in what order. In TOML it can
+	// be an array of type strings or a table with layout/line-numbers. Present
+	// tracks whether the config was explicitly set
 	Gutter struct {
 		Present     bool
 		Layout      []GutterType      `toml:"layout"`
@@ -87,6 +87,8 @@ type (
 )
 
 const (
+	DefaultTheme = "mocha"
+
 	BufferLineNever    BufferLine = "never"
 	BufferLineAlways   BufferLine = "always"
 	BufferLineMultiple BufferLine = "multiple"
@@ -289,7 +291,8 @@ func (g *Gutter) UnmarshalTOML(value any) error {
 		if raw, ok := v["layout"]; ok {
 			items, ok := raw.([]any)
 			if !ok {
-				return fmt.Errorf("%w: layout must be an array", ErrInvalidGutterType)
+				return fmt.Errorf("%w: layout must be an array",
+					ErrInvalidGutterType)
 			}
 			layout, err := decodeGutterLayout(items)
 			if err != nil {

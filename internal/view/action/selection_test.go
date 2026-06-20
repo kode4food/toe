@@ -170,7 +170,7 @@ func TestToggleLineComments(t *testing.T) {
 }
 
 func TestToggleBlockComments(t *testing.T) {
-	t.Run("wraps selection with block comment tokens", func(t *testing.T) {
+	t.Run("wraps selection with block tokens", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
@@ -196,7 +196,7 @@ func TestJoinSelectionsSpace(t *testing.T) {
 }
 
 func TestGotoLineEndNewline(t *testing.T) {
-	t.Run("moves cursor to end including newline pos", func(t *testing.T) {
+	t.Run("cursor to end including newline pos", func(t *testing.T) {
 		e := editorWithText(t, "abc\ndef")
 		setCursor(t, e, 0)
 
@@ -207,7 +207,7 @@ func TestGotoLineEndNewline(t *testing.T) {
 }
 
 func TestExtendToLineEndNewline(t *testing.T) {
-	t.Run("extends selection through newline grapheme", func(t *testing.T) {
+	t.Run("extends through newline grapheme", func(t *testing.T) {
 		e := editorWithText(t, "abc\ndef")
 		setCursor(t, e, 0)
 
@@ -320,7 +320,7 @@ func TestJumpBackwardForward(t *testing.T) {
 		assert.NotPanics(t, func() { action.JumpBackward(e) })
 	})
 
-	t.Run("jump forward is noop when no forward history", func(t *testing.T) {
+	t.Run("forward noop when no forward history", func(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		setCursor(t, e, 3)
 
@@ -345,7 +345,7 @@ func TestJumpBackwardForward(t *testing.T) {
 		assert.NotEqual(t, posEnd, posAfter)
 	})
 
-	t.Run("jump forward after backward restores position", func(t *testing.T) {
+	t.Run("forward after backward restores position", func(t *testing.T) {
 		e := editorWithText(t, "abc\ndef\nghi")
 		setCursor(t, e, 0)
 		action.SaveSelection(e)
@@ -406,7 +406,7 @@ func TestReindentSelections(t *testing.T) {
 		assert.True(t, len(doc.Text().String()) > 0)
 	})
 
-	t.Run("mixed tab-space indentation gets reindented", func(t *testing.T) {
+	t.Run("mixed tab-space gets reindented", func(t *testing.T) {
 		e := editorWithText(t, "\t  hello")
 		setSelection(t, e, []core.Range{core.NewRange(0, 8)}, 0)
 
@@ -465,7 +465,7 @@ func TestSmartTab(t *testing.T) {
 }
 
 func TestSelectionIsLinewise(t *testing.T) {
-	t.Run("non-linewise range is not treated as linewise", func(t *testing.T) {
+	t.Run("partial range is not linewise", func(t *testing.T) {
 		// A partial selection exercises the false branch of selectionIsLinewise
 		e := editorWithText(t, "  hello\n  world")
 		setSelection(t, e, []core.Range{core.NewRange(2, 5)}, 0)
@@ -498,7 +498,7 @@ func TestSelectionIsLinewise(t *testing.T) {
 }
 
 func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
-	t.Run("uses block tokens when no line tokens defined", func(t *testing.T) {
+	t.Run("block tokens when no line tokens", func(t *testing.T) {
 		dir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", dir)
 
@@ -512,7 +512,7 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 		assert.True(t, len(result) >= len("hello"))
 	})
 
-	t.Run("ToggleBlockComments with no tokens is noop", func(t *testing.T) {
+	t.Run("no tokens is noop", func(t *testing.T) {
 		dir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", dir)
 
@@ -539,22 +539,8 @@ func TestToggleCommentsMultiLine(t *testing.T) {
 	})
 }
 
-func writeTextLangConfig(t *testing.T, commentToken string) {
-	t.Helper()
-	dir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", dir)
-	configDir := filepath.Join(dir, "toe")
-	assert.NoError(t, os.MkdirAll(configDir, 0o755))
-	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
-		"comment-token = \"" + commentToken + "\"\n"
-	assert.NoError(t,
-		os.WriteFile(filepath.Join(configDir, "languages.toml"),
-			[]byte(content), 0o644),
-	)
-}
-
 func TestToggleLineCommentsWithLangToken(t *testing.T) {
-	t.Run("uses language comment token when configured", func(t *testing.T) {
+	t.Run("uses language comment token", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
 		e := editorWithText(t, "hello")
@@ -566,7 +552,7 @@ func TestToggleLineCommentsWithLangToken(t *testing.T) {
 		assert.Equal(t, "// hello", doc.Text().String())
 	})
 
-	t.Run("removes language comment token when present", func(t *testing.T) {
+	t.Run("removes language comment token", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
 		e := editorWithText(t, "// hello")
@@ -577,20 +563,6 @@ func TestToggleLineCommentsWithLangToken(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
-}
-
-func writeTextBlockCommentConfig(t *testing.T) {
-	t.Helper()
-	dir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", dir)
-	configDir := filepath.Join(dir, "toe")
-	assert.NoError(t, os.MkdirAll(configDir, 0o755))
-	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
-		"block-comment-tokens = [{ start = \"/*\", end = \"*/\" }]\n"
-	assert.NoError(t,
-		os.WriteFile(filepath.Join(configDir, "languages.toml"),
-			[]byte(content), 0o644),
-	)
 }
 
 func TestToggleLineCommentsBlockLang(t *testing.T) {
@@ -622,7 +594,7 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 		assert.NotEqual(t, "hello", result)
 	})
 
-	t.Run("ToggleComments removes existing block comment", func(t *testing.T) {
+	t.Run("removes existing block comment", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
 		e := editorWithText(t, "/* hello */")
@@ -692,4 +664,32 @@ func TestToggleBlockCommentsLineFallback(t *testing.T) {
 		result := doc.Text().String()
 		assert.Contains(t, result, "//")
 	})
+}
+
+func writeTextLangConfig(t *testing.T, commentToken string) {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	configDir := filepath.Join(dir, "toe")
+	assert.NoError(t, os.MkdirAll(configDir, 0o755))
+	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
+		"comment-token = \"" + commentToken + "\"\n"
+	assert.NoError(t,
+		os.WriteFile(filepath.Join(configDir, "languages.toml"),
+			[]byte(content), 0o644),
+	)
+}
+
+func writeTextBlockCommentConfig(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	configDir := filepath.Join(dir, "toe")
+	assert.NoError(t, os.MkdirAll(configDir, 0o755))
+	content := "[[language]]\nname = \"text\"\nscope = \"text.plain\"\n" +
+		"block-comment-tokens = [{ start = \"/*\", end = \"*/\" }]\n"
+	assert.NoError(t,
+		os.WriteFile(filepath.Join(configDir, "languages.toml"),
+			[]byte(content), 0o644),
+	)
 }

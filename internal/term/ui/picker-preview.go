@@ -13,7 +13,6 @@ import (
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
 	"github.com/kode4food/toe/internal/view/language"
 )
 
@@ -26,7 +25,6 @@ type (
 		// hlFrom < 0 means full preview, no highlight
 		hlFrom int
 		hlTo   int
-		cfg    *config.Config
 		th     *theme.Theme
 	}
 
@@ -39,7 +37,6 @@ type (
 		text   core.Rope
 		spans  []highlight.Span
 		format *language.TextFormat
-		cfg    *config.Config
 		opts   *view.Options
 		th     *theme.Theme
 		w, h   int
@@ -101,7 +98,7 @@ func (p *previewCtx) renderDocInto(
 	format := doc.TextFormatForConfig(p.w, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
-		format: format, cfg: p.cfg, opts: p.editor.Options(),
+		format: format, opts: p.editor.Options(),
 		th: p.th, w: p.w, h: p.h,
 		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
 	}
@@ -127,10 +124,12 @@ func (p *previewCtx) renderFileInto(
 		p.picker.fileCache[path] = entry
 	}
 	opts := p.editor.Options()
-	format := language.TextFormatForLanguageWithConfig(entry.lang, opts.TextWidth, opts.SoftWrap, p.w)
+	format := language.TextFormatForLanguageWithConfig(
+		entry.lang, opts.TextWidth, opts.SoftWrap, p.w,
+	)
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
-		format: format, cfg: p.cfg, opts: p.editor.Options(),
+		format: format, opts: p.editor.Options(),
 		th: p.th, w: p.w, h: p.h,
 		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
 	}
@@ -139,7 +138,7 @@ func (p *previewCtx) renderFileInto(
 }
 
 // ANSI codes in callback preview strings are stripped so the popup style
-// applies.
+// applies
 func (p *previewCtx) blitPlaceholderInto(
 	buf *tui.Buffer, x0, y0 int, text string,
 ) {
@@ -297,7 +296,7 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 	// so the stored scroll stays bounded. The upper bound pins the last line
 	// to the bottom of the pane rather than letting content scroll off top.
 	// The clamp counts logical lines; a tall soft-wrapped final line can still
-	// leave a gap. Use visual-row pinning if that becomes observable.
+	// leave a gap. Use visual-row pinning if that becomes observable
 	if args.scroll != 0 {
 		base := anchorLine
 		anchorLine = max(0, min(base+args.scroll, max(0, nLines-args.h)))

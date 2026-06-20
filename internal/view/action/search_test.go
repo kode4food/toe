@@ -104,7 +104,7 @@ func TestSearchCaseSensitive(t *testing.T) {
 }
 
 func TestSearchWrapAround(t *testing.T) {
-	t.Run("SearchNext wraps when wrap-around enabled", func(t *testing.T) {
+	t.Run("next wraps with wrap-around enabled", func(t *testing.T) {
 		e := editorWithText(t, "foo bar")
 		// search forward for "foo", landing at pos 0
 		err := action.SearchForward(e, "foo")
@@ -113,7 +113,7 @@ func TestSearchWrapAround(t *testing.T) {
 		assert.NotPanics(t, func() { action.SearchNext(e) })
 	})
 
-	t.Run("SearchPrev wraps when wrap-around enabled", func(t *testing.T) {
+	t.Run("prev wraps with wrap-around enabled", func(t *testing.T) {
 		e := editorWithText(t, "foo bar")
 		setCursor(t, e, 0)
 		// search backward from start - may need to wrap
@@ -218,7 +218,7 @@ func TestKillToLine(t *testing.T) {
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
-	t.Run("KillToLineEnd at line end joins with next line", func(t *testing.T) {
+	t.Run("at line end joins with next line", func(t *testing.T) {
 		e := editorWithText(t, "hello\nworld")
 		e.SetMode(view.ModeInsert)
 		// cursor at pos 5 = lineEnd of first line
@@ -230,7 +230,7 @@ func TestKillToLine(t *testing.T) {
 		assert.Equal(t, "helloworld", doc.Text().String())
 	})
 
-	t.Run("KillToLineStart deletes from start to cursor", func(t *testing.T) {
+	t.Run("deletes from line start to cursor", func(t *testing.T) {
 		e := editorWithText(t, "hello world")
 		e.SetMode(view.ModeInsert)
 		setCursor(t, e, 6)
@@ -255,7 +255,7 @@ func TestKillToLine(t *testing.T) {
 }
 
 func TestOpenBelow(t *testing.T) {
-	t.Run("inserts blank line below and enters insert", func(t *testing.T) {
+	t.Run("inserts blank line below", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		setCursor(t, e, 0)
 
@@ -268,7 +268,7 @@ func TestOpenBelow(t *testing.T) {
 }
 
 func TestOpenAbove(t *testing.T) {
-	t.Run("inserts blank line above and enters insert", func(t *testing.T) {
+	t.Run("inserts blank line above", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		setCursor(t, e, 0)
 
@@ -777,7 +777,7 @@ func TestExtendLineAboveBranches(t *testing.T) {
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
 
-	t.Run("extends from last line to end of document", func(t *testing.T) {
+	t.Run("last line extends to end of document", func(t *testing.T) {
 		e := editorWithText(t, "abc\ndef")
 		setCursor(t, e, 5)
 
@@ -791,7 +791,7 @@ func TestExtendLineAboveBranches(t *testing.T) {
 }
 
 func TestFindPrevMatchFromZero(t *testing.T) {
-	t.Run("SearchBackward from position 0 wraps around", func(t *testing.T) {
+	t.Run("from position 0 wraps around", func(t *testing.T) {
 		e := editorWithText(t, "foo bar foo")
 		setCursor(t, e, 0)
 
@@ -840,7 +840,7 @@ func TestSurroundDelete(t *testing.T) {
 }
 
 func TestSurroundReplace(t *testing.T) {
-	t.Run("replaces surrounding parens with brackets", func(t *testing.T) {
+	t.Run("parens replaced with brackets", func(t *testing.T) {
 		e := editorWithText(t, "(hello)")
 		setCursor(t, e, 1)
 

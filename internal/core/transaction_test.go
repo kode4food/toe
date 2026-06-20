@@ -50,7 +50,7 @@ func TestChangeSet(t *testing.T) {
 		assert.Equal(t, 2, cs.Operations()[2].LenChars())
 	})
 
-	t.Run("rejects unordered and out of range changes", func(t *testing.T) {
+	t.Run("rejects unordered or out-of-range", func(t *testing.T) {
 		doc := core.NewRope("abc")
 
 		_, err := core.NewChangeSetFromChanges(doc, []core.Change{
@@ -124,7 +124,7 @@ func TestChangeSet(t *testing.T) {
 		assert.Equal(t, doc.String(), back.String())
 	})
 
-	t.Run("maps positions through inserts and deletes", func(t *testing.T) {
+	t.Run("maps positions through changes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
 			core.TextChange(2, 4, "XYZ"),
@@ -229,7 +229,7 @@ func TestChangeSetCompose(t *testing.T) {
 		return out, cs
 	}
 
-	t.Run("insert then delete covers inserted region", func(t *testing.T) {
+	t.Run("delete covers previously inserted region", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		mid, csA := apply(t, doc, []core.Change{core.TextChange(1, 1, "XY")})
 		// mid = "aXYbc"

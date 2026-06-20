@@ -10,8 +10,9 @@ import (
 )
 
 // Options holds the editor's typed runtime config values. Fields are exported
-// so module Apply functions can write to them directly.
+// so module Apply functions can write to them directly
 type Options struct {
+	Theme                string
 	ScrollOff            int
 	ScrollLines          int
 	Mouse                bool
@@ -52,6 +53,7 @@ func defaultOptions() Options {
 		shell = []string{"cmd", "/C"}
 	}
 	return Options{
+		Theme:                DefaultTheme,
 		ScrollOff:            DefaultScrollOff,
 		ScrollLines:          DefaultScrollLines,
 		Mouse:                true,
@@ -71,7 +73,7 @@ func defaultOptions() Options {
 	}
 }
 
-// StatusLineSeparator returns the status line separator string with default.
+// StatusLineSeparator returns the status line separator string with default
 func (o *Options) StatusLineSeparator() string {
 	if o.StatusLine.Separator != "" {
 		return o.StatusLine.Separator
@@ -79,7 +81,7 @@ func (o *Options) StatusLineSeparator() string {
 	return "│"
 }
 
-// ModeNameForMode returns the display name for the given mode string.
+// ModeNameForMode returns the display name for the given mode string
 func (o *Options) ModeNameForMode(mode string) string {
 	switch strings.ToLower(mode) {
 	case "ins", "insert":
@@ -100,7 +102,7 @@ func (o *Options) ModeNameForMode(mode string) string {
 	}
 }
 
-// StatusLineLeft returns the left status line elements with defaults.
+// StatusLineLeft returns the left status line elements with defaults
 func (o *Options) StatusLineLeft() []StatusLineElement {
 	if len(o.StatusLine.Left) > 0 {
 		return slices.Clone(o.StatusLine.Left)
@@ -114,12 +116,12 @@ func (o *Options) StatusLineLeft() []StatusLineElement {
 	}
 }
 
-// StatusLineCenter returns the center status line elements.
+// StatusLineCenter returns the center status line elements
 func (o *Options) StatusLineCenter() []StatusLineElement {
 	return slices.Clone(o.StatusLine.Center)
 }
 
-// StatusLineRight returns the right status line elements with defaults.
+// StatusLineRight returns the right status line elements with defaults
 func (o *Options) StatusLineRight() []StatusLineElement {
 	if len(o.StatusLine.Right) > 0 {
 		return slices.Clone(o.StatusLine.Right)
@@ -133,13 +135,13 @@ func (o *Options) StatusLineRight() []StatusLineElement {
 	}
 }
 
-// AutoPairs returns the auto-pair map and whether auto-pairs are enabled.
+// AutoPairs returns the auto-pair map and whether auto-pairs are enabled
 func (o *Options) AutoPairs() (core.AutoPairs, bool) {
 	return o.AutoPairMap, o.HasAutoPairs
 }
 
 // CursorShapeForMode returns the cursor shape for the given mode string
-// ("NOR", "INS", "SEL").
+// ("NOR", "INS", "SEL")
 func (o *Options) CursorShapeForMode(mode string) CursorKind {
 	var k CursorKind
 	switch mode {

@@ -45,7 +45,7 @@ func TestCompletePositional(t *testing.T) {
 		Completer:   c,
 	}
 
-	t.Run("completes first positional from empty input", func(t *testing.T) {
+	t.Run("first positional from empty input", func(t *testing.T) {
 		got := c.Complete(nil, sig, "")
 		assert.Equal(t, 3, len(got))
 	})
@@ -149,7 +149,7 @@ func TestCompleteRaw(t *testing.T) {
 	}
 	c := command.Completer{Raw: rawFn}
 
-	t.Run("raw completer used after rawAfter threshold", func(t *testing.T) {
+	t.Run("raw completer after rawAfter threshold", func(t *testing.T) {
 		got := c.Complete(nil, sig, "cmd file")
 		assert.Equal(t, 2, len(got))
 	})

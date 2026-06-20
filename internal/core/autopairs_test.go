@@ -43,14 +43,14 @@ func TestHookInsertOpen(t *testing.T) {
 		assert.Equal(t, "()", change.Text())
 	})
 
-	t.Run("no action when next char exists and is alpha", func(t *testing.T) {
+	t.Run("no action when next char is alpha", func(t *testing.T) {
 		doc := core.NewRope("x")
 		r := core.PointRange(0)
 		_, _, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.False(t, ok)
 	})
 
-	t.Run("forward single-grapheme: cursor after open", func(t *testing.T) {
+	t.Run("forward single-grapheme after open", func(t *testing.T) {
 		doc := core.NewRope("( ")
 		r := core.NewRange(0, 1)
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
@@ -59,7 +59,7 @@ func TestHookInsertOpen(t *testing.T) {
 		assert.Equal(t, 1, next.Anchor)
 	})
 
-	t.Run("backward single-grapheme: cursor after open", func(t *testing.T) {
+	t.Run("backward single-grapheme after open", func(t *testing.T) {
 		doc := core.NewRope("( ")
 		r := core.NewRange(1, 0)
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
@@ -68,7 +68,7 @@ func TestHookInsertOpen(t *testing.T) {
 		assert.Equal(t, 2, next.Anchor)
 	})
 
-	t.Run("multi-char forward selection inserts pair", func(t *testing.T) {
+	t.Run("forward multi-char inserts pair", func(t *testing.T) {
 		doc := core.NewRope("()  ")
 		r := core.NewRange(0, 3)
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
@@ -77,7 +77,7 @@ func TestHookInsertOpen(t *testing.T) {
 		assert.Equal(t, 4, next.Head)
 	})
 
-	t.Run("multi-char backward selection inserts pair", func(t *testing.T) {
+	t.Run("backward multi-char inserts pair", func(t *testing.T) {
 		doc := core.NewRope("()  ")
 		r := core.NewRange(3, 0)
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
@@ -104,7 +104,7 @@ func TestHookInsertClose(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("skips with single-grapheme forward selection", func(t *testing.T) {
+	t.Run("skips with single-grapheme forward sel", func(t *testing.T) {
 		doc := core.NewRope(")x")
 		r := core.NewRange(0, 1)
 		change, next, ok := core.HookInsert(doc, r, ')', core.DefaultAutoPairs())

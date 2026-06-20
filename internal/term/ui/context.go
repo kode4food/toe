@@ -13,27 +13,36 @@ type Context struct {
 
 	lastLayer func(*view.Editor) layerFunc
 
-	theme     *theme.Theme
-	themeName string
+	loadedTheme *theme.Theme
+	theme       string
 }
 
 // Theme returns the active theme, reloading it when the configured theme name
 // has changed. Falls back to the embedded default if the configured theme
-// fails to load; the embedded default is guaranteed to succeed
+// fails to load. If the embedded default is unavailable, returns a minimal
+// decoded theme so rendering can continue
 func (c *Context) Theme() *theme.Theme {
-	name := c.Editor.Config().Theme.Choose(false)
-	if name == c.themeName {
-		return c.theme
+	name := c.Editor.Options().Theme
+	if name == c.theme {
+		return c.loadedTheme
 	}
-	c.themeName = name
+	c.theme = name
 	if th, _, err := theme.Load(name); err == nil {
-		c.theme = th
-		return c.theme
+		c.loadedTheme = th
+		return c.loadedTheme
 	}
 	th, _, err := theme.Default()
 	if err != nil {
-		panic("embedded default theme failed to load: " + err.Error())
+		c.loadedTheme = fallbackTheme()
+		return c.loadedTheme
 	}
-	c.theme = th
-	return c.theme
+	c.loadedTheme = th
+	return c.loadedTheme
+}
+
+func fallbackTheme() *theme.Theme {
+	th, _ := theme.Decode(map[string]any{
+		"ui.selection": "default",
+	})
+	return th
 }

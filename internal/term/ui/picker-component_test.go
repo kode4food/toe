@@ -19,11 +19,11 @@ import (
 type fixedPickerSource struct{ items []ui.PickerItem }
 
 func TestPickerScroll(t *testing.T) {
-	// At 120×20: areaW=108, areaH=16, left=6, top=1, preview layout active.
-	// listBounds: x=7, y=4, w=53, h=12  →  valid x range [7,59], y range [4,15]
-	// Preview pane occupies x≥60 inside the picker.
+	// At 120x20: areaW=108, areaH=16, left=6, top=1, preview layout active.
+	// listBounds: x=7, y=4, w=53, h=12; valid x [7,59], y [4,15]
+	// Preview pane occupies x >= 60 inside the picker
 
-	t.Run("wheel over list scrolls without selecting", func(t *testing.T) {
+	t.Run("wheel list keeps selection", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 
 		out := stripANSI(m.View().Content)
@@ -37,20 +37,22 @@ func TestPickerScroll(t *testing.T) {
 			m = m2.(ui.Model)
 		}
 		out = stripANSI(m.View().Content)
-		// list scrolled to reveal the far item; selection (and preview) unchanged
+		// list scrolled to reveal the far item; selection (and preview)
+		// unchanged
 		assert.Contains(t, out, "item29")
 		assert.Contains(t, out, "CONTENT-00")
 		assert.NotContains(t, out, "CONTENT-29")
 	})
 
-	t.Run("wheel over preview pane does not scroll list", func(t *testing.T) {
+	t.Run("wheel preview keeps list", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 
 		out := stripANSI(m.View().Content)
 		assert.NotContains(t, out, "item29")
 
 		for range 10 {
-			// X=65 is inside the picker but in the preview pane, outside listBounds
+			// X=65 is inside the picker but in the preview pane, outside
+			// listBounds
 			m2, _ := m.Update(tea.MouseWheelMsg{
 				X: 65, Y: 10, Button: tea.MouseWheelDown,
 			})

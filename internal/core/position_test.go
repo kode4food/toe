@@ -36,7 +36,7 @@ func TestPosition(t *testing.T) {
 		)
 	})
 
-	t.Run("matches reference carriage return handling", func(t *testing.T) {
+	t.Run("reference carriage return handling", func(t *testing.T) {
 		p := core.Position{}
 
 		assert.Equal(t, core.Position{Row: 1, Col: 1},

@@ -20,6 +20,13 @@ func intOr(p *int, def int) int {
 	return *p
 }
 
+func stringOr(s, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
+}
+
 func lineNumberOr(
 	v view.LineNumber, def view.LineNumber,
 ) view.LineNumber {

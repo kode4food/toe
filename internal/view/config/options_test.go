@@ -54,10 +54,49 @@ func TestParseHelpers(t *testing.T) {
 		assert.Equal(t, []int{80, 120}, v)
 	})
 
+	t.Run("ParseIntSlice invalid", func(t *testing.T) {
+		_, err := config.ParseIntSlice("not a slice")
+		assert.ErrorIs(t, err, config.ErrInvalidOption)
+	})
+
 	t.Run("ParseStringSlice", func(t *testing.T) {
 		v, err := config.ParseStringSlice(`["bash", "-c"]`)
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"bash", "-c"}, v)
+	})
+
+	t.Run("ParseStringSlice invalid", func(t *testing.T) {
+		_, err := config.ParseStringSlice("not a slice")
+		assert.ErrorIs(t, err, config.ErrInvalidOption)
+	})
+
+	t.Run("ParseStringLiteral plain value", func(t *testing.T) {
+		v, err := config.ParseStringLiteral("hello")
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", v)
+	})
+
+	t.Run("ParseStringLiteral quoted string", func(t *testing.T) {
+		v, err := config.ParseStringLiteral(`"hello world"`)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello world", v)
+	})
+
+	t.Run("ParseStringLiteral single-quoted string", func(t *testing.T) {
+		v, err := config.ParseStringLiteral(`'hello'`)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", v)
+	})
+
+	t.Run("ParseStringLiteral empty returns empty", func(t *testing.T) {
+		v, err := config.ParseStringLiteral("  ")
+		assert.NoError(t, err)
+		assert.Equal(t, "", v)
+	})
+
+	t.Run("ParseStringLiteral invalid quoted errors", func(t *testing.T) {
+		_, err := config.ParseStringLiteral(`"unclosed`)
+		assert.ErrorIs(t, err, config.ErrInvalidOption)
 	})
 
 	t.Run("FormatIntSlice", func(t *testing.T) {

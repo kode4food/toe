@@ -6,7 +6,7 @@ import (
 )
 
 // globMatch reports whether path matches the glob pattern, expanding brace
-// alternatives and matching with both native and slash separators.
+// alternatives and matching with both native and slash separators
 func globMatch(pattern, path string) bool {
 	for _, pattern := range expandGlobBraces(pattern) {
 		if ok := pathGlobMatch(pattern, filepath.ToSlash(path)); ok {

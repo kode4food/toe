@@ -9,19 +9,6 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-func render(s tui.Style) string {
-	b := tui.NewBuffer(1, 1)
-	b.SetString(0, 0, "x", s)
-	return b.RenderToANSI()
-}
-
-func renderTwo(s0, s1 tui.Style) string {
-	b := tui.NewBuffer(2, 1)
-	b.SetString(0, 0, "a", s0)
-	b.SetString(1, 0, "b", s1)
-	return b.RenderToANSI()
-}
-
 func TestRenderEmpty(t *testing.T) {
 	t.Run("zero-width returns empty", func(t *testing.T) {
 		b := tui.NewBuffer(0, 5)
@@ -127,7 +114,7 @@ func TestEmitBgColor(t *testing.T) {
 
 func TestEmitUlColor(t *testing.T) {
 	t.Run("reset emits 59m", func(t *testing.T) {
-		// Change from a non-reset to reset to force emission.
+		// Change from a non-reset to reset to force emission
 		out := renderTwo(
 			tui.Style{}.UlColor(tui.ColorRGB(1, 2, 3)),
 			tui.Style{}.UlColor(tui.ColorReset),
@@ -297,4 +284,17 @@ func TestEmitModifiers(t *testing.T) {
 		assert.Contains(t, out, "\x1b[22m")
 		assert.Contains(t, out, "\x1b[2m")
 	})
+}
+
+func render(s tui.Style) string {
+	b := tui.NewBuffer(1, 1)
+	b.SetString(0, 0, "x", s)
+	return b.RenderToANSI()
+}
+
+func renderTwo(s0, s1 tui.Style) string {
+	b := tui.NewBuffer(2, 1)
+	b.SetString(0, 0, "a", s0)
+	b.SetString(1, 0, "b", s1)
+	return b.RenderToANSI()
 }

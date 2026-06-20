@@ -51,7 +51,7 @@ func terminalTrueColor() bool {
 		os.Getenv("WSL_DISTRO_NAME") != ""
 }
 
-func configModule(r *Registry) command.Module {
+func configModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
 	return command.Module{
 		Commands: map[string]command.Command{
@@ -81,7 +81,7 @@ func configModule(r *Registry) command.Module {
 				Signature: command.Signature{
 					Positionals: command.Positionals{Min: 1, Max: 1},
 					Completer: command.PositionalCompleter(
-						r.optionCompleter(),
+						r.OptionCompleter(),
 					),
 				},
 			},
@@ -112,7 +112,7 @@ func configModule(r *Registry) command.Module {
 					Positionals: command.Positionals{Min: 2, Max: 2},
 					RawAfter:    1,
 					Completer: command.PositionalCompleter(
-						r.optionCompleter(),
+						r.OptionCompleter(),
 					),
 				},
 			},
@@ -144,7 +144,7 @@ func configModule(r *Registry) command.Module {
 				Signature: command.Signature{
 					Positionals: command.Positionals{Min: 1, Max: 1},
 					Completer: command.PositionalCompleter(
-						r.boolOptionCompleter(),
+						r.BoolOptionCompleter(),
 					),
 				},
 			},
@@ -233,9 +233,8 @@ func configModule(r *Registry) command.Module {
 				DocString: "Change the editor theme " +
 					"(show current theme if no name specified)",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
-					cfg := e.Config()
 					if args == nil || args.Empty() {
-						name := cfg.Theme.Choose(false)
+						name := e.Options().Theme
 						if _, _, err := theme.Load(name); err != nil {
 							th, _, _ := theme.Default()
 							name = th.Name()
@@ -258,8 +257,7 @@ func configModule(r *Registry) command.Module {
 							Message: "error: theme requires true color support",
 						}
 					}
-					cfg.Theme = config.Theme{Name: name}
-					e.SetConfig(cfg)
+					e.Options().Theme = name
 					return command.Result{}
 				},
 				Signature: staticSig(optionalArg(), loader.ThemeNames()...),
@@ -373,14 +371,10 @@ func configModule(r *Registry) command.Module {
 			{
 				Key: "theme",
 				Get: func(e *view.Editor) (string, error) {
-					c := e.Config()
-					if c.Theme.Adaptive {
-						return c.Theme.Choose(false), nil
-					}
-					return c.Theme.Name, nil
+					return e.Options().Theme, nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					e.Config().Theme = config.Theme{Name: s}
+					e.Options().Theme = s
 					return nil
 				},
 			},
@@ -569,8 +563,11 @@ func configModule(r *Registry) command.Module {
 			Reset:  func() { *cfg = uiSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
+				opts.Theme = stringOr(cfg.Theme, view.DefaultTheme)
 				opts.Mouse = boolOr(cfg.Editor.Mouse, true)
-				opts.MiddleClickPaste = boolOr(cfg.Editor.MiddleClickPaste, true)
+				opts.MiddleClickPaste = boolOr(
+					cfg.Editor.MiddleClickPaste, true,
+				)
 				opts.Insecure = boolOr(cfg.Editor.Insecure, false)
 				opts.EditorConfig = boolOr(cfg.Editor.EditorConfig, true)
 				opts.DefaultLineEnding = cfg.Editor.DefaultLineEnding

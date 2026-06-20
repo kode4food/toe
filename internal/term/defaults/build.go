@@ -7,8 +7,10 @@ import (
 
 // RegisterDefaults installs the default command registry for an editor and
 // returns the registry so callers can apply TOML config to module sections
-func RegisterDefaults(model ui.Model, km *command.Keymaps) (*Registry, error) {
-	r := &Registry{km: km}
+func RegisterDefaults(
+	model ui.Model, km *command.Keymaps,
+) (*command.Registry, error) {
+	r := command.NewRegistry(km)
 	if err := registerDefaultCommands(r, model); err != nil {
 		return nil, err
 	}
@@ -16,7 +18,7 @@ func RegisterDefaults(model ui.Model, km *command.Keymaps) (*Registry, error) {
 	return r, nil
 }
 
-func registerDefaultCommands(r *Registry, model ui.Model) error {
+func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 	modules := []command.Module{
 		insertModule(),
 		motionModule(),
@@ -38,7 +40,7 @@ func registerDefaultCommands(r *Registry, model ui.Model) error {
 		macroModule(model),
 	}
 	for _, m := range modules {
-		if err := r.registerModule(m); err != nil {
+		if err := r.RegisterModule(m); err != nil {
 			return err
 		}
 	}

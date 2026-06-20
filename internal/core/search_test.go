@@ -32,7 +32,7 @@ func TestFindNthChar(t *testing.T) {
 		assert.Equal(t, 11, pos)
 	})
 
-	t.Run("returns false when not enough matches forward", func(t *testing.T) {
+	t.Run("false when not enough forward matches", func(t *testing.T) {
 		doc := core.NewRope("aa ⌚aa \r\n aa")
 		_, ok := doc.FindNthChar(4, m, 5, core.DirectionForward)
 		assert.False(t, ok)
@@ -59,7 +59,7 @@ func TestFindNthChar(t *testing.T) {
 		assert.Equal(t, 0, pos)
 	})
 
-	t.Run("returns false when not enough matches backward", func(t *testing.T) {
+	t.Run("false when not enough backward matches", func(t *testing.T) {
 		doc := core.NewRope("aa ⌚aa \r\n aa")
 		_, ok := doc.FindNthChar(4, m, 5, core.DirectionBackward)
 		assert.False(t, ok)

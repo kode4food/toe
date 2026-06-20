@@ -75,7 +75,7 @@ func TestMoveLineEndEmpty(t *testing.T) {
 		assert.Equal(t, 0, cursorPos(t, e))
 	})
 
-	t.Run("ExtendToLineEnd on empty line stays at start", func(t *testing.T) {
+	t.Run("empty line stays at start", func(t *testing.T) {
 		e := editorWithText(t, "\nabc")
 		setCursor(t, e, 0)
 
@@ -442,7 +442,7 @@ func TestExtendWordMotions(t *testing.T) {
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
 
-	t.Run("ExtendNextLongWordStart extends to WORD start", func(t *testing.T) {
+	t.Run("extends to WORD start", func(t *testing.T) {
 		e := editorWithText(t, "foo.bar baz")
 		setCursor(t, e, 0)
 
@@ -454,7 +454,7 @@ func TestExtendWordMotions(t *testing.T) {
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
 
-	t.Run("ExtendPrevWordEnd extends to prev word end", func(t *testing.T) {
+	t.Run("extends to prev word end", func(t *testing.T) {
 		e := editorWithText(t, "foo bar")
 		setCursor(t, e, 6)
 
@@ -552,7 +552,7 @@ func TestExtendLongWordMotions(t *testing.T) {
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
 
-	t.Run("ExtendPrevLongWordEnd extends to prev WORD end", func(t *testing.T) {
+	t.Run("extends to prev WORD end", func(t *testing.T) {
 		e := editorWithText(t, "foo bar")
 		setCursor(t, e, 6)
 
@@ -602,7 +602,7 @@ func TestVisualMoveFormat(t *testing.T) {
 		assert.Equal(t, 0, cursorPos(t, e))
 	})
 
-	t.Run("no viewport width uses logical lines down", func(t *testing.T) {
+	t.Run("no viewport width uses logical down", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd\nef")
 		e.SetViewContentWidth(0)
 		setCursor(t, e, 0)
@@ -612,7 +612,7 @@ func TestVisualMoveFormat(t *testing.T) {
 		assert.Equal(t, 3, cursorPos(t, e))
 	})
 
-	t.Run("MoveUp with soft-wrap width uses visual lines", func(t *testing.T) {
+	t.Run("soft-wrap width uses visual lines", func(t *testing.T) {
 		e := editorWithText(t, "abcdef\nghijkl")
 		e.Options().SoftWrap.Enable = new(true)
 		e.SetViewContentWidth(20)
@@ -636,7 +636,7 @@ func TestVisualMoveFormat(t *testing.T) {
 }
 
 func TestParagraphMotionWithCount(t *testing.T) {
-	t.Run("GotoNextParagraph count=2 skips two paragraphs", func(t *testing.T) {
+	t.Run("count=2 skips two paragraphs forward", func(t *testing.T) {
 		e := editorWithText(t, "a\n\nb\n\nc")
 		setCursor(t, e, 0)
 		e.SetCount(2)
@@ -664,7 +664,7 @@ func TestParagraphMotionWithCount(t *testing.T) {
 		assert.Equal(t, 0, cursorPos(t, e))
 	})
 
-	t.Run("GotoPrevParagraph count=2 skips two paragraphs", func(t *testing.T) {
+	t.Run("count=2 skips two paragraphs backward", func(t *testing.T) {
 		e := editorWithText(t, "a\n\nb\n\nc")
 		setCursor(t, e, 6)
 		e.SetCount(2)

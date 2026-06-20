@@ -57,7 +57,7 @@ func TestRope(t *testing.T) {
 		assert.Equal(t, 701, r.LenLines())
 	})
 
-	t.Run("edits large ropes on both sides of the tree", func(t *testing.T) {
+	t.Run("edits both sides of large tree", func(t *testing.T) {
 		text := strings.Repeat("a", 1200) + strings.Repeat("b", 1200)
 		r := core.NewRope(text)
 

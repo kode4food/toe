@@ -107,9 +107,7 @@ func TestPromptCompletion(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
-		cfg := e.Config()
-		cfg.Theme.Name = "mocha"
-		e.SetConfig(cfg)
+		e.Options().Theme = "mocha"
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{

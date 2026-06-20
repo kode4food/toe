@@ -90,7 +90,7 @@ func TestIncrementInteger(t *testing.T) {
 		}
 	})
 
-	t.Run("leading and trailing separators are not valid", func(t *testing.T) {
+	t.Run("leading/trailing separators invalid", func(t *testing.T) {
 		_, ok := core.IncrementInteger("9_", 1)
 		assert.False(t, ok)
 		_, ok = core.IncrementInteger("_9", 1)

@@ -26,7 +26,8 @@ func TextFormatForLanguage(lang string, w int) *TextFormat {
 }
 
 // loadUserEditorFormat reads the user's config.toml for editor text-width and
-// soft-wrap settings. Returns nil/zero values when the file is absent or unparseable.
+// soft-wrap settings. Returns nil/zero values when the file is absent or
+// unparseable
 func loadUserEditorFormat() (*int, SoftWrap) {
 	path, ok := loader.ConfigFile()
 	if !ok {
@@ -62,7 +63,9 @@ func TextFormatForConfig(
 		tw = *lang.TextWidth
 	}
 
-	wrapAt := boolValue(lang.SoftWrap.WrapAtTextWidth, softWrap.WrapAtTextWidth, false)
+	wrapAt := boolValue(
+		lang.SoftWrap.WrapAtTextWidth, softWrap.WrapAtTextWidth, false,
+	)
 	if wrapAt {
 		if tw >= w {
 			wrapAt = false
@@ -78,12 +81,15 @@ func TextFormatForConfig(
 		intValue(lang.SoftWrap.MaxWrap, softWrap.MaxWrap, DefaultMaxWrap),
 		w/4,
 	)
-	format.MaxIndentRetain = min(
-		intValue(lang.SoftWrap.MaxIndentRetain, softWrap.MaxIndentRetain, DefaultMaxIndentRetain),
-		w*2/5,
+	retain := intValue(
+		lang.SoftWrap.MaxIndentRetain,
+		softWrap.MaxIndentRetain,
+		DefaultMaxIndentRetain,
 	)
+	format.MaxIndentRetain = min(retain, w*2/5)
 	format.WrapIndicator = stringValue(
-		lang.SoftWrap.WrapIndicator, softWrap.WrapIndicator, DefaultWrapIndicator,
+		lang.SoftWrap.WrapIndicator, softWrap.WrapIndicator,
+		DefaultWrapIndicator,
 	)
 	format.SoftWrapAtTextWidth = wrapAt
 	return format

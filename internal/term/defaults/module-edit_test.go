@@ -74,6 +74,124 @@ func TestEditReplaceChar(t *testing.T) {
 	})
 }
 
+func TestEditTextOps(t *testing.T) {
+	t.Run("delete selection removes text", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abcdef")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "delete_selection")
+		assert.Equal(t, "def", docText(t, e))
+	})
+
+	t.Run("removes and enters insert", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abcdef")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "change_selection")
+		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+
+	t.Run("switch case toggles text", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "switch_case")
+		assert.Equal(t, "ABC", docText(t, e))
+	})
+
+	t.Run("switch to lowercase", func(t *testing.T) {
+		e, km := defaultsEnv(t, "ABC")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "switch_to_lowercase")
+		assert.Equal(t, "abc", docText(t, e))
+	})
+
+	t.Run("switch to uppercase", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "switch_to_uppercase")
+		assert.Equal(t, "ABC", docText(t, e))
+	})
+
+	t.Run("indent adds indentation", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc\n")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "indent")
+		assert.Contains(t, docText(t, e), "\t")
+	})
+
+	t.Run("join selections combines lines", func(t *testing.T) {
+		e, km := defaultsEnv(t, "a\nb\n")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "join_selections")
+		assert.NotContains(t, docText(t, e), "\n\n")
+	})
+
+	t.Run("shrinks selection bounds, text unchanged", func(t *testing.T) {
+		e, km := defaultsEnv(t, "  abc  ")
+		setSelection(t, e, []core.Range{core.NewRange(0, 7)}, 0)
+		runCmd(t, km, e, "trim_selections")
+		// TrimSelections trims selection bounds, not the text
+		assert.Equal(t, "  abc  ", docText(t, e))
+	})
+
+	t.Run("increment increases number", func(t *testing.T) {
+		e, km := defaultsEnv(t, "1")
+		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		runCmd(t, km, e, "increment")
+		assert.Equal(t, "2", docText(t, e))
+	})
+
+	t.Run("decrement decreases number", func(t *testing.T) {
+		e, km := defaultsEnv(t, "2")
+		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		runCmd(t, km, e, "decrement")
+		assert.Equal(t, "1", docText(t, e))
+	})
+
+	t.Run("ensure forward makes selection forward", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc")
+		runCmd(t, km, e, "ensure_forward")
+		assert.NotContains(t,
+			runCmd(t, km, e, "ensure_forward").Message, "error")
+	})
+}
+
+func TestEditOptions(t *testing.T) {
+	cases := []struct{ key, val string }{
+		{"editor.auto-pairs", "true"},
+		{"editor.continue-comments", "true"},
+		{"editor.auto-save", "true"},
+		{"editor.auto-save.focus-lost", "true"},
+		{"editor.auto-save.after-delay.enable", "true"},
+		{"editor.auto-save.after-delay.timeout", "1000"},
+		{"editor.atomic-save", "true"},
+	}
+	for _, tc := range cases {
+		t.Run("set/get "+tc.key, func(t *testing.T) {
+			e, km := defaultsEnv(t, "")
+			runCmdArgs(t, km, e, "set_option", tc.key+" "+tc.val)
+			res := runCmdArgs(t, km, e, "get_option", tc.key)
+			assert.Equal(t, tc.val, res.Message)
+		})
+	}
+
+	t.Run("toggle auto-pairs", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "toggle_option", "editor.auto-pairs")
+		assert.Contains(t, res.Message, "is now set to")
+	})
+
+	t.Run("toggle continue-comments", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "toggle_option", "editor.continue-comments")
+		assert.Contains(t, res.Message, "is now set to")
+	})
+
+	t.Run("toggle auto-save", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "toggle_option", "editor.auto-save")
+		assert.Contains(t, res.Message, "is now set to")
+	})
+}
+
 func TestEditUndoRedo(t *testing.T) {
 	t.Run("undo reverts, redo reapplies", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")

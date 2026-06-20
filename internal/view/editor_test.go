@@ -788,7 +788,7 @@ func TestEditorSwitchOrOpenDocError(t *testing.T) {
 }
 
 func TestEditorSwitchFileReuseDoc(t *testing.T) {
-	t.Run("switch to already open file reuses document", func(t *testing.T) {
+	t.Run("already open file reuses document", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "reuse.txt")
 		err := os.WriteFile(path, []byte("content"), 0o644)
@@ -835,7 +835,7 @@ func TestEditorModeNoView(t *testing.T) {
 }
 
 func TestEditorNewDocumentNoView(t *testing.T) {
-	t.Run("NewDocument when no view inserts new view", func(t *testing.T) {
+	t.Run("no view inserts new view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		e.CloseView(v.ID())
@@ -928,7 +928,7 @@ func TestEditorRedoNoView(t *testing.T) {
 }
 
 func TestEditorSaveAllWithError(t *testing.T) {
-	t.Run("SaveAll with modified scratch returns error", func(t *testing.T) {
+	t.Run("modified scratch returns error", func(t *testing.T) {
 		e := editorWithText(t, "unsaved")
 		errs := e.SaveAll()
 		assert.Equal(t, 1, len(errs))

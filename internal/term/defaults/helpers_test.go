@@ -27,17 +27,6 @@ func defaultsEnv(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	return e, km
 }
 
-// registryEnv builds an editor, registers all defaults, and returns both
-// the editor and the live registry for option/section inspection
-func registryEnv(t *testing.T) (*view.Editor, *defaults.Registry) {
-	t.Helper()
-	km := command.NewKeymaps()
-	e := view.NewEditor(t.TempDir())
-	reg, err := defaults.RegisterDefaults(ui.New(e, km), km)
-	assert.NoError(t, err)
-	return e, reg
-}
-
 func setText(t *testing.T, e *view.Editor, text string) {
 	t.Helper()
 	doc, ok := e.FocusedDocument()

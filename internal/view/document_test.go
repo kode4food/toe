@@ -48,7 +48,7 @@ func TestNewDocument(t *testing.T) {
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 
-	t.Run("uses live default line ending for scratch", func(t *testing.T) {
+	t.Run("live default line ending for scratch", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.Options().DefaultLineEnding = core.LineEndingCRLF
 
@@ -149,7 +149,7 @@ indent = { tab-width = 8, unit = "  " }
 		assert.Equal(t, 8, d.TabWidth())
 	})
 
-	t.Run("missing file uses language indent fallback", func(t *testing.T) {
+	t.Run("missing file language indent", func(t *testing.T) {
 		root := t.TempDir()
 		writeViewLanguages(t, root, `
 [[language]]
@@ -208,7 +208,7 @@ end_of_line = crlf
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 
-	t.Run("editorconfig max-line-length drives format", func(t *testing.T) {
+	t.Run("editorconfig text width", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		tmp := t.TempDir()
 		err := os.WriteFile(filepath.Join(tmp, ".editorconfig"), []byte(`
@@ -272,7 +272,7 @@ func TestDocumentSave(t *testing.T) {
 		assert.Equal(t, "hello\n", doc.Text().String())
 	})
 
-	t.Run("uses document line ending for final newline", func(t *testing.T) {
+	t.Run("doc line ending used for final newline", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
@@ -654,7 +654,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		assert.Equal(t, "abc", d.Text().String())
 	})
 
-	t.Run("mapOtherSelections on apply with two views", func(t *testing.T) {
+	t.Run("maps other view selections", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "multi.txt")
 		err := os.WriteFile(path, []byte("hello"), 0o644)

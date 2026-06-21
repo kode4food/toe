@@ -17,22 +17,117 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type statusElemCtx struct {
-	doc        *view.Document
-	opts       *view.Options
-	mode       string
-	baseTUI    tui.Style
-	modeSt     tui.Style
-	sepSt      tui.Style
-	sep        string
-	nSel       int
-	primIdx    int
-	primLen    int
-	totalLines int
-	reg        rune
-	cwd        string
-	row        int
-	col        int
+type (
+	statusElemCtx struct {
+		doc        *view.Document
+		opts       *view.Options
+		mode       string
+		baseTUI    tui.Style
+		modeSt     tui.Style
+		sepSt      tui.Style
+		sep        string
+		nSel       int
+		primIdx    int
+		primLen    int
+		totalLines int
+		reg        rune
+		cwd        string
+		row        int
+		col        int
+	}
+
+	renderStatusArgs struct {
+		doc     *view.Document
+		view    *view.View
+		buf     *tui.Buffer
+		x, y    int
+		width   int
+		focused bool
+	}
+)
+
+var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
+	view.StatusLineMode:             statusElemMode,
+	view.StatusLineSeparator:        statusElemSeparator,
+	view.StatusLineFileName:         statusElemFileName,
+	view.StatusLineFileBaseName:     statusElemFileBaseName,
+	view.StatusLineFileAbsolutePath: statusElemFileAbsPath,
+	view.StatusLineReadOnly:         statusElemReadOnly,
+	view.StatusLineModified:         statusElemModified,
+	view.StatusLineSelections:       statusElemSelections,
+	view.StatusLinePrimaryLen:       statusElemPrimaryLen,
+	view.StatusLinePosition:         statusElemPosition,
+	view.StatusLinePercent:          statusElemPercent,
+	view.StatusLineTotalLines:       statusElemTotalLines,
+	view.StatusLineFileLineEnding:   statusElemLineEnding,
+	view.StatusLineFileIndentStyle:  statusElemIndentStyle,
+	view.StatusLineFileType:         statusElemFileType,
+	view.StatusLineRegister:         statusElemRegister,
+}
+
+// buildLipglossStyles constructs a lipglossStyles from a loaded theme and mode
+func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
+	sel := th.Get("ui.selection")
+	cur, _ := modeCursorStyleFor(th, mode, false)
+	curPrim, _ := modeCursorStyleFor(th, mode, true)
+	cl := th.Get("ui.cursorline.primary")
+	st := lipglossStyles{
+		background:       th.Get("ui.background"),
+		text:             th.Get("ui.text"),
+		line:             th.Get("ui.linenr"),
+		lineSelected:     th.Get("ui.linenr.selected"),
+		selection:        sel,
+		selectionPrim:    sel,
+		cursor:           cur,
+		cursorPrim:       curPrim,
+		cursorlinePrim:   cl,
+		cursorlineSec:    cl,
+		cursorcolumnPrim: cl,
+		cursorcolumnSec:  cl,
+		whitespace:       th.Get("ui.virtual.whitespace"),
+		indentGuide:      th.Get("ui.virtual.indent-guide"),
+		ruler:            th.Get("ui.virtual.ruler"),
+		searchMatch:      searchMatchStyle(),
+	}
+	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
+		st.selectionPrim = next
+	}
+	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
+		st.cursorlineSec = next
+		st.cursorcolumnSec = next
+	}
+	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
+		st.cursorcolumnPrim = next
+		st.cursorcolumnSec = next
+	}
+	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
+		st.cursorcolumnPrim = next
+	}
+	if next, ok := th.TryGetExact("ui.cursorcolumn.secondary"); ok {
+		st.cursorcolumnSec = next
+	}
+	if next, ok := th.TryGet("ui.search.match"); ok {
+		st.searchMatch = next
+	}
+	st.inheritBackground()
+	return st
+}
+
+func buildTUIStyles(s *lipglossStyles) *tuiStyles {
+	return &tuiStyles{
+		text:             lipglossToTUIStyle(s.text),
+		selection:        lipglossToTUIStyle(s.selection),
+		selectionPrim:    lipglossToTUIStyle(s.selectionPrim),
+		cursor:           lipglossToTUIStyle(s.cursor),
+		cursorPrim:       lipglossToTUIStyle(s.cursorPrim),
+		cursorlinePrim:   lipglossToTUIStyle(s.cursorlinePrim),
+		cursorlineSec:    lipglossToTUIStyle(s.cursorlineSec),
+		cursorcolumnPrim: lipglossToTUIStyle(s.cursorcolumnPrim),
+		cursorcolumnSec:  lipglossToTUIStyle(s.cursorcolumnSec),
+		whitespace:       lipglossToTUIStyle(s.whitespace),
+		indentGuide:      lipglossToTUIStyle(s.indentGuide),
+		searchMatch:      lipglossToTUIStyle(s.searchMatch),
+	}
 }
 
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
@@ -62,15 +157,6 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	if rightW > 0 && rightW <= w {
 		buf.SetString(w-rightW, y, right, tuiSt)
 	}
-}
-
-type renderStatusArgs struct {
-	doc     *view.Document
-	view    *view.View
-	buf     *tui.Buffer
-	x, y    int
-	width   int
-	focused bool
 }
 
 func (r *renderPass) renderStatus(args renderStatusArgs) {
@@ -182,69 +268,12 @@ func (r *renderPass) activeTheme() *theme.Theme {
 	return r.cx.Theme()
 }
 
-// buildLipglossStyles constructs a lipglossStyles from a loaded theme and mode
-func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
-	sel := th.Get("ui.selection")
-	cur, _ := modeCursorStyleFor(th, mode, false)
-	curPrim, _ := modeCursorStyleFor(th, mode, true)
-	cl := th.Get("ui.cursorline.primary")
-	st := lipglossStyles{
-		background:       th.Get("ui.background"),
-		text:             th.Get("ui.text"),
-		line:             th.Get("ui.linenr"),
-		lineSelected:     th.Get("ui.linenr.selected"),
-		selection:        sel,
-		selectionPrim:    sel,
-		cursor:           cur,
-		cursorPrim:       curPrim,
-		cursorlinePrim:   cl,
-		cursorlineSec:    cl,
-		cursorcolumnPrim: cl,
-		cursorcolumnSec:  cl,
-		whitespace:       th.Get("ui.virtual.whitespace"),
-		indentGuide:      th.Get("ui.virtual.indent-guide"),
-		ruler:            th.Get("ui.virtual.ruler"),
-		searchMatch:      searchMatchStyle(),
+func (r *renderPass) cmdlineStyle(errorMsg bool) lipgloss.Style {
+	th := r.activeTheme()
+	if errorMsg {
+		return th.Get("error")
 	}
-	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
-		st.selectionPrim = next
-	}
-	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
-		st.cursorlineSec = next
-		st.cursorcolumnSec = next
-	}
-	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
-		st.cursorcolumnPrim = next
-		st.cursorcolumnSec = next
-	}
-	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
-		st.cursorcolumnPrim = next
-	}
-	if next, ok := th.TryGetExact("ui.cursorcolumn.secondary"); ok {
-		st.cursorcolumnSec = next
-	}
-	if next, ok := th.TryGet("ui.search.match"); ok {
-		st.searchMatch = next
-	}
-	st.inheritBackground()
-	return st
-}
-
-func buildTUIStyles(s *lipglossStyles) *tuiStyles {
-	return &tuiStyles{
-		text:             lipglossToTUIStyle(s.text),
-		selection:        lipglossToTUIStyle(s.selection),
-		selectionPrim:    lipglossToTUIStyle(s.selectionPrim),
-		cursor:           lipglossToTUIStyle(s.cursor),
-		cursorPrim:       lipglossToTUIStyle(s.cursorPrim),
-		cursorlinePrim:   lipglossToTUIStyle(s.cursorlinePrim),
-		cursorlineSec:    lipglossToTUIStyle(s.cursorlineSec),
-		cursorcolumnPrim: lipglossToTUIStyle(s.cursorcolumnPrim),
-		cursorcolumnSec:  lipglossToTUIStyle(s.cursorcolumnSec),
-		whitespace:       lipglossToTUIStyle(s.whitespace),
-		indentGuide:      lipglossToTUIStyle(s.indentGuide),
-		searchMatch:      lipglossToTUIStyle(s.searchMatch),
-	}
+	return th.Get("ui.statusline")
 }
 
 func (r *lipglossStyles) inheritBackground() {
@@ -269,6 +298,13 @@ func (r *lipglossStyles) clearBackground() {
 	r.lineSelected = clearStyleBackground(r.lineSelected)
 	r.whitespace = clearStyleBackground(r.whitespace)
 	r.indentGuide = clearStyleBackground(r.indentGuide)
+}
+
+func (s *statusElemCtx) elem(e view.StatusLineElement) statusElem {
+	if fn, ok := statusElemFns[e]; ok {
+		return fn(s)
+	}
+	return statusElem{}
 }
 
 func clearStyleBackground(st lipgloss.Style) lipgloss.Style {
@@ -324,14 +360,6 @@ func modeCursorStyleFor(
 	return th.TryGetExact(scope)
 }
 
-func (r *renderPass) cmdlineStyle(errorMsg bool) lipgloss.Style {
-	th := r.activeTheme()
-	if errorMsg {
-		return th.Get("error")
-	}
-	return th.Get("ui.statusline")
-}
-
 func cursorKindToShape(kind view.CursorKind) tea.CursorShape {
 	switch kind {
 	case view.CursorKindBar:
@@ -343,116 +371,124 @@ func cursorKindToShape(kind view.CursorKind) tea.CursorShape {
 	}
 }
 
-func (s *statusElemCtx) elem(e view.StatusLineElement) statusElem {
-	switch e {
-	case view.StatusLineMode:
-		return statusElem{
-			text:  " " + s.opts.ModeNameForMode(s.mode) + " ",
-			style: s.modeSt,
-		}
-	case view.StatusLineSeparator:
-		return statusElem{
-			text:  s.sep,
-			style: s.sepSt,
-		}
-	case view.StatusLineSpacer, view.StatusLineSpinner:
+func statusElemMode(s *statusElemCtx) statusElem {
+	return statusElem{
+		text:  " " + s.opts.ModeNameForMode(s.mode) + " ",
+		style: s.modeSt,
+	}
+}
+
+func statusElemSeparator(s *statusElemCtx) statusElem {
+	return statusElem{text: s.sep, style: s.sepSt}
+}
+
+func statusElemFileName(s *statusElemCtx) statusElem {
+	return statusElem{
+		text:  " " + s.doc.RelativeName(s.cwd) + " ",
+		style: s.baseTUI,
+	}
+}
+
+func statusElemFileBaseName(s *statusElemCtx) statusElem {
+	return statusElem{
+		text:  " " + filepath.Base(s.doc.Path()) + " ",
+		style: s.baseTUI,
+	}
+}
+
+func statusElemFileAbsPath(s *statusElemCtx) statusElem {
+	return statusElem{text: " " + s.doc.Path() + " ", style: s.baseTUI}
+}
+
+func statusElemReadOnly(s *statusElemCtx) statusElem {
+	if !s.doc.Readonly() {
 		return statusElem{}
-	case view.StatusLineFileName:
-		return statusElem{
-			text:  " " + s.doc.RelativeName(s.cwd) + " ",
-			style: s.baseTUI,
-		}
-	case view.StatusLineFileBaseName:
-		return statusElem{
-			text:  " " + filepath.Base(s.doc.Path()) + " ",
-			style: s.baseTUI,
-		}
-	case view.StatusLineFileAbsolutePath:
-		return statusElem{
-			text:  " " + s.doc.Path() + " ",
-			style: s.baseTUI,
-		}
-	case view.StatusLineReadOnly:
-		if s.doc.Readonly() {
-			return statusElem{text: " [readonly]", style: s.baseTUI}
-		}
+	}
+	return statusElem{text: " [readonly]", style: s.baseTUI}
+}
+
+func statusElemModified(s *statusElemCtx) statusElem {
+	if !s.doc.Modified() {
 		return statusElem{}
-	case view.StatusLineModified:
-		if s.doc.Modified() {
-			return statusElem{text: "[modified] ", style: s.baseTUI}
-		}
+	}
+	return statusElem{text: "[modified] ", style: s.baseTUI}
+}
+
+func statusElemSelections(s *statusElemCtx) statusElem {
+	if s.nSel == 1 {
+		return statusElem{text: " 1 sel ", style: s.baseTUI}
+	}
+	return statusElem{
+		text:  fmt.Sprintf(" %d/%d sels ", s.primIdx+1, s.nSel),
+		style: s.baseTUI,
+	}
+}
+
+func statusElemPrimaryLen(s *statusElemCtx) statusElem {
+	return statusElem{
+		text:  fmt.Sprintf(" %d ", s.primLen),
+		style: s.baseTUI,
+	}
+}
+
+func statusElemPosition(s *statusElemCtx) statusElem {
+	return statusElem{
+		text:  fmt.Sprintf(" %d:%d ", s.row, s.col),
+		style: s.baseTUI,
+	}
+}
+
+func statusElemPercent(s *statusElemCtx) statusElem {
+	pct := 0
+	if s.totalLines > 0 {
+		pct = (s.row * 100) / s.totalLines
+	}
+	return statusElem{
+		text:  fmt.Sprintf(" %d%% ", pct),
+		style: s.baseTUI,
+	}
+}
+
+func statusElemTotalLines(s *statusElemCtx) statusElem {
+	return statusElem{
+		text:  fmt.Sprintf(" %d ", s.totalLines),
+		style: s.baseTUI,
+	}
+}
+
+func statusElemLineEnding(s *statusElemCtx) statusElem {
+	label := "lf"
+	if s.doc.LineEnding() == core.LineEndingCRLF {
+		label = "crlf"
+	}
+	return statusElem{text: " " + label + " ", style: s.baseTUI}
+}
+
+func statusElemIndentStyle(s *statusElemCtx) statusElem {
+	indent := s.doc.IndentStyle()
+	var label string
+	if indent.IsTabs() {
+		label = "tabs"
+	} else {
+		label = fmt.Sprintf("spaces:%d", indent.Width())
+	}
+	return statusElem{text: " " + label + " ", style: s.baseTUI}
+}
+
+func statusElemFileType(s *statusElemCtx) statusElem {
+	lang := s.doc.Lang()
+	if lang == "" {
+		lang = "text"
+	}
+	return statusElem{text: " " + lang + " ", style: s.baseTUI}
+}
+
+func statusElemRegister(s *statusElemCtx) statusElem {
+	if s.reg == 0 {
 		return statusElem{}
-	case view.StatusLineSelections:
-		if s.nSel == 1 {
-			return statusElem{text: " 1 sel ", style: s.baseTUI}
-		}
-		return statusElem{
-			text: fmt.Sprintf(
-				" %d/%d sels ", s.primIdx+1, s.nSel,
-			),
-			style: s.baseTUI,
-		}
-	case view.StatusLinePrimaryLen:
-		return statusElem{
-			text:  fmt.Sprintf(" %d ", s.primLen),
-			style: s.baseTUI,
-		}
-	case view.StatusLinePosition:
-		return statusElem{
-			text:  fmt.Sprintf(" %d:%d ", s.row, s.col),
-			style: s.baseTUI,
-		}
-	case view.StatusLinePercent:
-		pct := 0
-		if s.totalLines > 0 {
-			pct = (s.row * 100) / s.totalLines
-		}
-		return statusElem{
-			text:  fmt.Sprintf(" %d%% ", pct),
-			style: s.baseTUI,
-		}
-	case view.StatusLineTotalLines:
-		return statusElem{
-			text:  fmt.Sprintf(" %d ", s.totalLines),
-			style: s.baseTUI,
-		}
-	case view.StatusLineFileEncoding:
-		return statusElem{}
-	case view.StatusLineFileLineEnding:
-		le := s.doc.LineEnding()
-		label := "lf"
-		if le == core.LineEndingCRLF {
-			label = "crlf"
-		}
-		return statusElem{text: " " + label + " ", style: s.baseTUI}
-	case view.StatusLineFileIndentStyle:
-		indent := s.doc.IndentStyle()
-		var label string
-		if indent.IsTabs() {
-			label = "tabs"
-		} else {
-			label = fmt.Sprintf("spaces:%d", indent.Width())
-		}
-		return statusElem{text: " " + label + " ", style: s.baseTUI}
-	case view.StatusLineFileType:
-		lang := s.doc.Lang()
-		if lang == "" {
-			lang = "text"
-		}
-		return statusElem{text: " " + lang + " ", style: s.baseTUI}
-	case view.StatusLineRegister:
-		if s.reg != 0 {
-			return statusElem{
-				text:  fmt.Sprintf(" reg=%c ", s.reg),
-				style: s.baseTUI,
-			}
-		}
-		return statusElem{}
-	case view.StatusLineDiagnostics,
-		view.StatusLineWorkspaceDiag,
-		view.StatusLineVersionControl:
-		return statusElem{}
-	default:
-		return statusElem{}
+	}
+	return statusElem{
+		text:  fmt.Sprintf(" reg=%c ", s.reg),
+		style: s.baseTUI,
 	}
 }

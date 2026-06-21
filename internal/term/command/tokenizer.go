@@ -77,6 +77,23 @@ const (
 var (
 	// ErrCommandLineParse is the sentinel error for command-line parse failures
 	ErrCommandLineParse = errors.New("command line parse error")
+
+	expansionKindNames = map[string]ExpansionKind{
+		"":    ExpansionVariable,
+		"u":   ExpansionUnicode,
+		"sh":  ExpansionShell,
+		"reg": ExpansionRegister,
+	}
+
+	expansionDelimPairs = map[byte][2]byte{
+		'(':  {'(', ')'},
+		'[':  {'[', ']'},
+		'{':  {'{', '}'},
+		'<':  {'<', '>'},
+		'\'': {'\'', '\''},
+		'"':  {'"', '"'},
+		'|':  {'|', '|'},
+	}
 )
 
 // NewTokenizer returns a tokenizer for command-line input
@@ -381,18 +398,8 @@ func (t *Tokenizer) peekEscapedToken() bool {
 }
 
 func commandExpansionKind(name string) (ExpansionKind, bool) {
-	switch name {
-	case "":
-		return ExpansionVariable, true
-	case "u":
-		return ExpansionUnicode, true
-	case "sh":
-		return ExpansionShell, true
-	case "reg":
-		return ExpansionRegister, true
-	default:
-		return ExpansionVariable, false
-	}
+	k, ok := expansionKindNames[name]
+	return k, ok
 }
 
 func lowerASCII(ch byte) bool {
@@ -400,18 +407,8 @@ func lowerASCII(ch byte) bool {
 }
 
 func expansionDelimiters(ch byte) (byte, byte, bool) {
-	switch ch {
-	case '(':
-		return '(', ')', true
-	case '[':
-		return '[', ']', true
-	case '{':
-		return '{', '}', true
-	case '<':
-		return '<', '>', true
-	case '\'', '"', '|':
-		return ch, ch, true
-	default:
-		return 0, 0, false
+	if pair, ok := expansionDelimPairs[ch]; ok {
+		return pair[0], pair[1], true
 	}
+	return 0, 0, false
 }

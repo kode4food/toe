@@ -17,6 +17,83 @@ type Span struct {
 	Scope string
 }
 
+var (
+	defaultStyles = map[string]lipgloss.Style{
+		"keyword":                     ansiStyle("3").Bold(true),
+		"keyword.function":            ansiStyle("13").Bold(true),
+		"keyword.operator":            ansiStyle("5"),
+		"namespace":                   ansiStyle("13").Bold(true),
+		"type":                        ansiStyle("11").Bold(true),
+		"type.builtin":                ansiStyle("3").Bold(true),
+		"string":                      ansiStyle("2"),
+		"string.special":              ansiStyle("6"),
+		"constant.character.escape":   ansiStyle("6"),
+		"comment":                     ansiStyle("8").Italic(true),
+		"comment.block.documentation": ansiStyle("12").Italic(true),
+		"constant.numeric":            ansiStyle("14"),
+		"constant":                    ansiStyle("14"),
+		"operator":                    ansiStyle("5"),
+		"function":                    ansiStyle("12"),
+		"function.builtin":            ansiStyle("6"),
+		"variable.builtin":            ansiStyle("6"),
+		"attribute":                   ansiStyle("10"),
+		"tag":                         ansiStyle("4").Bold(true),
+		"diff.plus":                   ansiStyle("2"),
+		"diff.minus":                  ansiStyle("1"),
+		"markup.heading":              lipgloss.NewStyle().Bold(true),
+	}
+
+	chromaScopes = map[chroma.TokenType]string{
+		chroma.Keyword:            "keyword",
+		chroma.KeywordReserved:    "keyword",
+		chroma.KeywordDeclaration: "keyword.function",
+		chroma.KeywordNamespace:   "namespace",
+		chroma.KeywordType:        "type.builtin",
+
+		chroma.String:         "string",
+		chroma.StringDoc:      "string",
+		chroma.StringDouble:   "string",
+		chroma.StringSingle:   "string",
+		chroma.StringBacktick: "string",
+		chroma.StringHeredoc:  "string",
+		chroma.StringEscape:   "constant.character.escape",
+		chroma.StringInterpol: "string.special",
+
+		chroma.Comment:          "comment",
+		chroma.CommentSingle:    "comment",
+		chroma.CommentMultiline: "comment",
+		chroma.CommentHashbang:  "comment",
+		chroma.CommentSpecial:   "comment.block.documentation",
+
+		chroma.Number:        "constant.numeric",
+		chroma.NumberInteger: "constant.numeric",
+		chroma.NumberFloat:   "constant.numeric",
+		chroma.NumberBin:     "constant.numeric",
+		chroma.NumberOct:     "constant.numeric",
+		chroma.NumberHex:     "constant.numeric",
+
+		chroma.Operator:     "operator",
+		chroma.OperatorWord: "keyword.operator",
+
+		chroma.NameFunction:      "function",
+		chroma.NameFunctionMagic: "function",
+		chroma.NameBuiltin:       "function.builtin",
+		chroma.NameBuiltinPseudo: "variable.builtin",
+		chroma.NameClass:         "type",
+		chroma.NameDecorator:     "attribute",
+		chroma.NameException:     "type",
+		chroma.NameAttribute:     "attribute",
+		chroma.NameTag:           "tag",
+		chroma.NameConstant:      "constant",
+
+		chroma.LiteralStringSymbol: "constant",
+
+		chroma.GenericInserted: "diff.plus",
+		chroma.GenericDeleted:  "diff.minus",
+		chroma.GenericHeading:  "markup.heading",
+	}
+)
+
 // Tokenize parses text using Chroma and returns highlight spans with theme
 // scope names. Prefer calling syntax.Tokenize which tries Tree-sitter
 // first and uses this as a fallback
@@ -93,98 +170,11 @@ func DefaultStyle(scope string) lipgloss.Style {
 // that differ from plain text are returned
 func scopeFor(t chroma.TokenType) (string, bool) {
 	for ; t > 0; t = t.Parent() {
-		switch t {
-		case chroma.Keyword, chroma.KeywordReserved:
-			return "keyword", true
-		case chroma.KeywordDeclaration:
-			return "keyword.function", true
-		case chroma.KeywordNamespace:
-			return "namespace", true
-		case chroma.KeywordType:
-			return "type.builtin", true
-
-		case chroma.String, chroma.StringDoc, chroma.StringDouble,
-			chroma.StringSingle, chroma.StringBacktick, chroma.StringHeredoc:
-			return "string", true
-		case chroma.StringEscape:
-			return "constant.character.escape", true
-		case chroma.StringInterpol:
-			return "string.special", true
-
-		case chroma.Comment, chroma.CommentSingle,
-			chroma.CommentMultiline, chroma.CommentHashbang:
-			return "comment", true
-		case chroma.CommentSpecial:
-			return "comment.block.documentation", true
-
-		case chroma.Number, chroma.NumberInteger, chroma.NumberFloat,
-			chroma.NumberBin, chroma.NumberOct, chroma.NumberHex:
-			return "constant.numeric", true
-
-		case chroma.Operator:
-			return "operator", true
-		case chroma.OperatorWord:
-			return "keyword.operator", true
-
-		case chroma.NameFunction, chroma.NameFunctionMagic:
-			return "function", true
-		case chroma.NameBuiltin:
-			return "function.builtin", true
-		case chroma.NameBuiltinPseudo:
-			return "variable.builtin", true
-		case chroma.NameClass:
-			return "type", true
-		case chroma.NameDecorator:
-			return "attribute", true
-		case chroma.NameException:
-			return "type", true
-		case chroma.NameAttribute:
-			return "attribute", true
-		case chroma.NameTag:
-			return "tag", true
-		case chroma.NameConstant:
-			return "constant", true
-
-		case chroma.LiteralStringSymbol:
-			return "constant", true
-
-		case chroma.GenericInserted:
-			return "diff.plus", true
-		case chroma.GenericDeleted:
-			return "diff.minus", true
-		case chroma.GenericHeading:
-			return "markup.heading", true
-
-		default:
-			// fall through to parent
+		if scope, ok := chromaScopes[t]; ok {
+			return scope, true
 		}
 	}
 	return "", false
-}
-
-var defaultStyles = map[string]lipgloss.Style{
-	"keyword":                     ansiStyle("3").Bold(true),
-	"keyword.function":            ansiStyle("13").Bold(true),
-	"keyword.operator":            ansiStyle("5"),
-	"namespace":                   ansiStyle("13").Bold(true),
-	"type":                        ansiStyle("11").Bold(true),
-	"type.builtin":                ansiStyle("3").Bold(true),
-	"string":                      ansiStyle("2"),
-	"string.special":              ansiStyle("6"),
-	"constant.character.escape":   ansiStyle("6"),
-	"comment":                     ansiStyle("8").Italic(true),
-	"comment.block.documentation": ansiStyle("12").Italic(true),
-	"constant.numeric":            ansiStyle("14"),
-	"constant":                    ansiStyle("14"),
-	"operator":                    ansiStyle("5"),
-	"function":                    ansiStyle("12"),
-	"function.builtin":            ansiStyle("6"),
-	"variable.builtin":            ansiStyle("6"),
-	"attribute":                   ansiStyle("10"),
-	"tag":                         ansiStyle("4").Bold(true),
-	"diff.plus":                   ansiStyle("2"),
-	"diff.minus":                  ansiStyle("1"),
-	"markup.heading":              lipgloss.NewStyle().Bold(true),
 }
 
 // NormalizeNewlines replaces \r\n with \n for consistent tokenization

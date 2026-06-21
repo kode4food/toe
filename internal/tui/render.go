@@ -2,6 +2,55 @@ package tui
 
 import "strings"
 
+var (
+	underlineEsc = [UnderlineDoubleLine + 1]string{
+		UnderlineReset:      "\x1b[24m",
+		UnderlineLine:       "\x1b[4m",
+		UnderlineCurl:       "\x1b[4:3m",
+		UnderlineDotted:     "\x1b[4:4m",
+		UnderlineDashed:     "\x1b[4:5m",
+		UnderlineDoubleLine: "\x1b[21m",
+	}
+	fgNamedEsc = [colorWhite + 1]string{
+		colorReset:        "\x1b[39m",
+		colorBlack:        "\x1b[30m",
+		colorRed:          "\x1b[31m",
+		colorGreen:        "\x1b[32m",
+		colorYellow:       "\x1b[33m",
+		colorBlue:         "\x1b[34m",
+		colorMagenta:      "\x1b[35m",
+		colorCyan:         "\x1b[36m",
+		colorGray:         "\x1b[90m",
+		colorLightRed:     "\x1b[91m",
+		colorLightGreen:   "\x1b[92m",
+		colorLightYellow:  "\x1b[93m",
+		colorLightBlue:    "\x1b[94m",
+		colorLightMagenta: "\x1b[95m",
+		colorLightCyan:    "\x1b[96m",
+		colorLightGray:    "\x1b[37m",
+		colorWhite:        "\x1b[97m",
+	}
+	bgNamedEsc = [colorWhite + 1]string{
+		colorReset:        "\x1b[49m",
+		colorBlack:        "\x1b[40m",
+		colorRed:          "\x1b[41m",
+		colorGreen:        "\x1b[42m",
+		colorYellow:       "\x1b[43m",
+		colorBlue:         "\x1b[44m",
+		colorMagenta:      "\x1b[45m",
+		colorCyan:         "\x1b[46m",
+		colorGray:         "\x1b[100m",
+		colorLightRed:     "\x1b[101m",
+		colorLightGreen:   "\x1b[102m",
+		colorLightYellow:  "\x1b[103m",
+		colorLightBlue:    "\x1b[104m",
+		colorLightMagenta: "\x1b[105m",
+		colorLightCyan:    "\x1b[106m",
+		colorLightGray:    "\x1b[47m",
+		colorWhite:        "\x1b[107m",
+	}
+)
+
 // RenderToANSI serialises the buffer as rows joined by '\n', emitting style
 // escapes only on changes — used to bridge into the string-based render path
 func (b *Buffer) RenderToANSI() string {
@@ -130,63 +179,11 @@ func (a *ansiEmitter) emitUnderline(uc Color, us UnderlineStyle) {
 	if us == a.ulStyle {
 		return
 	}
-	switch us {
-	case UnderlineReset:
-		_, _ = a.w.WriteString("\x1b[24m")
-	case UnderlineLine:
-		_, _ = a.w.WriteString("\x1b[4m")
-	case UnderlineCurl:
-		_, _ = a.w.WriteString("\x1b[4:3m")
-	case UnderlineDotted:
-		_, _ = a.w.WriteString("\x1b[4:4m")
-	case UnderlineDashed:
-		_, _ = a.w.WriteString("\x1b[4:5m")
-	case UnderlineDoubleLine:
-		_, _ = a.w.WriteString("\x1b[21m")
+	if us < UnderlineStyle(len(underlineEsc)) {
+		_, _ = a.w.WriteString(underlineEsc[us])
 	}
 	a.ulStyle = us
 }
-
-var (
-	fgNamedEsc = [colorWhite + 1]string{
-		colorReset:        "\x1b[39m",
-		colorBlack:        "\x1b[30m",
-		colorRed:          "\x1b[31m",
-		colorGreen:        "\x1b[32m",
-		colorYellow:       "\x1b[33m",
-		colorBlue:         "\x1b[34m",
-		colorMagenta:      "\x1b[35m",
-		colorCyan:         "\x1b[36m",
-		colorGray:         "\x1b[90m",
-		colorLightRed:     "\x1b[91m",
-		colorLightGreen:   "\x1b[92m",
-		colorLightYellow:  "\x1b[93m",
-		colorLightBlue:    "\x1b[94m",
-		colorLightMagenta: "\x1b[95m",
-		colorLightCyan:    "\x1b[96m",
-		colorLightGray:    "\x1b[37m",
-		colorWhite:        "\x1b[97m",
-	}
-	bgNamedEsc = [colorWhite + 1]string{
-		colorReset:        "\x1b[49m",
-		colorBlack:        "\x1b[40m",
-		colorRed:          "\x1b[41m",
-		colorGreen:        "\x1b[42m",
-		colorYellow:       "\x1b[43m",
-		colorBlue:         "\x1b[44m",
-		colorMagenta:      "\x1b[45m",
-		colorCyan:         "\x1b[46m",
-		colorGray:         "\x1b[100m",
-		colorLightRed:     "\x1b[101m",
-		colorLightGreen:   "\x1b[102m",
-		colorLightYellow:  "\x1b[103m",
-		colorLightBlue:    "\x1b[104m",
-		colorLightMagenta: "\x1b[105m",
-		colorLightCyan:    "\x1b[106m",
-		colorLightGray:    "\x1b[47m",
-		colorWhite:        "\x1b[107m",
-	}
-)
 
 func emitFgColor(w *strings.Builder, c Color) {
 	emitColorTo(w, c, &fgNamedEsc, "\x1b[38;5;", "\x1b[38;2;")

@@ -103,6 +103,13 @@ const asciiTable = "" +
 	"pqrstuvw" +
 	"xyz{|}~\x7f"
 
+var ansiBasicColors = [16]tui.Color{
+	tui.ColorBlack, tui.ColorRed, tui.ColorGreen, tui.ColorYellow,
+	tui.ColorBlue, tui.ColorMagenta, tui.ColorCyan, tui.ColorLightGray,
+	tui.ColorGray, tui.ColorLightRed, tui.ColorLightGreen, tui.ColorLightYellow,
+	tui.ColorLightBlue, tui.ColorLightMagenta, tui.ColorLightCyan, tui.ColorWhite,
+}
+
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 	th := r.activeTheme()
 	bgTUI := lipglossToTUIStyle(th.Get("ui.bufferline.background"))
@@ -1460,42 +1467,10 @@ func lipglossColorToTUI(c color.Color) tui.Color {
 }
 
 func basicTUIColor(idx uint8) tui.Color {
-	switch idx {
-	case 0:
-		return tui.ColorBlack
-	case 1:
-		return tui.ColorRed
-	case 2:
-		return tui.ColorGreen
-	case 3:
-		return tui.ColorYellow
-	case 4:
-		return tui.ColorBlue
-	case 5:
-		return tui.ColorMagenta
-	case 6:
-		return tui.ColorCyan
-	case 7:
-		return tui.ColorLightGray
-	case 8:
-		return tui.ColorGray
-	case 9:
-		return tui.ColorLightRed
-	case 10:
-		return tui.ColorLightGreen
-	case 11:
-		return tui.ColorLightYellow
-	case 12:
-		return tui.ColorLightBlue
-	case 13:
-		return tui.ColorLightMagenta
-	case 14:
-		return tui.ColorLightCyan
-	case 15:
-		return tui.ColorWhite
-	default:
-		return tui.ColorIndexed(idx)
+	if idx < 16 {
+		return ansiBasicColors[idx]
 	}
+	return tui.ColorIndexed(idx)
 }
 
 func lipglossUnderlineToTUI(u lipgloss.Underline) tui.UnderlineStyle {

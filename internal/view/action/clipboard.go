@@ -29,26 +29,6 @@ func ShowClipboardProvider() string {
 	return "none"
 }
 
-func selectionFragments(e *view.Editor) []string {
-	v, ok := e.FocusedView()
-	if !ok {
-		return nil
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return nil
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	values := make([]string, 0, len(sel.Ranges()))
-	for _, r := range sel.Ranges() {
-		if frag, err := r.Fragment(text); err == nil {
-			values = append(values, frag)
-		}
-	}
-	return values
-}
-
 // YankToClipboard copies all selection text to the system clipboard
 func YankToClipboard(e *view.Editor) {
 	values := selectionFragments(e)
@@ -154,6 +134,38 @@ func YankToPrimaryClipboard(e *view.Editor) {
 	_ = writePrimaryClipboard(strings.Join(values, "\n"))
 }
 
+func PastePrimaryClipboardAfter(e *view.Editor) {
+	withPrimaryClipboard(e, PasteAfter)
+}
+
+func PastePrimaryClipboardBefore(e *view.Editor) {
+	withPrimaryClipboard(e, PasteBefore)
+}
+
+func PrimaryClipboardReplace(e *view.Editor) {
+	withPrimaryClipboard(e, ReplaceWithYanked)
+}
+
+func selectionFragments(e *view.Editor) []string {
+	v, ok := e.FocusedView()
+	if !ok {
+		return nil
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	values := make([]string, 0, len(sel.Ranges()))
+	for _, r := range sel.Ranges() {
+		if frag, err := r.Fragment(text); err == nil {
+			values = append(values, frag)
+		}
+	}
+	return values
+}
+
 func withPrimaryClipboard(e *view.Editor, fn func(*view.Editor)) {
 	val, err := readPrimaryClipboard()
 	if err != nil {
@@ -165,18 +177,6 @@ func withPrimaryClipboard(e *view.Editor, fn func(*view.Editor)) {
 	e.SetRegister(primaryClipboardRegister)
 	fn(e)
 	e.SetRegister(prev)
-}
-
-func PastePrimaryClipboardAfter(e *view.Editor) {
-	withPrimaryClipboard(e, PasteAfter)
-}
-
-func PastePrimaryClipboardBefore(e *view.Editor) {
-	withPrimaryClipboard(e, PasteBefore)
-}
-
-func PrimaryClipboardReplace(e *view.Editor) {
-	withPrimaryClipboard(e, ReplaceWithYanked)
 }
 
 func tryReadCmds(cmds [][]string) (string, bool) {

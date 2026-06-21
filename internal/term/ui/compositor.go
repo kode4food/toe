@@ -14,10 +14,6 @@ type (
 	layerFunc func(*Context) (Component, tea.Cmd)
 )
 
-func newCompositor() *Compositor {
-	return &Compositor{}
-}
-
 func (c *Compositor) Push(layer Component) {
 	c.layers = append(c.layers, layer)
 }
@@ -93,6 +89,19 @@ func (c *Compositor) Render(cx *Context) string {
 	return content
 }
 
+func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
+	for i := len(c.layers) - 1; i >= 0; i-- {
+		if cur, ok = c.layers[i].Cursor(c.width, c.height, cx); ok {
+			return
+		}
+	}
+	return tea.Cursor{}, false
+}
+
+func newCompositor() *Compositor {
+	return &Compositor{}
+}
+
 // falls back (!ok) when any layer doesn't implement the buffer interface,
 // so the caller can use the per-layer ANSI compositing path instead
 func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {
@@ -113,13 +122,4 @@ func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {
 		ov.RenderOverBuffer(buf, cx)
 	}
 	return buf.RenderToANSI(), true
-}
-
-func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
-	for i := len(c.layers) - 1; i >= 0; i-- {
-		if cur, ok = c.layers[i].Cursor(c.width, c.height, cx); ok {
-			return
-		}
-	}
-	return tea.Cursor{}, false
 }

@@ -47,39 +47,6 @@ func MakeSearchWordBounded(e *view.Editor) {
 	e.Registers().Write(searchRegister, []string{out})
 }
 
-func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	var parts []string
-	for _, r := range sel.Ranges() {
-		from, to := r.From(), r.To()
-		if from >= to {
-			continue
-		}
-		slice, err := text.Slice(from, to)
-		if err != nil {
-			continue
-		}
-		parts = append(parts, regexp.QuoteMeta(slice.String()))
-	}
-	if len(parts) == 0 {
-		return
-	}
-	pat := strings.Join(parts, "|")
-	if wordBoundaries {
-		pat = `\b(?:` + pat + `)\b`
-	}
-	e.Registers().Write(searchRegister, []string{pat})
-}
-
 // SearchForward executes a forward search with the given pattern, storing it
 // in the '/' register, and moves each cursor to the first match
 func SearchForward(e *view.Editor, pattern string) error {
@@ -144,6 +111,39 @@ func ExtendSearchPrev(e *view.Editor) {
 		editor: e, pattern: pat, count: countOrOne(e),
 		wrap: e.Options().SearchWrapAround, extend: true,
 	})
+}
+
+func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	var parts []string
+	for _, r := range sel.Ranges() {
+		from, to := r.From(), r.To()
+		if from >= to {
+			continue
+		}
+		slice, err := text.Slice(from, to)
+		if err != nil {
+			continue
+		}
+		parts = append(parts, regexp.QuoteMeta(slice.String()))
+	}
+	if len(parts) == 0 {
+		return
+	}
+	pat := strings.Join(parts, "|")
+	if wordBoundaries {
+		pat = `\b(?:` + pat + `)\b`
+	}
+	e.Registers().Write(searchRegister, []string{pat})
 }
 
 type searchArgs struct {

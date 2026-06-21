@@ -44,24 +44,6 @@ func (d *Document) Save(opts *Options) error {
 	return nil
 }
 
-func atomicWrite(path, dir string, data []byte) error {
-	f, err := os.CreateTemp(dir, ".toe-save-*")
-	if err != nil {
-		return err
-	}
-	tmp := f.Name()
-	if _, err = f.Write(data); err != nil {
-		_ = f.Close()
-		_ = os.Remove(tmp)
-		return err
-	}
-	if err = f.Close(); err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	return os.Rename(tmp, path)
-}
-
 // Reload replaces the document text with the current file contents on disk
 // All per-view selections are reset to the start of the document
 func (d *Document) Reload() error {
@@ -85,6 +67,24 @@ func (d *Document) Reload() error {
 		d.selections[vid] = sel
 	}
 	return nil
+}
+
+func atomicWrite(path, dir string, data []byte) error {
+	f, err := os.CreateTemp(dir, ".toe-save-*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	if _, err = f.Write(data); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err = f.Close(); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return os.Rename(tmp, path)
 }
 
 // detectLang returns a Chroma-compatible language name for the given file path

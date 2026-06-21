@@ -47,32 +47,6 @@ type Options struct {
 	BufferLine           BufferLine
 }
 
-func defaultOptions() Options {
-	shell := []string{"sh", "-c"}
-	if runtime.GOOS == "windows" {
-		shell = []string{"cmd", "/C"}
-	}
-	return Options{
-		Theme:                DefaultTheme,
-		ScrollOff:            DefaultScrollOff,
-		ScrollLines:          DefaultScrollLines,
-		Mouse:                true,
-		MiddleClickPaste:     true,
-		Shell:                shell,
-		AtomicSave:           true,
-		InsertFinalNewline:   true,
-		EditorConfig:         true,
-		ContinueComments:     true,
-		SearchSmartCase:      true,
-		SearchWrapAround:     true,
-		AutoSaveDelayTimeout: DefaultAutoSaveDelay,
-		LineNumber:           LineNumberAbsolute,
-		BufferLine:           BufferLineNever,
-		AutoPairMap:          core.DefaultAutoPairs(),
-		HasAutoPairs:         true,
-	}
-}
-
 // StatusLineSeparator returns the status line separator string with default
 func (o *Options) StatusLineSeparator() string {
 	if o.StatusLine.Separator != "" {
@@ -156,4 +130,30 @@ func (o *Options) CursorShapeForMode(mode string) CursorKind {
 		return CursorKindBlock
 	}
 	return k
+}
+
+func defaultOptions() Options {
+	shell := []string{"sh", "-c"}
+	if runtime.GOOS == "windows" {
+		shell = []string{"cmd", "/C"}
+	}
+	return Options{
+		Theme:                DefaultTheme,
+		ScrollOff:            DefaultScrollOff,
+		ScrollLines:          DefaultScrollLines,
+		Mouse:                true,
+		MiddleClickPaste:     true,
+		Shell:                shell,
+		AtomicSave:           true,
+		InsertFinalNewline:   true,
+		EditorConfig:         true,
+		ContinueComments:     true,
+		SearchSmartCase:      true,
+		SearchWrapAround:     true,
+		AutoSaveDelayTimeout: DefaultAutoSaveDelay,
+		LineNumber:           LineNumberAbsolute,
+		BufferLine:           BufferLineNever,
+		AutoPairMap:          core.DefaultAutoPairs(),
+		HasAutoPairs:         true,
+	}
 }

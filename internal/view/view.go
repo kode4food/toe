@@ -18,28 +18,44 @@ type View struct {
 }
 
 // ID returns the view identifier
-func (v *View) ID() Id { return v.id }
+func (v *View) ID() Id {
+	return v.id
+}
 
 // Area returns the screen rectangle assigned by the layout engine
-func (v *View) Area() Area { return v.area }
+func (v *View) Area() Area {
+	return v.area
+}
 
 // SetArea sets the screen rectangle (called by the layout engine)
-func (v *View) SetArea(a Area) { v.area = a }
+func (v *View) SetArea(a Area) {
+	v.area = a
+}
 
 // DocID returns the document this view displays
-func (v *View) DocID() DocumentId { return v.docID }
+func (v *View) DocID() DocumentId {
+	return v.docID
+}
 
 // Mode returns the current editing mode
-func (v *View) Mode() Mode { return v.mode }
+func (v *View) Mode() Mode {
+	return v.mode
+}
 
 // SetMode sets the current editing mode
-func (v *View) SetMode(m Mode) { v.mode = m }
+func (v *View) SetMode(m Mode) {
+	v.mode = m
+}
 
 // Offset returns the current scroll position
-func (v *View) Offset() Position { return v.offset }
+func (v *View) Offset() Position {
+	return v.offset
+}
 
 // SetOffset updates the scroll position
-func (v *View) SetOffset(p Position) { v.offset = p }
+func (v *View) SetOffset(p Position) {
+	v.offset = p
+}
 
 // PushJump records a cursor position in the jump list
 func (v *View) PushJump(docID DocumentId, anchor int) {
@@ -57,7 +73,9 @@ func (v *View) JumpForward() (DocumentId, int, bool) {
 }
 
 // Jumps returns all entries in the jump history, oldest first
-func (v *View) Jumps() []JumpEntry { return v.jumps.Entries() }
+func (v *View) Jumps() []JumpEntry {
+	return v.jumps.Entries()
+}
 
 // EnsureCursorVisible adjusts the view offset so the cursor is visible within
 // height terminal rows, respecting the scrolloff margin. When vf describes an
@@ -75,6 +93,58 @@ func (v *View) EnsureCursorVisible(
 		return
 	}
 	v.ensureCursorVisibleByLine(doc, sel, height, scrolloff)
+}
+
+// EnsureCursorVisibleHorizontal adjusts the horizontal scroll offset so the
+// cursor's visual column stays within width content columns, respecting the
+// scrolloff margin. The gutter is never shifted — width is the content area
+// (viewport minus gutter). A width <= 0 disables horizontal scrolling (used for
+// soft-wrapped views) and resets the offset to 0
+func (v *View) EnsureCursorVisibleHorizontal(
+	doc core.Rope, sel core.Selection, width, tabW, scrolloff int,
+) {
+	if width <= 0 {
+		v.offset.HorizontalOffset = 0
+		return
+	}
+	cursor := sel.Primary().Cursor(doc)
+	line, err := doc.CharToLine(cursor)
+	if err != nil {
+		return
+	}
+	lineStart, err := doc.LineToChar(line)
+	if err != nil {
+		return
+	}
+	col := visualColumn(doc, lineStart, cursor, tabW)
+
+	h := v.offset.HorizontalOffset
+	// Clamp scrolloff so there is always at least one column in the middle
+	so := min(scrolloff, max(width-1, 0)/2)
+
+	leftEdge := h + so
+	rightEdge := h + width - 1 - so
+
+	if col < leftEdge {
+		h = max(col-so, 0)
+	} else if col > rightEdge {
+		h = max(col-width+1+so, 0)
+	}
+	v.offset.HorizontalOffset = h
+}
+
+// RuneWidth returns the display width of ch at visual column col, expanding tabs
+// to the next tabW boundary. The ASCII fast path avoids a per-rune string
+// allocation in the render and cursor-positioning hot paths
+func RuneWidth(ch rune, col, tabW int) int {
+	switch {
+	case ch == '\t':
+		return tabW - col%tabW
+	case ch >= 0x20 && ch < 0x7f:
+		return 1
+	default:
+		return ansi.StringWidth(string(ch))
+	}
 }
 
 func (v *View) ensureCursorVisibleByLine(
@@ -186,58 +256,6 @@ func visualRowsToCursor(
 		}
 	}
 	return rows, true
-}
-
-// EnsureCursorVisibleHorizontal adjusts the horizontal scroll offset so the
-// cursor's visual column stays within width content columns, respecting the
-// scrolloff margin. The gutter is never shifted — width is the content area
-// (viewport minus gutter). A width <= 0 disables horizontal scrolling (used for
-// soft-wrapped views) and resets the offset to 0
-func (v *View) EnsureCursorVisibleHorizontal(
-	doc core.Rope, sel core.Selection, width, tabW, scrolloff int,
-) {
-	if width <= 0 {
-		v.offset.HorizontalOffset = 0
-		return
-	}
-	cursor := sel.Primary().Cursor(doc)
-	line, err := doc.CharToLine(cursor)
-	if err != nil {
-		return
-	}
-	lineStart, err := doc.LineToChar(line)
-	if err != nil {
-		return
-	}
-	col := visualColumn(doc, lineStart, cursor, tabW)
-
-	h := v.offset.HorizontalOffset
-	// Clamp scrolloff so there is always at least one column in the middle
-	so := min(scrolloff, max(width-1, 0)/2)
-
-	leftEdge := h + so
-	rightEdge := h + width - 1 - so
-
-	if col < leftEdge {
-		h = max(col-so, 0)
-	} else if col > rightEdge {
-		h = max(col-width+1+so, 0)
-	}
-	v.offset.HorizontalOffset = h
-}
-
-// RuneWidth returns the display width of ch at visual column col, expanding tabs
-// to the next tabW boundary. The ASCII fast path avoids a per-rune string
-// allocation in the render and cursor-positioning hot paths
-func RuneWidth(ch rune, col, tabW int) int {
-	switch {
-	case ch == '\t':
-		return tabW - col%tabW
-	case ch >= 0x20 && ch < 0x7f:
-		return 1
-	default:
-		return ansi.StringWidth(string(ch))
-	}
 }
 
 // visualColumn returns the display column of position to, measured from from,

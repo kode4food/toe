@@ -85,7 +85,9 @@ func (h *History) CommitRevisionAt(
 }
 
 // LastEditPos returns the char offset of the most recently committed change
-func (h *History) LastEditPos() int { return h.lastEditPos }
+func (h *History) LastEditPos() int {
+	return h.lastEditPos
+}
 
 func (h *History) Undo() (Transaction, bool) {
 	if h.AtRoot() {

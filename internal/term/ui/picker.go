@@ -186,6 +186,18 @@ func (p PickerTarget) Valid() bool {
 	return p.Path != "" || p.ID != view.InvalidDocumentId
 }
 
+func (p pickerMeta) Title() string {
+	return p.title
+}
+
+func (p pickerMeta) Columns() []string {
+	return p.columns
+}
+
+func (p pickerMeta) Primary() int {
+	return p.primary
+}
+
 func (p *Picker) addItems(items []PickerItem) {
 	if len(items) == 0 {
 		return
@@ -241,16 +253,4 @@ func (p PickerLocation) lineRange() (int, int, bool) {
 		return 0, 0, false
 	}
 	return p.Lines.From, p.Lines.To, true
-}
-
-func (p pickerMeta) Title() string {
-	return p.title
-}
-
-func (p pickerMeta) Columns() []string {
-	return p.columns
-}
-
-func (p pickerMeta) Primary() int {
-	return p.primary
 }

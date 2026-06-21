@@ -2,63 +2,6 @@ package core
 
 import "unicode"
 
-func visualLineRunes(doc Rope, lineIdx int) []rune {
-	lineStart, err := doc.LineToChar(lineIdx)
-	if err != nil {
-		return nil
-	}
-	lineEnd, err := doc.LineEndCharIndex(lineIdx)
-	if err != nil {
-		return nil
-	}
-	if lineEnd <= lineStart {
-		return nil
-	}
-	sl, err := doc.Slice(lineStart, lineEnd)
-	if err != nil {
-		return nil
-	}
-	return []rune(sl.String())
-}
-
-func visualPrefixWidth(
-	runes []rune, tabW, maxIndentRetain, wrapIndLen int,
-) int {
-	indent := visualLineIndentW(runes, tabW)
-	if indent > maxIndentRetain {
-		indent = 0
-	}
-	return indent + wrapIndLen
-}
-
-func visualLineIndentW(runes []rune, tabW int) int {
-	col := 0
-	for _, ch := range runes {
-		switch ch {
-		case '\t':
-			col += TabWidthAt(col, tabW)
-		case ' ':
-			col++
-		default:
-			return col
-		}
-	}
-	return col
-}
-
-func newVisualLine(doc Rope, line int, format *VisualMoveFormat) visualLine {
-	runes := visualLineRunes(doc, line)
-	v := visualLine{runes: runes, format: format}
-	if format != nil {
-		v.prefixW = visualPrefixWidth(
-			runes, format.TabWidth, format.MaxIndentRetain,
-			format.WrapIndicatorLen,
-		)
-		v.rowStarts = format.VisualRowStarts(runes)
-	}
-	return v
-}
-
 // VisualRowStarts returns the char offsets (relative to line start) at which
 // each soft-wrapped visual row after the first begins for the given line runes.
 // The slice is empty when the line fits on a single row. Wrapping happens at
@@ -127,6 +70,63 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 		col += wordWidth
 	}
 	return starts
+}
+
+func visualLineRunes(doc Rope, lineIdx int) []rune {
+	lineStart, err := doc.LineToChar(lineIdx)
+	if err != nil {
+		return nil
+	}
+	lineEnd, err := doc.LineEndCharIndex(lineIdx)
+	if err != nil {
+		return nil
+	}
+	if lineEnd <= lineStart {
+		return nil
+	}
+	sl, err := doc.Slice(lineStart, lineEnd)
+	if err != nil {
+		return nil
+	}
+	return []rune(sl.String())
+}
+
+func visualPrefixWidth(
+	runes []rune, tabW, maxIndentRetain, wrapIndLen int,
+) int {
+	indent := visualLineIndentW(runes, tabW)
+	if indent > maxIndentRetain {
+		indent = 0
+	}
+	return indent + wrapIndLen
+}
+
+func visualLineIndentW(runes []rune, tabW int) int {
+	col := 0
+	for _, ch := range runes {
+		switch ch {
+		case '\t':
+			col += TabWidthAt(col, tabW)
+		case ' ':
+			col++
+		default:
+			return col
+		}
+	}
+	return col
+}
+
+func newVisualLine(doc Rope, line int, format *VisualMoveFormat) visualLine {
+	runes := visualLineRunes(doc, line)
+	v := visualLine{runes: runes, format: format}
+	if format != nil {
+		v.prefixW = visualPrefixWidth(
+			runes, format.TabWidth, format.MaxIndentRetain,
+			format.WrapIndicatorLen,
+		)
+		v.rowStarts = format.VisualRowStarts(runes)
+	}
+	return v
 }
 
 func (v visualLine) rowStartOffset(row int) int {

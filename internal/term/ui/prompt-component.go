@@ -57,17 +57,6 @@ type promptComponentArgs struct {
 	pickerFn func(*view.Editor, string) (*Picker, error)
 }
 
-func newPromptComponent(args promptComponentArgs) *PromptComponent {
-	return &PromptComponent{
-		ec:       args.ec,
-		kind:     args.kind,
-		forward:  args.forward,
-		prompt:   args.prompt,
-		fn:       args.fn,
-		pickerFn: args.pickerFn,
-	}
-}
-
 func (p *PromptComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -107,6 +96,17 @@ func (p *PromptComponent) Cursor(
 	_, _ int, _ *Context,
 ) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
+}
+
+func newPromptComponent(args promptComponentArgs) *PromptComponent {
+	return &PromptComponent{
+		ec:       args.ec,
+		kind:     args.kind,
+		forward:  args.forward,
+		prompt:   args.prompt,
+		fn:       args.fn,
+		pickerFn: args.pickerFn,
+	}
 }
 
 func (p *PromptComponent) handleKey(

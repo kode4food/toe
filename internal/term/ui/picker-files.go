@@ -44,16 +44,6 @@ func FilePickerInDir(dir string) PickerFunc {
 	}
 }
 
-func newFilePickerSource(dir string) *filePickerSource {
-	return &filePickerSource{
-		pickerMeta: pickerMeta{
-			title:   "Open file",
-			columns: []string{"path"},
-		},
-		dir: dir,
-	}
-}
-
 func (f *filePickerSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -70,6 +60,16 @@ func (f *filePickerSource) Accept(e *view.Editor, item PickerItem) {
 	path, _ := item.Payload.(string)
 	if path != "" {
 		_, _ = e.OpenFile(path)
+	}
+}
+
+func newFilePickerSource(dir string) *filePickerSource {
+	return &filePickerSource{
+		pickerMeta: pickerMeta{
+			title:   "Open file",
+			columns: []string{"path"},
+		},
+		dir: dir,
 	}
 }
 

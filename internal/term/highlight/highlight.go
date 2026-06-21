@@ -166,6 +166,11 @@ func DefaultStyle(scope string) lipgloss.Style {
 	return lipgloss.NewStyle()
 }
 
+// NormalizeNewlines replaces \r\n with \n for consistent tokenization
+func NormalizeNewlines(s string) string {
+	return strings.ReplaceAll(s, "\r\n", "\n")
+}
+
 // scopeFor maps a Chroma token type to a theme scope name. Only token types
 // that differ from plain text are returned
 func scopeFor(t chroma.TokenType) (string, bool) {
@@ -175,11 +180,6 @@ func scopeFor(t chroma.TokenType) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-// NormalizeNewlines replaces \r\n with \n for consistent tokenization
-func NormalizeNewlines(s string) string {
-	return strings.ReplaceAll(s, "\r\n", "\n")
 }
 
 func ansiStyle(c string) lipgloss.Style {

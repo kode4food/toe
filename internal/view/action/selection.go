@@ -449,26 +449,6 @@ func CopyOnPrevLine(e *view.Editor) {
 	copySelectionOnLine(e, false)
 }
 
-func jumpTo(e *view.Editor, fn func(*view.View) (view.DocumentId, int, bool)) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	_, pos, ok := fn(v)
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	newSel, err := core.NewSelection([]core.Range{core.PointRange(pos)}, 0)
-	if err != nil {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), newSel)
-}
-
 // GotoLastModification moves each cursor to the position of the most recent
 // committed change in the current document
 func GotoLastModification(e *view.Editor) {
@@ -488,6 +468,26 @@ func GotoLastModification(e *view.Editor) {
 		[]core.Range{core.PointRange(pos).PutCursor(text, pos, extend)},
 		0,
 	)
+	if err != nil {
+		return
+	}
+	doc.SetSelectionFor(v.ID(), newSel)
+}
+
+func jumpTo(e *view.Editor, fn func(*view.View) (view.DocumentId, int, bool)) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	_, pos, ok := fn(v)
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	newSel, err := core.NewSelection([]core.Range{core.PointRange(pos)}, 0)
 	if err != nil {
 		return
 	}

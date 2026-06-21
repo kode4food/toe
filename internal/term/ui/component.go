@@ -51,13 +51,17 @@ type (
 	}
 )
 
-func consumed() EventResult { return EventResult{Consumed: true} }
+func consumed() EventResult {
+	return EventResult{Consumed: true}
+}
 
 func consumedWith(cb Callback) EventResult {
 	return EventResult{Consumed: true, Callback: cb}
 }
 
-func ignored() EventResult { return EventResult{} }
+func ignored() EventResult {
+	return EventResult{}
+}
 
 func ignoredWith(cb Callback) EventResult {
 	return EventResult{Callback: cb}

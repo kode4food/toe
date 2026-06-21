@@ -44,7 +44,9 @@ const (
 	ModAlt
 )
 
-func (k KeyModifiers) Has(mod KeyModifiers) bool { return k&mod != 0 }
+func (k KeyModifiers) Has(mod KeyModifiers) bool {
+	return k&mod != 0
+}
 
 func (k KeyCode) String() string {
 	if k.Char != 0 {

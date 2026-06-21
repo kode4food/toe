@@ -28,28 +28,6 @@ type (
 	}
 )
 
-func newTree(width, height int) *Tree {
-	t := &Tree{
-		nodes: map[Id]*treeNode{},
-	}
-	t.area = Area{Width: width, Height: height}
-	// root is always a container node
-	t.nextID++
-	rootID := t.nextID
-	t.nodes[rootID] = &treeNode{
-		container: &treeContainer{layout: LayoutVertical},
-	}
-	t.nodes[rootID].parent = rootID
-	t.root = rootID
-	t.focus = rootID
-	return t
-}
-
-func (t *Tree) allocID() Id {
-	t.nextID++
-	return t.nextID
-}
-
 // Insert adds a view as the next sibling after the currently focused view
 func (t *Tree) Insert(v *View) Id {
 	focus := t.focus
@@ -109,20 +87,6 @@ func (t *Tree) Split(v *View, layout Layout) Id {
 	return id
 }
 
-func (t *Tree) removeOrReplace(child Id, replacement Id) {
-	parent := t.nodes[child].parent
-	delete(t.nodes, child)
-
-	c := t.nodes[parent].container
-	pos := indexInSlice(c.children, child)
-	if replacement == 0 {
-		c.children = append(c.children[:pos], c.children[pos+1:]...)
-	} else {
-		c.children[pos] = replacement
-		t.nodes[replacement].parent = parent
-	}
-}
-
 // Remove removes a view from the tree. Focus is moved to the previous view
 // before removal. Empty containers are collapsed
 func (t *Tree) Remove(id Id) {
@@ -154,10 +118,14 @@ func (t *Tree) Get(id Id) *View {
 }
 
 // Focus returns the currently focused view id
-func (t *Tree) Focus() Id { return t.focus }
+func (t *Tree) Focus() Id {
+	return t.focus
+}
 
 // SetFocus moves focus to the given view id
-func (t *Tree) SetFocus(id Id) { t.focus = id }
+func (t *Tree) SetFocus(id Id) {
+	t.focus = id
+}
 
 // IsEmpty reports whether the tree has no views
 func (t *Tree) IsEmpty() bool {
@@ -174,6 +142,86 @@ func (t *Tree) Resize(width, height int) bool {
 	t.area = a
 	t.recalculate()
 	return true
+}
+
+// Traverse returns all view nodes in DFS order (left-to-right, top-to-bottom)
+func (t *Tree) Traverse() []*View {
+	return t.traverse(t.root, nil)
+}
+
+// Views returns all views in DFS order with a focused flag
+func (t *Tree) Views() []struct {
+	View    *View
+	Focused bool
+} {
+	all := t.Traverse()
+	out := make([]struct {
+		View    *View
+		Focused bool
+	}, len(all))
+	for i, v := range all {
+		out[i] = struct {
+			View    *View
+			Focused bool
+		}{v, v.id == t.focus}
+	}
+	return out
+}
+
+// NodeID returns the ViewId of the treeNode that holds the given view id,
+// which is the same as the view id for leaf nodes
+func (t *Tree) NodeID(viewID Id) Id {
+	return viewID
+}
+
+// ContainerLayoutAt returns the layout of the container that holds viewID
+func (t *Tree) ContainerLayoutAt(viewID Id) (Layout, bool) {
+	n, ok := t.nodes[viewID]
+	if !ok {
+		return 0, false
+	}
+	parent := n.parent
+	pn, ok := t.nodes[parent]
+	if !ok || pn.container == nil {
+		return 0, false
+	}
+	return pn.container.layout, true
+}
+
+func newTree(width, height int) *Tree {
+	t := &Tree{
+		nodes: map[Id]*treeNode{},
+	}
+	t.area = Area{Width: width, Height: height}
+	// root is always a container node
+	t.nextID++
+	rootID := t.nextID
+	t.nodes[rootID] = &treeNode{
+		container: &treeContainer{layout: LayoutVertical},
+	}
+	t.nodes[rootID].parent = rootID
+	t.root = rootID
+	t.focus = rootID
+	return t
+}
+
+func (t *Tree) allocID() Id {
+	t.nextID++
+	return t.nextID
+}
+
+func (t *Tree) removeOrReplace(child Id, replacement Id) {
+	parent := t.nodes[child].parent
+	delete(t.nodes, child)
+
+	c := t.nodes[parent].container
+	pos := indexInSlice(c.children, child)
+	if replacement == 0 {
+		c.children = append(c.children[:pos], c.children[pos+1:]...)
+	} else {
+		c.children[pos] = replacement
+		t.nodes[replacement].parent = parent
+	}
 }
 
 // recalculate distributes the tree area to all view nodes using the same
@@ -235,11 +283,6 @@ func (t *Tree) recalculate() {
 	}
 }
 
-// Traverse returns all view nodes in DFS order (left-to-right, top-to-bottom)
-func (t *Tree) Traverse() []*View {
-	return t.traverse(t.root, nil)
-}
-
 func (t *Tree) traverse(id Id, out []*View) []*View {
 	n := t.nodes[id]
 	if n.view != nil {
@@ -249,41 +292,4 @@ func (t *Tree) traverse(id Id, out []*View) []*View {
 		out = t.traverse(child, out)
 	}
 	return out
-}
-
-// Views returns all views in DFS order with a focused flag
-func (t *Tree) Views() []struct {
-	View    *View
-	Focused bool
-} {
-	all := t.Traverse()
-	out := make([]struct {
-		View    *View
-		Focused bool
-	}, len(all))
-	for i, v := range all {
-		out[i] = struct {
-			View    *View
-			Focused bool
-		}{v, v.id == t.focus}
-	}
-	return out
-}
-
-// NodeID returns the ViewId of the treeNode that holds the given view id,
-// which is the same as the view id for leaf nodes
-func (t *Tree) NodeID(viewID Id) Id { return viewID }
-
-// ContainerLayoutAt returns the layout of the container that holds viewID
-func (t *Tree) ContainerLayoutAt(viewID Id) (Layout, bool) {
-	n, ok := t.nodes[viewID]
-	if !ok {
-		return 0, false
-	}
-	parent := n.parent
-	pn, ok := t.nodes[parent]
-	if !ok || pn.container == nil {
-		return 0, false
-	}
-	return pn.container.layout, true
 }

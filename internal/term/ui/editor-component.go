@@ -46,22 +46,6 @@ type (
 	}
 )
 
-func newEditorComponent() *EditorComponent {
-	return &EditorComponent{
-		saveSlot:  &saveGenSlot{},
-		cache:     newRenderCache(),
-		macroSlot: &macroSlot{macros: map[rune][]command.KeyEvent{}},
-		focused:   true,
-	}
-}
-
-func newRenderCache() *renderCache {
-	return &renderCache{
-		docCaches:   map[view.DocumentId]*docRenderCache{},
-		viewRowMaps: map[view.Id][]viewRowEntry{},
-	}
-}
-
 func (e *EditorComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -164,6 +148,73 @@ func (e *EditorComponent) RenderBuffer(w, h int, cx *Context) *tui.Buffer {
 func (e *EditorComponent) Cursor(w, h int, cx *Context) (tea.Cursor, bool) {
 	r := &renderPass{ec: e, cx: cx, w: w, h: h}
 	return r.editorCursor()
+}
+
+func (e *EditorComponent) MacroRecordAction(
+	ed *view.Editor,
+) command.Continuation {
+	ms := e.macroSlot
+	if ms.recording {
+		if len(ms.keys) > 0 {
+			ms.keys = ms.keys[:len(ms.keys)-1]
+		}
+		ms.macros[ms.reg] = slices.Clone(ms.keys)
+		ms.recording = false
+		ms.keys = nil
+		ms.reg = 0
+		return nil
+	}
+	ed.SetHint("Q ...")
+	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
+		if k.Code.Char == 0 || k.Mods != command.ModNone {
+			ed.SetHint("")
+			return nil
+		}
+		ms.recording = true
+		ms.reg = k.Code.Char
+		ms.keys = nil
+		return nil
+	}
+}
+
+func (e *EditorComponent) MacroReplayAction(
+	ed *view.Editor,
+) command.Continuation {
+	ms := e.macroSlot
+	if ms.recording {
+		return nil
+	}
+	ed.SetHint("q ...")
+	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
+		if k.Code.Char == 0 || k.Mods != command.ModNone {
+			ed.SetHint("")
+			return nil
+		}
+		n := ed.Count()
+		if n == 0 {
+			n = 1
+		}
+		ms.replayReg = k.Code.Char
+		ms.replayN = n
+		ms.hasReplay = true
+		return nil
+	}
+}
+
+func newEditorComponent() *EditorComponent {
+	return &EditorComponent{
+		saveSlot:  &saveGenSlot{},
+		cache:     newRenderCache(),
+		macroSlot: &macroSlot{macros: map[rune][]command.KeyEvent{}},
+		focused:   true,
+	}
+}
+
+func newRenderCache() *renderCache {
+	return &renderCache{
+		docCaches:   map[view.DocumentId]*docRenderCache{},
+		viewRowMaps: map[view.Id][]viewRowEntry{},
+	}
 }
 
 func (e *EditorComponent) handleKeyPress(
@@ -367,57 +418,6 @@ func (e *EditorComponent) replayMacro(
 				act.InsertChar(cx.Editor, k.Code.Char)
 			}
 		}
-	}
-}
-
-func (e *EditorComponent) MacroRecordAction(
-	ed *view.Editor,
-) command.Continuation {
-	ms := e.macroSlot
-	if ms.recording {
-		if len(ms.keys) > 0 {
-			ms.keys = ms.keys[:len(ms.keys)-1]
-		}
-		ms.macros[ms.reg] = slices.Clone(ms.keys)
-		ms.recording = false
-		ms.keys = nil
-		ms.reg = 0
-		return nil
-	}
-	ed.SetHint("Q ...")
-	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			ed.SetHint("")
-			return nil
-		}
-		ms.recording = true
-		ms.reg = k.Code.Char
-		ms.keys = nil
-		return nil
-	}
-}
-
-func (e *EditorComponent) MacroReplayAction(
-	ed *view.Editor,
-) command.Continuation {
-	ms := e.macroSlot
-	if ms.recording {
-		return nil
-	}
-	ed.SetHint("q ...")
-	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			ed.SetHint("")
-			return nil
-		}
-		n := ed.Count()
-		if n == 0 {
-			n = 1
-		}
-		ms.replayReg = k.Code.Char
-		ms.replayN = n
-		ms.hasReplay = true
-		return nil
 	}
 }
 

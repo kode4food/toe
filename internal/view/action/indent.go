@@ -119,25 +119,6 @@ func Unindent(e *view.Editor) {
 	applyWithSelMap(e, text, sel, changes)
 }
 
-func applyWithSelMap(
-	e *view.Editor, text core.Rope, sel core.Selection, changes []core.Change,
-) {
-	if len(changes) == 0 {
-		return
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
-	}
-	e.SetMode(view.ModeNormal)
-	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
-	_ = e.Apply(tx)
-}
-
 // InsertTab inserts one indentation unit (tab or spaces) at each cursor
 func InsertTab(e *view.Editor) {
 	v, ok := e.FocusedView()
@@ -221,4 +202,23 @@ func SmartTab(e *view.Editor) {
 		return
 	}
 	InsertTab(e)
+}
+
+func applyWithSelMap(
+	e *view.Editor, text core.Rope, sel core.Selection, changes []core.Change,
+) {
+	if len(changes) == 0 {
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
+		return
+	}
+	newSel, err := sel.Map(cs)
+	if err != nil {
+		return
+	}
+	e.SetMode(view.ModeNormal)
+	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
+	_ = e.Apply(tx)
 }

@@ -79,13 +79,24 @@ var (
 	ColorWhite        = Color{kind: colorWhite}
 )
 
-func ColorIndexed(idx uint8) Color { return Color{kind: colorIndexed, r: idx} }
+func ColorIndexed(idx uint8) Color {
+	return Color{kind: colorIndexed, r: idx}
+}
+
 func ColorRGB(r, g, b uint8) Color {
 	return Color{kind: colorRGB, r: r, g: g, b: b}
 }
 
-func (s Style) Fg(c Color) Style { s.fg = c; return s }
-func (s Style) Bg(c Color) Style { s.bg = c; return s }
+func (s Style) Fg(c Color) Style {
+	s.fg = c
+	return s
+}
+
+func (s Style) Bg(c Color) Style {
+	s.bg = c
+	return s
+}
+
 func (s Style) UlColor(c Color) Style {
 	s.underlineColor = c
 	return s
@@ -95,11 +106,28 @@ func (s Style) UlStyle(u UnderlineStyle) Style {
 	s.underlineStyle = u
 	return s
 }
-func (s Style) Mod(m Modifier) Style   { s.modifier |= m; return s }
-func (s Style) FgColor() Color         { return s.fg }
-func (s Style) BgColor() Color         { return s.bg }
-func (s Style) HasMod(m Modifier) bool { return s.modifier&m == m }
 
-func (c Color) IsReset() bool { return c.kind == colorReset }
+func (s Style) Mod(m Modifier) Style {
+	s.modifier |= m
+	return s
+}
 
-func (m Modifier) has(bit Modifier) bool { return m&bit != 0 }
+func (s Style) FgColor() Color {
+	return s.fg
+}
+
+func (s Style) BgColor() Color {
+	return s.bg
+}
+
+func (s Style) HasMod(m Modifier) bool {
+	return s.modifier&m == m
+}
+
+func (c Color) IsReset() bool {
+	return c.kind == colorReset
+}
+
+func (m Modifier) has(bit Modifier) bool {
+	return m&bit != 0
+}

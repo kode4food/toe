@@ -68,7 +68,9 @@ func NewChangeSet(doc Rope) ChangeSet {
 }
 
 // Text returns replacement text, or empty string for a deletion
-func (c Change) Text() string { return c.text }
+func (c Change) Text() string {
+	return c.text
+}
 
 func TextChange(from, to int, text string) Change {
 	return Change{From: from, To: to, text: text}
@@ -121,20 +123,6 @@ func (a Assoc) Sticky() bool {
 	return a == AssocBeforeSticky || a == AssocAfterSticky
 }
 
-func (a Assoc) insertOffset(s string) int {
-	chars := runeLen(s)
-	switch a {
-	case AssocAfter, AssocAfterSticky:
-		return chars
-	case AssocAfterWord:
-		return countWordPrefix(s)
-	case AssocBeforeWord:
-		return chars - countWordSuffix(s)
-	default:
-		return 0
-	}
-}
-
 func (c ChangeSet) Operations() []Operation {
 	return slices.Clone(c.ops)
 }
@@ -176,6 +164,20 @@ func (c ChangeSet) Empty() bool {
 	return len(c.ops) == 0 ||
 		(len(c.ops) == 1 && c.ops[0].kind == OperationRetain &&
 			c.ops[0].n == c.len)
+}
+
+func (a Assoc) insertOffset(s string) int {
+	chars := runeLen(s)
+	switch a {
+	case AssocAfter, AssocAfterSticky:
+		return chars
+	case AssocAfterWord:
+		return countWordPrefix(s)
+	case AssocBeforeWord:
+		return chars - countWordSuffix(s)
+	default:
+		return 0
+	}
 }
 
 func (c ChangeSet) retain(n int) ChangeSet {

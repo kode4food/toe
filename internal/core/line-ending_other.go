@@ -2,4 +2,6 @@
 
 package core
 
-func NativeLineEnding() LineEnding { return LineEndingLF }
+func NativeLineEnding() LineEnding {
+	return LineEndingLF
+}

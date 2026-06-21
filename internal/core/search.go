@@ -10,7 +10,9 @@ type (
 	RuneMatcher rune
 )
 
-func (r RuneMatcher) MatchChar(ch rune) bool { return rune(r) == ch }
+func (r RuneMatcher) MatchChar(ch rune) bool {
+	return rune(r) == ch
+}
 
 // FindNthChar finds the position of the nth character matching m, starting from
 // pos in the given direction

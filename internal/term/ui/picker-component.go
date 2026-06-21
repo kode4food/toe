@@ -21,10 +21,6 @@ type (
 
 const pickerMinPreviewArea = 72
 
-func newPickerComponent(p *Picker) *PickerComponent {
-	return &PickerComponent{state: p}
-}
-
 func (p *PickerComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -152,6 +148,10 @@ func (p *PickerComponent) Cursor(
 	_, _ int, _ *Context,
 ) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
+}
+
+func newPickerComponent(p *Picker) *PickerComponent {
+	return &PickerComponent{state: p}
 }
 
 func (p *PickerComponent) mouseOutside(x, y int) bool {

@@ -197,21 +197,6 @@ func DetectLanguage(path, content string) (string, bool) {
 	return languageForMatch(langs, content)
 }
 
-func loadUserWorkspaceLanguages() (Languages, bool) {
-	path, ok := UserLanguagesPath()
-	if !ok {
-		return Languages{}, false
-	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		cwd = "."
-	}
-	langs, ok := LoadLanguagesForWorkspace(
-		path, WorkspaceLanguagesPath(cwd), cwd,
-	)
-	return langs, ok
-}
-
 func LoadBundledLanguages() (Languages, bool) {
 	base, ok := loader.LoadDefaultLanguagesTOML()
 	if !ok {
@@ -244,4 +229,19 @@ func UserLanguagesPath() (string, bool) {
 
 func WorkspaceLanguagesPath(dir string) string {
 	return loader.WorkspaceLanguagesFile(dir)
+}
+
+func loadUserWorkspaceLanguages() (Languages, bool) {
+	path, ok := UserLanguagesPath()
+	if !ok {
+		return Languages{}, false
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = "."
+	}
+	langs, ok := LoadLanguagesForWorkspace(
+		path, WorkspaceLanguagesPath(cwd), cwd,
+	)
+	return langs, ok
 }

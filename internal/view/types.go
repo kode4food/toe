@@ -183,4 +183,6 @@ func (d *DocumentOpenError) Error() string {
 	return fmt.Sprintf("open %s: %v", d.Path, d.Err)
 }
 
-func (d *DocumentOpenError) Unwrap() error { return d.Err }
+func (d *DocumentOpenError) Unwrap() error {
+	return d.Err
+}

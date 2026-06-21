@@ -83,26 +83,6 @@ func ExtendToColumn(e *view.Editor) {
 	gotoColumn(e, true)
 }
 
-func gotoColumn(e *view.Editor, extend bool) {
-	col := max(e.Count(), 1)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		cursor := r.Cursor(doc)
-		line, err := doc.CharToLine(cursor)
-		if err != nil {
-			return r
-		}
-		lineStart, err := doc.LineToChar(line)
-		if err != nil {
-			return r
-		}
-		lineEnd, err := doc.LineEndCharIndex(line)
-		if err != nil {
-			return r
-		}
-		return r.PutCursor(doc, min(lineStart+col-1, lineEnd), extend)
-	})
-}
-
 // Increment increments the integer in each selection range by count
 func Increment(e *view.Editor) {
 	incrementImpl(e, 1)
@@ -398,6 +378,26 @@ func YankJoin(e *view.Editor, sep string) {
 	}
 	e.Registers().Set(reg, strings.Join(parts, sep))
 	e.SetMode(view.ModeNormal)
+}
+
+func gotoColumn(e *view.Editor, extend bool) {
+	col := max(e.Count(), 1)
+	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
+		cursor := r.Cursor(doc)
+		line, err := doc.CharToLine(cursor)
+		if err != nil {
+			return r
+		}
+		lineStart, err := doc.LineToChar(line)
+		if err != nil {
+			return r
+		}
+		lineEnd, err := doc.LineEndCharIndex(line)
+		if err != nil {
+			return r
+		}
+		return r.PutCursor(doc, min(lineStart+col-1, lineEnd), extend)
+	})
 }
 
 func dedentDelete(

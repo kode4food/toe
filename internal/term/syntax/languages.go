@@ -37,11 +37,6 @@ var langRegistry = map[string]*sitter.Language{
 	"yaml":       yaml.GetLanguage(),
 }
 
-func languageFor(name string) (*sitter.Language, bool) {
-	l, ok := langRegistry[name]
-	return l, ok
-}
-
 func SupportedLanguages() []string {
 	names := make([]string, 0, len(langRegistry))
 	for name := range langRegistry {
@@ -49,4 +44,9 @@ func SupportedLanguages() []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+func languageFor(name string) (*sitter.Language, bool) {
+	l, ok := langRegistry[name]
+	return l, ok
 }

@@ -41,13 +41,6 @@ func FileExplorerInBufferDir(e *view.Editor) *Picker {
 	return NewPicker(e, newFileExplorerSource(dir))
 }
 
-func newFileExplorerSource(root string) *fileExplorerSource {
-	return &fileExplorerSource{
-		pickerMeta: pickerMeta{columns: []string{"name"}},
-		root:       root,
-	}
-}
-
 func (f *fileExplorerSource) Title() string {
 	return filepath.Base(f.root)
 }
@@ -85,6 +78,13 @@ func (f *fileExplorerSource) Navigate(
 	dir, _ := filepath.Abs(entry.path)
 	return func(e *view.Editor) *Picker {
 		return NewPicker(e, newFileExplorerSource(dir))
+	}
+}
+
+func newFileExplorerSource(root string) *fileExplorerSource {
+	return &fileExplorerSource{
+		pickerMeta: pickerMeta{columns: []string{"name"}},
+		root:       root,
 	}
 }
 

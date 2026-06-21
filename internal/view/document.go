@@ -13,37 +13,25 @@ import (
 type (
 	// Document holds the text, history, and per-view state for an open buffer
 	Document struct {
-		id       DocumentId
-		text     core.Rope
-		path     string
-		modified bool
-		// modifiedSinceAccessed is set when changes land and cleared when this
-		// document becomes the focused document, enabling goto_last_modified_file
+		id                    DocumentId
+		text                  core.Rope
+		path                  string
+		modified              bool
 		modifiedSinceAccessed bool
-		// hasBOM records that the file was opened with a UTF-8 BOM so it is
-		// preserved on save
-		hasBOM bool
+		hasBOM                bool
 
 		selections map[Id]core.Selection
 		history    core.History
 
-		// version increments on every text change, including insert-mode
-		// changes not yet committed to history
-		version int
-
-		// insertAcc accumulates changes made during insert mode so that the whole
-		// session is committed as one history revision on exit
+		version   int
 		insertAcc *insertAccum
 
-		indent       core.IndentStyle
-		tabWidth     int
-		lineEnding   core.LineEnding
-		editorConfig *config.EditorConfig
-		readonly     bool
-		lang         string
-		// langDef holds the resolved language definition for lang, set whenever
-		// lang is, so the render path reads it directly instead of re-parsing
-		// the language config every frame
+		indent        core.IndentStyle
+		tabWidth      int
+		lineEnding    core.LineEnding
+		editorConfig  *config.EditorConfig
+		readonly      bool
+		lang          string
 		langDef       *language.Language
 		restoreCursor bool
 	}
@@ -58,122 +46,45 @@ type (
 
 // RestoreCursor reports whether the next exit from insert mode should move the
 // cursor back by one grapheme
-func (d *Document) RestoreCursor() bool { return d.restoreCursor }
+func (d *Document) RestoreCursor() bool {
+	return d.restoreCursor
+}
 
 // SetRestoreCursor marks whether the next insert-mode exit should restore the
 // cursor one grapheme to the left
-func (d *Document) SetRestoreCursor(v bool) { d.restoreCursor = v }
-
-func newDocument(id DocumentId, opts *Options) *Document {
-	d := &Document{
-		id:         id,
-		text:       core.NewRope(""),
-		selections: map[Id]core.Selection{},
-		history:    core.NewHistory(),
-		indent:     core.Tabs(),
-		tabWidth:   4,
-		lineEnding: defaultLineEnding(opts.DefaultLineEnding),
-	}
-	d.SetLang("text")
-	return d
-}
-
-func openDocument(
-	id DocumentId, path string, opts *Options,
-) (*Document, error) {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return nil, &DocumentOpenError{Path: path, Err: err}
-	}
-	var ec *config.EditorConfig
-	if opts.EditorConfig {
-		ec = config.FindEditorConfig(absPath)
-	}
-	data, err := os.ReadFile(absPath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			doc := newDocument(id, opts)
-			doc.path = absPath
-			doc.editorConfig = ec
-			doc.SetLang(detectLang(absPath, ""))
-			lang := doc.langDef
-			if ec != nil && ec.LineEnding != nil {
-				doc.lineEnding = *ec.LineEnding
-			}
-			if ec != nil && ec.IndentStyle != nil {
-				doc.indent = *ec.IndentStyle
-			} else if lang.Indent.Unit != "" {
-				doc.indent = core.ParseIndentStyle(lang.Indent.Unit)
-			}
-			if ec != nil && ec.TabWidth != nil {
-				doc.tabWidth = *ec.TabWidth
-			} else if lang.Indent.TabWidth != nil {
-				doc.tabWidth = *lang.Indent.TabWidth
-			}
-			return doc, nil
-		}
-		return nil, &DocumentOpenError{Path: path, Err: err}
-	}
-
-	hasBOM := hasBOMBytes(data)
-	if hasBOM {
-		data = data[3:]
-	}
-	rope := core.NewRope(string(data))
-	doc := &Document{
-		id:           id,
-		text:         rope,
-		path:         absPath,
-		selections:   map[Id]core.Selection{},
-		history:      core.NewHistory(),
-		tabWidth:     4,
-		lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
-		editorConfig: ec,
-		hasBOM:       hasBOM,
-	}
-	doc.SetLang(detectLang(absPath, string(data)))
-
-	lang := doc.langDef
-	if ec != nil && ec.IndentStyle != nil {
-		doc.indent = *ec.IndentStyle
-	} else if style, ok := core.AutoDetect(rope); ok {
-		doc.indent = style
-	} else if lang.Indent.Unit != "" {
-		doc.indent = core.ParseIndentStyle(lang.Indent.Unit)
-	} else {
-		doc.indent = core.Tabs()
-	}
-	if ec != nil && ec.TabWidth != nil {
-		doc.tabWidth = *ec.TabWidth
-	} else if lang.Indent.TabWidth != nil {
-		doc.tabWidth = *lang.Indent.TabWidth
-	}
-	if ec != nil && ec.LineEnding != nil {
-		doc.lineEnding = *ec.LineEnding
-	} else if le, ok := core.AutoDetectLineEndingString(string(data)); ok {
-		doc.lineEnding = le
-	}
-
-	return doc, nil
+func (d *Document) SetRestoreCursor(v bool) {
+	d.restoreCursor = v
 }
 
 // ID returns the unique document identifier
-func (d *Document) ID() DocumentId { return d.id }
+func (d *Document) ID() DocumentId {
+	return d.id
+}
 
 // Text returns the current rope text
-func (d *Document) Text() core.Rope { return d.text }
+func (d *Document) Text() core.Rope {
+	return d.text
+}
 
 // Path returns the file path, or empty string for scratch buffers
-func (d *Document) Path() string { return d.path }
+func (d *Document) Path() string {
+	return d.path
+}
 
 // SetPath sets the file path for this document
-func (d *Document) SetPath(path string) { d.path = path }
+func (d *Document) SetPath(path string) {
+	d.path = path
+}
 
 // Modified reports whether the document has unsaved changes
-func (d *Document) Modified() bool { return d.modified }
+func (d *Document) Modified() bool {
+	return d.modified
+}
 
 // Lang returns the language identifier for syntax highlighting
-func (d *Document) Lang() string { return d.lang }
+func (d *Document) Lang() string {
+	return d.lang
+}
 
 // SetLang sets the language identifier and resolves its definition once, so the
 // render path reads the cached *config.Language directly instead of re-parsing
@@ -203,25 +114,39 @@ func (d *Document) TextFormatForConfig(
 }
 
 // Readonly reports whether the document is read-only
-func (d *Document) Readonly() bool { return d.readonly }
+func (d *Document) Readonly() bool {
+	return d.readonly
+}
 
 // IndentStyle returns the active indentation style
-func (d *Document) IndentStyle() core.IndentStyle { return d.indent }
+func (d *Document) IndentStyle() core.IndentStyle {
+	return d.indent
+}
 
 // SetIndentStyle updates the indent style for this document
-func (d *Document) SetIndentStyle(s core.IndentStyle) { d.indent = s }
+func (d *Document) SetIndentStyle(s core.IndentStyle) {
+	d.indent = s
+}
 
 // TabWidth returns the display tab width
-func (d *Document) TabWidth() int { return d.tabWidth }
+func (d *Document) TabWidth() int {
+	return d.tabWidth
+}
 
 // LineEnding returns the document's line-ending style
-func (d *Document) LineEnding() core.LineEnding { return d.lineEnding }
+func (d *Document) LineEnding() core.LineEnding {
+	return d.lineEnding
+}
 
 // SetLineEnding updates the line ending for this document
-func (d *Document) SetLineEnding(le core.LineEnding) { d.lineEnding = le }
+func (d *Document) SetLineEnding(le core.LineEnding) {
+	d.lineEnding = le
+}
 
 // DisplayName returns the short display name for the document
-func (d *Document) DisplayName() string { return DocumentDisplayName(d.path) }
+func (d *Document) DisplayName() string {
+	return DocumentDisplayName(d.path)
+}
 
 // RelativeName returns the path relative to basedir
 func (d *Document) RelativeName(basedir string) string {
@@ -324,10 +249,14 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 }
 
 // LastEditPos returns the char offset of the most recently committed change
-func (d *Document) LastEditPos() int { return d.history.LastEditPos() }
+func (d *Document) LastEditPos() int {
+	return d.history.LastEditPos()
+}
 
 // Revision returns the document version used for render-cache invalidation
-func (d *Document) Revision() int { return d.version }
+func (d *Document) Revision() int {
+	return d.version
+}
 
 // Undo reverts one history step for the given view
 func (d *Document) Undo(vid Id) bool {
@@ -373,6 +302,99 @@ func (d *Document) Redo(vid Id) bool {
 	d.modified = true
 	d.modifiedSinceAccessed = true
 	return true
+}
+
+func newDocument(id DocumentId, opts *Options) *Document {
+	d := &Document{
+		id:         id,
+		text:       core.NewRope(""),
+		selections: map[Id]core.Selection{},
+		history:    core.NewHistory(),
+		indent:     core.Tabs(),
+		tabWidth:   4,
+		lineEnding: defaultLineEnding(opts.DefaultLineEnding),
+	}
+	d.SetLang("text")
+	return d
+}
+
+func openDocument(
+	id DocumentId, path string, opts *Options,
+) (*Document, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, &DocumentOpenError{Path: path, Err: err}
+	}
+	var ec *config.EditorConfig
+	if opts.EditorConfig {
+		ec = config.FindEditorConfig(absPath)
+	}
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			doc := newDocument(id, opts)
+			doc.path = absPath
+			doc.editorConfig = ec
+			doc.SetLang(detectLang(absPath, ""))
+			lang := doc.langDef
+			if ec != nil && ec.LineEnding != nil {
+				doc.lineEnding = *ec.LineEnding
+			}
+			if ec != nil && ec.IndentStyle != nil {
+				doc.indent = *ec.IndentStyle
+			} else if lang.Indent.Unit != "" {
+				doc.indent = core.ParseIndentStyle(lang.Indent.Unit)
+			}
+			if ec != nil && ec.TabWidth != nil {
+				doc.tabWidth = *ec.TabWidth
+			} else if lang.Indent.TabWidth != nil {
+				doc.tabWidth = *lang.Indent.TabWidth
+			}
+			return doc, nil
+		}
+		return nil, &DocumentOpenError{Path: path, Err: err}
+	}
+
+	hasBOM := hasBOMBytes(data)
+	if hasBOM {
+		data = data[3:]
+	}
+	rope := core.NewRope(string(data))
+	doc := &Document{
+		id:           id,
+		text:         rope,
+		path:         absPath,
+		selections:   map[Id]core.Selection{},
+		history:      core.NewHistory(),
+		tabWidth:     4,
+		lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
+		editorConfig: ec,
+		hasBOM:       hasBOM,
+	}
+	doc.SetLang(detectLang(absPath, string(data)))
+
+	lang := doc.langDef
+	if ec != nil && ec.IndentStyle != nil {
+		doc.indent = *ec.IndentStyle
+	} else if style, ok := core.AutoDetect(rope); ok {
+		doc.indent = style
+	} else if lang.Indent.Unit != "" {
+		doc.indent = core.ParseIndentStyle(lang.Indent.Unit)
+	} else {
+		doc.indent = core.Tabs()
+	}
+	if ec != nil && ec.TabWidth != nil {
+		doc.tabWidth = *ec.TabWidth
+	} else if lang.Indent.TabWidth != nil {
+		doc.tabWidth = *lang.Indent.TabWidth
+	}
+	if ec != nil && ec.LineEnding != nil {
+		doc.lineEnding = *ec.LineEnding
+	} else if le, ok := core.AutoDetectLineEndingString(string(data)); ok {
+		doc.lineEnding = le
+	}
+
+	return doc, nil
 }
 
 func (d *Document) mapOtherSelections(vid Id, cs core.ChangeSet) {

@@ -133,16 +133,6 @@ func (b *Buffer) SetRightAlignedInt(x, y, width, n int, style Style) {
 	}
 }
 
-// setASCIICell writes a single printable ASCII byte to (x, y) using the shared
-// asciiTable, avoiding a per-call string allocation. The caller is responsible
-// for validating y; x is clipped to the buffer width
-func (b *Buffer) setASCIICell(x, y int, ch byte, style Style) {
-	if x < 0 || x >= b.Width {
-		return
-	}
-	b.cells[y*b.Width+x] = Cell{Symbol: asciiTable[ch : ch+1], Style: style}
-}
-
 // SetString writes graphemes of s starting at (x, y), advancing x by display
 // width. Wide graphemes reserve their trailing columns without emitting
 // additional printable cells
@@ -176,6 +166,16 @@ func (b *Buffer) SetString(x, y int, s string, style Style) {
 		}
 		x += w
 	}
+}
+
+// setASCIICell writes a single printable ASCII byte to (x, y) using the shared
+// asciiTable, avoiding a per-call string allocation. The caller is responsible
+// for validating y; x is clipped to the buffer width
+func (b *Buffer) setASCIICell(x, y int, ch byte, style Style) {
+	if x < 0 || x >= b.Width {
+		return
+	}
+	b.cells[y*b.Width+x] = Cell{Symbol: asciiTable[ch : ch+1], Style: style}
 }
 
 func (b *Buffer) setASCIIString(x, y int, s string, style Style) (int, string) {

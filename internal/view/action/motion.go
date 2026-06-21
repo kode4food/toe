@@ -155,24 +155,6 @@ func GotoPrevParagraph(e *view.Editor) {
 	})
 }
 
-func skipConsecutiveBlanks(doc core.Rope, l, nLines, step int) int {
-	for {
-		next := l + step
-		if next < 0 || next >= nLines {
-			break
-		}
-		lr, err := doc.Line(next)
-		if err != nil {
-			break
-		}
-		if !isBlankLine(lr.String()) {
-			break
-		}
-		l = next
-	}
-	return l
-}
-
 // MoveLeft moves all cursors one grapheme to the left
 func MoveLeft(e *view.Editor) {
 	n := countOrOne(e)
@@ -568,6 +550,24 @@ func GotoLine(e *view.Editor, n int) {
 		}
 		return r.PutCursor(doc, pos, extend)
 	})
+}
+
+func skipConsecutiveBlanks(doc core.Rope, l, nLines, step int) int {
+	for {
+		next := l + step
+		if next < 0 || next >= nLines {
+			break
+		}
+		lr, err := doc.Line(next)
+		if err != nil {
+			break
+		}
+		if !isBlankLine(lr.String()) {
+			break
+		}
+		l = next
+	}
+	return l
 }
 
 func moveLineEnd(e *view.Editor, extend bool) {

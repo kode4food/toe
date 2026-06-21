@@ -58,7 +58,9 @@ func NewEditor(cwd string) *Editor {
 }
 
 // Tree returns the layout tree
-func (e *Editor) Tree() *Tree { return e.tree }
+func (e *Editor) Tree() *Tree {
+	return e.tree
+}
 
 // ResizeTree resizes the layout tree to the given content area dimensions
 func (e *Editor) ResizeTree(width, height int) {
@@ -188,37 +190,15 @@ func (e *Editor) Transpose() {
 	e.tree.Transpose()
 }
 
-// recordPrevDoc saves the current focused document as the alternate file and
-// updates the last-modified list if the document was changed since last access
-func (e *Editor) recordPrevDoc() {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	did := v.DocID()
-	e.prevDocID = did
-	if doc, ok := e.docs[did]; ok && doc.modifiedSinceAccessed {
-		if e.lastModifiedDocIDs[0] != did {
-			e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
-			e.lastModifiedDocIDs[0] = did
-		}
-	}
-}
-
-// markDocAccessed clears the modifiedSinceAccessed flag on the focused document
-func (e *Editor) markDocAccessed() {
-	if v, ok := e.FocusedView(); ok {
-		if doc, ok := e.docs[v.DocID()]; ok {
-			doc.modifiedSinceAccessed = false
-		}
-	}
-}
-
 // SetLastMotion records fn as the last repeatable motion
-func (e *Editor) SetLastMotion(fn func(*Editor)) { e.lastMotion = fn }
+func (e *Editor) SetLastMotion(fn func(*Editor)) {
+	e.lastMotion = fn
+}
 
 // LastMotion returns the most recently recorded repeatable motion
-func (e *Editor) LastMotion() func(*Editor) { return e.lastMotion }
+func (e *Editor) LastMotion() func(*Editor) {
+	return e.lastMotion
+}
 
 // LastModifiedDocIDs returns the two most recently modified-and-left documents,
 // with the most recent first. Invalid entries have value InvalidDocumentId
@@ -238,7 +218,9 @@ func (e *Editor) PrevDocID() (DocumentId, bool) {
 }
 
 // Options returns the typed runtime config values for the editor session
-func (e *Editor) Options() *Options { return &e.opts }
+func (e *Editor) Options() *Options {
+	return &e.opts
+}
 
 // SetConfigReload registers the function called by ReloadConfig to reset
 // module section state and re-apply the merged TOML config
@@ -295,42 +277,66 @@ func (e *Editor) SetMode(m Mode) {
 }
 
 // Count returns the pending numeric count argument (0 = none)
-func (e *Editor) Count() int { return e.count }
+func (e *Editor) Count() int {
+	return e.count
+}
 
 // SetCount sets the pending numeric count
-func (e *Editor) SetCount(n int) { e.count = n }
+func (e *Editor) SetCount(n int) {
+	e.count = n
+}
 
 // ResetCount clears the pending count
-func (e *Editor) ResetCount() { e.count = 0 }
+func (e *Editor) ResetCount() {
+	e.count = 0
+}
 
 // ActiveRegister returns the pending register rune (0 = default)
-func (e *Editor) ActiveRegister() rune { return e.activeRegister }
+func (e *Editor) ActiveRegister() rune {
+	return e.activeRegister
+}
 
 // SetRegister sets the pending register selection
-func (e *Editor) SetRegister(r rune) { e.activeRegister = r }
+func (e *Editor) SetRegister(r rune) {
+	e.activeRegister = r
+}
 
 // ResetRegister clears the pending register to the default
-func (e *Editor) ResetRegister() { e.activeRegister = 0 }
+func (e *Editor) ResetRegister() {
+	e.activeRegister = 0
+}
 
 // Registers returns the editor's register store
-func (e *Editor) Registers() register.Registers { return e.registers }
+func (e *Editor) Registers() register.Registers {
+	return e.registers
+}
 
 // ViewHeight returns the last-reported content area height
-func (e *Editor) ViewHeight() int { return e.viewHeight }
+func (e *Editor) ViewHeight() int {
+	return e.viewHeight
+}
 
 // SetViewHeight sets the content area height (called by the UI on resize)
-func (e *Editor) SetViewHeight(h int) { e.viewHeight = h }
+func (e *Editor) SetViewHeight(h int) {
+	e.viewHeight = h
+}
 
 // ViewContentWidth returns the last-reported text content width (viewport minus
 // gutter), used for visual-line movement when soft-wrap is active
-func (e *Editor) ViewContentWidth() int { return e.viewContentWidth }
+func (e *Editor) ViewContentWidth() int {
+	return e.viewContentWidth
+}
 
 // SetViewContentWidth stores the text content width (called by the renderer
 // after computing the gutter width for the focused document)
-func (e *Editor) SetViewContentWidth(w int) { e.viewContentWidth = w }
+func (e *Editor) SetViewContentWidth(w int) {
+	e.viewContentWidth = w
+}
 
 // Cwd returns the editor working directory
-func (e *Editor) Cwd() string { return e.cwd }
+func (e *Editor) Cwd() string {
+	return e.cwd
+}
 
 // AllDocuments returns all open documents
 func (e *Editor) AllDocuments() []*Document {
@@ -365,7 +371,9 @@ func (e *Editor) CloseAllOtherViews() {
 
 // SetStatusMsg stores a transient status message to be displayed after the
 // current keypress. The UI clears it via TakeStatusMsg
-func (e *Editor) SetStatusMsg(msg string) { e.statusMsg = msg }
+func (e *Editor) SetStatusMsg(msg string) {
+	e.statusMsg = msg
+}
 
 // TakeStatusMsg returns the pending status message and clears it
 func (e *Editor) TakeStatusMsg() string {
@@ -375,11 +383,39 @@ func (e *Editor) TakeStatusMsg() string {
 }
 
 // SetHint stores a transient hint shown during an active continuation
-func (e *Editor) SetHint(h string) { e.hint = h }
+func (e *Editor) SetHint(h string) {
+	e.hint = h
+}
 
 // TakeHint returns the pending hint and clears it
 func (e *Editor) TakeHint() string {
 	h := e.hint
 	e.hint = ""
 	return h
+}
+
+// recordPrevDoc saves the current focused document as the alternate file and
+// updates the last-modified list if the document was changed since last access
+func (e *Editor) recordPrevDoc() {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	did := v.DocID()
+	e.prevDocID = did
+	if doc, ok := e.docs[did]; ok && doc.modifiedSinceAccessed {
+		if e.lastModifiedDocIDs[0] != did {
+			e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
+			e.lastModifiedDocIDs[0] = did
+		}
+	}
+}
+
+// markDocAccessed clears the modifiedSinceAccessed flag on the focused document
+func (e *Editor) markDocAccessed() {
+	if v, ok := e.FocusedView(); ok {
+		if doc, ok := e.docs[v.DocID()]; ok {
+			doc.modifiedSinceAccessed = false
+		}
+	}
 }

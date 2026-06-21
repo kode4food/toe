@@ -1,5 +1,14 @@
 package view
 
+// WalkSeparators calls fn for each vertical separator column in the layout. x
+// is the buffer column, y is the top row in tree coordinates, height is the
+// number of rows
+func (t *Tree) WalkSeparators(fn func(x, y, height int)) {
+	if !t.IsEmpty() {
+		t.walkSep(t.root, fn)
+	}
+}
+
 func (t *Tree) findChild(
 	id Id, children []Id, dir Direction,
 ) (Id, bool) {
@@ -83,15 +92,6 @@ func (t *Tree) topOf(id Id) int {
 		return t.topOf(n.container.children[0])
 	}
 	return 0
-}
-
-// WalkSeparators calls fn for each vertical separator column in the layout. x
-// is the buffer column, y is the top row in tree coordinates, height is the
-// number of rows
-func (t *Tree) WalkSeparators(fn func(x, y, height int)) {
-	if !t.IsEmpty() {
-		t.walkSep(t.root, fn)
-	}
 }
 
 func (t *Tree) walkSep(id Id, fn func(x, y, height int)) {

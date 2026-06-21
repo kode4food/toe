@@ -101,16 +101,6 @@ func (e *Editor) DirStack() []string {
 	return cp
 }
 
-func (e *Editor) newDocument() *Document {
-	e.nextDocID++
-	return newDocument(e.nextDocID, &e.opts)
-}
-
-func (e *Editor) openFile(path string) (*Document, error) {
-	e.nextDocID++
-	return openDocument(e.nextDocID, path, &e.opts)
-}
-
 // OpenFile replaces the focused view's document with the given file
 func (e *Editor) OpenFile(path string) (*View, error) {
 	return e.SwitchFile(path)
@@ -185,4 +175,14 @@ func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
 	}
 	e.docs[doc.ID()] = doc
 	return doc, nil
+}
+
+func (e *Editor) newDocument() *Document {
+	e.nextDocID++
+	return newDocument(e.nextDocID, &e.opts)
+}
+
+func (e *Editor) openFile(path string) (*Document, error) {
+	e.nextDocID++
+	return openDocument(e.nextDocID, path, &e.opts)
 }

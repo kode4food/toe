@@ -176,13 +176,19 @@ func (a *Args) Finish() error {
 }
 
 // Len returns the positional argument count
-func (a *Args) Len() int { return len(a.positionals) }
+func (a *Args) Len() int {
+	return len(a.positionals)
+}
 
 // Empty reports whether there are no positional arguments
-func (a *Args) Empty() bool { return len(a.positionals) == 0 }
+func (a *Args) Empty() bool {
+	return len(a.positionals) == 0
+}
 
 // First returns the first positional argument
-func (a *Args) First() (string, bool) { return a.Get(0) }
+func (a *Args) First() (string, bool) {
+	return a.Get(0)
+}
 
 // Get returns the positional argument at index
 func (a *Args) Get(i int) (string, bool) {

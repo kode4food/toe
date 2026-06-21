@@ -239,13 +239,14 @@ func fuzzyMatch(pat, text string) (int, []int) {
 		if prev >= 0 && idx == prev+1 {
 			score += 5
 		}
-		switch {
-		case idx == 0:
+		switch idx {
+		case 0:
 			score += 10
-		case tr[idx-1] == '/' || tr[idx-1] == '\\' ||
-			tr[idx-1] == '.' || tr[idx-1] == '-' ||
-			tr[idx-1] == '_' || tr[idx-1] == ' ':
-			score += 8
+		default:
+			switch tr[idx-1] {
+			case '/', '\\', '.', '-', '_', ' ':
+				score += 8
+			}
 		}
 		prev = idx
 	}

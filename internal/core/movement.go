@@ -299,20 +299,18 @@ func (v visualMover) moveVertically(
 }
 
 func wordMove(doc Rope, r Range, count int, target WordMotionTarget) Range {
-	isPrev := target == WordMotionPrevWordStart ||
-		target == WordMotionPrevLongWordStart ||
-		target == WordMotionPrevSubWordStart ||
-		target == WordMotionPrevWordEnd ||
-		target == WordMotionPrevLongWordEnd ||
-		target == WordMotionPrevSubWordEnd
+	prev := isPrevWordMotion(target)
 
 	n := doc.LenChars()
-	if isPrev && r.Head == 0 || !isPrev && r.Head == n {
+	if prev && r.Head == 0 {
+		return r
+	}
+	if !prev && r.Head == n {
 		return r
 	}
 
 	var start Range
-	if isPrev {
+	if prev {
 		if r.Anchor < r.Head {
 			start = NewRange(r.Head, PrevGraphemeBoundary(doc, r.Head))
 		} else {
@@ -339,20 +337,15 @@ func wordMove(doc Rope, r Range, count int, target WordMotionTarget) Range {
 
 // rangeToTarget extends or moves origin to reach the given word motion target
 func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
-	isPrev := target == WordMotionPrevWordStart ||
-		target == WordMotionPrevLongWordStart ||
-		target == WordMotionPrevSubWordStart ||
-		target == WordMotionPrevWordEnd ||
-		target == WordMotionPrevLongWordEnd ||
-		target == WordMotionPrevSubWordEnd
+	prev := isPrevWordMotion(target)
 
 	it := newCharIterAt(doc, origin.Head)
-	if isPrev {
+	if prev {
 		it.reverse()
 	}
 
 	var advance func(int) int
-	if isPrev {
+	if prev {
 		advance = func(idx int) int {
 			if idx > 0 {
 				return idx - 1
@@ -488,29 +481,21 @@ func isSubWordBoundary(a, b rune, dir Direction) bool {
 func reachedTarget(target WordMotionTarget, prev, next rune) bool {
 	switch target {
 	case WordMotionNextWordStart, WordMotionPrevWordEnd:
-		return isWordBoundary(prev, next) &&
-			(CharIsLineEnding(next) || !isWhitespaceChar(next))
+		return isWordBoundary(prev, next) && atWordStartPos(next)
 	case WordMotionNextWordEnd, WordMotionPrevWordStart:
-		return isWordBoundary(prev, next) &&
-			(!isWhitespaceChar(prev) || CharIsLineEnding(next))
+		return isWordBoundary(prev, next) && atWordEndPos(prev, next)
 	case WordMotionNextLongWordStart, WordMotionPrevLongWordEnd:
-		return isLongWordBoundary(prev, next) &&
-			(CharIsLineEnding(next) || !isWhitespaceChar(next))
+		return isLongWordBoundary(prev, next) && atWordStartPos(next)
 	case WordMotionNextLongWordEnd, WordMotionPrevLongWordStart:
-		return isLongWordBoundary(prev, next) &&
-			(!isWhitespaceChar(prev) || CharIsLineEnding(next))
+		return isLongWordBoundary(prev, next) && atWordEndPos(prev, next)
 	case WordMotionNextSubWordStart:
-		return isSubWordBoundary(prev, next, DirectionForward) &&
-			(CharIsLineEnding(next) || !(isWhitespaceChar(next) || next == '_'))
+		return isSubWordBoundary(prev, next, DirectionForward) && atSubWordStartPos(next)
 	case WordMotionPrevSubWordEnd:
-		return isSubWordBoundary(prev, next, DirectionBackward) &&
-			(CharIsLineEnding(next) || !(isWhitespaceChar(next) || next == '_'))
+		return isSubWordBoundary(prev, next, DirectionBackward) && atSubWordStartPos(next)
 	case WordMotionNextSubWordEnd:
-		return isSubWordBoundary(prev, next, DirectionForward) &&
-			(!(isWhitespaceChar(prev) || prev == '_') || CharIsLineEnding(next))
+		return isSubWordBoundary(prev, next, DirectionForward) && atSubWordEndPos(prev, next)
 	case WordMotionPrevSubWordStart:
-		return isSubWordBoundary(prev, next, DirectionBackward) &&
-			(!(isWhitespaceChar(prev) || prev == '_') || CharIsLineEnding(next))
+		return isSubWordBoundary(prev, next, DirectionBackward) && atSubWordEndPos(prev, next)
 	default:
 		return false
 	}
@@ -661,17 +646,17 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 		wordStart := i
 		lastW := 0
 		for {
-			if col+wordWidth >= viewport {
-				if wordWidth > maxWrap {
-					// word too wide to move whole. If a grapheme overflowed the
-					// edge it becomes the next word's start; otherwise the word
-					// ends exactly at the edge and stays on this row
-					if col+wordWidth > viewport {
-						wordWidth -= lastW
-						i--
-					}
-					break
-				}
+			atEdge := col+wordWidth >= viewport
+			tooWide := atEdge && wordWidth > maxWrap
+			overflowed := tooWide && col+wordWidth > viewport
+			if overflowed {
+				wordWidth -= lastW
+				i--
+			}
+			if tooWide {
+				break
+			}
+			if atEdge {
 				// move the accumulated word to the next row
 				starts = append(starts, wordStart)
 				col = indentCarry()
@@ -774,4 +759,35 @@ func visualRuneW(ch rune, col, tabW int) int {
 		return TabWidthAt(col, tabW)
 	}
 	return graphemeWidth(string(ch))
+}
+
+func isPrevWordMotion(t WordMotionTarget) bool {
+	switch t {
+	case WordMotionPrevWordStart, WordMotionPrevLongWordStart,
+		WordMotionPrevSubWordStart, WordMotionPrevWordEnd,
+		WordMotionPrevLongWordEnd, WordMotionPrevSubWordEnd:
+		return true
+	default:
+		return false
+	}
+}
+
+func atWordStartPos(next rune) bool {
+	return CharIsLineEnding(next) || !isWhitespaceChar(next)
+}
+
+func atWordEndPos(prev, next rune) bool {
+	return !isWhitespaceChar(prev) || CharIsLineEnding(next)
+}
+
+func atSubWordStartPos(next rune) bool {
+	return CharIsLineEnding(next) || !isSubWordStop(next)
+}
+
+func atSubWordEndPos(prev, next rune) bool {
+	return !isSubWordStop(prev) || CharIsLineEnding(next)
+}
+
+func isSubWordStop(ch rune) bool {
+	return isWhitespaceChar(ch) || ch == '_'
 }

@@ -118,18 +118,7 @@ func (e *EditorComponent) HandleEvent(
 		}
 		switch msg.Button {
 		case tea.MouseLeft:
-			if e.mouseDownRange != nil {
-				down := *e.mouseDownRange
-				e.mouseDownRange = nil
-				doc, dok := cx.Editor.FocusedDocument()
-				v, vok := cx.Editor.FocusedView()
-				if dok && vok {
-					cur := doc.SelectionFor(v.ID()).Primary()
-					if cur.Anchor != down.Anchor || cur.Head != down.Head {
-						act.YankToPrimaryClipboard(cx.Editor)
-					}
-				}
-			}
+			e.handleMouseLeftRelease(cx)
 		case tea.MouseMiddle:
 			if cx.Editor.Options().MiddleClickPaste {
 				r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
@@ -306,6 +295,26 @@ func (e *EditorComponent) resize(cx *Context) {
 		th--
 	}
 	cx.Editor.ResizeTree(e.w, max(th, 0))
+}
+
+func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
+	if e.mouseDownRange == nil {
+		return
+	}
+	down := *e.mouseDownRange
+	e.mouseDownRange = nil
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return
+	}
+	cur := doc.SelectionFor(v.ID()).Primary()
+	if cur.Anchor != down.Anchor || cur.Head != down.Head {
+		act.YankToPrimaryClipboard(cx.Editor)
+	}
 }
 
 func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {

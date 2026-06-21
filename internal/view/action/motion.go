@@ -748,9 +748,12 @@ func moveFileEnd(e *view.Editor, extend bool) {
 }
 
 func isPathDelim(ch rune) bool {
-	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' ||
-		ch == '"' || ch == '\'' || ch == '(' || ch == ')' ||
-		ch == '[' || ch == ']' || ch == '{' || ch == '}'
+	switch ch {
+	case ' ', '\t', '\n', '\r', '"', '\'', '(', ')', '[', ']', '{', '}':
+		return true
+	default:
+		return false
+	}
 }
 
 // countOrOne returns the pending count or 1 if none is set

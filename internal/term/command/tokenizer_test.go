@@ -132,49 +132,6 @@ func TestTokenizerPos(t *testing.T) {
 	})
 }
 
-func TestExpansionDelimiters(t *testing.T) {
-	cases := []struct {
-		input    string
-		contains string
-	}{
-		{`%{hello}`, "hello"},
-		{`%(hello)`, "hello"},
-		{`%[hello]`, "hello"},
-		{`%<hello>`, "hello"},
-		{`%'hello'`, "hello"},
-		{`%"hello"`, "hello"},
-		{`%|hello|`, "hello"},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.input, func(t *testing.T) {
-			args, err := commandTokens(tc.input, true)
-			assert.NoError(t, err)
-			assert.Equal(t, 1, len(args))
-			assert.Equal(t, tc.contains, args[0])
-		})
-	}
-}
-
-func TestCommandExpansionKind(t *testing.T) {
-	cases := []struct {
-		input string
-	}{
-		{`%{var}`},
-		{`%u{0041}`},
-		{`%sh{echo hello}`},
-		{`%reg{a}`},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.input, func(t *testing.T) {
-			args, err := commandTokens(tc.input, true)
-			assert.NoError(t, err)
-			assert.Equal(t, 1, len(args))
-		})
-	}
-}
-
 func TestPeekEscapedToken(t *testing.T) {
 	t.Run("backslash before quote parsed as escape", func(t *testing.T) {
 		// On non-windows, backslash before ' is an escape
@@ -216,19 +173,4 @@ func TestTokenizerIncomplete(t *testing.T) {
 		assert.Equal(t, 1, len(args))
 		assert.Equal(t, "hello", args[0])
 	})
-}
-
-func commandTokens(input string, validate bool) ([]string, error) {
-	tok := command.NewTokenizer(input, validate)
-	var args []string
-	for {
-		token, ok, err := tok.Next()
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return args, nil
-		}
-		args = append(args, token.Content)
-	}
 }

@@ -205,9 +205,10 @@ func writePickerItem(
 		if !fg.IsReset() {
 			itemBase = base.Fg(fg)
 		}
-		writePickerMatchedTextInto(
-			buf, cx2, y, cellW, m.item.Display, m.indices, itemBase, match,
-		)
+		writePickerMatched(buf, writePickerMatchedArgs{
+			x: cx2, y: y, maxW: cellW, text: m.item.Display,
+			indices: m.indices, base: itemBase, match: match,
+		})
 	} else {
 		widths := pickerColumnWidths(p, cellW)
 		cur := cx2
@@ -220,9 +221,10 @@ func writePickerItem(
 				val = m.item.Columns[i]
 			}
 			if i == primary {
-				writePickerMatchedTextInto(
-					buf, cur, y, widths[i], val, m.indices, base, match,
-				)
+				writePickerMatched(buf, writePickerMatchedArgs{
+					x: cur, y: y, maxW: widths[i], text: val,
+					indices: m.indices, base: base, match: match,
+				})
 			} else {
 				text := ansi.Truncate(val, widths[i], "")
 				buf.SetString(cur, y, text, base)
@@ -232,22 +234,28 @@ func writePickerItem(
 	}
 }
 
-func writePickerMatchedTextInto(
-	buf *tui.Buffer, x, y, maxW int,
-	text string, indices []int,
-	base, match tui.Style,
-) {
-	if maxW <= 0 {
+type writePickerMatchedArgs struct {
+	x, y    int
+	maxW    int
+	text    string
+	indices []int
+	base    tui.Style
+	match   tui.Style
+}
+
+func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
+	if args.maxW <= 0 {
 		return
 	}
-	runes := []rune(text)
+	runes := []rune(args.text)
+	indices := args.indices
 	ptr := 0
-	col := x
-	budget := maxW
+	col := args.x
+	budget := args.maxW
 	for i := 0; i < len(runes) && budget > 0; {
-		isMatch := ptr < len(indices) && indices[ptr] == i
+		matched := ptr < len(indices) && indices[ptr] == i
 		j := i + 1
-		if isMatch {
+		if matched {
 			ptr++
 			for j < len(runes) && ptr < len(indices) && indices[ptr] == j {
 				ptr++
@@ -265,11 +273,11 @@ func writePickerMatchedTextInto(
 			run = ansi.Truncate(run, budget, "")
 			rw = ansi.StringWidth(run)
 		}
-		st := base
-		if isMatch {
-			st = match
+		st := args.base
+		if matched {
+			st = args.match
 		}
-		buf.SetString(col, y, run, st)
+		buf.SetString(col, args.y, run, st)
 		col += rw
 		budget -= rw
 		i = j

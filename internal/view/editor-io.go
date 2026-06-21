@@ -1,0 +1,188 @@
+package view
+
+import (
+	"os"
+	"path/filepath"
+)
+
+// Save saves the focused document to disk
+func (e *Editor) Save() error {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return ErrNoDocument
+	}
+	return doc.Save(&e.opts)
+}
+
+// NewDocument creates a new empty scratch document and makes it the focused
+// view
+func (e *Editor) NewDocument() *View {
+	doc := e.newDocument()
+	e.docs[doc.ID()] = doc
+	v, ok := e.FocusedView()
+	if ok {
+		v.docID = doc.ID()
+		v.offset = Position{}
+		return v
+	}
+	nv := &View{docID: doc.ID(), mode: ModeNormal}
+	e.tree.Insert(nv)
+	return nv
+}
+
+// SaveAll saves all modified documents
+func (e *Editor) SaveAll() []error {
+	var errs []error
+	for _, doc := range e.docs {
+		if doc.Modified() {
+			if err := doc.Save(&e.opts); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return errs
+}
+
+// Reload reloads the focused document from disk
+func (e *Editor) Reload() error {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return ErrNoDocument
+	}
+	return doc.Reload()
+}
+
+// ReloadAll reloads all documents that have a file path
+func (e *Editor) ReloadAll() []error {
+	var errs []error
+	for _, doc := range e.docs {
+		if doc.Path() != "" {
+			if err := doc.Reload(); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return errs
+}
+
+// Chdir changes the editor working directory
+func (e *Editor) Chdir(path string) error {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	if err := os.Chdir(abs); err != nil {
+		return err
+	}
+	e.cwd = abs
+	return nil
+}
+
+// PushDirectory pushes the current directory onto the stack then chdirs
+func (e *Editor) PushDirectory(path string) error {
+	e.dirStack = append(e.dirStack, e.cwd)
+	return e.Chdir(path)
+}
+
+// PopDirectory changes to the top of the directory stack, if any
+func (e *Editor) PopDirectory() error {
+	if len(e.dirStack) == 0 {
+		return ErrEmptyDirStack
+	}
+	top := e.dirStack[len(e.dirStack)-1]
+	e.dirStack = e.dirStack[:len(e.dirStack)-1]
+	return e.Chdir(top)
+}
+
+// DirStack returns a copy of the directory stack (bottom to top)
+func (e *Editor) DirStack() []string {
+	cp := make([]string, len(e.dirStack))
+	copy(cp, e.dirStack)
+	return cp
+}
+
+func (e *Editor) newDocument() *Document {
+	e.nextDocID++
+	return newDocument(e.nextDocID, &e.opts)
+}
+
+func (e *Editor) openFile(path string) (*Document, error) {
+	e.nextDocID++
+	return openDocument(e.nextDocID, path, &e.opts)
+}
+
+// OpenFile replaces the focused view's document with the given file
+func (e *Editor) OpenFile(path string) (*View, error) {
+	return e.SwitchFile(path)
+}
+
+// SwitchFile replaces the focused view's document with the given file, reusing
+// an existing document if it is already open
+func (e *Editor) SwitchFile(path string) (*View, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range e.docs {
+		if d.Path() == absPath {
+			e.recordPrevDoc()
+			if v, ok := e.FocusedView(); ok {
+				v.docID = d.ID()
+				v.offset = Position{}
+				e.markDocAccessed()
+				return v, nil
+			}
+			return nil, ErrNoView
+		}
+	}
+
+	doc, err := e.openFile(absPath)
+	if err != nil {
+		return nil, err
+	}
+	e.recordPrevDoc()
+	e.docs[doc.ID()] = doc
+	if v, ok := e.FocusedView(); ok {
+		v.docID = doc.ID()
+		v.offset = Position{}
+		e.markDocAccessed()
+		return v, nil
+	}
+	return nil, ErrNoView
+}
+
+// SwitchBuffer replaces the focused view's document with an already-open
+// document by ID. Returns false if the document does not exist or there is no
+// focused view
+func (e *Editor) SwitchBuffer(did DocumentId) bool {
+	if _, ok := e.docs[did]; !ok {
+		return false
+	}
+	e.recordPrevDoc()
+	if v, ok := e.FocusedView(); ok {
+		v.docID = did
+		v.offset = Position{}
+		e.markDocAccessed()
+		return true
+	}
+	return false
+}
+
+// SwitchOrOpenDoc returns an existing document for path, opening it if needed
+func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range e.docs {
+		if d.Path() == absPath {
+			return d, nil
+		}
+	}
+	doc, err := e.openFile(absPath)
+	if err != nil {
+		return nil, err
+	}
+	e.docs[doc.ID()] = doc
+	return doc, nil
+}

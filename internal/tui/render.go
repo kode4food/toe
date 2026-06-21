@@ -5,6 +5,14 @@ import (
 	"strings"
 )
 
+type ansiEmitter struct {
+	w        *strings.Builder
+	fg, bg   Color
+	ulColor  Color
+	ulStyle  UnderlineStyle
+	modifier Modifier
+}
+
 var (
 	underlineEsc = [UnderlineDoubleLine + 1]string{
 		UnderlineReset:      "\x1b[24m",
@@ -55,14 +63,6 @@ func (b *Buffer) RenderRowsToANSI() []string {
 		rows[y] = sb.String()
 	}
 	return rows
-}
-
-type ansiEmitter struct {
-	w        *strings.Builder
-	fg, bg   Color
-	ulColor  Color
-	ulStyle  UnderlineStyle
-	modifier Modifier
 }
 
 func (a *ansiEmitter) emitStyle(s Style) {

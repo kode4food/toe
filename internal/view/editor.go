@@ -2,10 +2,7 @@ package view
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view/register"
 )
 
@@ -66,83 +63,6 @@ func (e *Editor) Tree() *Tree { return e.tree }
 // ResizeTree resizes the layout tree to the given content area dimensions
 func (e *Editor) ResizeTree(width, height int) {
 	e.tree.Resize(width, height)
-}
-
-// OpenFile replaces the focused view's document with the given file, reusing an
-// existing document if it is already open
-func (e *Editor) OpenFile(path string) (*View, error) {
-	return e.SwitchFile(path)
-}
-
-// SwitchFile replaces the focused view's document with the given file, reusing
-// an existing document if it is already open
-func (e *Editor) SwitchFile(path string) (*View, error) {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return nil, err
-	}
-	for _, d := range e.docs {
-		if d.Path() == absPath {
-			e.recordPrevDoc()
-			if v, ok := e.FocusedView(); ok {
-				v.docID = d.ID()
-				v.offset = Position{}
-				e.markDocAccessed()
-				return v, nil
-			}
-			return nil, ErrNoView
-		}
-	}
-
-	doc, err := e.openFile(absPath)
-	if err != nil {
-		return nil, err
-	}
-	e.recordPrevDoc()
-	e.docs[doc.ID()] = doc
-	if v, ok := e.FocusedView(); ok {
-		v.docID = doc.ID()
-		v.offset = Position{}
-		e.markDocAccessed()
-		return v, nil
-	}
-	return nil, ErrNoView
-}
-
-// SwitchBuffer replaces the focused view's document with an already-open
-// document by ID. Returns false if the document does not exist or there is no
-// focused view
-func (e *Editor) SwitchBuffer(did DocumentId) bool {
-	if _, ok := e.docs[did]; !ok {
-		return false
-	}
-	e.recordPrevDoc()
-	if v, ok := e.FocusedView(); ok {
-		v.docID = did
-		v.offset = Position{}
-		e.markDocAccessed()
-		return true
-	}
-	return false
-}
-
-// SwitchOrOpenDoc returns an existing document for path, opening it if needed
-func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return nil, err
-	}
-	for _, d := range e.docs {
-		if d.Path() == absPath {
-			return d, nil
-		}
-	}
-	doc, err := e.openFile(absPath)
-	if err != nil {
-		return nil, err
-	}
-	e.docs[doc.ID()] = doc
-	return doc, nil
 }
 
 // VSplit opens docID in a new vertical split (side by side)
@@ -359,62 +279,6 @@ func (e *Editor) FocusedDocument() (*Document, bool) {
 	return e.Document(v.DocID())
 }
 
-// Apply applies a transaction to the focused document for the focused view
-func (e *Editor) Apply(tx core.Transaction) error {
-	v, ok := e.FocusedView()
-	if !ok {
-		return ErrNoView
-	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return ErrNoDocument
-	}
-	if v.Mode() == ModeInsert {
-		doc.BeginInsertGroup(v.ID())
-	}
-	return doc.Apply(tx, v.ID())
-}
-
-// CommitInsertHistory flushes any pending insert-mode history accumulation on
-// the focused document into a single history revision
-func (e *Editor) CommitInsertHistory() {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return
-	}
-	doc.CommitInsertHistory(v.ID())
-}
-
-// Undo reverts one history step in the focused document
-func (e *Editor) Undo() bool {
-	v, ok := e.FocusedView()
-	if !ok {
-		return false
-	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return false
-	}
-	return doc.Undo(v.ID())
-}
-
-// Redo reapplies one reverted step in the focused document
-func (e *Editor) Redo() bool {
-	v, ok := e.FocusedView()
-	if !ok {
-		return false
-	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return false
-	}
-	return doc.Redo(v.ID())
-}
-
 // Mode returns the mode of the focused view
 func (e *Editor) Mode() Mode {
 	if v, ok := e.FocusedView(); ok {
@@ -482,44 +346,6 @@ func (e *Editor) AllViews() []*View {
 	return e.tree.Traverse()
 }
 
-// Save saves the focused document
-func (e *Editor) Save() error {
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return ErrNoDocument
-	}
-	return doc.Save(&e.opts)
-}
-
-// NewDocument creates a new empty scratch document and makes it the focused
-// view
-func (e *Editor) NewDocument() *View {
-	doc := e.newDocument()
-	e.docs[doc.ID()] = doc
-	v, ok := e.FocusedView()
-	if ok {
-		v.docID = doc.ID()
-		v.offset = Position{}
-		return v
-	}
-	nv := &View{docID: doc.ID(), mode: ModeNormal}
-	e.tree.Insert(nv)
-	return nv
-}
-
-// SaveAll saves all modified documents
-func (e *Editor) SaveAll() []error {
-	var errs []error
-	for _, doc := range e.docs {
-		if doc.Modified() {
-			if err := doc.Save(&e.opts); err != nil {
-				errs = append(errs, err)
-			}
-		}
-	}
-	return errs
-}
-
 // CloseCurrentView closes the focused view (and its document if unreferenced)
 func (e *Editor) CloseCurrentView() {
 	if v, ok := e.FocusedView(); ok {
@@ -535,64 +361,6 @@ func (e *Editor) CloseAllOtherViews() {
 			e.CloseView(v.ID())
 		}
 	}
-}
-
-// Reload reloads the focused document from disk
-func (e *Editor) Reload() error {
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return ErrNoDocument
-	}
-	return doc.Reload()
-}
-
-// ReloadAll reloads all documents that have a file path
-func (e *Editor) ReloadAll() []error {
-	var errs []error
-	for _, doc := range e.docs {
-		if doc.Path() != "" {
-			if err := doc.Reload(); err != nil {
-				errs = append(errs, err)
-			}
-		}
-	}
-	return errs
-}
-
-// Chdir changes the editor working directory
-func (e *Editor) Chdir(path string) error {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
-	if err := os.Chdir(abs); err != nil {
-		return err
-	}
-	e.cwd = abs
-	return nil
-}
-
-// PushDirectory pushes the current directory onto the stack then chdirs
-func (e *Editor) PushDirectory(path string) error {
-	e.dirStack = append(e.dirStack, e.cwd)
-	return e.Chdir(path)
-}
-
-// PopDirectory changes to the top of the directory stack, if any
-func (e *Editor) PopDirectory() error {
-	if len(e.dirStack) == 0 {
-		return ErrEmptyDirStack
-	}
-	top := e.dirStack[len(e.dirStack)-1]
-	e.dirStack = e.dirStack[:len(e.dirStack)-1]
-	return e.Chdir(top)
-}
-
-// DirStack returns a copy of the directory stack (bottom to top)
-func (e *Editor) DirStack() []string {
-	cp := make([]string, len(e.dirStack))
-	copy(cp, e.dirStack)
-	return cp
 }
 
 // SetStatusMsg stores a transient status message to be displayed after the
@@ -614,68 +382,4 @@ func (e *Editor) TakeHint() string {
 	h := e.hint
 	e.hint = ""
 	return h
-}
-
-// Earlier navigates history backward by the given UndoKind
-func (e *Editor) Earlier(kind core.UndoKind) bool {
-	v, ok := e.FocusedView()
-	if !ok {
-		return false
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return false
-	}
-	txns := doc.history.Earlier(kind)
-	for _, tx := range txns {
-		inv, err := tx.Invert(doc.text)
-		if err != nil {
-			return false
-		}
-		newText, err := inv.Apply(doc.text)
-		if err != nil {
-			return false
-		}
-		doc.text = newText
-		if txSel := tx.Selection(); txSel != nil {
-			doc.SetSelectionFor(v.ID(), *txSel)
-		}
-	}
-	doc.modified = len(txns) > 0 || doc.modified
-	return len(txns) > 0
-}
-
-// Later navigates history forward by the given UndoKind
-func (e *Editor) Later(kind core.UndoKind) bool {
-	v, ok := e.FocusedView()
-	if !ok {
-		return false
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return false
-	}
-	txns := doc.history.Later(kind)
-	for _, tx := range txns {
-		newText, err := tx.Apply(doc.text)
-		if err != nil {
-			return false
-		}
-		doc.text = newText
-		if txSel := tx.Selection(); txSel != nil {
-			doc.SetSelectionFor(v.ID(), *txSel)
-		}
-	}
-	doc.modified = len(txns) > 0 || doc.modified
-	return len(txns) > 0
-}
-
-func (e *Editor) newDocument() *Document {
-	e.nextDocID++
-	return newDocument(e.nextDocID, &e.opts)
-}
-
-func (e *Editor) openFile(path string) (*Document, error) {
-	e.nextDocID++
-	return openDocument(e.nextDocID, path, &e.opts)
 }

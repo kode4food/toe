@@ -2,7 +2,6 @@ package action
 
 import (
 	"regexp"
-	"slices"
 	"strings"
 	"unicode"
 
@@ -10,16 +9,10 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type (
-	newlineTarget struct {
-		pos int
-		off int
-	}
-	posChar struct {
-		pos int
-		ch  rune
-	}
-)
+type newlineTarget struct {
+	pos int
+	off int
+}
 
 const searchRegister = '/'
 
@@ -88,21 +81,6 @@ func OpenAbove(e *view.Editor) {
 	applyNewlines(e, applyNewlinesArgs{
 		text: text, sel: sel, changes: changes, targets: targets,
 	})
-}
-
-// GotoWindowTop moves the cursor to the first visible line in the viewport
-func GotoWindowTop(e *view.Editor) {
-	gotoWindowImpl(e, 0)
-}
-
-// GotoWindowBottom moves the cursor to the last visible line in the viewport
-func GotoWindowBottom(e *view.Editor) {
-	gotoWindowImpl(e, 2)
-}
-
-// GotoWindowCenter moves the cursor to the center visible line
-func GotoWindowCenter(e *view.Editor) {
-	gotoWindowImpl(e, 1)
 }
 
 // GotoLine moves (or extends in select mode) the cursor to line n (1-based)
@@ -286,138 +264,6 @@ func ReplaceWithYanked(e *view.Editor) {
 	applyChangesFrom(e, applyChangesFromArgs{text, sel, ranges, changes})
 }
 
-// SwitchCase toggles the case of every character in each selection
-func SwitchCase(e *view.Editor) {
-	switchCaseImpl(e, func(s string) string {
-		var b strings.Builder
-		for _, ch := range s {
-			if unicode.IsLower(ch) {
-				b.WriteRune(unicode.ToUpper(ch))
-			} else if unicode.IsUpper(ch) {
-				b.WriteRune(unicode.ToLower(ch))
-			} else {
-				b.WriteRune(ch)
-			}
-		}
-		return b.String()
-	})
-}
-
-// SelectTextObjectAround selects around the text object identified by ch
-// Plaintext objects: w=word, W=WORD, p=paragraph, m or bracket = surround pair
-func SelectTextObjectAround(e *view.Editor, ch rune) {
-	textObjectSelect(e, ch, core.TextObjectAround)
-}
-
-// SelectTextObjectInside selects inside the text object identified by ch
-// Plaintext objects: w=word, W=WORD, p=paragraph, m or bracket = surround pair
-func SelectTextObjectInside(e *view.Editor, ch rune) {
-	textObjectSelect(e, ch, core.TextObjectInside)
-}
-
-// SurroundAdd wraps each selection with the pair that matches ch, then switches
-// to normal mode. ch may be either the opening or closing bracket character
-func SurroundAdd(e *view.Editor, ch rune) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	openCh, closeCh := core.GetPair(ch)
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-
-	rawChanges := make([]core.Change, 0, len(ranges)*2)
-	newRanges := make([]core.Range, len(ranges))
-	offs := 0
-	for i, r := range ranges {
-		from, to := r.From(), r.To()
-		rawChanges = append(rawChanges,
-			core.TextChange(from+offs, from+offs, string(openCh)),
-			core.TextChange(to+offs+1, to+offs+1, string(closeCh)),
-		)
-		newRanges[i] = core.NewRange(from+offs, to+offs+2)
-		offs += 2
-	}
-
-	cs, err := core.NewChangeSetFromChanges(text, rawChanges)
-	if err != nil {
-		return
-	}
-	newSel, _ := core.NewSelection(newRanges, sel.PrimaryIndex())
-	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
-	_ = e.Apply(tx)
-	e.SetMode(view.ModeNormal)
-}
-
-// SurroundDelete removes the surrounding pair identified by ch around each
-// selection, then switches to normal mode
-func SurroundDelete(e *view.Editor, ch rune) {
-	res, ok := resolveSurroundPos(e, ch)
-	if !ok {
-		return
-	}
-	slices.Sort(res.positions)
-	rawChanges := make([]core.Change, len(res.positions))
-	for i, p := range res.positions {
-		rawChanges[i] = core.DeleteChange(p, p+1)
-	}
-	cs, err := core.NewChangeSetFromChanges(res.text, rawChanges)
-	if err != nil {
-		return
-	}
-	tx := core.NewTransaction(res.text).WithChanges(cs)
-	_ = e.Apply(tx)
-	e.SetMode(view.ModeNormal)
-}
-
-// SurroundReplace replaces the surrounding pair identified by from with the
-// pair matching to. Called after two key prompts resolved by the model
-func SurroundReplace(e *view.Editor, from, to rune) {
-	res, ok := resolveSurroundPos(e, from)
-	if !ok {
-		return
-	}
-
-	openCh, closeCh := core.GetPair(to)
-
-	sorted := make([]posChar, 0, len(res.positions))
-	for i := 0; i < len(res.positions); i += 2 {
-		sorted = append(sorted,
-			posChar{res.positions[i], openCh},
-			posChar{res.positions[i+1], closeCh},
-		)
-	}
-	slices.SortFunc(sorted, func(a, b posChar) int {
-		return a.pos - b.pos
-	})
-	rawChanges := make([]core.Change, len(sorted))
-	for i, pc := range sorted {
-		rawChanges[i] = core.TextChange(pc.pos, pc.pos+1, string(pc.ch))
-	}
-	cs, err := core.NewChangeSetFromChanges(res.text, rawChanges)
-	if err != nil {
-		return
-	}
-	tx := core.NewTransaction(res.text).WithChanges(cs)
-	_ = e.Apply(tx)
-	e.SetMode(view.ModeNormal)
-}
-
-// SwitchToUppercase converts every character in each selection to uppercase
-func SwitchToUppercase(e *view.Editor) {
-	switchCaseImpl(e, strings.ToUpper)
-}
-
-// SwitchToLowercase converts every character in each selection to lowercase
-func SwitchToLowercase(e *view.Editor) {
-	switchCaseImpl(e, strings.ToLower)
-}
-
 // ExtendToLineBounds extends each selection range to cover complete lines
 // (from line start to next-line start), preserving direction
 func ExtendToLineBounds(e *view.Editor) {
@@ -549,118 +395,6 @@ func EnsureForward(e *view.Editor) {
 	})
 }
 
-// Indent inserts one indentation unit at the start of each selected line
-func Indent(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	unit := doc.IndentStyle().AsStr()
-	n := max(e.Count(), 1)
-	indent := strings.Repeat(unit, n)
-
-	style := doc.IndentStyle()
-	indentWidth := style.IndentWidth(doc.TabWidth())
-	lines := selectionLines(text, sel)
-	changes := make([]core.Change, 0, len(lines))
-	for _, line := range lines {
-		lineRope, err := text.Line(line)
-		if err != nil {
-			continue
-		}
-		if isBlankLine(lineRope.String()) {
-			continue
-		}
-		pos, err := text.LineToChar(line)
-		if err != nil {
-			continue
-		}
-		ins := indent
-		if !style.IsTabs() {
-			// Find the column of the first non-whitespace char and
-			// align to the next indent stop
-			firstNonWS := 0
-			for _, ch := range lineRope.String() {
-				if ch != ' ' && ch != '\t' {
-					break
-				}
-				firstNonWS++
-			}
-			offset := firstNonWS % indentWidth
-			if offset > 0 && offset < len(ins) {
-				ins = ins[offset:]
-			}
-		}
-		changes = append(changes, core.TextChange(pos, pos, ins))
-	}
-	applyWithSelMap(e, text, sel, changes)
-}
-
-// Unindent removes one indentation unit from the start of each selected line
-func Unindent(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	n := max(e.Count(), 1)
-	tabWidth := doc.TabWidth()
-	indentWidth := n * doc.IndentStyle().IndentWidth(tabWidth)
-
-	lines := selectionLines(text, sel)
-	changes := make([]core.Change, 0, len(lines))
-	for _, line := range lines {
-		lineRope, err := text.Line(line)
-		if err != nil {
-			continue
-		}
-		lineStr := lineRope.String()
-		width := 0
-		pos := 0
-		for _, ch := range lineStr {
-			switch ch {
-			case ' ':
-				width++
-			case '\t':
-				width = (width/tabWidth + 1) * tabWidth
-			default:
-				goto doneUnindent
-			}
-			pos++
-			if width >= indentWidth {
-				goto doneUnindent
-			}
-		}
-	doneUnindent:
-		if pos == 0 {
-			continue
-		}
-		start, err := text.LineToChar(line)
-		if err != nil {
-			continue
-		}
-		changes = append(changes, core.DeleteChange(start, start+pos))
-	}
-	applyWithSelMap(e, text, sel, changes)
-}
-
 // SearchSelection stores the joined selection text as the search pattern (no
 // word-boundary detection) and sets it in the '/' register
 func SearchSelection(e *view.Editor) {
@@ -707,21 +441,6 @@ func CopyOnNextLine(e *view.Editor) {
 // on the previous line (count times)
 func CopyOnPrevLine(e *view.Editor) {
 	copySelectionOnLine(e, false)
-}
-
-// AlignViewTop scrolls the viewport so the cursor line is at the top
-func AlignViewTop(e *view.Editor) {
-	alignViewImpl(e, 0)
-}
-
-// AlignViewCenter scrolls the viewport so the cursor line is at the center
-func AlignViewCenter(e *view.Editor) {
-	alignViewImpl(e, (max(e.ViewHeight(), 1)-1)/2)
-}
-
-// AlignViewBottom scrolls the viewport so the cursor line is at the bottom
-func AlignViewBottom(e *view.Editor) {
-	alignViewImpl(e, max(e.ViewHeight(), 1)-1)
 }
 
 // DeleteWordBackward deletes from the cursor to the start of the previous
@@ -975,56 +694,6 @@ func applyChangesFrom(e *view.Editor, args applyChangesFromArgs) {
 	e.SetMode(view.ModeNormal)
 }
 
-type resolveSurroundPosRes struct {
-	text      core.Rope
-	sel       core.Selection
-	positions []int
-}
-
-func resolveSurroundPos(e *view.Editor, ch rune) (resolveSurroundPosRes, bool) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return resolveSurroundPosRes{}, false
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return resolveSurroundPosRes{}, false
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	skip := max(countOrOne(e), 1)
-	var positions []int
-	var err error
-	if ch != 'm' {
-		positions, err = core.GetSurroundPosFor(text, sel, ch, skip)
-	} else {
-		positions, err = core.GetSurroundPos(text, sel, skip)
-	}
-	if err != nil {
-		return resolveSurroundPosRes{}, false
-	}
-	return resolveSurroundPosRes{text, sel, positions}, true
-}
-
-func applyWithSelMap(
-	e *view.Editor, text core.Rope, sel core.Selection, changes []core.Change,
-) {
-	if len(changes) == 0 {
-		return
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
-	}
-	e.SetMode(view.ModeNormal)
-	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
-	_ = e.Apply(tx)
-}
-
 type applyDeletesArgs struct {
 	text    core.Rope
 	sel     core.Selection
@@ -1087,124 +756,6 @@ func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
 		pat = `\b(?:` + pat + `)\b`
 	}
 	e.Registers().Write(searchRegister, []string{pat})
-}
-
-// gotoWindowImpl moves to the top, center, or bottom of the viewport
-// It respects scrolloff and count offset. In select mode the selection is
-// extended rather than moved
-func gotoWindowImpl(e *view.Editor, align int) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	text := doc.Text()
-	anchorLine, err := text.CharToLine(v.Offset().Anchor)
-	if err != nil {
-		anchorLine = 0
-	}
-	height := e.ViewHeight()
-	if height <= 0 {
-		height = 1
-	}
-	scrolloff := e.Options().ScrollOff
-	offset := max(e.Count()-1, 0)
-	e.ResetCount()
-	lastLine := min(anchorLine+height-1, text.LenLines()-1)
-	var targetLine int
-	switch align {
-	case 0: // top
-		targetLine = anchorLine + scrolloff + offset
-	case 1: // center
-		targetLine = anchorLine + height/2
-	default: // bottom
-		targetLine = lastLine - scrolloff - offset
-	}
-	targetLine = max(targetLine, anchorLine+scrolloff)
-	targetLine = min(targetLine, lastLine-scrolloff)
-	targetLine = max(0, min(targetLine, text.LenLines()-1))
-	pos, err := text.LineToChar(targetLine)
-	if err != nil {
-		return
-	}
-	extend := e.Mode() == view.ModeSelect
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.PutCursor(doc, pos, extend)
-	})
-}
-
-func textObjectSelect(e *view.Editor, ch rune, kind core.TextObjectKind) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	n := max(countOrOne(e), 1)
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	newRanges := make([]core.Range, len(sel.Ranges()))
-	for i, r := range sel.Ranges() {
-		var nr core.Range
-		switch ch {
-		case 'w':
-			nr = core.TextObjectWord(text, r, kind, false)
-		case 'W':
-			nr = core.TextObjectWord(text, r, kind, true)
-		case 'p':
-			nr = core.TextObjectParagraph(text, r, kind, n)
-		case 'm':
-			nr = r.TextObjectPairSurround(text, kind, 0, n)
-		default:
-			if !core.CharIsWord(ch) {
-				// Use as a specific bracket char
-				nr = r.TextObjectPairSurround(text, kind, ch, n)
-			} else {
-				// Tree-sitter textobjects not yet supported; leave unchanged
-				nr = r
-			}
-		}
-		newRanges[i] = nr
-	}
-	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
-	if err != nil {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), newSel)
-}
-
-func switchCaseImpl(e *view.Editor, transform func(string) string) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-
-	changes := make([]core.Change, 0, len(ranges))
-	for _, r := range ranges {
-		frag, err := r.Fragment(text)
-		if err != nil || frag == "" {
-			continue
-		}
-		changes = append(changes,
-			core.TextChange(r.From(), r.To(), transform(frag)),
-		)
-	}
-	applyChangesFrom(e, applyChangesFromArgs{text, sel, ranges, changes})
 }
 
 func pasteImpl(e *view.Editor, before bool) {

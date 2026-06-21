@@ -1,7 +1,5 @@
 package language
 
-import "github.com/kode4food/toe/internal/core"
-
 func decodeLanguagesMap(m map[string]any) (Languages, bool) {
 	values, ok := languageValues(m["language"])
 	if !ok {
@@ -354,46 +352,6 @@ func decodeCommentTokens(m map[string]any) []string {
 	return decodeStringOrSlice(m["comment-token"])
 }
 
-func decodeStringOrSlice(value any) []string {
-	if s, ok := value.(string); ok {
-		return []string{s}
-	}
-	return decodeStringSlice(value)
-}
-
-func decodeBlockCommentTokens(value any) []core.BlockCommentToken {
-	if token, ok := decodeBlockCommentToken(value); ok {
-		return []core.BlockCommentToken{token}
-	}
-	values, ok := anySlice(value)
-	if !ok {
-		return nil
-	}
-	out := make([]core.BlockCommentToken, 0, len(values))
-	for _, value := range values {
-		if token, ok := decodeBlockCommentToken(value); ok {
-			out = append(out, token)
-		}
-	}
-	return out
-}
-
-func decodeBlockCommentToken(value any) (core.BlockCommentToken, bool) {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return core.BlockCommentToken{}, false
-	}
-	start, ok := m["start"].(string)
-	if !ok {
-		return core.BlockCommentToken{}, false
-	}
-	end, ok := m["end"].(string)
-	if !ok {
-		return core.BlockCommentToken{}, false
-	}
-	return core.BlockCommentToken{Start: start, End: end}, true
-}
-
 func decodeFileTypes(value any) []FileType {
 	values, ok := anySlice(value)
 	if !ok {
@@ -413,63 +371,6 @@ func decodeFileTypes(value any) []FileType {
 	return out
 }
 
-func decodeStringSlice(value any) []string {
-	values, ok := anySlice(value)
-	if !ok {
-		return nil
-	}
-	out := make([]string, 0, len(values))
-	for _, value := range values {
-		if s, ok := value.(string); ok {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-func anySlice(value any) ([]any, bool) {
-	switch values := value.(type) {
-	case []any:
-		return values, true
-	case []map[string]any:
-		out := make([]any, len(values))
-		for i, value := range values {
-			out[i] = value
-		}
-		return out, true
-	case []string:
-		out := make([]any, len(values))
-		for i, value := range values {
-			out[i] = value
-		}
-		return out, true
-	default:
-		return nil, false
-	}
-}
-
-func decodeStringMap(value any) map[string]string {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return nil
-	}
-	out := make(map[string]string, len(m))
-	for k, value := range m {
-		if s, ok := value.(string); ok {
-			out[k] = s
-		}
-	}
-	return out
-}
-
-func decodeAnyMap(value any) map[string]any {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return nil
-	}
-	return m
-}
-
 func decodeSoftWrap(m map[string]any) SoftWrap {
 	return SoftWrap{
 		Enable:          boolPtr(m["enable"]),
@@ -478,85 +379,4 @@ func decodeSoftWrap(m map[string]any) SoftWrap {
 		WrapIndicator:   stringPtr(m["wrap-indicator"]),
 		WrapAtTextWidth: boolPtr(m["wrap-at-text-width"]),
 	}
-}
-
-// Low-level helpers
-
-func boolValue(lang, editor *bool, fallback bool) bool {
-	if lang != nil {
-		return *lang
-	}
-	if editor != nil {
-		return *editor
-	}
-	return fallback
-}
-
-func intValue(lang, editor *int, fallback int) int {
-	if lang != nil {
-		return *lang
-	}
-	if editor != nil {
-		return *editor
-	}
-	return fallback
-}
-
-func stringValue(lang, editor *string, fallback string) string {
-	if lang != nil {
-		return *lang
-	}
-	if editor != nil {
-		return *editor
-	}
-	return fallback
-}
-
-func boolPtr(value any) *bool {
-	v, ok := value.(bool)
-	if !ok {
-		return nil
-	}
-	return &v
-}
-
-func intPtr(value any) (*int, bool) {
-	switch v := value.(type) {
-	case int:
-		return &v, true
-	case int64:
-		return new(int(v)), true
-	default:
-		return nil, false
-	}
-}
-
-func intPtrOrNil(value any) *int {
-	v, _ := intPtr(value)
-	return v
-}
-
-func stringPtr(value any) *string {
-	v, ok := value.(string)
-	if !ok {
-		return nil
-	}
-	return &v
-}
-
-func stringValueFromMap(m map[string]any, key string) string {
-	v, _ := m[key].(string)
-	return v
-}
-
-func intValueFromMap(m map[string]any, key string, fallback int) int {
-	if n, ok := intPtr(m[key]); ok {
-		return *n
-	}
-	return fallback
-}
-
-func boolValueFromMap(m map[string]any, key string) bool {
-	v, _ := m[key].(bool)
-	return v
 }

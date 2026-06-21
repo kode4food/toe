@@ -26,6 +26,14 @@ type (
 		path string
 		line int
 	}
+
+	globalSearcher struct {
+		ch       chan PickerItem
+		done     chan struct{}
+		re       *regexp.Regexp
+		root     string
+		openDocs []docSnap
+	}
 )
 
 func (g *globalSearchSource) Search(query string) {
@@ -90,6 +98,87 @@ func (g *globalSearchSource) Accept(e *view.Editor, item PickerItem) {
 	doc.SetSelectionFor(v.ID(), sel)
 }
 
+func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
+	rel, _ := filepath.Rel(gs.root, path)
+	rel = filepath.ToSlash(rel)
+	lineNum := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNum++
+		if !gs.re.MatchString(line) {
+			continue
+		}
+		ln := lineNum
+		select {
+		case gs.ch <- PickerItem{
+			Display: fmt.Sprintf("%s:%d", rel, ln),
+			SortKey: fmt.Sprintf("%s:%06d", rel, ln),
+			Location: PickerLocation{
+				Target: PickerTarget{Path: path},
+				Lines:  &PickerLineRange{From: ln - 1, To: ln - 1},
+			},
+			Payload: globalSearchPayload{path: path, line: ln},
+		}:
+		case <-gs.done:
+			return false
+		}
+	}
+	return true
+}
+
+func (gs *globalSearcher) searchFile(path string) bool {
+	for _, snap := range gs.openDocs {
+		if snap.path == path {
+			return gs.scanLines(
+				path, bufio.NewScanner(strings.NewReader(snap.text)),
+			)
+		}
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return true
+	}
+	defer func() { _ = f.Close() }()
+	header := make([]byte, 1024)
+	n, _ := f.Read(header)
+	if looksBinary(header[:n]) {
+		return true
+	}
+	if _, err := f.Seek(0, 0); err != nil {
+		return true
+	}
+	return gs.scanLines(path, bufio.NewScanner(f))
+}
+
+func (gs *globalSearcher) walk() {
+	defer close(gs.ch)
+	_ = filepath.WalkDir(gs.root, func(
+		path string, d os.DirEntry, err error,
+	) error {
+		if err != nil || path == gs.root {
+			return nil
+		}
+		rel, err := filepath.Rel(gs.root, path)
+		if err != nil {
+			return nil
+		}
+		rel = filepath.ToSlash(rel)
+		if skipPickerPath(rel, d, loadIgnoreFiles(gs.root, rel)) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !gs.searchFile(path) {
+			return filepath.SkipAll
+		}
+		return nil
+	})
+}
+
 func globalSearchQuery(
 	root string, openDocs []docSnap, pattern string, smartCase bool,
 ) (<-chan PickerItem, StopFunc) {
@@ -103,92 +192,13 @@ func globalSearchQuery(
 		close(ch)
 		return ch, func() {}
 	}
-
 	done := make(chan struct{})
 	var once sync.Once
 	cancel := func() { once.Do(func() { close(done) }) }
-
-	scanLines := func(path string, scanner *bufio.Scanner) bool {
-		rel, _ := filepath.Rel(root, path)
-		rel = filepath.ToSlash(rel)
-		lineNum := 0
-		for scanner.Scan() {
-			line := scanner.Text()
-			lineNum++
-			if !re.MatchString(line) {
-				continue
-			}
-			ln := lineNum
-			select {
-			case ch <- PickerItem{
-				Display: fmt.Sprintf("%s:%d", rel, ln),
-				SortKey: fmt.Sprintf("%s:%06d", rel, ln),
-				Location: PickerLocation{
-					Target: PickerTarget{Path: path},
-					Lines:  &PickerLineRange{From: ln - 1, To: ln - 1},
-				},
-				Payload: globalSearchPayload{path: path, line: ln},
-			}:
-			case <-done:
-				return false
-			}
-		}
-		return true
+	gs := &globalSearcher{
+		ch: ch, done: done, re: re, root: root, openDocs: openDocs,
 	}
-
-	searchFile := func(path string) bool {
-		for _, snap := range openDocs {
-			if snap.path == path {
-				return scanLines(
-					path, bufio.NewScanner(strings.NewReader(snap.text)),
-				)
-			}
-		}
-		f, err := os.Open(path)
-		if err != nil {
-			return true
-		}
-		defer func() { _ = f.Close() }()
-		header := make([]byte, 1024)
-		n, _ := f.Read(header)
-		if looksBinary(header[:n]) {
-			return true
-		}
-		if _, err := f.Seek(0, 0); err != nil {
-			return true
-		}
-		return scanLines(path, bufio.NewScanner(f))
-	}
-
-	go func() {
-		defer close(ch)
-		_ = filepath.WalkDir(root, func(
-			path string, d os.DirEntry, err error,
-		) error {
-			if err != nil || path == root {
-				return nil
-			}
-			rel, err := filepath.Rel(root, path)
-			if err != nil {
-				return nil
-			}
-			rel = filepath.ToSlash(rel)
-			if skipPickerPath(rel, d, loadIgnoreFiles(root, rel)) {
-				if d.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
-			if d.IsDir() {
-				return nil
-			}
-			if !searchFile(path) {
-				return filepath.SkipAll
-			}
-			return nil
-		})
-	}()
-
+	go gs.walk()
 	return ch, cancel
 }
 

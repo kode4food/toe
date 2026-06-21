@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"strconv"
 
@@ -53,306 +54,12 @@ func terminalTrueColor() bool {
 
 func configModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
+	cmds := configOptionCmds(r)
+	maps.Copy(cmds, configSystemCmds())
+	maps.Copy(cmds, configThemeCmds())
+	maps.Copy(cmds, configFormatCmds())
 	return command.Module{
-		Commands: map[string]command.Command{
-			actGetOption: {
-				DocString: "Get the current value of a config option",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
-						return command.Result{
-							Message: "error: usage: get <key>",
-						}
-					}
-					key, _ := args.First()
-					o, ok := r.LookupOption(key)
-					if !ok {
-						return command.Result{
-							Message: "error: " +
-								config.ErrUnknownOption.Error() + ": " + key,
-						}
-					}
-					value, err := o.Get(e)
-					if err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: value}
-				},
-				Aliases: []string{"get-option", "get"},
-				Signature: command.Signature{
-					Positionals: command.Positionals{Min: 1, Max: 1},
-					Completer: command.PositionalCompleter(
-						r.OptionCompleter(),
-					),
-				},
-			},
-			actSetOption: {
-				DocString: "Set a config option at runtime",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Len() < 2 {
-						return command.Result{
-							Message: "error: usage: set <key> <value>",
-						}
-					}
-					key, _ := args.Get(0)
-					val, _ := args.Get(1)
-					o, ok := r.LookupOption(key)
-					if !ok {
-						return command.Result{
-							Message: "error: " +
-								config.ErrUnknownOption.Error() + ": " + key,
-						}
-					}
-					if err := o.Set(e, val); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{}
-				},
-				Aliases: []string{"set-option", "set"},
-				Signature: command.Signature{
-					Positionals: command.Positionals{Min: 2, Max: 2},
-					RawAfter:    1,
-					Completer: command.PositionalCompleter(
-						r.OptionCompleter(),
-					),
-				},
-			},
-			actToggleOption: {
-				DocString: "Toggle a config option at runtime",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
-						return command.Result{
-							Message: "error: usage: toggle <key>",
-						}
-					}
-					key, _ := args.First()
-					o, ok := r.LookupOption(key)
-					if !ok || o.Toggle == nil {
-						return command.Result{
-							Message: "error: " +
-								config.ErrInvalidOption.Error() + ": " + key,
-						}
-					}
-					value, err := o.Toggle(e)
-					if err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{
-						Message: "'" + key + "' is now set to " + value,
-					}
-				},
-				Aliases: []string{"toggle-option", "toggle"},
-				Signature: command.Signature{
-					Positionals: command.Positionals{Min: 1, Max: 1},
-					Completer: command.PositionalCompleter(
-						r.BoolOptionCompleter(),
-					),
-				},
-			},
-			actConfigOpen: {
-				DocString: "Open the user config.toml file",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					return openFromPath(
-						e, config.UserConfigPath, "config path unavailable",
-					)
-				},
-				Aliases:   []string{"config-open"},
-				Signature: sig(),
-			},
-			actConfigOpenWorkspace: {
-				DocString: "Open the workspace config.toml file",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					path := config.WorkspaceConfigPath(e.Cwd())
-					if _, err := e.SwitchFile(path); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{}
-				},
-				Aliases:   []string{"config-open-workspace"},
-				Signature: sig(),
-			},
-			actConfigReload: {
-				DocString: "Refresh user config",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					if err := e.ReloadConfig(); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: "config reloaded"}
-				},
-				Aliases:   []string{"config-reload"},
-				Signature: sig(),
-			},
-			actLogOpen: {
-				DocString: "Open the editor log file",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					return openFromPath(
-						e, config.LogFilePath, "log path unavailable",
-					)
-				},
-				Aliases:   []string{"log-open"},
-				Signature: sig(),
-			},
-			actWorkspaceTrust: {
-				DocString: "Add current workspace to the list of trusted " +
-					"workspaces",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					if err := config.TrustWorkspace(e.Cwd()); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: "workspace trusted"}
-				},
-				Aliases:   []string{"workspace-trust"},
-				Signature: sig(),
-			},
-			actWorkspaceUntrust: {
-				DocString: "Remove current workspace from the list of " +
-					"trusted workspaces",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					if err := config.UntrustWorkspace(e.Cwd()); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: "workspace untrusted"}
-				},
-				Aliases:   []string{"workspace-untrust"},
-				Signature: sig(),
-			},
-			actTheme: {
-				DocString: "Change the editor theme " +
-					"(show current theme if no name specified)",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
-						name := e.Options().Theme
-						if _, _, err := theme.Load(name); err != nil {
-							th, _, _ := theme.Default()
-							name = th.Name()
-						}
-						return command.Result{Message: name}
-					}
-					name, _ := args.First()
-					if name == "default" {
-						name = "mocha"
-					}
-					th, _, err := theme.Load(name)
-					if err != nil {
-						return command.Result{
-							Message: "error: could not load theme: " +
-								err.Error(),
-						}
-					}
-					if !(terminalTrueColor() || th.Is16Color()) {
-						return command.Result{
-							Message: "error: theme requires true color support",
-						}
-					}
-					e.Options().Theme = name
-					return command.Result{}
-				},
-				Signature: staticSig(optionalArg(), loader.ThemeNames()...),
-			},
-			actSetLanguage: {
-				DocString: "Set the language of current buffer " +
-					"(show current language if no value specified)",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					doc, ok := e.FocusedDocument()
-					if !ok {
-						return command.Result{Message: "error: no document"}
-					}
-					if args == nil || args.Empty() {
-						lang := doc.Lang()
-						if lang == "" {
-							lang = "text"
-						}
-						return command.Result{Message: lang}
-					}
-					lang, _ := args.First()
-					if lang == "text" {
-						lang = ""
-					}
-					doc.SetLang(lang)
-					return command.Result{Message: ""}
-				},
-				Aliases:   []string{"set-language", "lang"},
-				Signature: staticSig(optionalArg(), languageNames()...),
-			},
-			actSetLineEnding: {
-				DocString: "Set the document's default line ending. " +
-					"Options: crlf, lf",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
-						doc, ok := e.FocusedDocument()
-						if !ok {
-							return command.Result{Message: "error: no document"}
-						}
-						switch doc.LineEnding() {
-						case core.LineEndingCRLF:
-							return command.Result{Message: "crlf"}
-						default:
-							return command.Result{Message: "line feed"}
-						}
-					}
-					name, _ := args.First()
-					var le core.LineEnding
-					switch name {
-					case "lf":
-						le = core.LineEndingLF
-					case "crlf":
-						le = core.LineEndingCRLF
-					default:
-						return command.Result{
-							Message: "error: unknown line ending: " + name,
-						}
-					}
-					if err := action.SetLineEnding(e, le); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					return command.Result{Message: ""}
-				},
-				Aliases:   []string{"line-ending"},
-				Signature: staticSig(optionalArg(), "crlf", "lf"),
-			},
-			actIndentStyle: {
-				DocString: "Set the indentation style for editing. " +
-					"('t' for tabs or 1-16 for number of spaces)",
-				Run: func(e *view.Editor, args *command.Args) command.Result {
-					doc, ok := e.FocusedDocument()
-					if !ok {
-						return command.Result{Message: "error: no document"}
-					}
-					if args == nil || args.Empty() {
-						return command.Result{
-							Message: doc.IndentStyle().AsStr(),
-						}
-					}
-					arg, _ := args.First()
-					switch arg {
-					case "tabs", "tab", "t":
-						doc.SetIndentStyle(core.Tabs())
-					default:
-						n, err := strconv.Atoi(arg)
-						if err != nil || n < 1 || n > core.MaxIndent {
-							return command.Result{
-								Message: "error: expected 'tab' or spaces " +
-									"count (1-16)",
-							}
-						}
-						doc.SetIndentStyle(core.Spaces(uint8(n)))
-					}
-					return command.Result{Message: "indent style set"}
-				},
-				Aliases: []string{"indent-style"},
-				Signature: staticSig(
-					sig(),
-					"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",
-					"9", "10", "11", "12", "13", "14", "15", "16",
-				),
-			},
-			actEncoding: {
-				DocString: "Set encoding",
-				Run: func(_ *view.Editor, _ *command.Args) command.Result {
-					return command.Result{Message: "utf-8"}
-				},
-				Signature: sig(),
-			},
-		},
+		Commands: cmds,
 		Options: []command.Option{
 			{
 				Key: "theme",
@@ -474,6 +181,323 @@ func configModule(r *command.Registry) command.Module {
 				opts.CursorShape = cfg.Editor.CursorShape
 				opts.StatusLine = cfg.Editor.StatusLine
 			},
+		},
+	}
+}
+
+func configOptionCmds(r *command.Registry) map[string]command.Command {
+	return map[string]command.Command{
+		actGetOption: {
+			DocString: "Get the current value of a config option",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				if args == nil || args.Empty() {
+					return command.Result{
+						Message: "error: usage: get <key>",
+					}
+				}
+				key, _ := args.First()
+				o, ok := r.LookupOption(key)
+				if !ok {
+					return command.Result{
+						Message: "error: " +
+							config.ErrUnknownOption.Error() + ": " + key,
+					}
+				}
+				value, err := o.Get(e)
+				if err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{Message: value}
+			},
+			Aliases: []string{"get-option", "get"},
+			Signature: command.Signature{
+				Positionals: command.Positionals{Min: 1, Max: 1},
+				Completer: command.PositionalCompleter(
+					r.OptionCompleter(),
+				),
+			},
+		},
+		actSetOption: {
+			DocString: "Set a config option at runtime",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				if args == nil || args.Len() < 2 {
+					return command.Result{
+						Message: "error: usage: set <key> <value>",
+					}
+				}
+				key, _ := args.Get(0)
+				val, _ := args.Get(1)
+				o, ok := r.LookupOption(key)
+				if !ok {
+					return command.Result{
+						Message: "error: " +
+							config.ErrUnknownOption.Error() + ": " + key,
+					}
+				}
+				if err := o.Set(e, val); err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{}
+			},
+			Aliases: []string{"set-option", "set"},
+			Signature: command.Signature{
+				Positionals: command.Positionals{Min: 2, Max: 2},
+				RawAfter:    1,
+				Completer: command.PositionalCompleter(
+					r.OptionCompleter(),
+				),
+			},
+		},
+		actToggleOption: {
+			DocString: "Toggle a config option at runtime",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				if args == nil || args.Empty() {
+					return command.Result{
+						Message: "error: usage: toggle <key>",
+					}
+				}
+				key, _ := args.First()
+				o, ok := r.LookupOption(key)
+				if !ok || o.Toggle == nil {
+					return command.Result{
+						Message: "error: " +
+							config.ErrInvalidOption.Error() + ": " + key,
+					}
+				}
+				value, err := o.Toggle(e)
+				if err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{
+					Message: "'" + key + "' is now set to " + value,
+				}
+			},
+			Aliases: []string{"toggle-option", "toggle"},
+			Signature: command.Signature{
+				Positionals: command.Positionals{Min: 1, Max: 1},
+				Completer: command.PositionalCompleter(
+					r.BoolOptionCompleter(),
+				),
+			},
+		},
+	}
+}
+
+func configSystemCmds() map[string]command.Command {
+	return map[string]command.Command{
+		actConfigOpen: {
+			DocString: "Open the user config.toml file",
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				return openFromPath(
+					e, config.UserConfigPath, "config path unavailable",
+				)
+			},
+			Aliases:   []string{"config-open"},
+			Signature: sig(),
+		},
+		actConfigOpenWorkspace: {
+			DocString: "Open the workspace config.toml file",
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				path := config.WorkspaceConfigPath(e.Cwd())
+				if _, err := e.SwitchFile(path); err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{}
+			},
+			Aliases:   []string{"config-open-workspace"},
+			Signature: sig(),
+		},
+		actConfigReload: {
+			DocString: "Refresh user config",
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				if err := e.ReloadConfig(); err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{Message: "config reloaded"}
+			},
+			Aliases:   []string{"config-reload"},
+			Signature: sig(),
+		},
+		actLogOpen: {
+			DocString: "Open the editor log file",
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				return openFromPath(
+					e, config.LogFilePath, "log path unavailable",
+				)
+			},
+			Aliases:   []string{"log-open"},
+			Signature: sig(),
+		},
+		actWorkspaceTrust: {
+			DocString: "Add current workspace to the list of trusted " +
+				"workspaces",
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				if err := config.TrustWorkspace(e.Cwd()); err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{Message: "workspace trusted"}
+			},
+			Aliases:   []string{"workspace-trust"},
+			Signature: sig(),
+		},
+		actWorkspaceUntrust: {
+			DocString: "Remove current workspace from the list of " +
+				"trusted workspaces",
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				if err := config.UntrustWorkspace(e.Cwd()); err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{Message: "workspace untrusted"}
+			},
+			Aliases:   []string{"workspace-untrust"},
+			Signature: sig(),
+		},
+	}
+}
+
+func configThemeCmds() map[string]command.Command {
+	return map[string]command.Command{
+		actTheme: {
+			DocString: "Change the editor theme " +
+				"(show current theme if no name specified)",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				if args == nil || args.Empty() {
+					name := e.Options().Theme
+					if _, _, err := theme.Load(name); err != nil {
+						th, _, _ := theme.Default()
+						name = th.Name()
+					}
+					return command.Result{Message: name}
+				}
+				name, _ := args.First()
+				if name == "default" {
+					name = "mocha"
+				}
+				th, _, err := theme.Load(name)
+				if err != nil {
+					return command.Result{
+						Message: "error: could not load theme: " +
+							err.Error(),
+					}
+				}
+				if !(terminalTrueColor() || th.Is16Color()) {
+					return command.Result{
+						Message: "error: theme requires true color support",
+					}
+				}
+				e.Options().Theme = name
+				return command.Result{}
+			},
+			Signature: staticSig(optionalArg(), loader.ThemeNames()...),
+		},
+	}
+}
+
+func configFormatCmds() map[string]command.Command {
+	return map[string]command.Command{
+		actSetLanguage: {
+			DocString: "Set the language of current buffer " +
+				"(show current language if no value specified)",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				doc, ok := e.FocusedDocument()
+				if !ok {
+					return command.Result{Message: "error: no document"}
+				}
+				if args == nil || args.Empty() {
+					lang := doc.Lang()
+					if lang == "" {
+						lang = "text"
+					}
+					return command.Result{Message: lang}
+				}
+				lang, _ := args.First()
+				if lang == "text" {
+					lang = ""
+				}
+				doc.SetLang(lang)
+				return command.Result{Message: ""}
+			},
+			Aliases:   []string{"set-language", "lang"},
+			Signature: staticSig(optionalArg(), languageNames()...),
+		},
+		actSetLineEnding: {
+			DocString: "Set the document's default line ending. " +
+				"Options: crlf, lf",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				if args == nil || args.Empty() {
+					doc, ok := e.FocusedDocument()
+					if !ok {
+						return command.Result{Message: "error: no document"}
+					}
+					switch doc.LineEnding() {
+					case core.LineEndingCRLF:
+						return command.Result{Message: "crlf"}
+					default:
+						return command.Result{Message: "line feed"}
+					}
+				}
+				name, _ := args.First()
+				var le core.LineEnding
+				switch name {
+				case "lf":
+					le = core.LineEndingLF
+				case "crlf":
+					le = core.LineEndingCRLF
+				default:
+					return command.Result{
+						Message: "error: unknown line ending: " + name,
+					}
+				}
+				if err := action.SetLineEnding(e, le); err != nil {
+					return command.Result{Message: "error: " + err.Error()}
+				}
+				return command.Result{Message: ""}
+			},
+			Aliases:   []string{"line-ending"},
+			Signature: staticSig(optionalArg(), "crlf", "lf"),
+		},
+		actIndentStyle: {
+			DocString: "Set the indentation style for editing. " +
+				"('t' for tabs or 1-16 for number of spaces)",
+			Run: func(e *view.Editor, args *command.Args) command.Result {
+				doc, ok := e.FocusedDocument()
+				if !ok {
+					return command.Result{Message: "error: no document"}
+				}
+				if args == nil || args.Empty() {
+					return command.Result{
+						Message: doc.IndentStyle().AsStr(),
+					}
+				}
+				arg, _ := args.First()
+				switch arg {
+				case "tabs", "tab", "t":
+					doc.SetIndentStyle(core.Tabs())
+				default:
+					n, err := strconv.Atoi(arg)
+					if err != nil || n < 1 || n > core.MaxIndent {
+						return command.Result{
+							Message: "error: expected 'tab' or spaces " +
+								"count (1-16)",
+						}
+					}
+					doc.SetIndentStyle(core.Spaces(uint8(n)))
+				}
+				return command.Result{Message: "indent style set"}
+			},
+			Aliases: []string{"indent-style"},
+			Signature: staticSig(
+				sig(),
+				"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",
+				"9", "10", "11", "12", "13", "14", "15", "16",
+			),
+		},
+		actEncoding: {
+			DocString: "Set encoding",
+			Run: func(_ *view.Editor, _ *command.Args) command.Result {
+				return command.Result{Message: "utf-8"}
+			},
+			Signature: sig(),
 		},
 	}
 }

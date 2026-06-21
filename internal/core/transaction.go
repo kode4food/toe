@@ -45,6 +45,16 @@ type (
 		changes   ChangeSet
 		selection *Selection
 	}
+
+	// composeCtx holds iterator state for ChangeSet.Compose
+	composeCtx struct {
+		a, b         []Operation
+		ai, bi       int
+		aKind, bKind OperationKind
+		aRem, bRem   int
+		aStr, bStr   string
+		out          ChangeSet
+	}
 )
 
 const (
@@ -252,139 +262,10 @@ func (c ChangeSet) Compose(other ChangeSet) ChangeSet {
 	if len(other.ops) == 0 {
 		return c
 	}
-
-	out := ChangeSet{}
-
-	// Iterator state: index into ops slice and remaining amount/text within
-	// the current op (for Retain/Delete: remaining count; for Insert:
-	// remaining string suffix)
-	ai, bi := 0, 0
-	var aRem int    // remaining chars in current Retain/Delete op from c
-	var bRem int    // remaining chars in current Retain/Delete op from other
-	var aStr string // remaining text in current Insert op from c
-	var bStr string // remaining text in current Insert op from other
-	aKind := OperationKind(0)
-	bKind := OperationKind(0)
-
-	loadA := func() {
-		if ai < len(c.ops) {
-			op := c.ops[ai]
-			ai++
-			aKind = op.kind
-			if op.kind == OperationInsert {
-				aStr = op.text
-			} else {
-				aRem = op.n
-			}
-		} else {
-			aKind = 0
-		}
-	}
-	loadB := func() {
-		if bi < len(other.ops) {
-			op := other.ops[bi]
-			bi++
-			bKind = op.kind
-			if op.kind == OperationInsert {
-				bStr = op.text
-			} else {
-				bRem = op.n
-			}
-		} else {
-			bKind = 0
-		}
-	}
-
-	loadA()
-	loadB()
-
-	for {
-		// Rule 1: Delete in A — emit delete, advance A only (b unchanged)
-		if aKind == OperationDelete {
-			out = out.delete(aRem)
-			loadA()
-			continue
-		}
-		// Rule 2: Insert in B — emit insert, advance B only (a unchanged)
-		if bKind == OperationInsert {
-			out = out.insert(bStr)
-			loadB()
-			continue
-		}
-		// Both exhausted
-		if aKind == 0 && bKind == 0 {
-			break
-		}
-
-		switch {
-		// (Retain, Retain)
-		case aKind == OperationRetain && bKind == OperationRetain:
-			if aRem < bRem {
-				out = out.retain(aRem)
-				bRem -= aRem
-				loadA()
-			} else if aRem == bRem {
-				out = out.retain(aRem)
-				loadA()
-				loadB()
-			} else {
-				out = out.retain(bRem)
-				aRem -= bRem
-				loadB()
-			}
-
-		// (Insert in A, Delete in B) — cancel out
-		case aKind == OperationInsert && bKind == OperationDelete:
-			aLen := runeLen(aStr)
-			if aLen < bRem {
-				bRem -= aLen
-				loadA()
-			} else if aLen == bRem {
-				loadA()
-				loadB()
-			} else {
-				// bRem < aLen: trim the front of aStr by bRem runes
-				aStr = runeDropPrefix(aStr, bRem)
-				loadB()
-			}
-
-		// (Insert in A, Retain in B) — emit prefix of insert
-		case aKind == OperationInsert && bKind == OperationRetain:
-			aLen := runeLen(aStr)
-			if aLen < bRem {
-				out = out.insert(aStr)
-				bRem -= aLen
-				loadA()
-			} else if aLen == bRem {
-				out = out.insert(aStr)
-				loadA()
-				loadB()
-			} else {
-				before, after := runeSplitAt(aStr, bRem)
-				out = out.insert(before)
-				aStr = after
-				loadB()
-			}
-
-		// (Retain, Delete)
-		case aKind == OperationRetain && bKind == OperationDelete:
-			if aRem < bRem {
-				out = out.delete(aRem)
-				bRem -= aRem
-				loadA()
-			} else if aRem == bRem {
-				out = out.delete(aRem)
-				loadA()
-				loadB()
-			} else {
-				out = out.delete(bRem)
-				aRem -= bRem
-				loadB()
-			}
-		}
-	}
-
-	return out
+	ctx := &composeCtx{a: c.ops, b: other.ops}
+	ctx.loadA()
+	ctx.loadB()
+	return ctx.run()
 }
 
 func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
@@ -539,6 +420,121 @@ func (c ChangeSet) mergeInsert(text string) (ChangeSet, bool) {
 	c.ops[len(c.ops)-1] = Operation{kind: OperationInsert, text: text}
 	c.ops = append(c.ops, last)
 	return c, true
+}
+
+func (c *composeCtx) loadA() {
+	if c.ai < len(c.a) {
+		op := c.a[c.ai]
+		c.ai++
+		c.aKind = op.kind
+		if op.kind == OperationInsert {
+			c.aStr = op.text
+		} else {
+			c.aRem = op.n
+		}
+	} else {
+		c.aKind = 0
+	}
+}
+
+func (c *composeCtx) loadB() {
+	if c.bi < len(c.b) {
+		op := c.b[c.bi]
+		c.bi++
+		c.bKind = op.kind
+		if op.kind == OperationInsert {
+			c.bStr = op.text
+		} else {
+			c.bRem = op.n
+		}
+	} else {
+		c.bKind = 0
+	}
+}
+
+// advancePair consumes min(aRem,bRem) chars, emitting a retain or delete op,
+// and advances whichever iterator(s) are exhausted
+func (c *composeCtx) advancePair(kind OperationKind) {
+	if c.aRem < c.bRem {
+		c.emitN(c.aRem, kind)
+		c.bRem -= c.aRem
+		c.loadA()
+	} else if c.aRem == c.bRem {
+		c.emitN(c.aRem, kind)
+		c.loadA()
+		c.loadB()
+	} else {
+		c.emitN(c.bRem, kind)
+		c.aRem -= c.bRem
+		c.loadB()
+	}
+}
+
+func (c *composeCtx) emitN(n int, kind OperationKind) {
+	if kind == OperationDelete {
+		c.out = c.out.delete(n)
+	} else {
+		c.out = c.out.retain(n)
+	}
+}
+
+// stepInsertDelete handles (Insert-A, Delete-B): the inserted text is consumed
+// by the deletion; no output is emitted
+func (c *composeCtx) stepInsertDelete() {
+	aLen := runeLen(c.aStr)
+	if aLen < c.bRem {
+		c.bRem -= aLen
+		c.loadA()
+	} else if aLen == c.bRem {
+		c.loadA()
+		c.loadB()
+	} else {
+		c.aStr = runeDropPrefix(c.aStr, c.bRem)
+		c.loadB()
+	}
+}
+
+// stepInsertRetain handles (Insert-A, Retain-B): emit the prefix of the insert
+// that fits within the retain window
+func (c *composeCtx) stepInsertRetain() {
+	aLen := runeLen(c.aStr)
+	if aLen < c.bRem {
+		c.out = c.out.insert(c.aStr)
+		c.bRem -= aLen
+		c.loadA()
+	} else if aLen == c.bRem {
+		c.out = c.out.insert(c.aStr)
+		c.loadA()
+		c.loadB()
+	} else {
+		before, after := runeSplitAt(c.aStr, c.bRem)
+		c.out = c.out.insert(before)
+		c.aStr = after
+		c.loadB()
+	}
+}
+
+func (c *composeCtx) run() ChangeSet {
+	for {
+		switch {
+		case c.aKind == OperationDelete:
+			c.out = c.out.delete(c.aRem)
+			c.loadA()
+		case c.bKind == OperationInsert:
+			c.out = c.out.insert(c.bStr)
+			c.loadB()
+		case c.aKind == 0 && c.bKind == 0:
+			return c.out
+		case c.aKind == OperationRetain && c.bKind == OperationRetain:
+			c.advancePair(OperationRetain)
+		case c.aKind == OperationInsert && c.bKind == OperationDelete:
+			c.stepInsertDelete()
+		case c.aKind == OperationInsert && c.bKind == OperationRetain:
+			c.stepInsertRetain()
+		case c.aKind == OperationRetain && c.bKind == OperationDelete:
+			c.advancePair(OperationDelete)
+		}
+	}
 }
 
 func countWordPrefix(s string) int {

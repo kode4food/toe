@@ -1,6 +1,9 @@
 package tui
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 var (
 	underlineEsc = [UnderlineDoubleLine + 1]string{
@@ -12,45 +15,8 @@ var (
 		UnderlineDoubleLine: "\x1b[21m",
 	}
 
-	fgNamedEsc = [colorWhite + 1]string{
-		colorReset:        "\x1b[39m",
-		colorBlack:        "\x1b[30m",
-		colorRed:          "\x1b[31m",
-		colorGreen:        "\x1b[32m",
-		colorYellow:       "\x1b[33m",
-		colorBlue:         "\x1b[34m",
-		colorMagenta:      "\x1b[35m",
-		colorCyan:         "\x1b[36m",
-		colorGray:         "\x1b[90m",
-		colorLightRed:     "\x1b[91m",
-		colorLightGreen:   "\x1b[92m",
-		colorLightYellow:  "\x1b[93m",
-		colorLightBlue:    "\x1b[94m",
-		colorLightMagenta: "\x1b[95m",
-		colorLightCyan:    "\x1b[96m",
-		colorLightGray:    "\x1b[37m",
-		colorWhite:        "\x1b[97m",
-	}
-
-	bgNamedEsc = [colorWhite + 1]string{
-		colorReset:        "\x1b[49m",
-		colorBlack:        "\x1b[40m",
-		colorRed:          "\x1b[41m",
-		colorGreen:        "\x1b[42m",
-		colorYellow:       "\x1b[43m",
-		colorBlue:         "\x1b[44m",
-		colorMagenta:      "\x1b[45m",
-		colorCyan:         "\x1b[46m",
-		colorGray:         "\x1b[100m",
-		colorLightRed:     "\x1b[101m",
-		colorLightGreen:   "\x1b[102m",
-		colorLightYellow:  "\x1b[103m",
-		colorLightBlue:    "\x1b[104m",
-		colorLightMagenta: "\x1b[105m",
-		colorLightCyan:    "\x1b[106m",
-		colorLightGray:    "\x1b[47m",
-		colorWhite:        "\x1b[107m",
-	}
+	fgNamedEsc = buildNamedEsc(0)
+	bgNamedEsc = buildNamedEsc(10)
 )
 
 // RenderToANSI serialises the buffer as rows joined by '\n', emitting style
@@ -207,7 +173,7 @@ func emitColorTo(
 	case colorIndexed:
 		w.WriteString(indexedPfx)
 		writeUint8(w, c.r)
-		w.WriteString("m")
+		w.WriteByte('m')
 	case colorRGB:
 		w.WriteString(rgbPfx)
 		writeUint8(w, c.r)
@@ -275,4 +241,31 @@ func writeUint8(w *strings.Builder, n uint8) {
 		return
 	}
 	w.WriteByte('0' + n)
+}
+
+func buildNamedEsc(offset int) [colorWhite + 1]string {
+	codes := [colorWhite + 1]int{
+		colorReset:        39,
+		colorBlack:        30,
+		colorRed:          31,
+		colorGreen:        32,
+		colorYellow:       33,
+		colorBlue:         34,
+		colorMagenta:      35,
+		colorCyan:         36,
+		colorGray:         90,
+		colorLightRed:     91,
+		colorLightGreen:   92,
+		colorLightYellow:  93,
+		colorLightBlue:    94,
+		colorLightMagenta: 95,
+		colorLightCyan:    96,
+		colorLightGray:    37,
+		colorWhite:        97,
+	}
+	var t [colorWhite + 1]string
+	for i, c := range codes {
+		t[i] = "\x1b[" + strconv.Itoa(c+offset) + "m"
+	}
+	return t
 }

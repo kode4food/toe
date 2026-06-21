@@ -99,6 +99,13 @@ func GotoWindowCenter(e *view.Editor) {
 	gotoWindowImpl(e, 1)
 }
 
+// ScrollViewLines scrolls a specific view by n lines without changing keyboard
+// focus, used for mouse-wheel events over a (possibly unfocused) pane. The
+// pane's own height drives the scrolloff so stacked splits scroll correctly
+func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
+	scrollViewBy(e, v, max(v.Area().Height-1, 1), n, up)
+}
+
 func alignViewImpl(e *view.Editor, relOffset int) {
 	v, ok := e.FocusedView()
 	if !ok {
@@ -171,4 +178,94 @@ func gotoWindowImpl(e *view.Editor, align int) {
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.PutCursor(doc, pos, extend)
 	})
+}
+
+func scrollView(e *view.Editor, lines int, up bool) {
+	if v, ok := e.FocusedView(); ok {
+		scrollViewBy(e, v, max(e.ViewHeight(), 1), lines, up)
+	}
+}
+
+func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
+	doc, ok := e.Document(v.DocID())
+	if !ok {
+		return
+	}
+	if lines < 1 {
+		lines = 1
+	}
+	text := doc.Text()
+	so := min(e.Options().ScrollOff, max(height-1, 0)/2)
+
+	offset := v.Offset()
+	anchorLine, err := text.CharToLine(offset.Anchor)
+	if err != nil {
+		anchorLine = 0
+	}
+	nLines := text.LenLines()
+	var newAnchorLine int
+	if up {
+		newAnchorLine = max(anchorLine-lines, 0)
+	} else {
+		newAnchorLine = min(anchorLine+lines, max(nLines-1, 0))
+	}
+	newAnchor, err := text.LineToChar(newAnchorLine)
+	if err != nil {
+		return
+	}
+	offset.Anchor = newAnchor
+	v.SetOffset(offset)
+
+	sel := doc.SelectionFor(v.ID())
+	cursor := sel.Primary().Cursor(text)
+	cursorLine, err := text.CharToLine(cursor)
+	if err != nil {
+		return
+	}
+
+	if up {
+		newCursorLine := max(cursorLine-lines, 0)
+		if newCursorLine == cursorLine {
+			return
+		}
+		newCursorChar, err := text.LineToChar(newCursorLine)
+		if err != nil {
+			return
+		}
+		newSel := clampSelectionToLine(text, sel, newCursorChar)
+		doc.SetSelectionFor(v.ID(), newSel)
+	} else {
+		topLine := min(newAnchorLine+so, max(nLines-1, 0))
+		if cursorLine >= topLine {
+			return
+		}
+		topChar, err := text.LineToChar(topLine)
+		if err != nil {
+			return
+		}
+		newSel := clampSelectionToLine(text, sel, topChar)
+		doc.SetSelectionFor(v.ID(), newSel)
+	}
+}
+
+func clampSelectionToLine(
+	text core.Rope, sel core.Selection, targetChar int,
+) core.Selection {
+	line, err := text.CharToLine(targetChar)
+	if err != nil {
+		return sel
+	}
+	lineStart, err := text.LineToChar(line)
+	if err != nil {
+		return sel
+	}
+	ranges := sel.Ranges()
+	newRanges := make([]core.Range, len(ranges))
+	copy(newRanges, ranges)
+	newRanges[sel.PrimaryIndex()] = core.PointRange(lineStart)
+	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
+	if err != nil {
+		return sel
+	}
+	return newSel
 }

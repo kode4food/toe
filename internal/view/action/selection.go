@@ -306,6 +306,149 @@ func JumpForward(e *view.Editor) {
 	jumpTo(e, (*view.View).JumpForward)
 }
 
+// ExtendToLineBounds extends each selection range to cover complete lines
+// (from line start to next-line start), preserving direction
+func ExtendToLineBounds(e *view.Editor) {
+	applyMove(e, func(text core.Rope, r core.Range) core.Range {
+		lr, err := r.LineRange(text)
+		if err != nil {
+			return r
+		}
+		start, err := text.LineToChar(lr.From)
+		if err != nil {
+			return r
+		}
+		nLines := text.LenLines()
+		endLine := lr.To + 1
+		var end int
+		if endLine >= nLines {
+			end = text.LenChars()
+		} else {
+			end, err = text.LineToChar(endLine)
+			if err != nil {
+				return r
+			}
+		}
+		return core.NewRange(start, end).WithDirection(r.Direction())
+	})
+}
+
+// ShrinkToLineBounds shrinks each multi-line selection so that it no longer
+// includes leading/trailing line endings. Single-line selections are unchanged
+func ShrinkToLineBounds(e *view.Editor) {
+	applyMove(e, func(text core.Rope, r core.Range) core.Range {
+		lr, err := r.LineRange(text)
+		if err != nil {
+			return r
+		}
+		if lr.From == lr.To {
+			return r
+		}
+		nLines := text.LenLines()
+		start, err := text.LineToChar(lr.From)
+		if err != nil {
+			return r
+		}
+		endLine := lr.To + 1
+		var end int
+		if endLine >= nLines {
+			end = text.LenChars()
+		} else {
+			end, err = text.LineToChar(endLine)
+			if err != nil {
+				return r
+			}
+		}
+		if start != r.From() {
+			nextLine := lr.From + 1
+			if nextLine < nLines {
+				start, err = text.LineToChar(nextLine)
+				if err != nil {
+					return r
+				}
+			}
+		}
+		if end != r.To() {
+			end, err = text.LineToChar(lr.To)
+			if err != nil {
+				return r
+			}
+		}
+		return core.NewRange(start, end).WithDirection(r.Direction())
+	})
+}
+
+// RemovePrimarySelection removes the primary selection range. If only one
+// range exists, the command is a no-op
+func RemovePrimarySelection(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	sel := doc.SelectionFor(v.ID())
+	if len(sel.Ranges()) == 1 {
+		e.SetStatusMsg("no selections remaining")
+		return
+	}
+	newSel, err := sel.Remove(sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	doc.SetSelectionFor(v.ID(), newSel)
+}
+
+// MergeSelections merges all selection ranges into one spanning range
+func MergeSelections(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	sel := doc.SelectionFor(v.ID())
+	doc.SetSelectionFor(v.ID(), sel.MergeRanges())
+}
+
+// MergeConsecutive merges overlapping or adjacent selection ranges
+func MergeConsecutive(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	sel := doc.SelectionFor(v.ID())
+	doc.SetSelectionFor(v.ID(), sel.MergeConsecutiveRanges())
+}
+
+// EnsureForward forces all selection ranges to have a forward
+// direction (anchor <= head)
+func EnsureForward(e *view.Editor) {
+	applyMove(e, func(_ core.Rope, r core.Range) core.Range {
+		return r.WithDirection(core.DirectionForward)
+	})
+}
+
+// CopyOnNextLine duplicates each selection range to the same column
+// on the next line (count times)
+func CopyOnNextLine(e *view.Editor) {
+	copySelectionOnLine(e, true)
+}
+
+// CopyOnPrevLine duplicates each selection range to the same column
+// on the previous line (count times)
+func CopyOnPrevLine(e *view.Editor) {
+	copySelectionOnLine(e, false)
+}
+
 func jumpTo(e *view.Editor, fn func(*view.View) (view.DocumentId, int, bool)) {
 	v, ok := e.FocusedView()
 	if !ok {
@@ -503,8 +646,6 @@ func selectionIsLinewise(text core.Rope, sel core.Selection) bool {
 	return true
 }
 
-// applyMove applies fn to every range in the focused selection and
-// replaces the selection with the transformed result
 func applyMove(e *view.Editor, fn func(core.Rope, core.Range) core.Range) {
 	v, ok := e.FocusedView()
 	if !ok {

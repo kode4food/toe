@@ -14,138 +14,6 @@ import (
 
 var ErrNoFilePath = errors.New("no file path under cursor")
 
-// AddNewlineAbove inserts blank lines above each selection's first line.
-// Repeats count times using the document line ending
-func AddNewlineAbove(e *view.Editor) {
-	addNewlineImpl(e, true)
-}
-
-// AddNewlineBelow inserts blank lines below each selection's last line. Repeats
-// count times using the document line ending
-func AddNewlineBelow(e *view.Editor) {
-	addNewlineImpl(e, false)
-}
-
-func addNewlineImpl(e *view.Editor, above bool) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	count := max(1, e.Count())
-	nl := strings.Repeat(string(doc.LineEnding()), count)
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	seen := map[int]bool{}
-	changes := make([]core.Change, 0, len(sel.Ranges()))
-	for _, r := range sel.Ranges() {
-		lr, err := r.LineRange(text)
-		if err != nil {
-			continue
-		}
-		var targetLine int
-		if above {
-			targetLine = lr.From
-		} else {
-			targetLine = lr.To + 1
-		}
-		pos, err := text.LineToChar(targetLine)
-		if err != nil {
-			continue
-		}
-		if seen[pos] {
-			continue
-		}
-		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, nl))
-	}
-	if len(changes) == 0 {
-		return
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
-	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
-}
-
-// AlignSelections inserts spaces before each cursor so all cursors sit at the
-// same visual column (the maximum column among all cursors). Only operates
-// when there are multiple selection ranges, all on different lines
-func AlignSelections(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	if len(ranges) < 2 {
-		return
-	}
-
-	// Compute the visual column of each cursor's anchor
-	cols := make([]int, len(ranges))
-	maxCol := 0
-	for i, r := range ranges {
-		pos := r.Cursor(text)
-		line, err := text.CharToLine(pos)
-		if err != nil {
-			return
-		}
-		lineStart, err := text.LineToChar(line)
-		if err != nil {
-			return
-		}
-		col := pos - lineStart
-		cols[i] = col
-		if col > maxCol {
-			maxCol = col
-		}
-	}
-
-	// Insert spaces to bring each cursor to maxCol
-	changes := make([]core.Change, 0, len(ranges))
-	for i, r := range ranges {
-		pad := maxCol - cols[i]
-		if pad <= 0 {
-			continue
-		}
-		pos := r.Cursor(text)
-		changes = append(changes,
-			core.TextChange(pos, pos, strings.Repeat(" ", pad)))
-	}
-	if len(changes) == 0 {
-		return
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
-	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
-}
-
 // GotoFile opens the file whose path the primary cursor sits on. Returns the
 // resolved path, or an error if no valid path can be found
 func GotoFile(e *view.Editor) (string, error) {
@@ -672,6 +540,33 @@ func ExtendToFileEnd(e *view.Editor) {
 	SaveSelection(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.PutCursor(doc, doc.LenChars(), true)
+	})
+}
+
+// GotoLine moves (or extends in select mode) the cursor to line n (1-based)
+// If n is 0 the command is a no-op. Clamps to the last non-empty line
+func GotoLine(e *view.Editor, n int) {
+	if n <= 0 {
+		return
+	}
+	SaveSelection(e)
+	extend := e.Mode() == view.ModeSelect
+	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
+		nLines := doc.LenLines()
+		maxLine := nLines - 1
+		// If the last line is blank, don't jump to it
+		if maxLine > 0 {
+			lastLineStart, err := doc.LineToChar(maxLine)
+			if err == nil && lastLineStart >= doc.LenChars() {
+				maxLine--
+			}
+		}
+		line := min(n-1, maxLine)
+		pos, err := doc.LineToChar(line)
+		if err != nil {
+			return r
+		}
+		return r.PutCursor(doc, pos, extend)
 	})
 }
 

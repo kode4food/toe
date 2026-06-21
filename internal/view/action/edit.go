@@ -660,6 +660,426 @@ func ChangeSelectionNoyank(e *view.Editor) {
 	e.SetMode(view.ModeInsert)
 }
 
+// AddNewlineAbove inserts blank lines above each selection's first line.
+// Repeats count times using the document line ending
+func AddNewlineAbove(e *view.Editor) {
+	addNewlineImpl(e, true)
+}
+
+// AddNewlineBelow inserts blank lines below each selection's last line. Repeats
+// count times using the document line ending
+func AddNewlineBelow(e *view.Editor) {
+	addNewlineImpl(e, false)
+}
+
+// AlignSelections inserts spaces before each cursor so all cursors sit at the
+// same visual column (the maximum column among all cursors). Only operates
+// when there are multiple selection ranges, all on different lines
+func AlignSelections(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	if len(ranges) < 2 {
+		return
+	}
+
+	// Compute the visual column of each cursor's anchor
+	cols := make([]int, len(ranges))
+	maxCol := 0
+	for i, r := range ranges {
+		pos := r.Cursor(text)
+		line, err := text.CharToLine(pos)
+		if err != nil {
+			return
+		}
+		lineStart, err := text.LineToChar(line)
+		if err != nil {
+			return
+		}
+		col := pos - lineStart
+		cols[i] = col
+		if col > maxCol {
+			maxCol = col
+		}
+	}
+
+	// Insert spaces to bring each cursor to maxCol
+	changes := make([]core.Change, 0, len(ranges))
+	for i, r := range ranges {
+		pad := maxCol - cols[i]
+		if pad <= 0 {
+			continue
+		}
+		pos := r.Cursor(text)
+		changes = append(changes,
+			core.TextChange(pos, pos, strings.Repeat(" ", pad)))
+	}
+	if len(changes) == 0 {
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
+		return
+	}
+	newSel, err := sel.Map(cs)
+	if err != nil {
+		return
+	}
+	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
+}
+
+// OpenAbove inserts a new line above each cursor's current line, places
+// the cursor at the start of the new line, and enters insert mode
+func OpenAbove(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	count := max(e.Count(), 1)
+
+	changes := make([]core.Change, 0, len(ranges))
+	targets := make([]newlineTarget, 0, len(ranges)*count)
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		cursor := r.Cursor(text)
+		line, err := text.CharToLine(cursor)
+		if err != nil {
+			continue
+		}
+		var insertPos int
+		if line == 0 {
+			insertPos = 0
+		} else {
+			insertPos, err = text.LineEndCharIndex(line - 1)
+			if err != nil {
+				continue
+			}
+		}
+		if seen[insertPos] {
+			continue
+		}
+		seen[insertPos] = true
+		indent, _ := continuedIndent(e, doc, line, cursor)
+		var unit string
+		var firstOff int
+		if line == 0 {
+			unit = indent + "\n"
+			firstOff = len([]rune(indent))
+		} else {
+			unit = "\n" + indent
+			firstOff = len([]rune(unit))
+		}
+		changes = append(changes,
+			core.TextChange(insertPos, insertPos, strings.Repeat(unit, count)),
+		)
+		unitLen := len([]rune(unit))
+		for i := range count {
+			targets = append(targets, newlineTarget{
+				pos: insertPos,
+				off: i*unitLen + firstOff,
+			})
+		}
+	}
+	applyNewlines(e, applyNewlinesArgs{
+		text: text, sel: sel, changes: changes, targets: targets,
+	})
+}
+
+// ReplaceChar replaces every grapheme in each selection with ch and exits
+// select mode
+func ReplaceChar(e *view.Editor, ch rune) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	replacement := string(ch)
+
+	changes := make([]core.Change, 0, len(ranges))
+	for _, r := range ranges {
+		if r.Empty() {
+			continue
+		}
+		// Replace each grapheme in the range with ch
+		frag, err := r.Fragment(text)
+		if err != nil {
+			continue
+		}
+		var b strings.Builder
+		for range []rune(frag) {
+			b.WriteString(replacement)
+		}
+		changes = append(changes, core.TextChange(r.From(), r.To(), b.String()))
+	}
+	applyChangesFrom(e, applyChangesFromArgs{text, sel, ranges, changes})
+}
+
+// ReplaceWithYanked replaces each selection with the corresponding value from
+// the active register (default '"'). Exits select mode
+func ReplaceWithYanked(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	reg := e.ActiveRegister()
+	if reg == 0 {
+		reg = defaultYankRegister
+	}
+	values := e.Registers().Read(reg)
+	if len(values) == 0 {
+		return
+	}
+	n := max(e.Count(), 1)
+	valueFor := func(i int) string {
+		v := values[len(values)-1]
+		if i < len(values) {
+			v = values[i]
+		}
+		return strings.Repeat(v, n)
+	}
+
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+
+	// valueFor uses a sequential counter that advances only for non-empty
+	// ranges
+	valueIdx := 0
+	changes := make([]core.Change, 0, len(ranges))
+	for _, r := range ranges {
+		if r.Empty() {
+			continue
+		}
+		changes = append(changes,
+			core.TextChange(r.From(), r.To(), valueFor(valueIdx)),
+		)
+		valueIdx++
+	}
+	applyChangesFrom(e, applyChangesFromArgs{text, sel, ranges, changes})
+}
+
+// DeleteWordBackward deletes from the cursor to the start of the previous
+// word, for use in insert mode (C-w)
+func DeleteWordBackward(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+
+	changes := make([]core.Change, 0, len(ranges))
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		pos := r.Cursor(text)
+		if pos == 0 || seen[pos] {
+			continue
+		}
+		seen[pos] = true
+		wordStart := core.MovePrevWordStart(
+			text, core.PointRange(pos), 1,
+		).From()
+		changes = append(changes, core.DeleteChange(wordStart, pos))
+	}
+	applyDeletesAtCursor(e, applyDeletesArgs{
+		text: text, sel: sel, ranges: ranges, changes: changes,
+	})
+}
+
+// DeleteWordForward deletes from the cursor to the end of the next word,
+// for use in insert mode (A-d)
+func DeleteWordForward(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+
+	changes := make([]core.Change, 0, len(ranges))
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		pos := r.Cursor(text)
+		if seen[pos] {
+			continue
+		}
+		seen[pos] = true
+		wordEnd := core.MoveNextWordEnd(text, core.PointRange(pos), 1).To()
+		if wordEnd <= pos {
+			continue
+		}
+		changes = append(changes, core.DeleteChange(pos, wordEnd))
+	}
+	applyDeletesAtCursor(e, applyDeletesArgs{
+		text: text, sel: sel, ranges: ranges, changes: changes,
+	})
+}
+
+// KillToLineEnd deletes from the cursor to the end of the line. If the cursor
+// is already at the line ending, the newline itself is deleted
+func KillToLineEnd(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+
+	changes := make([]core.Change, 0, len(ranges))
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		pos := r.Cursor(text)
+		if seen[pos] {
+			continue
+		}
+		seen[pos] = true
+		line, err := text.CharToLine(pos)
+		if err != nil {
+			continue
+		}
+		lineEnd, err := text.LineEndCharIndex(line)
+		if err != nil {
+			continue
+		}
+		if pos == lineEnd {
+			nextLine := line + 1
+			if nextLine < text.LenLines() {
+				next, err := text.LineToChar(nextLine)
+				if err != nil {
+					continue
+				}
+				changes = append(changes, core.DeleteChange(pos, next))
+			}
+		} else {
+			changes = append(changes, core.DeleteChange(pos, lineEnd))
+		}
+	}
+	applyDeletesAtCursor(e, applyDeletesArgs{
+		text: text, sel: sel, ranges: ranges, changes: changes,
+	})
+}
+
+// KillToLineStart deletes from the cursor to the start of the current line
+// If the cursor is at the start, deletes the preceding newline (joins lines)
+func KillToLineStart(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+
+	changes := make([]core.Change, 0, len(ranges))
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		pos := r.Cursor(text)
+		if seen[pos] {
+			continue
+		}
+		seen[pos] = true
+		line, err := text.CharToLine(pos)
+		if err != nil {
+			continue
+		}
+		lineStart, err := text.LineToChar(line)
+		if err != nil {
+			continue
+		}
+		var head int
+		if pos == lineStart {
+			if line == 0 {
+				continue
+			}
+			prevEnd, err := text.LineEndCharIndex(line - 1)
+			if err != nil {
+				continue
+			}
+			head = prevEnd
+		} else {
+			lineEnd, _ := text.LineEndCharIndex(line)
+			firstNonWS := skipHorizontalWhitespace(text, lineStart, lineEnd)
+			if firstNonWS < pos {
+				head = firstNonWS
+			} else {
+				head = lineStart
+			}
+		}
+		changes = append(changes, core.DeleteChange(head, pos))
+	}
+	applyDeletesAtCursor(e, applyDeletesArgs{
+		text: text, sel: sel, ranges: ranges, changes: changes,
+	})
+}
+
 type resolveLineBoundsRes struct {
 	startLine, endLine int
 	start, end         int
@@ -897,6 +1317,279 @@ func applyDeletions(e *view.Editor, args applyDeletionsArgs) bool {
 	tx := core.NewTransaction(args.text).WithChanges(cs).WithSelection(newSel)
 	_ = e.Apply(tx)
 	return true
+}
+
+type newlineTarget struct {
+	pos int
+	off int
+}
+
+type applyNewlinesArgs struct {
+	text    core.Rope
+	sel     core.Selection
+	changes []core.Change
+	targets []newlineTarget
+}
+
+func applyNewlines(e *view.Editor, args applyNewlinesArgs) {
+	if len(args.changes) == 0 {
+		e.SetMode(view.ModeInsert)
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(args.text, args.changes)
+	if err != nil {
+		return
+	}
+	newRanges := make([]core.Range, len(args.targets))
+	for i, target := range args.targets {
+		pos, err := cs.MapPos(target.pos, core.AssocBefore)
+		if err != nil {
+			return
+		}
+		newRanges[i] = core.PointRange(pos + target.off)
+	}
+	primary := min(args.sel.PrimaryIndex(), len(newRanges)-1)
+	newSel, err := core.NewSelection(newRanges, primary)
+	if err != nil {
+		return
+	}
+	tx := core.NewTransaction(args.text).WithChanges(cs).WithSelection(newSel)
+	_ = e.Apply(tx)
+	e.SetMode(view.ModeInsert)
+}
+
+type applyChangesFromArgs struct {
+	text    core.Rope
+	sel     core.Selection
+	ranges  []core.Range
+	changes []core.Change
+}
+
+func applyChangesFrom(e *view.Editor, args applyChangesFromArgs) {
+	if len(args.changes) == 0 {
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(args.text, args.changes)
+	if err != nil {
+		return
+	}
+	newRanges := make([]core.Range, len(args.ranges))
+	for i, r := range args.ranges {
+		mapped, err := cs.MapRange(r)
+		if err != nil {
+			return
+		}
+		newRanges[i] = core.PointRange(mapped.From())
+	}
+	newSel, err := core.NewSelection(newRanges, args.sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	tx := core.NewTransaction(args.text).WithChanges(cs).WithSelection(newSel)
+	_ = e.Apply(tx)
+	e.SetMode(view.ModeNormal)
+}
+
+type applyDeletesArgs struct {
+	text    core.Rope
+	sel     core.Selection
+	ranges  []core.Range
+	changes []core.Change
+}
+
+func applyDeletesAtCursor(e *view.Editor, args applyDeletesArgs) {
+	if len(args.changes) == 0 {
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(args.text, args.changes)
+	if err != nil {
+		return
+	}
+	newRanges := make([]core.Range, len(args.ranges))
+	for i, r := range args.ranges {
+		mapped, err := cs.MapRange(r)
+		if err != nil {
+			return
+		}
+		newRanges[i] = core.PointRange(mapped.Head)
+	}
+	newSel, err := core.NewSelection(newRanges, args.sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	tx := core.NewTransaction(args.text).WithChanges(cs).WithSelection(newSel)
+	_ = e.Apply(tx)
+}
+
+func pasteImpl(e *view.Editor, before bool) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	reg := e.ActiveRegister()
+	if reg == 0 {
+		reg = defaultYankRegister
+	}
+	values := e.Registers().Read(reg)
+	if len(values) == 0 {
+		return
+	}
+
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+
+	linewise := false
+	for _, val := range values {
+		if len(val) > 0 && val[len(val)-1] == '\n' {
+			linewise = true
+			break
+		}
+	}
+
+	valueFor := func(i int) string {
+		if i < len(values) {
+			return values[i]
+		}
+		return values[len(values)-1]
+	}
+
+	pastePos := make([]int, len(ranges))
+	for i := range pastePos {
+		pastePos[i] = -1
+	}
+	changes := make([]core.Change, 0, len(ranges))
+	for i, r := range ranges {
+		pos, ok := pastePosition(text, r, linewise, before)
+		if !ok {
+			continue
+		}
+		pastePos[i] = pos
+		changes = append(changes, core.TextChange(pos, pos, valueFor(i)))
+	}
+	if len(changes) == 0 {
+		return
+	}
+
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
+		return
+	}
+
+	newRanges := make([]core.Range, len(ranges))
+	for i, r := range ranges {
+		if pastePos[i] < 0 {
+			newRanges[i] = r
+			continue
+		}
+		newPos, err := cs.MapPos(pastePos[i], core.AssocBeforeSticky)
+		if err != nil {
+			newRanges[i] = r
+			continue
+		}
+		newRanges[i] = core.PointRange(newPos)
+	}
+	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
+	_ = e.Apply(tx)
+}
+
+func pastePosition(
+	text core.Rope, r core.Range, linewise, before bool,
+) (int, bool) {
+	if !linewise {
+		if before {
+			return r.From(), true
+		}
+		return r.To(), true
+	}
+	if before {
+		line, err := text.CharToLine(r.From())
+		if err != nil {
+			return 0, false
+		}
+		pos, err := text.LineToChar(line)
+		if err != nil {
+			return 0, false
+		}
+		return pos, true
+	}
+	line, err := text.CharToLine(r.To())
+	if err != nil {
+		return 0, false
+	}
+	next := line + 1
+	if next >= text.LenLines() {
+		return text.LenChars(), true
+	}
+	pos, err := text.LineToChar(next)
+	if err != nil {
+		return 0, false
+	}
+	return pos, true
+}
+
+func addNewlineImpl(e *view.Editor, above bool) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if doc.Readonly() {
+		return
+	}
+	count := max(1, e.Count())
+	nl := strings.Repeat(string(doc.LineEnding()), count)
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	seen := map[int]bool{}
+	changes := make([]core.Change, 0, len(sel.Ranges()))
+	for _, r := range sel.Ranges() {
+		lr, err := r.LineRange(text)
+		if err != nil {
+			continue
+		}
+		var targetLine int
+		if above {
+			targetLine = lr.From
+		} else {
+			targetLine = lr.To + 1
+		}
+		pos, err := text.LineToChar(targetLine)
+		if err != nil {
+			continue
+		}
+		if seen[pos] {
+			continue
+		}
+		seen[pos] = true
+		changes = append(changes, core.TextChange(pos, pos, nl))
+	}
+	if len(changes) == 0 {
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
+		return
+	}
+	newSel, err := sel.Map(cs)
+	if err != nil {
+		return
+	}
+	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
 func autoPairsForDocument(

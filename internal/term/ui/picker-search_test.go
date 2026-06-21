@@ -55,7 +55,7 @@ func globalSearchModel(t *testing.T, query string) (ui.Model, *view.Editor) {
 	m := ui.New(e, km)
 	bindNormalTestAction(
 		km, "global_search", m.GlobalSearchAction(),
-		[]command.KeyEvent{command.Char('s')},
+		[]command.KeyEvent{char('s')},
 	)
 	m = resize(m, 120, 30)
 	m = openPickerAndFeed(m, 's')

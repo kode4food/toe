@@ -4,9 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"slices"
-	"strings"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
@@ -136,34 +133,6 @@ var ErrInvalidAutoPairConfig = errors.New("invalid auto-pair config")
 
 const MinSoftWrapWidth = 10
 
-// LSPWorkspaceArgs holds the parameters for FindLSPWorkspace
-type LSPWorkspaceArgs struct {
-	File              string
-	Language          *Language
-	RootDirs          []string
-	Workspace         string
-	WorkspaceFallback bool
-}
-
-// SelectedGrammars applies the configured grammar include/exclude selection
-func (l *Languages) SelectedGrammars() []Grammar {
-	out := make([]Grammar, 0, len(l.Grammars))
-	if len(l.GrammarSelection.Only) > 0 {
-		for _, grammar := range l.Grammars {
-			if slices.Contains(l.GrammarSelection.Only, grammar.Name) {
-				out = append(out, grammar)
-			}
-		}
-		return out
-	}
-	for _, grammar := range l.Grammars {
-		if !slices.Contains(l.GrammarSelection.Except, grammar.Name) {
-			out = append(out, grammar)
-		}
-	}
-	return out
-}
-
 func (a *AutoPairConfig) OrDefault() (core.AutoPairs, bool) {
 	if !a.Present {
 		return core.DefaultAutoPairs(), true
@@ -204,96 +173,6 @@ func LoadLanguage(lang string) *Language {
 	return &Language{}
 }
 
-// LoadLanguageForScope resolves a language by its syntax scope
-func LoadLanguageForScope(scope string) *Language {
-	if langs, ok := loadUserWorkspaceLanguages(); ok {
-		for _, l := range langs.Languages {
-			if l.Scope == scope {
-				return &l
-			}
-		}
-	}
-	return &Language{}
-}
-
-// FindLanguageRoot returns the topmost ancestor with a language root marker
-func FindLanguageRoot(path string, lang *Language) (string, bool) {
-	if len(lang.Roots) == 0 {
-		return "", false
-	}
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		abs = path
-	}
-	if info, err := os.Stat(abs); err == nil && !info.IsDir() {
-		abs = filepath.Dir(abs)
-	}
-	var found string
-	for {
-		if languageRootMarkerExists(abs, lang.Roots) {
-			found = abs
-		}
-		next := filepath.Dir(abs)
-		if next == abs {
-			break
-		}
-		abs = next
-	}
-	return found, found != ""
-}
-
-// FindLSPWorkspace resolves a language server workspace root for a file
-func FindLSPWorkspace(args LSPWorkspaceArgs) (string, bool) {
-	abs, err := filepath.Abs(args.File)
-	if err != nil {
-		abs = args.File
-	}
-	abs = filepath.Clean(abs)
-	workspace := filepath.Clean(args.Workspace)
-	if rel, err := filepath.Rel(workspace, abs); err != nil || rel == ".." ||
-		strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", false
-	}
-	if info, err := os.Stat(abs); err == nil && !info.IsDir() {
-		abs = filepath.Dir(abs)
-	}
-	var top string
-	for dir := abs; ; dir = filepath.Dir(dir) {
-		if args.Language != nil &&
-			languageRootMarkerExists(dir, args.Language.Roots) {
-			top = dir
-		}
-		if lspRootDirMatches(dir, args.RootDirs, workspace) {
-			if top != "" {
-				return top, true
-			}
-			return workspace, true
-		}
-		if dir == workspace {
-			if top != "" {
-				return top, true
-			}
-			if args.WorkspaceFallback {
-				return workspace, true
-			}
-			return "", false
-		}
-		next := filepath.Dir(dir)
-		if next == dir {
-			return "", false
-		}
-	}
-}
-
-func lspRootDirMatches(dir string, rootDirs []string, workspace string) bool {
-	for _, root := range rootDirs {
-		if filepath.Clean(filepath.Join(workspace, root)) == dir {
-			return true
-		}
-	}
-	return false
-}
-
 func DetectLanguage(path, content string) (string, bool) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -331,14 +210,6 @@ func loadUserWorkspaceLanguages() (Languages, bool) {
 		path, WorkspaceLanguagesPath(cwd), cwd,
 	)
 	return langs, ok
-}
-
-func LoadLanguages(path string) (Languages, bool) {
-	merged, ok := loader.LoadMergedTOML([]string{path}, 3)
-	if !ok {
-		return Languages{}, false
-	}
-	return decodeLanguagesMap(merged)
 }
 
 func LoadBundledLanguages() (Languages, bool) {

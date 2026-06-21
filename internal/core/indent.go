@@ -117,30 +117,6 @@ func AutoDetect(doc Rope) (IndentStyle, bool) {
 	return Spaces(uint8(best)), true
 }
 
-// LevelForLine returns the indent level of the given line
-func LevelForLine(line Rope, tabWidth, indentWidth int) int {
-	var length int
-	for i := range line.LenChars() {
-		ch, err := line.CharAt(i)
-		if err != nil {
-			break
-		}
-		switch ch {
-		case '\t':
-			length += TabWidthAt(length, tabWidth)
-		case ' ':
-			length++
-		default:
-			goto done
-		}
-	}
-done:
-	if indentWidth == 0 {
-		return 0
-	}
-	return length / indentWidth
-}
-
 // IsTabs reports whether this style uses tab characters
 func (i IndentStyle) IsTabs() bool {
 	return i.tabs

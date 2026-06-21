@@ -22,12 +22,6 @@ type (
 const defaultRegistryScrollOff = 3
 
 func TestRegistry(t *testing.T) {
-	t.Run("Keymaps returns the installed keymaps", func(t *testing.T) {
-		km := command.NewKeymaps()
-		reg := command.NewRegistry(km)
-		assert.Equal(t, km, reg.Keymaps())
-	})
-
 	t.Run("RegisterCommand prepends the name", func(t *testing.T) {
 		km := command.NewKeymaps()
 		reg := command.NewRegistry(km)

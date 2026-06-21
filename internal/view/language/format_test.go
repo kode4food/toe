@@ -131,12 +131,3 @@ func TestTextFormatForLanguageWithConfig(t *testing.T) {
 		assert.Equal(t, 80, f.ViewportWidth)
 	})
 }
-
-func TestTextFormatForLanguage(t *testing.T) {
-	t.Run("go language returns non-nil format", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		f := language.TextFormatForLanguage("go", 80)
-		assert.NotNil(t, f)
-		assert.Equal(t, 80, f.ViewportWidth)
-	})
-}

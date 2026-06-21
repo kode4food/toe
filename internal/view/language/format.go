@@ -1,7 +1,5 @@
 package language
 
-import "github.com/kode4food/toe/internal/loader"
-
 const (
 	DefaultTextWidth       = 80
 	DefaultTabWidth        = 4
@@ -18,35 +16,6 @@ type TextFormat struct {
 	MaxIndentRetain     int
 	WrapIndicator       string
 	SoftWrapAtTextWidth bool
-}
-
-func TextFormatForLanguage(lang string, w int) *TextFormat {
-	textWidth, sw := loadUserEditorFormat()
-	return TextFormatForLanguageWithConfig(lang, textWidth, sw, w)
-}
-
-// loadUserEditorFormat reads the user's config.toml for editor text-width and
-// soft-wrap settings. Returns nil/zero values when the file is absent or
-// unparseable
-func loadUserEditorFormat() (*int, SoftWrap) {
-	path, ok := loader.ConfigFile()
-	if !ok {
-		return nil, SoftWrap{}
-	}
-	data, ok := loader.LoadMergedTOML([]string{path}, 3)
-	if !ok {
-		return nil, SoftWrap{}
-	}
-	editor, _ := data["editor"].(map[string]any)
-	textWidth := intPtrOrNil(editor["text-width"])
-	sw, _ := editor["soft-wrap"].(map[string]any)
-	return textWidth, SoftWrap{
-		Enable:          boolPtr(sw["enable"]),
-		MaxWrap:         intPtrOrNil(sw["max-wrap"]),
-		MaxIndentRetain: intPtrOrNil(sw["max-indent-retain"]),
-		WrapIndicator:   stringPtr(sw["wrap-indicator"]),
-		WrapAtTextWidth: boolPtr(sw["wrap-at-text-width"]),
-	}
 }
 
 func TextFormatForLanguageWithConfig(

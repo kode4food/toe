@@ -130,3 +130,11 @@ func bindNormalTestAction(
 		km: km, mode: "NOR", name: name, fn: fn, seqs: seqs,
 	})
 }
+
+func char(ch rune) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Char: ch}}
+}
+
+func special(name string) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Special: name}}
+}

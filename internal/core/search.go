@@ -8,14 +8,9 @@ type (
 
 	// RuneMatcher is a CharMatcher that matches a single rune
 	RuneMatcher rune
-
-	// FuncMatcher wraps a function as a CharMatcher
-	FuncMatcher func(rune) bool
 )
 
 func (r RuneMatcher) MatchChar(ch rune) bool { return rune(r) == ch }
-
-func (f FuncMatcher) MatchChar(ch rune) bool { return f(ch) }
 
 // FindNthChar finds the position of the nth character matching m, starting from
 // pos in the given direction

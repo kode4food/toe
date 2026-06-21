@@ -261,17 +261,6 @@ func TestMoveFileStartEnd(t *testing.T) {
 	})
 }
 
-func TestGotoFileEnd(t *testing.T) {
-	t.Run("goes to absolute end", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 0)
-
-		action.GotoFileEnd(e)
-
-		assert.Equal(t, 3, cursorPos(t, e))
-	})
-}
-
 func TestMoveLineNonWhitespace(t *testing.T) {
 	t.Run("skips leading whitespace", func(t *testing.T) {
 		e := editorWithText(t, "  hello")

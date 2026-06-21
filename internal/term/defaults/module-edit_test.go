@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -69,7 +68,7 @@ func TestEditReplaceChar(t *testing.T) {
 		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		res := runCmd(t, km, e, "replace")
 		assert.NotNil(t, res.Continuation)
-		res.Continuation(e, command.Char('x'))
+		res.Continuation(e, char('x'))
 		assert.Equal(t, "xbc", docText(t, e))
 	})
 }

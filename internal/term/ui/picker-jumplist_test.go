@@ -52,7 +52,7 @@ func jumplistModel(t *testing.T) (ui.Model, *view.Editor, int) {
 	m := ui.New(e, km)
 	bindNormalTestAction(
 		km, "jumplist", m.PickerAction(ui.JumplistPicker),
-		[]command.KeyEvent{command.Char('j')},
+		[]command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 30)
 	return sendKey(m, 'j'), e, jumplistAnchor

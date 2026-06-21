@@ -30,7 +30,7 @@ func TestPickerFiles(t *testing.T) {
 		bindNormalTestAction(
 			km, "file_picker",
 			m.PickerAction(ui.FilePickerInDir(tmp)),
-			[]command.KeyEvent{command.Char('p')},
+			[]command.KeyEvent{char('p')},
 		)
 
 		m = resize(m, 100, 30)
@@ -86,7 +86,7 @@ func TestPickerFiles(t *testing.T) {
 		bindNormalTestAction(
 			km, "file_picker",
 			m.PickerAction(ui.FilePickerInDir(tmp)),
-			[]command.KeyEvent{command.Char('p')},
+			[]command.KeyEvent{char('p')},
 		)
 
 		m = resize(m, 100, 30)
@@ -112,7 +112,7 @@ func TestPickerFiles(t *testing.T) {
 			m.PickerAction(func(e *view.Editor) *ui.Picker {
 				return ui.NewPicker(e, src)
 			}),
-			[]command.KeyEvent{command.Char('p')},
+			[]command.KeyEvent{char('p')},
 		)
 
 		m = resize(m, 80, 20)
@@ -165,7 +165,7 @@ func TestPickerFiles(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
-			[]command.KeyEvent{command.Char('b')},
+			[]command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 100, 16)

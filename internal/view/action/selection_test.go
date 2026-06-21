@@ -93,43 +93,6 @@ func TestSelection(t *testing.T) {
 		assert.Equal(t, 1, doc.SelectionFor(v.ID()).PrimaryIndex())
 	})
 
-	t.Run("reverse contents tracks primary", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e,
-			[]core.Range{
-				core.NewRange(0, 1),
-				core.NewRange(1, 2),
-				core.NewRange(2, 3),
-			},
-			0,
-		)
-
-		action.ReverseSelectionContents(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, "cba", doc.Text().String())
-		assert.Equal(t, 2, doc.SelectionFor(v.ID()).PrimaryIndex())
-	})
-
-	t.Run("reverse contents even count is noop", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e,
-			[]core.Range{
-				core.NewRange(0, 1),
-				core.NewRange(1, 2),
-				core.NewRange(2, 3),
-			},
-			0,
-		)
-		e.SetCount(2)
-
-		action.ReverseSelectionContents(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, "abc", doc.Text().String())
-	})
-
 	t.Run("toggle comments a line", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		setCursor(t, e, 0)
@@ -219,40 +182,6 @@ func TestExtendToLineEndNewline(t *testing.T) {
 		assert.Equal(t, 0, sel.Primary().From())
 		// PutCursor with extend=true advances one grapheme past newline pos
 		assert.Equal(t, 4, sel.Primary().To())
-	})
-}
-
-func TestRotateSelectionsFirst(t *testing.T) {
-	t.Run("sets primary to first range", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{
-			core.PointRange(0),
-			core.PointRange(1),
-			core.PointRange(2),
-		}, 2)
-
-		action.RotateSelectionsFirst(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, 0, doc.SelectionFor(v.ID()).PrimaryIndex())
-	})
-}
-
-func TestRotateSelectionsLast(t *testing.T) {
-	t.Run("sets primary to last range", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{
-			core.PointRange(0),
-			core.PointRange(1),
-			core.PointRange(2),
-		}, 0)
-
-		action.RotateSelectionsLast(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, 2, doc.SelectionFor(v.ID()).PrimaryIndex())
 	})
 }
 

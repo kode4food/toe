@@ -48,7 +48,7 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 		m.PickerAction(func(ed *view.Editor) *ui.Picker {
 			return ui.CommandPalettePicker(ed, km)
 		}),
-		[]command.KeyEvent{command.Char('p')},
+		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 100, 30)
 	return sendKey(m, 'p'), e

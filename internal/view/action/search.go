@@ -23,60 +23,6 @@ type (
 
 const searchRegister = '/'
 
-// OpenBelow inserts a new line below each cursor's current line, places
-// the cursor at the start of the new line, and enters insert mode
-func OpenBelow(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	count := max(e.Count(), 1)
-
-	changes := make([]core.Change, 0, len(ranges))
-	targets := make([]newlineTarget, 0, len(ranges)*count)
-	seen := map[int]bool{}
-	for _, r := range ranges {
-		cursor := r.Cursor(text)
-		line, err := text.CharToLine(cursor)
-		if err != nil {
-			continue
-		}
-		lineEnd, err := text.LineEndCharIndex(line)
-		if err != nil {
-			continue
-		}
-		if seen[lineEnd] {
-			continue
-		}
-		seen[lineEnd] = true
-		indent, _ := continuedIndent(e, doc, line, cursor)
-		unit := "\n" + indent
-		changes = append(changes,
-			core.TextChange(lineEnd, lineEnd, strings.Repeat(unit, count)),
-		)
-		unitLen := len([]rune(unit))
-		for i := range count {
-			targets = append(targets, newlineTarget{
-				pos: lineEnd,
-				off: (i + 1) * unitLen,
-			})
-		}
-	}
-	applyNewlines(e, applyNewlinesArgs{
-		text: text, sel: sel, changes: changes, targets: targets,
-	})
-}
-
 // OpenAbove inserts a new line above each cursor's current line, places
 // the cursor at the start of the new line, and enters insert mode
 func OpenAbove(e *view.Editor) {

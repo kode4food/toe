@@ -135,8 +135,6 @@ func TestRotateSelections(t *testing.T) {
 	}, 0))
 	action.RotateSelectionsForward(e)
 	action.RotateSelectionsBackward(e)
-	action.RotateSelectionsFirst(e)
-	action.RotateSelectionsLast(e)
 	assert.NotNil(t, doc)
 }
 

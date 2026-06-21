@@ -32,7 +32,7 @@ func TestPickerMatch(t *testing.T) {
 		bindNormalTestAction(
 			km, "file_picker",
 			m.PickerAction(ui.FilePickerInDir(tmp)),
-			[]command.KeyEvent{command.Char('p')},
+			[]command.KeyEvent{char('p')},
 		)
 
 		m = resize(m, 70, 20)
@@ -61,7 +61,7 @@ func TestPickerMatch(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
-			[]command.KeyEvent{command.Char('b')},
+			[]command.KeyEvent{char('b')},
 		)
 
 		m = resize(m, 100, 30)

@@ -180,19 +180,6 @@ func ReadFile(e *view.Editor, path string) error {
 	return e.Apply(tx)
 }
 
-// ShellRunCommand runs a shell command and returns combined stdout+stderr.
-// Nothing is inserted into the document; the caller displays the result
-func ShellRunCommand(e *view.Editor, cmdStr string) (string, error) {
-	cmd := makeShellCmd(e, cmdStr)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &out
-	if err := cmd.Run(); err != nil && out.Len() == 0 {
-		return "", err
-	}
-	return strings.TrimRight(out.String(), "\n"), nil
-}
-
 func shellOutputAt(
 	e *view.Editor, cmdStr string, pos func(core.Range) int,
 ) error {

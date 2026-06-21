@@ -409,32 +409,6 @@ func TestMovePrevLongWordEnd(t *testing.T) {
 	}
 }
 
-func TestSkipWhile(t *testing.T) {
-	t.Run("skips matching chars forward", func(t *testing.T) {
-		doc := core.NewRope("   abc")
-		pos, ok := core.SkipWhile(doc, 0, func(ch rune) bool { return ch == ' ' })
-		assert.True(t, ok)
-		assert.Equal(t, 3, pos)
-	})
-
-	t.Run("returns false when all chars match", func(t *testing.T) {
-		doc := core.NewRope("   ")
-		_, ok := core.SkipWhile(doc, 0, func(ch rune) bool { return ch == ' ' })
-		assert.False(t, ok)
-	})
-}
-
-func TestBackwardsSkipWhile(t *testing.T) {
-	t.Run("skips matching chars backward", func(t *testing.T) {
-		doc := core.NewRope("abc   ")
-		pos, ok := core.BackwardsSkipWhile(doc, 6, func(ch rune) bool {
-			return ch == ' '
-		})
-		assert.True(t, ok)
-		assert.Equal(t, 3, pos)
-	})
-}
-
 func TestMoveVertically(t *testing.T) {
 	doc := core.NewRope("one\ntwo\nthree\n")
 

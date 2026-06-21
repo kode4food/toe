@@ -25,16 +25,6 @@ func TestIncrementHex(t *testing.T) {
 }
 
 func TestBuffer(t *testing.T) {
-	t.Run("goto column", func(t *testing.T) {
-		e := editorWithText(t, "abcdef\nxyz")
-		setCursor(t, e, 0)
-		e.SetCount(3)
-
-		action.GotoColumn(e)
-
-		assert.Equal(t, 2, cursorPos(t, e))
-	})
-
 	t.Run("increment/decrement", func(t *testing.T) {
 		e := editorWithText(t, "1")
 		setCursor(t, e, 0)
@@ -711,18 +701,6 @@ func TestSearchWithCount(t *testing.T) {
 	})
 }
 
-func TestGotoColumnEdge(t *testing.T) {
-	t.Run("beyond line end clamps to line end", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd")
-		setCursor(t, e, 0)
-		e.SetCount(100)
-
-		action.GotoColumn(e)
-
-		assert.True(t, cursorPos(t, e) <= 2)
-	})
-}
-
 func TestIncrementNonNumber(t *testing.T) {
 	t.Run("increment on non-numeric word is noop", func(t *testing.T) {
 		e := editorWithText(t, "hello")
@@ -793,36 +771,6 @@ func TestFilterSelectionsImplEdge(t *testing.T) {
 		err := action.KeepSelectionsMatching(e, "xyz")
 
 		assert.NoError(t, err)
-	})
-}
-
-func TestScrollView(t *testing.T) {
-	t.Run("ScrollUpLines with count", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng")
-		setCursor(t, e, 10)
-		e.SetCount(3)
-
-		assert.NotPanics(t, func() { action.ScrollUpLines(e, 3) })
-	})
-
-	t.Run("ScrollDownLines with count", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng")
-		setCursor(t, e, 0)
-		e.SetCount(3)
-
-		assert.NotPanics(t, func() { action.ScrollDownLines(e, 3) })
-	})
-}
-
-func TestClampSelectionToLine(t *testing.T) {
-	t.Run("cursor at line end stays put", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		setCursor(t, e, 2)
-		e.SetCount(3)
-
-		action.GotoColumn(e)
-
-		assert.Equal(t, 2, cursorPos(t, e))
 	})
 }
 

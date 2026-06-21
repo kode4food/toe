@@ -667,15 +667,6 @@ func ExtendToLastLine(e *view.Editor) {
 	moveFileEnd(e, true)
 }
 
-// GotoFileEnd moves all cursors to the absolute end of the document
-// (past all characters, including any trailing newline)
-func GotoFileEnd(e *view.Editor) {
-	SaveSelection(e)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.PutCursor(doc, doc.LenChars(), false)
-	})
-}
-
 // ExtendToFileEnd extends all selections to the absolute end of the document
 func ExtendToFileEnd(e *view.Editor) {
 	SaveSelection(e)

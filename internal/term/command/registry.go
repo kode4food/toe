@@ -21,11 +21,6 @@ func NewRegistry(km *Keymaps) *Registry {
 	return &Registry{km: km}
 }
 
-// Keymaps returns the registry-owned key mappings
-func (r *Registry) Keymaps() *Keymaps {
-	return r.km
-}
-
 // RegisterCommand registers a command. The action name is automatically
 // prepended to Aliases so it is typeable from the command line
 func (r *Registry) RegisterCommand(name string, c Command) error {
@@ -77,13 +72,6 @@ func (r *Registry) ApplyTOML(e *view.Editor, raw map[string]any) error {
 		}
 	}
 	return nil
-}
-
-// ResetSections restores all section configs to their defaults
-func (r *Registry) ResetSections() {
-	for _, s := range r.sections {
-		s.Reset()
-	}
 }
 
 // LookupOption returns the registered Option for the given key, if any

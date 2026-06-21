@@ -298,30 +298,6 @@ func (v visualMover) moveVertically(
 	return r.PutCursor(doc, tStart+off, move == MovementExtend)
 }
 
-// SkipWhile returns the first position at or after pos where f returns false,
-// and false if all remaining characters satisfy f
-func SkipWhile(doc Rope, pos int, f func(rune) bool) (int, bool) {
-	runes := []rune(doc.String())
-	for i := pos; i < len(runes); i++ {
-		if !f(runes[i]) {
-			return i, true
-		}
-	}
-	return 0, false
-}
-
-// BackwardsSkipWhile returns the first position at or before pos where f
-// returns false, and false if all characters toward the start satisfy f
-func BackwardsSkipWhile(doc Rope, pos int, f func(rune) bool) (int, bool) {
-	runes := []rune(doc.String())
-	for i := pos - 1; i >= 0; i-- {
-		if !f(runes[i]) {
-			return i + 1, true
-		}
-	}
-	return 0, false
-}
-
 func wordMove(doc Rope, r Range, count int, target WordMotionTarget) Range {
 	isPrev := target == WordMotionPrevWordStart ||
 		target == WordMotionPrevLongWordStart ||

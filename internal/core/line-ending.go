@@ -38,22 +38,6 @@ func LineEndingFromChar(ch rune) (LineEnding, bool) {
 	return "", false
 }
 
-func ParseLineEnding(s string) (LineEnding, bool) {
-	switch s {
-	case "\r\n":
-		return LineEndingCRLF, true
-	case "\n":
-		return LineEndingLF, true
-	default:
-		return "", false
-	}
-}
-
-func StrIsLineEnding(s string) bool {
-	_, ok := ParseLineEnding(s)
-	return ok
-}
-
 func AutoDetectLineEndingString(s string) (LineEnding, bool) {
 	var prev rune
 	for _, ch := range s {
@@ -77,11 +61,4 @@ func GetLineEndingOfString(s string) (LineEnding, bool) {
 		return LineEndingLF, true
 	}
 	return "", false
-}
-
-func StringWithoutLineEnding(s string) string {
-	if e, ok := GetLineEndingOfString(s); ok {
-		return s[:len(s)-len(string(e))]
-	}
-	return s
 }

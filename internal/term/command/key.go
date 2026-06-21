@@ -71,16 +71,6 @@ func (k KeyEvent) String() string {
 	return fmt.Sprintf("<%s-%s>", strings.Join(parts, "-"), s)
 }
 
-// Char returns a KeyEvent for a plain character
-func Char(ch rune) KeyEvent {
-	return KeyEvent{Code: KeyCode{Char: ch}}
-}
-
-// Special returns a KeyEvent for a named special key
-func Special(name string) KeyEvent {
-	return KeyEvent{Code: KeyCode{Special: name}}
-}
-
 // WithMods returns a copy of k with the given modifiers added
 func (k KeyEvent) WithMods(m KeyModifiers) KeyEvent {
 	k.Mods |= m

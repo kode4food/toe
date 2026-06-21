@@ -31,7 +31,7 @@ func TestBufferPicker(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
-			[]command.KeyEvent{command.Char('p')},
+			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')

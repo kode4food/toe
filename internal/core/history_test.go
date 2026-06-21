@@ -61,19 +61,6 @@ func TestHistory(t *testing.T) {
 		assert.Equal(t, "a f\n", st.Doc.String())
 	})
 
-	t.Run("navigates by time", func(t *testing.T) {
-		h, st := historyFixture(t)
-
-		applyAll(t, h.Earlier(core.UndoSteps(4)), &st)
-		assert.Equal(t, "a b c\n", st.Doc.String())
-
-		applyAll(t, h.Later(core.UndoTimePeriod(5*time.Second)), &st)
-		assert.Equal(t, "a b c d\n", st.Doc.String())
-
-		applyAll(t, h.Later(core.UndoTimePeriod(6*time.Second)), &st)
-		assert.Equal(t, "a b c e\n", st.Doc.String())
-	})
-
 	t.Run("CurrentRevision tracks commits", func(t *testing.T) {
 		h := core.NewHistory()
 		st := core.State{
@@ -111,12 +98,6 @@ func TestHistory(t *testing.T) {
 			c: core.TextChange(3, 3, "X"), when: time.Now(),
 		})
 		assert.Equal(t, 3, h.LastEditPos())
-	})
-
-	t.Run("Earlier with time period", func(t *testing.T) {
-		h, st := historyFixture(t)
-		applyAll(t, h.Earlier(core.UndoTimePeriod(5*time.Second)), &st)
-		assert.NotEmpty(t, st.Doc.String())
 	})
 
 	t.Run("Earlier negative steps clamps to zero", func(t *testing.T) {

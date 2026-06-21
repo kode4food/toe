@@ -31,18 +31,18 @@ func TestRenderCrash(t *testing.T) {
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: "NOR", name: "insert_mode",
 		fn:   act(action.InsertMode),
-		seqs: [][]command.KeyEvent{{command.Char('i')}},
+		seqs: [][]command.KeyEvent{{char('i')}},
 	})
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: "INS", name: "insert_newline",
 		fn:   act(action.InsertNewline),
-		seqs: [][]command.KeyEvent{{command.Special("ret")}},
+		seqs: [][]command.KeyEvent{{special("ret")}},
 	})
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: "INS", name: "insert_newline",
 		fn: act(action.InsertNewline),
 		seqs: [][]command.KeyEvent{{
-			command.Char('j').WithMods(command.ModCtrl),
+			char('j').WithMods(command.ModCtrl),
 		}},
 	})
 
@@ -188,7 +188,7 @@ func TestThemeRender(t *testing.T) {
 			},
 			Modes: []string{"NOR"},
 			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{{
-				command.Char(' '), command.Char('界'),
+				char(' '), char('界'),
 			}}}},
 		})
 		m := resize(ui.New(e, km), 40, 10)

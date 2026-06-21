@@ -41,21 +41,21 @@ func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(km, "rec", m.MacroRecordAction,
-		[]command.KeyEvent{command.Char('z')})
+		[]command.KeyEvent{char('z')})
 	bindNormalTestAction(km, "play", m.MacroReplayAction,
-		[]command.KeyEvent{command.Char('v')})
+		[]command.KeyEvent{char('v')})
 	bindNormalTestAction(km, "to_insert",
 		func(e *view.Editor) command.Continuation {
 			action.InsertMode(e)
 			return nil
-		}, []command.KeyEvent{command.Char('i')})
+		}, []command.KeyEvent{char('i')})
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: "INS", name: "to_normal",
 		fn: func(e *view.Editor) command.Continuation {
 			action.NormalMode(e)
 			return nil
 		},
-		seqs: [][]command.KeyEvent{{command.Special("esc")}},
+		seqs: [][]command.KeyEvent{{special("esc")}},
 	})
 	m = resize(m, 80, 24)
 	return m, e

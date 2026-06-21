@@ -136,48 +136,6 @@ func ExtendLineBellow(e *view.Editor) {
 	})
 }
 
-// ExtendLineAbove selects the current line(s) inclusive of the trailing
-// newline. If the range already spans the full line, extends one more line
-// upward
-func ExtendLineAbove(e *view.Editor) {
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		b, ok := resolveLineBounds(doc, r)
-		if !ok {
-			return r
-		}
-		if r.From() == b.start && r.To() == b.end {
-			if b.startLine == 0 {
-				return core.NewRange(b.end, b.start)
-			}
-			prev, err := doc.LineToChar(b.startLine - 1)
-			if err != nil {
-				return r
-			}
-			return core.NewRange(b.end, prev)
-		}
-		return core.NewRange(b.end, b.start)
-	})
-}
-
-// ExtendLine selects the current line(s). If the selection is backward,
-// extends above; otherwise extends below
-func ExtendLine(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	sel := doc.SelectionFor(v.ID())
-	if sel.Primary().Direction() == core.DirectionBackward {
-		ExtendLineAbove(e)
-	} else {
-		ExtendLineBellow(e)
-	}
-}
-
 // SelectLineBelow selects current line(s) extending downward, direction-aware:
 // forward selections grow at the head; backward selections shrink at the head
 func SelectLineBelow(e *view.Editor) {

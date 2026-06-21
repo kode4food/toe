@@ -28,7 +28,7 @@ func TestPromptCompletion(t *testing.T) {
 			},
 			Modes: []string{"NOR"},
 			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{command.Char(':')},
+				{char(':')},
 			}}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
@@ -65,7 +65,7 @@ func TestPromptCompletion(t *testing.T) {
 			},
 			Modes: []string{"NOR"},
 			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{command.Char(':')},
+				{char(':')},
 			}}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
@@ -89,7 +89,7 @@ func TestPromptCompletion(t *testing.T) {
 			},
 			Modes: []string{"NOR"},
 			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{command.Char(':')},
+				{char(':')},
 			}}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
@@ -116,7 +116,7 @@ func TestPromptCompletion(t *testing.T) {
 			},
 			Modes: []string{"NOR"},
 			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{command.Char(':')},
+				{char(':')},
 			}}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))

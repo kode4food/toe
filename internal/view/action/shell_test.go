@@ -77,35 +77,6 @@ func TestShell(t *testing.T) {
 		assert.Equal(t, core.NewRange(0, 1), sel.Ranges()[0])
 	})
 
-	t.Run("run captures output without inserting", func(t *testing.T) {
-		e := editorWithText(t, "original")
-
-		out, err := action.ShellRunCommand(e, "printf 'hello world'")
-
-		assert.NoError(t, err)
-		assert.Equal(t, "hello world", out)
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, "original", doc.Text().String())
-	})
-
-	t.Run("run shows stderr from failed command", func(t *testing.T) {
-		e := editorWithText(t, "x")
-
-		out, err := action.ShellRunCommand(e, "printf err >&2; exit 1")
-
-		assert.NoError(t, err)
-		assert.Equal(t, "err", out)
-	})
-
-	t.Run("run strips trailing newline", func(t *testing.T) {
-		e := editorWithText(t, "x")
-
-		out, err := action.ShellRunCommand(e, "echo hello")
-
-		assert.NoError(t, err)
-		assert.Equal(t, "hello", out)
-	})
-
 	t.Run("read file inserts contents", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "input.txt")

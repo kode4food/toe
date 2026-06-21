@@ -117,22 +117,6 @@ comment-token = "//"
 		assert.Equal(t, doc.Text().LenChars(), cursorPos(t, e))
 	})
 
-	t.Run("open below continues line comment", func(t *testing.T) {
-		writeCommandLanguages(t, `
-[[language]]
-name = "custom"
-comment-token = "//"
-`)
-		e := editorWithText(t, "  // hello")
-		doc, _ := e.FocusedDocument()
-		doc.SetLang("custom")
-
-		action.OpenBelow(e)
-
-		assert.Equal(t, "  // hello\n  // ", doc.Text().String())
-		assert.Equal(t, doc.Text().LenChars(), cursorPos(t, e))
-	})
-
 	t.Run("open above continues line comment", func(t *testing.T) {
 		writeCommandLanguages(t, `
 [[language]]
@@ -164,28 +148,6 @@ comment-token = "//"
 		action.InsertNewline(e)
 
 		assert.Equal(t, "  // hello\n  ", doc.Text().String())
-	})
-
-	t.Run("open below repeated cursors", func(t *testing.T) {
-		writeCommandLanguages(t, `
-[[language]]
-name = "custom"
-comment-token = "//"
-`)
-		e := editorWithText(t, "  // hello")
-		e.SetCount(2)
-		doc, _ := e.FocusedDocument()
-		doc.SetLang("custom")
-
-		action.OpenBelow(e)
-
-		v, _ := e.FocusedView()
-		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, "  // hello\n  // \n  // ", doc.Text().String())
-		assert.Equal(t, []core.Range{
-			core.PointRange(16),
-			core.PointRange(22),
-		}, sel.Ranges())
 	})
 
 	t.Run("open above repeated cursors", func(t *testing.T) {

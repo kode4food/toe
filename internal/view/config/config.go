@@ -74,10 +74,6 @@ func LogFilePath() (string, bool) {
 	return loader.LogFile()
 }
 
-func WorkspaceTrustPath() (string, bool) {
-	return loader.WorkspaceTrustFile()
-}
-
 func TrustWorkspace(dir string) error {
 	return loader.TrustWorkspace(dir)
 }

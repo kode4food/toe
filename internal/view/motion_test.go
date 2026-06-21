@@ -230,19 +230,6 @@ func TestExtendToColumn(t *testing.T) {
 	assert.True(t, h > 0)
 }
 
-func TestGotoColumn(t *testing.T) {
-	e := editorWithText(t, "hello\nworld")
-	e.SetCount(3)
-	action.GotoColumn(e)
-	assert.Equal(t, 2, cursorPos(t, e))
-}
-
-func TestGotoFileEnd(t *testing.T) {
-	e := editorWithText(t, "abc\ndef\n")
-	action.GotoFileEnd(e)
-	assert.Equal(t, 8, cursorPos(t, e))
-}
-
 func TestGotoNextParagraph(t *testing.T) {
 	e := editorWithText(t, "a\n\nb\n")
 	action.GotoNextParagraph(e)

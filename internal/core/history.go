@@ -47,10 +47,6 @@ func UndoSteps(n int) UndoKind {
 	return UndoKind{steps: n}
 }
 
-func UndoTimePeriod(d time.Duration) UndoKind {
-	return UndoKind{duration: d, timed: true}
-}
-
 func (h *History) CurrentRevision() int {
 	return h.current
 }

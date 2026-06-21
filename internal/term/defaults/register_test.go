@@ -64,10 +64,10 @@ func TestDefaults(t *testing.T) {
 	t.Run("binds window rotation", func(t *testing.T) {
 		km := defaultKeymaps(t)
 		for _, seq := range [][]command.KeyEvent{
-			{ctrl('w'), command.Char('w')},
+			{ctrl('w'), char('w')},
 			{ctrl('w'), ctrl('w')},
-			{command.Char(' '), command.Char('w'), command.Char('w')},
-			{command.Char(' '), command.Char('w'), ctrl('w')},
+			{char(' '), char('w'), char('w')},
+			{char(' '), char('w'), ctrl('w')},
 		} {
 			_, found, prefix := km.Lookup("NOR", seq)
 			assert.True(t, found)
@@ -81,7 +81,7 @@ func TestDefaults(t *testing.T) {
 		_, ok := km.ResolveCommand("goto_next_buffer")
 		assert.True(t, ok)
 		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
-			command.Char('g'), command.Char('n'),
+			char('g'), char('n'),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -93,7 +93,7 @@ func TestDefaults(t *testing.T) {
 		_, ok := km.ResolveCommand("goto_line_end_newline")
 		assert.True(t, ok)
 		_, found, prefix := km.Lookup("INS", []command.KeyEvent{
-			command.Special("end"),
+			special("end"),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -103,31 +103,31 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
-			command.Char('['),
+			char('['),
 		})
 		assert.False(t, found)
 		assert.True(t, prefix)
 
 		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
-			command.Char('['), command.Char('p'),
+			char('['), char('p'),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
 
 		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
-			command.Char(']'),
+			char(']'),
 		})
 		assert.False(t, found)
 		assert.True(t, prefix)
 
 		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
-			command.Char(']'), command.Char('p'),
+			char(']'), char('p'),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
 
 		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
-			command.Char('p'),
+			char('p'),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -206,7 +206,7 @@ func defaultRegistry(t *testing.T) *command.Registry {
 }
 
 func ctrl(ch rune) command.KeyEvent {
-	return command.Char(ch).WithMods(command.ModCtrl)
+	return char(ch).WithMods(command.ModCtrl)
 }
 
 func collectDefaultKeySeqs(km *command.Keymaps) map[string][]string {
@@ -288,25 +288,25 @@ func parseKeySeq(t *testing.T, seq string) []command.KeyEvent {
 func parseKeyPart(t *testing.T, part string) command.KeyEvent {
 	t.Helper()
 	if len(part) == 1 {
-		return command.Char(rune(part[0]))
+		return char(rune(part[0]))
 	}
 	if !strings.HasPrefix(part, "<") || !strings.HasSuffix(part, ">") {
-		return command.Special(part)
+		return special(part)
 	}
 	inner := strings.TrimSuffix(strings.TrimPrefix(part, "<"), ">")
 	if inner == "space" {
-		return command.Char(' ')
+		return char(' ')
 	}
 	if value, ok := strings.CutPrefix(inner, "C-"); ok {
-		return command.Char(rune(value[0])).WithMods(command.ModCtrl)
+		return char(rune(value[0])).WithMods(command.ModCtrl)
 	}
 	if value, ok := strings.CutPrefix(inner, "A-"); ok {
-		return command.Char(rune(value[0])).WithMods(command.ModAlt)
+		return char(rune(value[0])).WithMods(command.ModAlt)
 	}
 	if value, ok := strings.CutPrefix(inner, "S-"); ok {
-		return command.Special(value).WithMods(command.ModShift)
+		return special(value).WithMods(command.ModShift)
 	}
-	return command.Special(inner)
+	return special(inner)
 }
 
 func containsString(items []string, target string) bool {

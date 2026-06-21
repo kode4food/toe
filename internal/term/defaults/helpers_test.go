@@ -141,6 +141,14 @@ func envWithRegistry(t *testing.T, text string) (
 	return e, km, reg
 }
 
+func char(ch rune) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Char: ch}}
+}
+
+func special(name string) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Special: name}}
+}
+
 // runCmdArgs resolves a command and runs it with positional args parsed from
 // input against the command's own signature
 func runCmdArgs(

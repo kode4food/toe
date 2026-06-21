@@ -2,7 +2,9 @@ package core
 
 import "slices"
 
-const MaxPlaintextScan = 10000
+const (
+	MaxPlaintextScan = 10000
+)
 
 var (
 	// bracketTable contains pairs where only one side is a bracket
@@ -117,34 +119,4 @@ func IsCloseBracket(ch rune) bool {
 // IsValidBracket reports whether ch is either side of a bracket pair
 func IsValidBracket(ch rune) bool {
 	return IsOpenBracket(ch) || IsCloseBracket(ch)
-}
-
-// IsOpenPair reports whether ch is an opening character of any pair
-func IsOpenPair(ch rune) bool {
-	for _, p := range bracketPairTable {
-		if p[0] == ch {
-			return true
-		}
-	}
-	return false
-}
-
-// IsClosePair reports whether ch is a closing character of any pair
-func IsClosePair(ch rune) bool {
-	for _, p := range bracketPairTable {
-		if p[1] == ch {
-			return true
-		}
-	}
-	return false
-}
-
-// IsValidPair reports whether ch appears in any pair (open or close)
-func IsValidPair(ch rune) bool {
-	for _, p := range bracketPairTable {
-		if p[0] == ch || p[1] == ch {
-			return true
-		}
-	}
-	return false
 }

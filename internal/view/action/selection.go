@@ -264,46 +264,6 @@ func RotateSelectionsBackward(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
-// RotateSelectionsFirst sets the primary selection to the first range
-func RotateSelectionsFirst(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	sel := doc.SelectionFor(v.ID())
-	newSel, err := sel.SetPrimaryIndex(0)
-	if err != nil {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), newSel)
-}
-
-// RotateSelectionsLast sets the primary selection to the last range
-func RotateSelectionsLast(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	sel := doc.SelectionFor(v.ID())
-	n := len(sel.Ranges())
-	if n == 0 {
-		return
-	}
-	newSel, err := sel.SetPrimaryIndex(n - 1)
-	if err != nil {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), newSel)
-}
-
 // RotateContentsForward rotates the text content of each selection
 // range forward by count steps
 func RotateContentsForward(e *view.Editor) {
@@ -314,60 +274,6 @@ func RotateContentsForward(e *view.Editor) {
 // range backward by count steps
 func RotateContentsBackward(e *view.Editor) {
 	rotateSelectionContents(e, false)
-}
-
-// ReverseSelectionContents reverses the order of the text content of each
-// selection range. Even counts are a no-op (reversing twice restores order)
-func ReverseSelectionContents(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
-		return
-	}
-	count := max(e.Count(), 1)
-	if count%2 == 0 {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	n := len(ranges)
-	if n < 2 {
-		return
-	}
-	texts := make([]string, n)
-	for i, r := range ranges {
-		slice, err := text.Slice(r.From(), r.To())
-		if err != nil {
-			return
-		}
-		texts[i] = slice.String()
-	}
-	reversed := make([]string, n)
-	for i := range n {
-		reversed[i] = texts[n-1-i]
-	}
-	changes := make([]core.Change, n)
-	for i, r := range ranges {
-		changes[i] = core.TextChange(r.From(), r.To(), reversed[i])
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	newPrimary := (n - 1) - sel.PrimaryIndex()
-	newRanges := rangesAfterReplace(ranges, reversed)
-	newSel, err := core.NewSelection(newRanges, newPrimary)
-	if err != nil {
-		return
-	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
 // ToggleComments auto-selects line or block comment style based on context
@@ -474,18 +380,6 @@ func ScrollUp(e *view.Editor) {
 // ScrollDown scrolls the view down by count lines without moving the cursor
 func ScrollDown(e *view.Editor) {
 	scrollView(e, max(e.Count(), 1), false)
-}
-
-// ScrollUpLines scrolls the view up by exactly n lines without moving the
-// cursor. Used for mouse wheel events where count is fixed by scroll_lines
-func ScrollUpLines(e *view.Editor, n int) {
-	scrollView(e, max(n, 1), true)
-}
-
-// ScrollDownLines scrolls the view down by exactly n lines without moving
-// the cursor. Used for mouse wheel events where count is fixed by scroll_lines
-func ScrollDownLines(e *view.Editor, n int) {
-	scrollView(e, max(n, 1), false)
 }
 
 // PageUp moves the cursor and scrolls the view up by one page

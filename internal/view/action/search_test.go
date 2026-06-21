@@ -195,15 +195,6 @@ func TestPageOperations(t *testing.T) {
 		assert.NotPanics(t, func() { action.PageDown(e) })
 	})
 
-	t.Run("ScrollUpLines does not panic", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd")
-		assert.NotPanics(t, func() { action.ScrollUpLines(e, 2) })
-	})
-
-	t.Run("ScrollDownLines does not panic", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd")
-		assert.NotPanics(t, func() { action.ScrollDownLines(e, 2) })
-	})
 }
 
 func TestKillToLine(t *testing.T) {
@@ -251,19 +242,6 @@ func TestKillToLine(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "helloworld", doc.Text().String())
-	})
-}
-
-func TestOpenBelow(t *testing.T) {
-	t.Run("inserts blank line below", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
-
-		action.OpenBelow(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, "hello\n", doc.Text().String())
-		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
 }
 
@@ -760,33 +738,6 @@ func TestIndentWithSpaces(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.True(t, len(doc.Text().String()) > len("hello"))
-	})
-}
-
-func TestExtendLineAboveBranches(t *testing.T) {
-	t.Run("extends from first line backward wraps", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		// Start with full first-line selection then extend
-		setSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
-
-		action.ExtendLineAbove(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		sel := doc.SelectionFor(v.ID())
-		assert.True(t, sel.Primary().To() >= sel.Primary().From())
-	})
-
-	t.Run("last line extends to end of document", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		setCursor(t, e, 5)
-
-		action.ExtendLineAbove(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		sel := doc.SelectionFor(v.ID())
-		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
 }
 

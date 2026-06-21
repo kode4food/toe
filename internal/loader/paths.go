@@ -138,14 +138,6 @@ func WorkspaceTrustFile() (string, bool) {
 	return filepath.Join(dir, "trusted_workspaces"), true
 }
 
-func WorkspaceExcludeFile() (string, bool) {
-	dir, ok := DataDir()
-	if !ok {
-		return "", false
-	}
-	return filepath.Join(dir, "excluded_workspaces"), true
-}
-
 func FindWorkspace(dir string) (string, bool) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {

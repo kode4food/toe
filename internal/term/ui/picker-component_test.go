@@ -120,7 +120,7 @@ func fixedPicker(t *testing.T, n, w, h int) ui.Model {
 		m.PickerAction(func(*view.Editor) *ui.Picker {
 			return ui.NewPicker(e, src)
 		}),
-		[]command.KeyEvent{command.Char('p')},
+		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, w, h)
 	m = sendKey(m, 'p')

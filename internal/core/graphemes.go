@@ -1,95 +1,13 @@
 package core
 
-import "github.com/rivo/uniseg"
-
-type (
-	// GraphemeStr is an immutable string slice representing one grapheme
-	// cluster. Go strings are already immutable so no special type is needed
-	GraphemeStr = string
-
-	// GraphemeKind identifies the grapheme variant
-	GraphemeKind int
-
-	// Grapheme classifies a single grapheme cluster for rendering
-	Grapheme struct {
-		kind  GraphemeKind
-		text  GraphemeStr
-		width int
-	}
-)
-
-const (
-	GraphemeKindNewline GraphemeKind = iota + 1
-	GraphemeKindTab
-	GraphemeKindOther
+import (
+	"github.com/rivo/uniseg"
 )
 
 // TabWidthAt returns the visual width of a tab character at the given x
 // position
 func TabWidthAt(visualX, tabWidth int) int {
 	return tabWidth - (visualX % tabWidth)
-}
-
-// NewGrapheme constructs a Grapheme from a cluster string, visual x position,
-// and tab width setting
-func NewGrapheme(g GraphemeStr, visualX, tabWidth int) Grapheme {
-	if StrIsLineEnding(g) {
-		return Grapheme{kind: GraphemeKindNewline, width: 1}
-	}
-	if g == "\t" {
-		w := TabWidthAt(visualX, tabWidth)
-		return Grapheme{kind: GraphemeKindTab, text: g, width: w}
-	}
-	return Grapheme{kind: GraphemeKindOther, text: g, width: graphemeWidth(g)}
-}
-
-// NewDecorationGrapheme constructs an Other grapheme from a static decoration
-// string
-func NewDecorationGrapheme(g GraphemeStr) Grapheme {
-	return NewGrapheme(g, 0, 4)
-}
-
-func (g *Grapheme) Kind() GraphemeKind {
-	return g.kind
-}
-
-func (g *Grapheme) Text() GraphemeStr {
-	return g.text
-}
-
-// Width returns the visual display width of the grapheme in terminal columns
-func (g *Grapheme) Width() int {
-	return g.width
-}
-
-// IsWhitespace reports whether this grapheme is whitespace
-func (g *Grapheme) IsWhitespace() bool {
-	if g.kind != GraphemeKindOther {
-		return true
-	}
-	for _, ch := range g.text {
-		return CharIsWhitespace(ch)
-	}
-	return false
-}
-
-// IsWordBoundary reports whether this grapheme begins a word boundary
-func (g *Grapheme) IsWordBoundary() bool {
-	if g.kind != GraphemeKindOther {
-		return true
-	}
-	for _, ch := range g.text {
-		return !CharIsWord(ch)
-	}
-	return false
-}
-
-// ChangePosition updates the visual width of a Tab grapheme when its column
-// changes
-func (g *Grapheme) ChangePosition(visualX, tabWidth int) {
-	if g.kind == GraphemeKindTab {
-		g.width = TabWidthAt(visualX, tabWidth)
-	}
 }
 
 // NthPrevGraphemeBoundary returns the char index n grapheme clusters before

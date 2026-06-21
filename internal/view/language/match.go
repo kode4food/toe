@@ -1,7 +1,6 @@
 package language
 
 import (
-	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -93,29 +92,6 @@ func languageForShebang(langs Languages, content string) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-func languageRootMarkerExists(dir string, roots []string) bool {
-	osEntries, err := os.ReadDir(dir)
-	if err != nil {
-		return false
-	}
-	entries := make([]string, 0, len(osEntries))
-	for _, e := range osEntries {
-		entries = append(entries, e.Name())
-	}
-	for _, name := range entries {
-		for _, root := range roots {
-			if rootMarkerMatches(root, name) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func rootMarkerMatches(pattern, name string) bool {
-	return globMatch(pattern, name) || pattern == name
 }
 
 func globMatch(pattern, path string) bool {

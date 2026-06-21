@@ -90,14 +90,4 @@ func TestFindNthChar(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("FuncMatcher works", func(t *testing.T) {
-		doc := core.NewRope("a1b2c3")
-		pos, ok := doc.FindNthChar(
-			2,
-			core.FuncMatcher(func(r rune) bool { return r >= '0' && r <= '9' }),
-			0, core.DirectionForward,
-		)
-		assert.True(t, ok)
-		assert.Equal(t, 3, pos)
-	})
 }

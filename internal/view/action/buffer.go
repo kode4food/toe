@@ -157,11 +157,6 @@ func RepeatLastMotion(e *view.Editor) {
 	}
 }
 
-// GotoColumn moves each cursor to the Nth character column of its current line
-func GotoColumn(e *view.Editor) {
-	gotoColumn(e, false)
-}
-
 // ExtendToColumn extends each selection to the Nth character column
 func ExtendToColumn(e *view.Editor) {
 	gotoColumn(e, true)

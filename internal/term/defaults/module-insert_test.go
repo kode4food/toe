@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/kode4food/toe/internal/term/command"
 )
 
 func TestInsertRegister(t *testing.T) {
@@ -15,6 +13,6 @@ func TestInsertRegister(t *testing.T) {
 		res := runCmd(t, km, e, "insert_register")
 		assert.NotNil(t, res.Continuation)
 		// empty register pastes nothing; the continuation still completes
-		assert.Nil(t, res.Continuation(e, command.Char('a')))
+		assert.Nil(t, res.Continuation(e, char('a')))
 	})
 }

@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/kode4food/toe/internal/term/command"
 )
 
 func TestMotionGotoLine(t *testing.T) {
@@ -37,7 +35,7 @@ func TestMotionFindChar(t *testing.T) {
 		setCursor(t, e, 0)
 		res := runCmd(t, km, e, "find_next_char")
 		assert.NotNil(t, res.Continuation)
-		res.Continuation(e, command.Char('c'))
+		res.Continuation(e, char('c'))
 		assert.Equal(t, 2, cursorPos(t, e))
 	})
 
@@ -45,7 +43,7 @@ func TestMotionFindChar(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
 		setCursor(t, e, 0)
 		res := runCmd(t, km, e, "find_till_char")
-		res.Continuation(e, command.Char('c'))
+		res.Continuation(e, char('c'))
 		assert.Equal(t, 1, cursorPos(t, e))
 	})
 
@@ -53,7 +51,7 @@ func TestMotionFindChar(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
 		setCursor(t, e, 0)
 		res := runCmd(t, km, e, "find_next_char")
-		res.Continuation(e, command.Special("esc"))
+		res.Continuation(e, special("esc"))
 		assert.Equal(t, 0, cursorPos(t, e))
 	})
 }

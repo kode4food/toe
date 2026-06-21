@@ -60,7 +60,7 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 	m := ui.New(e, km)
 	bindNormalTestAction(
 		km, "buffer_picker", m.PickerAction(ui.BufferPicker),
-		[]command.KeyEvent{command.Char('b')},
+		[]command.KeyEvent{char('b')},
 	)
 	m = resize(m, 120, 40)
 	m = sendKey(m, 'b')

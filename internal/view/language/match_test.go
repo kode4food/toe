@@ -47,161 +47,6 @@ shebangs = ["python3"]
 	})
 }
 
-func TestLoadLanguages(t *testing.T) {
-	t.Run("loads glob file types", func(t *testing.T) {
-		path := writeLangToml(t, `
-[[language]]
-name = "owners"
-file-types = [{ glob = "OWNERS" }]
-`)
-		langs, ok := language.LoadLanguages(path)
-		assert.True(t, ok)
-		assert.Equal(t, "owners", langs.Languages[0].Name)
-		assert.Equal(t, "*/OWNERS", langs.Languages[0].FileTypes[0].Glob)
-	})
-
-	t.Run("loads brace-expansion globs", func(t *testing.T) {
-		path := writeLangToml(t, `
-[[language]]
-name = "c"
-file-types = [{ glob = "*.{c,h}" }]
-`)
-		langs, ok := language.LoadLanguages(path)
-		assert.True(t, ok)
-		assert.Equal(t, "*/*.{c,h}", langs.Languages[0].FileTypes[0].Glob)
-	})
-
-	t.Run("missing file returns false", func(t *testing.T) {
-		_, ok := language.LoadLanguages(
-			filepath.Join(t.TempDir(), "missing.toml"),
-		)
-		assert.False(t, ok)
-	})
-}
-
-func TestFindLanguageRoot(t *testing.T) {
-	t.Run("finds root with marker file", func(t *testing.T) {
-		dir := t.TempDir()
-		_, err := os.Create(filepath.Join(dir, "go.mod"))
-		assert.NoError(t, err)
-		lang := &language.Language{Roots: []string{"go.mod"}}
-		root, ok := language.FindLanguageRoot(dir, lang)
-		assert.True(t, ok)
-		assert.Equal(t, dir, root)
-	})
-
-	t.Run("no roots returns false", func(t *testing.T) {
-		_, ok := language.FindLanguageRoot(t.TempDir(), &language.Language{})
-		assert.False(t, ok)
-	})
-
-	t.Run("marker absent returns false", func(t *testing.T) {
-		lang := &language.Language{Roots: []string{"go.mod"}}
-		_, ok := language.FindLanguageRoot(t.TempDir(), lang)
-		assert.False(t, ok)
-	})
-
-	t.Run("finds root from file path", func(t *testing.T) {
-		dir := t.TempDir()
-		_, err := os.Create(filepath.Join(dir, "go.mod"))
-		assert.NoError(t, err)
-		sub := filepath.Join(dir, "pkg")
-		assert.NoError(t, os.Mkdir(sub, 0o755))
-		f, err := os.Create(filepath.Join(sub, "main.go"))
-		assert.NoError(t, err)
-		_ = f.Close()
-		lang := &language.Language{Roots: []string{"go.mod"}}
-		root, ok := language.FindLanguageRoot(
-			filepath.Join(sub, "main.go"), lang)
-		assert.True(t, ok)
-		assert.Equal(t, dir, root)
-	})
-}
-
-func TestFindLSPWorkspace(t *testing.T) {
-	t.Run("file outside workspace returns false", func(t *testing.T) {
-		_, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
-			File:      "/some/other/path/file.go",
-			Workspace: "/workspace",
-		})
-		assert.False(t, ok)
-	})
-
-	t.Run("fallback returns workspace root", func(t *testing.T) {
-		dir := t.TempDir()
-		f, err := os.Create(filepath.Join(dir, "file.go"))
-		assert.NoError(t, err)
-		_ = f.Close()
-		root, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
-			File:              filepath.Join(dir, "file.go"),
-			Workspace:         dir,
-			WorkspaceFallback: true,
-		})
-		assert.True(t, ok)
-		assert.Equal(t, dir, root)
-	})
-
-	t.Run("no fallback or root marker returns false", func(t *testing.T) {
-		dir := t.TempDir()
-		f, err := os.Create(filepath.Join(dir, "file.go"))
-		assert.NoError(t, err)
-		_ = f.Close()
-		_, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
-			File:      filepath.Join(dir, "file.go"),
-			Workspace: dir,
-		})
-		assert.False(t, ok)
-	})
-
-	t.Run("matching rootDir returns workspace", func(t *testing.T) {
-		dir := t.TempDir()
-		src := filepath.Join(dir, "src")
-		assert.NoError(t, os.Mkdir(src, 0o755))
-		f, err := os.Create(filepath.Join(src, "file.go"))
-		assert.NoError(t, err)
-		_ = f.Close()
-		root, ok := language.FindLSPWorkspace(language.LSPWorkspaceArgs{
-			File:      filepath.Join(src, "file.go"),
-			RootDirs:  []string{"src"},
-			Workspace: dir,
-		})
-		assert.True(t, ok)
-		assert.Equal(t, dir, root)
-	})
-}
-
-func TestSelectedGrammars(t *testing.T) {
-	langs := language.Languages{
-		Grammars: []language.Grammar{
-			{Name: "go"},
-			{Name: "rust"},
-			{Name: "skip"},
-		},
-	}
-
-	t.Run("no filter returns all", func(t *testing.T) {
-		langs.GrammarSelection = language.GrammarSelection{}
-		assert.Len(t, langs.SelectedGrammars(), 3)
-	})
-
-	t.Run("only filter selects subset", func(t *testing.T) {
-		langs.GrammarSelection = language.GrammarSelection{
-			Only: []string{"go"},
-		}
-		grammars := langs.SelectedGrammars()
-		assert.Len(t, grammars, 1)
-		assert.Equal(t, "go", grammars[0].Name)
-	})
-
-	t.Run("except filter excludes", func(t *testing.T) {
-		langs.GrammarSelection = language.GrammarSelection{
-			Except: []string{"skip"},
-		}
-		grammars := langs.SelectedGrammars()
-		assert.Len(t, grammars, 2)
-	})
-}
-
 func TestAutoPairConfig(t *testing.T) {
 	t.Run("absent returns defaults", func(t *testing.T) {
 		a := language.AutoPairConfig{}
@@ -271,24 +116,6 @@ func TestLoadBundledLanguages(t *testing.T) {
 	})
 }
 
-func TestLoadLanguageForScope(t *testing.T) {
-	t.Run("unknown scope returns empty language", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		l := language.LoadLanguageForScope("source.xyz_unknown")
-		assert.NotNil(t, l)
-	})
-
-	t.Run("known scope from user langs", func(t *testing.T) {
-		setUserLangs(t, `
-[[language]]
-name = "myscope"
-scope = "source.myscope"
-`)
-		l := language.LoadLanguageForScope("source.myscope")
-		assert.Equal(t, "myscope", l.Name)
-	})
-}
-
 func TestExpandGlobBraces(t *testing.T) {
 	t.Run("brace expansion detects c files", func(t *testing.T) {
 		setUserLangs(t, `
@@ -311,13 +138,6 @@ file-types = [{ glob = "*.{c,h}" }]
 		assert.True(t, ok)
 		assert.Equal(t, "c", name)
 	})
-}
-
-func writeLangToml(t *testing.T, text string) string {
-	t.Helper()
-	path := filepath.Join(t.TempDir(), "languages.toml")
-	assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
-	return path
 }
 
 func setUserLangs(t *testing.T, text string) {

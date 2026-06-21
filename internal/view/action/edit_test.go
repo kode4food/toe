@@ -177,47 +177,6 @@ func TestExtendLineBellow(t *testing.T) {
 	})
 }
 
-func TestExtendLineAbove(t *testing.T) {
-	t.Run("extends upward to full line", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd")
-		setCursor(t, e, 0)
-
-		action.ExtendLineAbove(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, sel.Primary().From(), 0)
-	})
-}
-
-func TestExtendLine(t *testing.T) {
-	t.Run("forward selection extends below", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setCursor(t, e, 0)
-
-		action.ExtendLine(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, 0, sel.Primary().From())
-		assert.Equal(t, 3, sel.Primary().To())
-	})
-
-	t.Run("backward selection extends above", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setSelection(t, e, []core.Range{core.NewRange(3, 0)}, 0)
-
-		action.ExtendLine(e)
-
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
-		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, core.DirectionBackward, sel.Primary().Direction())
-	})
-}
-
 func TestSelectLineBelow(t *testing.T) {
 	t.Run("selects current line forward", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd\nef")

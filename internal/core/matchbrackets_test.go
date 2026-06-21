@@ -109,24 +109,4 @@ func TestBracketClassifiers(t *testing.T) {
 		assert.False(t, core.IsValidBracket('x'))
 	})
 
-	t.Run("IsOpenPair includes same-char pairs", func(t *testing.T) {
-		assert.True(t, core.IsOpenPair('('))
-		assert.True(t, core.IsOpenPair('"'))
-		assert.True(t, core.IsOpenPair('`'))
-		assert.False(t, core.IsOpenPair('x'))
-	})
-
-	t.Run("IsClosePair includes same-char pairs", func(t *testing.T) {
-		assert.True(t, core.IsClosePair(')'))
-		assert.True(t, core.IsClosePair('"'))
-		assert.True(t, core.IsClosePair('|'))
-		assert.False(t, core.IsClosePair('x'))
-	})
-
-	t.Run("IsValidPair", func(t *testing.T) {
-		assert.True(t, core.IsValidPair('('))
-		assert.True(t, core.IsValidPair(')'))
-		assert.True(t, core.IsValidPair('"'))
-		assert.False(t, core.IsValidPair('x'))
-	})
 }

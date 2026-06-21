@@ -85,7 +85,7 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 		bindNormalTestAction(
 			km, "explorer_buf",
 			m.PickerAction(ui.FileExplorerInBufferDir),
-			[]command.KeyEvent{command.Char('e')},
+			[]command.KeyEvent{char('e')},
 		)
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'e')
@@ -102,7 +102,7 @@ func explorerModel(t *testing.T, dir string) ui.Model {
 	m := ui.New(e, km)
 	bindNormalTestAction(
 		km, "explorer", m.PickerAction(ui.FileExplorer),
-		[]command.KeyEvent{command.Char('e')},
+		[]command.KeyEvent{char('e')},
 	)
 	m = resize(m, 100, 30)
 	return sendKey(m, 'e')

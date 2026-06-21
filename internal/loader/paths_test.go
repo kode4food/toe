@@ -206,35 +206,3 @@ func TestQueryWorkspaceTrust(t *testing.T) {
 	assert.Equal(t, loader.TrustTrusted, status)
 	assert.Equal(t, loader.TrustTrusted, loader.QueryWorkspaceTrust(cwd, true))
 }
-
-func TestExplicitWorkspaceTrust(t *testing.T) {
-	root := t.TempDir()
-	work := filepath.Join(root, "work")
-	cwd := filepath.Join(work, "src")
-	err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
-	assert.NoError(t, err)
-	err = os.MkdirAll(cwd, 0o755)
-	assert.NoError(t, err)
-	t.Setenv("XDG_DATA_HOME", t.TempDir())
-
-	status := loader.QueryWorkspaceTrustWithExplicitUntrust(cwd, false)
-
-	assert.Equal(t, loader.TrustDenyOnce, status)
-
-	err = loader.TrustWorkspace(cwd)
-	assert.NoError(t, err)
-
-	status = loader.QueryWorkspaceTrustWithExplicitUntrust(cwd, false)
-
-	assert.Equal(t, loader.TrustAllowAlways, status)
-
-	err = loader.ExcludeWorkspace(cwd)
-	assert.NoError(t, err)
-
-	status = loader.QueryWorkspaceTrustWithExplicitUntrust(cwd, false)
-
-	assert.Equal(t, loader.TrustDenyAlways, status)
-	assert.Equal(t, loader.TrustAllowAlways,
-		loader.QueryWorkspaceTrustWithExplicitUntrust(cwd, true),
-	)
-}

@@ -87,43 +87,6 @@ func TestIndentWidth(t *testing.T) {
 	})
 }
 
-func TestLevelForLine(t *testing.T) {
-	t.Run("eight spaces at width 4 is level 2", func(t *testing.T) {
-		line := core.NewRope("        fn new")
-		assert.Equal(t, 2, core.LevelForLine(line, 4, 4))
-	})
-
-	t.Run("three tabs is level 3", func(t *testing.T) {
-		line := core.NewRope("\t\t\tfn new")
-		assert.Equal(t, 3, core.LevelForLine(line, 4, 4))
-	})
-
-	t.Run("tab+four-spaces+tab is level 3", func(t *testing.T) {
-		line := core.NewRope("\t    \tfn new")
-		assert.Equal(t, 3, core.LevelForLine(line, 4, 4))
-	})
-
-	t.Run("sixteen spaces at width 16 is level 1", func(t *testing.T) {
-		line := core.NewRope(strings.Repeat(" ", 16) + "x")
-		assert.Equal(t, 1, core.LevelForLine(line, 16, 16))
-	})
-
-	t.Run("thirty-two spaces at width 16 is level 2", func(t *testing.T) {
-		line := core.NewRope(strings.Repeat(" ", 32) + "x")
-		assert.Equal(t, 2, core.LevelForLine(line, 16, 16))
-	})
-
-	t.Run("zero indentWidth returns 0", func(t *testing.T) {
-		line := core.NewRope("    x")
-		assert.Equal(t, 0, core.LevelForLine(line, 4, 0))
-	})
-
-	t.Run("no indent is level 0", func(t *testing.T) {
-		line := core.NewRope("fn new")
-		assert.Equal(t, 0, core.LevelForLine(line, 4, 4))
-	})
-}
-
 func TestAutoDetect(t *testing.T) {
 	t.Run("detects tab indentation", func(t *testing.T) {
 		doc := core.NewRope(

@@ -2,6 +2,7 @@ package loader
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -9,6 +10,11 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+)
+
+var (
+	ErrThemeNotFound = errors.New("theme not found")
+	ErrThemeCycle    = errors.New("theme inheritance cycle")
 )
 
 var (

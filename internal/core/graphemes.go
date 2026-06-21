@@ -1,8 +1,6 @@
 package core
 
-import (
-	"github.com/rivo/uniseg"
-)
+import "github.com/rivo/uniseg"
 
 type (
 	// GraphemeStr is an immutable string slice representing one grapheme

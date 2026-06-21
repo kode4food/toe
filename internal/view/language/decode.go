@@ -1,8 +1,6 @@
 package language
 
-import (
-	"github.com/kode4food/toe/internal/core"
-)
+import "github.com/kode4food/toe/internal/core"
 
 func decodeLanguagesMap(m map[string]any) (Languages, bool) {
 	values, ok := languageValues(m["language"])

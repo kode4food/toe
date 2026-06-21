@@ -77,7 +77,9 @@ const (
 var (
 	// ErrCommandLineParse is the sentinel error for command-line parse failures
 	ErrCommandLineParse = errors.New("command line parse error")
+)
 
+var (
 	expansionKindNames = map[string]ExpansionKind{
 		"":    ExpansionVariable,
 		"u":   ExpansionUnicode,

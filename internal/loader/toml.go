@@ -8,10 +8,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-var (
-	//go:embed assets/languages.toml
-	defaultLanguagesTOML string
-)
+//go:embed assets/languages.toml
+var defaultLanguagesTOML string
 
 // LoadDefaultLanguagesTOML decodes the bundled language defaults
 func LoadDefaultLanguagesTOML() (map[string]any, bool) {

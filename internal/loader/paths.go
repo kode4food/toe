@@ -1,11 +1,14 @@
 package loader
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 )
+
+var ErrPathUnavailable = errors.New("path unavailable")
 
 const (
 	DirName           = "toe"

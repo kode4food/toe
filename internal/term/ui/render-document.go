@@ -43,23 +43,15 @@ type (
 		cursorlinePrim      bool
 		cursorlineSec       bool
 		cursorIsBlock       bool
-		// hStart/hWidth define the visible horizontal window in content columns
-		// for non-wrapped lines. Graphemes outside it are not built, so a long
-		// line only allocates cells for the visible slice. hWidth <= 0 disables
-		// windowing (the whole line is built, e.g. under soft-wrap)
-		hStart int
-		hWidth int
-		// maxRows bounds how many soft-wrapped visual rows to build for the
-		// line, so it never builds more rows than the viewport can show
-		maxRows int
+		hStart              int
+		hWidth              int
+		maxRows             int
 	}
 
 	renderedRow struct {
-		cells  []renderedCell
-		width  int
-		offset int
-		// colStart is the absolute content column of the first cell, non-zero
-		// only when the build was horizontally windowed
+		cells    []renderedCell
+		width    int
+		offset   int
 		colStart int
 	}
 

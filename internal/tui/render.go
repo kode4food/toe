@@ -11,6 +11,7 @@ var (
 		UnderlineDashed:     "\x1b[4:5m",
 		UnderlineDoubleLine: "\x1b[21m",
 	}
+
 	fgNamedEsc = [colorWhite + 1]string{
 		colorReset:        "\x1b[39m",
 		colorBlack:        "\x1b[30m",
@@ -30,6 +31,7 @@ var (
 		colorLightGray:    "\x1b[37m",
 		colorWhite:        "\x1b[97m",
 	}
+
 	bgNamedEsc = [colorWhite + 1]string{
 		colorReset:        "\x1b[49m",
 		colorBlack:        "\x1b[40m",

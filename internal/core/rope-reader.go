@@ -2,13 +2,11 @@ package core
 
 import "io"
 
-type (
-	// RopeReader streams rope contents through io.Reader
-	RopeReader struct {
-		text []byte
-		pos  int
-	}
-)
+// RopeReader streams rope contents through io.Reader
+type RopeReader struct {
+	text []byte
+	pos  int
+}
 
 func NewRopeReader(r Rope) *RopeReader {
 	return &RopeReader{text: []byte(r.String())}

@@ -2,9 +2,7 @@ package core
 
 import "slices"
 
-const (
-	MaxPlaintextScan = 10000
-)
+const MaxPlaintextScan = 10000
 
 var (
 	// bracketTable contains pairs where only one side is a bracket

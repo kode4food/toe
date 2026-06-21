@@ -1,8 +1,6 @@
 package tui
 
-import (
-	"github.com/rivo/uniseg"
-)
+import "github.com/rivo/uniseg"
 
 type (
 	Cell struct {
@@ -20,6 +18,7 @@ type (
 
 var (
 	defaultCell = Cell{Symbol: " "}
+
 	// asciiTable holds bytes 0x00..0x7f in order; asciiTable[ch:ch+1] yields a
 	// single-byte string that shares this backing array, so cell symbols for
 	// ASCII content are produced without allocation

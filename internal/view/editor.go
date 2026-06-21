@@ -20,29 +20,19 @@ type Editor struct {
 	configReload func() error
 	registers    register.Registers
 
-	nextDocID DocumentId
-
-	// count is the pending numeric argument (0 means none)
-	count int
-	// activeRegister is the pending register selection (0 means default)
-	activeRegister rune
-	// viewHeight is the current content area height, kept in sync by the UI
-	viewHeight int
-	// viewContentWidth is the text content area width (viewport minus gutter),
-	// kept in sync by the UI layer and used for visual-line movement
-	viewContentWidth int
-	// prevDocID is the doc switched away from most recently (alternate file)
-	prevDocID DocumentId
-	// lastModifiedDocIDs tracks the two most recently modified-then-left docs
+	nextDocID          DocumentId
+	prevDocID          DocumentId
 	lastModifiedDocIDs [2]DocumentId
-	// lastMotion is the most recently recorded repeatable motion
-	lastMotion func(*Editor)
-	// statusMsg is a transient message set by commands (error, warning, info)
-	// The UI reads and clears it after each keypress via TakeStatusMsg
+
+	count          int
+	activeRegister rune
+	lastMotion     func(*Editor)
+
+	viewHeight       int
+	viewContentWidth int
+
 	statusMsg string
-	// hint is a transient display hint set by actions during a continuation
-	// (e.g. "f ...", "r ..."). The UI reads and clears it via TakeHint
-	hint string
+	hint      string
 }
 
 var (

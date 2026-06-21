@@ -17,6 +17,24 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type statusElemCtx struct {
+	doc        *view.Document
+	opts       *view.Options
+	mode       string
+	baseTUI    tui.Style
+	modeSt     tui.Style
+	sepSt      tui.Style
+	sep        string
+	nSel       int
+	primIdx    int
+	primLen    int
+	totalLines int
+	reg        rune
+	cwd        string
+	row        int
+	col        int
+}
+
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	w := r.w
 	isErr := r.ec.cmdMsg != "" &&
@@ -108,134 +126,20 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	baseTUI := lipglossToTUIStyle(st)
 
-	renderElem := func(e view.StatusLineElement) statusElem {
-		switch e {
-		case view.StatusLineMode:
-			return statusElem{
-				text:  " " + opts.ModeNameForMode(mode) + " ",
-				style: lipglossToTUIStyle(modeSt),
-			}
-		case view.StatusLineSeparator:
-			return statusElem{
-				text:  sep,
-				style: lipglossToTUIStyle(sepSt),
-			}
-		case view.StatusLineSpacer, view.StatusLineSpinner:
-			return statusElem{}
-		case view.StatusLineFileName:
-			return statusElem{
-				text:  " " + doc.RelativeName(cwd) + " ",
-				style: baseTUI,
-			}
-		case view.StatusLineFileBaseName:
-			return statusElem{
-				text:  " " + filepath.Base(doc.Path()) + " ",
-				style: baseTUI,
-			}
-		case view.StatusLineFileAbsolutePath:
-			return statusElem{
-				text:  " " + doc.Path() + " ",
-				style: baseTUI,
-			}
-		case view.StatusLineReadOnly:
-			if doc.Readonly() {
-				return statusElem{
-					text: " [readonly]", style: baseTUI,
-				}
-			}
-			return statusElem{}
-		case view.StatusLineModified:
-			if doc.Modified() {
-				return statusElem{
-					text: "[modified] ", style: baseTUI,
-				}
-			}
-			return statusElem{}
-		case view.StatusLineSelections:
-			if nSel == 1 {
-				return statusElem{text: " 1 sel ", style: baseTUI}
-			}
-			return statusElem{
-				text: fmt.Sprintf(
-					" %d/%d sels ", primIdx+1, nSel,
-				),
-				style: baseTUI,
-			}
-		case view.StatusLinePrimaryLen:
-			return statusElem{
-				text:  fmt.Sprintf(" %d ", primLen),
-				style: baseTUI,
-			}
-		case view.StatusLinePosition:
-			return statusElem{
-				text:  fmt.Sprintf(" %d:%d ", row, col),
-				style: baseTUI,
-			}
-		case view.StatusLinePercent:
-			pct := 0
-			if totalLines > 0 {
-				pct = (row * 100) / totalLines
-			}
-			return statusElem{
-				text:  fmt.Sprintf(" %d%% ", pct),
-				style: baseTUI,
-			}
-		case view.StatusLineTotalLines:
-			return statusElem{
-				text:  fmt.Sprintf(" %d ", totalLines),
-				style: baseTUI,
-			}
-		case view.StatusLineFileEncoding:
-			return statusElem{} // UTF-8 omitted per reference
-		case view.StatusLineFileLineEnding:
-			le := doc.LineEnding()
-			label := "lf"
-			if le == core.LineEndingCRLF {
-				label = "crlf"
-			}
-			return statusElem{
-				text: " " + label + " ", style: baseTUI,
-			}
-		case view.StatusLineFileIndentStyle:
-			indent := doc.IndentStyle()
-			var label string
-			if indent.IsTabs() {
-				label = "tabs"
-			} else {
-				label = fmt.Sprintf("spaces:%d", indent.Width())
-			}
-			return statusElem{
-				text: " " + label + " ", style: baseTUI,
-			}
-		case view.StatusLineFileType:
-			lang := doc.Lang()
-			if lang == "" {
-				lang = "text"
-			}
-			return statusElem{text: " " + lang + " ", style: baseTUI}
-		case view.StatusLineRegister:
-			if reg != 0 {
-				return statusElem{
-					text:  fmt.Sprintf(" reg=%c ", reg),
-					style: baseTUI,
-				}
-			}
-			return statusElem{}
-		case view.StatusLineDiagnostics,
-			view.StatusLineWorkspaceDiag,
-			view.StatusLineVersionControl:
-			return statusElem{}
-		default:
-			return statusElem{}
-		}
+	src := &statusElemCtx{
+		doc: doc, opts: opts, mode: mode,
+		baseTUI: baseTUI,
+		modeSt:  lipglossToTUIStyle(modeSt),
+		sepSt:   lipglossToTUIStyle(sepSt),
+		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
+		totalLines: totalLines, reg: reg, cwd: cwd,
+		row: row, col: col,
 	}
 
-	collectElems := func(
-		elems []view.StatusLineElement,
-	) []statusElem {
+	collectElems := func(elems []view.StatusLineElement) []statusElem {
 		out := make([]statusElem, 0, len(elems))
 		for _, e := range elems {
-			if se := renderElem(e); se.text != "" {
+			if se := src.elem(e); se.text != "" {
 				out = append(out, se)
 			}
 		}
@@ -436,5 +340,119 @@ func cursorKindToShape(kind view.CursorKind) tea.CursorShape {
 		return tea.CursorUnderline
 	default:
 		return tea.CursorBlock
+	}
+}
+
+func (s *statusElemCtx) elem(e view.StatusLineElement) statusElem {
+	switch e {
+	case view.StatusLineMode:
+		return statusElem{
+			text:  " " + s.opts.ModeNameForMode(s.mode) + " ",
+			style: s.modeSt,
+		}
+	case view.StatusLineSeparator:
+		return statusElem{
+			text:  s.sep,
+			style: s.sepSt,
+		}
+	case view.StatusLineSpacer, view.StatusLineSpinner:
+		return statusElem{}
+	case view.StatusLineFileName:
+		return statusElem{
+			text:  " " + s.doc.RelativeName(s.cwd) + " ",
+			style: s.baseTUI,
+		}
+	case view.StatusLineFileBaseName:
+		return statusElem{
+			text:  " " + filepath.Base(s.doc.Path()) + " ",
+			style: s.baseTUI,
+		}
+	case view.StatusLineFileAbsolutePath:
+		return statusElem{
+			text:  " " + s.doc.Path() + " ",
+			style: s.baseTUI,
+		}
+	case view.StatusLineReadOnly:
+		if s.doc.Readonly() {
+			return statusElem{text: " [readonly]", style: s.baseTUI}
+		}
+		return statusElem{}
+	case view.StatusLineModified:
+		if s.doc.Modified() {
+			return statusElem{text: "[modified] ", style: s.baseTUI}
+		}
+		return statusElem{}
+	case view.StatusLineSelections:
+		if s.nSel == 1 {
+			return statusElem{text: " 1 sel ", style: s.baseTUI}
+		}
+		return statusElem{
+			text: fmt.Sprintf(
+				" %d/%d sels ", s.primIdx+1, s.nSel,
+			),
+			style: s.baseTUI,
+		}
+	case view.StatusLinePrimaryLen:
+		return statusElem{
+			text:  fmt.Sprintf(" %d ", s.primLen),
+			style: s.baseTUI,
+		}
+	case view.StatusLinePosition:
+		return statusElem{
+			text:  fmt.Sprintf(" %d:%d ", s.row, s.col),
+			style: s.baseTUI,
+		}
+	case view.StatusLinePercent:
+		pct := 0
+		if s.totalLines > 0 {
+			pct = (s.row * 100) / s.totalLines
+		}
+		return statusElem{
+			text:  fmt.Sprintf(" %d%% ", pct),
+			style: s.baseTUI,
+		}
+	case view.StatusLineTotalLines:
+		return statusElem{
+			text:  fmt.Sprintf(" %d ", s.totalLines),
+			style: s.baseTUI,
+		}
+	case view.StatusLineFileEncoding:
+		return statusElem{}
+	case view.StatusLineFileLineEnding:
+		le := s.doc.LineEnding()
+		label := "lf"
+		if le == core.LineEndingCRLF {
+			label = "crlf"
+		}
+		return statusElem{text: " " + label + " ", style: s.baseTUI}
+	case view.StatusLineFileIndentStyle:
+		indent := s.doc.IndentStyle()
+		var label string
+		if indent.IsTabs() {
+			label = "tabs"
+		} else {
+			label = fmt.Sprintf("spaces:%d", indent.Width())
+		}
+		return statusElem{text: " " + label + " ", style: s.baseTUI}
+	case view.StatusLineFileType:
+		lang := s.doc.Lang()
+		if lang == "" {
+			lang = "text"
+		}
+		return statusElem{text: " " + lang + " ", style: s.baseTUI}
+	case view.StatusLineRegister:
+		if s.reg != 0 {
+			return statusElem{
+				text:  fmt.Sprintf(" reg=%c ", s.reg),
+				style: s.baseTUI,
+			}
+		}
+		return statusElem{}
+	case view.StatusLineDiagnostics,
+		view.StatusLineWorkspaceDiag,
+		view.StatusLineVersionControl:
+		return statusElem{}
+	default:
+		return statusElem{}
 	}
 }

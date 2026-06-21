@@ -775,46 +775,18 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 		firstPos = skipHorizontalWhitespace(text, firstPos, firstEnd)
 		currentToken := commentTokenAt(text, commentTokens, firstPos)
 		for l := lr.From; l < endLine; l++ {
-			lineEnd, err := text.LineEndCharIndex(l)
-			if err != nil {
+			span, token, ok := joinLinePair(
+				text, commentTokens, currentToken, l)
+			if !ok {
 				continue
 			}
-			nextStart, err := text.LineToChar(l + 1)
-			if err != nil {
-				continue
-			}
-			nextLineEnd, err := text.LineEndCharIndex(l + 1)
-			if err != nil {
-				continue
-			}
-			skip := nextStart
-			for skip < nextLineEnd {
-				ch, err := text.CharAt(skip)
-				if err != nil || (ch != ' ' && ch != '\t') {
-					break
-				}
-				skip++
-			}
-			if token := commentTokenAt(text, commentTokens, skip); token != "" {
-				if token == currentToken {
-					skip += len([]rune(token))
-					skip = skipHorizontalWhitespace(text, skip, nextLineEnd)
-				} else {
-					currentToken = token
-				}
-			}
-			sep := " "
-			if skip == nextLineEnd {
-				sep = ""
-			}
-			key := joinDedupKey{lineEnd: lineEnd, skip: skip}
+			currentToken = token
+			key := joinDedupKey{lineEnd: span.from, skip: span.to}
 			if dedup[key] {
 				continue
 			}
 			dedup[key] = true
-			spans = append(spans, commentSpan{
-				from: lineEnd, to: skip, sep: sep,
-			})
+			spans = append(spans, span)
 		}
 	}
 	if len(spans) == 0 {
@@ -837,20 +809,8 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 		return
 	}
 	if withSpace {
-		ranges := make([]core.Range, 0, len(spans))
-		off := 0
-		for _, s := range spans {
-			if s.sep == "" {
-				off += s.to - s.from
-				continue
-			}
-			ranges = append(ranges, core.PointRange(s.from-off))
-			off += s.to - s.from - 1
-		}
-		if len(ranges) > 0 {
-			if sel, err := core.NewSelection(ranges, 0); err == nil {
-				newSel = sel
-			}
+		if sel, ok := spaceJoinSelection(spans); ok {
+			newSel = sel
 		}
 	}
 	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
@@ -865,6 +825,55 @@ func skipHorizontalWhitespace(text core.Rope, from, to int) int {
 		from++
 	}
 	return from
+}
+
+func joinLinePair(
+	text core.Rope, tokens []string, currentToken string, l int,
+) (commentSpan, string, bool) {
+	lineEnd, err := text.LineEndCharIndex(l)
+	if err != nil {
+		return commentSpan{}, currentToken, false
+	}
+	nextStart, err := text.LineToChar(l + 1)
+	if err != nil {
+		return commentSpan{}, currentToken, false
+	}
+	nextLineEnd, err := text.LineEndCharIndex(l + 1)
+	if err != nil {
+		return commentSpan{}, currentToken, false
+	}
+	skip := skipHorizontalWhitespace(text, nextStart, nextLineEnd)
+	if token := commentTokenAt(text, tokens, skip); token != "" {
+		if token == currentToken {
+			skip += len([]rune(token))
+			skip = skipHorizontalWhitespace(text, skip, nextLineEnd)
+		} else {
+			currentToken = token
+		}
+	}
+	sep := " "
+	if skip == nextLineEnd {
+		sep = ""
+	}
+	return commentSpan{from: lineEnd, to: skip, sep: sep}, currentToken, true
+}
+
+func spaceJoinSelection(spans []commentSpan) (core.Selection, bool) {
+	ranges := make([]core.Range, 0, len(spans))
+	off := 0
+	for _, s := range spans {
+		if s.sep == "" {
+			off += s.to - s.from
+			continue
+		}
+		ranges = append(ranges, core.PointRange(s.from-off))
+		off += s.to - s.from - 1
+	}
+	if len(ranges) == 0 {
+		return core.Selection{}, false
+	}
+	sel, err := core.NewSelection(ranges, 0)
+	return sel, err == nil
 }
 
 func commentTokenAt(text core.Rope, tokens []string, pos int) string {

@@ -259,34 +259,15 @@ func FindChar(args FindCharArgs) {
 			}
 		}
 
+		start := fwd
+		search := findCharForward
+		if !args.Forward {
+			start = bwd
+			search = findCharBackward
+		}
 		found := -1
 		for range n {
-			found = -1
-			if args.Forward {
-				for j := fwd; j < doc.LenChars(); j++ {
-					c, err := doc.CharAt(j)
-					if err != nil {
-						break
-					}
-					if c == args.Ch {
-						found = j
-						fwd = j + 1
-						break
-					}
-				}
-			} else {
-				for j := bwd; j >= 0; j-- {
-					c, err := doc.CharAt(j)
-					if err != nil {
-						break
-					}
-					if c == args.Ch {
-						found = j
-						bwd = j - 1
-						break
-					}
-				}
-			}
+			found, start = search(doc, start, args.Ch)
 			if found == -1 {
 				return r
 			}
@@ -967,21 +948,9 @@ func KillToLineStart(e *view.Editor) {
 			}
 			head = prevEnd
 		} else {
-			// Find first non-whitespace on current line
 			lineEnd, _ := text.LineEndCharIndex(line)
-			firstNonWS := lineEnd // default: all whitespace
-			for i := lineStart; i < lineEnd; i++ {
-				ch, err := text.CharAt(i)
-				if err != nil {
-					break
-				}
-				if ch != ' ' && ch != '\t' {
-					firstNonWS = i
-					break
-				}
-			}
+			firstNonWS := skipHorizontalWhitespace(text, lineStart, lineEnd)
 			if firstNonWS < pos {
-				// Cursor is after first non-whitespace: kill to it
 				head = firstNonWS
 			} else {
 				head = lineStart
@@ -1338,43 +1307,12 @@ func pasteImpl(e *view.Editor, before bool) {
 	}
 	changes := make([]core.Change, 0, len(ranges))
 	for i, r := range ranges {
-		val := valueFor(i)
-		var pos int
-		if linewise {
-			if before {
-				line, err := text.CharToLine(r.From())
-				if err != nil {
-					continue
-				}
-				pos, err = text.LineToChar(line)
-				if err != nil {
-					continue
-				}
-			} else {
-				line, err := text.CharToLine(r.To())
-				if err != nil {
-					continue
-				}
-				next := line + 1
-				if next >= text.LenLines() {
-					pos = text.LenChars()
-				} else {
-					var err2 error
-					pos, err2 = text.LineToChar(next)
-					if err2 != nil {
-						continue
-					}
-				}
-			}
-		} else {
-			if before {
-				pos = r.From()
-			} else {
-				pos = r.To()
-			}
+		pos, ok := pastePosition(text, r, linewise, before)
+		if !ok {
+			continue
 		}
 		pastePos[i] = pos
-		changes = append(changes, core.TextChange(pos, pos, val))
+		changes = append(changes, core.TextChange(pos, pos, valueFor(i)))
 	}
 	if len(changes) == 0 {
 		return
@@ -1608,4 +1546,65 @@ func runeOffsetToByteOffset(s string, runeOff int) int {
 
 func byteOffsetToRuneOffset(s string, byteOff int) int {
 	return len([]rune(s[:byteOff]))
+}
+
+func pastePosition(
+	text core.Rope, r core.Range, linewise, before bool,
+) (int, bool) {
+	if !linewise {
+		if before {
+			return r.From(), true
+		}
+		return r.To(), true
+	}
+	if before {
+		line, err := text.CharToLine(r.From())
+		if err != nil {
+			return 0, false
+		}
+		pos, err := text.LineToChar(line)
+		if err != nil {
+			return 0, false
+		}
+		return pos, true
+	}
+	line, err := text.CharToLine(r.To())
+	if err != nil {
+		return 0, false
+	}
+	next := line + 1
+	if next >= text.LenLines() {
+		return text.LenChars(), true
+	}
+	pos, err := text.LineToChar(next)
+	if err != nil {
+		return 0, false
+	}
+	return pos, true
+}
+
+func findCharForward(doc core.Rope, start int, ch rune) (int, int) {
+	for j := start; j < doc.LenChars(); j++ {
+		c, err := doc.CharAt(j)
+		if err != nil {
+			break
+		}
+		if c == ch {
+			return j, j + 1
+		}
+	}
+	return -1, start
+}
+
+func findCharBackward(doc core.Rope, start int, ch rune) (int, int) {
+	for j := start; j >= 0; j-- {
+		c, err := doc.CharAt(j)
+		if err != nil {
+			break
+		}
+		if c == ch {
+			return j, j - 1
+		}
+	}
+	return -1, start
 }

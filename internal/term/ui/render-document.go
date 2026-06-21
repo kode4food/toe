@@ -507,6 +507,102 @@ type renderContentArgs struct {
 	focused bool
 }
 
+func (dc *docRenderCache) ensureRawText(rev int, text core.Rope) string {
+	if dc.rawTextRev != rev || dc.rawTextCached == "" {
+		dc.rawTextRev = rev
+		dc.rawTextCached = text.String()
+	}
+	return dc.rawTextCached
+}
+
+func (dc *docRenderCache) ensureHL(
+	rev int, lang, rawText string,
+) []highlight.Span {
+	if lang != "text" && (dc.hlRev != rev || dc.hlLang != lang) {
+		dc.hlRev = rev
+		dc.hlLang = lang
+		dc.hlSpans = syntax.Tokenize(
+			highlight.NormalizeNewlines(rawText), lang,
+		)
+	}
+	if lang == "text" {
+		return nil
+	}
+	return dc.hlSpans
+}
+
+func (dc *docRenderCache) ensureSearchSpans(
+	rev int, pat, rawText string,
+) {
+	if dc.smRev == rev && dc.smPat == pat {
+		return
+	}
+	dc.smRev = rev
+	dc.smPat = pat
+	dc.smSpans = nil
+	if pat == "" {
+		return
+	}
+	re, err := regexp.Compile(pat)
+	if err != nil {
+		return
+	}
+	locs := re.FindAllStringIndex(rawText, -1)
+	if len(locs) == 0 {
+		return
+	}
+	b2r := make([]int, len(rawText)+1)
+	ri := 0
+	for bi := range rawText {
+		b2r[bi] = ri
+		ri++
+	}
+	b2r[len(rawText)] = ri
+	for _, loc := range locs {
+		from, to := b2r[loc[0]], b2r[loc[1]]
+		if to > from {
+			dc.smSpans = append(dc.smSpans, matchSpan{from, to})
+		}
+	}
+}
+
+func cursorCols(
+	selSpans []selectionSpan, lStr string,
+	lineStart, lineEnd, tabW int,
+) (primary, secondary map[int]bool) {
+	for _, sp := range selSpans {
+		if sp.cur < lineStart || sp.cur > lineEnd {
+			continue
+		}
+		vcol := 0
+		offset := sp.cur - lineStart
+		charIdx := 0
+		for _, ch := range lStr {
+			if charIdx >= offset {
+				break
+			}
+			charIdx++
+			if ch == '\t' {
+				vcol += tabW - vcol%tabW
+			} else {
+				vcol++
+			}
+		}
+		if sp.primary {
+			if primary == nil {
+				primary = make(map[int]bool)
+			}
+			primary[vcol] = true
+		} else {
+			if secondary == nil {
+				secondary = make(map[int]bool)
+			}
+			secondary[vcol] = true
+		}
+	}
+	return
+}
+
 func (r *renderPass) renderContent(args renderContentArgs) {
 	doc := args.doc
 	v := args.view
@@ -584,54 +680,14 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		c.docCaches[docID] = dc
 	}
 
-	if dc.rawTextRev != rev || dc.rawTextCached == "" {
-		dc.rawTextRev = rev
-		dc.rawTextCached = text.String()
-	}
-	rawText := dc.rawTextCached
-
-	if lang != "text" && (dc.hlRev != rev || dc.hlLang != lang) {
-		dc.hlRev = rev
-		dc.hlLang = lang
-		dc.hlSpans = syntax.Tokenize(
-			highlight.NormalizeNewlines(rawText), lang)
-	}
-	hlSpans := dc.hlSpans
-	if lang == "text" {
-		hlSpans = nil
-	}
+	rawText := dc.ensureRawText(rev, text)
+	hlSpans := dc.ensureHL(rev, lang, rawText)
 
 	pat, hasPat := r.cx.Editor.Registers().First('/')
 	if !hasPat {
 		pat = ""
 	}
-	if dc.smRev != rev || dc.smPat != pat {
-		dc.smRev = rev
-		dc.smPat = pat
-		dc.smSpans = nil
-		if pat != "" {
-			if re, err := regexp.Compile(pat); err == nil {
-				locs := re.FindAllStringIndex(rawText, -1)
-				if len(locs) > 0 {
-					b2r := make([]int, len(rawText)+1)
-					ri := 0
-					for bi := range rawText {
-						b2r[bi] = ri
-						ri++
-					}
-					b2r[len(rawText)] = ri
-					for _, loc := range locs {
-						from, to := b2r[loc[0]], b2r[loc[1]]
-						if to > from {
-							dc.smSpans = append(
-								dc.smSpans, matchSpan{from, to},
-							)
-						}
-					}
-				}
-			}
-		}
-	}
+	dc.ensureSearchSpans(rev, pat, rawText)
 	searchMatches := dc.smSpans
 	th := r.activeTheme()
 	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
@@ -787,36 +843,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 
 		var primaryCursorCols, secondaryCursorCols map[int]bool
 		if opts.Cursorcolumn {
-			for _, sp := range selSpans {
-				if sp.cur < lineStart || sp.cur > lineContentEnd {
-					continue
-				}
-				vcol := 0
-				offset := sp.cur - lineStart
-				charIdx := 0
-				for _, ch := range lStr {
-					if charIdx >= offset {
-						break
-					}
-					charIdx++
-					if ch == '\t' {
-						vcol += tabW - vcol%tabW
-					} else {
-						vcol++
-					}
-				}
-				if sp.primary {
-					if primaryCursorCols == nil {
-						primaryCursorCols = make(map[int]bool)
-					}
-					primaryCursorCols[vcol] = true
-				} else {
-					if secondaryCursorCols == nil {
-						secondaryCursorCols = make(map[int]bool)
-					}
-					secondaryCursorCols[vcol] = true
-				}
-			}
+			primaryCursorCols, secondaryCursorCols = cursorCols(
+				selSpans, lStr, lineStart, lineContentEnd, tabW,
+			)
 		}
 
 		// The anchor line is scrolled by vOff visual rows; skip those rows when
@@ -866,6 +895,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 					break
 				}
 				rowPrefixW := 0
+				if i > 0 && showLineNumbers {
+					buf.SetString(x0, bufRow, blankGutter, lineTUI)
+				}
 				if i == 0 {
 					cr.writeToBuffer(rowWriteArgs{
 						buf: buf, x: contentX, y: bufRow,
@@ -873,11 +905,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 						startCol: hOff,
 					})
 				} else {
-					if showLineNumbers {
-						buf.SetString(
-							x0, bufRow, blankGutter, lineTUI,
-						)
-					}
 					cont := prefixRow
 					cont.append(cr)
 					cont.writeToBuffer(rowWriteArgs{
@@ -887,7 +914,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 					})
 					rowPrefixW = prefixW
 				}
-				rowMap = append(rowMap, viewRowEntry{lineNum, cr.offset, rowPrefixW})
+				rowMap = append(rowMap, viewRowEntry{
+					lineNum, cr.offset, rowPrefixW,
+				})
 				bufRow++
 			}
 		} else {
@@ -922,32 +951,9 @@ func (r *rowRender) rows() []renderedRow {
 	col := 0
 	pos := r.lineStart
 
-	// Soft-wrap break points are computed once per line by the shared visual
-	// formatter so rendering wraps at exactly the same offsets that cursor
-	// movement and scrolling use. Each break offset is where a new visual row
-	// begins. maxRows bounds the build to what the viewport can show
-	var breaks []int
+	breaks := r.softWrapBreaks(tabW)
 	breakIdx := 0
 	maxRows := max(r.maxRows, 1)
-	if r.softWrap {
-		// A line only wraps when its width exceeds the viewport. Sum the width
-		// with an alloc-free scan first so the common short line skips the
-		// rune-slice conversion and break computation entirely
-		w := 0
-		for _, ch := range r.lineStr {
-			w += view.RuneWidth(ch, w, tabW)
-		}
-		if w > r.format.ViewportWidth {
-			vf := &core.VisualMoveFormat{
-				ViewportWidth:    r.format.ViewportWidth,
-				TabWidth:         r.format.TabWidth,
-				MaxWrap:          r.format.MaxWrap,
-				MaxIndentRetain:  r.format.MaxIndentRetain,
-				WrapIndicatorLen: ansi.StringWidth(r.format.WrapIndicator),
-			}
-			breaks = vf.VisualRowStarts([]rune(r.lineStr))
-		}
-	}
 	rows := make([]renderedRow, 0, min(len(breaks)+1, maxRows))
 	rowStart := 0
 	flushRow := func(nextStart int) {
@@ -963,9 +969,6 @@ func (r *rowRender) rows() []renderedRow {
 		row.write(rendered, width, style)
 	}
 
-	// windowed builds only the visible horizontal slice of a non-wrapped line,
-	// skipping the per-grapheme work for off-screen columns so a long line does
-	// not allocate a cell per character
 	windowed := !r.softWrap && r.hWidth > 0
 	hEnd := r.hStart + r.hWidth
 	if windowed {
@@ -1061,6 +1064,17 @@ func (r *rowRender) rows() []renderedRow {
 	return []renderedRow{row}
 }
 
+func (r *rowRender) isGuideAt(
+	col, indentCol, startGuide, endGuide int,
+) bool {
+	if !r.ig.Render || col >= indentCol {
+		return false
+	}
+	tabW := r.format.TabWidth
+	level := col / tabW
+	return col%tabW == 0 && level >= startGuide && level < endGuide
+}
+
 type rowGraphemeArgs struct {
 	ch         rune
 	col        int
@@ -1080,9 +1094,7 @@ func (r *rowRender) renderGrapheme(
 	tabW := r.format.TabWidth
 	wsRender := r.ws.Render
 	wsChars := r.ws.Characters
-	guide := r.ig.Render && col < args.indentCol &&
-		col%tabW == 0 && col/tabW >= args.startGuide &&
-		col/tabW < args.endGuide
+	guide := r.isGuideAt(col, args.indentCol, args.startGuide, args.endGuide)
 	switch ch {
 	case '\t':
 		width := tabW - col%tabW
@@ -1179,6 +1191,27 @@ func lineString(text core.Rope, from, to int) string {
 		return ""
 	}
 	return s
+}
+
+func (r *rowRender) softWrapBreaks(tabW int) []int {
+	if !r.softWrap {
+		return nil
+	}
+	w := 0
+	for _, ch := range r.lineStr {
+		w += view.RuneWidth(ch, w, tabW)
+	}
+	if w <= r.format.ViewportWidth {
+		return nil
+	}
+	vf := &core.VisualMoveFormat{
+		ViewportWidth:    r.format.ViewportWidth,
+		TabWidth:         r.format.TabWidth,
+		MaxWrap:          r.format.MaxWrap,
+		MaxIndentRetain:  r.format.MaxIndentRetain,
+		WrapIndicatorLen: ansi.StringWidth(r.format.WrapIndicator),
+	}
+	return vf.VisualRowStarts([]rune(r.lineStr))
 }
 
 func softWrapContinuationRow(
@@ -1302,7 +1335,9 @@ func (r *renderedRow) write(text string, width int, style tui.Style) {
 	if text == "" || width <= 0 {
 		return
 	}
-	r.cells = append(r.cells, renderedCell{text: text, width: width, style: style})
+	r.cells = append(r.cells, renderedCell{
+		text: text, width: width, style: style,
+	})
 	r.width += width
 }
 

@@ -191,24 +191,8 @@ func (p *PickerComponent) handleKey(
 		return dismiss()
 	case k.Code.Special == "ret":
 		if item := ps.selection(); item != nil {
-			if nav, ok := ps.source.(NavigablePickerSource); ok {
-				if fn := nav.Navigate(cx.Editor, *item); fn != nil {
-					if next := fn(cx.Editor); next != nil {
-						feedCmd := next.feedCmd
-						next.feedCmd = nil
-						if ps.dynamicStop != nil {
-							ps.dynamicStop()
-						}
-						ps.cancel()
-						return consumedWith(
-							func(comp *Compositor, _ *Context) tea.Cmd {
-								comp.Pop()
-								comp.Push(newPickerComponent(next))
-								return feedCmd
-							},
-						), nil
-					}
-				}
+			if r, cmd, ok := p.navigateItem(cx, ps, *item); ok {
+				return r, cmd
 			}
 			ps.source.Accept(cx.Editor, *item)
 		}
@@ -247,6 +231,34 @@ func (p *PickerComponent) handleKey(
 	// keyboard navigation keeps the selection on screen, unlike the wheel
 	ps.ensureCursorVisible()
 	return consumed(), nil
+}
+
+func (p *PickerComponent) navigateItem(
+	cx *Context, ps *Picker, item PickerItem,
+) (EventResult, tea.Cmd, bool) {
+	nav, ok := ps.source.(NavigablePickerSource)
+	if !ok {
+		return EventResult{}, nil, false
+	}
+	fn := nav.Navigate(cx.Editor, item)
+	if fn == nil {
+		return EventResult{}, nil, false
+	}
+	next := fn(cx.Editor)
+	if next == nil {
+		return EventResult{}, nil, false
+	}
+	feedCmd := next.feedCmd
+	next.feedCmd = nil
+	if ps.dynamicStop != nil {
+		ps.dynamicStop()
+	}
+	ps.cancel()
+	return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
+		comp.Pop()
+		comp.Push(newPickerComponent(next))
+		return feedCmd
+	}), nil, true
 }
 
 func (p *PickerComponent) drawPickerBox(

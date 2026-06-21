@@ -67,29 +67,7 @@ func AutoDetect(doc Rope) (IndentStyle, bool) {
 			continue
 		}
 
-		leading := 1
-		done := false
-		skip := false
-	inner:
-		for _, ch := range runes[1:] {
-			switch {
-			case ch == '\t' && isTabs && !done:
-				leading++
-			case ch == ' ' && !isTabs && !done:
-				leading++
-			case CharIsLineEnding(ch):
-				skip = true
-				break inner
-			case CharIsWhitespace(ch):
-				done = true
-			default:
-				break inner
-			}
-			if leading > 256 {
-				skip = true
-				break inner
-			}
-		}
+		leading, skip := countLeading(runes, isTabs)
 		if skip {
 			continue
 		}
@@ -191,4 +169,26 @@ func (i IndentStyle) IndentWidth(tabWidth int) int {
 		return tabWidth
 	}
 	return int(i.width)
+}
+
+func countLeading(runes []rune, isTabs bool) (int, bool) {
+	leading := 1
+	for _, ch := range runes[1:] {
+		switch {
+		case ch == '\t' && isTabs:
+			leading++
+		case ch == ' ' && !isTabs:
+			leading++
+		case CharIsLineEnding(ch):
+			return 0, true
+		case CharIsWhitespace(ch):
+			return leading, false
+		default:
+			return leading, false
+		}
+		if leading > 256 {
+			return 0, true
+		}
+	}
+	return leading, false
 }

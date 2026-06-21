@@ -338,44 +338,77 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 		highlighted := args.hlFrom >= 0 &&
 			lineNum >= args.hlFrom && lineNum <= args.hlTo
 
-		if softWrap {
-			indent := indentWidth(lStr, args.format.TabWidth)
-			prefixRow := softWrapContinuationRow(args.format, indent, lgStyles)
-			for i, cr := range rendered {
-				if i < rowSkip {
-					continue
-				}
-				if bufRow >= args.h {
-					break
-				}
-				row := cr
-				if i > 0 {
-					row = prefixRow
-					row.append(cr)
-				}
-				row.writeToBuffer(rowWriteArgs{
-					buf: buf, x: x0, y: y0 + bufRow,
-					fillStyle: fillTUI, width: args.w,
-				})
-				buf.PatchBgRange(x0, y0+bufRow, args.w, popupBg)
-				if highlighted {
-					buf.PatchBgRange(x0, y0+bufRow, args.w, hlBg)
-				}
-				bufRow++
-			}
-		} else {
-			rendered[0].writeToBuffer(rowWriteArgs{
-				buf: buf, x: x0, y: y0 + bufRow,
-				fillStyle: fillTUI, width: args.w,
-			})
-			buf.PatchBgRange(x0, y0+bufRow, args.w, popupBg)
-			if highlighted {
-				buf.PatchBgRange(x0, y0+bufRow, args.w, hlBg)
-			}
-			bufRow++
-		}
+		bufRow += emitPreviewLine(
+			buf, x0, y0+bufRow, rendered,
+			previewLineCtx{
+				format: args.format, lgStyles: lgStyles,
+				fillTUI: fillTUI, popupBg: popupBg,
+				hlBg: hlBg, w: args.w,
+				rowSkip: rowSkip, maxH: args.h - bufRow,
+				softWrap: softWrap, lStr: lStr,
+				highlighted: highlighted,
+			},
+		)
 	}
 	if len(rulers) > 0 {
 		applyRulers(buf, x0, y0, args.w, args.h, 0, rulers, rulerBg)
 	}
+}
+
+type previewLineCtx struct {
+	format      *language.TextFormat
+	lgStyles    *lipglossStyles
+	fillTUI     tui.Style
+	popupBg     tui.Color
+	hlBg        tui.Color
+	w           int
+	rowSkip     int
+	maxH        int
+	softWrap    bool
+	lStr        string
+	highlighted bool
+}
+
+func emitPreviewLine(
+	buf *tui.Buffer, x, y int,
+	rendered []renderedRow, ctx previewLineCtx,
+) int {
+	n := 0
+	if ctx.softWrap {
+		indent := indentWidth(ctx.lStr, ctx.format.TabWidth)
+		prefixRow := softWrapContinuationRow(ctx.format, indent, ctx.lgStyles)
+		for i, cr := range rendered {
+			if i < ctx.rowSkip {
+				continue
+			}
+			if n >= ctx.maxH {
+				break
+			}
+			row := cr
+			if i > 0 {
+				row = prefixRow
+				row.append(cr)
+			}
+			row.writeToBuffer(rowWriteArgs{
+				buf: buf, x: x, y: y + n,
+				fillStyle: ctx.fillTUI, width: ctx.w,
+			})
+			buf.PatchBgRange(x, y+n, ctx.w, ctx.popupBg)
+			if ctx.highlighted {
+				buf.PatchBgRange(x, y+n, ctx.w, ctx.hlBg)
+			}
+			n++
+		}
+	} else {
+		rendered[0].writeToBuffer(rowWriteArgs{
+			buf: buf, x: x, y: y,
+			fillStyle: ctx.fillTUI, width: ctx.w,
+		})
+		buf.PatchBgRange(x, y, ctx.w, ctx.popupBg)
+		if ctx.highlighted {
+			buf.PatchBgRange(x, y, ctx.w, ctx.hlBg)
+		}
+		n = 1
+	}
+	return n
 }

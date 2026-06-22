@@ -18,14 +18,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type bindTestActionArgs struct {
-	km   *command.Keymaps
-	mode string
-	name string
-	fn   command.KeyAction
-	seqs [][]command.KeyEvent
-}
-
 func stripANSI(s string) string {
 	re := regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
 	return strings.TrimRight(re.ReplaceAllString(s, ""), "\n")
@@ -110,6 +102,14 @@ func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
 func resize(m ui.Model, w, h int) ui.Model {
 	m2, _ := m.Update(tea.WindowSizeMsg{Width: w, Height: h})
 	return m2.(ui.Model)
+}
+
+type bindTestActionArgs struct {
+	km   *command.Keymaps
+	mode string
+	name string
+	fn   command.KeyAction
+	seqs [][]command.KeyEvent
 }
 
 func bindTestAction(args bindTestActionArgs) {

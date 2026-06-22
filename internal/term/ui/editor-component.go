@@ -8,7 +8,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
-	"github.com/kode4food/toe/internal/view"
 	act "github.com/kode4food/toe/internal/view/action"
 )
 
@@ -33,14 +32,9 @@ type (
 		mouseDownRange  *core.Range
 	}
 
-	// renderPass bundles the state needed for a single render pass so
-	// every render helper receives it without passing cx and ec separately
-	renderPass struct {
-		ec *EditorComponent
-		cx *Context
-		w  int
-		h  int
-	}
+	saveGenSlot struct{ gen int }
+
+	autoSaveMsg struct{ gen int }
 )
 
 func (e *EditorComponent) HandleEvent(
@@ -156,13 +150,6 @@ func newEditorComponent() *EditorComponent {
 	}
 }
 
-func newRenderCache() *renderCache {
-	return &renderCache{
-		docCaches:   map[view.DocumentId]*docRenderCache{},
-		viewRowMaps: map[view.Id][]viewRowEntry{},
-	}
-}
-
 func (e *EditorComponent) cancelPending(cx *Context) {
 	e.pending = nil
 	e.status = ""
@@ -226,15 +213,4 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	return tea.Tick(d, func(time.Time) tea.Msg {
 		return autoSaveMsg{gen: gen}
 	})
-}
-
-func bufferlineVisible(cx *Context) bool {
-	switch cx.Editor.Options().BufferLine {
-	case view.BufferLineAlways:
-		return true
-	case view.BufferLineMultiple:
-		return len(cx.Editor.AllDocuments()) > 1
-	default:
-		return false
-	}
 }

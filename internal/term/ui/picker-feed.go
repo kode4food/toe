@@ -6,6 +6,20 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+type (
+	pickerFeedMsg struct {
+		items []PickerItem
+		feed  <-chan PickerItem
+		done  <-chan struct{}
+	}
+
+	pickerDynamicFeedMsg struct {
+		gen   int
+		items []PickerItem
+		feed  <-chan PickerItem
+	}
+)
+
 func drainPickerFeed(ch <-chan PickerItem, done <-chan struct{}) tea.Cmd {
 	return func() tea.Msg {
 		batch := make([]PickerItem, 0, pickerFeedBatchSize)

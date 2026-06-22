@@ -3,7 +3,6 @@ package theme
 import (
 	"errors"
 	"fmt"
-	"image/color"
 	"slices"
 	"strings"
 
@@ -12,22 +11,13 @@ import (
 	"github.com/kode4food/toe/internal/loader"
 )
 
-type (
-	Theme struct {
-		name          string
-		styles        map[string]lipgloss.Style
-		scopes        []string
-		rainbowLength int
-		rgb           bool
-	}
-
-	palette map[string]colorSpec
-
-	colorSpec struct {
-		color color.Color
-		rgb   bool
-	}
-)
+type Theme struct {
+	name          string
+	styles        map[string]lipgloss.Style
+	scopes        []string
+	rainbowLength int
+	rgb           bool
+}
 
 var (
 	ErrMissingSelection = errors.New("missing required ui.selection scope")
@@ -42,7 +32,7 @@ func Decode(data map[string]any) (*Theme, []string) {
 	rainbow, rainbowRGB, err := pal.parseStyleArray(data["rainbow"])
 	if err != nil {
 		warnings = append(warnings, err.Error())
-		rainbow = defaultRainbow()
+		rainbow = defaultRainbow
 		rainbowRGB = false
 	}
 	rgb = rainbowRGB

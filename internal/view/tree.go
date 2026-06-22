@@ -26,6 +26,26 @@ type (
 		id   Id
 		area Area
 	}
+
+	// Layout describes how child views are arranged within a split container
+	Layout int
+
+	// Direction is used to navigate between splits
+	Direction int
+)
+
+const (
+	// LayoutVertical places splits side by side
+	LayoutVertical Layout = iota
+	// LayoutHorizontal stacks splits one above the other
+	LayoutHorizontal
+)
+
+const (
+	DirectionUp Direction = iota
+	DirectionDown
+	DirectionLeft
+	DirectionRight
 )
 
 // Insert adds a view as the next sibling after the currently focused view

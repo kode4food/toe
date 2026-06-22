@@ -18,6 +18,46 @@ import (
 )
 
 type (
+	lipglossStyles struct {
+		background       lipgloss.Style
+		text             lipgloss.Style
+		line             lipgloss.Style
+		lineSelected     lipgloss.Style
+		selection        lipgloss.Style
+		selectionPrim    lipgloss.Style
+		cursor           lipgloss.Style
+		cursorPrim       lipgloss.Style
+		cursorlinePrim   lipgloss.Style
+		cursorlineSec    lipgloss.Style
+		cursorcolumnPrim lipgloss.Style
+		cursorcolumnSec  lipgloss.Style
+		whitespace       lipgloss.Style
+		indentGuide      lipgloss.Style
+		ruler            lipgloss.Style
+		searchMatch      lipgloss.Style
+	}
+
+	tuiStyles struct {
+		text             tui.Style
+		selection        tui.Style
+		selectionPrim    tui.Style
+		cursor           tui.Style
+		cursorPrim       tui.Style
+		cursorlinePrim   tui.Style
+		cursorlineSec    tui.Style
+		cursorcolumnPrim tui.Style
+		cursorcolumnSec  tui.Style
+		whitespace       tui.Style
+		indentGuide      tui.Style
+		searchMatch      tui.Style
+	}
+
+	// statusElem is a single rendered piece of a status bar
+	statusElem struct {
+		text  string
+		style tui.Style
+	}
+
 	statusElemCtx struct {
 		doc        *view.Document
 		opts       *view.Options
@@ -34,15 +74,6 @@ type (
 		cwd        string
 		row        int
 		col        int
-	}
-
-	renderStatusArgs struct {
-		doc     *view.Document
-		view    *view.View
-		buf     *tui.Buffer
-		x, y    int
-		width   int
-		focused bool
 	}
 )
 
@@ -157,6 +188,15 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	if rightW > 0 && rightW <= w {
 		buf.SetString(w-rightW, y, right, tuiSt)
 	}
+}
+
+type renderStatusArgs struct {
+	doc     *view.Document
+	view    *view.View
+	buf     *tui.Buffer
+	x, y    int
+	width   int
+	focused bool
 }
 
 func (r *renderPass) renderStatus(args renderStatusArgs) {

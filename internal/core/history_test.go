@@ -9,14 +9,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-type commitArgs struct {
-	t    *testing.T
-	h    *core.History
-	st   *core.State
-	c    core.Change
-	when time.Time
-}
-
 func TestHistory(t *testing.T) {
 	t.Run("undoes and redoes edits", func(t *testing.T) {
 		h := core.NewHistory()
@@ -180,6 +172,14 @@ func historyFixture(t *testing.T) (*core.History, core.State) {
 	})
 
 	return &h, st
+}
+
+type commitArgs struct {
+	t    *testing.T
+	h    *core.History
+	st   *core.State
+	c    core.Change
+	when time.Time
 }
 
 func commit(args commitArgs) {

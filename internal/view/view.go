@@ -6,16 +6,72 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-// View is a viewport into a document
-type View struct {
-	id     Id
-	docID  DocumentId
-	offset Position
-	mode   Mode
-	jumps  JumpList
-	// area is the screen rectangle assigned by the layout engine
-	area Area
-}
+type (
+	// View is a viewport into a document
+	View struct {
+		id     Id
+		docID  DocumentId
+		offset Position
+		mode   Mode
+		jumps  JumpList
+		// area is the screen rectangle assigned by the layout engine
+		area Area
+	}
+
+	// Id is the unique identifier for an open view
+	Id int
+
+	// Mode describes the current editing mode
+	Mode int
+
+	// Align describes vertical scroll alignment
+	Align int
+
+	// Area is the screen rectangle assigned to a view by the layout engine
+	Area struct {
+		X, Y, Width, Height int
+	}
+
+	// Position holds the scroll offset for a view
+	Position struct {
+		// Anchor is the first visible char position in the document
+		Anchor int
+		// HorizontalOffset is the number of columns scrolled right
+		HorizontalOffset int
+		// VerticalOffset is lines of context above the visible area
+		VerticalOffset int
+	}
+
+	// JumpList manages a bounded history of cursor positions
+	JumpList struct {
+		items []jump
+		head  int
+	}
+
+	jump struct {
+		docID  DocumentId
+		anchor int
+	}
+
+	// JumpEntry is a single entry in the jump history
+	JumpEntry struct {
+		DocID  DocumentId
+		Anchor int
+	}
+)
+
+const (
+	ModeNormal Mode = iota
+	ModeInsert
+	ModeSelect
+)
+
+const (
+	// InvalidViewId is the zero value, indicating no view
+	InvalidViewId Id = 0
+
+	jumpListCap = 64
+)
 
 // ID returns the view identifier
 func (v *View) ID() Id {
@@ -131,6 +187,59 @@ func (v *View) EnsureCursorVisibleHorizontal(
 		h = max(col-width+1+so, 0)
 	}
 	v.offset.HorizontalOffset = h
+}
+
+func (m Mode) String() string {
+	switch m {
+	case ModeNormal:
+		return "NOR"
+	case ModeInsert:
+		return "INS"
+	case ModeSelect:
+		return "SEL"
+	}
+	return "NOR"
+}
+
+// Entries returns all jump history entries from oldest to newest
+func (j *JumpList) Entries() []JumpEntry {
+	out := make([]JumpEntry, len(j.items))
+	for i, it := range j.items {
+		out[i] = JumpEntry{it.docID, it.anchor}
+	}
+	return out
+}
+
+// Push adds a new jump position, discarding forward history
+func (j *JumpList) Push(docID DocumentId, anchor int) {
+	if len(j.items) > 0 && j.head < len(j.items) {
+		j.items = j.items[:j.head]
+	}
+	j.items = append(j.items, jump{docID, anchor})
+	if len(j.items) > jumpListCap {
+		j.items = j.items[len(j.items)-jumpListCap:]
+	}
+	j.head = len(j.items)
+}
+
+// Backward moves to the previous jump and returns it
+func (j *JumpList) Backward() (DocumentId, int, bool) {
+	if j.head <= 1 {
+		return 0, 0, false
+	}
+	j.head--
+	it := j.items[j.head-1]
+	return it.docID, it.anchor, true
+}
+
+// Forward moves to the next jump and returns it
+func (j *JumpList) Forward() (DocumentId, int, bool) {
+	if j.head >= len(j.items) {
+		return 0, 0, false
+	}
+	it := j.items[j.head]
+	j.head++
+	return it.docID, it.anchor, true
 }
 
 // RuneWidth returns the display width of ch at visual column col, expanding tabs

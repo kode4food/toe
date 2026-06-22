@@ -3,6 +3,8 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	act "github.com/kode4food/toe/internal/view/action"
@@ -172,4 +174,112 @@ func (r *renderPass) resolveClickPos(x, y int) (resolveClickPosRes, bool) {
 		return resolveClickPosRes{}, false
 	}
 	return resolveClickPosRes{doc: doc, v: v, pos: pos}, true
+}
+
+type cursorScreenPosArgs struct {
+	text    core.Rope
+	cursor  int
+	gutterW int
+	rowMap  []viewRowEntry
+	tabW    int
+	// hOff is the view's horizontal scroll offset in content columns; the
+	// cursor's content column is shifted left by it, the gutter is not
+	hOff int
+}
+
+func cursorScreenPos(args cursorScreenPosArgs) (visualY, visualX int) {
+	text := args.text
+	cursor := args.cursor
+	gutterW := args.gutterW
+	cursorLine, err := text.CharToLine(cursor)
+	if err != nil {
+		return 0, gutterW
+	}
+	lineStart, err := text.LineToChar(cursorLine)
+	if err != nil {
+		return 0, gutterW
+	}
+	cursorOff := cursor - lineStart
+
+	segY := -1
+	segStart := 0
+	segPrefixW := 0
+	for i, e := range args.rowMap {
+		if e.logLine != cursorLine {
+			if segY >= 0 {
+				break
+			}
+			continue
+		}
+		if cursorOff < e.offset {
+			break
+		}
+		segY = i
+		segStart = e.offset
+		segPrefixW = e.prefixW
+	}
+	if segY < 0 {
+		return 0, gutterW
+	}
+
+	lineEnd, err := text.LineEndCharIndex(cursorLine)
+	if err != nil {
+		return segY, gutterW + segPrefixW
+	}
+	col := 0
+	runeIdx := 0
+	for _, ch := range lineString(text, lineStart, lineEnd) {
+		if runeIdx >= cursorOff {
+			break
+		}
+		if runeIdx >= segStart {
+			col += view.RuneWidth(ch, col, args.tabW)
+		}
+		runeIdx++
+	}
+	return segY, gutterW + segPrefixW + col - args.hOff
+}
+
+type charPosInLineSegArgs struct {
+	text    core.Rope
+	docLine int
+	charOff int
+	targetX int
+	tabW    int
+}
+
+func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
+	text := args.text
+	docLine := args.docLine
+	charOff := args.charOff
+	lineStart, err := text.LineToChar(docLine)
+	if err != nil {
+		return 0, false
+	}
+	lineEnd, err := text.LineEndCharIndex(docLine)
+	if err != nil {
+		return 0, false
+	}
+	col := 0
+	charPos := lineStart + charOff
+	runeIdx := 0
+	for _, ch := range lineString(text, lineStart, lineEnd) {
+		if runeIdx < charOff {
+			runeIdx++
+			continue
+		}
+		var w int
+		if ch == '\t' {
+			w = args.tabW - col%args.tabW
+		} else {
+			w = ansi.StringWidth(string(ch))
+		}
+		if col+w > args.targetX {
+			break
+		}
+		col += w
+		charPos++
+		runeIdx++
+	}
+	return charPos, true
 }

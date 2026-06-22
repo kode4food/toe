@@ -137,6 +137,11 @@ type (
 		columns []string
 		primary int
 	}
+
+	pickerDynamicTriggerMsg struct {
+		gen   int
+		query string
+	}
 )
 
 const pickerDynamicDelay = 275 * time.Millisecond

@@ -2,6 +2,7 @@ package view
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -42,6 +43,28 @@ type (
 		oldState core.State
 		cs       core.ChangeSet
 	}
+
+	// DocumentId is the unique identifier for an open document
+	DocumentId int
+
+	// DocumentOpenError describes why a document could not be opened
+	DocumentOpenError struct {
+		Path string
+		Err  error
+	}
+
+	// DocumentSavedEvent carries information about a successfully saved doc
+	DocumentSavedEvent struct {
+		DocID DocumentId
+		Path  string
+	}
+)
+
+const (
+	// InvalidDocumentId is the zero value, indicating no document
+	InvalidDocumentId DocumentId = 0
+	// ScratchBufferName is the display name used for unnamed scratch documents
+	ScratchBufferName = "[scratch]"
 )
 
 // RestoreCursor reports whether the next exit from insert mode should move the
@@ -302,6 +325,14 @@ func (d *Document) Redo(vid Id) bool {
 	d.modified = true
 	d.modifiedSinceAccessed = true
 	return true
+}
+
+func (d *DocumentOpenError) Error() string {
+	return fmt.Sprintf("open %s: %v", d.Path, d.Err)
+}
+
+func (d *DocumentOpenError) Unwrap() error {
+	return d.Err
 }
 
 func newDocument(id DocumentId, opts *Options) *Document {

@@ -45,15 +45,6 @@ const (
 	promptCompletionMaxRows   = 10
 )
 
-type promptComponentArgs struct {
-	ec       *EditorComponent
-	kind     promptKind
-	forward  bool
-	prompt   string
-	fn       func(*view.Editor, string) error
-	pickerFn func(*view.Editor, string) (*Picker, error)
-}
-
 func (p *PromptComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -93,6 +84,15 @@ func (p *PromptComponent) Cursor(
 	_, _ int, _ *Context,
 ) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
+}
+
+type promptComponentArgs struct {
+	ec       *EditorComponent
+	kind     promptKind
+	forward  bool
+	prompt   string
+	fn       func(*view.Editor, string) error
+	pickerFn func(*view.Editor, string) (*Picker, error)
 }
 
 func newPromptComponent(args promptComponentArgs) *PromptComponent {

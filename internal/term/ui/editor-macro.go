@@ -8,6 +8,16 @@ import (
 	act "github.com/kode4food/toe/internal/view/action"
 )
 
+type macroSlot struct {
+	recording bool
+	reg       rune
+	keys      []command.KeyEvent
+	macros    map[rune][]command.KeyEvent
+	replayReg rune
+	replayN   int
+	hasReplay bool
+}
+
 // MacroRecordAction starts or stops macro recording. When not recording,
 // prompts for a register key and begins recording. When already recording,
 // stops and saves the macro to the chosen register

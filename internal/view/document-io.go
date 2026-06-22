@@ -69,6 +69,31 @@ func (d *Document) Reload() error {
 	return nil
 }
 
+// DocumentDisplayName returns a short display name for a file path,
+// or ScratchBufferName if path is empty
+func DocumentDisplayName(path string) string {
+	if path == "" {
+		return ScratchBufferName
+	}
+	return filepath.Base(path)
+}
+
+// DocumentRelativeName returns path relative to basedir,
+// falling back to the absolute path on error
+func DocumentRelativeName(path, basedir string) string {
+	if path == "" {
+		return ScratchBufferName
+	}
+	rel, err := filepath.Rel(basedir, path)
+	if err != nil {
+		return path
+	}
+	if !strings.HasPrefix(rel, "..") {
+		return rel
+	}
+	return path
+}
+
 func atomicWrite(path, dir string, data []byte) error {
 	f, err := os.CreateTemp(dir, ".toe-save-*")
 	if err != nil {

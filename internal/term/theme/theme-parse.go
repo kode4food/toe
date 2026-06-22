@@ -2,17 +2,36 @@ package theme
 
 import (
 	"fmt"
+	"image/color"
 
 	"charm.land/lipgloss/v2"
 )
 
+type (
+	palette map[string]colorSpec
+
+	colorSpec struct {
+		color color.Color
+		rgb   bool
+	}
+)
+
+var defaultRainbow = []lipgloss.Style{
+	lipgloss.NewStyle().Foreground(lipgloss.Color("1")),
+	lipgloss.NewStyle().Foreground(lipgloss.Color("3")),
+	lipgloss.NewStyle().Foreground(lipgloss.Color("2")),
+	lipgloss.NewStyle().Foreground(lipgloss.Color("4")),
+	lipgloss.NewStyle().Foreground(lipgloss.Color("6")),
+	lipgloss.NewStyle().Foreground(lipgloss.Color("5")),
+}
+
 func decodePalette(value any) (palette, []string) {
-	p := defaultPalette()
+	p := basePalette()
 	m, ok := value.(map[string]any)
 	if !ok {
 		return p, nil
 	}
-	next := defaultPalette()
+	next := basePalette()
 	for name, value := range m {
 		s, ok := value.(string)
 		if !ok {
@@ -29,7 +48,7 @@ func decodePalette(value any) (palette, []string) {
 	return next, nil
 }
 
-func defaultPalette() palette {
+func basePalette() palette {
 	return palette{
 		"default":       {color: lipgloss.NoColor{}},
 		"black":         {color: lipgloss.Color("0")},
@@ -99,7 +118,7 @@ func (p palette) parseStyle(value any) (lipgloss.Style, bool, error) {
 
 func (p palette) parseStyleArray(value any) ([]lipgloss.Style, bool, error) {
 	if value == nil {
-		return defaultRainbow(), false, nil
+		return defaultRainbow, false, nil
 	}
 	values, ok := value.([]any)
 	if !ok {
@@ -117,15 +136,4 @@ func (p palette) parseStyleArray(value any) ([]lipgloss.Style, bool, error) {
 		styles = append(styles, style)
 	}
 	return styles, rgb, nil
-}
-
-func defaultRainbow() []lipgloss.Style {
-	return []lipgloss.Style{
-		lipgloss.NewStyle().Foreground(lipgloss.Color("1")),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("3")),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("2")),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("4")),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("6")),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("5")),
-	}
 }

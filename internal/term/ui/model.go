@@ -8,6 +8,14 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// Model is the root Bubbletea model — a thin wrapper around Compositor
+type Model struct {
+	compositor *Compositor
+	context    *Context
+	component  *EditorComponent
+	initCmd    tea.Cmd
+}
+
 // New creates an initialized Model for the given editor and keymaps
 func New(editor *view.Editor, km *command.Keymaps) Model {
 	cx := &Context{Editor: editor, Keymaps: km}

@@ -7,6 +7,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type newlineTarget struct {
+	pos int
+	off int
+}
+
 // AddNewlineAbove inserts blank lines above each selection's first line.
 // Repeats count times using the document line ending
 func AddNewlineAbove(e *view.Editor) {
@@ -84,11 +89,6 @@ func OpenAbove(e *view.Editor) {
 	applyNewlines(e, applyNewlinesArgs{
 		text: text, sel: sel, changes: changes, targets: targets,
 	})
-}
-
-type newlineTarget struct {
-	pos int
-	off int
 }
 
 type applyNewlinesArgs struct {

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -148,57 +147,6 @@ func (e *EditorComponent) RenderBuffer(w, h int, cx *Context) *tui.Buffer {
 func (e *EditorComponent) Cursor(w, h int, cx *Context) (tea.Cursor, bool) {
 	r := &renderPass{ec: e, cx: cx, w: w, h: h}
 	return r.editorCursor()
-}
-
-func (e *EditorComponent) MacroRecordAction(
-	ed *view.Editor,
-) command.Continuation {
-	ms := e.macroSlot
-	if ms.recording {
-		if len(ms.keys) > 0 {
-			ms.keys = ms.keys[:len(ms.keys)-1]
-		}
-		ms.macros[ms.reg] = slices.Clone(ms.keys)
-		ms.recording = false
-		ms.keys = nil
-		ms.reg = 0
-		return nil
-	}
-	ed.SetHint("Q ...")
-	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			ed.SetHint("")
-			return nil
-		}
-		ms.recording = true
-		ms.reg = k.Code.Char
-		ms.keys = nil
-		return nil
-	}
-}
-
-func (e *EditorComponent) MacroReplayAction(
-	ed *view.Editor,
-) command.Continuation {
-	ms := e.macroSlot
-	if ms.recording {
-		return nil
-	}
-	ed.SetHint("q ...")
-	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			ed.SetHint("")
-			return nil
-		}
-		n := ed.Count()
-		if n == 0 {
-			n = 1
-		}
-		ms.replayReg = k.Code.Char
-		ms.replayN = n
-		ms.hasReplay = true
-		return nil
-	}
 }
 
 func newEditorComponent() *EditorComponent {
@@ -381,46 +329,6 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	})
 }
 
-func (e *EditorComponent) handleReplay(cx *Context) {
-	ms := e.macroSlot
-	if !ms.hasReplay {
-		return
-	}
-	ms.hasReplay = false
-	e.replayMacro(cx, ms.macros[ms.replayReg], ms.replayN)
-}
-
-func (e *EditorComponent) replayMacro(
-	cx *Context, keys []command.KeyEvent, n int,
-) {
-	for range n {
-		i := 0
-		for i < len(keys) {
-			k := keys[i]
-			i++
-			mode := cx.Editor.Mode()
-			modeStr := mode.String()
-			if replaySkip(k, mode) {
-				continue
-			}
-			action, found, _ := cx.Keymaps.Lookup(
-				modeStr, []command.KeyEvent{k},
-			)
-			if found {
-				cont := action(cx.Editor)
-				for cont != nil && i < len(keys) {
-					k = keys[i]
-					i++
-					cont = cont(cx.Editor, k)
-				}
-				cx.Editor.ResetCount()
-			} else if mode == view.ModeInsert && k.IsTypable() {
-				act.InsertChar(cx.Editor, k.Code.Char)
-			}
-		}
-	}
-}
-
 func bufferlineVisible(cx *Context) bool {
 	switch cx.Editor.Options().BufferLine {
 	case view.BufferLineAlways:
@@ -430,23 +338,4 @@ func bufferlineVisible(cx *Context) bool {
 	default:
 		return false
 	}
-}
-
-func replaySkip(k command.KeyEvent, mode view.Mode) bool {
-	if mode != view.ModeNormal && mode != view.ModeSelect {
-		return false
-	}
-	if k.Mods == command.ModNone {
-		switch k.Code.Char {
-		case ':', '/', '?', 's', 'S', 'K', '|', '!', '$', 'Q', 'q':
-			return true
-		}
-	}
-	if k.Mods == command.ModAlt {
-		switch k.Code.Char {
-		case '|', '!', 'K':
-			return true
-		}
-	}
-	return false
 }

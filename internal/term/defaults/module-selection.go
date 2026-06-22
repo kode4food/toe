@@ -22,7 +22,7 @@ const (
 	actSelectAll                  = "select_all"
 	actSelectLineAbove            = "select_line_above"
 	actSelectLineBelow            = "select_line_below"
-	actExtendLineBellow           = "extend_line_below"
+	actExtendLineBelow            = "extend_line_below"
 	actExtendToLineBounds         = "extend_to_line_bounds"
 	actShrinkToLineBounds         = "shrink_to_line_bounds"
 	actKeepPrimarySelection       = "keep_primary_selection"
@@ -135,10 +135,10 @@ func selectionModule(model ui.Model) command.Module {
 				Run:       Runner(action.SelectLineBelow),
 				Signature: sig(),
 			},
-			actExtendLineBellow: {
+			actExtendLineBelow: {
 				DocString: "Select current line, if already selected, extend" +
 					" to next line",
-				Run:   Runner(action.ExtendLineBellow),
+				Run:   Runner(action.ExtendLineBelow),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('x')),
 			},

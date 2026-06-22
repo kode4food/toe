@@ -149,12 +149,12 @@ func TestKeepPrimarySelection(t *testing.T) {
 	})
 }
 
-func TestExtendLineBellow(t *testing.T) {
+func TestExtendLineBelow(t *testing.T) {
 	t.Run("extends cursor to full line", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd")
 		setCursor(t, e, 0)
 
-		action.ExtendLineBellow(e)
+		action.ExtendLineBelow(e)
 
 		v, _ := e.FocusedView()
 		doc, _ := e.FocusedDocument()
@@ -167,7 +167,7 @@ func TestExtendLineBellow(t *testing.T) {
 		e := editorWithText(t, "ab\ncd\nef")
 		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
-		action.ExtendLineBellow(e)
+		action.ExtendLineBelow(e)
 
 		v, _ := e.FocusedView()
 		doc, _ := e.FocusedDocument()

@@ -6,7 +6,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	gitignore "github.com/sabhiram/go-gitignore"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -131,11 +130,6 @@ type (
 		item    *PickerItem
 		score   int
 		indices []int
-	}
-
-	pickerIgnore struct {
-		base string
-		ig   *gitignore.GitIgnore
 	}
 
 	pickerMeta struct {

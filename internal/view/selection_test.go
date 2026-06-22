@@ -86,10 +86,10 @@ func TestDeleteSelection(t *testing.T) {
 	})
 }
 
-func TestExtendLineBellow(t *testing.T) {
+func TestExtendLineBelow(t *testing.T) {
 	t.Run("selects current line including newline", func(t *testing.T) {
 		e := editorWithText(t, "abc\ndef\n")
-		action.ExtendLineBellow(e)
+		action.ExtendLineBelow(e)
 		a, h := selectionAnchorHead(t, e)
 		assert.Equal(t, 0, a)
 		assert.Equal(t, 4, h)
@@ -102,7 +102,7 @@ func TestExtendLineBellow(t *testing.T) {
 		doc.SetSelectionFor(v.ID(),
 			newSelection(t, []core.Range{core.NewRange(0, 4)}, 0),
 		)
-		action.ExtendLineBellow(e)
+		action.ExtendLineBelow(e)
 		a, h := selectionAnchorHead(t, e)
 		assert.Equal(t, 0, a)
 		assert.Equal(t, 8, h)

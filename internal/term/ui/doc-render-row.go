@@ -73,7 +73,13 @@ func (r *rowRender) rows() []renderedRow {
 	endGuide := indentCol / tabW
 	startGuide := r.ig.GetSkipLevels()
 
+	// A visual row holds at most ViewportWidth cells (one per column), capped
+	// by the line's byte length. Pre-sizing cells avoids the geometric regrowth
+	// of appending grapheme-by-grapheme from nil — the dominant per-frame alloc
+	cellCap := min(len(r.lineStr)+1, r.format.ViewportWidth+1)
+
 	var row renderedRow
+	row.cells = make([]renderedCell, 0, cellCap)
 	col := 0
 	pos := r.lineStart
 
@@ -85,7 +91,7 @@ func (r *rowRender) rows() []renderedRow {
 	flushRow := func(nextStart int) {
 		row.offset = rowStart
 		rows = append(rows, row)
-		row = renderedRow{}
+		row = renderedRow{cells: make([]renderedCell, 0, cellCap)}
 		rowStart = nextStart
 	}
 	writeRendered := func(rendered string, width int, style tui.Style) {

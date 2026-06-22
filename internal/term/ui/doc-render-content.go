@@ -28,6 +28,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	width := args.width
 	height := args.height
 	viewFocused := args.focused
+
+	// --- selection / cursor state ---
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	primary := sel.Primary()
@@ -67,6 +69,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	// so a soft-wrapped line taller than the viewport can be scrolled within
 	vOff := max(v.Offset().VerticalOffset, 0)
 
+	// --- gutter ---
 	nLines := text.LenLines()
 	g3 := r.cx.Editor.Options().Gutters
 	gutterMinDigits := g3.LineNumberMinWidth()
@@ -83,6 +86,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		}
 	}
 
+	// --- cache: raw text, highlight, search ---
 	lang := doc.Lang()
 	docID := doc.ID()
 	rev := doc.Revision()
@@ -105,6 +109,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	}
 	dc.ensureSearchSpans(rev, pat, rawText)
 	searchMatches := dc.smSpans
+
+	// --- styles (rebuilt only on theme/mode change) ---
 	th := r.activeTheme()
 	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
 	if c.stylesKey != stylesKey {
@@ -126,6 +132,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		hlTUICache[scope] = st
 		return st
 	}
+
+	// --- options ---
 	opts := r.cx.Editor.Options()
 	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
@@ -134,7 +142,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	ws := opts.Whitespace
 	ig := opts.IndentGuides
 	rulers := opts.Rulers
+	relativeLineNumbers := opts.LineNumber == view.LineNumberRelative
+	insertMode := r.cx.Editor.Mode() == view.ModeInsert
 
+	// --- format / scroll ---
 	format := doc.TextFormatForConfig(
 		width-gutterW, r.cx.Editor.Options(),
 	)
@@ -154,12 +165,31 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	)
 	hOff := v.Offset().HorizontalOffset
 
+	// --- pre-converted TUI styles and layout constants ---
 	lineTUI := lipglossToTUIStyle(lgStyles.line)
 	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
 	blankGutter := strings.Repeat(" ", gutterW)
 	contentX := x0 + gutterW
+
+	rr := rowRender{
+		lgStyles:      lgStyles,
+		tuiStyles:     tuiStyles,
+		hlStyle:       hlStyleFn,
+		format:        format,
+		ws:            ws,
+		ig:            ig,
+		hlSpans:       hlSpans,
+		searchMatches: searchMatches,
+		selSpans:      selSpans,
+		cursor:        cursor,
+		cursorLine:    cursorLine,
+		softWrap:      softWrap,
+		cursorIsBlock: cursorIsBlock,
+		hStart:        hOff,
+		hWidth:        format.ViewportWidth,
+	}
 
 	bufRow := y0
 	logLine := anchorLine
@@ -211,14 +241,12 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			!isPrimaryCursorLine && isAnyCursorLine
 
 		if showLineNumbers {
-			relative := opts.LineNumber == view.LineNumberRelative
-			insertMode := r.cx.Editor.Mode() == view.ModeInsert
 			var num int
 			var gutterTUI tui.Style
 			if isAnyCursorLine {
 				num = lineNum + 1
 				gutterTUI = lineSelTUI
-			} else if relative && !insertMode {
+			} else if relativeLineNumbers && !insertMode {
 				rel := lineNum - cursorLine
 				if rel < 0 {
 					rel = -rel
@@ -271,32 +299,15 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			rowSkip = vOff
 		}
 
-		rr := rowRender{
-			lineStr:             lStr,
-			lgStyles:            lgStyles,
-			tuiStyles:           tuiStyles,
-			hlStyle:             hlStyleFn,
-			format:              format,
-			ws:                  ws,
-			ig:                  ig,
-			hlSpans:             hlSpans,
-			searchMatches:       searchMatches,
-			selSpans:            selSpans,
-			primaryCursorCols:   primaryCursorCols,
-			secondaryCursorCols: secondaryCursorCols,
-			cursor:              cursor,
-			cursorLine:          cursorLine,
-			lineNum:             lineNum,
-			lineStart:           lineStart,
-			lineEnd:             lineContentEnd,
-			softWrap:            softWrap,
-			cursorlinePrim:      isPrimaryCursorLine,
-			cursorlineSec:       isSecondaryCursorLine,
-			cursorIsBlock:       cursorIsBlock,
-			hStart:              hOff,
-			hWidth:              format.ViewportWidth,
-			maxRows:             y0 + height - bufRow + rowSkip,
-		}
+		rr.lineStr = lStr
+		rr.primaryCursorCols = primaryCursorCols
+		rr.secondaryCursorCols = secondaryCursorCols
+		rr.lineNum = lineNum
+		rr.lineStart = lineStart
+		rr.lineEnd = lineContentEnd
+		rr.cursorlinePrim = isPrimaryCursorLine
+		rr.cursorlineSec = isSecondaryCursorLine
+		rr.maxRows = y0 + height - bufRow + rowSkip
 		contentRows := rr.rows()
 
 		if softWrap {

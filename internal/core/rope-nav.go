@@ -76,6 +76,10 @@ func forEachSegmentNode(n *ropeNode, from, to int, fn func(string)) {
 		return
 	}
 	if n.left == nil && n.right == nil {
+		if from <= 0 && to >= n.chars {
+			fn(n.text)
+			return
+		}
 		fn(charSubstring(n.text, from, to))
 		return
 	}

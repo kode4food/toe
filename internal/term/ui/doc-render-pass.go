@@ -7,7 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/tui"
@@ -53,7 +53,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 			style = activeTUI
 		}
 		buf.SetString(x, y, label, style)
-		x += ansi.StringWidth(label)
+		x += runewidth.StringWidth(label)
 	}
 }
 
@@ -140,7 +140,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			TabWidth:         format.TabWidth,
 			MaxWrap:          format.MaxWrap,
 			MaxIndentRetain:  format.MaxIndentRetain,
-			WrapIndicatorLen: ansi.StringWidth(format.WrapIndicator),
+			WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
 		}
 	}
 	v.EnsureCursorVisible(
@@ -214,7 +214,7 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 
 	keyW := 0
 	for _, item := range items {
-		if w := ansi.StringWidth(item.Key); w > keyW {
+		if w := runewidth.StringWidth(item.Key); w > keyW {
 			keyW = w
 		}
 	}
@@ -222,11 +222,11 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	bodyW := 0
 	for i, item := range items {
 		rawLines[i] = fmt.Sprintf("%-*s  %s", keyW, item.Key, item.Label)
-		if w := ansi.StringWidth(rawLines[i]); w > bodyW {
+		if w := runewidth.StringWidth(rawLines[i]); w > bodyW {
 			bodyW = w
 		}
 	}
-	if tw := ansi.StringWidth(title); tw > bodyW {
+	if tw := runewidth.StringWidth(title); tw > bodyW {
 		bodyW = tw
 	}
 

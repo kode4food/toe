@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"charm.land/lipgloss/v2"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"

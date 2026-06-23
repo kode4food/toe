@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -40,10 +41,10 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 			}
 		}
 		run := string(runes[i:j])
-		rw := ansi.StringWidth(run)
+		rw := runewidth.StringWidth(run)
 		if rw > budget {
 			run = ansi.Truncate(run, budget, "")
-			rw = ansi.StringWidth(run)
+			rw = runewidth.StringWidth(run)
 		}
 		st := args.base
 		if matched {

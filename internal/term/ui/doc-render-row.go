@@ -26,13 +26,18 @@ type (
 		lineNum             int
 		lineStart           int
 		lineEnd             int
-		softWrap            bool
-		cursorlinePrim      bool
-		cursorlineSec       bool
-		cursorIsBlock       bool
-		hStart              int
-		hWidth              int
-		maxRows             int
+		// indentCol is the visual column where the line's indentation ends,
+		// pre-computed by the caller so rows() never needs to re-scan lineStr
+		// from position 0 when lineStr has been sliced to the visible window
+		indentCol      int
+		colOffset      int // visual column where lineStr starts (0 unless windowed)
+		softWrap       bool
+		cursorlinePrim bool
+		cursorlineSec  bool
+		cursorIsBlock  bool
+		hStart         int
+		hWidth         int
+		maxRows        int
 	}
 
 	selectionSpan struct {
@@ -69,7 +74,7 @@ const asciiTable = "" +
 
 func (r *rowRender) rows() []renderedRow {
 	tabW := r.format.TabWidth
-	indentCol := indentWidth(r.lineStr, tabW)
+	indentCol := r.indentCol
 	endGuide := indentCol / tabW
 	startGuide := r.ig.GetSkipLevels()
 
@@ -80,7 +85,7 @@ func (r *rowRender) rows() []renderedRow {
 
 	var row renderedRow
 	row.cells = make([]renderedCell, 0, cellCap)
-	col := 0
+	col := r.colOffset
 	pos := r.lineStart
 
 	breaks := r.softWrapBreaks(tabW)
@@ -104,7 +109,7 @@ func (r *rowRender) rows() []renderedRow {
 	windowed := !r.softWrap && r.hWidth > 0
 	hEnd := r.hStart + r.hWidth
 	if windowed {
-		row.colStart = r.hStart
+		row.colStart = r.colOffset
 	}
 
 	wsRender := r.ws.Render
@@ -118,19 +123,8 @@ func (r *rowRender) rows() []renderedRow {
 				break
 			}
 		}
-		if windowed {
-			w := view.RuneWidth(ch, col, tabW)
-			if col+w <= r.hStart {
-				col += w
-				pos++
-				continue
-			}
-			if col >= hEnd {
-				break
-			}
-			if len(row.cells) == 0 {
-				row.colStart = col
-			}
+		if windowed && col >= hEnd {
+			break
 		}
 		colBefore := col
 		rendered, width, glyph := r.renderGrapheme(rowGraphemeArgs{

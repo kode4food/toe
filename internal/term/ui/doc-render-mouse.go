@@ -3,7 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -272,7 +272,7 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 		if ch == '\t' {
 			w = args.tabW - col%args.tabW
 		} else {
-			w = ansi.StringWidth(string(ch))
+			w = runewidth.RuneWidth(ch)
 		}
 		if col+w > args.targetX {
 			break

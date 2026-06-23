@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -181,7 +182,7 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	if left == "" && right == "" {
 		return
 	}
-	rightW := ansi.StringWidth(right)
+	rightW := runewidth.StringWidth(right)
 	leftW := max(w-rightW, 0)
 	leftStr := ansi.Truncate(left, leftW, "")
 	buf.SetString(0, y, leftStr, tuiSt)
@@ -279,7 +280,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	elemsWidth := func(elems []statusElem) int {
 		w := 0
 		for _, e := range elems {
-			w += ansi.StringWidth(e.text)
+			w += runewidth.StringWidth(e.text)
 		}
 		return w
 	}
@@ -287,7 +288,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	writeElems := func(elems []statusElem, x int) {
 		for _, e := range elems {
 			buf.SetString(x, y, e.text, e.style)
-			x += ansi.StringWidth(e.text)
+			x += runewidth.StringWidth(e.text)
 		}
 	}
 

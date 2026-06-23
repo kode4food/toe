@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/term/command"
 )
@@ -57,7 +57,7 @@ func (p *PromptComponent) renderCompletions(
 	innerW := w - 2 - 2*pop.padX
 	maxLen := promptCompletionBaseWidth
 	for _, c := range p.comps {
-		maxLen = max(maxLen, ansi.StringWidth(c.completionText()))
+		maxLen = max(maxLen, runewidth.StringWidth(c.completionText()))
 	}
 	cols := max(1, innerW/maxLen)
 	colW := max((innerW-cols)/cols, 1)

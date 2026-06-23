@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -160,9 +160,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	if !softWrap {
 		hWidth = contentW
 	}
-	v.EnsureCursorVisibleHorizontal(
-		text, sel, hWidth, format.TabWidth, opts.ScrollOff,
-	)
+	v.EnsureCursorVisibleHorizontal(text, sel, hWidth, format.TabWidth, opts.ScrollOff)
 	hOff := v.Offset().HorizontalOffset
 
 	// --- pre-converted TUI styles and layout constants ---
@@ -272,23 +270,37 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			continue
 		}
 
-		// Only the chars covering the visible window need to be materialized.
-		// Each char occupies at least one visual column, so columns
-		// [0, hOff+ViewportWidth) require at most that many chars; the row
-		// builder stops at the window's right edge regardless
+		tabW := format.TabWidth
+
+		// For a horizontally scrolled (windowed) view, scan the invisible
+		// prefix once without materializing it: this computes indentCol
+		// (needed for indent guides) and finds the first visible char
+		// position so lineStr covers only the visible window
 		renderEnd := lineContentEnd
 		if !softWrap {
-			if bound := lineStart + hOff + format.ViewportWidth; bound < renderEnd {
+			bound := lineStart + hOff + format.ViewportWidth
+			if bound < renderEnd {
 				renderEnd = bound
 			}
 		}
-		lStr := lineString(text, lineStart, renderEnd)
-		tabW := format.TabWidth
+		var lStr string
+		var rowIndentCol, rowLineStart, rowColOffset int
+		if !softWrap && hOff > 0 {
+			rowIndentCol, rowLineStart, rowColOffset = scanLinePrefix(
+				text, lineStart, lineContentEnd, tabW, hOff,
+			)
+			lStr = lineString(text, rowLineStart, renderEnd)
+		} else {
+			rowLineStart = lineStart
+			lStr = lineString(text, lineStart, renderEnd)
+			rowIndentCol = indentWidth(lStr, tabW)
+		}
 
 		var primaryCursorCols, secondaryCursorCols map[int]bool
 		if opts.Cursorcolumn {
 			primaryCursorCols, secondaryCursorCols = cursorCols(
-				selSpans, lStr, lineStart, lineContentEnd, tabW,
+				selSpans, lStr, rowLineStart, lineContentEnd,
+				tabW, rowColOffset,
 			)
 		}
 
@@ -300,10 +312,12 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		}
 
 		rr.lineStr = lStr
+		rr.indentCol = rowIndentCol
+		rr.colOffset = rowColOffset
 		rr.primaryCursorCols = primaryCursorCols
 		rr.secondaryCursorCols = secondaryCursorCols
 		rr.lineNum = lineNum
-		rr.lineStart = lineStart
+		rr.lineStart = rowLineStart
 		rr.lineEnd = lineContentEnd
 		rr.cursorlinePrim = isPrimaryCursorLine
 		rr.cursorlineSec = isSecondaryCursorLine
@@ -313,7 +327,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		if softWrap {
 			indent := indentWidth(lStr, tabW)
 			prefixRow := softWrapContinuationRow(format, indent, lgStyles)
-			prefixW := ansi.StringWidth(softWrapPrefix(format, indent))
+			prefixW := runewidth.StringWidth(softWrapPrefix(format, indent))
 			for i, cr := range contentRows {
 				if i < rowSkip {
 					continue

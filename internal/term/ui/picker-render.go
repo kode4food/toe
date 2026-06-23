@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -28,19 +29,19 @@ func writePickerPromptRow(
 ) {
 	th := cx.Theme()
 	count := fmt.Sprintf("%d/%d", len(p.matched), len(p.items))
-	cl := ansi.StringWidth(count)
+	cl := runewidth.StringWidth(count)
 
 	queryArea := max(w-2*pickerPadX-1-cl, 0)
 
 	displayQuery := p.query
-	ql := ansi.StringWidth(p.query)
+	ql := runewidth.StringWidth(p.query)
 	if ql > queryArea {
 		runes := []rune(p.query)
-		for len(runes) > 0 && ansi.StringWidth(string(runes)) > queryArea {
+		for len(runes) > 0 && runewidth.StringWidth(string(runes)) > queryArea {
 			runes = runes[1:]
 		}
 		displayQuery = string(runes)
-		ql = ansi.StringWidth(displayQuery)
+		ql = runewidth.StringWidth(displayQuery)
 	}
 	gap := max(queryArea-ql, 0)
 
@@ -157,11 +158,11 @@ func pickerColumnWidths(p *Picker, w int) []int {
 	spacing := max(n-1, 0)
 	available := max(w-spacing, 0)
 	for i, col := range cols {
-		widths[i] = ansi.StringWidth(col)
+		widths[i] = runewidth.StringWidth(col)
 	}
 	for _, m := range p.matched {
 		for i := range min(len(m.item.Columns), n) {
-			widths[i] = max(widths[i], ansi.StringWidth(m.item.Columns[i]))
+			widths[i] = max(widths[i], runewidth.StringWidth(m.item.Columns[i]))
 		}
 	}
 	total := 0

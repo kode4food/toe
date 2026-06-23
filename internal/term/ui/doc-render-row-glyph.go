@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -72,7 +72,7 @@ func (r *rowRender) renderGrapheme(
 		}
 		return string(ch), 1, documentGlyphNone
 	default:
-		return string(ch), ansi.StringWidth(string(ch)), documentGlyphNone
+		return string(ch), runewidth.RuneWidth(ch), documentGlyphNone
 	}
 }
 
@@ -92,19 +92,70 @@ func (r *rowRender) softWrapBreaks(tabW int) []int {
 		TabWidth:         r.format.TabWidth,
 		MaxWrap:          r.format.MaxWrap,
 		MaxIndentRetain:  r.format.MaxIndentRetain,
-		WrapIndicatorLen: ansi.StringWidth(r.format.WrapIndicator),
+		WrapIndicatorLen: runewidth.StringWidth(r.format.WrapIndicator),
 	}
 	return vf.VisualRowStarts([]rune(r.lineStr))
 }
 
+// scanLinePrefix walks the rope from lineStart, returning indentCol (the visual
+// column where indentation ends), windowPos (the char offset of the first char
+// at or after column hStart), and windowCol (that char's visual column, which
+// may be < hStart when a tab straddles the window boundary).
+//
+// For printable ASCII the inner loop uses a direct width-1 assignment instead
+// of calling view.RuneWidth, so common code files need no per-char function
+// call overhead in the prefix
+func scanLinePrefix(
+	text core.Rope, lineStart, lineEnd, tabW, hStart int,
+) (indentCol, windowPos, windowCol int) {
+	pos := lineStart
+	col := 0
+	indentDone := false
+	found := false
+	text.ForEachSegment(lineStart, lineEnd, func(seg string) {
+		if found || col >= hStart {
+			return
+		}
+		for _, ch := range seg {
+			if !indentDone {
+				switch ch {
+				case '\t', ' ', '\xa0', ' ':
+				default:
+					indentDone = true
+					indentCol = col
+				}
+			}
+			var w int
+			if uint32(ch)-0x20 < 0x5f {
+				w = 1
+			} else {
+				w = view.RuneWidth(ch, col, tabW)
+			}
+			if col+w > hStart {
+				found = true
+				return
+			}
+			col += w
+			pos++
+		}
+	})
+	if !indentDone {
+		indentCol = col
+	}
+	windowPos = pos
+	windowCol = col
+	return
+}
+
 func cursorCols(
-	selSpans []selectionSpan, lStr string, lineStart, lineEnd, tabW int,
+	selSpans []selectionSpan, lStr string,
+	lineStart, lineEnd, tabW, colStart int,
 ) (primary, secondary map[int]bool) {
 	for _, sp := range selSpans {
 		if sp.cur < lineStart || sp.cur > lineEnd {
 			continue
 		}
-		vcol := 0
+		vcol := colStart
 		offset := sp.cur - lineStart
 		charIdx := 0
 		for _, ch := range lStr {
@@ -163,9 +214,9 @@ func softWrapContinuationRow(
 	format *language.TextFormat, indent int, lipglossStyles *lipglossStyles,
 ) renderedRow {
 	prefix := softWrapPrefix(format, indent)
-	indentW := max(ansi.StringWidth(prefix)-
-		ansi.StringWidth(format.WrapIndicator), 0)
-	wrapW := ansi.StringWidth(format.WrapIndicator)
+	indentW := max(runewidth.StringWidth(prefix)-
+		runewidth.StringWidth(format.WrapIndicator), 0)
+	wrapW := runewidth.StringWidth(format.WrapIndicator)
 	row := renderedRow{}
 	if indentW > 0 {
 		row.write(strings.Repeat(" ", indentW), indentW,

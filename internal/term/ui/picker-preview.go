@@ -6,6 +6,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -162,7 +163,7 @@ func blitTextInto(
 		buf.FillRange(x0, y0+i, w, fillStyle)
 		if w > 0 && plain != "" {
 			s := plain
-			if ansi.StringWidth(s) > w {
+			if runewidth.StringWidth(s) > w {
 				s = ansi.Truncate(s, w, "")
 			}
 			buf.SetString(x0, y0+i, s, fillStyle)
@@ -244,7 +245,7 @@ func previewAnchor(
 			TabWidth:         format.TabWidth,
 			MaxWrap:          format.MaxWrap,
 			MaxIndentRetain:  format.MaxIndentRetain,
-			WrapIndicatorLen: ansi.StringWidth(format.WrapIndicator),
+			WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
 		}
 	} else {
 		vf = &core.VisualMoveFormat{}

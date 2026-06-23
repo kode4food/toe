@@ -1,7 +1,7 @@
 package view
 
 import (
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 )
@@ -188,7 +188,6 @@ func (v *View) EnsureCursorVisibleHorizontal(
 	}
 	v.offset.HorizontalOffset = h
 }
-
 func (m Mode) String() string {
 	switch m {
 	case ModeNormal:
@@ -242,12 +241,10 @@ func (j *JumpList) Forward() (DocumentId, int, bool) {
 	return it.docID, it.anchor, true
 }
 
-// RuneWidth returns the display width of ch at visual column col, expanding tabs
-// to the next tabW boundary. The ASCII fast path avoids a per-rune string
+// RuneWidth returns the display width of ch at visual column col, expanding
+// tabs to the next tabW boundary. The ASCII fast path avoids a per-rune string
 // allocation in the render and cursor-positioning hot paths
 func RuneWidth(ch rune, col, tabW int) int {
-	// Single unsigned range check for printable ASCII (0x20..0x7e): one
-	// subtract+compare instead of two comparisons, and small enough to inline
 	if uint32(ch)-0x20 < 0x5f {
 		return 1
 	}
@@ -257,13 +254,9 @@ func RuneWidth(ch rune, col, tabW int) int {
 	return runeWidthWide(ch)
 }
 
-// runeWidthWide measures a non-ASCII rune. Kept non-inlinable so the hot
-// ASCII/tab path in RuneWidth stays small enough to inline into per-rune render
-// loops — the string(ch) allocation here is what would blow the inline budget
-//
 //go:noinline
 func runeWidthWide(ch rune) int {
-	return ansi.StringWidth(string(ch))
+	return runewidth.RuneWidth(ch)
 }
 
 func (v *View) ensureCursorVisibleByLine(

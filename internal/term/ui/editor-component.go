@@ -8,6 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 	act "github.com/kode4food/toe/internal/view/action"
 )
 
@@ -30,11 +31,18 @@ type (
 		infoTitle       string
 		infoItems       []command.KeyHint
 		mouseDownRange  *core.Range
+		mouseDownSep    *sepDrag
 	}
 
 	saveGenSlot struct{ gen int }
 
 	autoSaveMsg struct{ gen int }
+
+	sepDrag struct {
+		containerID view.Id
+		childIdx    int
+		layout      view.Layout
+	}
 )
 
 func (e *EditorComponent) HandleEvent(
@@ -183,6 +191,10 @@ func (e *EditorComponent) resize(cx *Context) {
 }
 
 func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
+	if e.mouseDownSep != nil {
+		e.mouseDownSep = nil
+		return
+	}
 	if e.mouseDownRange == nil {
 		return
 	}

@@ -14,6 +14,7 @@ type (
 		layout   Layout
 		children []Id
 		area     Area
+		ratios   []float64
 	}
 
 	treeNode struct {
@@ -48,6 +49,11 @@ const (
 	DirectionRight
 )
 
+const (
+	minPaneWidth  = 16
+	minPaneHeight = 4
+)
+
 // Insert adds a view as the next sibling after the currently focused view
 func (t *Tree) Insert(v *View) Id {
 	focus := t.focus
@@ -64,9 +70,39 @@ func (t *Tree) Insert(v *View) Id {
 		pos := indexInSlice(c.children, focus)
 		c.children = insert(c.children, pos+1, id)
 	}
+	c.ratios = nil
 	t.focus = id
 	t.recalculate()
 	return id
+}
+
+// CanSplit reports whether there is enough room to split the focused pane in
+// the given layout while keeping all resulting panes at or above the min size
+func (t *Tree) CanSplit(layout Layout) bool {
+	if t.IsEmpty() {
+		return true
+	}
+	focus := t.focus
+	c := t.nodes[t.nodes[focus].parent].container
+	if c.layout == layout {
+		// one sibling is added to the existing container; gains one more gap
+		ln := len(c.children)
+		switch layout {
+		case LayoutVertical:
+			return max(c.area.Width-ln, 0)/(ln+1) >= minPaneWidth
+		case LayoutHorizontal:
+			return max(c.area.Height-ln, 0)/(ln+1) >= minPaneHeight
+		}
+	}
+	// focus is wrapped in a new 2-child sub-container with one gap
+	a := t.nodes[focus].view.area
+	switch layout {
+	case LayoutVertical:
+		return a.Width >= 2*minPaneWidth+1
+	case LayoutHorizontal:
+		return a.Height >= 2*minPaneHeight+1
+	}
+	return false
 }
 
 // Split creates a new view alongside the focused view using the given layout.
@@ -85,6 +121,7 @@ func (t *Tree) Split(v *View, layout Layout) Id {
 		pos := indexInSlice(parentC.children, focus)
 		parentC.children = insert(parentC.children, pos+1, id)
 		t.nodes[id].parent = parent
+		parentC.ratios = nil
 	} else {
 		// wrap focus and new view in a new sub-container
 		subID := t.allocID()
@@ -238,6 +275,7 @@ func (t *Tree) removeOrReplace(child Id, replacement Id) {
 	pos := indexInSlice(c.children, child)
 	if replacement == 0 {
 		c.children = append(c.children[:pos], c.children[pos+1:]...)
+		c.ratios = nil
 	} else {
 		c.children[pos] = replacement
 		t.nodes[replacement].parent = parent
@@ -251,7 +289,7 @@ func (t *Tree) recalculate() {
 		return
 	}
 
-	stack := []treeWork{{t.root, t.area}}
+	stack := []treeWork{{id: t.root, area: t.area}}
 
 	for len(stack) > 0 {
 		item := stack[len(stack)-1]
@@ -268,39 +306,189 @@ func (t *Tree) recalculate() {
 		a := item.area
 		switch c.layout {
 		case LayoutHorizontal:
-			// children stacked (hsplit): distribute height evenly
+			// children stacked (hsplit): distribute height evenly, 1px gap
 			ln := len(c.children)
-			h := a.Height / ln
+			innerGap := 1
+			usable := max(a.Height-(ln-1)*innerGap, 0)
+			h := usable / ln
 			childY := a.Y
 			for i, child := range c.children {
-				childH := h
-				if i == ln-1 {
-					childH = a.Y + a.Height - childY
+				var childH int
+				switch {
+				case i == ln-1:
+					childH = max(a.Y+a.Height-childY, 2)
+				case c.ratios != nil && i < len(c.ratios):
+					childH = max(
+						int(float64(usable)*c.ratios[i]),
+						minPaneHeight,
+					)
+				default:
+					childH = h
 				}
-				area := Area{a.X, childY, a.Width, childH}
-				stack = append(stack, treeWork{child, area})
-				childY += h
+				area := Area{X: a.X, Y: childY, Width: a.Width, Height: childH}
+				stack = append(stack, treeWork{id: child, area: area})
+				childY += childH + innerGap
 			}
 		case LayoutVertical:
 			// children side by side (vsplit): distribute width evenly, 1px gap
 			ln := len(c.children)
-			lnu := ln
 			innerGap := 1
-			totalGap := innerGap * max(lnu-2, 0)
-			usedArea := max(a.Width-totalGap, 0)
-			w := usedArea / lnu
+			usable := max(a.Width-(ln-1)*innerGap, 0)
+			w := usable / ln
 			childX := a.X
 			for i, child := range c.children {
-				childW := w
-				if i == ln-1 {
-					childW = a.X + a.Width - childX
+				var childW int
+				switch {
+				case i == ln-1:
+					childW = max(a.X+a.Width-childX, 1)
+				case c.ratios != nil && i < len(c.ratios):
+					childW = max(int(float64(usable)*c.ratios[i]), minPaneWidth)
+				default:
+					childW = w
 				}
-				area := Area{childX, a.Y, childW, a.Height}
-				stack = append(stack, treeWork{child, area})
-				childX += w + innerGap
+				area := Area{X: childX, Y: a.Y, Width: childW, Height: a.Height}
+				stack = append(stack, treeWork{id: child, area: area})
+				childX += childW + innerGap
 			}
 		}
 	}
+}
+
+// MoveSeparator adjusts the split between children[childIdx] and
+// children[childIdx+1] in containerID. For LayoutVertical, newPos is the new
+// separator column; for LayoutHorizontal, newPos is the new separator gap row
+// after children[childIdx] — both in tree coordinates
+func (t *Tree) MoveSeparator(
+	containerID Id, childIdx int, layout Layout, newPos int,
+) {
+	switch layout {
+	case LayoutVertical:
+		t.moveSepVertical(containerID, childIdx, newPos)
+	case LayoutHorizontal:
+		t.moveSepHorizontal(containerID, childIdx, newPos)
+	}
+}
+
+func (t *Tree) moveSepVertical(containerID Id, childIdx, newX int) {
+	n := t.nodes[containerID]
+	if n == nil || n.container == nil || n.container.layout != LayoutVertical {
+		return
+	}
+	c := n.container
+	ln := len(c.children)
+	if childIdx < 0 || childIdx >= ln-1 {
+		return
+	}
+	innerGap := 1
+	usable := max(c.area.Width-(ln-1)*innerGap, 0)
+	if usable == 0 {
+		return
+	}
+	if c.ratios == nil {
+		c.ratios = make([]float64, ln)
+		for i, child := range c.children {
+			c.ratios[i] = float64(t.widthOf(child)) / float64(usable)
+		}
+	}
+
+	leftStart := c.area.X
+	for i := range childIdx {
+		leftStart += max(
+			int(float64(usable)*c.ratios[i]),
+			minPaneWidth,
+		) + innerGap
+	}
+
+	minRatio := float64(minPaneWidth) / float64(usable)
+	total := c.ratios[childIdx] + c.ratios[childIdx+1]
+	leftRatio := float64(newX-leftStart) / float64(usable)
+	if leftRatio < minRatio {
+		leftRatio = minRatio
+	}
+	rightRatio := total - leftRatio
+	if rightRatio < minRatio {
+		rightRatio = minRatio
+		leftRatio = total - rightRatio
+	}
+	c.ratios[childIdx] = leftRatio
+	c.ratios[childIdx+1] = rightRatio
+	t.recalculate()
+}
+
+func (t *Tree) moveSepHorizontal(containerID Id, childIdx, newY int) {
+	n := t.nodes[containerID]
+	if n == nil || n.container == nil ||
+		n.container.layout != LayoutHorizontal {
+		return
+	}
+	c := n.container
+	ln := len(c.children)
+	if childIdx < 0 || childIdx >= ln-1 {
+		return
+	}
+	innerGap := 1
+	usable := max(c.area.Height-(ln-1)*innerGap, 0)
+	if usable == 0 {
+		return
+	}
+	if c.ratios == nil {
+		c.ratios = make([]float64, ln)
+		for i, child := range c.children {
+			c.ratios[i] = float64(t.heightOf(child)) / float64(usable)
+		}
+	}
+
+	topStart := c.area.Y
+	for i := range childIdx {
+		topStart += max(
+			int(float64(usable)*c.ratios[i]),
+			minPaneHeight,
+		) + innerGap
+	}
+
+	minRatio := float64(minPaneHeight) / float64(usable) // min rows per pane
+	total := c.ratios[childIdx] + c.ratios[childIdx+1]
+	// newY is the gap row after children[childIdx]; height = newY-topStart
+	leftRatio := float64(newY-topStart) / float64(usable)
+	if leftRatio < minRatio {
+		leftRatio = minRatio
+	}
+	rightRatio := total - leftRatio
+	if rightRatio < minRatio {
+		rightRatio = minRatio
+		leftRatio = total - rightRatio
+	}
+	c.ratios[childIdx] = leftRatio
+	c.ratios[childIdx+1] = rightRatio
+	t.recalculate()
+}
+
+func (t *Tree) widthOf(id Id) int {
+	n := t.nodes[id]
+	if n == nil {
+		return 0
+	}
+	if n.view != nil {
+		return n.view.area.Width
+	}
+	if n.container != nil {
+		return n.container.area.Width
+	}
+	return 0
+}
+
+func (t *Tree) heightOf(id Id) int {
+	n := t.nodes[id]
+	if n == nil {
+		return 0
+	}
+	if n.view != nil {
+		return n.view.area.Height
+	}
+	if n.container != nil {
+		return n.container.area.Height
+	}
+	return 0
 }
 
 func (t *Tree) traverse(id Id, out []*View) []*View {

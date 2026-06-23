@@ -305,6 +305,7 @@ func TestSelectionPerView(t *testing.T) {
 	assert.NoError(t, err)
 
 	e := view.NewEditor(tmp)
+	e.ResizeTree(80, 24)
 	v1, err := e.OpenFile(path)
 	assert.NoError(t, err)
 	// Create a second view into the same document via vertical split

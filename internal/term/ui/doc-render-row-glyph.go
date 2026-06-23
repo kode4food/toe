@@ -10,6 +10,16 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
+const (
+	runeSpace rune = ' '      // U+0020 space
+	runeTab   rune = '\t'     // U+0009 horizontal tab
+	runeNbsp  rune = '\u00a0' // U+00A0 no-break space
+	runeNnbsp rune = '\u202f' // U+202F narrow no-break space
+
+	runeFirstPrintableASCII rune = 0x21 // '!' - first printable non-space ASCII
+	runeLastPrintableASCII  rune = 0x7e // '~' - last printable ASCII
+)
+
 func (r *rowRender) isGuideAt(col, indentCol, startGuide, endGuide int) bool {
 	if !r.ig.Render || col >= indentCol {
 		return false
@@ -32,7 +42,7 @@ func (r *rowRender) renderGrapheme(
 ) (string, int, documentGlyph) {
 	ch := args.ch
 	col := args.col
-	if ch >= view.RuneFirstPrintableASCII && ch <= view.RuneLastPrintableASCII {
+	if ch >= runeFirstPrintableASCII && ch <= runeLastPrintableASCII {
 		return asciiTable[ch : ch+1], 1, documentGlyphNone
 	}
 	tabW := r.format.TabWidth
@@ -40,7 +50,7 @@ func (r *rowRender) renderGrapheme(
 	wsChars := r.ws.Characters
 	guide := r.isGuideAt(col, args.indentCol, args.startGuide, args.endGuide)
 	switch ch {
-	case view.RuneTab:
+	case runeTab:
 		width := tabW - col%tabW
 		if guide {
 			rendered := string(r.ig.CharRune()) +
@@ -53,7 +63,7 @@ func (r *rowRender) renderGrapheme(
 				width, documentGlyphWhitespace
 		}
 		return strings.Repeat(" ", width), width, documentGlyphNone
-	case view.RuneSpace:
+	case runeSpace:
 		if guide {
 			return string(r.ig.CharRune()), 1, documentGlyphGuide
 		}
@@ -61,12 +71,12 @@ func (r *rowRender) renderGrapheme(
 			return string(wsChars.SpaceRune()), 1, documentGlyphWhitespace
 		}
 		return " ", 1, documentGlyphNone
-	case view.RuneNbsp:
+	case runeNbsp:
 		if wsRender.NbspRender() == view.WhitespaceRenderAll {
 			return string(wsChars.NbspRune()), 1, documentGlyphWhitespace
 		}
 		return string(ch), 1, documentGlyphNone
-	case view.RuneNnbsp:
+	case runeNnbsp:
 		if wsRender.NnbspRender() == view.WhitespaceRenderAll {
 			return string(wsChars.NnbspRune()), 1, documentGlyphWhitespace
 		}

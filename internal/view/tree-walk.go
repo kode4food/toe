@@ -1,9 +1,17 @@
 package view
 
-// WalkSeparators calls fn for each vertical separator column in the layout. x
-// is the buffer column, y is the top row in tree coordinates, height is the
-// number of rows
-func (t *Tree) WalkSeparators(fn func(x, y, height int)) {
+// Separator describes the position and extent of the gap between two adjacent
+// split panes in a container
+type Separator struct {
+	Layout Layout
+	X, Y   int
+	W, H   int
+}
+
+// WalkSeparators calls fn for each separator between adjacent panes. Vertical
+// seps have W=1 and span the container height; horizontal seps have H=1 and
+// span the container width
+func (t *Tree) WalkSeparators(fn func(Separator)) {
 	if !t.IsEmpty() {
 		t.walkSep(t.root, fn)
 	}
@@ -94,7 +102,79 @@ func (t *Tree) topOf(id Id) int {
 	return 0
 }
 
-func (t *Tree) walkSep(id Id, fn func(x, y, height int)) {
+// SeparatorAt returns the container ID, left-child index, and layout of the
+// separator hit by the click at tree column x, tree row y (bufferline excluded)
+func (t *Tree) SeparatorAt(
+	x, y int,
+) (containerID Id, childIdx int, layout Layout, ok bool) {
+	if t.IsEmpty() {
+		return
+	}
+	t.walkSepWithID(t.root,
+		func(cID Id, idx int, s Separator) bool {
+			if x >= s.X && x < s.X+s.W && y >= s.Y && y < s.Y+s.H {
+				containerID, childIdx, layout, ok = cID, idx, s.Layout, true
+				return false
+			}
+			return true
+		},
+	)
+	return
+}
+
+func (t *Tree) walkSepWithID(
+	id Id, fn func(cID Id, childIdx int, sep Separator) bool,
+) bool {
+	n := t.nodes[id]
+	if n.view != nil {
+		return true
+	}
+	c := n.container
+	for i, child := range c.children {
+		if !t.walkSepWithID(child, fn) {
+			return false
+		}
+		if i >= len(c.children)-1 {
+			continue
+		}
+		cn := t.nodes[child]
+		var a Area
+		if cn.view != nil {
+			a = cn.view.Area()
+		} else {
+			a = cn.container.area
+		}
+		switch c.layout {
+		case LayoutVertical:
+			// 1-column gap between panes; separator is that gap column
+			s := Separator{
+				Layout: LayoutVertical,
+				X:      a.X + a.Width,
+				Y:      c.area.Y,
+				W:      1,
+				H:      c.area.Height,
+			}
+			if !fn(id, i, s) {
+				return false
+			}
+		case LayoutHorizontal:
+			// 1-row gap after child[i]; separator is that gap row
+			s := Separator{
+				Layout: LayoutHorizontal,
+				X:      c.area.X,
+				Y:      a.Y + a.Height,
+				W:      c.area.Width,
+				H:      1,
+			}
+			if !fn(id, i, s) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (t *Tree) walkSep(id Id, fn func(Separator)) {
 	n := t.nodes[id]
 	if n.view != nil {
 		return
@@ -102,15 +182,33 @@ func (t *Tree) walkSep(id Id, fn func(x, y, height int)) {
 	c := n.container
 	for i, child := range c.children {
 		t.walkSep(child, fn)
-		if i < len(c.children)-1 && c.layout == LayoutVertical {
-			cn := t.nodes[child]
-			var a Area
-			if cn.view != nil {
-				a = cn.view.Area()
-			} else {
-				a = cn.container.area
-			}
-			fn(a.X+a.Width, c.area.Y, c.area.Height)
+		if i >= len(c.children)-1 {
+			continue
+		}
+		cn := t.nodes[child]
+		var a Area
+		if cn.view != nil {
+			a = cn.view.Area()
+		} else {
+			a = cn.container.area
+		}
+		switch c.layout {
+		case LayoutVertical:
+			fn(Separator{
+				Layout: LayoutVertical,
+				X:      a.X + a.Width,
+				Y:      c.area.Y,
+				W:      1,
+				H:      c.area.Height,
+			})
+		case LayoutHorizontal:
+			fn(Separator{
+				Layout: LayoutHorizontal,
+				X:      c.area.X,
+				Y:      a.Y + a.Height,
+				W:      c.area.Width,
+				H:      1,
+			})
 		}
 	}
 }

@@ -57,6 +57,7 @@ type (
 	statusElem struct {
 		text  string
 		style tui.Style
+		kind  view.StatusLineElement
 	}
 
 	statusElemCtx struct {
@@ -77,6 +78,18 @@ type (
 		col        int
 	}
 )
+
+// statusDropOrder lists element groups to remove, in priority order, when the
+// status bar is too narrow to fit all elements. Mode is never dropped.
+var statusDropOrder = [][]view.StatusLineElement{
+	{
+		view.StatusLineFileName,
+		view.StatusLineFileBaseName,
+		view.StatusLineFileAbsolutePath,
+	},
+	{view.StatusLineSelections},
+	{view.StatusLineTotalLines},
+}
 
 var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLineMode:             statusElemMode,
@@ -285,6 +298,29 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		return w
 	}
 
+	for _, round := range statusDropOrder {
+		total := elemsWidth(left) + elemsWidth(center) + elemsWidth(right)
+		if total <= width {
+			break
+		}
+		dropSet := make(map[view.StatusLineElement]bool, len(round))
+		for _, k := range round {
+			dropSet[k] = true
+		}
+		filter := func(elems []statusElem) []statusElem {
+			out := make([]statusElem, 0, len(elems))
+			for _, e := range elems {
+				if !dropSet[e.kind] {
+					out = append(out, e)
+				}
+			}
+			return out
+		}
+		left = filter(left)
+		center = filter(center)
+		right = filter(right)
+	}
+
 	writeElems := func(elems []statusElem, x int) {
 		for _, e := range elems {
 			buf.SetString(x, y, e.text, e.style)
@@ -343,7 +379,9 @@ func (r *lipglossStyles) clearBackground() {
 
 func (s *statusElemCtx) elem(e view.StatusLineElement) statusElem {
 	if fn, ok := statusElemFns[e]; ok {
-		return fn(s)
+		se := fn(s)
+		se.kind = e
+		return se
 	}
 	return statusElem{}
 }

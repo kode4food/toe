@@ -14,6 +14,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	vertSplitChar  = "│" // '│' box drawings light vertical
+	horizSplitChar = "─" // '─' box drawings light horizontal
+)
+
 // renderPass bundles the state needed for a single render pass so every render
 // helper receives it without passing cx and ec separately
 type renderPass struct {
@@ -132,7 +137,9 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	// rows; nil keeps the text-line fallback when soft-wrap is off
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, opts.Gutters)
-	format := doc.TextFormatForConfig(editorW-gutterW, r.cx.Editor.Options())
+	format := doc.TextFormatForConfig(
+		max(editorW-gutterW, 0), r.cx.Editor.Options(),
+	)
 	var vf *core.VisualMoveFormat
 	if format.SoftWrap && gutterW < editorW {
 		vf = &core.VisualMoveFormat{
@@ -191,11 +198,49 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 
 	sepTUI := lipglossToTUIStyle(th.Get("ui.border"))
-	r.cx.Editor.Tree().WalkSeparators(func(x, y, h int) {
-		for row := y; row < y+h; row++ {
-			buf.SetString(x, y0+row, view.DefaultVerticalSplitChar, sepTUI)
+	vertCells := make(map[[2]int]bool)
+	horizCells := make(map[[2]int]bool)
+	r.cx.Editor.Tree().WalkSeparators(func(s view.Separator) {
+		if s.Layout == view.LayoutVertical {
+			for row := s.Y; row < s.Y+s.H; row++ {
+				vertCells[[2]int{s.X, row}] = true
+			}
+		} else {
+			for col := s.X; col < s.X+s.W; col++ {
+				horizCells[[2]int{col, s.Y}] = true
+			}
 		}
 	})
+	for cell := range vertCells {
+		x, y := cell[0], cell[1]
+		left := horizCells[[2]int{x - 1, y}]
+		right := horizCells[[2]int{x + 1, y}]
+		ch := vertSplitChar
+		if left || right {
+			ch = splitSepIntersectionChar(
+				vertCells[[2]int{x, y - 1}], vertCells[[2]int{x, y + 1}],
+				left, right,
+			)
+		}
+		buf.SetString(x, y0+y, ch, sepTUI)
+	}
+	for cell := range horizCells {
+		x, y := cell[0], cell[1]
+		if vertCells[[2]int{x, y}] {
+			continue
+		}
+		above := vertCells[[2]int{x, y - 1}]
+		below := vertCells[[2]int{x, y + 1}]
+		ch := horizSplitChar
+		if above || below {
+			ch = splitSepIntersectionChar(
+				above, below,
+				horizCells[[2]int{x - 1, y}],
+				horizCells[[2]int{x + 1, y}],
+			)
+		}
+		buf.SetString(x, y0+y, ch, sepTUI)
+	}
 
 	r.renderCmdline(buf, r.h-1)
 
@@ -248,5 +293,24 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	}
 	for i, raw := range rawLines {
 		buf.SetString(area.x, area.y+i, raw, popupTUI)
+	}
+}
+
+func splitSepIntersectionChar(above, below, left, right bool) string {
+	switch {
+	case above && below && left && right:
+		return "┼"
+	case above && below && right:
+		return "├"
+	case above && below && left:
+		return "┤"
+	case above && below:
+		return "│"
+	case above && left && right:
+		return "┴"
+	case below && left && right:
+		return "┬"
+	default:
+		return "─"
 	}
 }

@@ -15,6 +15,7 @@ import (
 func editorWithText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")
+	e.ResizeTree(80, 24)
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 	rope := doc.Text()

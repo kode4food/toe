@@ -20,6 +20,7 @@ func defaultsEnv(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	t.Helper()
 	km := command.NewKeymaps()
 	e := view.NewEditor(t.TempDir())
+	e.ResizeTree(80, 24)
 	_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 	if text != "" {
 		setText(t, e, text)
@@ -109,6 +110,7 @@ func twoBufferEnv(t *testing.T) (*view.Editor, *command.Keymaps) {
 	dir := t.TempDir()
 	km := command.NewKeymaps()
 	e := view.NewEditor(dir)
+	e.ResizeTree(80, 24)
 	_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 	for _, name := range []string{"a.txt", "b.txt"} {
 		p := filepath.Join(dir, name)
@@ -134,6 +136,7 @@ func envWithRegistry(t *testing.T, text string) (
 	t.Helper()
 	km := command.NewKeymaps()
 	e := view.NewEditor(t.TempDir())
+	e.ResizeTree(80, 24)
 	reg, _ := defaults.RegisterDefaults(ui.New(e, km), km)
 	if text != "" {
 		setText(t, e, text)

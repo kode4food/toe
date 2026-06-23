@@ -73,6 +73,9 @@ func (e *Editor) VSplit(docID DocumentId) (*View, bool) {
 	if !ok {
 		return nil, false
 	}
+	if !e.tree.CanSplit(LayoutVertical) {
+		return nil, false
+	}
 	e.recordPrevDoc()
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Split(v, LayoutVertical)
@@ -86,6 +89,9 @@ func (e *Editor) HSplit(docID DocumentId) (*View, bool) {
 	if !ok {
 		return nil, false
 	}
+	if !e.tree.CanSplit(LayoutHorizontal) {
+		return nil, false
+	}
 	e.recordPrevDoc()
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Split(v, LayoutHorizontal)
@@ -95,6 +101,9 @@ func (e *Editor) HSplit(docID DocumentId) (*View, bool) {
 
 // VSplitNew opens a new scratch document in a new vertical split
 func (e *Editor) VSplitNew() *View {
+	if !e.tree.CanSplit(LayoutVertical) {
+		return nil
+	}
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}
@@ -104,6 +113,9 @@ func (e *Editor) VSplitNew() *View {
 
 // HSplitNew opens a new scratch document in a new horizontal split
 func (e *Editor) HSplitNew() *View {
+	if !e.tree.CanSplit(LayoutHorizontal) {
+		return nil
+	}
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}

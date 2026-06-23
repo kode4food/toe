@@ -131,6 +131,7 @@ func TestEditorTree(t *testing.T) {
 func TestEditorSplits(t *testing.T) {
 	t.Run("HSplit creates second view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		d, _ := e.FocusedDocument()
 		v, ok := e.HSplit(d.ID())
 		assert.True(t, ok)
@@ -146,6 +147,7 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("VSplitNew adds new doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		v := e.VSplitNew()
 		assert.NotNil(t, v)
 		assert.Equal(t, 2, len(e.AllDocuments()))
@@ -153,15 +155,51 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("HSplitNew adds new doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		v := e.HSplitNew()
 		assert.NotNil(t, v)
 		assert.Equal(t, 2, len(e.AllDocuments()))
+	})
+
+	t.Run("VSplitNew returns nil when too narrow", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(20, 24)
+		v := e.VSplitNew()
+		assert.Nil(t, v)
+		assert.Equal(t, 1, len(e.AllDocuments()))
+	})
+
+	t.Run("HSplitNew returns nil when too short", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 8)
+		v := e.HSplitNew()
+		assert.Nil(t, v)
+		assert.Equal(t, 1, len(e.AllDocuments()))
+	})
+
+	t.Run("VSplit returns false when too narrow", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(20, 24)
+		d, _ := e.FocusedDocument()
+		v, ok := e.VSplit(d.ID())
+		assert.False(t, ok)
+		assert.Nil(t, v)
+	})
+
+	t.Run("HSplit returns false when too short", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 8)
+		d, _ := e.FocusedDocument()
+		v, ok := e.HSplit(d.ID())
+		assert.False(t, ok)
+		assert.Nil(t, v)
 	})
 }
 
 func TestEditorFocusNavigation(t *testing.T) {
 	t.Run("FocusNextView wraps around", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		v1, _ := e.FocusedView()
 		e.FocusNextView()
@@ -171,6 +209,7 @@ func TestEditorFocusNavigation(t *testing.T) {
 
 	t.Run("FocusPrevView wraps around", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		v1, _ := e.FocusedView()
 		e.FocusPrevView()
@@ -312,6 +351,7 @@ func TestEditorSaveAll(t *testing.T) {
 func TestEditorCloseCurrentAndOthers(t *testing.T) {
 	t.Run("CloseCurrentView removes focused", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		assert.Equal(t, 2, len(e.AllViews()))
 		e.CloseCurrentView()
@@ -320,6 +360,7 @@ func TestEditorCloseCurrentAndOthers(t *testing.T) {
 
 	t.Run("CloseAllOtherViews keeps focused", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		e.VSplitNew()
 		assert.Equal(t, 3, len(e.AllViews()))
@@ -429,6 +470,7 @@ func TestEditorSetViewContentWidth(t *testing.T) {
 func TestEditorSwitchBuffer(t *testing.T) {
 	t.Run("switch to existing doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		all := e.AllDocuments()
 		assert.Equal(t, 2, len(all))
@@ -546,6 +588,7 @@ func TestTreeViews(t *testing.T) {
 
 	t.Run("two views: one focused", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		views := e.Tree().Views()
 		assert.Equal(t, 2, len(views))
@@ -623,33 +666,33 @@ func TestTreeWalkSeparators(t *testing.T) {
 	t.Run("no separators for single view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(100, 40)
-		var seps []int
-		e.Tree().WalkSeparators(func(x, y, height int) {
-			seps = append(seps, x)
+		var count int
+		e.Tree().WalkSeparators(func(_ view.Separator) {
+			count++
 		})
-		assert.Empty(t, seps)
+		assert.Equal(t, 0, count)
 	})
 
 	t.Run("one separator for two vertical splits", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(100, 40)
 		e.VSplitNew()
-		var seps []int
-		e.Tree().WalkSeparators(func(x, y, height int) {
-			seps = append(seps, x)
+		var count int
+		e.Tree().WalkSeparators(func(_ view.Separator) {
+			count++
 		})
-		assert.Equal(t, 1, len(seps))
+		assert.Equal(t, 1, count)
 	})
 
-	t.Run("no sep for horizontal split", func(t *testing.T) {
+	t.Run("one separator for two horizontal splits", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(100, 40)
 		e.HSplitNew()
-		var seps []int
-		e.Tree().WalkSeparators(func(x, y, height int) {
-			seps = append(seps, x)
+		var count int
+		e.Tree().WalkSeparators(func(_ view.Separator) {
+			count++
 		})
-		assert.Empty(t, seps)
+		assert.Equal(t, 1, count)
 	})
 }
 
@@ -720,7 +763,8 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		views := e.Tree().Views()
 		assert.Equal(t, 2, len(views))
 		total := views[0].View.Area().Height + views[1].View.Area().Height
-		assert.Equal(t, 40, total)
+		// 1 gap row between panes
+		assert.Equal(t, 39, total)
 	})
 
 	t.Run("find split in up/down direction", func(t *testing.T) {

@@ -67,6 +67,21 @@ func (r *renderPass) contentViewAt(x, y int) (*view.View, bool) {
 }
 
 func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
+	yOff := 0
+	if bufferlineVisible(r.cx) {
+		yOff = 1
+	}
+	containerID, childIdx, layout, onSep :=
+		r.cx.Editor.Tree().SeparatorAt(x, y-yOff)
+	if onSep {
+		r.ec.mouseDownSep = &sepDrag{
+			containerID: containerID,
+			childIdx:    childIdx,
+			layout:      layout,
+		}
+		return
+	}
+
 	// A click outside any editor content area (status line, command line, or a
 	// gap) must not move the cursor
 	res, ok := r.resolveClickPos(x, y)
@@ -103,6 +118,23 @@ func (r *renderPass) handleMouseDrag(x, y int) {
 	if bufferlineVisible(r.cx) {
 		yOff = 1
 	}
+
+	if r.ec.mouseDownSep != nil {
+		sep := r.ec.mouseDownSep
+		newPos := x
+		if sep.layout == view.LayoutHorizontal {
+			newPos = y - yOff
+		}
+		r.cx.Editor.Tree().MoveSeparator(
+			sep.containerID, sep.childIdx, sep.layout, newPos,
+		)
+		return
+	}
+
+	if r.ec.mouseDownRange == nil {
+		return
+	}
+
 	contentY := y - yOff
 	if contentY < 0 {
 		return

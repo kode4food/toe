@@ -533,6 +533,7 @@ func TestGotoLastAccessedFileSwitches(t *testing.T) {
 		assert.NoError(t, os.WriteFile(f2, []byte("second"), 0o644))
 
 		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
 		v1, err := e.OpenFile(f1)
 		assert.NoError(t, err)
 		firstDocID := v1.DocID()
@@ -605,6 +606,7 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		assert.NoError(t, os.WriteFile(f2, []byte("second"), 0o644))
 
 		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
 		v1, err := e.OpenFile(f1)
 		assert.NoError(t, err)
 		firstDocID := v1.DocID()

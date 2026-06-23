@@ -131,25 +131,16 @@ const (
 	WhitespaceRenderNone WhitespaceRenderValue = "none"
 	WhitespaceRenderAll  WhitespaceRenderValue = "all"
 
-	RuneSpace rune = ' '      // U+0020 space
-	RuneTab   rune = '\t'     // U+0009 horizontal tab
-	RuneNbsp  rune = '\u00a0' // U+00A0 no-break space
-	RuneNnbsp rune = '\u202f' // U+202F narrow no-break space
-
-	RuneFirstPrintableASCII rune = 0x21 // '!' - first printable non-space ASCII
-	RuneLastPrintableASCII  rune = 0x7e // '~' - last printable ASCII
-
-	DefaultWSSpace   = '\u00b7' // '·' - middle dot (·)
-	DefaultWSNbsp    = '\u237d' // '⍽' - shouldered open box (⍽)
-	DefaultWSNnbsp   = '\u2423' // '␣' - open box (␣)
-	DefaultWSTab     = '\u2192' // '→' - rightwards arrow (→)
-	DefaultWSNewline = '\u23ce' // '⏎' - return symbol (⏎)
-	DefaultWSTabpad  = RuneSpace
+	DefaultWSSpace        = '\u00b7' // '·' - middle dot (·)
+	DefaultWSNbsp         = '\u237d' // '⍽' - shouldered open box (⍽)
+	DefaultWSNnbsp        = '\u2423' // '␣' - open box (␣)
+	DefaultWSTab          = '\u2192' // '→' - rightwards arrow (→)
+	DefaultWSNewline      = '\u23ce' // '⏎' - return symbol (⏎)
+	DefaultWSTabpad  rune = ' '
 
 	DefaultIndentGuideChar = '\u2502' // U+2502 box drawings light vertical
 
-	DefaultStatusLineSeparator = "\u2502" // U+2502 box drawings light vertical
-	DefaultVerticalSplitChar   = "\u2502" // U+2502 box drawings light vertical
+	DefaultStatusLineSeparator = "\u2502" // '│' - box drawings light vertical
 
 	GutterTypeDiagnostics GutterType = "diagnostics"
 	GutterTypeLineNumbers GutterType = "line-numbers"

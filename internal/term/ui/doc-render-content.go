@@ -160,7 +160,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	if !softWrap {
 		hWidth = contentW
 	}
-	v.EnsureCursorVisibleHorizontal(text, sel, hWidth, format.TabWidth, opts.ScrollOff)
+	v.EnsureCursorVisibleHorizontal(
+		text, sel, hWidth, format.TabWidth, opts.ScrollOff,
+	)
 	hOff := v.Offset().HorizontalOffset
 
 	// --- pre-converted TUI styles and layout constants ---

@@ -29,8 +29,9 @@ type (
 		// indentCol is the visual column where the line's indentation ends,
 		// pre-computed by the caller so rows() never needs to re-scan lineStr
 		// from position 0 when lineStr has been sliced to the visible window
-		indentCol      int
-		colOffset      int // visual column where lineStr starts (0 unless windowed)
+		indentCol int
+		// visual column where lineStr starts (0 unless windowed)
+		colOffset      int
 		softWrap       bool
 		cursorlinePrim bool
 		cursorlineSec  bool

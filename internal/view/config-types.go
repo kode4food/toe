@@ -131,6 +131,9 @@ const (
 	WhitespaceRenderNone WhitespaceRenderValue = "none"
 	WhitespaceRenderAll  WhitespaceRenderValue = "all"
 
+	RuneNbsp  rune = '\u00a0' // U+00A0 no-break space
+	RuneNnbsp rune = '\u202f' // U+202F narrow no-break space
+
 	DefaultWSSpace   = '·' // U+00B7 middle dot
 	DefaultWSNbsp    = '⍽' // U+237D shouldered open box
 	DefaultWSNnbsp   = '␣' // U+2423 open box

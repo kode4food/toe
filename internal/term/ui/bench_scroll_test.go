@@ -72,6 +72,7 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
+	e.ResizeTree(100, 40)
 	if _, ok := e.VSplit(docB.ID()); !ok {
 		b.Fatal("vsplit failed")
 	}

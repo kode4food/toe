@@ -14,11 +14,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-const (
-	vertSplitChar  = "│" // '│' box drawings light vertical
-	horizSplitChar = "─" // '─' box drawings light horizontal
-)
-
 // renderPass bundles the state needed for a single render pass so every render
 // helper receives it without passing cx and ec separately
 type renderPass struct {
@@ -27,6 +22,11 @@ type renderPass struct {
 	w  int
 	h  int
 }
+
+const (
+	vertSplitChar  = "│" // '│' box drawings light vertical
+	horizSplitChar = "─" // '─' box drawings light horizontal
+)
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 	th := r.activeTheme()

@@ -193,7 +193,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	sepTUI := lipglossToTUIStyle(th.Get("ui.border"))
 	r.cx.Editor.Tree().WalkSeparators(func(x, y, h int) {
 		for row := y; row < y+h; row++ {
-			buf.SetString(x, y0+row, "│", sepTUI)
+			buf.SetString(x, y0+row, view.DefaultVerticalSplitChar, sepTUI)
 		}
 	})
 

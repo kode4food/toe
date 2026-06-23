@@ -150,7 +150,7 @@ func nextIsNotAlphaPair(doc Rope, r Range) bool {
 	if !ok {
 		return true
 	}
-	return !autoPairIsAlphanumeric(ch)
+	return !CharIsWord(ch)
 }
 
 func prevIsNotAlphaPair(doc Rope, r Range) bool {
@@ -159,7 +159,7 @@ func prevIsNotAlphaPair(doc Rope, r Range) bool {
 	if !ok {
 		return true
 	}
-	return !autoPairIsAlphanumeric(ch)
+	return !CharIsWord(ch)
 }
 
 func autoPairCharAt(doc Rope, pos int) (rune, bool) {
@@ -175,12 +175,4 @@ func autoPairPrevChar(doc Rope, pos int) (rune, bool) {
 		return 0, false
 	}
 	return autoPairCharAt(doc, pos-1)
-}
-
-func autoPairIsAlphanumeric(ch rune) bool {
-	return CharIsWord(ch)
-}
-
-func autoPairIsWhitespace(ch rune) bool {
-	return CharIsWhitespace(ch) || CharIsLineEnding(ch)
 }

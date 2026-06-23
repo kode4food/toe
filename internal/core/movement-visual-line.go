@@ -57,7 +57,7 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 				break
 			}
 			ch := runes[i]
-			if indent < 0 && !charIsWrapWhitespace(ch) {
+			if indent < 0 && !CharIsWhitespace(ch) {
 				indent = col
 			}
 			lastW = visualRuneW(ch, col+wordWidth, tabW)
@@ -189,17 +189,6 @@ func (v visualLine) charAtPos(targetRow, targetCol int) int {
 // soft-wrap break points. Wrapping prefers to break between words
 func charIsWord(ch rune) bool {
 	return ch == '_' || unicode.IsLetter(ch) || unicode.IsNumber(ch)
-}
-
-// charIsWrapWhitespace reports whether ch is whitespace for the purpose of
-// detecting a line's leading indent (carried onto continuation rows)
-func charIsWrapWhitespace(ch rune) bool {
-	switch ch {
-	case '\t', 0x0020, 0x00A0, 0x180E, 0x202F,
-		0x205F, 0x3000, 0xFEFF:
-		return true
-	}
-	return ch >= 0x2000 && ch <= 0x200B
 }
 
 func visualRuneW(ch rune, col, tabW int) int {

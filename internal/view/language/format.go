@@ -5,7 +5,7 @@ const (
 	DefaultTabWidth        = 4
 	DefaultMaxWrap         = 20
 	DefaultMaxIndentRetain = 40
-	DefaultWrapIndicator   = "↪ "
+	DefaultWrapIndicator   = "\u21aa " // '↪' - rightwards arrow with hook
 )
 
 type TextFormat struct {

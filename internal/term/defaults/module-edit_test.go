@@ -81,6 +81,15 @@ func TestEditTextOps(t *testing.T) {
 		assert.Equal(t, "def", docText(t, e))
 	})
 
+	t.Run("delete selection yanks to register", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abcdef")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmd(t, km, e, "delete_selection")
+		got, ok := e.Registers().First('"')
+		assert.True(t, ok)
+		assert.Equal(t, "abc", got)
+	})
+
 	t.Run("removes and enters insert", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
 		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)

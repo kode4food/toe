@@ -52,7 +52,7 @@ func (o *Options) StatusLineSeparator() string {
 	if o.StatusLine.Separator != "" {
 		return o.StatusLine.Separator
 	}
-	return "│"
+	return DefaultStatusLineSeparator
 }
 
 // ModeNameForMode returns the display name for the given mode string

@@ -418,13 +418,13 @@ func TestAppendToLine(t *testing.T) {
 	})
 }
 
-func TestDeleteSelectionNoyank(t *testing.T) {
+func TestDeleteSelectionNoYank(t *testing.T) {
 	t.Run("deletes without affecting register", func(t *testing.T) {
 		e := editorWithText(t, "hello world")
 		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 		e.Registers().Write('"', []string{"saved"})
 
-		action.DeleteSelectionNoyank(e)
+		action.DeleteSelectionNoYank(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, " world", doc.Text().String())
@@ -491,13 +491,13 @@ func TestExitSelectMode(t *testing.T) {
 	})
 }
 
-func TestChangeSelectionNoyank(t *testing.T) {
+func TestChangeSelectionNoYank(t *testing.T) {
 	t.Run("skips register on insert", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 		setSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
 		e.Registers().Write('"', []string{"safe"})
 
-		action.ChangeSelectionNoyank(e)
+		action.ChangeSelectionNoYank(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "c", doc.Text().String())

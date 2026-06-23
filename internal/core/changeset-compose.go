@@ -1,5 +1,7 @@
 package core
 
+import "unicode/utf8"
+
 // composeCtx holds iterator state for ChangeSet.Compose
 type composeCtx struct {
 	a, b         []Operation
@@ -84,7 +86,7 @@ func (c *composeCtx) emitN(n int, kind OperationKind) {
 // stepInsertDelete handles (Insert-A, Delete-B): the inserted text is consumed
 // by the deletion; no output is emitted
 func (c *composeCtx) stepInsertDelete() {
-	aLen := runeLen(c.aStr)
+	aLen := utf8.RuneCountInString(c.aStr)
 	if aLen < c.bRem {
 		c.bRem -= aLen
 		c.loadA()
@@ -100,7 +102,7 @@ func (c *composeCtx) stepInsertDelete() {
 // stepInsertRetain handles (Insert-A, Retain-B): emit the prefix of the insert
 // that fits within the retain window
 func (c *composeCtx) stepInsertRetain() {
-	aLen := runeLen(c.aStr)
+	aLen := utf8.RuneCountInString(c.aStr)
 	if aLen < c.bRem {
 		c.out = c.out.insert(c.aStr)
 		c.bRem -= aLen

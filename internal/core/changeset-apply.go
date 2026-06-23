@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 func (c ChangeSet) Apply(doc Rope) (Rope, error) {
 	if doc.LenChars() != c.len {
@@ -25,7 +28,7 @@ func (c ChangeSet) Apply(doc Rope) (Rope, error) {
 				return Rope{}, err
 			}
 			out = next
-			pos += runeLen(op.text)
+			pos += utf8.RuneCountInString(op.text)
 		}
 	}
 	return out, nil
@@ -51,7 +54,7 @@ func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 			out = out.insert(text.String())
 			pos += op.n
 		case OperationInsert:
-			out = out.delete(runeLen(op.text))
+			out = out.delete(utf8.RuneCountInString(op.text))
 		}
 	}
 	return out, nil
@@ -82,7 +85,7 @@ func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
 			if pos == oldPos {
 				return newPos + assoc.insertOffset(op.text), nil
 			}
-			newPos += runeLen(op.text)
+			newPos += utf8.RuneCountInString(op.text)
 		}
 	}
 	return newPos, nil

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"unicode/utf8"
 )
 
 type (
@@ -110,7 +111,7 @@ func (o Operation) Kind() OperationKind {
 
 func (o Operation) LenChars() int {
 	if o.kind == OperationInsert {
-		return runeLen(o.text)
+		return utf8.RuneCountInString(o.text)
 	}
 	return o.n
 }
@@ -167,7 +168,7 @@ func (c ChangeSet) Empty() bool {
 }
 
 func (a Assoc) insertOffset(s string) int {
-	chars := runeLen(s)
+	chars := utf8.RuneCountInString(s)
 	switch a {
 	case AssocAfter, AssocAfterSticky:
 		return chars
@@ -210,7 +211,7 @@ func (c ChangeSet) insert(text string) ChangeSet {
 	if text == "" {
 		return c
 	}
-	c.lenAfter += runeLen(text)
+	c.lenAfter += utf8.RuneCountInString(text)
 	if out, ok := c.mergeInsert(text); ok {
 		return out
 	}

@@ -2,15 +2,11 @@ package core
 
 import "unicode/utf8"
 
-func runeLen(s string) int {
-	return utf8.RuneCountInString(s)
-}
-
 func splitStringAtChar(s string, pos int) (string, string) {
 	if pos <= 0 {
 		return "", s
 	}
-	if pos >= runeLen(s) {
+	if pos >= utf8.RuneCountInString(s) {
 		return s, ""
 	}
 	i := 0

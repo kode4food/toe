@@ -259,7 +259,7 @@ func TestViewJumps(t *testing.T) {
 	})
 }
 
-func TestViewEnsureCursorVisibleScrolloff(t *testing.T) {
+func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 	t.Run("scrolloff clamped when height is small", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()

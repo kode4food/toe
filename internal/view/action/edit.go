@@ -23,46 +23,42 @@ const (
 
 const defaultYankRegister = '"'
 
-// DeleteSelection deletes all selections and enters normal mode
+// DeleteSelection yanks all selections into the active register then deletes them
 func DeleteSelection(e *view.Editor) {
-	DeleteSelectionNoyank(e)
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok || doc.Readonly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	yankSelectionRanges(e, text, ranges)
+	if !applyDeletions(e, applyDeletionsArgs{text, sel, ranges}) {
+		return
+	}
+	e.SetMode(view.ModeNormal)
 }
 
-// ChangeSelection deletes the selection and enters insert mode
-// For linewise (whole-line) selections, opens a blank line above
+// ChangeSelection yanks all selections into the active register, deletes them,
+// and enters insert mode. For linewise selections, opens a blank line above
 func ChangeSelection(e *view.Editor) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
 	}
 	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.Readonly() {
+	if !ok || doc.Readonly() {
 		return
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	linewise := selectionIsLinewise(text, sel)
-
 	ranges := sel.Ranges()
-	reg := e.ActiveRegister()
-	if reg == 0 {
-		reg = defaultYankRegister
-	}
-
-	// Yank first, then delete
-	values := make([]string, 0, len(ranges))
-	for _, r := range ranges {
-		frag, err := r.MinWidth1(text).Slice(text)
-		if err != nil {
-			continue
-		}
-		values = append(values, frag.String())
-	}
-	e.Registers().Write(reg, values)
-
+	yankSelectionRanges(e, text, ranges)
 	if !applyDeletions(e, applyDeletionsArgs{text, sel, ranges}) {
 		return
 	}
@@ -133,8 +129,8 @@ func SplitSelectionOnNewline(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
-// DeleteSelectionNoyank deletes each selection without yanking first
-func DeleteSelectionNoyank(e *view.Editor) {
+// DeleteSelectionNoYank deletes each selection without yanking first
+func DeleteSelectionNoYank(e *view.Editor) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
@@ -154,9 +150,9 @@ func DeleteSelectionNoyank(e *view.Editor) {
 	e.SetMode(view.ModeNormal)
 }
 
-// ChangeSelectionNoyank deletes each selection without yanking and enters
+// ChangeSelectionNoYank deletes each selection without yanking and enters
 // insert mode
-func ChangeSelectionNoyank(e *view.Editor) {
+func ChangeSelectionNoYank(e *view.Editor) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
@@ -179,6 +175,22 @@ func ChangeSelectionNoyank(e *view.Editor) {
 		return
 	}
 	e.SetMode(view.ModeInsert)
+}
+
+func yankSelectionRanges(e *view.Editor, text core.Rope, ranges []core.Range) {
+	reg := e.ActiveRegister()
+	if reg == 0 {
+		reg = defaultYankRegister
+	}
+	values := make([]string, 0, len(ranges))
+	for _, r := range ranges {
+		frag, err := r.MinWidth1(text).Slice(text)
+		if err != nil {
+			continue
+		}
+		values = append(values, frag.String())
+	}
+	e.Registers().Write(reg, values)
 }
 
 type applyChangesFromArgs struct {

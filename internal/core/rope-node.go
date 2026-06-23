@@ -1,6 +1,9 @@
 package core
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 type ropeNode struct {
 	left  *ropeNode
@@ -15,17 +18,17 @@ func buildRopeNode(text string) *ropeNode {
 	if text == "" {
 		return nil
 	}
-	if runeLen(text) <= DefaultRopeLeafChars {
+	if utf8.RuneCountInString(text) <= DefaultRopeLeafChars {
 		return newLeafRopeNode(text)
 	}
-	left, right := splitStringAtChar(text, runeLen(text)/2)
+	left, right := splitStringAtChar(text, utf8.RuneCountInString(text)/2)
 	return concatRopeNode(buildRopeNode(left), buildRopeNode(right))
 }
 
 func newLeafRopeNode(text string) *ropeNode {
 	return &ropeNode{
 		text:  text,
-		chars: runeLen(text),
+		chars: utf8.RuneCountInString(text),
 		lines: strings.Count(text, "\n"),
 		depth: 1,
 	}

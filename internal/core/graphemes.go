@@ -1,6 +1,8 @@
 package core
 
 import (
+	"unicode/utf8"
+
 	"github.com/rivo/uniseg"
 )
 
@@ -49,7 +51,7 @@ func NthNextGraphemeBoundary(doc Rope, charIdx, n int) int {
 		if cl == "" {
 			break
 		}
-		pos += runeLen(cl)
+		pos += utf8.RuneCountInString(cl)
 		rest = rem
 		state = newState
 	}
@@ -88,7 +90,7 @@ func EnsureGraphemeBoundaryPrev(doc Rope, charIdx int) int {
 }
 
 // graphemeBoundaries returns the list of char-indexed grapheme cluster start
-// positions for s, including a trailing sentinel equal to runeLen(s)
+// positions for s, including a trailing sentinel equal to utf8.RuneCountInString(s)
 func graphemeBoundaries(s string) []int {
 	out := make([]int, 0, len(s)+1)
 	pos := 0
@@ -96,7 +98,7 @@ func graphemeBoundaries(s string) []int {
 	for s != "" {
 		out = append(out, pos)
 		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(s, state)
-		pos += runeLen(cl)
+		pos += utf8.RuneCountInString(cl)
 		s = rest
 		state = newState
 	}

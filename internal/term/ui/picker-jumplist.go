@@ -8,6 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const runeTruncEllipsis = "\u2026" // '…' - horizontal ellipsis
+
 type (
 	jumplistPickerSource struct {
 		pickerMeta
@@ -104,7 +106,7 @@ func jumplistContents(text core.Rope, anchor int) string {
 	s := strings.TrimRight(line.String(), "\r\n")
 	runes := []rune(s)
 	if len(runes) > 80 {
-		return string(runes[:80]) + "…"
+		return string(runes[:80]) + runeTruncEllipsis
 	}
 	return s
 }

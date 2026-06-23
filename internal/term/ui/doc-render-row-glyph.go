@@ -32,7 +32,7 @@ func (r *rowRender) renderGrapheme(
 ) (string, int, documentGlyph) {
 	ch := args.ch
 	col := args.col
-	if ch >= 0x21 && ch < 0x7F {
+	if ch >= view.RuneFirstPrintableASCII && ch <= view.RuneLastPrintableASCII {
 		return asciiTable[ch : ch+1], 1, documentGlyphNone
 	}
 	tabW := r.format.TabWidth
@@ -40,7 +40,7 @@ func (r *rowRender) renderGrapheme(
 	wsChars := r.ws.Characters
 	guide := r.isGuideAt(col, args.indentCol, args.startGuide, args.endGuide)
 	switch ch {
-	case '\t':
+	case view.RuneTab:
 		width := tabW - col%tabW
 		if guide {
 			rendered := string(r.ig.CharRune()) +
@@ -53,7 +53,7 @@ func (r *rowRender) renderGrapheme(
 				width, documentGlyphWhitespace
 		}
 		return strings.Repeat(" ", width), width, documentGlyphNone
-	case ' ':
+	case view.RuneSpace:
 		if guide {
 			return string(r.ig.CharRune()), 1, documentGlyphGuide
 		}

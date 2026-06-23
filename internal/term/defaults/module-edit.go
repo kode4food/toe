@@ -26,9 +26,9 @@ const (
 	actSwitchToLowercase        = "switch_to_lowercase"
 	actSwitchToUppercase        = "switch_to_uppercase"
 	actDeleteSelection          = "delete_selection"
-	actDeleteSelectionNoyank    = "delete_selection_noyank"
+	actDeleteSelectionNoYank    = "delete_selection_noyank"
 	actChangeSelection          = "change_selection"
-	actChangeSelectionNoyank    = "change_selection_noyank"
+	actChangeSelectionNoYank    = "change_selection_noyank"
 	actUndo                     = "undo"
 	actRedo                     = "redo"
 	actEarlier                  = "earlier"
@@ -127,9 +127,9 @@ func editModule() command.Module {
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('d')),
 			},
-			actDeleteSelectionNoyank: {
+			actDeleteSelectionNoYank: {
 				DocString: "Delete selection without yanking",
-				Run:       Runner(action.DeleteSelectionNoyank),
+				Run:       Runner(action.DeleteSelectionNoYank),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('d')),
 			},
@@ -139,9 +139,9 @@ func editModule() command.Module {
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('c')),
 			},
-			actChangeSelectionNoyank: {
+			actChangeSelectionNoYank: {
 				DocString: "Change selection without yanking",
-				Run:       Runner(action.ChangeSelectionNoyank),
+				Run:       Runner(action.ChangeSelectionNoYank),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('c')),
 			},

@@ -132,6 +132,7 @@ func YankToPrimaryClipboard(e *view.Editor) {
 	}
 	e.Registers().Write(primaryClipboardRegister, values)
 	_ = writePrimaryClipboard(strings.Join(values, "\n"))
+	e.SetMode(view.ModeNormal)
 }
 
 func PastePrimaryClipboardAfter(e *view.Editor) {

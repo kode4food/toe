@@ -27,14 +27,15 @@ func scanLinePrefix(
 		for _, ch := range seg {
 			if !indentDone {
 				switch ch {
-				case '\t', ' ', view.RuneNbsp, view.RuneNnbsp:
+				case view.RuneTab, view.RuneSpace, view.RuneNbsp,
+					view.RuneNnbsp:
 				default:
 					indentDone = true
 					indentCol = col
 				}
 			}
 			var w int
-			if uint32(ch)-0x20 < 0x5f {
+			if uint32(ch)-0x20 < 0x5f { // printable ASCII
 				w = 1
 			} else {
 				w = view.RuneWidth(ch, col, tabW)
@@ -71,7 +72,7 @@ func cursorCols(
 				break
 			}
 			charIdx++
-			if ch == '\t' {
+			if ch == view.RuneTab {
 				vcol += tabW - vcol%tabW
 			} else {
 				vcol++
@@ -96,9 +97,9 @@ func indentWidth(lineStr string, tabW int) int {
 	col := 0
 	for _, ch := range lineStr {
 		switch ch {
-		case '\t':
+		case view.RuneTab:
 			col += tabW - col%tabW
-		case ' ', view.RuneNbsp, view.RuneNnbsp:
+		case view.RuneSpace, view.RuneNbsp, view.RuneNnbsp:
 			col++
 		default:
 			return col

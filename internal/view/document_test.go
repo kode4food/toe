@@ -779,6 +779,49 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 		d, _ := e.FocusedDocument()
 		assert.NotEqual(t, "", d.Lang())
 	})
+
+	t.Run("chroma extension fallback", func(t *testing.T) {
+		// .py is not in bundled languages, falls back to chroma lexers.Match
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "main.py")
+		err := os.WriteFile(path, []byte("print('hello')\n"), 0o644)
+		assert.NoError(t, err)
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.NotEqual(t, "text", d.Lang())
+	})
+
+	t.Run("chroma content fallback", func(t *testing.T) {
+		// no extension + unrecognized-path, but chroma can analyse the content
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "noext")
+		err := os.WriteFile(path,
+			[]byte("#!/usr/bin/env python3\nprint('hi')\n"), 0o644)
+		assert.NoError(t, err)
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		_ = d.Lang() // may or may not match; just covers lexers.Analyse path
+	})
+
+	t.Run("unknown falls back to text", func(t *testing.T) {
+		// binary-ish content with weird extension: all three fallbacks fail
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "data.zzzxyzqwerty99")
+		err := os.WriteFile(path, []byte("xyzzy plugh\n"), 0o644)
+		assert.NoError(t, err)
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		assert.Equal(t, "text", d.Lang())
+	})
 }
 
 func TestDocumentTrimFinalNewlinesSingleEnding(t *testing.T) {

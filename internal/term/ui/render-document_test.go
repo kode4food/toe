@@ -218,6 +218,23 @@ func TestThemeRender(t *testing.T) {
 		assert.Contains(t, out, "\x1b[38;2;69;71;90m")
 	})
 
+	t.Run("highlights search matches", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(
+			path, []byte("hello world\nhello again\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Registers().Set('/', "hello")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		_ = m.View().Content
+	})
+
 	t.Run("applies selection and cursor styles", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())

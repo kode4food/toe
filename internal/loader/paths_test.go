@@ -156,6 +156,13 @@ func TestWorkspace(t *testing.T) {
 	assert.Equal(t, work, found)
 }
 
+func TestFindWorkspaceNoMarker(t *testing.T) {
+	t.Run("returns fallback when no marker", func(t *testing.T) {
+		_, fallback := loader.FindWorkspace(t.TempDir())
+		assert.True(t, fallback)
+	})
+}
+
 func TestWorkspaceTrust(t *testing.T) {
 	root := t.TempDir()
 	work := filepath.Join(root, "work")
@@ -221,6 +228,15 @@ func TestRuntimeDirTildePath(t *testing.T) {
 		}
 		assert.True(t, found)
 	})
+
+	t.Run("tilde with no home stays as-is", func(t *testing.T) {
+		t.Setenv(loader.RuntimeEnv, "~")
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv(loader.DefaultRuntimeEnv, "")
+		t.Setenv("HOME", "")
+		dirs := loader.RuntimeDirs()
+		assert.NotEmpty(t, dirs)
+	})
 }
 
 func TestRuntimeFileFallback(t *testing.T) {
@@ -269,6 +285,42 @@ func TestPathsWhenHomeMissing(t *testing.T) {
 		_, ok := loader.LogFile()
 
 		assert.False(t, ok)
+	})
+
+	t.Run("DataDir false when no home", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", "")
+		t.Setenv("HOME", "")
+
+		_, ok := loader.DataDir()
+
+		assert.False(t, ok)
+	})
+
+	t.Run("WorkspaceTrustFile false when no home", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", "")
+		t.Setenv("HOME", "")
+
+		_, ok := loader.WorkspaceTrustFile()
+
+		assert.False(t, ok)
+	})
+
+	t.Run("TrustWorkspace errors when no home", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", "")
+		t.Setenv("HOME", "")
+
+		err := loader.TrustWorkspace(t.TempDir())
+
+		assert.Equal(t, loader.ErrPathUnavailable, err)
+	})
+
+	t.Run("UntrustWorkspace errors when no home", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", "")
+		t.Setenv("HOME", "")
+
+		err := loader.UntrustWorkspace(t.TempDir())
+
+		assert.Equal(t, loader.ErrPathUnavailable, err)
 	})
 }
 

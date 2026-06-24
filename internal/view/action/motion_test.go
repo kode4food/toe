@@ -624,6 +624,17 @@ func TestVisualMoveFormat(t *testing.T) {
 	})
 }
 
+func TestMoveLineEndOnInternalEmptyLine(t *testing.T) {
+	t.Run("empty non-first line stays put", func(t *testing.T) {
+		e := editorWithText(t, "a\n\nb")
+		setCursor(t, e, 2)
+
+		action.MoveLineEnd(e)
+
+		assert.Equal(t, 2, cursorPos(t, e))
+	})
+}
+
 func TestParagraphMotionWithCount(t *testing.T) {
 	t.Run("count=2 skips two paragraphs forward", func(t *testing.T) {
 		e := editorWithText(t, "a\n\nb\n\nc")
@@ -651,6 +662,24 @@ func TestParagraphMotionWithCount(t *testing.T) {
 		action.GotoPrevParagraph(e)
 
 		assert.Equal(t, 0, cursorPos(t, e))
+	})
+
+	t.Run("prev para from blank first line", func(t *testing.T) {
+		e := editorWithText(t, "\nabc\ndef")
+		setCursor(t, e, 2)
+
+		action.GotoPrevParagraph(e)
+
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
+
+	t.Run("next para from blank last line", func(t *testing.T) {
+		e := editorWithText(t, "abc\n\n")
+		setCursor(t, e, 0)
+
+		action.GotoNextParagraph(e)
+
+		assert.True(t, cursorPos(t, e) > 0)
 	})
 
 	t.Run("count=2 skips two paragraphs backward", func(t *testing.T) {
@@ -695,6 +724,41 @@ func TestGotoFile(t *testing.T) {
 		_, err := action.GotoFile(e)
 
 		assert.Error(t, err)
+	})
+
+	t.Run("relative path resolved via cwd", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "rel.txt"), []byte("x"), 0o644,
+		))
+
+		e := editorWithText(t, "rel.txt")
+		assert.NoError(t, e.Chdir(dir))
+		setCursor(t, e, 0)
+
+		path, err := action.GotoFile(e)
+
+		assert.NoError(t, err)
+		assert.Equal(t, filepath.Join(dir, "rel.txt"), path)
+	})
+
+	t.Run("relative path resolved via doc dir", func(t *testing.T) {
+		dir := t.TempDir()
+		relPath := filepath.Join(dir, "rel.txt")
+		assert.NoError(t, os.WriteFile(relPath, []byte("x"), 0o644))
+		docPath := filepath.Join(dir, "main.txt")
+		assert.NoError(t, os.WriteFile(docPath, []byte("rel.txt"), 0o644))
+
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(docPath)
+		assert.NoError(t, err)
+		setCursor(t, e, 0)
+
+		path, err := action.GotoFile(e)
+
+		assert.NoError(t, err)
+		assert.Equal(t, relPath, path)
 	})
 }
 

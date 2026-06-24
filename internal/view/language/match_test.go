@@ -1,6 +1,7 @@
 package language_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -93,6 +94,32 @@ func TestAutoPairConfig(t *testing.T) {
 		var a language.AutoPairConfig
 		assert.Error(t, a.UnmarshalTOML(42))
 	})
+
+	t.Run("unmarshal nil errors", func(t *testing.T) {
+		var a language.AutoPairConfig
+		assert.Error(t, a.UnmarshalTOML(nil))
+	})
+
+	t.Run("unmarshal string map enables pairs", func(t *testing.T) {
+		var a language.AutoPairConfig
+		assert.NoError(t, a.UnmarshalTOML(map[string]string{"(": ")"}))
+		pairs, ok := a.AutoPairs()
+		assert.True(t, ok)
+		p, got := pairs.Get('(')
+		assert.True(t, got)
+		assert.Equal(t, ')', p.Close)
+	})
+
+	t.Run("OrDefault with present config", func(t *testing.T) {
+		a := language.AutoPairConfig{
+			Present: true,
+			Pairs:   [][2]rune{{'[', ']'}},
+		}
+		pairs, ok := a.OrDefault()
+		assert.True(t, ok)
+		_, got := pairs.Get('[')
+		assert.True(t, got)
+	})
 }
 
 func TestLoadBundledLanguages(t *testing.T) {
@@ -137,6 +164,87 @@ file-types = [{ glob = "*.{c,h}" }]
 		name, ok := language.DetectLanguage("types.h", "")
 		assert.True(t, ok)
 		assert.Equal(t, "c", name)
+	})
+}
+
+func TestLanguageForMatch(t *testing.T) {
+	t.Run("injection regex matches content", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "injlang"
+injection-regex = "injlang|il"
+`)
+		name, ok := language.DetectLanguage("", "il")
+		assert.True(t, ok)
+		assert.Equal(t, "injlang", name)
+	})
+
+	t.Run("injection regex no match returns false", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "injlang2"
+injection-regex = "uniqueinjlang2_abc"
+`)
+		_, ok := language.DetectLanguage("", "ZZZNOMATCH_ABCDEF_123")
+		assert.False(t, ok)
+	})
+
+	t.Run("invalid injection regex skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "badregexlang"
+injection-regex = "["
+`)
+		// content doesn't match name → 2nd loop tries invalid regex, skips it
+		_, ok := language.DetectLanguage("", "ZZZNOMATCH_ABCDEF_123")
+		assert.False(t, ok)
+	})
+}
+
+func TestGlobMatch(t *testing.T) {
+	t.Run("absolute glob matches exact path", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "exact.abs")
+		setUserLangs(t, fmt.Sprintf(`
+[[language]]
+name = "abslang"
+file-types = [{glob = %q}]
+`, target))
+		name, ok := language.DetectLanguage(target, "")
+		assert.True(t, ok)
+		assert.Equal(t, "abslang", name)
+	})
+
+	t.Run("starslash prefix glob matches", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "starlang"
+file-types = [{ glob = "*/foo.star" }]
+`)
+		name, ok := language.DetectLanguage("/any/dir/foo.star", "")
+		assert.True(t, ok)
+		assert.Equal(t, "starlang", name)
+	})
+
+	t.Run("double-star glob matches any path", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "dblstar"
+file-types = [{ glob = "**" }]
+`)
+		name, ok := language.DetectLanguage("anything/foo.xyz", "")
+		assert.True(t, ok)
+		assert.Equal(t, "dblstar", name)
+	})
+
+	t.Run("glob with double-star non-match is noop", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "nomatch"
+file-types = [{ glob = "**/nope.nomatch" }]
+`)
+		_, ok := language.DetectLanguage("some/path/other.txt", "")
+		assert.False(t, ok)
 	})
 }
 

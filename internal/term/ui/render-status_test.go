@@ -38,6 +38,20 @@ func TestStatuslineConfigRender(t *testing.T) {
 	})
 }
 
+func TestStatuslineTotalLines(t *testing.T) {
+	t.Run("total-line-numbers appears in status", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().StatusLine.Right = []view.StatusLineElement{
+			view.StatusLineTotalLines,
+		}
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, " 1 ")
+	})
+}
+
 func TestCommandlineThemeRender(t *testing.T) {
 	t.Run("applies commandline styles", func(t *testing.T) {
 		root := t.TempDir()

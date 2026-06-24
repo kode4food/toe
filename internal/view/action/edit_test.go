@@ -278,7 +278,6 @@ func TestYank(t *testing.T) {
 func TestPasteAfter(t *testing.T) {
 	t.Run("pastes at head of selection", func(t *testing.T) {
 		e := editorWithText(t, "xyz")
-		// Select "x" (range 0..1), head is at 1
 		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		e.Registers().Write('"', []string{"b"})
 
@@ -287,6 +286,26 @@ func TestPasteAfter(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "xbyz", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
+	})
+
+	t.Run("empty register is noop", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+
+		action.PasteAfter(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("linewise paste after last line", func(t *testing.T) {
+		e := editorWithText(t, "abc\ndef")
+		setCursor(t, e, 4)
+		e.Registers().Write('"', []string{"ghi\n"})
+
+		action.PasteAfter(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Contains(t, doc.Text().String(), "ghi")
 	})
 }
 
@@ -765,6 +784,55 @@ func TestChangeSelectionLinewiseTrue(t *testing.T) {
 		setSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
 
 		action.ChangeSelection(e)
+
+		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+}
+
+func TestInsertNewlineIndented(t *testing.T) {
+	t.Run("preserves leading indent", func(t *testing.T) {
+		e := editorWithText(t, "  hello")
+		setCursor(t, e, 7)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Contains(t, doc.Text().String(), "  ")
+	})
+
+	t.Run("no comment continuation when disabled", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		setCursor(t, e, 5)
+		e.Options().ContinueComments = false
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Contains(t, doc.Text().String(), "\n")
+	})
+
+	t.Run("continues comment token on newline", func(t *testing.T) {
+		writeTextLangConfig(t, "//")
+
+		e := editorWithText(t, "// hello")
+		setCursor(t, e, 8)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Contains(t, doc.Text().String(), "//")
+	})
+}
+
+func TestChangeSelectionNoYankLinewise(t *testing.T) {
+	t.Run("linewise opens line above", func(t *testing.T) {
+		e := editorWithText(t, "a\nb\n")
+		setSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
+
+		action.ChangeSelectionNoYank(e)
 
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})

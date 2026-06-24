@@ -22,6 +22,48 @@ func TestShellPipeTo(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
+
+	t.Run("failing command returns error", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+
+		err := action.ShellPipeTo(e, "false")
+
+		assert.Error(t, err)
+	})
+}
+
+func TestShellPipeErrors(t *testing.T) {
+	t.Run("failing command returns error", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
+		err := action.ShellPipe(e, "false")
+
+		assert.Error(t, err)
+	})
+}
+
+func TestShellOutputErrors(t *testing.T) {
+	t.Run("insert failing command returns error", func(t *testing.T) {
+		e := editorWithText(t, "x")
+		setCursor(t, e, 0)
+
+		err := action.ShellInsertOutput(e, "false")
+
+		assert.Error(t, err)
+	})
+}
+
+func TestReadFileErrors(t *testing.T) {
+	t.Run("missing file returns error", func(t *testing.T) {
+		e := editorWithText(t, "x")
+		setCursor(t, e, 0)
+
+		err := action.ReadFile(e, "/no/such/file/xyz.txt")
+
+		assert.Error(t, err)
+	})
 }
 
 func TestShell(t *testing.T) {

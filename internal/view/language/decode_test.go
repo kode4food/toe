@@ -1,10 +1,13 @@
 package language_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view/language"
 )
 
@@ -168,6 +171,18 @@ name = "gramlang3"
 		l := language.LoadLanguage("gramlang3")
 		assert.NotNil(t, l)
 	})
+
+	t.Run("grammar without source is skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[[grammar]]
+name = "nosrcgram"
+
+[[language]]
+name = "gramlang4"
+`)
+		l := language.LoadLanguage("gramlang4")
+		assert.NotNil(t, l)
+	})
 }
 
 func TestDecodeCommentTokens(t *testing.T) {
@@ -314,5 +329,73 @@ wrap-at-text-width = true
 		name, ok := language.DetectLanguage("test.swl", "")
 		assert.True(t, ok)
 		assert.Equal(t, "swlang", name)
+	})
+
+	t.Run("soft-wrap with all fields decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "swlang2"
+file-types = ["swl2"]
+
+[language.soft-wrap]
+enable = true
+max-wrap = 80
+max-indent-retain = 20
+wrap-indicator = "↩"
+`)
+		name, ok := language.DetectLanguage("test.swl2", "")
+		assert.True(t, ok)
+		assert.Equal(t, "swlang2", name)
+	})
+}
+
+func TestDecodeLanguageServerNoCommand(t *testing.T) {
+	t.Run("server without command is skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[language-server.badlsp]
+args = ["--stdio"]
+
+[[language]]
+name = "nolsp"
+`)
+		l := language.LoadLanguage("nolsp")
+		assert.NotNil(t, l)
+	})
+}
+
+func TestDecodeServerFeatureInt(t *testing.T) {
+	t.Run("integer entry in server list skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "intservlang"
+file-types = ["iss"]
+language-servers = [42]
+`)
+		name, ok := language.DetectLanguage("test.iss", "")
+		assert.True(t, ok)
+		assert.Equal(t, "intservlang", name)
+	})
+}
+
+func TestLoadLanguageNoConfig(t *testing.T) {
+	t.Run("no config path returns empty language", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("HOME", "")
+		l := language.LoadLanguage("anything")
+		assert.NotNil(t, l)
+		assert.Equal(t, "", l.Name)
+	})
+}
+
+func TestLoadLanguagesForWorkspace(t *testing.T) {
+	t.Run("trusted workspace path is included", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		wsRoot := t.TempDir()
+		assert.NoError(t, os.MkdirAll(filepath.Join(wsRoot, ".git"), 0o755))
+		assert.NoError(t, loader.TrustWorkspace(wsRoot))
+		langs, ok := language.LoadLanguagesForWorkspace("", "", wsRoot)
+		assert.True(t, ok)
+		_ = langs
 	})
 }

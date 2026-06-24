@@ -148,6 +148,28 @@ func TestSearchWrapAround(t *testing.T) {
 		assert.True(t, cursorPos(t, e) >= 0)
 		assert.True(t, posAfter >= 0)
 	})
+
+	t.Run("no wrap at last char stays put", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		e.Options().SearchWrapAround = false
+		setCursor(t, e, 2)
+
+		err := action.SearchForward(e, "abc")
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, cursorPos(t, e))
+	})
+
+	t.Run("wrap at last char finds from start", func(t *testing.T) {
+		e := editorWithText(t, "foo bar foo")
+		e.Options().SearchWrapAround = true
+		setCursor(t, e, 10)
+
+		err := action.SearchForward(e, "foo")
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
 }
 
 func TestPageOperations(t *testing.T) {
@@ -291,6 +313,16 @@ func TestReplaceChar(t *testing.T) {
 		assert.Equal(t, "axc", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
+
+	t.Run("empty range is skipped", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setCursor(t, e, 1)
+
+		action.ReplaceChar(e, 'x')
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
 }
 
 func TestReplaceWithYanked(t *testing.T) {
@@ -326,6 +358,26 @@ func TestSwitchCase(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "hELLO", doc.Text().String())
+	})
+
+	t.Run("non-alpha chars unchanged", func(t *testing.T) {
+		e := editorWithText(t, "a1b")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
+		action.SwitchCase(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "A1B", doc.Text().String())
+	})
+
+	t.Run("cursor-only is noop", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setCursor(t, e, 1)
+
+		action.SwitchCase(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
 
@@ -613,6 +665,16 @@ func TestIndentUnindent(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "hello\nworld", doc.Text().String())
+	})
+
+	t.Run("Unindent no-indent is noop", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		setCursor(t, e, 0)
+
+		action.Unindent(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
 
@@ -957,5 +1019,50 @@ func TestSearchNextNoWrap(t *testing.T) {
 		action.SearchNext(e)
 
 		assert.Equal(t, pos1, cursorPos(t, e))
+	})
+}
+
+func TestExtendToLineBoundsLastLine(t *testing.T) {
+	t.Run("extends to end of file on last line", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd")
+		setCursor(t, e, 3)
+
+		action.ExtendToLineBounds(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, 3, sel.Primary().From())
+		assert.Equal(t, 5, sel.Primary().To())
+	})
+}
+
+func TestFindCharNotFound(t *testing.T) {
+	t.Run("forward miss is noop", func(t *testing.T) {
+		e := editorWithText(t, "abcde")
+		setCursor(t, e, 0)
+
+		action.FindChar(action.FindCharArgs{
+			Editor:    e,
+			Ch:        'z',
+			Forward:   true,
+			Inclusive: true,
+		})
+
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
+
+	t.Run("backward miss is noop", func(t *testing.T) {
+		e := editorWithText(t, "abcde")
+		setCursor(t, e, 4)
+
+		action.FindChar(action.FindCharArgs{
+			Editor:    e,
+			Ch:        'z',
+			Forward:   false,
+			Inclusive: true,
+		})
+
+		assert.Equal(t, 4, cursorPos(t, e))
 	})
 }

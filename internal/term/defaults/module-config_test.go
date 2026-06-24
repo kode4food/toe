@@ -306,4 +306,20 @@ func TestConfigCommands(t *testing.T) {
 		res := runCmd(t, km, e, "indent_style")
 		assert.NotEmpty(t, res.Message)
 	})
+
+	t.Run("config_open no home returns error", func(t *testing.T) {
+		t.Setenv("HOME", "")
+		t.Setenv("XDG_CONFIG_HOME", "")
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "config_open")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("log_open no home returns error", func(t *testing.T) {
+		t.Setenv("HOME", "")
+		t.Setenv("XDG_DATA_HOME", "")
+		e, km := defaultsEnv(t, "")
+		res := runCmd(t, km, e, "log_open")
+		assert.Contains(t, res.Message, "error")
+	})
 }

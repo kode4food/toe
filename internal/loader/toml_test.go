@@ -95,6 +95,28 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		assert.True(t, ok)
 		assert.Len(t, arr, 2)
 	})
+
+	t.Run("named right entry not in left is appended", func(t *testing.T) {
+		left := []any{map[string]any{"name": "a"}}
+		right := []any{map[string]any{"name": "b"}}
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		arr, ok := merged.([]any)
+		assert.True(t, ok)
+		assert.Len(t, arr, 2)
+	})
+
+	t.Run("non-map right element appended", func(t *testing.T) {
+		left := []any{map[string]any{"name": "x"}}
+		right := []any{"string-element"}
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		arr, ok := merged.([]any)
+		assert.True(t, ok)
+		assert.Len(t, arr, 2)
+	})
 }
 
 func TestLoadMergedTOML(t *testing.T) {

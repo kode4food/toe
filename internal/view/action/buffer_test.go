@@ -490,6 +490,37 @@ func TestCharInfo(t *testing.T) {
 
 		assert.Equal(t, "", action.CharInfo(e))
 	})
+
+	t.Run("tab shows escape", func(t *testing.T) {
+		e := editorWithText(t, "\t")
+		setCursor(t, e, 0)
+
+		assert.Equal(t, `"\t" (U+0009) Dec 9 Hex 09`, action.CharInfo(e))
+	})
+
+	t.Run("cr shows escape", func(t *testing.T) {
+		e := editorWithText(t, "\r")
+		setCursor(t, e, 0)
+
+		assert.Equal(t, `"\r" (U+000d) Dec 13 Hex 0d`, action.CharInfo(e))
+	})
+
+	t.Run("null shows escape", func(t *testing.T) {
+		e := editorWithText(t, "\x00")
+		setCursor(t, e, 0)
+
+		assert.Equal(t, `"\0" (U+0000) Dec 0 Hex 00`, action.CharInfo(e))
+	})
+
+	t.Run("multi-codepoint grapheme", func(t *testing.T) {
+		// e + combining acute = two codepoints, one grapheme
+		e := editorWithText(t, "é")
+		setCursor(t, e, 0)
+
+		info := action.CharInfo(e)
+		assert.Contains(t, info, "U+0065")
+		assert.Contains(t, info, "U+0301")
+	})
 }
 
 func TestSetLineEndingCRLFConversion(t *testing.T) {

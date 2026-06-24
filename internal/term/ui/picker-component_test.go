@@ -86,6 +86,18 @@ func TestPickerScroll(t *testing.T) {
 		assert.Contains(t, out, "CONTENT-05")
 		assert.NotContains(t, out, "CONTENT-00")
 	})
+
+	t.Run("click outside picker dismisses it", func(t *testing.T) {
+		m := fixedPicker(t, 5, 120, 20)
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 0, Y: 0, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "fixed")
+	})
 }
 
 func (fixedPickerSource) Title() string     { return "fixed" }

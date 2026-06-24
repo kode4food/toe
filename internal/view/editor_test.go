@@ -543,6 +543,35 @@ func TestEditorEarlierLater(t *testing.T) {
 		e.Earlier(core.UndoSteps(1))
 		_ = e.Later(core.UndoSteps(1))
 	})
+
+	t.Run("Earlier no view returns false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		assert.False(t, e.Earlier(core.UndoSteps(1)))
+	})
+
+	t.Run("Later no view returns false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		assert.False(t, e.Later(core.UndoSteps(1)))
+	})
+}
+
+func TestEditorConfigReload(t *testing.T) {
+	t.Run("no reload fn returns error", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		assert.Equal(t, view.ErrConfigUnavailable, e.ReloadConfig())
+	})
+
+	t.Run("reload fn is called", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		called := false
+		e.SetConfigReload(func() error { called = true; return nil })
+		assert.NoError(t, e.ReloadConfig())
+		assert.True(t, called)
+	})
 }
 
 func TestEditorApplyInsertMode(t *testing.T) {
@@ -618,6 +647,44 @@ func TestTreeNext(t *testing.T) {
 		assert.Equal(t, v1.ID(), e.Tree().Next())
 		e.Tree().SetFocus(v1.ID())
 		assert.Equal(t, v2.ID(), e.Tree().Next())
+	})
+
+	t.Run("invalid focus returns first view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.Tree().SetFocus(view.InvalidViewId)
+		next := e.Tree().Next()
+		assert.NotEqual(t, view.InvalidViewId, next)
+	})
+
+	t.Run("empty tree returns current focus", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		next := e.Tree().Next()
+		assert.Equal(t, e.Tree().Focus(), next)
+	})
+}
+
+func TestTreePrev(t *testing.T) {
+	t.Run("single view prev wraps to self", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		assert.Equal(t, v.ID(), e.Tree().Prev())
+	})
+
+	t.Run("invalid focus returns last view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.Tree().SetFocus(view.InvalidViewId)
+		prev := e.Tree().Prev()
+		assert.NotEqual(t, view.InvalidViewId, prev)
+	})
+
+	t.Run("empty tree returns current focus", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		prev := e.Tree().Prev()
+		assert.Equal(t, e.Tree().Focus(), prev)
 	})
 }
 

@@ -283,3 +283,156 @@ func TestThemeValidate(t *testing.T) {
 		assert.NoError(t, th.Validate())
 	})
 }
+
+func TestUnderlineStyles(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		style string
+		ok    bool
+	}{
+		{"line", "line", true},
+		{"curl", "curl", true},
+		{"dashed", "dashed", true},
+		{"dotted", "dotted", true},
+		{"double_line", "double_line", true},
+		{"invalid", "squiggly", false},
+		{"non-string", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var value any = tc.style
+			if tc.name == "non-string" {
+				value = 42
+			}
+			th, warnings := theme.Decode(map[string]any{
+				"ui.selection": "#ffffff",
+				"keyword": map[string]any{
+					"underline": map[string]any{
+						"style": value,
+					},
+				},
+			})
+			if tc.ok {
+				assert.Empty(t, warnings)
+				_, ok := th.TryGet("keyword")
+				assert.True(t, ok)
+			} else {
+				assert.NotEmpty(t, warnings)
+			}
+		})
+	}
+}
+
+func TestModifiers(t *testing.T) {
+	t.Run("dim modifier", func(t *testing.T) {
+		th, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": []any{"dim"},
+			},
+		})
+		assert.Empty(t, warnings)
+		style := th.Get("keyword")
+		assert.True(t, style.GetFaint())
+	})
+
+	t.Run("underlined modifier", func(t *testing.T) {
+		th, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": []any{"underlined"},
+			},
+		})
+		assert.Empty(t, warnings)
+		style := th.Get("keyword")
+		assert.True(t, style.GetUnderline())
+	})
+
+	t.Run("crossed_out modifier", func(t *testing.T) {
+		th, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": []any{"crossed_out"},
+			},
+		})
+		assert.Empty(t, warnings)
+		style := th.Get("keyword")
+		assert.True(t, style.GetStrikethrough())
+	})
+
+	t.Run("hidden modifier skipped", func(t *testing.T) {
+		th, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": []any{"hidden"},
+			},
+		})
+		assert.Empty(t, warnings)
+		_ = th.Get("keyword")
+	})
+
+	t.Run("invalid modifier name warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": []any{"blinking"},
+			},
+		})
+		assert.NotEmpty(t, warnings)
+	})
+
+	t.Run("non-string modifier warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": []any{42},
+			},
+		})
+		assert.NotEmpty(t, warnings)
+	})
+
+	t.Run("non-array modifiers warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"modifiers": "bold",
+			},
+		})
+		assert.NotEmpty(t, warnings)
+	})
+}
+
+func TestUnderlineInvalidAttr(t *testing.T) {
+	t.Run("unknown underline attribute warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": map[string]any{
+				"underline": map[string]any{
+					"thickness": "2px",
+				},
+			},
+		})
+		assert.NotEmpty(t, warnings)
+	})
+}
+
+func TestRawColorEdgeCases(t *testing.T) {
+	t.Run("malformed hex length warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": "#ff00",
+		})
+		assert.NotEmpty(t, warnings)
+	})
+
+	t.Run("malformed hex content warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": "#xxyyzz",
+		})
+		assert.NotEmpty(t, warnings)
+	})
+
+	t.Run("ansi index out of range warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": "300",
+		})
+		assert.NotEmpty(t, warnings)
+	})
+
+	t.Run("non-string color value warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"keyword": 42,
+		})
+		assert.NotEmpty(t, warnings)
+	})
+}

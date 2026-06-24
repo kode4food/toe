@@ -693,6 +693,36 @@ func TestCopyOnPrevLine(t *testing.T) {
 	})
 }
 
+func TestCopyOnNextLineDuplicateHead(t *testing.T) {
+	t.Run("stops when target head already exists", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd")
+		setSelection(t, e, []core.Range{
+			core.PointRange(1),
+			core.PointRange(4),
+		}, 0)
+
+		action.CopyOnNextLine(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, 2, len(sel.Ranges()))
+	})
+}
+
+func TestJoinWithEmptyNextLine(t *testing.T) {
+	t.Run("join with empty next line uses no sep", func(t *testing.T) {
+		e := editorWithText(t, "abc\n\ndef")
+		setSelection(t, e, []core.Range{core.NewRange(0, 8)}, 0)
+
+		action.JoinSelectionsSpace(e)
+
+		doc, _ := e.FocusedDocument()
+		text := doc.Text().String()
+		assert.NotContains(t, text, "\n\n")
+	})
+}
+
 func TestAlignView(t *testing.T) {
 	t.Run("AlignViewTop does not panic", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne")
@@ -888,5 +918,44 @@ func TestFindChar(t *testing.T) {
 		})
 
 		assert.Equal(t, 0, cursorPos(t, e))
+	})
+}
+
+func TestSearchBackwardNoWrap(t *testing.T) {
+	t.Run("no match at zero when wrap off", func(t *testing.T) {
+		e := editorWithText(t, "foo bar")
+		setCursor(t, e, 0)
+		e.Options().SearchWrapAround = false
+
+		err := action.SearchBackward(e, "foo")
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
+}
+
+func TestSearchBackwardWrapsForward(t *testing.T) {
+	t.Run("wraps to match after cursor", func(t *testing.T) {
+		e := editorWithText(t, "xyzfoo")
+		setCursor(t, e, 2)
+
+		err := action.SearchBackward(e, "foo")
+
+		assert.NoError(t, err)
+		assert.Equal(t, 3, cursorPos(t, e))
+	})
+}
+
+func TestSearchNextNoWrap(t *testing.T) {
+	t.Run("no advance at last match wrap off", func(t *testing.T) {
+		e := editorWithText(t, "foo bar")
+		e.Options().SearchWrapAround = false
+		err := action.SearchForward(e, "foo")
+		assert.NoError(t, err)
+		pos1 := cursorPos(t, e)
+
+		action.SearchNext(e)
+
+		assert.Equal(t, pos1, cursorPos(t, e))
 	})
 }

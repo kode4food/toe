@@ -92,6 +92,21 @@ func TestHistory(t *testing.T) {
 		assert.Equal(t, 3, h.LastEditPos())
 	})
 
+	t.Run("navigates backward by duration", func(t *testing.T) {
+		h, st := historyFixture(t)
+		// fixture ends at t0+50s; go back 25s → should land near t0+30s
+		applyAll(t, h.Earlier(core.UndoDuration(25*time.Second)), &st)
+		assert.NotEmpty(t, st.Doc.String())
+	})
+
+	t.Run("navigates forward by duration", func(t *testing.T) {
+		h, st := historyFixture(t)
+		// go back 3 steps first, then forward 15s
+		applyAll(t, h.Earlier(core.UndoSteps(3)), &st)
+		applyAll(t, h.Later(core.UndoDuration(15*time.Second)), &st)
+		assert.NotEmpty(t, st.Doc.String())
+	})
+
 	t.Run("Earlier negative steps clamps to zero", func(t *testing.T) {
 		h, st := historyFixture(t)
 		txns := h.Earlier(core.UndoSteps(-5))

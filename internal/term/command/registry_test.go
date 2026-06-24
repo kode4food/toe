@@ -78,6 +78,20 @@ func TestRegistry(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("OptionCompleter filters by prefix", func(t *testing.T) {
+		reg := registryWithOptions(t)
+		completer := reg.OptionCompleter()
+		results := completer(nil, "editor.s")
+		assert.NotEmpty(t, results)
+	})
+
+	t.Run("BoolOptionCompleter filters by prefix", func(t *testing.T) {
+		reg := registryWithOptions(t)
+		completer := reg.BoolOptionCompleter()
+		results := completer(nil, "editor.c")
+		assert.NotEmpty(t, results)
+	})
+
 	t.Run("ApplyTOML decodes sections", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		reg := registryWithSection(t)

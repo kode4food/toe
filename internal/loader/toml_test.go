@@ -55,6 +55,48 @@ func TestMergeTOMLValues(t *testing.T) {
 	})
 }
 
+func TestMergeTOMLValuesEdgeCases(t *testing.T) {
+	t.Run("map merged with non-map returns right", func(t *testing.T) {
+		left := map[string]any{"a": 1}
+		right := "string"
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		assert.Equal(t, "string", merged)
+	})
+
+	t.Run("array with non-slice right returns right", func(t *testing.T) {
+		left := []any{map[string]any{"name": "x"}}
+		right := "not-a-slice"
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		assert.Equal(t, "not-a-slice", merged)
+	})
+
+	t.Run("[]map[string]any merged with array", func(t *testing.T) {
+		left := []map[string]any{{"name": "x", "val": "left"}}
+		right := []any{map[string]any{"name": "x", "val": "right"}}
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		arr, ok := merged.([]any)
+		assert.True(t, ok)
+		assert.Len(t, arr, 1)
+	})
+
+	t.Run("array with unnamed right entry appended", func(t *testing.T) {
+		left := []any{map[string]any{"name": "x"}}
+		right := []any{map[string]any{"val": "no-name"}}
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		arr, ok := merged.([]any)
+		assert.True(t, ok)
+		assert.Len(t, arr, 2)
+	})
+}
+
 func TestLoadMergedTOML(t *testing.T) {
 	dir := t.TempDir()
 	global := filepath.Join(dir, "global.toml")

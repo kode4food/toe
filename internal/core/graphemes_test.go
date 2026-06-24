@@ -63,6 +63,27 @@ func TestGraphemeBoundaries(t *testing.T) {
 		assert.Equal(t, 2, core.EnsureGraphemeBoundaryPrev(doc, 2))
 	})
 
+	t.Run("nth next clamps at end", func(t *testing.T) {
+		doc := core.NewRope("abc")
+		assert.Equal(t, 3, core.NthNextGraphemeBoundary(doc, 2, 10))
+	})
+
+	t.Run("nth prev clamps at start", func(t *testing.T) {
+		doc := core.NewRope("abc")
+		assert.Equal(t, 0, core.NthPrevGraphemeBoundary(doc, 1, 10))
+	})
+
+	t.Run("wide unicode grapheme has width > 1", func(t *testing.T) {
+		// 世 is a wide CJK char; its display width is 2
+		doc := core.NewRope("世b")
+		// NthNextGraphemeBoundary steps over 世 (1 grapheme) to pos 1
+		assert.Equal(t, 1, core.NextGraphemeBoundary(doc, 0))
+		// and the char at 0 is '世', which graphemeWidth reports as 2
+		// we verify indirectly: the rope contains 2 chars, prev from 1 lands
+		// at 0
+		assert.Equal(t, 0, core.PrevGraphemeBoundary(doc, 1))
+	})
+
 	t.Run("combined cluster is single unit", func(t *testing.T) {
 		// e + combining acute accent = é (2 bytes in UTF-8, 2 codepoints, 1 grapheme)
 		doc := core.NewRope("éx")

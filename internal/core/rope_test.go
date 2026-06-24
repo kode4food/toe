@@ -232,6 +232,27 @@ func TestRope(t *testing.T) {
 		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
 	})
 
+	t.Run("ForEachSegment clamps negative from", func(t *testing.T) {
+		r := core.NewRope("abcde")
+		var got string
+		r.ForEachSegment(-5, 3, func(s string) { got += s })
+		assert.Equal(t, "abc", got)
+	})
+
+	t.Run("ForEachSegment clamps to past end", func(t *testing.T) {
+		r := core.NewRope("abcde")
+		var got string
+		r.ForEachSegment(2, 999, func(s string) { got += s })
+		assert.Equal(t, "cde", got)
+	})
+
+	t.Run("ForEachSegment empty range calls nothing", func(t *testing.T) {
+		r := core.NewRope("abcde")
+		var called bool
+		r.ForEachSegment(3, 3, func(s string) { called = true })
+		assert.False(t, called)
+	})
+
 	t.Run("left-rotate rebalances right-heavy tree", func(t *testing.T) {
 		// 4097 chars builds a depth-4 rope; inserting at 0 creates a
 		// depth-2 vs depth-4 imbalance (diff=2 > maxRopeDepthSkew=1)

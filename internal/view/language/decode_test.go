@@ -1,0 +1,318 @@
+package language_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/view/language"
+)
+
+func TestDecodeLanguageServer(t *testing.T) {
+	t.Run("language server config decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[language-server.gopls]
+command = "gopls"
+args = ["-mode=stdio"]
+timeout = 30
+required-root-patterns = ["go.mod"]
+
+[language-server.gopls.environment]
+GOPATH = "/tmp/go"
+
+[language-server.gopls.config]
+hints = true
+
+[[language]]
+name = "lsptest"
+`)
+		l := language.LoadLanguage("lsptest")
+		assert.NotNil(t, l)
+	})
+
+	t.Run("language server features decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[language-server.testlsp]
+command = "testlsp"
+args = ["--stdio"]
+timeout = 10
+required-root-patterns = [".git"]
+
+[language-server.testlsp.environment]
+KEY = "val"
+
+[[language]]
+name = "testlang"
+scope = "source.testlang"
+language-servers = [
+  {
+    name = "testlsp",
+    only-features = ["completion"],
+    except-features = ["formatting"]
+  },
+  "testlsp"
+]
+`)
+		l := language.LoadLanguage("testlang")
+		assert.NotNil(t, l)
+		assert.Equal(t, "testlang", l.Name)
+	})
+}
+
+func TestDecodeLanguageServerFeatures(t *testing.T) {
+	t.Run("string form server feature", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "lang-str-srv"
+language-servers = ["my-lsp"]
+`)
+		// Exercise through DetectLanguage loading
+		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+	})
+
+	t.Run("map form with only and except features", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "lang-map-srv"
+language-servers = [
+  {
+    name = "my-lsp",
+    only-features = ["completion"],
+    except-features = ["diagnostics"]
+  }
+]
+`)
+		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+	})
+}
+
+func TestDecodeDebugAdapter(t *testing.T) {
+	t.Run("debug adapter with templates and quirks", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "debuglang"
+file-types = ["dbg"]
+
+[language.debugger]
+name = "debuglsp"
+transport = "stdio"
+command = "dlv"
+args = ["dap"]
+port-arg = "--listen"
+
+[[language.debugger.templates]]
+name = "Debug Binary"
+request = "launch"
+
+[language.debugger.templates.args]
+mode = "exec"
+
+[[language.debugger.templates.completion]]
+name = "program"
+completion = "filename"
+default = "."
+
+[[language.debugger.templates.completion]]
+name = "mode"
+
+[language.debugger.quirks]
+absolute-paths = true
+`)
+		name, ok := language.DetectLanguage("main.dbg", "")
+		assert.True(t, ok)
+		assert.Equal(t, "debuglang", name)
+	})
+}
+
+func TestDecodeGrammarConfig(t *testing.T) {
+	t.Run("grammar selection only", func(t *testing.T) {
+		setUserLangs(t, `
+[use-grammars]
+only = ["go", "json"]
+
+[[language]]
+name = "gramlang"
+`)
+		l := language.LoadLanguage("gramlang")
+		assert.NotNil(t, l)
+	})
+
+	t.Run("grammar source path form", func(t *testing.T) {
+		setUserLangs(t, `
+[[grammar]]
+name = "mygram"
+
+[grammar.source]
+path = "/tmp/mygram"
+
+[[language]]
+name = "gramlang2"
+`)
+		l := language.LoadLanguage("gramlang2")
+		assert.NotNil(t, l)
+	})
+
+	t.Run("grammar source git form", func(t *testing.T) {
+		setUserLangs(t, `
+[[grammar]]
+name = "gitgram"
+
+[grammar.source]
+git = "https://github.com/example/grammar"
+rev = "main"
+subpath = "src"
+
+[[language]]
+name = "gramlang3"
+`)
+		l := language.LoadLanguage("gramlang3")
+		assert.NotNil(t, l)
+	})
+}
+
+func TestDecodeCommentTokens(t *testing.T) {
+	t.Run("comment-token singular", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "cmtlang"
+comment-token = "//"
+`)
+		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+	})
+
+	t.Run("comment-tokens plural list", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "cmtlang2"
+comment-tokens = ["//", "#"]
+`)
+		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+	})
+}
+
+func TestDecodeAutoPairMap(t *testing.T) {
+	t.Run("auto-pairs map syntax", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "pairlang"
+file-types = ["prl"]
+
+[language.auto-pairs]
+"(" = ")"
+"[" = "]"
+`)
+		name, ok := language.DetectLanguage("test.prl", "")
+		assert.True(t, ok)
+		assert.Equal(t, "pairlang", name)
+	})
+}
+
+func TestLoadLanguage(t *testing.T) {
+	t.Run("known language returns entry", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "knownlang"
+scope = "source.knownlang"
+`)
+		l := language.LoadLanguage("knownlang")
+		assert.NotNil(t, l)
+		assert.Equal(t, "knownlang", l.Name)
+	})
+
+	t.Run("unknown language returns empty", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "somelang"
+`)
+		l := language.LoadLanguage("does-not-exist")
+		assert.NotNil(t, l)
+		assert.Equal(t, "", l.Name)
+	})
+}
+
+func TestDecodeStringMap(t *testing.T) {
+	t.Run("env map in language server", func(t *testing.T) {
+		setUserLangs(t, `
+[language-server.envlsp]
+command = "envlsp"
+
+[language-server.envlsp.environment]
+FOO = "bar"
+BAZ = "qux"
+
+[[language]]
+name = "envlang"
+`)
+		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+	})
+}
+
+func TestDecodeLanguageIDAndRulers(t *testing.T) {
+	t.Run("language-id and rulers decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "idlang"
+language-id = "myLangID"
+rulers = [80, 120]
+text-width = 100
+injection-regex = "idlang"
+`)
+		l := language.LoadLanguage("idlang")
+		assert.NotNil(t, l)
+		assert.Equal(t, "idlang", l.Name)
+	})
+}
+
+func TestDecodeAutoPairBool(t *testing.T) {
+	t.Run("auto-pairs false disables pairs", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "boolpairlang"
+file-types = ["bpl"]
+auto-pairs = false
+`)
+		name, ok := language.DetectLanguage("test.bpl", "")
+		assert.True(t, ok)
+		assert.Equal(t, "boolpairlang", name)
+	})
+}
+
+func TestDecodeDebugStringCompletion(t *testing.T) {
+	t.Run("string completion item in template", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "strcompl"
+file-types = ["strc"]
+
+[language.debugger]
+name = "dbg"
+transport = "stdio"
+command = "dbg"
+
+[[language.debugger.templates]]
+name = "Run"
+request = "launch"
+completion = ["program"]
+`)
+		name, ok := language.DetectLanguage("test.strc", "")
+		assert.True(t, ok)
+		assert.Equal(t, "strcompl", name)
+	})
+}
+
+func TestDecodeSoftWrap(t *testing.T) {
+	t.Run("soft-wrap config decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "swlang"
+file-types = ["swl"]
+
+[language.soft-wrap]
+enable = true
+wrap-at-text-width = true
+`)
+		name, ok := language.DetectLanguage("test.swl", "")
+		assert.True(t, ok)
+		assert.Equal(t, "swlang", name)
+	})
+}

@@ -47,6 +47,12 @@ func UndoSteps(n int) UndoKind {
 	return UndoKind{steps: n}
 }
 
+// UndoDuration constructs an UndoKind that travels to the nearest revision
+// whose timestamp is d before (for Earlier) or d after (for Later) the current
+func UndoDuration(d time.Duration) UndoKind {
+	return UndoKind{duration: d, timed: true}
+}
+
 func (h *History) CurrentRevision() int {
 	return h.current
 }

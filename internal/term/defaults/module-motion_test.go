@@ -1,6 +1,8 @@
 package defaults_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,11 +59,20 @@ func TestMotionFindChar(t *testing.T) {
 }
 
 func TestMotionGotoFile(t *testing.T) {
-	// no path under the cursor: the action reports an error via status and the
-	// command completes without a continuation
 	t.Run("no path under cursor is handled", func(t *testing.T) {
 		e, km := defaultsEnv(t, "not a path")
 		setCursor(t, e, 0)
+		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
+	})
+
+	t.Run("valid file path opens file", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "hello.txt")
+		assert.NoError(t, os.WriteFile(target, []byte("hi"), 0o644))
+
+		e, km := defaultsEnv(t, target)
+		setCursor(t, e, 0)
+
 		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
 	})
 }

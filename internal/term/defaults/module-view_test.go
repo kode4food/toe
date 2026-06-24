@@ -147,6 +147,20 @@ func TestViewOptionsExtra(t *testing.T) {
 	})
 }
 
+func TestNullableIntDefault(t *testing.T) {
+	t.Run("get text-width returns default unset", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "get_option", "editor.text-width")
+		assert.NotEmpty(t, res.Message)
+	})
+
+	t.Run("set invalid text-width reports error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "set_option", "editor.text-width bad")
+		assert.NotEmpty(t, res.Message)
+	})
+}
+
 func TestViewSwapCommands(t *testing.T) {
 	for _, name := range []string{
 		"swap_view_left", "swap_view_right",

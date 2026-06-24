@@ -184,6 +184,94 @@ func TestWorkspaceTrust(t *testing.T) {
 	assert.Equal(t, "", string(data))
 }
 
+func TestDirFallbacksToHome(t *testing.T) {
+	t.Run("ConfigDir uses home when XDG unset", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "")
+		dir, ok := loader.ConfigDir()
+		assert.True(t, ok)
+		assert.Contains(t, dir, loader.DirName)
+	})
+
+	t.Run("CacheDir uses home when XDG unset", func(t *testing.T) {
+		t.Setenv("XDG_CACHE_HOME", "")
+		dir, ok := loader.CacheDir()
+		assert.True(t, ok)
+		assert.Contains(t, dir, loader.DirName)
+	})
+
+	t.Run("DataDir uses home when XDG unset", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", "")
+		dir, ok := loader.DataDir()
+		assert.True(t, ok)
+		assert.Contains(t, dir, loader.DirName)
+	})
+}
+
+func TestRuntimeDirTildePath(t *testing.T) {
+	t.Run("normalizes bare tilde to home", func(t *testing.T) {
+		t.Setenv(loader.RuntimeEnv, "~")
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv(loader.DefaultRuntimeEnv, "")
+		dirs := loader.RuntimeDirs()
+		var found bool
+		for _, d := range dirs {
+			if !found && len(d) > 0 && d[len(d)-1] != '~' {
+				found = true
+			}
+		}
+		assert.True(t, found)
+	})
+}
+
+func TestRuntimeFileFallback(t *testing.T) {
+	t.Run("path returned when file not found", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+		result := loader.RuntimeFile("no-such-file-xyz99.txt")
+
+		assert.NotEmpty(t, result)
+		assert.Contains(t, result, "no-such-file-xyz99.txt")
+	})
+}
+
+func TestPathsWhenHomeMissing(t *testing.T) {
+	t.Run("ConfigFile false when no home", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("HOME", "")
+
+		_, ok := loader.ConfigFile()
+
+		assert.False(t, ok)
+	})
+
+	t.Run("LanguagesFile false when no home", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("HOME", "")
+
+		_, ok := loader.LanguagesFile()
+
+		assert.False(t, ok)
+	})
+
+	t.Run("ConfigIgnoreFile empty when no home", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("HOME", "")
+
+		result := loader.ConfigIgnoreFile()
+
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("LogFile false when no home", func(t *testing.T) {
+		t.Setenv("XDG_CACHE_HOME", "")
+		t.Setenv("HOME", "")
+
+		_, ok := loader.LogFile()
+
+		assert.False(t, ok)
+	})
+}
+
 func TestQueryWorkspaceTrust(t *testing.T) {
 	root := t.TempDir()
 	work := filepath.Join(root, "work")

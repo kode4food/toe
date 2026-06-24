@@ -88,6 +88,30 @@ func TestRange(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("grapheme aligned point range", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		r := core.PointRange(2)
+		aligned := r.GraphemeAligned(doc)
+		assert.Equal(t, 2, aligned.From())
+		assert.Equal(t, 2, aligned.To())
+	})
+
+	t.Run("grapheme aligned forward range", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		r := core.NewRange(0, 3)
+		aligned := r.GraphemeAligned(doc)
+		assert.Equal(t, 0, aligned.From())
+		assert.Equal(t, 3, aligned.To())
+	})
+
+	t.Run("grapheme aligned backward range", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		r := core.NewRange(4, 1)
+		aligned := r.GraphemeAligned(doc)
+		assert.Equal(t, 1, aligned.From())
+		assert.Equal(t, 4, aligned.To())
+	})
+
 	t.Run("put cursor forward crossing anchor", func(t *testing.T) {
 		doc := core.NewRope("hello world")
 		r := core.NewRange(3, 7)

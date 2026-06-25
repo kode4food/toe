@@ -80,6 +80,9 @@ func TestReadOnlyShellActions(t *testing.T) {
 		{"append output", func(e *view.Editor) error {
 			return action.ShellAppendOutput(e, "printf x")
 		}},
+		{"read file", func(e *view.Editor) error {
+			return action.ReadFile(e, writeTempFile(t, "input.txt", "x"))
+		}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

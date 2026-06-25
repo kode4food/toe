@@ -85,6 +85,7 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"paste register", func(e *view.Editor) {
 			action.PasteRegisterAtCursor(e, '"')
 		}},
+		{"clipboard replace", action.ClipboardReplace},
 		{"reindent", action.ReindentSelections},
 		{"remove primary", action.RemovePrimarySelection},
 		{"repeat last motion", action.RepeatLastMotion},
@@ -132,6 +133,7 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"yank main clipboard", action.YankMainToClipboard},
 		{"yank primary", action.YankToPrimaryClipboard},
 		{"yank join", func(e *view.Editor) { action.YankJoin(e, ",") }},
+		{"reflow", func(e *view.Editor) { action.ReflowSelections(e, 80) }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -151,6 +153,9 @@ func TestFocusedDocumentGuardErrors(t *testing.T) {
 		{"line ending", func(e *view.Editor) error {
 			return action.SetLineEnding(e, core.LineEndingCRLF)
 		}, view.ErrNoDocument},
+		{"sort", func(e *view.Editor) error {
+			return action.SortSelections(e, false, false)
+		}, nil},
 		{"search forward", func(e *view.Editor) error {
 			return action.SearchForward(e, "a")
 		}, nil},
@@ -204,6 +209,10 @@ func TestFocusedDocumentGuardErrors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFocusedDocumentGuardStrings(t *testing.T) {
+	assert.Empty(t, action.CharInfo(editorWithMissingFocusedDocument(t)))
 }
 
 func editorWithMissingFocusedDocument(t *testing.T) *view.Editor {

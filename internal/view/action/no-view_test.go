@@ -30,6 +30,14 @@ func TestNoViewActions(t *testing.T) {
 		{"delete word forward", action.DeleteWordForward},
 		{"ensure forward", action.EnsureForward},
 		{"exit select", action.ExitSelectMode},
+		{"extend search next", func(e *view.Editor) {
+			e.Registers().Write('/', []string{"a"})
+			action.ExtendSearchNext(e)
+		}},
+		{"extend search prev", func(e *view.Editor) {
+			e.Registers().Write('/', []string{"a"})
+			action.ExtendSearchPrev(e)
+		}},
 		{"extend char left", action.ExtendCharLeft},
 		{"extend char right", action.ExtendCharRight},
 		{"extend file end", action.ExtendToFileEnd},
@@ -108,6 +116,7 @@ func TestNoViewActions(t *testing.T) {
 		{"paste register", func(e *view.Editor) {
 			action.PasteRegisterAtCursor(e, '"')
 		}},
+		{"clipboard replace", action.ClipboardReplace},
 		{"reindent", action.ReindentSelections},
 		{"remove primary", action.RemovePrimarySelection},
 		{"repeat last motion", action.RepeatLastMotion},
@@ -118,6 +127,8 @@ func TestNoViewActions(t *testing.T) {
 		{"rotate selections backward", action.RotateSelectionsBackward},
 		{"rotate selections forward", action.RotateSelectionsForward},
 		{"save selection", action.SaveSelection},
+		{"search selection", action.SearchSelection},
+		{"search selection word", action.SearchSelectionWord},
 		{"search next", action.SearchNext},
 		{"search prev", action.SearchPrev},
 		{"select mode", action.SelectMode},
@@ -139,7 +150,20 @@ func TestNoViewActions(t *testing.T) {
 		{"shrink line bounds", action.ShrinkToLineBounds},
 		{"smart tab", action.SmartTab},
 		{"split newline", action.SplitSelectionOnNewline},
+		{"surround add", func(e *view.Editor) { action.SurroundAdd(e, '(') }},
+		{"surround delete", func(e *view.Editor) {
+			action.SurroundDelete(e, '(')
+		}},
+		{"surround replace", func(e *view.Editor) {
+			action.SurroundReplace(e, '(', '[')
+		}},
 		{"switch case", action.SwitchCase},
+		{"text object around", func(e *view.Editor) {
+			action.SelectTextObjectAround(e, 'w')
+		}},
+		{"text object inside", func(e *view.Editor) {
+			action.SelectTextObjectInside(e, 'w')
+		}},
 		{"lowercase", action.SwitchToLowercase},
 		{"uppercase", action.SwitchToUppercase},
 		{"toggle block comments", action.ToggleBlockComments},
@@ -150,7 +174,11 @@ func TestNoViewActions(t *testing.T) {
 		{"increment", action.Increment},
 		{"decrement", action.Decrement},
 		{"yank", action.Yank},
+		{"yank clipboard", action.YankToClipboard},
+		{"yank main clipboard", action.YankMainToClipboard},
+		{"yank primary", action.YankToPrimaryClipboard},
 		{"yank join", func(e *view.Editor) { action.YankJoin(e, ",") }},
+		{"reflow", func(e *view.Editor) { action.ReflowSelections(e, 80) }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -167,4 +195,53 @@ func TestNoViewSetLineEnding(t *testing.T) {
 
 		assert.ErrorIs(t, err, view.ErrNoView)
 	})
+}
+
+func TestNoViewReturnActions(t *testing.T) {
+	t.Run("sort returns nil", func(t *testing.T) {
+		err := action.SortSelections(editorWithNoView(t), false, false)
+		assert.NoError(t, err)
+	})
+
+	t.Run("char info returns empty", func(t *testing.T) {
+		assert.Empty(t, action.CharInfo(editorWithNoView(t)))
+	})
+
+	tests := []struct {
+		name string
+		fn   func(*view.Editor) error
+	}{
+		{"search forward", func(e *view.Editor) error {
+			return action.SearchForward(e, "a")
+		}},
+		{"search backward", func(e *view.Editor) error {
+			return action.SearchBackward(e, "a")
+		}},
+		{"select within regex", func(e *view.Editor) error {
+			return action.SelectWithinRegex(e, "a")
+		}},
+		{"split by regex", func(e *view.Editor) error {
+			return action.SplitSelectionByRegex(e, "a")
+		}},
+		{"keep matching", func(e *view.Editor) error {
+			return action.KeepSelectionsMatching(e, "a")
+		}},
+		{"remove matching", func(e *view.Editor) error {
+			return action.RemoveSelectionsMatching(e, "a")
+		}},
+		{"shell pipe", func(e *view.Editor) error {
+			return action.ShellPipe(e, "cat")
+		}},
+		{"shell pipe to", func(e *view.Editor) error {
+			return action.ShellPipeTo(e, "cat")
+		}},
+		{"shell keep pipe", func(e *view.Editor) error {
+			return action.ShellKeepPipe(e, "cat")
+		}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.NoError(t, tc.fn(editorWithNoView(t)))
+		})
+	}
 }

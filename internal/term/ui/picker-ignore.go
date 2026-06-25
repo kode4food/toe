@@ -16,17 +16,9 @@ type pickerIgnore struct {
 	ig   *gitignore.GitIgnore
 }
 
-func skipPickerPath(
-	rel, includeRel string, d os.DirEntry, ignores []pickerIgnore,
-) bool {
-	if !insideIncludedHiddenPath(rel, includeRel) {
-		return true
-	}
+func skipPickerPath(rel string, d os.DirEntry, ignores []pickerIgnore) bool {
 	name := d.Name()
 	if strings.HasPrefix(name, ".") {
-		if d.IsDir() && hiddenAncestorOfInclude(rel, includeRel) {
-			return false
-		}
 		return true
 	}
 	if excludedPickerType(name) {
@@ -35,29 +27,6 @@ func skipPickerPath(
 	for _, ig := range ignores {
 		sub, ok := ignorePathForBase(rel, ig.base)
 		if ok && ig.ig.MatchesPath(sub) {
-			return true
-		}
-	}
-	return false
-}
-
-func insideIncludedHiddenPath(rel, includeRel string) bool {
-	if includeRel == "" || !hasHiddenPathSegment(includeRel) {
-		return true
-	}
-	if rel == includeRel || strings.HasPrefix(rel, includeRel+"/") {
-		return true
-	}
-	return strings.HasPrefix(includeRel, rel+"/")
-}
-
-func hiddenAncestorOfInclude(rel, includeRel string) bool {
-	return hasHiddenPathSegment(rel) && strings.HasPrefix(includeRel, rel+"/")
-}
-
-func hasHiddenPathSegment(path string) bool {
-	for part := range strings.SplitSeq(path, "/") {
-		if strings.HasPrefix(part, ".") {
 			return true
 		}
 	}

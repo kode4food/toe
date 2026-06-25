@@ -123,7 +123,8 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	top := max((height-2-areaH)/2, 0)
 	p.bounds = bounds{x: left, y: top, w: areaW, h: areaH}
 
-	if ps.preview && areaW > pickerMinPreviewArea {
+	showPreview := areaW > pickerMinPreviewArea
+	if showPreview {
 		p.drawPickerBox(buf, left, top, areaW, areaH, cx)
 	} else {
 		p.drawPickerPane(buf, left, top, areaW, areaH, cx)
@@ -134,7 +135,7 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 		headerH = 1
 	}
 	listW := areaW - 2
-	if ps.preview && areaW > pickerMinPreviewArea {
+	if showPreview {
 		listW = areaW/2 - 1
 	}
 	p.listBounds = bounds{

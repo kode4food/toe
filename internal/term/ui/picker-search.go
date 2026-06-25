@@ -163,7 +163,7 @@ func (gs *globalSearcher) walk() {
 			return nil
 		}
 		rel = filepath.ToSlash(rel)
-		if skipPickerPath(rel, "", d, loadIgnoreFiles(gs.root, rel)) {
+		if skipPickerPath(rel, d, loadIgnoreFiles(gs.root, rel)) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}

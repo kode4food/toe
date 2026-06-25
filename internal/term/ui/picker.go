@@ -32,7 +32,6 @@ type (
 		// listHeight is the number of result rows visible in the list pane,
 		// computed during render and used for paging and scroll clamping
 		listHeight int
-		preview    bool
 		spanCache  map[view.DocumentId]previewSpanEntry
 		// fileCache caches the rope and syntax spans for file-path previews,
 		// avoiding re-tokenization across frames (geometry-independent, valid
@@ -159,9 +158,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	items, feed, stop := source.Load(e)
 	p.cancel = stop
 	_, isStatic := source.(StaticPickerSource)
-	_, isDynamic := source.(DynamicPickerSource)
 	p.items = items
-	p.preview = isDynamic || hasPreview(items)
 	if isStatic {
 		p.refilter()
 	} else {
@@ -203,7 +200,6 @@ func (p *Picker) addItems(items []PickerItem) {
 	}
 	p.items = append(p.items, items...)
 	sortPickerItems(p.items)
-	p.preview = hasPreview(p.items)
 	p.refilter()
 }
 

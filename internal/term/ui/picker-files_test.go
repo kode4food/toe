@@ -264,6 +264,74 @@ func TestPickerFiles(t *testing.T) {
 		assert.Contains(t, out, "languages.toml")
 	})
 
+	t.Run("symlinked current directory", func(t *testing.T) {
+		tmp := t.TempDir()
+		target := filepath.Join(tmp, ".dotfiles", "config", "toe")
+		err := os.MkdirAll(target, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(target, "config.toml"), []byte("[editor]\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(target, "languages.toml"), []byte("[[language]]\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		link := filepath.Join(tmp, ".config", "toe")
+		err = os.MkdirAll(filepath.Dir(link), 0o755)
+		assert.NoError(t, err)
+		err = os.Symlink(target, link)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(link)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker_cwd", m.PickerAction(ui.FilePickerInCWD),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "config.toml")
+		assert.Contains(t, out, "languages.toml")
+	})
+
+	t.Run("symlinked initial directory", func(t *testing.T) {
+		tmp := t.TempDir()
+		target := filepath.Join(tmp, ".dotfiles", "config", "toe")
+		err := os.MkdirAll(target, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(target, "config.toml"), []byte("[editor]\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(target, "languages.toml"), []byte("[[language]]\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		link := filepath.Join(tmp, ".config", "toe")
+		err = os.MkdirAll(filepath.Dir(link), 0o755)
+		assert.NoError(t, err)
+		err = os.Symlink(target, link)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(link)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(link),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "config.toml")
+		assert.Contains(t, out, "languages.toml")
+	})
+
 	t.Run("dynamic feed displays first open batch", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

@@ -77,6 +77,7 @@ func newFilePickerSource(dir string) *filePickerSource {
 func startFilePickerFeed(
 	root string, count int,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
+	root = resolvePickerWalkRoot(root)
 	done := make(chan struct{})
 	var once sync.Once
 	cancel := func() { once.Do(func() { close(done) }) }
@@ -118,20 +119,13 @@ func startFilePickerFeed(
 	}()
 
 	var initial []PickerItem
-	timer := time.NewTimer(pickerFeedFlushWait)
-	defer timer.Stop()
 	for len(initial) < count {
-		select {
-		case item, ok := <-ch:
-			if !ok {
-				sortPickerItems(initial)
-				return initial, nil, cancel
-			}
-			initial = append(initial, item)
-		case <-timer.C:
+		item, ok := <-ch
+		if !ok {
 			sortPickerItems(initial)
-			return initial, ch, cancel
+			return initial, nil, cancel
 		}
+		initial = append(initial, item)
 	}
 	for {
 		select {
@@ -146,6 +140,17 @@ func startFilePickerFeed(
 			return initial, ch, cancel
 		}
 	}
+}
+
+func resolvePickerWalkRoot(root string) string {
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return root
+	}
+	if fi, err := os.Stat(resolved); err == nil && fi.IsDir() {
+		return resolved
+	}
+	return root
 }
 
 func sortPickerItems(items []PickerItem) {

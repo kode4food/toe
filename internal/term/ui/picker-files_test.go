@@ -12,6 +12,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/defaults"
 
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -100,6 +101,137 @@ func TestPickerFiles(t *testing.T) {
 		assert.NotContains(t, out, "config_ignored.go")
 		assert.NotContains(t, out, "nested.go")
 		assert.Contains(t, out, "shown.go")
+	})
+
+	t.Run("workspace picker starts at workspace root", func(t *testing.T) {
+		tmp := t.TempDir()
+		work := filepath.Join(tmp, "work")
+		cwd := filepath.Join(work, "src")
+		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(work, "root.go"), []byte("package root\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(cwd)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(ui.FilePicker),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "root.go")
+		assert.Contains(t, out, "src/child.go")
+	})
+
+	t.Run("cwd picker stays in current directory", func(t *testing.T) {
+		tmp := t.TempDir()
+		work := filepath.Join(tmp, "work")
+		cwd := filepath.Join(work, "src")
+		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(work, "root.go"), []byte("package root\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(cwd)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker_cwd", m.PickerAction(ui.FilePickerInCWD),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "child.go")
+		assert.NotContains(t, out, "root.go")
+		assert.NotContains(t, out, "src/child.go")
+	})
+
+	t.Run("space capital f opens cwd picker", func(t *testing.T) {
+		tmp := t.TempDir()
+		work := filepath.Join(tmp, "work")
+		cwd := filepath.Join(work, "src")
+		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(work, "root.go"), []byte("package root\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "child.go"), []byte("package child\n"), 0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(cwd)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err = defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'F')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "child.go")
+		assert.NotContains(t, out, "root.go")
+		assert.NotContains(t, out, "src/child.go")
+	})
+
+	t.Run("current directory below hidden parent", func(t *testing.T) {
+		tmp := t.TempDir()
+		cwd := filepath.Join(tmp, ".config", "toe")
+		err := os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(cwd)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker_cwd", m.PickerAction(ui.FilePickerInCWD),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "config.toml")
+		assert.Contains(t, out, "languages.toml")
 	})
 
 	t.Run("dynamic feed displays first open batch", func(t *testing.T) {

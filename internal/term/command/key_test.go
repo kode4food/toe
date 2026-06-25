@@ -36,6 +36,26 @@ func TestKeyEventString(t *testing.T) {
 		assert.Equal(t, "<A-x>", k.String())
 	})
 
+	t.Run("shifted uppercase char", func(t *testing.T) {
+		k := char('F').WithMods(command.ModShift)
+		assert.Equal(t, "F", k.String())
+	})
+
+	t.Run("shifted unicode uppercase char", func(t *testing.T) {
+		k := char('Å').WithMods(command.ModShift)
+		assert.Equal(t, "Å", k.String())
+	})
+
+	t.Run("shifted non-uppercase char", func(t *testing.T) {
+		k := char('!').WithMods(command.ModShift)
+		assert.Equal(t, "<S-!>", k.String())
+	})
+
+	t.Run("ctrl shifted uppercase char", func(t *testing.T) {
+		k := char('F').WithMods(command.ModCtrl | command.ModShift)
+		assert.Equal(t, "<C-S-F>", k.String())
+	})
+
 	t.Run("ctrl+alt", func(t *testing.T) {
 		k := char('a').WithMods(command.ModCtrl | command.ModAlt)
 		s := k.String()
@@ -341,12 +361,26 @@ func TestPendingHints(t *testing.T) {
 			"*": {{{char('g'), char('b')}}},
 		},
 	})
+	_ = km.Register("gF", command.Command{
+		Run:   run,
+		Modes: []string{"NOR"},
+		Keys: map[string][]command.KeyBinding{
+			"*": {{{char('g'), char('F').WithMods(command.ModShift)}}},
+		},
+	})
 
 	t.Run("returns hints for prefix", func(t *testing.T) {
 		_, hints := km.PendingHints("NOR", []command.KeyEvent{
 			char('g'),
 		})
-		assert.Equal(t, 2, len(hints))
+		assert.Equal(t, 3, len(hints))
+	})
+
+	t.Run("displays shifted uppercase char", func(t *testing.T) {
+		_, hints := km.PendingHints("NOR", []command.KeyEvent{
+			char('g'),
+		})
+		assert.Contains(t, hints, command.KeyHint{Key: "F", Label: "F"})
 	})
 
 	t.Run("returns empty for unknown mode", func(t *testing.T) {
@@ -378,6 +412,18 @@ func TestKeyModifiers(t *testing.T) {
 		assert.True(t, m.Has(command.ModCtrl))
 		assert.True(t, m.Has(command.ModAlt))
 		assert.False(t, m.Has(command.ModShift))
+	})
+
+	t.Run("HasOnly matches exact bits", func(t *testing.T) {
+		assert.True(t, command.ModShift.HasOnly(command.ModShift))
+		assert.True(t,
+			(command.ModCtrl | command.ModShift).
+				HasOnly(command.ModCtrl|command.ModShift),
+		)
+		assert.False(t,
+			(command.ModCtrl | command.ModShift).HasOnly(command.ModShift),
+		)
+		assert.False(t, command.ModNone.HasOnly(command.ModShift))
 	})
 }
 

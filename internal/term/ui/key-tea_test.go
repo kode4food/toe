@@ -91,6 +91,14 @@ func TestFromTeaKey(t *testing.T) {
 		}, got)
 	})
 
+	t.Run("unicode uppercase text adds shift", func(t *testing.T) {
+		got := ui.FromTeaKey(tea.KeyPressMsg{Code: 'å', Text: "Å"})
+		assert.Equal(t, command.KeyEvent{
+			Code: command.KeyCode{Char: 'Å'},
+			Mods: command.ModShift,
+		}, got)
+	})
+
 	t.Run("ctrl+letter from code when no text", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
 		assert.Equal(t, command.KeyEvent{

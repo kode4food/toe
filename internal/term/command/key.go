@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/kode4food/toe/internal/view"
 )
@@ -48,6 +49,10 @@ func (k KeyModifiers) Has(mod KeyModifiers) bool {
 	return k&mod != 0
 }
 
+func (k KeyModifiers) HasOnly(mod KeyModifiers) bool {
+	return k == mod
+}
+
 func (k KeyCode) String() string {
 	if k.Char != 0 {
 		return string(k.Char)
@@ -64,7 +69,9 @@ func (k KeyEvent) String() string {
 		parts = append(parts, "A")
 	}
 	if k.Mods.Has(ModShift) {
-		parts = append(parts, "S")
+		if !k.Mods.HasOnly(ModShift) || !unicode.IsUpper(k.Code.Char) {
+			parts = append(parts, "S")
+		}
 	}
 	s := k.Code.String()
 	if len(parts) == 0 {

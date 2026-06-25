@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"unicode"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/term/command"
@@ -46,12 +48,12 @@ func FromTeaKey(k tea.KeyPressMsg) command.KeyEvent {
 	}
 	if k.Text != "" {
 		ch := []rune(k.Text)[0]
-		if ch >= 'A' && ch <= 'Z' {
+		if unicode.IsUpper(ch) {
 			mods |= command.ModShift
 		}
 		return command.KeyEvent{Code: command.KeyCode{Char: ch}, Mods: mods}
 	}
-	if k.Code >= 'a' && k.Code <= 'z' && mods.Has(command.ModCtrl) {
+	if unicode.IsLower(k.Code) && mods.Has(command.ModCtrl) {
 		return command.KeyEvent{Code: command.KeyCode{Char: k.Code}, Mods: mods}
 	}
 	return command.KeyEvent{

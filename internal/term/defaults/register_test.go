@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/stretchr/testify/assert"
 
@@ -97,6 +98,38 @@ func TestDefaults(t *testing.T) {
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
+	})
+
+	t.Run("capital bindings use shift", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
+			char(' '), char('F').WithMods(command.ModShift),
+		})
+		assert.True(t, found)
+		assert.False(t, prefix)
+	})
+
+	t.Run("capital hints omit shift", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		_, hints := km.PendingHints("NOR", []command.KeyEvent{char(' ')})
+
+		assert.Contains(t, hints, command.KeyHint{
+			Key:   "F",
+			Label: "Open file picker at current working directory",
+		})
+	})
+
+	t.Run("capital prefixes use shift", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		title, hints := km.PendingHints("NOR", []command.KeyEvent{
+			char('Z').WithMods(command.ModShift),
+		})
+
+		assert.Equal(t, "View", title)
+		assert.NotNil(t, hints)
 	})
 
 	t.Run("paragraph keys use unimpaired prefixes", func(t *testing.T) {
@@ -287,8 +320,13 @@ func parseKeySeq(t *testing.T, seq string) []command.KeyEvent {
 
 func parseKeyPart(t *testing.T, part string) command.KeyEvent {
 	t.Helper()
-	if len(part) == 1 {
-		return char(rune(part[0]))
+	runes := []rune(part)
+	if len(runes) == 1 {
+		r := runes[0]
+		if unicode.IsUpper(r) {
+			return char(r).WithMods(command.ModShift)
+		}
+		return char(r)
 	}
 	if !strings.HasPrefix(part, "<") || !strings.HasSuffix(part, ">") {
 		return special(part)
@@ -304,6 +342,10 @@ func parseKeyPart(t *testing.T, part string) command.KeyEvent {
 		return char(rune(value[0])).WithMods(command.ModAlt)
 	}
 	if value, ok := strings.CutPrefix(inner, "S-"); ok {
+		r := []rune(value)
+		if len(r) == 1 {
+			return char(r[0]).WithMods(command.ModShift)
+		}
 		return special(value).WithMods(command.ModShift)
 	}
 	return special(inner)

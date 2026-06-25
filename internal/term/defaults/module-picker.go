@@ -32,7 +32,7 @@ func pickerModule(model ui.Model) command.Module {
 			},
 			actFilePickerInCWD: {
 				DocString: "Open file picker at current working directory",
-				Run:       Continuation(model.PickerAction(ui.FilePicker)),
+				Run:       Continuation(model.PickerAction(ui.FilePickerInCWD)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('F'))),
 			},

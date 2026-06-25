@@ -49,13 +49,13 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 }
 
 func labelPrefixNodes(km *command.Keymaps) {
-	gKey := []command.KeyEvent{{Code: command.KeyCode{Char: 'g'}}}
-	spcKey := []command.KeyEvent{{Code: command.KeyCode{Char: ' '}}}
-	mKey := []command.KeyEvent{{Code: command.KeyCode{Char: 'm'}}}
-	prevKey := []command.KeyEvent{{Code: command.KeyCode{Char: '['}}}
-	nextKey := []command.KeyEvent{{Code: command.KeyCode{Char: ']'}}}
-	zKey := []command.KeyEvent{{Code: command.KeyCode{Char: 'z'}}}
-	ZKey := []command.KeyEvent{{Code: command.KeyCode{Char: 'Z'}}}
+	gKey := char('g')
+	spcKey := char(' ')
+	mKey := char('m')
+	prevKey := char('[')
+	nextKey := char(']')
+	zKey := char('z')
+	ZKey := char('Z')
 	cwKey := []command.KeyEvent{
 		{Code: command.KeyCode{Char: 'w'}, Mods: command.ModCtrl},
 	}

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -26,8 +27,14 @@ const (
 	pickerMaxPreview    = 10 * 1024 * 1024
 )
 
-// FilePicker opens a file picker rooted at the editor's working directory
+// FilePicker opens a file picker rooted at the workspace directory
 func FilePicker(e *view.Editor) *Picker {
+	root, _ := loader.FindWorkspace(e.Cwd())
+	return NewPicker(e, newFilePickerSource(root))
+}
+
+// FilePickerInCWD opens a file picker rooted at the current working directory
+func FilePickerInCWD(e *view.Editor) *Picker {
 	return NewPicker(e, newFilePickerSource(e.Cwd()))
 }
 

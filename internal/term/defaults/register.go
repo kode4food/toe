@@ -1,6 +1,8 @@
 package defaults
 
 import (
+	"unicode"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -28,7 +30,11 @@ func method(fn func(*view.Editor)) command.Run {
 // Key sequence helpers
 
 func char(r rune) []command.KeyEvent {
-	return []command.KeyEvent{{Code: command.KeyCode{Char: r}}}
+	ev := command.KeyEvent{Code: command.KeyCode{Char: r}}
+	if unicode.IsUpper(r) {
+		ev.Mods |= command.ModShift
+	}
+	return []command.KeyEvent{ev}
 }
 
 func special(name string) []command.KeyEvent {

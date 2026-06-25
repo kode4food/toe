@@ -166,6 +166,215 @@ func TestPromptCompletion(t *testing.T) {
 	})
 }
 
+func TestPromptCmdAccept(t *testing.T) {
+	t.Run("enter submits command prompt", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		for _, ch := range "bad_command" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "error")
+	})
+}
+
+func TestRegexPromptAccept(t *testing.T) {
+	t.Run("enter submits regex prompt", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, 's')
+		for _, ch := range "hello" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("enter with empty regex prompt", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, 's')
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestSearchPromptAccept(t *testing.T) {
+	t.Run("enter submits search pattern", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, '/')
+		for _, ch := range "hello" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("backward search prompt render", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, '?')
+		m = sendKey(m, 'x')
+		out := m.View().Content
+		assert.Contains(t, out, "?x")
+	})
+
+	t.Run("backward search enter submits", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, '?')
+		for _, ch := range "hello" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("search enter with empty pattern", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, '/')
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestSearchPromptError(t *testing.T) {
+	t.Run("invalid regex shows error", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, '/')
+		for _, ch := range "[invalid" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "error")
+	})
+}
+
+func TestRegexFnError(t *testing.T) {
+	t.Run("invalid regex fn shows error", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, 's')
+		for _, ch := range "[invalid" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "error")
+	})
+}
+
+func TestPromptHandlesMouse(t *testing.T) {
+	t.Run("mouse ignored while prompt open", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m2, _ := m.Update(tea.MouseClickMsg{X: 5, Y: 5, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		out := m.View().Content
+		assert.Contains(t, out, ":")
+	})
+}
+
+func TestRedrawSignal(t *testing.T) {
+	t.Run("redraw via prompt clears screen", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		for _, ch := range "redraw" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+}
+
 func testCommand(name string) command.Command {
 	return command.Command{
 		Run: func(

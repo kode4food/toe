@@ -35,6 +35,25 @@ indent_size = 4
 		assert.Equal(t, uint8(4), cfg.IndentStyle.Width())
 	})
 
+	t.Run("star-slash prefix matches subdir file", func(t *testing.T) {
+		root := t.TempDir()
+		dir := filepath.Join(root, "sub")
+		err := os.MkdirAll(dir, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(filepath.Join(root, ".editorconfig"), []byte(`
+root = true
+
+[*/*.go]
+indent_style = space
+indent_size = 2
+`), 0o644)
+		assert.NoError(t, err)
+
+		cfg := config.FindEditorConfig(filepath.Join(dir, "main.go"))
+		assert.NotNil(t, cfg.IndentStyle)
+		assert.False(t, cfg.IndentStyle.IsTabs())
+	})
+
 	t.Run("brace alternation matches extensions", func(t *testing.T) {
 		root := t.TempDir()
 		err := os.WriteFile(filepath.Join(root, ".editorconfig"), []byte(`

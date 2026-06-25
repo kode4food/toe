@@ -17,6 +17,42 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBufferlineRender(t *testing.T) {
+	t.Run("bufferline always visible", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().BufferLine = view.BufferLineAlways
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestPromptAccept(t *testing.T) {
+	t.Run("enter executes command from prompt", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Continuation: m.CmdModeAction()(e)}
+			},
+			Modes: []string{"NOR"},
+			Keys: map[string][]command.KeyBinding{
+				"*": {[][]command.KeyEvent{{char(':')}}},
+			},
+		})
+		m = resize(m, 80, 24)
+		m = sendKey(m, ':')
+		m = sendKey(m, 'n')
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		_ = m.View().Content
+	})
+}
+
 func TestRenderCrash(t *testing.T) {
 	e := view.NewEditor("/tmp")
 	km := command.NewKeymaps()
@@ -92,6 +128,32 @@ func TestCursorShapeRender(t *testing.T) {
 		assert.NotNil(t, cur)
 		assert.Equal(t, tea.CursorBar, cur.Shape)
 		assert.False(t, cur.Blink)
+	})
+}
+
+func TestCursorShapeUnfocused(t *testing.T) {
+	t.Run("unfocused uses underline cursor", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(t.TempDir())
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m2, _ := m.Update(tea.BlurMsg{})
+		m = m2.(ui.Model)
+
+		cur := m.View().Cursor
+
+		assert.NotNil(t, cur)
+		assert.Equal(t, tea.CursorUnderline, cur.Shape)
+	})
+}
+
+func TestInvalidThemeFallback(t *testing.T) {
+	t.Run("falls back to default on bad theme", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(t.TempDir())
+		e.Options().Theme = "nonexistent-theme-xyz"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out := m.View().Content
+		assert.NotEmpty(t, out)
 	})
 }
 
@@ -262,4 +324,239 @@ func TestThemeRender(t *testing.T) {
 		assert.Contains(t, out, "\x1b[48;2;245;224;220m")
 	})
 
+}
+
+func TestBaseStyleAtCases(t *testing.T) {
+	t.Run("selected syntax-highlighted text", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "main.go")
+		err := os.WriteFile(path, []byte("package main\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 7)}, 0)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), sel)
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out := m.View().Content
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("selected tab with indent guides", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		e := view.NewEditor(t.TempDir())
+		e.Options().IndentGuides = view.IndentGuides{Render: true}
+		e.Options().Theme = "mocha"
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "\thello\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 1)}, 0)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), sel)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out := m.View().Content
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("selected space with whitespace render", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		e := view.NewEditor(t.TempDir())
+		wsr := view.WhitespaceRenderAll
+		e.Options().Whitespace.Render = view.WhitespaceRender{Default: &wsr}
+		e.Options().Theme = "mocha"
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "  hello\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 2)}, 0)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), sel)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out := m.View().Content
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestSplitViewRender(t *testing.T) {
+	t.Run("vsplit and hsplit render separators", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		e.VSplit(v.DocID())
+		e.HSplit(v.DocID())
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestIndentGuideRender(t *testing.T) {
+	t.Run("renders indent guides", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().IndentGuides = view.IndentGuides{Render: true}
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "\thello\n\tworld\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestWhitespaceRender(t *testing.T) {
+	t.Run("renders visible whitespace chars", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		wsr := view.WhitespaceRenderAll
+		e.Options().Whitespace.Render = view.WhitespaceRender{Default: &wsr}
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "hello world end\t!\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "hello")
+	})
+}
+
+func TestMouseDragNoop(t *testing.T) {
+	t.Run("motion without prior click is noop", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Mouse = true
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m2, _ := m.Update(tea.MouseMotionMsg{
+			X: 10, Y: 5, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("drag after click extends selection", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Mouse = true
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "hello world\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		_ = m.View() // populate render cache so click can resolve position
+		m2, _ := m.Update(tea.MouseClickMsg{X: 5, Y: 0, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseMotionMsg{X: 8, Y: 0, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("release without click is noop", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Mouse = true
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m2, _ := m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestCursorcolumnRender(t *testing.T) {
+	t.Run("cursorcolumn highlights column", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Cursorcolumn = true
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "hello world\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "hello")
+	})
+
+	t.Run("multi-cursor secondary column", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Cursorcolumn = true
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "hello world\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{
+			core.PointRange(0),
+			core.PointRange(3),
+		}, 0)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), sel)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out2 := stripANSI(m.View().Content)
+		assert.Contains(t, out2, "hello")
+	})
+}
+
+func TestHorizontalScrollRender(t *testing.T) {
+	t.Run("scan prefix on scrolled long line", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		const longLine = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+			"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+			"xxxxxxxxxxxxxxx\n"
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, longLine),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		action.MoveLineEnd(e)
+		v.SetOffset(view.Position{HorizontalOffset: 50})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
 }

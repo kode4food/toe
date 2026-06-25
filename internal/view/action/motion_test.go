@@ -792,3 +792,32 @@ func TestAlignSelections(t *testing.T) {
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
+
+func TestScrollViewLines(t *testing.T) {
+	const manyLines = "line\nline\nline\nline\nline\nline\nline\nline\nline\n" +
+		"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
+		"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\n"
+
+	t.Run("scrolls view down", func(t *testing.T) {
+		e := editorWithText(t, manyLines)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		action.ScrollViewLines(e, v, 3, false)
+
+		offset := v.Offset()
+		assert.NotEqual(t, 0, offset.Anchor)
+	})
+
+	t.Run("scrolls view up", func(t *testing.T) {
+		e := editorWithText(t, manyLines)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		action.ScrollViewLines(e, v, 5, false)
+
+		action.ScrollViewLines(e, v, 3, true)
+
+		offset := v.Offset()
+		assert.NotEqual(t, 0, offset.Anchor)
+	})
+}

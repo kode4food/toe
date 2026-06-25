@@ -1066,3 +1066,33 @@ func TestFindCharNotFound(t *testing.T) {
 		assert.Equal(t, 4, cursorPos(t, e))
 	})
 }
+
+func TestExtendSearchNoPattern(t *testing.T) {
+	t.Run("ExtendSearchNext noop without pattern", func(t *testing.T) {
+		e := editorWithText(t, "hello world")
+		action.ExtendSearchNext(e)
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
+
+	t.Run("ExtendSearchPrev noop without pattern", func(t *testing.T) {
+		e := editorWithText(t, "hello world")
+		action.ExtendSearchPrev(e)
+		assert.Equal(t, 0, cursorPos(t, e))
+	})
+}
+
+func TestMergeNoView(t *testing.T) {
+	t.Run("MergeSelections noop without view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		action.MergeSelections(e)
+	})
+
+	t.Run("MergeConsecutive noop without view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		action.MergeConsecutive(e)
+	})
+}

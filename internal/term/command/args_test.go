@@ -9,6 +9,45 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 )
 
+func TestParseErrorVariants(t *testing.T) {
+	t.Run("unterminated token error", func(t *testing.T) {
+		pe := &command.ParseError{
+			Kind:  command.ParseErrorUnterminatedToken,
+			Token: command.Token{Content: `"hello`},
+		}
+		assert.Contains(t, pe.Error(), "unterminated")
+	})
+
+	t.Run("missing expansion delimiter bare", func(t *testing.T) {
+		pe := &command.ParseError{
+			Kind: command.ParseErrorMissingExpansionDelimiter,
+			Text: "",
+		}
+		assert.Contains(t, pe.Error(), "%%")
+	})
+
+	t.Run("missing expansion delimiter named", func(t *testing.T) {
+		pe := &command.ParseError{
+			Kind: command.ParseErrorMissingExpansionDelimiter,
+			Text: "sh",
+		}
+		assert.Contains(t, pe.Error(), "%sh")
+	})
+
+	t.Run("unknown expansion", func(t *testing.T) {
+		pe := &command.ParseError{
+			Kind: command.ParseErrorUnknownExpansion,
+			Text: "xyz",
+		}
+		assert.Contains(t, pe.Error(), "xyz")
+	})
+
+	t.Run("default fallback", func(t *testing.T) {
+		pe := &command.ParseError{Kind: -1}
+		assert.NotEmpty(t, pe.Error())
+	})
+}
+
 func TestDefaultSignature(t *testing.T) {
 	sig := command.DefaultSignature()
 	assert.Equal(t, 0, sig.Positionals.Min)

@@ -595,6 +595,46 @@ func TestToggleBlockCommentsLineFallback(t *testing.T) {
 	})
 }
 
+func TestRotateSelectionsNoView(t *testing.T) {
+	t.Run("forward noop with no view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		action.RotateSelectionsForward(e)
+	})
+
+	t.Run("backward noop with no view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		action.RotateSelectionsBackward(e)
+	})
+}
+
+func TestKeepPrimarySelectionNoView(t *testing.T) {
+	t.Run("noop with no view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		action.KeepPrimarySelection(e)
+	})
+}
+
+func TestToggleCommentsLineCommentedBranch(t *testing.T) {
+	t.Run("each line separately block-commented", func(t *testing.T) {
+		writeTextBlockCommentConfig(t)
+
+		e := editorWithText(t, "/* line one */\n/* line two */\n")
+		setSelection(t, e, []core.Range{core.NewRange(0, 30)}, 0)
+
+		action.ToggleComments(e)
+
+		doc, _ := e.FocusedDocument()
+		result := doc.Text().String()
+		assert.NotContains(t, result, "/*")
+	})
+}
+
 func writeTextLangConfig(t *testing.T, commentToken string) {
 	t.Helper()
 	dir := t.TempDir()

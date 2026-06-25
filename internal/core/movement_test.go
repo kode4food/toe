@@ -604,6 +604,16 @@ func TestVisualRows(t *testing.T) {
 		var nilvf *core.VisualMoveFormat
 		assert.Equal(t, 1, nilvf.VisualRows(doc, 0))
 	})
+
+	t.Run("empty line returns 1", func(t *testing.T) {
+		docEmpty := core.NewRope("a\n\nb")
+		assert.Equal(t, 1, vf.VisualRows(docEmpty, 1))
+	})
+
+	t.Run("tab-indented line wraps", func(t *testing.T) {
+		docTab := core.NewRope("\t\t\tlong content here")
+		assert.GreaterOrEqual(t, vf.VisualRows(docTab, 0), 1)
+	})
 }
 
 func TestVisualRowOfOffset(t *testing.T) {

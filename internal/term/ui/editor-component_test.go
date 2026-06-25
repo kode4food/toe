@@ -202,6 +202,21 @@ func setSelection(
 	doc.SetSelectionFor(v.ID(), sel)
 }
 
+func TestAutoSaveCmd(t *testing.T) {
+	t.Run("autosave tick created on keypress", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().AutoSaveAfterDelay = true
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+
+		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m.View().Content)
+		assert.NotNil(t, cmd)
+	})
+}
+
 func cursorPos(t *testing.T, e *view.Editor) int {
 	t.Helper()
 	v, ok := e.FocusedView()

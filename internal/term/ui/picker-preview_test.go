@@ -17,6 +17,42 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// pathPickerSource is a minimal PickerSource that returns one item
+// with a Location.Target.Path set to the given path.
+type pathPickerSource struct{ path string }
+
+func (p *pathPickerSource) Title() string {
+	return "test"
+}
+
+func (p *pathPickerSource) Columns() []string {
+	return []string{"name"}
+}
+
+func (p *pathPickerSource) Primary() int {
+	return 0
+}
+
+func (p *pathPickerSource) Accept(*view.Editor, ui.PickerItem) {}
+
+func (p *pathPickerSource) Load(
+	*view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	items := []ui.PickerItem{{
+		Display:  "item",
+		Columns:  []string{"item"},
+		SortKey:  "item",
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
+	}}
+	return items, nil, func() {}
+}
+
+func (p *pathPickerSource) Match(
+	_ string, _ ui.PickerItem,
+) (int, []int, bool) {
+	return 0, nil, true
+}
+
 const (
 	testPickerPreviewWidth   = 100
 	narrowPickerPreviewWidth = 60
@@ -409,5 +445,64 @@ wrap-indicator = "↪ "
 		out = stripANSI(m.View().Content)
 		assert.Contains(t, out, "LINE-00")
 		assert.NotContains(t, out, "LINE-79")
+	})
+}
+
+func TestPickerPreviewPlaceholders(t *testing.T) {
+	t.Run("binary file shows placeholder", func(t *testing.T) {
+		tmp := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(tmp, "binary.bin"),
+			[]byte{0x00, 0x01, 0x02, 0x03},
+			0o644,
+		))
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(ui.FilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("nonexistent path shows placeholder", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		src := &pathPickerSource{path: "/no/such/file.txt"}
+		bindNormalTestAction(
+			km, "custom_picker",
+			m.PickerAction(func(ed *view.Editor) *ui.Picker {
+				return ui.NewPicker(ed, src)
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("directory path shows placeholder", func(t *testing.T) {
+		dir := t.TempDir()
+		e := view.NewEditor(dir)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		src := &pathPickerSource{path: dir}
+		bindNormalTestAction(
+			km, "custom_picker2",
+			m.PickerAction(func(ed *view.Editor) *ui.Picker {
+				return ui.NewPicker(ed, src)
+			}),
+			[]command.KeyEvent{char('q')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'q')
+		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
 	})
 }

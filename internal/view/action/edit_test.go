@@ -177,6 +177,21 @@ func TestExtendLineBelow(t *testing.T) {
 	})
 }
 
+func TestExtendLineBelowLastLine(t *testing.T) {
+	t.Run("selects to end on last line", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd")
+		setCursor(t, e, 3)
+
+		action.ExtendLineBelow(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, 3, sel.Primary().From())
+		assert.Equal(t, 5, sel.Primary().To())
+	})
+}
+
 func TestSelectLineBelow(t *testing.T) {
 	t.Run("selects current line forward", func(t *testing.T) {
 		e := editorWithText(t, "ab\ncd\nef")
@@ -835,5 +850,45 @@ func TestChangeSelectionNoYankLinewise(t *testing.T) {
 		action.ChangeSelectionNoYank(e)
 
 		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+}
+
+func TestSelectAllNoView(t *testing.T) {
+	t.Run("no focused view is noop", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+
+		action.SelectAll(e)
+	})
+}
+
+func TestInsertTabNoView(t *testing.T) {
+	t.Run("no focused view is noop", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+
+		action.InsertTab(e)
+	})
+}
+
+func TestDeleteSelectionNoYankNoView(t *testing.T) {
+	t.Run("no focused view is noop", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+
+		action.DeleteSelectionNoYank(e)
+	})
+}
+
+func TestChangeSelectionNoYankNoView(t *testing.T) {
+	t.Run("no focused view is noop", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+
+		action.ChangeSelectionNoYank(e)
 	})
 }

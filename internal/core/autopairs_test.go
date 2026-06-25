@@ -85,6 +85,23 @@ func TestHookInsertOpen(t *testing.T) {
 		assert.Equal(t, 1, next.Head)
 		assert.Equal(t, 5, next.Anchor)
 	})
+
+	// 👋🏽 is 2 code points but one grapheme
+	t.Run("fwd multi-rune single grapheme", func(t *testing.T) {
+		doc := core.NewRope("👋🏽 ")
+		r := core.NewRange(0, 2)
+		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
+		assert.True(t, ok)
+		assert.GreaterOrEqual(t, next.Head, next.Anchor)
+	})
+
+	t.Run("bwd multi-rune single grapheme", func(t *testing.T) {
+		doc := core.NewRope("👋🏽 ")
+		r := core.NewRange(2, 0)
+		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
+		assert.True(t, ok)
+		_ = next
+	})
 }
 
 func TestHookInsertClose(t *testing.T) {
@@ -287,6 +304,24 @@ func TestAutoPairsGet(t *testing.T) {
 
 	t.Run("returns false for unknown char", func(t *testing.T) {
 		_, ok := core.DefaultAutoPairs().Get('x')
+		assert.False(t, ok)
+	})
+}
+
+func TestHookInsertNonPair(t *testing.T) {
+	t.Run("non-pair non-whitespace returns false", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		r := core.PointRange(5)
+		_, _, ok := core.HookInsert(doc, r, 'x', core.DefaultAutoPairs())
+		assert.False(t, ok)
+	})
+}
+
+func TestHookDeleteMismatch(t *testing.T) {
+	t.Run("mismatched prev char returns false", func(t *testing.T) {
+		doc := core.NewRope("[)")
+		r := core.PointRange(1)
+		_, _, ok := core.HookDelete(doc, r, core.DefaultAutoPairs())
 		assert.False(t, ok)
 	})
 }

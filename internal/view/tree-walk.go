@@ -55,8 +55,7 @@ found:
 			best := c.children[0]
 			bestDist := abs(t.leftOf(best) - curX)
 			for _, cc := range c.children[1:] {
-				d := abs(t.leftOf(cc) - curX)
-				if d < bestDist {
+				if d := abs(t.leftOf(cc) - curX); d < bestDist {
 					bestDist = d
 					best = cc
 				}
@@ -67,8 +66,7 @@ found:
 			best := c.children[0]
 			bestDist := abs(t.topOf(best) - curY)
 			for _, cc := range c.children[1:] {
-				d := abs(t.topOf(cc) - curY)
-				if d < bestDist {
+				if d := abs(t.topOf(cc) - curY); d < bestDist {
 					bestDist = d
 					best = cc
 				}
@@ -211,22 +209,6 @@ func (t *Tree) walkSep(id Id, fn func(Separator)) {
 			})
 		}
 	}
-}
-
-func indexInSlice(s []Id, id Id) int {
-	for i, v := range s {
-		if v == id {
-			return i
-		}
-	}
-	return -1
-}
-
-func insert(s []Id, pos int, id Id) []Id {
-	s = append(s, 0)
-	copy(s[pos+1:], s[pos:])
-	s[pos] = id
-	return s
 }
 
 func abs(n int) int {

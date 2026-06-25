@@ -56,6 +56,26 @@ func TestEdit(t *testing.T) {
 	})
 }
 
+func TestEditActionsNoView(t *testing.T) {
+	t.Run("delete selection is noop", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			action.DeleteSelection(editorWithNoView(t))
+		})
+	})
+
+	t.Run("change selection is noop", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			action.ChangeSelection(editorWithNoView(t))
+		})
+	})
+
+	t.Run("split selection is noop", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			action.SplitSelectionOnNewline(editorWithNoView(t))
+		})
+	})
+}
+
 func TestSelectAll(t *testing.T) {
 	t.Run("selects entire document", func(t *testing.T) {
 		e := editorWithText(t, "hello")
@@ -205,6 +225,18 @@ func TestSelectLineBelow(t *testing.T) {
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 3, sel.Primary().To())
 	})
+
+	t.Run("backward sel extends downward", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd\nef")
+		setSelection(t, e, []core.Range{core.NewRange(5, 3)}, 0)
+
+		action.SelectLineBelow(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.GreaterOrEqual(t, sel.Primary().To()-sel.Primary().From(), 0)
+	})
 }
 
 func TestSelectLineAbove(t *testing.T) {
@@ -219,6 +251,62 @@ func TestSelectLineAbove(t *testing.T) {
 		sel := doc.SelectionFor(v.ID())
 		// includes at least two lines worth of content
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 3)
+	})
+
+	t.Run("backward sel extends upward", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd\nef")
+		setSelection(t, e, []core.Range{core.NewRange(6, 3)}, 0)
+
+		action.SelectLineAbove(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.GreaterOrEqual(t, sel.Primary().To()-sel.Primary().From(), 0)
+	})
+}
+
+func TestSplitSelectionOnNewlineEdges(t *testing.T) {
+	t.Run("keeps point ranges", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.PointRange(1)}, 0)
+
+		action.SplitSelectionOnNewline(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t,
+			[]core.Range{core.PointRange(1)},
+			doc.SelectionFor(v.ID()).Ranges(),
+		)
+	})
+
+	t.Run("splits final line without newline", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd")
+		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+
+		action.SplitSelectionOnNewline(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t,
+			[]core.Range{core.NewRange(0, 2), core.NewRange(3, 5)},
+			doc.SelectionFor(v.ID()).Ranges(),
+		)
+	})
+
+	t.Run("invalid range leaves selection", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+
+		action.SplitSelectionOnNewline(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t,
+			[]core.Range{core.NewRange(-2, -1)},
+			doc.SelectionFor(v.ID()).Ranges(),
+		)
 	})
 }
 
@@ -288,6 +376,21 @@ func TestYank(t *testing.T) {
 
 		assert.Equal(t, "ab", registeredValue(t, e, '"'))
 	})
+
+	t.Run("noop with no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		assert.NotPanics(t, func() { action.Yank(e) })
+	})
+
+	t.Run("invalid range is skipped", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+
+		action.Yank(e)
+
+		assert.Empty(t, e.Registers().Read('"'))
+	})
 }
 
 func TestPasteAfter(t *testing.T) {
@@ -322,6 +425,38 @@ func TestPasteAfter(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "ghi")
 	})
+
+	t.Run("multiple cursors reuse last value", func(t *testing.T) {
+		e := editorWithText(t, "abcd")
+		setSelection(t, e,
+			[]core.Range{core.PointRange(1), core.PointRange(3)},
+			0,
+		)
+		e.Registers().Write('"', []string{"x"})
+
+		action.PasteAfter(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "axbcxd", doc.Text().String())
+	})
+
+	t.Run("invalid position leaves text", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e.Registers().Write('"', []string{"x"})
+
+		action.PasteAfter(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("noop with no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+		e.Registers().Write('"', []string{"x"})
+
+		assert.NotPanics(t, func() { action.PasteAfter(e) })
+	})
 }
 
 func TestPasteBefore(t *testing.T) {
@@ -335,6 +470,24 @@ func TestPasteBefore(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "xyz", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
+	})
+
+	t.Run("linewise invalid range is skipped", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e.Registers().Write('"', []string{"x\n"})
+
+		action.PasteBefore(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("noop with no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+		e.Registers().Write('"', []string{"x"})
+
+		assert.NotPanics(t, func() { action.PasteBefore(e) })
 	})
 }
 
@@ -648,6 +801,48 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "(\n\t\n)", doc.Text().String())
 	})
+
+	t.Run("no view is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		assert.NotPanics(t, func() { action.InsertNewline(e) })
+	})
+
+	t.Run("trims trailing whitespace", func(t *testing.T) {
+		e := editorWithText(t, "abc   def")
+		setCursor(t, e, 6)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc\ndef", doc.Text().String())
+	})
+
+	t.Run("duplicate cursors share insertion", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e,
+			[]core.Range{core.PointRange(1), core.PointRange(1)},
+			0,
+		)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "a\nbc", doc.Text().String())
+	})
+
+	t.Run("negative range inserts at top", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "\nabc", doc.Text().String())
+	})
 }
 
 func TestAddNewlineImplNoView(t *testing.T) {
@@ -656,6 +851,53 @@ func TestAddNewlineImplNoView(t *testing.T) {
 		setCursor(t, e, 0)
 
 		assert.NotPanics(t, func() { action.AddNewlineAbove(e) })
+	})
+
+	t.Run("add newline above no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		assert.NotPanics(t, func() { action.AddNewlineAbove(e) })
+	})
+
+	t.Run("add newline below no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		assert.NotPanics(t, func() { action.AddNewlineBelow(e) })
+	})
+}
+
+func TestAddNewlineEdges(t *testing.T) {
+	t.Run("invalid range leaves text", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+
+		action.AddNewlineAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("duplicate target inserts once", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e,
+			[]core.Range{core.PointRange(0), core.PointRange(1)},
+			0,
+		)
+
+		action.AddNewlineAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "\nabc", doc.Text().String())
+	})
+
+	t.Run("below missing next line leaves text", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setCursor(t, e, 0)
+
+		action.AddNewlineBelow(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
 

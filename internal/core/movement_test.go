@@ -520,6 +520,42 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		assert.Equal(t, 5, got.Head)
 		assert.Equal(t, 4, got.Cursor(doc))
 	})
+
+	t.Run("moves down across wrapped lines", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
+		r := core.PointRange(0)
+
+		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 3)
+
+		assert.Equal(t, 23, got.Head)
+	})
+
+	t.Run("moves down past wrapped lines", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
+		r := core.PointRange(0)
+
+		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 5)
+
+		assert.Equal(t, 26, got.Head)
+	})
+
+	t.Run("moves up across wrapped lines", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
+		r := core.PointRange(26)
+
+		got := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 2)
+
+		assert.Equal(t, 13, got.Head)
+	})
+
+	t.Run("moves up past wrapped lines", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
+		r := core.PointRange(26)
+
+		got := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 3)
+
+		assert.Equal(t, 10, got.Head)
+	})
 }
 
 func TestVisualRowStarts(t *testing.T) {
@@ -561,6 +597,21 @@ func TestVisualRowStarts(t *testing.T) {
 	t.Run("single short line does not wrap", func(t *testing.T) {
 		vf := &core.VisualMoveFormat{ViewportWidth: 80, TabWidth: 4, MaxWrap: 20}
 		assert.Empty(t, vf.VisualRowStarts([]rune("short line")))
+	})
+
+	t.Run("wide CJK chars trigger overflow path", func(t *testing.T) {
+		vf := &core.VisualMoveFormat{ViewportWidth: 9, TabWidth: 4, MaxWrap: 2}
+		starts := vf.VisualRowStarts([]rune("αβγδεζηθ日"))
+		assert.NotEmpty(t, starts)
+	})
+
+	t.Run("wrap drops indent over MaxIndentRetain", func(t *testing.T) {
+		vf := &core.VisualMoveFormat{
+			ViewportWidth: 8, TabWidth: 4, MaxWrap: 20, MaxIndentRetain: 2,
+		}
+		runes := []rune("    abcdefghij")
+		starts := vf.VisualRowStarts(runes)
+		assert.NotEmpty(t, starts)
 	})
 }
 
@@ -605,6 +656,11 @@ func TestVisualRows(t *testing.T) {
 		assert.Equal(t, 1, nilvf.VisualRows(doc, 0))
 	})
 
+	t.Run("zero width returns 1", func(t *testing.T) {
+		vf := &core.VisualMoveFormat{}
+		assert.Equal(t, 1, vf.VisualRows(doc, 1))
+	})
+
 	t.Run("empty line returns 1", func(t *testing.T) {
 		docEmpty := core.NewRope("a\n\nb")
 		assert.Equal(t, 1, vf.VisualRows(docEmpty, 1))
@@ -631,6 +687,11 @@ func TestVisualRowOfOffset(t *testing.T) {
 	t.Run("nil format always returns 0", func(t *testing.T) {
 		var nilvf *core.VisualMoveFormat
 		assert.Equal(t, 0, nilvf.VisualRowOfOffset(doc, 0, 5))
+	})
+
+	t.Run("zero width always returns 0", func(t *testing.T) {
+		vf := &core.VisualMoveFormat{}
+		assert.Equal(t, 0, vf.VisualRowOfOffset(doc, 0, 5))
 	})
 }
 

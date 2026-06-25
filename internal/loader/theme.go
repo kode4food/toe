@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -21,12 +20,12 @@ var (
 	//go:embed assets/themes
 	embeddedThemes embed.FS
 
-	supportedThemeNames = []string{
+	supportedThemeNames = sortedStrings(
 		"frappe",
 		"latte",
 		"macchiato",
 		"mocha",
-	}
+	)
 )
 
 func ThemeNames() []string {
@@ -118,8 +117,8 @@ func mergeThemePalette(parent, theme any) any {
 }
 
 func supportedThemeName(name string) bool {
-	i := sort.SearchStrings(supportedThemeNames, name)
-	return i < len(supportedThemeNames) && supportedThemeNames[i] == name
+	_, found := slices.BinarySearch(supportedThemeNames, name)
+	return found
 }
 
 func decodeThemeTOML(text string) (map[string]any, error) {
@@ -128,4 +127,9 @@ func decodeThemeTOML(text string) (map[string]any, error) {
 		return nil, err
 	}
 	return theme, nil
+}
+
+func sortedStrings(s ...string) []string {
+	slices.Sort(s)
+	return s
 }

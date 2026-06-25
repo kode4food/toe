@@ -259,6 +259,15 @@ func TestMoveFileStartEnd(t *testing.T) {
 
 		assert.Equal(t, 4, cursorPos(t, e))
 	})
+
+	t.Run("MoveFileEnd skips blank last line", func(t *testing.T) {
+		e := editorWithText(t, "abc\ndef\n")
+		setCursor(t, e, 0)
+
+		action.MoveFileEnd(e)
+
+		assert.Equal(t, 4, cursorPos(t, e))
+	})
 }
 
 func TestMoveLineNonWhitespace(t *testing.T) {
@@ -760,6 +769,15 @@ func TestGotoFile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, relPath, path)
 	})
+
+	t.Run("cursor in middle expands outward", func(t *testing.T) {
+		e := editorWithText(t, "/no/such/file.txt")
+		setCursor(t, e, 8)
+
+		_, err := action.GotoFile(e)
+
+		assert.Error(t, err)
+	})
 }
 
 func TestAlignSelections(t *testing.T) {
@@ -819,5 +837,14 @@ func TestScrollViewLines(t *testing.T) {
 
 		offset := v.Offset()
 		assert.NotEqual(t, 0, offset.Anchor)
+	})
+
+	t.Run("zero lines clamps to one", func(t *testing.T) {
+		e := editorWithText(t, manyLines)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		before := v.Offset().Anchor
+		action.ScrollViewLines(e, v, 0, false)
+		assert.GreaterOrEqual(t, v.Offset().Anchor, before)
 	})
 }

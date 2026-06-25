@@ -103,6 +103,17 @@ func TestToggleLineComments(t *testing.T) {
 		doc = applyTx(doc, tx)
 		assert.Equal(t, "// hello", doc.String())
 	})
+
+	t.Run("all-blank selection is no-op", func(t *testing.T) {
+		doc := core.NewRope("\n\n")
+		sel, _ := core.NewSelection(
+			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+		)
+		tx, err := core.ToggleLineComments(doc, sel, "")
+		assert.NoError(t, err)
+		out := applyTx(doc, tx)
+		assert.Equal(t, "\n\n", out.String())
+	})
 }
 
 func TestSplitLinesOfSelection(t *testing.T) {

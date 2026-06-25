@@ -103,4 +103,58 @@ func TestChangeSetComposeCoverage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
 	})
+
+	t.Run("small insert consumed by larger delete", func(t *testing.T) {
+		// A inserts "X"; B deletes "Xb" (2 chars, more than A inserted)
+		doc := core.NewRope("ab")
+		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
+			core.TextChange(1, 1, "X"),
+		})
+		assert.NoError(t, err)
+		mid, err := csA.Apply(doc) // "aXb"
+		assert.NoError(t, err)
+		csB, err := core.NewChangeSetFromChanges(mid, []core.Change{
+			core.DeleteChange(1, 3),
+		})
+		assert.NoError(t, err)
+		final, err := csB.Apply(mid) // "a"
+		assert.NoError(t, err)
+
+		result, err := csA.Compose(csB).Apply(doc)
+
+		assert.NoError(t, err)
+		assert.Equal(t, final.String(), result.String())
+	})
+}
+
+func TestChangeSetComposeEmpty(t *testing.T) {
+	t.Run("empty lhs returns rhs", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		empty := core.NewChangeSet(doc)
+		csB, err := core.NewChangeSetFromChanges(doc, []core.Change{
+			core.TextChange(0, 5, "world"),
+		})
+		assert.NoError(t, err)
+
+		result, err := empty.Compose(csB).Apply(doc)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "world", result.String())
+	})
+
+	t.Run("empty rhs returns lhs", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
+			core.TextChange(0, 5, "world"),
+		})
+		assert.NoError(t, err)
+		mid, err := csA.Apply(doc)
+		assert.NoError(t, err)
+		empty := core.NewChangeSet(mid)
+
+		result, err := csA.Compose(empty).Apply(doc)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "world", result.String())
+	})
 }

@@ -141,6 +141,17 @@ func TestTokenizeCached(t *testing.T) {
 	assert.Equal(t, len(spans1), len(spans2))
 }
 
+func TestTokenizeEscapeOverlap(t *testing.T) {
+	t.Run("escape in string skips nested capture", func(t *testing.T) {
+		src := "package main\nconst s = \"hello\\nworld\"\n"
+		spans := syntax.Tokenize(src, "go")
+		assert.NotEmpty(t, spans)
+		for i := 1; i < len(spans); i++ {
+			assert.LessOrEqual(t, spans[i-1].End, spans[i].Start)
+		}
+	})
+}
+
 func TestTokenizeNonOverlapping(t *testing.T) {
 	src := "package main\n\nimport \"fmt\"\n\n" +
 		"func main() {\n\tfmt.Println(\"hello\")\n}\n"

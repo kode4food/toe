@@ -47,6 +47,14 @@ func TestFindMatchingBracketPlaintext(t *testing.T) {
 		assert.Equal(t, 24, pos)
 	})
 
+	t.Run("close bracket with nested parens backward", func(t *testing.T) {
+		// cursor on outer `)` at 5; inner `)` at 3 increments count backward
+		doc := core.NewRope("((x)y)")
+		pos, ok := core.FindMatchingBracketPlaintext(doc, 5)
+		assert.True(t, ok)
+		assert.Equal(t, 0, pos)
+	})
+
 	t.Run("not on bracket returns false", func(t *testing.T) {
 		doc := core.NewRope("(hello)")
 		_, ok := core.FindMatchingBracketPlaintext(doc, 3)

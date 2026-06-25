@@ -1,6 +1,8 @@
 package ui_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -75,6 +77,32 @@ func TestTokenExpander(t *testing.T) {
 		assert.Equal(t, "hello", result)
 	})
 
+	t.Run("register expansion joins values", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Registers().Write('a', []string{"hello", "world"})
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionRegister,
+			Content:   "a",
+		}
+		result, err := expand(tok)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello\nworld", result)
+	})
+
+	t.Run("register expansion rejects names", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionRegister,
+			Content:   "ab",
+		}
+		_, err := expand(tok)
+		assert.Error(t, err)
+	})
+
 	t.Run("unset register expands empty", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		expand := ui.NewTokenExpander(e)
@@ -129,6 +157,21 @@ func TestTokenExpander(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("variable with no document returns error", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionVariable,
+			Content:   "cursor_line",
+		}
+		_, err := expand(tok)
+		assert.ErrorIs(t, err, ui.ErrNoFocusedDocument)
+	})
+
 	t.Run("double-quoted percent markers expand", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Registers().Write('a', []string{"world"})
@@ -167,6 +210,97 @@ func TestTokenExpander(t *testing.T) {
 		assert.Equal(t, "hello", result)
 	})
 
+	t.Run("shell expansion uses default shell", func(t *testing.T) {
+		t.Setenv("SHELL", "/bin/sh")
+		e := view.NewEditor(t.TempDir())
+		e.Options().Shell = nil
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionShell,
+			Content:   "printf hello",
+		}
+		result, err := expand(tok)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", result)
+	})
+
+	t.Run("shell expansion keeps stdout on error", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionShell,
+			Content:   "printf hello; exit 1",
+		}
+		result, err := expand(tok)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", result)
+	})
+
+	t.Run("shell expansion returns empty error", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionShell,
+			Content:   "exit 1",
+		}
+		_, err := expand(tok)
+		assert.Error(t, err)
+	})
+
+	t.Run("shell expansion expands inner tokens", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Registers().Write('a', []string{"hello"})
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionShell,
+			Content:   "printf %reg{a}",
+		}
+		result, err := expand(tok)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello", result)
+	})
+
+	t.Run("shell expansion returns inner error", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionShell,
+			Content:   "printf %var{missing}",
+		}
+		_, err := expand(tok)
+		assert.Error(t, err)
+	})
+
+	t.Run("unknown expansion returns content", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:      command.TokenExpansion,
+			Expansion: command.ExpansionKind(99),
+			Content:   "raw",
+		}
+		result, err := expand(tok)
+		assert.NoError(t, err)
+		assert.Equal(t, "raw", result)
+	})
+
+	t.Run("trailing percent is preserved", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		expand := ui.NewTokenExpander(e)
+		tok := command.Token{
+			Kind:    command.TokenExpand,
+			Content: "hello %",
+		}
+		result, err := expand(tok)
+		assert.NoError(t, err)
+		assert.Equal(t, "hello %", result)
+	})
+
 	t.Run("default token kind returns content", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		expand := ui.NewTokenExpander(e)
@@ -195,6 +329,18 @@ func TestExpandVariables(t *testing.T) {
 		assert.Equal(t, view.ScratchBufferName, result)
 	})
 
+	t.Run("buffer_name returns relative path", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "file.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		result, err := expandVar(t, e, "buffer_name")
+		assert.NoError(t, err)
+		assert.Equal(t, "file.txt", result)
+	})
+
 	t.Run("file_path_absolute scratch returns cwd", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.NewDocument()
@@ -203,11 +349,35 @@ func TestExpandVariables(t *testing.T) {
 		assert.Equal(t, e.Cwd(), result)
 	})
 
+	t.Run("file_path_absolute returns file path", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "file.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		result, err := expandVar(t, e, "file_path_absolute")
+		assert.NoError(t, err)
+		assert.Equal(t, path, result)
+	})
+
 	t.Run("line_ending returns lf by default", func(t *testing.T) {
 		e := expandEditorWithText(t, "abc\n")
 		result, err := expandVar(t, e, "line_ending")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, result)
+	})
+
+	t.Run("workspace_directory finds marker", func(t *testing.T) {
+		root := t.TempDir()
+		child := filepath.Join(root, "a", "b")
+		assert.NoError(t, os.MkdirAll(child, 0o755))
+		assert.NoError(t, os.Mkdir(filepath.Join(root, ".toe"), 0o755))
+		e := view.NewEditor(child)
+		e.NewDocument()
+		result, err := expandVar(t, e, "workspace_directory")
+		assert.NoError(t, err)
+		assert.Equal(t, root, result)
 	})
 
 	t.Run("workspace_directory returns a dir", func(t *testing.T) {
@@ -224,6 +394,16 @@ func TestExpandVariables(t *testing.T) {
 		result, err := expandVar(t, e, "language")
 		assert.NoError(t, err)
 		assert.Equal(t, "text", result)
+	})
+
+	t.Run("language returns document language", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetLang("go")
+		result, err := expandVar(t, e, "language")
+		assert.NoError(t, err)
+		assert.Equal(t, "go", result)
 	})
 
 	t.Run("selection returns selected text", func(t *testing.T) {

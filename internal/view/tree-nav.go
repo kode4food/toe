@@ -1,5 +1,7 @@
 package view
 
+import "slices"
+
 // Next returns the id of the view after the focused one in DFS order
 func (t *Tree) Next() Id {
 	views := t.Traverse()
@@ -79,8 +81,8 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 
 	if focusParent == targetParent {
 		c := t.nodes[focusParent].container
-		fi := indexInSlice(c.children, focus)
-		ti := indexInSlice(c.children, target)
+		fi := slices.Index(c.children, focus)
+		ti := slices.Index(c.children, target)
 		c.children[fi], c.children[ti] = c.children[ti], c.children[fi]
 		// swap areas
 		fv := t.nodes[focus].view
@@ -89,8 +91,8 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 	} else {
 		fc := t.nodes[focusParent].container
 		tc := t.nodes[targetParent].container
-		fi := indexInSlice(fc.children, focus)
-		ti := indexInSlice(tc.children, target)
+		fi := slices.Index(fc.children, focus)
+		ti := slices.Index(tc.children, target)
 		fc.children[fi], tc.children[ti] = tc.children[ti], fc.children[fi]
 		t.nodes[focus].parent = targetParent
 		t.nodes[target].parent = focusParent

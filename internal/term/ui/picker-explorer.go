@@ -1,9 +1,10 @@
 package ui
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -102,12 +103,8 @@ func (f *fileExplorerSource) readDir() []PickerItem {
 			files = append(files, explorerEntry{full, false})
 		}
 	}
-	sort.Slice(dirs, func(i, j int) bool {
-		return dirs[i].path < dirs[j].path
-	})
-	sort.Slice(files, func(i, j int) bool {
-		return files[i].path < files[j].path
-	})
+	slices.SortFunc(dirs, func(a, b explorerEntry) int { return cmp.Compare(a.path, b.path) })
+	slices.SortFunc(files, func(a, b explorerEntry) int { return cmp.Compare(a.path, b.path) })
 
 	var items []PickerItem
 	parent, _ := filepath.Abs(filepath.Join(f.root, ".."))
@@ -158,8 +155,8 @@ func explorerDirPreview(dir string, w, h int, dirStyle lipgloss.Style) string {
 			files = append(files, e.Name())
 		}
 	}
-	sort.Strings(dirs)
-	sort.Strings(files)
+	slices.Sort(dirs)
+	slices.Sort(files)
 
 	all := append(dirs, files...)
 	if len(all) > h {

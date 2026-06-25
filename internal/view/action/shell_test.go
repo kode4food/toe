@@ -66,6 +66,122 @@ func TestReadFileErrors(t *testing.T) {
 	})
 }
 
+func TestShellNoView(t *testing.T) {
+	t.Run("pipe is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		err := action.ShellPipe(e, "cat")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("pipe to is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		err := action.ShellPipeTo(e, "cat")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("insert output is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		err := action.ShellInsertOutput(e, "printf hello")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("append output is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		err := action.ShellAppendOutput(e, "printf hello")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("keep pipe is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		err := action.ShellKeepPipe(e, "cat")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("read file is noop", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "input.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
+		e := editorWithNoView(t)
+
+		err := action.ReadFile(e, path)
+
+		assert.NoError(t, err)
+	})
+}
+
+func TestShellEdgeSelections(t *testing.T) {
+	t.Run("pipe skips invalid range", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
+
+		err := action.ShellPipe(e, "cat")
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("pipe to skips invalid range", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
+
+		err := action.ShellPipeTo(e, "cat")
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("keep pipe skips invalid range", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
+
+		err := action.ShellKeepPipe(e, "cat")
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("keep pipe keeps none", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
+		err := action.ShellKeepPipe(e, "false")
+
+		assert.NoError(t, err)
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, []core.Range{core.NewRange(0, 3)}, sel.Ranges())
+	})
+
+	t.Run("append output skips duplicate position", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(
+			t, e,
+			[]core.Range{core.NewRange(0, 1), core.PointRange(1)},
+			0,
+		)
+
+		err := action.ShellAppendOutput(e, "printf x")
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "axbc", doc.Text().String())
+	})
+}
+
 func TestShell(t *testing.T) {
 	t.Run("pipe replaces selection", func(t *testing.T) {
 		e := editorWithText(t, "abc")

@@ -32,9 +32,50 @@ func TestFindNthClosestPairsPos(t *testing.T) {
 		_, _, err := core.FindNthClosestPairsPos(doc, r, 1)
 		assert.True(t, errors.Is(err, core.ErrPairNotFound))
 	})
+
+	t.Run("skips pair whose open is after pos", func(t *testing.T) {
+		// "a(x)y)z": cursor at 0; the `)` at 5 has its `(` at 1 > pos=0
+		doc := core.NewRope("a(x)y)z")
+		r := core.PointRange(0)
+		_, _, err := core.FindNthClosestPairsPos(doc, r, 1)
+		assert.True(t, errors.Is(err, core.ErrPairNotFound))
+	})
+
+	t.Run("skips pair closed before selection end", func(t *testing.T) {
+		// "(xyz)abc" with sel(3,8): the `)` at 4 < r.To()-1=7, skip it
+		doc := core.NewRope("(xyz)abc")
+		r := core.NewRange(3, 8)
+		_, _, err := core.FindNthClosestPairsPos(doc, r, 1)
+		assert.True(t, errors.Is(err, core.ErrPairNotFound))
+	})
+
+	t.Run("skip=2 returns outer pair", func(t *testing.T) {
+		doc := core.NewRope("((ab))")
+		r := core.PointRange(3)
+		anchor, head, err := core.FindNthClosestPairsPos(doc, r, 2)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, anchor)
+		assert.Equal(t, 5, head)
+	})
+
+	t.Run("backward range returns reversed positions", func(t *testing.T) {
+		doc := core.NewRope("(hello)")
+		r := core.NewRange(4, 2)
+		anchor, head, err := core.FindNthClosestPairsPos(doc, r, 1)
+		assert.NoError(t, err)
+		assert.Equal(t, 6, anchor)
+		assert.Equal(t, 0, head)
+	})
 }
 
 func TestFindNthPairsPos(t *testing.T) {
+	t.Run("short doc returns PairNotFound", func(t *testing.T) {
+		doc := core.NewRope("x")
+		r := core.PointRange(0)
+		_, _, err := core.FindNthPairsPos(doc, '(', r, 1)
+		assert.True(t, errors.Is(err, core.ErrPairNotFound))
+	})
+
 	t.Run("finds specific char pair", func(t *testing.T) {
 		doc := core.NewRope("(some) (chars)\n(newline)")
 		r := core.PointRange(9)
@@ -65,6 +106,22 @@ func TestFindNthPairsPos(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 5, anchor)
 		assert.Equal(t, 17, head)
+	})
+
+	t.Run("cursor on same-char bracket is ambiguous", func(t *testing.T) {
+		doc := core.NewRope("some 'text' here")
+		r := core.PointRange(5)
+		_, _, err := core.FindNthPairsPos(doc, '\'', r, 1)
+		assert.True(t, errors.Is(err, core.ErrCursorOnAmbiguousPair))
+	})
+
+	t.Run("backward range returns reversed positions", func(t *testing.T) {
+		doc := core.NewRope("(some) (chars)\n(newline)")
+		r := core.NewRange(10, 8)
+		anchor, head, err := core.FindNthPairsPos(doc, '(', r, 1)
+		assert.NoError(t, err)
+		assert.Equal(t, 13, anchor)
+		assert.Equal(t, 7, head)
 	})
 }
 

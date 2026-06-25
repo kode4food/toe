@@ -146,6 +146,20 @@ func TestToggleBlockComments(t *testing.T) {
 	})
 }
 
+func TestToggleCommentsBlockCommented(t *testing.T) {
+	t.Run("removes inline block comment", func(t *testing.T) {
+		const src = "hello /* world */"
+		e := editorWithText(t, src)
+		doc, _ := e.FocusedDocument()
+		doc.SetLang("go")
+		setSelection(t, e, []core.Range{core.NewRange(6, len(src))}, 0)
+
+		action.ToggleComments(e)
+
+		assert.NotEqual(t, src, doc.Text().String())
+	})
+}
+
 func TestJoinSelectionsSpace(t *testing.T) {
 	t.Run("joins lines with space separator", func(t *testing.T) {
 		e := editorWithText(t, "a\nb")
@@ -580,6 +594,26 @@ func TestToggleCommentsWithLineToken(t *testing.T) {
 	})
 }
 
+func TestCommentActionsNoView(t *testing.T) {
+	t.Run("toggle comments is noop", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			action.ToggleComments(editorWithNoView(t))
+		})
+	})
+
+	t.Run("toggle line comments is noop", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			action.ToggleLineComments(editorWithNoView(t))
+		})
+	})
+
+	t.Run("toggle block comments is noop", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			action.ToggleBlockComments(editorWithNoView(t))
+		})
+	})
+}
+
 func TestToggleBlockCommentsLineFallback(t *testing.T) {
 	t.Run("line-only lang falls back to line toggle", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
@@ -597,26 +631,62 @@ func TestToggleBlockCommentsLineFallback(t *testing.T) {
 
 func TestRotateSelectionsNoView(t *testing.T) {
 	t.Run("forward noop with no view", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		e.CloseView(v.ID())
+		e := editorWithNoView(t)
 		action.RotateSelectionsForward(e)
 	})
 
 	t.Run("backward noop with no view", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		e.CloseView(v.ID())
+		e := editorWithNoView(t)
 		action.RotateSelectionsBackward(e)
 	})
 }
 
 func TestKeepPrimarySelectionNoView(t *testing.T) {
 	t.Run("noop with no view", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		e.CloseView(v.ID())
+		e := editorWithNoView(t)
 		action.KeepPrimarySelection(e)
+	})
+}
+
+func TestSelectionActionsNoView(t *testing.T) {
+	t.Run("line end is noop", func(t *testing.T) {
+		action.GotoLineEndNewline(editorWithNoView(t))
+	})
+
+	t.Run("extend line end is noop", func(t *testing.T) {
+		action.ExtendToLineEndNewline(editorWithNoView(t))
+	})
+
+	t.Run("save selection is noop", func(t *testing.T) {
+		action.SaveSelection(editorWithNoView(t))
+	})
+
+	t.Run("remove primary is noop", func(t *testing.T) {
+		action.RemovePrimarySelection(editorWithNoView(t))
+	})
+
+	t.Run("merge selections is noop", func(t *testing.T) {
+		action.MergeSelections(editorWithNoView(t))
+	})
+
+	t.Run("merge consecutive is noop", func(t *testing.T) {
+		action.MergeConsecutive(editorWithNoView(t))
+	})
+
+	t.Run("ensure forward is noop", func(t *testing.T) {
+		action.EnsureForward(editorWithNoView(t))
+	})
+
+	t.Run("last modification is noop", func(t *testing.T) {
+		action.GotoLastModification(editorWithNoView(t))
+	})
+
+	t.Run("jump backward is noop", func(t *testing.T) {
+		action.JumpBackward(editorWithNoView(t))
+	})
+
+	t.Run("jump forward is noop", func(t *testing.T) {
+		action.JumpForward(editorWithNoView(t))
 	})
 }
 

@@ -50,6 +50,20 @@ func TestChangeSet(t *testing.T) {
 		assert.Equal(t, 2, cs.Operations()[2].LenChars())
 	})
 
+	t.Run("merges consecutive inserts at same pos", func(t *testing.T) {
+		doc := core.NewRope("abc")
+		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
+			core.TextChange(1, 1, "X"),
+			core.TextChange(1, 1, "Y"),
+		})
+		assert.NoError(t, err)
+
+		out, err := cs.Apply(doc)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "aXYbc", out.String())
+	})
+
 	t.Run("rejects unordered or out-of-range", func(t *testing.T) {
 		doc := core.NewRope("abc")
 

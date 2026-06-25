@@ -537,6 +537,39 @@ func TestCursorcolumnRender(t *testing.T) {
 	})
 }
 
+func TestRelativeLineNumberRender(t *testing.T) {
+	t.Run("renders distance above cursor", func(t *testing.T) {
+		e := editorWithText(t, "aa\nbb\ncc\n")
+		e.Options().LineNumber = view.LineNumberRelative
+		setSelection(t, e, []core.Range{core.PointRange(6)}, 0)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 10)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "  2 aa")
+		assert.Contains(t, out, "  1 bb")
+		assert.Contains(t, out, "  3 cc")
+	})
+}
+
+func TestSoftWrapRender(t *testing.T) {
+	t.Run("renders continuation rows", func(t *testing.T) {
+		e := editorWithText(t, "alpha bravo charlie delta echo\n")
+		enabled := true
+		maxWrap := 4
+		indicator := ">> "
+		e.Options().SoftWrap.Enable = &enabled
+		e.Options().SoftWrap.MaxWrap = &maxWrap
+		e.Options().SoftWrap.WrapIndicator = &indicator
+		m := resize(ui.New(e, command.NewKeymaps()), 18, 8)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "alpha")
+		assert.Contains(t, out, ">>")
+	})
+}
+
 func TestHorizontalScrollRender(t *testing.T) {
 	t.Run("scan prefix on scrolled long line", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -557,6 +590,45 @@ func TestHorizontalScrollRender(t *testing.T) {
 		v.SetOffset(view.Position{HorizontalOffset: 50})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		out := stripANSI(m.View().Content)
+		assert.NotEmpty(t, out)
+	})
+
+	t.Run("cursorcolumn with scrolled long line", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Cursorcolumn = true
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		const longLine = "abcdefghijabcdefghijabcdefghijabcdefghij\n"
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, longLine),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		setSelection(t, e,
+			[]core.Range{core.PointRange(24), core.PointRange(28)},
+			0,
+		)
+		v.SetOffset(view.Position{HorizontalOffset: 10})
+		m := resize(ui.New(e, command.NewKeymaps()), 20, 8)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestSearchInvalidRegex(t *testing.T) {
+	t.Run("invalid search pattern does not panic", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(t.TempDir())
+		e.Registers().Write('/', []string{"["})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
 		assert.NotEmpty(t, out)
 	})
 }

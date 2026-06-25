@@ -27,6 +27,15 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 	return e
 }
 
+func editorWithNoView(t *testing.T) *view.Editor {
+	t.Helper()
+	e := view.NewEditor("/tmp")
+	v, ok := e.FocusedView()
+	assert.True(t, ok)
+	e.CloseView(v.ID())
+	return e
+}
+
 func setCursor(t *testing.T, e *view.Editor, pos int) {
 	t.Helper()
 	v, ok := e.FocusedView()

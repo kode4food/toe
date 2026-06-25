@@ -187,6 +187,81 @@ func TestPromptCmdAccept(t *testing.T) {
 	})
 }
 
+func TestPromptKeyEditing(t *testing.T) {
+	t.Run("escape closes prompt", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendSpecial(m, tea.KeyEscape)
+
+		assert.NotRegexp(t,
+			regexp.MustCompile(`(?m)^:`), stripANSI(m.View().Content))
+	})
+
+	t.Run("backspace removes input", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'a')
+		m = sendKey(m, 'b')
+		m = sendSpecial(m, tea.KeyBackspace)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, ":a")
+		assert.NotContains(t, out, ":ab")
+	})
+
+	t.Run("ctrl h removes input", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'x')
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Code: 'h',
+			Mod:  tea.ModCtrl,
+		})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, ":")
+		assert.NotContains(t, out, ":x")
+	})
+
+	t.Run("shift tab wraps completions", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'o')
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Code: tea.KeyTab,
+			Mod:  tea.ModShift,
+		})
+		m = m2.(ui.Model)
+
+		assert.Contains(t, stripANSI(m.View().Content), ":")
+	})
+}
+
 func TestRegexPromptAccept(t *testing.T) {
 	t.Run("enter submits regex prompt", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -347,6 +422,22 @@ func TestPromptHandlesMouse(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m2, _ := m.Update(tea.MouseClickMsg{X: 5, Y: 5, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		out := m.View().Content
+		assert.Contains(t, out, ":")
+	})
+
+	t.Run("mouse motion is consumed", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m2, _ := m.Update(tea.MouseMotionMsg{X: 5, Y: 5})
 		m = m2.(ui.Model)
 
 		out := m.View().Content

@@ -278,6 +278,59 @@ func TestOpenAbove(t *testing.T) {
 		assert.Equal(t, "\nhello", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
+
+	t.Run("inserts above second line", func(t *testing.T) {
+		e := editorWithText(t, "a\nb")
+		setCursor(t, e, 2)
+
+		action.OpenAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "a\n\nb", doc.Text().String())
+		assert.Equal(t, 2, cursorPos(t, e))
+	})
+
+	t.Run("count repeats new lines", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		setCursor(t, e, 0)
+		e.SetCount(2)
+
+		action.OpenAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "\n\nhello", doc.Text().String())
+		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+
+	t.Run("duplicate target inserts once", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e,
+			[]core.Range{core.PointRange(0), core.PointRange(1)},
+			0,
+		)
+
+		action.OpenAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "\nabc", doc.Text().String())
+	})
+
+	t.Run("negative range inserts at top", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+
+		action.OpenAbove(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "\nabc", doc.Text().String())
+		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+
+	t.Run("no view is noop", func(t *testing.T) {
+		e := editorWithNoView(t)
+
+		assert.NotPanics(t, func() { action.OpenAbove(e) })
+	})
 }
 
 func TestGotoLine(t *testing.T) {
@@ -300,6 +353,15 @@ func TestGotoLine(t *testing.T) {
 			assert.Equal(t, tc.want, cursorPos(t, e))
 		})
 	}
+}
+
+func TestGotoLineTrailingNewline(t *testing.T) {
+	t.Run("skips blank last line", func(t *testing.T) {
+		e := editorWithText(t, "ab\ncd\n")
+		setCursor(t, e, 0)
+		action.GotoLine(e, 99)
+		assert.Equal(t, 3, cursorPos(t, e))
+	})
 }
 
 func TestReplaceChar(t *testing.T) {
@@ -346,6 +408,41 @@ func TestReplaceWithYanked(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("multiple selections repeat fallback", func(t *testing.T) {
+		e := editorWithText(t, "abcd")
+		setSelection(t, e,
+			[]core.Range{core.NewRange(0, 1), core.NewRange(2, 3)},
+			0,
+		)
+		e.Registers().Write('"', []string{"x"})
+		e.SetCount(2)
+
+		action.ReplaceWithYanked(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "xxbxxd", doc.Text().String())
+	})
+
+	t.Run("empty ranges are ignored", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{core.PointRange(1)}, 0)
+		e.Registers().Write('"', []string{"x"})
+
+		action.ReplaceWithYanked(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("noop with no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+		e.Registers().Write('"', []string{"x"})
+
+		assert.NotPanics(t, func() {
+			action.ReplaceWithYanked(e)
+		})
 	})
 }
 

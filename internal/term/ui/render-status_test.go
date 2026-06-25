@@ -119,6 +119,86 @@ func TestStatuslineTotalLines(t *testing.T) {
 	})
 }
 
+func TestStatuslineEdgeElements(t *testing.T) {
+	t.Run("narrow width drops low priority groups", func(t *testing.T) {
+		root := t.TempDir()
+		path := filepath.Join(root, "very-long-file-name.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(root)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		opts := e.Options()
+		opts.StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineMode,
+			view.StatusLineFileAbsolutePath,
+			view.StatusLineSelections,
+			view.StatusLineTotalLines,
+		}
+		opts.StatusLine.Center = nil
+		opts.StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 18, 8)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, " NOR ")
+		assert.NotContains(t, out, "very-long-file-name")
+	})
+
+	t.Run("modified scratch appears", func(t *testing.T) {
+		e := editorWithText(t, "changed")
+		e.Options().StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineModified,
+		}
+		e.Options().StatusLine.Center = nil
+		e.Options().StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 8)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "[modified]")
+	})
+
+	t.Run("plural selections include primary", func(t *testing.T) {
+		e := editorWithText(t, "abcd")
+		setSelection(t, e,
+			[]core.Range{core.PointRange(0), core.PointRange(2)},
+			1,
+		)
+		e.Options().StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineSelections,
+			view.StatusLinePrimaryLen,
+		}
+		e.Options().StatusLine.Center = nil
+		e.Options().StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 8)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, " 2/2 sels ")
+		assert.Contains(t, out, " 0 ")
+	})
+
+	t.Run("spaces indent and default file type", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetIndentStyle(core.Spaces(2))
+		doc.SetLang("")
+		e.Options().StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineFileIndentStyle,
+			view.StatusLineFileType,
+		}
+		e.Options().StatusLine.Center = nil
+		e.Options().StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 8)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, " spaces:2 ")
+		assert.Contains(t, out, " text ")
+	})
+}
+
 func TestCommandlineThemeRender(t *testing.T) {
 	t.Run("applies commandline styles", func(t *testing.T) {
 		root := t.TempDir()

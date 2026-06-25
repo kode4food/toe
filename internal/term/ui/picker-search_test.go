@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -36,21 +37,102 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, line) // 0-indexed line 2 holds "findme here"
 	})
+
+	t.Run("empty query has no matches", func(t *testing.T) {
+		m, _ := globalSearchModel(t, "")
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "a.txt")
+		assert.NotContains(t, out, "b.txt")
+	})
+
+	t.Run("invalid regex has no matches", func(t *testing.T) {
+		m, _ := globalSearchModel(t, "[")
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "a.txt")
+		assert.NotContains(t, out, "b.txt")
+	})
+
+	t.Run("lowercase query ignores case", func(t *testing.T) {
+		m, _ := globalSearchModelWithFiles(t, "findme", map[string]string{
+			"a.txt": "alpha\nFindMe here\n",
+			"b.txt": "beta\n",
+		})
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "a.txt")
+	})
+
+	t.Run("uppercase query is case sensitive", func(t *testing.T) {
+		m, _ := globalSearchModelWithFiles(t, "FINDME", map[string]string{
+			"a.txt": "alpha\nfindme here\n",
+			"b.txt": "beta\n",
+		})
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "a.txt")
+	})
+
+	t.Run("skips binary files", func(t *testing.T) {
+		m, _ := globalSearchModelWithFiles(t, "findme", map[string]string{
+			"a.bin": "findme\x00here\n",
+			"b.txt": "beta\n",
+		})
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "a.bin")
+	})
+
+	t.Run("searches open document text", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("disk\n"), 0o644))
+
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, rope.LenChars(), "memory needle\n"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).
+			WithChanges(cs).
+			WithSelection(core.PointSelection(0))
+		assert.NoError(t, e.Apply(tx))
+
+		m := globalSearchModelForEditor(t, e, "needle")
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "a.txt")
+	})
 }
 
 // globalSearchModel writes two files, opens the global-search picker, and types
 // the query. openPickerAndFeed drains the dynamic source's async feed per key
 func globalSearchModel(t *testing.T, query string) (ui.Model, *view.Editor) {
 	t.Helper()
-	dir := t.TempDir()
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "a.txt"), []byte("alpha\nfindme here\n"), 0o644,
-	))
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "b.txt"), []byte("beta\n"), 0o644,
-	))
+	return globalSearchModelWithFiles(t, query, map[string]string{
+		"a.txt": "alpha\nfindme here\n",
+		"b.txt": "beta\n",
+	})
+}
 
+func globalSearchModelWithFiles(
+	t *testing.T, query string, files map[string]string,
+) (ui.Model, *view.Editor) {
+	t.Helper()
+	dir := t.TempDir()
+	for name, text := range files {
+		path := filepath.Join(dir, name)
+		err := os.WriteFile(path, []byte(text), 0o644)
+		assert.NoError(t, err)
+	}
 	e := view.NewEditor(dir)
+	return globalSearchModelForEditor(t, e, query), e
+}
+
+func globalSearchModelForEditor(
+	t *testing.T, e *view.Editor, query string,
+) ui.Model {
+	t.Helper()
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
@@ -62,5 +144,5 @@ func globalSearchModel(t *testing.T, query string) (ui.Model, *view.Editor) {
 	for _, ch := range query {
 		m = openPickerAndFeed(m, ch)
 	}
-	return m, e
+	return m
 }

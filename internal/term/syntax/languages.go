@@ -1,7 +1,7 @@
 package syntax
 
 import (
-	"sort"
+	"slices"
 
 	sitter "github.com/smacker/go-tree-sitter"
 	"github.com/smacker/go-tree-sitter/bash"
@@ -42,7 +42,7 @@ func SupportedLanguages() []string {
 	for name := range langRegistry {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }
 

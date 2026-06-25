@@ -1056,3 +1056,52 @@ func TestEditorCommitInsertHistoryNoDoc(t *testing.T) {
 		e.CommitInsertHistory()
 	})
 }
+
+func TestTreeSeparatorAt(t *testing.T) {
+	t.Run("empty tree returns not ok", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+
+		_, _, _, ok := e.Tree().SeparatorAt(0, 0)
+
+		assert.False(t, ok)
+	})
+
+	t.Run("nested layout separator found", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 60)
+		v1ID := e.Tree().Focus()
+		e.VSplitNew()
+		e.Tree().SetFocus(v1ID)
+		e.HSplitNew()
+
+		var count int
+		e.Tree().WalkSeparators(func(_ view.Separator) {
+			count++
+		})
+
+		assert.Equal(t, 2, count)
+	})
+
+	t.Run("nested layout SeparatorAt finds sep", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 60)
+		v1ID := e.Tree().Focus()
+		e.VSplitNew()
+		e.Tree().SetFocus(v1ID)
+		e.HSplitNew()
+
+		var found bool
+		e.Tree().WalkSeparators(func(s view.Separator) {
+			if s.Layout == view.LayoutVertical {
+				_, _, _, ok := e.Tree().SeparatorAt(s.X, s.Y)
+				if ok {
+					found = true
+				}
+			}
+		})
+
+		assert.True(t, found)
+	})
+}

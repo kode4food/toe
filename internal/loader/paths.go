@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -218,7 +218,7 @@ func updateWorkspaceSet(path, workspace string, add bool) error {
 	for line := range set {
 		lines = append(lines, line)
 	}
-	sort.Strings(lines)
+	slices.Sort(lines)
 	text := ""
 	if len(lines) > 0 {
 		text = strings.Join(lines, "\n") + "\n"

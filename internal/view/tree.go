@@ -1,5 +1,7 @@
 package view
 
+import "slices"
+
 type (
 	// Tree manages the spatial layout of views as a split tree
 	Tree struct {
@@ -67,8 +69,8 @@ func (t *Tree) Insert(v *View) Id {
 	if len(c.children) == 0 {
 		c.children = []Id{id}
 	} else {
-		pos := indexInSlice(c.children, focus)
-		c.children = insert(c.children, pos+1, id)
+		pos := slices.Index(c.children, focus)
+		c.children = slices.Insert(c.children, pos+1, id)
 	}
 	c.ratios = nil
 	t.focus = id
@@ -118,8 +120,8 @@ func (t *Tree) Split(v *View, layout Layout) Id {
 
 	parentC := t.nodes[parent].container
 	if parentC.layout == layout {
-		pos := indexInSlice(parentC.children, focus)
-		parentC.children = insert(parentC.children, pos+1, id)
+		pos := slices.Index(parentC.children, focus)
+		parentC.children = slices.Insert(parentC.children, pos+1, id)
 		t.nodes[id].parent = parent
 		parentC.ratios = nil
 	} else {
@@ -135,7 +137,7 @@ func (t *Tree) Split(v *View, layout Layout) Id {
 		t.nodes[focus].parent = subID
 		t.nodes[id].parent = subID
 
-		pos := indexInSlice(parentC.children, focus)
+		pos := slices.Index(parentC.children, focus)
 		parentC.children[pos] = subID
 	}
 
@@ -272,7 +274,7 @@ func (t *Tree) removeOrReplace(child Id, replacement Id) {
 	delete(t.nodes, child)
 
 	c := t.nodes[parent].container
-	pos := indexInSlice(c.children, child)
+	pos := slices.Index(c.children, child)
 	if replacement == 0 {
 		c.children = append(c.children[:pos], c.children[pos+1:]...)
 		c.ratios = nil

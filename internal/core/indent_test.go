@@ -128,4 +128,39 @@ func TestAutoDetect(t *testing.T) {
 		_, ok := core.AutoDetect(doc)
 		assert.False(t, ok)
 	})
+
+	t.Run("skips line with deeply nested indent", func(t *testing.T) {
+		doc := core.NewRope("x\n" + strings.Repeat(" ", 257) + "y\n")
+		_, ok := core.AutoDetect(doc)
+		assert.False(t, ok)
+	})
+
+	t.Run("penalizes 1-space indent", func(t *testing.T) {
+		doc := core.NewRope("x\n a\n  b\n   c\n    d\n")
+		style, ok := core.AutoDetect(doc)
+		assert.True(t, ok)
+		assert.Equal(t, uint8(1), style.Width())
+	})
+
+	t.Run("returns false for ambiguous indent", func(t *testing.T) {
+		doc := core.NewRope(
+			"x\n  a\n    b\n      c\ny\n   a\n      b\n         c\n",
+		)
+		_, ok := core.AutoDetect(doc)
+		assert.False(t, ok)
+	})
+
+	t.Run("handles mixed whitespace in line", func(t *testing.T) {
+		doc := core.NewRope("x\n  \ta\n  b\n  c\n")
+		style, ok := core.AutoDetect(doc)
+		assert.True(t, ok)
+		assert.Equal(t, uint8(2), style.Width())
+	})
+
+	t.Run("handles all-space trailing line", func(t *testing.T) {
+		doc := core.NewRope("x\n    a\n    b\n    ")
+		style, ok := core.AutoDetect(doc)
+		assert.True(t, ok)
+		assert.Equal(t, uint8(4), style.Width())
+	})
 }

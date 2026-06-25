@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/kode4food/toe/internal/view"
 )
@@ -56,14 +56,14 @@ func GotoFile(e *view.Editor) (string, error) {
 	path := slice.String()
 
 	// Resolve relative paths against the document's directory
-	if !strings.HasPrefix(path, "/") {
+	if !filepath.IsAbs(path) {
 		base := doc.Path()
 		if base != "" {
-			base = base[:strings.LastIndex(base, "/")+1]
+			base = filepath.Dir(base)
 		} else {
-			base = e.Cwd() + "/"
+			base = e.Cwd()
 		}
-		path = base + path
+		path = filepath.Join(base, path)
 	}
 
 	// Check the file exists

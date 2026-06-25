@@ -234,6 +234,76 @@ func TestPickerFiles(t *testing.T) {
 		assert.Contains(t, out, "languages.toml")
 	})
 
+	t.Run("space f below hidden parent", func(t *testing.T) {
+		tmp := t.TempDir()
+		cwd := filepath.Join(tmp, ".config", "toe")
+		err := os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(cwd)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err = defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'f')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "config.toml")
+		assert.Contains(t, out, "languages.toml")
+	})
+
+	t.Run("workspace root above hidden cwd", func(t *testing.T) {
+		tmp := t.TempDir()
+		cwd := filepath.Join(tmp, ".config", "toe")
+		err := os.MkdirAll(filepath.Join(tmp, ".git"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(filepath.Join(tmp, ".config", "other"), 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(cwd, "languages.toml"), []byte("[[language]]\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(tmp, ".config", "other", "hidden.toml"),
+			[]byte("hidden\n"), 0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(cwd)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err = defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'f')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, ".config/toe/config.toml")
+		assert.Contains(t, out, ".config/toe/languages.toml")
+		assert.NotContains(t, out, ".config/other/hidden.toml")
+	})
+
 	t.Run("dynamic feed displays first open batch", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

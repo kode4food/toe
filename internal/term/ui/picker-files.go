@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,7 +18,8 @@ type (
 
 	filePickerSource struct {
 		pickerMeta
-		dir string
+		dir        string
+		includeDir string
 	}
 )
 
@@ -30,25 +32,25 @@ const (
 // FilePicker opens a file picker rooted at the workspace directory
 func FilePicker(e *view.Editor) *Picker {
 	root, _ := loader.FindWorkspace(e.Cwd())
-	return NewPicker(e, newFilePickerSource(root))
+	return NewPicker(e, newFilePickerSource(root, e.Cwd()))
 }
 
 // FilePickerInCWD opens a file picker rooted at the current working directory
 func FilePickerInCWD(e *view.Editor) *Picker {
-	return NewPicker(e, newFilePickerSource(e.Cwd()))
+	return NewPicker(e, newFilePickerSource(e.Cwd(), e.Cwd()))
 }
 
 // FilePickerInDir opens a file picker rooted at the given directory
 func FilePickerInDir(dir string) PickerFunc {
 	return func(e *view.Editor) *Picker {
-		return NewPicker(e, newFilePickerSource(dir))
+		return NewPicker(e, newFilePickerSource(dir, dir))
 	}
 }
 
 func (f *filePickerSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
-	return startFilePickerFeed(f.dir, pickerListRows(e))
+	return startFilePickerFeed(f.dir, f.includeDir, pickerListRows(e))
 }
 
 func (f *filePickerSource) Match(
@@ -64,13 +66,14 @@ func (f *filePickerSource) Accept(e *view.Editor, item PickerItem) {
 	}
 }
 
-func newFilePickerSource(dir string) *filePickerSource {
+func newFilePickerSource(dir, includeDir string) *filePickerSource {
 	return &filePickerSource{
 		pickerMeta: pickerMeta{
 			title:   "Open file",
 			columns: []string{"path"},
 		},
-		dir: dir,
+		dir:        dir,
+		includeDir: includeDir,
 	}
 }
 
@@ -84,12 +87,13 @@ func hasPreview(items []PickerItem) bool {
 }
 
 func startFilePickerFeed(
-	root string, count int,
+	root, includeDir string, count int,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
 	done := make(chan struct{})
 	var once sync.Once
 	cancel := func() { once.Do(func() { close(done) }) }
 
+	includeRel := filePickerIncludeRel(root, includeDir)
 	ch := make(chan PickerItem, 256)
 	go func() {
 		defer close(ch)
@@ -104,7 +108,7 @@ func startFilePickerFeed(
 				return nil
 			}
 			rel = filepath.ToSlash(rel)
-			if skipPickerPath(rel, d, loadIgnoreFiles(root, rel)) {
+			if skipPickerPath(rel, includeRel, d, loadIgnoreFiles(root, rel)) {
 				if d.IsDir() {
 					return filepath.SkipDir
 				}
@@ -148,6 +152,15 @@ func startFilePickerFeed(
 			return initial, ch, cancel
 		}
 	}
+}
+
+func filePickerIncludeRel(root, includeDir string) string {
+	rel, err := filepath.Rel(root, includeDir)
+	if err != nil || rel == "." || rel == ".." ||
+		strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return ""
+	}
+	return filepath.ToSlash(rel)
 }
 
 func sortPickerItems(items []PickerItem) {

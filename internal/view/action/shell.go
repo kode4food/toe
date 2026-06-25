@@ -21,8 +21,8 @@ func ShellPipe(e *view.Editor, cmdStr string) error {
 	if !ok {
 		return nil
 	}
-	if doc.Readonly() {
-		return view.ErrReadonly
+	if doc.ReadOnly() {
+		return view.ErrReadOnly
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
@@ -148,8 +148,8 @@ func ReadFile(e *view.Editor, path string) error {
 	if !ok {
 		return nil
 	}
-	if doc.Readonly() {
-		return view.ErrReadonly
+	if doc.ReadOnly() {
+		return view.ErrReadOnly
 	}
 	content := strings.ReplaceAll(string(data), "\r\n", "\n")
 	text := doc.Text()
@@ -195,8 +195,8 @@ func shellOutputAt(
 	if !ok {
 		return nil
 	}
-	if doc.Readonly() {
-		return view.ErrReadonly
+	if doc.ReadOnly() {
+		return view.ErrReadOnly
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())

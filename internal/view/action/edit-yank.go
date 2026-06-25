@@ -51,7 +51,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	reg := e.ActiveRegister()
@@ -112,7 +112,7 @@ func pasteImpl(e *view.Editor, before bool) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	reg := e.ActiveRegister()

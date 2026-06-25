@@ -136,8 +136,8 @@ func (d *Document) TextFormatForConfig(
 	return format
 }
 
-// Readonly reports whether the document is read-only
-func (d *Document) Readonly() bool {
+// ReadOnly reports whether the document is read-only
+func (d *Document) ReadOnly() bool {
 	return d.readonly
 }
 

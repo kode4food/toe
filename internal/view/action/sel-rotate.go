@@ -75,7 +75,7 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

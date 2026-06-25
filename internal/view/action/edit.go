@@ -30,7 +30,7 @@ func DeleteSelection(e *view.Editor) {
 		return
 	}
 	doc, ok := e.FocusedDocument()
-	if !ok || doc.Readonly() {
+	if !ok || doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()
@@ -51,7 +51,7 @@ func ChangeSelection(e *view.Editor) {
 		return
 	}
 	doc, ok := e.FocusedDocument()
-	if !ok || doc.Readonly() {
+	if !ok || doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()
@@ -139,7 +139,7 @@ func DeleteSelectionNoYank(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()
@@ -161,7 +161,7 @@ func ChangeSelectionNoYank(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

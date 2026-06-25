@@ -19,7 +19,7 @@ func AlignSelections(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()
@@ -85,7 +85,7 @@ func ReplaceChar(e *view.Editor, ch rune) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

@@ -44,7 +44,7 @@ func switchCaseImpl(e *view.Editor, transform func(string) string) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

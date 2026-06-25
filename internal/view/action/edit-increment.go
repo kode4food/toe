@@ -33,7 +33,7 @@ func incrementImpl(e *view.Editor, sign int) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

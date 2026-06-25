@@ -407,8 +407,8 @@ func TestDocumentAccessors(t *testing.T) {
 		assert.Equal(t, "go", d.Lang())
 	})
 
-	t.Run("Readonly defaults false", func(t *testing.T) {
-		assert.False(t, d.Readonly())
+	t.Run("ReadOnly defaults false", func(t *testing.T) {
+		assert.False(t, d.ReadOnly())
 	})
 
 	t.Run("IndentStyle defaults to tabs", func(t *testing.T) {

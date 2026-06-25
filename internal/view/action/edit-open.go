@@ -35,7 +35,7 @@ func OpenAbove(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()
@@ -134,7 +134,7 @@ func addNewlineImpl(e *view.Editor, above bool) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	count := max(1, e.Count())

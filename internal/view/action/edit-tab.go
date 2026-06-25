@@ -15,7 +15,7 @@ func InsertTab(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	tab := doc.IndentStyle().AsStr()

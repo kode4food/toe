@@ -17,7 +17,7 @@ func ToggleComments(e *view.Editor) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	lang := language.LoadLanguage(doc.Lang())
@@ -119,7 +119,7 @@ func toggleLineCommentsWithToken(e *view.Editor, token string) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	tx, err := core.ToggleLineComments(
@@ -154,7 +154,7 @@ func toggleBlockCommentsSelection(
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	tx, err := core.ToggleBlockComments(

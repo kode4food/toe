@@ -91,7 +91,7 @@ func runFormatter(e *view.Editor) command.Result {
 	if !ok {
 		return command.Result{}
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return command.Result{Message: "error: buffer is read-only"}
 	}
 

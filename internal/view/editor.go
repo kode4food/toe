@@ -35,7 +35,7 @@ type Editor struct {
 var (
 	ErrNoDocument        = errors.New("no document")
 	ErrNoView            = errors.New("no view")
-	ErrReadonly          = errors.New("document is readonly")
+	ErrReadOnly          = errors.New("document is readonly")
 	ErrDocumentNoPath    = errors.New("document has no path")
 	ErrEmptyDirStack     = errors.New("directory stack is empty")
 	ErrConfigUnavailable = errors.New("config path unavailable")

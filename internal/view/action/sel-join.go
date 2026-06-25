@@ -42,7 +42,7 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

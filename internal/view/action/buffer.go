@@ -70,7 +70,7 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 	if !ok {
 		return
 	}
-	if doc.Readonly() {
+	if doc.ReadOnly() {
 		return
 	}
 	val, ok := e.Registers().First(reg)

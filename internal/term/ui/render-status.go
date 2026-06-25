@@ -480,7 +480,7 @@ func statusElemFileAbsPath(s *statusElemCtx) statusElem {
 }
 
 func statusElemReadOnly(s *statusElemCtx) statusElem {
-	if !s.doc.Readonly() {
+	if !s.doc.ReadOnly() {
 		return statusElem{}
 	}
 	return statusElem{text: " [readonly]", style: s.baseTUI}

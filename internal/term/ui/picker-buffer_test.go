@@ -30,7 +30,7 @@ func TestBufferPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			km, "buffer_picker", m.PickerAction(bufferPicker),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
@@ -64,7 +64,7 @@ func TestBufferPicker(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			km, "buffer_picker", m.PickerAction(bufferPicker),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
@@ -78,4 +78,91 @@ func TestBufferPicker(t *testing.T) {
 		assert.True(t, ok)
 		assert.Contains(t, doc.Text().String(), "BBB")
 	})
+
+	t.Run("defaults to most recent buffer", func(t *testing.T) {
+		m, e := bufferPickerMRUModel(t)
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Contains(t, doc.Text().String(), "CCC")
+	})
+
+	t.Run("start previous selects previous buffer", func(t *testing.T) {
+		_, e := bufferPickerMRUModel(t)
+		m := openBufferPicker(t, e, ui.BufferPickerOptions{
+			StartPosition: ui.PickerStartPrevious,
+		})
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Contains(t, doc.Text().String(), "BBB")
+	})
+
+	t.Run("ctrl-s opens horizontal split", func(t *testing.T) {
+		m, e := bufferPickerMRUModel(t)
+		before := len(e.AllViews())
+		_ = sendModified(m, 's', tea.ModCtrl)
+
+		assert.Equal(t, before+1, len(e.AllViews()))
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Contains(t, doc.Text().String(), "CCC")
+	})
+
+	t.Run("ctrl-v opens vertical split", func(t *testing.T) {
+		m, e := bufferPickerMRUModel(t)
+		before := len(e.AllViews())
+		_ = sendModified(m, 'v', tea.ModCtrl)
+
+		assert.Equal(t, before+1, len(e.AllViews()))
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Contains(t, doc.Text().String(), "CCC")
+	})
+}
+
+func bufferPickerMRUModel(t *testing.T) (ui.Model, *view.Editor) {
+	t.Helper()
+	dir := t.TempDir()
+	for name, text := range map[string]string{
+		"a.txt": "AAA",
+		"b.txt": "BBB",
+		"c.txt": "CCC",
+	} {
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, name), []byte(text), 0o644,
+		))
+	}
+
+	e := view.NewEditor(dir)
+	for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
+		_, err := e.OpenFile(filepath.Join(dir, name))
+		assert.NoError(t, err)
+	}
+	return openBufferPicker(t, e), e
+}
+
+func openBufferPicker(
+	t *testing.T, e *view.Editor, opts ...ui.BufferPickerOptions,
+) ui.Model {
+	t.Helper()
+	cfg := ui.BufferPickerOptions{
+		StartPosition: ui.PickerStartTop,
+	}
+	if len(opts) > 0 {
+		cfg = opts[0]
+	}
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "buffer_picker",
+		m.PickerAction(func(e *view.Editor) *ui.Picker {
+			return ui.NewBufferPicker(e, cfg)
+		}),
+		[]command.KeyEvent{char('p')},
+	)
+	m = resize(m, 120, 30)
+	return sendKey(m, 'p')
 }

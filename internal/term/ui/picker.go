@@ -15,30 +15,25 @@ import (
 type (
 	// Picker holds the runtime state for an open picker overlay
 	Picker struct {
-		source  PickerSource
+		source PickerSource
+
 		items   []PickerItem
 		matched []pickerMatch
 		query   string
-		cursor  int
-		// listScroll is the first visible row of the list, decoupled from the
-		// cursor so the wheel can scroll without changing the selection
+
+		cursor     int
 		listScroll int
-		// previewScroll offsets the preview viewport by logical lines on top of
-		// the match anchor; the wheel adjusts it and the renderer clamps it.
-		// previewScrollFor is the cursor index it applies to, so it resets to 0
-		// whenever the selection changes
+		listHeight int
+
 		previewScroll    int
 		previewScrollFor int
-		// listHeight is the number of result rows visible in the list pane,
-		// computed during render and used for paging and scroll clamping
-		listHeight int
-		spanCache  map[view.DocumentId]previewSpanEntry
-		// fileCache caches the rope and syntax spans for file-path previews,
-		// avoiding re-tokenization across frames (geometry-independent, valid
-		// until the picker is closed)
-		fileCache   map[string]fileSpanEntry
-		feedCmd     tea.Cmd
-		cancel      StopFunc
+
+		spanCache    map[view.DocumentId]previewSpanEntry
+		previewCache map[string]cachedPreview
+
+		feedCmd tea.Cmd
+		cancel  StopFunc
+
 		dynamicGen  int
 		dynamicStop StopFunc
 	}
@@ -53,14 +48,20 @@ type (
 		spans []highlight.Span
 	}
 
-	// fileSpanEntry caches the rope and syntax spans for a file-path preview,
-	// keyed by path. Unlike previewSpanEntry it has no revision since the file
-	// is read once and treated as stable for the lifetime of the picker
-	fileSpanEntry struct {
+	cachedPreview struct {
+		kind  cachedPreviewKind
 		rope  core.Rope
 		spans []highlight.Span
 		lang  string
+		dir   []previewDirEntry
 	}
+
+	previewDirEntry struct {
+		name string
+		dir  bool
+	}
+
+	cachedPreviewKind int
 
 	// PickerFunc constructs a Picker from the editor
 	PickerFunc func(e *view.Editor) *Picker
@@ -74,7 +75,7 @@ type (
 		Columns() []string
 		Primary() int
 		Load(*view.Editor) ([]PickerItem, <-chan PickerItem, StopFunc)
-		Accept(*view.Editor, PickerItem)
+		Accept(*view.Editor, PickerItem, PickerAcceptAction)
 	}
 
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
@@ -125,6 +126,8 @@ type (
 		ID   view.DocumentId
 	}
 
+	PickerAcceptAction int
+
 	pickerMatch struct {
 		item    *PickerItem
 		score   int
@@ -145,15 +148,29 @@ type (
 
 const pickerDynamicDelay = 275 * time.Millisecond
 
+const (
+	PickerAcceptReplace PickerAcceptAction = iota
+	PickerAcceptHorizontalSplit
+	PickerAcceptVerticalSplit
+)
+
+const (
+	cachedPreviewDocument cachedPreviewKind = iota
+	cachedPreviewDirectory
+	cachedPreviewBinary
+	cachedPreviewLargeFile
+	cachedPreviewNotFound
+)
+
 // NewPicker constructs a Picker for the given source, triggering Load
 // immediately. The returned feedCmd (if any) must be dispatched by the
 // caller after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
-		source:    source,
-		spanCache: map[view.DocumentId]previewSpanEntry{},
-		fileCache: map[string]fileSpanEntry{},
-		cancel:    func() {},
+		source:       source,
+		spanCache:    map[view.DocumentId]previewSpanEntry{},
+		previewCache: map[string]cachedPreview{},
+		cancel:       func() {},
 	}
 	items, feed, stop := source.Load(e)
 	p.cancel = stop
@@ -243,9 +260,53 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	}
 }
 
+func (p *Picker) clearPreviewCache() {
+	p.previewCache = map[string]cachedPreview{}
+}
+
 func (p PickerLocation) lineRange() (int, int, bool) {
 	if p.Lines == nil {
 		return 0, 0, false
 	}
 	return p.Lines.From, p.Lines.To, true
+}
+
+func acceptDocumentID(
+	e *view.Editor, id view.DocumentId, action PickerAcceptAction,
+) (*view.View, bool) {
+	switch action {
+	case PickerAcceptHorizontalSplit:
+		return e.HSplit(id)
+	case PickerAcceptVerticalSplit:
+		return e.VSplit(id)
+	default:
+		return replaceDocumentID(e, id)
+	}
+}
+
+func replaceDocumentID(e *view.Editor, id view.DocumentId) (*view.View, bool) {
+	for _, v := range e.AllViews() {
+		if v.DocID() != id {
+			continue
+		}
+		e.FocusView(v.ID())
+		return v, true
+	}
+	if !e.SwitchBuffer(id) {
+		return nil, false
+	}
+	return e.FocusedView()
+}
+
+func acceptPath(
+	e *view.Editor, path string, action PickerAcceptAction,
+) (*view.View, bool) {
+	if path == "" {
+		return nil, false
+	}
+	doc, err := e.SwitchOrOpenDoc(path)
+	if err != nil {
+		return nil, false
+	}
+	return acceptDocumentID(e, doc.ID(), action)
 }

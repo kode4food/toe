@@ -6,6 +6,8 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 )
 
+type dismissFunc func() (EventResult, tea.Cmd)
+
 func (p *PickerComponent) handleKey(
 	msg tea.KeyPressMsg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -26,13 +28,11 @@ func (p *PickerComponent) handleKey(
 		(k.Code.Char == 'c' && k.Mods == command.ModCtrl):
 		return dismiss()
 	case k.Code.Special == "ret":
-		if item := ps.selection(); item != nil {
-			if r, cmd, ok := p.navigateItem(cx, ps, *item); ok {
-				return r, cmd
-			}
-			ps.source.Accept(cx.Editor, *item)
-		}
-		return dismiss()
+		return p.acceptItem(cx, ps, PickerAcceptReplace, dismiss)
+	case k.Code.Char == 's' && k.Mods == command.ModCtrl:
+		return p.acceptItem(cx, ps, PickerAcceptHorizontalSplit, dismiss)
+	case k.Code.Char == 'v' && k.Mods == command.ModCtrl:
+		return p.acceptItem(cx, ps, PickerAcceptVerticalSplit, dismiss)
 	case k.Code.Special == "up" ||
 		(k.Code.Char == 'p' && k.Mods == command.ModCtrl) ||
 		(k.Code.Special == "tab" && k.Mods == command.ModShift):
@@ -67,6 +67,22 @@ func (p *PickerComponent) handleKey(
 	// keyboard navigation keeps the selection on screen, unlike the wheel
 	ps.ensureCursorVisible()
 	return consumed(), nil
+}
+
+func (p *PickerComponent) acceptItem(
+	cx *Context, ps *Picker, action PickerAcceptAction, dismiss dismissFunc,
+) (EventResult, tea.Cmd) {
+	item := ps.selection()
+	if item == nil {
+		return dismiss()
+	}
+	if action == PickerAcceptReplace {
+		if r, cmd, ok := p.navigateItem(cx, ps, *item); ok {
+			return r, cmd
+		}
+	}
+	ps.source.Accept(cx.Editor, *item, action)
+	return dismiss()
 }
 
 func (p *PickerComponent) navigateItem(

@@ -3,6 +3,27 @@ package defaults
 import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/view"
+)
+
+type (
+	pickerSection struct {
+		Editor struct {
+			BufferPicker ui.BufferPickerOptions `toml:"buffer-picker"`
+			FileExplorer fileExplorerConfig     `toml:"file-explorer"`
+		} `toml:"editor"`
+	}
+
+	fileExplorerConfig struct {
+		Hidden         *bool `toml:"hidden"`
+		FollowSymlinks *bool `toml:"follow-symlinks"`
+		Parents        *bool `toml:"parents"`
+		Ignore         *bool `toml:"ignore"`
+		GitIgnore      *bool `toml:"git-ignore"`
+		GitGlobal      *bool `toml:"git-global"`
+		GitExclude     *bool `toml:"git-exclude"`
+		FlattenDirs    *bool `toml:"flatten-dirs"`
+	}
 )
 
 const (
@@ -21,6 +42,7 @@ const (
 
 func pickerModule(model ui.Model) command.Module {
 	spc := prefixed(char(' '))
+	cfg := new(pickerSection)
 
 	return command.Module{
 		Commands: map[string]command.Command{
@@ -38,23 +60,39 @@ func pickerModule(model ui.Model) command.Module {
 			},
 			actFileExplorer: {
 				DocString: "Open file explorer at workspace root",
-				Run:       Continuation(model.PickerAction(ui.FileExplorer)),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(spc(char('e'))),
+				Run: Continuation(model.PickerAction(
+					func(e *view.Editor) *ui.Picker {
+						return ui.NewFileExplorer(
+							e, fileExplorerOptions(cfg.Editor.FileExplorer),
+						)
+					},
+				)),
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(spc(char('e'))),
 			},
 			actFileExplorerInBufDir: {
 				DocString: "Open file explorer at current buffer's directory",
 				Run: Continuation(model.PickerAction(
-					ui.FileExplorerInBufferDir,
+					func(e *view.Editor) *ui.Picker {
+						return ui.NewBufferDirExplorer(
+							e, fileExplorerOptions(cfg.Editor.FileExplorer),
+						)
+					},
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(spc(char('.'))),
 			},
 			actBufferPicker: {
 				DocString: "Open buffer picker",
-				Run:       Continuation(model.PickerAction(ui.BufferPicker)),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(spc(char('b'))),
+				Run: Continuation(model.PickerAction(
+					func(e *view.Editor) *ui.Picker {
+						return ui.NewBufferPicker(
+							e, bufferPickerOptions(cfg.Editor.BufferPicker),
+						)
+					},
+				)),
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(spc(char('b'))),
 			},
 			actJumplistPicker: {
 				DocString: "Open jumplist picker",
@@ -83,5 +121,46 @@ func pickerModule(model ui.Model) command.Module {
 				Keys:      keys(spc(char('\''))),
 			},
 		},
+		Section: &command.Section{
+			Config: cfg,
+			Reset:  func() { *cfg = pickerSection{} },
+			Apply:  func(*view.Editor) {},
+		},
 	}
+}
+
+func bufferPickerOptions(cfg ui.BufferPickerOptions) ui.BufferPickerOptions {
+	if cfg.StartPosition == "" {
+		cfg.StartPosition = ui.PickerStartTop
+	}
+	return cfg
+}
+
+func fileExplorerOptions(cfg fileExplorerConfig) ui.FileExplorerOptions {
+	opts := ui.DefaultFileExplorerOptions()
+	if cfg.Hidden != nil {
+		opts.Hidden = *cfg.Hidden
+	}
+	if cfg.FollowSymlinks != nil {
+		opts.FollowSymlinks = *cfg.FollowSymlinks
+	}
+	if cfg.Parents != nil {
+		opts.Parents = *cfg.Parents
+	}
+	if cfg.Ignore != nil {
+		opts.Ignore = *cfg.Ignore
+	}
+	if cfg.GitIgnore != nil {
+		opts.GitIgnore = *cfg.GitIgnore
+	}
+	if cfg.GitGlobal != nil {
+		opts.GitGlobal = *cfg.GitGlobal
+	}
+	if cfg.GitExclude != nil {
+		opts.GitExclude = *cfg.GitExclude
+	}
+	if cfg.FlattenDirs != nil {
+		opts.FlattenDirs = *cfg.FlattenDirs
+	}
+	return opts
 }

@@ -12,6 +12,7 @@ func (p *Picker) setQuery(q string) tea.Cmd {
 		return nil
 	}
 	p.query = q
+	p.clearPreviewCache()
 	if _, ok := p.source.(DynamicPickerSource); ok {
 		return p.dynamicTriggerCmd()
 	}

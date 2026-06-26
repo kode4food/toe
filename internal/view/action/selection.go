@@ -51,7 +51,7 @@ func SaveSelection(e *view.Editor) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	v.PushJump(v.DocID(), sel.Primary().Cursor(text))
+	v.PushJump(v.DocID(), sel.Primary().Cursor(text), sel)
 }
 
 // CommitUndoCheckpoint explicitly commits any pending insert-mode changes to

@@ -91,7 +91,7 @@ func shellModule(model ui.Model) command.Module {
 					e.Options().Shell = cfg.Editor.Shell
 					return
 				}
-				e.Options().Shell = defaultShell()
+				e.Options().Shell = view.DefaultShell()
 			},
 		},
 	}

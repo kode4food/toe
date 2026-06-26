@@ -23,7 +23,7 @@ const (
 
 const defaultYankRegister = '"'
 
-// DeleteSelection yanks all selections into the active register then deletes them
+// DeleteSelection yanks selections into the active register, then deletes them
 func DeleteSelection(e *view.Editor) {
 	v, ok := e.FocusedView()
 	if !ok {
@@ -37,7 +37,9 @@ func DeleteSelection(e *view.Editor) {
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
 	yankSelectionRanges(e, text, ranges)
-	if !applyDeletions(e, applyDeletionsArgs{text, sel, ranges}) {
+	if !applyDeletions(e, applyDeletionsArgs{
+		text: text, sel: sel, ranges: ranges,
+	}) {
 		return
 	}
 	e.SetMode(view.ModeNormal)
@@ -59,7 +61,9 @@ func ChangeSelection(e *view.Editor) {
 	linewise := selectionIsLinewise(text, sel)
 	ranges := sel.Ranges()
 	yankSelectionRanges(e, text, ranges)
-	if !applyDeletions(e, applyDeletionsArgs{text, sel, ranges}) {
+	if !applyDeletions(e, applyDeletionsArgs{
+		text: text, sel: sel, ranges: ranges,
+	}) {
 		return
 	}
 	if linewise {
@@ -144,7 +148,9 @@ func DeleteSelectionNoYank(e *view.Editor) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	if !applyDeletions(e, applyDeletionsArgs{text, sel, sel.Ranges()}) {
+	if !applyDeletions(e, applyDeletionsArgs{
+		text: text, sel: sel, ranges: sel.Ranges(),
+	}) {
 		return
 	}
 	e.SetMode(view.ModeNormal)
@@ -167,7 +173,9 @@ func ChangeSelectionNoYank(e *view.Editor) {
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	linewise := selectionIsLinewise(text, sel)
-	if !applyDeletions(e, applyDeletionsArgs{text, sel, sel.Ranges()}) {
+	if !applyDeletions(e, applyDeletionsArgs{
+		text: text, sel: sel, ranges: sel.Ranges(),
+	}) {
 		return
 	}
 	if linewise {

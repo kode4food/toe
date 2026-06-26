@@ -1,7 +1,6 @@
 package view
 
 import (
-	"runtime"
 	"slices"
 	"strings"
 
@@ -133,17 +132,13 @@ func (o *Options) CursorShapeForMode(mode string) CursorKind {
 }
 
 func defaultOptions() Options {
-	shell := []string{"sh", "-c"}
-	if runtime.GOOS == "windows" {
-		shell = []string{"cmd", "/C"}
-	}
 	return Options{
 		Theme:                DefaultTheme,
 		ScrollOff:            DefaultScrollOff,
 		ScrollLines:          DefaultScrollLines,
 		Mouse:                true,
 		MiddleClickPaste:     true,
-		Shell:                shell,
+		Shell:                DefaultShell(),
 		AtomicSave:           true,
 		InsertFinalNewline:   true,
 		EditorConfig:         true,

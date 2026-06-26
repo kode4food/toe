@@ -36,6 +36,16 @@ func assertRenderedWidth(t *testing.T, out string, w int) {
 	}
 }
 
+func bufferPicker(e *view.Editor) *ui.Picker {
+	return ui.NewBufferPicker(e, ui.BufferPickerOptions{
+		StartPosition: ui.PickerStartTop,
+	})
+}
+
+func bufferDirExplorer(e *view.Editor) *ui.Picker {
+	return ui.NewBufferDirExplorer(e, ui.DefaultFileExplorerOptions())
+}
+
 func writeLanguageConfig(t *testing.T, root, lang string, enabled bool) {
 	t.Helper()
 	dir := filepath.Join(root, loader.DirName)
@@ -96,6 +106,11 @@ func sendSpecial(m ui.Model, k rune) ui.Model {
 
 func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
 	m2, _ := m.Update(tea.KeyPressMsg{Code: k, Text: text})
+	return m2.(ui.Model)
+}
+
+func sendModified(m ui.Model, ch rune, mod tea.KeyMod) ui.Model {
+	m2, _ := m.Update(tea.KeyPressMsg{Code: ch, Mod: mod})
 	return m2.(ui.Model)
 }
 

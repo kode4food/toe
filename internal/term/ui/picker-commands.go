@@ -47,7 +47,9 @@ func (c *commandPaletteSource) Match(
 	return fuzzyMatchItem(query, item, c.Columns(), c.Primary())
 }
 
-func (c *commandPaletteSource) Accept(e *view.Editor, item PickerItem) {
+func (c *commandPaletteSource) Accept(
+	e *view.Editor, item PickerItem, _ PickerAcceptAction,
+) {
 	cmd, ok := item.Payload.(command.Command)
 	if !ok || cmd.Run == nil {
 		return

@@ -22,11 +22,6 @@ type (
 		openDocs  []docSnap
 	}
 
-	globalSearchPayload struct {
-		path string
-		line int
-	}
-
 	globalSearcher struct {
 		ch       chan PickerItem
 		done     chan struct{}
@@ -57,25 +52,23 @@ func (g *globalSearchSource) Load(
 	return nil, ch, cancel
 }
 
-func (g *globalSearchSource) Accept(e *view.Editor, item PickerItem) {
-	payload, ok := item.Payload.(globalSearchPayload)
+func (g *globalSearchSource) Accept(
+	e *view.Editor, item PickerItem, action PickerAcceptAction,
+) {
+	path := item.Location.Target.Path
+	lineIdx, _, ok := item.Location.lineRange()
+	if path == "" || !ok || lineIdx < 0 {
+		return
+	}
+	v, ok := acceptPath(e, path, action)
 	if !ok {
 		return
 	}
-	path, line := payload.path, payload.line
-	if path == "" || line <= 0 {
-		return
-	}
-	v, err := e.OpenFile(path)
-	if err != nil {
-		return
-	}
-	doc, ok := e.FocusedDocument()
+	doc, ok := e.Document(v.DocID())
 	if !ok {
 		return
 	}
 	text := doc.Text()
-	lineIdx := line - 1
 	lineStart, err := text.LineToChar(lineIdx)
 	if err != nil {
 		return
@@ -117,7 +110,6 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 				Target: PickerTarget{Path: path},
 				Lines:  &PickerLineRange{From: ln - 1, To: ln - 1},
 			},
-			Payload: globalSearchPayload{path: path, line: ln},
 		}:
 		case <-gs.done:
 			return false
@@ -152,30 +144,8 @@ func (gs *globalSearcher) searchFile(path string) bool {
 
 func (gs *globalSearcher) walk() {
 	defer close(gs.ch)
-	_ = filepath.WalkDir(gs.root, func(
-		path string, d os.DirEntry, err error,
-	) error {
-		if err != nil || path == gs.root {
-			return nil
-		}
-		rel, err := filepath.Rel(gs.root, path)
-		if err != nil {
-			return nil
-		}
-		rel = filepath.ToSlash(rel)
-		if skipPickerPath(rel, d, loadIgnoreFiles(gs.root, rel)) {
-			if d.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if d.IsDir() {
-			return nil
-		}
-		if !gs.searchFile(path) {
-			return filepath.SkipAll
-		}
-		return nil
+	walkPickerFiles(gs.root, gs.done, func(path, _ string) bool {
+		return gs.searchFile(path)
 	})
 }
 

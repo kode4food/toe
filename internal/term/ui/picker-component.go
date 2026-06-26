@@ -64,7 +64,7 @@ func (p *PickerComponent) HandleEvent(
 		return consumed(), nil
 
 	case tea.WindowSizeMsg:
-		// File span caches are geometry-independent; no action needed on resize
+		p.state.clearPreviewCache()
 		return ignored(), nil
 
 	case tea.KeyPressMsg:

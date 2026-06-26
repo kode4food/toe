@@ -128,6 +128,79 @@ func TestPickerFiles(t *testing.T) {
 		assert.Contains(t, out, "shown.go")
 	})
 
+	t.Run("respects parent gitignore", func(t *testing.T) {
+		parent := t.TempDir()
+		root := filepath.Join(parent, "child")
+		err := os.MkdirAll(root, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(parent, ".gitignore"),
+			[]byte("child/parent_ignored.go\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(root, "parent_ignored.go"),
+			[]byte("package ignored\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(root, "visible.go"),
+			[]byte("package visible\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(root)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(root),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "parent_ignored.go")
+		assert.Contains(t, out, "visible.go")
+	})
+
+	t.Run("respects global gitignore", func(t *testing.T) {
+		tmp := t.TempDir()
+		global := filepath.Join(tmp, "global-ignore")
+		gitConfig := filepath.Join(tmp, "gitconfig")
+		err := os.WriteFile(global, []byte("global_ignored.go\n"), 0o644)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			gitConfig,
+			[]byte("[core]\n\texcludesfile = "+global+"\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		t.Setenv("GIT_CONFIG_GLOBAL", gitConfig)
+		err = os.WriteFile(
+			filepath.Join(tmp, "global_ignored.go"),
+			[]byte("package ignored\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(tmp, "visible.go"), []byte("package visible\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(tmp),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "global_ignored.go")
+		assert.Contains(t, out, "visible.go")
+	})
+
 	t.Run("workspace picker starts at workspace root", func(t *testing.T) {
 		tmp := t.TempDir()
 		work := filepath.Join(tmp, "work")
@@ -357,6 +430,57 @@ func TestPickerFiles(t *testing.T) {
 		assert.Contains(t, out, "languages.toml")
 	})
 
+	t.Run("follows external directory symlink", func(t *testing.T) {
+		tmp := t.TempDir()
+		external := filepath.Join(tmp, "external")
+		root := filepath.Join(tmp, "root")
+		err := os.MkdirAll(external, 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(root, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(external, "outside.go"),
+			[]byte("package outside\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.Symlink(external, filepath.Join(root, "linked"))
+		assert.NoError(t, err)
+
+		e := view.NewEditor(root)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(root),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "linked/outside.go")
+	})
+
+	t.Run("deduplicates internal directory symlink", func(t *testing.T) {
+		tmp := t.TempDir()
+		target := filepath.Join(tmp, "target")
+		err := os.MkdirAll(target, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(target, "inside.go"), []byte("package in\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		err = os.Symlink(target, filepath.Join(tmp, "linked"))
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(tmp),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "target/inside.go")
+		assert.NotContains(t, out, "linked/inside.go")
+	})
+
 	t.Run("broken symlink root falls back", func(t *testing.T) {
 		tmp := t.TempDir()
 		link := filepath.Join(tmp, "missing")
@@ -474,7 +598,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			km, "buffer_picker", m.PickerAction(bufferPicker),
 			[]command.KeyEvent{char('b')},
 		)
 
@@ -529,4 +653,7 @@ func (c *controlledDynamicSource) Load(
 	return nil, c.ch, func() {}
 }
 
-func (c *controlledDynamicSource) Accept(_ *view.Editor, _ ui.PickerItem) {}
+func (c *controlledDynamicSource) Accept(
+	_ *view.Editor, _ ui.PickerItem, _ ui.PickerAcceptAction,
+) {
+}

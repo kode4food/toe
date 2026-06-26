@@ -52,7 +52,7 @@ func KillToLineEnd(e *view.Editor) {
 			changes = append(changes, core.DeleteChange(pos, lineEnd))
 		}
 	}
-	applyDeletesAtCursor(e, applyDeletesArgs{
+	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text: text, sel: sel, ranges: ranges, changes: changes,
 	})
 }
@@ -112,7 +112,7 @@ func KillToLineStart(e *view.Editor) {
 		}
 		changes = append(changes, core.DeleteChange(head, pos))
 	}
-	applyDeletesAtCursor(e, applyDeletesArgs{
+	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text: text, sel: sel, ranges: ranges, changes: changes,
 	})
 }

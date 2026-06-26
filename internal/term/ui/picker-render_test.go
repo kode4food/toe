@@ -74,7 +74,7 @@ func TestPickerRender(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			km, "buffer_picker", m.PickerAction(bufferPicker),
 			[]command.KeyEvent{char('b')},
 		)
 
@@ -176,7 +176,10 @@ func (noPreviewPickerSource) Load(
 	}}, nil, func() {}
 }
 
-func (noPreviewPickerSource) Accept(*view.Editor, ui.PickerItem) {}
+func (noPreviewPickerSource) Accept(
+	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,
+) {
+}
 
 func (columnPickerSource) Title() string {
 	return "Columns"
@@ -212,4 +215,7 @@ func (columnPickerSource) Match(
 	return 1, nil, true
 }
 
-func (columnPickerSource) Accept(*view.Editor, ui.PickerItem) {}
+func (columnPickerSource) Accept(
+	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,
+) {
+}

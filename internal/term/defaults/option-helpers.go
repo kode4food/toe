@@ -1,7 +1,6 @@
 package defaults
 
 import (
-	"runtime"
 	"strconv"
 
 	"github.com/kode4food/toe/internal/term/command"
@@ -93,11 +92,4 @@ func editorBoolOption(
 			return strconv.FormatBool(v), nil
 		},
 	}
-}
-
-func defaultShell() []string {
-	if runtime.GOOS == "windows" {
-		return []string{"cmd", "/C"}
-	}
-	return []string{"sh", "-c"}
 }

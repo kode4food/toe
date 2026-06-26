@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +19,19 @@ type (
 	filePickerSource struct {
 		pickerMeta
 		dir string
+	}
+
+	pickerWalker struct {
+		root     string
+		rootReal string
+		seen     map[string]bool
+		done     <-chan struct{}
+		visit    func(path, rel string) bool
+	}
+
+	pickerFollow struct {
+		dir  bool
+		file bool
 	}
 )
 
@@ -57,11 +71,11 @@ func (f *filePickerSource) Match(
 	return fuzzyMatchItem(query, item, f.Columns(), f.Primary())
 }
 
-func (f *filePickerSource) Accept(e *view.Editor, item PickerItem) {
-	path, _ := item.Payload.(string)
-	if path != "" {
-		_, _ = e.OpenFile(path)
-	}
+func (f *filePickerSource) Accept(
+	e *view.Editor, item PickerItem, action PickerAcceptAction,
+) {
+	path := item.Location.Target.Path
+	acceptPath(e, path, action)
 }
 
 func newFilePickerSource(dir string) *filePickerSource {
@@ -85,36 +99,16 @@ func startFilePickerFeed(
 	ch := make(chan PickerItem, 256)
 	go func() {
 		defer close(ch)
-		_ = filepath.WalkDir(root, func(
-			path string, d os.DirEntry, err error,
-		) error {
-			if err != nil || path == root {
-				return nil
-			}
-			rel, err := filepath.Rel(root, path)
-			if err != nil {
-				return nil
-			}
-			rel = filepath.ToSlash(rel)
-			if skipPickerPath(rel, d, loadIgnoreFiles(root, rel)) {
-				if d.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
-			if d.IsDir() {
-				return nil
-			}
+		walkPickerFiles(root, done, func(path, rel string) bool {
 			select {
 			case ch <- PickerItem{
 				Display:  rel,
 				Location: PickerLocation{Target: PickerTarget{Path: path}},
-				Payload:  path,
 			}:
+				return true
 			case <-done:
-				return filepath.SkipAll
+				return false
 			}
-			return nil
 		})
 	}()
 
@@ -167,4 +161,101 @@ func pickerListRows(e *view.Editor) int {
 	h := e.ViewHeight() + 1
 	areaH := max((h-2)*90/100, 0)
 	return max(areaH-4, 1)
+}
+
+func walkPickerFiles(
+	root string, done <-chan struct{}, visit func(path, rel string) bool,
+) {
+	rootAbs, err := filepath.Abs(root)
+	if err != nil {
+		rootAbs = root
+	}
+	rootReal, err := filepath.EvalSymlinks(rootAbs)
+	if err != nil {
+		rootReal = rootAbs
+	}
+	w := &pickerWalker{
+		root: root, rootReal: rootReal, seen: map[string]bool{},
+		done: done, visit: visit,
+	}
+	w.walkDir(root)
+}
+
+func (w *pickerWalker) walkDir(dir string) bool {
+	realDir, err := filepath.EvalSymlinks(dir)
+	if err == nil {
+		if w.seen[realDir] {
+			return true
+		}
+		w.seen[realDir] = true
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return true
+	}
+	for _, entry := range entries {
+		select {
+		case <-w.done:
+			return false
+		default:
+		}
+		path := filepath.Join(dir, entry.Name())
+		rel, err := filepath.Rel(w.root, path)
+		if err != nil {
+			continue
+		}
+		rel = filepath.ToSlash(rel)
+		ignoreOpts := defaultPickerIgnoreOptions()
+		if skipPickerPath(skipPickerPathArgs{
+			rel: rel, path: path, entry: entry,
+			ignores: loadIgnoreFiles(w.root, path, rel, ignoreOpts),
+			opts:    ignoreOpts,
+		}) {
+			continue
+		}
+		if !w.walkEntry(path, rel, entry) {
+			return false
+		}
+	}
+	return true
+}
+
+func (w *pickerWalker) walkEntry(
+	path, rel string, entry os.DirEntry,
+) bool {
+	follow, err := pickerFollowEntry(path, w.rootReal, entry)
+	if err != nil || (!follow.dir && !follow.file) {
+		return true
+	}
+	if follow.dir {
+		return w.walkDir(path)
+	}
+	if follow.file {
+		return w.visit(path, rel)
+	}
+	return true
+}
+
+func pickerFollowEntry(
+	path, rootReal string, entry os.DirEntry,
+) (pickerFollow, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return pickerFollow{}, err
+	}
+	if entry.Type()&os.ModeSymlink != 0 {
+		realPath, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return pickerFollow{}, err
+		}
+		if pathWithinRoot(realPath, rootReal) {
+			return pickerFollow{}, nil
+		}
+	}
+	return pickerFollow{dir: info.IsDir(), file: info.Mode().IsRegular()}, nil
+}
+
+func pathWithinRoot(path, root string) bool {
+	rel, err := filepath.Rel(root, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, "../")
 }

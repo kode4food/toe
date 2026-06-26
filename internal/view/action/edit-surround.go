@@ -7,18 +7,10 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type (
-	posChar struct {
-		pos int
-		ch  rune
-	}
-
-	resolveSurroundPosRes struct {
-		text      core.Rope
-		sel       core.Selection
-		positions []int
-	}
-)
+type posChar struct {
+	pos int
+	ch  rune
+}
 
 // SelectTextObjectAround selects around the text object identified by ch
 // Plaintext objects: w=word, W=WORD, p=paragraph, m or bracket = surround pair
@@ -165,6 +157,12 @@ func textObjectSelect(e *view.Editor, ch rune, kind core.TextObjectKind) {
 		return
 	}
 	doc.SetSelectionFor(v.ID(), newSel)
+}
+
+type resolveSurroundPosRes struct {
+	text      core.Rope
+	sel       core.Selection
+	positions []int
 }
 
 func resolveSurroundPos(e *view.Editor, ch rune) (resolveSurroundPosRes, bool) {

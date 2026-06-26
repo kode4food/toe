@@ -512,7 +512,7 @@ func TestViewEdges(t *testing.T) {
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
 		for i := range 70 {
-			v.PushJump(view.DocumentId(i+1), i)
+			v.PushJump(view.DocumentId(i+1), i, core.PointSelection(i))
 		}
 
 		entries := v.Jumps()

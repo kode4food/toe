@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	gitignore "github.com/sabhiram/go-gitignore"
@@ -11,21 +13,41 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-type pickerIgnore struct {
-	base string
-	ig   *gitignore.GitIgnore
+type (
+	pickerIgnore struct {
+		base string
+		dir  string
+		ig   *gitignore.GitIgnore
+	}
+
+	pickerIgnoreOptions struct {
+		hidden     bool
+		parents    bool
+		ignore     bool
+		gitIgnore  bool
+		gitGlobal  bool
+		gitExclude bool
+	}
+)
+
+type skipPickerPathArgs struct {
+	rel     string
+	path    string
+	entry   os.DirEntry
+	ignores []pickerIgnore
+	opts    pickerIgnoreOptions
 }
 
-func skipPickerPath(rel string, d os.DirEntry, ignores []pickerIgnore) bool {
-	name := d.Name()
-	if strings.HasPrefix(name, ".") {
+func skipPickerPath(args skipPickerPathArgs) bool {
+	name := args.entry.Name()
+	if args.opts.hidden && strings.HasPrefix(name, ".") {
 		return true
 	}
 	if excludedPickerType(name) {
 		return true
 	}
-	for _, ig := range ignores {
-		sub, ok := ignorePathForBase(rel, ig.base)
+	for _, ig := range args.ignores {
+		sub, ok := ignorePathForBase(args.rel, args.path, ig)
 		if ok && ig.ig.MatchesPath(sub) {
 			return true
 		}
@@ -33,60 +55,166 @@ func skipPickerPath(rel string, d os.DirEntry, ignores []pickerIgnore) bool {
 	return false
 }
 
-func ignorePathForBase(rel, base string) (string, bool) {
-	if base == "" {
+func ignorePathForBase(rel, path string, ig pickerIgnore) (string, bool) {
+	if ig.dir != "" {
+		sub, err := filepath.Rel(ig.dir, path)
+		parent := ".." + string(filepath.Separator)
+		if err != nil || strings.HasPrefix(sub, parent) {
+			return "", false
+		}
+		if sub == ".." {
+			return "", false
+		}
+		return filepath.ToSlash(sub), true
+	}
+	if ig.base == "" {
 		return rel, true
 	}
-	if rel == base {
+	if rel == ig.base {
 		return "", true
 	}
-	sub, ok := strings.CutPrefix(rel, base+"/")
+	sub, ok := strings.CutPrefix(rel, ig.base+"/")
 	return sub, ok
 }
 
-func loadIgnoreFiles(root, rel string) []pickerIgnore {
+func loadIgnoreFiles(
+	root, path, rel string, opts pickerIgnoreOptions,
+) []pickerIgnore {
 	var ignores []pickerIgnore
-	for _, base := range ignoreBases(rel) {
-		dir := filepath.Join(root, filepath.FromSlash(base))
-		for _, name := range []string{
-			".ignore",
-			".gitignore",
-			filepath.Join(loader.WorkspaceDirName, "ignore"),
-		} {
-			if ig, ok := compileIgnore(filepath.Join(dir, name)); ok {
-				ignores = append(ignores, pickerIgnore{base, ig})
-			}
+	for _, dir := range ignoreDirs(root, path, opts.parents) {
+		if opts.ignore {
+			ignores = appendIgnore(ignores, dir, ".ignore")
+			ignores = appendIgnore(
+				ignores, dir, filepath.Join(loader.WorkspaceDirName, "ignore"),
+			)
 		}
-		if base == "" {
-			if ig, ok := compileIgnore(
-				filepath.Join(root, ".git", "info", "exclude"),
-			); ok {
-				ignores = append(ignores, pickerIgnore{base, ig})
-			}
-			if ig, ok := compileIgnore(config.IgnorePath()); ok {
-				ignores = append(ignores, pickerIgnore{base, ig})
-			}
+		if opts.gitIgnore {
+			ignores = appendIgnore(ignores, dir, ".gitignore")
 		}
+	}
+	if opts.gitExclude {
+		ignores = appendIgnore(
+			ignores, root, filepath.Join(".git", "info", "exclude"),
+		)
+	}
+	if opts.gitGlobal {
+		ignores = appendIgnorePath(ignores, root, gitGlobalIgnorePath())
+	}
+	if opts.ignore {
+		ignores = appendIgnorePath(ignores, "", config.IgnorePath())
 	}
 	return ignores
 }
 
-func ignoreBases(rel string) []string {
-	dir := filepath.ToSlash(filepath.Dir(rel))
-	if dir == "." {
-		return []string{""}
+func appendIgnore(
+	ignores []pickerIgnore, dir, name string,
+) []pickerIgnore {
+	return appendIgnorePath(ignores, dir, filepath.Join(dir, name))
+}
+
+func appendIgnorePath(
+	ignores []pickerIgnore, dir, path string,
+) []pickerIgnore {
+	if ig, ok := compileIgnore(path); ok {
+		return append(ignores, pickerIgnore{dir: dir, ig: ig})
 	}
-	parts := strings.Split(dir, "/")
-	bases := make([]string, 1, len(parts)+1)
-	for i := range parts {
-		bases = append(bases, strings.Join(parts[:i+1], "/"))
+	return ignores
+}
+
+func ignoreDirs(root, path string, parents bool) []string {
+	root = filepath.Clean(root)
+	dir := filepath.Dir(path)
+	if !parents {
+		return []string{root}
 	}
-	return bases
+	var dirs []string
+	for p := dir; ; p = filepath.Dir(p) {
+		dirs = append(dirs, p)
+		if p == filepath.Dir(p) {
+			break
+		}
+	}
+	slices.Reverse(dirs)
+	return dirs
+}
+
+func defaultPickerIgnoreOptions() pickerIgnoreOptions {
+	return pickerIgnoreOptions{
+		hidden: true, parents: true, ignore: true,
+		gitIgnore: true, gitGlobal: true, gitExclude: true,
+	}
 }
 
 func compileIgnore(path string) (*gitignore.GitIgnore, bool) {
 	ig, err := gitignore.CompileIgnoreFile(path)
 	return ig, err == nil
+}
+
+func gitGlobalIgnorePath() string {
+	for _, path := range gitConfigPaths() {
+		if found := readGitExcludesFile(path); found != "" {
+			return expandUserPath(found)
+		}
+	}
+	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
+		return filepath.Join(dir, "git", "ignore")
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".config", "git", "ignore")
+}
+
+func gitConfigPaths() []string {
+	if path := os.Getenv("GIT_CONFIG_GLOBAL"); path != "" {
+		return []string{path}
+	}
+	var paths []string
+	if home, err := os.UserHomeDir(); err == nil {
+		paths = append(paths, filepath.Join(home, ".gitconfig"))
+	}
+	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
+		paths = append(paths, filepath.Join(dir, "git", "config"))
+	}
+	return paths
+}
+
+func readGitExcludesFile(path string) string {
+	f, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer func() { _ = f.Close() }()
+	inCore := false
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			inCore = strings.EqualFold(line, "[core]")
+			continue
+		}
+		if !inCore ||
+			strings.HasPrefix(line, "#") ||
+			strings.HasPrefix(line, ";") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if ok && strings.EqualFold(strings.TrimSpace(key), "excludesfile") {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func expandUserPath(path string) string {
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			return filepath.Join(home, strings.TrimPrefix(path, "~/"))
+		}
+	}
+	return os.ExpandEnv(path)
 }
 
 func excludedPickerType(name string) bool {

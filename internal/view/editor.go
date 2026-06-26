@@ -18,6 +18,7 @@ type Editor struct {
 	registers    register.Registers
 
 	nextDocID          DocumentId
+	nextAccess         int64
 	prevDocID          DocumentId
 	lastModifiedDocIDs [2]DocumentId
 
@@ -54,6 +55,7 @@ func NewEditor(cwd string) *Editor {
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Insert(v)
+	e.markDocAccessed()
 	return e
 }
 
@@ -108,6 +110,7 @@ func (e *Editor) VSplitNew() *View {
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Split(v, LayoutVertical)
+	e.markDocAccessed()
 	return v
 }
 
@@ -120,6 +123,7 @@ func (e *Editor) HSplitNew() *View {
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Split(v, LayoutHorizontal)
+	e.markDocAccessed()
 	return v
 }
 
@@ -130,6 +134,7 @@ func (e *Editor) CloseView(vid Id) {
 	if v == nil {
 		return
 	}
+	focused := e.tree.Focus() == vid
 	docID := v.docID
 
 	if doc, ok := e.docs[docID]; ok {
@@ -148,6 +153,9 @@ func (e *Editor) CloseView(vid Id) {
 	}
 	if !referenced {
 		delete(e.docs, docID)
+	}
+	if focused {
+		e.markDocAccessed()
 	}
 }
 
@@ -427,6 +435,8 @@ func (e *Editor) recordPrevDoc() {
 func (e *Editor) markDocAccessed() {
 	if v, ok := e.FocusedView(); ok {
 		if doc, ok := e.docs[v.DocID()]; ok {
+			e.nextAccess++
+			doc.accessedAt = e.nextAccess
 			doc.modifiedSinceAccessed = false
 		}
 	}

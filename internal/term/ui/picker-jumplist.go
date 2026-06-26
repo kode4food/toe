@@ -8,17 +8,13 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-const runeTruncEllipsis = "\u2026" // '…' - horizontal ellipsis
+type jumplistPickerSource struct {
+	pickerMeta
+}
 
-type (
-	jumplistPickerSource struct {
-		pickerMeta
-	}
-
-	jumplistPayload struct {
-		docID  view.DocumentId
-		anchor int
-	}
+const (
+	runeTruncEllipsis       = "\u2026" // '…' - horizontal ellipsis
+	jumplistContentsMaxRune = 80
 )
 
 // JumplistPicker opens a picker listing the jump history for the focused view
@@ -42,31 +38,26 @@ func (j *jumplistPickerSource) Load(
 	jumps := v.Jumps()
 	items := make([]PickerItem, 0, len(jumps))
 	for i := len(jumps) - 1; i >= 0; i-- {
-		j := jumps[i]
-		doc, ok := e.Document(j.DocID)
+		entry := jumps[i]
+		doc, ok := e.Document(entry.DocID)
 		if !ok {
 			continue
 		}
 		name := doc.RelativeName(e.Cwd())
 		text := doc.Text()
-		line := 0
-		if l, err := text.CharToLine(j.Anchor); err == nil {
-			line = l + 1
-		}
-		display := fmt.Sprintf("%s:%d", name, line)
-		did := j.DocID
-		anchor := j.Anchor
+		line, lines := jumpLineRange(text, entry.Selection)
+		display := fmt.Sprintf("%s:%d", name, line+1)
 		items = append(items, PickerItem{
 			Display: display,
 			Columns: []string{
-				fmt.Sprintf("%d", did), display, "",
-				jumplistContents(text, anchor),
+				fmt.Sprintf("%d", entry.DocID), display, "",
+				jumplistContents(text, entry.Selection),
 			},
 			Location: PickerLocation{
-				Target: PickerTarget{ID: did},
-				Lines:  &PickerLineRange{From: line - 1, To: line - 1},
+				Target: PickerTarget{ID: entry.DocID},
+				Lines:  lines,
 			},
-			Payload: jumplistPayload{docID: did, anchor: anchor},
+			Payload: entry,
 		})
 	}
 	return items, nil, func() {}
@@ -78,35 +69,61 @@ func (j *jumplistPickerSource) Match(
 	return fuzzyMatchItem(query, item, j.Columns(), j.Primary())
 }
 
-func (j *jumplistPickerSource) Accept(e *view.Editor, item PickerItem) {
-	payload, ok := item.Payload.(jumplistPayload)
+func (j *jumplistPickerSource) Accept(
+	e *view.Editor, item PickerItem, action PickerAcceptAction,
+) {
+	entry, ok := item.Payload.(view.JumpEntry)
 	if !ok {
 		return
 	}
-	for _, v := range e.AllViews() {
-		if v.DocID() == payload.docID {
-			e.FocusView(v.ID())
-			if doc, ok := e.FocusedDocument(); ok {
-				doc.SetSelectionFor(v.ID(), core.PointSelection(payload.anchor))
-			}
-			return
-		}
+	v, ok := acceptDocumentID(e, entry.DocID, action)
+	if !ok {
+		return
+	}
+	if doc, ok := e.Document(v.DocID()); ok {
+		doc.SetSelectionFor(v.ID(), jumpSelection(entry))
+		alignJumplistView(e, v, doc)
 	}
 }
 
-func jumplistContents(text core.Rope, anchor int) string {
-	lineIdx := 0
-	if l, err := text.CharToLine(anchor); err == nil {
-		lineIdx = l
-	}
-	line, err := text.Line(lineIdx)
+func jumpSelection(j view.JumpEntry) core.Selection {
+	return j.Selection
+}
+
+func alignJumplistView(e *view.Editor, v *view.View, doc *view.Document) {
+	sel := doc.SelectionFor(v.ID())
+	v.EnsureCursorVisible(
+		doc.Text(), sel, max(v.Area().Height, e.ViewHeight()),
+		e.Options().ScrollOff, nil,
+	)
+	v.EnsureCursorVisibleHorizontal(
+		doc.Text(), sel, e.ViewContentWidth(), doc.TabWidth(),
+		e.Options().ScrollOff,
+	)
+}
+
+func jumpLineRange(text core.Rope, sel core.Selection) (int, *PickerLineRange) {
+	line, err := sel.Primary().CursorLine(text)
 	if err != nil {
-		return ""
+		return 0, nil
 	}
-	s := strings.TrimRight(line.String(), "\r\n")
+	return line, &PickerLineRange{From: line, To: line}
+}
+
+func jumplistContents(text core.Rope, sel core.Selection) string {
+	var parts []string
+	for _, r := range sel.Ranges() {
+		frag, err := r.Fragment(text)
+		if err != nil {
+			continue
+		}
+		parts = append(parts, frag)
+	}
+	s := strings.Join(parts, " ")
+	s = strings.TrimRight(s, "\r\n")
 	runes := []rune(s)
-	if len(runes) > 80 {
-		return string(runes[:80]) + runeTruncEllipsis
+	if len(runes) > jumplistContentsMaxRune {
+		return string(runes[:jumplistContentsMaxRune]) + runeTruncEllipsis
 	}
 	return s
 }

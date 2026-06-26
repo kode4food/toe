@@ -15,6 +15,7 @@ type (
 	// Document holds the text, history, and per-view state for an open buffer
 	Document struct {
 		id                    DocumentId
+		accessedAt            int64
 		text                  core.Rope
 		path                  string
 		modified              bool
@@ -84,6 +85,11 @@ func (d *Document) ID() DocumentId {
 	return d.id
 }
 
+// AccessedAt returns the monotonic focus/access sequence for MRU ordering
+func (d *Document) AccessedAt() int64 {
+	return d.accessedAt
+}
+
 // Text returns the current rope text
 func (d *Document) Text() core.Rope {
 	return d.text
@@ -131,7 +137,9 @@ func (d *Document) TextFormatForConfig(
 		cpy.TextWidth = d.editorConfig.MaxLineLength
 		langDef = &cpy
 	}
-	format := language.TextFormatForConfig(langDef, opts.TextWidth, opts.SoftWrap, w)
+	format := language.TextFormatForConfig(
+		langDef, opts.TextWidth, opts.SoftWrap, w,
+	)
 	format.TabWidth = d.tabWidth
 	return format
 }

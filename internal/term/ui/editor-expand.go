@@ -147,7 +147,7 @@ func expandUnicode(content string) (string, error) {
 func expandShell(e *view.Editor, content string) (string, error) {
 	shell := e.Options().Shell
 	if len(shell) == 0 {
-		shell = defaultShell()
+		shell = view.DefaultShell()
 	}
 	args := append(shell[1:len(shell):len(shell)], content)
 	cmd := exec.Command(shell[0], args...)
@@ -221,11 +221,4 @@ func findWorkspace(dir string) string {
 		d = parent
 	}
 	return dir
-}
-
-func defaultShell() []string {
-	if shell := os.Getenv("SHELL"); shell != "" {
-		return []string{shell, "-c"}
-	}
-	return []string{"sh", "-c"}
 }

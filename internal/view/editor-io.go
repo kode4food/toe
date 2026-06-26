@@ -23,10 +23,12 @@ func (e *Editor) NewDocument() *View {
 	if ok {
 		v.docID = doc.ID()
 		v.offset = Position{}
+		e.markDocAccessed()
 		return v
 	}
 	nv := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Insert(nv)
+	e.markDocAccessed()
 	return nv
 }
 

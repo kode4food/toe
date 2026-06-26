@@ -33,7 +33,10 @@ func (p *pathPickerSource) Primary() int {
 	return 0
 }
 
-func (p *pathPickerSource) Accept(*view.Editor, ui.PickerItem) {}
+func (p *pathPickerSource) Accept(
+	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,
+) {
+}
 
 func (p *pathPickerSource) Load(
 	*view.Editor,
@@ -334,7 +337,7 @@ wrap-indicator = "↪ "
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			km, "buffer_picker", m.PickerAction(bufferPicker),
 			[]command.KeyEvent{char('b')},
 		)
 
@@ -381,7 +384,7 @@ wrap-indicator = "↪ "
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+			km, "buffer_picker", m.PickerAction(bufferPicker),
 			[]command.KeyEvent{char('b')},
 		)
 
@@ -466,7 +469,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
 		out := stripANSI(m.View().Content)
-		assert.NotEmpty(t, out)
+		assert.Contains(t, out, "<Binary file>")
 	})
 
 	t.Run("nonexistent path shows placeholder", func(t *testing.T) {
@@ -484,11 +487,17 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
 		out := stripANSI(m.View().Content)
-		assert.NotEmpty(t, out)
+		assert.Contains(t, out, "<File not found>")
 	})
 
-	t.Run("directory path shows placeholder", func(t *testing.T) {
+	t.Run("directory path shows contents", func(t *testing.T) {
 		dir := t.TempDir()
+		sub := filepath.Join(dir, "subdir")
+		assert.NoError(t, os.Mkdir(sub, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "file.txt"), []byte("text\n"), 0o644,
+		))
+
 		e := view.NewEditor(dir)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -503,6 +512,53 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'q')
 		out := stripANSI(m.View().Content)
-		assert.NotEmpty(t, out)
+		assert.Contains(t, out, "subdir/")
+		assert.Contains(t, out, "file.txt")
+	})
+
+	t.Run("large file shows placeholder", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "huge.txt")
+		f, err := os.Create(path)
+		assert.NoError(t, err)
+		_, err = f.Write(make([]byte, 10*1024*1024+1))
+		assert.NoError(t, err)
+		assert.NoError(t, f.Close())
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(ui.FilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "<File too large to preview>")
+	})
+
+	t.Run("invalidates not found preview", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "later.txt")
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		src := &pathPickerSource{path: path}
+		bindNormalTestAction(
+			km, "custom_picker3",
+			m.PickerAction(func(ed *view.Editor) *ui.Picker {
+				return ui.NewPicker(ed, src)
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+		assert.Contains(t, stripANSI(m.View().Content), "<File not found>")
+
+		assert.NoError(t, os.WriteFile(path, []byte("now here\n"), 0o644))
+		m = sendKey(m, 'x')
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "now here")
 	})
 }

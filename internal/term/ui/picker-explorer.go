@@ -15,9 +15,21 @@ import (
 )
 
 type (
+	FileExplorerOptions struct {
+		Hidden         bool
+		FollowSymlinks bool
+		Parents        bool
+		Ignore         bool
+		GitIgnore      bool
+		GitGlobal      bool
+		GitExclude     bool
+		FlattenDirs    bool
+	}
+
 	fileExplorerSource struct {
 		pickerMeta
 		root     string
+		opts     FileExplorerOptions
 		dirStyle lipgloss.Style
 	}
 
@@ -27,19 +39,20 @@ type (
 	}
 )
 
-// FileExplorer opens a directory listing picker rooted at the editor's cwd
-func FileExplorer(e *view.Editor) *Picker {
-	return NewPicker(e, newFileExplorerSource(e.Cwd()))
+func NewFileExplorer(e *view.Editor, opts FileExplorerOptions) *Picker {
+	return NewPicker(e, newFileExplorerSource(e.Cwd(), opts))
 }
 
-// FileExplorerInBufferDir opens a directory listing picker rooted at the
-// focused buffer's directory, falling back to cwd for scratch buffers
-func FileExplorerInBufferDir(e *view.Editor) *Picker {
+func NewBufferDirExplorer(e *view.Editor, opts FileExplorerOptions) *Picker {
 	dir := e.Cwd()
 	if doc, ok := e.FocusedDocument(); ok && doc.Path() != "" {
 		dir = filepath.Dir(doc.Path())
 	}
-	return NewPicker(e, newFileExplorerSource(dir))
+	return NewPicker(e, newFileExplorerSource(dir, opts))
+}
+
+func DefaultFileExplorerOptions() FileExplorerOptions {
+	return FileExplorerOptions{FlattenDirs: true}
 }
 
 func (f *fileExplorerSource) Title() string {
@@ -61,12 +74,14 @@ func (f *fileExplorerSource) Match(
 	return fuzzyMatchItem(query, item, f.Columns(), f.Primary())
 }
 
-func (f *fileExplorerSource) Accept(e *view.Editor, item PickerItem) {
-	entry, ok := item.Payload.(explorerEntry)
-	if !ok || entry.isDir {
+func (f *fileExplorerSource) Accept(
+	e *view.Editor, item PickerItem, action PickerAcceptAction,
+) {
+	path := item.Location.Target.Path
+	if path == "" {
 		return
 	}
-	_, _ = e.OpenFile(entry.path)
+	acceptPath(e, path, action)
 }
 
 func (f *fileExplorerSource) Navigate(
@@ -78,14 +93,17 @@ func (f *fileExplorerSource) Navigate(
 	}
 	dir, _ := filepath.Abs(entry.path)
 	return func(e *view.Editor) *Picker {
-		return NewPicker(e, newFileExplorerSource(dir))
+		return NewPicker(e, newFileExplorerSource(dir, f.opts))
 	}
 }
 
-func newFileExplorerSource(root string) *fileExplorerSource {
+func newFileExplorerSource(
+	root string, opts FileExplorerOptions,
+) *fileExplorerSource {
 	return &fileExplorerSource{
 		pickerMeta: pickerMeta{columns: []string{"name"}},
 		root:       root,
+		opts:       opts,
 	}
 }
 
@@ -97,14 +115,36 @@ func (f *fileExplorerSource) readDir() []PickerItem {
 	var dirs, files []explorerEntry
 	for _, entry := range entries {
 		full := filepath.Join(f.root, entry.Name())
-		if entry.IsDir() {
-			dirs = append(dirs, explorerEntry{full, true})
+		rel := filepath.ToSlash(entry.Name())
+		ignoreOpts := explorerIgnoreOptions(f.opts)
+		if skipPickerPath(skipPickerPathArgs{
+			rel: rel, path: full, entry: entry,
+			ignores: loadIgnoreFiles(f.root, full, rel, ignoreOpts),
+			opts:    ignoreOpts,
+		}) {
+			continue
+		}
+		if pickerDirEntryIsDir(entry, full, f.opts.FollowSymlinks) {
+			if f.opts.FlattenDirs {
+				full = flattenExplorerDir(full, f.opts.FollowSymlinks)
+			}
+			dirs = append(dirs, explorerEntry{
+				path:  full,
+				isDir: true,
+			})
 		} else {
-			files = append(files, explorerEntry{full, false})
+			files = append(files, explorerEntry{
+				path:  full,
+				isDir: false,
+			})
 		}
 	}
-	slices.SortFunc(dirs, func(a, b explorerEntry) int { return cmp.Compare(a.path, b.path) })
-	slices.SortFunc(files, func(a, b explorerEntry) int { return cmp.Compare(a.path, b.path) })
+	slices.SortFunc(dirs, func(a, b explorerEntry) int {
+		return cmp.Compare(a.path, b.path)
+	})
+	slices.SortFunc(files, func(a, b explorerEntry) int {
+		return cmp.Compare(a.path, b.path)
+	})
 
 	var items []PickerItem
 	parent, _ := filepath.Abs(filepath.Join(f.root, ".."))
@@ -112,12 +152,37 @@ func (f *fileExplorerSource) readDir() []PickerItem {
 		items = append(items, f.makeDirItem("../", parent))
 	}
 	for _, e := range dirs {
-		items = append(items, f.makeDirItem(filepath.Base(e.path)+"/", e.path))
+		rel, err := filepath.Rel(f.root, e.path)
+		if err != nil {
+			rel = filepath.Base(e.path)
+		}
+		items = append(items, f.makeDirItem(filepath.ToSlash(rel)+"/", e.path))
 	}
 	for _, e := range files {
 		items = append(items, f.makeFileItem(e.path))
 	}
 	return items
+}
+
+func explorerIgnoreOptions(cfg FileExplorerOptions) pickerIgnoreOptions {
+	return pickerIgnoreOptions{
+		hidden: cfg.Hidden, parents: cfg.Parents, ignore: cfg.Ignore,
+		gitIgnore: cfg.GitIgnore, gitGlobal: cfg.GitGlobal,
+		gitExclude: cfg.GitExclude,
+	}
+}
+
+func pickerDirEntryIsDir(
+	entry os.DirEntry, path string, followSymlinks bool,
+) bool {
+	if entry.IsDir() {
+		return true
+	}
+	if !followSymlinks || entry.Type()&os.ModeSymlink == 0 {
+		return false
+	}
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 func (f *fileExplorerSource) makeDirItem(display, path string) PickerItem {
@@ -126,7 +191,10 @@ func (f *fileExplorerSource) makeDirItem(display, path string) PickerItem {
 		Display: display,
 		SortKey: display,
 		Style:   dirStyle,
-		Payload: explorerEntry{path, true},
+		Payload: explorerEntry{
+			path:  path,
+			isDir: true,
+		},
 		Preview: func(w, h int) string {
 			return explorerDirPreview(path, w, h, dirStyle)
 		},
@@ -137,9 +205,30 @@ func (f *fileExplorerSource) makeFileItem(path string) PickerItem {
 	return PickerItem{
 		Display:  filepath.Base(path),
 		SortKey:  filepath.Base(path),
-		Payload:  explorerEntry{path, false},
 		Location: PickerLocation{Target: PickerTarget{Path: path}},
 	}
+}
+
+func flattenExplorerDir(path string, followSymlinks bool) string {
+	for {
+		next, ok := singleChildExplorerDir(path, followSymlinks)
+		if !ok {
+			return path
+		}
+		path = next
+	}
+}
+
+func singleChildExplorerDir(path string, followSymlinks bool) (string, bool) {
+	entries, err := os.ReadDir(path)
+	if err != nil || len(entries) != 1 {
+		return "", false
+	}
+	next := filepath.Join(path, entries[0].Name())
+	if !pickerDirEntryIsDir(entries[0], next, followSymlinks) {
+		return "", false
+	}
+	return next, true
 }
 
 func explorerDirPreview(dir string, w, h int, dirStyle lipgloss.Style) string {

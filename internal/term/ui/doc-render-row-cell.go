@@ -24,9 +24,7 @@ type rowWriteArgs struct {
 	x, y      int
 	fillStyle tui.Style
 	width     int
-	// startCol is the horizontal scroll offset in content columns; 0 unless the
-	// view is horizontally scrolled (always 0 for soft-wrapped views)
-	startCol int
+	startCol  int
 }
 
 // writeToBuffer draws the row's cells into the buffer and pads the remainder of

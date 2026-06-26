@@ -59,7 +59,7 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "buffer_picker", m.PickerAction(ui.BufferPicker),
+		km, "buffer_picker", m.PickerAction(bufferPicker),
 		[]command.KeyEvent{char('b')},
 	)
 	m = resize(m, 120, 40)

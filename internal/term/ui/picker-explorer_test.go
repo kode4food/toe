@@ -67,6 +67,114 @@ func TestFileExplorer(t *testing.T) {
 		// the explorer is now rooted in sub, listing its file
 		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
 	})
+
+	t.Run("flattens single-child dirs", func(t *testing.T) {
+		dir := t.TempDir()
+		nested := filepath.Join(dir, "one", "two")
+		assert.NoError(t, os.MkdirAll(nested, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(nested, "inner.txt"), []byte("y"), 0o644,
+		))
+
+		m := explorerModel(t, dir)
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "one/two/")
+
+		for _, ch := range "one" {
+			m = sendKey(m, ch)
+		}
+		m = sendSpecial(m, tea.KeyEnter)
+		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+	})
+
+	t.Run("shows hidden files by default", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644,
+		))
+
+		out := stripANSI(explorerModel(t, dir).View().Content)
+
+		assert.Contains(t, out, ".hidden.txt")
+	})
+
+	t.Run("hides hidden files when configured", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644,
+		))
+		opts := ui.DefaultFileExplorerOptions()
+		opts.Hidden = true
+
+		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+
+		assert.NotContains(t, out, ".hidden.txt")
+	})
+
+	t.Run("shows ignored files by default", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, ".ignore"), []byte("ignored.txt\n"), 0o644,
+		))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
+		))
+
+		out := stripANSI(explorerModel(t, dir).View().Content)
+
+		assert.Contains(t, out, "ignored.txt")
+	})
+
+	t.Run("respects ignore when configured", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, ".ignore"), []byte("ignored.txt\n"), 0o644,
+		))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
+		))
+		opts := ui.DefaultFileExplorerOptions()
+		opts.Ignore = true
+
+		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+
+		assert.NotContains(t, out, "ignored.txt")
+	})
+
+	t.Run("disables directory flattening", func(t *testing.T) {
+		dir := t.TempDir()
+		nested := filepath.Join(dir, "one", "two")
+		assert.NoError(t, os.MkdirAll(nested, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(nested, "inner.txt"), []byte("y"), 0o644,
+		))
+		opts := ui.DefaultFileExplorerOptions()
+		opts.FlattenDirs = false
+
+		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+
+		assert.Contains(t, out, "one/")
+		assert.NotContains(t, out, "one/two/")
+	})
+
+	t.Run("follows symlinked directories", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "target", "child")
+		assert.NoError(t, os.MkdirAll(target, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(target, "inner.txt"), []byte("y"), 0o644,
+		))
+		link := filepath.Join(dir, "linked")
+		if err := os.Symlink(filepath.Join(dir, "target"), link); err != nil {
+			t.Skip("symlink unavailable")
+		}
+		opts := ui.DefaultFileExplorerOptions()
+		opts.FollowSymlinks = true
+
+		out := stripANSI(explorerModel(t, dir, opts).View().Content)
+
+		assert.Contains(t, out, "linked/child/")
+	})
 }
 
 func TestFileExplorerInBufferDir(t *testing.T) {
@@ -84,7 +192,7 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "explorer_buf",
-			m.PickerAction(ui.FileExplorerInBufferDir),
+			m.PickerAction(bufferDirExplorer),
 			[]command.KeyEvent{char('e')},
 		)
 		m = resize(m, 100, 30)
@@ -102,7 +210,7 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "explorer_buf",
-			m.PickerAction(ui.FileExplorerInBufferDir),
+			m.PickerAction(bufferDirExplorer),
 			[]command.KeyEvent{char('e')},
 		)
 
@@ -115,13 +223,22 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 
 // explorerModel opens a FileExplorer rooted at dir (the editor's cwd) and
 // returns the mounted model after one render-sized resize
-func explorerModel(t *testing.T, dir string) ui.Model {
+func explorerModel(
+	t *testing.T, dir string, opts ...ui.FileExplorerOptions,
+) ui.Model {
 	t.Helper()
+	cfg := ui.DefaultFileExplorerOptions()
+	if len(opts) > 0 {
+		cfg = opts[0]
+	}
 	e := view.NewEditor(dir)
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "explorer", m.PickerAction(ui.FileExplorer),
+		km, "explorer",
+		m.PickerAction(func(e *view.Editor) *ui.Picker {
+			return ui.NewFileExplorer(e, cfg)
+		}),
 		[]command.KeyEvent{char('e')},
 	)
 	m = resize(m, 100, 30)

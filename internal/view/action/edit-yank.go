@@ -88,7 +88,9 @@ func ReplaceWithYanked(e *view.Editor) {
 		)
 		valueIdx++
 	}
-	applyChangesFrom(e, applyChangesFromArgs{text, sel, ranges, changes})
+	applyChangesFrom(e, applyChangesFromArgs{
+		text: text, sel: sel, ranges: ranges, changes: changes,
+	})
 }
 
 func yankFragments(text core.Rope, sel core.Selection) []string {

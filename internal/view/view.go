@@ -44,19 +44,15 @@ type (
 
 	// JumpList manages a bounded history of cursor positions
 	JumpList struct {
-		items []jump
+		items []JumpEntry
 		head  int
-	}
-
-	jump struct {
-		docID  DocumentId
-		anchor int
 	}
 
 	// JumpEntry is a single entry in the jump history
 	JumpEntry struct {
-		DocID  DocumentId
-		Anchor int
+		DocID     DocumentId
+		Anchor    int
+		Selection core.Selection
 	}
 )
 
@@ -113,9 +109,9 @@ func (v *View) SetOffset(p Position) {
 	v.offset = p
 }
 
-// PushJump records a cursor position in the jump list
-func (v *View) PushJump(docID DocumentId, anchor int) {
-	v.jumps.Push(docID, anchor)
+// PushJump records a selection in the jump list
+func (v *View) PushJump(docID DocumentId, anchor int, sel core.Selection) {
+	v.jumps.Push(docID, anchor, sel)
 }
 
 // JumpBackward moves to the previous position in the jump list
@@ -188,6 +184,7 @@ func (v *View) EnsureCursorVisibleHorizontal(
 	}
 	v.offset.HorizontalOffset = h
 }
+
 func (m Mode) String() string {
 	switch m {
 	case ModeNormal:
@@ -202,19 +199,23 @@ func (m Mode) String() string {
 
 // Entries returns all jump history entries from oldest to newest
 func (j *JumpList) Entries() []JumpEntry {
-	out := make([]JumpEntry, len(j.items))
-	for i, it := range j.items {
-		out[i] = JumpEntry{it.docID, it.anchor}
-	}
-	return out
+	return append([]JumpEntry(nil), j.items...)
 }
 
-// Push adds a new jump position, discarding forward history
-func (j *JumpList) Push(docID DocumentId, anchor int) {
+// Push adds a new jump selection, discarding forward history
+func (j *JumpList) Push(docID DocumentId, anchor int, sel core.Selection) {
+	j.push(JumpEntry{
+		DocID:     docID,
+		Anchor:    anchor,
+		Selection: sel,
+	})
+}
+
+func (j *JumpList) push(item JumpEntry) {
 	if len(j.items) > 0 && j.head < len(j.items) {
 		j.items = j.items[:j.head]
 	}
-	j.items = append(j.items, jump{docID, anchor})
+	j.items = append(j.items, item)
 	if len(j.items) > jumpListCap {
 		j.items = j.items[len(j.items)-jumpListCap:]
 	}
@@ -228,7 +229,7 @@ func (j *JumpList) Backward() (DocumentId, int, bool) {
 	}
 	j.head--
 	it := j.items[j.head-1]
-	return it.docID, it.anchor, true
+	return it.DocID, it.Anchor, true
 }
 
 // Forward moves to the next jump and returns it
@@ -238,7 +239,7 @@ func (j *JumpList) Forward() (DocumentId, int, bool) {
 	}
 	it := j.items[j.head]
 	j.head++
-	return it.docID, it.anchor, true
+	return it.DocID, it.Anchor, true
 }
 
 // RuneWidth returns the display width of ch at visual column col, expanding

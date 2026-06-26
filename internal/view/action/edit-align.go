@@ -109,5 +109,7 @@ func ReplaceChar(e *view.Editor, ch rune) {
 		}
 		changes = append(changes, core.TextChange(r.From(), r.To(), b.String()))
 	}
-	applyChangesFrom(e, applyChangesFromArgs{text, sel, ranges, changes})
+	applyChangesFrom(e, applyChangesFromArgs{
+		text: text, sel: sel, ranges: ranges, changes: changes,
+	})
 }

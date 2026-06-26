@@ -2,6 +2,7 @@ package ui
 
 import (
 	"os"
+	"slices"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -29,11 +30,6 @@ type (
 		th     *theme.Theme
 	}
 
-	previewFile struct {
-		text string
-		lang string
-	}
-
 	previewDocRender struct {
 		text   core.Rope
 		spans  []highlight.Span
@@ -48,15 +44,6 @@ type (
 		// back so the caller can persist a bounded scroll position
 		scroll int
 	}
-
-	pickerPreviewKind int
-)
-
-const (
-	pickerPreviewDirectory pickerPreviewKind = iota
-	pickerPreviewBinary
-	pickerPreviewLargeFile
-	pickerPreviewNotFound
 )
 
 func (p *previewCtx) renderInto(buf *tui.Buffer, x0, y0 int) {
@@ -110,20 +97,20 @@ func (p *previewCtx) renderDocInto(
 func (p *previewCtx) renderFileInto(
 	buf *tui.Buffer, x0, y0 int, path string,
 ) {
-	entry, ok := p.picker.fileCache[path]
-	if !ok {
-		f, ph := loadPreviewFile(path)
-		if f == nil {
-			p.blitPlaceholderInto(buf, x0, y0, pickerPlaceholderText(ph))
-			return
-		}
-		entry = fileSpanEntry{
-			rope:  core.NewRope(f.text),
-			spans: previewSpans(f.text, f.lang),
-			lang:  f.lang,
-		}
-		p.picker.fileCache[path] = entry
+	entry := p.cachedPreview(path)
+	switch entry.kind {
+	case cachedPreviewDocument:
+		p.renderCachedDocInto(buf, x0, y0, entry)
+	case cachedPreviewDirectory:
+		p.renderDirInto(buf, x0, y0, entry.dir)
+	default:
+		p.blitPlaceholderInto(buf, x0, y0, pickerPlaceholderText(entry.kind))
 	}
+}
+
+func (p *previewCtx) renderCachedDocInto(
+	buf *tui.Buffer, x0, y0 int, entry cachedPreview,
+) {
 	opts := p.editor.Options()
 	format := language.TextFormatForLanguageWithConfig(
 		entry.lang, opts.TextWidth, opts.SoftWrap, p.w,
@@ -136,6 +123,42 @@ func (p *previewCtx) renderFileInto(
 	}
 	renderPreviewDocInto(buf, x0, y0, r)
 	p.picker.previewScroll = r.scroll
+}
+
+func (p *previewCtx) renderDirInto(
+	buf *tui.Buffer, x0, y0 int, entries []previewDirEntry,
+) {
+	fillTUI := lipglossToTUIStyle(
+		lipgloss.NewStyle().Background(
+			p.th.Get("ui.popup").GetBackground(),
+		),
+	)
+	dirTUI := lipglossToTUIStyle(
+		lipgloss.NewStyle().Foreground(
+			p.th.Get("ui.text.directory").GetForeground(),
+		).Background(p.th.Get("ui.popup").GetBackground()),
+	)
+	for i, entry := range entries {
+		if i >= p.h {
+			return
+		}
+		st := fillTUI
+		if entry.dir {
+			st = dirTUI
+		}
+		buf.FillRange(x0, y0+i, p.w, fillTUI)
+		buf.SetString(x0, y0+i, ansi.Truncate(entry.name, p.w, ""), st)
+	}
+}
+
+func (p *previewCtx) cachedPreview(path string) cachedPreview {
+	entry, ok := p.picker.previewCache[path]
+	if ok {
+		return entry
+	}
+	entry = loadCachedPreview(path)
+	p.picker.previewCache[path] = entry
+	return entry
 }
 
 // ANSI codes in callback preview strings are stripped so the popup style
@@ -180,36 +203,65 @@ func openDocumentPreview(path string, editor *view.Editor) *view.Document {
 	return nil
 }
 
-func loadPreviewFile(path string) (*previewFile, pickerPreviewKind) {
+func loadCachedPreview(path string) cachedPreview {
 	info, err := os.Stat(path)
 	if err != nil {
-		return nil, pickerPreviewNotFound
+		return cachedPreview{kind: cachedPreviewNotFound}
 	}
 	if info.IsDir() {
-		return nil, pickerPreviewDirectory
+		return cachedPreview{
+			kind: cachedPreviewDirectory, dir: previewDirEntries(path),
+		}
 	}
 	if info.Size() > pickerMaxPreview {
-		return nil, pickerPreviewLargeFile
+		return cachedPreview{kind: cachedPreviewLargeFile}
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, pickerPreviewNotFound
+		return cachedPreview{kind: cachedPreviewNotFound}
 	}
 	if looksBinary(data) {
-		return nil, pickerPreviewBinary
+		return cachedPreview{kind: cachedPreviewBinary}
 	}
 	text := highlight.NormalizeNewlines(string(data))
 	lang := highlight.DetectLanguage(path, text)
-	return &previewFile{text: text, lang: lang}, 0
+	return cachedPreview{
+		kind: cachedPreviewDocument,
+		rope: core.NewRope(text), spans: previewSpans(text, lang),
+		lang: lang,
+	}
 }
 
-func pickerPlaceholderText(kind pickerPreviewKind) string {
+func previewDirEntries(path string) []previewDirEntry {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil
+	}
+	var dirs, files []previewDirEntry
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() {
+			dirs = append(dirs, previewDirEntry{name: name + "/", dir: true})
+		} else {
+			files = append(files, previewDirEntry{name: name})
+		}
+	}
+	slices.SortFunc(dirs, comparePreviewDirEntry)
+	slices.SortFunc(files, comparePreviewDirEntry)
+	return append(dirs, files...)
+}
+
+func comparePreviewDirEntry(a, b previewDirEntry) int {
+	return strings.Compare(a.name, b.name)
+}
+
+func pickerPlaceholderText(kind cachedPreviewKind) string {
 	switch kind {
-	case pickerPreviewDirectory:
+	case cachedPreviewDirectory:
 		return "<Invalid directory location>"
-	case pickerPreviewBinary:
+	case cachedPreviewBinary:
 		return "<Binary file>"
-	case pickerPreviewLargeFile:
+	case cachedPreviewLargeFile:
 		return "<File too large to preview>"
 	default:
 		return "<File not found>"

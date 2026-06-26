@@ -36,7 +36,7 @@ func DeleteCharForward(e *view.Editor) {
 		}
 		changes = append(changes, core.DeleteChange(pos, next))
 	}
-	applyDeletesAtCursor(e, applyDeletesArgs{
+	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text: text, sel: sel, ranges: ranges, changes: changes,
 	})
 }
@@ -72,7 +72,7 @@ func DeleteWordBackward(e *view.Editor) {
 		).From()
 		changes = append(changes, core.DeleteChange(wordStart, pos))
 	}
-	applyDeletesAtCursor(e, applyDeletesArgs{
+	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text: text, sel: sel, ranges: ranges, changes: changes,
 	})
 }
@@ -109,7 +109,7 @@ func DeleteWordForward(e *view.Editor) {
 		}
 		changes = append(changes, core.DeleteChange(pos, wordEnd))
 	}
-	applyDeletesAtCursor(e, applyDeletesArgs{
+	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text: text, sel: sel, ranges: ranges, changes: changes,
 	})
 }
@@ -148,14 +148,14 @@ func applyDeletions(e *view.Editor, args applyDeletionsArgs) bool {
 	return true
 }
 
-type applyDeletesArgs struct {
+type applyDeletesAtCursorArgs struct {
 	text    core.Rope
 	sel     core.Selection
 	ranges  []core.Range
 	changes []core.Change
 }
 
-func applyDeletesAtCursor(e *view.Editor, args applyDeletesArgs) {
+func applyDeletesAtCursor(e *view.Editor, args applyDeletesAtCursorArgs) {
 	if len(args.changes) == 0 {
 		return
 	}

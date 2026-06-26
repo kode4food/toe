@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -35,8 +36,8 @@ func TestJumpList(t *testing.T) {
 
 	t.Run("push then backward", func(t *testing.T) {
 		var j view.JumpList
-		j.Push(view.DocumentId(1), 0)
-		j.Push(view.DocumentId(1), 5)
+		j.Push(view.DocumentId(1), 0, core.PointSelection(0))
+		j.Push(view.DocumentId(1), 5, core.PointSelection(5))
 		docID, anchor, ok := j.Backward()
 		assert.True(t, ok)
 		assert.Equal(t, view.DocumentId(1), docID)
@@ -45,8 +46,8 @@ func TestJumpList(t *testing.T) {
 
 	t.Run("forward after backward", func(t *testing.T) {
 		var j view.JumpList
-		j.Push(view.DocumentId(1), 0)
-		j.Push(view.DocumentId(1), 5)
+		j.Push(view.DocumentId(1), 0, core.PointSelection(0))
+		j.Push(view.DocumentId(1), 5, core.PointSelection(5))
 		j.Backward()
 		docID, anchor, ok := j.Forward()
 		assert.True(t, ok)
@@ -56,10 +57,10 @@ func TestJumpList(t *testing.T) {
 
 	t.Run("push discards forward history", func(t *testing.T) {
 		var j view.JumpList
-		j.Push(view.DocumentId(1), 0)
-		j.Push(view.DocumentId(1), 5)
+		j.Push(view.DocumentId(1), 0, core.PointSelection(0))
+		j.Push(view.DocumentId(1), 5, core.PointSelection(5))
 		j.Backward()
-		j.Push(view.DocumentId(1), 10)
+		j.Push(view.DocumentId(1), 10, core.PointSelection(10))
 		_, _, ok := j.Forward()
 		assert.False(t, ok)
 	})
@@ -75,8 +76,8 @@ func TestDocumentOpenError(t *testing.T) {
 func TestJumpListEntries(t *testing.T) {
 	t.Run("entries returns all pushed items", func(t *testing.T) {
 		var j view.JumpList
-		j.Push(view.DocumentId(1), 0)
-		j.Push(view.DocumentId(2), 10)
+		j.Push(view.DocumentId(1), 0, core.PointSelection(0))
+		j.Push(view.DocumentId(2), 10, core.PointSelection(10))
 		entries := j.Entries()
 		assert.Equal(t, 2, len(entries))
 		assert.Equal(t, view.DocumentId(1), entries[0].DocID)

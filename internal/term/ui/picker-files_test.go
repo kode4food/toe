@@ -38,8 +38,16 @@ func TestPickerFiles(t *testing.T) {
 		m = sendKey(m, 'p')
 		m = sendSpecial(m, tea.KeyEnter)
 		out := stripANSI(m.View().Content)
+		doc, ok := e.FocusedDocument()
+		if !assert.True(t, ok) {
+			return
+		}
+		wantPath, err := filepath.EvalSymlinks(path)
+		assert.NoError(t, err)
+		gotPath, err := filepath.EvalSymlinks(doc.Path())
+		assert.NoError(t, err)
 
-		assert.Contains(t, out, "main.go")
+		assert.Equal(t, wantPath, gotPath)
 		assert.Contains(t, out, "package main")
 		assert.NotContains(t, out, "┐┌")
 		assert.NotContains(t, out, "\x1b")

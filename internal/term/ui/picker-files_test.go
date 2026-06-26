@@ -18,6 +18,23 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+func TestPickerTarget(t *testing.T) {
+	t.Run("valid path", func(t *testing.T) {
+		target := ui.PickerTarget{Path: "main.go"}
+		assert.True(t, target.Valid())
+	})
+
+	t.Run("valid document id", func(t *testing.T) {
+		target := ui.PickerTarget{ID: view.DocumentId(1)}
+		assert.True(t, target.Valid())
+	})
+
+	t.Run("empty target", func(t *testing.T) {
+		target := ui.PickerTarget{ID: view.InvalidDocumentId}
+		assert.False(t, target.Valid())
+	})
+}
+
 func TestPickerFiles(t *testing.T) {
 	t.Run("accepts file", func(t *testing.T) {
 		tmp := t.TempDir()
@@ -338,6 +355,61 @@ func TestPickerFiles(t *testing.T) {
 
 		assert.Contains(t, out, "config.toml")
 		assert.Contains(t, out, "languages.toml")
+	})
+
+	t.Run("broken symlink root falls back", func(t *testing.T) {
+		tmp := t.TempDir()
+		link := filepath.Join(tmp, "missing")
+		err := os.Symlink(filepath.Join(tmp, "target"), link)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(link),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "0/0")
+	})
+
+	t.Run("file symlink root falls back", func(t *testing.T) {
+		tmp := t.TempDir()
+		target := filepath.Join(tmp, "target.go")
+		err := os.WriteFile(target, []byte("package target\n"), 0o644)
+		assert.NoError(t, err)
+		link := filepath.Join(tmp, "link.go")
+		err = os.Symlink(target, link)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
+			ui.FilePickerInDir(link),
+		)
+
+		m = resize(m, 100, 30)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "0/0")
+	})
+
+	t.Run("file feed continues after first batch", func(t *testing.T) {
+		tmp := t.TempDir()
+		for i := range 12 {
+			name := filepath.Join(tmp, "file-"+string(rune('a'+i))+".go")
+			err := os.WriteFile(name, []byte("package main\n"), 0o644)
+			assert.NoError(t, err)
+		}
+
+		e := view.NewEditor(tmp)
+		m := resize(ui.New(e, command.NewKeymaps()), 100, 6)
+		p := ui.FilePickerInDir(tmp)(e)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotNil(t, p)
+		assert.NotEmpty(t, out)
 	})
 
 	t.Run("dynamic feed displays first open batch", func(t *testing.T) {

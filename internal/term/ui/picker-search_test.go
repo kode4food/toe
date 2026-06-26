@@ -79,6 +79,44 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NotContains(t, out, "a.bin")
 	})
 
+	t.Run("respects ignore files", func(t *testing.T) {
+		dir := t.TempDir()
+		err := os.WriteFile(
+			filepath.Join(dir, ".gitignore"),
+			[]byte("ignored.txt\nignored-dir/\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(dir, "ignored.txt"),
+			[]byte("findme hidden\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		ignoredDir := filepath.Join(dir, "ignored-dir")
+		err = os.MkdirAll(ignoredDir, 0o755)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(ignoredDir, "nested.txt"),
+			[]byte("findme nested\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+		err = os.WriteFile(
+			filepath.Join(dir, "visible.txt"),
+			[]byte("findme visible\n"),
+			0o644,
+		)
+		assert.NoError(t, err)
+
+		m := globalSearchModelForEditor(t, view.NewEditor(dir), "findme")
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "visible.txt")
+		assert.NotContains(t, out, "ignored.txt")
+		assert.NotContains(t, out, "ignored-dir")
+	})
+
 	t.Run("searches open document text", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "a.txt")

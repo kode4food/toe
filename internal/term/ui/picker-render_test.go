@@ -13,7 +13,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type noPreviewPickerSource struct{}
+type (
+	noPreviewPickerSource struct{}
+
+	columnPickerSource struct{}
+)
 
 func TestPickerRender(t *testing.T) {
 	t.Run("file picker preview pane", func(t *testing.T) {
@@ -104,6 +108,51 @@ func TestPickerRender(t *testing.T) {
 		assert.Contains(t, out, "┤")
 		assert.Contains(t, out, " > plain")
 	})
+
+	t.Run("plain source small single pane", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "plain_picker",
+			m.PickerAction(func(e *view.Editor) *ui.Picker {
+				return ui.NewPicker(e, noPreviewPickerSource{})
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 60, 12)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, " > plain")
+		assert.NotContains(t, out, "┬")
+	})
+
+	t.Run("narrow columns and long query", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "column_picker",
+			m.PickerAction(func(e *view.Editor) *ui.Picker {
+				return ui.NewPicker(e, columnPickerSource{})
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 30, 12)
+		m = sendKey(m, 'p')
+		for _, ch := range "abcdefghijklmnopqrstuvwxyz" {
+			m = sendKey(m, ch)
+		}
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "kind")
+		assert.Contains(t, out, "desc")
+		assert.Contains(t, out, "uvwxyz")
+		assert.Contains(t, out, " > go")
+	})
 }
 
 func (noPreviewPickerSource) Title() string {
@@ -128,3 +177,39 @@ func (noPreviewPickerSource) Load(
 }
 
 func (noPreviewPickerSource) Accept(*view.Editor, ui.PickerItem) {}
+
+func (columnPickerSource) Title() string {
+	return "Columns"
+}
+
+func (columnPickerSource) Columns() []string {
+	return []string{"kind", "path", "description"}
+}
+
+func (columnPickerSource) Primary() int {
+	return 1
+}
+
+func (columnPickerSource) Load(
+	*view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	return []ui.PickerItem{{
+		Display: "first",
+		Columns: []string{
+			"go",
+			"internal/term/ui/picker-render-with-a-very-long-name.go",
+			"primary column should be clipped first",
+		},
+	}, {
+		Display: "second",
+		Columns: []string{"txt", "README.md", "short"},
+	}}, nil, func() {}
+}
+
+func (columnPickerSource) Match(
+	string, ui.PickerItem,
+) (int, []int, bool) {
+	return 1, nil, true
+}
+
+func (columnPickerSource) Accept(*view.Editor, ui.PickerItem) {}

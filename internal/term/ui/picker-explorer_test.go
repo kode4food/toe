@@ -91,6 +91,26 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 		m = sendKey(m, 'e')
 		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
 	})
+
+	t.Run("scratch buffer falls back to cwd", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(dir, "cwd.txt"), []byte("x"), 0o644,
+		))
+		e := view.NewEditor(dir)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "explorer_buf",
+			m.PickerAction(ui.FileExplorerInBufferDir),
+			[]command.KeyEvent{char('e')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'e')
+
+		assert.Contains(t, stripANSI(m.View().Content), "cwd.txt")
+	})
 }
 
 // explorerModel opens a FileExplorer rooted at dir (the editor's cwd) and

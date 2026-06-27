@@ -90,10 +90,10 @@ func (p *PickerComponent) drawPickerPane(
 }
 
 func (p *PickerComponent) drawPreviewInto(
-	buf *tui.Buffer, x0, y0, w, h int, cx *Context,
+	buf *tui.Buffer, x, y, w, h int, cx *Context,
 ) {
 	ps := p.state
-	p.previewBounds = bounds{x: x0, y: y0, w: w, h: h}
+	p.previewBounds = bounds{x: x, y: y, w: w, h: h}
 	if ps.cursor != ps.previewScrollFor {
 		ps.previewScroll = 0
 		ps.previewScrollFor = ps.cursor
@@ -117,7 +117,7 @@ func (p *PickerComponent) drawPreviewInto(
 		ctx.hlFrom = from
 		ctx.hlTo = to
 	}
-	ctx.renderInto(buf, x0+pickerPadX, y0)
+	ctx.renderInto(buf, x+pickerPadX, y)
 }
 
 func (b bounds) contains(x, y int) bool {

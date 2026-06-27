@@ -1,0 +1,137 @@
+package ui
+
+import (
+	"os"
+	"slices"
+	"strings"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/highlight"
+	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
+)
+
+type (
+	previewCache map[previewCacheKey]previewCacheEntry
+
+	previewCacheKey struct {
+		id   view.DocumentId
+		path string
+	}
+
+	previewCacheEntry interface {
+		renderInto(ctx *previewCtx, buf *tui.Buffer, x, y int)
+	}
+
+	previewDocEntry struct {
+		rev   int
+		lang  string
+		rope  core.Rope
+		spans []highlight.Span
+	}
+
+	previewDirEntry struct {
+		rows []previewDirRow
+	}
+
+	noPreviewEntry string
+
+	previewDirRow struct {
+		name string
+		dir  bool
+	}
+)
+
+func newPreviewCache() previewCache {
+	return previewCache{}
+}
+
+func (p previewCache) doc(doc *view.Document) *previewDocEntry {
+	lang := doc.Lang()
+	rev := doc.Revision()
+	key := previewDocKey(doc.ID())
+	entry, ok := p[key].(*previewDocEntry)
+	if ok && entry.rev == rev && entry.lang == lang {
+		return entry
+	}
+	text := highlight.NormalizeNewlines(doc.Text().String())
+	entry = &previewDocEntry{
+		rev: rev, lang: lang,
+		rope:  core.NewRope(text),
+		spans: previewSpans(text, lang),
+	}
+	p[key] = entry
+	return entry
+}
+
+func (p previewCache) path(path string) previewCacheEntry {
+	key := previewPathKey(path)
+	entry, ok := p[key]
+	if ok {
+		return entry
+	}
+	entry = loadPathPreview(path)
+	p[key] = entry
+	return entry
+}
+
+func (p *previewCache) clear() {
+	*p = newPreviewCache()
+}
+
+func previewDocKey(id view.DocumentId) previewCacheKey {
+	return previewCacheKey{id: id}
+}
+
+func previewPathKey(path string) previewCacheKey {
+	return previewCacheKey{path: path}
+}
+
+func loadPathPreview(path string) previewCacheEntry {
+	info, err := os.Stat(path)
+	if err != nil {
+		return noPreviewEntry("<File not found>")
+	}
+	if info.IsDir() {
+		return &previewDirEntry{rows: previewDirRows(path)}
+	}
+	if info.Size() > pickerMaxPreview {
+		return noPreviewEntry("<File too large to preview>")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return noPreviewEntry("<File not found>")
+	}
+	if looksBinary(data) {
+		return noPreviewEntry("<Binary file>")
+	}
+	text := highlight.NormalizeNewlines(string(data))
+	lang := highlight.DetectLanguage(path, text)
+	return &previewDocEntry{
+		rope: core.NewRope(text), spans: previewSpans(text, lang),
+		lang: lang,
+	}
+}
+
+func previewDirRows(path string) []previewDirRow {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil
+	}
+	var dirs, files []previewDirRow
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() {
+			dirs = append(dirs, previewDirRow{name: name + "/", dir: true})
+		} else {
+			files = append(files, previewDirRow{name: name})
+		}
+	}
+	slices.SortFunc(dirs, comparePreviewDirRow)
+	slices.SortFunc(files, comparePreviewDirRow)
+	return append(dirs, files...)
+}
+
+func comparePreviewDirRow(a, b previewDirRow) int {
+	return strings.Compare(a.name, b.name)
+}

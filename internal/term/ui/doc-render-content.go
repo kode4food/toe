@@ -23,8 +23,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	doc := args.doc
 	v := args.view
 	buf := args.buf
-	x0 := args.x
-	y0 := args.y
+	x := args.x
+	y := args.y
 	width := args.width
 	height := args.height
 	viewFocused := args.focused
@@ -171,7 +171,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
 	blankGutter := strings.Repeat(" ", gutterW)
-	contentX := x0 + gutterW
+	contentX := x + gutterW
 
 	rr := rowRender{
 		lgStyles:      lgStyles,
@@ -191,15 +191,15 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		hWidth:        format.ViewportWidth,
 	}
 
-	bufRow := y0
+	bufRow := y
 	logLine := anchorLine
-	for bufRow < y0+height {
+	for bufRow < y+height {
 		lineNum := logLine
 		logLine++
 
 		if lineNum >= nLines {
 			if showLineNumbers {
-				buf.SetString(x0, bufRow, blankGutter, lineTUI)
+				buf.SetString(x, bufRow, blankGutter, lineTUI)
 			}
 			var blank renderedRow
 			blank.writeToBuffer(rowWriteArgs{
@@ -213,8 +213,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 
 		if lineNum == nLines-1 && trailingEmpty {
 			if showLineNumbers {
-				buf.FillRange(x0, bufRow, gutterW, lineTUI)
-				buf.SetString(x0+gutterW-2, bufRow, "~", lineTUI)
+				buf.FillRange(x, bufRow, gutterW, lineTUI)
+				buf.SetString(x+gutterW-2, bufRow, "~", lineTUI)
 			}
 			var row renderedRow
 			if cursorIsBlock && lineNum == cursorLine {
@@ -257,8 +257,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				num = lineNum + 1
 				gutterTUI = lineTUI
 			}
-			buf.SetRightAlignedInt(x0, bufRow, gutterW-1, num, gutterTUI)
-			buf.FillRange(x0+gutterW-1, bufRow, 1, gutterTUI)
+			buf.SetRightAlignedInt(x, bufRow, gutterW-1, num, gutterTUI)
+			buf.FillRange(x+gutterW-1, bufRow, 1, gutterTUI)
 		}
 
 		lineStart, err := text.LineToChar(lineNum)
@@ -323,7 +323,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		rr.lineEnd = lineContentEnd
 		rr.cursorlinePrim = isPrimaryCursorLine
 		rr.cursorlineSec = isSecondaryCursorLine
-		rr.maxRows = y0 + height - bufRow + rowSkip
+		rr.maxRows = y + height - bufRow + rowSkip
 		contentRows := rr.rows()
 
 		if softWrap {
@@ -334,12 +334,12 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				if i < rowSkip {
 					continue
 				}
-				if bufRow >= y0+height {
+				if bufRow >= y+height {
 					break
 				}
 				rowPrefixW := 0
 				if i > 0 && showLineNumbers {
-					buf.SetString(x0, bufRow, blankGutter, lineTUI)
+					buf.SetString(x, bufRow, blankGutter, lineTUI)
 				}
 				if i == 0 {
 					cr.writeToBuffer(rowWriteArgs{
@@ -376,7 +376,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	// after all rows, so they sit behind text without altering its foreground
 	if len(rulers) > 0 {
 		applyRulers(
-			buf, contentX, y0, format.ViewportWidth, height, hOff,
+			buf, contentX, y, format.ViewportWidth, height, hOff,
 			rulers, rulerTUI.BgColor(),
 		)
 	}

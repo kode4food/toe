@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"os"
-	"slices"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -46,43 +44,32 @@ type (
 	}
 )
 
-func (p *previewCtx) renderInto(buf *tui.Buffer, x0, y0 int) {
+func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
 	switch {
 	case p.item.Location.Target.ID != view.InvalidDocumentId:
 		doc, ok := p.editor.Document(p.item.Location.Target.ID)
 		if !ok {
-			p.blitPlaceholderInto(buf, x0, y0, "<Invalid file location>")
+			p.blitPlaceholderInto(buf, x, y, "<Invalid file location>")
 			return
 		}
-		p.renderDocInto(buf, x0, y0, doc)
+		p.renderDocInto(buf, x, y, doc)
 	case p.item.Location.Target.Path != "":
 		path := p.item.Location.Target.Path
 		if doc := openDocumentPreview(path, p.editor); doc != nil {
-			p.renderDocInto(buf, x0, y0, doc)
+			p.renderDocInto(buf, x, y, doc)
 			return
 		}
-		p.renderFileInto(buf, x0, y0, path)
+		p.renderFileInto(buf, x, y, path)
 	case p.item.Preview != nil:
 		text := p.item.Preview(p.w, p.h)
-		p.blitPlaceholderInto(buf, x0, y0, text)
+		p.blitPlaceholderInto(buf, x, y, text)
 	}
 }
 
 func (p *previewCtx) renderDocInto(
-	buf *tui.Buffer, x0, y0 int, doc *view.Document,
+	buf *tui.Buffer, x, y int, doc *view.Document,
 ) {
-	lang := doc.Lang()
-	rev := doc.Revision()
-	id := doc.ID()
-	entry, ok := p.picker.spanCache[id]
-	if !ok || entry.rev != rev || entry.lang != lang {
-		text := highlight.NormalizeNewlines(doc.Text().String())
-		entry = previewSpanEntry{
-			rev: rev, lang: lang,
-			rope: core.NewRope(text), spans: previewSpans(text, lang),
-		}
-		p.picker.spanCache[id] = entry
-	}
+	entry := p.picker.previewCache.doc(doc)
 	format := doc.TextFormatForConfig(p.w, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
@@ -90,92 +77,81 @@ func (p *previewCtx) renderDocInto(
 		th: p.th, w: p.w, h: p.h,
 		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
 	}
-	renderPreviewDocInto(buf, x0, y0, r)
+	renderPreviewDocInto(buf, x, y, r)
 	p.picker.previewScroll = r.scroll
 }
 
 func (p *previewCtx) renderFileInto(
-	buf *tui.Buffer, x0, y0 int, path string,
+	buf *tui.Buffer, x, y int, path string,
 ) {
-	entry := p.cachedPreview(path)
-	switch entry.kind {
-	case cachedPreviewDocument:
-		p.renderCachedDocInto(buf, x0, y0, entry)
-	case cachedPreviewDirectory:
-		p.renderDirInto(buf, x0, y0, entry.dir)
-	default:
-		p.blitPlaceholderInto(buf, x0, y0, pickerPlaceholderText(entry.kind))
-	}
+	p.picker.previewCache.path(path).renderInto(p, buf, x, y)
 }
 
-func (p *previewCtx) renderCachedDocInto(
-	buf *tui.Buffer, x0, y0 int, entry cachedPreview,
+func (p *previewDocEntry) renderInto(
+	ctx *previewCtx, buf *tui.Buffer, x, y int,
 ) {
-	opts := p.editor.Options()
+	opts := ctx.editor.Options()
 	format := language.TextFormatForLanguageWithConfig(
-		entry.lang, opts.TextWidth, opts.SoftWrap, p.w,
+		p.lang, opts.TextWidth, opts.SoftWrap, ctx.w,
 	)
 	r := &previewDocRender{
-		text: entry.rope, spans: entry.spans,
-		format: format, opts: p.editor.Options(),
-		th: p.th, w: p.w, h: p.h,
-		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
+		text: p.rope, spans: p.spans,
+		format: format, opts: ctx.editor.Options(),
+		th: ctx.th, w: ctx.w, h: ctx.h,
+		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
+		scroll: ctx.picker.previewScroll,
 	}
-	renderPreviewDocInto(buf, x0, y0, r)
-	p.picker.previewScroll = r.scroll
+	renderPreviewDocInto(buf, x, y, r)
+	ctx.picker.previewScroll = r.scroll
 }
 
-func (p *previewCtx) renderDirInto(
-	buf *tui.Buffer, x0, y0 int, entries []previewDirEntry,
+func (p *previewDirEntry) renderInto(
+	ctx *previewCtx, buf *tui.Buffer, x, y int,
 ) {
 	fillTUI := lipglossToTUIStyle(
 		lipgloss.NewStyle().Background(
-			p.th.Get("ui.popup").GetBackground(),
+			ctx.th.Get("ui.popup").GetBackground(),
 		),
 	)
 	dirTUI := lipglossToTUIStyle(
 		lipgloss.NewStyle().Foreground(
-			p.th.Get("ui.text.directory").GetForeground(),
-		).Background(p.th.Get("ui.popup").GetBackground()),
+			ctx.th.Get("ui.text.directory").GetForeground(),
+		).Background(ctx.th.Get("ui.popup").GetBackground()),
 	)
-	for i, entry := range entries {
-		if i >= p.h {
+	for i, entry := range p.rows {
+		if i >= ctx.h {
 			return
 		}
 		st := fillTUI
 		if entry.dir {
 			st = dirTUI
 		}
-		buf.FillRange(x0, y0+i, p.w, fillTUI)
-		buf.SetString(x0, y0+i, ansi.Truncate(entry.name, p.w, ""), st)
+		buf.FillRange(x, y+i, ctx.w, fillTUI)
+		buf.SetString(x, y+i, ansi.Truncate(entry.name, ctx.w, ""), st)
 	}
 }
 
-func (p *previewCtx) cachedPreview(path string) cachedPreview {
-	entry, ok := p.picker.previewCache[path]
-	if ok {
-		return entry
-	}
-	entry = loadCachedPreview(path)
-	p.picker.previewCache[path] = entry
-	return entry
+func (p noPreviewEntry) renderInto(
+	ctx *previewCtx, buf *tui.Buffer, x, y int,
+) {
+	ctx.blitPlaceholderInto(buf, x, y, string(p))
 }
 
 // ANSI codes in callback preview strings are stripped so the popup style
 // applies
 func (p *previewCtx) blitPlaceholderInto(
-	buf *tui.Buffer, x0, y0 int, text string,
+	buf *tui.Buffer, x, y int, text string,
 ) {
 	fillTUI := lipglossToTUIStyle(
 		lipgloss.NewStyle().Background(
 			p.th.Get("ui.popup").GetBackground(),
 		),
 	)
-	blitTextInto(buf, x0, y0, p.w, p.h, text, fillTUI)
+	blitTextInto(buf, x, y, p.w, p.h, text, fillTUI)
 }
 
 func blitTextInto(
-	buf *tui.Buffer, x0, y0, w, h int, text string, fillStyle tui.Style,
+	buf *tui.Buffer, x, y, w, h int, text string, fillStyle tui.Style,
 ) {
 	lines := strings.SplitN(text, "\n", h+1)
 	if len(lines) > h {
@@ -183,13 +159,13 @@ func blitTextInto(
 	}
 	for i, line := range lines {
 		plain := ansi.Strip(line)
-		buf.FillRange(x0, y0+i, w, fillStyle)
+		buf.FillRange(x, y+i, w, fillStyle)
 		if w > 0 && plain != "" {
 			s := plain
 			if runewidth.StringWidth(s) > w {
 				s = ansi.Truncate(s, w, "")
 			}
-			buf.SetString(x0, y0+i, s, fillStyle)
+			buf.SetString(x, y+i, s, fillStyle)
 		}
 	}
 }
@@ -201,71 +177,6 @@ func openDocumentPreview(path string, editor *view.Editor) *view.Document {
 		}
 	}
 	return nil
-}
-
-func loadCachedPreview(path string) cachedPreview {
-	info, err := os.Stat(path)
-	if err != nil {
-		return cachedPreview{kind: cachedPreviewNotFound}
-	}
-	if info.IsDir() {
-		return cachedPreview{
-			kind: cachedPreviewDirectory, dir: previewDirEntries(path),
-		}
-	}
-	if info.Size() > pickerMaxPreview {
-		return cachedPreview{kind: cachedPreviewLargeFile}
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return cachedPreview{kind: cachedPreviewNotFound}
-	}
-	if looksBinary(data) {
-		return cachedPreview{kind: cachedPreviewBinary}
-	}
-	text := highlight.NormalizeNewlines(string(data))
-	lang := highlight.DetectLanguage(path, text)
-	return cachedPreview{
-		kind: cachedPreviewDocument,
-		rope: core.NewRope(text), spans: previewSpans(text, lang),
-		lang: lang,
-	}
-}
-
-func previewDirEntries(path string) []previewDirEntry {
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return nil
-	}
-	var dirs, files []previewDirEntry
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() {
-			dirs = append(dirs, previewDirEntry{name: name + "/", dir: true})
-		} else {
-			files = append(files, previewDirEntry{name: name})
-		}
-	}
-	slices.SortFunc(dirs, comparePreviewDirEntry)
-	slices.SortFunc(files, comparePreviewDirEntry)
-	return append(dirs, files...)
-}
-
-func comparePreviewDirEntry(a, b previewDirEntry) int {
-	return strings.Compare(a.name, b.name)
-}
-
-func pickerPlaceholderText(kind cachedPreviewKind) string {
-	switch kind {
-	case cachedPreviewDirectory:
-		return "<Invalid directory location>"
-	case cachedPreviewBinary:
-		return "<Binary file>"
-	case cachedPreviewLargeFile:
-		return "<File too large to preview>"
-	default:
-		return "<File not found>"
-	}
 }
 
 func previewSpans(text, lang string) []highlight.Span {

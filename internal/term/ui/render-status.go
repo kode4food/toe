@@ -217,7 +217,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	doc := args.doc
 	v := args.view
 	buf := args.buf
-	x0 := args.x
+	x := args.x
 	y := args.y
 	width := args.width
 	isFocused := args.focused
@@ -328,16 +328,16 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		}
 	}
 
-	buf.SetString(x0, y, strings.Repeat(" ", width), baseTUI)
+	buf.SetString(x, y, strings.Repeat(" ", width), baseTUI)
 
-	writeElems(left, x0)
+	writeElems(left, x)
 
 	rightW := elemsWidth(right)
-	writeElems(right, x0+width-rightW)
+	writeElems(right, x+width-rightW)
 
 	if len(center) > 0 {
 		centerW := elemsWidth(center)
-		writeElems(center, x0+width/2-centerW/2)
+		writeElems(center, x+width/2-centerW/2)
 	}
 }
 

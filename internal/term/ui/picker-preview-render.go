@@ -22,7 +22,7 @@ type previewLineCtx struct {
 	highlighted bool
 }
 
-func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
+func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 	lgStyles := new(buildLipglossStyles(args.th, view.ModeNormal))
 	lgStyles.clearBackground()
 	tuiStyles := buildTUIStyles(lgStyles)
@@ -101,7 +101,7 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 			lineNum >= args.hlFrom && lineNum <= args.hlTo
 
 		bufRow += emitPreviewLine(
-			buf, x0, y0+bufRow, rendered,
+			buf, x, y+bufRow, rendered,
 			previewLineCtx{
 				format: args.format, lgStyles: lgStyles,
 				fillTUI: fillTUI, popupBg: popupBg,
@@ -113,7 +113,7 @@ func renderPreviewDocInto(buf *tui.Buffer, x0, y0 int, args *previewDocRender) {
 		)
 	}
 	if len(rulers) > 0 {
-		applyRulers(buf, x0, y0, args.w, args.h, 0, rulers, rulerBg)
+		applyRulers(buf, x, y, args.w, args.h, 0, rulers, rulerBg)
 	}
 }
 

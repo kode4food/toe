@@ -7,8 +7,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -28,8 +26,7 @@ type (
 		previewScroll    int
 		previewScrollFor int
 
-		spanCache    map[view.DocumentId]previewSpanEntry
-		previewCache map[string]cachedPreview
+		previewCache previewCache
 
 		feedCmd tea.Cmd
 		cancel  StopFunc
@@ -37,31 +34,6 @@ type (
 		dynamicGen  int
 		dynamicStop StopFunc
 	}
-
-	// previewSpanEntry caches the materialized rope and syntax spans for an
-	// in-memory document preview, reused across frames until the document's
-	// revision or language changes
-	previewSpanEntry struct {
-		rev   int
-		lang  string
-		rope  core.Rope
-		spans []highlight.Span
-	}
-
-	cachedPreview struct {
-		kind  cachedPreviewKind
-		rope  core.Rope
-		spans []highlight.Span
-		lang  string
-		dir   []previewDirEntry
-	}
-
-	previewDirEntry struct {
-		name string
-		dir  bool
-	}
-
-	cachedPreviewKind int
 
 	// PickerFunc constructs a Picker from the editor
 	PickerFunc func(e *view.Editor) *Picker
@@ -154,22 +126,13 @@ const (
 	PickerAcceptVerticalSplit
 )
 
-const (
-	cachedPreviewDocument cachedPreviewKind = iota
-	cachedPreviewDirectory
-	cachedPreviewBinary
-	cachedPreviewLargeFile
-	cachedPreviewNotFound
-)
-
 // NewPicker constructs a Picker for the given source, triggering Load
 // immediately. The returned feedCmd (if any) must be dispatched by the
 // caller after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
 		source:       source,
-		spanCache:    map[view.DocumentId]previewSpanEntry{},
-		previewCache: map[string]cachedPreview{},
+		previewCache: newPreviewCache(),
 		cancel:       func() {},
 	}
 	items, feed, stop := source.Load(e)
@@ -261,7 +224,7 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 }
 
 func (p *Picker) clearPreviewCache() {
-	p.previewCache = map[string]cachedPreview{}
+	p.previewCache.clear()
 }
 
 func (p PickerLocation) lineRange() (int, int, bool) {

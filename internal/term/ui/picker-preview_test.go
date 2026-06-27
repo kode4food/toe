@@ -393,7 +393,7 @@ wrap-indicator = "↪ "
 		for _, ch := range "long" {
 			m = sendKey(m, ch)
 		}
-		_ = m.View().Content // render wide, populating the span cache
+		_ = m.View().Content // render wide, populating the preview cache
 
 		m = resize(m, narrowPickerPreviewWidth, 30)
 		out := stripANSI(m.View().Content)

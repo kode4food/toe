@@ -32,6 +32,7 @@ type (
 		infoItems       []command.KeyHint
 		mouseDownRange  *core.Range
 		mouseDownSep    *sepDrag
+		signatureHidden *signatureCall
 	}
 
 	saveGenSlot struct{ gen int }
@@ -56,6 +57,9 @@ func (e *EditorComponent) HandleEvent(
 		return consumed(), nil
 
 	case tea.KeyPressMsg:
+		for _, v := range cx.Editor.AllViews() {
+			v.SetFreeScroll(false)
+		}
 		result, cmd := e.handleKeyPress(msg, cx)
 		if shown := bufferlineVisible(cx); shown != e.bufferlineShown {
 			e.bufferlineShown = shown
@@ -122,6 +126,7 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		act.ScrollViewLines(cx.Editor, v, cx.Editor.Options().ScrollLines, up)
+		v.SetFreeScroll(true)
 		return consumed(), nil
 	}
 	return ignored(), nil

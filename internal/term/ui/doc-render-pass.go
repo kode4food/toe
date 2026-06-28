@@ -87,12 +87,8 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	cursor := sel.Primary().Cursor(text)
-	g0 := opts.Gutters
-	gutterW := max(lineNumberDigits(text), g0.LineNumberMinWidth()) + 1
 	area := v.Area()
-	if !g0.HasGutterType(view.GutterTypeLineNumbers) {
-		gutterW = 0
-	}
+	gutterW := gutterWidthFor(text, opts.Gutters)
 	xOff := area.X
 	yOff := area.Y
 	if bufferlineVisible(r.cx) {
@@ -150,9 +146,11 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
 		}
 	}
-	v.EnsureCursorVisible(
-		text, doc.SelectionFor(v.ID()), contentH, scrolloff, vf,
-	)
+	if !v.FreeScroll() {
+		v.EnsureCursorVisible(
+			text, doc.SelectionFor(v.ID()), contentH, scrolloff, vf,
+		)
+	}
 	r.renderContent(renderContentArgs{
 		doc:     doc,
 		view:    v,

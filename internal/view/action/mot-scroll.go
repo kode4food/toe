@@ -99,11 +99,36 @@ func GotoWindowCenter(e *view.Editor) {
 	gotoWindowImpl(e, 1)
 }
 
-// ScrollViewLines scrolls a specific view by n lines without changing keyboard
-// focus, used for mouse-wheel events over a (possibly unfocused) pane. The
-// pane's own height drives the scrolloff so stacked splits scroll correctly
+// ScrollViewLines scrolls a specific view by n lines, not moving the cursor.
+// Used for mouse-wheel events; the view snaps back to the cursor on next
+// keypress
 func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
-	scrollViewBy(e, v, max(v.Area().Height-1, 1), n, up)
+	doc, ok := e.Document(v.DocID())
+	if !ok {
+		return
+	}
+	if n < 1 {
+		n = 1
+	}
+	text := doc.Text()
+	offset := v.Offset()
+	anchorLine, err := text.CharToLine(offset.Anchor)
+	if err != nil {
+		anchorLine = 0
+	}
+	nLines := text.LenLines()
+	var newAnchorLine int
+	if up {
+		newAnchorLine = max(anchorLine-n, 0)
+	} else {
+		newAnchorLine = min(anchorLine+n, max(nLines-1, 0))
+	}
+	newAnchor, err := text.LineToChar(newAnchorLine)
+	if err != nil {
+		return
+	}
+	offset.Anchor = newAnchor
+	v.SetOffset(offset)
 }
 
 func alignViewImpl(e *view.Editor, relOffset int) {

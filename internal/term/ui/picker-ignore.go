@@ -153,7 +153,7 @@ func compileIgnore(path string) (*gitignore.GitIgnore, bool) {
 func gitGlobalIgnorePath() string {
 	for _, path := range gitConfigPaths() {
 		if found := readGitExcludesFile(path); found != "" {
-			return expandUserPath(found)
+			return loader.ExpandUserPath(found)
 		}
 	}
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
@@ -205,16 +205,6 @@ func readGitExcludesFile(path string) string {
 		}
 	}
 	return ""
-}
-
-func expandUserPath(path string) string {
-	if path == "~" || strings.HasPrefix(path, "~/") {
-		home, err := os.UserHomeDir()
-		if err == nil {
-			return filepath.Join(home, strings.TrimPrefix(path, "~/"))
-		}
-	}
-	return os.ExpandEnv(path)
 }
 
 func excludedPickerType(name string) bool {

@@ -95,10 +95,10 @@ func FindNthPairsPos(
 			openOk, closeOk = true, true
 		} else {
 			openPos, openOk = doc.FindNthChar(
-				n, RuneMatcher(openCh), pos, DirectionBackward,
+				n, openCh, pos, DirectionBackward,
 			)
 			closePos, closeOk = doc.FindNthChar(
-				n, RuneMatcher(closeCh), pos, DirectionForward,
+				n, closeCh, pos, DirectionForward,
 			)
 		}
 	} else {

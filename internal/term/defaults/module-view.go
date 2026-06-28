@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	"cmp"
 	"fmt"
 	"strconv"
 
@@ -550,7 +551,7 @@ func viewModule() command.Module {
 			Reset:  func() { *cfg = viewSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.LineNumber = lineNumberOr(
+				opts.LineNumber = cmp.Or(
 					cfg.Editor.LineNumber, view.LineNumberAbsolute,
 				)
 				opts.Cursorline = boolOr(cfg.Editor.Cursorline, false)
@@ -558,7 +559,7 @@ func viewModule() command.Module {
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
 				opts.Rulers = cfg.Editor.Rulers
-				opts.BufferLine = bufferLineOr(
+				opts.BufferLine = cmp.Or(
 					cfg.Editor.BufferLine, view.BufferLineNever,
 				)
 				opts.Whitespace = cfg.Editor.Whitespace

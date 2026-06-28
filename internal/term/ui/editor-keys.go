@@ -82,6 +82,14 @@ func (e *EditorComponent) handleKeyPress(
 		return consumed(), nil
 
 	case prefix:
+		if mode == view.ModeInsert && len(e.pending) == 1 {
+			if e.pending[0].IsTypable() {
+				if layer := e.insertTypable(cx, e.pending[0]); layer != nil {
+					return consumedWith(layer), nil
+				}
+				return consumed(), nil
+			}
+		}
 		var sb strings.Builder
 		if c := cx.Editor.Count(); c > 0 {
 			_, _ = fmt.Fprintf(&sb, "%d", c)
@@ -98,7 +106,10 @@ func (e *EditorComponent) handleKeyPress(
 	default:
 		if mode == view.ModeInsert && len(e.pending) == 1 {
 			if e.pending[0].IsTypable() {
-				act.InsertChar(cx.Editor, e.pending[0].Code.Char)
+				if layer := e.insertTypable(cx, e.pending[0]); layer != nil {
+					return consumedWith(layer), nil
+				}
+				return consumed(), nil
 			}
 		}
 		e.pending = nil
@@ -107,5 +118,93 @@ func (e *EditorComponent) handleKeyPress(
 		e.infoItems = nil
 		cx.Editor.ResetCount()
 		return consumed(), nil
+	}
+}
+
+func (e *EditorComponent) insertTypable(
+	cx *Context, k command.KeyEvent,
+) Callback {
+	act.InsertChar(cx.Editor, k.Code.Char)
+	e.pending = nil
+	e.status = ""
+	e.infoTitle = ""
+	e.infoItems = nil
+	cx.Editor.ResetCount()
+	if layer := e.triggerCompletionLayer(cx); layer != nil {
+		return layer
+	}
+	return e.triggerSignatureHelpLayer(cx)
+}
+
+func (e *EditorComponent) triggerCompletionLayer(cx *Context) Callback {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return nil
+	}
+	ls := cx.Editor.LanguageServerController()
+	if ls == nil {
+		return nil
+	}
+	items, err := ls.TriggerCompletions(doc, v.ID())
+	if err != nil {
+		cx.Editor.SetStatusMsg(err.Error())
+		return nil
+	}
+	if len(items) == 0 {
+		return nil
+	}
+	anchor := newCompletionAnchor(doc, v.ID())
+	return func(comp *Compositor, _ *Context) tea.Cmd {
+		comp.Push(newCompletionComponent(e, items, anchor))
+		return nil
+	}
+}
+
+func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return nil
+	}
+	ls := cx.Editor.LanguageServerController()
+	if ls == nil {
+		return nil
+	}
+	call, ok := currentSignatureCall(cx)
+	if !ok {
+		e.signatureHidden = nil
+		return nil
+	}
+	if e.signatureHidden != nil && *e.signatureHidden == call {
+		return nil
+	}
+	e.signatureHidden = nil
+	help, err := ls.TriggerSignatureHelp(doc, v.ID())
+	if err != nil {
+		cx.Editor.SetStatusMsg(err.Error())
+		return nil
+	}
+	if len(help.Signatures) == 0 {
+		return nil
+	}
+	return func(comp *Compositor, _ *Context) tea.Cmd {
+		pushSignatureHelpLayer(comp, newSignatureHelpComponent(e, call, help))
+		return nil
+	}
+}
+
+func newCompletionAnchor(doc *view.Document, viewID view.Id) completionAnchor {
+	sel := doc.SelectionFor(viewID)
+	return completionAnchor{
+		docID:  doc.ID(),
+		viewID: viewID,
+		pos:    sel.Primary().Cursor(doc.Text()),
 	}
 }

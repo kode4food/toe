@@ -10,10 +10,30 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
+
+func TestInsertMode(t *testing.T) {
+	t.Run("inserts space", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		m = sendKey(m, 'a')
+		m = sendSpecial(m, tea.KeySpace)
+		_ = sendKey(m, 'b')
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+
+		assert.Equal(t, "a b", doc.Text().String())
+	})
+}
 
 func TestMouseMiddlePaste(t *testing.T) {
 	t.Run("pastes at clicked position", func(t *testing.T) {
@@ -133,7 +153,7 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.True(t, ok)
 		before := v.Offset().Anchor
 
-		// Y=7 is the command line — outside any editor pane in this 40×8 window
+		// Y=7 is the command line, outside any editor pane in this window
 		m2, _ := m.Update(tea.MouseWheelMsg{
 			X: 5, Y: 7, Button: tea.MouseWheelDown,
 		})

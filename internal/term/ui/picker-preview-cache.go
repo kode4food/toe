@@ -1,9 +1,9 @@
 package ui
 
 import (
+	"cmp"
 	"os"
 	"slices"
-	"strings"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -42,10 +42,6 @@ type (
 	}
 )
 
-func newPreviewCache() previewCache {
-	return previewCache{}
-}
-
 func (p previewCache) doc(doc *view.Document) *previewDocEntry {
 	lang := doc.Lang()
 	rev := doc.Revision()
@@ -76,7 +72,7 @@ func (p previewCache) path(path string) previewCacheEntry {
 }
 
 func (p *previewCache) clear() {
-	*p = newPreviewCache()
+	*p = previewCache{}
 }
 
 func previewDocKey(id view.DocumentId) previewCacheKey {
@@ -127,11 +123,11 @@ func previewDirRows(path string) []previewDirRow {
 			files = append(files, previewDirRow{name: name})
 		}
 	}
-	slices.SortFunc(dirs, comparePreviewDirRow)
-	slices.SortFunc(files, comparePreviewDirRow)
+	slices.SortFunc(dirs, func(a, b previewDirRow) int {
+		return cmp.Compare(a.name, b.name)
+	})
+	slices.SortFunc(files, func(a, b previewDirRow) int {
+		return cmp.Compare(a.name, b.name)
+	})
 	return append(dirs, files...)
-}
-
-func comparePreviewDirRow(a, b previewDirRow) int {
-	return strings.Compare(a.name, b.name)
 }

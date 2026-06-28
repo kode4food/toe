@@ -43,16 +43,14 @@ func handleInsertClose(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	if !ok || ch != pair.Close {
 		return Change{}, Range{}, false
 	}
-	change := TextChange(cursor, cursor, "")
-	return change, autoPairNextRange(doc, r, 0), true
+	return TextChange(cursor, cursor, ""), skipOverRange(doc, r, cursor), true
 }
 
 func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	cursor := r.Cursor(doc)
 	ch, ok := autoPairCharAt(doc, cursor)
 	if ok && ch == pair.Open {
-		change := TextChange(cursor, cursor, "")
-		return change, autoPairNextRange(doc, r, 0), true
+		return TextChange(cursor, cursor, ""), skipOverRange(doc, r, cursor), true
 	}
 	if !pair.ShouldClose(doc, r) {
 		return Change{}, Range{}, false
@@ -76,6 +74,15 @@ func hookInsertWhitespace(
 	}
 	wsPair := Pair{Open: ch, Close: ch}
 	return handleInsertSame(doc, r, wsPair)
+}
+
+// skipOverRange computes the range after a close-char jump-over. Point cursors
+// become a point past the char; selections preserve their shape
+func skipOverRange(doc Rope, r Range, cursor int) Range {
+	if r.Len() == 0 {
+		return PointRange(NextGraphemeBoundary(doc, cursor))
+	}
+	return autoPairNextRange(doc, r, 0)
 }
 
 // autoPairNextRange computes the resulting range after an auto-pair insertion

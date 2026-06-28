@@ -8,7 +8,7 @@ import (
 // scanLinePrefix walks the rope from lineStart, returning indentCol (the visual
 // column where indentation ends), windowPos (the char offset of the first char
 // at or after column hStart), and windowCol (that char's visual column, which
-// may be < hStart when a tab straddles the window boundary).
+// may be < hStart when a tab straddles the window boundary)
 //
 // For printable ASCII the inner loop uses a direct width-1 assignment instead
 // of calling view.RuneWidth, so common code files need no per-char function

@@ -86,7 +86,9 @@ func checkLanguages() Check {
 	if !ok {
 		return failed("languages", "bundled languages.toml did not parse")
 	}
-	names := languageNames(langs.Languages)
+	names := sortedNames(langs.Languages, func(l language.Language) string {
+		return l.Name
+	})
 	errs := compareNames(expectedLanguages(), names)
 	return Check{
 		Name:   "languages",
@@ -101,7 +103,9 @@ func checkGrammars() Check {
 	if !ok {
 		return failed("grammars", "bundled languages.toml did not parse")
 	}
-	names := grammarNames(langs.Grammars)
+	names := sortedNames(langs.Grammars, func(g language.Grammar) string {
+		return g.Name
+	})
 	errs := compareNames(expectedGrammars(), names)
 	return Check{
 		Name:   "grammars",
@@ -153,19 +157,12 @@ func failed(name, msg string) Check {
 	return Check{Name: name, OK: false, Errors: []string{msg}}
 }
 
-func languageNames(langs []language.Language) []string {
-	names := make([]string, 0, len(langs))
-	for _, l := range langs {
-		names = append(names, l.Name)
-	}
-	slices.Sort(names)
-	return names
-}
-
-func grammarNames(grams []language.Grammar) []string {
-	names := make([]string, 0, len(grams))
-	for _, g := range grams {
-		names = append(names, g.Name)
+func sortedNames[T any](
+	items []T, name func(T) string,
+) []string {
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		names = append(names, name(item))
 	}
 	slices.Sort(names)
 	return names

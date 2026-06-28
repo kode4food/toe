@@ -1,0 +1,105 @@
+package lsp
+
+import (
+	"context"
+	"io"
+	"os"
+	"os/exec"
+	"sort"
+	"time"
+
+	"github.com/kode4food/toe/internal/view/language"
+	"go.lsp.dev/protocol"
+)
+
+type pipeConn struct {
+	r io.ReadCloser
+	w io.WriteCloser
+}
+
+// Start launches the language server process and returns a connected Client
+func Start(
+	ctx context.Context, name string, cfg language.Server, dir string,
+	handler protocol.Client,
+) (context.Context, *Client, error) {
+	if cfg.Command == "" {
+		return ctx, nil, ErrCommandRequired
+	}
+	root := dir
+	if root == "" {
+		root = "."
+	}
+	ok, err := RequiredRootFound(root, cfg.RequiredRootPatterns)
+	if err != nil {
+		return ctx, nil, err
+	}
+	if !ok {
+		return ctx, nil, ErrRequiredRoot
+	}
+	cmd := exec.Command(cfg.Command, cfg.Args...)
+	cmd.Env = commandEnv(cfg.Environment)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return ctx, nil, err
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return ctx, nil, err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return ctx, nil, err
+	}
+	if err := cmd.Start(); err != nil {
+		return ctx, nil, err
+	}
+	tail := &stderrTail{}
+	go func() {
+		_, _ = io.Copy(tail, stderr)
+	}()
+	ctx, client := NewClient(ctx, pipeConn{r: stdout, w: stdin}, handler)
+	client.name = name
+	client.cmd = cmd
+	client.timeout = time.Duration(cfg.Timeout) * time.Second
+	client.processDone = make(chan struct{})
+	client.stderr = tail
+	go func() {
+		client.markProcessDone(cmd.Wait())
+	}()
+	return ctx, client, nil
+}
+
+func (p pipeConn) Read(b []byte) (int, error) {
+	return p.r.Read(b)
+}
+
+func (p pipeConn) Write(b []byte) (int, error) {
+	return p.w.Write(b)
+}
+
+func (p pipeConn) Close() error {
+	err := p.r.Close()
+	if werr := p.w.Close(); err == nil {
+		err = werr
+	}
+	return err
+}
+
+func commandEnv(env map[string]string) []string {
+	if len(env) == 0 {
+		return os.Environ()
+	}
+	out := append([]string(nil), os.Environ()...)
+	keys := make([]string, 0, len(env))
+	for k := range env {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		out = append(out, k+"="+env[k])
+	}
+	return out
+}

@@ -1,23 +1,9 @@
 package core
 
-type (
-	// CharMatcher tests whether a character satisfies a condition
-	CharMatcher interface {
-		MatchChar(ch rune) bool
-	}
-
-	// RuneMatcher is a CharMatcher that matches a single rune
-	RuneMatcher rune
-)
-
-func (r RuneMatcher) MatchChar(ch rune) bool {
-	return rune(r) == ch
-}
-
-// FindNthChar finds the position of the nth character matching m, starting from
+// FindNthChar finds the position of the nth matching character, starting from
 // pos in the given direction
 func (r Rope) FindNthChar(
-	n int, m CharMatcher, pos int, dir Direction,
+	n int, match rune, pos int, dir Direction,
 ) (int, bool) {
 	if n == 0 {
 		return 0, false
@@ -29,7 +15,7 @@ func (r Rope) FindNthChar(
 			if err != nil {
 				return 0, false
 			}
-			if m.MatchChar(ch) {
+			if ch == match {
 				n--
 				if n == 0 {
 					return i, true
@@ -42,7 +28,7 @@ func (r Rope) FindNthChar(
 			if err != nil {
 				return 0, false
 			}
-			if m.MatchChar(ch) {
+			if ch == match {
 				n--
 				if n == 0 {
 					return i, true

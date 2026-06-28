@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/health"
+	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -82,6 +84,8 @@ func run(args []string, out io.Writer) error {
 			}
 		}
 	}
+	lspSession := lsp.Attach(context.Background(), editor)
+	defer lspSession.Close()
 	editor.SetConfigReload(func() error {
 		raw, _ := config.LoadRawUserConfig()
 		if raw == nil {

@@ -55,6 +55,17 @@ func RuntimeFile(rel string) string {
 	return filepath.Join(dirs[len(dirs)-1], rel)
 }
 
+// ExpandUserPath expands leading home-directory shorthand and environment vars
+func ExpandUserPath(path string) string {
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			return filepath.Join(home, strings.TrimPrefix(path, "~/"))
+		}
+	}
+	return os.ExpandEnv(path)
+}
+
 func ConfigFile() (string, bool) {
 	dir, ok := ConfigDir()
 	if !ok {
@@ -174,16 +185,7 @@ func UntrustWorkspace(dir string) error {
 }
 
 func normalizeRuntimeDir(dir string) string {
-	switch {
-	case dir == "~":
-		if home, err := os.UserHomeDir(); err == nil {
-			dir = home
-		}
-	case strings.HasPrefix(dir, "~/"):
-		if home, err := os.UserHomeDir(); err == nil {
-			dir = filepath.Join(home, strings.TrimPrefix(dir, "~/"))
-		}
-	}
+	dir = ExpandUserPath(dir)
 	if abs, err := filepath.Abs(dir); err == nil {
 		return filepath.Clean(abs)
 	}

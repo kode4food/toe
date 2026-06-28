@@ -16,6 +16,8 @@ type Editor struct {
 	opts         Options
 	configReload func() error
 	registers    register.Registers
+	docObserver  DocumentObserver
+	langServers  LanguageServerController
 
 	nextDocID          DocumentId
 	nextAccess         int64
@@ -152,6 +154,9 @@ func (e *Editor) CloseView(vid Id) {
 		}
 	}
 	if !referenced {
+		if doc, ok := e.docs[docID]; ok {
+			e.documentClosed(doc)
+		}
 		delete(e.docs, docID)
 	}
 	if focused {

@@ -24,6 +24,7 @@ func (d *Document) Save(opts *Options) error {
 	text := prepareSaveText(d.text.String(), d.lineEnding, opts, d.editorConfig)
 	if text != d.text.String() {
 		d.text = core.NewRope(text)
+		d.version++
 	}
 	var data []byte
 	if d.hasBOM {

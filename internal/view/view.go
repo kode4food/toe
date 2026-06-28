@@ -9,11 +9,12 @@ import (
 type (
 	// View is a viewport into a document
 	View struct {
-		id     Id
-		docID  DocumentId
-		offset Position
-		mode   Mode
-		jumps  JumpList
+		id         Id
+		docID      DocumentId
+		offset     Position
+		mode       Mode
+		jumps      JumpList
+		freeScroll bool
 		// area is the screen rectangle assigned by the layout engine
 		area Area
 	}
@@ -107,6 +108,16 @@ func (v *View) Offset() Position {
 // SetOffset updates the scroll position
 func (v *View) SetOffset(p Position) {
 	v.offset = p
+}
+
+// FreeScroll reports whether the viewport is decoupled from the cursor
+func (v *View) FreeScroll() bool {
+	return v.freeScroll
+}
+
+// SetFreeScroll sets whether the viewport is decoupled from the cursor
+func (v *View) SetFreeScroll(b bool) {
+	v.freeScroll = b
 }
 
 // PushJump records a selection in the jump list

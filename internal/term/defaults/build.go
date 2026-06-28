@@ -21,6 +21,7 @@ func RegisterDefaults(
 func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 	modules := []command.Module{
 		insertModule(),
+		completionModule(model),
 		motionModule(),
 		editModule(),
 		selectionModule(model),
@@ -34,6 +35,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		shellModule(model),
 		lifecycleModule(),
 		formatModule(),
+		lspModule(model),
 		supportModule(),
 		pickerModule(model),
 		commentModule(),

@@ -15,7 +15,16 @@ func (e *Editor) Apply(tx core.Transaction) error {
 	if v.Mode() == ModeInsert {
 		doc.BeginInsertGroup(v.ID())
 	}
-	return doc.Apply(tx, v.ID())
+	rev := doc.Revision()
+	before := doc.Text()
+	changes := tx.Changes()
+	if err := doc.Apply(tx, v.ID()); err != nil {
+		return err
+	}
+	if doc.Revision() != rev {
+		e.documentChanged(doc, newDocumentChange(before, changes))
+	}
+	return nil
 }
 
 // CommitInsertHistory flushes any pending insert-mode history accumulation on
@@ -42,7 +51,12 @@ func (e *Editor) Undo() bool {
 	if !ok {
 		return false
 	}
-	return doc.Undo(v.ID())
+	before := doc.Text()
+	if !doc.Undo(v.ID()) {
+		return false
+	}
+	e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
+	return true
 }
 
 // Redo reapplies one reverted step in the focused document
@@ -55,7 +69,12 @@ func (e *Editor) Redo() bool {
 	if !ok {
 		return false
 	}
-	return doc.Redo(v.ID())
+	before := doc.Text()
+	if !doc.Redo(v.ID()) {
+		return false
+	}
+	e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
+	return true
 }
 
 // Earlier navigates history backward by the given UndoKind
@@ -68,6 +87,7 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 	if !ok {
 		return false
 	}
+	before := doc.text
 	txns := doc.history.Earlier(kind)
 	for _, tx := range txns {
 		inv, err := tx.Invert(doc.text)
@@ -84,7 +104,12 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 		}
 	}
 	doc.modified = len(txns) > 0 || doc.modified
-	return len(txns) > 0
+	if len(txns) == 0 {
+		return false
+	}
+	doc.version++
+	e.documentChanged(doc, wholeDocumentChange(before, doc.text.String()))
+	return true
 }
 
 // Later navigates history forward by the given UndoKind
@@ -97,6 +122,7 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	if !ok {
 		return false
 	}
+	before := doc.text
 	txns := doc.history.Later(kind)
 	for _, tx := range txns {
 		newText, err := tx.Apply(doc.text)
@@ -109,5 +135,10 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 		}
 	}
 	doc.modified = len(txns) > 0 || doc.modified
-	return len(txns) > 0
+	if len(txns) == 0 {
+		return false
+	}
+	doc.version++
+	e.documentChanged(doc, wholeDocumentChange(before, doc.text.String()))
+	return true
 }

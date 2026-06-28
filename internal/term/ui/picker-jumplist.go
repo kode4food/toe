@@ -82,24 +82,12 @@ func (j *jumplistPickerSource) Accept(
 	}
 	if doc, ok := e.Document(v.DocID()); ok {
 		doc.SetSelectionFor(v.ID(), jumpSelection(entry))
-		alignJumplistView(e, v, doc)
+		alignAcceptedView(e, v, doc)
 	}
 }
 
 func jumpSelection(j view.JumpEntry) core.Selection {
 	return j.Selection
-}
-
-func alignJumplistView(e *view.Editor, v *view.View, doc *view.Document) {
-	sel := doc.SelectionFor(v.ID())
-	v.EnsureCursorVisible(
-		doc.Text(), sel, max(v.Area().Height, e.ViewHeight()),
-		e.Options().ScrollOff, nil,
-	)
-	v.EnsureCursorVisibleHorizontal(
-		doc.Text(), sel, e.ViewContentWidth(), doc.TabWidth(),
-		e.Options().ScrollOff,
-	)
 }
 
 func jumpLineRange(text core.Rope, sel core.Selection) (int, *PickerLineRange) {

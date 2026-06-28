@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	"cmp"
 	"maps"
 	"os"
 
@@ -164,7 +165,7 @@ func configModule(r *command.Registry) command.Module {
 			Reset:  func() { *cfg = uiSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.Theme = stringOr(cfg.Theme, view.DefaultTheme)
+				opts.Theme = cmp.Or(cfg.Theme, view.DefaultTheme)
 				opts.Mouse = boolOr(cfg.Editor.Mouse, true)
 				opts.MiddleClickPaste = boolOr(
 					cfg.Editor.MiddleClickPaste, true,

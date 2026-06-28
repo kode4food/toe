@@ -2,11 +2,13 @@ package defaults
 
 import (
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 const (
+	actCompletion           = "completion"
 	actInsertRegister       = "insert_register"
 	actCommitUndoCheckpoint = "commit_undo_checkpoint"
 	actDeleteWordBackward   = "delete_word_backward"
@@ -91,6 +93,19 @@ func insertModule() command.Module {
 				Run:       Runner(action.GotoLineEndNewline),
 				Modes:     []string{"INS"},
 				Keys:      keys(special("end")),
+			},
+		},
+	}
+}
+
+func completionModule(model ui.Model) command.Module {
+	return command.Module{
+		Commands: map[string]command.Command{
+			actCompletion: {
+				DocString: "Complete current word",
+				Run:       Continuation(model.CompletionAction()),
+				Modes:     []string{"INS"},
+				Keys:      keys(ctrl('x')),
 			},
 		},
 	}

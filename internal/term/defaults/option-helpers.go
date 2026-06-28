@@ -22,31 +22,6 @@ func intOr(p *int, def int) int {
 	return *p
 }
 
-func stringOr(s, def string) string {
-	if s == "" {
-		return def
-	}
-	return s
-}
-
-func lineNumberOr(
-	v view.LineNumber, def view.LineNumber,
-) view.LineNumber {
-	if v == "" {
-		return def
-	}
-	return v
-}
-
-func bufferLineOr(
-	v view.BufferLine, def view.BufferLine,
-) view.BufferLine {
-	if v == "" {
-		return def
-	}
-	return v
-}
-
 func editorNullableIntOption(
 	key string, dflt int, get func(*view.Editor) *int,
 	set func(*view.Editor, *int),

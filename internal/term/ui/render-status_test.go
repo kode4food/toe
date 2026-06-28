@@ -77,6 +77,31 @@ func TestStatuslineAltBranches(t *testing.T) {
 	})
 }
 
+func TestStatuslineDiagnostics(t *testing.T) {
+	t.Run("renders diagnostic counts", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+			{Severity: view.DiagnosticSeverityError},
+			{Severity: view.DiagnosticSeverityWarning},
+			{Severity: view.DiagnosticSeverityHint},
+		})
+		e.Options().StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineDiagnostics,
+		}
+		e.Options().StatusLine.Center = nil
+		e.Options().StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "E:1")
+		assert.Contains(t, out, "W:1")
+		assert.Contains(t, out, "H:1")
+	})
+}
+
 func TestModeColorRender(t *testing.T) {
 	t.Run("applies mode color", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())

@@ -11,7 +11,16 @@ func (e *Editor) Save() error {
 	if !ok {
 		return ErrNoDocument
 	}
-	return doc.Save(&e.opts)
+	before := doc.Text()
+	rev := doc.Revision()
+	if err := doc.Save(&e.opts); err != nil {
+		return err
+	}
+	if doc.Revision() != rev {
+		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
+	}
+	e.documentSaved(doc)
+	return nil
 }
 
 // NewDocument creates a new empty scratch document and makes it the focused
@@ -19,6 +28,7 @@ func (e *Editor) Save() error {
 func (e *Editor) NewDocument() *View {
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
+	e.documentOpened(doc)
 	v, ok := e.FocusedView()
 	if ok {
 		v.docID = doc.ID()
@@ -37,9 +47,17 @@ func (e *Editor) SaveAll() []error {
 	var errs []error
 	for _, doc := range e.docs {
 		if doc.Modified() {
+			before := doc.Text()
+			rev := doc.Revision()
 			if err := doc.Save(&e.opts); err != nil {
 				errs = append(errs, err)
+				continue
 			}
+			if doc.Revision() != rev {
+				change := wholeDocumentChange(before, doc.Text().String())
+				e.documentChanged(doc, change)
+			}
+			e.documentSaved(doc)
 		}
 	}
 	return errs
@@ -134,6 +152,7 @@ func (e *Editor) SwitchFile(path string) (*View, error) {
 	}
 	e.recordPrevDoc()
 	e.docs[doc.ID()] = doc
+	e.documentOpened(doc)
 	if v, ok := e.FocusedView(); ok {
 		v.docID = doc.ID()
 		v.offset = Position{}
@@ -176,6 +195,7 @@ func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
 		return nil, err
 	}
 	e.docs[doc.ID()] = doc
+	e.documentOpened(doc)
 	return doc, nil
 }
 

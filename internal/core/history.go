@@ -16,11 +16,9 @@ type (
 		lastEditPos int // char offset of most recent committed change
 	}
 
-	// UndoKind selects whether history navigation uses steps or time
+	// UndoKind selects how many steps history navigation travels
 	UndoKind struct {
-		steps    int
-		duration time.Duration
-		timed    bool
+		steps int
 	}
 
 	revision struct {
@@ -45,12 +43,6 @@ func NewHistory() History {
 
 func UndoSteps(n int) UndoKind {
 	return UndoKind{steps: n}
-}
-
-// UndoDuration constructs an UndoKind that travels to the nearest revision
-// whose timestamp is d before (for Earlier) or d after (for Later) the current
-func UndoDuration(d time.Duration) UndoKind {
-	return UndoKind{duration: d, timed: true}
 }
 
 func (h *History) CurrentRevision() int {
@@ -114,16 +106,10 @@ func (h *History) Redo() (Transaction, bool) {
 }
 
 func (h *History) Earlier(kind UndoKind) []Transaction {
-	if kind.timed {
-		return h.jumpDurationBackward(kind.duration)
-	}
 	return h.jumpBackward(kind.steps)
 }
 
 func (h *History) Later(kind UndoKind) []Transaction {
-	if kind.timed {
-		return h.jumpDurationForward(kind.duration)
-	}
 	return h.jumpForward(kind.steps)
 }
 
@@ -183,35 +169,4 @@ func (h *History) jumpForward(delta int) []Transaction {
 		to = len(h.revisions) - 1
 	}
 	return h.jumpTo(to)
-}
-
-func (h *History) jumpDurationBackward(d time.Duration) []Transaction {
-	target := h.revisions[h.current].timestamp.Add(-d)
-	return h.jumpInstant(target)
-}
-
-func (h *History) jumpDurationForward(d time.Duration) []Transaction {
-	target := h.revisions[h.current].timestamp.Add(d)
-	return h.jumpInstant(target)
-}
-
-func (h *History) jumpInstant(target time.Time) []Transaction {
-	best := 0
-	bestDist := absDuration(h.revisions[0].timestamp.Sub(target))
-	for i := 1; i < len(h.revisions); i++ {
-		d := absDuration(h.revisions[i].timestamp.Sub(target))
-		if d > bestDist {
-			continue
-		}
-		best = i
-		bestDist = d
-	}
-	return h.jumpTo(best)
-}
-
-func absDuration(d time.Duration) time.Duration {
-	if d < 0 {
-		return -d
-	}
-	return d
 }

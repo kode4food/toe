@@ -17,8 +17,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// pathPickerSource is a minimal PickerSource that returns one item
-// with a Location.Target.Path set to the given path.
+// pathPickerSource is a minimal PickerSource that returns one item with a
+// Location.Target.Path set to the given path
 type pathPickerSource struct{ path string }
 
 func (p *pathPickerSource) Title() string {

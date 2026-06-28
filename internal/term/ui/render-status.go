@@ -107,6 +107,7 @@ var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLineFileLineEnding:   statusElemLineEnding,
 	view.StatusLineFileIndentStyle:  statusElemIndentStyle,
 	view.StatusLineFileType:         statusElemFileType,
+	view.StatusLineDiagnostics:      statusElemDiagnostics,
 	view.StatusLineRegister:         statusElemRegister,
 }
 
@@ -560,6 +561,30 @@ func statusElemFileType(s *statusElemCtx) statusElem {
 		lang = "text"
 	}
 	return statusElem{text: " " + lang + " ", style: s.baseTUI}
+}
+
+func statusElemDiagnostics(s *statusElemCtx) statusElem {
+	counts := s.doc.DiagnosticCounts()
+	var parts []string
+	if counts.Errors > 0 {
+		parts = append(parts, fmt.Sprintf("E:%d", counts.Errors))
+	}
+	if counts.Warnings > 0 {
+		parts = append(parts, fmt.Sprintf("W:%d", counts.Warnings))
+	}
+	if counts.Info > 0 {
+		parts = append(parts, fmt.Sprintf("I:%d", counts.Info))
+	}
+	if counts.Hints > 0 {
+		parts = append(parts, fmt.Sprintf("H:%d", counts.Hints))
+	}
+	if len(parts) == 0 {
+		return statusElem{}
+	}
+	return statusElem{
+		text:  " " + strings.Join(parts, " ") + " ",
+		style: s.baseTUI,
+	}
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {

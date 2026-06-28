@@ -22,8 +22,9 @@ type (
 		modifiedSinceAccessed bool
 		hasBOM                bool
 
-		selections map[Id]core.Selection
-		history    core.History
+		selections  map[Id]core.Selection
+		history     core.History
+		diagnostics []Diagnostic
 
 		version   int
 		insertAcc *insertAccum

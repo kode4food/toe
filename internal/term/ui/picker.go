@@ -132,7 +132,7 @@ const (
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
 		source:       source,
-		previewCache: newPreviewCache(),
+		previewCache: previewCache{},
 		cancel:       func() {},
 	}
 	items, feed, stop := source.Load(e)
@@ -272,4 +272,16 @@ func acceptPath(
 		return nil, false
 	}
 	return acceptDocumentID(e, doc.ID(), action)
+}
+
+func alignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
+	sel := doc.SelectionFor(v.ID())
+	v.EnsureCursorVisible(
+		doc.Text(), sel, max(v.Area().Height, e.ViewHeight()),
+		e.Options().ScrollOff, nil,
+	)
+	v.EnsureCursorVisibleHorizontal(
+		doc.Text(), sel, e.ViewContentWidth(), doc.TabWidth(),
+		e.Options().ScrollOff,
+	)
 }

@@ -58,12 +58,6 @@ type (
 		Path string
 		Err  error
 	}
-
-	// DocumentSavedEvent carries information about a successfully saved doc
-	DocumentSavedEvent struct {
-		DocID DocumentId
-		Path  string
-	}
 )
 
 const (

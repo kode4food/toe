@@ -20,12 +20,12 @@ var (
 	//go:embed assets/themes
 	embeddedThemes embed.FS
 
-	supportedThemeNames = sortedStrings(
+	supportedThemeNames = slices.Sorted(slices.Values([]string{
 		"frappe",
 		"latte",
 		"macchiato",
 		"mocha",
-	)
+	}))
 )
 
 func ThemeNames() []string {
@@ -72,23 +72,17 @@ func resolveInherits(
 }
 
 func themeFileForLoad(name string, seen map[string]bool) (string, error) {
-	filename := name + ".toml"
-	cycle := false
 	if !supportedThemeName(name) {
 		return "", fmt.Errorf("%w: %s", ErrThemeNotFound, name)
 	}
-	embPath := "assets/themes/" + filename
+	embPath := "assets/themes/" + name + ".toml"
 	if _, err := embeddedThemes.Open(embPath); err == nil {
 		key := "embed:" + embPath
 		if seen[key] {
-			cycle = true
-		} else {
-			seen[key] = true
-			return "embed:" + embPath, nil
+			return "", fmt.Errorf("%w: %s", ErrThemeCycle, name)
 		}
-	}
-	if cycle {
-		return "", fmt.Errorf("%w: %s", ErrThemeCycle, name)
+		seen[key] = true
+		return "embed:" + embPath, nil
 	}
 	return "", fmt.Errorf("%w: %s", ErrThemeNotFound, name)
 }
@@ -127,9 +121,4 @@ func decodeThemeTOML(text string) (map[string]any, error) {
 		return nil, err
 	}
 	return theme, nil
-}
-
-func sortedStrings(s ...string) []string {
-	slices.Sort(s)
-	return s
 }

@@ -616,7 +616,7 @@ func (s *Session) startClient(
 ) (*Client, bool) {
 	root := s.workspaceRoot(doc, lang)
 	handler := &clientHandler{session: s, name: name}
-	_, client, err := s.registry.Start(s.ctx, name, root, handler)
+	client, err := s.registry.Start(s.ctx, name, root, handler)
 	if err != nil {
 		return nil, false
 	}

@@ -3,9 +3,8 @@ package core
 type (
 	// Range is a selection span with an immovable anchor and movable head
 	Range struct {
-		Anchor            int
-		Head              int
-		OldVisualPosition *Position
+		Anchor int
+		Head   int
 	}
 
 	// LineRange is an inclusive range of document lines
@@ -61,11 +60,7 @@ func (r Range) Direction() Direction {
 }
 
 func (r Range) Flip() Range {
-	return Range{
-		Anchor:            r.Head,
-		Head:              r.Anchor,
-		OldVisualPosition: r.OldVisualPosition,
-	}
+	return Range{Anchor: r.Head, Head: r.Anchor}
 }
 
 func (r Range) WithDirection(dir Direction) Range {
@@ -130,27 +125,17 @@ func (r Range) GraphemeAligned(doc Rope) Range {
 	switch {
 	case r.Anchor == r.Head:
 		pos := EnsureGraphemeBoundaryPrev(doc, r.Anchor)
-		return Range{
-			Anchor:            pos,
-			Head:              pos,
-			OldVisualPosition: r.OldVisualPosition,
-		}
+		return Range{Anchor: pos, Head: pos}
 	case r.Anchor < r.Head:
-		a := EnsureGraphemeBoundaryPrev(doc, r.Anchor)
-		h := EnsureGraphemeBoundaryNext(doc, r.Head)
-		ovp := r.OldVisualPosition
-		if a != r.Anchor {
-			ovp = nil
+		return Range{
+			Anchor: EnsureGraphemeBoundaryPrev(doc, r.Anchor),
+			Head:   EnsureGraphemeBoundaryNext(doc, r.Head),
 		}
-		return Range{Anchor: a, Head: h, OldVisualPosition: ovp}
 	default:
-		a := EnsureGraphemeBoundaryNext(doc, r.Anchor)
-		h := EnsureGraphemeBoundaryPrev(doc, r.Head)
-		ovp := r.OldVisualPosition
-		if a != r.Anchor {
-			ovp = nil
+		return Range{
+			Anchor: EnsureGraphemeBoundaryNext(doc, r.Anchor),
+			Head:   EnsureGraphemeBoundaryPrev(doc, r.Head),
 		}
-		return Range{Anchor: a, Head: h, OldVisualPosition: ovp}
 	}
 }
 
@@ -160,11 +145,7 @@ func (r Range) MinWidth1(doc Rope) Range {
 	if r.Anchor != r.Head {
 		return r
 	}
-	return Range{
-		Anchor:            r.Anchor,
-		Head:              NextGraphemeBoundary(doc, r.Head),
-		OldVisualPosition: r.OldVisualPosition,
-	}
+	return Range{Anchor: r.Anchor, Head: NextGraphemeBoundary(doc, r.Head)}
 }
 
 // IsSingleGrapheme reports whether this range covers exactly one grapheme

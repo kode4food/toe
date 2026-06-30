@@ -60,4 +60,17 @@ func TestDiagnostics(t *testing.T) {
 		assert.Equal(t, 1, counts.Info)
 		assert.Equal(t, 1, counts.Hints)
 	})
+
+	t.Run("clears diagnostics", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+			{Severity: view.DiagnosticSeverityError},
+		})
+
+		doc.ClearDiagnostics()
+
+		assert.Empty(t, doc.Diagnostics())
+	})
 }

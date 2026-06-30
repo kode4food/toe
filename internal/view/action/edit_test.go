@@ -237,6 +237,21 @@ func TestSelectLineBelow(t *testing.T) {
 		sel := doc.SelectionFor(v.ID())
 		assert.GreaterOrEqual(t, sel.Primary().To()-sel.Primary().From(), 0)
 	})
+
+	t.Run("extends snapped forward selection", func(t *testing.T) {
+		// Start with a line-aligned forward selection (0→3 covers "ab\n"), then
+		// extend again so anchorLine < headLine is reached with cnt > 0
+		e := editorWithText(t, "ab\ncd\nef")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
+		action.SelectLineBelow(e)
+
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, 0, sel.Primary().From())
+		assert.Equal(t, 6, sel.Primary().To())
+	})
 }
 
 func TestSelectLineAbove(t *testing.T) {
@@ -529,6 +544,24 @@ func TestNormalMode(t *testing.T) {
 
 	t.Run("noop when already normal", func(t *testing.T) {
 		e := editorWithText(t, "abc")
+
+		action.NormalMode(e)
+
+		assert.Equal(t, view.ModeNormal, e.Mode())
+	})
+
+	t.Run("exits insert mode with no view", func(t *testing.T) {
+		e := editorWithNoView(t)
+		e.SetMode(view.ModeInsert)
+
+		action.NormalMode(e)
+
+		assert.Equal(t, view.ModeNormal, e.Mode())
+	})
+
+	t.Run("exits insert mode with missing document", func(t *testing.T) {
+		e := editorWithMissingFocusedDocument(t)
+		e.SetMode(view.ModeInsert)
 
 		action.NormalMode(e)
 
@@ -951,6 +984,34 @@ func TestCountOrOne(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "a\n\n\nb", doc.Text().String())
+	})
+}
+
+func TestInsertCharDuplicate(t *testing.T) {
+	t.Run("same-position cursors insert once", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		setSelection(t, e, []core.Range{
+			core.PointRange(0),
+			core.PointRange(0),
+		}, 0)
+
+		action.InsertChar(e, 'x')
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "xabc", doc.Text().String())
+	})
+}
+
+func TestDeleteCharBackwardAutoPair(t *testing.T) {
+	t.Run("deletes auto-pair bracket", func(t *testing.T) {
+		e := editorWithText(t, "()")
+		e.SetMode(view.ModeInsert)
+		setCursor(t, e, 1)
+
+		action.DeleteCharBackward(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "", doc.Text().String())
 	})
 }
 

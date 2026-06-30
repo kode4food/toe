@@ -35,6 +35,8 @@ type (
 
 	BufferLine string
 
+	DiagnosticFilter string
+
 	Whitespace struct {
 		Render     WhitespaceRender     `toml:"render"`
 		Characters WhitespaceCharacters `toml:"characters"`
@@ -128,6 +130,12 @@ const (
 	DefaultScrollLines   = 3
 	DefaultAutoSaveDelay = 3000
 
+	DiagnosticFilterDisable DiagnosticFilter = "disable"
+	DiagnosticFilterHint    DiagnosticFilter = "hint"
+	DiagnosticFilterInfo    DiagnosticFilter = "info"
+	DiagnosticFilterWarning DiagnosticFilter = "warning"
+	DiagnosticFilterError   DiagnosticFilter = "error"
+
 	WhitespaceRenderNone WhitespaceRenderValue = "none"
 	WhitespaceRenderAll  WhitespaceRenderValue = "all"
 
@@ -140,7 +148,7 @@ const (
 
 	DefaultIndentGuideChar = '\u2502' // U+2502 box drawings light vertical
 
-	DefaultStatusLineSeparator = "\u2502" // '│' - box drawings light vertical
+	DefaultStatusLineSeparator = "\u2502" // '│' box drawings light vertical
 
 	GutterTypeDiagnostics GutterType = "diagnostics"
 	GutterTypeLineNumbers GutterType = "line-numbers"
@@ -155,6 +163,7 @@ var (
 	ErrInvalidLineNumber       = errors.New("invalid line-number value")
 	ErrInvalidStatusLine       = errors.New("invalid statusline element")
 	ErrInvalidWhitespaceRender = errors.New("invalid whitespace render value")
+	ErrInvalidDiagnosticFilter = errors.New("invalid diagnostic filter")
 	ErrInvalidGutterType       = errors.New("invalid gutter type")
 	ErrInvalidBufferLine       = errors.New("invalid bufferline value")
 )
@@ -183,12 +192,35 @@ func ParseBufferLine(value string) (BufferLine, error) {
 	return b, nil
 }
 
+func ParseDiagnosticFilter(value string) (DiagnosticFilter, error) {
+	var f DiagnosticFilter
+	if err := f.UnmarshalText([]byte(value)); err != nil {
+		return "", fmt.Errorf("%w: %s", ErrInvalidDiagnosticFilter, value)
+	}
+	return f, nil
+}
+
 func ParseWhitespaceRenderValue(s string) (WhitespaceRenderValue, error) {
 	switch WhitespaceRenderValue(s) {
 	case WhitespaceRenderNone, WhitespaceRenderAll:
 		return WhitespaceRenderValue(s), nil
 	default:
 		return "", fmt.Errorf("%w: %s", ErrInvalidWhitespaceRender, s)
+	}
+}
+
+func (f DiagnosticFilter) Allows(severity DiagnosticSeverity) bool {
+	switch f {
+	case DiagnosticFilterDisable:
+		return false
+	case DiagnosticFilterError:
+		return severity >= DiagnosticSeverityError
+	case DiagnosticFilterWarning:
+		return severity >= DiagnosticSeverityWarning
+	case DiagnosticFilterInfo:
+		return severity >= DiagnosticSeverityInfo
+	default:
+		return severity >= DiagnosticSeverityHint
 	}
 }
 
@@ -269,6 +301,17 @@ func (b *BufferLine) UnmarshalText(text []byte) error {
 		*b = BufferLine(text)
 	default:
 		return fmt.Errorf("%w: %s", ErrInvalidBufferLine, text)
+	}
+	return nil
+}
+
+func (f *DiagnosticFilter) UnmarshalText(text []byte) error {
+	switch DiagnosticFilter(text) {
+	case DiagnosticFilterDisable, DiagnosticFilterHint, DiagnosticFilterInfo,
+		DiagnosticFilterWarning, DiagnosticFilterError:
+		*f = DiagnosticFilter(text)
+	default:
+		return fmt.Errorf("%w: %s", ErrInvalidDiagnosticFilter, text)
 	}
 	return nil
 }

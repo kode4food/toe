@@ -25,6 +25,7 @@ type completionComponent struct {
 type completionAnchor struct {
 	docID  view.DocumentId
 	viewID view.Id
+	rev    int
 	pos    int
 }
 
@@ -141,6 +142,9 @@ func (c *completionComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 }
 
 func (c *completionComponent) valid(cx *Context) bool {
+	if cx.Editor.Mode() != view.ModeInsert {
+		return false
+	}
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok || doc.ID() != c.anchor.docID {
 		return false

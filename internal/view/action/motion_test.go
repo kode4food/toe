@@ -1,6 +1,7 @@
 package action_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -768,6 +769,54 @@ func TestGotoFile(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, relPath, path)
+	})
+
+	t.Run("uses document link", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "target.txt")
+		assert.NoError(t, os.WriteFile(target, []byte("x"), 0o644))
+		e := editorWithText(t, "not-a-real-path")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{
+			{From: 0, To: 15, Target: "file://" + target},
+		})
+		setCursor(t, e, 2)
+
+		path, err := action.GotoFile(e)
+
+		assert.NoError(t, err)
+		assert.Equal(t, target, path)
+	})
+
+	t.Run("rejects external link", func(t *testing.T) {
+		e := editorWithText(t, "https://example.com")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{
+			{From: 0, To: 19, Target: "https://example.com"},
+		})
+		setCursor(t, e, 2)
+
+		_, err := action.GotoFile(e)
+
+		assert.True(t, errors.Is(err, action.ErrDocumentLinkTarget))
+	})
+
+	t.Run("returns external target", func(t *testing.T) {
+		e := editorWithText(t, "https://example.com")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{
+			{From: 0, To: 19, Target: "https://example.com"},
+		})
+		setCursor(t, e, 2)
+
+		target, err := action.GotoFileTarget(e)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "https://example.com", target.URL)
+		assert.Empty(t, target.Path)
 	})
 
 	t.Run("cursor in middle expands outward", func(t *testing.T) {

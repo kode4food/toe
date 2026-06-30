@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/kode4food/toe/internal/view/language"
@@ -92,7 +93,13 @@ func commandEnv(env map[string]string) []string {
 	if len(env) == 0 {
 		return os.Environ()
 	}
-	out := append([]string(nil), os.Environ()...)
+	out := make([]string, 0, len(os.Environ())+len(env))
+	for _, e := range os.Environ() {
+		k, _, _ := strings.Cut(e, "=")
+		if _, override := env[k]; !override {
+			out = append(out, e)
+		}
+	}
 	keys := make([]string, 0, len(env))
 	for k := range env {
 		keys = append(keys, k)

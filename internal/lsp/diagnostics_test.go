@@ -54,6 +54,37 @@ func TestDiagnostics(t *testing.T) {
 		assert.Equal(t, view.DiagnosticRange{From: 0, To: 1}, diags[0].Range)
 	})
 
+	t.Run("maps all severity levels", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer session.Close()
+
+		err = session.PublishDiagnostics(
+			t.Context(),
+			&protocol.PublishDiagnosticsParams{
+				URI: uri.File(path),
+				Diagnostics: []protocol.Diagnostic{
+					{Range: protocol.Range{}, Severity: protocol.DiagnosticSeverityWarning, Message: protocol.String("warn")},
+					{Range: protocol.Range{}, Severity: protocol.DiagnosticSeverityInformation, Message: protocol.String("info")},
+					{Range: protocol.Range{}, Severity: protocol.DiagnosticSeverityHint, Message: protocol.String("hint")},
+				},
+			},
+		)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		diags := doc.Diagnostics()
+		assert.NoError(t, err)
+		assert.Len(t, diags, 3)
+		assert.Equal(t, view.DiagnosticSeverityWarning, diags[0].Severity)
+		assert.Equal(t, view.DiagnosticSeverityInfo, diags[1].Severity)
+		assert.Equal(t, view.DiagnosticSeverityHint, diags[2].Severity)
+	})
+
 	t.Run("ignores stale versions", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "main.go")

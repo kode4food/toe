@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"github.com/mattn/go-runewidth"
+
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -18,6 +20,11 @@ type (
 		ig                  view.IndentGuides
 		hlSpans             []highlight.Span
 		searchMatches       []matchSpan
+		docHighlights       []matchSpan
+		docLinks            []matchSpan
+		docColors           []colorSpan
+		diagnostics         []diagnosticSpan
+		annotations         []inlineAnnotation
 		selSpans            []selectionSpan
 		primaryCursorCols   map[int]bool
 		secondaryCursorCols map[int]bool
@@ -115,6 +122,16 @@ func (r *rowRender) rows() []renderedRow {
 
 	wsRender := r.ws.Render
 	wsChars := r.ws.Characters
+	annIdx := 0
+	writeAnnotations := func(pos int) {
+		for annIdx < len(r.annotations) && r.annotations[annIdx].pos == pos {
+			ann := r.annotations[annIdx]
+			writeRendered(
+				ann.text, runewidth.StringWidth(ann.text), ann.style,
+			)
+			annIdx++
+		}
+	}
 	for _, ch := range r.lineStr {
 		if r.softWrap && breakIdx < len(breaks) &&
 			pos-r.lineStart == breaks[breakIdx] {
@@ -127,6 +144,9 @@ func (r *rowRender) rows() []renderedRow {
 		if windowed && col >= hEnd {
 			break
 		}
+		if r.annotations != nil {
+			writeAnnotations(pos)
+		}
 		colBefore := col
 		rendered, width, glyph := r.renderGrapheme(rowGraphemeArgs{
 			ch: ch, col: col, indentCol: indentCol,
@@ -135,6 +155,16 @@ func (r *rowRender) rows() []renderedRow {
 		col += width
 		selAt := r.selectionAt(pos)
 		ts := r.tuiStyles
+		var colorStyle tui.Style
+		colorOK := false
+		if r.docColors != nil {
+			colorStyle, colorOK = r.colorAt(pos)
+		}
+		var diagStyle tui.Style
+		diagOK := false
+		if r.diagnostics != nil {
+			diagStyle, diagOK = r.diagnosticAt(pos)
+		}
 		switch {
 		case selAt.cursor && selAt.primary && r.cursorIsBlock:
 			writeRendered(rendered, width, ts.cursorPrim)
@@ -148,8 +178,22 @@ func (r *rowRender) rows() []renderedRow {
 			writeRendered(rendered, width, overlaySelStyle(
 				r.baseStyleAt(pos, glyph), ts.selection,
 			))
+		case rangeMatch(r.docHighlights, pos):
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.documentHighlight,
+			))
+		case rangeMatch(r.docLinks, pos):
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.documentLink,
+			))
+		case colorOK:
+			writeRendered(rendered, width, colorStyle)
 		case r.searchMatch(pos):
 			writeRendered(rendered, width, ts.searchMatch)
+		case diagOK:
+			writeRendered(rendered, width, overlayDiagnosticStyle(
+				r.baseStyleAt(pos, glyph), diagStyle,
+			))
 		case glyph == documentGlyphGuide:
 			writeRendered(rendered, width, ts.indentGuide)
 		case glyph == documentGlyphWhitespace:
@@ -172,6 +216,9 @@ func (r *rowRender) rows() []renderedRow {
 			writeRendered(rendered, width, ts.text)
 		}
 		pos++
+	}
+	if r.annotations != nil {
+		writeAnnotations(pos)
 	}
 
 	if wsRender.NewlineRender() == view.WhitespaceRenderAll &&
@@ -211,10 +258,48 @@ func (r *rowRender) selectionAt(pos int) selectionAtRes {
 }
 
 func (r *rowRender) searchMatch(pos int) bool {
-	lo, hi := 0, len(r.searchMatches)-1
+	return rangeMatch(r.searchMatches, pos)
+}
+
+func (r *rowRender) colorAt(pos int) (tui.Style, bool) {
+	lo, hi := 0, len(r.docColors)-1
 	for lo <= hi {
 		mid := (lo + hi) / 2
-		sp := r.searchMatches[mid]
+		sp := r.docColors[mid]
+		if pos < sp.from {
+			hi = mid - 1
+		} else if pos >= sp.to {
+			lo = mid + 1
+		} else {
+			return sp.style, true
+		}
+	}
+	return tui.Style{}, false
+}
+
+func (r *rowRender) diagnosticAt(pos int) (tui.Style, bool) {
+	var best diagnosticSpan
+	ok := false
+	for _, sp := range r.diagnostics {
+		if pos < sp.from {
+			break
+		}
+		if pos >= sp.to {
+			continue
+		}
+		if !ok || sp.severity > best.severity {
+			best = sp
+			ok = true
+		}
+	}
+	return best.style, ok
+}
+
+func rangeMatch(ranges []matchSpan, pos int) bool {
+	lo, hi := 0, len(ranges)-1
+	for lo <= hi {
+		mid := (lo + hi) / 2
+		sp := ranges[mid]
 		if pos < sp.from {
 			hi = mid - 1
 		} else if pos >= sp.to {
@@ -250,6 +335,25 @@ func overlaySelStyle(base, sel tui.Style) tui.Style {
 	}
 	if !sel.FgColor().IsReset() {
 		base = base.Fg(sel.FgColor())
+	}
+	return base
+}
+
+func overlayDiagnosticStyle(base, diag tui.Style) tui.Style {
+	if !diag.FgColor().IsReset() {
+		base = base.Fg(diag.FgColor())
+	}
+	if !diag.BgColor().IsReset() {
+		base = base.Bg(diag.BgColor())
+	}
+	if !diag.UnderlineColor().IsReset() {
+		base = base.UlColor(diag.UnderlineColor())
+	}
+	if diag.UnderlineStyle() != tui.UnderlineReset {
+		base = base.UlStyle(diag.UnderlineStyle())
+	}
+	if mod := diag.Modifier(); mod != 0 {
+		base = base.Mod(mod)
 	}
 	return base
 }

@@ -35,7 +35,7 @@ func NewInitializeParams(cfg InitializeConfig) *protocol.InitializeParams {
 	return params
 }
 
-// DefaultClientCapabilities returns the editor's declared LSP client capabilities
+// DefaultClientCapabilities returns the editor's LSP client capabilities
 func DefaultClientCapabilities() protocol.ClientCapabilities {
 	yes := true
 	no := false
@@ -45,6 +45,14 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 			WorkspaceFolders:       &yes,
 			ApplyEdit:              &yes,
 			DidChangeConfiguration: dynamicRegistration(false),
+			DidChangeWatchedFiles: &protocol.
+				DidChangeWatchedFilesClientCapabilities{
+				DynamicRegistration:    &yes,
+				RelativePatternSupport: &yes,
+			},
+			Symbol: &protocol.WorkspaceSymbolClientCapabilities{
+				DynamicRegistration: &no,
+			},
 			WorkspaceEdit: &protocol.WorkspaceEditClientCapabilities{
 				DocumentChanges: &yes,
 				ResourceOperations: []protocol.ResourceOperationKind{
@@ -54,6 +62,17 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 				},
 				FailureHandling:       protocol.FailureHandlingKindAbort,
 				NormalizesLineEndings: &no,
+			},
+			InlayHint: &protocol.InlayHintWorkspaceClientCapabilities{
+				RefreshSupport: &no,
+			},
+			FileOperations: &protocol.FileOperationClientCapabilities{
+				WillCreate: &yes,
+				DidCreate:  &yes,
+				WillRename: &yes,
+				DidRename:  &yes,
+				WillDelete: &yes,
+				DidDelete:  &yes,
 			},
 		},
 		TextDocument: &protocol.TextDocumentClientCapabilities{
@@ -90,6 +109,22 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 			DocumentSymbol: &protocol.DocumentSymbolClientCapabilities{
 				HierarchicalDocumentSymbolSupport: &no,
 			},
+			CodeAction: &protocol.CodeActionClientCapabilities{
+				DynamicRegistration: &no,
+				ResolveSupport: protocol.ClientCodeActionResolveOptions{
+					Properties: []string{"edit", "command"},
+				},
+			},
+			DocumentLink: &protocol.DocumentLinkClientCapabilities{
+				DynamicRegistration: &no,
+				TooltipSupport:      &yes,
+			},
+			ColorProvider: &protocol.DocumentColorClientCapabilities{
+				DynamicRegistration: &no,
+			},
+			InlayHint: &protocol.InlayHintClientCapabilities{
+				DynamicRegistration: &no,
+			},
 		},
 		Window: &protocol.WindowClientCapabilities{
 			WorkDoneProgress: &yes,
@@ -107,7 +142,7 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 	}
 }
 
-// OffsetEncoding resolves the preferred position encoding from server capabilities
+// OffsetEncoding resolves the preferred position encoding
 func OffsetEncoding(
 	capabilities protocol.ServerCapabilities,
 ) protocol.PositionEncodingKind {

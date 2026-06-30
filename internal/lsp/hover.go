@@ -75,42 +75,7 @@ func hoverContentsText(contents protocol.HoverContents) string {
 			return ""
 		}
 		return v.Value
-	//lint:ignore SA1019 LSP hover contents still permit MarkedString variants
-	case *protocol.MarkedStringWithLanguage:
-		return markedStringWithLanguageText(v)
-	case protocol.MarkedStringSlice:
-		parts := make([]string, 0, len(v))
-		for _, item := range v {
-			if text := markedStringText(item); text != "" {
-				parts = append(parts, text)
-			}
-		}
-		return strings.Join(parts, "\n\n")
 	default:
 		return ""
 	}
-}
-
-//lint:ignore SA1019 LSP hover contents still permit MarkedString variants
-func markedStringText(s protocol.MarkedString) string {
-	switch v := s.(type) {
-	case protocol.String:
-		return string(v)
-	//lint:ignore SA1019 LSP hover contents still permit MarkedString variants
-	case *protocol.MarkedStringWithLanguage:
-		return markedStringWithLanguageText(v)
-	default:
-		return ""
-	}
-}
-
-//lint:ignore SA1019 LSP hover contents still permit MarkedString variants
-func markedStringWithLanguageText(s *protocol.MarkedStringWithLanguage) string {
-	if s == nil {
-		return ""
-	}
-	if s.Language == "markdown" {
-		return s.Value
-	}
-	return "```" + s.Language + "\n" + s.Value + "\n```"
 }

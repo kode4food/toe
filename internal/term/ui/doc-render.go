@@ -32,13 +32,11 @@ func lineNumberDigits(text core.Rope) int {
 	return digitCount(lastDrawn)
 }
 
-// gutterWidthFor returns the gutter width for the given line-number config, or
-// 0 when line numbers are not shown
+// gutterWidthFor returns the total configured gutter width
 func gutterWidthFor(text core.Rope, g view.Gutter) int {
-	if !g.HasGutterType(view.GutterTypeLineNumbers) {
-		return 0
-	}
-	return max(lineNumberDigits(text), g.LineNumberMinWidth()) + 1
+	layout := g.GutterLayout()
+	lineNumberW := gutterLineNumberWidth(text, g, layout)
+	return gutterLayoutWidth(layout, lineNumberW)
 }
 
 func bufferlineVisible(cx *Context) bool {

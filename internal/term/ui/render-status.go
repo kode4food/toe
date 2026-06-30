@@ -20,37 +20,65 @@ import (
 
 type (
 	lipglossStyles struct {
-		background       lipgloss.Style
-		text             lipgloss.Style
-		line             lipgloss.Style
-		lineSelected     lipgloss.Style
-		selection        lipgloss.Style
-		selectionPrim    lipgloss.Style
-		cursor           lipgloss.Style
-		cursorPrim       lipgloss.Style
-		cursorlinePrim   lipgloss.Style
-		cursorlineSec    lipgloss.Style
-		cursorcolumnPrim lipgloss.Style
-		cursorcolumnSec  lipgloss.Style
-		whitespace       lipgloss.Style
-		indentGuide      lipgloss.Style
-		ruler            lipgloss.Style
-		searchMatch      lipgloss.Style
+		background        lipgloss.Style
+		text              lipgloss.Style
+		line              lipgloss.Style
+		lineSelected      lipgloss.Style
+		selection         lipgloss.Style
+		selectionPrim     lipgloss.Style
+		cursor            lipgloss.Style
+		cursorPrim        lipgloss.Style
+		cursorlinePrim    lipgloss.Style
+		cursorlineSec     lipgloss.Style
+		cursorcolumnPrim  lipgloss.Style
+		cursorcolumnSec   lipgloss.Style
+		whitespace        lipgloss.Style
+		indentGuide       lipgloss.Style
+		ruler             lipgloss.Style
+		inlayHint         lipgloss.Style
+		inlayHintType     lipgloss.Style
+		inlayHintParam    lipgloss.Style
+		severityHint      lipgloss.Style
+		severityInfo      lipgloss.Style
+		severityWarning   lipgloss.Style
+		severityError     lipgloss.Style
+		diagnostic        lipgloss.Style
+		diagnosticHint    lipgloss.Style
+		diagnosticInfo    lipgloss.Style
+		diagnosticWarning lipgloss.Style
+		diagnosticError   lipgloss.Style
+		documentHighlight lipgloss.Style
+		documentLink      lipgloss.Style
+		searchMatch       lipgloss.Style
 	}
 
 	tuiStyles struct {
-		text             tui.Style
-		selection        tui.Style
-		selectionPrim    tui.Style
-		cursor           tui.Style
-		cursorPrim       tui.Style
-		cursorlinePrim   tui.Style
-		cursorlineSec    tui.Style
-		cursorcolumnPrim tui.Style
-		cursorcolumnSec  tui.Style
-		whitespace       tui.Style
-		indentGuide      tui.Style
-		searchMatch      tui.Style
+		text              tui.Style
+		selection         tui.Style
+		selectionPrim     tui.Style
+		cursor            tui.Style
+		cursorPrim        tui.Style
+		cursorlinePrim    tui.Style
+		cursorlineSec     tui.Style
+		cursorcolumnPrim  tui.Style
+		cursorcolumnSec   tui.Style
+		whitespace        tui.Style
+		indentGuide       tui.Style
+		inlayHint         tui.Style
+		inlayHintType     tui.Style
+		inlayHintParam    tui.Style
+		severityHint      tui.Style
+		severityInfo      tui.Style
+		severityWarning   tui.Style
+		severityError     tui.Style
+		diagnostic        tui.Style
+		diagnosticHint    tui.Style
+		diagnosticInfo    tui.Style
+		diagnosticWarning tui.Style
+		diagnosticError   tui.Style
+		documentHighlight tui.Style
+		documentLink      tui.Style
+		searchMatch       tui.Style
 	}
 
 	// statusElem is a single rendered piece of a status bar
@@ -80,7 +108,7 @@ type (
 )
 
 // statusDropOrder lists element groups to remove, in priority order, when the
-// status bar is too narrow to fit all elements. Mode is never dropped.
+// status bar is too narrow to fit all elements. Mode is never dropped
 var statusDropOrder = [][]view.StatusLineElement{
 	{
 		view.StatusLineFileName,
@@ -118,22 +146,53 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
 	cl := th.Get("ui.cursorline.primary")
 	st := lipglossStyles{
-		background:       th.Get("ui.background"),
-		text:             th.Get("ui.text"),
-		line:             th.Get("ui.linenr"),
-		lineSelected:     th.Get("ui.linenr.selected"),
-		selection:        sel,
-		selectionPrim:    sel,
-		cursor:           cur,
-		cursorPrim:       curPrim,
-		cursorlinePrim:   cl,
-		cursorlineSec:    cl,
-		cursorcolumnPrim: cl,
-		cursorcolumnSec:  cl,
-		whitespace:       th.Get("ui.virtual.whitespace"),
-		indentGuide:      th.Get("ui.virtual.indent-guide"),
-		ruler:            th.Get("ui.virtual.ruler"),
-		searchMatch:      searchMatchStyle(),
+		background:        th.Get("ui.background"),
+		text:              th.Get("ui.text"),
+		line:              th.Get("ui.linenr"),
+		lineSelected:      th.Get("ui.linenr.selected"),
+		selection:         sel,
+		selectionPrim:     sel,
+		cursor:            cur,
+		cursorPrim:        curPrim,
+		cursorlinePrim:    cl,
+		cursorlineSec:     cl,
+		cursorcolumnPrim:  cl,
+		cursorcolumnSec:   cl,
+		whitespace:        th.Get("ui.virtual.whitespace"),
+		indentGuide:       th.Get("ui.virtual.indent-guide"),
+		ruler:             th.Get("ui.virtual.ruler"),
+		inlayHint:         th.Get("ui.virtual"),
+		inlayHintType:     th.Get("ui.virtual"),
+		inlayHintParam:    th.Get("ui.virtual"),
+		severityHint:      th.Get("hint"),
+		severityInfo:      th.Get("info"),
+		severityWarning:   th.Get("warning"),
+		severityError:     th.Get("error"),
+		diagnostic:        th.Get("diagnostic"),
+		diagnosticHint:    th.Get("diagnostic.hint"),
+		diagnosticInfo:    th.Get("diagnostic.info"),
+		diagnosticWarning: th.Get("diagnostic.warning"),
+		diagnosticError:   th.Get("diagnostic.error"),
+		documentHighlight: th.Get("ui.highlight"),
+		documentLink:      th.Get("markup.link.url"),
+		searchMatch:       searchMatchStyle(),
+	}
+	if next, ok := th.TryGet("ui.virtual.inlay-hint"); ok {
+		st.inlayHint = next
+		st.inlayHintType = next
+		st.inlayHintParam = next
+	}
+	if next, ok := th.TryGet("ui.virtual.inlay-hint.type"); ok {
+		st.inlayHintType = next
+	}
+	if next, ok := th.TryGet("ui.virtual.inlay-hint.parameter"); ok {
+		st.inlayHintParam = next
+	}
+	if next, ok := th.TryGetExact("markup.link"); ok {
+		st.documentLink = next
+	}
+	if next, ok := th.TryGetExact("markup.link.url"); ok {
+		st.documentLink = next
 	}
 	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
 		st.selectionPrim = next
@@ -161,18 +220,32 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 
 func buildTUIStyles(s *lipglossStyles) *tuiStyles {
 	return &tuiStyles{
-		text:             lipglossToTUIStyle(s.text),
-		selection:        lipglossToTUIStyle(s.selection),
-		selectionPrim:    lipglossToTUIStyle(s.selectionPrim),
-		cursor:           lipglossToTUIStyle(s.cursor),
-		cursorPrim:       lipglossToTUIStyle(s.cursorPrim),
-		cursorlinePrim:   lipglossToTUIStyle(s.cursorlinePrim),
-		cursorlineSec:    lipglossToTUIStyle(s.cursorlineSec),
-		cursorcolumnPrim: lipglossToTUIStyle(s.cursorcolumnPrim),
-		cursorcolumnSec:  lipglossToTUIStyle(s.cursorcolumnSec),
-		whitespace:       lipglossToTUIStyle(s.whitespace),
-		indentGuide:      lipglossToTUIStyle(s.indentGuide),
-		searchMatch:      lipglossToTUIStyle(s.searchMatch),
+		text:              lipglossToTUIStyle(s.text),
+		selection:         lipglossToTUIStyle(s.selection),
+		selectionPrim:     lipglossToTUIStyle(s.selectionPrim),
+		cursor:            lipglossToTUIStyle(s.cursor),
+		cursorPrim:        lipglossToTUIStyle(s.cursorPrim),
+		cursorlinePrim:    lipglossToTUIStyle(s.cursorlinePrim),
+		cursorlineSec:     lipglossToTUIStyle(s.cursorlineSec),
+		cursorcolumnPrim:  lipglossToTUIStyle(s.cursorcolumnPrim),
+		cursorcolumnSec:   lipglossToTUIStyle(s.cursorcolumnSec),
+		whitespace:        lipglossToTUIStyle(s.whitespace),
+		indentGuide:       lipglossToTUIStyle(s.indentGuide),
+		inlayHint:         lipglossToTUIStyle(s.inlayHint),
+		inlayHintType:     lipglossToTUIStyle(s.inlayHintType),
+		inlayHintParam:    lipglossToTUIStyle(s.inlayHintParam),
+		severityHint:      lipglossToTUIStyle(s.severityHint),
+		severityInfo:      lipglossToTUIStyle(s.severityInfo),
+		severityWarning:   lipglossToTUIStyle(s.severityWarning),
+		severityError:     lipglossToTUIStyle(s.severityError),
+		diagnostic:        lipglossToTUIStyle(s.diagnostic),
+		diagnosticHint:    lipglossToTUIStyle(s.diagnosticHint),
+		diagnosticInfo:    lipglossToTUIStyle(s.diagnosticInfo),
+		diagnosticWarning: lipglossToTUIStyle(s.diagnosticWarning),
+		diagnosticError:   lipglossToTUIStyle(s.diagnosticError),
+		documentHighlight: lipglossToTUIStyle(s.documentHighlight),
+		documentLink:      lipglossToTUIStyle(s.documentLink),
+		searchMatch:       lipglossToTUIStyle(s.searchMatch),
 	}
 }
 

@@ -314,6 +314,18 @@ func TestScrollUpDown(t *testing.T) {
 		assert.NotPanics(t, func() { action.ScrollUp(e) })
 		assert.NotPanics(t, func() { action.ScrollDown(e) })
 	})
+
+	t.Run("ScrollUp moves cursor from below top", func(t *testing.T) {
+		e := editorWithText(t, "a\nb\nc\nd\ne")
+		setCursor(t, e, 8) // line 4
+
+		action.ScrollUp(e)
+
+		doc, _ := e.FocusedDocument()
+		v, _ := e.FocusedView()
+		sel := doc.SelectionFor(v.ID())
+		assert.Less(t, sel.Primary().Cursor(doc.Text()), 8)
+	})
 }
 
 func TestReindentSelections(t *testing.T) {

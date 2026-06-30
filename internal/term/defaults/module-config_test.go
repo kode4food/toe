@@ -205,6 +205,22 @@ func TestConfigOptionErrors(t *testing.T) {
 	})
 }
 
+func TestConfigThemeErrors(t *testing.T) {
+	t.Run("unknown name errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		res := runCmdArgs(t, km, e, "theme", "no-such-theme-xyz")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("invalid current falls back to default", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
+		e, km := defaultsEnv(t, "")
+		e.Options().Theme = "no-such-theme-xyz"
+		res := runCmd(t, km, e, "theme")
+		assert.NotContains(t, res.Message, "error")
+	})
+}
+
 func TestConfigThemeExtra(t *testing.T) {
 	t.Run("theme default alias loads mocha", func(t *testing.T) {
 		t.Setenv("COLORTERM", "truecolor")
@@ -258,10 +274,17 @@ func TestConfigCommands(t *testing.T) {
 		assert.Equal(t, "utf-8", res.Message)
 	})
 
-	t.Run("config_reload errors without reload fn", func(t *testing.T) {
+	t.Run("config_reload no fn errors", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmd(t, km, e, "config_reload")
 		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("config_reload fn set succeeds", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		e.SetConfigReload(func() error { return nil })
+		res := runCmd(t, km, e, "config_reload")
+		assert.Equal(t, "config reloaded", res.Message)
 	})
 
 	t.Run("config_open runs without panic", func(t *testing.T) {

@@ -120,6 +120,21 @@ func (s Style) BgColor() Color {
 	return s.bg
 }
 
+// UnderlineColor returns the style underline color
+func (s Style) UnderlineColor() Color {
+	return s.underlineColor
+}
+
+// UnderlineStyle returns the style underline variant
+func (s Style) UnderlineStyle() UnderlineStyle {
+	return s.underlineStyle
+}
+
+// Modifier returns the style modifier bits
+func (s Style) Modifier() Modifier {
+	return s.modifier
+}
+
 func (s Style) HasMod(m Modifier) bool {
 	return s.modifier&m == m
 }

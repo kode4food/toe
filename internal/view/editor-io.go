@@ -11,6 +11,10 @@ func (e *Editor) Save() error {
 	if !ok {
 		return ErrNoDocument
 	}
+	creating := fileMissing(doc.Path())
+	if ops, ok := e.fileOperationController(); ok && creating {
+		_ = ops.WillCreateFile(doc.Path(), false)
+	}
 	before := doc.Text()
 	rev := doc.Revision()
 	if err := doc.Save(&e.opts); err != nil {
@@ -20,6 +24,9 @@ func (e *Editor) Save() error {
 		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
 	}
 	e.documentSaved(doc)
+	if ops, ok := e.fileOperationController(); ok && creating {
+		_ = ops.DidCreateFile(doc.Path(), false)
+	}
 	return nil
 }
 
@@ -47,6 +54,10 @@ func (e *Editor) SaveAll() []error {
 	var errs []error
 	for _, doc := range e.docs {
 		if doc.Modified() {
+			creating := fileMissing(doc.Path())
+			if ops, ok := e.fileOperationController(); ok && creating {
+				_ = ops.WillCreateFile(doc.Path(), false)
+			}
 			before := doc.Text()
 			rev := doc.Revision()
 			if err := doc.Save(&e.opts); err != nil {
@@ -58,9 +69,57 @@ func (e *Editor) SaveAll() []error {
 				e.documentChanged(doc, change)
 			}
 			e.documentSaved(doc)
+			if ops, ok := e.fileOperationController(); ok && creating {
+				_ = ops.DidCreateFile(doc.Path(), false)
+			}
 		}
 	}
 	return errs
+}
+
+// MoveFocusedFile renames the focused document's backing file and updates the
+// document path
+func (e *Editor) MoveFocusedFile(path string, force bool) error {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return ErrNoDocument
+	}
+	if doc.Modified() && !force {
+		return ErrUnsavedChanges
+	}
+	oldPath := doc.Path()
+	if oldPath == "" || fileMissing(oldPath) {
+		doc.SetPath(path)
+		return e.Save()
+	}
+	newPath, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	oldAbs, err := filepath.Abs(oldPath)
+	if err != nil {
+		return err
+	}
+	if oldAbs == newPath {
+		return nil
+	}
+	if ops, ok := e.fileOperationController(); ok {
+		_ = ops.WillRenameFile(oldAbs, newPath, false)
+	}
+	if err := os.MkdirAll(filepath.Dir(newPath), 0o755); err != nil {
+		return err
+	}
+	if err := os.Rename(oldAbs, newPath); err != nil {
+		return err
+	}
+	doc.SetPath(newPath)
+	if ops, ok := e.fileOperationController(); ok {
+		_ = ops.DidRenameFile(oldAbs, newPath, false)
+	}
+	if doc.Modified() {
+		return e.Save()
+	}
+	return nil
 }
 
 // Reload reloads the focused document from disk
@@ -207,4 +266,17 @@ func (e *Editor) newDocument() *Document {
 func (e *Editor) openFile(path string) (*Document, error) {
 	e.nextDocID++
 	return openDocument(e.nextDocID, path, &e.opts)
+}
+
+func (e *Editor) fileOperationController() (FileOperationController, bool) {
+	ops, ok := e.langServers.(FileOperationController)
+	return ops, ok
+}
+
+func fileMissing(path string) bool {
+	if path == "" {
+		return false
+	}
+	_, err := os.Stat(path)
+	return os.IsNotExist(err)
 }

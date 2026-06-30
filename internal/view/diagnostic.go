@@ -45,6 +45,10 @@ func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 	d.diagnostics = append(out, diags...)
 }
 
+func (d *Document) ClearDiagnostics() {
+	d.diagnostics = nil
+}
+
 func (d *Document) Diagnostics() []Diagnostic {
 	out := make([]Diagnostic, len(d.diagnostics))
 	copy(out, d.diagnostics)

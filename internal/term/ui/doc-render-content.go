@@ -1,7 +1,8 @@
 package ui
 
 import (
-	"strings"
+	"cmp"
+	"slices"
 
 	"github.com/mattn/go-runewidth"
 
@@ -30,6 +31,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	viewFocused := args.focused
 
 	// --- selection / cursor state ---
+	opts := r.cx.Editor.Options()
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	primary := sel.Primary()
@@ -71,13 +73,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 
 	// --- gutter ---
 	nLines := text.LenLines()
-	g3 := r.cx.Editor.Options().Gutters
-	gutterMinDigits := g3.LineNumberMinWidth()
-	showLineNumbers := g3.HasGutterType(view.GutterTypeLineNumbers)
-	gutterW := 0
-	if showLineNumbers {
-		gutterW = max(lineNumberDigits(text), gutterMinDigits) + 1
-	}
+	g3 := opts.Gutters
+	gutterLayout := g3.GutterLayout()
+	gutterLineNumberW := gutterLineNumberWidth(text, g3, gutterLayout)
+	gutterW := gutterLayoutWidth(gutterLayout, gutterLineNumberW)
 
 	trailingEmpty := false
 	if nLines > 0 {
@@ -109,6 +108,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	}
 	dc.ensureSearchSpans(rev, pat, rawText)
 	searchMatches := dc.smSpans
+	docDiagnostics := doc.Diagnostics()
+	docHighlights := documentHighlightSpans(doc.DocumentHighlights(v.ID()))
+	docLinks := documentLinkSpans(doc.DocumentLinks())
+	docColors := documentColorSpans(doc.DocumentColors())
 
 	// --- styles (rebuilt only on theme/mode change) ---
 	th := r.activeTheme()
@@ -133,8 +136,15 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		return st
 	}
 
+	diagnostics := diagnosticSpans(docDiagnostics, tuiStyles)
+	annotations := inlayHintAnnotations(doc.InlayHints(v.ID()), tuiStyles)
+	colorAnnotations := documentColorAnnotations(doc.DocumentColors())
+	annotations = append(annotations, colorAnnotations...)
+	slices.SortStableFunc(annotations, func(a, b inlineAnnotation) int {
+		return cmp.Compare(a.pos, b.pos)
+	})
+
 	// --- options ---
-	opts := r.cx.Editor.Options()
 	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
 		viewFocused
@@ -170,8 +180,11 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
-	blankGutter := strings.Repeat(" ", gutterW)
 	contentX := x + gutterW
+	gutter := newGutterSpec(
+		text, gutterLayout, gutterLineNumberW, lineTUI, lineSelTUI,
+		tuiStyles, docDiagnostics,
+	)
 
 	rr := rowRender{
 		lgStyles:      lgStyles,
@@ -182,6 +195,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		ig:            ig,
 		hlSpans:       hlSpans,
 		searchMatches: searchMatches,
+		docHighlights: docHighlights,
+		docLinks:      docLinks,
+		docColors:     docColors,
+		diagnostics:   diagnostics,
 		selSpans:      selSpans,
 		cursor:        cursor,
 		cursorLine:    cursorLine,
@@ -198,8 +215,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		logLine++
 
 		if lineNum >= nLines {
-			if showLineNumbers {
-				buf.SetString(x, bufRow, blankGutter, lineTUI)
+			if gutter.width > 0 {
+				gutter.renderBlank(buf, x, bufRow)
 			}
 			var blank renderedRow
 			blank.writeToBuffer(rowWriteArgs{
@@ -212,9 +229,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		}
 
 		if lineNum == nLines-1 && trailingEmpty {
-			if showLineNumbers {
-				buf.FillRange(x, bufRow, gutterW, lineTUI)
-				buf.SetString(x+gutterW-2, bufRow, "~", lineTUI)
+			if gutter.width > 0 {
+				gutter.renderTilde(
+					buf, x, bufRow, lineNum == cursorLine,
+				)
 			}
 			var row renderedRow
 			if cursorIsBlock && lineNum == cursorLine {
@@ -240,25 +258,22 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		isSecondaryCursorLine := cursorlineEnabled &&
 			!isPrimaryCursorLine && isAnyCursorLine
 
-		if showLineNumbers {
+		if gutter.width > 0 {
 			var num int
-			var gutterTUI tui.Style
 			if isAnyCursorLine {
 				num = lineNum + 1
-				gutterTUI = lineSelTUI
 			} else if relativeLineNumbers && !insertMode {
 				rel := lineNum - cursorLine
 				if rel < 0 {
 					rel = -rel
 				}
 				num = rel
-				gutterTUI = lineTUI
 			} else {
 				num = lineNum + 1
-				gutterTUI = lineTUI
 			}
-			buf.SetRightAlignedInt(x, bufRow, gutterW-1, num, gutterTUI)
-			buf.FillRange(x+gutterW-1, bufRow, 1, gutterTUI)
+			gutter.renderLine(
+				buf, x, bufRow, lineNum, num, isAnyCursorLine,
+			)
 		}
 
 		lineStart, err := text.LineToChar(lineNum)
@@ -321,6 +336,12 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		rr.lineNum = lineNum
 		rr.lineStart = rowLineStart
 		rr.lineEnd = lineContentEnd
+		rr.annotations = lineAnnotations(
+			annotations, rowLineStart, lineContentEnd,
+		)
+		rr.diagnostics = lineDiagnosticSpans(
+			diagnostics, rowLineStart, lineContentEnd,
+		)
 		rr.cursorlinePrim = isPrimaryCursorLine
 		rr.cursorlineSec = isSecondaryCursorLine
 		rr.maxRows = y + height - bufRow + rowSkip
@@ -338,8 +359,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 					break
 				}
 				rowPrefixW := 0
-				if i > 0 && showLineNumbers {
-					buf.SetString(x, bufRow, blankGutter, lineTUI)
+				if i > 0 && gutter.width > 0 {
+					gutter.renderBlank(buf, x, bufRow)
 				}
 				if i == 0 {
 					cr.writeToBuffer(rowWriteArgs{

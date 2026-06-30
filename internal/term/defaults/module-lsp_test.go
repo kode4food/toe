@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,6 +15,8 @@ type fakeLanguageServerController struct {
 	executed  string
 	args      []string
 	location  string
+	applied   string
+	renamed   string
 	symbols   []view.Symbol
 	err       error
 }
@@ -107,6 +110,28 @@ func TestLSPCommands(t *testing.T) {
 		assert.Equal(t, "reference", ctl.location)
 	})
 
+	t.Run("rename symbol is registered", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{}
+		e.SetLanguageServerController(ctl)
+
+		res := runCmdArgs(t, km, e, "rename_symbol", "")
+
+		assert.Empty(t, res.Message)
+	})
+
+	t.Run("code action is registered", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{
+			symbols: nil,
+		}
+		e.SetLanguageServerController(ctl)
+
+		res := runCmdArgs(t, km, e, "code_action", "")
+
+		assert.Empty(t, res.Message)
+	})
+
 	t.Run("symbol picker is registered", func(t *testing.T) {
 		e, km, _ := envWithRegistry(t, "")
 		ctl := &fakeLanguageServerController{
@@ -119,6 +144,105 @@ func TestLSPCommands(t *testing.T) {
 		res := runCmdArgs(t, km, e, "symbol_picker", "")
 
 		assert.Empty(t, res.Message)
+	})
+
+	t.Run("workspace symbol picker is registered", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{}
+		e.SetLanguageServerController(ctl)
+
+		res := runCmdArgs(t, km, e, "workspace_symbol_picker", "")
+
+		assert.Empty(t, res.Message)
+	})
+}
+
+func TestLSPCommandErrors(t *testing.T) {
+	t.Run("generic error", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{
+			err: errors.New("restart failed"),
+		}
+		e.SetLanguageServerController(ctl)
+		res := runCmdArgs(t, km, e, "lsp-restart", "gopls")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("ErrNoLanguageServer", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{err: lsp.ErrNoLanguageServer}
+		e.SetLanguageServerController(ctl)
+		res := runCmdArgs(t, km, e, "lsp-restart", "gopls")
+		assert.Contains(t, res.Message, "LSP not defined")
+	})
+
+	t.Run("ErrUnknownLanguageServer", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{err: lsp.ErrUnknownLanguageServer}
+		e.SetLanguageServerController(ctl)
+		res := runCmdArgs(t, km, e, "lsp-restart", "gopls")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("ErrWorkspaceCommand", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{err: lsp.ErrWorkspaceCommand}
+		e.SetLanguageServerController(ctl)
+		res := runCmdArgs(t, km, e, "lsp-restart", "gopls")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("stop error", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{
+			err: errors.New("stop failed"),
+		}
+		e.SetLanguageServerController(ctl)
+		res := runCmdArgs(t, km, e, "lsp-stop", "gopls")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("stop no document", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmdArgs(t, km, e, "lsp-stop", "gopls")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("workspace command no document", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmdArgs(t, km, e, "lsp-workspace-command", "test {}")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("restart empty names", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{}
+		e.SetLanguageServerController(ctl)
+		res := runCmd(t, km, e, "lsp-restart")
+		assert.Contains(t, res.Message, "no language servers")
+	})
+
+	t.Run("stop empty names", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{}
+		e.SetLanguageServerController(ctl)
+		res := runCmd(t, km, e, "lsp-stop")
+		assert.Contains(t, res.Message, "no language servers")
+	})
+
+	t.Run("one arg passes nil args", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+		ctl := &fakeLanguageServerController{}
+		e.SetLanguageServerController(ctl)
+		res := runCmdArgs(t, km, e, "lsp-workspace-command", "test")
+		assert.Contains(t, res.Message, "executed workspace command: test")
+		assert.Nil(t, ctl.args)
 	})
 }
 
@@ -227,8 +351,70 @@ func (c *fakeLanguageServerController) GotoReference(
 	return nil, c.err
 }
 
+func (c *fakeLanguageServerController) RenameSymbolPrefill(
+	*view.Document, view.Id,
+) (string, error) {
+	return "", c.err
+}
+
+func (c *fakeLanguageServerController) RenameSymbol(
+	_ *view.Document, _ view.Id, name string,
+) error {
+	c.renamed = name
+	return c.err
+}
+
+func (c *fakeLanguageServerController) CodeActions(
+	*view.Document, view.Id,
+) ([]view.CodeAction, error) {
+	return []view.CodeAction{{ID: "test:0", Title: "fix"}}, c.err
+}
+
+func (c *fakeLanguageServerController) ApplyCodeAction(
+	_ *view.Document, _ view.Id, action view.CodeAction,
+) error {
+	c.applied = action.ID
+	return c.err
+}
+
+func (c *fakeLanguageServerController) DocumentHighlights(
+	*view.Document, view.Id,
+) ([]view.DocumentHighlight, error) {
+	return nil, c.err
+}
+
+func (c *fakeLanguageServerController) DocumentLinks(
+	*view.Document,
+) ([]view.DocumentLink, error) {
+	return nil, c.err
+}
+
+func (c *fakeLanguageServerController) ResolveDocumentLink(
+	_ *view.Document, link view.DocumentLink,
+) (view.DocumentLink, error) {
+	return link, c.err
+}
+
+func (c *fakeLanguageServerController) FormatDocument(
+	*view.Document, view.Id,
+) error {
+	return c.err
+}
+
+func (c *fakeLanguageServerController) FormatSelection(
+	*view.Document, view.Id,
+) error {
+	return c.err
+}
+
 func (c *fakeLanguageServerController) DocumentSymbols(
 	*view.Document,
+) ([]view.Symbol, error) {
+	return c.symbols, c.err
+}
+
+func (c *fakeLanguageServerController) WorkspaceSymbols(
+	*view.Document, string,
 ) ([]view.Symbol, error) {
 	return c.symbols, c.err
 }

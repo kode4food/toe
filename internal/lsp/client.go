@@ -99,7 +99,7 @@ func (c *Client) Server() protocol.Server {
 	return c.server
 }
 
-// Capabilities returns server capabilities and whether initialization is complete
+// Capabilities returns initialized server capabilities
 func (c *Client) Capabilities() (protocol.ServerCapabilities, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

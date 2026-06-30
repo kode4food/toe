@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"errors"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -25,8 +26,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '(', Text: "("})
-		m = m2.(ui.Model)
+		m = sendKeyAndFeed(m, '(')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "Println(a ...any)")
@@ -54,12 +54,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '(', Text: "("})
-		m = m2.(ui.Model)
-		m2, _ = m.Update(tea.KeyPressMsg{
+		m = sendKeyAndFeed(m, '(')
+		m = updateAndFeed(m, tea.KeyPressMsg{
 			Code: 'n', Text: "n", Mod: tea.ModAlt,
 		})
-		m = m2.(ui.Model)
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "Printf(format string, a ...any)")
@@ -101,11 +99,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '(', Text: "("})
-		m = m2.(ui.Model)
+		m = sendKeyAndFeed(m, '(')
 		assert.Contains(t, stripANSI(m.View().Content), "format parameter")
 
-		m = sendKey(m, ',')
+		m = sendKeyAndFeed(m, ',')
 		out := stripANSI(m.View().Content)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -126,11 +123,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '(', Text: "("})
-		m = m2.(ui.Model)
+		m = sendKeyAndFeed(m, '(')
 		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
 
-		m = sendSpecial(m, tea.KeyLeft)
+		m = sendSpecialAndFeed(m, tea.KeyLeft)
 		out := stripANSI(m.View().Content)
 
 		assert.NotContains(t, out, "signature docs")
@@ -147,8 +143,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '(', Text: "("})
-		m = m2.(ui.Model)
+		m = sendKeyAndFeed(m, '(')
 		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
 
 		doc, ok := e.FocusedDocument()
@@ -172,17 +167,110 @@ func TestSignatureHelpComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '(', Text: "("})
-		m = m2.(ui.Model)
+		m = sendKeyAndFeed(m, '(')
 		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
 
-		m = sendSpecial(m, tea.KeyEscape)
-		m = sendKey(m, ',')
+		m = sendSpecialAndFeed(m, tea.KeyEscape)
+		m = sendKeyAndFeed(m, ',')
 		out := stripANSI(m.View().Content)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 
 		assert.Equal(t, "(,)", doc.Text().String())
 		assert.NotContains(t, out, "signature docs")
+	})
+
+	t.Run("moves backward with alt-p", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			signature: view.SignatureHelp{
+				Signatures: []view.SignatureInformation{
+					{Label: "Println(a ...any)"},
+					{Label: "Printf(format string, a ...any)"},
+				},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKeyAndFeed(m, '(')
+		// cycle forward then back
+		m = updateAndFeed(m, tea.KeyPressMsg{
+			Code: 'n', Text: "n", Mod: tea.ModAlt,
+		})
+		m = updateAndFeed(m, tea.KeyPressMsg{
+			Code: 'p', Text: "p", Mod: tea.ModAlt,
+		})
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "Println(a ...any)")
+	})
+
+	t.Run("empty help dismisses", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{editor: e}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKeyAndFeed(m, '(')
+		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+
+		ctl.signatureEmpty = true
+		m = sendKeyAndFeed(m, 'x')
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "signature docs")
+	})
+
+	t.Run("dismisses on signature help error", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{editor: e}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKeyAndFeed(m, '(')
+		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+
+		ctl.signatureErr = errors.New("sig error")
+		m = sendKeyAndFeed(m, 'x')
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "signature docs")
+	})
+
+	t.Run("renders with unfocused cursor position", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{editor: e}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKeyAndFeed(m, '(')
+		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
+
+		m = updateAndFeed(m, tea.BlurMsg{})
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "signature docs")
 	})
 }

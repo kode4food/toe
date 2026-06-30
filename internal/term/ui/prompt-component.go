@@ -91,6 +91,7 @@ type promptComponentArgs struct {
 	kind     promptKind
 	forward  bool
 	prompt   string
+	buf      string
 	fn       func(*view.Editor, string) error
 	pickerFn func(*view.Editor, string) (*Picker, error)
 }
@@ -101,6 +102,7 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 		kind:     args.kind,
 		forward:  args.forward,
 		prompt:   args.prompt,
+		buf:      args.buf,
 		fn:       args.fn,
 		pickerFn: args.pickerFn,
 	}

@@ -100,6 +100,41 @@ func TestStatuslineDiagnostics(t *testing.T) {
 		assert.Contains(t, out, "W:1")
 		assert.Contains(t, out, "H:1")
 	})
+
+	t.Run("info and hint counts", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+			{Severity: view.DiagnosticSeverityInfo},
+			{Severity: view.DiagnosticSeverityHint},
+		})
+		e.Options().StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineDiagnostics,
+		}
+		e.Options().StatusLine.Center = nil
+		e.Options().StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "I:1")
+		assert.Contains(t, out, "H:1")
+	})
+}
+
+func TestThemeStyleBranches(t *testing.T) {
+	t.Run("ao theme covers extended style keys", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		e := view.NewEditor(t.TempDir())
+		e.Options().Theme = "ao"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.NotEmpty(t, out)
+	})
 }
 
 func TestModeColorRender(t *testing.T) {

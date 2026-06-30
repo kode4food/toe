@@ -166,3 +166,18 @@ func openBufferPicker(
 	m = resize(m, 120, 30)
 	return sendKey(m, 'p')
 }
+
+func TestPickerStartPositionUnmarshal(t *testing.T) {
+	t.Run("valid values unmarshal", func(t *testing.T) {
+		var p ui.PickerStartPosition
+		assert.NoError(t, p.UnmarshalText([]byte("top")))
+		assert.Equal(t, ui.PickerStartTop, p)
+		assert.NoError(t, p.UnmarshalText([]byte("previous")))
+		assert.Equal(t, ui.PickerStartPrevious, p)
+	})
+	t.Run("invalid value returns error", func(t *testing.T) {
+		var p ui.PickerStartPosition
+		err := p.UnmarshalText([]byte("invalid"))
+		assert.ErrorIs(t, err, ui.ErrInvalidPickerStart)
+	})
+}

@@ -74,6 +74,8 @@ func TestFileMoveReadReload(t *testing.T) {
 		assert.Contains(t, res.Message, "moved")
 		_, err := os.Stat(dst)
 		assert.NoError(t, err)
+		_, err = os.Stat(src)
+		assert.True(t, os.IsNotExist(err))
 	})
 
 	t.Run("read inserts a file into the buffer", func(t *testing.T) {
@@ -209,6 +211,35 @@ func TestFileReloadError(t *testing.T) {
 	t.Run("read bad path errors", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(t, km, e, "read", "/no/such/dir/file_xyz.txt")
+		assert.Contains(t, res.Message, "error")
+	})
+}
+
+func TestFileMoveErrors(t *testing.T) {
+	t.Run("move no document returns error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmdArgs(t, km, e, "move", "/tmp/dest.txt")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("move MoveFocusedFile error returns error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		src := filepath.Join(e.Cwd(), "src.txt")
+		assert.NoError(t, os.WriteFile(src, []byte("M"), 0o644))
+		runCmdArgs(t, km, e, "open", src)
+		res := runCmdArgs(t, km, e, "move", "/dev/null/cannot/create.txt")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("move! no document returns error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmdArgs(t, km, e, "move!", "/tmp/dest.txt")
 		assert.Contains(t, res.Message, "error")
 	})
 }

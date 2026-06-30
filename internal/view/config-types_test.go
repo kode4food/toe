@@ -103,6 +103,50 @@ func TestGutter(t *testing.T) {
 		g := view.Gutter{}
 		assert.Error(t, g.UnmarshalTOML(42))
 	})
+
+	t.Run("map layout rejects non-array", func(t *testing.T) {
+		g := view.Gutter{}
+		assert.Error(t, g.UnmarshalTOML(map[string]any{"layout": "not-an-array"}))
+	})
+
+	t.Run("non-string in layout array", func(t *testing.T) {
+		g := view.Gutter{}
+		assert.Error(t, g.UnmarshalTOML([]any{42}))
+	})
+
+	t.Run("min-width as int", func(t *testing.T) {
+		g := view.Gutter{}
+		err := g.UnmarshalTOML(map[string]any{
+			"line-numbers": map[string]any{"min-width": 4},
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 4, g.LineNumberMinWidth())
+	})
+
+	t.Run("min-width as int64", func(t *testing.T) {
+		g := view.Gutter{}
+		err := g.UnmarshalTOML(map[string]any{
+			"line-numbers": map[string]any{"min-width": int64(5)},
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 5, g.LineNumberMinWidth())
+	})
+
+	t.Run("non-int min-width ignored", func(t *testing.T) {
+		g := view.Gutter{}
+		err := g.UnmarshalTOML(map[string]any{
+			"line-numbers": map[string]any{"min-width": "bad"},
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth())
+	})
+
+	t.Run("bad string in map layout", func(t *testing.T) {
+		g := view.Gutter{}
+		assert.Error(t, g.UnmarshalTOML(map[string]any{
+			"layout": []any{"bad-gutter-type"},
+		}))
+	})
 }
 
 func TestWhitespaceRender(t *testing.T) {
@@ -122,7 +166,10 @@ func TestWhitespaceRender(t *testing.T) {
 	})
 
 	t.Run("specific overrides Default", func(t *testing.T) {
-		w := view.WhitespaceRender{Default: new(view.WhitespaceRenderAll), Space: new(view.WhitespaceRenderNone)}
+		w := view.WhitespaceRender{
+			Default: new(view.WhitespaceRenderAll),
+			Space:   new(view.WhitespaceRenderNone),
+		}
 		assert.Equal(t, view.WhitespaceRenderNone, w.SpaceRender())
 		assert.Equal(t, view.WhitespaceRenderAll, w.TabRender())
 	})
@@ -143,6 +190,25 @@ func TestWhitespaceRender(t *testing.T) {
 		assert.Equal(t, view.WhitespaceRenderNone, w.TabRender())
 	})
 
+	t.Run("map sets all per-char keys", func(t *testing.T) {
+		w := view.WhitespaceRender{}
+		err := w.UnmarshalTOML(map[string]any{
+			"default": "all",
+			"nbsp":    "all",
+			"nnbsp":   "all",
+			"newline": "all",
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, view.WhitespaceRenderAll, w.NbspRender())
+		assert.Equal(t, view.WhitespaceRenderAll, w.NnbspRender())
+		assert.Equal(t, view.WhitespaceRenderAll, w.NewlineRender())
+	})
+
+	t.Run("map rejects invalid render value", func(t *testing.T) {
+		w := view.WhitespaceRender{}
+		assert.Error(t, w.UnmarshalTOML(map[string]any{"space": "bad-value"}))
+	})
+
 	t.Run("UnmarshalTOML with nil is a no-op", func(t *testing.T) {
 		w := view.WhitespaceRender{}
 		assert.NoError(t, w.UnmarshalTOML(nil))
@@ -156,6 +222,11 @@ func TestWhitespaceRender(t *testing.T) {
 	t.Run("rejects non-string map value", func(t *testing.T) {
 		w := view.WhitespaceRender{}
 		assert.Error(t, w.UnmarshalTOML(map[string]any{"space": 42}))
+	})
+
+	t.Run("rejects non-string non-map", func(t *testing.T) {
+		w := view.WhitespaceRender{}
+		assert.Error(t, w.UnmarshalTOML(42))
 	})
 }
 
@@ -226,6 +297,45 @@ func TestConfigTypes(t *testing.T) {
 	t.Run("rejects line number", func(t *testing.T) {
 		_, err := view.ParseLineNumber("bad")
 		assert.ErrorIs(t, err, view.ErrInvalidLineNumber)
+	})
+
+	t.Run("parses diagnostic filter", func(t *testing.T) {
+		v, err := view.ParseDiagnosticFilter("warning")
+		assert.NoError(t, err)
+		assert.Equal(t, view.DiagnosticFilterWarning, v)
+	})
+
+	t.Run("rejects diagnostic filter", func(t *testing.T) {
+		_, err := view.ParseDiagnosticFilter("bad")
+		assert.ErrorIs(t, err, view.ErrInvalidDiagnosticFilter)
+	})
+
+	t.Run("DiagnosticFilter disable blocks all", func(t *testing.T) {
+		f := view.DiagnosticFilterDisable
+		assert.False(t, f.Allows(view.DiagnosticSeverityError))
+	})
+
+	t.Run("DiagnosticFilter error blocks warning", func(t *testing.T) {
+		f := view.DiagnosticFilterError
+		assert.True(t, f.Allows(view.DiagnosticSeverityError))
+		assert.False(t, f.Allows(view.DiagnosticSeverityWarning))
+	})
+
+	t.Run("DiagnosticFilter warning blocks info", func(t *testing.T) {
+		f := view.DiagnosticFilterWarning
+		assert.True(t, f.Allows(view.DiagnosticSeverityWarning))
+		assert.False(t, f.Allows(view.DiagnosticSeverityInfo))
+	})
+
+	t.Run("DiagnosticFilter info blocks hint", func(t *testing.T) {
+		f := view.DiagnosticFilterInfo
+		assert.True(t, f.Allows(view.DiagnosticSeverityInfo))
+		assert.False(t, f.Allows(view.DiagnosticSeverityHint))
+	})
+
+	t.Run("DiagnosticFilter hint allows all", func(t *testing.T) {
+		f := view.DiagnosticFilterHint
+		assert.True(t, f.Allows(view.DiagnosticSeverityHint))
 	})
 
 	t.Run("parses bufferline", func(t *testing.T) {

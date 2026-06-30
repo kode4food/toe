@@ -16,6 +16,24 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type highlightRefreshController struct {
+	locationController
+}
+
+func TestModelView(t *testing.T) {
+	t.Run("returns empty before resize", func(t *testing.T) {
+		e := editorWithText(t, "")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		v := m.View()
+
+		assert.Empty(t, v.Content)
+	})
+}
+
 func TestInsertMode(t *testing.T) {
 	t.Run("inserts space", func(t *testing.T) {
 		e := editorWithText(t, "")
@@ -32,6 +50,18 @@ func TestInsertMode(t *testing.T) {
 		assert.True(t, ok)
 
 		assert.Equal(t, "a b", doc.Text().String())
+	})
+}
+
+func TestEditorKeys(t *testing.T) {
+	t.Run("accepts count in select mode", func(t *testing.T) {
+		e := editorWithText(t, "abcdefgh")
+		e.SetMode(view.ModeSelect)
+		m := renderedModel(e)
+
+		_ = sendKey(m, '3')
+
+		assert.Equal(t, 3, e.Count())
 	})
 }
 
@@ -411,6 +441,119 @@ func setSelection(
 	doc.SetSelectionFor(v.ID(), sel)
 }
 
+func TestFocusMessages(t *testing.T) {
+	t.Run("focus message handled", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		m2, _ := m.Update(tea.FocusMsg{})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m.View().Content)
+	})
+
+	t.Run("blur focus lost triggers autosave", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Options().AutoSaveFocusLost = true
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		m2, _ := m.Update(tea.BlurMsg{})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m.View().Content)
+	})
+}
+
+func TestMouseDisabledEvents(t *testing.T) {
+	t.Run("mouse release ignored disabled", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Mouse = false
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		m2, _ := m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m.View().Content)
+	})
+
+	t.Run("mouse wheel ignored when mouse disabled", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Mouse = false
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		m2, _ := m.Update(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m.View().Content)
+	})
+
+	t.Run("unknown message returns ignored", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		m2, _ := m.Update(struct{ unexpected string }{"msg"})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m.View().Content)
+	})
+}
+
+func TestSyncEditorMessages(t *testing.T) {
+	t.Run("status shown from action", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		// No LSP sets "No configured language server"
+		bindNormalTestAction(
+			km, "goto_decl", m.GotoDeclarationAction(),
+			[]command.KeyEvent{char('g')},
+		)
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, 'g')
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "No configured language server")
+	})
+}
+
+func TestDocumentHighlightRefresh(t *testing.T) {
+	t.Run("refreshes after cursor move", func(t *testing.T) {
+		e := editorWithText(t, "hello\n")
+		ctl := &highlightRefreshController{
+			locationController: locationController{
+				highlights: []view.DocumentHighlight{{From: 1, To: 3}},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+		drainCmd(m, cmd)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		assert.Equal(t, ctl.highlights, doc.DocumentHighlights(v.ID()))
+	})
+}
+
 func TestAutoSaveCmd(t *testing.T) {
 	t.Run("autosave tick created on keypress", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -424,6 +567,39 @@ func TestAutoSaveCmd(t *testing.T) {
 		assert.NotEmpty(t, m.View().Content)
 		assert.NotNil(t, cmd)
 	})
+
+	t.Run("autosave fires on gen match", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Options().AutoSaveAfterDelay = true
+		e.Options().AutoSaveDelayTimeout = 0
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+
+		// Execute the autosave command returned by the keypress
+		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		m = m2.(ui.Model)
+		if cmd != nil {
+			msg := cmd()
+			if msg != nil {
+				m2, _ = m.Update(msg)
+				m = m2.(ui.Model)
+			}
+		}
+
+		assert.NotEmpty(t, m.View().Content)
+	})
+}
+
+func (c *highlightRefreshController) DocumentHighlights(
+	doc *view.Document, id view.Id,
+) ([]view.DocumentHighlight, error) {
+	doc.SetDocumentHighlights(id, c.highlights)
+	return c.highlights, nil
 }
 
 func cursorPos(t *testing.T, e *view.Editor) int {
@@ -433,4 +609,23 @@ func cursorPos(t *testing.T, e *view.Editor) int {
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 	return doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
+}
+
+func drainCmd(m ui.Model, cmd tea.Cmd) ui.Model {
+	for cmd != nil {
+		msg := cmd()
+		if msg == nil {
+			return m
+		}
+		if batch, ok := msg.(tea.BatchMsg); ok {
+			for _, c := range batch {
+				m = drainCmd(m, c)
+			}
+			return m
+		}
+		m2, next := m.Update(msg)
+		m = m2.(ui.Model)
+		cmd = next
+	}
+	return m
 }

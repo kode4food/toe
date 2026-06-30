@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -107,6 +108,42 @@ func (m Model) ShellAction(
 	}
 }
 
+func (m Model) RenameSymbolAction() command.KeyAction {
+	ec := m.component
+	return func(e *view.Editor) command.Continuation {
+		doc, ok := e.FocusedDocument()
+		if !ok {
+			return nil
+		}
+		v, ok := e.FocusedView()
+		if !ok {
+			return nil
+		}
+		ls := e.LanguageServerController()
+		if ls == nil {
+			e.SetStatusMsg(
+				"No configured language server supports symbol renaming",
+			)
+			return nil
+		}
+		prefill, err := ls.RenameSymbolPrefill(doc, v.ID())
+		if err != nil {
+			e.SetStatusMsg(err.Error())
+			return nil
+		}
+		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+			return newPromptComponent(promptComponentArgs{
+				ec: ec, kind: promptRegex, prompt: "rename-to:",
+				buf: prefill,
+				fn: func(e *view.Editor, name string) error {
+					return renameSymbol(e, name)
+				},
+			}), nil
+		}
+		return nil
+	}
+}
+
 func (m Model) GlobalSearchAction() command.KeyAction {
 	ec := m.component
 	cx := m.context
@@ -163,29 +200,18 @@ func (m Model) LastPickerAction() command.KeyAction {
 func (m Model) CompletionAction() command.KeyAction {
 	ec := m.component
 	return func(e *view.Editor) command.Continuation {
-		doc, ok := e.FocusedDocument()
-		if !ok {
+		if _, ok := e.FocusedDocument(); !ok {
 			return nil
 		}
-		v, ok := e.FocusedView()
-		if !ok {
+		if _, ok := e.FocusedView(); !ok {
 			return nil
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
 			return nil
 		}
-		items, err := ls.Completions(doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(err.Error())
-			return nil
-		}
-		if len(items) == 0 {
-			return nil
-		}
-		anchor := newCompletionAnchor(doc, v.ID())
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newCompletionComponent(ec, items, anchor), nil
+		ec.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return nil, ec.completionCmd(cx, false)
 		}
 		return nil
 	}
@@ -327,6 +353,37 @@ func (m Model) GotoReferenceAction() command.KeyAction {
 	)
 }
 
+func (m Model) SelectReferencesAction() command.KeyAction {
+	return func(e *view.Editor) command.Continuation {
+		doc, ok := e.FocusedDocument()
+		if !ok {
+			return nil
+		}
+		v, ok := e.FocusedView()
+		if !ok {
+			return nil
+		}
+		ls := e.LanguageServerController()
+		if ls == nil {
+			e.SetStatusMsg(
+				"No configured language server supports document highlights",
+			)
+			return nil
+		}
+		highlights, err := ls.DocumentHighlights(doc, v.ID())
+		if err != nil {
+			e.SetStatusMsg(err.Error())
+			return nil
+		}
+		if len(highlights) == 0 {
+			e.SetStatusMsg("No symbol references found.")
+			return nil
+		}
+		setSelectionFromHighlights(doc, v.ID(), highlights)
+		return nil
+	}
+}
+
 func (m Model) SymbolPickerAction() command.KeyAction {
 	ec := m.component
 	cx := m.context
@@ -358,12 +415,85 @@ func (m Model) SymbolPickerAction() command.KeyAction {
 	}
 }
 
+func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
+	ec := m.component
+	cx := m.context
+	return func(e *view.Editor) command.Continuation {
+		_, ok := e.FocusedDocument()
+		if !ok {
+			return nil
+		}
+		ls := e.LanguageServerController()
+		if ls == nil {
+			e.SetStatusMsg(
+				"No configured language server supports workspace symbols",
+			)
+			return nil
+		}
+		opener := workspaceSymbolPickerLayer()
+		cx.lastLayer = opener
+		ec.nextLayer = opener(e)
+		return nil
+	}
+}
+
+func (m Model) CodeActionPickerAction() command.KeyAction {
+	ec := m.component
+	cx := m.context
+	return func(e *view.Editor) command.Continuation {
+		doc, ok := e.FocusedDocument()
+		if !ok {
+			return nil
+		}
+		v, ok := e.FocusedView()
+		if !ok {
+			return nil
+		}
+		ls := e.LanguageServerController()
+		if ls == nil {
+			e.SetStatusMsg(
+				"No configured language server supports code actions",
+			)
+			return nil
+		}
+		actions, err := ls.CodeActions(doc, v.ID())
+		if err != nil {
+			e.SetStatusMsg(err.Error())
+			return nil
+		}
+		if len(actions) == 0 {
+			e.SetStatusMsg("No code actions available.")
+			return nil
+		}
+		opener := codeActionPickerLayer(actions)
+		cx.lastLayer = opener
+		ec.nextLayer = opener(e)
+		return nil
+	}
+}
+
 func (m Model) MacroRecordAction(e *view.Editor) command.Continuation {
 	return m.component.MacroRecordAction(e)
 }
 
 func (m Model) MacroReplayAction(e *view.Editor) command.Continuation {
 	return m.component.MacroReplayAction(e)
+}
+
+func renameSymbol(e *view.Editor, name string) error {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	v, ok := e.FocusedView()
+	if !ok {
+		return nil
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		return nil
+	}
+	return ls.RenameSymbol(doc, v.ID(), name)
 }
 
 func (m Model) gotoLocationAction(
@@ -428,6 +558,30 @@ func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
 	}
 }
 
+func workspaceSymbolPickerLayer() func(*view.Editor) layerFunc {
+	return func(e *view.Editor) layerFunc {
+		p := newLSPWorkspaceSymbolPicker(e)
+		cmd := p.feedCmd
+		p.feedCmd = nil
+		return func(_ *Context) (Component, tea.Cmd) {
+			return newPickerComponent(p), cmd
+		}
+	}
+}
+
+func codeActionPickerLayer(
+	actions []view.CodeAction,
+) func(*view.Editor) layerFunc {
+	return func(e *view.Editor) layerFunc {
+		p := newLSPCodeActionPicker(e, actions)
+		cmd := p.feedCmd
+		p.feedCmd = nil
+		return func(_ *Context) (Component, tea.Cmd) {
+			return newPickerComponent(p), cmd
+		}
+	}
+}
+
 func jumpToLocation(e *view.Editor, loc view.Location) {
 	action.SaveSelection(e)
 	v, err := e.SwitchFile(loc.Path)
@@ -444,4 +598,25 @@ func jumpToLocation(e *view.Editor, loc view.Location) {
 		return
 	}
 	doc.SetSelectionFor(v.ID(), sel)
+}
+
+func setSelectionFromHighlights(
+	doc *view.Document, viewID view.Id, highlights []view.DocumentHighlight,
+) {
+	text := doc.Text()
+	cursor := doc.SelectionFor(viewID).Primary().Cursor(text)
+	ranges := make([]core.Range, 0, len(highlights))
+	primary := 0
+	for i, h := range highlights {
+		r := core.NewRange(h.From, h.To)
+		if r.Contains(cursor) {
+			primary = i
+		}
+		ranges = append(ranges, r)
+	}
+	sel, err := core.NewSelection(ranges, primary)
+	if err != nil {
+		return
+	}
+	doc.SetSelectionFor(viewID, sel)
 }

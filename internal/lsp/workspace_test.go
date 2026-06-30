@@ -121,6 +121,58 @@ func TestWorkspace(t *testing.T) {
 	})
 }
 
+func TestWorkspaceEmptyPath(t *testing.T) {
+	t.Run("empty filepath defaults to cwd", func(t *testing.T) {
+		root := t.TempDir()
+
+		_, ok := lsp.ResolveWorkspace(lsp.WorkspaceRequest{
+			FilePath:  "",
+			Workspace: root,
+		})
+
+		assert.False(t, ok)
+	})
+
+	t.Run("empty workspace rejects", func(t *testing.T) {
+		root := t.TempDir()
+
+		_, ok := lsp.ResolveWorkspace(lsp.WorkspaceRequest{
+			FilePath:  filepath.Join(root, "main.go"),
+			Workspace: "",
+		})
+
+		assert.False(t, ok)
+	})
+
+	t.Run("file equals workspace dir", func(t *testing.T) {
+		root := t.TempDir()
+
+		ws, ok := lsp.ResolveWorkspace(lsp.WorkspaceRequest{
+			FilePath:  root,
+			Workspace: root,
+		})
+
+		assert.True(t, ok)
+		assert.Equal(t, root, ws.Path)
+	})
+
+	t.Run("relative filepath resolved via cwd", func(t *testing.T) {
+		root := t.TempDir()
+
+		_, ok := lsp.ResolveWorkspace(lsp.WorkspaceRequest{
+			FilePath:  "some/relative/file.go",
+			Workspace: root,
+		})
+
+		assert.False(t, ok)
+	})
+}
+
+func TestWorkspaceURI(t *testing.T) {
+	ws := lsp.Workspace{Path: "/some/project"}
+	assert.Equal(t, "file:///some/project", string(ws.URI()))
+}
+
 func writeFile(t *testing.T, path string) string {
 	t.Helper()
 	assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))

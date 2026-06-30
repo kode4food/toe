@@ -33,11 +33,31 @@ type (
 		mouseDownRange  *core.Range
 		mouseDownSep    *sepDrag
 		signatureHidden *signatureCall
+		docHighlightGen int
+		docHighlightPos docHighlightPosition
+		completionGen   int
 	}
 
 	saveGenSlot struct{ gen int }
 
 	autoSaveMsg struct{ gen int }
+
+	docHighlightMsg struct{ gen int }
+
+	completionMsg struct {
+		gen    int
+		anchor completionAnchor
+		items  []view.CompletionItem
+		err    error
+	}
+
+	docHighlightPosition struct {
+		docID  view.DocumentId
+		viewID view.Id
+		rev    int
+		pos    int
+		ok     bool
+	}
 
 	sepDrag struct {
 		containerID view.Id
@@ -65,11 +85,13 @@ func (e *EditorComponent) HandleEvent(
 			e.bufferlineShown = shown
 			e.resize(cx)
 		}
-		return result, tea.Batch(cmd, e.autoSaveCmd(cx))
+		return result, tea.Batch(
+			cmd, e.autoSaveCmd(cx), e.documentHighlightCmd(cx),
+		)
 
 	case tea.FocusMsg:
 		e.focused = true
-		return ignored(), nil
+		return ignored(), e.documentHighlightCmd(cx)
 
 	case tea.BlurMsg:
 		e.focused = false
@@ -84,22 +106,51 @@ func (e *EditorComponent) HandleEvent(
 		}
 		return consumed(), nil
 
+	case docHighlightMsg:
+		if msg.gen != e.docHighlightGen {
+			e.docHighlightPos = docHighlightPosition{}
+			return consumed(), e.documentHighlightCmd(cx)
+		}
+		return consumed(), nil
+
+	case completionMsg:
+		if msg.gen != e.completionGen {
+			return consumed(), nil
+		}
+		if !completionRequestValid(cx, msg.anchor) {
+			return consumed(), nil
+		}
+		if msg.err != nil {
+			cx.Editor.SetStatusMsg(msg.err.Error())
+			return consumed(), nil
+		}
+		if len(msg.items) == 0 {
+			return consumed(), nil
+		}
+		return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
+			comp.Push(newCompletionComponent(e, msg.items, msg.anchor))
+			return nil
+		}), nil
+
 	case tea.MouseClickMsg:
+		e.completionGen++
 		e.cancelPending(cx)
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			r.handleMouseClick(msg.X, msg.Y, msg.Mod)
 		}
-		return consumed(), nil
+		return consumed(), e.documentHighlightCmd(cx)
 
 	case tea.MouseMotionMsg:
+		e.completionGen++
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			r.handleMouseDrag(msg.X, msg.Y)
 		}
-		return consumed(), nil
+		return consumed(), e.documentHighlightCmd(cx)
 
 	case tea.MouseReleaseMsg:
+		e.completionGen++
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
@@ -112,9 +163,10 @@ func (e *EditorComponent) HandleEvent(
 				r.handleMouseMiddleRelease(msg.X, msg.Y, msg.Mod)
 			}
 		}
-		return consumed(), nil
+		return consumed(), e.documentHighlightCmd(cx)
 
 	case tea.MouseWheelMsg:
+		e.completionGen++
 		e.cancelPending(cx)
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
@@ -130,6 +182,47 @@ func (e *EditorComponent) HandleEvent(
 		return consumed(), nil
 	}
 	return ignored(), nil
+}
+
+func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return nil
+	}
+	ls := cx.Editor.LanguageServerController()
+	if ls == nil {
+		doc.ClearDocumentHighlights(v.ID())
+		return nil
+	}
+	pos := documentHighlightPositionFor(doc, v)
+	if e.docHighlightPos == pos {
+		return nil
+	}
+	e.docHighlightPos = pos
+	e.docHighlightGen++
+	gen := e.docHighlightGen
+	return func() tea.Msg {
+		_, _ = ls.DocumentHighlights(doc, v.ID())
+		return docHighlightMsg{gen: gen}
+	}
+}
+
+func documentHighlightPositionFor(
+	doc *view.Document, v *view.View,
+) docHighlightPosition {
+	sel := doc.SelectionFor(v.ID())
+	pos := sel.Primary().Cursor(doc.Text())
+	return docHighlightPosition{
+		docID:  doc.ID(),
+		viewID: v.ID(),
+		rev:    doc.Revision(),
+		pos:    pos,
+		ok:     true,
+	}
 }
 
 func (e *EditorComponent) Render(w, h int, cx *Context) string {

@@ -2,10 +2,12 @@ package defaults
 
 import (
 	"bytes"
+	"errors"
 	"os/exec"
 	"strconv"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -33,7 +35,7 @@ func formatModule() command.Module {
 			},
 			actReindentSelections: {
 				DocString: "Format selection",
-				Run:       Runner(action.ReindentSelections),
+				Run:       runFormatSelection,
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('=')),
 			},
@@ -97,9 +99,7 @@ func runFormatter(e *view.Editor) command.Result {
 
 	lang := language.LoadLanguage(doc.Lang())
 	if lang.Formatter == nil {
-		return command.Result{
-			Message: "no formatter configured for " + doc.Lang(),
-		}
+		return runLSPFormatter(e, doc, v.ID())
 	}
 
 	text := doc.Text().String()
@@ -132,6 +132,64 @@ func runFormatter(e *view.Editor) command.Result {
 	sel := doc.SelectionFor(v.ID())
 	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(sel)
 	if err := e.Apply(tx); err != nil {
+		return command.Result{Message: "error: " + err.Error()}
+	}
+	return command.Result{}
+}
+
+func runLSPFormatter(
+	e *view.Editor, doc *view.Document, viewID view.Id,
+) command.Result {
+	ctl := e.LanguageServerController()
+	if ctl == nil {
+		return command.Result{
+			Message: "no formatter configured for " + doc.Lang(),
+		}
+	}
+	err := ctl.FormatDocument(doc, viewID)
+	if errors.Is(err, lsp.ErrNoLanguageServer) {
+		return command.Result{
+			Message: "no formatter configured for " + doc.Lang(),
+		}
+	}
+	if err != nil {
+		return command.Result{Message: "error: " + err.Error()}
+	}
+	return command.Result{}
+}
+
+func runFormatSelection(
+	e *view.Editor, _ *command.Args,
+) command.Result {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return command.Result{}
+	}
+	v, ok := e.FocusedView()
+	if !ok {
+		return command.Result{}
+	}
+	ctl := e.LanguageServerController()
+	if ctl == nil {
+		return command.Result{
+			Message: "error: No configured language server supports " +
+				"range formatting",
+		}
+	}
+	err := ctl.FormatSelection(doc, v.ID())
+	if errors.Is(err, lsp.ErrNoLanguageServer) {
+		return command.Result{
+			Message: "error: No configured language server supports " +
+				"range formatting",
+		}
+	}
+	if errors.Is(err, lsp.ErrFormatSelection) {
+		return command.Result{
+			Message: "error: format_selections only supports " +
+				"a single selection for now",
+		}
+	}
+	if err != nil {
 		return command.Result{Message: "error: " + err.Error()}
 	}
 	return command.Result{}

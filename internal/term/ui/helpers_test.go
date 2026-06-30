@@ -85,16 +85,35 @@ func sendKey(m ui.Model, ch rune) ui.Model {
 	return m2.(ui.Model)
 }
 
+func sendKeyAndFeed(m ui.Model, ch rune) ui.Model {
+	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Text: string(ch)})
+}
+
 func openPickerAndFeed(m ui.Model, ch rune) ui.Model {
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+	return sendKeyAndFeed(m, ch)
+}
+
+func updateAndFeed(m ui.Model, msg tea.Msg) ui.Model {
+	m2, cmd := m.Update(msg)
 	m = m2.(ui.Model)
+	return feedCmds(m, cmd)
+}
+
+func feedCmds(m ui.Model, cmd tea.Cmd) ui.Model {
 	for cmd != nil {
 		msg := cmd()
 		if msg == nil {
 			break
 		}
-		m2, cmd = m.Update(msg)
+		if batch, ok := msg.(tea.BatchMsg); ok {
+			for _, next := range batch {
+				m = feedCmds(m, next)
+			}
+			break
+		}
+		m2, next := m.Update(msg)
 		m = m2.(ui.Model)
+		cmd = next
 	}
 	return m
 }
@@ -102,6 +121,10 @@ func openPickerAndFeed(m ui.Model, ch rune) ui.Model {
 func sendSpecial(m ui.Model, k rune) ui.Model {
 	m2, _ := m.Update(tea.KeyPressMsg{Code: k})
 	return m2.(ui.Model)
+}
+
+func sendSpecialAndFeed(m ui.Model, k rune) ui.Model {
+	return updateAndFeed(m, tea.KeyPressMsg{Code: k})
 }
 
 func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
@@ -112,6 +135,10 @@ func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
 func sendModified(m ui.Model, ch rune, mod tea.KeyMod) ui.Model {
 	m2, _ := m.Update(tea.KeyPressMsg{Code: ch, Mod: mod})
 	return m2.(ui.Model)
+}
+
+func sendModifiedAndFeed(m ui.Model, ch rune, mod tea.KeyMod) ui.Model {
+	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Mod: mod})
 }
 
 func resize(m ui.Model, w, h int) ui.Model {

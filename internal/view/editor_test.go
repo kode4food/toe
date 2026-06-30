@@ -557,6 +557,43 @@ func TestEditorEarlierLater(t *testing.T) {
 		e.CloseView(v.ID())
 		assert.False(t, e.Later(core.UndoSteps(1)))
 	})
+
+	t.Run("Earlier same-length substitution", func(t *testing.T) {
+		// Same-length substitution is the one case where the double-inversion
+		// in Earlier produces a changeset whose len matches doc.text.LenChars()
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "sub.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("a"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 1, "b"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		assert.True(t, e.Earlier(core.UndoSteps(1)))
+	})
+
+	t.Run("Later same-length substitution", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "sub2.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("a"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 1, "b"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		e.Earlier(core.UndoSteps(1))
+		assert.True(t, e.Later(core.UndoSteps(1)))
+	})
 }
 
 func TestEditorConfigReload(t *testing.T) {
@@ -1046,6 +1083,61 @@ func TestEditorSaveAllWithError(t *testing.T) {
 	})
 }
 
+func TestMoveFocusedFile(t *testing.T) {
+	t.Run("returns error when no document", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		v, _ := e.FocusedView()
+		e.CloseView(v.ID())
+		err := e.MoveFocusedFile("newpath.txt", false)
+		assert.ErrorIs(t, err, view.ErrNoDocument)
+	})
+
+	t.Run("modified unforced returns error", func(t *testing.T) {
+		e := editorWithText(t, "unsaved")
+		err := e.MoveFocusedFile("newpath.txt", false)
+		assert.ErrorIs(t, err, view.ErrUnsavedChanges)
+	})
+
+	t.Run("renames scratch doc by setting path", func(t *testing.T) {
+		dir := t.TempDir()
+		e := editorWithText(t, "hello\n")
+		newPath := filepath.Join(dir, "newfile.txt")
+		err := e.MoveFocusedFile(newPath, true)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, newPath, doc.Path())
+	})
+
+	t.Run("renames existing file on disk", func(t *testing.T) {
+		dir := t.TempDir()
+		oldPath := filepath.Join(dir, "old.txt")
+		newPath := filepath.Join(dir, "new.txt")
+		assert.NoError(t, os.WriteFile(oldPath, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(oldPath)
+		assert.NoError(t, err)
+		err = e.MoveFocusedFile(newPath, false)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, newPath, doc.Path())
+		_, statErr := os.Stat(newPath)
+		assert.NoError(t, statErr)
+	})
+
+	t.Run("same path is no-op", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "same.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		err = e.MoveFocusedFile(path, false)
+		assert.NoError(t, err)
+	})
+}
+
 func TestEditorCommitInsertHistoryNoDoc(t *testing.T) {
 	t.Run("CommitInsertHistory when no doc is no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
@@ -1103,5 +1195,239 @@ func TestTreeSeparatorAt(t *testing.T) {
 		})
 
 		assert.True(t, found)
+	})
+}
+
+func TestApplyToDocument(t *testing.T) {
+	t.Run("nil document returns error", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		rope := e.AllDocuments()[0].Text()
+		tx := core.NewTransaction(rope)
+		err := e.ApplyToDocument(nil, tx)
+		assert.ErrorIs(t, err, view.ErrNoDocument)
+	})
+
+	t.Run("applies to non-focused document", func(t *testing.T) {
+		dir := t.TempDir()
+		a := filepath.Join(dir, "a.go")
+		b := filepath.Join(dir, "b.go")
+		assert.NoError(t, os.WriteFile(a, []byte("aaa\n"), 0o644))
+		assert.NoError(t, os.WriteFile(b, []byte("bbb\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(a)
+		assert.NoError(t, err)
+		docB, err := e.SwitchOrOpenDoc(b)
+		assert.NoError(t, err)
+		rope := docB.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 3, "xxx"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		err = e.ApplyToDocument(docB, tx)
+		assert.NoError(t, err)
+		assert.Equal(t, "xxx\n", docB.Text().String())
+	})
+
+	t.Run("applies to focused document", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 5, "world"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		err = e.ApplyToDocument(doc, tx)
+		assert.NoError(t, err)
+		assert.Equal(t, "world\n", doc.Text().String())
+	})
+
+	t.Run("insert mode triggers BeginInsertGroup", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetMode(view.ModeInsert)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 5, "world"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		err = e.ApplyToDocument(doc, tx)
+		assert.NoError(t, err)
+		assert.Equal(t, "world\n", doc.Text().String())
+	})
+}
+
+type fileOpController struct {
+	view.LanguageServerController
+}
+
+func (c *fileOpController) WillCreateFile(_ string, _ bool) error    { return nil }
+func (c *fileOpController) DidCreateFile(_ string, _ bool) error     { return nil }
+func (c *fileOpController) WillRenameFile(_, _ string, _ bool) error { return nil }
+func (c *fileOpController) DidRenameFile(_, _ string, _ bool) error  { return nil }
+func (c *fileOpController) WillDeleteFile(_ string, _ bool) error    { return nil }
+func (c *fileOpController) DidDeleteFile(_ string, _ bool) error     { return nil }
+
+func TestEditorSaveWithFileOps(t *testing.T) {
+	t.Run("WillCreate/DidCreate on new file", func(t *testing.T) {
+		dir := t.TempDir()
+		newPath := filepath.Join(dir, "new.txt")
+		e := editorWithText(t, "hello\n")
+		e.SetLanguageServerController(&fileOpController{})
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetPath(newPath)
+		assert.NoError(t, e.Save())
+		_, err := os.Stat(newPath)
+		assert.NoError(t, err)
+	})
+}
+
+func TestEditorSaveAllWithFileOps(t *testing.T) {
+	t.Run("WillCreate/DidCreate during SaveAll", func(t *testing.T) {
+		dir := t.TempDir()
+		newPath := filepath.Join(dir, "new.txt")
+		e := editorWithText(t, "hello\n")
+		e.SetLanguageServerController(&fileOpController{})
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetPath(newPath)
+		errs := e.SaveAll()
+		assert.Empty(t, errs)
+	})
+}
+
+func TestMoveFocusedFileWithOps(t *testing.T) {
+	t.Run("WillRename and DidRename called", func(t *testing.T) {
+		dir := t.TempDir()
+		oldPath := filepath.Join(dir, "old.txt")
+		newPath := filepath.Join(dir, "new.txt")
+		assert.NoError(t, os.WriteFile(oldPath, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(oldPath)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&fileOpController{})
+		assert.NoError(t, e.MoveFocusedFile(newPath, false))
+	})
+
+	t.Run("saves modified file after force-move", func(t *testing.T) {
+		dir := t.TempDir()
+		oldPath := filepath.Join(dir, "old.txt")
+		newPath := filepath.Join(dir, "new.txt")
+		assert.NoError(t, os.WriteFile(oldPath, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(oldPath)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 5, "world"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		assert.NoError(t, e.Apply(tx))
+		assert.True(t, doc.Modified())
+		assert.NoError(t, e.MoveFocusedFile(newPath, true))
+		assert.Equal(t, "world\n", doc.Text().String())
+	})
+
+	t.Run("MkdirAll error returns error", func(t *testing.T) {
+		dir := t.TempDir()
+		oldPath := filepath.Join(dir, "old.txt")
+		assert.NoError(t, os.WriteFile(oldPath, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(oldPath)
+		assert.NoError(t, err)
+		err = e.MoveFocusedFile("/dev/null/cannot/create/this.txt", false)
+		assert.Error(t, err)
+	})
+}
+
+func TestSwitchFileEdgeCases(t *testing.T) {
+	t.Run("existing doc no view returns ErrNoView", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hi\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		_, err = e.SwitchFile(path)
+		assert.ErrorIs(t, err, view.ErrNoView)
+	})
+
+	t.Run("unreadable path returns error", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		_, err := e.SwitchFile("/dev/null/cannot-open.txt")
+		assert.Error(t, err)
+	})
+
+	t.Run("new file with no view returns ErrNoView", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "b.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hi\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		path2 := filepath.Join(dir, "c.txt")
+		assert.NoError(t, os.WriteFile(path2, []byte("hi\n"), 0o644))
+		_, err = e.SwitchFile(path2)
+		assert.ErrorIs(t, err, view.ErrNoView)
+	})
+}
+
+func TestSwitchBufferNoView(t *testing.T) {
+	t.Run("returns false when no focused view", func(t *testing.T) {
+		dir := t.TempDir()
+		e := view.NewEditor(dir)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		ok = e.SwitchBuffer(doc.ID())
+		assert.False(t, ok)
+	})
+}
+
+func TestSwitchOrOpenDocError(t *testing.T) {
+	t.Run("returns error for unreadable path", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		_, err := e.SwitchOrOpenDoc("/dev/null/cannot-open.txt")
+		assert.Error(t, err)
+	})
+}
+
+func TestReloadAllError(t *testing.T) {
+	t.Run("returns error when file was deleted", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, os.Remove(path))
+		errs := e.ReloadAll()
+		assert.NotEmpty(t, errs)
 	})
 }

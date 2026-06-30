@@ -17,9 +17,13 @@ const (
 	actGotoTypeDefinition  = "goto_type_definition"
 	actGotoImplementation  = "goto_implementation"
 	actGotoReference       = "goto_reference"
+	actSelectReferences    = "select_references_to_symbol_under_cursor"
+	actCodeAction          = "code_action"
 	actHover               = "hover"
+	actRenameSymbol        = "rename_symbol"
 	actSignatureHelp       = "signature-help"
 	actSymbolPicker        = "symbol_picker"
+	actWorkspaceSymbol     = "workspace_symbol_picker"
 	actLSPRestart          = "lsp-restart"
 	actLSPStop             = "lsp-stop"
 	actLSPWorkspaceCommand = "lsp-workspace-command"
@@ -60,11 +64,29 @@ func lspModule(model ui.Model) command.Module {
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('r'))),
 			},
+			actSelectReferences: {
+				DocString: "Select symbol references",
+				Run:       Continuation(model.SelectReferencesAction()),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(spc(char('h'))),
+			},
+			actCodeAction: {
+				DocString: "Perform code action",
+				Run:       Continuation(model.CodeActionPickerAction()),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(spc(char('a'))),
+			},
 			actHover: {
 				DocString: "Show docs for item under cursor",
 				Run:       Continuation(model.HoverAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('k'))),
+			},
+			actRenameSymbol: {
+				DocString: "Rename symbol",
+				Run:       Continuation(model.RenameSymbolAction()),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(spc(char('r'))),
 			},
 			actSignatureHelp: {
 				DocString: "Show signature help",
@@ -76,6 +98,12 @@ func lspModule(model ui.Model) command.Module {
 				Run:       Continuation(model.SymbolPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('s'))),
+			},
+			actWorkspaceSymbol: {
+				DocString: "Open workspace symbol picker",
+				Run:       Continuation(model.WorkspaceSymbolPickerAction()),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(spc(char('S'))),
 			},
 			actLSPRestart: {
 				DocString: "Restart language servers for the current document",

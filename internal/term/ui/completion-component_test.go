@@ -22,6 +22,8 @@ type completionController struct {
 	docs                string
 	signature           view.SignatureHelp
 	signatureAfterComma view.SignatureHelp
+	signatureErr        error
+	signatureEmpty      bool
 }
 
 func TestCompletionComponent(t *testing.T) {
@@ -47,7 +49,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "Println")
@@ -76,8 +78,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Code: '.', Text: "."})
-		m = m2.(ui.Model)
+		m = sendKeyAndFeed(m, '.')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "Name")
@@ -106,10 +107,38 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "resolved docs")
+	})
+
+	t.Run("markdown code block no syntax spans", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			docs:   "# Println\n\n```unknownlang\nhello\n```",
+			items: []view.CompletionItem{
+				{
+					ID:     "one",
+					Label:  "Println",
+					Insert: "Println",
+					Kind:   "function",
+				},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "Println")
 	})
 
 	t.Run("renders markdown docs", func(t *testing.T) {
@@ -134,12 +163,41 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "Println")
 		assert.Contains(t, out, "func main() {}")
 		assert.NotContains(t, out, "```")
+	})
+
+	t.Run("shows docs above popup on narrow screen", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			docs:   "docs for narrow screen",
+			items: []view.CompletionItem{
+				{
+					ID:     "one",
+					Label:  "Println",
+					Insert: "Println",
+					Kind:   "function",
+				},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		// Narrow screen forces docs above/below the popup
+		m = resize(m, 40, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "Println")
 	})
 
 	t.Run("shows scroll thumb", func(t *testing.T) {
@@ -162,7 +220,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "▌")
@@ -187,7 +245,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "Println")
 
@@ -214,7 +272,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "Println")
 
@@ -244,7 +302,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "Println")
 		assert.Contains(t, out, "Scanln")
@@ -278,7 +336,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendKey(m, 'C')
 		m = sendKey(m, 'l')
 		out := stripANSI(m.View().Content)
@@ -307,7 +365,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendSpecial(m, tea.KeyDown)
 		m = sendKey(m, 'C')
 		_ = sendSpecial(m, tea.KeyEnter)
@@ -331,7 +389,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		_ = sendKey(m, '.')
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -361,10 +419,35 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m = sendModified(m, 'x', tea.ModCtrl)
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		assert.Contains(t, stripANSI(m.View().Content), "Println")
 
 		doc.SetSelectionFor(v.ID(), core.PointSelection(1))
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "Println")
+	})
+
+	t.Run("drops stale response", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			items: []view.CompletionItem{
+				{Label: "Println", Insert: "Println", Kind: "function"},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+		m = m2.(ui.Model)
+		m = sendKey(m, 'p')
+		m = feedCmds(m, cmd)
 		out := stripANSI(m.View().Content)
 
 		assert.NotContains(t, out, "Println")
@@ -437,6 +520,12 @@ func (c *completionController) Hover(*view.Document, view.Id) (string, error) {
 func (c *completionController) SignatureHelp(
 	doc *view.Document, viewID view.Id,
 ) (view.SignatureHelp, error) {
+	if c.signatureErr != nil {
+		return view.SignatureHelp{}, c.signatureErr
+	}
+	if c.signatureEmpty {
+		return view.SignatureHelp{}, nil
+	}
 	if doc != nil && len(c.signatureAfterComma.Signatures) > 0 {
 		sel := doc.SelectionFor(viewID)
 		pos := sel.Primary().Cursor(doc.Text())
@@ -505,8 +594,68 @@ func (c *completionController) GotoReference(
 	return nil, nil
 }
 
+func (c *completionController) RenameSymbolPrefill(
+	*view.Document, view.Id,
+) (string, error) {
+	return "", nil
+}
+
+func (c *completionController) RenameSymbol(
+	*view.Document, view.Id, string,
+) error {
+	return nil
+}
+
+func (c *completionController) CodeActions(
+	*view.Document, view.Id,
+) ([]view.CodeAction, error) {
+	return nil, nil
+}
+
+func (c *completionController) ApplyCodeAction(
+	*view.Document, view.Id, view.CodeAction,
+) error {
+	return nil
+}
+
+func (c *completionController) DocumentHighlights(
+	*view.Document, view.Id,
+) ([]view.DocumentHighlight, error) {
+	return nil, nil
+}
+
+func (c *completionController) DocumentLinks(
+	*view.Document,
+) ([]view.DocumentLink, error) {
+	return nil, nil
+}
+
+func (c *completionController) ResolveDocumentLink(
+	_ *view.Document, link view.DocumentLink,
+) (view.DocumentLink, error) {
+	return link, nil
+}
+
+func (c *completionController) FormatDocument(
+	*view.Document, view.Id,
+) error {
+	return nil
+}
+
+func (c *completionController) FormatSelection(
+	*view.Document, view.Id,
+) error {
+	return nil
+}
+
 func (c *completionController) DocumentSymbols(
 	*view.Document,
+) ([]view.Symbol, error) {
+	return nil, nil
+}
+
+func (c *completionController) WorkspaceSymbols(
+	*view.Document, string,
 ) ([]view.Symbol, error) {
 	return nil, nil
 }

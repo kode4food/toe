@@ -36,21 +36,30 @@ type (
 		docs      map[view.DocumentId][]string
 		diagIDs   map[view.DocumentId]map[string]string
 		comps     map[string]completionCandidate
+		actions   map[string]codeActionCandidate
+		links     map[string]documentLinkCandidate
+		progress  map[string]map[string]progressEntry
+		watches   map[string]map[string][]fileWatch
+		watcher   *fsWatcher
 		roots     map[string]string
 		mu        sync.Mutex
 	}
 )
 
 var (
-	ErrNoLanguageServer      = errors.New("LSP not defined for document")
-	ErrUnknownLanguageServer = errors.New("unknown language server")
-	ErrWorkspaceCommand      = errors.New("workspace command unavailable")
-	ErrCompletionUnavailable = errors.New("completion unavailable")
-	ErrLanguageServerExited  = errors.New("language server exited")
-	ErrLanguageServerRequest = errors.New("language server request failed")
+	ErrNoLanguageServer        = errors.New("LSP not defined for document")
+	ErrUnknownLanguageServer   = errors.New("unknown language server")
+	ErrWorkspaceCommand        = errors.New("workspace command unavailable")
+	ErrCompletionUnavailable   = errors.New("completion unavailable")
+	ErrCodeActionUnavailable   = errors.New("code action unavailable")
+	ErrDocumentLinkUnavailable = errors.New("document link unavailable")
+	ErrFormatSelection         = errors.New("format selection unsupported")
+	ErrLanguageServerExited    = errors.New("language server exited")
+	ErrLanguageServerRequest   = errors.New("language server request failed")
 )
 
 var _ view.DocumentObserver = (*Session)(nil)
+var _ view.FileOperationController = (*Session)(nil)
 var _ view.LanguageServerController = (*Session)(nil)
 var _ protocol.Client = (*clientHandler)(nil)
 
@@ -66,6 +75,10 @@ func NewSession(ctx context.Context, cwd string) *Session {
 		docs:      map[view.DocumentId][]string{},
 		diagIDs:   map[view.DocumentId]map[string]string{},
 		comps:     map[string]completionCandidate{},
+		actions:   map[string]codeActionCandidate{},
+		links:     map[string]documentLinkCandidate{},
+		progress:  map[string]map[string]progressEntry{},
+		watches:   map[string]map[string][]fileWatch{},
 		roots:     map[string]string{},
 	}
 }
@@ -80,6 +93,21 @@ func Attach(ctx context.Context, e *view.Editor) *Session {
 		s.DocumentOpened(doc)
 	}
 	return s
+}
+
+// ReloadConfig reloads language-server config and restarts open documents
+func (s *Session) ReloadConfig() error {
+	langs := loadLanguages(s.cwd)
+	clients := s.resetConfig(langs)
+	s.clearDocumentState()
+	closeClients(clients)
+	if s.editor == nil {
+		return nil
+	}
+	for _, doc := range s.editor.AllDocuments() {
+		s.DocumentOpened(doc)
+	}
+	return nil
 }
 
 func (s *Session) PublishDiagnostics(
@@ -104,15 +132,30 @@ func (h *clientHandler) WorkspaceFolders(
 	return h.session.workspaceFolders(), nil
 }
 
-func (h *clientHandler) WorkDoneProgressCreate(
-	context.Context, *protocol.WorkDoneProgressCreateParams,
+func (h *clientHandler) RegisterCapability(
+	_ context.Context, params *protocol.RegistrationParams,
 ) error {
+	return h.session.registerCapability(h.name, params)
+}
+
+func (h *clientHandler) UnregisterCapability(
+	_ context.Context, params *protocol.UnregistrationParams,
+) error {
+	h.session.unregisterCapability(h.name, params)
+	return nil
+}
+
+func (h *clientHandler) WorkDoneProgressCreate(
+	_ context.Context, params *protocol.WorkDoneProgressCreateParams,
+) error {
+	h.session.createProgress(h.name, params.Token)
 	return nil
 }
 
 func (h *clientHandler) Progress(
-	context.Context, *protocol.ProgressParams,
+	_ context.Context, params *protocol.ProgressParams,
 ) error {
+	h.session.updateProgress(h.name, params)
 	return nil
 }
 
@@ -153,12 +196,23 @@ func (h *clientHandler) Telemetry(
 }
 
 func (h *clientHandler) ApplyEdit(
-	context.Context, *protocol.ApplyWorkspaceEditParams,
+	_ context.Context, params *protocol.ApplyWorkspaceEditParams,
 ) (*protocol.ApplyWorkspaceEditResult, error) {
-	return &protocol.ApplyWorkspaceEditResult{Applied: false}, nil
+	encoding := protocol.PositionEncodingKindUTF16
+	if client, ok := h.session.client(h.name); ok {
+		encoding = client.OffsetEncoding()
+	}
+	if err := h.session.applyWorkspaceEdit(params.Edit, encoding); err != nil {
+		reason := err.Error()
+		return &protocol.ApplyWorkspaceEditResult{
+			Applied:       false,
+			FailureReason: &reason,
+		}, nil
+	}
+	return &protocol.ApplyWorkspaceEditResult{Applied: true}, nil
 }
 
-// PullDiagnostics requests fresh diagnostics from supporting servers for the document
+// PullDiagnostics requests fresh diagnostics from document servers
 func (s *Session) PullDiagnostics(doc *view.Document) error {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
@@ -203,6 +257,7 @@ func (s *Session) RestartLanguageServers(
 	if err != nil {
 		return nil, err
 	}
+	s.clearDocumentHighlightsForServers(selected)
 	s.stopClients(selected)
 	for _, name := range selected {
 		_, _ = s.startClient(name, doc, lang)
@@ -223,6 +278,7 @@ func (s *Session) StopLanguageServers(
 	if err != nil {
 		return nil, err
 	}
+	s.clearDocumentHighlightsForServers(selected)
 	s.stopClients(selected)
 	return selected, nil
 }
@@ -252,7 +308,7 @@ func (s *Session) ExecuteWorkspaceCommand(
 	}
 }
 
-// WorkspaceCommands returns all workspace commands advertised by attached servers
+// WorkspaceCommands returns commands advertised by attached servers
 func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 	clients := s.clientsForDocument(doc)
 	out := []string{}
@@ -268,6 +324,8 @@ func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 
 // Close terminates all clients owned by the session
 func (s *Session) Close() error {
+	s.clearAllDocumentHighlights()
+	s.closeFileWatcher()
 	s.mu.Lock()
 	clients := make([]*Client, 0, len(s.clients))
 	for _, client := range s.clients {
@@ -288,6 +346,9 @@ func (s *Session) Close() error {
 func (s *Session) DocumentOpened(doc *view.Document) {
 	s.notify(doc, (*Client).DidOpen)
 	s.pullDiagnosticsAsync(doc)
+	s.documentLinksAsync(doc)
+	s.documentColorsAsync(doc)
+	s.inlayHintsAsync(doc)
 }
 
 // DocumentChanged sends didChange notifications to attached servers
@@ -296,20 +357,31 @@ func (s *Session) DocumentChanged(
 ) {
 	s.notifyChange(doc, change)
 	s.pullDiagnosticsAsync(doc)
+	s.documentLinksAsync(doc)
+	s.documentColorsAsync(doc)
+	s.inlayHintsAsync(doc)
 }
 
 // DocumentSaved sends didSave notifications to attached servers
 func (s *Session) DocumentSaved(doc *view.Document) {
 	s.notify(doc, (*Client).DidSave)
 	s.pullDiagnosticsAsync(doc)
+	s.documentLinksAsync(doc)
+	s.documentColorsAsync(doc)
+	s.inlayHintsAsync(doc)
+	s.didChangeWatchedFile(doc.Path())
 }
 
 // DocumentClosed sends didClose notifications and forgets the document
 func (s *Session) DocumentClosed(doc *view.Document) {
 	s.notify(doc, (*Client).DidClose)
+	doc.ClearAllDocumentHighlights()
+	doc.ClearDocumentLinks()
+	doc.ClearDocumentColors()
 	s.mu.Lock()
 	delete(s.docs, doc.ID())
 	delete(s.diagIDs, doc.ID())
+	s.clearDocumentLinksLocked(doc.ID())
 	s.mu.Unlock()
 }
 
@@ -503,6 +575,29 @@ func (s *Session) setDocumentServers(
 	s.docs[id] = names
 }
 
+func (s *Session) resetConfig(langs language.Languages) []*Client {
+	s.closeFileWatcher()
+	s.mu.Lock()
+	clients := make([]*Client, 0, len(s.clients))
+	for _, client := range s.clients {
+		clients = append(clients, client)
+	}
+	s.registry = NewRegistry(langs.LanguageServers)
+	s.languages = languagesByName(langs)
+	s.clients = map[string]*Client{}
+	s.docs = map[view.DocumentId][]string{}
+	s.diagIDs = map[view.DocumentId]map[string]string{}
+	s.comps = map[string]completionCandidate{}
+	s.actions = map[string]codeActionCandidate{}
+	s.links = map[string]documentLinkCandidate{}
+	s.progress = map[string]map[string]progressEntry{}
+	s.watches = map[string]map[string][]fileWatch{}
+	s.watcher = nil
+	s.roots = map[string]string{}
+	s.mu.Unlock()
+	return clients
+}
+
 func (s *Session) languageForDocument(
 	doc *view.Document,
 ) (language.Language, bool) {
@@ -531,8 +626,14 @@ func (s *Session) startClient(
 		_ = client.Close()
 		return nil, false
 	}
-	s.clients[name] = client
+	s.setClient(name, client)
 	return client, true
+}
+
+func (s *Session) setClient(name string, client *Client) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clients[name] = client
 }
 
 func (s *Session) setWorkspaceRoot(name, root string) {
@@ -756,12 +857,63 @@ func (s *Session) stopClients(names []string) {
 }
 
 func (s *Session) dropClient(name string, client *Client) {
+	s.clearDocumentHighlightsForServers([]string{name})
 	s.mu.Lock()
 	if s.clients[name] == client {
 		delete(s.clients, name)
 	}
 	s.mu.Unlock()
 	_ = client.Close()
+}
+
+func (s *Session) clearAllDocumentHighlights() {
+	if s.editor == nil {
+		return
+	}
+	for _, doc := range s.editor.AllDocuments() {
+		doc.ClearAllDocumentHighlights()
+	}
+}
+
+func (s *Session) clearDocumentState() {
+	if s.editor == nil {
+		return
+	}
+	for _, doc := range s.editor.AllDocuments() {
+		doc.ClearDiagnostics()
+		doc.ClearAllDocumentHighlights()
+		doc.ClearDocumentLinks()
+		doc.ClearDocumentColors()
+		doc.ClearAllInlayHints()
+	}
+}
+
+func (s *Session) clearDocumentHighlightsForServers(names []string) {
+	if s.editor == nil || len(names) == 0 {
+		return
+	}
+	selected := make(map[string]bool, len(names))
+	for _, name := range names {
+		selected[name] = true
+	}
+	for _, doc := range s.editor.AllDocuments() {
+		lang, ok := s.languageForDocument(doc)
+		if !ok {
+			continue
+		}
+		for _, name := range serverNames(lang.LanguageServers) {
+			if selected[name] {
+				doc.ClearAllDocumentHighlights()
+				break
+			}
+		}
+	}
+}
+
+func closeClients(clients []*Client) {
+	for _, client := range clients {
+		_ = client.Close()
+	}
 }
 
 func clientSupportsCommand(client *Client, name string) bool {

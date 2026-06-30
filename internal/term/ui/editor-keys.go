@@ -14,6 +14,7 @@ import (
 func (e *EditorComponent) handleKeyPress(
 	msg tea.KeyPressMsg, cx *Context,
 ) (EventResult, tea.Cmd) {
+	e.completionGen++
 	k := FromTeaKey(msg)
 
 	if len(e.pending) == 0 && k.Code.Char == 'z' && k.Mods == command.ModCtrl {
@@ -130,13 +131,23 @@ func (e *EditorComponent) insertTypable(
 	e.infoTitle = ""
 	e.infoItems = nil
 	cx.Editor.ResetCount()
-	if layer := e.triggerCompletionLayer(cx); layer != nil {
+	if layer := e.triggerSignatureHelpLayer(cx); layer != nil {
 		return layer
 	}
-	return e.triggerSignatureHelpLayer(cx)
+	return e.triggerCompletionLayer(cx)
 }
 
 func (e *EditorComponent) triggerCompletionLayer(cx *Context) Callback {
+	cmd := e.completionCmd(cx, true)
+	if cmd == nil {
+		return nil
+	}
+	return func(*Compositor, *Context) tea.Cmd {
+		return cmd
+	}
+}
+
+func (e *EditorComponent) completionCmd(cx *Context, trigger bool) tea.Cmd {
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
 		return nil
@@ -149,18 +160,20 @@ func (e *EditorComponent) triggerCompletionLayer(cx *Context) Callback {
 	if ls == nil {
 		return nil
 	}
-	items, err := ls.TriggerCompletions(doc, v.ID())
-	if err != nil {
-		cx.Editor.SetStatusMsg(err.Error())
-		return nil
-	}
-	if len(items) == 0 {
-		return nil
-	}
 	anchor := newCompletionAnchor(doc, v.ID())
-	return func(comp *Compositor, _ *Context) tea.Cmd {
-		comp.Push(newCompletionComponent(e, items, anchor))
-		return nil
+	e.completionGen++
+	gen := e.completionGen
+	return func() tea.Msg {
+		var items []view.CompletionItem
+		var err error
+		if trigger {
+			items, err = ls.TriggerCompletions(doc, v.ID())
+		} else {
+			items, err = ls.Completions(doc, v.ID())
+		}
+		return completionMsg{
+			gen: gen, anchor: anchor, items: items, err: err,
+		}
 	}
 }
 
@@ -205,6 +218,23 @@ func newCompletionAnchor(doc *view.Document, viewID view.Id) completionAnchor {
 	return completionAnchor{
 		docID:  doc.ID(),
 		viewID: viewID,
+		rev:    doc.Revision(),
 		pos:    sel.Primary().Cursor(doc.Text()),
 	}
+}
+
+func completionRequestValid(cx *Context, anchor completionAnchor) bool {
+	if cx.Editor.Mode() != view.ModeInsert {
+		return false
+	}
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok || doc.ID() != anchor.docID || doc.Revision() != anchor.rev {
+		return false
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok || v.ID() != anchor.viewID {
+		return false
+	}
+	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
+	return pos == anchor.pos
 }

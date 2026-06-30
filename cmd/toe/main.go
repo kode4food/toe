@@ -91,7 +91,10 @@ func run(args []string, out io.Writer) error {
 		if raw == nil {
 			raw = map[string]any{}
 		}
-		return reg.ApplyTOML(editor, raw)
+		if err := reg.ApplyTOML(editor, raw); err != nil {
+			return err
+		}
+		return lspSession.ReloadConfig()
 	})
 	if pickerDir != "" {
 		abs, err := filepath.Abs(pickerDir)

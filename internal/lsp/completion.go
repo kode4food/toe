@@ -63,7 +63,7 @@ func (c *Client) Completion(
 	return normalizeCompletionResult(c.name, result), true, nil
 }
 
-// Completions requests an invoked completion list for the document at the cursor
+// Completions requests an invoked completion list at the cursor
 func (s *Session) Completions(
 	doc *view.Document, viewID view.Id,
 ) ([]view.CompletionItem, error) {
@@ -73,7 +73,7 @@ func (s *Session) Completions(
 	return s.completions(doc, viewID, context)
 }
 
-// TriggerCompletions requests completion triggered by the character before the cursor
+// TriggerCompletions requests character-triggered completion
 func (s *Session) TriggerCompletions(
 	doc *view.Document, viewID view.Id,
 ) ([]view.CompletionItem, error) {
@@ -119,7 +119,7 @@ func (s *Session) ApplyCompletion(
 	return s.applyCompletionCommand(c.client, c.item.Command)
 }
 
-// ResolveCompletion fetches additional details for a completion item from the server
+// ResolveCompletion fetches extra completion item details
 func (s *Session) ResolveCompletion(
 	_ *view.Document, _ view.Id, item view.CompletionItem,
 ) (view.CompletionItem, error) {

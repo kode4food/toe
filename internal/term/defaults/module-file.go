@@ -328,8 +328,7 @@ func fileManageCmds() map[string]command.Command {
 					}
 				}
 				path, _ := args.First()
-				doc.SetPath(path)
-				if err := e.Save(); err != nil {
+				if err := e.MoveFocusedFile(path, false); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				return command.Result{Message: "moved to '" + path + "'"}
@@ -347,13 +346,12 @@ func fileManageCmds() map[string]command.Command {
 						Message: "error: no filename given",
 					}
 				}
-				doc, ok := e.FocusedDocument()
+				_, ok := e.FocusedDocument()
 				if !ok {
 					return command.Result{Message: "error: no document"}
 				}
 				path, _ := args.First()
-				doc.SetPath(path)
-				_ = e.Save()
+				_ = e.MoveFocusedFile(path, true)
 				return command.Result{Message: "moved to '" + path + "'"}
 			},
 			Aliases:   []string{"mv!"},

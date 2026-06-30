@@ -17,15 +17,16 @@ import (
 type (
 	syncServer struct {
 		protocol.UnimplementedServer
-		sync        protocol.TextDocumentSync
-		opened      chan *protocol.DidOpenTextDocumentParams
-		changed     chan *protocol.DidChangeTextDocumentParams
-		saved       chan *protocol.DidSaveTextDocumentParams
-		closed      chan *protocol.DidCloseTextDocumentParams
-		diagnostic  chan *protocol.DocumentDiagnosticParams
-		completion  chan *protocol.CompletionParams
-		command     chan *protocol.ExecuteCommandParams
-		initialized chan struct{}
+		sync             protocol.TextDocumentSync
+		positionEncoding protocol.PositionEncodingKind
+		opened           chan *protocol.DidOpenTextDocumentParams
+		changed          chan *protocol.DidChangeTextDocumentParams
+		saved            chan *protocol.DidSaveTextDocumentParams
+		closed           chan *protocol.DidCloseTextDocumentParams
+		diagnostic       chan *protocol.DocumentDiagnosticParams
+		completion       chan *protocol.CompletionParams
+		command          chan *protocol.ExecuteCommandParams
+		initialized      chan struct{}
 	}
 
 	wholeDocumentChange = protocol.TextDocumentContentChangeWholeDocument
@@ -122,6 +123,343 @@ func TestTextSync(t *testing.T) {
 		assert.Equal(t, partial.Range.Start, partial.Range.End)
 	})
 
+	t.Run("sends incremental delete", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		before := core.NewRope("hello\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(0, 5, ""),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 9,
+			Text:    "\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "", partial.Text)
+		assert.Equal(t, uint32(0), partial.Range.Start.Line)
+		assert.Equal(t, uint32(0), partial.Range.Start.Character)
+		assert.Equal(t, uint32(5), partial.Range.End.Character)
+	})
+
+	t.Run("sends incremental replace", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		before := core.NewRope("hello\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(0, 5, "world"),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 10,
+			Text:    "world\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "world", partial.Text)
+		assert.Equal(t, uint32(0), partial.Range.Start.Line)
+		assert.Equal(t, uint32(0), partial.Range.Start.Character)
+		assert.Equal(t, uint32(5), partial.Range.End.Character)
+	})
+
+	t.Run("sends incremental delete across newline", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		before := core.NewRope("hello\nworld\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(0, 6, ""),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 11,
+			Text:    "world\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "", partial.Text)
+		assert.Equal(t, uint32(0), partial.Range.Start.Line)
+		assert.Equal(t, uint32(1), partial.Range.End.Line)
+	})
+
+	t.Run("sends incremental delete with CRLF", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		before := core.NewRope("hi\r\nbye\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(0, 4, ""),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 12,
+			Text:    "bye\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "", partial.Text)
+		assert.Equal(t, uint32(0), partial.Range.Start.Line)
+		assert.Equal(t, uint32(1), partial.Range.End.Line)
+	})
+
+	t.Run("UTF-8 encoding incremental change", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			positionEncoding: protocol.PositionEncodingKindUTF8,
+			changed:          make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized:      make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		before := core.NewRope("hello\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(5, 5, "!"),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 13,
+			Text:    "hello!\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "!", partial.Text)
+		assert.Equal(t, uint32(5), partial.Range.Start.Character)
+	})
+
+	t.Run("UTF-32 encoding incremental change", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			positionEncoding: protocol.PositionEncodingKindUTF32,
+			changed:          make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized:      make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		before := core.NewRope("hi\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(2, 2, "!"),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 14,
+			Text:    "hi!\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "!", partial.Text)
+		assert.Equal(t, uint32(2), partial.Range.Start.Character)
+	})
+
+	t.Run("UTF-16 surrogate pair incremental", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+			},
+			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		// "😀" is U+1F600, requires a UTF-16 surrogate pair (counts as 2)
+		before := core.NewRope("😀\n")
+		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
+			core.TextChange(1, 1, "!"),
+		})
+		assert.NoError(t, err)
+		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
+			URI:     uri.File("/tmp/main.go"),
+			Version: 15,
+			Text:    "😀!\n",
+		}, view.DocumentChange{Before: before, Changes: cs})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		change := <-server.changed
+		partial, ok := change.ContentChanges[0].(*partialChange)
+		assert.True(t, ok)
+		assert.Equal(t, "!", partial.Text)
+		// 😀 is 2 UTF-16 code units
+		assert.Equal(t, uint32(2), partial.Range.Start.Character)
+	})
+
+	t.Run("open/close disabled returns false", func(t *testing.T) {
+		server := &syncServer{
+			sync:        protocol.TextDocumentSyncKindNone,
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
+		ok, err := client.DidOpen(ctx, doc)
+		assert.NoError(t, err)
+		assert.False(t, ok)
+		ok, err = client.DidClose(ctx, doc)
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	})
+
+	t.Run("kind-based full sync", func(t *testing.T) {
+		server := &syncServer{
+			sync:        protocol.TextDocumentSyncKindFull,
+			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
+			saved:       make(chan *protocol.DidSaveTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go"), Text: "hello\n"}
+		ok, err := client.DidChange(ctx, doc)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		<-server.changed
+
+		ok, err = client.DidSave(ctx, doc)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		<-server.saved
+	})
+
+	t.Run("nil change returns false", func(t *testing.T) {
+		server := &syncServer{
+			sync:        &protocol.TextDocumentSyncOptions{},
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
+		ok, err := client.DidChange(ctx, doc)
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	})
+
+	t.Run("empty changeset returns false", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindIncremental
+		server := &syncServer{
+			sync:        &protocol.TextDocumentSyncOptions{Change: &kind},
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
+		ok, err := client.DidChangeDocument(ctx, doc, view.DocumentChange{})
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	})
+
+	t.Run("boolean save option", func(t *testing.T) {
+		kind := protocol.TextDocumentSyncKindFull
+		server := &syncServer{
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: &kind,
+				Save:   protocol.Boolean(true),
+			},
+			saved:       make(chan *protocol.DidSaveTextDocumentParams, 1),
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go"), Text: "hi\n"}
+		ok, err := client.DidSave(ctx, doc)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		save := <-server.saved
+		assert.Nil(t, save.Text)
+	})
+
+	t.Run("OpenClose=false returns false", func(t *testing.T) {
+		server := &syncServer{
+			sync:        &protocol.TextDocumentSyncOptions{},
+			initialized: make(chan struct{}),
+		}
+		ctx, client, close := newSyncClient(t, server)
+		defer close()
+
+		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
+		ok, err := client.DidOpen(ctx, doc)
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	})
+
 	t.Run("requests pull diagnostics", func(t *testing.T) {
 		resultID := "diag-1"
 		server := &syncServer{
@@ -212,6 +550,7 @@ func (s *syncServer) Initialize(
 			TextDocumentSync:   s.sync,
 			DiagnosticProvider: &protocol.DiagnosticOptions{},
 			CompletionProvider: &protocol.CompletionOptions{},
+			PositionEncoding:   s.positionEncoding,
 		},
 	}, nil
 }

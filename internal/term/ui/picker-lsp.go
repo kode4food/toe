@@ -22,6 +22,16 @@ type (
 		pickerMeta
 		symbols []view.Symbol
 	}
+
+	lspCodeActionSource struct {
+		pickerMeta
+		actions []view.CodeAction
+	}
+
+	lspWorkspaceSymbolSource struct {
+		pickerMeta
+		query string
+	}
 )
 
 // LSPWorkspaceCommandPicker opens commands exposed by language servers
@@ -60,6 +70,31 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 			primary: 1,
 		},
 		symbols: symbols,
+	})
+}
+
+func newLSPCodeActionPicker(
+	e *view.Editor, actions []view.CodeAction,
+) *Picker {
+	return NewPicker(e, &lspCodeActionSource{
+		pickerMeta: pickerMeta{
+			title:   "LSP code actions",
+			columns: []string{"kind", "title", "server"},
+			primary: 1,
+		},
+		actions: actions,
+	})
+}
+
+func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
+	return NewPicker(e, &lspWorkspaceSymbolSource{
+		pickerMeta: pickerMeta{
+			title: "LSP workspace symbols",
+			columns: []string{
+				"kind", "name", "container", "path",
+			},
+			primary: 1,
+		},
 	})
 }
 
@@ -172,6 +207,113 @@ func (l *lspSymbolSource) Match(
 }
 
 func (l *lspSymbolSource) Accept(
+	e *view.Editor, item PickerItem, action PickerAcceptAction,
+) {
+	acceptLocation(e, item, action)
+}
+
+func (l *lspCodeActionSource) Load(
+	_ *view.Editor,
+) ([]PickerItem, <-chan PickerItem, StopFunc) {
+	items := make([]PickerItem, 0, len(l.actions))
+	for _, action := range l.actions {
+		items = append(items, PickerItem{
+			Display: action.Title,
+			Columns: []string{action.Kind, action.Title, action.Server},
+			SortKey: action.Title,
+			Payload: action,
+		})
+	}
+	return items, nil, func() {}
+}
+
+func (l *lspCodeActionSource) Match(
+	query string, item PickerItem,
+) (int, []int, bool) {
+	return fuzzyMatchItem(query, item, l.Columns(), l.Primary())
+}
+
+func (l *lspCodeActionSource) Accept(
+	e *view.Editor, item PickerItem, _ PickerAcceptAction,
+) {
+	action, ok := item.Payload.(view.CodeAction)
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	ctl := e.LanguageServerController()
+	if ctl == nil {
+		return
+	}
+	if err := ctl.ApplyCodeAction(doc, v.ID(), action); err != nil {
+		e.SetStatusMsg(err.Error())
+	}
+}
+
+func (l *lspWorkspaceSymbolSource) Search(query string) {
+	l.query = query
+}
+
+func (l *lspWorkspaceSymbolSource) Load(
+	e *view.Editor,
+) ([]PickerItem, <-chan PickerItem, StopFunc) {
+	if l.query == "" {
+		return nil, nil, func() {}
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return nil, nil, func() {}
+	}
+	ctl := e.LanguageServerController()
+	if ctl == nil {
+		return nil, nil, func() {}
+	}
+	symbols, err := ctl.WorkspaceSymbols(doc, l.query)
+	if err != nil {
+		e.SetStatusMsg(err.Error())
+		return nil, nil, func() {}
+	}
+	items := make([]PickerItem, 0, len(symbols))
+	for _, sym := range symbols {
+		item, ok := l.item(e, sym)
+		if ok {
+			items = append(items, item)
+		}
+	}
+	return items, nil, func() {}
+}
+
+func (l *lspWorkspaceSymbolSource) item(
+	e *view.Editor, sym view.Symbol,
+) (PickerItem, bool) {
+	loc := sym.Location
+	doc, err := e.SwitchOrOpenDoc(loc.Path)
+	if err != nil {
+		return PickerItem{}, false
+	}
+	line, lines := locationLineRange(doc.Text(), loc)
+	name := doc.RelativeName(e.Cwd())
+	display := fmt.Sprintf("%s:%d %s", name, line+1, sym.Name)
+	return PickerItem{
+		Display: display,
+		Columns: []string{sym.Kind, sym.Name, sym.Container, name},
+		SortKey: sym.Name,
+		Location: PickerLocation{
+			Target: PickerTarget{Path: loc.Path},
+			Lines:  lines,
+		},
+		Payload: loc,
+	}, true
+}
+
+func (l *lspWorkspaceSymbolSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)

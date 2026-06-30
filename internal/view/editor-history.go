@@ -27,6 +27,33 @@ func (e *Editor) Apply(tx core.Transaction) error {
 	return nil
 }
 
+// ApplyToDocument applies a transaction without changing the focused view
+func (e *Editor) ApplyToDocument(doc *Document, tx core.Transaction) error {
+	if doc == nil {
+		return ErrNoDocument
+	}
+	v, ok := e.viewForDocument(doc.ID())
+	if !ok {
+		v, ok = e.FocusedView()
+		if !ok {
+			return ErrNoView
+		}
+	}
+	if v.DocID() == doc.ID() && v.Mode() == ModeInsert {
+		doc.BeginInsertGroup(v.ID())
+	}
+	rev := doc.Revision()
+	before := doc.Text()
+	changes := tx.Changes()
+	if err := doc.Apply(tx, v.ID()); err != nil {
+		return err
+	}
+	if doc.Revision() != rev {
+		e.documentChanged(doc, newDocumentChange(before, changes))
+	}
+	return nil
+}
+
 // CommitInsertHistory flushes any pending insert-mode history accumulation on
 // the focused document into a single history revision
 func (e *Editor) CommitInsertHistory() {
@@ -141,4 +168,13 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	doc.version++
 	e.documentChanged(doc, wholeDocumentChange(before, doc.text.String()))
 	return true
+}
+
+func (e *Editor) viewForDocument(id DocumentId) (*View, bool) {
+	for _, v := range e.AllViews() {
+		if v.DocID() == id {
+			return v, true
+		}
+	}
+	return nil, false
 }

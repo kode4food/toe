@@ -27,6 +27,36 @@ func TestBufferlineRender(t *testing.T) {
 
 		assert.NotEmpty(t, out)
 	})
+
+	t.Run("modified doc shows marker", func(t *testing.T) {
+		e := editorWithText(t, "hello")
+		e.Options().BufferLine = view.BufferLineAlways
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "[+]")
+	})
+
+	t.Run("multiple docs sorted by ID", func(t *testing.T) {
+		root := t.TempDir()
+		path1 := filepath.Join(root, "a.txt")
+		path2 := filepath.Join(root, "b.txt")
+		assert.NoError(t, os.WriteFile(path1, []byte("a\n"), 0o644))
+		assert.NoError(t, os.WriteFile(path2, []byte("b\n"), 0o644))
+		e := view.NewEditor(root)
+		_, err := e.OpenFile(path1)
+		assert.NoError(t, err)
+		_, err = e.OpenFile(path2)
+		assert.NoError(t, err)
+		e.Options().BufferLine = view.BufferLineAlways
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "a.txt")
+		assert.Contains(t, out, "b.txt")
+	})
 }
 
 func TestPromptAccept(t *testing.T) {
@@ -129,6 +159,19 @@ func TestCursorShapeRender(t *testing.T) {
 		assert.Equal(t, tea.CursorBar, cur.Shape)
 		assert.False(t, cur.Blink)
 	})
+
+	t.Run("underline cursor uses underline shape", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(t.TempDir())
+		e.Options().CursorShape.Insert = view.CursorKindUnderline
+		e.SetMode(view.ModeInsert)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		cur := m.View().Cursor
+
+		assert.NotNil(t, cur)
+		assert.Equal(t, tea.CursorUnderline, cur.Shape)
+	})
 }
 
 func TestCursorShapeUnfocused(t *testing.T) {
@@ -196,6 +239,186 @@ func TestThemeRender(t *testing.T) {
 		assert.Contains(t, out, "\x1b[38;2;205;214;244m")
 	})
 
+	t.Run("applies diagnostic underline", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityError,
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, "\x1b[4:3m")
+	})
+
+	t.Run("renders diagnostic gutter", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityError,
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, stripANSI(out), "\u25cf")
+		assert.Contains(t, out, "\x1b[38;2;243;139;168m")
+	})
+
+	t.Run("renders diagnostic popup at cursor", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityError,
+			Message:  "unused value",
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, "\x1b[38;2;243;139;168m")
+		assert.Contains(t, stripANSI(out), "unused value")
+		assert.Equal(t, 1, strings.Count(stripANSI(out), "unused value"))
+	})
+
+	t.Run("popup warning severity", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityWarning,
+			Source:   "lint",
+			Message:  "warning msg",
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "lint: warning msg")
+	})
+
+	t.Run("popup info severity", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityInfo,
+			Message:  "info msg",
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "info msg")
+	})
+
+	t.Run("popup hint severity", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityHint,
+			Message:  "hint msg",
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "hint msg")
+	})
+
+	t.Run("hides diagnostic popup off range", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("plain\nnext\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityWarning,
+			Message:  "cursor warning",
+		}})
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(6))
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "cursor warning")
+	})
+
 	t.Run("renders rulers on short lines", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -219,7 +442,7 @@ func TestThemeRender(t *testing.T) {
 			if !ok {
 				continue
 			}
-			assert.Equal(t, 13, ansi.StringWidth(pfx))
+			assert.Equal(t, 16, ansi.StringWidth(pfx))
 		}
 	})
 
@@ -546,9 +769,9 @@ func TestRelativeLineNumberRender(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "  2 aa")
-		assert.Contains(t, out, "  1 bb")
-		assert.Contains(t, out, "  3 cc")
+		assert.Contains(t, out, "    2  aa")
+		assert.Contains(t, out, "    1  bb")
+		assert.Contains(t, out, "    3  cc")
 	})
 }
 
@@ -617,6 +840,49 @@ func TestHorizontalScrollRender(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.NotEmpty(t, out)
+	})
+}
+
+func TestDocumentHighlightAndLinkRender(t *testing.T) {
+	t.Run("renders with document highlights set", func(t *testing.T) {
+		e := editorWithText(t, "hello world\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
+			{From: 0, To: 5},
+			{From: 6, To: 11},
+		})
+		doc.SetDocumentLinks([]view.DocumentLink{
+			{From: 0, To: 5, Target: "/some/path"},
+		})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotEmpty(t, out)
+	})
+}
+
+func TestTextAnnotationRender(t *testing.T) {
+	t.Run("renders inlay hints and color swatches", func(t *testing.T) {
+		e := editorWithText(t, "hello\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetInlayHints(v.ID(), []view.InlayHint{
+			{Pos: 5, Label: ": string", Kind: "type"},
+		})
+		doc.SetDocumentColors([]view.DocumentColor{
+			{From: 0, To: 5, Red: 255},
+		})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "\u25a0hello: string")
 	})
 }
 

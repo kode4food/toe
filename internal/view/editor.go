@@ -42,6 +42,7 @@ var (
 	ErrDocumentNoPath    = errors.New("document has no path")
 	ErrEmptyDirStack     = errors.New("directory stack is empty")
 	ErrConfigUnavailable = errors.New("config path unavailable")
+	ErrUnsavedChanges    = errors.New("unsaved changes")
 )
 
 // NewEditor creates an empty editor with one scratch document and view

@@ -536,8 +536,12 @@ func motionModule() command.Module {
 			Reset:  func() { *cfg = motionSection{} },
 			Apply: func(e *view.Editor) {
 				opts := e.Options()
-				opts.ScrollOff = intOr(cfg.Editor.ScrollOff, view.DefaultScrollOff)
-				opts.ScrollLines = intOr(cfg.Editor.ScrollLines, view.DefaultScrollLines)
+				opts.ScrollOff = intOr(
+					cfg.Editor.ScrollOff, view.DefaultScrollOff,
+				)
+				opts.ScrollLines = intOr(
+					cfg.Editor.ScrollLines, view.DefaultScrollLines,
+				)
 			},
 		},
 	}
@@ -601,12 +605,18 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 }
 
 func gotoFileAction(e *view.Editor) command.Continuation {
-	path, err := action.GotoFile(e)
+	target, err := action.GotoFileTarget(e)
 	if err != nil {
 		e.SetStatusMsg("error: " + err.Error())
 		return nil
 	}
-	if _, err2 := e.OpenFile(path); err2 != nil {
+	if target.URL != "" {
+		if err2 := action.OpenExternalURL(target.URL); err2 != nil {
+			e.SetStatusMsg("error: " + err2.Error())
+		}
+		return nil
+	}
+	if _, err2 := e.OpenFile(target.Path); err2 != nil {
 		e.SetStatusMsg("error: " + err2.Error())
 	}
 	return nil

@@ -22,9 +22,13 @@ type (
 		modifiedSinceAccessed bool
 		hasBOM                bool
 
-		selections  map[Id]core.Selection
-		history     core.History
-		diagnostics []Diagnostic
+		selections         map[Id]core.Selection
+		documentHighlights map[Id][]DocumentHighlight
+		documentLinks      []DocumentLink
+		documentColors     []DocumentColor
+		inlayHints         map[Id][]InlayHint
+		history            core.History
+		diagnostics        []Diagnostic
 
 		version   int
 		insertAcc *insertAccum
@@ -202,6 +206,8 @@ func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
 // RemoveView cleans up selection state for a closed view
 func (d *Document) RemoveView(vid Id) {
 	delete(d.selections, vid)
+	delete(d.documentHighlights, vid)
+	delete(d.inlayHints, vid)
 }
 
 // BeginInsertGroup starts insert-mode change accumulation for vid if not
@@ -346,13 +352,15 @@ func (d *DocumentOpenError) Unwrap() error {
 
 func newDocument(id DocumentId, opts *Options) *Document {
 	d := &Document{
-		id:         id,
-		text:       core.NewRope(""),
-		selections: map[Id]core.Selection{},
-		history:    core.NewHistory(),
-		indent:     core.Tabs(),
-		tabWidth:   4,
-		lineEnding: defaultLineEnding(opts.DefaultLineEnding),
+		id:                 id,
+		text:               core.NewRope(""),
+		selections:         map[Id]core.Selection{},
+		documentHighlights: map[Id][]DocumentHighlight{},
+		inlayHints:         map[Id][]InlayHint{},
+		history:            core.NewHistory(),
+		indent:             core.Tabs(),
+		tabWidth:           4,
+		lineEnding:         defaultLineEnding(opts.DefaultLineEnding),
 	}
 	d.SetLang("text")
 	return d
@@ -401,15 +409,17 @@ func openDocument(
 	}
 	rope := core.NewRope(string(data))
 	doc := &Document{
-		id:           id,
-		text:         rope,
-		path:         absPath,
-		selections:   map[Id]core.Selection{},
-		history:      core.NewHistory(),
-		tabWidth:     4,
-		lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
-		editorConfig: ec,
-		hasBOM:       hasBOM,
+		id:                 id,
+		text:               rope,
+		path:               absPath,
+		selections:         map[Id]core.Selection{},
+		documentHighlights: map[Id][]DocumentHighlight{},
+		inlayHints:         map[Id][]InlayHint{},
+		history:            core.NewHistory(),
+		tabWidth:           4,
+		lineEnding:         defaultLineEnding(opts.DefaultLineEnding),
+		editorConfig:       ec,
+		hasBOM:             hasBOM,
 	}
 	doc.SetLang(detectLang(absPath, string(data)))
 

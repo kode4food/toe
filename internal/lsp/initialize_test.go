@@ -19,10 +19,31 @@ func TestInitialize(t *testing.T) {
 		assert.NotNil(t, params.Capabilities.Workspace)
 		assert.NotNil(t, params.Capabilities.TextDocument)
 		assert.NotNil(t, params.Capabilities.Window)
+		workspaceSymbols := params.Capabilities.Workspace.Symbol
+		assert.NotNil(t, workspaceSymbols)
+		assert.False(t, *workspaceSymbols.DynamicRegistration)
+		watchedFiles := params.Capabilities.Workspace.DidChangeWatchedFiles
+		assert.NotNil(t, watchedFiles)
+		assert.True(t, *watchedFiles.DynamicRegistration)
+		assert.True(t, *watchedFiles.RelativePatternSupport)
+		workspaceInlay := params.Capabilities.Workspace.InlayHint
+		assert.NotNil(t, workspaceInlay)
+		assert.False(t, *workspaceInlay.RefreshSupport)
+		fileOps := params.Capabilities.Workspace.FileOperations
+		assert.NotNil(t, fileOps)
+		assert.True(t, *fileOps.WillCreate)
+		assert.True(t, *fileOps.DidCreate)
+		assert.True(t, *fileOps.WillRename)
+		assert.True(t, *fileOps.DidRename)
+		assert.True(t, *fileOps.WillDelete)
+		assert.True(t, *fileOps.DidDelete)
 		completion := params.Capabilities.TextDocument.Completion
 		assert.NotNil(t, completion)
 		assert.True(t, *completion.ContextSupport)
 		assert.False(t, *completion.CompletionItem.SnippetSupport)
+		inlay := params.Capabilities.TextDocument.InlayHint
+		assert.NotNil(t, inlay)
+		assert.False(t, *inlay.DynamicRegistration)
 		symbols := params.Capabilities.TextDocument.DocumentSymbol
 		assert.NotNil(t, symbols)
 		assert.False(t, *symbols.HierarchicalDocumentSymbolSupport)

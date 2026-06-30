@@ -57,6 +57,14 @@ func TestCommandLine(t *testing.T) {
 
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 	})
+
+	t.Run("escaped unclosed incomplete tokens", func(t *testing.T) {
+		// 'it'' has a doubled-quote escape but no closing quote → escaped+unclosed
+		args, err := commandTokens("'it''", false)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"it'"}, args)
+	})
 }
 
 func TestSplitCommandLine(t *testing.T) {

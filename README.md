@@ -14,13 +14,14 @@ Work in progress. Assume it will lose your edits.
 - Syntax highlighting
 - Persistent undo history
 - Soft wrap, rulers, whitespace rendering, auto-pairs
+- Language server support for completion, hover, signature help, formatting, symbols, code actions, rename, and go-to navigation
+- Diagnostics with underlines, gutter markers, status counts, and cursor-scoped popup text
 - User and workspace config in TOML
 
 ## What's still being built
 
-- Code completion and hover docs
-- Go-to definition, find references, rename
-- Inline errors and warnings
+- Snippet expansion
+- Tree-sitter textobjects, indentation queries, bracket matching, and surround matching
 - Git change indicators in the gutter
 - Debugger integration
 

@@ -8,15 +8,19 @@ import (
 )
 
 const (
-	actQuit    = "quit"
-	actQuitAll = "quit_all"
-	actCquit   = "cquit"
+	actQuit         = "quit"
+	actQuitForce    = "quit!"
+	actQuitAll      = "quit_all"
+	actQuitAllForce = "quit-all!"
+	actCquit        = "cquit"
+	actCquitForce   = "cquit!"
 )
 
 func lifecycleModule() command.Module {
 	return command.Module{
-		Commands: map[string]command.Command{
-			actQuit: {
+		Commands: []command.Command{
+			{
+				Name:      actQuit,
 				DocString: "Close the current view",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
@@ -32,7 +36,8 @@ func lifecycleModule() command.Module {
 				Aliases:   []string{"q"},
 				Signature: sig(),
 			},
-			"quit!": {
+			{
+				Name: actQuitForce,
 				DocString: "Force close the current view, ignoring unsaved " +
 					"changes",
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
@@ -41,7 +46,8 @@ func lifecycleModule() command.Module {
 				Aliases:   []string{"q!"},
 				Signature: sig(),
 			},
-			actQuitAll: {
+			{
+				Name:      actQuitAll,
 				DocString: "Close all views",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
@@ -57,7 +63,8 @@ func lifecycleModule() command.Module {
 				Aliases:   []string{"quit-all", "qa"},
 				Signature: sig(),
 			},
-			"quit-all!": {
+			{
+				Name:      actQuitAllForce,
 				DocString: "Force close all views ignoring unsaved changes",
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
@@ -65,7 +72,8 @@ func lifecycleModule() command.Module {
 				Aliases:   []string{"qa!"},
 				Signature: sig(),
 			},
-			actCquit: {
+			{
+				Name:      actCquit,
 				DocString: "Quit with exit code (default 1)",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
@@ -82,7 +90,8 @@ func lifecycleModule() command.Module {
 				Aliases:   []string{"cq"},
 				Signature: sig(),
 			},
-			"cquit!": {
+			{
+				Name: actCquitForce,
 				DocString: "Force quit with exit code (default 1) ignoring " +
 					"unsaved changes",
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {

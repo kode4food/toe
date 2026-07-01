@@ -45,20 +45,23 @@ func pickerModule(model ui.Model) command.Module {
 	cfg := new(pickerSection)
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actFilePicker: {
+		Commands: []command.Command{
+			{
+				Name:      actFilePicker,
 				DocString: "Open file picker",
 				Run:       Continuation(model.PickerAction(ui.FilePicker)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('f'))),
 			},
-			actFilePickerInCWD: {
+			{
+				Name:      actFilePickerInCWD,
 				DocString: "Open file picker at current working directory",
 				Run:       Continuation(model.PickerAction(ui.FilePickerInCWD)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('F'))),
 			},
-			actFileExplorer: {
+			{
+				Name:      actFileExplorer,
 				DocString: "Open file explorer at workspace root",
 				Run: Continuation(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
@@ -70,7 +73,8 @@ func pickerModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(spc(char('e'))),
 			},
-			actFileExplorerInBufDir: {
+			{
+				Name:      actFileExplorerInBufDir,
 				DocString: "Open file explorer at current buffer's directory",
 				Run: Continuation(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
@@ -82,7 +86,8 @@ func pickerModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(spc(char('.'))),
 			},
-			actBufferPicker: {
+			{
+				Name:      actBufferPicker,
 				DocString: "Open buffer picker",
 				Run: Continuation(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
@@ -94,26 +99,30 @@ func pickerModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(spc(char('b'))),
 			},
-			actJumplistPicker: {
+			{
+				Name:      actJumplistPicker,
 				DocString: "Open jumplist picker",
 				Run:       Continuation(model.PickerAction(ui.JumplistPicker)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('j'))),
 			},
-			actGlobalSearch: {
+			{
+				Name:      actGlobalSearch,
 				DocString: "Global search in workspace folder",
 				Run:       Continuation(model.GlobalSearchAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('/'))),
 			},
-			actCommandPalette: {
+			{
+				Name:      actCommandPalette,
 				DocString: "Open command palette",
 				Run:       Continuation(model.CommandPaletteAction()),
 				Aliases:   []string{"command-palette"},
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('?'))),
 			},
-			actLastPicker: {
+			{
+				Name:      actLastPicker,
 				DocString: "Reopen the last picker",
 				Run:       Continuation(model.LastPickerAction()),
 				Aliases:   []string{"last-picker"},

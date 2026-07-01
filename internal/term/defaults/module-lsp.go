@@ -33,89 +33,104 @@ func lspModule(model ui.Model) command.Module {
 	spc := prefixed(char(' '))
 	g := prefixed(char('g'))
 	return command.Module{
-		Commands: map[string]command.Command{
-			actGotoDeclaration: {
+		Commands: []command.Command{
+			{
+				Name:      actGotoDeclaration,
 				DocString: "Goto declaration",
 				Run:       Continuation(model.GotoDeclarationAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('D'))),
 			},
-			actGotoDefinition: {
+			{
+				Name:      actGotoDefinition,
 				DocString: "Goto definition",
 				Run:       Continuation(model.GotoDefinitionAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('d'))),
 			},
-			actGotoTypeDefinition: {
+			{
+				Name:      actGotoTypeDefinition,
 				DocString: "Goto type definition",
 				Run:       Continuation(model.GotoTypeDefinitionAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('y'))),
 			},
-			actGotoImplementation: {
+			{
+				Name:      actGotoImplementation,
 				DocString: "Goto implementation",
 				Run:       Continuation(model.GotoImplementationAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('i'))),
 			},
-			actGotoReference: {
+			{
+				Name:      actGotoReference,
 				DocString: "Goto references",
 				Run:       Continuation(model.GotoReferenceAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('r'))),
 			},
-			actSelectReferences: {
+			{
+				Name:      actSelectReferences,
 				DocString: "Select symbol references",
 				Run:       Continuation(model.SelectReferencesAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('h'))),
 			},
-			actCodeAction: {
+			{
+				Name:      actCodeAction,
 				DocString: "Perform code action",
 				Run:       Continuation(model.CodeActionPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('a'))),
 			},
-			actHover: {
+			{
+				Name:      actHover,
 				DocString: "Show docs for item under cursor",
 				Run:       Continuation(model.HoverAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('k'))),
 			},
-			actRenameSymbol: {
+			{
+				Name:      actRenameSymbol,
 				DocString: "Rename symbol",
 				Run:       Continuation(model.RenameSymbolAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('r'))),
 			},
-			actSignatureHelp: {
+			{
+				Name:      actSignatureHelp,
 				DocString: "Show signature help",
 				Run:       Continuation(model.SignatureHelpAction()),
 				Modes:     []string{"INS"},
 			},
-			actSymbolPicker: {
+			{
+				Name:      actSymbolPicker,
 				DocString: "Open symbol picker",
 				Run:       Continuation(model.SymbolPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('s'))),
 			},
-			actWorkspaceSymbol: {
+			{
+				Name:      actWorkspaceSymbol,
 				DocString: "Open workspace symbol picker",
 				Run:       Continuation(model.WorkspaceSymbolPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('S'))),
 			},
-			actLSPRestart: {
+			{
+				Name:      actLSPRestart,
 				DocString: "Restart language servers for the current document",
 				Run:       runLSPRestart,
 				Signature: command.Signature{},
 			},
-			actLSPStop: {
+			{
+				Name:      actLSPStop,
 				DocString: "Stop language servers for the current document",
 				Run:       runLSPStop,
 				Signature: command.Signature{},
 			},
-			actLSPWorkspaceCommand: {
+			{
+				Name:      actLSPWorkspaceCommand,
 				DocString: "Execute a language server workspace command",
 				Run:       runLSPWorkspaceCommand(model),
 				Signature: command.Signature{

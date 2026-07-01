@@ -9,9 +9,10 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-func configSystemCmds() map[string]command.Command {
-	return map[string]command.Command{
-		actConfigOpen: {
+func configSystemCmds() []command.Command {
+	return []command.Command{
+		{
+			Name:      actConfigOpen,
 			DocString: "Open the user config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(
@@ -21,7 +22,8 @@ func configSystemCmds() map[string]command.Command {
 			Aliases:   []string{"config-open"},
 			Signature: sig(),
 		},
-		actConfigOpenWorkspace: {
+		{
+			Name:      actConfigOpenWorkspace,
 			DocString: "Open the workspace config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				path := config.WorkspaceConfigPath(e.Cwd())
@@ -33,7 +35,8 @@ func configSystemCmds() map[string]command.Command {
 			Aliases:   []string{"config-open-workspace"},
 			Signature: sig(),
 		},
-		actConfigReload: {
+		{
+			Name:      actConfigReload,
 			DocString: "Refresh user config",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := e.ReloadConfig(); err != nil {
@@ -44,7 +47,8 @@ func configSystemCmds() map[string]command.Command {
 			Aliases:   []string{"config-reload"},
 			Signature: sig(),
 		},
-		actLogOpen: {
+		{
+			Name:      actLogOpen,
 			DocString: "Open the editor log file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(
@@ -54,7 +58,8 @@ func configSystemCmds() map[string]command.Command {
 			Aliases:   []string{"log-open"},
 			Signature: sig(),
 		},
-		actWorkspaceTrust: {
+		{
+			Name: actWorkspaceTrust,
 			DocString: "Add current workspace to the list of trusted " +
 				"workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -66,7 +71,8 @@ func configSystemCmds() map[string]command.Command {
 			Aliases:   []string{"workspace-trust"},
 			Signature: sig(),
 		},
-		actWorkspaceUntrust: {
+		{
+			Name: actWorkspaceUntrust,
 			DocString: "Remove current workspace from the list of " +
 				"trusted workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -81,9 +87,10 @@ func configSystemCmds() map[string]command.Command {
 	}
 }
 
-func configThemeCmds() map[string]command.Command {
-	return map[string]command.Command{
-		actTheme: {
+func configThemeCmds() []command.Command {
+	return []command.Command{
+		{
+			Name: actTheme,
 			DocString: "Change the editor theme " +
 				"(show current theme if no name specified)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {

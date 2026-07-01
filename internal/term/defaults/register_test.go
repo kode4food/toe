@@ -121,6 +121,23 @@ func TestDefaults(t *testing.T) {
 		})
 	})
 
+	t.Run("space hints are ordered", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		_, hints := km.PendingHints("NOR", []command.KeyEvent{char(' ')})
+		keys := make([]string, 0, len(hints))
+		for _, h := range hints {
+			keys = append(keys, h.Key)
+		}
+
+		assert.Equal(t, []string{
+			"y", "Y", "p", "P", "R", "w",
+			"h", "a", "k", "r", "s", "S",
+			"f", "F", "e", ".", "b", "j",
+			"/", "?", "'", "c", "A-c", "C",
+		}, keys)
+	})
+
 	t.Run("capital prefixes use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 

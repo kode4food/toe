@@ -8,7 +8,7 @@ type (
 	// config section. Options are registered into the editor option registry
 	// when the module is installed
 	Module struct {
-		Commands map[string]Command
+		Commands []Command
 		Options  []Option
 		Section  *Section
 	}
@@ -35,6 +35,7 @@ type (
 	// Command describes one registered command: its runner, key bindings,
 	// mode applicability, typeable aliases, and argument signature
 	Command struct {
+		Name      string
 		Run       Run
 		DocString string
 		Modes     []string

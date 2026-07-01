@@ -28,12 +28,12 @@ func TestKeyEventString(t *testing.T) {
 
 	t.Run("ctrl modifier", func(t *testing.T) {
 		k := char('w').WithMods(command.ModCtrl)
-		assert.Equal(t, "<C-w>", k.String())
+		assert.Equal(t, "C-w", k.String())
 	})
 
 	t.Run("alt modifier", func(t *testing.T) {
 		k := char('x').WithMods(command.ModAlt)
-		assert.Equal(t, "<A-x>", k.String())
+		assert.Equal(t, "A-x", k.String())
 	})
 
 	t.Run("shifted uppercase char", func(t *testing.T) {
@@ -48,12 +48,12 @@ func TestKeyEventString(t *testing.T) {
 
 	t.Run("shifted non-uppercase char", func(t *testing.T) {
 		k := char('!').WithMods(command.ModShift)
-		assert.Equal(t, "<S-!>", k.String())
+		assert.Equal(t, "S-!", k.String())
 	})
 
 	t.Run("ctrl shifted uppercase char", func(t *testing.T) {
 		k := char('F').WithMods(command.ModCtrl | command.ModShift)
-		assert.Equal(t, "<C-S-F>", k.String())
+		assert.Equal(t, "C-S-f", k.String())
 	})
 
 	t.Run("ctrl+alt", func(t *testing.T) {

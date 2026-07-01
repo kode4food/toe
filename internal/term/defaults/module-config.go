@@ -2,7 +2,6 @@ package defaults
 
 import (
 	"cmp"
-	"maps"
 	"os"
 
 	"github.com/kode4food/toe/internal/core"
@@ -50,9 +49,9 @@ func terminalTrueColor() bool {
 func configModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
 	cmds := configOptionCmds(r)
-	maps.Copy(cmds, configSystemCmds())
-	maps.Copy(cmds, configThemeCmds())
-	maps.Copy(cmds, configFormatCmds())
+	cmds = append(cmds, configSystemCmds()...)
+	cmds = append(cmds, configThemeCmds()...)
+	cmds = append(cmds, configFormatCmds()...)
 	return command.Module{
 		Commands: cmds,
 		Options: []command.Option{
@@ -180,9 +179,10 @@ func configModule(r *command.Registry) command.Module {
 	}
 }
 
-func configOptionCmds(r *command.Registry) map[string]command.Command {
-	return map[string]command.Command{
-		actGetOption: {
+func configOptionCmds(r *command.Registry) []command.Command {
+	return []command.Command{
+		{
+			Name:      actGetOption,
 			DocString: "Get the current value of a config option",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
@@ -212,7 +212,8 @@ func configOptionCmds(r *command.Registry) map[string]command.Command {
 				),
 			},
 		},
-		actSetOption: {
+		{
+			Name:      actSetOption,
 			DocString: "Set a config option at runtime",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Len() < 2 {
@@ -243,7 +244,8 @@ func configOptionCmds(r *command.Registry) map[string]command.Command {
 				),
 			},
 		},
-		actToggleOption: {
+		{
+			Name:      actToggleOption,
 			DocString: "Toggle a config option at runtime",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {

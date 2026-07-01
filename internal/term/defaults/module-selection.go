@@ -44,20 +44,23 @@ func selectionModule(model ui.Model) command.Module {
 	next := prefixed(char(']'))
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actCopyOnNextLine: {
+		Commands: []command.Command{
+			{
+				Name:      actCopyOnNextLine,
 				DocString: "Copy selection on next line",
 				Run:       Runner(action.CopyOnNextLine),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('C')),
 			},
-			actCopyOnPrevLine: {
+			{
+				Name:      actCopyOnPrevLine,
 				DocString: "Copy selection on previous line",
 				Run:       Runner(action.CopyOnPrevLine),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('C')),
 			},
-			actSelectWithinRegex: {
+			{
+				Name:      actSelectWithinRegex,
 				DocString: "Select all regex matches inside selections",
 				Run: Continuation(model.RegexAction(
 					"select:", action.SelectWithinRegex,
@@ -65,7 +68,8 @@ func selectionModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('s')),
 			},
-			actSplitSelectionByRegex: {
+			{
+				Name:      actSplitSelectionByRegex,
 				DocString: "Split selections on regex matches",
 				Run: Continuation(model.RegexAction(
 					"split:", action.SplitSelectionByRegex,
@@ -73,7 +77,8 @@ func selectionModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('S')),
 			},
-			actKeepSelectionsMatching: {
+			{
+				Name:      actKeepSelectionsMatching,
 				DocString: "Keep selections matching regex",
 				Run: Continuation(model.RegexAction(
 					"keep:", action.KeepSelectionsMatching,
@@ -81,7 +86,8 @@ func selectionModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('K')),
 			},
-			actRemoveSelectionsMatching: {
+			{
+				Name:      actRemoveSelectionsMatching,
 				DocString: "Remove selections matching regex",
 				Run: Continuation(model.RegexAction(
 					"remove:", action.RemoveSelectionsMatching,
@@ -89,132 +95,154 @@ func selectionModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(alt('K')),
 			},
-			actSplitSelectionOnNewline: {
+			{
+				Name:      actSplitSelectionOnNewline,
 				DocString: "Split selection on newlines",
 				Run:       Runner(action.SplitSelectionOnNewline),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('s')),
 			},
-			actMergeSelections: {
+			{
+				Name:      actMergeSelections,
 				DocString: "Merge selections",
 				Run:       Runner(action.MergeSelections),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('-')),
 			},
-			actMergeConsecutiveSelections: {
+			{
+				Name:      actMergeConsecutiveSelections,
 				DocString: "Merge consecutive selections",
 				Run:       Runner(action.MergeConsecutive),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('_')),
 			},
-			actCollapseSelection: {
+			{
+				Name:      actCollapseSelection,
 				DocString: "Collapse selection into single cursor",
 				Run:       Runner(action.CollapseSelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char(';')),
 			},
-			actFlipSelections: {
+			{
+				Name:      actFlipSelections,
 				DocString: "Flip selection cursor and anchor",
 				Run:       Runner(action.FlipSelections),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt(';')),
 			},
-			actSelectAll: {
+			{
+				Name:      actSelectAll,
 				DocString: "Select whole document",
 				Run:       Runner(action.SelectAll),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('%')),
 			},
-			actSelectLineAbove: {
+			{
+				Name:      actSelectLineAbove,
 				DocString: "Select line above",
 				Run:       Runner(action.SelectLineAbove),
 				Signature: sig(),
 			},
-			actSelectLineBelow: {
+			{
+				Name:      actSelectLineBelow,
 				DocString: "Select line below",
 				Run:       Runner(action.SelectLineBelow),
 				Signature: sig(),
 			},
-			actExtendLineBelow: {
+			{
+				Name: actExtendLineBelow,
 				DocString: "Select current line, if already selected, extend" +
 					" to next line",
 				Run:   Runner(action.ExtendLineBelow),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('x')),
 			},
-			actExtendToLineBounds: {
+			{
+				Name:      actExtendToLineBounds,
 				DocString: "Extend selection to line bounds",
 				Run:       Runner(action.ExtendToLineBounds),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('X')),
 			},
-			actShrinkToLineBounds: {
+			{
+				Name:      actShrinkToLineBounds,
 				DocString: "Shrink selection to line bounds",
 				Run:       Runner(action.ShrinkToLineBounds),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('x')),
 			},
-			actKeepPrimarySelection: {
+			{
+				Name:      actKeepPrimarySelection,
 				DocString: "Keep primary selection",
 				Run:       Runner(action.KeepPrimarySelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char(',')),
 			},
-			actRemovePrimarySelection: {
+			{
+				Name:      actRemovePrimarySelection,
 				DocString: "Remove primary selection",
 				Run:       Runner(action.RemovePrimarySelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt(',')),
 			},
-			actMatchBrackets: {
+			{
+				Name:      actMatchBrackets,
 				DocString: "Goto matching bracket",
 				Run:       Runner(action.MatchBrackets),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('m'))),
 			},
-			actSurroundAdd: {
+			{
+				Name:      actSurroundAdd,
 				DocString: "Surround add",
 				Run:       Continuation(surroundAddAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('s'))),
 			},
-			actSurroundReplace: {
+			{
+				Name:      actSurroundReplace,
 				DocString: "Surround replace",
 				Run:       Continuation(surroundReplaceAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('r'))),
 			},
-			actSurroundDelete: {
+			{
+				Name:      actSurroundDelete,
 				DocString: "Surround delete",
 				Run:       Continuation(surroundDeleteAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('d'))),
 			},
-			actSelectTextObjectAround: {
+			{
+				Name:      actSelectTextObjectAround,
 				DocString: "Select around object",
 				Run:       Continuation(textObjectAction(true)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('a'))),
 			},
-			actSelectTextObjectInside: {
+			{
+				Name:      actSelectTextObjectInside,
 				DocString: "Select inside object",
 				Run:       Continuation(textObjectAction(false)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('i'))),
 			},
-			actAddNewlineAbove: {
+			{
+				Name:      actAddNewlineAbove,
 				DocString: "Add newline above",
 				Run:       Runner(action.AddNewlineAbove),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(prev(char(' '))),
 			},
-			actAddNewlineBelow: {
+			{
+				Name:      actAddNewlineBelow,
 				DocString: "Add newline below",
 				Run:       Runner(action.AddNewlineBelow),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(next(char(' '))),
 			},
-			actSelectRegister: {
+			{
+				Name:      actSelectRegister,
 				DocString: "Select register",
 				Run:       Continuation(selectRegisterAction),
 				Modes:     []string{"NOR", "SEL"},

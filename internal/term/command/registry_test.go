@@ -44,8 +44,11 @@ func TestRegistry(t *testing.T) {
 		km := command.NewKeymaps()
 		reg := command.NewRegistry(km)
 		assert.NoError(t, reg.RegisterModule(command.Module{
-			Commands: map[string]command.Command{
-				"noop": registryCommand(),
+			Commands: []command.Command{
+				{
+					Name: "noop",
+					Run:  registryCommand().Run,
+				},
 			},
 		}))
 

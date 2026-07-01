@@ -71,8 +71,9 @@ func viewModule() command.Module {
 	Cwn := prefixed(Cw(char('n')))
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actPageUp: {
+		Commands: []command.Command{
+			{
+				Name:      actPageUp,
 				DocString: "Move page up",
 				Run:       Runner(action.PageUp),
 				Modes:     []string{"NOR", "SEL", "INS"},
@@ -82,7 +83,8 @@ func viewModule() command.Module {
 					{Z(ctrl('b')), Z(special("pageup"))},
 				}},
 			},
-			actPageDown: {
+			{
+				Name:      actPageDown,
 				DocString: "Move page down",
 				Run:       Runner(action.PageDown),
 				Modes:     []string{"NOR", "SEL", "INS"},
@@ -92,7 +94,8 @@ func viewModule() command.Module {
 					{Z(ctrl('f')), Z(special("pagedown"))},
 				}},
 			},
-			actPageCursorHalfUp: {
+			{
+				Name:      actPageCursorHalfUp,
 				DocString: "Move page and cursor half up",
 				Run:       Runner(action.PageCursorHalfUp),
 				Modes:     []string{"NOR", "SEL"},
@@ -102,7 +105,8 @@ func viewModule() command.Module {
 					{Z(ctrl('u')), Z(special("backspace"))},
 				}},
 			},
-			actPageCursorHalfDown: {
+			{
+				Name:      actPageCursorHalfDown,
 				DocString: "Move page and cursor half down",
 				Run:       Runner(action.PageCursorHalfDown),
 				Modes:     []string{"NOR", "SEL"},
@@ -112,25 +116,30 @@ func viewModule() command.Module {
 					{Z(ctrl('d')), Z(char(' '))},
 				}},
 			},
-			actHalfPageUp: {
+			{
+				Name:      actHalfPageUp,
 				DocString: "Move half page up",
 				Run:       Runner(action.HalfPageUp),
 				Signature: sig(),
 			},
-			actHalfPageDown: {
+			{
+				Name:      actHalfPageDown,
 				DocString: "Move half page down",
 				Run:       Runner(action.HalfPageDown),
 				Signature: sig(),
 			},
-			actPageCursorUp: {
+			{
+				Name:      actPageCursorUp,
 				DocString: "Move page and cursor up",
 				Run:       Runner(action.PageUp),
 			},
-			actPageCursorDown: {
+			{
+				Name:      actPageCursorDown,
 				DocString: "Move page and cursor down",
 				Run:       Runner(action.PageDown),
 			},
-			actCenterCursorLine: {
+			{
+				Name:      actCenterCursorLine,
 				DocString: "Align view center",
 				Run:       Runner(action.AlignViewCenter),
 				Modes:     []string{"NOR", "SEL"},
@@ -139,7 +148,8 @@ func viewModule() command.Module {
 					{Z(char('z')), Z(char('c'))},
 				}},
 			},
-			actCenterCursorLineTop: {
+			{
+				Name:      actCenterCursorLineTop,
 				DocString: "Align view top",
 				Run:       Runner(action.AlignViewTop),
 				Modes:     []string{"NOR", "SEL"},
@@ -148,7 +158,8 @@ func viewModule() command.Module {
 					{Z(char('.')), Z(char('t'))},
 				}},
 			},
-			actCenterCursorLineBottom: {
+			{
+				Name:      actCenterCursorLineBottom,
 				DocString: "Align view bottom",
 				Run:       Runner(action.AlignViewBottom),
 				Modes:     []string{"NOR", "SEL"},
@@ -157,7 +168,8 @@ func viewModule() command.Module {
 					{Z(char('b'))},
 				}},
 			},
-			actScrollUp: {
+			{
+				Name:      actScrollUp,
 				DocString: "Scroll view up",
 				Run:       Runner(action.ScrollUp),
 				Modes:     []string{"NOR", "SEL"},
@@ -166,7 +178,8 @@ func viewModule() command.Module {
 					{Z(char('k')), Z(special("up"))},
 				}},
 			},
-			actScrollDown: {
+			{
+				Name:      actScrollDown,
 				DocString: "Scroll view down",
 				Run:       Runner(action.ScrollDown),
 				Modes:     []string{"NOR", "SEL"},
@@ -175,7 +188,8 @@ func viewModule() command.Module {
 					{Z(char('j')), Z(special("down"))},
 				}},
 			},
-			actVSplitView: {
+			{
+				Name:      actVSplitView,
 				DocString: "Vertical right split",
 				Run:       Runner(action.VSplit),
 				Modes:     []string{"NOR", "SEL"},
@@ -186,7 +200,8 @@ func viewModule() command.Module {
 				Aliases:   []string{"vs"},
 				Signature: sig(),
 			},
-			actHSplitView: {
+			{
+				Name:      actHSplitView,
 				DocString: "Horizontal bottom split",
 				Run:       Runner(action.HSplit),
 				Modes:     []string{"NOR", "SEL"},
@@ -197,7 +212,8 @@ func viewModule() command.Module {
 				Aliases:   []string{"hs", "sp"},
 				Signature: sig(),
 			},
-			actVSplitNew: {
+			{
+				Name:      actVSplitNew,
 				DocString: "Vertical right split scratch buffer",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					e.VSplitNew()
@@ -211,7 +227,8 @@ func viewModule() command.Module {
 				Aliases:   []string{"vnew"},
 				Signature: sig(),
 			},
-			actHSplitNew: {
+			{
+				Name:      actHSplitNew,
 				DocString: "Horizontal bottom split scratch buffer",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					e.HSplitNew()
@@ -225,7 +242,8 @@ func viewModule() command.Module {
 				Aliases:   []string{"hnew"},
 				Signature: sig(),
 			},
-			actTransposeView: {
+			{
+				Name:      actTransposeView,
 				DocString: "Transpose splits",
 				Run:       Runner(action.TransposeView),
 				Modes:     []string{"NOR", "SEL"},
@@ -234,7 +252,8 @@ func viewModule() command.Module {
 					{Spcw(char('t')), Spcw(ctrl('t'))},
 				}},
 			},
-			actCloseCurrentView: {
+			{
+				Name:      actCloseCurrentView,
 				DocString: "Close window",
 				Run:       Runner(action.CloseCurrentView),
 				Modes:     []string{"NOR", "SEL"},
@@ -245,13 +264,15 @@ func viewModule() command.Module {
 				Aliases:   []string{"wc"},
 				Signature: sig(),
 			},
-			actCloseCurrentViewForce: {
+			{
+				Name:      actCloseCurrentViewForce,
 				DocString: "Force close window",
 				Run:       Runner(action.CloseCurrentViewForce),
 				Aliases:   []string{"wc!"},
 				Signature: sig(),
 			},
-			actCloseOtherViews: {
+			{
+				Name:      actCloseOtherViews,
 				DocString: "Close windows except current",
 				Run:       Runner(action.CloseOtherViews),
 				Modes:     []string{"NOR", "SEL"},
@@ -262,7 +283,8 @@ func viewModule() command.Module {
 				Aliases:   []string{"wo"},
 				Signature: sig(),
 			},
-			actRotateView: {
+			{
+				Name:      actRotateView,
 				DocString: "Goto next window",
 				Run:       Runner(action.RotateView),
 				Modes:     []string{"NOR", "SEL"},
@@ -271,7 +293,8 @@ func viewModule() command.Module {
 					{Spcw(char('w')), Spcw(ctrl('w'))},
 				}},
 			},
-			actJumpViewLeft: {
+			{
+				Name:      actJumpViewLeft,
 				DocString: "Jump to left split",
 				Run:       Runner(action.JumpViewLeft),
 				Modes:     []string{"NOR", "SEL"},
@@ -280,7 +303,8 @@ func viewModule() command.Module {
 					{Spcw(char('h')), Spcw(ctrl('h')), Spcw(special("left"))},
 				}},
 			},
-			actJumpViewDown: {
+			{
+				Name:      actJumpViewDown,
 				DocString: "Jump to split below",
 				Run:       Runner(action.JumpViewDown),
 				Modes:     []string{"NOR", "SEL"},
@@ -289,7 +313,8 @@ func viewModule() command.Module {
 					{Spcw(char('j')), Spcw(ctrl('j')), Spcw(special("down"))},
 				}},
 			},
-			actJumpViewUp: {
+			{
+				Name:      actJumpViewUp,
 				DocString: "Jump to split above",
 				Run:       Runner(action.JumpViewUp),
 				Modes:     []string{"NOR", "SEL"},
@@ -298,7 +323,8 @@ func viewModule() command.Module {
 					{Spcw(char('k')), Spcw(ctrl('k')), Spcw(special("up"))},
 				}},
 			},
-			actJumpViewRight: {
+			{
+				Name:      actJumpViewRight,
 				DocString: "Jump to right split",
 				Run:       Runner(action.JumpViewRight),
 				Modes:     []string{"NOR", "SEL"},
@@ -307,7 +333,8 @@ func viewModule() command.Module {
 					{Spcw(char('l')), Spcw(ctrl('l')), Spcw(special("right"))},
 				}},
 			},
-			actSwapViewLeft: {
+			{
+				Name:      actSwapViewLeft,
 				DocString: "Swap with left split",
 				Run:       Runner(action.SwapViewLeft),
 				Modes:     []string{"NOR", "SEL"},
@@ -316,7 +343,8 @@ func viewModule() command.Module {
 					{Spcw(char('H'))},
 				}},
 			},
-			actSwapViewDown: {
+			{
+				Name:      actSwapViewDown,
 				DocString: "Swap with split below",
 				Run:       Runner(action.SwapViewDown),
 				Modes:     []string{"NOR", "SEL"},
@@ -325,7 +353,8 @@ func viewModule() command.Module {
 					{Spcw(char('J'))},
 				}},
 			},
-			actSwapViewUp: {
+			{
+				Name:      actSwapViewUp,
 				DocString: "Swap with split above",
 				Run:       Runner(action.SwapViewUp),
 				Modes:     []string{"NOR", "SEL"},
@@ -334,7 +363,8 @@ func viewModule() command.Module {
 					{Spcw(char('K'))},
 				}},
 			},
-			actSwapViewRight: {
+			{
+				Name:      actSwapViewRight,
 				DocString: "Swap with right split",
 				Run:       Runner(action.SwapViewRight),
 				Modes:     []string{"NOR", "SEL"},

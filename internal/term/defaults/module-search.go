@@ -35,14 +35,16 @@ func searchModule(model ui.Model) command.Module {
 	Z := prefixed(char('Z'))
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actCommandMode: {
+		Commands: []command.Command{
+			{
+				Name:      actCommandMode,
 				DocString: "Enter command mode",
 				Run:       Continuation(model.CmdModeAction()),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char(':')),
 			},
-			actSearch: {
+			{
+				Name:      actSearch,
 				DocString: "Search for regex pattern",
 				Run:       Continuation(model.SearchAction(true)),
 				Modes:     []string{"NOR", "SEL"},
@@ -50,7 +52,8 @@ func searchModule(model ui.Model) command.Module {
 					"*": {{char('/')}, {z(char('/'))}, {Z(char('/'))}},
 				},
 			},
-			actSearchReverse: {
+			{
+				Name:      actSearchReverse,
 				DocString: "Reverse search for regex pattern",
 				Run:       Continuation(model.SearchAction(false)),
 				Modes:     []string{"NOR", "SEL"},
@@ -58,7 +61,8 @@ func searchModule(model ui.Model) command.Module {
 					"*": {{char('?')}, {z(char('?'))}, {Z(char('?'))}},
 				},
 			},
-			actSearchNext: {
+			{
+				Name:      actSearchNext,
 				DocString: "Select next search match",
 				Run:       Runner(action.SearchNext),
 				Modes:     []string{"NOR"},
@@ -66,7 +70,8 @@ func searchModule(model ui.Model) command.Module {
 					"*": {{char('n')}, {z(char('n'))}, {Z(char('n'))}},
 				},
 			},
-			actSearchPrev: {
+			{
+				Name:      actSearchPrev,
 				DocString: "Select previous search match",
 				Run:       Runner(action.SearchPrev),
 				Modes:     []string{"NOR"},
@@ -74,25 +79,29 @@ func searchModule(model ui.Model) command.Module {
 					"*": {{char('N')}, {z(char('N'))}, {Z(char('N'))}},
 				},
 			},
-			actSearchSelectionWord: {
+			{
+				Name: actSearchSelectionWord,
 				DocString: "Use current selection as the search pattern," +
 					" automatically wrapping with `\\b` on word boundaries",
 				Run:   Runner(action.SearchSelectionWord),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('*')),
 			},
-			actMakeSearchWordBounded: {
+			{
+				Name:      actMakeSearchWordBounded,
 				DocString: "Modify current search to make it word bounded",
 				Run:       Runner(action.MakeSearchWordBounded),
 				Signature: sig(),
 			},
-			actSearchSelection: {
+			{
+				Name:      actSearchSelection,
 				DocString: "Use current selection as search pattern",
 				Run:       Runner(action.SearchSelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('*')),
 			},
-			actExtendSearchNext: {
+			{
+				Name:      actExtendSearchNext,
 				DocString: "Add next search match to selection",
 				Run:       Runner(action.ExtendSearchNext),
 				Modes:     []string{"SEL"},
@@ -100,7 +109,8 @@ func searchModule(model ui.Model) command.Module {
 					"*": {{char('n')}, {z(char('n'))}, {Z(char('n'))}},
 				},
 			},
-			actExtendSearchPrev: {
+			{
+				Name:      actExtendSearchPrev,
 				DocString: "Add previous search match to selection",
 				Run:       Runner(action.ExtendSearchPrev),
 				Modes:     []string{"SEL"},

@@ -25,8 +25,9 @@ const (
 func shellModule(model ui.Model) command.Module {
 	cfg := new(shellSection)
 	return command.Module{
-		Commands: map[string]command.Command{
-			actShellPipe: {
+		Commands: []command.Command{
+			{
+				Name:      actShellPipe,
 				DocString: "Pipe selections through shell command",
 				Run: Continuation(model.ShellAction(
 					"|", action.ShellPipe,
@@ -34,7 +35,8 @@ func shellModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('|')),
 			},
-			actShellInsertOutput: {
+			{
+				Name:      actShellInsertOutput,
 				DocString: "Insert shell command output before selections",
 				Run: Continuation(model.ShellAction(
 					"!", action.ShellInsertOutput,
@@ -42,7 +44,8 @@ func shellModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('!')),
 			},
-			actShellKeepPipe: {
+			{
+				Name:      actShellKeepPipe,
 				DocString: "Filter selections with shell predicate",
 				Run: Continuation(model.ShellAction(
 					"$", action.ShellKeepPipe,
@@ -50,7 +53,8 @@ func shellModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(char('$')),
 			},
-			actShellPipeTo: {
+			{
+				Name:      actShellPipeTo,
 				DocString: "Pipe selections into shell command ignoring output",
 				Run: Continuation(model.ShellAction(
 					"alt+|", action.ShellPipeTo,
@@ -58,7 +62,8 @@ func shellModule(model ui.Model) command.Module {
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(alt('|')),
 			},
-			actShellAppendOutput: {
+			{
+				Name:      actShellAppendOutput,
 				DocString: "Append shell command output after selections",
 				Run: Continuation(model.ShellAction(
 					"alt+!", action.ShellAppendOutput,

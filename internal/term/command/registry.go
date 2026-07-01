@@ -34,8 +34,8 @@ func (r *Registry) RegisterCommand(name string, c Command) error {
 }
 
 func (r *Registry) RegisterModule(m Module) error {
-	for name, cmd := range m.Commands {
-		if err := r.RegisterCommand(name, cmd); err != nil {
+	for _, c := range m.Commands {
+		if err := r.RegisterCommand(c.Name, c); err != nil {
 			return err
 		}
 	}

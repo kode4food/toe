@@ -15,20 +15,23 @@ func commentModule() command.Module {
 	spc := prefixed(char(' '))
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actToggleComments: {
+		Commands: []command.Command{
+			{
+				Name:      actToggleComments,
 				DocString: "Comment/uncomment selections",
 				Run:       Runner(action.ToggleComments),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(ctrl('c'), spc(char('c'))),
 			},
-			actToggleLineComments: {
+			{
+				Name:      actToggleLineComments,
 				DocString: "Line comment/uncomment selections",
 				Run:       Runner(action.ToggleLineComments),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(alt('c'))),
 			},
-			actToggleBlockComments: {
+			{
+				Name:      actToggleBlockComments,
 				DocString: "Block comment/uncomment selections",
 				Run:       Runner(action.ToggleBlockComments),
 				Modes:     []string{"NOR", "SEL"},

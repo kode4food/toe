@@ -17,8 +17,9 @@ const (
 
 func directoryModule() command.Module {
 	return command.Module{
-		Commands: map[string]command.Command{
-			actChangeDirectory: {
+		Commands: []command.Command{
+			{
+				Name:      actChangeDirectory,
 				DocString: "Change the current working directory",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					return cdResult(e, args, e.Chdir)
@@ -26,7 +27,8 @@ func directoryModule() command.Module {
 				Aliases:   []string{"change-current-directory", "cd"},
 				Signature: minArgs(1),
 			},
-			actShowDirectory: {
+			{
+				Name:      actShowDirectory,
 				DocString: "Show the current working directory",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: e.Cwd()}
@@ -34,7 +36,8 @@ func directoryModule() command.Module {
 				Aliases:   []string{"show-directory", "pwd"},
 				Signature: sig(),
 			},
-			actShowDirectoryStack: {
+			{
+				Name: actShowDirectoryStack,
 				DocString: "Show the directory stack as a space delimited " +
 					"string",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -45,7 +48,8 @@ func directoryModule() command.Module {
 				Aliases:   []string{"show-directory-stack"},
 				Signature: sig(),
 			},
-			actPushDirectory: {
+			{
+				Name:      actPushDirectory,
 				DocString: "Save and then change the current directory",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					return cdResult(e, args, e.PushDirectory)
@@ -53,7 +57,8 @@ func directoryModule() command.Module {
 				Aliases:   []string{"push-directory", "pushd"},
 				Signature: minArgs(1),
 			},
-			actPopDirectory: {
+			{
+				Name: actPopDirectory,
 				DocString: "Remove the top entry from the directory stack " +
 					"and cd to the new top directory",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {

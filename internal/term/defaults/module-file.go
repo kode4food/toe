@@ -1,8 +1,6 @@
 package defaults
 
 import (
-	"maps"
-
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -17,24 +15,30 @@ type fileSection struct {
 }
 
 const (
-	actWrite            = "write"
-	actWriteAll         = "write_all"
-	actWriteQuit        = "write_quit"
-	actWriteQuitAll     = "write_quit_all"
-	actWriteBufferClose = "write_buffer_close"
-	actUpdate           = "update"
-	actOpen             = "open"
-	actNew              = "new"
-	actReload           = "reload"
-	actReloadAll        = "reload_all"
-	actMove             = "move"
-	actRead             = "read"
+	actWrite                 = "write"
+	actWriteForce            = "write!"
+	actWriteAll              = "write_all"
+	actWriteAllForce         = "write-all!"
+	actWriteQuit             = "write_quit"
+	actWriteQuitForce        = "write-quit!"
+	actWriteQuitAll          = "write_quit_all"
+	actWriteQuitAllForce     = "write-quit-all!"
+	actWriteBufferClose      = "write_buffer_close"
+	actWriteBufferCloseForce = "write-buffer-close!"
+	actUpdate                = "update"
+	actOpen                  = "open"
+	actNew                   = "new"
+	actReload                = "reload"
+	actReloadAll             = "reload_all"
+	actMove                  = "move"
+	actMoveForce             = "move!"
+	actRead                  = "read"
 )
 
 func fileModule() command.Module {
 	cfg := new(fileSection)
 	cmds := fileWriteCmds()
-	maps.Copy(cmds, fileManageCmds())
+	cmds = append(cmds, fileManageCmds()...)
 	return command.Module{
 		Commands: cmds,
 		Options: []command.Option{
@@ -80,9 +84,10 @@ func fileModule() command.Module {
 	}
 }
 
-func fileWriteCmds() map[string]command.Command {
-	return map[string]command.Command{
-		actWrite: {
+func fileWriteCmds() []command.Command {
+	return []command.Command{
+		{
+			Name: actWrite,
 			DocString: "Write changes to disk. " +
 				"Accepts an optional path (:write some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -101,7 +106,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"w"},
 			Signature: sig(),
 		},
-		"write!": {
+		{
+			Name: actWriteForce,
 			DocString: "Force write changes to disk creating necessary " +
 				"subdirectories. Accepts an optional path (:write! " +
 				"some/path.txt)",
@@ -119,7 +125,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"w!"},
 			Signature: sig(),
 		},
-		actWriteAll: {
+		{
+			Name:      actWriteAll,
 			DocString: "Write changes from all buffers to disk",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if errs := e.SaveAll(); len(errs) > 0 {
@@ -132,7 +139,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"write-all", "wa"},
 			Signature: sig(),
 		},
-		"write-all!": {
+		{
+			Name: actWriteAllForce,
 			DocString: "Forcefully write changes from all buffers to " +
 				"disk creating necessary subdirectories",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -144,7 +152,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"wa!"},
 			Signature: sig(),
 		},
-		actWriteQuit: {
+		{
+			Name: actWriteQuit,
 			DocString: "Write changes to disk and close the current " +
 				"view. Accepts an optional path (:wq some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -157,7 +166,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"write-quit", "wq", "exit", "x", "xit"},
 			Signature: fileSig(sig()),
 		},
-		"write-quit!": {
+		{
+			Name: actWriteQuitForce,
 			DocString: "Write changes to disk and close the current view " +
 				"forcefully. Accepts an optional path (:wq! some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -168,7 +178,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"wq!", "exit!", "x!", "xit!"},
 			Signature: fileSig(sig()),
 		},
-		actWriteQuitAll: {
+		{
+			Name: actWriteQuitAll,
 			DocString: "Write changes from all buffers to disk and close " +
 				"all views",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -182,7 +193,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"write-quit-all", "wqa", "xa"},
 			Signature: sig(),
 		},
-		"write-quit-all!": {
+		{
+			Name: actWriteQuitAllForce,
 			DocString: "Forcefully write changes from all buffers to " +
 				"disk, creating necessary subdirectories, and close all " +
 				"views (ignoring unsaved changes)",
@@ -195,7 +207,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"wqa!", "xa!"},
 			Signature: sig(),
 		},
-		actWriteBufferClose: {
+		{
+			Name: actWriteBufferClose,
 			DocString: "Write changes to disk and closes the buffer. " +
 				"Accepts an optional path (:write-buffer-close " +
 				"some/path.txt)",
@@ -210,7 +223,8 @@ func fileWriteCmds() map[string]command.Command {
 			Aliases:   []string{"write-buffer-close", "wbc"},
 			Signature: sig(),
 		},
-		"write-buffer-close!": {
+		{
+			Name: actWriteBufferCloseForce,
 			DocString: "Force write changes to disk creating necessary " +
 				"subdirectories and closes the buffer. Accepts an " +
 				"optional path (:write-buffer-close! some/path.txt)",
@@ -226,9 +240,10 @@ func fileWriteCmds() map[string]command.Command {
 	}
 }
 
-func fileManageCmds() map[string]command.Command {
-	return map[string]command.Command{
-		actUpdate: {
+func fileManageCmds() []command.Command {
+	return []command.Command{
+		{
+			Name:      actUpdate,
 			DocString: "Write changes only if the file has been modified",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				doc, ok := e.FocusedDocument()
@@ -245,7 +260,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"u"},
 			Signature: sig(),
 		},
-		actOpen: {
+		{
+			Name:      actOpen,
 			DocString: "Open a file from disk into the current view",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
@@ -268,7 +284,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"o", "edit", "e"},
 			Signature: fileSig(minArgs(1)),
 		},
-		actNew: {
+		{
+			Name:      actNew,
 			DocString: "Create a new scratch buffer",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				e.NewDocument()
@@ -277,7 +294,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"n"},
 			Signature: sig(),
 		},
-		actReload: {
+		{
+			Name:      actReload,
 			DocString: "Discard changes and reload from the source file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := e.Reload(); err != nil {
@@ -294,7 +312,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"rl"},
 			Signature: sig(),
 		},
-		actReloadAll: {
+		{
+			Name: actReloadAll,
 			DocString: "Discard changes and reload all documents from " +
 				"the source files",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -308,7 +327,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"reload-all", "rla"},
 			Signature: sig(),
 		},
-		actMove: {
+		{
+			Name: actMove,
 			DocString: "Move the current buffer and its corresponding " +
 				"file to a different path",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -336,7 +356,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"mv"},
 			Signature: fileSig(minArgs(1)),
 		},
-		"move!": {
+		{
+			Name: actMoveForce,
 			DocString: "Move the current buffer and its corresponding " +
 				"file to a different path creating necessary " +
 				"subdirectories",
@@ -357,7 +378,8 @@ func fileManageCmds() map[string]command.Command {
 			Aliases:   []string{"mv!"},
 			Signature: fileSig(minArgs(1)),
 		},
-		actRead: {
+		{
+			Name:      actRead,
 			DocString: "Load a file into buffer",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {

@@ -61,211 +61,246 @@ const (
 func editModule() command.Module {
 	cfg := new(editSection)
 	return command.Module{
-		Commands: map[string]command.Command{
-			actSelectMode: {
+		Commands: []command.Command{
+			{
+				Name:      actSelectMode,
 				DocString: "Enter selection extend mode",
 				Run:       Continuation(selectModeAction),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('v')),
 			},
-			actNormalMode: {
+			{
+				Name:      actNormalMode,
 				DocString: "Enter normal mode",
 				Run:       Continuation(normalModeAction),
 				Keys:      keys(special("esc")),
 			},
-			actInsertMode: {
+			{
+				Name:      actInsertMode,
 				DocString: "Insert before selection",
 				Run:       Continuation(insertModeAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('i')),
 			},
-			actInsertAtLineStart: {
+			{
+				Name:      actInsertAtLineStart,
 				DocString: "Insert at start of line",
 				Run:       Continuation(insertAtLineStartAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('I')),
 			},
-			actAppendMode: {
+			{
+				Name:      actAppendMode,
 				DocString: "Append after selection",
 				Run:       Continuation(appendModeAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('a')),
 			},
-			actAppendToLine: {
+			{
+				Name:      actAppendToLine,
 				DocString: "Insert at end of line",
 				Run:       Continuation(appendToLineAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('A')),
 			},
-			actOpenBelow: {
+			{
+				Name:      actOpenBelow,
 				DocString: "Open new line below selection",
 				Run:       Continuation(openBelowAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('o')),
 			},
-			actOpenAbove: {
+			{
+				Name:      actOpenAbove,
 				DocString: "Open new line above selection",
 				Run:       Continuation(openAboveAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('O')),
 			},
-			actExitSelectMode: {
+			{
+				Name:      actExitSelectMode,
 				DocString: "Exit selection mode",
 				Run:       Continuation(normalModeAction),
 				Modes:     []string{"SEL"},
 				Keys:      keys(special("esc")),
 			},
-			actReplace: {
+			{
+				Name:      actReplace,
 				DocString: "Replace with new char",
 				Run:       Continuation(replaceCharAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('r')),
 			},
-			actDeleteSelection: {
+			{
+				Name:      actDeleteSelection,
 				DocString: "Delete selection",
 				Run:       Runner(action.DeleteSelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('d')),
 			},
-			actDeleteSelectionNoYank: {
+			{
+				Name:      actDeleteSelectionNoYank,
 				DocString: "Delete selection without yanking",
 				Run:       Runner(action.DeleteSelectionNoYank),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('d')),
 			},
-			actChangeSelection: {
+			{
+				Name:      actChangeSelection,
 				DocString: "Change selection",
 				Run:       Runner(action.ChangeSelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('c')),
 			},
-			actChangeSelectionNoYank: {
+			{
+				Name:      actChangeSelectionNoYank,
 				DocString: "Change selection without yanking",
 				Run:       Runner(action.ChangeSelectionNoYank),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('c')),
 			},
-			actUndo: {
+			{
+				Name:      actUndo,
 				DocString: "Undo change",
 				Run:       Continuation(undoAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('u')),
 			},
-			actRedo: {
+			{
+				Name:      actRedo,
 				DocString: "Redo change",
 				Run:       Continuation(redoAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('U')),
 			},
-			actEarlier: {
+			{
+				Name:      actEarlier,
 				DocString: "Move backward in history",
 				Run:       Continuation(earlierAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('u')),
 			},
-			actLater: {
+			{
+				Name:      actLater,
 				DocString: "Move forward in history",
 				Run:       Continuation(laterAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('U')),
 			},
-			actSwitchCase: {
+			{
+				Name:      actSwitchCase,
 				DocString: "Switch (toggle) case",
 				Run:       Runner(action.SwitchCase),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('~')),
 			},
-			actSwitchToLowercase: {
+			{
+				Name:      actSwitchToLowercase,
 				DocString: "Switch to lowercase",
 				Run:       Runner(action.SwitchToLowercase),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('`')),
 			},
-			actSwitchToUppercase: {
+			{
+				Name:      actSwitchToUppercase,
 				DocString: "Switch to uppercase",
 				Run:       Runner(action.SwitchToUppercase),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('`')),
 			},
-			actRepeatLastMotion: {
+			{
+				Name:      actRepeatLastMotion,
 				DocString: "Repeat last motion",
 				Run:       Runner(action.RepeatLastMotion),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('.')),
 			},
-			actIndent: {
+			{
+				Name:      actIndent,
 				DocString: "Indent selection",
 				Run:       Runner(action.Indent),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('>')),
 			},
-			actUnindent: {
+			{
+				Name:      actUnindent,
 				DocString: "Unindent selection",
 				Run:       Runner(action.Unindent),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('<')),
 			},
-			actJoinSelections: {
+			{
+				Name:      actJoinSelections,
 				DocString: "Join lines inside selection",
 				Run:       Runner(action.JoinSelections),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('J')),
 			},
-			actJoinSelectionsSpace: {
+			{
+				Name:      actJoinSelectionsSpace,
 				DocString: "Join lines inside selection and select spaces",
 				Run:       Runner(action.JoinSelectionsSpace),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('J')),
 			},
-			actAlignSelections: {
+			{
+				Name:      actAlignSelections,
 				DocString: "Align selections in column",
 				Run:       Runner(action.AlignSelections),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('&')),
 			},
-			actTrimSelections: {
+			{
+				Name:      actTrimSelections,
 				DocString: "Trim whitespace from selections",
 				Run:       Runner(action.TrimSelections),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('_')),
 			},
-			actRotateSelectionsBackward: {
+			{
+				Name:      actRotateSelectionsBackward,
 				DocString: "Rotate selections backward",
 				Run:       Runner(action.RotateSelectionsBackward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('(')),
 			},
-			actRotateSelectionsForward: {
+			{
+				Name:      actRotateSelectionsForward,
 				DocString: "Rotate selections forward",
 				Run:       Runner(action.RotateSelectionsForward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char(')')),
 			},
-			actRotateContentsBackward: {
+			{
+				Name:      actRotateContentsBackward,
 				DocString: "Rotate selections contents backward",
 				Run:       Runner(action.RotateContentsBackward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('(')),
 			},
-			actRotateContentsForward: {
+			{
+				Name:      actRotateContentsForward,
 				DocString: "Rotate selection contents forward",
 				Run:       Runner(action.RotateContentsForward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt(')')),
 			},
-			actEnsureForward: {
+			{
+				Name:      actEnsureForward,
 				DocString: "Ensure all selections face forward",
 				Run:       Runner(action.EnsureForward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt(':')),
 			},
-			actIncrement: {
+			{
+				Name:      actIncrement,
 				DocString: "Increment item under cursor",
 				Run:       Runner(action.Increment),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(ctrl('a')),
 			},
-			actDecrement: {
+			{
+				Name:      actDecrement,
 				DocString: "Decrement item under cursor",
 				Run:       Runner(action.Decrement),
 				Modes:     []string{"NOR", "SEL"},

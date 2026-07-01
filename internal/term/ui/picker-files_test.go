@@ -337,6 +337,8 @@ func TestPickerFiles(t *testing.T) {
 		cwd := filepath.Join(tmp, ".config", "toe")
 		err := os.MkdirAll(cwd, 0o755)
 		assert.NoError(t, err)
+		err = os.MkdirAll(filepath.Join(cwd, ".git"), 0o755)
+		assert.NoError(t, err)
 		err = os.WriteFile(
 			filepath.Join(cwd, "config.toml"), []byte("[editor]\n"), 0o644,
 		)

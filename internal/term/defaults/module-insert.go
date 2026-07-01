@@ -38,44 +38,51 @@ const (
 
 func insertModule() command.Module {
 	return command.Module{
-		Commands: map[string]command.Command{
-			actInsertRegister: {
+		Commands: []command.Command{
+			{
+				Name:      actInsertRegister,
 				DocString: "Insert register",
 				Run:       Continuation(insertRegisterAction),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('r')),
 			},
-			actCommitUndoCheckpoint: {
+			{
+				Name:      actCommitUndoCheckpoint,
 				DocString: "Commit changes to new checkpoint",
 				Run:       Runner(action.CommitUndoCheckpoint),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('s')),
 			},
-			actDeleteWordBackward: {
+			{
+				Name:      actDeleteWordBackward,
 				DocString: "Delete previous word",
 				Run:       Runner(action.DeleteWordBackward),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('w'), altSpecial("backspace")),
 			},
-			actDeleteWordForward: {
+			{
+				Name:      actDeleteWordForward,
 				DocString: "Delete next word",
 				Run:       Runner(action.DeleteWordForward),
 				Modes:     []string{"INS"},
 				Keys:      keys(alt('d'), altSpecial("del")),
 			},
-			actKillToLineStart: {
+			{
+				Name:      actKillToLineStart,
 				DocString: "Delete till start of line",
 				Run:       Runner(action.KillToLineStart),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('u')),
 			},
-			actKillToLineEnd: {
+			{
+				Name:      actKillToLineEnd,
 				DocString: "Delete till end of line",
 				Run:       Runner(action.KillToLineEnd),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('k')),
 			},
-			actDeleteCharBackward: {
+			{
+				Name:      actDeleteCharBackward,
 				DocString: "Delete previous char",
 				Run:       Runner(action.DeleteCharBackward),
 				Modes:     []string{"INS"},
@@ -83,26 +90,30 @@ func insertModule() command.Module {
 					ctrl('h'), special("backspace"), shift("backspace"),
 				),
 			},
-			actDeleteCharForward: {
+			{
+				Name:      actDeleteCharForward,
 				DocString: "Delete next char",
 				Run:       Runner(action.DeleteCharForward),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('d'), special("del")),
 			},
-			actInsertNewline: {
+			{
+				Name:      actInsertNewline,
 				DocString: "Insert newline char",
 				Run:       Runner(action.InsertNewline),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('j'), special("ret")),
 			},
-			actSmartTab: {
+			{
+				Name: actSmartTab,
 				DocString: "Insert tab if all cursors have all whitespace to " +
 					"their left; otherwise, run a separate command",
 				Run:   Runner(action.SmartTab),
 				Modes: []string{"INS"},
 				Keys:  keys(special("tab")),
 			},
-			actGotoLineEndNewline: {
+			{
+				Name:      actGotoLineEndNewline,
 				DocString: "Goto newline at line end",
 				Run:       Runner(action.GotoLineEndNewline),
 				Modes:     []string{"INS"},
@@ -115,56 +126,65 @@ func insertModule() command.Module {
 func completionModule(model ui.Model) command.Module {
 	cfg := new(completionSection)
 	return command.Module{
-		Commands: map[string]command.Command{
-			actCompletion: {
+		Commands: []command.Command{
+			{
+				Name:      actCompletion,
 				DocString: "Complete current word",
 				Run:       Continuation(model.CompletionAction()),
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('x')),
 			},
-			actCompletionAccept: {
+			{
+				Name:      actCompletionAccept,
 				DocString: "Accept completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("ret")),
 			},
-			actCompletionCancel: {
+			{
+				Name:      actCompletionCancel,
 				DocString: "Cancel completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("esc")),
 			},
-			actCompletionPrevious: {
+			{
+				Name:      actCompletionPrevious,
 				DocString: "Previous completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("up"), ctrl('p')),
 			},
-			actCompletionNext: {
+			{
+				Name:      actCompletionNext,
 				DocString: "Next completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("down"), ctrl('n')),
 			},
-			actCompletionPageUp: {
+			{
+				Name:      actCompletionPageUp,
 				DocString: "Previous completion page",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("pageup")),
 			},
-			actCompletionPageDown: {
+			{
+				Name:      actCompletionPageDown,
 				DocString: "Next completion page",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("pagedown")),
 			},
-			actCompletionFirst: {
+			{
+				Name:      actCompletionFirst,
 				DocString: "First completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      keys(special("home")),
 			},
-			actCompletionLast: {
+			{
+				Name:      actCompletionLast,
 				DocString: "Last completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},

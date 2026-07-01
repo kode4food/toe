@@ -100,8 +100,9 @@ func motionModule() command.Module {
 	next := prefixed(char(']'))
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actMoveLeft: {
+		Commands: []command.Command{
+			{
+				Name:      actMoveLeft,
 				DocString: "Move left",
 				Run:       Runner(action.MoveLeft),
 				Modes:     []string{"NOR", "INS"},
@@ -110,7 +111,8 @@ func motionModule() command.Module {
 					"INS": keyBinding(special("left")),
 				},
 			},
-			actMoveDown: {
+			{
+				Name:      actMoveDown,
 				DocString: "Move down",
 				Run:       Runner(action.MoveDown),
 				Modes:     []string{"NOR", "INS"},
@@ -119,7 +121,8 @@ func motionModule() command.Module {
 					"INS": keyBinding(special("down")),
 				},
 			},
-			actMoveUp: {
+			{
+				Name:      actMoveUp,
 				DocString: "Move up",
 				Run:       Runner(action.MoveUp),
 				Modes:     []string{"NOR", "INS"},
@@ -128,7 +131,8 @@ func motionModule() command.Module {
 					"INS": keyBinding(special("up")),
 				},
 			},
-			actMoveRight: {
+			{
+				Name:      actMoveRight,
 				DocString: "Move right",
 				Run:       Runner(action.MoveRight),
 				Modes:     []string{"NOR", "INS"},
@@ -137,365 +141,428 @@ func motionModule() command.Module {
 					"INS": keyBinding(special("right")),
 				},
 			},
-			actMoveNextWordStart: {
+			{
+				Name:      actMoveNextWordStart,
 				DocString: "Move to start of next word",
 				Run:       Runner(action.MoveWordForward),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('w')),
 			},
-			actMovePrevWordStart: {
+			{
+				Name:      actMovePrevWordStart,
 				DocString: "Move to start of previous word",
 				Run:       Runner(action.MoveWordBackward),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('b')),
 			},
-			actMoveNextWordEnd: {
+			{
+				Name:      actMoveNextWordEnd,
 				DocString: "Move to end of next word",
 				Run:       Runner(action.MoveWordEnd),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('e')),
 			},
-			actMovePrevWordEnd: {
+			{
+				Name:      actMovePrevWordEnd,
 				DocString: "Move to end of previous word",
 				Run:       Runner(action.MovePrevWordEnd),
 				Signature: sig(),
 			},
-			actMoveNextLongWordStart: {
+			{
+				Name:      actMoveNextLongWordStart,
 				DocString: "Move to start of next long word",
 				Run:       Runner(action.MoveLongWordForward),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('W')),
 			},
-			actMovePrevLongWordStart: {
+			{
+				Name:      actMovePrevLongWordStart,
 				DocString: "Move to start of previous long word",
 				Run:       Runner(action.MoveLongWordBackward),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('B')),
 			},
-			actMoveNextLongWordEnd: {
+			{
+				Name:      actMoveNextLongWordEnd,
 				DocString: "Move to end of next long word",
 				Run:       Runner(action.MoveLongWordEnd),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('E')),
 			},
-			actMovePrevLongWordEnd: {
+			{
+				Name:      actMovePrevLongWordEnd,
 				DocString: "Move to end of previous long word",
 				Run:       Runner(action.MovePrevLongWordEnd),
 				Signature: sig(),
 			},
-			actMoveNextSubWordStart: {
+			{
+				Name:      actMoveNextSubWordStart,
 				DocString: "Move to start of next sub-word",
 				Run:       Runner(action.MoveNextSubWordStart),
 				Signature: sig(),
 			},
-			actMovePrevSubWordStart: {
+			{
+				Name:      actMovePrevSubWordStart,
 				DocString: "Move to start of previous sub-word",
 				Run:       Runner(action.MovePrevSubWordStart),
 				Signature: sig(),
 			},
-			actMoveNextSubWordEnd: {
+			{
+				Name:      actMoveNextSubWordEnd,
 				DocString: "Move to end of next sub-word",
 				Run:       Runner(action.MoveNextSubWordEnd),
 				Signature: sig(),
 			},
-			actMovePrevSubWordEnd: {
+			{
+				Name:      actMovePrevSubWordEnd,
 				DocString: "Move to end of previous sub-word",
 				Run:       Runner(action.MovePrevSubWordEnd),
 				Signature: sig(),
 			},
-			actGotoLineStart: {
+			{
+				Name:      actGotoLineStart,
 				DocString: "Goto line start",
 				Run:       Runner(action.MoveLineStart),
 				Modes:     []string{"NOR", "INS"},
 				Keys:      keys(special("home")),
 			},
-			actGotoLineEnd: {
+			{
+				Name:      actGotoLineEnd,
 				DocString: "Goto line end",
 				Run:       Runner(action.MoveLineEnd),
 				Modes:     []string{"NOR"},
 				Keys:      keys(special("end")),
 			},
-			actFindNextChar: {
+			{
+				Name:      actFindNextChar,
 				DocString: "Move to next occurrence of char",
 				Run:       Continuation(findCharAction(true, true, false)),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('f')),
 			},
-			actFindTillChar: {
+			{
+				Name:      actFindTillChar,
 				DocString: "Move till next occurrence of char",
 				Run:       Continuation(findCharAction(true, false, false)),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('t')),
 			},
-			actFindPrevChar: {
+			{
+				Name:      actFindPrevChar,
 				DocString: "Move to previous occurrence of char",
 				Run:       Continuation(findCharAction(false, true, false)),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('F')),
 			},
-			actTillPrevChar: {
+			{
+				Name:      actTillPrevChar,
 				DocString: "Move till previous occurrence of char",
 				Run:       Continuation(findCharAction(false, false, false)),
 				Modes:     []string{"NOR"},
 				Keys:      keys(char('T')),
 			},
-			actGotoLine: {
+			{
+				Name:      actGotoLine,
 				DocString: "Goto line",
 				Run:       Continuation(gotoLineAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('G')),
 			},
-			actGotoLineOrFileStart: {
+			{
+				Name:      actGotoLineOrFileStart,
 				DocString: "Goto line number `<n>` else file start",
 				Run:       Continuation(gotoLineOrFileStartAction),
 				Modes:     []string{"NOR"},
 				Keys:      keys(g(char('g'))),
 			},
-			actGotoFile: {
+			{
+				Name:      actGotoFile,
 				DocString: "Goto files/URLs in selections",
 				Run:       Continuation(gotoFileAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('f'))),
 			},
-			actGotoColumn: {
+			{
+				Name:      actGotoColumn,
 				DocString: "Goto column",
 				Run:       Runner(action.ExtendToColumn),
 				Modes:     []string{"NOR"},
 				Keys:      keys(g(char('|'))),
 			},
-			actGotoWindowTop: {
+			{
+				Name:      actGotoWindowTop,
 				DocString: "Goto window top",
 				Run:       Runner(action.GotoWindowTop),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('t'))),
 			},
-			actGotoWindowCenter: {
+			{
+				Name:      actGotoWindowCenter,
 				DocString: "Goto window center",
 				Run:       Runner(action.GotoWindowCenter),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('c'))),
 			},
-			actGotoWindowBottom: {
+			{
+				Name:      actGotoWindowBottom,
 				DocString: "Goto window bottom",
 				Run:       Runner(action.GotoWindowBottom),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('b'))),
 			},
-			actMoveFileEnd: {
+			{
+				Name:      actMoveFileEnd,
 				DocString: "Goto last line",
 				Run:       Runner(action.MoveFileEnd),
 				Modes:     []string{"NOR"},
 				Keys:      keys(g(char('e'))),
 			},
-			actMoveLineNonWhitespace: {
+			{
+				Name:      actMoveLineNonWhitespace,
 				DocString: "Goto first non-blank in line",
 				Run:       Runner(action.MoveLineNonWhitespace),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('s'))),
 			},
-			actGotoLastAccessedFile: {
+			{
+				Name:      actGotoLastAccessedFile,
 				DocString: "Goto last accessed file",
 				Run:       Runner(action.GotoLastAccessedFile),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('a'))),
 			},
-			actGotoLastModifiedFile: {
+			{
+				Name:      actGotoLastModifiedFile,
 				DocString: "Goto last modified file",
 				Run:       Runner(action.GotoLastModifiedFile),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('m'))),
 			},
-			actGotoLastModification: {
+			{
+				Name:      actGotoLastModification,
 				DocString: "Goto last modification",
 				Run:       Runner(action.GotoLastModification),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('.'))),
 			},
-			actJumpForward: {
+			{
+				Name:      actJumpForward,
 				DocString: "Jump forward on jumplist",
 				Run:       Runner(action.JumpForward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(ctrl('i'), special("tab")),
 			},
-			actJumpBackward: {
+			{
+				Name:      actJumpBackward,
 				DocString: "Jump backward on jumplist",
 				Run:       Runner(action.JumpBackward),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(ctrl('o')),
 			},
-			actSaveSelection: {
+			{
+				Name:      actSaveSelection,
 				DocString: "Save current selection to jumplist",
 				Run:       Runner(action.SaveSelection),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(ctrl('s')),
 			},
-			actGotoNextParagraph: {
+			{
+				Name:      actGotoNextParagraph,
 				DocString: "Goto next paragraph",
 				Run:       Runner(action.GotoNextParagraph),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(next(char('p'))),
 			},
-			actGotoPrevParagraph: {
+			{
+				Name:      actGotoPrevParagraph,
 				DocString: "Goto previous paragraph",
 				Run:       Runner(action.GotoPrevParagraph),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(prev(char('p'))),
 			},
-			actExtendCharLeft: {
+			{
+				Name:      actExtendCharLeft,
 				DocString: "Extend left",
 				Run:       Runner(action.ExtendCharLeft),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('h'), special("left")),
 			},
-			actExtendVisualLineDown: {
+			{
+				Name:      actExtendVisualLineDown,
 				DocString: "Extend down",
 				Run:       Runner(action.ExtendLineDown),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('j'), special("down")),
 			},
-			actExtendVisualLineUp: {
+			{
+				Name:      actExtendVisualLineUp,
 				DocString: "Extend up",
 				Run:       Runner(action.ExtendLineUp),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('k'), special("up")),
 			},
-			actExtendCharRight: {
+			{
+				Name:      actExtendCharRight,
 				DocString: "Extend right",
 				Run:       Runner(action.ExtendCharRight),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('l'), special("right")),
 			},
-			actExtendNextWordStart: {
+			{
+				Name:      actExtendNextWordStart,
 				DocString: "Extend to start of next word",
 				Run:       Runner(action.ExtendNextWordStart),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('w')),
 			},
-			actExtendPrevWordStart: {
+			{
+				Name:      actExtendPrevWordStart,
 				DocString: "Extend to start of previous word",
 				Run:       Runner(action.ExtendPrevWordStart),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('b')),
 			},
-			actExtendNextWordEnd: {
+			{
+				Name:      actExtendNextWordEnd,
 				DocString: "Extend to end of next word",
 				Run:       Runner(action.ExtendNextWordEnd),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('e')),
 			},
-			actExtendPrevWordEnd: {
+			{
+				Name:      actExtendPrevWordEnd,
 				DocString: "Extend to end of previous word",
 				Run:       Runner(action.ExtendPrevWordEnd),
 				Signature: sig(),
 			},
-			actExtendNextLongWordStart: {
+			{
+				Name:      actExtendNextLongWordStart,
 				DocString: "Extend to start of next long word",
 				Run:       Runner(action.ExtendNextLongWordStart),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('W')),
 			},
-			actExtendPrevLongWordStart: {
+			{
+				Name:      actExtendPrevLongWordStart,
 				DocString: "Extend to start of previous long word",
 				Run:       Runner(action.ExtendPrevLongWordStart),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('B')),
 			},
-			actExtendNextLongWordEnd: {
+			{
+				Name:      actExtendNextLongWordEnd,
 				DocString: "Extend to end of next long word",
 				Run:       Runner(action.ExtendNextLongWordEnd),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('E')),
 			},
-			actExtendPrevLongWordEnd: {
+			{
+				Name:      actExtendPrevLongWordEnd,
 				DocString: "Extend to end of previous long word",
 				Run:       Runner(action.ExtendPrevLongWordEnd),
 				Signature: sig(),
 			},
-			actExtendNextSubWordStart: {
+			{
+				Name:      actExtendNextSubWordStart,
 				DocString: "Extend to start of next sub-word",
 				Run:       Runner(action.ExtendNextSubWordStart),
 				Signature: sig(),
 			},
-			actExtendPrevSubWordStart: {
+			{
+				Name:      actExtendPrevSubWordStart,
 				DocString: "Extend to start of previous sub-word",
 				Run:       Runner(action.ExtendPrevSubWordStart),
 				Signature: sig(),
 			},
-			actExtendNextSubWordEnd: {
+			{
+				Name:      actExtendNextSubWordEnd,
 				DocString: "Extend to end of next sub-word",
 				Run:       Runner(action.ExtendNextSubWordEnd),
 				Signature: sig(),
 			},
-			actExtendPrevSubWordEnd: {
+			{
+				Name:      actExtendPrevSubWordEnd,
 				DocString: "Extend to end of previous sub-word",
 				Run:       Runner(action.ExtendPrevSubWordEnd),
 				Signature: sig(),
 			},
-			actExtendNextChar: {
+			{
+				Name:      actExtendNextChar,
 				DocString: "Extend to next occurrence of char",
 				Run:       Continuation(findCharAction(true, true, true)),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('f')),
 			},
-			actExtendTillChar: {
+			{
+				Name:      actExtendTillChar,
 				DocString: "Extend till next occurrence of char",
 				Run:       Continuation(findCharAction(true, false, true)),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('t')),
 			},
-			actExtendPrevChar: {
+			{
+				Name:      actExtendPrevChar,
 				DocString: "Extend to previous occurrence of char",
 				Run:       Continuation(findCharAction(false, true, true)),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('F')),
 			},
-			actExtendTillPrevChar: {
+			{
+				Name:      actExtendTillPrevChar,
 				DocString: "Extend till previous occurrence of char",
 				Run:       Continuation(findCharAction(false, false, true)),
 				Modes:     []string{"SEL"},
 				Keys:      keys(char('T')),
 			},
-			actExtendToLineStart: {
+			{
+				Name:      actExtendToLineStart,
 				DocString: "Extend to line start",
 				Run:       Runner(action.ExtendToLineStart),
 				Modes:     []string{"SEL"},
 				Keys:      keys(special("home")),
 			},
-			actExtendToLineEnd: {
+			{
+				Name:      actExtendToLineEnd,
 				DocString: "Extend to line end",
 				Run:       Runner(action.ExtendToLineEnd),
 				Modes:     []string{"SEL"},
 				Keys:      keys(special("end")),
 			},
-			actExtendToLineEndNewline: {
+			{
+				Name:      actExtendToLineEndNewline,
 				DocString: "Extend to line end",
 				Run:       Runner(action.ExtendToLineEndNewline),
 				Signature: sig(),
 			},
-			actExtendToNonWhitespace: {
+			{
+				Name:      actExtendToNonWhitespace,
 				DocString: "Extend to first non-blank in line",
 				Run:       Runner(action.ExtendToNonWhitespace),
 				Signature: sig(),
 			},
-			actGotoLineOrExtendFileStart: {
+			{
+				Name:      actGotoLineOrExtendFileStart,
 				DocString: "Extend to line number `<n>` else file start",
 				Run:       Continuation(gotoLineOrExtendFileStartAction),
 				Modes:     []string{"SEL"},
 				Keys:      keys(g(char('g'))),
 			},
-			actExtendToColumn: {
+			{
+				Name:      actExtendToColumn,
 				DocString: "Extend to column",
 				Run:       Runner(action.ExtendToColumn),
 				Modes:     []string{"SEL"},
 				Keys:      keys(g(char('|'))),
 			},
-			actExtendToLastLine: {
+			{
+				Name:      actExtendToLastLine,
 				DocString: "Extend to last line",
 				Run:       Runner(action.ExtendToLastLine),
 				Modes:     []string{"SEL"},
 				Keys:      keys(g(char('e'))),
 			},
-			actExtendToFileEnd: {
+			{
+				Name:      actExtendToFileEnd,
 				DocString: "Extend to file end",
 				Run:       Runner(action.ExtendToFileEnd),
 				Signature: sig(),

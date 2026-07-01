@@ -77,7 +77,10 @@ func (k KeyEvent) String() string {
 	if len(parts) == 0 {
 		return s
 	}
-	return fmt.Sprintf("<%s-%s>", strings.Join(parts, "-"), s)
+	if k.Mods.Has(ModShift) && k.Code.Char != 0 {
+		s = strings.ToLower(s)
+	}
+	return fmt.Sprintf("%s-%s", strings.Join(parts, "-"), s)
 }
 
 // WithMods returns a copy of k with the given modifiers added

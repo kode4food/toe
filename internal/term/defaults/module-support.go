@@ -19,8 +19,9 @@ const (
 
 func supportModule() command.Module {
 	return command.Module{
-		Commands: map[string]command.Command{
-			actCharacterInfo: {
+		Commands: []command.Command{
+			{
+				Name: actCharacterInfo,
 				DocString: "Get info about the character under the primary " +
 					"cursor",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -29,7 +30,8 @@ func supportModule() command.Module {
 				Aliases:   []string{"character-info", "char"},
 				Signature: sig(),
 			},
-			actEcho: {
+			{
+				Name:      actEcho,
 				DocString: "Prints the given arguments to the statusline",
 				Run: func(_ *view.Editor, args *command.Args) command.Result {
 					if args == nil {
@@ -39,14 +41,16 @@ func supportModule() command.Module {
 				},
 				Signature: sig(),
 			},
-			actRedraw: {
+			{
+				Name:      actRedraw,
 				DocString: "Clear and re-render the whole UI",
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalClearScreen}
 				},
 				Signature: sig(),
 			},
-			actTutor: {
+			{
+				Name:      actTutor,
 				DocString: "Open the tutorial",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					_, err := e.SwitchFile(loader.RuntimeFile("tutor"))
@@ -60,7 +64,8 @@ func supportModule() command.Module {
 				},
 				Signature: sig(),
 			},
-			actGoto: {
+			{
+				Name:      actGoto,
 				DocString: "Goto line number",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					if args == nil || args.Empty() {

@@ -23,8 +23,9 @@ const (
 
 func formatModule() command.Module {
 	return command.Module{
-		Commands: map[string]command.Command{
-			actFormat: {
+		Commands: []command.Command{
+			{
+				Name: actFormat,
 				DocString: "Format the file using an external formatter or " +
 					"language server",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -33,13 +34,15 @@ func formatModule() command.Module {
 				Aliases:   []string{"fmt"},
 				Signature: sig(),
 			},
-			actReindentSelections: {
+			{
+				Name:      actReindentSelections,
 				DocString: "Format selection",
 				Run:       runFormatSelection,
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(char('=')),
 			},
-			actReflow: {
+			{
+				Name: actReflow,
 				DocString: "Hard-wrap the current selection of lines to a " +
 					"given width",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -62,7 +65,8 @@ func formatModule() command.Module {
 				},
 				Signature: optionalArg(),
 			},
-			actSort: {
+			{
+				Name:      actSort,
 				DocString: "Sort ranges in selection",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					reverse := args != nil && args.HasFlag("reverse")

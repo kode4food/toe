@@ -11,9 +11,10 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-func configFormatCmds() map[string]command.Command {
-	return map[string]command.Command{
-		actSetLanguage: {
+func configFormatCmds() []command.Command {
+	return []command.Command{
+		{
+			Name: actSetLanguage,
 			DocString: "Set the language of current buffer " +
 				"(show current language if no value specified)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -38,7 +39,8 @@ func configFormatCmds() map[string]command.Command {
 			Aliases:   []string{"set-language", "lang"},
 			Signature: staticSig(optionalArg(), languageNames()...),
 		},
-		actSetLineEnding: {
+		{
+			Name: actSetLineEnding,
 			DocString: "Set the document's default line ending. " +
 				"Options: crlf, lf",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -74,7 +76,8 @@ func configFormatCmds() map[string]command.Command {
 			Aliases:   []string{"line-ending"},
 			Signature: staticSig(optionalArg(), "crlf", "lf"),
 		},
-		actIndentStyle: {
+		{
+			Name: actIndentStyle,
 			DocString: "Set the indentation style for editing. " +
 				"('t' for tabs or 1-16 for number of spaces)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
@@ -110,7 +113,8 @@ func configFormatCmds() map[string]command.Command {
 				"9", "10", "11", "12", "13", "14", "15", "16",
 			),
 		},
-		actEncoding: {
+		{
+			Name:      actEncoding,
 			DocString: "Set encoding",
 			Run: func(_ *view.Editor, _ *command.Args) command.Result {
 				return command.Result{Message: "utf-8"}

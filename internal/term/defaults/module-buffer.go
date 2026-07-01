@@ -20,8 +20,9 @@ func bufferModule() command.Module {
 	g := prefixed(char('g'))
 
 	return command.Module{
-		Commands: map[string]command.Command{
-			actBufferClose: {
+		Commands: []command.Command{
+			{
+				Name:      actBufferClose,
 				DocString: "Close the current buffer",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					if doc, ok := e.FocusedDocument(); ok && doc.Modified() {
@@ -37,7 +38,8 @@ func bufferModule() command.Module {
 				Aliases:   []string{"buffer-close", "bc", "bclose"},
 				Signature: sig(),
 			},
-			actBufferCloseForce: {
+			{
+				Name: actBufferCloseForce,
 				DocString: "Close the current buffer forcefully, ignoring " +
 					"unsaved changes",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
@@ -48,7 +50,8 @@ func bufferModule() command.Module {
 				Aliases:   []string{"buffer-close!", "bc!", "bclose!"},
 				Signature: sig(),
 			},
-			actBufferCloseOthers: {
+			{
+				Name:      actBufferCloseOthers,
 				DocString: "Close all buffers but the currently focused one",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					focused, _ := e.FocusedView()
@@ -65,7 +68,8 @@ func bufferModule() command.Module {
 				},
 				Signature: sig(),
 			},
-			actBufferCloseAll: {
+			{
+				Name:      actBufferCloseAll,
 				DocString: "Close all buffers without quitting",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
@@ -85,27 +89,31 @@ func bufferModule() command.Module {
 				Aliases:   []string{"buffer-close-all", "bca", "bcloseall"},
 				Signature: sig(),
 			},
-			actBufferNext: {
+			{
+				Name:      actBufferNext,
 				DocString: "Goto next buffer",
 				Run:       Runner((*view.Editor).FocusNextView),
 				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"buffer-next", "bn", "bnext"},
 				Signature: sig(),
 			},
-			actBufferPrevious: {
+			{
+				Name:      actBufferPrevious,
 				DocString: "Goto previous buffer",
 				Run:       Runner((*view.Editor).FocusPrevView),
 				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"buffer-previous", "bp", "bprev"},
 				Signature: sig(),
 			},
-			actGotoNextBuffer: {
+			{
+				Name:      actGotoNextBuffer,
 				DocString: "Goto next buffer",
 				Run:       method((*view.Editor).FocusNextView),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('n'))),
 			},
-			actGotoPreviousBuffer: {
+			{
+				Name:      actGotoPreviousBuffer,
 				DocString: "Goto previous buffer",
 				Run:       method((*view.Editor).FocusPrevView),
 				Modes:     []string{"NOR", "SEL"},

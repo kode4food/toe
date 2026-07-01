@@ -1,7 +1,6 @@
 package action_test
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -706,23 +705,23 @@ func TestParagraphMotionWithCount(t *testing.T) {
 func TestGotoFile(t *testing.T) {
 	t.Run("finds existing file path at cursor", func(t *testing.T) {
 		dir := t.TempDir()
-		target := filepath.Join(dir, "target.txt")
-		assert.NoError(t, os.WriteFile(target, []byte("x"), 0o644))
+		path := filepath.Join(dir, "target.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("x"), 0o644))
 
-		e := editorWithText(t, target)
+		e := editorWithText(t, path)
 		setCursor(t, e, 0)
 
-		path, err := action.GotoFile(e)
+		target, err := action.GotoFileTarget(e)
 
 		assert.NoError(t, err)
-		assert.Equal(t, target, path)
+		assert.Equal(t, path, target.Path)
 	})
 
 	t.Run("returns error when file does not exist", func(t *testing.T) {
 		e := editorWithText(t, "/no/such/file.txt")
 		setCursor(t, e, 0)
 
-		_, err := action.GotoFile(e)
+		_, err := action.GotoFileTarget(e)
 
 		assert.Error(t, err)
 	})
@@ -731,7 +730,7 @@ func TestGotoFile(t *testing.T) {
 		e := editorWithText(t, "   ")
 		setCursor(t, e, 1)
 
-		_, err := action.GotoFile(e)
+		_, err := action.GotoFileTarget(e)
 
 		assert.Error(t, err)
 	})
@@ -746,10 +745,10 @@ func TestGotoFile(t *testing.T) {
 		assert.NoError(t, e.Chdir(dir))
 		setCursor(t, e, 0)
 
-		path, err := action.GotoFile(e)
+		target, err := action.GotoFileTarget(e)
 
 		assert.NoError(t, err)
-		assert.Equal(t, filepath.Join(dir, "rel.txt"), path)
+		assert.Equal(t, filepath.Join(dir, "rel.txt"), target.Path)
 	})
 
 	t.Run("relative path resolved via doc dir", func(t *testing.T) {
@@ -765,42 +764,28 @@ func TestGotoFile(t *testing.T) {
 		assert.NoError(t, err)
 		setCursor(t, e, 0)
 
-		path, err := action.GotoFile(e)
+		target, err := action.GotoFileTarget(e)
 
 		assert.NoError(t, err)
-		assert.Equal(t, relPath, path)
+		assert.Equal(t, relPath, target.Path)
 	})
 
 	t.Run("uses document link", func(t *testing.T) {
 		dir := t.TempDir()
-		target := filepath.Join(dir, "target.txt")
-		assert.NoError(t, os.WriteFile(target, []byte("x"), 0o644))
+		path := filepath.Join(dir, "target.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("x"), 0o644))
 		e := editorWithText(t, "not-a-real-path")
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		doc.SetDocumentLinks([]view.DocumentLink{
-			{From: 0, To: 15, Target: "file://" + target},
+			{From: 0, To: 15, Target: "file://" + path},
 		})
 		setCursor(t, e, 2)
 
-		path, err := action.GotoFile(e)
+		target, err := action.GotoFileTarget(e)
 
 		assert.NoError(t, err)
-		assert.Equal(t, target, path)
-	})
-
-	t.Run("rejects external link", func(t *testing.T) {
-		e := editorWithText(t, "https://example.com")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		doc.SetDocumentLinks([]view.DocumentLink{
-			{From: 0, To: 19, Target: "https://example.com"},
-		})
-		setCursor(t, e, 2)
-
-		_, err := action.GotoFile(e)
-
-		assert.True(t, errors.Is(err, action.ErrDocumentLinkTarget))
+		assert.Equal(t, path, target.Path)
 	})
 
 	t.Run("returns external target", func(t *testing.T) {
@@ -823,7 +808,7 @@ func TestGotoFile(t *testing.T) {
 		e := editorWithText(t, "/no/such/file.txt")
 		setCursor(t, e, 8)
 
-		_, err := action.GotoFile(e)
+		_, err := action.GotoFileTarget(e)
 
 		assert.Error(t, err)
 	})

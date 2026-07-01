@@ -86,31 +86,24 @@ func (p *Picker) pageUp() {
 	p.moveBy(-max(p.listHeight, 1))
 }
 
-// maxScroll is the largest valid first-visible row, leaving the last page of
-// items filling the viewport
-func (p *Picker) maxScroll() int {
-	return max(0, len(p.matched)-max(p.listHeight, 1))
-}
-
 // clampScroll keeps the scroll offset within the valid range
 func (p *Picker) clampScroll() {
-	p.listScroll = max(0, min(p.listScroll, p.maxScroll()))
+	p.listScroll = listClampScroll(
+		p.listScroll, len(p.matched), p.listHeight,
+	)
 }
 
 // scrollBy moves the list view by delta rows without changing the selection
 func (p *Picker) scrollBy(delta int) {
-	p.listScroll += delta
-	p.clampScroll()
+	p.listScroll = listScrollBy(
+		p.listScroll, len(p.matched), p.listHeight, delta,
+	)
 }
 
 // ensureCursorVisible scrolls the list the minimum amount needed to bring the
 // selected row into view, used after keyboard navigation
 func (p *Picker) ensureCursorVisible() {
-	h := max(p.listHeight, 1)
-	if p.cursor < p.listScroll {
-		p.listScroll = p.cursor
-	} else if p.cursor >= p.listScroll+h {
-		p.listScroll = p.cursor - h + 1
-	}
-	p.clampScroll()
+	p.listScroll = listEnsureCursorVisible(
+		p.listScroll, p.cursor, len(p.matched), p.listHeight,
+	)
 }

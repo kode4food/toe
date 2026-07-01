@@ -7,8 +7,22 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
+type completionSection struct {
+	Editor struct {
+		Completion ui.CompletionOptions `toml:"completion"`
+	} `toml:"editor"`
+}
+
 const (
 	actCompletion           = "completion"
+	actCompletionAccept     = ui.CompletionAcceptAction
+	actCompletionCancel     = ui.CompletionCancelAction
+	actCompletionPrevious   = ui.CompletionPreviousAction
+	actCompletionNext       = ui.CompletionNextAction
+	actCompletionPageUp     = ui.CompletionPageUpAction
+	actCompletionPageDown   = ui.CompletionPageDownAction
+	actCompletionFirst      = ui.CompletionFirstAction
+	actCompletionLast       = ui.CompletionLastAction
 	actInsertRegister       = "insert_register"
 	actCommitUndoCheckpoint = "commit_undo_checkpoint"
 	actDeleteWordBackward   = "delete_word_backward"
@@ -99,6 +113,7 @@ func insertModule() command.Module {
 }
 
 func completionModule(model ui.Model) command.Module {
+	cfg := new(completionSection)
 	return command.Module{
 		Commands: map[string]command.Command{
 			actCompletion: {
@@ -107,9 +122,66 @@ func completionModule(model ui.Model) command.Module {
 				Modes:     []string{"INS"},
 				Keys:      keys(ctrl('x')),
 			},
+			actCompletionAccept: {
+				DocString: "Accept completion",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("ret")),
+			},
+			actCompletionCancel: {
+				DocString: "Cancel completion",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("esc")),
+			},
+			actCompletionPrevious: {
+				DocString: "Previous completion",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("up"), ctrl('p')),
+			},
+			actCompletionNext: {
+				DocString: "Next completion",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("down"), ctrl('n')),
+			},
+			actCompletionPageUp: {
+				DocString: "Previous completion page",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("pageup")),
+			},
+			actCompletionPageDown: {
+				DocString: "Next completion page",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("pagedown")),
+			},
+			actCompletionFirst: {
+				DocString: "First completion",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("home")),
+			},
+			actCompletionLast: {
+				DocString: "Last completion",
+				Run:       Runner(noopAction),
+				Modes:     []string{ui.CompletionMode},
+				Keys:      keys(special("end")),
+			},
+		},
+		Section: &command.Section{
+			Config: cfg,
+			Reset:  func() { *cfg = completionSection{} },
+			Apply: func(*view.Editor) {
+				model.SetCompletionOptions(cfg.Editor.Completion)
+			},
 		},
 	}
 }
+
+func noopAction(*view.Editor) {}
 
 func insertRegisterAction(e *view.Editor) command.Continuation {
 	e.SetHint("^r ...")

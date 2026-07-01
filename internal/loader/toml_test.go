@@ -85,6 +85,25 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		assert.Len(t, arr, 1)
 	})
 
+	t.Run("[]map[string]any merged with []map[string]any", func(t *testing.T) {
+		left := []map[string]any{{"name": "x", "val": "left"}}
+		right := []map[string]any{{"name": "x", "val": "right"}}
+
+		merged := loader.MergeTOMLValues(left, right, 3)
+
+		arr, ok := merged.([]any)
+		assert.True(t, ok)
+		assert.Len(t, arr, 1)
+	})
+
+	t.Run("map slice with scalar right", func(t *testing.T) {
+		left := []map[string]any{{"name": "x"}}
+
+		merged := loader.MergeTOMLValues(left, "not-a-slice", 3)
+
+		assert.Equal(t, "not-a-slice", merged)
+	})
+
 	t.Run("array with unnamed right entry appended", func(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{map[string]any{"val": "no-name"}}

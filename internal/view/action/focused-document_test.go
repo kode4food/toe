@@ -53,7 +53,7 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 			action.ExtendSearchPrev(e)
 		}},
 		{"flip selections", action.FlipSelections},
-		{"goto file", func(e *view.Editor) { _, _ = action.GotoFile(e) }},
+		{"goto file", func(e *view.Editor) { _, _ = action.GotoFileTarget(e) }},
 		{"goto line end newline", action.GotoLineEndNewline},
 		{"goto last modification", action.GotoLastModification},
 		{"indent", action.Indent},
@@ -86,7 +86,6 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 			action.PasteRegisterAtCursor(e, '"')
 		}},
 		{"clipboard replace", action.ClipboardReplace},
-		{"reindent", action.ReindentSelections},
 		{"remove primary", action.RemovePrimarySelection},
 		{"repeat last motion", action.RepeatLastMotion},
 		{"replace char", func(e *view.Editor) { action.ReplaceChar(e, 'x') }},

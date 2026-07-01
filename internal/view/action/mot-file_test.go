@@ -100,17 +100,3 @@ func TestGotoFileTarget(t *testing.T) {
 		assert.Equal(t, path, target.Path)
 	})
 }
-
-func TestGotoFileURLError(t *testing.T) {
-	t.Run("GotoFile returns error for URL target", func(t *testing.T) {
-		e := editorWithText(t, "some text\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		doc.SetDocumentLinks([]view.DocumentLink{
-			{From: 0, To: 4, Target: "https://example.com"},
-		})
-		setCursor(t, e, 2)
-		_, err := action.GotoFile(e)
-		assert.ErrorIs(t, err, action.ErrDocumentLinkTarget)
-	})
-}

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/term/ui"
 )
 
 func TestInsertRegister(t *testing.T) {
@@ -14,5 +16,33 @@ func TestInsertRegister(t *testing.T) {
 		assert.NotNil(t, res.Continuation)
 		// empty register pastes nothing; the continuation still completes
 		assert.Nil(t, res.Continuation(e, char('a')))
+	})
+}
+
+func TestCompletionConfig(t *testing.T) {
+	t.Run("icon mode decodes", func(t *testing.T) {
+		e, _, reg := envWithRegistry(t, "")
+		err := reg.ApplyTOML(e, map[string]any{
+			"editor": map[string]any{
+				"completion": map[string]any{
+					"icons": string(ui.CompletionIconsNone),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid icon mode errors", func(t *testing.T) {
+		e, _, reg := envWithRegistry(t, "")
+		err := reg.ApplyTOML(e, map[string]any{
+			"editor": map[string]any{
+				"completion": map[string]any{
+					"icons": "automatic",
+				},
+			},
+		})
+
+		assert.Error(t, err)
 	})
 }

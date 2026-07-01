@@ -302,6 +302,16 @@ func TestEditorPrevDocID(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, prevID, id)
 	})
+
+	t.Run("false when prev doc closed", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		v1 := e.VSplitNew()
+		e.FocusNextView()
+		e.CloseView(v1.ID())
+		_, ok := e.PrevDocID()
+		assert.False(t, ok)
+	})
 }
 
 func TestEditorCommitInsertHistory(t *testing.T) {

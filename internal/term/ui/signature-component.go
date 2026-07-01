@@ -96,9 +96,9 @@ func (s *signatureHelpComponent) RenderOverBuffer(
 	x, y := 0, 0
 	if cur, ok := s.ec.Cursor(buf.Width, buf.Height, cx); ok {
 		x = s.openScreenX(cx)
-		y = max(cur.Y-h-1, 0)
-		if cur.Y < h+1 {
-			y = min(cur.Y+1, max(buf.Height-h, 0))
+		y = cur.Y + 1
+		if y+h > buf.Height {
+			y = max(cur.Y-h-1, 0)
 		}
 	}
 	if x+w > buf.Width {

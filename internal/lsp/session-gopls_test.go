@@ -44,7 +44,8 @@ func TestSessionGopls(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(len(text)-3))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, items)

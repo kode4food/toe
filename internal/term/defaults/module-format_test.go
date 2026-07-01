@@ -35,11 +35,15 @@ func (s *stubController) ExecuteWorkspaceCommand(_ *view.Document, _ string, _ [
 	return nil
 }
 func (s *stubController) WorkspaceCommands(_ *view.Document) []string { return nil }
-func (s *stubController) Completions(_ *view.Document, _ view.Id) ([]view.CompletionItem, error) {
-	return nil, nil
+func (s *stubController) Completions(
+	_ *view.Document, _ view.Id,
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, nil
 }
-func (s *stubController) TriggerCompletions(_ *view.Document, _ view.Id) ([]view.CompletionItem, error) {
-	return nil, nil
+func (s *stubController) TriggerCompletions(
+	_ *view.Document, _ view.Id,
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, nil
 }
 func (s *stubController) ResolveCompletion(_ *view.Document, _ view.Id, item view.CompletionItem) (view.CompletionItem, error) {
 	return item, nil

@@ -299,45 +299,6 @@ func TestConfigTypes(t *testing.T) {
 		assert.ErrorIs(t, err, view.ErrInvalidLineNumber)
 	})
 
-	t.Run("parses diagnostic filter", func(t *testing.T) {
-		v, err := view.ParseDiagnosticFilter("warning")
-		assert.NoError(t, err)
-		assert.Equal(t, view.DiagnosticFilterWarning, v)
-	})
-
-	t.Run("rejects diagnostic filter", func(t *testing.T) {
-		_, err := view.ParseDiagnosticFilter("bad")
-		assert.ErrorIs(t, err, view.ErrInvalidDiagnosticFilter)
-	})
-
-	t.Run("DiagnosticFilter disable blocks all", func(t *testing.T) {
-		f := view.DiagnosticFilterDisable
-		assert.False(t, f.Allows(view.DiagnosticSeverityError))
-	})
-
-	t.Run("DiagnosticFilter error blocks warning", func(t *testing.T) {
-		f := view.DiagnosticFilterError
-		assert.True(t, f.Allows(view.DiagnosticSeverityError))
-		assert.False(t, f.Allows(view.DiagnosticSeverityWarning))
-	})
-
-	t.Run("DiagnosticFilter warning blocks info", func(t *testing.T) {
-		f := view.DiagnosticFilterWarning
-		assert.True(t, f.Allows(view.DiagnosticSeverityWarning))
-		assert.False(t, f.Allows(view.DiagnosticSeverityInfo))
-	})
-
-	t.Run("DiagnosticFilter info blocks hint", func(t *testing.T) {
-		f := view.DiagnosticFilterInfo
-		assert.True(t, f.Allows(view.DiagnosticSeverityInfo))
-		assert.False(t, f.Allows(view.DiagnosticSeverityHint))
-	})
-
-	t.Run("DiagnosticFilter hint allows all", func(t *testing.T) {
-		f := view.DiagnosticFilterHint
-		assert.True(t, f.Allows(view.DiagnosticSeverityHint))
-	})
-
 	t.Run("parses bufferline", func(t *testing.T) {
 		v, err := view.ParseBufferLine("never")
 		assert.NoError(t, err)

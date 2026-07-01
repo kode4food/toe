@@ -174,6 +174,22 @@ func TestChangeSet(t *testing.T) {
 		assert.Equal(t, 4, pos)
 	})
 
+	t.Run("all-word insertion word association", func(t *testing.T) {
+		doc := core.NewRope("ab")
+		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
+			core.TextChange(1, 1, "xyz"),
+		})
+		assert.NoError(t, err)
+
+		pos, err := cs.MapPos(1, core.AssocAfterWord)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, pos)
+
+		pos, err = cs.MapPos(1, core.AssocBeforeWord)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, pos)
+	})
+
 	t.Run("reports sticky association variants", func(t *testing.T) {
 		assert.True(t, core.AssocBeforeSticky.Sticky())
 		assert.True(t, core.AssocAfterSticky.Sticky())

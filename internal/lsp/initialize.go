@@ -82,11 +82,18 @@ func DefaultClientCapabilities() protocol.ClientCapabilities {
 			Completion: &protocol.CompletionClientCapabilities{
 				ContextSupport: &yes,
 				CompletionItem: &protocol.ClientCompletionItemOptions{
-					SnippetSupport: &no,
+					SnippetSupport:    &no,
+					DeprecatedSupport: &yes,
 					DocumentationFormat: []protocol.MarkupKind{
 						protocol.MarkupKindMarkdown,
 						protocol.MarkupKindPlainText,
 					},
+					TagSupport: protocol.CompletionItemTagOptions{
+						ValueSet: []protocol.CompletionItemTag{
+							protocol.CompletionItemTagDeprecated,
+						},
+					},
+					LabelDetailsSupport: &yes,
 					ResolveSupport: protocol.ClientCompletionItemResolveOptions{
 						Properties: []string{
 							"documentation",

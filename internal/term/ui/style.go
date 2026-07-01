@@ -53,6 +53,74 @@ func pickerSelMatchStyle(cx *Context) lipgloss.Style {
 	return pickerSelStyle(cx).Foreground(s.GetForeground()).Bold(true)
 }
 
+func completionIconStyle(
+	cx *Context, kind string, selected bool,
+) lipgloss.Style {
+	base := completionBaseStyle(cx, selected)
+	scope := completionKindStyleScope(kind)
+	icon, ok := cx.Theme().TryGet(scope)
+	if !ok {
+		icon = cx.Theme().Get("ui.text.inactive")
+	}
+	return completionSegmentStyle(base, icon)
+}
+
+func completionInfoStyle(cx *Context, selected bool) lipgloss.Style {
+	base := completionBaseStyle(cx, selected)
+	info, ok := cx.Theme().TryGet("comment")
+	if !ok {
+		info = cx.Theme().Get("ui.text.inactive")
+	}
+	return completionSegmentStyle(base, info)
+}
+
+func completionBaseStyle(cx *Context, selected bool) lipgloss.Style {
+	base := pickerItemStyle(cx)
+	if selected {
+		base = pickerSelStyle(cx)
+	}
+	return base
+}
+
+func completionSegmentStyle(base, accent lipgloss.Style) lipgloss.Style {
+	if fg := accent.GetForeground(); fg != nil {
+		base = base.Foreground(fg)
+	}
+	if accent.GetBold() {
+		base = base.Bold(true)
+	}
+	if accent.GetFaint() {
+		base = base.Faint(true)
+	}
+	if accent.GetItalic() {
+		base = base.Italic(true)
+	}
+	return base
+}
+
+func completionKindStyleScope(kind string) string {
+	switch kind {
+	case "function", "method", "constructor":
+		return "function"
+	case "field", "property", "reference":
+		return "variable.other.member"
+	case "variable":
+		return "variable.parameter"
+	case "class", "interface", "struct", "type_param", "unit":
+		return "type"
+	case "module":
+		return "namespace"
+	case "value", "enum", "enum_member", "constant":
+		return "constant"
+	case "keyword", "operator":
+		return kind
+	case "snippet", "text", "file", "folder", "color", "event":
+		return "string"
+	default:
+		return "ui.text.inactive"
+	}
+}
+
 func pickerFrameStyle(cx *Context) lipgloss.Style {
 	popup := cx.Theme().Get("ui.popup")
 	return lipgloss.NewStyle().

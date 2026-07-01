@@ -36,6 +36,7 @@ type (
 		docHighlightGen int
 		docHighlightPos docHighlightPosition
 		completionGen   int
+		completionOpts  CompletionOptions
 	}
 
 	saveGenSlot struct{ gen int }
@@ -45,10 +46,11 @@ type (
 	docHighlightMsg struct{ gen int }
 
 	completionMsg struct {
-		gen    int
-		anchor completionAnchor
-		items  []view.CompletionItem
-		err    error
+		gen        int
+		anchor     completionAnchor
+		items      []view.CompletionItem
+		incomplete bool
+		err        error
 	}
 
 	docHighlightPosition struct {
@@ -128,7 +130,10 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
-			comp.Push(newCompletionComponent(e, msg.items, msg.anchor))
+			comp.Push(newCompletionComponent(
+				e, msg.items, msg.anchor, e.completionOpts,
+				msg.incomplete,
+			))
 			return nil
 		}), nil
 
@@ -249,10 +254,11 @@ func (e *EditorComponent) Cursor(w, h int, cx *Context) (tea.Cursor, bool) {
 
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
-		saveSlot:  &saveGenSlot{},
-		cache:     newRenderCache(),
-		macroSlot: &macroSlot{macros: map[rune][]command.KeyEvent{}},
-		focused:   true,
+		saveSlot:       &saveGenSlot{},
+		cache:          newRenderCache(),
+		macroSlot:      &macroSlot{macros: map[rune][]command.KeyEvent{}},
+		focused:        true,
+		completionOpts: DefaultCompletionOptions(),
 	}
 }
 

@@ -3,6 +3,7 @@ package ui_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -74,7 +75,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: 6, Y: 0, Button: tea.MouseMiddle,
+			X: 9, Y: 0, Button: tea.MouseMiddle,
 		})
 		_ = m2
 
@@ -92,7 +93,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: 6, Y: 0, Button: tea.MouseMiddle,
+			X: 9, Y: 0, Button: tea.MouseMiddle,
 		})
 		_ = m2
 
@@ -199,11 +200,23 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 7, Y: 0, Button: tea.MouseLeft,
+			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		_ = m2
 
-		// X 7 lands past the line-number gutter at content column 3
+		assert.Equal(t, 3, cursorPos(t, e))
+	})
+
+	t.Run("clicks rendered character cell", func(t *testing.T) {
+		e := editorWithText(t, "abcdef")
+		m := renderedModel(e)
+		x, y := renderedTextPoint(t, m, "abcdef", 3)
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: x, Y: y, Button: tea.MouseLeft,
+		})
+		_ = m2
+
 		assert.Equal(t, 3, cursorPos(t, e))
 	})
 
@@ -213,7 +226,7 @@ func TestMouseClickPositioning(t *testing.T) {
 
 		// place the cursor in the content area first
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 7, Y: 0, Button: tea.MouseLeft,
+			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.Equal(t, 3, cursorPos(t, e))
@@ -233,7 +246,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 6, Y: 0, Button: tea.MouseLeft, Mod: tea.ModAlt,
+			X: 9, Y: 0, Button: tea.MouseLeft, Mod: tea.ModAlt,
 		})
 		_ = m2
 
@@ -250,7 +263,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 7, Y: 0, Button: tea.MouseLeft,
+			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -266,13 +279,13 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 7, Y: 0, Button: tea.MouseLeft,
+			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.Equal(t, 0, cursorPos(t, e))
 
 		m2, _ = m.Update(tea.MouseClickMsg{
-			X: 7, Y: 1, Button: tea.MouseLeft,
+			X: 10, Y: 1, Button: tea.MouseLeft,
 		})
 		_ = m2
 		assert.Equal(t, 3, cursorPos(t, e))
@@ -283,7 +296,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 7, Y: 5, Button: tea.MouseLeft,
+			X: 10, Y: 5, Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -295,7 +308,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 8, Y: 0, Button: tea.MouseLeft,
+			X: 11, Y: 0, Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -362,7 +375,7 @@ func TestMouseDragBounds(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := renderedModel(e)
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 5, Y: 0, Button: tea.MouseLeft,
+			X: 8, Y: 0, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
@@ -384,12 +397,12 @@ func TestMouseDragBounds(t *testing.T) {
 		e.Options().BufferLine = view.BufferLineAlways
 		m := renderedModel(e)
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 5, Y: 1, Button: tea.MouseLeft,
+			X: 8, Y: 1, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: 9, Y: 1, Button: tea.MouseLeft,
+			X: 13, Y: 1, Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -609,6 +622,20 @@ func cursorPos(t *testing.T, e *view.Editor) int {
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 	return doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
+}
+
+func renderedTextPoint(
+	t *testing.T, m ui.Model, text string, off int,
+) (int, int) {
+	t.Helper()
+	lines := strings.Split(stripANSI(m.View().Content), "\n")
+	for y, line := range lines {
+		if x := strings.Index(line, text); x >= 0 {
+			return x + off, y
+		}
+	}
+	t.Fatalf("rendered text %q not found", text)
+	return 0, 0
 }
 
 func drainCmd(m ui.Model, cmd tea.Cmd) ui.Model {

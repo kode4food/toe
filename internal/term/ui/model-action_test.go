@@ -352,14 +352,14 @@ func (c *locationController) WorkspaceCommands(*view.Document) []string {
 
 func (c *locationController) Completions(
 	*view.Document, view.Id,
-) ([]view.CompletionItem, error) {
-	return nil, nil
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, nil
 }
 
 func (c *locationController) TriggerCompletions(
 	*view.Document, view.Id,
-) ([]view.CompletionItem, error) {
-	return nil, nil
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, nil
 }
 
 func (c *locationController) ResolveCompletion(

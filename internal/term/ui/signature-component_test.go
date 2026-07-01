@@ -2,6 +2,7 @@ package ui_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -15,6 +16,25 @@ import (
 )
 
 func TestSignatureHelpComponent(t *testing.T) {
+	t.Run("prefers below cursor", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{editor: e}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 40)
+
+		m = sendKeyAndFeed(m, '(')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		docY := signatureLineIndex(lines, "()")
+		sigY := signatureLineIndex(lines, "Println(a ...any)")
+
+		assert.Greater(t, sigY, docY)
+	})
+
 	t.Run("opens after trigger character", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
@@ -273,4 +293,13 @@ func TestSignatureHelpComponent(t *testing.T) {
 
 		assert.Contains(t, out, "signature docs")
 	})
+}
+
+func signatureLineIndex(lines []string, text string) int {
+	for i, line := range lines {
+		if strings.Contains(line, text) {
+			return i
+		}
+	}
+	return -1
 }

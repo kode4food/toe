@@ -884,6 +884,23 @@ func TestTextAnnotationRender(t *testing.T) {
 
 		assert.Contains(t, out, "\u25a0hello: string")
 	})
+
+	t.Run("renders parameter and unknown hint kinds", func(t *testing.T) {
+		e := editorWithText(t, "hello\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetInlayHints(v.ID(), []view.InlayHint{
+			{Pos: 5, Label: ": T", Kind: "parameter"},
+			{Pos: 5, Label: ": U", Kind: "other"},
+		})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, ": T")
+	})
 }
 
 func TestSearchInvalidRegex(t *testing.T) {

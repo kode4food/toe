@@ -29,19 +29,6 @@ var (
 	ErrExternalURLOpener = errors.New("external URL opener unavailable")
 )
 
-// GotoFile opens the file whose path the primary cursor sits on. Returns the
-// resolved path, or an error if no valid path can be found
-func GotoFile(e *view.Editor) (string, error) {
-	target, err := GotoFileTarget(e)
-	if err != nil {
-		return "", err
-	}
-	if target.URL != "" {
-		return "", fmt.Errorf("%w: %s", ErrDocumentLinkTarget, target.URL)
-	}
-	return target.Path, nil
-}
-
 // GotoFileTarget resolves the file or URL target under the primary cursor
 func GotoFileTarget(e *view.Editor) (GotoTarget, error) {
 	doc, ok := e.FocusedDocument()

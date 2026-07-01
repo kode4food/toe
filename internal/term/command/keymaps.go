@@ -21,6 +21,7 @@ type (
 		children map[KeyEvent]*keyTrieNode
 		order    []KeyEvent // insertion order for info popup display
 		action   KeyAction
+		name     string
 		label    string
 	}
 )
@@ -74,7 +75,9 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 				bindings = cmd.Keys["*"]
 			}
 			for _, binding := range bindings {
-				k.bindActionWithLabel(mode, action, label, binding...)
+				k.bindCommandWithLabel(
+					mode, name, action, label, binding...,
+				)
 			}
 		}
 	}
@@ -107,7 +110,7 @@ func (k *Keymaps) Bind(mode string, name string, seqs ...[]KeyEvent) {
 	action := func(e *view.Editor) Continuation {
 		return cmd.Run(e, nil).Continuation
 	}
-	k.bindAction(mode, action, seqs...)
+	k.bindCommandWithLabel(mode, name, action, "", seqs...)
 }
 
 // Lookup traverses the key trie. Returns (action, true, false) on a complete
@@ -115,6 +118,27 @@ func (k *Keymaps) Bind(mode string, name string, seqs ...[]KeyEvent) {
 func (k *Keymaps) Lookup(
 	mode string, seq []KeyEvent,
 ) (action KeyAction, found, prefix bool) {
+	node, found, prefix := k.lookup(mode, seq)
+	if !found {
+		return nil, false, prefix
+	}
+	return node.action, true, false
+}
+
+// LookupCommand traverses the key trie and returns the registered command name
+func (k *Keymaps) LookupCommand(
+	mode string, seq []KeyEvent,
+) (name string, found, prefix bool) {
+	node, found, prefix := k.lookup(mode, seq)
+	if !found {
+		return "", false, prefix
+	}
+	return node.name, true, false
+}
+
+func (k *Keymaps) lookup(
+	mode string, seq []KeyEvent,
+) (*keyTrieNode, bool, bool) {
 	root, ok := k.modes[mode]
 	if !ok {
 		return nil, false, false
@@ -128,7 +152,7 @@ func (k *Keymaps) Lookup(
 		node = child
 	}
 	if node.action != nil {
-		return node.action, true, false
+		return node, true, false
 	}
 	if len(node.children) > 0 {
 		return nil, false, true
@@ -144,15 +168,8 @@ func (k *Keymaps) command(name string) (Command, bool) {
 	return k.commands[idx], true
 }
 
-// LabelNode sets the display name for a prefix node (e.g., "Goto" for `g`)
-func (k *Keymaps) bindAction(
-	mode string, action KeyAction, seqs ...[]KeyEvent,
-) {
-	k.bindActionWithLabel(mode, action, "", seqs...)
-}
-
-func (k *Keymaps) bindActionWithLabel(
-	mode string, action KeyAction, label string, seqs ...[]KeyEvent,
+func (k *Keymaps) bindCommandWithLabel(
+	mode, name string, action KeyAction, label string, seqs ...[]KeyEvent,
 ) {
 	root, ok := k.modes[mode]
 	if !ok {
@@ -172,6 +189,7 @@ func (k *Keymaps) bindActionWithLabel(
 			node = child
 		}
 		node.action = action
+		node.name = name
 		if label != "" {
 			node.label = label
 		}

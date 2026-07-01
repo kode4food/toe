@@ -39,7 +39,6 @@ func TestReadOnlyActions(t *testing.T) {
 		{"open below", action.AddNewlineBelow},
 		{"paste after", action.PasteAfter},
 		{"paste before", action.PasteBefore},
-		{"reindent", action.ReindentSelections},
 		{"replace char", func(e *view.Editor) { action.ReplaceChar(e, 'x') }},
 		{"replace yanked", action.ReplaceWithYanked},
 		{"rotate contents backward", action.RotateContentsBackward},

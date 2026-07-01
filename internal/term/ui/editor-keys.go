@@ -164,15 +164,19 @@ func (e *EditorComponent) completionCmd(cx *Context, trigger bool) tea.Cmd {
 	e.completionGen++
 	gen := e.completionGen
 	return func() tea.Msg {
-		var items []view.CompletionItem
+		var res view.CompletionResult
 		var err error
 		if trigger {
-			items, err = ls.TriggerCompletions(doc, v.ID())
+			res, err = ls.TriggerCompletions(doc, v.ID())
 		} else {
-			items, err = ls.Completions(doc, v.ID())
+			res, err = ls.Completions(doc, v.ID())
 		}
 		return completionMsg{
-			gen: gen, anchor: anchor, items: items, err: err,
+			gen:        gen,
+			anchor:     anchor,
+			items:      res.Items,
+			incomplete: res.Incomplete,
+			err:        err,
 		}
 	}
 }

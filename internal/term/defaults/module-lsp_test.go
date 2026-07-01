@@ -276,14 +276,14 @@ func (c *fakeLanguageServerController) WorkspaceCommands(
 
 func (c *fakeLanguageServerController) Completions(
 	*view.Document, view.Id,
-) ([]view.CompletionItem, error) {
-	return nil, c.err
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, c.err
 }
 
 func (c *fakeLanguageServerController) TriggerCompletions(
 	*view.Document, view.Id,
-) ([]view.CompletionItem, error) {
-	return nil, c.err
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, c.err
 }
 
 func (c *fakeLanguageServerController) ResolveCompletion(

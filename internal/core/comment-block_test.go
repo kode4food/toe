@@ -119,4 +119,16 @@ func TestToggleBlockComments(t *testing.T) {
 		doc = applyTx(doc, tx)
 		assert.Equal(t, "", doc.String())
 	})
+
+	t.Run("whitespace-only is no-op", func(t *testing.T) {
+		doc := core.NewRope("   ")
+		sel, _ := core.NewSelection(
+			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+		)
+		tx, err := core.ToggleBlockComments(doc, sel, toks)
+		assert.NoError(t, err)
+		out, err := tx.Apply(doc)
+		assert.NoError(t, err)
+		assert.Equal(t, "   ", out.String())
+	})
 }

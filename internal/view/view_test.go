@@ -238,6 +238,18 @@ func TestViewArea(t *testing.T) {
 	})
 }
 
+func TestViewFreeScroll(t *testing.T) {
+	t.Run("set and get round-trips", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		assert.False(t, v.FreeScroll())
+		v.SetFreeScroll(true)
+		assert.True(t, v.FreeScroll())
+		v.SetFreeScroll(false)
+		assert.False(t, v.FreeScroll())
+	})
+}
+
 func TestViewJumps(t *testing.T) {
 	t.Run("entries includes pushed jumps", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

@@ -25,6 +25,16 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 	return Model{compositor: comp, context: cx, component: ec}
 }
 
+// CompletionOptions returns the UI-owned completion popup behavior settings
+func (m Model) CompletionOptions() CompletionOptions {
+	return m.component.completionOpts
+}
+
+// SetCompletionOptions applies UI-owned completion popup behavior settings
+func (m Model) SetCompletionOptions(opts CompletionOptions) {
+	m.component.completionOpts = opts.WithDefaults()
+}
+
 // Init fires the startup cmd if one was set before the program started
 func (m Model) Init() tea.Cmd {
 	return m.initCmd

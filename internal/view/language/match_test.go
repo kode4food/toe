@@ -46,6 +46,12 @@ shebangs = ["python3"]
 		assert.True(t, ok)
 		assert.Equal(t, "bash", name)
 	})
+
+	t.Run("empty shebang fields returns false", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		_, ok := language.DetectLanguage("", "#!")
+		assert.False(t, ok)
+	})
 }
 
 func TestAutoPairConfig(t *testing.T) {

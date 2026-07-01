@@ -74,8 +74,9 @@ func (p *PickerComponent) HandleEvent(
 		if p.mouseOutside(msg.X, msg.Y) {
 			return p.dismiss()
 		}
-		if p.listBounds.contains(msg.X, msg.Y) {
-			idx := p.state.listScroll + (msg.Y - p.listBounds.y)
+		if idx, ok := listIndexAt(
+			p.listBounds, p.state.listScroll, msg.X, msg.Y,
+		); ok {
 			if idx >= 0 && idx < len(p.state.matched) {
 				p.state.cursor = idx
 			}

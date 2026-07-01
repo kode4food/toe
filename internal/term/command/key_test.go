@@ -479,6 +479,15 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 		assert.Equal(t, "quit", called)
 	})
 
+	t.Run("command name found", func(t *testing.T) {
+		name, found, prefix := km.LookupCommand(
+			"normal", []command.KeyEvent{char('q')},
+		)
+		assert.True(t, found)
+		assert.False(t, prefix)
+		assert.Equal(t, "quit", name)
+	})
+
 	t.Run("two-key sequence found", func(t *testing.T) {
 		a, found, prefix := km.Lookup("normal", []command.KeyEvent{
 			char('g'), char('g'),
@@ -496,6 +505,15 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 		})
 		assert.False(t, found)
 		assert.True(t, prefix)
+	})
+
+	t.Run("command prefix returns prefix=true", func(t *testing.T) {
+		name, found, prefix := km.LookupCommand(
+			"normal", []command.KeyEvent{char('g')},
+		)
+		assert.False(t, found)
+		assert.True(t, prefix)
+		assert.Empty(t, name)
 	})
 
 	t.Run("unknown key returns false", func(t *testing.T) {

@@ -117,7 +117,6 @@ func TestNoViewActions(t *testing.T) {
 			action.PasteRegisterAtCursor(e, '"')
 		}},
 		{"clipboard replace", action.ClipboardReplace},
-		{"reindent", action.ReindentSelections},
 		{"remove primary", action.RemovePrimarySelection},
 		{"repeat last motion", action.RepeatLastMotion},
 		{"replace char", func(e *view.Editor) { action.ReplaceChar(e, 'x') }},

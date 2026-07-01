@@ -28,11 +28,7 @@ func (r *renderPass) screenCharPos(
 	entry := rowMap[localY]
 
 	text := doc.Text()
-	g2 := r.cx.Editor.Options().Gutters
-	gutterW := 0
-	if g2.HasGutterType(view.GutterTypeLineNumbers) {
-		gutterW = max(lineNumberDigits(text), g2.LineNumberMinWidth()) + 1
-	}
+	gutterW := gutterWidthFor(text, r.cx.Editor.Options().Gutters)
 	// Add the horizontal scroll offset: screen column 0 of the content maps to
 	// content column hOff. The gutter is fixed and excluded from the offset
 	contentX := max(x-a.X-gutterW-entry.prefixW, 0) +

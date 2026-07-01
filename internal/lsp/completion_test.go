@@ -32,7 +32,8 @@ func TestCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 		assert.NoError(t, err)
 		assert.Len(t, items, 1)
 		if len(items) != 1 {
@@ -63,7 +64,8 @@ func TestCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 		assert.NoError(t, err)
 		assert.Len(t, items, 1)
 		if len(items) != 1 {
@@ -94,7 +96,8 @@ func TestCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 
 		assert.Empty(t, items)
 		assert.True(t, errors.Is(err, lsp.ErrLanguageServerExited))
@@ -121,7 +124,8 @@ func TestCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 
 		assert.Empty(t, items)
 		assert.True(t, errors.Is(err, lsp.ErrLanguageServerExited))
@@ -149,7 +153,8 @@ func TestCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.TriggerCompletions(doc, v.ID())
+		res, err := session.TriggerCompletions(doc, v.ID())
+		items := res.Items
 
 		assert.NoError(t, err)
 		assert.Len(t, items, 1)
@@ -179,7 +184,8 @@ func TestCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 		assert.NoError(t, err)
 		assert.Len(t, items, 1)
 		if len(items) != 1 {
@@ -213,7 +219,8 @@ func TestManyCompletionKinds(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, items)
@@ -254,7 +261,8 @@ func TestAltCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 		assert.NoError(t, err)
 		assert.Len(t, items, 4)
 		if len(items) != 4 {
@@ -289,7 +297,8 @@ func TestAltCompletion(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 		assert.NoError(t, err)
 		assert.Len(t, items, 4)
 		if len(items) != 4 {
@@ -327,8 +336,10 @@ func TestCompletionList(t *testing.T) {
 		assert.True(t, ok)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		items, err := session.Completions(doc, v.ID())
+		res, err := session.Completions(doc, v.ID())
+		items := res.Items
 		assert.NoError(t, err)
+		assert.True(t, res.Incomplete)
 		assert.Len(t, items, 1)
 		assert.Equal(t, "Println", items[0].Label)
 	})

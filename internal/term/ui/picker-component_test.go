@@ -20,8 +20,8 @@ type fixedPickerSource struct{ items []ui.PickerItem }
 
 func TestPickerScroll(t *testing.T) {
 	// At 120x20: areaW=108, areaH=16, left=6, top=1, preview layout active.
-	// listBounds: x=7, y=4, w=53, h=12; valid x [7,59], y [4,15]
-	// Preview pane occupies x >= 60 inside the picker
+	// listBounds: x=7, y=4, w=53, h=12; valid x [7,59], y [4,15]. Preview pane
+	// occupies x >= 60 inside the picker
 
 	t.Run("wheel list keeps selection", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)

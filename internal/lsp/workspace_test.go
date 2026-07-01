@@ -168,11 +168,6 @@ func TestWorkspaceEmptyPath(t *testing.T) {
 	})
 }
 
-func TestWorkspaceURI(t *testing.T) {
-	ws := lsp.Workspace{Path: "/some/project"}
-	assert.Equal(t, "file:///some/project", string(ws.URI()))
-}
-
 func writeFile(t *testing.T, path string) string {
 	t.Helper()
 	assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))

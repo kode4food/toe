@@ -66,7 +66,7 @@ func (c *Client) Completion(
 // Completions requests an invoked completion list at the cursor
 func (s *Session) Completions(
 	doc *view.Document, viewID view.Id,
-) ([]view.CompletionItem, error) {
+) (view.CompletionResult, error) {
 	context := protocol.CompletionContext{
 		TriggerKind: protocol.CompletionTriggerKindInvoked,
 	}
@@ -76,10 +76,10 @@ func (s *Session) Completions(
 // TriggerCompletions requests character-triggered completion
 func (s *Session) TriggerCompletions(
 	doc *view.Document, viewID view.Id,
-) ([]view.CompletionItem, error) {
+) (view.CompletionResult, error) {
 	trigger, ok := s.completionTrigger(doc, viewID)
 	if !ok {
-		return nil, nil
+		return view.CompletionResult{}, nil
 	}
 	context := protocol.CompletionContext{
 		TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
@@ -148,10 +148,10 @@ func (s *Session) ResolveCompletion(
 
 func (s *Session) completions(
 	doc *view.Document, viewID view.Id, context protocol.CompletionContext,
-) ([]view.CompletionItem, error) {
+) (view.CompletionResult, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
-		return nil, nil
+		return view.CompletionResult{}, nil
 	}
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
@@ -159,6 +159,7 @@ func (s *Session) completions(
 	out := []view.CompletionItem{}
 	raw := map[string]completionCandidate{}
 	var err error
+	incomplete := false
 	for _, client := range clients {
 		list, sent, e := client.Completion(s.ctx, snap, pos, context)
 		if e != nil {
@@ -166,6 +167,7 @@ func (s *Session) completions(
 			continue
 		}
 		if sent {
+			incomplete = incomplete || list.Incomplete
 			for i, item := range list.Items {
 				id := completionID(client.Name(), i)
 				item.ID = id
@@ -179,7 +181,10 @@ func (s *Session) completions(
 	}
 	s.storeCompletions(raw)
 	sortCompletions(out)
-	return out, err
+	return view.CompletionResult{
+		Items:      out,
+		Incomplete: incomplete,
+	}, err
 }
 
 func (s *Session) completionError(client *Client, err error) error {
@@ -269,17 +274,41 @@ func normalizeCompletionItem(
 	}
 	detail, _ := item.Detail.Get()
 	preselect, _ := item.Preselect.Get()
+	deprecated := completionDeprecated(item.Tags)
+	labelDetail, labelDescription := completionLabelDetails(item)
 	return view.CompletionItem{
-		Label:     item.Label,
-		Detail:    detail,
-		Filter:    filter,
-		Sort:      sortText,
-		Insert:    insert,
-		Kind:      completionItemKind(item.Kind),
-		Docs:      completionDocumentation(detail, item.Documentation),
-		Server:    server,
-		Preselect: preselect,
+		Label:            item.Label,
+		LabelDetail:      labelDetail,
+		LabelDescription: labelDescription,
+		Detail:           detail,
+		Filter:           filter,
+		Sort:             sortText,
+		Insert:           insert,
+		Kind:             completionItemKind(item.Kind),
+		Docs:             completionDocumentation(detail, item.Documentation),
+		Server:           server,
+		Preselect:        preselect,
+		Deprecated:       deprecated,
 	}
+}
+
+func completionLabelDetails(item protocol.CompletionItem) (string, string) {
+	if item.LabelDetails == nil {
+		return "", ""
+	}
+	detail := ""
+	if item.LabelDetails.Detail != nil {
+		detail = *item.LabelDetails.Detail
+	}
+	description := ""
+	if item.LabelDetails.Description != nil {
+		description = *item.LabelDetails.Description
+	}
+	return detail, description
+}
+
+func completionDeprecated(tags []protocol.CompletionItemTag) bool {
+	return slices.Contains(tags, protocol.CompletionItemTagDeprecated)
 }
 
 func completionItemKind(kind protocol.CompletionItemKind) string {

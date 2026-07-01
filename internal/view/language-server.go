@@ -1,18 +1,27 @@
 package view
 
 type (
+	// CompletionResult is a normalized language-server completion response
+	CompletionResult struct {
+		Items      []CompletionItem
+		Incomplete bool
+	}
+
 	// CompletionItem is a normalized language-server completion candidate
 	CompletionItem struct {
-		ID        string
-		Label     string
-		Detail    string
-		Filter    string
-		Sort      string
-		Insert    string
-		Kind      string
-		Docs      string
-		Server    string
-		Preselect bool
+		ID               string
+		Label            string
+		LabelDetail      string
+		LabelDescription string
+		Detail           string
+		Filter           string
+		Sort             string
+		Insert           string
+		Kind             string
+		Docs             string
+		Server           string
+		Preselect        bool
+		Deprecated       bool
 	}
 
 	// SignatureHelp is a normalized callable signature response
@@ -93,8 +102,8 @@ type (
 		StopLanguageServers(*Document, []string) ([]string, error)
 		ExecuteWorkspaceCommand(*Document, string, []string) error
 		WorkspaceCommands(*Document) []string
-		Completions(*Document, Id) ([]CompletionItem, error)
-		TriggerCompletions(*Document, Id) ([]CompletionItem, error)
+		Completions(*Document, Id) (CompletionResult, error)
+		TriggerCompletions(*Document, Id) (CompletionResult, error)
 		ResolveCompletion(*Document, Id, CompletionItem) (CompletionItem, error)
 		ApplyCompletion(*Document, Id, CompletionItem) error
 		Hover(*Document, Id) (string, error)

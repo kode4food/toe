@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"go.lsp.dev/uri"
 )
 
 type (
@@ -59,10 +57,6 @@ func ResolveWorkspace(req WorkspaceRequest) (Workspace, bool) {
 			return Workspace{}, false
 		}
 	}
-}
-
-func (w Workspace) URI() uri.URI {
-	return uri.File(w.Path)
 }
 
 // RequiredRootFound reports whether any required root pattern matches a directory entry

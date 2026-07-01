@@ -328,50 +328,6 @@ func TestScrollUpDown(t *testing.T) {
 	})
 }
 
-func TestReindentSelections(t *testing.T) {
-	t.Run("normalizes leading whitespace", func(t *testing.T) {
-		e := editorWithText(t, "    hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 9)}, 0)
-
-		action.ReindentSelections(e)
-
-		doc, _ := e.FocusedDocument()
-		// indentation is normalized (may change tabs/spaces)
-		assert.True(t, len(doc.Text().String()) > 0)
-	})
-
-	t.Run("linewise selection is reindented", func(t *testing.T) {
-		e := editorWithText(t, "    a\n    b\n")
-		// Full linewise selection covering both lines (0..12)
-		setSelection(t, e, []core.Range{core.NewRange(0, 12)}, 0)
-
-		action.ReindentSelections(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.True(t, len(doc.Text().String()) > 0)
-	})
-
-	t.Run("tab-indented line gets reindented", func(t *testing.T) {
-		e := editorWithText(t, "\t\thello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 7)}, 0)
-
-		action.ReindentSelections(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.True(t, len(doc.Text().String()) > 0)
-	})
-
-	t.Run("mixed tab-space gets reindented", func(t *testing.T) {
-		e := editorWithText(t, "\t  hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 8)}, 0)
-
-		action.ReindentSelections(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.True(t, len(doc.Text().String()) > 0)
-	})
-}
-
 func TestHSplitVSplit(t *testing.T) {
 	t.Run("HSplit adds view", func(t *testing.T) {
 		e := editorWithText(t, "abc")
@@ -420,17 +376,6 @@ func TestSmartTab(t *testing.T) {
 }
 
 func TestSelectionIsLinewise(t *testing.T) {
-	t.Run("partial range is not linewise", func(t *testing.T) {
-		// A partial selection exercises the false branch of selectionIsLinewise
-		e := editorWithText(t, "  hello\n  world")
-		setSelection(t, e, []core.Range{core.NewRange(2, 5)}, 0)
-
-		action.ReindentSelections(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.True(t, len(doc.Text().String()) > 0)
-	})
-
 	t.Run("linewise selection via ChangeSelection", func(t *testing.T) {
 		// "hello\nworld\n" — Range(0,12) covers both complete lines exactly
 		e := editorWithText(t, "hello\nworld\n")

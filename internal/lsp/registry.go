@@ -42,7 +42,13 @@ func (r *Registry) Start(
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrServerNotFound, name)
 	}
-	_, client, err := Start(ctx, name, cfg, dir, handler)
+	_, client, err := Start(&TransportConfig{
+		Ctx:     ctx,
+		Name:    name,
+		Server:  cfg,
+		Dir:     dir,
+		Handler: handler,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -15,16 +15,21 @@ func (c *Client) Hover(
 	if !c.SupportsFeature(FeatureHover) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) (*protocol.Hover, bool, error) {
-		hover, err := c.server.Hover(ctx, &protocol.HoverParams{
-			TextDocumentPositionParams: tdp,
-		})
-		if err != nil {
-			return nil, true, err
-		}
-		return hover, true, nil
+	return clientPosRequest(c, posRequestArgs[*protocol.Hover]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) (*protocol.Hover, bool, error) {
+			hover, err := c.server.Hover(ctx, &protocol.HoverParams{
+				TextDocumentPositionParams: tdp,
+			})
+			if err != nil {
+				return nil, true, err
+			}
+			return hover, true, nil
+		},
 	})
 }
 

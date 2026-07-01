@@ -10,11 +10,9 @@ import (
 	"go.lsp.dev/uri"
 )
 
-type (
-	fileOpSelector func(
-		*protocol.FileOperationOptions,
-	) protocol.FileOperationRegistrationOptions
-)
+type fileOpSelector func(
+	*protocol.FileOperationOptions,
+) protocol.FileOperationRegistrationOptions
 
 func (c *Client) WillCreateFile(
 	ctx context.Context, path string, dir bool,

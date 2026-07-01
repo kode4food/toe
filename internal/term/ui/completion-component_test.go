@@ -348,6 +348,215 @@ func TestCompletionComponent(t *testing.T) {
 		assert.Contains(t, out, "fn Printf")
 	})
 
+	t.Run("renders codicon kinds", func(t *testing.T) {
+		cases := []struct {
+			kind string
+			icon string
+		}{
+			{
+				kind: "text",
+				icon: "",
+			},
+			{
+				kind: "variable",
+				icon: "",
+			},
+			{
+				kind: "class",
+				icon: "",
+			},
+			{
+				kind: "interface",
+				icon: "",
+			},
+			{
+				kind: "module",
+				icon: "",
+			},
+			{
+				kind: "property",
+				icon: "",
+			},
+			{
+				kind: "unit",
+				icon: "",
+			},
+			{
+				kind: "value",
+				icon: "",
+			},
+			{
+				kind: "keyword",
+				icon: "",
+			},
+			{
+				kind: "snippet",
+				icon: "",
+			},
+			{
+				kind: "color",
+				icon: "",
+			},
+			{
+				kind: "file",
+				icon: "",
+			},
+			{
+				kind: "reference",
+				icon: "",
+			},
+			{
+				kind: "folder",
+				icon: "",
+			},
+			{
+				kind: "constant",
+				icon: "",
+			},
+			{
+				kind: "struct",
+				icon: "",
+			},
+			{
+				kind: "event",
+				icon: "",
+			},
+			{
+				kind: "operator",
+				icon: "",
+			},
+			{
+				kind: "type_param",
+				icon: "",
+			},
+			{
+				kind: "enum_member",
+				icon: "",
+			},
+			{
+				kind: "unknown",
+				icon: "?",
+			},
+		}
+		for _, tc := range cases {
+			t.Run(tc.kind, func(t *testing.T) {
+				e := editorWithText(t, "")
+				e.SetMode(view.ModeInsert)
+				ctl := &completionController{
+					editor: e,
+					items: []view.CompletionItem{
+						{Label: "Item", Insert: "Item", Kind: tc.kind},
+					},
+				}
+				e.SetLanguageServerController(ctl)
+				km := command.NewKeymaps()
+				m := ui.New(e, km)
+				_, err := defaults.RegisterDefaults(m, km)
+				assert.NoError(t, err)
+				m = resize(m, 80, 24)
+
+				m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+				out := stripANSI(m.View().Content)
+
+				assert.Contains(t, out, tc.icon+" Item")
+			})
+		}
+	})
+
+	t.Run("renders ascii icon kinds", func(t *testing.T) {
+		cases := []struct {
+			kind string
+			icon string
+		}{
+			{
+				kind: "constructor",
+				icon: "+",
+			},
+			{
+				kind: "field",
+				icon: ".",
+			},
+			{
+				kind: "variable",
+				icon: "v",
+			},
+			{
+				kind: "class",
+				icon: "C",
+			},
+			{
+				kind: "interface",
+				icon: "I",
+			},
+			{
+				kind: "module",
+				icon: "M",
+			},
+			{
+				kind: "keyword",
+				icon: "K",
+			},
+			{
+				kind: "snippet",
+				icon: "S",
+			},
+			{
+				kind: "file",
+				icon: "F",
+			},
+			{
+				kind: "folder",
+				icon: "D",
+			},
+			{
+				kind: "constant",
+				icon: "k",
+			},
+			{
+				kind: "enum",
+				icon: "E",
+			},
+			{
+				kind: "enum_member",
+				icon: "e",
+			},
+			{
+				kind: "type_param",
+				icon: "T",
+			},
+			{
+				kind: "unknown",
+				icon: "?",
+			},
+		}
+		for _, tc := range cases {
+			t.Run(tc.kind, func(t *testing.T) {
+				e := editorWithText(t, "")
+				e.SetMode(view.ModeInsert)
+				ctl := &completionController{
+					editor: e,
+					items: []view.CompletionItem{
+						{Label: "Item", Insert: "Item", Kind: tc.kind},
+					},
+				}
+				e.SetLanguageServerController(ctl)
+				km := command.NewKeymaps()
+				m := ui.New(e, km)
+				m.SetCompletionOptions(ui.CompletionOptions{
+					Icons: ui.CompletionIconsASCII,
+				})
+				_, err := defaults.RegisterDefaults(m, km)
+				assert.NoError(t, err)
+				m = resize(m, 80, 24)
+
+				m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+				out := stripANSI(m.View().Content)
+
+				assert.Contains(t, out, tc.icon+" Item")
+			})
+		}
+	})
+
 	t.Run("renders no icons", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
@@ -577,6 +786,57 @@ func TestCompletionComponent(t *testing.T) {
 		_ = sendSpecial(m, tea.KeyEnter)
 
 		assert.Equal(t, "item_j", ctl.item.Label)
+	})
+
+	t.Run("page up moves selection", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		items := make([]view.CompletionItem, 0, 12)
+		for i := range 12 {
+			label := "item_" + string(rune('a'+i))
+			items = append(items, view.CompletionItem{
+				Label:  label,
+				Insert: label,
+			})
+		}
+		ctl := &completionController{editor: e, items: items}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
+		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, "item_a", ctl.item.Label)
+	})
+
+	t.Run("escape cancels completion", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			items: []view.CompletionItem{
+				{Label: "Println", Insert: "Println", Kind: "function"},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		m = sendSpecial(m, tea.KeyEscape)
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "Println")
+		assert.Empty(t, ctl.item.Label)
 	})
 
 	t.Run("home and end move selection", func(t *testing.T) {

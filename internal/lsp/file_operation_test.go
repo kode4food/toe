@@ -114,6 +114,53 @@ func TestFileOperationsWillEdit(t *testing.T) {
 	})
 }
 
+func TestFileOperationsErrors(t *testing.T) {
+	exe, err := os.Executable()
+	assert.NoError(t, err)
+
+	t.Run("joins server errors", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		newPath := filepath.Join(dir, "renamed.session")
+		writeFileOperationErrorLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer session.Close()
+
+		assert.Error(t, session.WillCreateFile(path, false))
+		assert.Error(t, session.WillRenameFile(path, newPath, false))
+		assert.Error(t, session.WillDeleteFile(path, false))
+	})
+}
+
+func writeFileOperationErrorLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerFileOperationsEnv + ` = "1", ` +
+		testServerAllErrorEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
 func writeFileOpFolderLanguages(t *testing.T, exe string) {
 	t.Helper()
 	root := t.TempDir()

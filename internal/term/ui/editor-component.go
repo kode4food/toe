@@ -130,10 +130,16 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
-			comp.Push(newCompletionComponent(
-				e, msg.items, msg.anchor, e.completionOpts,
-				msg.incomplete,
-			))
+			c := &completionComponent{
+				ec:         e,
+				all:        msg.items,
+				items:      msg.items,
+				anchor:     msg.anchor,
+				opts:       e.completionOpts.WithDefaults(),
+				incomplete: msg.incomplete,
+			}
+			c.resetCursor()
+			comp.Push(c)
 			return nil
 		}), nil
 

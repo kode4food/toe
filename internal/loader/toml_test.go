@@ -236,6 +236,52 @@ soft-wrap.wrap-indicator = "» "
 	assert.Equal(t, "» ", soft["wrap-indicator"])
 }
 
+func TestLoadMergedTOMLMissing(t *testing.T) {
+	merged, ok := loader.LoadMergedTOML([]string{"missing.toml"}, 3)
+
+	assert.False(t, ok)
+	assert.Nil(t, merged)
+}
+
+func TestTOMLValuePointers(t *testing.T) {
+	t.Run("bool", func(t *testing.T) {
+		v := loader.BoolPtr(true)
+
+		assert.NotNil(t, v)
+		assert.Equal(t, true, *v)
+		assert.Nil(t, loader.BoolPtr("true"))
+	})
+
+	t.Run("int", func(t *testing.T) {
+		v, ok := loader.IntPtr(3)
+
+		assert.True(t, ok)
+		assert.NotNil(t, v)
+		assert.Equal(t, 3, *v)
+
+		v, ok = loader.IntPtr(int64(4))
+
+		assert.True(t, ok)
+		assert.NotNil(t, v)
+		assert.Equal(t, 4, *v)
+
+		v, ok = loader.IntPtr("4")
+
+		assert.False(t, ok)
+		assert.Nil(t, v)
+		assert.Nil(t, loader.IntPtrOrNil("4"))
+		assert.Equal(t, 5, *loader.IntPtrOrNil(5))
+	})
+
+	t.Run("string", func(t *testing.T) {
+		v := loader.StringPtr("go")
+
+		assert.NotNil(t, v)
+		assert.Equal(t, "go", *v)
+		assert.Nil(t, loader.StringPtr(1))
+	})
+}
+
 func namedTOMLValue(value any, name string) (map[string]any, bool) {
 	switch values := value.(type) {
 	case []any:

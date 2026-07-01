@@ -7,13 +7,11 @@ import (
 	"slices"
 )
 
-type (
-	// Selection is a non-empty ordered set of ranges with one primary range
-	Selection struct {
-		ranges       []Range
-		primaryIndex int
-	}
-)
+// Selection is a non-empty ordered set of ranges with one primary range
+type Selection struct {
+	ranges       []Range
+	primaryIndex int
+}
 
 var (
 	ErrEmptySelection       = errors.New("empty selection")

@@ -21,24 +21,6 @@ type gutterSpec struct {
 	severityError   tui.Style
 }
 
-func newGutterSpec(
-	text core.Rope, layout []view.GutterType, lineNumberW int,
-	line, selected tui.Style, styles *tuiStyles, diags []view.Diagnostic,
-) gutterSpec {
-	return gutterSpec{
-		layout:          layout,
-		lineNumberW:     lineNumberW,
-		width:           gutterLayoutWidth(layout, lineNumberW),
-		lineStyle:       line,
-		lineSelected:    selected,
-		diagLines:       diagnosticGutterLines(text, diags),
-		severityHint:    styles.severityHint,
-		severityInfo:    styles.severityInfo,
-		severityWarning: styles.severityWarning,
-		severityError:   styles.severityError,
-	}
-}
-
 func (g gutterSpec) renderBlank(buf *tui.Buffer, x, y int) {
 	buf.FillRange(x, y, g.width, g.lineStyle)
 }

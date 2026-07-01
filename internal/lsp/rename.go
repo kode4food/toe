@@ -16,16 +16,23 @@ func (c *Client) PrepareRename(
 	if !c.supportsPrepareRename() {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) (protocol.PrepareRenameResult, bool, error) {
-		result, err := c.server.PrepareRename(ctx, &protocol.PrepareRenameParams{
-			TextDocumentPositionParams: tdp,
-		})
-		if err != nil {
-			return nil, true, err
-		}
-		return result, true, nil
+	return clientPosRequest(c, posRequestArgs[protocol.PrepareRenameResult]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) (protocol.PrepareRenameResult, bool, error) {
+			result, err := c.server.PrepareRename(
+				ctx, &protocol.PrepareRenameParams{
+					TextDocumentPositionParams: tdp,
+				},
+			)
+			if err != nil {
+				return nil, true, err
+			}
+			return result, true, nil
+		},
 	})
 }
 
@@ -36,16 +43,21 @@ func (c *Client) RenameSymbol(
 	if !c.SupportsFeature(FeatureRename) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) (*protocol.WorkspaceEdit, bool, error) {
-		edit, err := c.server.Rename(ctx, &protocol.RenameParams{
-			TextDocumentPositionParams: tdp, NewName: name,
-		})
-		if err != nil {
-			return nil, true, err
-		}
-		return edit, true, nil
+	return clientPosRequest(c, posRequestArgs[*protocol.WorkspaceEdit]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) (*protocol.WorkspaceEdit, bool, error) {
+			edit, err := c.server.Rename(ctx, &protocol.RenameParams{
+				TextDocumentPositionParams: tdp, NewName: name,
+			})
+			if err != nil {
+				return nil, true, err
+			}
+			return edit, true, nil
+		},
 	})
 }
 

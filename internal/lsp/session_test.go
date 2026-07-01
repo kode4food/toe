@@ -1382,3 +1382,161 @@ language-servers = ["session-test"]
 	))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
+
+func TestSessionWithoutEditor(t *testing.T) {
+	exe, err := os.Executable()
+	assert.NoError(t, err)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "main.session")
+	writeCompletionLanguages(t, exe)
+	assert.NoError(t, os.WriteFile(path, []byte("test\n"), 0o644))
+	session := lsp.NewSession(t.Context(), dir)
+	defer session.Close()
+
+	t.Run("reload config is a no-op", func(t *testing.T) {
+		assert.NoError(t, session.ReloadConfig())
+	})
+
+	t.Run("publish diagnostics is a no-op", func(t *testing.T) {
+		err := session.PublishDiagnostics(
+			t.Context(), &protocol.PublishDiagnosticsParams{},
+		)
+		assert.NoError(t, err)
+	})
+
+	t.Run("stop language servers rejects nil document", func(t *testing.T) {
+		_, err := session.StopLanguageServers(nil, nil)
+		assert.True(t, errors.Is(err, lsp.ErrNoLanguageServer))
+	})
+
+	t.Run("stop language servers without attached editor", func(t *testing.T) {
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+
+		names, err := session.StopLanguageServers(doc, nil)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"session-test"}, names)
+	})
+}
+
+func TestSessionMultiServer(t *testing.T) {
+	t.Run("ambiguous workspace command", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeMultiServerSessionLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("test\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer session.Close()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+
+		err = session.ExecuteWorkspaceCommand(
+			doc, "session.afterCompletion", nil,
+		)
+
+		assert.True(t, errors.Is(err, lsp.ErrWorkspaceCommand))
+	})
+
+	t.Run("serves folders for every server", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeMultiServerSessionLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("test\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer session.Close()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		view, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		_, err = session.Completions(doc, view.ID())
+		assert.NoError(t, err)
+	})
+
+	t.Run("deduplicates repeated server names", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeDuplicateServerLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("test\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer session.Close()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+
+		commands := session.WorkspaceCommands(doc)
+
+		assert.Equal(t, []string{"session.afterCompletion"}, commands)
+	})
+}
+
+func writeMultiServerSessionLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`
+[language-server.session-test-a]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+environment = { %s = "1", %s = "1", %s = "1" }
+
+[language-server.session-test-b]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+environment = { %s = "1", %s = "1", %s = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test-a", "session-test-b"]
+`, exe, testServerEnv, testServerCompletionEnv, testServerWorkspaceFoldersEnv,
+		exe, testServerEnv, testServerCompletionEnv,
+		testServerWorkspaceFoldersEnv)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeDuplicateServerLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`
+[language-server.session-test]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+environment = { %s = "1", %s = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test", "session-test"]
+`, exe, testServerEnv, testServerCompletionEnv)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}

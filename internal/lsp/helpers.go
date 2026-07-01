@@ -40,24 +40,34 @@ func clientDocRequest[R any](
 	})
 }
 
+type posRequestArgs[R any] struct {
+	ctx  context.Context
+	doc  DocumentSnapshot
+	pos  int
+	call posCallFn[R]
+}
+
 // clientPosRequest sends a cursor-position request, computing the LSP position
 // from doc.Text and pos, then passing a TextDocumentPositionParams to call.
 func clientPosRequest[R any](
-	c *Client, ctx context.Context, doc DocumentSnapshot, pos int,
-	call posCallFn[R],
+	c *Client, args posRequestArgs[R],
 ) (R, bool, error) {
-	lspPos, err := lspPosition(core.NewRope(doc.Text), pos, c.OffsetEncoding())
+	lspPos, err := lspPosition(
+		core.NewRope(args.doc.Text), args.pos, c.OffsetEncoding(),
+	)
 	if err != nil {
 		var zero R
 		return zero, false, err
 	}
 	tdp := protocol.TextDocumentPositionParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
+		TextDocument: protocol.TextDocumentIdentifier{URI: args.doc.URI},
 		Position:     lspPos,
 	}
-	return clientRunRequest(c, ctx, func(ctx context.Context) (R, bool, error) {
-		return call(ctx, tdp)
-	})
+	return clientRunRequest(c, args.ctx,
+		func(ctx context.Context) (R, bool, error) {
+			return args.call(ctx, tdp)
+		},
+	)
 }
 
 func candidateID(server string, idx int) string {

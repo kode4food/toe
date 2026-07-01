@@ -19,13 +19,6 @@ import (
 )
 
 type (
-	clientHandler struct {
-		protocol.UnimplementedClient
-
-		session *Session
-		name    string
-	}
-
 	// Session owns runtime language-server clients for an editor
 	Session struct {
 		ctx       context.Context
@@ -44,6 +37,13 @@ type (
 		watcher   *fsWatcher
 		roots     map[string]string
 		mu        sync.RWMutex
+	}
+
+	clientHandler struct {
+		protocol.UnimplementedClient
+
+		session *Session
+		name    string
 	}
 )
 

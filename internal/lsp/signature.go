@@ -17,16 +17,23 @@ func (c *Client) SignatureHelp(
 	if !c.SupportsFeature(FeatureSignatureHelp) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) (*protocol.SignatureHelp, bool, error) {
-		help, err := c.server.SignatureHelp(ctx, &protocol.SignatureHelpParams{
-			TextDocumentPositionParams: tdp, Context: shCtx,
-		})
-		if err != nil {
-			return nil, true, err
-		}
-		return help, true, nil
+	return clientPosRequest(c, posRequestArgs[*protocol.SignatureHelp]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) (*protocol.SignatureHelp, bool, error) {
+			help, err := c.server.SignatureHelp(
+				ctx, &protocol.SignatureHelpParams{
+					TextDocumentPositionParams: tdp, Context: shCtx,
+				},
+			)
+			if err != nil {
+				return nil, true, err
+			}
+			return help, true, nil
+		},
 	})
 }
 
@@ -40,7 +47,8 @@ func (s *Session) SignatureHelp(
 	return s.signatureHelp(doc, viewID, context)
 }
 
-// TriggerSignatureHelp returns signature help triggered by the character before the cursor
+// TriggerSignatureHelp returns signature help triggered by the character before
+// the cursor
 func (s *Session) TriggerSignatureHelp(
 	doc *view.Document, viewID view.Id,
 ) (view.SignatureHelp, error) {

@@ -75,6 +75,8 @@ const testServerDiagnosticErrorEnv = "TOE_LSP_DIAGNOSTIC_ERROR"
 const testServerAllErrorEnv = "TOE_LSP_ALL_ERROR"
 const testServerFileOperationsEnv = "TOE_LSP_FILE_OPERATIONS"
 const testServerFileOpFolderEnv = "TOE_LSP_FILE_OP_FOLDER"
+const testServerWatchRegEdgeEnv = "TOE_LSP_WATCH_REG_EDGE"
+const testServerNoResolveEnv = "TOE_LSP_NO_RESOLVE"
 const testServerFileOpWillEditEnv = "TOE_LSP_FILE_OP_WILL_EDIT"
 
 var _ io.ReadWriteCloser = stdioConn{}
@@ -91,7 +93,11 @@ func TestTransport(t *testing.T) {
 				testServerEnv: "1",
 			},
 		}
-		_, client, err := lsp.Start(t.Context(), "test", cfg, "", nil)
+		_, client, err := lsp.Start(&lsp.TransportConfig{
+			Ctx:    t.Context(),
+			Name:   "test",
+			Server: cfg,
+		})
 		assert.NoError(t, err)
 
 		result, err := client.Initialize(
@@ -107,9 +113,10 @@ func TestTransport(t *testing.T) {
 	})
 
 	t.Run("requires command", func(t *testing.T) {
-		_, _, err := lsp.Start(
-			t.Context(), "test", language.Server{}, "", nil,
-		)
+		_, _, err := lsp.Start(&lsp.TransportConfig{
+			Ctx:  t.Context(),
+			Name: "test",
+		})
 
 		assert.True(t, errors.Is(err, lsp.ErrCommandRequired))
 	})
@@ -136,10 +143,12 @@ func (s *processServer) Initialize(
 	kind := protocol.TextDocumentSyncKindFull
 	var completionProvider *protocol.CompletionOptions
 	if os.Getenv(testServerCompletionEnv) == "1" {
-		resolve := true
 		completionProvider = &protocol.CompletionOptions{
 			TriggerCharacters: []string{"."},
-			ResolveProvider:   &resolve,
+		}
+		if os.Getenv(testServerNoResolveEnv) != "1" {
+			resolve := true
+			completionProvider.ResolveProvider = &resolve
 		}
 	}
 	var signatureProvider *protocol.SignatureHelpOptions
@@ -192,7 +201,13 @@ func (s *processServer) Initialize(
 			&protocol.ShowDocumentParams{URI: "file:///dev/null"},
 		)
 		_, _ = s.client.ApplyEdit(ctx,
-			&protocol.ApplyWorkspaceEditParams{},
+			&protocol.ApplyWorkspaceEditParams{
+				Edit: protocol.WorkspaceEdit{
+					Changes: map[uri.URI][]protocol.TextEdit{
+						"untitled:Untitled-1": {{NewText: "x"}},
+					},
+				},
+			},
 		)
 		_ = s.client.PublishDiagnostics(ctx,
 			&protocol.PublishDiagnosticsParams{
@@ -228,7 +243,9 @@ func (s *processServer) Initialize(
 	var docLinkProvider *protocol.DocumentLinkOptions
 	if os.Getenv(testServerDocumentLinkEnv) == "1" {
 		resolvable := os.Getenv(testServerDocumentLinkResolveEnv) == "1"
-		docLinkProvider = &protocol.DocumentLinkOptions{ResolveProvider: &resolvable}
+		docLinkProvider = &protocol.DocumentLinkOptions{
+			ResolveProvider: &resolvable,
+		}
 	}
 	inlayHints := protocol.Boolean(os.Getenv(testServerInlayHintsEnv) == "1")
 	docColors := protocol.Boolean(os.Getenv(testServerDocumentColorEnv) == "1")
@@ -239,8 +256,11 @@ func (s *processServer) Initialize(
 		httpsScheme := "https"
 		fileFilter := []protocol.FileOperationFilter{
 			{
-				Scheme:  &httpsScheme,
-				Pattern: protocol.FileOperationPattern{Glob: "**", Matches: fileKind},
+				Scheme: &httpsScheme,
+				Pattern: protocol.FileOperationPattern{
+					Glob:    "**",
+					Matches: fileKind,
+				},
 			},
 			{
 				Pattern: protocol.FileOperationPattern{
@@ -252,10 +272,15 @@ func (s *processServer) Initialize(
 				},
 			},
 			{
-				Pattern: protocol.FileOperationPattern{Glob: "**", Matches: fileKind},
+				Pattern: protocol.FileOperationPattern{
+					Glob:    "**",
+					Matches: fileKind,
+				},
 			},
 		}
-		fileOps := protocol.FileOperationRegistrationOptions{Filters: fileFilter}
+		fileOps := protocol.FileOperationRegistrationOptions{
+			Filters: fileFilter,
+		}
 		workspace = &protocol.WorkspaceOptions{
 			FileOperations: &protocol.FileOperationOptions{
 				WillCreate: fileOps,
@@ -275,7 +300,9 @@ func (s *processServer) Initialize(
 				Matches: folderKind,
 			},
 		}}
-		folderOps := protocol.FileOperationRegistrationOptions{Filters: folderFilter}
+		folderOps := protocol.FileOperationRegistrationOptions{
+			Filters: folderFilter,
+		}
 		workspace = &protocol.WorkspaceOptions{
 			FileOperations: &protocol.FileOperationOptions{
 				WillCreate: folderOps,
@@ -312,11 +339,13 @@ func (s *processServer) Initialize(
 			DiagnosticProvider:              diagnosticProvider,
 			DocumentFormattingProvider:      format,
 			DocumentRangeFormattingProvider: format,
-			DocumentHighlightProvider:       protocol.Boolean(os.Getenv(testServerHighlightEnv) == "1"),
-			DocumentLinkProvider:            docLinkProvider,
-			InlayHintProvider:               inlayHints,
-			ColorProvider:                   docColors,
-			Workspace:                       workspace,
+			DocumentHighlightProvider: protocol.Boolean(
+				os.Getenv(testServerHighlightEnv) == "1",
+			),
+			DocumentLinkProvider: docLinkProvider,
+			InlayHintProvider:    inlayHints,
+			ColorProvider:        docColors,
+			Workspace:            workspace,
 		},
 	}, nil
 }
@@ -326,26 +355,31 @@ func (s *processServer) Initialized(
 ) error {
 	if os.Getenv(testServerProgressEnv) == "1" {
 		tok := protocol.String("test-progress")
-		_ = s.client.WorkDoneProgressCreate(ctx, &protocol.WorkDoneProgressCreateParams{
-			Token: tok,
-		})
+		_ = s.client.WorkDoneProgressCreate(ctx,
+			&protocol.WorkDoneProgressCreateParams{
+				Token: tok,
+			},
+		)
+		begin := `{"kind":"begin","title":"Loading","message":"start"}`
 		_ = s.client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
-			Value: protocol.LSPAny(`{"kind":"begin","title":"Loading","message":"start"}`),
+			Value: protocol.LSPAny(begin),
 		})
+		report := `{"kind":"report","message":"halfway","percentage":50}`
 		_ = s.client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
-			Value: protocol.LSPAny(`{"kind":"report","message":"halfway","percentage":50}`),
+			Value: protocol.LSPAny(report),
 		})
 		_ = s.client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
 			Value: protocol.LSPAny(`{"kind":"end","message":"done"}`),
 		})
-		// Integer token path
 		iTok := protocol.Integer(42)
-		_ = s.client.WorkDoneProgressCreate(ctx, &protocol.WorkDoneProgressCreateParams{
-			Token: iTok,
-		})
+		_ = s.client.WorkDoneProgressCreate(ctx,
+			&protocol.WorkDoneProgressCreateParams{
+				Token: iTok,
+			},
+		)
 		_ = s.client.Progress(ctx, &protocol.ProgressParams{
 			Token: iTok,
 			Value: protocol.LSPAny(`{"kind":"begin","title":"Indexing"}`),
@@ -354,38 +388,74 @@ func (s *processServer) Initialized(
 			Token: iTok,
 			Value: protocol.LSPAny(`{"kind":"end"}`),
 		})
-		// Report for unknown token (covers lookupProgress not-found path)
 		_ = s.client.Progress(ctx, &protocol.ProgressParams{
 			Token: protocol.String("unknown"),
 			Value: protocol.LSPAny(`{"kind":"report","message":"ghost"}`),
 		})
 	}
 	if os.Getenv(testServerFileWatchEnv) == "1" {
-		// Register with absolute, relative, recursive, folder-base, and empty patterns
+		watchers := `{"watchers":[` +
+			`{"globPattern":"*.session"},` +
+			`{"globPattern":{"pattern":"*.session","baseUri":"file:///tmp"}},` +
+			`{"globPattern":{"pattern":"**/*.session",` +
+			`"baseUri":{"uri":"file:///tmp","name":"myFolder"}}},` +
+			`{"globPattern":""}` +
+			`]}`
 		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
-				ID:     "watch-session",
-				Method: "workspace/didChangeWatchedFiles",
-				RegisterOptions: protocol.LSPAny(`{"watchers":[` +
-					`{"globPattern":"*.session"},` +
-					`{"globPattern":{"pattern":"*.session","baseUri":"file:///tmp"}},` +
-					`{"globPattern":{"pattern":"**/*.session","baseUri":{"uri":"file:///tmp","name":"myFolder"}}},` +
-					`{"globPattern":""}` +
-					`]}`),
+				ID:              "watch-session",
+				Method:          "workspace/didChangeWatchedFiles",
+				RegisterOptions: protocol.LSPAny(watchers),
 			}},
 		})
-		// Register a second watcher then unregister it
 		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
-				ID:              "watch-tmp",
-				Method:          "workspace/didChangeWatchedFiles",
-				RegisterOptions: protocol.LSPAny(`{"watchers":[{"globPattern":"*.tmp"}]}`),
+				ID:     "watch-tmp",
+				Method: "workspace/didChangeWatchedFiles",
+				RegisterOptions: protocol.LSPAny(
+					`{"watchers":[{"globPattern":"*.tmp"}]}`,
+				),
 			}},
 		})
 		_ = s.client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
 			Unregisterations: []protocol.Unregistration{{
 				ID:     "watch-tmp",
 				Method: "workspace/didChangeWatchedFiles",
+			}},
+		})
+	}
+	if os.Getenv(testServerWatchRegEdgeEnv) == "1" {
+		_ = s.client.RegisterCapability(ctx, nil)
+		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+			Registrations: []protocol.Registration{{
+				ID: "other", Method: "textDocument/other",
+			}},
+		})
+		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+			Registrations: []protocol.Registration{{
+				ID:              "bad-json",
+				Method:          "workspace/didChangeWatchedFiles",
+				RegisterOptions: protocol.LSPAny("not-json"),
+			}},
+		})
+		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+			Registrations: []protocol.Registration{{
+				ID:     "solo",
+				Method: "workspace/didChangeWatchedFiles",
+				RegisterOptions: protocol.LSPAny(
+					`{"watchers":[{"globPattern":"*.watched"}]}`,
+				),
+			}},
+		})
+		_ = s.client.UnregisterCapability(ctx, nil)
+		_ = s.client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
+			Unregisterations: []protocol.Unregistration{{
+				ID: "solo", Method: "textDocument/other",
+			}},
+		})
+		_ = s.client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
+			Unregisterations: []protocol.Unregistration{{
+				ID: "solo", Method: "workspace/didChangeWatchedFiles",
 			}},
 		})
 	}
@@ -528,6 +598,9 @@ func (s *processServer) Completion(
 func (s *processServer) CompletionResolve(
 	_ context.Context, item *protocol.CompletionItem,
 ) (*protocol.CompletionItem, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("completion resolve error")
+	}
 	item.Detail = protocol.NewOptional("func Println(a ...any)")
 	item.Documentation = protocol.String("Println formats its operands.")
 	return item, nil
@@ -588,7 +661,9 @@ func (s *processServer) SignatureHelp(
 					{
 						Label: func() protocol.ParameterInformationLabel {
 							if os.Getenv(testServerSignatureOffsetEnv) == "1" {
-								return protocol.ParameterInformationLabelTuple{8, 16}
+								return protocol.ParameterInformationLabelTuple{
+									8, 16,
+								}
 							}
 							return protocol.String("a ...any")
 						}(),
@@ -890,7 +965,9 @@ func (s *processServer) PrepareRename(
 	}
 	if os.Getenv(testServerRenameDefaultBehaviorEnv) == "1" {
 		defaultBehavior := true
-		return &protocol.PrepareRenameDefaultBehavior{DefaultBehavior: defaultBehavior}, nil
+		return &protocol.PrepareRenameDefaultBehavior{
+			DefaultBehavior: defaultBehavior,
+		}, nil
 	}
 	if os.Getenv(testServerRenameRangeEnv) == "1" {
 		r := protocol.Range{
@@ -944,16 +1021,40 @@ func (s *processServer) DocumentHighlight(
 	pos := params.Position
 	if os.Getenv(testServerHighlightMultiEnv) == "1" {
 		return []protocol.DocumentHighlight{
-			{Range: protocol.Range{Start: protocol.Position{Line: pos.Line, Character: 0}, End: protocol.Position{Line: pos.Line, Character: 3}}, Kind: protocol.DocumentHighlightKindText},
-			{Range: protocol.Range{Start: protocol.Position{Line: pos.Line, Character: 0}, End: protocol.Position{Line: pos.Line, Character: 5}}, Kind: protocol.DocumentHighlightKindText},
-			{Range: protocol.Range{Start: protocol.Position{Line: pos.Line, Character: 6}, End: protocol.Position{Line: pos.Line, Character: 7}}, Kind: protocol.DocumentHighlightKindText},
+			{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: pos.Line, Character: 0},
+					End:   protocol.Position{Line: pos.Line, Character: 3},
+				},
+				Kind: protocol.DocumentHighlightKindText,
+			},
+			{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: pos.Line, Character: 0},
+					End:   protocol.Position{Line: pos.Line, Character: 5},
+				},
+				Kind: protocol.DocumentHighlightKindText,
+			},
+			{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: pos.Line, Character: 6},
+					End:   protocol.Position{Line: pos.Line, Character: 7},
+				},
+				Kind: protocol.DocumentHighlightKindText,
+			},
 		}, nil
 	}
 	return []protocol.DocumentHighlight{
 		{
 			Range: protocol.Range{
-				Start: protocol.Position{Line: pos.Line, Character: pos.Character},
-				End:   protocol.Position{Line: pos.Line, Character: pos.Character + 3},
+				Start: protocol.Position{
+					Line:      pos.Line,
+					Character: pos.Character,
+				},
+				End: protocol.Position{
+					Line:      pos.Line,
+					Character: pos.Character + 3,
+				},
 			},
 			Kind: protocol.DocumentHighlightKindText,
 		},
@@ -1008,11 +1109,12 @@ func (s *processServer) Diagnostic(
 	}
 	if os.Getenv(testServerDiagnosticUnchangedEnv) == "1" {
 		resultID := "unchanged-result-1"
+		report := protocol.UnchangedDocumentDiagnosticReport{
+			Kind:     string(protocol.DocumentDiagnosticReportKindUnchanged),
+			ResultID: resultID,
+		}
 		return &protocol.RelatedUnchangedDocumentDiagnosticReport{
-			UnchangedDocumentDiagnosticReport: protocol.UnchangedDocumentDiagnosticReport{
-				Kind:     string(protocol.DocumentDiagnosticReportKindUnchanged),
-				ResultID: resultID,
-			},
+			UnchangedDocumentDiagnosticReport: report,
 		}, nil
 	}
 	fullResultID := "full-result-1"
@@ -1268,6 +1370,9 @@ func (s *processServer) navigationDefLinkSlice() protocol.DefinitionLinkSlice {
 func (s *processServer) WillCreateFiles(
 	_ context.Context, _ *protocol.CreateFilesParams,
 ) (*protocol.WorkspaceEdit, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("will create error")
+	}
 	if os.Getenv(testServerFileOpWillEditEnv) == "1" {
 		return &protocol.WorkspaceEdit{}, nil
 	}
@@ -1277,30 +1382,45 @@ func (s *processServer) WillCreateFiles(
 func (s *processServer) DidCreateFiles(
 	_ context.Context, _ *protocol.CreateFilesParams,
 ) error {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return errors.New("did create error")
+	}
 	return nil
 }
 
 func (s *processServer) WillRenameFiles(
 	_ context.Context, _ *protocol.RenameFilesParams,
 ) (*protocol.WorkspaceEdit, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("will rename error")
+	}
 	return nil, nil
 }
 
 func (s *processServer) DidRenameFiles(
 	_ context.Context, _ *protocol.RenameFilesParams,
 ) error {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return errors.New("did rename error")
+	}
 	return nil
 }
 
 func (s *processServer) WillDeleteFiles(
 	_ context.Context, _ *protocol.DeleteFilesParams,
 ) (*protocol.WorkspaceEdit, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("will delete error")
+	}
 	return nil, nil
 }
 
 func (s *processServer) DidDeleteFiles(
 	_ context.Context, _ *protocol.DeleteFilesParams,
 ) error {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return errors.New("did delete error")
+	}
 	return nil
 }
 

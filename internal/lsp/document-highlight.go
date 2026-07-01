@@ -18,16 +18,23 @@ func (c *Client) DocumentHighlights(
 	if !c.SupportsFeature(FeatureDocumentHighlight) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) ([]protocol.DocumentHighlight, bool, error) {
-		highlights, err := c.server.DocumentHighlight(ctx,
-			&protocol.DocumentHighlightParams{TextDocumentPositionParams: tdp},
-		)
-		if err != nil {
-			return nil, true, err
-		}
-		return highlights, true, nil
+	return clientPosRequest(c, posRequestArgs[[]protocol.DocumentHighlight]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) ([]protocol.DocumentHighlight, bool, error) {
+			highlights, err := c.server.DocumentHighlight(ctx,
+				&protocol.DocumentHighlightParams{
+					TextDocumentPositionParams: tdp,
+				},
+			)
+			if err != nil {
+				return nil, true, err
+			}
+			return highlights, true, nil
+		},
 	})
 }
 

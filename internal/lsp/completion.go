@@ -28,12 +28,10 @@ type (
 		doc      *view.Document
 		encoding protocol.PositionEncodingKind
 		cursor   int
-		replace  bool
 	}
 
 	completionApplyOp struct {
 		offset  *completionEditOffset
-		replace bool
 		removed string
 		newText string
 	}
@@ -54,16 +52,21 @@ func (c *Client) Completion(
 	if !c.SupportsFeature(FeatureCompletion) {
 		return CompletionList{}, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) (CompletionList, bool, error) {
-		result, err := c.server.Completion(ctx, &protocol.CompletionParams{
-			TextDocumentPositionParams: tdp, Context: compCtx,
-		})
-		if err != nil {
-			return CompletionList{}, true, err
-		}
-		return normalizeCompletionResult(c.name, result), true, nil
+	return clientPosRequest(c, posRequestArgs[CompletionList]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) (CompletionList, bool, error) {
+			result, err := c.server.Completion(ctx, &protocol.CompletionParams{
+				TextDocumentPositionParams: tdp, Context: compCtx,
+			})
+			if err != nil {
+				return CompletionList{}, true, err
+			}
+			return normalizeCompletionResult(c.name, result), true, nil
+		},
 	})
 }
 
@@ -454,7 +457,6 @@ type completionTransactionArgs struct {
 	item     protocol.CompletionItem
 	encoding protocol.PositionEncodingKind
 	viewID   view.Id
-	replace  bool
 }
 
 func completionTransaction(
@@ -464,24 +466,22 @@ func completionTransaction(
 	sel := doc.SelectionFor(args.viewID)
 	text := doc.Text()
 	cursor := sel.Primary().Cursor(text)
-	ctx := completionEditCtx{
-		doc: doc, encoding: args.encoding, cursor: cursor, replace: args.replace,
-	}
+	ctx := completionEditCtx{doc: doc, encoding: args.encoding, cursor: cursor}
 	editOffset, newText, err := completionEdit(ctx, args.item)
 	if err != nil {
 		return core.Transaction{}, err
 	}
-	from, to, ok := completionRange(text, editOffset, args.replace, cursor)
+	from, to, ok := completionRange(text, editOffset, cursor)
 	if !ok {
 		return core.Transaction{}, ErrCompletionUnavailable
 	}
-	from, to = completionPrimaryRange(text, from, to, args.replace, cursor)
+	from, to = completionPrimaryRange(text, from, to, cursor)
 	removed, err := text.SliceString(from, to)
 	if err != nil {
 		return core.Transaction{}, err
 	}
 	apply := completionApplyOp{
-		offset: editOffset, replace: args.replace, removed: removed, newText: newText,
+		offset: editOffset, removed: removed, newText: newText,
 	}
 	changes, err := completionChanges(text, sel, apply)
 	if err != nil {
@@ -500,9 +500,9 @@ func completionTransaction(
 }
 
 func completionPrimaryRange(
-	text core.Rope, from, to int, replace bool, cursor int,
+	text core.Rope, from, to, cursor int,
 ) (int, int) {
-	wordFrom, wordTo := findCompletionRange(text, replace, cursor)
+	wordFrom, wordTo := findCompletionRange(text, cursor)
 	if from <= wordFrom && to >= wordTo {
 		return from, to
 	}
@@ -523,11 +523,7 @@ func completionEdit(
 			to:   to - ctx.cursor,
 		}, edit.NewText, nil
 	case *protocol.InsertReplaceEdit:
-		r := edit.Insert
-		if ctx.replace {
-			r = edit.Replace
-		}
-		from, to, ok := lspRangeToChars(ctx.doc, r, ctx.encoding)
+		from, to, ok := lspRangeToChars(ctx.doc, edit.Insert, ctx.encoding)
 		if !ok {
 			return nil, "", ErrCompletionUnavailable
 		}
@@ -550,13 +546,13 @@ func completionChanges(
 	changes := make([]core.Change, 0, len(ranges))
 	for _, r := range ranges {
 		cursor := r.Cursor(text)
-		from, to := completionRangeForCursor(text, op.offset, op.replace, cursor)
+		from, to := completionRangeForCursor(text, op.offset, cursor)
 		got, err := text.SliceString(from, to)
 		if err != nil {
 			return nil, err
 		}
 		if got != op.removed {
-			from, to = findCompletionRange(text, op.replace, cursor)
+			from, to = findCompletionRange(text, cursor)
 		}
 		changes = append(changes, core.TextChange(from, to, op.newText))
 	}
@@ -564,19 +560,19 @@ func completionChanges(
 }
 
 func completionRangeForCursor(
-	text core.Rope, offset *completionEditOffset, replace bool, cursor int,
+	text core.Rope, offset *completionEditOffset, cursor int,
 ) (int, int) {
-	if from, to, ok := completionRange(text, offset, replace, cursor); ok {
+	if from, to, ok := completionRange(text, offset, cursor); ok {
 		return from, to
 	}
-	return findCompletionRange(text, replace, cursor)
+	return findCompletionRange(text, cursor)
 }
 
 func completionRange(
-	text core.Rope, offset *completionEditOffset, replace bool, cursor int,
+	text core.Rope, offset *completionEditOffset, cursor int,
 ) (int, int, bool) {
 	if offset == nil {
-		from, to := findCompletionRange(text, replace, cursor)
+		from, to := findCompletionRange(text, cursor)
 		return from, to, true
 	}
 	from := cursor + offset.from
@@ -587,28 +583,10 @@ func completionRange(
 	return from, to, true
 }
 
-func findCompletionRange(
-	text core.Rope, replace bool, cursor int,
-) (int, int) {
+func findCompletionRange(text core.Rope, cursor int) (int, int) {
 	before, _ := text.SliceString(0, cursor)
-	after, _ := text.SliceString(cursor, text.LenChars())
 	from := cursor - countWordSuffix(before)
-	to := cursor
-	if replace {
-		to += countWordPrefix(after)
-	}
-	return from, to
-}
-
-func countWordPrefix(s string) int {
-	n := 0
-	for _, ch := range s {
-		if !core.CharIsWord(ch) {
-			return n
-		}
-		n++
-	}
-	return n
+	return from, cursor
 }
 
 func countWordSuffix(s string) int {

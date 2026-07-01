@@ -22,56 +22,52 @@ type (
 func (c *Client) GotoDeclaration(
 	ctx context.Context, doc DocumentSnapshot, pos int,
 ) ([]protocol.Location, bool, error) {
-	return c.gotoLocationRequest(ctx, doc, pos, FeatureGotoDeclaration,
-		func(
-			ctx context.Context, tdp protocol.TextDocumentPositionParams,
-		) (any, error) {
-			return c.server.Declaration(ctx, &protocol.DeclarationParams{
-				TextDocumentPositionParams: tdp,
-			})
-		})
+	return c.gotoLocationRequest(locationRequestArgs{
+		ctx:        ctx,
+		doc:        doc,
+		pos:        pos,
+		feature:    FeatureGotoDeclaration,
+		serverCall: c.declarationLocation,
+	})
 }
 
 // GotoDefinition requests the definition location of the symbol at pos
 func (c *Client) GotoDefinition(
 	ctx context.Context, doc DocumentSnapshot, pos int,
 ) ([]protocol.Location, bool, error) {
-	return c.gotoLocationRequest(ctx, doc, pos, FeatureGotoDefinition,
-		func(
-			ctx context.Context, tdp protocol.TextDocumentPositionParams,
-		) (any, error) {
-			return c.server.Definition(ctx, &protocol.DefinitionParams{
-				TextDocumentPositionParams: tdp,
-			})
-		})
+	return c.gotoLocationRequest(locationRequestArgs{
+		ctx:        ctx,
+		doc:        doc,
+		pos:        pos,
+		feature:    FeatureGotoDefinition,
+		serverCall: c.definitionLocation,
+	})
 }
 
 // GotoTypeDefinition requests the type definition location of the symbol at pos
 func (c *Client) GotoTypeDefinition(
 	ctx context.Context, doc DocumentSnapshot, pos int,
 ) ([]protocol.Location, bool, error) {
-	return c.gotoLocationRequest(ctx, doc, pos, FeatureGotoTypeDefinition,
-		func(
-			ctx context.Context, tdp protocol.TextDocumentPositionParams,
-		) (any, error) {
-			return c.server.TypeDefinition(ctx, &protocol.TypeDefinitionParams{
-				TextDocumentPositionParams: tdp,
-			})
-		})
+	return c.gotoLocationRequest(locationRequestArgs{
+		ctx:        ctx,
+		doc:        doc,
+		pos:        pos,
+		feature:    FeatureGotoTypeDefinition,
+		serverCall: c.typeDefinitionLocation,
+	})
 }
 
-// GotoImplementation requests the implementation locations for the symbol at pos
+// GotoImplementation requests implementation locations for the symbol at pos
 func (c *Client) GotoImplementation(
 	ctx context.Context, doc DocumentSnapshot, pos int,
 ) ([]protocol.Location, bool, error) {
-	return c.gotoLocationRequest(ctx, doc, pos, FeatureGotoImplementation,
-		func(
-			ctx context.Context, tdp protocol.TextDocumentPositionParams,
-		) (any, error) {
-			return c.server.Implementation(ctx, &protocol.ImplementationParams{
-				TextDocumentPositionParams: tdp,
-			})
-		})
+	return c.gotoLocationRequest(locationRequestArgs{
+		ctx:        ctx,
+		doc:        doc,
+		pos:        pos,
+		feature:    FeatureGotoImplementation,
+		serverCall: c.implementationLocation,
+	})
 }
 
 // GotoReference requests all reference locations for the symbol at pos
@@ -81,19 +77,24 @@ func (c *Client) GotoReference(
 	if !c.SupportsFeature(FeatureGotoReference) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) ([]protocol.Location, bool, error) {
-		locations, err := c.server.References(ctx, &protocol.ReferenceParams{
-			TextDocumentPositionParams: tdp,
-			Context: protocol.ReferenceContext{
-				IncludeDeclaration: true,
-			},
-		})
-		if err != nil {
-			return nil, true, err
-		}
-		return locations, true, nil
+	return clientPosRequest(c, posRequestArgs[[]protocol.Location]{
+		ctx: ctx,
+		doc: doc,
+		pos: pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) ([]protocol.Location, bool, error) {
+			locations, err := c.server.References(ctx, &protocol.ReferenceParams{
+				TextDocumentPositionParams: tdp,
+				Context: protocol.ReferenceContext{
+					IncludeDeclaration: true,
+				},
+			})
+			if err != nil {
+				return nil, true, err
+			}
+			return locations, true, nil
+		},
 	})
 }
 
@@ -111,14 +112,16 @@ func (s *Session) GotoDefinition(
 	return s.locations(doc, viewID, (*Client).GotoDefinition)
 }
 
-// GotoTypeDefinition returns type definition locations for the symbol at the cursor
+// GotoTypeDefinition returns type definition locations for the symbol at the
+// cursor
 func (s *Session) GotoTypeDefinition(
 	doc *view.Document, viewID view.Id,
 ) ([]view.Location, error) {
 	return s.locations(doc, viewID, (*Client).GotoTypeDefinition)
 }
 
-// GotoImplementation returns implementation locations for the symbol at the cursor
+// GotoImplementation returns implementation locations for the symbol at the
+// cursor
 func (s *Session) GotoImplementation(
 	doc *view.Document, viewID view.Id,
 ) ([]view.Location, error) {
@@ -132,21 +135,65 @@ func (s *Session) GotoReference(
 	return s.locations(doc, viewID, (*Client).GotoReference)
 }
 
+type locationRequestArgs struct {
+	ctx        context.Context
+	doc        DocumentSnapshot
+	pos        int
+	feature    Feature
+	serverCall locationServerFn
+}
+
 func (c *Client) gotoLocationRequest(
-	ctx context.Context, doc DocumentSnapshot, pos int, feature Feature,
-	serverCall locationServerFn,
+	args locationRequestArgs,
 ) ([]protocol.Location, bool, error) {
-	if !c.SupportsFeature(feature) {
+	if !c.SupportsFeature(args.feature) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, ctx, doc, pos, func(
-		ctx context.Context, tdp protocol.TextDocumentPositionParams,
-	) ([]protocol.Location, bool, error) {
-		result, err := serverCall(ctx, tdp)
-		if err != nil {
-			return nil, true, err
-		}
-		return locationResultLocations(result), true, nil
+	return clientPosRequest(c, posRequestArgs[[]protocol.Location]{
+		ctx: args.ctx,
+		doc: args.doc,
+		pos: args.pos,
+		call: func(
+			ctx context.Context, tdp protocol.TextDocumentPositionParams,
+		) ([]protocol.Location, bool, error) {
+			result, err := args.serverCall(ctx, tdp)
+			if err != nil {
+				return nil, true, err
+			}
+			return locationResultLocations(result), true, nil
+		},
+	})
+}
+
+func (c *Client) declarationLocation(
+	ctx context.Context, tdp protocol.TextDocumentPositionParams,
+) (any, error) {
+	return c.server.Declaration(ctx, &protocol.DeclarationParams{
+		TextDocumentPositionParams: tdp,
+	})
+}
+
+func (c *Client) definitionLocation(
+	ctx context.Context, tdp protocol.TextDocumentPositionParams,
+) (any, error) {
+	return c.server.Definition(ctx, &protocol.DefinitionParams{
+		TextDocumentPositionParams: tdp,
+	})
+}
+
+func (c *Client) typeDefinitionLocation(
+	ctx context.Context, tdp protocol.TextDocumentPositionParams,
+) (any, error) {
+	return c.server.TypeDefinition(ctx, &protocol.TypeDefinitionParams{
+		TextDocumentPositionParams: tdp,
+	})
+}
+
+func (c *Client) implementationLocation(
+	ctx context.Context, tdp protocol.TextDocumentPositionParams,
+) (any, error) {
+	return c.server.Implementation(ctx, &protocol.ImplementationParams{
+		TextDocumentPositionParams: tdp,
 	})
 }
 

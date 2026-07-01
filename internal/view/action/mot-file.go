@@ -11,13 +11,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type (
-	// GotoTarget is the resolved target under the primary cursor
-	GotoTarget struct {
-		Path string
-		URL  string
-	}
-)
+// GotoTarget is the resolved target under the primary cursor
+type GotoTarget struct {
+	Path string
+	URL  string
+}
 
 var (
 	// ErrNoFilePath is returned when no file path is found under the cursor

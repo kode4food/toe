@@ -89,7 +89,7 @@ func (s *Session) formatDocument(
 	opts := formattingOptions(doc)
 	var err error
 	for _, client := range clients {
-		edits, sent, e := formatRequest(client, s.ctx, snap, r, opts)
+		edits, sent, e := client.formatRequest(s.ctx, snap, r, opts)
 		if e != nil {
 			err = errors.Join(err, s.completionError(client, e))
 			continue
@@ -108,14 +108,14 @@ func (s *Session) formatDocument(
 	return ErrNoLanguageServer
 }
 
-func formatRequest(
-	client *Client, ctx context.Context, snap DocumentSnapshot,
-	r *core.Range, opts protocol.FormattingOptions,
+func (c *Client) formatRequest(
+	ctx context.Context, snap DocumentSnapshot, r *core.Range,
+	opts protocol.FormattingOptions,
 ) ([]protocol.TextEdit, bool, error) {
 	if r == nil {
-		return client.FormatDocument(ctx, snap, opts)
+		return c.FormatDocument(ctx, snap, opts)
 	}
-	return client.FormatRange(ctx, snap, *r, opts)
+	return c.FormatRange(ctx, snap, *r, opts)
 }
 
 func (s *Session) applyFormattingEdits(

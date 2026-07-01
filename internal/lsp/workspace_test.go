@@ -112,10 +112,15 @@ func TestWorkspace(t *testing.T) {
 
 	t.Run("missing required root", func(t *testing.T) {
 		root := t.TempDir()
-		_, _, err := lsp.Start(t.Context(), "test", language.Server{
-			Command:              "unused",
-			RequiredRootPatterns: []string{"go.mod"},
-		}, root, nil)
+		_, _, err := lsp.Start(&lsp.TransportConfig{
+			Ctx:  t.Context(),
+			Name: "test",
+			Server: language.Server{
+				Command:              "unused",
+				RequiredRootPatterns: []string{"go.mod"},
+			},
+			Dir: root,
+		})
 
 		assert.True(t, errors.Is(err, lsp.ErrRequiredRoot))
 	})

@@ -51,6 +51,54 @@ func capabilityCases() []capabilityCase {
 			want: true,
 		},
 		{
+			name:    "range format",
+			feature: lsp.FeatureRangeFormat,
+			caps: protocol.ServerCapabilities{
+				DocumentRangeFormattingProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "definition",
+			feature: lsp.FeatureGotoDefinition,
+			caps: protocol.ServerCapabilities{
+				DefinitionProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "type definition",
+			feature: lsp.FeatureGotoTypeDefinition,
+			caps: protocol.ServerCapabilities{
+				TypeDefinitionProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "references",
+			feature: lsp.FeatureGotoReference,
+			caps: protocol.ServerCapabilities{
+				ReferencesProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "implementation",
+			feature: lsp.FeatureGotoImplementation,
+			caps: protocol.ServerCapabilities{
+				ImplementationProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "signature help",
+			feature: lsp.FeatureSignatureHelp,
+			caps: protocol.ServerCapabilities{
+				SignatureHelpProvider: &protocol.SignatureHelpOptions{},
+			},
+			want: true,
+		},
+		{
 			name:    "completion provider",
 			feature: lsp.FeatureCompletion,
 			caps: protocol.ServerCapabilities{
@@ -63,6 +111,30 @@ func capabilityCases() []capabilityCase {
 			feature: lsp.FeatureHover,
 			caps: protocol.ServerCapabilities{
 				HoverProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "document highlight",
+			feature: lsp.FeatureDocumentHighlight,
+			caps: protocol.ServerCapabilities{
+				DocumentHighlightProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "code action",
+			feature: lsp.FeatureCodeAction,
+			caps: protocol.ServerCapabilities{
+				CodeActionProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "document links",
+			feature: lsp.FeatureDocumentLinks,
+			caps: protocol.ServerCapabilities{
+				DocumentLinkProvider: &protocol.DocumentLinkOptions{},
 			},
 			want: true,
 		},
@@ -80,6 +152,22 @@ func capabilityCases() []capabilityCase {
 			name:    "empty workspace command",
 			feature: lsp.FeatureWorkspaceCommand,
 			caps:    protocol.ServerCapabilities{},
+		},
+		{
+			name:    "document symbols",
+			feature: lsp.FeatureDocumentSymbols,
+			caps: protocol.ServerCapabilities{
+				DocumentSymbolProvider: protocol.Boolean(true),
+			},
+			want: true,
+		},
+		{
+			name:    "workspace symbols",
+			feature: lsp.FeatureWorkspaceSymbols,
+			caps: protocol.ServerCapabilities{
+				WorkspaceSymbolProvider: protocol.Boolean(true),
+			},
+			want: true,
 		},
 		{
 			name:    "push diagnostics",
@@ -126,6 +214,18 @@ func capabilityCases() []capabilityCase {
 				CallHierarchyProvider: &protocol.CallHierarchyOptions{},
 			},
 			want: true,
+		},
+		{
+			name:    "nil pointer disabled",
+			feature: lsp.FeatureCodeAction,
+			caps: protocol.ServerCapabilities{
+				CodeActionProvider: (*protocol.CodeActionOptions)(nil),
+			},
+		},
+		{
+			name:    "unknown feature",
+			feature: lsp.Feature(999),
+			caps:    protocol.ServerCapabilities{},
 		},
 	}
 }

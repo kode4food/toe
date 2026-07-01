@@ -96,22 +96,6 @@ const (
 	completionPreviewMaxWidth = 40
 )
 
-func newCompletionComponent(
-	ec *EditorComponent, items []view.CompletionItem, anchor completionAnchor,
-	opts CompletionOptions, incomplete bool,
-) *completionComponent {
-	c := &completionComponent{
-		ec:         ec,
-		all:        items,
-		items:      items,
-		anchor:     anchor,
-		opts:       opts.WithDefaults(),
-		incomplete: incomplete,
-	}
-	c.resetCursor()
-	return c
-}
-
 func (c *completionComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {

@@ -181,10 +181,18 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
 	contentX := x + gutterW
-	gutter := newGutterSpec(
-		text, gutterLayout, gutterLineNumberW, lineTUI, lineSelTUI,
-		tuiStyles, docDiagnostics,
-	)
+	gutter := gutterSpec{
+		layout:          gutterLayout,
+		lineNumberW:     gutterLineNumberW,
+		width:           gutterLayoutWidth(gutterLayout, gutterLineNumberW),
+		lineStyle:       lineTUI,
+		lineSelected:    lineSelTUI,
+		diagLines:       diagnosticGutterLines(text, docDiagnostics),
+		severityHint:    tuiStyles.severityHint,
+		severityInfo:    tuiStyles.severityInfo,
+		severityWarning: tuiStyles.severityWarning,
+		severityError:   tuiStyles.severityError,
+	}
 
 	rr := rowRender{
 		lgStyles:      lgStyles,

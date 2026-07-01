@@ -43,6 +43,7 @@ type (
 		cursorlinePrim bool
 		cursorlineSec  bool
 		cursorIsBlock  bool
+		mode           view.Mode
 		hStart         int
 		hWidth         int
 		maxRows        int
@@ -168,6 +169,10 @@ func (r *rowRender) rows() []renderedRow {
 		switch {
 		case selAt.cursor && selAt.primary && r.cursorIsBlock:
 			writeRendered(rendered, width, ts.cursorPrim)
+		case selAt.cursor && selAt.primary && r.mode != view.ModeInsert:
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.selectionPrim,
+			))
 		case selAt.cursor && !selAt.primary:
 			writeRendered(rendered, width, ts.cursor)
 		case selAt.selected && selAt.selPrimary:

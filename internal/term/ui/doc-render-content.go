@@ -212,6 +212,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		cursorLine:    cursorLine,
 		softWrap:      softWrap,
 		cursorIsBlock: cursorIsBlock,
+		mode:          r.cx.Editor.Mode(),
 		hStart:        hOff,
 		hWidth:        format.ViewportWidth,
 	}

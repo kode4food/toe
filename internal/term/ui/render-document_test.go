@@ -547,6 +547,45 @@ func TestThemeRender(t *testing.T) {
 		assert.Contains(t, out, "\x1b[48;2;245;224;220m")
 	})
 
+	t.Run("non-block cursor still painted", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("abcdef\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Options().Theme = "mocha"
+		e.Options().CursorShape.Select = view.CursorKindUnderline
+		e.SetMode(view.ModeSelect)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, "\x1b[48;2;69;71;90m")
+	})
+
+	t.Run("insert cursor stays unpainted", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("abcdef\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Options().Theme = "mocha"
+		e.Options().CursorShape.Insert = view.CursorKindBar
+		e.SetMode(view.ModeInsert)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.NotContains(t, out, "\x1b[48;2;69;71;90m")
+	})
 }
 
 func TestBaseStyleAtCases(t *testing.T) {

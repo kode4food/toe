@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -104,7 +104,7 @@ func commandEnv(env map[string]string) []string {
 	for k := range env {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, k := range keys {
 		out = append(out, k+"="+env[k])
 	}

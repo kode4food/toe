@@ -265,6 +265,31 @@ func writeNavigationLinksLanguages(t *testing.T, exe, target string) {
 	writeNavigationConfig(t, exe, target, testServerNavLinksEnv+` = "1", `)
 }
 
+func TestNavigationOutOfRangePosition(t *testing.T) {
+	exe, err := os.Executable()
+	assert.NoError(t, err)
+
+	dir := t.TempDir()
+	source := filepath.Join(dir, "main.session")
+	target := filepath.Join(dir, "target.session")
+	writeNavigationLanguages(t, exe, target)
+	assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o644))
+	assert.NoError(t, os.WriteFile(target, []byte("target\n"), 0o644))
+	e := view.NewEditor(dir)
+	_, err = e.OpenFile(source)
+	assert.NoError(t, err)
+	session := lsp.Attach(t.Context(), e)
+	defer session.Close()
+	doc, ok := e.FocusedDocument()
+	assert.True(t, ok)
+	v, ok := e.FocusedView()
+	assert.True(t, ok)
+	doc.SetSelectionFor(v.ID(), core.PointSelection(9999))
+
+	_, err = session.GotoDefinition(doc, v.ID())
+	assert.Error(t, err)
+}
+
 func writeNavigationConfig(t *testing.T, exe, target, extra string) {
 	t.Helper()
 	root := t.TempDir()

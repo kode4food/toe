@@ -1,35 +1,37 @@
 package view
 
+import "slices"
+
 // SetDocumentHighlights stores the same-document highlight ranges for a view
 func (d *Document) SetDocumentHighlights(
 	vid Id, highlights []DocumentHighlight,
 ) {
+	d.ls.Lock()
+	defer d.ls.Unlock()
 	if len(highlights) == 0 {
-		delete(d.documentHighlights, vid)
+		delete(d.ls.highlights, vid)
 		return
 	}
-	if d.documentHighlights == nil {
-		d.documentHighlights = map[Id][]DocumentHighlight{}
-	}
-	out := make([]DocumentHighlight, len(highlights))
-	copy(out, highlights)
-	d.documentHighlights[vid] = out
+	d.ls.highlights[vid] = slices.Clone(highlights)
 }
 
 // ClearDocumentHighlights removes highlight ranges for a view
 func (d *Document) ClearDocumentHighlights(vid Id) {
-	delete(d.documentHighlights, vid)
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	delete(d.ls.highlights, vid)
 }
 
 // ClearAllDocumentHighlights removes highlight ranges for every view
 func (d *Document) ClearAllDocumentHighlights() {
-	clear(d.documentHighlights)
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	clear(d.ls.highlights)
 }
 
 // DocumentHighlights returns same-document highlight ranges for a view
 func (d *Document) DocumentHighlights(vid Id) []DocumentHighlight {
-	highlights := d.documentHighlights[vid]
-	out := make([]DocumentHighlight, len(highlights))
-	copy(out, highlights)
-	return out
+	d.ls.RLock()
+	defer d.ls.RUnlock()
+	return slices.Clone(d.ls.highlights[vid])
 }

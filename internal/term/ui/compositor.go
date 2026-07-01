@@ -98,10 +98,6 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
 }
 
-func newCompositor() *Compositor {
-	return &Compositor{}
-}
-
 // falls back (!ok) when any layer doesn't implement the buffer interface,
 // so the caller can use the per-layer ANSI compositing path instead
 func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {

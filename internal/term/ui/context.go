@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -10,6 +11,7 @@ import (
 type Context struct {
 	Editor  *view.Editor
 	Keymaps *command.Keymaps
+	Syntax  *syntax.SyntaxCache
 
 	lastLayer func(*view.Editor) layerFunc
 

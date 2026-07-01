@@ -15,19 +15,16 @@ import (
 func (c *Client) DocumentColors(
 	ctx context.Context, doc DocumentSnapshot,
 ) ([]protocol.ColorInformation, bool, error) {
-	if !c.SupportsFeature(FeatureDocumentColors) {
-		return nil, false, nil
-	}
-	params := &protocol.DocumentColorParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	colors, err := c.server.DocumentColor(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return colors, true, nil
+	return clientDocRequest(c, ctx, doc, func(ctx context.Context, c *Client, tdid protocol.TextDocumentIdentifier) ([]protocol.ColorInformation, bool, error) {
+		if !c.SupportsFeature(FeatureDocumentColors) {
+			return nil, false, nil
+		}
+		colors, err := c.server.DocumentColor(ctx, &protocol.DocumentColorParams{TextDocument: tdid})
+		if err != nil {
+			return nil, true, err
+		}
+		return colors, true, nil
+	})
 }
 
 // DocumentColors returns document-wide colors and stores them on the document
@@ -74,15 +71,7 @@ func documentColors(
 ) []view.DocumentColor {
 	out := make([]view.DocumentColor, 0, len(colors))
 	for _, color := range colors {
-		from, ok := lspPositionToChar(
-			doc, color.Range.Start, client.OffsetEncoding(),
-		)
-		if !ok {
-			continue
-		}
-		to, ok := lspPositionToChar(
-			doc, color.Range.End, client.OffsetEncoding(),
-		)
+		from, to, ok := lspRangeToChars(doc, color.Range, client.OffsetEncoding())
 		if !ok {
 			continue
 		}

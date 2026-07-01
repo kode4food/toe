@@ -17,11 +17,10 @@ type (
 	Report []Check
 
 	Check struct {
-		Name    string
-		OK      bool
-		Detail  string
-		Errors  []string
-		Warning []string
+		Name   string
+		OK     bool
+		Detail string
+		Errors []string
 	}
 )
 
@@ -75,9 +74,6 @@ func writeReport(w io.Writer, r Report) {
 		for _, msg := range c.Errors {
 			_, _ = fmt.Fprintf(w, "  error: %s\n", msg)
 		}
-		for _, msg := range c.Warning {
-			_, _ = fmt.Fprintf(w, "  warning: %s\n", msg)
-		}
 	}
 }
 
@@ -86,9 +82,11 @@ func checkLanguages() Check {
 	if !ok {
 		return failed("languages", "bundled languages.toml did not parse")
 	}
-	names := sortedNames(langs.Languages, func(l language.Language) string {
-		return l.Name
-	})
+	names := make([]string, 0, len(langs.Languages))
+	for _, l := range langs.Languages {
+		names = append(names, l.Name)
+	}
+	slices.Sort(names)
 	errs := compareNames(expectedLanguages(), names)
 	return Check{
 		Name:   "languages",
@@ -103,9 +101,11 @@ func checkGrammars() Check {
 	if !ok {
 		return failed("grammars", "bundled languages.toml did not parse")
 	}
-	names := sortedNames(langs.Grammars, func(g language.Grammar) string {
-		return g.Name
-	})
+	names := make([]string, 0, len(langs.Grammars))
+	for _, g := range langs.Grammars {
+		names = append(names, g.Name)
+	}
+	slices.Sort(names)
 	errs := compareNames(expectedGrammars(), names)
 	return Check{
 		Name:   "grammars",
@@ -155,17 +155,6 @@ func checkSyntaxQueries() Check {
 
 func failed(name, msg string) Check {
 	return Check{Name: name, OK: false, Errors: []string{msg}}
-}
-
-func sortedNames[T any](
-	items []T, name func(T) string,
-) []string {
-	names := make([]string, 0, len(items))
-	for _, item := range items {
-		names = append(names, name(item))
-	}
-	slices.Sort(names)
-	return names
 }
 
 func compareNames(expected, actual []string) []string {

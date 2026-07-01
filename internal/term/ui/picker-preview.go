@@ -21,6 +21,7 @@ type (
 		picker *Picker
 		item   *PickerItem
 		editor *view.Editor
+		syntax *syntax.SyntaxCache
 		w, h   int
 		// hlFrom < 0 means full preview, no highlight
 		hlFrom int
@@ -69,7 +70,7 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
 func (p *previewCtx) renderDocInto(
 	buf *tui.Buffer, x, y int, doc *view.Document,
 ) {
-	entry := p.picker.previewCache.doc(doc)
+	entry := p.picker.previewCache.doc(p.syntax, doc)
 	format := doc.TextFormatForConfig(p.w, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
@@ -84,15 +85,15 @@ func (p *previewCtx) renderDocInto(
 func (p *previewCtx) renderFileInto(
 	buf *tui.Buffer, x, y int, path string,
 ) {
-	p.picker.previewCache.path(path).renderInto(p, buf, x, y)
+	p.picker.previewCache.path(p.syntax, path).renderInto(p, buf, x, y)
 }
 
 func (p *previewDocEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, x, y int,
 ) {
 	opts := ctx.editor.Options()
-	format := language.TextFormatForLanguageWithConfig(
-		p.lang, opts.TextWidth, opts.SoftWrap, ctx.w,
+	format := language.TextFormatForConfig(
+		language.LoadLanguage(p.lang), opts.TextWidth, opts.SoftWrap, ctx.w,
 	)
 	r := &previewDocRender{
 		text: p.rope, spans: p.spans,
@@ -179,11 +180,11 @@ func openDocumentPreview(path string, editor *view.Editor) *view.Document {
 	return nil
 }
 
-func previewSpans(text, lang string) []highlight.Span {
+func previewSpans(sc *syntax.SyntaxCache, text, lang string) []highlight.Span {
 	if lang == "text" {
 		return nil
 	}
-	return syntax.Tokenize(text, lang)
+	return sc.Tokenize(text, lang)
 }
 
 // span backgrounds are stripped so the pane provides the background uniformly

@@ -22,6 +22,7 @@ type completionController struct {
 	refreshItems        []view.CompletionItem
 	item                view.CompletionItem
 	docs                string
+	hoverText           string
 	signature           view.SignatureHelp
 	signatureAfterComma view.SignatureHelp
 	signatureErr        error
@@ -91,6 +92,31 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		_ = sendModifiedAndFeed(m, 'j', tea.ModCtrl)
 
+		assert.Equal(t, "Println", ctl.item.Label)
+	})
+
+	t.Run("accepts completion on tab", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			items: []view.CompletionItem{
+				{Label: "Println", Insert: "Println"},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		_ = sendSpecialAndFeed(m, tea.KeyTab)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "Println", doc.Text().String())
 		assert.Equal(t, "Println", ctl.item.Label)
 	})
 
@@ -1112,6 +1138,9 @@ func (c *completionController) ApplyCompletion(
 }
 
 func (c *completionController) Hover(*view.Document, view.Id) (string, error) {
+	if c.hoverText != "" {
+		return c.hoverText, nil
+	}
 	return "hover docs", nil
 }
 

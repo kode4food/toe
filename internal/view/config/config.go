@@ -33,7 +33,7 @@ func LoadRawConfig(path string) (map[string]any, bool) {
 // workspace config, for applying to module section structs via
 // Registry.ApplyTOML
 func LoadRawUserConfig() (map[string]any, bool) {
-	path, ok := UserConfigPath()
+	path, ok := loader.ConfigFile()
 	if !ok {
 		return nil, false
 	}
@@ -41,7 +41,7 @@ func LoadRawUserConfig() (map[string]any, bool) {
 	if err != nil {
 		cwd = "."
 	}
-	return LoadRawConfigForWorkspace(path, WorkspaceConfigPath(cwd), cwd)
+	return LoadRawConfigForWorkspace(path, loader.WorkspaceConfigFile(cwd), cwd)
 }
 
 func LoadRawConfigForWorkspace(
@@ -56,30 +56,6 @@ func LoadRawConfigForWorkspace(
 		paths = append(paths, workspace)
 	}
 	return loader.LoadMergedTOML(paths, 3)
-}
-
-func UserConfigPath() (string, bool) {
-	return loader.ConfigFile()
-}
-
-func WorkspaceConfigPath(dir string) string {
-	return loader.WorkspaceConfigFile(dir)
-}
-
-func IgnorePath() string {
-	return loader.ConfigIgnoreFile()
-}
-
-func LogFilePath() (string, bool) {
-	return loader.LogFile()
-}
-
-func TrustWorkspace(dir string) error {
-	return loader.TrustWorkspace(dir)
-}
-
-func UntrustWorkspace(dir string) error {
-	return loader.UntrustWorkspace(dir)
 }
 
 func (a *AutoSave) UnmarshalTOML(value any) error {
@@ -108,7 +84,7 @@ func decodeAutoSave(value any) (AutoSave, bool) {
 		return AutoSave{FocusLost: &v}, true
 	case map[string]any:
 		return AutoSave{
-			FocusLost:  boolPtr(v["focus-lost"]),
+			FocusLost:  loader.BoolPtr(v["focus-lost"]),
 			AfterDelay: decodeAutoSaveAfterDelay(v["after-delay"]),
 		}, true
 	default:
@@ -122,31 +98,7 @@ func decodeAutoSaveAfterDelay(value any) AutoSaveAfterDelay {
 		return AutoSaveAfterDelay{}
 	}
 	return AutoSaveAfterDelay{
-		Enable:  boolPtr(m["enable"]),
-		Timeout: intPtrOrNil(m["timeout"]),
+		Enable:  loader.BoolPtr(m["enable"]),
+		Timeout: loader.IntPtrOrNil(m["timeout"]),
 	}
-}
-
-func boolPtr(value any) *bool {
-	v, ok := value.(bool)
-	if !ok {
-		return nil
-	}
-	return &v
-}
-
-func intPtr(value any) (*int, bool) {
-	switch v := value.(type) {
-	case int:
-		return &v, true
-	case int64:
-		return new(int(v)), true
-	default:
-		return nil, false
-	}
-}
-
-func intPtrOrNil(value any) *int {
-	v, _ := intPtr(value)
-	return v
 }

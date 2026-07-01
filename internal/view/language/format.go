@@ -18,12 +18,6 @@ type TextFormat struct {
 	SoftWrapAtTextWidth bool
 }
 
-func TextFormatForLanguageWithConfig(
-	lang string, textWidth *int, softWrap SoftWrap, w int,
-) *TextFormat {
-	return TextFormatForConfig(LoadLanguage(lang), textWidth, softWrap, w)
-}
-
 func TextFormatForConfig(
 	lang *Language, textWidth *int, softWrap SoftWrap, w int,
 ) *TextFormat {

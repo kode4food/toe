@@ -108,6 +108,7 @@ func (p *PickerComponent) drawPreviewInto(
 		picker: ps,
 		item:   item,
 		editor: cx.Editor,
+		syntax: cx.Syntax,
 		w:      innerW,
 		h:      h,
 		th:     cx.Theme(),

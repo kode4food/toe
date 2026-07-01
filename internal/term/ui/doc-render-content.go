@@ -100,7 +100,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	}
 
 	rawText := dc.ensureRawText(rev, text)
-	hlSpans := dc.ensureHL(rev, lang, rawText)
+	hlSpans := dc.ensureHL(r.cx.Syntax, rev, lang, rawText)
 
 	pat, hasPat := r.cx.Editor.Registers().First('/')
 	if !hasPat {

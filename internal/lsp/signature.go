@@ -6,38 +6,28 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
 )
 
 func (c *Client) SignatureHelp(
 	ctx context.Context, doc DocumentSnapshot, pos int,
-	context protocol.SignatureHelpContext,
+	shCtx protocol.SignatureHelpContext,
 ) (*protocol.SignatureHelp, bool, error) {
 	if !c.SupportsFeature(FeatureSignatureHelp) {
 		return nil, false, nil
 	}
-	lspPos, err := lspPosition(
-		core.NewRope(doc.Text), pos, c.OffsetEncoding(),
-	)
-	if err != nil {
-		return nil, false, err
-	}
-	params := &protocol.SignatureHelpParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-			Position:     lspPos,
-		},
-		Context: context,
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	help, err := c.server.SignatureHelp(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return help, true, nil
+	return clientPosRequest(c, ctx, doc, pos, func(
+		ctx context.Context, tdp protocol.TextDocumentPositionParams,
+	) (*protocol.SignatureHelp, bool, error) {
+		help, err := c.server.SignatureHelp(ctx, &protocol.SignatureHelpParams{
+			TextDocumentPositionParams: tdp, Context: shCtx,
+		})
+		if err != nil {
+			return nil, true, err
+		}
+		return help, true, nil
+	})
 }
 
 // SignatureHelp returns the signature help at the cursor for an invoked trigger
@@ -123,11 +113,11 @@ func normalizeSignatureHelp(help *protocol.SignatureHelp) view.SignatureHelp {
 		param := activeParameter(help, sig)
 		info := view.SignatureInformation{
 			Label: sig.Label,
-			Docs:  tooltipText(sig.Documentation),
+			Docs:  markupText(sig.Documentation),
 		}
 		if param >= 0 && param < len(sig.Parameters) {
 			p := sig.Parameters[param]
-			info.ParamDocs = tooltipText(p.Documentation)
+			info.ParamDocs = markupText(p.Documentation)
 			info.ActiveStart, info.ActiveEnd = activeParameterRange(sig, p)
 		}
 		out.Signatures = append(out.Signatures, info)

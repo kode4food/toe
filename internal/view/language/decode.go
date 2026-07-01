@@ -1,5 +1,12 @@
 package language
 
+import (
+	"path/filepath"
+	"strings"
+
+	"github.com/kode4food/toe/internal/loader"
+)
+
 func decodeLanguagesMap(m map[string]any) (Languages, bool) {
 	values, ok := languageValues(m["language"])
 	if !ok {
@@ -107,7 +114,7 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	if injection, ok := m["injection-regex"].(string); ok {
 		l.InjectionRegex = injection
 	}
-	if n, ok := intPtr(m["text-width"]); ok {
+	if n, ok := loader.IntPtr(m["text-width"]); ok {
 		l.TextWidth = n
 	}
 	l.FileTypes = decodeFileTypes(m["file-types"])
@@ -122,12 +129,8 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	if pairs, ok := decodeAutoPairConfig(m["auto-pairs"]); ok {
 		l.AutoPairs = pairs
 	}
-	l.AutoFormat = boolPtr(m["auto-format"])
 	if formatter, ok := decodeFormatter(m["formatter"]); ok {
 		l.Formatter = &formatter
-	}
-	if debug, ok := decodeDebugAdapter(m["debugger"]); ok {
-		l.Debugger = &debug
 	}
 	if soft, ok := m["soft-wrap"].(map[string]any); ok {
 		l.SoftWrap = decodeSoftWrap(soft)
@@ -173,7 +176,7 @@ func decodeAutoPairMap(m map[string]any) (AutoPairConfig, bool) {
 
 func decodeIndent(m map[string]any) Indent {
 	return Indent{
-		TabWidth: intPtrOrNil(m["tab-width"]),
+		TabWidth: loader.IntPtrOrNil(m["tab-width"]),
 		Unit:     stringValueFromMap(m, "unit"),
 	}
 }
@@ -206,10 +209,17 @@ func decodeFileTypes(value any) []FileType {
 
 func decodeSoftWrap(m map[string]any) SoftWrap {
 	return SoftWrap{
-		Enable:          boolPtr(m["enable"]),
-		MaxWrap:         intPtrOrNil(m["max-wrap"]),
-		MaxIndentRetain: intPtrOrNil(m["max-indent-retain"]),
-		WrapIndicator:   stringPtr(m["wrap-indicator"]),
-		WrapAtTextWidth: boolPtr(m["wrap-at-text-width"]),
+		Enable:          loader.BoolPtr(m["enable"]),
+		MaxWrap:         loader.IntPtrOrNil(m["max-wrap"]),
+		MaxIndentRetain: loader.IntPtrOrNil(m["max-indent-retain"]),
+		WrapIndicator:   loader.StringPtr(m["wrap-indicator"]),
+		WrapAtTextWidth: loader.BoolPtr(m["wrap-at-text-width"]),
 	}
+}
+
+func normalizeGlob(g string) string {
+	if filepath.IsAbs(g) || strings.HasPrefix(g, "*/") {
+		return g
+	}
+	return "*/" + g
 }

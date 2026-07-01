@@ -14,17 +14,22 @@ import (
 
 // Save writes the document to its current path
 func (d *Document) Save(opts *Options) error {
-	if d.path == "" {
+	path := d.Path()
+	if path == "" {
 		return ErrDocumentNoPath
 	}
-	dir := filepath.Dir(d.path)
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	text := prepareSaveText(d.text.String(), d.lineEnding, opts, d.editorConfig)
-	if text != d.text.String() {
-		d.text = core.NewRope(text)
-		d.version++
+	text := prepareSaveText(
+		d.buf.text.String(), d.lineEnding, opts, d.editorConfig,
+	)
+	if text != d.buf.text.String() {
+		d.buf.Lock()
+		d.buf.text = core.NewRope(text)
+		d.buf.version++
+		d.buf.Unlock()
 	}
 	var data []byte
 	if d.hasBOM {
@@ -34,24 +39,25 @@ func (d *Document) Save(opts *Options) error {
 	}
 	var err error
 	if opts.AtomicSave {
-		err = atomicWrite(d.path, dir, data)
+		err = atomicWrite(path, dir, data)
 	} else {
-		err = os.WriteFile(d.path, data, 0o644)
+		err = os.WriteFile(path, data, 0o644)
 	}
 	if err != nil {
 		return err
 	}
-	d.modified = false
+	d.buf.modified = false
 	return nil
 }
 
 // Reload replaces the document text with the current file contents on disk
 // All per-view selections are reset to the start of the document
 func (d *Document) Reload() error {
-	if d.path == "" {
+	path := d.Path()
+	if path == "" {
 		return ErrDocumentNoPath
 	}
-	data, err := os.ReadFile(d.path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -59,13 +65,15 @@ func (d *Document) Reload() error {
 	if d.hasBOM {
 		data = data[3:]
 	}
-	d.text = core.NewRope(string(data))
-	d.version++
-	d.modified = false
-	d.history = core.NewHistory()
-	for vid := range d.selections {
+	d.buf.Lock()
+	d.buf.text = core.NewRope(string(data))
+	d.buf.version++
+	d.buf.Unlock()
+	d.buf.modified = false
+	d.buf.history = core.NewHistory()
+	for vid := range d.buf.selections {
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-		d.selections[vid] = sel
+		d.buf.selections[vid] = sel
 	}
 	return nil
 }

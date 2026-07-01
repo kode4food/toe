@@ -5,7 +5,6 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/config"
 	"github.com/kode4food/toe/internal/view/language"
 )
 
@@ -16,7 +15,7 @@ func configSystemCmds() []command.Command {
 			DocString: "Open the user config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(
-					e, config.UserConfigPath, "config path unavailable",
+					e, loader.ConfigFile, "config path unavailable",
 				)
 			},
 			Aliases:   []string{"config-open"},
@@ -26,7 +25,7 @@ func configSystemCmds() []command.Command {
 			Name:      actConfigOpenWorkspace,
 			DocString: "Open the workspace config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				path := config.WorkspaceConfigPath(e.Cwd())
+				path := loader.WorkspaceConfigFile(e.Cwd())
 				if _, err := e.SwitchFile(path); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
@@ -52,7 +51,7 @@ func configSystemCmds() []command.Command {
 			DocString: "Open the editor log file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(
-					e, config.LogFilePath, "log path unavailable",
+					e, loader.LogFile, "log path unavailable",
 				)
 			},
 			Aliases:   []string{"log-open"},
@@ -63,7 +62,7 @@ func configSystemCmds() []command.Command {
 			DocString: "Add current workspace to the list of trusted " +
 				"workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				if err := config.TrustWorkspace(e.Cwd()); err != nil {
+				if err := loader.TrustWorkspace(e.Cwd()); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				return command.Result{Message: "workspace trusted"}
@@ -76,7 +75,7 @@ func configSystemCmds() []command.Command {
 			DocString: "Remove current workspace from the list of " +
 				"trusted workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				if err := config.UntrustWorkspace(e.Cwd()); err != nil {
+				if err := loader.UntrustWorkspace(e.Cwd()); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				return command.Result{Message: "workspace untrusted"}

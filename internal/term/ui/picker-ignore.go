@@ -10,7 +10,6 @@ import (
 	gitignore "github.com/sabhiram/go-gitignore"
 
 	"github.com/kode4food/toe/internal/loader"
-	"github.com/kode4food/toe/internal/view/config"
 )
 
 type (
@@ -101,7 +100,7 @@ func loadIgnoreFiles(
 		ignores = appendIgnorePath(ignores, root, gitGlobalIgnorePath())
 	}
 	if opts.ignore {
-		ignores = appendIgnorePath(ignores, "", config.IgnorePath())
+		ignores = appendIgnorePath(ignores, "", loader.ConfigIgnoreFile())
 	}
 	return ignores
 }

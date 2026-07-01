@@ -1,33 +1,35 @@
 package view
 
+import "slices"
+
 // SetInlayHints stores language-server inlay hints for a view
 func (d *Document) SetInlayHints(vid Id, hints []InlayHint) {
+	d.ls.Lock()
+	defer d.ls.Unlock()
 	if len(hints) == 0 {
-		delete(d.inlayHints, vid)
+		delete(d.ls.hints, vid)
 		return
 	}
-	if d.inlayHints == nil {
-		d.inlayHints = map[Id][]InlayHint{}
-	}
-	out := make([]InlayHint, len(hints))
-	copy(out, hints)
-	d.inlayHints[vid] = out
+	d.ls.hints[vid] = slices.Clone(hints)
 }
 
 // ClearInlayHints removes language-server inlay hints for a view
 func (d *Document) ClearInlayHints(vid Id) {
-	delete(d.inlayHints, vid)
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	delete(d.ls.hints, vid)
 }
 
 // ClearAllInlayHints removes language-server inlay hints for every view
 func (d *Document) ClearAllInlayHints() {
-	clear(d.inlayHints)
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	clear(d.ls.hints)
 }
 
 // InlayHints returns language-server inlay hints for a view
 func (d *Document) InlayHints(vid Id) []InlayHint {
-	hints := d.inlayHints[vid]
-	out := make([]InlayHint, len(hints))
-	copy(out, hints)
-	return out
+	d.ls.RLock()
+	defer d.ls.RUnlock()
+	return slices.Clone(d.ls.hints[vid])
 }

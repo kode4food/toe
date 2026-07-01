@@ -16,25 +16,17 @@ func (c *Client) PrepareRename(
 	if !c.supportsPrepareRename() {
 		return nil, false, nil
 	}
-	lspPos, err := lspPosition(
-		core.NewRope(doc.Text), pos, c.OffsetEncoding(),
-	)
-	if err != nil {
-		return nil, false, err
-	}
-	params := &protocol.PrepareRenameParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-			Position:     lspPos,
-		},
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	result, err := c.server.PrepareRename(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return result, true, nil
+	return clientPosRequest(c, ctx, doc, pos, func(
+		ctx context.Context, tdp protocol.TextDocumentPositionParams,
+	) (protocol.PrepareRenameResult, bool, error) {
+		result, err := c.server.PrepareRename(ctx, &protocol.PrepareRenameParams{
+			TextDocumentPositionParams: tdp,
+		})
+		if err != nil {
+			return nil, true, err
+		}
+		return result, true, nil
+	})
 }
 
 // RenameSymbol requests a workspace edit for a new symbol name
@@ -44,26 +36,17 @@ func (c *Client) RenameSymbol(
 	if !c.SupportsFeature(FeatureRename) {
 		return nil, false, nil
 	}
-	lspPos, err := lspPosition(
-		core.NewRope(doc.Text), pos, c.OffsetEncoding(),
-	)
-	if err != nil {
-		return nil, false, err
-	}
-	params := &protocol.RenameParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-			Position:     lspPos,
-		},
-		NewName: name,
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	edit, err := c.server.Rename(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return edit, true, nil
+	return clientPosRequest(c, ctx, doc, pos, func(
+		ctx context.Context, tdp protocol.TextDocumentPositionParams,
+	) (*protocol.WorkspaceEdit, bool, error) {
+		edit, err := c.server.Rename(ctx, &protocol.RenameParams{
+			TextDocumentPositionParams: tdp, NewName: name,
+		})
+		if err != nil {
+			return nil, true, err
+		}
+		return edit, true, nil
+	})
 }
 
 // RenameSymbolPrefill returns the initial rename prompt text
@@ -158,11 +141,7 @@ func renamePrefillFromResult(
 ) (string, error) {
 	switch r := result.(type) {
 	case *protocol.Range:
-		from, ok := lspPositionToChar(doc, r.Start, client.OffsetEncoding())
-		if !ok {
-			return "", ErrWorkspaceEditRange
-		}
-		to, ok := lspPositionToChar(doc, r.End, client.OffsetEncoding())
+		from, to, ok := lspRangeToChars(doc, *r, client.OffsetEncoding())
 		if !ok {
 			return "", ErrWorkspaceEditRange
 		}

@@ -91,14 +91,11 @@ func ConfigIgnoreFile() string {
 }
 
 func ConfigDir() (string, bool) {
-	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
-		return filepath.Join(dir, DirName), true
-	}
-	home, err := os.UserHomeDir()
+	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", false
 	}
-	return filepath.Join(home, ".config", DirName), true
+	return filepath.Join(dir, DirName), true
 }
 
 func LogFile() (string, bool) {
@@ -110,14 +107,11 @@ func LogFile() (string, bool) {
 }
 
 func CacheDir() (string, bool) {
-	if dir := os.Getenv("XDG_CACHE_HOME"); dir != "" {
-		return filepath.Join(dir, DirName), true
-	}
-	home, err := os.UserHomeDir()
+	dir, err := os.UserCacheDir()
 	if err != nil {
 		return "", false
 	}
-	return filepath.Join(home, ".cache", DirName), true
+	return filepath.Join(dir, DirName), true
 }
 
 func DataDir() (string, bool) {
@@ -155,8 +149,10 @@ func FindWorkspace(dir string) (string, bool) {
 		abs = dir
 	}
 	for {
-		if workspaceMarkerExists(abs) {
-			return abs, false
+		for _, name := range []string{".git", ".svn", ".jj", WorkspaceDirName} {
+			if _, err := os.Stat(filepath.Join(abs, name)); err == nil {
+				return abs, false
+			}
 		}
 		next := filepath.Dir(abs)
 		if next == abs {
@@ -190,16 +186,6 @@ func normalizeRuntimeDir(dir string) string {
 		return filepath.Clean(abs)
 	}
 	return filepath.Clean(dir)
-}
-
-func workspaceMarkerExists(dir string) bool {
-	names := []string{".git", ".svn", ".jj", WorkspaceDirName}
-	for _, name := range names {
-		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
-			return true
-		}
-	}
-	return false
 }
 
 func updateWorkspaceSet(path, workspace string, add bool) error {

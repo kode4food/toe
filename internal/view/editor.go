@@ -2,6 +2,7 @@ package view
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/kode4food/toe/internal/view/register"
 )
@@ -31,8 +32,9 @@ type Editor struct {
 	viewHeight       int
 	viewContentWidth int
 
-	statusMsg string
-	hint      string
+	statusMsg   string
+	statusMsgMu sync.Mutex
+	hint        string
 }
 
 var (
@@ -398,13 +400,17 @@ func (e *Editor) CloseAllOtherViews() {
 // SetStatusMsg stores a transient status message to be displayed after the
 // current keypress. The UI clears it via TakeStatusMsg
 func (e *Editor) SetStatusMsg(msg string) {
+	e.statusMsgMu.Lock()
 	e.statusMsg = msg
+	e.statusMsgMu.Unlock()
 }
 
 // TakeStatusMsg returns the pending status message and clears it
 func (e *Editor) TakeStatusMsg() string {
+	e.statusMsgMu.Lock()
 	msg := e.statusMsg
 	e.statusMsg = ""
+	e.statusMsgMu.Unlock()
 	return msg
 }
 
@@ -429,7 +435,7 @@ func (e *Editor) recordPrevDoc() {
 	}
 	did := v.DocID()
 	e.prevDocID = did
-	if doc, ok := e.docs[did]; ok && doc.modifiedSinceAccessed {
+	if doc, ok := e.docs[did]; ok && doc.buf.modifiedSinceAccessed {
 		if e.lastModifiedDocIDs[0] != did {
 			e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
 			e.lastModifiedDocIDs[0] = did
@@ -443,7 +449,7 @@ func (e *Editor) markDocAccessed() {
 		if doc, ok := e.docs[v.DocID()]; ok {
 			e.nextAccess++
 			doc.accessedAt = e.nextAccess
-			doc.modifiedSinceAccessed = false
+			doc.buf.modifiedSinceAccessed = false
 		}
 	}
 }

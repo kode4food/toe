@@ -22,7 +22,10 @@ func (e *Editor) Apply(tx core.Transaction) error {
 		return err
 	}
 	if doc.Revision() != rev {
-		e.documentChanged(doc, newDocumentChange(before, changes))
+		e.documentChanged(doc, DocumentChange{
+			Before:  before,
+			Changes: changes,
+		})
 	}
 	return nil
 }
@@ -49,7 +52,10 @@ func (e *Editor) ApplyToDocument(doc *Document, tx core.Transaction) error {
 		return err
 	}
 	if doc.Revision() != rev {
-		e.documentChanged(doc, newDocumentChange(before, changes))
+		e.documentChanged(doc, DocumentChange{
+			Before:  before,
+			Changes: changes,
+		})
 	}
 	return nil
 }
@@ -114,28 +120,34 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 	if !ok {
 		return false
 	}
-	before := doc.text
-	txns := doc.history.Earlier(kind)
+	doc.buf.Lock()
+	before := doc.buf.text
+	txns := doc.buf.history.Earlier(kind)
 	for _, tx := range txns {
-		inv, err := tx.Invert(doc.text)
+		inv, err := tx.Invert(doc.buf.text)
 		if err != nil {
+			doc.buf.Unlock()
 			return false
 		}
-		newText, err := inv.Apply(doc.text)
+		newText, err := inv.Apply(doc.buf.text)
 		if err != nil {
+			doc.buf.Unlock()
 			return false
 		}
-		doc.text = newText
+		doc.buf.text = newText
 		if txSel := tx.Selection(); txSel != nil {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.modified = len(txns) > 0 || doc.modified
+	doc.buf.modified = len(txns) > 0 || doc.buf.modified
 	if len(txns) == 0 {
+		doc.buf.Unlock()
 		return false
 	}
-	doc.version++
-	e.documentChanged(doc, wholeDocumentChange(before, doc.text.String()))
+	doc.buf.version++
+	afterStr := doc.buf.text.String()
+	doc.buf.Unlock()
+	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
 	return true
 }
 
@@ -149,24 +161,29 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	if !ok {
 		return false
 	}
-	before := doc.text
-	txns := doc.history.Later(kind)
+	doc.buf.Lock()
+	before := doc.buf.text
+	txns := doc.buf.history.Later(kind)
 	for _, tx := range txns {
-		newText, err := tx.Apply(doc.text)
+		newText, err := tx.Apply(doc.buf.text)
 		if err != nil {
+			doc.buf.Unlock()
 			return false
 		}
-		doc.text = newText
+		doc.buf.text = newText
 		if txSel := tx.Selection(); txSel != nil {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.modified = len(txns) > 0 || doc.modified
+	doc.buf.modified = len(txns) > 0 || doc.buf.modified
 	if len(txns) == 0 {
+		doc.buf.Unlock()
 		return false
 	}
-	doc.version++
-	e.documentChanged(doc, wholeDocumentChange(before, doc.text.String()))
+	doc.buf.version++
+	afterStr := doc.buf.text.String()
+	doc.buf.Unlock()
+	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
 	return true
 }
 

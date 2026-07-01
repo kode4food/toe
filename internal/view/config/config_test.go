@@ -43,7 +43,7 @@ soft-wrap.wrap-indicator = "» "
 `), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
-		err = config.TrustWorkspace(work)
+		err = loader.TrustWorkspace(work)
 		assert.NoError(t, err)
 
 		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, work)
@@ -207,7 +207,7 @@ insecure = true
 		err = os.WriteFile(workspace, []byte(`theme = "dracula"`), 0o644)
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
-		err = config.TrustWorkspace(work)
+		err = loader.TrustWorkspace(work)
 		assert.NoError(t, err)
 
 		raw, ok := config.LoadRawConfigForWorkspace(
@@ -290,7 +290,7 @@ func TestWorkspaceConfigPath(t *testing.T) {
 		err = os.MkdirAll(nested, 0o755)
 		assert.NoError(t, err)
 
-		path := config.WorkspaceConfigPath(nested)
+		path := loader.WorkspaceConfigFile(nested)
 
 		assert.Equal(t,
 			filepath.Join(work, loader.WorkspaceDirName, "config.toml"),
@@ -302,7 +302,7 @@ func TestWorkspaceConfigPath(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(root, loader.WorkspaceDirName), 0o755)
 		assert.NoError(t, err)
 
-		path := config.WorkspaceConfigPath(root)
+		path := loader.WorkspaceConfigFile(root)
 
 		assert.Equal(t,
 			filepath.Join(root, loader.WorkspaceDirName, "config.toml"),
@@ -314,7 +314,7 @@ func TestLogFilePath(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", root)
 
-	path, ok := config.LogFilePath()
+	path, ok := loader.LogFile()
 
 	assert.True(t, ok)
 	assert.Equal(t,
@@ -333,13 +333,13 @@ func TestWorkspaceTrust(t *testing.T) {
 	dataRoot := t.TempDir()
 	t.Setenv("XDG_DATA_HOME", dataRoot)
 
-	err = config.TrustWorkspace(cwd)
+	err = loader.TrustWorkspace(cwd)
 	assert.NoError(t, err)
 
 	trusted := loader.QueryWorkspaceTrust(cwd, false) == loader.TrustTrusted
 	assert.True(t, trusted)
 
-	err = config.UntrustWorkspace(cwd)
+	err = loader.UntrustWorkspace(cwd)
 	assert.NoError(t, err)
 
 	trusted = loader.QueryWorkspaceTrust(cwd, false) == loader.TrustTrusted
@@ -353,7 +353,9 @@ func TestTextFormat(t *testing.T) {
 		sw.WrapIndicator = new("» ")
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := language.TextFormatForLanguageWithConfig("go", nil, sw, 80)
+		format := language.TextFormatForConfig(
+			language.LoadLanguage("go"), nil, sw, 80,
+		)
 
 		assert.True(t, format.SoftWrap)
 		assert.Equal(t, "» ", format.WrapIndicator)
@@ -367,7 +369,9 @@ func TestTextFormat(t *testing.T) {
 		sw.MaxIndentRetain = new(40)
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := language.TextFormatForLanguageWithConfig("go", new(40), sw, 80)
+		format := language.TextFormatForConfig(
+			language.LoadLanguage("go"), new(40), sw, 80,
+		)
 
 		assert.True(t, format.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, format.ViewportWidth)
@@ -381,7 +385,9 @@ func TestTextFormat(t *testing.T) {
 		sw.WrapAtTextWidth = new(true)
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
-		format := language.TextFormatForLanguageWithConfig("go", new(80), sw, 40)
+		format := language.TextFormatForConfig(
+			language.LoadLanguage("go"), new(80), sw, 40,
+		)
 
 		assert.False(t, format.SoftWrapAtTextWidth)
 		assert.Equal(t, 40, format.ViewportWidth)
@@ -523,13 +529,13 @@ func TestConfigPaths(t *testing.T) {
 	t.Run("path under XDG_CONFIG_HOME", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", root)
-		path, ok := config.UserConfigPath()
+		path, ok := loader.ConfigFile()
 		assert.True(t, ok)
 		assert.Contains(t, path, root)
 	})
 
 	t.Run("IgnorePath returns non-empty string", func(t *testing.T) {
-		assert.NotEmpty(t, config.IgnorePath())
+		assert.NotEmpty(t, loader.ConfigIgnoreFile())
 	})
 }
 

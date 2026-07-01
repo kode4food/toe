@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
 )
@@ -16,25 +15,17 @@ func (c *Client) Hover(
 	if !c.SupportsFeature(FeatureHover) {
 		return nil, false, nil
 	}
-	lspPos, err := lspPosition(
-		core.NewRope(doc.Text), pos, c.OffsetEncoding(),
-	)
-	if err != nil {
-		return nil, false, err
-	}
-	params := &protocol.HoverParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-			Position:     lspPos,
-		},
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	hover, err := c.server.Hover(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return hover, true, nil
+	return clientPosRequest(c, ctx, doc, pos, func(
+		ctx context.Context, tdp protocol.TextDocumentPositionParams,
+	) (*protocol.Hover, bool, error) {
+		hover, err := c.server.Hover(ctx, &protocol.HoverParams{
+			TextDocumentPositionParams: tdp,
+		})
+		if err != nil {
+			return nil, true, err
+		}
+		return hover, true, nil
+	})
 }
 
 // Hover returns the hover text for the symbol at the cursor position
@@ -57,25 +48,11 @@ func (s *Session) Hover(
 			continue
 		}
 		if sent && hover != nil {
-			text := hoverContentsText(hover.Contents)
+			text := markupText(hover.Contents)
 			if text != "" {
 				out = append(out, text)
 			}
 		}
 	}
 	return strings.Join(out, "\n\n"), err
-}
-
-func hoverContentsText(contents protocol.HoverContents) string {
-	switch v := contents.(type) {
-	case protocol.String:
-		return string(v)
-	case *protocol.MarkupContent:
-		if v == nil {
-			return ""
-		}
-		return v.Value
-	default:
-		return ""
-	}
 }

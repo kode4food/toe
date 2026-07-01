@@ -145,22 +145,9 @@ func (s *Session) applyRenameFile(op *protocol.RenameFile) error {
 	if err != nil {
 		return err
 	}
-	exists, err := pathExists(newPath)
-	if err != nil {
+	skip, err := prepareRenameTarget(newPath, op.Options)
+	if err != nil || skip {
 		return err
-	}
-	overwrite := op.Options != nil && boolValue(op.Options.Overwrite)
-	ignore := op.Options != nil && boolValue(op.Options.IgnoreIfExists)
-	if exists && ignore {
-		return nil
-	}
-	if exists && !overwrite {
-		return fmt.Errorf("%w: %s", ErrWorkspaceEditFile, newPath)
-	}
-	if overwrite && exists {
-		if err := os.RemoveAll(newPath); err != nil {
-			return fmt.Errorf("%w: %v", ErrWorkspaceEditFile, err)
-		}
 	}
 	if err := os.MkdirAll(filepath.Dir(newPath), 0o755); err != nil {
 		return fmt.Errorf("%w: %v", ErrWorkspaceEditFile, err)
@@ -283,6 +270,27 @@ func workspaceEditPath(u uri.URI) (string, error) {
 	return u.FsPath(), nil
 }
 
+func prepareRenameTarget(newPath string, opts *protocol.RenameFileOptions) (bool, error) {
+	exists, err := pathExists(newPath)
+	if err != nil {
+		return false, err
+	}
+	overwrite := opts != nil && boolValue(opts.Overwrite)
+	ignore := opts != nil && boolValue(opts.IgnoreIfExists)
+	if exists && ignore {
+		return true, nil
+	}
+	if exists && !overwrite {
+		return false, fmt.Errorf("%w: %s", ErrWorkspaceEditFile, newPath)
+	}
+	if overwrite && exists {
+		if err := os.RemoveAll(newPath); err != nil {
+			return false, fmt.Errorf("%w: %v", ErrWorkspaceEditFile, err)
+		}
+	}
+	return false, nil
+}
+
 func (s *Session) renameOpenDocument(oldPath, newPath string) {
 	oldAbs, err := filepath.Abs(oldPath)
 	if err != nil {
@@ -320,7 +328,7 @@ func textEditsToChanges(
 ) ([]core.Change, error) {
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {
-		from, to, ok := completionEditRange(doc, edit.Range, encoding)
+		from, to, ok := lspRangeToChars(doc, edit.Range, encoding)
 		if !ok {
 			return nil, ErrWorkspaceEditRange
 		}

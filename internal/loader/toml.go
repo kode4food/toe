@@ -30,7 +30,7 @@ func MergeTOMLValues(left, right any, depth int) any {
 		if depth <= 0 {
 			return r
 		}
-		out := cloneMap(l)
+		out := maps.Clone(l)
 		for key, rv := range r {
 			if lv, ok := out[key]; ok {
 				out[key] = MergeTOMLValues(lv, rv, depth-1)
@@ -85,10 +85,40 @@ func LoadMergedTOML(paths []string, depth int) (map[string]any, bool) {
 	return LoadMergedTOMLWithBase(nil, paths, depth)
 }
 
-func cloneMap(in map[string]any) map[string]any {
-	out := make(map[string]any, len(in))
-	maps.Copy(out, in)
-	return out
+// BoolPtr converts a TOML any value to *bool, returning nil for non-bool
+func BoolPtr(value any) *bool {
+	v, ok := value.(bool)
+	if !ok {
+		return nil
+	}
+	return &v
+}
+
+// IntPtr converts a TOML any value to (*int, bool)
+func IntPtr(value any) (*int, bool) {
+	switch v := value.(type) {
+	case int:
+		return &v, true
+	case int64:
+		return new(int(v)), true
+	default:
+		return nil, false
+	}
+}
+
+// IntPtrOrNil converts a TOML any value to *int, returning nil for non-int
+func IntPtrOrNil(value any) *int {
+	v, _ := IntPtr(value)
+	return v
+}
+
+// StringPtr converts a TOML any value to *string, returning nil for non-string
+func StringPtr(value any) *string {
+	v, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	return &v
 }
 
 func mergeTOMLArrays(left, right []any, depth int) []any {

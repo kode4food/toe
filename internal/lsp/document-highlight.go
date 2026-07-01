@@ -18,25 +18,17 @@ func (c *Client) DocumentHighlights(
 	if !c.SupportsFeature(FeatureDocumentHighlight) {
 		return nil, false, nil
 	}
-	lspPos, err := lspPosition(
-		core.NewRope(doc.Text), pos, c.OffsetEncoding(),
-	)
-	if err != nil {
-		return nil, false, err
-	}
-	params := &protocol.DocumentHighlightParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-			Position:     lspPos,
-		},
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	highlights, err := c.server.DocumentHighlight(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return highlights, true, nil
+	return clientPosRequest(c, ctx, doc, pos, func(
+		ctx context.Context, tdp protocol.TextDocumentPositionParams,
+	) ([]protocol.DocumentHighlight, bool, error) {
+		highlights, err := c.server.DocumentHighlight(ctx,
+			&protocol.DocumentHighlightParams{TextDocumentPositionParams: tdp},
+		)
+		if err != nil {
+			return nil, true, err
+		}
+		return highlights, true, nil
+	})
 }
 
 // DocumentHighlights returns same-document symbol highlights at the cursor
@@ -81,15 +73,7 @@ func documentHighlightRanges(
 ) []core.Range {
 	out := make([]core.Range, 0, len(highlights))
 	for _, highlight := range highlights {
-		from, ok := lspPositionToChar(
-			doc, highlight.Range.Start, client.OffsetEncoding(),
-		)
-		if !ok {
-			continue
-		}
-		to, ok := lspPositionToChar(
-			doc, highlight.Range.End, client.OffsetEncoding(),
-		)
+		from, to, ok := lspRangeToChars(doc, highlight.Range, client.OffsetEncoding())
 		if !ok {
 			continue
 		}

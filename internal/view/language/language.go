@@ -31,9 +31,7 @@ type (
 		BlockCommentTokens []core.BlockCommentToken
 		Indent             Indent
 		AutoPairs          AutoPairConfig
-		AutoFormat         *bool
 		Formatter          *Formatter
-		Debugger           *DebugAdapter
 		SoftWrap           SoftWrap `toml:"soft-wrap"`
 		Rulers             []int    `toml:"rulers"`
 	}
@@ -48,12 +46,8 @@ type (
 		Glob      string
 	}
 
-	ServerFeature string
-
 	ServerFeatures struct {
-		Name     string
-		Only     []ServerFeature
-		Excluded []ServerFeature
+		Name string
 	}
 
 	Server struct {
@@ -68,33 +62,6 @@ type (
 	Formatter struct {
 		Command string
 		Args    []string
-	}
-
-	DebugAdapter struct {
-		Name      string
-		Transport string
-		Command   string
-		Args      []string
-		PortArg   string
-		Templates []DebugTemplate
-		Quirks    DebuggerQuirks
-	}
-
-	DebugTemplate struct {
-		Name       string
-		Request    string
-		Completion []DebugCompletion
-		Args       map[string]any
-	}
-
-	DebugCompletion struct {
-		Name       string
-		Completion string
-		Default    string
-	}
-
-	DebuggerQuirks struct {
-		AbsolutePaths bool
 	}
 
 	GrammarSelection struct {
@@ -178,12 +145,12 @@ func DetectLanguage(path, content string) (string, bool) {
 	if err != nil {
 		cwd = "."
 	}
-	global, ok := UserLanguagesPath()
+	global, ok := loader.LanguagesFile()
 	if !ok {
 		global = ""
 	}
 	langs, ok := LoadLanguagesForWorkspace(
-		global, WorkspaceLanguagesPath(cwd), cwd,
+		global, loader.WorkspaceLanguagesFile(cwd), cwd,
 	)
 	if !ok {
 		return "", false
@@ -223,16 +190,8 @@ func LoadLanguagesForWorkspace(
 	return decodeLanguagesMap(merged)
 }
 
-func UserLanguagesPath() (string, bool) {
-	return loader.LanguagesFile()
-}
-
-func WorkspaceLanguagesPath(dir string) string {
-	return loader.WorkspaceLanguagesFile(dir)
-}
-
 func loadUserWorkspaceLanguages() (Languages, bool) {
-	path, ok := UserLanguagesPath()
+	path, ok := loader.LanguagesFile()
 	if !ok {
 		return Languages{}, false
 	}
@@ -241,7 +200,7 @@ func loadUserWorkspaceLanguages() (Languages, bool) {
 		cwd = "."
 	}
 	langs, ok := LoadLanguagesForWorkspace(
-		path, WorkspaceLanguagesPath(cwd), cwd,
+		path, loader.WorkspaceLanguagesFile(cwd), cwd,
 	)
 	return langs, ok
 }

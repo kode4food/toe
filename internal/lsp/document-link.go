@@ -6,7 +6,6 @@ import (
 	"errors"
 	"maps"
 	"slices"
-	"strconv"
 
 	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
@@ -22,19 +21,16 @@ type documentLinkCandidate struct {
 func (c *Client) DocumentLinks(
 	ctx context.Context, doc DocumentSnapshot,
 ) ([]protocol.DocumentLink, bool, error) {
-	if !c.SupportsFeature(FeatureDocumentLinks) {
-		return nil, false, nil
-	}
-	params := &protocol.DocumentLinkParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	links, err := c.server.DocumentLink(ctx, params)
-	if err != nil {
-		return nil, true, err
-	}
-	return links, true, nil
+	return clientDocRequest(c, ctx, doc, func(ctx context.Context, c *Client, tdid protocol.TextDocumentIdentifier) ([]protocol.DocumentLink, bool, error) {
+		if !c.SupportsFeature(FeatureDocumentLinks) {
+			return nil, false, nil
+		}
+		links, err := c.server.DocumentLink(ctx, &protocol.DocumentLinkParams{TextDocument: tdid})
+		if err != nil {
+			return nil, true, err
+		}
+		return links, true, nil
+	})
 }
 
 // ResolveDocumentLink resolves a stored document link target when supported
@@ -134,15 +130,7 @@ func (s *Session) ResolveDocumentLink(
 func viewDocumentLink(
 	client *Client, doc *view.Document, idx int, link protocol.DocumentLink,
 ) (view.DocumentLink, bool) {
-	from, ok := lspPositionToChar(
-		doc, link.Range.Start, client.OffsetEncoding(),
-	)
-	if !ok {
-		return view.DocumentLink{}, false
-	}
-	to, ok := lspPositionToChar(
-		doc, link.Range.End, client.OffsetEncoding(),
-	)
+	from, to, ok := lspRangeToChars(doc, link.Range, client.OffsetEncoding())
 	if !ok || from >= to {
 		return view.DocumentLink{}, false
 	}
@@ -151,7 +139,7 @@ func viewDocumentLink(
 		target = link.Target.String()
 	}
 	return view.DocumentLink{
-		ID:     documentLinkID(client.Name(), idx),
+		ID:     candidateID(client.Name(), idx),
 		From:   from,
 		To:     to,
 		Target: target,
@@ -166,10 +154,6 @@ func clientResolvesDocumentLinks(client *Client) bool {
 	}
 	resolve := capabilities.DocumentLinkProvider.ResolveProvider
 	return resolve != nil && *resolve
-}
-
-func documentLinkID(server string, idx int) string {
-	return server + ":" + strconv.Itoa(idx)
 }
 
 func (s *Session) storeDocumentLinks(
@@ -190,8 +174,8 @@ func (s *Session) clearDocumentLinksLocked(docID view.DocumentId) {
 }
 
 func (s *Session) documentLink(id string) (documentLinkCandidate, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	link, ok := s.links[id]
 	return link, ok
 }

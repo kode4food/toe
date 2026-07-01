@@ -139,7 +139,7 @@ func completionModule(model ui.Model) command.Module {
 				DocString: "Accept completion",
 				Run:       Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
-				Keys:      keys(special("ret")),
+				Keys:      keys(special("ret"), special("tab")),
 			},
 			{
 				Name:      actCompletionCancel,

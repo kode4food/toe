@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/glob"
 )
 
 type (
@@ -117,7 +118,7 @@ func editorConfigSectionMatches(pattern, rel string) bool {
 	if !isEditorConfigGlobRelative(pattern) {
 		pattern = "**/" + pattern
 	}
-	return globMatch(pattern, rel)
+	return glob.Match(pattern, rel)
 }
 
 // isEditorConfigGlobRelative reports whether a glob pattern contains '/'

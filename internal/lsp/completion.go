@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +24,20 @@ type (
 		to   int
 	}
 
+	completionEditCtx struct {
+		doc      *view.Document
+		encoding protocol.PositionEncodingKind
+		cursor   int
+		replace  bool
+	}
+
+	completionApplyOp struct {
+		offset  *completionEditOffset
+		replace bool
+		removed string
+		newText string
+	}
+
 	// CompletionList is a normalized completion response
 	CompletionList struct {
 		Items      []view.CompletionItem
@@ -36,31 +49,22 @@ type (
 // Completion requests completion items from the server at the given position
 func (c *Client) Completion(
 	ctx context.Context, doc DocumentSnapshot, pos int,
-	context protocol.CompletionContext,
+	compCtx protocol.CompletionContext,
 ) (CompletionList, bool, error) {
 	if !c.SupportsFeature(FeatureCompletion) {
 		return CompletionList{}, false, nil
 	}
-	lspPos, err := lspPosition(
-		core.NewRope(doc.Text), pos, c.OffsetEncoding(),
-	)
-	if err != nil {
-		return CompletionList{}, false, err
-	}
-	params := &protocol.CompletionParams{
-		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: doc.URI},
-			Position:     lspPos,
-		},
-		Context: context,
-	}
-	ctx, cancel := c.requestContext(ctx)
-	defer cancel()
-	result, err := c.server.Completion(ctx, params)
-	if err != nil {
-		return CompletionList{}, true, err
-	}
-	return normalizeCompletionResult(c.name, result), true, nil
+	return clientPosRequest(c, ctx, doc, pos, func(
+		ctx context.Context, tdp protocol.TextDocumentPositionParams,
+	) (CompletionList, bool, error) {
+		result, err := c.server.Completion(ctx, &protocol.CompletionParams{
+			TextDocumentPositionParams: tdp, Context: compCtx,
+		})
+		if err != nil {
+			return CompletionList{}, true, err
+		}
+		return normalizeCompletionResult(c.name, result), true, nil
+	})
 }
 
 // Completions requests an invoked completion list at the cursor
@@ -169,7 +173,7 @@ func (s *Session) completions(
 		if sent {
 			incomplete = incomplete || list.Incomplete
 			for i, item := range list.Items {
-				id := completionID(client.Name(), i)
+				id := candidateID(client.Name(), i)
 				item.ID = id
 				out = append(out, item)
 				raw[id] = completionCandidate{
@@ -201,7 +205,7 @@ func (s *Session) completionError(client *Client, err error) error {
 		}
 		return fmt.Errorf("%w: %s: %s", ErrLanguageServerExited, name, detail)
 	}
-	return fmt.Errorf("%w: %s", ErrLanguageServerRequest, name)
+	return fmt.Errorf("%w: %s: %w", ErrLanguageServerRequest, name, err)
 }
 
 func (s *Session) completionTrigger(
@@ -311,67 +315,42 @@ func completionDeprecated(tags []protocol.CompletionItemTag) bool {
 	return slices.Contains(tags, protocol.CompletionItemTagDeprecated)
 }
 
+var completionItemKindNames = map[protocol.CompletionItemKind]string{
+	protocol.CompletionItemKindText:          "text",
+	protocol.CompletionItemKindMethod:        "method",
+	protocol.CompletionItemKindFunction:      "function",
+	protocol.CompletionItemKindConstructor:   "constructor",
+	protocol.CompletionItemKindField:         "field",
+	protocol.CompletionItemKindVariable:      "variable",
+	protocol.CompletionItemKindClass:         "class",
+	protocol.CompletionItemKindInterface:     "interface",
+	protocol.CompletionItemKindModule:        "module",
+	protocol.CompletionItemKindProperty:      "property",
+	protocol.CompletionItemKindUnit:          "unit",
+	protocol.CompletionItemKindValue:         "value",
+	protocol.CompletionItemKindEnum:          "enum",
+	protocol.CompletionItemKindKeyword:       "keyword",
+	protocol.CompletionItemKindSnippet:       "snippet",
+	protocol.CompletionItemKindColor:         "color",
+	protocol.CompletionItemKindFile:          "file",
+	protocol.CompletionItemKindReference:     "reference",
+	protocol.CompletionItemKindFolder:        "folder",
+	protocol.CompletionItemKindEnumMember:    "enum_member",
+	protocol.CompletionItemKindConstant:      "constant",
+	protocol.CompletionItemKindStruct:        "struct",
+	protocol.CompletionItemKindEvent:         "event",
+	protocol.CompletionItemKindOperator:      "operator",
+	protocol.CompletionItemKindTypeParameter: "type_param",
+}
+
 func completionItemKind(kind protocol.CompletionItemKind) string {
-	switch kind {
-	case protocol.CompletionItemKindText:
-		return "text"
-	case protocol.CompletionItemKindMethod:
-		return "method"
-	case protocol.CompletionItemKindFunction:
-		return "function"
-	case protocol.CompletionItemKindConstructor:
-		return "constructor"
-	case protocol.CompletionItemKindField:
-		return "field"
-	case protocol.CompletionItemKindVariable:
-		return "variable"
-	case protocol.CompletionItemKindClass:
-		return "class"
-	case protocol.CompletionItemKindInterface:
-		return "interface"
-	case protocol.CompletionItemKindModule:
-		return "module"
-	case protocol.CompletionItemKindProperty:
-		return "property"
-	case protocol.CompletionItemKindUnit:
-		return "unit"
-	case protocol.CompletionItemKindValue:
-		return "value"
-	case protocol.CompletionItemKindEnum:
-		return "enum"
-	case protocol.CompletionItemKindKeyword:
-		return "keyword"
-	case protocol.CompletionItemKindSnippet:
-		return "snippet"
-	case protocol.CompletionItemKindColor:
-		return "color"
-	case protocol.CompletionItemKindFile:
-		return "file"
-	case protocol.CompletionItemKindReference:
-		return "reference"
-	case protocol.CompletionItemKindFolder:
-		return "folder"
-	case protocol.CompletionItemKindEnumMember:
-		return "enum_member"
-	case protocol.CompletionItemKindConstant:
-		return "constant"
-	case protocol.CompletionItemKindStruct:
-		return "struct"
-	case protocol.CompletionItemKindEvent:
-		return "event"
-	case protocol.CompletionItemKindOperator:
-		return "operator"
-	case protocol.CompletionItemKindTypeParameter:
-		return "type_param"
-	default:
-		return ""
-	}
+	return completionItemKindNames[kind]
 }
 
 func completionDocumentation(
 	detail string, docs protocol.InlayHintTooltip,
 ) string {
-	doc := tooltipText(docs)
+	doc := markupText(docs)
 	switch {
 	case detail != "" && doc != "":
 		return "```text\n" + detail + "\n```\n" + doc
@@ -379,20 +358,6 @@ func completionDocumentation(
 		return "```text\n" + detail + "\n```"
 	default:
 		return doc
-	}
-}
-
-func tooltipText(docs protocol.InlayHintTooltip) string {
-	switch v := docs.(type) {
-	case protocol.String:
-		return string(v)
-	case *protocol.MarkupContent:
-		if v == nil {
-			return ""
-		}
-		return v.Value
-	default:
-		return ""
 	}
 }
 
@@ -429,10 +394,6 @@ func sortCompletions(items []view.CompletionItem) {
 	})
 }
 
-func completionID(server string, idx int) string {
-	return server + ":" + strconv.Itoa(idx)
-}
-
 func (s *Session) storeCompletions(items map[string]completionCandidate) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -461,7 +422,7 @@ func (s *Session) applyAdditionalCompletionEdits(
 	}
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {
-		from, to, ok := completionEditRange(doc, edit.Range, encoding)
+		from, to, ok := lspRangeToChars(doc, edit.Range, encoding)
 		if !ok {
 			return ErrCompletionUnavailable
 		}
@@ -503,9 +464,10 @@ func completionTransaction(
 	sel := doc.SelectionFor(args.viewID)
 	text := doc.Text()
 	cursor := sel.Primary().Cursor(text)
-	editOffset, newText, err := completionEdit(
-		doc, args.item, args.encoding, cursor, args.replace,
-	)
+	ctx := completionEditCtx{
+		doc: doc, encoding: args.encoding, cursor: cursor, replace: args.replace,
+	}
+	editOffset, newText, err := completionEdit(ctx, args.item)
 	if err != nil {
 		return core.Transaction{}, err
 	}
@@ -518,9 +480,10 @@ func completionTransaction(
 	if err != nil {
 		return core.Transaction{}, err
 	}
-	changes, err := completionChanges(
-		text, sel, editOffset, args.replace, removed, newText,
-	)
+	apply := completionApplyOp{
+		offset: editOffset, replace: args.replace, removed: removed, newText: newText,
+	}
+	changes, err := completionChanges(text, sel, apply)
 	if err != nil {
 		return core.Transaction{}, err
 	}
@@ -547,31 +510,30 @@ func completionPrimaryRange(
 }
 
 func completionEdit(
-	doc *view.Document, item protocol.CompletionItem,
-	encoding protocol.PositionEncodingKind, cursor int, replace bool,
+	ctx completionEditCtx, item protocol.CompletionItem,
 ) (*completionEditOffset, string, error) {
 	switch edit := item.TextEdit.(type) {
 	case *protocol.TextEdit:
-		from, to, ok := completionEditRange(doc, edit.Range, encoding)
+		from, to, ok := lspRangeToChars(ctx.doc, edit.Range, ctx.encoding)
 		if !ok {
 			return nil, "", ErrCompletionUnavailable
 		}
 		return &completionEditOffset{
-			from: from - cursor,
-			to:   to - cursor,
+			from: from - ctx.cursor,
+			to:   to - ctx.cursor,
 		}, edit.NewText, nil
 	case *protocol.InsertReplaceEdit:
 		r := edit.Insert
-		if replace {
+		if ctx.replace {
 			r = edit.Replace
 		}
-		from, to, ok := completionEditRange(doc, r, encoding)
+		from, to, ok := lspRangeToChars(ctx.doc, r, ctx.encoding)
 		if !ok {
 			return nil, "", ErrCompletionUnavailable
 		}
 		return &completionEditOffset{
-			from: from - cursor,
-			to:   to - cursor,
+			from: from - ctx.cursor,
+			to:   to - ctx.cursor,
 		}, edit.NewText, nil
 	default:
 		if text, ok := item.InsertText.Get(); ok {
@@ -582,22 +544,21 @@ func completionEdit(
 }
 
 func completionChanges(
-	text core.Rope, sel core.Selection, offset *completionEditOffset,
-	replace bool, removed string, newText string,
+	text core.Rope, sel core.Selection, op completionApplyOp,
 ) ([]core.Change, error) {
 	ranges := sel.Ranges()
 	changes := make([]core.Change, 0, len(ranges))
 	for _, r := range ranges {
 		cursor := r.Cursor(text)
-		from, to := completionRangeForCursor(text, offset, replace, cursor)
+		from, to := completionRangeForCursor(text, op.offset, op.replace, cursor)
 		got, err := text.SliceString(from, to)
 		if err != nil {
 			return nil, err
 		}
-		if got != removed {
-			from, to = findCompletionRange(text, replace, cursor)
+		if got != op.removed {
+			from, to = findCompletionRange(text, op.replace, cursor)
 		}
-		changes = append(changes, core.TextChange(from, to, newText))
+		changes = append(changes, core.TextChange(from, to, op.newText))
 	}
 	return changes, nil
 }
@@ -637,21 +598,6 @@ func findCompletionRange(
 		to += countWordPrefix(after)
 	}
 	return from, to
-}
-
-func completionEditRange(
-	doc *view.Document, r protocol.Range,
-	encoding protocol.PositionEncodingKind,
-) (int, int, bool) {
-	from, ok := lspPositionToChar(doc, r.Start, encoding)
-	if !ok {
-		return 0, 0, false
-	}
-	to, ok := lspPositionToChar(doc, r.End, encoding)
-	if !ok {
-		return 0, 0, false
-	}
-	return from, to, true
 }
 
 func countWordPrefix(s string) int {

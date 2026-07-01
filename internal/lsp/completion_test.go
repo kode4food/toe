@@ -271,6 +271,8 @@ func TestAltCompletion(t *testing.T) {
 		// preselected items sort first; among preselected, sort by Sort key
 		assert.True(t, items[0].Preselect)
 		assert.Equal(t, "Println", items[0].Label)
+		assert.Equal(t, "(n int, format string)", items[0].LabelDetail)
+		assert.Equal(t, "fmt", items[0].LabelDescription)
 		assert.Contains(t, items[0].Docs, "Prints a line")
 
 		err = session.ApplyCompletion(doc, v.ID(), items[0])

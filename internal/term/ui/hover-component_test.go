@@ -75,4 +75,46 @@ func TestHoverComponent(t *testing.T) {
 
 		assert.NotContains(t, out, "hover docs")
 	})
+
+	t.Run("renders markdown heading", func(t *testing.T) {
+		e := editorWithText(t, "Println")
+		e.SetMode(view.ModeNormal)
+		e.SetLanguageServerController(&completionController{
+			editor:    e,
+			hoverText: "# Println\n\nPrints to standard output.\n\n",
+		})
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'k')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "Println")
+		assert.Contains(t, out, "Prints to standard output.")
+	})
+
+	t.Run("renders code block in hover popup", func(t *testing.T) {
+		e := editorWithText(t, "Println")
+		e.SetMode(view.ModeNormal)
+		e.SetLanguageServerController(&completionController{
+			editor:    e,
+			hoverText: "# Println\n\n```go\nfunc Println(a ...any) (n int, err error)\n```\n",
+		})
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'k')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "Println")
+		assert.Contains(t, out, "func Println")
+	})
 }

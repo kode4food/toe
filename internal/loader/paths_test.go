@@ -158,7 +158,12 @@ func TestWorkspace(t *testing.T) {
 
 func TestFindWorkspaceNoMarker(t *testing.T) {
 	t.Run("returns fallback when no marker", func(t *testing.T) {
-		_, fallback := loader.FindWorkspace(t.TempDir())
+		dir := t.TempDir()
+		_, parentFallback := loader.FindWorkspace(filepath.Dir(dir))
+		if !parentFallback {
+			t.Skip("environment has workspace markers above temp dir")
+		}
+		_, fallback := loader.FindWorkspace(dir)
 		assert.True(t, fallback)
 	})
 }

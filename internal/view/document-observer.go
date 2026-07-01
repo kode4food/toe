@@ -45,13 +45,6 @@ func (e *Editor) documentClosed(doc *Document) {
 	}
 }
 
-func newDocumentChange(before core.Rope, cs core.ChangeSet) DocumentChange {
-	return DocumentChange{
-		Before:  before,
-		Changes: cs,
-	}
-}
-
 func wholeDocumentChange(before core.Rope, text string) DocumentChange {
 	cs, err := core.NewChangeSetFromChanges(before, []core.Change{
 		core.TextChange(0, before.LenChars(), text),
@@ -59,5 +52,5 @@ func wholeDocumentChange(before core.Rope, text string) DocumentChange {
 	if err != nil {
 		return DocumentChange{Before: before}
 	}
-	return newDocumentChange(before, cs)
+	return DocumentChange{Before: before, Changes: cs}
 }

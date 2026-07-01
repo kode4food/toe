@@ -621,6 +621,9 @@ func (s *processServer) Declaration(
 func (s *processServer) Definition(
 	context.Context, *protocol.DefinitionParams,
 ) (protocol.DefinitionResult, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("definition error")
+	}
 	if os.Getenv(testServerNavigationEnv) != "1" {
 		return nil, nil
 	}
@@ -636,6 +639,9 @@ func (s *processServer) Definition(
 func (s *processServer) TypeDefinition(
 	context.Context, *protocol.TypeDefinitionParams,
 ) (protocol.DefinitionResult, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("type definition error")
+	}
 	if os.Getenv(testServerNavigationEnv) != "1" {
 		return nil, nil
 	}
@@ -645,6 +651,9 @@ func (s *processServer) TypeDefinition(
 func (s *processServer) Implementation(
 	context.Context, *protocol.ImplementationParams,
 ) (protocol.DefinitionResult, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("implementation error")
+	}
 	if os.Getenv(testServerNavigationEnv) != "1" {
 		return nil, nil
 	}
@@ -654,6 +663,9 @@ func (s *processServer) Implementation(
 func (s *processServer) References(
 	_ context.Context, params *protocol.ReferenceParams,
 ) ([]protocol.Location, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("references error")
+	}
 	if os.Getenv(testServerNavigationEnv) != "1" {
 		return nil, nil
 	}
@@ -718,6 +730,8 @@ func altCompletionItems() protocol.CompletionItemSlice {
 	sortA := "aaa"
 	sortB := "bbb"
 	sortZ := "zzz"
+	labelDetail := "(n int, format string)"
+	labelDescription := "fmt"
 	return protocol.CompletionItemSlice{
 		// Preselect=true, Sort="aaa" (should be first); has a Command
 		{
@@ -726,6 +740,10 @@ func altCompletionItems() protocol.CompletionItemSlice {
 			TextEdit:  insertReplaceEdit,
 			Preselect: protocol.NewOptional(preTrue),
 			SortText:  protocol.NewOptional(sortA),
+			LabelDetails: &protocol.CompletionItemLabelDetails{
+				Detail:      &labelDetail,
+				Description: &labelDescription,
+			},
 			Documentation: &protocol.MarkupContent{
 				Kind:  protocol.MarkupKindMarkdown,
 				Value: "Prints a line",

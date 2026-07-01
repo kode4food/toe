@@ -1,5 +1,7 @@
 package view
 
+import "slices"
+
 type (
 	// Diagnostic is a document diagnostic reported by an external provider
 	Diagnostic struct {
@@ -35,29 +37,39 @@ const (
 	DiagnosticSeverityError
 )
 
+// ReplaceDiagnostics replaces all diagnostics from provider with diags
 func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
-	out := d.diagnostics[:0]
-	for _, diag := range d.diagnostics {
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	out := d.ls.diagnostics[:0]
+	for _, diag := range d.ls.diagnostics {
 		if diag.Provider != provider {
 			out = append(out, diag)
 		}
 	}
-	d.diagnostics = append(out, diags...)
+	d.ls.diagnostics = append(out, diags...)
 }
 
+// ClearDiagnostics removes all diagnostics from the document
 func (d *Document) ClearDiagnostics() {
-	d.diagnostics = nil
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	d.ls.diagnostics = nil
 }
 
+// Diagnostics returns a snapshot of all current diagnostics
 func (d *Document) Diagnostics() []Diagnostic {
-	out := make([]Diagnostic, len(d.diagnostics))
-	copy(out, d.diagnostics)
-	return out
+	d.ls.RLock()
+	defer d.ls.RUnlock()
+	return slices.Clone(d.ls.diagnostics)
 }
 
+// DiagnosticCounts returns severity counts for all current diagnostics
 func (d *Document) DiagnosticCounts() DiagnosticCounts {
+	d.ls.RLock()
+	defer d.ls.RUnlock()
 	var counts DiagnosticCounts
-	for _, diag := range d.diagnostics {
+	for _, diag := range d.ls.diagnostics {
 		switch diag.Severity {
 		case DiagnosticSeverityError:
 			counts.Errors++

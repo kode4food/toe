@@ -15,10 +15,11 @@ import (
 )
 
 type (
-	tsCapture struct {
-		start, end int
-		scope      string
-		idx        uint32
+	// SyntaxCache holds Tree-sitter parser and query caches for a UI context
+	SyntaxCache struct {
+		mu        sync.RWMutex
+		langCache map[string]*langEntry
+		rawQuery  map[string][]byte
 	}
 
 	// langEntry holds the compiled parser and query for a single language
@@ -26,30 +27,37 @@ type (
 		parser *sitter.Parser
 		query  *sitter.Query
 	}
+
+	tsCapture struct {
+		start, end int
+		scope      string
+		idx        uint32
+	}
 )
 
-var (
-	langCacheMu sync.RWMutex
-	langCache   = map[string]*langEntry{}
-	rawQueryMu  sync.RWMutex
-	rawQuery    = map[string][]byte{}
-)
+// NewSyntaxCache returns an initialized SyntaxCache
+func NewSyntaxCache() *SyntaxCache {
+	return &SyntaxCache{
+		langCache: map[string]*langEntry{},
+		rawQuery:  map[string][]byte{},
+	}
+}
 
 // Tokenize parses text for lang and returns highlight spans with theme
 // scope names. Tree-sitter is tried first; Chroma is the fallback
-func Tokenize(text, lang string) []highlight.Span {
-	if spans := treeTokenize(text, lang); spans != nil {
+func (sc *SyntaxCache) Tokenize(text, lang string) []highlight.Span {
+	if spans := sc.treeTokenize(text, lang); spans != nil {
 		return spans
 	}
 	return highlight.Tokenize(text, lang)
 }
 
-func treeTokenize(text, lang string) []highlight.Span {
+func (sc *SyntaxCache) treeTokenize(text, lang string) []highlight.Span {
 	language, ok := languageFor(lang)
 	if !ok {
 		return nil
 	}
-	lc, ok := langCacheFor(lang, language)
+	lc, ok := sc.langCacheFor(lang, language)
 	if !ok {
 		return nil
 	}
@@ -111,6 +119,51 @@ func treeTokenize(text, lang string) []highlight.Span {
 	return buildSpans(captures)
 }
 
+func (sc *SyntaxCache) langCacheFor(
+	lang string, language *sitter.Language,
+) (*langEntry, bool) {
+	sc.mu.RLock()
+	if e, ok := sc.langCache[lang]; ok {
+		sc.mu.RUnlock()
+		return e, true
+	}
+	sc.mu.RUnlock()
+
+	qb, ok := sc.queryFor(lang)
+	if !ok {
+		return nil, false
+	}
+	p := sitter.NewParser()
+	p.SetLanguage(language)
+	q, err := sitter.NewQuery(qb, language)
+	if err != nil {
+		return nil, false
+	}
+	e := &langEntry{parser: p, query: q}
+	sc.mu.Lock()
+	sc.langCache[lang] = e
+	sc.mu.Unlock()
+	return e, true
+}
+
+func (sc *SyntaxCache) queryFor(lang string) ([]byte, bool) {
+	sc.mu.RLock()
+	if b, ok := sc.rawQuery[lang]; ok {
+		sc.mu.RUnlock()
+		return b, true
+	}
+	sc.mu.RUnlock()
+
+	b, ok := resolveQuery(lang, map[string]bool{})
+	if !ok {
+		return nil, false
+	}
+	sc.mu.Lock()
+	sc.rawQuery[lang] = b
+	sc.mu.Unlock()
+	return b, true
+}
+
 // buildByteToChar builds a table mapping UTF-8 byte offset → rune offset
 func buildByteToChar(text string) []int {
 	table := make([]int, len(text)+1)
@@ -156,49 +209,6 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 		i = j
 	}
 	return spans
-}
-
-func langCacheFor(lang string, language *sitter.Language) (*langEntry, bool) {
-	langCacheMu.RLock()
-	if e, ok := langCache[lang]; ok {
-		langCacheMu.RUnlock()
-		return e, true
-	}
-	langCacheMu.RUnlock()
-
-	qb, ok := queryFor(lang)
-	if !ok {
-		return nil, false
-	}
-	p := sitter.NewParser()
-	p.SetLanguage(language)
-	q, err := sitter.NewQuery(qb, language)
-	if err != nil {
-		return nil, false
-	}
-	e := &langEntry{parser: p, query: q}
-	langCacheMu.Lock()
-	langCache[lang] = e
-	langCacheMu.Unlock()
-	return e, true
-}
-
-func queryFor(lang string) ([]byte, bool) {
-	rawQueryMu.RLock()
-	if b, ok := rawQuery[lang]; ok {
-		rawQueryMu.RUnlock()
-		return b, true
-	}
-	rawQueryMu.RUnlock()
-
-	b, ok := resolveQuery(lang, map[string]bool{})
-	if !ok {
-		return nil, false
-	}
-	rawQueryMu.Lock()
-	rawQuery[lang] = b
-	rawQueryMu.Unlock()
-	return b, true
 }
 
 // resolveQuery loads and resolves ;; inherits: directives for a language

@@ -3,8 +3,11 @@ package language
 import (
 	"path/filepath"
 	"regexp"
+
 	"slices"
 	"strings"
+
+	"github.com/kode4food/toe/internal/glob"
 )
 
 func languageForFilename(langs Languages, path string) (Language, bool) {
@@ -16,7 +19,7 @@ func languageForFilename(langs Languages, path string) (Language, bool) {
 	foundLen := -1
 	for _, lang := range langs.Languages {
 		for _, ft := range lang.FileTypes {
-			if ft.Glob != "" && globMatch(ft.Glob, abs) {
+			if ft.Glob != "" && glob.Match(ft.Glob, abs) {
 				if n := len(ft.Glob); n > foundLen {
 					found = lang
 					foundLen = n

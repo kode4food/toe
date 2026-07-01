@@ -1300,6 +1300,22 @@ func TestSessionAllOperationsError(t *testing.T) {
 		_, err := session.GotoDeclaration(doc, v.ID())
 		assert.Error(t, err)
 	})
+	t.Run("goto definition returns error", func(t *testing.T) {
+		_, err := session.GotoDefinition(doc, v.ID())
+		assert.Error(t, err)
+	})
+	t.Run("goto type definition returns error", func(t *testing.T) {
+		_, err := session.GotoTypeDefinition(doc, v.ID())
+		assert.Error(t, err)
+	})
+	t.Run("goto implementation returns error", func(t *testing.T) {
+		_, err := session.GotoImplementation(doc, v.ID())
+		assert.Error(t, err)
+	})
+	t.Run("goto reference returns error", func(t *testing.T) {
+		_, err := session.GotoReference(doc, v.ID())
+		assert.Error(t, err)
+	})
 	t.Run("document colors returns error", func(t *testing.T) {
 		_, err := session.DocumentColors(doc)
 		assert.Error(t, err)

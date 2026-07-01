@@ -5,6 +5,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -18,9 +19,9 @@ type Model struct {
 
 // New creates an initialized Model for the given editor and keymaps
 func New(editor *view.Editor, km *command.Keymaps) Model {
-	cx := &Context{Editor: editor, Keymaps: km}
+	cx := &Context{Editor: editor, Keymaps: km, Syntax: syntax.NewSyntaxCache()}
 	ec := newEditorComponent()
-	comp := newCompositor()
+	comp := &Compositor{}
 	comp.Push(ec)
 	return Model{compositor: comp, context: cx, component: ec}
 }

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
@@ -16,6 +15,31 @@ import (
 type codeActionCandidate struct {
 	client *Client
 	item   protocol.CommandOrCodeAction
+}
+
+// Sort priority constants for code action ordering (lower = listed first).
+const (
+	codeActionQuickfix         = iota // 0
+	codeActionRefactorExtract         // 1
+	codeActionRefactorInline          // 2
+	codeActionRefactorRewrite         // 3
+	codeActionRefactorMove            // 4
+	codeActionRefactorSurround        // 5
+	codeActionSource                  // 6
+	codeActionOther                   // 7
+)
+
+var codeActionTopCategory = map[string]int{
+	"quickfix": codeActionQuickfix,
+	"source":   codeActionSource,
+}
+
+var codeActionRefactorSubcategory = map[string]int{
+	"extract":  codeActionRefactorExtract,
+	"inline":   codeActionRefactorInline,
+	"rewrite":  codeActionRefactorRewrite,
+	"move":     codeActionRefactorMove,
+	"surround": codeActionRefactorSurround,
 }
 
 // CodeActions requests code actions and commands for a selection
@@ -76,7 +100,7 @@ func (s *Session) CodeActions(
 			continue
 		}
 		for i, action := range actions {
-			id := codeActionID(client.Name(), i)
+			id := candidateID(client.Name(), i)
 			item, ok := viewCodeAction(id, client.Name(), action)
 			if !ok {
 				continue
@@ -232,42 +256,21 @@ func viewCodeAction(
 	}
 }
 
-func codeActionID(server string, idx int) string {
-	return server + ":" + strconv.Itoa(idx)
-}
-
 func codeActionCategory(item protocol.CommandOrCodeAction) int {
 	action, ok := item.(*protocol.CodeAction)
 	if !ok || action.Kind == nil {
-		return 7
+		return codeActionOther
 	}
 	parts := strings.Split(string(*action.Kind), ".")
-	switch parts[0] {
-	case "quickfix":
-		return 0
-	case "refactor":
-		if len(parts) < 2 {
-			return 7
-		}
-		switch parts[1] {
-		case "extract":
-			return 1
-		case "inline":
-			return 2
-		case "rewrite":
-			return 3
-		case "move":
-			return 4
-		case "surround":
-			return 5
-		default:
-			return 7
-		}
-	case "source":
-		return 6
-	default:
-		return 7
+	if cat, ok := codeActionTopCategory[parts[0]]; ok {
+		return cat
 	}
+	if parts[0] == "refactor" && len(parts) >= 2 {
+		if cat, ok := codeActionRefactorSubcategory[parts[1]]; ok {
+			return cat
+		}
+	}
+	return codeActionOther
 }
 
 func codeActionPreferred(item protocol.CommandOrCodeAction) bool {

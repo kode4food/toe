@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
+	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -42,7 +43,9 @@ type (
 	}
 )
 
-func (p previewCache) doc(doc *view.Document) *previewDocEntry {
+func (p previewCache) doc(
+	sc *syntax.SyntaxCache, doc *view.Document,
+) *previewDocEntry {
 	lang := doc.Lang()
 	rev := doc.Revision()
 	key := previewDocKey(doc.ID())
@@ -54,19 +57,21 @@ func (p previewCache) doc(doc *view.Document) *previewDocEntry {
 	entry = &previewDocEntry{
 		rev: rev, lang: lang,
 		rope:  core.NewRope(text),
-		spans: previewSpans(text, lang),
+		spans: previewSpans(sc, text, lang),
 	}
 	p[key] = entry
 	return entry
 }
 
-func (p previewCache) path(path string) previewCacheEntry {
+func (p previewCache) path(
+	sc *syntax.SyntaxCache, path string,
+) previewCacheEntry {
 	key := previewPathKey(path)
 	entry, ok := p[key]
 	if ok {
 		return entry
 	}
-	entry = loadPathPreview(path)
+	entry = loadPathPreview(sc, path)
 	p[key] = entry
 	return entry
 }
@@ -83,7 +88,7 @@ func previewPathKey(path string) previewCacheKey {
 	return previewCacheKey{path: path}
 }
 
-func loadPathPreview(path string) previewCacheEntry {
+func loadPathPreview(sc *syntax.SyntaxCache, path string) previewCacheEntry {
 	info, err := os.Stat(path)
 	if err != nil {
 		return noPreviewEntry("<File not found>")
@@ -104,7 +109,7 @@ func loadPathPreview(path string) previewCacheEntry {
 	text := highlight.NormalizeNewlines(string(data))
 	lang := highlight.DetectLanguage(path, text)
 	return &previewDocEntry{
-		rope: core.NewRope(text), spans: previewSpans(text, lang),
+		rope: core.NewRope(text), spans: previewSpans(sc, text, lang),
 		lang: lang,
 	}
 }

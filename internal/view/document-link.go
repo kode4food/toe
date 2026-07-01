@@ -1,23 +1,28 @@
 package view
 
+import "slices"
+
 // SetDocumentLinks stores document-wide LSP links
 func (d *Document) SetDocumentLinks(links []DocumentLink) {
+	d.ls.Lock()
+	defer d.ls.Unlock()
 	if len(links) == 0 {
-		d.documentLinks = nil
+		d.ls.links = nil
 		return
 	}
-	d.documentLinks = make([]DocumentLink, len(links))
-	copy(d.documentLinks, links)
+	d.ls.links = slices.Clone(links)
 }
 
 // ClearDocumentLinks removes document-wide LSP links
 func (d *Document) ClearDocumentLinks() {
-	d.documentLinks = nil
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	d.ls.links = nil
 }
 
 // DocumentLinks returns document-wide LSP links
 func (d *Document) DocumentLinks() []DocumentLink {
-	out := make([]DocumentLink, len(d.documentLinks))
-	copy(out, d.documentLinks)
-	return out
+	d.ls.RLock()
+	defer d.ls.RUnlock()
+	return slices.Clone(d.ls.links)
 }

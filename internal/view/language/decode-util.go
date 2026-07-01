@@ -1,6 +1,9 @@
 package language
 
-import "github.com/kode4food/toe/internal/core"
+import (
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/loader"
+)
 
 func decodeStringOrSlice(value any) []string {
 	if s, ok := value.(string); ok {
@@ -131,51 +134,14 @@ func stringValue(lang, editor *string, fallback string) string {
 	return fallback
 }
 
-func boolPtr(value any) *bool {
-	v, ok := value.(bool)
-	if !ok {
-		return nil
-	}
-	return &v
-}
-
-func intPtr(value any) (*int, bool) {
-	switch v := value.(type) {
-	case int:
-		return &v, true
-	case int64:
-		return new(int(v)), true
-	default:
-		return nil, false
-	}
-}
-
-func intPtrOrNil(value any) *int {
-	v, _ := intPtr(value)
-	return v
-}
-
-func stringPtr(value any) *string {
-	v, ok := value.(string)
-	if !ok {
-		return nil
-	}
-	return &v
-}
-
 func stringValueFromMap(m map[string]any, key string) string {
 	v, _ := m[key].(string)
 	return v
 }
 
 func intValueFromMap(m map[string]any, key string, fallback int) int {
-	if n, ok := intPtr(m[key]); ok {
+	if n, ok := loader.IntPtr(m[key]); ok {
 		return *n
 	}
 	return fallback
-}
-
-func boolValueFromMap(m map[string]any, key string) bool {
-	v, _ := m[key].(bool)
-	return v
 }

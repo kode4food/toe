@@ -51,9 +51,10 @@ func TestTokenize(t *testing.T) {
 		{"sql", "SELECT id FROM users WHERE active = 1;\n"},
 	}
 
+	sc := syntax.NewSyntaxCache()
 	for _, tc := range cases {
 		t.Run(tc.lang, func(t *testing.T) {
-			spans := syntax.Tokenize(tc.src, tc.lang)
+			spans := sc.Tokenize(tc.src, tc.lang)
 			assert.NotEmpty(t, spans)
 			for _, sp := range spans {
 				assert.Less(t, sp.Start, sp.End, "span must have Start < End")
@@ -68,7 +69,8 @@ func TestTokenize(t *testing.T) {
 
 func TestTokenizeChromaFallback(t *testing.T) {
 	// "json" has no Tree-sitter grammar in langRegistry; falls back to Chroma
-	spans := syntax.Tokenize(`{"key": "value", "n": 42}`, "json")
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize(`{"key": "value", "n": 42}`, "json")
 	assert.NotEmpty(t, spans)
 	for _, sp := range spans {
 		assert.Less(t, sp.Start, sp.End)
@@ -76,19 +78,22 @@ func TestTokenizeChromaFallback(t *testing.T) {
 }
 
 func TestTokenizeEmpty(t *testing.T) {
-	spans := syntax.Tokenize("", "go")
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize("", "go")
 	assert.Empty(t, spans)
 }
 
 func TestTokenizeUnknown(t *testing.T) {
 	// Unknown lang must not panic and falls back to Chroma's fallback lexer
-	spans := syntax.Tokenize("hello world", "__unknown__")
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize("hello world", "__unknown__")
 	_ = spans
 }
 
 func TestTokenizeGoScopes(t *testing.T) {
 	src := "package main\n\nfunc main() {}\n"
-	spans := syntax.Tokenize(src, "go")
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize(src, "go")
 
 	scopes := make(map[string]bool)
 	for _, sp := range spans {
@@ -125,7 +130,8 @@ type Config struct {
 const DefaultPort = 8080
 var _ = DefaultPort
 `
-	spans := syntax.Tokenize(src, "go")
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize(src, "go")
 	assert.NotEmpty(t, spans)
 	for i := 1; i < len(spans); i++ {
 		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start,
@@ -136,15 +142,17 @@ var _ = DefaultPort
 func TestTokenizeCached(t *testing.T) {
 	// Second call for same language hits the rawQuery cache
 	src := "package main\n"
-	spans1 := syntax.Tokenize(src, "go")
-	spans2 := syntax.Tokenize(src, "go")
+	sc := syntax.NewSyntaxCache()
+	spans1 := sc.Tokenize(src, "go")
+	spans2 := sc.Tokenize(src, "go")
 	assert.Equal(t, len(spans1), len(spans2))
 }
 
 func TestTokenizeEscapeOverlap(t *testing.T) {
 	t.Run("escape in string skips nested capture", func(t *testing.T) {
 		src := "package main\nconst s = \"hello\\nworld\"\n"
-		spans := syntax.Tokenize(src, "go")
+		sc := syntax.NewSyntaxCache()
+		spans := sc.Tokenize(src, "go")
 		assert.NotEmpty(t, spans)
 		for i := 1; i < len(spans); i++ {
 			assert.LessOrEqual(t, spans[i-1].End, spans[i].Start)
@@ -155,7 +163,8 @@ func TestTokenizeEscapeOverlap(t *testing.T) {
 func TestTokenizeNonOverlapping(t *testing.T) {
 	src := "package main\n\nimport \"fmt\"\n\n" +
 		"func main() {\n\tfmt.Println(\"hello\")\n}\n"
-	spans := syntax.Tokenize(src, "go")
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize(src, "go")
 
 	for i := 1; i < len(spans); i++ {
 		assert.LessOrEqual(t,

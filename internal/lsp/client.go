@@ -28,12 +28,12 @@ type (
 		processExited bool
 		stderr        *stderrTail
 		initialized   bool
-		mu            sync.Mutex
+		mu            sync.RWMutex
 	}
 
 	stderrTail struct {
+		sync.RWMutex
 		text string
-		mu   sync.Mutex
 	}
 
 	// ClientState is the lifecycle state of a Client
@@ -71,9 +71,9 @@ func NewClient(
 func (c *Client) requestContext(
 	ctx context.Context,
 ) (context.Context, context.CancelFunc) {
-	c.mu.Lock()
+	c.mu.RLock()
 	timeout := c.timeout
-	c.mu.Unlock()
+	c.mu.RUnlock()
 	if timeout <= 0 {
 		return ctx, func() {}
 	}
@@ -82,15 +82,15 @@ func (c *Client) requestContext(
 
 // State returns the current lifecycle state of the client
 func (c *Client) State() ClientState {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.state
 }
 
 // OffsetEncoding returns the position encoding kind negotiated with the server
 func (c *Client) OffsetEncoding() protocol.PositionEncodingKind {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.offset
 }
 
@@ -101,8 +101,8 @@ func (c *Client) Server() protocol.Server {
 
 // Capabilities returns initialized server capabilities
 func (c *Client) Capabilities() (protocol.ServerCapabilities, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.capabilities, c.initialized
 }
 
@@ -131,8 +131,8 @@ func (c *Client) ExecuteCommand(
 }
 
 func (c *Client) processExitStatus() (bool, string, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.processExited, c.stderrText(), c.processErr
 }
 
@@ -220,8 +220,8 @@ func (c *Client) markProcessDone(err error) {
 }
 
 func (c *Client) processErrValue() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.processErr
 }
 
@@ -233,8 +233,8 @@ func (c *Client) stderrText() string {
 }
 
 func (s *stderrTail) Write(b []byte) (int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Lock()
+	defer s.Unlock()
 	s.text += string(b)
 	if len(s.text) > maxStderrTail {
 		s.text = s.text[len(s.text)-maxStderrTail:]
@@ -243,7 +243,7 @@ func (s *stderrTail) Write(b []byte) (int, error) {
 }
 
 func (s *stderrTail) String() string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 	return strings.TrimSpace(s.text)
 }

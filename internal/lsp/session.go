@@ -11,6 +11,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 	"go.lsp.dev/protocol"
@@ -42,7 +43,7 @@ type (
 		watches   map[string]map[string][]fileWatch
 		watcher   *fsWatcher
 		roots     map[string]string
-		mu        sync.Mutex
+		mu        sync.RWMutex
 	}
 )
 
@@ -222,9 +223,11 @@ func (s *Session) PullDiagnostics(doc *view.Document) error {
 	if len(clients) == 0 {
 		return ErrNoLanguageServer
 	}
+	s.mu.RLock()
 	if lang, ok := s.languages[doc.Lang()]; ok && lang.LanguageID != "" {
 		snap.LanguageID = lang.LanguageID
 	}
+	s.mu.RUnlock()
 	var err error
 	for _, client := range clients {
 		if !client.SupportsFeature(FeaturePullDiagnostics) {
@@ -326,12 +329,12 @@ func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 func (s *Session) Close() error {
 	s.clearAllDocumentHighlights()
 	s.closeFileWatcher()
-	s.mu.Lock()
+	s.mu.RLock()
 	clients := make([]*Client, 0, len(s.clients))
 	for _, client := range s.clients {
 		clients = append(clients, client)
 	}
-	s.mu.Unlock()
+	s.mu.RUnlock()
 
 	var err error
 	for _, client := range clients {
@@ -448,8 +451,8 @@ func (s *Session) applyDiagnosticReport(
 func (s *Session) previousDiagnosticID(
 	id view.DocumentId, provider string,
 ) *string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	ids, ok := s.diagIDs[id]
 	if !ok {
 		return nil
@@ -507,9 +510,11 @@ func (s *Session) notify(
 	if len(clients) == 0 {
 		return
 	}
+	s.mu.RLock()
 	if lang, ok := s.languages[doc.Lang()]; ok && lang.LanguageID != "" {
 		snap.LanguageID = lang.LanguageID
 	}
+	s.mu.RUnlock()
 	for _, client := range clients {
 		_, _ = send(client, s.ctx, snap)
 	}
@@ -526,9 +531,11 @@ func (s *Session) notifyChange(
 	if len(clients) == 0 {
 		return
 	}
+	s.mu.RLock()
 	if lang, ok := s.languages[doc.Lang()]; ok && lang.LanguageID != "" {
 		snap.LanguageID = lang.LanguageID
 	}
+	s.mu.RUnlock()
 	for _, client := range clients {
 		_, _ = client.DidChangeDocument(s.ctx, snap, change)
 	}
@@ -561,8 +568,8 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 }
 
 func (s *Session) client(name string) (*Client, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	client, ok := s.clients[name]
 	return client, ok
 }
@@ -604,7 +611,9 @@ func (s *Session) languageForDocument(
 	if doc == nil {
 		return language.Language{}, false
 	}
+	s.mu.RLock()
 	lang, ok := s.languages[doc.Lang()]
+	s.mu.RUnlock()
 	if !ok || len(lang.LanguageServers) == 0 {
 		return language.Language{}, false
 	}
@@ -616,7 +625,9 @@ func (s *Session) startClient(
 ) (*Client, bool) {
 	root := s.workspaceRoot(doc, lang)
 	handler := &clientHandler{session: s, name: name}
+	s.mu.RLock()
 	client, err := s.registry.Start(s.ctx, name, root, handler)
+	s.mu.RUnlock()
 	if err != nil {
 		return nil, false
 	}
@@ -643,9 +654,9 @@ func (s *Session) setWorkspaceRoot(name, root string) {
 }
 
 func (s *Session) workspaceFolders() []protocol.WorkspaceFolder {
-	s.mu.Lock()
+	s.mu.RLock()
 	roots := maps.Clone(s.roots)
-	s.mu.Unlock()
+	s.mu.RUnlock()
 	out := make([]protocol.WorkspaceFolder, 0, len(roots))
 	for _, root := range roots {
 		out = append(out, protocol.WorkspaceFolder{
@@ -665,11 +676,7 @@ func (s *Session) convertDiagnostics(
 ) []view.Diagnostic {
 	out := make([]view.Diagnostic, 0, len(diags))
 	for _, diag := range diags {
-		from, ok := lspPositionToChar(doc, diag.Range.Start, encoding)
-		if !ok {
-			continue
-		}
-		to, ok := lspPositionToChar(doc, diag.Range.End, encoding)
+		from, to, ok := lspRangeToChars(doc, diag.Range, encoding)
 		if !ok {
 			continue
 		}
@@ -680,7 +687,7 @@ func (s *Session) convertDiagnostics(
 				To:   to,
 			},
 			Severity: diagnosticSeverity(diag.Severity),
-			Message:  diagnosticMessage(diag.Message),
+			Message:  markupText(diag.Message),
 			Source:   source,
 			Provider: provider,
 		})
@@ -691,57 +698,13 @@ func (s *Session) convertDiagnostics(
 func (s *Session) offsetForProvider(
 	provider string,
 ) protocol.PositionEncodingKind {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	client, ok := s.clients[provider]
 	if !ok {
 		return protocol.PositionEncodingKindUTF16
 	}
 	return client.OffsetEncoding()
-}
-
-func lspPositionToChar(
-	doc *view.Document, pos protocol.Position,
-	encoding protocol.PositionEncodingKind,
-) (int, bool) {
-	lineStart, err := doc.Text().LineToChar(int(pos.Line))
-	if err != nil {
-		return 0, false
-	}
-	lineEnd, err := doc.Text().LineEndCharIndex(int(pos.Line))
-	if err != nil {
-		return 0, false
-	}
-	line, err := doc.Text().SliceString(lineStart, lineEnd)
-	if err != nil {
-		return 0, false
-	}
-	chars, ok := encodedPositionToChar(line, int(pos.Character), encoding)
-	if !ok {
-		return 0, false
-	}
-	return lineStart + chars, true
-}
-
-func encodedPositionToChar(
-	line string, target int, encoding protocol.PositionEncodingKind,
-) (int, bool) {
-	units := 0
-	chars := 0
-	for _, ch := range line {
-		if units == target {
-			return chars, true
-		}
-		units += encodedRuneLen(ch, encoding)
-		chars++
-		if units > target {
-			return 0, false
-		}
-	}
-	if units == target {
-		return chars, true
-	}
-	return 0, false
 }
 
 func diagnosticSeverity(
@@ -756,17 +719,6 @@ func diagnosticSeverity(
 		return view.DiagnosticSeverityInfo
 	default:
 		return view.DiagnosticSeverityHint
-	}
-}
-
-func diagnosticMessage(message protocol.InlayHintTooltip) string {
-	switch m := message.(type) {
-	case protocol.String:
-		return string(m)
-	case *protocol.MarkupContent:
-		return m.Value
-	default:
-		return ""
 	}
 }
 
@@ -789,11 +741,11 @@ func (s *Session) workspaceRoot(
 }
 
 func loadLanguages(cwd string) language.Languages {
-	global, ok := language.UserLanguagesPath()
+	global, ok := loader.LanguagesFile()
 	if !ok {
 		global = ""
 	}
-	workspace := language.WorkspaceLanguagesPath(cwd)
+	workspace := loader.WorkspaceLanguagesFile(cwd)
 	langs, ok := language.LoadLanguagesForWorkspace(global, workspace, cwd)
 	if !ok {
 		return language.Languages{}

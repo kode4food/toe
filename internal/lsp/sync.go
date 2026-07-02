@@ -19,19 +19,6 @@ type DocumentSnapshot struct {
 	Text       string
 }
 
-// SnapshotDocument captures the current file-backed view document state
-func SnapshotDocument(doc *view.Document) (DocumentSnapshot, bool) {
-	if doc == nil || doc.Path() == "" {
-		return DocumentSnapshot{}, false
-	}
-	return DocumentSnapshot{
-		URI:        uri.File(doc.Path()),
-		LanguageID: doc.Lang(),
-		Version:    int32(doc.Revision()),
-		Text:       doc.Text().String(),
-	}, true
-}
-
 // DidOpen sends a textDocument/didOpen notification when supported
 func (c *Client) DidOpen(
 	ctx context.Context, doc DocumentSnapshot,
@@ -218,6 +205,19 @@ func (c *Client) diagnosticIdentifier() (*string, bool) {
 	default:
 		return nil, false
 	}
+}
+
+// SnapshotDocument captures the current file-backed view document state
+func SnapshotDocument(doc *view.Document) (DocumentSnapshot, bool) {
+	if doc == nil || doc.Path() == "" {
+		return DocumentSnapshot{}, false
+	}
+	return DocumentSnapshot{
+		URI:        uri.File(doc.Path()),
+		LanguageID: doc.Lang(),
+		Version:    int32(doc.Revision()),
+		Text:       doc.Text().String(),
+	}, true
 }
 
 func incrementalChanges(

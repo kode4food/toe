@@ -85,18 +85,6 @@ func NewSession(ctx context.Context, cwd string) *Session {
 	}
 }
 
-// Attach starts an LSP session for the editor and observes document changes
-func Attach(ctx context.Context, e *view.Editor) *Session {
-	s := NewSession(ctx, e.Cwd())
-	s.editor = e
-	e.SetLanguageServerController(s)
-	e.SetDocumentObserver(s)
-	for _, doc := range e.AllDocuments() {
-		s.DocumentOpened(doc)
-	}
-	return s
-}
-
 // ReloadConfig reloads language-server config and restarts open documents
 func (s *Session) ReloadConfig() error {
 	langs := loadLanguages(s.cwd)
@@ -860,6 +848,18 @@ func (s *Session) clearDocumentHighlightsForServers(names []string) {
 			}
 		}
 	}
+}
+
+// Attach starts an LSP session for the editor and observes document changes
+func Attach(ctx context.Context, e *view.Editor) *Session {
+	s := NewSession(ctx, e.Cwd())
+	s.editor = e
+	e.SetLanguageServerController(s)
+	e.SetDocumentObserver(s)
+	for _, doc := range e.AllDocuments() {
+		s.DocumentOpened(doc)
+	}
+	return s
 }
 
 func closeClients(clients []*Client) {

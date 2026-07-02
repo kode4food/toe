@@ -17,17 +17,6 @@ const (
 	jumplistContentsMaxRune = 80
 )
 
-// JumplistPicker opens a picker listing the jump history for the focused view
-func JumplistPicker(e *view.Editor) *Picker {
-	return NewPicker(e, &jumplistPickerSource{
-		pickerMeta: pickerMeta{
-			title:   "Jumplist",
-			columns: []string{"id", "path", "flags", "contents"},
-			primary: 1,
-		},
-	})
-}
-
 func (j *jumplistPickerSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -84,6 +73,17 @@ func (j *jumplistPickerSource) Accept(
 		doc.SetSelectionFor(v.ID(), jumpSelection(entry))
 		alignAcceptedView(e, v, doc)
 	}
+}
+
+// JumplistPicker opens a picker listing the jump history for the focused view
+func JumplistPicker(e *view.Editor) *Picker {
+	return NewPicker(e, &jumplistPickerSource{
+		pickerMeta: pickerMeta{
+			title:   "Jumplist",
+			columns: []string{"id", "path", "flags", "contents"},
+			primary: 1,
+		},
+	})
 }
 
 func jumpSelection(j view.JumpEntry) core.Selection {

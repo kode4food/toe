@@ -84,20 +84,6 @@ func NewTokenizer(input string, validate bool) *Tokenizer {
 	return &Tokenizer{input: input, validate: validate}
 }
 
-// SplitCommandLine separates the command name from its argument text
-func SplitCommandLine(input string) (string, string, bool) {
-	i := strings.IndexAny(input, " \t")
-	if i < 0 {
-		return input, "", true
-	}
-	name := input[:i]
-	rest := input[i+1:]
-	complete := name == "" ||
-		(strings.TrimSpace(rest) == "" && !strings.HasSuffix(input, " ") &&
-			!strings.HasSuffix(input, "\t"))
-	return name, rest, complete
-}
-
 func (s *SyntaxError) Error() string {
 	switch s.Kind {
 	case SyntaxErrorUnterminatedToken:
@@ -297,4 +283,18 @@ func (t *Tokenizer) peekEscapedToken() bool {
 	default:
 		return false
 	}
+}
+
+// SplitCommandLine separates the command name from its argument text
+func SplitCommandLine(input string) (string, string, bool) {
+	i := strings.IndexAny(input, " \t")
+	if i < 0 {
+		return input, "", true
+	}
+	name := input[:i]
+	rest := input[i+1:]
+	complete := name == "" ||
+		(strings.TrimSpace(rest) == "" && !strings.HasSuffix(input, " ") &&
+			!strings.HasSuffix(input, "\t"))
+	return name, rest, complete
 }

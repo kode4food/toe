@@ -45,6 +45,34 @@ type (
 	}
 )
 
+var completionItemKindNames = map[protocol.CompletionItemKind]string{
+	protocol.CompletionItemKindText:          "text",
+	protocol.CompletionItemKindMethod:        "method",
+	protocol.CompletionItemKindFunction:      "function",
+	protocol.CompletionItemKindConstructor:   "constructor",
+	protocol.CompletionItemKindField:         "field",
+	protocol.CompletionItemKindVariable:      "variable",
+	protocol.CompletionItemKindClass:         "class",
+	protocol.CompletionItemKindInterface:     "interface",
+	protocol.CompletionItemKindModule:        "module",
+	protocol.CompletionItemKindProperty:      "property",
+	protocol.CompletionItemKindUnit:          "unit",
+	protocol.CompletionItemKindValue:         "value",
+	protocol.CompletionItemKindEnum:          "enum",
+	protocol.CompletionItemKindKeyword:       "keyword",
+	protocol.CompletionItemKindSnippet:       "snippet",
+	protocol.CompletionItemKindColor:         "color",
+	protocol.CompletionItemKindFile:          "file",
+	protocol.CompletionItemKindReference:     "reference",
+	protocol.CompletionItemKindFolder:        "folder",
+	protocol.CompletionItemKindEnumMember:    "enum_member",
+	protocol.CompletionItemKindConstant:      "constant",
+	protocol.CompletionItemKindStruct:        "struct",
+	protocol.CompletionItemKindEvent:         "event",
+	protocol.CompletionItemKindOperator:      "operator",
+	protocol.CompletionItemKindTypeParameter: "type_param",
+}
+
 // Completion requests completion items from the server at the given position
 func (c *Client) Completion(
 	ctx context.Context, doc DocumentSnapshot, pos int,
@@ -317,34 +345,6 @@ func completionLabelDetails(item protocol.CompletionItem) (string, string) {
 
 func completionDeprecated(tags []protocol.CompletionItemTag) bool {
 	return slices.Contains(tags, protocol.CompletionItemTagDeprecated)
-}
-
-var completionItemKindNames = map[protocol.CompletionItemKind]string{
-	protocol.CompletionItemKindText:          "text",
-	protocol.CompletionItemKindMethod:        "method",
-	protocol.CompletionItemKindFunction:      "function",
-	protocol.CompletionItemKindConstructor:   "constructor",
-	protocol.CompletionItemKindField:         "field",
-	protocol.CompletionItemKindVariable:      "variable",
-	protocol.CompletionItemKindClass:         "class",
-	protocol.CompletionItemKindInterface:     "interface",
-	protocol.CompletionItemKindModule:        "module",
-	protocol.CompletionItemKindProperty:      "property",
-	protocol.CompletionItemKindUnit:          "unit",
-	protocol.CompletionItemKindValue:         "value",
-	protocol.CompletionItemKindEnum:          "enum",
-	protocol.CompletionItemKindKeyword:       "keyword",
-	protocol.CompletionItemKindSnippet:       "snippet",
-	protocol.CompletionItemKindColor:         "color",
-	protocol.CompletionItemKindFile:          "file",
-	protocol.CompletionItemKindReference:     "reference",
-	protocol.CompletionItemKindFolder:        "folder",
-	protocol.CompletionItemKindEnumMember:    "enum_member",
-	protocol.CompletionItemKindConstant:      "constant",
-	protocol.CompletionItemKindStruct:        "struct",
-	protocol.CompletionItemKindEvent:         "event",
-	protocol.CompletionItemKindOperator:      "operator",
-	protocol.CompletionItemKindTypeParameter: "type_param",
 }
 
 func completionItemKind(kind protocol.CompletionItemKind) string {

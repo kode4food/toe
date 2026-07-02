@@ -39,6 +39,27 @@ func DefaultAutoPairs() AutoPairs {
 	return NewAutoPairs(defaultAutoPairRunes)
 }
 
+// Get returns the Pair for ch, or false if ch is not a registered opener/closer
+func (a AutoPairs) Get(ch rune) (Pair, bool) {
+	p, ok := a[ch]
+	return p, ok
+}
+
+// Same reports whether the pair's open and close characters are identical
+func (p Pair) Same() bool {
+	return p.Open == p.Close
+}
+
+// ShouldClose reports whether typing this pair's close character at range
+// should insert the closing character rather than skip past an existing one
+func (p Pair) ShouldClose(doc Rope, r Range) bool {
+	ok := nextIsNotAlphaPair(doc, r)
+	if p.Same() {
+		ok = ok && prevIsNotAlphaPair(doc, r)
+	}
+	return ok
+}
+
 // HookInsert returns a Change and updated Range when ch should trigger an
 // auto-pair action, or ok=false when no action is needed
 func HookInsert(
@@ -102,25 +123,4 @@ func HookDelete(doc Rope, r Range, pairs AutoPairs) (Deletion, Range, bool) {
 		return Deletion{}, Range{}, false
 	}
 	return handleDeletePair(doc, r)
-}
-
-// Get returns the Pair for ch, or false if ch is not a registered opener/closer
-func (a AutoPairs) Get(ch rune) (Pair, bool) {
-	p, ok := a[ch]
-	return p, ok
-}
-
-// Same reports whether the pair's open and close characters are identical
-func (p Pair) Same() bool {
-	return p.Open == p.Close
-}
-
-// ShouldClose reports whether typing this pair's close character at range
-// should insert the closing character rather than skip past an existing one
-func (p Pair) ShouldClose(doc Rope, r Range) bool {
-	ok := nextIsNotAlphaPair(doc, r)
-	if p.Same() {
-		ok = ok && prevIsNotAlphaPair(doc, r)
-	}
-	return ok
 }

@@ -30,6 +30,29 @@ type (
 	}
 )
 
+func (c *TransportConfig) context() context.Context {
+	if c.Ctx == nil {
+		return context.Background()
+	}
+	return c.Ctx
+}
+
+func (p pipeConn) Read(b []byte) (int, error) {
+	return p.r.Read(b)
+}
+
+func (p pipeConn) Write(b []byte) (int, error) {
+	return p.w.Write(b)
+}
+
+func (p pipeConn) Close() error {
+	err := p.r.Close()
+	if werr := p.w.Close(); err == nil {
+		err = werr
+	}
+	return err
+}
+
 // Start launches the language server process and returns a connected Client
 func Start(cfg *TransportConfig) (context.Context, *Client, error) {
 	ctx := cfg.context()
@@ -81,29 +104,6 @@ func Start(cfg *TransportConfig) (context.Context, *Client, error) {
 		client.markProcessDone(cmd.Wait())
 	}()
 	return ctx, client, nil
-}
-
-func (c *TransportConfig) context() context.Context {
-	if c.Ctx == nil {
-		return context.Background()
-	}
-	return c.Ctx
-}
-
-func (p pipeConn) Read(b []byte) (int, error) {
-	return p.r.Read(b)
-}
-
-func (p pipeConn) Write(b []byte) (int, error) {
-	return p.w.Write(b)
-}
-
-func (p pipeConn) Close() error {
-	err := p.r.Close()
-	if werr := p.w.Close(); err == nil {
-		err = werr
-	}
-	return err
 }
 
 func commandEnv(env map[string]string) []string {

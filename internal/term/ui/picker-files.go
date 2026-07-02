@@ -41,24 +41,6 @@ const (
 	pickerMaxPreview    = 10 * 1024 * 1024
 )
 
-// FilePicker opens a file picker rooted at the workspace directory
-func FilePicker(e *view.Editor) *Picker {
-	root, _ := loader.FindWorkspace(e.Cwd())
-	return NewPicker(e, newFilePickerSource(root))
-}
-
-// FilePickerInCWD opens a file picker rooted at the current working directory
-func FilePickerInCWD(e *view.Editor) *Picker {
-	return NewPicker(e, newFilePickerSource(e.Cwd()))
-}
-
-// FilePickerInDir opens a file picker rooted at the given directory
-func FilePickerInDir(dir string) PickerFunc {
-	return func(e *view.Editor) *Picker {
-		return NewPicker(e, newFilePickerSource(dir))
-	}
-}
-
 func (f *filePickerSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -234,6 +216,24 @@ func (w *pickerWalker) walkEntry(
 		return w.visit(path, rel)
 	}
 	return true
+}
+
+// FilePicker opens a file picker rooted at the workspace directory
+func FilePicker(e *view.Editor) *Picker {
+	root, _ := loader.FindWorkspace(e.Cwd())
+	return NewPicker(e, newFilePickerSource(root))
+}
+
+// FilePickerInCWD opens a file picker rooted at the current working directory
+func FilePickerInCWD(e *view.Editor) *Picker {
+	return NewPicker(e, newFilePickerSource(e.Cwd()))
+}
+
+// FilePickerInDir opens a file picker rooted at the given directory
+func FilePickerInDir(dir string) PickerFunc {
+	return func(e *view.Editor) *Picker {
+		return NewPicker(e, newFilePickerSource(dir))
+	}
 }
 
 func pickerFollowEntry(

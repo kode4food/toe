@@ -34,33 +34,6 @@ type (
 	}
 )
 
-func drawTextPopup(
-	buf *tui.Buffer, x, y, maxW, maxH int, text string, cx *Context,
-) popupArea {
-	lines := popupTextLines(text, maxW-2)
-	w := popupTextWidth(lines) + 2
-	h := len(lines) + 2
-	w = min(max(w, 2), maxW)
-	h = min(max(h, 2), maxH)
-	if x+w > buf.Width {
-		x = max(buf.Width-w, 0)
-	}
-	if y+h > buf.Height {
-		y = max(buf.Height-h, 0)
-	}
-	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
-	pop := popup{
-		border:       lipgloss.RoundedBorder(),
-		borderStyle:  st,
-		contentStyle: st,
-		padX:         0,
-	}
-	area := pop.drawInto(buf, x, y, w, h)
-	r := popupTextRenderer{buf: buf, cx: cx, area: area, base: st}
-	r.render(lines)
-	return area
-}
-
 func (p *popupMarkdown) parse(text string) {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	for line := range strings.SplitSeq(text, "\n") {
@@ -175,6 +148,33 @@ func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
 	}
 	st := inheritStyleBackground(highlight.DefaultStyle(scope), bg)
 	return lipglossToTUIStyle(st)
+}
+
+func drawTextPopup(
+	buf *tui.Buffer, x, y, maxW, maxH int, text string, cx *Context,
+) popupArea {
+	lines := popupTextLines(text, maxW-2)
+	w := popupTextWidth(lines) + 2
+	h := len(lines) + 2
+	w = min(max(w, 2), maxW)
+	h = min(max(h, 2), maxH)
+	if x+w > buf.Width {
+		x = max(buf.Width-w, 0)
+	}
+	if y+h > buf.Height {
+		y = max(buf.Height-h, 0)
+	}
+	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
+	pop := popup{
+		border:       lipgloss.RoundedBorder(),
+		borderStyle:  st,
+		contentStyle: st,
+		padX:         0,
+	}
+	area := pop.drawInto(buf, x, y, w, h)
+	r := popupTextRenderer{buf: buf, cx: cx, area: area, base: st}
+	r.render(lines)
+	return area
 }
 
 func popupTextLines(text string, w int) []popupLine {

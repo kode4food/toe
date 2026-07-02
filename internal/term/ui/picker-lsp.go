@@ -34,22 +34,6 @@ type (
 	}
 )
 
-// LSPWorkspaceCommandPicker opens commands exposed by language servers
-func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
-	ctl := e.LanguageServerController()
-	var commands []string
-	if doc, ok := e.FocusedDocument(); ok && ctl != nil {
-		commands = ctl.WorkspaceCommands(doc)
-	}
-	return NewPicker(e, &lspWorkspaceCommandSource{
-		pickerMeta: pickerMeta{
-			title:   "LSP workspace command",
-			columns: []string{"command"},
-		},
-		commands: commands,
-	})
-}
-
 func newLSPLocationPicker(
 	e *view.Editor, locations []view.Location,
 ) *Picker {
@@ -317,6 +301,22 @@ func (l *lspWorkspaceSymbolSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
+}
+
+// LSPWorkspaceCommandPicker opens commands exposed by language servers
+func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
+	ctl := e.LanguageServerController()
+	var commands []string
+	if doc, ok := e.FocusedDocument(); ok && ctl != nil {
+		commands = ctl.WorkspaceCommands(doc)
+	}
+	return NewPicker(e, &lspWorkspaceCommandSource{
+		pickerMeta: pickerMeta{
+			title:   "LSP workspace command",
+			columns: []string{"command"},
+		},
+		commands: commands,
+	})
 }
 
 func acceptLocation(

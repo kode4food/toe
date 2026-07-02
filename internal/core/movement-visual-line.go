@@ -72,50 +72,6 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 	return starts
 }
 
-func visualLineRunes(doc Rope, lineIdx int) []rune {
-	lineStart, err := doc.LineToChar(lineIdx)
-	if err != nil {
-		return nil
-	}
-	lineEnd, err := doc.LineEndCharIndex(lineIdx)
-	if err != nil {
-		return nil
-	}
-	if lineEnd <= lineStart {
-		return nil
-	}
-	sl, err := doc.Slice(lineStart, lineEnd)
-	if err != nil {
-		return nil
-	}
-	return []rune(sl.String())
-}
-
-func visualPrefixWidth(
-	runes []rune, tabW, maxIndentRetain, wrapIndLen int,
-) int {
-	indent := visualLineIndentW(runes, tabW)
-	if indent > maxIndentRetain {
-		indent = 0
-	}
-	return indent + wrapIndLen
-}
-
-func visualLineIndentW(runes []rune, tabW int) int {
-	col := 0
-	for _, ch := range runes {
-		switch ch {
-		case '\t':
-			col += TabWidthAt(col, tabW)
-		case ' ':
-			col++
-		default:
-			return col
-		}
-	}
-	return col
-}
-
 func newVisualLine(doc Rope, line int, format *VisualMoveFormat) visualLine {
 	runes := visualLineRunes(doc, line)
 	v := visualLine{runes: runes, format: format}
@@ -183,6 +139,50 @@ func (v visualLine) charAtPos(targetRow, targetCol int) int {
 		col += visualRuneW(v.runes[i], col, tabW)
 	}
 	return best
+}
+
+func visualLineRunes(doc Rope, lineIdx int) []rune {
+	lineStart, err := doc.LineToChar(lineIdx)
+	if err != nil {
+		return nil
+	}
+	lineEnd, err := doc.LineEndCharIndex(lineIdx)
+	if err != nil {
+		return nil
+	}
+	if lineEnd <= lineStart {
+		return nil
+	}
+	sl, err := doc.Slice(lineStart, lineEnd)
+	if err != nil {
+		return nil
+	}
+	return []rune(sl.String())
+}
+
+func visualPrefixWidth(
+	runes []rune, tabW, maxIndentRetain, wrapIndLen int,
+) int {
+	indent := visualLineIndentW(runes, tabW)
+	if indent > maxIndentRetain {
+		indent = 0
+	}
+	return indent + wrapIndLen
+}
+
+func visualLineIndentW(runes []rune, tabW int) int {
+	col := 0
+	for _, ch := range runes {
+		switch ch {
+		case '\t':
+			col += TabWidthAt(col, tabW)
+		case ' ':
+			col++
+		default:
+			return col
+		}
+	}
+	return col
 }
 
 // charIsWord reports whether ch counts as part of a word when deciding

@@ -10,17 +10,6 @@ type commandPaletteSource struct {
 	km *command.Keymaps
 }
 
-// CommandPalettePicker opens a picker listing all registered commands
-func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
-	return NewPicker(e, &commandPaletteSource{
-		pickerMeta: pickerMeta{
-			title:   "Command palette",
-			columns: []string{"name", "description"},
-		},
-		km: km,
-	})
-}
-
 func (c *commandPaletteSource) Load(
 	_ *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -55,4 +44,15 @@ func (c *commandPaletteSource) Accept(
 		return
 	}
 	cmd.Run(e, nil)
+}
+
+// CommandPalettePicker opens a picker listing all registered commands
+func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
+	return NewPicker(e, &commandPaletteSource{
+		pickerMeta: pickerMeta{
+			title:   "Command palette",
+			columns: []string{"name", "description"},
+		},
+		km: km,
+	})
 }

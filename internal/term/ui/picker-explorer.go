@@ -51,10 +51,6 @@ func NewBufferDirExplorer(e *view.Editor, opts FileExplorerOptions) *Picker {
 	return NewPicker(e, newFileExplorerSource(dir, opts))
 }
 
-func DefaultFileExplorerOptions() FileExplorerOptions {
-	return FileExplorerOptions{FlattenDirs: true}
-}
-
 func (f *fileExplorerSource) Title() string {
 	return filepath.Base(f.root)
 }
@@ -207,6 +203,10 @@ func (f *fileExplorerSource) makeFileItem(path string) PickerItem {
 		SortKey:  filepath.Base(path),
 		Location: PickerLocation{Target: PickerTarget{Path: path}},
 	}
+}
+
+func DefaultFileExplorerOptions() FileExplorerOptions {
+	return FileExplorerOptions{FlattenDirs: true}
 }
 
 func flattenExplorerDir(path string, followSymlinks bool) string {

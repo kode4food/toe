@@ -35,6 +35,36 @@ func ParseIndentStyle(s string) IndentStyle {
 	return Spaces(uint8(min(len(s), MaxIndent)))
 }
 
+// IsTabs reports whether this style uses tab characters
+func (i IndentStyle) IsTabs() bool {
+	return i.tabs
+}
+
+// Width returns the number of spaces per indent level (0 for tabs)
+func (i IndentStyle) Width() uint8 {
+	return i.width
+}
+
+// AsStr returns the string for one indent level
+func (i IndentStyle) AsStr() string {
+	if i.tabs {
+		return "\t"
+	}
+	n := i.width
+	if n == 0 || n > MaxIndent {
+		n = 1
+	}
+	return indents[:n]
+}
+
+// IndentWidth returns the number of columns one indent level occupies
+func (i IndentStyle) IndentWidth(tabWidth int) int {
+	if i.tabs {
+		return tabWidth
+	}
+	return int(i.width)
+}
+
 // AutoDetect attempts to detect the indentation style used in doc. Returns the
 // detected style and true, or false if confidence is too low
 func AutoDetect(doc Rope) (IndentStyle, bool) {
@@ -115,36 +145,6 @@ func AutoDetect(doc Rope) (IndentStyle, bool) {
 		return Tabs(), true
 	}
 	return Spaces(uint8(best)), true
-}
-
-// IsTabs reports whether this style uses tab characters
-func (i IndentStyle) IsTabs() bool {
-	return i.tabs
-}
-
-// Width returns the number of spaces per indent level (0 for tabs)
-func (i IndentStyle) Width() uint8 {
-	return i.width
-}
-
-// AsStr returns the string for one indent level
-func (i IndentStyle) AsStr() string {
-	if i.tabs {
-		return "\t"
-	}
-	n := i.width
-	if n == 0 || n > MaxIndent {
-		n = 1
-	}
-	return indents[:n]
-}
-
-// IndentWidth returns the number of columns one indent level occupies
-func (i IndentStyle) IndentWidth(tabWidth int) int {
-	if i.tabs {
-		return tabWidth
-	}
-	return int(i.width)
 }
 
 func countLeading(runes []rune, isTabs bool) (int, bool) {

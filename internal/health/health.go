@@ -28,15 +28,6 @@ var (
 	ErrFailed = errors.New("health check failed")
 )
 
-func Run(w io.Writer) error {
-	rep := CheckRuntime()
-	writeReport(w, rep)
-	if !rep.OK() {
-		return ErrFailed
-	}
-	return nil
-}
-
 func CheckRuntime() Report {
 	return Report{
 		checkLanguages(),
@@ -53,6 +44,15 @@ func (r Report) OK() bool {
 		}
 	}
 	return true
+}
+
+func Run(w io.Writer) error {
+	rep := CheckRuntime()
+	writeReport(w, rep)
+	if !rep.OK() {
+		return ErrFailed
+	}
+	return nil
 }
 
 func writeReport(w io.Writer, r Report) {

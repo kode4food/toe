@@ -41,10 +41,6 @@ func NewHistory() History {
 	return History{revisions: []revision{root}}
 }
 
-func UndoSteps(n int) UndoKind {
-	return UndoKind{steps: n}
-}
-
 func (h *History) CurrentRevision() int {
 	return h.current
 }
@@ -169,4 +165,8 @@ func (h *History) jumpForward(delta int) []Transaction {
 		to = len(h.revisions) - 1
 	}
 	return h.jumpTo(to)
+}
+
+func UndoSteps(n int) UndoKind {
+	return UndoKind{steps: n}
 }

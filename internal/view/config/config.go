@@ -24,6 +24,15 @@ type (
 	}
 )
 
+func (a *AutoSave) UnmarshalTOML(value any) error {
+	cfg, ok := decodeAutoSave(value)
+	if !ok {
+		return fmt.Errorf("%w: %v", ErrInvalidOption, value)
+	}
+	*a = cfg
+	return nil
+}
+
 // LoadRawConfig returns the raw merged TOML map for the given config file path
 func LoadRawConfig(path string) (map[string]any, bool) {
 	return loader.LoadMergedTOML([]string{path}, 3)
@@ -56,15 +65,6 @@ func LoadRawConfigForWorkspace(
 		paths = append(paths, workspace)
 	}
 	return loader.LoadMergedTOML(paths, 3)
-}
-
-func (a *AutoSave) UnmarshalTOML(value any) error {
-	cfg, ok := decodeAutoSave(value)
-	if !ok {
-		return fmt.Errorf("%w: %v", ErrInvalidOption, value)
-	}
-	*a = cfg
-	return nil
 }
 
 func decodeInsecure(m map[string]any) bool {

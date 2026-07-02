@@ -66,13 +66,20 @@ func (s *Session) DocumentColors(
 	return out, err
 }
 
+func (s *Session) documentColorsAsync(doc *view.Document) {
+	go func() {
+		_, _ = s.DocumentColors(doc)
+	}()
+}
+
 func documentColors(
-	client *Client, doc *view.Document,
-	colors []protocol.ColorInformation,
+	client *Client, doc *view.Document, colors []protocol.ColorInformation,
 ) []view.DocumentColor {
 	out := make([]view.DocumentColor, 0, len(colors))
 	for _, color := range colors {
-		from, to, ok := lspRangeToChars(doc, color.Range, client.OffsetEncoding())
+		from, to, ok := lspRangeToChars(
+			doc, color.Range, client.OffsetEncoding(),
+		)
 		if !ok {
 			continue
 		}
@@ -93,10 +100,4 @@ func documentColors(
 
 func colorByte(v float64) uint8 {
 	return uint8(min(max(v, 0), 1) * 255)
-}
-
-func (s *Session) documentColorsAsync(doc *view.Document) {
-	go func() {
-		_, _ = s.DocumentColors(doc)
-	}()
 }

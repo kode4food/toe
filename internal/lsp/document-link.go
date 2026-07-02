@@ -128,35 +128,6 @@ func (s *Session) ResolveDocumentLink(
 	return item, nil
 }
 
-func viewDocumentLink(
-	client *Client, doc *view.Document, idx int, link protocol.DocumentLink,
-) (view.DocumentLink, bool) {
-	from, to, ok := lspRangeToChars(doc, link.Range, client.OffsetEncoding())
-	if !ok || from >= to {
-		return view.DocumentLink{}, false
-	}
-	target := ""
-	if link.Target != nil {
-		target = link.Target.String()
-	}
-	return view.DocumentLink{
-		ID:     candidateID(client.Name(), idx),
-		From:   from,
-		To:     to,
-		Target: target,
-		Server: client.Name(),
-	}, true
-}
-
-func clientResolvesDocumentLinks(client *Client) bool {
-	capabilities, ok := client.Capabilities()
-	if !ok || capabilities.DocumentLinkProvider == nil {
-		return false
-	}
-	resolve := capabilities.DocumentLinkProvider.ResolveProvider
-	return resolve != nil && *resolve
-}
-
 func (s *Session) storeDocumentLinks(
 	docID view.DocumentId, links map[string]documentLinkCandidate,
 ) {
@@ -206,4 +177,33 @@ func (s *Session) documentLinksAsync(doc *view.Document) {
 	go func() {
 		_, _ = s.DocumentLinks(doc)
 	}()
+}
+
+func viewDocumentLink(
+	client *Client, doc *view.Document, idx int, link protocol.DocumentLink,
+) (view.DocumentLink, bool) {
+	from, to, ok := lspRangeToChars(doc, link.Range, client.OffsetEncoding())
+	if !ok || from >= to {
+		return view.DocumentLink{}, false
+	}
+	target := ""
+	if link.Target != nil {
+		target = link.Target.String()
+	}
+	return view.DocumentLink{
+		ID:     candidateID(client.Name(), idx),
+		From:   from,
+		To:     to,
+		Target: target,
+		Server: client.Name(),
+	}, true
+}
+
+func clientResolvesDocumentLinks(client *Client) bool {
+	capabilities, ok := client.Capabilities()
+	if !ok || capabilities.DocumentLinkProvider == nil {
+		return false
+	}
+	resolve := capabilities.DocumentLinkProvider.ResolveProvider
+	return resolve != nil && *resolve
 }

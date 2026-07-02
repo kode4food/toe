@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
@@ -586,6 +587,88 @@ func TestThemeRender(t *testing.T) {
 
 		assert.NotContains(t, out, "\x1b[48;2;69;71;90m")
 	})
+
+	t.Run("selection overrides symbol highlight", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("abcde\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{
+			core.NewRange(1, 4),
+		}, 0)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), sel)
+		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
+			{From: 0, To: 5},
+		})
+		e.Options().Theme = "mocha"
+		e.Options().CursorShape.Normal = view.CursorKindUnderline
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		cells := styledRunes(m.View().Content)
+
+		assert.Equal(t, "48;2;49;50;68", cells['a'])
+		assert.Equal(t, "48;2;69;71;90", cells['b'])
+		assert.Equal(t, "48;2;69;71;90", cells['c'])
+		assert.Equal(t, "48;2;69;71;90", cells['d'])
+		assert.Equal(t, "48;2;49;50;68", cells['e'])
+	})
+}
+
+func styledRunes(s string) map[rune]string {
+	out := map[rune]string{}
+	bg := ""
+	for len(s) > 0 {
+		if strings.HasPrefix(s, "\x1b[") {
+			end := strings.IndexByte(s, 'm')
+			if end < 0 {
+				return out
+			}
+			if next, ok := styleBg(s[2:end]); ok {
+				bg = next
+			}
+			s = s[end+1:]
+			continue
+		}
+		r, n := rune(s[0]), 1
+		if r >= 0x80 {
+			r, n = utf8.DecodeRuneInString(s)
+		}
+		if r == '\n' {
+			return out
+		}
+		if r >= 'a' && r <= 'z' {
+			out[r] = bg
+		}
+		s = s[n:]
+	}
+	return out
+}
+
+func styleBg(params string) (string, bool) {
+	parts := strings.Split(params, ";")
+	for i := 0; i < len(parts); i++ {
+		switch parts[i] {
+		case "0", "49":
+			return "", true
+		case "48":
+			if i+4 < len(parts) && parts[i+1] == "2" {
+				return strings.Join(parts[i:i+5], ";"), true
+			}
+			if i+2 < len(parts) && parts[i+1] == "5" {
+				i += 2
+				continue
+			}
+		}
+	}
+	return "", false
 }
 
 func TestLineContentRender(t *testing.T) {

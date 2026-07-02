@@ -926,6 +926,62 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		assert.NotEqual(t, v1ID, id)
 	})
 
+	t.Run("down into vertical container chooses nearest x", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 60)
+		top := e.Tree().Traverse()[0].ID()
+		e.HSplitNew()
+		e.VSplitNew()
+		e.Tree().SetFocus(top)
+
+		id, ok := e.Tree().FindSplitInDirection(top, view.DirectionDown)
+
+		assert.True(t, ok)
+		assert.NotEqual(t, top, id)
+	})
+
+	t.Run("right into horizontal container", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 60)
+		left := e.Tree().Traverse()[0].ID()
+		e.VSplitNew()
+		e.HSplitNew()
+		e.Tree().SetFocus(left)
+
+		id, ok := e.Tree().FindSplitInDirection(left, view.DirectionRight)
+
+		assert.True(t, ok)
+		assert.NotEqual(t, left, id)
+	})
+
+	t.Run("down from right chooses by x", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 60)
+		top := e.Tree().Traverse()[0].ID()
+		e.HSplitNew()
+		e.VSplitNew()
+		e.Tree().SetFocus(top)
+
+		id, ok := e.Tree().FindSplitInDirection(top, view.DirectionDown)
+
+		assert.True(t, ok)
+		assert.NotEqual(t, top, id)
+	})
+
+	t.Run("right from lower chooses by y", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 60)
+		left := e.Tree().Traverse()[0].ID()
+		e.VSplitNew()
+		e.HSplitNew()
+		e.Tree().SetFocus(left)
+
+		id, ok := e.Tree().FindSplitInDirection(left, view.DirectionRight)
+
+		assert.True(t, ok)
+		assert.NotEqual(t, left, id)
+	})
+
 	t.Run("swap cross-container swaps views", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(120, 60)
@@ -1285,12 +1341,29 @@ type fileOpController struct {
 	view.LanguageServerController
 }
 
-func (c *fileOpController) WillCreateFile(_ string, _ bool) error    { return nil }
-func (c *fileOpController) DidCreateFile(_ string, _ bool) error     { return nil }
-func (c *fileOpController) WillRenameFile(_, _ string, _ bool) error { return nil }
-func (c *fileOpController) DidRenameFile(_, _ string, _ bool) error  { return nil }
-func (c *fileOpController) WillDeleteFile(_ string, _ bool) error    { return nil }
-func (c *fileOpController) DidDeleteFile(_ string, _ bool) error     { return nil }
+func (c *fileOpController) WillCreateFile(_ string, _ bool) error {
+	return nil
+}
+
+func (c *fileOpController) DidCreateFile(_ string, _ bool) error {
+	return nil
+}
+
+func (c *fileOpController) WillRenameFile(_, _ string, _ bool) error {
+	return nil
+}
+
+func (c *fileOpController) DidRenameFile(_, _ string, _ bool) error {
+	return nil
+}
+
+func (c *fileOpController) WillDeleteFile(_ string, _ bool) error {
+	return nil
+}
+
+func (c *fileOpController) DidDeleteFile(_ string, _ bool) error {
+	return nil
+}
 
 func TestEditorSaveWithFileOps(t *testing.T) {
 	t.Run("WillCreate/DidCreate on new file", func(t *testing.T) {

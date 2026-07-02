@@ -75,6 +75,16 @@ func TestMotionGotoFile(t *testing.T) {
 
 		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
 	})
+
+	t.Run("directory path reports open error", func(t *testing.T) {
+		dir := t.TempDir()
+		e, km := defaultsEnv(t, dir)
+		setCursor(t, e, 0)
+
+		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
+
+		assert.Contains(t, e.TakeStatusMsg(), "error:")
+	})
 }
 
 func TestMotionParagraph(t *testing.T) {

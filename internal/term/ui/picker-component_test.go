@@ -100,9 +100,16 @@ func TestPickerScroll(t *testing.T) {
 	})
 }
 
-func (fixedPickerSource) Title() string     { return "fixed" }
-func (fixedPickerSource) Columns() []string { return []string{"name"} }
-func (fixedPickerSource) Primary() int      { return 0 }
+func (fixedPickerSource) Title() string {
+	return "fixed"
+}
+
+func (fixedPickerSource) Columns() []string {
+	return []string{"name"}
+}
+func (fixedPickerSource) Primary() int {
+	return 0
+}
 
 func (fixedPickerSource) Accept(
 	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,

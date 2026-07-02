@@ -113,6 +113,12 @@ func TestFileWriteVariants(t *testing.T) {
 		assert.Contains(t, res.Message, "written")
 	})
 
+	t.Run("write_all reports save error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "dirty")
+		res := runCmd(t, km, e, "write_all")
+		assert.Contains(t, res.Message, "error")
+	})
+
 	t.Run("write-all! force-writes all buffers", func(t *testing.T) {
 		e, km := twoBufferEnv(t)
 		res := runCmd(t, km, e, "write-all!")
@@ -137,6 +143,12 @@ func TestFileWriteVariants(t *testing.T) {
 		e, km := twoBufferEnv(t)
 		res := runCmd(t, km, e, "write_quit_all")
 		assert.Equal(t, command.SignalQuit, res.Signal)
+	})
+
+	t.Run("write_quit_all reports save error", func(t *testing.T) {
+		e, km := defaultsEnv(t, "dirty")
+		res := runCmd(t, km, e, "write_quit_all")
+		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("force-saves all and signals quit", func(t *testing.T) {

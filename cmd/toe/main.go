@@ -11,7 +11,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/health"
-	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
@@ -78,7 +77,7 @@ func run(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	raw, _ := loadRawConfigForDir(sessionRoot)
+	raw, _ := config.LoadRawConfigForDir(sessionRoot)
 	if raw == nil {
 		raw = map[string]any{}
 	}
@@ -112,7 +111,7 @@ func run(args []string, out io.Writer) error {
 	lspSession := lsp.Attach(context.Background(), editor)
 	defer func() { _ = lspSession.Close() }()
 	editor.SetConfigReload(func() error {
-		raw, _ := loadRawConfigForDir(editor.Cwd())
+		raw, _ := config.LoadRawConfigForDir(editor.Cwd())
 		if raw == nil {
 			raw = map[string]any{}
 		}
@@ -153,16 +152,6 @@ func changedOptionValues(
 		}
 	}
 	return out
-}
-
-func loadRawConfigForDir(dir string) (map[string]any, bool) {
-	path, ok := loader.ConfigFile()
-	if !ok {
-		return nil, false
-	}
-	return config.LoadRawConfigForWorkspace(
-		path, loader.WorkspaceConfigFile(dir), dir,
-	)
 }
 
 // parseConfigFlag strips --config <path> from args and sets path

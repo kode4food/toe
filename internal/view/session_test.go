@@ -289,4 +289,88 @@ head = 1
 		assert.NoError(t, err)
 		assert.True(t, restored)
 	})
+
+	t.Run("restores scratch document", func(t *testing.T) {
+		dir := t.TempDir()
+		sessionPath := filepath.Join(dir, view.SessionFile)
+		content := `version = 1
+
+[[document]]
+scratch = true
+text = "scratch text\n"
+language = "go"
+
+[layout]
+kind = "view"
+document = 1
+focused = true
+`
+		assert.NoError(t,
+			os.WriteFile(sessionPath, []byte(content), 0o644),
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, restored, err := e.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "scratch text\n", doc.Text().String())
+		assert.Equal(t, "go", doc.Lang())
+	})
+
+	t.Run("uses first view when none focused", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "file.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package main\n"), 0o644),
+		)
+		sessionPath := filepath.Join(dir, view.SessionFile)
+		content := fmt.Sprintf(`version = 1
+
+[[document]]
+path = %q
+
+[layout]
+kind = "view"
+document = 1
+`, filePath)
+		assert.NoError(t,
+			os.WriteFile(sessionPath, []byte(content), 0o644),
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, restored, err := e.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		assert.Len(t, e.AllViews(), 1)
+	})
+
+	t.Run("split child invalid", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "file.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package main\n"), 0o644),
+		)
+		sessionPath := filepath.Join(dir, view.SessionFile)
+		content := fmt.Sprintf(`version = 1
+
+[[document]]
+path = %q
+
+[layout]
+kind = "split"
+layout = "vertical"
+
+[[layout.child]]
+kind = "bogus"
+`, filePath)
+		assert.NoError(t,
+			os.WriteFile(sessionPath, []byte(content), 0o644),
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, _, err := e.RestoreSession(sessionPath)
+		assert.True(t, errors.Is(err, view.ErrSessionInvalid))
+	})
 }

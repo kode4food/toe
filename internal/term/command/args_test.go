@@ -294,4 +294,30 @@ func TestCommandArgs(t *testing.T) {
 			[]string{"gutters", `["diff"] ["diff", "diagnostics"]`},
 			args.Positionals())
 	})
+
+	t.Run("unknown flag allowed when loose", func(t *testing.T) {
+		args, err := command.ParseArgs(`--quiz value`, sig, false, nil)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"--quiz", "value"}, args.Positionals())
+	})
+
+	t.Run("missing flag arg allowed when loose", func(t *testing.T) {
+		args, err := command.ParseArgs(`hello --bar`, sig, false, nil)
+
+		assert.NoError(t, err)
+		assert.True(t, args.HasFlag("bar"))
+	})
+
+	t.Run("raw rest can be empty", func(t *testing.T) {
+		sig := command.Signature{
+			Positionals: command.Positionals{Min: 1, Max: 1},
+			RawAfter:    1,
+		}
+
+		args, err := command.ParseArgs(`echo`, sig, true, nil)
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"echo"}, args.Positionals())
+	})
 }

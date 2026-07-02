@@ -34,7 +34,7 @@ func TestPickerConfig(t *testing.T) {
 	})
 
 	t.Run("file explorer config decodes", func(t *testing.T) {
-		e, _, reg := envWithRegistry(t, "")
+		e, km, reg := envWithRegistry(t, "")
 		err := reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
 				"file-explorer": map[string]any{
@@ -51,6 +51,8 @@ func TestPickerConfig(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
+		res := runCmd(t, km, e, "file_explorer")
+		assert.Empty(t, res.Message)
 	})
 
 	t.Run("empty config decodes", func(t *testing.T) {

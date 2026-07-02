@@ -46,6 +46,21 @@ func TestViewSplit(t *testing.T) {
 		assert.Equal(t, before+1, len(e.AllViews()))
 	})
 
+	t.Run("hsplit_new opens a new empty view", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc")
+		before := len(e.AllViews())
+		runCmd(t, km, e, "hsplit_new")
+		assert.Equal(t, before+1, len(e.AllViews()))
+	})
+
+	t.Run("wclose reduces view count", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		runCmd(t, km, e, "vsplit")
+		before := len(e.AllViews())
+		runCmd(t, km, e, "wclose")
+		assert.Equal(t, before-1, len(e.AllViews()))
+	})
+
 	t.Run("wclose! reduces view count", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
 		runCmd(t, km, e, "vsplit")

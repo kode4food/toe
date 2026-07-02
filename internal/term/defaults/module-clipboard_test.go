@@ -86,6 +86,12 @@ func TestClipboardSystemClipboard(t *testing.T) {
 		runCmd(t, km, e, "yank_joined_to_clipboard")
 	})
 
+	t.Run("yank joined uses separator arg", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc")
+		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		runCmdArgs(t, km, e, "yank_joined_to_clipboard", ",")
+	})
+
 	t.Run("yank to primary clipboard runs", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
 		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)

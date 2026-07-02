@@ -42,15 +42,23 @@ func LoadRawConfig(path string) (map[string]any, bool) {
 // workspace config, for applying to module section structs via
 // Registry.ApplyTOML
 func LoadRawUserConfig() (map[string]any, bool) {
-	path, ok := loader.ConfigFile()
-	if !ok {
-		return nil, false
-	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		cwd = "."
 	}
-	return LoadRawConfigForWorkspace(path, loader.WorkspaceConfigFile(cwd), cwd)
+	return LoadRawConfigForDir(cwd)
+}
+
+// LoadRawConfigForDir returns user config merged with dir's trusted workspace
+// config
+func LoadRawConfigForDir(dir string) (map[string]any, bool) {
+	path, ok := loader.ConfigFile()
+	if !ok {
+		return nil, false
+	}
+	return LoadRawConfigForWorkspace(
+		path, loader.WorkspaceConfigFile(dir), dir,
+	)
 }
 
 func LoadRawConfigForWorkspace(

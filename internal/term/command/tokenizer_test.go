@@ -59,7 +59,7 @@ func TestCommandLine(t *testing.T) {
 	})
 
 	t.Run("escaped unclosed incomplete tokens", func(t *testing.T) {
-		// 'it'' has a doubled-quote escape but no closing quote → escaped+unclosed
+		// 'it'' has a doubled-quote escape but no closing quote
 		args, err := commandTokens("'it''", false)
 
 		assert.NoError(t, err)
@@ -154,17 +154,41 @@ func TestPeekEscapedToken(t *testing.T) {
 		assert.Equal(t, 1, len(args))
 	})
 
-	t.Run("backslash before backtick escape", func(t *testing.T) {
+	t.Run("backtick quoted token", func(t *testing.T) {
 		args, err := commandTokens("`hello`", false)
 		assert.NoError(t, err)
+		assert.Equal(t, []string{"hello"}, args)
+	})
+
+	t.Run("backslash before backtick escape", func(t *testing.T) {
+		args, err := commandTokens("\\`hello", true)
+		assert.NoError(t, err)
 		assert.Equal(t, 1, len(args))
-		assert.Equal(t, "hello", args[0])
+		assert.Equal(t, "`hello", args[0])
 	})
 
 	t.Run("backslash before percent escape", func(t *testing.T) {
 		args, err := commandTokens(`\%`, true)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(args))
+	})
+
+	t.Run("percent escape inside token", func(t *testing.T) {
+		args, err := commandTokens(`a\%b`, true)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{`a\%b`}, args)
+	})
+
+	t.Run("backslash before regular char is literal", func(t *testing.T) {
+		args, err := commandTokens(`a\b`, true)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{`a\b`}, args)
+	})
+
+	t.Run("trailing backslash is literal", func(t *testing.T) {
+		args, err := commandTokens(`abc\`, true)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"abc"}, args)
 	})
 }
 

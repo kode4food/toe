@@ -93,6 +93,33 @@ func TestConfigDocumentOptions(t *testing.T) {
 		res := runCmdArgs(t, km, e, "indent_style", "99")
 		assert.Contains(t, strings.ToLower(res.Message), "error")
 	})
+
+	t.Run("set language no document errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmd(t, km, e, "set_language")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("line ending no document errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmd(t, km, e, "set_line_ending")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("indent style no document errors", func(t *testing.T) {
+		e, km := defaultsEnv(t, "")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.CloseView(v.ID())
+		res := runCmd(t, km, e, "indent_style")
+		assert.Contains(t, res.Message, "error")
+	})
 }
 
 func TestConfigOptions(t *testing.T) {

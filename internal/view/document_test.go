@@ -452,6 +452,28 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.Equal(t, 3, doc.SelectionFor(v.ID()).Primary().Head)
 	})
 
+	t.Run("clean reload clips invalid selections", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "invalid-selection.txt")
+		err := os.WriteFile(path, []byte("0123456789"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
+			core.NewRange(-5, 20),
+		}, 0))
+		err = os.WriteFile(path, []byte("012"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		assert.True(t, ok)
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, []core.Range{core.NewRange(0, 3)}, sel.Ranges())
+	})
+
 	t.Run("clean reload maps inserted prefix", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "insert.txt")
@@ -556,7 +578,9 @@ func TestDocumentRelativeName(t *testing.T) {
 	})
 
 	t.Run("scratch buffer returns scratch name", func(t *testing.T) {
-		assert.Equal(t, view.ScratchBufferName, view.DocumentRelativeName("", "/any"))
+		assert.Equal(t,
+			view.ScratchBufferName, view.DocumentRelativeName("", "/any"),
+		)
 	})
 }
 
@@ -1034,6 +1058,8 @@ func writeViewLanguages(t *testing.T, root, text string) {
 	dir := filepath.Join(root, loader.DirName)
 	err := os.MkdirAll(dir, 0o755)
 	assert.NoError(t, err)
-	err = os.WriteFile(filepath.Join(dir, "languages.toml"), []byte(text), 0o644)
+	err = os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	)
 	assert.NoError(t, err)
 }

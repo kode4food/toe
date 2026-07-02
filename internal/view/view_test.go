@@ -149,7 +149,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		// a single line of 80 cells wraps to 8 visual rows at width 10; with a
-		// 4-row viewport the cursor near the end cannot be shown by anchoring at
+		// 4-row viewport cannot show the cursor near the end by anchoring at
 		// the line start, so the view must scroll into the line itself
 		doc := core.NewRope(strings.Repeat("x", 80))
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(79)}, 0)
@@ -157,10 +157,38 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
 		}
 		v.EnsureCursorVisible(doc, sel, 4, 0, vf)
-		// anchor stays at the line start, but the view is scrolled 4 visual rows
-		// into the line so the cursor (row 7) sits on the bottom viewport row
+		// anchor stays at the line start, but the view scrolls 4 visual rows
+		// into the line so the cursor sits on the bottom viewport row
 		assert.Equal(t, 0, v.Offset().Anchor)
 		assert.Equal(t, 4, v.Offset().VerticalOffset)
+	})
+
+	t.Run("visual scrolls up above anchor", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		doc := core.NewRope("a\nb\nc\nd\n")
+		line2, _ := doc.LineToChar(2)
+		v.SetOffset(view.Position{Anchor: line2})
+		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
+		vf := &core.VisualMoveFormat{
+			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
+		}
+		v.EnsureCursorVisible(doc, sel, 4, 1, vf)
+		assert.Equal(t, 0, v.Offset().Anchor)
+	})
+
+	t.Run("visual scrolls below wrapped lines", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		long := strings.Repeat("x", 40)
+		doc := core.NewRope(long + "\n" + long + "\nend")
+		last, _ := doc.LineToChar(2)
+		sel, _ := core.NewSelection([]core.Range{core.PointRange(last)}, 0)
+		vf := &core.VisualMoveFormat{
+			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
+		}
+		v.EnsureCursorVisible(doc, sel, 3, 0, vf)
+		assert.Greater(t, v.Offset().Anchor, 0)
 	})
 }
 

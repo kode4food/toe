@@ -218,6 +218,32 @@ insecure = true
 		assert.Equal(t, "dracula", raw["theme"])
 	})
 
+	t.Run("loads config for directory workspace", func(t *testing.T) {
+		root := t.TempDir()
+		writeConfig(t, root, `
+theme = "mocha"
+
+[editor]
+insecure = true
+`)
+		t.Setenv("XDG_CONFIG_HOME", root)
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		work := filepath.Join(root, "work")
+		workspaceDir := filepath.Join(work, loader.WorkspaceDirName)
+		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(workspaceDir, 0o755)
+		assert.NoError(t, err)
+		workspace := filepath.Join(workspaceDir, "config.toml")
+		err = os.WriteFile(workspace, []byte(`theme = "dracula"`), 0o644)
+		assert.NoError(t, err)
+
+		raw, ok := config.LoadRawConfigForDir(work)
+
+		assert.True(t, ok)
+		assert.Equal(t, "dracula", raw["theme"])
+	})
+
 	t.Run("ignores untrusted workspace config", func(t *testing.T) {
 		root := t.TempDir()
 		global := writeConfig(t, root, `theme = "mocha"`)

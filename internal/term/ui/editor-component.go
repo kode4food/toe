@@ -79,7 +79,7 @@ func (e *EditorComponent) HandleEvent(
 		return consumed(), nil
 
 	case tea.KeyPressMsg:
-		for _, v := range cx.Editor.AllViews() {
+		if v, ok := cx.Editor.FocusedView(); ok {
 			v.SetFreeScroll(false)
 		}
 		result, cmd := e.handleKeyPress(msg, cx)

@@ -100,8 +100,8 @@ func GotoWindowCenter(e *view.Editor) {
 }
 
 // ScrollViewLines scrolls a specific view by n lines, not moving the cursor.
-// Used for mouse-wheel events; the view snaps back to the cursor on next
-// keypress
+// Used for mouse-wheel events; the view remains free-scrolled until that view
+// receives cursor-moving keyboard input
 func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	doc, ok := e.Document(v.DocID())
 	if !ok {

@@ -415,6 +415,33 @@ func TestMouseDragBounds(t *testing.T) {
 	})
 }
 
+func TestFreeScroll(t *testing.T) {
+	t.Run("keypress keeps other scrolled view", func(t *testing.T) {
+		e := editorWithText(t, strings.Repeat("0123456789abcdef\n", 20))
+		e.ResizeTree(80, 24)
+		v1, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v2, ok := e.VSplit(doc.ID())
+		assert.True(t, ok)
+		assert.Equal(t, v2.ID(), e.Tree().Focus())
+		anchor, err := doc.Text().LineToChar(10)
+		assert.NoError(t, err)
+		scrolled := view.Position{Anchor: anchor}
+		v1.SetOffset(scrolled)
+		v1.SetFreeScroll(true)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		m = sendKey(m, 'l')
+		_ = m.View().Content
+
+		assert.True(t, v1.FreeScroll())
+		assert.Equal(t, scrolled, v1.Offset())
+		assert.False(t, v2.FreeScroll())
+	})
+}
+
 func renderedModel(e *view.Editor) ui.Model {
 	m := ui.New(e, command.NewKeymaps())
 	m2, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 8})

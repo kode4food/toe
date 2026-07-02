@@ -91,6 +91,9 @@ func ConfigIgnoreFile() string {
 }
 
 func ConfigDir() (string, bool) {
+	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
+		return filepath.Join(dir, DirName), true
+	}
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", false
@@ -107,6 +110,9 @@ func LogFile() (string, bool) {
 }
 
 func CacheDir() (string, bool) {
+	if dir := os.Getenv("XDG_CACHE_HOME"); dir != "" {
+		return filepath.Join(dir, DirName), true
+	}
 	dir, err := os.UserCacheDir()
 	if err != nil {
 		return "", false

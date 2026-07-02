@@ -101,6 +101,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 
 	rawText := dc.ensureRawText(rev, text)
 	hlSpans := dc.ensureHL(r.cx.Syntax, rev, lang, rawText)
+	lineIdx := dc.ensureLineIndex(rev, rawText)
 
 	pat, hasPat := r.cx.Editor.Registers().First('/')
 	if !hasPat {
@@ -285,16 +286,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			)
 		}
 
-		lineStart, err := text.LineToChar(lineNum)
-		if err != nil {
-			bufRow++
-			continue
-		}
-		lineContentEnd, err := text.LineEndCharIndex(lineNum)
-		if err != nil {
-			bufRow++
-			continue
-		}
+		entry, next := lineIdx[lineNum], lineIdx[lineNum+1]
+		lineStart := entry.charStart
+		lineContentEnd := next.charStart - entry.endingLen
 
 		tabW := format.TabWidth
 
@@ -312,13 +306,23 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		var lStr string
 		var rowIndentCol, rowLineStart, rowColOffset int
 		if !softWrap && hOff > 0 {
-			rowIndentCol, rowLineStart, rowColOffset = scanLinePrefix(
-				text, lineStart, lineContentEnd, tabW, hOff,
-			)
+			prefix := dc.ensureLinePrefix(linePrefixArgs{
+				rev: rev, lineNum: lineNum, lineStart: lineStart,
+				lineEnd: lineContentEnd, tabW: tabW, hOff: hOff,
+				text: text,
+			})
+			rowIndentCol = prefix.indentCol
+			rowLineStart = prefix.windowPos
+			rowColOffset = prefix.windowCol
 			lStr = lineString(text, rowLineStart, renderEnd)
 		} else {
 			rowLineStart = lineStart
-			lStr = lineString(text, lineStart, renderEnd)
+			if renderEnd == lineContentEnd {
+				// Zero-copy: line content shares rawText's backing array
+				lStr = rawText[entry.byteStart : next.byteStart-entry.endingLen]
+			} else {
+				lStr = lineString(text, lineStart, renderEnd)
+			}
 			rowIndentCol = indentWidth(lStr, tabW)
 		}
 

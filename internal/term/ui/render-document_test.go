@@ -588,6 +588,47 @@ func TestThemeRender(t *testing.T) {
 	})
 }
 
+func TestLineContentRender(t *testing.T) {
+	t.Run("excludes CRLF endings", func(t *testing.T) {
+		e := editorWithText(t, "alpha\r\nbeta\r\ngamma")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "alpha")
+		assert.Contains(t, out, "beta")
+		assert.Contains(t, out, "gamma")
+	})
+
+	t.Run("block cursor lands after CRLF line", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
+		e := editorWithText(t, "abc\r\nxyz")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
+		m := resize(ui.New(e, command.NewKeymaps()), 40, 6)
+
+		rows := strings.Split(m.View().Content, "\n")
+
+		// with the \r correctly outside the line, the cursor sits at line
+		// end and draws a cursor-styled cell; on the \r it renders nothing
+		assert.Contains(t, rows[0], "\x1b[48;2;245;224;220m")
+	})
+
+	t.Run("slices multibyte lines cleanly", func(t *testing.T) {
+		e := editorWithText(t, "héllo wörld\n日本語テスト\nend")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "héllo wörld")
+		assert.Contains(t, out, "日本語テスト")
+		assert.Contains(t, out, "end")
+	})
+}
+
 func TestBaseStyleAtCases(t *testing.T) {
 	t.Run("selected syntax-highlighted text", func(t *testing.T) {
 		root := t.TempDir()

@@ -17,6 +17,17 @@ type (
 		freeScroll bool
 		// area is the screen rectangle assigned by the layout engine
 		area Area
+		// vcol memoizes the last visualColumn result; doc is immutable and
+		// comparable, so an exact match skips the O(line length) rescan that
+		// would otherwise repeat every render frame the cursor stays put
+		vcol vcolCache
+	}
+
+	vcolCache struct {
+		doc    core.Rope
+		cursor int
+		tabW   int
+		col    int
 	}
 
 	// Id is the unique identifier for an open view
@@ -179,7 +190,7 @@ func (v *View) EnsureCursorVisibleHorizontal(
 	if err != nil {
 		return
 	}
-	col := visualColumn(doc, lineStart, cursor, tabW)
+	col := v.cachedVisualColumn(doc, lineStart, cursor, tabW)
 
 	h := v.offset.HorizontalOffset
 	// Clamp scrolloff so there is always at least one column in the middle
@@ -194,6 +205,17 @@ func (v *View) EnsureCursorVisibleHorizontal(
 		h = max(col-width+1+so, 0)
 	}
 	v.offset.HorizontalOffset = h
+}
+
+// cachedVisualColumn returns visualColumn(doc, from, to, tabW), reusing the
+// last result when doc, to, and tabW are unchanged since the previous call
+func (v *View) cachedVisualColumn(doc core.Rope, from, to, tabW int) int {
+	if v.vcol.doc == doc && v.vcol.cursor == to && v.vcol.tabW == tabW {
+		return v.vcol.col
+	}
+	col := visualColumn(doc, from, to, tabW)
+	v.vcol = vcolCache{doc: doc, cursor: to, tabW: tabW, col: col}
+	return col
 }
 
 func (m Mode) String() string {

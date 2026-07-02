@@ -5,23 +5,27 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// scanLinePrefix walks the rope from lineStart, returning indentCol (the visual
-// column where indentation ends), windowPos (the char offset of the first char
-// at or after column hStart), and windowCol (that char's visual column, which
-// may be < hStart when a tab straddles the window boundary)
+type linePrefixArgs struct {
+	rev, lineNum, lineStart, lineEnd, tabW, hOff int
+	text                                         core.Rope
+}
+
+// scanLinePrefix walks the rope from args.lineStart to compute the indent
+// column and the horizontal-scroll window start described by
+// linePrefixScan. rev and lineNum are unused here — they exist only for
+// docRenderCache's cache key in ensureLinePrefix, which forwards args as-is
 //
 // For printable ASCII the inner loop uses a direct width-1 assignment instead
 // of calling view.RuneWidth, so common code files need no per-char function
 // call overhead in the prefix
-func scanLinePrefix(
-	text core.Rope, lineStart, lineEnd, tabW, hStart int,
-) (indentCol, windowPos, windowCol int) {
-	pos := lineStart
+func scanLinePrefix(args linePrefixArgs) linePrefixScan {
+	pos := args.lineStart
 	col := 0
+	indentCol := 0
 	indentDone := false
 	found := false
-	text.ForEachSegment(lineStart, lineEnd, func(seg string) {
-		if found || col >= hStart {
+	args.text.ForEachSegment(args.lineStart, args.lineEnd, func(seg string) {
+		if found || col >= args.hOff {
 			return
 		}
 		for _, ch := range seg {
@@ -37,9 +41,9 @@ func scanLinePrefix(
 			if uint32(ch)-0x20 < 0x5f { // printable ASCII
 				w = 1
 			} else {
-				w = view.RuneWidth(ch, col, tabW)
+				w = view.RuneWidth(ch, col, args.tabW)
 			}
-			if col+w > hStart {
+			if col+w > args.hOff {
 				found = true
 				return
 			}
@@ -50,9 +54,11 @@ func scanLinePrefix(
 	if !indentDone {
 		indentCol = col
 	}
-	windowPos = pos
-	windowCol = col
-	return
+	return linePrefixScan{
+		indentCol: indentCol,
+		windowPos: pos,
+		windowCol: col,
+	}
 }
 
 func cursorCols(

@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"regexp"
 	"slices"
+	"strings"
 
 	"charm.land/lipgloss/v2"
 
@@ -50,6 +51,37 @@ type (
 		smRev   int
 		smPat   string
 		smSpans []matchSpan
+
+		prefixRev  int
+		prefixHOff int
+		prefixTabW int
+
+		// linePrefix caches scanLinePrefix results per line while the
+		// document revision, horizontal offset, and tab width are unchanged;
+		// any of the three changing invalidates every line at once, since a
+		// changed hOff or tabW shifts what every line's scan would return
+		linePrefix map[int]linePrefixScan
+
+		// lineIndex holds one entry per line plus a sentinel, built in a
+		// single pass over rawTextCached, so the render loop resolves line
+		// bounds and slices line text in O(1) instead of descending the rope
+		// for every visible row on every frame
+		lineIndex []lineIndexEntry
+		liRev     int
+	}
+
+	linePrefixScan struct {
+		indentCol, windowPos, windowCol int
+	}
+
+	// lineIndexEntry records where a line starts in both char and byte
+	// terms, plus the length of its line-ending sequence (0, 1 for \n, 2
+	// for \r\n — the same count in chars and bytes since both are ASCII).
+	// Content end is the next entry's start minus this entry's endingLen
+	lineIndexEntry struct {
+		charStart int
+		byteStart int
+		endingLen int
 	}
 
 	matchSpan struct{ from, to int }
@@ -136,9 +168,55 @@ func (dc *docRenderCache) ensureSearchSpans(rev int, pat, rawText string) {
 	}
 }
 
-func documentHighlightSpans(
-	highlights []view.DocumentHighlight,
-) []matchSpan {
+func (dc *docRenderCache) ensureLineIndex(
+	rev int, rawText string,
+) []lineIndexEntry {
+	if dc.liRev == rev && dc.lineIndex != nil {
+		return dc.lineIndex
+	}
+	idx := make([]lineIndexEntry, 1, strings.Count(rawText, "\n")+2)
+	charPos := 0
+	for bytePos, ch := range rawText {
+		charPos++
+		if ch != '\n' {
+			continue
+		}
+		endingLen := 1
+		if bytePos > 0 && rawText[bytePos-1] == '\r' {
+			endingLen = 2
+		}
+		idx[len(idx)-1].endingLen = endingLen
+		idx = append(idx, lineIndexEntry{
+			charStart: charPos, byteStart: bytePos + 1,
+		})
+	}
+	idx = append(idx, lineIndexEntry{
+		charStart: charPos, byteStart: len(rawText),
+	})
+	dc.liRev = rev
+	dc.lineIndex = idx
+	return idx
+}
+
+func (dc *docRenderCache) ensureLinePrefix(
+	args linePrefixArgs,
+) linePrefixScan {
+	if dc.prefixRev != args.rev || dc.prefixHOff != args.hOff ||
+		dc.prefixTabW != args.tabW {
+		dc.prefixRev = args.rev
+		dc.prefixHOff = args.hOff
+		dc.prefixTabW = args.tabW
+		dc.linePrefix = make(map[int]linePrefixScan, len(dc.linePrefix))
+	}
+	if r, ok := dc.linePrefix[args.lineNum]; ok {
+		return r
+	}
+	res := scanLinePrefix(args)
+	dc.linePrefix[args.lineNum] = res
+	return res
+}
+
+func documentHighlightSpans(highlights []view.DocumentHighlight) []matchSpan {
 	if len(highlights) == 0 {
 		return nil
 	}

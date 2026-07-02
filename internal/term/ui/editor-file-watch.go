@@ -24,17 +24,10 @@ type (
 )
 
 func newEditorFileWatcher() *editorFileWatcher {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil
+	return &editorFileWatcher{
+		events: make(chan string, 64),
+		dirs:   map[string]struct{}{},
 	}
-	w := &editorFileWatcher{
-		watcher: watcher,
-		events:  make(chan string, 64),
-		dirs:    map[string]struct{}{},
-	}
-	go w.run()
-	return w
 }
 
 func (e *EditorComponent) syncFileWatcher(cx *Context) {
@@ -64,6 +57,16 @@ func (w *editorFileWatcher) sync(e *view.Editor) {
 		dir := filepath.Dir(path)
 		if _, ok := w.dirs[dir]; ok {
 			continue
+		}
+		// The inotify instance is a limited per-user resource; open it only
+		// once there is a directory to watch
+		if w.watcher == nil {
+			watcher, err := fsnotify.NewWatcher()
+			if err != nil {
+				return
+			}
+			w.watcher = watcher
+			go w.run()
 		}
 		if err := w.watcher.Add(dir); err != nil {
 			continue

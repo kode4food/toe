@@ -251,21 +251,6 @@ func TestNavigationLocationSlice(t *testing.T) {
 	})
 }
 
-func writeNavigationLocationSliceLanguages(t *testing.T, exe, target string) {
-	t.Helper()
-	writeNavigationConfig(t, exe, target, testServerNavLocationSliceEnv+` = "1", `)
-}
-
-func writeNavigationLanguages(t *testing.T, exe, target string) {
-	t.Helper()
-	writeNavigationConfig(t, exe, target, "")
-}
-
-func writeNavigationLinksLanguages(t *testing.T, exe, target string) {
-	t.Helper()
-	writeNavigationConfig(t, exe, target, testServerNavLinksEnv+` = "1", `)
-}
-
 func TestNavigationOutOfRangePosition(t *testing.T) {
 	exe, err := os.Executable()
 	assert.NoError(t, err)
@@ -289,6 +274,22 @@ func TestNavigationOutOfRangePosition(t *testing.T) {
 
 	_, err = session.GotoDefinition(doc, v.ID())
 	assert.Error(t, err)
+}
+
+func writeNavigationLocationSliceLanguages(t *testing.T, exe, target string) {
+	t.Helper()
+	writeNavigationConfig(t,
+		exe, target, testServerNavLocationSliceEnv+` = "1", `)
+}
+
+func writeNavigationLanguages(t *testing.T, exe, target string) {
+	t.Helper()
+	writeNavigationConfig(t, exe, target, "")
+}
+
+func writeNavigationLinksLanguages(t *testing.T, exe, target string) {
+	t.Helper()
+	writeNavigationConfig(t, exe, target, testServerNavLinksEnv+` = "1", `)
 }
 
 func writeNavigationConfig(t *testing.T, exe, target, extra string) {

@@ -31,6 +31,7 @@ type completionController struct {
 	refreshIncomplete   bool
 }
 
+//goland:noinspection GoRedundantConversion
 func TestCompletionComponent(t *testing.T) {
 	t.Run("opens and accepts completion", func(t *testing.T) {
 		e := editorWithText(t, "")

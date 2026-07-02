@@ -372,6 +372,115 @@ func TestCompletionList(t *testing.T) {
 	})
 }
 
+func TestCompletionResolveEdgeCases(t *testing.T) {
+	t.Run("resolve error", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeCompletionResolveErrorLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
+
+		res, err := session.Completions(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 1)
+		if len(res.Items) != 1 {
+			return
+		}
+
+		_, err = session.ResolveCompletion(doc, v.ID(), res.Items[0])
+		assert.True(t, errors.Is(err, lsp.ErrLanguageServerRequest))
+	})
+
+	t.Run("skips resolve without provider", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeNoResolveCompletionLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
+
+		res, err := session.Completions(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 1)
+		if len(res.Items) != 1 {
+			return
+		}
+
+		resolved, err := session.ResolveCompletion(doc, v.ID(), res.Items[0])
+		assert.NoError(t, err)
+		assert.Equal(t, res.Items[0], resolved)
+	})
+}
+
+func TestMultiServerCompletion(t *testing.T) {
+	t.Run("skips server without completion support", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeMultiServerCompletionLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
+
+		res, err := session.Completions(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Len(t, res.Items, 1)
+	})
+
+	t.Run("no trigger match returns empty", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeMultiServerCompletionLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
+
+		res, err := session.TriggerCompletions(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Empty(t, res.Items)
+	})
+}
+
 func writeCompletionListLanguages(t *testing.T, exe string) {
 	t.Helper()
 	root := t.TempDir()
@@ -546,67 +655,6 @@ language-servers = ["session-test"]
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
-func TestCompletionResolveEdgeCases(t *testing.T) {
-	t.Run("resolve error", func(t *testing.T) {
-		exe, err := os.Executable()
-		assert.NoError(t, err)
-		dir := t.TempDir()
-		path := filepath.Join(dir, "main.session")
-		writeCompletionResolveErrorLanguages(t, exe)
-		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
-		e := view.NewEditor(dir)
-		_, err = e.OpenFile(path)
-		assert.NoError(t, err)
-		session := lsp.Attach(t.Context(), e)
-		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
-
-		res, err := session.Completions(doc, v.ID())
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 1)
-		if len(res.Items) != 1 {
-			return
-		}
-
-		_, err = session.ResolveCompletion(doc, v.ID(), res.Items[0])
-		assert.True(t, errors.Is(err, lsp.ErrLanguageServerRequest))
-	})
-
-	t.Run("skips resolve without provider", func(t *testing.T) {
-		exe, err := os.Executable()
-		assert.NoError(t, err)
-		dir := t.TempDir()
-		path := filepath.Join(dir, "main.session")
-		writeNoResolveCompletionLanguages(t, exe)
-		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
-		e := view.NewEditor(dir)
-		_, err = e.OpenFile(path)
-		assert.NoError(t, err)
-		session := lsp.Attach(t.Context(), e)
-		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
-
-		res, err := session.Completions(doc, v.ID())
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 1)
-		if len(res.Items) != 1 {
-			return
-		}
-
-		resolved, err := session.ResolveCompletion(doc, v.ID(), res.Items[0])
-		assert.NoError(t, err)
-		assert.Equal(t, res.Items[0], resolved)
-	})
-}
-
 func writeCompletionResolveErrorLanguages(t *testing.T, exe string) {
 	t.Helper()
 	root := t.TempDir()
@@ -630,54 +678,6 @@ language-servers = ["session-test"]
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
 	))
 	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
-func TestMultiServerCompletion(t *testing.T) {
-	t.Run("skips server without completion support", func(t *testing.T) {
-		exe, err := os.Executable()
-		assert.NoError(t, err)
-		dir := t.TempDir()
-		path := filepath.Join(dir, "main.session")
-		writeMultiServerCompletionLanguages(t, exe)
-		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
-		e := view.NewEditor(dir)
-		_, err = e.OpenFile(path)
-		assert.NoError(t, err)
-		session := lsp.Attach(t.Context(), e)
-		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
-
-		res, err := session.Completions(doc, v.ID())
-		assert.NoError(t, err)
-		assert.Len(t, res.Items, 1)
-	})
-
-	t.Run("no trigger match returns empty", func(t *testing.T) {
-		exe, err := os.Executable()
-		assert.NoError(t, err)
-		dir := t.TempDir()
-		path := filepath.Join(dir, "main.session")
-		writeMultiServerCompletionLanguages(t, exe)
-		assert.NoError(t, os.WriteFile(path, []byte("Pr\n"), 0o644))
-		e := view.NewEditor(dir)
-		_, err = e.OpenFile(path)
-		assert.NoError(t, err)
-		session := lsp.Attach(t.Context(), e)
-		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
-
-		res, err := session.TriggerCompletions(doc, v.ID())
-		assert.NoError(t, err)
-		assert.Empty(t, res.Items)
-	})
 }
 
 func writeMultiServerCompletionLanguages(t *testing.T, exe string) {

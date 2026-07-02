@@ -12,6 +12,7 @@ import (
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -64,29 +65,6 @@ func TestSession(t *testing.T) {
 		}, time.Second, 10*time.Millisecond)
 	})
 
-}
-
-func writeSessionLanguages(t *testing.T, exe, marker string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := fmt.Sprintf(`
-[language-server.session-test]
-command = %q
-args = ["-test.run=TestLSPServerProcess"]
-environment = { %s = "1", %s = %q }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`, exe, testServerEnv, testServerDidOpenFileEnv, marker)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
 func TestSessionMethods(t *testing.T) {
@@ -803,55 +781,6 @@ func TestSessionScratchDocument(t *testing.T) {
 	})
 }
 
-func writeCallbacksLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerCompletionEnv + ` = "1", ` +
-		testServerCallbacksEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
-func writePullDiagnosticsLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerPullDiagnosticsEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
 func TestSessionPullDiagnosticsError(t *testing.T) {
 	t.Run("returns error from server", func(t *testing.T) {
 		exe, err := os.Executable()
@@ -871,31 +800,6 @@ func TestSessionPullDiagnosticsError(t *testing.T) {
 		err = session.PullDiagnostics(doc)
 		assert.Error(t, err)
 	})
-}
-
-func writePullDiagnosticsErrorLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerPullDiagnosticsEnv + ` = "1", ` +
-		testServerDiagnosticErrorEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
 func TestSessionPullDiagnosticsRegOptions(t *testing.T) {
@@ -920,31 +824,6 @@ func TestSessionPullDiagnosticsRegOptions(t *testing.T) {
 	})
 }
 
-func writePullDiagnosticsRegOptionsLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerPullDiagnosticsEnv + ` = "1", ` +
-		testServerDiagRegOptionsEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
 func TestSessionPullDiagnosticsUnchanged(t *testing.T) {
 	t.Run("handles unchanged diagnostic report", func(t *testing.T) {
 		exe, err := os.Executable()
@@ -964,31 +843,6 @@ func TestSessionPullDiagnosticsUnchanged(t *testing.T) {
 		err = session.PullDiagnostics(doc)
 		assert.NoError(t, err)
 	})
-}
-
-func writePullDiagnosticsUnchangedLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerPullDiagnosticsEnv + ` = "1", ` +
-		testServerDiagnosticUnchangedEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
 func TestSessionProgress(t *testing.T) {
@@ -1035,15 +889,15 @@ func TestFileWatching(t *testing.T) {
 
 		// Trigger initialization; server registers file watcher
 		_, _ = session.Completions(doc, v.ID())
-		time.Sleep(100 * time.Millisecond)
 
-		// Save the document; session sends didChangeWatchedFiles
+		// Saving resends didChangeWatchedFiles each attempt, so the poll
+		// succeeds as soon as the async watch registration lands
 		doc.SetSelectionFor(v.ID(), doc.SelectionFor(v.ID()))
-		session.DocumentSaved(doc)
-		time.Sleep(100 * time.Millisecond)
-
-		_, err = os.Stat(notifyFile)
-		assert.NoError(t, err)
+		assert.Eventually(t, func() bool {
+			session.DocumentSaved(doc)
+			_, err := os.Stat(notifyFile)
+			return err == nil
+		}, 5*time.Second, 25*time.Millisecond)
 	})
 
 	t.Run("notifies server on external create", func(t *testing.T) {
@@ -1065,64 +919,16 @@ func TestFileWatching(t *testing.T) {
 		assert.True(t, ok)
 
 		_, _ = session.Completions(doc, v.ID())
-		time.Sleep(100 * time.Millisecond)
-		created := filepath.Join(dir, "created.session")
-		assert.NoError(t, os.WriteFile(created, []byte("new\n"), 0o644))
 
+		// Rewriting the file each attempt raises a fresh fsnotify event, so
+		// the poll succeeds as soon as the directory watch is established
+		created := filepath.Join(dir, "created.session")
 		assert.Eventually(t, func() bool {
+			assert.NoError(t, os.WriteFile(created, []byte("new\n"), 0o644))
 			_, err := os.Stat(notifyFile)
 			return err == nil
-		}, 2*time.Second, 25*time.Millisecond)
+		}, 5*time.Second, 25*time.Millisecond)
 	})
-}
-
-func writeProgressLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerCompletionEnv + ` = "1", ` +
-		testServerProgressEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
-func writeFileWatchLanguages(t *testing.T, exe, notifyFile string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := fmt.Sprintf(`[language-server.session-test]
-command = %q
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { %s = "1", %s = "1", %s = "1", %s = %q }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`, exe, testServerEnv, testServerCompletionEnv, testServerFileWatchEnv,
-		testServerFileWatchNotifyEnv, notifyFile)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
 func TestInlayHints(t *testing.T) {
@@ -1198,54 +1004,6 @@ func TestDocumentColors(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, colors)
 	})
-}
-
-func writeInlayHintsLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerInlayHintsEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
-func writeDocumentColorLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerDocumentColorEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
 func TestSessionAllOperationsError(t *testing.T) {
@@ -1325,63 +1083,22 @@ func TestSessionAllOperationsError(t *testing.T) {
 		_, err := session.SignatureHelp(doc, v.ID())
 		assert.Error(t, err)
 	})
-}
-
-func writeAllErrorLanguages(t *testing.T, exe string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := `[language-server.session-test]
-command = "` + exe + `"
-args = ["-test.run=TestLSPServerProcess"]
-timeout = 1
-environment = { ` + testServerEnv + ` = "1", ` +
-		testServerAllErrorEnv + ` = "1", ` +
-		testServerCodeActionEnv + ` = "1", ` +
-		testServerHighlightEnv + ` = "1", ` +
-		testServerFormatEnv + ` = "1", ` +
-		testServerSignatureEnv + ` = "1", ` +
-		testServerSymbolsEnv + ` = "1", ` +
-		testServerWorkspaceSymbolsEnv + ` = "1", ` +
-		testServerRenameEnv + ` = "1", ` +
-		testServerNavigationEnv + ` = "1", ` +
-		testServerDocumentColorEnv + ` = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
-}
-
-func writeWorkspaceFolderLanguages(t *testing.T, exe, marker string) {
-	t.Helper()
-	root := t.TempDir()
-	dir := filepath.Join(root, "toe")
-	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	text := fmt.Sprintf(`
-[language-server.session-test]
-command = %q
-args = ["-test.run=TestLSPServerProcess"]
-environment = { %s = "1", %s = %q, %s = "1" }
-
-[[language]]
-name = "session"
-language-id = "session"
-file-types = ["session"]
-language-servers = ["session-test"]
-`, exe, testServerEnv, testServerDidOpenFileEnv, marker,
-		testServerWorkspaceFoldersEnv)
-	assert.NoError(t, os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
-	))
-	t.Setenv("XDG_CONFIG_HOME", root)
+	t.Run("format selection returns error", func(t *testing.T) {
+		err := session.FormatSelection(doc, v.ID())
+		assert.Error(t, err)
+	})
+	t.Run("trigger signature without trigger", func(t *testing.T) {
+		help, err := session.TriggerSignatureHelp(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Empty(t, help.Signatures)
+	})
+	t.Run("resolve document link returns error", func(t *testing.T) {
+		links, err := session.DocumentLinks(doc)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, links)
+		_, err = session.ResolveDocumentLink(doc, links[0])
+		assert.Error(t, err)
+	})
 }
 
 func TestSessionWithoutEditor(t *testing.T) {
@@ -1489,6 +1206,429 @@ func TestSessionMultiServer(t *testing.T) {
 	})
 }
 
+func TestSessionBareServer(t *testing.T) {
+	exe, err := os.Executable()
+	assert.NoError(t, err)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "main.session")
+	writeBareLanguages(t, exe)
+	assert.NoError(t, os.WriteFile(path, []byte("f(x)\n"), 0o644))
+	e := view.NewEditor(dir)
+	_, err = e.OpenFile(path)
+	assert.NoError(t, err)
+	session := lsp.Attach(t.Context(), e)
+	defer func() { _ = session.Close() }()
+	doc, ok := e.FocusedDocument()
+	assert.True(t, ok)
+	v, ok := e.FocusedView()
+	assert.True(t, ok)
+
+	t.Run("code actions unsupported", func(t *testing.T) {
+		actions, err := session.CodeActions(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Empty(t, actions)
+	})
+	t.Run("rename prefill unsupported", func(t *testing.T) {
+		_, err := session.RenameSymbolPrefill(doc, v.ID())
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("rename unsupported", func(t *testing.T) {
+		err := session.RenameSymbol(doc, v.ID(), "new")
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("format unsupported", func(t *testing.T) {
+		err := session.FormatDocument(doc, v.ID())
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("format selection multi range", func(t *testing.T) {
+		sel, err := core.NewSelection([]core.Range{
+			core.NewRange(0, 1),
+			core.NewRange(2, 3),
+		}, 0)
+		assert.NoError(t, err)
+		doc.SetSelectionFor(v.ID(), sel)
+		assert.ErrorIs(t,
+			session.FormatSelection(doc, v.ID()), lsp.ErrFormatSelection,
+		)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
+	})
+	t.Run("document symbols unsupported", func(t *testing.T) {
+		symbols, err := session.DocumentSymbols(doc)
+		assert.NoError(t, err)
+		assert.Empty(t, symbols)
+	})
+	t.Run("workspace symbols unsupported", func(t *testing.T) {
+		symbols, err := session.WorkspaceSymbols(doc, "f")
+		assert.NoError(t, err)
+		assert.Empty(t, symbols)
+	})
+	t.Run("signature help unsupported", func(t *testing.T) {
+		help, err := session.SignatureHelp(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Empty(t, help.Signatures)
+	})
+	t.Run("trigger signature unsupported", func(t *testing.T) {
+		help, err := session.TriggerSignatureHelp(doc, v.ID())
+		assert.NoError(t, err)
+		assert.Empty(t, help.Signatures)
+	})
+	t.Run("document links unsupported", func(t *testing.T) {
+		_, err := session.DocumentLinks(doc)
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("inlay hints unsupported", func(t *testing.T) {
+		_, err := session.InlayHints(doc, v.ID())
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("pull diagnostics unsupported", func(t *testing.T) {
+		assert.NoError(t, session.PullDiagnostics(doc))
+	})
+	t.Run("resolve unknown document link", func(t *testing.T) {
+		_, err := session.ResolveDocumentLink(doc, view.DocumentLink{
+			ID: "missing",
+		})
+		assert.ErrorIs(t, err, lsp.ErrDocumentLinkUnavailable)
+	})
+}
+
+func TestSessionUnconfiguredDocument(t *testing.T) {
+	exe, err := os.Executable()
+	assert.NoError(t, err)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "plain.txt")
+	writeBareLanguages(t, exe)
+	assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+	e := view.NewEditor(dir)
+	_, err = e.OpenFile(path)
+	assert.NoError(t, err)
+	session := lsp.Attach(t.Context(), e)
+	defer func() { _ = session.Close() }()
+	doc, ok := e.FocusedDocument()
+	assert.True(t, ok)
+	v, ok := e.FocusedView()
+	assert.True(t, ok)
+
+	t.Run("code actions no server", func(t *testing.T) {
+		_, err := session.CodeActions(doc, v.ID())
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("rename prefill no server", func(t *testing.T) {
+		_, err := session.RenameSymbolPrefill(doc, v.ID())
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("rename no server", func(t *testing.T) {
+		err := session.RenameSymbol(doc, v.ID(), "new")
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+	t.Run("format no server", func(t *testing.T) {
+		err := session.FormatDocument(doc, v.ID())
+		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+	})
+}
+
+func writeSessionLanguages(t *testing.T, exe, marker string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`
+[language-server.session-test]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+environment = { %s = "1", %s = %q }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`, exe, testServerEnv, testServerDidOpenFileEnv, marker)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeCallbacksLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerCompletionEnv + ` = "1", ` +
+		testServerCallbacksEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writePullDiagnosticsLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerPullDiagnosticsEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writePullDiagnosticsErrorLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerPullDiagnosticsEnv + ` = "1", ` +
+		testServerDiagnosticErrorEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writePullDiagnosticsRegOptionsLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerPullDiagnosticsEnv + ` = "1", ` +
+		testServerDiagRegOptionsEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writePullDiagnosticsUnchangedLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerPullDiagnosticsEnv + ` = "1", ` +
+		testServerDiagnosticUnchangedEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeProgressLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerCompletionEnv + ` = "1", ` +
+		testServerProgressEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeFileWatchLanguages(t *testing.T, exe, notifyFile string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`[language-server.session-test]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { %s = "1", %s = "1", %s = "1", %s = %q }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`, exe, testServerEnv, testServerCompletionEnv, testServerFileWatchEnv,
+		testServerFileWatchNotifyEnv, notifyFile)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeInlayHintsLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerInlayHintsEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeDocumentColorLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerDocumentColorEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeAllErrorLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerAllErrorEnv + ` = "1", ` +
+		testServerCodeActionEnv + ` = "1", ` +
+		testServerHighlightEnv + ` = "1", ` +
+		testServerFormatEnv + ` = "1", ` +
+		testServerSignatureEnv + ` = "1", ` +
+		testServerSymbolsEnv + ` = "1", ` +
+		testServerWorkspaceSymbolsEnv + ` = "1", ` +
+		testServerRenameEnv + ` = "1", ` +
+		testServerNavigationEnv + ` = "1", ` +
+		testServerDocumentLinkEnv + ` = "1", ` +
+		testServerDocumentLinkResolveEnv + ` = "1", ` +
+		testServerDocumentColorEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeWorkspaceFolderLanguages(t *testing.T, exe, marker string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`
+[language-server.session-test]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+environment = { %s = "1", %s = %q, %s = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`, exe, testServerEnv, testServerDidOpenFileEnv, marker,
+		testServerWorkspaceFoldersEnv)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
 func writeMultiServerSessionLanguages(t *testing.T, exe string) {
 	t.Helper()
 	root := t.TempDir()
@@ -1536,6 +1676,29 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test", "session-test"]
 `, exe, testServerEnv, testServerCompletionEnv)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeBareLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1" }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
 	))

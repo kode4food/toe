@@ -143,6 +143,11 @@ func (s *Session) ensureFileWatcher() {
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
 			s.mu.Unlock()
+			if s.editor != nil {
+				s.editor.SetStatusMsg(
+					"file watching unavailable: " + err.Error(),
+				)
+			}
 			return
 		}
 		state := &fsWatcher{

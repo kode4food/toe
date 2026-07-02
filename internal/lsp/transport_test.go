@@ -78,6 +78,7 @@ const testServerFileOperationsEnv = "TOE_LSP_FILE_OPERATIONS"
 const testServerFileOpFolderEnv = "TOE_LSP_FILE_OP_FOLDER"
 const testServerWatchRegEdgeEnv = "TOE_LSP_WATCH_REG_EDGE"
 const testServerNoResolveEnv = "TOE_LSP_NO_RESOLVE"
+const testServerCAResolveEnv = "TOE_LSP_CA_RESOLVE"
 const testServerFileOpWillEditEnv = "TOE_LSP_FILE_OP_WILL_EDIT"
 
 var _ io.ReadWriteCloser = stdioConn{}
@@ -161,6 +162,9 @@ func (s *processServer) Initialize(
 		codeActionProvider = &protocol.CodeActionOptions{
 			ResolveProvider: new(true),
 		}
+		if os.Getenv(testServerNoResolveEnv) == "1" {
+			codeActionProvider = protocol.Boolean(true)
+		}
 	}
 	if os.Getenv(testServerWorkspaceFoldersEnv) != "" {
 		folders, err := s.client.WorkspaceFolders(ctx)
@@ -239,7 +243,9 @@ func (s *processServer) Initialize(
 	var docLinkProvider *protocol.DocumentLinkOptions
 	if os.Getenv(testServerDocumentLinkEnv) == "1" {
 		docLinkProvider = &protocol.DocumentLinkOptions{
-			ResolveProvider: new(os.Getenv(testServerDocumentLinkResolveEnv) == "1"),
+			ResolveProvider: new(
+				os.Getenv(testServerDocumentLinkResolveEnv) == "1",
+			),
 		}
 	}
 	inlayHints := protocol.Boolean(os.Getenv(testServerInlayHintsEnv) == "1")
@@ -1068,6 +1074,9 @@ func (s *processServer) Formatting(
 func (s *processServer) RangeFormatting(
 	_ context.Context, _ *protocol.DocumentRangeFormattingParams,
 ) ([]protocol.TextEdit, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("range format error")
+	}
 	if os.Getenv(testServerFormatEnv) != "1" {
 		return nil, nil
 	}
@@ -1154,12 +1163,21 @@ func (s *processServer) DocumentLink(
 	} else {
 		link.Target = new(uri.File(os.Getenv(testServerNavigationTargetEnv)))
 	}
-	return []protocol.DocumentLink{link}, nil
+	empty := protocol.DocumentLink{
+		Range: protocol.Range{
+			Start: protocol.Position{Line: 0, Character: 1},
+			End:   protocol.Position{Line: 0, Character: 1},
+		},
+	}
+	return []protocol.DocumentLink{link, empty}, nil
 }
 
 func (s *processServer) DocumentLinkResolve(
 	_ context.Context, link *protocol.DocumentLink,
 ) (*protocol.DocumentLink, error) {
+	if os.Getenv(testServerAllErrorEnv) == "1" {
+		return nil, errors.New("document link resolve error")
+	}
 	link.Target = new(uri.File(os.Getenv(testServerNavigationTargetEnv)))
 	return link, nil
 }
@@ -1207,17 +1225,68 @@ func (s *processServer) CodeAction(
 	}
 	if os.Getenv(testServerMultiCodeActionEnv) == "1" {
 		actions = append(actions,
-			&protocol.CodeAction{Title: "Extract method", Kind: new(protocol.CodeActionKindRefactorExtract)},
-			&protocol.CodeAction{Title: "Inline method", Kind: new(protocol.CodeActionKindRefactorInline)},
-			&protocol.CodeAction{Title: "Rewrite method", Kind: new(protocol.CodeActionKindRefactorRewrite)},
-			&protocol.CodeAction{Title: "Move method", Kind: new(protocol.CodeActionKindRefactorMove)},
-			&protocol.CodeAction{Title: "Surround method", Kind: new(protocol.CodeActionKind("refactor.surround"))},
-			&protocol.CodeAction{Title: "Refactor", Kind: new(protocol.CodeActionKindRefactor)},
-			&protocol.CodeAction{Title: "Organize imports", Kind: new(protocol.CodeActionKindSource)},
-			&protocol.CodeAction{Title: "Unknown action", Kind: new(protocol.CodeActionKind("unknown.kind"))},
+			&protocol.CodeAction{
+				Title: "Extract method",
+				Kind:  new(protocol.CodeActionKindRefactorExtract),
+			},
+			&protocol.CodeAction{
+				Title: "Inline method",
+				Kind:  new(protocol.CodeActionKindRefactorInline),
+			},
+			&protocol.CodeAction{
+				Title: "Rewrite method",
+				Kind:  new(protocol.CodeActionKindRefactorRewrite),
+			},
+			&protocol.CodeAction{
+				Title: "Move method",
+				Kind:  new(protocol.CodeActionKindRefactorMove),
+			},
+			&protocol.CodeAction{
+				Title: "Surround method",
+				Kind:  new(protocol.CodeActionKind("refactor.surround")),
+			},
+			&protocol.CodeAction{
+				Title: "Refactor",
+				Kind:  new(protocol.CodeActionKindRefactor),
+			},
+			&protocol.CodeAction{
+				Title: "Organize imports",
+				Kind:  new(protocol.CodeActionKindSource),
+			},
+			&protocol.CodeAction{
+				Title: "Unknown action",
+				Kind:  new(protocol.CodeActionKind("unknown.kind")),
+			},
 			&protocol.Command{
 				Title:   "Run formatter",
 				Command: "session.afterCompletion",
+			},
+			&protocol.Command{Title: ""},
+			&protocol.CodeAction{Title: ""},
+			&protocol.CodeAction{
+				Title: "Edit and command",
+				Kind:  new(protocol.CodeActionKindQuickFix),
+				Edit: &protocol.WorkspaceEdit{
+					Changes: map[uri.URI][]protocol.TextEdit{
+						params.TextDocument.URI: {
+							{
+								Range: protocol.Range{
+									Start: protocol.Position{
+										Line: 0, Character: 0,
+									},
+									End: protocol.Position{
+										Line: 0, Character: 0,
+									},
+								},
+								NewText: "",
+							},
+						},
+					},
+				},
+				Command: protocol.Command{
+					Title:   "after",
+					Command: "session.afterCompletion",
+				},
 			},
 		)
 	}
@@ -1279,6 +1348,12 @@ func (s *processServer) CodeAction(
 func (s *processServer) CodeActionResolve(
 	_ context.Context, action *protocol.CodeAction,
 ) (*protocol.CodeAction, error) {
+	switch os.Getenv(testServerCAResolveEnv) {
+	case "error":
+		return nil, errors.New("code action resolve error")
+	case "nil":
+		return nil, nil
+	}
 	return action, nil
 }
 

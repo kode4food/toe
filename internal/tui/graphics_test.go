@@ -45,9 +45,16 @@ func TestStyle(t *testing.T) {
 		s := tui.Style{}.
 			Fg(tui.ColorRGB(1, 2, 3)).
 			Bg(tui.ColorIndexed(240)).
+			UlColor(tui.ColorRGB(4, 5, 6)).
+			UlStyle(tui.UnderlineCurl).
 			Mod(tui.ModifierBold | tui.ModifierItalic)
 		assert.Equal(t, tui.ColorRGB(1, 2, 3), s.FgColor())
 		assert.Equal(t, tui.ColorIndexed(240), s.BgColor())
+		assert.Equal(t, tui.ColorRGB(4, 5, 6), s.UnderlineColor())
+		assert.Equal(t, tui.UnderlineCurl, s.UnderlineStyle())
+		assert.Equal(t,
+			tui.ModifierBold|tui.ModifierItalic, s.Modifier(),
+		)
 		assert.True(t, s.HasMod(tui.ModifierBold))
 		assert.True(t, s.HasMod(tui.ModifierItalic))
 		assert.False(t, s.HasMod(tui.ModifierReversed))

@@ -77,6 +77,12 @@ func TestAutoPairConfig(t *testing.T) {
 		assert.True(t, got)
 	})
 
+	t.Run("empty present config disables", func(t *testing.T) {
+		a := language.AutoPairConfig{Present: true}
+		_, ok := a.AutoPairs()
+		assert.False(t, ok)
+	})
+
 	t.Run("custom pairs returned", func(t *testing.T) {
 		a := language.AutoPairConfig{
 			Present: true,
@@ -99,6 +105,16 @@ func TestAutoPairConfig(t *testing.T) {
 	t.Run("unmarshal invalid errors", func(t *testing.T) {
 		var a language.AutoPairConfig
 		assert.Error(t, a.UnmarshalTOML(42))
+	})
+
+	t.Run("unmarshal non-string pair errors", func(t *testing.T) {
+		var a language.AutoPairConfig
+		assert.Error(t, a.UnmarshalTOML(map[string]any{"(": 1}))
+	})
+
+	t.Run("unmarshal multi-rune pair errors", func(t *testing.T) {
+		var a language.AutoPairConfig
+		assert.Error(t, a.UnmarshalTOML(map[string]string{"<<": ">>"}))
 	})
 
 	t.Run("unmarshal nil errors", func(t *testing.T) {

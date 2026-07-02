@@ -249,4 +249,38 @@ func TestShell(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 	})
+
+	t.Run("read file normalizes crlf", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "input.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("a\r\nb\r\n"), 0o644))
+
+		e := editorWithText(t, "")
+		setCursor(t, e, 0)
+
+		err := action.ReadFile(e, path)
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "a\nb\n", doc.Text().String())
+	})
+
+	t.Run("read file skips duplicate position", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "input.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("x"), 0o644))
+
+		e := editorWithText(t, "ab")
+		setSelection(
+			t, e,
+			[]core.Range{core.NewRange(0, 1), core.PointRange(0)},
+			0,
+		)
+
+		err := action.ReadFile(e, path)
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "xab", doc.Text().String())
+	})
 }

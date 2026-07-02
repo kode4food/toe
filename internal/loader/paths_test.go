@@ -310,6 +310,15 @@ func TestPathsWhenHomeMissing(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("untrusted when no home", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", "")
+		t.Setenv("HOME", "")
+
+		status := loader.QueryWorkspaceTrust(t.TempDir(), false)
+
+		assert.Equal(t, loader.TrustUntrusted, status)
+	})
+
 	t.Run("TrustWorkspace errors when no home", func(t *testing.T) {
 		t.Setenv("XDG_DATA_HOME", "")
 		t.Setenv("HOME", "")

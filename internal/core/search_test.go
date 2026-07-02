@@ -89,4 +89,9 @@ func TestFindNthChar(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("unknown direction returns false", func(t *testing.T) {
+		doc := core.NewRope("abc")
+		_, ok := doc.FindNthChar(1, ch, 0, core.Direction(99))
+		assert.False(t, ok)
+	})
 }

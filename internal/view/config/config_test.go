@@ -611,6 +611,17 @@ func TestAutoSaveUnmarshal(t *testing.T) {
 		assert.True(t, *a.AfterDelay.Enable)
 	})
 
+	t.Run("non-map after-delay is empty", func(t *testing.T) {
+		var a config.AutoSave
+		err := a.UnmarshalTOML(map[string]any{
+			"after-delay": "bad",
+		})
+
+		assert.NoError(t, err)
+		assert.Nil(t, a.AfterDelay.Enable)
+		assert.Nil(t, a.AfterDelay.Timeout)
+	})
+
 	t.Run("nil input returns error", func(t *testing.T) {
 		var a config.AutoSave
 		assert.Error(t, a.UnmarshalTOML(nil))

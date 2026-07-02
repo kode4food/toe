@@ -38,6 +38,14 @@ func TestBuffer(t *testing.T) {
 		assert.Equal(t, " ", b.Get(0, 0).Symbol)
 	})
 
+	t.Run("Get out-of-bounds returns default", func(t *testing.T) {
+		b := tui.NewBuffer(3, 3)
+		assert.Equal(t, " ", b.Get(-1, 0).Symbol)
+		assert.Equal(t, " ", b.Get(0, -1).Symbol)
+		assert.Equal(t, " ", b.Get(3, 0).Symbol)
+		assert.Equal(t, " ", b.Get(0, 3).Symbol)
+	})
+
 	t.Run("Clear resets all cells", func(t *testing.T) {
 		b := tui.NewBuffer(2, 2)
 		b.Set(0, 0, tui.Cell{Symbol: "A"})
@@ -134,6 +142,12 @@ func TestSetRightAlignedInt(t *testing.T) {
 		b.SetRightAlignedInt(0, 0, 3, 0, tui.Style{})
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "0")
+	})
+
+	t.Run("clips left padding", func(t *testing.T) {
+		b := tui.NewBuffer(3, 1)
+		b.SetRightAlignedInt(-2, 0, 5, 42, tui.Style{})
+		assert.Contains(t, b.RenderToANSI(), "42")
 	})
 
 	t.Run("ignores out-of-bounds row", func(t *testing.T) {

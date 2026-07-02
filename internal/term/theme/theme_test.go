@@ -111,6 +111,34 @@ func TestTheme(t *testing.T) {
 		assert.Equal(t, lipgloss.Color("#ff0000"), style.GetUnderlineColor())
 	})
 
+	t.Run("underline color implies line", func(t *testing.T) {
+		th, warnings := theme.Decode(map[string]any{
+			"diagnostic.warning": map[string]any{
+				"underline": map[string]any{
+					"color": "#ffaa00",
+				},
+			},
+		})
+
+		style := th.Get("diagnostic.warning")
+
+		assert.Empty(t, warnings)
+		assert.True(t, style.GetUnderline())
+		assert.Equal(t, lipgloss.Color("#ffaa00"), style.GetUnderlineColor())
+	})
+
+	t.Run("invalid underline warns", func(t *testing.T) {
+		_, warnings := theme.Decode(map[string]any{
+			"diagnostic.info": map[string]any{
+				"underline": map[string]any{
+					"bogus": true,
+				},
+			},
+		})
+
+		assert.NotEmpty(t, warnings)
+	})
+
 	t.Run("falls back through dot scopes", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
 			"ui.text": "white",
@@ -123,6 +151,17 @@ func TestTheme(t *testing.T) {
 		assert.True(t, ok)
 		assert.False(t, exact)
 		assert.Equal(t, lipgloss.Color("15"), style.GetForeground())
+	})
+
+	t.Run("missing scope returns false", func(t *testing.T) {
+		th, warnings := theme.Decode(map[string]any{
+			"ui.text": "white",
+		})
+
+		_, ok := th.TryGet("ui.popup")
+
+		assert.Empty(t, warnings)
+		assert.False(t, ok)
 	})
 
 	t.Run("detects 16 color theme", func(t *testing.T) {

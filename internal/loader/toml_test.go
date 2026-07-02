@@ -136,6 +136,15 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		assert.True(t, ok)
 		assert.Len(t, arr, 2)
 	})
+
+	t.Run("array replaced at depth zero", func(t *testing.T) {
+		left := []any{map[string]any{"name": "x"}}
+		right := []any{map[string]any{"name": "y"}}
+
+		merged := loader.MergeTOMLValues(left, right, 0)
+
+		assert.Equal(t, right, merged)
+	})
 }
 
 func TestLoadMergedTOML(t *testing.T) {

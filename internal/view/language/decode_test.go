@@ -203,6 +203,49 @@ comment-tokens = ["//", "#"]
 `)
 		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
 	})
+
+	t.Run("block-comment token table", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "blockcmt"
+
+[language.block-comment-tokens]
+start = "/*"
+end = "*/"
+`)
+		l := language.LoadLanguage("blockcmt")
+		assert.Len(t, l.BlockCommentTokens, 1)
+		assert.Equal(t, "/*", l.BlockCommentTokens[0].Start)
+		assert.Equal(t, "*/", l.BlockCommentTokens[0].End)
+	})
+
+	t.Run("block-comment token array", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "blockcmtlist"
+
+[[language.block-comment-tokens]]
+start = "/*"
+end = "*/"
+
+[[language.block-comment-tokens]]
+start = "<!--"
+end = "-->"
+`)
+		l := language.LoadLanguage("blockcmtlist")
+		assert.Len(t, l.BlockCommentTokens, 2)
+		assert.Equal(t, "<!--", l.BlockCommentTokens[1].Start)
+	})
+
+	t.Run("invalid block-comment tokens skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "badblockcmt"
+block-comment-tokens = ["bad"]
+`)
+		l := language.LoadLanguage("badblockcmt")
+		assert.Empty(t, l.BlockCommentTokens)
+	})
 }
 
 func TestDecodeAutoPairMap(t *testing.T) {
@@ -275,6 +318,18 @@ injection-regex = "idlang"
 		l := language.LoadLanguage("idlang")
 		assert.NotNil(t, l)
 		assert.Equal(t, "idlang", l.Name)
+	})
+
+	t.Run("shebangs and roots decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "rootlang"
+shebangs = ["rootlang"]
+roots = ["root.lang"]
+`)
+		l := language.LoadLanguage("rootlang")
+		assert.Equal(t, []string{"rootlang"}, l.Shebangs)
+		assert.Equal(t, []string{"root.lang"}, l.Roots)
 	})
 }
 

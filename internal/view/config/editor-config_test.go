@@ -109,3 +109,23 @@ max_line_length = 100
 	assert.False(t, *cfg.InsertFinalNewline)
 	assert.Equal(t, 100, *cfg.MaxLineLength)
 }
+
+func TestEditorConfigIndentSizeTab(t *testing.T) {
+	root := t.TempDir()
+	err := os.WriteFile(filepath.Join(root, ".editorconfig"), []byte(`
+root = true
+
+[*.go]
+indent_style = space
+indent_size = tab
+tab_width = 6
+end_of_line = lf
+`), 0o644)
+	assert.NoError(t, err)
+
+	cfg := config.FindEditorConfig(filepath.Join(root, "main.go"))
+
+	assert.NotNil(t, cfg.IndentStyle)
+	assert.Equal(t, uint8(6), cfg.IndentStyle.Width())
+	assert.Equal(t, core.LineEndingLF, *cfg.LineEnding)
+}

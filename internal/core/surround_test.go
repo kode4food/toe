@@ -123,6 +123,15 @@ func TestFindNthPairsPos(t *testing.T) {
 		assert.Equal(t, 13, anchor)
 		assert.Equal(t, 7, head)
 	})
+
+	t.Run("n=2 returns outer pair", func(t *testing.T) {
+		doc := core.NewRope("((chars))")
+		r := core.PointRange(3)
+		anchor, head, err := core.FindNthPairsPos(doc, '(', r, 2)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, anchor)
+		assert.Equal(t, 8, head)
+	})
 }
 
 func TestGetSurroundPos(t *testing.T) {

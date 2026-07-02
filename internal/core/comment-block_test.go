@@ -76,6 +76,18 @@ func TestFindBlockComments(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "/**", changes[0].StartToken)
 	})
+
+	t.Run("invalid range returns error", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		sel, _ := core.NewSelection([]core.Range{
+			core.NewRange(0, doc.LenChars()+1),
+		}, 0)
+		toks := []core.BlockCommentToken{{Start: "/*", End: "*/"}}
+
+		_, _, err := core.FindBlockComments(toks, doc, sel)
+
+		assert.Error(t, err)
+	})
 }
 
 func TestToggleBlockComments(t *testing.T) {
@@ -130,5 +142,16 @@ func TestToggleBlockComments(t *testing.T) {
 		out, err := tx.Apply(doc)
 		assert.NoError(t, err)
 		assert.Equal(t, "   ", out.String())
+	})
+
+	t.Run("invalid range returns error", func(t *testing.T) {
+		doc := core.NewRope("hello")
+		sel, _ := core.NewSelection([]core.Range{
+			core.NewRange(0, doc.LenChars()+1),
+		}, 0)
+
+		_, err := core.ToggleBlockComments(doc, sel, toks)
+
+		assert.Error(t, err)
 	})
 }

@@ -88,6 +88,34 @@ func TestPickerRender(t *testing.T) {
 		assert.Contains(t, out, "path")
 	})
 
+	t.Run("file explorer shows root title", func(t *testing.T) {
+		tmp := t.TempDir()
+		dir := filepath.Join(tmp, "project")
+		assert.NoError(t, os.MkdirAll(dir, 0o755))
+		assert.NoError(t,
+			os.WriteFile(filepath.Join(dir, "main.go"), []byte(""), 0o644),
+		)
+		e := view.NewEditor(dir)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_explorer",
+			m.PickerAction(func(e *view.Editor) *ui.Picker {
+				return ui.NewFileExplorer(
+					e, ui.DefaultFileExplorerOptions(),
+				)
+			}),
+			[]command.KeyEvent{char('e')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'e')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "project")
+		assert.Contains(t, out, "main.go")
+	})
+
 	t.Run("plain source preview pane", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

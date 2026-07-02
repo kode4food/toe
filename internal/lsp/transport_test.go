@@ -80,6 +80,10 @@ const testServerWatchRegEdgeEnv = "TOE_LSP_WATCH_REG_EDGE"
 const testServerNoResolveEnv = "TOE_LSP_NO_RESOLVE"
 const testServerCAResolveEnv = "TOE_LSP_CA_RESOLVE"
 const testServerFileOpWillEditEnv = "TOE_LSP_FILE_OP_WILL_EDIT"
+const testServerSignatureHelpActiveEnv = "TOE_LSP_SIGNATURE_HELP_ACTIVE"
+const testServerSignatureNoParamsEnv = "TOE_LSP_SIGNATURE_NO_PARAMS"
+const testServerSignatureMissingLabelEnv = "TOE_LSP_SIGNATURE_MISSING_LABEL"
+const testServerSignatureActiveOutEnv = "TOE_LSP_SIGNATURE_ACTIVE_OUT"
 
 var _ io.ReadWriteCloser = stdioConn{}
 
@@ -646,6 +650,37 @@ func (s *processServer) SignatureHelp(
 	if os.Getenv(testServerSignatureEnv) != "1" {
 		return nil, nil
 	}
+	if os.Getenv(testServerSignatureHelpActiveEnv) == "1" {
+		return signatureHelpFromJSON(`{
+			"activeParameter": 1,
+			"signatures": [{
+				"label": "Println(a, b)",
+				"parameters": [
+					{"label": "a"},
+					{"label": "b", "documentation": "second docs"}
+				]
+			}]
+		}`)
+	}
+	if os.Getenv(testServerSignatureNoParamsEnv) == "1" {
+		return signatureHelpFromJSON(`{
+			"signatures": [{"label": "Now()"}]
+		}`)
+	}
+	if os.Getenv(testServerSignatureMissingLabelEnv) == "1" {
+		return signatureHelpFromJSON(`{
+			"signatures": [{
+				"label": "Println(a)",
+				"parameters": [{"label": "missing"}]
+			}]
+		}`)
+	}
+	if os.Getenv(testServerSignatureActiveOutEnv) == "1" {
+		return signatureHelpFromJSON(`{
+			"activeSignature": 3,
+			"signatures": [{"label": "Now()"}]
+		}`)
+	}
 	return &protocol.SignatureHelp{
 		ActiveSignature: new(uint32(0)),
 		Signatures: []protocol.SignatureInformation{
@@ -668,6 +703,16 @@ func (s *processServer) SignatureHelp(
 			},
 		},
 	}, nil
+}
+
+func signatureHelpFromJSON(
+	text string,
+) (*protocol.SignatureHelp, error) {
+	var help protocol.SignatureHelp
+	if err := protocol.Unmarshal([]byte(text), &help); err != nil {
+		return nil, err
+	}
+	return &help, nil
 }
 
 func (s *processServer) Declaration(

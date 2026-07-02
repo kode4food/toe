@@ -65,6 +65,18 @@ func TestGlob(t *testing.T) {
 				want:    true,
 			},
 			{
+				name:    "globstar miss",
+				pattern: "**/*.go",
+				path:    "a/b/main.txt",
+				want:    false,
+			},
+			{
+				name:    "path too short",
+				pattern: "cmd/toe/*.go",
+				path:    "cmd/toe",
+				want:    false,
+			},
+			{
 				name:    "native",
 				pattern: "cmd/toe/*.go",
 				path:    "cmd/toe/main.go",

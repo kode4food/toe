@@ -4,6 +4,7 @@ package highlight
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2"
@@ -112,7 +113,7 @@ func Tokenize(text, lang string) []Span {
 	var spans []Span
 	pos := 0
 	for tok := iter(); tok != chroma.EOF; tok = iter() {
-		n := len([]rune(tok.Value))
+		n := utf8.RuneCountInString(tok.Value)
 		if scope, ok := scopeFor(tok.Type); ok {
 			spans = append(spans, Span{Start: pos, End: pos + n, Scope: scope})
 		}

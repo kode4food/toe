@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"go.lsp.dev/protocol"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"go.lsp.dev/protocol"
 )
 
 // FormatDocument requests whole-document formatting edits
@@ -68,8 +69,7 @@ func (s *Session) FormatSelection(doc *view.Document, viewID view.Id) error {
 	if len(sel.Ranges()) != 1 {
 		return ErrFormatSelection
 	}
-	r := sel.Primary()
-	return s.formatDocument(doc, &r)
+	return s.formatDocument(doc, new(sel.Primary()))
 }
 
 func (s *Session) formatDocument(

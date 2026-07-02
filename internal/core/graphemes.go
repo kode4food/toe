@@ -18,18 +18,30 @@ func NthPrevGraphemeBoundary(doc Rope, charIdx, n int) int {
 	if charIdx == 0 || n == 0 {
 		return charIdx
 	}
-	// Collect all grapheme boundary char indices from 0..charIdx
 	s, err := doc.Slice(0, charIdx)
 	if err != nil {
 		return 0
 	}
-	boundaries := graphemeBoundaries(s.String())
-	// boundaries[0] == 0, boundaries[len] == charIdx
-	k := len(boundaries) - 1 - n
-	if k < 0 {
+	text := s.String()
+	// Ring of size n+1 tracks the last n+1 boundary positions so we avoid
+	// collecting all boundaries for large documents
+	ring := make([]int, n+1)
+	ring[0] = 0
+	count := 1
+	pos := 0
+	state := -1
+	for text != "" {
+		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(text, state)
+		pos += utf8.RuneCountInString(cl)
+		text = rest
+		state = newState
+		ring[count%(n+1)] = pos
+		count++
+	}
+	if count-1 < n {
 		return 0
 	}
-	return boundaries[k]
+	return ring[(count-1-n)%(n+1)]
 }
 
 // NthNextGraphemeBoundary returns the char index n grapheme clusters after
@@ -87,23 +99,6 @@ func EnsureGraphemeBoundaryPrev(doc Rope, charIdx int) int {
 		return charIdx
 	}
 	return PrevGraphemeBoundary(doc, charIdx+1)
-}
-
-// graphemeBoundaries returns the list of char-indexed grapheme cluster start
-// positions for s, including a trailing sentinel equal to utf8.RuneCountInString(s)
-func graphemeBoundaries(s string) []int {
-	out := make([]int, 0, len(s)+1)
-	pos := 0
-	state := -1
-	for s != "" {
-		out = append(out, pos)
-		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(s, state)
-		pos += utf8.RuneCountInString(cl)
-		s = rest
-		state = newState
-	}
-	out = append(out, pos)
-	return out
 }
 
 // graphemeWidth returns the display width of a grapheme cluster string

@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"unicode/utf16"
+	"unicode/utf8"
+
+	"go.lsp.dev/protocol"
 
 	"github.com/kode4food/toe/internal/view"
-	"go.lsp.dev/protocol"
 )
 
 func (c *Client) SignatureHelp(
@@ -41,10 +42,10 @@ func (c *Client) SignatureHelp(
 func (s *Session) SignatureHelp(
 	doc *view.Document, viewID view.Id,
 ) (view.SignatureHelp, error) {
-	context := protocol.SignatureHelpContext{
+	ctx := protocol.SignatureHelpContext{
 		TriggerKind: protocol.SignatureHelpTriggerKindInvoked,
 	}
-	return s.signatureHelp(doc, viewID, context)
+	return s.signatureHelp(doc, viewID, ctx)
 }
 
 // TriggerSignatureHelp returns signature help triggered by the character before
@@ -56,11 +57,11 @@ func (s *Session) TriggerSignatureHelp(
 	if !ok {
 		return view.SignatureHelp{}, nil
 	}
-	context := protocol.SignatureHelpContext{
+	ctx := protocol.SignatureHelpContext{
 		TriggerKind:      protocol.SignatureHelpTriggerKindTriggerCharacter,
 		TriggerCharacter: &trigger,
 	}
-	return s.signatureHelp(doc, viewID, context)
+	return s.signatureHelp(doc, viewID, ctx)
 }
 
 func (s *Session) signatureHelp(
@@ -189,16 +190,22 @@ func signatureTriggerCharacters(
 }
 
 func runeIndex(s string, byteOffset int) int {
-	return len([]rune(s[:byteOffset]))
+	return utf8.RuneCountInString(s[:byteOffset])
 }
 
 func utf16Index(s string, target int) int {
 	units := 0
-	for i, r := range []rune(s) {
+	runeIdx := 0
+	for _, r := range s {
 		if units >= target {
-			return i
+			return runeIdx
 		}
-		units += len(utf16.Encode([]rune{r}))
+		if r >= 0x10000 {
+			units += 2
+		} else {
+			units++
+		}
+		runeIdx++
 	}
-	return len([]rune(s))
+	return utf8.RuneCountInString(s)
 }

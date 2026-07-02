@@ -21,7 +21,7 @@ type (
 		picker *Picker
 		item   *PickerItem
 		editor *view.Editor
-		syntax *syntax.SyntaxCache
+		syntax *syntax.Cache
 		w, h   int
 		// hlFrom < 0 means full preview, no highlight
 		hlFrom int
@@ -180,7 +180,7 @@ func openDocumentPreview(path string, editor *view.Editor) *view.Document {
 	return nil
 }
 
-func previewSpans(sc *syntax.SyntaxCache, text, lang string) []highlight.Span {
+func previewSpans(sc *syntax.Cache, text, lang string) []highlight.Span {
 	if lang == "text" {
 		return nil
 	}

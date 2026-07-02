@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDocumentLinks(t *testing.T) {
@@ -25,7 +26,7 @@ func TestDocumentLinks(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 
@@ -54,7 +55,7 @@ func TestResolveDocumentLink(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 

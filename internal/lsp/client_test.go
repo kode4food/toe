@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/lsp"
 )
 
 type lifecycleServer struct {
@@ -27,8 +28,8 @@ func TestClient(t *testing.T) {
 	t.Run("returns server handle", func(t *testing.T) {
 		ctx := t.Context()
 		clientConn, serverConn := net.Pipe()
-		defer clientConn.Close()
-		defer serverConn.Close()
+		defer func() { _ = clientConn.Close() }()
+		defer func() { _ = serverConn.Close() }()
 
 		server := &lifecycleServer{
 			initialized: make(chan struct{}),
@@ -37,10 +38,10 @@ func TestClient(t *testing.T) {
 		_, serverRPC, _ := protocol.NewServer(
 			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
 		)
-		defer serverRPC.Close()
+		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		srv := client.Server()
 
@@ -51,8 +52,8 @@ func TestClient(t *testing.T) {
 		ctx := t.Context()
 
 		clientConn, serverConn := net.Pipe()
-		defer clientConn.Close()
-		defer serverConn.Close()
+		defer func() { _ = clientConn.Close() }()
+		defer func() { _ = serverConn.Close() }()
 
 		server := &lifecycleServer{
 			initialized: make(chan struct{}),
@@ -61,10 +62,10 @@ func TestClient(t *testing.T) {
 		_, serverRPC, _ := protocol.NewServer(
 			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
 		)
-		defer serverRPC.Close()
+		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		result, err := client.Initialize(
 			ctx, lsp.NewInitializeParams(lsp.InitializeConfig{}),
@@ -97,8 +98,8 @@ func TestClient(t *testing.T) {
 	t.Run("sends file operations by server interest", func(t *testing.T) {
 		ctx := t.Context()
 		clientConn, serverConn := net.Pipe()
-		defer clientConn.Close()
-		defer serverConn.Close()
+		defer func() { _ = clientConn.Close() }()
+		defer func() { _ = serverConn.Close() }()
 
 		server := &lifecycleServer{
 			capabilities: fileOperationCapabilities("**/*.go"),
@@ -109,10 +110,10 @@ func TestClient(t *testing.T) {
 		_, serverRPC, _ := protocol.NewServer(
 			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
 		)
-		defer serverRPC.Close()
+		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 		_, err := client.Initialize(
 			ctx, lsp.NewInitializeParams(lsp.InitializeConfig{}),
 		)

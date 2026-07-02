@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSymbol(t *testing.T) {
@@ -24,7 +25,7 @@ func TestSymbol(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 
@@ -57,7 +58,7 @@ func TestSymbol(t *testing.T) {
 		_, err = e.OpenFile(source)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 
@@ -87,7 +88,7 @@ func TestManySymbolKinds(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 
@@ -113,7 +114,7 @@ func TestWorkspaceSymbolSlice(t *testing.T) {
 		_, err = e.OpenFile(source)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 

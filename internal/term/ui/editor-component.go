@@ -37,6 +37,7 @@ type (
 		docHighlightPos docHighlightPosition
 		completionGen   int
 		completionOpts  CompletionOptions
+		fileWatcher     *editorFileWatcher
 	}
 
 	saveGenSlot struct{ gen int }
@@ -71,6 +72,7 @@ type (
 func (e *EditorComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
+	e.syncFileWatcher(cx)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		e.w = msg.Width
@@ -142,6 +144,11 @@ func (e *EditorComponent) HandleEvent(
 			comp.Push(c)
 			return nil
 		}), nil
+
+	case externalFileChangedMsg:
+		cx.Editor.ProcessExternalFileChange(msg.path)
+		e.syncEditorMessages(cx)
+		return consumed(), e.fileWatchCmd(cx)
 
 	case tea.MouseClickMsg:
 		e.completionGen++
@@ -266,6 +273,7 @@ func newEditorComponent() *EditorComponent {
 		macroSlot:      &macroSlot{macros: map[rune][]command.KeyEvent{}},
 		focused:        true,
 		completionOpts: DefaultCompletionOptions(),
+		fileWatcher:    newEditorFileWatcher(),
 	}
 }
 

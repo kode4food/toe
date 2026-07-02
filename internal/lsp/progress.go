@@ -161,7 +161,7 @@ func progressMessage(server string, entry progressEntry) string {
 	b.WriteString(server)
 	b.WriteString(": ")
 	if entry.percentage != nil {
-		fmt.Fprintf(&b, "%2d%% ", *entry.percentage)
+		_, _ = fmt.Fprintf(&b, "%2d%% ", *entry.percentage)
 	}
 	b.WriteString(entry.title)
 	if entry.title != "" && entry.message != "" {

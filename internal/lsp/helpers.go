@@ -4,8 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/kode4food/toe/internal/core"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/core"
 )
 
 type (

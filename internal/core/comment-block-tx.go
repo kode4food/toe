@@ -1,5 +1,7 @@
 package core
 
+import "unicode/utf8"
+
 // CreateBlockCommentTransaction builds the transaction and updated ranges for a
 // block comment toggle operation
 func CreateBlockCommentTransaction(
@@ -15,8 +17,8 @@ func CreateBlockCommentTransaction(
 			if ch.Kind != CommentChangeCommented {
 				continue
 			}
-			startLen := len([]rune(ch.StartToken))
-			endLen := len([]rune(ch.EndToken))
+			startLen := utf8.RuneCountInString(ch.StartToken)
+			endLen := utf8.RuneCountInString(ch.EndToken)
 			sm := 0
 			if ch.StartMargin {
 				sm = 1
@@ -38,8 +40,8 @@ func CreateBlockCommentTransaction(
 		} else {
 			switch ch.Kind {
 			case CommentChangeUncommented:
-				startLen := len([]rune(ch.StartToken))
-				endLen := len([]rune(ch.EndToken))
+				startLen := utf8.RuneCountInString(ch.StartToken)
+				endLen := utf8.RuneCountInString(ch.EndToken)
 				sp := from + ch.StartPos
 				ep := from + ch.EndPos
 				changes = append(changes,

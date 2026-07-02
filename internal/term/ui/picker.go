@@ -224,7 +224,7 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 }
 
 func (p *Picker) clearPreviewCache() {
-	p.previewCache.clear()
+	clear(p.previewCache)
 }
 
 func (p PickerLocation) lineRange() (int, int, bool) {

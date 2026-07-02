@@ -22,9 +22,8 @@ const DefaultClientName = "toe"
 
 // NewInitializeParams builds an InitializeParams message from the given config
 func NewInitializeParams(cfg InitializeConfig) *protocol.InitializeParams {
-	pid := int32(os.Getpid())
 	params := &protocol.InitializeParams{}
-	params.ProcessID = &pid
+	params.ProcessID = new(int32(os.Getpid()))
 	params.ClientInfo = protocol.ClientInfo{
 		Name:    clientName(cfg.ClientName),
 		Version: protocol.NewOptional(cfg.ClientVersion),
@@ -164,21 +163,19 @@ func OffsetEncoding(
 }
 
 func signatureInfoCapabilities() *protocol.ClientSignatureInformationOptions {
-	yes := true
 	return &protocol.ClientSignatureInformationOptions{
 		DocumentationFormat: []protocol.MarkupKind{
 			protocol.MarkupKindMarkdown,
 			protocol.MarkupKindPlainText,
 		},
 		ParameterInformation:   sigParamCaps(),
-		ActiveParameterSupport: &yes,
+		ActiveParameterSupport: new(true),
 	}
 }
 
 func sigParamCaps() *protocol.ClientSignatureParameterInformationOptions {
-	yes := true
 	return &protocol.ClientSignatureParameterInformationOptions{
-		LabelOffsetSupport: &yes,
+		LabelOffsetSupport: new(true),
 	}
 }
 

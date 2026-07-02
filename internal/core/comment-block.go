@@ -3,6 +3,7 @@ package core
 import (
 	"cmp"
 	"slices"
+	"unicode/utf8"
 )
 
 type (
@@ -74,8 +75,8 @@ func FindBlockComments(
 		lineCommented := false
 
 		for _, tok := range sorted {
-			startLen := len([]rune(tok.Start))
-			endLen := len([]rune(tok.End))
+			startLen := utf8.RuneCountInString(tok.Start)
+			endLen := utf8.RuneCountInString(tok.End)
 			afterStart := startPos + startLen
 			beforeEnd := max(0, endPos-endLen)
 			contentLen := (endPos + 1) - startPos

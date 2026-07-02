@@ -5,11 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kode4food/toe/internal/lsp"
-	"github.com/kode4food/toe/internal/view"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestDiagnostics(t *testing.T) {
@@ -21,7 +22,7 @@ func TestDiagnostics(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		err = session.PublishDiagnostics(
 			t.Context(),
@@ -62,7 +63,7 @@ func TestDiagnostics(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		err = session.PublishDiagnostics(
 			t.Context(),
@@ -93,7 +94,7 @@ func TestDiagnostics(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		err = session.PublishDiagnostics(
 			t.Context(),

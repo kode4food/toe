@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kode4food/toe/internal/view/language"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (

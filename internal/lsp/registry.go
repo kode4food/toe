@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"maps"
 
-	"github.com/kode4food/toe/internal/view/language"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 // Registry maps named server configurations to running client connections

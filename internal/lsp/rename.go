@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"go.lsp.dev/protocol"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"go.lsp.dev/protocol"
 )
 
 // PrepareRename requests the server's rename range or placeholder

@@ -85,7 +85,7 @@ func run(args []string, out io.Writer) error {
 		}
 	}
 	lspSession := lsp.Attach(context.Background(), editor)
-	defer lspSession.Close()
+	defer func() { _ = lspSession.Close() }()
 	editor.SetConfigReload(func() error {
 		raw, _ := config.LoadRawUserConfig()
 		if raw == nil {

@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kode4food/toe/internal/lsp"
-	"github.com/kode4food/toe/internal/view"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type watchServer struct {
@@ -25,8 +26,8 @@ func TestDidChangeWatchedFile(t *testing.T) {
 	t.Run("ignores empty path", func(t *testing.T) {
 		ctx := t.Context()
 		clientConn, serverConn := net.Pipe()
-		defer clientConn.Close()
-		defer serverConn.Close()
+		defer func() { _ = clientConn.Close() }()
+		defer func() { _ = serverConn.Close() }()
 
 		server := &watchServer{
 			changes: make(chan *protocol.DidChangeWatchedFilesParams, 1),
@@ -34,10 +35,10 @@ func TestDidChangeWatchedFile(t *testing.T) {
 		_, serverRPC, _ := protocol.NewServer(
 			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
 		)
-		defer serverRPC.Close()
+		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		assert.NoError(t, client.DidChangeWatchedFile(ctx, ""))
 		select {
@@ -50,8 +51,8 @@ func TestDidChangeWatchedFile(t *testing.T) {
 	t.Run("forwards changed event", func(t *testing.T) {
 		ctx := t.Context()
 		clientConn, serverConn := net.Pipe()
-		defer clientConn.Close()
-		defer serverConn.Close()
+		defer func() { _ = clientConn.Close() }()
+		defer func() { _ = serverConn.Close() }()
 
 		server := &watchServer{
 			changes: make(chan *protocol.DidChangeWatchedFilesParams, 1),
@@ -59,10 +60,10 @@ func TestDidChangeWatchedFile(t *testing.T) {
 		_, serverRPC, _ := protocol.NewServer(
 			ctx, server, jsonrpc2.NewHeaderStream(serverConn),
 		)
-		defer serverRPC.Close()
+		defer func() { _ = serverRPC.Close() }()
 
 		_, client := lsp.NewClient(ctx, clientConn, nil)
-		defer client.Close()
+		defer func() { _ = client.Close() }()
 
 		assert.NoError(t, client.DidChangeWatchedFile(ctx, "/tmp/main.go"))
 		params := <-server.changes
@@ -86,7 +87,7 @@ func TestWatchRegistrationEdgeCases(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		v, ok := e.FocusedView()

@@ -291,7 +291,7 @@ func signatureCallOpen(doc *view.Document, pos int) (int, bool) {
 	if err != nil {
 		return 0, false
 	}
-	stack := []int{}
+	var stack []int
 	charIdx := 0
 	for len(before) > 0 {
 		ch, size := utf8.DecodeRuneInString(before)

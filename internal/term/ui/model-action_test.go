@@ -7,11 +7,12 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/stretchr/testify/assert"
 )
 
 type locationController struct {

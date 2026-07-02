@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGotoFileTarget(t *testing.T) {

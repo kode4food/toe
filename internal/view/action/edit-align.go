@@ -2,6 +2,7 @@ package action
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -104,7 +105,7 @@ func ReplaceChar(e *view.Editor, ch rune) {
 			continue
 		}
 		var b strings.Builder
-		for range []rune(frag) {
+		for range utf8.RuneCountInString(frag) {
 			b.WriteString(replacement)
 		}
 		changes = append(changes, core.TextChange(r.From(), r.To(), b.String()))

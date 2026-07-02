@@ -3,6 +3,7 @@ package core
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // ReflowHardWrap reformats text to fit within width columns by breaking at word
@@ -26,7 +27,7 @@ func ReflowHardWrap(text string, width int) string {
 	lineLen := 0
 
 	for i, w := range words {
-		wLen := len([]rune(w))
+		wLen := utf8.RuneCountInString(w)
 		if i == 0 {
 			b.WriteString(w)
 			lineLen = wLen

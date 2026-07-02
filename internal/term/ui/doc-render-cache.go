@@ -147,7 +147,7 @@ func (dc *docRenderCache) ensureRawText(rev int, text core.Rope) string {
 }
 
 func (dc *docRenderCache) ensureHL(
-	sc *syntax.SyntaxCache, rev int, lang, rawText string,
+	sc *syntax.Cache, rev int, lang, rawText string,
 ) []highlight.Span {
 	if lang != "text" && (dc.hlRev != rev || dc.hlLang != lang) {
 		dc.hlRev = rev

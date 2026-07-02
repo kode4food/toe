@@ -15,8 +15,8 @@ import (
 )
 
 type (
-	// SyntaxCache holds Tree-sitter parser and query caches for a UI context
-	SyntaxCache struct {
+	// Cache holds Tree-sitter parser and query caches for a UI context
+	Cache struct {
 		mu        sync.RWMutex
 		langCache map[string]*langEntry
 		rawQuery  map[string][]byte
@@ -36,8 +36,8 @@ type (
 )
 
 // NewSyntaxCache returns an initialized SyntaxCache
-func NewSyntaxCache() *SyntaxCache {
-	return &SyntaxCache{
+func NewSyntaxCache() *Cache {
+	return &Cache{
 		langCache: map[string]*langEntry{},
 		rawQuery:  map[string][]byte{},
 	}
@@ -45,14 +45,14 @@ func NewSyntaxCache() *SyntaxCache {
 
 // Tokenize parses text for lang and returns highlight spans with theme
 // scope names. Tree-sitter is tried first; Chroma is the fallback
-func (sc *SyntaxCache) Tokenize(text, lang string) []highlight.Span {
+func (sc *Cache) Tokenize(text, lang string) []highlight.Span {
 	if spans := sc.treeTokenize(text, lang); spans != nil {
 		return spans
 	}
 	return highlight.Tokenize(text, lang)
 }
 
-func (sc *SyntaxCache) treeTokenize(text, lang string) []highlight.Span {
+func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
 	language, ok := languageFor(lang)
 	if !ok {
 		return nil
@@ -119,7 +119,7 @@ func (sc *SyntaxCache) treeTokenize(text, lang string) []highlight.Span {
 	return buildSpans(captures)
 }
 
-func (sc *SyntaxCache) langCacheFor(
+func (sc *Cache) langCacheFor(
 	lang string, language *sitter.Language,
 ) (*langEntry, bool) {
 	sc.mu.RLock()
@@ -146,7 +146,7 @@ func (sc *SyntaxCache) langCacheFor(
 	return e, true
 }
 
-func (sc *SyntaxCache) queryFor(lang string) ([]byte, bool) {
+func (sc *Cache) queryFor(lang string) ([]byte, bool) {
 	sc.mu.RLock()
 	if b, ok := sc.rawQuery[lang]; ok {
 		sc.mu.RUnlock()

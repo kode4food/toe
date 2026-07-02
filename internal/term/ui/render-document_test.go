@@ -790,8 +790,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
-		wsr := view.WhitespaceRenderAll
-		e.Options().Whitespace.Render = view.WhitespaceRender{Default: &wsr}
+		e.Options().Whitespace.Render = view.WhitespaceRender{Default: new(view.WhitespaceRenderAll)}
 		e.Options().Theme = "mocha"
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -846,8 +845,7 @@ func TestIndentGuideRender(t *testing.T) {
 func TestWhitespaceRender(t *testing.T) {
 	t.Run("renders visible whitespace chars", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		wsr := view.WhitespaceRenderAll
-		e.Options().Whitespace.Render = view.WhitespaceRender{Default: &wsr}
+		e.Options().Whitespace.Render = view.WhitespaceRender{Default: new(view.WhitespaceRenderAll)}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -969,12 +967,9 @@ func TestRelativeLineNumberRender(t *testing.T) {
 func TestSoftWrapRender(t *testing.T) {
 	t.Run("renders continuation rows", func(t *testing.T) {
 		e := editorWithText(t, "alpha bravo charlie delta echo\n")
-		enabled := true
-		maxWrap := 4
-		indicator := ">> "
-		e.Options().SoftWrap.Enable = &enabled
-		e.Options().SoftWrap.MaxWrap = &maxWrap
-		e.Options().SoftWrap.WrapIndicator = &indicator
+		e.Options().SoftWrap.Enable = new(true)
+		e.Options().SoftWrap.MaxWrap = new(4)
+		e.Options().SoftWrap.WrapIndicator = new(">> ")
 		m := resize(ui.New(e, command.NewKeymaps()), 18, 8)
 
 		out := stripANSI(m.View().Content)

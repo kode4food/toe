@@ -2,6 +2,7 @@ package action
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -165,11 +166,11 @@ func newlineInsertForCursor(args newlineInsertArgs) (string, int) {
 	pairs, ok := autoPairsForDocument(args.editor, args.doc)
 	if args.continued || !ok || !betweenAutoPair(text, args.r, pairs) {
 		insert := "\n" + args.indent
-		return insert, len([]rune(insert))
+		return insert, utf8.RuneCountInString(insert)
 	}
 	inner := args.indent + args.doc.IndentStyle().AsStr()
 	insert := "\n" + inner + "\n" + args.indent
-	return insert, 1 + len([]rune(inner))
+	return insert, 1 + utf8.RuneCountInString(inner)
 }
 
 func betweenAutoPair(text core.Rope, r core.Range, pairs core.AutoPairs) bool {

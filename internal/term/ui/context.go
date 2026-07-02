@@ -11,7 +11,7 @@ import (
 type Context struct {
 	Editor  *view.Editor
 	Keymaps *command.Keymaps
-	Syntax  *syntax.SyntaxCache
+	Syntax  *syntax.Cache
 
 	lastLayer func(*view.Editor) layerFunc
 

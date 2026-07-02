@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"go.lsp.dev/protocol"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"go.lsp.dev/protocol"
 )
 
 type (
@@ -74,10 +75,10 @@ func (c *Client) Completion(
 func (s *Session) Completions(
 	doc *view.Document, viewID view.Id,
 ) (view.CompletionResult, error) {
-	context := protocol.CompletionContext{
+	ctx := protocol.CompletionContext{
 		TriggerKind: protocol.CompletionTriggerKindInvoked,
 	}
-	return s.completions(doc, viewID, context)
+	return s.completions(doc, viewID, ctx)
 }
 
 // TriggerCompletions requests character-triggered completion
@@ -88,11 +89,11 @@ func (s *Session) TriggerCompletions(
 	if !ok {
 		return view.CompletionResult{}, nil
 	}
-	context := protocol.CompletionContext{
+	ctx := protocol.CompletionContext{
 		TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
 		TriggerCharacter: &trigger,
 	}
-	return s.completions(doc, viewID, context)
+	return s.completions(doc, viewID, ctx)
 }
 
 // ApplyCompletion applies the selected completion item to the document
@@ -163,7 +164,7 @@ func (s *Session) completions(
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
 	clients := s.clientsForDocument(doc)
-	out := []view.CompletionItem{}
+	var out []view.CompletionItem
 	raw := map[string]completionCandidate{}
 	var err error
 	incomplete := false

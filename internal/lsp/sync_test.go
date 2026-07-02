@@ -5,13 +5,14 @@ import (
 	"net"
 	"testing"
 
-	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/lsp"
-	"github.com/kode4food/toe/internal/view"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type (
@@ -36,11 +37,10 @@ type (
 func TestTextSync(t *testing.T) {
 	t.Run("sends full sync notifications", func(t *testing.T) {
 		yes := true
-		kind := protocol.TextDocumentSyncKindFull
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
 				OpenClose: &yes,
-				Change:    &kind,
+				Change:    new(protocol.TextDocumentSyncKindFull),
 				Save: &protocol.SaveOptions{
 					IncludeText: &yes,
 				},
@@ -51,8 +51,8 @@ func TestTextSync(t *testing.T) {
 			closed:      make(chan *protocol.DidCloseTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{
 			URI:        uri.File("/tmp/main.go"),
@@ -87,10 +87,9 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("sends incremental changes", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			opened:      make(chan *protocol.DidOpenTextDocumentParams, 1),
 			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
@@ -98,8 +97,8 @@ func TestTextSync(t *testing.T) {
 			closed:      make(chan *protocol.DidCloseTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -124,16 +123,15 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("sends incremental delete", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -158,16 +156,15 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("sends incremental replace", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -192,16 +189,15 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("sends incremental delete across newline", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hello\nworld\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -225,16 +221,15 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("sends incremental delete with CRLF", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hi\r\nbye\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -258,17 +253,16 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("UTF-8 encoding incremental change", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			positionEncoding: protocol.PositionEncodingKindUTF8,
 			changed:          make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized:      make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -291,17 +285,16 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("UTF-32 encoding incremental change", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			positionEncoding: protocol.PositionEncodingKindUTF32,
 			changed:          make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized:      make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		before := core.NewRope("hi\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
@@ -324,16 +317,15 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("UTF-16 surrogate pair incremental", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			changed:     make(chan *protocol.DidChangeTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		// "😀" is U+1F600, requires a UTF-16 surrogate pair (counts as 2)
 		before := core.NewRope("😀\n")
@@ -362,8 +354,8 @@ func TestTextSync(t *testing.T) {
 			sync:        protocol.TextDocumentSyncKindNone,
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
 		ok, err := client.DidOpen(ctx, doc)
@@ -381,8 +373,8 @@ func TestTextSync(t *testing.T) {
 			saved:       make(chan *protocol.DidSaveTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go"), Text: "hello\n"}
 		ok, err := client.DidChange(ctx, doc)
@@ -401,8 +393,8 @@ func TestTextSync(t *testing.T) {
 			sync:        &protocol.TextDocumentSyncOptions{},
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
 		ok, err := client.DidChange(ctx, doc)
@@ -411,13 +403,12 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("empty changeset returns false", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindIncremental
 		server := &syncServer{
-			sync:        &protocol.TextDocumentSyncOptions{Change: &kind},
+			sync:        &protocol.TextDocumentSyncOptions{Change: new(protocol.TextDocumentSyncKindIncremental)},
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
 		ok, err := client.DidChangeDocument(ctx, doc, view.DocumentChange{})
@@ -426,17 +417,16 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("boolean save option", func(t *testing.T) {
-		kind := protocol.TextDocumentSyncKindFull
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
-				Change: &kind,
+				Change: new(protocol.TextDocumentSyncKindFull),
 				Save:   protocol.Boolean(true),
 			},
 			saved:       make(chan *protocol.DidSaveTextDocumentParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go"), Text: "hi\n"}
 		ok, err := client.DidSave(ctx, doc)
@@ -451,8 +441,8 @@ func TestTextSync(t *testing.T) {
 			sync:        &protocol.TextDocumentSyncOptions{},
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 
 		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go")}
 		ok, err := client.DidOpen(ctx, doc)
@@ -466,8 +456,8 @@ func TestTextSync(t *testing.T) {
 			diagnostic:  make(chan *protocol.DocumentDiagnosticParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 		prev := "diag-0"
 		doc := lsp.DocumentSnapshot{
 			URI: uri.File("/tmp/main.go"),
@@ -491,8 +481,8 @@ func TestTextSync(t *testing.T) {
 			completion:  make(chan *protocol.CompletionParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 		doc := lsp.DocumentSnapshot{
 			URI:  uri.File("/tmp/main.go"),
 			Text: "fmt.Pr",
@@ -524,8 +514,8 @@ func TestTextSync(t *testing.T) {
 			command:     make(chan *protocol.ExecuteCommandParams, 1),
 			initialized: make(chan struct{}),
 		}
-		ctx, client, close := newSyncClient(t, server)
-		defer close()
+		ctx, client, closeClient := newSyncClient(t, server)
+		defer closeClient()
 		params := &protocol.ExecuteCommandParams{
 			Command: "do.it",
 			Arguments: []protocol.LSPAny{
@@ -594,11 +584,10 @@ func (s *syncServer) Diagnostic(
 	_ context.Context, p *protocol.DocumentDiagnosticParams,
 ) (protocol.DocumentDiagnosticReport, error) {
 	s.diagnostic <- p
-	resultID := "diag-1"
 	return &protocol.RelatedFullDocumentDiagnosticReport{
 		FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 			Kind:     string(protocol.DocumentDiagnosticReportKindFull),
-			ResultID: &resultID,
+			ResultID: new("diag-1"),
 			Items: []protocol.Diagnostic{
 				{
 					Range: protocol.Range{
@@ -656,9 +645,9 @@ func newSyncClient(
 	assert.NoError(t, err)
 	assert.True(t, waitFor(server.initialized))
 	return clientCtx, client, func() {
-		client.Close()
-		serverRPC.Close()
-		clientConn.Close()
-		serverConn.Close()
+		_ = client.Close()
+		_ = serverRPC.Close()
+		_ = clientConn.Close()
+		_ = serverConn.Close()
 	}
 }

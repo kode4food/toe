@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -795,14 +796,14 @@ func completionLabelMatchIndices(label, query string) []int {
 	}
 	rs := []rune(label)
 	if strings.HasPrefix(strings.ToLower(label), strings.ToLower(query)) {
-		n := min(len([]rune(query)), len(rs))
+		n := min(utf8.RuneCountInString(query), len(rs))
 		indices := make([]int, n)
 		for i := range n {
 			indices[i] = i
 		}
 		return indices
 	}
-	indices := make([]int, 0, len([]rune(query)))
+	indices := make([]int, 0, utf8.RuneCountInString(query))
 	from := 0
 	for _, q := range query {
 		q = unicode.ToLower(q)

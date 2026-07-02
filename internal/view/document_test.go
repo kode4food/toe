@@ -387,6 +387,168 @@ func TestDocumentReload(t *testing.T) {
 	})
 }
 
+func TestDocumentExternalChange(t *testing.T) {
+	t.Run("clean buffer reloads", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "reload.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		err = os.WriteFile(path, []byte("new content"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		doc, _ := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "new content", doc.Text().String())
+		assert.False(t, doc.Modified())
+		assert.Equal(t, view.ExternalStateClean, doc.ExternalState())
+		assert.Contains(t, e.TakeStatusMsg(), "reloaded")
+	})
+
+	t.Run("clean reload preserves selections", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "cursor.txt")
+		err := os.WriteFile(path, []byte("0123456789"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		e.ResizeTree(80, 24)
+		v1, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		v2, ok := e.VSplit(doc.ID())
+		assert.True(t, ok)
+		doc.SetSelectionFor(v1.ID(), core.PointSelection(4))
+		doc.SetSelectionFor(v2.ID(), core.PointSelection(8))
+		err = os.WriteFile(path, []byte("0123456789012345"), 0o644)
+		assert.NoError(t, err)
+
+		ok = e.ProcessExternalFileChange(path)
+
+		assert.True(t, ok)
+		assert.Equal(t, 4, doc.SelectionFor(v1.ID()).Primary().Head)
+		assert.Equal(t, 8, doc.SelectionFor(v2.ID()).Primary().Head)
+	})
+
+	t.Run("clean reload clips selections", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "short.txt")
+		err := os.WriteFile(path, []byte("0123456789"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		doc.SetSelectionFor(v.ID(), core.PointSelection(8))
+		err = os.WriteFile(path, []byte("012"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		assert.True(t, ok)
+		assert.Equal(t, 3, doc.SelectionFor(v.ID()).Primary().Head)
+	})
+
+	t.Run("clean reload maps inserted prefix", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "insert.txt")
+		err := os.WriteFile(path, []byte("alpha beta"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		doc.SetSelectionFor(v.ID(), core.PointSelection(6))
+		err = os.WriteFile(path, []byte("new alpha beta"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		assert.True(t, ok)
+		assert.Equal(t, 10, doc.SelectionFor(v.ID()).Primary().Head)
+	})
+
+	t.Run("clean reload maps deleted prefix", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "delete-prefix.txt")
+		err := os.WriteFile(path, []byte("new alpha beta"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		doc.SetSelectionFor(v.ID(), core.PointSelection(10))
+		err = os.WriteFile(path, []byte("alpha beta"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		assert.True(t, ok)
+		assert.Equal(t, 6, doc.SelectionFor(v.ID()).Primary().Head)
+	})
+
+	t.Run("dirty buffer marks conflict", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "dirty.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		replaceFocusedText(t, e, "local")
+		err = os.WriteFile(path, []byte("external content"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		doc, _ := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "local", doc.Text().String())
+		assert.True(t, doc.Modified())
+		assert.Equal(t, view.ExternalStateChanged, doc.ExternalState())
+		assert.Contains(t, e.TakeStatusMsg(), ":reload or :write")
+	})
+
+	t.Run("deleted file marks conflict", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "delete.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		err = os.Remove(path)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		doc, _ := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "old", doc.Text().String())
+		assert.Equal(t, view.ExternalStateDeleted, doc.ExternalState())
+		assert.Contains(t, e.TakeStatusMsg(), "deleted")
+	})
+
+	t.Run("save refreshes snapshot", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "save.txt")
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		replaceFocusedText(t, e, "local")
+		assert.NoError(t, e.Save())
+
+		ok := e.ProcessExternalFileChange(path)
+
+		doc, _ := e.FocusedDocument()
+		assert.False(t, ok)
+		assert.Equal(t, view.ExternalStateClean, doc.ExternalState())
+	})
+}
+
 func TestDocumentRelativeName(t *testing.T) {
 	t.Run("relative to basedir", func(t *testing.T) {
 		name := view.DocumentRelativeName("/a/b/c/file.txt", "/a/b")

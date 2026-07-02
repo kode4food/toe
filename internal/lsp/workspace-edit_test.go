@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/lsp"
-	"github.com/kode4food/toe/internal/view"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestWorkspaceEditChangesErrors(t *testing.T) {
@@ -23,7 +24,7 @@ func TestWorkspaceEditChangesErrors(t *testing.T) {
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				Changes: map[uri.URI][]protocol.TextEdit{
-					uri.URI("untitled:Untitled-1"): {{NewText: "x"}},
+					"untitled:Untitled-1": {{NewText: "x"}},
 				},
 			})
 		assert.True(t, errors.Is(err, lsp.ErrWorkspaceEditURI))
@@ -147,13 +148,12 @@ func TestWorkspaceEditDocumentChangesErrors(t *testing.T) {
 	})
 
 	t.Run("text document edit invalid range", func(t *testing.T) {
-		edit := hugeRangeEdit()
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.TextDocumentEdit{
 						TextDocument: versionedTextDocumentID(uri.File(path)),
-						Edits:        []protocol.TextDocumentEditElement{&edit},
+						Edits:        []protocol.TextDocumentEditElement{new(hugeRangeEdit())},
 					},
 				},
 			})
@@ -192,15 +192,13 @@ func TestWorkspaceEditCreateFileErrors(t *testing.T) {
 	t.Run("existing file with ignoreIfExists is a no-op", func(t *testing.T) {
 		existing := filepath.Join(dir, "existing-ignored.session")
 		assert.NoError(t, os.WriteFile(existing, []byte("x"), 0o644))
-		ignore := true
-
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.CreateFile{
 						URI: uri.File(existing),
 						Options: &protocol.CreateFileOptions{
-							IgnoreIfExists: &ignore,
+							IgnoreIfExists: new(true),
 						},
 					},
 				},
@@ -307,15 +305,13 @@ func TestWorkspaceEditDeleteFileErrors(t *testing.T) {
 	})
 
 	t.Run("missing file with ignoreIfNotExists is a no-op", func(t *testing.T) {
-		ignore := true
-
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.DeleteFile{
 						URI: uri.File(filepath.Join(dir, "missing.session")),
 						Options: &protocol.DeleteFileOptions{
-							IgnoreIfNotExists: &ignore,
+							IgnoreIfNotExists: new(true),
 						},
 					},
 				},
@@ -329,15 +325,13 @@ func TestWorkspaceEditDeleteFileErrors(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(target, "file.session"), []byte("x"), 0o644,
 		))
-		recursive := true
-
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.DeleteFile{
 						URI: uri.File(target),
 						Options: &protocol.DeleteFileOptions{
-							Recursive: &recursive,
+							Recursive: new(true),
 						},
 					},
 				},

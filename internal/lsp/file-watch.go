@@ -175,7 +175,7 @@ func (s *Session) fileWatchRoots() []string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	seen := map[string]struct{}{}
-	out := []string{}
+	var out []string
 	add := func(path string) {
 		if path == "" {
 			return

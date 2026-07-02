@@ -46,6 +46,7 @@ func (d *Document) Save(opts *Options) error {
 	if err != nil {
 		return err
 	}
+	d.refreshDiskSnapshot()
 	d.buf.modified = false
 	return nil
 }
@@ -75,6 +76,39 @@ func (d *Document) Reload() error {
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
 		d.buf.selections[vid] = sel
 	}
+	d.refreshDiskSnapshot()
+	return nil
+}
+
+func (d *Document) reloadPreservingSelections() error {
+	path := d.Path()
+	if path == "" {
+		return ErrDocumentNoPath
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	d.hasBOM = hasBOMBytes(data)
+	if d.hasBOM {
+		data = data[3:]
+	}
+	oldText := d.buf.text
+	newText := string(data)
+	text := core.NewRope(newText)
+	cs, err := diffChangeSet(oldText, newText)
+	if err != nil {
+		return err
+	}
+	selections := mapSelections(d.buf.selections, cs, text.LenChars())
+	d.buf.Lock()
+	d.buf.text = text
+	d.buf.version++
+	d.buf.selections = selections
+	d.buf.Unlock()
+	d.buf.modified = false
+	d.buf.history = core.NewHistory()
+	d.refreshDiskSnapshot()
 	return nil
 }
 
@@ -119,6 +153,71 @@ func atomicWrite(path, dir string, data []byte) error {
 		return err
 	}
 	return os.Rename(tmp, path)
+}
+
+func diffChangeSet(oldText core.Rope, newText string) (core.ChangeSet, error) {
+	oldRunes := []rune(oldText.String())
+	newRunes := []rune(newText)
+	pfx := commonPrefix(oldRunes, newRunes)
+	sfx := commonSuffix(oldRunes[pfx:], newRunes[pfx:])
+	from := pfx
+	to := len(oldRunes) - sfx
+	repl := string(newRunes[pfx : len(newRunes)-sfx])
+	return core.NewChangeSetFromChanges(oldText, []core.Change{
+		core.TextChange(from, to, repl),
+	})
+}
+
+func mapSelections(
+	selections map[Id]core.Selection, cs core.ChangeSet, n int,
+) map[Id]core.Selection {
+	out := make(map[Id]core.Selection, len(selections))
+	for vid, sel := range selections {
+		out[vid] = mapSelection(sel, cs, n)
+	}
+	return out
+}
+
+func mapSelection(
+	sel core.Selection, cs core.ChangeSet, n int,
+) core.Selection {
+	out, err := sel.Map(cs)
+	if err == nil {
+		return out
+	}
+	ranges := sel.Ranges()
+	for i, r := range ranges {
+		ranges[i] = core.NewRange(clipPos(r.Anchor, n), clipPos(r.Head, n))
+	}
+	out, err = core.NewSelection(ranges, sel.PrimaryIndex())
+	if err != nil {
+		return core.PointSelection(clipPos(sel.Primary().Head, n))
+	}
+	return out
+}
+
+func commonPrefix(a, b []rune) int {
+	n := min(len(a), len(b))
+	for i := range n {
+		if a[i] != b[i] {
+			return i
+		}
+	}
+	return n
+}
+
+func commonSuffix(a, b []rune) int {
+	n := min(len(a), len(b))
+	for i := range n {
+		if a[len(a)-1-i] != b[len(b)-1-i] {
+			return i
+		}
+	}
+	return n
+}
+
+func clipPos(pos, n int) int {
+	return min(max(pos, 0), n)
 }
 
 // detectLang returns a Chroma-compatible language name for the given file path

@@ -158,14 +158,22 @@ func failed(name, msg string) Check {
 }
 
 func compareNames(expected, actual []string) []string {
+	expSet := make(map[string]bool, len(expected))
+	for _, name := range expected {
+		expSet[name] = true
+	}
+	actSet := make(map[string]bool, len(actual))
+	for _, name := range actual {
+		actSet[name] = true
+	}
 	var errs []string
 	for _, name := range expected {
-		if !slices.Contains(actual, name) {
+		if !actSet[name] {
 			errs = append(errs, fmt.Sprintf("missing %s", name))
 		}
 	}
 	for _, name := range actual {
-		if !slices.Contains(expected, name) {
+		if !expSet[name] {
 			errs = append(errs, fmt.Sprintf("unexpected %s", name))
 		}
 	}

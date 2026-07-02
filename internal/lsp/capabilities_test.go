@@ -3,9 +3,10 @@ package lsp_test
 import (
 	"testing"
 
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/lsp"
 )
 
 type capabilityCase struct {

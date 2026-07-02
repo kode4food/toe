@@ -24,7 +24,7 @@ func TestFileOperations(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		assert.NoError(t, session.WillCreateFile(path, false))
 		assert.NoError(t, session.DidCreateFile(path, false))
@@ -44,7 +44,7 @@ func TestFileOperations(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		assert.NoError(t, session.WillCreateFile(path, false))
 		assert.NoError(t, session.DidCreateFile(path, false))
@@ -63,7 +63,7 @@ func TestFileOperations(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		assert.NoError(t, session.WillCreateFile(path, true))
 		assert.NoError(t, session.WillRenameFile(path, path+"2", true))
@@ -84,7 +84,7 @@ func TestFileOperationsFolderKind(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		assert.NoError(t, session.WillCreateFile(dir, true))
 		assert.NoError(t, session.DidCreateFile(dir, true))
@@ -108,7 +108,7 @@ func TestFileOperationsWillEdit(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		assert.NoError(t, session.WillCreateFile(path, false))
 	})
@@ -128,7 +128,7 @@ func TestFileOperationsErrors(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 
 		assert.Error(t, session.WillCreateFile(path, false))
 		assert.Error(t, session.WillRenameFile(path, newPath, false))

@@ -3,8 +3,9 @@ package view_test
 import (
 	"testing"
 
-	"github.com/kode4food/toe/internal/view"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestDocumentHighlights(t *testing.T) {

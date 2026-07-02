@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // DefaultCommentToken is used for line comments when no token is configured
@@ -61,7 +62,7 @@ func ToggleLineComments(
 	}
 
 	found := findLineComment(token, doc, lines)
-	tokenLen := len([]rune(token))
+	tokenLen := utf8.RuneCountInString(token)
 
 	changes := make([]Change, 0, len(found.lines))
 	for _, lineNum := range found.lines {
@@ -125,7 +126,7 @@ func findLineComment(
 		minCol:    math.MaxInt,
 		margin:    1,
 	}
-	tokenLen := len([]rune(token))
+	tokenLen := utf8.RuneCountInString(token)
 
 	for _, lineNum := range lines {
 		line, err := text.Line(lineNum)

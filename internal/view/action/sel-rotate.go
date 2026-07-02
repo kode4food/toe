@@ -1,6 +1,8 @@
 package action
 
 import (
+	"unicode/utf8"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -132,7 +134,7 @@ func rangesAfterReplace(
 	delta := 0
 	for i, r := range ranges {
 		newFrom := r.From() + delta
-		newLen := len([]rune(replacements[i]))
+		newLen := utf8.RuneCountInString(replacements[i])
 		out[i] = core.NewRange(newFrom, newFrom+newLen)
 		delta += newLen - (r.To() - r.From())
 	}

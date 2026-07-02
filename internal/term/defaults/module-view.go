@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -553,7 +554,7 @@ func viewModule() command.Module {
 					if err != nil {
 						return err
 					}
-					if len([]rune(v)) != 1 {
+					if utf8.RuneCountInString(v) != 1 {
 						return fmt.Errorf("%w: %s", config.ErrInvalidOption, v)
 					}
 					e.Options().IndentGuides.Character = v

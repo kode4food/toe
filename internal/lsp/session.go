@@ -11,11 +11,12 @@ import (
 	"slices"
 	"sync"
 
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
+
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
-	"go.lsp.dev/protocol"
-	"go.lsp.dev/uri"
 )
 
 type (
@@ -204,10 +205,9 @@ func (h *clientHandler) ApplyEdit(
 		encoding = client.OffsetEncoding()
 	}
 	if err := h.session.applyWorkspaceEdit(params.Edit, encoding); err != nil {
-		reason := err.Error()
 		return &protocol.ApplyWorkspaceEditResult{
 			Applied:       false,
-			FailureReason: &reason,
+			FailureReason: new(err.Error()),
 		}, nil
 	}
 	return &protocol.ApplyWorkspaceEditResult{Applied: true}, nil
@@ -314,7 +314,7 @@ func (s *Session) ExecuteWorkspaceCommand(
 // WorkspaceCommands returns commands advertised by attached servers
 func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 	clients := s.clientsForDocument(doc)
-	out := []string{}
+	var out []string
 	for _, client := range clients {
 		capabilities, ok := client.Capabilities()
 		if !ok || len(capabilities.ExecuteCommandProvider.Commands) == 0 {
@@ -883,7 +883,7 @@ func stringsToLSPAny(args []string) []protocol.LSPAny {
 	out := make([]protocol.LSPAny, len(args))
 	for i, arg := range args {
 		b, _ := json.Marshal(arg)
-		out[i] = protocol.LSPAny(b)
+		out[i] = b
 	}
 	return out
 }

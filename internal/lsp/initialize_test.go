@@ -4,10 +4,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/lsp"
 )
 
 func TestInitialize(t *testing.T) {

@@ -523,6 +523,7 @@ func TestPickerFiles(t *testing.T) {
 	t.Run("file feed continues after first batch", func(t *testing.T) {
 		tmp := t.TempDir()
 		for i := range 12 {
+			//goland:noinspection GoRedundantConversion
 			name := filepath.Join(tmp, "file-"+string(rune('a'+i))+".go")
 			err := os.WriteFile(name, []byte("package main\n"), 0o644)
 			assert.NoError(t, err)

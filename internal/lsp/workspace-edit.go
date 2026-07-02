@@ -8,10 +8,11 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type workspaceDocumentEdit struct {

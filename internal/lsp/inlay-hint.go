@@ -7,9 +7,10 @@ import (
 	"slices"
 	"strings"
 
+	"go.lsp.dev/protocol"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"go.lsp.dev/protocol"
 )
 
 // InlayHints requests inlay hints for a document range

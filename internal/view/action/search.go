@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -281,5 +282,5 @@ func runeOffsetToByteOffset(s string, runeOff int) int {
 }
 
 func byteOffsetToRuneOffset(s string, byteOff int) int {
-	return len([]rune(s[:byteOff]))
+	return utf8.RuneCountInString(s[:byteOff])
 }

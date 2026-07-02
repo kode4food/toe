@@ -8,12 +8,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kode4food/toe/internal/lsp"
-	"github.com/kode4food/toe/internal/view/language"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -139,16 +140,13 @@ func TestLSPServerProcess(t *testing.T) {
 func (s *processServer) Initialize(
 	ctx context.Context, _ *protocol.InitializeParams,
 ) (*protocol.InitializeResult, error) {
-	yes := true
-	kind := protocol.TextDocumentSyncKindFull
 	var completionProvider *protocol.CompletionOptions
 	if os.Getenv(testServerCompletionEnv) == "1" {
 		completionProvider = &protocol.CompletionOptions{
 			TriggerCharacters: []string{"."},
 		}
 		if os.Getenv(testServerNoResolveEnv) != "1" {
-			resolve := true
-			completionProvider.ResolveProvider = &resolve
+			completionProvider.ResolveProvider = new(true)
 		}
 	}
 	var signatureProvider *protocol.SignatureHelpOptions
@@ -160,9 +158,8 @@ func (s *processServer) Initialize(
 	}
 	var codeActionProvider protocol.CodeActionProvider
 	if os.Getenv(testServerCodeActionEnv) == "1" {
-		resolve := true
 		codeActionProvider = &protocol.CodeActionOptions{
-			ResolveProvider: &resolve,
+			ResolveProvider: new(true),
 		}
 	}
 	if os.Getenv(testServerWorkspaceFoldersEnv) != "" {
@@ -221,11 +218,10 @@ func (s *processServer) Initialize(
 	workspaceSymbols := protocol.Boolean(
 		os.Getenv(testServerWorkspaceSymbolsEnv) == "1",
 	)
-	prepareRename := true
 	var renameProvider protocol.RenameProvider
 	if os.Getenv(testServerRenameEnv) == "1" {
 		renameProvider = &protocol.RenameOptions{
-			PrepareProvider: &prepareRename,
+			PrepareProvider: new(true),
 		}
 	}
 	var diagnosticProvider protocol.DiagnosticProvider
@@ -242,9 +238,8 @@ func (s *processServer) Initialize(
 	format := protocol.Boolean(os.Getenv(testServerFormatEnv) == "1")
 	var docLinkProvider *protocol.DocumentLinkOptions
 	if os.Getenv(testServerDocumentLinkEnv) == "1" {
-		resolvable := os.Getenv(testServerDocumentLinkResolveEnv) == "1"
 		docLinkProvider = &protocol.DocumentLinkOptions{
-			ResolveProvider: &resolvable,
+			ResolveProvider: new(os.Getenv(testServerDocumentLinkResolveEnv) == "1"),
 		}
 	}
 	inlayHints := protocol.Boolean(os.Getenv(testServerInlayHintsEnv) == "1")
@@ -252,11 +247,9 @@ func (s *processServer) Initialize(
 	var workspace *protocol.WorkspaceOptions
 	if os.Getenv(testServerFileOperationsEnv) == "1" {
 		fileKind := protocol.FileOperationPatternKindFile
-		ignoreCase := true
-		httpsScheme := "https"
 		fileFilter := []protocol.FileOperationFilter{
 			{
-				Scheme: &httpsScheme,
+				Scheme: new("https"),
 				Pattern: protocol.FileOperationPattern{
 					Glob:    "**",
 					Matches: fileKind,
@@ -267,7 +260,7 @@ func (s *processServer) Initialize(
 					Glob:    "*.SESSION",
 					Matches: fileKind,
 					Options: &protocol.FileOperationPatternOptions{
-						IgnoreCase: &ignoreCase,
+						IgnoreCase: new(true),
 					},
 				},
 			},
@@ -318,8 +311,8 @@ func (s *processServer) Initialize(
 		Capabilities: protocol.ServerCapabilities{
 			PositionEncoding: protocol.PositionEncodingKindUTF16,
 			TextDocumentSync: &protocol.TextDocumentSyncOptions{
-				OpenClose: &yes,
-				Change:    &kind,
+				OpenClose: new(true),
+				Change:    new(protocol.TextDocumentSyncKindFull),
 			},
 			CompletionProvider:    completionProvider,
 			SignatureHelpProvider: signatureProvider,
@@ -473,20 +466,18 @@ func (s *processServer) DidChangeWatchedFiles(
 }
 
 func (s *processServer) InlayHint(
-	_ context.Context, params *protocol.InlayHintParams,
+	_ context.Context, _ *protocol.InlayHintParams,
 ) ([]protocol.InlayHint, error) {
 	if os.Getenv(testServerInlayHintsEnv) != "1" {
 		return nil, nil
 	}
-	paddingLeft := true
-	paddingRight := true
 	return []protocol.InlayHint{
 		{
 			Position:     protocol.Position{Line: 0, Character: 0},
 			Label:        protocol.String("string-label"),
 			Kind:         protocol.InlayHintKindType,
-			PaddingLeft:  &paddingLeft,
-			PaddingRight: &paddingRight,
+			PaddingLeft:  new(true),
+			PaddingRight: new(true),
 		},
 		{
 			Position: protocol.Position{Line: 0, Character: 0},
@@ -559,9 +550,8 @@ func (s *processServer) Completion(
 		return altCompletionItems(), nil
 	}
 	if os.Getenv(testServerCompletionListEnv) == "1" {
-		incomplete := true
 		return &protocol.CompletionList{
-			IsIncomplete: incomplete,
+			IsIncomplete: true,
 			Items: []protocol.CompletionItem{
 				{Label: "Println", Kind: protocol.CompletionItemKindFunction},
 			},
@@ -650,9 +640,8 @@ func (s *processServer) SignatureHelp(
 	if os.Getenv(testServerSignatureEnv) != "1" {
 		return nil, nil
 	}
-	active := uint32(0)
 	return &protocol.SignatureHelp{
-		ActiveSignature: &active,
+		ActiveSignature: new(uint32(0)),
 		Signatures: []protocol.SignatureInformation{
 			{
 				Label:         "Println(a ...any)",
@@ -800,24 +789,20 @@ func altCompletionItems() protocol.CompletionItemSlice {
 			End:   protocol.Position{Line: 0, Character: 2},
 		},
 	}
-	preTrue := true
-	preFalse := false
 	sortA := "aaa"
 	sortB := "bbb"
 	sortZ := "zzz"
-	labelDetail := "(n int, format string)"
-	labelDescription := "fmt"
 	return protocol.CompletionItemSlice{
 		// Preselect=true, Sort="aaa" (should be first); has a Command
 		{
 			Label:     "Println",
 			Kind:      protocol.CompletionItemKindFunction,
 			TextEdit:  insertReplaceEdit,
-			Preselect: protocol.NewOptional(preTrue),
+			Preselect: protocol.NewOptional(true),
 			SortText:  protocol.NewOptional(sortA),
 			LabelDetails: &protocol.CompletionItemLabelDetails{
-				Detail:      &labelDetail,
-				Description: &labelDescription,
+				Detail:      new("(n int, format string)"),
+				Description: new("fmt"),
 			},
 			Documentation: &protocol.MarkupContent{
 				Kind:  protocol.MarkupKindMarkdown,
@@ -832,21 +817,21 @@ func altCompletionItems() protocol.CompletionItemSlice {
 		{
 			Label:     "Printf",
 			Kind:      protocol.CompletionItemKindFunction,
-			Preselect: protocol.NewOptional(preFalse),
+			Preselect: protocol.NewOptional(false),
 			SortText:  protocol.NewOptional(sortZ),
 		},
 		// Preselect=true, Sort="bbb" (exercises Sort > branch vs "aaa")
 		{
 			Label:     "Putchar",
 			Kind:      protocol.CompletionItemKindFunction,
-			Preselect: protocol.NewOptional(preTrue),
+			Preselect: protocol.NewOptional(true),
 			SortText:  protocol.NewOptional(sortB),
 		},
 		// Preselect=false, Sort="zzz" (exercises Label < branch vs Printf)
 		{
 			Label:     "Puts",
 			Kind:      protocol.CompletionItemKindFunction,
-			Preselect: protocol.NewOptional(preFalse),
+			Preselect: protocol.NewOptional(false),
 			SortText:  protocol.NewOptional(sortZ),
 		},
 	}
@@ -964,9 +949,8 @@ func (s *processServer) PrepareRename(
 		return nil, nil
 	}
 	if os.Getenv(testServerRenameDefaultBehaviorEnv) == "1" {
-		defaultBehavior := true
 		return &protocol.PrepareRenameDefaultBehavior{
-			DefaultBehavior: defaultBehavior,
+			DefaultBehavior: true,
 		}, nil
 	}
 	if os.Getenv(testServerRenameRangeEnv) == "1" {
@@ -1062,7 +1046,7 @@ func (s *processServer) DocumentHighlight(
 }
 
 func (s *processServer) Formatting(
-	_ context.Context, params *protocol.DocumentFormattingParams,
+	_ context.Context, _ *protocol.DocumentFormattingParams,
 ) ([]protocol.TextEdit, error) {
 	if os.Getenv(testServerAllErrorEnv) == "1" {
 		return nil, errors.New("format error")
@@ -1117,11 +1101,10 @@ func (s *processServer) Diagnostic(
 			UnchangedDocumentDiagnosticReport: report,
 		}, nil
 	}
-	fullResultID := "full-result-1"
 	return &protocol.RelatedFullDocumentDiagnosticReport{
 		FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 			Kind:     string(protocol.DocumentDiagnosticReportKindFull),
-			ResultID: &fullResultID,
+			ResultID: new("full-result-1"),
 			Items: []protocol.Diagnostic{
 				{
 					Range: protocol.Range{
@@ -1154,12 +1137,11 @@ func (s *processServer) ExecuteCommand(
 }
 
 func (s *processServer) DocumentLink(
-	_ context.Context, params *protocol.DocumentLinkParams,
+	_ context.Context, _ *protocol.DocumentLinkParams,
 ) ([]protocol.DocumentLink, error) {
 	if os.Getenv(testServerDocumentLinkEnv) != "1" {
 		return nil, nil
 	}
-	target := uri.File(os.Getenv(testServerNavigationTargetEnv))
 	resolvable := os.Getenv(testServerDocumentLinkResolveEnv) == "1"
 	link := protocol.DocumentLink{
 		Range: protocol.Range{
@@ -1170,7 +1152,7 @@ func (s *processServer) DocumentLink(
 	if resolvable {
 		link.Data = protocol.LSPAny(`"resolve-me"`)
 	} else {
-		link.Target = &target
+		link.Target = new(uri.File(os.Getenv(testServerNavigationTargetEnv)))
 	}
 	return []protocol.DocumentLink{link}, nil
 }
@@ -1178,8 +1160,7 @@ func (s *processServer) DocumentLink(
 func (s *processServer) DocumentLinkResolve(
 	_ context.Context, link *protocol.DocumentLink,
 ) (*protocol.DocumentLink, error) {
-	target := uri.File(os.Getenv(testServerNavigationTargetEnv))
-	link.Target = &target
+	link.Target = new(uri.File(os.Getenv(testServerNavigationTargetEnv)))
 	return link, nil
 }
 
@@ -1193,13 +1174,12 @@ func (s *processServer) CodeAction(
 		return nil, nil
 	}
 	kind := protocol.CodeActionKindQuickFix
-	preferred := true
 	actions := []protocol.CommandOrCodeAction{
 		&protocol.CodeAction{
 			Title:       "Fix old",
 			Kind:        &kind,
 			Diagnostics: params.Context.Diagnostics,
-			IsPreferred: &preferred,
+			IsPreferred: new(true),
 			Edit: &protocol.WorkspaceEdit{
 				Changes: map[uri.URI][]protocol.TextEdit{
 					params.TextDocument.URI: {
@@ -1226,23 +1206,15 @@ func (s *processServer) CodeAction(
 		},
 	}
 	if os.Getenv(testServerMultiCodeActionEnv) == "1" {
-		k0 := protocol.CodeActionKindRefactorExtract
-		k1 := protocol.CodeActionKindRefactorInline
-		k2 := protocol.CodeActionKindRefactorRewrite
-		k3 := protocol.CodeActionKindRefactorMove
-		k4 := protocol.CodeActionKind("refactor.surround")
-		k5 := protocol.CodeActionKindRefactor
-		k6 := protocol.CodeActionKindSource
-		k7 := protocol.CodeActionKind("unknown.kind")
 		actions = append(actions,
-			&protocol.CodeAction{Title: "Extract method", Kind: &k0},
-			&protocol.CodeAction{Title: "Inline method", Kind: &k1},
-			&protocol.CodeAction{Title: "Rewrite method", Kind: &k2},
-			&protocol.CodeAction{Title: "Move method", Kind: &k3},
-			&protocol.CodeAction{Title: "Surround method", Kind: &k4},
-			&protocol.CodeAction{Title: "Refactor", Kind: &k5},
-			&protocol.CodeAction{Title: "Organize imports", Kind: &k6},
-			&protocol.CodeAction{Title: "Unknown action", Kind: &k7},
+			&protocol.CodeAction{Title: "Extract method", Kind: new(protocol.CodeActionKindRefactorExtract)},
+			&protocol.CodeAction{Title: "Inline method", Kind: new(protocol.CodeActionKindRefactorInline)},
+			&protocol.CodeAction{Title: "Rewrite method", Kind: new(protocol.CodeActionKindRefactorRewrite)},
+			&protocol.CodeAction{Title: "Move method", Kind: new(protocol.CodeActionKindRefactorMove)},
+			&protocol.CodeAction{Title: "Surround method", Kind: new(protocol.CodeActionKind("refactor.surround"))},
+			&protocol.CodeAction{Title: "Refactor", Kind: new(protocol.CodeActionKindRefactor)},
+			&protocol.CodeAction{Title: "Organize imports", Kind: new(protocol.CodeActionKindSource)},
+			&protocol.CodeAction{Title: "Unknown action", Kind: new(protocol.CodeActionKind("unknown.kind"))},
 			&protocol.Command{
 				Title:   "Run formatter",
 				Command: "session.afterCompletion",
@@ -1258,10 +1230,9 @@ func (s *processServer) CodeAction(
 	if os.Getenv(testServerWsEditCodeActionEnv) == "1" {
 		oldPath := os.Getenv(testServerWsEditOldPathEnv)
 		newPath := os.Getenv(testServerWsEditNewPathEnv)
-		docEditKind := protocol.CodeActionKindQuickFix
 		actions = append(actions, &protocol.CodeAction{
 			Title: "Create file",
-			Kind:  &docEditKind,
+			Kind:  new(protocol.CodeActionKindQuickFix),
 			Edit: &protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.CreateFile{

@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/view"
 )
 
 type (
@@ -265,7 +266,7 @@ func locationResultLocations(result any) []protocol.Location {
 		}
 		return []protocol.Location{*r}
 	case protocol.LocationSlice:
-		return []protocol.Location(r)
+		return r
 	case protocol.DeclarationLinkSlice:
 		return linkLocations(r)
 	case protocol.DefinitionLinkSlice:

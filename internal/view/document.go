@@ -27,6 +27,8 @@ type (
 		readonly      bool
 		langDef       *language.Language
 		restoreCursor bool
+		disk          diskSnapshot
+		external      ExternalState
 
 		buf bufState
 		ls  lsState
@@ -75,6 +77,10 @@ type (
 		Path string
 		Err  error
 	}
+
+	// ExternalState describes whether a file-backed document has diverged from
+	// the last disk snapshot toe loaded or wrote
+	ExternalState int
 )
 
 const (
@@ -82,6 +88,12 @@ const (
 	InvalidDocumentId DocumentId = 0
 	// ScratchBufferName is the display name used for unnamed scratch documents
 	ScratchBufferName = "[scratch]"
+)
+
+const (
+	ExternalStateClean   ExternalState = iota // no external disk change pending
+	ExternalStateChanged                      // changed while buffer dirty
+	ExternalStateDeleted                      // backing file removed while open
 )
 
 // RestoreCursor reports whether the next exit from insert mode should move the
@@ -130,6 +142,12 @@ func (d *Document) SetPath(path string) {
 // Modified reports whether the document has unsaved changes
 func (d *Document) Modified() bool {
 	return d.buf.modified
+}
+
+// ExternalState reports any unresolved change made to the backing file by
+// another process
+func (d *Document) ExternalState() ExternalState {
+	return d.external
 }
 
 // Lang returns the language identifier for syntax highlighting
@@ -452,6 +470,7 @@ func openDocument(
 			} else if lang.Indent.TabWidth != nil {
 				doc.tabWidth = *lang.Indent.TabWidth
 			}
+			doc.refreshDiskSnapshot()
 			return doc, nil
 		}
 		return nil, &DocumentOpenError{Path: path, Err: err}
@@ -501,6 +520,7 @@ func openDocument(
 	} else if le, ok := core.AutoDetectLineEndingString(string(data)); ok {
 		doc.lineEnding = le
 	}
+	doc.refreshDiskSnapshot()
 
 	return doc, nil
 }

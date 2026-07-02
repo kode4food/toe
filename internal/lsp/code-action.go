@@ -7,9 +7,10 @@ import (
 	"slices"
 	"strings"
 
+	"go.lsp.dev/protocol"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"go.lsp.dev/protocol"
 )
 
 type codeActionCandidate struct {
@@ -86,7 +87,7 @@ func (s *Session) CodeActions(
 	if len(clients) == 0 {
 		return nil, ErrNoLanguageServer
 	}
-	out := []view.CodeAction{}
+	var out []view.CodeAction
 	raw := map[string]codeActionCandidate{}
 	var err error
 	for _, client := range clients {

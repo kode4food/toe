@@ -87,3 +87,16 @@ func setCursor(t *testing.T, e *view.Editor, pos int) {
 	assert.True(t, ok)
 	doc.SetSelectionFor(v.ID(), core.PointSelection(pos))
 }
+
+func replaceFocusedText(t *testing.T, e *view.Editor, text string) {
+	t.Helper()
+	doc, ok := e.FocusedDocument()
+	assert.True(t, ok)
+	rope := doc.Text()
+	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+		core.TextChange(0, rope.LenChars(), text),
+	})
+	assert.NoError(t, err)
+	tx := core.NewTransaction(rope).WithChanges(cs)
+	assert.NoError(t, e.Apply(tx))
+}

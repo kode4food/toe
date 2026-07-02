@@ -3,8 +3,9 @@ package glob_test
 import (
 	"testing"
 
-	"github.com/kode4food/toe/internal/glob"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/glob"
 )
 
 func TestGlob(t *testing.T) {

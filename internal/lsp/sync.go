@@ -4,10 +4,11 @@ import (
 	"context"
 	"unicode/utf8"
 
-	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/view"
 )
 
 // DocumentSnapshot is the LSP-visible state of a file-backed document

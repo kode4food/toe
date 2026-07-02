@@ -7,8 +7,9 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/view"
 )
 
 type documentLinkCandidate struct {

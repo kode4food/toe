@@ -2,6 +2,7 @@ package action
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -70,15 +71,15 @@ func OpenAbove(e *view.Editor) {
 		var firstOff int
 		if line == 0 {
 			unit = indent + "\n"
-			firstOff = len([]rune(indent))
+			firstOff = utf8.RuneCountInString(indent)
 		} else {
 			unit = "\n" + indent
-			firstOff = len([]rune(unit))
+			firstOff = utf8.RuneCountInString(unit)
 		}
 		changes = append(changes,
 			core.TextChange(insertPos, insertPos, strings.Repeat(unit, count)),
 		)
-		unitLen := len([]rune(unit))
+		unitLen := utf8.RuneCountInString(unit)
 		for i := range count {
 			targets = append(targets, newlineTarget{
 				pos: insertPos,

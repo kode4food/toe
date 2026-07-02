@@ -23,7 +23,12 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 	ec := newEditorComponent()
 	comp := &Compositor{}
 	comp.Push(ec)
-	return Model{compositor: comp, context: cx, component: ec}
+	return Model{
+		compositor: comp,
+		context:    cx,
+		component:  ec,
+		initCmd:    ec.fileWatchCmd(cx),
+	}
 }
 
 // CompletionOptions returns the UI-owned completion popup behavior settings
@@ -43,7 +48,9 @@ func (m Model) Init() tea.Cmd {
 
 // Update delegates all events to the compositor
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, m.compositor.HandleEvent(msg, m.context)
+	cmd := m.compositor.HandleEvent(msg, m.context)
+	m.component.syncFileWatcher(m.context)
+	return m, cmd
 }
 
 // View renders the current frame via the compositor

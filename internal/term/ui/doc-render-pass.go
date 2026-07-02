@@ -385,7 +385,7 @@ func diagnosticPopupLines(text string, width, maxLines int) []string {
 	if text == "" || width <= 0 || maxLines <= 0 {
 		return nil
 	}
-	lines := []string{}
+	var lines []string
 	for line := range strings.SplitSeq(lipgloss.Wrap(text, width, ""), "\n") {
 		line = strings.TrimRight(line, " \t")
 		if line == "" {

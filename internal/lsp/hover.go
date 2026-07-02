@@ -5,8 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/kode4food/toe/internal/view"
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/view"
 )
 
 func (c *Client) Hover(
@@ -44,7 +45,7 @@ func (s *Session) Hover(
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
 	clients := s.clientsForDocument(doc)
-	out := []string{}
+	var out []string
 	var err error
 	for _, client := range clients {
 		hover, sent, e := client.Hover(s.ctx, snap, pos)

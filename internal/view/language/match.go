@@ -3,7 +3,6 @@ package language
 import (
 	"path/filepath"
 	"regexp"
-
 	"slices"
 	"strings"
 

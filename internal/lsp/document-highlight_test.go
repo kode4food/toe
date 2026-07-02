@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestDocumentHighlights(t *testing.T) {
@@ -24,7 +25,7 @@ func TestDocumentHighlights(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		v, ok := e.FocusedView()
@@ -51,7 +52,7 @@ func TestDocumentHighlightsMerge(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		v, ok := e.FocusedView()
@@ -68,7 +69,7 @@ func TestDocumentHighlightsMerge(t *testing.T) {
 func TestDocumentHighlightLifecycle(t *testing.T) {
 	t.Run("stop clears highlights", func(t *testing.T) {
 		session, doc, v := openHighlightSession(t)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: 0, To: 3},
 		})
@@ -81,7 +82,7 @@ func TestDocumentHighlightLifecycle(t *testing.T) {
 
 	t.Run("restart clears highlights", func(t *testing.T) {
 		session, doc, v := openHighlightSession(t)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: 0, To: 3},
 		})
@@ -117,7 +118,7 @@ func TestDocumentHighlightLifecycle(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
-		defer session.Close()
+		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		v, ok := e.FocusedView()

@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view/language"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestWorkspace(t *testing.T) {

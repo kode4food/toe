@@ -44,7 +44,7 @@ type (
 )
 
 func (p previewCache) doc(
-	sc *syntax.SyntaxCache, doc *view.Document,
+	sc *syntax.Cache, doc *view.Document,
 ) *previewDocEntry {
 	lang := doc.Lang()
 	rev := doc.Revision()
@@ -63,9 +63,7 @@ func (p previewCache) doc(
 	return entry
 }
 
-func (p previewCache) path(
-	sc *syntax.SyntaxCache, path string,
-) previewCacheEntry {
+func (p previewCache) path(sc *syntax.Cache, path string) previewCacheEntry {
 	key := previewPathKey(path)
 	entry, ok := p[key]
 	if ok {
@@ -76,10 +74,6 @@ func (p previewCache) path(
 	return entry
 }
 
-func (p *previewCache) clear() {
-	*p = previewCache{}
-}
-
 func previewDocKey(id view.DocumentId) previewCacheKey {
 	return previewCacheKey{id: id}
 }
@@ -88,7 +82,7 @@ func previewPathKey(path string) previewCacheKey {
 	return previewCacheKey{path: path}
 }
 
-func loadPathPreview(sc *syntax.SyntaxCache, path string) previewCacheEntry {
+func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	info, err := os.Stat(path)
 	if err != nil {
 		return noPreviewEntry("<File not found>")

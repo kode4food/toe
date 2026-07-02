@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/health"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
@@ -43,14 +44,21 @@ func run(args []string, out io.Writer) error {
 		return err
 	}
 
-	editor := view.NewEditor(cwd)
-
 	var pickerDir string
 	if len(args) > 0 {
 		if fi, err := os.Stat(args[0]); err == nil && fi.IsDir() {
 			pickerDir, args = args[0], args[1:]
 		}
 	}
+	sessionRoot := cwd
+	if pickerDir != "" {
+		sessionRoot, err = filepath.Abs(pickerDir)
+		if err != nil {
+			return err
+		}
+	}
+
+	editor := view.NewEditor(sessionRoot)
 	for _, path := range args {
 		if fi, err := os.Stat(path); err == nil && fi.IsDir() {
 			return fmt.Errorf(
@@ -70,7 +78,7 @@ func run(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	raw, _ := config.LoadRawUserConfig()
+	raw, _ := loadRawConfigForDir(sessionRoot)
 	if raw == nil {
 		raw = map[string]any{}
 	}
@@ -84,10 +92,27 @@ func run(args []string, out io.Writer) error {
 			}
 		}
 	}
+	baseValues, err := reg.OptionValues(editor)
+	if err != nil {
+		return err
+	}
+	sessionPath := view.WorkspaceSessionFile(sessionRoot)
+	if editor.Options().AutoSession && len(args) == 0 {
+		values, ok, err := editor.RestoreSession(sessionPath)
+		if err != nil && !errors.Is(err, view.ErrSessionEmpty) {
+			return err
+		}
+		if ok {
+			if err := reg.ApplyOptionValues(editor, values); err != nil {
+				return err
+			}
+			pickerDir = ""
+		}
+	}
 	lspSession := lsp.Attach(context.Background(), editor)
 	defer func() { _ = lspSession.Close() }()
 	editor.SetConfigReload(func() error {
-		raw, _ := config.LoadRawUserConfig()
+		raw, _ := loadRawConfigForDir(editor.Cwd())
 		if raw == nil {
 			raw = map[string]any{}
 		}
@@ -106,7 +131,38 @@ func run(args []string, out io.Writer) error {
 
 	p := tea.NewProgram(model)
 	_, err = p.Run()
+	if err == nil && editor.Options().AutoSession {
+		values, valueErr := reg.OptionValues(editor)
+		if valueErr != nil {
+			return valueErr
+		}
+		err = editor.SaveSession(
+			sessionPath, changedOptionValues(baseValues, values),
+		)
+	}
 	return err
+}
+
+func changedOptionValues(
+	base, values map[string]string,
+) map[string]string {
+	out := map[string]string{}
+	for key, value := range values {
+		if base[key] != value {
+			out[key] = value
+		}
+	}
+	return out
+}
+
+func loadRawConfigForDir(dir string) (map[string]any, bool) {
+	path, ok := loader.ConfigFile()
+	if !ok {
+		return nil, false
+	}
+	return config.LoadRawConfigForWorkspace(
+		path, loader.WorkspaceConfigFile(dir), dir,
+	)
 }
 
 // parseConfigFlag strips --config <path> from args and sets path

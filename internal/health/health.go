@@ -28,6 +28,65 @@ var (
 	ErrFailed = errors.New("health check failed")
 )
 
+var (
+	expectedLanguages = []string{
+		"bash",
+		"css",
+		"dockerfile",
+		"env",
+		"gitcommit",
+		"gitattributes",
+		"gitignore",
+		"go",
+		"gomod",
+		"graphql",
+		"hcl",
+		"html",
+		"javascript",
+		"json",
+		"jsonc",
+		"markdown",
+		"markdown.inline",
+		"protobuf",
+		"sql",
+		"toml",
+		"tsx",
+		"typescript",
+		"yaml",
+	}
+
+	expectedGrammars = []string{
+		"bash",
+		"css",
+		"dockerfile",
+		"gitattributes",
+		"gitcommit",
+		"gitignore",
+		"go",
+		"gomod",
+		"graphql",
+		"hcl",
+		"html",
+		"javascript",
+		"json",
+		"markdown",
+		"markdown_inline",
+		"proto",
+		"sql",
+		"toml",
+		"tsx",
+		"typescript",
+		"yaml",
+	}
+
+	expectedThemes = []string{
+		"frappe",
+		"latte",
+		"macchiato",
+		"mocha",
+	}
+)
+
 func CheckRuntime() Report {
 	return Report{
 		checkLanguages(),
@@ -87,7 +146,7 @@ func checkLanguages() Check {
 		names = append(names, l.Name)
 	}
 	slices.Sort(names)
-	errs := compareNames(expectedLanguages(), names)
+	errs := compareNames(expectedLanguages, names)
 	return Check{
 		Name:   "languages",
 		OK:     len(errs) == 0,
@@ -106,7 +165,7 @@ func checkGrammars() Check {
 		names = append(names, g.Name)
 	}
 	slices.Sort(names)
-	errs := compareNames(expectedGrammars(), names)
+	errs := compareNames(expectedGrammars, names)
 	return Check{
 		Name:   "grammars",
 		OK:     len(errs) == 0,
@@ -117,7 +176,7 @@ func checkGrammars() Check {
 
 func checkThemes() Check {
 	names := loader.ThemeNames()
-	errs := compareNames(expectedThemes(), names)
+	errs := compareNames(expectedThemes, names)
 	for _, name := range names {
 		data, err := loader.LoadThemeTOML(name)
 		if err != nil {
@@ -178,67 +237,4 @@ func compareNames(expected, actual []string) []string {
 		}
 	}
 	return errs
-}
-
-func expectedLanguages() []string {
-	return []string{
-		"bash",
-		"css",
-		"dockerfile",
-		"env",
-		"gitcommit",
-		"gitattributes",
-		"gitignore",
-		"go",
-		"gomod",
-		"graphql",
-		"hcl",
-		"html",
-		"javascript",
-		"json",
-		"jsonc",
-		"markdown",
-		"markdown.inline",
-		"protobuf",
-		"sql",
-		"toml",
-		"tsx",
-		"typescript",
-		"yaml",
-	}
-}
-
-func expectedGrammars() []string {
-	return []string{
-		"bash",
-		"css",
-		"dockerfile",
-		"gitattributes",
-		"gitcommit",
-		"gitignore",
-		"go",
-		"gomod",
-		"graphql",
-		"hcl",
-		"html",
-		"javascript",
-		"json",
-		"markdown",
-		"markdown_inline",
-		"proto",
-		"sql",
-		"toml",
-		"tsx",
-		"typescript",
-		"yaml",
-	}
-}
-
-func expectedThemes() []string {
-	return []string{
-		"frappe",
-		"latte",
-		"macchiato",
-		"mocha",
-	}
 }

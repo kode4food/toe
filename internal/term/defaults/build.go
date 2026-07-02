@@ -33,6 +33,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		clipboardModule(),
 		viewModule(),
 		shellModule(model),
+		sessionModule(),
 		lifecycleModule(),
 		formatModule(),
 		lspModule(model),

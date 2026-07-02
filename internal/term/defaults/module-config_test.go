@@ -101,6 +101,7 @@ func TestConfigOptions(t *testing.T) {
 		"editor.middle-click-paste",
 		"editor.insecure",
 		"editor.editor-config",
+		"editor.auto-session",
 	}
 	for _, key := range boolCases {
 		t.Run("toggle "+key, func(t *testing.T) {

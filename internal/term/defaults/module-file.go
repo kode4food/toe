@@ -88,8 +88,8 @@ func fileWriteCmds() []command.Command {
 	return []command.Command{
 		{
 			Name: actWrite,
-			DocString: "Write changes to disk. " +
-				"Accepts an optional path (:write some/path.txt)",
+			DocString: "Write changes to disk. Accepts an optional path " +
+				"(:write some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				if err := e.Save(); err != nil {

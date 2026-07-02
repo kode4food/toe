@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -88,6 +89,38 @@ func (r *Registry) OptionKeys() []string {
 	}
 	slices.Sort(keys)
 	return keys
+}
+
+// OptionValues returns the current string value for every registered runtime
+// option
+func (r *Registry) OptionValues(e *view.Editor) (map[string]string, error) {
+	out := map[string]string{}
+	for _, key := range r.OptionKeys() {
+		o := r.options[key]
+		value, err := o.Get(e)
+		if err != nil {
+			return nil, err
+		}
+		out[key] = value
+	}
+	return out, nil
+}
+
+// ApplyOptionValues applies a set of runtime option strings through the same
+// handlers used by :set
+func (r *Registry) ApplyOptionValues(
+	e *view.Editor, values map[string]string,
+) error {
+	for key, value := range values {
+		o, ok := r.LookupOption(key)
+		if !ok {
+			return fmt.Errorf("%w: %s", view.ErrSessionUnknownOption, key)
+		}
+		if err := o.Set(e, value); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // BoolOptionKeys returns registered option keys that support toggle

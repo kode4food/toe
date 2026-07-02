@@ -17,6 +17,7 @@ type uiSection struct {
 		MiddleClickPaste  *bool            `toml:"middle-click-paste"`
 		Insecure          *bool            `toml:"insecure"`
 		EditorConfig      *bool            `toml:"editor-config"`
+		AutoSession       *bool            `toml:"auto-session"`
 		DefaultLineEnding core.LineEnding  `toml:"default-line-ending"`
 		CursorShape       view.CursorShape `toml:"cursor-shape"`
 		StatusLine        view.StatusLine  `toml:"statusline"`
@@ -97,6 +98,14 @@ func configModule(r *command.Registry) command.Module {
 					e.Options().EditorConfig = v
 				},
 			),
+			editorBoolOption("editor.auto-session",
+				func(e *view.Editor) bool {
+					return e.Options().AutoSession
+				},
+				func(e *view.Editor, v bool) {
+					e.Options().AutoSession = v
+				},
+			),
 			{
 				Key: "editor.default-line-ending",
 				Get: func(e *view.Editor) (string, error) {
@@ -171,6 +180,9 @@ func configModule(r *command.Registry) command.Module {
 				)
 				opts.Insecure = boolOr(cfg.Editor.Insecure, false)
 				opts.EditorConfig = boolOr(cfg.Editor.EditorConfig, true)
+				opts.AutoSession = boolOr(
+					cfg.Editor.AutoSession, true,
+				)
 				opts.DefaultLineEnding = cfg.Editor.DefaultLineEnding
 				opts.CursorShape = cfg.Editor.CursorShape
 				opts.StatusLine = cfg.Editor.StatusLine

@@ -25,6 +25,7 @@ type Options struct {
 	TrimFinalNewlines    bool
 	TrimTrailingWS       bool
 	EditorConfig         bool
+	AutoSession          bool
 	Insecure             bool
 	ContinueComments     bool
 	SearchSmartCase      bool
@@ -142,6 +143,7 @@ func defaultOptions() Options {
 		AtomicSave:           true,
 		InsertFinalNewline:   true,
 		EditorConfig:         true,
+		AutoSession:          true,
 		ContinueComments:     true,
 		SearchSmartCase:      true,
 		SearchWrapAround:     true,

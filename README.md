@@ -17,6 +17,7 @@ Work in progress. Assume it will lose your edits.
 - Language server support for completion, hover, signature help, formatting, symbols, code actions, rename, and go-to navigation
 - Diagnostics with underlines, gutter markers, status counts, and cursor-scoped popup text
 - User and workspace config in TOML
+- Session persistence: open documents, split layout, cursor positions, and view modes survive restarts
 
 ## What's still being built
 

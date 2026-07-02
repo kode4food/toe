@@ -56,16 +56,13 @@ type (
 		prefixHOff int
 		prefixTabW int
 
-		// linePrefix caches scanLinePrefix results per line while the
-		// document revision, horizontal offset, and tab width are unchanged;
-		// any of the three changing invalidates every line at once, since a
-		// changed hOff or tabW shifts what every line's scan would return
+		// linePrefix caches scanLinePrefix results per line; a change to
+		// the revision, horizontal offset, or tab width invalidates all
+		// lines at once
 		linePrefix map[int]linePrefixScan
 
 		// lineIndex holds one entry per line plus a sentinel, built in a
-		// single pass over rawTextCached, so the render loop resolves line
-		// bounds and slices line text in O(1) instead of descending the rope
-		// for every visible row on every frame
+		// single pass over rawTextCached
 		lineIndex []lineIndexEntry
 		liRev     int
 	}
@@ -108,6 +105,36 @@ func newRenderCache() *renderCache {
 	return &renderCache{
 		docCaches:   map[view.DocumentId]*docRenderCache{},
 		viewRowMaps: map[view.Id][]viewRowEntry{},
+	}
+}
+
+// evictClosed drops cache entries for documents and views that no longer
+// exist; docCaches retains each document's full text, so entries must not
+// outlive their documents
+func (c *renderCache) evictClosed(e *view.Editor) {
+	docs := e.AllDocuments()
+	if len(c.docCaches) > len(docs) {
+		live := make(map[view.DocumentId]struct{}, len(docs))
+		for _, d := range docs {
+			live[d.ID()] = struct{}{}
+		}
+		for id := range c.docCaches {
+			if _, ok := live[id]; !ok {
+				delete(c.docCaches, id)
+			}
+		}
+	}
+	views := e.AllViews()
+	if len(c.viewRowMaps) > len(views) {
+		live := make(map[view.Id]struct{}, len(views))
+		for _, v := range views {
+			live[v.ID()] = struct{}{}
+		}
+		for id := range c.viewRowMaps {
+			if _, ok := live[id]; !ok {
+				delete(c.viewRowMaps, id)
+			}
+		}
 	}
 }
 

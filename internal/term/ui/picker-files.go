@@ -208,7 +208,7 @@ func (w *pickerWalker) walkDir(dir string) bool {
 		ignoreOpts := defaultPickerIgnoreOptions()
 		if skipPickerPath(skipPickerPathArgs{
 			rel: rel, path: path, entry: entry,
-			ignores: loadIgnoreFiles(w.root, path, rel, ignoreOpts),
+			ignores: loadIgnoreFiles(w.root, path, ignoreOpts),
 			opts:    ignoreOpts,
 		}) {
 			continue

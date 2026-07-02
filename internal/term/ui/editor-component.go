@@ -248,6 +248,7 @@ func (e *EditorComponent) RenderBuffer(w, h int, cx *Context) *tui.Buffer {
 	} else {
 		e.buf.Clear()
 	}
+	e.cache.evictClosed(cx.Editor)
 	r := &renderPass{ec: e, cx: cx, w: w, h: h}
 	r.renderEditorContent(e.buf)
 	return e.buf

@@ -629,6 +629,34 @@ func TestLineContentRender(t *testing.T) {
 	})
 }
 
+func TestRenderAfterClose(t *testing.T) {
+	t.Run("drops closed doc and view", func(t *testing.T) {
+		root := t.TempDir()
+		pathA := filepath.Join(root, "a.txt")
+		pathB := filepath.Join(root, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("ALPHA\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("BRAVO\n"), 0o644))
+		e := view.NewEditor(root)
+		_, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		docB, err := e.SwitchOrOpenDoc(pathB)
+		assert.NoError(t, err)
+		e.ResizeTree(100, 30)
+		_, ok := e.VSplit(docB.ID())
+		assert.True(t, ok)
+		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "ALPHA")
+		assert.Contains(t, out, "BRAVO")
+
+		e.CloseCurrentView()
+		out = stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "ALPHA")
+		assert.NotContains(t, out, "BRAVO")
+	})
+}
+
 func TestBaseStyleAtCases(t *testing.T) {
 	t.Run("selected syntax-highlighted text", func(t *testing.T) {
 		root := t.TempDir()

@@ -77,7 +77,7 @@ func ignorePathForBase(rel, path string, ig pickerIgnore) (string, bool) {
 }
 
 func loadIgnoreFiles(
-	root, path, rel string, opts pickerIgnoreOptions,
+	root, path string, opts pickerIgnoreOptions,
 ) []pickerIgnore {
 	var ignores []pickerIgnore
 	for _, dir := range ignoreDirs(root, path, opts.parents) {

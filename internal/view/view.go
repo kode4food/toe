@@ -17,9 +17,8 @@ type (
 		freeScroll bool
 		// area is the screen rectangle assigned by the layout engine
 		area Area
-		// vcol memoizes the last visualColumn result; doc is immutable and
-		// comparable, so an exact match skips the O(line length) rescan that
-		// would otherwise repeat every render frame the cursor stays put
+		// vcol memoizes the last visualColumn result; Rope is immutable
+		// and comparable, so equal fields mean an identical result
 		vcol vcolCache
 	}
 

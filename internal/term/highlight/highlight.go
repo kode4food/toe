@@ -132,23 +132,6 @@ func DetectLanguage(path, content string) string {
 	return "text"
 }
 
-// SpanAt returns the scope name for the character at pos, or ("", false)
-func SpanAt(spans []Span, pos int) (string, bool) {
-	lo, hi := 0, len(spans)-1
-	for lo <= hi {
-		mid := (lo + hi) / 2
-		s := spans[mid]
-		if pos < s.Start {
-			hi = mid - 1
-		} else if pos >= s.End {
-			lo = mid + 1
-		} else {
-			return s.Scope, true
-		}
-	}
-	return "", false
-}
-
 // DefaultStyle returns the fallback ANSI style for a scope name when no
 // theme is active or the theme does not define the scope
 func DefaultStyle(scope string) lipgloss.Style {

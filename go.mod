@@ -20,8 +20,6 @@ require (
 	go.lsp.dev/jsonrpc2 v1.0.0
 	go.lsp.dev/protocol v1.0.0
 	go.lsp.dev/uri v1.0.0
-	golang.org/x/tools v0.46.0
-	honnef.co/go/tools v0.7.0
 )
 
 require (
@@ -44,5 +42,12 @@ require (
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260611141451-d61e87d5f4a3 // indirect
+	golang.org/x/tools v0.46.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	honnef.co/go/tools v0.7.0 // indirect
+)
+
+tool (
+	golang.org/x/tools/cmd/goimports
+	honnef.co/go/tools/cmd/staticcheck
 )

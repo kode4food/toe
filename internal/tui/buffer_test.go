@@ -143,24 +143,6 @@ func TestSetRightAlignedInt(t *testing.T) {
 	})
 }
 
-func TestRenderRowsToANSI(t *testing.T) {
-	t.Run("returns one string per row", func(t *testing.T) {
-		b := tui.NewBuffer(3, 2)
-		b.SetString(0, 0, "abc", tui.Style{})
-		b.SetString(0, 1, "xyz", tui.Style{})
-		rows := b.RenderRowsToANSI()
-		assert.Len(t, rows, 2)
-		assert.Contains(t, rows[0], "abc")
-		assert.Contains(t, rows[1], "xyz")
-	})
-
-	t.Run("zero-height returns empty slice", func(t *testing.T) {
-		b := tui.NewBuffer(3, 0)
-		rows := b.RenderRowsToANSI()
-		assert.Empty(t, rows)
-	})
-}
-
 func TestFill(t *testing.T) {
 	t.Run("fills all cells with style", func(t *testing.T) {
 		b := tui.NewBuffer(3, 2)

@@ -318,7 +318,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		} else {
 			rowLineStart = lineStart
 			if renderEnd == lineContentEnd {
-				// Zero-copy: line content shares rawText's backing array
 				lStr = rawText[entry.byteStart : next.byteStart-entry.endingLen]
 			} else {
 				lStr = lineString(text, lineStart, renderEnd)

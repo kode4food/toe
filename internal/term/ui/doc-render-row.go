@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"sort"
+
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -47,6 +49,12 @@ type (
 		hStart         int
 		hWidth         int
 		maxRows        int
+		// reused across rows() calls when not soft-wrapping; the returned
+		// row must be consumed before the next call
+		cellScratch []renderedCell
+		rowScratch  []renderedRow
+		// index of the current highlight span; pos only moves forward
+		hlIdx int
 	}
 
 	selectionSpan struct {
@@ -93,14 +101,27 @@ func (r *rowRender) rows() []renderedRow {
 	cellCap := min(len(r.lineStr)+1, r.format.ViewportWidth+1)
 
 	var row renderedRow
-	row.cells = make([]renderedCell, 0, cellCap)
+	if r.softWrap {
+		row.cells = make([]renderedCell, 0, cellCap)
+	} else {
+		if cap(r.cellScratch) < cellCap {
+			r.cellScratch = make([]renderedCell, 0, cellCap)
+		}
+		row.cells = r.cellScratch[:0]
+	}
 	col := r.colOffset
 	pos := r.lineStart
+	if r.hlSpans != nil {
+		r.hlIdx = spanLowerBound(r.hlSpans, pos)
+	}
 
 	breaks := r.softWrapBreaks(tabW)
 	breakIdx := 0
 	maxRows := max(r.maxRows, 1)
-	rows := make([]renderedRow, 0, min(len(breaks)+1, maxRows))
+	var rows []renderedRow
+	if r.softWrap {
+		rows = make([]renderedRow, 0, min(len(breaks)+1, maxRows))
+	}
 	rowStart := 0
 	flushRow := func(nextStart int) {
 		row.offset = rowStart
@@ -193,7 +214,7 @@ func (r *rowRender) rows() []renderedRow {
 			))
 		case colorOK:
 			writeRendered(rendered, width, colorStyle)
-		case r.searchMatch(pos):
+		case rangeMatch(r.searchMatches, pos):
 			writeRendered(rendered, width, ts.searchMatch)
 		case diagOK:
 			writeRendered(rendered, width, overlayDiagnosticStyle(
@@ -212,7 +233,7 @@ func (r *rowRender) rows() []renderedRow {
 		case r.secondaryCursorCols[colBefore]:
 			writeRendered(rendered, width, ts.cursorcolumnSec)
 		case r.hlSpans != nil:
-			if scope, ok := highlight.SpanAt(r.hlSpans, pos); ok {
+			if scope, ok := r.hlScopeAt(pos); ok {
 				writeRendered(rendered, width, r.hlStyle(scope))
 			} else {
 				writeRendered(rendered, width, ts.text)
@@ -240,7 +261,9 @@ func (r *rowRender) rows() []renderedRow {
 		}
 		return rows
 	}
-	return []renderedRow{row}
+	r.cellScratch = row.cells[:0]
+	r.rowScratch = append(r.rowScratch[:0], row)
+	return r.rowScratch
 }
 
 type selectionAtRes struct {
@@ -260,10 +283,6 @@ func (r *rowRender) selectionAt(pos int) selectionAtRes {
 		}
 	}
 	return selectionAtRes{}
-}
-
-func (r *rowRender) searchMatch(pos int) bool {
-	return rangeMatch(r.searchMatches, pos)
 }
 
 func (r *rowRender) colorAt(pos int) (tui.Style, bool) {
@@ -325,11 +344,30 @@ func (r *rowRender) baseStyleAt(pos int, glyph documentGlyph) tui.Style {
 	case glyph == documentGlyphWhitespace:
 		return r.tuiStyles.whitespace
 	case r.hlSpans != nil:
-		if scope, ok := highlight.SpanAt(r.hlSpans, pos); ok {
+		if scope, ok := r.hlScopeAt(pos); ok {
 			return r.hlStyle(scope)
 		}
 	}
 	return r.tuiStyles.text
+}
+
+// hlScopeAt resolves the highlight scope at pos by advancing hlIdx; callers
+// must present non-decreasing positions, which rows() guarantees
+func (r *rowRender) hlScopeAt(pos int) (string, bool) {
+	spans := r.hlSpans
+	for r.hlIdx < len(spans) && pos >= spans[r.hlIdx].End {
+		r.hlIdx++
+	}
+	if r.hlIdx < len(spans) && pos >= spans[r.hlIdx].Start {
+		return spans[r.hlIdx].Scope, true
+	}
+	return "", false
+}
+
+func spanLowerBound(spans []highlight.Span, pos int) int {
+	return sort.Search(len(spans), func(i int) bool {
+		return spans[i].End > pos
+	})
 }
 
 // overlaySelStyle overlays the bg (and explicit fg) of sel onto base,

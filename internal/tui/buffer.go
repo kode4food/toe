@@ -10,9 +10,11 @@ type (
 	}
 
 	Buffer struct {
-		cells  []Cell
-		Width  int
-		Height int
+		cells []Cell
+		// lastANSILen pre-sizes the next RenderToANSI output
+		lastANSILen int
+		Width       int
+		Height      int
 	}
 )
 

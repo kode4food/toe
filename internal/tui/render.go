@@ -34,7 +34,7 @@ func (b *Buffer) RenderToANSI() string {
 		return ""
 	}
 	var sb strings.Builder
-	sb.Grow(b.Width*b.Height + max(b.Height-1, 0))
+	sb.Grow(max(b.lastANSILen, b.Width*b.Height+max(b.Height-1, 0)))
 	e := &ansiEmitter{w: &sb}
 	style := Style{}
 	for y := range b.Height {
@@ -43,26 +43,9 @@ func (b *Buffer) RenderToANSI() string {
 		}
 		style = emitRow(e, b.cells[y*b.Width:(y+1)*b.Width], style)
 	}
-	return sb.String()
-}
-
-// RenderRowsToANSI serialises each buffer row as an independent ANSI string,
-// resetting style at the end of any row that left styling active. Unlike
-// RenderToANSI it does not carry style across row boundaries, so the rows can
-// be composed individually (for example inside a lipgloss box) without a row's
-// trailing colors bleeding into the next
-func (b *Buffer) RenderRowsToANSI() []string {
-	rows := make([]string, b.Height)
-	for y := range b.Height {
-		var sb strings.Builder
-		e := &ansiEmitter{w: &sb}
-		style := emitRow(e, b.cells[y*b.Width:(y+1)*b.Width], Style{})
-		if style != (Style{}) {
-			sb.WriteString("\x1b[m")
-		}
-		rows[y] = sb.String()
-	}
-	return rows
+	out := sb.String()
+	b.lastANSILen = len(out)
+	return out
 }
 
 func (a *ansiEmitter) emitStyle(s Style) {

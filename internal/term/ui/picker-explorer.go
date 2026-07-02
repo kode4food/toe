@@ -119,7 +119,7 @@ func (f *fileExplorerSource) readDir() []PickerItem {
 		ignoreOpts := explorerIgnoreOptions(f.opts)
 		if skipPickerPath(skipPickerPathArgs{
 			rel: rel, path: full, entry: entry,
-			ignores: loadIgnoreFiles(f.root, full, rel, ignoreOpts),
+			ignores: loadIgnoreFiles(f.root, full, ignoreOpts),
 			opts:    ignoreOpts,
 		}) {
 			continue

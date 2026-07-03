@@ -309,3 +309,33 @@ func namedTOMLValue(value any, name string) (map[string]any, bool) {
 	}
 	return nil, false
 }
+
+func TestAnySlice(t *testing.T) {
+	t.Run("[]any passthrough", func(t *testing.T) {
+		in := []any{1, 2, 3}
+		out, ok := loader.AnySlice(in)
+		assert.True(t, ok)
+		assert.Equal(t, in, out)
+	})
+
+	t.Run("[]map[string]any converts", func(t *testing.T) {
+		in := []map[string]any{{"a": 1}, {"b": 2}}
+		out, ok := loader.AnySlice(in)
+		assert.True(t, ok)
+		assert.Equal(t, []any{
+			map[string]any{"a": 1}, map[string]any{"b": 2},
+		}, out)
+	})
+
+	t.Run("[]string converts", func(t *testing.T) {
+		in := []string{"x", "y"}
+		out, ok := loader.AnySlice(in)
+		assert.True(t, ok)
+		assert.Equal(t, []any{"x", "y"}, out)
+	})
+
+	t.Run("unknown type returns false", func(t *testing.T) {
+		_, ok := loader.AnySlice(42)
+		assert.False(t, ok)
+	})
+}

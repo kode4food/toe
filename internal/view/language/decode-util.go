@@ -16,7 +16,7 @@ func decodeBlockCommentTokens(value any) []core.BlockCommentToken {
 	if token, ok := decodeBlockCommentToken(value); ok {
 		return []core.BlockCommentToken{token}
 	}
-	values, ok := anySlice(value)
+	values, ok := loader.AnySlice(value)
 	if !ok {
 		return nil
 	}
@@ -46,7 +46,7 @@ func decodeBlockCommentToken(value any) (core.BlockCommentToken, bool) {
 }
 
 func decodeStringSlice(value any) []string {
-	values, ok := anySlice(value)
+	values, ok := loader.AnySlice(value)
 	if !ok {
 		return nil
 	}
@@ -57,27 +57,6 @@ func decodeStringSlice(value any) []string {
 		}
 	}
 	return out
-}
-
-func anySlice(value any) ([]any, bool) {
-	switch values := value.(type) {
-	case []any:
-		return values, true
-	case []map[string]any:
-		out := make([]any, len(values))
-		for i, value := range values {
-			out[i] = value
-		}
-		return out, true
-	case []string:
-		out := make([]any, len(values))
-		for i, value := range values {
-			out[i] = value
-		}
-		return out, true
-	default:
-		return nil, false
-	}
 }
 
 func decodeStringMap(value any) map[string]string {

@@ -40,13 +40,13 @@ func MergeTOMLValues(left, right any, depth int) any {
 		}
 		return out
 	case []map[string]any:
-		r, ok := anySlice(right)
+		r, ok := AnySlice(right)
 		if !ok {
 			return right
 		}
 		return mergeTOMLArrays(mapSliceToAny(l), r, depth)
 	case []any:
-		r, ok := anySlice(right)
+		r, ok := AnySlice(right)
 		if !ok {
 			return right
 		}
@@ -151,12 +151,19 @@ func mapSliceToAny(values []map[string]any) []any {
 	return out
 }
 
-func anySlice(value any) ([]any, bool) {
+// AnySlice coerces common TOML slice types to []any
+func AnySlice(value any) ([]any, bool) {
 	switch v := value.(type) {
 	case []any:
 		return v, true
 	case []map[string]any:
 		return mapSliceToAny(v), true
+	case []string:
+		out := make([]any, len(v))
+		for i, s := range v {
+			out[i] = s
+		}
+		return out, true
 	default:
 		return nil, false
 	}

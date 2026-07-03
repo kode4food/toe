@@ -40,7 +40,7 @@ func decodeGrammarSelection(value any) GrammarSelection {
 }
 
 func decodeGrammars(value any) []Grammar {
-	values, ok := anySlice(value)
+	values, ok := loader.AnySlice(value)
 	if !ok {
 		return nil
 	}
@@ -189,7 +189,7 @@ func decodeCommentTokens(m map[string]any) []string {
 }
 
 func decodeFileTypes(value any) []FileType {
-	values, ok := anySlice(value)
+	values, ok := loader.AnySlice(value)
 	if !ok {
 		return nil
 	}

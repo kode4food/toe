@@ -1,5 +1,7 @@
 package language
 
+import "github.com/kode4food/toe/internal/loader"
+
 func decodeLanguageServers(value any) map[string]Server {
 	m, ok := value.(map[string]any)
 	if !ok {
@@ -35,7 +37,7 @@ func decodeLanguageServer(value any) (Server, bool) {
 }
 
 func decodeLanguageServerFeatures(value any) []ServerFeatures {
-	values, ok := anySlice(value)
+	values, ok := loader.AnySlice(value)
 	if !ok {
 		return nil
 	}

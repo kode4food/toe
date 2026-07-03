@@ -346,6 +346,46 @@ document = 1
 		assert.Len(t, e.AllViews(), 1)
 	})
 
+	t.Run("restores pane ratios after manual resize", func(t *testing.T) {
+		dir := t.TempDir()
+		leftPath := filepath.Join(dir, "left.go")
+		rightPath := filepath.Join(dir, "right.go")
+		assert.NoError(t,
+			os.WriteFile(leftPath, []byte("package main\n"), 0o644))
+		assert.NoError(t,
+			os.WriteFile(rightPath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(leftPath)
+		assert.NoError(t, err)
+		rightDoc, err := e.SwitchOrOpenDoc(rightPath)
+		assert.NoError(t, err)
+		_, ok := e.VSplit(rightDoc.ID())
+		assert.True(t, ok)
+
+		// drag separator: left pane gets ~30 cols
+		vs := e.Tree().Views()
+		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
+		cID, idx, layout, ok := e.Tree().SeparatorAt(sepX, 0)
+		assert.True(t, ok)
+		e.Tree().MoveSeparator(cID, idx, layout, 30)
+
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		views := next.AllViews()
+		assert.Len(t, views, 2)
+		// left pane width should be close to 30 (within 1 due to int rounding)
+		assert.InDelta(t, 30, views[0].Area().Width, 1)
+	})
+
 	t.Run("split child invalid", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

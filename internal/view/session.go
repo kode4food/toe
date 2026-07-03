@@ -35,6 +35,7 @@ type (
 	sessionNode struct {
 		Kind             string        `toml:"kind"`
 		Layout           string        `toml:"layout,omitempty"`
+		Ratios           []float64     `toml:"ratios,omitempty"`
 		Document         int           `toml:"document,omitempty"`
 		Mode             string        `toml:"mode,omitempty"`
 		Anchor           int           `toml:"anchor,omitempty"`
@@ -246,6 +247,7 @@ func (e *Editor) sessionNodeFor(
 	out := sessionNode{
 		Kind:     sessionKindSplit,
 		Layout:   sessionLayoutName(c.layout),
+		Ratios:   c.ratios,
 		Children: make([]sessionNode, 0, len(c.children)),
 	}
 	for _, child := range c.children {
@@ -290,6 +292,7 @@ func (e *Editor) restoreSessionRoot(
 	}
 	c := t.nodes[root].container
 	c.layout = sessionLayout(sn.Layout)
+	c.ratios = sn.Ratios
 	for _, child := range sn.Children {
 		id, err := e.restoreSessionNode(t, root, child, rs)
 		if err != nil {
@@ -310,6 +313,7 @@ func (e *Editor) restoreSessionNode(
 			parent: parent,
 			container: &treeContainer{
 				layout: sessionLayout(sn.Layout),
+				ratios: sn.Ratios,
 			},
 		}
 		for _, child := range sn.Children {

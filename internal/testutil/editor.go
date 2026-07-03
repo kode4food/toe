@@ -68,3 +68,11 @@ func SetSelection(
 	assert.NoError(t, err)
 	doc.SetSelectionFor(v.ID(), sel)
 }
+
+// RegisteredValue returns the first value stored in the named register
+func RegisteredValue(t *testing.T, e *view.Editor, reg rune) string {
+	t.Helper()
+	v, ok := e.Registers().First(reg)
+	assert.True(t, ok)
+	return v
+}

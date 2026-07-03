@@ -23,13 +23,6 @@ func selectionAnchorHead(t *testing.T, e *view.Editor) (anchor, head int) {
 	return r.Anchor, r.Head
 }
 
-func registeredValue(t *testing.T, e *view.Editor, reg rune) string {
-	t.Helper()
-	v, ok := e.Registers().First(reg)
-	assert.True(t, ok)
-	return v
-}
-
 func writeCommandLanguages(t *testing.T, text string) {
 	t.Helper()
 	root := t.TempDir()

@@ -377,7 +377,7 @@ func TestYank(t *testing.T) {
 
 		action.Yank(e)
 
-		assert.Equal(t, "hello", registeredValue(t, e, '"'))
+		assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
 
@@ -390,7 +390,7 @@ func TestYank(t *testing.T) {
 
 		action.Yank(e)
 
-		assert.Equal(t, "ab", registeredValue(t, e, '"'))
+		assert.Equal(t, "ab", testutil.RegisteredValue(t, e, '"'))
 	})
 
 	t.Run("noop with no view", func(t *testing.T) {
@@ -649,7 +649,7 @@ func TestDeleteSelectionNoYank(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, " world", doc.Text().String())
-		assert.Equal(t, "saved", registeredValue(t, e, '"'))
+		assert.Equal(t, "saved", testutil.RegisteredValue(t, e, '"'))
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
 }
@@ -723,7 +723,7 @@ func TestChangeSelectionNoYank(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "c", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
-		assert.Equal(t, "safe", registeredValue(t, e, '"'))
+		assert.Equal(t, "safe", testutil.RegisteredValue(t, e, '"'))
 	})
 }
 

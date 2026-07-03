@@ -81,7 +81,7 @@ func TestClipboard(t *testing.T) {
 		data, err := os.ReadFile(clipFile)
 		assert.NoError(t, err)
 		assert.Equal(t, "hello", string(data))
-		assert.Equal(t, "hello", registeredValue(t, e, '+'))
+		assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '+'))
 	})
 
 	t.Run("paste after/before", func(t *testing.T) {

@@ -20,7 +20,7 @@ func TestYank(t *testing.T) {
 
 	action.Yank(e)
 
-	assert.Equal(t, "hello", registeredValue(t, e, '"'))
+	assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
 }
 
 func TestPasteAfter(t *testing.T) {

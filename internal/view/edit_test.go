@@ -243,5 +243,5 @@ func TestChangeSelection(t *testing.T) {
 
 	assert.Equal(t, " world", doc.Text().String())
 	assert.Equal(t, view.ModeInsert, e.Mode())
-	assert.Equal(t, "hello", registeredValue(t, e, '"'))
+	assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
 }

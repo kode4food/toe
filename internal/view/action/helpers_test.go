@@ -21,10 +21,3 @@ func viewCount(t *testing.T, e *view.Editor) int {
 	t.Helper()
 	return len(e.AllViews())
 }
-
-func registeredValue(t *testing.T, e *view.Editor, reg rune) string {
-	t.Helper()
-	v, ok := e.Registers().First(reg)
-	assert.True(t, ok)
-	return v
-}

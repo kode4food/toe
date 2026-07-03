@@ -3,6 +3,8 @@ package testutil_test
 import (
 	"testing"
 
+	"github.com/kode4food/toe/internal/term/command"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
@@ -55,4 +57,27 @@ func TestSetSelection(t *testing.T) {
 	r := sel.Primary()
 	assert.Equal(t, 1, r.Anchor)
 	assert.Equal(t, 4, r.Head)
+}
+
+func TestRegisteredValue(t *testing.T) {
+	e := testutil.EditorWithText(t, "hello")
+	e.Registers().Set('"', "hello")
+
+	assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
+}
+
+func TestChar(t *testing.T) {
+	ev := testutil.Char('a')
+
+	assert.Equal(t, command.KeyEvent{
+		Code: command.KeyCode{Char: 'a'},
+	}, ev)
+}
+
+func TestSpecial(t *testing.T) {
+	ev := testutil.Special("enter")
+
+	assert.Equal(t, command.KeyEvent{
+		Code: command.KeyCode{Special: "enter"},
+	}, ev)
 }

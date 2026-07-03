@@ -134,7 +134,7 @@ func run(args []string, out io.Writer) error {
 		model = model.WithInitialPicker(ui.FilePickerInDir(abs))
 	}
 	if !editor.Options().Insecure && !workspaceTrusted() {
-		editor.SetStatusMsg(
+		model = model.WithStartupMessage(
 			"Workspace untrusted — session and workspace config disabled. " +
 				":workspace_trust to enable",
 		)

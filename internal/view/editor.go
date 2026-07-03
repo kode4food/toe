@@ -280,6 +280,12 @@ func (e *Editor) Document(did DocumentId) (*Document, bool) {
 	return d, ok
 }
 
+// DeleteDocument removes a document from the editor without closing its views.
+// Views that referenced the document will report no focused document.
+func (e *Editor) DeleteDocument(did DocumentId) {
+	delete(e.docs, did)
+}
+
 // FocusedDocument returns the document displayed by the focused view
 func (e *Editor) FocusedDocument() (*Document, bool) {
 	v, ok := e.FocusedView()
@@ -435,7 +441,7 @@ func (e *Editor) recordPrevDoc() {
 	}
 	did := v.DocID()
 	e.prevDocID = did
-	if doc, ok := e.docs[did]; ok && doc.buf.modifiedSinceAccessed {
+	if doc, ok := e.docs[did]; ok && doc.buf.modified {
 		if e.lastModifiedDocIDs[0] != did {
 			e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
 			e.lastModifiedDocIDs[0] = did
@@ -443,13 +449,13 @@ func (e *Editor) recordPrevDoc() {
 	}
 }
 
-// markDocAccessed clears the modifiedSinceAccessed flag on the focused document
+// markDocAccessed clears the modified flag on the focused document
 func (e *Editor) markDocAccessed() {
 	if v, ok := e.FocusedView(); ok {
 		if doc, ok := e.docs[v.DocID()]; ok {
 			e.nextAccess++
 			doc.accessedAt = e.nextAccess
-			doc.buf.modifiedSinceAccessed = false
+			doc.buf.modified = false
 		}
 	}
 }

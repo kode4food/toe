@@ -24,7 +24,7 @@ type (
 		tabWidth      int
 		lineEnding    core.LineEnding
 		editorConfig  *config.EditorConfig
-		readonly      bool
+		readOnly      bool
 		langDef       *language.Language
 		restoreCursor bool
 		disk          diskSnapshot
@@ -40,15 +40,15 @@ type (
 	// only. The embedded RWMutex lets goroutines snapshot safely
 	bufState struct {
 		sync.RWMutex
-		path                  string
-		lang                  string
-		text                  core.Rope
-		version               int
-		history               core.History
-		insertAcc             *insertAccum
-		selections            map[Id]core.Selection
-		modified              bool
-		modifiedSinceAccessed bool
+		path       string
+		lang       string
+		text       core.Rope
+		version    int
+		history    core.History
+		insertAcc  *insertAccum
+		selections map[Id]core.Selection
+		unsaved    bool
+		modified   bool
 	}
 
 	// lsState holds all language-server-managed overlays for the document,
@@ -141,7 +141,7 @@ func (d *Document) SetPath(path string) {
 
 // Modified reports whether the document has unsaved changes
 func (d *Document) Modified() bool {
-	return d.buf.modified
+	return d.buf.unsaved
 }
 
 // ExternalState reports any unresolved change made to the backing file by
@@ -190,7 +190,12 @@ func (d *Document) TextFormatForConfig(
 
 // ReadOnly reports whether the document is read-only
 func (d *Document) ReadOnly() bool {
-	return d.readonly
+	return d.readOnly
+}
+
+// SetReadOnly marks the document as read-only or writable
+func (d *Document) SetReadOnly(v bool) {
+	d.readOnly = v
 }
 
 // IndentStyle returns the active indentation style
@@ -303,8 +308,8 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		if !cs.Empty() {
 			d.buf.insertAcc.cs = d.buf.insertAcc.cs.Compose(cs)
 			d.mapOtherSelections(vid, cs)
+			d.buf.unsaved = true
 			d.buf.modified = true
-			d.buf.modifiedSinceAccessed = true
 			d.buf.version++
 		}
 		d.buf.Unlock()
@@ -327,8 +332,8 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	d.buf.selections[vid] = newSel
 	if !cs.Empty() {
 		d.mapOtherSelections(vid, cs)
+		d.buf.unsaved = true
 		d.buf.modified = true
-		d.buf.modifiedSinceAccessed = true
 		d.buf.version++
 	}
 	d.buf.Unlock()
@@ -367,8 +372,8 @@ func (d *Document) Undo(vid Id) bool {
 	if txSel := tx.Selection(); txSel != nil {
 		d.buf.selections[vid] = *txSel
 	}
-	d.buf.modified = !d.buf.history.AtRoot()
-	d.buf.modifiedSinceAccessed = true
+	d.buf.unsaved = !d.buf.history.AtRoot()
+	d.buf.modified = true
 	d.buf.Unlock()
 	return true
 }
@@ -393,8 +398,8 @@ func (d *Document) Redo(vid Id) bool {
 	if txSel := tx.Selection(); txSel != nil {
 		d.buf.selections[vid] = *txSel
 	}
+	d.buf.unsaved = true
 	d.buf.modified = true
-	d.buf.modifiedSinceAccessed = true
 	d.buf.Unlock()
 	return true
 }

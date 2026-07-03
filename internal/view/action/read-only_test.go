@@ -1,9 +1,7 @@
 package action_test
 
 import (
-	"reflect"
 	"testing"
-	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 
@@ -104,8 +102,5 @@ func editorWithReadOnlyText(t *testing.T, text string) *view.Editor {
 }
 
 func setReadOnly(doc *view.Document) {
-	f := reflect.ValueOf(doc).Elem().FieldByName("readonly")
-	reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).
-		Elem().
-		SetBool(true)
+	doc.SetReadOnly(true)
 }

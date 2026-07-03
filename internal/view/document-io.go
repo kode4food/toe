@@ -47,7 +47,7 @@ func (d *Document) Save(opts *Options) error {
 		return err
 	}
 	d.refreshDiskSnapshot()
-	d.buf.modified = false
+	d.buf.unsaved = false
 	return nil
 }
 
@@ -70,7 +70,7 @@ func (d *Document) Reload() error {
 	d.buf.text = core.NewRope(string(data))
 	d.buf.version++
 	d.buf.Unlock()
-	d.buf.modified = false
+	d.buf.unsaved = false
 	d.buf.history = core.NewHistory()
 	for vid := range d.buf.selections {
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
@@ -106,7 +106,7 @@ func (d *Document) reloadPreservingSelections() error {
 	d.buf.version++
 	d.buf.selections = selections
 	d.buf.Unlock()
-	d.buf.modified = false
+	d.buf.unsaved = false
 	d.buf.history = core.NewHistory()
 	d.refreshDiskSnapshot()
 	return nil

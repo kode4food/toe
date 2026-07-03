@@ -18,6 +18,12 @@ func (m Model) WithStartupCmd(cmd tea.Cmd) Model {
 	return m
 }
 
+// WithStartupMessage sets an initial status bar message visible on the first frame
+func (m Model) WithStartupMessage(msg string) Model {
+	m.component.cmdMsg = msg
+	return m
+}
+
 func (m Model) WithInitialPicker(fn PickerFunc) Model {
 	m.compositor.startup = func(cx *Context) (Component, tea.Cmd) {
 		p := fn(cx.Editor)

@@ -3,9 +3,7 @@ package action_test
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
-	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 
@@ -226,9 +224,7 @@ func editorWithMissingFocusedDocument(t *testing.T) *view.Editor {
 }
 
 func deleteDocument(e *view.Editor, did view.DocumentId) {
-	f := reflect.ValueOf(e).Elem().FieldByName("docs")
-	docs := reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
-	docs.SetMapIndex(reflect.ValueOf(did), reflect.Value{})
+	e.DeleteDocument(did)
 }
 
 func writeTempFile(t *testing.T, name, text string) string {

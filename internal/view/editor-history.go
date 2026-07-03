@@ -139,7 +139,7 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.buf.modified = len(txns) > 0 || doc.buf.modified
+	doc.buf.unsaved = len(txns) > 0 || doc.buf.unsaved
 	if len(txns) == 0 {
 		doc.buf.Unlock()
 		return false
@@ -175,7 +175,7 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.buf.modified = len(txns) > 0 || doc.buf.modified
+	doc.buf.unsaved = len(txns) > 0 || doc.buf.unsaved
 	if len(txns) == 0 {
 		doc.buf.Unlock()
 		return false

@@ -11,49 +11,10 @@ import (
 var ErrPathUnavailable = errors.New("path unavailable")
 
 const (
-	DirName           = "toe"
-	LogFileName       = "toe.log"
-	WorkspaceDirName  = "." + DirName
-	RuntimeEnv        = "TOE_RUNTIME"
-	DefaultRuntimeEnv = "TOE_DEFAULT_RUNTIME"
+	DirName          = "toe"
+	LogFileName      = "toe.log"
+	WorkspaceDirName = "." + DirName
 )
-
-func RuntimeDirs() []string {
-	var dirs []string
-	if dir := os.Getenv("CARGO_MANIFEST_DIR"); dir != "" {
-		dirs = append(dirs, filepath.Join(filepath.Dir(dir), "runtime"))
-	}
-	if dir, ok := ConfigDir(); ok {
-		dirs = append(dirs, filepath.Join(dir, "runtime"))
-	}
-	if dir := os.Getenv(RuntimeEnv); dir != "" {
-		dirs = append(dirs, normalizeRuntimeDir(dir))
-	}
-	if dir := os.Getenv(DefaultRuntimeEnv); dir != "" {
-		dirs = append(dirs, dir)
-	}
-	if exe, err := os.Executable(); err == nil {
-		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
-			exe = resolved
-		}
-		dirs = append(dirs, filepath.Join(filepath.Dir(exe), "runtime"))
-	}
-	return dirs
-}
-
-func RuntimeFile(rel string) string {
-	dirs := RuntimeDirs()
-	for _, dir := range dirs {
-		path := filepath.Join(dir, rel)
-		if _, err := os.Stat(path); err == nil {
-			return path
-		}
-	}
-	if len(dirs) == 0 {
-		return rel
-	}
-	return filepath.Join(dirs[len(dirs)-1], rel)
-}
 
 // ExpandUserPath expands leading home-directory shorthand and environment vars
 func ExpandUserPath(path string) string {
@@ -184,14 +145,6 @@ func UntrustWorkspace(dir string) error {
 	}
 	root, _ := FindWorkspace(dir)
 	return updateWorkspaceSet(path, root, false)
-}
-
-func normalizeRuntimeDir(dir string) string {
-	dir = ExpandUserPath(dir)
-	if abs, err := filepath.Abs(dir); err == nil {
-		return filepath.Clean(abs)
-	}
-	return filepath.Clean(dir)
 }
 
 func updateWorkspaceSet(path, workspace string, add bool) error {

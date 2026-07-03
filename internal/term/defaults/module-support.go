@@ -3,7 +3,6 @@ package defaults
 import (
 	"strconv"
 
-	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -13,7 +12,6 @@ const (
 	actCharacterInfo = "character_info"
 	actEcho          = "echo"
 	actRedraw        = "redraw"
-	actTutor         = "tutor"
 	actGoto          = "goto"
 )
 
@@ -46,21 +44,6 @@ func supportModule() command.Module {
 				DocString: "Clear and re-render the whole UI",
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalClearScreen}
-				},
-				Signature: sig(),
-			},
-			{
-				Name:      actTutor,
-				DocString: "Open the tutorial",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					_, err := e.SwitchFile(loader.RuntimeFile("tutor"))
-					if err != nil {
-						return command.Result{Message: "error: " + err.Error()}
-					}
-					if doc, ok := e.FocusedDocument(); ok {
-						doc.SetPath("")
-					}
-					return command.Result{}
 				},
 				Signature: sig(),
 			},

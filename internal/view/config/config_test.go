@@ -565,10 +565,10 @@ func TestConfigPaths(t *testing.T) {
 	})
 }
 
-func TestLoadRawUserConfig(t *testing.T) {
+func TestLoadRawConfigForDir(t *testing.T) {
 	t.Run("returns false when no config", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		_, ok := config.LoadRawUserConfig()
+		_, ok := config.LoadRawConfigForDir(t.TempDir())
 		assert.False(t, ok)
 	})
 
@@ -577,7 +577,7 @@ func TestLoadRawUserConfig(t *testing.T) {
 		writeConfig(t, root, `theme = "nord"`)
 		t.Setenv("XDG_CONFIG_HOME", root)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
-		m, ok := config.LoadRawUserConfig()
+		m, ok := config.LoadRawConfigForDir(t.TempDir())
 		assert.True(t, ok)
 		assert.Equal(t, "nord", m["theme"])
 	})

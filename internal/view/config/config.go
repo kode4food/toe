@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kode4food/toe/internal/loader"
 )
@@ -36,17 +35,6 @@ func (a *AutoSave) UnmarshalTOML(value any) error {
 // LoadRawConfig returns the raw merged TOML map for the given config file path
 func LoadRawConfig(path string) (map[string]any, bool) {
 	return loader.LoadMergedTOML([]string{path}, 3)
-}
-
-// LoadRawUserConfig returns the raw merged TOML map for the user and trusted
-// workspace config, for applying to module section structs via
-// Registry.ApplyTOML
-func LoadRawUserConfig() (map[string]any, bool) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		cwd = "."
-	}
-	return LoadRawConfigForDir(cwd)
 }
 
 // LoadRawConfigForDir returns user config merged with dir's trusted workspace

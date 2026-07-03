@@ -108,39 +108,6 @@ func TestPaths(t *testing.T) {
 	})
 }
 
-func TestRuntimeFile(t *testing.T) {
-	t.Run("uses runtime env path", func(t *testing.T) {
-		root := t.TempDir()
-		rt := filepath.Join(root, "runtime")
-		err := os.MkdirAll(rt, 0o755)
-		assert.NoError(t, err)
-		path := filepath.Join(rt, "tutor")
-		err = os.WriteFile(path, []byte("learn"), 0o644)
-		assert.NoError(t, err)
-		t.Setenv(loader.RuntimeEnv, rt)
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		t.Setenv(loader.DefaultRuntimeEnv, t.TempDir())
-
-		assert.Equal(t, path, loader.RuntimeFile("tutor"))
-	})
-
-	t.Run("expands runtime env home path", func(t *testing.T) {
-		home := t.TempDir()
-		rt := filepath.Join(home, "runtime")
-		err := os.MkdirAll(rt, 0o755)
-		assert.NoError(t, err)
-		path := filepath.Join(rt, "tutor")
-		err = os.WriteFile(path, []byte("learn"), 0o644)
-		assert.NoError(t, err)
-		t.Setenv("HOME", home)
-		t.Setenv(loader.RuntimeEnv, "~/runtime")
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		t.Setenv(loader.DefaultRuntimeEnv, t.TempDir())
-
-		assert.Equal(t, path, loader.RuntimeFile("tutor"))
-	})
-}
-
 func TestWorkspace(t *testing.T) {
 	root := t.TempDir()
 	work := filepath.Join(root, "work")
@@ -220,42 +187,6 @@ func TestDirFallbacksToHome(t *testing.T) {
 		dir, ok := loader.DataDir()
 		assert.True(t, ok)
 		assert.Contains(t, dir, loader.DirName)
-	})
-}
-
-func TestRuntimeDirTildePath(t *testing.T) {
-	t.Run("normalizes bare tilde to home", func(t *testing.T) {
-		t.Setenv(loader.RuntimeEnv, "~")
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		t.Setenv(loader.DefaultRuntimeEnv, "")
-		dirs := loader.RuntimeDirs()
-		var found bool
-		for _, d := range dirs {
-			if !found && len(d) > 0 && d[len(d)-1] != '~' {
-				found = true
-			}
-		}
-		assert.True(t, found)
-	})
-
-	t.Run("tilde with no home stays as-is", func(t *testing.T) {
-		t.Setenv(loader.RuntimeEnv, "~")
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		t.Setenv(loader.DefaultRuntimeEnv, "")
-		t.Setenv("HOME", "")
-		dirs := loader.RuntimeDirs()
-		assert.NotEmpty(t, dirs)
-	})
-}
-
-func TestRuntimeFileFallback(t *testing.T) {
-	t.Run("path returned when file not found", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-
-		result := loader.RuntimeFile("no-such-file-xyz99.txt")
-
-		assert.NotEmpty(t, result)
-		assert.Contains(t, result, "no-such-file-xyz99.txt")
 	})
 }
 

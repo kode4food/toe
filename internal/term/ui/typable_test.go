@@ -90,27 +90,6 @@ func TestConfigCommands(t *testing.T) {
 		assert.Equal(t, work+"\n", string(data))
 	})
 
-	t.Run("tutor", func(t *testing.T) {
-		root := t.TempDir()
-		rt := filepath.Join(root, "runtime")
-		err := os.MkdirAll(rt, 0o755)
-		assert.NoError(t, err)
-		path := filepath.Join(rt, "tutor")
-		err = os.WriteFile(path, []byte("learn"), 0o644)
-		assert.NoError(t, err)
-		t.Setenv(loader.RuntimeEnv, rt)
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		e := view.NewEditor(t.TempDir())
-		m := runTypable(newTestModel(t, e), "tutor")
-
-		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-		doc, ok := e.FocusedDocument()
-
-		assert.True(t, ok)
-		assert.Equal(t, "", doc.Path())
-		assert.Equal(t, "learn", doc.Text().String())
-	})
-
 	t.Run("set", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 
@@ -222,7 +201,6 @@ text-width = 72
 	})
 
 	t.Run("theme: default alias", func(t *testing.T) {
-		t.Setenv(loader.RuntimeEnv, t.TempDir())
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
@@ -233,7 +211,6 @@ text-width = 72
 	})
 
 	t.Run("theme: reports active", func(t *testing.T) {
-		t.Setenv(loader.RuntimeEnv, t.TempDir())
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
 		m := resize(newTestModel(t, e), 80, 24)
@@ -255,7 +232,7 @@ func newTestModel(t *testing.T, e *view.Editor) ui.Model {
 	reg, err := defaults.RegisterDefaults(m, km)
 	assert.NoError(t, err)
 	e.SetConfigReload(func() error {
-		raw, _ := viewconfig.LoadRawUserConfig()
+		raw, _ := viewconfig.LoadRawConfigForDir(e.Cwd())
 		if raw == nil {
 			raw = map[string]any{}
 		}

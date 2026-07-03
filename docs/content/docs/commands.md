@@ -176,4 +176,3 @@ Enter command mode with `:`. All commands can be used by their full name or any 
 | `character_info` | `character-info`, `char` | Get info about the character under the primary cursor |
 | `echo` | | Prints the given arguments to the statusline |
 | `redraw` | | Clear and re-render the whole UI |
-| `tutor` | | Open the tutorial |

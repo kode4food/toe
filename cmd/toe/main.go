@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/health"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
@@ -96,7 +97,12 @@ func run(args []string, out io.Writer) error {
 		return err
 	}
 	sessionPath := view.WorkspaceSessionFile(sessionRoot)
-	if editor.Options().AutoSession && len(args) == 0 {
+	workspaceTrusted := func() bool {
+		return loader.QueryWorkspaceTrust(
+			sessionRoot, editor.Options().Insecure,
+		) == loader.TrustTrusted
+	}
+	if editor.Options().AutoSession && len(args) == 0 && workspaceTrusted() {
 		values, ok, err := editor.RestoreSession(sessionPath)
 		if err != nil && !errors.Is(err, view.ErrSessionEmpty) {
 			return err
@@ -130,7 +136,7 @@ func run(args []string, out io.Writer) error {
 
 	p := tea.NewProgram(model)
 	_, err = p.Run()
-	if err == nil && editor.Options().AutoSession {
+	if err == nil && editor.Options().AutoSession && workspaceTrusted() {
 		values, valueErr := reg.OptionValues(editor)
 		if valueErr != nil {
 			return valueErr

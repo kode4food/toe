@@ -36,8 +36,7 @@ toe file1.go file2.go      # open multiple files
 
 ## Modes
 
-toe is a modal editor. Every key press means something different depending on
-the current mode.
+toe is a modal editor. Every key press means something different depending on the current mode.
 
 | Mode | How to enter | Purpose |
 |------|-------------|---------|
@@ -90,7 +89,6 @@ Ctrl+w h/j/k/l  navigate between splits
 
 ### Command Mode
 
-Press `:` in Normal mode to type a command. Commands support aliases and tab
-completion via the command palette (`Space+?`).
+Press `:` in Normal mode to type a command. Commands support aliases and tab completion via the command palette (`Space+?`).
 
 → See [Key Bindings]({{< relref "/docs/key-bindings" >}}) for the complete reference.

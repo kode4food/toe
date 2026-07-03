@@ -5,8 +5,7 @@ weight: 40
 
 # Sessions
 
-toe can save and restore your editing session: the set of open documents,
-split layout, cursor positions, view modes, and editor options.
+toe can save and restore your editing session: the set of open documents, split layout, cursor positions, view modes, and editor options.
 
 ## Session File
 
@@ -41,8 +40,7 @@ You can save or restore at any time regardless of the auto-session setting:
 :restore_session   (alias: restore-session)
 ```
 
-`save_session` writes the current state to `.toe/session.toml`. `restore_session`
-reads it back, reopening all documents and restoring split layout.
+`save_session` writes the current state to `.toe/session.toml`. `restore_session` reads it back, reopening all documents and restoring split layout.
 
 ## What Is Saved
 

@@ -5,10 +5,7 @@ weight: 50
 
 # Language Servers
 
-toe is a Go editor. LSP support is built around `gopls` for Go, with additional
-servers available for web languages (TypeScript, HTML, CSS) and other tools in
-the Go ecosystem. Each language specifies which server to use; you configure
-servers in your `languages.toml`.
+toe is a Go editor. LSP support is built around `gopls` for Go, with additional servers available for web languages (TypeScript, HTML, CSS) and other tools in the Go ecosystem. Each language specifies which server to use; you configure servers in your `languages.toml`.
 
 ## Configuring a Language Server
 
@@ -30,8 +27,7 @@ language-servers = ["gopls"]
 
 ## Workspace Config
 
-Language server config in `.toe/languages.toml` is merged on top of user
-config, letting you override per-project without touching global settings.
+Language server config in `.toe/languages.toml` is merged on top of user config, letting you override per-project without touching global settings.
 
 ## Available LSP Features
 
@@ -52,9 +48,7 @@ config, letting you override per-project without touching global settings.
 | Document symbols | `Space+s` | `symbol_picker` |
 | Workspace symbols | `Space+S` | `workspace_symbol_picker` |
 
-Diagnostics (errors and warnings) appear as underlines in the document,
-markers in the gutter, counts in the status bar, and a popup when the cursor
-rests on a diagnostic.
+Diagnostics (errors and warnings) appear as underlines in the document, markers in the gutter, counts in the status bar, and a popup when the cursor rests on a diagnostic.
 
 ## Restarting Servers
 

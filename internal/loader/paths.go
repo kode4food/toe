@@ -94,11 +94,11 @@ func ConfigDir() (string, bool) {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
 	}
-	dir, err := os.UserConfigDir()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", false
 	}
-	return filepath.Join(dir, DirName), true
+	return filepath.Join(home, ".config", DirName), true
 }
 
 func LogFile() (string, bool) {
@@ -113,11 +113,11 @@ func CacheDir() (string, bool) {
 	if dir := os.Getenv("XDG_CACHE_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
 	}
-	dir, err := os.UserCacheDir()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", false
 	}
-	return filepath.Join(dir, DirName), true
+	return filepath.Join(home, ".cache", DirName), true
 }
 
 func DataDir() (string, bool) {

@@ -13,14 +13,39 @@ toe reads config in this order (later values override earlier ones):
 |------|---------|
 | `$XDG_CONFIG_HOME/toe/config.toml` | User config |
 | `$XDG_CONFIG_HOME/toe/languages.toml` | User language config |
-| `.toe/config.toml` | Workspace config |
-| `.toe/languages.toml` | Workspace language config |
+| `.toe/config.toml` | Workspace config (trusted workspaces only) |
+| `.toe/languages.toml` | Workspace language config (trusted workspaces only) |
 
-`$XDG_CONFIG_HOME` defaults to `~/.config` on Linux/macOS.
+`$XDG_CONFIG_HOME` defaults to `~/.config`.
 
 Open your user config directly: `:config_open`  
 Open workspace config: `:config_open_workspace`  
 Reload after editing: `:config_reload`
+
+## Workspace Trust
+
+Workspace-local config files (`.toe/config.toml` and `.toe/languages.toml`) are only loaded for trusted workspaces. Untrusted workspaces silently skip these files — only user config applies.
+
+Trust the current workspace:
+
+```
+:workspace_trust
+```
+
+Remove trust:
+
+```
+:workspace_untrust
+```
+
+Trusted workspaces are stored in `$DATA_DIR/trusted_workspaces` (`~/.local/share/toe/trusted_workspaces` on Linux/macOS).
+
+To bypass trust checks entirely and always load workspace config, set in your user config:
+
+```toml
+[editor]
+insecure = true
+```
 
 ## Editor Options
 

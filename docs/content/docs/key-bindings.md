@@ -294,8 +294,7 @@ All `Ctrl+w` bindings also work with `Space+w`.
 
 ## Select Mode
 
-Select mode extends the current selection. Motion keys move the selection's
-head rather than collapsing it.
+Select mode extends the current selection. Motion keys move the selection's head rather than collapsing it.
 
 | Key | Action |
 |-----|--------|

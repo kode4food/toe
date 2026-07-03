@@ -197,18 +197,22 @@ func TestWorkspaceTrust(t *testing.T) {
 }
 
 func TestDirFallbacksToHome(t *testing.T) {
-	t.Run("ConfigDir uses home when XDG unset", func(t *testing.T) {
+	t.Run("ConfigDir uses ~/.config when XDG unset", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", "")
+		home, err := os.UserHomeDir()
+		assert.NoError(t, err)
 		dir, ok := loader.ConfigDir()
 		assert.True(t, ok)
-		assert.Contains(t, dir, loader.DirName)
+		assert.Equal(t, filepath.Join(home, ".config", loader.DirName), dir)
 	})
 
-	t.Run("CacheDir uses home when XDG unset", func(t *testing.T) {
+	t.Run("CacheDir uses ~/.cache when XDG unset", func(t *testing.T) {
 		t.Setenv("XDG_CACHE_HOME", "")
+		home, err := os.UserHomeDir()
+		assert.NoError(t, err)
 		dir, ok := loader.CacheDir()
 		assert.True(t, ok)
-		assert.Contains(t, dir, loader.DirName)
+		assert.Equal(t, filepath.Join(home, ".cache", loader.DirName), dir)
 	})
 
 	t.Run("DataDir uses home when XDG unset", func(t *testing.T) {

@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kode4food/toe/internal/testutil"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 func TestMotionGotoLine(t *testing.T) {

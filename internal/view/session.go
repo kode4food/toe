@@ -386,25 +386,38 @@ func (e *Editor) restoreSessionNode(
 			return 0, ErrSessionInvalid
 		}
 		id := t.allocID()
-		return e.restoreSessionView(t, parent, id, docID, sn, rs), nil
+		return e.restoreSessionView(restoreSessionViewArgs{
+			tree:    t,
+			parent:  parent,
+			id:      id,
+			docID:   docID,
+			session: sn,
+			restore: rs,
+		}), nil
 	}
 	return 0, ErrSessionInvalid
 }
 
-func (e *Editor) restoreSessionView(
-	t *Tree, parent, id Id, docID DocumentId, sn sessionNode,
-	rs *sessionRestore,
-) Id {
+type restoreSessionViewArgs struct {
+	tree    *Tree
+	parent  Id
+	id      Id
+	docID   DocumentId
+	session sessionNode
+	restore *sessionRestore
+}
+
+func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	v := &View{
-		id:         id,
-		docID:      docID,
-		mode:       sessionMode(sn.Mode),
-		offset:     sessionPosition(sn),
-		freeScroll: sn.FreeScroll,
+		id:         args.id,
+		docID:      args.docID,
+		mode:       sessionMode(args.session.Mode),
+		offset:     sessionPosition(args.session),
+		freeScroll: args.session.FreeScroll,
 	}
-	entries := make([]JumpEntry, 0, len(sn.Jumps))
-	for _, j := range sn.Jumps {
-		jDocID, ok := rs.docs[j.Document]
+	entries := make([]JumpEntry, 0, len(args.session.Jumps))
+	for _, j := range args.session.Jumps {
+		jDocID, ok := args.restore.docs[j.Document]
 		if !ok {
 			continue
 		}
@@ -414,19 +427,19 @@ func (e *Editor) restoreSessionView(
 			Selection: j.Selection.selection(),
 		})
 	}
-	head := sn.JumpHead
+	head := args.session.JumpHead
 	if head == 0 || head > len(entries) {
 		head = len(entries)
 	}
 	v.jumps.Restore(entries, head)
-	t.nodes[id] = &treeNode{parent: parent, view: v}
-	if doc, ok := rs.documents[docID]; ok {
-		doc.SetSelectionFor(id, sn.Selection.selection())
+	args.tree.nodes[args.id] = &treeNode{parent: args.parent, view: v}
+	if doc, ok := args.restore.documents[args.docID]; ok {
+		doc.SetSelectionFor(args.id, args.session.Selection.selection())
 	}
-	if sn.Focused {
-		rs.focus = id
+	if args.session.Focused {
+		args.restore.focus = args.id
 	}
-	return id
+	return args.id
 }
 
 func sessionSelection(sel core.Selection) sessionSelect {

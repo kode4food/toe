@@ -90,8 +90,7 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("reflow uses configured text width", func(t *testing.T) {
 		e, km := defaultsEnv(t, "one two three four five\n")
-		width := 10
-		e.Options().TextWidth = &width
+		e.Options().TextWidth = new(10)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
 		assert.Empty(t, runCmd(t, km, e, "reflow").Message)
 	})

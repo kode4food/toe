@@ -3,8 +3,9 @@ package defaults_test
 import (
 	"testing"
 
-	"github.com/kode4food/toe/internal/testutil"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 func TestViewScrollCommands(t *testing.T) {

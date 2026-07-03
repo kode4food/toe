@@ -614,6 +614,10 @@ func TestDocumentAccessors(t *testing.T) {
 		d.SetPath("/a/b/c.txt")
 		assert.Equal(t, "b/c.txt", d.RelativeName("/a"))
 	})
+
+	t.Run("AccessedAt non-zero", func(t *testing.T) {
+		assert.NotZero(t, d.AccessedAt())
+	})
 }
 
 func TestDocumentBOM(t *testing.T) {

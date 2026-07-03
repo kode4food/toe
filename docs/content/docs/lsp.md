@@ -60,8 +60,7 @@ Diagnostics (errors and warnings) appear as underlines in the document, markers 
 
 ## Formatter
 
-You can also configure a standalone formatter (runs when `auto-format = true`
-or when you invoke `=`):
+You can also configure a standalone formatter (runs when `auto-format = true` or when you invoke `=`):
 
 ```toml
 [[language]]
@@ -70,5 +69,4 @@ auto-format = true
 formatter = { command = "gofmt" }
 ```
 
-If a language server and formatter are both configured, the language server's
-formatting is used.
+If a language server and formatter are both configured, the language server's formatting is used.

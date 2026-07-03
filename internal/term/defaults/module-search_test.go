@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 func TestSearch(t *testing.T) {
@@ -38,13 +39,13 @@ func TestSearch(t *testing.T) {
 
 	t.Run("search_selection runs", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "search_selection")
 	})
 
 	t.Run("search_selection_word runs", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		runCmd(t, km, e, "search_selection_word")
 	})
 

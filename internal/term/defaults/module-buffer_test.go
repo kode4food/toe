@@ -8,6 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -44,14 +45,14 @@ func TestBufferClose(t *testing.T) {
 
 	t.Run("close warns on unsaved changes", func(t *testing.T) {
 		e, km := twoBufferEnv(t)
-		setText(t, e, "dirty")
+		testutil.SetEditorText(t, e, "dirty")
 		res := runCmd(t, km, e, "buffer_close")
 		assert.Contains(t, res.Message, "unsaved")
 	})
 
 	t.Run("close force ignores unsaved changes", func(t *testing.T) {
 		e, km := twoBufferEnv(t)
-		setText(t, e, "dirty")
+		testutil.SetEditorText(t, e, "dirty")
 		before := len(e.AllViews())
 		runCmd(t, km, e, "buffer_close_force")
 		assert.Less(t, len(e.AllViews()), before)
@@ -72,7 +73,7 @@ func TestBufferClose(t *testing.T) {
 
 	t.Run("close all warns on unsaved changes", func(t *testing.T) {
 		e, km := twoBufferEnv(t)
-		setText(t, e, "dirty")
+		testutil.SetEditorText(t, e, "dirty")
 		res := runCmd(t, km, e, "buffer_close_all")
 		assert.Contains(t, res.Message, "unsaved")
 	})

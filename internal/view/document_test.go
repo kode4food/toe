@@ -9,6 +9,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -259,7 +260,7 @@ func TestDocumentSave(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
@@ -276,7 +277,7 @@ func TestDocumentSave(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 		doc.SetLineEnding(core.LineEndingCRLF)
@@ -292,7 +293,7 @@ func TestDocumentSave(t *testing.T) {
 	t.Run("applies configured save cleanup", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
-		e := editorWithText(t, "a  \n\n\n")
+		e := testutil.EditorWithText(t, "a  \n\n\n")
 		e.Options().TrimTrailingWS = true
 		e.Options().TrimFinalNewlines = true
 		e.Options().InsertFinalNewline = true
@@ -311,7 +312,7 @@ func TestDocumentSave(t *testing.T) {
 	t.Run("can disable final newline insertion", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
@@ -737,13 +738,13 @@ func TestDocumentRevisionAndLastEditPos(t *testing.T) {
 	})
 
 	t.Run("revision increments on apply", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		d, _ := e.FocusedDocument()
 		assert.Greater(t, d.Revision(), 0)
 	})
 
 	t.Run("LastEditPos after edit", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		d, _ := e.FocusedDocument()
 		assert.GreaterOrEqual(t, d.LastEditPos(), 0)
 	})
@@ -869,7 +870,7 @@ func TestDocumentAtomicSave(t *testing.T) {
 	t.Run("atomic save writes content", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "atomic.txt")
-		e := editorWithText(t, "atomic content")
+		e := testutil.EditorWithText(t, "atomic content")
 		e.Options().AtomicSave = true
 		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
@@ -936,7 +937,7 @@ func TestDocumentTrimTrailingWhitespaceWithCRLF(t *testing.T) {
 	t.Run("preserves crlf on trimmed lines", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "crlf.txt")
-		e := editorWithText(t, "line  \r\nend  ")
+		e := testutil.EditorWithText(t, "line  \r\nend  ")
 		e.Options().TrimTrailingWS = true
 		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
@@ -1014,7 +1015,7 @@ func TestDocumentTrimFinalNewlinesSingleEnding(t *testing.T) {
 	t.Run("single final newline is preserved", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "single.txt")
-		e := editorWithText(t, "hello\n")
+		e := testutil.EditorWithText(t, "hello\n")
 		e.Options().TrimFinalNewlines = true
 		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()

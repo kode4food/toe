@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -347,7 +348,7 @@ func TestEditorSaveAll(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "all.txt")
-		e := editorWithText(t, "content")
+		e := testutil.EditorWithText(t, "content")
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 		errs := e.SaveAll()
@@ -544,12 +545,12 @@ func TestEditorEarlierLater(t *testing.T) {
 	})
 
 	t.Run("Earlier with history is callable", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		_ = e.Earlier(core.UndoSteps(1))
 	})
 
 	t.Run("Later with history is callable", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		e.Earlier(core.UndoSteps(1))
 		_ = e.Later(core.UndoSteps(1))
 	})
@@ -1022,7 +1023,7 @@ func TestEditorSwitchFileReuseDoc(t *testing.T) {
 
 func TestEditorUndoRedoWithHistory(t *testing.T) {
 	t.Run("undo restores previous text", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		ok := e.Undo()
 		assert.True(t, ok)
 		d, _ := e.FocusedDocument()
@@ -1030,7 +1031,7 @@ func TestEditorUndoRedoWithHistory(t *testing.T) {
 	})
 
 	t.Run("redo reapplies text", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		e.Undo()
 		ok := e.Redo()
 		assert.True(t, ok)
@@ -1143,7 +1144,7 @@ func TestEditorRedoNoView(t *testing.T) {
 
 func TestEditorSaveAllWithError(t *testing.T) {
 	t.Run("modified scratch returns error", func(t *testing.T) {
-		e := editorWithText(t, "unsaved")
+		e := testutil.EditorWithText(t, "unsaved")
 		errs := e.SaveAll()
 		assert.Equal(t, 1, len(errs))
 	})
@@ -1159,14 +1160,14 @@ func TestMoveFocusedFile(t *testing.T) {
 	})
 
 	t.Run("modified unforced returns error", func(t *testing.T) {
-		e := editorWithText(t, "unsaved")
+		e := testutil.EditorWithText(t, "unsaved")
 		err := e.MoveFocusedFile("newpath.txt", false)
 		assert.ErrorIs(t, err, view.ErrUnsavedChanges)
 	})
 
 	t.Run("renames scratch doc by setting path", func(t *testing.T) {
 		dir := t.TempDir()
-		e := editorWithText(t, "hello\n")
+		e := testutil.EditorWithText(t, "hello\n")
 		newPath := filepath.Join(dir, "newfile.txt")
 		err := e.MoveFocusedFile(newPath, true)
 		assert.NoError(t, err)
@@ -1369,7 +1370,7 @@ func TestEditorSaveWithFileOps(t *testing.T) {
 	t.Run("WillCreate/DidCreate on new file", func(t *testing.T) {
 		dir := t.TempDir()
 		newPath := filepath.Join(dir, "new.txt")
-		e := editorWithText(t, "hello\n")
+		e := testutil.EditorWithText(t, "hello\n")
 		e.SetLanguageServerController(&fileOpController{})
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -1384,7 +1385,7 @@ func TestEditorSaveAllWithFileOps(t *testing.T) {
 	t.Run("WillCreate/DidCreate during SaveAll", func(t *testing.T) {
 		dir := t.TempDir()
 		newPath := filepath.Join(dir, "new.txt")
-		e := editorWithText(t, "hello\n")
+		e := testutil.EditorWithText(t, "hello\n")
 		e.SetLanguageServerController(&fileOpController{})
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)

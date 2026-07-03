@@ -81,7 +81,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "abXYcd", doc.Text().String())
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 
 	t.Run("disabled leaves document unchanged", func(t *testing.T) {
@@ -106,7 +106,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		testutil.WriteFakeClipboardTools(t, clipFile)
 		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
@@ -204,7 +204,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m2
 
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
 
 	t.Run("clicks rendered character cell", func(t *testing.T) {
@@ -217,7 +217,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m2
 
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
 
 	t.Run("ignores click on status or command line", func(t *testing.T) {
@@ -229,7 +229,7 @@ func TestMouseClickPositioning(t *testing.T) {
 			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 
 		// the bottom row of the 8-high window is the status/command line, never
 		// editor content, so a click there must leave the cursor put
@@ -238,7 +238,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m3
 
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
 
 	t.Run("alt click adds secondary selection", func(t *testing.T) {
@@ -282,13 +282,13 @@ func TestMouseClickPositioning(t *testing.T) {
 			X: 10, Y: 0, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
-		assert.Equal(t, 0, cursorPos(t, e))
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
 
 		m2, _ = m.Update(tea.MouseClickMsg{
 			X: 10, Y: 1, Button: tea.MouseLeft,
 		})
 		_ = m2
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
 
 	t.Run("click below row map clamps", func(t *testing.T) {
@@ -300,7 +300,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m2
 
-		assert.Equal(t, 4, cursorPos(t, e))
+		assert.Equal(t, 4, testutil.CursorPos(t, e))
 	})
 
 	t.Run("tab click uses expanded width", func(t *testing.T) {
@@ -312,7 +312,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m2
 
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 }
 
@@ -466,19 +466,6 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 		WithSelection(core.PointSelection(0))
 	assert.NoError(t, e.Apply(tx))
 	return e
-}
-
-func setSelection(
-	t *testing.T, e *view.Editor, ranges []core.Range, primary int,
-) {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	sel, err := core.NewSelection(ranges, primary)
-	assert.NoError(t, err)
-	doc.SetSelectionFor(v.ID(), sel)
 }
 
 func TestFocusMessages(t *testing.T) {
@@ -640,15 +627,6 @@ func (c *highlightRefreshController) DocumentHighlights(
 ) ([]view.DocumentHighlight, error) {
 	doc.SetDocumentHighlights(id, c.highlights)
 	return c.highlights, nil
-}
-
-func cursorPos(t *testing.T, e *view.Editor) int {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	return doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
 }
 
 func renderedTextPoint(

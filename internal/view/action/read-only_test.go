@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -94,7 +95,7 @@ func TestReadOnlyShellActions(t *testing.T) {
 
 func editorWithReadOnlyText(t *testing.T, text string) *view.Editor {
 	t.Helper()
-	e := editorWithText(t, text)
+	e := testutil.EditorWithText(t, text)
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 	setReadOnly(doc)

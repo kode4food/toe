@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -220,7 +221,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 
 	t.Run("plural selections include primary", func(t *testing.T) {
 		e := editorWithText(t, "abcd")
-		setSelection(t, e,
+		testutil.SetSelection(t, e,
 			[]core.Range{core.PointRange(0), core.PointRange(2)},
 			1,
 		)

@@ -8,13 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestShellPipeTo(t *testing.T) {
 	t.Run("pipes selection without changing doc", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		err := action.ShellPipeTo(e, "cat > /dev/null")
 
@@ -24,8 +25,8 @@ func TestShellPipeTo(t *testing.T) {
 	})
 
 	t.Run("failing command returns error", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		err := action.ShellPipeTo(e, "false")
 
@@ -35,8 +36,8 @@ func TestShellPipeTo(t *testing.T) {
 
 func TestShellPipeErrors(t *testing.T) {
 	t.Run("failing command returns error", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		err := action.ShellPipe(e, "false")
 
@@ -46,8 +47,8 @@ func TestShellPipeErrors(t *testing.T) {
 
 func TestShellOutputErrors(t *testing.T) {
 	t.Run("insert failing command returns error", func(t *testing.T) {
-		e := editorWithText(t, "x")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "x")
+		testutil.SetCursor(t, e, 0)
 
 		err := action.ShellInsertOutput(e, "false")
 
@@ -57,8 +58,8 @@ func TestShellOutputErrors(t *testing.T) {
 
 func TestReadFileErrors(t *testing.T) {
 	t.Run("missing file returns error", func(t *testing.T) {
-		e := editorWithText(t, "x")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "x")
+		testutil.SetCursor(t, e, 0)
 
 		err := action.ReadFile(e, "/no/such/file/xyz.txt")
 
@@ -121,8 +122,8 @@ func TestShellNoView(t *testing.T) {
 
 func TestShellEdgeSelections(t *testing.T) {
 	t.Run("pipe skips invalid range", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
 
 		err := action.ShellPipe(e, "cat")
 
@@ -132,8 +133,8 @@ func TestShellEdgeSelections(t *testing.T) {
 	})
 
 	t.Run("pipe to skips invalid range", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
 
 		err := action.ShellPipeTo(e, "cat")
 
@@ -143,8 +144,8 @@ func TestShellEdgeSelections(t *testing.T) {
 	})
 
 	t.Run("keep pipe skips invalid range", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(10, 11)}, 0)
 
 		err := action.ShellKeepPipe(e, "cat")
 
@@ -154,8 +155,8 @@ func TestShellEdgeSelections(t *testing.T) {
 	})
 
 	t.Run("keep pipe keeps none", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		err := action.ShellKeepPipe(e, "false")
 
@@ -167,8 +168,8 @@ func TestShellEdgeSelections(t *testing.T) {
 	})
 
 	t.Run("append output skips duplicate position", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(
 			t, e,
 			[]core.Range{core.NewRange(0, 1), core.PointRange(1)},
 			0,
@@ -184,8 +185,8 @@ func TestShellEdgeSelections(t *testing.T) {
 
 func TestShell(t *testing.T) {
 	t.Run("pipe replaces selection", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		err := action.ShellPipe(e, "tr a-z A-Z")
 
@@ -195,8 +196,8 @@ func TestShell(t *testing.T) {
 	})
 
 	t.Run("insert/append at boundaries", func(t *testing.T) {
-		e := editorWithText(t, "x")
-		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		e := testutil.EditorWithText(t, "x")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 
 		err := action.ShellInsertOutput(e, "printf hello")
 
@@ -204,8 +205,8 @@ func TestShell(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "hellox", doc.Text().String())
 
-		e = editorWithText(t, "x")
-		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		e = testutil.EditorWithText(t, "x")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 
 		err = action.ShellAppendOutput(e, "printf hello")
 
@@ -215,8 +216,8 @@ func TestShell(t *testing.T) {
 	})
 
 	t.Run("keep pipe by exit status", func(t *testing.T) {
-		e := editorWithText(t, "a\nb")
-		setSelection(
+		e := testutil.EditorWithText(t, "a\nb")
+		testutil.SetSelection(
 			t, e,
 			[]core.Range{
 				core.NewRange(0, 1),
@@ -240,8 +241,8 @@ func TestShell(t *testing.T) {
 		path := filepath.Join(dir, "input.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
 
-		e := editorWithText(t, "x")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "x")
+		testutil.SetCursor(t, e, 1)
 
 		err := action.ReadFile(e, path)
 
@@ -255,8 +256,8 @@ func TestShell(t *testing.T) {
 		path := filepath.Join(dir, "input.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("a\r\nb\r\n"), 0o644))
 
-		e := editorWithText(t, "")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "")
+		testutil.SetCursor(t, e, 0)
 
 		err := action.ReadFile(e, path)
 
@@ -270,8 +271,8 @@ func TestShell(t *testing.T) {
 		path := filepath.Join(dir, "input.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("x"), 0o644))
 
-		e := editorWithText(t, "ab")
-		setSelection(
+		e := testutil.EditorWithText(t, "ab")
+		testutil.SetSelection(
 			t, e,
 			[]core.Range{core.NewRange(0, 1), core.PointRange(0)},
 			0,

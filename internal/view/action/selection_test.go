@@ -8,14 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestSelection(t *testing.T) {
 	t.Run("trim removes surrounding whitespace", func(t *testing.T) {
-		e := editorWithText(t, "  hi  ")
-		setSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
+		e := testutil.EditorWithText(t, "  hi  ")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
 
 		action.TrimSelections(e)
 
@@ -27,8 +28,8 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("trim drops all-whitespace range", func(t *testing.T) {
-		e := editorWithText(t, "  ")
-		setSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
+		e := testutil.EditorWithText(t, "  ")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
 
 		action.TrimSelections(e)
 
@@ -42,8 +43,8 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("join selections collapses line breaks", func(t *testing.T) {
-		e := editorWithText(t, "a\nb")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		e := testutil.EditorWithText(t, "a\nb")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		action.JoinSelections(e)
 
@@ -52,8 +53,8 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("rotate selections changes primary", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(
 			t, e,
 			[]core.Range{
 				core.PointRange(0),
@@ -75,8 +76,8 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("rotate contents tracks primary", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e,
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e,
 			[]core.Range{
 				core.NewRange(0, 1),
 				core.NewRange(1, 2),
@@ -94,15 +95,15 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("toggle comments a line", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleComments(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "# hello", doc.Text().String())
 
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		action.ToggleComments(e)
 
 		assert.Equal(t, "hello", doc.Text().String())
@@ -111,8 +112,8 @@ func TestSelection(t *testing.T) {
 
 func TestToggleLineComments(t *testing.T) {
 	t.Run("adds default line comment token", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleLineComments(e)
 
@@ -122,8 +123,8 @@ func TestToggleLineComments(t *testing.T) {
 	})
 
 	t.Run("removes existing comment token", func(t *testing.T) {
-		e := editorWithText(t, "# hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "# hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleLineComments(e)
 
@@ -134,8 +135,8 @@ func TestToggleLineComments(t *testing.T) {
 
 func TestToggleBlockComments(t *testing.T) {
 	t.Run("wraps selection with block tokens", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -149,10 +150,10 @@ func TestToggleBlockComments(t *testing.T) {
 func TestToggleCommentsBlockCommented(t *testing.T) {
 	t.Run("removes inline block comment", func(t *testing.T) {
 		const src = "hello /* world */"
-		e := editorWithText(t, src)
+		e := testutil.EditorWithText(t, src)
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("go")
-		setSelection(t, e, []core.Range{core.NewRange(6, len(src))}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(6, len(src))}, 0)
 
 		action.ToggleComments(e)
 
@@ -162,8 +163,8 @@ func TestToggleCommentsBlockCommented(t *testing.T) {
 
 func TestJoinSelectionsSpace(t *testing.T) {
 	t.Run("joins lines with space separator", func(t *testing.T) {
-		e := editorWithText(t, "a\nb")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		e := testutil.EditorWithText(t, "a\nb")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		action.JoinSelectionsSpace(e)
 
@@ -174,19 +175,19 @@ func TestJoinSelectionsSpace(t *testing.T) {
 
 func TestGotoLineEndNewline(t *testing.T) {
 	t.Run("cursor to end including newline pos", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc\ndef")
+		testutil.SetCursor(t, e, 0)
 
 		action.GotoLineEndNewline(e)
 
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
 }
 
 func TestExtendToLineEndNewline(t *testing.T) {
 	t.Run("extends through newline grapheme", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc\ndef")
+		testutil.SetCursor(t, e, 0)
 
 		action.ExtendToLineEndNewline(e)
 
@@ -201,8 +202,8 @@ func TestExtendToLineEndNewline(t *testing.T) {
 
 func TestRotateContentsBackward(t *testing.T) {
 	t.Run("rotates content backward", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e,
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e,
 			[]core.Range{
 				core.NewRange(0, 1),
 				core.NewRange(1, 2),
@@ -220,8 +221,8 @@ func TestRotateContentsBackward(t *testing.T) {
 
 func TestSaveSelection(t *testing.T) {
 	t.Run("does not panic and keeps text", func(t *testing.T) {
-		e := editorWithText(t, "abcdef")
-		setCursor(t, e, 3)
+		e := testutil.EditorWithText(t, "abcdef")
+		testutil.SetCursor(t, e, 3)
 
 		assert.NotPanics(t, func() { action.SaveSelection(e) })
 
@@ -232,7 +233,7 @@ func TestSaveSelection(t *testing.T) {
 
 func TestCommitUndoCheckpoint(t *testing.T) {
 	t.Run("does not change text", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 
 		action.CommitUndoCheckpoint(e)
 
@@ -243,81 +244,81 @@ func TestCommitUndoCheckpoint(t *testing.T) {
 
 func TestGotoLastModification(t *testing.T) {
 	t.Run("moves cursor to last edit position", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 0)
 		action.InsertMode(e)
 		action.InsertChar(e, 'x')
 		action.NormalMode(e)
 		// cursor should be near position 1 after inserting 'x'
 		action.GotoLastModification(e)
 
-		assert.True(t, cursorPos(t, e) >= 0)
+		assert.True(t, testutil.CursorPos(t, e) >= 0)
 	})
 }
 
 func TestJumpBackwardForward(t *testing.T) {
 	t.Run("jump backward is noop when no history", func(t *testing.T) {
-		e := editorWithText(t, "abcdef")
-		setCursor(t, e, 3)
+		e := testutil.EditorWithText(t, "abcdef")
+		testutil.SetCursor(t, e, 3)
 
 		assert.NotPanics(t, func() { action.JumpBackward(e) })
 	})
 
 	t.Run("forward noop when no forward history", func(t *testing.T) {
-		e := editorWithText(t, "abcdef")
-		setCursor(t, e, 3)
+		e := testutil.EditorWithText(t, "abcdef")
+		testutil.SetCursor(t, e, 3)
 
 		assert.NotPanics(t, func() { action.JumpForward(e) })
 	})
 
 	t.Run("backward jump restores earlier position", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef\nghi")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "abc\ndef\nghi")
+		testutil.SetCursor(t, e, 1)
 		// SaveSelection pushes cursor pos 1; then move to end
 		action.SaveSelection(e)
 		action.MoveFileEnd(e)
 		// SaveSelection pushes cursor at end
 		action.SaveSelection(e)
 		// Now head=2; Backward() will succeed
-		posEnd := cursorPos(t, e)
+		posEnd := testutil.CursorPos(t, e)
 
 		action.JumpBackward(e)
 
-		posAfter := cursorPos(t, e)
+		posAfter := testutil.CursorPos(t, e)
 		// Should have jumped to the end position (the second push)
 		assert.NotEqual(t, posEnd, posAfter)
 	})
 
 	t.Run("forward after backward restores position", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef\nghi")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc\ndef\nghi")
+		testutil.SetCursor(t, e, 0)
 		action.SaveSelection(e)
 		action.MoveFileEnd(e)
-		posEnd := cursorPos(t, e)
+		posEnd := testutil.CursorPos(t, e)
 		action.SaveSelection(e)
 		action.JumpBackward(e)
-		posBack := cursorPos(t, e)
+		posBack := testutil.CursorPos(t, e)
 		assert.NotEqual(t, posEnd, posBack)
 
 		action.JumpForward(e)
 
-		posAfter := cursorPos(t, e)
+		posAfter := testutil.CursorPos(t, e)
 		assert.True(t, posAfter >= 0)
 	})
 }
 
 func TestScrollUpDown(t *testing.T) {
 	t.Run("ScrollUp does not panic", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd\ne")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "a\nb\nc\nd\ne")
+		testutil.SetCursor(t, e, 0)
 
 		assert.NotPanics(t, func() { action.ScrollUp(e) })
 		assert.NotPanics(t, func() { action.ScrollDown(e) })
 	})
 
 	t.Run("ScrollUp moves cursor from below top", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd\ne")
-		setCursor(t, e, 8) // line 4
+		e := testutil.EditorWithText(t, "a\nb\nc\nd\ne")
+		testutil.SetCursor(t, e, 8) // line 4
 
 		action.ScrollUp(e)
 
@@ -330,7 +331,7 @@ func TestScrollUpDown(t *testing.T) {
 
 func TestHSplitVSplit(t *testing.T) {
 	t.Run("HSplit adds view", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		before := viewCount(t, e)
 
 		action.HSplit(e)
@@ -339,7 +340,7 @@ func TestHSplitVSplit(t *testing.T) {
 	})
 
 	t.Run("VSplit adds view", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		before := viewCount(t, e)
 
 		action.VSplit(e)
@@ -350,7 +351,7 @@ func TestHSplitVSplit(t *testing.T) {
 
 func TestRotateView(t *testing.T) {
 	t.Run("cycles to next view", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		v, _ := e.FocusedView()
 		e.VSplit(v.DocID())
 		before, _ := e.FocusedView()
@@ -364,9 +365,9 @@ func TestRotateView(t *testing.T) {
 
 func TestSmartTab(t *testing.T) {
 	t.Run("inserts tab in leading whitespace", func(t *testing.T) {
-		e := editorWithText(t, "\thello")
+		e := testutil.EditorWithText(t, "\thello")
 		e.SetMode(view.ModeInsert)
-		setCursor(t, e, 1)
+		testutil.SetCursor(t, e, 1)
 
 		action.SmartTab(e)
 
@@ -378,8 +379,8 @@ func TestSmartTab(t *testing.T) {
 func TestSelectionIsLinewise(t *testing.T) {
 	t.Run("linewise selection via ChangeSelection", func(t *testing.T) {
 		// "hello\nworld\n" — Range(0,12) covers both complete lines exactly
-		e := editorWithText(t, "hello\nworld\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 12)}, 0)
+		e := testutil.EditorWithText(t, "hello\nworld\n")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 12)}, 0)
 
 		action.ChangeSelection(e)
 
@@ -388,8 +389,8 @@ func TestSelectionIsLinewise(t *testing.T) {
 
 	t.Run("unaligned multi-line is not linewise", func(t *testing.T) {
 		// Range(1, 10) spans lines 0 and 1 but does not start at line 0 start
-		e := editorWithText(t, "hello\nworld\n")
-		setSelection(t, e, []core.Range{core.NewRange(1, 10)}, 0)
+		e := testutil.EditorWithText(t, "hello\nworld\n")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 10)}, 0)
 
 		action.ChangeSelection(e)
 
@@ -402,8 +403,8 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 		dir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", dir)
 
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleLineComments(e)
 
@@ -416,8 +417,8 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 		dir := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", dir)
 
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -428,8 +429,8 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 
 func TestToggleCommentsMultiLine(t *testing.T) {
 	t.Run("ToggleLineComments on multiple lines", func(t *testing.T) {
-		e := editorWithText(t, "hello\nworld")
-		setSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
+		e := testutil.EditorWithText(t, "hello\nworld")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
 
 		action.ToggleLineComments(e)
 
@@ -443,8 +444,8 @@ func TestToggleLineCommentsWithLangToken(t *testing.T) {
 	t.Run("uses language comment token", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleLineComments(e)
 
@@ -455,8 +456,8 @@ func TestToggleLineCommentsWithLangToken(t *testing.T) {
 	t.Run("removes language comment token", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
-		e := editorWithText(t, "// hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "// hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleLineComments(e)
 
@@ -469,8 +470,8 @@ func TestToggleLineCommentsBlockLang(t *testing.T) {
 	t.Run("block-only lang uses block tokens", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleLineComments(e)
 
@@ -484,8 +485,8 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 	t.Run("block-only lang uses block tokens", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.ToggleComments(e)
 
@@ -497,8 +498,8 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 	t.Run("removes existing block comment", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
-		e := editorWithText(t, "/* hello */")
-		setSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
+		e := testutil.EditorWithText(t, "/* hello */")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
 
 		action.ToggleComments(e)
 
@@ -512,8 +513,8 @@ func TestToggleBlockCommentsWithLang(t *testing.T) {
 	t.Run("wraps with language block tokens", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -526,8 +527,8 @@ func TestToggleBlockCommentsWithLang(t *testing.T) {
 	t.Run("unwraps block comment", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
-		e := editorWithText(t, "/* hello */")
-		setSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
+		e := testutil.EditorWithText(t, "/* hello */")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -541,8 +542,8 @@ func TestToggleCommentsWithLineToken(t *testing.T) {
 	t.Run("line-only lang uses line token", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.ToggleComments(e)
 
@@ -575,8 +576,8 @@ func TestToggleBlockCommentsLineFallback(t *testing.T) {
 	t.Run("line-only lang falls back to line toggle", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -651,8 +652,8 @@ func TestToggleCommentsLineCommentedBranch(t *testing.T) {
 	t.Run("each line separately block-commented", func(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
-		e := editorWithText(t, "/* line one */\n/* line two */\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 30)}, 0)
+		e := testutil.EditorWithText(t, "/* line one */\n/* line two */\n")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 30)}, 0)
 
 		action.ToggleComments(e)
 

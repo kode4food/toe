@@ -5,11 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
 func TestDocumentColors(t *testing.T) {
-	e := editorWithText(t, "color: #123456\n")
+	e := testutil.EditorWithText(t, "color: #123456\n")
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 

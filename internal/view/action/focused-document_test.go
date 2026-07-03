@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -214,7 +215,7 @@ func TestFocusedDocumentGuardStrings(t *testing.T) {
 
 func editorWithMissingFocusedDocument(t *testing.T) *view.Editor {
 	t.Helper()
-	e := editorWithText(t, "1\nabc\n")
+	e := testutil.EditorWithText(t, "1\nabc\n")
 	v, ok := e.FocusedView()
 	assert.True(t, ok)
 	deleteDocument(e, v.DocID())

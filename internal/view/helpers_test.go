@@ -12,33 +12,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-func editorWithText(t *testing.T, text string) *view.Editor {
-	t.Helper()
-	e := view.NewEditor("/tmp")
-	e.ResizeTree(80, 24)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	rope := doc.Text()
-	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, 0, text),
-	})
-	assert.NoError(t, err)
-	sel := core.PointSelection(0)
-	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(sel)
-	assert.NoError(t, e.Apply(tx))
-	return e
-}
-
-func cursorPos(t *testing.T, e *view.Editor) int {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	sel := doc.SelectionFor(v.ID())
-	return sel.Primary().Cursor(doc.Text())
-}
-
 func selectionAnchorHead(t *testing.T, e *view.Editor) (anchor, head int) {
 	t.Helper()
 	v, ok := e.FocusedView()
@@ -77,15 +50,6 @@ func newSelection(
 	sel, err := core.NewSelection(ranges, primary)
 	assert.NoError(t, err)
 	return sel
-}
-
-func setCursor(t *testing.T, e *view.Editor, pos int) {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	doc.SetSelectionFor(v.ID(), core.PointSelection(pos))
 }
 
 func replaceFocusedText(t *testing.T, e *view.Editor, text string) {

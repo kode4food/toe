@@ -6,71 +6,72 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 	"github.com/kode4food/toe/internal/view/language"
 )
 
 func TestInsertChar(t *testing.T) {
-	e := editorWithText(t, "hllo")
-	setCursor(t, e, 1)
+	e := testutil.EditorWithText(t, "hllo")
+	testutil.SetCursor(t, e, 1)
 	action.InsertChar(e, 'e')
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "hello", doc.Text().String())
-	assert.Equal(t, 2, cursorPos(t, e))
+	assert.Equal(t, 2, testutil.CursorPos(t, e))
 }
 
 func TestInsertNewline(t *testing.T) {
-	e := editorWithText(t, "ab")
-	setCursor(t, e, 1)
+	e := testutil.EditorWithText(t, "ab")
+	testutil.SetCursor(t, e, 1)
 	action.InsertNewline(e)
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "a\nb", doc.Text().String())
 }
 
 func TestInsertNewlineAutoPair(t *testing.T) {
-	e := editorWithText(t, "()")
-	setCursor(t, e, 1)
+	e := testutil.EditorWithText(t, "()")
+	testutil.SetCursor(t, e, 1)
 	action.InsertNewline(e)
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "(\n\t\n)", doc.Text().String())
-	assert.Equal(t, 3, cursorPos(t, e))
+	assert.Equal(t, 3, testutil.CursorPos(t, e))
 }
 
 func TestAutoPairConfig(t *testing.T) {
 	t.Run("global false disables insert hook", func(t *testing.T) {
-		e := editorWithText(t, "")
+		e := testutil.EditorWithText(t, "")
 		e.Options().HasAutoPairs = false
 
 		action.InsertChar(e, '(')
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "(", doc.Text().String())
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 
 	t.Run("global false disables newline pair hook", func(t *testing.T) {
-		e := editorWithText(t, "()")
+		e := testutil.EditorWithText(t, "()")
 		e.Options().HasAutoPairs = false
-		setCursor(t, e, 1)
+		testutil.SetCursor(t, e, 1)
 
 		action.InsertNewline(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "(\n)", doc.Text().String())
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 
 	t.Run("global false disables delete hook", func(t *testing.T) {
-		e := editorWithText(t, "()")
+		e := testutil.EditorWithText(t, "()")
 		e.Options().HasAutoPairs = false
-		setCursor(t, e, 1)
+		testutil.SetCursor(t, e, 1)
 
 		action.DeleteCharBackward(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, ")", doc.Text().String())
-		assert.Equal(t, 0, cursorPos(t, e))
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 
 	t.Run("language table overrides editor default", func(t *testing.T) {
@@ -87,7 +88,7 @@ name = "custom"
 		pair, ok := pairs.Get('<')
 		assert.True(t, ok)
 		assert.Equal(t, core.Pair{Open: '<', Close: '>'}, pair)
-		e := editorWithText(t, "")
+		e := testutil.EditorWithText(t, "")
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("custom")
 
@@ -95,7 +96,7 @@ name = "custom"
 		action.InsertChar(e, '<')
 
 		assert.Equal(t, "(<>", doc.Text().String())
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 }
 
@@ -106,15 +107,15 @@ func TestContinueComments(t *testing.T) {
 name = "custom"
 comment-token = "//"
 `)
-		e := editorWithText(t, "  // hello")
+		e := testutil.EditorWithText(t, "  // hello")
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("custom")
-		setCursor(t, e, doc.Text().LenChars())
+		testutil.SetCursor(t, e, doc.Text().LenChars())
 
 		action.InsertNewline(e)
 
 		assert.Equal(t, "  // hello\n  // ", doc.Text().String())
-		assert.Equal(t, doc.Text().LenChars(), cursorPos(t, e))
+		assert.Equal(t, doc.Text().LenChars(), testutil.CursorPos(t, e))
 	})
 
 	t.Run("open above continues line comment", func(t *testing.T) {
@@ -123,14 +124,14 @@ comment-token = "//"
 name = "custom"
 comment-token = "//"
 `)
-		e := editorWithText(t, "  // hello")
+		e := testutil.EditorWithText(t, "  // hello")
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("custom")
 
 		action.OpenAbove(e)
 
 		assert.Equal(t, "  // \n  // hello", doc.Text().String())
-		assert.Equal(t, 5, cursorPos(t, e))
+		assert.Equal(t, 5, testutil.CursorPos(t, e))
 	})
 
 	t.Run("can disable continuation", func(t *testing.T) {
@@ -139,11 +140,11 @@ comment-token = "//"
 name = "custom"
 comment-token = "//"
 `)
-		e := editorWithText(t, "  // hello")
+		e := testutil.EditorWithText(t, "  // hello")
 		e.Options().ContinueComments = false
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("custom")
-		setCursor(t, e, doc.Text().LenChars())
+		testutil.SetCursor(t, e, doc.Text().LenChars())
 
 		action.InsertNewline(e)
 
@@ -151,7 +152,7 @@ comment-token = "//"
 	})
 
 	t.Run("open above repeated cursors", func(t *testing.T) {
-		e := editorWithText(t, "hello")
+		e := testutil.EditorWithText(t, "hello")
 		e.SetCount(2)
 
 		action.OpenAbove(e)
@@ -168,39 +169,39 @@ comment-token = "//"
 }
 
 func TestDeleteCharBackward(t *testing.T) {
-	e := editorWithText(t, "hello")
-	setCursor(t, e, 3)
+	e := testutil.EditorWithText(t, "hello")
+	testutil.SetCursor(t, e, 3)
 	action.DeleteCharBackward(e)
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "helo", doc.Text().String())
-	assert.Equal(t, 2, cursorPos(t, e))
+	assert.Equal(t, 2, testutil.CursorPos(t, e))
 }
 
 func TestDeleteCharBackwardAtStart(t *testing.T) {
-	e := editorWithText(t, "hi")
+	e := testutil.EditorWithText(t, "hi")
 	action.DeleteCharBackward(e)
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "hi", doc.Text().String())
 }
 
 func TestDeleteCharForward(t *testing.T) {
-	e := editorWithText(t, "hello")
+	e := testutil.EditorWithText(t, "hello")
 	action.DeleteCharForward(e)
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "ello", doc.Text().String())
-	assert.Equal(t, 0, cursorPos(t, e))
+	assert.Equal(t, 0, testutil.CursorPos(t, e))
 }
 
 func TestDeleteCharForwardAtEnd(t *testing.T) {
-	e := editorWithText(t, "hi")
-	setCursor(t, e, 2)
+	e := testutil.EditorWithText(t, "hi")
+	testutil.SetCursor(t, e, 2)
 	action.DeleteCharForward(e)
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "hi", doc.Text().String())
 }
 
 func TestInsertCharMultiCursor(t *testing.T) {
-	e := editorWithText(t, "ab")
+	e := testutil.EditorWithText(t, "ab")
 	v, _ := e.FocusedView()
 	doc, _ := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
@@ -213,8 +214,8 @@ func TestInsertCharMultiCursor(t *testing.T) {
 }
 
 func TestUndoRedo(t *testing.T) {
-	e := editorWithText(t, "hello")
-	setCursor(t, e, 5)
+	e := testutil.EditorWithText(t, "hello")
+	testutil.SetCursor(t, e, 5)
 	action.InsertChar(e, '!')
 	doc, _ := e.FocusedDocument()
 	assert.Equal(t, "hello!", doc.Text().String())
@@ -231,7 +232,7 @@ func TestUndoRedo(t *testing.T) {
 }
 
 func TestChangeSelection(t *testing.T) {
-	e := editorWithText(t, "hello world")
+	e := testutil.EditorWithText(t, "hello world")
 	v, _ := e.FocusedView()
 	doc, _ := e.FocusedDocument()
 	doc.SetSelectionFor(

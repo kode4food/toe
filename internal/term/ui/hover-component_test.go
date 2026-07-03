@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -49,7 +50,7 @@ func TestHoverComponent(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.NotContains(t, out, "hover docs")
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 
 	t.Run("does not follow moved cursor", func(t *testing.T) {
@@ -101,8 +102,9 @@ func TestHoverComponent(t *testing.T) {
 		e := editorWithText(t, "Println")
 		e.SetMode(view.ModeNormal)
 		e.SetLanguageServerController(&completionController{
-			editor:    e,
-			hoverText: "# Println\n\n```go\nfunc Println(a ...any) (n int, err error)\n```\n",
+			editor: e,
+			hoverText: "# Println\n\n```go\n" +
+				"func Println(a ...any) (n int, err error)\n```\n",
 		})
 		km := command.NewKeymaps()
 		m := ui.New(e, km)

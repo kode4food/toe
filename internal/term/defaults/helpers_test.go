@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -23,46 +23,9 @@ func defaultsEnv(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	e.ResizeTree(80, 24)
 	_, _ = defaults.RegisterDefaults(ui.New(e, km), km)
 	if text != "" {
-		setText(t, e, text)
+		testutil.SetEditorText(t, e, text)
 	}
 	return e, km
-}
-
-func setText(t *testing.T, e *view.Editor, text string) {
-	t.Helper()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	rope := doc.Text()
-	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, 0, text),
-	})
-	assert.NoError(t, err)
-	tx := core.NewTransaction(rope).
-		WithChanges(cs).
-		WithSelection(core.PointSelection(0))
-	assert.NoError(t, e.Apply(tx))
-}
-
-func setCursor(t *testing.T, e *view.Editor, pos int) {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	doc.SetSelectionFor(v.ID(), core.PointSelection(pos))
-}
-
-func setSelection(
-	t *testing.T, e *view.Editor, ranges []core.Range, primary int,
-) {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	sel, err := core.NewSelection(ranges, primary)
-	assert.NoError(t, err)
-	doc.SetSelectionFor(v.ID(), sel)
 }
 
 func docText(t *testing.T, e *view.Editor) string {
@@ -72,20 +35,11 @@ func docText(t *testing.T, e *view.Editor) string {
 	return doc.Text().String()
 }
 
-func cursorPos(t *testing.T, e *view.Editor) int {
-	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	return doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
-}
-
 func cursorLine(t *testing.T, e *view.Editor) int {
 	t.Helper()
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
-	line, err := doc.Text().CharToLine(cursorPos(t, e))
+	line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
 	assert.NoError(t, err)
 	return line
 }
@@ -139,7 +93,7 @@ func envWithRegistry(t *testing.T, text string) (
 	e.ResizeTree(80, 24)
 	reg, _ := defaults.RegisterDefaults(ui.New(e, km), km)
 	if text != "" {
-		setText(t, e, text)
+		testutil.SetEditorText(t, e, text)
 	}
 	return e, km, reg
 }

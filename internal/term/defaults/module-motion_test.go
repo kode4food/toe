@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,50 +19,50 @@ func TestMotionGotoLine(t *testing.T) {
 
 	t.Run("goto line or file start without count", func(t *testing.T) {
 		e, km := defaultsEnv(t, "l0\nl1\nl2\n")
-		setCursor(t, e, 5)
+		testutil.SetCursor(t, e, 5)
 		runCmd(t, km, e, "goto_line_or_file_start")
-		assert.Equal(t, 0, cursorPos(t, e))
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 
 	t.Run("goto line or extend file start", func(t *testing.T) {
 		e, km := defaultsEnv(t, "l0\nl1\nl2\n")
-		setCursor(t, e, 5)
+		testutil.SetCursor(t, e, 5)
 		runCmd(t, km, e, "goto_line_or_extend_file_start")
-		assert.Equal(t, 0, cursorPos(t, e))
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 }
 
 func TestMotionFindChar(t *testing.T) {
 	t.Run("find next char lands on target", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		res := runCmd(t, km, e, "find_next_char")
 		assert.NotNil(t, res.Continuation)
 		res.Continuation(e, char('c'))
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 
 	t.Run("find till char stops before target", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		res := runCmd(t, km, e, "find_till_char")
 		res.Continuation(e, char('c'))
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 
 	t.Run("non-char key cancels find", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		res := runCmd(t, km, e, "find_next_char")
 		res.Continuation(e, special("esc"))
-		assert.Equal(t, 0, cursorPos(t, e))
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 }
 
 func TestMotionGotoFile(t *testing.T) {
 	t.Run("no path under cursor is handled", func(t *testing.T) {
 		e, km := defaultsEnv(t, "not a path")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
 	})
 
@@ -71,7 +72,7 @@ func TestMotionGotoFile(t *testing.T) {
 		assert.NoError(t, os.WriteFile(target, []byte("hi"), 0o644))
 
 		e, km := defaultsEnv(t, target)
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 
 		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
 	})
@@ -79,7 +80,7 @@ func TestMotionGotoFile(t *testing.T) {
 	t.Run("directory path reports open error", func(t *testing.T) {
 		dir := t.TempDir()
 		e, km := defaultsEnv(t, dir)
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 
 		assert.Nil(t, runCmd(t, km, e, "goto_file").Continuation)
 
@@ -90,16 +91,16 @@ func TestMotionGotoFile(t *testing.T) {
 func TestMotionParagraph(t *testing.T) {
 	t.Run("next paragraph moves cursor down", func(t *testing.T) {
 		e, km := defaultsEnv(t, "a\n\nb\n")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		runCmd(t, km, e, "goto_next_paragraph")
-		assert.Greater(t, cursorPos(t, e), 0)
+		assert.Greater(t, testutil.CursorPos(t, e), 0)
 	})
 
 	t.Run("prev paragraph runs from end", func(t *testing.T) {
 		e, km := defaultsEnv(t, "a\n\nb\n")
-		setCursor(t, e, 4)
+		testutil.SetCursor(t, e, 4)
 		runCmd(t, km, e, "goto_prev_paragraph")
-		assert.Less(t, cursorPos(t, e), 4)
+		assert.Less(t, testutil.CursorPos(t, e), 4)
 	})
 }
 

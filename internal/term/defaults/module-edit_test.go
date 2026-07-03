@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -47,7 +48,7 @@ func TestEditModeCommands(t *testing.T) {
 func TestEditOpenLine(t *testing.T) {
 	t.Run("open below adds line and enters insert", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		runCmd(t, km, e, "open_below")
 		assert.Contains(t, docText(t, e), "\n")
 		assert.Equal(t, view.ModeInsert, e.Mode())
@@ -55,7 +56,7 @@ func TestEditOpenLine(t *testing.T) {
 
 	t.Run("open above adds line and enters insert", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		runCmd(t, km, e, "open_above")
 		assert.Equal(t, "\nabc", docText(t, e))
 		assert.Equal(t, view.ModeInsert, e.Mode())
@@ -65,7 +66,7 @@ func TestEditOpenLine(t *testing.T) {
 func TestEditReplaceChar(t *testing.T) {
 	t.Run("continuation replaces char under cursor", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		res := runCmd(t, km, e, "replace")
 		assert.NotNil(t, res.Continuation)
 		res.Continuation(e, char('x'))
@@ -76,14 +77,14 @@ func TestEditReplaceChar(t *testing.T) {
 func TestEditTextOps(t *testing.T) {
 	t.Run("delete selection removes text", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "delete_selection")
 		assert.Equal(t, "def", docText(t, e))
 	})
 
 	t.Run("delete selection yanks to register", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "delete_selection")
 		got, ok := e.Registers().First('"')
 		assert.True(t, ok)
@@ -92,49 +93,49 @@ func TestEditTextOps(t *testing.T) {
 
 	t.Run("removes and enters insert", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcdef")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "change_selection")
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
 
 	t.Run("switch case toggles text", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "switch_case")
 		assert.Equal(t, "ABC", docText(t, e))
 	})
 
 	t.Run("switch to lowercase", func(t *testing.T) {
 		e, km := defaultsEnv(t, "ABC")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "switch_to_lowercase")
 		assert.Equal(t, "abc", docText(t, e))
 	})
 
 	t.Run("switch to uppercase", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "switch_to_uppercase")
 		assert.Equal(t, "ABC", docText(t, e))
 	})
 
 	t.Run("indent adds indentation", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "indent")
 		assert.Contains(t, docText(t, e), "\t")
 	})
 
 	t.Run("join selections combines lines", func(t *testing.T) {
 		e, km := defaultsEnv(t, "a\nb\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		runCmd(t, km, e, "join_selections")
 		assert.NotContains(t, docText(t, e), "\n\n")
 	})
 
 	t.Run("shrinks selection bounds, text unchanged", func(t *testing.T) {
 		e, km := defaultsEnv(t, "  abc  ")
-		setSelection(t, e, []core.Range{core.NewRange(0, 7)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 7)}, 0)
 		runCmd(t, km, e, "trim_selections")
 		// TrimSelections trims selection bounds, not the text
 		assert.Equal(t, "  abc  ", docText(t, e))
@@ -142,14 +143,14 @@ func TestEditTextOps(t *testing.T) {
 
 	t.Run("increment increases number", func(t *testing.T) {
 		e, km := defaultsEnv(t, "1")
-		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		runCmd(t, km, e, "increment")
 		assert.Equal(t, "2", docText(t, e))
 	})
 
 	t.Run("decrement decreases number", func(t *testing.T) {
 		e, km := defaultsEnv(t, "2")
-		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		runCmd(t, km, e, "decrement")
 		assert.Equal(t, "1", docText(t, e))
 	})

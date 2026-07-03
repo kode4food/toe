@@ -3,6 +3,7 @@ package defaults_test
 import (
 	"testing"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +18,7 @@ func TestViewScrollCommands(t *testing.T) {
 	} {
 		t.Run(name+" runs without error", func(t *testing.T) {
 			e, km := defaultsEnv(t, "l0\nl1\nl2\nl3\nl4\n")
-			setCursor(t, e, 5)
+			testutil.SetCursor(t, e, 5)
 			res := runCmd(t, km, e, name)
 			assert.Empty(t, res.Message)
 		})

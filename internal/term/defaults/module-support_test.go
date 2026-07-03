@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 func TestSupportQuit(t *testing.T) {
@@ -41,7 +42,7 @@ func TestSupportEchoInfo(t *testing.T) {
 
 	t.Run("character info describes cursor char", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
-		setCursor(t, e, 0)
+		testutil.SetCursor(t, e, 0)
 		assert.NotEmpty(t, runCmd(t, km, e, "character_info").Message)
 	})
 
@@ -74,7 +75,7 @@ func TestSupportSelectionOps(t *testing.T) {
 	t.Run("sort orders multiple selections", func(t *testing.T) {
 		// sort reorders the contents of multiple selections among themselves
 		e, km := defaultsEnv(t, "b\na\n")
-		setSelection(t, e,
+		testutil.SetSelection(t, e,
 			[]core.Range{core.NewRange(0, 1), core.NewRange(2, 3)}, 0)
 		assert.NotContains(t, runCmd(t, km, e, "sort").Message, "error")
 		assert.Equal(t, "a\nb\n", docText(t, e))
@@ -82,7 +83,7 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("reflow runs over a selection", func(t *testing.T) {
 		e, km := defaultsEnv(t, "one two three four five\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
 		assert.NotContains(t,
 			runCmdArgs(t, km, e, "reflow", "10").Message, "error")
 	})
@@ -91,7 +92,7 @@ func TestSupportSelectionOps(t *testing.T) {
 		e, km := defaultsEnv(t, "one two three four five\n")
 		width := 10
 		e.Options().TextWidth = &width
-		setSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
 		assert.Empty(t, runCmd(t, km, e, "reflow").Message)
 	})
 
@@ -102,7 +103,7 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("toggle comments runs", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 		assert.Empty(t, runCmd(t, km, e, "toggle_comments").Message)
 	})
 }

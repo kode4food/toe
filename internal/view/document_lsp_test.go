@@ -5,11 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
 func TestDocumentHighlights(t *testing.T) {
-	e := editorWithText(t, "hello world\n")
+	e := testutil.EditorWithText(t, "hello world\n")
 	v, ok := e.FocusedView()
 	assert.True(t, ok)
 	doc, ok := e.FocusedDocument()
@@ -33,7 +34,7 @@ func TestDocumentHighlights(t *testing.T) {
 }
 
 func TestDocumentHighlightsAll(t *testing.T) {
-	e := editorWithText(t, "hello world\n")
+	e := testutil.EditorWithText(t, "hello world\n")
 	v, ok := e.FocusedView()
 	assert.True(t, ok)
 	doc, ok := e.FocusedDocument()
@@ -51,14 +52,14 @@ func TestDocumentHighlightsAll(t *testing.T) {
 }
 
 func TestDocumentAccessedAt(t *testing.T) {
-	e := editorWithText(t, "hello\n")
+	e := testutil.EditorWithText(t, "hello\n")
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 	assert.NotZero(t, doc.AccessedAt())
 }
 
 func TestDocumentLinks(t *testing.T) {
-	e := editorWithText(t, "hello world\n")
+	e := testutil.EditorWithText(t, "hello world\n")
 	doc, ok := e.FocusedDocument()
 	assert.True(t, ok)
 

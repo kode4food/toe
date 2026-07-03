@@ -5,12 +5,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestCloseCurrentView(t *testing.T) {
 	t.Run("blocks modified view when others exist", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		v, _ := e.FocusedView()
 		// Create two additional splits so there are 3 views total
 		e.VSplit(v.DocID())
@@ -26,7 +27,7 @@ func TestCloseCurrentView(t *testing.T) {
 	})
 
 	t.Run("closes the only modified view", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		action.InsertMode(e)
 		action.InsertChar(e, 'x')
 
@@ -37,7 +38,7 @@ func TestCloseCurrentView(t *testing.T) {
 }
 
 func TestCloseOtherViews(t *testing.T) {
-	e := editorWithText(t, "abc")
+	e := testutil.EditorWithText(t, "abc")
 	v, _ := e.FocusedView()
 	// Create two additional splits
 	e.VSplit(v.DocID())

@@ -6,12 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 func TestSelectionSurround(t *testing.T) {
 	t.Run("add wraps selection", func(t *testing.T) {
 		e, km := defaultsEnv(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
 		res := runCmd(t, km, e, "surround_add")
 		assert.NotNil(t, res.Continuation)
 		res.Continuation(e, char('('))
@@ -23,7 +24,7 @@ func TestSelectionSurround(t *testing.T) {
 
 	t.Run("delete removes pair", func(t *testing.T) {
 		e, km := defaultsEnv(t, "(abc)")
-		setCursor(t, e, 2)
+		testutil.SetCursor(t, e, 2)
 		res := runCmd(t, km, e, "surround_delete")
 		res.Continuation(e, char('('))
 		assert.Equal(t, "abc", docText(t, e))
@@ -31,7 +32,7 @@ func TestSelectionSurround(t *testing.T) {
 
 	t.Run("replace swaps pair", func(t *testing.T) {
 		e, km := defaultsEnv(t, "(abc)")
-		setCursor(t, e, 2)
+		testutil.SetCursor(t, e, 2)
 		res := runCmd(t, km, e, "surround_replace")
 		next := res.Continuation(e, char('('))
 		assert.NotNil(t, next)
@@ -43,7 +44,7 @@ func TestSelectionSurround(t *testing.T) {
 func TestSelectionTextObject(t *testing.T) {
 	t.Run("inside selects within pair", func(t *testing.T) {
 		e, km := defaultsEnv(t, "(abc)")
-		setCursor(t, e, 2)
+		testutil.SetCursor(t, e, 2)
 		res := runCmd(t, km, e, "select_textobject_inside")
 		assert.NotNil(t, res.Continuation)
 		assert.Nil(t, res.Continuation(e, char('(')))
@@ -51,7 +52,7 @@ func TestSelectionTextObject(t *testing.T) {
 
 	t.Run("around selects with pair", func(t *testing.T) {
 		e, km := defaultsEnv(t, "(abc)")
-		setCursor(t, e, 2)
+		testutil.SetCursor(t, e, 2)
 		res := runCmd(t, km, e, "select_textobject_around")
 		assert.Nil(t, res.Continuation(e, char('(')))
 	})

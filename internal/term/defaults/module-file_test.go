@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/testutil"
 )
 
 func TestFileWrite(t *testing.T) {
@@ -33,7 +34,7 @@ func TestFileWrite(t *testing.T) {
 		path := filepath.Join(e.Cwd(), "u.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("orig"), 0o644))
 		runCmdArgs(t, km, e, "open", path)
-		setText(t, e, "X")
+		testutil.SetEditorText(t, e, "X")
 		res := runCmd(t, km, e, "update")
 		assert.Contains(t, res.Message, "written")
 	})
@@ -92,7 +93,7 @@ func TestFileMoveReadReload(t *testing.T) {
 		path := filepath.Join(e.Cwd(), "rl.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("DISK"), 0o644))
 		runCmdArgs(t, km, e, "open", path)
-		setText(t, e, "changed")
+		testutil.SetEditorText(t, e, "changed")
 		res := runCmd(t, km, e, "reload")
 		assert.Contains(t, res.Message, "reloaded")
 		assert.Equal(t, "DISK", docText(t, e))

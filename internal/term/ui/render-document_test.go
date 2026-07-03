@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 
@@ -790,7 +791,9 @@ func TestBaseStyleAtCases(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
-		e.Options().Whitespace.Render = view.WhitespaceRender{Default: new(view.WhitespaceRenderAll)}
+		e.Options().Whitespace.Render = view.WhitespaceRender{
+			Default: new(view.WhitespaceRenderAll),
+		}
 		e.Options().Theme = "mocha"
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -845,7 +848,9 @@ func TestIndentGuideRender(t *testing.T) {
 func TestWhitespaceRender(t *testing.T) {
 	t.Run("renders visible whitespace chars", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.Options().Whitespace.Render = view.WhitespaceRender{Default: new(view.WhitespaceRenderAll)}
+		e.Options().Whitespace.Render = view.WhitespaceRender{
+			Default: new(view.WhitespaceRenderAll),
+		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -953,7 +958,7 @@ func TestRelativeLineNumberRender(t *testing.T) {
 	t.Run("renders distance above cursor", func(t *testing.T) {
 		e := editorWithText(t, "aa\nbb\ncc\n")
 		e.Options().LineNumber = view.LineNumberRelative
-		setSelection(t, e, []core.Range{core.PointRange(6)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(6)}, 0)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 10)
 
 		out := stripANSI(m.View().Content)
@@ -1016,7 +1021,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
-		setSelection(t, e,
+		testutil.SetSelection(t, e,
 			[]core.Range{core.PointRange(24), core.PointRange(28)},
 			0,
 		)

@@ -5,11 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
 func TestDocumentInlayHints(t *testing.T) {
-	e := editorWithText(t, "fn main() {}\n")
+	e := testutil.EditorWithText(t, "fn main() {}\n")
 	v, ok := e.FocusedView()
 	assert.True(t, ok)
 	doc, ok := e.FocusedDocument()
@@ -37,7 +38,7 @@ func TestDocumentInlayHints(t *testing.T) {
 }
 
 func TestDocumentInlayHintsAll(t *testing.T) {
-	e := editorWithText(t, "fn main() {}\n")
+	e := testutil.EditorWithText(t, "fn main() {}\n")
 	v, ok := e.FocusedView()
 	assert.True(t, ok)
 	doc, ok := e.FocusedDocument()

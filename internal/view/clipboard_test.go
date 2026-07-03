@@ -6,11 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestYank(t *testing.T) {
-	e := editorWithText(t, "hello world")
+	e := testutil.EditorWithText(t, "hello world")
 	v, _ := e.FocusedView()
 	doc, _ := e.FocusedDocument()
 	doc.SetSelectionFor(
@@ -23,7 +24,7 @@ func TestYank(t *testing.T) {
 }
 
 func TestPasteAfter(t *testing.T) {
-	e := editorWithText(t, "ab")
+	e := testutil.EditorWithText(t, "ab")
 	v, _ := e.FocusedView()
 	doc, _ := e.FocusedDocument()
 	doc.SetSelectionFor(
@@ -39,7 +40,7 @@ func TestPasteAfter(t *testing.T) {
 }
 
 func TestPasteBefore(t *testing.T) {
-	e := editorWithText(t, "ab")
+	e := testutil.EditorWithText(t, "ab")
 	v, _ := e.FocusedView()
 	doc, _ := e.FocusedDocument()
 	doc.SetSelectionFor(
@@ -54,7 +55,7 @@ func TestPasteBefore(t *testing.T) {
 }
 
 func TestPasteAfterLinewise(t *testing.T) {
-	e := editorWithText(t, "foo\nbar")
+	e := testutil.EditorWithText(t, "foo\nbar")
 	v, _ := e.FocusedView()
 	doc, _ := e.FocusedDocument()
 	e.Registers().Write('"', []string{"baz\n"})

@@ -6,47 +6,48 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestEdit(t *testing.T) {
 	t.Run("insert at cursor", func(t *testing.T) {
-		e := editorWithText(t, "hllo")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "hllo")
+		testutil.SetCursor(t, e, 1)
 
 		action.InsertChar(e, 'e')
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 
 	t.Run("newline honors auto-pair", func(t *testing.T) {
-		e := editorWithText(t, "()")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "()")
+		testutil.SetCursor(t, e, 1)
 
 		action.InsertNewline(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "(\n\t\n)", doc.Text().String())
-		assert.Equal(t, 3, cursorPos(t, e))
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
 
 	t.Run("delete backward dedents", func(t *testing.T) {
-		e := editorWithText(t, "    x")
-		setCursor(t, e, 4)
+		e := testutil.EditorWithText(t, "    x")
+		testutil.SetCursor(t, e, 4)
 
 		action.DeleteCharBackward(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "x", doc.Text().String())
-		assert.Equal(t, 0, cursorPos(t, e))
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 
 	t.Run("change selection enters insert", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
 
 		action.ChangeSelection(e)
 
@@ -78,8 +79,8 @@ func TestEditActionsNoView(t *testing.T) {
 
 func TestSelectAll(t *testing.T) {
 	t.Run("selects entire document", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.SelectAll(e)
 
@@ -91,7 +92,7 @@ func TestSelectAll(t *testing.T) {
 	})
 
 	t.Run("empty document stays at zero", func(t *testing.T) {
-		e := editorWithText(t, "")
+		e := testutil.EditorWithText(t, "")
 
 		action.SelectAll(e)
 
@@ -105,8 +106,8 @@ func TestSelectAll(t *testing.T) {
 
 func TestCollapseSelection(t *testing.T) {
 	t.Run("range collapses to cursor", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
 
 		action.CollapseSelection(e)
 
@@ -118,8 +119,8 @@ func TestCollapseSelection(t *testing.T) {
 	})
 
 	t.Run("multiple selections each collapse", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(t, e, []core.Range{
 			core.NewRange(0, 2),
 			core.NewRange(2, 4),
 		}, 0)
@@ -137,8 +138,8 @@ func TestCollapseSelection(t *testing.T) {
 
 func TestFlipSelections(t *testing.T) {
 	t.Run("forward range becomes backward", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
 
 		action.FlipSelections(e)
 
@@ -152,8 +153,8 @@ func TestFlipSelections(t *testing.T) {
 
 func TestKeepPrimarySelection(t *testing.T) {
 	t.Run("discards non-primary ranges", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(t, e, []core.Range{
 			core.PointRange(0),
 			core.PointRange(2),
 			core.PointRange(3),
@@ -171,8 +172,8 @@ func TestKeepPrimarySelection(t *testing.T) {
 
 func TestExtendLineBelow(t *testing.T) {
 	t.Run("extends cursor to full line", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "ab\ncd")
+		testutil.SetCursor(t, e, 0)
 
 		action.ExtendLineBelow(e)
 
@@ -184,8 +185,8 @@ func TestExtendLineBelow(t *testing.T) {
 	})
 
 	t.Run("extends again if already full line", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		action.ExtendLineBelow(e)
 
@@ -199,8 +200,8 @@ func TestExtendLineBelow(t *testing.T) {
 
 func TestExtendLineBelowLastLine(t *testing.T) {
 	t.Run("selects to end on last line", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd")
-		setCursor(t, e, 3)
+		e := testutil.EditorWithText(t, "ab\ncd")
+		testutil.SetCursor(t, e, 3)
 
 		action.ExtendLineBelow(e)
 
@@ -214,8 +215,8 @@ func TestExtendLineBelowLastLine(t *testing.T) {
 
 func TestSelectLineBelow(t *testing.T) {
 	t.Run("selects current line forward", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetCursor(t, e, 0)
 
 		action.SelectLineBelow(e)
 
@@ -227,8 +228,8 @@ func TestSelectLineBelow(t *testing.T) {
 	})
 
 	t.Run("backward sel extends downward", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setSelection(t, e, []core.Range{core.NewRange(5, 3)}, 0)
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(5, 3)}, 0)
 
 		action.SelectLineBelow(e)
 
@@ -239,10 +240,10 @@ func TestSelectLineBelow(t *testing.T) {
 	})
 
 	t.Run("extends snapped forward selection", func(t *testing.T) {
-		// Start with a line-aligned forward selection (0→3 covers "ab\n"), then
-		// extend again so anchorLine < headLine is reached with cnt > 0
-		e := editorWithText(t, "ab\ncd\nef")
-		setSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		// Start with a line-aligned forward selection (0→3 covers "ab\n"),
+		// then extend again so anchorLine < headLine is reached with cnt > 0
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		action.SelectLineBelow(e)
 
@@ -256,8 +257,8 @@ func TestSelectLineBelow(t *testing.T) {
 
 func TestSelectLineAbove(t *testing.T) {
 	t.Run("includes previous line", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setCursor(t, e, 6)
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetCursor(t, e, 6)
 
 		action.SelectLineAbove(e)
 
@@ -269,8 +270,8 @@ func TestSelectLineAbove(t *testing.T) {
 	})
 
 	t.Run("backward sel extends upward", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setSelection(t, e, []core.Range{core.NewRange(6, 3)}, 0)
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(6, 3)}, 0)
 
 		action.SelectLineAbove(e)
 
@@ -283,8 +284,8 @@ func TestSelectLineAbove(t *testing.T) {
 
 func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 	t.Run("keeps point ranges", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.PointRange(1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.PointRange(1)}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -297,8 +298,8 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 	})
 
 	t.Run("splits final line without newline", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "ab\ncd")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -311,8 +312,8 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 	})
 
 	t.Run("invalid range leaves selection", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -327,8 +328,8 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 
 func TestDeleteSelection(t *testing.T) {
 	t.Run("deletes selected text", func(t *testing.T) {
-		e := editorWithText(t, "hello world")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello world")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.DeleteSelection(e)
 
@@ -338,19 +339,19 @@ func TestDeleteSelection(t *testing.T) {
 	})
 
 	t.Run("cursor lands at deletion point", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
 
 		action.DeleteSelection(e)
 
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 }
 
 func TestDeleteCharForward(t *testing.T) {
 	t.Run("deletes char under cursor", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 1)
 
 		action.DeleteCharForward(e)
 
@@ -359,8 +360,8 @@ func TestDeleteCharForward(t *testing.T) {
 	})
 
 	t.Run("noop at end of document", func(t *testing.T) {
-		e := editorWithText(t, "a")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "a")
+		testutil.SetCursor(t, e, 1)
 
 		action.DeleteCharForward(e)
 
@@ -371,8 +372,8 @@ func TestDeleteCharForward(t *testing.T) {
 
 func TestYank(t *testing.T) {
 	t.Run("copies selection to default register", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.Yank(e)
 
@@ -381,8 +382,8 @@ func TestYank(t *testing.T) {
 	})
 
 	t.Run("yank multiple ranges", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e, []core.Range{
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(t, e, []core.Range{
 			core.NewRange(0, 2),
 			core.NewRange(2, 4),
 		}, 0)
@@ -399,8 +400,8 @@ func TestYank(t *testing.T) {
 	})
 
 	t.Run("invalid range is skipped", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
 
 		action.Yank(e)
 
@@ -410,8 +411,8 @@ func TestYank(t *testing.T) {
 
 func TestPasteAfter(t *testing.T) {
 	t.Run("pastes at head of selection", func(t *testing.T) {
-		e := editorWithText(t, "xyz")
-		setSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		e := testutil.EditorWithText(t, "xyz")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		e.Registers().Write('"', []string{"b"})
 
 		action.PasteAfter(e)
@@ -422,7 +423,7 @@ func TestPasteAfter(t *testing.T) {
 	})
 
 	t.Run("empty register is noop", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 
 		action.PasteAfter(e)
 
@@ -431,8 +432,8 @@ func TestPasteAfter(t *testing.T) {
 	})
 
 	t.Run("linewise paste after last line", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		setCursor(t, e, 4)
+		e := testutil.EditorWithText(t, "abc\ndef")
+		testutil.SetCursor(t, e, 4)
 		e.Registers().Write('"', []string{"ghi\n"})
 
 		action.PasteAfter(e)
@@ -442,8 +443,8 @@ func TestPasteAfter(t *testing.T) {
 	})
 
 	t.Run("multiple cursors reuse last value", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		setSelection(t, e,
+		e := testutil.EditorWithText(t, "abcd")
+		testutil.SetSelection(t, e,
 			[]core.Range{core.PointRange(1), core.PointRange(3)},
 			0,
 		)
@@ -456,8 +457,8 @@ func TestPasteAfter(t *testing.T) {
 	})
 
 	t.Run("invalid position leaves text", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
 		e.Registers().Write('"', []string{"x"})
 
 		action.PasteAfter(e)
@@ -476,8 +477,8 @@ func TestPasteAfter(t *testing.T) {
 
 func TestPasteBefore(t *testing.T) {
 	t.Run("pastes before cursor position", func(t *testing.T) {
-		e := editorWithText(t, "xz")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "xz")
+		testutil.SetCursor(t, e, 1)
 		e.Registers().Write('"', []string{"y"})
 
 		action.PasteBefore(e)
@@ -488,8 +489,8 @@ func TestPasteBefore(t *testing.T) {
 	})
 
 	t.Run("linewise invalid range is skipped", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
 		e.Registers().Write('"', []string{"x\n"})
 
 		action.PasteBefore(e)
@@ -508,8 +509,8 @@ func TestPasteBefore(t *testing.T) {
 
 func TestSplitSelectionOnNewline(t *testing.T) {
 	t.Run("splits multiline selection into per-line", func(t *testing.T) {
-		e := editorWithText(t, "ab\ncd\nef")
-		setSelection(t, e, []core.Range{core.NewRange(0, 8)}, 0)
+		e := testutil.EditorWithText(t, "ab\ncd\nef")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 8)}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -520,8 +521,8 @@ func TestSplitSelectionOnNewline(t *testing.T) {
 	})
 
 	t.Run("point selection is kept", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 1)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -534,7 +535,7 @@ func TestSplitSelectionOnNewline(t *testing.T) {
 
 func TestNormalMode(t *testing.T) {
 	t.Run("exits insert mode", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		e.SetMode(view.ModeInsert)
 
 		action.NormalMode(e)
@@ -543,7 +544,7 @@ func TestNormalMode(t *testing.T) {
 	})
 
 	t.Run("noop when already normal", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 
 		action.NormalMode(e)
 
@@ -571,20 +572,20 @@ func TestNormalMode(t *testing.T) {
 
 func TestInsertMode(t *testing.T) {
 	t.Run("places cursor at selection start", func(t *testing.T) {
-		e := editorWithText(t, "abcde")
-		setSelection(t, e, []core.Range{core.NewRange(2, 4)}, 0)
+		e := testutil.EditorWithText(t, "abcde")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(2, 4)}, 0)
 
 		action.InsertMode(e)
 
 		assert.Equal(t, view.ModeInsert, e.Mode())
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 }
 
 func TestAppendMode(t *testing.T) {
 	t.Run("places cursor past selection end", func(t *testing.T) {
-		e := editorWithText(t, "abcde")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "abcde")
+		testutil.SetCursor(t, e, 1)
 
 		action.AppendMode(e)
 
@@ -594,8 +595,8 @@ func TestAppendMode(t *testing.T) {
 
 func TestSelectMode(t *testing.T) {
 	t.Run("enters select mode", func(t *testing.T) {
-		e := editorWithText(t, "abcde")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abcde")
+		testutil.SetCursor(t, e, 0)
 
 		action.SelectMode(e)
 
@@ -603,8 +604,8 @@ func TestSelectMode(t *testing.T) {
 	})
 
 	t.Run("widens empty end-of-doc selection", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 3)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 3)
 
 		action.SelectMode(e)
 
@@ -617,20 +618,20 @@ func TestSelectMode(t *testing.T) {
 
 func TestInsertAtLineStart(t *testing.T) {
 	t.Run("moves to first non-ws and enters insert", func(t *testing.T) {
-		e := editorWithText(t, "  hello")
-		setCursor(t, e, 6)
+		e := testutil.EditorWithText(t, "  hello")
+		testutil.SetCursor(t, e, 6)
 
 		action.InsertAtLineStart(e)
 
 		assert.Equal(t, view.ModeInsert, e.Mode())
-		assert.Equal(t, 2, cursorPos(t, e))
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 }
 
 func TestAppendToLine(t *testing.T) {
 	t.Run("moves to end of line and enters insert", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
 
 		action.AppendToLine(e)
 
@@ -640,8 +641,8 @@ func TestAppendToLine(t *testing.T) {
 
 func TestDeleteSelectionNoYank(t *testing.T) {
 	t.Run("deletes without affecting register", func(t *testing.T) {
-		e := editorWithText(t, "hello world")
-		setSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		e := testutil.EditorWithText(t, "hello world")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 		e.Registers().Write('"', []string{"saved"})
 
 		action.DeleteSelectionNoYank(e)
@@ -655,9 +656,9 @@ func TestDeleteSelectionNoYank(t *testing.T) {
 
 func TestChangeSelectionLinewise(t *testing.T) {
 	t.Run("linewise change opens blank line above", func(t *testing.T) {
-		e := editorWithText(t, "hello\nworld")
+		e := testutil.EditorWithText(t, "hello\nworld")
 		// Select full first line including newline (linewise)
-		setSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
 
 		action.ChangeSelection(e)
 
@@ -667,8 +668,8 @@ func TestChangeSelectionLinewise(t *testing.T) {
 
 func TestLinewisePaste(t *testing.T) {
 	t.Run("PasteAfter linewise pastes below", func(t *testing.T) {
-		e := editorWithText(t, "abc\ndef")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc\ndef")
+		testutil.SetCursor(t, e, 0)
 		// Yank full first line (with newline = linewise)
 		e.Registers().Write('"', []string{"abc\n"})
 
@@ -680,8 +681,8 @@ func TestLinewisePaste(t *testing.T) {
 	})
 
 	t.Run("PasteBefore linewise pastes above", func(t *testing.T) {
-		e := editorWithText(t, "def")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "def")
+		testutil.SetCursor(t, e, 0)
 		e.Registers().Write('"', []string{"abc\n"})
 
 		action.PasteBefore(e)
@@ -694,7 +695,7 @@ func TestLinewisePaste(t *testing.T) {
 
 func TestExitSelectMode(t *testing.T) {
 	t.Run("exits select mode to normal", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 		e.SetMode(view.ModeSelect)
 
 		action.ExitSelectMode(e)
@@ -703,7 +704,7 @@ func TestExitSelectMode(t *testing.T) {
 	})
 
 	t.Run("noop when not in select mode", func(t *testing.T) {
-		e := editorWithText(t, "abc")
+		e := testutil.EditorWithText(t, "abc")
 
 		action.ExitSelectMode(e)
 
@@ -713,8 +714,8 @@ func TestExitSelectMode(t *testing.T) {
 
 func TestChangeSelectionNoYank(t *testing.T) {
 	t.Run("skips register on insert", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 2)}, 0)
 		e.Registers().Write('"', []string{"safe"})
 
 		action.ChangeSelectionNoYank(e)
@@ -728,25 +729,25 @@ func TestChangeSelectionNoYank(t *testing.T) {
 
 func TestNormalModeRestoreCursor(t *testing.T) {
 	t.Run("append normal moves cursor back", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 0)
 
 		action.AppendMode(e)
-		posInsert := cursorPos(t, e)
+		posInsert := testutil.CursorPos(t, e)
 		action.NormalMode(e)
 
 		assert.Equal(t, view.ModeNormal, e.Mode())
-		posNormal := cursorPos(t, e)
+		posNormal := testutil.CursorPos(t, e)
 		assert.True(t, posNormal <= posInsert)
 	})
 
 	t.Run("normal strips blank indent", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 5)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 5)
 		action.InsertMode(e)
 		action.InsertNewline(e)
 		action.InsertChar(e, '\t')
-		setCursor(t, e, cursorPos(t, e))
+		testutil.SetCursor(t, e, testutil.CursorPos(t, e))
 
 		action.NormalMode(e)
 
@@ -760,9 +761,10 @@ func TestNormalModeRestoreCursor(t *testing.T) {
 func TestTryRestoreIndent(t *testing.T) {
 	t.Run("normal clears whitespace line", func(t *testing.T) {
 		// "a\n    \nb": a=0, \n=1, ' '=2..5, \n=6, b=7
-		// lineEnd for line 1 = lineStart(2) + LineEndCharIndex("    \n") = 2+4=6
-		e := editorWithText(t, "a\n    \nb")
-		setCursor(t, e, 6)
+		// lineEnd for line 1 = lineStart(2) +
+		// LineEndCharIndex("    \n") = 2+4=6
+		e := testutil.EditorWithText(t, "a\n    \nb")
+		testutil.SetCursor(t, e, 6)
 		e.SetMode(view.ModeInsert)
 
 		action.NormalMode(e)
@@ -775,8 +777,8 @@ func TestTryRestoreIndent(t *testing.T) {
 	t.Run("non-blank line is not cleared", func(t *testing.T) {
 		// "a\n  x\nb": a=0,\n=1,' '=2,' '=3,x=4,\n=5,b=6
 		// lineEnd for line 1 = 2 + LineEndCharIndex("  x\n") = 2+3=5
-		e := editorWithText(t, "a\n  x\nb")
-		setCursor(t, e, 5)
+		e := testutil.EditorWithText(t, "a\n  x\nb")
+		testutil.SetCursor(t, e, 5)
 		e.SetMode(view.ModeInsert)
 
 		action.NormalMode(e)
@@ -788,8 +790,8 @@ func TestTryRestoreIndent(t *testing.T) {
 
 func TestDeleteCharBackwardAtLineStart(t *testing.T) {
 	t.Run("at start of document is noop", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.DeleteCharBackward(e)
@@ -799,22 +801,22 @@ func TestDeleteCharBackwardAtLineStart(t *testing.T) {
 	})
 
 	t.Run("deletes single grapheme backward", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 2)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 2)
 		e.SetMode(view.ModeInsert)
 
 		action.DeleteCharBackward(e)
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "ac", doc.Text().String())
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 }
 
 func TestInsertNewlineContinuedComment(t *testing.T) {
 	t.Run("bare newline whitespace line", func(t *testing.T) {
-		e := editorWithText(t, "   ")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "   ")
+		testutil.SetCursor(t, e, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -825,8 +827,8 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 	})
 
 	t.Run("newline between brackets indents", func(t *testing.T) {
-		e := editorWithText(t, "()")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "()")
+		testutil.SetCursor(t, e, 1)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -842,8 +844,8 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 	})
 
 	t.Run("trims trailing whitespace", func(t *testing.T) {
-		e := editorWithText(t, "abc   def")
-		setCursor(t, e, 6)
+		e := testutil.EditorWithText(t, "abc   def")
+		testutil.SetCursor(t, e, 6)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -853,8 +855,8 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 	})
 
 	t.Run("duplicate cursors share insertion", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e,
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e,
 			[]core.Range{core.PointRange(1), core.PointRange(1)},
 			0,
 		)
@@ -867,8 +869,8 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 	})
 
 	t.Run("negative range inserts at top", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -880,8 +882,8 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 func TestAddNewlineImplNoView(t *testing.T) {
 	t.Run("add newline above empty text", func(t *testing.T) {
-		e := editorWithText(t, "")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "")
+		testutil.SetCursor(t, e, 0)
 
 		assert.NotPanics(t, func() { action.AddNewlineAbove(e) })
 	})
@@ -901,8 +903,8 @@ func TestAddNewlineImplNoView(t *testing.T) {
 
 func TestAddNewlineEdges(t *testing.T) {
 	t.Run("invalid range leaves text", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
 
 		action.AddNewlineAbove(e)
 
@@ -911,8 +913,8 @@ func TestAddNewlineEdges(t *testing.T) {
 	})
 
 	t.Run("duplicate target inserts once", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e,
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e,
 			[]core.Range{core.PointRange(0), core.PointRange(1)},
 			0,
 		)
@@ -924,8 +926,8 @@ func TestAddNewlineEdges(t *testing.T) {
 	})
 
 	t.Run("below missing next line leaves text", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetCursor(t, e, 0)
 
 		action.AddNewlineBelow(e)
 
@@ -936,7 +938,7 @@ func TestAddNewlineEdges(t *testing.T) {
 
 func TestAutoPairsDisabled(t *testing.T) {
 	t.Run("auto-pairs disabled skips pair hook", func(t *testing.T) {
-		e := editorWithText(t, "")
+		e := testutil.EditorWithText(t, "")
 		e.Options().HasAutoPairs = false
 		e.SetMode(view.ModeInsert)
 
@@ -949,8 +951,8 @@ func TestAutoPairsDisabled(t *testing.T) {
 
 func TestInsertNewlineDuplicateCursors(t *testing.T) {
 	t.Run("duplicate cursors insert newline once", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{
 			core.PointRange(1),
 			core.PointRange(1),
 		}, 0)
@@ -965,8 +967,8 @@ func TestInsertNewlineDuplicateCursors(t *testing.T) {
 
 func TestCountOrOne(t *testing.T) {
 	t.Run("no count uses 1", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc")
-		setCursor(t, e, 2)
+		e := testutil.EditorWithText(t, "a\nb\nc")
+		testutil.SetCursor(t, e, 2)
 		e.SetCount(0)
 
 		action.AddNewlineAbove(e)
@@ -976,8 +978,8 @@ func TestCountOrOne(t *testing.T) {
 	})
 
 	t.Run("count=2 inserts two newlines", func(t *testing.T) {
-		e := editorWithText(t, "a\nb")
-		setCursor(t, e, 2)
+		e := testutil.EditorWithText(t, "a\nb")
+		testutil.SetCursor(t, e, 2)
 		e.SetCount(2)
 
 		action.AddNewlineAbove(e)
@@ -989,8 +991,8 @@ func TestCountOrOne(t *testing.T) {
 
 func TestInsertCharDuplicate(t *testing.T) {
 	t.Run("same-position cursors insert once", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{
 			core.PointRange(0),
 			core.PointRange(0),
 		}, 0)
@@ -1004,9 +1006,9 @@ func TestInsertCharDuplicate(t *testing.T) {
 
 func TestDeleteCharBackwardAutoPair(t *testing.T) {
 	t.Run("deletes auto-pair bracket", func(t *testing.T) {
-		e := editorWithText(t, "()")
+		e := testutil.EditorWithText(t, "()")
 		e.SetMode(view.ModeInsert)
-		setCursor(t, e, 1)
+		testutil.SetCursor(t, e, 1)
 
 		action.DeleteCharBackward(e)
 
@@ -1017,19 +1019,19 @@ func TestDeleteCharBackwardAutoPair(t *testing.T) {
 
 func TestInsertCharAutoPair(t *testing.T) {
 	t.Run("inserting open bracket creates auto-pair", func(t *testing.T) {
-		e := editorWithText(t, "")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "")
+		testutil.SetCursor(t, e, 0)
 
 		action.InsertChar(e, '(')
 
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "()", doc.Text().String())
-		assert.Equal(t, 1, cursorPos(t, e))
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
 
 	t.Run("inserting close bracket moves past it", func(t *testing.T) {
-		e := editorWithText(t, "()")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "()")
+		testutil.SetCursor(t, e, 1)
 
 		action.InsertChar(e, ')')
 
@@ -1040,8 +1042,8 @@ func TestInsertCharAutoPair(t *testing.T) {
 
 func TestDeleteCharForwardDuplicate(t *testing.T) {
 	t.Run("same-position cursors delete once", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		setSelection(t, e, []core.Range{
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{
 			core.PointRange(0),
 			core.PointRange(0),
 		}, 0)
@@ -1057,8 +1059,8 @@ func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 	t.Run("trims trailing whitespace", func(t *testing.T) {
 		// "hello  " — cursor at 7 (pos after 'o'), chars 5,6 are spaces
 		// firstTrailingWS=5, pos=7 → 5 < 7 hits the elif branch
-		e := editorWithText(t, "hello  ")
-		setCursor(t, e, 7)
+		e := testutil.EditorWithText(t, "hello  ")
+		testutil.SetCursor(t, e, 7)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1070,8 +1072,8 @@ func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 	})
 
 	t.Run("whitespace line gets bare newline", func(t *testing.T) {
-		e := editorWithText(t, "   ")
-		setCursor(t, e, 0)
+		e := testutil.EditorWithText(t, "   ")
+		testutil.SetCursor(t, e, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1084,8 +1086,8 @@ func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 
 func TestDeleteCharBackwardDedent(t *testing.T) {
 	t.Run("dedents leading tab", func(t *testing.T) {
-		e := editorWithText(t, "\thello")
-		setCursor(t, e, 1)
+		e := testutil.EditorWithText(t, "\thello")
+		testutil.SetCursor(t, e, 1)
 		e.SetMode(view.ModeInsert)
 
 		action.DeleteCharBackward(e)
@@ -1097,9 +1099,9 @@ func TestDeleteCharBackwardDedent(t *testing.T) {
 
 func TestChangeSelectionLinewiseTrue(t *testing.T) {
 	t.Run("linewise inserts above", func(t *testing.T) {
-		e := editorWithText(t, "hello\nworld\n")
+		e := testutil.EditorWithText(t, "hello\nworld\n")
 		// Linewise: covers the full first line including newline
-		setSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
 
 		action.ChangeSelection(e)
 
@@ -1109,8 +1111,8 @@ func TestChangeSelectionLinewiseTrue(t *testing.T) {
 
 func TestInsertNewlineIndented(t *testing.T) {
 	t.Run("preserves leading indent", func(t *testing.T) {
-		e := editorWithText(t, "  hello")
-		setCursor(t, e, 7)
+		e := testutil.EditorWithText(t, "  hello")
+		testutil.SetCursor(t, e, 7)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1120,8 +1122,8 @@ func TestInsertNewlineIndented(t *testing.T) {
 	})
 
 	t.Run("no comment continuation when disabled", func(t *testing.T) {
-		e := editorWithText(t, "hello")
-		setCursor(t, e, 5)
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 5)
 		e.Options().ContinueComments = false
 		e.SetMode(view.ModeInsert)
 
@@ -1134,8 +1136,8 @@ func TestInsertNewlineIndented(t *testing.T) {
 	t.Run("continues comment token on newline", func(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
-		e := editorWithText(t, "// hello")
-		setCursor(t, e, 8)
+		e := testutil.EditorWithText(t, "// hello")
+		testutil.SetCursor(t, e, 8)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1147,8 +1149,8 @@ func TestInsertNewlineIndented(t *testing.T) {
 
 func TestChangeSelectionNoYankLinewise(t *testing.T) {
 	t.Run("linewise opens line above", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\n")
-		setSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
+		e := testutil.EditorWithText(t, "a\nb\n")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
 
 		action.ChangeSelectionNoYank(e)
 

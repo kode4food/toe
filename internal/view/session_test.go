@@ -386,6 +386,65 @@ document = 1
 		assert.InDelta(t, 30, views[0].Area().Width, 1)
 	})
 
+	t.Run("restores registers", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "file.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+		e.Registers().Write('"', []string{"hello", "world"})
+		e.Registers().Write('a', []string{"foo"})
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		assert.Equal(t, []string{"hello", "world"}, next.Registers().Read('"'))
+		assert.Equal(t, []string{"foo"}, next.Registers().Read('a'))
+		assert.Nil(t, next.Registers().Read('z'))
+	})
+
+	t.Run("restores jump list", func(t *testing.T) {
+		dir := t.TempDir()
+		aPath := filepath.Join(dir, "a.go")
+		bPath := filepath.Join(dir, "b.go")
+		assert.NoError(t, os.WriteFile(aPath, []byte("package main\n"), 0o644))
+		assert.NoError(t, os.WriteFile(bPath, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		va, err := e.OpenFile(aPath)
+		assert.NoError(t, err)
+		docA, _ := e.Document(va.DocID())
+		docB, err := e.SwitchOrOpenDoc(bPath)
+		assert.NoError(t, err)
+
+		va.PushJump(docA.ID(), 0, core.PointSelection(0))
+		va.PushJump(docB.ID(), 5, core.PointSelection(5))
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		views := next.AllViews()
+		assert.Len(t, views, 1)
+		jumps := views[0].Jumps()
+		assert.Len(t, jumps, 2)
+		assert.Equal(t, 0, jumps[0].Anchor)
+		assert.Equal(t, 5, jumps[1].Anchor)
+	})
+
 	t.Run("split child invalid", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

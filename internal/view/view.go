@@ -234,6 +234,17 @@ func (j *JumpList) Entries() []JumpEntry {
 	return append([]JumpEntry(nil), j.items...)
 }
 
+// Head returns the current head index in the jump list
+func (j *JumpList) Head() int {
+	return j.head
+}
+
+// Restore replaces the jump list contents and head position
+func (j *JumpList) Restore(items []JumpEntry, head int) {
+	j.items = items
+	j.head = head
+}
+
 // Push adds a new jump selection, discarding forward history
 func (j *JumpList) Push(docID DocumentId, anchor int, sel core.Selection) {
 	j.push(JumpEntry{

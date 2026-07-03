@@ -16,6 +16,7 @@ type (
 	editorSession struct {
 		Version   int               `toml:"version"`
 		Options   []sessionOption   `toml:"option"`
+		Registers []sessionRegister `toml:"register,omitempty"`
 		Documents []sessionDocument `toml:"document"`
 		Layout    sessionNode       `toml:"layout"`
 	}
@@ -23,6 +24,17 @@ type (
 	sessionOption struct {
 		Key   string `toml:"key"`
 		Value string `toml:"value"`
+	}
+
+	sessionRegister struct {
+		Name   string   `toml:"name"`
+		Values []string `toml:"value"`
+	}
+
+	sessionJump struct {
+		Document  int           `toml:"document"`
+		Anchor    int           `toml:"anchor"`
+		Selection sessionSelect `toml:"selection"`
 	}
 
 	sessionDocument struct {
@@ -44,6 +56,8 @@ type (
 		FreeScroll       bool          `toml:"free-scroll,omitempty"`
 		Focused          bool          `toml:"focused,omitempty"`
 		Selection        sessionSelect `toml:"selection"`
+		JumpHead         int           `toml:"jump-head,omitempty"`
+		Jumps            []sessionJump `toml:"jump,omitempty"`
 		Children         []sessionNode `toml:"child"`
 	}
 
@@ -97,6 +111,19 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 			Key:   key,
 			Value: opts[key],
 		})
+	}
+	regKeys := make([]rune, 0, len(e.registers))
+	for k := range e.registers {
+		regKeys = append(regKeys, k)
+	}
+	slices.Sort(regKeys)
+	for _, k := range regKeys {
+		if vals := e.registers.Read(k); len(vals) > 0 {
+			s.Registers = append(s.Registers, sessionRegister{
+				Name:   string(k),
+				Values: vals,
+			})
+		}
 	}
 	for _, v := range e.AllViews() {
 		d, ok := e.docs[v.docID]
@@ -210,6 +237,14 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	e.lastModifiedDocIDs = [2]DocumentId{}
 	e.markDocAccessed()
 
+	e.registers.ClearAll()
+	for _, r := range s.Registers {
+		runes := []rune(r.Name)
+		if len(runes) == 1 {
+			e.registers.Write(runes[0], r.Values)
+		}
+	}
+
 	opts := map[string]string{}
 	for _, o := range s.Options {
 		opts[o.Key] = o.Value
@@ -263,6 +298,24 @@ func (e *Editor) sessionViewNode(
 	if !ok {
 		return sessionNode{Kind: sessionKindView}
 	}
+	entries := v.jumps.Entries()
+	savedHead := v.jumps.Head()
+	jumps := make([]sessionJump, 0, len(entries))
+	newHead := 0
+	for i, j := range entries {
+		idx, ok := docIndex[j.DocID]
+		if !ok {
+			continue
+		}
+		if i < savedHead {
+			newHead++
+		}
+		jumps = append(jumps, sessionJump{
+			Document:  idx,
+			Anchor:    j.Anchor,
+			Selection: sessionSelection(j.Selection),
+		})
+	}
 	return sessionNode{
 		Kind:             sessionKindView,
 		Document:         docIndex[doc.ID()],
@@ -273,6 +326,8 @@ func (e *Editor) sessionViewNode(
 		FreeScroll:       v.freeScroll,
 		Focused:          e.tree.focus == v.id,
 		Selection:        sessionSelection(doc.SelectionFor(v.id)),
+		JumpHead:         newHead,
+		Jumps:            jumps,
 	}
 }
 
@@ -347,6 +402,23 @@ func (e *Editor) restoreSessionView(
 		offset:     sessionPosition(sn),
 		freeScroll: sn.FreeScroll,
 	}
+	entries := make([]JumpEntry, 0, len(sn.Jumps))
+	for _, j := range sn.Jumps {
+		jDocID, ok := rs.docs[j.Document]
+		if !ok {
+			continue
+		}
+		entries = append(entries, JumpEntry{
+			DocID:     jDocID,
+			Anchor:    j.Anchor,
+			Selection: j.Selection.selection(),
+		})
+	}
+	head := sn.JumpHead
+	if head == 0 || head > len(entries) {
+		head = len(entries)
+	}
+	v.jumps.Restore(entries, head)
 	t.nodes[id] = &treeNode{parent: parent, view: v}
 	if doc, ok := rs.documents[docID]; ok {
 		doc.SetSelectionFor(id, sn.Selection.selection())

@@ -75,40 +75,10 @@ func (e *Editor) CommitInsertHistory() {
 }
 
 // Undo reverts one history step in the focused document
-func (e *Editor) Undo() bool {
-	v, ok := e.FocusedView()
-	if !ok {
-		return false
-	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return false
-	}
-	before := doc.Text()
-	if !doc.Undo(v.ID()) {
-		return false
-	}
-	e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
-	return true
-}
+func (e *Editor) Undo() bool { return e.applyUndoRedo((*Document).Undo) }
 
 // Redo reapplies one reverted step in the focused document
-func (e *Editor) Redo() bool {
-	v, ok := e.FocusedView()
-	if !ok {
-		return false
-	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return false
-	}
-	before := doc.Text()
-	if !doc.Redo(v.ID()) {
-		return false
-	}
-	e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
-	return true
-}
+func (e *Editor) Redo() bool { return e.applyUndoRedo((*Document).Redo) }
 
 // Earlier navigates history backward by the given UndoKind
 func (e *Editor) Earlier(kind core.UndoKind) bool {
@@ -184,6 +154,23 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	afterStr := doc.buf.text.String()
 	doc.buf.Unlock()
 	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
+	return true
+}
+
+func (e *Editor) applyUndoRedo(fn func(*Document, Id) bool) bool {
+	v, ok := e.FocusedView()
+	if !ok {
+		return false
+	}
+	doc, ok := e.Document(v.DocID())
+	if !ok {
+		return false
+	}
+	before := doc.Text()
+	if !fn(doc, v.ID()) {
+		return false
+	}
+	e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
 	return true
 }
 

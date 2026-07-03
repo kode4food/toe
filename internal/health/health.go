@@ -145,14 +145,7 @@ func checkLanguages() Check {
 	for _, l := range langs.Languages {
 		names = append(names, l.Name)
 	}
-	slices.Sort(names)
-	errs := compareNames(expectedLanguages, names)
-	return Check{
-		Name:   "languages",
-		OK:     len(errs) == 0,
-		Detail: fmt.Sprintf("%d supported", len(names)),
-		Errors: errs,
-	}
+	return checkBundled("languages", names, expectedLanguages, "%d supported")
 }
 
 func checkGrammars() Check {
@@ -164,12 +157,16 @@ func checkGrammars() Check {
 	for _, g := range langs.Grammars {
 		names = append(names, g.Name)
 	}
+	return checkBundled("grammars", names, expectedGrammars, "%d configured")
+}
+
+func checkBundled(name string, names, expected []string, detail string) Check {
 	slices.Sort(names)
-	errs := compareNames(expectedGrammars, names)
+	errs := compareNames(expected, names)
 	return Check{
-		Name:   "grammars",
+		Name:   name,
 		OK:     len(errs) == 0,
-		Detail: fmt.Sprintf("%d configured", len(names)),
+		Detail: fmt.Sprintf(detail, len(names)),
 		Errors: errs,
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/kode4food/toe/internal/core"
@@ -528,4 +529,54 @@ func openDocument(
 	doc.refreshDiskSnapshot()
 
 	return doc, nil
+}
+
+func setOverlaySlice[T any](ls *lsState, field *[]T, items []T) {
+	ls.Lock()
+	defer ls.Unlock()
+	if len(items) == 0 {
+		*field = nil
+		return
+	}
+	*field = slices.Clone(items)
+}
+
+func clearOverlaySlice[T any](ls *lsState, field *[]T) {
+	ls.Lock()
+	defer ls.Unlock()
+	*field = nil
+}
+
+func getOverlaySlice[T any](ls *lsState, field *[]T) []T {
+	ls.RLock()
+	defer ls.RUnlock()
+	return slices.Clone(*field)
+}
+
+func setOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id, items []T) {
+	ls.Lock()
+	defer ls.Unlock()
+	if len(items) == 0 {
+		delete(m, vid)
+		return
+	}
+	m[vid] = slices.Clone(items)
+}
+
+func clearOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id) {
+	ls.Lock()
+	defer ls.Unlock()
+	delete(m, vid)
+}
+
+func clearAllOverlayMap[T any](ls *lsState, m map[Id][]T) {
+	ls.Lock()
+	defer ls.Unlock()
+	clear(m)
+}
+
+func getOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id) []T {
+	ls.RLock()
+	defer ls.RUnlock()
+	return slices.Clone(m[vid])
 }

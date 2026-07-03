@@ -321,27 +321,10 @@ func diagnosticSpans(
 func lineDiagnosticSpans(
 	diags []diagnosticSpan, from, to int,
 ) []diagnosticSpan {
-	if len(diags) == 0 {
-		return nil
-	}
-	start := len(diags)
-	end := start
-	for i, diag := range diags {
-		if diag.to <= from {
-			continue
-		}
-		if diag.from > to {
-			break
-		}
-		if start == len(diags) {
-			start = i
-		}
-		end = i + 1
-	}
-	if start == len(diags) {
-		return nil
-	}
-	return diags[start:end]
+	return filterLineItems(diags,
+		func(d diagnosticSpan) bool { return d.to <= from },
+		func(d diagnosticSpan) bool { return d.from > to },
+	)
 }
 
 func documentColorAnnotations(colors []view.DocumentColor) []inlineAnnotation {
@@ -421,27 +404,34 @@ func diagnosticStyle(
 func lineAnnotations(
 	annotations []inlineAnnotation, from, to int,
 ) []inlineAnnotation {
-	if len(annotations) == 0 {
+	return filterLineItems(annotations,
+		func(a inlineAnnotation) bool { return a.pos < from },
+		func(a inlineAnnotation) bool { return a.pos > to },
+	)
+}
+
+func filterLineItems[T any](items []T, before, after func(T) bool) []T {
+	if len(items) == 0 {
 		return nil
 	}
-	start := len(annotations)
+	start := len(items)
 	end := start
-	for i, ann := range annotations {
-		if ann.pos < from {
+	for i, item := range items {
+		if before(item) {
 			continue
 		}
-		if ann.pos > to {
+		if after(item) {
 			break
 		}
-		if start == len(annotations) {
+		if start == len(items) {
 			start = i
 		}
 		end = i + 1
 	}
-	if start == len(annotations) {
+	if start == len(items) {
 		return nil
 	}
-	return annotations[start:end]
+	return items[start:end]
 }
 
 func documentColorStyle(color view.DocumentColor) tui.Style {

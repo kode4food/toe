@@ -5,7 +5,7 @@ weight: 10
 
 # Getting Started
 
-toe is a modal terminal editor built for Go development.
+toe is a modal terminal editor built for Go development. toe edits Go projects, not the universe.
 
 ## Requirements
 

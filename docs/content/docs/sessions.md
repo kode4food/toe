@@ -59,8 +59,3 @@ reads it back, reopening all documents and restoring split layout.
 
 Undo history is **not** saved. Each document starts with a fresh history after
 restore.
-
-## Workspace Trust
-
-Sessions are only saved in trusted workspaces. Use `:workspace_trust` to trust
-a directory, or `:workspace_untrust` to revoke trust.

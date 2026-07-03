@@ -15,139 +15,140 @@ weight: 30
 | `j` / `↓` | Move down |
 | `k` / `↑` | Move up |
 | `l` / `→` | Move right |
-| `w` | Next word start |
-| `b` | Previous word start |
-| `e` | Next word end |
-| `W` | Next WORD start |
-| `B` | Previous WORD start |
-| `E` | Next WORD end |
-| `f<char>` | Move to next occurrence of char (inclusive) |
+| `w` | Move to start of next word |
+| `b` | Move to start of previous word |
+| `e` | Move to end of next word |
+| `W` | Move to start of next long word |
+| `B` | Move to start of previous long word |
+| `E` | Move to end of next long word |
+| `f<char>` | Move to next occurrence of char |
 | `t<char>` | Move till next occurrence of char |
 | `F<char>` | Move to previous occurrence of char |
 | `T<char>` | Move till previous occurrence of char |
-| `Home` | Line start |
-| `End` | Line end |
-| `gg` / `<n>gg` | File start (or go to line `n`) |
-| `G` / `<n>G` | Last line (or go to line `n`) |
-| `gs` | First non-whitespace character |
-| `ge` | Last line |
-| `g\|` / `<n>g\|` | Go to column `n` |
-| `]p` | Next paragraph |
-| `[p` | Previous paragraph |
+| `Home` | Goto line start |
+| `End` | Goto line end |
+| `gg` / `<n>gg` | Goto line number `<n>` else file start |
+| `G` / `<n>G` | Goto line |
+| `gs` | Goto first non-blank in line |
+| `ge` | Goto last line |
+| `g\|` / `<n>g\|` | Goto column |
+| `]p` | Goto next paragraph |
+| `[p` | Goto previous paragraph |
 
 ### Goto Prefix (`g`)
 
 | Key | Action |
 |-----|--------|
-| `gd` | Go to definition |
-| `gD` | Go to declaration |
-| `gy` | Go to type definition |
-| `gi` | Go to implementation |
-| `gr` | Go to references |
-| `gf` | Open file or URL in selection |
-| `gn` | Next buffer |
-| `gp` | Previous buffer |
-| `ga` | Last accessed file |
-| `gm` | Last modified file |
-| `.` | Last modification location |
-| `gt` | Window top |
-| `gc` | Window center |
-| `gb` | Window bottom |
+| `gd` | Goto definition |
+| `gD` | Goto declaration |
+| `gy` | Goto type definition |
+| `gi` | Goto implementation |
+| `gr` | Goto references |
+| `gf` | Goto files/URLs in selections |
+| `gn` | Goto next buffer |
+| `gp` | Goto previous buffer |
+| `ga` | Goto last accessed file |
+| `gm` | Goto last modified file |
+| `g.` | Goto last modification |
+| `gt` | Goto window top |
+| `gc` | Goto window center |
+| `gb` | Goto window bottom |
 
 ### Jumplist
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+o` | Jump backward |
-| `Ctrl+i` / `Tab` | Jump forward |
-| `Ctrl+s` | Save current position to jumplist |
+| `Ctrl+o` | Jump backward on jumplist |
+| `Ctrl+i` / `Tab` | Jump forward on jumplist |
+| `Ctrl+s` | Save current selection to jumplist |
 
 ### Entering Other Modes
 
 | Key | Action |
 |-----|--------|
+| `:` | Enter command mode |
 | `i` | Insert before selection |
-| `I` | Insert at line start |
+| `I` | Insert at start of line |
 | `a` | Append after selection |
-| `A` | Append at line end |
-| `o` | Open line below and insert |
-| `O` | Open line above and insert |
-| `v` | Enter Select mode |
+| `A` | Insert at end of line |
+| `o` | Open new line below selection |
+| `O` | Open new line above selection |
+| `v` | Enter selection extend mode |
 
 ### Editing
 
 | Key | Action |
 |-----|--------|
-| `d` | Delete selection (yanks) |
-| `Alt+d` | Delete without yank |
-| `c` | Change selection (delete and insert, yanks) |
-| `Alt+c` | Change without yank |
-| `r<char>` | Replace selection with char |
-| `u` | Undo |
-| `U` | Redo |
-| `Alt+u` | Step to earlier history branch |
-| `Alt+U` | Step to later history branch |
-| `~` | Toggle case |
-| `` ` `` | Lowercase |
-| `Alt+`` ` ``  | Uppercase |
-| `>` | Indent |
-| `<` | Unindent |
-| `J` | Join lines |
-| `Alt+J` | Join lines with spaces |
+| `d` | Delete selection |
+| `Alt+d` | Delete selection without yanking |
+| `c` | Change selection |
+| `Alt+c` | Change selection without yanking |
+| `r<char>` | Replace with new char |
+| `u` | Undo change |
+| `U` | Redo change |
+| `Alt+u` | Move backward in history |
+| `Alt+U` | Move forward in history |
+| `~` | Switch (toggle) case |
+| `` ` `` | Switch to lowercase |
+| `Alt+`` ` `` | Switch to uppercase |
+| `>` | Indent selection |
+| `<` | Unindent selection |
+| `J` | Join lines inside selection |
+| `Alt+J` | Join lines inside selection and select spaces |
 | `&` | Align selections in column |
 | `_` | Trim whitespace from selections |
-| `Ctrl+a` | Increment number |
-| `Ctrl+x` | Decrement number |
+| `Ctrl+a` | Increment item under cursor |
+| `Ctrl+x` | Decrement item under cursor |
 | `=` | Format selection |
 
 ### Yank and Paste
 
 | Key | Action |
 |-----|--------|
-| `y` | Yank |
-| `p` | Paste after |
-| `P` | Paste before |
-| `R` | Replace with yanked |
-| `Space+y` | Yank to system clipboard |
-| `Space+Y` | Yank primary selection to clipboard |
-| `Space+p` | Paste from clipboard after |
-| `Space+P` | Paste from clipboard before |
-| `Space+R` | Replace with clipboard |
-| `"<reg>` | Select register for next yank/paste |
+| `y` | Yank selection |
+| `p` | Paste after selection |
+| `P` | Paste before selection |
+| `R` | Replace with yanked text |
+| `Space+y` | Yank selections to clipboard |
+| `Space+Y` | Yank main selection to clipboard |
+| `Space+p` | Paste clipboard after selections |
+| `Space+P` | Paste clipboard before selections |
+| `Space+R` | Replace selections by clipboard content |
+| `"<reg>` | Select register |
 
 ### Search
 
 | Key | Action |
 |-----|--------|
-| `/` | Search forward |
-| `?` | Search backward |
-| `n` | Next match |
-| `N` | Previous match |
-| `*` | Search word under cursor (whole word) |
-| `Alt+*` | Search selection |
+| `/` | Search for regex pattern |
+| `?` | Reverse search for regex pattern |
+| `n` | Select next search match |
+| `N` | Select previous search match |
+| `*` | Use current selection as search pattern, word bounded |
+| `Alt+*` | Use current selection as search pattern |
 
 ### Selection Manipulation
 
 | Key | Action |
 |-----|--------|
-| `s` | Select regex matches within selection |
-| `S` | Split selection by regex |
+| `s` | Select all regex matches inside selections |
+| `S` | Split selections on regex matches |
 | `K` | Keep selections matching regex |
 | `Alt+K` | Remove selections matching regex |
 | `Alt+s` | Split selection on newlines |
-| `;` | Collapse to single cursor |
-| `Alt+;` | Flip cursor/anchor |
-| `%` | Select all |
-| `x` | Extend selection by line |
-| `X` | Extend to line bounds |
-| `Alt+x` | Shrink to line bounds |
-| `,` | Keep only primary selection |
+| `;` | Collapse selection into single cursor |
+| `Alt+;` | Flip selection cursor and anchor |
+| `%` | Select whole document |
+| `x` | Select current line, if already selected, extend to next line |
+| `X` | Extend selection to line bounds |
+| `Alt+x` | Shrink selection to line bounds |
+| `,` | Keep primary selection |
 | `Alt+,` | Remove primary selection |
 | `(` | Rotate selections backward |
 | `)` | Rotate selections forward |
-| `Alt+(` | Rotate contents backward |
-| `Alt+)` | Rotate contents forward |
-| `Alt+:` | Ensure selections are forward |
+| `Alt+(` | Rotate selections contents backward |
+| `Alt+)` | Rotate selection contents forward |
+| `Alt+:` | Ensure all selections face forward |
 | `C` | Copy selection on next line |
 | `Alt+C` | Copy selection on previous line |
 | `Alt+-` | Merge selections |
@@ -158,41 +159,41 @@ weight: 30
 
 | Key | Action |
 |-----|--------|
-| `mm` | Go to matching bracket |
-| `ms<char>` | Add surround character |
-| `mr<from><to>` | Replace surround character |
-| `md<char>` | Delete surround character |
-| `ma<char>` | Select around text object |
-| `mi<char>` | Select inside text object |
+| `mm` | Goto matching bracket |
+| `ms<char>` | Surround add |
+| `mr<from><to>` | Surround replace |
+| `md<char>` | Surround delete |
+| `ma<char>` | Select around object |
+| `mi<char>` | Select inside object |
 
-### View / Scroll (`z` prefix)
+### View / Scroll (`z` / `Z` prefix)
 
 | Key | Action |
 |-----|--------|
-| `zz` / `zcz` | Center view on cursor |
-| `zt` / `z.` | Align view top to cursor |
-| `zb` | Align view bottom to cursor |
-| `zk` / `z↑` | Scroll up |
-| `zj` / `z↓` | Scroll down |
-| `Ctrl+b` / `PageUp` | Page up |
-| `Ctrl+f` / `PageDown` | Page down |
-| `Ctrl+u` | Half-page up |
-| `Ctrl+d` | Half-page down |
+| `zz` / `zc` / `Zz` / `Zc` | Align view center |
+| `zt` / `z.` / `Zt` / `Z.` | Align view top |
+| `zb` / `Zb` | Align view bottom |
+| `zk` / `z↑` / `Zk` / `Z↑` | Scroll view up |
+| `zj` / `z↓` / `Zj` / `Z↓` | Scroll view down |
+| `Ctrl+b` / `PageUp` | Move page up |
+| `Ctrl+f` / `PageDown` | Move page down |
+| `Ctrl+u` | Move page and cursor half up |
+| `Ctrl+d` | Move page and cursor half down |
 
 ### Splits (`Ctrl+w` or `Space+w`)
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+w v` | Vertical split |
-| `Ctrl+w s` | Horizontal split |
-| `Ctrl+w n v` | Vertical split with new buffer |
-| `Ctrl+w n s` | Horizontal split with new buffer |
-| `Ctrl+w q` | Close current split |
-| `Ctrl+w o` | Close other splits |
-| `Ctrl+w w` | Cycle to next split |
-| `Ctrl+w t` | Transpose splits |
-| `Ctrl+w h/j/k/l` | Jump to split in direction |
-| `Ctrl+w H/J/K/L` | Swap split in direction |
+| `Ctrl+w v` / `Ctrl+w Ctrl+v` | Vertical right split |
+| `Ctrl+w s` / `Ctrl+w Ctrl+s` | Horizontal bottom split |
+| `Ctrl+w n v` / `Ctrl+w n Ctrl+v` | Vertical right split scratch buffer |
+| `Ctrl+w n s` / `Ctrl+w n Ctrl+s` | Horizontal bottom split scratch buffer |
+| `Ctrl+w q` / `Ctrl+w Ctrl+q` | Close window |
+| `Ctrl+w o` / `Ctrl+w Ctrl+o` | Close windows except current |
+| `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
+| `Ctrl+w t` / `Ctrl+w Ctrl+t` | Transpose splits |
+| `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` | Jump to left/below/above/right split |
+| `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
 
 All `Ctrl+w` bindings also work with `Space+w`.
 
@@ -200,33 +201,37 @@ All `Ctrl+w` bindings also work with `Space+w`.
 
 | Key | Action |
 |-----|--------|
-| `Space+f` | File picker |
-| `Space+F` | File picker in current directory |
-| `Space+e` | File explorer |
-| `Space+.` | File explorer in buffer's directory |
-| `Space+b` | Buffer picker |
-| `Space+j` | Jumplist picker |
-| `Space+/` | Global search |
-| `Space+?` | Command palette |
-| `Space+'` | Reopen last picker |
-| `Space+k` | Hover docs (LSP) |
-| `Space+a` | Code action (LSP) |
-| `Space+r` | Rename symbol (LSP) |
-| `Space+h` | Select all references (LSP) |
-| `Space+s` | Document symbol picker (LSP) |
-| `Space+S` | Workspace symbol picker (LSP) |
-| `Space+c` | Toggle comment |
-| `Space+C` | Toggle block comment |
-| `Space+Alt+c` | Toggle line comment |
-| `Space+y` | Yank to clipboard |
-| `Space+p` | Paste from clipboard |
+| `Space+y` | Yank selections to clipboard |
+| `Space+Y` | Yank main selection to clipboard |
+| `Space+p` | Paste clipboard after selections |
+| `Space+P` | Paste clipboard before selections |
+| `Space+R` | Replace selections by clipboard content |
+| `Space+w` | Window (see Splits) |
+| `Space+h` | Select symbol references |
+| `Space+a` | Perform code action |
+| `Space+k` | Show docs for item under cursor |
+| `Space+r` | Rename symbol |
+| `Space+s` | Open symbol picker |
+| `Space+S` | Open workspace symbol picker |
+| `Space+f` | Open file picker |
+| `Space+F` | Open file picker at current working directory |
+| `Space+e` | Open file explorer at workspace root |
+| `Space+.` | Open file explorer at current buffer's directory |
+| `Space+b` | Open buffer picker |
+| `Space+j` | Open jumplist picker |
+| `Space+/` | Global search in workspace folder |
+| `Space+?` | Open command palette |
+| `Space+'` | Reopen the last picker |
+| `Space+c` | Comment/uncomment selections |
+| `Space+Alt+c` | Line comment/uncomment selections |
+| `Space+C` | Block comment/uncomment selections |
 
 ### Prev/Next (`[` / `]`)
 
 | Key | Action |
 |-----|--------|
-| `[p` | Previous paragraph |
-| `]p` | Next paragraph |
+| `[p` | Goto previous paragraph |
+| `]p` | Goto next paragraph |
 | `[␣` | Add newline above |
 | `]␣` | Add newline below |
 
@@ -234,7 +239,7 @@ All `Ctrl+w` bindings also work with `Space+w`.
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+c` | Toggle comment |
+| `Ctrl+c` | Comment/uncomment selections |
 | `Q` | Record macro |
 | `q` | Replay macro |
 
@@ -242,11 +247,11 @@ All `Ctrl+w` bindings also work with `Space+w`.
 
 | Key | Action |
 |-----|--------|
-| `\|` | Pipe selection through shell command |
-| `Alt+\|` | Pipe to shell (discard output) |
-| `!` | Insert shell output before selection |
-| `Alt+!` | Append shell output after selection |
-| `$` | Filter selection with shell predicate |
+| `\|` | Pipe selections through shell command |
+| `Alt+\|` | Pipe selections into shell command ignoring output |
+| `!` | Insert shell command output before selections |
+| `Alt+!` | Append shell command output after selections |
+| `$` | Filter selections with shell predicate |
 
 ---
 
@@ -254,36 +259,36 @@ All `Ctrl+w` bindings also work with `Space+w`.
 
 | Key | Action |
 |-----|--------|
-| `Escape` | Return to Normal mode |
+| `Escape` | Enter normal mode |
 | `←↓↑→` | Move cursor |
-| `Home` | Line start |
-| `End` | Line end |
-| `Ctrl+r <reg>` | Insert register contents |
-| `Ctrl+s` | Commit undo checkpoint |
-| `Ctrl+h` / `Backspace` | Delete character backward |
-| `Ctrl+d` / `Delete` | Delete character forward |
-| `Ctrl+w` / `Alt+Backspace` | Delete word backward |
-| `Alt+d` / `Alt+Delete` | Delete word forward |
-| `Ctrl+u` | Delete to line start |
-| `Ctrl+k` | Delete to line end |
-| `Ctrl+j` / `Return` | Insert newline |
-| `Tab` | Smart indent |
-| `Ctrl+x` | Show completion popup |
-| `PageUp` / `Ctrl+b` | Page up |
-| `PageDown` / `Ctrl+f` | Page down |
+| `Home` | Goto line start |
+| `End` | Goto newline at line end |
+| `Ctrl+r <reg>` | Insert register |
+| `Ctrl+s` | Commit changes to new checkpoint |
+| `Ctrl+h` / `Backspace` | Delete previous char |
+| `Ctrl+d` / `Delete` | Delete next char |
+| `Ctrl+w` / `Alt+Backspace` | Delete previous word |
+| `Alt+d` / `Alt+Delete` | Delete next word |
+| `Ctrl+u` | Delete till start of line |
+| `Ctrl+k` | Delete till end of line |
+| `Ctrl+j` / `Return` | Insert newline char |
+| `Tab` | Insert tab if all cursors have all whitespace to their left, else complete current word |
+| `Ctrl+x` | Complete current word |
+| `PageUp` / `Ctrl+b` | Move page up |
+| `PageDown` / `Ctrl+f` | Move page down |
 
 ### Completion Popup
 
 | Key | Action |
 |-----|--------|
 | `Return` / `Tab` | Accept completion |
-| `Escape` | Cancel |
-| `↑` / `Ctrl+p` | Previous item |
-| `↓` / `Ctrl+n` | Next item |
-| `PageUp` | Page up |
-| `PageDown` | Page down |
-| `Home` | First item |
-| `End` | Last item |
+| `Escape` | Cancel completion |
+| `↑` / `Ctrl+p` | Previous completion |
+| `↓` / `Ctrl+n` | Next completion |
+| `PageUp` | Previous completion page |
+| `PageDown` | Next completion page |
+| `Home` | First completion |
+| `End` | Last completion |
 
 ---
 
@@ -298,9 +303,12 @@ head rather than collapsing it.
 | `w/b/e/W/B/E` | Extend by word |
 | `f/t/F/T` | Extend to character |
 | `Home` / `End` | Extend to line start/end |
-| `x` | Extend by line |
+| `x` | Select current line, if already selected, extend to next line |
+| `gg` | Extend to line number `<n>` else file start |
+| `ge` | Extend to last line |
+| `g\|` | Extend to column |
 | `n` / `N` | Add next/previous search match to selection |
-| `Escape` | Return to Normal mode |
+| `Escape` | Exit selection mode |
 
 All other Normal mode commands (editing, clipboard, search) work the same in
 Select mode.

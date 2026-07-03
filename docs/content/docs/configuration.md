@@ -24,13 +24,13 @@ Reload after editing: `:config_reload`
 
 ## Editor Options
 
-Options can also be changed at runtime with `:set <key> <value>`, `:get <key>`,
+Options can be changed at runtime with `:set <key> <value>`, `:get <key>`,
 and `:toggle <key>` (for booleans).
 
 ### Theme
 
 ```toml
-theme = "frappe"   # frappe | latte | macchiato | mocha | default
+theme = "frappe"   # frappe | latte | macchiato | mocha
 ```
 
 ### General
@@ -48,7 +48,7 @@ theme = "frappe"   # frappe | latte | macchiato | mocha | default
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.line-number` | string | `"absolute"` | `absolute`, `relative`, or `none` |
+| `editor.line-number` | string | `"absolute"` | `absolute` or `relative` |
 | `editor.cursorline` | bool | `false` | Highlight cursor line |
 | `editor.cursorcolumn` | bool | `false` | Highlight cursor column |
 | `editor.text-width` | int | `80` | Text width (used by rulers and reflow) |
@@ -60,20 +60,20 @@ theme = "frappe"   # frappe | latte | macchiato | mocha | default
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `editor.soft-wrap.enable` | bool | `false` | Enable soft wrap |
-| `editor.soft-wrap.max-wrap` | int | `80` | Maximum visual indentation when wrapping |
-| `editor.soft-wrap.max-indent-retain` | int | `16` | Max indent levels to retain |
-| `editor.soft-wrap.wrap-indicator` | string | `"↳"` | Continuation indicator |
+| `editor.soft-wrap.max-wrap` | int | `20` | Maximum visual indentation when wrapping |
+| `editor.soft-wrap.max-indent-retain` | int | `40` | Max indent levels to retain |
+| `editor.soft-wrap.wrap-indicator` | string | `"↪ "` | Continuation indicator |
 | `editor.soft-wrap.wrap-at-text-width` | bool | `false` | Wrap at `text-width` instead of window width |
 
 ### Whitespace and Indentation
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.whitespace.render` | string | `"none"` | `none`, `all`, or specific chars |
+| `editor.whitespace.render` | string | `"none"` | `none` or `all` |
 | `editor.indent-guides.render` | bool | `false` | Show indent guides |
 | `editor.indent-guides.character` | string | `"│"` | Guide character |
-| `editor.indent-guides.skip-levels` | int | `1` | Indent levels to skip |
-| `editor.gutters.line-numbers.min-width` | int | `4` | Minimum gutter width |
+| `editor.indent-guides.skip-levels` | int | `0` | Indent levels to skip |
+| `editor.gutters.line-numbers.min-width` | int | `3` | Minimum gutter width |
 
 ### Editing
 
@@ -90,10 +90,10 @@ theme = "frappe"   # frappe | latte | macchiato | mocha | default
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.auto-save` | bool | `false` | Save on focus loss and delay |
+| `editor.auto-save` | bool | `false` | Save when focus is lost (alias for `auto-save.focus-lost`) |
 | `editor.auto-save.focus-lost` | bool | `false` | Save when focus leaves the view |
 | `editor.auto-save.after-delay.enable` | bool | `false` | Save after idle delay |
-| `editor.auto-save.after-delay.timeout` | int | `1000` | Idle delay in milliseconds |
+| `editor.auto-save.after-delay.timeout` | int | `3000` | Idle delay in milliseconds |
 
 ### Search
 
@@ -106,7 +106,7 @@ theme = "frappe"   # frappe | latte | macchiato | mocha | default
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.scrolloff` | int | `3` | Lines of context kept above/below cursor |
+| `editor.scrolloff` | int | `5` | Lines of context kept above/below cursor |
 | `editor.scroll-lines` | int | `3` | Lines moved per scroll step |
 
 ### Cursor Shape
@@ -128,20 +128,25 @@ theme = "frappe"   # frappe | latte | macchiato | mocha | default
 
 ### Pickers
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `editor.buffer-picker.start_position` | string | `"top"` | `top` or `bottom` |
+These options are TOML-only and cannot be changed at runtime with `:set`.
+
+| TOML key | Type | Default | Description |
+|----------|------|---------|-------------|
+| `editor.buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
 | `editor.file-explorer.hidden` | bool | `false` | Show hidden files |
 | `editor.file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |
-| `editor.file-explorer.ignore` | bool | `true` | Respect `.ignore` files |
-| `editor.file-explorer.git-ignore` | bool | `true` | Respect `.gitignore` |
-| `editor.file-explorer.flatten-dirs` | bool | `false` | Collapse single-child directories |
+| `editor.file-explorer.parents` | bool | `false` | Include parent directories |
+| `editor.file-explorer.ignore` | bool | `false` | Respect `.ignore` files |
+| `editor.file-explorer.git-ignore` | bool | `false` | Respect `.gitignore` |
+| `editor.file-explorer.git-global` | bool | `false` | Respect global gitignore |
+| `editor.file-explorer.git-exclude` | bool | `false` | Respect git exclude rules |
+| `editor.file-explorer.flatten-dirs` | bool | `true` | Collapse single-child directories |
 
 ### Shell
 
 ```toml
 [editor]
-shell = ["bash", "-c"]   # default: system shell
+shell = ["sh", "-c"]   # default on Unix; ["cmd", "/C"] on Windows
 ```
 
 ## Config Example

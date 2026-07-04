@@ -28,8 +28,10 @@ type rowWriteArgs struct {
 }
 
 // writeToBuffer draws the row's cells into the buffer and pads the remainder of
-// the row with the fill style. Rulers are applied separately as a background
-// overlay once the whole pane is drawn (see applyRulers)
+// the row with the fill style. Glyph and fill styles without a background are
+// transparent (see Buffer.SetString), so pre-painted ruler / cursorline /
+// cursorcolumn layers show through; overlay cells (selection, cursor, search)
+// carry their own background and overwrite them
 func (r *renderedRow) writeToBuffer(args rowWriteArgs) {
 	cx := writeCellsWindowed(
 		args.buf, r.cells, args.x, args.y, args.width, args.startCol,

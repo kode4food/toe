@@ -585,7 +585,7 @@ func viewModule() command.Module {
 				opts.LineNumber = cmp.Or(
 					cfg.Editor.LineNumber, view.LineNumberAbsolute,
 				)
-				opts.Cursorline = boolOr(cfg.Editor.Cursorline, false)
+				opts.Cursorline = boolOr(cfg.Editor.Cursorline, true)
 				opts.Cursorcolumn = boolOr(cfg.Editor.Cursorcolumn, false)
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap

@@ -61,41 +61,22 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 	}
 }
 
-func cursorCols(
-	selSpans []selectionSpan, lStr string,
-	lineStart, lineEnd, tabW, colStart int,
-) (primary, secondary map[int]bool) {
-	for _, sp := range selSpans {
-		if sp.cur < lineStart || sp.cur > lineEnd {
-			continue
+// visualColOf returns the visual column of the character at charOffset within
+// lStr, expanding tabs to tabW-width stops
+func visualColOf(lStr string, charOffset, tabW int) int {
+	col, charIdx := 0, 0
+	for _, ch := range lStr {
+		if charIdx >= charOffset {
+			break
 		}
-		vcol := colStart
-		offset := sp.cur - lineStart
-		charIdx := 0
-		for _, ch := range lStr {
-			if charIdx >= offset {
-				break
-			}
-			charIdx++
-			if ch == runeTab {
-				vcol += tabW - vcol%tabW
-			} else {
-				vcol++
-			}
-		}
-		if sp.primary {
-			if primary == nil {
-				primary = make(map[int]bool)
-			}
-			primary[vcol] = true
+		charIdx++
+		if ch == runeTab {
+			col += tabW - col%tabW
 		} else {
-			if secondary == nil {
-				secondary = make(map[int]bool)
-			}
-			secondary[vcol] = true
+			col++
 		}
 	}
-	return
+	return col
 }
 
 func indentWidth(lineStr string, tabW int) int {

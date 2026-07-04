@@ -20,7 +20,6 @@ import (
 
 type (
 	lipglossStyles struct {
-		background        lipgloss.Style
 		text              lipgloss.Style
 		line              lipgloss.Style
 		lineSelected      lipgloss.Style
@@ -146,7 +145,6 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
 	cl := th.Get("ui.cursorline.primary")
 	st := lipglossStyles{
-		background:        th.Get("ui.background"),
 		text:              th.Get("ui.text"),
 		line:              th.Get("ui.linenr"),
 		lineSelected:      th.Get("ui.linenr.selected"),
@@ -214,7 +212,6 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 	if next, ok := th.TryGet("ui.search.match"); ok {
 		st.searchMatch = next
 	}
-	st.inheritBackground()
 	return st
 }
 
@@ -427,30 +424,6 @@ func (r *renderPass) cmdlineStyle(errorMsg bool) lipgloss.Style {
 	return th.Get("ui.statusline")
 }
 
-func (r *lipglossStyles) inheritBackground() {
-	bg := r.background.GetBackground()
-	if lipglossColorToTUI(bg).IsReset() {
-		return
-	}
-	r.text = inheritStyleBackground(r.text, bg)
-	r.line = inheritStyleBackground(r.line, bg)
-	r.lineSelected = inheritStyleBackground(r.lineSelected, bg)
-	r.whitespace = inheritStyleBackground(r.whitespace, bg)
-	r.indentGuide = inheritStyleBackground(r.indentGuide, bg)
-}
-
-// clearBackground strips the document background from all inherited styles so
-// that preview content is background-transparent; the containing pane provides
-// the background uniformly via its outer Render call
-func (r *lipglossStyles) clearBackground() {
-	r.background = lipgloss.NewStyle()
-	r.text = clearStyleBackground(r.text)
-	r.line = clearStyleBackground(r.line)
-	r.lineSelected = clearStyleBackground(r.lineSelected)
-	r.whitespace = clearStyleBackground(r.whitespace)
-	r.indentGuide = clearStyleBackground(r.indentGuide)
-}
-
 func (s *statusElemCtx) elem(e view.StatusLineElement) statusElem {
 	if fn, ok := statusElemFns[e]; ok {
 		se := fn(s)
@@ -481,13 +454,16 @@ func inheritStyleBackground(
 
 // hlStyleFnFor returns a function that maps highlight scope names to styles,
 // falling back to the default Chroma palette when the theme has no entry
+// hlStyleFnFor resolves a syntax scope to its theme style. Styles carry no
+// background of their own: they render transparently over whatever layer sits
+// beneath (base fill, ruler, cursorline). A scope with an explicit background
+// in the theme is treated as an intentional override
 func hlStyleFnFor(th *theme.Theme) func(string) lipgloss.Style {
-	bg := th.Get("ui.background").GetBackground()
 	return func(scope string) lipgloss.Style {
 		if s, ok := th.TryGet(scope); ok {
-			return inheritStyleBackground(s, bg)
+			return s
 		}
-		return inheritStyleBackground(highlight.DefaultStyle(scope), bg)
+		return highlight.DefaultStyle(scope)
 	}
 }
 

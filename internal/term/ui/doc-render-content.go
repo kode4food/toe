@@ -181,6 +181,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
+	cursorlinePriBg := lipglossToTUIStyle(lgStyles.cursorlinePrim).BgColor()
+	cursorlineSecBg := lipglossToTUIStyle(lgStyles.cursorlineSec).BgColor()
 	contentX := x + gutterW
 	gutter := gutterSpec{
 		layout:          gutterLayout,
@@ -218,6 +220,31 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		hWidth:        format.ViewportWidth,
 	}
 
+	// Overlay pre-passes: paint the background layers before any rows. Text is
+	// drawn preserving these backgrounds, so they show through the glyphs;
+	// selection and the cursor carry their own background and overwrite them.
+	// Cursorcolumn is painted first so rulers render over it (matching Helix)
+	if opts.Cursorcolumn && cursorLine < len(lineIdx)-1 {
+		entry := lineIdx[cursorLine]
+		next := lineIdx[cursorLine+1]
+		cursorLStr := rawText[entry.byteStart : next.byteStart-entry.endingLen]
+		vcol := visualColOf(cursorLStr, cursor-entry.charStart, format.TabWidth)
+		rel := vcol - hOff
+		if rel >= 0 && rel < format.ViewportWidth {
+			sx := contentX + rel
+			ccBg := tuiStyles.cursorcolumnPrim.BgColor()
+			for row := y; row < y+height; row++ {
+				buf.PatchBg(sx, row, ccBg)
+			}
+		}
+	}
+	if len(rulers) > 0 {
+		applyRulers(
+			buf, contentX, y, format.ViewportWidth, height, hOff,
+			rulers, rulerTUI.BgColor(),
+		)
+	}
+
 	bufRow := y
 	logLine := anchorLine
 	for bufRow < y+height {
@@ -253,6 +280,11 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 						lipglossToTUIStyle(lgStyles.cursorPrim),
 					)
 				}
+			}
+			if cursorlineEnabled && lineNum == cursorLine {
+				buf.PatchBgRange(
+					contentX, bufRow, format.ViewportWidth, cursorlinePriBg,
+				)
 			}
 			row.writeToBuffer(rowWriteArgs{
 				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
@@ -325,14 +357,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			rowIndentCol = indentWidth(lStr, tabW)
 		}
 
-		var primaryCursorCols, secondaryCursorCols map[int]bool
-		if opts.Cursorcolumn {
-			primaryCursorCols, secondaryCursorCols = cursorCols(
-				selSpans, lStr, rowLineStart, lineContentEnd,
-				tabW, rowColOffset,
-			)
-		}
-
 		// The anchor line is scrolled by vOff visual rows; skip those rows when
 		// drawing so a wrapped line taller than the viewport scrolls within
 		rowSkip := 0
@@ -343,8 +367,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		rr.lineStr = lStr
 		rr.indentCol = rowIndentCol
 		rr.colOffset = rowColOffset
-		rr.primaryCursorCols = primaryCursorCols
-		rr.secondaryCursorCols = secondaryCursorCols
 		rr.lineNum = lineNum
 		rr.lineStart = rowLineStart
 		rr.lineEnd = lineContentEnd
@@ -354,8 +376,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		rr.diagnostics = lineDiagnosticSpans(
 			diagnostics, rowLineStart, lineContentEnd,
 		)
-		rr.cursorlinePrim = isPrimaryCursorLine
-		rr.cursorlineSec = isSecondaryCursorLine
 		rr.maxRows = y + height - bufRow + rowSkip
 		contentRows := rr.rows()
 
@@ -373,6 +393,16 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				rowPrefixW := 0
 				if i > 0 && gutter.width > 0 {
 					gutter.renderBlank(buf, x, bufRow)
+				}
+				switch {
+				case isPrimaryCursorLine:
+					buf.PatchBgRange(
+						contentX, bufRow, format.ViewportWidth, cursorlinePriBg,
+					)
+				case isSecondaryCursorLine:
+					buf.PatchBgRange(
+						contentX, bufRow, format.ViewportWidth, cursorlineSecBg,
+					)
 				}
 				if i == 0 {
 					cr.writeToBuffer(rowWriteArgs{
@@ -396,6 +426,16 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				bufRow++
 			}
 		} else {
+			switch {
+			case isPrimaryCursorLine:
+				buf.PatchBgRange(
+					contentX, bufRow, format.ViewportWidth, cursorlinePriBg,
+				)
+			case isSecondaryCursorLine:
+				buf.PatchBgRange(
+					contentX, bufRow, format.ViewportWidth, cursorlineSecBg,
+				)
+			}
 			contentRows[0].writeToBuffer(rowWriteArgs{
 				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
 				width: format.ViewportWidth, startCol: hOff,
@@ -403,15 +443,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 			rowMap = append(rowMap, viewRowEntry{lineNum, 0, 0})
 			bufRow++
 		}
-	}
-
-	// Rulers are a background overlay drawn once over the whole content area,
-	// after all rows, so they sit behind text without altering its foreground
-	if len(rulers) > 0 {
-		applyRulers(
-			buf, contentX, y, format.ViewportWidth, height, hOff,
-			rulers, rulerTUI.BgColor(),
-		)
 	}
 
 	c.viewRowMaps[v.ID()] = rowMap

@@ -13,42 +13,38 @@ import (
 
 type (
 	rowRender struct {
-		lineStr             string
-		lgStyles            *lipglossStyles
-		tuiStyles           *tuiStyles
-		hlStyle             func(string) tui.Style
-		format              *language.TextFormat
-		ws                  view.Whitespace
-		ig                  view.IndentGuides
-		hlSpans             []highlight.Span
-		searchMatches       []matchSpan
-		docHighlights       []matchSpan
-		docLinks            []matchSpan
-		docColors           []colorSpan
-		diagnostics         []diagnosticSpan
-		annotations         []inlineAnnotation
-		selSpans            []selectionSpan
-		primaryCursorCols   map[int]bool
-		secondaryCursorCols map[int]bool
-		cursor              int
-		cursorLine          int
-		lineNum             int
-		lineStart           int
-		lineEnd             int
+		lineStr       string
+		lgStyles      *lipglossStyles
+		tuiStyles     *tuiStyles
+		hlStyle       func(string) tui.Style
+		format        *language.TextFormat
+		ws            view.Whitespace
+		ig            view.IndentGuides
+		hlSpans       []highlight.Span
+		searchMatches []matchSpan
+		docHighlights []matchSpan
+		docLinks      []matchSpan
+		docColors     []colorSpan
+		diagnostics   []diagnosticSpan
+		annotations   []inlineAnnotation
+		selSpans      []selectionSpan
+		cursor        int
+		cursorLine    int
+		lineNum       int
+		lineStart     int
+		lineEnd       int
 		// indentCol is the visual column where the line's indentation ends,
 		// pre-computed by the caller so rows() never needs to re-scan lineStr
 		// from position 0 when lineStr has been sliced to the visible window
 		indentCol int
 		// visual column where lineStr starts (0 unless windowed)
-		colOffset      int
-		softWrap       bool
-		cursorlinePrim bool
-		cursorlineSec  bool
-		cursorIsBlock  bool
-		mode           view.Mode
-		hStart         int
-		hWidth         int
-		maxRows        int
+		colOffset     int
+		softWrap      bool
+		cursorIsBlock bool
+		mode          view.Mode
+		hStart        int
+		hWidth        int
+		maxRows       int
 		// reused across rows() calls when not soft-wrapping; the returned
 		// row must be consumed before the next call
 		cellScratch []renderedCell
@@ -169,7 +165,6 @@ func (r *rowRender) rows() []renderedRow {
 		if r.annotations != nil {
 			writeAnnotations(pos)
 		}
-		colBefore := col
 		rendered, width, glyph := r.renderGrapheme(rowGraphemeArgs{
 			ch: ch, col: col, indentCol: indentCol,
 			startGuide: startGuide, endGuide: endGuide,
@@ -202,7 +197,7 @@ func (r *rowRender) rows() []renderedRow {
 			))
 		case selAt.selected:
 			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.selection,
+				r.baseStyleAt(pos, glyph), ts.selectionPrim,
 			))
 		case rangeMatch(r.docHighlights, pos):
 			writeRendered(rendered, width, overlaySelStyle(
@@ -224,14 +219,6 @@ func (r *rowRender) rows() []renderedRow {
 			writeRendered(rendered, width, ts.indentGuide)
 		case glyph == documentGlyphWhitespace:
 			writeRendered(rendered, width, ts.whitespace)
-		case r.cursorlinePrim:
-			writeRendered(rendered, width, ts.cursorlinePrim)
-		case r.cursorlineSec:
-			writeRendered(rendered, width, ts.cursorlineSec)
-		case r.primaryCursorCols[colBefore]:
-			writeRendered(rendered, width, ts.cursorcolumnPrim)
-		case r.secondaryCursorCols[colBefore]:
-			writeRendered(rendered, width, ts.cursorcolumnSec)
 		case r.hlSpans != nil:
 			if scope, ok := r.hlScopeAt(pos); ok {
 				writeRendered(rendered, width, r.hlStyle(scope))

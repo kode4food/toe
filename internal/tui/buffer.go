@@ -89,6 +89,9 @@ func (b *Buffer) Fill(style Style) {
 	}
 }
 
+// FillRange fills width cells with a space in the given style. A style with no
+// background is transparent: each cell keeps its existing background so a
+// pre-painted layer (ruler, cursorline) shows through
 func (b *Buffer) FillRange(x, y, width int, style Style) {
 	if y < 0 || y >= b.Height || width <= 0 || x >= b.Width {
 		return
@@ -98,9 +101,14 @@ func (b *Buffer) FillRange(x, y, width int, style Style) {
 		x = 0
 	}
 	end := min(x+width, b.Width)
-	c := Cell{Symbol: " ", Style: style}
+	keepBg := style.BgColor().IsReset()
 	for i := x; i < end; i++ {
-		b.cells[y*b.Width+i] = c
+		idx := y*b.Width + i
+		st := style
+		if keepBg {
+			st = style.Bg(b.cells[idx].Style.BgColor())
+		}
+		b.cells[idx] = Cell{Symbol: " ", Style: st}
 	}
 }
 
@@ -137,12 +145,15 @@ func (b *Buffer) SetRightAlignedInt(x, y, width, n int, style Style) {
 
 // SetString writes graphemes of s starting at (x, y), advancing x by display
 // width. Wide graphemes reserve their trailing columns without emitting
-// additional printable cells
+// additional printable cells. A style with no background is transparent: each
+// written cell keeps its existing background so a pre-painted layer (ruler,
+// cursorline) shows through the glyphs
 func (b *Buffer) SetString(x, y int, s string, style Style) {
 	if y < 0 || y >= b.Height || x >= b.Width {
 		return
 	}
-	nx, rest := b.setASCIIString(x, y, s, style)
+	keepBg := style.BgColor().IsReset()
+	nx, rest := b.setASCIIString(x, y, s, style, keepBg)
 	if rest == "" {
 		return
 	}
@@ -162,9 +173,13 @@ func (b *Buffer) SetString(x, y int, s string, style Style) {
 		if x+w > b.Width {
 			break
 		}
-		b.Set(x, y, Cell{Symbol: cluster, Style: style})
+		st := style
+		if keepBg {
+			st = style.Bg(b.cells[y*b.Width+x].Style.BgColor())
+		}
+		b.Set(x, y, Cell{Symbol: cluster, Style: st})
 		for i := 1; i < w && x+i < b.Width; i++ {
-			b.Set(x+i, y, Cell{Skip: true, Style: style})
+			b.Set(x+i, y, Cell{Skip: true, Style: st})
 		}
 		x += w
 	}
@@ -172,15 +187,22 @@ func (b *Buffer) SetString(x, y int, s string, style Style) {
 
 // setASCIICell writes a single printable ASCII byte to (x, y) using the shared
 // asciiTable, avoiding a per-call string allocation. The caller is responsible
-// for validating y; x is clipped to the buffer width
+// for validating y; x is clipped to the buffer width. A style with no
+// background is transparent: the cell keeps its existing background
 func (b *Buffer) setASCIICell(x, y int, ch byte, style Style) {
 	if x < 0 || x >= b.Width {
 		return
 	}
-	b.cells[y*b.Width+x] = Cell{Symbol: asciiTable[ch : ch+1], Style: style}
+	idx := y*b.Width + x
+	if style.BgColor().IsReset() {
+		style = style.Bg(b.cells[idx].Style.BgColor())
+	}
+	b.cells[idx] = Cell{Symbol: asciiTable[ch : ch+1], Style: style}
 }
 
-func (b *Buffer) setASCIIString(x, y int, s string, style Style) (int, string) {
+func (b *Buffer) setASCIIString(
+	x, y int, s string, style Style, overBg bool,
+) (int, string) {
 	for i := range len(s) {
 		ch := s[i]
 		if ch < ' ' || ch >= 0x7f {
@@ -190,9 +212,14 @@ func (b *Buffer) setASCIIString(x, y int, s string, style Style) (int, string) {
 			return x, ""
 		}
 		if x >= 0 {
-			b.cells[y*b.Width+x] = Cell{
+			idx := y*b.Width + x
+			st := style
+			if overBg {
+				st = style.Bg(b.cells[idx].Style.BgColor())
+			}
+			b.cells[idx] = Cell{
 				Symbol: asciiTable[ch : ch+1],
-				Style:  style,
+				Style:  st,
 			}
 		}
 		x++

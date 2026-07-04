@@ -24,7 +24,6 @@ type previewLineCtx struct {
 
 func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 	lgStyles := new(buildLipglossStyles(args.th, view.ModeNormal))
-	lgStyles.clearBackground()
 	tuiStyles := buildTUIStyles(lgStyles)
 	hlLipgloss := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)

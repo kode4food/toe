@@ -74,7 +74,7 @@ func shellModule(model ui.Model) command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "editor.shell",
+				Key: "shell",
 				Get: func(e *view.Editor) (string, error) {
 					return config.FormatStringSlice(e.Options().Shell), nil
 				},

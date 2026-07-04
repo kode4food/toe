@@ -66,7 +66,7 @@ func configModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			editorBoolOption("editor.mouse",
+			editorBoolOption("mouse",
 				func(e *view.Editor) bool {
 					return e.Options().Mouse
 				},
@@ -74,7 +74,7 @@ func configModule(r *command.Registry) command.Module {
 					e.Options().Mouse = v
 				},
 			),
-			editorBoolOption("editor.middle-click-paste",
+			editorBoolOption("middle-click-paste",
 				func(e *view.Editor) bool {
 					return e.Options().MiddleClickPaste
 				},
@@ -82,7 +82,7 @@ func configModule(r *command.Registry) command.Module {
 					e.Options().MiddleClickPaste = v
 				},
 			),
-			editorBoolOption("editor.insecure",
+			editorBoolOption("insecure",
 				func(e *view.Editor) bool {
 					return e.Options().Insecure
 				},
@@ -90,7 +90,7 @@ func configModule(r *command.Registry) command.Module {
 					e.Options().Insecure = v
 				},
 			),
-			editorBoolOption("editor.editor-config",
+			editorBoolOption("editor-config",
 				func(e *view.Editor) bool {
 					return e.Options().EditorConfig
 				},
@@ -98,7 +98,7 @@ func configModule(r *command.Registry) command.Module {
 					e.Options().EditorConfig = v
 				},
 			),
-			editorBoolOption("editor.auto-session",
+			editorBoolOption("auto-session",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSession
 				},
@@ -107,7 +107,7 @@ func configModule(r *command.Registry) command.Module {
 				},
 			),
 			{
-				Key: "editor.default-line-ending",
+				Key: "default-line-ending",
 				Get: func(e *view.Editor) (string, error) {
 					switch e.Options().DefaultLineEnding {
 					case core.LineEndingLF:
@@ -127,23 +127,23 @@ func configModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			cursorShapeOption("editor.cursor-shape.normal", "NOR",
+			cursorShapeOption("cursor-shape.normal", "NOR",
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Normal = v
 				},
 			),
-			cursorShapeOption("editor.cursor-shape.select", "SEL",
+			cursorShapeOption("cursor-shape.select", "SEL",
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Select = v
 				},
 			),
-			cursorShapeOption("editor.cursor-shape.insert", "INS",
+			cursorShapeOption("cursor-shape.insert", "INS",
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Insert = v
 				},
 			),
 			{
-				Key: "editor.statusline.separator",
+				Key: "statusline.separator",
 				Get: func(e *view.Editor) (string, error) {
 					return e.Options().StatusLineSeparator(), nil
 				},
@@ -152,17 +152,17 @@ func configModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			statuslineModeOption("editor.statusline.mode.normal", "normal",
+			statuslineModeOption("statusline.mode.normal", "normal",
 				func(o *view.Options, s string) {
 					o.StatusLine.Mode.Normal = s
 				},
 			),
-			statuslineModeOption("editor.statusline.mode.insert", "insert",
+			statuslineModeOption("statusline.mode.insert", "insert",
 				func(o *view.Options, s string) {
 					o.StatusLine.Mode.Insert = s
 				},
 			),
-			statuslineModeOption("editor.statusline.mode.select", "select",
+			statuslineModeOption("statusline.mode.select", "select",
 				func(o *view.Options, s string) {
 					o.StatusLine.Mode.Select = s
 				},

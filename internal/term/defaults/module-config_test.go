@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const configOptionBoolKey = "editor.atomic-save"
+const configOptionBoolKey = "atomic-save"
 
 func TestConfigOption(t *testing.T) {
 	t.Run("set then get round-trips", func(t *testing.T) {
@@ -124,11 +124,11 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 func TestConfigOptions(t *testing.T) {
 	boolCases := []string{
-		"editor.mouse",
-		"editor.middle-click-paste",
-		"editor.insecure",
-		"editor.editor-config",
-		"editor.auto-session",
+		"mouse",
+		"middle-click-paste",
+		"insecure",
+		"editor-config",
+		"auto-session",
 	}
 	for _, key := range boolCases {
 		t.Run("toggle "+key, func(t *testing.T) {
@@ -140,61 +140,61 @@ func TestConfigOptions(t *testing.T) {
 
 	t.Run("get/set default-line-ending", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.default-line-ending lf")
-		res := runCmdArgs(t, km, e, "get_option", "editor.default-line-ending")
+		runCmdArgs(t, km, e, "set_option", "default-line-ending lf")
+		res := runCmdArgs(t, km, e, "get_option", "default-line-ending")
 		assert.Equal(t, "lf", res.Message)
 	})
 
 	t.Run("get/set statusline separator", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.statusline.separator |")
-		res := runCmdArgs(t, km, e, "get_option", "editor.statusline.separator")
+		runCmdArgs(t, km, e, "set_option", "statusline.separator |")
+		res := runCmdArgs(t, km, e, "get_option", "statusline.separator")
 		assert.Equal(t, "|", res.Message)
 	})
 
 	t.Run("get/set statusline mode names", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", `editor.statusline.mode.normal NOR`)
+		runCmdArgs(t, km, e, "set_option", `statusline.mode.normal NOR`)
 		res := runCmdArgs(t,
-			km, e, "get_option", "editor.statusline.mode.normal")
+			km, e, "get_option", "statusline.mode.normal")
 		assert.Equal(t, "NOR", res.Message)
 	})
 
 	t.Run("get/set statusline mode insert", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.statusline.mode.insert INS")
+		runCmdArgs(t, km, e, "set_option", "statusline.mode.insert INS")
 		res := runCmdArgs(t,
-			km, e, "get_option", "editor.statusline.mode.insert")
+			km, e, "get_option", "statusline.mode.insert")
 		assert.Equal(t, "INS", res.Message)
 	})
 
 	t.Run("get/set statusline mode select", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.statusline.mode.select SEL")
+		runCmdArgs(t, km, e, "set_option", "statusline.mode.select SEL")
 		res := runCmdArgs(t,
-			km, e, "get_option", "editor.statusline.mode.select")
+			km, e, "get_option", "statusline.mode.select")
 		assert.Equal(t, "SEL", res.Message)
 	})
 
 	t.Run("get/set cursor-shape normal", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.cursor-shape.normal bar")
-		res := runCmdArgs(t, km, e, "get_option", "editor.cursor-shape.normal")
+		runCmdArgs(t, km, e, "set_option", "cursor-shape.normal bar")
+		res := runCmdArgs(t, km, e, "get_option", "cursor-shape.normal")
 		assert.Equal(t, "bar", res.Message)
 	})
 
 	t.Run("get/set cursor-shape select", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		runCmdArgs(t,
-			km, e, "set_option", "editor.cursor-shape.select underline")
-		res := runCmdArgs(t, km, e, "get_option", "editor.cursor-shape.select")
+			km, e, "set_option", "cursor-shape.select underline")
+		res := runCmdArgs(t, km, e, "get_option", "cursor-shape.select")
 		assert.Equal(t, "underline", res.Message)
 	})
 
 	t.Run("get/set cursor-shape insert", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.cursor-shape.insert bar")
-		res := runCmdArgs(t, km, e, "get_option", "editor.cursor-shape.insert")
+		runCmdArgs(t, km, e, "set_option", "cursor-shape.insert bar")
+		res := runCmdArgs(t, km, e, "get_option", "cursor-shape.insert")
 		assert.Equal(t, "bar", res.Message)
 	})
 
@@ -207,8 +207,8 @@ func TestConfigOptions(t *testing.T) {
 
 	t.Run("get/set default-line-ending crlf", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.default-line-ending crlf")
-		res := runCmdArgs(t, km, e, "get_option", "editor.default-line-ending")
+		runCmdArgs(t, km, e, "set_option", "default-line-ending crlf")
+		res := runCmdArgs(t, km, e, "get_option", "default-line-ending")
 		assert.Equal(t, "crlf", res.Message)
 	})
 }
@@ -268,14 +268,14 @@ func TestConfigThemeExtra(t *testing.T) {
 	t.Run("cursor-shape invalid value errors", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(
-			t, km, e, "set_option", "editor.cursor-shape.normal bogus_invalid",
+			t, km, e, "set_option", "cursor-shape.normal bogus_invalid",
 		)
 		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("get default-line-ending empty returns empty", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "get_option", "editor.default-line-ending")
+		res := runCmdArgs(t, km, e, "get_option", "default-line-ending")
 		assert.NotContains(t, res.Message, "error")
 	})
 }
@@ -284,7 +284,7 @@ func TestConfigCommands(t *testing.T) {
 	t.Run("toggle non-toggleable option errors", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(
-			t, km, e, "toggle_option", "editor.default-line-ending",
+			t, km, e, "toggle_option", "default-line-ending",
 		)
 		assert.Contains(t, res.Message, "error")
 	})

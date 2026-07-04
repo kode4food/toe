@@ -49,12 +49,12 @@ func TestDefaults(t *testing.T) {
 	t.Run("registers module options", func(t *testing.T) {
 		reg := defaultRegistry(t)
 		for _, key := range []string{
-			"editor.scrolloff",
-			"editor.search.smart-case",
-			"editor.auto-pairs",
-			"editor.shell",
-			"editor.cursorline",
-			"editor.mouse",
+			"scrolloff",
+			"search.smart-case",
+			"auto-pairs",
+			"shell",
+			"cursorline",
+			"mouse",
 			"theme",
 		} {
 			_, ok := reg.LookupOption(key)
@@ -216,12 +216,12 @@ func TestOptionCompleters(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		cmd, ok := km.ResolveCommand("get_option")
 		assert.True(t, ok)
-		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "editor.sc")
+		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "sc")
 		texts := make([]string, len(comps))
 		for i, c := range comps {
 			texts[i] = c.Text
 		}
-		assert.Contains(t, texts, "editor.scrolloff")
+		assert.Contains(t, texts, "scrolloff")
 	})
 
 	t.Run("toggle completes only bool option keys", func(t *testing.T) {
@@ -229,10 +229,10 @@ func TestOptionCompleters(t *testing.T) {
 		cmd, ok := km.ResolveCommand("toggle_option")
 		assert.True(t, ok)
 		allComps := cmd.Signature.Completer.Complete(
-			e, cmd.Signature, "editor.",
+			e, cmd.Signature, "",
 		)
 		for _, c := range allComps {
-			assert.NotEqual(t, "editor.scrolloff", c.Text)
+			assert.NotEqual(t, "scrolloff", c.Text)
 		}
 		assert.True(t, len(allComps) > 0)
 	})

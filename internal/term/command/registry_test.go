@@ -60,14 +60,14 @@ func TestRegistry(t *testing.T) {
 	t.Run("OptionKeys returns sorted option keys", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		assert.Equal(t, []string{
-			"editor.cursorline",
-			"editor.scrolloff",
+			"cursorline",
+			"scrolloff",
 		}, reg.OptionKeys())
 	})
 
 	t.Run("BoolOptionKeys returns toggleable keys", func(t *testing.T) {
 		reg := registryWithOptions(t)
-		assert.Equal(t, []string{"editor.cursorline"}, reg.BoolOptionKeys())
+		assert.Equal(t, []string{"cursorline"}, reg.BoolOptionKeys())
 	})
 
 	t.Run("OptionValues returns current values", func(t *testing.T) {
@@ -79,8 +79,8 @@ func TestRegistry(t *testing.T) {
 		values, err := reg.OptionValues(e)
 
 		assert.NoError(t, err)
-		assert.Equal(t, "true", values["editor.cursorline"])
-		assert.Equal(t, "9", values["editor.scrolloff"])
+		assert.Equal(t, "true", values["cursorline"])
+		assert.Equal(t, "9", values["scrolloff"])
 	})
 
 	t.Run("OptionValues returns get errors", func(t *testing.T) {
@@ -97,8 +97,8 @@ func TestRegistry(t *testing.T) {
 		reg := registryWithLiveOptions(t)
 
 		err := reg.ApplyOptionValues(e, map[string]string{
-			"editor.cursorline": "true",
-			"editor.scrolloff":  "7",
+			"cursorline": "true",
+			"scrolloff":  "7",
 		})
 
 		assert.NoError(t, err)
@@ -111,7 +111,7 @@ func TestRegistry(t *testing.T) {
 		reg := registryWithLiveOptions(t)
 
 		err := reg.ApplyOptionValues(e, map[string]string{
-			"editor.unknown": "true",
+			"unknown": "true",
 		})
 
 		assert.Error(t, err)
@@ -122,7 +122,7 @@ func TestRegistry(t *testing.T) {
 		reg := registryWithLiveOptions(t)
 
 		err := reg.ApplyOptionValues(e, map[string]string{
-			"editor.cursorline": "maybe",
+			"cursorline": "maybe",
 		})
 
 		assert.Error(t, err)
@@ -130,7 +130,7 @@ func TestRegistry(t *testing.T) {
 
 	t.Run("LookupOption is case-insensitive", func(t *testing.T) {
 		reg := registryWithOptions(t)
-		_, ok := reg.LookupOption(" Editor.ScrollOff ")
+		_, ok := reg.LookupOption(" ScrollOff ")
 		assert.True(t, ok)
 	})
 
@@ -143,14 +143,14 @@ func TestRegistry(t *testing.T) {
 	t.Run("OptionCompleter filters by prefix", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		completer := reg.OptionCompleter()
-		results := completer(nil, "editor.s")
+		results := completer(nil, "s")
 		assert.NotEmpty(t, results)
 	})
 
 	t.Run("BoolOptionCompleter filters by prefix", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		completer := reg.BoolOptionCompleter()
-		results := completer(nil, "editor.c")
+		results := completer(nil, "c")
 		assert.NotEmpty(t, results)
 	})
 
@@ -201,9 +201,9 @@ func registryWithOptions(t *testing.T) *command.Registry {
 	reg := command.NewRegistry(command.NewKeymaps())
 	err := reg.RegisterModule(command.Module{
 		Options: []command.Option{
-			{Key: "editor.scrolloff"},
+			{Key: "scrolloff"},
 			{
-				Key: "editor.cursorline",
+				Key: "cursorline",
 				Toggle: func(*view.Editor) (string, error) {
 					return "", nil
 				},
@@ -220,7 +220,7 @@ func registryWithLiveOptions(t *testing.T) *command.Registry {
 	err := reg.RegisterModule(command.Module{
 		Options: []command.Option{
 			{
-				Key: "editor.scrolloff",
+				Key: "scrolloff",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().ScrollOff), nil
 				},
@@ -234,7 +234,7 @@ func registryWithLiveOptions(t *testing.T) *command.Registry {
 				},
 			},
 			{
-				Key: "editor.cursorline",
+				Key: "cursorline",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.FormatBool(e.Options().Cursorline), nil
 				},
@@ -263,7 +263,7 @@ func registryWithFailingOption(t *testing.T) *command.Registry {
 	err := reg.RegisterModule(command.Module{
 		Options: []command.Option{
 			{
-				Key: "editor.bad",
+				Key: "bad",
 				Get: func(*view.Editor) (string, error) {
 					return "", assert.AnError
 				},

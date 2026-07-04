@@ -108,15 +108,15 @@ func TestMotionParagraph(t *testing.T) {
 func TestMotionOptions(t *testing.T) {
 	t.Run("get/set scrolloff", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.scrolloff 5")
-		res := runCmdArgs(t, km, e, "get_option", "editor.scrolloff")
+		runCmdArgs(t, km, e, "set_option", "scrolloff 5")
+		res := runCmdArgs(t, km, e, "get_option", "scrolloff")
 		assert.Equal(t, "5", res.Message)
 	})
 
 	t.Run("get/set scroll-lines", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", "editor.scroll-lines 3")
-		res := runCmdArgs(t, km, e, "get_option", "editor.scroll-lines")
+		runCmdArgs(t, km, e, "set_option", "scroll-lines 3")
+		res := runCmdArgs(t, km, e, "get_option", "scroll-lines")
 		assert.Equal(t, "3", res.Message)
 	})
 }

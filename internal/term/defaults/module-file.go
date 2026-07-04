@@ -42,7 +42,7 @@ func fileModule() command.Module {
 	return command.Module{
 		Commands: cmds,
 		Options: []command.Option{
-			editorBoolOption("editor.insert-final-newline",
+			editorBoolOption("insert-final-newline",
 				func(e *view.Editor) bool {
 					return e.Options().InsertFinalNewline
 				},
@@ -50,7 +50,7 @@ func fileModule() command.Module {
 					e.Options().InsertFinalNewline = v
 				},
 			),
-			editorBoolOption("editor.trim-final-newlines",
+			editorBoolOption("trim-final-newlines",
 				func(e *view.Editor) bool {
 					return e.Options().TrimFinalNewlines
 				},
@@ -58,7 +58,7 @@ func fileModule() command.Module {
 					e.Options().TrimFinalNewlines = v
 				},
 			),
-			editorBoolOption("editor.trim-trailing-whitespace",
+			editorBoolOption("trim-trailing-whitespace",
 				func(e *view.Editor) bool {
 					return e.Options().TrimTrailingWS
 				},

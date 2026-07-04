@@ -95,7 +95,7 @@ func TestConfigCommands(t *testing.T) {
 
 		_ = runTypable(
 			newTestModel(t, e),
-			"set editor.text-width 72",
+			"set text-width 72",
 		)
 
 		assert.Equal(t, 72, *e.Options().TextWidth)
@@ -106,7 +106,7 @@ func TestConfigCommands(t *testing.T) {
 
 		_ = runTypable(
 			newTestModel(t, e),
-			"set editor.soft-wrap.wrap-indicator '» '",
+			"set soft-wrap.wrap-indicator '» '",
 		)
 
 		assert.Equal(t, "» ", *e.Options().SoftWrap.WrapIndicator)
@@ -116,8 +116,8 @@ func TestConfigCommands(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := newTestModel(t, e)
 
-		_ = runTypable(m, "set editor.rulers [80, 120]")
-		_ = runTypable(m, `set editor.shell ["bash", "--norc", "-c"]`)
+		_ = runTypable(m, "set rulers [80, 120]")
+		_ = runTypable(m, `set shell ["bash", "--norc", "-c"]`)
 
 		assert.Equal(t, []int{80, 120}, e.Options().Rulers)
 		assert.Equal(t, []string{"bash", "--norc", "-c"}, e.Options().Shell)
@@ -128,7 +128,7 @@ func TestConfigCommands(t *testing.T) {
 
 		_ = runTypable(
 			newTestModel(t, e),
-			"toggle editor.soft-wrap.enable",
+			"toggle soft-wrap.enable",
 		)
 
 		assert.True(t, *e.Options().SoftWrap.Enable)

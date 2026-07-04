@@ -165,13 +165,13 @@ func TestEditTextOps(t *testing.T) {
 
 func TestEditOptions(t *testing.T) {
 	cases := []struct{ key, val string }{
-		{"editor.auto-pairs", "true"},
-		{"editor.continue-comments", "true"},
-		{"editor.auto-save", "true"},
-		{"editor.auto-save.focus-lost", "true"},
-		{"editor.auto-save.after-delay.enable", "true"},
-		{"editor.auto-save.after-delay.timeout", "1000"},
-		{"editor.atomic-save", "true"},
+		{"auto-pairs", "true"},
+		{"continue-comments", "true"},
+		{"auto-save", "true"},
+		{"auto-save.focus-lost", "true"},
+		{"auto-save.after-delay.enable", "true"},
+		{"auto-save.after-delay.timeout", "1000"},
+		{"atomic-save", "true"},
 	}
 	for _, tc := range cases {
 		t.Run("set/get "+tc.key, func(t *testing.T) {
@@ -184,19 +184,19 @@ func TestEditOptions(t *testing.T) {
 
 	t.Run("toggle auto-pairs", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "toggle_option", "editor.auto-pairs")
+		res := runCmdArgs(t, km, e, "toggle_option", "auto-pairs")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
 	t.Run("toggle continue-comments", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "toggle_option", "editor.continue-comments")
+		res := runCmdArgs(t, km, e, "toggle_option", "continue-comments")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
 	t.Run("toggle auto-save", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "toggle_option", "editor.auto-save")
+		res := runCmdArgs(t, km, e, "toggle_option", "auto-save")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 }

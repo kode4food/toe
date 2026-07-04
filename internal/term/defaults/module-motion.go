@@ -570,7 +570,7 @@ func motionModule() command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "editor.scrolloff",
+				Key: "scrolloff",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().ScrollOff), nil
 				},
@@ -584,7 +584,7 @@ func motionModule() command.Module {
 				},
 			},
 			{
-				Key: "editor.scroll-lines",
+				Key: "scroll-lines",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().ScrollLines), nil
 				},

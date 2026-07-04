@@ -309,7 +309,7 @@ func editModule() command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "editor.auto-pairs",
+				Key: "auto-pairs",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.FormatBool(e.Options().HasAutoPairs), nil
 				},
@@ -333,7 +333,7 @@ func editModule() command.Module {
 					return strconv.FormatBool(v), nil
 				},
 			},
-			editorBoolOption("editor.continue-comments",
+			editorBoolOption("continue-comments",
 				func(e *view.Editor) bool {
 					return e.Options().ContinueComments
 				},
@@ -341,7 +341,7 @@ func editModule() command.Module {
 					e.Options().ContinueComments = v
 				},
 			),
-			editorBoolOption("editor.auto-save",
+			editorBoolOption("auto-save",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSaveFocusLost
 				},
@@ -349,7 +349,7 @@ func editModule() command.Module {
 					e.Options().AutoSaveFocusLost = v
 				},
 			),
-			editorBoolOption("editor.auto-save.focus-lost",
+			editorBoolOption("auto-save.focus-lost",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSaveFocusLost
 				},
@@ -357,7 +357,7 @@ func editModule() command.Module {
 					e.Options().AutoSaveFocusLost = v
 				},
 			),
-			editorBoolOption("editor.auto-save.after-delay.enable",
+			editorBoolOption("auto-save.after-delay.enable",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSaveAfterDelay
 				},
@@ -366,7 +366,7 @@ func editModule() command.Module {
 				},
 			),
 			{
-				Key: "editor.auto-save.after-delay.timeout",
+				Key: "auto-save.after-delay.timeout",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().AutoSaveDelayTimeout), nil
 				},
@@ -379,7 +379,7 @@ func editModule() command.Module {
 					return nil
 				},
 			},
-			editorBoolOption("editor.atomic-save",
+			editorBoolOption("atomic-save",
 				func(e *view.Editor) bool {
 					return e.Options().AtomicSave
 				},

@@ -271,9 +271,9 @@ func TestFileMoveForce(t *testing.T) {
 
 func TestFileOptions(t *testing.T) {
 	for _, tc := range []struct{ key, val string }{
-		{"editor.insert-final-newline", "true"},
-		{"editor.trim-final-newlines", "true"},
-		{"editor.trim-trailing-whitespace", "true"},
+		{"insert-final-newline", "true"},
+		{"trim-final-newlines", "true"},
+		{"trim-trailing-whitespace", "true"},
 	} {
 		t.Run("toggle "+tc.key, func(t *testing.T) {
 			e, km := defaultsEnv(t, "")

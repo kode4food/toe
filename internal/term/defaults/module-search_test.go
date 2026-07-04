@@ -57,8 +57,8 @@ func TestSearch(t *testing.T) {
 
 func TestSearchOptions(t *testing.T) {
 	cases := []struct{ key, val string }{
-		{"editor.search.smart-case", "false"},
-		{"editor.search.wrap-around", "false"},
+		{"search.smart-case", "false"},
+		{"search.wrap-around", "false"},
 	}
 	for _, tc := range cases {
 		t.Run("set/get "+tc.key, func(t *testing.T) {
@@ -72,14 +72,14 @@ func TestSearchOptions(t *testing.T) {
 	t.Run("toggle smart-case", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(t,
-			km, e, "toggle_option", "editor.search.smart-case")
+			km, e, "toggle_option", "search.smart-case")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
 	t.Run("toggle wrap-around", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(t,
-			km, e, "toggle_option", "editor.search.wrap-around")
+			km, e, "toggle_option", "search.wrap-around")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 }

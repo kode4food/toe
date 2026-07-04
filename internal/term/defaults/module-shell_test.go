@@ -19,16 +19,16 @@ func TestShellCommands(t *testing.T) {
 }
 
 func TestShellOption(t *testing.T) {
-	t.Run("get editor.shell returns value", func(t *testing.T) {
+	t.Run("get shell returns value", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "get_option", "editor.shell")
+		res := runCmdArgs(t, km, e, "get_option", "shell")
 		assert.NotEmpty(t, res.Message)
 	})
 
-	t.Run("set then get editor.shell", func(t *testing.T) {
+	t.Run("set then get shell", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmdArgs(t, km, e, "set_option", `editor.shell ["bash", "-c"]`)
-		res := runCmdArgs(t, km, e, "get_option", "editor.shell")
+		runCmdArgs(t, km, e, "set_option", `shell ["bash", "-c"]`)
+		res := runCmdArgs(t, km, e, "get_option", "shell")
 		assert.Contains(t, res.Message, "bash")
 	})
 }

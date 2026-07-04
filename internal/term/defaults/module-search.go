@@ -120,7 +120,7 @@ func searchModule(model ui.Model) command.Module {
 			},
 		},
 		Options: []command.Option{
-			editorBoolOption("editor.search.smart-case",
+			editorBoolOption("search.smart-case",
 				func(e *view.Editor) bool {
 					return e.Options().SearchSmartCase
 				},
@@ -128,7 +128,7 @@ func searchModule(model ui.Model) command.Module {
 					e.Options().SearchSmartCase = v
 				},
 			),
-			editorBoolOption("editor.search.wrap-around",
+			editorBoolOption("search.wrap-around",
 				func(e *view.Editor) bool {
 					return e.Options().SearchWrapAround
 				},

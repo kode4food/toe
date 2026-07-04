@@ -88,15 +88,15 @@ func TestViewNavigation(t *testing.T) {
 
 func TestViewOptions(t *testing.T) {
 	cases := []struct{ key, val string }{
-		{"editor.line-number", "absolute"},
-		{"editor.cursorline", "true"},
-		{"editor.cursorcolumn", "true"},
-		{"editor.text-width", "72"},
-		{"editor.soft-wrap.enable", "true"},
-		{"editor.soft-wrap.max-wrap", "10"},
-		{"editor.soft-wrap.max-indent-retain", "20"},
-		{"editor.soft-wrap.wrap-at-text-width", "true"},
-		{"editor.bufferline", "always"},
+		{"line-number", "absolute"},
+		{"cursorline", "true"},
+		{"cursorcolumn", "true"},
+		{"text-width", "72"},
+		{"soft-wrap.enable", "true"},
+		{"soft-wrap.max-wrap", "10"},
+		{"soft-wrap.max-indent-retain", "20"},
+		{"soft-wrap.wrap-at-text-width", "true"},
+		{"bufferline", "always"},
 	}
 	for _, tc := range cases {
 		t.Run("set/get "+tc.key, func(t *testing.T) {
@@ -109,13 +109,13 @@ func TestViewOptions(t *testing.T) {
 
 	t.Run("toggle cursorline", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "toggle_option", "editor.cursorline")
+		res := runCmdArgs(t, km, e, "toggle_option", "cursorline")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
 	t.Run("toggle soft-wrap.enable", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "toggle_option", "editor.soft-wrap.enable")
+		res := runCmdArgs(t, km, e, "toggle_option", "soft-wrap.enable")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 }
@@ -131,13 +131,13 @@ func TestViewWonly(t *testing.T) {
 
 func TestViewOptionsExtra(t *testing.T) {
 	cases := []struct{ key, val string }{
-		{"editor.rulers", "[80, 100]"},
-		{"editor.whitespace.render", "all"},
-		{"editor.indent-guides.render", "true"},
-		{"editor.indent-guides.skip-levels", "2"},
-		{"editor.indent-guides.character", `"│"`},
-		{"editor.gutters.line-numbers.min-width", "3"},
-		{"editor.soft-wrap.wrap-indicator", `"↩"`},
+		{"rulers", "[80, 100]"},
+		{"whitespace.render", "all"},
+		{"indent-guides.render", "true"},
+		{"indent-guides.skip-levels", "2"},
+		{"indent-guides.character", `"│"`},
+		{"gutters.line-numbers.min-width", "3"},
+		{"soft-wrap.wrap-indicator", `"↩"`},
 	}
 	for _, tc := range cases {
 		t.Run("set/get "+tc.key, func(t *testing.T) {
@@ -151,14 +151,14 @@ func TestViewOptionsExtra(t *testing.T) {
 	t.Run("toggle indent-guides.render", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(t,
-			km, e, "toggle_option", "editor.indent-guides.render")
+			km, e, "toggle_option", "indent-guides.render")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
 	t.Run("toggle soft-wrap.wrap-at-text-width", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
 		res := runCmdArgs(
-			t, km, e, "toggle_option", "editor.soft-wrap.wrap-at-text-width",
+			t, km, e, "toggle_option", "soft-wrap.wrap-at-text-width",
 		)
 		assert.Contains(t, res.Message, "is now set to")
 	})
@@ -167,13 +167,13 @@ func TestViewOptionsExtra(t *testing.T) {
 func TestNullableIntDefault(t *testing.T) {
 	t.Run("get text-width returns default unset", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "get_option", "editor.text-width")
+		res := runCmdArgs(t, km, e, "get_option", "text-width")
 		assert.NotEmpty(t, res.Message)
 	})
 
 	t.Run("set invalid text-width reports error", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		res := runCmdArgs(t, km, e, "set_option", "editor.text-width bad")
+		res := runCmdArgs(t, km, e, "set_option", "text-width bad")
 		assert.NotEmpty(t, res.Message)
 	})
 }

@@ -377,7 +377,7 @@ func viewModule() command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "editor.line-number",
+				Key: "line-number",
 				Get: func(e *view.Editor) (string, error) {
 					return string(e.Options().LineNumber), nil
 				},
@@ -390,7 +390,7 @@ func viewModule() command.Module {
 					return nil
 				},
 			},
-			editorBoolOption("editor.cursorline",
+			editorBoolOption("cursorline",
 				func(e *view.Editor) bool {
 					return e.Options().Cursorline
 				},
@@ -398,7 +398,7 @@ func viewModule() command.Module {
 					e.Options().Cursorline = v
 				},
 			),
-			editorBoolOption("editor.cursorcolumn",
+			editorBoolOption("cursorcolumn",
 				func(e *view.Editor) bool {
 					return e.Options().Cursorcolumn
 				},
@@ -406,7 +406,7 @@ func viewModule() command.Module {
 					e.Options().Cursorcolumn = v
 				},
 			),
-			editorNullableIntOption("editor.text-width",
+			editorNullableIntOption("text-width",
 				language.DefaultTextWidth,
 				func(e *view.Editor) *int {
 					return e.Options().TextWidth
@@ -415,7 +415,7 @@ func viewModule() command.Module {
 					e.Options().TextWidth = v
 				},
 			),
-			editorBoolOption("editor.soft-wrap.enable",
+			editorBoolOption("soft-wrap.enable",
 				func(e *view.Editor) bool {
 					sw := e.Options().SoftWrap.Enable
 					return sw != nil && *sw
@@ -424,7 +424,7 @@ func viewModule() command.Module {
 					e.Options().SoftWrap.Enable = &v
 				},
 			),
-			editorNullableIntOption("editor.soft-wrap.max-wrap",
+			editorNullableIntOption("soft-wrap.max-wrap",
 				language.DefaultMaxWrap,
 				func(e *view.Editor) *int {
 					return e.Options().SoftWrap.MaxWrap
@@ -433,7 +433,7 @@ func viewModule() command.Module {
 					e.Options().SoftWrap.MaxWrap = v
 				},
 			),
-			editorNullableIntOption("editor.soft-wrap.max-indent-retain",
+			editorNullableIntOption("soft-wrap.max-indent-retain",
 				language.DefaultMaxIndentRetain,
 				func(e *view.Editor) *int {
 					return e.Options().SoftWrap.MaxIndentRetain
@@ -443,7 +443,7 @@ func viewModule() command.Module {
 				},
 			),
 			{
-				Key: "editor.soft-wrap.wrap-indicator",
+				Key: "soft-wrap.wrap-indicator",
 				Get: func(e *view.Editor) (string, error) {
 					wi := language.DefaultWrapIndicator
 					if e.Options().SoftWrap.WrapIndicator != nil {
@@ -460,7 +460,7 @@ func viewModule() command.Module {
 					return nil
 				},
 			},
-			editorBoolOption("editor.soft-wrap.wrap-at-text-width",
+			editorBoolOption("soft-wrap.wrap-at-text-width",
 				func(e *view.Editor) bool {
 					v := e.Options().SoftWrap.WrapAtTextWidth
 					return v != nil && *v
@@ -470,7 +470,7 @@ func viewModule() command.Module {
 				},
 			),
 			{
-				Key: "editor.rulers",
+				Key: "rulers",
 				Get: func(e *view.Editor) (string, error) {
 					return config.FormatIntSlice(e.Options().Rulers), nil
 				},
@@ -484,7 +484,7 @@ func viewModule() command.Module {
 				},
 			},
 			{
-				Key: "editor.bufferline",
+				Key: "bufferline",
 				Get: func(e *view.Editor) (string, error) {
 					return string(e.Options().BufferLine), nil
 				},
@@ -498,7 +498,7 @@ func viewModule() command.Module {
 				},
 			},
 			{
-				Key: "editor.whitespace.render",
+				Key: "whitespace.render",
 				Get: func(e *view.Editor) (string, error) {
 					rv := view.WhitespaceRenderNone
 					if e.Options().Whitespace.Render.Default != nil {
@@ -521,7 +521,7 @@ func viewModule() command.Module {
 					return nil
 				},
 			},
-			editorBoolOption("editor.indent-guides.render",
+			editorBoolOption("indent-guides.render",
 				func(e *view.Editor) bool {
 					return e.Options().IndentGuides.Render
 				},
@@ -530,7 +530,7 @@ func viewModule() command.Module {
 				},
 			),
 			{
-				Key: "editor.indent-guides.skip-levels",
+				Key: "indent-guides.skip-levels",
 				Get: func(e *view.Editor) (string, error) {
 					n := e.Options().IndentGuides.GetSkipLevels()
 					return strconv.Itoa(n), nil
@@ -545,7 +545,7 @@ func viewModule() command.Module {
 				},
 			},
 			{
-				Key: "editor.indent-guides.character",
+				Key: "indent-guides.character",
 				Get: func(e *view.Editor) (string, error) {
 					return string(e.Options().IndentGuides.CharRune()), nil
 				},
@@ -562,7 +562,7 @@ func viewModule() command.Module {
 				},
 			},
 			{
-				Key: "editor.gutters.line-numbers.min-width",
+				Key: "gutters.line-numbers.min-width",
 				Get: func(e *view.Editor) (string, error) {
 					n := e.Options().Gutters.LineNumberMinWidth()
 					return strconv.Itoa(n), nil

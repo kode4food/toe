@@ -54,6 +54,12 @@ func (r *renderedRow) writeFillToBuffer(args rowFillArgs) {
 	if args.width <= 0 {
 		return
 	}
+	// fg-only spaces are invisible over the base fill; skip them
+	s := args.style
+	if s.BgColor().IsReset() && s.Modifier() == 0 &&
+		s.UnderlineStyle() == tui.UnderlineReset {
+		return
+	}
 	args.buf.FillRange(args.x, args.y, args.width, args.style)
 }
 

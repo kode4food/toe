@@ -22,7 +22,7 @@ func TestSession(t *testing.T) {
 	})
 
 	t.Run("no session file returns not found", func(t *testing.T) {
-		e, km := defaultsEnv(t, "")
+		e, km := sessionEditorInDir(t, t.TempDir())
 		res := runCmd(t, km, e, "restore_session")
 		assert.Equal(t, "no session found", res.Message)
 	})
@@ -69,6 +69,9 @@ func sessionEditorInDir(
 	t *testing.T, dir string,
 ) (*view.Editor, *command.Keymaps) {
 	t.Helper()
+	// pin the workspace root so FindWorkspace can't escape the temp dir to
+	// an ancestor with a stray .git/.toe marker (e.g. /tmp/.git)
+	assert.NoError(t, os.MkdirAll(filepath.Join(dir, ".git"), 0o755))
 	km := command.NewKeymaps()
 	e := view.NewEditor(dir)
 	e.ResizeTree(80, 24)

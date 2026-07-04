@@ -131,6 +131,30 @@ func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	v.SetOffset(offset)
 }
 
+// ScrollViewColumns scrolls a specific view horizontally by n columns, not
+// moving the cursor. Used for mouse-wheel events; the view remains
+// free-scrolled until that view receives cursor-moving keyboard input.
+// Scrolling right is clamped so the widest visible line keeps at least one
+// column on screen
+func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
+	doc, ok := e.Document(v.DocID())
+	if !ok {
+		return
+	}
+	if n < 1 {
+		n = 1
+	}
+	offset := v.Offset()
+	if left {
+		offset.HorizontalOffset = max(offset.HorizontalOffset-n, 0)
+	} else {
+		want := offset.HorizontalOffset + n
+		maxOff := max(maxVisibleColumns(doc, v, want+1)-1, 0)
+		offset.HorizontalOffset = min(want, maxOff)
+	}
+	v.SetOffset(offset)
+}
+
 func alignViewImpl(e *view.Editor, relOffset int) {
 	v, ok := e.FocusedView()
 	if !ok {
@@ -271,6 +295,37 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 		newSel := clampSelectionToLine(text, sel, topChar)
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
+}
+
+// maxVisibleColumns returns the visual width of the widest line currently
+// visible in v, measuring each line over at most its first limit chars.
+// Every char is at least one column wide (tabs expand, wide runes count
+// double), so the result is exact whenever it is below limit; zero-width
+// combining chars can under-measure a truncated line, which only clamps a
+// bit early
+func maxVisibleColumns(doc *view.Document, v *view.View, limit int) int {
+	text := doc.Text()
+	anchorLine, err := text.CharToLine(v.Offset().Anchor)
+	if err != nil {
+		anchorLine = 0
+	}
+	h := max(v.Area().Height-1, 1)
+	lastLine := min(anchorLine+h, text.LenLines())
+	tabW := doc.TabWidth()
+	w := 0
+	for l := anchorLine; l < lastLine; l++ {
+		start, err := text.LineToChar(l)
+		if err != nil {
+			continue
+		}
+		end, err := text.LineEndCharIndex(l)
+		if err != nil {
+			continue
+		}
+		end = min(end, start+limit)
+		w = max(w, view.VisualColumn(text, start, end, tabW))
+	}
+	return w
 }
 
 func clampSelectionToLine(

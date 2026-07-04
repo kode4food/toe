@@ -883,3 +883,46 @@ func TestScrollViewLines(t *testing.T) {
 		assert.GreaterOrEqual(t, v.Offset().Anchor, before)
 	})
 }
+
+func TestScrollViewColumns(t *testing.T) {
+	t.Run("scrolls view right", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcdefghij\n")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		action.ScrollViewColumns(e, v, 3, false)
+
+		assert.Equal(t, 3, v.Offset().HorizontalOffset)
+	})
+
+	t.Run("right clamps to widest visible line", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcdefghij\n")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		action.ScrollViewColumns(e, v, 100, false)
+
+		assert.Equal(t, 9, v.Offset().HorizontalOffset)
+	})
+
+	t.Run("left clamps to zero", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcdefghij\n")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		action.ScrollViewColumns(e, v, 3, false)
+
+		action.ScrollViewColumns(e, v, 100, true)
+
+		assert.Equal(t, 0, v.Offset().HorizontalOffset)
+	})
+
+	t.Run("zero columns clamps to one", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcdefghij\n")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		action.ScrollViewColumns(e, v, 0, false)
+
+		assert.Equal(t, 1, v.Offset().HorizontalOffset)
+	})
+}

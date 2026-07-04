@@ -21,7 +21,7 @@ type (
 		fsSel core.Selection
 		// area is the screen rectangle assigned by the layout engine
 		area Area
-		// vcol memoizes the last visualColumn result; Rope is immutable
+		// vcol memoizes the last VisualColumn result; Rope is immutable
 		// and comparable, so equal fields mean an identical result
 		vcol vcolCache
 	}
@@ -233,13 +233,13 @@ func (v *View) EnsureCursorVisibleHorizontal(
 	v.offset.HorizontalOffset = h
 }
 
-// cachedVisualColumn returns visualColumn(doc, from, to, tabW), reusing the
+// cachedVisualColumn returns VisualColumn(doc, from, to, tabW), reusing the
 // last result when doc, to, and tabW are unchanged since the previous call
 func (v *View) cachedVisualColumn(doc core.Rope, from, to, tabW int) int {
 	if v.vcol.doc == doc && v.vcol.cursor == to && v.vcol.tabW == tabW {
 		return v.vcol.col
 	}
-	col := visualColumn(doc, from, to, tabW)
+	col := VisualColumn(doc, from, to, tabW)
 	v.vcol = vcolCache{doc: doc, cursor: to, tabW: tabW, col: col}
 	return col
 }
@@ -441,10 +441,10 @@ func visualRowsToCursor(
 	return rows, true
 }
 
-// visualColumn returns the display column of position to, measured from from,
+// VisualColumn returns the display column of position to, measured from from,
 // expanding tabs to the next tabW boundary. It folds rune widths over the
 // range directly, allocating no intermediate substring
-func visualColumn(doc core.Rope, from, to, tabW int) int {
+func VisualColumn(doc core.Rope, from, to, tabW int) int {
 	col := 0
 	doc.ForEachSegment(from, to, func(seg string) {
 		for _, ch := range seg {

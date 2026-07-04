@@ -175,6 +175,25 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.Equal(t, before, v.Offset().Anchor)
 	})
 
+	t.Run("horizontal wheel scrolls columns", func(t *testing.T) {
+		e := editorWithText(t, strings.Repeat("x", 60)+"\nshort")
+		m := renderedModel(e)
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		m2, _ := m.Update(tea.MouseWheelMsg{
+			X: 5, Y: 0, Button: tea.MouseWheelRight,
+		})
+		hOff := v.Offset().HorizontalOffset
+		assert.Greater(t, hOff, 0)
+
+		// The cursor is at column 0; without free scroll the next render
+		// would snap the offset back to it
+		_ = m2.(ui.Model).View()
+		assert.Equal(t, hOff, v.Offset().HorizontalOffset)
+	})
+
 	t.Run("wheel outside all panes does not scroll", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
 		e.SetViewHeight(6)

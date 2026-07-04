@@ -171,9 +171,13 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	if !softWrap {
 		hWidth = contentW
 	}
-	v.EnsureCursorVisibleHorizontal(
-		text, sel, hWidth, format.TabWidth, opts.ScrollOff,
-	)
+	// Free scroll decouples the horizontal offset from the cursor too, but
+	// soft-wrap must still reset the offset to 0
+	if !v.FreeScroll() || softWrap {
+		v.EnsureCursorVisibleHorizontal(
+			text, sel, hWidth, format.TabWidth, opts.ScrollOff,
+		)
+	}
 	hOff := v.Offset().HorizontalOffset
 
 	// --- pre-converted TUI styles and layout constants ---

@@ -186,13 +186,20 @@ func (e *EditorComponent) HandleEvent(
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
-		up := msg.Button == tea.MouseWheelUp
 		r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 		v, ok := r.contentViewAt(msg.X, msg.Y)
 		if !ok {
 			return consumed(), nil
 		}
-		act.ScrollViewLines(cx.Editor, v, cx.Editor.Options().ScrollLines, up)
+		n := cx.Editor.Options().ScrollLines
+		switch msg.Button {
+		case tea.MouseWheelLeft, tea.MouseWheelRight:
+			left := msg.Button == tea.MouseWheelLeft
+			act.ScrollViewColumns(cx.Editor, v, n, left)
+		default:
+			up := msg.Button == tea.MouseWheelUp
+			act.ScrollViewLines(cx.Editor, v, n, up)
+		}
 		if doc, ok := cx.Editor.Document(v.DocID()); ok {
 			v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
 		}

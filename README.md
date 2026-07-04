@@ -1,6 +1,6 @@
 # Thom's Own Editor (toe) <img src="./docs/img/logo.png" align="right" height="100"/>
 
-![Build Status](https://github.com/kode4food/toe/actions/workflows/build.yml/badge.svg) [![Code Coverage](https://qlty.sh/gh/kode4food/projects/toe/coverage.svg)](https://qlty.sh/gh/kode4food/projects/toe) [![Maintainability](https://qlty.sh/gh/kode4food/projects/toe/maintainability.svg)](https://qlty.sh/gh/kode4food/projects/toe) [![GitHub](https://img.shields.io/github/license/kode4food/toe)](https://github.com/kode4food/toe/blob/main/LICENSE)
+![Build Status](https://github.com/kode4food/toe/actions/workflows/build.yml/badge.svg) [![Code Coverage](https://qlty.sh/gh/kode4food/projects/toe/coverage.svg)](https://qlty.sh/gh/kode4food/projects/toe) [![Maintainability](https://qlty.sh/gh/kode4food/projects/toe/maintainability.svg)](https://qlty.sh/gh/kode4food/projects/toe) [![GitHub](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/kode4food/toe/blob/main/LICENSE)
 
 **toe** is a modal terminal editor for Go development. toe edits Go projects, not the universe.
 

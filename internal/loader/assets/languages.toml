@@ -46,7 +46,6 @@ comment-token = "//"
 block-comment-tokens = [{ start = "/*", end = "*/" }]
 language-servers = ["gopls"]
 auto-format = true
-formatter = { command = "gofmt" }
 indent = { tab-width = 4, unit = "\t" }
 
 [[language]]

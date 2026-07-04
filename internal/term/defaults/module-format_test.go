@@ -328,6 +328,18 @@ func writeAutoFormatConfig(t *testing.T, fmtToml string) {
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
+func writeAutoFormatLSPConfig(t *testing.T) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	content := "[[language]]\nname = \"text\"\nauto-format = true\n"
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(content), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
 func TestAutoFormat(t *testing.T) {
 	t.Run("auto-format runs formatter on write", func(t *testing.T) {
 		writeAutoFormatConfig(t, `command = "tr"
@@ -337,5 +349,14 @@ args = ["a-z", "A-Z"]`)
 		res := runCmdArgs(t, km, e, "write", out)
 		assert.Contains(t, res.Message, "written")
 		assert.Equal(t, "HELLO\n", docText(t, e))
+	})
+
+	t.Run("auto-format falls through to lsp", func(t *testing.T) {
+		writeAutoFormatLSPConfig(t)
+		e, km := defaultsEnv(t, "hello\n")
+		e.SetLanguageServerController(&stubController{})
+		out := filepath.Join(e.Cwd(), "out.txt")
+		res := runCmdArgs(t, km, e, "write", out)
+		assert.Contains(t, res.Message, "written")
 	})
 }

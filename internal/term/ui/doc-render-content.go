@@ -181,8 +181,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
-	cursorlinePriBg := lipglossToTUIStyle(lgStyles.cursorlinePrim).BgColor()
-	cursorlineSecBg := lipglossToTUIStyle(lgStyles.cursorlineSec).BgColor()
+	cursorlinePriBg := tuiStyles.cursorlinePrim.BgColor()
+	cursorlineSecBg := tuiStyles.cursorlineSec.BgColor()
 	contentX := x + gutterW
 	gutter := gutterSpec{
 		layout:          gutterLayout,
@@ -296,9 +296,11 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		}
 
 		_, isAnyCursorLine := cursorLines[lineNum]
-		isPrimaryCursorLine := cursorlineEnabled && lineNum == cursorLine
-		isSecondaryCursorLine := cursorlineEnabled &&
-			!isPrimaryCursorLine && isAnyCursorLine
+		paintCursorline := cursorlineEnabled && isAnyCursorLine
+		cursorlineBg := cursorlineSecBg
+		if lineNum == cursorLine {
+			cursorlineBg = cursorlinePriBg
+		}
 
 		if gutter.width > 0 {
 			var num int
@@ -394,14 +396,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				if i > 0 && gutter.width > 0 {
 					gutter.renderBlank(buf, x, bufRow)
 				}
-				switch {
-				case isPrimaryCursorLine:
+				if paintCursorline {
 					buf.PatchBgRange(
-						contentX, bufRow, format.ViewportWidth, cursorlinePriBg,
-					)
-				case isSecondaryCursorLine:
-					buf.PatchBgRange(
-						contentX, bufRow, format.ViewportWidth, cursorlineSecBg,
+						contentX, bufRow, format.ViewportWidth, cursorlineBg,
 					)
 				}
 				if i == 0 {
@@ -426,14 +423,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				bufRow++
 			}
 		} else {
-			switch {
-			case isPrimaryCursorLine:
+			if paintCursorline {
 				buf.PatchBgRange(
-					contentX, bufRow, format.ViewportWidth, cursorlinePriBg,
-				)
-			case isSecondaryCursorLine:
-				buf.PatchBgRange(
-					contentX, bufRow, format.ViewportWidth, cursorlineSecBg,
+					contentX, bufRow, format.ViewportWidth, cursorlineBg,
 				)
 			}
 			contentRows[0].writeToBuffer(rowWriteArgs{

@@ -23,14 +23,12 @@ type (
 		text              lipgloss.Style
 		line              lipgloss.Style
 		lineSelected      lipgloss.Style
-		selection         lipgloss.Style
 		selectionPrim     lipgloss.Style
 		cursor            lipgloss.Style
 		cursorPrim        lipgloss.Style
 		cursorlinePrim    lipgloss.Style
 		cursorlineSec     lipgloss.Style
 		cursorcolumnPrim  lipgloss.Style
-		cursorcolumnSec   lipgloss.Style
 		whitespace        lipgloss.Style
 		indentGuide       lipgloss.Style
 		ruler             lipgloss.Style
@@ -53,14 +51,12 @@ type (
 
 	tuiStyles struct {
 		text              tui.Style
-		selection         tui.Style
 		selectionPrim     tui.Style
 		cursor            tui.Style
 		cursorPrim        tui.Style
 		cursorlinePrim    tui.Style
 		cursorlineSec     tui.Style
 		cursorcolumnPrim  tui.Style
-		cursorcolumnSec   tui.Style
 		whitespace        tui.Style
 		indentGuide       tui.Style
 		inlayHint         tui.Style
@@ -148,14 +144,12 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 		text:              th.Get("ui.text"),
 		line:              th.Get("ui.linenr"),
 		lineSelected:      th.Get("ui.linenr.selected"),
-		selection:         sel,
 		selectionPrim:     sel,
 		cursor:            cur,
 		cursorPrim:        curPrim,
 		cursorlinePrim:    cl,
 		cursorlineSec:     cl,
 		cursorcolumnPrim:  cl,
-		cursorcolumnSec:   cl,
 		whitespace:        th.Get("ui.virtual.whitespace"),
 		indentGuide:       th.Get("ui.virtual.indent-guide"),
 		ruler:             th.Get("ui.virtual.ruler"),
@@ -197,17 +191,12 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 	}
 	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
 		st.cursorlineSec = next
-		st.cursorcolumnSec = next
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
 		st.cursorcolumnPrim = next
-		st.cursorcolumnSec = next
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
 		st.cursorcolumnPrim = next
-	}
-	if next, ok := th.TryGetExact("ui.cursorcolumn.secondary"); ok {
-		st.cursorcolumnSec = next
 	}
 	if next, ok := th.TryGet("ui.search.match"); ok {
 		st.searchMatch = next
@@ -218,14 +207,12 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 func buildTUIStyles(s *lipglossStyles) *tuiStyles {
 	return &tuiStyles{
 		text:              lipglossToTUIStyle(s.text),
-		selection:         lipglossToTUIStyle(s.selection),
 		selectionPrim:     lipglossToTUIStyle(s.selectionPrim),
 		cursor:            lipglossToTUIStyle(s.cursor),
 		cursorPrim:        lipglossToTUIStyle(s.cursorPrim),
 		cursorlinePrim:    lipglossToTUIStyle(s.cursorlinePrim),
 		cursorlineSec:     lipglossToTUIStyle(s.cursorlineSec),
 		cursorcolumnPrim:  lipglossToTUIStyle(s.cursorcolumnPrim),
-		cursorcolumnSec:   lipglossToTUIStyle(s.cursorcolumnSec),
 		whitespace:        lipglossToTUIStyle(s.whitespace),
 		indentGuide:       lipglossToTUIStyle(s.indentGuide),
 		inlayHint:         lipglossToTUIStyle(s.inlayHint),

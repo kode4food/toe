@@ -140,6 +140,7 @@ func (r *rowRender) rows() []renderedRow {
 
 	wsRender := r.ws.Render
 	wsChars := r.ws.Characters
+	ts := r.tuiStyles
 	annIdx := 0
 	writeAnnotations := func(pos int) {
 		for annIdx < len(r.annotations) && r.annotations[annIdx].pos == pos {
@@ -171,7 +172,6 @@ func (r *rowRender) rows() []renderedRow {
 		})
 		col += width
 		selAt := r.selectionAt(pos)
-		ts := r.tuiStyles
 		var colorStyle tui.Style
 		colorOK := false
 		if r.docColors != nil {
@@ -191,10 +191,6 @@ func (r *rowRender) rows() []renderedRow {
 			))
 		case selAt.cursor && !selAt.primary:
 			writeRendered(rendered, width, ts.cursor)
-		case selAt.selected && selAt.selPrimary:
-			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.selectionPrim,
-			))
 		case selAt.selected:
 			writeRendered(rendered, width, overlaySelStyle(
 				r.baseStyleAt(pos, glyph), ts.selectionPrim,
@@ -254,10 +250,9 @@ func (r *rowRender) rows() []renderedRow {
 }
 
 type selectionAtRes struct {
-	cursor     bool
-	primary    bool
-	selected   bool
-	selPrimary bool
+	cursor   bool
+	primary  bool
+	selected bool
 }
 
 func (r *rowRender) selectionAt(pos int) selectionAtRes {
@@ -266,7 +261,7 @@ func (r *rowRender) selectionAt(pos int) selectionAtRes {
 			return selectionAtRes{cursor: true, primary: sp.primary}
 		}
 		if pos >= sp.from && pos < sp.to {
-			return selectionAtRes{selected: true, selPrimary: sp.primary}
+			return selectionAtRes{selected: true}
 		}
 	}
 	return selectionAtRes{}

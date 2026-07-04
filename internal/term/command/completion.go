@@ -32,14 +32,7 @@ func PositionalCompleter(c ...CompletionFunc) Completer {
 // StaticCompleter completes from a fixed string set
 func StaticCompleter(items ...string) CompletionFunc {
 	return func(_ *view.Editor, input string) []Completion {
-		out := make([]Completion, 0, len(items))
-		for _, item := range items {
-			if !strings.HasPrefix(item, input) {
-				continue
-			}
-			out = append(out, Completion{Text: item})
-		}
-		return out
+		return matchPrefix(items, input)
 	}
 }
 
@@ -122,6 +115,17 @@ func offsetCompletions(items []Completion, offset int) []Completion {
 	for _, item := range items {
 		item.Start += offset
 		out = append(out, item)
+	}
+	return out
+}
+
+// matchPrefix returns a completion for every item that has input as a prefix
+func matchPrefix(items []string, input string) []Completion {
+	out := make([]Completion, 0, len(items))
+	for _, item := range items {
+		if strings.HasPrefix(item, input) {
+			out = append(out, Completion{Text: item})
+		}
 	}
 	return out
 }

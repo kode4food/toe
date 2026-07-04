@@ -137,13 +137,13 @@ func (r *Registry) BoolOptionKeys() []string {
 
 func (r *Registry) OptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, input string) []Completion {
-		return StaticCompleter(r.OptionKeys()...)(nil, input)
+		return matchPrefix(r.OptionKeys(), input)
 	}
 }
 
 func (r *Registry) BoolOptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, input string) []Completion {
-		return StaticCompleter(r.BoolOptionKeys()...)(nil, input)
+		return matchPrefix(r.BoolOptionKeys(), input)
 	}
 }
 

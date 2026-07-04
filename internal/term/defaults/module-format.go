@@ -162,6 +162,16 @@ func runLSPFormatter(
 	return command.Result{}
 }
 
+func autoFormat(e *view.Editor) {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	if language.LoadLanguage(doc.Lang()).AutoFormat {
+		runFormatter(e)
+	}
+}
+
 func runFormatSelection(
 	e *view.Editor, _ *command.Args,
 ) command.Result {

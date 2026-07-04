@@ -132,6 +132,7 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	if formatter, ok := decodeFormatter(m["formatter"]); ok {
 		l.Formatter = &formatter
 	}
+	l.AutoFormat, _ = m["auto-format"].(bool)
 	if soft, ok := m["soft-wrap"].(map[string]any); ok {
 		l.SoftWrap = decodeSoftWrap(soft)
 	}

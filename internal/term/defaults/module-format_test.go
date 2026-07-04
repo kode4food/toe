@@ -311,3 +311,31 @@ func writeFormatterConfig(t *testing.T, fmtToml string) {
 	))
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
+
+func writeAutoFormatConfig(t *testing.T, fmtToml string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	content := fmt.Sprintf(
+		"[[language]]\nname = \"text\"\nauto-format = true\n"+
+			"[language.formatter]\n%s\n",
+		fmtToml,
+	)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(content), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func TestAutoFormat(t *testing.T) {
+	t.Run("auto-format runs formatter on write", func(t *testing.T) {
+		writeAutoFormatConfig(t, `command = "tr"
+args = ["a-z", "A-Z"]`)
+		e, km := defaultsEnv(t, "hello\n")
+		out := filepath.Join(e.Cwd(), "out.txt")
+		res := runCmdArgs(t, km, e, "write", out)
+		assert.Contains(t, res.Message, "written")
+		assert.Equal(t, "HELLO\n", docText(t, e))
+	})
+}

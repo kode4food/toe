@@ -31,6 +31,7 @@ type (
 		BlockCommentTokens []core.BlockCommentToken
 		Indent             Indent
 		AutoPairs          AutoPairConfig
+		AutoFormat         bool `toml:"auto-format"`
 		Formatter          *Formatter
 		SoftWrap           SoftWrap `toml:"soft-wrap"`
 		Rulers             []int    `toml:"rulers"`

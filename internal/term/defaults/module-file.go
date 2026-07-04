@@ -92,6 +92,7 @@ func fileWriteCmds() []command.Command {
 				"(:write some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
+				autoFormat(e)
 				if err := e.Save(); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
@@ -113,6 +114,7 @@ func fileWriteCmds() []command.Command {
 				"some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
+				autoFormat(e)
 				_ = e.Save()
 				if doc, ok := e.FocusedDocument(); ok {
 					return command.Result{
@@ -158,6 +160,7 @@ func fileWriteCmds() []command.Command {
 				"view. Accepts an optional path (:wq some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
+				autoFormat(e)
 				if err := e.Save(); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
@@ -172,6 +175,7 @@ func fileWriteCmds() []command.Command {
 				"forcefully. Accepts an optional path (:wq! some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
+				autoFormat(e)
 				_ = e.Save()
 				return command.Result{Signal: command.SignalQuit}
 			},
@@ -214,6 +218,7 @@ func fileWriteCmds() []command.Command {
 				"some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
+				autoFormat(e)
 				if err := e.Save(); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
@@ -230,6 +235,7 @@ func fileWriteCmds() []command.Command {
 				"optional path (:write-buffer-close! some/path.txt)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
+				autoFormat(e)
 				_ = e.Save()
 				e.CloseCurrentView()
 				return command.Result{Message: "written and closed"}
@@ -250,6 +256,7 @@ func fileManageCmds() []command.Command {
 				if !ok || !doc.Modified() {
 					return command.Result{Message: "no changes to write"}
 				}
+				autoFormat(e)
 				if err := e.Save(); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}

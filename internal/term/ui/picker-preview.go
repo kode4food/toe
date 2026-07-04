@@ -82,9 +82,7 @@ func (p *previewCtx) renderDocInto(
 	p.picker.previewScroll = r.scroll
 }
 
-func (p *previewCtx) renderFileInto(
-	buf *tui.Buffer, x, y int, path string,
-) {
+func (p *previewCtx) renderFileInto(buf *tui.Buffer, x, y int, path string) {
 	p.picker.previewCache.path(p.syntax, path).renderInto(p, buf, x, y)
 }
 
@@ -132,9 +130,7 @@ func (p *previewDirEntry) renderInto(
 	}
 }
 
-func (p noPreviewEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, x, y int,
-) {
+func (p noPreviewEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, x, y int) {
 	ctx.blitPlaceholderInto(buf, x, y, string(p))
 }
 

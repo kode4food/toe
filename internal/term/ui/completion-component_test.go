@@ -1524,15 +1524,11 @@ func (c *completionController) ResolveDocumentLink(
 	return link, nil
 }
 
-func (c *completionController) FormatDocument(
-	*view.Document, view.Id,
-) error {
+func (c *completionController) FormatDocument(*view.Document, view.Id) error {
 	return nil
 }
 
-func (c *completionController) FormatSelection(
-	*view.Document, view.Id,
-) error {
+func (c *completionController) FormatSelection(*view.Document, view.Id) error {
 	return nil
 }
 

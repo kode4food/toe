@@ -38,9 +38,7 @@ func (p *PromptComponent) changeCompletion(dir int) {
 	p.compSel = &idx
 }
 
-func (p *PromptComponent) renderCompletions(
-	w, h int, cx *Context,
-) string {
+func (p *PromptComponent) renderCompletions(w, h int, cx *Context) string {
 	if len(p.comps) == 0 || w <= 4 || h <= 3 {
 		return ""
 	}

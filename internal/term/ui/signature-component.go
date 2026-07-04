@@ -70,9 +70,7 @@ func (s *signatureHelpComponent) Render(int, int, *Context) string {
 	return ""
 }
 
-func (s *signatureHelpComponent) Cursor(
-	int, int, *Context,
-) (tea.Cursor, bool) {
+func (s *signatureHelpComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
@@ -195,9 +193,7 @@ func (s *signatureHelpComponent) refresh(
 	return nil
 }
 
-func (s *signatureHelpComponent) dismiss(
-	comp *Compositor, _ *Context,
-) tea.Cmd {
+func (s *signatureHelpComponent) dismiss(comp *Compositor, _ *Context) tea.Cmd {
 	s.ec.signatureHidden = &s.call
 	comp.Pop()
 	return nil

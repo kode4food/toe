@@ -19,9 +19,7 @@ type progressKind struct {
 	Kind string `json:"kind"`
 }
 
-func (s *Session) createProgress(
-	server string, token protocol.ProgressToken,
-) {
+func (s *Session) createProgress(server string, token protocol.ProgressToken) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.progressForServer(server)[progressTokenKey(token)] = progressEntry{}
@@ -124,9 +122,7 @@ func (s *Session) lookupProgress(
 	return entry, ok
 }
 
-func (s *Session) clearProgress(
-	server string, token protocol.ProgressToken,
-) {
+func (s *Session) clearProgress(server string, token protocol.ProgressToken) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.progress[server], progressTokenKey(token))
@@ -135,9 +131,7 @@ func (s *Session) clearProgress(
 	}
 }
 
-func (s *Session) progressForServer(
-	server string,
-) map[string]progressEntry {
+func (s *Session) progressForServer(server string) map[string]progressEntry {
 	entries := s.progress[server]
 	if entries == nil {
 		entries = map[string]progressEntry{}

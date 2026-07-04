@@ -66,9 +66,7 @@ func writePickerPromptRow(
 	buf.SetString(x+pickerPadX+ql+1+gap, y, count, countTUI)
 }
 
-func writePickerHeader(
-	buf *tui.Buffer, x, y, w int, p *Picker, cx *Context,
-) {
+func writePickerHeader(buf *tui.Buffer, x, y, w int, p *Picker, cx *Context) {
 	cols := p.source.Columns()
 	widths := pickerColumnWidths(p, max(w-pickerMarkerW, 0))
 	colTUI := lipglossToTUIStyle(pickerCountStyle(cx))
@@ -84,9 +82,7 @@ func writePickerHeader(
 	}
 }
 
-func writePickerItem(
-	buf *tui.Buffer, x, y, w int, args *pickerItemRender,
-) {
+func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 	p := args.p
 	m := args.match
 	cx := args.cx

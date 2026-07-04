@@ -30,9 +30,7 @@ type (
 	}
 )
 
-func (c *Client) DidChangeWatchedFile(
-	ctx context.Context, path string,
-) error {
+func (c *Client) DidChangeWatchedFile(ctx context.Context, path string) error {
 	return c.DidChangeWatchedFiles(ctx, []fileWatchEvent{{
 		path: path,
 		kind: protocol.FileChangeTypeChanged,
@@ -102,9 +100,7 @@ func (s *Session) unregisterCapability(
 	}
 }
 
-func (s *Session) registerWatches(
-	server, id string, watches []fileWatch,
-) {
+func (s *Session) registerWatches(server, id string, watches []fileWatch) {
 	s.mu.Lock()
 	if s.watches[server] == nil {
 		s.watches[server] = map[string][]fileWatch{}
@@ -323,9 +319,7 @@ func fileWatchFor(pattern protocol.GlobPattern) (fileWatch, bool) {
 	}
 }
 
-func relativePatternBase(
-	base protocol.RelativePatternBaseURI,
-) (string, bool) {
+func relativePatternBase(base protocol.RelativePatternBaseURI) (string, bool) {
 	switch b := base.(type) {
 	case protocol.URI:
 		return uri.URI(b).FsPath(), true
@@ -339,9 +333,7 @@ func relativePatternBase(
 	}
 }
 
-func watchRegistrationsMatch(
-	regs map[string][]fileWatch, path string,
-) bool {
+func watchRegistrationsMatch(regs map[string][]fileWatch, path string) bool {
 	for _, watches := range regs {
 		for _, watch := range watches {
 			if watch.match(path) {
@@ -389,9 +381,7 @@ func matchWatchPattern(pattern, path string) bool {
 	return false
 }
 
-func fileWatchChangeType(
-	op fsnotify.Op,
-) (protocol.FileChangeType, bool) {
+func fileWatchChangeType(op fsnotify.Op) (protocol.FileChangeType, bool) {
 	switch {
 	case op&(fsnotify.Remove|fsnotify.Rename) != 0:
 		return protocol.FileChangeTypeDeleted, true

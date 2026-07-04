@@ -34,9 +34,7 @@ type (
 	}
 )
 
-func newLSPLocationPicker(
-	e *view.Editor, locations []view.Location,
-) *Picker {
+func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
 	return NewPicker(e, &lspLocationSource{
 		pickerMeta: pickerMeta{
 			title:   "LSP locations",
@@ -57,9 +55,7 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 	})
 }
 
-func newLSPCodeActionPicker(
-	e *view.Editor, actions []view.CodeAction,
-) *Picker {
+func newLSPCodeActionPicker(e *view.Editor, actions []view.CodeAction) *Picker {
 	return NewPicker(e, &lspCodeActionSource{
 		pickerMeta: pickerMeta{
 			title:   "LSP code actions",

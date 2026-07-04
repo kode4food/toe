@@ -154,9 +154,7 @@ func run(args []string, out io.Writer) error {
 	return err
 }
 
-func changedOptionValues(
-	base, values map[string]string,
-) map[string]string {
+func changedOptionValues(base, values map[string]string) map[string]string {
 	out := map[string]string{}
 	for key, value := range values {
 		if base[key] != value {

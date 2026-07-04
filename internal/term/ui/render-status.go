@@ -427,9 +427,7 @@ func clearStyleBackground(st lipgloss.Style) lipgloss.Style {
 	return st.Background(lipgloss.NoColor{})
 }
 
-func inheritStyleBackground(
-	st lipgloss.Style, bg color.Color,
-) lipgloss.Style {
+func inheritStyleBackground(st lipgloss.Style, bg color.Color) lipgloss.Style {
 	if lipglossColorToTUI(bg).IsReset() {
 		return st
 	}

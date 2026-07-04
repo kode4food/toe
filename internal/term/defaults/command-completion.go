@@ -42,9 +42,7 @@ func fileSig(sig command.Signature) command.Signature {
 	return sig
 }
 
-func staticSig(
-	sig command.Signature, items ...string,
-) command.Signature {
+func staticSig(sig command.Signature, items ...string) command.Signature {
 	sig.Completer = command.PositionalCompleter(
 		command.StaticCompleter(items...),
 	)

@@ -225,9 +225,7 @@ func (dc *docRenderCache) ensureLineIndex(
 	return idx
 }
 
-func (dc *docRenderCache) ensureLinePrefix(
-	args linePrefixArgs,
-) linePrefixScan {
+func (dc *docRenderCache) ensureLinePrefix(args linePrefixArgs) linePrefixScan {
 	if dc.prefixRev != args.rev || dc.prefixHOff != args.hOff ||
 		dc.prefixTabW != args.tabW {
 		dc.prefixRev = args.rev

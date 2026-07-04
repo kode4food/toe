@@ -105,15 +105,11 @@ func loadIgnoreFiles(
 	return ignores
 }
 
-func appendIgnore(
-	ignores []pickerIgnore, dir, name string,
-) []pickerIgnore {
+func appendIgnore(ignores []pickerIgnore, dir, name string) []pickerIgnore {
 	return appendIgnorePath(ignores, dir, filepath.Join(dir, name))
 }
 
-func appendIgnorePath(
-	ignores []pickerIgnore, dir, path string,
-) []pickerIgnore {
+func appendIgnorePath(ignores []pickerIgnore, dir, path string) []pickerIgnore {
 	if ig, ok := compileIgnore(path); ok {
 		return append(ignores, pickerIgnore{dir: dir, ig: ig})
 	}

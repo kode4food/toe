@@ -159,9 +159,7 @@ func (c *completionComponent) handleAction(
 	}
 }
 
-func (c *completionComponent) Cursor(
-	int, int, *Context,
-) (tea.Cursor, bool) {
+func (c *completionComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
@@ -663,9 +661,7 @@ func filterCompletionItems(
 	return out
 }
 
-func completionMatchScore(
-	item view.CompletionItem, query string,
-) (int, bool) {
+func completionMatchScore(item view.CompletionItem, query string) (int, bool) {
 	text := item.Filter
 	if text == "" {
 		text = item.Label

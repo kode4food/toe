@@ -118,9 +118,7 @@ type lineCommentRes struct {
 	margin    int
 }
 
-func findLineComment(
-	token string, text Rope, lines []int,
-) lineCommentRes {
+func findLineComment(token string, text Rope, lines []int) lineCommentRes {
 	res := lineCommentRes{
 		commented: true,
 		minCol:    math.MaxInt,

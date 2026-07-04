@@ -293,9 +293,7 @@ func (s Signature) checkPositionalCount(n int) error {
 	}
 }
 
-func (a *Args) readToken(
-	t *Tokenizer,
-) (Token, bool, error) {
+func (a *Args) readToken(t *Tokenizer) (Token, bool, error) {
 	if a.signature.RawAfter > 0 && a.Len() >= a.signature.RawAfter {
 		a.onlyPositionals = true
 		tok, ok := t.Rest()

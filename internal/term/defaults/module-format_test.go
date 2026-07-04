@@ -73,9 +73,7 @@ func (s *stubController) ApplyCompletion(
 	return nil
 }
 
-func (s *stubController) Hover(
-	_ *view.Document, _ view.Id,
-) (string, error) {
+func (s *stubController) Hover(_ *view.Document, _ view.Id) (string, error) {
 	return "", nil
 }
 

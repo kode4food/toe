@@ -50,9 +50,7 @@ func decodeLanguageServerFeatures(value any) []ServerFeatures {
 	return out
 }
 
-func decodeLanguageServerFeature(
-	value any,
-) (ServerFeatures, bool) {
+func decodeLanguageServerFeature(value any) (ServerFeatures, bool) {
 	switch v := value.(type) {
 	case string:
 		return ServerFeatures{Name: v}, true

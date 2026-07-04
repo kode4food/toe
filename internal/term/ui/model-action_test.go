@@ -469,15 +469,11 @@ func (c *locationController) ResolveDocumentLink(
 	return link, nil
 }
 
-func (c *locationController) FormatDocument(
-	*view.Document, view.Id,
-) error {
+func (c *locationController) FormatDocument(*view.Document, view.Id) error {
 	return nil
 }
 
-func (c *locationController) FormatSelection(
-	*view.Document, view.Id,
-) error {
+func (c *locationController) FormatSelection(*view.Document, view.Id) error {
 	return nil
 }
 

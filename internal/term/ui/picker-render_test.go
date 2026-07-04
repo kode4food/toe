@@ -237,9 +237,7 @@ func (columnPickerSource) Load(
 	}}, nil, func() {}
 }
 
-func (columnPickerSource) Match(
-	string, ui.PickerItem,
-) (int, []int, bool) {
+func (columnPickerSource) Match(string, ui.PickerItem) (int, []int, bool) {
 	return 1, nil, true
 }
 

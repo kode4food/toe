@@ -72,9 +72,7 @@ func (s *Session) FormatSelection(doc *view.Document, viewID view.Id) error {
 	return s.formatDocument(doc, new(sel.Primary()))
 }
 
-func (s *Session) formatDocument(
-	doc *view.Document, r *core.Range,
-) error {
+func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
 	if s.editor == nil {
 		return ErrNoLanguageServer
 	}

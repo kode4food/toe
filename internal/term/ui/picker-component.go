@@ -89,9 +89,7 @@ func (p *PickerComponent) Cursor(
 	return tea.Cursor{}, false
 }
 
-func (p *PickerComponent) handleFeed(
-	msg pickerFeedMsg,
-) (EventResult, tea.Cmd) {
+func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 	p.state.addItems(msg.items)
 	if msg.feed != nil {
 		return consumed(), drainPickerFeed(msg.feed, msg.done)
@@ -167,9 +165,7 @@ func (p *PickerComponent) handleMouseWheel(
 	return consumed(), nil
 }
 
-func (p *PickerComponent) scrollListByWheel(
-	button tea.MouseButton, step int,
-) {
+func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {
 	switch button {
 	case tea.MouseWheelUp:
 		p.state.scrollBy(-step)

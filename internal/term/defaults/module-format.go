@@ -172,9 +172,7 @@ func autoFormat(e *view.Editor) {
 	}
 }
 
-func runFormatSelection(
-	e *view.Editor, _ *command.Args,
-) command.Result {
+func runFormatSelection(e *view.Editor, _ *command.Args) command.Result {
 	doc, ok := e.FocusedDocument()
 	if !ok {
 		return command.Result{}

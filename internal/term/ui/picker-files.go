@@ -202,9 +202,7 @@ func (w *pickerWalker) walkDir(dir string) bool {
 	return true
 }
 
-func (w *pickerWalker) walkEntry(
-	path, rel string, entry os.DirEntry,
-) bool {
+func (w *pickerWalker) walkEntry(path, rel string, entry os.DirEntry) bool {
 	follow, err := pickerFollowEntry(path, w.rootReal, entry)
 	if err != nil || (!follow.dir && !follow.file) {
 		return true

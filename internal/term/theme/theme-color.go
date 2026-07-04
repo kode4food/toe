@@ -103,9 +103,7 @@ func parseUnderlineStyle(value any) (lipgloss.Underline, error) {
 	}
 }
 
-func parseModifiers(
-	style lipgloss.Style, value any,
-) (lipgloss.Style, error) {
+func parseModifiers(style lipgloss.Style, value any) (lipgloss.Style, error) {
 	values, ok := value.([]any)
 	if !ok {
 		return style, fmt.Errorf("%w: modifiers should be an array",

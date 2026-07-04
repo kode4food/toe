@@ -238,9 +238,7 @@ func (s *Session) textDocumentEdit(
 	return workspaceDocumentEdit{doc: doc, changes: changes}, nil
 }
 
-func (s *Session) applyWorkspaceDocumentEdit(
-	edit workspaceDocumentEdit,
-) error {
+func (s *Session) applyWorkspaceDocumentEdit(edit workspaceDocumentEdit) error {
 	if len(edit.changes) == 0 {
 		return nil
 	}

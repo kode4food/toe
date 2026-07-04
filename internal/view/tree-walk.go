@@ -17,9 +17,7 @@ func (t *Tree) WalkSeparators(fn func(Separator)) {
 	}
 }
 
-func (t *Tree) findChild(
-	id Id, children []Id, dir Direction,
-) (Id, bool) {
+func (t *Tree) findChild(id Id, children []Id, dir Direction) (Id, bool) {
 	var childID Id
 	switch dir {
 	case DirectionUp, DirectionLeft:

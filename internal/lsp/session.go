@@ -179,9 +179,7 @@ func (h *clientHandler) ShowDocument(
 	return &protocol.ShowDocumentResult{Success: false}, nil
 }
 
-func (h *clientHandler) Telemetry(
-	context.Context, protocol.LSPAny,
-) error {
+func (h *clientHandler) Telemetry(context.Context, protocol.LSPAny) error {
 	return nil
 }
 
@@ -508,9 +506,7 @@ func (s *Session) notify(
 	}
 }
 
-func (s *Session) notifyChange(
-	doc *view.Document, change view.DocumentChange,
-) {
+func (s *Session) notifyChange(doc *view.Document, change view.DocumentChange) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return
@@ -562,9 +558,7 @@ func (s *Session) client(name string) (*Client, bool) {
 	return client, ok
 }
 
-func (s *Session) setDocumentServers(
-	id view.DocumentId, names []string,
-) {
+func (s *Session) setDocumentServers(id view.DocumentId, names []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.docs[id] = names

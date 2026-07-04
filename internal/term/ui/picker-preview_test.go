@@ -50,9 +50,7 @@ func (p *pathPickerSource) Load(
 	return items, nil, func() {}
 }
 
-func (p *pathPickerSource) Match(
-	_ string, _ ui.PickerItem,
-) (int, []int, bool) {
+func (p *pathPickerSource) Match(_ string, _ ui.PickerItem) (int, []int, bool) {
 	return 0, nil, true
 }
 

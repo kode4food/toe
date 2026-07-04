@@ -178,9 +178,7 @@ func mapSelections(
 	return out
 }
 
-func mapSelection(
-	sel core.Selection, cs core.ChangeSet, n int,
-) core.Selection {
+func mapSelection(sel core.Selection, cs core.ChangeSet, n int) core.Selection {
 	out, err := sel.Map(cs)
 	if err == nil {
 		return out

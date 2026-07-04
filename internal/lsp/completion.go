@@ -500,9 +500,7 @@ func completionTransaction(
 	return tx, nil
 }
 
-func completionPrimaryRange(
-	text core.Rope, from, to, cursor int,
-) (int, int) {
+func completionPrimaryRange(text core.Rope, from, to, cursor int) (int, int) {
 	wordFrom, wordTo := findCompletionRange(text, cursor)
 	if from <= wordFrom && to >= wordTo {
 		return from, to

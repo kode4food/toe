@@ -705,9 +705,7 @@ func (s *processServer) SignatureHelp(
 	}, nil
 }
 
-func signatureHelpFromJSON(
-	text string,
-) (*protocol.SignatureHelp, error) {
+func signatureHelpFromJSON(text string) (*protocol.SignatureHelp, error) {
 	var help protocol.SignatureHelp
 	if err := protocol.Unmarshal([]byte(text), &help); err != nil {
 		return nil, err

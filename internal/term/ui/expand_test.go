@@ -431,9 +431,7 @@ func TestExpandVariables(t *testing.T) {
 	})
 }
 
-func expandVar(
-	t *testing.T, e *view.Editor, name string,
-) (string, error) {
+func expandVar(t *testing.T, e *view.Editor, name string) (string, error) {
 	t.Helper()
 	expand := ui.NewTokenExpander(e)
 	return expand(command.Token{

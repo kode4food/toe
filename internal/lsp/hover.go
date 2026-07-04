@@ -35,9 +35,7 @@ func (c *Client) Hover(
 }
 
 // Hover returns the hover text for the symbol at the cursor position
-func (s *Session) Hover(
-	doc *view.Document, viewID view.Id,
-) (string, error) {
+func (s *Session) Hover(doc *view.Document, viewID view.Id) (string, error) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return "", nil

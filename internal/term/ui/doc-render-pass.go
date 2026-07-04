@@ -151,10 +151,9 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
 		}
 	}
-	if !v.FreeScroll() {
-		v.EnsureCursorVisible(
-			text, doc.SelectionFor(v.ID()), contentH, scrolloff, vf,
-		)
+	sel := doc.SelectionFor(v.ID())
+	if !v.SyncFreeScroll(doc.Revision(), sel) {
+		v.EnsureCursorVisible(text, sel, contentH, scrolloff, vf)
 	}
 	r.renderContent(renderContentArgs{
 		doc:     doc,

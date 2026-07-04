@@ -81,9 +81,6 @@ func (e *EditorComponent) HandleEvent(
 		return consumed(), nil
 
 	case tea.KeyPressMsg:
-		if v, ok := cx.Editor.FocusedView(); ok {
-			v.SetFreeScroll(false)
-		}
 		result, cmd := e.handleKeyPress(msg, cx)
 		if shown := bufferlineVisible(cx); shown != e.bufferlineShown {
 			e.bufferlineShown = shown
@@ -196,7 +193,9 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		act.ScrollViewLines(cx.Editor, v, cx.Editor.Options().ScrollLines, up)
-		v.SetFreeScroll(true)
+		if doc, ok := cx.Editor.Document(v.DocID()); ok {
+			v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
+		}
 		return consumed(), nil
 	}
 	return ignored(), nil

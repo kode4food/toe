@@ -40,7 +40,7 @@ func TestWorkspace(t *testing.T) {
 		})
 
 		assert.True(t, ok)
-		assert.Equal(t, project, ws.Path)
+		assert.Equal(t, project, ws)
 	})
 
 	t.Run("workspace fallback", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestWorkspace(t *testing.T) {
 		})
 
 		assert.True(t, ok)
-		assert.Equal(t, root, ws.Path)
+		assert.Equal(t, root, ws)
 	})
 
 	t.Run("cwd workspace without marker", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestWorkspace(t *testing.T) {
 		})
 
 		assert.True(t, ok)
-		assert.Equal(t, root, ws.Path)
+		assert.Equal(t, root, ws)
 	})
 
 	t.Run("root dir stop keeps marker", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestWorkspace(t *testing.T) {
 		})
 
 		assert.True(t, ok)
-		assert.Equal(t, pkg, ws.Path)
+		assert.Equal(t, pkg, ws)
 	})
 
 	t.Run("required root patterns", func(t *testing.T) {
@@ -159,7 +159,7 @@ func TestWorkspaceEmptyPath(t *testing.T) {
 		})
 
 		assert.True(t, ok)
-		assert.Equal(t, root, ws.Path)
+		assert.Equal(t, root, ws)
 	})
 
 	t.Run("relative filepath resolved via cwd", func(t *testing.T) {

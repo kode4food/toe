@@ -434,7 +434,11 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	v.jumps.Restore(entries, head)
 	args.tree.nodes[args.id] = &treeNode{parent: args.parent, view: v}
 	if doc, ok := args.restore.documents[args.docID]; ok {
-		doc.SetSelectionFor(args.id, args.session.Selection.selection())
+		sel := args.session.Selection.selection()
+		doc.SetSelectionFor(args.id, sel)
+		if v.freeScroll {
+			v.BeginFreeScroll(doc.Revision(), sel)
+		}
 	}
 	if args.session.Focused {
 		args.restore.focus = args.id

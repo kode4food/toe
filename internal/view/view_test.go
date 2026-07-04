@@ -267,14 +267,46 @@ func TestViewArea(t *testing.T) {
 }
 
 func TestViewFreeScroll(t *testing.T) {
-	t.Run("set and get round-trips", func(t *testing.T) {
+	t.Run("begin and end round-trips", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		assert.False(t, v.FreeScroll())
-		v.SetFreeScroll(true)
+		v.BeginFreeScroll(0, core.PointSelection(0))
 		assert.True(t, v.FreeScroll())
-		v.SetFreeScroll(false)
+		v.EndFreeScroll()
 		assert.False(t, v.FreeScroll())
+	})
+
+	t.Run("sync keeps unchanged state", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		sel := core.PointSelection(0)
+		v.BeginFreeScroll(1, sel)
+		assert.True(t, v.SyncFreeScroll(1, sel))
+		assert.True(t, v.FreeScroll())
+	})
+
+	t.Run("sync ends on selection change", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		v.BeginFreeScroll(1, core.PointSelection(0))
+		assert.False(t, v.SyncFreeScroll(1, core.PointSelection(3)))
+		assert.False(t, v.FreeScroll())
+	})
+
+	t.Run("sync ends on revision change", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		sel := core.PointSelection(0)
+		v.BeginFreeScroll(1, sel)
+		assert.False(t, v.SyncFreeScroll(2, sel))
+		assert.False(t, v.FreeScroll())
+	})
+
+	t.Run("sync inactive reports false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		assert.False(t, v.SyncFreeScroll(0, core.PointSelection(0)))
 	})
 }
 

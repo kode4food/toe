@@ -15,6 +15,10 @@ type (
 		mode       Mode
 		jumps      JumpList
 		freeScroll bool
+		// fsRev and fsSel snapshot the document state when free scroll
+		// began; free scroll ends when either changes
+		fsRev int
+		fsSel core.Selection
 		// area is the screen rectangle assigned by the layout engine
 		area Area
 		// vcol memoizes the last visualColumn result; Rope is immutable
@@ -125,9 +129,32 @@ func (v *View) FreeScroll() bool {
 	return v.freeScroll
 }
 
-// SetFreeScroll sets whether the viewport is decoupled from the cursor
-func (v *View) SetFreeScroll(b bool) {
-	v.freeScroll = b
+// BeginFreeScroll decouples the viewport from the cursor. The revision and
+// selection snapshot the document state at this moment; free scroll ends
+// automatically when either changes
+func (v *View) BeginFreeScroll(rev int, sel core.Selection) {
+	v.freeScroll = true
+	v.fsRev = rev
+	v.fsSel = sel
+}
+
+// EndFreeScroll re-couples the viewport to the cursor
+func (v *View) EndFreeScroll() {
+	v.freeScroll = false
+	v.fsSel = core.Selection{}
+}
+
+// SyncFreeScroll ends free scroll when the document revision or selection
+// changed since BeginFreeScroll, and reports whether it remains active
+func (v *View) SyncFreeScroll(rev int, sel core.Selection) bool {
+	if !v.freeScroll {
+		return false
+	}
+	if rev != v.fsRev || !sel.Equal(v.fsSel) {
+		v.EndFreeScroll()
+		return false
+	}
+	return true
 }
 
 // PushJump records a selection in the jump list

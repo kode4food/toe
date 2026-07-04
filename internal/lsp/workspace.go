@@ -6,31 +6,24 @@ import (
 	"strings"
 )
 
-type (
-	// WorkspaceRequest carries the parameters for resolving a project workspace root
-	WorkspaceRequest struct {
-		FilePath       string
-		Workspace      string
-		WorkspaceIsCWD bool
-		RootMarkers    []string
-		RootDirs       []string
-	}
-
-	// Workspace represents a resolved project workspace directory
-	Workspace struct {
-		Path string
-	}
-)
+// WorkspaceRequest carries parameters for resolving a project workspace root
+type WorkspaceRequest struct {
+	FilePath       string
+	Workspace      string
+	WorkspaceIsCWD bool
+	RootMarkers    []string
+	RootDirs       []string
+}
 
 // ResolveWorkspace locates the nearest workspace root for the given file path
-func ResolveWorkspace(req WorkspaceRequest) (Workspace, bool) {
+func ResolveWorkspace(req WorkspaceRequest) (string, bool) {
 	file, ok := workspaceFile(req.FilePath)
 	if !ok {
-		return Workspace{}, false
+		return "", false
 	}
 	workspace, ok := cleanAbs(req.Workspace)
 	if !ok || !inside(file, workspace) {
-		return Workspace{}, false
+		return "", false
 	}
 	var marked string
 	for dir := file; ; dir = filepath.Dir(dir) {
@@ -39,27 +32,28 @@ func ResolveWorkspace(req WorkspaceRequest) (Workspace, bool) {
 		}
 		if matchesRootDir(workspace, dir, req.RootDirs) {
 			if marked != "" {
-				return Workspace{Path: marked}, true
+				return marked, true
 			}
-			return Workspace{Path: workspace}, true
+			return workspace, true
 		}
 		if dir == workspace {
 			if marked != "" {
-				return Workspace{Path: marked}, true
+				return marked, true
 			}
 			if !req.WorkspaceIsCWD {
-				return Workspace{Path: workspace}, true
+				return workspace, true
 			}
-			return Workspace{}, false
+			return "", false
 		}
 		next := filepath.Dir(dir)
 		if next == dir {
-			return Workspace{}, false
+			return "", false
 		}
 	}
 }
 
-// RequiredRootFound reports whether any required root pattern matches a directory entry
+// RequiredRootFound reports whether any required root pattern matches a
+// directory entry
 func RequiredRootFound(root string, patterns []string) (bool, error) {
 	if len(patterns) == 0 {
 		return true, nil

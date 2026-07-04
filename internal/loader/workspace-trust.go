@@ -5,30 +5,23 @@ import (
 	"strings"
 )
 
-type TrustStatus int
-
-const (
-	TrustUntrusted TrustStatus = iota
-	TrustTrusted
-)
-
-func QueryWorkspaceTrust(dir string, insecure bool) TrustStatus {
+func QueryWorkspaceTrust(dir string, insecure bool) bool {
 	if insecure {
-		return TrustTrusted
+		return true
 	}
 	root, _ := FindWorkspace(dir)
 	path, ok := WorkspaceTrustFile()
 	if !ok {
-		return TrustUntrusted
+		return false
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return TrustUntrusted
+		return false
 	}
 	for line := range strings.SplitSeq(string(data), "\n") {
 		if line == root {
-			return TrustTrusted
+			return true
 		}
 	}
-	return TrustUntrusted
+	return false
 }

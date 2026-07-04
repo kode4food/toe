@@ -8,7 +8,7 @@ import (
 // Match reports whether path matches the glob pattern, expanding brace
 // alternatives and matching with both native and slash separators
 func Match(pattern, path string) bool {
-	for _, p := range ExpandBraces(pattern) {
+	for _, p := range expandBraces(pattern) {
 		if matchPath(p, filepath.ToSlash(path)) {
 			return true
 		}
@@ -19,8 +19,8 @@ func Match(pattern, path string) bool {
 	return false
 }
 
-// ExpandBraces expands brace alternatives in a glob pattern
-func ExpandBraces(pattern string) []string {
+// expandBraces expands brace alternatives in a glob pattern
+func expandBraces(pattern string) []string {
 	start := strings.Index(pattern, "{")
 	if start < 0 {
 		return []string{pattern}
@@ -35,7 +35,7 @@ func ExpandBraces(pattern string) []string {
 	alts := strings.Split(pattern[start+1:end], ",")
 	out := make([]string, 0, len(alts))
 	for _, alt := range alts {
-		out = append(out, ExpandBraces(pfx+alt+sfx)...)
+		out = append(out, expandBraces(pfx+alt+sfx)...)
 	}
 	return out
 }

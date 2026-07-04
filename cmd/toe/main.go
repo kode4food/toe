@@ -100,7 +100,7 @@ func run(args []string, out io.Writer) error {
 	workspaceTrusted := func() bool {
 		return loader.QueryWorkspaceTrust(
 			sessionRoot, editor.Options().Insecure,
-		) == loader.TrustTrusted
+		)
 	}
 	if editor.Options().AutoSession && len(args) == 0 && workspaceTrusted() {
 		values, ok, err := editor.RestoreSession(sessionPath)

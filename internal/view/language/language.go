@@ -180,7 +180,7 @@ func LoadLanguagesForWorkspace(
 		return Languages{}, false
 	}
 	paths := []string{global}
-	if loader.QueryWorkspaceTrust(dir, false) == loader.TrustTrusted {
+	if loader.QueryWorkspaceTrust(dir, false) {
 		paths = append(paths, workspace)
 	}
 	merged, ok := loader.LoadMergedTOMLWithBase(base, paths, 3)

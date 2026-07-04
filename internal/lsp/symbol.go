@@ -9,13 +9,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type nestedSymbolAppend struct {
-	client    *Client
-	snap      DocumentSnapshot
-	out       *[]view.Symbol
-	container string
-}
-
 // DocumentSymbols requests the document symbol tree from the server
 func (c *Client) DocumentSymbols(
 	ctx context.Context, doc DocumentSnapshot,
@@ -172,37 +165,26 @@ func (s *Session) nestedSymbols(
 	client *Client, snap DocumentSnapshot, symbols []protocol.DocumentSymbol,
 ) []view.Symbol {
 	var out []view.Symbol
+	var appendSym func(container string, sym protocol.DocumentSymbol)
+	appendSym = func(container string, sym protocol.DocumentSymbol) {
+		loc, ok := s.viewLocation(client, protocol.Location{
+			URI:   snap.URI,
+			Range: sym.SelectionRange,
+		})
+		if ok {
+			out = append(out, view.Symbol{
+				Name: sym.Name, Kind: symbolKind(sym.Kind),
+				Container: container, Location: loc,
+			})
+		}
+		for _, child := range sym.Children {
+			appendSym(sym.Name, child)
+		}
+	}
 	for _, sym := range symbols {
-		s.appendNestedSymbol(&nestedSymbolAppend{
-			client: client,
-			snap:   snap,
-			out:    &out,
-		}, sym)
+		appendSym("", sym)
 	}
 	return out
-}
-
-func (s *Session) appendNestedSymbol(
-	args *nestedSymbolAppend, sym protocol.DocumentSymbol,
-) {
-	loc, ok := s.viewLocation(args.client, protocol.Location{
-		URI:   args.snap.URI,
-		Range: sym.SelectionRange,
-	})
-	if ok {
-		*args.out = append(*args.out, view.Symbol{
-			Name: sym.Name, Kind: symbolKind(sym.Kind),
-			Container: args.container, Location: loc,
-		})
-	}
-	for _, child := range sym.Children {
-		s.appendNestedSymbol(&nestedSymbolAppend{
-			client:    args.client,
-			snap:      args.snap,
-			out:       args.out,
-			container: sym.Name,
-		}, child)
-	}
 }
 
 func workspaceSymbolLocation(

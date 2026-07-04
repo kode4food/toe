@@ -362,14 +362,12 @@ func TestWorkspaceTrust(t *testing.T) {
 	err = loader.TrustWorkspace(cwd)
 	assert.NoError(t, err)
 
-	trusted := loader.QueryWorkspaceTrust(cwd, false) == loader.TrustTrusted
-	assert.True(t, trusted)
+	assert.True(t, loader.QueryWorkspaceTrust(cwd, false))
 
 	err = loader.UntrustWorkspace(cwd)
 	assert.NoError(t, err)
 
-	trusted = loader.QueryWorkspaceTrust(cwd, false) == loader.TrustTrusted
-	assert.False(t, trusted)
+	assert.False(t, loader.QueryWorkspaceTrust(cwd, false))
 }
 
 func TestTextFormat(t *testing.T) {

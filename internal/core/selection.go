@@ -58,6 +58,13 @@ func (s Selection) PrimaryIndex() int {
 	return s.primaryIndex
 }
 
+// Equal reports whether two selections have identical ranges and the same
+// primary index
+func (s Selection) Equal(other Selection) bool {
+	return s.primaryIndex == other.primaryIndex &&
+		slices.Equal(s.ranges, other.ranges)
+}
+
 func (s Selection) SetPrimaryIndex(idx int) (Selection, error) {
 	if idx < 0 || idx >= len(s.ranges) {
 		return Selection{}, fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound,

@@ -173,47 +173,12 @@ func (t *Tree) walkSepWithID(
 }
 
 func (t *Tree) walkSep(id Id, fn func(Separator)) {
-	n := t.nodes[id]
-	if n.view != nil {
-		return
-	}
-	c := n.container
-	for i, child := range c.children {
-		t.walkSep(child, fn)
-		if i >= len(c.children)-1 {
-			continue
-		}
-		cn := t.nodes[child]
-		var a Area
-		if cn.view != nil {
-			a = cn.view.Area()
-		} else {
-			a = cn.container.area
-		}
-		switch c.layout {
-		case LayoutVertical:
-			fn(Separator{
-				Layout: LayoutVertical,
-				X:      a.X + a.Width,
-				Y:      c.area.Y,
-				W:      1,
-				H:      c.area.Height,
-			})
-		case LayoutHorizontal:
-			fn(Separator{
-				Layout: LayoutHorizontal,
-				X:      c.area.X,
-				Y:      a.Y + a.Height,
-				W:      c.area.Width,
-				H:      1,
-			})
-		}
-	}
+	t.walkSepWithID(id, func(_ Id, _ int, s Separator) bool {
+		fn(s)
+		return true
+	})
 }
 
 func abs(n int) int {
-	if n < 0 {
-		return -n
-	}
-	return n
+	return max(-n, n)
 }

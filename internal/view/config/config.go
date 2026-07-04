@@ -57,7 +57,7 @@ func LoadRawConfigForWorkspace(
 	if globalRaw, ok := LoadRawConfig(global); ok {
 		insecure = decodeInsecure(globalRaw)
 	}
-	if loader.QueryWorkspaceTrust(dir, insecure) == loader.TrustTrusted {
+	if loader.QueryWorkspaceTrust(dir, insecure) {
 		paths = append(paths, workspace)
 	}
 	return loader.LoadMergedTOML(paths, 3)

@@ -51,10 +51,10 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, err)
 		second, ok := e.HSplit(secondDoc.ID())
 		assert.True(t, ok)
-		second.SetFreeScroll(true)
 		second.SetMode(view.ModeInsert)
 		secondSel := core.PointSelection(5)
 		secondDoc.SetSelectionFor(second.ID(), secondSel)
+		second.BeginFreeScroll(secondDoc.Revision(), secondSel)
 		assert.NoError(t, e.SaveSession(
 			sessionPath, map[string]string{"editor.cursorline": "true"},
 		))

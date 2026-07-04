@@ -9,24 +9,6 @@ import (
 )
 
 func TestGlob(t *testing.T) {
-	t.Run("expands braces", func(t *testing.T) {
-		assert.Equal(t,
-			[]string{"*.go", "*.mod", "*.sum"},
-			glob.ExpandBraces("*.{go,mod,sum}"),
-		)
-		assert.Equal(t,
-			[]string{
-				"cmd/a.go", "cmd/a.txt", "internal/a.go", "internal/a.txt",
-			},
-			glob.ExpandBraces("{cmd,internal}/a.{go,txt}"),
-		)
-	})
-
-	t.Run("keeps malformed braces", func(t *testing.T) {
-		assert.Equal(t, []string{"*.{go"}, glob.ExpandBraces("*.{go"))
-		assert.Equal(t, []string{"*.go"}, glob.ExpandBraces("*.go"))
-	})
-
 	t.Run("matches paths", func(t *testing.T) {
 		cases := []struct {
 			name    string

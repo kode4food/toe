@@ -720,7 +720,7 @@ func (s *Session) workspaceRoot(
 		RootMarkers:    lang.Roots,
 	})
 	if ok {
-		return workspace.Path
+		return workspace
 	}
 	if dir := filepath.Dir(doc.Path()); dir != "." {
 		return dir

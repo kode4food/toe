@@ -430,7 +430,7 @@ func TestFreeScroll(t *testing.T) {
 		assert.NoError(t, err)
 		scrolled := view.Position{Anchor: anchor}
 		v1.SetOffset(scrolled)
-		v1.SetFreeScroll(true)
+		v1.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v1.ID()))
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
 		m = sendKey(m, 'l')

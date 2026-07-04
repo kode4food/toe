@@ -76,6 +76,12 @@ func TestGlob(t *testing.T) {
 				path:    "main.go",
 				want:    false,
 			},
+			{
+				name:    "unclosed brace",
+				pattern: "*.{go",
+				path:    "main.go",
+				want:    false,
+			},
 		}
 
 		for _, tt := range cases {

@@ -6,6 +6,8 @@ title: "toe"
 
 **toe** is a modal terminal editor for Go development. toe edits Go projects, not the universe.
 
+![toe screenshot](img/screenshot.png)
+
 - Normal, insert, and selection modes
 - Multiple buffers and split views
 - Fuzzy file, buffer, and global search pickers with live preview

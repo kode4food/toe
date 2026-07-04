@@ -6,6 +6,8 @@
 
 Work in progress. Assume it will lose your edits.
 
+![toe screenshot](./docs/img/screenshot.png)
+
 ## What works
 
 - Modal editing (normal, insert, selection)

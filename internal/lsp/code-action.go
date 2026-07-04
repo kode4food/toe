@@ -168,8 +168,7 @@ func (s *Session) resolveCodeAction(
 }
 
 func (s *Session) codeActionDiagnostics(
-	doc *view.Document, r core.Range,
-	encoding protocol.PositionEncodingKind,
+	doc *view.Document, r core.Range, encoding protocol.PositionEncodingKind,
 ) []protocol.Diagnostic {
 	var out []protocol.Diagnostic
 	for _, diag := range doc.Diagnostics() {
@@ -213,9 +212,7 @@ func enabledCodeActions(
 	return out
 }
 
-func compareCodeActionItems(
-	a, b protocol.CommandOrCodeAction,
-) int {
+func compareCodeActionItems(a, b protocol.CommandOrCodeAction) int {
 	if order := cmp.Compare(
 		codeActionCategory(a), codeActionCategory(b),
 	); order != 0 {
@@ -313,11 +310,10 @@ func commandParams(command protocol.Command) *protocol.ExecuteCommandParams {
 }
 
 func protocolDiagnostic(
-	doc *view.Document, diag view.Diagnostic,
-	encoding protocol.PositionEncodingKind,
+	doc *view.Document, diag view.Diagnostic, enc protocol.PositionEncodingKind,
 ) (protocol.Diagnostic, bool) {
 	r, err := lspRange(
-		doc.Text(), core.NewRange(diag.Range.From, diag.Range.To), encoding,
+		doc.Text(), core.NewRange(diag.Range.From, diag.Range.To), enc,
 	)
 	if err != nil {
 		return protocol.Diagnostic{}, false

@@ -100,28 +100,18 @@ const (
 func (c *completionComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
-	if msg, ok := msg.(completionRefreshMsg); ok {
-		return c.handleRefreshMsg(msg, cx)
-	}
 	switch msg := msg.(type) {
+	case completionRefreshMsg:
+		return c.handleRefreshMsg(msg, cx)
 	case tea.MouseClickMsg:
 		return c.handleMouseClick(msg, cx), nil
 	case tea.MouseWheelMsg:
 		return c.handleMouseWheel(msg, cx), nil
-	}
-	key, ok := msg.(tea.KeyPressMsg)
-	if !ok {
+	case tea.KeyPressMsg:
+		return c.handleKeyPress(msg, cx)
+	default:
 		return ignored(), nil
 	}
-	k := FromTeaKey(key)
-	if name, ok := c.lookupAction(cx, k); ok {
-		return c.handleAction(name, cx), nil
-	}
-	if cx.Editor.Mode() == view.ModeInsert && k.IsTypable() {
-		act.InsertChar(cx.Editor, k.Code.Char)
-		return consumedWith(c.refresh), nil
-	}
-	return ignoredWith(popLayer), nil
 }
 
 func (c *completionComponent) Render(int, int, *Context) string {
@@ -271,6 +261,20 @@ func (c *completionComponent) moveTo(idx int) {
 	c.cursor = min(max(idx, 0), len(c.items)-1)
 	c.manual = true
 	c.ensureCursorVisible(c.visibleRows())
+}
+
+func (c *completionComponent) handleKeyPress(
+	msg tea.KeyPressMsg, cx *Context,
+) (EventResult, tea.Cmd) {
+	k := FromTeaKey(msg)
+	if name, ok := c.lookupAction(cx, k); ok {
+		return c.handleAction(name, cx), nil
+	}
+	if cx.Editor.Mode() == view.ModeInsert && k.IsTypable() {
+		act.InsertChar(cx.Editor, k.Code.Char)
+		return consumedWith(c.refresh), nil
+	}
+	return ignoredWith(popLayer), nil
 }
 
 func (c *completionComponent) handleMouseClick(

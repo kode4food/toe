@@ -78,6 +78,26 @@ func TestStatuslineAltBranches(t *testing.T) {
 	})
 }
 
+func TestStatuslineReadOnly(t *testing.T) {
+	t.Run("readonly indicator appears", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetReadOnly(true)
+		opts := e.Options()
+		opts.StatusLine.Left = []view.StatusLineElement{
+			view.StatusLineReadOnly,
+		}
+		opts.StatusLine.Center = nil
+		opts.StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "[readonly]")
+	})
+}
+
 func TestStatuslineDiagnostics(t *testing.T) {
 	t.Run("renders diagnostic counts", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())

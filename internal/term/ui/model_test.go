@@ -58,6 +58,11 @@ func TestModelLifecycle(t *testing.T) {
 		assert.NotEmpty(t, m.View().Content)
 	})
 
+	t.Run("startup message appears in view", func(t *testing.T) {
+		m := newModel().WithStartupMessage("hello startup")
+		assert.Contains(t, stripANSI(m.View().Content), "hello startup")
+	})
+
 	t.Run("initial picker mounts on resize", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.FilePicker)

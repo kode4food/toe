@@ -432,6 +432,42 @@ language-servers = [42]
 	})
 }
 
+func TestDecodeFormatter(t *testing.T) {
+	t.Run("formatter command and args decoded", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "fmtlang"
+auto-format = true
+formatter = { command = "gofmt", args = ["-s"] }
+`)
+		l := language.LoadLanguage("fmtlang")
+		assert.NotNil(t, l.Formatter)
+		assert.Equal(t, "gofmt", l.Formatter.Command)
+		assert.Equal(t, []string{"-s"}, l.Formatter.Args)
+		assert.True(t, l.AutoFormat)
+	})
+
+	t.Run("formatter without command is skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "nocmdlang"
+formatter = { args = ["-s"] }
+`)
+		l := language.LoadLanguage("nocmdlang")
+		assert.Nil(t, l.Formatter)
+	})
+
+	t.Run("server feature map without name is skipped", func(t *testing.T) {
+		setUserLangs(t, `
+[[language]]
+name = "nonamelang"
+language-servers = [{ only-features = ["completion"] }]
+`)
+		l := language.LoadLanguage("nonamelang")
+		assert.Empty(t, l.LanguageServers)
+	})
+}
+
 func TestLoadLanguageNoConfig(t *testing.T) {
 	t.Run("no config path returns empty language", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", "")

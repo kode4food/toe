@@ -955,6 +955,60 @@ func TestCursorcolumnRender(t *testing.T) {
 	})
 }
 
+func TestSplitSeparatorJunctions(t *testing.T) {
+	junctions := func(build func(e *view.Editor)) string {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(80, 24)
+		build(e)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		return stripANSI(m.View().Content)
+	}
+
+	t.Run("left tee where right column splits", func(t *testing.T) {
+		out := junctions(func(e *view.Editor) {
+			e.VSplitNew()
+			e.HSplitNew()
+		})
+		assert.Contains(t, out, "├")
+	})
+
+	t.Run("right tee where left column splits", func(t *testing.T) {
+		out := junctions(func(e *view.Editor) {
+			e.VSplitNew()
+			e.FocusDirection(view.DirectionLeft)
+			e.HSplitNew()
+		})
+		assert.Contains(t, out, "┤")
+	})
+
+	t.Run("cross where both columns split", func(t *testing.T) {
+		out := junctions(func(e *view.Editor) {
+			e.VSplitNew()
+			e.HSplitNew()
+			e.FocusDirection(view.DirectionLeft)
+			e.HSplitNew()
+		})
+		assert.Contains(t, out, "┼")
+	})
+
+	t.Run("down tee where bottom row splits", func(t *testing.T) {
+		out := junctions(func(e *view.Editor) {
+			e.HSplitNew()
+			e.VSplitNew()
+		})
+		assert.Contains(t, out, "┬")
+	})
+
+	t.Run("up tee where top row splits", func(t *testing.T) {
+		out := junctions(func(e *view.Editor) {
+			e.HSplitNew()
+			e.FocusDirection(view.DirectionUp)
+			e.VSplitNew()
+		})
+		assert.Contains(t, out, "┴")
+	})
+}
+
 func TestRelativeLineNumberRender(t *testing.T) {
 	t.Run("renders distance above cursor", func(t *testing.T) {
 		e := editorWithText(t, "aa\nbb\ncc\n")

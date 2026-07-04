@@ -235,6 +235,29 @@ func TestEditorFocusNavigation(t *testing.T) {
 		after, _ := e.FocusedView()
 		assert.Equal(t, v.ID(), after.ID())
 	})
+
+	t.Run("FocusDirection descends nested containers", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(120, 40)
+		e.VSplitNew()
+		e.VSplitNew()
+		e.FocusDirection(view.DirectionLeft)
+		e.HSplitNew()
+		e.VSplitNew()
+		inner, _ := e.FocusedView()
+		e.HSplitNew()
+		e.FocusDirection(view.DirectionRight)
+		right, _ := e.FocusedView()
+		assert.NotEqual(t, inner.ID(), right.ID())
+		e.HSplitNew()
+		bottomRight, _ := e.FocusedView()
+
+		e.FocusDirection(view.DirectionLeft)
+
+		focused, _ := e.FocusedView()
+		assert.NotEqual(t, bottomRight.ID(), focused.ID())
+		assert.Equal(t, inner.ID(), focused.ID())
+	})
 }
 
 func TestEditorSwapAndTranspose(t *testing.T) {

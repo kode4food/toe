@@ -148,6 +148,12 @@ func TestSelection(t *testing.T) {
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
+	t.Run("single range is unchanged by consecutive merge", func(t *testing.T) {
+		s := core.PointSelection(3)
+
+		assert.Equal(t, s, s.MergeConsecutiveRanges())
+	})
+
 	t.Run("merges consecutive ranges", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
 			core.NewRange(1, 3),
@@ -204,5 +210,39 @@ func TestSelection(t *testing.T) {
 		_, err := s.LineRanges(text)
 
 		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
+	})
+}
+
+func TestSelectionEqual(t *testing.T) {
+	ranges := []core.Range{core.NewRange(1, 3), core.NewRange(5, 7)}
+
+	t.Run("identical selections are equal", func(t *testing.T) {
+		a, err := core.NewSelection(ranges, 1)
+		assert.NoError(t, err)
+		b, err := core.NewSelection(ranges, 1)
+		assert.NoError(t, err)
+
+		assert.True(t, a.Equal(b))
+	})
+
+	t.Run("different ranges are not equal", func(t *testing.T) {
+		a, err := core.NewSelection(ranges, 1)
+		assert.NoError(t, err)
+		b, err := core.NewSelection([]core.Range{
+			core.NewRange(1, 3),
+			core.NewRange(5, 8),
+		}, 1)
+		assert.NoError(t, err)
+
+		assert.False(t, a.Equal(b))
+	})
+
+	t.Run("different primary index is not equal", func(t *testing.T) {
+		a, err := core.NewSelection(ranges, 0)
+		assert.NoError(t, err)
+		b, err := core.NewSelection(ranges, 1)
+		assert.NoError(t, err)
+
+		assert.False(t, a.Equal(b))
 	})
 }

@@ -184,7 +184,11 @@ func configModule(r *command.Registry) command.Module {
 					cfg.Editor.AutoSession, true,
 				)
 				opts.DefaultLineEnding = cfg.Editor.DefaultLineEnding
-				opts.CursorShape = cfg.Editor.CursorShape
+				opts.CursorShape = view.CursorShape{
+					Normal: cmp.Or(cfg.Editor.CursorShape.Normal, view.CursorKindBlock),
+					Insert: cmp.Or(cfg.Editor.CursorShape.Insert, view.CursorKindBar),
+					Select: cmp.Or(cfg.Editor.CursorShape.Select, view.CursorKindUnderline),
+				}
 				opts.StatusLine = cfg.Editor.StatusLine
 			},
 		},

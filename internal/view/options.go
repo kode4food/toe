@@ -134,7 +134,12 @@ func (o *Options) CursorShapeForMode(mode string) CursorKind {
 
 func defaultOptions() Options {
 	return Options{
-		Theme:                DefaultTheme,
+		Theme: DefaultTheme,
+		CursorShape: CursorShape{
+			Normal: CursorKindBlock,
+			Insert: CursorKindBar,
+			Select: CursorKindUnderline,
+		},
 		ScrollOff:            DefaultScrollOff,
 		ScrollLines:          DefaultScrollLines,
 		Mouse:                true,

@@ -140,6 +140,7 @@ func TestCursorShapeRender(t *testing.T) {
 	t.Run("hides block cursor escape", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
+		e.Options().CursorShape.Insert = view.CursorKindBlock
 		e.SetMode(view.ModeInsert)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 

@@ -11,6 +11,8 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
+type optionSetter[T any] func(*view.Options, T)
+
 func configFormatCmds() []command.Command {
 	return []command.Command{
 		{
@@ -125,7 +127,7 @@ func configFormatCmds() []command.Command {
 }
 
 func cursorShapeOption(
-	key, mode string, set func(*view.Options, view.CursorKind),
+	key, mode string, set optionSetter[view.CursorKind],
 ) command.Option {
 	return command.Option{
 		Key: key,
@@ -144,7 +146,7 @@ func cursorShapeOption(
 }
 
 func statuslineModeOption(
-	key, mode string, set func(*view.Options, string),
+	key, mode string, set optionSetter[string],
 ) command.Option {
 	return command.Option{
 		Key: key,

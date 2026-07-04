@@ -76,10 +76,13 @@ type (
 		Style    lipgloss.Style
 		Columns  []string
 		SortKey  string
-		Preview  func(w, h int) string
+		Preview  PreviewRenderer
 		Location PickerLocation
 		Payload  any
 	}
+
+	// PreviewRenderer renders a picker item's preview at the given size
+	PreviewRenderer func(w, h int) string
 
 	// PickerLocation holds a target and an optional line range
 	PickerLocation struct {

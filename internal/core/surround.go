@@ -2,6 +2,8 @@ package core
 
 import "errors"
 
+type surroundPosFinder func(Range) (int, int, error)
+
 var (
 	ErrPairNotFound = errors.New(
 		"surround pair not found around all cursors",
@@ -135,9 +137,7 @@ func GetSurroundPosFor(
 	})
 }
 
-func collectSurroundPos(
-	sel Selection, find func(Range) (int, int, error),
-) ([]int, error) {
+func collectSurroundPos(sel Selection, find surroundPosFinder) ([]int, error) {
 	var positions []int
 	for _, r := range sel.Ranges() {
 		openPos, closePos, err := find(r)

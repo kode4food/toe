@@ -8,6 +8,11 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
+type (
+	editorGetter[T any] func(*view.Editor) T
+	editorSetter[T any] func(*view.Editor, T)
+)
+
 func boolOr(p *bool, def bool) bool {
 	if p == nil {
 		return def
@@ -23,8 +28,7 @@ func intOr(p *int, def int) int {
 }
 
 func editorNullableIntOption(
-	key string, dflt int, get func(*view.Editor) *int,
-	set func(*view.Editor, *int),
+	key string, dflt int, get editorGetter[*int], set editorSetter[*int],
 ) command.Option {
 	return command.Option{
 		Key: key,
@@ -46,7 +50,7 @@ func editorNullableIntOption(
 }
 
 func editorBoolOption(
-	key string, get func(*view.Editor) bool, set func(*view.Editor, bool),
+	key string, get editorGetter[bool], set editorSetter[bool],
 ) command.Option {
 	return command.Option{
 		Key: key,

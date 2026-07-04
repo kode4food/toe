@@ -8,6 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
+type pathProvider func() (string, bool)
+
 func configSystemCmds() []command.Command {
 	return []command.Command{
 		{
@@ -141,7 +143,7 @@ func languageNames() []string {
 }
 
 func openFromPath(
-	e *view.Editor, pathFn func() (string, bool), unavailMsg string,
+	e *view.Editor, pathFn pathProvider, unavailMsg string,
 ) command.Result {
 	path, ok := pathFn()
 	if !ok {

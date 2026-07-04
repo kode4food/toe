@@ -1,12 +1,16 @@
 package view
 
-// Separator describes the position and extent of the gap between two adjacent
-// split panes in a container
-type Separator struct {
-	Layout Layout
-	X, Y   int
-	W, H   int
-}
+type (
+	// Separator describes the position and extent of the gap between two
+	// adjacent split panes in a container
+	Separator struct {
+		Layout Layout
+		X, Y   int
+		W, H   int
+	}
+
+	sepVisitor func(cID Id, childIdx int, sep Separator) bool
+)
 
 // WalkSeparators calls fn for each separator between adjacent panes. Vertical
 // seps have W=1 and span the container height; horizontal seps have H=1 and
@@ -118,9 +122,7 @@ func (t *Tree) SeparatorAt(
 	return
 }
 
-func (t *Tree) walkSepWithID(
-	id Id, fn func(cID Id, childIdx int, sep Separator) bool,
-) bool {
+func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 	n := t.nodes[id]
 	if n.view != nil {
 		return true

@@ -441,9 +441,7 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 		called = "goto"
 		return nil
 	}
-	run := func(a command.KeyAction) func(
-		*view.Editor, *command.Args,
-	) command.Result {
+	run := func(a command.KeyAction) command.Run {
 		return func(e *view.Editor, _ *command.Args) command.Result {
 			return command.Result{Continuation: a(e)}
 		}

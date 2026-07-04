@@ -9,9 +9,13 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-type locationGetter func(
-	view.LanguageServerController, *view.Document, view.Id,
-) ([]view.Location, error)
+type (
+	locationGetter func(
+		view.LanguageServerController, *view.Document, view.Id,
+	) ([]view.Location, error)
+
+	promptHandler func(*view.Editor, string) error
+)
 
 func (m Model) WithStartupCmd(cmd tea.Cmd) Model {
 	m.initCmd = tea.Batch(m.initCmd, cmd)
@@ -86,9 +90,7 @@ func (m Model) SearchAction(forward bool) command.KeyAction {
 	}
 }
 
-func (m Model) RegexAction(
-	prompt string, fn func(*view.Editor, string) error,
-) command.KeyAction {
+func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
@@ -100,9 +102,7 @@ func (m Model) RegexAction(
 	}
 }
 
-func (m Model) ShellAction(
-	prompt string, fn func(*view.Editor, string) error,
-) command.KeyAction {
+func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {

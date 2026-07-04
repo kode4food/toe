@@ -26,13 +26,15 @@ type (
 		rootReal string
 		seen     map[string]bool
 		done     <-chan struct{}
-		visit    func(path, rel string) bool
+		visit    pickerVisitor
 	}
 
 	pickerFollow struct {
 		dir  bool
 		file bool
 	}
+
+	pickerVisitor func(path, rel string) bool
 )
 
 const (
@@ -145,9 +147,7 @@ func pickerListRows(e *view.Editor) int {
 	return max(areaH-4, 1)
 }
 
-func walkPickerFiles(
-	root string, done <-chan struct{}, visit func(path, rel string) bool,
-) {
+func walkPickerFiles(root string, done <-chan struct{}, visit pickerVisitor) {
 	rootAbs, err := filepath.Abs(root)
 	if err != nil {
 		rootAbs = root

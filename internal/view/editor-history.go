@@ -2,6 +2,8 @@ package view
 
 import "github.com/kode4food/toe/internal/core"
 
+type historyOp func(*Document, Id) bool
+
 // Apply applies a transaction to the focused document for the focused view
 func (e *Editor) Apply(tx core.Transaction) error {
 	v, ok := e.FocusedView()
@@ -157,7 +159,7 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	return true
 }
 
-func (e *Editor) applyUndoRedo(fn func(*Document, Id) bool) bool {
+func (e *Editor) applyUndoRedo(fn historyOp) bool {
 	v, ok := e.FocusedView()
 	if !ok {
 		return false

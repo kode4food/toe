@@ -21,14 +21,17 @@ type (
 		comps    []promptCompletion
 		compSel  *int
 		compDone bool
-		fn       func(*view.Editor, string) error
-		pickerFn func(*view.Editor, string) (*Picker, error)
+		fn       promptHandler
+		pickerFn pickerBuilder
 	}
 
 	promptCompletion struct {
 		command.Completion
 		score int
 	}
+
+	// pickerBuilder constructs a sub-picker from the submitted prompt text
+	pickerBuilder func(*view.Editor, string) (*Picker, error)
 
 	promptKind uint8
 )
@@ -92,8 +95,8 @@ type promptComponentArgs struct {
 	forward  bool
 	prompt   string
 	buf      string
-	fn       func(*view.Editor, string) error
-	pickerFn func(*view.Editor, string) (*Picker, error)
+	fn       promptHandler
+	pickerFn pickerBuilder
 }
 
 func newPromptComponent(args promptComponentArgs) *PromptComponent {

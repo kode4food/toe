@@ -5,6 +5,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type (
+	jumpResolver func(*view.View) (view.DocumentId, int, bool)
+	rangeMover   func(core.Rope, core.Range) core.Range
+)
+
 // GotoLineEndNewline moves each cursor to the end of its current line,
 // landing on the newline character (for use in insert mode)
 func GotoLineEndNewline(e *view.Editor) {
@@ -154,7 +159,7 @@ func GotoLastModification(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
-func jumpTo(e *view.Editor, fn func(*view.View) (view.DocumentId, int, bool)) {
+func jumpTo(e *view.Editor, fn jumpResolver) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
@@ -231,7 +236,7 @@ func selectionIsLinewise(text core.Rope, sel core.Selection) bool {
 	return true
 }
 
-func applyMove(e *view.Editor, fn func(core.Rope, core.Range) core.Range) {
+func applyMove(e *view.Editor, fn rangeMover) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return

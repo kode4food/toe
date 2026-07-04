@@ -17,10 +17,16 @@ type (
 	// nil for options that are not boolean-toggleable
 	Option struct {
 		Key    string
-		Get    func(*view.Editor) (string, error)
-		Set    func(*view.Editor, string) error
-		Toggle func(*view.Editor) (string, error)
+		Get    OptionGetter
+		Set    OptionSetter
+		Toggle OptionGetter
 	}
+
+	// OptionGetter reads an option's current value from the editor
+	OptionGetter func(*view.Editor) (string, error)
+
+	// OptionSetter applies a new option value to the editor
+	OptionSetter func(*view.Editor, string) error
 
 	// Section declares a module's live config pointer and Apply hook. Config
 	// must be a non-nil pointer to a struct with toml tags matching the full

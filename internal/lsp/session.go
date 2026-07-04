@@ -46,6 +46,10 @@ type (
 		session *Session
 		name    string
 	}
+
+	documentNotifier func(
+		*Client, context.Context, DocumentSnapshot,
+	) (bool, error)
 )
 
 var (
@@ -484,10 +488,7 @@ func (s *Session) pullAllDiagnosticsAsync() {
 	}
 }
 
-func (s *Session) notify(
-	doc *view.Document,
-	send func(*Client, context.Context, DocumentSnapshot) (bool, error),
-) {
+func (s *Session) notify(doc *view.Document, send documentNotifier) {
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return

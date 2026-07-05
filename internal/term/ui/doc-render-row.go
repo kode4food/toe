@@ -187,13 +187,13 @@ func (r *rowRender) rows() []renderedRow {
 			writeRendered(rendered, width, ts.cursorPrim)
 		case selAt.cursor && selAt.primary && r.mode != view.ModeInsert:
 			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.selectionPrim,
+				r.baseStyleAt(pos, glyph), ts.selection,
 			))
 		case selAt.cursor && !selAt.primary:
 			writeRendered(rendered, width, ts.cursor)
 		case selAt.selected:
 			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.selectionPrim,
+				r.baseStyleAt(pos, glyph), ts.selection,
 			))
 		case rangeMatch(r.docHighlights, pos):
 			writeRendered(rendered, width, overlaySelStyle(

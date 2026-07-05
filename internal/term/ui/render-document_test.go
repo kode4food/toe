@@ -913,10 +913,10 @@ func TestMouseDragNoop(t *testing.T) {
 	})
 }
 
-func TestCursorcolumnRender(t *testing.T) {
+func TestCursorColumnRender(t *testing.T) {
 	t.Run("cursorcolumn highlights column", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.Options().Cursorcolumn = true
+		e.Options().CursorColumn = true
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		rope := doc.Text()
@@ -932,7 +932,7 @@ func TestCursorcolumnRender(t *testing.T) {
 
 	t.Run("multi-cursor secondary column", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.Options().Cursorcolumn = true
+		e.Options().CursorColumn = true
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		rope := doc.Text()
@@ -1064,7 +1064,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 
 	t.Run("cursorcolumn with scrolled long line", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.Options().Cursorcolumn = true
+		e.Options().CursorColumn = true
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		rope := doc.Text()

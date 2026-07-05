@@ -10,23 +10,12 @@ Work in progress. Assume it will lose your edits.
 
 ## What works
 
-- Modal editing (normal, insert, selection)
-- Multiple buffers and split views
-- Fuzzy file, buffer, and global search pickers with live preview
-- Syntax highlighting
-- Persistent undo history
-- Soft wrap, rulers, whitespace rendering, auto-pairs
-- Language server support for completion, hover, signature help, formatting, symbols, code actions, rename, and go-to navigation
-- Diagnostics with underlines, gutter markers, status counts, and cursor-scoped popup text
-- User and workspace config in TOML
-- Session persistence: open documents, split layout, cursor positions, and view modes survive restarts
-
-## What's still being built
-
-- Snippet expansion
-- Tree-sitter textobjects, indentation queries, bracket matching, and surround matching
-- Git change indicators in the gutter
-- Debugger integration
+- Modal editing: normal, insert, and selection modes; multi-cursor editing; persistent undo history
+- Project navigation: multiple buffers, split views, fuzzy file/buffer pickers, global search, and live previews
+- Go-focused language tooling: syntax highlighting, LSP completion, hover, signature help, formatting, symbols, code actions, rename, go-to navigation, and diagnostics
+- Editor display: soft wrap, rulers, whitespace rendering, indent guides, gutters, configurable cursor shapes, and statusline elements
+- Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker, and statusline element
+- Project state: user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
 
 ## Requirements
 

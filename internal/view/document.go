@@ -218,6 +218,12 @@ func (d *Document) LineEnding() core.LineEnding {
 	return d.lineEnding
 }
 
+// HasBOM reports whether the document was loaded with a UTF-8 BOM, which is
+// preserved on save
+func (d *Document) HasBOM() bool {
+	return d.hasBOM
+}
+
 // SetLineEnding updates the line ending for this document
 func (d *Document) SetLineEnding(le core.LineEnding) {
 	d.lineEnding = le

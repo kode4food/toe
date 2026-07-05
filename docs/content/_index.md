@@ -8,16 +8,13 @@ title: "toe"
 
 ![toe screenshot](img/screenshot.png)
 
-- Normal, insert, and selection modes
-- Multiple buffers and split views
-- Fuzzy file, buffer, and global search pickers with live preview
-- Syntax highlighting via tree-sitter
-- Persistent undo history with branching
-- LSP support via `gopls` (plus TypeScript, HTML, CSS)
-- Session persistence (open files, layout, cursor positions)
+- Modal editing with normal, insert, and selection modes
+- Multiple buffers, split views, fuzzy pickers, and workspace search
+- Go-focused LSP support via `gopls`, plus web language servers
+- Diagnostics, syntax highlighting, formatting, and symbol navigation
+- Git diff gutters, change navigation, changed-file picker, and statusline element
+- Session persistence, external file reloads, user/workspace TOML config, and EditorConfig
 - 4 Catppuccin themes: frappe, latte, macchiato, mocha
-- User and workspace config in TOML
-- EditorConfig support
 
 ## Quick Start
 

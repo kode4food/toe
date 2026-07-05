@@ -73,7 +73,7 @@ func TestRegistry(t *testing.T) {
 	t.Run("OptionValues returns current values", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().ScrollOff = 9
-		e.Options().Cursorline = true
+		e.Options().CursorLine = true
 		reg := registryWithLiveOptions(t)
 
 		values, err := reg.OptionValues(e)
@@ -102,7 +102,7 @@ func TestRegistry(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.True(t, e.Options().Cursorline)
+		assert.True(t, e.Options().CursorLine)
 		assert.Equal(t, 7, e.Options().ScrollOff)
 	})
 
@@ -236,19 +236,19 @@ func registryWithLiveOptions(t *testing.T) *command.Registry {
 			{
 				Key: "cursorline",
 				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().Cursorline), nil
+					return strconv.FormatBool(e.Options().CursorLine), nil
 				},
 				Set: func(e *view.Editor, s string) error {
 					v, err := strconv.ParseBool(s)
 					if err != nil {
 						return err
 					}
-					e.Options().Cursorline = v
+					e.Options().CursorLine = v
 					return nil
 				},
 				Toggle: func(e *view.Editor) (string, error) {
-					e.Options().Cursorline = !e.Options().Cursorline
-					return strconv.FormatBool(e.Options().Cursorline), nil
+					e.Options().CursorLine = !e.Options().CursorLine
+					return strconv.FormatBool(e.Options().CursorLine), nil
 				},
 			},
 		},

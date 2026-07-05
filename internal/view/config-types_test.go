@@ -250,16 +250,36 @@ func TestWhitespaceCharacters(t *testing.T) {
 	})
 }
 
-func TestStatusLineElement(t *testing.T) {
+func TestStatusLineItem(t *testing.T) {
 	t.Run("parses valid element", func(t *testing.T) {
-		var s view.StatusLineElement
+		var s view.StatusLineItem
 		assert.NoError(t, s.UnmarshalText([]byte("mode")))
-		assert.Equal(t, view.StatusLineMode, s)
+		assert.Equal(t,
+			view.StatusLineItem{Element: view.StatusLineMode}, s,
+		)
 	})
 
 	t.Run("rejects invalid element", func(t *testing.T) {
-		var s view.StatusLineElement
+		var s view.StatusLineItem
 		assert.Error(t, s.UnmarshalText([]byte("bad-element")))
+	})
+
+	t.Run("parses pinned element", func(t *testing.T) {
+		var s view.StatusLineItem
+		assert.NoError(t, s.UnmarshalText([]byte("mode!")))
+		assert.Equal(t,
+			view.StatusLineItem{Element: view.StatusLineMode, Pinned: true}, s,
+		)
+	})
+
+	t.Run("rejects invalid pinned element", func(t *testing.T) {
+		var s view.StatusLineItem
+		assert.Error(t, s.UnmarshalText([]byte("bad-element!")))
+	})
+
+	t.Run("rejects bare pin marker", func(t *testing.T) {
+		var s view.StatusLineItem
+		assert.Error(t, s.UnmarshalText([]byte("!")))
 	})
 }
 

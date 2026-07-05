@@ -16,8 +16,8 @@ import (
 type viewSection struct {
 	Editor struct {
 		LineNumber   view.LineNumber   `toml:"line-number"`
-		Cursorline   *bool             `toml:"cursorline"`
-		Cursorcolumn *bool             `toml:"cursorcolumn"`
+		CursorLine   *bool             `toml:"cursorline"`
+		CursorColumn *bool             `toml:"cursorcolumn"`
 		TextWidth    *int              `toml:"text-width"`
 		SoftWrap     language.SoftWrap `toml:"soft-wrap"`
 		Rulers       []int             `toml:"rulers"`
@@ -392,18 +392,18 @@ func viewModule() command.Module {
 			},
 			editorBoolOption("cursorline",
 				func(e *view.Editor) bool {
-					return e.Options().Cursorline
+					return e.Options().CursorLine
 				},
 				func(e *view.Editor, v bool) {
-					e.Options().Cursorline = v
+					e.Options().CursorLine = v
 				},
 			),
 			editorBoolOption("cursorcolumn",
 				func(e *view.Editor) bool {
-					return e.Options().Cursorcolumn
+					return e.Options().CursorColumn
 				},
 				func(e *view.Editor, v bool) {
-					e.Options().Cursorcolumn = v
+					e.Options().CursorColumn = v
 				},
 			),
 			editorNullableIntOption("text-width",
@@ -585,8 +585,8 @@ func viewModule() command.Module {
 				opts.LineNumber = cmp.Or(
 					cfg.Editor.LineNumber, view.LineNumberAbsolute,
 				)
-				opts.Cursorline = boolOr(cfg.Editor.Cursorline, true)
-				opts.Cursorcolumn = boolOr(cfg.Editor.Cursorcolumn, false)
+				opts.CursorLine = boolOr(cfg.Editor.CursorLine, true)
+				opts.CursorColumn = boolOr(cfg.Editor.CursorColumn, false)
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
 				opts.Rulers = cfg.Editor.Rulers

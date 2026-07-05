@@ -160,7 +160,6 @@ wrap-at-text-width = true
 [editor.statusline]
 separator = "|"
 left = ["mode", "file-name"]
-center = ["spacer"]
 right = ["position", "file-encoding"]
 diagnostics = ["hint", "error"]
 workspace-diagnostics = ["info", "warning"]

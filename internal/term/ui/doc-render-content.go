@@ -149,7 +149,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
 		viewFocused
-	cursorlineEnabled := opts.Cursorline
+	cursorLineEnabled := opts.CursorLine
 	ws := opts.Whitespace
 	ig := opts.IndentGuides
 	rulers := opts.Rulers
@@ -185,8 +185,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
-	cursorlinePriBg := tuiStyles.cursorlinePrim.BgColor()
-	cursorlineSecBg := tuiStyles.cursorlineSec.BgColor()
+	cursorLinePriBg := tuiStyles.cursorLinePrim.BgColor()
+	cursorLineSecBg := tuiStyles.cursorLineSec.BgColor()
 	contentX := x + gutterW
 	gutter := gutterSpec{
 		layout:          gutterLayout,
@@ -231,8 +231,8 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	// Overlay pre-passes: paint the background layers before any rows. Text is
 	// drawn preserving these backgrounds, so they show through the glyphs;
 	// selection and the cursor carry their own background and overwrite them.
-	// Cursorcolumn is painted first so rulers render over it (matching Helix)
-	if opts.Cursorcolumn && cursorLine < len(lineIdx)-1 {
+	// CursorColumn is painted first so rulers render over it
+	if opts.CursorColumn && cursorLine < len(lineIdx)-1 {
 		entry := lineIdx[cursorLine]
 		next := lineIdx[cursorLine+1]
 		cursorLStr := rawText[entry.byteStart : next.byteStart-entry.endingLen]
@@ -240,7 +240,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		rel := vcol - hOff
 		if rel >= 0 && rel < format.ViewportWidth {
 			sx := contentX + rel
-			ccBg := tuiStyles.cursorcolumnPrim.BgColor()
+			ccBg := tuiStyles.cursorColumn.BgColor()
 			for row := y; row < y+height; row++ {
 				buf.PatchBg(sx, row, ccBg)
 			}
@@ -289,9 +289,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 					)
 				}
 			}
-			if cursorlineEnabled && lineNum == cursorLine {
+			if cursorLineEnabled && lineNum == cursorLine {
 				buf.PatchBgRange(
-					contentX, bufRow, format.ViewportWidth, cursorlinePriBg,
+					contentX, bufRow, format.ViewportWidth, cursorLinePriBg,
 				)
 			}
 			row.writeToBuffer(rowWriteArgs{
@@ -304,10 +304,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		}
 
 		_, isAnyCursorLine := cursorLines[lineNum]
-		paintCursorline := cursorlineEnabled && isAnyCursorLine
-		cursorlineBg := cursorlineSecBg
+		paintCursorLine := cursorLineEnabled && isAnyCursorLine
+		cursorLineBg := cursorLineSecBg
 		if lineNum == cursorLine {
-			cursorlineBg = cursorlinePriBg
+			cursorLineBg = cursorLinePriBg
 		}
 
 		if gutter.width > 0 {
@@ -404,9 +404,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				if i > 0 && gutter.width > 0 {
 					gutter.renderBlank(buf, x, bufRow)
 				}
-				if paintCursorline {
+				if paintCursorLine {
 					buf.PatchBgRange(
-						contentX, bufRow, format.ViewportWidth, cursorlineBg,
+						contentX, bufRow, format.ViewportWidth, cursorLineBg,
 					)
 				}
 				if i == 0 {
@@ -431,9 +431,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				bufRow++
 			}
 		} else {
-			if paintCursorline {
+			if paintCursorLine {
 				buf.PatchBgRange(
-					contentX, bufRow, format.ViewportWidth, cursorlineBg,
+					contentX, bufRow, format.ViewportWidth, cursorLineBg,
 				)
 			}
 			contentRows[0].writeToBuffer(rowWriteArgs{

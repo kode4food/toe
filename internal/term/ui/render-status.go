@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -23,12 +24,12 @@ type (
 		text              lipgloss.Style
 		line              lipgloss.Style
 		lineSelected      lipgloss.Style
-		selectionPrim     lipgloss.Style
+		selection         lipgloss.Style
 		cursor            lipgloss.Style
 		cursorPrim        lipgloss.Style
-		cursorlinePrim    lipgloss.Style
-		cursorlineSec     lipgloss.Style
-		cursorcolumnPrim  lipgloss.Style
+		cursorLinePrim    lipgloss.Style
+		cursorLineSec     lipgloss.Style
+		cursorColumn      lipgloss.Style
 		whitespace        lipgloss.Style
 		indentGuide       lipgloss.Style
 		ruler             lipgloss.Style
@@ -54,12 +55,12 @@ type (
 
 	tuiStyles struct {
 		text              tui.Style
-		selectionPrim     tui.Style
+		selection         tui.Style
 		cursor            tui.Style
 		cursorPrim        tui.Style
-		cursorlinePrim    tui.Style
-		cursorlineSec     tui.Style
-		cursorcolumnPrim  tui.Style
+		cursorLinePrim    tui.Style
+		cursorLineSec     tui.Style
+		cursorColumn      tui.Style
 		whitespace        tui.Style
 		indentGuide       tui.Style
 		inlayHint         tui.Style
@@ -84,9 +85,10 @@ type (
 
 	// statusElem is a single rendered piece of a status bar
 	statusElem struct {
-		text  string
-		style tui.Style
-		kind  view.StatusLineElement
+		text   string
+		style  tui.Style
+		kind   view.StatusLineElement
+		pinned bool
 	}
 
 	statusElemCtx struct {
@@ -109,18 +111,6 @@ type (
 	}
 )
 
-// statusDropOrder lists element groups to remove, in priority order, when the
-// status bar is too narrow to fit all elements. Mode is never dropped
-var statusDropOrder = [][]view.StatusLineElement{
-	{
-		view.StatusLineFileName,
-		view.StatusLineFileBaseName,
-		view.StatusLineFileAbsolutePath,
-	},
-	{view.StatusLineSelections},
-	{view.StatusLineTotalLines},
-}
-
 var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLineMode:             statusElemMode,
 	view.StatusLineSeparator:        statusElemSeparator,
@@ -134,7 +124,9 @@ var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLinePosition:         statusElemPosition,
 	view.StatusLinePercent:          statusElemPercent,
 	view.StatusLineTotalLines:       statusElemTotalLines,
+	view.StatusLineFileEncoding:     statusElemEncoding,
 	view.StatusLineFileLineEnding:   statusElemLineEnding,
+	view.StatusLineSpacer:           statusElemSpacer,
 	view.StatusLineFileIndentStyle:  statusElemIndentStyle,
 	view.StatusLineFileType:         statusElemFileType,
 	view.StatusLineDiagnostics:      statusElemDiagnostics,
@@ -152,12 +144,12 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 		text:              th.Get("ui.text"),
 		line:              th.Get("ui.linenr"),
 		lineSelected:      th.Get("ui.linenr.selected"),
-		selectionPrim:     sel,
+		selection:         sel,
 		cursor:            cur,
 		cursorPrim:        curPrim,
-		cursorlinePrim:    cl,
-		cursorlineSec:     cl,
-		cursorcolumnPrim:  cl,
+		cursorLinePrim:    cl,
+		cursorLineSec:     cl,
+		cursorColumn:      cl,
 		whitespace:        th.Get("ui.virtual.whitespace"),
 		indentGuide:       th.Get("ui.virtual.indent-guide"),
 		ruler:             th.Get("ui.virtual.ruler"),
@@ -198,16 +190,16 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 		st.documentLink = next
 	}
 	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
-		st.selectionPrim = next
+		st.selection = next
 	}
 	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
-		st.cursorlineSec = next
+		st.cursorLineSec = next
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
-		st.cursorcolumnPrim = next
+		st.cursorColumn = next
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
-		st.cursorcolumnPrim = next
+		st.cursorColumn = next
 	}
 	if next, ok := th.TryGet("ui.search.match"); ok {
 		st.searchMatch = next
@@ -218,12 +210,12 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 func buildTUIStyles(s *lipglossStyles) *tuiStyles {
 	return &tuiStyles{
 		text:              lipglossToTUIStyle(s.text),
-		selectionPrim:     lipglossToTUIStyle(s.selectionPrim),
+		selection:         lipglossToTUIStyle(s.selection),
 		cursor:            lipglossToTUIStyle(s.cursor),
 		cursorPrim:        lipglossToTUIStyle(s.cursorPrim),
-		cursorlinePrim:    lipglossToTUIStyle(s.cursorlinePrim),
-		cursorlineSec:     lipglossToTUIStyle(s.cursorlineSec),
-		cursorcolumnPrim:  lipglossToTUIStyle(s.cursorcolumnPrim),
+		cursorLinePrim:    lipglossToTUIStyle(s.cursorLinePrim),
+		cursorLineSec:     lipglossToTUIStyle(s.cursorLineSec),
+		cursorColumn:      lipglossToTUIStyle(s.cursorColumn),
 		whitespace:        lipglossToTUIStyle(s.whitespace),
 		indentGuide:       lipglossToTUIStyle(s.indentGuide),
 		inlayHint:         lipglossToTUIStyle(s.inlayHint),
@@ -353,9 +345,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		vcsHead: vcsHead,
 	}
 
-	collectElems := func(elems []view.StatusLineElement) []statusElem {
-		out := make([]statusElem, 0, len(elems))
-		for _, e := range elems {
+	collectElems := func(items []view.StatusLineItem) []statusElem {
+		out := make([]statusElem, 0, len(items))
+		for _, e := range items {
 			if se := src.elem(e); se.text != "" {
 				out = append(out, se)
 			}
@@ -364,7 +356,6 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	}
 
 	left := collectElems(opts.StatusLineLeft())
-	center := collectElems(opts.StatusLineCenter())
 	right := collectElems(opts.StatusLineRight())
 
 	elemsWidth := func(elems []statusElem) int {
@@ -375,27 +366,30 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		return w
 	}
 
-	for _, round := range statusDropOrder {
-		total := elemsWidth(left) + elemsWidth(center) + elemsWidth(right)
-		if total <= width {
+	// Elements suffixed "!" in config are pinned and never dropped. When the
+	// bar is too narrow, sections shed from their inner edge so edge-anchored
+	// items survive longest: the right section drops from its left, the left
+	// section from its right. Right section first, then left
+	dropOne := func(elems []statusElem, fromEnd bool) ([]statusElem, bool) {
+		for n, i := len(elems), 0; i < n; i++ {
+			idx := i
+			if fromEnd {
+				idx = n - 1 - i
+			}
+			if !elems[idx].pinned {
+				return slices.Delete(elems, idx, idx+1), true
+			}
+		}
+		return elems, false
+	}
+	for elemsWidth(left)+elemsWidth(right) > width {
+		var ok bool
+		if right, ok = dropOne(right, false); ok {
+			continue
+		}
+		if left, ok = dropOne(left, true); !ok {
 			break
 		}
-		dropSet := make(map[view.StatusLineElement]bool, len(round))
-		for _, k := range round {
-			dropSet[k] = true
-		}
-		filter := func(elems []statusElem) []statusElem {
-			out := make([]statusElem, 0, len(elems))
-			for _, e := range elems {
-				if !dropSet[e.kind] {
-					out = append(out, e)
-				}
-			}
-			return out
-		}
-		left = filter(left)
-		center = filter(center)
-		right = filter(right)
 	}
 
 	writeElems := func(elems []statusElem, x int) {
@@ -411,11 +405,6 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	rightW := elemsWidth(right)
 	writeElems(right, x+width-rightW)
-
-	if len(center) > 0 {
-		centerW := elemsWidth(center)
-		writeElems(center, x+width/2-centerW/2)
-	}
 }
 
 func (r *renderPass) activeTheme() *theme.Theme {
@@ -430,10 +419,11 @@ func (r *renderPass) cmdlineStyle(errorMsg bool) lipgloss.Style {
 	return th.Get("ui.statusline")
 }
 
-func (s *statusElemCtx) elem(e view.StatusLineElement) statusElem {
-	if fn, ok := statusElemFns[e]; ok {
+func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {
+	if fn, ok := statusElemFns[e.Element]; ok {
 		se := fn(s)
-		se.kind = e
+		se.kind = e.Element
+		se.pinned = e.Pinned
 		return se
 	}
 	return statusElem{}
@@ -587,6 +577,18 @@ func statusElemTotalLines(s *statusElemCtx) statusElem {
 		text:  fmt.Sprintf(" %d ", s.totalLines),
 		style: s.baseTUI,
 	}
+}
+
+func statusElemEncoding(s *statusElemCtx) statusElem {
+	label := "utf-8"
+	if s.doc.HasBOM() {
+		label = "utf-8-bom"
+	}
+	return statusElem{text: " " + label + " ", style: s.baseTUI}
+}
+
+func statusElemSpacer(s *statusElemCtx) statusElem {
+	return statusElem{text: " ", style: s.baseTUI}
 }
 
 func statusElemLineEnding(s *statusElemCtx) statusElem {

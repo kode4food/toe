@@ -146,10 +146,30 @@ theme = "frappe"   # frappe | latte | macchiato | mocha
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.statusline.separator` | string | `" "` | Separator between status items |
+| `editor.statusline.left` | string[] | built-in | Left-aligned statusline elements |
+| `editor.statusline.right` | string[] | built-in | Right-aligned statusline elements |
+| `editor.statusline.separator` | string | `"│"` | Separator between status items |
 | `editor.statusline.mode.normal` | string | `"normal"` | Label for Normal mode |
 | `editor.statusline.mode.insert` | string | `"insert"` | Label for Insert mode |
 | `editor.statusline.mode.select` | string | `"select"` | Label for Select mode |
+
+Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spacer`, `register`, and `version-control`.
+
+When the pane is too narrow to fit everything, sections shed elements from their inner edge, so items anchored at the bar's edges survive longest: the right section drops from its left end, the left section from its right end. The right section sheds first, then the left. Suffix an element with `!` (for example `"mode!"` or `"position!"`) to pin it so it never drops. The default configuration pins `mode` and `position`.
+
+```toml
+[editor.statusline]
+left = ["mode!", "file-name", "read-only-indicator", "file-modified-indicator"]
+right = ["diagnostics", "selections", "register", "position!"]
+```
+
+Example:
+
+```toml
+[editor.statusline]
+left = ["mode", "file-name", "file-modified-indicator"]
+right = ["version-control", "diagnostics", "position"]
+```
 
 ### Pickers
 

@@ -53,8 +53,8 @@ func TestDiffGutter(t *testing.T) {
 	t.Run("statusline shows head name", func(t *testing.T) {
 		e, s := repoEditor(t, "one\ntwo\n", "one\nCHANGED\n")
 		defer s.Close()
-		e.Options().StatusLine.Right = []view.StatusLineElement{
-			view.StatusLineVersionControl,
+		e.Options().StatusLine.Right = []view.StatusLineItem{
+			{Element: view.StatusLineVersionControl},
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 

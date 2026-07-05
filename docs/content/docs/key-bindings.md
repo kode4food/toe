@@ -215,6 +215,7 @@ All `Ctrl+w` bindings also work with `Space+w`.
 | `Space+S` | Open workspace symbol picker |
 | `Space+f` | Open file picker |
 | `Space+F` | Open file picker at current working directory |
+| `Space+g` | Open changed-file picker |
 | `Space+e` | Open file explorer at workspace root |
 | `Space+.` | Open file explorer at current buffer's directory |
 | `Space+b` | Open buffer picker |
@@ -232,6 +233,10 @@ All `Ctrl+w` bindings also work with `Space+w`.
 |-----|--------|
 | `[p` | Goto previous paragraph |
 | `]p` | Goto next paragraph |
+| `[g` | Goto previous change |
+| `]g` | Goto next change |
+| `[G` | Goto first change |
+| `]G` | Goto last change |
 | `[␣` | Add newline above |
 | `]␣` | Add newline below |
 

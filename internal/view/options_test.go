@@ -27,25 +27,15 @@ func TestOptionsStatusLine(t *testing.T) {
 
 	t.Run("left custom overrides default", func(t *testing.T) {
 		o := view.Options{StatusLine: view.StatusLine{
-			Left: []view.StatusLineElement{view.StatusLineMode},
+			Left: []view.StatusLineItem{
+				{Element: view.StatusLineMode},
+			},
 		}}
 		assert.Equal(t,
-			[]view.StatusLineElement{view.StatusLineMode}, o.StatusLineLeft(),
+			[]view.StatusLineItem{
+				{Element: view.StatusLineMode},
+			}, o.StatusLineLeft(),
 		)
-	})
-
-	t.Run("center returns clone of elements", func(t *testing.T) {
-		o := view.Options{StatusLine: view.StatusLine{
-			Center: []view.StatusLineElement{view.StatusLineFileName},
-		}}
-		assert.Equal(t,
-			[]view.StatusLineElement{view.StatusLineFileName},
-			o.StatusLineCenter())
-	})
-
-	t.Run("center empty returns empty", func(t *testing.T) {
-		o := view.Options{}
-		assert.Empty(t, o.StatusLineCenter())
 	})
 
 	t.Run("right default elements returned", func(t *testing.T) {
@@ -56,10 +46,10 @@ func TestOptionsStatusLine(t *testing.T) {
 
 	t.Run("right custom overrides default", func(t *testing.T) {
 		o := view.Options{StatusLine: view.StatusLine{
-			Right: []view.StatusLineElement{view.StatusLinePosition},
+			Right: []view.StatusLineItem{{Element: view.StatusLinePosition}},
 		}}
 		assert.Equal(t,
-			[]view.StatusLineElement{view.StatusLinePosition},
+			[]view.StatusLineItem{{Element: view.StatusLinePosition}},
 			o.StatusLineRight())
 	})
 }

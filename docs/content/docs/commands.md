@@ -30,6 +30,8 @@ Enter command mode with `:`. All commands can be used by their full name or any 
 | `move!` | `mv!` | Move the current buffer and file, creating necessary subdirectories |
 | `read` | `r` | Load a file into buffer at the cursor |
 
+toe watches file-backed buffers for external changes. Clean buffers reload automatically; dirty buffers keep their in-memory text and can be resolved explicitly with `reload`, `reload_all`, or `write`.
+
 ## Buffer
 
 | Command | Aliases | Description |
@@ -135,6 +137,17 @@ Enter command mode with `:`. All commands can be used by their full name or any 
 | `lsp-restart` | | Restart language servers for the current document |
 | `lsp-stop` | | Stop language servers for the current document |
 | `lsp-workspace-command` | | Execute a language server workspace command |
+
+## Version Control
+
+| Command | Aliases | Description |
+|---------|---------|-------------|
+| `changed_file_picker` | | Open changed file picker |
+| `goto_next_change` | | Goto next change |
+| `goto_prev_change` | | Goto previous change |
+| `goto_first_change` | | Goto first change |
+| `goto_last_change` | | Goto last change |
+| `reset_diff_change` | `reset-diff-change`, `diff-reset` | Reset the diff changes under the selections |
 
 ## Clipboard
 

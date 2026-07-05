@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 )
 
 type (
@@ -16,11 +17,18 @@ type (
 	CursorKind string
 
 	StatusLine struct {
-		Left      []StatusLineElement `toml:"left"`
-		Center    []StatusLineElement `toml:"center"`
-		Right     []StatusLineElement `toml:"right"`
+		Left      []StatusLineItem    `toml:"left"`
+		Right     []StatusLineItem    `toml:"right"`
 		Separator string              `toml:"separator"`
 		Mode      StatusLineModeNames `toml:"mode"`
+	}
+
+	// StatusLineItem is one configured status bar element. In TOML it is the
+	// element name, optionally suffixed with "!" to pin it so it is never
+	// dropped when the bar is too narrow to fit every element
+	StatusLineItem struct {
+		Element StatusLineElement
+		Pinned  bool
 	}
 
 	StatusLineElement string
@@ -94,7 +102,6 @@ const (
 	BufferLineMultiple BufferLine = "multiple"
 
 	StatusLineMode             StatusLineElement = "mode"
-	StatusLineSpinner          StatusLineElement = "spinner"
 	StatusLineFileBaseName     StatusLineElement = "file-base-name"
 	StatusLineFileName         StatusLineElement = "file-name"
 	StatusLineFileAbsolutePath StatusLineElement = "file-absolute-path"
@@ -104,7 +111,6 @@ const (
 	StatusLineFileIndentStyle  StatusLineElement = "file-indent-style"
 	StatusLineFileType         StatusLineElement = "file-type"
 	StatusLineDiagnostics      StatusLineElement = "diagnostics"
-	StatusLineWorkspaceDiag    StatusLineElement = "workspace-diagnostics"
 	StatusLineSelections       StatusLineElement = "selections"
 	StatusLinePrimaryLen       StatusLineElement = "primary-selection-length"
 	StatusLinePosition         StatusLineElement = "position"
@@ -149,6 +155,31 @@ const (
 
 	DefaultGutterLineNumberMinWidth = 3
 )
+
+// AllStatusLineElements is the canonical list of valid statusline elements.
+// Config parsing and the renderer must both cover exactly this set
+var AllStatusLineElements = []StatusLineElement{
+	StatusLineMode,
+	StatusLineFileBaseName,
+	StatusLineFileName,
+	StatusLineFileAbsolutePath,
+	StatusLineReadOnly,
+	StatusLineFileEncoding,
+	StatusLineFileLineEnding,
+	StatusLineFileIndentStyle,
+	StatusLineFileType,
+	StatusLineDiagnostics,
+	StatusLineSelections,
+	StatusLinePrimaryLen,
+	StatusLinePosition,
+	StatusLineSeparator,
+	StatusLinePercent,
+	StatusLineTotalLines,
+	StatusLineSpacer,
+	StatusLineVersionControl,
+	StatusLineRegister,
+	StatusLineModified,
+}
 
 var (
 	ErrInvalidCursorKind       = errors.New("invalid cursor kind")
@@ -244,22 +275,13 @@ func (l *LineNumber) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (s *StatusLineElement) UnmarshalText(text []byte) error {
-	switch StatusLineElement(text) {
-	case StatusLineMode, StatusLineSpinner, StatusLineFileBaseName,
-		StatusLineFileName, StatusLineFileAbsolutePath,
-		StatusLineModified, StatusLineReadOnly,
-		StatusLineFileEncoding, StatusLineFileLineEnding,
-		StatusLineFileIndentStyle, StatusLineFileType, StatusLineDiagnostics,
-		StatusLineWorkspaceDiag, StatusLineSelections,
-		StatusLinePrimaryLen, StatusLinePosition,
-		StatusLineSeparator, StatusLinePercent,
-		StatusLineTotalLines, StatusLineSpacer, StatusLineVersionControl,
-		StatusLineRegister:
-		*s = StatusLineElement(text)
-	default:
+func (s *StatusLineItem) UnmarshalText(text []byte) error {
+	name, pinned := strings.CutSuffix(string(text), "!")
+	e := StatusLineElement(name)
+	if !slices.Contains(AllStatusLineElements, e) {
 		return fmt.Errorf("%w: %s", ErrInvalidStatusLine, text)
 	}
+	*s = StatusLineItem{Element: e, Pinned: pinned}
 	return nil
 }
 

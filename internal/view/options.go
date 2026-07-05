@@ -30,8 +30,8 @@ type Options struct {
 	ContinueComments     bool
 	SearchSmartCase      bool
 	SearchWrapAround     bool
-	Cursorline           bool
-	Cursorcolumn         bool
+	CursorLine           bool
+	CursorColumn         bool
 	TextWidth            *int
 	SoftWrap             language.SoftWrap
 	DefaultLineEnding    core.LineEnding
@@ -76,36 +76,29 @@ func (o *Options) ModeNameForMode(mode string) string {
 	}
 }
 
-// StatusLineLeft returns the left status line elements with defaults
-func (o *Options) StatusLineLeft() []StatusLineElement {
+// StatusLineLeft returns the left status line items with defaults
+func (o *Options) StatusLineLeft() []StatusLineItem {
 	if len(o.StatusLine.Left) > 0 {
 		return slices.Clone(o.StatusLine.Left)
 	}
-	return []StatusLineElement{
-		StatusLineMode,
-		StatusLineSpinner,
-		StatusLineFileName,
-		StatusLineReadOnly,
-		StatusLineModified,
+	return []StatusLineItem{
+		{Element: StatusLineMode, Pinned: true},
+		{Element: StatusLineFileName},
+		{Element: StatusLineReadOnly},
+		{Element: StatusLineModified},
 	}
 }
 
-// StatusLineCenter returns the center status line elements
-func (o *Options) StatusLineCenter() []StatusLineElement {
-	return slices.Clone(o.StatusLine.Center)
-}
-
-// StatusLineRight returns the right status line elements with defaults
-func (o *Options) StatusLineRight() []StatusLineElement {
+// StatusLineRight returns the right status line items with defaults
+func (o *Options) StatusLineRight() []StatusLineItem {
 	if len(o.StatusLine.Right) > 0 {
 		return slices.Clone(o.StatusLine.Right)
 	}
-	return []StatusLineElement{
-		StatusLineDiagnostics,
-		StatusLineSelections,
-		StatusLineRegister,
-		StatusLinePosition,
-		StatusLineFileEncoding,
+	return []StatusLineItem{
+		{Element: StatusLineDiagnostics},
+		{Element: StatusLineSelections},
+		{Element: StatusLineRegister},
+		{Element: StatusLinePosition, Pinned: true},
 	}
 }
 

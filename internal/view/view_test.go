@@ -363,8 +363,8 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 		last, _ := doc.LineToChar(29)
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(last)}, 0)
 		v.EnsureCursorVisible(doc, sel, 10, 5, nil)
-		// Helix anchors so the cursor sits at height-soBottom-1=4, leaving the
-		// full bottom margin of blank rows below EOF (anchor = 29-4 = line 25)
+		// Anchor puts the cursor at height-soBottom-1=4, leaving the full
+		// bottom margin of blank rows below EOF (anchor = 29-4 = line 25)
 		anchorLine, _ := doc.CharToLine(v.Offset().Anchor)
 		assert.Equal(t, 25, anchorLine)
 	})

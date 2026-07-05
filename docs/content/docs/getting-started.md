@@ -73,6 +73,7 @@ U             redo
 ```
 Space+f       open file picker
 Space+b       open buffer picker
+Space+g       open changed-file picker
 Space+/       global search
 ```
 

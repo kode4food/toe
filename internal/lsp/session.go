@@ -850,7 +850,7 @@ func Attach(ctx context.Context, e *view.Editor) *Session {
 	s := NewSession(ctx, e.Cwd())
 	s.editor = e
 	e.SetLanguageServerController(s)
-	e.SetDocumentObserver(s)
+	e.AddDocumentObserver(s)
 	for _, doc := range e.AllDocuments() {
 		s.DocumentOpened(doc)
 	}

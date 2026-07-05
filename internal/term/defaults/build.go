@@ -41,6 +41,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		pickerModule(model),
 		commentModule(),
 		macroModule(model),
+		vcsModule(model),
 	}
 	for _, m := range modules {
 		if err := r.RegisterModule(m); err != nil {

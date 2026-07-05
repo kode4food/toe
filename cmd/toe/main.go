@@ -16,6 +16,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/config"
 )
@@ -71,6 +72,9 @@ func run(args []string, out io.Writer) error {
 			return err
 		}
 	}
+
+	vcsSession := vcs.Attach(editor)
+	defer vcsSession.Close()
 
 	km := command.NewKeymaps()
 	model := ui.New(editor, km)

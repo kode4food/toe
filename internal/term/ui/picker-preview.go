@@ -30,18 +30,16 @@ type (
 	}
 
 	previewDocRender struct {
-		text   core.Rope
-		spans  []highlight.Span
-		format *language.TextFormat
-		opts   *view.Options
-		th     *theme.Theme
-		w, h   int
-		hlFrom int
-		hlTo   int
-		// scroll offsets the viewport by logical lines past the match anchor;
-		// the renderer clamps it to the document and writes the applied value
-		// back so the caller can persist a bounded scroll position
-		scroll int
+		text      core.Rope
+		spans     []highlight.Span
+		format    *language.TextFormat
+		opts      *view.Options
+		th        *theme.Theme
+		w, h      int
+		hlFrom    int
+		hlTo      int
+		diffLines map[int]diffGutterKind
+		scroll    int
 	}
 )
 
@@ -76,10 +74,16 @@ func (p *previewCtx) renderDocInto(
 		text: entry.rope, spans: entry.spans,
 		format: format, opts: p.editor.Options(),
 		th: p.th, w: p.w, h: p.h,
-		hlFrom: p.hlFrom, hlTo: p.hlTo, scroll: p.picker.previewScroll,
+		hlFrom: p.hlFrom, hlTo: p.hlTo,
+		diffLines: p.itemDiffLines(entry.rope),
+		scroll:    p.picker.previewScroll,
 	}
 	renderPreviewDocInto(buf, x, y, r)
 	p.picker.previewScroll = r.scroll
+}
+
+func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
+	return diffGutterLines(p.item.DiffHunks, text.LenLines())
 }
 
 func (p *previewCtx) renderFileInto(buf *tui.Buffer, x, y int, path string) {
@@ -98,7 +102,8 @@ func (p *previewDocEntry) renderInto(
 		format: format, opts: ctx.editor.Options(),
 		th: ctx.th, w: ctx.w, h: ctx.h,
 		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
-		scroll: ctx.picker.previewScroll,
+		diffLines: ctx.itemDiffLines(p.rope),
+		scroll:    ctx.picker.previewScroll,
 	}
 	renderPreviewDocInto(buf, x, y, r)
 	ctx.picker.previewScroll = r.scroll

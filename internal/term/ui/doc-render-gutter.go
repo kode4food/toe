@@ -8,18 +8,32 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type gutterSpec struct {
-	layout          []view.GutterType
-	lineNumberW     int
-	width           int
-	lineStyle       tui.Style
-	lineSelected    tui.Style
-	diagLines       map[int]view.DiagnosticSeverity
-	severityHint    tui.Style
-	severityInfo    tui.Style
-	severityWarning tui.Style
-	severityError   tui.Style
-}
+type (
+	gutterSpec struct {
+		layout          []view.GutterType
+		lineNumberW     int
+		width           int
+		lineStyle       tui.Style
+		lineSelected    tui.Style
+		diagLines       map[int]view.DiagnosticSeverity
+		diffLines       map[int]diffGutterKind
+		severityHint    tui.Style
+		severityInfo    tui.Style
+		severityWarning tui.Style
+		severityError   tui.Style
+		diffAdded       tui.Style
+		diffModified    tui.Style
+		diffRemoved     tui.Style
+	}
+
+	diffGutterKind byte
+)
+
+const (
+	diffGutterAdded diffGutterKind = iota
+	diffGutterModified
+	diffGutterRemoved
+)
 
 func (g gutterSpec) renderBlank(buf *tui.Buffer, x, y int) {
 	buf.FillRange(x, y, g.width, g.lineStyle)
@@ -60,6 +74,13 @@ func (g gutterSpec) renderLine(
 					col, y, g.lineNumberW, num, g.lineStyleFor(selected),
 				)
 			}
+		case view.GutterTypeDiff:
+			if kind, ok := g.diffLines[lineNum]; ok {
+				icon, st := g.diffMarker(kind)
+				buf.SetString(col, y, icon, overlayDiagnosticStyle(
+					g.lineStyleFor(selected), st,
+				))
+			}
 		}
 		col += w
 	}
@@ -94,6 +115,17 @@ func (g gutterSpec) diagnosticStyle(
 	}
 }
 
+func (g gutterSpec) diffMarker(kind diffGutterKind) (string, tui.Style) {
+	switch kind {
+	case diffGutterAdded:
+		return "▍", g.diffAdded
+	case diffGutterRemoved:
+		return "▔", g.diffRemoved
+	default:
+		return "▍", g.diffModified
+	}
+}
+
 func gutterLineNumberWidth(
 	text core.Rope, g view.Gutter, layout []view.GutterType,
 ) int {
@@ -117,6 +149,45 @@ func gutterLayoutWidth(layout []view.GutterType, lineNumberW int) int {
 		}
 	}
 	return w
+}
+
+// diffGutterLines maps document lines to their diff gutter markers. Pure
+// removals occupy no document lines, so they mark the line the removal sits on
+// (clamped when the removal is at end of file)
+func diffGutterLines(
+	hunks []view.DiffHunk, nLines int,
+) map[int]diffGutterKind {
+	if len(hunks) == 0 {
+		return nil
+	}
+	out := map[int]diffGutterKind{}
+	for _, h := range hunks {
+		if h.PureRemoval() {
+			line := min(h.From, nLines-1)
+			if _, ok := out[line]; !ok {
+				out[line] = diffGutterRemoved
+			}
+			continue
+		}
+		kind := diffGutterModified
+		if h.PureInsertion() {
+			kind = diffGutterAdded
+		}
+		for line := h.From; line < h.To && line < nLines; line++ {
+			out[line] = kind
+		}
+	}
+	return out
+}
+
+func documentDiffLines(
+	e *view.Editor, doc *view.Document, nLines int,
+) map[int]diffGutterKind {
+	vc := e.VersionControl()
+	if vc == nil {
+		return nil
+	}
+	return diffGutterLines(vc.DiffHunks(doc), nLines)
 }
 
 func diagnosticGutterLines(

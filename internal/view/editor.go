@@ -17,8 +17,10 @@ type Editor struct {
 	opts         Options
 	configReload func() error
 	registers    register.Registers
-	docObserver  DocumentObserver
+	docObservers []DocumentObserver
 	langServers  LanguageServerController
+
+	versionControl VersionControl
 
 	nextDocID          DocumentId
 	nextAccess         int64

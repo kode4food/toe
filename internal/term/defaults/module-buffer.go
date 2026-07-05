@@ -108,14 +108,14 @@ func bufferModule() command.Module {
 			{
 				Name:      actGotoNextBuffer,
 				DocString: "Goto next buffer",
-				Run:       method((*view.Editor).FocusNextView),
+				Run:       Runner((*view.Editor).FocusNextView),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('n'))),
 			},
 			{
 				Name:      actGotoPreviousBuffer,
 				DocString: "Goto previous buffer",
-				Run:       method((*view.Editor).FocusPrevView),
+				Run:       Runner((*view.Editor).FocusPrevView),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(g(char('p'))),
 			},

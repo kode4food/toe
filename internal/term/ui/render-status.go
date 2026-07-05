@@ -47,6 +47,9 @@ type (
 		documentHighlight lipgloss.Style
 		documentLink      lipgloss.Style
 		searchMatch       lipgloss.Style
+		diffAdded         lipgloss.Style
+		diffModified      lipgloss.Style
+		diffRemoved       lipgloss.Style
 	}
 
 	tuiStyles struct {
@@ -74,6 +77,9 @@ type (
 		documentHighlight tui.Style
 		documentLink      tui.Style
 		searchMatch       tui.Style
+		diffAdded         tui.Style
+		diffModified      tui.Style
+		diffRemoved       tui.Style
 	}
 
 	// statusElem is a single rendered piece of a status bar
@@ -99,6 +105,7 @@ type (
 		cwd        string
 		row        int
 		col        int
+		vcsHead    string
 	}
 )
 
@@ -132,6 +139,7 @@ var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLineFileType:         statusElemFileType,
 	view.StatusLineDiagnostics:      statusElemDiagnostics,
 	view.StatusLineRegister:         statusElemRegister,
+	view.StatusLineVersionControl:   statusElemVersionControl,
 }
 
 // buildLipglossStyles constructs a lipglossStyles from a loaded theme and mode
@@ -168,6 +176,9 @@ func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 		documentHighlight: th.Get("ui.highlight"),
 		documentLink:      th.Get("markup.link.url"),
 		searchMatch:       searchMatchStyle(),
+		diffAdded:         th.Get("diff.plus.gutter"),
+		diffModified:      th.Get("diff.delta.gutter"),
+		diffRemoved:       th.Get("diff.minus.gutter"),
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint"); ok {
 		st.inlayHint = next
@@ -230,6 +241,9 @@ func buildTUIStyles(s *lipglossStyles) *tuiStyles {
 		documentHighlight: lipglossToTUIStyle(s.documentHighlight),
 		documentLink:      lipglossToTUIStyle(s.documentLink),
 		searchMatch:       lipglossToTUIStyle(s.searchMatch),
+		diffAdded:         lipglossToTUIStyle(s.diffAdded),
+		diffModified:      lipglossToTUIStyle(s.diffModified),
+		diffRemoved:       lipglossToTUIStyle(s.diffRemoved),
 	}
 }
 
@@ -321,6 +335,10 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	reg := r.cx.Editor.ActiveRegister()
 	cwd := r.cx.Editor.Cwd()
 	sep := opts.StatusLineSeparator()
+	var vcsHead string
+	if vc := r.cx.Editor.VersionControl(); vc != nil {
+		vcsHead, _ = vc.HeadName(doc)
+	}
 
 	baseTUI := lipglossToTUIStyle(st)
 
@@ -332,6 +350,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		row: row, col: col,
+		vcsHead: vcsHead,
 	}
 
 	collectElems := func(elems []view.StatusLineElement) []statusElem {
@@ -619,6 +638,13 @@ func statusElemDiagnostics(s *statusElemCtx) statusElem {
 		text:  " " + strings.Join(parts, " ") + " ",
 		style: s.baseTUI,
 	}
+}
+
+func statusElemVersionControl(s *statusElemCtx) statusElem {
+	if s.vcsHead == "" {
+		return statusElem{}
+	}
+	return statusElem{text: " " + s.vcsHead + " ", style: s.baseTUI}
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {

@@ -46,6 +46,8 @@ type (
 
 	docHighlightMsg struct{ gen int }
 
+	vcsUpdatedMsg struct{}
+
 	completionMsg struct {
 		gen        int
 		anchor     completionAnchor
@@ -147,6 +149,9 @@ func (e *EditorComponent) HandleEvent(
 		e.syncEditorMessages(cx)
 		return consumed(), e.fileWatchCmd(cx)
 
+	case vcsUpdatedMsg:
+		return consumed(), vcsUpdateCmd(cx)
+
 	case tea.MouseClickMsg:
 		e.completionGen++
 		e.cancelPending(cx)
@@ -206,6 +211,18 @@ func (e *EditorComponent) HandleEvent(
 		return consumed(), nil
 	}
 	return ignored(), nil
+}
+
+func vcsUpdateCmd(cx *Context) tea.Cmd {
+	vc := cx.Editor.VersionControl()
+	if vc == nil {
+		return nil
+	}
+	updates := vc.Updates()
+	return func() tea.Msg {
+		<-updates
+		return vcsUpdatedMsg{}
+	}
 }
 
 func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {

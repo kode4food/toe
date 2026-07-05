@@ -195,10 +195,14 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		lineStyle:       lineTUI,
 		lineSelected:    lineSelTUI,
 		diagLines:       diagnosticGutterLines(text, docDiagnostics),
+		diffLines:       documentDiffLines(r.cx.Editor, doc, text.LenLines()),
 		severityHint:    tuiStyles.severityHint,
 		severityInfo:    tuiStyles.severityInfo,
 		severityWarning: tuiStyles.severityWarning,
 		severityError:   tuiStyles.severityError,
+		diffAdded:       tuiStyles.diffAdded,
+		diffModified:    tuiStyles.diffModified,
+		diffRemoved:     tuiStyles.diffRemoved,
 	}
 
 	rr := rowRender{

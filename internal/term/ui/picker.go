@@ -72,13 +72,14 @@ type (
 
 	// PickerItem is a single row shown in the picker list
 	PickerItem struct {
-		Display  string
-		Style    lipgloss.Style
-		Columns  []string
-		SortKey  string
-		Preview  PreviewRenderer
-		Location PickerLocation
-		Payload  any
+		Display   string
+		Style     lipgloss.Style
+		Columns   []string
+		SortKey   string
+		Preview   PreviewRenderer
+		Location  PickerLocation
+		Payload   any
+		DiffHunks []view.DiffHunk
 	}
 
 	// PreviewRenderer renders a picker item's preview at the given size

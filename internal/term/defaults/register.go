@@ -22,11 +22,6 @@ func Continuation(fn command.KeyAction) command.Run {
 	}
 }
 
-// method wraps an editor method into a command Run
-func method(fn func(*view.Editor)) command.Run {
-	return Runner(fn)
-}
-
 // Key sequence helpers
 
 func char(r rune) []command.KeyEvent {

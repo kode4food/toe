@@ -16,32 +16,33 @@ type DocumentObserver interface {
 	DocumentClosed(*Document)
 }
 
-// SetDocumentObserver installs a document lifecycle observer
-func (e *Editor) SetDocumentObserver(o DocumentObserver) {
-	e.docObserver = o
+// AddDocumentObserver installs a document lifecycle observer. Observers are
+// notified in registration order
+func (e *Editor) AddDocumentObserver(o DocumentObserver) {
+	e.docObservers = append(e.docObservers, o)
 }
 
 func (e *Editor) documentOpened(doc *Document) {
-	if e.docObserver != nil {
-		e.docObserver.DocumentOpened(doc)
+	for _, o := range e.docObservers {
+		o.DocumentOpened(doc)
 	}
 }
 
 func (e *Editor) documentChanged(doc *Document, change DocumentChange) {
-	if e.docObserver != nil {
-		e.docObserver.DocumentChanged(doc, change)
+	for _, o := range e.docObservers {
+		o.DocumentChanged(doc, change)
 	}
 }
 
 func (e *Editor) documentSaved(doc *Document) {
-	if e.docObserver != nil {
-		e.docObserver.DocumentSaved(doc)
+	for _, o := range e.docObservers {
+		o.DocumentSaved(doc)
 	}
 }
 
 func (e *Editor) documentClosed(doc *Document) {
-	if e.docObserver != nil {
-		e.docObserver.DocumentClosed(doc)
+	for _, o := range e.docObservers {
+		o.DocumentClosed(doc)
 	}
 }
 

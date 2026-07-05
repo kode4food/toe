@@ -20,6 +20,9 @@ type previewLineCtx struct {
 	softWrap    bool
 	lStr        string
 	highlighted bool
+	markerW     int
+	marker      string
+	markerStyle tui.Style
 }
 
 func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
@@ -47,6 +50,13 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 		),
 	)
 	popupBg := fillTUI.BgColor()
+
+	markerW := 0
+	if len(args.diffLines) > 0 {
+		markerW = 1
+	}
+	contentX := x + markerW
+	contentW := args.w - markerW
 
 	softWrap := args.format.SoftWrap && args.format.ViewportWidth > 0
 	anchorLine, vOff := previewAnchor(
@@ -92,24 +102,26 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 			hlStyle: hlStyleFn, format: args.format, ws: ws, ig: ig,
 			hlSpans: args.spans, cursor: -1, cursorLine: -1,
 			lineNum: lineNum, lineStart: start, lineEnd: end,
-			softWrap: softWrap, hStart: 0, hWidth: args.w,
+			softWrap: softWrap, hStart: 0, hWidth: contentW,
 			maxRows: args.h - bufRow + rowSkip,
 		}
 		rendered := rr.rows()
 		highlighted := args.hlFrom >= 0 &&
 			lineNum >= args.hlFrom && lineNum <= args.hlTo
 
-		bufRow += emitPreviewLine(
-			buf, x, y+bufRow, rendered,
-			previewLineCtx{
-				format: args.format, lgStyles: lgStyles,
-				fillTUI: fillTUI, popupBg: popupBg,
-				hlBg: hlBg, w: args.w,
-				rowSkip: rowSkip, maxH: args.h - bufRow,
-				softWrap: softWrap, lStr: lStr,
-				highlighted: highlighted,
-			},
-		)
+		lineCtx := previewLineCtx{
+			format: args.format, lgStyles: lgStyles,
+			fillTUI: fillTUI, popupBg: popupBg,
+			hlBg: hlBg, w: contentW,
+			rowSkip: rowSkip, maxH: args.h - bufRow,
+			softWrap: softWrap, lStr: lStr,
+			highlighted: highlighted, markerW: markerW,
+		}
+		if kind, ok := args.diffLines[lineNum]; ok {
+			lineCtx.marker, lineCtx.markerStyle =
+				previewDiffMarker(kind, tuiStyles)
+		}
+		bufRow += emitPreviewLine(buf, contentX, y+bufRow, rendered, lineCtx)
 	}
 	if len(rulers) > 0 {
 		applyRulers(buf, x, y, args.w, args.h, 0, rulers, rulerBg)
@@ -144,6 +156,7 @@ func emitPreviewLine(
 			if ctx.highlighted {
 				buf.PatchBgRange(x, y+n, ctx.w, ctx.hlBg)
 			}
+			ctx.emitMarker(buf, x, y+n, n == 0)
 			n++
 		}
 	} else {
@@ -155,7 +168,34 @@ func emitPreviewLine(
 		if ctx.highlighted {
 			buf.PatchBgRange(x, y, ctx.w, ctx.hlBg)
 		}
+		ctx.emitMarker(buf, x, y, true)
 		n = 1
 	}
 	return n
+}
+
+func (c previewLineCtx) emitMarker(buf *tui.Buffer, x, y int, first bool) {
+	if c.markerW == 0 {
+		return
+	}
+	mx := x - c.markerW
+	buf.FillRange(mx, y, c.markerW, c.fillTUI)
+	buf.PatchBgRange(mx, y, c.markerW, c.popupBg)
+	if c.marker != "" && first {
+		st := c.markerStyle.Bg(c.popupBg)
+		buf.SetString(mx, y, c.marker, st)
+	}
+}
+
+func previewDiffMarker(
+	kind diffGutterKind, styles *tuiStyles,
+) (string, tui.Style) {
+	switch kind {
+	case diffGutterAdded:
+		return "▍", styles.diffAdded
+	case diffGutterRemoved:
+		return "▔", styles.diffRemoved
+	default:
+		return "▍", styles.diffModified
+	}
 }

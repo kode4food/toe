@@ -24,7 +24,7 @@ func TestDocumentObserver(t *testing.T) {
 
 		e := view.NewEditor(dir)
 		o := &recordingDocumentObserver{}
-		e.SetDocumentObserver(o)
+		e.AddDocumentObserver(o)
 
 		v, err := e.SwitchFile(path)
 		assert.NoError(t, err)

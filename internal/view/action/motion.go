@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -315,6 +315,6 @@ func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
 		TabWidth:         format.TabWidth,
 		MaxWrap:          format.MaxWrap,
 		MaxIndentRetain:  format.MaxIndentRetain,
-		WrapIndicatorLen: ansi.StringWidth(format.WrapIndicator),
+		WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
 	}
 }

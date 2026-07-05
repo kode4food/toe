@@ -135,6 +135,7 @@ func TestDefaults(t *testing.T) {
 			"h", "a", "k", "r", "s", "S",
 			"f", "F", "e", ".", "b", "j",
 			"/", "?", "'", "c", "A-c", "C",
+			"g",
 		}, keys)
 	})
 

@@ -56,3 +56,11 @@ make pre-commit   # run this before committing
 make test
 make coverage
 ```
+
+## Acknowledgements
+
+toe is possible because of excellent terminal UI, parsing, and syntax highlighting projects:
+
+- [Christian Rocha](https://github.com/meowgorithm) and the [Charm team](https://charm.land/) for [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Lip Gloss](https://github.com/charmbracelet/lipgloss), which give toe its TUI runtime, input handling, renderer, styling, and layout model
+- [Max Brunsfeld](https://github.com/maxbrunsfeld) and the [Tree-sitter project](https://tree-sitter.github.io/tree-sitter/), and [Maxim Sukharev](https://github.com/smacker) and the [go-tree-sitter project](https://github.com/smacker/go-tree-sitter), for the incremental parsing stack, Go bindings, and bundled grammars behind toe's Tree-sitter highlighting
+- [Alec Thomas](https://github.com/alecthomas) and the [Chroma project](https://github.com/alecthomas/chroma), the pure-Go syntax highlighter toe uses as its highlighting fallback

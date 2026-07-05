@@ -7,40 +7,40 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/creack/pty"
+	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/assert"
 )
 
-// tui drives a toe process running inside a pseudo-terminal. All output
-// from the process is accumulated so tests can wait for screen content
+// tui drives a toe process running inside a pseudo-terminal. Output is fed into
+// a virtual terminal emulator so tests assert against the rendered screen
+// rather than the raw escape stream, which only carries cell deltas
 type tui struct {
 	t    *testing.T
 	cmd  *exec.Cmd
 	ptmx *os.File
 	done chan error
 
-	mu  sync.Mutex
-	buf strings.Builder
+	mu sync.Mutex
+	vt vt10x.Terminal
 }
 
 const (
 	binEnv      = "TOE_INTEGRATION_BIN"
 	waitTimeout = 10 * time.Second
 
+	termCols = 80
+	termRows = 24
+
 	// escPause must comfortably exceed the terminal reader's 50ms escape
 	// timeout, or keys sent after a bare escape are read as part of an
 	// alt-modified sequence
 	escPause = 200 * time.Millisecond
-)
-
-var ansiPattern = regexp.MustCompile(
-	`\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\a]*(\a|\x1b\\)|\x1b[@-_]`,
 )
 
 func TestMain(m *testing.M) {
@@ -86,19 +86,15 @@ func TestIntegration(t *testing.T) {
 		tt := startTUI(t, dir, path)
 		tt.waitFor("NOR")
 
-		tt.reset()
 		tt.send("i")
 		tt.waitFor("INS")
 
-		tt.reset()
 		tt.escape()
 		tt.waitFor("NOR")
 
-		tt.reset()
 		tt.send("v")
 		tt.waitFor("SEL")
 
-		tt.reset()
 		tt.escape()
 		tt.waitFor("NOR")
 		tt.quit()
@@ -136,12 +132,15 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-// send writes raw keystrokes to the terminal, pausing briefly so the
-// process observes distinct key events
+// send types keystrokes one byte at a time so the process sees distinct key
+// events with per-keystroke redraws, matching real typing
 func (tt *tui) send(keys string) {
 	tt.t.Helper()
-	if _, err := tt.ptmx.WriteString(keys); err != nil {
-		tt.t.Fatalf("send %q: %v", keys, err)
+	for i := 0; i < len(keys); i++ {
+		if _, err := tt.ptmx.Write([]byte{keys[i]}); err != nil {
+			tt.t.Fatalf("send %q: %v", keys, err)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 	time.Sleep(50 * time.Millisecond)
 }
@@ -153,8 +152,8 @@ func (tt *tui) escape() {
 	time.Sleep(escPause)
 }
 
-// waitFor polls the accumulated output, stripped of ANSI sequences, until
-// it contains the wanted substring or the timeout expires
+// waitFor polls the emulated screen until it contains the wanted substring or
+// the timeout expires
 func (tt *tui) waitFor(want string) {
 	tt.t.Helper()
 	deadline := time.Now().Add(waitTimeout)
@@ -164,7 +163,7 @@ func (tt *tui) waitFor(want string) {
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	tt.t.Fatalf("timed out waiting for %q; output:\n%s", want, tt.screen())
+	tt.t.Fatalf("timed out waiting for %q; screen:\n%s", want, tt.screen())
 }
 
 // waitFileContent polls a file on disk until it holds the wanted content
@@ -183,17 +182,9 @@ func (tt *tui) waitFileContent(path, want string) {
 		time.Sleep(20 * time.Millisecond)
 	}
 	tt.t.Fatalf(
-		"file %s = %q, want %q; output:\n%s",
+		"file %s = %q, want %q; screen:\n%s",
 		path, last, want, tt.screen(),
 	)
-}
-
-// reset discards accumulated output so waitFor only matches content the
-// process renders after this point
-func (tt *tui) reset() {
-	tt.mu.Lock()
-	defer tt.mu.Unlock()
-	tt.buf.Reset()
 }
 
 // quit exits the editor from normal mode and waits for a clean process
@@ -206,7 +197,7 @@ func (tt *tui) quit() {
 		assert.NoError(tt.t, err)
 	case <-time.After(waitTimeout):
 		tt.t.Fatalf(
-			"timed out waiting for process exit; output:\n%s",
+			"timed out waiting for process exit; screen:\n%s",
 			tt.screen(),
 		)
 	}
@@ -215,7 +206,7 @@ func (tt *tui) quit() {
 func (tt *tui) screen() string {
 	tt.mu.Lock()
 	defer tt.mu.Unlock()
-	return ansiPattern.ReplaceAllString(tt.buf.String(), "")
+	return tt.vt.String()
 }
 
 func (tt *tui) pump() {
@@ -224,7 +215,7 @@ func (tt *tui) pump() {
 		n, err := tt.ptmx.Read(buf)
 		if n > 0 {
 			tt.mu.Lock()
-			tt.buf.Write(buf[:n])
+			_, _ = tt.vt.Write(buf[:n])
 			tt.mu.Unlock()
 		}
 		if err != nil {
@@ -249,11 +240,19 @@ func startTUI(t *testing.T, dir string, args ...string) *tui {
 		"HOME="+dir,
 		"XDG_CONFIG_HOME="+filepath.Join(dir, ".config"),
 	)
-	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: 24, Cols: 80})
+	ptmx, err := pty.StartWithSize(
+		cmd, &pty.Winsize{Rows: termRows, Cols: termCols},
+	)
 	if err != nil {
 		t.Fatalf("start pty: %v", err)
 	}
-	tt := &tui{t: t, cmd: cmd, ptmx: ptmx, done: make(chan error, 1)}
+	tt := &tui{
+		t:    t,
+		cmd:  cmd,
+		ptmx: ptmx,
+		done: make(chan error, 1),
+		vt:   vt10x.New(vt10x.WithSize(termCols, termRows)),
+	}
 	go tt.pump()
 	go func() { tt.done <- cmd.Wait() }()
 	t.Cleanup(tt.stop)

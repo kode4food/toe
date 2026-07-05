@@ -8,6 +8,8 @@ title: "toe"
 
 ![toe screenshot](img/screenshot.png)
 
+## Super Opinionated
+
 - Modal editing with normal, insert, and selection modes
 - Multiple buffers, split views, fuzzy pickers, and workspace search
 - Go-focused LSP support via `gopls`, plus web language servers

@@ -140,6 +140,7 @@ func (r *rowRender) rows() []renderedRow {
 
 	wsRender := r.ws.Render
 	wsChars := r.ws.Characters
+	ts := r.tuiStyles
 	annIdx := 0
 	writeAnnotations := func(pos int) {
 		for annIdx < len(r.annotations) && r.annotations[annIdx].pos == pos {
@@ -170,7 +171,61 @@ func (r *rowRender) rows() []renderedRow {
 			startGuide: startGuide, endGuide: endGuide,
 		})
 		col += width
-		writeRendered(rendered, width, r.cellStyle(pos, glyph))
+		selAt := r.selectionAt(pos)
+		var colorStyle tui.Style
+		colorOK := false
+		if r.docColors != nil {
+			colorStyle, colorOK = r.colorAt(pos)
+		}
+		var diagStyle tui.Style
+		diagOK := false
+		if r.diagnostics != nil {
+			diagStyle, diagOK = r.diagnosticAt(pos)
+		}
+		switch {
+		case selAt.cursor && selAt.primary && r.cursorIsBlock:
+			writeRendered(rendered, width, ts.cursorPrim)
+		case selAt.cursor && selAt.primary && r.mode != view.ModeInsert:
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.selection,
+			))
+		case selAt.cursor && !selAt.primary:
+			writeRendered(rendered, width, ts.cursor)
+		case selAt.selected:
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.selection,
+			))
+		case r.mode == view.ModeSelect:
+			writeRendered(rendered, width, r.baseStyleAt(pos, glyph))
+		case rangeMatch(r.docHighlights, pos):
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.documentHighlight,
+			))
+		case rangeMatch(r.docLinks, pos):
+			writeRendered(rendered, width, overlaySelStyle(
+				r.baseStyleAt(pos, glyph), ts.documentLink,
+			))
+		case colorOK:
+			writeRendered(rendered, width, colorStyle)
+		case rangeMatch(r.searchMatches, pos):
+			writeRendered(rendered, width, ts.searchMatch)
+		case diagOK:
+			writeRendered(rendered, width, overlayDiagnosticStyle(
+				r.baseStyleAt(pos, glyph), diagStyle,
+			))
+		case glyph == documentGlyphGuide:
+			writeRendered(rendered, width, ts.indentGuide)
+		case glyph == documentGlyphWhitespace:
+			writeRendered(rendered, width, ts.whitespace)
+		case r.hlSpans != nil:
+			if scope, ok := r.hlScopeAt(pos); ok {
+				writeRendered(rendered, width, r.hlStyle(scope))
+			} else {
+				writeRendered(rendered, width, ts.text)
+			}
+		default:
+			writeRendered(rendered, width, ts.text)
+		}
 		pos++
 	}
 	if r.annotations != nil {
@@ -182,12 +237,26 @@ func (r *rowRender) rows() []renderedRow {
 	drawEnd := selEnd.selected || nlWhitespace ||
 		(selEnd.cursor && (r.mode != view.ModeInsert || !selEnd.primary))
 	if drawEnd && !(windowed && col >= hEnd) {
-		rendered, glyph := " ", documentGlyphNone
+		glyph := documentGlyphNone
 		if nlWhitespace {
-			rendered = string(wsChars.NewlineRune())
 			glyph = documentGlyphWhitespace
 		}
-		writeRendered(rendered, 1, r.cellStyle(r.lineEnd, glyph))
+		switch {
+		case selEnd.cursor && selEnd.primary && r.cursorIsBlock:
+			writeRendered(" ", 1, ts.cursorPrim)
+		case selEnd.cursor && selEnd.primary && r.mode != view.ModeInsert:
+			writeRendered(" ", 1, overlaySelStyle(
+				r.baseStyleAt(r.lineEnd, glyph), ts.selection,
+			))
+		case selEnd.cursor && !selEnd.primary:
+			writeRendered(" ", 1, ts.cursor)
+		case selEnd.selected:
+			writeRendered(" ", 1, overlaySelStyle(
+				r.baseStyleAt(r.lineEnd, glyph), ts.selection,
+			))
+		default:
+			writeRendered(string(wsChars.NewlineRune()), 1, ts.whitespace)
+		}
 	}
 	if r.softWrap {
 		if (!row.empty() || len(rows) == 0) && len(rows) < maxRows {
@@ -198,45 +267,6 @@ func (r *rowRender) rows() []renderedRow {
 	r.cellScratch = row.cells[:0]
 	r.rowScratch = append(r.rowScratch[:0], row)
 	return r.rowScratch
-}
-
-func (r *rowRender) cellStyle(pos int, glyph documentGlyph) tui.Style {
-	ts := r.tuiStyles
-	selAt := r.selectionAt(pos)
-	switch {
-	case selAt.cursor && selAt.primary && r.cursorIsBlock:
-		return ts.cursorPrim
-	case selAt.cursor && selAt.primary && r.mode != view.ModeInsert:
-		return overlaySelStyle(r.baseStyleAt(pos, glyph), ts.selection)
-	case selAt.cursor && !selAt.primary:
-		return ts.cursor
-	case selAt.selected:
-		return overlaySelStyle(r.baseStyleAt(pos, glyph), ts.selection)
-	}
-	// select mode hides decoration overlays so the selection stays legible
-	if r.mode == view.ModeSelect {
-		return r.baseStyleAt(pos, glyph)
-	}
-	switch {
-	case rangeMatch(r.docHighlights, pos):
-		return overlaySelStyle(r.baseStyleAt(pos, glyph), ts.documentHighlight)
-	case rangeMatch(r.docLinks, pos):
-		return overlaySelStyle(r.baseStyleAt(pos, glyph), ts.documentLink)
-	}
-	if r.docColors != nil {
-		if colorStyle, ok := r.colorAt(pos); ok {
-			return colorStyle
-		}
-	}
-	if rangeMatch(r.searchMatches, pos) {
-		return ts.searchMatch
-	}
-	if r.diagnostics != nil {
-		if diagStyle, ok := r.diagnosticAt(pos); ok {
-			return overlayDiagnosticStyle(r.baseStyleAt(pos, glyph), diagStyle)
-		}
-	}
-	return r.baseStyleAt(pos, glyph)
 }
 
 type selectionAtRes struct {

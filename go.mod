@@ -11,6 +11,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.26.1
 	github.com/charmbracelet/ultraviolet v0.0.0-20260608091853-35bcb7319efa
 	github.com/charmbracelet/x/ansi v0.11.7
+	github.com/creack/pty v1.1.24
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-json-experiment/json v0.0.0-20260601182631-00ed12fed2a6
 	github.com/mattn/go-runewidth v0.0.24

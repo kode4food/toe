@@ -82,10 +82,10 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 ### Integration
 
-- [ ] Launch `toe` in a pseudo-terminal for integration coverage.
-- [ ] Exercise open/edit/save/reload flows.
-- [ ] Exercise normal/insert/select mode transitions.
-- [ ] Exercise multiple cursors.
+- [x] Launch `toe` in a pseudo-terminal for integration coverage (`cmd/toe/integration_test.go`; builds the binary once in `TestMain`, drives it through a pty with real keystrokes, asserts on ANSI-stripped screen output and saved file bytes).
+- [x] Exercise open/edit/save/reload flows.
+- [x] Exercise normal/insert/select mode transitions.
+- [x] Exercise multiple cursors (copy-on-next-line, insert at both cursors, verify saved bytes).
 - [ ] Exercise search and replace flows.
 - [ ] Exercise splits and buffers.
 - [ ] Exercise LSP end-to-end with a small test server.

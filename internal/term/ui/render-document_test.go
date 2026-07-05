@@ -616,11 +616,11 @@ func TestThemeRender(t *testing.T) {
 
 		cells := styledRunes(m.View().Content)
 
-		assert.Equal(t, "48;2;49;50;68", cells['a'])
+		assert.Equal(t, "48;2;88;91;112", cells['a'])
 		assert.Equal(t, "48;2;69;71;90", cells['b'])
 		assert.Equal(t, "48;2;69;71;90", cells['c'])
 		assert.Equal(t, "48;2;69;71;90", cells['d'])
-		assert.Equal(t, "48;2;49;50;68", cells['e'])
+		assert.Equal(t, "48;2;88;91;112", cells['e'])
 	})
 }
 

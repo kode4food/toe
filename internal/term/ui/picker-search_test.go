@@ -3,6 +3,7 @@ package ui_test
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -21,6 +22,34 @@ func TestGlobalSearch(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "a.txt")
 		assert.NotContains(t, out, "b.txt")
+	})
+
+	t.Run("preview highlights the matched line", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
+		m, e := globalSearchModel(t, "findme", map[string]string{
+			"a.txt": "alpha\nfindme here\nbravo\n",
+			"b.txt": "beta\n",
+		})
+		e.Options().Theme = "mocha"
+		m = resize(m, 120, 30)
+		out := m.View().Content
+
+		matchLine, otherLine := "", ""
+		for line := range strings.SplitSeq(out, "\n") {
+			plain := stripANSI(line)
+			switch {
+			case strings.Contains(plain, "findme here"):
+				matchLine = line
+			case strings.Contains(plain, "bravo"):
+				otherLine = line
+			}
+		}
+		assert.NotEmpty(t, matchLine)
+		assert.NotEmpty(t, otherLine)
+		matchBg := bgAt(matchLine, "findme here")
+		otherBg := bgAt(otherLine, "bravo")
+		assert.NotEmpty(t, matchBg)
+		assert.NotEqual(t, otherBg, matchBg)
 	})
 
 	t.Run("accept opens match", func(t *testing.T) {
@@ -199,4 +228,32 @@ func openGlobalSearch(t *testing.T, e *view.Editor, query string) ui.Model {
 		m = openPickerAndFeed(m, ch)
 	}
 	return m
+}
+
+var previewCellBgRE = regexp.MustCompile(`48;2;\d+;\d+;\d+`)
+
+// bgAt returns the true-color background escape in effect at the first
+// occurrence of needle in line, tracking SGR state left to right
+func bgAt(line, needle string) string {
+	idx := strings.Index(stripANSI(line), needle)
+	bg, seen := "", 0
+	for len(line) > 0 {
+		if strings.HasPrefix(line, "\x1b[") {
+			end := strings.IndexByte(line, 'm')
+			if end < 0 {
+				break
+			}
+			if m := previewCellBgRE.FindString(line[2:end]); m != "" {
+				bg = m
+			}
+			line = line[end+1:]
+			continue
+		}
+		if seen == idx {
+			return bg
+		}
+		seen++
+		line = line[1:]
+	}
+	return bg
 }

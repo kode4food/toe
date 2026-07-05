@@ -8,7 +8,9 @@ Work in progress. Assume it will lose your edits.
 
 ![toe screenshot](./docs/img/screenshot.png)
 
-## What works
+## Super Opinionated
+
+toe is opinionated because it is built for one tight workflow: editing Go projects from a terminal without growing into a general-purpose IDE. It favors modal editing, `gopls`, TOML config, project-local state, Git-aware navigation, and a small set of deliberate defaults over plugin sprawl or endless knobs.
 
 - Modal editing: normal, insert, and selection modes; multi-cursor editing; persistent undo history
 - Project navigation: multiple buffers, split views, fuzzy file/buffer pickers, global search, and live previews
@@ -16,6 +18,7 @@ Work in progress. Assume it will lose your edits.
 - Editor display: soft wrap, rulers, whitespace rendering, indent guides, gutters, configurable cursor shapes, and statusline elements
 - Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker, and statusline element
 - Project state: user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
+- 4 Catppuccin themes: frappe, latte, macchiato, mocha
 
 ## Requirements
 

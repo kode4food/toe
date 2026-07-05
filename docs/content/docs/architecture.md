@@ -5,14 +5,14 @@ weight: 60
 
 # Architecture
 
-toe is a Go-native modal terminal editor built on Bubbletea, Lipgloss, and Tree-sitter. This page explains how the codebase is layered, how data flows through it, and where the extension seams are.
+toe is a Go-native modal terminal editor built on Bubbletea, Lipgloss, Tree-sitter, and Chroma. This page explains the current package layout, the main data flow, and the integration points that exist in the code today.
 
 ## Design Principles
 
 - **toe edits Go projects, not the universe.** Features exist because Go development needs them, not because other editors have them.
-- **Persistent data structures.** The core text and editing types are immutable; every operation returns a new value. Structural sharing keeps this efficient and makes undo/redo, previews, and concurrent workers safe by construction.
-- **Modular ownership.** Each capability (LSP, VCS, pickers, themes) owns its configuration and state. The core editor exposes narrow seams; modules plug into them rather than reaching into editor internals.
-- **Render once, cache everything.** The render path runs on every keystroke. Anything parsed or computed (config, themes, syntax, highlight spans) is cached and invalidated on change, never recomputed per frame.
+- **Persistent editing values.** The core text and edit values (`Rope`, `ChangeSet`, `Transaction`, `Selection`, and `Range`) return new values rather than mutating their inputs. `History` is the exception in the current implementation: it is owned by a document and mutates its revision cursor and revision list while storing immutable transactions.
+- **Modular ownership.** LSP, VCS, pickers, themes, and command modules keep their state and configuration close to the module that owns the behavior. The editor exposes narrow interfaces where decoupled services need to plug in.
+- **Render once, cache everything expensive.** The render path runs on every keystroke. Parsed syntax queries, syntax caches, raw document text, highlight spans, search spans, preview entries, and line-prefix scans are cached and invalidated by revision or input changes.
 
 ## Package Layers
 
@@ -22,17 +22,17 @@ Dependencies point downward; lower layers never import higher ones.
 
 Packages: `internal/core`.
 
-Persistent text (`Rope`), selections, ranges, movement, transactions (`ChangeSet`, `Transaction`), and pure editing algorithms. No I/O, no UI, no editor state — everything here is a pure function over immutable values. All higher layers are built on these types.
+Persistent text (`Rope`), selections, ranges, movement, transactions (`ChangeSet`, `Transaction`), search, comments, indentation, brackets, surround helpers, text objects, wrapping, and undo/redo history. This package has no terminal UI or file I/O. Most editing values are immutable value types; `History` is stateful and lives inside a `Document`.
 
 ### Editor State
 
 Packages: `internal/view` and its subpackages.
 
-The editor, documents, view tree (splits), history, and file I/O. A `Document` owns text, revision, language, and per-view selections; a `View` is a window onto a document; the `Editor` owns the document table, the split tree, and focus. Subpackages:
+The editor, documents, view tree (splits), sessions, file I/O, overlays, diagnostics, and service interfaces. A `Document` owns text, revision, language, history, diagnostics, LSP overlay state, and per-view selections; a `View` is a window onto a document; the `Editor` owns the document table, split tree, focus, runtime options, registers, document observers, and optional service controllers. Subpackages:
 
-- `view/config` — editor configuration, runtime options, and EditorConfig support.
-- `view/language` — language configuration, matching, and formatter/server metadata.
-- `view/register` — registers and clipboard behavior.
+- `view/config` — raw editor config loading/merging and EditorConfig support.
+- `view/language` — language configuration, matching, formatter metadata, server metadata, indentation, auto-pair, and soft-wrap settings.
+- `view/register` — the in-memory register store, including the default and black-hole registers.
 - `view/action` — reusable editor actions invoked by commands and UI components.
 
 `view.Options` is deliberately limited to innate editor behavior that core editor, document, action, or renderer code must consult directly. Module-owned settings live with their module.
@@ -41,13 +41,13 @@ The editor, documents, view tree (splits), history, and file I/O. A `Document` o
 
 Packages: `internal/term/command`, `internal/term/defaults`.
 
-`term/command` provides the machinery: command signatures, tokenization, completion, key parsing, key tries, keymaps, and the registry. `term/defaults` provides the content: built-in command modules and the immutable default key bindings. Commands are declarative registrations that resolve to `view/action` calls, so the same behavior is reachable from keys, the command prompt, and UI components.
+`term/command` provides the machinery: command signatures, argument parsing, tokenization and expansion, completion, key parsing, key tries, keymaps, option registration, config sections, and the registry. `term/defaults` provides the content: built-in command modules, default key bindings, module-owned config structs, and live option handlers. Many commands resolve directly to `view/action` calls; others bridge to the UI model, LSP, VCS, shell commands, sessions, or config reload.
 
 ### Terminal UI
 
 Packages: `internal/term/ui`, `internal/tui`.
 
-`term/ui` contains the Bubbletea model: the document renderer, prompt, pickers, completion popup, overlays, and event handling. `internal/tui` is the low-level terminal layer — cell buffer, styles, spans, and ANSI rendering.
+`term/ui` contains the Bubbletea model: the document renderer, status line, prompt, pickers, completion popup, hover and signature popups, overlays, macro handling, mouse handling, and event routing. `internal/tui` is the low-level terminal layer: cell buffers, styles, graphics primitives, spans, and ANSI rendering.
 
 Overlays implement one of two interfaces: `BufferOverlayComponent` (`RenderOverBuffer`) writes cells directly into the frame buffer and is the fast path for complex panels; `OverlayComponent` composes lipgloss layers and suits simple string-based overlays like the command prompt. Bordered popups share the `popup` helper so content and border render in one pass.
 
@@ -55,20 +55,22 @@ Overlays implement one of two interfaces: `BufferOverlayComponent` (`RenderOverB
 
 Packages: `internal/term/syntax`, `internal/term/highlight`, `internal/term/theme`.
 
-The syntax runtime loads Tree-sitter grammars and queries for supported languages, `highlight` turns parse results into styled spans, and `theme` maps theme scopes onto terminal styles. Highlight spans are cached per document revision.
+`syntax` owns the Tree-sitter language registry, embedded highlight queries, query inheritance, parser/query caches, and Tree-sitter tokenization for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto Lipgloss styles. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path.
+
+Only highlight queries are bundled today. Injection, locals, textobject, indent, tags, folds, rainbow-bracket, syntax-aware bracket matching, and syntax-aware surround support are still tracked in `PLAN.md`.
 
 ### Services
 
 Packages: `internal/lsp`, `internal/vcs`.
 
-- `internal/lsp` implements the language-server client: transport, lifecycle, capability negotiation, and feature surfaces (completion, hover, signature help, diagnostics, symbols, code actions, rename, navigation). Server metadata comes from `languages.toml`.
-- `internal/vcs` implements version-control integration behind a provider registry. Git is the only provider today, shelling out to the git binary. A debounced per-document diff worker (`vcs.Differ`) computes line hunks; `vcs.Attach` wires a session into document lifecycle observers, and the UI subscribes to update events for gutter rendering.
+- `internal/lsp` implements the language-server client: transport, lifecycle, capability negotiation, dynamic file-watch registration, document sync, diagnostics, completion, hover, signature help, navigation, symbols, code actions, rename, formatting, document links, inlay hints, document colors, progress, and workspace edits. Server metadata comes from merged `languages.toml` data.
+- `internal/vcs` implements version-control integration behind a provider registry. Git is the only provider today, shelling out to the git binary. A debounced per-document diff worker (`vcs.Differ`) computes line hunks; `vcs.Attach` wires a session into document lifecycle observers, installs the editor's `view.VersionControl` implementation, and exposes update events for gutter/status/picker rendering.
 
 ### Support
 
 Packages: `internal/loader`, `internal/glob`, `internal/health`, `internal/testutil`.
 
-Runtime path lookup, embedded assets, TOML merge helpers, and workspace trust live in `loader`. `health` powers the runtime health checks; `testutil` holds shared test infrastructure.
+Runtime path lookup, embedded assets, TOML merge helpers, theme loading, and workspace trust live in `loader`. `glob` provides glob matching used by language/config behavior. `health` powers the runtime health checks; `testutil` holds shared test infrastructure.
 
 ## Data Flow
 
@@ -76,22 +78,24 @@ toe is a single Bubbletea program. One frame looks like:
 
 1. Terminal input arrives as a Bubbletea message.
 2. The model routes it: modal overlays (picker, completion, prompt) get first refusal; otherwise the key trie resolves it against the active mode's keymap.
-3. The resolved command invokes a `view/action`, which builds a `Transaction` against the document's current `Rope`.
-4. Applying the transaction produces a new document revision; history records it, selections are mapped through the `ChangeSet`, and observers (LSP document sync, VCS differ) are notified.
+3. The resolved command runs its handler. Editing handlers usually call `view/action` helpers that build a `Transaction` against the document's current `Rope`.
+4. For an edit, applying the transaction produces a new `Rope`, increments the document revision, records history unless the edit is being accumulated for insert mode, maps selections through the `ChangeSet`, and notifies observers such as LSP document sync and the VCS differ.
 5. The renderer draws the visible viewport from cached highlight spans and gutter state into the cell buffer, and Bubbletea diffs it onto the screen.
 
-Because documents are persistent values, background workers (diff computation, LSP sync) operate on the revision they were handed without locking or racing the UI.
+Because document text is a persistent `Rope`, background workers can keep the text snapshot they were handed. Mutable document snapshot fields are protected by document locks where async LSP goroutines need to read or update them.
 
 ## Extension Points
 
-- **Languages and language servers** — add a `[[language]]` entry and a `[language-server.<name>]` section to `languages.toml`. No code changes are needed for a new server; grammar support requires bundling the Tree-sitter grammar and queries in the syntax runtime.
-- **VCS providers** — implement the `vcs.Provider` interface and register it with the provider registry. The `view.VersionControl` seam is what the editor consumes, so providers never touch UI code.
+- **Languages and language servers** — add or override `[[language]]` entries and `[language-server.<name>]` sections in the merged `languages.toml` data. No code changes are needed for a new server. Tree-sitter highlighting for a new language requires adding the grammar import to `internal/term/syntax`, registering it in the language registry, and bundling a highlight query.
+- **VCS providers** — implement the `vcs.Provider` interface. The registry currently installs Git directly in `NewRegistry`, so adding another provider also requires wiring it into that constructor. The editor consumes only the `view.VersionControl` seam.
 - **Commands** — add a command module under `term/defaults` that registers signatures against the command registry. Registered commands automatically participate in key binding, prompt completion, and the command palette.
 - **Actions** — put reusable editing behavior in `view/action` so commands, keymaps, and UI components can share it.
-- **Themes** — themes are TOML scope-to-style maps loaded by `loader`; drop a theme file into the runtime path. The four Catppuccin variants ship embedded.
-- **Clipboard** — clipboard access goes through the provider abstraction in `view/register`, so platform integrations (OSC 52, custom commands) are pluggable.
-- **UI components** — new panels implement `BufferOverlayComponent` and register with the model's overlay handling; pickers share list interaction helpers for hit testing, scrolling, and cursor visibility.
+- **Themes** — themes are TOML scope-to-style maps decoded by `internal/term/theme` and loaded through `loader`. The four embedded Catppuccin variants (`latte`, `frappe`, `macchiato`, `mocha`) are the supported theme names today.
+- **Clipboard** — register yanks and pastes use `view/register`. System clipboard actions detect external tools (`pbcopy`/`pbpaste`, `xclip`, `xsel`, or `wl-copy`/`wl-paste`) directly in `view/action`; OSC 52 and custom command providers are not implemented yet.
+- **UI components** — complex overlays implement `BufferOverlayComponent` and draw directly into the frame buffer. Simple string overlays can implement `OverlayComponent`. Pickers share source/list/render helpers for matching, hit testing, scrolling, preview caching, and cursor visibility.
 
 ## Testing Strategy
 
-All tests are black-box (`package_test`), with a 90% coverage floor and nothing excluded — test helpers are tested too. Rendering changes are benchmarked (`-benchmem`) against the realistic worst cases: long single lines, far-right horizontal scroll, and split layouts. Service packages (LSP, VCS) are exercised end-to-end against real fixtures — temporary git repositories for VCS, a test language server for LSP.
+Tests are black-box (`package_test`) throughout the repo, and shared test helpers have their own tests. The project target is 90% coverage, but CI and coverage enforcement are still listed as remaining work in `PLAN.md`.
+
+Rendering-sensitive code has benchmarks with `-benchmem` coverage for long single lines, picker previews, large highlighted files, scrolling, and visual-column calculations. Service packages are exercised with real fixtures where practical: temporary git repositories for VCS and an in-process test language server for LSP.

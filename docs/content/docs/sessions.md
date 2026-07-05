@@ -14,7 +14,7 @@ directory). Each project has its own independent session.
 
 ## Auto-Session
 
-When `editor.auto-session` is enabled (the default), toe automatically:
+When `auto-session` is enabled (the default), toe automatically:
 
 - **Restores** the previous session when launched with no file arguments
 - **Saves** the current session when you quit
@@ -28,7 +28,7 @@ auto-session = true   # default: true
 To disable auto-session:
 
 ```sh
-:set editor.auto-session false
+:set auto-session false
 ```
 
 ## Manual Save and Restore

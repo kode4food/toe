@@ -62,96 +62,96 @@ theme = "frappe"   # frappe | latte | macchiato | mocha
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.mouse` | bool | `true` | Enable mouse support |
-| `editor.middle-click-paste` | bool | `true` | Paste on middle-click |
-| `editor.insecure` | bool | `false` | Disable workspace trust checks |
-| `editor.editor-config` | bool | `true` | Respect `.editorconfig` files |
-| `editor.auto-session` | bool | `true` | Save/restore session automatically |
-| `editor.default-line-ending` | string | (system) | `lf`, `crlf`, or `native` |
+| `mouse` | bool | `true` | Enable mouse support |
+| `middle-click-paste` | bool | `true` | Paste on middle-click |
+| `insecure` | bool | `false` | Disable workspace trust checks |
+| `editor-config` | bool | `true` | Respect `.editorconfig` files |
+| `auto-session` | bool | `true` | Save/restore session automatically |
+| `default-line-ending` | string | (system) | `lf`, `crlf`, or `native` |
 
 ### Display
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.line-number` | string | `"absolute"` | `absolute` or `relative` |
-| `editor.cursorline` | bool | `false` | Highlight cursor line |
-| `editor.cursorcolumn` | bool | `false` | Highlight cursor column |
-| `editor.text-width` | int | `80` | Text width (used by rulers and reflow) |
-| `editor.rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
-| `editor.bufferline` | string | `"never"` | Show buffer tabs: `never`, `always`, `multiple` |
+| `line-number` | string | `"absolute"` | `absolute` or `relative` |
+| `cursorline` | bool | `false` | Highlight cursor line |
+| `cursorcolumn` | bool | `false` | Highlight cursor column |
+| `text-width` | int | `80` | Text width (used by rulers and reflow) |
+| `rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
+| `bufferline` | string | `"never"` | Show buffer tabs: `never`, `always`, `multiple` |
 
 ### Soft Wrap
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.soft-wrap.enable` | bool | `false` | Enable soft wrap |
-| `editor.soft-wrap.max-wrap` | int | `20` | Maximum visual indentation when wrapping |
-| `editor.soft-wrap.max-indent-retain` | int | `40` | Max indent levels to retain |
-| `editor.soft-wrap.wrap-indicator` | string | `"↪ "` | Continuation indicator |
-| `editor.soft-wrap.wrap-at-text-width` | bool | `false` | Wrap at `text-width` instead of window width |
+| `soft-wrap.enable` | bool | `false` | Enable soft wrap |
+| `soft-wrap.max-wrap` | int | `20` | Maximum visual indentation when wrapping |
+| `soft-wrap.max-indent-retain` | int | `40` | Max indent levels to retain |
+| `soft-wrap.wrap-indicator` | string | `"↪ "` | Continuation indicator |
+| `soft-wrap.wrap-at-text-width` | bool | `false` | Wrap at `text-width` instead of window width |
 
 ### Whitespace and Indentation
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.whitespace.render` | string | `"none"` | `none` or `all` |
-| `editor.indent-guides.render` | bool | `false` | Show indent guides |
-| `editor.indent-guides.character` | string | `"│"` | Guide character |
-| `editor.indent-guides.skip-levels` | int | `0` | Indent levels to skip |
-| `editor.gutters.line-numbers.min-width` | int | `3` | Minimum gutter width |
+| `whitespace.render` | string | `"none"` | `none` or `all` |
+| `indent-guides.render` | bool | `false` | Show indent guides |
+| `indent-guides.character` | string | `"│"` | Guide character |
+| `indent-guides.skip-levels` | int | `0` | Indent levels to skip |
+| `gutters.line-numbers.min-width` | int | `3` | Minimum gutter width |
 
 ### Editing
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.auto-pairs` | bool | `true` | Auto-insert closing brackets and quotes |
-| `editor.continue-comments` | bool | `true` | Extend comment tokens on new lines |
-| `editor.atomic-save` | bool | `true` | Write via temp file to prevent partial writes |
-| `editor.insert-final-newline` | bool | `true` | Ensure file ends with a newline |
-| `editor.trim-final-newlines` | bool | `false` | Remove trailing blank lines on save |
-| `editor.trim-trailing-whitespace` | bool | `false` | Remove trailing spaces on save |
+| `auto-pairs` | bool | `true` | Auto-insert closing brackets and quotes |
+| `continue-comments` | bool | `true` | Extend comment tokens on new lines |
+| `atomic-save` | bool | `true` | Write via temp file to prevent partial writes |
+| `insert-final-newline` | bool | `true` | Ensure file ends with a newline |
+| `trim-final-newlines` | bool | `false` | Remove trailing blank lines on save |
+| `trim-trailing-whitespace` | bool | `false` | Remove trailing spaces on save |
 
 ### Auto-Save
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.auto-save` | bool | `false` | Save when focus is lost (alias for `auto-save.focus-lost`) |
-| `editor.auto-save.focus-lost` | bool | `false` | Save when focus leaves the view |
-| `editor.auto-save.after-delay.enable` | bool | `false` | Save after idle delay |
-| `editor.auto-save.after-delay.timeout` | int | `3000` | Idle delay in milliseconds |
+| `auto-save` | bool | `false` | Save when focus is lost (alias for `auto-save.focus-lost`) |
+| `auto-save.focus-lost` | bool | `false` | Save when focus leaves the view |
+| `auto-save.after-delay.enable` | bool | `false` | Save after idle delay |
+| `auto-save.after-delay.timeout` | int | `3000` | Idle delay in milliseconds |
 
 ### Search
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.search.smart-case` | bool | `true` | Case-insensitive unless pattern has uppercase |
-| `editor.search.wrap-around` | bool | `true` | Wrap search at end of file |
+| `search.smart-case` | bool | `true` | Case-insensitive unless pattern has uppercase |
+| `search.wrap-around` | bool | `true` | Wrap search at end of file |
 
 ### Scrolling
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.scrolloff` | int | `5` | Lines of context kept above/below cursor |
-| `editor.scroll-lines` | int | `3` | Lines moved per scroll step |
+| `scrolloff` | int | `5` | Lines of context kept above/below cursor |
+| `scroll-lines` | int | `3` | Lines moved per scroll step |
 
 ### Cursor Shape
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.cursor-shape.normal` | string | (terminal) | `block`, `bar`, or `underline` |
-| `editor.cursor-shape.insert` | string | (terminal) | Cursor shape in Insert mode |
-| `editor.cursor-shape.select` | string | (terminal) | Cursor shape in Select mode |
+| `cursor-shape.normal` | string | (terminal) | `block`, `bar`, or `underline` |
+| `cursor-shape.insert` | string | (terminal) | Cursor shape in Insert mode |
+| `cursor-shape.select` | string | (terminal) | Cursor shape in Select mode |
 
 ### Status Bar
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `editor.statusline.left` | string[] | built-in | Left-aligned statusline elements |
-| `editor.statusline.right` | string[] | built-in | Right-aligned statusline elements |
-| `editor.statusline.separator` | string | `"│"` | Separator between status items |
-| `editor.statusline.mode.normal` | string | `"normal"` | Label for Normal mode |
-| `editor.statusline.mode.insert` | string | `"insert"` | Label for Insert mode |
-| `editor.statusline.mode.select` | string | `"select"` | Label for Select mode |
+| `statusline.left` | string[] | built-in | Left-aligned statusline elements |
+| `statusline.right` | string[] | built-in | Right-aligned statusline elements |
+| `statusline.separator` | string | `"│"` | Separator between status items |
+| `statusline.mode.normal` | string | `"normal"` | Label for Normal mode |
+| `statusline.mode.insert` | string | `"insert"` | Label for Insert mode |
+| `statusline.mode.select` | string | `"select"` | Label for Select mode |
 
 Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spacer`, `register`, and `version-control`.
 
@@ -177,15 +177,15 @@ These options are TOML-only and cannot be changed at runtime with `:set`.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|
-| `editor.buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
-| `editor.file-explorer.hidden` | bool | `false` | Show hidden files |
-| `editor.file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |
-| `editor.file-explorer.parents` | bool | `false` | Include parent directories |
-| `editor.file-explorer.ignore` | bool | `false` | Respect `.ignore` files |
-| `editor.file-explorer.git-ignore` | bool | `false` | Respect `.gitignore` |
-| `editor.file-explorer.git-global` | bool | `false` | Respect global gitignore |
-| `editor.file-explorer.git-exclude` | bool | `false` | Respect git exclude rules |
-| `editor.file-explorer.flatten-dirs` | bool | `true` | Collapse single-child directories |
+| `buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
+| `file-explorer.hidden` | bool | `false` | Show hidden files |
+| `file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |
+| `file-explorer.parents` | bool | `false` | Include parent directories |
+| `file-explorer.ignore` | bool | `false` | Respect `.ignore` files |
+| `file-explorer.git-ignore` | bool | `false` | Respect `.gitignore` |
+| `file-explorer.git-global` | bool | `false` | Respect global gitignore |
+| `file-explorer.git-exclude` | bool | `false` | Respect git exclude rules |
+| `file-explorer.flatten-dirs` | bool | `true` | Collapse single-child directories |
 
 ### Shell
 

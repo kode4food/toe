@@ -115,7 +115,7 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 | Command | Aliases | Description |
 |---------|---------|-------------|
 | `format` | `fmt` | Format the file using an external formatter or language server |
-| `reflow` | | Hard-wrap the current selection of lines to a given width. Accepts an optional width argument (defaults to `editor.text-width`) |
+| `reflow` | | Hard-wrap the current selection of lines to a given width. Accepts an optional width argument (defaults to `text-width`) |
 | `sort` | | Sort ranges in selection. Flags: `-r`/`--reverse`, `-i`/`--insensitive` |
 
 ## LSP

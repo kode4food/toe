@@ -127,8 +127,16 @@ func AppendMode(e *view.Editor) {
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
 	for i, r := range ranges {
-		next := core.NextGraphemeBoundary(text, r.To())
-		ranges[i] = core.NewRange(r.From(), next)
+		ins := r.To()
+		if r.Empty() {
+			ins = core.NextGraphemeBoundary(text, ins)
+		}
+		head := core.NextGraphemeBoundary(text, ins)
+		if head == ins {
+			ranges[i] = core.PointRange(ins)
+		} else {
+			ranges[i] = core.NewRange(r.From(), head)
+		}
 	}
 	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
 	if err != nil {

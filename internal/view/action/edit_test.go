@@ -590,6 +590,19 @@ func TestAppendMode(t *testing.T) {
 		action.AppendMode(e)
 
 		assert.Equal(t, view.ModeInsert, e.Mode())
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
+	})
+
+	t.Run("types after the selection, not before it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcde")
+		testutil.SetCursor(t, e, 1)
+
+		action.AppendMode(e)
+		action.InsertChar(e, 'X')
+		action.InsertChar(e, 'Y')
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abXYcde", doc.Text().String())
 	})
 }
 
@@ -636,6 +649,19 @@ func TestAppendToLine(t *testing.T) {
 		action.AppendToLine(e)
 
 		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+
+	t.Run("types after the last character of the line", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "hello")
+		testutil.SetCursor(t, e, 0)
+
+		action.AppendToLine(e)
+		for _, ch := range " world" {
+			action.InsertChar(e, ch)
+		}
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "hello world", doc.Text().String())
 	})
 }
 

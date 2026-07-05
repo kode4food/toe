@@ -79,7 +79,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("buffer next distinct", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, ok := km.ResolveCommand("goto_next_buffer")
+		_, ok := km.ResolveCommand("buffer_next")
 		assert.True(t, ok)
 		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
 			char('g'), char('n'),

@@ -119,14 +119,13 @@ func TestGit(t *testing.T) {
 		assert.Equal(t, view.FileChangeConflict, changes[0].Kind)
 	})
 
-	t.Run("registry falls through on failure", func(t *testing.T) {
+	t.Run("errors outside a repository", func(t *testing.T) {
 		dir := t.TempDir()
-		reg := vcs.NewRegistry()
-		_, ok := reg.DiffBase(filepath.Join(dir, "nope.txt"))
-		assert.False(t, ok)
-		_, ok = reg.HeadName(filepath.Join(dir, "nope.txt"))
-		assert.False(t, ok)
-		_, ok = reg.ChangedFiles(dir)
-		assert.False(t, ok)
+		_, err := vcs.Git{}.DiffBase(filepath.Join(dir, "nope.txt"))
+		assert.Error(t, err)
+		_, err = vcs.Git{}.HeadName(filepath.Join(dir, "nope.txt"))
+		assert.Error(t, err)
+		_, err = vcs.Git{}.ChangedFiles(dir)
+		assert.Error(t, err)
 	})
 }

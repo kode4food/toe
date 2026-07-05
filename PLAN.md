@@ -86,8 +86,8 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 - [x] Exercise open/edit/save/reload flows.
 - [x] Exercise normal/insert/select mode transitions.
 - [x] Exercise multiple cursors (copy-on-next-line, insert at both cursors, verify saved bytes).
-- [ ] Exercise search and replace flows.
-- [ ] Exercise splits and buffers.
+- [x] Exercise search and replace flows.
+- [x] Exercise splits and buffers.
 - [ ] Exercise LSP end-to-end with a small test server.
 
 ### VCS

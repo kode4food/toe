@@ -117,6 +117,90 @@ func TestIntegration(t *testing.T) {
 		tt.quit()
 	})
 
+	t.Run("searches and jumps between matches", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "foo\nbar\nfoo\nbar\nfoo\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("foo")
+
+		tt.send("/foo\r")
+		tt.waitFor("3:1") // first match strictly after the cursor: line 3
+
+		tt.send("n")
+		tt.waitFor("5:1") // next match wraps forward to the last line
+
+		tt.send("N")
+		tt.waitFor("3:1") // prev match steps back
+		tt.quit()
+	})
+
+	t.Run("replaces all regex matches", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "foo\nbar\nfoo\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("foo")
+
+		tt.send("%sfoo\r")
+		tt.send("cX")
+		tt.waitFor("X")
+		tt.escape()
+		tt.send(":write\r")
+		tt.waitFileContent(path, "X\nbar\nX\n")
+		tt.quit()
+	})
+
+	t.Run("splits show the same document", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("hello")
+
+		tt.send("\x17v") // ctrl-w v: vertical right split
+		tt.waitFor("│")
+		assert.Equal(t, 2, strings.Count(tt.screen(), "hello"))
+
+		tt.send("A world")
+		tt.waitFor("hello world")
+		assert.Equal(t, 2, strings.Count(tt.screen(), "hello world"))
+
+		tt.escape()
+		tt.send(":write\r") // closing a modified doc needs it saved first
+		tt.send("\x17q")    // ctrl-w q: close the focused split
+		tt.waitFor("hello world")
+		assert.Equal(t, 1, strings.Count(tt.screen(), "hello world"))
+		tt.quit()
+	})
+
+	t.Run("cycles buffers across splits", func(t *testing.T) {
+		dir := t.TempDir()
+		pathA := writeFile(t, dir, "a.txt", "buffer a\n")
+		writeFile(t, dir, "b.txt", "buffer b\n")
+
+		tt := startTUI(t, dir, pathA)
+		tt.waitFor("buffer a")
+
+		tt.send("\x17v") // ctrl-w v: vertical right split (same doc for now)
+		tt.waitFor("│")
+		tt.send(":open b.txt\r") // swap the focused split's buffer to b.txt
+		tt.waitFor("buffer b")
+		assert.Contains(t, tt.screen(), "buffer a") // left split untouched
+
+		tt.send("\x17w") // ctrl-w w: rotate focus back to the left split
+		tt.send("A - edited")
+		tt.waitFor("buffer a - edited")
+		assert.NotContains(t, tt.screen(), "buffer b - edited")
+
+		tt.escape()
+		tt.send("\x17w") // ctrl-w w: rotate to the right split
+		tt.send("A - edited")
+		tt.waitFor("buffer b - edited")
+		tt.escape()
+		tt.quit()
+	})
+
 	t.Run("reloads external changes", func(t *testing.T) {
 		dir := t.TempDir()
 		path := writeFile(t, dir, "note.txt", "before\n")

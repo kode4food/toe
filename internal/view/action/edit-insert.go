@@ -23,33 +23,29 @@ func InsertChar(e *view.Editor, ch rune) {
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
+	pairs, pairEnabled := autoPairsForDocument(e, doc)
 
 	changes := make([]core.Change, 0, len(ranges))
 	staged := make([]core.Range, len(ranges))
-	kinds := make([]rangeKind, len(ranges))
+	paired := make([]bool, len(ranges))
 	seen := map[int]bool{}
-	pairs, pairEnabled := autoPairsForDocument(e, doc)
 
 	for i, r := range ranges {
 		pos := r.Cursor(text)
+		staged[i] = r
 		if seen[pos] {
-			staged[i] = r
-			kinds[i] = kindDup
 			continue
 		}
 		seen[pos] = true
 		if pairEnabled {
-			change, newR, ok := core.HookInsert(text, r, ch, pairs)
-			if ok {
+			if change, newR, ok := core.HookInsert(text, r, ch, pairs); ok {
 				changes = append(changes, change)
 				staged[i] = newR
-				kinds[i] = kindAutoPair
+				paired[i] = true
 				continue
 			}
 		}
 		changes = append(changes, core.TextChange(pos, pos, string(ch)))
-		staged[i] = r
-		kinds[i] = kindNormal
 	}
 
 	cs, err := core.NewChangeSetFromChanges(text, changes)
@@ -59,16 +55,15 @@ func InsertChar(e *view.Editor, ch rune) {
 
 	newRanges := make([]core.Range, len(ranges))
 	for i, r := range staged {
-		switch kinds[i] {
-		case kindAutoPair:
+		if paired[i] {
 			newRanges[i] = r
-		default:
-			mapped, err := cs.MapRange(r)
-			if err != nil {
-				return
-			}
-			newRanges[i] = core.PointRange(mapped.Head)
+			continue
 		}
+		mapped, err := cs.MapRange(r)
+		if err != nil {
+			return
+		}
+		newRanges[i] = mapped
 	}
 	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 	if err != nil {

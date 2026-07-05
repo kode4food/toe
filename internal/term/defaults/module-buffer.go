@@ -6,14 +6,12 @@ import (
 )
 
 const (
-	actBufferClose        = "buffer_close"
-	actBufferCloseForce   = "buffer_close_force"
-	actBufferCloseOthers  = "buffer_close_others"
-	actBufferCloseAll     = "buffer_close_all"
-	actBufferNext         = "buffer_next"
-	actBufferPrevious     = "buffer_previous"
-	actGotoNextBuffer     = "goto_next_buffer"
-	actGotoPreviousBuffer = "goto_previous_buffer"
+	actBufferClose       = "buffer_close"
+	actBufferCloseForce  = "buffer_close_force"
+	actBufferCloseOthers = "buffer_close_others"
+	actBufferCloseAll    = "buffer_close_all"
+	actBufferNext        = "buffer_next"
+	actBufferPrevious    = "buffer_previous"
 )
 
 func bufferModule() command.Module {
@@ -94,6 +92,7 @@ func bufferModule() command.Module {
 				DocString: "Goto next buffer",
 				Run:       Runner((*view.Editor).FocusNextView),
 				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(g(char('n'))),
 				Aliases:   []string{"buffer-next", "bn", "bnext"},
 				Signature: sig(),
 			},
@@ -102,22 +101,9 @@ func bufferModule() command.Module {
 				DocString: "Goto previous buffer",
 				Run:       Runner((*view.Editor).FocusPrevView),
 				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(g(char('p'))),
 				Aliases:   []string{"buffer-previous", "bp", "bprev"},
 				Signature: sig(),
-			},
-			{
-				Name:      actGotoNextBuffer,
-				DocString: "Goto next buffer",
-				Run:       Runner((*view.Editor).FocusNextView),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(g(char('n'))),
-			},
-			{
-				Name:      actGotoPreviousBuffer,
-				DocString: "Goto previous buffer",
-				Run:       Runner((*view.Editor).FocusPrevView),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(g(char('p'))),
 			},
 		},
 	}

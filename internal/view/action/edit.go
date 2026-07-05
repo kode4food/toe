@@ -5,21 +5,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type (
-	insertEntry struct {
-		del  core.Deletion
-		newR core.Range
-		pair bool
-	}
-
-	rangeKind int
-)
-
-const (
-	kindNormal rangeKind = iota
-	kindAutoPair
-	kindDup
-)
+type insertEntry struct {
+	del  core.Deletion
+	newR core.Range
+	pair bool
+}
 
 const defaultYankRegister = '"'
 

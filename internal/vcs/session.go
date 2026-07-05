@@ -1,3 +1,6 @@
+// Package vcs integrates version-control systems with the editor: diff bases
+// for gutter hunks, changed-file listings, and head names. Git is the only
+// provider today; the Provider interface keeps additional systems pluggable
 package vcs
 
 import (
@@ -9,16 +12,33 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Session owns a differ per open document and implements the editor's
-// VersionControl seam over the provider registry
-type Session struct {
-	mu       sync.Mutex
-	editor   *view.Editor
-	registry *Registry
-	differs  map[view.DocumentId]*Differ
-	heads    map[view.DocumentId]string
-	updates  chan struct{}
-}
+type (
+	// Session owns a differ per open document and implements the editor's
+	// VersionControl seam over the version-control provider
+	Session struct {
+		mu       sync.Mutex
+		editor   *view.Editor
+		provider Provider
+		differs  map[view.DocumentId]*Differ
+		heads    map[view.DocumentId]string
+		updates  chan struct{}
+	}
+
+	// Provider supplies diff bases and change information from one
+	// version-control system
+	Provider interface {
+		// DiffBase returns the checked-in contents of path, the "base" text a
+		// diff of the working copy is computed against
+		DiffBase(path string) ([]byte, error)
+
+		// HeadName returns a short display name for the current head, such as
+		// a branch name
+		HeadName(path string) (string, error)
+
+		// ChangedFiles lists workspace files that differ from the head
+		ChangedFiles(cwd string) ([]view.FileChange, error)
+	}
+)
 
 var (
 	_ view.DocumentObserver = (*Session)(nil)
@@ -30,7 +50,7 @@ var (
 func Attach(e *view.Editor) *Session {
 	s := &Session{
 		editor:   e,
-		registry: NewRegistry(),
+		provider: Git{},
 		differs:  map[view.DocumentId]*Differ{},
 		heads:    map[view.DocumentId]string{},
 		updates:  make(chan struct{}, 1),
@@ -63,8 +83,8 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 // contents of an arbitrary workspace file. It shells out to the provider and is
 // intended for on-demand use such as picker previews
 func (s *Session) DiffHunksForPath(path string) []view.DiffHunk {
-	base, ok := s.registry.DiffBase(path)
-	if !ok {
+	base, err := s.provider.DiffBase(path)
+	if err != nil {
 		return nil
 	}
 	data, err := os.ReadFile(path)
@@ -84,11 +104,7 @@ func (s *Session) HeadName(doc *view.Document) (string, bool) {
 
 // ChangedFiles lists workspace files that differ from the head
 func (s *Session) ChangedFiles() ([]view.FileChange, error) {
-	changes, ok := s.registry.ChangedFiles(s.editor.Cwd())
-	if !ok {
-		return nil, ErrGitCommand
-	}
-	return changes, nil
+	return s.provider.ChangedFiles(s.editor.Cwd())
 }
 
 // Updates delivers a token whenever diff state changes
@@ -155,12 +171,12 @@ func (s *Session) differ(doc *view.Document) (*Differ, bool) {
 // updating its differ. It runs off the main goroutine because providers may
 // shell out
 func (s *Session) loadDiffBase(doc *view.Document, path string) {
-	base, ok := s.registry.DiffBase(path)
-	if !ok {
+	base, err := s.provider.DiffBase(path)
+	if err != nil {
 		return
 	}
 	rope := baseRope(base)
-	name, _ := s.registry.HeadName(path)
+	name, _ := s.provider.HeadName(path)
 
 	s.mu.Lock()
 	if d, ok := s.differs[doc.ID()]; ok {

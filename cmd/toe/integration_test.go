@@ -46,7 +46,7 @@ const (
 func TestMain(m *testing.M) {
 	path, err := buildBinary()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "build toe: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "build toe: %v\n", err)
 		os.Exit(1)
 	}
 	_ = os.Setenv(binEnv, path)

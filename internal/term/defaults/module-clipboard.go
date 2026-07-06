@@ -1,6 +1,8 @@
 package defaults
 
 import (
+	"strings"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -27,6 +29,8 @@ const (
 
 func clipboardModule() command.Module {
 	spc := prefixed(char(' '))
+	ttyAvail := action.MakeTTYAvailable()
+	ttyWrite := action.MakeTTYWriter()
 
 	return command.Module{
 		Commands: []command.Command{
@@ -62,16 +66,28 @@ func clipboardModule() command.Module {
 			{
 				Name:      actYankToClipboard,
 				DocString: "Yank selections to clipboard",
-				Run:       Runner(action.YankToClipboard),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(spc(char('y'))),
+				Run: func(e *view.Editor, _ *command.Args) command.Result {
+					action.YankToClipboard(e)
+					if vals := e.Registers().Read('+'); len(vals) > 0 {
+						ttyWrite(strings.Join(vals, "\n"), false)
+					}
+					return command.Result{}
+				},
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(spc(char('y'))),
 			},
 			{
 				Name:      actYankMainToClipboard,
 				DocString: "Yank main selection to clipboard",
-				Run:       Runner(action.YankMainToClipboard),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(spc(char('Y'))),
+				Run: func(e *view.Editor, _ *command.Args) command.Result {
+					action.YankMainToClipboard(e)
+					if vals := e.Registers().Read('+'); len(vals) > 0 {
+						ttyWrite(strings.Join(vals, "\n"), false)
+					}
+					return command.Result{}
+				},
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(spc(char('Y'))),
 			},
 			{
 				Name:      actPasteClipboardAfter,
@@ -118,7 +134,13 @@ func clipboardModule() command.Module {
 			{
 				Name:      actYankPrimaryClipboard,
 				DocString: "Yank selections to primary clipboard",
-				Run:       Runner(action.YankToPrimaryClipboard),
+				Run: func(e *view.Editor, _ *command.Args) command.Result {
+					action.YankToPrimaryClipboard(e)
+					if vals := e.Registers().Read('*'); len(vals) > 0 {
+						ttyWrite(strings.Join(vals, "\n"), true)
+					}
+					return command.Result{}
+				},
 				Aliases:   []string{"primary-clipboard-yank"},
 				Signature: sig(),
 			},
@@ -158,9 +180,8 @@ func clipboardModule() command.Module {
 				Name:      actShowClipboardProvider,
 				DocString: "Show clipboard provider name in status bar",
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
-					return command.Result{
-						Message: action.ShowClipboardProvider(),
-					}
+					msg := action.ShowClipboardProvider(ttyAvail)
+					return command.Result{Message: msg}
 				},
 				Aliases:   []string{"show-clipboard-provider"},
 				Signature: sig(),

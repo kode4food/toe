@@ -56,9 +56,7 @@ func TestClipboardNoProvider(t *testing.T) {
 	t.Run("ShowClipboardProvider returns none", func(t *testing.T) {
 		t.Setenv("PATH", "")
 
-		result := action.ShowClipboardProvider()
-
-		assert.Equal(t, "none", result)
+		assert.Equal(t, "none", action.ShowClipboardProvider(nil))
 	})
 }
 
@@ -67,7 +65,7 @@ func TestClipboard(t *testing.T) {
 		clipFile := filepath.Join(t.TempDir(), "clip.txt")
 		testutil.WriteFakeClipboardTools(t, clipFile)
 
-		assert.Equal(t, "pbcopy", action.ShowClipboardProvider())
+		assert.Equal(t, "pbcopy", action.ShowClipboardProvider(nil))
 	})
 
 	t.Run("yank to clipboard", func(t *testing.T) {

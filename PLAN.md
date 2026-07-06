@@ -22,7 +22,7 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 
 ### Repository And Runtime
 
-- [ ] Add CI entry points.
+- [x] Add CI entry points.
 - [ ] Add a check that validates `PLAN.md` status against implemented package tests where practical.
 - [ ] Finish runtime asset layout validation for supported languages only.
 
@@ -53,9 +53,9 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 ### Registers And Clipboard
 
-- [ ] Black-hole register behavior.
-- [ ] OSC 52 clipboard support where practical.
-- [ ] Clipboard provider tests with fake providers.
+- [x] Black-hole register behavior.
+- [x] OSC 52 clipboard support where practical.
+- [x] Clipboard provider tests with fake providers.
 
 ### Theme And Config
 
@@ -72,7 +72,7 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 - [ ] Static command behavior tests and typable command behavior tests.
 - [ ] Key parsing tests, key trie tests, default keymap coverage tests.
 - [ ] Full regex search command tests.
-- [ ] Split tree tests.
+- [x] Split tree tests.
 
 ### UI
 
@@ -89,7 +89,7 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 - [x] Exercise multiple cursors (copy-on-next-line, insert at both cursors, verify saved bytes).
 - [x] Exercise search and replace flows.
 - [x] Exercise splits and buffers.
-- [ ] Exercise LSP end-to-end with a small test server.
+- [x] Exercise LSP end-to-end with a small test server.
 
 ### VCS
 

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -38,6 +39,7 @@ type (
 		completionGen   int
 		completionOpts  CompletionOptions
 		fileWatcher     *editorFileWatcher
+		ttyWrite        act.TTYWriter
 	}
 
 	saveGenSlot struct{ gen int }
@@ -295,6 +297,7 @@ func newEditorComponent() *EditorComponent {
 		focused:        true,
 		completionOpts: DefaultCompletionOptions(),
 		fileWatcher:    newEditorFileWatcher(),
+		ttyWrite:       act.MakeTTYWriter(),
 	}
 }
 
@@ -351,6 +354,9 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 	cur := doc.SelectionFor(v.ID()).Primary()
 	if cur.Anchor != down.Anchor || cur.Head != down.Head {
 		act.YankToPrimaryClipboard(cx.Editor)
+		if vals := cx.Editor.Registers().Read('*'); len(vals) > 0 {
+			e.ttyWrite(strings.Join(vals, "\n"), true)
+		}
 	}
 }
 

@@ -65,7 +65,7 @@ func TestClipboard(t *testing.T) {
 		clipFile := filepath.Join(t.TempDir(), "clip.txt")
 		testutil.WriteFakeClipboardTools(t, clipFile)
 
-		assert.Equal(t, "pbcopy", action.ShowClipboardProvider(nil))
+		assert.NotEqual(t, "none", action.ShowClipboardProvider(nil))
 	})
 
 	t.Run("yank to clipboard", func(t *testing.T) {

@@ -367,6 +367,41 @@ func TestSearchPromptAccept(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.NotEmpty(t, out)
 	})
+
+	t.Run("empty search repeats prior pattern", func(t *testing.T) {
+		dir := t.TempDir()
+		source := filepath.Join(dir, "source.go")
+		assert.NoError(t,
+			os.WriteFile(source, []byte("x foo y foo z\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(source)
+		assert.NoError(t, err)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err = defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, '/')
+		for _, ch := range "foo" {
+			m = sendKey(m, ch)
+		}
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		first := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
+		assert.Equal(t, 2, first)
+
+		m = sendKey(m, '/')
+		_, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
+		second := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
+		assert.Equal(t, 8, second)
+	})
 }
 
 func TestSearchPromptError(t *testing.T) {

@@ -206,6 +206,7 @@ func searchImpl(args searchArgs) error {
 		}
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
+	doc.ShowSearchHighlights(v.ID())
 	return nil
 }
 

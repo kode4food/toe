@@ -47,6 +47,7 @@ type (
 		history    core.History
 		insertAcc  *insertAccum
 		selections map[Id]core.Selection
+		searchHL   map[Id]bool
 		unsaved    bool
 		modified   bool
 	}
@@ -248,14 +249,33 @@ func (d *Document) SelectionFor(vid Id) core.Selection {
 	return sel
 }
 
-// SetSelectionFor sets the selection for a view
+// SetSelectionFor sets the selection for a view. Changing the selection clears
+// any search-match highlighting for that view, matching helix: a search shows
+// its matches until the selection next moves
 func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
 	d.buf.selections[vid] = sel
+	delete(d.buf.searchHL, vid)
+}
+
+// ShowSearchHighlights marks a view's search matches as visible. Search actions
+// call this after moving the selection to their match
+func (d *Document) ShowSearchHighlights(vid Id) {
+	if d.buf.searchHL == nil {
+		d.buf.searchHL = make(map[Id]bool)
+	}
+	d.buf.searchHL[vid] = true
+}
+
+// SearchHighlightsActive reports whether search matches should be highlighted
+// for a view
+func (d *Document) SearchHighlightsActive(vid Id) bool {
+	return d.buf.searchHL[vid]
 }
 
 // RemoveView cleans up selection and LSP state for a closed view
 func (d *Document) RemoveView(vid Id) {
 	delete(d.buf.selections, vid)
+	delete(d.buf.searchHL, vid)
 	d.ls.Lock()
 	delete(d.ls.highlights, vid)
 	delete(d.ls.hints, vid)

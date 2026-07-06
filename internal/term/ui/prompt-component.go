@@ -162,18 +162,24 @@ func (p *PromptComponent) accept(
 
 	case promptSearch:
 		pat := strings.TrimSpace(p.buf)
-		if pat != "" {
-			var err error
-			if p.forward {
-				err = action.SearchForward(cx.Editor, pat)
-			} else {
-				err = action.SearchBackward(cx.Editor, pat)
-			}
-			if err != nil {
-				p.ec.cmdMsg = "error: " + err.Error()
-			} else {
-				p.ec.cmdMsg = ""
-			}
+		if pat == "" {
+			// empty search repeats the last pattern in the prompt's direction
+			pat, _ = cx.Editor.Registers().First('/')
+		}
+		if pat == "" {
+			p.ec.cmdMsg = ""
+			return pop(nil)
+		}
+		var err error
+		if p.forward {
+			err = action.SearchForward(cx.Editor, pat)
+		} else {
+			err = action.SearchBackward(cx.Editor, pat)
+		}
+		if err != nil {
+			p.ec.cmdMsg = "error: " + err.Error()
+		} else {
+			p.ec.cmdMsg = ""
 		}
 		return pop(nil)
 

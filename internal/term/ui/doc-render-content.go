@@ -104,7 +104,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	lineIdx := dc.ensureLineIndex(rev, rawText)
 
 	pat, hasPat := r.cx.Editor.Registers().First('/')
-	if !hasPat {
+	if !hasPat || !doc.SearchHighlightsActive(v.ID()) {
 		pat = ""
 	}
 	dc.ensureSearchSpans(rev, pat, rawText)

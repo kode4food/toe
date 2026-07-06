@@ -32,6 +32,29 @@ func TestSearch(t *testing.T) {
 	})
 }
 
+func TestSearchHighlightLifecycle(t *testing.T) {
+	t.Run("search shows highlights, cursor move clears them", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "foo bar foo")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+
+		assert.False(t, doc.SearchHighlightsActive(v.ID()))
+
+		assert.NoError(t, action.SearchForward(e, "foo"))
+		assert.True(t, doc.SearchHighlightsActive(v.ID()))
+
+		// repeating the search keeps highlights visible
+		action.SearchNext(e)
+		assert.True(t, doc.SearchHighlightsActive(v.ID()))
+
+		// a plain cursor move clears them
+		testutil.SetCursor(t, e, 0)
+		assert.False(t, doc.SearchHighlightsActive(v.ID()))
+	})
+}
+
 func TestSearchNext(t *testing.T) {
 	t.Run("repeats last search forward", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar foo")

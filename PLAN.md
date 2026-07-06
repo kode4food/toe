@@ -23,7 +23,7 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 ### Repository And Runtime
 
 - [x] Add CI entry points.
-- [ ] Add a check that validates `PLAN.md` status against implemented package tests where practical.
+- [x] Add a check that validates `PLAN.md` status against implemented package tests where practical.
 - [x] Finish runtime asset layout validation for supported languages only.
 
 ### Tree-Sitter Queries And Syntax Features

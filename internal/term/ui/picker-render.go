@@ -204,7 +204,6 @@ func pickerSplitLeftWidth(w int, ratio float64) int {
 	if usable == 0 {
 		return 0
 	}
-	ratio = PickerLayoutOptions{SplitRatio: ratio}.WithDefaults().SplitRatio
 	left := int(float64(usable)*ratio + 0.5)
 	minW := min(pickerMinSplitPaneWidth, usable/2)
 	if left < minW {

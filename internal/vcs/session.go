@@ -1,6 +1,6 @@
 // Package vcs integrates version-control systems with the editor: diff bases
 // for gutter hunks, changed-file listings, and head names. Git is the only
-// provider today; the Provider interface keeps additional systems pluggable
+// provider today; the Provider interface keeps the API explicit and pluggable
 package vcs
 
 import (

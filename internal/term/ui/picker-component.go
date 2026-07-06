@@ -195,9 +195,9 @@ func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
 		return
 	}
 	left := x - (p.bounds.x + 1)
-	cx.pickerLayout = PickerLayoutOptions{
-		SplitRatio: float64(left) / float64(usable),
-	}.WithDefaults()
+	ratio := float64(left) / float64(usable)
+	ratio = min(max(ratio, MinPickerSplitRatio), MaxPickerSplitRatio)
+	cx.pickerLayout = PickerLayoutOptions{SplitRatio: ratio}
 }
 
 func (p *PickerComponent) handleMouseWheel(

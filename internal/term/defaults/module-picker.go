@@ -158,9 +158,7 @@ func pickerSplitRatioOption(model ui.Model) command.Option {
 		},
 		Set: func(_ *view.Editor, s string) error {
 			ratio, err := strconv.ParseFloat(s, 64)
-			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) ||
-				ratio < ui.MinPickerSplitRatio ||
-				ratio > ui.MaxPickerSplitRatio {
+			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 			}
 			model.SetPickerLayoutOptions(ui.PickerLayoutOptions{

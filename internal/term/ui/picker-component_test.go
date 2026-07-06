@@ -118,6 +118,31 @@ func TestPickerScroll(t *testing.T) {
 
 		assert.InDelta(t, 0.648, m.PickerLayoutOptions().SplitRatio, 0.001)
 	})
+
+	t.Run("drag stays monotonic across the whole width", func(t *testing.T) {
+		m := fixedPicker(t, 30, 120, 20)
+		_ = m.View()
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 60, Y: 8, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		prev := ui.MinPickerSplitRatio
+		for x := 0; x <= 120; x++ {
+			m2, _ = m.Update(tea.MouseMotionMsg{
+				X: x, Y: 8, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+			r := m.PickerLayoutOptions().SplitRatio
+			assert.GreaterOrEqual(t, r, ui.MinPickerSplitRatio)
+			assert.LessOrEqual(t, r, ui.MaxPickerSplitRatio)
+			// dragging rightward must never step the ratio back; the
+			// zero-width edge once snapped to the default and broke this
+			assert.GreaterOrEqual(t, r, prev)
+			prev = r
+		}
+	})
 }
 
 func (fixedPickerSource) Title() string {

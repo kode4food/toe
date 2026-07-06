@@ -9,6 +9,8 @@ import (
 	"github.com/kode4food/toe/internal/testutil"
 )
 
+const searchRegisterName = '/'
+
 func TestSearch(t *testing.T) {
 	t.Run("search_forward runs without panic", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abcabc")
@@ -26,32 +28,83 @@ func TestSearch(t *testing.T) {
 	})
 
 	t.Run("search_next runs without error", func(t *testing.T) {
-		e, km := defaultsEnv(t, "abc")
-		res := runCmd(t, km, e, "search_next")
-		_ = res
+		e, km := defaultsEnv(t, "zero one two one")
+		e.Registers().Set(searchRegisterName, `o\w+`)
+
+		runCmd(t, km, e, "search_next")
+
+		assert.Equal(t, 5, testutil.CursorPos(t, e))
 	})
 
 	t.Run("search_prev runs without error", func(t *testing.T) {
-		e, km := defaultsEnv(t, "abc")
-		res := runCmd(t, km, e, "search_prev")
-		_ = res
+		e, km := defaultsEnv(t, "zero one two one")
+		testutil.SetCursor(t, e, 16)
+		e.Registers().Set(searchRegisterName, `o\w+`)
+
+		runCmd(t, km, e, "search_prev")
+
+		assert.Equal(t, 13, testutil.CursorPos(t, e))
+	})
+
+	t.Run("search_next obeys no wrap", func(t *testing.T) {
+		e, km := defaultsEnv(t, "foo bar")
+		e.Options().SearchWrapAround = false
+		testutil.SetCursor(t, e, 6)
+		e.Registers().Set(searchRegisterName, "foo")
+
+		runCmd(t, km, e, "search_next")
+
+		assert.Equal(t, 6, testutil.CursorPos(t, e))
+	})
+
+	t.Run("search_prev wraps", func(t *testing.T) {
+		e, km := defaultsEnv(t, "foo bar")
+		testutil.SetCursor(t, e, 0)
+		e.Registers().Set(searchRegisterName, "bar")
+
+		runCmd(t, km, e, "search_prev")
+
+		assert.Equal(t, 4, testutil.CursorPos(t, e))
 	})
 
 	t.Run("search_selection runs", func(t *testing.T) {
-		e, km := defaultsEnv(t, "abc")
+		e, km := defaultsEnv(t, "a.b")
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
 		runCmd(t, km, e, "search_selection")
+
+		assert.Equal(t, `a\.b`,
+			testutil.RegisteredValue(t, e, searchRegisterName))
 	})
 
 	t.Run("search_selection_word runs", func(t *testing.T) {
-		e, km := defaultsEnv(t, "abc")
-		testutil.SetCursor(t, e, 0)
+		e, km := defaultsEnv(t, "foo bar")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
 		runCmd(t, km, e, "search_selection_word")
+
+		assert.Equal(t, `\b(?:foo)\b`,
+			testutil.RegisteredValue(t, e, searchRegisterName))
 	})
 
 	t.Run("make_search_word_bounded runs", func(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
+		e.Registers().Set(searchRegisterName, "abc")
+
 		runCmd(t, km, e, "make_search_word_bounded")
+
+		assert.Equal(t, `\babc\b`,
+			testutil.RegisteredValue(t, e, searchRegisterName))
+	})
+
+	t.Run("make_search_word_bounded is idempotent", func(t *testing.T) {
+		e, km := defaultsEnv(t, "abc")
+		e.Registers().Set(searchRegisterName, `\babc\b`)
+
+		runCmd(t, km, e, "make_search_word_bounded")
+
+		assert.Equal(t, `\babc\b`,
+			testutil.RegisteredValue(t, e, searchRegisterName))
 	})
 }
 

@@ -24,7 +24,7 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 
 - [x] Add CI entry points.
 - [ ] Add a check that validates `PLAN.md` status against implemented package tests where practical.
-- [ ] Finish runtime asset layout validation for supported languages only.
+- [x] Finish runtime asset layout validation for supported languages only.
 
 ### Tree-Sitter Queries And Syntax Features
 
@@ -39,13 +39,13 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 - [ ] Rainbow bracket queries.
 - [ ] Tree-sitter-aware bracket matching.
 - [ ] Tree-sitter-aware surround pair finding.
-- [ ] Generated tests: every supported language entry parses; every supported runtime query file is discoverable.
+- [x] Generated tests: every supported language entry parses; every supported runtime query file is discoverable.
 
 ### Command Mode
 
-- [ ] Finish register expansion coverage.
-- [ ] Finish variable expansion coverage.
-- [ ] Tokenizer/parser tests for expansions, flags, signatures, and raw-after behavior.
+- [x] Finish register expansion coverage.
+- [x] Finish variable expansion coverage.
+- [x] Tokenizer/parser tests for expansions, flags, signatures, and raw-after behavior.
 
 ### Pickers
 
@@ -59,19 +59,19 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 ### Theme And Config
 
-- [ ] Theme parse/style tests; generated tests that all four Catppuccin variants parse.
-- [ ] Full config parse/merge coverage for the modeled config surface.
+- [x] Theme parse/style tests; generated tests that all four Catppuccin variants parse.
+- [x] Full config parse/merge coverage for the modeled config surface.
 - [ ] Interactive workspace trust prompts.
 - [ ] Config event fanout to VCS and any future LSP reload needs.
 - [ ] Terminal-info/backend capability detection beyond current true-color checks.
 
 ### Generated And Behavior Tests
 
-- [ ] Every documented command is registered.
-- [ ] Every default keybinding resolves.
-- [ ] Static command behavior tests and typable command behavior tests.
-- [ ] Key parsing tests, key trie tests, default keymap coverage tests.
-- [ ] Full regex search command tests.
+- [x] Every documented command is registered.
+- [x] Every default keybinding resolves.
+- [x] Static command behavior tests and typable command behavior tests.
+- [x] Key parsing tests, key trie tests, default keymap coverage tests.
+- [x] Full regex search command tests.
 - [x] Split tree tests.
 
 ### UI

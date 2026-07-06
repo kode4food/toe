@@ -297,6 +297,23 @@ func TestLoad(t *testing.T) {
 	})
 }
 
+func TestCatppuccinThemes(t *testing.T) {
+	for _, name := range loader.ThemeNames() {
+		t.Run(name, func(t *testing.T) {
+			th, warnings, err := theme.Load(name)
+			style, ok := th.TryGet("ui.text")
+
+			assert.NoError(t, err)
+			assert.Empty(t, warnings)
+			assert.Equal(t, name, th.Name())
+			assert.NoError(t, th.Validate())
+			assert.True(t, ok)
+			assert.NotNil(t, style.GetForeground())
+			assert.NotEmpty(t, th.Scopes())
+		})
+	}
+}
+
 func TestThemeDefault(t *testing.T) {
 	t.Run("Default loads mocha theme", func(t *testing.T) {
 		th, warnings, err := theme.Default()

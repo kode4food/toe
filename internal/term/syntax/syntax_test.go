@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/syntax"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 func TestSupportedLanguages(t *testing.T) {
@@ -29,6 +30,21 @@ func TestHasHighlightQuery(t *testing.T) {
 	}
 }
 
+func TestSupportedLanguageEntries(t *testing.T) {
+	langs, ok := language.LoadBundledLanguages()
+	assert.True(t, ok)
+	names := map[string]bool{}
+	for _, lang := range langs.Languages {
+		names[lang.Name] = true
+	}
+	for _, lang := range syntax.SupportedLanguages() {
+		t.Run(lang, func(t *testing.T) {
+			assert.True(t, names[lang])
+			assert.True(t, syntax.HasHighlightQuery(lang))
+		})
+	}
+}
+
 func TestHasHighlightQueryUnknown(t *testing.T) {
 	assert.False(t, syntax.HasHighlightQuery("__no_such_lang__"))
 }
@@ -42,6 +58,7 @@ func TestTokenize(t *testing.T) {
 		{"bash", "#!/bin/bash\necho hello\n"},
 		{"yaml", "key: value\nlist:\n  - a\n  - b\n"},
 		{"toml", "[section]\nkey = \"value\"\n"},
+		{"hcl", "resource \"x\" \"y\" {\n  name = \"z\"\n}\n"},
 		{"css", "body { color: red; }\n"},
 		{"html", "<html><body>hi</body></html>\n"},
 		{"javascript", "const f = (x) => `Hello ${x + 1}`;\n"},

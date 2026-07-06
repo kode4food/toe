@@ -1,6 +1,9 @@
 package defaults_test
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -43,6 +46,16 @@ func TestDefaults(t *testing.T) {
 		} {
 			_, ok := km.ResolveCommand(name)
 			assert.True(t, ok)
+		}
+	})
+
+	t.Run("documented commands resolve", func(t *testing.T) {
+		km := defaultKeymaps(t)
+		for _, name := range documentedCommandNames(t) {
+			t.Run(name, func(t *testing.T) {
+				_, ok := km.ResolveCommand(name)
+				assert.True(t, ok)
+			})
 		}
 	})
 
@@ -182,6 +195,26 @@ func TestDefaults(t *testing.T) {
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
+	})
+
+	t.Run("default keybindings resolve", func(t *testing.T) {
+		km := defaultKeymaps(t)
+		for _, cmd := range km.Commands() {
+			name := commandName(cmd)
+			for _, mode := range commandModes(cmd) {
+				for _, binding := range commandBindings(cmd, mode) {
+					for _, seq := range binding {
+						t.Run(mode+"/"+name+"/"+keySeqString(seq),
+							func(t *testing.T) {
+								_, found, prefix := km.Lookup(mode, seq)
+								assert.True(t, found)
+								assert.False(t, prefix)
+							},
+						)
+					}
+				}
+			}
+		}
 	})
 
 	t.Run("no conflicting default keybindings", func(t *testing.T) {
@@ -371,4 +404,50 @@ func parseKeyPart(t *testing.T, part string) command.KeyEvent {
 
 func containsString(items []string, target string) bool {
 	return slices.Contains(items, target)
+}
+
+func documentedCommandNames(t *testing.T) []string {
+	t.Helper()
+	_, file, _, ok := runtime.Caller(0)
+	assert.True(t, ok)
+	root := filepath.Clean(filepath.Join(filepath.Dir(file), "../../.."))
+	data, err := os.ReadFile(
+		filepath.Join(root, "docs/content/docs/commands.md"),
+	)
+	assert.NoError(t, err)
+	seen := map[string]bool{}
+	var out []string
+	for line := range strings.SplitSeq(string(data), "\n") {
+		if !strings.HasPrefix(line, "| `") {
+			continue
+		}
+		cells := strings.Split(line, "|")
+		if len(cells) < 4 {
+			continue
+		}
+		out = appendDocumentedCommandNames(out, seen, cells[1])
+		out = appendDocumentedCommandNames(out, seen, cells[2])
+	}
+	return out
+}
+
+func appendDocumentedCommandNames(
+	out []string, seen map[string]bool, cell string,
+) []string {
+	for {
+		_, rest, ok := strings.Cut(cell, "`")
+		if !ok {
+			return out
+		}
+		name, after, ok := strings.Cut(rest, "`")
+		if !ok {
+			return out
+		}
+		cell = after
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
 }

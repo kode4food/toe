@@ -30,7 +30,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	height := args.height
 	viewFocused := args.focused
 
-	// --- selection / cursor state ---
 	opts := r.cx.Editor.Options()
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
@@ -71,7 +70,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	// so a soft-wrapped line taller than the viewport can be scrolled within
 	vOff := max(v.Offset().VerticalOffset, 0)
 
-	// --- gutter ---
 	nLines := text.LenLines()
 	g3 := opts.Gutters
 	gutterLayout := g3.GutterLayout()
@@ -85,7 +83,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		}
 	}
 
-	// --- cache: raw text, highlight, search ---
 	lang := doc.Lang()
 	docID := doc.ID()
 	rev := doc.Revision()
@@ -114,7 +111,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	docLinks := documentLinkSpans(doc.DocumentLinks())
 	docColors := documentColorSpans(doc.DocumentColors())
 
-	// --- styles (rebuilt only on theme/mode change) ---
+	// styles rebuilt only when theme or mode changes
 	th := r.activeTheme()
 	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
 	if c.stylesKey != stylesKey {
@@ -145,7 +142,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 		return cmp.Compare(a.pos, b.pos)
 	})
 
-	// --- options ---
 	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
 		viewFocused
@@ -156,7 +152,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	relativeLineNumbers := opts.LineNumber == view.LineNumberRelative
 	insertMode := r.cx.Editor.Mode() == view.ModeInsert
 
-	// --- format / scroll ---
 	format := doc.TextFormatForConfig(
 		width-gutterW, r.cx.Editor.Options(),
 	)
@@ -180,7 +175,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	}
 	hOff := v.Offset().HorizontalOffset
 
-	// --- pre-converted TUI styles and layout constants ---
 	lineTUI := lipglossToTUIStyle(lgStyles.line)
 	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
 	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)

@@ -143,7 +143,6 @@ func textObjectSelect(e *view.Editor, ch rune, kind core.TextObjectKind) {
 			nr = r.TextObjectPairSurround(text, kind, 0, n)
 		default:
 			if !core.CharIsWord(ch) {
-				// Use as a specific bracket char
 				nr = r.TextObjectPairSurround(text, kind, ch, n)
 			} else {
 				// Tree-sitter textobjects not yet supported; leave unchanged

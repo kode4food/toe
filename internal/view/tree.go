@@ -125,7 +125,6 @@ func (t *Tree) Split(v *View, layout Layout) Id {
 		t.nodes[id].parent = parent
 		parentC.ratios = nil
 	} else {
-		// wrap focus and new view in a new sub-container
 		subID := t.allocID()
 		t.nodes[subID] = &treeNode{
 			parent: parent,
@@ -284,7 +283,6 @@ func (t *Tree) removeOrReplace(child Id, replacement Id) {
 	}
 }
 
-// recalculate distributes the tree area to all view nodes using the same
 func (t *Tree) recalculate() {
 	if t.IsEmpty() {
 		t.focus = t.root

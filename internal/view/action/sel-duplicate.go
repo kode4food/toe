@@ -49,7 +49,6 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 		// height is the number of lines spanned by the selection (min 1)
 		height := headLine - anchorLine + 1
 
-		// Column offsets within each line
 		anchorLineStart, _ := text.LineToChar(anchorLine)
 		headLineStart, _ := text.LineToChar(headLine)
 		anchorCol := r.From() - anchorLineStart
@@ -78,7 +77,6 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 			if err != nil {
 				break
 			}
-			// Clamp column to line length
 			destAnchorLineEnd, _ := text.LineEndCharIndex(destAnchorLine)
 			destHeadLineEnd, _ := text.LineEndCharIndex(destHeadLine)
 			newAnchor := min(destAnchorStart+anchorCol, destAnchorLineEnd)

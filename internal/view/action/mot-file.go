@@ -45,7 +45,6 @@ func GotoFileTarget(e *view.Editor) (GotoTarget, error) {
 		return target, err
 	}
 
-	// Expand outward from the cursor to capture a file-path token
 	n := text.LenChars()
 	from := pos
 	for from > 0 {

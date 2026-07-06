@@ -4,12 +4,11 @@
 package syntax
 
 import (
-	"context"
 	"slices"
 	"strings"
 	"sync"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	sitter "github.com/tree-sitter/go-tree-sitter"
 
 	"github.com/kode4food/toe/internal/term/highlight"
 )
@@ -24,8 +23,9 @@ type (
 
 	// langEntry holds the compiled parser and query for a single language
 	langEntry struct {
-		parser *sitter.Parser
-		query  *sitter.Query
+		parser   *sitter.Parser
+		query    *sitter.Query
+		capNames []string
 	}
 
 	tsCapture struct {
@@ -63,10 +63,7 @@ func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
 	}
 
 	src := []byte(text)
-	tree, err := lc.parser.ParseCtx(context.Background(), nil, src)
-	if err != nil {
-		return nil
-	}
+	tree := lc.parser.Parse(src, nil)
 	if tree == nil {
 		return nil
 	}
@@ -74,19 +71,23 @@ func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
 
 	qc := sitter.NewQueryCursor()
 	defer qc.Close()
-	qc.Exec(lc.query, tree.RootNode())
+
+	root := tree.RootNode()
+	matches := qc.Matches(lc.query, root, src)
 
 	b2c := buildByteToChar(text)
 
 	var captures []tsCapture
 	for {
-		m, ok := qc.NextMatch()
-		if !ok {
+		m := matches.Next()
+		if m == nil {
 			break
 		}
-		m = qc.FilterPredicates(m, src)
+		if !m.SatisfiesTextPredicate(lc.query, nil, nil, src) {
+			continue
+		}
 		for _, c := range m.Captures {
-			name := lc.query.CaptureNameForId(c.Index)
+			name := lc.capNames[c.Index]
 			scope := strings.TrimPrefix(name, "@")
 			if scope == "" {
 				continue
@@ -134,12 +135,20 @@ func (sc *Cache) langCacheFor(
 		return nil, false
 	}
 	p := sitter.NewParser()
-	p.SetLanguage(language)
-	q, err := sitter.NewQuery(qb, language)
-	if err != nil {
+	if err := p.SetLanguage(language); err != nil {
+		p.Close()
 		return nil, false
 	}
-	e := &langEntry{parser: p, query: q}
+	q, qErr := sitter.NewQuery(language, string(qb))
+	if qErr != nil {
+		p.Close()
+		return nil, false
+	}
+	e := &langEntry{
+		parser:   p,
+		query:    q,
+		capNames: q.CaptureNames(),
+	}
 	sc.mu.Lock()
 	sc.langCache[lang] = e
 	sc.mu.Unlock()
@@ -187,7 +196,10 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 			continue
 		}
 		start := max(c.start, pos)
-		best := tsCapture{start: start, end: c.end, scope: c.scope, idx: c.idx}
+		best := tsCapture{
+			start: start, end: c.end,
+			scope: c.scope, idx: c.idx,
+		}
 		j := i + 1
 		for j < len(cs) && cs[j].start == c.start {
 			if cs[j].idx < best.idx {

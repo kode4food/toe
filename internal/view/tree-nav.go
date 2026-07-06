@@ -84,7 +84,6 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 		fi := slices.Index(c.children, focus)
 		ti := slices.Index(c.children, target)
 		c.children[fi], c.children[ti] = c.children[ti], c.children[fi]
-		// swap areas
 		fv := t.nodes[focus].view
 		tv := t.nodes[target].view
 		fv.area, tv.area = tv.area, fv.area
@@ -96,7 +95,6 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 		fc.children[fi], tc.children[ti] = tc.children[ti], fc.children[fi]
 		t.nodes[focus].parent = targetParent
 		t.nodes[target].parent = focusParent
-		// swap areas
 		fv := t.nodes[focus].view
 		tv := t.nodes[target].view
 		fv.area, tv.area = tv.area, fv.area

@@ -30,7 +30,6 @@ func AlignSelections(e *view.Editor) {
 		return
 	}
 
-	// Compute the visual column of each cursor's anchor
 	cols := make([]int, len(ranges))
 	maxCol := 0
 	for i, r := range ranges {
@@ -50,7 +49,6 @@ func AlignSelections(e *view.Editor) {
 		}
 	}
 
-	// Insert spaces to bring each cursor to maxCol
 	changes := make([]core.Change, 0, len(ranges))
 	for i, r := range ranges {
 		pad := maxCol - cols[i]
@@ -99,7 +97,6 @@ func ReplaceChar(e *view.Editor, ch rune) {
 		if r.Empty() {
 			continue
 		}
-		// Replace each grapheme in the range with ch
 		frag, err := r.Fragment(text)
 		if err != nil {
 			continue

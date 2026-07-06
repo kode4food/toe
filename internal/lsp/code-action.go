@@ -20,14 +20,14 @@ type codeActionCandidate struct {
 
 // Sort priority constants for code action ordering (lower = listed first).
 const (
-	codeActionQuickfix         = iota // 0
-	codeActionRefactorExtract         // 1
-	codeActionRefactorInline          // 2
-	codeActionRefactorRewrite         // 3
-	codeActionRefactorMove            // 4
-	codeActionRefactorSurround        // 5
-	codeActionSource                  // 6
-	codeActionOther                   // 7
+	codeActionQuickfix = iota
+	codeActionRefactorExtract
+	codeActionRefactorInline
+	codeActionRefactorRewrite
+	codeActionRefactorMove
+	codeActionRefactorSurround
+	codeActionSource
+	codeActionOther
 )
 
 var codeActionTopCategory = map[string]int{

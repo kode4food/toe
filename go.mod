@@ -19,8 +19,17 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
-	github.com/smacker/go-tree-sitter v0.0.0-20240827094217-dd81d9e9be82
 	github.com/stretchr/testify v1.11.1
+	github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.0
+	github.com/tree-sitter-grammars/tree-sitter-toml v0.7.0
+	github.com/tree-sitter-grammars/tree-sitter-yaml v0.7.2
+	github.com/tree-sitter/go-tree-sitter v0.25.0
+	github.com/tree-sitter/tree-sitter-bash v0.25.1
+	github.com/tree-sitter/tree-sitter-css v0.25.0
+	github.com/tree-sitter/tree-sitter-go v0.25.0
+	github.com/tree-sitter/tree-sitter-html v0.23.2
+	github.com/tree-sitter/tree-sitter-javascript v0.25.0
+	github.com/tree-sitter/tree-sitter-typescript v0.23.2
 	go.lsp.dev/jsonrpc2 v1.0.0
 	go.lsp.dev/protocol v1.0.0
 	go.lsp.dev/uri v1.0.0
@@ -36,6 +45,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2/v2 v2.2.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
+	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/exp v0.0.0-20260611194520-c48552f49976 // indirect

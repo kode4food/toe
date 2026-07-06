@@ -7,10 +7,9 @@ import (
 )
 
 func (p *PickerComponent) drawPickerBox(
-	buf *tui.Buffer, x, y, w, h int, cx *Context,
+	buf *tui.Buffer, x, y, w, h, lw int, cx *Context,
 ) {
 	ps := p.state
-	lw := w/2 - 1
 	innerH := h - 2
 
 	cols := ps.source.Columns()

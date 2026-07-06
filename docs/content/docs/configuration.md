@@ -173,10 +173,11 @@ right = ["version-control", "diagnostics", "position"]
 
 ### Pickers
 
-These options are TOML-only and cannot be changed at runtime with `:set`.
+Picker options are module-owned UI settings. `picker.split-ratio` can also be changed at runtime with `:set editor.picker.split-ratio` and is persisted by auto-session when changed.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|
+| `picker.split-ratio` | float | `0.5` | Picker list/preview split ratio, from `0.2` to `0.8` |
 | `buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
 | `file-explorer.hidden` | bool | `false` | Show hidden files |
 | `file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |

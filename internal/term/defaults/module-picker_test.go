@@ -4,6 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/defaults"
+	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/config"
 )
 
 func TestPickerConfig(t *testing.T) {
@@ -60,5 +66,56 @@ func TestPickerConfig(t *testing.T) {
 		err := reg.ApplyTOML(e, map[string]any{})
 
 		assert.NoError(t, err)
+	})
+
+	t.Run("picker split ratio config", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		reg, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		err = reg.ApplyTOML(e, map[string]any{
+			"editor": map[string]any{
+				"picker": map[string]any{
+					"split-ratio": 0.65,
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, 0.65, m.PickerLayoutOptions().SplitRatio)
+	})
+
+	t.Run("picker split ratio option", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		reg, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		err = reg.ApplyOptionValues(e, map[string]string{
+			"editor.picker.split-ratio": "0.625",
+		})
+		values, valueErr := reg.OptionValues(e)
+
+		assert.NoError(t, err)
+		assert.NoError(t, valueErr)
+		assert.Equal(t, 0.625, m.PickerLayoutOptions().SplitRatio)
+		assert.Equal(t, "0.625", values["editor.picker.split-ratio"])
+	})
+
+	t.Run("picker split ratio rejects invalid", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		reg, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+
+		err = reg.ApplyOptionValues(e, map[string]string{
+			"editor.picker.split-ratio": "0.95",
+		})
+
+		assert.ErrorIs(t, err, config.ErrInvalidOption)
 	})
 }

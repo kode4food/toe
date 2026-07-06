@@ -12,6 +12,8 @@ type (
 		bounds        bounds
 		listBounds    bounds
 		previewBounds bounds
+		splitBounds   bounds
+		dragSplit     bool
 	}
 
 	bounds struct{ x, y, w, h int }
@@ -39,7 +41,11 @@ func (p *PickerComponent) HandleEvent(
 	case tea.KeyPressMsg:
 		return p.handleKey(msg, cx)
 	case tea.MouseClickMsg:
-		return p.handleMouseClick(msg)
+		return p.handleMouseClick(msg, cx)
+	case tea.MouseMotionMsg:
+		return p.handleMouseMotion(msg, cx)
+	case tea.MouseReleaseMsg:
+		return p.handleMouseRelease(msg)
 	case tea.MouseWheelMsg:
 		return p.handleMouseWheel(msg, cx)
 	}
@@ -62,10 +68,17 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	left := (width - areaW) / 2
 	top := max((height-2-areaH)/2, 0)
 	p.bounds = bounds{x: left, y: top, w: areaW, h: areaH}
+	p.previewBounds = bounds{}
+	p.splitBounds = bounds{}
 
 	showPreview := areaW > pickerMinPreviewArea
+	splitW := 0
 	if showPreview {
-		p.drawPickerBox(buf, left, top, areaW, areaH, cx)
+		splitW = pickerSplitLeftWidth(areaW, cx.pickerLayout.SplitRatio)
+		p.splitBounds = bounds{
+			x: left + 1 + splitW, y: top, w: 1, h: areaH,
+		}
+		p.drawPickerBox(buf, left, top, areaW, areaH, splitW, cx)
 	} else {
 		p.drawPickerPane(buf, left, top, areaW, areaH, cx)
 	}
@@ -76,7 +89,7 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	}
 	listW := areaW - 2
 	if showPreview {
-		listW = areaW/2 - 1
+		listW = splitW
 	}
 	p.listBounds = bounds{
 		x: left + 1, y: top + 3 + headerH, w: listW, h: ps.listHeight,
@@ -137,10 +150,15 @@ func (p *PickerComponent) handleDynamicFeed(
 }
 
 func (p *PickerComponent) handleMouseClick(
-	msg tea.MouseClickMsg,
+	msg tea.MouseClickMsg, cx *Context,
 ) (EventResult, tea.Cmd) {
 	if p.mouseOutside(msg.X, msg.Y) {
 		return p.dismiss()
+	}
+	if msg.Button == tea.MouseLeft && p.splitBounds.contains(msg.X, msg.Y) {
+		p.dragSplit = true
+		p.updateSplitRatio(msg.X, cx)
+		return consumed(), nil
 	}
 	if idx, ok := listIndexAt(
 		p.listBounds, p.state.listScroll, msg.X, msg.Y,
@@ -150,6 +168,36 @@ func (p *PickerComponent) handleMouseClick(
 		}
 	}
 	return consumed(), nil
+}
+
+func (p *PickerComponent) handleMouseMotion(
+	msg tea.MouseMotionMsg, cx *Context,
+) (EventResult, tea.Cmd) {
+	if !p.dragSplit || msg.Button != tea.MouseLeft {
+		return consumed(), nil
+	}
+	p.updateSplitRatio(msg.X, cx)
+	return consumed(), nil
+}
+
+func (p *PickerComponent) handleMouseRelease(
+	msg tea.MouseReleaseMsg,
+) (EventResult, tea.Cmd) {
+	if msg.Button == tea.MouseLeft {
+		p.dragSplit = false
+	}
+	return consumed(), nil
+}
+
+func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
+	usable := p.bounds.w - pickerSplitFrameOverhead
+	if usable <= 0 {
+		return
+	}
+	left := x - (p.bounds.x + 1)
+	cx.pickerLayout = PickerLayoutOptions{
+		SplitRatio: float64(left) / float64(usable),
+	}.WithDefaults()
 }
 
 func (p *PickerComponent) handleMouseWheel(
@@ -192,6 +240,7 @@ func (p *PickerComponent) mouseOutside(x, y int) bool {
 
 func (p *PickerComponent) dismiss() (EventResult, tea.Cmd) {
 	ps := p.state
+	p.dragSplit = false
 	if ps.dynamicStop != nil {
 		ps.dynamicStop()
 	}

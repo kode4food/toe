@@ -15,8 +15,9 @@ type Context struct {
 
 	lastLayer func(*view.Editor) layerFunc
 
-	loadedTheme *theme.Theme
-	theme       string
+	pickerLayout PickerLayoutOptions
+	loadedTheme  *theme.Theme
+	theme        string
 }
 
 // Theme returns the active theme, reloading it when the configured theme name

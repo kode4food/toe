@@ -22,6 +22,9 @@ type pickerItemRender struct {
 const (
 	pickerMarkerW = 3
 	pickerPadX    = 1
+
+	pickerSplitFrameOverhead = 3
+	pickerMinSplitPaneWidth  = 20
 )
 
 func writePickerPromptRow(
@@ -194,4 +197,21 @@ func pickerOverlaySize(w, h int) (int, int) {
 	areaW := w * 90 / 100
 	areaH := max((h-2)*90/100, 0)
 	return areaW, areaH
+}
+
+func pickerSplitLeftWidth(w int, ratio float64) int {
+	usable := max(w-pickerSplitFrameOverhead, 0)
+	if usable == 0 {
+		return 0
+	}
+	ratio = PickerLayoutOptions{SplitRatio: ratio}.WithDefaults().SplitRatio
+	left := int(float64(usable)*ratio + 0.5)
+	minW := min(pickerMinSplitPaneWidth, usable/2)
+	if left < minW {
+		return minW
+	}
+	if right := usable - left; right < minW {
+		return usable - minW
+	}
+	return left
 }

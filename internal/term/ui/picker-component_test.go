@@ -98,6 +98,26 @@ func TestPickerScroll(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.NotContains(t, out, "fixed")
 	})
+
+	t.Run("drag divider updates split ratio", func(t *testing.T) {
+		m := fixedPicker(t, 30, 120, 20)
+		_ = m.View()
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 60, Y: 8, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseMotionMsg{
+			X: 75, Y: 8, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseReleaseMsg{
+			Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		assert.InDelta(t, 0.648, m.PickerLayoutOptions().SplitRatio, 0.001)
+	})
 }
 
 func (fixedPickerSource) Title() string {

@@ -1,9 +1,14 @@
 package defaults
 
 import (
+	"fmt"
+	"math"
+	"strconv"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/config"
 )
 
 type (
@@ -11,6 +16,7 @@ type (
 		Editor struct {
 			BufferPicker ui.BufferPickerOptions `toml:"buffer-picker"`
 			FileExplorer fileExplorerConfig     `toml:"file-explorer"`
+			Picker       ui.PickerLayoutOptions `toml:"picker"`
 		} `toml:"editor"`
 	}
 
@@ -133,7 +139,34 @@ func pickerModule(model ui.Model) command.Module {
 		Section: &command.Section{
 			Config: cfg,
 			Reset:  func() { *cfg = pickerSection{} },
-			Apply:  func(*view.Editor) {},
+			Apply: func(*view.Editor) {
+				model.SetPickerLayoutOptions(cfg.Editor.Picker)
+			},
+		},
+		Options: []command.Option{
+			pickerSplitRatioOption(model),
+		},
+	}
+}
+
+func pickerSplitRatioOption(model ui.Model) command.Option {
+	return command.Option{
+		Key: "editor.picker.split-ratio",
+		Get: func(*view.Editor) (string, error) {
+			ratio := model.PickerLayoutOptions().SplitRatio
+			return strconv.FormatFloat(ratio, 'f', 3, 64), nil
+		},
+		Set: func(_ *view.Editor, s string) error {
+			ratio, err := strconv.ParseFloat(s, 64)
+			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) ||
+				ratio < ui.MinPickerSplitRatio ||
+				ratio > ui.MaxPickerSplitRatio {
+				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
+			}
+			model.SetPickerLayoutOptions(ui.PickerLayoutOptions{
+				SplitRatio: ratio,
+			})
+			return nil
 		},
 	}
 }

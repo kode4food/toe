@@ -76,6 +76,7 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 ### UI
 
+- [x] Picker preview split dragging and auto-session persistence.
 - [ ] Rendering golden tests.
 - [ ] Bubbletea model update tests.
 - [ ] Complete mouse behavior audit and tests for remaining gaps.

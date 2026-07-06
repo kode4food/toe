@@ -19,7 +19,12 @@ type Model struct {
 
 // New creates an initialized Model for the given editor and keymaps
 func New(editor *view.Editor, km *command.Keymaps) Model {
-	cx := &Context{Editor: editor, Keymaps: km, Syntax: syntax.NewSyntaxCache()}
+	cx := &Context{
+		Editor:       editor,
+		Keymaps:      km,
+		Syntax:       syntax.NewSyntaxCache(),
+		pickerLayout: DefaultPickerLayoutOptions(),
+	}
 	ec := newEditorComponent()
 	comp := &Compositor{}
 	comp.Push(ec)
@@ -39,6 +44,16 @@ func (m Model) CompletionOptions() CompletionOptions {
 // SetCompletionOptions applies UI-owned completion popup behavior settings
 func (m Model) SetCompletionOptions(opts CompletionOptions) {
 	m.component.completionOpts = opts.WithDefaults()
+}
+
+// PickerLayoutOptions returns the UI-owned picker layout settings
+func (m Model) PickerLayoutOptions() PickerLayoutOptions {
+	return m.context.pickerLayout.WithDefaults()
+}
+
+// SetPickerLayoutOptions applies UI-owned picker layout settings
+func (m Model) SetPickerLayoutOptions(opts PickerLayoutOptions) {
+	m.context.pickerLayout = opts.WithDefaults()
 }
 
 // Init fires the startup cmd if one was set before the program started

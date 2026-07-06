@@ -40,8 +40,6 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 	}
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
-	rulers := args.opts.Rulers
-	rulerBg := lipglossToTUIStyle(lgStyles.ruler).BgColor()
 	// syntax spans have stripped backgrounds; patch popup bg onto every row
 	// so the pane provides it uniformly rather than showing terminal default
 	fillTUI := lipglossToTUIStyle(
@@ -122,9 +120,6 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 				previewDiffMarker(kind, tuiStyles)
 		}
 		bufRow += emitPreviewLine(buf, contentX, y+bufRow, rendered, lineCtx)
-	}
-	if len(rulers) > 0 {
-		applyRulers(buf, x, y, args.w, args.h, 0, rulers, rulerBg)
 	}
 }
 

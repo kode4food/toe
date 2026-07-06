@@ -40,6 +40,8 @@ const (
 	actFileExplorerInBufDir = "file_explorer_in_current_buffer_directory"
 	actBufferPicker         = "buffer_picker"
 	actJumplistPicker       = "jumplist_picker"
+	actDiagnosticPicker     = "diagnostic_picker"
+	actWorkspaceDiagnostics = "workspace_diagnostics_picker"
 
 	actGlobalSearch   = "global_search"
 	actCommandPalette = "command_palette"
@@ -111,6 +113,24 @@ func pickerModule(model ui.Model) command.Module {
 				Run:       Continuation(model.PickerAction(ui.JumplistPicker)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(spc(char('j'))),
+			},
+			{
+				Name:      actDiagnosticPicker,
+				DocString: "Open diagnostic picker",
+				Run: Continuation(model.PickerAction(
+					ui.NewDiagnosticPicker,
+				)),
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(spc(char('d'))),
+			},
+			{
+				Name:      actWorkspaceDiagnostics,
+				DocString: "Open workspace diagnostic picker",
+				Run: Continuation(model.PickerAction(
+					ui.NewWorkspaceDiagnosticPicker,
+				)),
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(spc(char('D'))),
 			},
 			{
 				Name:      actGlobalSearch,

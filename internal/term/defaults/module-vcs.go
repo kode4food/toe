@@ -27,9 +27,9 @@ func vcsModule(model ui.Model) command.Module {
 			{
 				Name:      actChangedFilePicker,
 				DocString: "Open changed file picker",
-				Run: Continuation(
-					model.PickerAction(ui.NewChangedFilePicker),
-				),
+				Run: Continuation(model.PickerAction(
+					ui.NewChangedFilePicker,
+				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  keys(spc(char('g'))),
 			},

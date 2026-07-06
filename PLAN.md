@@ -49,7 +49,7 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 ### Pickers
 
-- [ ] Diagnostics picker and workspace diagnostics picker.
+- [x] Diagnostics picker and workspace diagnostics picker.
 
 ### Registers And Clipboard
 

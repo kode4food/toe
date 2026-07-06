@@ -13,6 +13,16 @@ import (
 )
 
 func TestPickerConfig(t *testing.T) {
+	t.Run("diagnostic pickers registered", func(t *testing.T) {
+		e, km, _ := envWithRegistry(t, "")
+
+		res := runCmd(t, km, e, "diagnostic_picker")
+		assert.Empty(t, res.Message)
+
+		res = runCmd(t, km, e, "workspace_diagnostics_picker")
+		assert.Empty(t, res.Message)
+	})
+
 	t.Run("buffer picker config decodes", func(t *testing.T) {
 		e, _, reg := envWithRegistry(t, "")
 		err := reg.ApplyTOML(e, map[string]any{

@@ -143,6 +143,32 @@ func TestPickerScroll(t *testing.T) {
 			prev = r
 		}
 	})
+
+	t.Run("split panes clamp at edges", func(t *testing.T) {
+		m := fixedPicker(t, 1, 120, 20)
+		_ = m.View()
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 60, Y: 8, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		for _, x := range []int{0, 120} {
+			m2, _ = m.Update(tea.MouseMotionMsg{
+				X: x, Y: 8, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+			out := stripANSI(m.View().Content)
+			assert.Contains(t, out, "item00")
+			assert.Contains(t, out, "CONTENT-00")
+		}
+	})
+
+	t.Run("tiny picker skips overlay", func(t *testing.T) {
+		m := fixedPicker(t, 1, 3, 3)
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "fixed")
+	})
 }
 
 func (fixedPickerSource) Title() string {

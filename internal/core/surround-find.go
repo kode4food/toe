@@ -6,7 +6,6 @@ func (r Rope) surroundFindNthOpen(
 	if pos >= r.LenChars() {
 		return 0, false
 	}
-	// Check if pos is already on the open char
 	if ch, err := r.CharAt(pos); err == nil && ch == openCh {
 		return pos, true
 	}
@@ -42,7 +41,6 @@ func (r Rope) surroundFindNthClose(
 	if pos >= r.LenChars() {
 		return 0, false
 	}
-	// Check if pos is already on the close char
 	if ch, err := r.CharAt(pos); err == nil && ch == closeCh {
 		return pos, true
 	}

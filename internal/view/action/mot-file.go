@@ -83,7 +83,6 @@ func GotoFileTarget(e *view.Editor) (GotoTarget, error) {
 		path = filepath.Join(base, path)
 	}
 
-	// Check the file exists
 	if _, err := os.Stat(path); err != nil {
 		return GotoTarget{}, fmt.Errorf("%w: '%s'", err, path)
 	}

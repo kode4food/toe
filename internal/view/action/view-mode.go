@@ -182,7 +182,6 @@ func tryRestoreIndent(_ *view.Editor, doc *view.Document, v *view.View) {
 	if err != nil {
 		return
 	}
-	// Check that the line contains only whitespace
 	onlySpace := true
 	for pos := lineStart; pos < lineEnd; pos++ {
 		ch, err := text.CharAt(pos)
@@ -194,7 +193,6 @@ func tryRestoreIndent(_ *view.Editor, doc *view.Document, v *view.View) {
 	if !onlySpace || lineStart == lineEnd {
 		return
 	}
-	// Delete the whitespace-only content of this line
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
 		core.DeleteChange(lineStart, lineEnd),
 	})

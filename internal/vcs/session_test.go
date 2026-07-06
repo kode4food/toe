@@ -1,6 +1,7 @@
 package vcs_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -72,6 +73,7 @@ func TestSession(t *testing.T) {
 		assert.False(t, ok)
 		_, ok = s.HeadName(doc)
 		assert.False(t, ok)
+		s.DocumentSaved(doc)
 	})
 
 	t.Run("changed files uses editor cwd", func(t *testing.T) {
@@ -117,7 +119,16 @@ func TestSession(t *testing.T) {
 		}, waitHunks(t, s, doc))
 
 		// saving refreshes the diff base from HEAD; hunks remain
+		select {
+		case <-s.Updates():
+		default:
+		}
 		assert.NoError(t, e.Save())
+		select {
+		case <-s.Updates():
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for save update")
+		}
 		assert.Len(t, waitHunks(t, s, doc), 1)
 
 		// closing the document tears down its differ
@@ -137,6 +148,8 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, []view.DiffHunk{
 			{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
 		}, s.DiffHunksForPath(path))
+		assert.NoError(t, os.Remove(path))
+		assert.Nil(t, s.DiffHunksForPath(path))
 		assert.Nil(t, s.DiffHunksForPath(filepath.Join(repo, "nope.txt")))
 	})
 

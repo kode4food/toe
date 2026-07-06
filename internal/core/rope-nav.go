@@ -69,8 +69,6 @@ func charToLineRopeNode(n *ropeNode, pos int) int {
 	return ropeLines(n.left) + charToLineRopeNode(n.right, pos-leftChars)
 }
 
-// forEachSegmentNode walks leaves in [from, to) handing each spanned leaf
-// substring to fn
 func forEachSegmentNode(n *ropeNode, from, to int, fn func(string)) {
 	if n == nil || from >= to {
 		return

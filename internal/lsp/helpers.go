@@ -21,7 +21,6 @@ type (
 	) (R, bool, error)
 )
 
-// clientRunRequest wraps a server call with the client's request context.
 func clientRunRequest[R any](
 	c *Client, ctx context.Context, call clientCallFn[R],
 ) (R, bool, error) {
@@ -30,7 +29,6 @@ func clientRunRequest[R any](
 	return call(ctx)
 }
 
-// clientDocRequest sends a document-scoped request with no cursor position.
 func clientDocRequest[R any](
 	c *Client, ctx context.Context, doc DocumentSnapshot,
 	call docCallFn[R],
@@ -48,8 +46,6 @@ type posRequestArgs[R any] struct {
 	call posCallFn[R]
 }
 
-// clientPosRequest sends a cursor-position request, computing the LSP position
-// from doc.Text and pos, then passing a TextDocumentPositionParams to call.
 func clientPosRequest[R any](
 	c *Client, args posRequestArgs[R],
 ) (R, bool, error) {

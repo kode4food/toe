@@ -284,7 +284,6 @@ func trimTrailingWhitespace(s string) string {
 	return b.String()
 }
 
-// hasBOMBytes reports whether data begins with the UTF-8 BOM (0xef 0xbb 0xbf)
 func hasBOMBytes(data []byte) bool {
 	return len(data) >= 3 &&
 		data[0] == 0xef && data[1] == 0xbb && data[2] == 0xbf

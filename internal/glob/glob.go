@@ -19,7 +19,6 @@ func Match(pattern, path string) bool {
 	return false
 }
 
-// expandBraces expands brace alternatives in a glob pattern
 func expandBraces(pattern string) []string {
 	start := strings.Index(pattern, "{")
 	if start < 0 {

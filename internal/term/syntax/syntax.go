@@ -164,7 +164,6 @@ func (sc *Cache) queryFor(lang string) ([]byte, bool) {
 	return b, true
 }
 
-// buildByteToChar builds a table mapping UTF-8 byte offset → rune offset
 func buildByteToChar(text string) []int {
 	table := make([]int, len(text)+1)
 	ri := 0
@@ -211,7 +210,6 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 	return spans
 }
 
-// resolveQuery loads and resolves ;; inherits: directives for a language
 func resolveQuery(lang string, seen map[string]bool) ([]byte, bool) {
 	if seen[lang] {
 		return nil, false

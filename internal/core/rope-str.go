@@ -19,7 +19,6 @@ func splitStringAtChar(s string, pos int) (string, string) {
 	return s, ""
 }
 
-// charSubstring returns the substring of s between rune offsets [from, to)
 func charSubstring(s string, from, to int) string {
 	startByte, endByte := 0, len(s)
 	i := 0

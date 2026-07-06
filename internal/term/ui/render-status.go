@@ -134,7 +134,6 @@ var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLineVersionControl:   statusElemVersionControl,
 }
 
-// buildLipglossStyles constructs a lipglossStyles from a loaded theme and mode
 func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
 	sel := th.Get("ui.selection")
 	cur, _ := modeCursorStyleFor(th, mode, false)
@@ -446,12 +445,9 @@ func inheritStyleBackground(st lipgloss.Style, bg color.Color) lipgloss.Style {
 	return st.Background(bg)
 }
 
-// hlStyleFnFor returns a function that maps highlight scope names to styles,
-// falling back to the default Chroma palette when the theme has no entry
-// hlStyleFnFor resolves a syntax scope to its theme style. Styles carry no
-// background of their own: they render transparently over whatever layer sits
-// beneath (base fill, ruler, cursorline). A scope with an explicit background
-// in the theme is treated as an intentional override
+// Resolved styles carry no background of their own: they render transparently
+// over whatever layer sits beneath (base fill, ruler, cursorline). A scope with
+// an explicit background in the theme is treated as an intentional override
 func hlStyleFnFor(th *theme.Theme) func(string) lipgloss.Style {
 	return func(scope string) lipgloss.Style {
 		if s, ok := th.TryGet(scope); ok {

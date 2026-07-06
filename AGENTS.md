@@ -679,6 +679,11 @@ Skip godoc when the name is self-documenting:
 func NewHistory() History {
 ```
 
+Only exported funcs, methods, types, consts, and vars get godoc. Do not write
+godoc comments on unexported symbols; if an unexported symbol has genuinely
+non-obvious behavior, explain that as an inline comment, not a name-prefixed
+doc comment.
+
 Godoc rule: the last sentence of a comment should not end with a period.
 
 ### Inline Comments

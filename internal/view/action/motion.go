@@ -287,7 +287,6 @@ func moveFileEnd(e *view.Editor, extend bool) {
 	})
 }
 
-// countOrOne returns the pending count or 1 if none is set
 func countOrOne(e *view.Editor) int {
 	if n := e.Count(); n > 0 {
 		return n

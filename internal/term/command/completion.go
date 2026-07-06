@@ -119,7 +119,6 @@ func offsetCompletions(items []Completion, offset int) []Completion {
 	return out
 }
 
-// matchPrefix returns a completion for every item that has input as a prefix
 func matchPrefix(items []string, input string) []Completion {
 	out := make([]Completion, 0, len(items))
 	for _, item := range items {

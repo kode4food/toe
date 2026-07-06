@@ -77,7 +77,6 @@ func wordMove(doc Rope, r Range, count int, target WordMotionTarget) Range {
 	return cur
 }
 
-// rangeToTarget extends or moves origin to reach the given word motion target
 func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 	prev := isPrevWordMotion(target)
 
@@ -101,7 +100,6 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 	anchor := origin.Anchor
 	head := origin.Head
 
-	// Peek at the character before head for context
 	var prevCh rune
 	hasPrev := false
 	if ch, ok := it.prev(); ok {
@@ -110,7 +108,6 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 		_, _ = it.next()
 	}
 
-	// Skip initial newline characters
 	for {
 		ch, ok := it.next()
 		if !ok {
@@ -128,7 +125,6 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 		anchor = head
 	}
 
-	// Find the target position
 	headStart := head
 	for {
 		nextCh, ok := it.next()

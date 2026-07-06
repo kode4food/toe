@@ -451,7 +451,6 @@ func (e *Editor) recordPrevDoc() {
 	}
 }
 
-// markDocAccessed clears the modified flag on the focused document
 func (e *Editor) markDocAccessed() {
 	if v, ok := e.FocusedView(); ok {
 		if doc, ok := e.docs[v.DocID()]; ok {

@@ -32,7 +32,6 @@ func lineNumberDigits(text core.Rope) int {
 	return digitCount(lastDrawn)
 }
 
-// gutterWidthFor returns the total configured gutter width
 func gutterWidthFor(text core.Rope, g view.Gutter) int {
 	layout := g.GutterLayout()
 	lineNumberW := gutterLineNumberWidth(text, g, layout)

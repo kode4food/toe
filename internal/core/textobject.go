@@ -58,7 +58,6 @@ func TextObjectWord(doc Rope, r Range, kind TextObjectKind, long bool) Range {
 	return NewRange(start-wsLeft, end)
 }
 
-// wordBoundaryBackward returns the start of the word ending at pos
 func wordBoundaryBackward(doc Rope, pos int, long bool) int {
 	if pos == 0 {
 		return 0
@@ -91,7 +90,6 @@ func wordBoundaryBackward(doc Rope, pos int, long bool) int {
 	return 0
 }
 
-// wordBoundaryForward returns the end (exclusive) of the word starting at pos
 func wordBoundaryForward(doc Rope, pos int, long bool) int {
 	n := doc.LenChars()
 	if pos == 0 {

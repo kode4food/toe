@@ -135,7 +135,6 @@ func softWrapPrefix(format *language.TextFormat, indent int) string {
 	return strings.Repeat(" ", indent) + format.WrapIndicator
 }
 
-// lipglossToTUIStyle converts a lipgloss style at the per-cell boundary
 func lipglossToTUIStyle(s lipgloss.Style) tui.Style {
 	st := tui.Style{}
 	st = st.Fg(lipglossColorToTUI(s.GetForeground()))

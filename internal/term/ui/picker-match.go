@@ -86,14 +86,12 @@ func (p *Picker) pageUp() {
 	p.moveBy(-max(p.listHeight, 1))
 }
 
-// clampScroll keeps the scroll offset within the valid range
 func (p *Picker) clampScroll() {
 	p.listScroll = listClampScroll(
 		p.listScroll, len(p.matched), p.listHeight,
 	)
 }
 
-// scrollBy moves the list view by delta rows without changing the selection
 func (p *Picker) scrollBy(delta int) {
 	p.listScroll = listScrollBy(
 		p.listScroll, len(p.matched), p.listHeight, delta,

@@ -88,7 +88,6 @@ func AutoDetect(doc Rope) (IndentStyle, bool) {
 		case first == '\t':
 			isTabs = true
 		case first == ' ':
-			// spaces
 		case CharIsLineEnding(first):
 			continue // blank line
 		default:

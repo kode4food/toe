@@ -2,7 +2,6 @@ package core
 
 import "unicode/utf8"
 
-// composeCtx holds iterator state for ChangeSet.Compose
 type composeCtx struct {
 	a, b         []Operation
 	ai, bi       int

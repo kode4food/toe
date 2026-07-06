@@ -85,8 +85,6 @@ func skipOverRange(doc Rope, r Range, cursor int) Range {
 	return autoPairNextRange(doc, r, 0)
 }
 
-// autoPairNextRange computes the resulting range after an auto-pair insertion
-// of lenInserted chars
 func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 	n := doc.LenChars()
 	if start.Head == n && start.Anchor == n {

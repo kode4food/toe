@@ -101,7 +101,6 @@ func EnsureGraphemeBoundaryPrev(doc Rope, charIdx int) int {
 	return PrevGraphemeBoundary(doc, charIdx+1)
 }
 
-// graphemeWidth returns the display width of a grapheme cluster string
 func graphemeWidth(g string) int {
 	if len(g) == 0 {
 		return 0

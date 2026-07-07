@@ -13,10 +13,6 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 - Keep `view.Options` limited to innate editor behavior that core editor, document, action, or renderer code must consult directly. Module-owned config stays with the owning module.
 - Do not mark a feature complete until it is implemented, tested, documented where applicable, and reflected here.
 
-## Out Of Scope
-
-- **Snippets** — decided 2026-07-05. A snippet engine (parser, tabstops, placeholder rendering, variable resolution, regex transforms, navigation state) is large surface for marginal UX now that AI completion covers boilerplate expansion, and signature help already covers post-acceptance call parameters. The LSP client advertises `snippetSupport: false` so servers send plain-text completions, and snippet workspace edits are rejected as unsupported. Revisit only if a concrete need emerges.
-- **DAP** — on hold until finalization is complete. Debug adapter registry, transport, client lifecycle, execution control, pickers, breakpoints, and a test adapter all land together when resumed.
 
 ## Remaining Work
 
@@ -26,17 +22,10 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 - [x] Add a check that validates `PLAN.md` status against implemented package tests where practical.
 - [x] Finish runtime asset layout validation for supported languages only.
 
-### Tree-Sitter Queries And Syntax Features
-
-The largest remaining chunk. Bundle and load each query kind, then the features that consume them:
+### Tree-Sitter Editing Features
 
 - [ ] Injection queries; overlay highlighting after injection/scope support lands.
-- [ ] Locals queries.
 - [ ] Textobject queries; textobject selection and syntax-aware selection expansion/shrinking.
-- [ ] Indent queries; Tree-sitter indentation heuristics and exact comment-continuation behavior.
-- [ ] Tags queries; revisit Tree-sitter fallback symbol pickers after they land.
-- [ ] Folds queries.
-- [ ] Rainbow bracket queries.
 - [ ] Tree-sitter-aware bracket matching.
 - [ ] Tree-sitter-aware surround pair finding.
 - [x] Generated tests: every supported language entry parses; every supported runtime query file is discoverable.
@@ -62,8 +51,6 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 - [x] Theme parse/style tests; generated tests that all four Catppuccin variants parse.
 - [x] Full config parse/merge coverage for the modeled config surface.
 - [x] Workspace trust startup prompt and workspace config guard.
-- [ ] Config event fanout to VCS and any future LSP reload needs.
-- [ ] Terminal-info/backend capability detection beyond current true-color checks.
 
 ### Generated And Behavior Tests
 

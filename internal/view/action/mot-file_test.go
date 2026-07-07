@@ -1,6 +1,7 @@
 package action_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -100,5 +101,61 @@ func TestGotoFileTarget(t *testing.T) {
 		target, err := action.GotoFileTarget(e)
 		assert.NoError(t, err)
 		assert.Equal(t, path, target.Path)
+	})
+
+	t.Run("controller resolves empty target to file URL", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "resolved.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hi"), 0o644))
+		e := testutil.EditorWithText(t, "link\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
+		e.SetLanguageServerController(&stubLSP{
+			resolveLink: func(
+				_ *view.Document, lnk view.DocumentLink,
+			) (view.DocumentLink, error) {
+				lnk.Target = "file://" + path
+				return lnk, nil
+			},
+		})
+		testutil.SetCursor(t, e, 2)
+		target, err := action.GotoFileTarget(e)
+		assert.NoError(t, err)
+		assert.Equal(t, path, target.Path)
+	})
+
+	t.Run("controller returns error on resolve", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "link\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
+		e.SetLanguageServerController(&stubLSP{
+			resolveLink: func(
+				_ *view.Document, lnk view.DocumentLink,
+			) (view.DocumentLink, error) {
+				return lnk, errors.New("lsp failed")
+			},
+		})
+		testutil.SetCursor(t, e, 2)
+		_, err := action.GotoFileTarget(e)
+		assert.Error(t, err)
+	})
+
+	t.Run("controller resolves to empty target errors", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "link\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
+		e.SetLanguageServerController(&stubLSP{
+			resolveLink: func(
+				_ *view.Document, lnk view.DocumentLink,
+			) (view.DocumentLink, error) {
+				return lnk, nil
+			},
+		})
+		testutil.SetCursor(t, e, 2)
+		_, err := action.GotoFileTarget(e)
+		assert.ErrorIs(t, err, action.ErrDocumentLinkTarget)
 	})
 }

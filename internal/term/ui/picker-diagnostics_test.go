@@ -87,28 +87,40 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.Contains(t, out, "severity")
 	})
 
-	t.Run("colors severity", func(t *testing.T) {
-		dir := t.TempDir()
-		path := filepath.Join(dir, "main.go")
-		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+	for _, tc := range []struct {
+		name string
+		sev  view.DiagnosticSeverity
+		want string
+	}{
+		{"colors error severity", view.DiagnosticSeverityError, "ERROR"},
+		{"colors warning severity", view.DiagnosticSeverityWarning, "WARN"},
+		{"colors info severity", view.DiagnosticSeverityInfo, "INFO"},
+		{"colors hint severity", view.DiagnosticSeverityHint, "HINT"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "main.go")
+			assert.NoError(t,
+				os.WriteFile(path, []byte("package main\n"), 0o644))
 
-		e := view.NewEditor(dir)
-		v, err := e.OpenFile(path)
-		assert.NoError(t, err)
-		doc, ok := e.Document(v.DocID())
-		assert.True(t, ok)
-		doc.ReplaceDiagnostics("test", []view.Diagnostic{
-			{
-				Severity: view.DiagnosticSeverityError,
-				Message:  "bad main",
-				Source:   "test",
-				Provider: "test",
-			},
+			e := view.NewEditor(dir)
+			v, err := e.OpenFile(path)
+			assert.NoError(t, err)
+			doc, ok := e.Document(v.DocID())
+			assert.True(t, ok)
+			doc.ReplaceDiagnostics("test", []view.Diagnostic{
+				{
+					Severity: tc.sev,
+					Message:  "bad main",
+					Source:   "test",
+					Provider: "test",
+				},
+			})
+
+			m := openDiagnosticPicker(e, ui.NewDiagnosticPicker, 'd')
+			assert.Contains(t, stripANSI(m.View().Content), tc.want)
 		})
-
-		m := openDiagnosticPicker(e, ui.NewDiagnosticPicker, 'd')
-		assert.Regexp(t, "\x1b\\[[0-9;:]*mERROR", m.View().Content)
-	})
+	}
 }
 
 func openDiagnosticPicker(

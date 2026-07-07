@@ -227,6 +227,41 @@ func TestSymbolPickerAction(t *testing.T) {
 		assert.Nil(t, cont)
 		assert.Equal(t, "symbols failed", e.TakeStatusMsg())
 	})
+
+	for _, tc := range []struct {
+		name string
+		kind string
+	}{
+		{"construct kind remaps to constructor", "construct"},
+		{"enummem kind remaps to enum_member", "enummem"},
+		{"typeparam kind remaps to type_param", "typeparam"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "main.go")
+			assert.NoError(t, os.WriteFile(
+				path, []byte("package main\n"), 0o600,
+			))
+			e := view.NewEditor(dir)
+			_, err := e.OpenFile(path)
+			assert.NoError(t, err)
+			e.SetLanguageServerController(&locationController{
+				symbols: []view.Symbol{
+					{Name: "MySymbol", Kind: tc.kind,
+						Location: view.Location{Path: path}},
+				},
+			})
+			km := command.NewKeymaps()
+			m := ui.New(e, km)
+			bindNormalTestAction(
+				km, "sym_kind_test", m.SymbolPickerAction(),
+				[]command.KeyEvent{char('s')},
+			)
+			m = resize(m, 80, 24)
+			m = sendKey(m, 's')
+			assert.Contains(t, stripANSI(m.View().Content), "MySymbol")
+		})
+	}
 }
 
 func TestSelectReferencesAction(t *testing.T) {
@@ -489,10 +524,9 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 		m = sendKey(m, 'a')
 		m.View()
-		m2, _ := m.Update(tea.MouseClickMsg{
+		_, _ = m.Update(tea.MouseClickMsg{
 			X: 9, Y: 4, Button: tea.MouseLeft,
 		})
-		m = m2.(ui.Model)
 
 		assert.Equal(t, "session:2", ctl.applied)
 	})

@@ -1346,7 +1346,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
-		m = feedCmds(m2.(ui.Model), cmd)
+		_ = feedCmds(m2.(ui.Model), cmd)
 
 		assert.Equal(t, "completion failed", e.TakeStatusMsg())
 	})

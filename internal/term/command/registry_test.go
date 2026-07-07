@@ -169,6 +169,25 @@ func TestRegistry(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("LookupOption finds prefix key", func(t *testing.T) {
+		store := &prefixStore{values: map[string]string{"editor.test.x": "v"}}
+		reg := registryWithPrefixOption(t, store)
+		opt, ok := reg.LookupOption("editor.test.x")
+		assert.True(t, ok)
+		e := view.NewEditor(t.TempDir())
+		got, err := opt.Get(e)
+		assert.NoError(t, err)
+		assert.Equal(t, "v", got)
+		assert.NoError(t, opt.Set(e, "w"))
+		assert.Equal(t, "w", store.values["editor.test.x"])
+	})
+
+	t.Run("LookupOption rejects prefix key with no setter", func(t *testing.T) {
+		reg := registryWithReadOnlyPrefixOption(t)
+		_, ok := reg.LookupOption("ro.key")
+		assert.False(t, ok)
+	})
+
 	t.Run("OptionCompleter filters by prefix", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		completer := reg.OptionCompleter()
@@ -318,6 +337,23 @@ func registryWithPrefixOption(
 				KeySet: func(_ *view.Editor, key, value string) error {
 					store.values[key] = value
 					return nil
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	return reg
+}
+
+func registryWithReadOnlyPrefixOption(t *testing.T) *command.Registry {
+	t.Helper()
+	reg := command.NewRegistry(command.NewKeymaps())
+	err := reg.RegisterModule(command.Module{
+		Options: []command.Option{
+			{
+				Key: "ro.",
+				KeyGet: func(*view.Editor) (map[string]string, error) {
+					return map[string]string{"ro.key": "val"}, nil
 				},
 			},
 		},

@@ -86,6 +86,29 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.Contains(t, out, "bad b")
 		assert.Contains(t, out, "severity")
 	})
+
+	t.Run("colors severity", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+
+		e := view.NewEditor(dir)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.Document(v.DocID())
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{
+			{
+				Severity: view.DiagnosticSeverityError,
+				Message:  "bad main",
+				Source:   "test",
+				Provider: "test",
+			},
+		})
+
+		m := openDiagnosticPicker(e, ui.NewDiagnosticPicker, 'd')
+		assert.Regexp(t, "\x1b\\[[0-9;:]*mERROR", m.View().Content)
+	})
 }
 
 func openDiagnosticPicker(

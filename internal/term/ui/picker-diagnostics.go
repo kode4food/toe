@@ -120,13 +120,16 @@ func (d *diagnosticPickerSource) item(
 	columns := []string{
 		diagnosticSeverityText(diag.Severity), diag.Source, "", diag.Message,
 	}
+	scopes := []string{diagnosticSeverityScope(diag.Severity), "", "", ""}
 	if d.workspace {
 		columns = slices.Insert(columns, 3, name)
+		scopes = slices.Insert(scopes, 3, "")
 	}
 	return PickerItem{
-		Display: display,
-		Columns: columns,
-		SortKey: display,
+		Display:     display,
+		Columns:     columns,
+		StyleScopes: scopes,
+		SortKey:     display,
 		Location: PickerLocation{
 			Target: PickerTarget{ID: doc.ID()},
 			Lines:  lines,
@@ -189,5 +192,18 @@ func diagnosticSeverityText(sev view.DiagnosticSeverity) string {
 		return "INFO"
 	default:
 		return "HINT"
+	}
+}
+
+func diagnosticSeverityScope(sev view.DiagnosticSeverity) string {
+	switch sev {
+	case view.DiagnosticSeverityError:
+		return "error"
+	case view.DiagnosticSeverityWarning:
+		return "warning"
+	case view.DiagnosticSeverityInfo:
+		return "info"
+	default:
+		return "hint"
 	}
 }

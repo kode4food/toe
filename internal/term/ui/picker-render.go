@@ -132,18 +132,32 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 			if i < len(m.item.Columns) {
 				val = m.item.Columns[i]
 			}
+			colBase := pickerColumnBase(base, m.item.StyleScopes, i, cx)
 			if i == primary {
 				writePickerMatched(buf, writePickerMatchedArgs{
 					x: cur, y: y, maxW: widths[i], text: val,
-					indices: m.indices, base: base, match: match,
+					indices: m.indices, base: colBase, match: match,
 				})
 			} else {
 				text := ansi.Truncate(val, widths[i], "")
-				buf.SetString(cur, y, text, base)
+				buf.SetString(cur, y, text, colBase)
 			}
 			cur += widths[i]
 		}
 	}
+}
+
+func pickerColumnBase(
+	base tui.Style, scopes []string, i int, cx *Context,
+) tui.Style {
+	if i >= len(scopes) || scopes[i] == "" {
+		return base
+	}
+	fg := lipglossColorToTUI(cx.Theme().Get(scopes[i]).GetForeground())
+	if fg.IsReset() {
+		return base
+	}
+	return base.Fg(fg)
 }
 
 func pickerColumnWidths(p *Picker, w int) []int {

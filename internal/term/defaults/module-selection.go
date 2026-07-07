@@ -40,6 +40,8 @@ const (
 	actSurroundAdd                = "surround_add"
 	actSurroundReplace            = "surround_replace"
 	actSurroundDelete             = "surround_delete"
+	actSelectObjectAround         = "select_textobject_around"
+	actSelectObjectInner          = "select_textobject_inner"
 	actAddNewlineAbove            = "add_newline_above"
 	actAddNewlineBelow            = "add_newline_below"
 	actSelectRegister             = "select_register"
@@ -68,21 +70,6 @@ var (
 		{ch: '\'', label: "single quotes"},
 		{ch: '`', label: "backticks"},
 		{ch: '|', label: "pipes"},
-	}
-
-	textObjectCharIDs = map[rune]string{
-		'(':  "lparen",
-		')':  "rparen",
-		'{':  "lbrace",
-		'}':  "rbrace",
-		'[':  "lbracket",
-		']':  "rbracket",
-		'<':  "langle",
-		'>':  "rangle",
-		'"':  "dquote",
-		'\'': "squote",
-		'`':  "backtick",
-		'|':  "pipe",
 	}
 )
 
@@ -276,6 +263,20 @@ func selectionModule(model ui.Model) command.Module {
 				Keys:      keys(m(char('d'))),
 			},
 			{
+				Name:      actSelectObjectAround,
+				DocString: "Select around object",
+				Run:       Continuation(textObjectAction(true)),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(m(char('a'))),
+			},
+			{
+				Name:      actSelectObjectInner,
+				DocString: "Select inside object",
+				Run:       Continuation(textObjectAction(false)),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(m(char('i'))),
+			},
+			{
 				Name:      actAddNewlineAbove,
 				DocString: "Add newline above",
 				Run:       Runner(action.AddNewlineAbove),
@@ -298,7 +299,6 @@ func selectionModule(model ui.Model) command.Module {
 			},
 		},
 	}
-	mod.Commands = append(mod.Commands, textObjectCommands(m)...)
 	return mod
 }
 
@@ -429,55 +429,38 @@ func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 	return positions, true
 }
 
-func textObjectCommands(
-	m func(...[]command.KeyEvent) []command.KeyEvent,
-) []command.Command {
-	maSeq := func(ch rune) []command.KeyEvent {
-		return append(m(char('a')), char(ch)...)
+func textObjectAction(around bool) command.KeyAction {
+	h, inside := "ma", false
+	if !around {
+		h, inside = "mi", true
 	}
-	miSeq := func(ch rune) []command.KeyEvent {
-		return append(m(char('i')), char(ch)...)
-	}
-	cmds := make([]command.Command, 0, len(textObjectEntries)*2)
-	for _, e := range textObjectEntries {
-		for _, inside := range []bool{false, true} {
-			ch, lbl := e.ch, e.label
-			dir, pfx, seq := "around", "select_textobject_around_", maSeq
-			if inside {
-				dir, pfx, seq = "inside", "select_textobject_inside_", miSeq
-			}
-			id, ok := textObjectCharIDs[ch]
-			if !ok {
-				id = string(ch)
-			}
-			cmds = append(cmds, command.Command{
-				Name:      pfx + id,
-				DocString: "Select " + dir + " " + lbl,
-				Run: Runner(func(ed *view.Editor) {
-					if syntax.IsTextObjectChar(ch) {
-						syntaxTextObjectSelect(ed, ch, inside)
-					} else if inside {
-						action.SelectTextObjectInside(ed, ch)
+	return func(e *view.Editor) command.Continuation {
+		e.SetHint(h + " ...")
+		return func(e *view.Editor, k command.KeyEvent) command.Continuation {
+			if k.Code.Char != 0 && k.Mods == command.ModNone {
+				ch := k.Code.Char
+				if !syntaxTextObjectSelect(e, ch, inside) {
+					if inside {
+						action.SelectTextObjectInside(e, ch)
 					} else {
-						action.SelectTextObjectAround(ed, ch)
+						action.SelectTextObjectAround(e, ch)
 					}
-				}),
-				Modes: []string{"NOR", "SEL"},
-				Keys:  keys(seq(ch)),
-			})
+				}
+			}
+			e.SetHint("")
+			return nil
 		}
 	}
-	return cmds
 }
 
-func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) {
+func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) bool {
 	v, ok := e.FocusedView()
 	if !ok {
-		return
+		return false
 	}
 	doc, ok := e.FocusedDocument()
 	if !ok {
-		return
+		return false
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
@@ -498,13 +481,14 @@ func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) {
 		changed = true
 	}
 	if !changed {
-		return
+		return false
 	}
 	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
 	if err != nil {
-		return
+		return false
 	}
 	doc.SetSelectionFor(v.ID(), newSel)
+	return true
 }
 
 func syntaxExpandSelection(e *view.Editor) {

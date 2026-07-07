@@ -10,12 +10,6 @@ var textObjectNames = map[rune]string{
 	'e': "entry",
 }
 
-// IsTextObjectChar reports whether ch maps to a tree-sitter textobject
-func IsTextObjectChar(ch rune) bool {
-	_, ok := textObjectNames[ch]
-	return ok
-}
-
 // FindTextObject finds the innermost textobject at cursor for lang. inside=true
 // returns the node's inner content, stripping bracket delimiters when present;
 // false returns the full node range. Returns (Range{}, false) when the language

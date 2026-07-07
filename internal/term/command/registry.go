@@ -158,14 +158,7 @@ func (r *Registry) ApplyOptionValues(
 	for key, value := range values {
 		o, ok := r.LookupOption(key)
 		if !ok {
-			o, ok = r.lookupPrefixOption(key)
-			if !ok || o.KeySet == nil {
-				return fmt.Errorf("%w: %s", view.ErrSessionUnknownOption, key)
-			}
-			if err := o.KeySet(e, key, value); err != nil {
-				return err
-			}
-			continue
+			return fmt.Errorf("%w: %s", view.ErrSessionUnknownOption, key)
 		}
 		if err := o.Set(e, value); err != nil {
 			return err

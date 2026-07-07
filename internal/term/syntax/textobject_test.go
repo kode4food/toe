@@ -137,14 +137,3 @@ func TestFindTextObjectNoMatch(t *testing.T) {
 	_, ok := syntax.FindTextObject(src, "go", cursor, 'f', true)
 	assert.False(t, ok)
 }
-
-func TestIsTextObjectChar(t *testing.T) {
-	assert.True(t, syntax.IsTextObjectChar('f'))
-	assert.True(t, syntax.IsTextObjectChar('t'))
-	assert.True(t, syntax.IsTextObjectChar('a'))
-	assert.True(t, syntax.IsTextObjectChar('c'))
-	assert.True(t, syntax.IsTextObjectChar('e'))
-	assert.False(t, syntax.IsTextObjectChar('w'))
-	assert.False(t, syntax.IsTextObjectChar('('))
-	assert.False(t, syntax.IsTextObjectChar('z'))
-}

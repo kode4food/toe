@@ -142,6 +142,8 @@ weight: 30
 | `x` | Select current line, if already selected, extend to next line |
 | `X` | Extend selection to line bounds |
 | `Alt+x` | Shrink selection to line bounds |
+| `Alt+o` | Expand selection to syntax node |
+| `Alt+i` | Shrink selection to syntax node |
 | `,` | Keep primary selection |
 | `Alt+,` | Remove primary selection |
 | `(` | Rotate selections backward |

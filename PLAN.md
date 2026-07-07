@@ -25,7 +25,8 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 ### Tree-Sitter Editing Features
 
 - [ ] Injection queries; overlay highlighting after injection/scope support lands.
-- [ ] Textobject queries; textobject selection and syntax-aware selection expansion/shrinking.
+- [ ] Textobject queries and textobject selection.
+- [x] Syntax-aware selection expansion/shrinking.
 - [ ] Tree-sitter-aware bracket matching.
 - [ ] Tree-sitter-aware surround pair finding.
 - [x] Generated tests: every supported language entry parses; every supported runtime query file is discoverable.
@@ -64,7 +65,6 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 ### UI
 
 - [x] Picker preview split dragging and auto-session persistence.
-- [ ] Rendering golden tests.
 - [x] Bubbletea model update tests.
 - [x] Complete mouse behavior audit and tests for remaining gaps.
 
@@ -82,23 +82,8 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 
 - [x] Refresh diff bases on external head movement.
 
-### Conditional Items
-
-Implement only if a remaining feature above needs them; otherwise prune during the final audit:
-
-- Tendril/compact string semantics; remaining visual offset helpers; remaining range helper utilities; `UrlConversionErrorKind` detail.
-- Range filtering/mapping helpers beyond `Selection.Map`, `ChangeSet.MapPos`, `ChangeSet.MapRange`.
-- Mark mapping over edits; `ChangeIterator`.
-- Encodings beyond UTF-8/UTF-8-BOM; Unicode line endings; save cleanup in transaction/history; file lock/read-only behavior; expansion variables.
-- Custom command clipboard provider.
-- Dedicated menu/select widgets; progress spinner UI; word jump labels.
-- Events And Jobs framework (event registration, hooks, debouncing, task cancellation, redraw locks, job queue) — current direct wiring works; adopt only if a feature demands decoupling.
-- `ProgressStatus`, `LspProgressMap`, `ApplyEditError`, `ApplyEditErrorKind` public abstractions.
-- `DiagnosticTag`, `NumberOrString` in diagnostics display.
-
 ### Final Audit
 
-- [ ] Remove any stale checklist item that no longer maps to a toe capability or concrete behavior.
 - [ ] Confirm the final supported surface is documented and tested.
 
 ## Completion Definition

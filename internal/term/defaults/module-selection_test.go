@@ -1,6 +1,7 @@
 package defaults_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,6 +56,24 @@ func TestSelectionTextObject(t *testing.T) {
 		testutil.SetCursor(t, e, 2)
 		res := runCmd(t, km, e, "select_textobject_around")
 		assert.Nil(t, res.Continuation(e, char('(')))
+	})
+}
+
+func TestSelectionSyntax(t *testing.T) {
+	t.Run("expand selects syntax node", func(t *testing.T) {
+		src := "package main\n\nfunc main() {\n\tprintln(alpha)\n}\n"
+		e, km := defaultsEnv(t, src)
+		runCmdArgs(t, km, e, "set_language", "go")
+		pos := strings.Index(src, "alpha") + 1
+		testutil.SetCursor(t, e, pos)
+		runCmd(t, km, e, "expand_selection")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		got, err := doc.SelectionFor(v.ID()).Primary().Fragment(doc.Text())
+		assert.NoError(t, err)
+		assert.Equal(t, "alpha", got)
 	})
 }
 

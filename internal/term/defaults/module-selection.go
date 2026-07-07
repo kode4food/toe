@@ -1,7 +1,9 @@
 package defaults
 
 import (
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -25,6 +27,8 @@ const (
 	actExtendLineBelow            = "extend_line_below"
 	actExtendToLineBounds         = "extend_to_line_bounds"
 	actShrinkToLineBounds         = "shrink_to_line_bounds"
+	actExpandSelection            = "expand_selection"
+	actShrinkSelection            = "shrink_selection"
 	actKeepPrimarySelection       = "keep_primary_selection"
 	actRemovePrimarySelection     = "remove_primary_selection"
 	actMatchBrackets              = "match_brackets"
@@ -170,6 +174,20 @@ func selectionModule(model ui.Model) command.Module {
 				Run:       Runner(action.ShrinkToLineBounds),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(alt('x')),
+			},
+			{
+				Name:      actExpandSelection,
+				DocString: "Expand selection to syntax node",
+				Run:       Runner(syntaxExpandSelection),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(alt('o')),
+			},
+			{
+				Name:      actShrinkSelection,
+				DocString: "Shrink selection to syntax node",
+				Run:       Runner(syntaxShrinkSelection),
+				Modes:     []string{"NOR", "SEL"},
+				Keys:      keys(alt('i')),
 			},
 			{
 				Name:      actKeepPrimarySelection,
@@ -319,4 +337,54 @@ func textObjectAction(around bool) command.KeyAction {
 			return nil
 		}
 	}
+}
+
+func syntaxExpandSelection(e *view.Editor) {
+	syntaxSelect(e, syntax.ExpandSelection)
+}
+
+func syntaxShrinkSelection(e *view.Editor) {
+	syntaxSelect(e, syntax.ShrinkSelection)
+}
+
+func syntaxSelect(
+	e *view.Editor, fn func(syntax.SelectionArgs) (syntax.Range, bool),
+) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	text := doc.Text()
+	src := text.String()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	changed := false
+	for i, r := range ranges {
+		res, ok := fn(syntax.SelectionArgs{
+			Text:   src,
+			Lang:   doc.Lang(),
+			Cursor: r.Cursor(text),
+			Range: syntax.Range{
+				From: r.From(),
+				To:   r.To(),
+			},
+		})
+		if !ok {
+			continue
+		}
+		ranges[i] = core.NewRange(res.From, res.To).WithDirection(r.Direction())
+		changed = changed || ranges[i] != r
+	}
+	if !changed {
+		return
+	}
+	sel, err := core.NewSelection(ranges, sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	doc.SetSelectionFor(v.ID(), sel)
 }

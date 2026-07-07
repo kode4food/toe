@@ -42,6 +42,13 @@ func TestFindSurroundPair(t *testing.T) {
 		assert.False(t, ok)
 	})
 
+	t.Run("out-of-bounds cursor returns false", func(t *testing.T) {
+		_, ok := syntax.FindSurroundPair(src, "go", -1, 1)
+		assert.False(t, ok)
+		_, ok = syntax.FindSurroundPair(src, "go", len([]rune(src)), 1)
+		assert.False(t, ok)
+	})
+
 	t.Run("inside string not matched", func(t *testing.T) {
 		strSrc := "package main\n\nfunc main() {\n" +
 			"\tx := \"(foo)\"\n\t_ = x\n}\n"
@@ -92,6 +99,11 @@ func TestFindSurroundPairFor(t *testing.T) {
 
 	t.Run("unknown language returns false", func(t *testing.T) {
 		_, ok := syntax.FindSurroundPairFor(src, "nope", cursor, '(', 1)
+		assert.False(t, ok)
+	})
+
+	t.Run("out-of-bounds cursor returns false", func(t *testing.T) {
+		_, ok := syntax.FindSurroundPairFor(src, "go", -1, '(', 1)
 		assert.False(t, ok)
 	})
 }

@@ -243,11 +243,15 @@ func TestNavigationLocationSlice(t *testing.T) {
 
 		locations, err := session.GotoDeclaration(doc, v.ID())
 		assert.NoError(t, err)
-		assert.Equal(t, []view.Location{{Path: target, From: 3, To: 6}}, locations)
+		assert.Equal(t, []view.Location{
+			{Path: target, From: 3, To: 6},
+		}, locations)
 
 		locations, err = session.GotoDefinition(doc, v.ID())
 		assert.NoError(t, err)
-		assert.Equal(t, []view.Location{{Path: target, From: 3, To: 6}}, locations)
+		assert.Equal(t, []view.Location{
+			{Path: target, From: 3, To: 6},
+		}, locations)
 	})
 }
 

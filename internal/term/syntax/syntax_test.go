@@ -182,12 +182,23 @@ func scopeAt(spans []highlight.Span, src, needle string) string {
 }
 
 func TestTokenizeCached(t *testing.T) {
-	// Second call for same language hits the rawQuery cache
-	src := "package main\n"
-	sc := syntax.NewSyntaxCache()
-	spans1 := sc.Tokenize(src, "go")
-	spans2 := sc.Tokenize(src, "go")
-	assert.Equal(t, len(spans1), len(spans2))
+	t.Run("highlight cache hit", func(t *testing.T) {
+		// Second call hits rawQuery and langCache
+		src := "package main\n"
+		sc := syntax.NewSyntaxCache()
+		spans1 := sc.Tokenize(src, "go")
+		spans2 := sc.Tokenize(src, "go")
+		assert.Equal(t, len(spans1), len(spans2))
+	})
+
+	t.Run("injection cache hit", func(t *testing.T) {
+		// Second call hits rawInject cache
+		src := "<script>const x = 1;</script>\n"
+		sc := syntax.NewSyntaxCache()
+		spans1 := sc.Tokenize(src, "html")
+		spans2 := sc.Tokenize(src, "html")
+		assert.Equal(t, len(spans1), len(spans2))
+	})
 }
 
 func TestTokenizeEscapeOverlap(t *testing.T) {

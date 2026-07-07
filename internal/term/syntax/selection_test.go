@@ -63,4 +63,38 @@ func TestSelection(t *testing.T) {
 		})
 		assert.False(t, ok)
 	})
+
+	t.Run("expand reversed range normalizes", func(t *testing.T) {
+		// reversed From/To exercises bounds() swap branch
+		res, ok := syntax.ExpandSelection(syntax.SelectionArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Range:  syntax.Range{From: idTo, To: idFrom},
+		})
+		assert.True(t, ok)
+		assert.Less(t, res.From, idFrom)
+	})
+
+	t.Run("expand at root returns false", func(t *testing.T) {
+		// range already covers the whole file; no larger parent exists
+		_, ok := syntax.ExpandSelection(syntax.SelectionArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Range:  syntax.Range{From: 0, To: len(src)},
+		})
+		assert.False(t, ok)
+	})
+
+	t.Run("shrink point returns false", func(t *testing.T) {
+		// empty range has no child to shrink to
+		_, ok := syntax.ShrinkSelection(syntax.SelectionArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Range:  syntax.Range{From: cursor, To: cursor},
+		})
+		assert.False(t, ok)
+	})
 }

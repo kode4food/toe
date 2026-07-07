@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/loader"
 )
 
 const configOptionBoolKey = "atomic-save"
@@ -321,9 +323,18 @@ func TestConfigCommands(t *testing.T) {
 		runCmd(t, km, e, "config_open")
 	})
 
-	t.Run("config_open_workspace runs without panic", func(t *testing.T) {
+	t.Run("config_open_workspace rejects untrusted", func(t *testing.T) {
 		e, km := defaultsEnv(t, "")
-		runCmd(t, km, e, "config_open_workspace")
+		res := runCmd(t, km, e, "config_open_workspace")
+		assert.Contains(t, res.Message, "workspace untrusted")
+	})
+
+	t.Run("config_open_workspace opens trusted", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		e, km := defaultsEnv(t, "")
+		assert.NoError(t, loader.TrustWorkspace(e.Cwd()))
+		res := runCmd(t, km, e, "config_open_workspace")
+		assert.NotContains(t, res.Message, "error")
 	})
 
 	t.Run("log_open runs without panic", func(t *testing.T) {

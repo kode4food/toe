@@ -137,10 +137,10 @@ func run(args []string, out io.Writer) error {
 		}
 		model = model.WithInitialPicker(ui.FilePickerInDir(abs))
 	}
-	if !editor.Options().Insecure && !workspaceTrusted() {
+	_, workspaceFallback := loader.FindWorkspace(sessionRoot)
+	if !editor.Options().Insecure && !workspaceFallback && !workspaceTrusted() {
 		model = model.WithStartupMessage(
-			"Workspace untrusted — session and workspace config disabled. " +
-				":workspace_trust to enable",
+			"Workspace untrusted; run :workspace_trust to enable config",
 		)
 	}
 

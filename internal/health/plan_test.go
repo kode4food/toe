@@ -113,6 +113,13 @@ func planChecks() []planCheck {
 			},
 		},
 		{
+			item: "Workspace trust startup prompt and workspace config guard.",
+			tests: []string{
+				"internal/term/defaults/module-config_test.go",
+				"internal/term/ui/model_test.go",
+			},
+		},
+		{
 			item: "Generated tests: every supported language entry parses; " +
 				"every supported runtime query file is discoverable.",
 			tests: []string{

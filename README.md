@@ -17,7 +17,7 @@ toe is opinionated because it is built for one tight workflow: editing Go projec
 - Go-focused language tooling: syntax highlighting, LSP completion, hover, signature help, formatting, symbols, code actions, rename, go-to navigation, and diagnostics
 - Editor display: soft wrap, rulers, whitespace rendering, indent guides, gutters, configurable cursor shapes, and statusline elements
 - Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker, and statusline element
-- Project state: user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
+- Project state: workspace trust, user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
 - 4 Catppuccin themes: frappe, latte, macchiato, mocha
 
 ## Requirements
@@ -48,6 +48,13 @@ $XDG_CONFIG_HOME/toe/languages.toml
 ```
 
 Workspace config goes in `.toe/config.toml` and `.toe/languages.toml` at the project root.
+
+Workspace config is trust-gated. See `docs/content/docs/configuration.md` for details.
+
+```text
+:workspace_trust
+:workspace_untrust
+```
 
 ## Development
 

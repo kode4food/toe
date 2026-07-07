@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -206,19 +207,6 @@ func expandInner(e *view.Editor, content string) (string, error) {
 }
 
 func findWorkspace(dir string) string {
-	markers := []string{".git", ".svn", ".toe", "jj"}
-	d := dir
-	for {
-		for _, m := range markers {
-			if _, err := os.Stat(filepath.Join(d, m)); err == nil {
-				return d
-			}
-		}
-		parent := filepath.Dir(d)
-		if parent == d {
-			break
-		}
-		d = parent
-	}
-	return dir
+	root, _ := loader.FindWorkspace(dir)
+	return root
 }

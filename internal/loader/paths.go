@@ -116,7 +116,7 @@ func FindWorkspace(dir string) (string, bool) {
 		abs = dir
 	}
 	for {
-		for _, name := range []string{".git", ".svn", ".jj", WorkspaceDirName} {
+		for _, name := range []string{".git", WorkspaceDirName} {
 			if _, err := os.Stat(filepath.Join(abs, name)); err == nil {
 				return abs, false
 			}

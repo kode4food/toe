@@ -24,7 +24,17 @@ Reload after editing: `:config_reload`
 
 ## Workspace Trust
 
-Workspace-local config files (`.toe/config.toml` and `.toe/languages.toml`) are only loaded for trusted workspaces. Untrusted workspaces silently skip these files — only user config applies.
+toe treats a directory with `.git` or `.toe` as a workspace. Workspace trust is the explicit opt-in that lets workspace-controlled config and tooling affect toe.
+
+Until a workspace is trusted:
+
+- normal file editing, `:write`, `:write_all`, and `:move` still work
+- automatic workspace session restore/save is skipped
+- workspace-local config files (`.toe/config.toml` and `.toe/languages.toml`) are not loaded
+- workspace-configured language servers and formatter commands are not started from workspace config
+- `:config_open_workspace` refuses to create or open workspace config until you trust the workspace
+
+User config still applies in untrusted workspaces.
 
 Trust the current workspace:
 
@@ -38,9 +48,9 @@ Remove trust:
 :workspace_untrust
 ```
 
-Trusted workspaces are stored in `$DATA_DIR/trusted_workspaces` (`~/.local/share/toe/trusted_workspaces` on Linux/macOS).
+Trusted workspaces are stored in `$DATA_DIR/trusted_workspaces` (`~/.local/share/toe/trusted_workspaces` on Linux/macOS). If a workspace is untrusted at startup, toe shows a status message asking you to run `:workspace_trust`.
 
-To bypass trust checks entirely and always load workspace config, set in your user config:
+To bypass trust checks entirely, set in your user config:
 
 ```toml
 [editor]

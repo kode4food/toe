@@ -109,18 +109,50 @@ func TestPaths(t *testing.T) {
 }
 
 func TestWorkspace(t *testing.T) {
-	root := t.TempDir()
-	work := filepath.Join(root, "work")
-	cwd := filepath.Join(work, "src")
-	err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
-	assert.NoError(t, err)
-	err = os.MkdirAll(cwd, 0o755)
-	assert.NoError(t, err)
+	t.Run("finds git marker", func(t *testing.T) {
+		root := t.TempDir()
+		work := filepath.Join(root, "work")
+		cwd := filepath.Join(work, "src")
+		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
 
-	found, fallback := loader.FindWorkspace(cwd)
+		found, fallback := loader.FindWorkspace(cwd)
 
-	assert.False(t, fallback)
-	assert.Equal(t, work, found)
+		assert.False(t, fallback)
+		assert.Equal(t, work, found)
+	})
+
+	t.Run("finds toe marker", func(t *testing.T) {
+		root := t.TempDir()
+		work := filepath.Join(root, "work")
+		cwd := filepath.Join(work, "src")
+		err := os.MkdirAll(filepath.Join(work, ".toe"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+
+		found, fallback := loader.FindWorkspace(cwd)
+
+		assert.False(t, fallback)
+		assert.Equal(t, work, found)
+	})
+
+	t.Run("ignores unsupported markers", func(t *testing.T) {
+		root := t.TempDir()
+		work := filepath.Join(root, "work")
+		cwd := filepath.Join(work, "src")
+		err := os.MkdirAll(filepath.Join(work, ".svn"), 0o755)
+		assert.NoError(t, err)
+		err = os.MkdirAll(cwd, 0o755)
+		assert.NoError(t, err)
+
+		found, fallback := loader.FindWorkspace(cwd)
+
+		assert.True(t, fallback)
+		assert.Equal(t, cwd, found)
+	})
 }
 
 func TestFindWorkspaceNoMarker(t *testing.T) {

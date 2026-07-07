@@ -9,8 +9,9 @@ toe can save and restore your editing session: the set of open documents, split 
 
 ## Session File
 
-Sessions are stored in `.toe/session.toml` at your project root (the workspace
-directory). Each project has its own independent session.
+Sessions are stored in `.toe/session.toml` at your project root (the workspace directory). Each project has its own independent session.
+
+Auto-session only saves and restores session files for trusted workspaces. Run `:workspace_trust` in the project before relying on automatic session restore/save.
 
 ## Auto-Session
 

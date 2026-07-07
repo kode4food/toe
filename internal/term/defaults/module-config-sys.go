@@ -27,6 +27,14 @@ func configSystemCmds() []command.Command {
 			Name:      actConfigOpenWorkspace,
 			DocString: "Open the workspace config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				if !loader.QueryWorkspaceTrust(
+					e.Cwd(), e.Options().Insecure,
+				) {
+					return command.Result{
+						Message: "workspace untrusted; " +
+							"run :workspace_trust to enable",
+					}
+				}
 				path := loader.WorkspaceConfigFile(e.Cwd())
 				if _, err := e.SwitchFile(path); err != nil {
 					return command.Result{Message: "error: " + err.Error()}

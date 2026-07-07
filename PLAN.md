@@ -61,7 +61,7 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 - [x] Theme parse/style tests; generated tests that all four Catppuccin variants parse.
 - [x] Full config parse/merge coverage for the modeled config surface.
-- [ ] Interactive workspace trust prompts.
+- [x] Workspace trust startup prompt and workspace config guard.
 - [ ] Config event fanout to VCS and any future LSP reload needs.
 - [ ] Terminal-info/backend capability detection beyond current true-color checks.
 

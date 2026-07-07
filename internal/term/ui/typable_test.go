@@ -40,6 +40,8 @@ func TestConfigCommands(t *testing.T) {
 		assert.NoError(t, err)
 		err = os.MkdirAll(cwd, 0o755)
 		assert.NoError(t, err)
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		assert.NoError(t, loader.TrustWorkspace(cwd))
 		e := view.NewEditor(cwd)
 		m := runTypable(
 			newTestModel(t, e),

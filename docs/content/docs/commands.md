@@ -91,7 +91,7 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 | `set_option` | `set-option`, `set` | Set a config option at runtime |
 | `toggle_option` | `toggle-option`, `toggle` | Toggle a config option at runtime |
 | `config_open` | `config-open` | Open the user config.toml file |
-| `config_open_workspace` | `config-open-workspace` | Open the workspace config.toml file |
+| `config_open_workspace` | `config-open-workspace` | Open the workspace config.toml file in a trusted workspace |
 | `config_reload` | `config-reload` | Refresh user config |
 | `theme` | | Change the editor theme (show current theme if no name specified) |
 | `log_open` | `log-open` | Open the editor log file |
@@ -100,8 +100,8 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `workspace_trust` | `workspace-trust` | Add current workspace to the list of trusted workspaces |
-| `workspace_untrust` | `workspace-untrust` | Remove current workspace from the list of trusted workspaces |
+| `workspace_trust` | `workspace-trust` | Trust the current workspace, enabling workspace config, configured tooling, and auto-session |
+| `workspace_untrust` | `workspace-untrust` | Remove current workspace trust |
 
 ## Session
 

@@ -70,17 +70,22 @@ func SurroundDelete(e *view.Editor, ch rune) {
 	if !ok {
 		return
 	}
-	slices.Sort(res.positions)
-	rawChanges := make([]core.Change, len(res.positions))
-	for i, p := range res.positions {
+	SurroundDeleteAt(e, res.text, res.positions)
+}
+
+// SurroundDeleteAt deletes the brackets at flat [open, close, ...] positions
+// and switches to normal mode
+func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
+	slices.Sort(positions)
+	rawChanges := make([]core.Change, len(positions))
+	for i, p := range positions {
 		rawChanges[i] = core.DeleteChange(p, p+1)
 	}
-	cs, err := core.NewChangeSetFromChanges(res.text, rawChanges)
+	cs, err := core.NewChangeSetFromChanges(text, rawChanges)
 	if err != nil {
 		return
 	}
-	tx := core.NewTransaction(res.text).WithChanges(cs)
-	_ = e.Apply(tx)
+	_ = e.Apply(core.NewTransaction(text).WithChanges(cs))
 	e.SetMode(view.ModeNormal)
 }
 
@@ -91,14 +96,20 @@ func SurroundReplace(e *view.Editor, from, to rune) {
 	if !ok {
 		return
 	}
+	SurroundReplaceAt(e, res.text, res.positions, to)
+}
 
+// SurroundReplaceAt replaces brackets at flat [open, close, ...] positions with
+// the pair matching to, then switches to normal mode
+func SurroundReplaceAt(
+	e *view.Editor, text core.Rope, positions []int, to rune,
+) {
 	openCh, closeCh := core.GetPair(to)
-
-	sorted := make([]posChar, 0, len(res.positions))
-	for i := 0; i < len(res.positions); i += 2 {
+	sorted := make([]posChar, 0, len(positions))
+	for i := 0; i < len(positions); i += 2 {
 		sorted = append(sorted,
-			posChar{res.positions[i], openCh},
-			posChar{res.positions[i+1], closeCh},
+			posChar{pos: positions[i], ch: openCh},
+			posChar{pos: positions[i+1], ch: closeCh},
 		)
 	}
 	slices.SortFunc(sorted, func(a, b posChar) int {
@@ -108,12 +119,11 @@ func SurroundReplace(e *view.Editor, from, to rune) {
 	for i, pc := range sorted {
 		rawChanges[i] = core.TextChange(pc.pos, pc.pos+1, string(pc.ch))
 	}
-	cs, err := core.NewChangeSetFromChanges(res.text, rawChanges)
+	cs, err := core.NewChangeSetFromChanges(text, rawChanges)
 	if err != nil {
 		return
 	}
-	tx := core.NewTransaction(res.text).WithChanges(cs)
-	_ = e.Apply(tx)
+	_ = e.Apply(core.NewTransaction(text).WithChanges(cs))
 	e.SetMode(view.ModeNormal)
 }
 
@@ -131,25 +141,21 @@ func textObjectSelect(e *view.Editor, ch rune, kind core.TextObjectKind) {
 	sel := doc.SelectionFor(v.ID())
 	newRanges := make([]core.Range, len(sel.Ranges()))
 	for i, r := range sel.Ranges() {
-		var nr core.Range
 		switch ch {
 		case 'w':
-			nr = core.TextObjectWord(text, r, kind, false)
+			r = core.TextObjectWord(text, r, kind, false)
 		case 'W':
-			nr = core.TextObjectWord(text, r, kind, true)
+			r = core.TextObjectWord(text, r, kind, true)
 		case 'p':
-			nr = core.TextObjectParagraph(text, r, kind, n)
+			r = core.TextObjectParagraph(text, r, kind, n)
 		case 'm':
-			nr = r.TextObjectPairSurround(text, kind, 0, n)
+			r = r.TextObjectPairSurround(text, kind, 0, n)
 		default:
 			if !core.CharIsWord(ch) {
-				nr = r.TextObjectPairSurround(text, kind, ch, n)
-			} else {
-				// Tree-sitter textobjects not yet supported; leave unchanged
-				nr = r
+				r = r.TextObjectPairSurround(text, kind, ch, n)
 			}
 		}
-		newRanges[i] = nr
+		newRanges[i] = r
 	}
 	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 	if err != nil {

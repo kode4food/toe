@@ -74,7 +74,8 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	showPreview := areaW > pickerMinPreviewArea
 	splitW := 0
 	if showPreview {
-		splitW = pickerSplitLeftWidth(areaW, cx.pickerLayout.SplitRatio)
+		ratio := cx.pickerLayout.SplitRatioFor(ps.source.Title())
+		splitW = pickerSplitLeftWidth(areaW, ratio)
 		p.splitBounds = bounds{
 			x: left + 1 + splitW, y: top, w: 1, h: areaH,
 		}
@@ -197,7 +198,12 @@ func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
 	left := x - (p.bounds.x + 1)
 	ratio := float64(left) / float64(usable)
 	ratio = min(max(ratio, MinPickerSplitRatio), MaxPickerSplitRatio)
-	cx.pickerLayout = PickerLayoutOptions{SplitRatio: ratio}
+	opts := cx.pickerLayout.WithDefaults()
+	if opts.SplitRatios == nil {
+		opts.SplitRatios = map[string]float64{}
+	}
+	opts.SplitRatios[p.state.source.Title()] = ratio
+	cx.pickerLayout = opts
 }
 
 func (p *PickerComponent) handleMouseWheel(

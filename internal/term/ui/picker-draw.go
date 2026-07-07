@@ -102,7 +102,6 @@ func (p *PickerComponent) drawPreviewInto(
 		return
 	}
 	innerW := max(w-2*pickerPadX, 1)
-	from, to, ok := item.Location.lineRange()
 	ctx := previewCtx{
 		picker: ps,
 		item:   item,
@@ -113,9 +112,9 @@ func (p *PickerComponent) drawPreviewInto(
 		th:     cx.Theme(),
 		hlFrom: -1,
 	}
-	if ok {
-		ctx.hlFrom = from
-		ctx.hlTo = to
+	if lr := item.Location.Lines; lr != nil {
+		ctx.hlFrom = lr.From
+		ctx.hlTo = lr.To
 	}
 	ctx.renderInto(buf, x+pickerPadX, y)
 }

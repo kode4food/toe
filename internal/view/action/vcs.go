@@ -72,14 +72,16 @@ func ResetDiffChange(e *view.Editor) (int, error) {
 		if !hunkIntersects(h, lineRanges) {
 			continue
 		}
-		from, to, ok := hunkCharRange(h, text)
+		hr, ok := hunkCharRange(h, text)
 		if !ok {
 			continue
 		}
 		bf := min(h.BaseFrom, len(baseLines))
 		bt := min(h.BaseTo, len(baseLines))
 		replacement := strings.Join(baseLines[bf:bt], "")
-		changes = append(changes, core.TextChange(from, to, replacement))
+		changes = append(
+			changes, core.TextChange(hr.From(), hr.To(), replacement),
+		)
 	}
 	if len(changes) == 0 {
 		return 0, ErrNoChangesInSelection
@@ -183,28 +185,28 @@ func focusedDiffHunks(
 // modifications cover the changed lines; a pure removal is the point at the
 // start of the removal
 func hunkRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
-	from, to, ok := hunkCharRange(h, text)
+	r, ok := hunkCharRange(h, text)
 	if !ok {
 		return core.Range{}, false
 	}
 	if h.PureRemoval() {
-		return core.NewRange(from, min(from+1, text.LenChars())), true
+		return core.NewRange(r.From(), min(r.From()+1, text.LenChars())), true
 	}
-	return core.NewRange(from, to), true
+	return r, true
 }
 
-func hunkCharRange(h view.DiffHunk, text core.Rope) (int, int, bool) {
+func hunkCharRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
 	from, err := text.LineToChar(min(h.From, text.LenLines()-1))
 	if err != nil {
-		return 0, 0, false
+		return core.Range{}, false
 	}
 	to := text.LenChars()
 	if h.To < text.LenLines() {
 		if to, err = text.LineToChar(h.To); err != nil {
-			return 0, 0, false
+			return core.Range{}, false
 		}
 	}
-	return from, to, true
+	return core.NewRange(from, to), true
 }
 
 func nextHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {

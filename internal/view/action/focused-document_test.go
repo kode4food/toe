@@ -43,6 +43,9 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"delete word forward", action.DeleteWordForward},
 		{"ensure forward", action.EnsureForward},
 		{"exit select", action.ExitSelectMode},
+		{"extend line below", action.ExtendLineBelow},
+		{"extend to column", action.ExtendToColumn},
+		{"extend to non whitespace", action.ExtendToNonWhitespace},
 		{"extend search next", func(e *view.Editor) {
 			e.Registers().Write('/', []string{"a"})
 			action.ExtendSearchNext(e)
@@ -54,7 +57,15 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"flip selections", action.FlipSelections},
 		{"goto file", func(e *view.Editor) { _, _ = action.GotoFileTarget(e) }},
 		{"goto line end newline", action.GotoLineEndNewline},
+		{"goto first change", action.GotoFirstChange},
+		{"goto last change", action.GotoLastChange},
 		{"goto last modification", action.GotoLastModification},
+		{"goto next change", action.GotoNextChange},
+		{"goto next paragraph", action.GotoNextParagraph},
+		{"goto prev change", action.GotoPrevChange},
+		{"goto prev paragraph", action.GotoPrevParagraph},
+		{"hsplit", action.HSplit},
+		{"vsplit", action.VSplit},
 		{"indent", action.Indent},
 		{"insert char", func(e *view.Editor) { action.InsertChar(e, 'x') }},
 		{"insert mode", action.InsertMode},
@@ -72,7 +83,6 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"line below", action.SelectLineBelow},
 		{"copy next", action.CopyOnNextLine},
 		{"copy prev", action.CopyOnPrevLine},
-		{"match brackets", action.MatchBrackets},
 		{"merge consecutive", action.MergeConsecutive},
 		{"merge selections", action.MergeSelections},
 		{"move file end", action.MoveFileEnd},

@@ -56,10 +56,11 @@ func (g *globalSearchSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
 	path := item.Location.Target.Path
-	lineIdx, _, ok := item.Location.lineRange()
-	if path == "" || !ok || lineIdx < 0 {
+	lr := item.Location.Lines
+	if path == "" || lr == nil || lr.From < 0 {
 		return
 	}
+	lineIdx := lr.From
 	v, ok := acceptPath(e, path, action)
 	if !ok {
 		return

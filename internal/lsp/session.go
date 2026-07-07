@@ -659,15 +659,15 @@ func (s *Session) convertDiagnostics(
 ) []view.Diagnostic {
 	out := make([]view.Diagnostic, 0, len(diags))
 	for _, diag := range diags {
-		from, to, ok := lspRangeToChars(doc, diag.Range, encoding)
+		dr, ok := lspRangeToChars(doc, diag.Range, encoding)
 		if !ok {
 			continue
 		}
 		source, _ := diag.Source.Get()
 		out = append(out, view.Diagnostic{
 			Range: view.DiagnosticRange{
-				From: from,
-				To:   to,
+				From: dr.From(),
+				To:   dr.To(),
 			},
 			Severity: diagnosticSeverity(diag.Severity),
 			Message:  markupText(diag.Message),

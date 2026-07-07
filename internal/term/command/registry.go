@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -16,6 +17,7 @@ type Registry struct {
 	km       *Keymaps
 	sections []Section
 	options  map[string]Option
+	prefixes []Option
 }
 
 func NewRegistry(km *Keymaps) *Registry {
@@ -47,6 +49,10 @@ func (r *Registry) RegisterModule(m Module) error {
 		if r.options == nil {
 			r.options = make(map[string]Option)
 		}
+		if o.KeyGet != nil || o.KeySet != nil {
+			r.prefixes = append(r.prefixes, o)
+			continue
+		}
 		r.options[normalizeOptionKey(o.Key)] = o
 	}
 	return nil
@@ -77,8 +83,36 @@ func (r *Registry) ApplyTOML(e *view.Editor, raw map[string]any) error {
 
 // LookupOption returns the registered Option for the given key, if any
 func (r *Registry) LookupOption(key string) (Option, bool) {
-	o, ok := r.options[normalizeOptionKey(key)]
-	return o, ok
+	if o, ok := r.options[normalizeOptionKey(key)]; ok {
+		return o, true
+	}
+	o, ok := r.lookupPrefixOption(key)
+	if !ok || o.KeySet == nil {
+		return Option{}, false
+	}
+	return Option{
+		Key: key,
+		Get: func(e *view.Editor) (string, error) {
+			values, err := o.KeyGet(e)
+			if err != nil {
+				return "", err
+			}
+			return values[key], nil
+		},
+		Set: func(e *view.Editor, value string) error {
+			return o.KeySet(e, key, value)
+		},
+	}, true
+}
+
+func (r *Registry) lookupPrefixOption(key string) (Option, bool) {
+	key = normalizeOptionKey(key)
+	for _, o := range r.prefixes {
+		if strings.HasPrefix(key, normalizeOptionKey(o.Key)) {
+			return o, true
+		}
+	}
+	return Option{}, false
 }
 
 // OptionKeys returns all registered option keys in sorted order
@@ -103,6 +137,16 @@ func (r *Registry) OptionValues(e *view.Editor) (map[string]string, error) {
 		}
 		out[key] = value
 	}
+	for _, o := range r.prefixes {
+		if o.KeyGet == nil {
+			continue
+		}
+		values, err := o.KeyGet(e)
+		if err != nil {
+			return nil, err
+		}
+		maps.Copy(out, values)
+	}
 	return out, nil
 }
 
@@ -114,7 +158,14 @@ func (r *Registry) ApplyOptionValues(
 	for key, value := range values {
 		o, ok := r.LookupOption(key)
 		if !ok {
-			return fmt.Errorf("%w: %s", view.ErrSessionUnknownOption, key)
+			o, ok = r.lookupPrefixOption(key)
+			if !ok || o.KeySet == nil {
+				return fmt.Errorf("%w: %s", view.ErrSessionUnknownOption, key)
+			}
+			if err := o.KeySet(e, key, value); err != nil {
+				return err
+			}
+			continue
 		}
 		if err := o.Set(e, value); err != nil {
 			return err

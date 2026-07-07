@@ -232,13 +232,6 @@ func (p *Picker) clearPreviewCache() {
 	clear(p.previewCache)
 }
 
-func (p PickerLocation) lineRange() (int, int, bool) {
-	if p.Lines == nil {
-		return 0, 0, false
-	}
-	return p.Lines.From, p.Lines.To, true
-}
-
 func acceptDocumentID(
 	e *view.Editor, id view.DocumentId, action PickerAcceptAction,
 ) (*view.View, bool) {

@@ -22,16 +22,23 @@ type documentLinkCandidate struct {
 func (c *Client) DocumentLinks(
 	ctx context.Context, doc DocumentSnapshot,
 ) ([]protocol.DocumentLink, bool, error) {
-	return clientDocRequest(c, ctx, doc, func(ctx context.Context, c *Client, tdid protocol.TextDocumentIdentifier) ([]protocol.DocumentLink, bool, error) {
-		if !c.SupportsFeature(FeatureDocumentLinks) {
-			return nil, false, nil
-		}
-		links, err := c.server.DocumentLink(ctx, &protocol.DocumentLinkParams{TextDocument: tdid})
-		if err != nil {
-			return nil, true, err
-		}
-		return links, true, nil
-	})
+	return clientDocRequest(c, ctx, doc,
+		func(
+			ctx context.Context, c *Client,
+			tdid protocol.TextDocumentIdentifier,
+		) ([]protocol.DocumentLink, bool, error) {
+			if !c.SupportsFeature(FeatureDocumentLinks) {
+				return nil, false, nil
+			}
+			links, err := c.server.DocumentLink(
+				ctx, &protocol.DocumentLinkParams{TextDocument: tdid},
+			)
+			if err != nil {
+				return nil, true, err
+			}
+			return links, true, nil
+		},
+	)
 }
 
 // ResolveDocumentLink resolves a stored document link target when supported
@@ -182,8 +189,8 @@ func (s *Session) documentLinksAsync(doc *view.Document) {
 func viewDocumentLink(
 	client *Client, doc *view.Document, idx int, link protocol.DocumentLink,
 ) (view.DocumentLink, bool) {
-	from, to, ok := lspRangeToChars(doc, link.Range, client.OffsetEncoding())
-	if !ok || from >= to {
+	cr, ok := lspRangeToChars(doc, link.Range, client.OffsetEncoding())
+	if !ok || cr.From() >= cr.To() {
 		return view.DocumentLink{}, false
 	}
 	target := ""
@@ -192,8 +199,8 @@ func viewDocumentLink(
 	}
 	return view.DocumentLink{
 		ID:     candidateID(client.Name(), idx),
-		From:   from,
-		To:     to,
+		From:   cr.From(),
+		To:     cr.To(),
 		Target: target,
 		Server: client.Name(),
 	}, true

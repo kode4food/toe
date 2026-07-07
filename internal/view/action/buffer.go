@@ -104,18 +104,6 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
-// MatchBrackets moves each cursor to the matching bracket at that position
-func MatchBrackets(e *view.Editor) {
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		pos := r.Cursor(doc)
-		match, ok := core.FindMatchingBracket(doc, pos)
-		if !ok {
-			return r
-		}
-		return r.PutCursor(doc, match, false)
-	})
-}
-
 // YankJoin yanks all selection text joined by a separator to the active
 // register (default '"'). Mirrors :yank-join
 func YankJoin(e *view.Editor, sep string) {

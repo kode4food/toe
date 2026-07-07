@@ -9,6 +9,11 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
+type textObjectEntry struct {
+	ch    rune
+	label string
+}
+
 const (
 	actCopyOnNextLine             = "copy_on_next_line"
 	actCopyOnPrevLine             = "copy_on_prev_line"
@@ -35,11 +40,50 @@ const (
 	actSurroundAdd                = "surround_add"
 	actSurroundReplace            = "surround_replace"
 	actSurroundDelete             = "surround_delete"
-	actSelectTextObjectAround     = "select_textobject_around"
-	actSelectTextObjectInside     = "select_textobject_inside"
 	actAddNewlineAbove            = "add_newline_above"
 	actAddNewlineBelow            = "add_newline_below"
 	actSelectRegister             = "select_register"
+)
+
+var (
+	textObjectEntries = []textObjectEntry{
+		{ch: 'f', label: "function"},
+		{ch: 't', label: "type definition"},
+		{ch: 'a', label: "argument/parameter"},
+		{ch: 'c', label: "call"},
+		{ch: 'e', label: "data structure entry"},
+		{ch: 'w', label: "word"},
+		{ch: 'W', label: "WORD"},
+		{ch: 'p', label: "paragraph"},
+		{ch: 'm', label: "closest surrounding pair"},
+		{ch: '(', label: "parentheses"},
+		{ch: ')', label: "parentheses"},
+		{ch: '{', label: "curly braces"},
+		{ch: '}', label: "curly braces"},
+		{ch: '[', label: "square brackets"},
+		{ch: ']', label: "square brackets"},
+		{ch: '<', label: "angled brackets"},
+		{ch: '>', label: "angled brackets"},
+		{ch: '"', label: "double quotes"},
+		{ch: '\'', label: "single quotes"},
+		{ch: '`', label: "backticks"},
+		{ch: '|', label: "pipes"},
+	}
+
+	textObjectCharIDs = map[rune]string{
+		'(':  "lparen",
+		')':  "rparen",
+		'{':  "lbrace",
+		'}':  "rbrace",
+		'[':  "lbracket",
+		']':  "rbracket",
+		'<':  "langle",
+		'>':  "rangle",
+		'"':  "dquote",
+		'\'': "squote",
+		'`':  "backtick",
+		'|':  "pipe",
+	}
 )
 
 func selectionModule(model ui.Model) command.Module {
@@ -47,7 +91,7 @@ func selectionModule(model ui.Model) command.Module {
 	prev := prefixed(char('['))
 	next := prefixed(char(']'))
 
-	return command.Module{
+	mod := command.Module{
 		Commands: []command.Command{
 			{
 				Name:      actCopyOnNextLine,
@@ -232,20 +276,6 @@ func selectionModule(model ui.Model) command.Module {
 				Keys:      keys(m(char('d'))),
 			},
 			{
-				Name:      actSelectTextObjectAround,
-				DocString: "Select around object",
-				Run:       Continuation(textObjectAction(true)),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(m(char('a'))),
-			},
-			{
-				Name:      actSelectTextObjectInside,
-				DocString: "Select inside object",
-				Run:       Continuation(textObjectAction(false)),
-				Modes:     []string{"NOR", "SEL"},
-				Keys:      keys(m(char('i'))),
-			},
-			{
 				Name:      actAddNewlineAbove,
 				DocString: "Add newline above",
 				Run:       Runner(action.AddNewlineAbove),
@@ -268,6 +298,8 @@ func selectionModule(model ui.Model) command.Module {
 			},
 		},
 	}
+	mod.Commands = append(mod.Commands, textObjectCommands(m)...)
+	return mod
 }
 
 func selectRegisterAction(e *view.Editor) command.Continuation {
@@ -303,7 +335,15 @@ func surroundReplaceAction(e *view.Editor) command.Continuation {
 		e.SetHint("mr " + string(from) + " ...")
 		return func(e *view.Editor, k command.KeyEvent) command.Continuation {
 			if k.Code.Char != 0 && k.Mods == command.ModNone {
-				action.SurroundReplace(e, from, k.Code.Char)
+				to := k.Code.Char
+				if positions, ok := syntaxSurroundPos(e, from); ok {
+					if doc, dOK := e.FocusedDocument(); dOK {
+						action.SurroundReplaceAt(e, doc.Text(), positions, to)
+						e.SetHint("")
+						return nil
+					}
+				}
+				action.SurroundReplace(e, from, to)
 			}
 			e.SetHint("")
 			return nil
@@ -315,28 +355,156 @@ func surroundDeleteAction(e *view.Editor) command.Continuation {
 	e.SetHint("md ...")
 	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
 		if k.Code.Char != 0 && k.Mods == command.ModNone {
-			action.SurroundDelete(e, k.Code.Char)
+			ch := k.Code.Char
+			if positions, ok := syntaxSurroundPos(e, ch); ok {
+				if doc, dOK := e.FocusedDocument(); dOK {
+					action.SurroundDeleteAt(e, doc.Text(), positions)
+					e.SetHint("")
+					return nil
+				}
+			}
+			action.SurroundDelete(e, ch)
 		}
 		e.SetHint("")
 		return nil
 	}
 }
 
-func textObjectAction(around bool) command.KeyAction {
-	h, fn := "mi", action.SelectTextObjectInside
-	if around {
-		h, fn = "ma", action.SelectTextObjectAround
+// syntaxSurroundPos finds surrounding bracket positions for all selection
+// ranges, using Tree-sitter for structural brackets and falling back to
+// plaintext for each range that tree-sitter cannot handle
+func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return nil, false
 	}
-	return func(e *view.Editor) command.Continuation {
-		e.SetHint(h + " ...")
-		return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-			if k.Code.Char != 0 && k.Mods == command.ModNone {
-				fn(e, k.Code.Char)
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return nil, false
+	}
+	text := doc.Text()
+	src := text.String()
+	lang := doc.Lang()
+	sel := doc.SelectionFor(v.ID())
+	skip := max(e.Count(), 1)
+
+	var positions []int
+	for _, r := range sel.Ranges() {
+		cursor := r.Cursor(text)
+		var res syntax.Range
+		var found bool
+		if ch == 'm' {
+			res, found = syntax.FindSurroundPair(src, lang, cursor, skip)
+		} else {
+			res, found = syntax.FindSurroundPairFor(
+				src, lang, cursor, ch, skip,
+			)
+		}
+		if !found {
+			var coreFrom, coreTo int
+			var err error
+			if ch == 'm' {
+				coreFrom, coreTo, err = core.FindNthClosestPairsPos(
+					text, r, skip,
+				)
+			} else {
+				coreFrom, coreTo, err = core.FindNthPairsPos(text, ch, r, skip)
 			}
-			e.SetHint("")
-			return nil
+			if err != nil {
+				return nil, false
+			}
+			res = syntax.Range{
+				From: min(coreFrom, coreTo),
+				To:   max(coreFrom, coreTo),
+			}
+		}
+		anchor, head := min(res.From, res.To), max(res.From, res.To)
+		for _, p := range positions {
+			if p == anchor || p == head {
+				return nil, false
+			}
+		}
+		positions = append(positions, anchor, head)
+	}
+	return positions, true
+}
+
+func textObjectCommands(
+	m func(...[]command.KeyEvent) []command.KeyEvent,
+) []command.Command {
+	maSeq := func(ch rune) []command.KeyEvent {
+		return append(m(char('a')), char(ch)...)
+	}
+	miSeq := func(ch rune) []command.KeyEvent {
+		return append(m(char('i')), char(ch)...)
+	}
+	cmds := make([]command.Command, 0, len(textObjectEntries)*2)
+	for _, e := range textObjectEntries {
+		for _, inside := range []bool{false, true} {
+			ch, lbl := e.ch, e.label
+			dir, pfx, seq := "around", "select_textobject_around_", maSeq
+			if inside {
+				dir, pfx, seq = "inside", "select_textobject_inside_", miSeq
+			}
+			id, ok := textObjectCharIDs[ch]
+			if !ok {
+				id = string(ch)
+			}
+			cmds = append(cmds, command.Command{
+				Name:      pfx + id,
+				DocString: "Select " + dir + " " + lbl,
+				Run: Runner(func(ed *view.Editor) {
+					if syntax.IsTextObjectChar(ch) {
+						syntaxTextObjectSelect(ed, ch, inside)
+					} else if inside {
+						action.SelectTextObjectInside(ed, ch)
+					} else {
+						action.SelectTextObjectAround(ed, ch)
+					}
+				}),
+				Modes: []string{"NOR", "SEL"},
+				Keys:  keys(seq(ch)),
+			})
 		}
 	}
+	return cmds
+}
+
+func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	changed := false
+	for i, r := range ranges {
+		res, ok := syntax.FindTextObject(
+			text.String(), doc.Lang(), r.Cursor(text), ch, inside,
+		)
+		if !ok {
+			continue
+		}
+		nr := core.NewRange(res.From, res.To)
+		if nr == r {
+			continue
+		}
+		ranges[i] = nr
+		changed = true
+	}
+	if !changed {
+		return
+	}
+	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 func syntaxExpandSelection(e *view.Editor) {

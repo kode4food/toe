@@ -1,7 +1,7 @@
 package ui
 
 type PickerLayoutOptions struct {
-	SplitRatio float64 `toml:"split-ratio"`
+	SplitRatios map[string]float64 `toml:"split-ratios"`
 }
 
 const (
@@ -11,18 +11,35 @@ const (
 )
 
 func DefaultPickerLayoutOptions() PickerLayoutOptions {
-	return PickerLayoutOptions{SplitRatio: DefaultPickerSplitRatio}
+	return PickerLayoutOptions{}
 }
 
 func (o PickerLayoutOptions) WithDefaults() PickerLayoutOptions {
-	if o.SplitRatio == 0 {
-		o.SplitRatio = DefaultPickerSplitRatio
-	}
-	if o.SplitRatio < MinPickerSplitRatio {
-		o.SplitRatio = MinPickerSplitRatio
-	}
-	if o.SplitRatio > MaxPickerSplitRatio {
-		o.SplitRatio = MaxPickerSplitRatio
+	if len(o.SplitRatios) > 0 {
+		ratios := make(map[string]float64, len(o.SplitRatios))
+		for key, ratio := range o.SplitRatios {
+			ratios[key] = clampPickerSplitRatio(ratio)
+		}
+		o.SplitRatios = ratios
 	}
 	return o
+}
+
+// SplitRatioFor returns the saved split ratio for a picker key
+func (o PickerLayoutOptions) SplitRatioFor(key string) float64 {
+	o = o.WithDefaults()
+	if ratio, ok := o.SplitRatios[key]; ok {
+		return ratio
+	}
+	return DefaultPickerSplitRatio
+}
+
+func clampPickerSplitRatio(ratio float64) float64 {
+	if ratio < MinPickerSplitRatio {
+		return MinPickerSplitRatio
+	}
+	if ratio > MaxPickerSplitRatio {
+		return MaxPickerSplitRatio
+	}
+	return ratio
 }

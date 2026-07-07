@@ -293,26 +293,6 @@ func TestSetLineEnding(t *testing.T) {
 	})
 }
 
-func TestMatchBrackets(t *testing.T) {
-	t.Run("jumps to matching bracket", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "(abc)")
-		testutil.SetCursor(t, e, 0)
-
-		action.MatchBrackets(e)
-
-		assert.Equal(t, 4, testutil.CursorPos(t, e))
-	})
-
-	t.Run("noop when no bracket under cursor", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "abc")
-		testutil.SetCursor(t, e, 1)
-
-		action.MatchBrackets(e)
-
-		assert.Equal(t, 1, testutil.CursorPos(t, e))
-	})
-}
-
 func TestPasteRegisterAtCursor(t *testing.T) {
 	t.Run("pastes register content at cursor", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ac")

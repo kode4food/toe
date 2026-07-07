@@ -327,11 +327,13 @@ func textEditsToChanges(
 ) ([]core.Change, error) {
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {
-		from, to, ok := lspRangeToChars(doc, edit.Range, encoding)
+		cr, ok := lspRangeToChars(doc, edit.Range, encoding)
 		if !ok {
 			return nil, ErrWorkspaceEditRange
 		}
-		changes = append(changes, core.TextChange(from, to, edit.NewText))
+		changes = append(
+			changes, core.TextChange(cr.From(), cr.To(), edit.NewText),
+		)
 	}
 	slices.SortStableFunc(changes, func(a, b core.Change) int {
 		if a.From != b.From {

@@ -24,16 +24,16 @@ func lspRange(
 func lspRangeToChars(
 	doc *view.Document, r protocol.Range,
 	encoding protocol.PositionEncodingKind,
-) (int, int, bool) {
+) (core.Range, bool) {
 	from, ok := lspPositionToChar(doc, r.Start, encoding)
 	if !ok {
-		return 0, 0, false
+		return core.Range{}, false
 	}
 	to, ok := lspPositionToChar(doc, r.End, encoding)
 	if !ok {
-		return 0, 0, false
+		return core.Range{}, false
 	}
-	return from, to, true
+	return core.NewRange(from, to), true
 }
 
 func lspPositionToChar(

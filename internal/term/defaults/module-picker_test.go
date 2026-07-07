@@ -78,7 +78,7 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("picker split ratio config", func(t *testing.T) {
+	t.Run("picker split ratios config", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -88,16 +88,21 @@ func TestPickerConfig(t *testing.T) {
 		err = reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
 				"picker": map[string]any{
-					"split-ratio": 0.65,
+					"split-ratios": map[string]any{
+						"Diagnostics": 0.65,
+					},
 				},
 			},
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, 0.65, m.PickerLayoutOptions().SplitRatio)
+		assert.Equal(
+			t, 0.65,
+			m.PickerLayoutOptions().SplitRatios["Diagnostics"],
+		)
 	})
 
-	t.Run("picker split ratio option", func(t *testing.T) {
+	t.Run("picker split ratios option", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -105,17 +110,23 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = reg.ApplyOptionValues(e, map[string]string{
-			"editor.picker.split-ratio": "0.625",
+			"editor.picker.split-ratios.Diagnostics": "0.65",
 		})
 		values, valueErr := reg.OptionValues(e)
 
 		assert.NoError(t, err)
 		assert.NoError(t, valueErr)
-		assert.Equal(t, 0.625, m.PickerLayoutOptions().SplitRatio)
-		assert.Equal(t, "0.625", values["editor.picker.split-ratio"])
+		assert.Equal(
+			t, 0.65,
+			m.PickerLayoutOptions().SplitRatios["Diagnostics"],
+		)
+		assert.Equal(
+			t, "0.65",
+			values["editor.picker.split-ratios.Diagnostics"],
+		)
 	})
 
-	t.Run("picker split ratio clamps out of range", func(t *testing.T) {
+	t.Run("picker split ratios clamp out of range", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -123,15 +134,17 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = reg.ApplyOptionValues(e, map[string]string{
-			"editor.picker.split-ratio": "0.95",
+			"editor.picker.split-ratios.Diagnostics": "0.95",
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t,
-			ui.MaxPickerSplitRatio, m.PickerLayoutOptions().SplitRatio)
+			ui.MaxPickerSplitRatio,
+			m.PickerLayoutOptions().SplitRatios["Diagnostics"],
+		)
 	})
 
-	t.Run("picker split ratio rejects garbage", func(t *testing.T) {
+	t.Run("picker split ratios rejects garbage", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -139,7 +152,7 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = reg.ApplyOptionValues(e, map[string]string{
-			"editor.picker.split-ratio": "nope",
+			"editor.picker.split-ratios.Diagnostics": "nope",
 		})
 
 		assert.ErrorIs(t, err, config.ErrInvalidOption)

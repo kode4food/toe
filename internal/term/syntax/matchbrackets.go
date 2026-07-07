@@ -8,11 +8,10 @@ var syntaxBrackets = [][2]rune{
 	{'[', ']'},
 }
 
-// FindMatchingBracket returns the char position of the bracket matching the
-// one at cursorPos using the Tree-sitter parse tree, so brackets inside
-// strings and comments are never falsely matched.
-// Returns (0, false) if the language is unknown or cursorPos is not on a
-// supported bracket character.
+// FindMatchingBracket returns the char position of the bracket matching the one
+// at cursorPos using the Tree-sitter parse tree, so brackets inside strings and
+// comments are never falsely matched. Returns (0, false) if the language is
+// unknown or cursorPos is not on a supported bracket character
 func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 	runes := []rune(text)
 	if cursorPos < 0 || cursorPos >= len(runes) {
@@ -82,11 +81,8 @@ func bracketPairFor(ch rune) (open, close rune, ok bool) {
 	return 0, 0, false
 }
 
-// isBracketNode reports whether n's first and last children are the
-// anonymous bracket tokens openCh and closeCh respectively. This
-// distinguishes structural bracket pairs (e.g. argument_list) from
-// nodes that merely happen to start/end with a bracket character
-// (e.g. interpreted_string_literal_content).
+// anonymous first/last children confirm real bracket delimiters, not nodes
+// whose content merely starts/ends with a bracket character
 func isBracketNode(n *sitter.Node, openCh, closeCh rune) bool {
 	count := n.ChildCount()
 	if count == 0 {

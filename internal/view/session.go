@@ -15,27 +15,15 @@ import (
 type (
 	editorSession struct {
 		Version   int               `toml:"version"`
-		Options   []sessionOption   `toml:"option"`
-		Registers []sessionRegister `toml:"register,omitempty"`
+		Options   sessionOptions    `toml:"option,omitempty"`
+		Registers sessionRegisters  `toml:"register,omitempty"`
 		Documents []sessionDocument `toml:"document"`
 		Layout    sessionNode       `toml:"layout"`
 	}
 
-	sessionOption struct {
-		Key   string `toml:"key"`
-		Value string `toml:"value"`
-	}
+	sessionOptions map[string]string
 
-	sessionRegister struct {
-		Name   string   `toml:"name"`
-		Values []string `toml:"value"`
-	}
-
-	sessionJump struct {
-		Document  int           `toml:"document"`
-		Anchor    int           `toml:"anchor"`
-		Selection sessionSelect `toml:"selection"`
-	}
+	sessionRegisters map[string][]string
 
 	sessionDocument struct {
 		Path    string `toml:"path,omitempty"`
@@ -64,6 +52,12 @@ type (
 	sessionSelect struct {
 		Primary int            `toml:"primary"`
 		Ranges  []sessionRange `toml:"range"`
+	}
+
+	sessionJump struct {
+		Document  int           `toml:"document"`
+		Anchor    int           `toml:"anchor"`
+		Selection sessionSelect `toml:"selection"`
 	}
 
 	sessionRange struct {
@@ -106,23 +100,23 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		keys = append(keys, key)
 	}
 	slices.Sort(keys)
+	if len(keys) > 0 {
+		s.Options = sessionOptions{}
+	}
 	for _, key := range keys {
-		s.Options = append(s.Options, sessionOption{
-			Key:   key,
-			Value: opts[key],
-		})
+		s.Options[key] = opts[key]
 	}
 	regKeys := make([]rune, 0, len(e.registers))
 	for k := range e.registers {
 		regKeys = append(regKeys, k)
 	}
 	slices.Sort(regKeys)
+	if len(regKeys) > 0 {
+		s.Registers = sessionRegisters{}
+	}
 	for _, k := range regKeys {
 		if vals := e.registers.Read(k); len(vals) > 0 {
-			s.Registers = append(s.Registers, sessionRegister{
-				Name:   string(k),
-				Values: vals,
-			})
+			s.Registers[string(k)] = vals
 		}
 	}
 	for _, v := range e.AllViews() {
@@ -238,18 +232,14 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	e.markDocAccessed()
 
 	e.registers.ClearAll()
-	for _, r := range s.Registers {
-		runes := []rune(r.Name)
+	for name, values := range s.Registers {
+		runes := []rune(name)
 		if len(runes) == 1 {
-			e.registers.Write(runes[0], r.Values)
+			e.registers.Write(runes[0], values)
 		}
 	}
 
-	opts := map[string]string{}
-	for _, o := range s.Options {
-		opts[o.Key] = o.Value
-	}
-	return opts, true, nil
+	return s.Options, true, nil
 }
 
 func WorkspaceSessionFile(dir string) string {

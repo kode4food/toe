@@ -81,11 +81,11 @@ func documentHighlightRanges(
 ) []core.Range {
 	out := make([]core.Range, 0, len(highlights))
 	for _, highlight := range highlights {
-		from, to, ok := lspRangeToChars(doc, highlight.Range, client.OffsetEncoding())
+		r, ok := lspRangeToChars(doc, highlight.Range, client.OffsetEncoding())
 		if !ok {
 			continue
 		}
-		r := core.NewRange(from, to).MinWidth1(doc.Text())
+		r = r.MinWidth1(doc.Text())
 		if r.From() < r.To() {
 			out = append(out, r)
 		}

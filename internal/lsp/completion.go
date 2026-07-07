@@ -426,11 +426,11 @@ func (s *Session) applyAdditionalCompletionEdits(
 	}
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {
-		from, to, ok := lspRangeToChars(doc, edit.Range, encoding)
+		cr, ok := lspRangeToChars(doc, edit.Range, encoding)
 		if !ok {
 			return ErrCompletionUnavailable
 		}
-		changes = append(changes, core.TextChange(from, to, edit.NewText))
+		changes = append(changes, core.TextChange(cr.From(), cr.To(), edit.NewText))
 	}
 	cs, err := core.NewChangeSetFromChanges(doc.Text(), changes)
 	if err != nil {
@@ -513,22 +513,22 @@ func completionEdit(
 ) (*completionEditOffset, string, error) {
 	switch edit := item.TextEdit.(type) {
 	case *protocol.TextEdit:
-		from, to, ok := lspRangeToChars(ctx.doc, edit.Range, ctx.encoding)
+		cr, ok := lspRangeToChars(ctx.doc, edit.Range, ctx.encoding)
 		if !ok {
 			return nil, "", ErrCompletionUnavailable
 		}
 		return &completionEditOffset{
-			from: from - ctx.cursor,
-			to:   to - ctx.cursor,
+			from: cr.From() - ctx.cursor,
+			to:   cr.To() - ctx.cursor,
 		}, edit.NewText, nil
 	case *protocol.InsertReplaceEdit:
-		from, to, ok := lspRangeToChars(ctx.doc, edit.Insert, ctx.encoding)
+		cr, ok := lspRangeToChars(ctx.doc, edit.Insert, ctx.encoding)
 		if !ok {
 			return nil, "", ErrCompletionUnavailable
 		}
 		return &completionEditOffset{
-			from: from - ctx.cursor,
-			to:   to - ctx.cursor,
+			from: cr.From() - ctx.cursor,
+			to:   cr.To() - ctx.cursor,
 		}, edit.NewText, nil
 	default:
 		if text, ok := item.InsertText.Get(); ok {

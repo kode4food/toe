@@ -88,5 +88,18 @@ func labelPrefixNodes(km *command.Keymaps) {
 		km.LabelNode(mode, cwnKey, "New split scratch buffer")
 		km.LabelNode(mode, spcwKey, "Window")
 		km.LabelNode(mode, spcwnKey, "New split scratch buffer")
+
+		km.LabelNode(mode, append(char('m'), char('a')...), "Match around")
+		km.LabelNode(mode, append(char('m'), char('i')...), "Match inside")
+		for _, e := range textObjectEntries {
+			km.LabelNode(mode,
+				append(char('m'), append(char('a'), char(e.ch)...)...),
+				e.label,
+			)
+			km.LabelNode(mode,
+				append(char('m'), append(char('i'), char(e.ch)...)...),
+				e.label,
+			)
+		}
 	}
 }

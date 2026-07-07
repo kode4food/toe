@@ -19,6 +19,8 @@ type (
 		Key    string
 		Get    OptionGetter
 		Set    OptionSetter
+		KeyGet OptionKeyGetter
+		KeySet OptionKeySetter
 		Toggle OptionGetter
 	}
 
@@ -27,6 +29,12 @@ type (
 
 	// OptionSetter applies a new option value to the editor
 	OptionSetter func(*view.Editor, string) error
+
+	// OptionKeyGetter reads concrete values owned by an option key prefix
+	OptionKeyGetter func(*view.Editor) (map[string]string, error)
+
+	// OptionKeySetter applies a concrete option key owned by a key prefix
+	OptionKeySetter func(*view.Editor, string, string) error
 
 	// Section declares a module's live config pointer and Apply hook. Config
 	// must be a non-nil pointer to a struct with toml tags matching the full

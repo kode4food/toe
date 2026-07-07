@@ -16,7 +16,10 @@ import (
 // fixedPickerSource is a deterministic, synchronous picker source: a fixed list
 // of items in a known order, each previewing distinct content. The preview of
 // the selected item reveals the selection, independent of the scroll position
-type fixedPickerSource struct{ items []ui.PickerItem }
+type fixedPickerSource struct {
+	items []ui.PickerItem
+	title string
+}
 
 func TestPickerScroll(t *testing.T) {
 	// At 120x20: areaW=108, areaH=16, left=6, top=1, preview layout active.
@@ -116,7 +119,8 @@ func TestPickerScroll(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		assert.InDelta(t, 0.648, m.PickerLayoutOptions().SplitRatio, 0.001)
+		ratios := m.PickerLayoutOptions().SplitRatios
+		assert.InDelta(t, 0.648, ratios["fixed"], 0.001)
 	})
 
 	t.Run("drag stays monotonic across the whole width", func(t *testing.T) {
@@ -134,7 +138,7 @@ func TestPickerScroll(t *testing.T) {
 				X: x, Y: 8, Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
-			r := m.PickerLayoutOptions().SplitRatio
+			r := m.PickerLayoutOptions().SplitRatios["fixed"]
 			assert.GreaterOrEqual(t, r, ui.MinPickerSplitRatio)
 			assert.LessOrEqual(t, r, ui.MaxPickerSplitRatio)
 			// dragging rightward must never step the ratio back; the
@@ -164,6 +168,23 @@ func TestPickerScroll(t *testing.T) {
 		}
 	})
 
+	t.Run("drag split is per picker", func(t *testing.T) {
+		m := fixedPickers(t, 120, 20)
+		m = sendKey(m, 'a')
+		m = dragPickerSplit(m, 60, 75)
+		opts := m.PickerLayoutOptions()
+		assert.InDelta(t, 0.648, opts.SplitRatios["alpha"], 0.001)
+		_, ok := opts.SplitRatios["beta"]
+		assert.False(t, ok)
+
+		m = sendSpecial(m, tea.KeyEscape)
+		m = sendKey(m, 'b')
+		m = dragPickerSplit(m, 60, 45)
+		opts = m.PickerLayoutOptions()
+		assert.InDelta(t, 0.648, opts.SplitRatios["alpha"], 0.001)
+		assert.InDelta(t, 0.362, opts.SplitRatios["beta"], 0.001)
+	})
+
 	t.Run("tiny picker skips overlay", func(t *testing.T) {
 		m := fixedPicker(t, 1, 3, 3)
 		out := stripANSI(m.View().Content)
@@ -171,7 +192,10 @@ func TestPickerScroll(t *testing.T) {
 	})
 }
 
-func (fixedPickerSource) Title() string {
+func (s fixedPickerSource) Title() string {
+	if s.title != "" {
+		return s.title
+	}
 	return "fixed"
 }
 
@@ -195,15 +219,7 @@ func (s fixedPickerSource) Load(
 
 func fixedPicker(t *testing.T, n, w, h int) ui.Model {
 	t.Helper()
-	items := make([]ui.PickerItem, n)
-	for i := range n {
-		body := fmt.Sprintf("CONTENT-%02d", i)
-		items[i] = ui.PickerItem{
-			Display: fmt.Sprintf("item%02d", i),
-			Columns: []string{fmt.Sprintf("item%02d", i)},
-			Preview: func(int, int) string { return body },
-		}
-	}
+	items := fixedPickerItems(n)
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
@@ -218,4 +234,60 @@ func fixedPicker(t *testing.T, n, w, h int) ui.Model {
 	m = resize(m, w, h)
 	m = sendKey(m, 'p')
 	return m
+}
+
+func fixedPickers(t *testing.T, w, h int) ui.Model {
+	t.Helper()
+	items := fixedPickerItems(30)
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "alpha_picker",
+		m.PickerAction(func(*view.Editor) *ui.Picker {
+			return ui.NewPicker(
+				e, fixedPickerSource{items: items, title: "alpha"},
+			)
+		}),
+		[]command.KeyEvent{char('a')},
+	)
+	bindNormalTestAction(
+		km, "beta_picker",
+		m.PickerAction(func(*view.Editor) *ui.Picker {
+			return ui.NewPicker(
+				e, fixedPickerSource{items: items, title: "beta"},
+			)
+		}),
+		[]command.KeyEvent{char('b')},
+	)
+	return resize(m, w, h)
+}
+
+func fixedPickerItems(n int) []ui.PickerItem {
+	items := make([]ui.PickerItem, n)
+	for i := range n {
+		body := fmt.Sprintf("CONTENT-%02d", i)
+		items[i] = ui.PickerItem{
+			Display: fmt.Sprintf("item%02d", i),
+			Columns: []string{fmt.Sprintf("item%02d", i)},
+			Preview: func(int, int) string { return body },
+		}
+	}
+	return items
+}
+
+func dragPickerSplit(m ui.Model, from, to int) ui.Model {
+	_ = m.View()
+	m2, _ := m.Update(tea.MouseClickMsg{
+		X: from, Y: 8, Button: tea.MouseLeft,
+	})
+	m = m2.(ui.Model)
+	m2, _ = m.Update(tea.MouseMotionMsg{
+		X: to, Y: 8, Button: tea.MouseLeft,
+	})
+	m = m2.(ui.Model)
+	m2, _ = m.Update(tea.MouseReleaseMsg{
+		Button: tea.MouseLeft,
+	})
+	return m2.(ui.Model)
 }

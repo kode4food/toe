@@ -58,6 +58,10 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, e.SaveSession(
 			sessionPath, map[string]string{"editor.cursorline": "true"},
 		))
+		data, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		assert.Contains(t, string(data), "[option]")
+		assert.NotContains(t, string(data), "[[option]]")
 
 		next := view.NewEditor(dir)
 		values, restored, err := next.RestoreSession(sessionPath)
@@ -400,6 +404,10 @@ document = 1
 		e.Registers().Write('"', []string{"hello", "world"})
 		e.Registers().Write('a', []string{"foo"})
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
+		data, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		assert.Contains(t, string(data), "[register]")
+		assert.NotContains(t, string(data), "[[register]]")
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(80, 24)

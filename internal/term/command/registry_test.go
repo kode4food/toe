@@ -18,6 +18,10 @@ type (
 	registryEditor struct {
 		ScrollOff int `toml:"scrolloff"`
 	}
+
+	prefixStore struct {
+		values map[string]string
+	}
 )
 
 const defaultRegistryScrollOff = 3
@@ -104,6 +108,31 @@ func TestRegistry(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, e.Options().CursorLine)
 		assert.Equal(t, 7, e.Options().ScrollOff)
+	})
+
+	t.Run("prefix options return values", func(t *testing.T) {
+		store := &prefixStore{values: map[string]string{
+			"editor.test.alpha": "1",
+		}}
+		reg := registryWithPrefixOption(t, store)
+
+		values, err := reg.OptionValues(view.NewEditor(t.TempDir()))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "1", values["editor.test.alpha"])
+	})
+
+	t.Run("prefix options apply values", func(t *testing.T) {
+		store := &prefixStore{values: map[string]string{}}
+		reg := registryWithPrefixOption(t, store)
+
+		err := reg.ApplyOptionValues(
+			view.NewEditor(t.TempDir()),
+			map[string]string{"editor.test.beta": "2"},
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "2", store.values["editor.test.beta"])
 	})
 
 	t.Run("ApplyOptionValues rejects unknown keys", func(t *testing.T) {
@@ -266,6 +295,29 @@ func registryWithFailingOption(t *testing.T) *command.Registry {
 				Key: "bad",
 				Get: func(*view.Editor) (string, error) {
 					return "", assert.AnError
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	return reg
+}
+
+func registryWithPrefixOption(
+	t *testing.T, store *prefixStore,
+) *command.Registry {
+	t.Helper()
+	reg := command.NewRegistry(command.NewKeymaps())
+	err := reg.RegisterModule(command.Module{
+		Options: []command.Option{
+			{
+				Key: "editor.test.",
+				KeyGet: func(*view.Editor) (map[string]string, error) {
+					return store.values, nil
+				},
+				KeySet: func(_ *view.Editor, key, value string) error {
+					store.values[key] = value
+					return nil
 				},
 			},
 		},

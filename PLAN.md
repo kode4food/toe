@@ -25,10 +25,10 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 ### Tree-Sitter Editing Features
 
 - [ ] Injection queries; overlay highlighting after injection/scope support lands.
-- [ ] Textobject queries and textobject selection.
+- [x] Textobject queries and textobject selection.
 - [x] Syntax-aware selection expansion/shrinking.
 - [x] Tree-sitter-aware bracket matching.
-- [ ] Tree-sitter-aware surround pair finding.
+- [x] Tree-sitter-aware surround pair finding.
 - [x] Generated tests: every supported language entry parses; every supported runtime query file is discoverable.
 
 ### Command Mode

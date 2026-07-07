@@ -8,7 +8,6 @@ import (
 
 	"go.lsp.dev/protocol"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -16,16 +15,23 @@ import (
 func (c *Client) DocumentColors(
 	ctx context.Context, doc DocumentSnapshot,
 ) ([]protocol.ColorInformation, bool, error) {
-	return clientDocRequest(c, ctx, doc, func(ctx context.Context, c *Client, tdid protocol.TextDocumentIdentifier) ([]protocol.ColorInformation, bool, error) {
-		if !c.SupportsFeature(FeatureDocumentColors) {
-			return nil, false, nil
-		}
-		colors, err := c.server.DocumentColor(ctx, &protocol.DocumentColorParams{TextDocument: tdid})
-		if err != nil {
-			return nil, true, err
-		}
-		return colors, true, nil
-	})
+	return clientDocRequest(c, ctx, doc,
+		func(
+			ctx context.Context, c *Client,
+			tdid protocol.TextDocumentIdentifier,
+		) ([]protocol.ColorInformation, bool, error) {
+			if !c.SupportsFeature(FeatureDocumentColors) {
+				return nil, false, nil
+			}
+			colors, err := c.server.DocumentColor(
+				ctx, &protocol.DocumentColorParams{TextDocument: tdid},
+			)
+			if err != nil {
+				return nil, true, err
+			}
+			return colors, true, nil
+		},
+	)
 }
 
 // DocumentColors returns document-wide colors and stores them on the document
@@ -77,13 +83,13 @@ func documentColors(
 ) []view.DocumentColor {
 	out := make([]view.DocumentColor, 0, len(colors))
 	for _, color := range colors {
-		from, to, ok := lspRangeToChars(
+		cr, ok := lspRangeToChars(
 			doc, color.Range, client.OffsetEncoding(),
 		)
 		if !ok {
 			continue
 		}
-		r := core.NewRange(from, to).MinWidth1(doc.Text())
+		r := cr.MinWidth1(doc.Text())
 		if r.From() >= r.To() {
 			continue
 		}

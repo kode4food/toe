@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -164,26 +165,39 @@ func pickerModule(model ui.Model) command.Module {
 			},
 		},
 		Options: []command.Option{
-			pickerSplitRatioOption(model),
+			pickerSplitRatiosOption(model),
 		},
 	}
 }
 
-func pickerSplitRatioOption(model ui.Model) command.Option {
+func pickerSplitRatiosOption(model ui.Model) command.Option {
+	const prefix = "editor.picker.split-ratios."
 	return command.Option{
-		Key: "editor.picker.split-ratio",
-		Get: func(*view.Editor) (string, error) {
-			ratio := model.PickerLayoutOptions().SplitRatio
-			return strconv.FormatFloat(ratio, 'f', 3, 64), nil
+		Key: prefix,
+		KeyGet: func(*view.Editor) (map[string]string, error) {
+			ratios := model.PickerLayoutOptions().SplitRatios
+			out := make(map[string]string, len(ratios))
+			for key, ratio := range ratios {
+				out[prefix+key] = strconv.FormatFloat(ratio, 'f', -1, 64)
+			}
+			return out, nil
 		},
-		Set: func(_ *view.Editor, s string) error {
+		KeySet: func(_ *view.Editor, key, s string) error {
+			name := strings.TrimSpace(key)
+			if len(name) <= len(prefix) {
+				return fmt.Errorf("%w: %s", config.ErrInvalidOption, key)
+			}
+			name = name[len(prefix):]
 			ratio, err := strconv.ParseFloat(s, 64)
 			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 			}
-			model.SetPickerLayoutOptions(ui.PickerLayoutOptions{
-				SplitRatio: ratio,
-			})
+			opts := model.PickerLayoutOptions()
+			if opts.SplitRatios == nil {
+				opts.SplitRatios = map[string]float64{}
+			}
+			opts.SplitRatios[name] = ratio
+			model.SetPickerLayoutOptions(opts)
 			return nil
 		},
 	}

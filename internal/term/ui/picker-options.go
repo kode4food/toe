@@ -27,8 +27,7 @@ func (o PickerLayoutOptions) WithDefaults() PickerLayoutOptions {
 
 // SplitRatioFor returns the saved split ratio for a picker key
 func (o PickerLayoutOptions) SplitRatioFor(key string) float64 {
-	o = o.WithDefaults()
-	if ratio, ok := o.SplitRatios[key]; ok {
+	if ratio, ok := o.WithDefaults().SplitRatios[key]; ok {
 		return ratio
 	}
 	return DefaultPickerSplitRatio

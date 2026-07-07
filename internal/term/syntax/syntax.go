@@ -19,13 +19,16 @@ type (
 		mu        sync.RWMutex
 		langCache map[string]*langEntry
 		rawQuery  map[string][]byte
+		rawInject map[string][]byte
 	}
 
 	// langEntry holds the compiled parser and query for a single language
 	langEntry struct {
-		parser   *sitter.Parser
-		query    *sitter.Query
-		capNames []string
+		parser         *sitter.Parser
+		query          *sitter.Query
+		capNames       []string
+		injectionQuery *sitter.Query
+		injectionCaps  []string
 	}
 
 	tsCapture struct {
@@ -40,6 +43,7 @@ func NewSyntaxCache() *Cache {
 	return &Cache{
 		langCache: map[string]*langEntry{},
 		rawQuery:  map[string][]byte{},
+		rawInject: map[string][]byte{},
 	}
 }
 
@@ -109,6 +113,7 @@ func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
 	if len(captures) == 0 {
 		return nil
 	}
+	captures = append(captures, sc.injectionCaptures(lc, root, src, b2c)...)
 
 	slices.SortFunc(captures, func(a, b tsCapture) int {
 		if a.start != b.start {
@@ -118,6 +123,49 @@ func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
 		return int(a.idx) - int(b.idx)
 	})
 	return buildSpans(captures)
+}
+
+func (sc *Cache) injectionCaptures(
+	lc *langEntry, root *sitter.Node, src []byte, b2c []int,
+) []tsCapture {
+	if lc.injectionQuery == nil {
+		return nil
+	}
+	qc := sitter.NewQueryCursor()
+	defer qc.Close()
+
+	matches := qc.Matches(lc.injectionQuery, root, src)
+	var out []tsCapture
+	for {
+		m := matches.Next()
+		if m == nil {
+			break
+		}
+		lang := injectionLanguage(lc.injectionQuery, lc.injectionCaps, m, src)
+		if lang == "" {
+			continue
+		}
+		for _, c := range m.Captures {
+			if lc.injectionCaps[c.Index] != "injection.content" {
+				continue
+			}
+			sb := int(c.Node.StartByte())
+			eb := int(c.Node.EndByte())
+			if eb <= sb {
+				continue
+			}
+			start := b2c[sb]
+			injected := string(src[sb:eb])
+			for _, sp := range sc.Tokenize(injected, lang) {
+				out = append(out, tsCapture{
+					start: start + sp.Start,
+					end:   start + sp.End,
+					scope: sp.Scope,
+				})
+			}
+		}
+	}
+	return out
 }
 
 func (sc *Cache) langCacheFor(
@@ -149,6 +197,12 @@ func (sc *Cache) langCacheFor(
 		query:    q,
 		capNames: q.CaptureNames(),
 	}
+	if iqb, ok := sc.injectionQueryFor(lang); ok {
+		if iq, err := sitter.NewQuery(language, string(iqb)); err == nil {
+			e.injectionQuery = iq
+			e.injectionCaps = iq.CaptureNames()
+		}
+	}
 	sc.mu.Lock()
 	sc.langCache[lang] = e
 	sc.mu.Unlock()
@@ -169,6 +223,24 @@ func (sc *Cache) queryFor(lang string) ([]byte, bool) {
 	}
 	sc.mu.Lock()
 	sc.rawQuery[lang] = b
+	sc.mu.Unlock()
+	return b, true
+}
+
+func (sc *Cache) injectionQueryFor(lang string) ([]byte, bool) {
+	sc.mu.RLock()
+	if b, ok := sc.rawInject[lang]; ok {
+		sc.mu.RUnlock()
+		return b, true
+	}
+	sc.mu.RUnlock()
+
+	b, ok := embeddedInjectionQuery(lang)
+	if !ok {
+		return nil, false
+	}
+	sc.mu.Lock()
+	sc.rawInject[lang] = b
 	sc.mu.Unlock()
 	return b, true
 }
@@ -220,6 +292,24 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 		i = j
 	}
 	return spans
+}
+
+func injectionLanguage(
+	q *sitter.Query, names []string, m *sitter.QueryMatch, src []byte,
+) string {
+	for _, p := range q.PropertySettings(m.PatternIndex) {
+		if p.Key == "injection.language" && p.Value != nil {
+			return *p.Value
+		}
+	}
+	for _, c := range m.Captures {
+		if names[c.Index] == "injection.language" {
+			sb := int(c.Node.StartByte())
+			eb := int(c.Node.EndByte())
+			return string(src[sb:eb])
+		}
+	}
+	return ""
 }
 
 func resolveQuery(lang string, seen map[string]bool) ([]byte, bool) {

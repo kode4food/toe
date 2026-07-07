@@ -208,7 +208,9 @@ func (r *rowRender) rows() []renderedRow {
 		case colorOK:
 			writeRendered(rendered, width, colorStyle)
 		case rangeMatch(r.searchMatches, pos):
-			writeRendered(rendered, width, ts.searchMatch)
+			writeRendered(rendered, width, overlayBgStyle(
+				r.baseStyleAt(pos, glyph), ts.searchMatch,
+			))
 		case diagOK:
 			writeRendered(rendered, width, overlayDiagnosticStyle(
 				r.baseStyleAt(pos, glyph), diagStyle,
@@ -380,6 +382,13 @@ func overlaySelStyle(base, sel tui.Style) tui.Style {
 	}
 	if !sel.FgColor().IsReset() {
 		base = base.Fg(sel.FgColor())
+	}
+	return base
+}
+
+func overlayBgStyle(base, overlay tui.Style) tui.Style {
+	if !overlay.BgColor().IsReset() {
+		base = base.Bg(overlay.BgColor())
 	}
 	return base
 }

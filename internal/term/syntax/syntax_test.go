@@ -2,10 +2,12 @@ package syntax_test
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -121,6 +123,16 @@ func TestTokenizeGoScopes(t *testing.T) {
 		"expected keyword scope in go source")
 }
 
+func TestTokenizeHTMLInjections(t *testing.T) {
+	src := `<style>body { color: red; }</style>` + "\n" +
+		`<script>const answer = 42;</script>`
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize(src, "html")
+
+	assert.Equal(t, "variable.other.member", scopeAt(spans, src, "color"))
+	assert.Equal(t, "keyword.storage.modifier", scopeAt(spans, src, "const"))
+}
+
 func TestTokenizeGoRich(t *testing.T) {
 	// Rich source to trigger overlapping tree-sitter captures at different
 	// start positions (exercises buildSpans c.end <= pos branch)
@@ -154,6 +166,19 @@ var _ = DefaultPort
 		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start,
 			"spans must not overlap")
 	}
+}
+
+func scopeAt(spans []highlight.Span, src, needle string) string {
+	pos := strings.Index(src, needle)
+	if pos < 0 {
+		return ""
+	}
+	for _, sp := range spans {
+		if sp.Start <= pos && pos < sp.End {
+			return sp.Scope
+		}
+	}
+	return ""
 }
 
 func TestTokenizeCached(t *testing.T) {

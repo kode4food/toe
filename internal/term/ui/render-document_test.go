@@ -523,6 +523,31 @@ func TestThemeRender(t *testing.T) {
 		_ = m.View().Content
 	})
 
+	t.Run("search preserves injected syntax", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "index.html")
+		err := os.WriteFile(
+			path, []byte(`<style>.x { z-index: 1; }</style>`+"\n"), 0o644,
+		)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ShowSearchHighlights(v.ID())
+		e.Registers().Set('/', "z-index")
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		cells := styledRuneStyles(m.View().Content)
+
+		assert.Equal(t, "38;2;137;180;250", cells['z'].fg)
+		assert.NotEmpty(t, cells['z'].bg)
+	})
+
 	t.Run("applies selection and cursor styles", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -652,6 +677,77 @@ func styledRunes(s string) map[rune]string {
 		s = s[n:]
 	}
 	return out
+}
+
+type styledRuneStyle struct {
+	fg string
+	bg string
+}
+
+func styledRuneStyles(s string) map[rune]styledRuneStyle {
+	out := map[rune]styledRuneStyle{}
+	var st styledRuneStyle
+	for len(s) > 0 {
+		if strings.HasPrefix(s, "\x1b[") {
+			end := strings.IndexByte(s, 'm')
+			if end < 0 {
+				return out
+			}
+			st = updateStyle(st, s[2:end])
+			s = s[end+1:]
+			continue
+		}
+		r, n := rune(s[0]), 1
+		if r >= 0x80 {
+			r, n = utf8.DecodeRuneInString(s)
+		}
+		if r == '\n' {
+			return out
+		}
+		out[r] = st
+		s = s[n:]
+	}
+	return out
+}
+
+func updateStyle(st styledRuneStyle, params string) styledRuneStyle {
+	parts := strings.Split(params, ";")
+	for i := 0; i < len(parts); i++ {
+		switch parts[i] {
+		case "0":
+			st = styledRuneStyle{}
+		case "39":
+			st.fg = ""
+		case "49":
+			st.bg = ""
+		case "38", "48":
+			next, n, ok := sgrColor(parts[i:])
+			if !ok {
+				continue
+			}
+			if parts[i] == "38" {
+				st.fg = next
+			} else {
+				st.bg = next
+			}
+			i += n - 1
+		case "30", "31", "32", "33", "34", "35", "36", "37":
+			st.fg = parts[i]
+		case "40", "41", "42", "43", "44", "45", "46", "47":
+			st.bg = parts[i]
+		}
+	}
+	return st
+}
+
+func sgrColor(parts []string) (string, int, bool) {
+	if len(parts) >= 5 && parts[1] == "2" {
+		return strings.Join(parts[:5], ";"), 5, true
+	}
+	if len(parts) >= 3 && parts[1] == "5" {
+		return strings.Join(parts[:3], ";"), 3, true
+	}
+	return "", 0, false
 }
 
 func styleBg(params string) (string, bool) {

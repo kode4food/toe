@@ -21,18 +21,22 @@ func embeddedQuery(lang string) ([]byte, bool) {
 	return data, true
 }
 
-func embeddedTextobjectQuery(lang string) ([]byte, bool) {
-	return resolveTextobjectQuery(lang, map[string]bool{})
+func embeddedInjectionQuery(lang string) ([]byte, bool) {
+	return resolveQueryDir("queries/injections", lang, map[string]bool{})
 }
 
-func resolveTextobjectQuery(lang string, seen map[string]bool) ([]byte, bool) {
+func embeddedTextobjectQuery(lang string) ([]byte, bool) {
+	return resolveQueryDir("queries/textobjects", lang, map[string]bool{})
+}
+
+func resolveQueryDir(
+	dir, lang string, seen map[string]bool,
+) ([]byte, bool) {
 	if seen[lang] {
 		return nil, false
 	}
 	seen[lang] = true
-	data, err := embeddedQueryFS.ReadFile(
-		"queries/textobjects/" + lang + ".scm",
-	)
+	data, err := embeddedQueryFS.ReadFile(dir + "/" + lang + ".scm")
 	if err != nil {
 		return nil, false
 	}
@@ -47,9 +51,7 @@ func resolveTextobjectQuery(lang string, seen map[string]bool) ([]byte, bool) {
 				if parent == "" {
 					continue
 				}
-				if pb, ok := resolveTextobjectQuery(
-					parent, seen,
-				); ok {
+				if pb, ok := resolveQueryDir(dir, parent, seen); ok {
 					out = append(out, pb...)
 					out = append(out, '\n')
 				}

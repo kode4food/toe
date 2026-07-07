@@ -68,14 +68,6 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 }
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
-	doc, ok := r.cx.Editor.FocusedDocument()
-	if !ok {
-		return tea.Cursor{}, false
-	}
-	v, ok := r.cx.Editor.FocusedView()
-	if !ok {
-		return tea.Cursor{}, false
-	}
 	opts := r.cx.Editor.Options()
 	kind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	switch kind {
@@ -89,30 +81,14 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		// terminal lost focus: use underline so position is still visible
 		kind = view.CursorKindUnderline
 	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	cursor := sel.Primary().Cursor(text)
-	area := v.Area()
-	gutterW := gutterWidthFor(text, opts.Gutters)
-	xOff := area.X
-	yOff := area.Y
-	if bufferlineVisible(r.cx) {
-		yOff++
+	x, y, ok := r.ec.caretScreenPos(r.cx)
+	if !ok {
+		return tea.Cursor{}, false
 	}
-
-	rowMap := r.ec.cache.viewRowMaps[v.ID()]
-	visualY, visualX := cursorScreenPos(cursorScreenPosArgs{
-		text: text, cursor: cursor, gutterW: gutterW,
-		rowMap: rowMap, tabW: doc.TabWidth(),
-		hOff: v.Offset().HorizontalOffset,
-	})
 	return tea.Cursor{
-		Position: tea.Position{
-			X: xOff + visualX,
-			Y: yOff + visualY,
-		},
-		Shape: cursorKindToShape(kind),
-		Blink: false,
+		Position: tea.Position{X: x, Y: y},
+		Shape:    cursorKindToShape(kind),
+		Blink:    false,
 	}, true
 }
 

@@ -445,7 +445,6 @@ func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
 
 func (m Model) CodeActionPickerAction() command.KeyAction {
 	ec := m.component
-	cx := m.context
 	return func(e *view.Editor) command.Continuation {
 		doc, ok := e.FocusedDocument()
 		if !ok {
@@ -471,9 +470,11 @@ func (m Model) CodeActionPickerAction() command.KeyAction {
 			e.SetStatusMsg("No code actions available.")
 			return nil
 		}
-		opener := codeActionPickerLayer(actions)
-		cx.lastLayer = opener
-		ec.nextLayer = opener(e)
+		docID := doc.ID()
+		viewID := v.ID()
+		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+			return newCodeActionMenu(ec, docID, viewID, actions), nil
+		}
 		return nil
 	}
 }
@@ -567,19 +568,6 @@ func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
 func workspaceSymbolPickerLayer() func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPWorkspaceSymbolPicker(e)
-		cmd := p.feedCmd
-		p.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
-		}
-	}
-}
-
-func codeActionPickerLayer(
-	actions []view.CodeAction,
-) func(*view.Editor) layerFunc {
-	return func(e *view.Editor) layerFunc {
-		p := newLSPCodeActionPicker(e, actions)
 		cmd := p.feedCmd
 		p.feedCmd = nil
 		return func(_ *Context) (Component, tea.Cmd) {

@@ -39,8 +39,7 @@ func (j *jumplistPickerSource) Load(
 		items = append(items, PickerItem{
 			Display: display,
 			Columns: []string{
-				fmt.Sprintf("%d", entry.DocID), display, "",
-				jumplistContents(text, entry.Selection),
+				display, jumplistContents(text, entry.Selection),
 			},
 			Location: PickerLocation{
 				Target: PickerTarget{ID: entry.DocID},
@@ -50,12 +49,6 @@ func (j *jumplistPickerSource) Load(
 		})
 	}
 	return items, nil, func() {}
-}
-
-func (j *jumplistPickerSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, j.Columns(), j.Primary())
 }
 
 func (j *jumplistPickerSource) Accept(
@@ -80,8 +73,8 @@ func JumplistPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &jumplistPickerSource{
 		pickerMeta: pickerMeta{
 			title:   "Jumplist",
-			columns: []string{"id", "path", "flags", "contents"},
-			primary: 1,
+			columns: []string{"path", "contents"},
+			primary: 0,
 		},
 	})
 }

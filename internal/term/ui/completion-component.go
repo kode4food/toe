@@ -547,10 +547,7 @@ func (c *completionComponent) rowParts(
 func (c *completionComponent) popupPos(
 	buf *tui.Buffer, cx *Context,
 ) (int, int) {
-	if cur, ok := c.ec.Cursor(buf.Width, buf.Height, cx); ok {
-		return cur.X, cur.Y + 1
-	}
-	return 0, max(buf.Height-completionMaxRows-2, 0)
+	return c.ec.popupAnchorBelowCaret(buf, cx, completionMaxRows)
 }
 
 func (c *completionComponent) resetCursor() {

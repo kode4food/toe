@@ -71,7 +71,7 @@ func writePickerPromptRow(
 
 func writePickerHeader(buf *tui.Buffer, x, y, w int, p *Picker, cx *Context) {
 	cols := p.source.Columns()
-	widths := pickerColumnWidths(p, max(w-pickerMarkerW, 0))
+	widths := pickerColumnWidths(p, max(w-pickerMarkerW-1, 0))
 	colTUI := lipglossToTUIStyle(pickerCountStyle(cx))
 	buf.FillRange(x, y, w, colTUI)
 	cur := x + pickerMarkerW
@@ -160,6 +160,32 @@ func pickerColumnBase(
 	return base.Fg(fg)
 }
 
+func pickerEmptyHint(ps *Picker) string {
+	if len(ps.matched) > 0 {
+		return ""
+	}
+	if _, ok := ps.source.(DynamicPickerSource); ok {
+		switch {
+		case ps.query == "":
+			return "Type to search…"
+		case ps.dynamicPending:
+			return "Searching…"
+		}
+	}
+	return "No results"
+}
+
+func writePickerCenteredHint(
+	buf *tui.Buffer, x, y, w, h int, text string, cx *Context,
+) {
+	if text == "" || h <= 0 {
+		return
+	}
+	style := lipglossToTUIStyle(pickerCountStyle(cx))
+	hx := x + max((w-runewidth.StringWidth(text))/2, 0)
+	buf.SetString(hx, y+h/2, text, style)
+}
+
 func pickerColumnWidths(p *Picker, w int) []int {
 	cols := p.source.Columns()
 	primary := p.source.Primary()
@@ -183,16 +209,25 @@ func pickerColumnWidths(p *Picker, w int) []int {
 		total += width
 	}
 	if total <= available {
-		widths[n-1] += available - total
+		widths[primary] += available - total
 		return widths
 	}
-	fixed := 0
+	// overflow: take space from non-primary columns before the primary one
+	over := total - available
 	for i := range n {
-		if i != primary {
-			fixed += widths[i]
+		if over <= 0 {
+			break
 		}
+		if i == primary {
+			continue
+		}
+		take := min(over, widths[i])
+		widths[i] -= take
+		over -= take
 	}
-	widths[primary] = max(available-fixed, 1)
+	if over > 0 {
+		widths[primary] = max(widths[primary]-over, 1)
+	}
 	return widths
 }
 

@@ -138,7 +138,6 @@ func TestSymbolPickerAction(t *testing.T) {
 		m = sendKey(m, 's')
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "function")
 		assert.Contains(t, out, "main")
 		assert.Contains(t, out, "package")
 
@@ -195,9 +194,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		m = next.(ui.Model)
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "function")
 		assert.Contains(t, out, "WorkspaceMain")
-		assert.Contains(t, out, "workspace")
 		assert.Contains(t, out, "target.go")
 
 		_ = sendSpecial(m, tea.KeyEnter)
@@ -290,7 +287,6 @@ func TestCodeActionPickerAction(t *testing.T) {
 		m = sendKey(m, 'a')
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "quickfix")
 		assert.Contains(t, out, "Fix old")
 
 		_ = sendSpecial(m, tea.KeyEnter)

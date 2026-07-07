@@ -45,12 +45,6 @@ func (d *diagnosticPickerSource) Load(
 	return items, nil, func() {}
 }
 
-func (d *diagnosticPickerSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, d.Columns(), d.Primary())
-}
-
 func (d *diagnosticPickerSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {

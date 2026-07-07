@@ -68,12 +68,6 @@ func (c *changedFilePickerSource) Load(
 	return nil, feed, stop
 }
 
-func (c *changedFilePickerSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, c.Columns(), c.Primary())
-}
-
 func (c *changedFilePickerSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {

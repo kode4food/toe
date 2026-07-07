@@ -64,12 +64,6 @@ func (f *fileExplorerSource) Load(
 	return f.readDir(), nil, func() {}
 }
 
-func (f *fileExplorerSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, f.Columns(), f.Primary())
-}
-
 func (f *fileExplorerSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {

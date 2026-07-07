@@ -30,12 +30,6 @@ func (c *commandPaletteSource) Load(
 	return items, nil, func() {}
 }
 
-func (c *commandPaletteSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, c.Columns(), c.Primary())
-}
-
 func (c *commandPaletteSource) Accept(
 	e *view.Editor, item PickerItem, _ PickerAcceptAction,
 ) {

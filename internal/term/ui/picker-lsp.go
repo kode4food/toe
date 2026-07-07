@@ -23,11 +23,6 @@ type (
 		symbols []view.Symbol
 	}
 
-	lspCodeActionSource struct {
-		pickerMeta
-		actions []view.CodeAction
-	}
-
 	lspWorkspaceSymbolSource struct {
 		pickerMeta
 		query string
@@ -48,32 +43,19 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 	return NewPicker(e, &lspSymbolSource{
 		pickerMeta: pickerMeta{
 			title:   "LSP symbols",
-			columns: []string{"kind", "name", "container"},
-			primary: 1,
+			columns: []string{"name"},
+			primary: 0,
 		},
 		symbols: symbols,
-	})
-}
-
-func newLSPCodeActionPicker(e *view.Editor, actions []view.CodeAction) *Picker {
-	return NewPicker(e, &lspCodeActionSource{
-		pickerMeta: pickerMeta{
-			title:   "LSP code actions",
-			columns: []string{"kind", "title", "server"},
-			primary: 1,
-		},
-		actions: actions,
 	})
 }
 
 func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &lspWorkspaceSymbolSource{
 		pickerMeta: pickerMeta{
-			title: "LSP workspace symbols",
-			columns: []string{
-				"kind", "name", "container", "path",
-			},
-			primary: 1,
+			title:   "LSP workspace symbols",
+			columns: []string{"name", "path"},
+			primary: 0,
 		},
 	})
 }
@@ -91,12 +73,6 @@ func (l *lspWorkspaceCommandSource) Load(
 		})
 	}
 	return items, nil, func() {}
-}
-
-func (l *lspWorkspaceCommandSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, l.Columns(), l.Primary())
 }
 
 func (l *lspWorkspaceCommandSource) Accept(
@@ -141,12 +117,6 @@ func (l *lspLocationSource) Load(
 	return items, nil, func() {}
 }
 
-func (l *lspLocationSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, l.Columns(), l.Primary())
-}
-
 func (l *lspLocationSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
@@ -163,12 +133,11 @@ func (l *lspSymbolSource) Load(
 		if err != nil {
 			continue
 		}
-		line, lines := locationLineRange(doc.Text(), loc)
-		name := doc.RelativeName(e.Cwd())
-		display := fmt.Sprintf("%s:%d %s", name, line+1, sym.Name)
+		_, lines := locationLineRange(doc.Text(), loc)
+		display := symbolDisplayName(sym.Kind, symbolName(sym))
 		items = append(items, PickerItem{
 			Display: display,
-			Columns: []string{sym.Kind, sym.Name, sym.Container},
+			Columns: []string{display},
 			SortKey: sym.Name,
 			Location: PickerLocation{
 				Target: PickerTarget{Path: loc.Path},
@@ -180,61 +149,10 @@ func (l *lspSymbolSource) Load(
 	return items, nil, func() {}
 }
 
-func (l *lspSymbolSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, l.Columns(), l.Primary())
-}
-
 func (l *lspSymbolSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
-}
-
-func (l *lspCodeActionSource) Load(
-	_ *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
-	items := make([]PickerItem, 0, len(l.actions))
-	for _, action := range l.actions {
-		items = append(items, PickerItem{
-			Display: action.Title,
-			Columns: []string{action.Kind, action.Title, action.Server},
-			SortKey: action.Title,
-			Payload: action,
-		})
-	}
-	return items, nil, func() {}
-}
-
-func (l *lspCodeActionSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, l.Columns(), l.Primary())
-}
-
-func (l *lspCodeActionSource) Accept(
-	e *view.Editor, item PickerItem, _ PickerAcceptAction,
-) {
-	action, ok := item.Payload.(view.CodeAction)
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	ctl := e.LanguageServerController()
-	if ctl == nil {
-		return
-	}
-	if err := ctl.ApplyCodeAction(doc, v.ID(), action); err != nil {
-		e.SetStatusMsg(err.Error())
-	}
 }
 
 func (l *lspWorkspaceSymbolSource) Search(query string) {
@@ -283,7 +201,7 @@ func (l *lspWorkspaceSymbolSource) item(
 	display := fmt.Sprintf("%s:%d %s", name, line+1, sym.Name)
 	return PickerItem{
 		Display: display,
-		Columns: []string{sym.Kind, sym.Name, sym.Container, name},
+		Columns: []string{symbolDisplayName(sym.Kind, sym.Name), name},
 		SortKey: sym.Name,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},
@@ -356,4 +274,30 @@ func locationSelection(loc view.Location) (core.Selection, error) {
 	return core.NewSelection(
 		[]core.Range{core.NewRange(loc.To, loc.From)}, 0,
 	)
+}
+
+func symbolName(sym view.Symbol) string {
+	if sym.Container == "" {
+		return sym.Name
+	}
+	return sym.Container + "." + sym.Name
+}
+
+func symbolDisplayName(kind, name string) string {
+	if icon := symbolKindIcon(kind); icon != "" {
+		return icon + " " + name
+	}
+	return name
+}
+
+func symbolKindIcon(kind string) string {
+	switch kind {
+	case "construct":
+		kind = "constructor"
+	case "enummem":
+		kind = "enum_member"
+	case "typeparam":
+		kind = "type_param"
+	}
+	return completionKindCodicon(kind)
 }

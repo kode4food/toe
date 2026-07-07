@@ -133,6 +133,7 @@ func (p *PickerComponent) handleDynamicTrigger(
 	if ch != nil {
 		return consumed(), drainDynamicFeed(msg.gen, ch)
 	}
+	ps.dynamicPending = false
 	return consumed(), nil
 }
 
@@ -147,6 +148,7 @@ func (p *PickerComponent) handleDynamicFeed(
 	if msg.feed != nil {
 		return consumed(), drainDynamicFeed(msg.gen, msg.feed)
 	}
+	ps.dynamicPending = false
 	return consumed(), nil
 }
 

@@ -83,7 +83,6 @@ func TestPickerRender(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "┬")
-		assert.Contains(t, out, "id")
 		assert.Contains(t, out, "flags")
 		assert.Contains(t, out, "path")
 	})
@@ -176,10 +175,10 @@ func TestPickerRender(t *testing.T) {
 		}
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "kind")
-		assert.Contains(t, out, "desc")
 		assert.Contains(t, out, "uvwxyz")
-		assert.Contains(t, out, " > go")
+		// primary (path) is protected; non-primary columns clip away first
+		assert.Contains(t, out, "internal/term/ui")
+		assert.NotContains(t, out, " > go")
 	})
 }
 
@@ -229,7 +228,7 @@ func (columnPickerSource) Load(
 		Columns: []string{
 			"go",
 			"internal/term/ui/picker-render-with-a-very-long-name.go",
-			"primary column should be clipped first",
+			"non-primary columns clip before the primary one",
 		},
 	}, {
 		Display: "second",

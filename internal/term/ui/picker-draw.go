@@ -13,8 +13,9 @@ func (p *PickerComponent) drawPickerBox(
 	innerH := h - 2
 
 	cols := ps.source.Columns()
+	showHeader := len(cols) > 1 && len(ps.matched) > 0
 	headerH := 0
-	if len(cols) > 1 {
+	if showHeader {
 		headerH = 1
 	}
 	ps.listHeight = max(innerH-2-headerH, 1)
@@ -30,7 +31,7 @@ func (p *PickerComponent) drawPickerBox(
 		buf, areas.left.x, areas.left.y, areas.left.w, ps, cx,
 	)
 	itemY := areas.left.y + 2 // row 1 is the cut-separator, skip it
-	if len(cols) > 1 {
+	if showHeader {
 		writePickerHeader(buf, areas.left.x, itemY, areas.left.w, ps, cx)
 		itemY++
 	}
@@ -47,6 +48,10 @@ func (p *PickerComponent) drawPickerBox(
 			},
 		)
 	}
+	if len(ps.matched) == 0 {
+		writePickerCenteredHint(buf, areas.left.x, itemY, areas.left.w,
+			ps.listHeight, pickerEmptyHint(ps), cx)
+	}
 
 	p.drawPreviewInto(buf, areas.right.x, areas.right.y, areas.right.w,
 		areas.right.h, cx)
@@ -59,8 +64,9 @@ func (p *PickerComponent) drawPickerPane(
 	innerH := h - 2
 
 	cols := ps.source.Columns()
+	showHeader := len(cols) > 1 && len(ps.matched) > 0
 	headerH := 0
-	if len(cols) > 1 {
+	if showHeader {
 		headerH = 1
 	}
 	ps.listHeight = max(innerH-2-headerH, 1)
@@ -74,7 +80,7 @@ func (p *PickerComponent) drawPickerPane(
 
 	writePickerPromptRow(buf, area.x, area.y, area.w, ps, cx)
 	itemY := area.y + 2 // row 1 is the cut-separator, skip it
-	if len(cols) > 1 {
+	if showHeader {
 		writePickerHeader(buf, area.x, itemY, area.w, ps, cx)
 		itemY++
 	}
@@ -85,6 +91,10 @@ func (p *PickerComponent) drawPickerPane(
 			p: ps, match: ps.matched[idx], w: area.w,
 			selected: idx == ps.cursor, cx: cx,
 		})
+	}
+	if len(ps.matched) == 0 {
+		writePickerCenteredHint(buf, area.x, itemY, area.w,
+			ps.listHeight, pickerEmptyHint(ps), cx)
 	}
 }
 

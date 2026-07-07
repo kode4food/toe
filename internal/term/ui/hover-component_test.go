@@ -98,6 +98,30 @@ func TestHoverComponent(t *testing.T) {
 		assert.Contains(t, out, "Prints to standard output.")
 	})
 
+	t.Run("renders thematic break as full-width rule", func(t *testing.T) {
+		e := editorWithText(t, "Println")
+		e.SetMode(view.ModeNormal)
+		e.SetLanguageServerController(&completionController{
+			editor:    e,
+			hoverText: "above\n\n---\n\nbelow",
+		})
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'k')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "above")
+		assert.Contains(t, out, "below")
+		// the literal --- becomes a border-tied horizontal rule
+		assert.NotContains(t, out, "---")
+		assert.Contains(t, out, "├─")
+	})
+
 	t.Run("renders code block in hover popup", func(t *testing.T) {
 		e := editorWithText(t, "Println")
 		e.SetMode(view.ModeNormal)

@@ -34,8 +34,8 @@ func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *Picker {
 	p := NewPicker(e, &bufferPickerSource{
 		pickerMeta: pickerMeta{
 			title:   "Open buffer",
-			columns: []string{"id", "flags", "path"},
-			primary: 2,
+			columns: []string{"flags", "path"},
+			primary: 1,
 		},
 	})
 	if opts.StartPosition == PickerStartPrevious && len(p.matched) > 1 {
@@ -82,7 +82,7 @@ func (b *bufferPickerSource) Load(
 		lines := bufferPickerLines(doc, views, focusedView)
 		items = append(items, PickerItem{
 			Display: name,
-			Columns: []string{fmt.Sprintf("%d", id), flags, name},
+			Columns: []string{flags, name},
 			SortKey: name,
 			Location: PickerLocation{
 				Target: PickerTarget{ID: id},
@@ -91,12 +91,6 @@ func (b *bufferPickerSource) Load(
 		})
 	}
 	return items, nil, func() {}
-}
-
-func (b *bufferPickerSource) Match(
-	query string, item PickerItem,
-) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, b.Columns(), b.Primary())
 }
 
 func (b *bufferPickerSource) Accept(

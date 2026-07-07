@@ -31,8 +31,9 @@ type (
 		feedCmd tea.Cmd
 		cancel  StopFunc
 
-		dynamicGen  int
-		dynamicStop StopFunc
+		dynamicGen     int
+		dynamicStop    StopFunc
+		dynamicPending bool
 	}
 
 	// PickerFunc constructs a Picker from the editor
@@ -179,6 +180,10 @@ func (p pickerMeta) Primary() int {
 	return p.primary
 }
 
+func (p pickerMeta) Match(query string, item PickerItem) (int, []int, bool) {
+	return fuzzyMatchItem(query, item, p.columns, p.primary)
+}
+
 func (p *Picker) addItems(items []PickerItem) {
 	if len(items) == 0 {
 		return
@@ -220,8 +225,10 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	gen := p.dynamicGen
 	q := p.query
 	if q == "" {
+		p.dynamicPending = false
 		return nil
 	}
+	p.dynamicPending = true
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
 		return pickerDynamicTriggerMsg{gen: gen, query: q}

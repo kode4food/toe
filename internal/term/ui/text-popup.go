@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"regexp"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -24,6 +25,7 @@ type (
 		lang    string
 		code    bool
 		heading bool
+		rule    bool
 	}
 
 	popupTextRenderer struct {
@@ -31,8 +33,16 @@ type (
 		cx   *Context
 		area popupArea
 		base tui.Style
+		padX int
 	}
 )
+
+// popupPadX is the left/right content padding, matching the doc/prompt popups
+const popupPadX = 1
+
+// markdownLink matches inline links and images: [text](url) and ![alt](url),
+// capturing the visible text so the URL and brackets can be dropped
+var markdownLink = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
 
 func (p *popupMarkdown) parse(text string) {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
@@ -61,7 +71,20 @@ func (p *popupMarkdown) parseLine(line string) {
 	}
 	line = strings.TrimRight(line, " \t")
 	if strings.TrimSpace(line) == "" {
+		// collapse a run of blanks to one break and drop leading blanks; a
+		// preceding rule counts as blank here, so it swallows the blank after
+		if len(p.lines) == 0 || p.lines[len(p.lines)-1].text == "" {
+			return
+		}
 		p.lines = append(p.lines, popupLine{})
+		return
+	}
+	if popupRule(line) {
+		// drop the blank (or prior) before it so it sits flush against text
+		if n := len(p.lines); n > 0 && p.lines[n-1].text == "" {
+			p.lines = p.lines[:n-1]
+		}
+		p.lines = append(p.lines, popupLine{rule: true})
 		return
 	}
 	if text, ok := popupHeading(line); ok {
@@ -96,6 +119,13 @@ func (r *popupTextRenderer) render(lines []popupLine) {
 }
 
 func (r *popupTextRenderer) renderLine(line popupLine, y int) {
+	if line.rule {
+		// span the full box, tying into border like the picker cut-separator
+		w := r.area.w + 2*r.padX
+		rule := splitLeftT + strings.Repeat(horizSplit, w) + splitRightT
+		r.buf.SetString(r.area.x-1-r.padX, y, rule, r.base)
+		return
+	}
 	if line.code {
 		r.renderCode(line, y)
 		return
@@ -153,8 +183,8 @@ func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
 func drawTextPopup(
 	buf *tui.Buffer, x, y, maxW, maxH int, text string, cx *Context,
 ) popupArea {
-	lines := popupTextLines(text, maxW-2)
-	w := popupTextWidth(lines) + 2
+	lines := popupTextLines(text, maxW-2-2*popupPadX)
+	w := popupTextWidth(lines) + 2 + 2*popupPadX
 	h := len(lines) + 2
 	w = min(max(w, 2), maxW)
 	h = min(max(h, 2), maxH)
@@ -169,10 +199,10 @@ func drawTextPopup(
 		border:       lipgloss.RoundedBorder(),
 		borderStyle:  st,
 		contentStyle: st,
-		padX:         0,
+		padX:         popupPadX,
 	}
 	area := pop.drawInto(buf, x, y, w, h)
-	r := popupTextRenderer{buf: buf, cx: cx, area: area, base: st}
+	r := popupTextRenderer{buf: buf, cx: cx, area: area, base: st, padX: popupPadX}
 	r.render(lines)
 	return area
 }
@@ -206,6 +236,23 @@ func popupFence(line string) (string, bool) {
 	return lang, true
 }
 
+func popupRule(line string) bool {
+	s := strings.TrimSpace(line)
+	if len(s) < 3 {
+		return false
+	}
+	c := s[0]
+	if c != '-' && c != '*' && c != '_' {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] != c && s[i] != ' ' {
+			return false
+		}
+	}
+	return true
+}
+
 func popupHeading(line string) (string, bool) {
 	trimmed := strings.TrimLeft(line, " \t")
 	i := 0
@@ -219,6 +266,7 @@ func popupHeading(line string) (string, bool) {
 }
 
 func popupInlineText(text string) string {
+	text = markdownLink.ReplaceAllString(text, "$1")
 	r := strings.NewReplacer("**", "", "__", "", "`", "")
 	return r.Replace(text)
 }

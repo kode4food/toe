@@ -77,6 +77,18 @@ type (
 
 const vcsRefreshInterval = 5 * time.Second
 
+func newEditorComponent() *EditorComponent {
+	return &EditorComponent{
+		saveSlot:       &saveGenSlot{},
+		cache:          newRenderCache(),
+		macroSlot:      &macroSlot{macros: map[rune][]command.KeyEvent{}},
+		focused:        true,
+		completionOpts: DefaultCompletionOptions(),
+		fileWatcher:    newEditorFileWatcher(),
+		ttyWrite:       act.MakeTTYWriter(),
+	}
+}
+
 func (e *EditorComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -273,16 +285,42 @@ func (e *EditorComponent) Cursor(w, h int, cx *Context) (tea.Cursor, bool) {
 	return r.editorCursor()
 }
 
-func newEditorComponent() *EditorComponent {
-	return &EditorComponent{
-		saveSlot:       &saveGenSlot{},
-		cache:          newRenderCache(),
-		macroSlot:      &macroSlot{macros: map[rune][]command.KeyEvent{}},
-		focused:        true,
-		completionOpts: DefaultCompletionOptions(),
-		fileWatcher:    newEditorFileWatcher(),
-		ttyWrite:       act.MakeTTYWriter(),
+// reports the caret position regardless of cursor shape, so caret-anchored
+// overlays still work under the normal-mode block cursor that Cursor hides
+func (e *EditorComponent) caretScreenPos(cx *Context) (int, int, bool) {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return 0, 0, false
 	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return 0, 0, false
+	}
+	opts := cx.Editor.Options()
+	text := doc.Text()
+	cursor := doc.SelectionFor(v.ID()).Primary().Cursor(text)
+	area := v.Area()
+	yOff := area.Y
+	if bufferlineVisible(cx) {
+		yOff++
+	}
+	visualY, visualX := cursorScreenPos(cursorScreenPosArgs{
+		text: text, cursor: cursor,
+		gutterW: gutterWidthFor(text, opts.Gutters),
+		rowMap:  e.cache.viewRowMaps[v.ID()],
+		tabW:    doc.TabWidth(),
+		hOff:    v.Offset().HorizontalOffset,
+	})
+	return area.X + visualX, yOff + visualY, true
+}
+
+func (e *EditorComponent) popupAnchorBelowCaret(
+	buf *tui.Buffer, cx *Context, fallbackRows int,
+) (int, int) {
+	if x, y, ok := e.caretScreenPos(cx); ok {
+		return x, y + 1
+	}
+	return 0, max(buf.Height-fallbackRows-2, 0)
 }
 
 func (e *EditorComponent) cancelPending(cx *Context) {

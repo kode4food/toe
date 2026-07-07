@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -105,6 +106,34 @@ func TestChangedFilePicker(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "CHANGED-DEEP")
 		assert.Contains(t, out, "▍")
+	})
+
+	t.Run("lists deleted and renamed files", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		deleted := testutil.GitCommitFile(t, repo, "deleted.txt", "gone\n")
+		testutil.GitCommitFile(t, repo, "old.txt", "moved\n")
+		assert.NoError(t, os.Remove(deleted))
+		testutil.RunGit(t, repo, "mv", "old.txt", "new.txt")
+
+		m := changedFilePicker(t, repo)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "deleted.txt")
+		assert.Contains(t, out, "deleted")
+		assert.Contains(t, out, "old.txt → new.txt")
+		assert.Contains(t, out, "renamed")
+	})
+
+	t.Run("accept opens changed file", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "modified.txt", "one\n")
+		testutil.WriteFile(t, filepath.Join(repo, "modified.txt"), "two\n")
+
+		m := changedFilePicker(t, repo)
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "two")
 	})
 }
 

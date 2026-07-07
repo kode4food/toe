@@ -1,6 +1,8 @@
 package ui_test
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,6 +24,7 @@ type locationController struct {
 	actions       []view.CodeAction
 	highlights    []view.DocumentHighlight
 	signatureHelp view.SignatureHelp
+	err           error
 	applied       string
 	renamed       string
 }
@@ -206,6 +209,111 @@ func TestSymbolPickerAction(t *testing.T) {
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, core.NewRange(6, 3), sel.Primary())
 	})
+
+	t.Run("symbol error sets status", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			err: errors.New("symbols failed"),
+		})
+		m := ui.New(e, command.NewKeymaps())
+
+		cont := m.SymbolPickerAction()(e)
+
+		assert.Nil(t, cont)
+		assert.Equal(t, "symbols failed", e.TakeStatusMsg())
+	})
+}
+
+func TestSelectReferencesAction(t *testing.T) {
+	t.Run("selects highlights", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("foo foo\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			highlights: []view.DocumentHighlight{
+				{From: 0, To: 3},
+				{From: 4, To: 7},
+			},
+		})
+		m := ui.New(e, command.NewKeymaps())
+
+		cont := m.SelectReferencesAction()(e)
+
+		assert.Nil(t, cont)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		assert.Len(t, doc.SelectionFor(v.ID()).Ranges(), 2)
+	})
+
+	t.Run("highlight error sets status", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("foo\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			err: errors.New("highlights failed"),
+		})
+		m := ui.New(e, command.NewKeymaps())
+
+		cont := m.SelectReferencesAction()(e)
+
+		assert.Nil(t, cont)
+		assert.Equal(t, "highlights failed", e.TakeStatusMsg())
+	})
+
+	t.Run("no results returns nil", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "source.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello world\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{})
+		m := ui.New(e, command.NewKeymaps())
+
+		cont := m.SelectReferencesAction()(e)
+
+		assert.Nil(t, cont)
+	})
+
+	t.Run("selects ranges at offset", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "source.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello world hello\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			highlights: []view.DocumentHighlight{
+				{From: 0, To: 5},
+				{From: 12, To: 17},
+			},
+		})
+		m := ui.New(e, command.NewKeymaps())
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
+
+		cont := m.SelectReferencesAction()(e)
+
+		assert.Nil(t, cont)
+		sel := doc.SelectionFor(v.ID())
+		assert.Len(t, sel.Ranges(), 2)
+	})
 }
 
 func TestRenameSymbolAction(t *testing.T) {
@@ -323,6 +431,124 @@ func TestCodeActionPickerAction(t *testing.T) {
 		assert.Nil(t, cont)
 		assert.Contains(t, e.TakeStatusMsg(), "No code actions")
 	})
+
+	t.Run("code action error sets status", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("old\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			err: errors.New("code actions failed"),
+		})
+		m := ui.New(e, command.NewKeymaps())
+
+		cont := m.CodeActionPickerAction()(e)
+
+		assert.Nil(t, cont)
+		assert.Equal(t, "code actions failed", e.TakeStatusMsg())
+	})
+
+	t.Run("selects preferred action", func(t *testing.T) {
+		m, ctl := codeActionModel(t, codeActions(12, 7))
+
+		m = sendKey(m, 'a')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "Action 9")
+		assert.Contains(t, out, "▌")
+
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, "session:7", ctl.applied)
+	})
+
+	t.Run("wraps upward", func(t *testing.T) {
+		m, ctl := codeActionModel(t, codeActions(2, -1))
+
+		m = sendKey(m, 'a')
+		m = sendSpecial(m, tea.KeyUp)
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, "session:1", ctl.applied)
+	})
+
+	t.Run("typing dismisses menu", func(t *testing.T) {
+		m, ctl := codeActionModel(t, codeActions(1, -1))
+
+		m = sendKey(m, 'a')
+		m = sendKey(m, 'x')
+
+		assert.Empty(t, ctl.applied)
+		assert.NotContains(t, stripANSI(m.View().Content), "Action 0")
+	})
+
+	t.Run("click applies action", func(t *testing.T) {
+		m, ctl := codeActionModel(t, codeActions(4, -1))
+
+		m = sendKey(m, 'a')
+		m.View()
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 9, Y: 4, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		assert.Equal(t, "session:2", ctl.applied)
+	})
+
+	t.Run("wheel scrolls menu", func(t *testing.T) {
+		m, ctl := codeActionModel(t, codeActions(14, -1))
+
+		m = sendKey(m, 'a')
+		m.View()
+		m2, _ := m.Update(tea.MouseWheelMsg{
+			X: 9, Y: 4, Button: tea.MouseWheelDown,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseClickMsg{
+			X: 9, Y: 10, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		assert.NotEmpty(t, m)
+		assert.Equal(t, "session:11", ctl.applied)
+	})
+}
+
+func codeActionModel(
+	t *testing.T, actions []view.CodeAction,
+) (ui.Model, *locationController) {
+	t.Helper()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "main.go")
+	assert.NoError(t, os.WriteFile(path, []byte("old\n"), 0o600))
+	e := view.NewEditor(dir)
+	_, err := e.OpenFile(path)
+	assert.NoError(t, err)
+	ctl := &locationController{actions: actions}
+	e.SetLanguageServerController(ctl)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "code_action", m.CodeActionPickerAction(),
+		[]command.KeyEvent{char('a')},
+	)
+	return resize(m, 80, 24), ctl
+}
+
+func codeActions(n, preferred int) []view.CodeAction {
+	actions := make([]view.CodeAction, n)
+	for i := range actions {
+		actions[i] = view.CodeAction{
+			ID:        fmt.Sprintf("session:%d", i),
+			Title:     fmt.Sprintf("Action %d", i),
+			Kind:      "quickfix",
+			Server:    "session",
+			Preferred: i == preferred,
+		}
+	}
+	return actions
 }
 
 func (c *locationController) RestartLanguageServers(
@@ -390,30 +616,45 @@ func (c *locationController) TriggerSignatureHelp(
 func (c *locationController) GotoDeclaration(
 	*view.Document, view.Id,
 ) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.locations, nil
 }
 
 func (c *locationController) GotoDefinition(
 	*view.Document, view.Id,
 ) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.locations, nil
 }
 
 func (c *locationController) GotoTypeDefinition(
 	*view.Document, view.Id,
 ) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.locations, nil
 }
 
 func (c *locationController) GotoImplementation(
 	*view.Document, view.Id,
 ) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.locations, nil
 }
 
 func (c *locationController) GotoReference(
 	*view.Document, view.Id,
 ) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.locations, nil
 }
 
@@ -437,6 +678,9 @@ func (c *locationController) RenameSymbol(
 func (c *locationController) CodeActions(
 	*view.Document, view.Id,
 ) ([]view.CodeAction, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.actions, nil
 }
 
@@ -450,6 +694,9 @@ func (c *locationController) ApplyCodeAction(
 func (c *locationController) DocumentHighlights(
 	*view.Document, view.Id,
 ) ([]view.DocumentHighlight, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.highlights, nil
 }
 
@@ -476,12 +723,18 @@ func (c *locationController) FormatSelection(*view.Document, view.Id) error {
 func (c *locationController) DocumentSymbols(
 	*view.Document,
 ) ([]view.Symbol, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.symbols, nil
 }
 
 func (c *locationController) WorkspaceSymbols(
 	*view.Document, string,
 ) ([]view.Symbol, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
 	return c.symbols, nil
 }
 
@@ -521,6 +774,25 @@ func TestGotoActions(t *testing.T) {
 		cont := m.GotoDeclarationAction()(e)
 
 		assert.Nil(t, cont)
+		assert.Contains(t, e.TakeStatusMsg(), "No declaration")
+	})
+
+	t.Run("location error sets status", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "source.go")
+		assert.NoError(t, os.WriteFile(path, []byte("source\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			err: errors.New("location failed"),
+		})
+		m := ui.New(e, command.NewKeymaps())
+
+		cont := m.GotoDeclarationAction()(e)
+
+		assert.Nil(t, cont)
+		assert.Equal(t, "location failed", e.TakeStatusMsg())
 	})
 
 	for _, tc := range gotoActionCases {
@@ -754,49 +1026,5 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 		m = resize(m, 80, 24)
 		m = openPickerAndFeed(m, 'w')
 		sendSpecial(m, tea.KeyEnter)
-	})
-}
-
-func TestSelectReferencesAction(t *testing.T) {
-	t.Run("no results sets status", func(t *testing.T) {
-		dir := t.TempDir()
-		path := filepath.Join(dir, "source.go")
-		assert.NoError(t, os.WriteFile(path, []byte("hello world\n"), 0o600))
-		e := view.NewEditor(dir)
-		_, err := e.OpenFile(path)
-		assert.NoError(t, err)
-		e.SetLanguageServerController(&locationController{})
-		m := ui.New(e, command.NewKeymaps())
-
-		cont := m.SelectReferencesAction()(e)
-
-		assert.Nil(t, cont)
-	})
-
-	t.Run("with highlights selects ranges", func(t *testing.T) {
-		dir := t.TempDir()
-		path := filepath.Join(dir, "source.go")
-		assert.NoError(t, os.WriteFile(path, []byte("hello world hello\n"), 0o600))
-		e := view.NewEditor(dir)
-		_, err := e.OpenFile(path)
-		assert.NoError(t, err)
-		e.SetLanguageServerController(&locationController{
-			highlights: []view.DocumentHighlight{
-				{From: 0, To: 5},
-				{From: 12, To: 17},
-			},
-		})
-		m := ui.New(e, command.NewKeymaps())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
-
-		cont := m.SelectReferencesAction()(e)
-
-		assert.Nil(t, cont)
-		sel := doc.SelectionFor(v.ID())
-		assert.Len(t, sel.Ranges(), 2)
 	})
 }

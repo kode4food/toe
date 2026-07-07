@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -25,6 +26,8 @@ type completionController struct {
 	hoverText           string
 	signature           view.SignatureHelp
 	signatureAfterComma view.SignatureHelp
+	completionErr       error
+	applyErr            error
 	signatureErr        error
 	signatureEmpty      bool
 	incomplete          bool
@@ -1328,6 +1331,49 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotContains(t, out, "Println")
 	})
 
+	t.Run("completion error sets status", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor:        e,
+			completionErr: errors.New("completion failed"),
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+		m = feedCmds(m2.(ui.Model), cmd)
+
+		assert.Equal(t, "completion failed", e.TakeStatusMsg())
+	})
+
+	t.Run("apply error sets status", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			items: []view.CompletionItem{
+				{Label: "Println", Insert: "Println"},
+			},
+			applyErr: errors.New("apply failed"),
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, "apply failed", e.TakeStatusMsg())
+	})
+
 }
 
 func (c *completionController) RestartLanguageServers(
@@ -1355,6 +1401,9 @@ func (c *completionController) WorkspaceCommands(*view.Document) []string {
 func (c *completionController) Completions(
 	doc *view.Document, _ view.Id,
 ) (view.CompletionResult, error) {
+	if c.completionErr != nil {
+		return view.CompletionResult{}, c.completionErr
+	}
 	items := c.items
 	incomplete := c.incomplete
 	if doc != nil && len(c.refreshItems) > 0 &&
@@ -1387,6 +1436,9 @@ func (c *completionController) ResolveCompletion(
 func (c *completionController) ApplyCompletion(
 	_ *view.Document, _ view.Id, item view.CompletionItem,
 ) error {
+	if c.applyErr != nil {
+		return c.applyErr
+	}
 	c.item = item
 	text := item.Insert
 	if text == "" {

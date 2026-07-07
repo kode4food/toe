@@ -598,6 +598,11 @@ func TestDocumentAccessors(t *testing.T) {
 		assert.False(t, d.ReadOnly())
 	})
 
+	t.Run("sets read only", func(t *testing.T) {
+		d.SetReadOnly(true)
+		assert.True(t, d.ReadOnly())
+	})
+
 	t.Run("IndentStyle defaults to tabs", func(t *testing.T) {
 		assert.True(t, d.IndentStyle().IsTabs())
 	})
@@ -618,6 +623,15 @@ func TestDocumentAccessors(t *testing.T) {
 	t.Run("AccessedAt non-zero", func(t *testing.T) {
 		assert.NotZero(t, d.AccessedAt())
 	})
+
+	t.Run("tracks search highlights", func(t *testing.T) {
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		assert.False(t, d.SearchHighlightsActive(v.ID()))
+		d.ShowSearchHighlights(v.ID())
+		assert.True(t, d.SearchHighlightsActive(v.ID()))
+	})
 }
 
 func TestDocumentBOM(t *testing.T) {
@@ -635,6 +649,7 @@ func TestDocumentBOM(t *testing.T) {
 
 		d, _ := e.FocusedDocument()
 		assert.Equal(t, "hello", d.Text().String())
+		assert.True(t, d.HasBOM())
 	})
 
 	t.Run("BOM preserved on save", func(t *testing.T) {
@@ -688,6 +703,7 @@ func TestDocumentBOM(t *testing.T) {
 
 		d, _ := e.FocusedDocument()
 		assert.Equal(t, "v2\n", d.Text().String())
+		assert.True(t, d.HasBOM())
 		assert.NoError(t, e.Save())
 
 		data, err := os.ReadFile(path)

@@ -32,3 +32,20 @@ func TestWriteFakeClipboardTools(t *testing.T) {
 		assert.Equal(t, "world", string(out))
 	})
 }
+
+func TestGitHelpers(t *testing.T) {
+	testutil.RequireGit(t)
+	repo := testutil.GitRepo(t)
+
+	path := testutil.GitCommitFile(t, repo, "note.txt", "hello\n")
+	testutil.WriteFile(t, filepath.Join(repo, "other.txt"), "world\n")
+	testutil.RunGit(t, repo, "add", "other.txt")
+
+	data, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	assert.Equal(t, "hello\n", string(data))
+
+	out, err := exec.Command("git", "-C", repo, "status", "--short").Output()
+	assert.NoError(t, err)
+	assert.Equal(t, "A  other.txt\n", string(out))
+}

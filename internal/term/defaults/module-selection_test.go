@@ -214,6 +214,23 @@ func TestSelectionSyntax(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "alpha", got)
 	})
+
+	t.Run("shrink selects child syntax node", func(t *testing.T) {
+		src := "package main\n\nfunc main() {\n\tprintln(alpha)\n}\n"
+		e, km := defaultsEnv(t, src)
+		runCmdArgs(t, km, e, "set_language", "go")
+		from := strings.Index(src, "func main")
+		to := strings.Index(src, "}\n") + 1
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(from, to)}, 0)
+		runCmd(t, km, e, "shrink_selection")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		got, err := doc.SelectionFor(v.ID()).Primary().Fragment(doc.Text())
+		assert.NoError(t, err)
+		assert.Contains(t, got, "println")
+	})
 }
 
 func TestSelectionRegister(t *testing.T) {

@@ -83,6 +83,24 @@ func TestPaths(t *testing.T) {
 		assert.Equal(t, filepath.Join(root, loader.DirName), dir)
 	})
 
+	t.Run("expands user path", func(t *testing.T) {
+		home, err := os.UserHomeDir()
+		assert.NoError(t, err)
+
+		path := loader.ExpandUserPath("~/toe")
+
+		assert.Equal(t, filepath.Join(home, "toe"), path)
+	})
+
+	t.Run("expands env path", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("TOE_TEST_ROOT", root)
+
+		path := loader.ExpandUserPath("$TOE_TEST_ROOT/toe")
+
+		assert.Equal(t, filepath.Join(root, "toe"), path)
+	})
+
 	t.Run("resolves workspace config file", func(t *testing.T) {
 		root := t.TempDir()
 		work := filepath.Join(root, "work")

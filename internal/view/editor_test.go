@@ -527,6 +527,17 @@ func TestEditorSwitchBuffer(t *testing.T) {
 		ok := e.SwitchBuffer(view.DocumentId(999))
 		assert.False(t, ok)
 	})
+
+	t.Run("delete removes document", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+
+		e.DeleteDocument(doc.ID())
+		ok = e.SwitchBuffer(doc.ID())
+
+		assert.False(t, ok)
+	})
 }
 
 func TestEditorSwitchOrOpenDoc(t *testing.T) {

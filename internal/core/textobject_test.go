@@ -98,6 +98,22 @@ func TestTextObjectParagraph(t *testing.T) {
 		)
 		assert.Equal(t, "a\n", sliceOf(t, doc, r))
 	})
+
+	t.Run("cursor in second paragraph walks backward", func(t *testing.T) {
+		doc := core.NewRope("a\n\nb\nc\n")
+		r := core.TextObjectParagraph(
+			doc, core.NewRange(4, 4), core.TextObjectInside, 1,
+		)
+		assert.Equal(t, "b\nc\n", sliceOf(t, doc, r))
+	})
+
+	t.Run("around at document end clamps", func(t *testing.T) {
+		doc := core.NewRope("a\n\nb")
+		r := core.TextObjectParagraph(
+			doc, core.NewRange(3, 3), core.TextObjectAround, 2,
+		)
+		assert.Equal(t, "b", sliceOf(t, doc, r))
+	})
 }
 
 func TestTextObjectPairSurround(t *testing.T) {

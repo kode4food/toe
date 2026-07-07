@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -99,6 +100,67 @@ func TestGotoChange(t *testing.T) {
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 		assert.Equal(t, action.StatusDiffUnavailable, e.TakeStatusMsg())
 	})
+
+	t.Run("count jumps over hunks", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "a\nB\nc\nD\ne\nF\n")
+		e.SetVersionControl(&stubVC{
+			base: "a\nb\nc\nd\ne\nf\n",
+			hunks: []view.DiffHunk{
+				{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
+				{BaseFrom: 3, BaseTo: 4, From: 3, To: 4},
+				{BaseFrom: 5, BaseTo: 6, From: 5, To: 6},
+			},
+		})
+		testutil.SetCursor(t, e, 0)
+		e.SetCount(2)
+
+		action.GotoNextChange(e)
+
+		assert.Equal(t, 7, testutil.CursorPos(t, e))
+	})
+
+	t.Run("select mode extends to hunk", func(t *testing.T) {
+		e := setup(t)
+		testutil.SetCursor(t, e, 0)
+		e.SetMode(view.ModeSelect)
+
+		action.GotoNextChange(e)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		r := doc.SelectionFor(v.ID()).Primary()
+		assert.Equal(t, 0, r.Anchor)
+		assert.Equal(t, 12, r.Head)
+	})
+
+	t.Run("prev finds pure removal", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "one\nthree\nfour\n")
+		e.SetVersionControl(&stubVC{
+			base: "one\ntwo\nthree\nfour\n",
+			hunks: []view.DiffHunk{
+				{BaseFrom: 1, BaseTo: 2, From: 1, To: 1},
+			},
+		})
+		testutil.SetCursor(t, e, 11)
+
+		action.GotoPrevChange(e)
+
+		assert.Equal(t, 4, testutil.CursorPos(t, e))
+	})
+
+	t.Run("empty hunks keep cursor", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "one\n")
+		e.SetVersionControl(&stubVC{})
+		testutil.SetCursor(t, e, 2)
+
+		action.GotoNextChange(e)
+		action.GotoFirstChange(e)
+		action.GotoLastChange(e)
+
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
+	})
 }
 
 func TestResetDiffChange(t *testing.T) {
@@ -131,6 +193,28 @@ func TestResetDiffChange(t *testing.T) {
 		n, err := action.ResetDiffChange(e)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, n)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "one\ntwo\nthree\n", doc.Text().String())
+	})
+
+	t.Run("reverts multiple selected hunks", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "one\nCHANGED\nthree\nADDED\n")
+		e.SetVersionControl(&stubVC{
+			base: "one\ntwo\nthree\n",
+			hunks: []view.DiffHunk{
+				{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
+				{BaseFrom: 3, BaseTo: 3, From: 3, To: 4},
+			},
+		})
+		testutil.SetSelection(t, e, []core.Range{
+			core.NewRange(4, 24),
+		}, 0)
+
+		n, err := action.ResetDiffChange(e)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, n)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		assert.Equal(t, "one\ntwo\nthree\n", doc.Text().String())

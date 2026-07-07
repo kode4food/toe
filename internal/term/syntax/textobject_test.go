@@ -137,3 +137,22 @@ func TestFindTextObjectNoMatch(t *testing.T) {
 	_, ok := syntax.FindTextObject(src, "go", cursor, 'f', true)
 	assert.False(t, ok)
 }
+
+func TestFindTextObjectOutOfBounds(t *testing.T) {
+	t.Run("negative cursor returns false", func(t *testing.T) {
+		_, ok := syntax.FindTextObject(goSrc, "go", -1, 'f', true)
+		assert.False(t, ok)
+	})
+
+	t.Run("cursor past end returns false", func(t *testing.T) {
+		_, ok := syntax.FindTextObject(
+			goSrc, "go", len([]rune(goSrc)), 'f', true,
+		)
+		assert.False(t, ok)
+	})
+
+	t.Run("lang with no textobject query returns false", func(t *testing.T) {
+		_, ok := syntax.FindTextObject("body { color: red; }", "css", 0, 'f', false)
+		assert.False(t, ok)
+	})
+}

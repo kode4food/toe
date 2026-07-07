@@ -57,6 +57,16 @@ func (Git) HeadName(path string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
+// HeadID returns the full current HEAD revision
+func (Git) HeadID(path string) (string, error) {
+	dir := filepath.Dir(path)
+	out, err := runGit(dir, "rev-parse", "HEAD")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // ChangedFiles emulates `git status` for the repository containing cwd,
 // reporting paths as absolute
 func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {

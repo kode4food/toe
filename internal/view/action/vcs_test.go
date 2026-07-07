@@ -39,6 +39,8 @@ func (s *stubVC) ChangedFiles() ([]view.FileChange, error) {
 	return nil, nil
 }
 
+func (s *stubVC) Refresh() {}
+
 func (s *stubVC) Updates() <-chan struct{} {
 	return nil
 }

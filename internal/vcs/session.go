@@ -21,6 +21,7 @@ type (
 		provider Provider
 		differs  map[view.DocumentId]*Differ
 		heads    map[view.DocumentId]string
+		headIDs  map[view.DocumentId]string
 		updates  chan struct{}
 	}
 
@@ -34,6 +35,9 @@ type (
 		// HeadName returns a short display name for the current head, such as
 		// a branch name
 		HeadName(path string) (string, error)
+
+		// HeadID returns the exact current head revision
+		HeadID(path string) (string, error)
 
 		// ChangedFiles lists workspace files that differ from the head
 		ChangedFiles(cwd string) ([]view.FileChange, error)
@@ -53,6 +57,7 @@ func Attach(e *view.Editor) *Session {
 		provider: Git{},
 		differs:  map[view.DocumentId]*Differ{},
 		heads:    map[view.DocumentId]string{},
+		headIDs:  map[view.DocumentId]string{},
 		updates:  make(chan struct{}, 1),
 	}
 	e.AddDocumentObserver(s)
@@ -107,6 +112,17 @@ func (s *Session) ChangedFiles() ([]view.FileChange, error) {
 	return s.provider.ChangedFiles(s.editor.Cwd())
 }
 
+// Refresh reloads open document diff bases when their repository head moves
+func (s *Session) Refresh() {
+	for _, doc := range s.editor.AllDocuments() {
+		path := doc.Path()
+		if path == "" || !s.headMoved(doc, path) {
+			continue
+		}
+		go s.loadDiffBase(doc, path)
+	}
+}
+
 // Updates delivers a token whenever diff state changes
 func (s *Session) Updates() <-chan struct{} {
 	return s.updates
@@ -148,6 +164,7 @@ func (s *Session) DocumentClosed(doc *view.Document) {
 		delete(s.differs, doc.ID())
 	}
 	delete(s.heads, doc.ID())
+	delete(s.headIDs, doc.ID())
 }
 
 // Close stops all differs
@@ -167,6 +184,17 @@ func (s *Session) differ(doc *view.Document) (*Differ, bool) {
 	return d, ok
 }
 
+func (s *Session) headMoved(doc *view.Document, path string) bool {
+	head, err := s.provider.HeadID(path)
+	if err != nil {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	old, ok := s.headIDs[doc.ID()]
+	return ok && old != head
+}
+
 // loadDiffBase resolves the diff base and head name for doc, creating or
 // updating its differ. It runs off the main goroutine because providers may
 // shell out
@@ -177,10 +205,12 @@ func (s *Session) loadDiffBase(doc *view.Document, path string) {
 	}
 	rope := baseRope(base)
 	name, _ := s.provider.HeadName(path)
+	head, _ := s.provider.HeadID(path)
 
 	s.mu.Lock()
 	if d, ok := s.differs[doc.ID()]; ok {
 		s.heads[doc.ID()] = name
+		s.headIDs[doc.ID()] = head
 		s.mu.Unlock()
 		d.SetBase(rope)
 		return
@@ -188,6 +218,7 @@ func (s *Session) loadDiffBase(doc *view.Document, path string) {
 	d := NewDiffer(rope, doc.Text(), s.notifyUpdate)
 	s.differs[doc.ID()] = d
 	s.heads[doc.ID()] = name
+	s.headIDs[doc.ID()] = head
 	s.mu.Unlock()
 	s.notifyUpdate()
 }

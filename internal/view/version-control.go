@@ -23,6 +23,9 @@ type (
 		// ChangedFiles lists workspace files that differ from the head
 		ChangedFiles() ([]FileChange, error)
 
+		// Refresh picks up external version-control state changes
+		Refresh()
+
 		// Updates delivers a token whenever diff state changes, so the UI can
 		// schedule a redraw
 		Updates() <-chan struct{}

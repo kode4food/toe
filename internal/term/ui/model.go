@@ -32,7 +32,9 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		compositor: comp,
 		context:    cx,
 		component:  ec,
-		initCmd:    tea.Batch(ec.fileWatchCmd(cx), vcsUpdateCmd(cx)),
+		initCmd: tea.Batch(
+			ec.fileWatchCmd(cx), vcsUpdateCmd(cx), vcsRefreshCmd(cx),
+		),
 	}
 }
 

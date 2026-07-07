@@ -91,6 +91,31 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, view.FileChangeUntracked, changes[0].Kind)
 	})
 
+	t.Run("refreshes after external head movement", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		defer s.Close()
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		waitBase(t, s, doc, "one\n")
+
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "a.txt")
+		testutil.RunGit(t, repo, "commit", "-m", "external")
+
+		s.Refresh()
+
+		assert.Equal(t, "two\n", waitBase(t, s, doc, "two\n"))
+		assert.Equal(t, []view.DiffHunk{
+			{BaseFrom: 0, BaseTo: 1, From: 0, To: 1},
+		}, waitHunks(t, s, doc))
+	})
+
 	t.Run("edits and lifecycle flow through the differ", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
@@ -183,6 +208,21 @@ func waitDiffer(t *testing.T, s *vcs.Session, doc *view.Document) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	t.Fatal("timed out waiting for differ")
+}
+
+func waitBase(
+	t *testing.T, s *vcs.Session, doc *view.Document, want string,
+) string {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if base, ok := s.DiffBase(doc); ok && base == want {
+			return base
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("timed out waiting for base")
+	return ""
 }
 
 func waitHunks(

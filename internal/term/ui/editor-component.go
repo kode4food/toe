@@ -50,6 +50,8 @@ type (
 
 	vcsUpdatedMsg struct{}
 
+	vcsRefreshMsg struct{}
+
 	completionMsg struct {
 		gen        int
 		anchor     completionAnchor
@@ -72,6 +74,8 @@ type (
 		layout      view.Layout
 	}
 )
+
+const vcsRefreshInterval = 5 * time.Second
 
 func (e *EditorComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
@@ -154,6 +158,12 @@ func (e *EditorComponent) HandleEvent(
 	case vcsUpdatedMsg:
 		return consumed(), vcsUpdateCmd(cx)
 
+	case vcsRefreshMsg:
+		if vc := cx.Editor.VersionControl(); vc != nil {
+			vc.Refresh()
+		}
+		return consumed(), vcsRefreshCmd(cx)
+
 	case tea.MouseClickMsg:
 		e.completionGen++
 		e.cancelPending(cx)
@@ -215,18 +225,6 @@ func (e *EditorComponent) HandleEvent(
 	return ignored(), nil
 }
 
-func vcsUpdateCmd(cx *Context) tea.Cmd {
-	vc := cx.Editor.VersionControl()
-	if vc == nil {
-		return nil
-	}
-	updates := vc.Updates()
-	return func() tea.Msg {
-		<-updates
-		return vcsUpdatedMsg{}
-	}
-}
-
 func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
@@ -251,20 +249,6 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	return func() tea.Msg {
 		_, _ = ls.DocumentHighlights(doc, v.ID())
 		return docHighlightMsg{gen: gen}
-	}
-}
-
-func documentHighlightPositionFor(
-	doc *view.Document, v *view.View,
-) docHighlightPosition {
-	sel := doc.SelectionFor(v.ID())
-	pos := sel.Primary().Cursor(doc.Text())
-	return docHighlightPosition{
-		docID:  doc.ID(),
-		viewID: v.ID(),
-		rev:    doc.Revision(),
-		pos:    pos,
-		ok:     true,
 	}
 }
 
@@ -371,4 +355,39 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	return tea.Tick(d, func(time.Time) tea.Msg {
 		return autoSaveMsg{gen: gen}
 	})
+}
+
+func vcsUpdateCmd(cx *Context) tea.Cmd {
+	vc := cx.Editor.VersionControl()
+	if vc == nil {
+		return nil
+	}
+	updates := vc.Updates()
+	return func() tea.Msg {
+		<-updates
+		return vcsUpdatedMsg{}
+	}
+}
+
+func vcsRefreshCmd(cx *Context) tea.Cmd {
+	if cx.Editor.VersionControl() == nil {
+		return nil
+	}
+	return tea.Tick(vcsRefreshInterval, func(time.Time) tea.Msg {
+		return vcsRefreshMsg{}
+	})
+}
+
+func documentHighlightPositionFor(
+	doc *view.Document, v *view.View,
+) docHighlightPosition {
+	sel := doc.SelectionFor(v.ID())
+	pos := sel.Primary().Cursor(doc.Text())
+	return docHighlightPosition{
+		docID:  doc.ID(),
+		viewID: v.ID(),
+		rev:    doc.Revision(),
+		pos:    pos,
+		ok:     true,
+	}
 }

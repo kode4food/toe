@@ -78,8 +78,8 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 - [x] Picker preview split dragging and auto-session persistence.
 - [ ] Rendering golden tests.
-- [ ] Bubbletea model update tests.
-- [ ] Complete mouse behavior audit and tests for remaining gaps.
+- [x] Bubbletea model update tests.
+- [x] Complete mouse behavior audit and tests for remaining gaps.
 
 ### Integration
 
@@ -93,7 +93,7 @@ The largest remaining chunk. Bundle and load each query kind, then the features 
 
 ### VCS
 
-- [ ] Refresh diff bases on external head movement (commits made outside toe are picked up on save/reload only).
+- [x] Refresh diff bases on external head movement.
 
 ### Conditional Items
 

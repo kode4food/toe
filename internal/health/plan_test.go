@@ -75,6 +75,27 @@ func planChecks() []planCheck {
 			},
 		},
 		{
+			item: "Refresh diff bases on external head movement.",
+			tests: []string{
+				"internal/vcs/session_test.go",
+			},
+		},
+		{
+			item: "Bubbletea model update tests.",
+			tests: []string{
+				"internal/term/ui/editor-component_test.go",
+				"internal/term/ui/model-action_test.go",
+			},
+		},
+		{
+			item: "Complete mouse behavior audit and tests for remaining gaps.",
+			tests: []string{
+				"internal/term/ui/editor-component_test.go",
+				"internal/term/ui/completion-component_test.go",
+				"internal/term/ui/picker-component_test.go",
+			},
+		},
+		{
 			item: "Theme parse/style tests; generated tests that all four " +
 				"Catppuccin variants parse.",
 			tests: []string{

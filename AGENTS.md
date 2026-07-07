@@ -4,16 +4,6 @@
 
 Thom's Own Editor: a Go-native modal terminal editor using Go 1.26, Bubbletea, Lipgloss, and Chroma. Module: `github.com/kode4food/toe`
 
----
-
-# CRITICAL: PLAN.md
-
-**Read `PLAN.md` before starting any implementation task.** It is the authoritative record of what is implemented, what is in progress, and what is deferred. Never assume the state of the project from memory or prior conversation.
-
-**Update `PLAN.md` when work lands.** A feature is not complete until `PLAN.md` reflects it. Check off `[x]` only when every item in the Completion Definition (at the bottom of `PLAN.md`) is satisfied. Do not defer `PLAN.md` updates to a follow-up session.
-
----
-
 ## CRITICAL: Do Exactly What Is Asked
 
 When the user asks for a specific thing, do that thing and nothing else. Do not take liberties rewriting, refactoring, or "improving" code that wasn't part of the request. The risk of breaking something or introducing unwanted changes is not worth it, and unilateral decisions like that are not mine to make.
@@ -22,24 +12,15 @@ When the user asks for a specific thing, do that thing and nothing else. Do not 
 
 ## Configuration Boundaries
 
-`view.Options` is only for innate editor behavior that the core editor,
-documents, actions, or renderer must consult directly at runtime. It must not
-be used as a dumping ground for configuration owned by optional or decoupled
-modules.
+`view.Options` is only for innate editor behavior that the core editor, documents, actions, or renderer must consult directly at runtime. It must not be used as a dumping ground for configuration owned by optional or decoupled modules.
 
-Module-owned configuration must be colocated with the module that owns the
-behavior:
+Module-owned configuration must be colocated with the module that owns the behavior:
 
-- Default command module TOML section structs live in `internal/term/defaults`
-  with the command module that loads them.
-- UI component behavior options live with the UI component in
-  `internal/term/ui`.
-- A module command passes its parsed options into the module/component factory
-  explicitly.
+- Default command module TOML section structs live in `internal/term/defaults` with the command module that loads them.
+- UI component behavior options live with the UI component in `internal/term/ui`.
+- A module command passes its parsed options into the module/component factory explicitly.
 
-Do not add picker, explorer, LSP, VCS, DAP, or other pluggable capability
-settings to `view.Options` unless the core editor itself must own that behavior
-to function correctly.
+Do not add picker, explorer, LSP, VCS, DAP, or other pluggable capability settings to `view.Options` unless the core editor itself must own that behavior to function correctly.
 
 ---
 
@@ -679,10 +660,7 @@ Skip godoc when the name is self-documenting:
 func NewHistory() History {
 ```
 
-Only exported funcs, methods, types, consts, and vars get godoc. Do not write
-godoc comments on unexported symbols; if an unexported symbol has genuinely
-non-obvious behavior, explain that as an inline comment, not a name-prefixed
-doc comment.
+Only exported funcs, methods, types, consts, and vars get godoc. Do not write godoc comments on unexported symbols; if an unexported symbol has genuinely non-obvious behavior, explain that as an inline comment, not a name-prefixed doc comment.
 
 Godoc rule: the last sentence of a comment should not end with a period.
 

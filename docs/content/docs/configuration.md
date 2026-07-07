@@ -183,11 +183,11 @@ right = ["version-control", "diagnostics", "position"]
 
 ### Pickers
 
-Picker options are module-owned UI settings. `picker.split-ratio` can also be changed at runtime with `:set editor.picker.split-ratio` and is persisted by auto-session when changed.
+Picker options are module-owned UI settings. Split ratios are saved per picker. They can also be changed at runtime with keys like `:set editor.picker.split-ratios.Diagnostics 0.65` and are persisted by auto-session when changed.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|
-| `picker.split-ratio` | float | `0.5` | Picker list/preview split ratio, from `0.2` to `0.8` |
+| `picker.split-ratios` | table | `{}` | Picker list/preview split ratios by picker title, from `0.2` to `0.8`; missing pickers use `0.5` |
 | `buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
 | `file-explorer.hidden` | bool | `false` | Show hidden files |
 | `file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |

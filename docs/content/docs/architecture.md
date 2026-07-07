@@ -55,9 +55,9 @@ Overlays implement one of two interfaces: `BufferOverlayComponent` (`RenderOverB
 
 Packages: `internal/term/syntax`, `internal/term/highlight`, `internal/term/theme`.
 
-`syntax` owns the Tree-sitter language registry, embedded highlight queries, query inheritance, parser/query caches, and Tree-sitter tokenization for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto Lipgloss styles. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path.
+`syntax` owns the Tree-sitter language registry, embedded highlight, injection, and textobject queries, query inheritance, parser/query caches, Tree-sitter tokenization, syntax-aware selection, bracket matching, and surround-pair lookup for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto Lipgloss styles. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path.
 
-Only highlight queries are bundled today. Injection, locals, textobject, indent, tags, folds, rainbow-bracket, syntax-aware bracket matching, and syntax-aware surround support are still tracked in `PLAN.md`.
+Highlight queries are bundled for every supported Tree-sitter language. Injection and textobject queries are bundled where toe has behavior that consumes them.
 
 ### Services
 
@@ -96,6 +96,6 @@ Because document text is a persistent `Rope`, background workers can keep the te
 
 ## Testing Strategy
 
-Tests are black-box (`package_test`) throughout the repo, and shared test helpers have their own tests. The project target is 90% coverage, but CI and coverage enforcement are still listed as remaining work in `PLAN.md`.
+Tests are black-box (`package_test`) throughout the repo, and shared test helpers have their own tests. CI entry points, runtime asset validation, command/keybinding registration tests, behavior tests, integration tests, and render benchmarks cover the supported surface.
 
 Rendering-sensitive code has benchmarks with `-benchmem` coverage for long single lines, picker previews, large highlighted files, scrolling, and visual-column calculations. Service packages are exercised with real fixtures where practical: temporary git repositories for VCS and an in-process test language server for LSP.

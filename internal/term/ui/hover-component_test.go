@@ -98,6 +98,34 @@ func TestHoverComponent(t *testing.T) {
 		assert.Contains(t, out, "Prints to standard output.")
 	})
 
+	for _, tc := range []struct {
+		name string
+		text string
+	}{
+		{"hides leading separator", "---\ncontent"},
+		{"hides trailing separator", "content\n---"},
+		{"hides separator before empty code", "content\n---\n```go\n \n```"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e := editorWithText(t, "Println")
+			e.SetMode(view.ModeNormal)
+			e.SetLanguageServerController(&completionController{
+				editor:    e,
+				hoverText: tc.text,
+			})
+			km := command.NewKeymaps()
+			m := ui.New(e, km)
+			_, err := defaults.RegisterDefaults(m, km)
+			assert.NoError(t, err)
+			m = resize(m, 80, 24)
+			m = sendKey(m, ' ')
+			m = sendKey(m, 'k')
+			out := stripANSI(m.View().Content)
+			assert.Contains(t, out, "content")
+			assert.NotContains(t, out, "├─")
+		})
+	}
+
 	t.Run("renders thematic break as full-width rule", func(t *testing.T) {
 		e := editorWithText(t, "Println")
 		e.SetMode(view.ModeNormal)

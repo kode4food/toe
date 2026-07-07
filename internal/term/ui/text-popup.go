@@ -107,9 +107,7 @@ func (p *popupMarkdown) appendWrapped(text string, heading bool) {
 }
 
 func (p *popupMarkdown) trim() {
-	for len(p.lines) > 0 && p.lines[len(p.lines)-1].text == "" {
-		p.lines = p.lines[:len(p.lines)-1]
-	}
+	p.lines = trimPopupLines(p.lines, 0)
 }
 
 func (r *popupTextRenderer) render(lines []popupLine) {
@@ -180,10 +178,29 @@ func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
 	return lipglossToTUIStyle(st)
 }
 
+func trimPopupLines(lines []popupLine, maxVisible int) []popupLine {
+	for len(lines) > 0 && lines[0].rule {
+		lines = lines[1:]
+	}
+	if maxVisible > 0 && len(lines) > maxVisible {
+		lines = lines[:maxVisible]
+	}
+	for len(lines) > 0 {
+		last := lines[len(lines)-1]
+		if last.rule || strings.TrimSpace(last.text) == "" {
+			lines = lines[:len(lines)-1]
+		} else {
+			break
+		}
+	}
+	return lines
+}
+
 func drawTextPopup(
 	buf *tui.Buffer, x, y, maxW, maxH int, text string, cx *Context,
 ) popupArea {
 	lines := popupTextLines(text, maxW-2-2*popupPadX)
+	lines = trimPopupLines(lines, maxH-2)
 	w := popupTextWidth(lines) + 2 + 2*popupPadX
 	h := len(lines) + 2
 	w = min(max(w, 2), maxW)

@@ -8,41 +8,41 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-func TestFindMatchingBracketPlaintext(t *testing.T) {
+func TestFindMatchingBracket(t *testing.T) {
 	t.Run("empty file returns false", func(t *testing.T) {
 		doc := core.NewRope("")
-		_, ok := core.FindMatchingBracketPlaintext(doc, 0)
+		_, ok := core.FindMatchingBracket(doc, 0)
 		assert.False(t, ok)
 	})
 
 	t.Run("simple parens", func(t *testing.T) {
 		doc := core.NewRope("(hello)")
-		pos, ok := core.FindMatchingBracketPlaintext(doc, 0)
+		pos, ok := core.FindMatchingBracket(doc, 0)
 		assert.True(t, ok)
 		assert.Equal(t, 6, pos)
 		// symmetrical
-		pos, ok = core.FindMatchingBracketPlaintext(doc, 6)
+		pos, ok = core.FindMatchingBracket(doc, 6)
 		assert.True(t, ok)
 		assert.Equal(t, 0, pos)
 	})
 
 	t.Run("nested parens outer", func(t *testing.T) {
 		doc := core.NewRope("((hello))")
-		pos, ok := core.FindMatchingBracketPlaintext(doc, 0)
+		pos, ok := core.FindMatchingBracket(doc, 0)
 		assert.True(t, ok)
 		assert.Equal(t, 8, pos)
 	})
 
 	t.Run("nested parens inner", func(t *testing.T) {
 		doc := core.NewRope("((hello))")
-		pos, ok := core.FindMatchingBracketPlaintext(doc, 1)
+		pos, ok := core.FindMatchingBracket(doc, 1)
 		assert.True(t, ok)
 		assert.Equal(t, 7, pos)
 	})
 
 	t.Run("mixed brackets", func(t *testing.T) {
 		doc := core.NewRope("(paren (paren {bracket}))")
-		pos, ok := core.FindMatchingBracketPlaintext(doc, 0)
+		pos, ok := core.FindMatchingBracket(doc, 0)
 		assert.True(t, ok)
 		assert.Equal(t, 24, pos)
 	})
@@ -50,26 +50,26 @@ func TestFindMatchingBracketPlaintext(t *testing.T) {
 	t.Run("close bracket with nested parens backward", func(t *testing.T) {
 		// cursor on outer `)` at 5; inner `)` at 3 increments count backward
 		doc := core.NewRope("((x)y)")
-		pos, ok := core.FindMatchingBracketPlaintext(doc, 5)
+		pos, ok := core.FindMatchingBracket(doc, 5)
 		assert.True(t, ok)
 		assert.Equal(t, 0, pos)
 	})
 
 	t.Run("not on bracket returns false", func(t *testing.T) {
 		doc := core.NewRope("(hello)")
-		_, ok := core.FindMatchingBracketPlaintext(doc, 3)
+		_, ok := core.FindMatchingBracket(doc, 3)
 		assert.False(t, ok)
 	})
 
 	t.Run("unmatched bracket returns false", func(t *testing.T) {
 		doc := core.NewRope("(hello")
-		_, ok := core.FindMatchingBracketPlaintext(doc, 0)
+		_, ok := core.FindMatchingBracket(doc, 0)
 		assert.False(t, ok)
 	})
 
 	t.Run("multiline matching", func(t *testing.T) {
 		doc := core.NewRope("(prev line\n ) (middle) ( \n next line)")
-		pos, ok := core.FindMatchingBracketPlaintext(doc, 0)
+		pos, ok := core.FindMatchingBracket(doc, 0)
 		assert.True(t, ok)
 		assert.Equal(t, 12, pos)
 	})

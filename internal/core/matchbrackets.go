@@ -2,9 +2,7 @@ package core
 
 import "slices"
 
-const (
-	MaxPlaintextScan = 10000
-)
+const MaxPlaintextScan = 10000
 
 var (
 	// bracketTable contains pairs where only one side is a bracket
@@ -29,10 +27,10 @@ var (
 	)
 )
 
-// FindMatchingBracketPlaintext returns the position of the bracket matching the
-// one at cursorPos, scanning at most MaxPlaintextScan characters. Returns (pos,
-// true) on success, (0, false) if not found or not on a bracket
-func FindMatchingBracketPlaintext(doc Rope, cursorPos int) (int, bool) {
+// FindMatchingBracket returns the position of the bracket matching the one at
+// cursorPos, scanning at most MaxPlaintextScan characters. Returns (pos, true)
+// on success, (0, false) if not found or not on a bracket
+func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 	if cursorPos >= doc.LenChars() {
 		return 0, false
 	}

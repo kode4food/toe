@@ -206,7 +206,7 @@ func selectionModule(model ui.Model) command.Module {
 			{
 				Name:      actMatchBrackets,
 				DocString: "Goto matching bracket",
-				Run:       Runner(action.MatchBrackets),
+				Run:       Runner(syntaxMatchBrackets),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      keys(m(char('m'))),
 			},
@@ -387,4 +387,44 @@ func syntaxSelect(
 		return
 	}
 	doc.SetSelectionFor(v.ID(), sel)
+}
+
+func syntaxMatchBrackets(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	text := doc.Text()
+	src := text.String()
+	lang := doc.Lang()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	changed := false
+	for i, r := range ranges {
+		pos := r.Cursor(text)
+		match, ok := syntax.FindMatchingBracket(src, lang, pos)
+		if !ok {
+			match, ok = core.FindMatchingBracket(text, pos)
+		}
+		if !ok {
+			continue
+		}
+		nr := r.PutCursor(text, match, false)
+		if nr != r {
+			ranges[i] = nr
+			changed = true
+		}
+	}
+	if !changed {
+		return
+	}
+	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
+	if err != nil {
+		return
+	}
+	doc.SetSelectionFor(v.ID(), newSel)
 }

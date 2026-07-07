@@ -105,11 +105,10 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 }
 
 // MatchBrackets moves each cursor to the matching bracket at that position
-// Uses plaintext bracket matching
 func MatchBrackets(e *view.Editor) {
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		pos := r.Cursor(doc)
-		match, ok := core.FindMatchingBracketPlaintext(doc, pos)
+		match, ok := core.FindMatchingBracket(doc, pos)
 		if !ok {
 			return r
 		}

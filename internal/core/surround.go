@@ -85,7 +85,7 @@ func FindNthPairsPos(
 	if openCh == closeCh {
 		cur, e := doc.CharAt(pos)
 		if e == nil && cur == openCh {
-			match, ok := FindMatchingBracketPlaintext(doc, pos)
+			match, ok := FindMatchingBracket(doc, pos)
 			if !ok {
 				return 0, 0, ErrCursorOnAmbiguousPair
 			}

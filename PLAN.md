@@ -27,7 +27,7 @@ This plan captures the remaining finalization work. Earlier phases (core text mo
 - [ ] Injection queries; overlay highlighting after injection/scope support lands.
 - [ ] Textobject queries and textobject selection.
 - [x] Syntax-aware selection expansion/shrinking.
-- [ ] Tree-sitter-aware bracket matching.
+- [x] Tree-sitter-aware bracket matching.
 - [ ] Tree-sitter-aware surround pair finding.
 - [x] Generated tests: every supported language entry parses; every supported runtime query file is discoverable.
 

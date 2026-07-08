@@ -118,6 +118,35 @@ func TestSession(t *testing.T) {
 		assert.Contains(t, path, loader.WorkspaceDirName)
 	})
 
+	t.Run("notifies observers for restored documents", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "file.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package main\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		o := &recordingDocumentObserver{}
+		next.AddDocumentObserver(o)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		opened := make([]string, len(next.AllDocuments()))
+		for i := range opened {
+			opened[i] = "opened"
+		}
+		assert.Equal(t, opened, o.events)
+	})
+
 	t.Run("single view no split", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

@@ -239,6 +239,10 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		}
 	}
 
+	for _, doc := range nextDocs {
+		e.documentOpened(doc)
+	}
+
 	return s.Options, true, nil
 }
 

@@ -29,9 +29,18 @@ type (
 		restoreCursor bool
 		disk          diskSnapshot
 		external      ExternalState
+		pending       *pendingLoad
 
 		buf bufState
 		ls  lsState
+	}
+
+	// pendingLoad marks a session buffer whose file has not been read yet. The
+	// path and language are known; content and everything derived from it load
+	// on first access
+	pendingLoad struct {
+		opts *Options
+		lang string
 	}
 
 	// bufState holds the full editing state of the document. Snapshot fields
@@ -121,6 +130,7 @@ func (d *Document) AccessedAt() int64 {
 
 // Text returns the current rope text
 func (d *Document) Text() core.Rope {
+	d.ensureLoaded()
 	d.buf.RLock()
 	defer d.buf.RUnlock()
 	return d.buf.text
@@ -143,6 +153,14 @@ func (d *Document) SetPath(path string) {
 // Modified reports whether the document has unsaved changes
 func (d *Document) Modified() bool {
 	return d.buf.unsaved
+}
+
+// Loaded reports whether the backing file has been read; a restored session
+// buffer stays unloaded until its content is first accessed
+func (d *Document) Loaded() bool {
+	d.buf.RLock()
+	defer d.buf.RUnlock()
+	return d.pending == nil
 }
 
 // ExternalState reports any unresolved change made to the backing file by
@@ -176,6 +194,7 @@ func (d *Document) TextFormat(w int) *language.TextFormat {
 func (d *Document) TextFormatForConfig(
 	w int, opts *Options,
 ) *language.TextFormat {
+	d.ensureLoaded()
 	langDef := d.langDef
 	if d.editorConfig != nil && d.editorConfig.MaxLineLength != nil {
 		cpy := *langDef
@@ -201,6 +220,7 @@ func (d *Document) SetReadOnly(v bool) {
 
 // IndentStyle returns the active indentation style
 func (d *Document) IndentStyle() core.IndentStyle {
+	d.ensureLoaded()
 	return d.indent
 }
 
@@ -211,17 +231,20 @@ func (d *Document) SetIndentStyle(s core.IndentStyle) {
 
 // TabWidth returns the display tab width
 func (d *Document) TabWidth() int {
+	d.ensureLoaded()
 	return d.tabWidth
 }
 
 // LineEnding returns the document's line-ending style
 func (d *Document) LineEnding() core.LineEnding {
+	d.ensureLoaded()
 	return d.lineEnding
 }
 
 // HasBOM reports whether the document was loaded with a UTF-8 BOM, which is
 // preserved on save
 func (d *Document) HasBOM() bool {
+	d.ensureLoaded()
 	return d.hasBOM
 }
 
@@ -316,6 +339,7 @@ func (d *Document) CommitInsertHistory(vid Id) {
 // insert group is active (BeginInsertGroup was called), changes are accumulated
 // and a single revision is committed by CommitInsertHistory
 func (d *Document) Apply(tx core.Transaction, vid Id) error {
+	d.ensureLoaded()
 	newText, err := tx.Apply(d.buf.text)
 	if err != nil {
 		return err
@@ -449,6 +473,36 @@ func (d *Document) mapOtherSelections(vid Id, cs core.ChangeSet) {
 	}
 }
 
+// ensureLoaded reads the backing file the first time a pending buffer's content
+// is touched, copying the content-derived state onto the placeholder
+func (d *Document) ensureLoaded() {
+	d.buf.Lock()
+	defer d.buf.Unlock()
+	p := d.pending
+	if p == nil {
+		return
+	}
+	d.pending = nil
+	loaded, err := openDocument(d.id, d.buf.path, p.opts)
+	if err != nil {
+		return
+	}
+	d.hasBOM = loaded.hasBOM
+	d.indent = loaded.indent
+	d.tabWidth = loaded.tabWidth
+	d.lineEnding = loaded.lineEnding
+	d.editorConfig = loaded.editorConfig
+	d.disk = loaded.disk
+	d.external = loaded.external
+	d.buf.text = loaded.buf.text
+	d.buf.version = loaded.buf.version
+	d.buf.history = loaded.buf.history
+	if p.lang == "" {
+		d.buf.lang = loaded.buf.lang
+		d.langDef = loaded.langDef
+	}
+}
+
 func newDocument(id DocumentId, opts *Options) *Document {
 	d := &Document{
 		id:         id,
@@ -554,4 +608,16 @@ func openDocument(
 	doc.refreshDiskSnapshot()
 
 	return doc, nil
+}
+
+func newPendingDocument(
+	id DocumentId, absPath, lang string, opts *Options,
+) *Document {
+	d := newDocument(id, opts)
+	d.buf.path = absPath
+	d.pending = &pendingLoad{opts: opts, lang: lang}
+	if lang != "" {
+		d.SetLang(lang)
+	}
+	return d
 }

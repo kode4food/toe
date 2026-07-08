@@ -111,7 +111,7 @@ func bufferPickerLines(
 			return selectionLineRange(doc, v.ID())
 		}
 	}
-	if focused == nil {
+	if focused == nil || !doc.Loaded() {
 		return nil
 	}
 	return selectionLineRange(doc, focused.ID())

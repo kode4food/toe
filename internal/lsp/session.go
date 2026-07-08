@@ -29,6 +29,7 @@ type (
 		languages map[string]language.Language
 		clients   map[string]*Client
 		docs      map[view.DocumentId][]string
+		opened    map[view.DocumentId]bool
 		diagIDs   map[view.DocumentId]map[string]string
 		comps     map[string]completionCandidate
 		actions   map[string]codeActionCandidate
@@ -79,6 +80,7 @@ func NewSession(ctx context.Context, cwd string) *Session {
 		languages: languagesByName(langs),
 		clients:   map[string]*Client{},
 		docs:      map[view.DocumentId][]string{},
+		opened:    map[view.DocumentId]bool{},
 		diagIDs:   map[view.DocumentId]map[string]string{},
 		comps:     map[string]completionCandidate{},
 		actions:   map[string]codeActionCandidate{},
@@ -98,7 +100,7 @@ func (s *Session) ReloadConfig() error {
 	if s.editor == nil {
 		return nil
 	}
-	for _, doc := range s.editor.AllDocuments() {
+	for _, doc := range s.editor.VisibleDocuments() {
 		s.DocumentOpened(doc)
 	}
 	return nil
@@ -337,7 +339,7 @@ func (s *Session) Close() error {
 
 // DocumentOpened starts matching servers and sends didOpen notifications
 func (s *Session) DocumentOpened(doc *view.Document) {
-	s.notify(doc, (*Client).DidOpen)
+	s.clientsForDocument(doc)
 	s.pullDiagnosticsAsync(doc)
 	s.documentLinksAsync(doc)
 	s.documentColorsAsync(doc)
@@ -367,12 +369,18 @@ func (s *Session) DocumentSaved(doc *view.Document) {
 
 // DocumentClosed sends didClose notifications and forgets the document
 func (s *Session) DocumentClosed(doc *view.Document) {
-	s.notify(doc, (*Client).DidClose)
+	s.mu.RLock()
+	opened := s.opened[doc.ID()]
+	s.mu.RUnlock()
+	if opened {
+		s.notify(doc, (*Client).DidClose)
+	}
 	doc.ClearAllDocumentHighlights()
 	doc.ClearDocumentLinks()
 	doc.ClearDocumentColors()
 	s.mu.Lock()
 	delete(s.docs, doc.ID())
+	delete(s.opened, doc.ID())
 	delete(s.diagIDs, doc.ID())
 	s.clearDocumentLinksLocked(doc.ID())
 	s.mu.Unlock()
@@ -484,6 +492,9 @@ func (s *Session) pullAllDiagnosticsAsync() {
 		return
 	}
 	for _, doc := range s.editor.AllDocuments() {
+		if !doc.Loaded() {
+			continue
+		}
 		s.pullDiagnosticsAsync(doc)
 	}
 }
@@ -549,7 +560,32 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 		out = append(out, client)
 	}
 	s.setDocumentServers(doc.ID(), names)
+	s.ensureDidOpen(doc, out, lang)
 	return out
+}
+
+func (s *Session) ensureDidOpen(
+	doc *view.Document, clients []*Client, lang language.Language,
+) {
+	if len(clients) == 0 {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.opened[doc.ID()] {
+		return
+	}
+	snap, ok := SnapshotDocument(doc)
+	if !ok {
+		return
+	}
+	if lang.LanguageID != "" {
+		snap.LanguageID = lang.LanguageID
+	}
+	for _, client := range clients {
+		_, _ = client.DidOpen(s.ctx, snap)
+	}
+	s.opened[doc.ID()] = true
 }
 
 func (s *Session) client(name string) (*Client, bool) {
@@ -576,6 +612,7 @@ func (s *Session) resetConfig(langs language.Languages) []*Client {
 	s.languages = languagesByName(langs)
 	s.clients = map[string]*Client{}
 	s.docs = map[view.DocumentId][]string{}
+	s.opened = map[view.DocumentId]bool{}
 	s.diagIDs = map[view.DocumentId]map[string]string{}
 	s.comps = map[string]completionCandidate{}
 	s.actions = map[string]codeActionCandidate{}
@@ -851,9 +888,12 @@ func Attach(ctx context.Context, e *view.Editor) *Session {
 	s.editor = e
 	e.SetLanguageServerController(s)
 	e.AddDocumentObserver(s)
-	for _, doc := range e.AllDocuments() {
-		s.DocumentOpened(doc)
-	}
+	docs := e.VisibleDocuments()
+	go func() {
+		for _, doc := range docs {
+			s.DocumentOpened(doc)
+		}
+	}()
 	return s
 }
 

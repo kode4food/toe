@@ -333,6 +333,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
+		waitForWorkspaceServer(t, session)
 
 		err = session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{
 			Changes: map[uri.URI][]protocol.TextEdit{
@@ -371,6 +372,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
+		waitForWorkspaceServer(t, session)
 		textDoc := protocol.OptionalVersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{
 				URI: uri.File(path),
@@ -424,6 +426,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
+		waitForWorkspaceServer(t, session)
 
 		err = session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{
 			DocumentChanges: []protocol.DocumentChange{
@@ -471,6 +474,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
+		waitForWorkspaceServer(t, session)
 
 		trueVal := true
 
@@ -1703,4 +1707,14 @@ language-servers = ["session-test"]
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
 	))
 	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func waitForWorkspaceServer(t *testing.T, session *lsp.Session) {
+	t.Helper()
+	assert.Eventually(t, func() bool {
+		return !errors.Is(
+			session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{}),
+			lsp.ErrUnknownLanguageServer,
+		)
+	}, 2*time.Second, 5*time.Millisecond)
 }

@@ -398,6 +398,22 @@ func (e *Editor) AllViews() []*View {
 	return e.tree.Traverse()
 }
 
+// VisibleDocuments returns the deduplicated documents currently shown in a pane
+func (e *Editor) VisibleDocuments() []*Document {
+	seen := map[DocumentId]bool{}
+	var out []*Document
+	for _, v := range e.tree.Traverse() {
+		if seen[v.docID] {
+			continue
+		}
+		if doc, ok := e.docs[v.docID]; ok {
+			seen[v.docID] = true
+			out = append(out, doc)
+		}
+	}
+	return out
+}
+
 // CloseCurrentView closes the focused view (and its document if unreferenced)
 func (e *Editor) CloseCurrentView() {
 	if v, ok := e.FocusedView(); ok {

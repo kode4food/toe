@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"maps"
 	"slices"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 )
@@ -11,13 +12,17 @@ import (
 //go:embed assets/languages.toml
 var defaultLanguagesTOML string
 
-// LoadDefaultLanguagesTOML decodes the bundled language defaults
-func LoadDefaultLanguagesTOML() (map[string]any, bool) {
+var defaultLanguages = sync.OnceValues(func() (map[string]any, bool) {
 	var out map[string]any
 	if _, err := toml.Decode(defaultLanguagesTOML, &out); err != nil {
 		return nil, false
 	}
 	return out, true
+})
+
+// LoadDefaultLanguagesTOML returns the cached bundled defaults; do not mutate
+func LoadDefaultLanguagesTOML() (map[string]any, bool) {
+	return defaultLanguages()
 }
 
 func MergeTOMLValues(left, right any, depth int) any {

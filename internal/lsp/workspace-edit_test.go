@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
@@ -353,6 +354,14 @@ func attachWorkspaceEditSession(t *testing.T, dir, path string) *lsp.Session {
 	assert.NoError(t, err)
 	session := lsp.Attach(t.Context(), e)
 	t.Cleanup(func() { _ = session.Close() })
+	// Attach opens visible documents asynchronously; wait until the server for
+	// the visible buffer has started before exercising it by name
+	assert.Eventually(t, func() bool {
+		return !errors.Is(
+			session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{}),
+			lsp.ErrUnknownLanguageServer,
+		)
+	}, 2*time.Second, 5*time.Millisecond)
 	return session
 }
 

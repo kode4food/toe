@@ -44,6 +44,9 @@ func (g *globalSearchSource) Load(
 	g.smartCase = e.Options().SearchSmartCase
 	g.openDocs = nil
 	for _, doc := range e.AllDocuments() {
+		if !doc.Modified() {
+			continue
+		}
 		if path := doc.Path(); path != "" {
 			g.openDocs = append(g.openDocs, docSnap{path, doc.Text().String()})
 		}

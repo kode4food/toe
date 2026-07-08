@@ -174,23 +174,26 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	docs := map[int]DocumentId{}
 	nextDocs := map[DocumentId]*Document{}
 	for i, sd := range s.Documents {
+		e.nextDocID++
+		id := e.nextDocID
 		var doc *Document
 		if sd.Scratch {
-			doc = e.newDocument()
+			doc = newDocument(id, &e.opts)
 			doc.buf.text = core.NewRope(sd.Text)
 			doc.buf.version++
+			if sd.Lang != "" {
+				doc.SetLang(sd.Lang)
+			}
 		} else {
 			if sd.Path == "" {
+				e.nextDocID--
 				continue
 			}
-			var err error
-			doc, err = e.openFile(sessionAbsPath(base, sd.Path))
+			absPath, err := filepath.Abs(sessionAbsPath(base, sd.Path))
 			if err != nil {
 				return nil, false, err
 			}
-		}
-		if sd.Lang != "" {
-			doc.SetLang(sd.Lang)
+			doc = newPendingDocument(id, absPath, sd.Lang, &e.opts)
 		}
 		nextDocs[doc.ID()] = doc
 		docs[i+1] = doc.ID()
@@ -239,7 +242,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		}
 	}
 
-	for _, doc := range nextDocs {
+	for _, doc := range e.VisibleDocuments() {
 		e.documentOpened(doc)
 	}
 

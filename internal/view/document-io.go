@@ -14,6 +14,9 @@ import (
 
 // Save writes the document to its current path
 func (d *Document) Save(opts *Options) error {
+	if !d.Loaded() {
+		return nil
+	}
 	path := d.Path()
 	if path == "" {
 		return ErrDocumentNoPath
@@ -54,6 +57,7 @@ func (d *Document) Save(opts *Options) error {
 // Reload replaces the document text with the current file contents on disk
 // All per-view selections are reset to the start of the document
 func (d *Document) Reload() error {
+	d.ensureLoaded()
 	path := d.Path()
 	if path == "" {
 		return ErrDocumentNoPath
@@ -81,6 +85,7 @@ func (d *Document) Reload() error {
 }
 
 func (d *Document) reloadPreservingSelections() error {
+	d.ensureLoaded()
 	path := d.Path()
 	if path == "" {
 		return ErrDocumentNoPath

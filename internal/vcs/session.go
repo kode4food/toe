@@ -22,6 +22,7 @@ type (
 		differs  map[view.DocumentId]*Differ
 		heads    map[view.DocumentId]string
 		headIDs  map[view.DocumentId]string
+		loading  map[view.DocumentId]bool
 		updates  chan struct{}
 	}
 
@@ -58,21 +59,24 @@ func Attach(e *view.Editor) *Session {
 		differs:  map[view.DocumentId]*Differ{},
 		heads:    map[view.DocumentId]string{},
 		headIDs:  map[view.DocumentId]string{},
+		loading:  map[view.DocumentId]bool{},
 		updates:  make(chan struct{}, 1),
 	}
 	e.AddDocumentObserver(s)
 	e.SetVersionControl(s)
-	for _, doc := range e.AllDocuments() {
+	for _, doc := range e.VisibleDocuments() {
 		s.DocumentOpened(doc)
 	}
 	return s
 }
 
-// DiffHunks returns the current hunks for the document
+// DiffHunks returns the current hunks for the document, loading its diff base
+// on first request for a buffer that was not open at startup
 func (s *Session) DiffHunks(doc *view.Document) []view.DiffHunk {
 	if d, ok := s.differ(doc); ok {
 		return d.Hunks()
 	}
+	s.ensureDiffBase(doc)
 	return nil
 }
 
@@ -131,11 +135,7 @@ func (s *Session) Updates() <-chan struct{} {
 // DocumentOpened fetches the diff base in the background and starts a differ
 // once it arrives
 func (s *Session) DocumentOpened(doc *view.Document) {
-	path := doc.Path()
-	if path == "" {
-		return
-	}
-	go s.loadDiffBase(doc, path)
+	s.ensureDiffBase(doc)
 }
 
 // DocumentChanged feeds the new document text to the differ
@@ -175,6 +175,29 @@ func (s *Session) Close() {
 		d.Close()
 		delete(s.differs, id)
 	}
+}
+
+// ensureDiffBase loads the diff base once per document, off the main goroutine
+func (s *Session) ensureDiffBase(doc *view.Document) {
+	path := doc.Path()
+	if path == "" {
+		return
+	}
+	id := doc.ID()
+	s.mu.Lock()
+	_, hasDiffer := s.differs[id]
+	if hasDiffer || s.loading[id] {
+		s.mu.Unlock()
+		return
+	}
+	s.loading[id] = true
+	s.mu.Unlock()
+	go func() {
+		s.loadDiffBase(doc, path)
+		s.mu.Lock()
+		delete(s.loading, id)
+		s.mu.Unlock()
+	}()
 }
 
 func (s *Session) differ(doc *view.Document) (*Differ, bool) {

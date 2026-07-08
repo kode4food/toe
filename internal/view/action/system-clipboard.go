@@ -1,46 +1,31 @@
 package action
 
-import (
-	"golang.design/x/clipboard"
+import "github.com/kode4food/toe/internal/view"
 
-	"github.com/kode4food/toe/internal/view"
-)
-
-type SystemClipboard struct {
-	ready bool
-}
+type SystemClipboard struct{}
 
 var _ view.Clipboard = (*SystemClipboard)(nil)
 
 func NewSystemClipboard() *SystemClipboard {
-	return &SystemClipboard{
-		ready: clipboard.Init() == nil,
-	}
+	return &SystemClipboard{}
 }
 
-func (c *SystemClipboard) Available() bool {
-	return c.ready
+func (*SystemClipboard) Available() bool {
+	return clipboardAvailable()
 }
 
-func (c *SystemClipboard) Write(text string) error {
-	if !c.ready {
-		return ErrNoClipboardProvider
-	}
-	clipboard.Write(clipboard.FmtText, []byte(text))
-	return nil
+func (*SystemClipboard) Write(text string) error {
+	return writeClipboard(text)
 }
 
-func (c *SystemClipboard) WritePrimary(string) error {
-	return nil
+func (*SystemClipboard) WritePrimary(text string) error {
+	return writePrimaryClipboard(text)
 }
 
-func (c *SystemClipboard) Read() (string, error) {
-	if !c.ready {
-		return "", ErrNoClipboardProvider
-	}
-	return string(clipboard.Read(clipboard.FmtText)), nil
+func (*SystemClipboard) Read() (string, error) {
+	return readClipboard()
 }
 
-func (c *SystemClipboard) ReadPrimary() (string, error) {
-	return c.Read()
+func (*SystemClipboard) ReadPrimary() (string, error) {
+	return readPrimaryClipboard()
 }

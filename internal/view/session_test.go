@@ -180,6 +180,40 @@ func TestSession(t *testing.T) {
 		assert.True(t, doc.Loaded())
 	})
 
+	t.Run("restored buffer whose file is gone loads empty", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "gone.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package gone\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		assert.NoError(t, os.Remove(filePath))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		var doc *view.Document
+		for _, d := range next.AllDocuments() {
+			if d.Path() == filePath {
+				doc = d
+			}
+		}
+		assert.NotNil(t, doc)
+		assert.Equal(t, "", doc.Text().String())
+		assert.True(t, doc.Loaded())
+	})
+
 	t.Run("single view no split", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

@@ -7,11 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
+
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Git provides diff bases and file status by shelling out to the git binary
-// found on PATH
+// Git reads HEAD state through go-git in-process and reports working-tree
+// status by shelling out to the git binary found on PATH
 type Git struct{}
 
 var (
@@ -21,13 +23,17 @@ var (
 
 var _ Provider = Git{}
 
-// DiffBase returns the HEAD contents of path. The --filters flag applies the
-// work-tree conversions (eol, ident) git would perform on checkout, so the
-// result matches what an unedited file contains on disk
+// DiffBase returns the HEAD contents of path. ponytail: returns the raw blob;
+// git's checkout filters (eol/ident smudge) are not applied, so a repo with
+// .gitattributes eol conversion may show phantom diffs — add filtering if it
+// bites
 func (Git) DiffBase(path string) ([]byte, error) {
 	path = realPath(path)
-	dir := filepath.Dir(path)
-	root, err := gitRoot(dir)
+	repo, err := openRepo(path)
+	if err != nil {
+		return nil, err
+	}
+	root, err := repoRoot(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -35,36 +41,57 @@ func (Git) DiffBase(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return runGit(dir, "cat-file", "--filters", "HEAD:"+filepath.ToSlash(rel))
+	ref, err := repo.Head()
+	if err != nil {
+		return nil, err
+	}
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, err
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, err
+	}
+	file, err := tree.File(filepath.ToSlash(rel))
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrGitCommand, err)
+	}
+	content, err := file.Contents()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(content), nil
 }
 
 // HeadName returns the current branch name, or a short commit hash when the
 // head is detached
 func (Git) HeadName(path string) (string, error) {
-	dir := filepath.Dir(path)
-	out, err := runGit(dir, "rev-parse", "--abbrev-ref", "HEAD")
+	repo, err := openRepo(path)
 	if err != nil {
 		return "", err
 	}
-	name := strings.TrimSpace(string(out))
-	if name != "HEAD" {
-		return name, nil
-	}
-	out, err = runGit(dir, "rev-parse", "--short=8", "HEAD")
+	ref, err := repo.Head()
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(out)), nil
+	if ref.Name().IsBranch() {
+		return ref.Name().Short(), nil
+	}
+	return ref.Hash().String()[:8], nil
 }
 
 // HeadID returns the full current HEAD revision
 func (Git) HeadID(path string) (string, error) {
-	dir := filepath.Dir(path)
-	out, err := runGit(dir, "rev-parse", "HEAD")
+	repo, err := openRepo(path)
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(out)), nil
+	ref, err := repo.Head()
+	if err != nil {
+		return "", err
+	}
+	return ref.Hash().String(), nil
 }
 
 // ChangedFiles emulates `git status` for the repository containing cwd,
@@ -155,6 +182,20 @@ func gitRoot(dir string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+func openRepo(path string) (*git.Repository, error) {
+	return git.PlainOpenWithOptions(
+		filepath.Dir(path), &git.PlainOpenOptions{DetectDotGit: true},
+	)
+}
+
+func repoRoot(repo *git.Repository) (string, error) {
+	wt, err := repo.Worktree()
+	if err != nil {
+		return "", err
+	}
+	return realPath(wt.Filesystem.Root()), nil
 }
 
 func runGit(dir string, args ...string) ([]byte, error) {

@@ -1,8 +1,6 @@
 package action_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,97 +11,88 @@ import (
 )
 
 func TestClipboardNoProvider(t *testing.T) {
-	t.Run("YankToClipboard", func(t *testing.T) {
-		t.Setenv("PATH", "")
+	// the default editor clipboard is a no-op; actions must not panic
+	t.Run("yank", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		assert.NotPanics(t, func() { action.YankToClipboard(e) })
 	})
 
-	t.Run("PasteClipboardAfter", func(t *testing.T) {
-		t.Setenv("PATH", "")
+	t.Run("paste", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetCursor(t, e, 0)
 
 		assert.NotPanics(t, func() { action.PasteClipboardAfter(e) })
 	})
 
-	t.Run("YankToPrimaryClipboard", func(t *testing.T) {
-		t.Setenv("PATH", "")
+	t.Run("yank primary", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		assert.NotPanics(t, func() { action.YankToPrimaryClipboard(e) })
 	})
 
-	t.Run("PastePrimaryClipboardAfter", func(t *testing.T) {
-		t.Setenv("PATH", "")
+	t.Run("paste primary", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetCursor(t, e, 0)
 
 		assert.NotPanics(t, func() { action.PastePrimaryClipboardAfter(e) })
 	})
 
-	t.Run("ClipboardReplace", func(t *testing.T) {
-		t.Setenv("PATH", "")
+	t.Run("replace", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
 
 		assert.NotPanics(t, func() { action.ClipboardReplace(e) })
 	})
 
-	t.Run("ShowClipboardProvider returns none", func(t *testing.T) {
-		t.Setenv("PATH", "")
-
-		assert.Equal(t, "none", action.ShowClipboardProvider(nil))
+	t.Run("provider is none", func(t *testing.T) {
+		assert.Equal(t, "none", action.ShowClipboardProvider(nil, nil))
 	})
 }
 
 func TestClipboard(t *testing.T) {
-	t.Run("show provider", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-
-		assert.NotEqual(t, "none", action.ShowClipboardProvider(nil))
+	t.Run("provider is system", func(t *testing.T) {
+		assert.Equal(t, "system",
+			action.ShowClipboardProvider(testutil.NewFakeClipboard(), nil))
 	})
 
 	t.Run("yank to clipboard", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
 		e := testutil.EditorWithText(t, "hello")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.YankToClipboard(e)
 
-		data, err := os.ReadFile(clipFile)
-		assert.NoError(t, err)
-		assert.Equal(t, "hello", string(data))
+		assert.Equal(t, "hello", clip.System)
 		assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '+'))
 	})
 
 	t.Run("paste after/before", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("hello"), 0o644))
+		clip := testutil.NewFakeClipboard()
+		clip.System = "hello"
 
 		e := testutil.EditorWithText(t, "x")
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		action.PasteClipboardAfter(e)
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 
 		e = testutil.EditorWithText(t, "x")
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		action.PasteClipboardBefore(e)
 		doc, _ = e.FocusedDocument()
 		assert.Equal(t, "hellox", doc.Text().String())
 	})
 
-	t.Run("yank main selection to clipboard", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
+	t.Run("yank main to clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{
 			core.NewRange(0, 5),
 			core.NewRange(6, 11),
@@ -111,16 +100,14 @@ func TestClipboard(t *testing.T) {
 
 		action.YankMainToClipboard(e)
 
-		data, err := os.ReadFile(clipFile)
-		assert.NoError(t, err)
-		assert.Equal(t, "hello", string(data))
+		assert.Equal(t, "hello", clip.System)
 	})
 
 	t.Run("clipboard replace", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := testutil.EditorWithText(t, "abc")
+		clip := testutil.NewFakeClipboard()
+		clip.System = "XY"
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
 
 		action.ClipboardReplace(e)
@@ -130,23 +117,21 @@ func TestClipboard(t *testing.T) {
 	})
 
 	t.Run("yank to primary clipboard", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
 		e := testutil.EditorWithText(t, "hello")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
 
 		action.YankToPrimaryClipboard(e)
 
-		data, err := os.ReadFile(clipFile)
-		assert.NoError(t, err)
-		assert.Equal(t, "hello", string(data))
+		assert.Equal(t, "hello", clip.Primary)
 	})
 
-	t.Run("paste primary clipboard after", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("hi"), 0o644))
+	t.Run("paste primary after", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "x")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "hi"
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 
 		action.PastePrimaryClipboardAfter(e)
@@ -155,11 +140,11 @@ func TestClipboard(t *testing.T) {
 		assert.Equal(t, "xhi", doc.Text().String())
 	})
 
-	t.Run("paste primary clipboard before", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("hi"), 0o644))
+	t.Run("paste primary before", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "x")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "hi"
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 
 		action.PastePrimaryClipboardBefore(e)
@@ -168,11 +153,11 @@ func TestClipboard(t *testing.T) {
 		assert.Equal(t, "hix", doc.Text().String())
 	})
 
-	t.Run("primary clipboard replace", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("Z"), 0o644))
+	t.Run("primary replace", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "Z"
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
 
 		action.PrimaryClipboardReplace(e)

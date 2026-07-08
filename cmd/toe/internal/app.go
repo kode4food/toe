@@ -18,6 +18,7 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/action"
 	"github.com/kode4food/toe/internal/view/config"
 )
 
@@ -49,6 +50,7 @@ func Run(args []string, out io.Writer) error {
 		return err
 	}
 	a.Editor = view.NewEditor(a.Root)
+	a.Editor.SetClipboard(action.NewOSC52Clipboard(action.NewSystemClipboard()))
 	if err := a.OpenEditorFiles(); err != nil {
 		return err
 	}

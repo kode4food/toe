@@ -56,6 +56,24 @@ func MakeTTYWriter() TTYWriter {
 	}
 }
 
+// ShowClipboardProvider names the active clipboard mechanism for the status
+// bar. clip is the editor's clipboard; ttyAvail reports whether OSC 52 output
+// is possible
+func ShowClipboardProvider(clip view.Clipboard, ttyAvail func() bool) string {
+	sys := clip != nil && clip.Available()
+	osc := ttyAvail != nil && ttyAvail()
+	switch {
+	case sys && osc:
+		return "osc52+system"
+	case sys:
+		return "system"
+	case osc:
+		return "osc52"
+	default:
+		return "none"
+	}
+}
+
 // YankToClipboard copies all selection text to the system clipboard
 func YankToClipboard(e *view.Editor) {
 	values := selectionFragments(e)
@@ -63,7 +81,7 @@ func YankToClipboard(e *view.Editor) {
 		return
 	}
 	e.Registers().Write(clipboardRegister, values)
-	_ = writeClipboard(strings.Join(values, "\n"))
+	_ = e.Clipboard().Write(strings.Join(values, "\n"))
 	e.SetMode(view.ModeNormal)
 }
 
@@ -84,13 +102,13 @@ func YankMainToClipboard(e *view.Editor) {
 		return
 	}
 	e.Registers().Write(clipboardRegister, []string{frag})
-	_ = writeClipboard(frag)
+	_ = e.Clipboard().Write(frag)
 	e.SetMode(view.ModeNormal)
 }
 
 // PasteClipboardAfter reads the clipboard and pastes after each selection
 func PasteClipboardAfter(e *view.Editor) {
-	val, err := readClipboard()
+	val, err := e.Clipboard().Read()
 	if err != nil || val == "" {
 		return
 	}
@@ -104,7 +122,7 @@ func PasteClipboardAfter(e *view.Editor) {
 
 // PasteClipboardBefore reads the clipboard and pastes before each selection
 func PasteClipboardBefore(e *view.Editor) {
-	val, err := readClipboard()
+	val, err := e.Clipboard().Read()
 	if err != nil || val == "" {
 		return
 	}
@@ -118,7 +136,7 @@ func PasteClipboardBefore(e *view.Editor) {
 
 // ClipboardReplace replaces each selection with the clipboard
 func ClipboardReplace(e *view.Editor) {
-	val, err := readClipboard()
+	val, err := e.Clipboard().Read()
 	if err != nil || val == "" {
 		return
 	}
@@ -161,7 +179,7 @@ func YankToPrimaryClipboard(e *view.Editor) {
 		return
 	}
 	e.Registers().Write(primaryClipboardRegister, values)
-	_ = writePrimaryClipboard(strings.Join(values, "\n"))
+	_ = e.Clipboard().WritePrimary(strings.Join(values, "\n"))
 	e.SetMode(view.ModeNormal)
 }
 
@@ -203,7 +221,7 @@ func selectionFragments(e *view.Editor) []string {
 }
 
 func withPrimaryClipboard(e *view.Editor, fn func(*view.Editor)) {
-	val, err := readPrimaryClipboard()
+	val, err := e.Clipboard().ReadPrimary()
 	if err != nil {
 		e.SetStatusMsg("error: " + err.Error())
 		return

@@ -94,9 +94,13 @@ func (Git) HeadID(path string) (string, error) {
 	return ref.Hash().String(), nil
 }
 
-// ChangedFiles emulates `git status` for the repository containing cwd,
-// reporting paths as absolute
+// ChangedFiles reports the working-tree changes for the repository containing
+// cwd, with absolute paths. It prefers the git binary (fast) and falls back to
+// go-git's in-process status walk when git is not on PATH
 func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
+	if _, err := exec.LookPath("git"); err != nil {
+		return changedFilesGoGit(cwd)
+	}
 	root, err := gitRoot(cwd)
 	if err != nil {
 		return nil, err
@@ -109,6 +113,42 @@ func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 		return nil, err
 	}
 	return parseGitStatus(root, string(out))
+}
+
+// go-git reports the same X/Y status codes as porcelain but does not detect
+// renames, so a moved file shows as add + delete
+func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
+	repo, err := git.PlainOpenWithOptions(
+		cwd, &git.PlainOpenOptions{DetectDotGit: true},
+	)
+	if err != nil {
+		return nil, err
+	}
+	wt, err := repo.Worktree()
+	if err != nil {
+		return nil, err
+	}
+	root := realPath(wt.Filesystem.Root())
+	st, err := wt.Status()
+	if err != nil {
+		return nil, err
+	}
+	var changes []view.FileChange
+	for p, fs := range st {
+		x, y := byte(fs.Staging), byte(fs.Worktree)
+		if x == ' ' && y == ' ' {
+			continue
+		}
+		kind := changeKind(x, y)
+		fc := view.FileChange{
+			Kind: kind, Path: filepath.Join(root, filepath.FromSlash(p)),
+		}
+		if kind == view.FileChangeRenamed && fs.Extra != "" {
+			fc.FromPath = filepath.Join(root, filepath.FromSlash(fs.Extra))
+		}
+		changes = append(changes, fc)
+	}
+	return changes, nil
 }
 
 // parseGitStatus decodes `git status --porcelain -z` output. Each entry is
@@ -126,40 +166,38 @@ func parseGitStatus(root, out string) ([]view.FileChange, error) {
 			return nil, fmt.Errorf("%w: %q", ErrGitBadStatus, entry)
 		}
 		x, y := entry[0], entry[1]
-		path := filepath.Join(root, filepath.FromSlash(entry[3:]))
-		switch {
-		case x == '?' && y == '?':
-			changes = append(changes, view.FileChange{
-				Kind: view.FileChangeUntracked, Path: path,
-			})
-		case gitConflict(x, y):
-			changes = append(changes, view.FileChange{
-				Kind: view.FileChangeConflict, Path: path,
-			})
-		case x == 'R' || y == 'R':
+		kind := changeKind(x, y)
+		fc := view.FileChange{
+			Kind: kind,
+			Path: filepath.Join(root, filepath.FromSlash(entry[3:])),
+		}
+		if kind == view.FileChangeRenamed {
 			if i+1 >= len(fields) {
 				return nil, fmt.Errorf("%w: %q", ErrGitBadStatus, entry)
 			}
 			i++
-			from := filepath.Join(root, filepath.FromSlash(fields[i]))
-			changes = append(changes, view.FileChange{
-				Kind: view.FileChangeRenamed, Path: path, FromPath: from,
-			})
-		case x == 'D' || y == 'D':
-			changes = append(changes, view.FileChange{
-				Kind: view.FileChangeDeleted, Path: path,
-			})
-		case x == 'A':
-			changes = append(changes, view.FileChange{
-				Kind: view.FileChangeAdded, Path: path,
-			})
-		default:
-			changes = append(changes, view.FileChange{
-				Kind: view.FileChangeModified, Path: path,
-			})
+			fc.FromPath = filepath.Join(root, filepath.FromSlash(fields[i]))
 		}
+		changes = append(changes, fc)
 	}
 	return changes, nil
+}
+
+func changeKind(x, y byte) view.FileChangeKind {
+	switch {
+	case x == '?' && y == '?':
+		return view.FileChangeUntracked
+	case gitConflict(x, y):
+		return view.FileChangeConflict
+	case x == 'R' || y == 'R':
+		return view.FileChangeRenamed
+	case x == 'D' || y == 'D':
+		return view.FileChangeDeleted
+	case x == 'A':
+		return view.FileChangeAdded
+	default:
+		return view.FileChangeModified
+	}
 }
 
 func gitConflict(x, y byte) bool {

@@ -68,10 +68,10 @@ func TestEditorKeys(t *testing.T) {
 
 func TestMouseMiddlePaste(t *testing.T) {
 	t.Run("pastes at clicked position", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := editorWithText(t, "abcd")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "XY"
+		e.SetClipboard(clip)
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
@@ -85,10 +85,10 @@ func TestMouseMiddlePaste(t *testing.T) {
 	})
 
 	t.Run("disabled leaves document unchanged", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := editorWithText(t, "abcd")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "XY"
+		e.SetClipboard(clip)
 		e.Options().MiddleClickPaste = false
 		m := renderedModel(e)
 
@@ -102,10 +102,10 @@ func TestMouseMiddlePaste(t *testing.T) {
 	})
 
 	t.Run("alt replaces selection", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := editorWithText(t, "abcd")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "XY"
+		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
 		m := renderedModel(e)
 
@@ -119,10 +119,10 @@ func TestMouseMiddlePaste(t *testing.T) {
 	})
 
 	t.Run("outside content is ignored", func(t *testing.T) {
-		clipFile := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clipFile)
-		assert.NoError(t, os.WriteFile(clipFile, []byte("XY"), 0o644))
 		e := editorWithText(t, "abcd")
+		clip := testutil.NewFakeClipboard()
+		clip.Primary = "XY"
+		e.SetClipboard(clip)
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{

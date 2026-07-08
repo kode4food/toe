@@ -54,7 +54,7 @@ func TestGit(t *testing.T) {
 		assert.Equal(t, "main", name)
 	})
 
-	t.Run("head name reports short hash when detached", func(t *testing.T) {
+	t.Run("short hash when detached", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
 		testutil.RunGit(t, repo, "checkout", "--detach")
@@ -97,6 +97,30 @@ func TestGit(t *testing.T) {
 				)
 			}
 		}
+	})
+
+	t.Run("falls back to go-git", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		modified := testutil.GitCommitFile(t, repo, "modified.txt", "one\n")
+		deleted := testutil.GitCommitFile(t, repo, "deleted.txt", "gone\n")
+		testutil.WriteFile(t, modified, "one\nmore\n")
+		assert.NoError(t, os.Remove(deleted))
+		untracked := filepath.Join(repo, "untracked.txt")
+		testutil.WriteFile(t, untracked, "new\n")
+
+		// hide the git binary so ChangedFiles takes the go-git path
+		t.Setenv("PATH", "")
+
+		changes, err := vcs.Git{}.ChangedFiles(repo)
+		assert.NoError(t, err)
+
+		kinds := map[string]view.FileChangeKind{}
+		for _, c := range changes {
+			kinds[filepath.Base(c.Path)] = c.Kind
+		}
+		assert.Equal(t, view.FileChangeModified, kinds["modified.txt"])
+		assert.Equal(t, view.FileChangeDeleted, kinds["deleted.txt"])
+		assert.Equal(t, view.FileChangeUntracked, kinds["untracked.txt"])
 	})
 
 	t.Run("changed files reports conflicts", func(t *testing.T) {

@@ -11,26 +11,20 @@ import (
 	"github.com/kode4food/toe/internal/testutil"
 )
 
-func TestWriteFakeClipboardTools(t *testing.T) {
-	t.Run("pbcopy/pbpaste round-trips text", func(t *testing.T) {
-		clip := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clip)
+func TestFakeClipboard(t *testing.T) {
+	clip := testutil.NewFakeClipboard()
+	assert.True(t, clip.Available())
 
-		assert.NoError(t, os.WriteFile(clip, []byte("hello"), 0o644))
-		out, err := exec.Command("pbpaste").Output()
-		assert.NoError(t, err)
-		assert.Equal(t, "hello", string(out))
-	})
+	assert.NoError(t, clip.Write("hello"))
+	assert.NoError(t, clip.WritePrimary("world"))
 
-	t.Run("installs xclip that round-trips text", func(t *testing.T) {
-		clip := filepath.Join(t.TempDir(), "clip.txt")
-		testutil.WriteFakeClipboardTools(t, clip)
+	sys, err := clip.Read()
+	assert.NoError(t, err)
+	assert.Equal(t, "hello", sys)
 
-		assert.NoError(t, os.WriteFile(clip, []byte("world"), 0o644))
-		out, err := exec.Command("xclip", "-o").Output()
-		assert.NoError(t, err)
-		assert.Equal(t, "world", string(out))
-	})
+	pri, err := clip.ReadPrimary()
+	assert.NoError(t, err)
+	assert.Equal(t, "world", pri)
 }
 
 func TestGitHelpers(t *testing.T) {

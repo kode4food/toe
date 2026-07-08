@@ -17,6 +17,7 @@ type Editor struct {
 	opts         Options
 	configReload func() error
 	registers    register.Registers
+	clipboard    Clipboard
 	docObservers []DocumentObserver
 	langServers  LanguageServerController
 
@@ -57,6 +58,7 @@ func NewEditor(cwd string) *Editor {
 		cwd:       cwd,
 		opts:      defaultOptions(),
 		registers: register.New(),
+		clipboard: noopClipboard{},
 	}
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
@@ -345,6 +347,14 @@ func (e *Editor) ResetRegister() {
 // Registers returns the editor's register store
 func (e *Editor) Registers() register.Registers {
 	return e.registers
+}
+
+func (e *Editor) Clipboard() Clipboard {
+	return e.clipboard
+}
+
+func (e *Editor) SetClipboard(c Clipboard) {
+	e.clipboard = c
 }
 
 // ViewHeight returns the last-reported content area height

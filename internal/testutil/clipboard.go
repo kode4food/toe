@@ -1,55 +1,39 @@
 package testutil
 
-import (
-	"os"
-	"path/filepath"
-	"testing"
-)
+import "github.com/kode4food/toe/internal/view"
 
-const (
-	pbcopyScript = `#!/bin/sh
-/bin/cat > "$CLIPFILE"
-`
-	pbpasteScript = `#!/bin/sh
-/bin/cat "$CLIPFILE"
-`
-	xclipScript = `#!/bin/sh
-case " $* " in
-*" -o "*) /bin/cat "$CLIPFILE";;
-*) /bin/cat > "$CLIPFILE";;
-esac
-`
-	xselScript = `#!/bin/sh
-case " $* " in
-*" --output "*) /bin/cat "$CLIPFILE";;
-*) /bin/cat > "$CLIPFILE";;
-esac
-`
-	wlcopyScript = `#!/bin/sh
-/bin/cat > "$CLIPFILE"
-`
-	wlpasteScript = `#!/bin/sh
-/bin/cat "$CLIPFILE"
-`
-)
-
-func WriteFakeClipboardTools(t testing.TB, clipFile string) {
-	t.Helper()
-	dir := t.TempDir()
-	writeTool(t, dir, "pbcopy", pbcopyScript)
-	writeTool(t, dir, "pbpaste", pbpasteScript)
-	writeTool(t, dir, "xclip", xclipScript)
-	writeTool(t, dir, "xsel", xselScript)
-	writeTool(t, dir, "wl-copy", wlcopyScript)
-	writeTool(t, dir, "wl-paste", wlpasteScript)
-	t.Setenv("PATH", dir)
-	t.Setenv("CLIPFILE", clipFile)
+// FakeClipboard is an in-memory view.Clipboard for hermetic tests, keeping the
+// system and PRIMARY selections in separate buffers
+type FakeClipboard struct {
+	System  string
+	Primary string
+	Ready   bool
 }
 
-func writeTool(t testing.TB, dir, name, script string) {
-	t.Helper()
-	err := os.WriteFile(filepath.Join(dir, name), []byte(script), 0o755)
-	if err != nil {
-		t.Fatalf("write fake clipboard tool %s: %v", name, err)
-	}
+var _ view.Clipboard = (*FakeClipboard)(nil)
+
+func NewFakeClipboard() *FakeClipboard {
+	return &FakeClipboard{Ready: true}
+}
+
+func (c *FakeClipboard) Available() bool {
+	return c.Ready
+}
+
+func (c *FakeClipboard) Write(text string) error {
+	c.System = text
+	return nil
+}
+
+func (c *FakeClipboard) WritePrimary(text string) error {
+	c.Primary = text
+	return nil
+}
+
+func (c *FakeClipboard) Read() (string, error) {
+	return c.System, nil
+}
+
+func (c *FakeClipboard) ReadPrimary() (string, error) {
+	return c.Primary, nil
 }

@@ -67,9 +67,6 @@ func HookInsert(
 ) (Change, Range, bool) {
 	pair, ok := pairs.Get(ch)
 	if !ok {
-		if isWhitespaceChar(ch) {
-			return hookInsertWhitespace(doc, r, ch, pairs)
-		}
 		return Change{}, Range{}, false
 	}
 	if pair.Same() {
@@ -96,23 +93,6 @@ func HookDelete(doc Rope, r Range, pairs AutoPairs) (Deletion, Range, bool) {
 	prev, ok := autoPairPrevChar(doc, cursor)
 	if !ok {
 		return Deletion{}, Range{}, false
-	}
-
-	if doc.LenChars() >= 4 &&
-		isWhitespaceChar(prev) && isWhitespaceChar(cur) {
-		secondPrev, ok1 := autoPairCharAt(
-			doc, NthPrevGraphemeBoundary(doc, cursor, 2),
-		)
-		secondNext, ok2 := autoPairCharAt(
-			doc, NextGraphemeBoundary(doc, cursor),
-		)
-		if ok1 && ok2 {
-			if pair, ok := pairs.Get(secondPrev); ok {
-				if pair.Open == secondPrev && pair.Close == secondNext {
-					return handleDeletePair(doc, r)
-				}
-			}
-		}
 	}
 
 	pair, ok := pairs.Get(cur)

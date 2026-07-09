@@ -59,23 +59,6 @@ func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	return TextChange(cursor, cursor, text), autoPairNextRange(doc, r, 2), true
 }
 
-func hookInsertWhitespace(
-	doc Rope, r Range, ch rune, pairs AutoPairs,
-) (Change, Range, bool) {
-	cursor := r.Cursor(doc)
-	cur, ok1 := autoPairCharAt(doc, cursor)
-	prev, ok2 := autoPairPrevChar(doc, cursor)
-	if !ok1 || !ok2 {
-		return Change{}, Range{}, false
-	}
-	pair, ok := pairs.Get(cur)
-	if !ok || pair.Open != prev || pair.Close != cur {
-		return Change{}, Range{}, false
-	}
-	wsPair := Pair{Open: ch, Close: ch}
-	return handleInsertSame(doc, r, wsPair)
-}
-
 // skipOverRange computes the range after a close-char jump-over. Point cursors
 // become a point past the char; selections preserve their shape
 func skipOverRange(doc Rope, r Range, cursor int) Range {

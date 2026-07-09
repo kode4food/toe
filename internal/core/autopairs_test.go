@@ -178,35 +178,25 @@ func TestHookInsertSame(t *testing.T) {
 }
 
 func TestHookInsertWhitespace(t *testing.T) {
-	t.Run("inserts space pair inside bracket pair", func(t *testing.T) {
-		doc := core.NewRope("()")
-		r := core.PointRange(1)
-		change, next, ok := core.HookInsert(doc, r, ' ', core.DefaultAutoPairs())
+	t.Run("space is never paired, inside brackets or quotes", func(t *testing.T) {
+		for _, doc := range []string{"()", `""`, "ab", "(]"} {
+			_, _, ok := core.HookInsert(
+				core.NewRope(doc), core.PointRange(1), ' ',
+				core.DefaultAutoPairs(),
+			)
+			assert.False(t, ok)
+		}
+	})
+
+	t.Run("closing quote still skips over after a space", func(t *testing.T) {
+		doc := core.NewRope(`" "`)
+		r := core.PointRange(2)
+		change, next, ok := core.HookInsert(
+			doc, r, '"', core.DefaultAutoPairs(),
+		)
 		assert.True(t, ok)
-		assert.Equal(t, "  ", change.Text())
-		assert.Equal(t, 2, next.Head)
-		assert.Equal(t, 2, next.Anchor)
-	})
-
-	t.Run("no action when not inside a pair", func(t *testing.T) {
-		doc := core.NewRope("ab")
-		r := core.PointRange(1)
-		_, _, ok := core.HookInsert(doc, r, ' ', core.DefaultAutoPairs())
-		assert.False(t, ok)
-	})
-
-	t.Run("no action at start of doc", func(t *testing.T) {
-		doc := core.NewRope("()")
-		r := core.PointRange(0)
-		_, _, ok := core.HookInsert(doc, r, ' ', core.DefaultAutoPairs())
-		assert.False(t, ok)
-	})
-
-	t.Run("no action when pair does not match", func(t *testing.T) {
-		doc := core.NewRope("(]")
-		r := core.PointRange(1)
-		_, _, ok := core.HookInsert(doc, r, ' ', core.DefaultAutoPairs())
-		assert.False(t, ok)
+		assert.Equal(t, "", change.Text())
+		assert.Equal(t, 3, next.Head)
 	})
 }
 
@@ -239,15 +229,6 @@ func TestHookDelete(t *testing.T) {
 		r := core.PointRange(2)
 		_, _, ok := core.HookDelete(doc, r, core.DefaultAutoPairs())
 		assert.False(t, ok)
-	})
-
-	t.Run("deletes inner spaces of padded pair", func(t *testing.T) {
-		doc := core.NewRope("(  )")
-		r := core.PointRange(2)
-		del, _, ok := core.HookDelete(doc, r, core.DefaultAutoPairs())
-		assert.True(t, ok)
-		assert.Equal(t, 1, del.From)
-		assert.Equal(t, 3, del.To)
 	})
 
 	t.Run("no whitespace delete when chars differ", func(t *testing.T) {

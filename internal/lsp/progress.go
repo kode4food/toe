@@ -3,26 +3,36 @@ package lsp
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/go-json-experiment/json"
 	"go.lsp.dev/protocol"
 )
 
-type progressEntry struct {
-	title      string
-	message    string
-	percentage *uint32
-	started    bool
-}
+type (
+	// progressState tracks in-flight work-done progress notifications, keyed
+	// by server name and then by progress token
+	progressState struct {
+		sync.RWMutex
+		byServer map[string]map[string]progressEntry
+	}
 
-type progressKind struct {
-	Kind string `json:"kind"`
-}
+	progressEntry struct {
+		title      string
+		message    string
+		percentage *uint32
+		started    bool
+	}
+
+	progressKind struct {
+		Kind string `json:"kind"`
+	}
+)
 
 func (s *Session) createProgress(server string, token protocol.ProgressToken) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.progressForServer(server)[progressTokenKey(token)] = progressEntry{}
+	s.progress.Lock()
+	defer s.progress.Unlock()
+	s.progress.forServer(server)[progressTokenKey(token)] = progressEntry{}
 }
 
 func (s *Session) updateProgress(
@@ -108,36 +118,42 @@ func (s *Session) endProgress(
 func (s *Session) storeProgress(
 	server string, token protocol.ProgressToken, entry progressEntry,
 ) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.progressForServer(server)[progressTokenKey(token)] = entry
+	s.progress.Lock()
+	defer s.progress.Unlock()
+	s.progress.forServer(server)[progressTokenKey(token)] = entry
 }
 
 func (s *Session) lookupProgress(
 	server string, token protocol.ProgressToken,
 ) (progressEntry, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	entry, ok := s.progress[server][progressTokenKey(token)]
+	s.progress.RLock()
+	defer s.progress.RUnlock()
+	entry, ok := s.progress.byServer[server][progressTokenKey(token)]
 	return entry, ok
 }
 
 func (s *Session) clearProgress(server string, token protocol.ProgressToken) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.progress[server], progressTokenKey(token))
-	if len(s.progress[server]) == 0 {
-		delete(s.progress, server)
+	s.progress.Lock()
+	defer s.progress.Unlock()
+	delete(s.progress.byServer[server], progressTokenKey(token))
+	if len(s.progress.byServer[server]) == 0 {
+		delete(s.progress.byServer, server)
 	}
 }
 
-func (s *Session) progressForServer(server string) map[string]progressEntry {
-	entries := s.progress[server]
+func (p *progressState) forServer(server string) map[string]progressEntry {
+	entries := p.byServer[server]
 	if entries == nil {
 		entries = map[string]progressEntry{}
-		s.progress[server] = entries
+		p.byServer[server] = entries
 	}
 	return entries
+}
+
+func (p *progressState) reset() {
+	p.Lock()
+	defer p.Unlock()
+	p.byServer = map[string]map[string]progressEntry{}
 }
 
 func (s *Session) showProgress(server string, entry progressEntry) {

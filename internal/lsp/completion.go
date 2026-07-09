@@ -399,21 +399,21 @@ func sortCompletions(items []view.CompletionItem) {
 }
 
 func (s *Session) storeCompletions(items map[string]completionCandidate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.comps = items
+	s.candidates.Lock()
+	defer s.candidates.Unlock()
+	s.candidates.completions = items
 }
 
 func (s *Session) storeCompletion(id string, item completionCandidate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.comps[id] = item
+	s.candidates.Lock()
+	defer s.candidates.Unlock()
+	s.candidates.completions[id] = item
 }
 
 func (s *Session) completion(id string) (completionCandidate, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	c, ok := s.comps[id]
+	s.candidates.RLock()
+	defer s.candidates.RUnlock()
+	c, ok := s.candidates.completions[id]
 	return c, ok
 }
 

@@ -328,6 +328,46 @@ func TestSession(t *testing.T) {
 		assert.True(t, doc.Loaded())
 	})
 
+	t.Run("unreadable file dropped from restored session", func(t *testing.T) {
+		if os.Getuid() == 0 {
+			t.Skip("permission checks don't apply when running as root")
+		}
+		dir := t.TempDir()
+		subDir := filepath.Join(dir, "locked")
+		filePath := filepath.Join(subDir, "file.go")
+		otherPath := filepath.Join(dir, "other.go")
+		assert.NoError(t, os.Mkdir(subDir, 0o755))
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package locked\n"), 0o644),
+		)
+		assert.NoError(t,
+			os.WriteFile(otherPath, []byte("package other\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+		_, err = e.OpenFile(otherPath)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		assert.NoError(t, os.Chmod(subDir, 0o000))
+		t.Cleanup(func() { _ = os.Chmod(subDir, 0o755) })
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		for _, d := range next.AllDocuments() {
+			assert.NotEqual(t, filePath, d.Path())
+		}
+	})
+
 	t.Run("single view no split", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

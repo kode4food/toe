@@ -176,6 +176,21 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	docs := map[int]DocumentId{}
 	nextDocs := map[DocumentId]*Document{}
 	for i, sd := range s.Documents {
+		var absPath string
+		if !sd.Scratch {
+			if sd.Path == "" {
+				continue
+			}
+			var err error
+			absPath, err = filepath.Abs(sessionAbsPath(base, sd.Path))
+			if err != nil {
+				return nil, false, err
+			}
+			if _, err := os.Stat(absPath); err != nil &&
+				!errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+		}
 		e.nextDocID++
 		id := e.nextDocID
 		var doc *Document
@@ -190,14 +205,6 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				sd.Selection.selection(), doc.buf.text.LenChars(),
 			)
 		} else {
-			if sd.Path == "" {
-				e.nextDocID--
-				continue
-			}
-			absPath, err := filepath.Abs(sessionAbsPath(base, sd.Path))
-			if err != nil {
-				return nil, false, err
-			}
 			doc = newPendingDocument(id, absPath, sd.Lang, &e.opts)
 			doc.buf.lastSel = sd.Selection.selection()
 		}

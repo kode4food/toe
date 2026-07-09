@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-json-experiment/json"
@@ -13,6 +14,20 @@ import (
 )
 
 type (
+	// watchState owns the fsnotify watcher and each server's registered
+	// file-watch patterns
+	watchState struct {
+		sync.RWMutex
+		registrations map[string]map[string][]fileWatch
+		watcher       *fsWatcher
+	}
+
+	fsWatcher struct {
+		watcher *fsnotify.Watcher
+		done    chan struct{}
+		dirs    map[string]struct{}
+	}
+
 	fileWatchEvent struct {
 		path string
 		kind protocol.FileChangeType
@@ -21,12 +36,6 @@ type (
 	fileWatch struct {
 		pattern string
 		base    string
-	}
-
-	fsWatcher struct {
-		watcher *fsnotify.Watcher
-		done    chan struct{}
-		dirs    map[string]struct{}
 	}
 )
 
@@ -87,26 +96,26 @@ func (s *Session) unregisterCapability(
 	if params == nil {
 		return
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.watch.Lock()
+	defer s.watch.Unlock()
 	for _, unreg := range params.Unregisterations {
 		if unreg.Method != protocol.MethodWorkspaceDidChangeWatchedFiles {
 			continue
 		}
-		delete(s.watches[server], unreg.ID)
-		if len(s.watches[server]) == 0 {
-			delete(s.watches, server)
+		delete(s.watch.registrations[server], unreg.ID)
+		if len(s.watch.registrations[server]) == 0 {
+			delete(s.watch.registrations, server)
 		}
 	}
 }
 
 func (s *Session) registerWatches(server, id string, watches []fileWatch) {
-	s.mu.Lock()
-	if s.watches[server] == nil {
-		s.watches[server] = map[string][]fileWatch{}
+	s.watch.Lock()
+	if s.watch.registrations[server] == nil {
+		s.watch.registrations[server] = map[string][]fileWatch{}
 	}
-	s.watches[server][id] = watches
-	s.mu.Unlock()
+	s.watch.registrations[server][id] = watches
+	s.watch.Unlock()
 	if len(watches) > 0 {
 		go s.ensureFileWatcher()
 	}
@@ -134,11 +143,11 @@ func (s *Session) ensureFileWatcher() {
 	if len(roots) == 0 {
 		return
 	}
-	s.mu.Lock()
-	if s.watcher == nil {
+	s.watch.Lock()
+	if s.watch.watcher == nil {
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
-			s.mu.Unlock()
+			s.watch.Unlock()
 			if s.editor != nil {
 				s.editor.SetStatusMsg(
 					"file watching unavailable: " + err.Error(),
@@ -151,20 +160,20 @@ func (s *Session) ensureFileWatcher() {
 			done:    make(chan struct{}),
 			dirs:    map[string]struct{}{},
 		}
-		s.watcher = state
+		s.watch.watcher = state
 		go s.runFileWatcher(state)
 	}
-	s.mu.Unlock()
+	s.watch.Unlock()
 	for _, root := range roots {
 		s.addFileWatchRoot(root)
 	}
 }
 
 func (s *Session) closeFileWatcher() {
-	s.mu.Lock()
-	state := s.watcher
-	s.watcher = nil
-	s.mu.Unlock()
+	s.watch.Lock()
+	state := s.watch.watcher
+	s.watch.watcher = nil
+	s.watch.Unlock()
 	if state == nil {
 		return
 	}
@@ -173,8 +182,6 @@ func (s *Session) closeFileWatcher() {
 }
 
 func (s *Session) fileWatchRoots() []string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	seen := map[string]struct{}{}
 	var out []string
 	add := func(path string) {
@@ -193,7 +200,7 @@ func (s *Session) fileWatchRoots() []string {
 		out = append(out, abs)
 	}
 	add(s.cwd)
-	for _, root := range s.roots {
+	for _, root := range s.servers.allRoots() {
 		add(root)
 	}
 	return out
@@ -251,38 +258,60 @@ func (s *Session) addFileWatchRoot(root string) {
 
 func (s *Session) addFileWatchDir(path string) {
 	path = filepath.Clean(path)
-	s.mu.Lock()
-	state := s.watcher
+	s.watch.Lock()
+	state := s.watch.watcher
 	if state == nil {
-		s.mu.Unlock()
+		s.watch.Unlock()
 		return
 	}
 	if _, ok := state.dirs[path]; ok {
-		s.mu.Unlock()
+		s.watch.Unlock()
 		return
 	}
 	state.dirs[path] = struct{}{}
-	s.mu.Unlock()
+	s.watch.Unlock()
 	if err := state.watcher.Add(path); err != nil {
-		s.mu.Lock()
+		s.watch.Lock()
 		delete(state.dirs, path)
-		s.mu.Unlock()
+		s.watch.Unlock()
 	}
 }
 
 func (s *Session) clientsWatching(path string) []*Client {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var out []*Client
-	for server, regs := range s.watches {
-		if !watchRegistrationsMatch(regs, path) {
-			continue
+	var servers []string
+	s.watch.RLock()
+	for server, regs := range s.watch.registrations {
+		if watchRegistrationsMatch(regs, path) {
+			servers = append(servers, server)
 		}
-		if client := s.clients[server]; client != nil {
+	}
+	s.watch.RUnlock()
+	var out []*Client
+	for _, server := range servers {
+		if client, ok := s.servers.client(server); ok {
 			out = append(out, client)
 		}
 	}
 	return out
+}
+
+func (w *watchState) reset() {
+	w.Lock()
+	defer w.Unlock()
+	w.registrations = map[string]map[string][]fileWatch{}
+}
+
+func (w fileWatch) match(path string) bool {
+	candidate := path
+	if w.base != "" {
+		rel, err := filepath.Rel(w.base, path)
+		if err != nil ||
+			strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return false
+		}
+		candidate = rel
+	}
+	return matchWatchPattern(w.pattern, candidate)
 }
 
 func fileWatches(
@@ -342,19 +371,6 @@ func watchRegistrationsMatch(regs map[string][]fileWatch, path string) bool {
 		}
 	}
 	return false
-}
-
-func (w fileWatch) match(path string) bool {
-	candidate := path
-	if w.base != "" {
-		rel, err := filepath.Rel(w.base, path)
-		if err != nil ||
-			strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			return false
-		}
-		candidate = rel
-	}
-	return matchWatchPattern(w.pattern, candidate)
 }
 
 func matchWatchPattern(pattern, path string) bool {

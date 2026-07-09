@@ -70,9 +70,21 @@ func TestDiagnostics(t *testing.T) {
 			&protocol.PublishDiagnosticsParams{
 				URI: uri.File(path),
 				Diagnostics: []protocol.Diagnostic{
-					{Range: protocol.Range{}, Severity: protocol.DiagnosticSeverityWarning, Message: protocol.String("warn")},
-					{Range: protocol.Range{}, Severity: protocol.DiagnosticSeverityInformation, Message: protocol.String("info")},
-					{Range: protocol.Range{}, Severity: protocol.DiagnosticSeverityHint, Message: protocol.String("hint")},
+					{
+						Range:    protocol.Range{},
+						Severity: protocol.DiagnosticSeverityWarning,
+						Message:  protocol.String("warn"),
+					},
+					{
+						Range:    protocol.Range{},
+						Severity: protocol.DiagnosticSeverityInformation,
+						Message:  protocol.String("info"),
+					},
+					{
+						Range:    protocol.Range{},
+						Severity: protocol.DiagnosticSeverityHint,
+						Message:  protocol.String("hint"),
+					},
 				},
 			},
 		)

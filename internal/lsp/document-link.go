@@ -138,24 +138,16 @@ func (s *Session) ResolveDocumentLink(
 func (s *Session) storeDocumentLinks(
 	docID view.DocumentId, links map[string]documentLinkCandidate,
 ) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.clearDocumentLinksLocked(docID)
-	maps.Copy(s.links, links)
-}
-
-func (s *Session) clearDocumentLinksLocked(docID view.DocumentId) {
-	for id, link := range s.links {
-		if link.docID == docID {
-			delete(s.links, id)
-		}
-	}
+	s.candidates.Lock()
+	defer s.candidates.Unlock()
+	s.candidates.clearLinksForDocLocked(docID)
+	maps.Copy(s.candidates.links, links)
 }
 
 func (s *Session) documentLink(id string) (documentLinkCandidate, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	link, ok := s.links[id]
+	s.candidates.RLock()
+	defer s.candidates.RUnlock()
+	link, ok := s.candidates.links[id]
 	return link, ok
 }
 
@@ -172,12 +164,12 @@ func (s *Session) replaceDocumentLink(
 	}
 	doc.SetDocumentLinks(links)
 
-	s.mu.Lock()
-	if candidate, ok := s.links[id]; ok {
+	s.candidates.Lock()
+	if candidate, ok := s.candidates.links[id]; ok {
 		candidate.link = raw
-		s.links[id] = candidate
+		s.candidates.links[id] = candidate
 	}
-	s.mu.Unlock()
+	s.candidates.Unlock()
 }
 
 func (s *Session) documentLinksAsync(doc *view.Document) {

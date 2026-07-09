@@ -33,7 +33,7 @@ var (
 func (s *Session) ApplyWorkspaceEdit(
 	server string, edit protocol.WorkspaceEdit,
 ) error {
-	client, ok := s.client(server)
+	client, ok := s.servers.client(server)
 	if !ok {
 		return ErrUnknownLanguageServer
 	}
@@ -269,7 +269,9 @@ func workspaceEditPath(u uri.URI) (string, error) {
 	return u.FsPath(), nil
 }
 
-func prepareRenameTarget(newPath string, opts *protocol.RenameFileOptions) (bool, error) {
+func prepareRenameTarget(
+	newPath string, opts *protocol.RenameFileOptions,
+) (bool, error) {
 	exists, err := pathExists(newPath)
 	if err != nil {
 		return false, err

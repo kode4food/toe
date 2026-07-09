@@ -182,10 +182,8 @@ func (s *Session) DidDeleteFile(path string, dir bool) error {
 func (s *Session) fileOperationClients(
 	sel fileOpSelector, path string, dir bool,
 ) []*Client {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	var out []*Client
-	for _, client := range s.clients {
+	for _, client := range s.servers.allClients() {
 		if client.fileOperationInterested(sel, path, dir) {
 			out = append(out, client)
 		}

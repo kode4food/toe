@@ -491,17 +491,23 @@ func (d *Document) mapOtherSelections(vid Id, cs core.ChangeSet) {
 // ensureLoaded reads the backing file the first time a pending buffer's content
 // is touched, copying the content-derived state onto the placeholder
 func (d *Document) ensureLoaded() {
+	d.buf.RLock()
+	pending := d.pending != nil
+	d.buf.RUnlock()
+	if !pending {
+		return
+	}
 	d.buf.Lock()
 	defer d.buf.Unlock()
 	p := d.pending
 	if p == nil {
 		return
 	}
-	d.pending = nil
 	loaded, err := openDocument(d.id, d.buf.path, p.opts)
 	if err != nil {
 		return
 	}
+	d.pending = nil
 	d.hasBOM = loaded.hasBOM
 	d.indent = loaded.indent
 	d.tabWidth = loaded.tabWidth

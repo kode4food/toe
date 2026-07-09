@@ -185,15 +185,15 @@ func (s *Session) codeActionDiagnostics(
 }
 
 func (s *Session) storeCodeActions(items map[string]codeActionCandidate) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.actions = items
+	s.candidates.Lock()
+	defer s.candidates.Unlock()
+	s.candidates.codeActions = items
 }
 
 func (s *Session) codeAction(id string) (codeActionCandidate, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	c, ok := s.actions[id]
+	s.candidates.RLock()
+	defer s.candidates.RUnlock()
+	c, ok := s.candidates.codeActions[id]
 	return c, ok
 }
 

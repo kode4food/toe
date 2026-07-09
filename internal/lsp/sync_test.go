@@ -404,7 +404,9 @@ func TestTextSync(t *testing.T) {
 
 	t.Run("empty changeset returns false", func(t *testing.T) {
 		server := &syncServer{
-			sync:        &protocol.TextDocumentSyncOptions{Change: new(protocol.TextDocumentSyncKindIncremental)},
+			sync: &protocol.TextDocumentSyncOptions{
+				Change: new(protocol.TextDocumentSyncKindIncremental),
+			},
 			initialized: make(chan struct{}),
 		}
 		ctx, client, closeClient := newSyncClient(t, server)

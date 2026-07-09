@@ -356,11 +356,8 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 
 	if d.buf.insertAcc != nil {
 		// Accumulate into the ongoing insert group
-		newSel := d.SelectionFor(vid)
-		if txSel := tx.Selection(); txSel != nil {
-			newSel = *txSel
-		}
 		cs := tx.Changes()
+		newSel := d.resolveAppliedSelection(vid, tx, cs)
 		d.buf.Lock()
 		d.buf.text = newText
 		d.buf.selections[vid] = newSel
@@ -381,11 +378,8 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		return err
 	}
 
-	newSel := beforeSt.Selection
-	if txSel := tx.Selection(); txSel != nil {
-		newSel = *txSel
-	}
 	cs := tx.Changes()
+	newSel := d.resolveAppliedSelection(vid, tx, cs)
 	d.buf.Lock()
 	d.buf.text = newText
 	d.buf.selections[vid] = newSel
@@ -475,6 +469,19 @@ func (d *Document) rememberSelection(vid Id) {
 	if sel, ok := d.buf.selections[vid]; ok {
 		d.buf.lastSel = sel
 	}
+}
+
+func (d *Document) resolveAppliedSelection(
+	vid Id, tx core.Transaction, cs core.ChangeSet,
+) core.Selection {
+	if txSel := tx.Selection(); txSel != nil {
+		return *txSel
+	}
+	cur := d.SelectionFor(vid)
+	if mapped, err := cur.Map(cs); err == nil {
+		return mapped
+	}
+	return cur
 }
 
 func (d *Document) mapOtherSelections(vid Id, cs core.ChangeSet) {

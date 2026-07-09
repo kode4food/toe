@@ -225,7 +225,7 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 		client, ok := s.servers.client(name)
 		if !ok {
 			var started bool
-			client, started = s.startClient(name, doc, lang)
+			client, started = s.ensureClient(name, doc, lang)
 			if !started {
 				continue
 			}

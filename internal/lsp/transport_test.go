@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/jsonrpc2"
@@ -84,6 +86,8 @@ const testServerSignatureHelpActiveEnv = "TOE_LSP_SIGNATURE_HELP_ACTIVE"
 const testServerSignatureNoParamsEnv = "TOE_LSP_SIGNATURE_NO_PARAMS"
 const testServerSignatureMissingLabelEnv = "TOE_LSP_SIGNATURE_MISSING_LABEL"
 const testServerSignatureActiveOutEnv = "TOE_LSP_SIGNATURE_ACTIVE_OUT"
+const testServerStartMarkerEnv = "TOE_LSP_START_MARKER"
+const testServerInitDelayMsEnv = "TOE_LSP_INIT_DELAY_MS"
 
 var _ io.ReadWriteCloser = stdioConn{}
 
@@ -132,6 +136,13 @@ func TestLSPServerProcess(t *testing.T) {
 	if os.Getenv(testServerEnv) != "1" {
 		return
 	}
+	if marker := os.Getenv(testServerStartMarkerEnv); marker != "" {
+		f, err := os.OpenFile(marker, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err == nil {
+			_, _ = f.WriteString("x\n")
+			_ = f.Close()
+		}
+	}
 	ctx := context.Background()
 	server := &processServer{exit: make(chan struct{})}
 	_, conn, client := protocol.NewServer(
@@ -145,6 +156,9 @@ func TestLSPServerProcess(t *testing.T) {
 func (s *processServer) Initialize(
 	ctx context.Context, _ *protocol.InitializeParams,
 ) (*protocol.InitializeResult, error) {
+	if ms, err := strconv.Atoi(os.Getenv(testServerInitDelayMsEnv)); err == nil {
+		time.Sleep(time.Duration(ms) * time.Millisecond)
+	}
 	var completionProvider *protocol.CompletionOptions
 	if os.Getenv(testServerCompletionEnv) == "1" {
 		completionProvider = &protocol.CompletionOptions{

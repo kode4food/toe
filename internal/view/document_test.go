@@ -861,6 +861,29 @@ func TestDocumentApplyBranches(t *testing.T) {
 		assert.Equal(t, "abc", d.Text().String())
 	})
 
+	t.Run("maps own selection when transaction sets none", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		cs, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
+			core.TextChange(0, 0, "abc\n"),
+		})
+		assert.NoError(t, err)
+		firstTx := core.NewTransaction(d.Text()).WithChanges(cs).
+			WithSelection(core.PointSelection(4))
+		assert.NoError(t, d.Apply(firstTx, v.ID()))
+		assert.Equal(t, 4, d.SelectionFor(v.ID()).Primary().Head)
+
+		importCS, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
+			core.TextChange(0, 0, "import \"strings\"\n"),
+		})
+		assert.NoError(t, err)
+		importTx := core.NewTransaction(d.Text()).WithChanges(importCS)
+		assert.NoError(t, d.Apply(importTx, v.ID()))
+		assert.Equal(t, 4+len("import \"strings\"\n"),
+			d.SelectionFor(v.ID()).Primary().Head)
+	})
+
 	t.Run("maps other view selections", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "multi.txt")

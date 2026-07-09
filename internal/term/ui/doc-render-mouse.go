@@ -233,7 +233,7 @@ func cursorScreenPos(args cursorScreenPosArgs) (visualY, visualX int) {
 	segStart := 0
 	segPrefixW := 0
 	for i, e := range args.rowMap {
-		if e.logLine != cursorLine {
+		if e.filler || e.logLine != cursorLine {
 			if segY >= 0 {
 				break
 			}

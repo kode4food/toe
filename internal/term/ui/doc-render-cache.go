@@ -36,6 +36,7 @@ type (
 		logLine int
 		offset  int
 		prefixW int
+		filler  bool
 	}
 
 	// docRenderCache memoizes a single document's derived render state, keyed

@@ -262,7 +262,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
 				width: format.ViewportWidth, startCol: hOff,
 			})
-			rowMap = append(rowMap, viewRowEntry{logLine: max(nLines-1, 0)})
+			rowMap = append(rowMap, viewRowEntry{
+				logLine: max(nLines-1, 0),
+				filler:  true,
+			})
 			bufRow++
 			continue
 		}
@@ -420,7 +423,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 					rowPrefixW = prefixW
 				}
 				rowMap = append(rowMap, viewRowEntry{
-					lineNum, cr.offset, rowPrefixW,
+					logLine: lineNum, offset: cr.offset, prefixW: rowPrefixW,
 				})
 				bufRow++
 			}
@@ -434,7 +437,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
 				width: format.ViewportWidth, startCol: hOff,
 			})
-			rowMap = append(rowMap, viewRowEntry{lineNum, 0, 0})
+			rowMap = append(rowMap, viewRowEntry{logLine: lineNum})
 			bufRow++
 		}
 	}

@@ -163,6 +163,19 @@ func TestCursorShapeRender(t *testing.T) {
 		assert.False(t, cur.Blink)
 	})
 
+	t.Run("scratch buffer keeps cursor at top", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		e := view.NewEditor(t.TempDir())
+		e.Options().CursorShape.Insert = view.CursorKindBar
+		e.SetMode(view.ModeInsert)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		cur := m.View().Cursor
+
+		assert.NotNil(t, cur)
+		assert.Equal(t, 0, cur.Y)
+	})
+
 	t.Run("underline cursor uses underline shape", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())

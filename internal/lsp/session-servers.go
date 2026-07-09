@@ -22,11 +22,11 @@ import (
 // they were started from, and each server's workspace root
 type serverState struct {
 	sync.RWMutex
+	starting  sync.Mutex
 	registry  *Registry
 	languages map[string]language.Language
 	clients   map[string]*Client
 	roots     map[string]string
-	starting  map[string]*sync.Mutex
 }
 
 // RestartLanguageServers stops and restarts the named servers for the document
@@ -122,9 +122,8 @@ func (s *Session) languageForDocument(
 func (s *Session) ensureClient(
 	name string, doc *view.Document, lang language.Language,
 ) (*Client, bool) {
-	lock := s.servers.startLock(name)
-	lock.Lock()
-	defer lock.Unlock()
+	s.servers.starting.Lock()
+	defer s.servers.starting.Unlock()
 	if client, ok := s.servers.client(name); ok {
 		return client, true
 	}
@@ -240,17 +239,6 @@ func (s *serverState) setRoot(name, root string) {
 	s.roots[name] = root
 }
 
-func (s *serverState) startLock(name string) *sync.Mutex {
-	s.Lock()
-	defer s.Unlock()
-	lock, ok := s.starting[name]
-	if !ok {
-		lock = &sync.Mutex{}
-		s.starting[name] = lock
-	}
-	return lock
-}
-
 func (s *serverState) startRegistry(
 	ctx context.Context, name, root string, handler *clientHandler,
 ) (*Client, error) {
@@ -310,7 +298,6 @@ func (s *serverState) reset(langs language.Languages) []*Client {
 	s.languages = languagesByName(langs)
 	s.clients = map[string]*Client{}
 	s.roots = map[string]string{}
-	s.starting = map[string]*sync.Mutex{}
 	return clients
 }
 

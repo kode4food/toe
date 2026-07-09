@@ -3,7 +3,6 @@ package lsp
 import (
 	"context"
 	"errors"
-	"sync"
 
 	"go.lsp.dev/protocol"
 
@@ -65,7 +64,6 @@ func NewSession(ctx context.Context, cwd string) *Session {
 			languages: languagesByName(langs),
 			clients:   map[string]*Client{},
 			roots:     map[string]string{},
-			starting:  map[string]*sync.Mutex{},
 		},
 		docs: docState{
 			serverNames: map[view.DocumentId][]string{},

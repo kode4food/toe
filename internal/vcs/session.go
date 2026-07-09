@@ -123,7 +123,11 @@ func (s *Session) Refresh() {
 		if path == "" || !s.headMoved(doc, path) {
 			continue
 		}
-		go s.loadDiffBase(doc, path)
+		if _, ok := s.differ(doc); !ok {
+			continue
+		}
+		text := doc.Text()
+		go s.loadDiffBase(doc, path, text)
 	}
 }
 
@@ -152,7 +156,8 @@ func (s *Session) DocumentSaved(doc *view.Document) {
 	if path == "" {
 		return
 	}
-	go s.loadDiffBase(doc, path)
+	text := doc.Text()
+	go s.loadDiffBase(doc, path, text)
 }
 
 // DocumentClosed stops and forgets the document's differ
@@ -192,8 +197,9 @@ func (s *Session) ensureDiffBase(doc *view.Document) {
 	}
 	s.loading[id] = true
 	s.mu.Unlock()
+	text := doc.Text()
 	go func() {
-		s.loadDiffBase(doc, path)
+		s.loadDiffBase(doc, path, text)
 		s.mu.Lock()
 		delete(s.loading, id)
 		s.mu.Unlock()
@@ -221,7 +227,9 @@ func (s *Session) headMoved(doc *view.Document, path string) bool {
 // loadDiffBase resolves the diff base and head name for doc, creating or
 // updating its differ. It runs off the main goroutine because providers may
 // shell out
-func (s *Session) loadDiffBase(doc *view.Document, path string) {
+func (s *Session) loadDiffBase(
+	doc *view.Document, path string, text core.Rope,
+) {
 	base, err := s.provider.DiffBase(path)
 	if err != nil {
 		return
@@ -238,7 +246,7 @@ func (s *Session) loadDiffBase(doc *view.Document, path string) {
 		d.SetBase(rope)
 		return
 	}
-	d := NewDiffer(rope, doc.Text(), s.notifyUpdate)
+	d := NewDiffer(rope, text, s.notifyUpdate)
 	s.differs[doc.ID()] = d
 	s.heads[doc.ID()] = name
 	s.headIDs[doc.ID()] = head

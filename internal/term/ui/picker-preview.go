@@ -51,6 +51,14 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
 			p.blitPlaceholderInto(buf, x, y, "<Invalid file location>")
 			return
 		}
+		if p.hlFrom < 0 {
+			sel := doc.Selection()
+			if l, err := doc.Text().CharToLine(
+				sel.Primary().Cursor(doc.Text()),
+			); err == nil {
+				p.hlFrom, p.hlTo = l, l
+			}
+		}
 		p.renderDocInto(buf, x, y, doc)
 	case p.item.Location.Target.Path != "":
 		path := p.item.Location.Target.Path

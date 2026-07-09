@@ -26,10 +26,11 @@ type (
 	sessionRegisters map[string][]string
 
 	sessionDocument struct {
-		Path    string `toml:"path,omitempty"`
-		Scratch bool   `toml:"scratch,omitempty"`
-		Text    string `toml:"text,omitempty"`
-		Lang    string `toml:"language,omitempty"`
+		Path      string        `toml:"path,omitempty"`
+		Scratch   bool          `toml:"scratch,omitempty"`
+		Text      string        `toml:"text,omitempty"`
+		Lang      string        `toml:"language,omitempty"`
+		Selection sessionSelect `toml:"selection"`
 	}
 
 	sessionNode struct {
@@ -124,6 +125,7 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		if !ok {
 			continue
 		}
+		d.rememberSelection(v.id)
 		if _, ok := docIndex[d.ID()]; ok {
 			continue
 		}
@@ -184,6 +186,9 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 			if sd.Lang != "" {
 				doc.SetLang(sd.Lang)
 			}
+			doc.buf.lastSel = clampSelection(
+				sd.Selection.selection(), doc.buf.text.LenChars(),
+			)
 		} else {
 			if sd.Path == "" {
 				e.nextDocID--
@@ -194,6 +199,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				return nil, false, err
 			}
 			doc = newPendingDocument(id, absPath, sd.Lang, &e.opts)
+			doc.buf.lastSel = sd.Selection.selection()
 		}
 		nextDocs[doc.ID()] = doc
 		docs[i+1] = doc.ID()
@@ -243,6 +249,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	}
 
 	for _, doc := range e.VisibleDocuments() {
+		doc.ensureLoaded()
 		e.documentOpened(doc)
 	}
 
@@ -257,14 +264,16 @@ func WorkspaceSessionFile(dir string) string {
 func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 	if d.Path() == "" {
 		return sessionDocument{
-			Scratch: true,
-			Text:    d.Text().String(),
-			Lang:    d.Lang(),
+			Scratch:   true,
+			Text:      d.Text().String(),
+			Lang:      d.Lang(),
+			Selection: sessionSelection(d.Selection()),
 		}
 	}
 	return sessionDocument{
-		Path: sessionPath(base, d.Path()),
-		Lang: d.Lang(),
+		Path:      sessionPath(base, d.Path()),
+		Lang:      d.Lang(),
+		Selection: sessionSelection(d.Selection()),
 	}
 }
 

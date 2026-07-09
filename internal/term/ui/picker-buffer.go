@@ -65,8 +65,6 @@ func (b *bufferPickerSource) Load(
 		return cmp.Compare(a.ID(), b.ID())
 	})
 	focusedDoc, _ := e.FocusedDocument()
-	views := e.AllViews()
-	focusedView, _ := e.FocusedView()
 
 	items := make([]PickerItem, 0, len(docs))
 	for _, doc := range docs {
@@ -78,15 +76,12 @@ func (b *bufferPickerSource) Load(
 			flags += "+"
 		}
 		name := doc.RelativeName(e.Cwd())
-		id := doc.ID()
-		lines := bufferPickerLines(doc, views, focusedView)
 		items = append(items, PickerItem{
 			Display: name,
 			Columns: []string{flags, name},
 			SortKey: name,
 			Location: PickerLocation{
-				Target: PickerTarget{ID: id},
-				Lines:  lines,
+				Target: PickerTarget{ID: doc.ID()},
 			},
 		})
 	}
@@ -100,28 +95,11 @@ func (b *bufferPickerSource) Accept(
 	if id == view.InvalidDocumentId {
 		return
 	}
-	acceptDocumentID(e, id, action)
-}
-
-func bufferPickerLines(
-	doc *view.Document, views []*view.View, focused *view.View,
-) *PickerLineRange {
-	for _, v := range views {
-		if v.DocID() == doc.ID() {
-			return selectionLineRange(doc, v.ID())
-		}
+	v, ok := acceptDocumentID(e, id, action)
+	if !ok {
+		return
 	}
-	if focused == nil || !doc.Loaded() {
-		return nil
+	if doc, ok := e.Document(v.DocID()); ok {
+		alignAcceptedView(e, v, doc)
 	}
-	return selectionLineRange(doc, focused.ID())
-}
-
-func selectionLineRange(doc *view.Document, vid view.Id) *PickerLineRange {
-	sel := doc.SelectionFor(vid)
-	cursor := sel.Primary().Cursor(doc.Text())
-	if l, err := doc.Text().CharToLine(cursor); err == nil {
-		return &PickerLineRange{From: l, To: l}
-	}
-	return nil
 }

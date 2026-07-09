@@ -469,10 +469,13 @@ func (e *Editor) recordPrevDoc() {
 	}
 	did := v.DocID()
 	e.prevDocID = did
-	if doc, ok := e.docs[did]; ok && doc.buf.modified {
-		if e.lastModifiedDocIDs[0] != did {
-			e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
-			e.lastModifiedDocIDs[0] = did
+	if doc, ok := e.docs[did]; ok {
+		doc.rememberSelection(v.ID())
+		if doc.buf.modified {
+			if e.lastModifiedDocIDs[0] != did {
+				e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
+				e.lastModifiedDocIDs[0] = did
+			}
 		}
 	}
 }

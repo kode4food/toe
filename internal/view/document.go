@@ -56,6 +56,7 @@ type (
 		history    core.History
 		insertAcc  *insertAccum
 		selections map[Id]core.Selection
+		lastSel    core.Selection
 		searchHL   map[Id]bool
 		unsaved    bool
 		modified   bool
@@ -268,8 +269,15 @@ func (d *Document) SelectionFor(vid Id) core.Selection {
 	if sel, ok := d.buf.selections[vid]; ok {
 		return sel
 	}
-	sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-	return sel
+	return d.Selection()
+}
+
+// Selection returns the buffer's canonical cursor, independent of any view
+func (d *Document) Selection() core.Selection {
+	if len(d.buf.lastSel.Ranges()) > 0 {
+		return d.buf.lastSel
+	}
+	return core.PointSelection(0)
 }
 
 // SetSelectionFor sets the selection for a view. Changing the selection clears
@@ -297,6 +305,7 @@ func (d *Document) SearchHighlightsActive(vid Id) bool {
 
 // RemoveView cleans up selection and LSP state for a closed view
 func (d *Document) RemoveView(vid Id) {
+	d.rememberSelection(vid)
 	delete(d.buf.selections, vid)
 	delete(d.buf.searchHL, vid)
 	d.ls.Lock()
@@ -462,6 +471,12 @@ func (d *DocumentOpenError) Unwrap() error {
 	return d.Err
 }
 
+func (d *Document) rememberSelection(vid Id) {
+	if sel, ok := d.buf.selections[vid]; ok {
+		d.buf.lastSel = sel
+	}
+}
+
 func (d *Document) mapOtherSelections(vid Id, cs core.ChangeSet) {
 	for otherVid, sel := range d.buf.selections {
 		if otherVid == vid {
@@ -501,6 +516,9 @@ func (d *Document) ensureLoaded() {
 		d.buf.lang = loaded.buf.lang
 		d.langDef = loaded.langDef
 	}
+	d.buf.lastSel = clampSelection(
+		d.buf.lastSel, d.buf.text.LenChars(),
+	)
 }
 
 func newDocument(id DocumentId, opts *Options) *Document {
@@ -620,4 +638,23 @@ func newPendingDocument(
 		d.SetLang(lang)
 	}
 	return d
+}
+
+func clampSelection(sel core.Selection, maxChars int) core.Selection {
+	ranges := sel.Ranges()
+	if len(ranges) == 0 {
+		return core.PointSelection(0)
+	}
+	clamped := make([]core.Range, len(ranges))
+	for i, r := range ranges {
+		clamped[i] = core.NewRange(
+			min(max(r.Anchor, 0), maxChars),
+			min(max(r.Head, 0), maxChars),
+		)
+	}
+	out, err := core.NewSelection(clamped, sel.PrimaryIndex())
+	if err != nil {
+		return core.PointSelection(0)
+	}
+	return out
 }

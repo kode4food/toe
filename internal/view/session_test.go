@@ -147,11 +147,15 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, opened, o.events)
 	})
 
-	t.Run("restored buffers load lazily on first content access", func(t *testing.T) {
+	t.Run("hidden buffer loads lazily on first access", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
+		otherPath := filepath.Join(dir, "other.go")
 		assert.NoError(t,
 			os.WriteFile(filePath, []byte("package lazy\n"), 0o644),
+		)
+		assert.NoError(t,
+			os.WriteFile(otherPath, []byte("package other\n"), 0o644),
 		)
 		sessionPath := filepath.Join(
 			dir, loader.WorkspaceDirName, view.SessionFile,
@@ -159,6 +163,8 @@ func TestSession(t *testing.T) {
 		e := view.NewEditor(dir)
 		e.ResizeTree(80, 24)
 		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+		_, err = e.SwitchFile(otherPath) // hide file.go
 		assert.NoError(t, err)
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
@@ -180,7 +186,115 @@ func TestSession(t *testing.T) {
 		assert.True(t, doc.Loaded())
 	})
 
-	t.Run("restored buffer whose file is gone loads empty", func(t *testing.T) {
+	t.Run("visible buffer loads on restore", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "file.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package eager\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		doc, ok := next.FocusedDocument()
+		assert.True(t, ok)
+		assert.True(t, doc.Loaded())
+	})
+
+	t.Run("hidden buffer keeps selection", func(t *testing.T) {
+		dir := t.TempDir()
+		aPath := filepath.Join(dir, "a.go")
+		bPath := filepath.Join(dir, "b.go")
+		assert.NoError(t, os.WriteFile(aPath, []byte("package aaaa\n"), 0o644))
+		assert.NoError(t, os.WriteFile(bPath, []byte("package bbbb\n"), 0o644))
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		va, err := e.OpenFile(aPath)
+		assert.NoError(t, err)
+		aDoc, ok := e.Document(va.DocID())
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{core.NewRange(3, 7)}, 0)
+		assert.NoError(t, err)
+		aDoc.SetSelectionFor(va.ID(), sel)
+		_, err = e.SwitchFile(bPath) // hide a.go
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		var doc *view.Document
+		for _, d := range next.AllDocuments() {
+			if d.Path() == aPath {
+				doc = d
+			}
+		}
+		assert.NotNil(t, doc)
+		assert.False(t, doc.Loaded())
+		assert.Equal(t, sel.Ranges(), doc.Selection().Ranges())
+	})
+
+	t.Run("clamps selection to shrunk file", func(t *testing.T) {
+		dir := t.TempDir()
+		aPath := filepath.Join(dir, "a.go")
+		bPath := filepath.Join(dir, "b.go")
+		assert.NoError(t, os.WriteFile(aPath, []byte("package aaaa\n"), 0o644))
+		assert.NoError(t, os.WriteFile(bPath, []byte("package bbbb\n"), 0o644))
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		va, err := e.OpenFile(aPath)
+		assert.NoError(t, err)
+		aDoc, ok := e.Document(va.DocID())
+		assert.True(t, ok)
+		sel, err := core.NewSelection([]core.Range{core.NewRange(8, 11)}, 0)
+		assert.NoError(t, err)
+		aDoc.SetSelectionFor(va.ID(), sel)
+		_, err = e.SwitchFile(bPath)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		assert.NoError(t, os.WriteFile(aPath, []byte("hi\n"), 0o644)) // 3 chars
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		var doc *view.Document
+		for _, d := range next.AllDocuments() {
+			if d.Path() == aPath {
+				doc = d
+			}
+		}
+		assert.NotNil(t, doc)
+		assert.Equal(t, "hi\n", doc.Text().String()) // triggers load + clamp
+		primary := doc.Selection().Primary()
+		assert.LessOrEqual(t, primary.Anchor, 3)
+		assert.LessOrEqual(t, primary.Head, 3)
+	})
+
+	t.Run("missing file loads empty", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "gone.go")
 		assert.NoError(t,

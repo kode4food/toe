@@ -10,6 +10,31 @@ import (
 	act "github.com/kode4food/toe/internal/view/action"
 )
 
+type (
+	resolveClickPosRes struct {
+		doc *view.Document
+		v   *view.View
+		pos int
+	}
+
+	cursorScreenPosArgs struct {
+		text    core.Rope
+		cursor  int
+		gutterW int
+		rowMap  []viewRowEntry
+		tabW    int
+		hOff    int
+	}
+
+	charPosInLineSegArgs struct {
+		text    core.Rope
+		docLine int
+		charOff int
+		targetX int
+		tabW    int
+	}
+)
+
 func (r *renderPass) screenCharPos(
 	doc *view.Document, v *view.View, x, contentY int,
 ) (int, bool) {
@@ -88,6 +113,8 @@ func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
 	text := res.doc.Text()
 	prevSel := res.doc.SelectionFor(res.v.ID())
 	r.ec.mouseDownRange = new(prevSel.Primary())
+	r.ec.autoScrollV.last = y - yOff
+	r.ec.autoScrollH.last = x
 
 	var newSel core.Selection
 	switch {
@@ -110,7 +137,7 @@ func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
 	res.v.BeginFreeScroll(res.doc.Revision(), newSel)
 }
 
-func (r *renderPass) handleMouseDrag(x, y int) {
+func (r *renderPass) handleMouseDrag(x, y int) tea.Cmd {
 	yOff := 0
 	if bufferlineVisible(r.cx) {
 		yOff = 1
@@ -125,42 +152,51 @@ func (r *renderPass) handleMouseDrag(x, y int) {
 		r.cx.Editor.Tree().MoveSeparator(
 			sep.containerID, sep.childIdx, sep.layout, newPos,
 		)
-		return
+		return nil
 	}
 
 	if r.ec.mouseDownRange == nil {
-		return
-	}
-
-	contentY := y - yOff
-	if contentY < 0 {
-		return
+		return nil
 	}
 
 	doc, ok := r.cx.Editor.FocusedDocument()
 	if !ok {
-		return
+		return nil
 	}
 	v, ok := r.cx.Editor.FocusedView()
 	if !ok {
-		return
+		return nil
 	}
 
-	pos, ok := r.screenCharPos(doc, v, x, contentY)
+	contentY := y - yOff
+	area := v.Area()
+	contentH := max(area.Height-1, 0)
+	scrollOff := r.cx.Editor.Options().ScrollOff
+
+	atTop, atBottom, clampedY := r.ec.autoScrollV.update(
+		contentY, area.Y, area.Y+contentH-1,
+		autoScrollMargin(contentH, scrollOff),
+	)
+
+	gutterW := gutterWidthFor(doc.Text(), r.cx.Editor.Options().Gutters)
+	contentX := area.X + gutterW
+	contentW := max(area.Width-gutterW, 0)
+	atLeft, atRight, clampedX := r.ec.autoScrollH.update(
+		x, contentX, contentX+contentW-1,
+		autoScrollMargin(contentW, scrollOff),
+	)
+
+	pos, ok := r.screenCharPos(doc, v, clampedX, clampedY)
 	if !ok {
-		return
+		return nil
+	}
+	if !extendSelectionTo(r.cx, doc, v, pos) {
+		return nil
 	}
 
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	primary := sel.Primary().PutCursor(text, pos, true)
-	newSel, err := sel.Replace(sel.PrimaryIndex(), primary)
-	if err != nil {
-		return
-	}
-	tx := core.NewTransaction(text).WithSelection(newSel)
-	_ = r.cx.Editor.Apply(tx)
-	v.BeginFreeScroll(doc.Revision(), newSel)
+	vCmd := r.ec.autoScrollV.trigger(atTop, atBottom, clampedX)
+	hCmd := r.ec.autoScrollH.trigger(atLeft, atRight, clampedY)
+	return tea.Batch(vCmd, hCmd)
 }
 
 func (r *renderPass) handleMouseMiddleRelease(x, y int, mod tea.KeyMod) {
@@ -177,12 +213,6 @@ func (r *renderPass) handleMouseMiddleRelease(x, y int, mod tea.KeyMod) {
 	tx := core.NewTransaction(text).WithSelection(core.PointSelection(res.pos))
 	_ = r.cx.Editor.Apply(tx)
 	act.PastePrimaryClipboardBefore(r.cx.Editor)
-}
-
-type resolveClickPosRes struct {
-	doc *view.Document
-	v   *view.View
-	pos int
 }
 
 func (r *renderPass) resolveClickPos(x, y int) (resolveClickPosRes, bool) {
@@ -204,17 +234,6 @@ func (r *renderPass) resolveClickPos(x, y int) (resolveClickPosRes, bool) {
 		return resolveClickPosRes{}, false
 	}
 	return resolveClickPosRes{doc: doc, v: v, pos: pos}, true
-}
-
-type cursorScreenPosArgs struct {
-	text    core.Rope
-	cursor  int
-	gutterW int
-	rowMap  []viewRowEntry
-	tabW    int
-	// hOff is the view's horizontal scroll offset in content columns; the
-	// cursor's content column is shifted left by it, the gutter is not
-	hOff int
 }
 
 func cursorScreenPos(args cursorScreenPosArgs) (visualY, visualX int) {
@@ -270,14 +289,6 @@ func cursorScreenPos(args cursorScreenPosArgs) (visualY, visualX int) {
 	return segY, gutterW + segPrefixW + col - args.hOff
 }
 
-type charPosInLineSegArgs struct {
-	text    core.Rope
-	docLine int
-	charOff int
-	targetX int
-	tabW    int
-}
-
 func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 	text := args.text
 	docLine := args.docLine
@@ -312,4 +323,24 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 		runeIdx++
 	}
 	return charPos, true
+}
+
+func extendSelectionTo(
+	cx *Context, doc *view.Document, v *view.View, pos int,
+) bool {
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	primary := sel.Primary().PutCursor(text, pos, true)
+	newSel, err := sel.Replace(sel.PrimaryIndex(), primary)
+	if err != nil {
+		return false
+	}
+	tx := core.NewTransaction(text).WithSelection(newSel)
+	_ = cx.Editor.Apply(tx)
+	v.BeginFreeScroll(doc.Revision(), newSel)
+	return true
+}
+
+func autoScrollMargin(span, scrollOff int) int {
+	return min(scrollOff, max(span/2-1, 0))
 }

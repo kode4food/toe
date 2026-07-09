@@ -38,17 +38,39 @@ type (
 		completionGen   int
 		completionOpts  CompletionOptions
 		fileWatcher     *editorFileWatcher
+		autoScrollV     mouseAutoScrollAxis
+		autoScrollH     mouseAutoScrollAxis
 	}
 
 	saveGenSlot struct{ gen int }
 
-	autoSaveMsg struct{ gen int }
+	mouseAutoScrollAxis struct {
+		last, fixed int
+		gen         int
+		on, toLo    bool
+		interval    time.Duration
+		scroll      mouseAxisScrollFunc
+		pos         mouseAxisPosFunc
+	}
 
-	docHighlightMsg struct{ gen int }
+	mouseAxisScrollFunc func(e *view.Editor, v *view.View, toLo bool)
 
-	vcsUpdatedMsg struct{}
+	mouseAxisPosFunc func(
+		r *renderPass, doc *view.Document, v *view.View, fixed int, toLo bool,
+	) (int, bool)
 
-	vcsRefreshMsg struct{}
+	mouseAxisScrollMsg struct {
+		gen  int
+		axis *mouseAutoScrollAxis
+		toLo bool
+	}
+
+	dragEdgeArgs struct {
+		pos, last  int
+		lo, hi     int
+		margin     int
+		onLo, onHi bool
+	}
 
 	completionMsg struct {
 		gen        int
@@ -71,9 +93,22 @@ type (
 		childIdx    int
 		layout      view.Layout
 	}
+
+	autoSaveMsg struct{ gen int }
+
+	docHighlightMsg struct{ gen int }
+
+	vcsUpdatedMsg struct{}
+
+	vcsRefreshMsg struct{}
 )
 
-const vcsRefreshInterval = 5 * time.Second
+const (
+	vcsRefreshInterval = 5 * time.Second
+
+	mouseAutoScrollMaxInterval = 400 * time.Millisecond
+	mouseAutoScrollMinInterval = 50 * time.Millisecond
+)
 
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
@@ -83,6 +118,41 @@ func newEditorComponent() *EditorComponent {
 		focused:        true,
 		completionOpts: DefaultCompletionOptions(),
 		fileWatcher:    newEditorFileWatcher(),
+		autoScrollV: mouseAutoScrollAxis{
+			scroll: func(e *view.Editor, v *view.View, toLo bool) {
+				act.ScrollViewLines(e, v, 1, toLo)
+			},
+			pos: func(
+				r *renderPass, doc *view.Document, v *view.View, fixed int,
+				toLo bool,
+			) (int, bool) {
+				area := v.Area()
+				edgeY := area.Y + max(area.Height-1, 0) - 1
+				if toLo {
+					edgeY = area.Y
+				}
+				return r.screenCharPos(doc, v, fixed, edgeY)
+			},
+		},
+		autoScrollH: mouseAutoScrollAxis{
+			scroll: func(e *view.Editor, v *view.View, toLo bool) {
+				act.ScrollViewColumns(e, v, 1, toLo)
+			},
+			pos: func(
+				r *renderPass, doc *view.Document, v *view.View, fixed int,
+				toLo bool,
+			) (int, bool) {
+				area := v.Area()
+				gutterW := gutterWidthFor(
+					doc.Text(), r.cx.Editor.Options().Gutters,
+				)
+				edgeX := area.X + area.Width - 1
+				if toLo {
+					edgeX = area.X + gutterW
+				}
+				return r.screenCharPos(doc, v, edgeX, fixed)
+			},
+		},
 	}
 }
 
@@ -176,6 +246,8 @@ func (e *EditorComponent) HandleEvent(
 	case tea.MouseClickMsg:
 		e.completionGen++
 		e.cancelPending(cx)
+		e.autoScrollV.stop()
+		e.autoScrollH.stop()
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			r.handleMouseClick(msg.X, msg.Y, msg.Mod)
@@ -184,11 +256,18 @@ func (e *EditorComponent) HandleEvent(
 
 	case tea.MouseMotionMsg:
 		e.completionGen++
+		var dragCmd tea.Cmd
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
-			r.handleMouseDrag(msg.X, msg.Y)
+			dragCmd = r.handleMouseDrag(msg.X, msg.Y)
 		}
-		return consumed(), e.documentHighlightCmd(cx)
+		return consumed(), tea.Batch(dragCmd, e.documentHighlightCmd(cx))
+
+	case mouseAxisScrollMsg:
+		if msg.gen != msg.axis.gen {
+			return consumed(), nil
+		}
+		return consumed(), e.continueAxisScroll(cx, msg.axis, msg.toLo)
 
 	case tea.MouseReleaseMsg:
 		e.completionGen++
@@ -353,6 +432,8 @@ func (e *EditorComponent) resize(cx *Context) {
 }
 
 func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
+	e.autoScrollV.stop()
+	e.autoScrollH.stop()
 	if e.mouseDownSep != nil {
 		e.mouseDownSep = nil
 		return
@@ -389,6 +470,72 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	})
 }
 
+func (e *EditorComponent) continueAxisScroll(
+	cx *Context, axis *mouseAutoScrollAxis, toLo bool,
+) tea.Cmd {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return nil
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return nil
+	}
+	axis.scroll(cx.Editor, v, toLo)
+
+	r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
+	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLo); ok {
+		extendSelectionTo(cx, doc, v, pos)
+	}
+	return axis.cmd(toLo)
+}
+
+func (a *mouseAutoScrollAxis) cmd(toLo bool) tea.Cmd {
+	a.gen++
+	gen := a.gen
+	a.on = true
+	a.toLo = toLo
+	interval := a.interval
+	if interval <= 0 {
+		interval = mouseAutoScrollMaxInterval
+	}
+	return tea.Tick(interval, func(time.Time) tea.Msg {
+		return mouseAxisScrollMsg{gen: gen, axis: a, toLo: toLo}
+	})
+}
+
+func (a *mouseAutoScrollAxis) stop() {
+	if !a.on {
+		return
+	}
+	a.gen++
+	a.on = false
+}
+
+func (a *mouseAutoScrollAxis) update(
+	pos, lo, hi, margin int,
+) (atLo, atHi bool, clamped int) {
+	atLo, atHi, clamped = dragEdge(dragEdgeArgs{
+		pos: pos, last: a.last, lo: lo, hi: hi, margin: margin,
+		onLo: a.on && a.toLo, onHi: a.on && !a.toLo,
+	})
+	a.last = pos
+	a.interval = autoScrollInterval(pos, lo, hi, margin, atLo, atHi)
+	return atLo, atHi, clamped
+}
+
+func (a *mouseAutoScrollAxis) trigger(atLo, atHi bool, fixed int) tea.Cmd {
+	if !atLo && !atHi {
+		a.stop()
+		return nil
+	}
+	a.fixed = fixed
+	if a.on && a.toLo == atLo {
+		return nil
+	}
+	return a.cmd(atLo)
+}
+
 func vcsUpdateCmd(cx *Context) tea.Cmd {
 	vc := cx.Editor.VersionControl()
 	if vc == nil {
@@ -422,4 +569,37 @@ func documentHighlightPositionFor(
 		pos:    pos,
 		ok:     true,
 	}
+}
+
+func dragEdge(a dragEdgeArgs) (atLo, atHi bool, clamped int) {
+	towardLo := a.pos < a.last
+	towardHi := a.pos > a.last
+	stuckLo := a.onLo && a.pos <= a.lo
+	stuckHi := a.onHi && a.pos >= a.hi
+	atLo = a.pos <= a.lo+a.margin && (towardLo || stuckLo)
+	atHi = a.pos >= a.hi-a.margin && (towardHi || stuckHi)
+	clamped = min(max(a.pos, a.lo), a.hi)
+	return atLo, atHi, clamped
+}
+
+func autoScrollInterval(
+	pos, lo, hi, margin int, atLo, atHi bool,
+) time.Duration {
+	if margin <= 0 {
+		return mouseAutoScrollMinInterval
+	}
+	var depth int
+	switch {
+	case atLo:
+		depth = lo + margin - pos
+	case atHi:
+		depth = pos - (hi - margin)
+	default:
+		return mouseAutoScrollMaxInterval
+	}
+	depth = min(max(depth, 0), margin)
+	t := float64(depth) / float64(margin)
+	t *= t // ease in: stays slow through most of the margin, then drops fast
+	span := mouseAutoScrollMaxInterval - mouseAutoScrollMinInterval
+	return mouseAutoScrollMaxInterval - time.Duration(t*float64(span))
 }

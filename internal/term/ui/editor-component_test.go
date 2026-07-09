@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
@@ -391,7 +392,7 @@ func TestMouseSeparatorDrag(t *testing.T) {
 }
 
 func TestMouseDragBounds(t *testing.T) {
-	t.Run("negative row leaves selection unchanged", func(t *testing.T) {
+	t.Run("negative row clamps to top edge", func(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := renderedModel(e)
 		m2, _ := m.Update(tea.MouseClickMsg{
@@ -399,6 +400,8 @@ func TestMouseDragBounds(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
+		// dragging above the pane's top row clamps to it instead of being a
+		// no-op, so a drag started at the top edge still extends
 		m2, _ = m.Update(tea.MouseMotionMsg{
 			X: 8, Y: -1, Button: tea.MouseLeft,
 		})
@@ -407,7 +410,7 @@ func TestMouseDragBounds(t *testing.T) {
 		v, _ := e.FocusedView()
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t,
-			[]core.Range{core.PointRange(1)},
+			[]core.Range{core.NewRange(1, 2)},
 			doc.SelectionFor(v.ID()).Ranges(),
 		)
 	})
@@ -432,6 +435,306 @@ func TestMouseDragBounds(t *testing.T) {
 			[]core.Range{core.NewRange(1, 6)},
 			doc.SelectionFor(v.ID()).Ranges(),
 		)
+	})
+}
+
+func TestMouseDragAutoScroll(t *testing.T) {
+	t.Run("drag past bottom edge scrolls", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		before := v.Offset().Anchor
+
+		// dragging past the pane's bottom edge starts an auto-scroll tick
+		// instead of just clamping the selection in place
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: 100, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		// fire exactly one tick; it reschedules itself, but we only need to
+		// prove a single step scrolls forward, not drive it to completion
+		msg := cmd()
+		m2, _ = m.Update(msg)
+		_ = m2.(ui.Model)
+
+		assert.Greater(t, v.Offset().Anchor, before)
+	})
+
+	t.Run("tick moves exactly one line after render", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		anchor, err := doc.Text().LineToChar(20)
+		assert.NoError(t, err)
+		v.SetOffset(view.Position{Anchor: anchor})
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 3, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		beforeLine, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: -100, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+		m2, _ = m.Update(cmd())
+		m = m2.(ui.Model)
+
+		// a render used to let normal scrolloff re-centering fight the tick
+		// and jump the viewport further than the deliberate one-line step
+		_ = m.View()
+
+		afterLine, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, beforeLine-afterLine)
+	})
+
+	t.Run("drag near top edge scrolls up", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		anchor, err := doc.Text().LineToChar(20)
+		assert.NoError(t, err)
+		v.SetOffset(view.Position{Anchor: anchor})
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 3, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		before := v.Offset().Anchor
+
+		// row 1 is inside the visible pane, not off-screen, but within the
+		// top scrolloff margin — a pane at the screen's top edge has no row
+		// above it to drag into, so the trigger zone must live inside it
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: 1, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		msg := cmd()
+		m2, _ = m.Update(msg)
+		_ = m2.(ui.Model)
+
+		assert.Less(t, v.Offset().Anchor, before)
+	})
+
+	t.Run("tick interval speeds up near edge", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		tickDelay := func(dragY int) time.Duration {
+			e := editorWithText(t, b.String())
+			m := renderedModel(e)
+
+			m2, _ := m.Update(tea.MouseClickMsg{
+				X: 0, Y: 3, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+
+			_, cmd := m.Update(tea.MouseMotionMsg{
+				X: 0, Y: dragY, Button: tea.MouseLeft,
+			})
+			assert.NotNil(t, cmd)
+			start := time.Now()
+			cmd() // tea.Tick blocks for the scheduled interval
+			return time.Since(start)
+		}
+
+		// row 1 is barely inside the top margin; far off-screen is pinned
+		// against the pane's edge, where ticks should fire faster
+		nearMargin := tickDelay(1)
+		atEdge := tickDelay(-100)
+		assert.Greater(t, nearMargin, atEdge)
+	})
+
+	t.Run("edge zone does not jump selection", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		startAnchor, err := doc.Text().LineToChar(20)
+		assert.NoError(t, err)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		var lines []int
+		for row := range 8 {
+			v.SetOffset(view.Position{Anchor: startAnchor})
+			m2, _ := m.Update(tea.MouseClickMsg{
+				X: 0, Y: 4, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+			m2, _ = m.Update(tea.MouseMotionMsg{
+				X: 0, Y: row, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+
+			line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
+			assert.NoError(t, err)
+			lines = append(lines, line)
+		}
+
+		// each one-row mouse move must change the cursor by at most one
+		// line — snapping straight to the clamped edge on entering the
+		// margin zone used to jump several lines in a single step
+		for i := 1; i < len(lines); i++ {
+			assert.LessOrEqual(t, lines[i-1]-lines[i], 1)
+		}
+	})
+
+	t.Run("repeated motion does not restart timer", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: 100, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		// a second motion event still inside the same edge zone must not
+		// reschedule the tick — otherwise a fast mouse-motion stream never
+		// lets the timer fire
+		m2, cmd2 := m.Update(tea.MouseMotionMsg{
+			X: 1, Y: 100, Button: tea.MouseLeft,
+		})
+		_ = m2.(ui.Model)
+		assert.Nil(t, cmd2)
+	})
+
+	t.Run("release stops auto-scroll", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: 100, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		before := v.Offset().Anchor
+
+		// the tick scheduled before release must be a no-op now
+		msg := cmd()
+		m2, _ = m.Update(msg)
+		_ = m2.(ui.Model)
+
+		assert.Equal(t, before, v.Offset().Anchor)
+	})
+
+	t.Run("left edge zone starts at content", func(t *testing.T) {
+		minWidth := 10
+		e := editorWithText(t, strings.Repeat("x", 200)+"\nshort")
+		e.Options().Gutters = view.Gutter{
+			Present: true,
+			Layout:  []view.GutterType{view.GutterTypeLineNumbers},
+			LineNumbers: view.GutterLineNumbers{
+				MinWidth: &minWidth,
+			},
+		}
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		_ = m.View()
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		area := v.Area()
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: area.X + 20, Y: 0, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		// column area.X+minWidth is the first column of text, right after
+		// the gutter — the trigger zone must reach that far, not require
+		// the drag to be over the gutter itself
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: area.X + minWidth, Y: 0, Button: tea.MouseLeft,
+		})
+		_ = m2.(ui.Model)
+
+		assert.NotNil(t, cmd)
+	})
+
+	t.Run("clamped position at edge stays fast", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		m := renderedModel(e)
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 5, Button: tea.MouseLeft})
+		m = m2.(ui.Model)
+
+		m2, cmd := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: 0, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+		start := time.Now()
+		cmd()
+		firstTick := time.Since(start)
+
+		// the terminal clamps out-of-window coordinates, so a drag held
+		// outside keeps reporting this same row with no further movement
+		m2, cmd2 := m.Update(tea.MouseMotionMsg{
+			X: 0, Y: 0, Button: tea.MouseLeft,
+		})
+		_ = m2.(ui.Model)
+		if cmd2 != nil {
+			start2 := time.Now()
+			cmd2()
+			assert.Less(t, time.Since(start2), 2*firstTick)
+		}
 	})
 }
 
@@ -464,7 +767,7 @@ func TestFreeScroll(t *testing.T) {
 	t.Run("click near viewport edge does not scroll", func(t *testing.T) {
 		var b strings.Builder
 		for i := range 60 {
-			fmt.Fprintf(&b, "line%d\n", i)
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
 		}
 		e := editorWithText(t, b.String())
 		e.ResizeTree(80, 24)

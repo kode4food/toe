@@ -50,7 +50,9 @@ func Run(args []string, out io.Writer) error {
 		return err
 	}
 	a.Editor = view.NewEditor(a.Root)
-	a.Editor.SetClipboard(action.NewOSC52Clipboard(action.NewSystemClipboard()))
+	a.Editor.SetClipboard(
+		action.NewOSC52Clipboard(action.NewSystemClipboard()),
+	)
 	if err := a.OpenEditorFiles(); err != nil {
 		return err
 	}

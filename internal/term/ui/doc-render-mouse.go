@@ -107,6 +107,7 @@ func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
 	}
 	tx := core.NewTransaction(text).WithSelection(newSel)
 	_ = r.cx.Editor.Apply(tx)
+	res.v.BeginFreeScroll(res.doc.Revision(), newSel)
 }
 
 func (r *renderPass) handleMouseDrag(x, y int) {
@@ -159,6 +160,7 @@ func (r *renderPass) handleMouseDrag(x, y int) {
 	}
 	tx := core.NewTransaction(text).WithSelection(newSel)
 	_ = r.cx.Editor.Apply(tx)
+	v.BeginFreeScroll(doc.Revision(), newSel)
 }
 
 func (r *renderPass) handleMouseMiddleRelease(x, y int, mod tea.KeyMod) {

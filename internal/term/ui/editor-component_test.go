@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -458,6 +459,54 @@ func TestFreeScroll(t *testing.T) {
 		assert.True(t, v1.FreeScroll())
 		assert.Equal(t, scrolled, v1.Offset())
 		assert.False(t, v2.FreeScroll())
+	})
+
+	t.Run("click near viewport edge does not scroll", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 60 {
+			fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		e.ResizeTree(80, 24)
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		for range 40 {
+			m = sendKey(m, 'j')
+		}
+		_ = m.View()
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		before := v.Offset()
+
+		// the last content row before the status/command line is well inside
+		// the default 5-line scrolloff margin, which used to force a
+		// re-center on click
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		clickY := -1
+		for y := len(lines) - 2; y >= 0; y-- {
+			if strings.Contains(lines[y], "line") {
+				clickY = y
+				break
+			}
+		}
+		assert.GreaterOrEqual(t, clickY, 0)
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 5, Y: clickY, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.True(t, v.FreeScroll())
+		assert.Equal(t, before, v.Offset())
+
+		m = sendKey(m, 'j')
+		_ = m.View()
+
+		assert.False(t, v.FreeScroll())
 	})
 }
 

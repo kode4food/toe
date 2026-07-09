@@ -1,17 +1,17 @@
 package core
 
+import "strings"
+
 // IndentStyle describes whether indentation uses tabs or spaces
 type IndentStyle struct {
 	tabs  bool
 	width uint8
 }
 
-const (
-	// MaxIndent is the maximum spaces per indent level
-	MaxIndent = 16
+// MaxIndent is the maximum spaces per indent level
+const MaxIndent = 16
 
-	indents = "                " // 16 spaces
-)
+var indents = strings.Repeat(" ", MaxIndent)
 
 // Tabs returns an IndentStyle that uses tab characters
 func Tabs() IndentStyle {

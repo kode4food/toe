@@ -14,14 +14,20 @@ func TestReflowHardWrap(t *testing.T) {
 		assert.Equal(t, "one two\nthree four\nfive", got)
 	})
 
-	t.Run("no split of long words", func(t *testing.T) {
+	t.Run("breaks long words", func(t *testing.T) {
 		got := core.ReflowHardWrap("superlongword", 5)
-		assert.Equal(t, "superlongword", got)
+		assert.Equal(t, "super\nlongw\nord", got)
 	})
 
 	t.Run("collapses line breaks and re-wraps", func(t *testing.T) {
 		got := core.ReflowHardWrap("one\ntwo three\nfour", 10)
 		assert.Equal(t, "one two\nthree four", got)
+	})
+
+	t.Run("avoids short final line", func(t *testing.T) {
+		text := "This is a demo of the short last line penalty."
+		got := core.ReflowHardWrap(text, 37)
+		assert.Equal(t, "This is a demo of the short last\nline penalty.", got)
 	})
 
 	t.Run("empty string returns empty string", func(t *testing.T) {
@@ -38,5 +44,25 @@ func TestReflowHardWrap(t *testing.T) {
 
 	t.Run("all-whitespace collapses to empty", func(t *testing.T) {
 		assert.Equal(t, "", core.ReflowHardWrap("   \n  \n  ", 80))
+	})
+
+	t.Run("preserves list prefixes", func(t *testing.T) {
+		got := core.ReflowHardWrap("* This is my\n  list item.", 20)
+		assert.Equal(t, "* This is my list\n  item.", got)
+	})
+
+	t.Run("preserves comment prefixes", func(t *testing.T) {
+		got := core.ReflowHardWrap("    // foo bar\n    // baz quux", 16)
+		assert.Equal(t, "    // foo bar\n    // baz quux", got)
+	})
+
+	t.Run("preserves quote prefixes", func(t *testing.T) {
+		got := core.ReflowHardWrap("> Memory\n> safety without garbage", 20)
+		assert.Equal(t, "> Memory safety\n> without garbage", got)
+	})
+
+	t.Run("preserves trailing crlf", func(t *testing.T) {
+		got := core.ReflowHardWrap("> foo\r\n> bar\r\n", 20)
+		assert.Equal(t, "> foo bar\r\n", got)
 	})
 }

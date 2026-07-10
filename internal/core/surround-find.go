@@ -9,6 +9,11 @@ func (r Rope) surroundFindNthOpen(
 	if ch, err := r.CharAt(pos); err == nil && ch == openCh {
 		return pos, true
 	}
+	if pos > 0 {
+		if ch, err := r.CharAt(pos - 1); err == nil && ch == openCh {
+			return pos - 1, true
+		}
+	}
 	for range n {
 		stepOver := 0
 		found := false

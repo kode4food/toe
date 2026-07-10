@@ -157,6 +157,13 @@ func TestAutoDetect(t *testing.T) {
 		assert.Equal(t, uint8(2), style.Width())
 	})
 
+	t.Run("skips blank mixed whitespace line", func(t *testing.T) {
+		doc := core.NewRope("x\n  \t\n    a\n    b\n")
+		style, ok := core.AutoDetect(doc)
+		assert.True(t, ok)
+		assert.Equal(t, uint8(4), style.Width())
+	})
+
 	t.Run("handles all-space trailing line", func(t *testing.T) {
 		doc := core.NewRope("x\n    a\n    b\n    ")
 		style, ok := core.AutoDetect(doc)

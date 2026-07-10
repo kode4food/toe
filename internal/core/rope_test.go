@@ -171,6 +171,22 @@ func TestRope(t *testing.T) {
 		assert.Equal(t, 2, line)
 	})
 
+	t.Run("maps nonstandard line endings", func(t *testing.T) {
+		r := core.NewRope("one\rtwo\u2028three")
+
+		pos, err := r.LineToChar(1)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, pos)
+
+		pos, err = r.LineToChar(2)
+		assert.NoError(t, err)
+		assert.Equal(t, 8, pos)
+
+		line, err := r.CharToLine(9)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, line)
+	})
+
 	t.Run("maps positions across large line sets", func(t *testing.T) {
 		r := core.NewRope(strings.Repeat("x\n", 1500) + "tail")
 
@@ -208,6 +224,15 @@ func TestRope(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, 7, pos)
+	})
+
+	t.Run("computes line end before unicode ending", func(t *testing.T) {
+		r := core.NewRope("one\u2028two")
+
+		pos, err := r.LineEndCharIndex(0)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 3, pos)
 	})
 
 	t.Run("computes final line end", func(t *testing.T) {

@@ -96,12 +96,7 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 	before := doc.buf.text
 	txns := doc.buf.history.Earlier(kind)
 	for _, tx := range txns {
-		inv, err := tx.Invert(doc.buf.text)
-		if err != nil {
-			doc.buf.Unlock()
-			return false
-		}
-		newText, err := inv.Apply(doc.buf.text)
+		newText, err := tx.Apply(doc.buf.text)
 		if err != nil {
 			doc.buf.Unlock()
 			return false
@@ -111,7 +106,7 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.buf.unsaved = len(txns) > 0 || doc.buf.unsaved
+	doc.buf.unsaved = doc.Modified()
 	if len(txns) == 0 {
 		doc.buf.Unlock()
 		return false
@@ -147,7 +142,7 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.buf.unsaved = len(txns) > 0 || doc.buf.unsaved
+	doc.buf.unsaved = doc.Modified()
 	if len(txns) == 0 {
 		doc.buf.Unlock()
 		return false

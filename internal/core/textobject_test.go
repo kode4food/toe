@@ -88,15 +88,15 @@ func TestTextObjectParagraph(t *testing.T) {
 		r := core.TextObjectParagraph(
 			doc, core.NewRange(0, 0), core.TextObjectInside, 2,
 		)
-		assert.Equal(t, "a\n", sliceOf(t, doc, r))
+		assert.Equal(t, "a\n\nb\n", sliceOf(t, doc, r))
 	})
 
-	t.Run("blank line selects previous block", func(t *testing.T) {
+	t.Run("blank line before paragraph selects next", func(t *testing.T) {
 		doc := core.NewRope("a\n\nb\n")
 		r := core.TextObjectParagraph(
 			doc, core.NewRange(2, 2), core.TextObjectInside, 1,
 		)
-		assert.Equal(t, "a\n", sliceOf(t, doc, r))
+		assert.Equal(t, "b\n", sliceOf(t, doc, r))
 	})
 
 	t.Run("cursor in second paragraph walks backward", func(t *testing.T) {
@@ -112,7 +112,15 @@ func TestTextObjectParagraph(t *testing.T) {
 		r := core.TextObjectParagraph(
 			doc, core.NewRange(3, 3), core.TextObjectAround, 2,
 		)
-		assert.Equal(t, "b", sliceOf(t, doc, r))
+		assert.Equal(t, "a\n\nb", sliceOf(t, doc, r))
+	})
+
+	t.Run("empty to line boundary selects next", func(t *testing.T) {
+		doc := core.NewRope("empty to line\n\nparagraph boundary\n\n")
+		r := core.TextObjectParagraph(
+			doc, core.NewRange(14, 14), core.TextObjectInside, 1,
+		)
+		assert.Equal(t, "paragraph boundary\n", sliceOf(t, doc, r))
 	})
 }
 
@@ -136,6 +144,13 @@ func TestTextObjectPairSurround(t *testing.T) {
 		r := core.NewRange(4, 4).TextObjectPairSurround(
 			doc, core.TextObjectInside, 0, 1)
 		assert.Equal(t, "a (bc)", sliceOf(t, doc, r))
+	})
+
+	t.Run("specific pair adjacent to range start", func(t *testing.T) {
+		doc := core.NewRope("(abc)")
+		r := core.NewRange(1, 4).TextObjectPairSurround(
+			doc, core.TextObjectInside, '(', 1)
+		assert.Equal(t, "abc", sliceOf(t, doc, r))
 	})
 
 	t.Run("backward range stays backward", func(t *testing.T) {

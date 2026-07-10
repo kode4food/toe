@@ -118,6 +118,35 @@ func TestSession(t *testing.T) {
 		assert.Contains(t, path, loader.WorkspaceDirName)
 	})
 
+	t.Run("selection-only change saves in session", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		tx := core.NewTransaction(doc.Text()).
+			WithSelection(core.PointSelection(3))
+		assert.NoError(t, e.Apply(tx))
+		assert.False(t, doc.Modified())
+
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+		next := view.NewEditor(dir)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		views := next.AllViews()
+		assert.NotEmpty(t, views)
+		nextDoc, ok := next.Document(views[0].DocID())
+		assert.True(t, ok)
+		assert.Equal(t, 3, nextDoc.Selection().Primary().Head)
+	})
+
 	t.Run("notifies observers for restored documents", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

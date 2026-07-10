@@ -273,6 +273,24 @@ func TestDocumentSave(t *testing.T) {
 		assert.Equal(t, "hello\n", doc.Text().String())
 	})
 
+	t.Run("save cleanup is undoable", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		e := testutil.EditorWithText(t, "hello")
+		doc, _ := e.FocusedDocument()
+		doc.SetPath(path)
+
+		err := e.Save()
+
+		assert.NoError(t, err)
+		assert.Equal(t, "hello\n", doc.Text().String())
+		assert.False(t, doc.Modified())
+		assert.True(t, e.Undo())
+		assert.Equal(t, "hello", doc.Text().String())
+		assert.True(t, doc.Modified())
+	})
+
 	t.Run("doc line ending used for final newline", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		tmp := t.TempDir()
@@ -385,6 +403,32 @@ func TestDocumentReload(t *testing.T) {
 		d, _ := e.FocusedDocument()
 		assert.Equal(t, "new", d.Text().String())
 		assert.False(t, d.Modified())
+	})
+
+	t.Run("reload preserves undo history", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "reload.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(3, 3, "!"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		err = os.WriteFile(path, []byte("old!"), 0o644)
+		assert.NoError(t, err)
+
+		err = e.Reload()
+
+		assert.NoError(t, err)
+		assert.True(t, e.Undo())
+		assert.Equal(t, "old", doc.Text().String())
 	})
 }
 
@@ -768,6 +812,24 @@ func TestDocumentRevisionAndLastEditPos(t *testing.T) {
 		d, _ := e.FocusedDocument()
 		assert.GreaterOrEqual(t, d.LastEditPos(), 0)
 	})
+
+	t.Run("selection apply does not modify document", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "clean.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		d, _ := e.FocusedDocument()
+		v, _ := e.FocusedView()
+		tx := core.NewTransaction(
+			d.Text()).WithSelection(core.PointSelection(3))
+
+		assert.NoError(t, e.Apply(tx))
+
+		assert.Equal(t, 3, d.SelectionFor(v.ID()).Primary().Head)
+		assert.False(t, d.Modified())
+	})
 }
 
 func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
@@ -954,8 +1016,8 @@ func TestDocumentReloadScratch(t *testing.T) {
 	})
 }
 
-func TestDocumentReloadResetsSelections(t *testing.T) {
-	t.Run("reload resets per-view selections", func(t *testing.T) {
+func TestDocumentReloadPreservesSelections(t *testing.T) {
+	t.Run("reload maps per-view selections", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "sel.txt")
 		err := os.WriteFile(path, []byte("hello world"), 0o644)
@@ -969,10 +1031,12 @@ func TestDocumentReloadResetsSelections(t *testing.T) {
 		doc, _ := e.Document(v1.DocID())
 		doc.SetSelectionFor(v1.ID(), core.PointSelection(5))
 		doc.SetSelectionFor(v2.ID(), core.PointSelection(8))
+		err = os.WriteFile(path, []byte("hello big world"), 0o644)
+		assert.NoError(t, err)
 		err = doc.Reload()
 		assert.NoError(t, err)
-		assert.Equal(t, 0, doc.SelectionFor(v1.ID()).Primary().Head)
-		assert.Equal(t, 0, doc.SelectionFor(v2.ID()).Primary().Head)
+		assert.Equal(t, 5, doc.SelectionFor(v1.ID()).Primary().Head)
+		assert.Equal(t, 12, doc.SelectionFor(v2.ID()).Primary().Head)
 	})
 }
 

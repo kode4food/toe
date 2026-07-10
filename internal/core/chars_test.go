@@ -11,7 +11,7 @@ import (
 func TestChars(t *testing.T) {
 	t.Run("categorizes line endings", func(t *testing.T) {
 		assert.Equal(t, core.CharCategoryEOL, core.CategorizeChar('\n'))
-		assert.False(t, core.CharIsLineEnding('\r'))
+		assert.Equal(t, core.CharCategoryEOL, core.CategorizeChar('\r'))
 	})
 
 	t.Run("categorizes whitespace", func(t *testing.T) {

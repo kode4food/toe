@@ -28,11 +28,8 @@ func (d *Document) Save(opts *Options) error {
 	text := prepareSaveText(
 		d.buf.text.String(), d.lineEnding, opts, d.editorConfig,
 	)
-	if text != d.buf.text.String() {
-		d.buf.Lock()
-		d.buf.text = core.NewRope(text)
-		d.buf.version++
-		d.buf.Unlock()
+	if err := d.applySaveText(text); err != nil {
+		return err
 	}
 	var data []byte
 	if d.hasBOM {
@@ -50,6 +47,7 @@ func (d *Document) Save(opts *Options) error {
 		return err
 	}
 	d.refreshDiskSnapshot()
+	d.buf.savePoint = d.buf.history.CurrentRevision()
 	d.buf.unsaved = false
 	return nil
 }
@@ -57,31 +55,7 @@ func (d *Document) Save(opts *Options) error {
 // Reload replaces the document text with the current file contents on disk
 // All per-view selections are reset to the start of the document
 func (d *Document) Reload() error {
-	d.ensureLoaded()
-	path := d.Path()
-	if path == "" {
-		return ErrDocumentNoPath
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	d.hasBOM = hasBOMBytes(data)
-	if d.hasBOM {
-		data = data[3:]
-	}
-	d.buf.Lock()
-	d.buf.text = core.NewRope(string(data))
-	d.buf.version++
-	d.buf.Unlock()
-	d.buf.unsaved = false
-	d.buf.history = core.NewHistory()
-	for vid := range d.buf.selections {
-		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-		d.buf.selections[vid] = sel
-	}
-	d.refreshDiskSnapshot()
-	return nil
+	return d.reloadPreservingSelections()
 }
 
 func (d *Document) reloadPreservingSelections() error {
@@ -111,9 +85,42 @@ func (d *Document) reloadPreservingSelections() error {
 	d.buf.version++
 	d.buf.selections = selections
 	d.buf.Unlock()
+	d.buf.savePoint = d.buf.history.CurrentRevision()
 	d.buf.unsaved = false
-	d.buf.history = core.NewHistory()
 	d.refreshDiskSnapshot()
+	return nil
+}
+
+func (d *Document) applySaveText(text string) error {
+	oldText := d.buf.text
+	cs, err := diffChangeSet(oldText, text)
+	if err != nil || cs.Empty() {
+		return err
+	}
+	sel := d.Selection()
+	tx := core.NewTransaction(oldText).WithChanges(cs).WithSelection(sel)
+	st := core.State{Doc: oldText, Selection: sel}
+	if err := d.buf.history.CommitRevision(tx, st); err != nil {
+		return err
+	}
+	newText, err := tx.Apply(oldText)
+	if err != nil {
+		return err
+	}
+	for vid, sel := range d.buf.selections {
+		if mapped, err := sel.Map(cs); err == nil {
+			d.buf.selections[vid] = mapped
+		}
+	}
+	if mapped, err := d.buf.lastSel.Map(cs); err == nil {
+		d.buf.lastSel = mapped
+	}
+	d.buf.Lock()
+	d.buf.text = newText
+	d.buf.version++
+	d.buf.unsaved = true
+	d.buf.modified = true
+	d.buf.Unlock()
 	return nil
 }
 

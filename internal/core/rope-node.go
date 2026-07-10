@@ -29,7 +29,7 @@ func newLeafRopeNode(text string) *ropeNode {
 	return &ropeNode{
 		text:  text,
 		chars: utf8.RuneCountInString(text),
-		lines: strings.Count(text, "\n"),
+		lines: countLineBreaks(text),
 		depth: 1,
 	}
 }

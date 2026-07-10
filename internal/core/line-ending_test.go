@@ -2,6 +2,7 @@ package core_test
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,8 +32,13 @@ func TestLineEnding(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, core.LineEndingLF, e)
 
-		_, ok = core.LineEndingFromChar('\r')
-		assert.False(t, ok)
+		for _, ch := range []rune{
+			'\r', '\v', '\f', '\u0085', '\u2028', '\u2029',
+		} {
+			e, ok = core.LineEndingFromChar(ch)
+			assert.True(t, ok)
+			assert.Equal(t, core.LineEndingLF, e)
+		}
 	})
 
 	t.Run("detects first document line ending", func(t *testing.T) {
@@ -65,10 +71,39 @@ func TestLineEnding(t *testing.T) {
 				ok:   true,
 			},
 			{
-				name: "ignores form feed without unicode lines",
+				name: "ignores form feed for style",
 				in:   "a formfeed\u000C with crlf\r\nand lf\n",
 				e:    core.LineEndingCRLF,
 				ok:   true,
+			},
+			{
+				name: "detects lone cr",
+				in:   "a\rb\n",
+				e:    core.LineEndingLF,
+				ok:   true,
+			},
+			{
+				name: "detects next line",
+				in:   "a\u0085b\n",
+				e:    core.LineEndingLF,
+				ok:   true,
+			},
+			{
+				name: "detects line separator",
+				in:   "a\u2028b\n",
+				e:    core.LineEndingLF,
+				ok:   true,
+			},
+			{
+				name: "ignores paragraph separator",
+				in:   "a\u2029b\n",
+				e:    core.LineEndingLF,
+				ok:   true,
+			},
+			{
+				name: "caps scan",
+				in:   strings.Repeat("x\f", 100) + "\n",
+				ok:   false,
 			},
 		}
 

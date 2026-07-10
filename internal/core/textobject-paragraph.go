@@ -7,61 +7,69 @@ func TextObjectParagraph(
 	doc Rope, r Range, kind TextObjectKind, count int,
 ) Range {
 	nLines := doc.LenLines()
-	line, err := doc.CharToLine(r.Cursor(doc))
+	cursor := r.Cursor(doc)
+	line, err := doc.CharToLine(cursor)
 	if err != nil {
 		return r
 	}
-
-	isBlank := func(l int) bool {
-		if l < 0 || l >= nLines {
-			return true
-		}
-		lineRope, e := doc.Line(l)
-		if e != nil {
-			return true
-		}
-		return isBlankLine(lineRope.String())
+	if count < 1 {
+		count = 1
 	}
 
-	// Walk backward to find the start of the current paragraph block
-	startLine := line
-	for startLine > 0 && !isBlank(startLine-1) {
-		startLine--
+	prevEmpty := paragraphLineBlank(doc, line-1, nLines)
+	currEmpty := paragraphLineBlank(doc, line, nLines)
+	nextEmpty := line+1 >= nLines || paragraphLineBlank(doc, line+1, nLines)
+	nextStart := paragraphLineToChar(doc, line+1)
+	lastChar := PrevGraphemeBoundary(doc, nextStart) == cursor
+	prevEmptyToLine := prevEmpty && !currEmpty
+	currEmptyToLine := currEmpty && !nextEmpty
+
+	lineBack := line
+	if prevEmptyToLine || currEmptyToLine {
+		lineBack++
+	}
+	if !(currEmptyToLine && lastChar) {
+		for lineBack > 0 && paragraphLineBlank(doc, lineBack-1, nLines) {
+			lineBack--
+		}
+		for lineBack > 0 && !paragraphLineBlank(doc, lineBack-1, nLines) {
+			lineBack--
+		}
 	}
 
-	// Walk forward through count paragraphs
-	endLine := line
+	if currEmptyToLine && lastChar {
+		line++
+	}
+	countDone := 0
 	for range count {
-		for endLine < nLines && !isBlank(endLine) {
-			endLine++
+		done := false
+		for line < nLines && !paragraphLineBlank(doc, line, nLines) {
+			line++
+			done = true
 		}
-		if kind == TextObjectAround {
-			for endLine < nLines && isBlank(endLine) {
-				endLine++
-			}
+		for line < nLines && paragraphLineBlank(doc, line, nLines) {
+			line++
+		}
+		if done {
+			countDone++
 		}
 	}
-
-	// Inside: trim trailing blank lines from the end
+	if countDone != count && line >= nLines {
+		for lineBack > 0 && paragraphLineBlank(doc, lineBack-1, nLines) {
+			lineBack--
+		}
+		for lineBack > 0 && !paragraphLineBlank(doc, lineBack-1, nLines) {
+			lineBack--
+		}
+	}
 	if kind == TextObjectInside {
-		for endLine > startLine && isBlank(endLine-1) {
-			endLine--
+		for line > lineBack && paragraphLineBlank(doc, line-1, nLines) {
+			line--
 		}
 	}
 
-	from, err2 := doc.LineToChar(startLine)
-	if err2 != nil {
-		return r
-	}
-	var to int
-	if endLine >= nLines {
-		to = doc.LenChars()
-	} else {
-		to, err2 = doc.LineToChar(endLine)
-		if err2 != nil {
-			return r
-		}
-	}
+	from := paragraphLineToChar(doc, lineBack)
+	to := paragraphLineToChar(doc, line)
 	return NewRange(from, to)
 }
 
@@ -100,9 +108,31 @@ func (r Range) TextObjectPairSurround(
 
 func isBlankLine(s string) bool {
 	for _, ch := range s {
-		if ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n' {
+		if ch != ' ' && ch != '\t' && !CharIsLineEnding(ch) {
 			return false
 		}
 	}
 	return true
+}
+
+func paragraphLineBlank(doc Rope, line, nLines int) bool {
+	if line < 0 || line >= nLines {
+		return true
+	}
+	lineRope, err := doc.Line(line)
+	if err != nil {
+		return true
+	}
+	return isBlankLine(lineRope.String())
+}
+
+func paragraphLineToChar(doc Rope, line int) int {
+	if line >= doc.LenLines() {
+		return doc.LenChars()
+	}
+	pos, err := doc.LineToChar(line)
+	if err != nil {
+		return doc.LenChars()
+	}
+	return pos
 }

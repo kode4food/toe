@@ -107,7 +107,10 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	dc.ensureSearchSpans(rev, pat, rawText)
 	searchMatches := dc.smSpans
 	docDiagnostics := doc.Diagnostics()
-	docHighlights := documentHighlightSpans(doc.DocumentHighlights(v.ID()))
+	var docHighlights []matchSpan
+	if r.cx.Editor.Mode() != view.ModeSelect && r.ec.mouseDownRange == nil {
+		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
+	}
 	docLinks := documentLinkSpans(doc.DocumentLinks())
 	docColors := documentColorSpans(doc.DocumentColors())
 

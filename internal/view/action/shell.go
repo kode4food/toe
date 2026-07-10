@@ -2,6 +2,8 @@ package action
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -9,6 +11,8 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
+
+var ErrShellCommand = errors.New("shell command failed")
 
 // ShellPipe pipes each selection through a shell command, replacing the
 // selection with the command's stdout
@@ -236,10 +240,25 @@ func runShell(e *view.Editor, cmdStr, input string) (string, error) {
 	cmd := makeShellCmd(e, cmdStr)
 	cmd.Stdin = strings.NewReader(input)
 	var out bytes.Buffer
+	var stderr bytes.Buffer
 	cmd.Stdout = &out
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", err
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			return "", err
+		}
+		return "", fmt.Errorf("%w: %s", ErrShellCommand, msg)
 	}
-	return out.String(), nil
+	return trimShellOutput(out.String(), input), nil
+}
+
+func trimShellOutput(out, input string) string {
+	if _, ok := core.GetLineEndingOfString(input); ok {
+		return out
+	}
+	if before, ok := strings.CutSuffix(out, "\r\n"); ok {
+		return before
+	}
+	return strings.TrimSuffix(out, "\n")
 }

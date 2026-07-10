@@ -1,8 +1,10 @@
 package action_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,6 +44,16 @@ func TestShellPipeErrors(t *testing.T) {
 		err := action.ShellPipe(e, "false")
 
 		assert.Error(t, err)
+	})
+
+	t.Run("failing command returns stderr", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
+		err := action.ShellPipe(e, "printf nope >&2; exit 1")
+
+		assert.True(t, errors.Is(err, action.ErrShellCommand))
+		assert.True(t, strings.Contains(err.Error(), "nope"))
 	})
 }
 
@@ -193,6 +205,28 @@ func TestShell(t *testing.T) {
 		assert.NoError(t, err)
 		doc, _ := e.FocusedDocument()
 		assert.Equal(t, "ABC", doc.Text().String())
+	})
+
+	t.Run("pipe trims synthetic newline", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abc")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+
+		err := action.ShellPipe(e, "cat; printf '\\n'")
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+
+	t.Run("pipe keeps input newline", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abc\n")
+		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
+
+		err := action.ShellPipe(e, "cat")
+
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "abc\n", doc.Text().String())
 	})
 
 	t.Run("insert/append at boundaries", func(t *testing.T) {

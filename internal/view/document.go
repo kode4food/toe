@@ -59,6 +59,7 @@ type (
 		lastSel    core.Selection
 		searchHL   map[Id]bool
 		unsaved    bool
+		savePoint  int
 		modified   bool
 	}
 
@@ -153,7 +154,7 @@ func (d *Document) SetPath(path string) {
 
 // Modified reports whether the document has unsaved changes
 func (d *Document) Modified() bool {
-	return d.buf.unsaved
+	return d.buf.history.CurrentRevision() != d.buf.savePoint
 }
 
 // Loaded reports whether the backing file has been read; a restored session
@@ -372,14 +373,15 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		return nil
 	}
 
-	// Commit the FORWARD tx with the BEFORE state so that Undo can restore it
-	beforeSt := core.State{Doc: d.buf.text, Selection: d.SelectionFor(vid)}
-	if err := d.buf.history.CommitRevision(tx, beforeSt); err != nil {
-		return err
-	}
-
 	cs := tx.Changes()
 	newSel := d.resolveAppliedSelection(vid, tx, cs)
+	if !cs.Empty() {
+		// Commit the FORWARD tx with the BEFORE state so Undo can restore it
+		beforeSt := core.State{Doc: d.buf.text, Selection: d.SelectionFor(vid)}
+		if err := d.buf.history.CommitRevision(tx, beforeSt); err != nil {
+			return err
+		}
+	}
 	d.buf.Lock()
 	d.buf.text = newText
 	d.buf.selections[vid] = newSel
@@ -425,7 +427,7 @@ func (d *Document) Undo(vid Id) bool {
 	if txSel := tx.Selection(); txSel != nil {
 		d.buf.selections[vid] = *txSel
 	}
-	d.buf.unsaved = !d.buf.history.AtRoot()
+	d.buf.unsaved = d.Modified()
 	d.buf.modified = true
 	d.buf.Unlock()
 	return true
@@ -451,7 +453,7 @@ func (d *Document) Redo(vid Id) bool {
 	if txSel := tx.Selection(); txSel != nil {
 		d.buf.selections[vid] = *txSel
 	}
-	d.buf.unsaved = true
+	d.buf.unsaved = d.Modified()
 	d.buf.modified = true
 	d.buf.Unlock()
 	return true

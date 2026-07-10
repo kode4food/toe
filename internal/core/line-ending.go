@@ -32,23 +32,29 @@ func (l *LineEnding) UnmarshalText(text []byte) error {
 }
 
 func LineEndingFromChar(ch rune) (LineEnding, bool) {
-	if ch == '\n' {
+	switch ch {
+	case '\n', '\r', '\v', '\f', '\u0085', '\u2028', '\u2029':
 		return LineEndingLF, true
 	}
 	return "", false
 }
 
 func AutoDetectLineEndingString(s string) (LineEnding, bool) {
-	var prev rune
-	for _, ch := range s {
-		if ch != '\n' {
-			prev = ch
-			continue
-		}
-		if prev == '\r' {
+	runes := []rune(s)
+	lines := 0
+	for i, ch := range runes {
+		if ch == '\r' && i+1 < len(runes) && runes[i+1] == '\n' {
 			return LineEndingCRLF, true
 		}
-		return LineEndingLF, true
+		switch ch {
+		case '\n', '\r', '\u0085', '\u2028':
+			return LineEndingLF, true
+		case '\v', '\f', '\u2029':
+			lines++
+			if lines >= 100 {
+				return "", false
+			}
+		}
 	}
 	return "", false
 }
@@ -60,5 +66,27 @@ func GetLineEndingOfString(s string) (LineEnding, bool) {
 	if len(s) >= 1 && s[len(s)-1:] == string(LineEndingLF) {
 		return LineEndingLF, true
 	}
+	runes := []rune(s)
+	if len(runes) > 0 {
+		if _, ok := LineEndingFromChar(runes[len(runes)-1]); ok {
+			return LineEndingLF, true
+		}
+	}
 	return "", false
+}
+
+func countLineBreaks(s string) int {
+	runes := []rune(s)
+	n := 0
+	for i := 0; i < len(runes); i++ {
+		if runes[i] == '\r' && i+1 < len(runes) && runes[i+1] == '\n' {
+			n++
+			i++
+			continue
+		}
+		if _, ok := LineEndingFromChar(runes[i]); ok {
+			n++
+		}
+	}
+	return n
 }

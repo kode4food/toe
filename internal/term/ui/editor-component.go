@@ -314,6 +314,9 @@ func (e *EditorComponent) HandleEvent(
 }
 
 func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
+	if e.mouseDownRange != nil {
+		return nil
+	}
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
 		return nil

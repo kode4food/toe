@@ -604,8 +604,6 @@ func TestEditorEarlierLater(t *testing.T) {
 	})
 
 	t.Run("Earlier same-length substitution", func(t *testing.T) {
-		// Same-length substitution is the one case where the double-inversion
-		// in Earlier produces a changeset whose len matches doc.text.LenChars()
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "sub.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("a"), 0o644))
@@ -620,6 +618,8 @@ func TestEditorEarlierLater(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		assert.True(t, e.Earlier(core.UndoSteps(1)))
+		assert.Equal(t, "a", doc.Text().String())
+		assert.False(t, doc.Modified())
 	})
 
 	t.Run("Later same-length substitution", func(t *testing.T) {

@@ -660,6 +660,45 @@ func TestThemeRender(t *testing.T) {
 		assert.Equal(t, "48;2;69;71;90", cells['d'])
 		assert.Equal(t, "48;2;88;91;112", cells['e'])
 	})
+
+	t.Run("drag selection hides symbol highlight", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("abcde\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
+			{From: 0, To: 5},
+		})
+		e.Options().Mouse = true
+		e.Options().Theme = "mocha"
+		e.Options().CursorShape.Normal = view.CursorKindUnderline
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		x, y := renderedTextPoint(t, m, "abcde", 1)
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: x, Y: y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseMotionMsg{
+			X: x + 2, Y: y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		cells := styledRunes(m.View().Content)
+
+		assert.NotEqual(t, "48;2;88;91;112", cells['a'])
+		assert.Equal(t, "48;2;69;71;90", cells['b'])
+		assert.Equal(t, "48;2;69;71;90", cells['c'])
+		assert.Equal(t, "48;2;69;71;90", cells['d'])
+		assert.NotEqual(t, "48;2;88;91;112", cells['e'])
+	})
 }
 
 func styledRunes(s string) map[rune]string {

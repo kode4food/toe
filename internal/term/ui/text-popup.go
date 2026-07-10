@@ -31,7 +31,7 @@ type (
 	popupTextRenderer struct {
 		buf  *tui.Buffer
 		cx   *Context
-		area popupArea
+		area Bounds
 		base tui.Style
 		padX int
 	}

@@ -26,6 +26,8 @@ const (
 	codeActionMinWidth = 16
 )
 
+var _ BufferOverlayComponent = (*codeActionMenu)(nil)
+
 func newCodeActionMenu(
 	ec *EditorComponent, docID view.DocumentId, viewID view.Id,
 	actions []view.CodeAction,
@@ -109,7 +111,7 @@ func (m *codeActionMenu) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 		contentStyle: lipglossToTUIStyle(menu),
 	}
 	area := pop.drawInto(buf, 0, 0, w, h)
-	m.listBounds = Bounds(area).translate(pl.x, pl.y)
+	m.listBounds = area.translate(pl.x, pl.y)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
 	m.scroll = listClampScroll(m.scroll, len(m.actions), area.h)

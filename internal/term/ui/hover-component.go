@@ -18,9 +18,10 @@ type hoverComponent struct {
 	ec     *EditorComponent
 	anchor hoverAnchor
 	text   string
-	bounds Bounds
 	lines  []popupLine
 }
+
+var _ BufferOverlayComponent = (*hoverComponent)(nil)
 
 func newHoverComponent(
 	ec *EditorComponent, anchor hoverAnchor, text string,
@@ -72,7 +73,6 @@ func (h *hoverComponent) Layout(
 
 func (h *hoverComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
 	buf := h.get(pl.w, pl.h)
-	h.bounds = pl
 	paintTextPopup(buf, h.lines, cx)
 	return buf
 }

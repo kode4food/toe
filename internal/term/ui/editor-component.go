@@ -110,6 +110,8 @@ const (
 	mouseAutoScrollMinInterval = 50 * time.Millisecond
 )
 
+var _ BufferRenderer = (*EditorComponent)(nil)
+
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
 		saveSlot:       &saveGenSlot{},

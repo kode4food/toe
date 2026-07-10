@@ -101,6 +101,8 @@ type promptComponentArgs struct {
 	pickerFn pickerBuilder
 }
 
+var _ BufferOverlayComponent = (*PromptComponent)(nil)
+
 func newPromptComponent(args promptComponentArgs) *PromptComponent {
 	return &PromptComponent{
 		ec:       args.ec,

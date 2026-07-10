@@ -16,8 +16,8 @@ type (
 	}
 
 	pickerBoxAreas struct {
-		left  popupArea
-		right popupArea
+		left  Bounds
+		right Bounds
 	}
 )
 
@@ -58,20 +58,20 @@ func (f pickerBoxFrame) drawSplit(
 		}
 	}
 	return pickerBoxAreas{
-		left:  popupArea{x: x + 1, y: y + 1, w: lw, h: h - 2},
-		right: popupArea{x: x + 2 + lw, y: y + 1, w: rw, h: h - 2},
+		left:  Bounds{x: x + 1, y: y + 1, w: lw, h: h - 2},
+		right: Bounds{x: x + 2 + lw, y: y + 1, w: rw, h: h - 2},
 	}
 }
 
 func (f pickerBoxFrame) drawSingle(
 	buf *tui.Buffer, x, y, w, h, cutY int,
-) popupArea {
+) Bounds {
 	innerW := max(w-2, 0)
 	for dy := range h {
 		buf.FillRange(x, y+dy, w, f.contentStyle)
 	}
 	if w < 2 || h < 2 {
-		return popupArea{}
+		return Bounds{}
 	}
 	top := f.border.TopLeft +
 		strings.Repeat(f.border.Top, innerW) +
@@ -93,5 +93,5 @@ func (f pickerBoxFrame) drawSingle(
 			buf.SetString(x+w-1, ry, f.border.Right, f.borderStyle)
 		}
 	}
-	return popupArea{x: x + 1, y: y + 1, w: innerW, h: h - 2}
+	return Bounds{x: x + 1, y: y + 1, w: innerW, h: h - 2}
 }

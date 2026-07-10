@@ -27,12 +27,13 @@ type (
 		call   signatureCall
 		help   view.SignatureHelp
 		cursor int
-		bounds Bounds
 		lines  []popupLine
 	}
 )
 
 const signaturePopupMaxH = 12
+
+var _ BufferOverlayComponent = (*signatureHelpComponent)(nil)
 
 func newSignatureHelpComponent(
 	ec *EditorComponent, call signatureCall, help view.SignatureHelp,
@@ -117,7 +118,6 @@ func (s *signatureHelpComponent) paint(
 ) {
 	sig := s.help.Signatures[s.cursor]
 	w, h := pl.w, pl.h
-	s.bounds = pl
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	border := lipgloss.RoundedBorder()
 	pop := popup{
@@ -226,7 +226,7 @@ func (s *signatureHelpComponent) indexText() string {
 }
 
 func (s *signatureHelpComponent) renderSignature(
-	buf *tui.Buffer, area popupArea, sig view.SignatureInformation,
+	buf *tui.Buffer, area Bounds, sig view.SignatureInformation,
 	cx *Context,
 ) {
 	label := ansi.Truncate(sig.Label, area.w, "")

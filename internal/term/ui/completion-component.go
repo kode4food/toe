@@ -32,6 +32,8 @@ type completionComponent struct {
 	incomplete bool
 }
 
+var _ BufferOverlayComponent = (*completionComponent)(nil)
+
 type completionAnchor struct {
 	docID  view.DocumentId
 	viewID view.Id
@@ -198,7 +200,7 @@ func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 		contentStyle: lipglossToTUIStyle(menu),
 	}
 	area := pop.drawInto(buf, 0, 0, w, h)
-	c.listBounds = Bounds(area).translate(pl.x, pl.y)
+	c.listBounds = area.translate(pl.x, pl.y)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
 	match := lipglossToTUIStyle(pickerMatchStyle(cx))

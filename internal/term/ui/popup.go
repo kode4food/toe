@@ -20,26 +20,12 @@ type (
 		contentStyle tui.Style
 		padX         int
 	}
-
-	// popupArea is the inner content rectangle returned by popup.draw and
-	// popup.drawInto — the popup owns every cell outside this rectangle
-	popupArea struct {
-		x, y, w, h int
-	}
 )
-
-// draw allocates a buffer of the given outer size, fills it with the popup's
-// contentStyle, draws the border, and returns the inner content rectangle
-func (p popup) draw(w, h int) (*tui.Buffer, popupArea) {
-	buf := tui.NewBuffer(w, h)
-	area := p.drawInto(buf, 0, 0, w, h)
-	return buf, area
-}
 
 // drawInto fills the rectangle (ox, oy, w, h) of buf with the popup's
 // contentStyle, draws the border on its edges, and returns the inner content
 // rectangle in buf's coordinates
-func (p popup) drawInto(buf *tui.Buffer, ox, oy, w, h int) popupArea {
+func (p popup) drawInto(buf *tui.Buffer, ox, oy, w, h int) Bounds {
 	for dy := range h {
 		buf.FillRange(ox, oy+dy, w, p.contentStyle)
 	}
@@ -57,7 +43,7 @@ func (p popup) drawInto(buf *tui.Buffer, ox, oy, w, h int) popupArea {
 			buf.SetString(ox+w-1, oy+y, p.border.Right, p.borderStyle)
 		}
 	}
-	return popupArea{
+	return Bounds{
 		x: ox + 1 + p.padX,
 		y: oy + 1,
 		w: max(w-2-2*p.padX, 0),

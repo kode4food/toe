@@ -30,7 +30,7 @@ type (
 	// same buffer, skipping an ANSI round-trip
 	BufferRenderer interface {
 		Component
-		RenderBuffer(width, height int, cx *Context) *tui.Buffer
+		Render(width, height int, cx *Context) *tui.Buffer
 	}
 
 	// BufferOverlayComponent extends Component for overlay layers that own

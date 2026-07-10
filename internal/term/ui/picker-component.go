@@ -18,6 +18,8 @@ type PickerComponent struct {
 
 const pickerMinPreviewArea = 72
 
+var _ BufferOverlayComponent = (*PickerComponent)(nil)
+
 func newPickerComponent(p *Picker) *PickerComponent {
 	return &PickerComponent{state: p}
 }

@@ -111,7 +111,7 @@ func (c *Compositor) renderViaBuffer(cx *Context) string {
 			placements = append(placements, placed{ov, pl})
 		}
 	}
-	frame := br.RenderBuffer(c.width, c.height, cx)
+	frame := br.Render(c.width, c.height, cx)
 	regions := make([]Bounds, 0, len(placements))
 	for _, p := range placements {
 		buf := p.ov.PaintBuffer(p.pl, cx)

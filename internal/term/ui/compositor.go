@@ -70,9 +70,11 @@ func (c *Compositor) HandleEvent(msg tea.Msg, cx *Context) tea.Cmd {
 }
 
 func (c *Compositor) Render(cx *Context) string {
-	if len(c.layers) == 0 {
+	lc := len(c.layers)
+	if lc == 0 {
 		return ""
 	}
+	cx.SingleLayer = lc == 1
 	content, ok := c.renderViaBuffer(cx)
 	if !ok {
 		content = c.layers[0].Render(c.width, c.height, cx)

@@ -1297,6 +1297,48 @@ func TestTextAnnotationRender(t *testing.T) {
 	})
 }
 
+func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
+	t.Run("other pane stays unaffected", func(t *testing.T) {
+		root := t.TempDir()
+		pathA := filepath.Join(root, "a.txt")
+		pathB := filepath.Join(root, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("hello world\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("second file\n"), 0o644))
+		e := view.NewEditor(root)
+		vA, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		docB, err := e.SwitchOrOpenDoc(pathB)
+		assert.NoError(t, err)
+		e.ResizeTree(100, 30)
+		_, ok := e.VSplit(docB.ID())
+		assert.True(t, ok)
+		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
+
+		docA, ok := e.Document(vA.DocID())
+		assert.True(t, ok)
+		before := stripANSI(m.View().Content)
+		assert.Contains(t, before, "hello world")
+		assert.Contains(t, before, "second file")
+
+		docA.SetDocumentHighlights(vA.ID(), []view.DocumentHighlight{
+			{From: 0, To: 5},
+		})
+		after := stripANSI(m.View().Content)
+
+		beforeLines := strings.Split(before, "\n")
+		afterLines := strings.Split(after, "\n")
+		assert.Equal(t, len(beforeLines), len(afterLines))
+		for i, line := range beforeLines {
+			if strings.Contains(line, "second file") {
+				assert.Equal(t, line, afterLines[i],
+					"pane B's line changed when only pane A's highlight did")
+			}
+		}
+		assert.Contains(t, after, "hello world")
+		assert.Contains(t, after, "second file")
+	})
+}
+
 func TestSearchInvalidRegex(t *testing.T) {
 	t.Run("invalid search pattern does not panic", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())

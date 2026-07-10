@@ -45,6 +45,7 @@ type Options struct {
 	AutoPairMap          core.AutoPairs
 	HasAutoPairs         bool
 	BufferLine           BufferLine
+	Gen                  int
 }
 
 // StatusLineSeparator returns the status line separator string with default

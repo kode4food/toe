@@ -13,7 +13,8 @@ type Context struct {
 	Keymaps *command.Keymaps
 	Syntax  *syntax.Cache
 
-	lastLayer func(*view.Editor) layerFunc
+	SingleLayer bool
+	lastLayer   func(*view.Editor) layerFunc
 
 	pickerLayout PickerLayoutOptions
 	loadedTheme  *theme.Theme

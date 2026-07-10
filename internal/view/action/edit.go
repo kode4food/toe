@@ -11,8 +11,6 @@ type insertEntry struct {
 	pair bool
 }
 
-const defaultYankRegister = '"'
-
 // DeleteSelection yanks selections into the active register, then deletes them
 func DeleteSelection(e *view.Editor) {
 	v, ok := e.FocusedView()
@@ -178,7 +176,7 @@ func ChangeSelectionNoYank(e *view.Editor) {
 func yankSelectionRanges(e *view.Editor, text core.Rope, ranges []core.Range) {
 	reg := e.ActiveRegister()
 	if reg == 0 {
-		reg = defaultYankRegister
+		reg = view.RegisterDefaultYank
 	}
 	values := make([]string, 0, len(ranges))
 	for _, r := range ranges {

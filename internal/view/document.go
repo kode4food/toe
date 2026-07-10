@@ -72,6 +72,7 @@ type (
 		colors      []DocumentColor
 		hints       map[Id][]InlayHint
 		diagnostics []Diagnostic
+		gen         int
 	}
 
 	// insertAccum holds the pre-insert state and the composed changeset for the
@@ -356,7 +357,6 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	}
 
 	if d.buf.insertAcc != nil {
-		// Accumulate into the ongoing insert group
 		cs := tx.Changes()
 		newSel := d.resolveAppliedSelection(vid, tx, cs)
 		d.buf.Lock()
@@ -405,6 +405,13 @@ func (d *Document) Revision() int {
 	d.buf.RLock()
 	defer d.buf.RUnlock()
 	return d.buf.version
+}
+
+// OverlayGen increments on any LSP overlay change, independent of Revision
+func (d *Document) OverlayGen() int {
+	d.ls.RLock()
+	defer d.ls.RUnlock()
+	return d.ls.gen
 }
 
 // Undo reverts one history step for the given view

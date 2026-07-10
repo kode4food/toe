@@ -23,7 +23,7 @@ func Yank(e *view.Editor) {
 	sel := doc.SelectionFor(v.ID())
 	reg := e.ActiveRegister()
 	if reg == 0 {
-		reg = defaultYankRegister
+		reg = view.RegisterDefaultYank
 	}
 	values := yankFragments(text, sel)
 	e.WriteRegister(reg, values)
@@ -59,7 +59,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	}
 	reg := e.ActiveRegister()
 	if reg == 0 {
-		reg = defaultYankRegister
+		reg = view.RegisterDefaultYank
 	}
 	values := e.ReadRegister(reg)
 	if len(values) == 0 {
@@ -122,7 +122,7 @@ func pasteImpl(e *view.Editor, before bool) {
 	}
 	reg := e.ActiveRegister()
 	if reg == 0 {
-		reg = defaultYankRegister
+		reg = view.RegisterDefaultYank
 	}
 	values := e.ReadRegister(reg)
 	if len(values) == 0 {

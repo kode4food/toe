@@ -77,6 +77,7 @@ func (d *Document) InlayHints(vid Id) []InlayHint {
 func setOverlaySlice[T any](ls *lsState, field *[]T, items []T) {
 	ls.Lock()
 	defer ls.Unlock()
+	ls.gen++
 	if len(items) == 0 {
 		*field = nil
 		return
@@ -87,6 +88,7 @@ func setOverlaySlice[T any](ls *lsState, field *[]T, items []T) {
 func clearOverlaySlice[T any](ls *lsState, field *[]T) {
 	ls.Lock()
 	defer ls.Unlock()
+	ls.gen++
 	*field = nil
 }
 
@@ -99,6 +101,7 @@ func getOverlaySlice[T any](ls *lsState, field *[]T) []T {
 func setOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id, items []T) {
 	ls.Lock()
 	defer ls.Unlock()
+	ls.gen++
 	if len(items) == 0 {
 		delete(m, vid)
 		return
@@ -109,12 +112,14 @@ func setOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id, items []T) {
 func clearOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id) {
 	ls.Lock()
 	defer ls.Unlock()
+	ls.gen++
 	delete(m, vid)
 }
 
 func clearAllOverlayMap[T any](ls *lsState, m map[Id][]T) {
 	ls.Lock()
 	defer ls.Unlock()
+	ls.gen++
 	clear(m)
 }
 

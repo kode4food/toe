@@ -11,8 +11,6 @@ import (
 )
 
 const (
-	searchRegister = '/'
-
 	searchNoMoreMsg  = "No more matches"
 	searchWrappedMsg = "Wrapped around document"
 )
@@ -33,7 +31,7 @@ func SearchSelectionWord(e *view.Editor) {
 // MakeSearchWordBounded wraps the current search pattern with \b word-boundary
 // anchors if they are not already present
 func MakeSearchWordBounded(e *view.Editor) {
-	pat, ok := e.FirstRegister(searchRegister)
+	pat, ok := e.FirstRegister(view.RegisterSearch)
 	if !ok {
 		return
 	}
@@ -50,8 +48,8 @@ func MakeSearchWordBounded(e *view.Editor) {
 	if !endAnchored {
 		out += `\b`
 	}
-	e.WriteRegister(searchRegister, []string{out})
-	setRegisterStatus(e, searchRegister, out)
+	e.WriteRegister(view.RegisterSearch, []string{out})
+	setRegisterStatus(e, view.RegisterSearch, out)
 }
 
 // SearchForward executes a forward search with the given pattern, storing it
@@ -74,7 +72,7 @@ func SearchBackward(e *view.Editor, pattern string) error {
 
 // SearchNext repeats the last search forward, moving the selection
 func SearchNext(e *view.Editor) {
-	pat, ok := e.FirstRegister(searchRegister)
+	pat, ok := e.FirstRegister(view.RegisterSearch)
 	if !ok {
 		return
 	}
@@ -86,7 +84,7 @@ func SearchNext(e *view.Editor) {
 
 // SearchPrev repeats the last search backward, moving the selection
 func SearchPrev(e *view.Editor) {
-	pat, ok := e.FirstRegister(searchRegister)
+	pat, ok := e.FirstRegister(view.RegisterSearch)
 	if !ok {
 		return
 	}
@@ -98,7 +96,7 @@ func SearchPrev(e *view.Editor) {
 
 // ExtendSearchNext repeats the last search forward, extending the selection
 func ExtendSearchNext(e *view.Editor) {
-	pat, ok := e.FirstRegister(searchRegister)
+	pat, ok := e.FirstRegister(view.RegisterSearch)
 	if !ok {
 		return
 	}
@@ -110,7 +108,7 @@ func ExtendSearchNext(e *view.Editor) {
 
 // ExtendSearchPrev repeats the last search backward, extending the selection
 func ExtendSearchPrev(e *view.Editor) {
-	pat, ok := e.FirstRegister(searchRegister)
+	pat, ok := e.FirstRegister(view.RegisterSearch)
 	if !ok {
 		return
 	}
@@ -150,8 +148,8 @@ func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
 	if wordBoundaries {
 		pat = `\b(?:` + pat + `)\b`
 	}
-	e.WriteRegister(searchRegister, []string{pat})
-	setRegisterStatus(e, searchRegister, pat)
+	e.WriteRegister(view.RegisterSearch, []string{pat})
+	setRegisterStatus(e, view.RegisterSearch, pat)
 }
 
 type searchArgs struct {
@@ -178,7 +176,7 @@ func searchImpl(args searchArgs) error {
 	if err != nil {
 		return err
 	}
-	e.WriteRegister(searchRegister, []string{pattern})
+	e.WriteRegister(view.RegisterSearch, []string{pattern})
 
 	v, ok := e.FocusedView()
 	if !ok {

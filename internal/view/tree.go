@@ -226,12 +226,6 @@ func (t *Tree) Views() []struct {
 	return out
 }
 
-// NodeID returns the ViewId of the treeNode that holds the given view id,
-// which is the same as the view id for leaf nodes
-func (t *Tree) NodeID(viewID Id) Id {
-	return viewID
-}
-
 // ContainerLayoutAt returns the layout of the container that holds viewID
 func (t *Tree) ContainerLayoutAt(viewID Id) (Layout, bool) {
 	n, ok := t.nodes[viewID]

@@ -41,6 +41,7 @@ const (
 func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 	d.ls.Lock()
 	defer d.ls.Unlock()
+	d.ls.gen++
 	out := d.ls.diagnostics[:0]
 	for _, diag := range d.ls.diagnostics {
 		if diag.Provider != provider {
@@ -54,6 +55,7 @@ func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 func (d *Document) ClearDiagnostics() {
 	d.ls.Lock()
 	defer d.ls.Unlock()
+	d.ls.gen++
 	d.ls.diagnostics = nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -100,6 +101,14 @@ type renderPaneArgs struct {
 	focused bool
 }
 
+func clearPaneRect(buf *tui.Buffer, a view.Area, y0 int, style tui.Style) {
+	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
+	top := y0 + a.Y
+	for y := top; y < top+a.Height; y++ {
+		buf.FillRange(a.X, y, a.Width, style)
+	}
+}
+
 func (r *renderPass) renderPane(args renderPaneArgs) {
 	doc := args.doc
 	v := args.view
@@ -152,11 +161,33 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	})
 }
 
+func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
+	before := len(cache.paneSigs)
+
+	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
+	if cache.stylesKey != stylesKey {
+		clear(cache.paneSigs)
+	}
+	cache.syncOptionsGen(r.cx.Editor.Options().Gen)
+
+	singleLayer := r.cx.SingleLayer
+	if cache.lastSingleLayer != singleLayer {
+		cache.lastSingleLayer = singleLayer
+		clear(cache.paneSigs)
+	}
+
+	return before == 0 || len(cache.paneSigs) == 0
+}
+
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	th := r.activeTheme()
+	cache := r.ec.cache
 
+	redrawAll := r.forceFullRedraw(cache, th)
 	bgTUI := lipglossToTUIStyle(th.Get("ui.background"))
-	buf.Fill(bgTUI)
+	if redrawAll {
+		buf.Fill(bgTUI)
+	}
 
 	y0 := 0
 	if bufferlineVisible(r.cx) {
@@ -164,15 +195,32 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		y0 = 1
 	}
 
+	fastPath := !redrawAll && r.cx.SingleLayer
 	for _, vs := range r.cx.Editor.Tree().Views() {
 		v := vs.View
 		doc, ok := r.cx.Editor.Document(v.DocID())
 		if !ok {
 			continue
 		}
+		sig := paneSignature{
+			docID:      doc.ID(),
+			docRev:     doc.Revision(),
+			overlayGen: doc.OverlayGen(),
+			sel:        doc.SelectionFor(v.ID()),
+			offset:     v.Offset(),
+			area:       v.Area(),
+			focused:    vs.Focused,
+		}
+		if fastPath && cache.paneUnchanged(v.ID(), sig) {
+			continue
+		}
+		if !redrawAll {
+			clearPaneRect(buf, v.Area(), y0, bgTUI)
+		}
 		r.renderPane(renderPaneArgs{
 			doc: doc, view: v, buf: buf, y0: y0, focused: vs.Focused,
 		})
+		cache.commitPaneSig(v.ID(), sig)
 	}
 
 	sepTUI := lipglossToTUIStyle(th.Get("ui.border"))

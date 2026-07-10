@@ -198,19 +198,19 @@ func indentAfter(ch rune) bool {
 }
 
 func matchingCloseAt(text core.Rope, pos int, open rune) bool {
-	var close rune
+	var cl rune
 	switch open {
 	case '(':
-		close = ')'
+		cl = ')'
 	case '[':
-		close = ']'
+		cl = ']'
 	case '{':
-		close = '}'
+		cl = '}'
 	default:
 		return false
 	}
 	ch, err := text.CharAt(pos)
-	return err == nil && ch == close
+	return err == nil && ch == cl
 }
 
 type newlineInsertArgs struct {

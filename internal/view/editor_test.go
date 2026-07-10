@@ -816,14 +816,6 @@ func TestTreeTranspose(t *testing.T) {
 	})
 }
 
-func TestTreeNodeID(t *testing.T) {
-	t.Run("NodeID returns same id for leaf", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		assert.Equal(t, v.ID(), e.Tree().NodeID(v.ID()))
-	})
-}
-
 func TestTreeContainerLayoutAt(t *testing.T) {
 	t.Run("returns layout for valid view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

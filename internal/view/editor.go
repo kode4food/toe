@@ -152,7 +152,6 @@ func (e *Editor) CloseView(vid Id) {
 
 	e.tree.Remove(vid)
 
-	// clean up document if no longer referenced
 	referenced := false
 	for _, ov := range e.tree.Traverse() {
 		if ov.docID == docID {
@@ -278,10 +277,12 @@ func (e *Editor) SetConfigReload(fn func() error) {
 // ReloadConfig reloads the live editor config and resets module section state.
 // Falls back to loading user config only when no reload function is registered
 func (e *Editor) ReloadConfig() error {
-	if e.configReload != nil {
-		return e.configReload()
+	if e.configReload == nil {
+		return ErrConfigUnavailable
 	}
-	return ErrConfigUnavailable
+	err := e.configReload()
+	e.opts.Gen++
+	return err
 }
 
 // View returns a view by id

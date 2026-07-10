@@ -20,6 +20,7 @@ type Editor struct {
 	clipboard    Clipboard
 	docObservers []DocumentObserver
 	langServers  LanguageServerController
+	indenter     Indenter
 
 	versionControl VersionControl
 

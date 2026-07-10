@@ -143,14 +143,74 @@ func continuedIndent(
 	text := doc.Text()
 	indent := leadingWhitespace(text, pos)
 	if !e.Options().ContinueComments {
-		return indent, false
+		return structuralIndent(e, text, line, pos, indent, doc), false
 	}
 	lang := language.LoadLanguage(doc.Lang())
 	token, ok := core.GetCommentToken(text, lang.CommentTokens, line)
 	if !ok {
-		return indent, false
+		return structuralIndent(e, text, line, pos, indent, doc), false
 	}
 	return indent + token + " ", true
+}
+
+func structuralIndent(
+	e *view.Editor, text core.Rope, line, pos int, indent string,
+	doc *view.Document,
+) string {
+	if next, ok := e.IndentForNewline(doc, line, pos); ok {
+		return next
+	}
+	ch, ok := lastCodeChar(text, line, pos)
+	if !ok || !indentAfter(ch) {
+		return indent
+	}
+	if matchingCloseAt(text, pos, ch) {
+		return indent
+	}
+	return indent + doc.IndentStyle().AsStr()
+}
+
+func lastCodeChar(text core.Rope, line, pos int) (rune, bool) {
+	lineStart, err := text.LineToChar(line)
+	if err != nil {
+		return 0, false
+	}
+	for i := pos - 1; i >= lineStart; i-- {
+		ch, err := text.CharAt(i)
+		if err != nil {
+			return 0, false
+		}
+		if ch != ' ' && ch != '\t' {
+			return ch, true
+		}
+	}
+	return 0, false
+}
+
+func indentAfter(ch rune) bool {
+	switch ch {
+	case '(', '[', '{', ',', '.', ':', '+', '-', '*', '/', '%', '&', '|',
+		'^', '=', '<', '>', '?', '\\':
+		return true
+	default:
+		return false
+	}
+}
+
+func matchingCloseAt(text core.Rope, pos int, open rune) bool {
+	var close rune
+	switch open {
+	case '(':
+		close = ')'
+	case '[':
+		close = ']'
+	case '{':
+		close = '}'
+	default:
+		return false
+	}
+	ch, err := text.CharAt(pos)
+	return err == nil && ch == close
 }
 
 type newlineInsertArgs struct {

@@ -19,6 +19,11 @@ type Model struct {
 
 // New creates an initialized Model for the given editor and keymaps
 func New(editor *view.Editor, km *command.Keymaps) Model {
+	editor.SetIndenter(func(doc *view.Document, line, pos int) (string, bool) {
+		return syntax.IndentForNewline(
+			doc.Text(), doc.Lang(), line, pos, doc.IndentStyle(),
+		)
+	})
 	cx := &Context{
 		Editor:       editor,
 		Keymaps:      km,

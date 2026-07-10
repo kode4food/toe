@@ -864,6 +864,44 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 		assert.Equal(t, "(\n\t\n)", doc.Text().String())
 	})
 
+	t.Run("newline after opener indents", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "if ok {")
+		testutil.SetCursor(t, e, 7)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "if ok {\n\t", doc.Text().String())
+	})
+
+	t.Run("newline after comma indents", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "call(a,")
+		testutil.SetCursor(t, e, 7)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "call(a,\n\t", doc.Text().String())
+	})
+
+	t.Run("uses installed indent provider", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "    else:")
+		e.SetIndenter(func(
+			_ *view.Document, _, _ int,
+		) (string, bool) {
+			return "    ", true
+		})
+		testutil.SetCursor(t, e, 9)
+		e.SetMode(view.ModeInsert)
+
+		action.InsertNewline(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "    else:\n    ", doc.Text().String())
+	})
+
 	t.Run("no view is noop", func(t *testing.T) {
 		e := editorWithNoView(t)
 

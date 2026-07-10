@@ -24,13 +24,13 @@ Enter command mode with `:`. All commands can be used by their full name or any 
 | `update` | `u` | Write changes only if the file has been modified |
 | `open` | `o`, `edit`, `e` | Open a file from disk into the current view |
 | `new` | `n` | Create a new scratch buffer |
-| `reload` | `rl` | Discard changes and reload from the source file |
-| `reload_all` | `reload-all`, `rla` | Discard changes and reload all documents from the source files |
+| `reload` | `rl` | Reload from the source file, preserving undo history and selections |
+| `reload_all` | `reload-all`, `rla` | Reload all documents from their source files, preserving undo history and selections |
 | `move` | `mv` | Move the current buffer and its corresponding file to a different path |
 | `move!` | `mv!` | Move the current buffer and file, creating necessary subdirectories |
 | `read` | `r` | Load a file into buffer at the cursor |
 
-toe watches file-backed buffers for external changes. Clean buffers reload automatically; dirty buffers keep their in-memory text and can be resolved explicitly with `reload`, `reload_all`, or `write`.
+toe watches file-backed buffers for external changes. Clean buffers reload automatically; dirty buffers keep their in-memory text and can be resolved explicitly with `reload`, `reload_all`, or `write`. Reload applies the on-disk diff to the open document, so undo history and cursor/selection positions are preserved where possible.
 
 ## Buffer
 

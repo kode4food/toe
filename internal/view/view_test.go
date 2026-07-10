@@ -323,6 +323,17 @@ func TestViewJumps(t *testing.T) {
 		assert.Equal(t, 5, entries[1].Anchor)
 	})
 
+	t.Run("deduplicates adjacent jumps", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		v.PushJump(d.ID(), 0, core.PointSelection(0))
+		v.PushJump(d.ID(), 0, core.PointSelection(0))
+		entries := v.Jumps()
+		assert.Equal(t, 1, len(entries))
+		assert.Equal(t, 0, entries[0].Anchor)
+	})
+
 	t.Run("empty jumps returns empty slice", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()

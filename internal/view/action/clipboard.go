@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 	"os"
-	"strings"
 
 	"github.com/aymanbagabas/go-osc52/v2"
 
@@ -80,8 +79,7 @@ func YankToClipboard(e *view.Editor) {
 	if len(values) == 0 {
 		return
 	}
-	e.Registers().Write(clipboardRegister, values)
-	_ = e.Clipboard().Write(strings.Join(values, "\n"))
+	e.WriteRegister(clipboardRegister, values)
 	e.SetMode(view.ModeNormal)
 }
 
@@ -101,18 +99,15 @@ func YankMainToClipboard(e *view.Editor) {
 	if err != nil {
 		return
 	}
-	e.Registers().Write(clipboardRegister, []string{frag})
-	_ = e.Clipboard().Write(frag)
+	e.WriteRegister(clipboardRegister, []string{frag})
 	e.SetMode(view.ModeNormal)
 }
 
 // PasteClipboardAfter reads the clipboard and pastes after each selection
 func PasteClipboardAfter(e *view.Editor) {
-	val, err := e.Clipboard().Read()
-	if err != nil || val == "" {
+	if len(e.ReadRegister(clipboardRegister)) == 0 {
 		return
 	}
-	e.Registers().Write(clipboardRegister, []string{val})
 	old := e.ActiveRegister()
 	e.SetRegister(clipboardRegister)
 	pasteImpl(e, false)
@@ -122,11 +117,9 @@ func PasteClipboardAfter(e *view.Editor) {
 
 // PasteClipboardBefore reads the clipboard and pastes before each selection
 func PasteClipboardBefore(e *view.Editor) {
-	val, err := e.Clipboard().Read()
-	if err != nil || val == "" {
+	if len(e.ReadRegister(clipboardRegister)) == 0 {
 		return
 	}
-	e.Registers().Write(clipboardRegister, []string{val})
 	old := e.ActiveRegister()
 	e.SetRegister(clipboardRegister)
 	pasteImpl(e, true)
@@ -178,8 +171,7 @@ func YankToPrimaryClipboard(e *view.Editor) {
 	if len(values) == 0 {
 		return
 	}
-	e.Registers().Write(primaryClipboardRegister, values)
-	_ = e.Clipboard().WritePrimary(strings.Join(values, "\n"))
+	e.WriteRegister(primaryClipboardRegister, values)
 	e.SetMode(view.ModeNormal)
 }
 
@@ -221,12 +213,9 @@ func selectionFragments(e *view.Editor) []string {
 }
 
 func withPrimaryClipboard(e *view.Editor, fn func(*view.Editor)) {
-	val, err := e.Clipboard().ReadPrimary()
-	if err != nil {
-		e.SetStatusMsg("error: " + err.Error())
+	if len(e.ReadRegister(primaryClipboardRegister)) == 0 {
 		return
 	}
-	e.Registers().Write(primaryClipboardRegister, []string{val})
 	prev := e.ActiveRegister()
 	e.SetRegister(primaryClipboardRegister)
 	fn(e)

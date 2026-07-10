@@ -89,6 +89,31 @@ func TestClipboard(t *testing.T) {
 		assert.Equal(t, "hellox", doc.Text().String())
 	})
 
+	t.Run("paste preserves yanked selections", func(t *testing.T) {
+		clip := testutil.NewFakeClipboard()
+
+		e := testutil.EditorWithText(t, "abcd")
+		e.SetClipboard(clip)
+		testutil.SetSelection(t, e, []core.Range{
+			core.NewRange(0, 1),
+			core.NewRange(2, 3),
+		}, 0)
+		action.YankToClipboard(e)
+
+		e = testutil.EditorWithText(t, "wxyz")
+		e.SetClipboard(clip)
+		e.WriteRegister('+', []string{"a", "c"})
+		testutil.SetSelection(t, e, []core.Range{
+			core.PointRange(1),
+			core.PointRange(3),
+		}, 0)
+
+		action.PasteClipboardAfter(e)
+
+		doc, _ := e.FocusedDocument()
+		assert.Equal(t, "waxycz", doc.Text().String())
+	})
+
 	t.Run("yank main to clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world")
 		clip := testutil.NewFakeClipboard()

@@ -1,6 +1,7 @@
 package action
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
@@ -24,7 +25,9 @@ func Yank(e *view.Editor) {
 	if reg == 0 {
 		reg = defaultYankRegister
 	}
-	e.Registers().Write(reg, yankFragments(text, sel))
+	values := yankFragments(text, sel)
+	e.WriteRegister(reg, values)
+	setYankStatus(e, reg, len(values))
 	e.SetMode(view.ModeNormal)
 }
 
@@ -58,7 +61,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	if reg == 0 {
 		reg = defaultYankRegister
 	}
-	values := e.Registers().Read(reg)
+	values := e.ReadRegister(reg)
 	if len(values) == 0 {
 		return
 	}
@@ -121,7 +124,7 @@ func pasteImpl(e *view.Editor, before bool) {
 	if reg == 0 {
 		reg = defaultYankRegister
 	}
-	values := e.Registers().Read(reg)
+	values := e.ReadRegister(reg)
 	if len(values) == 0 {
 		return
 	}
@@ -186,6 +189,18 @@ func pasteImpl(e *view.Editor, before bool) {
 	}
 	tx := core.NewTransaction(text).WithChanges(cs).WithSelection(newSel)
 	_ = e.Apply(tx)
+}
+
+func setYankStatus(e *view.Editor, reg rune, n int) {
+	if n == 0 {
+		return
+	}
+	word := "selection"
+	if n != 1 {
+		word = "selections"
+	}
+	e.SetStatusMsg("yanked " + strconv.Itoa(n) + " " + word +
+		" to register " + string(reg))
 }
 
 func pastePosition(

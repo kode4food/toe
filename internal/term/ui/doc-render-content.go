@@ -100,7 +100,7 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	hlSpans := dc.ensureHL(r.cx.Syntax, rev, lang, rawText)
 	lineIdx := dc.ensureLineIndex(rev, rawText)
 
-	pat, hasPat := r.cx.Editor.Registers().First('/')
+	pat, hasPat := r.cx.Editor.FirstRegister('/')
 	if !hasPat || !doc.SearchHighlightsActive(v.ID()) {
 		pat = ""
 	}

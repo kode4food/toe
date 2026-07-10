@@ -25,7 +25,6 @@ type Editor struct {
 
 	nextDocID          DocumentId
 	nextAccess         int64
-	prevDocID          DocumentId
 	lastModifiedDocIDs [2]DocumentId
 
 	count          int
@@ -87,7 +86,7 @@ func (e *Editor) VSplit(docID DocumentId) (*View, bool) {
 	if !e.tree.CanSplit(LayoutVertical) {
 		return nil, false
 	}
-	e.recordPrevDoc()
+	e.recordLeavingDoc()
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Split(v, LayoutVertical)
 	e.markDocAccessed()
@@ -103,7 +102,7 @@ func (e *Editor) HSplit(docID DocumentId) (*View, bool) {
 	if !e.tree.CanSplit(LayoutHorizontal) {
 		return nil, false
 	}
-	e.recordPrevDoc()
+	e.recordLeavingDoc()
 	v := &View{docID: doc.ID(), mode: ModeNormal}
 	e.tree.Split(v, LayoutHorizontal)
 	e.markDocAccessed()
@@ -183,7 +182,7 @@ func (e *Editor) FocusedView() (*View, bool) {
 // FocusView moves focus to the given view
 func (e *Editor) FocusView(vid Id) {
 	if e.tree.Get(vid) != nil {
-		e.recordPrevDoc()
+		e.recordLeavingDoc()
 		e.tree.SetFocus(vid)
 		e.markDocAccessed()
 	}
@@ -191,14 +190,14 @@ func (e *Editor) FocusView(vid Id) {
 
 // FocusNextView moves focus to the next view in DFS order
 func (e *Editor) FocusNextView() {
-	e.recordPrevDoc()
+	e.recordLeavingDoc()
 	e.tree.SetFocus(e.tree.Next())
 	e.markDocAccessed()
 }
 
 // FocusPrevView moves focus to the previous view in DFS order
 func (e *Editor) FocusPrevView() {
-	e.recordPrevDoc()
+	e.recordLeavingDoc()
 	e.tree.SetFocus(e.tree.Prev())
 	e.markDocAccessed()
 }
@@ -206,7 +205,7 @@ func (e *Editor) FocusPrevView() {
 // FocusDirection moves focus to the nearest split in the given direction
 func (e *Editor) FocusDirection(dir Direction) {
 	if id, ok := e.tree.FindSplitInDirection(e.tree.Focus(), dir); ok {
-		e.recordPrevDoc()
+		e.recordLeavingDoc()
 		e.tree.SetFocus(id)
 		e.markDocAccessed()
 	}
@@ -240,13 +239,28 @@ func (e *Editor) LastModifiedDocIDs() [2]DocumentId {
 
 // PrevDocID returns the document ID of the last focused document
 func (e *Editor) PrevDocID() (DocumentId, bool) {
-	if e.prevDocID == InvalidDocumentId {
+	return e.PopPrevDocID()
+}
+
+// PopPrevDocID returns and removes the most recently accessed document for the
+// focused view
+func (e *Editor) PopPrevDocID() (DocumentId, bool) {
+	v, ok := e.FocusedView()
+	if !ok {
 		return InvalidDocumentId, false
 	}
-	if _, ok := e.docs[e.prevDocID]; !ok {
-		return InvalidDocumentId, false
+	for len(v.docHistory) > 0 {
+		last := len(v.docHistory) - 1
+		did := v.docHistory[last]
+		v.docHistory = v.docHistory[:last]
+		if did == v.DocID() {
+			continue
+		}
+		if _, ok := e.docs[did]; ok {
+			return did, true
+		}
 	}
-	return e.prevDocID, true
+	return InvalidDocumentId, false
 }
 
 // Options returns the typed runtime config values for the editor session
@@ -288,6 +302,9 @@ func (e *Editor) Document(did DocumentId) (*Document, bool) {
 // Views that referenced the document will report no focused document.
 func (e *Editor) DeleteDocument(did DocumentId) {
 	delete(e.docs, did)
+	for _, v := range e.tree.Traverse() {
+		v.removeDocHistory(did)
+	}
 }
 
 // FocusedDocument returns the document displayed by the focused view
@@ -460,22 +477,34 @@ func (e *Editor) TakeHint() string {
 	return h
 }
 
-// recordPrevDoc saves the current focused document as the alternate file and
-// updates the last-modified list if the document was changed since last access
+// recordPrevDoc adds the current document to the focused view's access history
+// before replacing it
 func (e *Editor) recordPrevDoc() {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
 	}
-	did := v.DocID()
-	e.prevDocID = did
-	if doc, ok := e.docs[did]; ok {
-		doc.rememberSelection(v.ID())
-		if doc.buf.modified {
-			if e.lastModifiedDocIDs[0] != did {
-				e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
-				e.lastModifiedDocIDs[0] = did
-			}
+	v.addDocHistory(v.DocID())
+	e.recordLeavingDocFor(v)
+}
+
+func (e *Editor) recordLeavingDoc() {
+	if v, ok := e.FocusedView(); ok {
+		e.recordLeavingDocFor(v)
+	}
+}
+
+func (e *Editor) recordLeavingDocFor(v *View) {
+	doc, ok := e.docs[v.DocID()]
+	if !ok {
+		return
+	}
+	doc.rememberSelection(v.ID())
+	if doc.buf.modified {
+		did := doc.ID()
+		if e.lastModifiedDocIDs[0] != did {
+			e.lastModifiedDocIDs[1] = e.lastModifiedDocIDs[0]
+			e.lastModifiedDocIDs[0] = did
 		}
 	}
 }

@@ -38,6 +38,7 @@ type (
 		Layout           string        `toml:"layout,omitempty"`
 		Ratios           []float64     `toml:"ratios,omitempty"`
 		Document         int           `toml:"document,omitempty"`
+		DocumentHistory  []int         `toml:"document-history,omitempty"`
 		Mode             string        `toml:"mode,omitempty"`
 		Anchor           int           `toml:"anchor,omitempty"`
 		HorizontalOffset int           `toml:"horizontal-offset,omitempty"`
@@ -243,7 +244,6 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 
 	e.docs = nextDocs
 	e.tree = t
-	e.prevDocID = InvalidDocumentId
 	e.lastModifiedDocIDs = [2]DocumentId{}
 	e.markDocAccessed()
 
@@ -329,7 +329,7 @@ func (e *Editor) sessionViewNode(
 			Selection: sessionSelection(j.Selection),
 		})
 	}
-	return sessionNode{
+	out := sessionNode{
 		Kind:             sessionKindView,
 		Document:         docIndex[doc.ID()],
 		Mode:             v.Mode().String(),
@@ -342,6 +342,12 @@ func (e *Editor) sessionViewNode(
 		JumpHead:         newHead,
 		Jumps:            jumps,
 	}
+	for _, did := range v.docHistory {
+		if idx, ok := docIndex[did]; ok {
+			out.DocumentHistory = append(out.DocumentHistory, idx)
+		}
+	}
+	return out
 }
 
 func (e *Editor) restoreSessionRoot(
@@ -427,6 +433,11 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 		mode:       sessionMode(args.session.Mode),
 		offset:     sessionPosition(args.session),
 		freeScroll: args.session.FreeScroll,
+	}
+	for _, idx := range args.session.DocumentHistory {
+		if did, ok := args.restore.docs[idx]; ok {
+			v.docHistory = append(v.docHistory, did)
+		}
 	}
 	entries := make([]JumpEntry, 0, len(args.session.Jumps))
 	for _, j := range args.session.Jumps {

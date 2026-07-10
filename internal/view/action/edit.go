@@ -188,7 +188,7 @@ func yankSelectionRanges(e *view.Editor, text core.Rope, ranges []core.Range) {
 		}
 		values = append(values, frag.String())
 	}
-	e.Registers().Write(reg, values)
+	e.WriteRegister(reg, values)
 }
 
 type applyChangesFromArgs struct {

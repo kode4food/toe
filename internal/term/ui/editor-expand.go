@@ -167,7 +167,7 @@ func expandRegister(e *view.Editor, content string) (string, error) {
 	if len(runes) != 1 {
 		return "", fmt.Errorf("%w: %s", ErrInvalidRegister, content)
 	}
-	vals := e.Registers().Read(runes[0])
+	vals := e.ReadRegister(runes[0])
 	return strings.Join(vals, "\n"), nil
 }
 

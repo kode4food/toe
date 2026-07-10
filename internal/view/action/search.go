@@ -10,7 +10,12 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-const searchRegister = '/'
+const (
+	searchRegister = '/'
+
+	searchNoMoreMsg  = "No more matches"
+	searchWrappedMsg = "Wrapped around document"
+)
 
 // SearchSelection stores the joined selection text as the search pattern (no
 // word-boundary detection) and sets it in the '/' register
@@ -28,7 +33,7 @@ func SearchSelectionWord(e *view.Editor) {
 // MakeSearchWordBounded wraps the current search pattern with \b word-boundary
 // anchors if they are not already present
 func MakeSearchWordBounded(e *view.Editor) {
-	pat, ok := e.Registers().First(searchRegister)
+	pat, ok := e.FirstRegister(searchRegister)
 	if !ok {
 		return
 	}
@@ -45,7 +50,8 @@ func MakeSearchWordBounded(e *view.Editor) {
 	if !endAnchored {
 		out += `\b`
 	}
-	e.Registers().Write(searchRegister, []string{out})
+	e.WriteRegister(searchRegister, []string{out})
+	setRegisterStatus(e, searchRegister, out)
 }
 
 // SearchForward executes a forward search with the given pattern, storing it
@@ -68,7 +74,7 @@ func SearchBackward(e *view.Editor, pattern string) error {
 
 // SearchNext repeats the last search forward, moving the selection
 func SearchNext(e *view.Editor) {
-	pat, ok := e.Registers().First(searchRegister)
+	pat, ok := e.FirstRegister(searchRegister)
 	if !ok {
 		return
 	}
@@ -80,7 +86,7 @@ func SearchNext(e *view.Editor) {
 
 // SearchPrev repeats the last search backward, moving the selection
 func SearchPrev(e *view.Editor) {
-	pat, ok := e.Registers().First(searchRegister)
+	pat, ok := e.FirstRegister(searchRegister)
 	if !ok {
 		return
 	}
@@ -92,7 +98,7 @@ func SearchPrev(e *view.Editor) {
 
 // ExtendSearchNext repeats the last search forward, extending the selection
 func ExtendSearchNext(e *view.Editor) {
-	pat, ok := e.Registers().First(searchRegister)
+	pat, ok := e.FirstRegister(searchRegister)
 	if !ok {
 		return
 	}
@@ -104,7 +110,7 @@ func ExtendSearchNext(e *view.Editor) {
 
 // ExtendSearchPrev repeats the last search backward, extending the selection
 func ExtendSearchPrev(e *view.Editor) {
-	pat, ok := e.Registers().First(searchRegister)
+	pat, ok := e.FirstRegister(searchRegister)
 	if !ok {
 		return
 	}
@@ -144,7 +150,8 @@ func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
 	if wordBoundaries {
 		pat = `\b(?:` + pat + `)\b`
 	}
-	e.Registers().Write(searchRegister, []string{pat})
+	e.WriteRegister(searchRegister, []string{pat})
+	setRegisterStatus(e, searchRegister, pat)
 }
 
 type searchArgs struct {
@@ -154,6 +161,11 @@ type searchArgs struct {
 	forward bool
 	wrap    bool
 	extend  bool
+}
+
+type searchMatch struct {
+	pos     int
+	wrapped bool
 }
 
 func searchImpl(args searchArgs) error {
@@ -166,7 +178,7 @@ func searchImpl(args searchArgs) error {
 	if err != nil {
 		return err
 	}
-	e.Registers().Write(searchRegister, []string{pattern})
+	e.WriteRegister(searchRegister, []string{pattern})
 
 	v, ok := e.FocusedView()
 	if !ok {
@@ -186,20 +198,25 @@ func searchImpl(args searchArgs) error {
 		ranges := sel.Ranges()
 
 		newRanges := make([]core.Range, len(ranges))
+		matched := false
+		wrapped := false
 		for i, r := range ranges {
 			cursor := r.Cursor(text)
-			var pos int
+			var m searchMatch
 			if forward {
-				pos = findNextMatch(re, fullStr, cursor+1, wrap)
+				m = findNextMatch(re, fullStr, cursor+1, wrap)
 			} else {
-				pos = findPrevMatch(re, fullStr, cursor, wrap)
+				m = findPrevMatch(re, fullStr, cursor, wrap)
 			}
-			if pos < 0 {
+			if m.pos < 0 {
 				newRanges[i] = r
 				continue
 			}
-			newRanges[i] = r.PutCursor(text, pos, extend)
+			matched = true
+			wrapped = wrapped || m.wrapped
+			newRanges[i] = r.PutCursor(text, m.pos, extend)
 		}
+		setSearchStatus(e, matched, wrapped)
 		newSel, err2 := core.NewSelection(newRanges, sel.PrimaryIndex())
 		if err2 != nil {
 			return nil
@@ -219,6 +236,20 @@ func compileSearchRegexp(
 	return regexp.Compile(pattern)
 }
 
+func setSearchStatus(e *view.Editor, matched, wrapped bool) {
+	if !matched {
+		e.SetStatusMsg(searchNoMoreMsg)
+		return
+	}
+	if wrapped {
+		e.SetStatusMsg(searchWrappedMsg)
+	}
+}
+
+func setRegisterStatus(e *view.Editor, reg rune, value string) {
+	e.SetStatusMsg("register '" + string(reg) + "' set to '" + value + "'")
+}
+
 func hasUppercase(pattern string) bool {
 	for _, ch := range pattern {
 		if unicode.IsUpper(ch) {
@@ -228,48 +259,74 @@ func hasUppercase(pattern string) bool {
 	return false
 }
 
-func findNextMatch(re *regexp.Regexp, text string, from int, wrap bool) int {
+func findNextMatch(
+	re *regexp.Regexp, text string, from int, wrap bool,
+) searchMatch {
 	runes := []rune(text)
+	wrapped := false
 	if from >= len(runes) {
 		if !wrap {
-			return -1
+			return searchMatch{pos: -1}
 		}
 		from = 0
+		wrapped = true
 	}
 	byteFrom := runeOffsetToByteOffset(text, from)
-	if idx := re.FindStringIndex(text[byteFrom:]); idx != nil {
-		return from + byteOffsetToRuneOffset(text[byteFrom:], idx[0])
+	for _, idx := range re.FindAllStringIndex(text[byteFrom:], -1) {
+		if idx[0] == idx[1] {
+			continue
+		}
+		pos := from + byteOffsetToRuneOffset(text[byteFrom:], idx[0])
+		return searchMatch{pos: pos, wrapped: wrapped}
 	}
 	if wrap {
-		if idx := re.FindStringIndex(text[:byteFrom]); idx != nil {
-			return byteOffsetToRuneOffset(text, idx[0])
+		for _, idx := range re.FindAllStringIndex(text[:byteFrom], -1) {
+			if idx[0] == idx[1] {
+				continue
+			}
+			pos := byteOffsetToRuneOffset(text, idx[0])
+			return searchMatch{pos: pos, wrapped: true}
 		}
 	}
-	return -1
+	return searchMatch{pos: -1}
 }
 
-func findPrevMatch(re *regexp.Regexp, text string, before int, wrap bool) int {
+func findPrevMatch(
+	re *regexp.Regexp, text string, before int, wrap bool,
+) searchMatch {
 	runes := []rune(text)
+	wrapped := false
 	if before <= 0 {
 		if !wrap {
-			return -1
+			return searchMatch{pos: -1}
 		}
 		before = len(runes)
+		wrapped = true
 	}
 	byteEnd := runeOffsetToByteOffset(text, before)
 	all := re.FindAllStringIndex(text[:byteEnd], -1)
-	if len(all) > 0 {
-		last := all[len(all)-1]
-		return byteOffsetToRuneOffset(text, last[0])
+	if last, ok := lastNonEmptyMatch(all); ok {
+		pos := byteOffsetToRuneOffset(text, last[0])
+		return searchMatch{pos: pos, wrapped: wrapped}
 	}
 	if wrap {
 		all2 := re.FindAllStringIndex(text[byteEnd:], -1)
-		if len(all2) > 0 {
-			last := all2[len(all2)-1]
-			return before + byteOffsetToRuneOffset(text[byteEnd:], last[0])
+		if last, ok := lastNonEmptyMatch(all2); ok {
+			pos := before + byteOffsetToRuneOffset(text[byteEnd:], last[0])
+			return searchMatch{pos: pos, wrapped: true}
 		}
 	}
-	return -1
+	return searchMatch{pos: -1}
+}
+
+func lastNonEmptyMatch(matches [][]int) ([]int, bool) {
+	for i := len(matches) - 1; i >= 0; i-- {
+		m := matches[i]
+		if m[0] != m[1] {
+			return m, true
+		}
+	}
+	return nil, false
 }
 
 func runeOffsetToByteOffset(s string, runeOff int) int {

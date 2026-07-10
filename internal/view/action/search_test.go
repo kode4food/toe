@@ -196,6 +196,72 @@ func TestSearchWrapAround(t *testing.T) {
 	})
 }
 
+func TestSearchFeedback(t *testing.T) {
+	t.Run("reports forward wrap", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "foo bar foo")
+		testutil.SetCursor(t, e, 10)
+
+		err := action.SearchForward(e, "foo")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Wrapped around document", e.TakeStatusMsg())
+	})
+
+	t.Run("reports no forward match", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "foo")
+		e.Options().SearchWrapAround = false
+		testutil.SetCursor(t, e, 2)
+
+		err := action.SearchForward(e, "bar")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "No more matches", e.TakeStatusMsg())
+		assert.Equal(t, 2, testutil.CursorPos(t, e))
+	})
+
+	t.Run("reports backward wrap", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "foo bar foo")
+		testutil.SetCursor(t, e, 0)
+
+		err := action.SearchBackward(e, "foo")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "Wrapped around document", e.TakeStatusMsg())
+		assert.Equal(t, 8, testutil.CursorPos(t, e))
+	})
+}
+
+func TestSearchPatterns(t *testing.T) {
+	t.Run("finds multiline pattern", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "aa\nbb\ncc")
+
+		err := action.SearchForward(e, "bb\ncc")
+
+		assert.NoError(t, err)
+		assert.Equal(t, 3, testutil.CursorPos(t, e))
+	})
+
+	t.Run("finds crlf pattern", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "aa\r\nbb\r\ncc")
+
+		err := action.SearchForward(e, "bb\r\ncc")
+
+		assert.NoError(t, err)
+		assert.Equal(t, 4, testutil.CursorPos(t, e))
+	})
+
+	t.Run("skips empty matches", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "bbb")
+		testutil.SetCursor(t, e, 0)
+
+		err := action.SearchForward(e, "a*")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "No more matches", e.TakeStatusMsg())
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
+	})
+}
+
 func TestPageOperations(t *testing.T) {
 	t.Run("PageUp does not panic", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc\nd\ne\nf")
@@ -809,6 +875,7 @@ func TestSearchSelection(t *testing.T) {
 		val, ok := e.Registers().First('/')
 		assert.True(t, ok)
 		assert.Equal(t, "foo", val)
+		assert.Equal(t, "register '/' set to 'foo'", e.TakeStatusMsg())
 	})
 }
 
@@ -822,6 +889,7 @@ func TestSearchSelectionWord(t *testing.T) {
 		val, ok := e.Registers().First('/')
 		assert.True(t, ok)
 		assert.True(t, len(val) > 0)
+		assert.Contains(t, e.TakeStatusMsg(), "register '/' set to '")
 	})
 }
 
@@ -835,6 +903,7 @@ func TestMakeSearchWordBounded(t *testing.T) {
 		val, ok := e.Registers().First('/')
 		assert.True(t, ok)
 		assert.Contains(t, val, `\b`)
+		assert.Equal(t, "register '/' set to '\\bfoo\\b'", e.TakeStatusMsg())
 	})
 
 	t.Run("noop when already bounded", func(t *testing.T) {

@@ -11,6 +11,7 @@ type (
 	View struct {
 		id         Id
 		docID      DocumentId
+		docHistory []DocumentId
 		offset     Position
 		mode       Mode
 		jumps      JumpList
@@ -102,6 +103,32 @@ func (v *View) SetArea(a Area) {
 // DocID returns the document this view displays
 func (v *View) DocID() DocumentId {
 	return v.docID
+}
+
+func (v *View) addDocHistory(did DocumentId) {
+	if did == InvalidDocumentId {
+		return
+	}
+	for i, existing := range v.docHistory {
+		if existing == did {
+			v.docHistory = append(
+				v.docHistory[:i], v.docHistory[i+1:]...,
+			)
+			break
+		}
+	}
+	v.docHistory = append(v.docHistory, did)
+}
+
+func (v *View) removeDocHistory(did DocumentId) {
+	for i := 0; i < len(v.docHistory); i++ {
+		if v.docHistory[i] == did {
+			v.docHistory = append(
+				v.docHistory[:i], v.docHistory[i+1:]...,
+			)
+			i--
+		}
+	}
 }
 
 // Mode returns the current editing mode
@@ -285,11 +312,21 @@ func (j *JumpList) push(item JumpEntry) {
 	if len(j.items) > 0 && j.head < len(j.items) {
 		j.items = j.items[:j.head]
 	}
+	if len(j.items) > 0 && jumpEntryEqual(j.items[len(j.items)-1], item) {
+		j.head = len(j.items)
+		return
+	}
 	j.items = append(j.items, item)
 	if len(j.items) > jumpListCap {
 		j.items = j.items[len(j.items)-jumpListCap:]
 	}
 	j.head = len(j.items)
+}
+
+func jumpEntryEqual(a, b JumpEntry) bool {
+	return a.DocID == b.DocID &&
+		a.Anchor == b.Anchor &&
+		a.Selection.Equal(b.Selection)
 }
 
 // Backward moves to the previous jump and returns it

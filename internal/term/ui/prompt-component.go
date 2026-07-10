@@ -164,7 +164,7 @@ func (p *PromptComponent) accept(
 		pat := strings.TrimSpace(p.buf)
 		if pat == "" {
 			// empty search repeats the last pattern in the prompt's direction
-			pat, _ = cx.Editor.Registers().First('/')
+			pat, _ = cx.Editor.FirstRegister('/')
 		}
 		if pat == "" {
 			p.ec.cmdMsg = ""

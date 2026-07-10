@@ -9,7 +9,7 @@ import (
 
 // GotoLastAccessedFile switches to the most recently accessed alternate file
 func GotoLastAccessedFile(e *view.Editor) {
-	did, ok := e.PrevDocID()
+	did, ok := e.PopPrevDocID()
 	if !ok {
 		return
 	}
@@ -73,7 +73,7 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 	if doc.ReadOnly() {
 		return
 	}
-	val, ok := e.Registers().First(reg)
+	val, ok := e.FirstRegister(reg)
 	if !ok {
 		return
 	}
@@ -125,7 +125,8 @@ func YankJoin(e *view.Editor, sep string) {
 	if len(parts) == 0 {
 		return
 	}
-	e.Registers().Set(reg, strings.Join(parts, sep))
+	e.WriteRegister(reg, []string{strings.Join(parts, sep)})
+	setYankStatus(e, reg, 1)
 	e.SetMode(view.ModeNormal)
 }
 

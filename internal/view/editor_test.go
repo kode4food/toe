@@ -316,23 +316,52 @@ func TestEditorPrevDocID(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("returns prev after switch", func(t *testing.T) {
+	t.Run("pops prev after buffer switch", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		first, _ := e.FocusedDocument()
 		e.VSplitNew()
-		d, _ := e.FocusedDocument()
-		prevID := d.ID()
-		e.FocusNextView()
+		second, _ := e.FocusedDocument()
+
+		ok := e.SwitchBuffer(first.ID())
+
+		assert.True(t, ok)
 		id, ok := e.PrevDocID()
 		assert.True(t, ok)
-		assert.Equal(t, prevID, id)
+		assert.Equal(t, second.ID(), id)
+		_, ok = e.PrevDocID()
+		assert.False(t, ok)
+	})
+
+	t.Run("focus keeps per-view prev", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		firstView, _ := e.FocusedView()
+		firstDoc, _ := e.FocusedDocument()
+		e.VSplitNew()
+		secondView, _ := e.FocusedView()
+		secondDoc, _ := e.FocusedDocument()
+		assert.True(t, e.SwitchBuffer(firstDoc.ID()))
+
+		e.FocusView(firstView.ID())
+		_, ok := e.PrevDocID()
+		assert.False(t, ok)
+
+		e.FocusView(secondView.ID())
+		id, ok := e.PrevDocID()
+		assert.True(t, ok)
+		assert.Equal(t, secondDoc.ID(), id)
 	})
 
 	t.Run("false when prev doc closed", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(80, 24)
-		v1 := e.VSplitNew()
-		e.FocusNextView()
-		e.CloseView(v1.ID())
+		first, _ := e.FocusedDocument()
+		e.VSplitNew()
+		second, _ := e.FocusedDocument()
+		assert.True(t, e.SwitchBuffer(first.ID()))
+		e.DeleteDocument(second.ID())
+
 		_, ok := e.PrevDocID()
 		assert.False(t, ok)
 	})

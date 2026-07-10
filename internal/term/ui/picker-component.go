@@ -49,10 +49,6 @@ func (p *PickerComponent) HandleEvent(
 	return ignored(), nil
 }
 
-func (p *PickerComponent) Render(_, _ int, _ *Context) string {
-	return ""
-}
-
 func (p *PickerComponent) Layout(
 	screenW, screenH int, _ *Context,
 ) (Bounds, bool) {

@@ -43,10 +43,6 @@ func (h *hoverComponent) HandleEvent(
 	}
 }
 
-func (h *hoverComponent) Render(int, int, *Context) string {
-	return ""
-}
-
 func (h *hoverComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }

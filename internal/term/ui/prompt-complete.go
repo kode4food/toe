@@ -9,6 +9,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/tui"
 )
 
 func (p *PromptComponent) recalculateCompletion(cx *Context) {
@@ -38,10 +39,31 @@ func (p *PromptComponent) changeCompletion(dir int) {
 	p.compSel = &idx
 }
 
-func (p *PromptComponent) renderCompletions(w, h int, cx *Context) string {
+func (p *PromptComponent) completionMenuHeight(w, h int) int {
 	if len(p.comps) == 0 || w <= 4 || h <= 3 {
-		return ""
+		p.compCols, p.compRows = 0, 0
+		return 0
 	}
+	innerW := w - 2 - 2*promptCompletionPadX
+	maxLen := promptCompletionBaseWidth
+	for _, c := range p.comps {
+		maxLen = max(maxLen, runewidth.StringWidth(c.completionText()))
+	}
+	cols := max(1, innerW/maxLen)
+	rowCount := (len(p.comps) + cols - 1) / cols
+	rowCount = min(rowCount, promptCompletionMaxRows)
+	rowCount = min(rowCount, h-3)
+	if rowCount <= 0 {
+		p.compCols, p.compRows = 0, 0
+		return 0
+	}
+	p.compCols, p.compRows = cols, rowCount
+	return rowCount + 2
+}
+
+func (p *PromptComponent) paintCompletions(
+	buf *tui.Buffer, y0, w int, cx *Context,
+) {
 	menuStyle, selected := promptCompletionStyles(cx)
 	pop := popup{
 		border: lipgloss.RoundedBorder(),
@@ -49,30 +71,17 @@ func (p *PromptComponent) renderCompletions(w, h int, cx *Context) string {
 			menuStyle.Foreground(pickerFrameStyle(cx).GetForeground()),
 		),
 		contentStyle: lipglossToTUIStyle(menuStyle),
-		padX:         1,
+		padX:         promptCompletionPadX,
 	}
-
-	innerW := w - 2 - 2*pop.padX
-	maxLen := promptCompletionBaseWidth
-	for _, c := range p.comps {
-		maxLen = max(maxLen, runewidth.StringWidth(c.completionText()))
-	}
-	cols := max(1, innerW/maxLen)
-	colW := max((innerW-cols)/cols, 1)
-	rowCount := (len(p.comps) + cols - 1) / cols
-	rowCount = min(rowCount, promptCompletionMaxRows)
-	rowCount = min(rowCount, h-3)
-	if rowCount <= 0 {
-		return ""
-	}
-
-	buf, area := pop.draw(w, rowCount+2)
+	area := pop.drawInto(buf, 0, y0, w, p.compRows+2)
+	innerW := w - 2 - 2*promptCompletionPadX
+	colW := max((innerW-p.compCols)/p.compCols, 1)
 	menuTUI := lipglossToTUIStyle(menuStyle)
 	selectedTUI := lipglossToTUIStyle(selected)
 
-	for row := range rowCount {
-		for col := range cols {
-			i := col*rowCount + row
+	for row := range p.compRows {
+		for col := range p.compCols {
+			i := col*p.compRows + row
 			if i >= len(p.comps) {
 				continue
 			}
@@ -84,7 +93,6 @@ func (p *PromptComponent) renderCompletions(w, h int, cx *Context) string {
 			buf.SetString(area.x+col*(colW+1), area.y+row, text, style)
 		}
 	}
-	return buf.RenderToANSI()
 }
 
 func promptCompletionStyles(cx *Context) (lipgloss.Style, lipgloss.Style) {

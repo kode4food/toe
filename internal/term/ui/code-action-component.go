@@ -69,10 +69,6 @@ func (m *codeActionMenu) HandleEvent(
 	return ignored(), nil
 }
 
-func (m *codeActionMenu) Render(int, int, *Context) string {
-	return ""
-}
-
 func (m *codeActionMenu) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }

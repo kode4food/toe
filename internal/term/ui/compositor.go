@@ -75,23 +75,13 @@ func (c *Compositor) HandleEvent(msg tea.Msg, cx *Context) tea.Cmd {
 }
 
 func (c *Compositor) Render(cx *Context) string {
-	lc := len(c.layers)
-	if lc == 0 {
+	if len(c.layers) == 0 {
 		return ""
 	}
-	cx.SingleLayer = lc == 1
+	cx.SingleLayer = len(c.layers) == 1
 	cx.OverlaysChanged = !slices.Equal(c.lastOverlays, c.layers[1:])
 	c.lastOverlays = slices.Clone(c.layers[1:])
-	content, ok := c.renderViaBuffer(cx)
-	if !ok {
-		cx.OverlayRegions, cx.OverlayRegionsPrecise = nil, false
-		content = c.layers[0].Render(c.width, c.height, cx)
-		for i := 1; i < len(c.layers); i++ {
-			if ov, ok := c.layers[i].(OverlayComponent); ok {
-				content = ov.RenderOver(c.width, c.height, content, cx)
-			}
-		}
-	}
+	content := c.renderViaBuffer(cx)
 	if content == c.cachedView {
 		return c.cachedView
 	}
@@ -108,23 +98,15 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
 }
 
-// falls back (!ok) when any layer doesn't implement the buffer interface,
-// so the caller can use the per-layer ANSI compositing path instead
-func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {
-	br, ok := c.layers[0].(BufferRenderer)
-	if !ok {
-		return "", false
-	}
+func (c *Compositor) renderViaBuffer(cx *Context) string {
+	br := c.layers[0].(BufferRenderer)
 	type placed struct {
 		ov BufferOverlayComponent
 		pl Bounds
 	}
 	placements := make([]placed, 0, len(c.layers)-1)
 	for i := 1; i < len(c.layers); i++ {
-		ov, ok := c.layers[i].(BufferOverlayComponent)
-		if !ok {
-			return "", false
-		}
+		ov := c.layers[i].(BufferOverlayComponent)
 		if pl, active := ov.Layout(c.width, c.height, cx); active {
 			placements = append(placements, placed{ov, pl})
 		}
@@ -137,5 +119,5 @@ func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {
 		regions = append(regions, p.pl)
 	}
 	cx.OverlayRegions, cx.OverlayRegionsPrecise = regions, true
-	return frame.RenderToANSI(), true
+	return frame.RenderToANSI()
 }

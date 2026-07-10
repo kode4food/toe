@@ -125,23 +125,27 @@ func TestPromptCompletion(t *testing.T) {
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
 
+		content := m.View().Content
 		assert.Regexp(t,
 			regexp.MustCompile(`\x1b\[[0-9;]*48;2;49;50;68[0-9;]*m╭`),
-			m.View().Content,
+			content,
 		)
-		for raw := range strings.SplitSeq(m.View().Content, "\n") {
-			if !strings.Contains(raw, "alpha") {
-				continue
-			}
-			before, _, _ := strings.Cut(raw, "alpha")
-			assert.Contains(t, before, "48;2;49;50;68m")
-			idx := strings.LastIndex(before, "48;2;49;50;68m")
-			if idx >= 0 {
-				assert.NotContains(t, before[idx:], "49m")
-			}
+		// ANSI style carries across lines when unchanged, so the menu bg escape
+		// before "alpha" must be found over the whole stream, not re-split per
+		// line
+		idx := strings.Index(content, "alpha")
+		if !assert.GreaterOrEqual(t, idx, 0) {
 			return
 		}
-		assert.Contains(t, m.View().Content, "alpha")
+		before := content[:idx]
+		bgIdx := strings.LastIndex(before, "48;2;49;50;68m")
+		if assert.GreaterOrEqual(t, bgIdx, 0) {
+			after := before[bgIdx+len("48;2;49;50;68m"):]
+			for _, m := range regexp.MustCompile(`48;2;\d+;\d+;\d+m`).
+				FindAllString(after, -1) {
+				assert.Equal(t, "48;2;49;50;68m", m)
+			}
+		}
 	})
 
 	t.Run("completes file args", func(t *testing.T) {

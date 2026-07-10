@@ -21,15 +21,7 @@ type (
 	// Component is the interface every compositor layer must implement
 	Component interface {
 		HandleEvent(msg tea.Msg, cx *Context) (EventResult, tea.Cmd)
-		Render(width, height int, cx *Context) string
 		Cursor(width, height int, cx *Context) (cur tea.Cursor, ok bool)
-	}
-
-	// OverlayComponent extends Component for layers that composite over
-	// the content rendered by layers beneath them
-	OverlayComponent interface {
-		Component
-		RenderOver(width, height int, base string, cx *Context) string
 	}
 
 	// BufferRenderer is implemented by a base (layer 0) component that can

@@ -4,15 +4,16 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
 type (
 	PromptComponent struct {
+		overlayBuf
 		ec       *EditorComponent
 		kind     promptKind
 		forward  bool
@@ -21,6 +22,8 @@ type (
 		comps    []promptCompletion
 		compSel  *int
 		compDone bool
+		compCols int
+		compRows int
 		fn       promptHandler
 		pickerFn pickerBuilder
 	}
@@ -46,6 +49,7 @@ const (
 const (
 	promptCompletionBaseWidth = 30
 	promptCompletionMaxRows   = 10
+	promptCompletionPadX      = 1
 )
 
 func (p *PromptComponent) HandleEvent(
@@ -61,26 +65,24 @@ func (p *PromptComponent) HandleEvent(
 	return ignored(), nil
 }
 
-func (p *PromptComponent) Render(_, _ int, _ *Context) string {
-	return ""
-}
-
-func (p *PromptComponent) RenderOver(
-	width, height int, base string, cx *Context,
-) string {
+func (p *PromptComponent) Layout(
+	screenW, screenH int, cx *Context,
+) (Bounds, bool) {
 	if !p.compDone {
 		p.recalculateCompletion(cx)
 	}
-	line := p.renderLine(width, cx)
-	baseLayer := lipgloss.NewLayer(base)
-	promptLayer := lipgloss.NewLayer(line).X(0).Y(height - 1).Z(1)
-	layers := []*lipgloss.Layer{baseLayer}
-	if menu := p.renderCompletions(width, height, cx); menu != "" {
-		y := max(height-1-strings.Count(menu, "\n")-1, 0)
-		layers = append(layers, lipgloss.NewLayer(menu).X(0).Y(y).Z(1))
+	menuH := p.completionMenuHeight(screenW, screenH)
+	y := max(screenH-1-menuH, 0)
+	return Bounds{x: 0, y: y, w: screenW, h: screenH - y}, true
+}
+
+func (p *PromptComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
+	buf := p.get(pl.w, pl.h)
+	if p.compRows > 0 {
+		p.paintCompletions(buf, 0, pl.w, cx)
 	}
-	layers = append(layers, promptLayer)
-	return lipgloss.NewCompositor(layers...).Render()
+	p.paintLine(buf, pl.h-1, pl.w, cx)
+	return buf
 }
 
 func (p *PromptComponent) Cursor(
@@ -215,9 +217,9 @@ func (p *PromptComponent) accept(
 	}
 }
 
-func (p *PromptComponent) renderLine(w int, cx *Context) string {
+func (p *PromptComponent) paintLine(buf *tui.Buffer, y, w int, cx *Context) {
 	r := &renderPass{ec: p.ec, cx: cx, w: w}
-	st := r.cmdlineStyle(false)
+	st := lipglossToTUIStyle(r.cmdlineStyle(false))
 	var content string
 	switch p.kind {
 	case promptCmd:
@@ -231,5 +233,6 @@ func (p *PromptComponent) renderLine(w int, cx *Context) string {
 	default:
 		content = p.prompt + " " + p.buf
 	}
-	return st.Width(w).Render(content)
+	buf.SetString(0, y, strings.Repeat(" ", w), st)
+	buf.SetString(0, y, content, st)
 }

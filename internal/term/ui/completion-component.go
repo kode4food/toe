@@ -115,10 +115,6 @@ func (c *completionComponent) HandleEvent(
 	}
 }
 
-func (c *completionComponent) Render(int, int, *Context) string {
-	return ""
-}
-
 func (c *completionComponent) lookupAction(
 	cx *Context, k command.KeyEvent,
 ) (string, bool) {

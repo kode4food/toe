@@ -71,10 +71,6 @@ func (s *signatureHelpComponent) HandleEvent(
 	}
 }
 
-func (s *signatureHelpComponent) Render(int, int, *Context) string {
-	return ""
-}
-
 func (s *signatureHelpComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }

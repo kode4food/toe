@@ -17,6 +17,7 @@ import (
 )
 
 type completionComponent struct {
+	overlayBuf
 	ec         *EditorComponent
 	all        []view.CompletionItem
 	items      []view.CompletionItem
@@ -24,8 +25,8 @@ type completionComponent struct {
 	opts       CompletionOptions
 	cursor     int
 	scroll     int
-	bounds     bounds
-	listBounds bounds
+	bounds     Bounds
+	listBounds Bounds
 	refreshGen int
 	manual     bool
 	incomplete bool
@@ -163,28 +164,35 @@ func (c *completionComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
-func (c *completionComponent) lastBounds() bounds {
-	return c.bounds
-}
-
-func (c *completionComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
-	if !c.valid(cx) {
-		return
+func (c *completionComponent) Layout(
+	screenW, screenH int, cx *Context,
+) (Bounds, bool) {
+	if !c.valid(cx) || len(c.items) == 0 {
+		return Bounds{}, false
 	}
-	if len(c.items) == 0 {
-		return
-	}
-	query, _ := c.query(cx)
-	x, y := c.popupPos(buf, cx)
+	x, y := c.popupPos(screenH, cx)
 	w := c.width()
 	rows := min(len(c.items), completionMaxRows)
 	h := rows + 2
-	if x+w > buf.Width {
-		x = max(buf.Width-w, 0)
+	if x+w > screenW {
+		x = max(screenW-w, 0)
 	}
-	if y+h > buf.Height {
+	if y+h > screenH {
 		y = max(y-h-1, 0)
 	}
+	return Bounds{x: x, y: y, w: w, h: h}, true
+}
+
+func (c *completionComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
+	buf := c.get(pl.w, pl.h)
+	c.paint(buf, pl, cx)
+	return buf
+}
+
+func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
+	query, _ := c.query(cx)
+	w, h := pl.w, pl.h
+	c.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
 		border: lipgloss.RoundedBorder(),
@@ -193,9 +201,8 @@ func (c *completionComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 		),
 		contentStyle: lipglossToTUIStyle(menu),
 	}
-	area := pop.drawInto(buf, x, y, w, h)
-	c.bounds = bounds{x: x, y: y, w: w, h: h}
-	c.listBounds = bounds(area)
+	area := pop.drawInto(buf, 0, 0, w, h)
+	c.listBounds = Bounds(area).translate(pl.x, pl.y)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
 	match := lipglossToTUIStyle(pickerMatchStyle(cx))
@@ -233,7 +240,7 @@ func (c *completionComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 		)
 	}
 	if overflow {
-		c.renderScroll(buf, x+w-1, area.y, area.h, base)
+		c.renderScroll(buf, w-1, area.y, area.h, base)
 	}
 }
 
@@ -548,10 +555,8 @@ func (c *completionComponent) rowParts(
 	return completionRowPartsFor(item, c.opts.Icons, selected)
 }
 
-func (c *completionComponent) popupPos(
-	buf *tui.Buffer, cx *Context,
-) (int, int) {
-	return c.ec.popupAnchorBelowCaret(buf, cx, completionMaxRows)
+func (c *completionComponent) popupPos(screenH int, cx *Context) (int, int) {
+	return c.ec.popupAnchorBelowCaret(screenH, cx, completionMaxRows)
 }
 
 func (c *completionComponent) resetCursor() {

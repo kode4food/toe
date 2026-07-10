@@ -196,21 +196,17 @@ func trimPopupLines(lines []popupLine, maxVisible int) []popupLine {
 	return lines
 }
 
-func drawTextPopup(
-	buf *tui.Buffer, x, y, maxW, maxH int, text string, cx *Context,
-) bounds {
+func measureTextPopup(maxW, maxH int, text string) ([]popupLine, int, int) {
 	lines := popupTextLines(text, maxW-2-2*popupPadX)
 	lines = trimPopupLines(lines, maxH-2)
 	w := popupTextWidth(lines) + 2 + 2*popupPadX
 	h := len(lines) + 2
 	w = min(max(w, 2), maxW)
 	h = min(max(h, 2), maxH)
-	if x+w > buf.Width {
-		x = max(buf.Width-w, 0)
-	}
-	if y+h > buf.Height {
-		y = max(buf.Height-h, 0)
-	}
+	return lines, w, h
+}
+
+func paintTextPopup(buf *tui.Buffer, lines []popupLine, cx *Context) {
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	pop := popup{
 		border:       lipgloss.RoundedBorder(),
@@ -218,10 +214,11 @@ func drawTextPopup(
 		contentStyle: st,
 		padX:         popupPadX,
 	}
-	area := pop.drawInto(buf, x, y, w, h)
-	r := popupTextRenderer{buf: buf, cx: cx, area: area, base: st, padX: popupPadX}
+	area := pop.drawInto(buf, 0, 0, buf.Width, buf.Height)
+	r := popupTextRenderer{
+		buf: buf, cx: cx, area: area, base: st, padX: popupPadX,
+	}
 	r.render(lines)
-	return bounds{x: x, y: y, w: w, h: h}
 }
 
 func popupTextLines(text string, w int) []popupLine {

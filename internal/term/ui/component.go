@@ -41,20 +41,40 @@ type (
 		RenderBuffer(width, height int, cx *Context) *tui.Buffer
 	}
 
-	// BufferOverlayComponent extends Component for overlay layers that draw
-	// directly onto the shared cell buffer rather than compositing ANSI
-	// strings. The compositor only takes this path when every layer above
-	// the base supports it; otherwise it falls back to OverlayComponent
+	// BufferOverlayComponent extends Component for overlay layers that own
+	// their own cell buffer instead of drawing into the shared one
 	BufferOverlayComponent interface {
 		Component
-		RenderOverBuffer(buf *tui.Buffer, cx *Context)
+		Layout(screenW, screenH int, cx *Context) (pl Bounds, ok bool)
+		PaintBuffer(pl Bounds, cx *Context) *tui.Buffer
 	}
 
-	boundedOverlay interface {
-		Component
-		lastBounds() bounds
+	// Bounds is a screen-space rectangle
+	Bounds struct{ x, y, w, h int }
+
+	// overlayBuf is embedded by BufferOverlayComponent implementers to
+	// reuse their paint buffer across frames instead of reallocating it
+	overlayBuf struct {
+		buf *tui.Buffer
 	}
 )
+
+func (o *overlayBuf) get(w, h int) *tui.Buffer {
+	if o.buf == nil || o.buf.Width != w || o.buf.Height != h {
+		o.buf = tui.NewBuffer(w, h)
+	} else {
+		o.buf.Clear()
+	}
+	return o.buf
+}
+
+func (b Bounds) contains(x, y int) bool {
+	return x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h
+}
+
+func (b Bounds) translate(dx, dy int) Bounds {
+	return Bounds{x: b.x + dx, y: b.y + dy, w: b.w, h: b.h}
+}
 
 func consumed() EventResult {
 	return EventResult{Consumed: true}

@@ -166,7 +166,8 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	cache.lastInfoTitle = r.ec.infoTitle
 	cache.lastInfoItems = r.ec.infoItems
 
-	return stylesChanged || optionsChanged || r.cx.OverlaysChanged || infoChanged
+	return stylesChanged || optionsChanged || r.cx.OverlaysChanged ||
+		infoChanged
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {

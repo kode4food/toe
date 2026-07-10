@@ -68,6 +68,35 @@ func (b *Buffer) PatchBgRange(x, y, width int, bg Color) {
 	}
 }
 
+// Blit copies src's cells into b at offset (ox, oy), clipped to b's bounds
+func (b *Buffer) Blit(src *Buffer, ox, oy int) {
+	for sy := range src.Height {
+		dy := oy + sy
+		if dy < 0 || dy >= b.Height {
+			continue
+		}
+		for sx := range src.Width {
+			dx := ox + sx
+			if dx < 0 || dx >= b.Width {
+				continue
+			}
+			c := src.cells[sy*src.Width+sx]
+			// blank a wide glyph whose trailing Skip cell got clipped, so it
+			// doesn't render with no room for its second column
+			if !c.Skip && dx == b.Width-1 && sx+1 < src.Width &&
+				src.cells[sy*src.Width+sx+1].Skip {
+				c = Cell{Symbol: " ", Style: c.Style}
+			}
+			di := dy*b.Width + dx
+			// reset bg means transparent: keep whatever's already at di
+			if c.Style.BgColor().IsReset() {
+				c.Style = c.Style.Bg(b.cells[di].Style.BgColor())
+			}
+			b.cells[di] = c
+		}
+	}
+}
+
 func (b *Buffer) Get(x, y int) Cell {
 	if x < 0 || y < 0 || x >= b.Width || y >= b.Height {
 		return defaultCell

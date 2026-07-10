@@ -6,18 +6,15 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-type (
-	PickerComponent struct {
-		state         *Picker
-		bounds        bounds
-		listBounds    bounds
-		previewBounds bounds
-		splitBounds   bounds
-		dragSplit     bool
-	}
-
-	bounds struct{ x, y, w, h int }
-)
+type PickerComponent struct {
+	overlayBuf
+	state         *Picker
+	bounds        Bounds
+	listBounds    Bounds
+	previewBounds Bounds
+	splitBounds   Bounds
+	dragSplit     bool
+}
 
 const pickerMinPreviewArea = 72
 
@@ -56,32 +53,40 @@ func (p *PickerComponent) Render(_, _ int, _ *Context) string {
 	return ""
 }
 
-// RenderOverBuffer avoids the lipgloss Compositor round-trip that was the
-// dominant per-frame cost in profiling
-func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
-	ps := p.state
-	width, height := buf.Width, buf.Height
-	areaW, areaH := pickerOverlaySize(width, height)
+func (p *PickerComponent) Layout(
+	screenW, screenH int, _ *Context,
+) (Bounds, bool) {
+	areaW, areaH := pickerOverlaySize(screenW, screenH)
 	if areaW < 4 || areaH < 4 {
-		return
+		return Bounds{}, false
 	}
-	left := (width - areaW) / 2
-	top := max((height-2-areaH)/2, 0)
-	p.bounds = bounds{x: left, y: top, w: areaW, h: areaH}
-	p.previewBounds = bounds{}
-	p.splitBounds = bounds{}
+	left := (screenW - areaW) / 2
+	top := max((screenH-2-areaH)/2, 0)
+	return Bounds{x: left, y: top, w: areaW, h: areaH}, true
+}
+
+func (p *PickerComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
+	buf := p.get(pl.w, pl.h)
+	p.paint(buf, pl, cx)
+	return buf
+}
+
+func (p *PickerComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
+	ps := p.state
+	areaW, areaH := pl.w, pl.h
+	p.bounds = pl
+	p.previewBounds = Bounds{}
+	p.splitBounds = Bounds{}
 
 	showPreview := areaW > pickerMinPreviewArea
 	splitW := 0
 	if showPreview {
 		ratio := cx.pickerLayout.SplitRatioFor(ps.source.Title())
 		splitW = pickerSplitLeftWidth(areaW, ratio)
-		p.splitBounds = bounds{
-			x: left + 1 + splitW, y: top, w: 1, h: areaH,
-		}
-		p.drawPickerBox(buf, left, top, areaW, areaH, splitW, cx)
+		p.splitBounds = Bounds{x: 1 + splitW, y: 0, w: 1, h: areaH}
+		p.drawPickerBox(buf, 0, 0, areaW, areaH, splitW, cx)
 	} else {
-		p.drawPickerPane(buf, left, top, areaW, areaH, cx)
+		p.drawPickerPane(buf, 0, 0, areaW, areaH, cx)
 	}
 
 	headerH := 0
@@ -92,19 +97,17 @@ func (p *PickerComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	if showPreview {
 		listW = splitW
 	}
-	p.listBounds = bounds{
-		x: left + 1, y: top + 3 + headerH, w: listW, h: ps.listHeight,
-	}
+	p.listBounds = Bounds{x: 1, y: 3 + headerH, w: listW, h: ps.listHeight}
+
+	p.splitBounds = p.splitBounds.translate(pl.x, pl.y)
+	p.previewBounds = p.previewBounds.translate(pl.x, pl.y)
+	p.listBounds = p.listBounds.translate(pl.x, pl.y)
 }
 
 func (p *PickerComponent) Cursor(
 	_, _ int, _ *Context,
 ) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
-}
-
-func (p *PickerComponent) lastBounds() bounds {
-	return p.bounds
 }
 
 func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {

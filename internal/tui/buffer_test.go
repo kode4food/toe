@@ -157,6 +157,77 @@ func TestSetRightAlignedInt(t *testing.T) {
 	})
 }
 
+func TestBlit(t *testing.T) {
+	t.Run("copies src cells at offset", func(t *testing.T) {
+		dst := tui.NewBuffer(5, 5)
+		src := tui.NewBuffer(2, 2)
+		src.SetString(0, 0, "AB", tui.Style{}.Fg(tui.ColorRed))
+		src.SetString(0, 1, "CD", tui.Style{}.Fg(tui.ColorRed))
+		dst.Blit(src, 1, 1)
+		assert.Equal(t, "A", dst.Get(1, 1).Symbol)
+		assert.Equal(t, "B", dst.Get(2, 1).Symbol)
+		assert.Equal(t, "C", dst.Get(1, 2).Symbol)
+		assert.Equal(t, "D", dst.Get(2, 2).Symbol)
+	})
+
+	t.Run("clips src overflowing bottom-right edge", func(t *testing.T) {
+		dst := tui.NewBuffer(3, 3)
+		src := tui.NewBuffer(3, 3)
+		src.Fill(tui.Style{}.Fg(tui.ColorBlue))
+		dst.Blit(src, 1, 1)
+		assert.Equal(t, tui.ColorBlue, dst.Get(2, 2).Style.FgColor())
+		assert.Equal(t, tui.Style{}, dst.Get(0, 0).Style)
+	})
+
+	t.Run("clips src overflowing negative offset", func(t *testing.T) {
+		dst := tui.NewBuffer(3, 3)
+		src := tui.NewBuffer(3, 3)
+		src.Fill(tui.Style{}.Fg(tui.ColorGreen))
+		dst.Blit(src, -1, -1)
+		assert.Equal(t, tui.ColorGreen, dst.Get(0, 0).Style.FgColor())
+		assert.Equal(t, tui.Style{}, dst.Get(2, 2).Style)
+	})
+
+	t.Run("transparent bg keeps dst background", func(t *testing.T) {
+		dst := tui.NewBuffer(2, 1)
+		dst.PatchBg(0, 0, tui.ColorYellow)
+		src := tui.NewBuffer(2, 1)
+		src.SetString(0, 0, "X", tui.Style{})
+		dst.Blit(src, 0, 0)
+		assert.Equal(t, "X", dst.Get(0, 0).Symbol)
+		assert.Equal(t, tui.ColorYellow, dst.Get(0, 0).Style.BgColor())
+	})
+
+	t.Run("opaque bg overwrites dst background", func(t *testing.T) {
+		dst := tui.NewBuffer(2, 1)
+		dst.PatchBg(0, 0, tui.ColorYellow)
+		src := tui.NewBuffer(2, 1)
+		src.SetString(0, 0, "X", tui.Style{}.Bg(tui.ColorRed))
+		dst.Blit(src, 0, 0)
+		assert.Equal(t, tui.ColorRed, dst.Get(0, 0).Style.BgColor())
+	})
+
+	t.Run("wide glyph clipped at right edge blanks", func(t *testing.T) {
+		dst := tui.NewBuffer(2, 1)
+		src := tui.NewBuffer(2, 1)
+		src.SetString(0, 0, "コ", tui.Style{})
+		dst.Blit(src, 1, 0)
+		assert.Equal(t, " ", dst.Get(0, 0).Symbol)
+		assert.Equal(t, " ", dst.Get(1, 0).Symbol)
+		assert.Equal(t, 2, ansi.StringWidth(dst.RenderToANSI()))
+	})
+
+	t.Run("wide glyph fitting at right edge survives", func(t *testing.T) {
+		dst := tui.NewBuffer(2, 1)
+		src := tui.NewBuffer(2, 1)
+		src.SetString(0, 0, "コ", tui.Style{})
+		dst.Blit(src, 0, 0)
+		assert.Equal(t, "コ", dst.Get(0, 0).Symbol)
+		assert.True(t, dst.Get(1, 0).Skip)
+		assert.Equal(t, 2, ansi.StringWidth(dst.RenderToANSI()))
+	})
+}
+
 func TestFill(t *testing.T) {
 	t.Run("fills all cells with style", func(t *testing.T) {
 		b := tui.NewBuffer(3, 2)

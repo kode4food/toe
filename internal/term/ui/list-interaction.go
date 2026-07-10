@@ -1,6 +1,6 @@
 package ui
 
-func listIndexAt(b bounds, scroll, x, y int) (int, bool) {
+func listIndexAt(b Bounds, scroll, x, y int) (int, bool) {
 	if !b.contains(x, y) {
 		return 0, false
 	}

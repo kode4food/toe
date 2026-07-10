@@ -10,14 +10,15 @@ import (
 )
 
 type codeActionMenu struct {
+	overlayBuf
 	ec         *EditorComponent
 	docID      view.DocumentId
 	viewID     view.Id
 	actions    []view.CodeAction
 	cursor     int
 	scroll     int
-	bounds     bounds
-	listBounds bounds
+	bounds     Bounds
+	listBounds Bounds
 }
 
 const (
@@ -76,23 +77,33 @@ func (m *codeActionMenu) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
-func (m *codeActionMenu) lastBounds() bounds {
-	return m.bounds
-}
-
-func (m *codeActionMenu) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
+func (m *codeActionMenu) Layout(
+	screenW, screenH int, cx *Context,
+) (Bounds, bool) {
 	if len(m.actions) == 0 || !m.valid(cx) {
-		return
+		return Bounds{}, false
 	}
-	x, y := m.popupPos(buf, cx)
+	x, y := m.popupPos(screenH, cx)
 	w := m.width()
 	h := min(len(m.actions), codeActionMaxRows) + 2
-	if x+w > buf.Width {
-		x = max(buf.Width-w, 0)
+	if x+w > screenW {
+		x = max(screenW-w, 0)
 	}
-	if y+h > buf.Height {
+	if y+h > screenH {
 		y = max(y-h-1, 0)
 	}
+	return Bounds{x: x, y: y, w: w, h: h}, true
+}
+
+func (m *codeActionMenu) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
+	buf := m.get(pl.w, pl.h)
+	m.paint(buf, pl, cx)
+	return buf
+}
+
+func (m *codeActionMenu) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
+	w, h := pl.w, pl.h
+	m.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
 		border: lipgloss.RoundedBorder(),
@@ -101,9 +112,8 @@ func (m *codeActionMenu) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 		),
 		contentStyle: lipglossToTUIStyle(menu),
 	}
-	area := pop.drawInto(buf, x, y, w, h)
-	m.bounds = bounds{x: x, y: y, w: w, h: h}
-	m.listBounds = bounds(area)
+	area := pop.drawInto(buf, 0, 0, w, h)
+	m.listBounds = Bounds(area).translate(pl.x, pl.y)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
 	m.scroll = listClampScroll(m.scroll, len(m.actions), area.h)
@@ -122,7 +132,7 @@ func (m *codeActionMenu) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 		buf.SetString(area.x, area.y+i, text, style)
 	}
 	if overflow {
-		m.renderScroll(buf, x+w-1, area.y, area.h, base)
+		m.renderScroll(buf, w-1, area.y, area.h, base)
 	}
 }
 
@@ -137,8 +147,8 @@ func (m *codeActionMenu) width() int {
 	return w + 2
 }
 
-func (m *codeActionMenu) popupPos(buf *tui.Buffer, cx *Context) (int, int) {
-	return m.ec.popupAnchorBelowCaret(buf, cx, codeActionMaxRows)
+func (m *codeActionMenu) popupPos(screenH int, cx *Context) (int, int) {
+	return m.ec.popupAnchorBelowCaret(screenH, cx, codeActionMaxRows)
 }
 
 func (m *codeActionMenu) move(n int) {

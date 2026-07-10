@@ -14,10 +14,12 @@ type hoverAnchor struct {
 }
 
 type hoverComponent struct {
+	overlayBuf
 	ec     *EditorComponent
 	anchor hoverAnchor
 	text   string
-	bounds bounds
+	bounds Bounds
+	lines  []popupLine
 }
 
 func newHoverComponent(
@@ -49,21 +51,34 @@ func (h *hoverComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
-func (h *hoverComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
+func (h *hoverComponent) Layout(
+	screenW, screenH int, cx *Context,
+) (Bounds, bool) {
 	if !h.valid(cx) {
-		return
+		return Bounds{}, false
 	}
 	x, y := 0, 0
-	if cur, ok := h.ec.Cursor(buf.Width, buf.Height, cx); ok {
+	if cur, ok := h.ec.Cursor(screenW, screenH, cx); ok {
 		x, y = cur.X+1, cur.Y+1
 	}
-	h.bounds = drawTextPopup(
-		buf, x, y, max(buf.Width-x, 30), min(buf.Height-y, 15), h.text, cx,
-	)
+	maxW := max(screenW-x, 30)
+	maxH := min(screenH-y, 15)
+	lines, w, hh := measureTextPopup(maxW, maxH, h.text)
+	if x+w > screenW {
+		x = max(screenW-w, 0)
+	}
+	if y+hh > screenH {
+		y = max(screenH-hh, 0)
+	}
+	h.lines = lines
+	return Bounds{x: x, y: y, w: w, h: hh}, true
 }
 
-func (h *hoverComponent) lastBounds() bounds {
-	return h.bounds
+func (h *hoverComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
+	buf := h.get(pl.w, pl.h)
+	h.bounds = pl
+	paintTextPopup(buf, h.lines, cx)
+	return buf
 }
 
 func (h *hoverComponent) valid(cx *Context) bool {

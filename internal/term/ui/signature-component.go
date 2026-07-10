@@ -14,19 +14,23 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type signatureCall struct {
-	docID  view.DocumentId
-	viewID view.Id
-	open   int
-}
+type (
+	signatureCall struct {
+		docID  view.DocumentId
+		viewID view.Id
+		open   int
+	}
 
-type signatureHelpComponent struct {
-	ec     *EditorComponent
-	call   signatureCall
-	help   view.SignatureHelp
-	cursor int
-	bounds bounds
-}
+	signatureHelpComponent struct {
+		overlayBuf
+		ec     *EditorComponent
+		call   signatureCall
+		help   view.SignatureHelp
+		cursor int
+		bounds Bounds
+		lines  []popupLine
+	}
+)
 
 const signaturePopupMaxH = 12
 
@@ -75,34 +79,49 @@ func (s *signatureHelpComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
-func (s *signatureHelpComponent) RenderOverBuffer(
-	buf *tui.Buffer, cx *Context,
-) {
-	if len(s.help.Signatures) == 0 {
-		return
-	}
-	if !s.valid(cx) {
-		return
+func (s *signatureHelpComponent) Layout(
+	screenW, screenH int, cx *Context,
+) (Bounds, bool) {
+	if len(s.help.Signatures) == 0 || !s.valid(cx) {
+		return Bounds{}, false
 	}
 	sig := s.help.Signatures[s.cursor]
-	lines := popupTextLines(signatureDocs(sig), buf.Width-2)
+	lines := popupTextLines(signatureDocs(sig), screenW-2)
 	w := max(runewidth.StringWidth(sig.Label), popupTextWidth(lines)) + 2
 	if len(s.help.Signatures) > 1 {
 		w += runewidth.StringWidth(s.indexText()) + 1
 	}
-	w = min(max(w, 2), buf.Width)
+	w = min(max(w, 2), screenW)
 	h := min(max(len(lines)+4, 3), signaturePopupMaxH)
 	x, y := 0, 0
-	if cur, ok := s.ec.Cursor(buf.Width, buf.Height, cx); ok {
+	if cur, ok := s.ec.Cursor(screenW, screenH, cx); ok {
 		x = s.openScreenX(cx)
 		y = cur.Y + 1
-		if y+h > buf.Height {
+		if y+h > screenH {
 			y = max(cur.Y-h-1, 0)
 		}
 	}
-	if x+w > buf.Width {
-		x = max(buf.Width-w, 0)
+	if x+w > screenW {
+		x = max(screenW-w, 0)
 	}
+	s.lines = lines
+	return Bounds{x: x, y: y, w: w, h: h}, true
+}
+
+func (s *signatureHelpComponent) PaintBuffer(
+	pl Bounds, cx *Context,
+) *tui.Buffer {
+	buf := s.get(pl.w, pl.h)
+	s.paint(buf, pl, cx)
+	return buf
+}
+
+func (s *signatureHelpComponent) paint(
+	buf *tui.Buffer, pl Bounds, cx *Context,
+) {
+	sig := s.help.Signatures[s.cursor]
+	w, h := pl.w, pl.h
+	s.bounds = pl
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	border := lipgloss.RoundedBorder()
 	pop := popup{
@@ -111,23 +130,22 @@ func (s *signatureHelpComponent) RenderOverBuffer(
 		contentStyle: st,
 		padX:         0,
 	}
-	s.bounds = bounds{x: x, y: y, w: w, h: h}
-	area := pop.drawInto(buf, x, y, w, h)
+	area := pop.drawInto(buf, 0, 0, w, h)
 	s.renderSignature(buf, area, sig, cx)
 	if len(s.help.Signatures) > 1 {
 		index := s.indexText()
 		buf.SetString(area.x+area.w-runewidth.StringWidth(index),
 			area.y, index, st)
 	}
-	if len(lines) == 0 || area.h < 3 {
+	if len(s.lines) == 0 || area.h < 3 {
 		return
 	}
-	renderSignatureSeparator(buf, x, area.y+1, w, border, st)
+	renderSignatureSeparator(buf, 0, area.y+1, w, border, st)
 	docArea := area
 	docArea.y += 2
 	docArea.h -= 2
 	r := popupTextRenderer{buf: buf, cx: cx, area: docArea, base: st}
-	r.render(lines)
+	r.render(s.lines)
 }
 
 func (s *signatureHelpComponent) openScreenX(cx *Context) int {

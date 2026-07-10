@@ -80,11 +80,11 @@ func (c *Compositor) Render(cx *Context) string {
 		return ""
 	}
 	cx.SingleLayer = lc == 1
-	cx.OverlayRegions, cx.OverlayRegionsPrecise = c.overlayRegions()
 	cx.OverlaysChanged = !slices.Equal(c.lastOverlays, c.layers[1:])
 	c.lastOverlays = slices.Clone(c.layers[1:])
 	content, ok := c.renderViaBuffer(cx)
 	if !ok {
+		cx.OverlayRegions, cx.OverlayRegionsPrecise = nil, false
 		content = c.layers[0].Render(c.width, c.height, cx)
 		for i := 1; i < len(c.layers); i++ {
 			if ov, ok := c.layers[i].(OverlayComponent); ok {
@@ -108,21 +108,6 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
 }
 
-func (c *Compositor) overlayRegions() (regions []bounds, precise bool) {
-	if len(c.layers) <= 1 {
-		return nil, true
-	}
-	regions = make([]bounds, 0, len(c.layers)-1)
-	for _, layer := range c.layers[1:] {
-		bo, ok := layer.(boundedOverlay)
-		if !ok {
-			return nil, false
-		}
-		regions = append(regions, bo.lastBounds())
-	}
-	return regions, true
-}
-
 // falls back (!ok) when any layer doesn't implement the buffer interface,
 // so the caller can use the per-layer ANSI compositing path instead
 func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {
@@ -130,17 +115,27 @@ func (c *Compositor) renderViaBuffer(cx *Context) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	overlays := make([]BufferOverlayComponent, 0, len(c.layers)-1)
+	type placed struct {
+		ov BufferOverlayComponent
+		pl Bounds
+	}
+	placements := make([]placed, 0, len(c.layers)-1)
 	for i := 1; i < len(c.layers); i++ {
 		ov, ok := c.layers[i].(BufferOverlayComponent)
 		if !ok {
 			return "", false
 		}
-		overlays = append(overlays, ov)
+		if pl, active := ov.Layout(c.width, c.height, cx); active {
+			placements = append(placements, placed{ov, pl})
+		}
 	}
-	buf := br.RenderBuffer(c.width, c.height, cx)
-	for _, ov := range overlays {
-		ov.RenderOverBuffer(buf, cx)
+	frame := br.RenderBuffer(c.width, c.height, cx)
+	regions := make([]Bounds, 0, len(placements))
+	for _, p := range placements {
+		buf := p.ov.PaintBuffer(p.pl, cx)
+		frame.Blit(buf, p.pl.x, p.pl.y)
+		regions = append(regions, p.pl)
 	}
-	return buf.RenderToANSI(), true
+	cx.OverlayRegions, cx.OverlayRegionsPrecise = regions, true
+	return frame.RenderToANSI(), true
 }

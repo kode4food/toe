@@ -394,12 +394,12 @@ func (e *EditorComponent) caretScreenPos(cx *Context) (int, int, bool) {
 }
 
 func (e *EditorComponent) popupAnchorBelowCaret(
-	buf *tui.Buffer, cx *Context, fallbackRows int,
+	screenH int, cx *Context, fallbackRows int,
 ) (int, int) {
 	if x, y, ok := e.caretScreenPos(cx); ok {
 		return x, y + 1
 	}
-	return 0, max(buf.Height-fallbackRows-2, 0)
+	return 0, max(screenH-fallbackRows-2, 0)
 }
 
 func (e *EditorComponent) cancelPending(cx *Context) {

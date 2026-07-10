@@ -1382,7 +1382,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.Contains(t, out, "zzz")
 	})
 
-	t.Run("narrower key hint popup clears the wider one", func(t *testing.T) {
+	t.Run("narrower hint popup clears wider one", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)

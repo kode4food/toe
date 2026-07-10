@@ -16,7 +16,7 @@ type Context struct {
 	SingleLayer bool
 	lastLayer   func(*view.Editor) layerFunc
 
-	OverlayRegions        []bounds
+	OverlayRegions        []Bounds
 	OverlayRegionsPrecise bool
 	OverlaysChanged       bool
 

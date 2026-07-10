@@ -40,8 +40,7 @@ const (
 // ReplaceDiagnostics replaces all diagnostics from provider with diags
 func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 	d.ls.Lock()
-	defer d.ls.Unlock()
-	d.ls.gen++
+	before := slices.Clone(d.ls.diagnostics)
 	out := d.ls.diagnostics[:0]
 	for _, diag := range d.ls.diagnostics {
 		if diag.Provider != provider {
@@ -49,14 +48,22 @@ func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 		}
 	}
 	d.ls.diagnostics = append(out, diags...)
+	changed := !slices.Equal(before, d.ls.diagnostics)
+	d.ls.Unlock()
+	if changed {
+		d.markAllDirty()
+	}
 }
 
 // ClearDiagnostics removes all diagnostics from the document
 func (d *Document) ClearDiagnostics() {
 	d.ls.Lock()
-	defer d.ls.Unlock()
-	d.ls.gen++
+	changed := len(d.ls.diagnostics) != 0
 	d.ls.diagnostics = nil
+	d.ls.Unlock()
+	if changed {
+		d.markAllDirty()
+	}
 }
 
 // Diagnostics returns a snapshot of all current diagnostics

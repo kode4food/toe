@@ -163,6 +163,10 @@ func (c *completionComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
+func (c *completionComponent) lastBounds() bounds {
+	return c.bounds
+}
+
 func (c *completionComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	if !c.valid(cx) {
 		return

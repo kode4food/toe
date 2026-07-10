@@ -101,14 +101,6 @@ type renderPaneArgs struct {
 	focused bool
 }
 
-func clearPaneRect(buf *tui.Buffer, a view.Area, y0 int, style tui.Style) {
-	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
-	top := y0 + a.Y
-	for y := top; y < top+a.Height; y++ {
-		buf.FillRange(a.X, y, a.Width, style)
-	}
-}
-
 func (r *renderPass) renderPane(args renderPaneArgs) {
 	doc := args.doc
 	v := args.view
@@ -162,21 +154,19 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 }
 
 func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
-	before := len(cache.paneSigs)
-
 	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
-	if cache.stylesKey != stylesKey {
-		clear(cache.paneSigs)
-	}
-	cache.syncOptionsGen(r.cx.Editor.Options().Gen)
+	stylesChanged := cache.stylesKey != stylesKey
 
-	singleLayer := r.cx.SingleLayer
-	if cache.lastSingleLayer != singleLayer {
-		cache.lastSingleLayer = singleLayer
-		clear(cache.paneSigs)
-	}
+	gen := r.cx.Editor.Options().Gen
+	optionsChanged := cache.lastOptionsGen != gen
+	cache.lastOptionsGen = gen
 
-	return before == 0 || len(cache.paneSigs) == 0
+	infoChanged := cache.lastInfoTitle != r.ec.infoTitle ||
+		!slices.Equal(cache.lastInfoItems, r.ec.infoItems)
+	cache.lastInfoTitle = r.ec.infoTitle
+	cache.lastInfoItems = r.ec.infoItems
+
+	return stylesChanged || optionsChanged || r.cx.OverlaysChanged || infoChanged
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
@@ -195,23 +185,16 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		y0 = 1
 	}
 
-	fastPath := !redrawAll && r.cx.SingleLayer
 	for _, vs := range r.cx.Editor.Tree().Views() {
 		v := vs.View
 		doc, ok := r.cx.Editor.Document(v.DocID())
 		if !ok {
 			continue
 		}
-		sig := paneSignature{
-			docID:      doc.ID(),
-			docRev:     doc.Revision(),
-			overlayGen: doc.OverlayGen(),
-			sel:        doc.SelectionFor(v.ID()),
-			offset:     v.Offset(),
-			area:       v.Area(),
-			focused:    vs.Focused,
-		}
-		if fastPath && cache.paneUnchanged(v.ID(), sig) {
+		vDirty := v.ConsumeDirty()
+		dDirty := doc.ConsumeDirty(v.ID())
+		forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, v.Area(), y0)
+		if !redrawAll && !forced && !vDirty && !dDirty {
 			continue
 		}
 		if !redrawAll {
@@ -220,7 +203,6 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		r.renderPane(renderPaneArgs{
 			doc: doc, view: v, buf: buf, y0: y0, focused: vs.Focused,
 		})
-		cache.commitPaneSig(v.ID(), sig)
 	}
 
 	sepTUI := lipglossToTUIStyle(th.Get("ui.border"))
@@ -329,6 +311,28 @@ func (r *renderPass) drawDiagnosticPopup(
 	area := pop.drawInto(buf, x, y, w, h)
 	for i, line := range lines {
 		buf.SetString(area.x, area.y+i, line, st)
+	}
+}
+
+func paneUnderOverlay(cx *Context, a view.Area, y0 int) bool {
+	if !cx.OverlayRegionsPrecise {
+		return true
+	}
+	ax, ay := a.X, y0+a.Y
+	for _, b := range cx.OverlayRegions {
+		if ax < b.x+b.w && b.x < ax+a.Width &&
+			ay < b.y+b.h && b.y < ay+a.Height {
+			return true
+		}
+	}
+	return false
+}
+
+func clearPaneRect(buf *tui.Buffer, a view.Area, y0 int, style tui.Style) {
+	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
+	top := y0 + a.Y
+	for y := top; y < top+a.Height; y++ {
+		buf.FillRange(a.X, y, a.Width, style)
 	}
 }
 

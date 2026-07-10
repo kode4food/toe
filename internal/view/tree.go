@@ -182,6 +182,15 @@ func (t *Tree) Focus() Id {
 
 // SetFocus moves focus to the given view id
 func (t *Tree) SetFocus(id Id) {
+	if id == t.focus {
+		return
+	}
+	if old, ok := t.nodes[t.focus]; ok {
+		old.view.MarkDirty()
+	}
+	if n, ok := t.nodes[id]; ok {
+		n.view.MarkDirty()
+	}
 	t.focus = id
 }
 

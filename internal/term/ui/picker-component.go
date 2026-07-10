@@ -103,6 +103,10 @@ func (p *PickerComponent) Cursor(
 	return tea.Cursor{}, false
 }
 
+func (p *PickerComponent) lastBounds() bounds {
+	return p.bounds
+}
+
 func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 	p.state.addItems(msg.items)
 	if msg.feed != nil {

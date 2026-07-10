@@ -49,6 +49,11 @@ type (
 		Component
 		RenderOverBuffer(buf *tui.Buffer, cx *Context)
 	}
+
+	boundedOverlay interface {
+		Component
+		lastBounds() bounds
+	}
 )
 
 func consumed() EventResult {

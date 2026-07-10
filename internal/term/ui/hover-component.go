@@ -17,6 +17,7 @@ type hoverComponent struct {
 	ec     *EditorComponent
 	anchor hoverAnchor
 	text   string
+	bounds bounds
 }
 
 func newHoverComponent(
@@ -56,8 +57,13 @@ func (h *hoverComponent) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	if cur, ok := h.ec.Cursor(buf.Width, buf.Height, cx); ok {
 		x, y = cur.X+1, cur.Y+1
 	}
-	drawTextPopup(buf, x, y, max(buf.Width-x, 30), min(buf.Height-y, 15),
-		h.text, cx)
+	h.bounds = drawTextPopup(
+		buf, x, y, max(buf.Width-x, 30), min(buf.Height-y, 15), h.text, cx,
+	)
+}
+
+func (h *hoverComponent) lastBounds() bounds {
+	return h.bounds
 }
 
 func (h *hoverComponent) valid(cx *Context) bool {

@@ -1,14 +1,19 @@
 package ui
 
-import tea "charm.land/bubbletea/v2"
+import (
+	"slices"
+
+	tea "charm.land/bubbletea/v2"
+)
 
 type (
 	Compositor struct {
-		layers     []Component
-		width      int
-		height     int
-		cachedView string
-		startup    layerFunc
+		layers       []Component
+		width        int
+		height       int
+		cachedView   string
+		startup      layerFunc
+		lastOverlays []Component
 	}
 
 	layerFunc func(*Context) (Component, tea.Cmd)
@@ -75,6 +80,9 @@ func (c *Compositor) Render(cx *Context) string {
 		return ""
 	}
 	cx.SingleLayer = lc == 1
+	cx.OverlayRegions, cx.OverlayRegionsPrecise = c.overlayRegions()
+	cx.OverlaysChanged = !slices.Equal(c.lastOverlays, c.layers[1:])
+	c.lastOverlays = slices.Clone(c.layers[1:])
 	content, ok := c.renderViaBuffer(cx)
 	if !ok {
 		content = c.layers[0].Render(c.width, c.height, cx)
@@ -98,6 +106,21 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 		}
 	}
 	return tea.Cursor{}, false
+}
+
+func (c *Compositor) overlayRegions() (regions []bounds, precise bool) {
+	if len(c.layers) <= 1 {
+		return nil, true
+	}
+	regions = make([]bounds, 0, len(c.layers)-1)
+	for _, layer := range c.layers[1:] {
+		bo, ok := layer.(boundedOverlay)
+		if !ok {
+			return nil, false
+		}
+		regions = append(regions, bo.lastBounds())
+	}
+	return regions, true
 }
 
 // falls back (!ok) when any layer doesn't implement the buffer interface,

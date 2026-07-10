@@ -9,6 +9,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
@@ -1336,6 +1337,68 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		}
 		assert.Contains(t, after, "hello world")
 		assert.Contains(t, after, "second file")
+	})
+
+	t.Run("focus switch repaints both panes", func(t *testing.T) {
+		root := t.TempDir()
+		pathA := filepath.Join(root, "a.txt")
+		pathB := filepath.Join(root, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("hello world\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("second file\n"), 0o644))
+		e := view.NewEditor(root)
+		_, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		docB, err := e.SwitchOrOpenDoc(pathB)
+		assert.NoError(t, err)
+		e.ResizeTree(100, 30)
+		_, ok := e.VSplit(docB.ID())
+		assert.True(t, ok)
+		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
+
+		before := m.View().Content
+
+		e.FocusNextView()
+		after := m.View().Content
+
+		assert.NotEqual(t, before, after)
+	})
+
+	t.Run("edit shows on next render", func(t *testing.T) {
+		e := editorWithText(t, "hello\n")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		_ = m.View().Content
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "zzz"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "zzz")
+	})
+
+	t.Run("narrower key hint popup clears the wider one", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 100, 30)
+
+		m = sendKey(m, ' ')
+		wide := stripANSI(m.View().Content)
+		assert.Contains(t, wide, "Yank selections to clipboard")
+
+		m = sendKey(m, 'w')
+		narrow := stripANSI(m.View().Content)
+
+		assert.NotContains(t, narrow, "Yank selections to clipboard")
+		assert.Contains(t, narrow, "Vertical right split")
 	})
 }
 

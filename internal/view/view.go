@@ -25,6 +25,9 @@ type (
 		// vcol memoizes the last VisualColumn result; Rope is immutable
 		// and comparable, so equal fields mean an identical result
 		vcol vcolCache
+		// dirty is set whenever area or offset changes value, or MarkDirty
+		// is called; render code consumes it to decide whether to repaint
+		dirty bool
 	}
 
 	vcolCache struct {
@@ -97,7 +100,23 @@ func (v *View) Area() Area {
 
 // SetArea sets the screen rectangle (called by the layout engine)
 func (v *View) SetArea(a Area) {
-	v.area = a
+	if a != v.area {
+		v.area = a
+		v.dirty = true
+	}
+}
+
+// MarkDirty flags the view as needing a repaint on the next frame
+func (v *View) MarkDirty() {
+	v.dirty = true
+}
+
+// ConsumeDirty reports whether the view has changed since the last call,
+// clearing the flag
+func (v *View) ConsumeDirty() bool {
+	d := v.dirty
+	v.dirty = false
+	return d
 }
 
 // DocID returns the document this view displays
@@ -148,7 +167,10 @@ func (v *View) Offset() Position {
 
 // SetOffset updates the scroll position
 func (v *View) SetOffset(p Position) {
-	v.offset = p
+	if p != v.offset {
+		v.offset = p
+		v.dirty = true
+	}
 }
 
 // FreeScroll reports whether the viewport is decoupled from the cursor
@@ -222,6 +244,15 @@ func (v *View) EnsureCursorVisible(
 	v.ensureCursorVisibleByLine(doc, sel, height, scrolloff)
 }
 
+func (v *View) trackOffsetChange() func() {
+	before := v.offset
+	return func() {
+		if v.offset != before {
+			v.dirty = true
+		}
+	}
+}
+
 // EnsureCursorVisibleHorizontal adjusts the horizontal scroll offset so the
 // cursor's visual column stays within width content columns, respecting the
 // scrolloff margin. The gutter is never shifted — width is the content area
@@ -230,6 +261,7 @@ func (v *View) EnsureCursorVisible(
 func (v *View) EnsureCursorVisibleHorizontal(
 	doc core.Rope, sel core.Selection, width, tabW, scrolloff int,
 ) {
+	defer v.trackOffsetChange()()
 	if width <= 0 {
 		v.offset.HorizontalOffset = 0
 		return
@@ -370,6 +402,7 @@ func runeWidthWide(ch rune) int {
 func (v *View) ensureCursorVisibleByLine(
 	doc core.Rope, sel core.Selection, height, scrolloff int,
 ) {
+	defer v.trackOffsetChange()()
 	// Text-line scrolling never scrolls within a line
 	v.offset.VerticalOffset = 0
 	cursor := sel.Primary().Cursor(doc)
@@ -412,6 +445,7 @@ func (v *View) ensureCursorVisibleVisual(
 	doc core.Rope, sel core.Selection, height, scrolloff int,
 	vf *core.VisualMoveFormat,
 ) {
+	defer v.trackOffsetChange()()
 	cursor := sel.Primary().Cursor(doc)
 	cursorLine, err := doc.CharToLine(cursor)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/tui"
@@ -31,9 +32,10 @@ type (
 
 		viewRowMaps map[view.Id][]viewRowEntry
 
-		paneSigs        map[view.Id]paneSignature
-		lastOptionsGen  int
-		lastSingleLayer bool
+		lastInfoTitle string
+		lastInfoItems []command.KeyHint
+
+		lastOptionsGen int
 	}
 
 	viewRowEntry struct {
@@ -41,17 +43,6 @@ type (
 		offset  int
 		prefixW int
 		filler  bool
-	}
-
-	// paneSignature excludes theme/mode/options, which force a full redraw
-	paneSignature struct {
-		docID      view.DocumentId
-		docRev     int
-		overlayGen int
-		sel        core.Selection
-		offset     view.Position
-		area       view.Area
-		focused    bool
 	}
 
 	// docRenderCache memoizes a single document's derived render state, keyed
@@ -121,29 +112,7 @@ func newRenderCache() *renderCache {
 	return &renderCache{
 		docCaches:   map[view.DocumentId]*docRenderCache{},
 		viewRowMaps: map[view.Id][]viewRowEntry{},
-		paneSigs:    map[view.Id]paneSignature{},
 	}
-}
-
-func (c *renderCache) paneUnchanged(vid view.Id, sig paneSignature) bool {
-	prev, ok := c.paneSigs[vid]
-	return ok && prev.docID == sig.docID && prev.docRev == sig.docRev &&
-		prev.overlayGen == sig.overlayGen && prev.offset == sig.offset &&
-		prev.area == sig.area && prev.focused == sig.focused &&
-		prev.sel.Equal(sig.sel)
-}
-
-func (c *renderCache) commitPaneSig(vid view.Id, sig paneSignature) {
-	c.paneSigs[vid] = sig
-}
-
-func (c *renderCache) syncOptionsGen(gen int) {
-	if c.lastOptionsGen == gen {
-		return
-	}
-	// no per-pane field tracks every option, so invalidate everything
-	c.lastOptionsGen = gen
-	clear(c.paneSigs)
 }
 
 // evictClosed drops cache entries for documents and views that no longer
@@ -163,7 +132,7 @@ func (c *renderCache) evictClosed(e *view.Editor) {
 		}
 	}
 	views := e.AllViews()
-	if len(c.viewRowMaps) > len(views) || len(c.paneSigs) > len(views) {
+	if len(c.viewRowMaps) > len(views) {
 		live := make(map[view.Id]struct{}, len(views))
 		for _, v := range views {
 			live[v.ID()] = struct{}{}
@@ -171,11 +140,6 @@ func (c *renderCache) evictClosed(e *view.Editor) {
 		for id := range c.viewRowMaps {
 			if _, ok := live[id]; !ok {
 				delete(c.viewRowMaps, id)
-			}
-		}
-		for id := range c.paneSigs {
-			if _, ok := live[id]; !ok {
-				delete(c.paneSigs, id)
 			}
 		}
 	}

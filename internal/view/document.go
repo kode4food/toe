@@ -33,6 +33,8 @@ type (
 
 		buf bufState
 		ls  lsState
+
+		track renderTrack
 	}
 
 	// pendingLoad marks a session buffer whose file has not been read yet. The
@@ -72,7 +74,13 @@ type (
 		colors      []DocumentColor
 		hints       map[Id][]InlayHint
 		diagnostics []Diagnostic
-		gen         int
+	}
+
+	// renderTrack tracks, per view, whether anything render-relevant has
+	// changed since ConsumeDirty last checked
+	renderTrack struct {
+		sync.Mutex
+		dirty map[Id]bool
 	}
 
 	// insertAccum holds the pre-insert state and the composed changeset for the
@@ -286,6 +294,9 @@ func (d *Document) Selection() core.Selection {
 // any search-match highlighting for that view, matching helix: a search shows
 // its matches until the selection next moves
 func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
+	if old, ok := d.buf.selections[vid]; !ok || !old.Equal(sel) {
+		d.markDirty(vid)
+	}
 	d.buf.selections[vid] = sel
 	delete(d.buf.searchHL, vid)
 }
@@ -314,6 +325,9 @@ func (d *Document) RemoveView(vid Id) {
 	delete(d.ls.highlights, vid)
 	delete(d.ls.hints, vid)
 	d.ls.Unlock()
+	d.track.Lock()
+	delete(d.track.dirty, vid)
+	d.track.Unlock()
 }
 
 // BeginInsertGroup starts insert-mode change accumulation for vid if not
@@ -359,6 +373,7 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	if d.buf.insertAcc != nil {
 		cs := tx.Changes()
 		newSel := d.resolveAppliedSelection(vid, tx, cs)
+		oldSel := d.buf.selections[vid]
 		d.buf.Lock()
 		d.buf.text = newText
 		d.buf.selections[vid] = newSel
@@ -370,11 +385,17 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 			d.buf.version++
 		}
 		d.buf.Unlock()
+		if !cs.Empty() {
+			d.markAllDirty()
+		} else if !oldSel.Equal(newSel) {
+			d.markDirty(vid)
+		}
 		return nil
 	}
 
 	cs := tx.Changes()
 	newSel := d.resolveAppliedSelection(vid, tx, cs)
+	oldSel := d.buf.selections[vid]
 	if !cs.Empty() {
 		// Commit the FORWARD tx with the BEFORE state so Undo can restore it
 		beforeSt := core.State{Doc: d.buf.text, Selection: d.SelectionFor(vid)}
@@ -392,6 +413,11 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		d.buf.version++
 	}
 	d.buf.Unlock()
+	if !cs.Empty() {
+		d.markAllDirty()
+	} else if !oldSel.Equal(newSel) {
+		d.markDirty(vid)
+	}
 	return nil
 }
 
@@ -407,11 +433,17 @@ func (d *Document) Revision() int {
 	return d.buf.version
 }
 
-// OverlayGen increments on any LSP overlay change, independent of Revision
-func (d *Document) OverlayGen() int {
-	d.ls.RLock()
-	defer d.ls.RUnlock()
-	return d.ls.gen
+// ConsumeDirty reports whether vid's rendered state changed since the last
+// call for vid, clearing the flag. A vid never seen before is dirty
+func (d *Document) ConsumeDirty(vid Id) bool {
+	d.track.Lock()
+	defer d.track.Unlock()
+	wasDirty, ok := d.track.dirty[vid]
+	if d.track.dirty == nil {
+		d.track.dirty = map[Id]bool{}
+	}
+	d.track.dirty[vid] = false
+	return !ok || wasDirty
 }
 
 // Undo reverts one history step for the given view
@@ -472,6 +504,29 @@ func (d *DocumentOpenError) Error() string {
 
 func (d *DocumentOpenError) Unwrap() error {
 	return d.Err
+}
+
+func (d *Document) markDirty(vid Id) {
+	d.track.Lock()
+	defer d.track.Unlock()
+	if d.track.dirty == nil {
+		d.track.dirty = map[Id]bool{}
+	}
+	d.track.dirty[vid] = true
+}
+
+func (d *Document) markAllDirty() {
+	d.track.Lock()
+	defer d.track.Unlock()
+	if d.track.dirty == nil {
+		d.track.dirty = map[Id]bool{}
+	}
+	// track.dirty (not buf.selections, empty until a view's own cursor
+	// first moves) is the reliable registry: ConsumeDirty runs for every
+	// visible view on every render regardless of selection state
+	for vid := range d.track.dirty {
+		d.track.dirty[vid] = true
+	}
 }
 
 func (d *Document) rememberSelection(vid Id) {

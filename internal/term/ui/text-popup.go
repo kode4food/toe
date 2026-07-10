@@ -198,7 +198,7 @@ func trimPopupLines(lines []popupLine, maxVisible int) []popupLine {
 
 func drawTextPopup(
 	buf *tui.Buffer, x, y, maxW, maxH int, text string, cx *Context,
-) popupArea {
+) bounds {
 	lines := popupTextLines(text, maxW-2-2*popupPadX)
 	lines = trimPopupLines(lines, maxH-2)
 	w := popupTextWidth(lines) + 2 + 2*popupPadX
@@ -221,7 +221,7 @@ func drawTextPopup(
 	area := pop.drawInto(buf, x, y, w, h)
 	r := popupTextRenderer{buf: buf, cx: cx, area: area, base: st, padX: popupPadX}
 	r.render(lines)
-	return area
+	return bounds{x: x, y: y, w: w, h: h}
 }
 
 func popupTextLines(text string, w int) []popupLine {

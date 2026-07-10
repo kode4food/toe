@@ -76,6 +76,10 @@ func (m *codeActionMenu) Cursor(int, int, *Context) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
+func (m *codeActionMenu) lastBounds() bounds {
+	return m.bounds
+}
+
 func (m *codeActionMenu) RenderOverBuffer(buf *tui.Buffer, cx *Context) {
 	if len(m.actions) == 0 || !m.valid(cx) {
 		return

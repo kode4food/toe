@@ -16,6 +16,10 @@ type Context struct {
 	SingleLayer bool
 	lastLayer   func(*view.Editor) layerFunc
 
+	OverlayRegions        []bounds
+	OverlayRegionsPrecise bool
+	OverlaysChanged       bool
+
 	pickerLayout PickerLayoutOptions
 	loadedTheme  *theme.Theme
 	theme        string

@@ -25,6 +25,7 @@ type signatureHelpComponent struct {
 	call   signatureCall
 	help   view.SignatureHelp
 	cursor int
+	bounds bounds
 }
 
 const signaturePopupMaxH = 12
@@ -110,6 +111,7 @@ func (s *signatureHelpComponent) RenderOverBuffer(
 		contentStyle: st,
 		padX:         0,
 	}
+	s.bounds = bounds{x: x, y: y, w: w, h: h}
 	area := pop.drawInto(buf, x, y, w, h)
 	s.renderSignature(buf, area, sig, cx)
 	if len(s.help.Signatures) > 1 {

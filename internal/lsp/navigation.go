@@ -242,7 +242,7 @@ func (s *Session) viewLocation(
 	if !loc.URI.IsFile() || s.editor == nil {
 		return view.Location{}, false
 	}
-	doc, err := s.editor.SwitchOrOpenDoc(loc.URI.FsPath())
+	doc, err := s.editor.PeekDoc(loc.URI.FsPath())
 	if err != nil {
 		return view.Location{}, false
 	}

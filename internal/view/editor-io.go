@@ -242,6 +242,19 @@ func (e *Editor) SwitchBuffer(did DocumentId) bool {
 
 // SwitchOrOpenDoc returns an existing document for path, opening it if needed
 func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
+	doc, err := e.PeekDoc(path)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := e.docs[doc.ID()]; !ok {
+		e.docs[doc.ID()] = doc
+		e.documentOpened(doc)
+	}
+	return doc, nil
+}
+
+// PeekDoc reads path without registering it as a buffer
+func (e *Editor) PeekDoc(path string) (*Document, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
@@ -251,13 +264,7 @@ func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
 			return d, nil
 		}
 	}
-	doc, err := e.openFile(absPath)
-	if err != nil {
-		return nil, err
-	}
-	e.docs[doc.ID()] = doc
-	e.documentOpened(doc)
-	return doc, nil
+	return e.openFile(absPath)
 }
 
 func (e *Editor) newDocument() *Document {

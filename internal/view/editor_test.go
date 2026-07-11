@@ -596,6 +596,47 @@ func TestEditorSwitchOrOpenDoc(t *testing.T) {
 	})
 }
 
+func TestEditorPeekDoc(t *testing.T) {
+	t.Run("skips buffer registration", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "peek.txt")
+		err := os.WriteFile(path, []byte("content"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		before := len(e.AllDocuments())
+
+		d, err := e.PeekDoc(path)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "content", d.Text().String())
+		assert.Len(t, e.AllDocuments(), before)
+	})
+
+	t.Run("reuses already-open doc", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "open.txt")
+		err := os.WriteFile(path, []byte("hi"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		opened, _ := e.FocusedDocument()
+		before := len(e.AllDocuments())
+
+		d, err := e.PeekDoc(path)
+
+		assert.NoError(t, err)
+		assert.Equal(t, opened.ID(), d.ID())
+		assert.Len(t, e.AllDocuments(), before)
+	})
+
+	t.Run("bad path returns error", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		_, err := e.PeekDoc("\x00invalid")
+		assert.Error(t, err)
+	})
+}
+
 func TestEditorEarlierLater(t *testing.T) {
 	t.Run("Earlier returns false with no history", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

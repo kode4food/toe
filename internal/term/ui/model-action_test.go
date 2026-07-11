@@ -103,13 +103,16 @@ func TestLocationAction(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 
+		before := len(e.AllDocuments())
 		m = sendKey(m, 'd')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "first.go:1")
 		assert.Contains(t, out, "second.go:1")
+		assert.Len(t, e.AllDocuments(), before)
 
 		_ = sendSpecial(m, tea.KeyEnter)
+		assert.Len(t, e.AllDocuments(), before+1)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		assert.Equal(t, first, doc.Path())
@@ -191,6 +194,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 
+		before := len(e.AllDocuments())
 		m = sendKey(m, 'w')
 		_ = m.View()
 		next, cmd := m.Update(tea.KeyPressMsg{
@@ -208,8 +212,10 @@ func TestSymbolPickerAction(t *testing.T) {
 
 		assert.Contains(t, out, "WorkspaceMain")
 		assert.Contains(t, out, "target.go")
+		assert.Len(t, e.AllDocuments(), before)
 
 		_ = sendSpecial(m, tea.KeyEnter)
+		assert.Len(t, e.AllDocuments(), before+1)
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		assert.Equal(t, target, doc.Path())

@@ -97,7 +97,7 @@ func (l *lspLocationSource) Load(
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
 	items := make([]PickerItem, 0, len(l.locations))
 	for _, loc := range l.locations {
-		doc, err := e.SwitchOrOpenDoc(loc.Path)
+		doc, err := e.PeekDoc(loc.Path)
 		if err != nil {
 			continue
 		}
@@ -130,7 +130,7 @@ func (l *lspSymbolSource) Load(
 	items := make([]PickerItem, 0, len(l.symbols))
 	for _, sym := range l.symbols {
 		loc := sym.Location
-		doc, err := e.SwitchOrOpenDoc(loc.Path)
+		doc, err := e.PeekDoc(loc.Path)
 		if err != nil {
 			continue
 		}
@@ -193,7 +193,7 @@ func (l *lspWorkspaceSymbolSource) item(
 	e *view.Editor, sym view.Symbol,
 ) (PickerItem, bool) {
 	loc := sym.Location
-	doc, err := e.SwitchOrOpenDoc(loc.Path)
+	doc, err := e.PeekDoc(loc.Path)
 	if err != nil {
 		return PickerItem{}, false
 	}

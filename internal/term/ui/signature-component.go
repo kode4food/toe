@@ -108,11 +108,9 @@ func (s *signatureHelpComponent) Layout(
 func (s *signatureHelpComponent) PaintBuffer(
 	pl Bounds, cx *Context,
 ) *tui.Buffer {
-	buf, repaint := s.get(pl.w, pl.h, cx)
-	if repaint {
+	return s.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
 		s.paint(buf, pl, cx)
-	}
-	return buf
+	})
 }
 
 func (s *signatureHelpComponent) paint(

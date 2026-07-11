@@ -53,10 +53,12 @@ type (
 	}
 )
 
-func (o *overlayBuf) get(w, h int, cx *Context) (buf *tui.Buffer, repaint bool) {
+func (o *overlayBuf) maybePaint(
+	w, h int, cx *Context, paint func(buf *tui.Buffer),
+) *tui.Buffer {
 	gen := cx.StyleGen()
 	resized := o.buf == nil || o.buf.Width != w || o.buf.Height != h
-	repaint = resized || o.dirty || o.styleGen != gen
+	repaint := resized || o.dirty || o.styleGen != gen
 	if resized {
 		o.buf = tui.NewBuffer(w, h)
 	} else if repaint {
@@ -64,7 +66,10 @@ func (o *overlayBuf) get(w, h int, cx *Context) (buf *tui.Buffer, repaint bool) 
 	}
 	o.dirty = false
 	o.styleGen = gen
-	return o.buf, repaint
+	if repaint {
+		paint(o.buf)
+	}
+	return o.buf
 }
 
 func (o *overlayBuf) markDirty() {

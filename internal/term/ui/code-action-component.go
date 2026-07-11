@@ -94,11 +94,9 @@ func (m *codeActionMenu) Layout(
 }
 
 func (m *codeActionMenu) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf, repaint := m.get(pl.w, pl.h, cx)
-	if repaint {
+	return m.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
 		m.paint(buf, pl, cx)
-	}
-	return buf
+	})
 }
 
 func (m *codeActionMenu) paint(buf *tui.Buffer, pl Bounds, cx *Context) {

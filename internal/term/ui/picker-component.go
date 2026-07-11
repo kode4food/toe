@@ -65,11 +65,9 @@ func (p *PickerComponent) Layout(
 }
 
 func (p *PickerComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf, repaint := p.get(pl.w, pl.h, cx)
-	if repaint {
+	return p.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
 		p.paint(buf, pl, cx)
-	}
-	return buf
+	})
 }
 
 func (p *PickerComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {

@@ -74,11 +74,9 @@ func (h *hoverComponent) Layout(
 }
 
 func (h *hoverComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf, repaint := h.get(pl.w, pl.h, cx)
-	if repaint {
+	return h.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
 		paintTextPopup(buf, h.lines, cx)
-	}
-	return buf
+	})
 }
 
 func (h *hoverComponent) valid(cx *Context) bool {

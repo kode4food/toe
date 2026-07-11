@@ -182,11 +182,9 @@ func (c *completionComponent) Layout(
 }
 
 func (c *completionComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf, repaint := c.get(pl.w, pl.h, cx)
-	if repaint {
+	return c.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
 		c.paint(buf, pl, cx)
-	}
-	return buf
+	})
 }
 
 func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {

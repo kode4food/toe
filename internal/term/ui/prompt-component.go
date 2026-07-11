@@ -80,15 +80,12 @@ func (p *PromptComponent) Layout(
 }
 
 func (p *PromptComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf, repaint := p.get(pl.w, pl.h, cx)
-	if !repaint {
-		return buf
-	}
-	if p.compRows > 0 {
-		p.paintCompletions(buf, 0, pl.w, cx)
-	}
-	p.paintLine(buf, pl.h-1, pl.w, cx)
-	return buf
+	return p.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
+		if p.compRows > 0 {
+			p.paintCompletions(buf, 0, pl.w, cx)
+		}
+		p.paintLine(buf, pl.h-1, pl.w, cx)
+	})
 }
 
 func (p *PromptComponent) Cursor(

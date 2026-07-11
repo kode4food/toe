@@ -646,7 +646,7 @@ Do not keep broad mixed test files once the source has been split cleanly.
 
 ### Godoc
 
-Exported symbols need godoc that adds value beyond the name:
+**Exported** funcs, methods, types, consts, and vars always need godoc — but no more than 3 lines. Describe what it does, not how. If it takes more than 3 lines to say what something does, it isn't coded well:
 
 ```go
 // History stores committed document revisions and supports undo/redo
@@ -660,20 +660,31 @@ Skip godoc when the name is self-documenting:
 func NewHistory() History {
 ```
 
-Only exported funcs, methods, types, consts, and vars get godoc. Do not write godoc comments on unexported symbols; if an unexported symbol has genuinely non-obvious behavior, explain that as an inline comment, not a name-prefixed doc comment.
+**Unexported** funcs and methods get no godoc by default. Only add one — capped at 2 lines — when the behavior is genuinely non-trivial and needs explanation:
+
+```go
+// unexported, self-explanatory — no comment
+func clampSelection(sel core.Selection, maxChars int) core.Selection {
+
+// unexported, but the "why" isn't obvious from the signature — 2 lines max
+// diffDebounce: single async debounce; the gutter trails a keystroke by this
+const diffDebounce = 50 * time.Millisecond
+```
 
 Godoc rule: the last sentence of a comment should not end with a period.
 
 ### Inline Comments
 
-Avoid comments that restate the code. Comment non-obvious logic:
+Avoid comments that restate the code. Never comment code that's already
+self-describing. When a comment is warranted, it explains WHY, capped at 2
+lines:
 
 ```go
 // Bad
 bucket, err := blob.OpenBucket(ctx, url)  // Open the bucket
 return err                                 // Return the error
 
-// Good - explains WHY
+// Good - explains WHY, 2 lines max
 // Missing key is not an error; deletion is idempotent by design
 if gcerrors.Code(err) == gcerrors.NotFound {
 	return nil

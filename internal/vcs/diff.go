@@ -27,10 +27,6 @@ func Diff(base, doc core.Rope) []view.DiffHunk {
 	return diffLines(splitLines(base.String()), splitLines(doc.String()))
 }
 
-// diffLines computes hunks over materialized lines. ponytail: difflib's
-// SequenceMatcher (already a module dependency) does the heavy lifting; swap in
-// a histogram/Myers diff if hunk quality or worst-case speed on large divergent
-// files ever disappoints
 func diffLines(a, b []string) []view.DiffHunk {
 	var hunks []view.DiffHunk
 	for _, op := range difflib.NewMatcher(a, b).GetOpCodes() {

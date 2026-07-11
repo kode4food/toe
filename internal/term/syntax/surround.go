@@ -2,10 +2,8 @@ package syntax
 
 import sitter "github.com/tree-sitter/go-tree-sitter"
 
-// FindSurroundPair returns the Range of the skip-th structural bracket pair
-// enclosing cursor in the Tree-sitter parse tree. Supports (, ), {, }, [, ]
-// pairs. Returns (Range{}, false) if the language is unknown or no enclosing
-// pair exists at the requested depth
+// FindSurroundPair returns the Range of the skip-th bracket pair enclosing
+// cursor, or (Range{}, false) if none exists at that depth
 func FindSurroundPair(text, lang string, cursor, skip int) (Range, bool) {
 	language, langOK := languageFor(lang)
 	if !langOK {
@@ -49,10 +47,8 @@ func FindSurroundPair(text, lang string, cursor, skip int) (Range, bool) {
 	return Range{}, false
 }
 
-// FindSurroundPairFor returns the Range of the skip-th enclosing bracket pair
-// matching ch in the Tree-sitter parse tree. ch may be either the opening or
-// closing bracket. Returns (Range{}, false) if the language is unknown, ch is
-// not a structural bracket, or no matching enclosing pair exists at the depth
+// FindSurroundPairFor returns the Range of the skip-th enclosing pair matching
+// ch (either bracket of the pair), or (Range{}, false) if none exists
 func FindSurroundPairFor(
 	text, lang string, cursor int, ch rune, skip int,
 ) (Range, bool) {

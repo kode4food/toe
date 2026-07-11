@@ -10,14 +10,6 @@ type linePrefixArgs struct {
 	text                                         core.Rope
 }
 
-// scanLinePrefix walks the rope from args.lineStart to compute the indent
-// column and the horizontal-scroll window start described by
-// linePrefixScan. rev and lineNum are unused here — they exist only for
-// docRenderCache's cache key in ensureLinePrefix, which forwards args as-is
-//
-// For printable ASCII the inner loop uses a direct width-1 assignment instead
-// of calling view.RuneWidth, so common code files need no per-char function
-// call overhead in the prefix
 func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 	pos := args.lineStart
 	col := 0

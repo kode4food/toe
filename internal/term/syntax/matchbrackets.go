@@ -8,10 +8,9 @@ var syntaxBrackets = [][2]rune{
 	{'[', ']'},
 }
 
-// FindMatchingBracket returns the char position of the bracket matching the one
-// at cursorPos using the Tree-sitter parse tree, so brackets inside strings and
-// comments are never falsely matched. Returns (0, false) if the language is
-// unknown or cursorPos is not on a supported bracket character
+// FindMatchingBracket returns the char position of the bracket matching the
+// one at cursorPos, using the parse tree so string/comment brackets don't
+// falsely match
 func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 	runes := []rune(text)
 	if cursorPos < 0 || cursorPos >= len(runes) {

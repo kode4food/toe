@@ -269,3 +269,69 @@ func (r *renderPass) prepareContentRender(
 		rr:     rr,
 	}
 }
+
+func documentHighlightSpans(highlights []view.DocumentHighlight) []matchSpan {
+	if len(highlights) == 0 {
+		return nil
+	}
+	out := make([]matchSpan, 0, len(highlights))
+	for _, h := range highlights {
+		if h.From < h.To {
+			out = append(out, matchSpan{from: h.From, to: h.To})
+		}
+	}
+	return out
+}
+
+func documentLinkSpans(links []view.DocumentLink) []matchSpan {
+	if len(links) == 0 {
+		return nil
+	}
+	out := make([]matchSpan, 0, len(links))
+	for _, link := range links {
+		if link.From < link.To {
+			out = append(out, matchSpan{from: link.From, to: link.To})
+		}
+	}
+	return out
+}
+
+func inlayHintAnnotations(
+	hints []view.InlayHint, styles *tuiStyles,
+) []inlineAnnotation {
+	if len(hints) == 0 {
+		return nil
+	}
+	out := make([]inlineAnnotation, 0, len(hints)*3)
+	for _, hint := range hints {
+		if hint.Label == "" {
+			continue
+		}
+		st := inlayHintStyle(hint.Kind, styles)
+		if hint.PaddingLeft {
+			out = append(out, inlineAnnotation{
+				pos: hint.Pos, text: " ", style: st,
+			})
+		}
+		out = append(out, inlineAnnotation{
+			pos: hint.Pos, text: hint.Label, style: st,
+		})
+		if hint.PaddingRight {
+			out = append(out, inlineAnnotation{
+				pos: hint.Pos, text: " ", style: st,
+			})
+		}
+	}
+	return out
+}
+
+func inlayHintStyle(kind string, styles *tuiStyles) tui.Style {
+	switch kind {
+	case "type":
+		return styles.inlayHintType
+	case "parameter":
+		return styles.inlayHintParam
+	default:
+		return styles.inlayHint
+	}
+}

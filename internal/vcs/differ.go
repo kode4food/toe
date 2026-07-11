@@ -30,8 +30,7 @@ type (
 )
 
 // diffDebounce is how long the worker waits for further updates before
-// recomputing. ponytail: single async debounce; the gutter trails a keystroke
-// by this much. Add a synchronous small-edit fast path if the lag ever shows
+// recomputing; the gutter trails a keystroke by this much
 const diffDebounce = 50 * time.Millisecond
 
 // NewDiffer starts a differ for the given base and document text. notify is

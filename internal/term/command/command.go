@@ -36,10 +36,7 @@ type (
 	// OptionKeySetter applies a concrete option key owned by a key prefix
 	OptionKeySetter func(*view.Editor, string, string) error
 
-	// Section declares a module's live config pointer and Apply hook. Config
-	// must be a non-nil pointer to a struct with toml tags matching the full
-	// config file shape. Reset restores Config to its default values before
-	// each config reload. Apply copies decoded values into Editor.Options
+	// Section declares a module's live config pointer and Apply hook
 	Section struct {
 		Config any // *ConcreteConfig, pre-filled with defaults
 		Reset  func()

@@ -131,11 +131,8 @@ func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	v.SetOffset(offset)
 }
 
-// ScrollViewColumns scrolls a specific view horizontally by n columns, not
-// moving the cursor. Used for mouse-wheel events; the view remains
-// free-scrolled until that view receives cursor-moving keyboard input.
-// Scrolling right is clamped so the widest visible line keeps at least one
-// column on screen
+// ScrollViewColumns scrolls a view horizontally by n columns without moving
+// the cursor; scrolling right is clamped to keep one column of content visible
 func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
 	doc, ok := e.Document(v.DocID())
 	if !ok {
@@ -297,12 +294,6 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 	}
 }
 
-// maxVisibleColumns returns the visual width of the widest line currently
-// visible in v, measuring each line over at most its first limit chars.
-// Every char is at least one column wide (tabs expand, wide runes count
-// double), so the result is exact whenever it is below limit; zero-width
-// combining chars can under-measure a truncated line, which only clamps a
-// bit early
 func maxVisibleColumns(doc *view.Document, v *view.View, limit int) int {
 	text := doc.Text()
 	anchorLine, err := text.CharToLine(v.Offset().Anchor)

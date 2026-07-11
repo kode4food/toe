@@ -10,10 +10,8 @@ var textObjectNames = map[rune]string{
 	'e': "entry",
 }
 
-// FindTextObject finds the innermost textobject at cursor for lang. inside=true
-// returns the node's inner content, stripping bracket delimiters when present;
-// false returns the full node range. Returns (Range{}, false) when the language
-// or char is unknown, or no matching textobject contains cursor
+// FindTextObject finds the innermost textobject at cursor for lang. inside
+// returns the node's inner content (delimiters stripped) vs its full range
 func FindTextObject(
 	text, lang string, cursor int, ch rune, inside bool,
 ) (Range, bool) {

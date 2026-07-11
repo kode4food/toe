@@ -19,10 +19,8 @@ func (vf *VisualMoveFormat) VisualRowOfOffset(doc Rope, line, charOff int) int {
 	return row
 }
 
-// VisualScrollUp returns the (line, vertical offset within that line) reached
-// by moving up by up visual rows from the visual position (line, row), clamped
-// at the start of the document. It is the basis for both keeping the cursor in
-// view and aligning a preview range
+// VisualScrollUp moves up by up visual rows from (line, row), clamped at the
+// start of the document
 func (vf *VisualMoveFormat) VisualScrollUp(
 	doc Rope, line, row, up int,
 ) (int, int) {

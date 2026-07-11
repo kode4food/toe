@@ -107,6 +107,13 @@ func (r *rowRender) softWrapBreaks(tabW int) []int {
 	return vf.VisualRowStarts([]rune(r.lineStr))
 }
 
+func softWrapPrefix(format *language.TextFormat, indent int) string {
+	if indent > format.MaxIndentRetain {
+		indent = 0
+	}
+	return strings.Repeat(" ", indent) + format.WrapIndicator
+}
+
 func softWrapContinuationRow(
 	format *language.TextFormat, indent int, lipglossStyles *lipglossStyles,
 ) renderedRow {

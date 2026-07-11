@@ -24,10 +24,8 @@ type (
 		Cursor(width, height int, cx *Context) (cur tea.Cursor, ok bool)
 	}
 
-	// BufferRenderer is implemented by a base (layer 0) component that can
-	// expose the cell buffer it rendered into, instead of only a serialized
-	// ANSI string. This lets overlay layers above it draw directly onto the
-	// same buffer, skipping an ANSI round-trip
+	// BufferRenderer exposes the raw cell buffer a base component rendered
+	// into, so overlay layers can draw directly onto it
 	BufferRenderer interface {
 		Component
 		Render(width, height int, cx *Context) *tui.Buffer

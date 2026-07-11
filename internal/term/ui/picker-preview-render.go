@@ -61,11 +61,8 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 		args.text, args.format, softWrap, args.hlFrom, args.hlTo, args.h,
 	)
 	nLines := args.text.LenLines()
-	// Apply wheel scroll past the anchor, then write the applied delta back
-	// so the stored scroll stays bounded. The upper bound pins the last line
-	// to the bottom of the pane rather than letting content scroll off top.
-	// The clamp counts logical lines; a tall soft-wrapped final line can still
-	// leave a gap. Use visual-row pinning if that becomes observable
+	// clamp scroll to keep the last line pinned to the pane bottom, then
+	// write the applied delta back so stored scroll stays bounded
 	if args.scroll != 0 {
 		base := anchorLine
 		anchorLine = max(0, min(base+args.scroll, max(0, nLines-args.h)))

@@ -1,0 +1,77 @@
+package view
+
+type treeWork struct {
+	id   Id
+	area Area
+}
+
+func (t *Tree) recalculate() {
+	if t.IsEmpty() {
+		t.focus = t.root
+		return
+	}
+
+	stack := []treeWork{{id: t.root, area: t.area}}
+
+	for len(stack) > 0 {
+		item := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		n := t.nodes[item.id]
+		if n.view != nil {
+			n.view.SetArea(item.area)
+			continue
+		}
+
+		c := n.container
+		c.area = item.area
+		a := item.area
+		switch c.layout {
+		case LayoutHorizontal:
+			// children stacked (hsplit): distribute height evenly, 1px gap
+			ln := len(c.children)
+			innerGap := 1
+			usable := max(a.Height-(ln-1)*innerGap, 0)
+			h := usable / ln
+			childY := a.Y
+			for i, child := range c.children {
+				var childH int
+				switch {
+				case i == ln-1:
+					childH = max(a.Y+a.Height-childY, 2)
+				case c.ratios != nil && i < len(c.ratios):
+					childH = max(
+						int(float64(usable)*c.ratios[i]),
+						minPaneHeight,
+					)
+				default:
+					childH = h
+				}
+				area := Area{X: a.X, Y: childY, Width: a.Width, Height: childH}
+				stack = append(stack, treeWork{id: child, area: area})
+				childY += childH + innerGap
+			}
+		case LayoutVertical:
+			// children side by side (vsplit): distribute width evenly, 1px gap
+			ln := len(c.children)
+			innerGap := 1
+			usable := max(a.Width-(ln-1)*innerGap, 0)
+			w := usable / ln
+			childX := a.X
+			for i, child := range c.children {
+				var childW int
+				switch {
+				case i == ln-1:
+					childW = max(a.X+a.Width-childX, 1)
+				case c.ratios != nil && i < len(c.ratios):
+					childW = max(int(float64(usable)*c.ratios[i]), minPaneWidth)
+				default:
+					childW = w
+				}
+				area := Area{X: childX, Y: a.Y, Width: childW, Height: a.Height}
+				stack = append(stack, treeWork{id: child, area: area})
+				childX += childW + innerGap
+			}
+		}
+	}
+}

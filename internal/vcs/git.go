@@ -23,10 +23,8 @@ var (
 
 var _ Provider = Git{}
 
-// DiffBase returns the HEAD contents of path. ponytail: returns the raw blob;
-// git's checkout filters (eol/ident smudge) are not applied, so a repo with
-// .gitattributes eol conversion may show phantom diffs — add filtering if it
-// bites
+// DiffBase returns the HEAD contents of path. No eol/ident smudge filtering
+// is applied; .gitattributes eol conversion may cause phantom diffs
 func (Git) DiffBase(path string) ([]byte, error) {
 	path = realPath(path)
 	repo, err := openRepo(path)

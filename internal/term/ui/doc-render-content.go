@@ -66,6 +66,36 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	r.ec.cache.viewRowMaps[args.view.ID()] = st.rowMap
 }
 
+// cursor column paints first so rulers render over it
+func (r *renderPass) paintContentOverlays(st *contentRenderState) {
+	args := st.args
+	buf := args.buf
+	contentX := st.contentX
+	format := st.format
+
+	if st.cursorColumnEnabled && st.cursorLine < len(st.lineIdx)-1 {
+		entry := st.lineIdx[st.cursorLine]
+		next := st.lineIdx[st.cursorLine+1]
+		end := next.byteStart - entry.endingLen
+		cursorLStr := st.rawText[entry.byteStart:end]
+		col := st.cursor - entry.charStart
+		vcol := visualColOf(cursorLStr, col, format.TabWidth)
+		rel := vcol - st.hOff
+		if rel >= 0 && rel < format.ViewportWidth {
+			sx := contentX + rel
+			for row := args.y; row < args.y+args.height; row++ {
+				buf.PatchBg(sx, row, st.cursorColumnBg)
+			}
+		}
+	}
+	if len(st.rulers) > 0 {
+		applyRulers(
+			buf, contentX, args.y, format.ViewportWidth, args.height, st.hOff,
+			st.rulers, st.rulerBg,
+		)
+	}
+}
+
 func (r *renderPass) renderContentRows(st *contentRenderState) {
 	args := st.args
 	buf := args.buf
@@ -187,10 +217,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 
 		tabW := format.TabWidth
 
-		// For a horizontally scrolled (windowed) view, scan the invisible
-		// prefix once without materializing it: this computes indentCol
-		// (needed for indent guides) and finds the first visible char
-		// position so lineStr covers only the visible window
+		// scan the invisible prefix without materializing it when scrolled
 		renderEnd := lineContentEnd
 		if !softWrap {
 			bound := lineStart + hOff + format.ViewportWidth
@@ -299,4 +326,37 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 	}
 
 	st.rowMap = rowMap
+}
+
+func lineAnnotations(
+	annotations []inlineAnnotation, from, to int,
+) []inlineAnnotation {
+	return filterLineItems(annotations,
+		func(a inlineAnnotation) bool { return a.pos < from },
+		func(a inlineAnnotation) bool { return a.pos > to },
+	)
+}
+
+func filterLineItems[T any](items []T, before, after func(T) bool) []T {
+	if len(items) == 0 {
+		return nil
+	}
+	start := len(items)
+	end := start
+	for i, item := range items {
+		if before(item) {
+			continue
+		}
+		if after(item) {
+			break
+		}
+		if start == len(items) {
+			start = i
+		}
+		end = i + 1
+	}
+	if start == len(items) {
+		return nil
+	}
+	return items[start:end]
 }

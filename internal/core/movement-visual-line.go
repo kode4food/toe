@@ -2,13 +2,9 @@ package core
 
 import "unicode"
 
-// VisualRowStarts returns the char offsets (relative to line start) at which
-// each soft-wrapped visual row after the first begins for the given line runes.
-// The slice is empty when the line fits on a single row. Wrapping happens at
-// word boundaries: a word that does not fit is moved to the next row whole,
-// unless it is wider than MaxWrap, in which case it is broken at the viewport
-// edge. The leading indent is carried onto continuation rows up to
-// MaxIndentRetain
+// VisualRowStarts returns the char offsets at which each soft-wrapped visual
+// row after the first begins; empty if the line fits on one row. Wraps at
+// word boundaries, breaking mid-word only past MaxWrap
 func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 	viewport := vf.ViewportWidth
 	if viewport <= 0 || len(runes) == 0 {
@@ -121,10 +117,6 @@ func (v visualLine) posOf(charOff int) (row, col int) {
 	return
 }
 
-// charAtPos returns the char offset (relative to line start) at the absolute
-// visual column targetCol on targetRow. When targetCol falls inside the
-// continuation prefix or beyond the row content, the nearest char in that row
-// is returned
 func (v visualLine) charAtPos(targetRow, targetCol int) int {
 	start := v.rowStartOffset(targetRow)
 	end := v.rowStartOffset(targetRow + 1)

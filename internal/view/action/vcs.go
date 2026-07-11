@@ -63,9 +63,8 @@ func ResetDiffChange(e *view.Editor) (int, error) {
 		return 0, err
 	}
 
-	// ponytail: hunks are recomputed on a debounced background worker, so they
-	// can trail the newest keystrokes by a beat; indices are clamped below. Add
-	// a synchronous diff refresh here if that beat ever bites
+	// hunks trail the newest keystrokes (debounced background worker); indices
+	// are clamped below
 	baseLines := strings.SplitAfter(base, "\n")
 	var changes []core.Change
 	for _, h := range hunks {

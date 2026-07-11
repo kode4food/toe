@@ -57,9 +57,7 @@ func (r Rope) Slice(from, to int) (Rope, error) {
 }
 
 // SliceString returns the substring between char offsets [from, to) without
-// constructing a new rope. It walks the tree and copies only the spanned leaf
-// ranges, avoiding the node splitting, concatenation, and rune recounting that
-// Slice followed by String performs — the hot path for per-line rendering
+// constructing a new rope; faster than Slice(from, to).String()
 func (r Rope) SliceString(from, to int) (string, error) {
 	if from < 0 || to < from || to > r.LenChars() {
 		return "", fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange, from, to)
@@ -76,9 +74,7 @@ func (r Rope) SliceString(from, to int) (string, error) {
 }
 
 // ForEachSegment applies fn to each contiguous leaf substring spanning
-// [from, to). The segments are slices into the rope's leaves, so nothing is
-// copied; callers that fold over a range fold over whole chunks instead of
-// paying a function call per rune
+// [from, to), without copying
 func (r Rope) ForEachSegment(from, to int, fn func(string)) {
 	if from < 0 {
 		from = 0

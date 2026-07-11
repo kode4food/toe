@@ -31,10 +31,8 @@ type (
 		Updates() <-chan struct{}
 	}
 
-	// DiffHunk is one contiguous change between the version-control base and
-	// the document, as half-open line ranges [BaseFrom,BaseTo) and [From,To).
-	// A pure insertion has an empty base range; a pure removal has an empty
-	// document range
+	// DiffHunk is a change as half-open ranges [BaseFrom,BaseTo) and [From,To);
+	// an empty base range is a pure insertion, empty doc range a pure removal
 	DiffHunk struct {
 		BaseFrom int
 		BaseTo   int

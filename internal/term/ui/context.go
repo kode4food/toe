@@ -33,10 +33,8 @@ func (c *Context) StyleGen() int {
 	return c.styleGen
 }
 
-// Theme returns the active theme, reloading it when the configured theme name
-// has changed. Falls back to the embedded default if the configured theme
-// fails to load. If the embedded default is unavailable, returns a minimal
-// decoded theme so rendering can continue
+// Theme returns the active theme, reloading it if the configured name
+// changed, falling back to the embedded default on load failure
 func (c *Context) Theme() *theme.Theme {
 	name := c.Editor.Options().Theme
 	if name == c.theme {

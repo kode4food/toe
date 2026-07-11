@@ -2,13 +2,11 @@ package ui
 
 import (
 	"image/color"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/kode4food/toe/internal/tui"
-	"github.com/kode4food/toe/internal/view/language"
 )
 
 var ansiBasicColors = [16]tui.Color{
@@ -132,13 +130,6 @@ func pickerFrameStyle(cx *Context) lipgloss.Style {
 	return lipgloss.NewStyle().
 		Foreground(popup.GetForeground()).
 		Background(popup.GetBackground())
-}
-
-func softWrapPrefix(format *language.TextFormat, indent int) string {
-	if indent > format.MaxIndentRetain {
-		indent = 0
-	}
-	return strings.Repeat(" ", indent) + format.WrapIndicator
 }
 
 func lipglossToTUIStyle(s lipgloss.Style) tui.Style {

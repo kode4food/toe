@@ -9,11 +9,6 @@ import (
 )
 
 type (
-	// popup is a bordered window that owns its background. The render methods
-	// fill every cell of the box with contentStyle first, then draw the border
-	// on top. Callers may write per-cell-styled content into the returned inner
-	// area without worrying about ANSI nesting resets, since every cell already
-	// has its final style and content writes simply overwrite cells in place
 	popup struct {
 		border       lipgloss.Border
 		borderStyle  tui.Style

@@ -226,10 +226,8 @@ func (v *View) Jumps() []JumpEntry {
 	return v.jumps.Entries()
 }
 
-// EnsureCursorVisible adjusts the view offset so the cursor is visible within
-// height terminal rows, respecting the scrolloff margin. When vf describes an
-// active soft-wrap layout, visibility is measured in visual (wrapped) rows;
-// otherwise it falls back to text-line counting
+// EnsureCursorVisible scrolls so the cursor is visible within height rows,
+// respecting scrolloff; measured in visual rows when vf has active soft-wrap
 func (v *View) EnsureCursorVisible(
 	doc core.Rope, sel core.Selection, height, scrolloff int,
 	vf *core.VisualMoveFormat,
@@ -253,11 +251,9 @@ func (v *View) trackOffsetChange() func() {
 	}
 }
 
-// EnsureCursorVisibleHorizontal adjusts the horizontal scroll offset so the
-// cursor's visual column stays within width content columns, respecting the
-// scrolloff margin. The gutter is never shifted — width is the content area
-// (viewport minus gutter). A width <= 0 disables horizontal scrolling (used for
-// soft-wrapped views) and resets the offset to 0
+// EnsureCursorVisibleHorizontal scrolls so the cursor's visual column stays
+// within width content columns (gutter excluded). width <= 0 disables
+// horizontal scrolling and resets the offset to 0
 func (v *View) EnsureCursorVisibleHorizontal(
 	doc core.Rope, sel core.Selection, width, tabW, scrolloff int,
 ) {
@@ -415,10 +411,8 @@ func (v *View) ensureCursorVisibleByLine(
 		anchorLine = 0
 	}
 
-	// Asymmetric scrolloff: the top loses one row so a gap always remains in
-	// the middle, while the bottom keeps the full margin. The bottom margin
-	// holds even at end-of-file, so the view scrolls past the last line rather
-	// than pinning it to the bottom edge
+	// asymmetric: bottom margin holds even at EOF, so the view scrolls past
+	// the last line instead of pinning it to the bottom edge
 	soTop := min(scrolloff, max(height-1, 0)/2)
 	soBottom := min(scrolloff, height/2)
 
@@ -436,11 +430,6 @@ func (v *View) ensureCursorVisibleByLine(
 	}
 }
 
-// ensureCursorVisibleVisual keeps the cursor within the scrolloff margin
-// measured in visual rows. The view top is the anchor line plus a vertical
-// offset of visual rows scrolled into it, so a single soft-wrapped line taller
-// than the viewport can scroll within itself. Each walk is bounded by the
-// viewport height
 func (v *View) ensureCursorVisibleVisual(
 	doc core.Rope, sel core.Selection, height, scrolloff int,
 	vf *core.VisualMoveFormat,
@@ -466,9 +455,7 @@ func (v *View) ensureCursorVisibleVisual(
 	soTop := min(scrolloff, max(height-1, 0)/2)
 	soBottom := min(scrolloff, height/2)
 
-	// fromTop is the cursor's visual row measured from the current viewport top
-	// (anchor line top, minus the rows already scrolled past). ok is false when
-	// the cursor sits above the anchor line entirely
+	// ok is false when the cursor sits above the anchor line entirely
 	rows, ok := visualRowsToCursor(
 		doc, vf, anchorLine, cursorLine, cursorRow, height+vOff,
 	)
@@ -490,11 +477,6 @@ func (v *View) ensureCursorVisibleVisual(
 	}
 }
 
-// visualRowsToCursor returns the cursor's visual-row distance from the top of
-// anchorLine (sum of the wrapped row counts of the lines in between plus the
-// cursor's row within its own line). ok is false when the cursor is above
-// anchorLine. The walk stops once it exceeds cap, since callers only compare
-// against the viewport height
 func visualRowsToCursor(
 	doc core.Rope, vf *core.VisualMoveFormat,
 	anchorLine, cursorLine, cursorRow, limit int,

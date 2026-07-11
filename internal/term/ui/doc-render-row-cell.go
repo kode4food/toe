@@ -27,11 +27,6 @@ type rowWriteArgs struct {
 	startCol  int
 }
 
-// writeToBuffer draws the row's cells into the buffer and pads the remainder of
-// the row with the fill style. Glyph and fill styles without a background are
-// transparent (see Buffer.SetString), so pre-painted ruler / cursorline /
-// cursorcolumn layers show through; overlay cells (selection, cursor, search)
-// carry their own background and overwrite them
 func (r *renderedRow) writeToBuffer(args rowWriteArgs) {
 	cx := writeCellsWindowed(
 		args.buf, r.cells, args.x, args.y, args.width, args.startCol,
@@ -82,12 +77,6 @@ func (r *renderedRow) append(other renderedRow) {
 	r.width += other.width
 }
 
-// writeCellsWindowed draws the visual-column window [startCol, startCol+width)
-// of cells at screen [x, x+width), returning the screen x just past the last
-// drawn column. Cells fully outside the window are skipped; a multi-width cell
-// (tab/padding/wide rune) straddling either edge is drawn partially. startCol
-// is the view's horizontal scroll offset (0 when not horizontally scrolled);
-// the caller has already placed x past the fixed gutter, which never shifts
 func writeCellsWindowed(
 	buf *tui.Buffer, cells []renderedCell, x, y, width, startCol, cellsCol int,
 ) int {
@@ -118,10 +107,7 @@ func writeCellsWindowed(
 	return cx
 }
 
-// applyRulers overlays the configured ruler columns as a background highlight
-// across the rows [y0, y0+height) of the content area, leaving each cell's
-// glyph and foreground untouched. rulers are 1-based content columns; hOff is
-// the horizontal scroll offset
+// rulers are 1-based content columns
 func applyRulers(
 	buf *tui.Buffer, contentX, y0, width, height, hOff int, rulers []int,
 	rulerBg tui.Color,

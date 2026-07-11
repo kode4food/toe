@@ -74,8 +74,10 @@ func (h *hoverComponent) Layout(
 }
 
 func (h *hoverComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf := h.get(pl.w, pl.h)
-	paintTextPopup(buf, h.lines, cx)
+	buf, repaint := h.get(pl.w, pl.h, cx)
+	if repaint {
+		paintTextPopup(buf, h.lines, cx)
+	}
 	return buf
 }
 

@@ -13,6 +13,7 @@ func (p *PickerComponent) handleKey(
 ) (EventResult, tea.Cmd) {
 	k := FromTeaKey(msg)
 	ps := p.state
+	p.markDirty()
 	dismiss := func() (EventResult, tea.Cmd) {
 		if ps.dynamicStop != nil {
 			ps.dynamicStop()

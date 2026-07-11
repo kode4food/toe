@@ -47,17 +47,28 @@ type (
 	// overlayBuf is embedded by BufferOverlayComponent implementers to
 	// reuse their paint buffer across frames instead of reallocating it
 	overlayBuf struct {
-		buf *tui.Buffer
+		buf      *tui.Buffer
+		dirty    bool
+		styleGen int
 	}
 )
 
-func (o *overlayBuf) get(w, h int) *tui.Buffer {
-	if o.buf == nil || o.buf.Width != w || o.buf.Height != h {
+func (o *overlayBuf) get(w, h int, cx *Context) (buf *tui.Buffer, repaint bool) {
+	gen := cx.StyleGen()
+	resized := o.buf == nil || o.buf.Width != w || o.buf.Height != h
+	repaint = resized || o.dirty || o.styleGen != gen
+	if resized {
 		o.buf = tui.NewBuffer(w, h)
-	} else {
+	} else if repaint {
 		o.buf.Clear()
 	}
-	return o.buf
+	o.dirty = false
+	o.styleGen = gen
+	return o.buf, repaint
+}
+
+func (o *overlayBuf) markDirty() {
+	o.dirty = true
 }
 
 func (b Bounds) contains(x, y int) bool {

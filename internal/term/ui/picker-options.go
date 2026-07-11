@@ -10,10 +10,6 @@ const (
 	MaxPickerSplitRatio     = 0.8
 )
 
-func DefaultPickerLayoutOptions() PickerLayoutOptions {
-	return PickerLayoutOptions{}
-}
-
 func (o PickerLayoutOptions) WithDefaults() PickerLayoutOptions {
 	if len(o.SplitRatios) > 0 {
 		ratios := make(map[string]float64, len(o.SplitRatios))

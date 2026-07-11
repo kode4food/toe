@@ -23,6 +23,14 @@ type Context struct {
 	pickerLayout PickerLayoutOptions
 	loadedTheme  *theme.Theme
 	theme        string
+	styleGen     int
+}
+
+// StyleGen returns a counter that increments whenever the active theme changes,
+// letting cached overlay buffers know they must repaint even without their own
+// content changing
+func (c *Context) StyleGen() int {
+	return c.styleGen
 }
 
 // Theme returns the active theme, reloading it when the configured theme name
@@ -35,6 +43,7 @@ func (c *Context) Theme() *theme.Theme {
 		return c.loadedTheme
 	}
 	c.theme = name
+	c.styleGen++
 	if th, _, err := theme.Load(name); err == nil {
 		c.loadedTheme = th
 		return c.loadedTheme

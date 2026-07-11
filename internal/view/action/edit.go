@@ -13,52 +13,13 @@ type insertEntry struct {
 
 // DeleteSelection yanks selections into the active register, then deletes them
 func DeleteSelection(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok || doc.ReadOnly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	yankSelectionRanges(e, text, ranges)
-	if !applyDeletions(e, applyDeletionsArgs{
-		text: text, sel: sel, ranges: ranges,
-	}) {
-		return
-	}
-	e.SetMode(view.ModeNormal)
+	deleteOrChange(e, true, false)
 }
 
 // ChangeSelection yanks all selections into the active register, deletes them,
 // and enters insert mode. For linewise selections, opens a blank line above
 func ChangeSelection(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok || doc.ReadOnly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	linewise := selectionIsLinewise(text, sel)
-	ranges := sel.Ranges()
-	yankSelectionRanges(e, text, ranges)
-	if !applyDeletions(e, applyDeletionsArgs{
-		text: text, sel: sel, ranges: ranges,
-	}) {
-		return
-	}
-	if linewise {
-		OpenAbove(e)
-		return
-	}
-	e.SetMode(view.ModeInsert)
+	deleteOrChange(e, true, true)
 }
 
 // SplitSelectionOnNewline splits each selection range on line boundaries,
@@ -123,54 +84,44 @@ func SplitSelectionOnNewline(e *view.Editor) {
 
 // DeleteSelectionNoYank deletes each selection without yanking first
 func DeleteSelectionNoYank(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
-	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.ReadOnly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	if !applyDeletions(e, applyDeletionsArgs{
-		text: text, sel: sel, ranges: sel.Ranges(),
-	}) {
-		return
-	}
-	e.SetMode(view.ModeNormal)
+	deleteOrChange(e, false, false)
 }
 
 // ChangeSelectionNoYank deletes each selection without yanking and enters
 // insert mode
 func ChangeSelectionNoYank(e *view.Editor) {
+	deleteOrChange(e, false, true)
+}
+
+func deleteOrChange(e *view.Editor, yank, enterInsert bool) {
 	v, ok := e.FocusedView()
 	if !ok {
 		return
 	}
 	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
-	}
-	if doc.ReadOnly() {
+	if !ok || doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	linewise := selectionIsLinewise(text, sel)
+	linewise := enterInsert && selectionIsLinewise(text, sel)
+	ranges := sel.Ranges()
+	if yank {
+		yankSelectionRanges(e, text, ranges)
+	}
 	if !applyDeletions(e, applyDeletionsArgs{
-		text: text, sel: sel, ranges: sel.Ranges(),
+		text: text, sel: sel, ranges: ranges,
 	}) {
 		return
 	}
-	if linewise {
+	switch {
+	case linewise:
 		OpenAbove(e)
-		return
+	case enterInsert:
+		e.SetMode(view.ModeInsert)
+	default:
+		e.SetMode(view.ModeNormal)
 	}
-	e.SetMode(view.ModeInsert)
 }
 
 func yankSelectionRanges(e *view.Editor, text core.Rope, ranges []core.Range) {

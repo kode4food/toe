@@ -35,6 +35,7 @@ func (p *PickerComponent) HandleEvent(
 	case pickerDynamicFeedMsg:
 		return p.handleDynamicFeed(msg)
 	case tea.WindowSizeMsg:
+		p.markDirty()
 		p.state.clearPreviewCache()
 		return ignored(), nil
 	case tea.KeyPressMsg:
@@ -64,8 +65,10 @@ func (p *PickerComponent) Layout(
 }
 
 func (p *PickerComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf := p.get(pl.w, pl.h)
-	p.paint(buf, pl, cx)
+	buf, repaint := p.get(pl.w, pl.h, cx)
+	if repaint {
+		p.paint(buf, pl, cx)
+	}
 	return buf
 }
 
@@ -109,6 +112,7 @@ func (p *PickerComponent) Cursor(
 }
 
 func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
+	p.markDirty()
 	p.state.addItems(msg.items)
 	if msg.feed != nil {
 		return consumed(), drainPickerFeed(msg.feed, msg.done)
@@ -127,6 +131,7 @@ func (p *PickerComponent) handleDynamicTrigger(
 	if !ok {
 		return consumed(), nil
 	}
+	p.markDirty()
 	src.Search(msg.query)
 	items, ch, stop := src.Load(cx.Editor)
 	ps.dynamicStop = stop
@@ -149,6 +154,7 @@ func (p *PickerComponent) handleDynamicFeed(
 	if msg.gen != ps.dynamicGen {
 		return consumed(), nil
 	}
+	p.markDirty()
 	ps.addDynamicItems(msg.items)
 	if msg.feed != nil {
 		return consumed(), drainDynamicFeed(msg.gen, msg.feed)
@@ -163,6 +169,7 @@ func (p *PickerComponent) handleMouseClick(
 	if p.mouseOutside(msg.X, msg.Y) {
 		return p.dismiss()
 	}
+	p.markDirty()
 	if msg.Button == tea.MouseLeft && p.splitBounds.contains(msg.X, msg.Y) {
 		p.dragSplit = true
 		p.updateSplitRatio(msg.X, cx)
@@ -184,6 +191,7 @@ func (p *PickerComponent) handleMouseMotion(
 	if !p.dragSplit || msg.Button != tea.MouseLeft {
 		return consumed(), nil
 	}
+	p.markDirty()
 	p.updateSplitRatio(msg.X, cx)
 	return consumed(), nil
 }
@@ -217,6 +225,7 @@ func (p *PickerComponent) handleMouseWheel(
 	msg tea.MouseWheelMsg, cx *Context,
 ) (EventResult, tea.Cmd) {
 	step := cx.Editor.Options().ScrollLines
+	p.markDirty()
 	switch {
 	case p.listBounds.contains(msg.X, msg.Y):
 		p.scrollListByWheel(msg.Button, step)

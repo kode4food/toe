@@ -70,6 +70,7 @@ func (p *PromptComponent) HandleEvent(
 func (p *PromptComponent) Layout(
 	screenW, screenH int, cx *Context,
 ) (Bounds, bool) {
+	p.markDirty()
 	if !p.compDone {
 		p.recalculateCompletion(cx)
 	}
@@ -79,7 +80,10 @@ func (p *PromptComponent) Layout(
 }
 
 func (p *PromptComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf := p.get(pl.w, pl.h)
+	buf, repaint := p.get(pl.w, pl.h, cx)
+	if !repaint {
+		return buf
+	}
 	if p.compRows > 0 {
 		p.paintCompletions(buf, 0, pl.w, cx)
 	}

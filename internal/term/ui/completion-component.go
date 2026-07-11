@@ -182,8 +182,10 @@ func (c *completionComponent) Layout(
 }
 
 func (c *completionComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf := c.get(pl.w, pl.h)
-	c.paint(buf, pl, cx)
+	buf, repaint := c.get(pl.w, pl.h, cx)
+	if repaint {
+		c.paint(buf, pl, cx)
+	}
 	return buf
 }
 
@@ -262,12 +264,14 @@ func (c *completionComponent) move(n int) {
 	c.cursor = (c.cursor + n + len(c.items)) % len(c.items)
 	c.manual = true
 	c.ensureCursorVisible(c.visibleRows())
+	c.markDirty()
 }
 
 func (c *completionComponent) moveTo(idx int) {
 	c.cursor = min(max(idx, 0), len(c.items)-1)
 	c.manual = true
 	c.ensureCursorVisible(c.visibleRows())
+	c.markDirty()
 }
 
 func (c *completionComponent) handleKeyPress(
@@ -315,6 +319,7 @@ func (c *completionComponent) handleMouseWheel(
 }
 
 func (c *completionComponent) refresh(comp *Compositor, cx *Context) tea.Cmd {
+	c.markDirty()
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
 		comp.Pop()
@@ -366,6 +371,7 @@ func (c *completionComponent) handleRefreshMsg(
 		cx.Editor.SetStatusMsg(msg.err.Error())
 		return consumed(), nil
 	}
+	c.markDirty()
 	c.all = msg.res.Items
 	c.incomplete = msg.res.Incomplete
 	query, ok := c.query(cx)
@@ -594,6 +600,7 @@ func (c *completionComponent) clampScroll(rows int) {
 }
 
 func (c *completionComponent) scrollBy(delta int) {
+	c.markDirty()
 	c.scroll = listScrollBy(
 		c.scroll, len(c.items), c.visibleRows(), delta,
 	)

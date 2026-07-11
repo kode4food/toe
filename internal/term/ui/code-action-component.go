@@ -94,8 +94,10 @@ func (m *codeActionMenu) Layout(
 }
 
 func (m *codeActionMenu) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	buf := m.get(pl.w, pl.h)
-	m.paint(buf, pl, cx)
+	buf, repaint := m.get(pl.w, pl.h, cx)
+	if repaint {
+		m.paint(buf, pl, cx)
+	}
 	return buf
 }
 
@@ -150,6 +152,7 @@ func (m *codeActionMenu) popupPos(screenH int, cx *Context) (int, int) {
 }
 
 func (m *codeActionMenu) move(n int) {
+	m.markDirty()
 	m.cursor = (m.cursor + n + len(m.actions)) % len(m.actions)
 	m.scroll = listEnsureCursorVisible(
 		m.scroll, m.cursor, len(m.actions), m.visibleRows(),
@@ -201,6 +204,7 @@ func (m *codeActionMenu) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 	}
 	if idx, ok := listIndexAt(m.listBounds, m.scroll, msg.X, msg.Y); ok {
 		if idx >= 0 && idx < len(m.actions) {
+			m.markDirty()
 			m.cursor = idx
 			return consumedWith(m.apply)
 		}
@@ -215,6 +219,7 @@ func (m *codeActionMenu) handleMouseWheel(
 		return ignoredWith(popLayer)
 	}
 	step := cx.Editor.Options().ScrollLines
+	m.markDirty()
 	switch msg.Button {
 	case tea.MouseWheelUp:
 		m.scroll = listScrollBy(m.scroll, len(m.actions), m.visibleRows(), -step)

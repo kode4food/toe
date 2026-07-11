@@ -108,8 +108,10 @@ func (s *signatureHelpComponent) Layout(
 func (s *signatureHelpComponent) PaintBuffer(
 	pl Bounds, cx *Context,
 ) *tui.Buffer {
-	buf := s.get(pl.w, pl.h)
-	s.paint(buf, pl, cx)
+	buf, repaint := s.get(pl.w, pl.h, cx)
+	if repaint {
+		s.paint(buf, pl, cx)
+	}
 	return buf
 }
 
@@ -170,6 +172,7 @@ func (s *signatureHelpComponent) move(n int) {
 	if len(s.help.Signatures) <= 1 {
 		return
 	}
+	s.markDirty()
 	s.cursor = (s.cursor + n + len(s.help.Signatures)) % len(s.help.Signatures)
 }
 

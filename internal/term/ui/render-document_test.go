@@ -1363,6 +1363,35 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NotEqual(t, before, after)
 	})
 
+	t.Run("resize repaints a pane whose area is unchanged", func(t *testing.T) {
+		root := t.TempDir()
+		pathA := filepath.Join(root, "a.txt")
+		pathB := filepath.Join(root, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("hello world\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("second file\n"), 0o644))
+		e := view.NewEditor(root)
+		_, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		docB, err := e.SwitchOrOpenDoc(pathB)
+		assert.NoError(t, err)
+		e.ResizeTree(101, 30)
+		_, ok := e.VSplit(docB.ID())
+		assert.True(t, ok)
+		m := resize(ui.New(e, command.NewKeymaps()), 101, 30)
+		before := stripANSI(m.View().Content)
+		assert.Contains(t, before, "hello world")
+		assert.Contains(t, before, "second file")
+
+		// left pane's width stays 50 going from 101 to 102 columns (the
+		// vsplit remainder is absorbed by the right pane), but the frame
+		// buffer is still reallocated since overall width changed
+		m = resize(m, 102, 30)
+		after := stripANSI(m.View().Content)
+
+		assert.Contains(t, after, "hello world")
+		assert.Contains(t, after, "second file")
+	})
+
 	t.Run("edit shows on next render", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)

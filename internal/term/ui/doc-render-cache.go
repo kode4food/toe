@@ -36,6 +36,8 @@ type (
 		lastInfoItems []command.KeyHint
 
 		lastOptionsGen int
+
+		lastW, lastH int
 	}
 
 	viewRowEntry struct {

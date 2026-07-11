@@ -125,6 +125,35 @@ func TestCompletionComponent(t *testing.T) {
 		assert.Equal(t, "Println", ctl.item.Label)
 	})
 
+	t.Run("selection highlight follows arrow key", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			items: []view.CompletionItem{
+				{Label: "Printf", Insert: "Printf", Kind: "function"},
+				{Label: "Println", Insert: "Println", Kind: "function"},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		before := m.View().Content
+		m = sendSpecialAndFeed(m, tea.KeyDown)
+		after := m.View().Content
+
+		assert.NotEqual(t,
+			rawLineContaining(t, before, "Printf"),
+			rawLineContaining(t, after, "Printf"),
+			"repainted buffer must reflect the moved selection",
+		)
+	})
+
 	t.Run("opens after trigger character", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)

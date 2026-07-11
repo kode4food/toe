@@ -28,7 +28,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		Editor:       editor,
 		Keymaps:      km,
 		Syntax:       syntax.NewSyntaxCache(),
-		pickerLayout: DefaultPickerLayoutOptions(),
+		pickerLayout: PickerLayoutOptions{},
 	}
 	ec := newEditorComponent()
 	comp := &Compositor{}

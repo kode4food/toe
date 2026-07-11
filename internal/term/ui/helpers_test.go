@@ -46,6 +46,17 @@ func previewPaneLine(t *testing.T, content, want string) string {
 	return ""
 }
 
+func rawLineContaining(t *testing.T, content, want string) string {
+	t.Helper()
+	for raw := range strings.SplitSeq(content, "\n") {
+		if strings.Contains(stripANSI(raw), want) {
+			return raw
+		}
+	}
+	t.Fatalf("no row found containing %q", want)
+	return ""
+}
+
 func assertRenderedWidth(t *testing.T, out string, w int) {
 	t.Helper()
 	for line := range strings.SplitSeq(out, "\n") {

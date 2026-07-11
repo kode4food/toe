@@ -76,7 +76,7 @@ func (p *PickerComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 	p.previewBounds = Bounds{}
 	p.splitBounds = Bounds{}
 
-	showPreview := areaW > pickerMinPreviewArea
+	showPreview := areaW > pickerMinPreviewArea && previewEnabled(ps.source)
 	splitW := 0
 	if showPreview {
 		ratio := cx.pickerLayout.SplitRatioFor(ps.source.Title())

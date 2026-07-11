@@ -61,6 +61,31 @@ func TestRegistry(t *testing.T) {
 		assert.True(t, ok)
 	})
 
+	t.Run("Bindings returns registered sequences", func(t *testing.T) {
+		km := command.NewKeymaps()
+		err := km.Register("noop", command.Command{
+			Run: registryCommand().Run,
+			Modes: []string{
+				"NOR",
+			},
+			Keys: map[string][]command.KeyBinding{
+				"*": {{
+					{{Code: command.KeyCode{Char: 'g'}}},
+				}},
+			},
+		})
+		assert.NoError(t, err)
+
+		km.Bind("NOR", "noop", []command.KeyEvent{
+			{Code: command.KeyCode{Char: 'x'}},
+		})
+
+		assert.Equal(t, []command.KeyBinding{
+			{{{Code: command.KeyCode{Char: 'g'}}}},
+			{{{Code: command.KeyCode{Char: 'x'}}}},
+		}, km.Bindings("NOR", "noop"))
+	})
+
 	t.Run("OptionKeys returns sorted option keys", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		assert.Equal(t, []string{

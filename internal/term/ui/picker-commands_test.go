@@ -17,6 +17,16 @@ func TestCommandPalettePicker(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), "palette_probe")
 	})
 
+	t.Run("shows key bindings", func(t *testing.T) {
+		m, _ := paletteModel(t)
+		m = resize(m, 60, 30)
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "bindings")
+		assert.Contains(t, out, "doc")
+		assert.Contains(t, out, "gp")
+		assert.Contains(t, out, "A command palette row")
+	})
+
 	t.Run("accepts and runs the command", func(t *testing.T) {
 		m, e := paletteModel(t)
 		for _, ch := range "palette_probe" {
@@ -36,12 +46,24 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	_ = km.Register("palette_probe", command.Command{
+		DocString: "A command palette row with enough doc text to overflow",
 		Run: func(e *view.Editor, _ *command.Args) command.Result {
 			e.SetMode(view.ModeInsert)
 			return command.Result{}
 		},
 		Aliases: []string{"palette_probe"},
 		Modes:   []string{"NOR"},
+		Keys: map[string][]command.KeyBinding{
+			"*": {
+				{
+					{char('g'), char('p')},
+				},
+			},
+		},
+	})
+	km.Bind("NOR", "palette_probe", []command.KeyEvent{
+		char('a'), char('b'), char('c'), char('d'), char('e'), char('f'),
+		char('g'), char('h'), char('i'), char('j'), char('k'), char('l'),
 	})
 	bindNormalTestAction(
 		km, "open_palette",

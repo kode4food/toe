@@ -137,7 +137,7 @@ func TestTokenExpander(t *testing.T) {
 		tok := command.Token{
 			Kind:      command.TokenExpansion,
 			Expansion: command.ExpansionVariable,
-			Content:   "current_working_directory",
+			Content:   "current_working_dir",
 		}
 		result, err := expand(tok)
 		assert.NoError(t, err)

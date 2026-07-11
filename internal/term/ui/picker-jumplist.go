@@ -72,9 +72,10 @@ func (j *jumplistPickerSource) Accept(
 func JumplistPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &jumplistPickerSource{
 		pickerMeta: pickerMeta{
-			title:   "Jumplist",
-			columns: []string{"path", "contents"},
-			primary: 0,
+			title:       "Jumplist",
+			columns:     []string{"path", "contents"},
+			matchColumn: 0,
+			proportions: []int{1, 1},
 		},
 	})
 }

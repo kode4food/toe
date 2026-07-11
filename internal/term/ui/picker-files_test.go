@@ -643,7 +643,11 @@ func (c *controlledDynamicSource) Title() string { return "Dynamic" }
 
 func (c *controlledDynamicSource) Columns() []string { return []string{"path"} }
 
-func (c *controlledDynamicSource) Primary() int { return 0 }
+func (c *controlledDynamicSource) MatchColumn() int { return 0 }
+
+func (c *controlledDynamicSource) ColumnProportions() []int {
+	return []int{1}
+}
 
 func (c *controlledDynamicSource) Search(query string) { c.query = query }
 

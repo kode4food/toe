@@ -29,8 +29,12 @@ func (p *pathPickerSource) Columns() []string {
 	return []string{"name"}
 }
 
-func (p *pathPickerSource) Primary() int {
+func (p *pathPickerSource) MatchColumn() int {
 	return 0
+}
+
+func (p *pathPickerSource) ColumnProportions() []int {
+	return []int{1}
 }
 
 func (p *pathPickerSource) Accept(

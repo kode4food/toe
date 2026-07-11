@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"strings"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -10,11 +12,24 @@ type commandPaletteSource struct {
 	km *command.Keymaps
 }
 
+// CommandPalettePicker opens a picker listing all registered commands
+func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
+	return NewPicker(e, &commandPaletteSource{
+		pickerMeta: pickerMeta{
+			title:       "Command palette",
+			columns:     []string{"name", "bindings", "doc"},
+			proportions: []int{0, 1, 2},
+		},
+		km: km,
+	})
+}
+
 func (c *commandPaletteSource) Load(
-	_ *view.Editor,
+	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
 	cmds := c.km.Commands()
 	items := make([]PickerItem, 0, len(cmds))
+	mode := e.Mode().String()
 	for _, cmd := range cmds {
 		if cmd.Run == nil || len(cmd.Aliases) == 0 {
 			continue
@@ -22,7 +37,9 @@ func (c *commandPaletteSource) Load(
 		name := cmd.Aliases[0]
 		items = append(items, PickerItem{
 			Display: name,
-			Columns: []string{name, cmd.DocString},
+			Columns: []string{
+				name, commandKeyString(c.km, mode, cmd.Name), cmd.DocString,
+			},
 			SortKey: name,
 			Payload: cmd,
 		})
@@ -40,13 +57,40 @@ func (c *commandPaletteSource) Accept(
 	cmd.Run(e, nil)
 }
 
-// CommandPalettePicker opens a picker listing all registered commands
-func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
-	return NewPicker(e, &commandPaletteSource{
-		pickerMeta: pickerMeta{
-			title:   "Command palette",
-			columns: []string{"name", "description"},
-		},
-		km: km,
-	})
+func (c *commandPaletteSource) SkipPreview() {}
+
+func commandKeyString(km *command.Keymaps, mode, name string) string {
+	return commandModeKeyString(km.Bindings(mode, name))
+}
+
+func commandModeKeyString(bindings []command.KeyBinding) string {
+	parts := make([]string, 0, len(bindings))
+	for _, binding := range bindings {
+		for _, seq := range binding {
+			if len(seq) == 0 {
+				continue
+			}
+			parts = append(parts, commandKeySeqString(seq))
+		}
+	}
+	return strings.Join(parts, " ")
+}
+
+func commandKeySeqString(seq []command.KeyEvent) string {
+	var b strings.Builder
+	for _, ev := range seq {
+		b.WriteString(commandKeyEventString(ev))
+	}
+	return b.String()
+}
+
+func commandKeyEventString(ev command.KeyEvent) string {
+	s := ev.String()
+	if s == " " {
+		s = "space"
+	}
+	if len([]rune(s)) > 1 {
+		return "<" + s + ">"
+	}
+	return s
 }

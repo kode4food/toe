@@ -46,9 +46,15 @@ type (
 	PickerSource interface {
 		Title() string
 		Columns() []string
-		Primary() int
+		MatchColumn() int
+		ColumnProportions() []int
 		Load(*view.Editor) ([]PickerItem, <-chan PickerItem, StopFunc)
 		Accept(*view.Editor, PickerItem, PickerAcceptAction)
+	}
+
+	// PickerPreviewSkipper marks picker sources that never render previews
+	PickerPreviewSkipper interface {
+		SkipPreview()
 	}
 
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
@@ -113,9 +119,10 @@ type (
 	}
 
 	pickerMeta struct {
-		title   string
-		columns []string
-		primary int
+		title       string
+		columns     []string
+		matchColumn int
+		proportions []int
 	}
 
 	pickerDynamicTriggerMsg struct {
@@ -176,12 +183,36 @@ func (p pickerMeta) Columns() []string {
 	return p.columns
 }
 
-func (p pickerMeta) Primary() int {
-	return p.primary
+func (p pickerMeta) MatchColumn() int {
+	return p.matchColumn
+}
+
+func (p pickerMeta) ColumnProportions() []int {
+	if len(p.proportions) == len(p.columns) {
+		for _, proportion := range p.proportions {
+			if proportion > 0 {
+				return p.proportions
+			}
+		}
+	}
+	return defaultColumnProportions(len(p.columns))
+}
+
+func defaultColumnProportions(n int) []int {
+	proportions := make([]int, n)
+	if n > 0 {
+		proportions[0] = 1
+	}
+	return proportions
+}
+
+func previewEnabled(source PickerSource) bool {
+	_, skip := source.(PickerPreviewSkipper)
+	return !skip
 }
 
 func (p pickerMeta) Match(query string, item PickerItem) (int, []int, bool) {
-	return fuzzyMatchItem(query, item, p.columns, p.primary)
+	return fuzzyMatchItem(query, item, p.columns, p.matchColumn)
 }
 
 func (p *Picker) addItems(items []PickerItem) {

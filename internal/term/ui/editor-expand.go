@@ -103,7 +103,7 @@ func expandVariable(e *view.Editor, name string) (string, error) {
 	case "line_ending":
 		return string(doc.LineEnding()), nil
 
-	case "current_working_directory":
+	case "current_working_dir":
 		return e.Cwd(), nil
 
 	case "workspace_directory":

@@ -202,8 +202,12 @@ func (s fixedPickerSource) Title() string {
 func (fixedPickerSource) Columns() []string {
 	return []string{"name"}
 }
-func (fixedPickerSource) Primary() int {
+func (fixedPickerSource) MatchColumn() int {
 	return 0
+}
+
+func (fixedPickerSource) ColumnProportions() []int {
+	return []int{1}
 }
 
 func (fixedPickerSource) Accept(

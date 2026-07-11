@@ -70,16 +70,19 @@ func (d *diagnosticPickerSource) Accept(
 
 func newDiagnosticPicker(e *view.Editor, workspace bool) *Picker {
 	title := "Diagnostics"
-	primary := 3
+	matchColumn := 3
+	proportions := []int{0, 0, 0, 1}
 	if workspace {
 		title = "Workspace diagnostics"
-		primary = 4
+		matchColumn = 4
+		proportions = []int{0, 0, 0, 1, 2}
 	}
 	return NewPicker(e, &diagnosticPickerSource{
 		pickerMeta: pickerMeta{
-			title:   title,
-			columns: diagnosticPickerColumns(workspace),
-			primary: primary,
+			title:       title,
+			columns:     diagnosticPickerColumns(workspace),
+			matchColumn: matchColumn,
+			proportions: proportions,
 		},
 		workspace: workspace,
 	})

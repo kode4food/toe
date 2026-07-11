@@ -42,9 +42,9 @@ func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
 func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 	return NewPicker(e, &lspSymbolSource{
 		pickerMeta: pickerMeta{
-			title:   "LSP symbols",
-			columns: []string{"name"},
-			primary: 0,
+			title:       "LSP symbols",
+			columns:     []string{"name"},
+			matchColumn: 0,
 		},
 		symbols: symbols,
 	})
@@ -53,9 +53,10 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &lspWorkspaceSymbolSource{
 		pickerMeta: pickerMeta{
-			title:   "LSP workspace symbols",
-			columns: []string{"name", "path"},
-			primary: 0,
+			title:       "LSP workspace symbols",
+			columns:     []string{"name", "path"},
+			matchColumn: 0,
+			proportions: []int{0, 1},
 		},
 	})
 }

@@ -156,7 +156,7 @@ func TestPickerRender(t *testing.T) {
 		assert.NotContains(t, out, "┬")
 	})
 
-	t.Run("narrow columns and long query", func(t *testing.T) {
+	t.Run("proportional columns and long query", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -176,9 +176,9 @@ func TestPickerRender(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "uvwxyz")
-		// primary (path) is protected; non-primary columns clip away first
-		assert.Contains(t, out, "internal/term/ui")
-		assert.NotContains(t, out, " > go")
+		assert.Contains(t, out, " > go")
+		assert.Contains(t, out, "internal/ter")
+		assert.Contains(t, out, "non")
 	})
 }
 
@@ -190,8 +190,12 @@ func (noPreviewPickerSource) Columns() []string {
 	return []string{"name"}
 }
 
-func (noPreviewPickerSource) Primary() int {
+func (noPreviewPickerSource) MatchColumn() int {
 	return 0
+}
+
+func (noPreviewPickerSource) ColumnProportions() []int {
+	return []int{1}
 }
 
 func (noPreviewPickerSource) Load(
@@ -216,8 +220,12 @@ func (columnPickerSource) Columns() []string {
 	return []string{"kind", "path", "description"}
 }
 
-func (columnPickerSource) Primary() int {
+func (columnPickerSource) MatchColumn() int {
 	return 1
+}
+
+func (columnPickerSource) ColumnProportions() []int {
+	return []int{0, 4, 1}
 }
 
 func (columnPickerSource) Load(

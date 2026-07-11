@@ -47,6 +47,9 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 	if _, ok := k.byName[name]; ok {
 		return fmt.Errorf("%w: %s", ErrDuplicateCommand, name)
 	}
+	if cmd.Name == "" {
+		cmd.Name = name
+	}
 	idx := len(k.commands)
 	k.commands = append(k.commands, cmd)
 	k.byName[name] = idx
@@ -99,6 +102,17 @@ func (k *Keymaps) ResolveCommand(name string) (Command, bool) {
 // Commands returns all registered commands in registration order
 func (k *Keymaps) Commands() []Command {
 	return slices.Clone(k.commands)
+}
+
+// Bindings returns key sequences bound to a command in a mode
+func (k *Keymaps) Bindings(mode, name string) []KeyBinding {
+	root, ok := k.modes[mode]
+	if !ok {
+		return nil
+	}
+	var bindings []KeyBinding
+	root.collectBindings(name, nil, &bindings)
+	return bindings
 }
 
 // Bind adds extra key sequences to an already-registered command
@@ -201,6 +215,18 @@ func (k *keyTrieNode) set(ev KeyEvent, child *keyTrieNode) {
 		k.order = append(k.order, ev)
 	}
 	k.children[ev] = child
+}
+
+func (k *keyTrieNode) collectBindings(
+	name string, seq []KeyEvent, bindings *[]KeyBinding,
+) {
+	if k.action != nil && k.name == name {
+		*bindings = append(*bindings, KeyBinding{slices.Clone(seq)})
+	}
+	for _, ev := range k.order {
+		child := k.children[ev]
+		child.collectBindings(name, append(seq, ev), bindings)
+	}
 }
 
 func defaultModes() []string {

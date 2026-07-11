@@ -33,9 +33,10 @@ var (
 func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *Picker {
 	p := NewPicker(e, &bufferPickerSource{
 		pickerMeta: pickerMeta{
-			title:   "Open buffer",
-			columns: []string{"flags", "path"},
-			primary: 1,
+			title:       "Open buffer",
+			columns:     []string{"flags", "path"},
+			matchColumn: 1,
+			proportions: []int{0, 1},
 		},
 	})
 	if opts.StartPosition == PickerStartPrevious && len(p.matched) > 1 {

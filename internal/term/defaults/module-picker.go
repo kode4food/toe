@@ -38,7 +38,7 @@ const (
 	actFilePickerInCWD = "file_picker_in_current_dir"
 
 	actFileExplorer         = "file_explorer"
-	actFileExplorerInBufDir = "file_explorer_in_current_buffer_directory"
+	actFileExplorerInBufDir = "file_explorer_in_current_buffer_dir"
 	actBufferPicker         = "buffer_picker"
 	actJumplistPicker       = "jumplist_picker"
 	actDiagnosticPicker     = "diagnostic_picker"

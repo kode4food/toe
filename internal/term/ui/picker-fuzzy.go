@@ -3,9 +3,9 @@ package ui
 import "strings"
 
 func fuzzyMatchItem(
-	query string, item PickerItem, columns []string, primary int,
+	query string, item PickerItem, columns []string, matchColumn int,
 ) (int, []int, bool) {
-	fields := parsePickerQuery(columns, primary, query)
+	fields := parsePickerQuery(columns, matchColumn, query)
 	score := 0
 	var indices []int
 	for col, pat := range fields {
@@ -15,7 +15,7 @@ func fuzzyMatchItem(
 			return 0, nil, false
 		}
 		score += s
-		if col == primary {
+		if col == matchColumn {
 			indices = idx
 		}
 	}
@@ -23,14 +23,14 @@ func fuzzyMatchItem(
 }
 
 func parsePickerQuery(
-	columns []string, primary int, input string,
+	columns []string, matchColumn int, input string,
 ) map[int]string {
 	fields := map[int]string{}
 	if input == "" {
-		fields[primary] = ""
+		fields[matchColumn] = ""
 		return fields
 	}
-	field := primary
+	field := matchColumn
 	var fieldText strings.Builder
 	var text strings.Builder
 	escaped := false
@@ -60,7 +60,7 @@ func parsePickerQuery(
 			if text.Len() > 0 {
 				finish()
 			}
-			field = primary
+			field = matchColumn
 			fieldText.Reset()
 			inField = true
 		case ch == ' ' && inField:
@@ -79,7 +79,7 @@ func parsePickerQuery(
 		finish()
 	}
 	if len(fields) == 0 {
-		fields[primary] = ""
+		fields[matchColumn] = ""
 	}
 	return fields
 }

@@ -109,7 +109,7 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 	cellW := max(w-pickerMarkerW-1, 0)
 	cx2 := x + pickerMarkerW
 	cols := p.source.Columns()
-	primary := p.source.Primary()
+	matchColumn := p.source.MatchColumn()
 
 	if len(cols) <= 1 {
 		itemBase := base
@@ -133,7 +133,7 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 				val = m.item.Columns[i]
 			}
 			colBase := pickerColumnBase(base, m.item.StyleScopes, i, cx)
-			if i == primary {
+			if i == matchColumn {
 				writePickerMatched(buf, writePickerMatchedArgs{
 					x: cur, y: y, maxW: widths[i], text: val,
 					indices: m.indices, base: colBase, match: match,
@@ -188,7 +188,6 @@ func writePickerCenteredHint(
 
 func pickerColumnWidths(p *Picker, w int) []int {
 	cols := p.source.Columns()
-	primary := p.source.Primary()
 	n := len(cols)
 	widths := make([]int, n)
 	if n == 0 {
@@ -196,6 +195,10 @@ func pickerColumnWidths(p *Picker, w int) []int {
 	}
 	spacing := max(n-1, 0)
 	available := max(w-spacing, 0)
+	proportions := p.source.ColumnProportions()
+	if len(proportions) != n {
+		proportions = defaultColumnProportions(n)
+	}
 	for i, col := range cols {
 		widths[i] = runewidth.StringWidth(col)
 	}
@@ -204,29 +207,52 @@ func pickerColumnWidths(p *Picker, w int) []int {
 			widths[i] = max(widths[i], runewidth.StringWidth(m.item.Columns[i]))
 		}
 	}
+	return pickerProportionalColumnWidths(widths, proportions, available)
+}
+
+func pickerProportionalColumnWidths(
+	measured []int, proportions []int, available int,
+) []int {
+	widths := make([]int, len(measured))
+	weight := 0
+	pinned := 0
+	for i, proportion := range proportions {
+		if proportion <= 0 {
+			widths[i] = measured[i]
+			pinned += widths[i]
+			continue
+		}
+		weight += proportion
+	}
+	remaining := max(available-pinned, 0)
+	used := 0
+	if weight > 0 {
+		for i, proportion := range proportions {
+			if proportion <= 0 {
+				continue
+			}
+			widths[i] = remaining * proportion / weight
+			used += widths[i]
+		}
+		for i, proportion := range proportions {
+			if used >= remaining {
+				break
+			}
+			if proportion <= 0 {
+				continue
+			}
+			widths[i]++
+			used++
+		}
+	}
 	total := 0
 	for _, width := range widths {
 		total += width
 	}
-	if total <= available {
-		widths[primary] += available - total
-		return widths
-	}
-	// overflow: take space from non-primary columns before the primary one
-	over := total - available
-	for i := range n {
-		if over <= 0 {
-			break
-		}
-		if i == primary {
-			continue
-		}
-		take := min(over, widths[i])
+	for i := len(widths) - 1; total > available && i >= 0; i-- {
+		take := min(widths[i], total-available)
 		widths[i] -= take
-		over -= take
-	}
-	if over > 0 {
-		widths[primary] = max(widths[primary]-over, 1)
+		total -= take
 	}
 	return widths
 }

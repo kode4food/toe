@@ -12,14 +12,20 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-// Save writes the document to its current path
-func (d *Document) Save(opts *Options) error {
+// Save writes the document to its current path. Unless force is set, it
+// refuses an unsafe overwrite (changed on disk, or read-only)
+func (d *Document) Save(opts *Options, force bool) error {
 	if !d.Loaded() {
 		return nil
 	}
 	path := d.Path()
 	if path == "" {
 		return ErrDocumentNoPath
+	}
+	if !force {
+		if err := d.checkSafeToOverwrite(path); err != nil {
+			return err
+		}
 	}
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -37,11 +43,26 @@ func (d *Document) Save(opts *Options) error {
 	} else {
 		data = []byte(text)
 	}
+	var backup string
+	if opts.AtomicSave {
+		if _, statErr := os.Stat(path); statErr == nil {
+			if b, err := renameToBackup(path, dir); err == nil {
+				backup = b
+			}
+		}
+	}
 	var err error
 	if opts.AtomicSave {
 		err = atomicWrite(path, dir, data)
 	} else {
-		err = os.WriteFile(path, data, 0o644)
+		err = writeFileSynced(path, data, 0o644)
+	}
+	if backup != "" {
+		if err != nil {
+			_ = os.Rename(backup, path)
+		} else {
+			_ = os.Remove(backup)
+		}
 	}
 	if err != nil {
 		return err
@@ -124,6 +145,17 @@ func (d *Document) applySaveText(text string) error {
 	return nil
 }
 
+func (d *Document) checkSafeToOverwrite(path string) error {
+	if info, err := os.Stat(path); err == nil &&
+		info.Mode().Perm()&0o200 == 0 {
+		return ErrFileReadOnly
+	}
+	if _, changed := d.diskChanged(); changed {
+		return ErrFileChangedOnDisk
+	}
+	return nil
+}
+
 // DocumentDisplayName returns a short display name for a file path,
 // or ScratchBufferName if path is empty
 func DocumentDisplayName(path string) string {
@@ -149,6 +181,24 @@ func DocumentRelativeName(path, basedir string) string {
 	return path
 }
 
+func renameToBackup(path, dir string) (string, error) {
+	f, err := os.CreateTemp(dir, filepath.Base(path)+".bck-*")
+	if err != nil {
+		return "", err
+	}
+	tmp := f.Name()
+	if err := f.Close(); err != nil {
+		return "", err
+	}
+	if err := os.Remove(tmp); err != nil {
+		return "", err
+	}
+	if err := os.Rename(path, tmp); err != nil {
+		return "", err
+	}
+	return tmp, nil
+}
+
 func atomicWrite(path, dir string, data []byte) error {
 	f, err := os.CreateTemp(dir, ".toe-save-*")
 	if err != nil {
@@ -160,11 +210,32 @@ func atomicWrite(path, dir string, data []byte) error {
 		_ = os.Remove(tmp)
 		return err
 	}
+	if err = f.Sync(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+		return err
+	}
 	if err = f.Close(); err != nil {
 		_ = os.Remove(tmp)
 		return err
 	}
 	return os.Rename(tmp, path)
+}
+
+func writeFileSynced(path string, data []byte, perm os.FileMode) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	if _, err = f.Write(data); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err = f.Sync(); err != nil {
+		_ = f.Close()
+		return err
+	}
+	return f.Close()
 }
 
 func diffChangeSet(oldText core.Rope, newText string) (core.ChangeSet, error) {

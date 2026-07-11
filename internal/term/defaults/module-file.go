@@ -93,7 +93,7 @@ func fileWriteCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
-				if err := e.Save(); err != nil {
+				if err := e.Save(false); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				if doc, ok := e.FocusedDocument(); ok {
@@ -115,7 +115,7 @@ func fileWriteCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
-				_ = e.Save()
+				_ = e.Save(true)
 				if doc, ok := e.FocusedDocument(); ok {
 					return command.Result{
 						Message: "'" + doc.RelativeName(e.Cwd()) +
@@ -131,7 +131,7 @@ func fileWriteCmds() []command.Command {
 			Name:      actWriteAll,
 			DocString: "Write changes from all buffers to disk",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				if errs := e.SaveAll(); len(errs) > 0 {
+				if errs := e.SaveAll(false); len(errs) > 0 {
 					return command.Result{
 						Message: "error: " + errs[0].Error(),
 					}
@@ -147,7 +147,7 @@ func fileWriteCmds() []command.Command {
 				"disk creating necessary subdirectories",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				for _, doc := range e.AllDocuments() {
-					_ = doc.Save(e.Options())
+					_ = doc.Save(e.Options(), true)
 				}
 				return command.Result{Message: "all documents written"}
 			},
@@ -161,7 +161,7 @@ func fileWriteCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
-				if err := e.Save(); err != nil {
+				if err := e.Save(false); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				return command.Result{Signal: command.SignalQuit}
@@ -176,7 +176,7 @@ func fileWriteCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
-				_ = e.Save()
+				_ = e.Save(true)
 				return command.Result{Signal: command.SignalQuit}
 			},
 			Aliases:   []string{"wq!", "exit!", "x!", "xit!"},
@@ -187,7 +187,7 @@ func fileWriteCmds() []command.Command {
 			DocString: "Write changes from all buffers to disk and close " +
 				"all views",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				if errs := e.SaveAll(); len(errs) > 0 {
+				if errs := e.SaveAll(false); len(errs) > 0 {
 					return command.Result{
 						Message: "error: " + errs[0].Error(),
 					}
@@ -204,7 +204,7 @@ func fileWriteCmds() []command.Command {
 				"views (ignoring unsaved changes)",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				for _, doc := range e.AllDocuments() {
-					_ = doc.Save(e.Options())
+					_ = doc.Save(e.Options(), true)
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
@@ -219,7 +219,7 @@ func fileWriteCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
-				if err := e.Save(); err != nil {
+				if err := e.Save(false); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				e.CloseCurrentView()
@@ -236,7 +236,7 @@ func fileWriteCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
-				_ = e.Save()
+				_ = e.Save(true)
 				e.CloseCurrentView()
 				return command.Result{Message: "written and closed"}
 			},
@@ -257,7 +257,7 @@ func fileManageCmds() []command.Command {
 					return command.Result{Message: "no changes to write"}
 				}
 				autoFormat(e)
-				if err := e.Save(); err != nil {
+				if err := e.Save(false); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				return command.Result{

@@ -291,8 +291,7 @@ func (d *Document) Selection() core.Selection {
 }
 
 // SetSelectionFor sets the selection for a view. Changing the selection clears
-// any search-match highlighting for that view, matching helix: a search shows
-// its matches until the selection next moves
+// any search-match highlighting for that view
 func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
 	if old, ok := d.buf.selections[vid]; !ok || !old.Equal(sel) {
 		d.markDirty(vid)
@@ -386,6 +385,7 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		}
 		d.buf.Unlock()
 		if !cs.Empty() {
+			d.remapOverlays(cs)
 			d.markAllDirty()
 		} else if !oldSel.Equal(newSel) {
 			d.markDirty(vid)
@@ -414,6 +414,7 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	}
 	d.buf.Unlock()
 	if !cs.Empty() {
+		d.remapOverlays(cs)
 		d.markAllDirty()
 	} else if !oldSel.Equal(newSel) {
 		d.markDirty(vid)
@@ -469,6 +470,9 @@ func (d *Document) Undo(vid Id) bool {
 	d.buf.unsaved = d.Modified()
 	d.buf.modified = true
 	d.buf.Unlock()
+	if !cs.Empty() {
+		d.remapOverlays(cs)
+	}
 	return true
 }
 
@@ -495,6 +499,9 @@ func (d *Document) Redo(vid Id) bool {
 	d.buf.unsaved = d.Modified()
 	d.buf.modified = true
 	d.buf.Unlock()
+	if !cs.Empty() {
+		d.remapOverlays(cs)
+	}
 	return true
 }
 

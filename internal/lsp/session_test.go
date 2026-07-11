@@ -870,6 +870,30 @@ func TestSessionProgress(t *testing.T) {
 		_, _ = session.Completions(doc, v.ID())
 		time.Sleep(100 * time.Millisecond)
 	})
+
+	t.Run("reports busy during progress", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeProgressLanguages(t, exe)
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+
+		_, _ = session.Completions(doc, v.ID())
+
+		assert.Eventually(t, session.Busy, time.Second, 5*time.Millisecond)
+		assert.Eventually(t, func() bool { return !session.Busy() },
+			time.Second, 5*time.Millisecond)
+	})
 }
 
 func TestFileWatching(t *testing.T) {

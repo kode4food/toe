@@ -44,6 +44,18 @@ func TestOptionsStatusLine(t *testing.T) {
 		assert.NotEmpty(t, right)
 	})
 
+	t.Run("left default includes spinner", func(t *testing.T) {
+		o := view.Options{}
+		assert.Contains(t, o.StatusLineLeft(),
+			view.StatusLineItem{Element: view.StatusLineSpinner})
+	})
+
+	t.Run("right default includes file encoding", func(t *testing.T) {
+		o := view.Options{}
+		assert.Contains(t, o.StatusLineRight(),
+			view.StatusLineItem{Element: view.StatusLineFileEncoding})
+	})
+
 	t.Run("right custom overrides default", func(t *testing.T) {
 		o := view.Options{StatusLine: view.StatusLine{
 			Right: []view.StatusLineItem{{Element: view.StatusLinePosition}},

@@ -48,6 +48,10 @@ var (
 	ErrEmptyDirStack     = errors.New("directory stack is empty")
 	ErrConfigUnavailable = errors.New("config path unavailable")
 	ErrUnsavedChanges    = errors.New("unsaved changes")
+	ErrFileChangedOnDisk = errors.New(
+		"file modified by an external process, use :w! to overwrite",
+	)
+	ErrFileReadOnly = errors.New("path is read only")
 )
 
 // NewEditor creates an empty editor with one scratch document and view

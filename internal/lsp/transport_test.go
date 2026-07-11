@@ -387,6 +387,9 @@ func (s *processServer) Initialized(
 			Token: tok,
 			Value: protocol.LSPAny(report),
 		})
+		// hold the token open briefly so a black-box test can observe
+		// Session.Busy() returning true before the matching "end" arrives
+		time.Sleep(50 * time.Millisecond)
 		_ = s.client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
 			Value: protocol.LSPAny(`{"kind":"end","message":"done"}`),

@@ -29,7 +29,7 @@ func TestDocumentObserver(t *testing.T) {
 		v, err := e.SwitchFile(path)
 		assert.NoError(t, err)
 		action.InsertChar(e, '/')
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 		e.CloseView(v.ID())
 
 		assert.Equal(t,

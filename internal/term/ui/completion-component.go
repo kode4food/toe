@@ -16,51 +16,51 @@ import (
 	act "github.com/kode4food/toe/internal/view/action"
 )
 
-type completionComponent struct {
-	overlayBuf
-	ec         *EditorComponent
-	all        []view.CompletionItem
-	items      []view.CompletionItem
-	anchor     completionAnchor
-	opts       CompletionOptions
-	cursor     int
-	scroll     int
-	bounds     Bounds
-	listBounds Bounds
-	refreshGen int
-	manual     bool
-	incomplete bool
-}
+type (
+	completionComponent struct {
+		overlayBuf
+		ec         *EditorComponent
+		all        []view.CompletionItem
+		items      []view.CompletionItem
+		anchor     completionAnchor
+		opts       CompletionOptions
+		cursor     int
+		scroll     int
+		bounds     Bounds
+		listBounds Bounds
+		refreshGen int
+		manual     bool
+		incomplete bool
+	}
 
-var _ BufferOverlayComponent = (*completionComponent)(nil)
+	completionAnchor struct {
+		docID  view.DocumentId
+		viewID view.Id
+		rev    int
+		pos    int
+	}
 
-type completionAnchor struct {
-	docID  view.DocumentId
-	viewID view.Id
-	rev    int
-	pos    int
-}
+	completionMatch struct {
+		item  view.CompletionItem
+		score int
+		order int
+	}
 
-type completionMatch struct {
-	item  view.CompletionItem
-	score int
-	order int
-}
+	completionRowParts struct {
+		icon  string
+		label string
+		info  string
+	}
 
-type completionRowParts struct {
-	icon  string
-	label string
-	info  string
-}
-
-type completionRefreshMsg struct {
-	layer *completionComponent
-	gen   int
-	rev   int
-	pos   int
-	res   view.CompletionResult
-	err   error
-}
+	completionRefreshMsg struct {
+		layer *completionComponent
+		gen   int
+		rev   int
+		pos   int
+		res   view.CompletionResult
+		err   error
+	}
+)
 
 const (
 	// CompletionMode is the keymap mode used while the completion popup is

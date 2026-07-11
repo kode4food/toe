@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -133,4 +134,130 @@ func TestDocumentInlayHintsAll(t *testing.T) {
 
 	assert.Empty(t, doc.InlayHints(v.ID()))
 	assert.Empty(t, doc.InlayHints(other))
+}
+
+func TestOverlayAnchoring(t *testing.T) {
+	t.Run("diagnostic shifts with insert before it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "func foo() {}\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+			{Range: view.DiagnosticRange{From: 5, To: 8}},
+		})
+
+		insertTextAt(t, e, doc, 0, "// x\n")
+
+		diags := doc.Diagnostics()
+		assert.Len(t, diags, 1)
+		assert.Equal(t, 5+len("// x\n"), diags[0].Range.From)
+		assert.Equal(t, 8+len("// x\n"), diags[0].Range.To)
+	})
+
+	t.Run("link shifts with insert before it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "hello world\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 6, To: 11}})
+
+		insertTextAt(t, e, doc, 0, "xx")
+
+		links := doc.DocumentLinks()
+		assert.Len(t, links, 1)
+		assert.Equal(t, 8, links[0].From)
+		assert.Equal(t, 13, links[0].To)
+	})
+
+	t.Run("color shifts with insert before it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "color: #123456\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentColors([]view.DocumentColor{{From: 7, To: 14}})
+
+		insertTextAt(t, e, doc, 0, "xx")
+
+		colors := doc.DocumentColors()
+		assert.Len(t, colors, 1)
+		assert.Equal(t, 9, colors[0].From)
+		assert.Equal(t, 16, colors[0].To)
+	})
+
+	t.Run("highlight shifts with insert before it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "hello world\n")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
+			{From: 6, To: 11},
+		})
+
+		insertTextAt(t, e, doc, 0, "xx")
+
+		hl := doc.DocumentHighlights(v.ID())
+		assert.Len(t, hl, 1)
+		assert.Equal(t, 8, hl[0].From)
+		assert.Equal(t, 13, hl[0].To)
+	})
+
+	t.Run("inlay hint shifts with insert before it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "fn main() {}\n")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.SetInlayHints(v.ID(), []view.InlayHint{{Pos: 8, Label: ": ()"}})
+
+		insertTextAt(t, e, doc, 0, "xx")
+
+		hints := doc.InlayHints(v.ID())
+		assert.Len(t, hints, 1)
+		assert.Equal(t, 10, hints[0].Pos)
+	})
+
+	t.Run("diagnostic unaffected by edit after it", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "func foo() {}\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+			{Range: view.DiagnosticRange{From: 5, To: 8}},
+		})
+
+		insertTextAt(t, e, doc, 12, "xx")
+
+		diags := doc.Diagnostics()
+		assert.Len(t, diags, 1)
+		assert.Equal(t, 5, diags[0].Range.From)
+		assert.Equal(t, 8, diags[0].Range.To)
+	})
+
+	t.Run("diagnostic shift survives undo and redo", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "func foo() {}\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+			{Range: view.DiagnosticRange{From: 5, To: 8}},
+		})
+
+		insertTextAt(t, e, doc, 0, "// x\n")
+		assert.Equal(t, 5+len("// x\n"), doc.Diagnostics()[0].Range.From)
+
+		assert.True(t, e.Undo())
+		assert.Equal(t, 5, doc.Diagnostics()[0].Range.From)
+
+		assert.True(t, e.Redo())
+		assert.Equal(t, 5+len("// x\n"), doc.Diagnostics()[0].Range.From)
+	})
+}
+
+func insertTextAt(
+	t *testing.T, e *view.Editor, doc *view.Document, at int, s string,
+) {
+	t.Helper()
+	rope := doc.Text()
+	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+		core.TextChange(at, at, s),
+	})
+	assert.NoError(t, err)
+	tx := core.NewTransaction(rope).WithChanges(cs)
+	assert.NoError(t, e.Apply(tx))
 }

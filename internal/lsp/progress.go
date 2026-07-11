@@ -29,6 +29,14 @@ type (
 	}
 )
 
+// Busy reports whether any language server has an in-flight progress
+// notification, for the status-line activity spinner
+func (s *Session) Busy() bool {
+	s.progress.RLock()
+	defer s.progress.RUnlock()
+	return len(s.progress.byServer) > 0
+}
+
 func (s *Session) createProgress(server string, token protocol.ProgressToken) {
 	s.progress.Lock()
 	defer s.progress.Unlock()

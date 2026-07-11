@@ -250,7 +250,7 @@ func TestDocumentSave(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
 		assert.Equal(t, "", string(data))
@@ -264,7 +264,7 @@ func TestDocumentSave(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
@@ -281,7 +281,7 @@ func TestDocumentSave(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "hello\n", doc.Text().String())
@@ -300,7 +300,7 @@ func TestDocumentSave(t *testing.T) {
 		doc.SetPath(path)
 		doc.SetLineEnding(core.LineEndingCRLF)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
@@ -318,7 +318,7 @@ func TestDocumentSave(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
@@ -335,7 +335,7 @@ func TestDocumentSave(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
@@ -369,7 +369,7 @@ trim_trailing_whitespace = true
 		tx := core.NewTransaction(rope).WithChanges(cs)
 		assert.NoError(t, e.Apply(tx))
 
-		err = e.Save()
+		err = e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
@@ -379,8 +379,102 @@ trim_trailing_whitespace = true
 
 	t.Run("scratch needs path to save", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		err := e.Save()
+		err := e.Save(false)
 		assert.Error(t, err)
+	})
+}
+
+func TestDocumentSaveSafety(t *testing.T) {
+	t.Run("refuses save when file changed on disk", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, os.WriteFile(path, []byte("externally changed"), 0o644))
+
+		err = e.Save(false)
+
+		assert.ErrorIs(t, err, view.ErrFileChangedOnDisk)
+		data, readErr := os.ReadFile(path)
+		assert.NoError(t, readErr)
+		assert.Equal(t, "externally changed", string(data))
+	})
+
+	t.Run("force save overwrites external change", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, os.WriteFile(path, []byte("externally changed"), 0o644))
+
+		err = e.Save(true)
+
+		assert.NoError(t, err)
+		data, readErr := os.ReadFile(path)
+		assert.NoError(t, readErr)
+		assert.Equal(t, "original\n", string(data))
+	})
+
+	t.Run("refuses save when file is read-only", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, os.Chmod(path, 0o444))
+		t.Cleanup(func() { _ = os.Chmod(path, 0o644) })
+
+		err = e.Save(false)
+
+		assert.ErrorIs(t, err, view.ErrFileReadOnly)
+	})
+
+	t.Run("leaves no backup after a successful save", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc, _ := e.FocusedDocument()
+		rope := doc.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, rope.LenChars(), "changed"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		assert.NoError(t, e.Apply(tx))
+
+		err = e.Save(false)
+
+		assert.NoError(t, err)
+		entries, readErr := os.ReadDir(tmp)
+		assert.NoError(t, readErr)
+		assert.Len(t, entries, 1)
+		assert.Equal(t, "out.txt", entries[0].Name())
+	})
+
+	t.Run("restores original when directory is not writable", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "out.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, os.Chmod(tmp, 0o555))
+		t.Cleanup(func() { _ = os.Chmod(tmp, 0o755) })
+
+		err = e.Save(false)
+
+		assert.Error(t, err)
+		data, readErr := os.ReadFile(path)
+		assert.NoError(t, readErr)
+		assert.Equal(t, "original", string(data))
 	})
 }
 
@@ -606,7 +700,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		replaceFocusedText(t, e, "local")
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 
 		ok := e.ProcessExternalFileChange(path)
 
@@ -706,7 +800,7 @@ func TestDocumentBOM(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
@@ -723,7 +817,7 @@ func TestDocumentBOM(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
@@ -748,7 +842,7 @@ func TestDocumentBOM(t *testing.T) {
 		d, _ := e.FocusedDocument()
 		assert.Equal(t, "v2\n", d.Text().String())
 		assert.True(t, d.HasBOM())
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
@@ -980,7 +1074,7 @@ func TestDocumentAtomicSave(t *testing.T) {
 		e.Options().InsertFinalNewline = false
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
-		err := e.Save()
+		err := e.Save(false)
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
@@ -1051,7 +1145,7 @@ func TestDocumentTrimTrailingWhitespaceWithCRLF(t *testing.T) {
 		doc.SetPath(path)
 		doc.SetLineEnding(core.LineEndingCRLF)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)
@@ -1128,7 +1222,7 @@ func TestDocumentTrimFinalNewlinesSingleEnding(t *testing.T) {
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
 
-		err := e.Save()
+		err := e.Save(false)
 
 		assert.NoError(t, err)
 		data, err := os.ReadFile(path)

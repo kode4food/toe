@@ -173,6 +173,10 @@ func (s *stubController) WorkspaceSymbols(
 	return nil, nil
 }
 
+func (s *stubController) Busy() bool {
+	return false
+}
+
 func TestFormatCommands(t *testing.T) {
 	t.Run("format on plain text reports no formatter", func(t *testing.T) {
 		e, km := defaultsEnv(t, "hello\n")

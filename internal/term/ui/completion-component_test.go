@@ -32,6 +32,7 @@ type completionController struct {
 	signatureEmpty      bool
 	incomplete          bool
 	refreshIncomplete   bool
+	busy                bool
 }
 
 //goland:noinspection GoRedundantConversion
@@ -1594,6 +1595,10 @@ func (c *completionController) WorkspaceSymbols(
 	*view.Document, string,
 ) ([]view.Symbol, error) {
 	return nil, nil
+}
+
+func (c *completionController) Busy() bool {
+	return c.busy
 }
 
 func hasRightEdgeThumb(out string) bool {

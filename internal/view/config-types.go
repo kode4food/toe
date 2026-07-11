@@ -121,6 +121,7 @@ const (
 	StatusLineVersionControl   StatusLineElement = "version-control"
 	StatusLineRegister         StatusLineElement = "register"
 	StatusLineModified         StatusLineElement = "file-modified-indicator"
+	StatusLineSpinner          StatusLineElement = "spinner"
 
 	CursorKindBlock     CursorKind = "block"
 	CursorKindBar       CursorKind = "bar"
@@ -179,6 +180,7 @@ var AllStatusLineElements = []StatusLineElement{
 	StatusLineVersionControl,
 	StatusLineRegister,
 	StatusLineModified,
+	StatusLineSpinner,
 }
 
 var (

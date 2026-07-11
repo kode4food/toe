@@ -125,6 +125,7 @@ type (
 		FormatSelection(*Document, Id) error
 		DocumentSymbols(*Document) ([]Symbol, error)
 		WorkspaceSymbols(*Document, string) ([]Symbol, error)
+		Busy() bool
 	}
 
 	// FileOperationController handles user-initiated filesystem operations

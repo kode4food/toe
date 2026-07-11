@@ -17,21 +17,30 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type locationController struct {
-	locations     []view.Location
-	symbols       []view.Symbol
-	commands      []string
-	actions       []view.CodeAction
-	highlights    []view.DocumentHighlight
-	signatureHelp view.SignatureHelp
-	err           error
-	applied       string
-	renamed       string
-}
+type (
+	locationController struct {
+		locations     []view.Location
+		symbols       []view.Symbol
+		commands      []string
+		actions       []view.CodeAction
+		highlights    []view.DocumentHighlight
+		signatureHelp view.SignatureHelp
+		err           error
+		applied       string
+		renamed       string
+	}
 
-type gotoActionCase struct {
-	desc   string
-	action func(ui.Model) command.KeyAction
+	gotoActionCase struct {
+		desc   string
+		action func(ui.Model) command.KeyAction
+	}
+)
+
+var gotoActionCases = []gotoActionCase{
+	{"GotoDeclarationAction", ui.Model.GotoDeclarationAction},
+	{"GotoTypeDefinitionAction", ui.Model.GotoTypeDefinitionAction},
+	{"GotoImplementationAction", ui.Model.GotoImplementationAction},
+	{"GotoReferenceAction", ui.Model.GotoReferenceAction},
 }
 
 func TestLocationAction(t *testing.T) {
@@ -772,11 +781,8 @@ func (c *locationController) WorkspaceSymbols(
 	return c.symbols, nil
 }
 
-var gotoActionCases = []gotoActionCase{
-	{"GotoDeclarationAction", ui.Model.GotoDeclarationAction},
-	{"GotoTypeDefinitionAction", ui.Model.GotoTypeDefinitionAction},
-	{"GotoImplementationAction", ui.Model.GotoImplementationAction},
-	{"GotoReferenceAction", ui.Model.GotoReferenceAction},
+func (c *locationController) Busy() bool {
+	return false
 }
 
 func TestGotoActions(t *testing.T) {

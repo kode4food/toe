@@ -84,6 +84,7 @@ func (o *Options) StatusLineLeft() []StatusLineItem {
 	}
 	return []StatusLineItem{
 		{Element: StatusLineMode, Pinned: true},
+		{Element: StatusLineSpinner},
 		{Element: StatusLineFileName},
 		{Element: StatusLineReadOnly},
 		{Element: StatusLineModified},
@@ -99,6 +100,7 @@ func (o *Options) StatusLineRight() []StatusLineItem {
 		{Element: StatusLineDiagnostics},
 		{Element: StatusLineSelections},
 		{Element: StatusLineRegister},
+		{Element: StatusLineFileEncoding},
 		{Element: StatusLinePosition, Pinned: true},
 	}
 }

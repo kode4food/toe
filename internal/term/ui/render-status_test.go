@@ -298,6 +298,15 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			want: " main ",
 		},
 		{
+			element: view.StatusLineSpinner,
+			setup: func(t *testing.T) *view.Editor {
+				e := view.NewEditor(t.TempDir())
+				e.SetLanguageServerController(&completionController{busy: true})
+				return e
+			},
+			want: "⣷",
+		},
+		{
 			element: view.StatusLineRegister,
 			setup: func(t *testing.T) *view.Editor {
 				e := view.NewEditor(t.TempDir())

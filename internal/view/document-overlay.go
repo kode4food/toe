@@ -1,6 +1,10 @@
 package view
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/kode4food/toe/internal/core"
+)
 
 // SetDocumentColors stores document-wide LSP colors
 func (d *Document) SetDocumentColors(colors []DocumentColor) {
@@ -94,6 +98,35 @@ func (d *Document) InlayHints(vid Id) []InlayHint {
 	return getOverlayMap(&d.ls, d.ls.hints, vid)
 }
 
+func (d *Document) remapOverlays(cs core.ChangeSet) {
+	d.ls.Lock()
+	defer d.ls.Unlock()
+	for i := range d.ls.diagnostics {
+		from, to := remapRange(
+			cs, d.ls.diagnostics[i].Range.From, d.ls.diagnostics[i].Range.To,
+		)
+		d.ls.diagnostics[i].Range.From, d.ls.diagnostics[i].Range.To = from, to
+	}
+	for i := range d.ls.links {
+		d.ls.links[i].From, d.ls.links[i].To =
+			remapRange(cs, d.ls.links[i].From, d.ls.links[i].To)
+	}
+	for i := range d.ls.colors {
+		d.ls.colors[i].From, d.ls.colors[i].To =
+			remapRange(cs, d.ls.colors[i].From, d.ls.colors[i].To)
+	}
+	for _, hl := range d.ls.highlights {
+		for i := range hl {
+			hl[i].From, hl[i].To = remapRange(cs, hl[i].From, hl[i].To)
+		}
+	}
+	for _, hints := range d.ls.hints {
+		for i := range hints {
+			hints[i].Pos = remapPos(cs, hints[i].Pos)
+		}
+	}
+}
+
 // setOverlaySlice reports whether field's content actually changed
 func setOverlaySlice[T comparable](ls *lsState, field *[]T, items []T) bool {
 	ls.Lock()
@@ -165,4 +198,20 @@ func getOverlayMap[T any](ls *lsState, m map[Id][]T, vid Id) []T {
 	ls.RLock()
 	defer ls.RUnlock()
 	return slices.Clone(m[vid])
+}
+
+func remapRange(cs core.ChangeSet, from, to int) (int, int) {
+	r, err := cs.MapRange(core.NewRange(from, to))
+	if err != nil {
+		return from, to
+	}
+	return r.Anchor, r.Head
+}
+
+func remapPos(cs core.ChangeSet, pos int) int {
+	p, err := cs.MapPos(pos, core.AssocAfterSticky)
+	if err != nil {
+		return pos
+	}
+	return p
 }

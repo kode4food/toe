@@ -148,7 +148,7 @@ func TestSession(t *testing.T) {
 		case <-s.Updates():
 		default:
 		}
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 		select {
 		case <-s.Updates():
 		case <-time.After(5 * time.Second):

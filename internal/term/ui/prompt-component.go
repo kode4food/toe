@@ -52,6 +52,8 @@ const (
 	promptCompletionPadX      = 1
 )
 
+var _ BufferOverlayComponent = (*PromptComponent)(nil)
+
 func (p *PromptComponent) HandleEvent(
 	msg tea.Msg, cx *Context,
 ) (EventResult, tea.Cmd) {
@@ -100,8 +102,6 @@ type promptComponentArgs struct {
 	fn       promptHandler
 	pickerFn pickerBuilder
 }
-
-var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
 func newPromptComponent(args promptComponentArgs) *PromptComponent {
 	return &PromptComponent{

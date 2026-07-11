@@ -392,7 +392,7 @@ func TestEditorSaveAll(t *testing.T) {
 	t.Run("save all with no paths returns errors", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.VSplitNew()
-		errs := e.SaveAll()
+		errs := e.SaveAll(false)
 		assert.Empty(t, errs)
 	})
 
@@ -403,7 +403,7 @@ func TestEditorSaveAll(t *testing.T) {
 		e := testutil.EditorWithText(t, "content")
 		doc, _ := e.FocusedDocument()
 		doc.SetPath(path)
-		errs := e.SaveAll()
+		errs := e.SaveAll(false)
 		assert.Empty(t, errs)
 		data, err := os.ReadFile(path)
 		assert.NoError(t, err)
@@ -1120,7 +1120,7 @@ func TestEditorSaveNoDoc(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		e.CloseView(v.ID())
-		err := e.Save()
+		err := e.Save(false)
 		assert.Error(t, err)
 	})
 }
@@ -1200,7 +1200,7 @@ func TestEditorRedoNoView(t *testing.T) {
 func TestEditorSaveAllWithError(t *testing.T) {
 	t.Run("modified scratch returns error", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "unsaved")
-		errs := e.SaveAll()
+		errs := e.SaveAll(false)
 		assert.Equal(t, 1, len(errs))
 	})
 }
@@ -1430,7 +1430,7 @@ func TestEditorSaveWithFileOps(t *testing.T) {
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		doc.SetPath(newPath)
-		assert.NoError(t, e.Save())
+		assert.NoError(t, e.Save(false))
 		_, err := os.Stat(newPath)
 		assert.NoError(t, err)
 	})
@@ -1445,7 +1445,7 @@ func TestEditorSaveAllWithFileOps(t *testing.T) {
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		doc.SetPath(newPath)
-		errs := e.SaveAll()
+		errs := e.SaveAll(false)
 		assert.Empty(t, errs)
 	})
 }

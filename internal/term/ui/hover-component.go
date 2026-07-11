@@ -7,19 +7,21 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type hoverAnchor struct {
-	docID  view.DocumentId
-	viewID view.Id
-	pos    int
-}
+type (
+	hoverComponent struct {
+		overlayBuf
+		ec     *EditorComponent
+		anchor hoverAnchor
+		text   string
+		lines  []popupLine
+	}
 
-type hoverComponent struct {
-	overlayBuf
-	ec     *EditorComponent
-	anchor hoverAnchor
-	text   string
-	lines  []popupLine
-}
+	hoverAnchor struct {
+		docID  view.DocumentId
+		viewID view.Id
+		pos    int
+	}
+)
 
 var _ BufferOverlayComponent = (*hoverComponent)(nil)
 

@@ -2,19 +2,21 @@ package view
 
 import "github.com/kode4food/toe/internal/core"
 
-// DocumentChange describes an editor text change for document observers
-type DocumentChange struct {
-	Before  core.Rope
-	Changes core.ChangeSet
-}
+type (
+	// DocumentObserver receives editor document lifecycle notifications
+	DocumentObserver interface {
+		DocumentOpened(*Document)
+		DocumentChanged(*Document, DocumentChange)
+		DocumentSaved(*Document)
+		DocumentClosed(*Document)
+	}
 
-// DocumentObserver receives editor document lifecycle notifications
-type DocumentObserver interface {
-	DocumentOpened(*Document)
-	DocumentChanged(*Document, DocumentChange)
-	DocumentSaved(*Document)
-	DocumentClosed(*Document)
-}
+	// DocumentChange describes an editor text change for document observers
+	DocumentChange struct {
+		Before  core.Rope
+		Changes core.ChangeSet
+	}
+)
 
 // AddDocumentObserver installs a document lifecycle observer. Observers are
 // notified in registration order

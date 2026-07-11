@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 )
 
-// Save saves the focused document to disk
-func (e *Editor) Save() error {
+// Save saves the focused document to disk. Unless force is set, it refuses
+// an unsafe overwrite (changed on disk, or read-only)
+func (e *Editor) Save(force bool) error {
 	doc, ok := e.FocusedDocument()
 	if !ok {
 		return ErrNoDocument
@@ -17,7 +18,7 @@ func (e *Editor) Save() error {
 	}
 	before := doc.Text()
 	rev := doc.Revision()
-	if err := doc.Save(&e.opts); err != nil {
+	if err := doc.Save(&e.opts, force); err != nil {
 		return err
 	}
 	if doc.Revision() != rev {
@@ -49,8 +50,9 @@ func (e *Editor) NewDocument() *View {
 	return nv
 }
 
-// SaveAll saves all modified documents
-func (e *Editor) SaveAll() []error {
+// SaveAll saves all modified documents. Unless force is set, it refuses an
+// unsafe overwrite (changed on disk, or read-only)
+func (e *Editor) SaveAll(force bool) []error {
 	var errs []error
 	for _, doc := range e.docs {
 		if doc.Modified() {
@@ -60,7 +62,7 @@ func (e *Editor) SaveAll() []error {
 			}
 			before := doc.Text()
 			rev := doc.Revision()
-			if err := doc.Save(&e.opts); err != nil {
+			if err := doc.Save(&e.opts, force); err != nil {
 				errs = append(errs, err)
 				continue
 			}
@@ -90,7 +92,7 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 	oldPath := doc.Path()
 	if oldPath == "" || fileMissing(oldPath) {
 		doc.SetPath(path)
-		return e.Save()
+		return e.Save(force)
 	}
 	newPath, err := filepath.Abs(path)
 	if err != nil {
@@ -117,7 +119,7 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 		_ = ops.DidRenameFile(oldAbs, newPath, false)
 	}
 	if doc.Modified() {
-		return e.Save()
+		return e.Save(force)
 	}
 	return nil
 }

@@ -169,6 +169,10 @@ func (s *stubLSP) WorkspaceSymbols(
 	return nil, nil
 }
 
+func (s *stubLSP) Busy() bool {
+	return false
+}
+
 func editorWithNoView(t *testing.T) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")

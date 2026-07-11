@@ -186,13 +186,13 @@ func (e *EditorComponent) HandleEvent(
 	case tea.BlurMsg:
 		e.focused = false
 		if cx.Editor.Options().AutoSaveFocusLost {
-			cx.Editor.SaveAll()
+			cx.Editor.SaveAll(false)
 		}
 		return ignored(), nil
 
 	case autoSaveMsg:
 		if msg.gen == e.saveSlot.gen {
-			cx.Editor.SaveAll()
+			cx.Editor.SaveAll(false)
 		}
 		return consumed(), nil
 

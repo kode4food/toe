@@ -108,6 +108,7 @@ type (
 		row        int
 		col        int
 		vcsHead    string
+		busy       bool
 	}
 )
 
@@ -132,6 +133,7 @@ var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
 	view.StatusLineDiagnostics:      statusElemDiagnostics,
 	view.StatusLineRegister:         statusElemRegister,
 	view.StatusLineVersionControl:   statusElemVersionControl,
+	view.StatusLineSpinner:          statusElemSpinner,
 }
 
 func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
@@ -330,6 +332,10 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	if vc := r.cx.Editor.VersionControl(); vc != nil {
 		vcsHead, _ = vc.HeadName(doc)
 	}
+	var busy bool
+	if ls := r.cx.Editor.LanguageServerController(); ls != nil {
+		busy = ls.Busy()
+	}
 
 	baseTUI := lipglossToTUIStyle(st)
 
@@ -342,6 +348,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		row: row, col: col,
 		vcsHead: vcsHead,
+		busy:    busy,
 	}
 
 	collectElems := func(items []view.StatusLineItem) []statusElem {
@@ -643,6 +650,13 @@ func statusElemVersionControl(s *statusElemCtx) statusElem {
 		return statusElem{}
 	}
 	return statusElem{text: " " + s.vcsHead + " ", style: s.baseTUI}
+}
+
+func statusElemSpinner(s *statusElemCtx) statusElem {
+	if !s.busy {
+		return statusElem{}
+	}
+	return statusElem{text: " ⣷ ", style: s.baseTUI}
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {

@@ -10,6 +10,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type searchMatch struct {
+	pos     int
+	wrapped bool
+}
+
 const (
 	searchNoMoreMsg  = "No more matches"
 	searchWrappedMsg = "Wrapped around document"
@@ -159,11 +164,6 @@ type searchArgs struct {
 	forward bool
 	wrap    bool
 	extend  bool
-}
-
-type searchMatch struct {
-	pos     int
-	wrapped bool
 }
 
 func searchImpl(args searchArgs) error {

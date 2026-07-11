@@ -419,3 +419,7 @@ func (c *fakeLanguageServerController) WorkspaceSymbols(
 ) ([]view.Symbol, error) {
 	return c.symbols, c.err
 }
+
+func (c *fakeLanguageServerController) Busy() bool {
+	return false
+}

@@ -83,17 +83,11 @@ func Start(cfg *TransportConfig) (context.Context, *Client, error) {
 	if err != nil {
 		return ctx, nil, err
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return ctx, nil, err
-	}
+	tail := &stderrTail{}
+	cmd.Stderr = tail
 	if err := cmd.Start(); err != nil {
 		return ctx, nil, err
 	}
-	tail := &stderrTail{}
-	go func() {
-		_, _ = io.Copy(tail, stderr)
-	}()
 	ctx, client := NewClient(ctx, pipeConn{r: stdout, w: stdin}, cfg.Handler)
 	client.name = cfg.Name
 	client.cmd = cmd

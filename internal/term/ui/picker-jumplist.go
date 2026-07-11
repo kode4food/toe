@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -11,11 +10,6 @@ import (
 type jumplistPickerSource struct {
 	pickerMeta
 }
-
-const (
-	runeTruncEllipsis       = "\u2026" // '…' - horizontal ellipsis
-	jumplistContentsMaxRune = 80
-)
 
 func (j *jumplistPickerSource) Load(
 	e *view.Editor,
@@ -38,9 +32,7 @@ func (j *jumplistPickerSource) Load(
 		display := fmt.Sprintf("%s:%d", name, line+1)
 		items = append(items, PickerItem{
 			Display: display,
-			Columns: []string{
-				display, jumplistContents(text, entry.Selection),
-			},
+			Columns: []string{display},
 			Location: PickerLocation{
 				Target: PickerTarget{ID: entry.DocID},
 				Lines:  lines,
@@ -73,9 +65,9 @@ func JumplistPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &jumplistPickerSource{
 		pickerMeta: pickerMeta{
 			title:       "Jumplist",
-			columns:     []string{"path", "contents"},
+			columns:     []string{"path"},
 			matchColumn: 0,
-			proportions: []int{1, 1},
+			proportions: []int{1},
 		},
 	})
 }
@@ -90,22 +82,4 @@ func jumpLineRange(text core.Rope, sel core.Selection) (int, *PickerLineRange) {
 		return 0, nil
 	}
 	return line, &PickerLineRange{From: line, To: line}
-}
-
-func jumplistContents(text core.Rope, sel core.Selection) string {
-	var parts []string
-	for _, r := range sel.Ranges() {
-		frag, err := r.Fragment(text)
-		if err != nil {
-			continue
-		}
-		parts = append(parts, frag)
-	}
-	s := strings.Join(parts, " ")
-	s = strings.TrimRight(s, "\r\n")
-	runes := []rune(s)
-	if len(runes) > jumplistContentsMaxRune {
-		return string(runes[:jumplistContentsMaxRune]) + runeTruncEllipsis
-	}
-	return s
 }

@@ -99,3 +99,8 @@ func ignored() EventResult {
 func ignoredWith(cb Callback) EventResult {
 	return EventResult{Callback: cb}
 }
+
+func popLayer(c *Compositor, _ *Context) tea.Cmd {
+	c.Pop()
+	return nil
+}

@@ -104,6 +104,7 @@ type (
 		col        int
 		vcsHead    string
 		busy       bool
+		spinFrame  int
 	}
 )
 
@@ -214,8 +215,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		row: row, col: col,
-		vcsHead: vcsHead,
-		busy:    busy,
+		vcsHead:   vcsHead,
+		busy:      busy,
+		spinFrame: r.ec.spinFrame,
 	}
 
 	collectElems := func(items []view.StatusLineItem) []statusElem {

@@ -35,8 +35,9 @@ type (
 
 		lastOptionsGen int
 
-		lastW, lastH int
-		lastDiagKey  diagPopupKey
+		lastW, lastH  int
+		lastDiagKey   diagPopupKey
+		lastSpinFrame int
 	}
 
 	// styleKey identifies the theme+mode combination the cached lipgloss/tui

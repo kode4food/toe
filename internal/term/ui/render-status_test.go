@@ -304,7 +304,7 @@ func TestStatuslineElementRegistry(t *testing.T) {
 				e.SetLanguageServerController(&completionController{busy: true})
 				return e
 			},
-			want: "⣷",
+			want: "⠋",
 		},
 		{
 			element: view.StatusLineRegister,

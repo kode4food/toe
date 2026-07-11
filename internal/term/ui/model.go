@@ -38,7 +38,10 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		context:    cx,
 		component:  ec,
 		initCmd: tea.Batch(
-			ec.fileWatchCmd(cx), vcsUpdateCmd(cx), vcsRefreshCmd(cx),
+			ec.fileWatchCmd(cx),
+			vcsUpdateCmd(cx),
+			vcsRefreshCmd(cx),
+			spinnerTickCmd(),
 		),
 	}
 }

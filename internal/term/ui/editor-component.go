@@ -40,6 +40,7 @@ type (
 		fileWatcher     *editorFileWatcher
 		autoScrollV     mouseAutoScrollAxis
 		autoScrollH     mouseAutoScrollAxis
+		spinFrame       int
 	}
 
 	saveGenSlot struct{ gen int }
@@ -73,9 +74,14 @@ type (
 	vcsUpdatedMsg struct{}
 
 	vcsRefreshMsg struct{}
+
+	spinnerTickMsg struct{}
 )
 
-const vcsRefreshInterval = 5 * time.Second
+const (
+	vcsRefreshInterval  = 5 * time.Second
+	spinnerTickInterval = 80 * time.Millisecond
+)
 
 var _ BufferRenderer = (*EditorComponent)(nil)
 
@@ -211,6 +217,14 @@ func (e *EditorComponent) HandleEvent(
 			vc.Refresh()
 		}
 		return consumed(), vcsRefreshCmd(cx)
+
+	case spinnerTickMsg:
+		if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
+			e.spinFrame++
+		} else {
+			e.spinFrame = 0
+		}
+		return consumed(), spinnerTickCmd()
 
 	case tea.MouseClickMsg:
 		e.completionGen++
@@ -456,6 +470,12 @@ func vcsRefreshCmd(cx *Context) tea.Cmd {
 	}
 	return tea.Tick(vcsRefreshInterval, func(time.Time) tea.Msg {
 		return vcsRefreshMsg{}
+	})
+}
+
+func spinnerTickCmd() tea.Cmd {
+	return tea.Tick(spinnerTickInterval, func(time.Time) tea.Msg {
+		return spinnerTickMsg{}
 	})
 }
 

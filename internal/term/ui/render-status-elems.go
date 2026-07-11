@@ -9,31 +9,44 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-const busyGlyph = "\u28f7" // ⣷
+var (
+	statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
+		view.StatusLineMode:             statusElemMode,
+		view.StatusLineSeparator:        statusElemSeparator,
+		view.StatusLineFileName:         statusElemFileName,
+		view.StatusLineFileBaseName:     statusElemFileBaseName,
+		view.StatusLineFileAbsolutePath: statusElemFileAbsPath,
+		view.StatusLineReadOnly:         statusElemReadOnly,
+		view.StatusLineModified:         statusElemModified,
+		view.StatusLineSelections:       statusElemSelections,
+		view.StatusLinePrimaryLen:       statusElemPrimaryLen,
+		view.StatusLinePosition:         statusElemPosition,
+		view.StatusLinePercent:          statusElemPercent,
+		view.StatusLineTotalLines:       statusElemTotalLines,
+		view.StatusLineFileEncoding:     statusElemEncoding,
+		view.StatusLineFileLineEnding:   statusElemLineEnding,
+		view.StatusLineSpacer:           statusElemSpacer,
+		view.StatusLineFileIndentStyle:  statusElemIndentStyle,
+		view.StatusLineFileType:         statusElemFileType,
+		view.StatusLineDiagnostics:      statusElemDiagnostics,
+		view.StatusLineRegister:         statusElemRegister,
+		view.StatusLineVersionControl:   statusElemVersionControl,
+		view.StatusLineSpinner:          statusElemSpinner,
+	}
 
-var statusElemFns = map[view.StatusLineElement]func(*statusElemCtx) statusElem{
-	view.StatusLineMode:             statusElemMode,
-	view.StatusLineSeparator:        statusElemSeparator,
-	view.StatusLineFileName:         statusElemFileName,
-	view.StatusLineFileBaseName:     statusElemFileBaseName,
-	view.StatusLineFileAbsolutePath: statusElemFileAbsPath,
-	view.StatusLineReadOnly:         statusElemReadOnly,
-	view.StatusLineModified:         statusElemModified,
-	view.StatusLineSelections:       statusElemSelections,
-	view.StatusLinePrimaryLen:       statusElemPrimaryLen,
-	view.StatusLinePosition:         statusElemPosition,
-	view.StatusLinePercent:          statusElemPercent,
-	view.StatusLineTotalLines:       statusElemTotalLines,
-	view.StatusLineFileEncoding:     statusElemEncoding,
-	view.StatusLineFileLineEnding:   statusElemLineEnding,
-	view.StatusLineSpacer:           statusElemSpacer,
-	view.StatusLineFileIndentStyle:  statusElemIndentStyle,
-	view.StatusLineFileType:         statusElemFileType,
-	view.StatusLineDiagnostics:      statusElemDiagnostics,
-	view.StatusLineRegister:         statusElemRegister,
-	view.StatusLineVersionControl:   statusElemVersionControl,
-	view.StatusLineSpinner:          statusElemSpinner,
-}
+	spinFrames = []string{
+		"\u280b", // ⠋
+		"\u2819", // ⠙
+		"\u2839", // ⠹
+		"\u2838", // ⠸
+		"\u283c", // ⠼
+		"\u2834", // ⠴
+		"\u2826", // ⠦
+		"\u2827", // ⠧
+		"\u2807", // ⠇
+		"\u280f", // ⠏
+	}
+)
 
 func statusElemMode(s *statusElemCtx) statusElem {
 	return statusElem{
@@ -194,7 +207,8 @@ func statusElemSpinner(s *statusElemCtx) statusElem {
 	if !s.busy {
 		return statusElem{}
 	}
-	return statusElem{text: " " + busyGlyph + " ", style: s.baseTUI}
+	frame := spinFrames[s.spinFrame%len(spinFrames)]
+	return statusElem{text: " " + frame + " ", style: s.baseTUI}
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {

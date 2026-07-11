@@ -436,6 +436,43 @@ func TestThemeRender(t *testing.T) {
 		assert.NotContains(t, out, "cursor warning")
 	})
 
+	t.Run("clearing diagnostic clears stale popup", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		pathA := filepath.Join(root, "a.txt")
+		pathB := filepath.Join(root, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("plain\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("second file\n"), 0o644))
+		e := view.NewEditor(root)
+		vA, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		docB, err := e.SwitchOrOpenDoc(pathB)
+		assert.NoError(t, err)
+		e.ResizeTree(80, 24)
+		_, ok := e.VSplit(docB.ID())
+		assert.True(t, ok)
+		// vA (docA) sits on the left; the diagnostic popup always renders
+		// in the screen's top-right corner, over the OTHER (docB) pane
+		e.FocusView(vA.ID())
+		docA, ok := e.Document(vA.DocID())
+		assert.True(t, ok)
+		docA.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Severity: view.DiagnosticSeverityError,
+			Message:  "unused value",
+		}})
+		e.Options().Theme = "mocha"
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		assert.Contains(t, stripANSI(m.View().Content), "unused value")
+
+		docA.ClearDiagnostics()
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "unused value")
+		assert.Contains(t, out, "second file")
+	})
+
 	t.Run("renders rulers on short lines", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())

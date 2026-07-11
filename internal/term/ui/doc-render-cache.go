@@ -24,7 +24,7 @@ type (
 		docCaches map[view.DocumentId]*docRenderCache
 
 		// rebuilt only when theme or mode changes between frames
-		stylesKey  string
+		stylesKey  styleKey
 		lgStyles   *lipglossStyles
 		tuiStyles  *tuiStyles
 		hlFn       func(string) lipgloss.Style
@@ -38,6 +38,21 @@ type (
 		lastOptionsGen int
 
 		lastW, lastH int
+		lastDiagKey  diagPopupKey
+	}
+
+	// styleKey identifies the theme+mode combination the cached lipgloss/tui
+	// styles were built for
+	styleKey struct {
+		theme string
+		mode  view.Mode
+	}
+
+	// diagPopupKey identifies the diagnostic popup's rendered content, so a
+	// change (including disappearing) can be detected across frames
+	diagPopupKey struct {
+		severity view.DiagnosticSeverity
+		text     string
 	}
 
 	viewRowEntry struct {

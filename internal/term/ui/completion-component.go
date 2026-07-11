@@ -573,10 +573,10 @@ func (c *completionComponent) resetCursor() {
 	c.ensureCursorVisible(c.visibleRows())
 }
 
-func (c *completionComponent) restoreCursor(selected string) {
-	if selected != "" {
+func (c *completionComponent) restoreCursor(selected completionItemKey) {
+	if selected != (completionItemKey{}) {
 		for i, item := range c.items {
-			if completionItemKey(item) == selected {
+			if keyOfCompletionItem(item) == selected {
 				c.cursor = i
 				c.ensureCursorVisible(c.visibleRows())
 				return
@@ -586,11 +586,11 @@ func (c *completionComponent) restoreCursor(selected string) {
 	c.resetCursor()
 }
 
-func (c *completionComponent) selectedKey() string {
+func (c *completionComponent) selectedKey() completionItemKey {
 	if c.cursor < 0 || c.cursor >= len(c.items) {
-		return ""
+		return completionItemKey{}
 	}
-	return completionItemKey(c.items[c.cursor])
+	return keyOfCompletionItem(c.items[c.cursor])
 }
 
 func (c *completionComponent) clampScroll(rows int) {
@@ -678,11 +678,18 @@ func completionMatchScore(item view.CompletionItem, query string) (int, bool) {
 	return fuzzyCompletionScore(text, query)
 }
 
-func completionItemKey(item view.CompletionItem) string {
+// completionItemKey identifies a completion item for restoring the cursor
+// across a refresh, without allocating a concatenated string to compare
+type completionItemKey struct {
+	id                  string
+	label, insert, kind string
+}
+
+func keyOfCompletionItem(item view.CompletionItem) completionItemKey {
 	if item.ID != "" {
-		return item.ID
+		return completionItemKey{id: item.ID}
 	}
-	return item.Label + "\x00" + item.Insert + "\x00" + item.Kind
+	return completionItemKey{label: item.Label, insert: item.Insert, kind: item.Kind}
 }
 
 func fuzzyCompletionScore(text, query string) (int, bool) {

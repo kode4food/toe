@@ -116,9 +116,9 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 
 	// styles rebuilt only when theme or mode changes
 	th := r.activeTheme()
-	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
-	if c.stylesKey != stylesKey {
-		c.stylesKey = stylesKey
+	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
+	if c.stylesKey != key {
+		c.stylesKey = key
 		c.lgStyles = new(buildLipglossStyles(th, r.cx.Editor.Mode()))
 		c.tuiStyles = buildTUIStyles(c.lgStyles)
 		c.hlFn = hlStyleFnFor(th)

@@ -154,8 +154,8 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 }
 
 func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
-	stylesKey := th.Name() + "\x00" + r.cx.Editor.Mode().String()
-	stylesChanged := cache.stylesKey != stylesKey
+	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
+	stylesChanged := cache.stylesKey != key
 
 	gen := r.cx.Editor.Options().Gen
 	optionsChanged := cache.lastOptionsGen != gen
@@ -169,8 +169,12 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	sizeChanged := cache.lastW != r.w || cache.lastH != r.h
 	cache.lastW, cache.lastH = r.w, r.h
 
+	diagKey := currentDiagnosticPopupKey(r.cx)
+	diagChanged := cache.lastDiagKey != diagKey
+	cache.lastDiagKey = diagKey
+
 	return stylesChanged || optionsChanged || r.cx.OverlaysChanged ||
-		infoChanged || sizeChanged
+		infoChanged || sizeChanged || diagChanged
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
@@ -316,6 +320,26 @@ func (r *renderPass) drawDiagnosticPopup(
 	for i, line := range lines {
 		buf.SetString(area.x, area.y+i, line, st)
 	}
+}
+
+func currentDiagnosticPopupKey(cx *Context) diagPopupKey {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return diagPopupKey{}
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return diagPopupKey{}
+	}
+	diag, ok := diagnosticAtCursor(doc, v)
+	if !ok {
+		return diagPopupKey{}
+	}
+	text := diagnosticPopupText(diag)
+	if text == "" {
+		return diagPopupKey{}
+	}
+	return diagPopupKey{severity: diag.Severity, text: text}
 }
 
 func paneUnderOverlay(cx *Context, a view.Area, y0 int) bool {

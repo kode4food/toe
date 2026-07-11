@@ -16,7 +16,7 @@ func TestSystemClipboardProviderSelection(t *testing.T) {
 	t.Run("prefers wayland when both are available", func(t *testing.T) {
 		clipFile := filepath.Join(t.TempDir(), "clip.txt")
 		bin := fakeClipboardTools(t, clipFile, "wl-copy", "wl-paste", "xclip")
-		t.Setenv("PATH", bin)
+		t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 		t.Setenv("WAYLAND_DISPLAY", "wayland-0")
 		t.Setenv("DISPLAY", ":0")
 
@@ -31,7 +31,7 @@ func TestSystemClipboardProviderSelection(t *testing.T) {
 	t.Run("falls back to xclip without wayland", func(t *testing.T) {
 		clipFile := filepath.Join(t.TempDir(), "clip.txt")
 		bin := fakeClipboardTools(t, clipFile, "xclip")
-		t.Setenv("PATH", bin)
+		t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 		t.Setenv("WAYLAND_DISPLAY", "")
 		t.Setenv("DISPLAY", ":0")
 

@@ -19,7 +19,7 @@ import (
 )
 
 func stripANSI(s string) string {
-	re := regexp.MustCompile(`\x1b\[[0-9;?]*[ -/]*[@-~]`)
+	re := regexp.MustCompile(`\x1b\[[0-9;:?]*[ -/]*[@-~]`)
 	return strings.TrimRight(re.ReplaceAllString(s, ""), "\n")
 }
 

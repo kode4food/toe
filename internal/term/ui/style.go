@@ -35,6 +35,12 @@ func pickerCountStyle(cx *Context) lipgloss.Style {
 	return bg.Foreground(th.Get("ui.text.inactive").GetForeground())
 }
 
+func pickerHeaderStyle(cx *Context) lipgloss.Style {
+	th := cx.Theme()
+	bg := lipgloss.NewStyle().Background(th.Get("ui.popup").GetBackground())
+	return bg.Foreground(th.Get("ui.text.focus").GetForeground()).Bold(true)
+}
+
 func pickerItemStyle(cx *Context) lipgloss.Style {
 	return cx.Theme().Get("ui.menu")
 }

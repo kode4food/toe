@@ -72,8 +72,12 @@ func writePickerPromptRow(
 func writePickerHeader(buf *tui.Buffer, x, y, w int, p *Picker, cx *Context) {
 	cols := p.source.Columns()
 	widths := pickerColumnWidths(p, max(w-pickerMarkerW-1, 0))
-	colTUI := lipglossToTUIStyle(pickerCountStyle(cx))
-	buf.FillRange(x, y, w, colTUI)
+	bgTUI := lipglossToTUIStyle(pickerHeaderStyle(cx))
+	underlineColor := cx.Theme().Get("ui.text.inactive").GetForeground()
+	colTUI := lipglossToTUIStyle(
+		pickerHeaderStyle(cx).Underline(true).UnderlineColor(underlineColor),
+	)
+	buf.FillRange(x, y, w, bgTUI)
 	cur := x + pickerMarkerW
 	for i, col := range cols {
 		if i > 0 {

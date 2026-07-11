@@ -153,28 +153,41 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	})
 }
 
-func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
+func (r *renderPass) forceFullRedraw(
+	cache *renderCache, th *theme.Theme,
+) (force bool) {
 	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
-	stylesChanged := cache.stylesKey != key
+	if cache.stylesKey != key {
+		force = true
+	}
 
-	gen := r.cx.Editor.Options().Gen
-	optionsChanged := cache.lastOptionsGen != gen
-	cache.lastOptionsGen = gen
+	if gen := r.cx.Editor.Options().Gen; cache.lastOptionsGen != gen {
+		cache.lastOptionsGen = gen
+		force = true
+	}
 
-	infoChanged := cache.lastInfoTitle != r.ec.infoTitle ||
-		!slices.Equal(cache.lastInfoItems, r.ec.infoItems)
-	cache.lastInfoTitle = r.ec.infoTitle
-	cache.lastInfoItems = r.ec.infoItems
+	if r.cx.OverlaysChanged {
+		force = true
+	}
 
-	sizeChanged := cache.lastW != r.w || cache.lastH != r.h
-	cache.lastW, cache.lastH = r.w, r.h
+	if cache.lastInfoTitle != r.ec.infoTitle ||
+		!slices.Equal(cache.lastInfoItems, r.ec.infoItems) {
+		cache.lastInfoTitle = r.ec.infoTitle
+		cache.lastInfoItems = r.ec.infoItems
+		force = true
+	}
 
-	diagKey := currentDiagnosticPopupKey(r.cx)
-	diagChanged := cache.lastDiagKey != diagKey
-	cache.lastDiagKey = diagKey
+	if cache.lastW != r.w || cache.lastH != r.h {
+		cache.lastW, cache.lastH = r.w, r.h
+		force = true
+	}
 
-	return stylesChanged || optionsChanged || r.cx.OverlaysChanged ||
-		infoChanged || sizeChanged || diagChanged
+	if key := currentDiagnosticPopupKey(r.cx); cache.lastDiagKey != key {
+		cache.lastDiagKey = key
+		force = true
+	}
+
+	return
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {

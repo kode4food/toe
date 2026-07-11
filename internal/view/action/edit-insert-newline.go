@@ -142,32 +142,41 @@ func continuedIndent(
 ) (string, bool) {
 	text := doc.Text()
 	indent := leadingWhitespace(text, pos)
+	args := structuralIndentArgs{
+		e: e, text: text, line: line, pos: pos, indent: indent, doc: doc,
+	}
 	if !e.Options().ContinueComments {
-		return structuralIndent(e, text, line, pos, indent, doc), false
+		return structuralIndent(args), false
 	}
 	lang := language.LoadLanguage(doc.Lang())
 	token, ok := core.GetCommentToken(text, lang.CommentTokens, line)
 	if !ok {
-		return structuralIndent(e, text, line, pos, indent, doc), false
+		return structuralIndent(args), false
 	}
 	return indent + token + " ", true
 }
 
-func structuralIndent(
-	e *view.Editor, text core.Rope, line, pos int, indent string,
-	doc *view.Document,
-) string {
-	if next, ok := e.IndentForNewline(doc, line, pos); ok {
+type structuralIndentArgs struct {
+	e      *view.Editor
+	text   core.Rope
+	line   int
+	pos    int
+	indent string
+	doc    *view.Document
+}
+
+func structuralIndent(args structuralIndentArgs) string {
+	if next, ok := args.e.IndentForNewline(args.doc, args.line, args.pos); ok {
 		return next
 	}
-	ch, ok := lastCodeChar(text, line, pos)
+	ch, ok := lastCodeChar(args.text, args.line, args.pos)
 	if !ok || !indentAfter(ch) {
-		return indent
+		return args.indent
 	}
-	if matchingCloseAt(text, pos, ch) {
-		return indent
+	if matchingCloseAt(args.text, args.pos, ch) {
+		return args.indent
 	}
-	return indent + doc.IndentStyle().AsStr()
+	return args.indent + args.doc.IndentStyle().AsStr()
 }
 
 func lastCodeChar(text core.Rope, line, pos int) (rune, bool) {

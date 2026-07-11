@@ -1,12 +1,20 @@
 package syntax
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 
 	sitter "github.com/tree-sitter/go-tree-sitter"
 
 	"github.com/kode4food/toe/internal/core"
+)
+
+var (
+	pythonOutdents  = []string{"elif", "else", "except", "finally"}
+	cLikeOutdents   = []string{"else", "case", "default"}
+	bashOutdents    = []string{"else", "elif", "fi", "done", "esac"}
+	defaultOutdents = []string{"else", "elseif", "end"}
 )
 
 // IndentForNewline returns syntax-aware indentation for a newline after pos
@@ -138,15 +146,13 @@ func outdentLine(lang, body string) bool {
 	word := firstWord(body)
 	switch lang {
 	case "python":
-		return word == "elif" || word == "else" || word == "except" ||
-			word == "finally"
+		return slices.Contains(pythonOutdents, word)
 	case "javascript", "typescript", "tsx":
-		return word == "else" || word == "case" || word == "default"
+		return slices.Contains(cLikeOutdents, word)
 	case "bash":
-		return word == "else" || word == "elif" || word == "fi" ||
-			word == "done" || word == "esac"
+		return slices.Contains(bashOutdents, word)
 	default:
-		return word == "else" || word == "elseif" || word == "end"
+		return slices.Contains(defaultOutdents, word)
 	}
 }
 

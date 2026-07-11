@@ -52,6 +52,27 @@ func TestSystemClipboardProviderSelection(t *testing.T) {
 
 		assert.False(t, clip.Available())
 	})
+
+	t.Run("primary read errors with no provider", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
+		t.Setenv("WAYLAND_DISPLAY", "")
+		t.Setenv("DISPLAY", "")
+
+		clip := action.NewSystemClipboard()
+		_, err := clip.ReadPrimary()
+
+		assert.ErrorIs(t, err, action.ErrNoClipboardProvider)
+	})
+
+	t.Run("primary write errors with no provider", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
+		t.Setenv("WAYLAND_DISPLAY", "")
+		t.Setenv("DISPLAY", "")
+
+		clip := action.NewSystemClipboard()
+
+		assert.ErrorIs(t, clip.WritePrimary("x"), action.ErrNoClipboardProvider)
+	})
 }
 
 func fakeClipboardTools(t *testing.T, clipFile string, names ...string) string {

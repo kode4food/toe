@@ -111,8 +111,9 @@ func ShellKeepPipe(e *view.Editor, cmdStr string) error {
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
+	oldIndex := sel.PrimaryIndex()
 	var kept []core.Range
-	primary := 0
+	index := -1
 	for i, r := range ranges {
 		frag, err := r.Fragment(text)
 		if err != nil {
@@ -120,15 +121,21 @@ func ShellKeepPipe(e *view.Editor, cmdStr string) error {
 		}
 		cmd := makeShellCmd(e, cmdStr)
 		cmd.Stdin = strings.NewReader(frag)
-		if err := cmd.Run(); err == nil {
-			if i == sel.PrimaryIndex() {
-				primary = len(kept)
-			}
-			kept = append(kept, r)
+		if err := cmd.Run(); err != nil {
+			continue
+		}
+		kept = append(kept, r)
+		if index == -1 && i >= oldIndex {
+			index = len(kept) - 1
 		}
 	}
-	if len(kept) == 0 {
+	n := len(kept)
+	if n == 0 {
 		return nil
+	}
+	primary := n - 1
+	if index != -1 {
+		primary = index
 	}
 	newSel, err := core.NewSelection(kept, primary)
 	if err != nil {

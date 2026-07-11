@@ -270,6 +270,49 @@ func TestShell(t *testing.T) {
 		assert.Equal(t, core.NewRange(0, 1), sel.Ranges()[0])
 	})
 
+	t.Run("dropped primary falls to next surviving", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "x\ny\nz")
+		testutil.SetSelection(
+			t, e,
+			[]core.Range{
+				core.NewRange(0, 1),
+				core.NewRange(2, 3),
+				core.NewRange(4, 5),
+			},
+			1,
+		)
+
+		err := action.ShellKeepPipe(e, "grep -v y")
+
+		assert.NoError(t, err)
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, core.NewRange(4, 5), sel.Primary())
+	})
+
+	t.Run("dropped primary falls to last surviving", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "w\nx\ny\ny")
+		testutil.SetSelection(
+			t, e,
+			[]core.Range{
+				core.NewRange(0, 1),
+				core.NewRange(2, 3),
+				core.NewRange(4, 5),
+				core.NewRange(6, 7),
+			},
+			2,
+		)
+
+		err := action.ShellKeepPipe(e, "grep -v y")
+
+		assert.NoError(t, err)
+		v, _ := e.FocusedView()
+		doc, _ := e.FocusedDocument()
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, core.NewRange(2, 3), sel.Primary())
+	})
+
 	t.Run("read file inserts contents", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "input.txt")

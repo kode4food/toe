@@ -23,8 +23,11 @@ func (c *SystemClipboard) Write(text string) error {
 }
 
 func (c *SystemClipboard) WritePrimary(text string) error {
+	if c.provider.write == nil {
+		return ErrNoClipboardProvider
+	}
 	if c.provider.writePrim == nil {
-		return c.Write(text)
+		return nil
 	}
 	return runWrite(c.provider.writePrim, text)
 }
@@ -34,8 +37,11 @@ func (c *SystemClipboard) Read() (string, error) {
 }
 
 func (c *SystemClipboard) ReadPrimary() (string, error) {
+	if c.provider.read == nil {
+		return "", ErrNoClipboardProvider
+	}
 	if c.provider.readPrim == nil {
-		return c.Read()
+		return "", nil
 	}
 	return runRead(c.provider.readPrim)
 }

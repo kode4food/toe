@@ -48,8 +48,9 @@ type (
 		Characters WhitespaceCharacters `toml:"characters"`
 	}
 
-	// WhitespaceRender: a plain-string TOML value sets Default only; a table
-	// sets fields independently, each falling back to Default then "none"
+	// WhitespaceRender holds per-kind whitespace rendering settings. A
+	// plain-string TOML value sets Default only; a table sets fields
+	// independently, each falling back to Default then "none"
 	WhitespaceRender struct {
 		Default *WhitespaceRenderValue
 		Space   *WhitespaceRenderValue

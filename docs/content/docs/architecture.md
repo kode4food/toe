@@ -49,7 +49,7 @@ Packages: `internal/term/ui`, `internal/tui`.
 
 `term/ui` contains the Bubbletea model: the document renderer, status line, prompt, pickers, completion popup, hover and signature popups, overlays, macro handling, mouse handling, and event routing. `internal/tui` is the low-level terminal layer: cell buffers, styles, graphics primitives, spans, and ANSI rendering.
 
-Overlays implement one of two interfaces: `BufferOverlayComponent` (`RenderOverBuffer`) writes cells directly into the frame buffer and is the fast path for complex panels; `OverlayComponent` composes lipgloss layers and suits simple string-based overlays like the command prompt. Bordered popups share the `popup` helper so content and border render in one pass.
+Every overlay (completion, hover, signature help, code actions, pickers, the command prompt) implements `BufferOverlayComponent`: `Layout` reports where it goes and how big it is, `PaintBuffer` draws into a buffer it owns, and the compositor blits that buffer onto the frame at the reported position. Each overlay caches its own paint buffer and skips repainting when nothing about it changed since the last frame (size, content, and theme all unchanged), so a popup that only moves re-blits instead of redrawing. Bordered popups share the `popup` helper so content and border render in one pass.
 
 ### Syntax And Themes
 
@@ -91,8 +91,8 @@ Because document text is a persistent `Rope`, background workers can keep the te
 - **Commands** — add a command module under `term/defaults` that registers signatures against the command registry. Registered commands automatically participate in key binding, prompt completion, and the command palette.
 - **Actions** — put reusable editing behavior in `view/action` so commands, keymaps, and UI components can share it.
 - **Themes** — themes are TOML scope-to-style maps decoded by `internal/term/theme` and loaded through `loader`. The four embedded Catppuccin variants (`latte`, `frappe`, `macchiato`, `mocha`) are the supported theme names today.
-- **Clipboard** — register yanks and pastes use `view/register`. System clipboard actions detect external tools (`pbcopy`/`pbpaste`, `xclip`, `xsel`, or `wl-copy`/`wl-paste`) directly in `view/action`; OSC 52 and custom command providers are not implemented yet.
-- **UI components** — complex overlays implement `BufferOverlayComponent` and draw directly into the frame buffer. Simple string overlays can implement `OverlayComponent`. Pickers share source/list/render helpers for matching, hit testing, scrolling, preview caching, and cursor visibility.
+- **Clipboard** — register yanks and pastes use `view/register`. System clipboard actions detect external tools (`pbcopy`/`pbpaste`, `xclip`, `xsel`, or `wl-copy`/`wl-paste`) directly in `view/action`. An OSC 52 layer wraps the system clipboard so a copy also reaches the clipboard of a terminal reached over SSH; custom command providers are not implemented yet.
+- **UI components** — overlays implement `BufferOverlayComponent` (`Layout` + `PaintBuffer`) and are composed by the compositor via blit, never by drawing directly into the shared frame buffer. Pickers share source/list/render helpers for matching, hit testing, scrolling, preview caching, and cursor visibility.
 
 ## Testing Strategy
 

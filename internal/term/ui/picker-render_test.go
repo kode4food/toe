@@ -3,6 +3,7 @@ package ui_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -85,6 +87,45 @@ func TestPickerRender(t *testing.T) {
 		assert.Contains(t, out, "┬")
 		assert.Contains(t, out, "flags")
 		assert.Contains(t, out, "path")
+	})
+
+	t.Run("preview follows live cursor", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.txt")
+		text := "one\ntwo\nthree\nfour\nfive\n"
+		assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
+
+		render := func(cursor int) string {
+			e := view.NewEditor(dir)
+			_, err := e.OpenFile(path)
+			assert.NoError(t, err)
+			testutil.SetCursor(t, e, cursor)
+
+			km := command.NewKeymaps()
+			m := ui.New(e, km)
+			bindNormalTestAction(
+				km, "buffer_picker", m.PickerAction(bufferPicker),
+				[]command.KeyEvent{char('p')},
+			)
+			m = resize(m, 100, 30)
+			m = sendKey(m, 'p')
+			return m.View().Content
+		}
+
+		atStart := render(0)
+		atFour := render(strings.Index(text, "four"))
+
+		oneStart := previewPaneLine(t, atStart, "one")
+		oneFour := previewPaneLine(t, atFour, "one")
+		fourStart := previewPaneLine(t, atStart, "four")
+		fourFour := previewPaneLine(t, atFour, "four")
+
+		assert.NotEqual(t, oneStart, oneFour,
+			"preview highlight on doc's first line should move"+
+				" once the cursor leaves it")
+		assert.NotEqual(t, fourStart, fourFour,
+			"preview highlight should follow the cursor to its"+
+				" current line")
 	})
 
 	t.Run("file explorer shows root title", func(t *testing.T) {

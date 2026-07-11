@@ -52,7 +52,7 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
 			return
 		}
 		if p.hlFrom < 0 {
-			sel := doc.Selection()
+			sel := p.previewSelection(doc)
 			if l, err := doc.Text().CharToLine(
 				sel.Primary().Cursor(doc.Text()),
 			); err == nil {
@@ -71,6 +71,13 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
 		text := p.item.Preview(p.w, p.h)
 		p.blitPlaceholderInto(buf, x, y, text)
 	}
+}
+
+func (p *previewCtx) previewSelection(doc *view.Document) core.Selection {
+	if fv, ok := p.editor.FocusedView(); ok && fv.DocID() == doc.ID() {
+		return doc.SelectionFor(fv.ID())
+	}
+	return doc.Selection()
 }
 
 func (p *previewCtx) renderDocInto(

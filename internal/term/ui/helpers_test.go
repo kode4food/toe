@@ -29,6 +29,23 @@ func assertPromptCountRightPadding(t *testing.T, out string) {
 	assert.True(t, re.MatchString(out))
 }
 
+func previewPaneLine(t *testing.T, content, want string) string {
+	t.Helper()
+	for raw := range strings.SplitSeq(content, "\n") {
+		stripped := stripANSI(raw)
+		if !strings.Contains(stripped, "│") {
+			continue
+		}
+		for col := range strings.SplitSeq(stripped, "│") {
+			if strings.TrimSpace(col) == want {
+				return raw
+			}
+		}
+	}
+	t.Fatalf("no preview pane row found containing %q", want)
+	return ""
+}
+
 func assertRenderedWidth(t *testing.T, out string, w int) {
 	t.Helper()
 	for line := range strings.SplitSeq(out, "\n") {

@@ -23,19 +23,6 @@ var (
 	ErrNoClipboardProvider = errors.New("no clipboard provider found")
 )
 
-// MakeTTYAvailable returns a function that reports whether the TTY can be
-// opened for writing. Call once at the term layer; pass the result where needed
-func MakeTTYAvailable() func() bool {
-	return func() bool {
-		f, err := os.OpenFile(ttyDevice, os.O_WRONLY, 0)
-		if err != nil {
-			return false
-		}
-		_ = f.Close()
-		return true
-	}
-}
-
 // MakeTTYWriter returns a function that writes text via OSC 52 to the TTY.
 // Returns false if the TTY is unavailable or the write fails. Call once at the
 // term layer; pass the result where needed
@@ -52,24 +39,6 @@ func MakeTTYWriter() TTYWriter {
 		}
 		_, err = seq.WriteTo(f)
 		return err == nil
-	}
-}
-
-// ShowClipboardProvider names the active clipboard mechanism for the status
-// bar. clip is the editor's clipboard; ttyAvail reports whether OSC 52 output
-// is possible
-func ShowClipboardProvider(clip view.Clipboard, ttyAvail func() bool) string {
-	sys := clip != nil && clip.Available()
-	osc := ttyAvail != nil && ttyAvail()
-	switch {
-	case sys && osc:
-		return "osc52+system"
-	case sys:
-		return "system"
-	case osc:
-		return "osc52"
-	default:
-		return "none"
 	}
 }
 

@@ -168,7 +168,6 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 | `paste_primary_clipboard_before` | `primary-clipboard-paste-before` | Paste primary clipboard before selections |
 | `primary_clipboard_paste_replace` | `primary-clipboard-paste-replace` | Replace selections by primary clipboard |
 | `clear_register` | `clear-register` | Clear given register. If no argument is given, clear all registers |
-| `show_clipboard_provider` | `show-clipboard-provider` | Show clipboard provider name in status bar |
 
 ## Search
 

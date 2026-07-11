@@ -41,12 +41,6 @@ func TestClipboardYankPaste(t *testing.T) {
 		e, km := defaultsEnv(t, "abc")
 		runCmd(t, km, e, "clear_register")
 	})
-
-	t.Run("show clipboard provider returns info", func(t *testing.T) {
-		e, km := defaultsEnv(t, "")
-		res := runCmd(t, km, e, "show_clipboard_provider")
-		assert.NotEmpty(t, res.Message)
-	})
 }
 
 func TestClipboardSystemClipboard(t *testing.T) {

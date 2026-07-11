@@ -46,18 +46,9 @@ func TestClipboardNoProvider(t *testing.T) {
 
 		assert.NotPanics(t, func() { action.ClipboardReplace(e) })
 	})
-
-	t.Run("provider is none", func(t *testing.T) {
-		assert.Equal(t, "none", action.ShowClipboardProvider(nil, nil))
-	})
 }
 
 func TestClipboard(t *testing.T) {
-	t.Run("provider is system", func(t *testing.T) {
-		assert.Equal(t, "system",
-			action.ShowClipboardProvider(testutil.NewFakeClipboard(), nil))
-	})
-
 	t.Run("yank to clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		clip := testutil.NewFakeClipboard()

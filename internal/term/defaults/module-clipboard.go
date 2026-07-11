@@ -22,12 +22,10 @@ const (
 	actPastePrimaryClipboardBefore = "paste_primary_clipboard_before"
 	actPrimaryClipboardReplace     = "primary_clipboard_paste_replace"
 	actClearRegister               = "clear_register"
-	actShowClipboardProvider       = "show_clipboard_provider"
 )
 
 func clipboardModule() command.Module {
 	spc := prefixed(char(' '))
-	ttyAvail := action.MakeTTYAvailable()
 
 	return command.Module{
 		Commands: []command.Command{
@@ -153,16 +151,6 @@ func clipboardModule() command.Module {
 					return command.Result{Message: "register cleared"}
 				},
 				Aliases:   []string{"clear-register"},
-				Signature: sig(),
-			},
-			{
-				Name:      actShowClipboardProvider,
-				DocString: "Show clipboard provider name in status bar",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					msg := action.ShowClipboardProvider(e.Clipboard(), ttyAvail)
-					return command.Result{Message: msg}
-				},
-				Aliases:   []string{"show-clipboard-provider"},
 				Signature: sig(),
 			},
 		},

@@ -2,57 +2,48 @@
 
 package action
 
-import "os/exec"
+import (
+	"os"
+	"os/exec"
+)
 
-func clipboardAvailable() bool {
-	for _, t := range []string{"xclip", "xsel", "wl-copy"} {
-		if _, err := exec.LookPath(t); err == nil {
-			return true
+func detectClipboardProvider() clipboardProvider {
+	if os.Getenv("WAYLAND_DISPLAY") != "" {
+		if paste, ok := lookPath("wl-paste"); ok {
+			if copyBin, ok := lookPath("wl-copy"); ok {
+				return clipboardProvider{
+					name:      "wayland",
+					read:      []string{paste, "--no-newline"},
+					write:     []string{copyBin, "--type", "text/plain"},
+					readPrim:  []string{paste, "-p", "--no-newline"},
+					writePrim: []string{copyBin, "-p", "--type", "text/plain"},
+				}
+			}
 		}
 	}
-	return false
+	if os.Getenv("DISPLAY") != "" {
+		if xclip, ok := lookPath("xclip"); ok {
+			return clipboardProvider{
+				name:      "xclip",
+				read:      []string{xclip, "-o", "-selection", "clipboard"},
+				write:     []string{xclip, "-i", "-selection", "clipboard"},
+				readPrim:  []string{xclip, "-o"},
+				writePrim: []string{xclip, "-i"},
+			}
+		}
+		if xsel, ok := lookPath("xsel"); ok && xselWorks(xsel) {
+			return clipboardProvider{
+				name:      "xsel",
+				read:      []string{xsel, "-o", "-b"},
+				write:     []string{xsel, "-i", "-b"},
+				readPrim:  []string{xsel, "-o"},
+				writePrim: []string{xsel, "-i"},
+			}
+		}
+	}
+	return clipboardProvider{name: "none"}
 }
 
-func writeClipboard(text string) error {
-	if tryWriteCmds([][]string{
-		{"xclip", "-selection", "clipboard"},
-		{"xsel", "--clipboard", "--input"},
-		{"wl-copy"},
-	}, text) {
-		return nil
-	}
-	return ErrNoClipboardProvider
-}
-
-func writePrimaryClipboard(text string) error {
-	if tryWriteCmds([][]string{
-		{"xclip", "-selection", "primary"},
-		{"xsel", "--primary", "--input"},
-		{"wl-copy", "--primary"},
-	}, text) {
-		return nil
-	}
-	return ErrNoClipboardProvider
-}
-
-func readClipboard() (string, error) {
-	if v, ok := tryReadCmds([][]string{
-		{"xclip", "-selection", "clipboard", "-o"},
-		{"xsel", "--clipboard", "--output"},
-		{"wl-paste", "--no-newline"},
-	}); ok {
-		return v, nil
-	}
-	return "", ErrNoClipboardProvider
-}
-
-func readPrimaryClipboard() (string, error) {
-	if v, ok := tryReadCmds([][]string{
-		{"xclip", "-selection", "primary", "-o"},
-		{"xsel", "--primary", "--output"},
-		{"wl-paste", "--primary", "--no-newline"},
-	}); ok {
-		return v, nil
-	}
-	return readClipboard()
+func xselWorks(xsel string) bool {
+	return exec.Command(xsel, "-o", "-b").Run() == nil
 }

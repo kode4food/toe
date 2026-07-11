@@ -2,31 +2,17 @@
 
 package action
 
-import "os/exec"
-
-func clipboardAvailable() bool {
-	_, err := exec.LookPath("pbcopy")
-	return err == nil
-}
-
-func writeClipboard(text string) error {
-	if tryWriteCmds([][]string{{"pbcopy"}}, text) {
-		return nil
+func detectClipboardProvider() clipboardProvider {
+	paste, okPaste := lookPath("pbpaste")
+	copyBin, okCopy := lookPath("pbcopy")
+	if okPaste && okCopy {
+		return clipboardProvider{
+			name:      "pasteboard",
+			read:      []string{paste},
+			write:     []string{copyBin},
+			readPrim:  []string{paste},
+			writePrim: []string{copyBin},
+		}
 	}
-	return ErrNoClipboardProvider
-}
-
-func writePrimaryClipboard(text string) error {
-	return writeClipboard(text)
-}
-
-func readClipboard() (string, error) {
-	if v, ok := tryReadCmds([][]string{{"pbpaste"}}); ok {
-		return v, nil
-	}
-	return "", ErrNoClipboardProvider
-}
-
-func readPrimaryClipboard() (string, error) {
-	return readClipboard()
+	return clipboardProvider{name: "none"}
 }

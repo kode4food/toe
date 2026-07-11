@@ -494,6 +494,33 @@ func TestTreeEdges(t *testing.T) {
 		assert.False(t, views[1].Focused)
 	})
 
+	t.Run("set focus marks old and new view dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		first, ok := e.FocusedView()
+		assert.True(t, ok)
+		second := e.VSplitNew()
+		assert.NotNil(t, second)
+		first.ConsumeDirty()
+		second.ConsumeDirty()
+
+		e.Tree().SetFocus(first.ID())
+
+		assert.True(t, first.ConsumeDirty())
+		assert.True(t, second.ConsumeDirty())
+	})
+
+	t.Run("set focus to same id is a no-op", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		v.ConsumeDirty()
+
+		e.Tree().SetFocus(v.ID())
+
+		assert.False(t, v.ConsumeDirty())
+	})
+
 	t.Run("remove last view empties tree", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, ok := e.FocusedView()

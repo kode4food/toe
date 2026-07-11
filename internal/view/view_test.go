@@ -266,6 +266,46 @@ func TestViewArea(t *testing.T) {
 	})
 }
 
+func TestViewConsumeDirty(t *testing.T) {
+	t.Run("new view starts dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		assert.True(t, v.ConsumeDirty())
+	})
+
+	t.Run("consuming clears the flag", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		v.ConsumeDirty()
+		assert.False(t, v.ConsumeDirty())
+	})
+
+	t.Run("setting area to same value stays clean", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		v.ConsumeDirty()
+		v.SetArea(v.Area())
+		assert.False(t, v.ConsumeDirty())
+	})
+
+	t.Run("setting area to new value marks dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		v.ConsumeDirty()
+		v.SetArea(view.Area{Width: 10, Height: 5})
+		assert.True(t, v.ConsumeDirty())
+	})
+
+	t.Run("mark dirty forces dirty on next consume", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		v.ConsumeDirty()
+		v.MarkDirty()
+		assert.True(t, v.ConsumeDirty())
+		assert.False(t, v.ConsumeDirty())
+	})
+}
+
 func TestViewFreeScroll(t *testing.T) {
 	t.Run("begin and end round-trips", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

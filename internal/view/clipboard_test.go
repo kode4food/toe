@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
 
@@ -52,6 +53,33 @@ func TestPasteBefore(t *testing.T) {
 	action.PasteBefore(e)
 
 	assert.Equal(t, "abb", doc.Text().String())
+}
+
+func TestDefaultClipboard(t *testing.T) {
+	e := view.NewEditor("/tmp")
+	clip := e.Clipboard()
+
+	assert.False(t, clip.Available())
+
+	val, err := clip.Read()
+	assert.NoError(t, err)
+	assert.Equal(t, "", val)
+
+	val, err = clip.ReadPrimary()
+	assert.NoError(t, err)
+	assert.Equal(t, "", val)
+
+	assert.NoError(t, clip.Write("x"))
+	assert.NoError(t, clip.WritePrimary("x"))
+}
+
+func TestSetClipboard(t *testing.T) {
+	e := view.NewEditor("/tmp")
+	fake := testutil.NewFakeClipboard()
+
+	e.SetClipboard(fake)
+
+	assert.Same(t, view.Clipboard(fake), e.Clipboard())
 }
 
 func TestPasteAfterLinewise(t *testing.T) {

@@ -1255,6 +1255,59 @@ tab_width = 2
 	})
 }
 
+func TestDocumentConsumeDirty(t *testing.T) {
+	t.Run("unseen view is dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		assert.True(t, d.ConsumeDirty(v.ID()))
+	})
+
+	t.Run("consuming clears the flag", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.ConsumeDirty(v.ID())
+		assert.False(t, d.ConsumeDirty(v.ID()))
+	})
+
+	t.Run("editing text marks every view dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.ConsumeDirty(v.ID())
+		rope := d.Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(0, 0, "x"),
+		})
+		assert.NoError(t, err)
+		tx := core.NewTransaction(rope).WithChanges(cs)
+		assert.NoError(t, d.Apply(tx, v.ID()))
+		assert.True(t, d.ConsumeDirty(v.ID()))
+	})
+
+	t.Run("changing selection marks that view dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.SetSelectionFor(v.ID(), core.PointSelection(0))
+		d.ConsumeDirty(v.ID())
+		d.SetSelectionFor(v.ID(), core.PointSelection(0))
+		assert.False(t, d.ConsumeDirty(v.ID()))
+		d.SetSelectionFor(v.ID(), core.PointSelection(1))
+		assert.True(t, d.ConsumeDirty(v.ID()))
+	})
+
+	t.Run("removing a view forgets its dirty state", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		d, _ := e.FocusedDocument()
+		d.ConsumeDirty(v.ID())
+		d.RemoveView(v.ID())
+		assert.True(t, d.ConsumeDirty(v.ID()))
+	})
+}
+
 func writeViewLanguages(t *testing.T, root, text string) {
 	t.Helper()
 	dir := filepath.Join(root, loader.DirName)

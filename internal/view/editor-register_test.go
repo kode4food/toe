@@ -57,6 +57,28 @@ func TestEditorRegisters(t *testing.T) {
 		assert.Equal(t, []string{"a", "c"}, e.ReadRegister('+'))
 	})
 
+	t.Run("first register returns first value", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "alpha beta")
+		testutil.SetSelection(t, e, []core.Range{
+			core.NewRange(0, 5),
+			core.NewRange(6, 10),
+		}, 0)
+
+		val, ok := e.FirstRegister('.')
+
+		assert.True(t, ok)
+		assert.Equal(t, "alpha", val)
+	})
+
+	t.Run("first register on empty register is not ok", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcd")
+
+		val, ok := e.FirstRegister('q')
+
+		assert.False(t, ok)
+		assert.Equal(t, "", val)
+	})
+
 	t.Run("external clipboard reads as one value", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
 		clip := testutil.NewFakeClipboard()

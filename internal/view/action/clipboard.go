@@ -23,25 +23,6 @@ var (
 	ErrNoClipboardProvider = errors.New("no clipboard provider found")
 )
 
-// MakeTTYWriter returns a function that writes text via OSC 52 to the TTY.
-// Returns false if the TTY is unavailable or the write fails. Call once at the
-// term layer; pass the result where needed
-func MakeTTYWriter() TTYWriter {
-	return func(text string, primary bool) bool {
-		f, err := os.OpenFile(ttyDevice, os.O_WRONLY, 0)
-		if err != nil {
-			return false
-		}
-		defer func() { _ = f.Close() }()
-		seq := osc52.New(text)
-		if primary {
-			seq = seq.Primary()
-		}
-		_, err = seq.WriteTo(f)
-		return err == nil
-	}
-}
-
 // YankToClipboard copies all selection text to the system clipboard
 func YankToClipboard(e *view.Editor) {
 	values := selectionFragments(e)
@@ -189,4 +170,18 @@ func withPrimaryClipboard(e *view.Editor, fn func(*view.Editor)) {
 	e.SetRegister(primaryClipboardRegister)
 	fn(e)
 	e.SetRegister(prev)
+}
+
+func writeTTY(text string, primary bool) bool {
+	f, err := os.OpenFile(ttyDevice, os.O_WRONLY, 0)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = f.Close() }()
+	seq := osc52.New(text)
+	if primary {
+		seq = seq.Primary()
+	}
+	_, err = seq.WriteTo(f)
+	return err == nil
 }

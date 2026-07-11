@@ -20,4 +20,13 @@ func TestSystemClipboardDarwin(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "hello from toe", got)
 	})
+
+	t.Run("roundtrips primary through pasteboard", func(t *testing.T) {
+		clip := action.NewSystemClipboard()
+
+		assert.NoError(t, clip.WritePrimary("primary from toe"))
+		got, err := clip.ReadPrimary()
+		assert.NoError(t, err)
+		assert.Equal(t, "primary from toe", got)
+	})
 }

@@ -53,6 +53,20 @@ func TestSystemClipboardProviderSelection(t *testing.T) {
 		assert.False(t, clip.Available())
 	})
 
+	t.Run("primary read/write round-trips when supported", func(t *testing.T) {
+		clipFile := filepath.Join(t.TempDir(), "clip.txt")
+		bin := fakeClipboardTools(t, clipFile, "xclip")
+		t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+		t.Setenv("WAYLAND_DISPLAY", "")
+		t.Setenv("DISPLAY", ":0")
+
+		clip := action.NewSystemClipboard()
+		assert.NoError(t, clip.WritePrimary("primary text"))
+		got, err := clip.ReadPrimary()
+		assert.NoError(t, err)
+		assert.Equal(t, "primary text", got)
+	})
+
 	t.Run("primary read errors with no provider", func(t *testing.T) {
 		t.Setenv("PATH", t.TempDir())
 		t.Setenv("WAYLAND_DISPLAY", "")

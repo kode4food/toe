@@ -48,6 +48,26 @@ func TestClipboardNoProvider(t *testing.T) {
 	})
 }
 
+func TestOSC52Clipboard(t *testing.T) {
+	t.Run("write forwards to inner clipboard", func(t *testing.T) {
+		inner := testutil.NewFakeClipboard()
+		clip := action.NewOSC52Clipboard(inner)
+
+		assert.NoError(t, clip.Write("hello"))
+
+		assert.Equal(t, "hello", inner.System)
+	})
+
+	t.Run("write primary forwards to inner clipboard", func(t *testing.T) {
+		inner := testutil.NewFakeClipboard()
+		clip := action.NewOSC52Clipboard(inner)
+
+		assert.NoError(t, clip.WritePrimary("hello"))
+
+		assert.Equal(t, "hello", inner.Primary)
+	})
+}
+
 func TestClipboard(t *testing.T) {
 	t.Run("yank to clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")

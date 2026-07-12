@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -26,6 +27,12 @@ func TestTerminalPane(t *testing.T) {
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Close() })
+
+		select {
+		case <-tp.Updates():
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected an update signal for the shell's startup output")
+		}
 
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: ']'})
 		m = m2.(ui.Model)
@@ -63,6 +70,75 @@ func TestTerminalPane(t *testing.T) {
 		_ = m.View()
 
 		assert.Equal(t, termID, e.Tree().Focus())
+	})
+
+	t.Run("falls back when $SHELL is unset", func(t *testing.T) {
+		t.Setenv("SHELL", "")
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+		focus := e.Tree().Focus()
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+
+		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		select {
+		case <-tp.Updates():
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected the fallback shell to produce output")
+		}
+	})
+
+	t.Run("renders every underline style", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		for _, sgr := range []string{"4", "4:2", "4:3", "4:4", "4:5"} {
+			_, err := tp.Emulator().Write(
+				fmt.Appendf(nil, "\x1b[%sma\x1b[0m", sgr),
+			)
+			assert.NoError(t, err)
+		}
+
+		assert.NotPanics(t, func() { _ = m.View() })
+	})
+
+	t.Run("focused click forwards to the shell", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+
+		termID := e.Tree().Focus()
+		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		area := tp.Area()
+
+		_, err := tp.Emulator().Write([]byte("\x1b[?1000h"))
+		assert.NoError(t, err)
+		assert.True(t, tp.MouseEnabled())
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		// the click was consumed by the shell, not the normal focus/select
+		// logic, so the terminal pane stays focused and mouse mode stays on
+		assert.Equal(t, termID, e.Tree().Focus())
+		assert.True(t, tp.MouseEnabled())
 	})
 
 	t.Run("session restore reopens the shell", func(t *testing.T) {
@@ -180,6 +256,211 @@ func TestTerminalPane(t *testing.T) {
 		assert.Positive(t, tp.ScrollOffset())
 		assert.False(t, tp.SearchScrollback("does-not-exist"))
 	})
+
+	t.Run("Ctrl-backslash detaches without closing", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		_, ok = e.VSplit(doc.ID())
+		assert.True(t, ok)
+		focus := e.Tree().Focus()
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.NotEqual(t, focus, e.Tree().Focus())
+		_, ok = e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+	})
+
+	t.Run("wheel down scrolls toward live output", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		area := tp.Area()
+		writeScrollbackLines(t, tp, 50)
+		tp.ScrollLines(50)
+		before := tp.ScrollOffset()
+		assert.Positive(t, before)
+
+		m2, _ := m.Update(tea.MouseWheelMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseWheelDown,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Less(t, tp.ScrollOffset(), before)
+	})
+
+	t.Run("release and motion forward when enabled", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		area := tp.Area()
+
+		_, err := tp.Emulator().Write([]byte("\x1b[?1000h"))
+		assert.NoError(t, err)
+		assert.True(t, tp.MouseEnabled())
+
+		m2, _ := m.Update(tea.MouseReleaseMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseMotionMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Equal(t, tp.ID(), e.Tree().Get(e.Tree().Focus()).ID())
+	})
+
+	t.Run("click below content area is dropped", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		area := tp.Area()
+
+		_, err := tp.Emulator().Write([]byte("\x1b[?1000h"))
+		assert.NoError(t, err)
+
+		statusRow := area.Y + area.Height - 1
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: area.X, Y: statusRow, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Equal(t, tp.ID(), e.Tree().Get(e.Tree().Focus()).ID())
+	})
+
+	t.Run("focused click is a no-op untracked", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		area := tp.Area()
+		assert.False(t, tp.MouseEnabled())
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Equal(t, tp.ID(), e.Tree().Get(e.Tree().Focus()).ID())
+	})
+
+	t.Run("polling restores the pane on shell exit", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+		focus := e.Tree().Focus()
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+
+		assert.NoError(t, tp.Close())
+		<-tp.Closed()
+
+		batch, ok := m.Init()().(tea.BatchMsg)
+		assert.True(t, ok)
+		for _, cmd := range batch {
+			if msg, ok := runWithTimeout(cmd, time.Second); ok {
+				m2, _ := m.Update(msg)
+				m = m2.(ui.Model)
+			}
+		}
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		assert.Equal(t, focus, v.ID())
+	})
+
+	t.Run("closing all panes kills their shells", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+
+		ui.CloseAllTerminalPanes(e)
+
+		<-tp.Closed()
+	})
+
+	t.Run("Ctrl-w / jumps to a scrollback match", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		writeScrollbackLines(t, tp, 50)
+
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m = m2.(ui.Model)
+		m = sendKey(m, '/')
+		for _, ch := range "line 3" {
+			m = sendKey(m, ch)
+		}
+		m2, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		m = m2.(ui.Model)
+
+		assert.Positive(t, tp.ScrollOffset())
+	})
+}
+
+// runWithTimeout runs cmd and reports its message, or ok=false if it hasn't
+// fired within d — used to skip Init's long-lived, event-driven commands
+func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {
+	if cmd == nil {
+		return nil, false
+	}
+	done := make(chan tea.Msg, 1)
+	go func() { done <- cmd() }()
+	select {
+	case msg := <-done:
+		return msg, true
+	case <-time.After(d):
+		return nil, false
+	}
 }
 
 // waitForResize blocks until the pane's debounced PTY/emulator resize has

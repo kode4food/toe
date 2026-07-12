@@ -1628,3 +1628,88 @@ func TestReloadAllError(t *testing.T) {
 		assert.NotEmpty(t, errs)
 	})
 }
+
+func TestEditorReplacePane(t *testing.T) {
+	t.Run("swaps and returns the displaced pane", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		id := v.ID()
+
+		old := e.ReplacePane(id, &fakePane{})
+
+		assert.Same(t, v, old)
+		_, ok := e.Tree().Get(id).(*fakePane)
+		assert.True(t, ok)
+	})
+}
+
+func TestEditorDiscardPane(t *testing.T) {
+	t.Run("closes the doc when it was the last view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		old := e.ReplacePane(v.ID(), &fakePane{})
+		docCount := len(e.AllDocuments())
+
+		e.DiscardPane(old)
+
+		assert.Equal(t, docCount-1, len(e.AllDocuments()))
+	})
+
+	t.Run("keeps the doc if still referenced", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		v, _ := e.FocusedView()
+		e.VSplit(v.DocID())
+		old := e.ReplacePane(v.ID(), &fakePane{})
+		docCount := len(e.AllDocuments())
+
+		e.DiscardPane(old)
+
+		assert.Equal(t, docCount, len(e.AllDocuments()))
+	})
+
+	t.Run("is a no-op for a non-View pane", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		assert.NotPanics(t, func() { e.DiscardPane(&fakePane{}) })
+	})
+}
+
+func TestEditorClosePane(t *testing.T) {
+	t.Run("replaces the sole pane with scratch", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v, _ := e.FocusedView()
+		id := v.ID()
+
+		e.ClosePane(id)
+
+		assert.Equal(t, 1, e.Tree().Count())
+		_, ok := e.Tree().Get(id).(*view.View)
+		assert.True(t, ok)
+	})
+
+	t.Run("closes a View pane like CloseView", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		e.VSplitNew()
+		count := e.Tree().Count()
+		v, _ := e.FocusedView()
+
+		e.ClosePane(v.ID())
+
+		assert.Equal(t, count-1, e.Tree().Count())
+	})
+
+	t.Run("removes a non-View pane, keeps docs", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		e.VSplitNew()
+		id := e.Tree().Split(&fakePane{}, view.LayoutVertical)
+		count := e.Tree().Count()
+		docCount := len(e.AllDocuments())
+
+		e.ClosePane(id)
+
+		assert.Equal(t, count-1, e.Tree().Count())
+		assert.Equal(t, docCount, len(e.AllDocuments()))
+	})
+}

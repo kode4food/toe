@@ -533,6 +533,44 @@ func TestTreeEdges(t *testing.T) {
 	})
 }
 
+func TestTreeReplacePane(t *testing.T) {
+	t.Run("keeps position and marks pane dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		id := v.ID()
+		area := v.Area()
+		replacement := &fakePane{}
+
+		e.Tree().ReplacePane(id, replacement)
+
+		assert.Equal(t, id, replacement.ID())
+		assert.Equal(t, area, replacement.Area())
+		assert.True(t, replacement.ConsumeDirty())
+	})
+
+	t.Run("does not mark an unfocused pane dirty", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		first, ok := e.FocusedView()
+		assert.True(t, ok)
+		e.VSplitNew()
+		replacement := &fakePane{}
+
+		e.Tree().ReplacePane(first.ID(), replacement)
+
+		assert.False(t, replacement.ConsumeDirty())
+	})
+
+	t.Run("is a no-op for an unknown id", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		assert.NotPanics(t, func() {
+			e.Tree().ReplacePane(view.InvalidViewId, &fakePane{})
+		})
+	})
+}
+
 func TestViewEdges(t *testing.T) {
 	t.Run("jump list keeps newest entries", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

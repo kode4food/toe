@@ -799,13 +799,21 @@ kind = "bogus"
 // fakePane stands in for a non-View pane (like a terminal) that the session
 // format cannot serialize
 type fakePane struct {
-	id   view.Id
-	area view.Area
+	id    view.Id
+	area  view.Area
+	dirty bool
 }
 
 func (p *fakePane) ID() view.Id         { return p.id }
 func (p *fakePane) SetID(id view.Id)    { p.id = id }
 func (p *fakePane) Area() view.Area     { return p.area }
 func (p *fakePane) SetArea(a view.Area) { p.area = a }
-func (p *fakePane) MarkDirty()          {}
-func (p *fakePane) Mode() view.Mode     { return view.ModeTerminal }
+func (p *fakePane) MarkDirty()          { p.dirty = true }
+
+// ConsumeDirty reports whether MarkDirty was called since the last check
+func (p *fakePane) ConsumeDirty() bool {
+	d := p.dirty
+	p.dirty = false
+	return d
+}
+func (p *fakePane) Mode() view.Mode { return view.ModeTerminal }

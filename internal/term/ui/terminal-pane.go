@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
@@ -20,23 +21,31 @@ import (
 // TerminalPane is a [view.Pane] backed by a real PTY and a VT100/xterm
 // emulator, so full-screen programs (editors, pagers, TUIs) render correctly
 type TerminalPane struct {
-	id      view.Id
-	area    view.Area
-	dirty   bool
-	emu     *vt.SafeEmulator
-	pty     *os.File
-	cmd     *exec.Cmd
-	updates chan struct{}
-	closed  chan struct{}
-	restore view.Pane
-	titleMu sync.Mutex
-	title   string
-	scrollN int
-	mouseMu sync.Mutex
-	mouseOn bool
+	id          view.Id
+	area        view.Area
+	dirty       bool
+	emu         *vt.SafeEmulator
+	pty         *os.File
+	cmd         *exec.Cmd
+	updates     chan struct{}
+	closed      chan struct{}
+	restore     view.Pane
+	titleMu     sync.Mutex
+	title       string
+	scrollN     int
+	mouseMu     sync.Mutex
+	mouseOn     bool
+	resizeMu    sync.Mutex
+	resizeTimer *time.Timer
+	pendingW    int
+	pendingH    int
 }
 
 var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
+
+// resizeDebounce avoids flooding a full-screen program with SIGWINCH while
+// a pane separator is being dragged
+const resizeDebounce = 50 * time.Millisecond
 
 var (
 	_ view.Pane  = (*TerminalPane)(nil)
@@ -98,8 +107,8 @@ func (t *TerminalPane) Mode() view.Mode {
 	return view.ModeTerminal
 }
 
-// SetArea resizes the PTY and the emulator to match the pane's screen
-// rectangle
+// SetArea updates the pane's screen rectangle and schedules a debounced
+// PTY/emulator resize, so a rapid run of calls only reflows the shell once
 func (t *TerminalPane) SetArea(a view.Area) {
 	if a == t.area {
 		return
@@ -108,6 +117,23 @@ func (t *TerminalPane) SetArea(a view.Area) {
 	t.dirty = true
 	// reserve the bottom row for the status line, matching renderTerminalPane
 	w, h := max(a.Width, 1), max(a.Height-1, 1)
+	t.scheduleResize(w, h)
+}
+
+func (t *TerminalPane) scheduleResize(w, h int) {
+	t.resizeMu.Lock()
+	defer t.resizeMu.Unlock()
+	t.pendingW, t.pendingH = w, h
+	if t.resizeTimer != nil {
+		t.resizeTimer.Stop()
+	}
+	t.resizeTimer = time.AfterFunc(resizeDebounce, t.applyResize)
+}
+
+func (t *TerminalPane) applyResize() {
+	t.resizeMu.Lock()
+	w, h := t.pendingW, t.pendingH
+	t.resizeMu.Unlock()
 	t.emu.Resize(w, h)
 	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
 }
@@ -228,6 +254,11 @@ func (t *TerminalPane) SearchScrollback(pattern string) bool {
 
 // Close terminates the shell process and releases the PTY
 func (t *TerminalPane) Close() error {
+	t.resizeMu.Lock()
+	if t.resizeTimer != nil {
+		t.resizeTimer.Stop()
+	}
+	t.resizeMu.Unlock()
 	_ = t.cmd.Process.Kill()
 	return t.pty.Close()
 }

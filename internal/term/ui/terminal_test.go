@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
@@ -123,6 +124,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Close() })
 
+		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 		assert.Positive(t, tp.Emulator().ScrollbackLen())
 		assert.Equal(t, 0, tp.ScrollOffset())
@@ -171,12 +173,24 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Close() })
 
+		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 
 		assert.True(t, tp.SearchScrollback("line 3"))
 		assert.Positive(t, tp.ScrollOffset())
 		assert.False(t, tp.SearchScrollback("does-not-exist"))
 	})
+}
+
+// waitForResize blocks until the pane's debounced PTY/emulator resize has
+// applied, so a test's writes land at the pane's real dimensions
+func waitForResize(t *testing.T, tp *ui.TerminalPane) {
+	t.Helper()
+	area := tp.Area()
+	w, h := max(area.Width, 1), max(area.Height-1, 1)
+	assert.Eventually(t, func() bool {
+		return tp.Emulator().Width() == w && tp.Emulator().Height() == h
+	}, time.Second, 5*time.Millisecond)
 }
 
 func writeScrollbackLines(t *testing.T, tp *ui.TerminalPane, n int) {

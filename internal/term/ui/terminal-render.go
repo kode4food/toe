@@ -66,6 +66,8 @@ func (r *renderPass) renderTerminalPane(
 	a := tp.Area()
 	contentH := max(a.Height-1, 0)
 	emu := tp.Emulator()
+	bg := r.activeTheme().Get("ui.background").GetBackground()
+	emu.SetBackgroundColor(bg)
 	scr := &tuiScreen{
 		buf: buf, originX: a.X, originY: y0 + a.Y,
 		w: a.Width, h: contentH, widthMeth: emu.WidthMethod(),

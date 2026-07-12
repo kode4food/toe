@@ -94,7 +94,7 @@ func (s Selection) Remove(idx int) (Selection, error) {
 	if idx < 0 || idx >= len(s.ranges) {
 		return Selection{}, fmt.Errorf("%w: %d", ErrRangeIndexNotFound, idx)
 	}
-	s.ranges = append(s.Ranges()[:idx], s.Ranges()[idx+1:]...)
+	s.ranges = slices.Delete(s.Ranges(), idx, idx+1)
 	if idx < s.primaryIndex || s.primaryIndex == len(s.ranges) {
 		s.primaryIndex--
 	}
@@ -208,10 +208,8 @@ func (s Selection) normalize() Selection {
 }
 
 func indexRange(ranges []Range, target Range) int {
-	for i, r := range ranges {
-		if r == target {
-			return i
-		}
+	if idx := slices.Index(ranges, target); idx >= 0 {
+		return idx
 	}
 	return 0
 }

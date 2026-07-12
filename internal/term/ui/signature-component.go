@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -269,12 +270,10 @@ func pushSignatureHelpLayer(comp *Compositor, layer *signatureHelpComponent) {
 }
 
 func removeSignatureHelpLayer(comp *Compositor) {
-	for i := len(comp.layers) - 1; i >= 1; i-- {
-		if _, ok := comp.layers[i].(*signatureHelpComponent); ok {
-			comp.layers = append(comp.layers[:i], comp.layers[i+1:]...)
-			return
-		}
-	}
+	comp.layers = slices.DeleteFunc(comp.layers, func(l Component) bool {
+		_, ok := l.(*signatureHelpComponent)
+		return ok
+	})
 }
 
 func currentSignatureCall(cx *Context) (signatureCall, bool) {

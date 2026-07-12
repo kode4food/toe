@@ -2,6 +2,7 @@ package view
 
 import (
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -91,22 +92,14 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	s := editorSession{
 		Version: sessionVersion,
 	}
-	keys := make([]string, 0, len(opts))
-	for key := range opts {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(opts))
 	if len(keys) > 0 {
 		s.Options = sessionOptions{}
 	}
 	for _, key := range keys {
 		s.Options[key] = opts[key]
 	}
-	regKeys := make([]rune, 0, len(e.registers))
-	for k := range e.registers {
-		regKeys = append(regKeys, k)
-	}
-	slices.Sort(regKeys)
+	regKeys := slices.Sorted(maps.Keys(e.registers))
 	if len(regKeys) > 0 {
 		s.Registers = sessionRegisters{}
 	}

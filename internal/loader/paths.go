@@ -2,6 +2,7 @@ package loader
 
 import (
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -161,11 +162,7 @@ func updateWorkspaceSet(path, workspace string, add bool) error {
 	} else {
 		delete(set, workspace)
 	}
-	lines := make([]string, 0, len(set))
-	for line := range set {
-		lines = append(lines, line)
-	}
-	slices.Sort(lines)
+	lines := slices.Sorted(maps.Keys(set))
 	text := ""
 	if len(lines) > 0 {
 		text = strings.Join(lines, "\n") + "\n"

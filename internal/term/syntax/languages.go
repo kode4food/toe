@@ -1,6 +1,7 @@
 package syntax
 
 import (
+	"maps"
 	"slices"
 
 	hcl "github.com/tree-sitter-grammars/tree-sitter-hcl/bindings/go"
@@ -29,12 +30,7 @@ var langRegistry = map[string]*sitter.Language{
 }
 
 func SupportedLanguages() []string {
-	names := make([]string, 0, len(langRegistry))
-	for name := range langRegistry {
-		names = append(names, name)
-	}
-	slices.Sort(names)
-	return names
+	return slices.Sorted(maps.Keys(langRegistry))
 }
 
 func languageFor(name string) (*sitter.Language, bool) {

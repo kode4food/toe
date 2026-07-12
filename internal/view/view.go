@@ -130,26 +130,14 @@ func (v *View) addDocHistory(did DocumentId) {
 	if did == InvalidDocumentId {
 		return
 	}
-	for i, existing := range v.docHistory {
-		if existing == did {
-			v.docHistory = append(
-				v.docHistory[:i], v.docHistory[i+1:]...,
-			)
-			break
-		}
-	}
+	v.removeDocHistory(did)
 	v.docHistory = append(v.docHistory, did)
 }
 
 func (v *View) removeDocHistory(did DocumentId) {
-	for i := 0; i < len(v.docHistory); i++ {
-		if v.docHistory[i] == did {
-			v.docHistory = append(
-				v.docHistory[:i], v.docHistory[i+1:]...,
-			)
-			i--
-		}
-	}
+	v.docHistory = slices.DeleteFunc(v.docHistory, func(d DocumentId) bool {
+		return d == did
+	})
 }
 
 // Mode returns the current editing mode

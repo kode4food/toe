@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	"go.lsp.dev/protocol"
@@ -52,10 +53,7 @@ func (s *Session) applyWorkspaceChanges(
 	changes map[uri.URI][]protocol.TextEdit,
 	encoding protocol.PositionEncodingKind,
 ) error {
-	uris := make([]uri.URI, 0, len(changes))
-	for u := range changes {
-		uris = append(uris, u)
-	}
+	uris := slices.Collect(maps.Keys(changes))
 	slices.SortFunc(uris, func(a, b uri.URI) int {
 		return cmp.Compare(a.String(), b.String())
 	})

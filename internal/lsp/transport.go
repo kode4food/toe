@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"slices"
@@ -111,11 +112,7 @@ func commandEnv(env map[string]string) []string {
 			out = append(out, e)
 		}
 	}
-	keys := make([]string, 0, len(env))
-	for k := range env {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(env))
 	for _, k := range keys {
 		out = append(out, k+"="+env[k])
 	}

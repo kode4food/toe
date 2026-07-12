@@ -273,7 +273,7 @@ func (t *Tree) removeOrReplace(child Id, replacement Id) {
 	c := t.nodes[parent].container
 	pos := slices.Index(c.children, child)
 	if replacement == 0 {
-		c.children = append(c.children[:pos], c.children[pos+1:]...)
+		c.children = slices.Delete(c.children, pos, pos+1)
 		c.ratios = nil
 	} else {
 		c.children[pos] = replacement

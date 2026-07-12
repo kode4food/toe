@@ -139,7 +139,7 @@ func mergeTOMLArrays(left, right []any, depth int) []any {
 		}
 		if idx >= 0 {
 			lv := out[idx]
-			out = append(out[:idx], out[idx+1:]...)
+			out = slices.Delete(out, idx, idx+1)
 			out = append(out, MergeTOMLValues(lv, rv, depth-1))
 			continue
 		}

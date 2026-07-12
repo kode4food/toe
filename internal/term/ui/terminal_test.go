@@ -432,6 +432,7 @@ func TestTerminalPane(t *testing.T) {
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
@@ -440,8 +441,7 @@ func TestTerminalPane(t *testing.T) {
 		for _, ch := range "line 3" {
 			m = sendKey(m, ch)
 		}
-		m2, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
-		m = m2.(ui.Model)
+		_, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 		assert.Positive(t, tp.ScrollOffset())
 	})

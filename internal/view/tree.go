@@ -12,6 +12,17 @@ type (
 		nextID Id
 	}
 
+	// Pane is the interface a split tree leaf node must implement; *View and
+	// the ui package's terminal pane are the two implementers
+	Pane interface {
+		ID() Id
+		SetID(Id)
+		Area() Area
+		SetArea(Area)
+		MarkDirty()
+		Mode() Mode
+	}
+
 	treeContainer struct {
 		layout   Layout
 		children []Id
@@ -21,11 +32,11 @@ type (
 
 	treeNode struct {
 		parent    Id
-		view      *View
+		pane      Pane
 		container *treeContainer
 	}
 
-	// Layout describes how child views are arranged within a split container
+	// Layout describes how child panes are arranged within a split container
 	Layout int
 
 	// Direction is used to navigate between splits
@@ -51,14 +62,31 @@ const (
 	minPaneHeight = 4
 )
 
-// Insert adds a view as the next sibling after the currently focused view
-func (t *Tree) Insert(v *View) Id {
+func newTree(width, height int) *Tree {
+	t := &Tree{
+		nodes: map[Id]*treeNode{},
+	}
+	t.area = Area{Width: width, Height: height}
+	// root is always a container node
+	t.nextID++
+	rootID := t.nextID
+	t.nodes[rootID] = &treeNode{
+		container: &treeContainer{layout: LayoutVertical},
+	}
+	t.nodes[rootID].parent = rootID
+	t.root = rootID
+	t.focus = rootID
+	return t
+}
+
+// Insert adds a pane as the next sibling after the currently focused pane
+func (t *Tree) Insert(p Pane) Id {
 	focus := t.focus
 	parent := t.nodes[focus].parent
 
 	id := t.allocID()
-	v.id = id
-	t.nodes[id] = &treeNode{parent: parent, view: v}
+	p.SetID(id)
+	t.nodes[id] = &treeNode{parent: parent, pane: p}
 
 	c := t.nodes[parent].container
 	if len(c.children) == 0 {
@@ -71,6 +99,20 @@ func (t *Tree) Insert(v *View) Id {
 	t.focus = id
 	t.recalculate()
 	return id
+}
+
+// ReplacePane swaps the pane at id for p, keeping its tree position and area
+func (t *Tree) ReplacePane(id Id, p Pane) {
+	n, ok := t.nodes[id]
+	if !ok || n.pane == nil {
+		return
+	}
+	p.SetID(id)
+	p.SetArea(n.pane.Area())
+	n.pane = p
+	if t.focus == id {
+		p.MarkDirty()
+	}
 }
 
 // CanSplit reports whether there is enough room to split the focused pane in
@@ -92,7 +134,7 @@ func (t *Tree) CanSplit(layout Layout) bool {
 		}
 	}
 	// focus is wrapped in a new 2-child sub-container with one gap
-	a := t.nodes[focus].view.area
+	a := t.nodes[focus].pane.Area()
 	switch layout {
 	case LayoutVertical:
 		return a.Width >= 2*minPaneWidth+1
@@ -102,16 +144,16 @@ func (t *Tree) CanSplit(layout Layout) bool {
 	return false
 }
 
-// Split creates a new view alongside the focused view using the given layout.
-// If the focused view's parent container already uses the same layout, the new
-// view is added as a sibling. Otherwise a new sub-container is created
-func (t *Tree) Split(v *View, layout Layout) Id {
+// Split creates a new pane alongside the focused pane using the given layout.
+// If the focused pane's parent container already uses the same layout, the
+// new pane is added as a sibling. Otherwise a new sub-container is created
+func (t *Tree) Split(p Pane, layout Layout) Id {
 	focus := t.focus
 	parent := t.nodes[focus].parent
 
 	id := t.allocID()
-	v.id = id
-	t.nodes[id] = &treeNode{view: v}
+	p.SetID(id)
+	t.nodes[id] = &treeNode{pane: p}
 
 	parentC := t.nodes[parent].container
 	if parentC.layout == layout {
@@ -162,10 +204,10 @@ func (t *Tree) Remove(id Id) {
 	t.recalculate()
 }
 
-// Get returns the view with the given id
-func (t *Tree) Get(id Id) *View {
-	if n, ok := t.nodes[id]; ok && n.view != nil {
-		return n.view
+// Get returns the pane at id, or nil if id is not a leaf node
+func (t *Tree) Get(id Id) Pane {
+	if n, ok := t.nodes[id]; ok {
+		return n.pane
 	}
 	return nil
 }
@@ -181,10 +223,10 @@ func (t *Tree) SetFocus(id Id) {
 		return
 	}
 	if old, ok := t.nodes[t.focus]; ok {
-		old.view.MarkDirty()
+		old.pane.MarkDirty()
 	}
 	if n, ok := t.nodes[id]; ok {
-		n.view.MarkDirty()
+		n.pane.MarkDirty()
 	}
 	t.focus = id
 }
@@ -206,33 +248,46 @@ func (t *Tree) Resize(width, height int) bool {
 	return true
 }
 
-// Traverse returns all view nodes in DFS order (left-to-right, top-to-bottom)
-func (t *Tree) Traverse() []*View {
-	return t.traverse(t.root, nil)
+// Range calls fn for each leaf pane in DFS order (left-to-right,
+// top-to-bottom), stopping early if fn returns false. It does not allocate
+func (t *Tree) Range(fn func(Pane) bool) {
+	t.rangePane(t.root, fn)
 }
 
-// Views returns all views in DFS order with a focused flag
-func (t *Tree) Views() []struct {
-	View    *View
-	Focused bool
-} {
-	all := t.Traverse()
-	out := make([]struct {
-		View    *View
-		Focused bool
-	}, len(all))
-	for i, v := range all {
-		out[i] = struct {
-			View    *View
-			Focused bool
-		}{v, v.id == t.focus}
-	}
+// Any reports whether any leaf pane satisfies pred, without allocating
+func (t *Tree) Any(pred func(Pane) bool) bool {
+	found := false
+	t.Range(func(p Pane) bool {
+		found = pred(p)
+		return !found
+	})
+	return found
+}
+
+// Count returns the number of leaf panes, without allocating
+func (t *Tree) Count() int {
+	n := 0
+	t.Range(func(Pane) bool {
+		n++
+		return true
+	})
+	return n
+}
+
+// Traverse returns all leaf panes in DFS order (left-to-right, top-to-bottom).
+// Prefer [Tree.Range] when a slice isn't actually needed
+func (t *Tree) Traverse() []Pane {
+	out := make([]Pane, 0, t.Count())
+	t.Range(func(p Pane) bool {
+		out = append(out, p)
+		return true
+	})
 	return out
 }
 
-// ContainerLayoutAt returns the layout of the container that holds viewID
-func (t *Tree) ContainerLayoutAt(viewID Id) (Layout, bool) {
-	n, ok := t.nodes[viewID]
+// ContainerLayoutAt returns the layout of the container that holds id
+func (t *Tree) ContainerLayoutAt(id Id) (Layout, bool) {
+	n, ok := t.nodes[id]
 	if !ok {
 		return 0, false
 	}
@@ -242,23 +297,6 @@ func (t *Tree) ContainerLayoutAt(viewID Id) (Layout, bool) {
 		return 0, false
 	}
 	return pn.container.layout, true
-}
-
-func newTree(width, height int) *Tree {
-	t := &Tree{
-		nodes: map[Id]*treeNode{},
-	}
-	t.area = Area{Width: width, Height: height}
-	// root is always a container node
-	t.nextID++
-	rootID := t.nextID
-	t.nodes[rootID] = &treeNode{
-		container: &treeContainer{layout: LayoutVertical},
-	}
-	t.nodes[rootID].parent = rootID
-	t.root = rootID
-	t.focus = rootID
-	return t
 }
 
 func (t *Tree) allocID() Id {
@@ -281,13 +319,17 @@ func (t *Tree) removeOrReplace(child Id, replacement Id) {
 	}
 }
 
-func (t *Tree) traverse(id Id, out []*View) []*View {
+// rangePane visits id in DFS order, returning false as soon as fn does, so
+// the caller stops walking sibling subtrees too
+func (t *Tree) rangePane(id Id, fn func(Pane) bool) bool {
 	n := t.nodes[id]
-	if n.view != nil {
-		return append(out, n.view)
+	if n.pane != nil {
+		return fn(n.pane)
 	}
 	for _, child := range n.container.children {
-		out = t.traverse(child, out)
+		if !t.rangePane(child, fn) {
+			return false
+		}
 	}
-	return out
+	return true
 }

@@ -69,6 +69,10 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 }
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
+	p := r.cx.Editor.Tree().Get(r.cx.Editor.Tree().Focus())
+	if pc, ok := p.(PaneCursor); ok {
+		return pc.Cursor(r.cx)
+	}
 	opts := r.cx.Editor.Options()
 	kind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	switch kind {
@@ -211,25 +215,40 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		y0 = 1
 	}
 
-	for _, vs := range r.cx.Editor.Tree().Views() {
-		v := vs.View
-		doc, ok := r.cx.Editor.Document(v.DocID())
-		if !ok {
-			continue
+	focus := r.cx.Editor.Tree().Focus()
+	r.cx.Editor.Tree().Range(func(p view.Pane) bool {
+		focused := p.ID() == focus
+		switch pane := p.(type) {
+		case *view.View:
+			doc, ok := r.cx.Editor.Document(pane.DocID())
+			if !ok {
+				return true
+			}
+			vDirty := pane.ConsumeDirty()
+			dDirty := doc.ConsumeDirty(pane.ID())
+			forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, pane.Area(), y0)
+			if !redrawAll && !forced && !vDirty && !dDirty {
+				return true
+			}
+			if !redrawAll {
+				clearPaneRect(buf, pane.Area(), y0, bgTUI)
+			}
+			r.renderPane(renderPaneArgs{
+				doc: doc, view: pane, buf: buf, y0: y0, focused: focused,
+			})
+		case *TerminalPane:
+			tpDirty := pane.ConsumeDirty()
+			forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, pane.Area(), y0)
+			if !redrawAll && !forced && !tpDirty {
+				return true
+			}
+			if !redrawAll {
+				clearPaneRect(buf, pane.Area(), y0, bgTUI)
+			}
+			r.renderTerminalPane(buf, pane, y0, focused)
 		}
-		vDirty := v.ConsumeDirty()
-		dDirty := doc.ConsumeDirty(v.ID())
-		forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, v.Area(), y0)
-		if !redrawAll && !forced && !vDirty && !dDirty {
-			continue
-		}
-		if !redrawAll {
-			clearPaneRect(buf, v.Area(), y0, bgTUI)
-		}
-		r.renderPane(renderPaneArgs{
-			doc: doc, view: v, buf: buf, y0: y0, focused: vs.Focused,
-		})
-	}
+		return true
+	})
 
 	sepTUI := lipglossToTUIStyle(th.Get("ui.border"))
 	vertCells := make(map[[2]int]bool)

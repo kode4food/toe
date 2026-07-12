@@ -27,6 +27,7 @@ type Editor struct {
 	nextDocID          DocumentId
 	nextAccess         int64
 	lastModifiedDocIDs [2]DocumentId
+	pendingTerminals   []Id
 
 	count          int
 	activeRegister rune
@@ -155,8 +156,8 @@ func (e *Editor) HSplitNew() *View {
 // CloseView closes a view and, if no other view references the same document,
 // also closes the document
 func (e *Editor) CloseView(vid Id) {
-	v := e.tree.Get(vid)
-	if v == nil {
+	v, ok := e.tree.Get(vid).(*View)
+	if !ok {
 		return
 	}
 	focused := e.tree.Focus() == vid
@@ -168,14 +169,7 @@ func (e *Editor) CloseView(vid Id) {
 
 	e.tree.Remove(vid)
 
-	referenced := false
-	for _, ov := range e.tree.Traverse() {
-		if ov.docID == docID {
-			referenced = true
-			break
-		}
-	}
-	if !referenced {
+	if !e.hasView(func(ov *View) bool { return ov.docID == docID }) {
 		if doc, ok := e.docs[docID]; ok {
 			e.documentClosed(doc)
 		}
@@ -186,18 +180,59 @@ func (e *Editor) CloseView(vid Id) {
 	}
 }
 
+// ReplacePane swaps the pane at id for p in place, with no split or reflow, and
+// returns the displaced pane so a caller can restore it later
+func (e *Editor) ReplacePane(id Id, p Pane) Pane {
+	old := e.tree.Get(id)
+	e.tree.ReplacePane(id, p)
+	return old
+}
+
+// DiscardPane closes p's document, if p is a view and this was its last
+// reference — for a displaced pane the caller has decided not to keep
+func (e *Editor) DiscardPane(p Pane) {
+	v, ok := p.(*View)
+	if !ok {
+		return
+	}
+	doc, ok := e.docs[v.docID]
+	if !ok {
+		return
+	}
+	doc.RemoveView(v.id)
+	if e.hasView(func(ov *View) bool { return ov.docID == v.docID }) {
+		return
+	}
+	e.documentClosed(doc)
+	delete(e.docs, v.docID)
+}
+
+// ClosePane closes the pane at id. If it is the tree's only pane, it is
+// replaced with a fresh scratch document instead of leaving the tree empty
+func (e *Editor) ClosePane(id Id) {
+	if e.tree.Count() <= 1 {
+		doc := e.newDocument()
+		e.docs[doc.ID()] = doc
+		e.tree.ReplacePane(id, &View{docID: doc.ID(), mode: ModeNormal})
+		e.markDocAccessed()
+		return
+	}
+	if _, ok := e.tree.Get(id).(*View); ok {
+		e.CloseView(id)
+		return
+	}
+	e.tree.Remove(id)
+}
+
 // FocusedView returns the currently focused view
 func (e *Editor) FocusedView() (*View, bool) {
-	v := e.tree.Get(e.tree.Focus())
-	if v == nil {
-		return nil, false
-	}
-	return v, true
+	v, ok := e.tree.Get(e.tree.Focus()).(*View)
+	return v, ok
 }
 
 // FocusView moves focus to the given view
 func (e *Editor) FocusView(vid Id) {
-	if e.tree.Get(vid) != nil {
+	if _, ok := e.tree.Get(vid).(*View); ok {
 		e.recordLeavingDoc()
 		e.tree.SetFocus(vid)
 		e.markDocAccessed()
@@ -303,11 +338,8 @@ func (e *Editor) ReloadConfig() error {
 
 // View returns a view by id
 func (e *Editor) View(vid Id) (*View, bool) {
-	v := e.tree.Get(vid)
-	if v == nil {
-		return nil, false
-	}
-	return v, true
+	v, ok := e.tree.Get(vid).(*View)
+	return v, ok
 }
 
 // Document returns a document by id
@@ -320,9 +352,12 @@ func (e *Editor) Document(did DocumentId) (*Document, bool) {
 // Views that referenced the document will report no focused document.
 func (e *Editor) DeleteDocument(did DocumentId) {
 	delete(e.docs, did)
-	for _, v := range e.tree.Traverse() {
-		v.removeDocHistory(did)
-	}
+	e.tree.Range(func(p Pane) bool {
+		if v, ok := p.(*View); ok {
+			v.removeDocHistory(did)
+		}
+		return true
+	})
 }
 
 // FocusedDocument returns the document displayed by the focused view
@@ -336,8 +371,8 @@ func (e *Editor) FocusedDocument() (*Document, bool) {
 
 // Mode returns the mode of the focused view
 func (e *Editor) Mode() Mode {
-	if v, ok := e.FocusedView(); ok {
-		return v.Mode()
+	if p := e.tree.Get(e.tree.Focus()); p != nil {
+		return p.Mode()
 	}
 	return ModeNormal
 }
@@ -430,22 +465,53 @@ func (e *Editor) AllDocuments() []*Document {
 
 // AllViews returns all open views in DFS order
 func (e *Editor) AllViews() []*View {
-	return e.tree.Traverse()
+	out := make([]*View, 0, e.tree.Count())
+	e.tree.Range(func(p Pane) bool {
+		if v, ok := p.(*View); ok {
+			out = append(out, v)
+		}
+		return true
+	})
+	return out
+}
+
+// Views returns all open views in DFS order with a focused flag
+func (e *Editor) Views() []struct {
+	View    *View
+	Focused bool
+} {
+	focus := e.tree.Focus()
+	var out []struct {
+		View    *View
+		Focused bool
+	}
+	e.tree.Range(func(p Pane) bool {
+		if v, ok := p.(*View); ok {
+			out = append(out, struct {
+				View    *View
+				Focused bool
+			}{View: v, Focused: v.id == focus})
+		}
+		return true
+	})
+	return out
 }
 
 // VisibleDocuments returns the deduplicated documents currently shown in a pane
 func (e *Editor) VisibleDocuments() []*Document {
 	seen := map[DocumentId]bool{}
 	var out []*Document
-	for _, v := range e.tree.Traverse() {
-		if seen[v.docID] {
-			continue
+	e.tree.Range(func(p Pane) bool {
+		v, ok := p.(*View)
+		if !ok || seen[v.docID] {
+			return true
 		}
 		if doc, ok := e.docs[v.docID]; ok {
 			seen[v.docID] = true
 			out = append(out, doc)
 		}
-	}
+		return true
+	})
 	return out
 }
 
@@ -483,6 +549,14 @@ func (e *Editor) TakeStatusMsg() string {
 	return msg
 }
 
+// TakePendingTerminals returns and clears the panes that held a terminal in
+// the most recently restored session, since a live shell can't be saved
+func (e *Editor) TakePendingTerminals() []Id {
+	ids := e.pendingTerminals
+	e.pendingTerminals = nil
+	return ids
+}
+
 // SetHint stores a transient hint shown during an active continuation
 func (e *Editor) SetHint(h string) {
 	e.hint = h
@@ -493,6 +567,14 @@ func (e *Editor) TakeHint() string {
 	h := e.hint
 	e.hint = ""
 	return h
+}
+
+// hasView reports whether any view in the tree satisfies pred
+func (e *Editor) hasView(pred func(*View) bool) bool {
+	return e.tree.Any(func(p Pane) bool {
+		v, ok := p.(*View)
+		return ok && pred(v)
+	})
 }
 
 // recordPrevDoc adds the current document to the focused view's access history

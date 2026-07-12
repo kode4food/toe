@@ -292,9 +292,9 @@ func TestEditorSwapAndTranspose(t *testing.T) {
 	t.Run("Transpose flips layout", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.VSplitNew()
-		before := e.Tree().Views()
+		before := e.Views()
 		e.Transpose()
-		after := e.Tree().Views()
+		after := e.Views()
 		assert.Equal(t, len(before), len(after))
 	})
 }
@@ -779,7 +779,7 @@ func TestEditorViewByID(t *testing.T) {
 func TestTreeViews(t *testing.T) {
 	t.Run("single view has focused=true", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		views := e.Tree().Views()
+		views := e.Views()
 		assert.Equal(t, 1, len(views))
 		assert.True(t, views[0].Focused)
 	})
@@ -788,7 +788,7 @@ func TestTreeViews(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(80, 24)
 		e.VSplitNew()
-		views := e.Tree().Views()
+		views := e.Views()
 		assert.Equal(t, 2, len(views))
 		focused := 0
 		for _, v := range views {
@@ -988,7 +988,7 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(80, 40)
 		e.HSplitNew()
-		views := e.Tree().Views()
+		views := e.Views()
 		assert.Equal(t, 2, len(views))
 		total := views[0].View.Area().Height + views[1].View.Area().Height
 		// 1 gap row between panes

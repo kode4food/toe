@@ -18,8 +18,8 @@ func (t *Tree) recalculate() {
 		stack = stack[:len(stack)-1]
 
 		n := t.nodes[item.id]
-		if n.view != nil {
-			n.view.SetArea(item.area)
+		if n.pane != nil {
+			n.pane.SetArea(item.area)
 			continue
 		}
 

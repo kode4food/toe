@@ -14,6 +14,15 @@ import (
 func (e *EditorComponent) handleKeyPress(
 	msg tea.KeyPressMsg, cx *Context,
 ) (EventResult, tea.Cmd) {
+	if !e.inWindowChord(msg) {
+		p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
+		if pi, ok := p.(PaneInput); ok {
+			if result, handled := pi.HandleKey(msg, cx); handled {
+				return result, nil
+			}
+		}
+	}
+
 	e.completionGen++
 	k := FromTeaKey(msg)
 

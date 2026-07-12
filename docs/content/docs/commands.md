@@ -51,6 +51,8 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 | `split` | `hs`, `sp` | Horizontal bottom split |
 | `vsplit_new` | `vnew` | Vertical right split scratch buffer |
 | `hsplit_new` | `hnew` | Horizontal bottom split scratch buffer |
+| `terminal` | | Open the user's shell in the focused pane |
+| `terminal_search` | | Search the focused terminal's scrollback |
 | `transpose_view` | | Transpose splits |
 | `wclose` | `wc` | Close window |
 | `wclose!` | `wc!` | Force close window |

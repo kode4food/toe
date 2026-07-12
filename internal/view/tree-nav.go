@@ -2,35 +2,55 @@ package view
 
 import "slices"
 
-// Next returns the id of the view after the focused one in DFS order
+// Next returns the id of the pane after the focused one in DFS order
 func (t *Tree) Next() Id {
-	views := t.Traverse()
-	for i, v := range views {
-		if v.id == t.focus {
-			return views[(i+1)%len(views)].id
+	var first, next Id
+	afterFocus := false
+	t.Range(func(p Pane) bool {
+		id := p.ID()
+		if first == 0 {
+			first = id
 		}
+		if afterFocus {
+			next = id
+			return false
+		}
+		afterFocus = id == t.focus
+		return true
+	})
+	if next != 0 {
+		return next
 	}
-	if len(views) > 0 {
-		return views[0].id
+	if first != 0 {
+		return first
 	}
 	return t.focus
 }
 
-// Prev returns the id of the view before the focused one in DFS order
+// Prev returns the id of the pane before the focused one in DFS order
 func (t *Tree) Prev() Id {
-	views := t.Traverse()
-	for i, v := range views {
-		if v.id == t.focus {
-			return views[(i+len(views)-1)%len(views)].id
+	var prev, last, beforeFocus Id
+	foundFocus := false
+	t.Range(func(p Pane) bool {
+		id := p.ID()
+		if id == t.focus {
+			foundFocus = true
+			beforeFocus = prev
 		}
+		prev, last = id, id
+		return true
+	})
+	switch {
+	case beforeFocus != 0:
+		return beforeFocus
+	case foundFocus, last != 0:
+		return last
+	default:
+		return t.focus
 	}
-	if len(views) > 0 {
-		return views[len(views)-1].id
-	}
-	return t.focus
 }
 
-// Transpose flips the layout of the container holding the focused view
+// Transpose flips the layout of the container holding the focused pane
 func (t *Tree) Transpose() {
 	parent := t.nodes[t.focus].parent
 	if c := t.nodes[parent].container; c != nil {
@@ -68,7 +88,7 @@ func (t *Tree) FindSplitInDirection(id Id, dir Direction) (Id, bool) {
 	}
 }
 
-// SwapSplitInDirection swaps the focused view with the nearest view in the
+// SwapSplitInDirection swaps the focused pane with the nearest pane in the
 // given direction
 func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 	target, ok := t.FindSplitInDirection(t.focus, dir)
@@ -84,9 +104,7 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 		fi := slices.Index(c.children, focus)
 		ti := slices.Index(c.children, target)
 		c.children[fi], c.children[ti] = c.children[ti], c.children[fi]
-		fv := t.nodes[focus].view
-		tv := t.nodes[target].view
-		fv.area, tv.area = tv.area, fv.area
+		swapPaneAreas(t.nodes[focus].pane, t.nodes[target].pane)
 	} else {
 		fc := t.nodes[focusParent].container
 		tc := t.nodes[targetParent].container
@@ -95,9 +113,13 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 		fc.children[fi], tc.children[ti] = tc.children[ti], fc.children[fi]
 		t.nodes[focus].parent = targetParent
 		t.nodes[target].parent = focusParent
-		fv := t.nodes[focus].view
-		tv := t.nodes[target].view
-		fv.area, tv.area = tv.area, fv.area
+		swapPaneAreas(t.nodes[focus].pane, t.nodes[target].pane)
 	}
 	return true
+}
+
+func swapPaneAreas(a, b Pane) {
+	aArea, bArea := a.Area(), b.Area()
+	a.SetArea(bArea)
+	b.SetArea(aArea)
 }

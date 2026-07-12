@@ -348,7 +348,7 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		assert.True(t, ok)
 		_ = m.View()
 
-		views := e.Tree().Views()
+		views := e.Views()
 		before := views[0].View.Area().Width
 		sepX := views[0].View.Area().X + before
 		m2, _ := m.Update(tea.MouseClickMsg{
@@ -360,7 +360,7 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		})
 		_ = m2
 
-		after := e.Tree().Views()[0].View.Area().Width
+		after := e.Views()[0].View.Area().Width
 		assert.Less(t, after, before)
 	})
 
@@ -374,7 +374,7 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		assert.True(t, ok)
 		_ = m.View()
 
-		views := e.Tree().Views()
+		views := e.Views()
 		before := views[0].View.Area().Height
 		sepY := views[0].View.Area().Y + before
 		m2, _ := m.Update(tea.MouseClickMsg{
@@ -386,7 +386,7 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		})
 		_ = m2
 
-		after := e.Tree().Views()[0].View.Area().Height
+		after := e.Views()[0].View.Area().Height
 		assert.Less(t, after, before)
 	})
 }

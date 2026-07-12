@@ -194,10 +194,24 @@ weight: 30
 | `Ctrl+w o` / `Ctrl+w Ctrl+o` | Close windows except current |
 | `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
 | `Ctrl+w t` / `Ctrl+w Ctrl+t` | Transpose splits |
+| `Ctrl+w x` | Open the user's shell in the focused pane |
+| `Ctrl+w /` | Search the focused terminal's scrollback |
 | `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` | Jump to left/below/above/right split |
 | `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
 
 All `Ctrl+w` bindings also work with `Space+w`.
+
+### Terminal Panes
+
+While a terminal pane has focus, all keys pass through to the shell except
+`Ctrl+w`, which still opens the window-management prefix above.
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+\` | Detach: focus another pane, leaving the shell running |
+| `Ctrl+]` | Close: kill the shell and restore what the pane showed before |
+| Mouse wheel | Scroll into scrollback; any keypress returns to live output |
+| Mouse click/drag/wheel | Forwarded to the shell if it enabled mouse tracking (e.g. vim, htop) |
 
 ### Space Menu
 

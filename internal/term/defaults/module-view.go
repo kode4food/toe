@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 	"github.com/kode4food/toe/internal/view/config"
@@ -50,6 +51,8 @@ const (
 	actCloseCurrentView       = "wclose"
 	actCloseCurrentViewForce  = "wclose!"
 	actCloseOtherViews        = "wonly"
+	actTerminal               = "terminal"
+	actTerminalSearch         = "terminal_search"
 	actJumpViewLeft           = "jump_view_left"
 	actJumpViewDown           = "jump_view_down"
 	actJumpViewUp             = "jump_view_up"
@@ -61,7 +64,7 @@ const (
 	actRotateView             = "rotate_view"
 )
 
-func viewModule() command.Module {
+func viewModule(model ui.Model) command.Module {
 	cfg := new(viewSection)
 	z := prefixed(char('z'))
 	Z := prefixed(char('Z'))
@@ -220,7 +223,7 @@ func viewModule() command.Module {
 					e.VSplitNew()
 					return command.Result{}
 				},
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cwn(char('v')), Cwn(ctrl('v'))},
 					{Spcwn(char('v')), Spcwn(ctrl('v'))},
@@ -235,7 +238,7 @@ func viewModule() command.Module {
 					e.HSplitNew()
 					return command.Result{}
 				},
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cwn(char('s')), Cwn(ctrl('s'))},
 					{Spcwn(char('s')), Spcwn(ctrl('s'))},
@@ -244,10 +247,32 @@ func viewModule() command.Module {
 				Signature: sig(),
 			},
 			{
+				Name:      actTerminal,
+				DocString: "Open a shell in the focused pane",
+				Run:       Continuation(model.TerminalAction()),
+				Modes:     []string{"NOR", "SEL", "TRM"},
+				Keys: map[string][]command.KeyBinding{"*": {
+					{Cw(char('x'))},
+					{Spcw(char('x'))},
+				}},
+				Signature: sig(),
+			},
+			{
+				Name:      actTerminalSearch,
+				DocString: "Search the focused terminal's scrollback",
+				Run:       Continuation(model.TerminalSearchAction()),
+				Modes:     []string{"TRM"},
+				Keys: map[string][]command.KeyBinding{"*": {
+					{Cw(char('/'))},
+					{Spcw(char('/'))},
+				}},
+				Signature: sig(),
+			},
+			{
 				Name:      actTransposeView,
 				DocString: "Transpose splits",
 				Run:       Runner(action.TransposeView),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('t')), Cw(ctrl('t'))},
 					{Spcw(char('t')), Spcw(ctrl('t'))},
@@ -288,7 +313,7 @@ func viewModule() command.Module {
 				Name:      actRotateView,
 				DocString: "Goto next window",
 				Run:       Runner(action.RotateView),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('w')), Cw(ctrl('w'))},
 					{Spcw(char('w')), Spcw(ctrl('w'))},
@@ -298,7 +323,7 @@ func viewModule() command.Module {
 				Name:      actJumpViewLeft,
 				DocString: "Jump to left split",
 				Run:       Runner(action.JumpViewLeft),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('h')), Cw(ctrl('h')), Cw(special("left"))},
 					{Spcw(char('h')), Spcw(ctrl('h')), Spcw(special("left"))},
@@ -308,7 +333,7 @@ func viewModule() command.Module {
 				Name:      actJumpViewDown,
 				DocString: "Jump to split below",
 				Run:       Runner(action.JumpViewDown),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('j')), Cw(ctrl('j')), Cw(special("down"))},
 					{Spcw(char('j')), Spcw(ctrl('j')), Spcw(special("down"))},
@@ -318,7 +343,7 @@ func viewModule() command.Module {
 				Name:      actJumpViewUp,
 				DocString: "Jump to split above",
 				Run:       Runner(action.JumpViewUp),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('k')), Cw(ctrl('k')), Cw(special("up"))},
 					{Spcw(char('k')), Spcw(ctrl('k')), Spcw(special("up"))},
@@ -328,7 +353,7 @@ func viewModule() command.Module {
 				Name:      actJumpViewRight,
 				DocString: "Jump to right split",
 				Run:       Runner(action.JumpViewRight),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('l')), Cw(ctrl('l')), Cw(special("right"))},
 					{Spcw(char('l')), Spcw(ctrl('l')), Spcw(special("right"))},
@@ -338,7 +363,7 @@ func viewModule() command.Module {
 				Name:      actSwapViewLeft,
 				DocString: "Swap with left split",
 				Run:       Runner(action.SwapViewLeft),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('H'))},
 					{Spcw(char('H'))},
@@ -348,7 +373,7 @@ func viewModule() command.Module {
 				Name:      actSwapViewDown,
 				DocString: "Swap with split below",
 				Run:       Runner(action.SwapViewDown),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('J'))},
 					{Spcw(char('J'))},
@@ -358,7 +383,7 @@ func viewModule() command.Module {
 				Name:      actSwapViewUp,
 				DocString: "Swap with split above",
 				Run:       Runner(action.SwapViewUp),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('K'))},
 					{Spcw(char('K'))},
@@ -368,7 +393,7 @@ func viewModule() command.Module {
 				Name:      actSwapViewRight,
 				DocString: "Swap with right split",
 				Run:       Runner(action.SwapViewRight),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('L'))},
 					{Spcw(char('L'))},

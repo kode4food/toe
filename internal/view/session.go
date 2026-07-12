@@ -73,8 +73,9 @@ const (
 	sessionVersion = 1
 	SessionFile    = "session.toml"
 
-	sessionKindSplit = "split"
-	sessionKindView  = "view"
+	sessionKindSplit    = "split"
+	sessionKindView     = "view"
+	sessionKindTerminal = "terminal"
 )
 
 var (
@@ -130,7 +131,7 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	if len(s.Documents) == 0 {
 		return nil
 	}
-	s.Layout = e.sessionNodeFor(e.tree.root, docIndex)
+	s.Layout = e.sessionNodeFor(e.tree.root, docIndex, &s)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -247,9 +248,11 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		e.documentOpened(doc)
 	}
 
+	e.pendingTerminals = rs.terminals
 	return s.Options, true, nil
 }
 
+// WorkspaceSessionFile returns the session file path for dir's workspace
 func WorkspaceSessionFile(dir string) string {
 	root, _ := loader.FindWorkspace(dir)
 	return filepath.Join(root, loader.WorkspaceDirName, SessionFile)

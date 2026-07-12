@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -12,7 +13,7 @@ const (
 
 // sessionModule provides explicit save/restore commands for layout and open
 // documents. Option persistence is handled by auto-session at startup/shutdown
-func sessionModule() command.Module {
+func sessionModule(model ui.Model) command.Module {
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -44,6 +45,7 @@ func sessionModule() command.Module {
 					if !ok {
 						return command.Result{Message: "no session found"}
 					}
+					model.RestoreTerminalPanes(e)
 					return command.Result{}
 				},
 				Aliases:   []string{"restore-session"},

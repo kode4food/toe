@@ -64,6 +64,152 @@ func TestIntegration(t *testing.T) {
 		tt.quit()
 	})
 
+	t.Run("opens a terminal and runs a command", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello toe\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("NOR")
+
+		tt.send(":terminal\r")
+		tt.send("echo TERMINAL_PANE_WORKS\r")
+		tt.waitFor("TERMINAL_PANE_WORKS")
+
+		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.waitFor("NOR")
+		tt.quit()
+	})
+
+	t.Run("OSC title updates the status label", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello toe\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("NOR")
+
+		tt.send(":terminal\r")
+		tt.waitFor(" terminal")
+		tt.send(`printf '\033]0;MYTITLE\007'` + "\r")
+		tt.waitFor("MYTITLE")
+
+		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.quit()
+	})
+
+	t.Run("output does not overlap the status row", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello toe\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("NOR")
+
+		tt.send(":terminal\r")
+		tt.waitFor(" terminal")
+		// fill well past the pane height so the shell's own idea of its last
+		// row is exercised, then print a marker as the final visible line
+		tt.send("seq 1 100; echo LAST_LINE_MARKER\r")
+		tt.waitFor("LAST_LINE_MARKER")
+
+		lines := strings.Split(tt.screen(), "\n")
+		markerRow, statusRow := -1, -1
+		for i, line := range lines {
+			if strings.Contains(line, "LAST_LINE_MARKER") {
+				markerRow = i
+			}
+			if strings.Contains(line, " TRM ") {
+				statusRow = i
+			}
+		}
+		if markerRow < 0 || statusRow < 0 {
+			t.Fatalf(
+				"expected both marker and status rows visible; screen:\n%s",
+				tt.screen(),
+			)
+		}
+		// the shell prints a fresh prompt on its own row right after the
+		// marker; if the PTY thinks it has one row more than we draw, that
+		// prompt row goes missing instead of appearing between them
+		if statusRow-markerRow < 2 {
+			t.Fatalf(
+				"expected a prompt row between the marker and the pane's "+
+					"status row; screen:\n%s",
+				tt.screen(),
+			)
+		}
+
+		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.quit()
+	})
+
+	t.Run("closes when the shell exits", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello toe\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("NOR")
+
+		tt.send(":terminal\r")
+		tt.waitFor(" terminal")
+		tt.send("exit\r")
+
+		deadline := time.Now().Add(waitTimeout)
+		for time.Now().Before(deadline) &&
+			strings.Contains(tt.screen(), " terminal") {
+			time.Sleep(20 * time.Millisecond)
+		}
+		if strings.Contains(tt.screen(), " terminal") {
+			t.Fatalf(
+				"terminal pane still open after shell exit; screen:\n%s",
+				tt.screen(),
+			)
+		}
+		tt.quit()
+	})
+
+	t.Run("ctrl-w still navigates away", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello toe\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("NOR")
+
+		tt.send(":vsplit\r")
+		tt.send(":terminal\r")
+		tt.waitFor(" terminal")
+
+		tt.send("\x17h") // Ctrl-w h: focus the split to the left (the document)
+		tt.send("ihi ")
+		tt.waitFor("hi hello toe")
+
+		tt.escape()
+		tt.send(":write\r")
+		tt.waitFileContent(path, "hi hello toe\n")
+		tt.quit()
+	})
+
+	t.Run("terminal commands hide outside TRM mode", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "hello toe\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("NOR")
+
+		tt.send("\x17") // Ctrl-w: open the window which-key menu on a doc pane
+		tt.waitFor("Window")
+		assert.NotContains(t, tt.screen(), "scrollback")
+		tt.escape()
+
+		tt.send(":terminal\r")
+		tt.waitFor(" terminal")
+
+		tt.send("\x17") // Ctrl-w: open the same menu with a terminal focused
+		tt.waitFor("scrollback")
+
+		tt.escape()
+		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.quit()
+	})
+
 	t.Run("edits and saves", func(t *testing.T) {
 		dir := t.TempDir()
 		path := writeFile(t, dir, "note.txt", "world\n")

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -84,6 +85,7 @@ func lifecycleModule() command.Module {
 							}
 						}
 					}
+					ui.CloseAllTerminalPanes(e)
 					os.Exit(1)
 					return command.Result{}
 				},
@@ -94,7 +96,8 @@ func lifecycleModule() command.Module {
 				Name: actCquitForce,
 				DocString: "Force quit with exit code (default 1) ignoring " +
 					"unsaved changes",
-				Run: func(_ *view.Editor, _ *command.Args) command.Result {
+				Run: func(e *view.Editor, _ *command.Args) command.Result {
+					ui.CloseAllTerminalPanes(e)
 					os.Exit(1)
 					return command.Result{}
 				},

@@ -42,6 +42,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 			vcsUpdateCmd(cx),
 			vcsRefreshCmd(cx),
 			spinnerTickCmd(),
+			terminalPollCmd(),
 		),
 	}
 }

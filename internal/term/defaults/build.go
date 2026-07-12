@@ -31,9 +31,9 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		directoryModule(),
 		configModule(r),
 		clipboardModule(),
-		viewModule(),
+		viewModule(model),
 		shellModule(model),
-		sessionModule(),
+		sessionModule(model),
 		lifecycleModule(),
 		formatModule(),
 		lspModule(model),
@@ -102,4 +102,5 @@ func labelPrefixNodes(km *command.Keymaps) {
 			)
 		}
 	}
+	km.LabelNode("TRM", cwKey, "Window")
 }

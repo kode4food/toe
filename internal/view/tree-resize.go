@@ -112,8 +112,8 @@ func (t *Tree) widthOf(id Id) int {
 	if n == nil {
 		return 0
 	}
-	if n.view != nil {
-		return n.view.area.Width
+	if n.pane != nil {
+		return n.pane.Area().Width
 	}
 	if n.container != nil {
 		return n.container.area.Width
@@ -126,8 +126,8 @@ func (t *Tree) heightOf(id Id) int {
 	if n == nil {
 		return 0
 	}
-	if n.view != nil {
-		return n.view.area.Height
+	if n.pane != nil {
+		return n.pane.Area().Height
 	}
 	if n.container != nil {
 		return n.container.area.Height

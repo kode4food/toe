@@ -75,6 +75,7 @@
 "ui.statusline.normal" = { fg = "base", bg = "rosewater", modifiers = ["bold"] }
 "ui.statusline.insert" = { fg = "base", bg = "green", modifiers = ["bold"] }
 "ui.statusline.select" = { fg = "base", bg = "lavender", modifiers = ["bold"] }
+"ui.statusline.terminal" = { fg = "base", bg = "peach", modifiers = ["bold"] }
 
 "ui.popup" = { fg = "text", bg = "surface0" }
 "ui.window" = { fg = "crust" }

@@ -20,8 +20,8 @@ type (
 
 	// Component is the interface every compositor layer must implement
 	Component interface {
-		HandleEvent(msg tea.Msg, cx *Context) (EventResult, tea.Cmd)
-		Cursor(width, height int, cx *Context) (cur tea.Cursor, ok bool)
+		HandleEvent(tea.Msg, *Context) (EventResult, tea.Cmd)
+		Cursor(width, height int, cx *Context) (tea.Cursor, bool)
 	}
 
 	// BufferRenderer exposes the raw cell buffer a base component rendered
@@ -35,8 +35,22 @@ type (
 	// their own cell buffer instead of drawing into the shared one
 	BufferOverlayComponent interface {
 		Component
-		Layout(screenW, screenH int, cx *Context) (pl Bounds, ok bool)
-		PaintBuffer(pl Bounds, cx *Context) *tui.Buffer
+		Layout(screenW, screenH int, cx *Context) (Bounds, bool)
+		PaintBuffer(Bounds, *Context) *tui.Buffer
+	}
+
+	// PaneInput is implemented by a [view.Pane] that wants to handle its own
+	// raw key and mouse events, instead of the normal keymap/document mouse
+	// logic. ok is false to fall through to that normal handling
+	PaneInput interface {
+		HandleKey(tea.KeyPressMsg, *Context) (EventResult, bool)
+		HandleMouse(tea.Msg, *Context) (EventResult, bool)
+	}
+
+	// PaneCursor is implemented by a [view.Pane] that draws its own cursor,
+	// instead of the normal document cursor-shape logic
+	PaneCursor interface {
+		Cursor(*Context) (tea.Cursor, bool)
 	}
 
 	// Bounds is a screen-space rectangle

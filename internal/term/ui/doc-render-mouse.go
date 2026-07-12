@@ -64,9 +64,8 @@ func (r *renderPass) screenCharPos(
 	})
 }
 
-// contentViewAt returns the view whose editor content area contains screen
-// point (x, y), excluding the pane's status row. Cursor positioning uses this
-// so a click on the status or command line is ignored
+// contentViewAt returns the view whose content area contains screen point
+// (x, y); a click on the pane's own status row or the command line misses
 func (r *renderPass) contentViewAt(x, y int) (*view.View, bool) {
 	yOff := 0
 	if bufferlineVisible(r.cx) {
@@ -76,18 +75,37 @@ func (r *renderPass) contentViewAt(x, y int) (*view.View, bool) {
 	if contentY < 0 {
 		return nil, false
 	}
-	for _, vs := range r.cx.Editor.Tree().Views() {
-		a := vs.View.Area()
+	var found *view.View
+	r.cx.Editor.Tree().Range(func(p view.Pane) bool {
+		v, ok := p.(*view.View)
+		if !ok {
+			return true
+		}
+		a := v.Area()
 		contentH := max(a.Height-1, 0)
 		if x >= a.X && x < a.X+a.Width &&
 			contentY >= a.Y && contentY < a.Y+contentH {
-			return vs.View, true
+			found = v
+			return false
 		}
-	}
-	return nil, false
+		return true
+	})
+	return found, found != nil
 }
 
 func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
+	if p, ok := paneAt(r.cx, x, y); ok {
+		if pi, ok := p.(PaneInput); ok {
+			wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
+			r.cx.Editor.Tree().SetFocus(p.ID())
+			if wasFocused {
+				msg := tea.MouseClickMsg{X: x, Y: y, Mod: mod, Button: tea.MouseLeft}
+				pi.HandleMouse(msg, r.cx)
+			}
+			return
+		}
+	}
+
 	yOff := 0
 	if bufferlineVisible(r.cx) {
 		yOff = 1

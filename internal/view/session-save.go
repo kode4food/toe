@@ -19,11 +19,19 @@ func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 }
 
 func (e *Editor) sessionNodeFor(
-	id Id, docIndex map[DocumentId]int,
+	id Id, docIndex map[DocumentId]int, s *editorSession,
 ) sessionNode {
 	n := e.tree.nodes[id]
-	if n.view != nil {
-		return e.sessionViewNode(n.view, docIndex)
+	if v, ok := n.pane.(*View); ok {
+		return e.sessionViewNode(v, docIndex)
+	}
+	if n.pane != nil {
+		// a non-View leaf's live state (e.g. a terminal's shell) isn't
+		// serializable, but its slot is: mark it so restore can reopen one
+		return sessionNode{
+			Kind:    sessionKindTerminal,
+			Focused: e.tree.focus == id,
+		}
 	}
 	c := n.container
 	out := sessionNode{
@@ -33,7 +41,9 @@ func (e *Editor) sessionNodeFor(
 		Children: make([]sessionNode, 0, len(c.children)),
 	}
 	for _, child := range c.children {
-		out.Children = append(out.Children, e.sessionNodeFor(child, docIndex))
+		out.Children = append(
+			out.Children, e.sessionNodeFor(child, docIndex, s),
+		)
 	}
 	return out
 }

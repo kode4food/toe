@@ -17,7 +17,7 @@ func TestSeparatorAt(t *testing.T) {
 		tree := e.Tree()
 
 		// separator is between the two panes at left.X + left.Width
-		vs := tree.Views()
+		vs := e.Views()
 		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
 
 		_, _, layout, ok := tree.SeparatorAt(sepX, 0)
@@ -43,7 +43,7 @@ func TestSeparatorAt(t *testing.T) {
 		tree := e.Tree()
 
 		// separator is the 1-row gap after the top pane
-		vs := tree.Views()
+		vs := e.Views()
 		sepY := vs[0].View.Area().Y + vs[0].View.Area().Height
 
 		_, _, layout, ok := tree.SeparatorAt(0, sepY)
@@ -68,7 +68,7 @@ func TestMoveSeparator(t *testing.T) {
 		e.VSplitNew()
 		tree := e.Tree()
 
-		vs := tree.Views()
+		vs := e.Views()
 		origLeft := vs[0].View.Area().Width
 		origRight := vs[1].View.Area().Width
 		sepX := vs[0].View.Area().X + origLeft
@@ -78,7 +78,7 @@ func TestMoveSeparator(t *testing.T) {
 		// move separator 10 columns to the left
 		tree.MoveSeparator(cID, idx, layout, sepX-10)
 
-		vs2 := tree.Views()
+		vs2 := e.Views()
 		assert.Less(t, vs2[0].View.Area().Width, origLeft)
 		assert.Greater(t, vs2[1].View.Area().Width, origRight)
 		assert.Equal(t, 79, vs2[0].View.Area().Width+vs2[1].View.Area().Width)
@@ -90,7 +90,7 @@ func TestMoveSeparator(t *testing.T) {
 		e.HSplitNew()
 		tree := e.Tree()
 
-		vs := tree.Views()
+		vs := e.Views()
 		origTop := vs[0].View.Area().Height
 		origBot := vs[1].View.Area().Height
 		sepY := vs[0].View.Area().Y + origTop // gap row after top pane
@@ -100,7 +100,7 @@ func TestMoveSeparator(t *testing.T) {
 		// move separator 3 rows up
 		tree.MoveSeparator(cID, idx, layout, sepY-3)
 
-		vs2 := tree.Views()
+		vs2 := e.Views()
 		assert.Less(t, vs2[0].View.Area().Height, origTop)
 		assert.Greater(t, vs2[1].View.Area().Height, origBot)
 		// pane heights + 1 gap row = 24
@@ -113,14 +113,14 @@ func TestMoveSeparator(t *testing.T) {
 		e.VSplitNew()
 		tree := e.Tree()
 
-		vs := tree.Views()
+		vs := e.Views()
 		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
 		cID, idx, layout, _ := tree.SeparatorAt(sepX, 0)
 
 		// try to collapse left pane to 0
 		tree.MoveSeparator(cID, idx, layout, -100)
 
-		vs2 := tree.Views()
+		vs2 := e.Views()
 		assert.GreaterOrEqual(t, vs2[0].View.Area().Width, 10)
 		assert.GreaterOrEqual(t, vs2[1].View.Area().Width, 10)
 	})
@@ -131,14 +131,14 @@ func TestMoveSeparator(t *testing.T) {
 		e.HSplitNew()
 		tree := e.Tree()
 
-		vs := tree.Views()
+		vs := e.Views()
 		sepY := vs[0].View.Area().Y + vs[0].View.Area().Height
 		cID, idx, layout, _ := tree.SeparatorAt(0, sepY)
 
 		// try to collapse top pane to 0
 		tree.MoveSeparator(cID, idx, layout, -100)
 
-		vs2 := tree.Views()
+		vs2 := e.Views()
 		assert.GreaterOrEqual(t, vs2[0].View.Area().Height, 4)
 		assert.GreaterOrEqual(t, vs2[1].View.Area().Height, 4)
 	})
@@ -210,7 +210,7 @@ func TestTreeSplitEdges(t *testing.T) {
 		v3 := e.VSplitNew()
 		assert.NotNil(t, v3)
 
-		views := e.Tree().Views()
+		views := e.Views()
 		assert.Equal(t, 3, len(views))
 		assert.Equal(t, v3.ID(), e.Tree().Focus())
 	})
@@ -227,7 +227,7 @@ func TestTreeSplitEdges(t *testing.T) {
 
 		e.CloseView(bottom.ID())
 
-		views := e.Tree().Views()
+		views := e.Views()
 		assert.Equal(t, 2, len(views))
 		_, ok = e.Tree().ContainerLayoutAt(right.ID())
 		assert.True(t, ok)
@@ -264,7 +264,7 @@ func TestWalkSeparatorsLayouts(t *testing.T) {
 		assert.Equal(t, 80, seps[0].W)
 		assert.Equal(t, 1, seps[0].H)
 		// gap row is at top pane's Y + Height (one row after the pane)
-		vs := e.Tree().Views()
+		vs := e.Views()
 		topArea := vs[0].View.Area()
 		assert.Equal(t, topArea.Y+topArea.Height, seps[0].Y)
 	})
@@ -276,7 +276,7 @@ func TestMoveSeparatorEdges(t *testing.T) {
 		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		before := vs[0].View.Area().Width
 		sepX := vs[0].View.Area().X + before
 		cID, idx, _, ok := tree.SeparatorAt(sepX, 0)
@@ -284,7 +284,7 @@ func TestMoveSeparatorEdges(t *testing.T) {
 
 		tree.MoveSeparator(cID, idx, view.LayoutHorizontal, sepX-5)
 
-		after := tree.Views()[0].View.Area().Width
+		after := e.Views()[0].View.Area().Width
 		assert.Equal(t, before, after)
 	})
 
@@ -293,7 +293,7 @@ func TestMoveSeparatorEdges(t *testing.T) {
 		e.ResizeTree(80, 24)
 		e.HSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		before := vs[0].View.Area().Height
 		sepY := vs[0].View.Area().Y + before
 		cID, _, layout, ok := tree.SeparatorAt(0, sepY)
@@ -301,7 +301,7 @@ func TestMoveSeparatorEdges(t *testing.T) {
 
 		tree.MoveSeparator(cID, 5, layout, sepY-2)
 
-		after := tree.Views()[0].View.Area().Height
+		after := e.Views()[0].View.Area().Height
 		assert.Equal(t, before, after)
 	})
 }
@@ -312,13 +312,13 @@ func TestMoveSeparatorMore(t *testing.T) {
 		e.ResizeTree(80, 24)
 		e.HSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		sepY := vs[0].View.Area().Y + vs[0].View.Area().Height
 		cID, idx, _, ok := tree.SeparatorAt(0, sepY)
 		assert.True(t, ok)
-		before := tree.Views()[0].View.Area().Height
+		before := e.Views()[0].View.Area().Height
 		tree.MoveSeparator(cID, idx, view.LayoutVertical, 0)
-		assert.Equal(t, before, tree.Views()[0].View.Area().Height)
+		assert.Equal(t, before, e.Views()[0].View.Area().Height)
 	})
 
 	t.Run("out of bounds idx vertical", func(t *testing.T) {
@@ -326,13 +326,13 @@ func TestMoveSeparatorMore(t *testing.T) {
 		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
 		cID, _, _, ok := tree.SeparatorAt(sepX, 0)
 		assert.True(t, ok)
-		before := tree.Views()[0].View.Area().Width
+		before := e.Views()[0].View.Area().Width
 		tree.MoveSeparator(cID, 99, view.LayoutVertical, sepX)
-		assert.Equal(t, before, tree.Views()[0].View.Area().Width)
+		assert.Equal(t, before, e.Views()[0].View.Area().Width)
 	})
 
 	t.Run("usable zero vertical", func(t *testing.T) {
@@ -345,7 +345,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		if ok {
 			tree.MoveSeparator(cID, idx, layout, 0)
 		}
-		assert.Equal(t, 2, len(tree.Views()))
+		assert.Equal(t, 2, len(e.Views()))
 	})
 
 	t.Run("usable zero horizontal", func(t *testing.T) {
@@ -358,7 +358,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		if ok {
 			tree.MoveSeparator(cID, idx, layout, 0)
 		}
-		assert.Equal(t, 2, len(tree.Views()))
+		assert.Equal(t, 2, len(e.Views()))
 	})
 
 	t.Run("childIdx=1 runs leftStart loop V", func(t *testing.T) {
@@ -367,14 +367,14 @@ func TestMoveSeparatorMore(t *testing.T) {
 		e.VSplitNew()
 		e.VSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		v2Area := vs[1].View.Area()
 		sepX := v2Area.X + v2Area.Width
 		cID, idx, layout, ok := tree.SeparatorAt(sepX, 0)
 		assert.True(t, ok)
 		assert.Equal(t, 1, idx)
 		tree.MoveSeparator(cID, idx, layout, sepX-5)
-		assert.Equal(t, 3, len(tree.Views()))
+		assert.Equal(t, 3, len(e.Views()))
 	})
 
 	t.Run("childIdx=1 runs topStart loop H", func(t *testing.T) {
@@ -383,14 +383,14 @@ func TestMoveSeparatorMore(t *testing.T) {
 		e.HSplitNew()
 		e.HSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		v2Area := vs[1].View.Area()
 		sepY := v2Area.Y + v2Area.Height
 		cID, idx, layout, ok := tree.SeparatorAt(0, sepY)
 		assert.True(t, ok)
 		assert.Equal(t, 1, idx)
 		tree.MoveSeparator(cID, idx, layout, sepY-2)
-		assert.Equal(t, 3, len(tree.Views()))
+		assert.Equal(t, 3, len(e.Views()))
 	})
 
 	t.Run("drag far right clamps right pane V", func(t *testing.T) {
@@ -398,11 +398,11 @@ func TestMoveSeparatorMore(t *testing.T) {
 		e.ResizeTree(80, 24)
 		e.VSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
 		cID, idx, layout, _ := tree.SeparatorAt(sepX, 0)
 		tree.MoveSeparator(cID, idx, layout, 76)
-		assert.GreaterOrEqual(t, tree.Views()[1].View.Area().Width, 1)
+		assert.GreaterOrEqual(t, e.Views()[1].View.Area().Width, 1)
 	})
 
 	t.Run("drag far down clamps bottom pane H", func(t *testing.T) {
@@ -410,11 +410,11 @@ func TestMoveSeparatorMore(t *testing.T) {
 		e.ResizeTree(80, 24)
 		e.HSplitNew()
 		tree := e.Tree()
-		vs := tree.Views()
+		vs := e.Views()
 		sepY := vs[0].View.Area().Y + vs[0].View.Area().Height
 		cID, idx, layout, _ := tree.SeparatorAt(0, sepY)
 		tree.MoveSeparator(cID, idx, layout, 22)
-		assert.GreaterOrEqual(t, tree.Views()[1].View.Area().Height, 1)
+		assert.GreaterOrEqual(t, e.Views()[1].View.Area().Height, 1)
 	})
 
 	t.Run("nested V sep init widthOf container", func(t *testing.T) {
@@ -434,7 +434,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		cID, idx, layout, ok := tree.SeparatorAt(vSep.X, vSep.Y)
 		assert.True(t, ok)
 		tree.MoveSeparator(cID, idx, layout, vSep.X-5)
-		assert.Equal(t, 3, len(tree.Views()))
+		assert.Equal(t, 3, len(e.Views()))
 	})
 
 	t.Run("nested H sep init heightOf container", func(t *testing.T) {
@@ -454,7 +454,7 @@ func TestMoveSeparatorMore(t *testing.T) {
 		cID, idx, layout, ok := tree.SeparatorAt(hSep.X, hSep.Y)
 		assert.True(t, ok)
 		tree.MoveSeparator(cID, idx, layout, hSep.Y-2)
-		assert.Equal(t, 3, len(tree.Views()))
+		assert.Equal(t, 3, len(e.Views()))
 	})
 }
 
@@ -488,7 +488,7 @@ func TestTreeEdges(t *testing.T) {
 		e.Tree().SetFocus(first.ID())
 
 		assert.Equal(t, first.ID(), e.Tree().Focus())
-		views := e.Tree().Views()
+		views := e.Views()
 		assert.Equal(t, 2, len(views))
 		assert.True(t, views[0].Focused)
 		assert.False(t, views[1].Focused)

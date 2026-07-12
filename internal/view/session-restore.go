@@ -6,12 +6,13 @@ type sessionRestore struct {
 	docs      map[int]DocumentId
 	documents map[DocumentId]*Document
 	focus     Id
+	terminals []Id
 }
 
 func (e *Editor) restoreSessionRoot(
 	t *Tree, root Id, sn sessionNode, rs *sessionRestore,
 ) error {
-	if sn.Kind == sessionKindView {
+	if sn.Kind == sessionKindView || sn.Kind == sessionKindTerminal {
 		id, err := e.restoreSessionNode(t, root, sn, rs)
 		if err != nil {
 			return err
@@ -71,6 +72,20 @@ func (e *Editor) restoreSessionNode(
 			session: sn,
 			restore: rs,
 		}), nil
+	case sessionKindTerminal:
+		e.nextDocID++
+		doc := newDocument(e.nextDocID, &e.opts)
+		rs.documents[doc.ID()] = doc
+		id := t.allocID()
+		t.nodes[id] = &treeNode{
+			parent: parent,
+			pane:   &View{id: id, docID: doc.ID(), mode: ModeNormal},
+		}
+		rs.terminals = append(rs.terminals, id)
+		if sn.Focused {
+			rs.focus = id
+		}
+		return id, nil
 	}
 	return 0, ErrSessionInvalid
 }
@@ -114,7 +129,7 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 		head = len(entries)
 	}
 	v.jumps.Restore(entries, head)
-	args.tree.nodes[args.id] = &treeNode{parent: args.parent, view: v}
+	args.tree.nodes[args.id] = &treeNode{parent: args.parent, pane: v}
 	if doc, ok := args.restore.documents[args.docID]; ok {
 		sel := args.session.Selection.selection()
 		doc.SetSelectionFor(args.id, sel)

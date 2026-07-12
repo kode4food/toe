@@ -209,6 +209,10 @@ func (e *EditorComponent) HandleEvent(
 		e.syncEditorMessages(cx)
 		return consumed(), e.fileWatchCmd(cx)
 
+	case terminalPollMsg:
+		e.pollTerminals(cx)
+		return consumed(), terminalPollCmd()
+
 	case vcsUpdatedMsg:
 		return consumed(), vcsUpdateCmd(cx)
 
@@ -241,6 +245,13 @@ func (e *EditorComponent) HandleEvent(
 		e.completionGen++
 		var dragCmd tea.Cmd
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
+			if p, ok := paneAt(cx, msg.X, msg.Y); ok {
+				if pi, ok := p.(PaneInput); ok {
+					if _, handled := pi.HandleMouse(msg, cx); handled {
+						return consumed(), nil
+					}
+				}
+			}
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			dragCmd = r.handleMouseDrag(msg.X, msg.Y)
 		}
@@ -256,6 +267,13 @@ func (e *EditorComponent) HandleEvent(
 		e.completionGen++
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
+		}
+		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
+			if pi, ok := p.(PaneInput); ok {
+				if _, handled := pi.HandleMouse(msg, cx); handled {
+					return consumed(), e.documentHighlightCmd(cx)
+				}
+			}
 		}
 		switch msg.Button {
 		case tea.MouseLeft:
@@ -273,6 +291,13 @@ func (e *EditorComponent) HandleEvent(
 		e.cancelPending(cx)
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
+		}
+		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
+			if pi, ok := p.(PaneInput); ok {
+				if _, handled := pi.HandleMouse(msg, cx); handled {
+					return consumed(), nil
+				}
+			}
 		}
 		r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 		v, ok := r.contentViewAt(msg.X, msg.Y)

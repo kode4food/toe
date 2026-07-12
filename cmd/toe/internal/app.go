@@ -74,6 +74,8 @@ func Run(args []string, out io.Writer) error {
 	if err := a.ConfigureModel(); err != nil {
 		return err
 	}
+	a.Model.RestoreTerminalPanes(a.Editor)
+	defer ui.CloseAllTerminalPanes(a.Editor)
 	if _, err := tea.NewProgram(a.Model).Run(); err != nil {
 		return err
 	}

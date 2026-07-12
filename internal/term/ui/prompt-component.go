@@ -44,6 +44,7 @@ const (
 	promptSearch
 	promptRegex
 	promptShell
+	promptTerminalSearch
 )
 
 const (

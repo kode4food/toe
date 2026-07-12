@@ -43,14 +43,15 @@ func (t *Tree) findChild(id Id, children []Id, dir Direction) (Id, bool) {
 	}
 
 found:
-	focusedView := t.nodes[t.focus].view
+	focusedPane := t.nodes[t.focus].pane
 	var curX, curY int
-	if focusedView != nil {
-		curX = focusedView.area.X
-		curY = focusedView.area.Y
+	if focusedPane != nil {
+		a := focusedPane.Area()
+		curX = a.X
+		curY = a.Y
 	}
 
-	for t.nodes[childID].view == nil {
+	for t.nodes[childID].pane == nil {
 		c := t.nodes[childID].container
 		if c.layout == LayoutVertical {
 			// find closest by X
@@ -81,8 +82,8 @@ found:
 
 func (t *Tree) leftOf(id Id) int {
 	n := t.nodes[id]
-	if n.view != nil {
-		return n.view.area.X
+	if n.pane != nil {
+		return n.pane.Area().X
 	}
 	// container: area is not tracked separately; use first child
 	if len(n.container.children) > 0 {
@@ -93,8 +94,8 @@ func (t *Tree) leftOf(id Id) int {
 
 func (t *Tree) topOf(id Id) int {
 	n := t.nodes[id]
-	if n.view != nil {
-		return n.view.area.Y
+	if n.pane != nil {
+		return n.pane.Area().Y
 	}
 	if len(n.container.children) > 0 {
 		return t.topOf(n.container.children[0])
@@ -124,7 +125,7 @@ func (t *Tree) SeparatorAt(
 
 func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 	n := t.nodes[id]
-	if n.view != nil {
+	if n.pane != nil {
 		return true
 	}
 	c := n.container
@@ -137,8 +138,8 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 		}
 		cn := t.nodes[child]
 		var a Area
-		if cn.view != nil {
-			a = cn.view.Area()
+		if cn.pane != nil {
+			a = cn.pane.Area()
 		} else {
 			a = cn.container.area
 		}

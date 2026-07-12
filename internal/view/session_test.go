@@ -649,7 +649,7 @@ document = 1
 		assert.True(t, ok)
 
 		// drag separator: left pane gets ~30 cols
-		vs := e.Tree().Views()
+		vs := e.Views()
 		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
 		cID, idx, layout, ok := e.Tree().SeparatorAt(sepX, 0)
 		assert.True(t, ok)
@@ -759,4 +759,53 @@ kind = "bogus"
 		_, _, err := e.RestoreSession(sessionPath)
 		assert.True(t, errors.Is(err, view.ErrSessionInvalid))
 	})
+
+	t.Run("round-trips a non-view pane's slot", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "file.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package main\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(80, 24)
+		_, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+
+		e.Tree().Split(&fakePane{}, view.LayoutVertical)
+
+		assert.NotPanics(t, func() {
+			assert.NoError(t, e.SaveSession(sessionPath, nil))
+		})
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(80, 24)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		assert.Len(t, next.AllViews(), 2)
+
+		// the layout survives as a placeholder view; the pane id is handed
+		// back so the UI layer can reopen a real terminal there
+		pending := next.TakePendingTerminals()
+		assert.Len(t, pending, 1)
+		assert.NotNil(t, next.Tree().Get(pending[0]))
+		assert.Empty(t, next.TakePendingTerminals())
+	})
 }
+
+// fakePane stands in for a non-View pane (like a terminal) that the session
+// format cannot serialize
+type fakePane struct {
+	id   view.Id
+	area view.Area
+}
+
+func (p *fakePane) ID() view.Id         { return p.id }
+func (p *fakePane) SetID(id view.Id)    { p.id = id }
+func (p *fakePane) Area() view.Area     { return p.area }
+func (p *fakePane) SetArea(a view.Area) { p.area = a }
+func (p *fakePane) MarkDirty()          {}
+func (p *fakePane) Mode() view.Mode     { return view.ModeTerminal }

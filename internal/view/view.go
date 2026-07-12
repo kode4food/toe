@@ -81,6 +81,7 @@ const (
 	ModeNormal Mode = iota
 	ModeInsert
 	ModeSelect
+	ModeTerminal
 )
 
 const (
@@ -93,6 +94,11 @@ const (
 // ID returns the view identifier
 func (v *View) ID() Id {
 	return v.id
+}
+
+// SetID sets the view identifier (called by the tree on insertion)
+func (v *View) SetID(id Id) {
+	v.id = id
 }
 
 // Area returns the screen rectangle assigned by the layout engine
@@ -124,20 +130,6 @@ func (v *View) ConsumeDirty() bool {
 // DocID returns the document this view displays
 func (v *View) DocID() DocumentId {
 	return v.docID
-}
-
-func (v *View) addDocHistory(did DocumentId) {
-	if did == InvalidDocumentId {
-		return
-	}
-	v.removeDocHistory(did)
-	v.docHistory = append(v.docHistory, did)
-}
-
-func (v *View) removeDocHistory(did DocumentId) {
-	v.docHistory = slices.DeleteFunc(v.docHistory, func(d DocumentId) bool {
-		return d == did
-	})
 }
 
 // Mode returns the current editing mode
@@ -232,15 +224,6 @@ func (v *View) EnsureCursorVisible(
 	v.ensureCursorVisibleByLine(doc, sel, height, scrolloff)
 }
 
-func (v *View) trackOffsetChange() func() {
-	before := v.offset
-	return func() {
-		if v.offset != before {
-			v.dirty = true
-		}
-	}
-}
-
 // EnsureCursorVisibleHorizontal scrolls so the cursor's visual column stays
 // within width content columns (gutter excluded). width <= 0 disables
 // horizontal scrolling and resets the offset to 0
@@ -278,6 +261,29 @@ func (v *View) EnsureCursorVisibleHorizontal(
 	v.offset.HorizontalOffset = h
 }
 
+func (v *View) addDocHistory(did DocumentId) {
+	if did == InvalidDocumentId {
+		return
+	}
+	v.removeDocHistory(did)
+	v.docHistory = append(v.docHistory, did)
+}
+
+func (v *View) removeDocHistory(did DocumentId) {
+	v.docHistory = slices.DeleteFunc(v.docHistory, func(d DocumentId) bool {
+		return d == did
+	})
+}
+
+func (v *View) trackOffsetChange() func() {
+	before := v.offset
+	return func() {
+		if v.offset != before {
+			v.dirty = true
+		}
+	}
+}
+
 // cachedVisualColumn returns VisualColumn(doc, from, to, tabW), reusing the
 // last result when doc, to, and tabW are unchanged since the previous call
 func (v *View) cachedVisualColumn(doc core.Rope, from, to, tabW int) int {
@@ -297,6 +303,8 @@ func (m Mode) String() string {
 		return "INS"
 	case ModeSelect:
 		return "SEL"
+	case ModeTerminal:
+		return "TRM"
 	}
 	return "NOR"
 }

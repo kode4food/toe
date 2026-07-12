@@ -470,6 +470,10 @@ func startTUI(t *testing.T, dir string, args ...string) *tui {
 		"HOME="+dir,
 		"XDG_CONFIG_HOME="+filepath.Join(dir, ".config"),
 	)
+	// an empty .zshrc suppresses zsh's interactive new-user setup wizard,
+	// which some Linux distros trigger on a HOME with no rc file
+	writeFile(t, dir, ".zshrc", "")
+
 	ptmx, err := pty.StartWithSize(
 		cmd, &pty.Winsize{Rows: termRows, Cols: termCols},
 	)

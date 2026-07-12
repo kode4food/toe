@@ -2,6 +2,7 @@ package defaults_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -250,14 +251,14 @@ func TestLSPCommandErrors(t *testing.T) {
 func (c *fakeLanguageServerController) RestartLanguageServers(
 	_ *view.Document, names []string,
 ) ([]string, error) {
-	c.restarted = append([]string(nil), names...)
+	c.restarted = slices.Clone(names)
 	return names, c.err
 }
 
 func (c *fakeLanguageServerController) StopLanguageServers(
 	_ *view.Document, names []string,
 ) ([]string, error) {
-	c.stopped = append([]string(nil), names...)
+	c.stopped = slices.Clone(names)
 	return names, c.err
 }
 
@@ -265,7 +266,7 @@ func (c *fakeLanguageServerController) ExecuteWorkspaceCommand(
 	_ *view.Document, name string, args []string,
 ) error {
 	c.executed = name
-	c.args = append([]string(nil), args...)
+	c.args = slices.Clone(args)
 	return c.err
 }
 

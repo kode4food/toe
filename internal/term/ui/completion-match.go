@@ -29,7 +29,7 @@ func filterCompletionItems(
 	items []view.CompletionItem, query string,
 ) []view.CompletionItem {
 	if query == "" {
-		return append([]view.CompletionItem(nil), items...)
+		return slices.Clone(items)
 	}
 	matches := make([]completionMatch, 0, len(items))
 	for i, item := range items {

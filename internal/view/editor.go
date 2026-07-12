@@ -93,6 +93,9 @@ func (e *Editor) VSplit(docID DocumentId) (*View, bool) {
 	}
 	e.recordLeavingDoc()
 	v := &View{docID: doc.ID(), mode: ModeNormal}
+	if src, ok := e.FocusedView(); ok {
+		v.jumps = src.jumps.Clone()
+	}
 	e.tree.Split(v, LayoutVertical)
 	e.markDocAccessed()
 	return v, true
@@ -109,6 +112,9 @@ func (e *Editor) HSplit(docID DocumentId) (*View, bool) {
 	}
 	e.recordLeavingDoc()
 	v := &View{docID: doc.ID(), mode: ModeNormal}
+	if src, ok := e.FocusedView(); ok {
+		v.jumps = src.jumps.Clone()
+	}
 	e.tree.Split(v, LayoutHorizontal)
 	e.markDocAccessed()
 	return v, true
@@ -122,6 +128,9 @@ func (e *Editor) VSplitNew() *View {
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}
+	if src, ok := e.FocusedView(); ok {
+		v.jumps = src.jumps.Clone()
+	}
 	e.tree.Split(v, LayoutVertical)
 	e.markDocAccessed()
 	return v
@@ -135,6 +144,9 @@ func (e *Editor) HSplitNew() *View {
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
 	v := &View{docID: doc.ID(), mode: ModeNormal}
+	if src, ok := e.FocusedView(); ok {
+		v.jumps = src.jumps.Clone()
+	}
 	e.tree.Split(v, LayoutHorizontal)
 	e.markDocAccessed()
 	return v

@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -184,9 +185,7 @@ func signatureTriggerCharacters(
 	capabilities protocol.ServerCapabilities,
 ) []string {
 	opts := capabilities.SignatureHelpProvider
-	triggers := append([]string(nil), opts.TriggerCharacters...)
-	triggers = append(triggers, opts.RetriggerCharacters...)
-	return triggers
+	return slices.Concat(opts.TriggerCharacters, opts.RetriggerCharacters)
 }
 
 func runeIndex(s string, byteOffset int) int {

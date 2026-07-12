@@ -195,6 +195,23 @@ func TestEditorSplits(t *testing.T) {
 		assert.False(t, ok)
 		assert.Nil(t, v)
 	})
+
+	t.Run("VSplit inherits jump list from source view", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(80, 24)
+		d, _ := e.FocusedDocument()
+		src, _ := e.FocusedView()
+		src.PushJump(d.ID(), 0, core.PointSelection(0))
+		src.PushJump(d.ID(), 5, core.PointSelection(5))
+
+		v, ok := e.VSplit(d.ID())
+		assert.True(t, ok)
+		assert.Equal(t, src.Jumps(), v.Jumps())
+
+		// splits are independent copies, not shared state
+		src.PushJump(d.ID(), 10, core.PointSelection(10))
+		assert.NotEqual(t, len(src.Jumps()), len(v.Jumps()))
+	})
 }
 
 func TestEditorFocusNavigation(t *testing.T) {

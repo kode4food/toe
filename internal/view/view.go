@@ -1,6 +1,8 @@
 package view
 
 import (
+	"slices"
+
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
@@ -313,7 +315,7 @@ func (m Mode) String() string {
 
 // Entries returns all jump history entries from oldest to newest
 func (j *JumpList) Entries() []JumpEntry {
-	return append([]JumpEntry(nil), j.items...)
+	return slices.Clone(j.items)
 }
 
 // Head returns the current head index in the jump list
@@ -325,6 +327,14 @@ func (j *JumpList) Head() int {
 func (j *JumpList) Restore(items []JumpEntry, head int) {
 	j.items = items
 	j.head = head
+}
+
+// Clone returns an independent copy of the jump list
+func (j *JumpList) Clone() JumpList {
+	return JumpList{
+		items: slices.Clone(j.items),
+		head:  j.head,
+	}
 }
 
 // Push adds a new jump selection, discarding forward history

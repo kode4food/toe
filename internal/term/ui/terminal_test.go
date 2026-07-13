@@ -43,6 +43,32 @@ func TestTerminalPane(t *testing.T) {
 		assert.Equal(t, focus, v.ID())
 	})
 
+	t.Run("second invocation is a no-op", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		focus := e.Tree().Focus()
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+
+		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		select {
+		case <-tp.Updates():
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected an update signal for the shell's startup output")
+		}
+
+		cont = m.TerminalAction()(e)
+		assert.Nil(t, cont)
+
+		tp2, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		assert.Same(t, tp, tp2)
+	})
+
 	t.Run("mouse click focuses it", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
@@ -416,6 +442,33 @@ func TestTerminalPane(t *testing.T) {
 		ui.CloseAllTerminalPanes(e)
 
 		<-tp.Closed()
+	})
+
+	t.Run("Ctrl-w x isn't bound while focused", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		focus := e.Tree().Focus()
+		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
+
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		tp2, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		assert.Same(t, tp, tp2)
 	})
 
 	t.Run("Ctrl-w / jumps to a scrollback match", func(t *testing.T) {

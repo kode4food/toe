@@ -103,4 +103,5 @@ func labelPrefixNodes(km *command.Keymaps) {
 		}
 	}
 	km.LabelNode("TRM", cwKey, "Window")
+	km.LabelNode("TRM", cwnKey, "New split scratch buffer")
 }

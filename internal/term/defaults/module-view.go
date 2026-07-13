@@ -250,7 +250,7 @@ func viewModule(model ui.Model) command.Module {
 				Name:      actTerminal,
 				DocString: "Open a shell in the focused pane",
 				Run:       Continuation(model.TerminalAction()),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(char('x'))},
 					{Spcw(char('x'))},

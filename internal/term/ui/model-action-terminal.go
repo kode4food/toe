@@ -10,6 +10,9 @@ import (
 // TerminalAction opens the user's shell in the focused pane
 func (m Model) TerminalAction() command.KeyAction {
 	return func(e *view.Editor) command.Continuation {
+		if _, ok := e.Tree().Get(e.Tree().Focus()).(*TerminalPane); ok {
+			return nil
+		}
 		tp, err := NewTerminalPane(interactiveShell(), 0, 0)
 		if err != nil {
 			e.SetStatusMsg(err.Error())

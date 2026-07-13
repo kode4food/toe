@@ -130,8 +130,12 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/tree-sitter-grammars/tree-sitter-diff v0.1.0 h1:mPG0e0Dh2yax2Pzq0E8esfiyAeNbizVklv/OODQFFjY=
+github.com/tree-sitter-grammars/tree-sitter-diff v0.1.0/go.mod h1:IQic5ZjN7tcxaiPqcS24EXX6wmPYoM9eo0ZXt7ncXGE=
 github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.0 h1:jl3v597Dii91OHcHAUrTQaSEK7oODNh6yK8z4H5xXFA=
 github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.0/go.mod h1:NzEB+a6rpv14H4tCrCfzhTorCyvYYb3T9+o/e4d0pdU=
+github.com/tree-sitter-grammars/tree-sitter-make v1.1.1 h1:JlFg2Gl++ldl0xzrZWMk9jilHKknc7jz2JNPd3uDBKk=
+github.com/tree-sitter-grammars/tree-sitter-make v1.1.1/go.mod h1:oS081OksouSnuE097RcJUtYVPJasQ24VvokDgwyFlfY=
 github.com/tree-sitter-grammars/tree-sitter-toml v0.7.0 h1:VQOyz+wSHzNZJ7gUMHAWVEP4Xt/YBZkeL7iurBv/9xc=
 github.com/tree-sitter-grammars/tree-sitter-toml v0.7.0/go.mod h1:hagl3VSOuQdsaDpGY13oGMz2cLK2tUDAf4mNNW2pDBQ=
 github.com/tree-sitter-grammars/tree-sitter-yaml v0.7.2 h1:Mmr9LYGTdr+8iD3ZEK1+j2FKZtY1Jt3y5Wq9dedgwfs=

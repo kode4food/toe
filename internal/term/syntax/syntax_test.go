@@ -68,6 +68,8 @@ func TestTokenize(t *testing.T) {
 		{"tsx", "const El = () => <div className=\"foo\">{name}</div>;\n"},
 		{"markdown", "# Heading\n\nParagraph text.\n"},
 		{"sql", "SELECT id FROM users WHERE active = 1;\n"},
+		{"makefile", "all: build\n\t$(CC) -o out main.c\n"},
+		{"diff", "diff --git a/foo.txt b/foo.txt\nindex 000..111 100644\n--- a/foo.txt\n+++ b/foo.txt\n@@ -1 +1 @@\n-old\n+new\n"},
 	}
 
 	sc := syntax.NewSyntaxCache()

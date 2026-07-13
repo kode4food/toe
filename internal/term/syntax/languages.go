@@ -5,11 +5,13 @@ import (
 	"slices"
 
 	hcl "github.com/tree-sitter-grammars/tree-sitter-hcl/bindings/go"
+	makefile "github.com/tree-sitter-grammars/tree-sitter-make/bindings/go"
 	toml "github.com/tree-sitter-grammars/tree-sitter-toml/bindings/go"
 	yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
 	css "github.com/tree-sitter/tree-sitter-css/bindings/go"
+	diff "github.com/tree-sitter/tree-sitter-diff/bindings/go"
 	golang "github.com/tree-sitter/tree-sitter-go/bindings/go"
 	html "github.com/tree-sitter/tree-sitter-html/bindings/go"
 	javascript "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
@@ -19,10 +21,12 @@ import (
 var langRegistry = map[string]*sitter.Language{
 	"bash":       sitter.NewLanguage(bash.Language()),
 	"css":        sitter.NewLanguage(css.Language()),
+	"diff":       sitter.NewLanguage(diff.Language()),
 	"go":         sitter.NewLanguage(golang.Language()),
 	"hcl":        sitter.NewLanguage(hcl.Language()),
 	"html":       sitter.NewLanguage(html.Language()),
 	"javascript": sitter.NewLanguage(javascript.Language()),
+	"makefile":   sitter.NewLanguage(makefile.Language()),
 	"toml":       sitter.NewLanguage(toml.Language()),
 	"tsx":        sitter.NewLanguage(typescript.LanguageTSX()),
 	"typescript": sitter.NewLanguage(typescript.LanguageTypescript()),

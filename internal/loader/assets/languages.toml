@@ -8,10 +8,12 @@ use-grammars = { only = [
   "gitcommit",
   "gitattributes",
   "gitignore",
+  "diff",
   "toml",
   "yaml",
   "json",
   "sql",
+  "makefile",
   "proto",
   "graphql",
   "html",
@@ -128,6 +130,12 @@ file-types = [{ glob = ".gitattributes" }]
 comment-token = "#"
 
 [[language]]
+name = "diff"
+scope = "source.diff"
+injection-regex = "diff|patch"
+file-types = ["diff", "patch"]
+
+[[language]]
 name = "env"
 scope = "source.env"
 injection-regex = "env"
@@ -177,6 +185,20 @@ injection-regex = "sql"
 file-types = ["sql"]
 comment-token = "--"
 indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "makefile"
+scope = "source.makefile"
+injection-regex = "makefile|make"
+file-types = [
+  "mk",
+  { glob = "Makefile" },
+  { glob = "makefile" },
+  { glob = "GNUmakefile" },
+  { glob = "*.mak" },
+]
+comment-token = "#"
+indent = { tab-width = 4, unit = "\t" }
 
 [[language]]
 name = "protobuf"
@@ -293,6 +315,10 @@ name = "gitattributes"
 source = { git = "https://github.com/ObserverOfTime/tree-sitter-gitattributes", rev = "8e0317fb7fda1ee77e5a972ee80f769611c4dca4" }
 
 [[grammar]]
+name = "diff"
+source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-diff", rev = "v0.1.0" }
+
+[[grammar]]
 name = "toml"
 source = { git = "https://github.com/tree-sitter/tree-sitter-toml", rev = "7cff70bbcbbc62001fdef1a3f3b4b5f5a2f72408" }
 
@@ -307,6 +333,10 @@ source = { git = "https://github.com/tree-sitter/tree-sitter-json", rev = "3fef3
 [[grammar]]
 name = "sql"
 source = { git = "https://github.com/DerekStride/tree-sitter-sql", rev = "da2f75b74f75525e0cef18e692e0c792a48a5f3a" }
+
+[[grammar]]
+name = "makefile"
+source = { git = "https://github.com/tree-sitter-grammars/tree-sitter-make", rev = "v1.1.1" }
 
 [[grammar]]
 name = "proto"

@@ -32,6 +32,7 @@ var (
 	expectedLanguages = []string{
 		"bash",
 		"css",
+		"diff",
 		"dockerfile",
 		"env",
 		"gitcommit",
@@ -45,6 +46,7 @@ var (
 		"javascript",
 		"json",
 		"jsonc",
+		"makefile",
 		"markdown",
 		"markdown.inline",
 		"protobuf",
@@ -58,6 +60,7 @@ var (
 	expectedGrammars = []string{
 		"bash",
 		"css",
+		"diff",
 		"dockerfile",
 		"gitattributes",
 		"gitcommit",
@@ -69,6 +72,7 @@ var (
 		"html",
 		"javascript",
 		"json",
+		"makefile",
 		"markdown",
 		"markdown_inline",
 		"proto",

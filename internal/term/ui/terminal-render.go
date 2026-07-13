@@ -10,8 +10,6 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-// tuiScreen adapts a rectangular region of a *tui.Buffer to uv.Screen so a
-// vt.Emulator can Draw directly into it
 type tuiScreen struct {
 	buf       *tui.Buffer
 	originX   int
@@ -58,8 +56,6 @@ func (s *tuiScreen) WidthMethod() uv.WidthMethod {
 	return s.widthMeth
 }
 
-// renderTerminalPane paints a terminal pane's emulator screen into buf at
-// its assigned area, reserving the bottom row for the status line
 func (r *renderPass) renderTerminalPane(
 	buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool,
 ) {
@@ -77,6 +73,7 @@ func (r *renderPass) renderTerminalPane(
 	} else {
 		emu.Draw(scr, uv.Rect(0, 0, a.Width, contentH))
 	}
+	highlightSelection(scr, tp)
 	r.renderTerminalStatus(buf, tp, y0, focused)
 }
 
@@ -98,6 +95,9 @@ func (r *renderPass) renderTerminalStatus(
 		modeSt = lipglossToTUIStyle(th.Get("ui.statusline.terminal"))
 	}
 	label := " TRM "
+	if tp.ConsumeBell(focused) && !focused {
+		label = " TRM* "
+	}
 	buf.SetString(a.X, y, label, modeSt)
 
 	title := tp.Title()
@@ -108,6 +108,32 @@ func (r *renderPass) renderTerminalStatus(
 		title = fmt.Sprintf("%s [scrollback -%d]", title, n)
 	}
 	buf.SetString(a.X+runewidth.StringWidth(label), y, " "+title, st)
+}
+
+func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
+	sel := tp.selection()
+	if !sel.active {
+		return
+	}
+	// span is in absolute (scrollback+screen) rows; translate to the rows
+	// currently visible in this viewport
+	start := tp.viewStart(scr.h)
+	sp := sel.span
+	y0, y1 := sp.start.Y-start, sp.end.Y-start
+	for y := max(y0, 0); y <= y1 && y < scr.h; y++ {
+		startX, endX := 0, scr.w-1
+		if y == y0 {
+			startX = sp.start.X
+		}
+		if y == y1 {
+			endX = sp.end.X
+		}
+		for x := max(startX, 0); x <= endX && x < scr.w; x++ {
+			c := scr.buf.Get(scr.originX+x, scr.originY+y)
+			c.Style = c.Style.Mod(tui.ModifierReversed)
+			scr.buf.Set(scr.originX+x, scr.originY+y, c)
+		}
+	}
 }
 
 func uvStyleToTUI(st uv.Style) tui.Style {
@@ -158,12 +184,9 @@ func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
 	}
 }
 
-// drawScrollback paints the h lines ending n lines back from live output,
-// combining scrollback with the live screen for the most recent lines
 func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 	emu := tp.Emulator()
 	bg := emu.BackgroundColor()
-	fg := emu.ForegroundColor()
 	blank := uv.EmptyCell
 	blank.Style.Bg = bg
 
@@ -186,12 +209,9 @@ func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 				scr.SetCell(x, row, &blank)
 				continue
 			}
-			cell = cell.Clone()
 			if cell.Style.Bg == nil && bg != nil {
+				cell = cell.Clone()
 				cell.Style.Bg = bg
-			}
-			if cell.Style.Fg == nil && fg != nil {
-				cell.Style.Fg = fg
 			}
 			scr.SetCell(x, row, cell)
 		}

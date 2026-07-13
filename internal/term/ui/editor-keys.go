@@ -16,7 +16,7 @@ func (e *EditorComponent) handleKeyPress(
 ) (EventResult, tea.Cmd) {
 	if !e.inWindowChord(msg) {
 		p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
-		if pi, ok := p.(PaneInput); ok {
+		if pi, ok := p.(RawPane); ok {
 			if result, handled := pi.HandleKey(msg, cx); handled {
 				return result, nil
 			}

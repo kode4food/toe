@@ -32,6 +32,7 @@ type (
 		infoItems       []command.KeyHint
 		mouseDownRange  *core.Range
 		mouseDownSep    *sepDrag
+		mouseDownDrag   RawPane
 		signatureHidden *signatureCall
 		docHighlightGen int
 		docHighlightPos docHighlightPosition
@@ -235,6 +236,10 @@ func (e *EditorComponent) HandleEvent(
 		e.cancelPending(cx)
 		e.autoScrollV.stop()
 		e.autoScrollH.stop()
+		if dc := e.mouseDownDrag; dc != nil {
+			dc.CancelDrag()
+		}
+		e.mouseDownDrag = nil
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
 			r.handleMouseClick(msg.X, msg.Y, msg.Mod)
@@ -243,10 +248,14 @@ func (e *EditorComponent) HandleEvent(
 
 	case tea.MouseMotionMsg:
 		e.completionGen++
+		if dc := e.mouseDownDrag; dc != nil &&
+			cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
+			return consumed(), dc.ContinueDrag(cx, msg.X, msg.Y)
+		}
 		var dragCmd tea.Cmd
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			if p, ok := paneAt(cx, msg.X, msg.Y); ok {
-				if pi, ok := p.(PaneInput); ok {
+				if pi, ok := p.(RawPane); ok {
 					if _, handled := pi.HandleMouse(msg, cx); handled {
 						return consumed(), nil
 					}
@@ -263,13 +272,22 @@ func (e *EditorComponent) HandleEvent(
 		}
 		return consumed(), e.continueAxisScroll(cx, msg.axis, msg.toLo)
 
+	case terminalDragScrollMsg:
+		return consumed(), msg.dc.DragTick(cx, msg.gen, msg.toTop)
+
 	case tea.MouseReleaseMsg:
 		e.completionGen++
+		if dc := e.mouseDownDrag; dc != nil {
+			e.mouseDownDrag = nil
+			cmd := dc.EndDrag(cx, msg.X, msg.Y)
+			e.syncEditorMessages(cx)
+			return consumed(), tea.Batch(cmd, e.documentHighlightCmd(cx))
+		}
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
 		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
-			if pi, ok := p.(PaneInput); ok {
+			if pi, ok := p.(RawPane); ok {
 				if _, handled := pi.HandleMouse(msg, cx); handled {
 					return consumed(), e.documentHighlightCmd(cx)
 				}
@@ -293,7 +311,7 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
-			if pi, ok := p.(PaneInput); ok {
+			if pi, ok := p.(RawPane); ok {
 				if _, handled := pi.HandleMouse(msg, cx); handled {
 					return consumed(), nil
 				}

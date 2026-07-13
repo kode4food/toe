@@ -18,9 +18,13 @@ func ScrollDown(e *view.Editor) {
 // PageUp moves the cursor and scrolls the view up by one page
 func PageUp(e *view.Editor) {
 	h := max(e.ViewHeight(), 1)
+	move := core.MovementMove
+	if e.Mode() == view.ModeSelect {
+		move = core.MovementExtend
+	}
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.MoveVertically(
-			doc, core.DirectionBackward, h, core.MovementMove,
+			doc, core.DirectionBackward, h, move,
 		)
 	})
 	scrollView(e, h, true)
@@ -29,9 +33,13 @@ func PageUp(e *view.Editor) {
 // PageDown moves the cursor and scrolls the view down by one page
 func PageDown(e *view.Editor) {
 	h := max(e.ViewHeight(), 1)
+	move := core.MovementMove
+	if e.Mode() == view.ModeSelect {
+		move = core.MovementExtend
+	}
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.MoveVertically(
-			doc, core.DirectionForward, h, core.MovementMove,
+			doc, core.DirectionForward, h, move,
 		)
 	})
 	scrollView(e, h, false)
@@ -278,7 +286,9 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 		if err != nil {
 			return
 		}
-		newSel := clampSelectionToLine(text, sel, newCursorChar)
+		newSel := clampSelectionToLine(
+			text, sel, newCursorChar, e.Mode() == view.ModeSelect,
+		)
 		doc.SetSelectionFor(v.ID(), newSel)
 	} else {
 		topLine := min(newAnchorLine+so, max(nLines-1, 0))
@@ -289,7 +299,9 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 		if err != nil {
 			return
 		}
-		newSel := clampSelectionToLine(text, sel, topChar)
+		newSel := clampSelectionToLine(
+			text, sel, topChar, e.Mode() == view.ModeSelect,
+		)
 		doc.SetSelectionFor(v.ID(), newSel)
 	}
 }
@@ -320,7 +332,7 @@ func maxVisibleColumns(doc *view.Document, v *view.View, limit int) int {
 }
 
 func clampSelectionToLine(
-	text core.Rope, sel core.Selection, targetChar int,
+	text core.Rope, sel core.Selection, targetChar int, extend bool,
 ) core.Selection {
 	line, err := text.CharToLine(targetChar)
 	if err != nil {
@@ -333,7 +345,8 @@ func clampSelectionToLine(
 	ranges := sel.Ranges()
 	newRanges := make([]core.Range, len(ranges))
 	copy(newRanges, ranges)
-	newRanges[sel.PrimaryIndex()] = core.PointRange(lineStart)
+	pi := sel.PrimaryIndex()
+	newRanges[pi] = newRanges[pi].PutCursor(text, lineStart, extend)
 	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 	if err != nil {
 		return sel

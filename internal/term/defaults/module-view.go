@@ -259,7 +259,7 @@ func viewModule(model ui.Model) command.Module {
 			},
 			{
 				Name:      actTerminalSearch,
-				DocString: "Search the focused terminal's scrollback",
+				DocString: "Search focused terminal's scrollback",
 				Run:       Continuation(model.TerminalSearchAction()),
 				Modes:     []string{"TRM"},
 				Keys: map[string][]command.KeyBinding{"*": {

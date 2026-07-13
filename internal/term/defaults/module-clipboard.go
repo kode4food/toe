@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -22,10 +23,12 @@ const (
 	actPastePrimaryClipboardBefore = "paste_primary_clipboard_before"
 	actPrimaryClipboardReplace     = "primary_clipboard_paste_replace"
 	actClearRegister               = "clear_register"
+	actPasteClipboardIntoPane      = "paste_clipboard_into_pane"
 )
 
 func clipboardModule() command.Module {
 	spc := prefixed(char(' '))
+	cw := prefixed(ctrl('w'))
 
 	return command.Module{
 		Commands: []command.Command{
@@ -79,6 +82,14 @@ func clipboardModule() command.Module {
 				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"clipboard-paste-after"},
 				Keys:      keys(spc(char('p'))),
+			},
+			{
+				Name:      actPasteClipboardIntoPane,
+				DocString: "Paste clipboard into terminal",
+				Run:       pasteClipboardIntoPane,
+				Modes:     []string{"TRM"},
+				Keys:      keys(cw(char('p'))),
+				Signature: sig(),
 			},
 			{
 				Name:      actPasteClipboardBefore,
@@ -155,4 +166,16 @@ func clipboardModule() command.Module {
 			},
 		},
 	}
+}
+
+func pasteClipboardIntoPane(e *view.Editor, _ *command.Args) command.Result {
+	// bypasses document/selection paste for a pane implementing RawPane
+	pp, ok := e.Tree().Get(e.Tree().Focus()).(ui.RawPane)
+	if !ok {
+		return command.Result{}
+	}
+	if text, ok := e.FirstRegister(view.RegisterClipboard); ok {
+		pp.Paste(text)
+	}
+	return command.Result{}
 }

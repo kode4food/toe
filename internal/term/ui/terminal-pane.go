@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"bytes"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -18,28 +20,40 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// TerminalPane is a [view.Pane] backed by a real PTY and a VT100/xterm
-// emulator, so full-screen programs (editors, pagers, TUIs) render correctly
-type TerminalPane struct {
-	id          view.Id
-	area        view.Area
-	dirty       bool
-	emu         *vt.SafeEmulator
-	pty         *os.File
-	cmd         *exec.Cmd
-	updates     chan struct{}
-	closed      chan struct{}
-	restore     view.Pane
-	titleMu     sync.Mutex
-	title       string
-	scrollN     int
-	mouseMu     sync.Mutex
-	mouseOn     bool
-	resizeMu    sync.Mutex
-	resizeTimer *time.Timer
-	pendingW    int
-	pendingH    int
-}
+type (
+	// TerminalPane is a [view.Pane] backed by a real PTY and a VT100/xterm
+	// emulator, so full-screen programs (editors, pagers, TUIs) render
+	// correctly
+	TerminalPane struct {
+		id          view.Id
+		area        view.Area
+		dirty       bool
+		emu         *vt.SafeEmulator
+		pty         *os.File
+		cmd         *exec.Cmd
+		clip        view.Clipboard
+		updates     chan struct{}
+		closed      chan struct{}
+		restore     view.Pane
+		stateMu     sync.Mutex
+		title       string
+		bellRung    bool
+		scrollN     int
+		mouseMu     sync.Mutex
+		mouseOn     bool
+		resizeMu    sync.Mutex
+		resizeTimer *time.Timer
+		pendingW    int
+		pendingH    int
+		selActive   bool
+		selA, selB  uv.Position
+		drag        axisTicker
+	}
+
+	selSpan struct {
+		start, end uv.Position
+	}
+)
 
 var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
 
@@ -48,13 +62,16 @@ var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
 const resizeDebounce = 50 * time.Millisecond
 
 var (
-	_ view.Pane  = (*TerminalPane)(nil)
-	_ PaneCursor = (*TerminalPane)(nil)
+	_ view.Pane = (*TerminalPane)(nil)
+	_ RawPane   = (*TerminalPane)(nil)
 )
 
 // NewTerminalPane spawns shell as a child process attached to a PTY sized
-// w by h, and starts pumping its output into a VT emulator
-func NewTerminalPane(shell string, w, h int) (*TerminalPane, error) {
+// w by h, and starts pumping its output into a VT emulator. clip may be nil
+// to ignore OSC 52 clipboard writes from programs running inside the shell
+func NewTerminalPane(
+	shell string, w, h int, clip view.Clipboard,
+) (*TerminalPane, error) {
 	w, h = max(w, 1), max(h, 1)
 	cmd := exec.Command(shell)
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{
@@ -68,14 +85,17 @@ func NewTerminalPane(shell string, w, h int) (*TerminalPane, error) {
 		emu:     vt.NewSafeEmulator(w, h),
 		pty:     f,
 		cmd:     cmd,
+		clip:    clip,
 		updates: make(chan struct{}, 1),
 		closed:  make(chan struct{}),
 	}
 	tp.emu.SetCallbacks(vt.Callbacks{
 		Title:       tp.setTitle,
+		Bell:        tp.onBell,
 		EnableMode:  func(m ansi.Mode) { tp.setMouseMode(m, true) },
 		DisableMode: func(m ansi.Mode) { tp.setMouseMode(m, false) },
 	})
+	tp.emu.RegisterOscHandler(52, tp.handleOSC52)
 	go tp.pump()
 	go func() { _, _ = io.Copy(tp.pty, tp.emu) }()
 	return tp, nil
@@ -120,24 +140,6 @@ func (t *TerminalPane) SetArea(a view.Area) {
 	t.scheduleResize(w, h)
 }
 
-func (t *TerminalPane) scheduleResize(w, h int) {
-	t.resizeMu.Lock()
-	defer t.resizeMu.Unlock()
-	t.pendingW, t.pendingH = w, h
-	if t.resizeTimer != nil {
-		t.resizeTimer.Stop()
-	}
-	t.resizeTimer = time.AfterFunc(resizeDebounce, t.applyResize)
-}
-
-func (t *TerminalPane) applyResize() {
-	t.resizeMu.Lock()
-	w, h := t.pendingW, t.pendingH
-	t.resizeMu.Unlock()
-	t.emu.Resize(w, h)
-	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
-}
-
 // ConsumeDirty reports whether the pane has changed since the last call,
 // clearing the flag
 func (t *TerminalPane) ConsumeDirty() bool {
@@ -178,8 +180,8 @@ func (t *TerminalPane) Emulator() *vt.SafeEmulator {
 // Title returns the terminal title most recently set by the shell or the
 // program running in it (OSC 0/2), or "" if none has been set yet
 func (t *TerminalPane) Title() string {
-	t.titleMu.Lock()
-	defer t.titleMu.Unlock()
+	t.stateMu.Lock()
+	defer t.stateMu.Unlock()
 	return t.title
 }
 
@@ -195,8 +197,8 @@ func (t *TerminalPane) SendKey(k uv.KeyEvent) {
 	t.emu.SendKey(k)
 }
 
-// MouseEnabled reports whether the program running in the shell has
-// requested mouse tracking (e.g. vim, htop, tmux)
+// MouseEnabled reports whether the program running in the shell has requested
+// mouse tracking (e.g. vim, htop, tmux)
 func (t *TerminalPane) MouseEnabled() bool {
 	t.mouseMu.Lock()
 	defer t.mouseMu.Unlock()
@@ -232,8 +234,8 @@ func (t *TerminalPane) ScrollToBottom() {
 	}
 }
 
-// SearchScrollback jumps to the nearest line above the current view
-// containing pattern (case-insensitive), reporting whether one was found
+// SearchScrollback jumps to the nearest line above the current view containing
+// pattern (case-insensitive), reporting whether one was found
 func (t *TerminalPane) SearchScrollback(pattern string) bool {
 	if pattern == "" {
 		return false
@@ -263,8 +265,8 @@ func (t *TerminalPane) Close() error {
 	return t.pty.Close()
 }
 
-// IngestOutput applies a chunk of output as if it had just been read from
-// the PTY, letting tests simulate shell output without a real child process
+// IngestOutput applies a chunk of output as if it had just been read from the
+// PTY, letting tests simulate shell output without a real child process
 func (t *TerminalPane) IngestOutput(data []byte) {
 	_, _ = t.emu.Write(data)
 	t.dirty = true
@@ -274,23 +276,75 @@ func (t *TerminalPane) IngestOutput(data []byte) {
 	}
 }
 
+// ConsumeBell reports whether the bell has rung since it was last consumed. A
+// rung bell only clears when read while focused, so it stays visible in the
+// status line until the pane is actually looked at
+func (t *TerminalPane) ConsumeBell(focused bool) bool {
+	t.stateMu.Lock()
+	defer t.stateMu.Unlock()
+	rung := t.bellRung
+	if focused {
+		t.bellRung = false
+	}
+	return rung
+}
+
+// Paste sends text to the shell, bracketing it with paste-mode escapes if the
+// running program requested bracketed paste
+func (t *TerminalPane) Paste(text string) {
+	t.ScrollToBottom()
+	t.emu.Paste(text)
+}
+
 func (t *TerminalPane) setTitle(s string) {
-	t.titleMu.Lock()
+	t.stateMu.Lock()
 	t.title = s
-	t.titleMu.Unlock()
+	t.stateMu.Unlock()
 	t.dirty = true
 }
 
-// setMouseMode tracks whether any mouse-tracking DEC mode is enabled, since
-// vt exposes no query for it directly, only enable/disable callbacks
+func (t *TerminalPane) onBell() {
+	t.stateMu.Lock()
+	t.bellRung = true
+	t.stateMu.Unlock()
+	t.dirty = true
+}
+
 func (t *TerminalPane) setMouseMode(m ansi.Mode, on bool) {
 	switch m {
 	case ansi.ModeMouseNormal, ansi.ModeMouseHighlight,
 		ansi.ModeMouseButtonEvent, ansi.ModeMouseAnyEvent:
+		// vt exposes no query for tracking mode, only these enable/disable
+		// callbacks, so track it ourselves
 		t.mouseMu.Lock()
 		t.mouseOn = on
 		t.mouseMu.Unlock()
+	default:
+		// no-op
 	}
+}
+
+func (t *TerminalPane) handleOSC52(data []byte) bool {
+	parts := bytes.SplitN(data, []byte{';'}, 3)
+	if len(parts) != 3 || t.clip == nil {
+		return false
+	}
+	payload := string(parts[2])
+	if payload == "?" {
+		// ignore clipboard queries, matching most terminals' default
+		// disallow-read stance
+		return true
+	}
+	decoded, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return false
+	}
+	if bytes.ContainsRune(parts[1], 'p') {
+		_ = t.clip.WritePrimary(string(decoded))
+	} else {
+		_ = t.clip.Write(string(decoded))
+	}
+	return true
 }
 
 func (t *TerminalPane) pump() {
@@ -307,9 +361,120 @@ func (t *TerminalPane) pump() {
 	}
 }
 
-// interactiveShell returns the user's shell for an interactive pane,
-// distinct from [view.Options.Shell]'s non-login `sh -c` filter runner
+func (t *TerminalPane) scheduleResize(w, h int) {
+	t.resizeMu.Lock()
+	defer t.resizeMu.Unlock()
+	t.pendingW, t.pendingH = w, h
+	if t.resizeTimer != nil {
+		t.resizeTimer.Stop()
+	}
+	t.resizeTimer = time.AfterFunc(resizeDebounce, t.applyResize)
+}
+
+func (t *TerminalPane) applyResize() {
+	t.resizeMu.Lock()
+	w, h := t.pendingW, t.pendingH
+	t.resizeMu.Unlock()
+	t.emu.Resize(w, h)
+	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
+}
+
+// absolute row of the top visible line, in scrollback+screen coordinates — the
+// same math drawScrollback uses to pick its window
+func (t *TerminalPane) viewStart(h int) int {
+	total := t.emu.ScrollbackLen() + t.emu.Height()
+	return max(total-h-t.scrollN, 0)
+}
+
+func (t *TerminalPane) contentHeight() int {
+	return max(t.area.Height-1, 0)
+}
+
+func (t *TerminalPane) toAbsolute(pos uv.Position) uv.Position {
+	return uv.Position{X: pos.X, Y: t.viewStart(t.contentHeight()) + pos.Y}
+}
+
+func (t *TerminalPane) beginSelection(pos uv.Position) {
+	t.selActive = true
+	abs := t.toAbsolute(pos)
+	t.selA, t.selB = abs, abs
+	t.dirty = true
+}
+
+func (t *TerminalPane) extendSelection(pos uv.Position) {
+	if !t.selActive {
+		return
+	}
+	t.selB = t.toAbsolute(pos)
+	t.dirty = true
+}
+
+func (t *TerminalPane) endSelection(pos uv.Position) string {
+	if !t.selActive {
+		return ""
+	}
+	t.selB = t.toAbsolute(pos)
+	t.selActive = false
+	t.dirty = true
+	return t.selectionText()
+}
+
+type selectionRes struct {
+	span   selSpan
+	active bool
+}
+
+func (t *TerminalPane) selection() selectionRes {
+	if !t.selActive {
+		return selectionRes{}
+	}
+	return selectionRes{span: normalizeSelection(t.selA, t.selB), active: true}
+}
+
+func (t *TerminalPane) selectionText() string {
+	sp := normalizeSelection(t.selA, t.selB)
+	w := t.emu.Width()
+	lines := make([]string, 0, sp.end.Y-sp.start.Y+1)
+	for y := sp.start.Y; y <= sp.end.Y; y++ {
+		startX, endX := 0, w-1
+		if y == sp.start.Y {
+			startX = sp.start.X
+		}
+		if y == sp.end.Y {
+			endX = sp.end.X
+		}
+		var b strings.Builder
+		for x := startX; x <= endX && x < w; x++ {
+			if c := t.cellAtAbsolute(x, y); c != nil && c.Content != "" {
+				b.WriteString(c.Content)
+			} else {
+				b.WriteByte(' ')
+			}
+		}
+		// terminal selection is line-oriented, not a rectangular block
+		lines = append(lines, strings.TrimRight(b.String(), " "))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (t *TerminalPane) cellAtAbsolute(x, y int) *uv.Cell {
+	sbLen := t.emu.ScrollbackLen()
+	if y < sbLen {
+		return t.emu.Scrollback().CellAt(x, y)
+	}
+	return t.emu.CellAt(x, y-sbLen)
+}
+
+func normalizeSelection(a, b uv.Position) selSpan {
+	if a.Y > b.Y || (a.Y == b.Y && a.X > b.X) {
+		a, b = b, a
+	}
+	return selSpan{start: a, end: b}
+}
+
 func interactiveShell() string {
+	// distinct from view.Options.Shell, which is a non-login `sh -c` filter
+	// runner rather than the user's real interactive shell
 	if sh := os.Getenv("SHELL"); sh != "" {
 		return sh
 	}

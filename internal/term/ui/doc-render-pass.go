@@ -70,7 +70,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 	p := r.cx.Editor.Tree().Get(r.cx.Editor.Tree().Focus())
-	if pc, ok := p.(PaneCursor); ok {
+	if pc, ok := p.(RawPane); ok {
 		return pc.Cursor(r.cx)
 	}
 	opts := r.cx.Editor.Options()

@@ -10,19 +10,19 @@ import (
 
 type (
 	mouseAutoScrollAxis struct {
+		axisTicker
+		scroll mouseAxisScrollFunc
+		pos    mouseAxisPosFunc
+	}
+
+	// axisTicker is the drag-edge-detection and repeating-tick state shared by
+	// every kind of mouse-drag auto-scroll (doc view or terminal pane)
+	axisTicker struct {
 		last, fixed int
 		gen         int
 		on, toLo    bool
 		interval    time.Duration
-		scroll      mouseAxisScrollFunc
-		pos         mouseAxisPosFunc
 	}
-
-	mouseAxisScrollFunc func(e *view.Editor, v *view.View, toLo bool)
-
-	mouseAxisPosFunc func(
-		r *renderPass, doc *view.Document, v *view.View, fixed int, toLo bool,
-	) (int, bool)
 
 	mouseAxisScrollMsg struct {
 		gen  int
@@ -30,12 +30,13 @@ type (
 		toLo bool
 	}
 
-	dragEdgeArgs struct {
-		pos, last  int
-		lo, hi     int
-		margin     int
-		onLo, onHi bool
-	}
+	axisTickSchedule func(toLo bool, gen int, interval time.Duration) tea.Cmd
+
+	mouseAxisScrollFunc func(e *view.Editor, v *view.View, toLo bool)
+
+	mouseAxisPosFunc func(
+		r *renderPass, doc *view.Document, v *view.View, fixed int, toLo bool,
+	) (int, bool)
 )
 
 const (
@@ -60,24 +61,30 @@ func (e *EditorComponent) continueAxisScroll(
 	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLo); ok {
 		extendSelectionTo(cx, doc, v, pos)
 	}
-	return axis.cmd(toLo)
+	return axis.tick(toLo, axis.schedule)
 }
 
-func (a *mouseAutoScrollAxis) cmd(toLo bool) tea.Cmd {
+func (a *mouseAutoScrollAxis) schedule(
+	toLo bool, gen int, interval time.Duration,
+) tea.Cmd {
+	return tea.Tick(interval, func(time.Time) tea.Msg {
+		return mouseAxisScrollMsg{gen: gen, axis: a, toLo: toLo}
+	})
+}
+
+// tick starts ticking toward toLo, scheduling the next tick via schedule
+func (a *axisTicker) tick(toLo bool, schedule axisTickSchedule) tea.Cmd {
 	a.gen++
-	gen := a.gen
 	a.on = true
 	a.toLo = toLo
 	interval := a.interval
 	if interval <= 0 {
 		interval = mouseAutoScrollMaxInterval
 	}
-	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return mouseAxisScrollMsg{gen: gen, axis: a, toLo: toLo}
-	})
+	return schedule(toLo, a.gen, interval)
 }
 
-func (a *mouseAutoScrollAxis) stop() {
+func (a *axisTicker) stop() {
 	if !a.on {
 		return
 	}
@@ -85,7 +92,7 @@ func (a *mouseAutoScrollAxis) stop() {
 	a.on = false
 }
 
-func (a *mouseAutoScrollAxis) update(
+func (a *axisTicker) update(
 	pos, lo, hi, margin int,
 ) (atLo, atHi bool, clamped int) {
 	atLo, atHi, clamped = dragEdge(dragEdgeArgs{
@@ -97,7 +104,11 @@ func (a *mouseAutoScrollAxis) update(
 	return atLo, atHi, clamped
 }
 
-func (a *mouseAutoScrollAxis) trigger(atLo, atHi bool, fixed int) tea.Cmd {
+// trigger starts or continues ticking toward whichever edge atLo/atHi
+// crossed, or stops ticking if neither has
+func (a *axisTicker) trigger(
+	atLo, atHi bool, fixed int, schedule axisTickSchedule,
+) tea.Cmd {
 	if !atLo && !atHi {
 		a.stop()
 		return nil
@@ -106,7 +117,14 @@ func (a *mouseAutoScrollAxis) trigger(atLo, atHi bool, fixed int) tea.Cmd {
 	if a.on && a.toLo == atLo {
 		return nil
 	}
-	return a.cmd(atLo)
+	return a.tick(atLo, schedule)
+}
+
+type dragEdgeArgs struct {
+	pos, last  int
+	lo, hi     int
+	margin     int
+	onLo, onHi bool
 }
 
 func dragEdge(a dragEdgeArgs) (atLo, atHi bool, clamped int) {

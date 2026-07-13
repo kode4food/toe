@@ -39,18 +39,18 @@ type (
 		PaintBuffer(Bounds, *Context) *tui.Buffer
 	}
 
-	// PaneInput is implemented by a [view.Pane] that wants to handle its own
-	// raw key and mouse events, instead of the normal keymap/document mouse
-	// logic. ok is false to fall through to that normal handling
-	PaneInput interface {
+	// RawPane opts out of the normal keymap/document mouse/cursor/paste logic
+	// entirely (e.g. a shell)
+	RawPane interface {
 		HandleKey(tea.KeyPressMsg, *Context) (EventResult, bool)
 		HandleMouse(tea.Msg, *Context) (EventResult, bool)
-	}
-
-	// PaneCursor is implemented by a [view.Pane] that draws its own cursor,
-	// instead of the normal document cursor-shape logic
-	PaneCursor interface {
 		Cursor(*Context) (tea.Cursor, bool)
+		Paste(text string)
+		BeginDrag(cx *Context, x, y int, mod tea.KeyMod) bool
+		ContinueDrag(cx *Context, x, y int) tea.Cmd
+		EndDrag(cx *Context, x, y int) tea.Cmd
+		CancelDrag()
+		DragTick(cx *Context, gen int, toTop bool) tea.Cmd
 	}
 
 	// Bounds is a screen-space rectangle

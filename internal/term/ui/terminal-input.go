@@ -22,8 +22,6 @@ func CloseAllTerminalPanes(e *view.Editor) {
 	})
 }
 
-var _ PaneInput = (*TerminalPane)(nil)
-
 // HandleKey forwards msg to the shell, unless it is one of the leaders that
 // detach or close the pane
 func (t *TerminalPane) HandleKey(
@@ -77,8 +75,120 @@ func (t *TerminalPane) HandleMouse(msg tea.Msg, cx *Context) (EventResult, bool)
 	return consumed(), true
 }
 
-// inWindowChord reports whether msg starts or continues the Ctrl-w prefix,
-// which must reach the keymap even while a pane has raw input focus
+type terminalDragScrollMsg struct {
+	dc    RawPane
+	gen   int
+	toTop bool
+}
+
+// BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or
+// forwards the click to it otherwise
+func (t *TerminalPane) BeginDrag(cx *Context, x, y int, mod tea.KeyMod) bool {
+	m, ok := t.localMouse(cx, x, y)
+	if !ok {
+		return false
+	}
+	if t.MouseEnabled() {
+		t.SendMouse(uv.MouseClickEvent(uv.Mouse{
+			X: m.X, Y: m.Y, Button: tea.MouseLeft, Mod: mod,
+		}))
+		return false
+	}
+	t.beginSelection(uv.Position{X: m.X, Y: m.Y})
+	return true
+}
+
+// ContinueDrag extends the selection to (x, y), auto-scrolling and
+// scheduling further ticks if the drag has crossed the pane's top or
+// bottom edge
+func (t *TerminalPane) ContinueDrag(cx *Context, x, y int) tea.Cmd {
+	yOff := 0
+	if bufferlineVisible(cx) {
+		yOff = 1
+	}
+	a := t.Area()
+	contentH := max(a.Height-1, 0)
+	scrollOff := cx.Editor.Options().ScrollOff
+	atTop, atBottom, clampedY := t.drag.update(
+		y-yOff, a.Y, a.Y+contentH-1, autoScrollMargin(contentH, scrollOff),
+	)
+	localX := min(max(x-a.X, 0), max(a.Width-1, 0))
+	t.extendSelection(uv.Position{X: localX, Y: clampedY - a.Y})
+	return t.drag.trigger(atTop, atBottom, localX, t.scheduleDragTick)
+}
+
+// EndDrag finalizes the selection at (x, y), copying it to the clipboard
+func (t *TerminalPane) EndDrag(cx *Context, x, y int) tea.Cmd {
+	t.drag.stop()
+	m := t.clampedMouse(cx, x, y)
+	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
+		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
+		cx.Editor.SetStatusMsg("copied selection to clipboard")
+	}
+	return nil
+}
+
+// CancelDrag stops any pending auto-scroll tick, without side effects
+func (t *TerminalPane) CancelDrag() {
+	t.drag.stop()
+}
+
+// DragTick continues scrolling toward toTop if gen still matches the
+// scheduling tick, or is a no-op if a newer drag has since superseded it
+func (t *TerminalPane) DragTick(_ *Context, gen int, toTop bool) tea.Cmd {
+	if gen != t.drag.gen {
+		return nil
+	}
+	if toTop {
+		t.ScrollLines(1)
+	} else {
+		t.ScrollLines(-1)
+	}
+	contentH := max(t.Area().Height-1, 0)
+	edgeY := contentH - 1
+	if toTop {
+		edgeY = 0
+	}
+	t.extendSelection(uv.Position{X: t.drag.fixed, Y: edgeY})
+	return t.drag.tick(toTop, t.scheduleDragTick)
+}
+
+func (t *TerminalPane) scheduleDragTick(
+	toTop bool, gen int, interval time.Duration,
+) tea.Cmd {
+	return tea.Tick(interval, func(time.Time) tea.Msg {
+		return terminalDragScrollMsg{dc: t, gen: gen, toTop: toTop}
+	})
+}
+
+func (t *TerminalPane) clampedMouse(cx *Context, x, y int) uv.Mouse {
+	yOff := 0
+	if bufferlineVisible(cx) {
+		yOff = 1
+	}
+	a := t.area
+	localX := min(max(x-a.X, 0), max(a.Width-1, 0))
+	contentH := max(a.Height-1, 0)
+	localY := min(max((y-yOff)-a.Y, 0), max(contentH-1, 0))
+	return uv.Mouse{X: localX, Y: localY}
+}
+
+func (t *TerminalPane) localMouse(cx *Context, x, y int) (uv.Mouse, bool) {
+	yOff := 0
+	if bufferlineVisible(cx) {
+		yOff = 1
+	}
+	a := t.Area()
+	localX, localY := x-a.X, (y-yOff)-a.Y
+	contentH := max(a.Height-1, 0)
+	if localX < 0 || localX >= a.Width || localY < 0 || localY >= contentH {
+		return uv.Mouse{}, false
+	}
+	return uv.Mouse{X: localX, Y: localY}, true
+}
+
+// the Ctrl-w prefix must reach the keymap even while a pane has raw input
+// focus, so it can't be treated as a normal keystroke
 func (e *EditorComponent) inWindowChord(msg tea.KeyPressMsg) bool {
 	if len(e.pending) > 0 {
 		return true
@@ -87,8 +197,6 @@ func (e *EditorComponent) inWindowChord(msg tea.KeyPressMsg) bool {
 	return k.Mod&tea.ModCtrl != 0 && k.Code == 'w'
 }
 
-// pollTerminals closes any terminal pane whose shell process has exited,
-// deferring closes (which mutate the tree) until after the scan completes
 func (e *EditorComponent) pollTerminals(cx *Context) {
 	var closing []*TerminalPane
 	cx.Editor.Tree().Range(func(p view.Pane) bool {
@@ -101,12 +209,12 @@ func (e *EditorComponent) pollTerminals(cx *Context) {
 		}
 		return true
 	})
+	// defer closes until after the scan, since closing mutates the tree
 	for _, tp := range closing {
 		closeTerminal(cx.Editor, tp)
 	}
 }
 
-// paneAt returns the leaf pane whose area contains screen point (x, y)
 func paneAt(cx *Context, x, y int) (view.Pane, bool) {
 	yOff := 0
 	if bufferlineVisible(cx) {
@@ -131,8 +239,6 @@ func terminalPollCmd() tea.Cmd {
 	})
 }
 
-// closeTerminal kills tp's shell and puts back whatever pane it replaced —
-// falling back to a scratch buffer if it wasn't opened via replacement
 func closeTerminal(e *view.Editor, tp *TerminalPane) {
 	_ = tp.Close()
 	if tp.restore != nil {
@@ -142,8 +248,8 @@ func closeTerminal(e *view.Editor, tp *TerminalPane) {
 	e.ClosePane(tp.ID())
 }
 
-// closeTerminalChain closes p's shell and walks p.restore, in case a
-// terminal was itself stashed behind a later one — a no-op for a *View
+// walks p.restore too, in case a terminal was itself stashed behind a
+// later one; a no-op for a *View
 func closeTerminalChain(p view.Pane) {
 	for {
 		tp, ok := p.(*TerminalPane)
@@ -155,23 +261,6 @@ func closeTerminalChain(p view.Pane) {
 	}
 }
 
-// localMouse translates screen point (x, y) to t's content-local
-// coordinates, reporting false if the point falls outside its content area
-func (t *TerminalPane) localMouse(cx *Context, x, y int) (uv.Mouse, bool) {
-	yOff := 0
-	if bufferlineVisible(cx) {
-		yOff = 1
-	}
-	a := t.Area()
-	localX, localY := x-a.X, (y-yOff)-a.Y
-	contentH := max(a.Height-1, 0)
-	if localX < 0 || localX >= a.Width || localY < 0 || localY >= contentH {
-		return uv.Mouse{}, false
-	}
-	return uv.Mouse{X: localX, Y: localY}, true
-}
-
-// mouseFields extracts the fields common to every mouse message kind
 func mouseFields(msg tea.Msg) (x, y int, btn tea.MouseButton, mod tea.KeyMod, ok bool) {
 	switch m := msg.(type) {
 	case tea.MouseClickMsg:
@@ -186,8 +275,6 @@ func mouseFields(msg tea.Msg) (x, y int, btn tea.MouseButton, mod tea.KeyMod, ok
 	return 0, 0, 0, 0, false
 }
 
-// wrapMouseEvent rebuilds msg's concrete uv event kind around m, once its
-// coordinates and button have been translated to the pane's local space
 func wrapMouseEvent(msg tea.Msg, m uv.Mouse) uv.MouseEvent {
 	switch msg.(type) {
 	case tea.MouseReleaseMsg:

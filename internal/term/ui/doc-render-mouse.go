@@ -95,12 +95,11 @@ func (r *renderPass) contentViewAt(x, y int) (*view.View, bool) {
 
 func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
 	if p, ok := paneAt(r.cx, x, y); ok {
-		if pi, ok := p.(PaneInput); ok {
+		if sp, ok := p.(RawPane); ok {
 			wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
 			r.cx.Editor.Tree().SetFocus(p.ID())
-			if wasFocused {
-				msg := tea.MouseClickMsg{X: x, Y: y, Mod: mod, Button: tea.MouseLeft}
-				pi.HandleMouse(msg, r.cx)
+			if wasFocused && sp.BeginDrag(r.cx, x, y, mod) {
+				r.ec.mouseDownDrag = sp
 			}
 			return
 		}
@@ -212,8 +211,9 @@ func (r *renderPass) handleMouseDrag(x, y int) tea.Cmd {
 		return nil
 	}
 
-	vCmd := r.ec.autoScrollV.trigger(atTop, atBottom, clampedX)
-	hCmd := r.ec.autoScrollH.trigger(atLeft, atRight, clampedY)
+	vAxis, hAxis := &r.ec.autoScrollV, &r.ec.autoScrollH
+	vCmd := vAxis.trigger(atTop, atBottom, clampedX, vAxis.schedule)
+	hCmd := hAxis.trigger(atLeft, atRight, clampedY, hAxis.schedule)
 	return tea.Batch(vCmd, hCmd)
 }
 

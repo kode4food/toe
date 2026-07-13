@@ -4,6 +4,7 @@ package main_test
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,8 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/vt"
 	"github.com/creack/pty"
-	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +28,7 @@ type tui struct {
 	done chan error
 
 	mu sync.Mutex
-	vt vt10x.Terminal
+	vt *vt.SafeEmulator
 }
 
 const (
@@ -485,9 +486,12 @@ func startTUI(t *testing.T, dir string, args ...string) *tui {
 		cmd:  cmd,
 		ptmx: ptmx,
 		done: make(chan error, 1),
-		vt:   vt10x.New(vt10x.WithSize(termCols, termRows)),
+		vt:   vt.NewSafeEmulator(termCols, termRows),
 	}
 	go tt.pump()
+	// drain the emulator's replies (mode queries, DA responses) back to the
+	// child, or an unread reply blocks the next Write forever
+	go func() { _, _ = io.Copy(tt.ptmx, tt.vt) }()
 	go func() { tt.done <- cmd.Wait() }()
 	t.Cleanup(tt.stop)
 	return tt

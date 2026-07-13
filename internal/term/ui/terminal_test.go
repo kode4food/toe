@@ -1,8 +1,10 @@
 package ui_test
 
 import (
+	"encoding/base64"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -469,6 +472,207 @@ func TestTerminalPane(t *testing.T) {
 		tp2, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
 		assert.Same(t, tp, tp2)
+	})
+
+	t.Run("Ctrl-w p pastes the clipboard register", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := defaults.RegisterDefaults(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
+
+		e.WriteRegister(view.RegisterClipboard, []string{"pasted-text"})
+
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m = m2.(ui.Model)
+		_ = sendKey(m, 'p')
+
+		assert.Eventually(t, func() bool {
+			return strings.Contains(tp.Emulator().String(), "pasted-text")
+		}, time.Second, 5*time.Millisecond)
+	})
+
+	t.Run("OSC 52 syncs nested clipboard writes", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		payload := base64.StdEncoding.EncodeToString([]byte("nested-copy"))
+		tp.IngestOutput(fmt.Appendf(nil, "\x1b]52;c;%s\x07", payload))
+
+		assert.Eventually(t, func() bool {
+			return clip.System == "nested-copy"
+		}, time.Second, 5*time.Millisecond)
+	})
+
+	t.Run("OSC 52 query is ignored, not written", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		tp.IngestOutput([]byte("\x1b]52;c;?\x07"))
+		time.Sleep(20 * time.Millisecond)
+
+		assert.Empty(t, clip.System)
+	})
+
+	t.Run("bell marks status until focused", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		_, ok = e.VSplit(doc.ID())
+		assert.True(t, ok)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		termID := e.Tree().Focus()
+		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+
+		e.FocusNextView()
+		assert.NotEqual(t, termID, e.Tree().Focus())
+
+		tp.IngestOutput([]byte("\x07"))
+		assert.Eventually(t, func() bool {
+			return strings.Contains(m.View().Content, "TRM*")
+		}, time.Second, 5*time.Millisecond)
+
+		e.Tree().SetFocus(termID)
+		content := m.View().Content
+		assert.NotContains(t, content, "TRM*")
+	})
+
+	t.Run("click-drag copies selected text", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
+
+		_, err := tp.Emulator().Write([]byte("COPYME"))
+		assert.NoError(t, err)
+		assert.False(t, tp.MouseEnabled())
+
+		area := tp.Area()
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseMotionMsg{
+			X: area.X + 5, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseReleaseMsg{
+			X: area.X + 5, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Equal(t, "COPYME", clip.System)
+	})
+
+	t.Run("click-drag selects while scrolled back", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		clip := testutil.NewFakeClipboard()
+		e.SetClipboard(clip)
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
+		writeScrollbackLines(t, tp, 50)
+
+		// pick a scrollback line and scroll so it lands on the top content
+		// row, using the same window math the renderer uses
+		sb := tp.Emulator().Scrollback()
+		target := sb.Len() - 5
+		area := tp.Area()
+		contentH := area.Height - 1
+		total := sb.Len() + tp.Emulator().Height()
+		tp.ScrollLines(total - contentH - target)
+		assert.Positive(t, tp.ScrollOffset())
+		want := strings.TrimRight(sb.Line(target).String(), " ")
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.MouseReleaseMsg{
+			X: area.X + area.Width - 1, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Equal(t, want, clip.System)
+	})
+
+	t.Run("drag past the top edge auto-scrolls scrollback", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
+		writeScrollbackLines(t, tp, 50)
+		assert.Equal(t, 0, tp.ScrollOffset())
+
+		area := tp.Area()
+		m2, cmd := m.Update(tea.MouseClickMsg{
+			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.Nil(t, cmd)
+
+		m2, cmd = m.Update(tea.MouseMotionMsg{
+			X: area.X, Y: area.Y - 1, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		assert.NotNil(t, cmd)
+
+		msg, ok := runWithTimeout(cmd, time.Second)
+		assert.True(t, ok)
+		m2, _ = m.Update(msg)
+		_ = m2.(ui.Model)
+
+		assert.Positive(t, tp.ScrollOffset())
 	})
 
 	t.Run("Ctrl-w / jumps to a scrollback match", func(t *testing.T) {

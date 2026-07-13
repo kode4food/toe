@@ -162,21 +162,38 @@ func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
 // combining scrollback with the live screen for the most recent lines
 func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 	emu := tp.Emulator()
+	bg := emu.BackgroundColor()
+	fg := emu.ForegroundColor()
+	blank := uv.EmptyCell
+	blank.Style.Bg = bg
+
 	sb := emu.Scrollback()
 	sbLen := sb.Len()
 	total := sbLen + emu.Height()
 	start := max(total-h-n, 0)
 	for row := range h {
 		line := start + row
-		if line >= total {
-			continue
-		}
 		for x := range w {
-			if line < sbLen {
-				scr.SetCell(x, row, sb.CellAt(x, line))
-			} else {
-				scr.SetCell(x, row, emu.CellAt(x, line-sbLen))
+			var cell *uv.Cell
+			if line < total {
+				if line < sbLen {
+					cell = sb.CellAt(x, line)
+				} else {
+					cell = emu.CellAt(x, line-sbLen)
+				}
 			}
+			if cell == nil {
+				scr.SetCell(x, row, &blank)
+				continue
+			}
+			cell = cell.Clone()
+			if cell.Style.Bg == nil && bg != nil {
+				cell.Style.Bg = bg
+			}
+			if cell.Style.Fg == nil && fg != nil {
+				cell.Style.Fg = fg
+			}
+			scr.SetCell(x, row, cell)
 		}
 	}
 }

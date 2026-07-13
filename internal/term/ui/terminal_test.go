@@ -183,8 +183,7 @@ func TestTerminalPane(t *testing.T) {
 
 		assert.Equal(t, "", tp.Title())
 
-		_, err := tp.Emulator().Write([]byte("\x1b]0;MYTITLE\x07"))
-		assert.NoError(t, err)
+		tp.IngestOutput([]byte("\x1b]0;MYTITLE\x07"))
 		assert.Equal(t, "MYTITLE", tp.Title())
 
 		assert.Contains(t, m.View().Content, "MYTITLE")

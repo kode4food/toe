@@ -263,6 +263,17 @@ func (t *TerminalPane) Close() error {
 	return t.pty.Close()
 }
 
+// IngestOutput applies a chunk of output as if it had just been read from
+// the PTY, letting tests simulate shell output without a real child process
+func (t *TerminalPane) IngestOutput(data []byte) {
+	_, _ = t.emu.Write(data)
+	t.dirty = true
+	select {
+	case t.updates <- struct{}{}:
+	default:
+	}
+}
+
 func (t *TerminalPane) setTitle(s string) {
 	t.titleMu.Lock()
 	t.title = s
@@ -287,12 +298,7 @@ func (t *TerminalPane) pump() {
 	for {
 		n, err := t.pty.Read(buf)
 		if n > 0 {
-			_, _ = t.emu.Write(buf[:n])
-			t.dirty = true
-			select {
-			case t.updates <- struct{}{}:
-			default:
-			}
+			t.IngestOutput(buf[:n])
 		}
 		if err != nil {
 			close(t.closed)

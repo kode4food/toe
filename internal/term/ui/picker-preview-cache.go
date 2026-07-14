@@ -97,7 +97,7 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	if info.Size() > PickerMaxPreview {
 		return noPreviewEntry("<File too large to preview>")
 	}
-	data, err := core.ReadIfText(path)
+	data, err := core.LoadText(path)
 	if err != nil {
 		if errors.Is(err, core.ErrBinaryFile) {
 			return noPreviewEntry("<Binary file>")

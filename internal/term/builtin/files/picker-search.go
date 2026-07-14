@@ -144,7 +144,7 @@ func (gs *globalSearcher) searchFile(path string) bool {
 		return true
 	}
 	defer func() { _ = f.Close() }()
-	header := make([]byte, 1024)
+	header := make([]byte, core.BinarySampleSize)
 	n, _ := f.Read(header)
 	if core.LooksBinary(header[:n]) {
 		return true

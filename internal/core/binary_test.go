@@ -145,7 +145,7 @@ func TestLooksBinary(t *testing.T) {
 		{
 			name: "NUL past sample window",
 			data: append(
-				bytes.Repeat([]byte("a"), 40*1024), // past the 32KiB sample
+				bytes.Repeat([]byte("a"), 2*core.BinarySampleSize),
 				0x00,
 			),
 			want: false,
@@ -153,7 +153,7 @@ func TestLooksBinary(t *testing.T) {
 		{
 			name: "NUL inside sample window",
 			data: append(
-				bytes.Repeat([]byte("a"), 20*1024),
+				bytes.Repeat([]byte("a"), core.BinarySampleSize/2),
 				0x00,
 			),
 			want: true,

@@ -40,7 +40,7 @@ func openDocument(
 	if opts.EditorConfig {
 		ec = config.FindEditorConfig(absPath)
 	}
-	data, err := core.ReadIfText(absPath)
+	data, err := core.LoadText(absPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			doc := newDocument(id, opts)

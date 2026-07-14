@@ -310,6 +310,7 @@ func AcceptPath(
 	}
 	doc, err := e.SwitchOrOpenDoc(path)
 	if err != nil {
+		e.SetStatusMsg("error: " + err.Error())
 		return nil, false
 	}
 	return AcceptDocumentID(e, doc.ID(), action)

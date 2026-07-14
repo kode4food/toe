@@ -9,6 +9,11 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
+var (
+	// ErrBinaryFile is returned when opening a file whose content looks binary
+	ErrBinaryFile = errors.New("binary file")
+)
+
 func newDocument(id DocumentId, opts *Options) *Document {
 	d := &Document{
 		id:         id,
@@ -65,6 +70,9 @@ func openDocument(
 			return doc, nil
 		}
 		return nil, &DocumentOpenError{Path: path, Err: err}
+	}
+	if core.LooksBinary(data) {
+		return nil, &DocumentOpenError{Path: path, Err: ErrBinaryFile}
 	}
 
 	hasBOM := hasBOMBytes(data)

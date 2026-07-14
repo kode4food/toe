@@ -100,7 +100,7 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	if err != nil {
 		return noPreviewEntry("<File not found>")
 	}
-	if LooksBinary(data) {
+	if core.LooksBinary(data) {
 		return noPreviewEntry("<Binary file>")
 	}
 	text := highlight.NormalizeNewlines(string(data))
@@ -132,10 +132,4 @@ func previewDirRows(path string) []previewDirRow {
 		return cmp.Compare(a.name, b.name)
 	})
 	return append(dirs, files...)
-}
-
-// LooksBinary reports whether data appears to be non-text content, using
-// the presence of a NUL byte in the first 1KB as the heuristic
-func LooksBinary(data []byte) bool {
-	return slices.Contains(data[:min(len(data), 1024)], 0)
 }

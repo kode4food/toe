@@ -29,7 +29,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 	modules := []command.Module{
 		editing.InsertModule(),
 		files.CompletionModule(model),
-		motion.CursorModule(model),
+		motion.CursorModule(),
 		editing.EditModule(),
 		editing.SelectionModule(model),
 		motion.SearchModule(model),

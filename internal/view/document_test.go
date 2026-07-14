@@ -74,6 +74,17 @@ func TestOpenDocument(t *testing.T) {
 		assert.False(t, d.Modified())
 	})
 
+	t.Run("rejects binary file", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "hello.bin")
+		data := []byte("hello\x00world")
+		assert.NoError(t, os.WriteFile(path, data, 0o644))
+
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.ErrorIs(t, err, view.ErrBinaryFile)
+	})
+
 	t.Run("new file returns empty doc at path", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "new.txt")

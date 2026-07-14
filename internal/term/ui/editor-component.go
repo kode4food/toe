@@ -375,6 +375,7 @@ func (e *EditorComponent) Render(w, h int, cx *Context) *tui.Buffer {
 	if e.buf == nil || e.buf.Width != w || e.buf.Height != h {
 		e.buf = tui.NewBuffer(w, h)
 	}
+	e.syncEditorMessages(cx)
 	e.cache.evictClosed(cx.Editor)
 	r := &renderPass{ec: e, cx: cx, w: w, h: h}
 	r.renderEditorContent(e.buf)

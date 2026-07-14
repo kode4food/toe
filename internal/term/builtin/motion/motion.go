@@ -5,7 +5,6 @@ import (
 
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 	"github.com/kode4food/toe/internal/view/config"
@@ -97,7 +96,7 @@ const (
 )
 
 // CursorModule returns the cursor-motion and goto commands
-func CursorModule(model ui.Model) command.Module {
+func CursorModule() command.Module {
 	cfg := new(motionSection)
 	g := kit.Prefixed(kit.Char('g'))
 	prev := kit.Prefixed(kit.Char('['))

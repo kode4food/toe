@@ -2,6 +2,7 @@ package ui
 
 import (
 	"cmp"
+	"errors"
 	"os"
 	"slices"
 
@@ -96,12 +97,12 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	if info.Size() > PickerMaxPreview {
 		return noPreviewEntry("<File too large to preview>")
 	}
-	data, err := os.ReadFile(path)
+	data, err := core.ReadIfText(path)
 	if err != nil {
+		if errors.Is(err, core.ErrBinaryFile) {
+			return noPreviewEntry("<Binary file>")
+		}
 		return noPreviewEntry("<File not found>")
-	}
-	if core.LooksBinary(data) {
-		return noPreviewEntry("<Binary file>")
 	}
 	text := highlight.NormalizeNewlines(string(data))
 	lang := highlight.DetectLanguage(path, text)

@@ -2,10 +2,18 @@ package core
 
 import (
 	"bytes"
+	"errors"
+	"io"
+	"os"
 	"unicode/utf8"
 )
 
 type textEncoding int
+
+var (
+	// ErrBinaryFile is returned by ReadIfText when a file's content looks binary
+	ErrBinaryFile = errors.New("binary file")
+)
 
 const (
 	encUTF8 textEncoding = iota
@@ -16,7 +24,9 @@ const (
 )
 
 const (
-	binarySampleSize = 32 * 1024
+	// BinarySampleSize is how much of a file LooksBinary inspects; callers can
+	// read just this much before deciding whether to load the rest
+	BinarySampleSize = 32 * 1024
 
 	// maxControlRatio applies once the sample is confirmed valid UTF-8, a
 	// strong text signal on its own; legacyControlRatio is stricter since
@@ -47,7 +57,7 @@ func LooksBinary(data []byte) bool {
 	if len(data) == 0 {
 		return false
 	}
-	sample := data[:min(len(data), binarySampleSize)]
+	sample := data[:min(len(data), BinarySampleSize)]
 
 	if hasBinarySignature(sample) {
 		return true
@@ -63,6 +73,33 @@ func LooksBinary(data []byte) bool {
 		threshold = maxControlRatio
 	}
 	return controlCharRatio(sample) > threshold
+}
+
+// ReadIfText reads path, returning ErrBinaryFile without reading past the
+// leading sample if the content looks binary, so a huge binary file is never
+// fully loaded just to be rejected
+func ReadIfText(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	sample := make([]byte, BinarySampleSize)
+	n, err := io.ReadFull(f, sample)
+	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+		return nil, err
+	}
+	sample = sample[:n]
+	if LooksBinary(sample) {
+		return nil, ErrBinaryFile
+	}
+
+	rest, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return append(sample, rest...), nil
 }
 
 func hasBinarySignature(sample []byte) bool {

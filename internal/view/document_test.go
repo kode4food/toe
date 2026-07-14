@@ -82,7 +82,7 @@ func TestOpenDocument(t *testing.T) {
 
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
-		assert.ErrorIs(t, err, view.ErrBinaryFile)
+		assert.ErrorIs(t, err, core.ErrBinaryFile)
 	})
 
 	t.Run("new file returns empty doc at path", func(t *testing.T) {

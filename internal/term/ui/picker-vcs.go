@@ -15,7 +15,7 @@ type changedFilePickerSource struct {
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
 		PickerBase: PickerBase{
-			title:       "Changed files",
+			id:          "changed-files",
 			columns:     []string{"change", "path"},
 			matchColumn: 1,
 			proportions: []int{0, 1},

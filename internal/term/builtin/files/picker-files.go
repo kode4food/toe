@@ -69,7 +69,7 @@ func (f *filePickerSource) Accept(
 
 func newFilePickerSource(dir string) *filePickerSource {
 	return &filePickerSource{
-		PickerBase: ui.NewPickerBase("Open file", []string{"path"}, 0, nil),
+		PickerBase: ui.NewPickerBase("open-file", []string{"path"}, 0, nil),
 		dir:        dir,
 	}
 }

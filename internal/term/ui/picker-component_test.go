@@ -192,7 +192,7 @@ func TestPickerScroll(t *testing.T) {
 	})
 }
 
-func (s fixedPickerSource) Title() string {
+func (s fixedPickerSource) ID() string {
 	if s.title != "" {
 		return s.title
 	}

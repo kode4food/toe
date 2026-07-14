@@ -45,7 +45,7 @@ type (
 
 	// PickerSource is implemented by every picker data source
 	PickerSource interface {
-		Title() string
+		ID() string
 		Columns() []string
 		MatchColumn() int
 		ColumnProportions() []int
@@ -119,10 +119,10 @@ type (
 	}
 
 	// PickerBase is an optional starting point a source can embed for default
-	// title, column, and fuzzy-match behavior; a source is free to implement
+	// id, column, and fuzzy-match behavior; a source is free to implement
 	// those methods itself instead
 	PickerBase struct {
-		title       string
+		id          string
 		columns     []string
 		matchColumn int
 		proportions []int
@@ -178,21 +178,21 @@ func (p PickerTarget) Valid() bool {
 	return p.Path != "" || p.ID != view.InvalidDocumentId
 }
 
-// NewPickerBase builds the fixed metadata a source embeds: window title,
+// NewPickerBase builds the fixed metadata a source embeds: kebab-case id,
 // column headers, the column matched against, and each column's flex weight
 func NewPickerBase(
-	title string, columns []string, matchColumn int, proportions []int,
+	id string, columns []string, matchColumn int, proportions []int,
 ) PickerBase {
 	return PickerBase{
-		title:       title,
+		id:          id,
 		columns:     columns,
 		matchColumn: matchColumn,
 		proportions: proportions,
 	}
 }
 
-func (p PickerBase) Title() string {
-	return p.title
+func (p PickerBase) ID() string {
+	return p.id
 }
 
 func (p PickerBase) Columns() []string {

@@ -224,7 +224,7 @@ func TestPickerRender(t *testing.T) {
 	})
 }
 
-func (noPreviewPickerSource) Title() string {
+func (noPreviewPickerSource) ID() string {
 	return "Plain"
 }
 
@@ -254,7 +254,7 @@ func (noPreviewPickerSource) Accept(
 ) {
 }
 
-func (columnPickerSource) Title() string {
+func (columnPickerSource) ID() string {
 	return "Columns"
 }
 

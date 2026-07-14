@@ -100,17 +100,17 @@ func (d *diagnosticPickerSource) item(
 }
 
 func newDiagnosticPicker(e *view.Editor, workspace bool) *ui.Picker {
-	title := "Diagnostics"
+	id := "diagnostics"
 	matchColumn := 3
 	proportions := []int{0, 0, 0, 1}
 	if workspace {
-		title = "Workspace diagnostics"
+		id = "workspace-diagnostics"
 		matchColumn = 4
 		proportions = []int{0, 0, 0, 1, 2}
 	}
 	return ui.NewPicker(e, &diagnosticPickerSource{
 		PickerBase: ui.NewPickerBase(
-			title, diagnosticPickerColumns(workspace), matchColumn, proportions,
+			id, diagnosticPickerColumns(workspace), matchColumn, proportions,
 		),
 		workspace: workspace,
 	})

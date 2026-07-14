@@ -640,7 +640,7 @@ func newControlledDynamicSource() *controlledDynamicSource {
 	return &controlledDynamicSource{ch: make(chan ui.PickerItem, 1)}
 }
 
-func (c *controlledDynamicSource) Title() string { return "Dynamic" }
+func (c *controlledDynamicSource) ID() string { return "dynamic" }
 
 func (c *controlledDynamicSource) Columns() []string { return []string{"path"} }
 

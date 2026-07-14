@@ -60,10 +60,6 @@ func DefaultFileExplorerOptions() FileExplorerOptions {
 	return FileExplorerOptions{FlattenDirs: true}
 }
 
-func (f *fileExplorerSource) Title() string {
-	return filepath.Base(f.root)
-}
-
 func (f *fileExplorerSource) Load(
 	_ *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
@@ -97,7 +93,7 @@ func newFileExplorerSource(
 	root string, opts FileExplorerOptions,
 ) *fileExplorerSource {
 	return &fileExplorerSource{
-		PickerBase: ui.NewPickerBase("", []string{"name"}, 0, nil),
+		PickerBase: ui.NewPickerBase("file-explorer", []string{"name"}, 0, nil),
 		root:       root,
 		opts:       opts,
 	}

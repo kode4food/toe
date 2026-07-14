@@ -18,8 +18,8 @@ toe reads config in this order (later values override earlier ones):
 
 `$XDG_CONFIG_HOME` defaults to `~/.config`.
 
-Open your user config directly: `:config_open`  
-Open workspace config: `:config_open_workspace`  
+Open your user config directly: `:config_open`
+Open workspace config: `:config_open_workspace`
 Reload after editing: `:config_reload`
 
 ## Workspace Trust
@@ -183,11 +183,11 @@ right = ["version-control", "diagnostics", "position"]
 
 ### Pickers
 
-Picker options are module-owned UI settings. Split ratios are saved per picker. They can also be changed at runtime with keys like `:set editor.picker.split-ratios.Diagnostics 0.65` and are persisted by auto-session when changed.
+Picker options are module-owned UI settings. Split ratios are saved per picker. They can also be changed at runtime with keys like `:set editor.picker.split-ratios.diagnostics 0.65` and are persisted by auto-session when changed.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|
-| `picker.split-ratios` | table | `{}` | Picker list/preview split ratios by picker title, from `0.2` to `0.8`; missing pickers use `0.5` |
+| `picker.split-ratios` | table | `{}` | Picker list/preview split ratios by picker id, from `0.2` to `0.8`; missing pickers use `0.5` |
 | `buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
 | `file-explorer.hidden` | bool | `false` | Show hidden files |
 | `file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |

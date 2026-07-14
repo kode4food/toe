@@ -80,7 +80,7 @@ func (p *PickerComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 	showPreview := areaW > pickerMinPreviewArea && previewEnabled(ps.source)
 	splitW := 0
 	if showPreview {
-		ratio := cx.pickerLayout.SplitRatioFor(ps.source.Title())
+		ratio := cx.pickerLayout.SplitRatioFor(ps.source.ID())
 		splitW = pickerSplitLeftWidth(areaW, ratio)
 		p.splitBounds = Bounds{x: 1 + splitW, y: 0, w: 1, h: areaH}
 		p.drawPickerBox(buf, 0, 0, areaW, areaH, splitW, cx)
@@ -215,7 +215,7 @@ func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
 	if opts.SplitRatios == nil {
 		opts.SplitRatios = map[string]float64{}
 	}
-	opts.SplitRatios[p.state.source.Title()] = ratio
+	opts.SplitRatios[p.state.source.ID()] = ratio
 	cx.pickerLayout = opts
 }
 

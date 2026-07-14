@@ -569,6 +569,7 @@ func TestTerminalPane(t *testing.T) {
 	})
 
 	t.Run("click-drag copies selected text", func(t *testing.T) {
+		t.Setenv("SHELL", "/bin/cat")
 		e := editorWithText(t, "hello toe")
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)

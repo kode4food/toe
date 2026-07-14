@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -103,7 +104,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, ".hidden.txt"), []byte("x"), 0o644,
 		))
-		opts := ui.DefaultFileExplorerOptions()
+		opts := files.DefaultFileExplorerOptions()
 		opts.Hidden = true
 
 		out := stripANSI(explorerModel(t, dir, opts).View().Content)
@@ -133,7 +134,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
 		))
-		opts := ui.DefaultFileExplorerOptions()
+		opts := files.DefaultFileExplorerOptions()
 		opts.Ignore = true
 
 		out := stripANSI(explorerModel(t, dir, opts).View().Content)
@@ -148,7 +149,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(nested, "inner.txt"), []byte("y"), 0o644,
 		))
-		opts := ui.DefaultFileExplorerOptions()
+		opts := files.DefaultFileExplorerOptions()
 		opts.FlattenDirs = false
 
 		out := stripANSI(explorerModel(t, dir, opts).View().Content)
@@ -168,7 +169,7 @@ func TestFileExplorer(t *testing.T) {
 		if err := os.Symlink(filepath.Join(dir, "target"), link); err != nil {
 			t.Skip("symlink unavailable")
 		}
-		opts := ui.DefaultFileExplorerOptions()
+		opts := files.DefaultFileExplorerOptions()
 		opts.FollowSymlinks = true
 
 		out := stripANSI(explorerModel(t, dir, opts).View().Content)
@@ -224,10 +225,10 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 // explorerModel opens a FileExplorer rooted at dir (the editor's cwd) and
 // returns the mounted model after one render-sized resize
 func explorerModel(
-	t *testing.T, dir string, opts ...ui.FileExplorerOptions,
+	t *testing.T, dir string, opts ...files.FileExplorerOptions,
 ) ui.Model {
 	t.Helper()
-	cfg := ui.DefaultFileExplorerOptions()
+	cfg := files.DefaultFileExplorerOptions()
 	if len(opts) > 0 {
 		cfg = opts[0]
 	}
@@ -237,7 +238,7 @@ func explorerModel(
 	bindNormalTestAction(
 		km, "explorer",
 		m.PickerAction(func(e *view.Editor) *ui.Picker {
-			return ui.NewFileExplorer(e, cfg)
+			return files.NewFileExplorer(e, cfg)
 		}),
 		[]command.KeyEvent{char('e')},
 	)

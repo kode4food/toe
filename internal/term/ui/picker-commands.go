@@ -8,14 +8,14 @@ import (
 )
 
 type commandPaletteSource struct {
-	pickerMeta
+	PickerBase
 	km *command.Keymaps
 }
 
 // CommandPalettePicker opens a picker listing all registered commands
 func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
 	return NewPicker(e, &commandPaletteSource{
-		pickerMeta: pickerMeta{
+		PickerBase: PickerBase{
 			title:       "Command palette",
 			columns:     []string{"name", "bindings", "doc"},
 			proportions: []int{0, 1, 2},

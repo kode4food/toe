@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -41,7 +42,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			},
 		})
 
-		m := openDiagnosticPicker(e, ui.NewDiagnosticPicker, 'd')
+		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
 		_ = sendSpecial(m, tea.KeyEnter)
 
 		v, ok = e.FocusedView()
@@ -79,7 +80,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			},
 		})
 
-		m := openDiagnosticPicker(e, ui.NewWorkspaceDiagnosticPicker, 'D')
+		m := openDiagnosticPicker(e, files.NewWorkspaceDiagnosticPicker, 'D')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "bad a")
@@ -117,7 +118,7 @@ func TestDiagnosticPicker(t *testing.T) {
 				},
 			})
 
-			m := openDiagnosticPicker(e, ui.NewDiagnosticPicker, 'd')
+			m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
 			assert.Contains(t, stripANSI(m.View().Content), tc.want)
 		})
 	}

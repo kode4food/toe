@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -90,8 +91,8 @@ func TestBufferPicker(t *testing.T) {
 
 	t.Run("start previous selects previous buffer", func(t *testing.T) {
 		_, e := bufferPickerMRUModel(t)
-		m := openBufferPicker(t, e, ui.BufferPickerOptions{
-			StartPosition: ui.PickerStartPrevious,
+		m := openBufferPicker(t, e, files.BufferPickerOptions{
+			StartPosition: files.PickerStartPrevious,
 		})
 		_ = sendSpecial(m, tea.KeyEnter)
 
@@ -145,11 +146,11 @@ func bufferPickerMRUModel(t *testing.T) (ui.Model, *view.Editor) {
 }
 
 func openBufferPicker(
-	t *testing.T, e *view.Editor, opts ...ui.BufferPickerOptions,
+	t *testing.T, e *view.Editor, opts ...files.BufferPickerOptions,
 ) ui.Model {
 	t.Helper()
-	cfg := ui.BufferPickerOptions{
-		StartPosition: ui.PickerStartTop,
+	cfg := files.BufferPickerOptions{
+		StartPosition: files.PickerStartTop,
 	}
 	if len(opts) > 0 {
 		cfg = opts[0]
@@ -159,7 +160,7 @@ func openBufferPicker(
 	bindNormalTestAction(
 		km, "buffer_picker",
 		m.PickerAction(func(e *view.Editor) *ui.Picker {
-			return ui.NewBufferPicker(e, cfg)
+			return files.NewBufferPicker(e, cfg)
 		}),
 		[]command.KeyEvent{char('p')},
 	)
@@ -169,15 +170,15 @@ func openBufferPicker(
 
 func TestPickerStartPositionUnmarshal(t *testing.T) {
 	t.Run("valid values unmarshal", func(t *testing.T) {
-		var p ui.PickerStartPosition
+		var p files.PickerStartPosition
 		assert.NoError(t, p.UnmarshalText([]byte("top")))
-		assert.Equal(t, ui.PickerStartTop, p)
+		assert.Equal(t, files.PickerStartTop, p)
 		assert.NoError(t, p.UnmarshalText([]byte("previous")))
-		assert.Equal(t, ui.PickerStartPrevious, p)
+		assert.Equal(t, files.PickerStartPrevious, p)
 	})
 	t.Run("invalid value returns error", func(t *testing.T) {
-		var p ui.PickerStartPosition
+		var p files.PickerStartPosition
 		err := p.UnmarshalText([]byte("invalid"))
-		assert.ErrorIs(t, err, ui.ErrInvalidPickerStart)
+		assert.ErrorIs(t, err, files.ErrInvalidPickerStart)
 	})
 }

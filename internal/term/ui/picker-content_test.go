@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 
 	"github.com/kode4food/toe/internal/term/ui"
@@ -33,7 +34,7 @@ func TestPickerRender(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -58,7 +59,7 @@ func TestPickerRender(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -141,8 +142,8 @@ func TestPickerRender(t *testing.T) {
 		bindNormalTestAction(
 			km, "file_explorer",
 			m.PickerAction(func(e *view.Editor) *ui.Picker {
-				return ui.NewFileExplorer(
-					e, ui.DefaultFileExplorerOptions(),
+				return files.NewFileExplorer(
+					e, files.DefaultFileExplorerOptions(),
 				)
 			}),
 			[]command.KeyEvent{char('e')},

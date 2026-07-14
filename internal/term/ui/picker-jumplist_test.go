@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin/motion"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -94,7 +95,7 @@ func jumplistModel(t *testing.T) (ui.Model, *view.Editor, int) {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "jumplist", m.PickerAction(ui.JumplistPicker),
+		km, "jumplist", m.PickerAction(motion.JumplistPicker),
 		[]command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 30)
@@ -124,7 +125,7 @@ func jumplistSelectionModel(t *testing.T) (
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "jumplist", m.PickerAction(ui.JumplistPicker),
+		km, "jumplist", m.PickerAction(motion.JumplistPicker),
 		[]command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 30)
@@ -160,7 +161,7 @@ func jumplistPreviewModel(t *testing.T) ui.Model {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "jumplist", m.PickerAction(ui.JumplistPicker),
+		km, "jumplist", m.PickerAction(motion.JumplistPicker),
 		[]command.KeyEvent{char('j')},
 	)
 	m = resize(m, 120, 12)

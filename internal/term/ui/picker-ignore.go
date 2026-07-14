@@ -13,40 +13,44 @@ import (
 )
 
 type (
-	pickerIgnore struct {
+	PickerIgnore struct {
 		base string
 		dir  string
 		ig   *gitignore.GitIgnore
 	}
 
-	pickerIgnoreOptions struct {
-		hidden     bool
-		parents    bool
-		ignore     bool
-		gitIgnore  bool
-		gitGlobal  bool
-		gitExclude bool
+	PickerIgnoreOptions struct {
+		Hidden     bool
+		Parents    bool
+		Ignore     bool
+		GitIgnore  bool
+		GitGlobal  bool
+		GitExclude bool
 	}
 )
 
-type skipPickerPathArgs struct {
-	rel     string
-	path    string
-	entry   os.DirEntry
-	ignores []pickerIgnore
-	opts    pickerIgnoreOptions
+// SkipPickerPathArgs holds the entry a picker file-walk is considering and
+// the ignore state to test it against
+type SkipPickerPathArgs struct {
+	Rel     string
+	Path    string
+	Entry   os.DirEntry
+	Ignores []PickerIgnore
+	Opts    PickerIgnoreOptions
 }
 
-func skipPickerPath(args skipPickerPathArgs) bool {
-	name := args.entry.Name()
-	if args.opts.hidden && strings.HasPrefix(name, ".") {
+// SkipPickerPath reports whether a walked entry should be excluded from a
+// picker's file listing under the given ignore rules
+func SkipPickerPath(args SkipPickerPathArgs) bool {
+	name := args.Entry.Name()
+	if args.Opts.Hidden && strings.HasPrefix(name, ".") {
 		return true
 	}
 	if excludedPickerType(name) {
 		return true
 	}
-	for _, ig := range args.ignores {
-		sub, ok := ignorePathForBase(args.rel, args.path, ig)
+	for _, ig := range args.Ignores {
+		sub, ok := ignorePathForBase(args.Rel, args.Path, ig)
 		if ok && ig.ig.MatchesPath(sub) {
 			return true
 		}
@@ -54,7 +58,7 @@ func skipPickerPath(args skipPickerPathArgs) bool {
 	return false
 }
 
-func ignorePathForBase(rel, path string, ig pickerIgnore) (string, bool) {
+func ignorePathForBase(rel, path string, ig PickerIgnore) (string, bool) {
 	if ig.dir != "" {
 		sub, err := filepath.Rel(ig.dir, path)
 		parent := ".." + string(filepath.Separator)
@@ -76,42 +80,42 @@ func ignorePathForBase(rel, path string, ig pickerIgnore) (string, bool) {
 	return sub, ok
 }
 
-func loadIgnoreFiles(
-	root, path string, opts pickerIgnoreOptions,
-) []pickerIgnore {
-	var ignores []pickerIgnore
-	for _, dir := range ignoreDirs(root, path, opts.parents) {
-		if opts.ignore {
+func LoadIgnoreFiles(
+	root, path string, opts PickerIgnoreOptions,
+) []PickerIgnore {
+	var ignores []PickerIgnore
+	for _, dir := range ignoreDirs(root, path, opts.Parents) {
+		if opts.Ignore {
 			ignores = appendIgnore(ignores, dir, ".ignore")
 			ignores = appendIgnore(
 				ignores, dir, filepath.Join(loader.WorkspaceDirName, "ignore"),
 			)
 		}
-		if opts.gitIgnore {
+		if opts.GitIgnore {
 			ignores = appendIgnore(ignores, dir, ".gitignore")
 		}
 	}
-	if opts.gitExclude {
+	if opts.GitExclude {
 		ignores = appendIgnore(
 			ignores, root, filepath.Join(".git", "info", "exclude"),
 		)
 	}
-	if opts.gitGlobal {
+	if opts.GitGlobal {
 		ignores = appendIgnorePath(ignores, root, gitGlobalIgnorePath())
 	}
-	if opts.ignore {
+	if opts.Ignore {
 		ignores = appendIgnorePath(ignores, "", loader.ConfigIgnoreFile())
 	}
 	return ignores
 }
 
-func appendIgnore(ignores []pickerIgnore, dir, name string) []pickerIgnore {
+func appendIgnore(ignores []PickerIgnore, dir, name string) []PickerIgnore {
 	return appendIgnorePath(ignores, dir, filepath.Join(dir, name))
 }
 
-func appendIgnorePath(ignores []pickerIgnore, dir, path string) []pickerIgnore {
+func appendIgnorePath(ignores []PickerIgnore, dir, path string) []PickerIgnore {
 	if ig, ok := compileIgnore(path); ok {
-		return append(ignores, pickerIgnore{dir: dir, ig: ig})
+		return append(ignores, PickerIgnore{dir: dir, ig: ig})
 	}
 	return ignores
 }
@@ -133,10 +137,12 @@ func ignoreDirs(root, path string, parents bool) []string {
 	return dirs
 }
 
-func defaultPickerIgnoreOptions() pickerIgnoreOptions {
-	return pickerIgnoreOptions{
-		hidden: true, parents: true, ignore: true,
-		gitIgnore: true, gitGlobal: true, gitExclude: true,
+// DefaultPickerIgnoreOptions is the ignore behavior file-walking pickers use
+// when a caller does not need to customize it
+func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
+	return PickerIgnoreOptions{
+		Hidden: true, Parents: true, Ignore: true,
+		GitIgnore: true, GitGlobal: true, GitExclude: true,
 	}
 }
 

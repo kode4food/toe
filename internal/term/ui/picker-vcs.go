@@ -3,21 +3,18 @@ package ui
 import (
 	"path/filepath"
 
-	"charm.land/lipgloss/v2"
-
-	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/view"
 )
 
 type changedFilePickerSource struct {
-	pickerMeta
+	PickerBase
 }
 
 // NewChangedFilePicker lists workspace files the version-control system
 // reports as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
-		pickerMeta: pickerMeta{
+		PickerBase: PickerBase{
 			title:       "Changed files",
 			columns:     []string{"change", "path"},
 			matchColumn: 1,
@@ -38,7 +35,6 @@ func (c *changedFilePickerSource) Load(
 		e.SetStatusMsg("error: " + err.Error())
 		return nil, nil, func() {}
 	}
-	styles := changedFileStyles(e)
 	// providers report symlink-resolved paths; resolve the workspace root
 	// the same way so names relativize cleanly
 	cwd := e.Cwd()
@@ -51,7 +47,7 @@ func (c *changedFilePickerSource) Load(
 	go func() {
 		defer close(feed)
 		for _, fc := range changes {
-			item := changedFileItem(vc, fc, cwd, styles)
+			item := changedFileItem(vc, fc, cwd)
 			select {
 			case feed <- item:
 			case <-done:
@@ -72,12 +68,11 @@ func (c *changedFilePickerSource) Load(
 func (c *changedFilePickerSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
-	_, _ = acceptPath(e, item.Location.Target.Path, action)
+	_, _ = AcceptPath(e, item.Location.Target.Path, action)
 }
 
 func changedFileItem(
 	vc view.VersionControl, fc view.FileChange, cwd string,
-	styles map[view.FileChangeKind]lipgloss.Style,
 ) PickerItem {
 	display := view.DocumentRelativeName(fc.Path, cwd)
 	if fc.Kind == view.FileChangeRenamed {
@@ -86,11 +81,11 @@ func changedFileItem(
 	}
 	hunks := changedFileHunks(vc, fc)
 	return PickerItem{
-		Display:   display,
-		Style:     styles[fc.Kind],
-		Columns:   []string{changedFileLabel(fc.Kind), display},
-		SortKey:   display,
-		DiffHunks: hunks,
+		Display:     display,
+		Columns:     []string{changedFileLabel(fc.Kind), display},
+		StyleScopes: []string{changedFileScope(fc.Kind), ""},
+		SortKey:     display,
+		DiffHunks:   hunks,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: fc.Path},
 			Lines:  firstChangeLines(hunks),
@@ -136,19 +131,19 @@ func changedFileLabel(kind view.FileChangeKind) string {
 	}
 }
 
-func changedFileStyles(
-	e *view.Editor,
-) map[view.FileChangeKind]lipgloss.Style {
-	th, _, err := theme.Load(e.Options().Theme)
-	if err != nil {
-		return nil
-	}
-	return map[view.FileChangeKind]lipgloss.Style{
-		view.FileChangeUntracked: th.Get("diff.plus"),
-		view.FileChangeAdded:     th.Get("diff.plus"),
-		view.FileChangeModified:  th.Get("diff.delta"),
-		view.FileChangeConflict:  th.Get("error"),
-		view.FileChangeDeleted:   th.Get("diff.minus"),
-		view.FileChangeRenamed:   th.Get("diff.delta.moved"),
+func changedFileScope(kind view.FileChangeKind) string {
+	switch kind {
+	case view.FileChangeUntracked, view.FileChangeAdded:
+		return "diff.plus"
+	case view.FileChangeModified:
+		return "diff.delta"
+	case view.FileChangeConflict:
+		return "error"
+	case view.FileChangeDeleted:
+		return "diff.minus"
+	case view.FileChangeRenamed:
+		return "diff.delta.moved"
+	default:
+		return ""
 	}
 }

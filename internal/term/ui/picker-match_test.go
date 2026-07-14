@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 
 	"github.com/kode4food/toe/internal/term/ui"
@@ -31,7 +32,7 @@ func TestPickerMatch(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 

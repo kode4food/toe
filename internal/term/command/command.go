@@ -11,6 +11,15 @@ type (
 		Commands []Command
 		Options  []Option
 		Section  *Section
+		Labels   []PrefixLabel
+	}
+
+	// PrefixLabel names an intermediate key-sequence node for the pending-key
+	// hint popup, letting a module label the prefixes it owns
+	PrefixLabel struct {
+		Modes []string
+		Seq   []KeyEvent
+		Label string
 	}
 
 	// Option describes a runtime editor option owned by a module. Toggle is

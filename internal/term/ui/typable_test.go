@@ -10,8 +10,8 @@ import (
 
 	"github.com/kode4food/toe/internal/loader"
 
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	viewconfig "github.com/kode4food/toe/internal/view/config"
@@ -231,7 +231,7 @@ func newTestModel(t *testing.T, e *view.Editor) ui.Model {
 	t.Helper()
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	reg, err := defaults.RegisterDefaults(m, km)
+	reg, err := builtin.Register(m, km)
 	assert.NoError(t, err)
 	e.SetConfigReload(func() error {
 		raw, _ := viewconfig.LoadRawConfigForDir(e.Cwd())

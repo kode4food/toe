@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -23,7 +23,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 40)
 
@@ -42,7 +42,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -70,7 +70,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -115,7 +115,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -139,7 +139,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -159,7 +159,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -183,7 +183,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -215,7 +215,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -239,7 +239,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -260,7 +260,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -281,7 +281,7 @@ func TestSignatureHelpComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 

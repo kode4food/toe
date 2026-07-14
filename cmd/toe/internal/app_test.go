@@ -12,8 +12,8 @@ import (
 
 	app "github.com/kode4food/toe/cmd/toe/internal"
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -23,7 +23,7 @@ func newTestApp(t *testing.T) *app.App {
 	dir := t.TempDir()
 	e := view.NewEditor(dir)
 	km := command.NewKeymaps()
-	reg, err := defaults.RegisterDefaults(ui.New(e, km), km)
+	reg, err := builtin.Register(ui.New(e, km), km)
 	assert.NoError(t, err)
 	return &app.App{Root: dir, Editor: e, Reg: reg}
 }

@@ -11,8 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin"
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -47,7 +48,7 @@ func TestPickerFiles(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -111,7 +112,7 @@ func TestPickerFiles(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -154,7 +155,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(root)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(root),
+			files.NewFilePickerInDir(root),
 		)
 
 		m = resize(m, 100, 30)
@@ -191,7 +192,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(tmp)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(tmp),
+			files.NewFilePickerInDir(tmp),
 		)
 
 		m = resize(m, 100, 30)
@@ -222,7 +223,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker", m.PickerAction(ui.FilePicker),
+			km, "file_picker", m.PickerAction(files.NewFilePicker),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -255,7 +256,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker_cwd", m.PickerAction(ui.FilePickerInCWD),
+			km, "file_picker_cwd", m.PickerAction(files.NewFilePickerInCWD),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -288,7 +289,7 @@ func TestPickerFiles(t *testing.T) {
 		e := view.NewEditor(cwd)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err = defaults.RegisterDefaults(m, km)
+		_, err = builtin.Register(m, km)
 		assert.NoError(t, err)
 
 		m = resize(m, 100, 30)
@@ -320,7 +321,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker_cwd", m.PickerAction(ui.FilePickerInCWD),
+			km, "file_picker_cwd", m.PickerAction(files.NewFilePickerInCWD),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -352,7 +353,7 @@ func TestPickerFiles(t *testing.T) {
 		e := view.NewEditor(cwd)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err = defaults.RegisterDefaults(m, km)
+		_, err = builtin.Register(m, km)
 		assert.NoError(t, err)
 
 		m = resize(m, 100, 30)
@@ -388,7 +389,7 @@ func TestPickerFiles(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker_cwd", m.PickerAction(ui.FilePickerInCWD),
+			km, "file_picker_cwd", m.PickerAction(files.NewFilePickerInCWD),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -422,7 +423,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(link)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(link),
+			files.NewFilePickerInDir(link),
 		)
 
 		m = resize(m, 100, 30)
@@ -450,7 +451,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(root)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(root),
+			files.NewFilePickerInDir(root),
 		)
 
 		m = resize(m, 100, 30)
@@ -473,7 +474,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(tmp)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(tmp),
+			files.NewFilePickerInDir(tmp),
 		)
 
 		m = resize(m, 100, 30)
@@ -491,7 +492,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(tmp)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(link),
+			files.NewFilePickerInDir(link),
 		)
 
 		m = resize(m, 100, 30)
@@ -511,7 +512,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(tmp)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			ui.FilePickerInDir(link),
+			files.NewFilePickerInDir(link),
 		)
 
 		m = resize(m, 100, 30)
@@ -531,7 +532,7 @@ func TestPickerFiles(t *testing.T) {
 
 		e := view.NewEditor(tmp)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 6)
-		p := ui.FilePickerInDir(tmp)(e)
+		p := files.NewFilePickerInDir(tmp)(e)
 
 		out := stripANSI(m.View().Content)
 

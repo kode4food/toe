@@ -106,29 +106,6 @@ func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
 	}
 }
 
-func (m Model) GlobalSearchAction() command.KeyAction {
-	ec := m.component
-	cx := m.context
-	opener := func(e *view.Editor) layerFunc {
-		p := NewPicker(e, &globalSearchSource{
-			pickerMeta: pickerMeta{
-				title:   "Global search",
-				columns: []string{"path"},
-			},
-		})
-		cmd := p.feedCmd
-		p.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
-		}
-	}
-	return func(e *view.Editor) command.Continuation {
-		cx.lastLayer = opener
-		ec.nextLayer = opener(e)
-		return nil
-	}
-}
-
 func (m Model) CommandPaletteAction() command.KeyAction {
 	ec := m.component
 	cx := m.context

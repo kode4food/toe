@@ -45,6 +45,11 @@ func (r *Registry) RegisterModule(m Module) error {
 	if m.Section != nil {
 		r.sections = append(r.sections, *m.Section)
 	}
+	for _, lbl := range m.Labels {
+		for _, mode := range lbl.Modes {
+			r.km.LabelNode(mode, lbl.Seq, lbl.Label)
+		}
+	}
 	for _, o := range m.Options {
 		if r.options == nil {
 			r.options = make(map[string]Option)

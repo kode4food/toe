@@ -8,8 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
@@ -1452,7 +1452,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 100, 30)
 

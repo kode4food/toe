@@ -20,6 +20,11 @@ type (
 	}
 )
 
+const (
+	pickerFeedBatchSize = 256
+	pickerFeedFlushWait = 40 * time.Millisecond
+)
+
 func drainPickerFeed(ch <-chan PickerItem, done <-chan struct{}) tea.Cmd {
 	return func() tea.Msg {
 		batch := make([]PickerItem, 0, pickerFeedBatchSize)

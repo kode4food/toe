@@ -13,8 +13,9 @@ import (
 	"github.com/kode4food/toe/internal/health"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/term/builtin"
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
@@ -140,7 +141,7 @@ func (a *App) InitReg() error {
 	km := command.NewKeymaps()
 	a.Model = ui.New(a.Editor, km)
 	var err error
-	a.Reg, err = defaults.RegisterDefaults(a.Model, km)
+	a.Reg, err = builtin.Register(a.Model, km)
 	return err
 }
 
@@ -212,7 +213,7 @@ func (a *App) ConfigureModel() error {
 		if err != nil {
 			return err
 		}
-		a.Model = a.Model.WithInitialPicker(ui.FilePickerInDir(abs))
+		a.Model = a.Model.WithInitialPicker(files.NewFilePickerInDir(abs))
 	}
 	_, workspaceFallback := loader.FindWorkspace(a.Root)
 	trusted := loader.QueryWorkspaceTrust(a.Root, a.Editor.Options().Insecure)

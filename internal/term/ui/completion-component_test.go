@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -55,7 +55,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -84,7 +84,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		km.Bind(
 			ui.CompletionMode, ui.CompletionAcceptAction,
@@ -112,7 +112,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -138,7 +138,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -166,7 +166,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -194,7 +194,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -228,7 +228,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -257,7 +257,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -286,7 +286,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -322,7 +322,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -346,7 +346,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -372,7 +372,7 @@ func TestCompletionComponent(t *testing.T) {
 		m.SetCompletionOptions(ui.CompletionOptions{
 			Icons: ui.CompletionIconsASCII,
 		})
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -485,7 +485,7 @@ func TestCompletionComponent(t *testing.T) {
 				e.SetLanguageServerController(ctl)
 				km := command.NewKeymaps()
 				m := ui.New(e, km)
-				_, err := defaults.RegisterDefaults(m, km)
+				_, err := builtin.Register(m, km)
 				assert.NoError(t, err)
 				m = resize(m, 80, 24)
 
@@ -579,7 +579,7 @@ func TestCompletionComponent(t *testing.T) {
 				m.SetCompletionOptions(ui.CompletionOptions{
 					Icons: ui.CompletionIconsASCII,
 				})
-				_, err := defaults.RegisterDefaults(m, km)
+				_, err := builtin.Register(m, km)
 				assert.NoError(t, err)
 				m = resize(m, 80, 24)
 
@@ -606,7 +606,7 @@ func TestCompletionComponent(t *testing.T) {
 		m.SetCompletionOptions(ui.CompletionOptions{
 			Icons: ui.CompletionIconsNone,
 		})
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -636,7 +636,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -667,7 +667,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -696,7 +696,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -725,7 +725,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -755,7 +755,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		// Narrow screen forces docs above/below the popup
 		m = resize(m, 40, 24)
@@ -783,7 +783,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -811,7 +811,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -837,7 +837,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -861,7 +861,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -887,7 +887,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -913,7 +913,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -938,7 +938,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -961,7 +961,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -988,7 +988,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1024,7 +1024,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1058,7 +1058,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1090,7 +1090,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 40, 8)
 
@@ -1121,7 +1121,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1155,7 +1155,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1185,7 +1185,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1216,7 +1216,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1244,7 +1244,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1269,7 +1269,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1293,7 +1293,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1323,7 +1323,7 @@ func TestCompletionComponent(t *testing.T) {
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1348,7 +1348,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1371,7 +1371,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
@@ -1394,7 +1394,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 

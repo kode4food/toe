@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -65,7 +66,7 @@ func TestModelLifecycle(t *testing.T) {
 
 	t.Run("initial picker mounts on resize", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.FilePicker)
+		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePicker)
 		m = resize(m, 80, 24)
 		assert.NotEmpty(t, m.View().Content)
 	})

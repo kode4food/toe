@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -65,13 +66,13 @@ func assertRenderedWidth(t *testing.T, out string, w int) {
 }
 
 func bufferPicker(e *view.Editor) *ui.Picker {
-	return ui.NewBufferPicker(e, ui.BufferPickerOptions{
-		StartPosition: ui.PickerStartTop,
+	return files.NewBufferPicker(e, files.BufferPickerOptions{
+		StartPosition: files.PickerStartTop,
 	})
 }
 
 func bufferDirExplorer(e *view.Editor) *ui.Picker {
-	return ui.NewBufferDirExplorer(e, ui.DefaultFileExplorerOptions())
+	return files.NewBufferDirExplorer(e, files.DefaultFileExplorerOptions())
 }
 
 func writeLanguageConfig(t *testing.T, root, lang string, enabled bool) {

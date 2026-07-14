@@ -1,11 +1,12 @@
 package ui
 
 import (
+	"cmp"
+	"slices"
 	"sync"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 
 	"github.com/kode4food/toe/internal/view"
 )
@@ -80,7 +81,6 @@ type (
 	// PickerItem is a single row shown in the picker list
 	PickerItem struct {
 		Display     string
-		Style       lipgloss.Style
 		Columns     []string
 		StyleScopes []string
 		SortKey     string
@@ -118,7 +118,10 @@ type (
 		indices []int
 	}
 
-	pickerMeta struct {
+	// PickerBase is an optional starting point a source can embed for default
+	// title, column, and fuzzy-match behavior; a source is free to implement
+	// those methods itself instead
+	PickerBase struct {
 		title       string
 		columns     []string
 		matchColumn int
@@ -175,19 +178,32 @@ func (p PickerTarget) Valid() bool {
 	return p.Path != "" || p.ID != view.InvalidDocumentId
 }
 
-func (p pickerMeta) Title() string {
+// NewPickerBase builds the fixed metadata a source embeds: window title,
+// column headers, the column matched against, and each column's flex weight
+func NewPickerBase(
+	title string, columns []string, matchColumn int, proportions []int,
+) PickerBase {
+	return PickerBase{
+		title:       title,
+		columns:     columns,
+		matchColumn: matchColumn,
+		proportions: proportions,
+	}
+}
+
+func (p PickerBase) Title() string {
 	return p.title
 }
 
-func (p pickerMeta) Columns() []string {
+func (p PickerBase) Columns() []string {
 	return p.columns
 }
 
-func (p pickerMeta) MatchColumn() int {
+func (p PickerBase) MatchColumn() int {
 	return p.matchColumn
 }
 
-func (p pickerMeta) ColumnProportions() []int {
+func (p PickerBase) ColumnProportions() []int {
 	if len(p.proportions) == len(p.columns) {
 		for _, proportion := range p.proportions {
 			if proportion > 0 {
@@ -198,21 +214,20 @@ func (p pickerMeta) ColumnProportions() []int {
 	return defaultColumnProportions(len(p.columns))
 }
 
-func defaultColumnProportions(n int) []int {
-	proportions := make([]int, n)
-	if n > 0 {
-		proportions[0] = 1
-	}
-	return proportions
-}
-
-func previewEnabled(source PickerSource) bool {
-	_, skip := source.(PickerPreviewSkipper)
-	return !skip
-}
-
-func (p pickerMeta) Match(query string, item PickerItem) (int, []int, bool) {
+func (p PickerBase) Match(query string, item PickerItem) (int, []int, bool) {
 	return fuzzyMatchItem(query, item, p.columns, p.matchColumn)
+}
+
+// MatchCount reports how many items currently match the query
+func (p *Picker) MatchCount() int {
+	return len(p.matched)
+}
+
+// SelectIndex moves the cursor to i when it is a valid match index
+func (p *Picker) SelectIndex(i int) {
+	if i >= 0 && i < len(p.matched) {
+		p.cursor = i
+	}
 }
 
 func (p *Picker) addItems(items []PickerItem) {
@@ -220,7 +235,7 @@ func (p *Picker) addItems(items []PickerItem) {
 		return
 	}
 	p.items = append(p.items, items...)
-	sortPickerItems(p.items)
+	SortPickerItems(p.items)
 	p.refilter()
 }
 
@@ -270,7 +285,9 @@ func (p *Picker) clearPreviewCache() {
 	clear(p.previewCache)
 }
 
-func acceptDocumentID(
+// AcceptDocumentID opens the document by id, splitting per action, and
+// returns the view now showing it
+func AcceptDocumentID(
 	e *view.Editor, id view.DocumentId, action PickerAcceptAction,
 ) (*view.View, bool) {
 	switch action {
@@ -281,6 +298,35 @@ func acceptDocumentID(
 	default:
 		return replaceDocumentID(e, id)
 	}
+}
+
+// AcceptPath opens the file at path (switching to it if already open),
+// splitting per action, and returns the view now showing it
+func AcceptPath(
+	e *view.Editor, path string, action PickerAcceptAction,
+) (*view.View, bool) {
+	if path == "" {
+		return nil, false
+	}
+	doc, err := e.SwitchOrOpenDoc(path)
+	if err != nil {
+		return nil, false
+	}
+	return AcceptDocumentID(e, doc.ID(), action)
+}
+
+// AlignAcceptedView scrolls the view so the accepted document's cursor is
+// visible after a picker jump
+func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
+	sel := doc.SelectionFor(v.ID())
+	v.EnsureCursorVisible(
+		doc.Text(), sel, max(v.Area().Height, e.ViewHeight()),
+		e.Options().ScrollOff, nil,
+	)
+	v.EnsureCursorVisibleHorizontal(
+		doc.Text(), sel, e.ViewContentWidth(), doc.TabWidth(),
+		e.Options().ScrollOff,
+	)
 }
 
 func replaceDocumentID(e *view.Editor, id view.DocumentId) (*view.View, bool) {
@@ -297,27 +343,23 @@ func replaceDocumentID(e *view.Editor, id view.DocumentId) (*view.View, bool) {
 	return e.FocusedView()
 }
 
-func acceptPath(
-	e *view.Editor, path string, action PickerAcceptAction,
-) (*view.View, bool) {
-	if path == "" {
-		return nil, false
+func defaultColumnProportions(n int) []int {
+	proportions := make([]int, n)
+	if n > 0 {
+		proportions[0] = 1
 	}
-	doc, err := e.SwitchOrOpenDoc(path)
-	if err != nil {
-		return nil, false
-	}
-	return acceptDocumentID(e, doc.ID(), action)
+	return proportions
 }
 
-func alignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
-	sel := doc.SelectionFor(v.ID())
-	v.EnsureCursorVisible(
-		doc.Text(), sel, max(v.Area().Height, e.ViewHeight()),
-		e.Options().ScrollOff, nil,
-	)
-	v.EnsureCursorVisibleHorizontal(
-		doc.Text(), sel, e.ViewContentWidth(), doc.TabWidth(),
-		e.Options().ScrollOff,
-	)
+func previewEnabled(source PickerSource) bool {
+	_, skip := source.(PickerPreviewSkipper)
+	return !skip
+}
+
+// SortPickerItems sorts items by display text, the default ordering for
+// static picker sources
+func SortPickerItems(items []PickerItem) {
+	slices.SortStableFunc(items, func(a, b PickerItem) int {
+		return cmp.Compare(a.Display, b.Display)
+	})
 }

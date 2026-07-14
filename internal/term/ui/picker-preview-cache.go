@@ -43,6 +43,9 @@ type (
 	}
 )
 
+// PickerMaxPreview is the largest file size a picker will preview inline
+const PickerMaxPreview = 10 * 1024 * 1024
+
 func (p previewCache) doc(
 	sc *syntax.Cache, doc *view.Document,
 ) *previewDocEntry {
@@ -90,14 +93,14 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	if info.IsDir() {
 		return &previewDirEntry{rows: previewDirRows(path)}
 	}
-	if info.Size() > pickerMaxPreview {
+	if info.Size() > PickerMaxPreview {
 		return noPreviewEntry("<File too large to preview>")
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return noPreviewEntry("<File not found>")
 	}
-	if looksBinary(data) {
+	if LooksBinary(data) {
 		return noPreviewEntry("<Binary file>")
 	}
 	text := highlight.NormalizeNewlines(string(data))
@@ -129,4 +132,10 @@ func previewDirRows(path string) []previewDirRow {
 		return cmp.Compare(a.name, b.name)
 	})
 	return append(dirs, files...)
+}
+
+// LooksBinary reports whether data appears to be non-text content, using
+// the presence of a NUL byte in the first 1KB as the heuristic
+func LooksBinary(data []byte) bool {
+	return slices.Contains(data[:min(len(data), 1024)], 0)
 }

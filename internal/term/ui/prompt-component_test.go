@@ -11,8 +11,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -157,7 +157,7 @@ func TestPromptCompletion(t *testing.T) {
 		e := view.NewEditor(root)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err = defaults.RegisterDefaults(m, km)
+		_, err = builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -175,7 +175,7 @@ func TestPromptCmdAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -196,7 +196,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -211,7 +211,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -229,7 +229,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -250,7 +250,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -271,7 +271,7 @@ func TestRegexPromptAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -290,7 +290,7 @@ func TestRegexPromptAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -308,7 +308,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -327,7 +327,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -341,7 +341,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -360,7 +360,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -382,7 +382,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		assert.NoError(t, err)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err = defaults.RegisterDefaults(m, km)
+		_, err = builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -413,7 +413,7 @@ func TestSearchPromptError(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -434,7 +434,7 @@ func TestRegexFnError(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -455,7 +455,7 @@ func TestPromptHandlesMouse(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -471,7 +471,7 @@ func TestPromptHandlesMouse(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 
@@ -489,7 +489,7 @@ func TestRedrawSignal(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 60, 12)
 

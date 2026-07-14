@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/defaults"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
@@ -28,7 +28,7 @@ func TestModelView(t *testing.T) {
 		e := editorWithText(t, "")
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 
 		v := m.View()
@@ -43,7 +43,7 @@ func TestInsertMode(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 
 		m = sendKey(m, 'a')
@@ -773,7 +773,7 @@ func TestFreeScroll(t *testing.T) {
 		e.ResizeTree(80, 24)
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		for range 40 {
 			m = sendKey(m, 'j')
@@ -936,7 +936,7 @@ func TestDocumentHighlightRefresh(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
-		_, err := defaults.RegisterDefaults(m, km)
+		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 
 		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})

@@ -116,11 +116,7 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 	matchColumn := p.source.MatchColumn()
 
 	if len(cols) <= 1 {
-		itemBase := base
-		fg := lipglossColorToTUI(m.item.Style.GetForeground())
-		if !fg.IsReset() {
-			itemBase = base.Fg(fg)
-		}
+		itemBase := pickerColumnBase(base, m.item.StyleScopes, 0, cx)
 		writePickerMatched(buf, writePickerMatchedArgs{
 			x: cx2, y: y, maxW: cellW, text: m.item.Display,
 			indices: m.indices, base: itemBase, match: match,

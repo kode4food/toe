@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 
 	"github.com/kode4food/toe/internal/term/ui"
@@ -78,7 +79,7 @@ func TestPickerPreview(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -113,7 +114,7 @@ func TestPickerPreview(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -149,7 +150,7 @@ func TestPickerPreview(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -186,7 +187,7 @@ func TestPickerPreview(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -216,7 +217,7 @@ func TestPickerPreview(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -247,7 +248,7 @@ func TestPickerPreview(t *testing.T) {
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -279,7 +280,7 @@ max-indent-retain = 40
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -312,7 +313,7 @@ wrap-indicator = "↪ "
 		m := ui.New(e, km)
 		bindNormalTestAction(
 			km, "file_picker",
-			m.PickerAction(ui.FilePickerInDir(tmp)),
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 
@@ -420,7 +421,7 @@ wrap-indicator = "↪ "
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker", m.PickerAction(ui.FilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
@@ -465,7 +466,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker", m.PickerAction(ui.FilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)
@@ -531,7 +532,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "file_picker", m.PickerAction(ui.FilePickerInDir(tmp)),
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
 			[]command.KeyEvent{char('p')},
 		)
 		m = resize(m, 120, 30)

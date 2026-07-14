@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -219,7 +220,7 @@ func openGlobalSearch(t *testing.T, e *view.Editor, query string) ui.Model {
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "global_search", m.GlobalSearchAction(),
+		km, "global_search", m.PickerAction(files.NewGlobalSearchPicker),
 		[]command.KeyEvent{char('s')},
 	)
 	m = resize(m, 120, 30)

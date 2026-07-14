@@ -9,29 +9,29 @@ import (
 
 type (
 	lspWorkspaceCommandSource struct {
-		pickerMeta
+		PickerBase
 		commands []string
 	}
 
 	lspLocationSource struct {
-		pickerMeta
+		PickerBase
 		locations []view.Location
 	}
 
 	lspSymbolSource struct {
-		pickerMeta
+		PickerBase
 		symbols []view.Symbol
 	}
 
 	lspWorkspaceSymbolSource struct {
-		pickerMeta
+		PickerBase
 		query string
 	}
 )
 
 func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
 	return NewPicker(e, &lspLocationSource{
-		pickerMeta: pickerMeta{
+		PickerBase: PickerBase{
 			title:   "LSP locations",
 			columns: []string{"location"},
 		},
@@ -41,7 +41,7 @@ func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
 
 func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 	return NewPicker(e, &lspSymbolSource{
-		pickerMeta: pickerMeta{
+		PickerBase: PickerBase{
 			title:       "LSP symbols",
 			columns:     []string{"name"},
 			matchColumn: 0,
@@ -52,7 +52,7 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 
 func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &lspWorkspaceSymbolSource{
-		pickerMeta: pickerMeta{
+		PickerBase: PickerBase{
 			title:       "LSP workspace symbols",
 			columns:     []string{"name", "path"},
 			matchColumn: 0,
@@ -226,7 +226,7 @@ func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 		commands = ctl.WorkspaceCommands(doc)
 	}
 	return NewPicker(e, &lspWorkspaceCommandSource{
-		pickerMeta: pickerMeta{
+		PickerBase: PickerBase{
 			title:   "LSP workspace command",
 			columns: []string{"command"},
 		},
@@ -241,7 +241,7 @@ func acceptLocation(
 	if !ok {
 		return
 	}
-	v, ok := acceptPath(e, loc.Path, action)
+	v, ok := AcceptPath(e, loc.Path, action)
 	if !ok {
 		return
 	}
@@ -254,7 +254,7 @@ func acceptLocation(
 		return
 	}
 	doc.SetSelectionFor(v.ID(), sel)
-	alignAcceptedView(e, v, doc)
+	AlignAcceptedView(e, v, doc)
 }
 
 func locationLineRange(

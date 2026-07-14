@@ -30,11 +30,5 @@ func (o PickerLayoutOptions) SplitRatioFor(key string) float64 {
 }
 
 func clampPickerSplitRatio(ratio float64) float64 {
-	if ratio < MinPickerSplitRatio {
-		return MinPickerSplitRatio
-	}
-	if ratio > MaxPickerSplitRatio {
-		return MaxPickerSplitRatio
-	}
-	return ratio
+	return min(max(ratio, MinPickerSplitRatio), MaxPickerSplitRatio)
 }

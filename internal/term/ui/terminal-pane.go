@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -39,8 +40,7 @@ type (
 		title       string
 		bellRung    bool
 		scrollN     int
-		mouseMu     sync.Mutex
-		mouseOn     bool
+		mouseOn     atomic.Bool
 		resizeMu    sync.Mutex
 		resizeTimer *time.Timer
 		pendingW    int
@@ -200,9 +200,7 @@ func (t *TerminalPane) SendKey(k uv.KeyEvent) {
 // MouseEnabled reports whether the program running in the shell has requested
 // mouse tracking (e.g. vim, htop, tmux)
 func (t *TerminalPane) MouseEnabled() bool {
-	t.mouseMu.Lock()
-	defer t.mouseMu.Unlock()
-	return t.mouseOn
+	return t.mouseOn.Load()
 }
 
 // SendMouse forwards a mouse event to the shell
@@ -316,9 +314,7 @@ func (t *TerminalPane) setMouseMode(m ansi.Mode, on bool) {
 		ansi.ModeMouseButtonEvent, ansi.ModeMouseAnyEvent:
 		// vt exposes no query for tracking mode, only these enable/disable
 		// callbacks, so track it ourselves
-		t.mouseMu.Lock()
-		t.mouseOn = on
-		t.mouseMu.Unlock()
+		t.mouseOn.Store(on)
 	default:
 		// no-op
 	}

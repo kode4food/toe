@@ -372,7 +372,15 @@ func (t *TerminalPane) applyResize() {
 	w, h := t.pendingW, t.pendingH
 	t.resizeMu.Unlock()
 	t.emu.Resize(w, h)
-	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
+	_ = pty.Setsize(t.pty, &pty.Winsize{
+		Rows: uint16(h),
+		Cols: uint16(w),
+	})
+	t.dirty = true
+	select {
+	case t.updates <- struct{}{}:
+	default:
+	}
 }
 
 // absolute row of the top visible line, in scrollback+screen coordinates — the

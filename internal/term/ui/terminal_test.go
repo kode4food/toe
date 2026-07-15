@@ -704,6 +704,30 @@ func TestTerminalPane(t *testing.T) {
 	})
 }
 
+func TestTerminalResize(t *testing.T) {
+	t.Run("signals redraw", func(t *testing.T) {
+		tp, err := ui.NewTerminalPane("cat", 20, 10, nil)
+		if !assert.NoError(t, err) {
+			return
+		}
+		t.Cleanup(func() { _ = tp.Close() })
+		_ = tp.ConsumeDirty()
+		select {
+		case <-tp.Updates():
+		default:
+		}
+
+		tp.SetArea(view.Area{Width: 30, Height: 12})
+
+		select {
+		case <-tp.Updates():
+			assert.True(t, tp.ConsumeDirty())
+		case <-time.After(time.Second):
+			assert.Fail(t, "resize did not signal redraw")
+		}
+	})
+}
+
 // runWithTimeout runs cmd and reports its message, or ok=false if it hasn't
 // fired within d — used to skip Init's long-lived, event-driven commands
 func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {

@@ -79,11 +79,10 @@ func TestChangedFilePicker(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "modified.txt")
-		assert.Contains(t, out, "modified")
 		assert.Contains(t, out, "untracked.txt")
-		assert.Contains(t, out, "untracked")
+		assert.Contains(t, out, "? untracked.txt")
 		assert.Contains(t, out, "staged.txt")
-		assert.Contains(t, out, "added")
+		assert.Contains(t, out, "\uf4d0 staged.txt") //  nf-oct-file_added
 	})
 
 	t.Run("preview opens on the first change", func(t *testing.T) {
@@ -118,10 +117,8 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "deleted.txt")
-		assert.Contains(t, out, "deleted")
-		assert.Contains(t, out, "old.txt → new.txt")
-		assert.Contains(t, out, "renamed")
+		assert.Contains(t, out, "\uf4d6 deleted.txt")            //  nf-oct-file_removed
+		assert.Contains(t, out, "\uf45a old.txt \u2192 new.txt") //  nf-oct-diff_renamed
 	})
 
 	t.Run("accept opens changed file", func(t *testing.T) {

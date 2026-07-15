@@ -10,13 +10,20 @@ type changedFilePickerSource struct {
 	PickerBase
 }
 
+const (
+	changedFileModifiedIcon = "\uf044" //  - nf-fa-pencil_square_o
+	changedFileAddedIcon    = "\uf4d0" //  - nf-oct-file_added
+	changedFileRemovedIcon  = "\uf4d6" //  - nf-oct-file_removed
+	changedFileRenamedIcon  = "\uf45a" //  - nf-oct-diff_renamed
+)
+
 // NewChangedFilePicker lists workspace files the version-control system
 // reports as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
 		PickerBase: PickerBase{
 			id:          "changed-files",
-			columns:     []string{"change", "path"},
+			columns:     []string{"", ""},
 			matchColumn: 1,
 			proportions: []int{0, 1},
 		},
@@ -82,7 +89,7 @@ func changedFileItem(
 	hunks := changedFileHunks(vc, fc)
 	return PickerItem{
 		Display:     display,
-		Columns:     []string{changedFileLabel(fc.Kind), display},
+		Columns:     []string{changedFileIcon(fc.Kind), display},
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
 		SortKey:     display,
 		DiffHunks:   hunks,
@@ -114,20 +121,20 @@ func firstChangeLines(hunks []view.DiffHunk) *PickerLineRange {
 	return &PickerLineRange{From: h.From, To: max(h.From, h.To-1)}
 }
 
-func changedFileLabel(kind view.FileChangeKind) string {
+func changedFileIcon(kind view.FileChangeKind) string {
 	switch kind {
 	case view.FileChangeUntracked:
-		return "untracked"
+		return "?"
 	case view.FileChangeAdded:
-		return "added"
+		return changedFileAddedIcon
 	case view.FileChangeConflict:
-		return "conflict"
+		return "!"
 	case view.FileChangeDeleted:
-		return "deleted"
+		return changedFileRemovedIcon
 	case view.FileChangeRenamed:
-		return "renamed"
+		return changedFileRenamedIcon
 	default:
-		return "modified"
+		return changedFileModifiedIcon
 	}
 }
 

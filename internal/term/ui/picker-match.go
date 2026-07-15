@@ -21,6 +21,19 @@ func (p *Picker) setQuery(q string) tea.Cmd {
 }
 
 func (p *Picker) refilter() {
+	p.rebuildMatches()
+	if p.query != "" {
+		p.cursor = 0
+	}
+	if p.cursor >= len(p.matched) {
+		p.cursor = max(0, len(p.matched)-1)
+	}
+	p.listScroll = 0
+	p.previewScroll = 0
+	p.clampScroll()
+}
+
+func (p *Picker) rebuildMatches() {
 	src, _ := p.source.(StaticPickerSource)
 	p.matched = p.matched[:0]
 	for i := range p.items {
@@ -38,16 +51,6 @@ func (p *Picker) refilter() {
 	slices.SortStableFunc(p.matched, func(a, b pickerMatch) int {
 		return cmp.Compare(b.score, a.score)
 	})
-	if p.query != "" {
-		p.cursor = 0
-	}
-	if p.cursor >= len(p.matched) {
-		p.cursor = max(0, len(p.matched)-1)
-	}
-	// a fresh result set views from the top; clamp handles a shrunk list
-	p.listScroll = 0
-	p.previewScroll = 0
-	p.clampScroll()
 }
 
 func (p *PickerItem) columnText(col int) string {
@@ -74,8 +77,7 @@ func (p *Picker) moveBy(n int) {
 	if len(p.matched) == 0 {
 		return
 	}
-	n = ((n % len(p.matched)) + len(p.matched)) % len(p.matched)
-	p.cursor = (p.cursor + n) % len(p.matched)
+	p.cursor = min(max(p.cursor+n, 0), len(p.matched)-1)
 }
 
 func (p *Picker) pageDown() {

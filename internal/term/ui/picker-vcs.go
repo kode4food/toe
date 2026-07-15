@@ -3,6 +3,7 @@ package ui
 import (
 	"path/filepath"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -77,7 +78,18 @@ func (c *changedFilePickerSource) Load(
 func (c *changedFilePickerSource) Accept(
 	e *view.Editor, item PickerItem, action PickerAcceptAction,
 ) {
-	_, _ = AcceptPath(e, item.Location.Target.Path, action)
+	v, ok := AcceptPath(e, item.Location.Target.Path, action)
+	if !ok {
+		return
+	}
+	doc, ok := e.Document(v.DocID())
+	if !ok {
+		return
+	}
+	if sel, ok := lineRangeSelection(doc.Text(), item.Location.Lines); ok {
+		doc.SetSelectionFor(v.ID(), sel)
+	}
+	AlignAcceptedView(e, v, doc)
 }
 
 func changedFileItem(
@@ -155,4 +167,27 @@ func changedFileScope(kind view.FileChangeKind) string {
 	default:
 		return ""
 	}
+}
+
+func lineRangeSelection(
+	text core.Rope, lr *PickerLineRange,
+) (core.Selection, bool) {
+	if lr == nil || lr.From < 0 {
+		return core.Selection{}, false
+	}
+	lineStart, err := text.LineToChar(lr.From)
+	if err != nil {
+		return core.Selection{}, false
+	}
+	lineEnd := text.LenChars()
+	if end, err := text.LineToChar(lr.From + 1); err == nil {
+		lineEnd = end
+	}
+	sel, err := core.NewSelection(
+		[]core.Range{core.NewRange(lineStart, lineEnd)}, 0,
+	)
+	if err != nil {
+		return core.Selection{}, false
+	}
+	return sel, true
 }

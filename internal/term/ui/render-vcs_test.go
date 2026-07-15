@@ -132,6 +132,35 @@ func TestChangedFilePicker(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "two")
 	})
+
+	t.Run("accept selects the first hunk", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		lines := make([]string, 60)
+		for i := range lines {
+			lines[i] = "line\n"
+		}
+		testutil.GitCommitFile(t, repo, "deep.txt", strings.Join(lines, ""))
+		lines[49] = "CHANGED-DEEP\n"
+		testutil.WriteFile(
+			t, filepath.Join(repo, "deep.txt"), strings.Join(lines, ""),
+		)
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(ui.NewChangedFilePicker)
+		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.Document(v.DocID())
+		assert.True(t, ok)
+		line, err := doc.SelectionFor(v.ID()).Primary().CursorLine(doc.Text())
+		assert.NoError(t, err)
+		assert.Equal(t, 49, line)
+	})
 }
 
 // changedFilePicker opens the changed-file picker over repo and drains its item

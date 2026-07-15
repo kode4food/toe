@@ -234,9 +234,36 @@ func (p *Picker) addItems(items []PickerItem) {
 	if len(items) == 0 {
 		return
 	}
+	target, hadSelection := p.selectedTarget()
 	p.items = append(p.items, items...)
 	SortPickerItems(p.items)
-	p.refilter()
+	p.rebuildMatches()
+	if hadSelection {
+		p.restoreSelection(target)
+	} else if p.cursor >= len(p.matched) {
+		p.cursor = max(0, len(p.matched)-1)
+	}
+	p.clampScroll()
+}
+
+func (p *Picker) selectedTarget() (PickerTarget, bool) {
+	if p.cursor < 0 || p.cursor >= len(p.matched) {
+		return PickerTarget{}, false
+	}
+	target := p.matched[p.cursor].item.Location.Target
+	return target, target.Valid()
+}
+
+func (p *Picker) restoreSelection(target PickerTarget) {
+	for i, m := range p.matched {
+		if m.item.Location.Target == target {
+			p.cursor = i
+			return
+		}
+	}
+	if p.cursor >= len(p.matched) {
+		p.cursor = max(0, len(p.matched)-1)
+	}
 }
 
 func (p *Picker) addDynamicItems(items []PickerItem) {

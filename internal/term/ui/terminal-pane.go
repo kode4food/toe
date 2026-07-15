@@ -25,24 +25,24 @@ type (
 	// emulator, so full-screen programs (editors, pagers, TUIs) render
 	// correctly
 	TerminalPane struct {
-		id          view.Id
-		area        view.Area
-		dirty       bool
-		emu         *vt.SafeEmulator
-		pty         *os.File
-		cmd         *exec.Cmd
-		clip        view.Clipboard
-		updates     chan struct{}
-		closed      chan struct{}
-		restore     view.Pane
-		stateMu     sync.Mutex
-		title       string
-		bellRung    bool
-		scrollN     int
-		mouseOn     atomic.Bool
-		selActive   bool
-		selA, selB  uv.Position
-		drag        axisTicker
+		id         view.Id
+		area       view.Area
+		dirty      bool
+		emu        *vt.SafeEmulator
+		pty        *os.File
+		cmd        *exec.Cmd
+		clip       view.Clipboard
+		updates    chan struct{}
+		closed     chan struct{}
+		restore    view.Pane
+		stateMu    sync.Mutex
+		title      string
+		bellRung   bool
+		scrollN    int
+		mouseOn    atomic.Bool
+		selActive  bool
+		selA, selB uv.Position
+		drag       axisTicker
 	}
 
 	selSpan struct {

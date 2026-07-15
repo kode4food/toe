@@ -16,6 +16,9 @@ type tuiScreen struct {
 	originY   int
 	w, h      int
 	widthMeth uv.WidthMethod
+	styleIn   uv.Style
+	styleOut  tui.Style
+	styleOk   bool
 }
 
 var _ uv.Screen = (*tuiScreen)(nil)
@@ -45,7 +48,7 @@ func (s *tuiScreen) SetCell(x, y int, c *uv.Cell) {
 		content = " "
 	}
 	s.buf.Set(s.originX+x, s.originY+y, tui.Cell{
-		Symbol: content, Style: uvStyleToTUI(c.Style),
+		Symbol: content, Style: s.styleFor(c.Style),
 	})
 	for i := 1; i < c.Width; i++ {
 		s.buf.Set(s.originX+x+i, s.originY+y, tui.Cell{Skip: true})
@@ -54,6 +57,15 @@ func (s *tuiScreen) SetCell(x, y int, c *uv.Cell) {
 
 func (s *tuiScreen) WidthMethod() uv.WidthMethod {
 	return s.widthMeth
+}
+
+func (s *tuiScreen) styleFor(st uv.Style) tui.Style {
+	if s.styleOk && s.styleIn == st {
+		return s.styleOut
+	}
+	out := uvStyleToTUI(st)
+	s.styleIn, s.styleOut, s.styleOk = st, out, true
+	return out
 }
 
 func (r *renderPass) renderTerminalPane(

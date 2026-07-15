@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -99,4 +100,47 @@ func BenchmarkRenderLongLineCursorStart(b *testing.B) {
 	for b.Loop() {
 		_ = m.View().Content
 	}
+}
+
+func benchTerminal(b *testing.B, fill string) {
+	e := view.NewEditor(b.TempDir())
+	e.Options().Theme = view.DefaultTheme
+	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+	_ = m.TerminalAction()(e)
+	tp := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+	b.Cleanup(func() { _ = tp.Close() })
+	tp.IngestOutput([]byte(fill))
+	_ = m.View().Content // prime
+
+	b.ReportAllocs()
+	for b.Loop() {
+		tp.MarkDirty()
+		_ = m.View().Content
+	}
+}
+
+// BenchmarkRenderTerminal redraws a full terminal screen every frame, the worst
+// case for the emulator-to-buffer cell copy and per-cell style conversion
+func BenchmarkRenderTerminal(b *testing.B) {
+	var sb strings.Builder
+	for i := range 22 {
+		fmt.Fprintf(&sb, "line %2d %s\r\n", i, strings.Repeat("x", 60))
+	}
+	benchTerminal(b, sb.String())
+}
+
+// BenchmarkRenderTerminalColored exercises the realistic case of many short
+// same-style runs (coloured ls/grep/build output), where the style memo has a
+// lower but still winning hit rate
+func BenchmarkRenderTerminalColored(b *testing.B) {
+	colors := []string{"31", "32", "33", "34", "36"}
+	var sb strings.Builder
+	for range 22 {
+		for c := range 9 {
+			fmt.Fprintf(&sb, "\x1b[%sm%s", colors[c%len(colors)],
+				strings.Repeat("w", 8))
+		}
+		sb.WriteString("\x1b[0m\r\n")
+	}
+	benchTerminal(b, sb.String())
 }

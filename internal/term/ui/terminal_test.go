@@ -676,6 +676,56 @@ func TestTerminalPane(t *testing.T) {
 		assert.Positive(t, tp.ScrollOffset())
 	})
 
+	t.Run("resize keeps content while output is silent", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		e.Options().Mouse = true
+		m := ui.New(e, command.NewKeymaps())
+		m = resize(m, 80, 24)
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		_, ok = e.VSplit(doc.ID())
+		assert.True(t, ok)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Close() })
+		waitForResize(t, tp)
+
+		tp.IngestOutput([]byte("RESIZESURVIVOR\r\n$ "))
+		assert.Contains(t, m.View().Content, "RESIZESURVIVOR")
+
+		var sepX int
+		e.Tree().WalkSeparators(func(s view.Separator) {
+			if s.Layout == view.LayoutVertical {
+				sepX = s.X
+			}
+		})
+
+		// drag the separator to resize the terminal pane, then let the
+		// debounced emulator resize apply while the shell stays silent
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: sepX, Y: 5, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		for x := sepX; x <= 65; x += 3 {
+			m2, _ = m.Update(tea.MouseMotionMsg{
+				X: x, Y: 5, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+		}
+		m2, _ = m.Update(tea.MouseReleaseMsg{
+			X: 65, Y: 5, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		waitForResize(t, tp)
+
+		// content must remain visible without any further shell output
+		assert.Contains(t, m.View().Content, "RESIZESURVIVOR")
+	})
+
 	t.Run("Ctrl-w / jumps to a scrollback match", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		km := command.NewKeymaps()
@@ -705,26 +755,19 @@ func TestTerminalPane(t *testing.T) {
 }
 
 func TestTerminalResize(t *testing.T) {
-	t.Run("signals redraw", func(t *testing.T) {
+	t.Run("reflows the emulator synchronously", func(t *testing.T) {
 		tp, err := ui.NewTerminalPane("cat", 20, 10, nil)
 		if !assert.NoError(t, err) {
 			return
 		}
 		t.Cleanup(func() { _ = tp.Close() })
-		_ = tp.ConsumeDirty()
-		select {
-		case <-tp.Updates():
-		default:
-		}
 
 		tp.SetArea(view.Area{Width: 30, Height: 12})
 
-		select {
-		case <-tp.Updates():
-			assert.True(t, tp.ConsumeDirty())
-		case <-time.After(time.Second):
-			assert.Fail(t, "resize did not signal redraw")
-		}
+		// no debounce: the emulator matches the new area at once, reserving
+		// the bottom row for the status line
+		assert.Equal(t, 30, tp.Emulator().Width())
+		assert.Equal(t, 11, tp.Emulator().Height())
 	})
 }
 
@@ -744,8 +787,9 @@ func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {
 	}
 }
 
-// waitForResize blocks until the pane's debounced PTY/emulator resize has
-// applied, so a test's writes land at the pane's real dimensions
+// waitForResize confirms the pane's emulator matches its area so a test's
+// writes land at the pane's real dimensions; resizing is synchronous, so this
+// normally passes on the first check
 func waitForResize(t *testing.T, tp *ui.TerminalPane) {
 	t.Helper()
 	area := tp.Area()

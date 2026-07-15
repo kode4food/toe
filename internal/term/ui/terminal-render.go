@@ -68,11 +68,7 @@ func (r *renderPass) renderTerminalPane(
 		buf: buf, originX: a.X, originY: y0 + a.Y,
 		w: a.Width, h: contentH, widthMeth: emu.WidthMethod(),
 	}
-	if n := tp.ScrollOffset(); n > 0 {
-		drawScrollback(scr, tp, n, a.Width, contentH)
-	} else {
-		emu.Draw(scr, uv.Rect(0, 0, a.Width, contentH))
-	}
+	drawViewport(scr, tp, tp.ScrollOffset(), a.Width, contentH)
 	highlightSelection(scr, tp)
 	r.renderTerminalStatus(buf, tp, y0, focused)
 }
@@ -184,7 +180,7 @@ func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
 	}
 }
 
-func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
+func drawViewport(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 	emu := tp.Emulator()
 	bg := emu.BackgroundColor()
 	blank := uv.EmptyCell
@@ -196,7 +192,7 @@ func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 	start := max(total-h-n, 0)
 	for row := range h {
 		line := start + row
-		for x := range w {
+		for x := 0; x < w; {
 			var cell *uv.Cell
 			if line < total {
 				if line < sbLen {
@@ -207,6 +203,7 @@ func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 			}
 			if cell == nil {
 				scr.SetCell(x, row, &blank)
+				x++
 				continue
 			}
 			if cell.Style.Bg == nil && bg != nil {
@@ -214,6 +211,7 @@ func drawScrollback(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 				cell.Style.Bg = bg
 			}
 			scr.SetCell(x, row, cell)
+			x += max(cell.Width, 1)
 		}
 	}
 }

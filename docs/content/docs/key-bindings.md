@@ -186,16 +186,15 @@ weight: 30
 
 | Key | Action |
 |-----|--------|
+| `Ctrl+w n` | Create a new scratch buffer |
+| `Ctrl+w x` | Open a new terminal |
+| `Ctrl+w /` | Search the focused terminal's scrollback |
 | `Ctrl+w v` / `Ctrl+w Ctrl+v` | Vertical right split |
 | `Ctrl+w s` / `Ctrl+w Ctrl+s` | Horizontal bottom split |
-| `Ctrl+w n v` / `Ctrl+w n Ctrl+v` | Vertical right split scratch buffer |
-| `Ctrl+w n s` / `Ctrl+w n Ctrl+s` | Horizontal bottom split scratch buffer |
+| `Ctrl+w t` / `Ctrl+w Ctrl+t` | Transpose splits |
 | `Ctrl+w q` / `Ctrl+w Ctrl+q` | Close window |
 | `Ctrl+w o` / `Ctrl+w Ctrl+o` | Close windows except current |
 | `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
-| `Ctrl+w t` / `Ctrl+w Ctrl+t` | Transpose splits |
-| `Ctrl+w x` | Open the user's shell in the focused pane |
-| `Ctrl+w /` | Search the focused terminal's scrollback |
 | `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` | Jump to left/below/above/right split |
 | `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
 

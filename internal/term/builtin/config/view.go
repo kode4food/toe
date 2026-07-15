@@ -72,9 +72,7 @@ func ViewModule(model ui.Model) command.Module {
 	Z := kit.Prefixed(kit.Char('Z'))
 	Spc := kit.Prefixed(kit.Char(' '))
 	Spcw := kit.Prefixed(Spc(kit.Char('w')))
-	Spcwn := kit.Prefixed(Spcw(kit.Char('n')))
 	Cw := kit.Prefixed(kit.Ctrl('w'))
-	Cwn := kit.Prefixed(Cw(kit.Char('n')))
 
 	return command.Module{
 		Commands: []command.Command{
@@ -195,6 +193,28 @@ func ViewModule(model ui.Model) command.Module {
 				}},
 			},
 			{
+				Name:      actTerminal,
+				DocString: "Open a new terminal",
+				Run:       kit.Continuation(model.TerminalAction()),
+				Modes:     []string{"NOR", "SEL"},
+				Keys: map[string][]command.KeyBinding{"*": {
+					{Cw(kit.Char('x'))},
+					{Spcw(kit.Char('x'))},
+				}},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actTerminalSearch,
+				DocString: "Search focused terminal's scrollback",
+				Run:       kit.Continuation(model.TerminalSearchAction()),
+				Modes:     []string{"TRM"},
+				Keys: map[string][]command.KeyBinding{"*": {
+					{Cw(kit.Char('/'))},
+					{Spcw(kit.Char('/'))},
+				}},
+				Signature: kit.Sig(),
+			},
+			{
 				Name:      actVSplitView,
 				DocString: "Vertical right split",
 				Run:       kit.Runner(action.VSplit),
@@ -225,11 +245,6 @@ func ViewModule(model ui.Model) command.Module {
 					e.VSplitNew()
 					return command.Result{}
 				},
-				Modes: []string{"NOR", "SEL", "TRM"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cwn(kit.Char('v')), Cwn(kit.Ctrl('v'))},
-					{Spcwn(kit.Char('v')), Spcwn(kit.Ctrl('v'))},
-				}},
 				Aliases:   []string{"vnew"},
 				Signature: kit.Sig(),
 			},
@@ -240,34 +255,7 @@ func ViewModule(model ui.Model) command.Module {
 					e.HSplitNew()
 					return command.Result{}
 				},
-				Modes: []string{"NOR", "SEL", "TRM"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cwn(kit.Char('s')), Cwn(kit.Ctrl('s'))},
-					{Spcwn(kit.Char('s')), Spcwn(kit.Ctrl('s'))},
-				}},
 				Aliases:   []string{"hnew"},
-				Signature: kit.Sig(),
-			},
-			{
-				Name:      actTerminal,
-				DocString: "Open a shell in the focused pane",
-				Run:       kit.Continuation(model.TerminalAction()),
-				Modes:     []string{"NOR", "SEL"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('x'))},
-					{Spcw(kit.Char('x'))},
-				}},
-				Signature: kit.Sig(),
-			},
-			{
-				Name:      actTerminalSearch,
-				DocString: "Search focused terminal's scrollback",
-				Run:       kit.Continuation(model.TerminalSearchAction()),
-				Modes:     []string{"TRM"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('/'))},
-					{Spcw(kit.Char('/'))},
-				}},
 				Signature: kit.Sig(),
 			},
 			{
@@ -629,11 +617,7 @@ func ViewModule(model ui.Model) command.Module {
 			kit.Label("View", kit.Char('z'), "NOR", "SEL"),
 			kit.Label("View", kit.Char('Z'), "NOR", "SEL"),
 			kit.Label("Window", kit.Ctrl('w'), "NOR", "SEL", "TRM"),
-			kit.Label("New split scratch buffer",
-				Cw(kit.Char('n')), "NOR", "SEL", "TRM"),
 			kit.Label("Window", Spc(kit.Char('w')), "NOR", "SEL"),
-			kit.Label("New split scratch buffer",
-				Spcw(kit.Char('n')), "NOR", "SEL"),
 		},
 	}
 }

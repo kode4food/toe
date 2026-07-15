@@ -331,13 +331,6 @@ func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
 }
 
 func replaceDocumentID(e *view.Editor, id view.DocumentId) (*view.View, bool) {
-	for _, v := range e.AllViews() {
-		if v.DocID() != id {
-			continue
-		}
-		e.FocusView(v.ID())
-		return v, true
-	}
 	if !e.SwitchBuffer(id) {
 		return nil, false
 	}

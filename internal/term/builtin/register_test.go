@@ -145,7 +145,7 @@ func TestDefaults(t *testing.T) {
 		}
 
 		assert.Equal(t, []string{
-			"y", "Y", "p", "P", "R", "w",
+			"w", "y", "Y", "p", "P", "R",
 			"h", "a", "k", "r", "s", "S",
 			"f", "F", "e", ".", "b", "j",
 			"d", "D", "/", "?", "'", "c",

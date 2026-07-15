@@ -249,6 +249,9 @@ func fileWriteCmds() []command.Command {
 }
 
 func fileManageCmds() []command.Command {
+	Cw := kit.Prefixed(kit.Ctrl('w'))
+	Spc := kit.Prefixed(kit.Char(' '))
+	Spcw := kit.Prefixed(Spc(kit.Char('w')))
 	return []command.Command{
 		{
 			Name:      actUpdate,
@@ -300,6 +303,11 @@ func fileManageCmds() []command.Command {
 				e.NewDocument()
 				return command.Result{Message: "[scratch]"}
 			},
+			Modes: []string{"NOR", "SEL"},
+			Keys: map[string][]command.KeyBinding{"*": {
+				{Cw(kit.Char('n'))},
+				{Spcw(kit.Char('n'))},
+			}},
 			Aliases:   []string{"n"},
 			Signature: kit.Sig(),
 		},

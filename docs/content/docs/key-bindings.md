@@ -334,14 +334,40 @@ Select mode.
 
 ---
 
+## Command Line
+
+The command line (`:`), search (`/`, `?`), and other text prompts such as symbol rename share a single-line editor with the insert-mode cursor shape.
+
+| Key | Action |
+|-----|--------|
+| `←` / `→` / `Ctrl+b` / `Ctrl+f` | Move by character |
+| `Ctrl+←` / `Ctrl+→` / `Alt+b` / `Alt+f` | Move by word |
+| `Home` / `Ctrl+a` | Move to start |
+| `End` / `Ctrl+e` | Move to end |
+| `Backspace` / `Ctrl+h` | Delete char before caret |
+| `Delete` / `Ctrl+d` | Delete char after caret |
+| `Ctrl+w` / `Alt+Backspace` | Delete word before caret |
+| `Alt+d` / `Ctrl+Delete` | Delete word after caret |
+| `Ctrl+u` | Delete to start |
+| `Ctrl+k` | Delete to end |
+| `Tab` / `Shift+Tab` | Next/previous completion |
+| `Return` | Submit |
+| `Escape` | Cancel |
+
+---
+
 ## Picker Navigation
 
 When any picker is open (file picker, buffer picker, global search, etc.):
 
 | Key | Action |
 |-----|--------|
-| `↑` / `Ctrl+p` | Move up |
-| `↓` / `Ctrl+n` | Move down |
+| `↑` / `Ctrl+p` / `Shift+Tab` | Move up |
+| `↓` / `Ctrl+n` / `Tab` | Move down |
+| `PageUp` / `Ctrl+u` | Move page up |
+| `PageDown` / `Ctrl+d` | Move page down |
+| `Home` | Jump to first item |
+| `End` | Jump to last item |
 | `Return` | Open selected item |
 | `Ctrl+s` | Open in horizontal split |
 | `Ctrl+v` | Open in vertical split |

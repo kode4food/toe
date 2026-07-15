@@ -58,11 +58,12 @@ func LoadText(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	sample := make([]byte, BinarySampleSize)
 	n, err := io.ReadFull(f, sample)
-	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
+	if err != nil &&
+		!errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
 	sample = sample[:n]

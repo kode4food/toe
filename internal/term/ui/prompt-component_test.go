@@ -9,6 +9,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/builtin"
@@ -76,7 +77,7 @@ func TestPromptCompletion(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 		m = m2.(ui.Model)
 
-		assert.Contains(t, m.View().Content, ":alpha")
+		assert.Contains(t, stripANSI(m.View().Content), ":alpha")
 	})
 
 	t.Run("ignores command args without completer", func(t *testing.T) {
@@ -100,7 +101,7 @@ func TestPromptCompletion(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		assert.Contains(t, m.View().Content, ":alpha ")
+		assert.Contains(t, stripANSI(m.View().Content), ":alpha ")
 	})
 
 	t.Run("renders completion box background", func(t *testing.T) {
@@ -264,6 +265,163 @@ func TestPromptKeyEditing(t *testing.T) {
 
 		assert.Contains(t, stripANSI(m.View().Content), ":")
 	})
+
+	t.Run("long input scrolls instead of wrapping", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 20, 12)
+
+		m = sendKey(m, ':')
+		for _, ch := range "abcdefghijklmnopqrstuvwxyz" {
+			m = sendKey(m, ch)
+		}
+
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		promptLine := lines[len(lines)-1]
+		assert.LessOrEqual(t, runewidth.StringWidth(promptLine), 20)
+		assert.Contains(t, promptLine, "…")
+		assert.NotContains(t, promptLine, "abc")
+		assert.Contains(t, promptLine, "xyz")
+	})
+}
+
+func TestPromptEditing(t *testing.T) {
+	t.Run("inserts at the caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendKey(m, 'X')
+		assert.Equal(t, ":aXbc", promptText(m))
+	})
+
+	t.Run("left and right move the caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "ab")
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendSpecial(m, tea.KeyRight)
+		m = sendKey(m, 'X')
+		assert.Equal(t, ":abX", promptText(m))
+	})
+
+	t.Run("home and end jump to the ends", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendSpecial(m, tea.KeyHome)
+		m = sendKey(m, 'X')
+		m = sendSpecial(m, tea.KeyEnd)
+		m = sendKey(m, 'Y')
+		assert.Equal(t, ":XabcY", promptText(m))
+	})
+
+	t.Run("ctrl a and ctrl e jump to the ends", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendModified(m, 'a', tea.ModCtrl)
+		m = sendKey(m, 'X')
+		m = sendModified(m, 'e', tea.ModCtrl)
+		m = sendKey(m, 'Y')
+		assert.Equal(t, ":XabcY", promptText(m))
+	})
+
+	t.Run("delete removes the char after caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendSpecial(m, tea.KeyDelete)
+		assert.Equal(t, ":ac", promptText(m))
+	})
+
+	t.Run("ctrl d removes the char after caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendSpecial(m, tea.KeyHome)
+		m = sendModified(m, 'd', tea.ModCtrl)
+		assert.Equal(t, ":bc", promptText(m))
+	})
+
+	t.Run("ctrl w deletes the word before caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "foo bar")
+		m = sendModified(m, 'w', tea.ModCtrl)
+		assert.Equal(t, ":foo", promptText(m))
+	})
+
+	t.Run("alt backspace deletes the word before caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "foo bar")
+		m = sendModified(m, tea.KeyBackspace, tea.ModAlt)
+		assert.Equal(t, ":foo", promptText(m))
+	})
+
+	t.Run("ctrl delete deletes the word after caret", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "foo bar")
+		m = sendSpecial(m, tea.KeyHome)
+		m = sendModified(m, tea.KeyDelete, tea.ModCtrl)
+		assert.Equal(t, ": bar", promptText(m))
+	})
+
+	t.Run("ctrl left moves by word", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "foo bar")
+		m = sendModified(m, tea.KeyLeft, tea.ModCtrl)
+		m = sendKey(m, 'X')
+		assert.Equal(t, ":foo Xbar", promptText(m))
+	})
+
+	t.Run("ctrl k kills to end of line", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendModified(m, 'k', tea.ModCtrl)
+		assert.Equal(t, ":a", promptText(m))
+	})
+
+	t.Run("ctrl u kills to start of line", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "abc")
+		m = sendSpecial(m, tea.KeyLeft)
+		m = sendModified(m, 'u', tea.ModCtrl)
+		assert.Equal(t, ":c", promptText(m))
+	})
+}
+
+func TestPromptCursor(t *testing.T) {
+	t.Run("tracks the caret with configured shape", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "ab")
+
+		cur := m.View().Cursor
+		assert.NotNil(t, cur)
+		assert.Equal(t, tea.CursorBar, cur.Shape)
+		assert.Equal(t, 3, cur.Position.X) // ":" + "ab"
+
+		m = sendSpecial(m, tea.KeyLeft)
+		assert.Equal(t, 2, m.View().Cursor.Position.X)
+	})
+
+	t.Run("honors a block insert cursor", func(t *testing.T) {
+		m, e := cmdPrompt(t)
+		e.Options().CursorShape.Insert = view.CursorKindBlock
+		m = typeString(m, "ab")
+
+		cur := m.View().Cursor
+		assert.NotNil(t, cur)
+		assert.Equal(t, tea.CursorBlock, cur.Shape)
+	})
+
+	t.Run("hidden insert cursor shows none", func(t *testing.T) {
+		m, e := cmdPrompt(t)
+		e.Options().CursorShape.Insert = view.CursorKindHidden
+		m = typeString(m, "ab")
+		assert.Nil(t, m.View().Cursor)
+	})
 }
 
 func TestRegexPromptAccept(t *testing.T) {
@@ -333,7 +491,7 @@ func TestSearchPromptAccept(t *testing.T) {
 
 		m = sendKey(m, '?')
 		m = sendKey(m, 'x')
-		out := m.View().Content
+		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "?x")
 	})
 
@@ -503,6 +661,30 @@ func TestRedrawSignal(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.NotEmpty(t, out)
 	})
+}
+
+func cmdPrompt(t *testing.T) (ui.Model, *view.Editor) {
+	t.Helper()
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m = resize(m, 40, 12)
+	return sendKey(m, ':'), e
+}
+
+func typeString(m ui.Model, s string) ui.Model {
+	for _, ch := range s {
+		m = sendKey(m, ch)
+	}
+	return m
+}
+
+func promptText(m ui.Model) string {
+	content := strings.TrimRight(stripANSI(m.View().Content), "\n")
+	lines := strings.Split(content, "\n")
+	return strings.TrimRight(lines[len(lines)-1], " ")
 }
 
 func testCommand(name string) command.Command {

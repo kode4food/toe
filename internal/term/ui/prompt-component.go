@@ -1,9 +1,13 @@
 package ui
 
 import (
+	"slices"
 	"strings"
+	"unicode"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
@@ -15,10 +19,13 @@ type (
 	PromptComponent struct {
 		overlayBuf
 		ec       *EditorComponent
+		bounds   Bounds
 		kind     promptKind
 		forward  bool
 		prompt   string
 		buf      string
+		caret    int
+		hOff     int
 		comps    []promptCompletion
 		compSel  *int
 		compDone bool
@@ -53,6 +60,9 @@ const (
 	promptCompletionPadX      = 1
 )
 
+// one column so the end-of-buffer caret cell stays on screen
+const promptRightPad = 1
+
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
 func (p *PromptComponent) HandleEvent(
@@ -77,7 +87,8 @@ func (p *PromptComponent) Layout(
 	}
 	menuH := p.completionMenuHeight(screenW, screenH)
 	y := max(screenH-1-menuH, 0)
-	return Bounds{x: 0, y: y, w: screenW, h: screenH - y}, true
+	p.bounds = Bounds{x: 0, y: y, w: screenW, h: screenH - y}
+	return p.bounds, true
 }
 
 func (p *PromptComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
@@ -90,9 +101,71 @@ func (p *PromptComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
 }
 
 func (p *PromptComponent) Cursor(
-	_, _ int, _ *Context,
+	_, _ int, cx *Context,
 ) (cur tea.Cursor, ok bool) {
-	return tea.Cursor{}, false
+	kind := cx.Editor.Options().CursorShapeForMode(view.ModeInsert.String())
+	if kind == view.CursorKindHidden {
+		return tea.Cursor{}, false
+	}
+	return tea.Cursor{
+		Position: tea.Position{
+			X: p.bounds.x + p.caretDisplayX(),
+			Y: p.bounds.y + p.bounds.h - 1,
+		},
+		Shape: cursorKindToShape(kind),
+		Blink: false,
+	}, true
+}
+
+func (p *PromptComponent) textWidth() int {
+	label := runewidth.StringWidth(p.promptLabel())
+	return max(p.bounds.w-label-promptRightPad, 1)
+}
+
+func (p *PromptComponent) syncScroll() {
+	runes := []rune(p.buf)
+	w := p.textWidth()
+	switch {
+	case runewidth.StringWidth(p.buf) < w:
+		p.hOff = 0
+	case p.caret <= p.hOff:
+		p.hOff = max(p.caret-1, 0)
+	case runewidth.StringWidth(string(runes[p.hOff:p.caret])) > w:
+		width, i := 0, p.caret
+		for i > 0 {
+			width += runewidth.RuneWidth(runes[i-1])
+			if width > w {
+				break
+			}
+			i--
+		}
+		p.hOff = i
+	}
+	tail := runewidth.StringWidth(string(runes[p.hOff:]))
+	caretCol := runewidth.StringWidth(string(runes[p.hOff:p.caret]))
+	if tail > w && caretCol >= w {
+		p.hOff++
+	}
+}
+
+func (p *PromptComponent) caretDisplayX() int {
+	p.syncScroll()
+	label := runewidth.StringWidth(p.promptLabel())
+	return label + runewidth.StringWidth(string([]rune(p.buf)[p.hOff:p.caret]))
+}
+
+func (p *PromptComponent) promptLabel() string {
+	switch p.kind {
+	case promptCmd:
+		return ":"
+	case promptSearch:
+		if p.forward {
+			return "/"
+		}
+		return "?"
+	default:
+		return p.prompt + " "
+	}
 }
 
 type promptComponentArgs struct {
@@ -112,6 +185,7 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 		forward:  args.forward,
 		prompt:   args.prompt,
 		buf:      args.buf,
+		caret:    len([]rune(args.buf)),
 		fn:       args.fn,
 		pickerFn: args.pickerFn,
 	}
@@ -140,17 +214,81 @@ func (p *PromptComponent) handleKey(
 	case k.Code.Special == "tab":
 		p.changeCompletion(1)
 
-	case k.Code.Special == "backspace" ||
-		(k.Code.Char == 'h' && k.Mods == command.ModCtrl):
+	// word deletions come before char deletions so a modified backspace or
+	// delete is not swallowed by the plain case
+	case k.Code.Char == 'w' && k.Mods == command.ModCtrl,
+		k.Code.Special == "backspace" && k.Mods.Has(command.ModCtrl),
+		k.Code.Special == "backspace" && k.Mods.Has(command.ModAlt):
 		runes := []rune(p.buf)
-		if len(runes) > 0 {
-			p.buf = string(runes[:len(runes)-1])
+		start := promptWordLeft(runes, p.caret)
+		p.buf = string(slices.Delete(runes, start, p.caret))
+		p.caret = start
+		p.recalculateCompletion(cx)
+
+	case k.Code.Char == 'd' && k.Mods == command.ModAlt,
+		k.Code.Special == "del" && k.Mods.Has(command.ModCtrl),
+		k.Code.Special == "del" && k.Mods.Has(command.ModAlt):
+		runes := []rune(p.buf)
+		end := promptWordRight(runes, p.caret)
+		p.buf = string(slices.Delete(runes, p.caret, end))
+		p.recalculateCompletion(cx)
+
+	case k.Code.Special == "backspace",
+		k.Code.Char == 'h' && k.Mods == command.ModCtrl:
+		if p.caret > 0 {
+			runes := []rune(p.buf)
+			p.buf = string(slices.Delete(runes, p.caret-1, p.caret))
+			p.caret--
 		}
 		p.recalculateCompletion(cx)
 
+	case k.Code.Special == "del",
+		k.Code.Char == 'd' && k.Mods == command.ModCtrl:
+		runes := []rune(p.buf)
+		if p.caret < len(runes) {
+			p.buf = string(slices.Delete(runes, p.caret, p.caret+1))
+		}
+		p.recalculateCompletion(cx)
+
+	case k.Code.Char == 'k' && k.Mods == command.ModCtrl:
+		p.buf = string([]rune(p.buf)[:p.caret])
+		p.recalculateCompletion(cx)
+
+	case k.Code.Char == 'u' && k.Mods == command.ModCtrl:
+		p.buf = string([]rune(p.buf)[p.caret:])
+		p.caret = 0
+		p.recalculateCompletion(cx)
+
+	case k.Code.Special == "left" && k.Mods.Has(command.ModCtrl),
+		k.Code.Char == 'b' && k.Mods == command.ModAlt:
+		p.caret = promptWordLeft([]rune(p.buf), p.caret)
+
+	case k.Code.Special == "right" && k.Mods.Has(command.ModCtrl),
+		k.Code.Char == 'f' && k.Mods == command.ModAlt:
+		p.caret = promptWordRight([]rune(p.buf), p.caret)
+
+	case k.Code.Special == "left",
+		k.Code.Char == 'b' && k.Mods == command.ModCtrl:
+		p.caret = max(p.caret-1, 0)
+
+	case k.Code.Special == "right",
+		k.Code.Char == 'f' && k.Mods == command.ModCtrl:
+		p.caret = min(p.caret+1, len([]rune(p.buf)))
+
+	case k.Code.Special == "home",
+		k.Code.Char == 'a' && k.Mods == command.ModCtrl:
+		p.caret = 0
+
+	case k.Code.Special == "end",
+		k.Code.Char == 'e' && k.Mods == command.ModCtrl:
+		p.caret = len([]rune(p.buf))
+
 	default:
 		if k.IsTypable() {
-			p.buf += string(k.Code.Char)
+			runes := []rune(p.buf)
+			runes = slices.Insert(runes, p.caret, k.Code.Char)
+			p.buf = string(runes)
+			p.caret++
 			p.recalculateCompletion(cx)
 		}
 	}
@@ -222,21 +360,62 @@ func (p *PromptComponent) accept(
 }
 
 func (p *PromptComponent) paintLine(buf *tui.Buffer, y, w int, cx *Context) {
-	r := &renderPass{ec: p.ec, cx: cx, w: w}
-	st := lipglossToTUIStyle(r.cmdlineStyle(false))
-	var content string
-	switch p.kind {
-	case promptCmd:
-		content = ":" + p.buf
-	case promptSearch:
-		if p.forward {
-			content = "/" + p.buf
-		} else {
-			content = "?" + p.buf
-		}
-	default:
-		content = p.prompt + " " + p.buf
+	th := cx.Theme()
+	rowBg := lipgloss.NewStyle().
+		Background(th.Get("ui.cursorline.primary").GetBackground())
+	labelSt := lipglossToTUIStyle(
+		rowBg.Foreground(th.Get("ui.picker.match").GetForeground()).Bold(true),
+	)
+	textSt := lipglossToTUIStyle(
+		rowBg.Foreground(th.Get("ui.text").GetForeground()),
+	)
+
+	label := p.promptLabel()
+	buf.FillRange(0, y, w, textSt)
+	buf.SetString(0, y, label, labelSt)
+	x := runewidth.StringWidth(label)
+
+	p.syncScroll()
+	runes := []rune(p.buf)
+	avail := p.textWidth()
+	truncEnd := runewidth.StringWidth(string(runes[p.hOff:])) > avail
+
+	limit := avail
+	if truncEnd {
+		limit--
 	}
-	buf.SetString(0, y, strings.Repeat(" ", w), st)
-	buf.SetString(0, y, content, st)
+	col, i := 0, p.hOff
+	for i < len(runes) && col+runewidth.RuneWidth(runes[i]) <= limit {
+		buf.SetString(x+col, y, string(runes[i]), textSt)
+		col += runewidth.RuneWidth(runes[i])
+		i++
+	}
+	if p.hOff > 0 {
+		buf.SetString(x, y, "…", textSt)
+	}
+	if truncEnd {
+		buf.SetString(x+col, y, "…", textSt)
+	}
+}
+
+func promptWordLeft(runes []rune, caret int) int {
+	i := caret
+	for i > 0 && unicode.IsSpace(runes[i-1]) {
+		i--
+	}
+	for i > 0 && !unicode.IsSpace(runes[i-1]) {
+		i--
+	}
+	return i
+}
+
+func promptWordRight(runes []rune, caret int) int {
+	i := caret
+	for i < len(runes) && unicode.IsSpace(runes[i]) {
+		i++
+	}
+	for i < len(runes) && !unicode.IsSpace(runes[i]) {
+		i++
+	}
+	return i
 }

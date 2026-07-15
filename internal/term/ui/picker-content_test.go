@@ -86,8 +86,7 @@ func TestPickerRender(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "┬")
-		assert.Contains(t, out, "flags")
-		assert.Contains(t, out, "path")
+		assert.Contains(t, out, "[scratch]")
 	})
 
 	t.Run("preview follows live cursor", func(t *testing.T) {

@@ -13,7 +13,7 @@ func (p *PickerComponent) drawPickerBox(
 	innerH := h - 2
 
 	cols := ps.source.Columns()
-	showHeader := len(cols) > 1 && len(ps.matched) > 0
+	showHeader := pickerHasHeader(cols) && len(ps.matched) > 0
 	headerH := 0
 	if showHeader {
 		headerH = 1
@@ -64,7 +64,7 @@ func (p *PickerComponent) drawPickerPane(
 	innerH := h - 2
 
 	cols := ps.source.Columns()
-	showHeader := len(cols) > 1 && len(ps.matched) > 0
+	showHeader := pickerHasHeader(cols) && len(ps.matched) > 0
 	headerH := 0
 	if showHeader {
 		headerH = 1

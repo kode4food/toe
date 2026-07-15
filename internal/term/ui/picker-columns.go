@@ -2,6 +2,18 @@ package ui
 
 import "github.com/mattn/go-runewidth"
 
+func pickerHasHeader(cols []string) bool {
+	if len(cols) <= 1 {
+		return false
+	}
+	for _, col := range cols {
+		if col != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func pickerColumnWidths(p *Picker, w int) []int {
 	cols := p.source.Columns()
 	n := len(cols)

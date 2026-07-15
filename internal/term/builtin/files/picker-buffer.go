@@ -27,12 +27,14 @@ const (
 	PickerStartPrevious PickerStartPosition = "previous"
 )
 
+const bufferPickerModifiedIcon = "\uf448" //  - pencil icon
+
 var ErrInvalidPickerStart = errors.New("invalid picker start position")
 
 func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
 	p := ui.NewPicker(e, &bufferPickerSource{
 		PickerBase: ui.NewPickerBase(
-			"open-buffer", []string{"flags", "path"}, 1, []int{0, 1},
+			"open-buffer", []string{"", ""}, 1, []int{0, 1},
 		),
 	})
 	if opts.StartPosition == PickerStartPrevious && p.MatchCount() > 1 {
@@ -55,22 +57,27 @@ func (b *bufferPickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
 	docs := e.AllDocuments()
+	id := view.InvalidDocumentId
+	if doc, _ := e.FocusedDocument(); doc != nil {
+		id = doc.ID()
+	}
 	slices.SortStableFunc(docs, func(a, b *view.Document) int {
+		ra := bufferPickerRank(a, id)
+		rb := bufferPickerRank(b, id)
+		if c := cmp.Compare(ra, rb); c != 0 {
+			return c
+		}
 		if c := cmp.Compare(b.AccessedAt(), a.AccessedAt()); c != 0 {
 			return c
 		}
 		return cmp.Compare(a.ID(), b.ID())
 	})
-	focusedDoc, _ := e.FocusedDocument()
 
 	items := make([]ui.PickerItem, 0, len(docs))
 	for _, doc := range docs {
 		flags := ""
-		if focusedDoc != nil && doc.ID() == focusedDoc.ID() {
-			flags += "*"
-		}
 		if doc.Modified() {
-			flags += "+"
+			flags = bufferPickerModifiedIcon
 		}
 		name := doc.RelativeName(e.Cwd())
 		items = append(items, ui.PickerItem{
@@ -98,5 +105,16 @@ func (b *bufferPickerSource) Accept(
 	}
 	if doc, ok := e.Document(v.DocID()); ok {
 		ui.AlignAcceptedView(e, v, doc)
+	}
+}
+
+func bufferPickerRank(doc *view.Document, focusedID view.DocumentId) int {
+	switch {
+	case doc.ID() == focusedID:
+		return 0
+	case doc.Modified():
+		return 1
+	default:
+		return 2
 	}
 }

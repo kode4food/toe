@@ -11,10 +11,11 @@ type changedFilePickerSource struct {
 }
 
 const (
-	changedFileModifiedIcon = "\uf044" //  - nf-fa-pencil_square_o
-	changedFileAddedIcon    = "\uf4d0" //  - nf-oct-file_added
-	changedFileRemovedIcon  = "\uf4d6" //  - nf-oct-file_removed
-	changedFileRenamedIcon  = "\uf45a" //  - nf-oct-diff_renamed
+	changedFileModifiedIcon  = "\uf459" //  - nf-oct-diff_modified
+	changedFileAddedIcon     = "\uf457" //  - nf-oct-diff_added
+	changedFileRemovedIcon   = "\uf458" //  - nf-oct-diff_removed
+	changedFileRenamedIcon   = "\uf45a" //  - nf-oct-diff_renamed
+	changedFileUntrackedIcon = "\uf420" //  - nf-oct-question
 )
 
 // NewChangedFilePicker lists workspace files the version-control system
@@ -124,7 +125,7 @@ func firstChangeLines(hunks []view.DiffHunk) *PickerLineRange {
 func changedFileIcon(kind view.FileChangeKind) string {
 	switch kind {
 	case view.FileChangeUntracked:
-		return "?"
+		return changedFileUntrackedIcon
 	case view.FileChangeAdded:
 		return changedFileAddedIcon
 	case view.FileChangeConflict:

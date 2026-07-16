@@ -20,6 +20,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	cursorColumnLongLine = "abcdefghijabcdefghijabcdefghijabcdefghij\n"
+	horizontalLongLine   = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+		"xxxxxxxxxxxxxxx\n"
+)
+
 func TestBufferlineRender(t *testing.T) {
 	t.Run("bufferline always visible", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -1231,11 +1238,8 @@ func TestHorizontalScrollRender(t *testing.T) {
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		rope := doc.Text()
-		const longLine = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
-			"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
-			"xxxxxxxxxxxxxxx\n"
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, longLine),
+			core.TextChange(0, 0, horizontalLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1254,9 +1258,8 @@ func TestHorizontalScrollRender(t *testing.T) {
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		rope := doc.Text()
-		const longLine = "abcdefghijabcdefghijabcdefghijabcdefghij\n"
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, longLine),
+			core.TextChange(0, 0, cursorColumnLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1400,7 +1403,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NotEqual(t, before, after)
 	})
 
-	t.Run("resize repaints a pane whose area is unchanged", func(t *testing.T) {
+	t.Run("resize repaints unchanged pane", func(t *testing.T) {
 		root := t.TempDir()
 		pathA := filepath.Join(root, "a.txt")
 		pathB := filepath.Join(root, "b.txt")

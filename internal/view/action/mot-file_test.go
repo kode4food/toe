@@ -103,7 +103,7 @@ func TestGotoFileTarget(t *testing.T) {
 		assert.Equal(t, path, target.Path)
 	})
 
-	t.Run("controller resolves empty target to file URL", func(t *testing.T) {
+	t.Run("empty target becomes file URL", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "resolved.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("hi"), 0o644))
@@ -142,7 +142,7 @@ func TestGotoFileTarget(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("controller resolves to empty target errors", func(t *testing.T) {
+	t.Run("empty resolved target errors", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "link\n")
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)

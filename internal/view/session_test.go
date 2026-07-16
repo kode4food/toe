@@ -147,7 +147,7 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, 3, nextDoc.Selection().Primary().Head)
 	})
 
-	t.Run("notifies observers for restored documents", func(t *testing.T) {
+	t.Run("observers see restored documents", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
 		assert.NoError(t,
@@ -176,7 +176,7 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, opened, o.events)
 	})
 
-	t.Run("hidden buffer loads lazily on first access", func(t *testing.T) {
+	t.Run("hidden buffer loads on access", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")
 		otherPath := filepath.Join(dir, "other.go")
@@ -193,7 +193,7 @@ func TestSession(t *testing.T) {
 		e.ResizeTree(80, 24)
 		_, err := e.OpenFile(filePath)
 		assert.NoError(t, err)
-		_, err = e.SwitchFile(otherPath) // hide file.go
+		_, err = e.OpenFile(otherPath) // hide file.go
 		assert.NoError(t, err)
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
@@ -259,7 +259,7 @@ func TestSession(t *testing.T) {
 		sel, err := core.NewSelection([]core.Range{core.NewRange(3, 7)}, 0)
 		assert.NoError(t, err)
 		aDoc.SetSelectionFor(va.ID(), sel)
-		_, err = e.SwitchFile(bPath) // hide a.go
+		_, err = e.OpenFile(bPath) // hide a.go
 		assert.NoError(t, err)
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
@@ -298,7 +298,7 @@ func TestSession(t *testing.T) {
 		sel, err := core.NewSelection([]core.Range{core.NewRange(8, 11)}, 0)
 		assert.NoError(t, err)
 		aDoc.SetSelectionFor(va.ID(), sel)
-		_, err = e.SwitchFile(bPath)
+		_, err = e.OpenFile(bPath)
 		assert.NoError(t, err)
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
@@ -357,7 +357,7 @@ func TestSession(t *testing.T) {
 		assert.True(t, doc.Loaded())
 	})
 
-	t.Run("unreadable file dropped from restored session", func(t *testing.T) {
+	t.Run("drops unreadable restored file", func(t *testing.T) {
 		if os.Getuid() == 0 {
 			t.Skip("permission checks don't apply when running as root")
 		}

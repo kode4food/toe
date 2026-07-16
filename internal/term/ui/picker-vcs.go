@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -42,7 +43,9 @@ func (c *changedFilePickerSource) Load(
 	}
 	changes, err := vc.ChangedFiles()
 	if err != nil {
-		e.SetStatusMsg("error: " + err.Error())
+		e.SetStatusMsg(i18n.Text(
+			i18n.ErrorMessage, i18n.Vars{"message": err},
+		))
 		return nil, nil, func() {}
 	}
 	// providers report symlink-resolved paths; resolve the workspace root

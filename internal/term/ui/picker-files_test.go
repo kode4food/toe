@@ -202,7 +202,7 @@ func TestPickerFiles(t *testing.T) {
 		assert.Contains(t, out, "visible.go")
 	})
 
-	t.Run("workspace picker starts at workspace root", func(t *testing.T) {
+	t.Run("starts at workspace root", func(t *testing.T) {
 		tmp := t.TempDir()
 		work := filepath.Join(tmp, "work")
 		cwd := filepath.Join(work, "src")

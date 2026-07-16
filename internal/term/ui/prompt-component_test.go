@@ -77,7 +77,7 @@ func TestPromptCompletion(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
 		m = m2.(ui.Model)
 
-		assert.Contains(t, stripANSI(m.View().Content), ":alpha")
+		assert.Contains(t, stripANSI(m.View().Content), ": alpha")
 	})
 
 	t.Run("tab advances the caret", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestPromptCompletion(t *testing.T) {
 
 		// typing after tab lands at the end, not mid-word where the caret was
 		m = sendKey(m, 'X')
-		assert.Contains(t, stripANSI(m.View().Content), ":alphaX")
+		assert.Contains(t, stripANSI(m.View().Content), ": alphaX")
 	})
 
 	t.Run("ignores command args without completer", func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestPromptCompletion(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		assert.Contains(t, stripANSI(m.View().Content), ":alpha ")
+		assert.Contains(t, stripANSI(m.View().Content), ": alpha ")
 	})
 
 	t.Run("renders completion box background", func(t *testing.T) {
@@ -248,8 +248,8 @@ func TestPromptKeyEditing(t *testing.T) {
 		m = sendSpecial(m, tea.KeyBackspace)
 
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, ":a")
-		assert.NotContains(t, out, ":ab")
+		assert.Contains(t, out, ": a")
+		assert.NotContains(t, out, ": ab")
 	})
 
 	t.Run("ctrl h removes input", func(t *testing.T) {
@@ -270,7 +270,7 @@ func TestPromptKeyEditing(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, ":")
-		assert.NotContains(t, out, ":x")
+		assert.NotContains(t, out, ": x")
 	})
 
 	t.Run("shift tab wraps completions", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestPromptEditing(t *testing.T) {
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendKey(m, 'X')
-		assert.Equal(t, ":aXbc", promptText(m))
+		assert.Equal(t, ": aXbc", promptText(m))
 	})
 
 	t.Run("left and right move the caret", func(t *testing.T) {
@@ -330,7 +330,7 @@ func TestPromptEditing(t *testing.T) {
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendSpecial(m, tea.KeyRight)
 		m = sendKey(m, 'X')
-		assert.Equal(t, ":abX", promptText(m))
+		assert.Equal(t, ": abX", promptText(m))
 	})
 
 	t.Run("home and end jump to the ends", func(t *testing.T) {
@@ -340,7 +340,7 @@ func TestPromptEditing(t *testing.T) {
 		m = sendKey(m, 'X')
 		m = sendSpecial(m, tea.KeyEnd)
 		m = sendKey(m, 'Y')
-		assert.Equal(t, ":XabcY", promptText(m))
+		assert.Equal(t, ": XabcY", promptText(m))
 	})
 
 	t.Run("ctrl a and ctrl e jump to the ends", func(t *testing.T) {
@@ -350,7 +350,7 @@ func TestPromptEditing(t *testing.T) {
 		m = sendKey(m, 'X')
 		m = sendModified(m, 'e', tea.ModCtrl)
 		m = sendKey(m, 'Y')
-		assert.Equal(t, ":XabcY", promptText(m))
+		assert.Equal(t, ": XabcY", promptText(m))
 	})
 
 	t.Run("delete removes the char after caret", func(t *testing.T) {
@@ -359,7 +359,7 @@ func TestPromptEditing(t *testing.T) {
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendSpecial(m, tea.KeyDelete)
-		assert.Equal(t, ":ac", promptText(m))
+		assert.Equal(t, ": ac", promptText(m))
 	})
 
 	t.Run("ctrl d removes the char after caret", func(t *testing.T) {
@@ -367,21 +367,21 @@ func TestPromptEditing(t *testing.T) {
 		m = typeString(m, "abc")
 		m = sendSpecial(m, tea.KeyHome)
 		m = sendModified(m, 'd', tea.ModCtrl)
-		assert.Equal(t, ":bc", promptText(m))
+		assert.Equal(t, ": bc", promptText(m))
 	})
 
 	t.Run("ctrl w deletes the word before caret", func(t *testing.T) {
 		m, _ := cmdPrompt(t)
 		m = typeString(m, "foo bar")
 		m = sendModified(m, 'w', tea.ModCtrl)
-		assert.Equal(t, ":foo", promptText(m))
+		assert.Equal(t, ": foo", promptText(m))
 	})
 
-	t.Run("alt backspace deletes the word before caret", func(t *testing.T) {
+	t.Run("alt backspace deletes prior word", func(t *testing.T) {
 		m, _ := cmdPrompt(t)
 		m = typeString(m, "foo bar")
 		m = sendModified(m, tea.KeyBackspace, tea.ModAlt)
-		assert.Equal(t, ":foo", promptText(m))
+		assert.Equal(t, ": foo", promptText(m))
 	})
 
 	t.Run("ctrl delete deletes the word after caret", func(t *testing.T) {
@@ -389,7 +389,7 @@ func TestPromptEditing(t *testing.T) {
 		m = typeString(m, "foo bar")
 		m = sendSpecial(m, tea.KeyHome)
 		m = sendModified(m, tea.KeyDelete, tea.ModCtrl)
-		assert.Equal(t, ": bar", promptText(m))
+		assert.Equal(t, ":  bar", promptText(m))
 	})
 
 	t.Run("ctrl left moves by word", func(t *testing.T) {
@@ -397,7 +397,7 @@ func TestPromptEditing(t *testing.T) {
 		m = typeString(m, "foo bar")
 		m = sendModified(m, tea.KeyLeft, tea.ModCtrl)
 		m = sendKey(m, 'X')
-		assert.Equal(t, ":foo Xbar", promptText(m))
+		assert.Equal(t, ": foo Xbar", promptText(m))
 	})
 
 	t.Run("ctrl k kills to end of line", func(t *testing.T) {
@@ -406,7 +406,7 @@ func TestPromptEditing(t *testing.T) {
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendModified(m, 'k', tea.ModCtrl)
-		assert.Equal(t, ":a", promptText(m))
+		assert.Equal(t, ": a", promptText(m))
 	})
 
 	t.Run("ctrl u kills to start of line", func(t *testing.T) {
@@ -414,7 +414,7 @@ func TestPromptEditing(t *testing.T) {
 		m = typeString(m, "abc")
 		m = sendSpecial(m, tea.KeyLeft)
 		m = sendModified(m, 'u', tea.ModCtrl)
-		assert.Equal(t, ":c", promptText(m))
+		assert.Equal(t, ": c", promptText(m))
 	})
 }
 
@@ -426,10 +426,10 @@ func TestPromptCursor(t *testing.T) {
 		cur := m.View().Cursor
 		assert.NotNil(t, cur)
 		assert.Equal(t, tea.CursorBar, cur.Shape)
-		assert.Equal(t, 3, cur.Position.X) // ":" + "ab"
+		assert.Equal(t, 4, cur.Position.X) // ": " + "ab"
 
 		m = sendSpecial(m, tea.KeyLeft)
-		assert.Equal(t, 2, m.View().Cursor.Position.X)
+		assert.Equal(t, 3, m.View().Cursor.Position.X)
 	})
 
 	t.Run("honors a block insert cursor", func(t *testing.T) {
@@ -497,6 +497,8 @@ func TestSearchPromptAccept(t *testing.T) {
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, '/')
+		assert.Contains(t, stripANSI(m.View().Content),
+			"search-forward: ")
 		for _, ch := range "hello" {
 			m = sendKey(m, ch)
 		}
@@ -518,7 +520,7 @@ func TestSearchPromptAccept(t *testing.T) {
 		m = sendKey(m, '?')
 		m = sendKey(m, 'x')
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "?x")
+		assert.Contains(t, out, "search-backward: x")
 	})
 
 	t.Run("backward search enter submits", func(t *testing.T) {

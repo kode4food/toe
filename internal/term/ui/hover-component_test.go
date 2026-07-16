@@ -126,7 +126,7 @@ func TestHoverComponent(t *testing.T) {
 		})
 	}
 
-	t.Run("renders thematic break as full-width rule", func(t *testing.T) {
+	t.Run("thematic break spans width", func(t *testing.T) {
 		e := editorWithText(t, "Println")
 		e.SetMode(view.ModeNormal)
 		e.SetLanguageServerController(&completionController{

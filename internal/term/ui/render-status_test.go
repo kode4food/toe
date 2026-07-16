@@ -374,7 +374,7 @@ func TestStatuslineElementRegistry(t *testing.T) {
 	}
 
 	t.Run("covers every element", func(t *testing.T) {
-		for _, e := range view.AllStatusLineElements {
+		for _, e := range view.AllStatusLineElements() {
 			assert.True(t, covered[e], string(e))
 		}
 	})

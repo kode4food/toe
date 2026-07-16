@@ -52,8 +52,8 @@ type (
 		Apply  func(*view.Editor)
 	}
 
-	// Command describes one registered command: its runner, key bindings,
-	// mode applicability, typeable aliases, and argument signature
+	// Command describes one registered command: its runner, key bindings, mode
+	// applicability, typeable aliases, and argument signature
 	Command struct {
 		Name      string
 		Run       Run

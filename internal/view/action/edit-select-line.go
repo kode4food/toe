@@ -68,7 +68,12 @@ func resolveLineBounds(
 			return resolveLineBoundsRes{}, false
 		}
 	}
-	return resolveLineBoundsRes{startLine, endLine, start, end}, true
+	return resolveLineBoundsRes{
+		startLine: startLine,
+		endLine:   endLine,
+		start:     start,
+		end:       end,
+	}, true
 }
 
 func selectLineImpl(e *view.Editor, above bool) {

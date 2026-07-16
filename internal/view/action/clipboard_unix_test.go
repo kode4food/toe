@@ -53,7 +53,7 @@ func TestSystemClipboardProviderSelection(t *testing.T) {
 		assert.False(t, clip.Available())
 	})
 
-	t.Run("primary read/write round-trips when supported", func(t *testing.T) {
+	t.Run("primary round-trips", func(t *testing.T) {
 		clipFile := filepath.Join(t.TempDir(), "clip.txt")
 		bin := fakeClipboardTools(t, clipFile, "xclip")
 		t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))

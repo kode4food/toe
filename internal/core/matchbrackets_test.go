@@ -47,7 +47,7 @@ func TestFindMatchingBracket(t *testing.T) {
 		assert.Equal(t, 24, pos)
 	})
 
-	t.Run("close bracket with nested parens backward", func(t *testing.T) {
+	t.Run("nested parens backward", func(t *testing.T) {
 		// cursor on outer `)` at 5; inner `)` at 3 increments count backward
 		doc := core.NewRope("((x)y)")
 		pos, ok := core.FindMatchingBracket(doc, 5)

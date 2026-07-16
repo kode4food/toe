@@ -67,7 +67,8 @@ name = "session"
 language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
-`, exe, testServerEnv, testServerStartMarkerEnv, marker, testServerInitDelayMsEnv)
+`, exe, testServerEnv, testServerStartMarkerEnv, marker,
+		testServerInitDelayMsEnv)
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
 	))

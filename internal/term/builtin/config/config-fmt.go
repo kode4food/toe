@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -18,12 +19,14 @@ func configFormatCmds() []command.Command {
 	return []command.Command{
 		{
 			Name: actSetLanguage,
-			DocString: "Set the language of current buffer " +
-				"(show current language if no value specified)",
+			DocString: "Set the language of current buffer (show current " +
+				"language if no value specified)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				doc, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{Message: "error: no document"}
+					return command.Result{
+						Message: i18n.Text(i18n.ErrorNoDocument),
+					}
 				}
 				if args == nil || args.Empty() {
 					lang := doc.Lang()
@@ -44,13 +47,15 @@ func configFormatCmds() []command.Command {
 		},
 		{
 			Name: actSetLineEnding,
-			DocString: "Set the document's default line ending. " +
-				"Options: crlf, lf",
+			DocString: "Set the document's default line ending. Options: " +
+				"crlf, lf",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					doc, ok := e.FocusedDocument()
 					if !ok {
-						return command.Result{Message: "error: no document"}
+						return command.Result{
+							Message: i18n.Text(i18n.ErrorNoDocument),
+						}
 					}
 					switch doc.LineEnding() {
 					case core.LineEndingCRLF:
@@ -81,12 +86,14 @@ func configFormatCmds() []command.Command {
 		},
 		{
 			Name: actIndentStyle,
-			DocString: "Set the indentation style for editing. " +
-				"('t' for tabs or 1-16 for number of spaces)",
+			DocString: "Set the indentation style for editing. ('t' for tabs " +
+				"or 1-16 for number of spaces)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				doc, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{Message: "error: no document"}
+					return command.Result{
+						Message: i18n.Text(i18n.ErrorNoDocument),
+					}
 				}
 				if args == nil || args.Empty() {
 					return command.Result{

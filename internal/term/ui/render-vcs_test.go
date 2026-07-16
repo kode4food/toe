@@ -117,8 +117,8 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "\uf458 deleted.txt")            //  nf-oct-diff_removed
-		assert.Contains(t, out, "\uf45a old.txt \u2192 new.txt") //  nf-oct-diff_renamed
+		assert.Contains(t, out, "\uf458 deleted.txt")
+		assert.Contains(t, out, "\uf45a old.txt \u2192 new.txt")
 	})
 
 	t.Run("accept opens changed file", func(t *testing.T) {

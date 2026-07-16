@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -20,9 +21,7 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg(
-				"No configured language server supports symbol renaming",
-			)
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoRename))
 			return nil
 		}
 		prefill, err := ls.RenameSymbolPrefill(doc, v.ID())
@@ -32,8 +31,9 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 		}
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptRegex, prompt: "rename-to:",
-				buf: prefill,
+				ec: ec, kind: promptRegex,
+				prompt: i18n.Text(i18n.PromptRename),
+				buf:    prefill,
 				fn: func(e *view.Editor, name string) error {
 					return renameSymbol(e, name)
 				},
@@ -76,7 +76,7 @@ func (m Model) HoverAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg("No configured language server supports hover")
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHover))
 			return nil
 		}
 		text, err := ls.Hover(doc, v.ID())
@@ -85,7 +85,7 @@ func (m Model) HoverAction() command.KeyAction {
 			return nil
 		}
 		if text == "" {
-			e.SetStatusMsg("No hover results available.")
+			e.SetStatusMsg(i18n.Text(i18n.StatusNoHoverResults))
 			return nil
 		}
 		anchor := newHoverAnchor(doc, v)
@@ -109,9 +109,7 @@ func (m Model) SignatureHelpAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg(
-				"No configured language server supports signature-help",
-			)
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoSignatureHelp))
 			return nil
 		}
 		call, ok := currentSignatureCall(m.context)

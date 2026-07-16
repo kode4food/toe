@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -12,9 +13,6 @@ var (
 	ErrDiffUnavailable      = errors.New("diff unavailable in this buffer")
 	ErrNoChangesInSelection = errors.New("no changes under any selection")
 )
-
-// StatusDiffUnavailable is shown by change motions when no diff exists
-const StatusDiffUnavailable = "Diff is not available in current buffer"
 
 // GotoNextChange moves each cursor to the next diff change
 func GotoNextChange(e *view.Editor) {
@@ -174,15 +172,14 @@ func focusedDiffHunks(
 	}
 	vc := e.VersionControl()
 	if vc == nil {
-		e.SetStatusMsg(StatusDiffUnavailable)
+		e.SetStatusMsg(i18n.Text(i18n.StatusDiffUnavailable))
 		return nil, nil, nil, false
 	}
 	return doc, v, vc.DiffHunks(doc), true
 }
 
-// hunkRange returns the selection range covering a hunk. Additions and
-// modifications cover the changed lines; a pure removal is the point at the
-// start of the removal
+// hunkRange covers added or modified lines; a pure removal becomes a point at
+// the removal start
 func hunkRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
 	r, ok := hunkCharRange(h, text)
 	if !ok {

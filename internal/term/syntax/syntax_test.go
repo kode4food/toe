@@ -69,7 +69,9 @@ func TestTokenize(t *testing.T) {
 		{"markdown", "# Heading\n\nParagraph text.\n"},
 		{"sql", "SELECT id FROM users WHERE active = 1;\n"},
 		{"makefile", "all: build\n\t$(CC) -o out main.c\n"},
-		{"diff", "diff --git a/foo.txt b/foo.txt\nindex 000..111 100644\n--- a/foo.txt\n+++ b/foo.txt\n@@ -1 +1 @@\n-old\n+new\n"},
+		{"diff", "diff --git a/foo.txt b/foo.txt\n" +
+			"index 000..111 100644\n--- a/foo.txt\n+++ b/foo.txt\n" +
+			"@@ -1 +1 @@\n-old\n+new\n"},
 	}
 
 	sc := syntax.NewSyntaxCache()

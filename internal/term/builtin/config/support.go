@@ -32,7 +32,7 @@ func SupportModule() command.Module {
 			},
 			{
 				Name:      actEcho,
-				DocString: "Prints the given arguments to the statusline",
+				DocString: "Prints the given arguments to the status line",
 				Run: func(_ *view.Editor, args *command.Args) command.Result {
 					if args == nil {
 						return command.Result{}

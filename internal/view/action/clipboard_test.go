@@ -58,7 +58,7 @@ func TestOSC52Clipboard(t *testing.T) {
 		assert.Equal(t, "hello", inner.System)
 	})
 
-	t.Run("write primary forwards to inner clipboard", func(t *testing.T) {
+	t.Run("primary write forwards", func(t *testing.T) {
 		inner := testutil.NewFakeClipboard()
 		clip := action.NewOSC52Clipboard(inner)
 

@@ -13,6 +13,11 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
+const scrollViewLinesText = "line\nline\nline\nline\nline\nline\nline\n" +
+	"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
+	"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
+	"line\n"
+
 func TestMotion(t *testing.T) {
 	t.Run("move line bounds", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd")
@@ -847,12 +852,8 @@ func TestAlignSelections(t *testing.T) {
 }
 
 func TestScrollViewLines(t *testing.T) {
-	const manyLines = "line\nline\nline\nline\nline\nline\nline\nline\nline\n" +
-		"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
-		"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\n"
-
 	t.Run("scrolls view down", func(t *testing.T) {
-		e := testutil.EditorWithText(t, manyLines)
+		e := testutil.EditorWithText(t, scrollViewLinesText)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
 
@@ -863,7 +864,7 @@ func TestScrollViewLines(t *testing.T) {
 	})
 
 	t.Run("scrolls view up", func(t *testing.T) {
-		e := testutil.EditorWithText(t, manyLines)
+		e := testutil.EditorWithText(t, scrollViewLinesText)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
 		action.ScrollViewLines(e, v, 5, false)
@@ -875,7 +876,7 @@ func TestScrollViewLines(t *testing.T) {
 	})
 
 	t.Run("zero lines clamps to one", func(t *testing.T) {
-		e := testutil.EditorWithText(t, manyLines)
+		e := testutil.EditorWithText(t, scrollViewLinesText)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
 		before := v.Offset().Anchor

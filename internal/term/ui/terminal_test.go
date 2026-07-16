@@ -642,7 +642,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Equal(t, want, clip.System)
 	})
 
-	t.Run("drag past the top edge auto-scrolls scrollback", func(t *testing.T) {
+	t.Run("top-edge drag scrolls back", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
@@ -676,7 +676,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Positive(t, tp.ScrollOffset())
 	})
 
-	t.Run("resize keeps content while output is silent", func(t *testing.T) {
+	t.Run("resize preserves silent content", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		e.Options().Mouse = true
 		m := ui.New(e, command.NewKeymaps())
@@ -787,9 +787,8 @@ func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {
 	}
 }
 
-// waitForResize confirms the pane's emulator matches its area so a test's
-// writes land at the pane's real dimensions; resizing is synchronous, so this
-// normally passes on the first check
+// waitForResize confirms writes use the pane's real dimensions; synchronous
+// resizing normally passes on the first check
 func waitForResize(t *testing.T, tp *ui.TerminalPane) {
 	t.Helper()
 	area := tp.Area()

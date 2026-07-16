@@ -132,9 +132,8 @@ func inheritStyleBackground(st lipgloss.Style, bg color.Color) lipgloss.Style {
 	return st.Background(bg)
 }
 
-// Resolved styles carry no background of their own: they render transparently
-// over whatever layer sits beneath (base fill, ruler, cursorline). A scope with
-// an explicit background in the theme is treated as an intentional override
+// Resolved styles render transparently over lower layers unless the theme
+// gives the scope an explicit background
 func hlStyleFnFor(th *theme.Theme) func(string) lipgloss.Style {
 	return func(scope string) lipgloss.Style {
 		if s, ok := th.TryGet(scope); ok {

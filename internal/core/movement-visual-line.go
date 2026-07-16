@@ -102,9 +102,8 @@ func (v visualLine) rowCount() int {
 	return len(v.rowStarts) + 1
 }
 
-// posOf returns the (row, col) visual position of charOff within the line. col
-// is the absolute visual column, including the continuation prefix on wrapped
-// rows
+// posOf returns charOff's row and absolute visual column, including the
+// continuation prefix on wrapped rows
 func (v visualLine) posOf(charOff int) (row, col int) {
 	for row < len(v.rowStarts) && v.rowStarts[row] <= charOff {
 		row++

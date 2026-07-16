@@ -179,7 +179,7 @@ func (s *stubController) Busy() bool {
 }
 
 func TestFormatCommands(t *testing.T) {
-	t.Run("format on plain text reports no formatter", func(t *testing.T) {
+	t.Run("plain text has no formatter", func(t *testing.T) {
 		e, km := test.Env(t, "hello\n")
 		res := test.RunCmd(t, km, e, "format")
 		assert.Contains(t, res.Message, "no formatter")

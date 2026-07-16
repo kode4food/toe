@@ -217,7 +217,7 @@ func TestBlit(t *testing.T) {
 		assert.Equal(t, 2, ansi.StringWidth(dst.RenderToANSI()))
 	})
 
-	t.Run("wide glyph fitting at right edge survives", func(t *testing.T) {
+	t.Run("wide glyph fits at right edge", func(t *testing.T) {
 		dst := tui.NewBuffer(2, 1)
 		src := tui.NewBuffer(2, 1)
 		src.SetString(0, 0, "コ", tui.Style{})

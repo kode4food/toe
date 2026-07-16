@@ -148,7 +148,7 @@ func TestSelection(t *testing.T) {
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
-	t.Run("single range is unchanged by consecutive merge", func(t *testing.T) {
+	t.Run("single range survives repeated merge", func(t *testing.T) {
 		s := core.PointSelection(3)
 
 		assert.Equal(t, s, s.MergeConsecutiveRanges())

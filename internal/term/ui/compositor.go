@@ -16,6 +16,11 @@ type (
 		lastOverlays []Component
 	}
 
+	bufferOverlayPlacement struct {
+		overlay BufferOverlayComponent
+		bounds  Bounds
+	}
+
 	layerFunc func(*Context) (Component, tea.Cmd)
 )
 
@@ -100,23 +105,22 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 
 func (c *Compositor) renderViaBuffer(cx *Context) string {
 	br := c.layers[0].(BufferRenderer)
-	type placed struct {
-		ov BufferOverlayComponent
-		pl Bounds
-	}
-	placements := make([]placed, 0, len(c.layers)-1)
+	placements := make([]bufferOverlayPlacement, 0, len(c.layers)-1)
 	for i := 1; i < len(c.layers); i++ {
 		ov := c.layers[i].(BufferOverlayComponent)
 		if pl, active := ov.Layout(c.width, c.height, cx); active {
-			placements = append(placements, placed{ov, pl})
+			placements = append(placements, bufferOverlayPlacement{
+				overlay: ov,
+				bounds:  pl,
+			})
 		}
 	}
 	frame := br.Render(c.width, c.height, cx)
 	regions := make([]Bounds, 0, len(placements))
 	for _, p := range placements {
-		buf := p.ov.PaintBuffer(p.pl, cx)
-		frame.Blit(buf, p.pl.x, p.pl.y)
-		regions = append(regions, p.pl)
+		buf := p.overlay.PaintBuffer(p.bounds, cx)
+		frame.Blit(buf, p.bounds.x, p.bounds.y)
+		regions = append(regions, p.bounds)
 	}
 	cx.OverlayRegions, cx.OverlayRegionsPrecise = regions, true
 	return frame.RenderToANSI()

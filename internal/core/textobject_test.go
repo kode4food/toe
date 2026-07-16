@@ -99,7 +99,7 @@ func TestTextObjectParagraph(t *testing.T) {
 		assert.Equal(t, "b\n", sliceOf(t, doc, r))
 	})
 
-	t.Run("cursor in second paragraph walks backward", func(t *testing.T) {
+	t.Run("second paragraph walks backward", func(t *testing.T) {
 		doc := core.NewRope("a\n\nb\nc\n")
 		r := core.TextObjectParagraph(
 			doc, core.NewRange(4, 4), core.TextObjectInside, 1,

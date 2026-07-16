@@ -13,6 +13,8 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
+const blockCommentedSource = "hello /* world */"
+
 func TestSelection(t *testing.T) {
 	t.Run("trim removes surrounding whitespace", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "  hi  ")
@@ -149,15 +151,16 @@ func TestToggleBlockComments(t *testing.T) {
 
 func TestToggleCommentsBlockCommented(t *testing.T) {
 	t.Run("removes inline block comment", func(t *testing.T) {
-		const src = "hello /* world */"
-		e := testutil.EditorWithText(t, src)
+		e := testutil.EditorWithText(t, blockCommentedSource)
 		doc, _ := e.FocusedDocument()
 		doc.SetLang("go")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(6, len(src))}, 0)
+		testutil.SetSelection(t, e, []core.Range{
+			core.NewRange(6, len(blockCommentedSource)),
+		}, 0)
 
 		action.ToggleComments(e)
 
-		assert.NotEqual(t, src, doc.Text().String())
+		assert.NotEqual(t, blockCommentedSource, doc.Text().String())
 	})
 }
 

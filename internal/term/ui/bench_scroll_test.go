@@ -12,9 +12,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// benchmarkScroll measures a full wheel-scroll cycle (event handling + render),
-// alternating direction so the anchor actually moves each frame rather than
-// re-rendering a cached steady view
+// benchmarkScroll measures wheel handling and rendering while alternating
+// direction so the anchor moves every frame
 func benchmarkScroll(b *testing.B, source string) {
 	root := b.TempDir()
 	path := filepath.Join(root, "f.go")

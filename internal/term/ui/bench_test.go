@@ -38,10 +38,9 @@ func BenchmarkRenderLongLine(b *testing.B) {
 	}
 }
 
-// BenchmarkRenderPickerPreview renders a buffer-picker frame whose preview is a
-// large syntax-highlighted in-memory document with a highlighted cursor line.
-// The buffer picker is the worst case: an in-memory doc is not cached, so the
-// preview is re-rendered (and re-tokenized) every frame
+// BenchmarkRenderPickerPreview renders a large syntax-highlighted in-memory
+// buffer preview with a highlighted cursor line. This uncached worst case
+// re-renders and re-tokenizes the preview every frame
 func BenchmarkRenderPickerPreview(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "big.go")
@@ -69,6 +68,31 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 		m = sendKey(m, ch)
 	}
 	_ = m.View().Content // prime
+
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = m.View().Content
+	}
+}
+
+// BenchmarkRenderEmptyPicker renders the picker no-results state
+func BenchmarkRenderEmptyPicker(b *testing.B) {
+	e := view.NewEditor(b.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "command_picker",
+		m.PickerAction(func(e *view.Editor) *ui.Picker {
+			return ui.CommandPalettePicker(e, km)
+		}),
+		[]command.KeyEvent{char('p')},
+	)
+	m = resize(m, 80, 24)
+	m = sendKey(m, 'p')
+	for _, ch := range "no-match" {
+		m = sendKey(m, ch)
+	}
+	_ = m.View().Content
 
 	b.ReportAllocs()
 	for b.Loop() {

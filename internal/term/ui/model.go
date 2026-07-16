@@ -59,12 +59,16 @@ func (m Model) SetCompletionOptions(opts CompletionOptions) {
 
 // PickerLayoutOptions returns the UI-owned picker layout settings
 func (m Model) PickerLayoutOptions() PickerLayoutOptions {
-	return m.context.pickerLayout.WithDefaults()
+	return m.context.pickerLayout.clone()
 }
 
 // SetPickerLayoutOptions applies UI-owned picker layout settings
 func (m Model) SetPickerLayoutOptions(opts PickerLayoutOptions) {
-	m.context.pickerLayout = opts.WithDefaults()
+	opts = opts.clone()
+	for key, ratio := range opts.SplitRatios {
+		opts.SplitRatios[key] = clampPickerSplitRatio(ratio)
+	}
+	m.context.pickerLayout = opts
 }
 
 // Init fires the startup cmd if one was set before the program started

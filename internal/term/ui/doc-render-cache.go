@@ -127,9 +127,8 @@ func newRenderCache() *renderCache {
 	}
 }
 
-// evictClosed drops cache entries for documents and views that no longer
-// exist; docCaches retains each document's full text, so entries must not
-// outlive their documents
+// evictClosed drops entries for closed documents and views because docCaches
+// retains each document's full text
 func (c *renderCache) evictClosed(e *view.Editor) {
 	docs := e.AllDocuments()
 	if len(c.docCaches) > len(docs) {

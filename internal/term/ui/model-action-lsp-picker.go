@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -17,9 +18,7 @@ func (m Model) SymbolPickerAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg(
-				"No configured language server supports document symbols",
-			)
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoDocSymbols))
 			return nil
 		}
 		symbols, err := ls.DocumentSymbols(doc)
@@ -28,7 +27,7 @@ func (m Model) SymbolPickerAction() command.KeyAction {
 			return nil
 		}
 		if len(symbols) == 0 {
-			e.SetStatusMsg("No document symbols found.")
+			e.SetStatusMsg(i18n.Text(i18n.StatusNoDocumentSymbols))
 			return nil
 		}
 		opener := symbolPickerLayer(symbols)
@@ -48,9 +47,7 @@ func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg(
-				"No configured language server supports workspace symbols",
-			)
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoWorkSymbols))
 			return nil
 		}
 		opener := workspaceSymbolPickerLayer()
@@ -73,9 +70,7 @@ func (m Model) CodeActionPickerAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg(
-				"No configured language server supports code actions",
-			)
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoCodeActions))
 			return nil
 		}
 		actions, err := ls.CodeActions(doc, v.ID())
@@ -84,7 +79,7 @@ func (m Model) CodeActionPickerAction() command.KeyAction {
 			return nil
 		}
 		if len(actions) == 0 {
-			e.SetStatusMsg("No code actions available.")
+			e.SetStatusMsg(i18n.Text(i18n.StatusNoCodeActions))
 			return nil
 		}
 		docID := doc.ID()

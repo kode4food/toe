@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -47,7 +48,9 @@ func (t *TerminalPane) HandleKey(
 
 // HandleMouse scrolls into scrollback on wheel when the shell hasn't
 // requested mouse tracking, or otherwise forwards the event to it
-func (t *TerminalPane) HandleMouse(msg tea.Msg, cx *Context) (EventResult, bool) {
+func (t *TerminalPane) HandleMouse(
+	msg tea.Msg, cx *Context,
+) (EventResult, bool) {
 	wheel, isWheel := msg.(tea.MouseWheelMsg)
 	if isWheel && !t.MouseEnabled() {
 		n := cx.Editor.Options().ScrollLines
@@ -123,7 +126,7 @@ func (t *TerminalPane) EndDrag(cx *Context, x, y int) tea.Cmd {
 	m := t.clampedMouse(cx, x, y)
 	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
 		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
-		cx.Editor.SetStatusMsg("copied selection to clipboard")
+		cx.Editor.SetStatusMsg(i18n.Text(i18n.StatusClipboardCopied))
 	}
 	return nil
 }
@@ -261,7 +264,9 @@ func closeTerminalChain(p view.Pane) {
 	}
 }
 
-func mouseFields(msg tea.Msg) (x, y int, btn tea.MouseButton, mod tea.KeyMod, ok bool) {
+func mouseFields(msg tea.Msg) (
+	x, y int, btn tea.MouseButton, mod tea.KeyMod, ok bool,
+) {
 	switch m := msg.(type) {
 	case tea.MouseClickMsg:
 		return m.X, m.Y, m.Button, m.Mod, true

@@ -11,28 +11,13 @@ import (
 )
 
 type tuiScreen struct {
-	buf       *tui.Buffer
-	originX   int
-	originY   int
-	w, h      int
-	widthMeth uv.WidthMethod
-	styleIn   uv.Style
-	styleOut  tui.Style
-	styleOk   bool
-}
-
-var _ uv.Screen = (*tuiScreen)(nil)
-
-func (s *tuiScreen) Bounds() uv.Rectangle {
-	return uv.Rect(0, 0, s.w, s.h)
-}
-
-func (s *tuiScreen) CellAt(x, y int) *uv.Cell {
-	if x < 0 || y < 0 || x >= s.w || y >= s.h {
-		return nil
-	}
-	c := s.buf.Get(s.originX+x, s.originY+y)
-	return &uv.Cell{Content: c.Symbol, Width: 1}
+	buf      *tui.Buffer
+	originX  int
+	originY  int
+	w, h     int
+	styleIn  uv.Style
+	styleOut tui.Style
+	styleOk  bool
 }
 
 func (s *tuiScreen) SetCell(x, y int, c *uv.Cell) {
@@ -55,10 +40,6 @@ func (s *tuiScreen) SetCell(x, y int, c *uv.Cell) {
 	}
 }
 
-func (s *tuiScreen) WidthMethod() uv.WidthMethod {
-	return s.widthMeth
-}
-
 func (s *tuiScreen) styleFor(st uv.Style) tui.Style {
 	if s.styleOk && s.styleIn == st {
 		return s.styleOut
@@ -78,7 +59,7 @@ func (r *renderPass) renderTerminalPane(
 	emu.SetBackgroundColor(bg)
 	scr := &tuiScreen{
 		buf: buf, originX: a.X, originY: y0 + a.Y,
-		w: a.Width, h: contentH, widthMeth: emu.WidthMethod(),
+		w: a.Width, h: contentH,
 	}
 	drawViewport(scr, tp, tp.ScrollOffset(), a.Width, contentH)
 	highlightSelection(scr, tp)

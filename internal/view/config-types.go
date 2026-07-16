@@ -156,9 +156,16 @@ const (
 	DefaultGutterLineNumberMinWidth = 3
 )
 
-// AllStatusLineElements is the canonical list of valid statusline elements.
-// Config parsing and the renderer must both cover exactly this set
-var AllStatusLineElements = []StatusLineElement{
+var (
+	ErrInvalidCursorKind       = errors.New("invalid cursor kind")
+	ErrInvalidLineNumber       = errors.New("invalid line-number value")
+	ErrInvalidStatusLine       = errors.New("invalid statusline element")
+	ErrInvalidWhitespaceRender = errors.New("invalid whitespace render value")
+	ErrInvalidGutterType       = errors.New("invalid gutter type")
+	ErrInvalidBufferLine       = errors.New("invalid bufferline value")
+)
+
+var allStatusLineElements = []StatusLineElement{
 	StatusLineMode,
 	StatusLineFileBaseName,
 	StatusLineFileName,
@@ -182,21 +189,17 @@ var AllStatusLineElements = []StatusLineElement{
 	StatusLineSpinner,
 }
 
-var (
-	ErrInvalidCursorKind       = errors.New("invalid cursor kind")
-	ErrInvalidLineNumber       = errors.New("invalid line-number value")
-	ErrInvalidStatusLine       = errors.New("invalid statusline element")
-	ErrInvalidWhitespaceRender = errors.New("invalid whitespace render value")
-	ErrInvalidGutterType       = errors.New("invalid gutter type")
-	ErrInvalidBufferLine       = errors.New("invalid bufferline value")
-)
-
 func ParseCursorKind(value string) (CursorKind, error) {
 	var c CursorKind
 	if err := c.UnmarshalText([]byte(value)); err != nil {
 		return "", fmt.Errorf("%w: %s", ErrInvalidCursorKind, value)
 	}
 	return c, nil
+}
+
+// AllStatusLineElements returns the canonical valid status line elements
+func AllStatusLineElements() []StatusLineElement {
+	return slices.Clone(allStatusLineElements)
 }
 
 func ParseLineNumber(value string) (LineNumber, error) {
@@ -279,7 +282,7 @@ func (l *LineNumber) UnmarshalText(text []byte) error {
 func (s *StatusLineItem) UnmarshalText(text []byte) error {
 	name, pinned := strings.CutSuffix(string(text), "!")
 	e := StatusLineElement(name)
-	if !slices.Contains(AllStatusLineElements, e) {
+	if !slices.Contains(allStatusLineElements, e) {
 		return fmt.Errorf("%w: %s", ErrInvalidStatusLine, text)
 	}
 	*s = StatusLineItem{Element: e, Pinned: pinned}

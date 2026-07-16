@@ -930,7 +930,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		m := ui.New(e, command.NewKeymaps())
 
 		assert.Nil(t, m.SignatureHelpAction()(e))
-		assert.Contains(t, e.TakeStatusMsg(), "signature-help")
+		assert.Contains(t, e.TakeStatusMsg(), "signature help")
 	})
 
 	t.Run("cursor not in call returns nil", func(t *testing.T) {

@@ -299,7 +299,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.GreaterOrEqual(t, strings.Count(line, "\x1b["), 4)
 	})
 
-	t.Run("popup width stays stable across selection", func(t *testing.T) {
+	t.Run("popup width stays stable", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
@@ -975,7 +975,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotContains(t, out, "Println")
 	})
 
-	t.Run("outside click dismisses and reaches editor", func(t *testing.T) {
+	t.Run("outside click reaches editor", func(t *testing.T) {
 		e := editorWithText(t, "alpha\nbeta\n")
 		e.SetMode(view.ModeInsert)
 		e.Options().Mouse = true
@@ -1076,7 +1076,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.Equal(t, "itemA", ctl.item.Label)
 	})
 
-	t.Run("outside wheel dismisses and reaches editor", func(t *testing.T) {
+	t.Run("outside wheel reaches editor", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
 		e.SetMode(view.ModeInsert)
 		e.Options().Mouse = true

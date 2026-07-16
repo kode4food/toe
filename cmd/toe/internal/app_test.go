@@ -140,7 +140,7 @@ func TestApplyConfigFiles(t *testing.T) {
 		assert.NoError(t, a.ApplyConfigFiles())
 	})
 
-	t.Run("missing explicit config is silently skipped", func(t *testing.T) {
+	t.Run("missing config is silently skipped", func(t *testing.T) {
 		a := newTestApp(t)
 		a.ConfigPath = filepath.Join(t.TempDir(), "none.toml")
 		assert.NoError(t, a.ApplyConfigFiles())
@@ -266,7 +266,7 @@ func TestConfigureModel(t *testing.T) {
 		assert.NoError(t, a.ConfigureModel())
 	})
 
-	t.Run("untrusted workspace shows startup message", func(t *testing.T) {
+	t.Run("untrusted workspace startup message", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.MkdirAll(filepath.Join(dir, ".git"), 0o755))
 		e := view.NewEditor(dir)

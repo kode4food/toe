@@ -178,7 +178,7 @@ func TestHookInsertSame(t *testing.T) {
 }
 
 func TestHookInsertWhitespace(t *testing.T) {
-	t.Run("space is never paired, inside brackets or quotes", func(t *testing.T) {
+	t.Run("space never pairs in brackets or quotes", func(t *testing.T) {
 		for _, doc := range []string{"()", `""`, "ab", "(]"} {
 			_, _, ok := core.HookInsert(
 				core.NewRope(doc), core.PointRange(1), ' ',
@@ -188,7 +188,7 @@ func TestHookInsertWhitespace(t *testing.T) {
 		}
 	})
 
-	t.Run("closing quote still skips over after a space", func(t *testing.T) {
+	t.Run("closing quote skips after a space", func(t *testing.T) {
 		doc := core.NewRope(`" "`)
 		r := core.PointRange(2)
 		change, next, ok := core.HookInsert(

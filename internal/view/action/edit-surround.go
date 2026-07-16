@@ -192,5 +192,9 @@ func resolveSurroundPos(e *view.Editor, ch rune) (resolveSurroundPosRes, bool) {
 	if err != nil {
 		return resolveSurroundPosRes{}, false
 	}
-	return resolveSurroundPosRes{text, sel, positions}, true
+	return resolveSurroundPosRes{
+		text:      text,
+		sel:       sel,
+		positions: positions,
+	}, true
 }

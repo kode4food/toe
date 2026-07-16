@@ -210,8 +210,8 @@ func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
 	}
 	left := x - (p.bounds.x + 1)
 	ratio := float64(left) / float64(usable)
-	ratio = min(max(ratio, MinPickerSplitRatio), MaxPickerSplitRatio)
-	opts := cx.pickerLayout.WithDefaults()
+	ratio = clampPickerSplitRatio(ratio)
+	opts := cx.pickerLayout.clone()
 	if opts.SplitRatios == nil {
 		opts.SplitRatios = map[string]float64{}
 	}

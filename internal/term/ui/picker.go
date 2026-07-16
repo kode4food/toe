@@ -8,6 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -337,7 +338,9 @@ func AcceptPath(
 	}
 	doc, err := e.SwitchOrOpenDoc(path)
 	if err != nil {
-		e.SetStatusMsg("error: " + err.Error())
+		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{
+			"message": err,
+		}))
 		return nil, false
 	}
 	return AcceptDocumentID(e, doc.ID(), action)

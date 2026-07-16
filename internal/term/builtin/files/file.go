@@ -1,6 +1,7 @@
 package files
 
 import (
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -104,7 +105,9 @@ func fileWriteCmds() []command.Command {
 							"' written",
 					}
 				}
-				return command.Result{Message: "written"}
+				return command.Result{
+					Message: i18n.Text(i18n.StatusWritten),
+				}
 			},
 			Aliases:   []string{"w"},
 			Signature: kit.Sig(),
@@ -124,7 +127,9 @@ func fileWriteCmds() []command.Command {
 							"' written",
 					}
 				}
-				return command.Result{Message: "written"}
+				return command.Result{
+					Message: i18n.Text(i18n.StatusWritten),
+				}
 			},
 			Aliases:   []string{"w!"},
 			Signature: kit.Sig(),
@@ -138,20 +143,24 @@ func fileWriteCmds() []command.Command {
 						Message: "error: " + errs[0].Error(),
 					}
 				}
-				return command.Result{Message: "all documents written"}
+				return command.Result{
+					Message: i18n.Text(i18n.StatusAllWritten),
+				}
 			},
 			Aliases:   []string{"write-all", "wa"},
 			Signature: kit.Sig(),
 		},
 		{
 			Name: actWriteAllForce,
-			DocString: "Forcefully write changes from all buffers to " +
-				"disk creating necessary subdirectories",
+			DocString: "Forcefully write changes from all buffers to disk " +
+				"creating necessary subdirectories",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				for _, doc := range e.AllDocuments() {
 					_ = doc.Save(e.Options(), true)
 				}
-				return command.Result{Message: "all documents written"}
+				return command.Result{
+					Message: i18n.Text(i18n.StatusAllWritten),
+				}
 			},
 			Aliases:   []string{"wa!"},
 			Signature: kit.Sig(),
@@ -225,7 +234,9 @@ func fileWriteCmds() []command.Command {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				e.CloseCurrentView()
-				return command.Result{Message: "written and closed"}
+				return command.Result{
+					Message: i18n.Text(i18n.StatusWrittenAndClosed),
+				}
 			},
 			Aliases:   []string{"write-buffer-close", "wbc"},
 			Signature: kit.Sig(),
@@ -240,7 +251,9 @@ func fileWriteCmds() []command.Command {
 				autoFormat(e)
 				_ = e.Save(true)
 				e.CloseCurrentView()
-				return command.Result{Message: "written and closed"}
+				return command.Result{
+					Message: i18n.Text(i18n.StatusWrittenAndClosed),
+				}
 			},
 			Aliases:   []string{"wbc!"},
 			Signature: kit.Sig(),
@@ -278,11 +291,11 @@ func fileManageCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					return command.Result{
-						Message: "error: no filename given",
+						Message: i18n.Text(i18n.ErrorNoFilename),
 					}
 				}
 				path, _ := args.First()
-				if _, err := e.SwitchFile(path); err != nil {
+				if _, err := e.OpenFile(path); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				if doc, ok := e.FocusedDocument(); ok {
@@ -351,12 +364,14 @@ func fileManageCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					return command.Result{
-						Message: "error: no filename given",
+						Message: i18n.Text(i18n.ErrorNoFilename),
 					}
 				}
 				doc, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{Message: "error: no document"}
+					return command.Result{
+						Message: i18n.Text(i18n.ErrorNoDocument),
+					}
 				}
 				if doc.Modified() {
 					return command.Result{
@@ -381,12 +396,14 @@ func fileManageCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					return command.Result{
-						Message: "error: no filename given",
+						Message: i18n.Text(i18n.ErrorNoFilename),
 					}
 				}
 				_, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{Message: "error: no document"}
+					return command.Result{
+						Message: i18n.Text(i18n.ErrorNoDocument),
+					}
 				}
 				path, _ := args.First()
 				_ = e.MoveFocusedFile(path, true)
@@ -401,7 +418,7 @@ func fileManageCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					return command.Result{
-						Message: "error: no filename given",
+						Message: i18n.Text(i18n.ErrorNoFilename),
 					}
 				}
 				path, _ := args.First()

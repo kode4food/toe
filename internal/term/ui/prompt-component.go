@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -157,14 +158,14 @@ func (p *PromptComponent) caretDisplayX() int {
 func (p *PromptComponent) promptLabel() string {
 	switch p.kind {
 	case promptCmd:
-		return ":"
+		return i18n.Text(i18n.PromptCommand) + " "
 	case promptSearch:
 		if p.forward {
-			return "/"
+			return i18n.Text(i18n.PromptSearchForward) + ": "
 		}
-		return "?"
+		return i18n.Text(i18n.PromptSearchBackward) + ": "
 	default:
-		return p.prompt + " "
+		return p.prompt + ": "
 	}
 }
 
@@ -308,7 +309,7 @@ func (p *PromptComponent) accept(
 		pat := strings.TrimSpace(p.buf)
 		if pat == "" {
 			// empty search repeats the last pattern in the prompt's direction
-			pat, _ = cx.Editor.FirstRegister('/')
+			pat, _ = cx.Editor.FirstRegister(view.RegisterSearch)
 		}
 		if pat == "" {
 			p.ec.cmdMsg = ""
@@ -321,7 +322,9 @@ func (p *PromptComponent) accept(
 			err = action.SearchBackward(cx.Editor, pat)
 		}
 		if err != nil {
-			p.ec.cmdMsg = "error: " + err.Error()
+			p.ec.cmdMsg = i18n.Text(i18n.ErrorMessage, i18n.Vars{
+				"message": err.Error(),
+			})
 		} else {
 			p.ec.cmdMsg = ""
 		}
@@ -334,7 +337,9 @@ func (p *PromptComponent) accept(
 		if p.pickerFn != nil {
 			picker, err := p.pickerFn(cx.Editor, p.buf)
 			if err != nil {
-				p.ec.cmdMsg = "error: " + err.Error()
+				p.ec.cmdMsg = i18n.Text(i18n.ErrorMessage, i18n.Vars{
+					"message": err.Error(),
+				})
 				return pop(nil)
 			}
 			if picker == nil {
@@ -350,7 +355,9 @@ func (p *PromptComponent) accept(
 		}
 		if p.fn != nil {
 			if err := p.fn(cx.Editor, p.buf); err != nil {
-				p.ec.cmdMsg = "error: " + err.Error()
+				p.ec.cmdMsg = i18n.Text(i18n.ErrorMessage, i18n.Vars{
+					"message": err.Error(),
+				})
 			} else {
 				p.ec.cmdMsg = ""
 			}

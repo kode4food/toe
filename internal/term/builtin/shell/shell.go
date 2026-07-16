@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -32,7 +33,7 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellPipe,
 				DocString: "Pipe selections through shell command",
 				Run: kit.Continuation(model.ShellAction(
-					"|", action.ShellPipe,
+					i18n.Text(i18n.PromptPipe), action.ShellPipe,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Char('|')),
@@ -41,7 +42,8 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellInsertOutput,
 				DocString: "Insert shell command output before selections",
 				Run: kit.Continuation(model.ShellAction(
-					"!", action.ShellInsertOutput,
+					i18n.Text(i18n.PromptInsertOutput),
+					action.ShellInsertOutput,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Char('!')),
@@ -50,7 +52,8 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellKeepPipe,
 				DocString: "Filter selections with shell predicate",
 				Run: kit.Continuation(model.ShellAction(
-					"$", action.ShellKeepPipe,
+					i18n.Text(i18n.PromptFilter),
+					action.ShellKeepPipe,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Char('$')),
@@ -59,7 +62,7 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellPipeTo,
 				DocString: "Pipe selections into shell command ignoring output",
 				Run: kit.Continuation(model.ShellAction(
-					"alt+|", action.ShellPipeTo,
+					i18n.Text(i18n.PromptPipeTo), action.ShellPipeTo,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Alt('|')),
@@ -68,7 +71,8 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellAppendOutput,
 				DocString: "Append shell command output after selections",
 				Run: kit.Continuation(model.ShellAction(
-					"alt+!", action.ShellAppendOutput,
+					i18n.Text(i18n.PromptAppendOutput),
+					action.ShellAppendOutput,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Alt('!')),

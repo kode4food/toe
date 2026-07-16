@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -15,7 +16,7 @@ type locationGetter func(
 
 func (m Model) GotoDeclarationAction() command.KeyAction {
 	return m.gotoLocationAction(
-		"No declaration found.",
+		i18n.Text(i18n.StatusNoDeclaration),
 		func(
 			ls view.LanguageServerController,
 			doc *view.Document,
@@ -28,7 +29,7 @@ func (m Model) GotoDeclarationAction() command.KeyAction {
 
 func (m Model) GotoDefinitionAction() command.KeyAction {
 	return m.gotoLocationAction(
-		"No definition found.",
+		i18n.Text(i18n.StatusNoDefinition),
 		func(
 			ls view.LanguageServerController,
 			doc *view.Document,
@@ -41,7 +42,7 @@ func (m Model) GotoDefinitionAction() command.KeyAction {
 
 func (m Model) GotoTypeDefinitionAction() command.KeyAction {
 	return m.gotoLocationAction(
-		"No type definition found.",
+		i18n.Text(i18n.StatusNoTypeDefinition),
 		func(
 			ls view.LanguageServerController,
 			doc *view.Document,
@@ -54,7 +55,7 @@ func (m Model) GotoTypeDefinitionAction() command.KeyAction {
 
 func (m Model) GotoImplementationAction() command.KeyAction {
 	return m.gotoLocationAction(
-		"No implementation found.",
+		i18n.Text(i18n.StatusNoImplementation),
 		func(
 			ls view.LanguageServerController,
 			doc *view.Document,
@@ -67,7 +68,7 @@ func (m Model) GotoImplementationAction() command.KeyAction {
 
 func (m Model) GotoReferenceAction() command.KeyAction {
 	return m.gotoLocationAction(
-		"No references found.",
+		i18n.Text(i18n.StatusNoReferences),
 		func(
 			ls view.LanguageServerController,
 			doc *view.Document,
@@ -90,9 +91,7 @@ func (m Model) SelectReferencesAction() command.KeyAction {
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg(
-				"No configured language server supports document highlights",
-			)
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHighlights))
 			return nil
 		}
 		highlights, err := ls.DocumentHighlights(doc, v.ID())
@@ -101,7 +100,7 @@ func (m Model) SelectReferencesAction() command.KeyAction {
 			return nil
 		}
 		if len(highlights) == 0 {
-			e.SetStatusMsg("No symbol references found.")
+			e.SetStatusMsg(i18n.Text(i18n.StatusNoSymbolReferences))
 			return nil
 		}
 		setSelectionFromHighlights(doc, v.ID(), highlights)
@@ -125,7 +124,7 @@ func (m Model) gotoLocationAction(
 		}
 		ls := e.LanguageServerController()
 		if ls == nil {
-			e.SetStatusMsg("No configured language server supports navigation")
+			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoNavigation))
 			return nil
 		}
 		locations, err := get(ls, doc, v.ID())
@@ -162,7 +161,7 @@ func locationPickerLayer(
 
 func jumpToLocation(e *view.Editor, loc view.Location) {
 	action.SaveSelection(e)
-	v, err := e.SwitchFile(loc.Path)
+	v, err := e.OpenFile(loc.Path)
 	if err != nil {
 		e.SetStatusMsg(err.Error())
 		return

@@ -37,7 +37,7 @@ func configSystemCmds() []command.Command {
 					}
 				}
 				path := loader.WorkspaceConfigFile(e.Cwd())
-				if _, err := e.SwitchFile(path); err != nil {
+				if _, err := e.OpenFile(path); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
 				}
 				return command.Result{}
@@ -83,8 +83,8 @@ func configSystemCmds() []command.Command {
 		},
 		{
 			Name: actWorkspaceUntrust,
-			DocString: "Remove current workspace from the list of " +
-				"trusted workspaces",
+			DocString: "Remove current workspace from the list of trusted " +
+				"workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := loader.UntrustWorkspace(e.Cwd()); err != nil {
 					return command.Result{Message: "error: " + err.Error()}
@@ -101,8 +101,8 @@ func configThemeCmds() []command.Command {
 	return []command.Command{
 		{
 			Name: actTheme,
-			DocString: "Change the editor theme " +
-				"(show current theme if no name specified)",
+			DocString: "Change the editor theme (show current theme if no " +
+				"name specified)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					name := e.Options().Theme
@@ -158,7 +158,7 @@ func openFromPath(
 	if !ok {
 		return command.Result{Message: "error: " + unavailMsg}
 	}
-	if _, err := e.SwitchFile(path); err != nil {
+	if _, err := e.OpenFile(path); err != nil {
 		return command.Result{Message: "error: " + err.Error()}
 	}
 	return command.Result{}

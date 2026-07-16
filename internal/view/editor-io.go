@@ -182,14 +182,9 @@ func (e *Editor) DirStack() []string {
 	return cp
 }
 
-// OpenFile replaces the focused view's document with the given file
-func (e *Editor) OpenFile(path string) (*View, error) {
-	return e.SwitchFile(path)
-}
-
-// SwitchFile replaces the focused view's document with the given file, reusing
+// OpenFile replaces the focused view's document with the given file, reusing
 // an existing document if it is already open
-func (e *Editor) SwitchFile(path string) (*View, error) {
+func (e *Editor) OpenFile(path string) (*View, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err

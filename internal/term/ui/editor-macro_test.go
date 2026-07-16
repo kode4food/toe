@@ -88,9 +88,8 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 	return m, e
 }
 
-// macroModel wires lowercase keys for record ('z'), replay ('v'), insert ('i'),
-// and esc->normal, avoiding the capital Q/q default bindings. Recording and
-// replaying an insert then exercises the macro machinery end to end
+// macroModel wires lowercase keys that avoid default bindings while exercising
+// insert recording and replay end to end
 func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 	t.Helper()
 	e := view.NewEditor(t.TempDir())

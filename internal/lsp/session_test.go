@@ -1150,12 +1150,12 @@ func TestSessionWithoutEditor(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("stop language servers rejects nil document", func(t *testing.T) {
+	t.Run("rejects nil document", func(t *testing.T) {
 		_, err := session.StopLanguageServers(nil, nil)
 		assert.True(t, errors.Is(err, lsp.ErrNoLanguageServer))
 	})
 
-	t.Run("stop language servers without attached editor", func(t *testing.T) {
+	t.Run("no attached editor", func(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)

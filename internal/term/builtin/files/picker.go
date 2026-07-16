@@ -108,10 +108,9 @@ func PickerModule(model ui.Model) command.Module {
 	}
 }
 
-// DiagnosticsModule returns the diagnostic and workspace search picker
-// commands. It is registered separately from PickerModule so its position
-// in the space-leader menu can be controlled independently of the file and
-// buffer pickers
+// DiagnosticsModule returns diagnostic and workspace search picker commands
+// separately from PickerModule, allowing independent placement in the
+// space-leader menu
 func DiagnosticsModule(model ui.Model) command.Module {
 	spc := kit.Prefixed(kit.Char(' '))
 

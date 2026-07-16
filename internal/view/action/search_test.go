@@ -33,7 +33,7 @@ func TestSearch(t *testing.T) {
 }
 
 func TestSearchHighlightLifecycle(t *testing.T) {
-	t.Run("search shows highlights, cursor move clears them", func(t *testing.T) {
+	t.Run("cursor move clears highlights", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar foo")
 		v, ok := e.FocusedView()
 		assert.True(t, ok)

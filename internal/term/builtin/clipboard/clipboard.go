@@ -28,10 +28,9 @@ const (
 	actPasteClipboardIntoPane      = "paste_clipboard_into_pane"
 )
 
-// Module returns the clipboard yank/paste and register commands
-func Module() command.Module {
+// DocumentModule returns clipboard commands for document panes
+func DocumentModule() command.Module {
 	spc := kit.Prefixed(kit.Char(' '))
-	cw := kit.Prefixed(kit.Ctrl('w'))
 
 	return command.Module{
 		Commands: []command.Command{
@@ -87,14 +86,6 @@ func Module() command.Module {
 				Keys:      kit.Keys(spc(kit.Char('p'))),
 			},
 			{
-				Name:      actPasteClipboardIntoPane,
-				DocString: "Paste clipboard into terminal",
-				Run:       pasteClipboardIntoPane,
-				Modes:     []string{"TRM"},
-				Keys:      kit.Keys(cw(kit.Char('p'))),
-				Signature: kit.Sig(),
-			},
-			{
 				Name:      actPasteClipboardBefore,
 				DocString: "Paste clipboard before selections",
 				Run:       kit.Runner(action.PasteClipboardBefore),
@@ -113,8 +104,9 @@ func Module() command.Module {
 			},
 			{
 				Name: actYankJoin,
-				DocString: "Yank joined selections. A separator can be " +
-					"provided as first argument. Default value is newline",
+				DocString: "Yank joined selections. A separator can " +
+					"be provided as first argument. Default value is " +
+					"newline",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					sep := "\n"
 					if args != nil {
@@ -168,6 +160,21 @@ func Module() command.Module {
 				Signature: kit.Sig(),
 			},
 		},
+	}
+}
+
+// TerminalModule returns clipboard commands used by terminal panes
+func TerminalModule() command.Module {
+	cw := kit.Prefixed(kit.Ctrl('w'))
+	return command.Module{
+		Commands: []command.Command{{
+			Name:      actPasteClipboardIntoPane,
+			DocString: "Paste clipboard into terminal",
+			Run:       pasteClipboardIntoPane,
+			Modes:     []string{"TRM"},
+			Keys:      kit.Keys(cw(kit.Char('p'))),
+			Signature: kit.Sig(),
+		}},
 	}
 }
 

@@ -65,9 +65,8 @@ func surroundDeleteAction(e *view.Editor) command.Continuation {
 	}
 }
 
-// syntaxSurroundPos finds surrounding bracket positions for all selection
-// ranges, using Tree-sitter for structural brackets and falling back to
-// plaintext for each range that tree-sitter cannot handle
+// syntaxSurroundPos uses Tree-sitter for surrounding brackets, falling back
+// to plaintext for each range it cannot handle
 func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 	v, ok := e.FocusedView()
 	if !ok {

@@ -187,9 +187,8 @@ func alignViewImpl(e *view.Editor, relOffset int) {
 	v.SetOffset(offset)
 }
 
-// gotoWindowImpl moves to the top, center, or bottom of the viewport.
-// align: 0=top, 1=center, 2=bottom. Respects scrolloff and count offset.
-// In select mode the selection is extended rather than moved
+// gotoWindowImpl moves to the viewport position selected by align: 0 top,
+// 1 center, 2 bottom; select mode extends the selection
 func gotoWindowImpl(e *view.Editor, align int) {
 	v, ok := e.FocusedView()
 	if !ok {

@@ -58,7 +58,7 @@ func TestFindNthClosestPairsPos(t *testing.T) {
 		assert.Equal(t, 5, head)
 	})
 
-	t.Run("backward range returns reversed positions", func(t *testing.T) {
+	t.Run("backward range reverses positions", func(t *testing.T) {
 		doc := core.NewRope("(hello)")
 		r := core.NewRange(4, 2)
 		anchor, head, err := core.FindNthClosestPairsPos(doc, r, 1)
@@ -115,7 +115,7 @@ func TestFindNthPairsPos(t *testing.T) {
 		assert.True(t, errors.Is(err, core.ErrCursorOnAmbiguousPair))
 	})
 
-	t.Run("backward range returns reversed positions", func(t *testing.T) {
+	t.Run("backward range reverses positions", func(t *testing.T) {
 		doc := core.NewRope("(some) (chars)\n(newline)")
 		r := core.NewRange(10, 8)
 		anchor, head, err := core.FindNthPairsPos(doc, '(', r, 1)

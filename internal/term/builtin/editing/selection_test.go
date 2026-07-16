@@ -187,7 +187,7 @@ func TestSelectionMatchBrackets(t *testing.T) {
 		assert.Equal(t, closePos, testutil.CursorPos(t, e))
 	})
 
-	t.Run("bracket in string not matched (tree-sitter)", func(t *testing.T) {
+	t.Run("ignores bracket in string", func(t *testing.T) {
 		src := "package main\n\nfunc main() {\n" +
 			"\tx := \"(foo)\"\n\t_ = x\n}\n"
 		e, km := test.Env(t, src)

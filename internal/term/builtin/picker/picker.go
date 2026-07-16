@@ -20,8 +20,9 @@ type pickerSection struct {
 }
 
 const (
-	actCommandPalette = "command_palette"
-	actLastPicker     = "last_picker"
+	actCommandPalette       = "command_palette"
+	actLastPicker           = "last_picker"
+	pickerSplitRatiosPrefix = "editor.picker.split-ratios."
 )
 
 // Module returns the generic, concern-independent pickers: the command
@@ -63,23 +64,24 @@ func Module(model ui.Model) command.Module {
 }
 
 func pickerSplitRatiosOption(model ui.Model) command.Option {
-	const prefix = "editor.picker.split-ratios."
 	return command.Option{
-		Key: prefix,
+		Key: pickerSplitRatiosPrefix,
 		KeyGet: func(*view.Editor) (map[string]string, error) {
 			ratios := model.PickerLayoutOptions().SplitRatios
 			out := make(map[string]string, len(ratios))
 			for key, ratio := range ratios {
-				out[prefix+key] = strconv.FormatFloat(ratio, 'f', -1, 64)
+				out[pickerSplitRatiosPrefix+key] = strconv.FormatFloat(
+					ratio, 'f', -1, 64,
+				)
 			}
 			return out, nil
 		},
 		KeySet: func(_ *view.Editor, key, s string) error {
 			name := strings.TrimSpace(key)
-			if len(name) <= len(prefix) {
+			if len(name) <= len(pickerSplitRatiosPrefix) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, key)
 			}
-			name = name[len(prefix):]
+			name = name[len(pickerSplitRatiosPrefix):]
 			ratio, err := strconv.ParseFloat(s, 64)
 			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)

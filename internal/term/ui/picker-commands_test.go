@@ -37,9 +37,8 @@ func TestCommandPalettePicker(t *testing.T) {
 	})
 }
 
-// paletteModel registers a probe command that switches to insert mode, then
-// binds 'p' to open the command palette. The editor is returned so the test
-// can observe the probe command's effect after it is accepted
+// paletteModel binds a probe command and opens the palette with 'p', returning
+// the editor so the test can observe the accepted command
 func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 	t.Helper()
 	e := view.NewEditor(t.TempDir())

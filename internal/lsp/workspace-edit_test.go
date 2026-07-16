@@ -190,7 +190,7 @@ func TestWorkspaceEditCreateFileErrors(t *testing.T) {
 		assert.True(t, errors.Is(err, lsp.ErrWorkspaceEditFile))
 	})
 
-	t.Run("existing file with ignoreIfExists is a no-op", func(t *testing.T) {
+	t.Run("existing file ignored", func(t *testing.T) {
 		existing := filepath.Join(dir, "existing-ignored.session")
 		assert.NoError(t, os.WriteFile(existing, []byte("x"), 0o644))
 		err := session.ApplyWorkspaceEdit(
@@ -305,7 +305,7 @@ func TestWorkspaceEditDeleteFileErrors(t *testing.T) {
 		assert.True(t, errors.Is(err, lsp.ErrWorkspaceEditFile))
 	})
 
-	t.Run("missing file with ignoreIfNotExists is a no-op", func(t *testing.T) {
+	t.Run("missing file ignored", func(t *testing.T) {
 		err := session.ApplyWorkspaceEdit(
 			"session-test", protocol.WorkspaceEdit{
 				DocumentChanges: []protocol.DocumentChange{

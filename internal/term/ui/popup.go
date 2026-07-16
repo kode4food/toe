@@ -17,9 +17,8 @@ type (
 	}
 )
 
-// drawInto fills the rectangle (ox, oy, w, h) of buf with the popup's
-// contentStyle, draws the border on its edges, and returns the inner content
-// rectangle in buf's coordinates
+// drawInto fills and borders the popup rectangle, returning its inner bounds
+// in buffer coordinates
 func (p popup) drawInto(buf *tui.Buffer, ox, oy, w, h int) Bounds {
 	for dy := range h {
 		buf.FillRange(ox, oy+dy, w, p.contentStyle)

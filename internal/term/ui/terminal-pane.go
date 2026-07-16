@@ -344,8 +344,8 @@ func (t *TerminalPane) pump() {
 	}
 }
 
-// absolute row of the top visible line, in scrollback+screen coordinates — the
-// same math drawViewport uses to pick its window
+// viewStart returns the top visible absolute row using drawViewport's window
+// calculation
 func (t *TerminalPane) viewStart(h int) int {
 	total := t.emu.ScrollbackLen() + t.emu.Height()
 	return max(total-h-t.scrollN, 0)

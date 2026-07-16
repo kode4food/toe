@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -34,7 +35,8 @@ func (m Model) TerminalSearchAction() command.KeyAction {
 		}
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptTerminalSearch, prompt: "scrollback:",
+				ec: ec, kind: promptTerminalSearch,
+				prompt: i18n.Text(i18n.PromptScrollbackSearch),
 				fn: func(_ *view.Editor, s string) error {
 					if !tp.SearchScrollback(s) {
 						return ErrScrollbackNoMatch

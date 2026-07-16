@@ -81,7 +81,7 @@ func TestFindTextObjectParameter(t *testing.T) {
 	cursor := strings.Index(goSrc, "x int")
 	runes := []rune(goSrc)
 
-	t.Run("around selects parameter list with parens", func(t *testing.T) {
+	t.Run("selects parenthesized parameters", func(t *testing.T) {
 		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'a', false)
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
@@ -151,7 +151,7 @@ func TestFindTextObjectOutOfBounds(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("lang with no textobject query returns false", func(t *testing.T) {
+	t.Run("no textobject query returns false", func(t *testing.T) {
 		_, ok := syntax.FindTextObject("body { color: red; }", "css", 0, 'f', false)
 		assert.False(t, ok)
 	})

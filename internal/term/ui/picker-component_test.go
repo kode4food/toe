@@ -123,7 +123,7 @@ func TestPickerScroll(t *testing.T) {
 		assert.InDelta(t, 0.648, ratios["fixed"], 0.001)
 	})
 
-	t.Run("drag stays monotonic across the whole width", func(t *testing.T) {
+	t.Run("drag stays monotonic", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 		_ = m.View()
 

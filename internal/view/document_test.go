@@ -470,7 +470,7 @@ func TestDocumentSaveSafety(t *testing.T) {
 		assert.Equal(t, "out.txt", entries[0].Name())
 	})
 
-	t.Run("restores original when directory is not writable", func(t *testing.T) {
+	t.Run("read-only directory restores original", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("original"), 0o644))
@@ -1028,7 +1028,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		assert.Equal(t, "abc", d.Text().String())
 	})
 
-	t.Run("maps own selection when transaction sets none", func(t *testing.T) {
+	t.Run("maps selection when transaction omits it", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		d, _ := e.FocusedDocument()

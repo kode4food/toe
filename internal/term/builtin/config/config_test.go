@@ -276,7 +276,7 @@ func TestConfigThemeExtra(t *testing.T) {
 		assert.Contains(t, res.Message, "error")
 	})
 
-	t.Run("get default-line-ending empty returns empty", func(t *testing.T) {
+	t.Run("empty default line ending", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "get_option", "default-line-ending")
 		assert.NotContains(t, res.Message, "error")
@@ -292,7 +292,7 @@ func TestConfigCommands(t *testing.T) {
 		assert.Contains(t, res.Message, "error")
 	})
 
-	t.Run("line ending no args on crlf doc shows crlf", func(t *testing.T) {
+	t.Run("no args shows CRLF", func(t *testing.T) {
 		e, km := test.Env(t, "abc\r\n")
 		test.RunCmdArgs(t, km, e, "set_line_ending", "crlf")
 		res := test.RunCmd(t, km, e, "set_line_ending")

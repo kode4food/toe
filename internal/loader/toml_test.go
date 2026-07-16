@@ -85,7 +85,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		assert.Len(t, arr, 1)
 	})
 
-	t.Run("[]map[string]any merged with []map[string]any", func(t *testing.T) {
+	t.Run("merges map slices", func(t *testing.T) {
 		left := []map[string]any{{"name": "x", "val": "left"}}
 		right := []map[string]any{{"name": "x", "val": "right"}}
 
@@ -115,7 +115,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		assert.Len(t, arr, 2)
 	})
 
-	t.Run("named right entry not in left is appended", func(t *testing.T) {
+	t.Run("appends right-only named entry", func(t *testing.T) {
 		left := []any{map[string]any{"name": "a"}}
 		right := []any{map[string]any{"name": "b"}}
 

@@ -149,9 +149,8 @@ func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
 	return changes, nil
 }
 
-// parseGitStatus decodes `git status --porcelain -z` output. Each entry is
-// "XY path" (X: index status, Y: work-tree status) terminated by NUL; rename
-// entries carry the original path as an extra NUL-terminated field
+// parseGitStatus decodes NUL-terminated porcelain entries; rename entries
+// carry the original path in an extra field
 func parseGitStatus(root, out string) ([]view.FileChange, error) {
 	var changes []view.FileChange
 	fields := strings.Split(out, "\x00")

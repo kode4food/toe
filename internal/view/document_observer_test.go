@@ -26,7 +26,7 @@ func TestDocumentObserver(t *testing.T) {
 		o := &recordingDocumentObserver{}
 		e.AddDocumentObserver(o)
 
-		v, err := e.SwitchFile(path)
+		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		action.InsertChar(e, '/')
 		assert.NoError(t, e.Save(false))

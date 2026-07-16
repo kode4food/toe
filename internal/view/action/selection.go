@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -88,7 +89,7 @@ func RemovePrimarySelection(e *view.Editor) {
 	}
 	sel := doc.SelectionFor(v.ID())
 	if len(sel.Ranges()) == 1 {
-		e.SetStatusMsg("no selections remaining")
+		e.SetStatusMsg(i18n.Text(i18n.StatusNoSelections))
 		return
 	}
 	newSel, err := sel.Remove(sel.PrimaryIndex())
@@ -206,9 +207,8 @@ func isBlankLine(s string) bool {
 	return true
 }
 
-// selectionIsLinewise returns true when every range in sel spans at least
-// two lines and starts/ends exactly on line boundaries (start of a line and
-// start of the next line, i.e., covers whole lines including newlines)
+// selectionIsLinewise reports whether every range covers whole lines, including
+// their newlines
 func selectionIsLinewise(text core.Rope, sel core.Selection) bool {
 	nLines := text.LenLines()
 	for _, r := range sel.Ranges() {

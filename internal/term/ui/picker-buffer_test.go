@@ -47,7 +47,7 @@ func TestBufferPicker(t *testing.T) {
 		assert.Contains(t, doc.Text().String(), "AAA")
 	})
 
-	t.Run("accept calls SwitchBuffer for orphaned doc", func(t *testing.T) {
+	t.Run("accepts orphaned document", func(t *testing.T) {
 		dir := t.TempDir()
 		a := filepath.Join(dir, "a.txt")
 		b := filepath.Join(dir, "b.txt")

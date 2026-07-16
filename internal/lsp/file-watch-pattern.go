@@ -9,6 +9,8 @@ import (
 	"go.lsp.dev/uri"
 )
 
+const recursiveWatchPrefix = "**" + string(filepath.Separator)
+
 func (w fileWatch) match(path string) bool {
 	candidate := path
 	if w.base != "" {
@@ -91,8 +93,7 @@ func matchWatchPattern(pattern, path string) bool {
 	if ok, _ := filepath.Match(pattern, filepath.Base(path)); ok {
 		return true
 	}
-	const recursive = "**" + string(filepath.Separator)
-	if after, ok := strings.CutPrefix(pattern, recursive); ok {
+	if after, ok := strings.CutPrefix(pattern, recursiveWatchPrefix); ok {
 		if ok, _ := filepath.Match(after, path); ok {
 			return true
 		}

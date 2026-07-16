@@ -224,9 +224,8 @@ func (s *Session) headMoved(doc *view.Document, path string) bool {
 	return ok && old != head
 }
 
-// loadDiffBase resolves the diff base and head name for doc, creating or
-// updating its differ. It runs off the main goroutine because providers may
-// shell out
+// loadDiffBase resolves the base and head off the main goroutine because
+// providers may shell out, then creates or updates the differ
 func (s *Session) loadDiffBase(
 	doc *view.Document, path string, text core.Rope,
 ) {

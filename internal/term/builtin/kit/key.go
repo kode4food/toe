@@ -90,7 +90,9 @@ func Keys(seqs ...[]command.KeyEvent) map[string][]command.KeyBinding {
 }
 
 // Label names a prefix key sequence for the pending-key hint popup
-func Label(label string, seq []command.KeyEvent, modes ...string) command.PrefixLabel {
+func Label(
+	label string, seq []command.KeyEvent, modes ...string,
+) command.PrefixLabel {
 	return command.PrefixLabel{Modes: modes, Seq: seq, Label: label}
 }
 

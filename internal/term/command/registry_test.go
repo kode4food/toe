@@ -207,7 +207,7 @@ func TestRegistry(t *testing.T) {
 		assert.Equal(t, "w", store.values["editor.test.x"])
 	})
 
-	t.Run("LookupOption rejects prefix key with no setter", func(t *testing.T) {
+	t.Run("rejects prefix without setter", func(t *testing.T) {
 		reg := registryWithReadOnlyPrefixOption(t)
 		_, ok := reg.LookupOption("ro.key")
 		assert.False(t, ok)

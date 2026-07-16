@@ -5,12 +5,8 @@ import (
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
-)
-
-const (
-	searchNoMoreMsg  = "No more matches"
-	searchWrappedMsg = "Wrapped around document"
 )
 
 // SearchSelection stores the joined selection text as the search pattern (no
@@ -220,14 +216,17 @@ func searchImpl(args searchArgs) error {
 
 func setSearchStatus(e *view.Editor, matched, wrapped bool) {
 	if !matched {
-		e.SetStatusMsg(searchNoMoreMsg)
+		e.SetStatusMsg(i18n.Text(i18n.StatusNoMoreMatches))
 		return
 	}
 	if wrapped {
-		e.SetStatusMsg(searchWrappedMsg)
+		e.SetStatusMsg(i18n.Text(i18n.StatusSearchWrapped))
 	}
 }
 
 func setRegisterStatus(e *view.Editor, reg rune, value string) {
-	e.SetStatusMsg("register '" + string(reg) + "' set to '" + value + "'")
+	e.SetStatusMsg(i18n.Text(i18n.StatusRegisterSet, i18n.Vars{
+		"register": string(reg),
+		"value":    value,
+	}))
 }

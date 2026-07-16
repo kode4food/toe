@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
 )
 
@@ -163,12 +164,12 @@ func pickerEmptyHint(ps *Picker) string {
 	if _, ok := ps.source.(DynamicPickerSource); ok {
 		switch {
 		case ps.query == "":
-			return "Type to search…"
+			return i18n.Text(i18n.StatusPickerTypeToSearch)
 		case ps.dynamicPending:
-			return "Searching…"
+			return i18n.Text(i18n.StatusPickerSearching)
 		}
 	}
-	return "No results"
+	return i18n.Text(i18n.StatusPickerNoResults)
 }
 
 func writePickerCenteredHint(

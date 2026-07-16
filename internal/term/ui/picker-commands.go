@@ -38,7 +38,8 @@ func (c *commandPaletteSource) Load(
 		items = append(items, PickerItem{
 			Display: name,
 			Columns: []string{
-				name, commandKeyString(c.km, mode, cmd.Name), cmd.DocString,
+				name, commandKeyString(c.km, mode, cmd.Name),
+				cmd.DocString,
 			},
 			SortKey: name,
 			Payload: cmd,

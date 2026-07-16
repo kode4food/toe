@@ -1,6 +1,10 @@
 package view
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/kode4food/toe/internal/i18n"
+)
 
 // ProcessExternalFileChange updates any open document whose backing file
 // changed outside the editor
@@ -29,28 +33,33 @@ func (e *Editor) processExternalChange(doc *Document) bool {
 	if !snap.exists {
 		doc.disk = snap
 		doc.external = ExternalStateDeleted
-		e.SetStatusMsg("'" + doc.RelativeName(e.cwd) + "' deleted on disk")
+		e.SetStatusMsg(i18n.Text(i18n.StatusFileDeleted, i18n.Vars{
+			"file": doc.RelativeName(e.cwd),
+		}))
 		return true
 	}
 	if doc.Modified() {
 		doc.disk = snap
 		doc.external = ExternalStateChanged
-		e.SetStatusMsg(
-			"'" + doc.RelativeName(e.cwd) +
-				"' changed on disk; use :reload or :write",
-		)
+		e.SetStatusMsg(i18n.Text(i18n.StatusFileChanged, i18n.Vars{
+			"file": doc.RelativeName(e.cwd),
+		}))
 		return true
 	}
 
 	before := doc.Text()
 	rev := doc.Revision()
 	if err := doc.reloadPreservingSelections(); err != nil {
-		e.SetStatusMsg("reload failed: " + err.Error())
+		e.SetStatusMsg(i18n.Text(i18n.StatusReloadFailed, i18n.Vars{
+			"error": err,
+		}))
 		return true
 	}
 	if doc.Revision() != rev {
 		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
 	}
-	e.SetStatusMsg("'" + doc.RelativeName(e.cwd) + "' reloaded")
+	e.SetStatusMsg(i18n.Text(i18n.StatusFileReloaded, i18n.Vars{
+		"file": doc.RelativeName(e.cwd),
+	}))
 	return true
 }

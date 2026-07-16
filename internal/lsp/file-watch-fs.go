@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
+
+	"github.com/kode4food/toe/internal/i18n"
 )
 
 func (s *Session) ensureFileWatcher() {
@@ -18,9 +20,11 @@ func (s *Session) ensureFileWatcher() {
 		if err != nil {
 			s.watch.Unlock()
 			if s.editor != nil {
-				s.editor.SetStatusMsg(
-					"file watching unavailable: " + err.Error(),
-				)
+				s.editor.SetStatusMsg(i18n.Text(
+					i18n.StatusFileWatchUnavailable, i18n.Vars{
+						"error": err,
+					},
+				))
 			}
 			return
 		}

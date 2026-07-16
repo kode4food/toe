@@ -1,10 +1,10 @@
 package action
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -195,12 +195,14 @@ func setYankStatus(e *view.Editor, reg rune, n int) {
 	if n == 0 {
 		return
 	}
-	word := "selection"
+	key := i18n.StatusYankedSelection
 	if n != 1 {
-		word = "selections"
+		key = i18n.StatusYankedSelections
 	}
-	e.SetStatusMsg("yanked " + strconv.Itoa(n) + " " + word +
-		" to register " + string(reg))
+	e.SetStatusMsg(i18n.Text(key, i18n.Vars{
+		"count":    n,
+		"register": string(reg),
+	}))
 }
 
 func pastePosition(

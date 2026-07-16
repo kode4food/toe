@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -146,7 +147,9 @@ func LspModule(model ui.Model) command.Module {
 func runLSPRestart(e *view.Editor, args *command.Args) command.Result {
 	doc, ctl, ok := lspCommandContext(e)
 	if !ok {
-		return command.Result{Message: "error: LSP not defined for document"}
+		return command.Result{
+			Message: i18n.Text(i18n.ErrorLSPUndefined),
+		}
 	}
 	names, err := ctl.RestartLanguageServers(doc, positionals(args))
 	if err != nil {
@@ -158,7 +161,9 @@ func runLSPRestart(e *view.Editor, args *command.Args) command.Result {
 func runLSPStop(e *view.Editor, args *command.Args) command.Result {
 	doc, ctl, ok := lspCommandContext(e)
 	if !ok {
-		return command.Result{Message: "error: LSP not defined for document"}
+		return command.Result{
+			Message: i18n.Text(i18n.ErrorLSPUndefined),
+		}
 	}
 	names, err := ctl.StopLanguageServers(doc, positionals(args))
 	if err != nil {
@@ -172,7 +177,7 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 		doc, ctl, ok := lspCommandContext(e)
 		if !ok {
 			return command.Result{
-				Message: "error: LSP not defined for document",
+				Message: i18n.Text(i18n.ErrorLSPUndefined),
 			}
 		}
 		if args == nil || args.Empty() {
@@ -203,7 +208,9 @@ func lspCommandContext(
 func lspCommandError(err error) command.Result {
 	switch {
 	case errors.Is(err, lsp.ErrNoLanguageServer):
-		return command.Result{Message: "error: LSP not defined for document"}
+		return command.Result{
+			Message: i18n.Text(i18n.ErrorLSPUndefined),
+		}
 	case errors.Is(err, lsp.ErrUnknownLanguageServer):
 		return command.Result{Message: "error: " + err.Error()}
 	case errors.Is(err, lsp.ErrWorkspaceCommand):

@@ -17,7 +17,9 @@ func TestRopeSliceString(t *testing.T) {
 	r := core.NewRope(src)
 	n := r.LenChars()
 
-	ranges := [][2]int{{0, 0}, {0, n}, {0, 7}, {3, 9}, {n - 10, n}, {n / 2, n/2 + 5}}
+	ranges := [][2]int{
+		{0, 0}, {0, n}, {0, 7}, {3, 9}, {n - 10, n}, {n / 2, n/2 + 5},
+	}
 	for _, rg := range ranges {
 		from, to := rg[0], rg[1]
 		want, err := r.Slice(from, to)

@@ -85,7 +85,7 @@ func TestGraphemeBoundaries(t *testing.T) {
 	})
 
 	t.Run("combined cluster is single unit", func(t *testing.T) {
-		// e + combining acute accent = é (2 bytes in UTF-8, 2 codepoints, 1 grapheme)
+		// e plus acute accent is two codepoints but one grapheme
 		doc := core.NewRope("éx")
 		assert.Equal(t, 2, core.NextGraphemeBoundary(doc, 0))
 		assert.Equal(t, 3, core.NextGraphemeBoundary(doc, 2))

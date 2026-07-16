@@ -1,6 +1,7 @@
 package editing
 
 import (
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -96,7 +97,8 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSelectWithinRegex,
 				DocString: "Select all regex matches inside selections",
 				Run: kit.Continuation(model.RegexAction(
-					"select:", action.SelectWithinRegex,
+					i18n.Text(i18n.PromptSelect),
+					action.SelectWithinRegex,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Char('s')),
@@ -105,7 +107,8 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSplitSelectionByRegex,
 				DocString: "Split selections on regex matches",
 				Run: kit.Continuation(model.RegexAction(
-					"split:", action.SplitSelectionByRegex,
+					i18n.Text(i18n.PromptSplit),
+					action.SplitSelectionByRegex,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Char('S')),
@@ -114,7 +117,8 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actKeepSelectionsMatching,
 				DocString: "Keep selections matching regex",
 				Run: kit.Continuation(model.RegexAction(
-					"keep:", action.KeepSelectionsMatching,
+					i18n.Text(i18n.PromptKeep),
+					action.KeepSelectionsMatching,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Char('K')),
@@ -123,7 +127,8 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actRemoveSelectionsMatching,
 				DocString: "Remove selections matching regex",
 				Run: kit.Continuation(model.RegexAction(
-					"remove:", action.RemoveSelectionsMatching,
+					i18n.Text(i18n.PromptRemove),
+					action.RemoveSelectionsMatching,
 				)),
 				Modes: []string{"NOR", "SEL"},
 				Keys:  kit.Keys(kit.Alt('K')),
@@ -184,7 +189,8 @@ func SelectionModule(model ui.Model) command.Module {
 			},
 			{
 				Name: actExtendLineBelow,
-				DocString: "Select current line, if already selected, extend" +
+				DocString: "Select current line, if already " +
+					"selected, extend" +
 					" to next line",
 				Run:   kit.Runner(action.ExtendLineBelow),
 				Modes: []string{"NOR", "SEL"},

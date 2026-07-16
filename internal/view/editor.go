@@ -288,11 +288,6 @@ func (e *Editor) LastModifiedDocIDs() [2]DocumentId {
 	return e.lastModifiedDocIDs
 }
 
-// PrevDocID returns the document ID of the last focused document
-func (e *Editor) PrevDocID() (DocumentId, bool) {
-	return e.PopPrevDocID()
-}
-
 // PopPrevDocID returns and removes the most recently accessed document for the
 // focused view
 func (e *Editor) PopPrevDocID() (DocumentId, bool) {
@@ -348,8 +343,8 @@ func (e *Editor) Document(did DocumentId) (*Document, bool) {
 	return d, ok
 }
 
-// DeleteDocument removes a document from the editor without closing its views.
-// Views that referenced the document will report no focused document.
+// DeleteDocument removes a document without closing its views; affected views
+// will report no focused document
 func (e *Editor) DeleteDocument(did DocumentId) {
 	delete(e.docs, did)
 	e.tree.Range(func(p Pane) bool {

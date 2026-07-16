@@ -196,7 +196,7 @@ func TestEditorSplits(t *testing.T) {
 		assert.Nil(t, v)
 	})
 
-	t.Run("VSplit inherits jump list from source view", func(t *testing.T) {
+	t.Run("VSplit inherits jump list", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(80, 24)
 		d, _ := e.FocusedDocument()
@@ -253,7 +253,7 @@ func TestEditorFocusNavigation(t *testing.T) {
 		assert.Equal(t, v.ID(), after.ID())
 	})
 
-	t.Run("FocusDirection descends nested containers", func(t *testing.T) {
+	t.Run("descends nested containers", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(120, 40)
 		e.VSplitNew()
@@ -329,7 +329,7 @@ func TestEditorLastModifiedDocIDs(t *testing.T) {
 func TestEditorPrevDocID(t *testing.T) {
 	t.Run("returns false when no prev", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		_, ok := e.PrevDocID()
+		_, ok := e.PopPrevDocID()
 		assert.False(t, ok)
 	})
 
@@ -343,10 +343,10 @@ func TestEditorPrevDocID(t *testing.T) {
 		ok := e.SwitchBuffer(first.ID())
 
 		assert.True(t, ok)
-		id, ok := e.PrevDocID()
+		id, ok := e.PopPrevDocID()
 		assert.True(t, ok)
 		assert.Equal(t, second.ID(), id)
-		_, ok = e.PrevDocID()
+		_, ok = e.PopPrevDocID()
 		assert.False(t, ok)
 	})
 
@@ -361,11 +361,11 @@ func TestEditorPrevDocID(t *testing.T) {
 		assert.True(t, e.SwitchBuffer(firstDoc.ID()))
 
 		e.FocusView(firstView.ID())
-		_, ok := e.PrevDocID()
+		_, ok := e.PopPrevDocID()
 		assert.False(t, ok)
 
 		e.FocusView(secondView.ID())
-		id, ok := e.PrevDocID()
+		id, ok := e.PopPrevDocID()
 		assert.True(t, ok)
 		assert.Equal(t, secondDoc.ID(), id)
 	})
@@ -379,7 +379,7 @@ func TestEditorPrevDocID(t *testing.T) {
 		assert.True(t, e.SwitchBuffer(first.ID()))
 		e.DeleteDocument(second.ID())
 
-		_, ok := e.PrevDocID()
+		_, ok := e.PopPrevDocID()
 		assert.False(t, ok)
 	})
 }
@@ -1040,7 +1040,7 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		assert.NotEqual(t, v1ID, id)
 	})
 
-	t.Run("down into vertical container chooses nearest x", func(t *testing.T) {
+	t.Run("vertical container chooses nearest x", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(120, 60)
 		top := e.Tree().Traverse()[0].ID()
@@ -1127,7 +1127,7 @@ func TestEditorSwitchFileReuseDoc(t *testing.T) {
 		d1, _ := e.FocusedDocument()
 		firstDocID := d1.ID()
 		e.VSplitNew()
-		_, err = e.SwitchFile(path)
+		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		d2, _ := e.FocusedDocument()
 		assert.Equal(t, firstDocID, d2.ID())
@@ -1566,13 +1566,13 @@ func TestSwitchFileEdgeCases(t *testing.T) {
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
 		e.CloseView(v.ID())
-		_, err = e.SwitchFile(path)
+		_, err = e.OpenFile(path)
 		assert.ErrorIs(t, err, view.ErrNoView)
 	})
 
 	t.Run("unreadable path returns error", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		_, err := e.SwitchFile("/dev/null/cannot-open.txt")
+		_, err := e.OpenFile("/dev/null/cannot-open.txt")
 		assert.Error(t, err)
 	})
 
@@ -1588,7 +1588,7 @@ func TestSwitchFileEdgeCases(t *testing.T) {
 		e.CloseView(v.ID())
 		path2 := filepath.Join(dir, "c.txt")
 		assert.NoError(t, os.WriteFile(path2, []byte("hi\n"), 0o644))
-		_, err = e.SwitchFile(path2)
+		_, err = e.OpenFile(path2)
 		assert.ErrorIs(t, err, view.ErrNoView)
 	})
 }

@@ -116,7 +116,7 @@ func TestSession(t *testing.T) {
 		}, waitHunks(t, s, doc))
 	})
 
-	t.Run("edits and lifecycle flow through the differ", func(t *testing.T) {
+	t.Run("lifecycle flows through differ", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
 

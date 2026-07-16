@@ -142,7 +142,7 @@ func TestSplitLinesOfSelection(t *testing.T) {
 		assert.Len(t, split.Ranges(), 1)
 	})
 
-	t.Run("last line without newline ends at document end", func(t *testing.T) {
+	t.Run("final unterminated line ends at document", func(t *testing.T) {
 		doc := core.NewRope("hello\nworld")
 		sel, _ := core.NewSelection([]core.Range{core.NewRange(6, 11)}, 0)
 

@@ -75,7 +75,7 @@ func TestDidChangeWatchedFile(t *testing.T) {
 }
 
 func TestWatchRegistrationEdgeCases(t *testing.T) {
-	t.Run("nil and mismatched registrations are ignored", func(t *testing.T) {
+	t.Run("ignores nil and mismatched registrations", func(t *testing.T) {
 		exe, err := os.Executable()
 		assert.NoError(t, err)
 		dir := t.TempDir()

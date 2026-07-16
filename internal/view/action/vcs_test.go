@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -98,7 +99,8 @@ func TestGotoChange(t *testing.T) {
 		testutil.SetCursor(t, e, 0)
 		action.GotoNextChange(e)
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
-		assert.Equal(t, action.StatusDiffUnavailable, e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.EnglishText(i18n.StatusDiffUnavailable), e.TakeStatusMsg())
 	})
 
 	t.Run("count jumps over hunks", func(t *testing.T) {

@@ -70,7 +70,7 @@ func TestEditorRegisters(t *testing.T) {
 		assert.Equal(t, "alpha", val)
 	})
 
-	t.Run("first register on empty register is not ok", func(t *testing.T) {
+	t.Run("empty first register is not ok", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
 
 		val, ok := e.FirstRegister('q')

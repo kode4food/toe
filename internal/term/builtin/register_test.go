@@ -153,6 +153,15 @@ func TestDefaults(t *testing.T) {
 		}, keys)
 	})
 
+	t.Run("terminal paste hint is first", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		_, hints := km.PendingHints("TRM", []command.KeyEvent{ctrl('w')})
+
+		assert.Equal(t, "p", hints[0].Key)
+		assert.Equal(t, "Paste clipboard into terminal", hints[0].Label)
+	})
+
 	t.Run("capital prefixes use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 

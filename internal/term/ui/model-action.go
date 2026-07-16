@@ -14,7 +14,7 @@ func (m Model) WithStartupCmd(cmd tea.Cmd) Model {
 	return m
 }
 
-// WithStartupMessage sets an initial status bar message visible on the first frame
+// WithStartupMessage sets a status bar message for the first frame
 func (m Model) WithStartupMessage(msg string) Model {
 	m.component.cmdMsg = msg
 	return m

@@ -151,9 +151,8 @@ func gutterLayoutWidth(layout []view.GutterType, lineNumberW int) int {
 	return w
 }
 
-// diffGutterLines maps document lines to their diff gutter markers. Pure
-// removals occupy no document lines, so they mark the line the removal sits on
-// (clamped when the removal is at end of file)
+// diffGutterLines maps lines to markers; pure removals mark the line where
+// they sit, clamped at end of file
 func diffGutterLines(
 	hunks []view.DiffHunk, nLines int,
 ) map[int]diffGutterKind {

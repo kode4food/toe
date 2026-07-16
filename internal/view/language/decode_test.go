@@ -457,7 +457,7 @@ formatter = { args = ["-s"] }
 		assert.Nil(t, l.Formatter)
 	})
 
-	t.Run("server feature map without name is skipped", func(t *testing.T) {
+	t.Run("skips unnamed server feature map", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
 name = "nonamelang"

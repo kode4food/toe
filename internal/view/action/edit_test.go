@@ -652,7 +652,7 @@ func TestAppendToLine(t *testing.T) {
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
 
-	t.Run("types after the last character of the line", func(t *testing.T) {
+	t.Run("types after line end", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetCursor(t, e, 0)
 

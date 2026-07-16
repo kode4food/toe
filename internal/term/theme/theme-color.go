@@ -8,6 +8,14 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+var underlineStyles = map[string]lipgloss.Underline{
+	"line":        lipgloss.UnderlineSingle,
+	"curl":        lipgloss.UnderlineCurly,
+	"dashed":      lipgloss.UnderlineDashed,
+	"dotted":      lipgloss.UnderlineDotted,
+	"double_line": lipgloss.UnderlineDouble,
+}
+
 func (p palette) parseColor(value any) (colorSpec, error) {
 	s, ok := value.(string)
 	if !ok {
@@ -86,21 +94,11 @@ func parseUnderlineStyle(value any) (lipgloss.Underline, error) {
 			fmt.Errorf("%w: invalid underline style: %v",
 				ErrInvalidTheme, value)
 	}
-	switch s {
-	case "line":
-		return lipgloss.UnderlineSingle, nil
-	case "curl":
-		return lipgloss.UnderlineCurly, nil
-	case "dashed":
-		return lipgloss.UnderlineDashed, nil
-	case "dotted":
-		return lipgloss.UnderlineDotted, nil
-	case "double_line":
-		return lipgloss.UnderlineDouble, nil
-	default:
-		return lipgloss.UnderlineNone,
-			fmt.Errorf("%w: invalid underline style: %s", ErrInvalidTheme, s)
+	if u, ok := underlineStyles[s]; ok {
+		return u, nil
 	}
+	return lipgloss.UnderlineNone,
+		fmt.Errorf("%w: invalid underline style: %s", ErrInvalidTheme, s)
 }
 
 func parseModifiers(style lipgloss.Style, value any) (lipgloss.Style, error) {

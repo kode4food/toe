@@ -7,12 +7,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type completionSection struct {
-	Editor struct {
-		Completion ui.CompletionOptions `toml:"completion"`
-	} `toml:"editor"`
-}
-
 const (
 	actCompletion         = "completion"
 	actCompletionAccept   = ui.CompletionAcceptAction
@@ -27,7 +21,6 @@ const (
 
 // CompletionModule returns the completion-popup navigation commands
 func CompletionModule(model ui.Model) command.Module {
-	cfg := new(completionSection)
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -92,13 +85,6 @@ func CompletionModule(model ui.Model) command.Module {
 				Run:       kit.Runner(noopAction),
 				Modes:     []string{ui.CompletionMode},
 				Keys:      kit.Keys(kit.Special("end")),
-			},
-		},
-		Section: &command.Section{
-			Config: cfg,
-			Reset:  func() { *cfg = completionSection{} },
-			Apply: func(*view.Editor) {
-				model.SetCompletionOptions(cfg.Editor.Completion)
 			},
 		},
 	}

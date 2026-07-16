@@ -47,16 +47,6 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 	}
 }
 
-// CompletionOptions returns the UI-owned completion popup behavior settings
-func (m Model) CompletionOptions() CompletionOptions {
-	return m.component.completionOpts
-}
-
-// SetCompletionOptions applies UI-owned completion popup behavior settings
-func (m Model) SetCompletionOptions(opts CompletionOptions) {
-	m.component.completionOpts = opts.WithDefaults()
-}
-
 // PickerLayoutOptions returns the UI-owned picker layout settings
 func (m Model) PickerLayoutOptions() PickerLayoutOptions {
 	return m.context.pickerLayout.clone()

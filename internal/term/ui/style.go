@@ -9,12 +9,52 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-var ansiBasicColors = [16]tui.Color{
-	tui.ColorBlack, tui.ColorRed, tui.ColorGreen, tui.ColorYellow,
-	tui.ColorBlue, tui.ColorMagenta, tui.ColorCyan, tui.ColorLightGray,
-	tui.ColorGray, tui.ColorLightRed, tui.ColorLightGreen, tui.ColorLightYellow,
-	tui.ColorLightBlue, tui.ColorLightMagenta, tui.ColorLightCyan, tui.ColorWhite,
-}
+var (
+	ansiBasicColors = [16]tui.Color{
+		tui.ColorBlack, tui.ColorRed, tui.ColorGreen, tui.ColorYellow,
+		tui.ColorBlue, tui.ColorMagenta, tui.ColorCyan, tui.ColorLightGray,
+		tui.ColorGray, tui.ColorLightRed, tui.ColorLightGreen,
+		tui.ColorLightYellow, tui.ColorLightBlue, tui.ColorLightMagenta,
+		tui.ColorLightCyan, tui.ColorWhite,
+	}
+
+	completionKindStyleScopes = map[string]string{
+		"function":    "function",
+		"method":      "function",
+		"constructor": "function",
+		"field":       "variable.other.member",
+		"property":    "variable.other.member",
+		"reference":   "variable.other.member",
+		"variable":    "variable.parameter",
+		"class":       "type",
+		"interface":   "type",
+		"struct":      "type",
+		"type_param":  "type",
+		"unit":        "type",
+		"module":      "namespace",
+		"value":       "constant",
+		"enum":        "constant",
+		"enum_member": "constant",
+		"constant":    "constant",
+		"keyword":     "keyword",
+		"operator":    "operator",
+		"snippet":     "string",
+		"text":        "string",
+		"file":        "string",
+		"folder":      "string",
+		"color":       "string",
+		"event":       "string",
+	}
+
+	underlineTUIStyles = [...]tui.UnderlineStyle{
+		lipgloss.UnderlineNone:   tui.UnderlineReset,
+		lipgloss.UnderlineSingle: tui.UnderlineLine,
+		lipgloss.UnderlineDouble: tui.UnderlineDoubleLine,
+		lipgloss.UnderlineCurly:  tui.UnderlineCurl,
+		lipgloss.UnderlineDotted: tui.UnderlineDotted,
+		lipgloss.UnderlineDashed: tui.UnderlineDashed,
+	}
+)
 
 func searchMatchStyle() lipgloss.Style {
 	return lipgloss.NewStyle().
@@ -103,26 +143,10 @@ func applyAccentStyle(base, accent lipgloss.Style) lipgloss.Style {
 }
 
 func completionKindStyleScope(kind string) string {
-	switch kind {
-	case "function", "method", "constructor":
-		return "function"
-	case "field", "property", "reference":
-		return "variable.other.member"
-	case "variable":
-		return "variable.parameter"
-	case "class", "interface", "struct", "type_param", "unit":
-		return "type"
-	case "module":
-		return "namespace"
-	case "value", "enum", "enum_member", "constant":
-		return "constant"
-	case "keyword", "operator":
-		return kind
-	case "snippet", "text", "file", "folder", "color", "event":
-		return "string"
-	default:
-		return "ui.text.inactive"
+	if scope, ok := completionKindStyleScopes[kind]; ok {
+		return scope
 	}
+	return "ui.text.inactive"
 }
 
 func pickerFrameStyle(cx *Context) lipgloss.Style {
@@ -188,18 +212,8 @@ func basicTUIColor(idx uint8) tui.Color {
 }
 
 func lipglossUnderlineToTUI(u lipgloss.Underline) tui.UnderlineStyle {
-	switch u {
-	case lipgloss.UnderlineSingle:
-		return tui.UnderlineLine
-	case lipgloss.UnderlineDouble:
-		return tui.UnderlineDoubleLine
-	case lipgloss.UnderlineCurly:
-		return tui.UnderlineCurl
-	case lipgloss.UnderlineDotted:
-		return tui.UnderlineDotted
-	case lipgloss.UnderlineDashed:
-		return tui.UnderlineDashed
-	default:
+	if int(u) >= len(underlineTUIStyles) {
 		return tui.UnderlineReset
 	}
+	return underlineTUIStyles[u]
 }

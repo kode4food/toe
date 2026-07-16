@@ -157,20 +157,10 @@ func uvStyleToTUI(st uv.Style) tui.Style {
 }
 
 func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
-	switch u {
-	case ansi.UnderlineSingle:
-		return tui.UnderlineLine
-	case ansi.UnderlineDouble:
-		return tui.UnderlineDoubleLine
-	case ansi.UnderlineCurly:
-		return tui.UnderlineCurl
-	case ansi.UnderlineDotted:
-		return tui.UnderlineDotted
-	case ansi.UnderlineDashed:
-		return tui.UnderlineDashed
-	default:
+	if int(u) >= len(underlineTUIStyles) {
 		return tui.UnderlineReset
 	}
+	return underlineTUIStyles[u]
 }
 
 func drawViewport(scr *tuiScreen, tp *TerminalPane, n, w, h int) {

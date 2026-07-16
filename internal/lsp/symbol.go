@@ -9,6 +9,35 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+var symbolKinds = [...]string{
+	protocol.SymbolKindFile:          "file",
+	protocol.SymbolKindModule:        "module",
+	protocol.SymbolKindNamespace:     "namespace",
+	protocol.SymbolKindPackage:       "package",
+	protocol.SymbolKindClass:         "class",
+	protocol.SymbolKindMethod:        "method",
+	protocol.SymbolKindProperty:      "property",
+	protocol.SymbolKindField:         "field",
+	protocol.SymbolKindConstructor:   "construct",
+	protocol.SymbolKindEnum:          "enum",
+	protocol.SymbolKindInterface:     "interface",
+	protocol.SymbolKindFunction:      "function",
+	protocol.SymbolKindVariable:      "variable",
+	protocol.SymbolKindConstant:      "constant",
+	protocol.SymbolKindString:        "string",
+	protocol.SymbolKindNumber:        "number",
+	protocol.SymbolKindBoolean:       "boolean",
+	protocol.SymbolKindArray:         "array",
+	protocol.SymbolKindObject:        "object",
+	protocol.SymbolKindKey:           "key",
+	protocol.SymbolKindNull:          "null",
+	protocol.SymbolKindEnumMember:    "enummem",
+	protocol.SymbolKindStruct:        "struct",
+	protocol.SymbolKindEvent:         "event",
+	protocol.SymbolKindOperator:      "operator",
+	protocol.SymbolKindTypeParameter: "typeparam",
+}
+
 // DocumentSymbols requests the document symbol tree from the server
 func (c *Client) DocumentSymbols(
 	ctx context.Context, doc DocumentSnapshot,
@@ -198,60 +227,8 @@ func workspaceSymbolLocation(
 }
 
 func symbolKind(kind protocol.SymbolKind) string {
-	switch kind {
-	case protocol.SymbolKindFile:
-		return "file"
-	case protocol.SymbolKindModule:
-		return "module"
-	case protocol.SymbolKindNamespace:
-		return "namespace"
-	case protocol.SymbolKindPackage:
-		return "package"
-	case protocol.SymbolKindClass:
-		return "class"
-	case protocol.SymbolKindMethod:
-		return "method"
-	case protocol.SymbolKindProperty:
-		return "property"
-	case protocol.SymbolKindField:
-		return "field"
-	case protocol.SymbolKindConstructor:
-		return "construct"
-	case protocol.SymbolKindEnum:
-		return "enum"
-	case protocol.SymbolKindInterface:
-		return "interface"
-	case protocol.SymbolKindFunction:
-		return "function"
-	case protocol.SymbolKindVariable:
-		return "variable"
-	case protocol.SymbolKindConstant:
-		return "constant"
-	case protocol.SymbolKindString:
-		return "string"
-	case protocol.SymbolKindNumber:
-		return "number"
-	case protocol.SymbolKindBoolean:
-		return "boolean"
-	case protocol.SymbolKindArray:
-		return "array"
-	case protocol.SymbolKindObject:
-		return "object"
-	case protocol.SymbolKindKey:
-		return "key"
-	case protocol.SymbolKindNull:
-		return "null"
-	case protocol.SymbolKindEnumMember:
-		return "enummem"
-	case protocol.SymbolKindStruct:
-		return "struct"
-	case protocol.SymbolKindEvent:
-		return "event"
-	case protocol.SymbolKindOperator:
-		return "operator"
-	case protocol.SymbolKindTypeParameter:
-		return "typeparam"
-	default:
+	if int(kind) >= len(symbolKinds) {
 		return ""
 	}
+	return symbolKinds[kind]
 }

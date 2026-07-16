@@ -21,6 +21,26 @@ const (
 	fileConflictIcon  = "\uf421" //  - nf-oct-alert
 )
 
+var (
+	changedFileIcons = [...]string{
+		view.FileChangeUntracked: fileUntrackedIcon,
+		view.FileChangeAdded:     fileAddedIcon,
+		view.FileChangeModified:  fileModifiedIcon,
+		view.FileChangeConflict:  fileConflictIcon,
+		view.FileChangeDeleted:   fileRemovedIcon,
+		view.FileChangeRenamed:   fileRenamedIcon,
+	}
+
+	changedFileScopes = [...]string{
+		view.FileChangeUntracked: "diff.plus",
+		view.FileChangeAdded:     "diff.plus",
+		view.FileChangeModified:  "diff.delta",
+		view.FileChangeConflict:  "error",
+		view.FileChangeDeleted:   "diff.minus",
+		view.FileChangeRenamed:   "diff.delta.moved",
+	}
+)
+
 // NewChangedFilePicker lists workspace files the version-control system
 // reports as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
@@ -139,37 +159,17 @@ func firstChangeLines(hunks []view.DiffHunk) *PickerLineRange {
 }
 
 func changedFileIcon(kind view.FileChangeKind) string {
-	switch kind {
-	case view.FileChangeUntracked:
-		return fileUntrackedIcon
-	case view.FileChangeAdded:
-		return fileAddedIcon
-	case view.FileChangeConflict:
-		return fileConflictIcon
-	case view.FileChangeDeleted:
-		return fileRemovedIcon
-	case view.FileChangeRenamed:
-		return fileRenamedIcon
-	default:
+	if kind < 0 || int(kind) >= len(changedFileIcons) {
 		return fileModifiedIcon
 	}
+	return changedFileIcons[kind]
 }
 
 func changedFileScope(kind view.FileChangeKind) string {
-	switch kind {
-	case view.FileChangeUntracked, view.FileChangeAdded:
-		return "diff.plus"
-	case view.FileChangeModified:
-		return "diff.delta"
-	case view.FileChangeConflict:
-		return "error"
-	case view.FileChangeDeleted:
-		return "diff.minus"
-	case view.FileChangeRenamed:
-		return "diff.delta.moved"
-	default:
+	if kind < 0 || int(kind) >= len(changedFileScopes) {
 		return ""
 	}
+	return changedFileScopes[kind]
 }
 
 func lineRangeSelection(

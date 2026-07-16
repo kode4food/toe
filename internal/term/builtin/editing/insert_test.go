@@ -48,31 +48,3 @@ func TestCompletionCommands(t *testing.T) {
 		})
 	}
 }
-
-func TestCompletionConfig(t *testing.T) {
-	t.Run("icon mode decodes", func(t *testing.T) {
-		e, _, reg := test.EnvWithRegistry(t, "")
-		err := reg.ApplyTOML(e, map[string]any{
-			"editor": map[string]any{
-				"completion": map[string]any{
-					"icons": string(ui.CompletionIconsNone),
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid icon mode errors", func(t *testing.T) {
-		e, _, reg := test.EnvWithRegistry(t, "")
-		err := reg.ApplyTOML(e, map[string]any{
-			"editor": map[string]any{
-				"completion": map[string]any{
-					"icons": "automatic",
-				},
-			},
-		})
-
-		assert.Error(t, err)
-	})
-}

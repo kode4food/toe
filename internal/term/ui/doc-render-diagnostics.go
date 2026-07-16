@@ -12,6 +12,13 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+var diagnosticPopupScopes = [...]string{
+	view.DiagnosticSeverityHint:    "diagnostic.hint",
+	view.DiagnosticSeverityInfo:    "diagnostic.info",
+	view.DiagnosticSeverityWarning: "diagnostic.warning",
+	view.DiagnosticSeverityError:   "diagnostic.error",
+}
+
 func (r *renderPass) renderDiagnosticPopup(buf *tui.Buffer) {
 	doc, ok := r.cx.Editor.FocusedDocument()
 	if !ok {
@@ -91,19 +98,10 @@ func diagnosticPopupStyle(
 	cx *Context, severity view.DiagnosticSeverity,
 ) tui.Style {
 	bg := lipglossToTUIStyle(cx.Theme().Get("ui.popup")).BgColor()
-	var scope string
-	switch severity {
-	case view.DiagnosticSeverityError:
-		scope = "diagnostic.error"
-	case view.DiagnosticSeverityWarning:
-		scope = "diagnostic.warning"
-	case view.DiagnosticSeverityInfo:
-		scope = "diagnostic.info"
-	case view.DiagnosticSeverityHint:
-		scope = "diagnostic.hint"
-	default:
+	if severity <= 0 || int(severity) >= len(diagnosticPopupScopes) {
 		return lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	}
+	scope := diagnosticPopupScopes[severity]
 	st := lipglossToTUIStyle(cx.Theme().Get(scope))
 	fg := st.FgColor()
 	if fg.IsReset() {

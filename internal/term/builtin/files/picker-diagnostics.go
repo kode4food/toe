@@ -22,6 +22,22 @@ type (
 	}
 )
 
+var (
+	diagnosticSeverityTexts = [...]string{
+		view.DiagnosticSeverityHint:    "HINT",
+		view.DiagnosticSeverityInfo:    "INFO",
+		view.DiagnosticSeverityWarning: "WARN",
+		view.DiagnosticSeverityError:   "ERROR",
+	}
+
+	diagnosticSeverityScopes = [...]string{
+		view.DiagnosticSeverityHint:    "hint",
+		view.DiagnosticSeverityInfo:    "info",
+		view.DiagnosticSeverityWarning: "warning",
+		view.DiagnosticSeverityError:   "error",
+	}
+)
+
 // NewDiagnosticPicker lists diagnostics for the focused document
 func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
 	return newDiagnosticPicker(e, false)
@@ -178,27 +194,15 @@ func diagnosticSelection(diag view.Diagnostic) (core.Selection, error) {
 }
 
 func diagnosticSeverityText(sev view.DiagnosticSeverity) string {
-	switch sev {
-	case view.DiagnosticSeverityError:
-		return "ERROR"
-	case view.DiagnosticSeverityWarning:
-		return "WARN"
-	case view.DiagnosticSeverityInfo:
-		return "INFO"
-	default:
+	if sev <= 0 || int(sev) >= len(diagnosticSeverityTexts) {
 		return "HINT"
 	}
+	return diagnosticSeverityTexts[sev]
 }
 
 func diagnosticSeverityScope(sev view.DiagnosticSeverity) string {
-	switch sev {
-	case view.DiagnosticSeverityError:
-		return "error"
-	case view.DiagnosticSeverityWarning:
-		return "warning"
-	case view.DiagnosticSeverityInfo:
-		return "info"
-	default:
+	if sev <= 0 || int(sev) >= len(diagnosticSeverityScopes) {
 		return "hint"
 	}
+	return diagnosticSeverityScopes[sev]
 }

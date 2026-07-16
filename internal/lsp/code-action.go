@@ -332,14 +332,8 @@ func protocolDiagnostic(
 func protocolDiagnosticSeverity(
 	severity view.DiagnosticSeverity,
 ) protocol.DiagnosticSeverity {
-	switch severity {
-	case view.DiagnosticSeverityError:
-		return protocol.DiagnosticSeverityError
-	case view.DiagnosticSeverityWarning:
-		return protocol.DiagnosticSeverityWarning
-	case view.DiagnosticSeverityInfo:
-		return protocol.DiagnosticSeverityInformation
-	default:
+	if severity <= 0 || int(severity) >= len(protocolDiagnosticSeverities) {
 		return protocol.DiagnosticSeverityHint
 	}
+	return protocolDiagnosticSeverities[severity]
 }

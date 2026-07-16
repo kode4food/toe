@@ -1,15 +1,38 @@
 package ui
 
-func completionKindMarker(kind string, mode CompletionIconMode) string {
-	if kind == "" || mode == CompletionIconsNone {
+var completionKindCodicons = map[string]string{
+	"text":        "\uea93", // '' - symbol-text: text/string icon
+	"function":    "\uea8c", // '' - symbol-method: function/method icon
+	"method":      "\uea8c", // '' - symbol-method: function/method icon
+	"constructor": "\uea8c", // '' - symbol-method: function/method icon
+	"field":       "\ueb5f", // '' - symbol-field: field icon
+	"variable":    "\uea88", // '' - symbol-variable: variable icon
+	"class":       "\ueb5b", // '' - symbol-class: class icon
+	"interface":   "\ueb61", // '' - symbol-interface: interface icon
+	"module":      "\uea8b", // '' - symbol-module: module/package icon
+	"property":    "\ueb65", // '' - symbol-property: property icon
+	"unit":        "\uea96", // '' - symbol-ruler: unit/ruler icon
+	"value":       "\uea95", // '' - symbol-enum: enum/value icon
+	"enum":        "\uea95", // '' - symbol-enum: enum/value icon
+	"keyword":     "\ueb62", // '' - symbol-keyword: keyword icon
+	"snippet":     "\ueb66", // '' - symbol-snippet: snippet icon
+	"color":       "\ueb5c", // '' - symbol-color: color swatch icon
+	"file":        "\uea7b", // '' - symbol-file: file icon
+	"reference":   "\uea94", // '' - symbol-reference: reference icon
+	"folder":      "\uea83", // '' - symbol-folder: folder icon
+	"constant":    "\ueb5d", // '' - symbol-constant: constant icon
+	"struct":      "\uea91", // '' - symbol-structure: struct icon
+	"event":       "\uea86", // '' - symbol-event: event icon
+	"operator":    "\ueb64", // '' - symbol-operator: operator icon
+	"type_param":  "\uea92", // '' - symbol-parameter: type-parameter icon
+	"enum_member": "\ueb5e", // '' - symbol-enum-member: enum-member icon
+}
+
+func completionKindMarker(kind string) string {
+	if kind == "" {
 		return ""
 	}
-	var icon string
-	if mode == CompletionIconsASCII {
-		icon = completionKindASCIIIcon(kind)
-	} else {
-		icon = completionKindCodicon(kind)
-	}
+	icon := completionKindCodicon(kind)
 	if icon == "" {
 		return "?"
 	}
@@ -17,91 +40,5 @@ func completionKindMarker(kind string, mode CompletionIconMode) string {
 }
 
 func completionKindCodicon(kind string) string {
-	switch kind {
-	case "text":
-		return "\uea93" // '' - symbol-text: text/string icon
-	case "function", "method", "constructor":
-		return "\uea8c" // '' - symbol-method: function/method icon
-	case "field":
-		return "\ueb5f" // '' - symbol-field: field icon
-	case "variable":
-		return "\uea88" // '' - symbol-variable: variable icon
-	case "class":
-		return "\ueb5b" // '' - symbol-class: class icon
-	case "interface":
-		return "\ueb61" // '' - symbol-interface: interface icon
-	case "module":
-		return "\uea8b" // '' - symbol-module: module/package icon
-	case "property":
-		return "\ueb65" // '' - symbol-property: property icon
-	case "unit":
-		return "\uea96" // '' - symbol-ruler: unit/ruler icon
-	case "value", "enum":
-		return "\uea95" // '' - symbol-enum: enum/value icon
-	case "keyword":
-		return "\ueb62" // '' - symbol-keyword: keyword icon
-	case "snippet":
-		return "\ueb66" // '' - symbol-snippet: snippet icon
-	case "color":
-		return "\ueb5c" // '' - symbol-color: color swatch icon
-	case "file":
-		return "\uea7b" // '' - symbol-file: file icon
-	case "reference":
-		return "\uea94" // '' - symbol-reference: reference icon
-	case "folder":
-		return "\uea83" // '' - symbol-folder: folder icon
-	case "constant":
-		return "\ueb5d" // '' - symbol-constant: constant icon
-	case "struct":
-		return "\uea91" // '' - symbol-structure: struct icon
-	case "event":
-		return "\uea86" // '' - symbol-event: event icon
-	case "operator":
-		return "\ueb64" // '' - symbol-operator: operator icon
-	case "type_param":
-		return "\uea92" // '' - symbol-parameter: type-parameter icon
-	case "enum_member":
-		return "\ueb5e" // '' - symbol-enum-member: enum-member icon
-	default:
-		return ""
-	}
-}
-
-func completionKindASCIIIcon(kind string) string {
-	switch kind {
-	case "function", "method":
-		return "fn"
-	case "constructor":
-		return "+"
-	case "field", "property":
-		return "."
-	case "variable":
-		return "v"
-	case "class":
-		return "C"
-	case "interface":
-		return "I"
-	case "module":
-		return "M"
-	case "keyword":
-		return "K"
-	case "snippet":
-		return "S"
-	case "file":
-		return "F"
-	case "folder":
-		return "D"
-	case "constant":
-		return "k"
-	case "struct":
-		return "S"
-	case "enum":
-		return "E"
-	case "enum_member":
-		return "e"
-	case "type_param":
-		return "T"
-	default:
-		return ""
-	}
+	return completionKindCodicons[kind]
 }

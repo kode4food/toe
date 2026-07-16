@@ -17,7 +17,6 @@ type (
 		all        []view.CompletionItem
 		items      []view.CompletionItem
 		anchor     completionAnchor
-		opts       CompletionOptions
 		cursor     int
 		scroll     int
 		bounds     Bounds

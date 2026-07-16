@@ -34,6 +34,13 @@ const (
 	horizSplit     = "\u2500" // '─' - box drawings light horizontal
 )
 
+var splitSepIntersectionChars = [...]string{
+	horizSplit, horizSplit, horizSplit, vertSplit,
+	horizSplit, horizSplit, horizSplit, splitRightT,
+	horizSplit, horizSplit, horizSplit, splitLeftT,
+	horizSplit, splitUpT, splitDownT, splitIntersect,
+}
+
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 	th := r.activeTheme()
 	bgTUI := lipglossToTUIStyle(th.Get("ui.bufferline.background"))
@@ -374,20 +381,18 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 }
 
 func splitSepIntersectionChar(above, below, left, right bool) string {
-	switch {
-	case above && below && left && right:
-		return splitIntersect
-	case above && below && right:
-		return splitLeftT
-	case above && below && left:
-		return splitRightT
-	case above && below:
-		return vertSplit
-	case above && left && right:
-		return splitUpT
-	case below && left && right:
-		return splitDownT
-	default:
-		return horizSplit
+	idx := 0
+	if above {
+		idx |= 1
 	}
+	if below {
+		idx |= 2
+	}
+	if left {
+		idx |= 4
+	}
+	if right {
+		idx |= 8
+	}
+	return splitSepIntersectionChars[idx]
 }

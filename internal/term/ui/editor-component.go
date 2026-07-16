@@ -37,7 +37,6 @@ type (
 		docHighlightGen int
 		docHighlightPos docHighlightPosition
 		completionGen   int
-		completionOpts  CompletionOptions
 		fileWatcher     *editorFileWatcher
 		autoScrollV     mouseAutoScrollAxis
 		autoScrollH     mouseAutoScrollAxis
@@ -88,12 +87,11 @@ var _ BufferRenderer = (*EditorComponent)(nil)
 
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
-		saveSlot:       &saveGenSlot{},
-		cache:          newRenderCache(),
-		macroSlot:      &macroSlot{macros: map[rune][]command.KeyEvent{}},
-		focused:        true,
-		completionOpts: DefaultCompletionOptions(),
-		fileWatcher:    newEditorFileWatcher(),
+		saveSlot:    &saveGenSlot{},
+		cache:       newRenderCache(),
+		macroSlot:   &macroSlot{macros: map[rune][]command.KeyEvent{}},
+		focused:     true,
+		fileWatcher: newEditorFileWatcher(),
 		autoScrollV: mouseAutoScrollAxis{
 			scroll: func(e *view.Editor, v *view.View, toLo bool) {
 				act.ScrollViewLines(e, v, 1, toLo)
@@ -197,7 +195,6 @@ func (e *EditorComponent) HandleEvent(
 				all:        msg.items,
 				items:      msg.items,
 				anchor:     msg.anchor,
-				opts:       e.completionOpts.WithDefaults(),
 				incomplete: msg.incomplete,
 			}
 			c.resetCursor()

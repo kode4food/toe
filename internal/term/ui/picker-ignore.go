@@ -29,6 +29,25 @@ type (
 	}
 )
 
+var excludedPickerTypes = map[string]struct{}{
+	".zip":  {},
+	".gz":   {},
+	".bz2":  {},
+	".zst":  {},
+	".lzo":  {},
+	".sz":   {},
+	".tgz":  {},
+	".tbz2": {},
+	".lz":   {},
+	".lz4":  {},
+	".lzma": {},
+	".z":    {},
+	".xz":   {},
+	".7z":   {},
+	".rar":  {},
+	".cab":  {},
+}
+
 // SkipPickerPathArgs holds the entry a picker file-walk is considering and
 // the ignore state to test it against
 type SkipPickerPathArgs struct {
@@ -210,11 +229,6 @@ func readGitExcludesFile(path string) string {
 
 func excludedPickerType(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
-	switch ext {
-	case ".zip", ".gz", ".bz2", ".zst", ".lzo", ".sz", ".tgz", ".tbz2",
-		".lz", ".lz4", ".lzma", ".z", ".xz", ".7z", ".rar", ".cab":
-		return true
-	default:
-		return false
-	}
+	_, ok := excludedPickerTypes[ext]
+	return ok
 }

@@ -10,6 +10,22 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+var (
+	diagnosticSeverities = [...]view.DiagnosticSeverity{
+		protocol.DiagnosticSeverityError:       view.DiagnosticSeverityError,
+		protocol.DiagnosticSeverityWarning:     view.DiagnosticSeverityWarning,
+		protocol.DiagnosticSeverityInformation: view.DiagnosticSeverityInfo,
+		protocol.DiagnosticSeverityHint:        view.DiagnosticSeverityHint,
+	}
+
+	protocolDiagnosticSeverities = [...]protocol.DiagnosticSeverity{
+		view.DiagnosticSeverityHint:    protocol.DiagnosticSeverityHint,
+		view.DiagnosticSeverityInfo:    protocol.DiagnosticSeverityInformation,
+		view.DiagnosticSeverityWarning: protocol.DiagnosticSeverityWarning,
+		view.DiagnosticSeverityError:   protocol.DiagnosticSeverityError,
+	}
+)
+
 // PullDiagnostics requests fresh diagnostics from document servers
 func (s *Session) PullDiagnostics(doc *view.Document) error {
 	snap, ok := SnapshotDocument(doc)
@@ -149,14 +165,8 @@ func (s *Session) convertDiagnostics(
 func diagnosticSeverity(
 	severity protocol.DiagnosticSeverity,
 ) view.DiagnosticSeverity {
-	switch severity {
-	case protocol.DiagnosticSeverityError:
-		return view.DiagnosticSeverityError
-	case protocol.DiagnosticSeverityWarning:
-		return view.DiagnosticSeverityWarning
-	case protocol.DiagnosticSeverityInformation:
-		return view.DiagnosticSeverityInfo
-	default:
+	if severity == 0 || int(severity) >= len(diagnosticSeverities) {
 		return view.DiagnosticSeverityHint
 	}
+	return diagnosticSeverities[severity]
 }

@@ -33,27 +33,6 @@ func TestModelLifecycle(t *testing.T) {
 		assert.True(t, v.AltScreen)
 	})
 
-	t.Run("completion options round trip", func(t *testing.T) {
-		e := view.NewEditor(t.TempDir())
-		m := ui.New(e, command.NewKeymaps())
-
-		assert.Equal(t,
-			ui.CompletionIconsCodicon, m.CompletionOptions().Icons,
-		)
-
-		m.SetCompletionOptions(ui.CompletionOptions{
-			Icons: ui.CompletionIconsASCII,
-		})
-
-		assert.Equal(t, ui.CompletionIconsASCII, m.CompletionOptions().Icons)
-
-		m.SetCompletionOptions(ui.CompletionOptions{})
-
-		assert.Equal(t,
-			ui.CompletionIconsCodicon, m.CompletionOptions().Icons,
-		)
-	})
-
 	t.Run("with startup cmd renders", func(t *testing.T) {
 		m := newModel().WithStartupCmd(nil)
 		assert.NotEmpty(t, m.View().Content)

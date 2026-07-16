@@ -91,6 +91,13 @@ const (
 	jumpListCap = 64
 )
 
+var modeNames = [...]string{
+	ModeNormal:   "NOR",
+	ModeInsert:   "INS",
+	ModeSelect:   "SEL",
+	ModeTerminal: "TRM",
+}
+
 // ID returns the view identifier
 func (v *View) ID() Id {
 	return v.id
@@ -296,17 +303,10 @@ func (v *View) cachedVisualColumn(doc core.Rope, from, to, tabW int) int {
 }
 
 func (m Mode) String() string {
-	switch m {
-	case ModeNormal:
-		return "NOR"
-	case ModeInsert:
-		return "INS"
-	case ModeSelect:
-		return "SEL"
-	case ModeTerminal:
-		return "TRM"
+	if m < 0 || int(m) >= len(modeNames) {
+		return modeNames[ModeNormal]
 	}
-	return "NOR"
+	return modeNames[m]
 }
 
 // Entries returns all jump history entries from oldest to newest

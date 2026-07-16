@@ -21,6 +21,8 @@ import (
 func newTestApp(t *testing.T) *app.App {
 	t.Helper()
 	dir := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
 	e := view.NewEditor(dir)
 	km := command.NewKeymaps()
 	reg, err := builtin.Register(ui.New(e, km), km)

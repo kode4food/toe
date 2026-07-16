@@ -23,7 +23,9 @@ import (
 func Env(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	t.Helper()
 	km := command.NewKeymaps()
-	e := view.NewEditor(t.TempDir())
+	dir := t.TempDir()
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
+	e := view.NewEditor(dir)
 	e.ResizeTree(80, 24)
 	_, _ = builtin.Register(ui.New(e, km), km)
 	if text != "" {
@@ -39,7 +41,9 @@ func EnvWithRegistry(t *testing.T, text string) (
 ) {
 	t.Helper()
 	km := command.NewKeymaps()
-	e := view.NewEditor(t.TempDir())
+	dir := t.TempDir()
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
+	e := view.NewEditor(dir)
 	e.ResizeTree(80, 24)
 	reg, _ := builtin.Register(ui.New(e, km), km)
 	if text != "" {

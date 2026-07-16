@@ -159,6 +159,10 @@ func TestWorkspace(t *testing.T) {
 
 	t.Run("ignores unsupported markers", func(t *testing.T) {
 		root := t.TempDir()
+		_, parentFallback := loader.FindWorkspace(filepath.Dir(root))
+		if !parentFallback {
+			t.Skip("environment has workspace markers above temp dir")
+		}
 		work := filepath.Join(root, "work")
 		cwd := filepath.Join(work, "src")
 		err := os.MkdirAll(filepath.Join(work, ".svn"), 0o755)

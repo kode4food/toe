@@ -36,7 +36,7 @@ func (p *PromptComponent) changeCompletion(dir int) {
 	c := p.comps[idx]
 	start := min(max(c.Start, 0), len(p.buf))
 	p.buf = p.buf[:start] + c.Text
-	p.compSel = &idx
+	p.caret = len([]rune(p.buf))
 }
 
 func (p *PromptComponent) completionMenuHeight(w, h int) int {

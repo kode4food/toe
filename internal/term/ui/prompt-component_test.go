@@ -80,6 +80,32 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), ":alpha")
 	})
 
+	t.Run("tab advances the caret", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Continuation: m.CmdModeAction()(e)}
+			},
+			Modes: []string{"NOR"},
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
+				{char(':')},
+			}}},
+		})
+		_ = km.Register("alpha", testCommand("alpha"))
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'a')
+		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
+		m = m2.(ui.Model)
+
+		// typing after tab lands at the end, not mid-word where the caret was
+		m = sendKey(m, 'X')
+		assert.Contains(t, stripANSI(m.View().Content), ":alphaX")
+	})
+
 	t.Run("ignores command args without completer", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

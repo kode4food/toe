@@ -80,10 +80,11 @@ type (
 
 	// statusElem is a single rendered piece of a status bar
 	statusElem struct {
-		text   string
-		style  tui.Style
-		kind   view.StatusLineElement
-		pinned bool
+		text    string
+		style   tui.Style
+		kind    view.StatusLineElement
+		pinned  bool
+		compact bool
 	}
 
 	statusElemCtx struct {
@@ -237,6 +238,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		w := 0
 		for _, e := range elems {
 			w += runewidth.StringWidth(e.text)
+			if !e.compact {
+				w += 2
+			}
 		}
 		return w
 	}
@@ -267,8 +271,16 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	writeElems := func(elems []statusElem, x int) {
 		for _, e := range elems {
+			if !e.compact {
+				buf.SetString(x, y, " ", baseTUI)
+				x++
+			}
 			buf.SetString(x, y, e.text, e.style)
 			x += runewidth.StringWidth(e.text)
+			if !e.compact {
+				buf.SetString(x, y, " ", baseTUI)
+				x++
+			}
 		}
 	}
 

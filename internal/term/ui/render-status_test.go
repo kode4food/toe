@@ -180,6 +180,23 @@ func TestStatuslineConfigRender(t *testing.T) {
 	})
 }
 
+func TestStatuslineSpacing(t *testing.T) {
+	t.Run("custom spinner location", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.SetLanguageServerController(&completionController{busy: true})
+		e.Options().StatusLine.Left = []view.StatusLineItem{
+			{Element: view.StatusLineFileName},
+			{Element: view.StatusLineSpinner},
+		}
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "[scratch] ⠋")
+		assert.NotContains(t, out, "[scratch]  ⠋")
+	})
+}
+
 func TestStatuslineTotalLines(t *testing.T) {
 	t.Run("total-line-numbers appears in status", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())

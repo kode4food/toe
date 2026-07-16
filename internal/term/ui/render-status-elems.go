@@ -50,67 +50,68 @@ var (
 
 func statusElemMode(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  " " + s.opts.ModeNameForMode(s.mode) + " ",
-		style: s.modeSt,
+		text:    " " + s.opts.ModeNameForMode(s.mode) + " ",
+		style:   s.modeSt,
+		compact: true,
 	}
 }
 
 func statusElemSeparator(s *statusElemCtx) statusElem {
-	return statusElem{text: s.sep, style: s.sepSt}
+	return statusElem{text: s.sep, style: s.sepSt, compact: true}
 }
 
 func statusElemFileName(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  " " + s.doc.RelativeName(s.cwd) + " ",
+		text:  s.doc.RelativeName(s.cwd),
 		style: s.baseTUI,
 	}
 }
 
 func statusElemFileBaseName(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  " " + filepath.Base(s.doc.Path()) + " ",
+		text:  filepath.Base(s.doc.Path()),
 		style: s.baseTUI,
 	}
 }
 
 func statusElemFileAbsPath(s *statusElemCtx) statusElem {
-	return statusElem{text: " " + s.doc.Path() + " ", style: s.baseTUI}
+	return statusElem{text: s.doc.Path(), style: s.baseTUI}
 }
 
 func statusElemReadOnly(s *statusElemCtx) statusElem {
 	if !s.doc.ReadOnly() {
 		return statusElem{}
 	}
-	return statusElem{text: " [readonly]", style: s.baseTUI}
+	return statusElem{text: "[readonly]", style: s.baseTUI}
 }
 
 func statusElemModified(s *statusElemCtx) statusElem {
 	if !s.doc.Modified() {
 		return statusElem{}
 	}
-	return statusElem{text: "[modified] ", style: s.baseTUI}
+	return statusElem{text: "[modified]", style: s.baseTUI}
 }
 
 func statusElemSelections(s *statusElemCtx) statusElem {
 	if s.nSel == 1 {
-		return statusElem{text: " 1 sel ", style: s.baseTUI}
+		return statusElem{text: "1 sel", style: s.baseTUI}
 	}
 	return statusElem{
-		text:  fmt.Sprintf(" %d/%d sels ", s.primIdx+1, s.nSel),
+		text:  fmt.Sprintf("%d/%d sels", s.primIdx+1, s.nSel),
 		style: s.baseTUI,
 	}
 }
 
 func statusElemPrimaryLen(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  fmt.Sprintf(" %d ", s.primLen),
+		text:  fmt.Sprintf("%d", s.primLen),
 		style: s.baseTUI,
 	}
 }
 
 func statusElemPosition(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  fmt.Sprintf(" %d:%d ", s.row, s.col),
+		text:  fmt.Sprintf("%d:%d", s.row, s.col),
 		style: s.baseTUI,
 	}
 }
@@ -121,14 +122,14 @@ func statusElemPercent(s *statusElemCtx) statusElem {
 		pct = (s.row * 100) / s.totalLines
 	}
 	return statusElem{
-		text:  fmt.Sprintf(" %d%% ", pct),
+		text:  fmt.Sprintf("%d%%", pct),
 		style: s.baseTUI,
 	}
 }
 
 func statusElemTotalLines(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  fmt.Sprintf(" %d ", s.totalLines),
+		text:  fmt.Sprintf("%d", s.totalLines),
 		style: s.baseTUI,
 	}
 }
@@ -138,11 +139,11 @@ func statusElemEncoding(s *statusElemCtx) statusElem {
 	if s.doc.HasBOM() {
 		label = "utf-8-bom"
 	}
-	return statusElem{text: " " + label + " ", style: s.baseTUI}
+	return statusElem{text: label, style: s.baseTUI}
 }
 
 func statusElemSpacer(s *statusElemCtx) statusElem {
-	return statusElem{text: " ", style: s.baseTUI}
+	return statusElem{text: " ", style: s.baseTUI, compact: true}
 }
 
 func statusElemLineEnding(s *statusElemCtx) statusElem {
@@ -150,7 +151,7 @@ func statusElemLineEnding(s *statusElemCtx) statusElem {
 	if s.doc.LineEnding() == core.LineEndingCRLF {
 		label = "crlf"
 	}
-	return statusElem{text: " " + label + " ", style: s.baseTUI}
+	return statusElem{text: label, style: s.baseTUI}
 }
 
 func statusElemIndentStyle(s *statusElemCtx) statusElem {
@@ -161,7 +162,7 @@ func statusElemIndentStyle(s *statusElemCtx) statusElem {
 	} else {
 		label = fmt.Sprintf("spaces:%d", indent.Width())
 	}
-	return statusElem{text: " " + label + " ", style: s.baseTUI}
+	return statusElem{text: label, style: s.baseTUI}
 }
 
 func statusElemFileType(s *statusElemCtx) statusElem {
@@ -169,7 +170,7 @@ func statusElemFileType(s *statusElemCtx) statusElem {
 	if lang == "" {
 		lang = "text"
 	}
-	return statusElem{text: " " + lang + " ", style: s.baseTUI}
+	return statusElem{text: lang, style: s.baseTUI}
 }
 
 func statusElemDiagnostics(s *statusElemCtx) statusElem {
@@ -191,7 +192,7 @@ func statusElemDiagnostics(s *statusElemCtx) statusElem {
 		return statusElem{}
 	}
 	return statusElem{
-		text:  " " + strings.Join(parts, " ") + " ",
+		text:  strings.Join(parts, " "),
 		style: s.baseTUI,
 	}
 }
@@ -200,7 +201,7 @@ func statusElemVersionControl(s *statusElemCtx) statusElem {
 	if s.vcsHead == "" {
 		return statusElem{}
 	}
-	return statusElem{text: " " + s.vcsHead + " ", style: s.baseTUI}
+	return statusElem{text: s.vcsHead, style: s.baseTUI}
 }
 
 func statusElemSpinner(s *statusElemCtx) statusElem {
@@ -208,7 +209,7 @@ func statusElemSpinner(s *statusElemCtx) statusElem {
 		return statusElem{}
 	}
 	frame := spinFrames[s.spinFrame%len(spinFrames)]
-	return statusElem{text: " " + frame + " ", style: s.baseTUI}
+	return statusElem{text: frame, style: s.baseTUI, compact: true}
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {
@@ -216,7 +217,7 @@ func statusElemRegister(s *statusElemCtx) statusElem {
 		return statusElem{}
 	}
 	return statusElem{
-		text:  fmt.Sprintf(" reg=%c ", s.reg),
+		text:  fmt.Sprintf("reg=%c", s.reg),
 		style: s.baseTUI,
 	}
 }

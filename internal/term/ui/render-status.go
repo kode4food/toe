@@ -94,6 +94,7 @@ type (
 		baseTUI    tui.Style
 		modeSt     tui.Style
 		sepSt      tui.Style
+		spinSt     tui.Style
 		sep        string
 		nSel       int
 		primIdx    int
@@ -189,6 +190,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	if s, ok := th.TryGet("ui.statusline.separator"); ok {
 		sepSt = s
 	}
+	spinSt := applyAccentStyle(st, th.Get("ui.prompt"))
 
 	nSel := len(sel.Ranges())
 	primIdx := sel.PrimaryIndex()
@@ -213,6 +215,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		baseTUI: baseTUI,
 		modeSt:  lipglossToTUIStyle(modeSt),
 		sepSt:   lipglossToTUIStyle(sepSt),
+		spinSt:  lipglossToTUIStyle(spinSt),
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		row: row, col: col,

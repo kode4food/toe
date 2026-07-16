@@ -50,17 +50,13 @@ func writePickerPromptRow(
 
 	popup := th.Get("ui.popup")
 	popupBg := lipgloss.NewStyle().Background(popup.GetBackground())
-	promptFg := lipgloss.NewStyle().Foreground(
-		th.Get("ui.picker.match").GetForeground(),
-	)
+	promptSt := th.Get("ui.prompt")
 
 	bgTUI := lipglossToTUIStyle(popupBg)
-	queryTUI := lipglossToTUIStyle(
-		popupBg.Foreground(promptFg.GetForeground()),
-	)
+	queryTUI := lipglossToTUIStyle(applyAccentStyle(popupBg, promptSt))
 	cursorTUI := lipglossToTUIStyle(lipgloss.NewStyle().
 		Foreground(popupBg.GetBackground()).
-		Background(promptFg.GetForeground()))
+		Background(promptSt.GetForeground()))
 	countTUI := lipglossToTUIStyle(pickerCountStyle(cx))
 
 	buf.FillRange(x, y, w, bgTUI)

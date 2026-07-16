@@ -364,7 +364,7 @@ func (p *PromptComponent) paintLine(buf *tui.Buffer, y, w int, cx *Context) {
 	rowBg := lipgloss.NewStyle().
 		Background(th.Get("ui.cursorline.primary").GetBackground())
 	labelSt := lipglossToTUIStyle(
-		rowBg.Foreground(th.Get("ui.picker.match").GetForeground()).Bold(true),
+		applyAccentStyle(rowBg, th.Get("ui.prompt")),
 	)
 	textSt := lipglossToTUIStyle(
 		rowBg.Foreground(th.Get("ui.text").GetForeground()),

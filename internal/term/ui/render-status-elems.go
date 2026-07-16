@@ -209,7 +209,7 @@ func statusElemSpinner(s *statusElemCtx) statusElem {
 		return statusElem{}
 	}
 	frame := spinFrames[s.spinFrame%len(spinFrames)]
-	return statusElem{text: frame, style: s.baseTUI, compact: true}
+	return statusElem{text: frame, style: s.spinSt}
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {

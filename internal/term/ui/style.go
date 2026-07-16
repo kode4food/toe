@@ -66,7 +66,7 @@ func completionIconStyle(
 	if !ok {
 		icon = cx.Theme().Get("ui.text.inactive")
 	}
-	return completionSegmentStyle(base, icon)
+	return applyAccentStyle(base, icon)
 }
 
 func completionInfoStyle(cx *Context, selected bool) lipgloss.Style {
@@ -75,7 +75,7 @@ func completionInfoStyle(cx *Context, selected bool) lipgloss.Style {
 	if !ok {
 		info = cx.Theme().Get("ui.text.inactive")
 	}
-	return completionSegmentStyle(base, info)
+	return applyAccentStyle(base, info)
 }
 
 func completionBaseStyle(cx *Context, selected bool) lipgloss.Style {
@@ -86,7 +86,7 @@ func completionBaseStyle(cx *Context, selected bool) lipgloss.Style {
 	return base
 }
 
-func completionSegmentStyle(base, accent lipgloss.Style) lipgloss.Style {
+func applyAccentStyle(base, accent lipgloss.Style) lipgloss.Style {
 	if fg := accent.GetForeground(); fg != nil {
 		base = base.Foreground(fg)
 	}

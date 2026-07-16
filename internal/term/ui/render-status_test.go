@@ -166,6 +166,21 @@ func TestModeColorRender(t *testing.T) {
 	})
 }
 
+func TestSpinnerColorRender(t *testing.T) {
+	t.Run("applies spinner color", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		e := view.NewEditor(t.TempDir())
+		e.Options().Theme = "mocha"
+		e.SetLanguageServerController(&completionController{busy: true})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, "\x1b[38;2;137;180;250m")
+	})
+}
+
 func TestStatuslineConfigRender(t *testing.T) {
 	t.Run("uses configured mode label", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -192,8 +207,8 @@ func TestStatuslineSpacing(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "[scratch] ⠋")
-		assert.NotContains(t, out, "[scratch]  ⠋")
+		assert.Contains(t, out, "[scratch]  ⠋ ")
+		assert.NotContains(t, out, "[scratch]   ⠋")
 	})
 }
 

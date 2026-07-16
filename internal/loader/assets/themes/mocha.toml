@@ -70,6 +70,8 @@
 "ui.linenr" = { fg = "surface1" }
 "ui.linenr.selected" = { fg = "lavender" }
 
+"ui.prompt" = { fg = "blue", modifiers = ["bold"] }
+
 "ui.statusline" = { fg = "subtext1", bg = "mantle" }
 "ui.statusline.inactive" = { fg = "surface2", bg = "mantle" }
 "ui.statusline.normal" = { fg = "base", bg = "rosewater", modifiers = ["bold"] }

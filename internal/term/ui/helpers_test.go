@@ -118,10 +118,6 @@ func sendKeyAndFeed(m ui.Model, ch rune) ui.Model {
 	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Text: string(ch)})
 }
 
-func openPickerAndFeed(m ui.Model, ch rune) ui.Model {
-	return sendKeyAndFeed(m, ch)
-}
-
 func updateAndFeed(m ui.Model, msg tea.Msg) ui.Model {
 	m2, cmd := m.Update(msg)
 	m = m2.(ui.Model)

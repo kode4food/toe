@@ -55,12 +55,6 @@ const (
 	promptTerminalSearch
 )
 
-const (
-	promptCompletionBaseWidth = 30
-	promptCompletionMaxRows   = 10
-	promptCompletionPadX      = 1
-)
-
 // one column so the end-of-buffer caret cell stays on screen
 const promptRightPad = 1
 

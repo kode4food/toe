@@ -59,6 +59,49 @@ func TestPromptCompletion(t *testing.T) {
 		}
 	})
 
+	t.Run("adapts width to item count", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Continuation: m.CmdModeAction()(e)}
+			},
+			Modes: []string{"NOR"},
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
+				{char(':')},
+			}}},
+		})
+		for _, name := range []string{
+			"match-a", "match-b", "match-c", "match-d",
+			"match-e", "match-f", "match-g", "match-h",
+			"few-a", "few-command-with-long-name",
+		} {
+			_ = km.Register(name, testCommand(name))
+		}
+		m = resize(m, 60, 6)
+		m = sendKey(m, ':')
+
+		content := stripANSI(m.View().Content)
+		rows := 0
+		for line := range strings.SplitSeq(content, "\n") {
+			if strings.Contains(line, "match-") ||
+				strings.Contains(line, "few-") {
+				rows++
+			}
+		}
+		assert.Equal(t, 2, rows)
+		assert.NotContains(t, content, "few-command-with-long-name")
+		assert.NotContains(t, content, "┬")
+		assert.NotContains(t, content, "┴")
+
+		for _, ch := range "few" {
+			m = sendKey(m, ch)
+		}
+		filtered := stripANSI(m.View().Content)
+		assert.Contains(t, filtered, "few-command-with-long-name")
+	})
+
 	t.Run("tab inserts selected command completion", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

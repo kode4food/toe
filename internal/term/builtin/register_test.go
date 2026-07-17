@@ -357,8 +357,8 @@ func allowedDuplicateKey(key string, names []string) bool {
 	if seq != "esc" || len(names) != 2 {
 		return false
 	}
-	return containsString(names, "normal-mode") &&
-		containsString(names, "exit-select-mode")
+	return slices.Contains(names, "normal-mode") &&
+		slices.Contains(names, "exit-select-mode")
 }
 
 func splitKeySeq(key string) (string, string) {
@@ -410,10 +410,6 @@ func parseKeyPart(t *testing.T, part string) command.KeyEvent {
 		return test.Special(value).WithMods(command.ModShift)
 	}
 	return test.Special(inner)
-}
-
-func containsString(items []string, target string) bool {
-	return slices.Contains(items, target)
 }
 
 func documentedCommandNames(t *testing.T) []string {

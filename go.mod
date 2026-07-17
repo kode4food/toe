@@ -9,7 +9,6 @@ require (
 	charm.land/lipgloss/v2 v2.0.4
 	github.com/BurntSushi/toml v1.6.0
 	github.com/alecthomas/chroma/v2 v2.26.1
-	github.com/aymanbagabas/go-osc52/v2 v2.0.1
 	github.com/charmbracelet/ultraviolet v0.0.0-20260608091853-35bcb7319efa
 	github.com/charmbracelet/x/ansi v0.11.7
 	github.com/charmbracelet/x/vt v0.0.0-20260712004152-b16d026a9d2e

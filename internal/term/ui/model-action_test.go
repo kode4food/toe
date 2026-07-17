@@ -1044,7 +1044,7 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 
-		m = openPickerAndFeed(m, 'w')
+		m = sendKeyAndFeed(m, 'w')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "fmt.run")
@@ -1070,7 +1070,7 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 			[]command.KeyEvent{char('w')},
 		)
 		m = resize(m, 80, 24)
-		m = openPickerAndFeed(m, 'w')
+		m = sendKeyAndFeed(m, 'w')
 		sendSpecial(m, tea.KeyEnter)
 	})
 }

@@ -1,10 +1,10 @@
 package action
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
-
-	"github.com/aymanbagabas/go-osc52/v2"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -178,10 +178,11 @@ func writeTTY(text string, primary bool) bool {
 		return false
 	}
 	defer func() { _ = f.Close() }()
-	seq := osc52.New(text)
+	selection := 'c'
 	if primary {
-		seq = seq.Primary()
+		selection = 'p'
 	}
-	_, err = seq.WriteTo(f)
+	data := base64.StdEncoding.EncodeToString([]byte(text))
+	_, err = fmt.Fprintf(f, "\x1b]52;%c;%s\a", selection, data)
 	return err == nil
 }

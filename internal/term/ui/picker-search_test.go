@@ -193,7 +193,7 @@ func TestGlobalSearch(t *testing.T) {
 }
 
 // globalSearchModel writes two files, opens the global-search picker, and types
-// the query. openPickerAndFeed drains the dynamic source's async feed per key
+// the query. sendKeyAndFeed drains the dynamic source's async feed per key
 func globalSearchModel(
 	t *testing.T, query string, files ...map[string]string,
 ) (ui.Model, *view.Editor) {
@@ -224,9 +224,9 @@ func openGlobalSearch(t *testing.T, e *view.Editor, query string) ui.Model {
 		[]command.KeyEvent{char('s')},
 	)
 	m = resize(m, 120, 30)
-	m = openPickerAndFeed(m, 's')
+	m = sendKeyAndFeed(m, 's')
 	for _, ch := range query {
-		m = openPickerAndFeed(m, ch)
+		m = sendKeyAndFeed(m, ch)
 	}
 	return m
 }

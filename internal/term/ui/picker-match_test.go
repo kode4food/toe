@@ -37,7 +37,7 @@ func TestPickerMatch(t *testing.T) {
 		)
 
 		m = resize(m, 70, 20)
-		m = openPickerAndFeed(m, 'p')
+		m = sendKeyAndFeed(m, 'p')
 		_ = m.View()
 
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")

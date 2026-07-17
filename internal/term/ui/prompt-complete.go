@@ -12,6 +12,13 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
+const (
+	compWidthPct = 90
+	compMaxRows  = 10
+	compPadX     = 1
+	compGap      = 2
+)
+
 func (p *PromptComponent) recalculateCompletion(cx *Context) {
 	p.compDone = true
 	p.compSel = nil
@@ -44,19 +51,29 @@ func (p *PromptComponent) completionMenuHeight(w, h int) int {
 		p.compCols, p.compRows = 0, 0
 		return 0
 	}
-	innerW := w - 2 - 2*promptCompletionPadX
-	maxLen := promptCompletionBaseWidth
-	for _, c := range p.comps {
-		maxLen = max(maxLen, runewidth.StringWidth(c.completionText()))
+	innerW := w - 2 - 2*compPadX
+	maxRows := min(compMaxRows, h-3)
+	widths := make([]int, len(p.comps))
+	for i, c := range p.comps {
+		widths[i] = runewidth.StringWidth(c.completionText())
 	}
-	cols := max(1, innerW/maxLen)
+	slices.Sort(widths)
+	colW := max(widths[len(widths)-1], 1)
+	fullCols := max(1, (innerW+compGap)/(colW+compGap))
+	if len(p.comps) > fullCols*maxRows {
+		idx := (len(widths) - 1) * compWidthPct / 100
+		colW = max(widths[idx], 1)
+	}
+	cols := min(len(p.comps), max(1,
+		(innerW+compGap)/(colW+compGap),
+	))
 	rowCount := (len(p.comps) + cols - 1) / cols
-	rowCount = min(rowCount, promptCompletionMaxRows)
-	rowCount = min(rowCount, h-3)
+	rowCount = min(rowCount, maxRows)
 	if rowCount <= 0 {
 		p.compCols, p.compRows = 0, 0
 		return 0
 	}
+	cols = min(cols, (len(p.comps)+rowCount-1)/rowCount)
 	p.compCols, p.compRows = cols, rowCount
 	return rowCount + 2
 }
@@ -71,11 +88,12 @@ func (p *PromptComponent) paintCompletions(
 			menuStyle.Foreground(pickerFrameStyle(cx).GetForeground()),
 		),
 		contentStyle: lipglossToTUIStyle(menuStyle),
-		padX:         promptCompletionPadX,
+		padX:         compPadX,
 	}
+	innerW := w - 2 - 2*compPadX
+	colW := max((innerW-compGap*(p.compCols-1))/
+		p.compCols, 1)
 	area := pop.drawInto(buf, 0, y0, w, p.compRows+2)
-	innerW := w - 2 - 2*promptCompletionPadX
-	colW := max((innerW-p.compCols)/p.compCols, 1)
 	menuTUI := lipglossToTUIStyle(menuStyle)
 	selectedTUI := lipglossToTUIStyle(selected)
 
@@ -90,7 +108,10 @@ func (p *PromptComponent) paintCompletions(
 			if p.compSel != nil && *p.compSel == i {
 				style = selectedTUI
 			}
-			buf.SetString(area.x+col*(colW+1), area.y+row, text, style)
+			buf.SetString(
+				area.x+col*(colW+compGap),
+				area.y+row, text, style,
+			)
 		}
 	}
 }
@@ -128,16 +149,17 @@ func completeCommandLine(cx *Context, input string) []promptCompletion {
 func completeCommandNames(cx *Context, input string) []promptCompletion {
 	out := make([]promptCompletion, 0)
 	seen := map[string]bool{}
+	input = strings.ToLower(input)
 	for _, cmd := range cx.Keymaps.Commands() {
 		for _, name := range cmd.Aliases {
 			if seen[name] {
 				continue
 			}
-			score, _ := fuzzyMatch(strings.ToLower(input), name)
+			seen[name] = true
+			score, _ := fuzzyMatch(input, name)
 			if score < 0 {
 				continue
 			}
-			seen[name] = true
 			out = append(out, promptCompletion{
 				Completion: command.Completion{Text: name},
 				score:      score,

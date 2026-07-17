@@ -125,7 +125,7 @@ func (d *Document) Undo(vid Id) bool {
 	d.buf.unsaved = d.Modified()
 	d.buf.modified = true
 	d.buf.Unlock()
-	d.markDirty(vid)
+	d.markAllDirty()
 	if !cs.Empty() {
 		d.remapOverlays(cs)
 	}
@@ -155,7 +155,7 @@ func (d *Document) Redo(vid Id) bool {
 	d.buf.unsaved = d.Modified()
 	d.buf.modified = true
 	d.buf.Unlock()
-	d.markDirty(vid)
+	d.markAllDirty()
 	if !cs.Empty() {
 		d.remapOverlays(cs)
 	}

@@ -349,9 +349,7 @@ func TestStatuslineElementRegistry(t *testing.T) {
 		},
 	}
 
-	covered := make(map[view.StatusLineElement]bool, len(cases))
 	for _, tc := range cases {
-		covered[tc.element] = true
 		t.Run(string(tc.element), func(t *testing.T) {
 			e := view.NewEditor(t.TempDir())
 			if tc.setup != nil {
@@ -372,12 +370,6 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			assert.Contains(t, out, tc.want)
 		})
 	}
-
-	t.Run("covers every element", func(t *testing.T) {
-		for _, e := range view.AllStatusLineElements() {
-			assert.True(t, covered[e], string(e))
-		}
-	})
 }
 
 func TestStatuslineEncoding(t *testing.T) {

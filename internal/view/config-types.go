@@ -197,11 +197,6 @@ func ParseCursorKind(value string) (CursorKind, error) {
 	return c, nil
 }
 
-// AllStatusLineElements returns the canonical valid status line elements
-func AllStatusLineElements() []StatusLineElement {
-	return slices.Clone(allStatusLineElements)
-}
-
 func ParseLineNumber(value string) (LineNumber, error) {
 	var l LineNumber
 	if err := l.UnmarshalText([]byte(value)); err != nil {

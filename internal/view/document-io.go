@@ -102,6 +102,7 @@ func (d *Document) reloadPreservingSelections() error {
 	d.buf.version++
 	d.buf.selections = selections
 	d.buf.Unlock()
+	d.markAllDirty()
 	d.buf.savePoint = d.buf.history.CurrentRevision()
 	d.buf.unsaved = false
 	d.refreshDiskSnapshot()
@@ -138,6 +139,7 @@ func (d *Document) applySaveText(text string) error {
 	d.buf.unsaved = true
 	d.buf.modified = true
 	d.buf.Unlock()
+	d.markAllDirty()
 	return nil
 }
 

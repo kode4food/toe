@@ -9,14 +9,14 @@ import (
 // SetDocumentColors stores document-wide LSP colors
 func (d *Document) SetDocumentColors(colors []DocumentColor) {
 	if setOverlaySlice(&d.ls, &d.ls.colors, colors) {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 
 // ClearDocumentColors removes document-wide LSP colors
 func (d *Document) ClearDocumentColors() {
 	if clearOverlaySlice(&d.ls, &d.ls.colors) {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 
@@ -28,14 +28,14 @@ func (d *Document) DocumentColors() []DocumentColor {
 // SetDocumentLinks stores document-wide LSP links
 func (d *Document) SetDocumentLinks(links []DocumentLink) {
 	if setOverlaySlice(&d.ls, &d.ls.links, links) {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 
 // ClearDocumentLinks removes document-wide LSP links
 func (d *Document) ClearDocumentLinks() {
 	if clearOverlaySlice(&d.ls, &d.ls.links) {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 
@@ -49,21 +49,21 @@ func (d *Document) SetDocumentHighlights(
 	vid Id, highlights []DocumentHighlight,
 ) {
 	if setOverlayMap(&d.ls, d.ls.highlights, vid, highlights) {
-		d.markDirty(vid)
+		d.markViewDirty(vid)
 	}
 }
 
 // ClearDocumentHighlights removes highlight ranges for a view
 func (d *Document) ClearDocumentHighlights(vid Id) {
 	if clearOverlayMap(&d.ls, d.ls.highlights, vid) {
-		d.markDirty(vid)
+		d.markViewDirty(vid)
 	}
 }
 
 // ClearAllDocumentHighlights removes highlight ranges for every view
 func (d *Document) ClearAllDocumentHighlights() {
 	if clearAllOverlayMap(&d.ls, d.ls.highlights) {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 
@@ -75,21 +75,21 @@ func (d *Document) DocumentHighlights(vid Id) []DocumentHighlight {
 // SetInlayHints stores language-server inlay hints for a view
 func (d *Document) SetInlayHints(vid Id, hints []InlayHint) {
 	if setOverlayMap(&d.ls, d.ls.hints, vid, hints) {
-		d.markDirty(vid)
+		d.markViewDirty(vid)
 	}
 }
 
 // ClearInlayHints removes language-server inlay hints for a view
 func (d *Document) ClearInlayHints(vid Id) {
 	if clearOverlayMap(&d.ls, d.ls.hints, vid) {
-		d.markDirty(vid)
+		d.markViewDirty(vid)
 	}
 }
 
 // ClearAllInlayHints removes language-server inlay hints for every view
 func (d *Document) ClearAllInlayHints() {
 	if clearAllOverlayMap(&d.ls, d.ls.hints) {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 

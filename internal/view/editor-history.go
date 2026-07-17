@@ -114,7 +114,7 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 	doc.buf.version++
 	afterStr := doc.buf.text.String()
 	doc.buf.Unlock()
-	doc.markAllDirty()
+	doc.MarkDirty()
 	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
 	return true
 }
@@ -151,7 +151,7 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	doc.buf.version++
 	afterStr := doc.buf.text.String()
 	doc.buf.Unlock()
-	doc.markAllDirty()
+	doc.MarkDirty()
 	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
 	return true
 }

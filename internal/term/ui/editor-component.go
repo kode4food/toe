@@ -212,6 +212,9 @@ func (e *EditorComponent) HandleEvent(
 		return consumed(), terminalPollCmd()
 
 	case vcsUpdatedMsg:
+		for _, doc := range cx.Editor.AllDocuments() {
+			doc.MarkDirty()
+		}
 		return consumed(), vcsUpdateCmd(cx)
 
 	case vcsRefreshMsg:

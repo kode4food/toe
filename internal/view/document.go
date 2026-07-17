@@ -182,6 +182,7 @@ func (d *Document) SetLang(lang string) {
 	d.buf.Lock()
 	d.buf.lang = lang
 	d.buf.Unlock()
+	d.MarkDirty()
 }
 
 // TextFormat returns the display-time text layout options for this document
@@ -226,6 +227,7 @@ func (d *Document) IndentStyle() core.IndentStyle {
 // SetIndentStyle updates the indent style for this document
 func (d *Document) SetIndentStyle(s core.IndentStyle) {
 	d.indent = s
+	d.MarkDirty()
 }
 
 // TabWidth returns the display tab width
@@ -282,7 +284,7 @@ func (d *Document) Selection() core.Selection {
 // any search-match highlighting for that view
 func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
 	if old, ok := d.buf.selections[vid]; !ok || !old.Equal(sel) {
-		d.markDirty(vid)
+		d.markViewDirty(vid)
 	}
 	d.buf.selections[vid] = sel
 	delete(d.buf.searchHL, vid)
@@ -329,6 +331,20 @@ func (d *Document) Revision() int {
 	return d.buf.version
 }
 
+func (d *Document) MarkDirty() {
+	d.track.Lock()
+	defer d.track.Unlock()
+	if d.track.dirty == nil {
+		d.track.dirty = map[Id]bool{}
+	}
+	// track.dirty (not buf.selections, empty until a view's own cursor
+	// first moves) is the reliable registry: ConsumeDirty runs for every
+	// visible view on every render regardless of selection state
+	for vid := range d.track.dirty {
+		d.track.dirty[vid] = true
+	}
+}
+
 // ConsumeDirty reports whether vid's rendered state changed since the last
 // call for vid, clearing the flag. A vid never seen before is dirty
 func (d *Document) ConsumeDirty(vid Id) bool {
@@ -350,27 +366,13 @@ func (d *DocumentOpenError) Unwrap() error {
 	return d.Err
 }
 
-func (d *Document) markDirty(vid Id) {
+func (d *Document) markViewDirty(vid Id) {
 	d.track.Lock()
 	defer d.track.Unlock()
 	if d.track.dirty == nil {
 		d.track.dirty = map[Id]bool{}
 	}
 	d.track.dirty[vid] = true
-}
-
-func (d *Document) markAllDirty() {
-	d.track.Lock()
-	defer d.track.Unlock()
-	if d.track.dirty == nil {
-		d.track.dirty = map[Id]bool{}
-	}
-	// track.dirty (not buf.selections, empty until a view's own cursor
-	// first moves) is the reliable registry: ConsumeDirty runs for every
-	// visible view on every render regardless of selection state
-	for vid := range d.track.dirty {
-		d.track.dirty[vid] = true
-	}
 }
 
 func (d *Document) rememberSelection(vid Id) {

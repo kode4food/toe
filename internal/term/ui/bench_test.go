@@ -148,7 +148,7 @@ func benchTerminal(b *testing.B, fill string) {
 func BenchmarkRenderTerminal(b *testing.B) {
 	var sb strings.Builder
 	for i := range 22 {
-		fmt.Fprintf(&sb, "line %2d %s\r\n", i, strings.Repeat("x", 60))
+		_, _ = fmt.Fprintf(&sb, "line %2d %s\r\n", i, strings.Repeat("x", 60))
 	}
 	benchTerminal(b, sb.String())
 }
@@ -161,7 +161,7 @@ func BenchmarkRenderTerminalColored(b *testing.B) {
 	var sb strings.Builder
 	for range 22 {
 		for c := range 9 {
-			fmt.Fprintf(&sb, "\x1b[%sm%s", colors[c%len(colors)],
+			_, _ = fmt.Fprintf(&sb, "\x1b[%sm%s", colors[c%len(colors)],
 				strings.Repeat("w", 8))
 		}
 		sb.WriteString("\x1b[0m\r\n")

@@ -51,7 +51,7 @@ func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 	changed := !slices.Equal(before, d.ls.diagnostics)
 	d.ls.Unlock()
 	if changed {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 
@@ -62,7 +62,7 @@ func (d *Document) ClearDiagnostics() {
 	d.ls.diagnostics = nil
 	d.ls.Unlock()
 	if changed {
-		d.markAllDirty()
+		d.MarkDirty()
 	}
 }
 

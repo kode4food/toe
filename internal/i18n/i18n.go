@@ -62,13 +62,13 @@ func (c catalog) text(key Key, vars ...Vars) string {
 		return string(key)
 	}
 	if len(vars) == 0 || len(vars[0]) == 0 {
-		return string(text)
+		return text
 	}
 	pairs := make([]string, 0, 2*len(vars[0]))
 	for k, v := range vars[0] {
 		pairs = append(pairs, "{"+k+"}", fmt.Sprint(v))
 	}
-	return strings.NewReplacer(pairs...).Replace(string(text))
+	return strings.NewReplacer(pairs...).Replace(text)
 }
 
 func resolve(locales ...locale.Locale) catalog {

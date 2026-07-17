@@ -160,15 +160,17 @@ func TestRegistry(t *testing.T) {
 		assert.Equal(t, "2", store.values["editor.test.beta"])
 	})
 
-	t.Run("ApplyOptionValues rejects unknown keys", func(t *testing.T) {
+	t.Run("ApplyOptionValues skips unknown keys", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		reg := registryWithLiveOptions(t)
 
 		err := reg.ApplyOptionValues(e, map[string]string{
-			"unknown": "true",
+			"cursorline": "true",
+			"unknown":    "true",
 		})
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
+		assert.True(t, e.Options().CursorLine)
 	})
 
 	t.Run("ApplyOptionValues returns set errors", func(t *testing.T) {

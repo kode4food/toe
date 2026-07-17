@@ -79,10 +79,9 @@ const (
 )
 
 var (
-	ErrSessionEmpty         = errors.New("session is empty")
-	ErrSessionInvalid       = errors.New("session is invalid")
-	ErrSessionUnsupported   = errors.New("session version unsupported")
-	ErrSessionUnknownOption = errors.New("session option unknown")
+	ErrSessionEmpty       = errors.New("session is empty")
+	ErrSessionInvalid     = errors.New("session is invalid")
+	ErrSessionUnsupported = errors.New("session version unsupported")
 )
 
 // SaveSession stores restorable workspace state in path. Runtime option

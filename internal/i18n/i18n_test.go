@@ -14,34 +14,17 @@ import (
 
 const testLocaleExpected = "TOE_TEST_LOCALE_EXPECTED"
 
-func TestEnUS(t *testing.T) {
-	t.Run("returns translated message", func(t *testing.T) {
-		assert.Equal(t, "written", i18n.EnglishText(i18n.StatusWritten))
-	})
-
-	t.Run("falls back to common message", func(t *testing.T) {
-		assert.Equal(t, ":", i18n.EnglishText(i18n.PromptCommand))
-	})
-
-	t.Run("common returns its own message", func(t *testing.T) {
-		assert.Equal(t, ":", i18n.CommonText(i18n.PromptCommand))
-	})
-
-	t.Run("common does not contain English", func(t *testing.T) {
-		assert.Equal(t,
-			string(i18n.StatusWritten), i18n.CommonText(i18n.StatusWritten))
-	})
-
+func TestText(t *testing.T) {
 	t.Run("interpolates named values", func(t *testing.T) {
-		assert.Equal(t, "error: broken",
-			i18n.EnglishText(i18n.ErrorMessage, i18n.Vars{
+		assert.Contains(t,
+			i18n.Text(i18n.ErrorMessage, i18n.Vars{
 				"message": "broken",
-			}))
+			}), "broken")
 	})
 
 	t.Run("returns missing key", func(t *testing.T) {
 		key := i18n.Key("missing.message")
-		assert.Equal(t, "missing.message", i18n.EnglishText(key))
+		assert.Equal(t, "missing.message", i18n.Text(key))
 	})
 }
 

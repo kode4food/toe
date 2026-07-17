@@ -25,9 +25,7 @@ var translationFiles embed.FS
 
 // Catalog data is loaded once from embedded files and never mutated
 var (
-	commonCatalog  = catalog{commonTranslations}
 	defaultCatalog = resolve(locale.Environment()...)
-	enUSCatalog    = resolve(locale.EnUS, locale.En)
 
 	commonTranslations = loadTranslation("translations/common.json")
 	localeTranslations = loadTranslations()
@@ -36,16 +34,6 @@ var (
 // Text returns a localized message with optional named interpolation
 func Text(key Key, vars ...Vars) string {
 	return defaultCatalog.text(key, vars...)
-}
-
-// CommonText returns a locale-independent message
-func CommonText(key Key, vars ...Vars) string {
-	return commonCatalog.text(key, vars...)
-}
-
-// EnglishText returns an English message
-func EnglishText(key Key, vars ...Vars) string {
-	return enUSCatalog.text(key, vars...)
 }
 
 func (c catalog) text(key Key, vars ...Vars) string {

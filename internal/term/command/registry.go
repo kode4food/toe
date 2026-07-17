@@ -2,7 +2,6 @@ package command
 
 import (
 	"bytes"
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -166,7 +165,7 @@ func (r *Registry) ApplyOptionValues(
 	for key, value := range values {
 		o, ok := r.LookupOption(key)
 		if !ok {
-			return fmt.Errorf("%w: %s", view.ErrSessionUnknownOption, key)
+			continue
 		}
 		if err := o.Set(e, value); err != nil {
 			return err

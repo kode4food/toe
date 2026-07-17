@@ -231,6 +231,22 @@ func TestUndoRedo(t *testing.T) {
 	assert.Equal(t, "hello!", doc.Text().String())
 }
 
+func TestUndoRedoMarksDirty(t *testing.T) {
+	e := testutil.EditorWithText(t, "hello")
+	testutil.SetCursor(t, e, 5)
+	action.InsertChar(e, '!')
+	v, _ := e.FocusedView()
+	doc, _ := e.FocusedDocument()
+
+	doc.ConsumeDirty(v.ID()) // clear dirty from the edit
+	assert.True(t, e.Undo())
+	assert.True(t, doc.ConsumeDirty(v.ID()))
+
+	assert.False(t, doc.ConsumeDirty(v.ID())) // stays clean until next change
+	assert.True(t, e.Redo())
+	assert.True(t, doc.ConsumeDirty(v.ID()))
+}
+
 func TestChangeSelection(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello world")
 	v, _ := e.FocusedView()

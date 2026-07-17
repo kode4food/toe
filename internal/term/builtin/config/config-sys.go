@@ -21,7 +21,6 @@ func configSystemCmds() []command.Command {
 					e, loader.ConfigFile, "config path unavailable",
 				)
 			},
-			Aliases:   []string{"config-open"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -42,7 +41,6 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{}
 			},
-			Aliases:   []string{"config-open-workspace"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -54,7 +52,6 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{Message: "config reloaded"}
 			},
-			Aliases:   []string{"config-reload"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -65,7 +62,6 @@ func configSystemCmds() []command.Command {
 					e, loader.LogFile, "log path unavailable",
 				)
 			},
-			Aliases:   []string{"log-open"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -78,7 +74,6 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace trusted"}
 			},
-			Aliases:   []string{"workspace-trust"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -91,7 +86,6 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace untrusted"}
 			},
-			Aliases:   []string{"workspace-untrust"},
 			Signature: kit.Sig(),
 		},
 	}

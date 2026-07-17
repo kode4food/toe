@@ -30,7 +30,6 @@ func SessionModule(model ui.Model) command.Module {
 					}
 					return command.Result{Message: "session saved"}
 				},
-				Aliases:   []string{"save-session"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -50,7 +49,6 @@ func SessionModule(model ui.Model) command.Module {
 					model.RestoreTerminalPanes(e)
 					return command.Result{}
 				},
-				Aliases:   []string{"restore-session"},
 				Signature: kit.Sig(),
 			},
 		},

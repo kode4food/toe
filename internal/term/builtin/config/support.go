@@ -27,7 +27,7 @@ func SupportModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: action.CharInfo(e)}
 				},
-				Aliases:   []string{"character-info", "char"},
+				Aliases:   []string{"char"},
 				Signature: kit.Sig(),
 			},
 			{

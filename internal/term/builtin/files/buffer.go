@@ -35,7 +35,7 @@ func BufferModule() command.Module {
 					return command.Result{Message: "buffer closed"}
 				},
 				Modes:     []string{"NOR", "SEL"},
-				Aliases:   []string{"buffer-close", "bc", "bclose"},
+				Aliases:   []string{"bc", "bclose"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -64,7 +64,7 @@ func BufferModule() command.Module {
 				},
 				Modes: []string{"NOR", "SEL"},
 				Aliases: []string{
-					"buffer-close-others", "bco", "bcloseother",
+					"bco", "bcloseother",
 				},
 				Signature: kit.Sig(),
 			},
@@ -86,7 +86,7 @@ func BufferModule() command.Module {
 					return command.Result{Message: "all buffers closed"}
 				},
 				Modes:     []string{"NOR", "SEL"},
-				Aliases:   []string{"buffer-close-all", "bca", "bcloseall"},
+				Aliases:   []string{"bca", "bcloseall"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -95,7 +95,7 @@ func BufferModule() command.Module {
 				Run:       kit.Runner((*view.Editor).FocusNextView),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      kit.Keys(g(kit.Char('n'))),
-				Aliases:   []string{"buffer-next", "bn", "bnext"},
+				Aliases:   []string{"bn", "bnext"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -104,7 +104,7 @@ func BufferModule() command.Module {
 				Run:       kit.Runner((*view.Editor).FocusPrevView),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      kit.Keys(g(kit.Char('p'))),
-				Aliases:   []string{"buffer-previous", "bp", "bprev"},
+				Aliases:   []string{"bp", "bprev"},
 				Signature: kit.Sig(),
 			},
 		},

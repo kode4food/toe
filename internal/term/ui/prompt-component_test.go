@@ -32,7 +32,9 @@ func TestPromptCompletion(t *testing.T) {
 				{char(':')},
 			}}},
 		})
-		_ = km.Register("alpha", testCommand("alpha"))
+		alpha := testCommand("alpha")
+		alpha.Aliases = append(alpha.Aliases, "alias")
+		_ = km.Register("alpha", alpha)
 		_ = km.Register("beta", testCommand("beta"))
 		m = resize(m, 60, 12)
 
@@ -43,6 +45,7 @@ func TestPromptCompletion(t *testing.T) {
 		withAl := m.View().Content
 
 		assert.Contains(t, withA, "alpha")
+		assert.Contains(t, withA, "alias")
 		assert.NotContains(t, withA, "beta")
 		assert.Contains(t, withAl, "alpha")
 		assert.NotContains(t, withAl, "beta")

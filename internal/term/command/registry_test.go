@@ -27,7 +27,7 @@ type (
 const defaultRegistryScrollOff = 3
 
 func TestRegistry(t *testing.T) {
-	t.Run("RegisterCommand prepends the name", func(t *testing.T) {
+	t.Run("RegisterCommand prepends kebab alias", func(t *testing.T) {
 		km := command.NewKeymaps()
 		reg := command.NewRegistry(km)
 		cmd := command.Command{
@@ -42,7 +42,7 @@ func TestRegistry(t *testing.T) {
 
 		got, ok := km.ResolveCommand("write_all")
 		assert.True(t, ok)
-		assert.Equal(t, []string{"write_all", "write"}, got.Aliases)
+		assert.Equal(t, []string{"write-all", "write"}, got.Aliases)
 	})
 
 	t.Run("RegisterModule installs commands", func(t *testing.T) {

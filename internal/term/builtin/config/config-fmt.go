@@ -42,7 +42,7 @@ func configFormatCmds() []command.Command {
 				doc.SetLang(lang)
 				return command.Result{Message: ""}
 			},
-			Aliases:   []string{"set-language", "lang"},
+			Aliases:   []string{"lang"},
 			Signature: kit.StaticSig(kit.OptionalArg(), languageNames()...),
 		},
 		{
@@ -116,7 +116,6 @@ func configFormatCmds() []command.Command {
 				}
 				return command.Result{Message: "indent style set"}
 			},
-			Aliases: []string{"indent-style"},
 			Signature: kit.StaticSig(
 				kit.Sig(),
 				"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",

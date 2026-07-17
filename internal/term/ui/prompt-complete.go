@@ -129,22 +129,20 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 	out := make([]promptCompletion, 0)
 	seen := map[string]bool{}
 	for _, cmd := range cx.Keymaps.Commands() {
-		if len(cmd.Aliases) == 0 {
-			continue
+		for _, name := range cmd.Aliases {
+			if seen[name] {
+				continue
+			}
+			score, _ := fuzzyMatch(strings.ToLower(input), name)
+			if score < 0 {
+				continue
+			}
+			seen[name] = true
+			out = append(out, promptCompletion{
+				Completion: command.Completion{Text: name},
+				score:      score,
+			})
 		}
-		name := cmd.Aliases[0]
-		if seen[name] {
-			continue
-		}
-		score, _ := fuzzyMatch(strings.ToLower(input), name)
-		if score < 0 {
-			continue
-		}
-		seen[name] = true
-		out = append(out, promptCompletion{
-			Completion: command.Completion{Text: name},
-			score:      score,
-		})
 	}
 	slices.SortStableFunc(out, func(a, b promptCompletion) int {
 		return cmp.Compare(b.score, a.score)

@@ -79,7 +79,7 @@ func Module(model ui.Model) command.Module {
 					}
 					return command.Result{Message: msg}
 				},
-				Aliases: []string{"reset-diff-change", "diff-reset"},
+				Aliases: []string{"diff-reset"},
 			},
 		},
 	}

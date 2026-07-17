@@ -222,7 +222,7 @@ func configOptionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{Message: value}
 			},
-			Aliases: []string{"get-option", "get"},
+			Aliases: []string{"get"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},
 				Completer: command.PositionalCompleter(
@@ -253,7 +253,7 @@ func configOptionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{}
 			},
-			Aliases: []string{"set-option", "set"},
+			Aliases: []string{"set"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 2, Max: 2},
 				RawAfter:    1,
@@ -287,7 +287,7 @@ func configOptionCmds(r *command.Registry) []command.Command {
 					Message: "'" + key + "' is now set to " + value,
 				}
 			},
-			Aliases: []string{"toggle-option", "toggle"},
+			Aliases: []string{"toggle"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},
 				Completer: command.PositionalCompleter(

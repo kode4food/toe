@@ -63,7 +63,7 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Aliases:   []string{"quit-all", "qa"},
+				Aliases:   []string{"qa"},
 				Signature: kit.Sig(),
 			},
 			{

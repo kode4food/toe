@@ -357,8 +357,8 @@ func allowedDuplicateKey(key string, names []string) bool {
 	if seq != "esc" || len(names) != 2 {
 		return false
 	}
-	return containsString(names, "normal_mode") &&
-		containsString(names, "exit_select_mode")
+	return containsString(names, "normal-mode") &&
+		containsString(names, "exit-select-mode")
 }
 
 func splitKeySeq(key string) (string, string) {

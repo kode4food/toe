@@ -147,7 +147,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusAllWritten),
 				}
 			},
-			Aliases:   []string{"write-all", "wa"},
+			Aliases:   []string{"wa"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -177,7 +177,7 @@ func fileWriteCmds() []command.Command {
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
-			Aliases:   []string{"write-quit", "wq", "exit", "x", "xit"},
+			Aliases:   []string{"wq", "exit", "x", "xit"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
 		{
@@ -205,7 +205,7 @@ func fileWriteCmds() []command.Command {
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
-			Aliases:   []string{"write-quit-all", "wqa", "xa"},
+			Aliases:   []string{"wqa", "xa"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -238,7 +238,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusWrittenAndClosed),
 				}
 			},
-			Aliases:   []string{"write-buffer-close", "wbc"},
+			Aliases:   []string{"wbc"},
 			Signature: kit.Sig(),
 		},
 		{
@@ -354,7 +354,7 @@ func fileManageCmds() []command.Command {
 				}
 				return command.Result{Message: "all documents reloaded"}
 			},
-			Aliases:   []string{"reload-all", "rla"},
+			Aliases:   []string{"rla"},
 			Signature: kit.Sig(),
 		},
 		{

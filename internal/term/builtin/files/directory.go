@@ -35,7 +35,7 @@ func DirectoryModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: e.Cwd()}
 				},
-				Aliases:   []string{"show-directory", "pwd"},
+				Aliases:   []string{"pwd"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -47,7 +47,6 @@ func DirectoryModule() command.Module {
 						Message: strings.Join(e.DirStack(), "\n"),
 					}
 				},
-				Aliases:   []string{"show-directory-stack"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -56,7 +55,7 @@ func DirectoryModule() command.Module {
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					return cdResult(e, args, e.PushDirectory)
 				},
-				Aliases:   []string{"push-directory", "pushd"},
+				Aliases:   []string{"pushd"},
 				Signature: kit.MinArgs(1),
 			},
 			{
@@ -69,7 +68,7 @@ func DirectoryModule() command.Module {
 					}
 					return command.Result{Message: "directory: " + e.Cwd()}
 				},
-				Aliases:   []string{"pop-directory", "popd"},
+				Aliases:   []string{"popd"},
 				Signature: kit.Sig(),
 			},
 		},

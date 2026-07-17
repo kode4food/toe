@@ -24,16 +24,19 @@ func NewRegistry(km *Keymaps) *Registry {
 	return &Registry{km: km}
 }
 
-// RegisterCommand registers a command. The action name is automatically
-// prepended to Aliases so it is typeable from the command line
+// RegisterCommand registers a command with its kebab-cased name as the first
+// alias
 func (r *Registry) RegisterCommand(name string, c Command) error {
 	if c.Run == nil {
 		return nil
 	}
-	if !slices.Contains(c.Aliases, name) {
-		c.Aliases = append([]string{name}, c.Aliases...)
+	alias := strings.ReplaceAll(name, "_", "-")
+	c.Aliases = append([]string{alias}, c.Aliases...)
+	if err := r.km.Register(name, c); err != nil {
+		return err
 	}
-	return r.km.Register(name, c)
+	r.km.byAlias[name] = r.km.byName[name]
+	return nil
 }
 
 func (r *Registry) RegisterModule(m Module) error {

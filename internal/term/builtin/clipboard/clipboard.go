@@ -98,7 +98,6 @@ func DocumentModule() command.Module {
 				DocString: "Replace selections by clipboard content",
 				Run:       kit.Runner(action.ClipboardReplace),
 				Modes:     []string{"NOR", "SEL"},
-				Aliases:   []string{"clipboard-paste-replace"},
 				Keys:      kit.Keys(spc(kit.Char('R'))),
 				Signature: kit.Sig(),
 			},
@@ -145,7 +144,6 @@ func DocumentModule() command.Module {
 				Name:      actPrimaryClipboardReplace,
 				DocString: "Replace selections by primary clipboard",
 				Run:       kit.Runner(action.PrimaryClipboardReplace),
-				Aliases:   []string{"primary-clipboard-paste-replace"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -156,7 +154,6 @@ func DocumentModule() command.Module {
 					e.ResetRegister()
 					return command.Result{Message: "register cleared"}
 				},
-				Aliases:   []string{"clear-register"},
 				Signature: kit.Sig(),
 			},
 		},

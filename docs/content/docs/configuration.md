@@ -77,6 +77,7 @@ theme = "frappe"   # frappe | latte | macchiato | mocha
 | `insecure` | bool | `false` | Disable workspace trust checks |
 | `editor-config` | bool | `true` | Respect `.editorconfig` files |
 | `auto-session` | bool | `true` | Save/restore session automatically |
+| `nerd-fonts` | bool | `true` | Use Nerd Font icons in pickers and completion |
 | `default-line-ending` | string | (system) | `lf`, `crlf`, or `native` |
 
 ### Display

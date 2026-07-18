@@ -24,6 +24,7 @@ type (
 		refreshGen int
 		manual     bool
 		incomplete bool
+		nerd       bool
 	}
 
 	completionAnchor struct {
@@ -148,6 +149,7 @@ func (c *completionComponent) Layout(
 	if !c.valid(cx) || len(c.items) == 0 {
 		return Bounds{}, false
 	}
+	c.nerd = cx.Editor.Options().NerdFonts
 	x, y := c.popupPos(screenH, cx)
 	w := c.width()
 	rows := min(len(c.items), completionMaxRows)
@@ -168,6 +170,7 @@ func (c *completionComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
 }
 
 func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
+	c.nerd = cx.Editor.Options().NerdFonts
 	query, _ := c.query(cx)
 	w, h := pl.w, pl.h
 	c.bounds = pl

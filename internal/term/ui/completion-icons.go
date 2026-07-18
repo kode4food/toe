@@ -1,6 +1,6 @@
 package ui
 
-var completionKindCodicons = map[string]string{
+var completionKindIcons = map[string]string{
 	"text":        "\uea93", // '' - symbol-text: text/string icon
 	"function":    "\uea8c", // '' - symbol-method: function/method icon
 	"method":      "\uea8c", // '' - symbol-method: function/method icon
@@ -28,17 +28,50 @@ var completionKindCodicons = map[string]string{
 	"enum_member": "\ueb5e", // '' - symbol-enum-member: enum-member icon
 }
 
-func completionKindMarker(kind string) string {
+// completionKindAscii maps completion kinds to short labels for terminals
+// without Nerd Font glyphs
+var completionKindAscii = map[string]string{
+	"text":        "Txt",
+	"function":    "Fun",
+	"method":      "Mth",
+	"constructor": "Ctr",
+	"field":       "Fld",
+	"variable":    "Var",
+	"class":       "Cls",
+	"interface":   "Ifc",
+	"module":      "Mod",
+	"property":    "Prp",
+	"unit":        "Unt",
+	"value":       "Val",
+	"enum":        "Enm",
+	"keyword":     "Kwd",
+	"snippet":     "Snp",
+	"color":       "Clr",
+	"file":        "Fil",
+	"reference":   "Ref",
+	"folder":      "Dir",
+	"constant":    "Cst",
+	"struct":      "Sct",
+	"event":       "Evt",
+	"operator":    "Opr",
+	"type_param":  "Tpm",
+	"enum_member": "Emb",
+}
+
+func completionKindMarker(kind string, nerd bool) string {
 	if kind == "" {
 		return ""
 	}
-	icon := completionKindCodicon(kind)
+	icon := completionKindIcon(kind, nerd)
 	if icon == "" {
 		return "?"
 	}
 	return icon
 }
 
-func completionKindCodicon(kind string) string {
-	return completionKindCodicons[kind]
+func completionKindIcon(kind string, nerd bool) string {
+	if nerd {
+		return completionKindIcons[kind]
+	}
+	return completionKindAscii[kind]
 }

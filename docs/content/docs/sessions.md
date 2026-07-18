@@ -5,7 +5,7 @@ weight: 40
 
 # Sessions
 
-toe can save and restore your editing session: the set of open documents, split layout, cursor positions, view modes, and editor options.
+toe can save and restore your editing session: open documents, image panes, terminal slots, split layout, cursor positions, view modes, and editor options.
 
 ## Session File
 
@@ -41,20 +41,24 @@ You can save or restore at any time regardless of the auto-session setting:
 :restore_session   (alias: restore-session)
 ```
 
-`save_session` writes the current state to `.toe/session.toml`. `restore_session` reads it back, reopening all documents and restoring split layout.
+`save_session` writes the current state to `.toe/session.toml`. `restore_session` reads it back, reopening documents, image panes, and terminal slots while restoring split layout.
 
 ## What Is Saved
 
 | Item | Saved |
 |------|-------|
 | Open documents | ✓ |
+| Image panes | ✓ |
+| Terminal panes | ✓ |
 | Split layout (horizontal/vertical) | ✓ |
 | Cursor position per view | ✓ |
 | Scroll offset per view | ✓ |
-| View mode (normal/insert/select) | ✓ |
+| View mode (normal/insert/select/image/terminal) | ✓ |
 | Free-scroll flag | ✓ |
 | Selection per view | ✓ |
 | Editor options (from `:set`) | ✓ |
 
 Undo history is **not** saved. Each document starts with a fresh history after
 restore.
+
+Terminal panes restore as fresh shells. toe saves the pane path, using the shell's OSC 7 current-directory report when available.

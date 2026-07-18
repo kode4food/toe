@@ -35,6 +35,17 @@ func TestOptionHelperDefaults(t *testing.T) {
 		assert.False(t, e.Options().SearchWrapAround)
 	})
 
+	t.Run("nerd-fonts defaults on, override off", func(t *testing.T) {
+		e, _, reg := test.EnvWithRegistry(t, "")
+		assert.NoError(t, reg.ApplyTOML(e, map[string]any{}))
+		assert.True(t, e.Options().NerdFonts)
+
+		assert.NoError(t, reg.ApplyTOML(e, map[string]any{
+			"editor": map[string]any{"nerd-fonts": false},
+		}))
+		assert.False(t, e.Options().NerdFonts)
+	})
+
 	t.Run("non-nil ints applied", func(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		assert.NoError(t, reg.ApplyTOML(e, map[string]any{

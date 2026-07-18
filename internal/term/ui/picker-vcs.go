@@ -22,6 +22,15 @@ const (
 )
 
 var (
+	changedFileScopes = [...]string{
+		view.FileChangeUntracked: "diff.plus",
+		view.FileChangeAdded:     "diff.plus",
+		view.FileChangeModified:  "diff.delta",
+		view.FileChangeConflict:  "error",
+		view.FileChangeDeleted:   "diff.minus",
+		view.FileChangeRenamed:   "diff.delta.moved",
+	}
+
 	changedFileIcons = [...]string{
 		view.FileChangeUntracked: fileUntrackedIcon,
 		view.FileChangeAdded:     fileAddedIcon,
@@ -31,13 +40,13 @@ var (
 		view.FileChangeRenamed:   fileRenamedIcon,
 	}
 
-	changedFileScopes = [...]string{
-		view.FileChangeUntracked: "diff.plus",
-		view.FileChangeAdded:     "diff.plus",
-		view.FileChangeModified:  "diff.delta",
-		view.FileChangeConflict:  "error",
-		view.FileChangeDeleted:   "diff.minus",
-		view.FileChangeRenamed:   "diff.delta.moved",
+	changedFileAscii = [...]string{
+		view.FileChangeUntracked: "?",
+		view.FileChangeAdded:     "A",
+		view.FileChangeModified:  "M",
+		view.FileChangeConflict:  "!",
+		view.FileChangeDeleted:   "D",
+		view.FileChangeRenamed:   "R",
 	}
 )
 
@@ -75,12 +84,13 @@ func (c *changedFilePickerSource) Load(
 		cwd = resolved
 	}
 
+	nerd := e.Options().NerdFonts
 	feed := make(chan PickerItem)
 	done := make(chan struct{})
 	go func() {
 		defer close(feed)
 		for _, fc := range changes {
-			item := changedFileItem(vc, fc, cwd)
+			item := changedFileItem(vc, fc, cwd, nerd)
 			select {
 			case feed <- item:
 			case <-done:
@@ -116,7 +126,7 @@ func (c *changedFilePickerSource) Accept(
 }
 
 func changedFileItem(
-	vc view.VersionControl, fc view.FileChange, cwd string,
+	vc view.VersionControl, fc view.FileChange, cwd string, nerd bool,
 ) PickerItem {
 	display := view.DocumentRelativeName(fc.Path, cwd)
 	if fc.Kind == view.FileChangeRenamed {
@@ -126,7 +136,7 @@ func changedFileItem(
 	hunks := changedFileHunks(vc, fc)
 	return PickerItem{
 		Display:     display,
-		Columns:     []string{changedFileIcon(fc.Kind), display},
+		Columns:     []string{changedFileIcon(fc.Kind, nerd), display},
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
 		SortKey:     display,
 		DiffHunks:   hunks,
@@ -158,11 +168,17 @@ func firstChangeLines(hunks []view.DiffHunk) *PickerLineRange {
 	return &PickerLineRange{From: h.From, To: max(h.From, h.To-1)}
 }
 
-func changedFileIcon(kind view.FileChangeKind) string {
-	if kind < 0 || int(kind) >= len(changedFileIcons) {
-		return fileModifiedIcon
+func changedFileIcon(kind view.FileChangeKind, nerd bool) string {
+	icons := changedFileIcons
+	fallback := fileModifiedIcon
+	if !nerd {
+		icons = changedFileAscii
+		fallback = "M"
 	}
-	return changedFileIcons[kind]
+	if kind < 0 || int(kind) >= len(icons) {
+		return fallback
+	}
+	return icons[kind]
 }
 
 func changedFileScope(kind view.FileChangeKind) string {

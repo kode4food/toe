@@ -11,6 +11,8 @@ toe is a modal terminal editor built for Go development. toe edits Go projects, 
 
 - Go 1.26 or later
 - A terminal with ANSI color support
+- A Kitty graphics capable terminal for inline image display: kitty, Ghostty, WezTerm, or Konsole
+- Optional Nerd Font glyphs for richer picker/completion icons; set `nerd-fonts = false` for ASCII fallbacks
 
 ## Installing
 
@@ -43,6 +45,8 @@ toe is a modal editor. Every key press means something different depending on th
 | **Normal** | `Escape` (or start here) | Navigation, commands, editing operations |
 | **Insert** | `i`, `a`, `o`, `A`, `I`, `O` | Type text |
 | **Select** | `v` | Extend and manipulate selections |
+| **Image** | Open or focus an image pane | Zoom and window commands |
+| **Terminal** | Open or focus a terminal pane | Shell input and window commands |
 
 The mode is shown in the status bar at the bottom of the screen.
 
@@ -78,6 +82,8 @@ Space+/       global search
 ```
 
 Start typing to filter. `Enter` opens the selection.
+
+Image files open in image panes when the terminal supports the Kitty graphics protocol. File picker previews also show PNG, JPEG, and GIF images in the preview pane.
 
 ### Splits
 

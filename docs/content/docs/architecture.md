@@ -11,7 +11,7 @@ toe is a Go-native modal terminal editor built on Bubbletea, Lipgloss, Tree-sitt
 
 - **toe edits Go projects, not the universe.** Features exist because Go development needs them, not because other editors have them.
 - **Persistent editing values.** The core text and edit values (`Rope`, `ChangeSet`, `Transaction`, `Selection`, and `Range`) return new values rather than mutating their inputs. `History` is the exception in the current implementation: it is owned by a document and mutates its revision cursor and revision list while storing immutable transactions.
-- **Modular ownership.** LSP, VCS, pickers, themes, and command modules keep their state and configuration close to the module that owns the behavior. The editor exposes narrow interfaces where decoupled services need to plug in.
+- **Modular ownership.** LSP, VCS, pickers, image display, themes, and command modules keep their state and configuration close to the module that owns the behavior. The editor exposes narrow interfaces where decoupled services need to plug in.
 - **Render once, cache everything expensive.** The render path runs on every keystroke. Parsed syntax queries, syntax caches, raw document text, highlight spans, search spans, preview entries, and line-prefix scans are cached and invalidated by revision or input changes.
 
 ## Package Layers
@@ -28,7 +28,7 @@ Persistent text (`Rope`), selections, ranges, movement, transactions (`ChangeSet
 
 Packages: `internal/view` and its subpackages.
 
-The editor, documents, view tree (splits), sessions, file I/O, overlays, diagnostics, and service interfaces. A `Document` owns text, revision, language, history, diagnostics, LSP overlay state, and per-view selections; a `View` is a window onto a document; the `Editor` owns the document table, split tree, focus, runtime options, registers, document observers, and optional service controllers. Subpackages:
+The editor, documents, pane tree (splits), sessions, file I/O, overlays, diagnostics, and service interfaces. A `Document` owns text, revision, language, history, diagnostics, LSP overlay state, and per-view selections; a `View` is a window onto a document. Image and terminal panes are separate pane implementations with their own rendering and persistence. The `Editor` owns the document table, split tree, focus, runtime options, registers, document observers, and optional service controllers. Subpackages:
 
 - `view/config` — raw editor config loading/merging and EditorConfig support.
 - `view/language` — language configuration, matching, formatter metadata, server metadata, indentation, auto-pair, and soft-wrap settings.
@@ -39,15 +39,15 @@ The editor, documents, view tree (splits), sessions, file I/O, overlays, diagnos
 
 ### Command System
 
-Packages: `internal/term/command`, `internal/term/defaults`.
+Packages: `internal/term/command`, `internal/term/builtin`.
 
-`term/command` provides the machinery: command signatures, argument parsing, tokenization and expansion, completion, key parsing, key tries, keymaps, option registration, config sections, and the registry. `term/defaults` provides the content: built-in command modules, default key bindings, module-owned config structs, and live option handlers. Many commands resolve directly to `view/action` calls; others bridge to the UI model, LSP, VCS, shell commands, sessions, or config reload.
+`term/command` provides the machinery: command signatures, argument parsing, tokenization and expansion, completion, key parsing, key tries, keymaps, option registration, config sections, and the registry. `term/builtin` provides the content: built-in command modules, default key bindings, module-owned config structs, and live option handlers. Many commands resolve directly to `view/action` calls; others bridge to the UI model, LSP, VCS, shell commands, sessions, or config reload.
 
 ### Terminal UI
 
 Packages: `internal/term/ui`, `internal/tui`.
 
-`term/ui` contains the Bubbletea model: the document renderer, status line, prompt, pickers, completion popup, hover and signature popups, overlays, macro handling, mouse handling, and event routing. `internal/tui` is the low-level terminal layer: cell buffers, styles, graphics primitives, spans, and ANSI rendering.
+`term/ui` contains the Bubbletea model: document, image, and terminal pane rendering; status lines; prompt; pickers; completion popup; hover and signature popups; overlays; macro handling; mouse handling; and event routing. `internal/tui` is the low-level terminal layer: cell buffers, styles, Kitty graphics primitives, spans, and ANSI rendering.
 
 Every overlay (completion, hover, signature help, code actions, pickers, the command prompt) implements `BufferOverlayComponent`: `Layout` reports where it goes and how big it is, `PaintBuffer` draws into a buffer it owns, and the compositor blits that buffer onto the frame at the reported position. Each overlay caches its own paint buffer and skips repainting when nothing about it changed since the last frame (size, content, and theme all unchanged), so a popup that only moves re-blits instead of redrawing. Bordered popups share the `popup` helper so content and border render in one pass.
 
@@ -55,7 +55,7 @@ Every overlay (completion, hover, signature help, code actions, pickers, the com
 
 Packages: `internal/term/syntax`, `internal/term/highlight`, `internal/term/theme`.
 
-`syntax` owns the Tree-sitter language registry, embedded highlight, injection, and textobject queries, query inheritance, parser/query caches, Tree-sitter tokenization, syntax-aware selection, bracket matching, and surround-pair lookup for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto Lipgloss styles. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path.
+`syntax` owns the Tree-sitter language registry, embedded highlight, injection, and textobject queries, query inheritance, parser/query caches, Tree-sitter tokenization, syntax-aware selection, bracket matching, and surround-pair lookup for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto Lipgloss styles. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path. Binary picker previews decode PNG, JPEG, and GIF files into image previews when supported.
 
 Highlight queries are bundled for every supported Tree-sitter language. Injection and textobject queries are bundled where toe has behavior that consumes them.
 
@@ -88,7 +88,7 @@ Because document text is a persistent `Rope`, background workers can keep the te
 
 - **Languages and language servers** — add or override `[[language]]` entries and `[language-server.<name>]` sections in the merged `languages.toml` data. No code changes are needed for a new server. Tree-sitter highlighting for a new language requires adding the grammar import to `internal/term/syntax`, registering it in the language registry, and bundling a highlight query.
 - **VCS providers** — implement the `vcs.Provider` interface. The registry currently installs Git directly in `NewRegistry`, so adding another provider also requires wiring it into that constructor. The editor consumes only the `view.VersionControl` seam.
-- **Commands** — add a command module under `term/defaults` that registers signatures against the command registry. Registered commands automatically participate in key binding, prompt completion, and the command palette.
+- **Commands** — add a command module under `term/builtin` that registers signatures against the command registry. Registered commands automatically participate in key binding, prompt completion, and the command palette.
 - **Actions** — put reusable editing behavior in `view/action` so commands, keymaps, and UI components can share it.
 - **Themes** — themes are TOML scope-to-style maps decoded by `internal/term/theme` and loaded through `loader`. The four embedded Catppuccin variants (`latte`, `frappe`, `macchiato`, `mocha`) are the supported theme names today.
 - **Clipboard** — register yanks and pastes use `view/register`. System clipboard actions detect external tools (`pbcopy`/`pbpaste`, `xclip`, `xsel`, or `wl-copy`/`wl-paste`) directly in `view/action`. An OSC 52 layer wraps the system clipboard so a copy also reaches the clipboard of a terminal reached over SSH; custom command providers are not implemented yet.

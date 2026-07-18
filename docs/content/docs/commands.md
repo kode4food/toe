@@ -58,6 +58,16 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 | `wclose!` | `wc!` | Force close window |
 | `wonly` | `wo` | Close windows except current |
 
+Splitting a document or image pane creates another view of the same document or image. Splitting a terminal starts a new shell.
+
+## Image
+
+| Command | Aliases | Description |
+|---------|---------|-------------|
+| `image_zoom_in` | `zoom-in` | Zoom image in |
+| `image_zoom_out` | `zoom-out` | Zoom image out |
+| `image_zoom_reset` | `zoom-reset` | Fit image to pane |
+
 ## Quit
 
 | Command | Aliases | Description |
@@ -111,6 +121,24 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 |---------|---------|-------------|
 | `save_session` | `save-session` | Save session to the workspace session file |
 | `restore_session` | `restore-session` | Restore session from the workspace session file |
+
+## Pickers
+
+| Command | Aliases | Description |
+|---------|---------|-------------|
+| `file_picker` | | Open file picker |
+| `file_picker_in_current_dir` | | Open file picker at current working directory |
+| `file_explorer` | | Open file explorer at workspace root |
+| `file_explorer_in_current_pane_dir` | | Open file explorer at current pane's directory |
+| `buffer_picker` | | Open buffer picker |
+| `diagnostic_picker` | | Open diagnostic picker |
+| `workspace_diagnostics_picker` | | Open workspace diagnostic picker |
+| `global_search` | | Global search in workspace folder |
+| `command_palette` | | Open command palette |
+| `last_picker` | | Reopen the last picker |
+| `jumplist_picker` | | Open jumplist picker |
+
+File picker previews show text, directory contents, and supported image files. Image preview requires a Kitty graphics capable terminal.
 
 ## Format
 

@@ -16,6 +16,7 @@ type Options struct {
 	ScrollLines          int
 	Mouse                bool
 	MiddleClickPaste     bool
+	NerdFonts            bool
 	Shell                []string
 	AutoSaveFocusLost    bool
 	AutoSaveAfterDelay   bool
@@ -140,6 +141,7 @@ func defaultOptions() Options {
 		ScrollLines:          DefaultScrollLines,
 		Mouse:                true,
 		MiddleClickPaste:     true,
+		NerdFonts:            true,
 		Shell:                DefaultShell(),
 		AtomicSave:           true,
 		InsertFinalNewline:   true,

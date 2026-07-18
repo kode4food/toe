@@ -16,6 +16,7 @@ type uiSection struct {
 	Editor struct {
 		Mouse             *bool            `toml:"mouse"`
 		MiddleClickPaste  *bool            `toml:"middle-click-paste"`
+		NerdFonts         *bool            `toml:"nerd-fonts"`
 		Insecure          *bool            `toml:"insecure"`
 		EditorConfig      *bool            `toml:"editor-config"`
 		AutoSession       *bool            `toml:"auto-session"`
@@ -82,6 +83,14 @@ func ConfigurationModule(r *command.Registry) command.Module {
 				},
 				func(e *view.Editor, v bool) {
 					e.Options().MiddleClickPaste = v
+				},
+			),
+			kit.EditorBoolOption("nerd-fonts",
+				func(e *view.Editor) bool {
+					return e.Options().NerdFonts
+				},
+				func(e *view.Editor, v bool) {
+					e.Options().NerdFonts = v
 				},
 			),
 			kit.EditorBoolOption("insecure",
@@ -180,6 +189,7 @@ func ConfigurationModule(r *command.Registry) command.Module {
 				opts.MiddleClickPaste = kit.BoolOr(
 					cfg.Editor.MiddleClickPaste, true,
 				)
+				opts.NerdFonts = kit.BoolOr(cfg.Editor.NerdFonts, true)
 				opts.Insecure = kit.BoolOr(cfg.Editor.Insecure, false)
 				opts.EditorConfig = kit.BoolOr(cfg.Editor.EditorConfig, true)
 				opts.AutoSession = kit.BoolOr(
@@ -187,9 +197,15 @@ func ConfigurationModule(r *command.Registry) command.Module {
 				)
 				opts.DefaultLineEnding = cfg.Editor.DefaultLineEnding
 				opts.CursorShape = view.CursorShape{
-					Normal: cmp.Or(cfg.Editor.CursorShape.Normal, view.CursorKindBlock),
-					Insert: cmp.Or(cfg.Editor.CursorShape.Insert, view.CursorKindBar),
-					Select: cmp.Or(cfg.Editor.CursorShape.Select, view.CursorKindUnderline),
+					Normal: cmp.Or(
+						cfg.Editor.CursorShape.Normal, view.CursorKindBlock,
+					),
+					Insert: cmp.Or(
+						cfg.Editor.CursorShape.Insert, view.CursorKindBar,
+					),
+					Select: cmp.Or(
+						cfg.Editor.CursorShape.Select, view.CursorKindUnderline,
+					),
 				}
 				opts.StatusLine = cfg.Editor.StatusLine
 			},

@@ -200,6 +200,8 @@ weight: 30
 
 All `Ctrl+w` bindings also work with `Space+w`.
 
+When a document or image pane is split, the new pane shows the same document or image. Splitting a terminal starts a new shell.
+
 ### Terminal Panes
 
 While a terminal pane has focus, all keys pass through to the shell except
@@ -211,6 +213,20 @@ While a terminal pane has focus, all keys pass through to the shell except
 | `Ctrl+]` | Close: kill the shell and restore what the pane showed before |
 | Mouse wheel | Scroll into scrollback; any keypress returns to live output |
 | Mouse click/drag/wheel | Forwarded to the shell if it enabled mouse tracking (e.g. vim, htop) |
+
+### Image Panes
+
+Image panes use IMG mode. The command prompt and window menu still work, filtered to commands that apply to images.
+
+| Key | Action |
+|-----|--------|
+| `:` | Enter command mode |
+| `+` / `=` | Zoom image in |
+| `-` | Zoom image out |
+| `0` | Fit image to pane |
+| Mouse wheel | Zoom image in or out |
+| Mouse click | Focus image pane |
+| `Ctrl+w` / `Space+w` | Window menu |
 
 ### Space Menu
 
@@ -232,7 +248,7 @@ While a terminal pane has focus, all keys pass through to the shell except
 | `Space+F` | Open file picker at current working directory |
 | `Space+g` | Open changed-file picker |
 | `Space+e` | Open file explorer at workspace root |
-| `Space+.` | Open file explorer at current buffer's directory |
+| `Space+.` | Open file explorer at current pane's directory |
 | `Space+b` | Open buffer picker |
 | `Space+j` | Open jumplist picker |
 | `Space+/` | Global search in workspace folder |

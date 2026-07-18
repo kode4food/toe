@@ -27,7 +27,10 @@ const (
 	PickerStartPrevious PickerStartPosition = "previous"
 )
 
-const bufferPickerModifiedIcon = "\uf448" //  - pencil icon
+const (
+	bufferPickerModifiedIcon      = "\uf448" //  - pencil icon
+	bufferPickerModifiedIconAscii = "*"
+)
 
 var ErrInvalidPickerStart = errors.New("invalid picker start position")
 
@@ -73,11 +76,15 @@ func (b *bufferPickerSource) Load(
 		return cmp.Compare(a.ID(), b.ID())
 	})
 
+	modifiedIcon := bufferPickerModifiedIcon
+	if !e.Options().NerdFonts {
+		modifiedIcon = bufferPickerModifiedIconAscii
+	}
 	items := make([]ui.PickerItem, 0, len(docs))
 	for _, doc := range docs {
 		flags := ""
 		if doc.Modified() {
-			flags = bufferPickerModifiedIcon
+			flags = modifiedIcon
 		}
 		name := doc.RelativeName(e.Cwd())
 		items = append(items, ui.PickerItem{

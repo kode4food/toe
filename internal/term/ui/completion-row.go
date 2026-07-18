@@ -94,7 +94,7 @@ func (c *completionComponent) rowLeft(
 func (c *completionComponent) rowParts(
 	item view.CompletionItem, selected bool,
 ) completionRowParts {
-	return completionRowPartsFor(item, selected)
+	return completionRowPartsFor(item, selected, c.nerd)
 }
 
 func (c *completionComponent) renderScroll(
@@ -114,10 +114,10 @@ func (c *completionComponent) renderScroll(
 }
 
 func completionRowPartsFor(
-	item view.CompletionItem, selected bool,
+	item view.CompletionItem, selected, nerd bool,
 ) completionRowParts {
 	parts := completionRowParts{
-		icon:  completionKindMarker(item.Kind),
+		icon:  completionKindMarker(item.Kind, nerd),
 		label: item.Label,
 	}
 	if selected {

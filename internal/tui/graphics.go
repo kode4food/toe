@@ -1,5 +1,7 @@
 package tui
 
+import "github.com/charmbracelet/x/ansi/kitty"
+
 type (
 	Style struct {
 		fg, bg, underlineColor Color
@@ -25,6 +27,9 @@ const (
 	UnderlineDashed
 	UnderlineDoubleLine
 )
+
+// PlaceholderRune is kitty's Unicode image placeholder
+const PlaceholderRune = kitty.Placeholder
 
 const (
 	ModifierBold       Modifier = 0b0000_0000_0001
@@ -85,6 +90,18 @@ func ColorIndexed(idx uint8) Color {
 
 func ColorRGB(r, g, b uint8) Color {
 	return Color{kind: colorRGB, r: r, g: g, b: b}
+}
+
+// ImageColor encodes a 24-bit image id as a terminal colour
+func ImageColor(id uint32) Color {
+	return ColorRGB(uint8(id>>16), uint8(id>>8), uint8(id))
+}
+
+// PlaceholderSymbol builds the cell content for image row and column
+func PlaceholderSymbol(row, col int) string {
+	return string([]rune{
+		kitty.Placeholder, kitty.Diacritic(row), kitty.Diacritic(col),
+	})
 }
 
 func (s Style) Fg(c Color) Style {

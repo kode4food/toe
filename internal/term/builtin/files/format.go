@@ -33,6 +33,7 @@ func FormatModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return runFormatter(e)
 				},
+				Modes:     command.DocumentModes(),
 				Aliases:   []string{"fmt"},
 				Signature: kit.Sig(),
 			},
@@ -65,6 +66,7 @@ func FormatModule() command.Module {
 					action.ReflowSelections(e, width)
 					return command.Result{}
 				},
+				Modes:     []string{"NOR", "SEL"},
 				Signature: kit.OptionalArg(),
 			},
 			{
@@ -79,6 +81,7 @@ func FormatModule() command.Module {
 					}
 					return command.Result{}
 				},
+				Modes: []string{"NOR", "SEL"},
 				Signature: command.Signature{
 					Flags: []command.Flag{
 						{Name: "reverse", Alias: 'r'},

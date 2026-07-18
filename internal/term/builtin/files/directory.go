@@ -26,6 +26,7 @@ func DirectoryModule() command.Module {
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					return cdResult(e, args, e.Chdir)
 				},
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"change-current-directory", "cd"},
 				Signature: kit.MinArgs(1),
 			},
@@ -35,6 +36,7 @@ func DirectoryModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: e.Cwd()}
 				},
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"pwd"},
 				Signature: kit.Sig(),
 			},
@@ -47,6 +49,7 @@ func DirectoryModule() command.Module {
 						Message: strings.Join(e.DirStack(), "\n"),
 					}
 				},
+				Modes:     command.PaneModes(),
 				Signature: kit.Sig(),
 			},
 			{
@@ -55,6 +58,7 @@ func DirectoryModule() command.Module {
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					return cdResult(e, args, e.PushDirectory)
 				},
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"pushd"},
 				Signature: kit.MinArgs(1),
 			},
@@ -68,6 +72,7 @@ func DirectoryModule() command.Module {
 					}
 					return command.Result{Message: "directory: " + e.Cwd()}
 				},
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"popd"},
 				Signature: kit.Sig(),
 			},

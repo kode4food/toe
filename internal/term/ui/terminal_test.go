@@ -3,6 +3,7 @@ package ui_test
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,9 +17,24 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestTerminalPane(t *testing.T) {
+	t.Run("supports pane split", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		e.ResizeTree(80, 24)
+		m := renderedModel(e)
+		_ = m.TerminalAction()(e)
+		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
+
+		action.VSplit(e)
+
+		assert.Equal(t, 2, e.Tree().Count())
+		_, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+	})
+
 	t.Run("opens in place and restores on close", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
@@ -29,7 +45,7 @@ func TestTerminalPane(t *testing.T) {
 
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		select {
 		case <-tp.Updates():
@@ -56,7 +72,7 @@ func TestTerminalPane(t *testing.T) {
 
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		select {
 		case <-tp.Updates():
@@ -86,7 +102,7 @@ func TestTerminalPane(t *testing.T) {
 		termID := e.Tree().Focus()
 		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		area := tp.Area()
 
 		e.FocusNextView()
@@ -112,7 +128,7 @@ func TestTerminalPane(t *testing.T) {
 
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		select {
 		case <-tp.Updates():
@@ -129,7 +145,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		for _, sgr := range []string{"4", "4:2", "4:3", "4:4", "4:5"} {
 			_, err := tp.Emulator().Write(
@@ -151,7 +167,7 @@ func TestTerminalPane(t *testing.T) {
 		termID := e.Tree().Focus()
 		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		area := tp.Area()
 
 		_, err := tp.Emulator().Write([]byte("\x1b[?1000h"))
@@ -179,25 +195,28 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
+		termDir := filepath.Join(dir, "term")
+		assert.NoError(t, os.Mkdir(termDir, 0o755))
+		tp.IngestOutput(
+			[]byte("\x1b]7;file://localhost" + termDir + "\x07"),
+		)
 
 		sessionPath := filepath.Join(dir, "session.toml")
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(80, 24)
+		_ = ui.New(next, command.NewKeymaps()) // registers pane restorers
 		_, restored, err := next.RestoreSession(sessionPath)
 		assert.NoError(t, err)
 		assert.True(t, restored)
 
-		nextModel := ui.New(next, command.NewKeymaps())
-		nextModel.RestoreTerminalPanes(next)
-
 		focus := next.Tree().Focus()
 		reopened, ok := next.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = reopened.Close() })
-		assert.Empty(t, next.TakePendingTerminals())
+		t.Cleanup(func() { _ = reopened.Stop() })
+		assert.Equal(t, termDir, reopened.Path())
 	})
 
 	t.Run("OSC title updates the status label", func(t *testing.T) {
@@ -208,7 +227,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		assert.Equal(t, "", tp.Title())
 
@@ -216,6 +235,50 @@ func TestTerminalPane(t *testing.T) {
 		assert.Equal(t, "MYTITLE", tp.Title())
 
 		assert.Contains(t, m.View().Content, "MYTITLE")
+	})
+
+	t.Run("path starts at editor cwd", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+
+		assert.Equal(t, e.Cwd(), tp.Path())
+	})
+
+	t.Run("OSC 7 updates path", func(t *testing.T) {
+		dir := t.TempDir()
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+
+		tp.IngestOutput([]byte("\x1b]7;file://localhost" + dir + "\x07"))
+
+		assert.Equal(t, dir, tp.Path())
+	})
+
+	t.Run("OSC 7 unescapes path", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := renderedModel(e)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+
+		tp.IngestOutput([]byte("\x1b]7;file://localhost/tmp/a%20b\x07"))
+
+		assert.Equal(t, "/tmp/a b", tp.Path())
 	})
 
 	t.Run("mouse wheel scrolls into scrollback", func(t *testing.T) {
@@ -226,7 +289,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
@@ -254,7 +317,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		assert.False(t, tp.MouseEnabled())
 
@@ -275,7 +338,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
@@ -298,7 +361,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
 		m = m2.(ui.Model)
@@ -317,7 +380,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		area := tp.Area()
 		writeScrollbackLines(t, tp, 50)
 		tp.ScrollLines(50)
@@ -341,7 +404,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		area := tp.Area()
 
 		_, err := tp.Emulator().Write([]byte("\x1b[?1000h"))
@@ -369,7 +432,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		area := tp.Area()
 
 		_, err := tp.Emulator().Write([]byte("\x1b[?1000h"))
@@ -393,7 +456,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		area := tp.Area()
 		assert.False(t, tp.MouseEnabled())
 
@@ -416,7 +479,7 @@ func TestTerminalPane(t *testing.T) {
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
 
-		assert.NoError(t, tp.Close())
+		assert.NoError(t, tp.Stop())
 		<-tp.Closed()
 
 		batch, ok := m.Init()().(tea.BatchMsg)
@@ -460,7 +523,7 @@ func TestTerminalPane(t *testing.T) {
 		focus := e.Tree().Focus()
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
@@ -488,7 +551,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 
 		e.WriteRegister(view.RegisterClipboard, []string{"pasted-text"})
@@ -512,7 +575,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		payload := base64.StdEncoding.EncodeToString([]byte("nested-copy"))
 		tp.IngestOutput(fmt.Appendf(nil, "\x1b]52;c;%s\x07", payload))
@@ -532,7 +595,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		tp.IngestOutput([]byte("\x1b]52;c;?\x07"))
 		time.Sleep(20 * time.Millisecond)
@@ -553,7 +616,7 @@ func TestTerminalPane(t *testing.T) {
 		termID := e.Tree().Focus()
 		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		e.FocusNextView()
 		assert.NotEqual(t, termID, e.Tree().Focus())
@@ -579,7 +642,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 
 		_, err := tp.Emulator().Write([]byte("COPYME"))
@@ -614,7 +677,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 
@@ -650,7 +713,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 		assert.Equal(t, 0, tp.ScrollOffset())
@@ -691,7 +754,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 
 		tp.IngestOutput([]byte("RESIZESURVIVOR\r\n$ "))
@@ -738,7 +801,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Nil(t, cont)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 
@@ -756,11 +819,12 @@ func TestTerminalPane(t *testing.T) {
 
 func TestTerminalResize(t *testing.T) {
 	t.Run("reflows the emulator synchronously", func(t *testing.T) {
-		tp, err := ui.NewTerminalPane("cat", 20, 10, nil)
+		e := view.NewEditor(t.TempDir())
+		tp, err := ui.NewTerminalPane(e, "cat", 20, 10)
 		if !assert.NoError(t, err) {
 			return
 		}
-		t.Cleanup(func() { _ = tp.Close() })
+		t.Cleanup(func() { _ = tp.Stop() })
 
 		tp.SetArea(view.Area{Width: 30, Height: 12})
 

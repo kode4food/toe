@@ -17,7 +17,7 @@ func newTerminalPane(t *testing.T) (ui.Model, *ui.TerminalPane) {
 	assert.Nil(t, cont)
 	tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 	assert.True(t, ok)
-	t.Cleanup(func() { _ = tp.Close() })
+	t.Cleanup(func() { _ = tp.Stop() })
 	waitForResize(t, tp)
 	return m, tp
 }

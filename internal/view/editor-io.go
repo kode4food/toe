@@ -44,8 +44,14 @@ func (e *Editor) NewDocument() *View {
 		e.markDocAccessed()
 		return v
 	}
-	nv := &View{docID: doc.ID(), mode: ModeNormal}
-	e.tree.Insert(nv)
+	nv := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	if e.tree.Get(e.tree.Focus()) == nil {
+		e.tree.Insert(nv)
+		e.markDocAccessed()
+		return nv
+	}
+	old := e.ReplacePane(e.tree.Focus(), nv)
+	e.DiscardPane(old)
 	e.markDocAccessed()
 	return nv
 }
@@ -233,6 +239,25 @@ func (e *Editor) SwitchBuffer(did DocumentId) bool {
 		return true
 	}
 	return false
+}
+
+// ShowDocument displays an open document in the focused pane
+func (e *Editor) ShowDocument(did DocumentId) (*View, bool) {
+	if e.SwitchBuffer(did) {
+		return e.FocusedView()
+	}
+	if _, ok := e.docs[did]; !ok {
+		return nil, false
+	}
+	id := e.tree.Focus()
+	if e.tree.Get(id) == nil {
+		return nil, false
+	}
+	v := &View{editor: e, docID: did, mode: ModeNormal}
+	old := e.ReplacePane(id, v)
+	e.DiscardPane(old)
+	e.markDocAccessed()
+	return v, true
 }
 
 // SwitchOrOpenDoc returns an existing document for path, opening it if needed

@@ -14,6 +14,15 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// fakePane stands in for a non-View pane (like a terminal) that persists
+// itself as a reopenable session slot
+type fakePane struct {
+	id     view.Id
+	editor *view.Editor
+	area   view.Area
+	dirty  bool
+}
+
 func TestSession(t *testing.T) {
 	t.Run("restores documents and layout", func(t *testing.T) {
 		dir := t.TempDir()
@@ -782,30 +791,38 @@ kind = "bogus"
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(80, 24)
+		// the pane rebuilds itself through its registered restorer, keyed by
+		// the kind it persisted — no switch on pane type
+		next.RegisterPaneRestorer(view.SessionKindTerminal,
+			func(e *view.Editor, _ string) (view.Pane, error) {
+				return &fakePane{editor: e}, nil
+			})
 		_, restored, err := next.RestoreSession(sessionPath)
 		assert.NoError(t, err)
 		assert.True(t, restored)
-		assert.Len(t, next.AllViews(), 2)
 
-		// the layout survives as a placeholder view; the pane id is handed
-		// back so the UI layer can reopen a real terminal there
-		pending := next.TakePendingTerminals()
-		assert.Len(t, pending, 1)
-		assert.NotNil(t, next.Tree().Get(pending[0]))
-		assert.Empty(t, next.TakePendingTerminals())
+		var restoredFake bool
+		for _, p := range next.Tree().Traverse() {
+			if _, ok := p.(*fakePane); ok {
+				restoredFake = true
+			}
+		}
+		assert.True(t, restoredFake)
 	})
 }
 
-// fakePane stands in for a non-View pane (like a terminal) that the session
-// format cannot serialize
-type fakePane struct {
-	id    view.Id
-	area  view.Area
-	dirty bool
+func (p *fakePane) ID() view.Id      { return p.id }
+func (p *fakePane) SetID(id view.Id) { p.id = id }
+func (p *fakePane) Split() (view.Pane, error) {
+	return &fakePane{editor: p.editor}, nil
 }
-
-func (p *fakePane) ID() view.Id         { return p.id }
-func (p *fakePane) SetID(id view.Id)    { p.id = id }
+func (p *fakePane) Close() {
+	if p.editor != nil {
+		p.editor.RemovePane(p.id)
+	}
+}
+func (p *fakePane) Discard()            {}
+func (p *fakePane) Shutdown()           {}
 func (p *fakePane) Area() view.Area     { return p.area }
 func (p *fakePane) SetArea(a view.Area) { p.area = a }
 func (p *fakePane) MarkDirty()          { p.dirty = true }
@@ -816,4 +833,9 @@ func (p *fakePane) ConsumeDirty() bool {
 	p.dirty = false
 	return d
 }
+
+func (p *fakePane) SaveSession(w *view.SessionWriter) {
+	w.SaveSlot(view.SessionKindTerminal, "")
+}
+func (p *fakePane) Path() string    { return "" }
 func (p *fakePane) Mode() view.Mode { return view.ModeTerminal }

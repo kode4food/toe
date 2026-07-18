@@ -27,6 +27,7 @@ func SupportModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: action.CharInfo(e)}
 				},
+				Modes:     command.DocumentModes(),
 				Aliases:   []string{"char"},
 				Signature: kit.Sig(),
 			},
@@ -39,6 +40,7 @@ func SupportModule() command.Module {
 					}
 					return command.Result{Message: args.Join(" ")}
 				},
+				Modes:     command.PaneModes(),
 				Signature: kit.Sig(),
 			},
 			{
@@ -47,6 +49,7 @@ func SupportModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalClearScreen}
 				},
+				Modes:     command.PaneModes(),
 				Signature: kit.Sig(),
 			},
 			{
@@ -68,6 +71,7 @@ func SupportModule() command.Module {
 					action.GotoLine(e, n)
 					return command.Result{}
 				},
+				Modes:     command.DocumentModes(),
 				Aliases:   []string{"g"},
 				Signature: kit.MinArgs(1),
 			},

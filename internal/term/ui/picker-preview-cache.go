@@ -38,6 +38,11 @@ type (
 
 	noPreviewEntry string
 
+	previewImageEntry struct {
+		image *Image
+		id    uint32
+	}
+
 	previewDirRow struct {
 		name string
 		dir  bool
@@ -100,7 +105,7 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	data, err := core.LoadText(path)
 	if err != nil {
 		if errors.Is(err, core.ErrBinaryFile) {
-			return noPreviewEntry("<Binary file>")
+			return binaryPreview(path)
 		}
 		return noPreviewEntry("<File not found>")
 	}
@@ -109,6 +114,17 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 	return &previewDocEntry{
 		rope: core.NewRope(text), spans: previewSpans(sc, text, lang),
 		lang: lang,
+	}
+}
+
+func binaryPreview(path string) previewCacheEntry {
+	img, err := LoadImage(path)
+	if err != nil {
+		return noPreviewEntry("<Binary file>")
+	}
+	return &previewImageEntry{
+		image: img,
+		id:    kittyImageID(img.ContentID(), 0, true),
 	}
 }
 

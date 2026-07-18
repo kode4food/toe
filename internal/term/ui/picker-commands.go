@@ -27,9 +27,9 @@ func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
 func (c *commandPaletteSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
-	cmds := c.km.Commands()
-	items := make([]PickerItem, 0, len(cmds))
 	mode := e.Mode().String()
+	cmds := c.km.CommandsIn(mode)
+	items := make([]PickerItem, 0, len(cmds))
 	for _, cmd := range cmds {
 		if cmd.Run == nil || len(cmd.Aliases) == 0 {
 			continue
@@ -52,7 +52,10 @@ func (c *commandPaletteSource) Accept(
 	e *view.Editor, item PickerItem, _ PickerAcceptAction,
 ) {
 	cmd, ok := item.Payload.(command.Command)
-	if !ok || cmd.Run == nil {
+	if !ok || cmd.Run == nil || len(cmd.Aliases) == 0 {
+		return
+	}
+	if _, ok := c.km.ResolveCommandIn(e.Mode().String(), cmd.Aliases[0]); !ok {
 		return
 	}
 	cmd.Run(e, nil)

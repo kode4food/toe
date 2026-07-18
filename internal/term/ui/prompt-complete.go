@@ -132,7 +132,8 @@ func completeCommandLine(cx *Context, input string) []promptCompletion {
 	if complete {
 		return completeCommandNames(cx, name)
 	}
-	cmd, ok := cx.Keymaps.ResolveCommand(name)
+	mode := cx.Editor.Mode().String()
+	cmd, ok := cx.Keymaps.ResolveCommandIn(mode, name)
 	if !ok {
 		return nil
 	}
@@ -150,7 +151,7 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 	out := make([]promptCompletion, 0)
 	seen := map[string]bool{}
 	input = strings.ToLower(input)
-	for _, cmd := range cx.Keymaps.Commands() {
+	for _, cmd := range cx.Keymaps.CommandsIn(cx.Editor.Mode().String()) {
 		for _, name := range cmd.Aliases {
 			if seen[name] {
 				continue

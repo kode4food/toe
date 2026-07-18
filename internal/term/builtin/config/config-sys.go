@@ -21,6 +21,7 @@ func configSystemCmds() []command.Command {
 					e, loader.ConfigFile, "config path unavailable",
 				)
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
 		},
 		{
@@ -41,6 +42,7 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{}
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
 		},
 		{
@@ -52,6 +54,7 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{Message: "config reloaded"}
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
 		},
 		{
@@ -62,6 +65,7 @@ func configSystemCmds() []command.Command {
 					e, loader.LogFile, "log path unavailable",
 				)
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
 		},
 		{
@@ -74,6 +78,7 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace trusted"}
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
 		},
 		{
@@ -86,6 +91,7 @@ func configSystemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace untrusted"}
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
 		},
 	}
@@ -125,6 +131,7 @@ func configThemeCmds() []command.Command {
 				e.Options().Theme = name
 				return command.Result{}
 			},
+			Modes:     command.PaneModes(),
 			Signature: kit.StaticSig(kit.OptionalArg(), loader.ThemeNames()...),
 		},
 	}

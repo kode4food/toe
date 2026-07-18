@@ -77,7 +77,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 	p := r.cx.Editor.Tree().Get(r.cx.Editor.Tree().Focus())
-	if pc, ok := p.(RawPane); ok {
+	if pc, ok := p.(PaneCursor); ok {
 		return pc.Cursor(r.cx)
 	}
 	opts := r.cx.Editor.Options()
@@ -206,6 +206,22 @@ func (r *renderPass) forceFullRedraw(
 	return
 }
 
+// beginPaneRedraw reports whether pane needs repainting this frame, clearing
+// its cell rectangle first on an incremental (non-full) redraw
+func (r *renderPass) beginPaneRedraw(
+	buf *tui.Buffer, pane view.Pane, y0 int, dirty, redrawAll bool,
+	bg tui.Style,
+) bool {
+	forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, pane.Area(), y0)
+	if !redrawAll && !forced && !dirty {
+		return false
+	}
+	if !redrawAll {
+		clearPaneRect(buf, pane.Area(), y0, bg)
+	}
+	return true
+}
+
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	th := r.activeTheme()
 	cache := r.ec.cache
@@ -231,28 +247,25 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if !ok {
 				return true
 			}
-			vDirty := pane.ConsumeDirty()
-			dDirty := doc.ConsumeDirty(pane.ID())
-			forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, pane.Area(), y0)
-			if !redrawAll && !forced && !vDirty && !dDirty {
-				return true
+			dirty := pane.ConsumeDirty()
+			dirty = doc.ConsumeDirty(pane.ID()) || dirty
+			if r.beginPaneRedraw(buf, pane, y0, dirty, redrawAll, bgTUI) {
+				r.renderPane(renderPaneArgs{
+					doc: doc, view: pane, buf: buf, y0: y0, focused: focused,
+				})
 			}
-			if !redrawAll {
-				clearPaneRect(buf, pane.Area(), y0, bgTUI)
+		case *ImagePane:
+			if r.beginPaneRedraw(
+				buf, pane, y0, pane.ConsumeDirty(), redrawAll, bgTUI,
+			) {
+				r.renderImagePane(buf, pane, y0, focused)
 			}
-			r.renderPane(renderPaneArgs{
-				doc: doc, view: pane, buf: buf, y0: y0, focused: focused,
-			})
 		case *TerminalPane:
-			tpDirty := pane.ConsumeDirty()
-			forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, pane.Area(), y0)
-			if !redrawAll && !forced && !tpDirty {
-				return true
+			if r.beginPaneRedraw(
+				buf, pane, y0, pane.ConsumeDirty(), redrawAll, bgTUI,
+			) {
+				r.renderTerminalPane(buf, pane, y0, focused)
 			}
-			if !redrawAll {
-				clearPaneRect(buf, pane.Area(), y0, bgTUI)
-			}
-			r.renderTerminalPane(buf, pane, y0, focused)
 		}
 		return true
 	})

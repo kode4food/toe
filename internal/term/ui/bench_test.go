@@ -7,11 +7,34 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
+
+// BenchmarkRenderImage redraws a full image pane
+func BenchmarkRenderImage(b *testing.B) {
+	root := b.TempDir()
+	path := writeRenderImage(b, root, 1600, 900, nil)
+	e := view.NewEditor(root)
+	pane, err := ui.NewImagePane(e, path)
+	if err != nil {
+		b.Fatal(err)
+	}
+	e.ReplacePane(e.Tree().Focus(), pane)
+	m := ui.New(e, command.NewKeymaps())
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 160, Height: 50})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		pane.MarkDirty()
+		_ = m.View().Content
+	}
+}
 
 // BenchmarkRenderLongLine renders a single very long line with the cursor
 // scrolled to the far right, exercising the horizontal-scroll render path
@@ -132,7 +155,7 @@ func benchTerminal(b *testing.B, fill string) {
 	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 	_ = m.TerminalAction()(e)
 	tp := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
-	b.Cleanup(func() { _ = tp.Close() })
+	b.Cleanup(func() { _ = tp.Stop() })
 	tp.IngestOutput([]byte(fill))
 	_ = m.View().Content // prime
 

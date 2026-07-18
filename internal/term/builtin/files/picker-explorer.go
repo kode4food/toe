@@ -43,16 +43,21 @@ func NewFileExplorer(e *view.Editor, opts FileExplorerOptions) *ui.Picker {
 	return ui.NewPicker(e, newFileExplorerSource(e.Cwd(), opts))
 }
 
-// NewBufferDirExplorer opens a file explorer rooted at the focused buffer's
-// directory, falling back to the working directory for unnamed buffers
-func NewBufferDirExplorer(
+// NewFocusedPaneDirExplorer opens a file explorer rooted at the focused pane's
+// path directory, falling back to the working directory
+func NewFocusedPaneDirExplorer(
 	e *view.Editor, opts FileExplorerOptions,
 ) *ui.Picker {
-	dir := e.Cwd()
-	if doc, ok := e.FocusedDocument(); ok && doc.Path() != "" {
-		dir = filepath.Dir(doc.Path())
+	return ui.NewPicker(e, newFileExplorerSource(focusedPaneDir(e), opts))
+}
+
+func focusedPaneDir(e *view.Editor) string {
+	if p := e.FocusedPane(); p != nil {
+		if path := p.Path(); path != "" {
+			return filepath.Dir(path)
+		}
 	}
-	return ui.NewPicker(e, newFileExplorerSource(dir, opts))
+	return e.Cwd()
 }
 
 // DefaultFileExplorerOptions returns the explorer's out-of-the-box behavior

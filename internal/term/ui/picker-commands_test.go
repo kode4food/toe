@@ -35,6 +35,36 @@ func TestCommandPalettePicker(t *testing.T) {
 		_ = sendSpecial(m, tea.KeyEnter)
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
+
+	t.Run("filters by mode", func(t *testing.T) {
+		root := t.TempDir()
+		e := view.NewEditor(root)
+		openRenderImagePane(t, e, writeRenderImage(t, root, 4, 4, nil))
+		km := command.NewKeymaps()
+		_ = km.Register("image_probe", command.Command{
+			DocString: "Image command",
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{}
+			},
+			Aliases: []string{"image_probe"},
+			Modes:   []string{"IMG"},
+		})
+		_ = km.Register("document_probe", command.Command{
+			DocString: "Document command",
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{}
+			},
+			Aliases: []string{"document_probe"},
+			Modes:   []string{"NOR"},
+		})
+		m := ui.New(e, km).WithInitialPicker(func(e *view.Editor) *ui.Picker {
+			return ui.CommandPalettePicker(e, km)
+		})
+		m = resize(m, 80, 24)
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "image_probe")
+		assert.NotContains(t, out, "document_probe")
+	})
 }
 
 // paletteModel binds a probe command and opens the palette with 'p', returning

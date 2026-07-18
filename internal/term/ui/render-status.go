@@ -182,7 +182,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	modeSt := st
 	if isFocused {
-		scope := "ui.statusline." + modeScopeName(mode)
+		scope := "ui.statusline." + v.Mode().Scope()
 		modeSt = th.Get(scope)
 	}
 

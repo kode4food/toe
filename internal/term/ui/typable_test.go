@@ -221,6 +221,26 @@ text-width = 72
 
 		assert.Contains(t, m.View().Content, "mocha")
 	})
+
+	t.Run("mode filters command aliases", func(t *testing.T) {
+		root := t.TempDir()
+		e := view.NewEditor(root)
+		openRenderImagePane(t, e, writeRenderImage(t, root, 4, 4, nil))
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_ = km.Register("normal_probe", command.Command{
+			Run: func(e *view.Editor, _ *command.Args) command.Result {
+				e.SetStatusMsg("ran")
+				return command.Result{Message: "ran"}
+			},
+			Aliases: []string{"normal-probe"},
+			Modes:   []string{"NOR"},
+		})
+
+		m = runTypable(m, "normal-probe")
+
+		assert.NotContains(t, m.View().Content, "ran")
+	})
 }
 
 func runTypable(m ui.Model, cmd string) ui.Model {

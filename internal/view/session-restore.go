@@ -3,16 +3,17 @@ package view
 import "github.com/kode4food/toe/internal/core"
 
 type sessionRestore struct {
+	base      string
 	docs      map[int]DocumentId
 	documents map[DocumentId]*Document
 	focus     Id
-	terminals []Id
 }
 
 func (e *Editor) restoreSessionRoot(
 	t *Tree, root Id, sn sessionNode, rs *sessionRestore,
 ) error {
-	if sn.Kind == sessionKindView || sn.Kind == sessionKindTerminal {
+	if sn.Kind == SessionKindView || sn.Kind == SessionKindImage ||
+		sn.Kind == SessionKindTerminal {
 		id, err := e.restoreSessionNode(t, root, sn, rs)
 		if err != nil {
 			return err
@@ -20,7 +21,7 @@ func (e *Editor) restoreSessionRoot(
 		t.nodes[root].container.children = []Id{id}
 		return nil
 	}
-	if sn.Kind != sessionKindSplit {
+	if sn.Kind != SessionKindSplit {
 		return ErrSessionInvalid
 	}
 	c := t.nodes[root].container
@@ -40,7 +41,7 @@ func (e *Editor) restoreSessionNode(
 	t *Tree, parent Id, sn sessionNode, rs *sessionRestore,
 ) (Id, error) {
 	switch sn.Kind {
-	case sessionKindSplit:
+	case SessionKindSplit:
 		id := t.allocID()
 		t.nodes[id] = &treeNode{
 			parent: parent,
@@ -58,7 +59,7 @@ func (e *Editor) restoreSessionNode(
 			c.children = append(c.children, childID)
 		}
 		return id, nil
-	case sessionKindView:
+	case SessionKindView:
 		docID, ok := rs.docs[sn.Document]
 		if !ok {
 			return 0, ErrSessionInvalid
@@ -72,22 +73,19 @@ func (e *Editor) restoreSessionNode(
 			session: sn,
 			restore: rs,
 		}), nil
-	case sessionKindTerminal:
-		e.nextDocID++
-		doc := newDocument(e.nextDocID, &e.opts)
-		rs.documents[doc.ID()] = doc
-		id := t.allocID()
-		t.nodes[id] = &treeNode{
-			parent: parent,
-			pane:   &View{id: id, docID: doc.ID(), mode: ModeNormal},
+	default:
+		pane, err := e.restorePane(sn.Kind, sessionAbsPath(rs.base, sn.Path))
+		if err != nil {
+			return 0, err
 		}
-		rs.terminals = append(rs.terminals, id)
+		id := t.allocID()
+		pane.SetID(id)
+		t.nodes[id] = &treeNode{parent: parent, pane: pane}
 		if sn.Focused {
 			rs.focus = id
 		}
 		return id, nil
 	}
-	return 0, ErrSessionInvalid
 }
 
 type restoreSessionViewArgs struct {
@@ -102,8 +100,9 @@ type restoreSessionViewArgs struct {
 func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	v := &View{
 		id:         args.id,
+		editor:     e,
 		docID:      args.docID,
-		mode:       sessionMode(args.session.Mode),
+		mode:       ParseMode(args.session.Mode),
 		offset:     sessionPosition(args.session),
 		freeScroll: args.session.FreeScroll,
 	}
@@ -163,17 +162,6 @@ func sessionLayout(name string) Layout {
 		return LayoutHorizontal
 	}
 	return LayoutVertical
-}
-
-func sessionMode(name string) Mode {
-	switch name {
-	case "INS":
-		return ModeInsert
-	case "SEL":
-		return ModeSelect
-	default:
-		return ModeNormal
-	}
 }
 
 func sessionPosition(sn sessionNode) Position {

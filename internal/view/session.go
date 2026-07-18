@@ -36,6 +36,7 @@ type (
 
 	sessionNode struct {
 		Kind             string        `toml:"kind"`
+		Path             string        `toml:"path,omitempty"`
 		Layout           string        `toml:"layout,omitempty"`
 		Ratios           []float64     `toml:"ratios,omitempty"`
 		Document         int           `toml:"document,omitempty"`
@@ -73,9 +74,10 @@ const (
 	sessionVersion = 1
 	SessionFile    = "session.toml"
 
-	sessionKindSplit    = "split"
-	sessionKindView     = "view"
-	sessionKindTerminal = "terminal"
+	SessionKindSplit    = "split"
+	SessionKindView     = "view"
+	SessionKindImage    = "image"
+	SessionKindTerminal = "terminal"
 )
 
 var (
@@ -130,7 +132,7 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	if len(s.Documents) == 0 {
 		return nil
 	}
-	s.Layout = e.sessionNodeFor(e.tree.root, docIndex, &s)
+	s.Layout = e.sessionNodeFor(e.tree.root, docIndex, base)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -215,7 +217,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 			layout: LayoutVertical,
 		},
 	}
-	rs := sessionRestore{docs: docs, documents: nextDocs}
+	rs := sessionRestore{base: base, docs: docs, documents: nextDocs}
 	if err := e.restoreSessionRoot(t, rootID, s.Layout, &rs); err != nil {
 		return nil, false, err
 	}
@@ -247,7 +249,6 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		e.documentOpened(doc)
 	}
 
-	e.pendingTerminals = rs.terminals
 	return s.Options, true, nil
 }
 

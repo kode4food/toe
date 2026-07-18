@@ -28,6 +28,7 @@ type (
 
 var (
 	ErrDuplicateCommand = errors.New("duplicate command registration")
+	ErrNoModes          = errors.New("command has no modes")
 	ErrUnknownMode      = errors.New("keys references mode not in modes")
 )
 
@@ -41,8 +42,8 @@ func NewKeymaps() *Keymaps {
 }
 
 // Register adds a command entry and wires its key bindings. Returns
-// ErrDuplicateCommand if name is already registered - eachcommand must be fully
-// declared once, in the module that owns it
+// ErrDuplicateCommand if name is already registered - each command must be
+// fully declared once, in the module that owns it
 func (k *Keymaps) Register(name string, cmd Command) error {
 	if _, ok := k.byName[name]; ok {
 		return fmt.Errorf("%w: %s", ErrDuplicateCommand, name)
@@ -50,14 +51,15 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 	if cmd.Name == "" {
 		cmd.Name = name
 	}
+	if len(cmd.Modes) == 0 {
+		return fmt.Errorf("%w: %s", ErrNoModes, name)
+	}
 	idx := len(k.commands)
 	k.commands = append(k.commands, cmd)
 	k.byName[name] = idx
-	if len(cmd.Modes) > 0 {
-		for mode := range cmd.Keys {
-			if mode != "*" && !slices.Contains(cmd.Modes, mode) {
-				return fmt.Errorf("%w: %s in %s", ErrUnknownMode, mode, name)
-			}
+	for mode := range cmd.Keys {
+		if mode != "*" && !slices.Contains(cmd.Modes, mode) {
+			return fmt.Errorf("%w: %s in %s", ErrUnknownMode, mode, name)
 		}
 	}
 	if cmd.Run != nil {
@@ -68,11 +70,7 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 		action := func(e *view.Editor) Continuation {
 			return k.commands[idx].Run(e, nil).Continuation
 		}
-		modes := cmd.Modes
-		if len(modes) == 0 {
-			modes = defaultModes()
-		}
-		for _, mode := range modes {
+		for _, mode := range cmd.Modes {
 			bindings, ok := cmd.Keys[mode]
 			if !ok {
 				bindings = cmd.Keys["*"]
@@ -99,9 +97,29 @@ func (k *Keymaps) ResolveCommand(name string) (Command, bool) {
 	return k.commands[idx], true
 }
 
+// ResolveCommandIn looks up a command by alias and filters it by mode
+func (k *Keymaps) ResolveCommandIn(mode, name string) (Command, bool) {
+	cmd, ok := k.ResolveCommand(name)
+	if !ok || !cmd.availableIn(mode) {
+		return Command{}, false
+	}
+	return cmd, true
+}
+
 // Commands returns all registered commands in registration order
 func (k *Keymaps) Commands() []Command {
 	return slices.Clone(k.commands)
+}
+
+// CommandsIn returns registered commands available in the named mode
+func (k *Keymaps) CommandsIn(mode string) []Command {
+	out := make([]Command, 0, len(k.commands))
+	for _, cmd := range k.commands {
+		if cmd.availableIn(mode) {
+			out = append(out, cmd)
+		}
+	}
+	return out
 }
 
 // Bindings returns key sequences bound to a command in a mode
@@ -182,6 +200,10 @@ func (k *Keymaps) command(name string) (Command, bool) {
 	return k.commands[idx], true
 }
 
+func (c Command) availableIn(mode string) bool {
+	return slices.Contains(c.Modes, mode)
+}
+
 func (k *Keymaps) bindCommandWithLabel(
 	mode, name string, action KeyAction, label string, seqs ...[]KeyEvent,
 ) {
@@ -227,8 +249,4 @@ func (k *keyTrieNode) collectBindings(
 		child := k.children[ev]
 		child.collectBindings(name, append(seq, ev), bindings)
 	}
-}
-
-func defaultModes() []string {
-	return []string{"NOR", "SEL", "INS"}
 }

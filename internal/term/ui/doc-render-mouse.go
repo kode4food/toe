@@ -95,9 +95,9 @@ func (r *renderPass) contentViewAt(x, y int) (*view.View, bool) {
 
 func (r *renderPass) handleMouseClick(x, y int, mod tea.KeyMod) {
 	if p, ok := paneAt(r.cx, x, y); ok {
-		if sp, ok := p.(RawPane); ok {
-			wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
-			r.cx.Editor.Tree().SetFocus(p.ID())
+		wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
+		r.cx.Editor.FocusPane(p.ID())
+		if sp, ok := p.(Draggable); ok {
 			if wasFocused && sp.BeginDrag(r.cx, x, y, mod) {
 				r.ec.mouseDownDrag = sp
 			}

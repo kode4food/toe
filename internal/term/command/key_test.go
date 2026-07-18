@@ -71,6 +71,7 @@ func TestCommandRegistry(t *testing.T) {
 	}
 	registered := command.Command{
 		Aliases:   []string{"open", "o", "edit"},
+		Modes:     []string{"NOR"},
 		Signature: sig,
 		Run: func(
 			*view.Editor, *command.Args,
@@ -97,6 +98,7 @@ func TestSparseCommands(t *testing.T) {
 		km := command.NewKeymaps()
 		_ = km.Register("write", command.Command{
 			Aliases: []string{"write", "w"},
+			Modes:   []string{"NOR"},
 			Run: func(
 				*view.Editor, *command.Args,
 			) command.Result {
@@ -114,6 +116,20 @@ func TestSparseCommands(t *testing.T) {
 		assert.Nil(t, action)
 		assert.False(t, found)
 		assert.False(t, prefix)
+	})
+
+	t.Run("missing modes errors", func(t *testing.T) {
+		km := command.NewKeymaps()
+		err := km.Register("write", command.Command{
+			Aliases: []string{"write", "w"},
+			Run: func(
+				*view.Editor, *command.Args,
+			) command.Result {
+				return command.Result{}
+			},
+		})
+
+		assert.ErrorIs(t, err, command.ErrNoModes)
 	})
 
 	t.Run("key only", func(t *testing.T) {
@@ -527,4 +543,30 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 		assert.False(t, found)
 		assert.False(t, prefix)
 	})
+}
+
+func TestKeymapsModeFilters(t *testing.T) {
+	km := command.NewKeymaps()
+	run := func(*view.Editor, *command.Args) command.Result {
+		return command.Result{}
+	}
+	_ = km.Register("normal", command.Command{
+		Run:     run,
+		Modes:   []string{"normal"},
+		Aliases: []string{"n"},
+	})
+	_ = km.Register("image", command.Command{
+		Run:     run,
+		Modes:   []string{"image"},
+		Aliases: []string{"i"},
+	})
+
+	_, ok := km.ResolveCommandIn("normal", "n")
+	assert.True(t, ok)
+	_, ok = km.ResolveCommandIn("image", "n")
+	assert.False(t, ok)
+
+	cmds := km.CommandsIn("image")
+	assert.Len(t, cmds, 1)
+	assert.Equal(t, "image", cmds[0].Name)
 }

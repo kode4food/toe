@@ -2,12 +2,14 @@ package ui
 
 import (
 	"cmp"
+	"errors"
 	"slices"
 	"sync"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -324,8 +326,33 @@ func AcceptDocumentID(
 	case PickerAcceptVerticalSplit:
 		return e.VSplit(id)
 	default:
-		return replaceDocumentID(e, id)
+		return e.ShowDocument(id)
 	}
+}
+
+// OpenPath opens a text document or image pane at path
+func OpenPath(
+	e *view.Editor, path string, action PickerAcceptAction,
+) (*view.View, bool, error) {
+	if path == "" {
+		return nil, false, view.ErrDocumentNoPath
+	}
+	doc, err := e.SwitchOrOpenDoc(path)
+	if err == nil {
+		v, ok := AcceptDocumentID(e, doc.ID(), action)
+		return v, ok, nil
+	}
+	if !errors.Is(err, core.ErrBinaryFile) {
+		return nil, false, err
+	}
+	pane, err := NewImagePane(e, path)
+	if err != nil {
+		return nil, false, err
+	}
+	if !acceptImagePane(e, pane, action) {
+		return nil, false, view.ErrNoView
+	}
+	return nil, true, nil
 }
 
 // AcceptPath opens the file at path (switching to it if already open),
@@ -336,14 +363,14 @@ func AcceptPath(
 	if path == "" {
 		return nil, false
 	}
-	doc, err := e.SwitchOrOpenDoc(path)
+	v, ok, err := OpenPath(e, path, action)
 	if err != nil {
 		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{
 			"message": err,
 		}))
 		return nil, false
 	}
-	return AcceptDocumentID(e, doc.ID(), action)
+	return v, ok
 }
 
 // AlignAcceptedView scrolls the view so the accepted document's cursor is
@@ -360,11 +387,27 @@ func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
 	)
 }
 
-func replaceDocumentID(e *view.Editor, id view.DocumentId) (*view.View, bool) {
-	if !e.SwitchBuffer(id) {
-		return nil, false
+func acceptImagePane(
+	e *view.Editor, pane *ImagePane, action PickerAcceptAction,
+) bool {
+	switch action {
+	case PickerAcceptHorizontalSplit:
+		if !e.SplitPane(pane, view.LayoutHorizontal) {
+			return false
+		}
+	case PickerAcceptVerticalSplit:
+		if !e.SplitPane(pane, view.LayoutVertical) {
+			return false
+		}
+	default:
+		id := e.Tree().Focus()
+		if e.Tree().Get(id) == nil {
+			return false
+		}
+		old := e.ReplacePane(id, pane)
+		e.DiscardPane(old)
 	}
-	return e.FocusedView()
+	return true
 }
 
 func defaultColumnProportions(n int) []int {

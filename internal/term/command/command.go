@@ -92,3 +92,13 @@ const (
 	SignalQuit
 	SignalClearScreen
 )
+
+// DocumentModes returns modes backed by editable document views
+func DocumentModes() []string {
+	return []string{"NOR", "SEL", "INS"}
+}
+
+// PaneModes returns modes for commands that apply to every pane kind
+func PaneModes() []string {
+	return []string{"NOR", "SEL", "INS", "TRM", "IMG"}
+}

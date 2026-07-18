@@ -39,13 +39,27 @@ type (
 		PaintBuffer(Bounds, *Context) *tui.Buffer
 	}
 
-	// RawPane opts out of the normal keymap/document mouse/cursor/paste logic
-	// entirely (e.g. a shell)
-	RawPane interface {
-		HandleKey(tea.KeyPressMsg, *Context) (EventResult, bool)
-		HandleMouse(tea.Msg, *Context) (EventResult, bool)
+	// PaneInput is a pane that handles bubbletea key and mouse events itself.
+	// It receives the event first; an unconsumed event (handled=false) falls
+	// through to the editor's default keymap/document handling
+	PaneInput interface {
+		HandleEvent(tea.Msg, *Context) (EventResult, bool)
+	}
+
+	// PaneCursor is a pane that positions its own cursor
+	PaneCursor interface {
 		Cursor(*Context) (tea.Cursor, bool)
+	}
+
+	// Pasteable is a pane that consumes a paste itself instead of the
+	// document/selection paste
+	Pasteable interface {
 		Paste(text string)
+	}
+
+	// Draggable is a pane that handles mouse drags itself. Drags span several
+	// events with cross-event state, so they stay separate from PaneInput
+	Draggable interface {
 		BeginDrag(cx *Context, x, y int, mod tea.KeyMod) bool
 		ContinueDrag(cx *Context, x, y int) tea.Cmd
 		EndDrag(cx *Context, x, y int) tea.Cmd

@@ -22,6 +22,7 @@ type (
 		item   *PickerItem
 		editor *view.Editor
 		syntax *syntax.Cache
+		images *imageRegistry
 		w, h   int
 		// hlFrom < 0 means full preview, no highlight
 		hlFrom int

@@ -103,6 +103,15 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
 }
 
+func (c *Compositor) activePicker() (*PickerComponent, bool) {
+	for i := len(c.layers) - 1; i >= 0; i-- {
+		if p, ok := c.layers[i].(*PickerComponent); ok {
+			return p, true
+		}
+	}
+	return nil, false
+}
+
 func (c *Compositor) renderViaBuffer(cx *Context) string {
 	br := c.layers[0].(BufferRenderer)
 	placements := make([]bufferOverlayPlacement, 0, len(c.layers)-1)

@@ -73,6 +73,13 @@ func TestViewSplit(t *testing.T) {
 	})
 }
 
+func TestImageMode(t *testing.T) {
+	_, km := test.Env(t, "")
+	assert.NotEmpty(t, km.Bindings("IMG", "image_zoom_in"))
+	assert.NotEmpty(t, km.Bindings("IMG", "vsplit"))
+	assert.Empty(t, km.Bindings("IMG", "page_up"))
+}
+
 func TestViewNavigation(t *testing.T) {
 	for _, name := range []string{
 		"jump_view_left", "jump_view_right",

@@ -59,6 +59,37 @@ func TestPromptCompletion(t *testing.T) {
 		}
 	})
 
+	t.Run("filters command names by mode", func(t *testing.T) {
+		root := t.TempDir()
+		e := view.NewEditor(root)
+		openRenderImagePane(t, e, writeRenderImage(t, root, 4, 4, nil))
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Continuation: m.CmdModeAction()(e)}
+			},
+			Modes: []string{"IMG"},
+			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
+				{char(':')},
+			}}},
+		})
+		img := testCommand("image-only")
+		img.Modes = []string{"IMG"}
+		doc := testCommand("document-only")
+		doc.Modes = []string{"NOR"}
+		_ = km.Register("image_only", img)
+		_ = km.Register("document_only", doc)
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'o')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "image-only")
+		assert.NotContains(t, out, "document-only")
+	})
+
 	t.Run("adapts width to item count", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
@@ -769,6 +800,7 @@ func testCommand(name string) command.Command {
 			return command.Result{}
 		},
 		Aliases:   []string{name},
+		Modes:     command.PaneModes(),
 		Signature: command.DefaultSignature(),
 	}
 }

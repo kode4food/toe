@@ -42,6 +42,7 @@ func configFormatCmds() []command.Command {
 				doc.SetLang(lang)
 				return command.Result{Message: ""}
 			},
+			Modes:     command.DocumentModes(),
 			Aliases:   []string{"lang"},
 			Signature: kit.StaticSig(kit.OptionalArg(), languageNames()...),
 		},
@@ -81,6 +82,7 @@ func configFormatCmds() []command.Command {
 				}
 				return command.Result{Message: ""}
 			},
+			Modes:     command.DocumentModes(),
 			Aliases:   []string{"line-ending"},
 			Signature: kit.StaticSig(kit.OptionalArg(), "crlf", "lf"),
 		},
@@ -116,6 +118,7 @@ func configFormatCmds() []command.Command {
 				}
 				return command.Result{Message: "indent style set"}
 			},
+			Modes: command.DocumentModes(),
 			Signature: kit.StaticSig(
 				kit.Sig(),
 				"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",
@@ -128,6 +131,7 @@ func configFormatCmds() []command.Command {
 			Run: func(_ *view.Editor, _ *command.Args) command.Result {
 				return command.Result{Message: "utf-8"}
 			},
+			Modes:     command.DocumentModes(),
 			Signature: kit.Sig(),
 		},
 	}

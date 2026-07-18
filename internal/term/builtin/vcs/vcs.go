@@ -66,6 +66,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actResetDiffChange,
 				DocString: "Reset the diff changes under the selections",
+				Modes:     []string{"NOR", "SEL"},
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					n, err := action.ResetDiffChange(e)
 					if err != nil {

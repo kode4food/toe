@@ -124,18 +124,21 @@ func LspModule(model ui.Model) command.Module {
 				Name:      actLSPRestart,
 				DocString: "Restart language servers for the current document",
 				Run:       runLSPRestart,
+				Modes:     command.DocumentModes(),
 				Signature: command.Signature{},
 			},
 			{
 				Name:      actLSPStop,
 				DocString: "Stop language servers for the current document",
 				Run:       runLSPStop,
+				Modes:     command.DocumentModes(),
 				Signature: command.Signature{},
 			},
 			{
 				Name:      actLSPWorkspaceCommand,
 				DocString: "Execute a language server workspace command",
 				Run:       runLSPWorkspaceCommand(model),
+				Modes:     command.DocumentModes(),
 				Signature: command.Signature{
 					RawAfter: 1,
 				},

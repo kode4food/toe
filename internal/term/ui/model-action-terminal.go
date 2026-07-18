@@ -14,7 +14,7 @@ func (m Model) TerminalAction() command.KeyAction {
 		if _, ok := e.Tree().Get(e.Tree().Focus()).(*TerminalPane); ok {
 			return nil
 		}
-		tp, err := NewTerminalPane(interactiveShell(), 0, 0, e.Clipboard())
+		tp, err := NewTerminalPane(e, interactiveShell(), 0, 0)
 		if err != nil {
 			e.SetStatusMsg(err.Error())
 			return nil
@@ -46,19 +46,5 @@ func (m Model) TerminalSearchAction() command.KeyAction {
 			}), nil
 		}
 		return nil
-	}
-}
-
-// RestoreTerminalPanes reopens a shell in each pane a restored session
-// marked as a terminal, since a live shell can't be saved
-func (m Model) RestoreTerminalPanes(e *view.Editor) {
-	for _, id := range e.TakePendingTerminals() {
-		tp, err := NewTerminalPane(interactiveShell(), 0, 0, e.Clipboard())
-		if err != nil {
-			continue
-		}
-		old := e.ReplacePane(id, tp)
-		closeTerminalChain(old)
-		e.DiscardPane(old)
 	}
 }

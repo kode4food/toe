@@ -162,6 +162,59 @@ func TestDefaults(t *testing.T) {
 		assert.Equal(t, "Paste clipboard into terminal", hints[0].Label)
 	})
 
+	t.Run("image command prompt is bound", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		_, found, prefix := km.Lookup("IMG", []command.KeyEvent{
+			test.Char(':'),
+		})
+
+		assert.True(t, found)
+		assert.False(t, prefix)
+	})
+
+	t.Run("image window hints are filtered", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		title, hints := km.PendingHints("IMG", []command.KeyEvent{ctrl('w')})
+
+		assert.Equal(t, "Window", title)
+		assert.Contains(t, hints, command.KeyHint{
+			Key:   "v, C-v",
+			Label: "Vertical right split",
+		})
+		assert.Contains(t, hints, command.KeyHint{
+			Key:   "q, C-q",
+			Label: "Close window",
+		})
+		assert.NotContains(t, hints, command.KeyHint{
+			Key:   "/",
+			Label: "Search focused terminal's scrollback",
+		})
+	})
+
+	t.Run("image space hints are filtered", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		title, hints := km.PendingHints("IMG", []command.KeyEvent{
+			test.Char(' '),
+		})
+
+		assert.Equal(t, "Space", title)
+		assert.Contains(t, hints, command.KeyHint{
+			Key:   "?",
+			Label: "Open command palette",
+		})
+		assert.Contains(t, hints, command.KeyHint{
+			Key:   "w",
+			Label: "Window",
+		})
+		assert.NotContains(t, hints, command.KeyHint{
+			Key:   "y",
+			Label: "Yank selections to the clipboard",
+		})
+	})
+
 	t.Run("capital prefixes use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 

@@ -116,6 +116,7 @@ func DocumentModule() command.Module {
 					action.YankJoin(e, sep)
 					return command.Result{}
 				},
+				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"yank-join"},
 				Signature: kit.Sig(),
 			},
@@ -123,6 +124,7 @@ func DocumentModule() command.Module {
 				Name:      actYankPrimaryClipboard,
 				DocString: "Yank selections to primary clipboard",
 				Run:       kit.Runner(action.YankToPrimaryClipboard),
+				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"primary-clipboard-yank"},
 				Signature: kit.Sig(),
 			},
@@ -130,6 +132,7 @@ func DocumentModule() command.Module {
 				Name:      actPastePrimaryClipboardAfter,
 				DocString: "Paste primary clipboard after selections",
 				Run:       kit.Runner(action.PastePrimaryClipboardAfter),
+				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"primary-clipboard-paste-after"},
 				Signature: kit.Sig(),
 			},
@@ -137,6 +140,7 @@ func DocumentModule() command.Module {
 				Name:      actPastePrimaryClipboardBefore,
 				DocString: "Paste primary clipboard before selections",
 				Run:       kit.Runner(action.PastePrimaryClipboardBefore),
+				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"primary-clipboard-paste-before"},
 				Signature: kit.Sig(),
 			},
@@ -144,6 +148,7 @@ func DocumentModule() command.Module {
 				Name:      actPrimaryClipboardReplace,
 				DocString: "Replace selections by primary clipboard",
 				Run:       kit.Runner(action.PrimaryClipboardReplace),
+				Modes:     []string{"NOR", "SEL"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -154,6 +159,7 @@ func DocumentModule() command.Module {
 					e.ResetRegister()
 					return command.Result{Message: "register cleared"}
 				},
+				Modes:     command.PaneModes(),
 				Signature: kit.Sig(),
 			},
 		},
@@ -176,8 +182,8 @@ func TerminalModule() command.Module {
 }
 
 func pasteClipboardIntoPane(e *view.Editor, _ *command.Args) command.Result {
-	// bypasses document/selection paste for a pane implementing RawPane
-	pp, ok := e.Tree().Get(e.Tree().Focus()).(ui.RawPane)
+	// bypasses document/selection paste for a pane implementing Pasteable
+	pp, ok := e.Tree().Get(e.Tree().Focus()).(ui.Pasteable)
 	if !ok {
 		return command.Result{}
 	}

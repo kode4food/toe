@@ -32,7 +32,7 @@ type (
 		infoItems       []command.KeyHint
 		mouseDownRange  *core.Range
 		mouseDownSep    *sepDrag
-		mouseDownDrag   RawPane
+		mouseDownDrag   Draggable
 		signatureHidden *signatureCall
 		docHighlightGen int
 		docHighlightPos docHighlightPosition
@@ -255,8 +255,8 @@ func (e *EditorComponent) HandleEvent(
 		var dragCmd tea.Cmd
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 			if p, ok := paneAt(cx, msg.X, msg.Y); ok {
-				if pi, ok := p.(RawPane); ok {
-					if _, handled := pi.HandleMouse(msg, cx); handled {
+				if pi, ok := p.(PaneInput); ok {
+					if _, handled := pi.HandleEvent(msg, cx); handled {
 						return consumed(), nil
 					}
 				}
@@ -287,8 +287,8 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
-			if pi, ok := p.(RawPane); ok {
-				if _, handled := pi.HandleMouse(msg, cx); handled {
+			if pi, ok := p.(PaneInput); ok {
+				if _, handled := pi.HandleEvent(msg, cx); handled {
 					return consumed(), e.documentHighlightCmd(cx)
 				}
 			}
@@ -311,8 +311,8 @@ func (e *EditorComponent) HandleEvent(
 			return consumed(), nil
 		}
 		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
-			if pi, ok := p.(RawPane); ok {
-				if _, handled := pi.HandleMouse(msg, cx); handled {
+			if pi, ok := p.(PaneInput); ok {
+				if _, handled := pi.HandleEvent(msg, cx); handled {
 					return consumed(), nil
 				}
 			}

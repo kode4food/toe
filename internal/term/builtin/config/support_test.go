@@ -120,7 +120,7 @@ func TestSupportPickerCommands(t *testing.T) {
 	// each opens an overlay layer on the model and completes without chaining
 	for _, name := range []string{
 		"file_picker", "file_picker_in_current_dir", "file_explorer",
-		"file_explorer_in_current_buffer_dir", "buffer_picker",
+		"file_explorer_in_current_pane_dir", "buffer_picker",
 		"jumplist_picker", "global_search", "command_palette", "last_picker",
 	} {
 		t.Run(name+" opens without chaining", func(t *testing.T) {

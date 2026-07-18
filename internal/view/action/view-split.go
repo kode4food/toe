@@ -7,8 +7,7 @@ import "github.com/kode4food/toe/internal/view"
 func CloseCurrentView(e *view.Editor) {
 	doc, _ := e.FocusedDocument()
 	if doc != nil && doc.Modified() {
-		all := e.AllViews()
-		if len(all) > 1 {
+		if e.Tree().Count() > 1 {
 			return
 		}
 	}
@@ -20,17 +19,17 @@ func CloseCurrentViewForce(e *view.Editor) {
 	e.CloseCurrentView()
 }
 
-// HSplit opens the current document in a new horizontal split (stacked)
+// HSplit opens the current pane in a new horizontal split (stacked)
 func HSplit(e *view.Editor) {
-	if doc, ok := e.FocusedDocument(); ok {
-		e.HSplit(doc.ID())
+	if err := e.SplitFocused(view.LayoutHorizontal); err != nil {
+		e.SetStatusMsg(err.Error())
 	}
 }
 
-// VSplit opens the current document in a new vertical split (side by side)
+// VSplit opens the current pane in a new vertical split (side by side)
 func VSplit(e *view.Editor) {
-	if doc, ok := e.FocusedDocument(); ok {
-		e.VSplit(doc.ID())
+	if err := e.SplitFocused(view.LayoutVertical); err != nil {
+		e.SetStatusMsg(err.Error())
 	}
 }
 
@@ -82,18 +81,10 @@ func SwapViewDown(e *view.Editor) {
 
 // RotateView cycles focus to the next view in tree order, wrapping around
 func RotateView(e *view.Editor) {
-	next := e.Tree().Next()
-	if next != view.InvalidViewId {
-		e.FocusView(next)
-	}
+	e.FocusNextView()
 }
 
 // CloseOtherViews closes every view except the currently focused one
 func CloseOtherViews(e *view.Editor) {
-	focused, _ := e.FocusedView()
-	for _, v := range e.AllViews() {
-		if focused == nil || v.ID() != focused.ID() {
-			e.CloseView(v.ID())
-		}
-	}
+	e.CloseAllOtherViews()
 }

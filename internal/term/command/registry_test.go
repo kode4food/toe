@@ -32,6 +32,7 @@ func TestRegistry(t *testing.T) {
 		reg := command.NewRegistry(km)
 		cmd := command.Command{
 			Aliases: []string{"write"},
+			Modes:   []string{"NOR"},
 			Run: func(
 				*view.Editor, *command.Args,
 			) command.Result {
@@ -51,8 +52,9 @@ func TestRegistry(t *testing.T) {
 		assert.NoError(t, reg.RegisterModule(command.Module{
 			Commands: []command.Command{
 				{
-					Name: "noop",
-					Run:  registryCommand().Run,
+					Name:  "noop",
+					Modes: []string{"NOR"},
+					Run:   registryCommand().Run,
 				},
 			},
 		}))
@@ -265,6 +267,7 @@ func TestRegistry(t *testing.T) {
 
 func registryCommand() command.Command {
 	return command.Command{
+		Modes: []string{"NOR"},
 		Run: func(*view.Editor, *command.Args) command.Result {
 			return command.Result{}
 		},

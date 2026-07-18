@@ -12,15 +12,20 @@ type (
 		nextID Id
 	}
 
-	// Pane is the interface a split tree leaf node must implement; *View and
-	// the ui package's terminal pane are the two implementers
+	// Pane is the interface implemented by every split tree leaf
 	Pane interface {
 		ID() Id
+		Path() string
 		SetID(Id)
 		Area() Area
 		SetArea(Area)
 		MarkDirty()
 		Mode() Mode
+		SaveSession(*SessionWriter)
+		Split() (Pane, error)
+		Close()
+		Discard()
+		Shutdown()
 	}
 
 	treeContainer struct {

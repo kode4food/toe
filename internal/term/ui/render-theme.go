@@ -143,24 +143,12 @@ func hlStyleFnFor(th *theme.Theme) func(string) lipgloss.Style {
 	}
 }
 
-func modeScopeName(mode string) string {
-	switch mode {
-	case "INS":
-		return "insert"
-	case "SEL":
-		return "select"
-	default:
-		return "normal"
-	}
-}
-
 func modeCursorStyleFor(
 	th *theme.Theme, mode view.Mode, primary bool,
 ) (lipgloss.Style, bool) {
-	modeStr := modeScopeName(mode.String())
-	scope := "ui.cursor." + modeStr
+	scope := "ui.cursor." + mode.Scope()
 	if primary {
-		scope = "ui.cursor.primary." + modeStr
+		scope = "ui.cursor.primary." + mode.Scope()
 	}
 	return th.TryGetExact(scope)
 }

@@ -2,6 +2,67 @@ package view
 
 import "github.com/kode4food/toe/internal/core"
 
+// SessionWriter is the opaque target a pane writes session state into
+type SessionWriter struct {
+	node     sessionNode
+	docIndex map[DocumentId]int
+	base     string
+	focused  bool
+}
+
+// SaveSession stores this view's document state in w
+func (v *View) SaveSession(w *SessionWriter) {
+	doc, ok := v.editor.docs[v.docID]
+	if !ok {
+		w.node = sessionNode{Kind: SessionKindView}
+		return
+	}
+	entries := v.jumps.Entries()
+	savedHead := v.jumps.Head()
+	jumps := make([]sessionJump, 0, len(entries))
+	newHead := 0
+	for i, j := range entries {
+		idx, ok := w.docIndex[j.DocID]
+		if !ok {
+			continue
+		}
+		if i < savedHead {
+			newHead++
+		}
+		jumps = append(jumps, sessionJump{
+			Document:  idx,
+			Anchor:    j.Anchor,
+			Selection: sessionSelection(j.Selection),
+		})
+	}
+	w.node = sessionNode{
+		Kind:             SessionKindView,
+		Document:         w.docIndex[doc.ID()],
+		Mode:             v.Mode().String(),
+		Anchor:           v.offset.Anchor,
+		HorizontalOffset: v.offset.HorizontalOffset,
+		VerticalOffset:   v.offset.VerticalOffset,
+		FreeScroll:       v.freeScroll,
+		Focused:          w.focused,
+		Selection:        sessionSelection(doc.SelectionFor(v.id)),
+		JumpHead:         newHead,
+		Jumps:            jumps,
+	}
+	for _, did := range v.docHistory {
+		if idx, ok := w.docIndex[did]; ok {
+			w.node.DocumentHistory = append(w.node.DocumentHistory, idx)
+		}
+	}
+}
+
+// SaveSlot stores a reopenable pane slot in the session
+func (w *SessionWriter) SaveSlot(kind, path string) {
+	w.node = sessionNode{Kind: kind, Focused: w.focused}
+	if path != "" {
+		w.node.Path = sessionPath(w.base, path)
+	}
+}
+
 func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 	if d.Path() == "" {
 		return sessionDocument{
@@ -19,77 +80,29 @@ func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 }
 
 func (e *Editor) sessionNodeFor(
-	id Id, docIndex map[DocumentId]int, s *editorSession,
+	id Id, docIndex map[DocumentId]int, base string,
 ) sessionNode {
 	n := e.tree.nodes[id]
-	if v, ok := n.pane.(*View); ok {
-		return e.sessionViewNode(v, docIndex)
-	}
 	if n.pane != nil {
-		// a non-View leaf's live state (e.g. a terminal's shell) isn't
-		// serializable, but its slot is: mark it so restore can reopen one
-		return sessionNode{
-			Kind:    sessionKindTerminal,
-			Focused: e.tree.focus == id,
+		w := &SessionWriter{
+			docIndex: docIndex,
+			base:     base,
+			focused:  e.tree.focus == id,
 		}
+		n.pane.SaveSession(w)
+		return w.node
 	}
 	c := n.container
 	out := sessionNode{
-		Kind:     sessionKindSplit,
+		Kind:     SessionKindSplit,
 		Layout:   sessionLayoutName(c.layout),
 		Ratios:   c.ratios,
 		Children: make([]sessionNode, 0, len(c.children)),
 	}
 	for _, child := range c.children {
 		out.Children = append(
-			out.Children, e.sessionNodeFor(child, docIndex, s),
+			out.Children, e.sessionNodeFor(child, docIndex, base),
 		)
-	}
-	return out
-}
-
-func (e *Editor) sessionViewNode(
-	v *View, docIndex map[DocumentId]int,
-) sessionNode {
-	doc, ok := e.docs[v.docID]
-	if !ok {
-		return sessionNode{Kind: sessionKindView}
-	}
-	entries := v.jumps.Entries()
-	savedHead := v.jumps.Head()
-	jumps := make([]sessionJump, 0, len(entries))
-	newHead := 0
-	for i, j := range entries {
-		idx, ok := docIndex[j.DocID]
-		if !ok {
-			continue
-		}
-		if i < savedHead {
-			newHead++
-		}
-		jumps = append(jumps, sessionJump{
-			Document:  idx,
-			Anchor:    j.Anchor,
-			Selection: sessionSelection(j.Selection),
-		})
-	}
-	out := sessionNode{
-		Kind:             sessionKindView,
-		Document:         docIndex[doc.ID()],
-		Mode:             v.Mode().String(),
-		Anchor:           v.offset.Anchor,
-		HorizontalOffset: v.offset.HorizontalOffset,
-		VerticalOffset:   v.offset.VerticalOffset,
-		FreeScroll:       v.freeScroll,
-		Focused:          e.tree.focus == v.id,
-		Selection:        sessionSelection(doc.SelectionFor(v.id)),
-		JumpHead:         newHead,
-		Jumps:            jumps,
-	}
-	for _, did := range v.docHistory {
-		if idx, ok := docIndex[did]; ok {
-			out.DocumentHistory = append(out.DocumentHistory, idx)
-		}
 	}
 	return out
 }

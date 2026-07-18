@@ -75,6 +75,7 @@ func EditModule() command.Module {
 				Name:      actNormalMode,
 				DocString: "Enter normal mode",
 				Run:       kit.Continuation(normalModeAction),
+				Modes:     command.DocumentModes(),
 				Keys:      kit.Keys(kit.Special("esc")),
 			},
 			{

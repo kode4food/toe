@@ -42,7 +42,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actCommandMode,
 				DocString: "Enter command mode",
 				Run:       kit.Continuation(model.CmdModeAction()),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "IMG"},
 				Keys:      kit.Keys(kit.Char(':')),
 			},
 			{
@@ -93,6 +93,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actMakeSearchWordBounded,
 				DocString: "Modify current search to make it word bounded",
 				Run:       kit.Runner(action.MakeSearchWordBounded),
+				Modes:     []string{"NOR", "SEL"},
 				Signature: kit.Sig(),
 			},
 			{

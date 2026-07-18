@@ -10,7 +10,14 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type terminalPollMsg struct{}
+type (
+	terminalDragScrollMsg struct {
+		dc    Draggable
+		gen   int
+		toTop bool
+	}
+	terminalPollMsg struct{}
+)
 
 const terminalPollInterval = 40 * time.Millisecond
 
@@ -18,14 +25,24 @@ const terminalPollInterval = 40 * time.Millisecond
 // stashed behind a replacement, so the process doesn't orphan them on exit
 func CloseAllTerminalPanes(e *view.Editor) {
 	e.Tree().Range(func(p view.Pane) bool {
-		closeTerminalChain(p)
+		p.Shutdown()
 		return true
 	})
 }
 
-// HandleKey forwards msg to the shell, unless it is one of the leaders that
+// HandleEvent routes key and mouse events to the shell
+func (t *TerminalPane) HandleEvent(
+	msg tea.Msg, cx *Context,
+) (EventResult, bool) {
+	if key, ok := msg.(tea.KeyPressMsg); ok {
+		return t.handleKey(key, cx)
+	}
+	return t.handleMouse(msg, cx)
+}
+
+// handleKey forwards msg to the shell, unless it is one of the leaders that
 // detach or close the pane
-func (t *TerminalPane) HandleKey(
+func (t *TerminalPane) handleKey(
 	msg tea.KeyPressMsg, cx *Context,
 ) (EventResult, bool) {
 	k := msg.Key()
@@ -46,9 +63,9 @@ func (t *TerminalPane) HandleKey(
 	return consumed(), true
 }
 
-// HandleMouse scrolls into scrollback on wheel when the shell hasn't
+// handleMouse scrolls into scrollback on wheel when the shell hasn't
 // requested mouse tracking, or otherwise forwards the event to it
-func (t *TerminalPane) HandleMouse(
+func (t *TerminalPane) handleMouse(
 	msg tea.Msg, cx *Context,
 ) (EventResult, bool) {
 	wheel, isWheel := msg.(tea.MouseWheelMsg)
@@ -76,12 +93,6 @@ func (t *TerminalPane) HandleMouse(
 	m.Button, m.Mod = btn, mod
 	t.SendMouse(wrapMouseEvent(msg, m))
 	return consumed(), true
-}
-
-type terminalDragScrollMsg struct {
-	dc    RawPane
-	gen   int
-	toTop bool
 }
 
 // BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or
@@ -243,25 +254,12 @@ func terminalPollCmd() tea.Cmd {
 }
 
 func closeTerminal(e *view.Editor, tp *TerminalPane) {
-	_ = tp.Close()
+	_ = tp.Stop()
 	if tp.restore != nil {
 		e.ReplacePane(tp.ID(), tp.restore)
 		return
 	}
 	e.ClosePane(tp.ID())
-}
-
-// walks p.restore too, in case a terminal was itself stashed behind a
-// later one; a no-op for a *View
-func closeTerminalChain(p view.Pane) {
-	for {
-		tp, ok := p.(*TerminalPane)
-		if !ok {
-			return
-		}
-		_ = tp.Close()
-		p = tp.restore
-	}
 }
 
 func mouseFields(msg tea.Msg) (

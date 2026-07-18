@@ -33,6 +33,27 @@ func TestColor(t *testing.T) {
 		assert.Equal(t, a, b)
 		assert.NotEqual(t, a, c)
 	})
+
+	t.Run("ImageColor encodes id", func(t *testing.T) {
+		assert.Equal(t,
+			tui.ColorRGB(0x12, 0x34, 0x56), tui.ImageColor(0x123456),
+		)
+	})
+}
+
+func TestPlaceholderSymbol(t *testing.T) {
+	t.Run("encodes row and col", func(t *testing.T) {
+		sym := tui.PlaceholderSymbol(0, 0)
+		runes := []rune(sym)
+		assert.Equal(t, tui.PlaceholderRune, runes[0])
+		assert.Len(t, runes, 3)
+	})
+
+	t.Run("distinct positions differ", func(t *testing.T) {
+		a := tui.PlaceholderSymbol(0, 0)
+		b := tui.PlaceholderSymbol(1, 0)
+		assert.NotEqual(t, a, b)
+	})
 }
 
 func TestStyle(t *testing.T) {

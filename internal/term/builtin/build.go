@@ -41,7 +41,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		config.ViewModule(model),
 		clipboard.DocumentModule(),
 		shell.Module(model),
-		files.SessionModule(model),
+		files.SessionModule(),
 		config.LifecycleModule(),
 		files.FormatModule(),
 		files.LspModule(model),
@@ -66,7 +66,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 // labelLeaders names the top-level leader keys shared across many modules,
 // which no single module owns
 func labelLeaders(km *command.Keymaps) {
-	for _, mode := range []string{"NOR", "SEL"} {
+	for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
 		km.LabelNode(mode, kit.Char(' '), "Space")
 		km.LabelNode(mode, kit.Char('['), "Prev")
 		km.LabelNode(mode, kit.Char(']'), "Next")

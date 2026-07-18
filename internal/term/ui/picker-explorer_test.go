@@ -193,8 +193,8 @@ func TestFileExplorer(t *testing.T) {
 	})
 }
 
-func TestFileExplorerInBufferDir(t *testing.T) {
-	t.Run("roots at the focused buffer's directory", func(t *testing.T) {
+func TestFileExplorerInPaneDir(t *testing.T) {
+	t.Run("document path", func(t *testing.T) {
 		dir := t.TempDir()
 		sub := filepath.Join(dir, "nested")
 		assert.NoError(t, os.Mkdir(sub, 0o755))
@@ -216,7 +216,33 @@ func TestFileExplorerInBufferDir(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
 	})
 
-	t.Run("scratch buffer falls back to cwd", func(t *testing.T) {
+	t.Run("image path", func(t *testing.T) {
+		dir := t.TempDir()
+		sub := filepath.Join(dir, "images")
+		assert.NoError(t, os.Mkdir(sub, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(sub, "sibling.txt"), []byte("x"), 0o644,
+		))
+
+		e := view.NewEditor(dir)
+		openRenderImagePane(t, e, writeRenderImage(t, sub, 4, 4, nil))
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindTestAction(bindTestActionArgs{
+			km:   km,
+			mode: "IMG",
+			name: "explorer_pane",
+			fn:   m.PickerAction(bufferDirExplorer),
+			seqs: [][]command.KeyEvent{{char('e')}},
+		})
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'e')
+
+		assert.Contains(t, stripANSI(m.View().Content), "sibling.txt")
+	})
+
+	t.Run("scratch falls back to cwd", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, "cwd.txt"), []byte("x"), 0o644,

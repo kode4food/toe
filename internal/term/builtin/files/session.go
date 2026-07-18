@@ -3,7 +3,6 @@ package files
 import (
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -15,7 +14,7 @@ const (
 // SessionModule provides explicit save/restore commands for layout and open
 // documents. Option persistence is handled by auto-session at startup/shutdown
 // SessionModule returns the session save and restore commands
-func SessionModule(model ui.Model) command.Module {
+func SessionModule() command.Module {
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -30,6 +29,7 @@ func SessionModule(model ui.Model) command.Module {
 					}
 					return command.Result{Message: "session saved"}
 				},
+				Modes:     command.PaneModes(),
 				Signature: kit.Sig(),
 			},
 			{
@@ -46,9 +46,9 @@ func SessionModule(model ui.Model) command.Module {
 					if !ok {
 						return command.Result{Message: "no session found"}
 					}
-					model.RestoreTerminalPanes(e)
 					return command.Result{}
 				},
+				Modes:     command.PaneModes(),
 				Signature: kit.Sig(),
 			},
 		},

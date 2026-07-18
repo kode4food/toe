@@ -55,6 +55,8 @@ const (
 	StatusPickerTypeToSearch Key = "status.pickerTypeToSearch"
 	StatusPickerSearching    Key = "status.pickerSearching"
 	StatusPickerNoResults    Key = "status.pickerNoResults"
+	StatusImageLoading       Key = "status.imageLoading"
+	StatusImageUnsupported   Key = "status.imageUnsupported"
 
 	StatusFileDeleted          Key = "status.fileDeleted"
 	StatusFileChanged          Key = "status.fileChanged"

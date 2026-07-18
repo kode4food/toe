@@ -12,6 +12,7 @@ type (
 	// View is a viewport into a document
 	View struct {
 		id         Id
+		editor     *Editor
 		docID      DocumentId
 		docHistory []DocumentId
 		offset     Position
@@ -82,6 +83,8 @@ const (
 	ModeInsert
 	ModeSelect
 	ModeTerminal
+	// ModeImage is the mode for image panes
+	ModeImage
 )
 
 const (
@@ -91,11 +94,20 @@ const (
 	jumpListCap = 64
 )
 
+var modeScopes = [...]string{
+	ModeNormal:   "normal",
+	ModeInsert:   "insert",
+	ModeSelect:   "select",
+	ModeTerminal: "normal",
+	ModeImage:    "normal",
+}
+
 var modeNames = [...]string{
 	ModeNormal:   "NOR",
 	ModeInsert:   "INS",
 	ModeSelect:   "SEL",
 	ModeTerminal: "TRM",
+	ModeImage:    "IMG",
 }
 
 // ID returns the view identifier
@@ -106,6 +118,34 @@ func (v *View) ID() Id {
 // SetID sets the view identifier (called by the tree on insertion)
 func (v *View) SetID(id Id) {
 	v.id = id
+}
+
+// Split returns another view of the same document
+func (v *View) Split() (Pane, error) {
+	return &View{
+		editor: v.editor,
+		docID:  v.docID,
+		mode:   ModeNormal,
+		jumps:  v.jumps.Clone(),
+	}, nil
+}
+
+// Close closes this view
+func (v *View) Close() {
+	if v.editor != nil {
+		v.editor.CloseView(v.id)
+	}
+}
+
+// Discard closes this displaced view if no other view uses its document
+func (v *View) Discard() {
+	if v.editor != nil {
+		v.editor.discardView(v)
+	}
+}
+
+// Shutdown releases external resources owned by this view
+func (v *View) Shutdown() {
 }
 
 // Area returns the screen rectangle assigned by the layout engine
@@ -137,6 +177,15 @@ func (v *View) ConsumeDirty() bool {
 // DocID returns the document this view displays
 func (v *View) DocID() DocumentId {
 	return v.docID
+}
+
+// Path returns the path of the document this view displays
+func (v *View) Path() string {
+	doc, ok := v.editor.Document(v.docID)
+	if !ok {
+		return ""
+	}
+	return doc.Path()
 }
 
 // Mode returns the current editing mode
@@ -307,6 +356,25 @@ func (m Mode) String() string {
 		return modeNames[ModeNormal]
 	}
 	return modeNames[m]
+}
+
+// Scope returns the theme scope suffix for the mode: normal, insert, or select
+func (m Mode) Scope() string {
+	if m < 0 || int(m) >= len(modeScopes) {
+		return modeScopes[ModeNormal]
+	}
+	return modeScopes[m]
+}
+
+// ParseMode returns the Mode for a short name (NOR, INS, …), defaulting to
+// ModeNormal for anything unrecognized
+func ParseMode(name string) Mode {
+	for m, n := range modeNames {
+		if n == name {
+			return Mode(m)
+		}
+	}
+	return ModeNormal
 }
 
 // Entries returns all jump history entries from oldest to newest

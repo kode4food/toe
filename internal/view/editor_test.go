@@ -1635,7 +1635,7 @@ func TestEditorReplacePane(t *testing.T) {
 		v, _ := e.FocusedView()
 		id := v.ID()
 
-		old := e.ReplacePane(id, &fakePane{})
+		old := e.ReplacePane(id, &fakePane{editor: e})
 
 		assert.Same(t, v, old)
 		_, ok := e.Tree().Get(id).(*fakePane)
@@ -1647,7 +1647,7 @@ func TestEditorDiscardPane(t *testing.T) {
 	t.Run("closes the doc when it was the last view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
-		old := e.ReplacePane(v.ID(), &fakePane{})
+		old := e.ReplacePane(v.ID(), &fakePane{editor: e})
 		docCount := len(e.AllDocuments())
 
 		e.DiscardPane(old)
@@ -1660,7 +1660,7 @@ func TestEditorDiscardPane(t *testing.T) {
 		e.ResizeTree(80, 24)
 		v, _ := e.FocusedView()
 		e.VSplit(v.DocID())
-		old := e.ReplacePane(v.ID(), &fakePane{})
+		old := e.ReplacePane(v.ID(), &fakePane{editor: e})
 		docCount := len(e.AllDocuments())
 
 		e.DiscardPane(old)
@@ -1703,7 +1703,7 @@ func TestEditorClosePane(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(80, 24)
 		e.VSplitNew()
-		id := e.Tree().Split(&fakePane{}, view.LayoutVertical)
+		id := e.Tree().Split(&fakePane{editor: e}, view.LayoutVertical)
 		count := e.Tree().Count()
 		docCount := len(e.AllDocuments())
 

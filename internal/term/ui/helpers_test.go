@@ -72,7 +72,9 @@ func bufferPicker(e *view.Editor) *ui.Picker {
 }
 
 func bufferDirExplorer(e *view.Editor) *ui.Picker {
-	return files.NewBufferDirExplorer(e, files.DefaultFileExplorerOptions())
+	return files.NewFocusedPaneDirExplorer(
+		e, files.DefaultFileExplorerOptions(),
+	)
 }
 
 func writeLanguageConfig(t *testing.T, root, lang string, enabled bool) {

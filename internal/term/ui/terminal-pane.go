@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,8 +27,10 @@ type (
 	// correctly
 	TerminalPane struct {
 		id         view.Id
+		editor     *view.Editor
 		area       view.Area
 		dirty      bool
+		shell      string
 		emu        *vt.SafeEmulator
 		pty        *os.File
 		cmd        *exec.Cmd
@@ -36,6 +39,7 @@ type (
 		closed     chan struct{}
 		restore    view.Pane
 		stateMu    sync.Mutex
+		path       string
 		title      string
 		bellRung   bool
 		scrollN    int
@@ -53,18 +57,29 @@ type (
 var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
 
 var (
-	_ view.Pane = (*TerminalPane)(nil)
-	_ RawPane   = (*TerminalPane)(nil)
+	_ view.Pane  = (*TerminalPane)(nil)
+	_ PaneInput  = (*TerminalPane)(nil)
+	_ PaneCursor = (*TerminalPane)(nil)
+	_ Pasteable  = (*TerminalPane)(nil)
+	_ Draggable  = (*TerminalPane)(nil)
 )
 
-// NewTerminalPane spawns shell as a child process attached to a PTY sized
-// w by h, and starts pumping its output into a VT emulator. clip may be nil
-// to ignore OSC 52 clipboard writes from programs running inside the shell
+// NewTerminalPane spawns shell in a PTY and pumps its output into a VT emulator
+// sized w by h
 func NewTerminalPane(
-	shell string, w, h int, clip view.Clipboard,
+	e *view.Editor, shell string, w, h int,
+) (*TerminalPane, error) {
+	return NewTerminalPaneInDir(e, shell, e.Cwd(), w, h)
+}
+
+// NewTerminalPaneInDir spawns shell in dir
+func NewTerminalPaneInDir(
+	e *view.Editor, shell, dir string, w, h int,
 ) (*TerminalPane, error) {
 	w, h = max(w, 1), max(h, 1)
 	cmd := exec.Command(shell)
+	path := terminalPath(e, dir)
+	cmd.Dir = path
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{
 		Rows: uint16(h),
 		Cols: uint16(w),
@@ -73,10 +88,13 @@ func NewTerminalPane(
 		return nil, err
 	}
 	tp := &TerminalPane{
+		editor:  e,
+		shell:   shell,
 		emu:     vt.NewSafeEmulator(w, h),
 		pty:     f,
 		cmd:     cmd,
-		clip:    clip,
+		clip:    e.Clipboard(),
+		path:    path,
 		updates: make(chan struct{}, 1),
 		closed:  make(chan struct{}),
 	}
@@ -87,6 +105,7 @@ func NewTerminalPane(
 		DisableMode: func(m ansi.Mode) { tp.setMouseMode(m, false) },
 	})
 	tp.emu.RegisterOscHandler(52, tp.handleOSC52)
+	tp.emu.RegisterOscHandler(7, tp.handleOSC7)
 	go tp.pump()
 	go func() { _, _ = io.Copy(tp.pty, tp.emu) }()
 	return tp, nil
@@ -100,6 +119,40 @@ func (t *TerminalPane) ID() view.Id {
 // SetID sets the pane identifier (called by the tree on insertion)
 func (t *TerminalPane) SetID(id view.Id) {
 	t.id = id
+}
+
+// Split starts another terminal using the same shell
+func (t *TerminalPane) Split() (view.Pane, error) {
+	return NewTerminalPane(
+		t.editor, t.shell, t.area.Width, max(t.area.Height-1, 1),
+	)
+}
+
+// Close terminates this terminal and closes its pane
+func (t *TerminalPane) Close() {
+	_ = t.Stop()
+	if t.restore != nil {
+		t.restore.Discard()
+	}
+	if t.editor != nil {
+		t.editor.RemovePane(t.id)
+	}
+}
+
+// Discard terminates this displaced terminal and everything behind it
+func (t *TerminalPane) Discard() {
+	_ = t.Stop()
+	if t.restore != nil {
+		t.restore.Discard()
+	}
+}
+
+// Shutdown terminates this terminal and terminals behind it
+func (t *TerminalPane) Shutdown() {
+	_ = t.Stop()
+	if t.restore != nil {
+		t.restore.Shutdown()
+	}
 }
 
 // Area returns the screen rectangle assigned by the layout engine
@@ -116,6 +169,18 @@ func (t *TerminalPane) MarkDirty() {
 // insert/select/normal distinction
 func (t *TerminalPane) Mode() view.Mode {
 	return view.ModeTerminal
+}
+
+// Path returns the shell working directory most recently reported by OSC 7
+func (t *TerminalPane) Path() string {
+	t.stateMu.Lock()
+	defer t.stateMu.Unlock()
+	return t.path
+}
+
+// SaveSession stores a terminal slot so a fresh shell can be reopened
+func (t *TerminalPane) SaveSession(w *view.SessionWriter) {
+	w.SaveSlot(view.SessionKindTerminal, t.Path())
 }
 
 // SetArea updates the pane's screen rectangle and resizes the PTY and
@@ -244,8 +309,8 @@ func (t *TerminalPane) SearchScrollback(pattern string) bool {
 	return false
 }
 
-// Close terminates the shell process and releases the PTY
-func (t *TerminalPane) Close() error {
+// Stop terminates the shell process and releases the PTY
+func (t *TerminalPane) Stop() error {
 	_ = t.cmd.Process.Kill()
 	return t.pty.Close()
 }
@@ -327,6 +392,21 @@ func (t *TerminalPane) handleOSC52(data []byte) bool {
 	} else {
 		_ = t.clip.Write(string(decoded))
 	}
+	return true
+}
+
+func (t *TerminalPane) handleOSC7(data []byte) bool {
+	_, raw, ok := strings.Cut(string(data), ";")
+	if !ok {
+		return false
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "file" || u.Path == "" {
+		return false
+	}
+	t.stateMu.Lock()
+	t.path = u.Path
+	t.stateMu.Unlock()
 	return true
 }
 
@@ -437,6 +517,18 @@ func normalizeSelection(a, b uv.Position) selSpan {
 	return selSpan{start: a, end: b}
 }
 
+func terminalPath(e *view.Editor, dir string) string {
+	if dir != "" && dirOK(dir) {
+		return dir
+	}
+	return e.Cwd()
+}
+
+func dirOK(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
 func interactiveShell() string {
 	// distinct from view.Options.Shell, which is a non-login `sh -c` filter
 	// runner rather than the user's real interactive shell
@@ -444,4 +536,11 @@ func interactiveShell() string {
 		return sh
 	}
 	return view.DefaultShell()[0]
+}
+
+func registerTerminalPane(e *view.Editor) {
+	e.RegisterPaneRestorer(view.SessionKindTerminal,
+		func(e *view.Editor, path string) (view.Pane, error) {
+			return NewTerminalPaneInDir(e, interactiveShell(), path, 0, 0)
+		})
 }

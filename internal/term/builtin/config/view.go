@@ -44,6 +44,9 @@ const (
 	actCenterCursorLineBottom = "align_view_bottom"
 	actScrollUp               = "scroll_up"
 	actScrollDown             = "scroll_down"
+	actImageZoomIn            = "image_zoom_in"
+	actImageZoomOut           = "image_zoom_out"
+	actImageZoomReset         = "image_zoom_reset"
 	actVSplitView             = "vsplit"
 	actHSplitView             = "split"
 	actVSplitNew              = "vsplit_new"
@@ -76,6 +79,33 @@ func ViewModule(model ui.Model) command.Module {
 
 	return command.Module{
 		Commands: []command.Command{
+			{
+				Name:      actImageZoomIn,
+				DocString: "Zoom image in",
+				Run:       kit.Runner(action.ImageZoomIn),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('+'), kit.Char('=')),
+				Aliases:   []string{"zoom-in"},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actImageZoomOut,
+				DocString: "Zoom image out",
+				Run:       kit.Runner(action.ImageZoomOut),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('-')),
+				Aliases:   []string{"zoom-out"},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actImageZoomReset,
+				DocString: "Fit image to pane",
+				Run:       kit.Runner(action.ImageZoomReset),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('0')),
+				Aliases:   []string{"zoom-reset"},
+				Signature: kit.Sig(),
+			},
 			{
 				Name:      actPageUp,
 				DocString: "Move page up",
@@ -124,23 +154,27 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actHalfPageUp,
 				DocString: "Move half page up",
 				Run:       kit.Runner(action.HalfPageUp),
+				Modes:     command.DocumentModes(),
 				Signature: kit.Sig(),
 			},
 			{
 				Name:      actHalfPageDown,
 				DocString: "Move half page down",
 				Run:       kit.Runner(action.HalfPageDown),
+				Modes:     command.DocumentModes(),
 				Signature: kit.Sig(),
 			},
 			{
 				Name:      actPageCursorUp,
 				DocString: "Move page and cursor up",
 				Run:       kit.Runner(action.PageUp),
+				Modes:     command.DocumentModes(),
 			},
 			{
 				Name:      actPageCursorDown,
 				DocString: "Move page and cursor down",
 				Run:       kit.Runner(action.PageDown),
+				Modes:     command.DocumentModes(),
 			},
 			{
 				Name:      actCenterCursorLine,
@@ -196,7 +230,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actTerminal,
 				DocString: "Open a new terminal",
 				Run:       kit.Continuation(model.TerminalAction()),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('x'))},
 					{Spcw(kit.Char('x'))},
@@ -218,7 +252,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actVSplitView,
 				DocString: "Vertical right split",
 				Run:       kit.Runner(action.VSplit),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('v')), Cw(kit.Ctrl('v'))},
 					{Spcw(kit.Char('v')), Spcw(kit.Ctrl('v'))},
@@ -230,7 +264,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actHSplitView,
 				DocString: "Horizontal bottom split",
 				Run:       kit.Runner(action.HSplit),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('s')), Cw(kit.Ctrl('s'))},
 					{Spcw(kit.Char('s')), Spcw(kit.Ctrl('s'))},
@@ -245,6 +279,7 @@ func ViewModule(model ui.Model) command.Module {
 					e.VSplitNew()
 					return command.Result{}
 				},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Aliases:   []string{"vnew"},
 				Signature: kit.Sig(),
 			},
@@ -255,6 +290,7 @@ func ViewModule(model ui.Model) command.Module {
 					e.HSplitNew()
 					return command.Result{}
 				},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Aliases:   []string{"hnew"},
 				Signature: kit.Sig(),
 			},
@@ -262,7 +298,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actTransposeView,
 				DocString: "Transpose splits",
 				Run:       kit.Runner(action.TransposeView),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('t')), Cw(kit.Ctrl('t'))},
 					{Spcw(kit.Char('t')), Spcw(kit.Ctrl('t'))},
@@ -272,7 +308,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actCloseCurrentView,
 				DocString: "Close window",
 				Run:       kit.Runner(action.CloseCurrentView),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('q')), Cw(kit.Ctrl('q'))},
 					{Spcw(kit.Char('q')), Spcw(kit.Ctrl('q'))},
@@ -284,6 +320,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actCloseCurrentViewForce,
 				DocString: "Force close window",
 				Run:       kit.Runner(action.CloseCurrentViewForce),
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Aliases:   []string{"wc!"},
 				Signature: kit.Sig(),
 			},
@@ -291,7 +328,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actCloseOtherViews,
 				DocString: "Close windows except current",
 				Run:       kit.Runner(action.CloseOtherViews),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('o')), Cw(kit.Ctrl('o'))},
 					{Spcw(kit.Char('o')), Spcw(kit.Ctrl('o'))},
@@ -303,7 +340,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actRotateView,
 				DocString: "Goto next window",
 				Run:       kit.Runner(action.RotateView),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('w')), Cw(kit.Ctrl('w'))},
 					{Spcw(kit.Char('w')), Spcw(kit.Ctrl('w'))},
@@ -313,7 +350,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actJumpViewLeft,
 				DocString: "Jump to left split",
 				Run:       kit.Runner(action.JumpViewLeft),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('h')), Cw(kit.Ctrl('h')), Cw(kit.Special("left"))},
 					{Spcw(kit.Char('h')), Spcw(kit.Ctrl('h')), Spcw(kit.Special("left"))},
@@ -323,7 +360,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actJumpViewDown,
 				DocString: "Jump to split below",
 				Run:       kit.Runner(action.JumpViewDown),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('j')), Cw(kit.Ctrl('j')), Cw(kit.Special("down"))},
 					{Spcw(kit.Char('j')), Spcw(kit.Ctrl('j')), Spcw(kit.Special("down"))},
@@ -333,7 +370,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actJumpViewUp,
 				DocString: "Jump to split above",
 				Run:       kit.Runner(action.JumpViewUp),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('k')), Cw(kit.Ctrl('k')), Cw(kit.Special("up"))},
 					{Spcw(kit.Char('k')), Spcw(kit.Ctrl('k')), Spcw(kit.Special("up"))},
@@ -343,7 +380,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actJumpViewRight,
 				DocString: "Jump to right split",
 				Run:       kit.Runner(action.JumpViewRight),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('l')), Cw(kit.Ctrl('l')), Cw(kit.Special("right"))},
 					{Spcw(kit.Char('l')), Spcw(kit.Ctrl('l')), Spcw(kit.Special("right"))},
@@ -353,7 +390,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actSwapViewLeft,
 				DocString: "Swap with left split",
 				Run:       kit.Runner(action.SwapViewLeft),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('H'))},
 					{Spcw(kit.Char('H'))},
@@ -363,7 +400,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actSwapViewDown,
 				DocString: "Swap with split below",
 				Run:       kit.Runner(action.SwapViewDown),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('J'))},
 					{Spcw(kit.Char('J'))},
@@ -373,7 +410,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actSwapViewUp,
 				DocString: "Swap with split above",
 				Run:       kit.Runner(action.SwapViewUp),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('K'))},
 					{Spcw(kit.Char('K'))},
@@ -383,7 +420,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actSwapViewRight,
 				DocString: "Swap with right split",
 				Run:       kit.Runner(action.SwapViewRight),
-				Modes:     []string{"NOR", "SEL", "TRM"},
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
 					{Cw(kit.Char('L'))},
 					{Spcw(kit.Char('L'))},
@@ -616,8 +653,8 @@ func ViewModule(model ui.Model) command.Module {
 		Labels: []command.PrefixLabel{
 			kit.Label("View", kit.Char('z'), "NOR", "SEL"),
 			kit.Label("View", kit.Char('Z'), "NOR", "SEL"),
-			kit.Label("Window", kit.Ctrl('w'), "NOR", "SEL", "TRM"),
-			kit.Label("Window", Spc(kit.Char('w')), "NOR", "SEL"),
+			kit.Label("Window", kit.Ctrl('w'), "NOR", "SEL", "TRM", "IMG"),
+			kit.Label("Window", Spc(kit.Char('w')), "NOR", "SEL", "IMG"),
 		},
 	}
 }

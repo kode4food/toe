@@ -31,7 +31,7 @@ const (
 	actFilePicker           = "file_picker"
 	actFilePickerInCWD      = "file_picker_in_current_dir"
 	actFileExplorer         = "file_explorer"
-	actFileExplorerInBufDir = "file_explorer_in_current_buffer_dir"
+	actFileExplorerForPane  = "file_explorer_in_current_pane_dir"
 	actBufferPicker         = "buffer_picker"
 	actDiagnosticPicker     = "diagnostic_picker"
 	actWorkspaceDiagnostics = "workspace_diagnostics_picker"
@@ -49,7 +49,7 @@ func PickerModule(model ui.Model) command.Module {
 				Name:      actFilePicker,
 				DocString: "Open file picker",
 				Run:       kit.Continuation(model.PickerAction(NewFilePicker)),
-				Modes:     []string{"NOR", "SEL"},
+				Modes:     []string{"NOR", "SEL", "IMG"},
 				Keys:      kit.Keys(spc(kit.Char('f'))),
 			},
 			{
@@ -58,7 +58,7 @@ func PickerModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewFilePickerInCWD),
 				),
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "IMG"},
 				Keys:  kit.Keys(spc(kit.Char('F'))),
 			},
 			{
@@ -71,20 +71,20 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "IMG"},
 				Keys:  kit.Keys(spc(kit.Char('e'))),
 			},
 			{
-				Name:      actFileExplorerInBufDir,
-				DocString: "Open file explorer at current buffer's directory",
+				Name:      actFileExplorerForPane,
+				DocString: "Open file explorer at current pane's directory",
 				Run: kit.Continuation(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
-						return NewBufferDirExplorer(
+						return NewFocusedPaneDirExplorer(
 							e, fileExplorerOptions(cfg.Editor.FileExplorer),
 						)
 					},
 				)),
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "IMG"},
 				Keys:  kit.Keys(spc(kit.Char('.'))),
 			},
 			{
@@ -97,7 +97,7 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "IMG"},
 				Keys:  kit.Keys(spc(kit.Char('b'))),
 			},
 		},
@@ -131,7 +131,7 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewWorkspaceDiagnosticPicker),
 				),
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "IMG"},
 				Keys:  kit.Keys(spc(kit.Char('D'))),
 			},
 			{
@@ -140,7 +140,7 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewGlobalSearchPicker),
 				),
-				Modes: []string{"NOR", "SEL"},
+				Modes: []string{"NOR", "SEL", "IMG"},
 				Keys:  kit.Keys(spc(kit.Char('/'))),
 			},
 		},

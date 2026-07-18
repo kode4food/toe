@@ -179,12 +179,14 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSelectLineAbove,
 				DocString: "Select line above",
 				Run:       kit.Runner(action.SelectLineAbove),
+				Modes:     []string{"NOR", "SEL"},
 				Signature: kit.Sig(),
 			},
 			{
 				Name:      actSelectLineBelow,
 				DocString: "Select line below",
 				Run:       kit.Runner(action.SelectLineBelow),
+				Modes:     []string{"NOR", "SEL"},
 				Signature: kit.Sig(),
 			},
 			{

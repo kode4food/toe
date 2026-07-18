@@ -48,6 +48,8 @@
   "status.pickerTypeToSearch": "Zum Suchen tippen…",
   "status.pickerSearching": "Wird gesucht…",
   "status.pickerNoResults": "Keine Ergebnisse",
+  "status.imageLoading": "Bild wird geladen…",
+  "status.imageUnsupported": "Bilder werden von diesem Terminal nicht unterstützt",
   "status.fileDeleted": "'{file}' wurde auf dem Datenträger gelöscht",
   "status.fileChanged": "'{file}' wurde auf dem Datenträger geändert; :reload oder :write verwenden",
   "status.reloadFailed": "Neu laden fehlgeschlagen: {error}",

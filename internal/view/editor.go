@@ -2,44 +2,51 @@ package view
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/kode4food/toe/internal/view/register"
 )
 
-// Editor holds the full state of the editor session: all open documents, the
-// view layout tree, and shared editor state
-type Editor struct {
-	docs         map[DocumentId]*Document
-	tree         *Tree
-	cwd          string
-	dirStack     []string
-	opts         Options
-	configReload func() error
-	registers    register.Registers
-	clipboard    Clipboard
-	docObservers []DocumentObserver
-	langServers  LanguageServerController
-	indenter     Indenter
+type (
+	// Editor holds the full state of the editor session: all open documents,
+	// the view layout tree, and shared editor state
+	Editor struct {
+		docs          map[DocumentId]*Document
+		tree          *Tree
+		cwd           string
+		dirStack      []string
+		opts          Options
+		configReload  func() error
+		registers     register.Registers
+		clipboard     Clipboard
+		docObservers  []DocumentObserver
+		langServers   LanguageServerController
+		indenter      Indenter
+		paneRestorers map[string]PaneRestorer
 
-	versionControl VersionControl
+		versionControl VersionControl
 
-	nextDocID          DocumentId
-	nextAccess         int64
-	lastModifiedDocIDs [2]DocumentId
-	pendingTerminals   []Id
+		nextDocID          DocumentId
+		nextAccess         int64
+		lastModifiedDocIDs [2]DocumentId
 
-	count          int
-	activeRegister rune
-	lastMotion     func(*Editor)
+		count          int
+		activeRegister rune
+		lastMotion     func(*Editor)
 
-	viewHeight       int
-	viewContentWidth int
+		viewHeight       int
+		viewContentWidth int
 
-	statusMsg   string
-	statusMsgMu sync.Mutex
-	hint        string
-}
+		statusMsg   string
+		statusMsgMu sync.Mutex
+		hint        string
+	}
+
+	// PaneRestorer rebuilds a leaf pane of a given session kind from its
+	// persisted path
+	PaneRestorer func(e *Editor, path string) (Pane, error)
+)
 
 var (
 	ErrNoDocument        = errors.New("no document")
@@ -53,6 +60,7 @@ var (
 		"file modified by an external process, use :w! to overwrite",
 	)
 	ErrFileReadOnly = errors.New("path is read only")
+	ErrCannotSplit  = errors.New("pane is too small to split")
 )
 
 // NewEditor creates an empty editor with one scratch document and view
@@ -67,7 +75,7 @@ func NewEditor(cwd string) *Editor {
 	}
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
-	v := &View{docID: doc.ID(), mode: ModeNormal}
+	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
 	e.tree.Insert(v)
 	e.markDocAccessed()
 	return e
@@ -93,7 +101,7 @@ func (e *Editor) VSplit(docID DocumentId) (*View, bool) {
 		return nil, false
 	}
 	e.recordLeavingDoc()
-	v := &View{docID: doc.ID(), mode: ModeNormal}
+	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
 	if src, ok := e.FocusedView(); ok {
 		v.jumps = src.jumps.Clone()
 	}
@@ -112,13 +120,43 @@ func (e *Editor) HSplit(docID DocumentId) (*View, bool) {
 		return nil, false
 	}
 	e.recordLeavingDoc()
-	v := &View{docID: doc.ID(), mode: ModeNormal}
+	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
 	if src, ok := e.FocusedView(); ok {
 		v.jumps = src.jumps.Clone()
 	}
 	e.tree.Split(v, LayoutHorizontal)
 	e.markDocAccessed()
 	return v, true
+}
+
+// SplitFocused opens the focused pane in a new split
+func (e *Editor) SplitFocused(layout Layout) error {
+	if !e.tree.CanSplit(layout) {
+		return ErrCannotSplit
+	}
+	p := e.tree.Get(e.tree.Focus())
+	if p == nil {
+		return ErrNoView
+	}
+	next, err := p.Split()
+	if err != nil {
+		return err
+	}
+	if !e.SplitPane(next, layout) {
+		return ErrCannotSplit
+	}
+	return nil
+}
+
+// SplitPane adds p in a new split
+func (e *Editor) SplitPane(p Pane, layout Layout) bool {
+	if !e.tree.CanSplit(layout) {
+		return false
+	}
+	e.recordLeavingDoc()
+	e.tree.Split(p, layout)
+	e.markDocAccessed()
+	return true
 }
 
 // VSplitNew opens a new scratch document in a new vertical split
@@ -128,7 +166,7 @@ func (e *Editor) VSplitNew() *View {
 	}
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
-	v := &View{docID: doc.ID(), mode: ModeNormal}
+	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
 	if src, ok := e.FocusedView(); ok {
 		v.jumps = src.jumps.Clone()
 	}
@@ -144,7 +182,7 @@ func (e *Editor) HSplitNew() *View {
 	}
 	doc := e.newDocument()
 	e.docs[doc.ID()] = doc
-	v := &View{docID: doc.ID(), mode: ModeNormal}
+	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
 	if src, ok := e.FocusedView(); ok {
 		v.jumps = src.jumps.Clone()
 	}
@@ -191,10 +229,10 @@ func (e *Editor) ReplacePane(id Id, p Pane) Pane {
 // DiscardPane closes p's document, if p is a view and this was its last
 // reference — for a displaced pane the caller has decided not to keep
 func (e *Editor) DiscardPane(p Pane) {
-	v, ok := p.(*View)
-	if !ok {
-		return
-	}
+	p.Discard()
+}
+
+func (e *Editor) discardView(v *View) {
 	doc, ok := e.docs[v.docID]
 	if !ok {
 		return
@@ -210,15 +248,31 @@ func (e *Editor) DiscardPane(p Pane) {
 // ClosePane closes the pane at id. If it is the tree's only pane, it is
 // replaced with a fresh scratch document instead of leaving the tree empty
 func (e *Editor) ClosePane(id Id) {
+	p := e.tree.Get(id)
+	if p == nil {
+		return
+	}
 	if e.tree.Count() <= 1 {
 		doc := e.newDocument()
 		e.docs[doc.ID()] = doc
-		e.tree.ReplacePane(id, &View{docID: doc.ID(), mode: ModeNormal})
+		v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+		e.tree.ReplacePane(id, v)
+		p.Discard()
 		e.markDocAccessed()
 		return
 	}
-	if _, ok := e.tree.Get(id).(*View); ok {
-		e.CloseView(id)
+	p.Close()
+}
+
+// RemovePane removes a non-document pane from the layout. If it is the only
+// pane, it is replaced with a fresh scratch document
+func (e *Editor) RemovePane(id Id) {
+	if e.tree.Count() <= 1 {
+		doc := e.newDocument()
+		e.docs[doc.ID()] = doc
+		v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+		e.tree.ReplacePane(id, v)
+		e.markDocAccessed()
 		return
 	}
 	e.tree.Remove(id)
@@ -230,13 +284,26 @@ func (e *Editor) FocusedView() (*View, bool) {
 	return v, ok
 }
 
+// FocusedPane returns the currently focused pane
+func (e *Editor) FocusedPane() Pane {
+	return e.tree.Get(e.tree.Focus())
+}
+
 // FocusView moves focus to the given view
 func (e *Editor) FocusView(vid Id) {
 	if _, ok := e.tree.Get(vid).(*View); ok {
-		e.recordLeavingDoc()
-		e.tree.SetFocus(vid)
-		e.markDocAccessed()
+		e.FocusPane(vid)
 	}
+}
+
+// FocusPane moves focus to the given pane
+func (e *Editor) FocusPane(id Id) {
+	if e.tree.Get(id) == nil {
+		return
+	}
+	e.recordLeavingDoc()
+	e.tree.SetFocus(id)
+	e.markDocAccessed()
 }
 
 // FocusNextView moves focus to the next view in DFS order
@@ -422,6 +489,15 @@ func (e *Editor) SetClipboard(c Clipboard) {
 	e.clipboard = c
 }
 
+// RegisterPaneRestorer registers how to rebuild a leaf pane of the given
+// session kind
+func (e *Editor) RegisterPaneRestorer(kind string, fn PaneRestorer) {
+	if e.paneRestorers == nil {
+		e.paneRestorers = map[string]PaneRestorer{}
+	}
+	e.paneRestorers[kind] = fn
+}
+
 // ViewHeight returns the last-reported content area height
 func (e *Editor) ViewHeight() int {
 	return e.viewHeight
@@ -510,19 +586,21 @@ func (e *Editor) VisibleDocuments() []*Document {
 	return out
 }
 
-// CloseCurrentView closes the focused view (and its document if unreferenced)
+// CloseCurrentView closes the focused pane
 func (e *Editor) CloseCurrentView() {
-	if v, ok := e.FocusedView(); ok {
-		e.CloseView(v.ID())
+	p := e.tree.Get(e.tree.Focus())
+	if p == nil {
+		return
 	}
+	p.Close()
 }
 
 // CloseAllOtherViews closes all views except the focused one
 func (e *Editor) CloseAllOtherViews() {
 	focused := e.tree.Focus()
-	for _, v := range e.tree.Traverse() {
-		if v.ID() != focused {
-			e.CloseView(v.ID())
+	for _, p := range e.tree.Traverse() {
+		if p.ID() != focused {
+			e.ClosePane(p.ID())
 		}
 	}
 }
@@ -544,14 +622,6 @@ func (e *Editor) TakeStatusMsg() string {
 	return msg
 }
 
-// TakePendingTerminals returns and clears the panes that held a terminal in
-// the most recently restored session, since a live shell can't be saved
-func (e *Editor) TakePendingTerminals() []Id {
-	ids := e.pendingTerminals
-	e.pendingTerminals = nil
-	return ids
-}
-
 // SetHint stores a transient hint shown during an active continuation
 func (e *Editor) SetHint(h string) {
 	e.hint = h
@@ -562,6 +632,16 @@ func (e *Editor) TakeHint() string {
 	h := e.hint
 	e.hint = ""
 	return h
+}
+
+// restorePane rebuilds a leaf pane of the given kind via its registered
+// restorer
+func (e *Editor) restorePane(kind, path string) (Pane, error) {
+	fn, ok := e.paneRestorers[kind]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrSessionInvalid, kind)
+	}
+	return fn(e, path)
 }
 
 // hasView reports whether any view in the tree satisfies pred

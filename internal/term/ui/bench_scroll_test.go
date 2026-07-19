@@ -7,6 +7,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -71,7 +72,7 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	e.ResizeTree(100, 40)
+	e.ResizeTree(geom.Size{Width: 100, Height: 40})
 	if _, ok := e.VSplit(docB.ID()); !ok {
 		b.Fatal("vsplit failed")
 	}

@@ -14,6 +14,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -23,7 +24,7 @@ type (
 	ImagePane struct {
 		id     view.Id
 		editor *view.Editor
-		area   view.Area
+		area   geom.Area
 		dirty  bool
 		path   string
 		image  *Image
@@ -87,9 +88,9 @@ func NewImagePane(e *view.Editor, path string) (*ImagePane, error) {
 }
 
 // Size returns the image bounds in pixels
-func (i *Image) Size() (int, int) {
+func (i *Image) Size() geom.Size {
 	b := i.Bounds()
-	return b.Dx(), b.Dy()
+	return geom.Size{Width: b.Dx(), Height: b.Dy()}
 }
 
 // ContentID returns a stable identifier for the decoded image bytes
@@ -100,7 +101,7 @@ func (i *Image) ContentID() uint32 {
 // HandleEvent zooms the image on a wheel event and ignores everything else,
 // letting keys and other input fall through to the editor
 func (p *ImagePane) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, bool) {
 	wheel, ok := msg.(tea.MouseWheelMsg)
 	if !ok {
@@ -134,12 +135,12 @@ func (p *ImagePane) SetID(id view.Id) {
 }
 
 // Area returns the screen rectangle assigned by the layout tree
-func (p *ImagePane) Area() view.Area {
+func (p *ImagePane) Area() geom.Area {
 	return p.area
 }
 
 // SetArea sets the screen rectangle assigned by the layout tree
-func (p *ImagePane) SetArea(a view.Area) {
+func (p *ImagePane) SetArea(a geom.Area) {
 	if a != p.area {
 		p.area = a
 		p.dirty = true

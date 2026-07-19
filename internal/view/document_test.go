@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
@@ -565,7 +566,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		err := os.WriteFile(path, []byte("0123456789"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		doc, _ := e.FocusedDocument()
@@ -1057,7 +1058,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		err := os.WriteFile(path, []byte("hello"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		v2, ok := e.VSplit(v1.DocID())
@@ -1128,7 +1129,7 @@ func TestDocumentReloadPreservesSelections(t *testing.T) {
 		err := os.WriteFile(path, []byte("hello world"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		v2, ok := e.VSplit(v1.DocID())

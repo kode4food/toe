@@ -12,28 +12,29 @@ import (
 	"github.com/charmbracelet/x/ansi/kitty"
 	"golang.org/x/image/draw"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
 
 type (
 	imageRegistry struct {
-		placed       map[uint32][2]int
-		ready        map[uint32][2]int
-		placeholders map[[2]int][]string
+		placed       map[uint32]geom.Size
+		ready        map[uint32]geom.Size
+		placeholders map[geom.Size][]string
 		graphics     bool
 		remote       bool
 	}
 
 	imageReadyMsg struct {
 		id   uint32
-		size [2]int
+		size geom.Size
 	}
 
 	imageTransmitMsg struct {
 		raw  string
 		id   uint32
-		size [2]int
+		size geom.Size
 	}
 
 	imageDisplayRequestMsg struct {
@@ -56,26 +57,26 @@ const (
 
 func newImageRegistry() *imageRegistry {
 	return &imageRegistry{
-		placed:       map[uint32][2]int{},
-		ready:        map[uint32][2]int{},
-		placeholders: map[[2]int][]string{},
+		placed:       map[uint32]geom.Size{},
+		ready:        map[uint32]geom.Size{},
+		placeholders: map[geom.Size][]string{},
 		graphics:     graphicsSupported(),
 		remote:       isRemoteSession(),
 	}
 }
 
 type displayArgs struct {
-	img        *Image
-	path       string
-	id         uint32
-	cols, rows int
+	img   *Image
+	path  string
+	id    uint32
+	cells geom.Size
 }
 
 func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	if !r.graphics {
 		return nil
 	}
-	size := [2]int{a.cols, a.rows}
+	size := a.cells
 	placed, transmitted := r.placed[a.id]
 	if transmitted && placed == size {
 		return nil
@@ -95,8 +96,7 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 				img:    a.img,
 				path:   a.path,
 				id:     a.id,
-				cols:   a.cols,
-				rows:   a.rows,
+				cells:  a.cells,
 				remote: remote,
 			})
 			if err != nil {
@@ -104,8 +104,12 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 			}
 		} else {
 			opts := &kitty.Options{
-				Action: kitty.Put, Quiet: 2, ID: int(a.id),
-				Columns: a.cols, Rows: a.rows, VirtualPlacement: true,
+				Action:           kitty.Put,
+				Quiet:            2,
+				ID:               int(a.id),
+				Columns:          a.cells.Width,
+				Rows:             a.cells.Height,
+				VirtualPlacement: true,
 			}
 			buf.WriteString(ansi.KittyGraphics(nil, opts.Options()...))
 		}
@@ -113,31 +117,31 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	}
 }
 
-func (r *imageRegistry) placeholder(cols, rows, row, col int) string {
-	return r.placeholders[[2]int{cols, rows}][row*cols+col]
+func (r *imageRegistry) placeholder(cells geom.Size, at geom.Point) string {
+	return r.placeholders[cells][at.Y*cells.Width+at.X]
 }
 
-func (r *imageRegistry) preparePlaceholders(size [2]int) {
-	if _, ok := r.placeholders[size]; ok {
+func (r *imageRegistry) preparePlaceholders(cells geom.Size) {
+	if _, ok := r.placeholders[cells]; ok {
 		return
 	}
-	cols, rows := size[0], size[1]
-	cells := make([]string, cols*rows)
-	for row := range rows {
-		for col := range cols {
-			cells[row*cols+col] = tui.PlaceholderSymbol(row, col)
+	placeholders := make([]string, cells.Width*cells.Height)
+	for row := range cells.Height {
+		for col := range cells.Width {
+			at := geom.Point{X: col, Y: row}
+			placeholders[row*cells.Width+col] = tui.PlaceholderSymbol(at)
 		}
 	}
-	r.placeholders[size] = cells
+	r.placeholders[cells] = placeholders
 }
 
-func (r *imageRegistry) isReady(id uint32, cols, rows int) bool {
-	return r.ready[id] == [2]int{cols, rows}
+func (r *imageRegistry) isReady(id uint32, cells geom.Size) bool {
+	return r.ready[id] == cells
 }
 
-func (r *imageRegistry) readySize(id uint32) ([2]int, bool) {
-	size, ok := r.ready[id]
-	return size, ok
+func (r *imageRegistry) readySize(id uint32) (geom.Size, bool) {
+	cells, ok := r.ready[id]
+	return cells, ok
 }
 
 func (m Model) imageDisplayCmd() tea.Cmd {
@@ -148,21 +152,25 @@ func (m Model) imageDisplayCmd() tea.Cmd {
 			return true
 		}
 		img := pane.Image()
-		w, h := img.Size()
+		pixels := img.Size()
 		a := pane.Area()
-		cols, rows := imagePaneCellSize(
-			pane, a.Width, max(a.Height-1, 0), w, h,
-		)
-		if cols == 0 || rows == 0 {
+		cells := imagePaneCellSize(imagePaneCellSizeArgs{
+			pane: pane,
+			maxCells: geom.Size{
+				Width:  a.Width,
+				Height: max(a.Height-1, 0),
+			},
+			pixels: pixels,
+		})
+		if cells.Width == 0 || cells.Height == 0 {
 			return true
 		}
 		id := kittyImageID(img.ContentID(), uint32(pane.ID()), false)
 		cmds = append(cmds, m.context.images.display(displayArgs{
-			img:  img,
-			path: pane.Path(),
-			id:   id,
-			cols: cols,
-			rows: rows,
+			img:   img,
+			path:  pane.Path(),
+			id:    id,
+			cells: cells,
 		}))
 		return true
 	})
@@ -177,12 +185,12 @@ func isRemoteSession() bool {
 }
 
 type transmitArgs struct {
-	buf        *bytes.Buffer
-	img        *Image
-	path       string
-	id         uint32
-	cols, rows int
-	remote     bool
+	buf    *bytes.Buffer
+	img    *Image
+	path   string
+	id     uint32
+	cells  geom.Size
+	remote bool
 }
 
 // transmit encodes a fresh image into buf via the cheapest medium: a local PNG
@@ -193,14 +201,14 @@ func transmit(args transmitArgs) error {
 		Format:           kitty.PNG,
 		Quiet:            2,
 		ID:               int(args.id),
-		Columns:          args.cols,
-		Rows:             args.rows,
+		Columns:          args.cells.Width,
+		Rows:             args.cells.Height,
 		VirtualPlacement: true,
 	}
 	switch {
 	case args.remote:
 		opts.Transmission, opts.Chunk = kitty.Direct, true
-		img := scaleForCells(args.img, args.cols, args.rows)
+		img := scaleForCells(args.img, args.cells)
 		return kitty.EncodeGraphics(args.buf, img, opts)
 	case args.img.format == "png":
 		// the terminal reads the PNG off disk and scales it, so encode nothing
@@ -208,15 +216,15 @@ func transmit(args transmitArgs) error {
 		return kitty.EncodeGraphics(args.buf, nil, opts)
 	default:
 		opts.Transmission = kitty.TempFile
-		img := scaleForCells(args.img, args.cols, args.rows)
+		img := scaleForCells(args.img, args.cells)
 		return kitty.EncodeGraphics(args.buf, img, opts)
 	}
 }
 
-func scaleForCells(img image.Image, cols, rows int) image.Image {
+func scaleForCells(img image.Image, cells geom.Size) image.Image {
 	b := img.Bounds()
 	sw, sh := b.Dx(), b.Dy()
-	tw, th := cols*cellPixelW, rows*cellPixelH
+	tw, th := cells.Width*cellPixelW, cells.Height*cellPixelH
 	if sw <= tw && sh <= th {
 		return img
 	}
@@ -240,18 +248,25 @@ func kittyImageID(content, surface uint32, preview bool) uint32 {
 	return id
 }
 
-func imageCellSize(maxCols, maxRows, imgW, imgH int) (int, int) {
-	if maxCols <= 0 || maxRows <= 0 || imgW <= 0 || imgH <= 0 {
-		return 0, 0
+type imageCellSizeArgs struct {
+	maxCells geom.Size
+	pixels   geom.Size
+}
+
+func imageCellSize(args imageCellSizeArgs) geom.Size {
+	if args.maxCells.Width <= 0 || args.maxCells.Height <= 0 ||
+		args.pixels.Width <= 0 || args.pixels.Height <= 0 {
+		return geom.Size{}
 	}
-	cols := maxCols
-	ratio := float64(imgH) / (float64(imgW) * imageCellAspect)
+	cols := args.maxCells.Width
+	ratio := float64(args.pixels.Height) /
+		(float64(args.pixels.Width) * imageCellAspect)
 	rows := max(int(float64(cols)*ratio), 1)
-	if rows > maxRows {
-		rows = maxRows
+	if rows > args.maxCells.Height {
+		rows = args.maxCells.Height
 		cols = max(int(float64(rows)/ratio), 1)
 	}
-	return cols, rows
+	return geom.Size{Width: cols, Height: rows}
 }
 
 func writeKittyDelete(buf *bytes.Buffer, id uint32) {

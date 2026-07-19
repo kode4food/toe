@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -102,8 +103,7 @@ type (
 		totalLines int
 		reg        rune
 		cwd        string
-		row        int
-		col        int
+		cursor     geom.Point
 		vcsHead    string
 		busy       bool
 		spinFrame  int
@@ -111,7 +111,7 @@ type (
 )
 
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
-	w := r.w
+	w := r.size.Width
 	isErr := r.ec.cmdMsg != "" &&
 		strings.HasPrefix(r.ec.cmdMsg, "error:")
 	st := r.cmdlineStyle(isErr)
@@ -126,16 +126,19 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 		right += fmt.Sprintf("[%c]", r.ec.macroSlot.reg)
 	}
 
-	buf.SetString(0, y, strings.Repeat(" ", w), tuiSt)
+	buf.SetString(geom.Point{X: 0, Y: y}, strings.Repeat(" ", w), tuiSt)
 	if left == "" && right == "" {
 		return
 	}
 	rightW := runewidth.StringWidth(right)
 	leftW := max(w-rightW, 0)
 	leftStr := ansi.Truncate(left, leftW, "")
-	buf.SetString(0, y, leftStr, tuiSt)
+	buf.SetString(geom.Point{X: 0, Y: y}, leftStr, tuiSt)
 	if rightW > 0 && rightW <= w {
-		buf.SetString(w-rightW, y, right, tuiSt)
+		buf.SetString(geom.Point{
+			X: w - rightW,
+			Y: y,
+		}, right, tuiSt)
 	}
 }
 
@@ -143,7 +146,7 @@ type renderStatusArgs struct {
 	doc     *view.Document
 	view    *view.View
 	buf     *tui.Buffer
-	x, y    int
+	at      geom.Point
 	width   int
 	focused bool
 }
@@ -152,8 +155,6 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	doc := args.doc
 	v := args.view
 	buf := args.buf
-	x := args.x
-	y := args.y
 	width := args.width
 	isFocused := args.focused
 	text := doc.Text()
@@ -218,7 +219,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		spinSt:  lipglossToTUIStyle(spinSt),
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
-		row: row, col: col,
+		cursor:    geom.Point{X: col, Y: row},
 		vcsHead:   vcsHead,
 		busy:      busy,
 		spinFrame: r.ec.spinFrame,
@@ -275,24 +276,24 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	writeElems := func(elems []statusElem, x int) {
 		for _, e := range elems {
 			if !e.compact {
-				buf.SetString(x, y, " ", baseTUI)
+				buf.SetString(geom.Point{X: x, Y: args.at.Y}, " ", baseTUI)
 				x++
 			}
-			buf.SetString(x, y, e.text, e.style)
+			buf.SetString(geom.Point{X: x, Y: args.at.Y}, e.text, e.style)
 			x += runewidth.StringWidth(e.text)
 			if !e.compact {
-				buf.SetString(x, y, " ", baseTUI)
+				buf.SetString(geom.Point{X: x, Y: args.at.Y}, " ", baseTUI)
 				x++
 			}
 		}
 	}
 
-	buf.SetString(x, y, strings.Repeat(" ", width), baseTUI)
+	buf.SetString(args.at, strings.Repeat(" ", width), baseTUI)
 
-	writeElems(left, x)
+	writeElems(left, args.at.X)
 
 	rightW := elemsWidth(right)
-	writeElems(right, x+width-rightW)
+	writeElems(right, args.at.X+width-rightW)
 }
 
 func (r *renderPass) activeTheme() *theme.Theme {

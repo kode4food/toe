@@ -10,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -94,7 +95,7 @@ type (
 	}
 
 	// PreviewRenderer renders a picker item's preview at the given size
-	PreviewRenderer func(w, h int) string
+	PreviewRenderer func(geom.Size) string
 
 	// PickerLocation holds a target and an optional line range
 	PickerLocation struct {

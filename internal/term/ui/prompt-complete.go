@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -46,13 +47,13 @@ func (p *PromptComponent) changeCompletion(dir int) {
 	p.caret = len([]rune(p.buf))
 }
 
-func (p *PromptComponent) completionMenuHeight(w, h int) int {
-	if len(p.comps) == 0 || w <= 4 || h <= 3 {
-		p.compCols, p.compRows = 0, 0
+func (p *PromptComponent) completionMenuHeight(screen geom.Size) int {
+	if len(p.comps) == 0 || screen.Width <= 4 || screen.Height <= 3 {
+		p.comp = geom.Size{}
 		return 0
 	}
-	innerW := w - 2 - 2*compPadX
-	maxRows := min(compMaxRows, h-3)
+	innerW := screen.Width - 2 - 2*compPadX
+	maxRows := min(compMaxRows, screen.Height-3)
 	widths := make([]int, len(p.comps))
 	for i, c := range p.comps {
 		widths[i] = runewidth.StringWidth(c.completionText())
@@ -70,16 +71,16 @@ func (p *PromptComponent) completionMenuHeight(w, h int) int {
 	rowCount := (len(p.comps) + cols - 1) / cols
 	rowCount = min(rowCount, maxRows)
 	if rowCount <= 0 {
-		p.compCols, p.compRows = 0, 0
+		p.comp = geom.Size{}
 		return 0
 	}
 	cols = min(cols, (len(p.comps)+rowCount-1)/rowCount)
-	p.compCols, p.compRows = cols, rowCount
+	p.comp = geom.Size{Width: cols, Height: rowCount}
 	return rowCount + 2
 }
 
 func (p *PromptComponent) paintCompletions(
-	buf *tui.Buffer, y0, w int, cx *Context,
+	cx *Context, buf *tui.Buffer, bounds geom.Area,
 ) {
 	menuStyle, selected := promptCompletionStyles(cx)
 	pop := popup{
@@ -90,16 +91,17 @@ func (p *PromptComponent) paintCompletions(
 		contentStyle: lipglossToTUIStyle(menuStyle),
 		padX:         compPadX,
 	}
-	innerW := w - 2 - 2*compPadX
-	colW := max((innerW-compGap*(p.compCols-1))/
-		p.compCols, 1)
-	area := pop.drawInto(buf, 0, y0, w, p.compRows+2)
+	innerW := bounds.Width - 2 - 2*compPadX
+	colW := max(
+		(innerW-compGap*(p.comp.Width-1))/p.comp.Width, 1,
+	)
+	area := pop.drawInto(buf, bounds)
 	menuTUI := lipglossToTUIStyle(menuStyle)
 	selectedTUI := lipglossToTUIStyle(selected)
 
-	for row := range p.compRows {
-		for col := range p.compCols {
-			i := col*p.compRows + row
+	for row := range p.comp.Height {
+		for col := range p.comp.Width {
+			i := col*p.comp.Height + row
 			if i >= len(p.comps) {
 				continue
 			}
@@ -108,10 +110,10 @@ func (p *PromptComponent) paintCompletions(
 			if p.compSel != nil && *p.compSel == i {
 				style = selectedTUI
 			}
-			buf.SetString(
-				area.x+col*(colW+compGap),
-				area.y+row, text, style,
-			)
+			buf.SetString(geom.Point{
+				X: area.X + col*(colW+compGap),
+				Y: area.Y + row,
+			}, text, style)
 		}
 	}
 }

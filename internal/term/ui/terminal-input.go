@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -32,18 +33,18 @@ func CloseAllTerminalPanes(e *view.Editor) {
 
 // HandleEvent routes key and mouse events to the shell
 func (t *TerminalPane) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, bool) {
 	if key, ok := msg.(tea.KeyPressMsg); ok {
-		return t.handleKey(key, cx)
+		return t.handleKey(cx, key)
 	}
-	return t.handleMouse(msg, cx)
+	return t.handleMouse(cx, msg)
 }
 
 // handleKey forwards msg to the shell, unless it is one of the leaders that
 // detach or close the pane
 func (t *TerminalPane) handleKey(
-	msg tea.KeyPressMsg, cx *Context,
+	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, bool) {
 	k := msg.Key()
 	if k.Mod&tea.ModCtrl != 0 {
@@ -66,7 +67,7 @@ func (t *TerminalPane) handleKey(
 // handleMouse scrolls into scrollback on wheel when the shell hasn't
 // requested mouse tracking, or otherwise forwards the event to it
 func (t *TerminalPane) handleMouse(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, bool) {
 	wheel, isWheel := msg.(tea.MouseWheelMsg)
 	if isWheel && !t.MouseEnabled() {
@@ -82,23 +83,25 @@ func (t *TerminalPane) handleMouse(
 	if !t.MouseEnabled() {
 		return ignored(), false
 	}
-	x, y, btn, mod, ok := mouseFields(msg)
+	mf, ok := mouseFields(msg)
 	if !ok {
 		return ignored(), false
 	}
-	m, ok := t.localMouse(cx, x, y)
+	m, ok := t.localMouse(cx, mf.at)
 	if !ok {
 		return consumed(), true
 	}
-	m.Button, m.Mod = btn, mod
+	m.Button, m.Mod = mf.btn, mf.mod
 	t.SendMouse(wrapMouseEvent(msg, m))
 	return consumed(), true
 }
 
 // BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or
 // forwards the click to it otherwise
-func (t *TerminalPane) BeginDrag(cx *Context, x, y int, mod tea.KeyMod) bool {
-	m, ok := t.localMouse(cx, x, y)
+func (t *TerminalPane) BeginDrag(
+	cx *Context, at geom.Point, mod tea.KeyMod,
+) bool {
+	m, ok := t.localMouse(cx, at)
 	if !ok {
 		return false
 	}
@@ -115,7 +118,7 @@ func (t *TerminalPane) BeginDrag(cx *Context, x, y int, mod tea.KeyMod) bool {
 // ContinueDrag extends the selection to (x, y), auto-scrolling and
 // scheduling further ticks if the drag has crossed the pane's top or
 // bottom edge
-func (t *TerminalPane) ContinueDrag(cx *Context, x, y int) tea.Cmd {
+func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
 	yOff := 0
 	if bufferlineVisible(cx) {
 		yOff = 1
@@ -124,17 +127,17 @@ func (t *TerminalPane) ContinueDrag(cx *Context, x, y int) tea.Cmd {
 	contentH := max(a.Height-1, 0)
 	scrollOff := cx.Editor.Options().ScrollOff
 	atTop, atBottom, clampedY := t.drag.update(
-		y-yOff, a.Y, a.Y+contentH-1, autoScrollMargin(contentH, scrollOff),
+		at.Y-yOff, a.Y, a.Y+contentH-1, autoScrollMargin(contentH, scrollOff),
 	)
-	localX := min(max(x-a.X, 0), max(a.Width-1, 0))
+	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
 	t.extendSelection(uv.Position{X: localX, Y: clampedY - a.Y})
 	return t.drag.trigger(atTop, atBottom, localX, t.scheduleDragTick)
 }
 
 // EndDrag finalizes the selection at (x, y), copying it to the clipboard
-func (t *TerminalPane) EndDrag(cx *Context, x, y int) tea.Cmd {
+func (t *TerminalPane) EndDrag(cx *Context, at geom.Point) tea.Cmd {
 	t.drag.stop()
-	m := t.clampedMouse(cx, x, y)
+	m := t.clampedMouse(cx, at)
 	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
 		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
 		cx.Editor.SetStatusMsg(i18n.Text(i18n.StatusClipboardCopied))
@@ -175,25 +178,25 @@ func (t *TerminalPane) scheduleDragTick(
 	})
 }
 
-func (t *TerminalPane) clampedMouse(cx *Context, x, y int) uv.Mouse {
+func (t *TerminalPane) clampedMouse(cx *Context, at geom.Point) uv.Mouse {
 	yOff := 0
 	if bufferlineVisible(cx) {
 		yOff = 1
 	}
 	a := t.area
-	localX := min(max(x-a.X, 0), max(a.Width-1, 0))
+	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
 	contentH := max(a.Height-1, 0)
-	localY := min(max((y-yOff)-a.Y, 0), max(contentH-1, 0))
+	localY := min(max((at.Y-yOff)-a.Y, 0), max(contentH-1, 0))
 	return uv.Mouse{X: localX, Y: localY}
 }
 
-func (t *TerminalPane) localMouse(cx *Context, x, y int) (uv.Mouse, bool) {
+func (t *TerminalPane) localMouse(cx *Context, at geom.Point) (uv.Mouse, bool) {
 	yOff := 0
 	if bufferlineVisible(cx) {
 		yOff = 1
 	}
 	a := t.Area()
-	localX, localY := x-a.X, (y-yOff)-a.Y
+	localX, localY := at.X-a.X, (at.Y-yOff)-a.Y
 	contentH := max(a.Height-1, 0)
 	if localX < 0 || localX >= a.Width || localY < 0 || localY >= contentH {
 		return uv.Mouse{}, false
@@ -229,16 +232,16 @@ func (e *EditorComponent) pollTerminals(cx *Context) {
 	}
 }
 
-func paneAt(cx *Context, x, y int) (view.Pane, bool) {
+func paneAt(cx *Context, at geom.Point) (view.Pane, bool) {
 	yOff := 0
 	if bufferlineVisible(cx) {
 		yOff = 1
 	}
-	cy := y - yOff
+	at.Y -= yOff
 	var found view.Pane
 	cx.Editor.Tree().Range(func(p view.Pane) bool {
 		a := p.Area()
-		if x >= a.X && x < a.X+a.Width && cy >= a.Y && cy < a.Y+a.Height {
+		if a.Contains(at) {
 			found = p
 			return false
 		}
@@ -262,20 +265,32 @@ func closeTerminal(e *view.Editor, tp *TerminalPane) {
 	e.ClosePane(tp.ID())
 }
 
-func mouseFields(msg tea.Msg) (
-	x, y int, btn tea.MouseButton, mod tea.KeyMod, ok bool,
-) {
-	switch m := msg.(type) {
+type mouseFieldsRes struct {
+	at  geom.Point
+	btn tea.MouseButton
+	mod tea.KeyMod
+}
+
+func mouseFields(msg tea.Msg) (mouseFieldsRes, bool) {
+	switch e := msg.(type) {
 	case tea.MouseClickMsg:
-		return m.X, m.Y, m.Button, m.Mod, true
+		return mouseFieldsRes{
+			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+		}, true
 	case tea.MouseReleaseMsg:
-		return m.X, m.Y, m.Button, m.Mod, true
+		return mouseFieldsRes{
+			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+		}, true
 	case tea.MouseMotionMsg:
-		return m.X, m.Y, m.Button, m.Mod, true
+		return mouseFieldsRes{
+			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+		}, true
 	case tea.MouseWheelMsg:
-		return m.X, m.Y, m.Button, m.Mod, true
+		return mouseFieldsRes{
+			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+		}, true
 	}
-	return 0, 0, 0, 0, false
+	return mouseFieldsRes{}, false
 }
 
 func wrapMouseEvent(msg tea.Msg, m uv.Mouse) uv.MouseEvent {

@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -35,29 +36,37 @@ const (
 	diffGutterRemoved
 )
 
-func (g gutterSpec) renderBlank(buf *tui.Buffer, x, y int) {
-	buf.FillRange(x, y, g.width, g.lineStyle)
+// diagnosticGutterMark is the dot drawn in the diagnostics gutter column
+const diagnosticGutterMark = "●"
+
+func (g gutterSpec) renderBlank(buf *tui.Buffer, at geom.Point) {
+	buf.FillRange(at, g.width, g.lineStyle)
 }
 
-func (g gutterSpec) renderTilde(buf *tui.Buffer, x, y int, selected bool) {
-	col := x
+func (g gutterSpec) renderTilde(
+	buf *tui.Buffer, at geom.Point, selected bool,
+) {
+	col := at.X
 	st := g.lineStyleFor(selected)
-	buf.FillRange(x, y, g.width, st)
+	buf.FillRange(at, g.width, st)
 	for _, gt := range g.layout {
 		w := g.gutterTypeWidth(gt)
 		if gt == view.GutterTypeLineNumbers && g.lineNumberW > 0 {
-			buf.SetString(col+g.lineNumberW-1, y, "~", g.lineStyleFor(selected))
+			buf.SetString(geom.Point{
+				X: col + g.lineNumberW - 1,
+				Y: at.Y,
+			}, "~", g.lineStyleFor(selected))
 		}
 		col += w
 	}
 }
 
 func (g gutterSpec) renderLine(
-	buf *tui.Buffer, x, y, lineNum, num int, selected bool,
+	buf *tui.Buffer, at geom.Point, lineNum, num int, selected bool,
 ) {
-	col := x
+	col := at.X
 	st := g.lineStyleFor(selected)
-	buf.FillRange(x, y, g.width, st)
+	buf.FillRange(at, g.width, st)
 	for _, gt := range g.layout {
 		w := g.gutterTypeWidth(gt)
 		switch gt {
@@ -66,20 +75,23 @@ func (g gutterSpec) renderLine(
 				st := overlayDiagnosticStyle(
 					g.lineStyleFor(selected), g.diagnosticStyle(sev),
 				)
-				buf.SetString(col, y, "\u25cf", st) // ●
+				buf.SetString(geom.Point{X: col, Y: at.Y}, diagnosticGutterMark, st)
 			}
 		case view.GutterTypeLineNumbers:
 			if g.lineNumberW > 0 {
 				buf.SetRightAlignedInt(
-					col, y, g.lineNumberW, num, g.lineStyleFor(selected),
+					geom.Point{X: col, Y: at.Y}, g.lineNumberW, num,
+					g.lineStyleFor(selected),
 				)
 			}
 		case view.GutterTypeDiff:
 			if kind, ok := g.diffLines[lineNum]; ok {
 				icon, st := g.diffMarker(kind)
-				buf.SetString(col, y, icon, overlayDiagnosticStyle(
-					g.lineStyleFor(selected), st,
-				))
+				buf.SetString(
+					geom.Point{X: col, Y: at.Y}, icon, overlayDiagnosticStyle(
+						g.lineStyleFor(selected), st,
+					),
+				)
 			}
 		}
 		col += w

@@ -700,20 +700,24 @@ func TestVisualScrollUp(t *testing.T) {
 	doc := core.NewRope("short\nlonger than ten chars\nend")
 
 	t.Run("scroll up within row stays on same line", func(t *testing.T) {
-		line, row := vf.VisualScrollUp(doc, 1, 2, 1)
-		assert.Equal(t, 1, line)
-		assert.Equal(t, 1, row)
+		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
+			Doc: doc, Line: 1, Row: 2, Up: 1,
+		})
+		assert.Equal(t, 1, res.Line)
+		assert.Equal(t, 1, res.Row)
 	})
 
 	t.Run("scroll up to previous line", func(t *testing.T) {
-		line, row := vf.VisualScrollUp(doc, 1, 0, 1)
-		assert.Equal(t, 0, line)
-		assert.GreaterOrEqual(t, row, 0)
+		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
+			Doc: doc, Line: 1, Up: 1,
+		})
+		assert.Equal(t, 0, res.Line)
+		assert.GreaterOrEqual(t, res.Row, 0)
 	})
 
 	t.Run("clamps at document start", func(t *testing.T) {
-		line, row := vf.VisualScrollUp(doc, 0, 0, 10)
-		assert.Equal(t, 0, line)
-		assert.Equal(t, 0, row)
+		res := vf.VisualScrollUp(core.VisualScrollUpArgs{Doc: doc, Up: 10})
+		assert.Equal(t, 0, res.Line)
+		assert.Equal(t, 0, res.Row)
 	})
 }

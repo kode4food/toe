@@ -9,7 +9,7 @@ import (
 type dismissFunc func() (EventResult, tea.Cmd)
 
 func (p *PickerComponent) handleKey(
-	msg tea.KeyPressMsg, cx *Context,
+	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
 	k := FromTeaKey(msg)
 	ps := p.state
@@ -19,7 +19,7 @@ func (p *PickerComponent) handleKey(
 			ps.dynamicStop()
 		}
 		ps.cancel()
-		return consumedWith(func(comp *Compositor, cx *Context) tea.Cmd {
+		return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
 			comp.Pop()
 			return nil
 		}), nil
@@ -107,7 +107,7 @@ func (p *PickerComponent) navigateItem(
 		ps.dynamicStop()
 	}
 	ps.cancel()
-	return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
+	return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
 		comp.Push(newPickerComponent(next))
 		return feedCmd

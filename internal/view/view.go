@@ -6,6 +6,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 )
 
 type (
@@ -24,7 +25,7 @@ type (
 		fsRev int
 		fsSel core.Selection
 		// area is the screen rectangle assigned by the layout engine
-		area Area
+		area geom.Area
 		// vcol memoizes the last VisualColumn result; Rope is immutable
 		// and comparable, so equal fields mean an identical result
 		vcol vcolCache
@@ -48,11 +49,6 @@ type (
 
 	// Align describes vertical scroll alignment
 	Align int
-
-	// Area is the screen rectangle assigned to a view by the layout engine
-	Area struct {
-		X, Y, Width, Height int
-	}
 
 	// Position holds the scroll offset for a view
 	Position struct {
@@ -149,12 +145,12 @@ func (v *View) Shutdown() {
 }
 
 // Area returns the screen rectangle assigned by the layout engine
-func (v *View) Area() Area {
+func (v *View) Area() geom.Area {
 	return v.area
 }
 
 // SetArea sets the screen rectangle (called by the layout engine)
-func (v *View) SetArea(a Area) {
+func (v *View) SetArea(a geom.Area) {
 	if a != v.area {
 		v.area = a
 		v.dirty = true
@@ -537,11 +533,21 @@ func (v *View) ensureCursorVisibleVisual(
 
 	switch {
 	case !ok || fromTop < soTop:
-		anchorLine, vOff = vf.VisualScrollUp(doc, cursorLine, cursorRow, soTop)
+		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
+			Doc:  doc,
+			Line: cursorLine,
+			Row:  cursorRow,
+			Up:   soTop,
+		})
+		anchorLine, vOff = res.Line, res.Row
 	case fromTop > height-1-soBottom:
-		anchorLine, vOff = vf.VisualScrollUp(
-			doc, cursorLine, cursorRow, height-1-soBottom,
-		)
+		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
+			Doc:  doc,
+			Line: cursorLine,
+			Row:  cursorRow,
+			Up:   height - 1 - soBottom,
+		})
+		anchorLine, vOff = res.Line, res.Row
 	default:
 		return
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -31,7 +32,7 @@ type (
 	popupTextRenderer struct {
 		buf  *tui.Buffer
 		cx   *Context
-		area Bounds
+		area geom.Area
 		base tui.Style
 		padX int
 	}
@@ -111,17 +112,20 @@ func (p *popupMarkdown) trim() {
 }
 
 func (r *popupTextRenderer) render(lines []popupLine) {
-	for i := 0; i < r.area.h && i < len(lines); i++ {
-		r.renderLine(lines[i], r.area.y+i)
+	for i := 0; i < r.area.Height && i < len(lines); i++ {
+		r.renderLine(lines[i], r.area.Y+i)
 	}
 }
 
 func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 	if line.rule {
 		// span the full box, tying into border like the picker cut-separator
-		w := r.area.w + 2*r.padX
+		w := r.area.Width + 2*r.padX
 		rule := splitLeftT + strings.Repeat(horizSplit, w) + splitRightT
-		r.buf.SetString(r.area.x-1-r.padX, y, rule, r.base)
+		r.buf.SetString(geom.Point{
+			X: r.area.X - 1 - r.padX,
+			Y: y,
+		}, rule, r.base)
 		return
 	}
 	if line.code {
@@ -132,41 +136,45 @@ func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 	if line.heading {
 		st = st.Mod(tui.ModifierBold)
 	}
-	text := ansi.Truncate(line.text, r.area.w, "")
-	r.buf.SetString(r.area.x, y, text, st)
+	text := ansi.Truncate(line.text, r.area.Width, "")
+	r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, st)
 }
 
 func (r *popupTextRenderer) renderCode(line popupLine, y int) {
-	text := ansi.Truncate(line.text, r.area.w, "")
+	text := ansi.Truncate(line.text, r.area.Width, "")
 	spans := highlight.Tokenize(text, line.lang)
 	if len(spans) == 0 {
-		r.buf.SetString(r.area.x, y, text, r.base)
+		r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, r.base)
 		return
 	}
 	rs := []rune(text)
-	x := r.area.x
+	x := r.area.X
 	pos := 0
 	for _, s := range spans {
 		start := min(s.Start, len(rs))
 		if start > pos {
-			x = r.writeRun(x, y, string(rs[pos:start]), r.base)
+			x = r.writeRun(
+				geom.Point{X: x, Y: y}, string(rs[pos:start]), r.base,
+			)
 		}
 		end := min(s.End, len(rs))
 		if end < start {
 			continue
 		}
 		st := r.highlightStyle(s.Scope)
-		x = r.writeRun(x, y, string(rs[start:end]), st)
+		x = r.writeRun(geom.Point{X: x, Y: y}, string(rs[start:end]), st)
 		pos = end
 	}
 	if pos < len(rs) {
-		r.writeRun(x, y, string(rs[pos:]), r.base)
+		r.writeRun(geom.Point{X: x, Y: y}, string(rs[pos:]), r.base)
 	}
 }
 
-func (r *popupTextRenderer) writeRun(x, y int, text string, st tui.Style) int {
-	r.buf.SetString(x, y, text, st)
-	return x + runewidth.StringWidth(text)
+func (r *popupTextRenderer) writeRun(
+	at geom.Point, text string, st tui.Style,
+) int {
+	r.buf.SetString(at, text, st)
+	return at.X + runewidth.StringWidth(text)
 }
 
 func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
@@ -196,17 +204,17 @@ func trimPopupLines(lines []popupLine, maxVisible int) []popupLine {
 	return lines
 }
 
-func measureTextPopup(maxW, maxH int, text string) ([]popupLine, int, int) {
-	lines := popupTextLines(text, maxW-2-2*popupPadX)
-	lines = trimPopupLines(lines, maxH-2)
+func measureTextPopup(maxSize geom.Size, text string) ([]popupLine, geom.Size) {
+	lines := popupTextLines(text, maxSize.Width-2-2*popupPadX)
+	lines = trimPopupLines(lines, maxSize.Height-2)
 	w := popupTextWidth(lines) + 2 + 2*popupPadX
 	h := len(lines) + 2
-	w = min(max(w, 2), maxW)
-	h = min(max(h, 2), maxH)
-	return lines, w, h
+	w = min(max(w, 2), maxSize.Width)
+	h = min(max(h, 2), maxSize.Height)
+	return lines, geom.Size{Width: w, Height: h}
 }
 
-func paintTextPopup(buf *tui.Buffer, lines []popupLine, cx *Context) {
+func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	pop := popup{
 		border:       lipgloss.RoundedBorder(),
@@ -214,7 +222,7 @@ func paintTextPopup(buf *tui.Buffer, lines []popupLine, cx *Context) {
 		contentStyle: st,
 		padX:         popupPadX,
 	}
-	area := pop.drawInto(buf, 0, 0, buf.Width, buf.Height)
+	area := pop.drawInto(buf, geom.Area{Size: buf.Size})
 	r := popupTextRenderer{
 		buf: buf, cx: cx, area: area, base: st, padX: popupPadX,
 	}

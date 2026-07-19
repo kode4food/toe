@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
@@ -10,7 +11,7 @@ type (
 	// Callback lets a component push, pop, or mutate compositor layers
 	// without direct coupling — the compositor executes it after event
 	// propagation completes
-	Callback func(*Compositor, *Context) tea.Cmd
+	Callback func(*Context, *Compositor) tea.Cmd
 
 	// EventResult is returned by every Component.HandleEvent call
 	EventResult struct {
@@ -20,30 +21,30 @@ type (
 
 	// Component is the interface every compositor layer must implement
 	Component interface {
-		HandleEvent(tea.Msg, *Context) (EventResult, tea.Cmd)
-		Cursor(width, height int, cx *Context) (tea.Cursor, bool)
+		HandleEvent(*Context, tea.Msg) (EventResult, tea.Cmd)
+		Cursor(*Context, geom.Size) (tea.Cursor, bool)
 	}
 
 	// BufferRenderer exposes the raw cell buffer a base component rendered
 	// into, so overlay layers can draw directly onto it
 	BufferRenderer interface {
 		Component
-		Render(width, height int, cx *Context) *tui.Buffer
+		Render(*Context, geom.Size) *tui.Buffer
 	}
 
 	// BufferOverlayComponent extends Component for overlay layers that own
 	// their own cell buffer instead of drawing into the shared one
 	BufferOverlayComponent interface {
 		Component
-		Layout(screenW, screenH int, cx *Context) (Bounds, bool)
-		PaintBuffer(Bounds, *Context) *tui.Buffer
+		Layout(*Context, geom.Size) (geom.Area, bool)
+		PaintBuffer(*Context, geom.Area) *tui.Buffer
 	}
 
 	// PaneInput is a pane that handles bubbletea key and mouse events itself.
 	// It receives the event first; an unconsumed event (handled=false) falls
 	// through to the editor's default keymap/document handling
 	PaneInput interface {
-		HandleEvent(tea.Msg, *Context) (EventResult, bool)
+		HandleEvent(*Context, tea.Msg) (EventResult, bool)
 	}
 
 	// PaneCursor is a pane that positions its own cursor
@@ -60,15 +61,12 @@ type (
 	// Draggable is a pane that handles mouse drags itself. Drags span several
 	// events with cross-event state, so they stay separate from PaneInput
 	Draggable interface {
-		BeginDrag(cx *Context, x, y int, mod tea.KeyMod) bool
-		ContinueDrag(cx *Context, x, y int) tea.Cmd
-		EndDrag(cx *Context, x, y int) tea.Cmd
+		BeginDrag(*Context, geom.Point, tea.KeyMod) bool
+		ContinueDrag(*Context, geom.Point) tea.Cmd
+		EndDrag(*Context, geom.Point) tea.Cmd
 		CancelDrag()
 		DragTick(cx *Context, gen int, toTop bool) tea.Cmd
 	}
-
-	// Bounds is a screen-space rectangle
-	Bounds struct{ x, y, w, h int }
 
 	// overlayBuf is embedded by BufferOverlayComponent implementers to
 	// reuse their paint buffer across frames instead of reallocating it
@@ -79,14 +77,17 @@ type (
 	}
 )
 
+// scrollbarThumb is the marker drawn in a list's scrollbar column
+const scrollbarThumb = "▌"
+
 func (o *overlayBuf) maybePaint(
-	w, h int, cx *Context, paint func(buf *tui.Buffer),
+	cx *Context, size geom.Size, paint func(buf *tui.Buffer),
 ) *tui.Buffer {
 	gen := cx.StyleGen()
-	resized := o.buf == nil || o.buf.Width != w || o.buf.Height != h
+	resized := o.buf == nil || o.buf.Size != size
 	repaint := resized || o.dirty || o.styleGen != gen
 	if resized {
-		o.buf = tui.NewBuffer(w, h)
+		o.buf = tui.NewBuffer(size)
 	} else if repaint {
 		o.buf.Clear()
 	}
@@ -100,14 +101,6 @@ func (o *overlayBuf) maybePaint(
 
 func (o *overlayBuf) markDirty() {
 	o.dirty = true
-}
-
-func (b Bounds) contains(x, y int) bool {
-	return x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h
-}
-
-func (b Bounds) translate(dx, dy int) Bounds {
-	return Bounds{x: b.x + dx, y: b.y + dy, w: b.w, h: b.h}
 }
 
 func consumed() EventResult {
@@ -126,7 +119,7 @@ func ignoredWith(cb Callback) EventResult {
 	return EventResult{Callback: cb}
 }
 
-func popLayer(c *Compositor, _ *Context) tea.Cmd {
+func popLayer(_ *Context, c *Compositor) tea.Cmd {
 	c.Pop()
 	return nil
 }

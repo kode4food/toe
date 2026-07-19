@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -114,7 +115,7 @@ func terminalScrollModel(b *testing.B, tc terminalOutputBench) ui.Model {
 		if err != nil {
 			b.Fatal(err)
 		}
-		e.ResizeTree(100, 40)
+		e.ResizeTree(geom.Size{Width: 100, Height: 40})
 		if _, ok := e.VSplit(docB.ID()); !ok {
 			b.Fatal("vsplit failed")
 		}

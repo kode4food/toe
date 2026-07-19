@@ -12,12 +12,12 @@ import (
 )
 
 func (e *EditorComponent) handleKeyPress(
-	msg tea.KeyPressMsg, cx *Context,
+	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
 	if !e.inWindowChord(msg) {
 		p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
 		if pi, ok := p.(PaneInput); ok {
-			if result, handled := pi.HandleEvent(msg, cx); handled {
+			if result, handled := pi.HandleEvent(cx, msg); handled {
 				return result, nil
 			}
 		}
@@ -81,7 +81,7 @@ func (e *EditorComponent) handleKeyPress(
 
 		if ov := e.nextLayer; ov != nil {
 			e.nextLayer = nil
-			return consumedWith(func(comp *Compositor, cx *Context) tea.Cmd {
+			return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
 				layer, cmd := ov(cx)
 				if layer != nil {
 					comp.Push(layer)
@@ -151,7 +151,7 @@ func (e *EditorComponent) triggerCompletionLayer(cx *Context) Callback {
 	if cmd == nil {
 		return nil
 	}
-	return func(*Compositor, *Context) tea.Cmd {
+	return func(*Context, *Compositor) tea.Cmd {
 		return cmd
 	}
 }
@@ -220,7 +220,7 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 	if len(help.Signatures) == 0 {
 		return nil
 	}
-	return func(comp *Compositor, _ *Context) tea.Cmd {
+	return func(_ *Context, comp *Compositor) tea.Cmd {
 		pushSignatureHelpLayer(comp, newSignatureHelpComponent(e, call, help))
 		return nil
 	}

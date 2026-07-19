@@ -1,5 +1,7 @@
 package core
 
+import "github.com/kode4food/toe/internal/geom"
+
 // VisualRows returns the number of visual (soft-wrapped) rows the given text
 // line occupies. It returns 1 when soft-wrap is inactive
 func (vf *VisualMoveFormat) VisualRows(doc Rope, line int) int {
@@ -15,27 +17,43 @@ func (vf *VisualMoveFormat) VisualRowOfOffset(doc Rope, line, charOff int) int {
 	if vf == nil || vf.ViewportWidth <= 0 {
 		return 0
 	}
-	row, _ := newVisualLine(doc, line, vf).posOf(charOff)
-	return row
+	return newVisualLine(doc, line, vf).posOf(charOff).Y
 }
 
-// VisualScrollUp moves up by up visual rows from (line, row), clamped at the
-// start of the document
-func (vf *VisualMoveFormat) VisualScrollUp(
-	doc Rope, line, row, up int,
-) (int, int) {
-	for up > 0 {
-		if row >= up {
-			return line, row - up
-		}
-		up -= row + 1
-		if line == 0 {
-			return 0, 0
-		}
-		line--
-		row = vf.VisualRows(doc, line) - 1
+type (
+	// VisualScrollUpArgs identifies a visual row and upward distance
+	VisualScrollUpArgs struct {
+		Doc  Rope
+		Line int
+		Row  int
+		Up   int
 	}
-	return line, row
+
+	// VisualScrollUpRes identifies the resulting line and visual row
+	VisualScrollUpRes struct {
+		Line int
+		Row  int
+	}
+)
+
+// VisualScrollUp moves upward from a visual row, clamped at the document start
+func (vf *VisualMoveFormat) VisualScrollUp(
+	args VisualScrollUpArgs,
+) VisualScrollUpRes {
+	for args.Up > 0 {
+		if args.Row >= args.Up {
+			return VisualScrollUpRes{
+				Line: args.Line, Row: args.Row - args.Up,
+			}
+		}
+		args.Up -= args.Row + 1
+		if args.Line == 0 {
+			return VisualScrollUpRes{}
+		}
+		args.Line--
+		args.Row = vf.VisualRows(args.Doc, args.Line) - 1
+	}
+	return VisualScrollUpRes{Line: args.Line, Row: args.Row}
 }
 
 func (v visualMover) moveVertically(
@@ -58,14 +76,14 @@ func (v visualMover) moveVertically(
 	}
 
 	vl := newVisualLine(doc, line, vf)
-	curRow, curCol := vl.posOf(cursor - lineStart)
+	cur := vl.posOf(cursor - lineStart)
 
 	if dir == DirectionForward {
 		total := vl.rowCount()
 		remaining := count
-		rowsBelow := total - 1 - curRow
+		rowsBelow := total - 1 - cur.Y
 		if remaining <= rowsBelow {
-			off := vl.charAtPos(curRow+remaining, curCol)
+			off := vl.charAtPos(geom.Point{X: cur.X, Y: cur.Y + remaining})
 			return r.PutCursor(doc, lineStart+off, move == MovementExtend)
 		}
 		remaining -= rowsBelow + 1
@@ -79,7 +97,7 @@ func (v visualMover) moveVertically(
 			tl := newVisualLine(doc, nextLine, vf)
 			tRows := tl.rowCount()
 			if remaining < tRows {
-				off := tl.charAtPos(remaining, curCol)
+				off := tl.charAtPos(geom.Point{X: cur.X, Y: remaining})
 				return r.PutCursor(doc, tStart+off, move == MovementExtend)
 			}
 			remaining -= tRows
@@ -91,17 +109,17 @@ func (v visualMover) moveVertically(
 			return r
 		}
 		tl := newVisualLine(doc, tLine, vf)
-		off := tl.charAtPos(0, curCol)
+		off := tl.charAtPos(geom.Point{X: cur.X})
 		return r.PutCursor(doc, tStart+off, move == MovementExtend)
 	}
 
 	// DirectionBackward
 	remaining := count
-	if remaining <= curRow {
-		off := vl.charAtPos(curRow-remaining, curCol)
+	if remaining <= cur.Y {
+		off := vl.charAtPos(geom.Point{X: cur.X, Y: cur.Y - remaining})
 		return r.PutCursor(doc, lineStart+off, move == MovementExtend)
 	}
-	remaining -= curRow + 1
+	remaining -= cur.Y + 1
 	prevLine := line - 1
 	for remaining > 0 && prevLine > 0 {
 		tStart, err := doc.LineToChar(prevLine)
@@ -111,7 +129,9 @@ func (v visualMover) moveVertically(
 		tl := newVisualLine(doc, prevLine, vf)
 		tRows := tl.rowCount()
 		if remaining < tRows {
-			off := tl.charAtPos(tRows-1-remaining, curCol)
+			off := tl.charAtPos(geom.Point{
+				X: cur.X, Y: tRows - 1 - remaining,
+			})
 			return r.PutCursor(doc, tStart+off, move == MovementExtend)
 		}
 		remaining -= tRows
@@ -124,6 +144,6 @@ func (v visualMover) moveVertically(
 	}
 	tl := newVisualLine(doc, tLine, vf)
 	tRows := tl.rowCount()
-	off := tl.charAtPos(tRows-1, curCol)
+	off := tl.charAtPos(geom.Point{X: cur.X, Y: tRows - 1})
 	return r.PutCursor(doc, tStart+off, move == MovementExtend)
 }

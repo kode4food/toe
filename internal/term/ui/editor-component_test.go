@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -741,7 +742,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 func TestFreeScroll(t *testing.T) {
 	t.Run("keypress keeps other scrolled view", func(t *testing.T) {
 		e := editorWithText(t, strings.Repeat("0123456789abcdef\n", 20))
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, ok := e.FocusedView()
 		assert.True(t, ok)
 		doc, ok := e.FocusedDocument()
@@ -770,7 +771,7 @@ func TestFreeScroll(t *testing.T) {
 			_, _ = fmt.Fprintf(&b, "line%d\n", i)
 		}
 		e := editorWithText(t, b.String())
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
 		_, err := builtin.Register(m, km)

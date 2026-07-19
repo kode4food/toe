@@ -7,36 +7,38 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
 type tuiScreen struct {
 	buf      *tui.Buffer
-	originX  int
-	originY  int
-	w, h     int
+	area     geom.Area
 	styleIn  uv.Style
 	styleOut tui.Style
 	styleOk  bool
 }
 
-func (s *tuiScreen) SetCell(x, y int, c *uv.Cell) {
-	if x < 0 || y < 0 || x >= s.w || y >= s.h {
+func (s *tuiScreen) SetCell(at geom.Point, c *uv.Cell) {
+	if !s.area.Size.Contains(at) {
 		return
 	}
+	o := s.area.Point
 	if c == nil {
-		s.buf.Set(s.originX+x, s.originY+y, tui.Cell{Symbol: " "})
+		s.buf.Set(geom.Point{X: o.X + at.X, Y: o.Y + at.Y},
+			tui.Cell{Symbol: " "})
 		return
 	}
 	content := c.Content
 	if content == "" {
 		content = " "
 	}
-	s.buf.Set(s.originX+x, s.originY+y, tui.Cell{
+	s.buf.Set(geom.Point{X: o.X + at.X, Y: o.Y + at.Y}, tui.Cell{
 		Symbol: content, Style: s.styleFor(c.Style),
 	})
 	for i := 1; i < c.Width; i++ {
-		s.buf.Set(s.originX+x+i, s.originY+y, tui.Cell{Skip: true})
+		s.buf.Set(geom.Point{X: o.X + at.X + i, Y: o.Y + at.Y},
+			tui.Cell{Skip: true})
 	}
 }
 
@@ -58,10 +60,15 @@ func (r *renderPass) renderTerminalPane(
 	bg := r.activeTheme().Get("ui.background").GetBackground()
 	emu.SetBackgroundColor(bg)
 	scr := &tuiScreen{
-		buf: buf, originX: a.X, originY: y0 + a.Y,
-		w: a.Width, h: contentH,
+		buf: buf,
+		area: geom.Area{
+			Point: geom.Point{X: a.X, Y: y0 + a.Y},
+			Size:  geom.Size{Width: a.Width, Height: contentH},
+		},
 	}
-	drawViewport(scr, tp, tp.ScrollOffset(), a.Width, contentH)
+	drawViewport(scr, tp, tp.ScrollOffset(), geom.Size{
+		Width: a.Width, Height: contentH,
+	})
 	highlightSelection(scr, tp)
 	r.renderTerminalStatus(buf, tp, y0, focused)
 }
@@ -77,7 +84,7 @@ func (r *renderPass) renderTerminalStatus(
 	}
 	st := lipglossToTUIStyle(th.Get(statusKey))
 	y := y0 + a.Y + a.Height - 1
-	buf.FillRange(a.X, y, a.Width, st)
+	buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, st)
 
 	modeSt := st
 	if focused {
@@ -87,7 +94,7 @@ func (r *renderPass) renderTerminalStatus(
 	if tp.ConsumeBell(focused) && !focused {
 		label = " TRM* "
 	}
-	buf.SetString(a.X, y, label, modeSt)
+	buf.SetString(geom.Point{X: a.X, Y: y}, label, modeSt)
 
 	title := tp.Title()
 	if title == "" {
@@ -96,7 +103,10 @@ func (r *renderPass) renderTerminalStatus(
 	if n := tp.ScrollOffset(); n > 0 {
 		title = fmt.Sprintf("%s [scrollback -%d]", title, n)
 	}
-	buf.SetString(a.X+runewidth.StringWidth(label), y, " "+title, st)
+	buf.SetString(geom.Point{
+		X: a.X + runewidth.StringWidth(label),
+		Y: y,
+	}, " "+title, st)
 }
 
 func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
@@ -106,20 +116,21 @@ func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
 	}
 	// span is in absolute (scrollback+screen) rows; translate to the rows
 	// currently visible in this viewport
-	start := tp.viewStart(scr.h)
+	start := tp.viewStart(scr.area.Height)
 	y0, y1 := sp.start.Y-start, sp.end.Y-start
-	for y := max(y0, 0); y <= y1 && y < scr.h; y++ {
-		startX, endX := 0, scr.w-1
+	for y := max(y0, 0); y <= y1 && y < scr.area.Height; y++ {
+		startX, endX := 0, scr.area.Width-1
 		if y == y0 {
 			startX = sp.start.X
 		}
 		if y == y1 {
 			endX = sp.end.X
 		}
-		for x := max(startX, 0); x <= endX && x < scr.w; x++ {
-			c := scr.buf.Get(scr.originX+x, scr.originY+y)
+		for x := max(startX, 0); x <= endX && x < scr.area.Width; x++ {
+			p := geom.Point{X: scr.area.X + x, Y: scr.area.Y + y}
+			c := scr.buf.Get(p)
 			c.Style = c.Style.Mod(tui.ModifierReversed)
-			scr.buf.Set(scr.originX+x, scr.originY+y, c)
+			scr.buf.Set(p, c)
 		}
 	}
 }
@@ -162,7 +173,9 @@ func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
 	return underlineTUIStyles[u]
 }
 
-func drawViewport(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
+func drawViewport(
+	scr *tuiScreen, tp *TerminalPane, n int, size geom.Size,
+) {
 	emu := tp.Emulator()
 	bg := emu.BackgroundColor()
 	blank := uv.EmptyCell
@@ -171,10 +184,10 @@ func drawViewport(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 	sb := emu.Scrollback()
 	sbLen := sb.Len()
 	total := sbLen + emu.Height()
-	start := max(total-h-n, 0)
-	for row := range h {
+	start := max(total-size.Height-n, 0)
+	for row := range size.Height {
 		line := start + row
-		for x := 0; x < w; {
+		for x := 0; x < size.Width; {
 			var cell *uv.Cell
 			if line < total {
 				if line < sbLen {
@@ -184,7 +197,7 @@ func drawViewport(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 				}
 			}
 			if cell == nil {
-				scr.SetCell(x, row, &blank)
+				scr.SetCell(geom.Point{X: x, Y: row}, &blank)
 				x++
 				continue
 			}
@@ -192,7 +205,7 @@ func drawViewport(scr *tuiScreen, tp *TerminalPane, n, w, h int) {
 				cell = cell.Clone()
 				cell.Style.Bg = bg
 			}
-			scr.SetCell(x, row, cell)
+			scr.SetCell(geom.Point{X: x, Y: row}, cell)
 			x += max(cell.Width, 1)
 		}
 	}

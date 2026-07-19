@@ -1,6 +1,10 @@
 package tui
 
-import "github.com/rivo/uniseg"
+import (
+	"github.com/rivo/uniseg"
+
+	"github.com/kode4food/toe/internal/geom"
+)
 
 // Fill sets every cell in the buffer to a space with the given style
 func (b *Buffer) Fill(style Style) {
@@ -13,7 +17,8 @@ func (b *Buffer) Fill(style Style) {
 // FillRange fills width cells with a space in the given style. A style with no
 // background is transparent: each cell keeps its existing background so a
 // pre-painted layer (ruler, cursorline) shows through
-func (b *Buffer) FillRange(x, y, width int, style Style) {
+func (b *Buffer) FillRange(p geom.Point, width int, style Style) {
+	x, y := p.X, p.Y
 	if y < 0 || y >= b.Height || width <= 0 || x >= b.Width {
 		return
 	}
@@ -34,8 +39,11 @@ func (b *Buffer) FillRange(x, y, width int, style Style) {
 }
 
 // SetRightAlignedInt writes n as decimal digits right-aligned in a field of
-// width starting at (x, y), padding left with spaces
-func (b *Buffer) SetRightAlignedInt(x, y, width, n int, style Style) {
+// width starting at p, padding left with spaces
+func (b *Buffer) SetRightAlignedInt(
+	p geom.Point, width, n int, style Style,
+) {
+	x, y := p.X, p.Y
 	if y < 0 || y >= b.Height || width <= 0 || x >= b.Width {
 		return
 	}
@@ -53,24 +61,25 @@ func (b *Buffer) SetRightAlignedInt(x, y, width, n int, style Style) {
 	}
 	col := x
 	for pad := width - (len(tmp) - i); pad > 0; pad-- {
-		b.setASCIICell(col, y, ' ', style)
+		b.setASCIICell(geom.Point{X: col, Y: y}, ' ', style)
 		col++
 	}
 	for ; i < len(tmp); i++ {
-		b.setASCIICell(col, y, tmp[i], style)
+		b.setASCIICell(geom.Point{X: col, Y: y}, tmp[i], style)
 		col++
 	}
 }
 
-// SetString writes graphemes of s starting at (x, y), advancing x by display
-// width. A style with no background is transparent, keeping each cell's
-// existing background
-func (b *Buffer) SetString(x, y int, s string, style Style) {
+// SetString writes graphemes of s starting at p, advancing x by display width.
+// A style with no background is transparent, keeping each cell's existing
+// background
+func (b *Buffer) SetString(p geom.Point, s string, style Style) {
+	x, y := p.X, p.Y
 	if y < 0 || y >= b.Height || x >= b.Width {
 		return
 	}
 	keepBg := style.BgColor().IsReset()
-	nx, rest := b.setASCIIString(x, y, s, style, keepBg)
+	nx, rest := b.setASCIIString(p, s, style, keepBg)
 	if rest == "" {
 		return
 	}
@@ -94,15 +103,16 @@ func (b *Buffer) SetString(x, y int, s string, style Style) {
 		if keepBg {
 			st = style.Bg(b.cells[y*b.Width+x].Style.BgColor())
 		}
-		b.Set(x, y, Cell{Symbol: cluster, Style: st})
+		b.Set(geom.Point{X: x, Y: y}, Cell{Symbol: cluster, Style: st})
 		for i := 1; i < w && x+i < b.Width; i++ {
-			b.Set(x+i, y, Cell{Skip: true, Style: st})
+			b.Set(geom.Point{X: x + i, Y: y}, Cell{Skip: true, Style: st})
 		}
 		x += w
 	}
 }
 
-func (b *Buffer) setASCIICell(x, y int, ch byte, style Style) {
+func (b *Buffer) setASCIICell(p geom.Point, ch byte, style Style) {
+	x, y := p.X, p.Y
 	if x < 0 || x >= b.Width {
 		return
 	}
@@ -114,8 +124,9 @@ func (b *Buffer) setASCIICell(x, y int, ch byte, style Style) {
 }
 
 func (b *Buffer) setASCIIString(
-	x, y int, s string, style Style, overBg bool,
+	p geom.Point, s string, style Style, overBg bool,
 ) (int, string) {
+	x, y := p.X, p.Y
 	for i := range len(s) {
 		ch := s[i]
 		if ch < ' ' || ch >= 0x7f {

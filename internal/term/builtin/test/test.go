@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -26,7 +27,7 @@ func Env(t *testing.T, text string) (*view.Editor, *command.Keymaps) {
 	dir := t.TempDir()
 	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
 	e := view.NewEditor(dir)
-	e.ResizeTree(80, 24)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	_, _ = builtin.Register(ui.New(e, km), km)
 	if text != "" {
 		testutil.SetEditorText(t, e, text)
@@ -44,7 +45,7 @@ func EnvWithRegistry(t *testing.T, text string) (
 	dir := t.TempDir()
 	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
 	e := view.NewEditor(dir)
-	e.ResizeTree(80, 24)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	reg, _ := builtin.Register(ui.New(e, km), km)
 	if text != "" {
 		testutil.SetEditorText(t, e, text)
@@ -58,7 +59,7 @@ func TwoBufferEnv(t *testing.T) (*view.Editor, *command.Keymaps) {
 	dir := t.TempDir()
 	km := command.NewKeymaps()
 	e := view.NewEditor(dir)
-	e.ResizeTree(80, 24)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	_, _ = builtin.Register(ui.New(e, km), km)
 	for _, name := range []string{"a.txt", "b.txt"} {
 		p := filepath.Join(dir, name)

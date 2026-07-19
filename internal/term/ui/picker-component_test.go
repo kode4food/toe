@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -274,7 +275,7 @@ func fixedPickerItems(n int) []ui.PickerItem {
 		items[i] = ui.PickerItem{
 			Display: fmt.Sprintf("item%02d", i),
 			Columns: []string{fmt.Sprintf("item%02d", i)},
-			Preview: func(int, int) string { return body },
+			Preview: func(geom.Size) string { return body },
 		}
 	}
 	return items

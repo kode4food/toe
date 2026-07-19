@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/tui"
@@ -23,7 +24,7 @@ type (
 	}
 
 	previewCacheEntry interface {
-		renderInto(ctx *previewCtx, buf *tui.Buffer, x, y int)
+		renderInto(*previewCtx, *tui.Buffer, geom.Point)
 	}
 
 	previewDocEntry struct {

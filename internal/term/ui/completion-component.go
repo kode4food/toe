@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -19,8 +20,8 @@ type (
 		anchor     completionAnchor
 		cursor     int
 		scroll     int
-		bounds     Bounds
-		listBounds Bounds
+		bounds     geom.Area
+		listBounds geom.Area
 		refreshGen int
 		manual     bool
 		incomplete bool
@@ -82,17 +83,17 @@ const (
 )
 
 func (c *completionComponent) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case completionRefreshMsg:
-		return c.handleRefreshMsg(msg, cx)
+		return c.handleRefreshMsg(cx, msg)
 	case tea.MouseClickMsg:
-		return c.handleMouseClick(msg, cx), nil
+		return c.handleMouseClick(cx, msg), nil
 	case tea.MouseWheelMsg:
-		return c.handleMouseWheel(msg, cx), nil
+		return c.handleMouseWheel(cx, msg), nil
 	case tea.KeyPressMsg:
-		return c.handleKeyPress(msg, cx)
+		return c.handleKeyPress(cx, msg)
 	default:
 		return ignored(), nil
 	}
@@ -108,7 +109,7 @@ func (c *completionComponent) lookupAction(
 }
 
 func (c *completionComponent) handleAction(
-	name string, cx *Context,
+	cx *Context, name string,
 ) EventResult {
 	switch name {
 	case CompletionAcceptAction:
@@ -139,40 +140,47 @@ func (c *completionComponent) handleAction(
 	}
 }
 
-func (c *completionComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
+func (c *completionComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
 func (c *completionComponent) Layout(
-	screenW, screenH int, cx *Context,
-) (Bounds, bool) {
+	cx *Context, screen geom.Size,
+) (geom.Area, bool) {
 	if !c.valid(cx) || len(c.items) == 0 {
-		return Bounds{}, false
+		return geom.Area{}, false
 	}
 	c.nerd = cx.Editor.Options().NerdFonts
-	x, y := c.popupPos(screenH, cx)
+	at := c.popupPos(cx, screen.Height)
 	w := c.width()
 	rows := min(len(c.items), completionMaxRows)
 	h := rows + 2
-	if x+w > screenW {
-		x = max(screenW-w, 0)
+	if at.X+w > screen.Width {
+		at.X = max(screen.Width-w, 0)
 	}
-	if y+h > screenH {
-		y = max(y-h-1, 0)
+	if at.Y+h > screen.Height {
+		at.Y = max(at.Y-h-1, 0)
 	}
-	return Bounds{x: x, y: y, w: w, h: h}, true
+	return geom.Area{
+		Point: at,
+		Size:  geom.Size{Width: w, Height: h},
+	}, true
 }
 
-func (c *completionComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	return c.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
-		c.paint(buf, pl, cx)
+func (c *completionComponent) PaintBuffer(
+	cx *Context, pl geom.Area,
+) *tui.Buffer {
+	return c.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
+		c.paint(cx, buf, pl)
 	})
 }
 
-func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
+func (c *completionComponent) paint(
+	cx *Context, buf *tui.Buffer, pl geom.Area,
+) {
 	c.nerd = cx.Editor.Options().NerdFonts
 	query, _ := c.query(cx)
-	w, h := pl.w, pl.h
+	w, h := pl.Width, pl.Height
 	c.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
@@ -182,21 +190,21 @@ func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 		),
 		contentStyle: lipglossToTUIStyle(menu),
 	}
-	area := pop.drawInto(buf, 0, 0, w, h)
-	c.listBounds = area.translate(pl.x, pl.y)
+	area := pop.drawInto(buf, geom.Area{Size: geom.Size{Width: w, Height: h}})
+	c.listBounds = area.Translate(pl.Point)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
 	match := lipglossToTUIStyle(pickerMatchStyle(cx))
 	selMatch := lipglossToTUIStyle(pickerSelMatchStyle(cx))
 	info := lipglossToTUIStyle(completionInfoStyle(cx, false))
 	selInfo := lipglossToTUIStyle(completionInfoStyle(cx, true))
-	c.clampScroll(area.h)
-	overflow := len(c.items) > area.h
-	listW := area.w
+	c.clampScroll(area.Height)
+	overflow := len(c.items) > area.Height
+	listW := area.Width
 	if overflow {
-		listW = max(area.w-completionScrollGap, 0)
+		listW = max(area.Width-completionScrollGap, 0)
 	}
-	for i := 0; i < area.h && c.scroll+i < len(c.items); i++ {
+	for i := 0; i < area.Height && c.scroll+i < len(c.items); i++ {
 		idx := c.scroll + i
 		item := c.items[idx]
 		style := base
@@ -211,17 +219,18 @@ func (c *completionComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 			matchStyle = selMatch
 			infoStyle = selInfo
 		}
-		c.renderRow(
-			buf, area.x, area.y+i, area.w, listW,
-			renderCompletionRowArgs{
-				item: item, selected: selected, query: query,
-				base: style, match: matchStyle,
-				icon: iconStyle, info: infoStyle,
-			},
-		)
+		c.renderRow(renderCompletionRowArgs{
+			buf: buf, at: geom.Point{X: area.X, Y: area.Y + i},
+			width: area.Width, listW: listW,
+			item: item, selected: selected, query: query,
+			base: style, match: matchStyle,
+			icon: iconStyle, info: infoStyle,
+		})
 	}
 	if overflow {
-		c.renderScroll(buf, w-1, area.y, area.h, base)
+		c.renderScroll(
+			buf, geom.Point{X: w - 1, Y: area.Y}, area.Height, base,
+		)
 	}
 }
 
@@ -256,11 +265,11 @@ func (c *completionComponent) moveTo(idx int) {
 }
 
 func (c *completionComponent) handleKeyPress(
-	msg tea.KeyPressMsg, cx *Context,
+	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
 	k := FromTeaKey(msg)
 	if name, ok := c.lookupAction(cx, k); ok {
-		return c.handleAction(name, cx), nil
+		return c.handleAction(cx, name), nil
 	}
 	if cx.Editor.Mode() == view.ModeInsert && k.IsTypable() {
 		act.InsertChar(cx.Editor, k.Code.Char)
@@ -270,12 +279,13 @@ func (c *completionComponent) handleKeyPress(
 }
 
 func (c *completionComponent) handleMouseClick(
-	msg tea.MouseClickMsg, _ *Context,
+	_ *Context, msg tea.MouseClickMsg,
 ) EventResult {
-	if !c.bounds.contains(msg.X, msg.Y) {
+	if !c.bounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return ignoredWith(popLayer)
 	}
-	if idx, ok := listIndexAt(c.listBounds, c.scroll, msg.X, msg.Y); ok {
+	at := geom.Point{X: msg.X, Y: msg.Y}
+	if idx, ok := listIndexAt(c.listBounds, c.scroll, at); ok {
 		if idx >= 0 && idx < len(c.items) {
 			c.moveTo(idx)
 		}
@@ -284,9 +294,9 @@ func (c *completionComponent) handleMouseClick(
 }
 
 func (c *completionComponent) handleMouseWheel(
-	msg tea.MouseWheelMsg, cx *Context,
+	cx *Context, msg tea.MouseWheelMsg,
 ) EventResult {
-	if !c.listBounds.contains(msg.X, msg.Y) {
+	if !c.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return ignoredWith(popLayer)
 	}
 	step := cx.Editor.Options().ScrollLines
@@ -299,7 +309,7 @@ func (c *completionComponent) handleMouseWheel(
 	return consumed()
 }
 
-func (c *completionComponent) refresh(comp *Compositor, cx *Context) tea.Cmd {
+func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 	c.markDirty()
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
@@ -340,7 +350,7 @@ func (c *completionComponent) refresh(comp *Compositor, cx *Context) tea.Cmd {
 }
 
 func (c *completionComponent) handleRefreshMsg(
-	msg completionRefreshMsg, cx *Context,
+	cx *Context, msg completionRefreshMsg,
 ) (EventResult, tea.Cmd) {
 	if msg.layer != c {
 		return ignored(), nil
@@ -462,8 +472,10 @@ func (c *completionComponent) accept(cx *Context) {
 	}
 }
 
-func (c *completionComponent) popupPos(screenH int, cx *Context) (int, int) {
-	return c.ec.popupAnchorBelowCaret(screenH, cx, completionMaxRows)
+func (c *completionComponent) popupPos(
+	cx *Context, screenH int,
+) geom.Point {
+	return c.ec.popupAnchorBelowCaret(cx, screenH, completionMaxRows)
 }
 
 func (c *completionComponent) resetCursor() {
@@ -516,8 +528,8 @@ func (c *completionComponent) ensureCursorVisible(rows int) {
 }
 
 func (c *completionComponent) visibleRows() int {
-	if c.listBounds.h > 0 {
-		return c.listBounds.h
+	if c.listBounds.Height > 0 {
+		return c.listBounds.Height
 	}
 	return completionMaxRows
 }

@@ -4,11 +4,12 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
 type writePickerMatchedArgs struct {
-	x, y    int
+	at      geom.Point
 	maxW    int
 	text    string
 	indices []int
@@ -23,7 +24,7 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 	runes := []rune(args.text)
 	indices := args.indices
 	ptr := 0
-	col := args.x
+	col := args.at.X
 	budget := args.maxW
 	for i := 0; i < len(runes) && budget > 0; {
 		matched := ptr < len(indices) && indices[ptr] == i
@@ -50,7 +51,7 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 		if matched {
 			st = args.match
 		}
-		buf.SetString(col, args.y, run, st)
+		buf.SetString(geom.Point{X: col, Y: args.at.Y}, run, st)
 		col += rw
 		budget -= rw
 		i = j

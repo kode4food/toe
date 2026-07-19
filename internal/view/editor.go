@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view/register"
 )
 
@@ -35,8 +36,7 @@ type (
 		activeRegister rune
 		lastMotion     func(*Editor)
 
-		viewHeight       int
-		viewContentWidth int
+		viewSize geom.Size
 
 		statusMsg   string
 		statusMsgMu sync.Mutex
@@ -67,7 +67,7 @@ var (
 func NewEditor(cwd string) *Editor {
 	e := &Editor{
 		docs:      map[DocumentId]*Document{},
-		tree:      newTree(0, 0),
+		tree:      newTree(geom.Size{}),
 		cwd:       cwd,
 		opts:      defaultOptions(),
 		registers: register.New(),
@@ -87,8 +87,8 @@ func (e *Editor) Tree() *Tree {
 }
 
 // ResizeTree resizes the layout tree to the given content area dimensions
-func (e *Editor) ResizeTree(width, height int) {
-	e.tree.Resize(width, height)
+func (e *Editor) ResizeTree(size geom.Size) {
+	e.tree.Resize(size)
 }
 
 // VSplit opens docID in a new vertical split (side by side)
@@ -500,24 +500,24 @@ func (e *Editor) RegisterPaneRestorer(kind string, fn PaneRestorer) {
 
 // ViewHeight returns the last-reported content area height
 func (e *Editor) ViewHeight() int {
-	return e.viewHeight
+	return e.viewSize.Height
 }
 
 // SetViewHeight sets the content area height (called by the UI on resize)
 func (e *Editor) SetViewHeight(h int) {
-	e.viewHeight = h
+	e.viewSize.Height = h
 }
 
 // ViewContentWidth returns the last-reported text content width (viewport minus
 // gutter), used for visual-line movement when soft-wrap is active
 func (e *Editor) ViewContentWidth() int {
-	return e.viewContentWidth
+	return e.viewSize.Width
 }
 
 // SetViewContentWidth stores the text content width (called by the renderer
 // after computing the gutter width for the focused document)
 func (e *Editor) SetViewContentWidth(w int) {
-	e.viewContentWidth = w
+	e.viewSize.Width = w
 }
 
 // Cwd returns the editor working directory

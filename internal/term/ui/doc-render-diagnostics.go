@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -68,9 +69,15 @@ func (r *renderPass) drawDiagnosticPopup(
 	if y+h > buf.Height {
 		y = max(buf.Height-h, 0)
 	}
-	area := pop.drawInto(buf, x, y, w, h)
+	area := pop.drawInto(buf, geom.Area{
+		Point: geom.Point{X: x, Y: y},
+		Size:  geom.Size{Width: w, Height: h},
+	})
 	for i, line := range lines {
-		buf.SetString(area.x, area.y+i, line, st)
+		buf.SetString(geom.Point{
+			X: area.X,
+			Y: area.Y + i,
+		}, line, st)
 	}
 }
 

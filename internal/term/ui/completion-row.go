@@ -7,6 +7,7 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -37,6 +38,10 @@ func (c *completionComponent) rowWidth(
 }
 
 type renderCompletionRowArgs struct {
+	buf      *tui.Buffer
+	at       geom.Point
+	width    int
+	listW    int
 	item     view.CompletionItem
 	selected bool
 	query    string
@@ -46,21 +51,22 @@ type renderCompletionRowArgs struct {
 	info     tui.Style
 }
 
-func (c *completionComponent) renderRow(
-	buf *tui.Buffer, x, y, w, listW int, args renderCompletionRowArgs,
-) {
-	buf.SetString(x, y, clipPad("", w), args.base)
+func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
+	buf := args.buf
+	at := args.at
+	buf.SetString(at, clipPad("", args.width), args.base)
 	parts := c.rowParts(args.item, args.selected)
-	labelX := x
-	budget := listW
+	labelX := at.X
+	budget := args.listW
 	if parts.icon != "" {
-		next := writeCompletionPart(
-			buf, labelX, y, budget, parts.icon, args.icon,
-		)
+		next := writeCompletionPart(writeCompletionPartArgs{
+			buf: buf, at: geom.Point{X: labelX, Y: at.Y}, maxW: budget,
+			text: parts.icon, style: args.icon,
+		})
 		budget -= next - labelX
 		labelX = next
 		if budget > 0 {
-			buf.SetString(labelX, y, " ", args.base)
+			buf.SetString(geom.Point{X: labelX, Y: at.Y}, " ", args.base)
 			labelX++
 			budget--
 		}
@@ -69,9 +75,12 @@ func (c *completionComponent) renderRow(
 		return
 	}
 	writePickerMatched(buf, writePickerMatchedArgs{
-		x: labelX, y: y, maxW: budget, text: parts.label,
+		at:      geom.Point{X: labelX, Y: at.Y},
+		maxW:    budget,
+		text:    parts.label,
 		indices: completionLabelMatchIndices(parts.label, args.query),
-		base:    args.base, match: args.match,
+		base:    args.base,
+		match:   args.match,
 	})
 	used := min(runewidth.StringWidth(parts.label), budget)
 	labelX += used
@@ -79,10 +88,13 @@ func (c *completionComponent) renderRow(
 	if parts.info == "" || budget <= 1 {
 		return
 	}
-	buf.SetString(labelX, y, " ", args.base)
+	buf.SetString(geom.Point{X: labelX, Y: at.Y}, " ", args.base)
 	labelX++
 	budget--
-	writeCompletionPart(buf, labelX, y, budget, parts.info, args.info)
+	writeCompletionPart(writeCompletionPartArgs{
+		buf: buf, at: geom.Point{X: labelX, Y: at.Y}, maxW: budget,
+		text: parts.info, style: args.info,
+	})
 }
 
 func (c *completionComponent) rowLeft(
@@ -98,7 +110,7 @@ func (c *completionComponent) rowParts(
 }
 
 func (c *completionComponent) renderScroll(
-	buf *tui.Buffer, x, y, rows int, style tui.Style,
+	buf *tui.Buffer, at geom.Point, rows int, style tui.Style,
 ) {
 	if rows <= 0 || len(c.items) <= rows {
 		return
@@ -109,7 +121,10 @@ func (c *completionComponent) renderScroll(
 		scrollY = (rows - scrollH) * c.scroll / (len(c.items) - rows)
 	}
 	for i := range scrollH {
-		buf.SetString(x, y+scrollY+i, "▌", style)
+		buf.SetString(geom.Point{
+			X: at.X,
+			Y: at.Y + scrollY + i,
+		}, scrollbarThumb, style)
 	}
 }
 
@@ -165,15 +180,21 @@ func completionPreview(s string) string {
 	return runewidth.Truncate(s, completionPreviewMaxWidth, "...")
 }
 
-func writeCompletionPart(
-	buf *tui.Buffer, x, y, maxW int, text string, st tui.Style,
-) int {
-	if maxW <= 0 || text == "" {
-		return x
+type writeCompletionPartArgs struct {
+	buf   *tui.Buffer
+	at    geom.Point
+	maxW  int
+	text  string
+	style tui.Style
+}
+
+func writeCompletionPart(args writeCompletionPartArgs) int {
+	if args.maxW <= 0 || args.text == "" {
+		return args.at.X
 	}
-	text = runewidth.Truncate(text, maxW, "")
-	buf.SetString(x, y, text, st)
-	return x + runewidth.StringWidth(text)
+	text := runewidth.Truncate(args.text, args.maxW, "")
+	args.buf.SetString(args.at, text, args.style)
+	return args.at.X + runewidth.StringWidth(text)
 }
 
 func completionLabelMatchIndices(label, query string) []int {

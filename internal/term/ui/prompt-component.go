@@ -9,6 +9,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
@@ -20,7 +21,7 @@ type (
 	PromptComponent struct {
 		overlayBuf
 		ec       *EditorComponent
-		bounds   Bounds
+		bounds   geom.Area
 		kind     promptKind
 		forward  bool
 		prompt   string
@@ -30,8 +31,7 @@ type (
 		comps    []promptCompletion
 		compSel  *int
 		compDone bool
-		compCols int
-		compRows int
+		comp     geom.Size
 		fn       promptHandler
 		pickerFn pickerBuilder
 	}
@@ -61,11 +61,11 @@ const promptRightPad = 1
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
 func (p *PromptComponent) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		return p.handleKey(msg, cx), nil
+		return p.handleKey(cx, msg), nil
 
 	case tea.MouseMsg, tea.MouseClickMsg:
 		return consumed(), nil
@@ -74,29 +74,44 @@ func (p *PromptComponent) HandleEvent(
 }
 
 func (p *PromptComponent) Layout(
-	screenW, screenH int, cx *Context,
-) (Bounds, bool) {
+	cx *Context, screen geom.Size,
+) (geom.Area, bool) {
 	p.markDirty()
 	if !p.compDone {
 		p.recalculateCompletion(cx)
 	}
-	menuH := p.completionMenuHeight(screenW, screenH)
-	y := max(screenH-1-menuH, 0)
-	p.bounds = Bounds{x: 0, y: y, w: screenW, h: screenH - y}
+	menuH := p.completionMenuHeight(screen)
+	y := max(screen.Height-1-menuH, 0)
+	p.bounds = geom.Area{
+		Point: geom.Point{X: 0, Y: y},
+		Size:  geom.Size{Width: screen.Width, Height: screen.Height - y},
+	}
 	return p.bounds, true
 }
 
-func (p *PromptComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	return p.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
-		if p.compRows > 0 {
-			p.paintCompletions(buf, 0, pl.w, cx)
+func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
+	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
+		if p.comp.Height > 0 {
+			p.paintCompletions(cx, buf, geom.Area{
+				Size: geom.Size{
+					Width:  pl.Width,
+					Height: p.comp.Height + 2,
+				},
+			})
 		}
-		p.paintLine(buf, pl.h-1, pl.w, cx)
+		p.paintLine(cx, buf, geom.Area{
+			Point: geom.Point{
+				Y: pl.Height - 1,
+			},
+			Size: geom.Size{
+				Width:  pl.Width,
+				Height: 1},
+		})
 	})
 }
 
 func (p *PromptComponent) Cursor(
-	_, _ int, cx *Context,
+	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
 	kind := cx.Editor.Options().CursorShapeForMode(view.ModeInsert.String())
 	if kind == view.CursorKindHidden {
@@ -104,8 +119,8 @@ func (p *PromptComponent) Cursor(
 	}
 	return tea.Cursor{
 		Position: tea.Position{
-			X: p.bounds.x + p.caretDisplayX(),
-			Y: p.bounds.y + p.bounds.h - 1,
+			X: p.bounds.X + p.caretDisplayX(),
+			Y: p.bounds.Y + p.bounds.Height - 1,
 		},
 		Shape: cursorKindToShape(kind),
 		Blink: false,
@@ -114,7 +129,7 @@ func (p *PromptComponent) Cursor(
 
 func (p *PromptComponent) textWidth() int {
 	label := runewidth.StringWidth(p.promptLabel())
-	return max(p.bounds.w-label-promptRightPad, 1)
+	return max(p.bounds.Width-label-promptRightPad, 1)
 }
 
 func (p *PromptComponent) syncScroll() {
@@ -187,11 +202,11 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 }
 
 func (p *PromptComponent) handleKey(
-	msg tea.KeyPressMsg, cx *Context,
+	cx *Context, msg tea.KeyPressMsg,
 ) EventResult {
 	k := FromTeaKey(msg)
 	pop := func(cmd tea.Cmd) EventResult {
-		return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
+		return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 			comp.Pop()
 			return cmd
 		})
@@ -341,7 +356,7 @@ func (p *PromptComponent) accept(
 			}
 			feedCmd := picker.feedCmd
 			picker.feedCmd = nil
-			return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
+			return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 				comp.Pop()
 				comp.Push(newPickerComponent(picker))
 				return feedCmd
@@ -360,7 +375,9 @@ func (p *PromptComponent) accept(
 	}
 }
 
-func (p *PromptComponent) paintLine(buf *tui.Buffer, y, w int, cx *Context) {
+func (p *PromptComponent) paintLine(
+	cx *Context, buf *tui.Buffer, area geom.Area,
+) {
 	th := cx.Theme()
 	rowBg := lipgloss.NewStyle().
 		Background(th.Get("ui.cursorline.primary").GetBackground())
@@ -372,8 +389,8 @@ func (p *PromptComponent) paintLine(buf *tui.Buffer, y, w int, cx *Context) {
 	)
 
 	label := p.promptLabel()
-	buf.FillRange(0, y, w, textSt)
-	buf.SetString(0, y, label, labelSt)
+	buf.FillRange(area.Point, area.Width, textSt)
+	buf.SetString(area.Point, label, labelSt)
 	x := runewidth.StringWidth(label)
 
 	p.syncScroll()
@@ -387,15 +404,24 @@ func (p *PromptComponent) paintLine(buf *tui.Buffer, y, w int, cx *Context) {
 	}
 	col, i := 0, p.hOff
 	for i < len(runes) && col+runewidth.RuneWidth(runes[i]) <= limit {
-		buf.SetString(x+col, y, string(runes[i]), textSt)
+		buf.SetString(geom.Point{
+			X: area.X + x + col,
+			Y: area.Y,
+		}, string(runes[i]), textSt)
 		col += runewidth.RuneWidth(runes[i])
 		i++
 	}
 	if p.hOff > 0 {
-		buf.SetString(x, y, "…", textSt)
+		buf.SetString(geom.Point{
+			X: area.X + x,
+			Y: area.Y,
+		}, "…", textSt)
 	}
 	if truncEnd {
-		buf.SetString(x+col, y, "…", textSt)
+		buf.SetString(geom.Point{
+			X: area.X + x + col,
+			Y: area.Y,
+		}, "…", textSt)
 	}
 }
 

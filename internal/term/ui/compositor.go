@@ -4,13 +4,14 @@ import (
 	"slices"
 
 	tea "charm.land/bubbletea/v2"
+
+	"github.com/kode4food/toe/internal/geom"
 )
 
 type (
 	Compositor struct {
 		layers       []Component
-		width        int
-		height       int
+		size         geom.Size
 		cachedView   string
 		startup      layerFunc
 		lastOverlays []Component
@@ -18,7 +19,7 @@ type (
 
 	bufferOverlayPlacement struct {
 		overlay BufferOverlayComponent
-		bounds  Bounds
+		bounds  geom.Area
 	}
 
 	layerFunc func(*Context) (Component, tea.Cmd)
@@ -34,17 +35,16 @@ func (c *Compositor) Pop() {
 	}
 }
 
-func (c *Compositor) HandleEvent(msg tea.Msg, cx *Context) tea.Cmd {
+func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	if ws, ok := msg.(tea.WindowSizeMsg); ok {
-		c.width = ws.Width
-		c.height = ws.Height
+		c.size = geom.Size{Width: ws.Width, Height: ws.Height}
 	}
 
 	var cmds []tea.Cmd
 	var callbacks []Callback
 
 	for i := len(c.layers) - 1; i >= 0; i-- {
-		result, cmd := c.layers[i].HandleEvent(msg, cx)
+		result, cmd := c.layers[i].HandleEvent(cx, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
@@ -57,14 +57,15 @@ func (c *Compositor) HandleEvent(msg tea.Msg, cx *Context) tea.Cmd {
 	}
 
 	for _, cb := range callbacks {
-		if cmd := cb(c, cx); cmd != nil {
+		if cmd := cb(cx, c); cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 	}
 
 	// After all layers have processed the resize (viewHeight is now set),
 	// create and mount any deferred initial component
-	if _, ok := msg.(tea.WindowSizeMsg); ok && c.width > 0 && c.height > 0 {
+	if _, ok := msg.(tea.WindowSizeMsg); ok &&
+		c.size.Width > 0 && c.size.Height > 0 {
 		if fn := c.startup; fn != nil {
 			c.startup = nil
 			if layer, cmd := fn(cx); layer != nil {
@@ -96,7 +97,7 @@ func (c *Compositor) Render(cx *Context) string {
 
 func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	for i := len(c.layers) - 1; i >= 0; i-- {
-		if cur, ok = c.layers[i].Cursor(c.width, c.height, cx); ok {
+		if cur, ok = c.layers[i].Cursor(cx, c.size); ok {
 			return
 		}
 	}
@@ -117,18 +118,18 @@ func (c *Compositor) renderViaBuffer(cx *Context) string {
 	placements := make([]bufferOverlayPlacement, 0, len(c.layers)-1)
 	for i := 1; i < len(c.layers); i++ {
 		ov := c.layers[i].(BufferOverlayComponent)
-		if pl, active := ov.Layout(c.width, c.height, cx); active {
+		if pl, active := ov.Layout(cx, c.size); active {
 			placements = append(placements, bufferOverlayPlacement{
 				overlay: ov,
 				bounds:  pl,
 			})
 		}
 	}
-	frame := br.Render(c.width, c.height, cx)
-	regions := make([]Bounds, 0, len(placements))
+	frame := br.Render(cx, c.size)
+	regions := make([]geom.Area, 0, len(placements))
 	for _, p := range placements {
-		buf := p.overlay.PaintBuffer(p.bounds, cx)
-		frame.Blit(buf, p.bounds.x, p.bounds.y)
+		buf := p.overlay.PaintBuffer(cx, p.bounds)
+		frame.Blit(buf, p.bounds.Point)
 		regions = append(regions, p.bounds)
 	}
 	cx.OverlayRegions, cx.OverlayRegionsPrecise = regions, true

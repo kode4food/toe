@@ -1,5 +1,7 @@
 package tui
 
+import "github.com/kode4food/toe/internal/geom"
+
 type (
 	Cell struct {
 		Symbol string
@@ -11,8 +13,7 @@ type (
 		cells []Cell
 		// lastANSILen pre-sizes the next RenderToANSI output
 		lastANSILen int
-		Width       int
-		Height      int
+		geom.Size
 	}
 )
 
@@ -31,50 +32,50 @@ var (
 	}()
 )
 
-func NewBuffer(w, h int) *Buffer {
-	n := max(w*h, 0)
+func NewBuffer(size geom.Size) *Buffer {
+	n := max(size.Width*size.Height, 0)
 	cells := make([]Cell, n)
 	for i := range cells {
 		cells[i] = defaultCell
 	}
-	return &Buffer{cells: cells, Width: w, Height: h}
+	return &Buffer{cells: cells, Size: size}
 }
 
-func (b *Buffer) Set(x, y int, c Cell) {
-	if x < 0 || y < 0 || x >= b.Width || y >= b.Height {
+func (b *Buffer) Set(p geom.Point, c Cell) {
+	if !b.Size.Contains(p) {
 		return
 	}
-	b.cells[y*b.Width+x] = c
+	b.cells[p.Y*b.Width+p.X] = c
 }
 
-// PatchBg sets only the background color of the cell at (x, y), preserving its
+// PatchBg sets only the background color of the cell at p, preserving its
 // symbol and foreground. Used to overlay rulers behind already-rendered text
-func (b *Buffer) PatchBg(x, y int, bg Color) {
-	if x < 0 || y < 0 || x >= b.Width || y >= b.Height {
+func (b *Buffer) PatchBg(p geom.Point, bg Color) {
+	if !b.Size.Contains(p) {
 		return
 	}
-	i := y*b.Width + x
+	i := p.Y*b.Width + p.X
 	b.cells[i].Style = b.cells[i].Style.Bg(bg)
 }
 
-// PatchBgRange sets only the background color of width cells starting at
-// (x, y), preserving each cell's symbol and foreground. Used to overlay a row
+// PatchBgRange sets only the background color of width cells starting at p,
+// preserving each cell's symbol and foreground. Used to overlay a row
 // highlight behind already-rendered text
-func (b *Buffer) PatchBgRange(x, y, width int, bg Color) {
+func (b *Buffer) PatchBgRange(p geom.Point, width int, bg Color) {
 	for i := range width {
-		b.PatchBg(x+i, y, bg)
+		b.PatchBg(geom.Point{X: p.X + i, Y: p.Y}, bg)
 	}
 }
 
-// Blit copies src's cells into b at offset (ox, oy), clipped to b's bounds
-func (b *Buffer) Blit(src *Buffer, ox, oy int) {
+// Blit copies src's cells into b at offset at, clipped to b's bounds
+func (b *Buffer) Blit(src *Buffer, at geom.Point) {
 	for sy := range src.Height {
-		dy := oy + sy
+		dy := at.Y + sy
 		if dy < 0 || dy >= b.Height {
 			continue
 		}
 		for sx := range src.Width {
-			dx := ox + sx
+			dx := at.X + sx
 			if dx < 0 || dx >= b.Width {
 				continue
 			}
@@ -95,11 +96,11 @@ func (b *Buffer) Blit(src *Buffer, ox, oy int) {
 	}
 }
 
-func (b *Buffer) Get(x, y int) Cell {
-	if x < 0 || y < 0 || x >= b.Width || y >= b.Height {
+func (b *Buffer) Get(p geom.Point) Cell {
+	if !b.Size.Contains(p) {
 		return defaultCell
 	}
-	return b.cells[y*b.Width+x]
+	return b.cells[p.Y*b.Width+p.X]
 }
 
 func (b *Buffer) Clear() {

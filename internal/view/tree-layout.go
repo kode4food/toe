@@ -1,8 +1,10 @@
 package view
 
+import "github.com/kode4food/toe/internal/geom"
+
 type treeWork struct {
 	id   Id
-	area Area
+	area geom.Area
 }
 
 func (t *Tree) recalculate() {
@@ -47,7 +49,10 @@ func (t *Tree) recalculate() {
 				default:
 					childH = h
 				}
-				area := Area{X: a.X, Y: childY, Width: a.Width, Height: childH}
+				area := geom.Area{
+					Point: geom.Point{X: a.X, Y: childY},
+					Size:  geom.Size{Width: a.Width, Height: childH},
+				}
 				stack = append(stack, treeWork{id: child, area: area})
 				childY += childH + innerGap
 			}
@@ -68,7 +73,10 @@ func (t *Tree) recalculate() {
 				default:
 					childW = w
 				}
-				area := Area{X: childX, Y: a.Y, Width: childW, Height: a.Height}
+				area := geom.Area{
+					Point: geom.Point{X: childX, Y: a.Y},
+					Size:  geom.Size{Width: childW, Height: a.Height},
+				}
 				stack = append(stack, treeWork{id: child, area: area})
 				childX += childW + innerGap
 			}

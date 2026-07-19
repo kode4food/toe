@@ -1,6 +1,10 @@
 package tui
 
-import "github.com/charmbracelet/x/ansi/kitty"
+import (
+	"github.com/charmbracelet/x/ansi/kitty"
+
+	"github.com/kode4food/toe/internal/geom"
+)
 
 type (
 	Style struct {
@@ -98,9 +102,9 @@ func ImageColor(id uint32) Color {
 }
 
 // PlaceholderSymbol builds the cell content for image row and column
-func PlaceholderSymbol(row, col int) string {
+func PlaceholderSymbol(at geom.Point) string {
 	return string([]rune{
-		kitty.Placeholder, kitty.Diacritic(row), kitty.Diacritic(col),
+		kitty.Placeholder, kitty.Diacritic(at.Y), kitty.Diacritic(at.X),
 	})
 }
 

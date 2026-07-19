@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -32,7 +33,7 @@ func newHoverComponent(
 }
 
 func (h *hoverComponent) HandleEvent(
-	msg tea.Msg, _ *Context,
+	_ *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	key, ok := msg.(tea.KeyPressMsg)
 	if !ok {
@@ -46,36 +47,41 @@ func (h *hoverComponent) HandleEvent(
 	}
 }
 
-func (h *hoverComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
+func (h *hoverComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
 func (h *hoverComponent) Layout(
-	screenW, screenH int, cx *Context,
-) (Bounds, bool) {
+	cx *Context, screen geom.Size,
+) (geom.Area, bool) {
 	if !h.valid(cx) {
-		return Bounds{}, false
+		return geom.Area{}, false
 	}
 	x, y := 0, 0
-	if cur, ok := h.ec.Cursor(screenW, screenH, cx); ok {
+	if cur, ok := h.ec.Cursor(cx, screen); ok {
 		x, y = cur.X+1, cur.Y+1
 	}
-	maxW := max(screenW-x, 30)
-	maxH := min(screenH-y, 15)
-	lines, w, hh := measureTextPopup(maxW, maxH, h.text)
-	if x+w > screenW {
-		x = max(screenW-w, 0)
+	maxW := max(screen.Width-x, 30)
+	maxH := min(screen.Height-y, 15)
+	lines, size := measureTextPopup(
+		geom.Size{Width: maxW, Height: maxH}, h.text,
+	)
+	if x+size.Width > screen.Width {
+		x = max(screen.Width-size.Width, 0)
 	}
-	if y+hh > screenH {
-		y = max(screenH-hh, 0)
+	if y+size.Height > screen.Height {
+		y = max(screen.Height-size.Height, 0)
 	}
 	h.lines = lines
-	return Bounds{x: x, y: y, w: w, h: hh}, true
+	return geom.Area{
+		Point: geom.Point{X: x, Y: y},
+		Size:  size,
+	}, true
 }
 
-func (h *hoverComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	return h.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
-		paintTextPopup(buf, h.lines, cx)
+func (h *hoverComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
+	return h.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
+		paintTextPopup(cx, buf, h.lines)
 	})
 }
 

@@ -3,16 +3,17 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
 type PickerComponent struct {
 	overlayBuf
 	state         *Picker
-	bounds        Bounds
-	listBounds    Bounds
-	previewBounds Bounds
-	splitBounds   Bounds
+	bounds        geom.Area
+	listBounds    geom.Area
+	previewBounds geom.Area
+	splitBounds   geom.Area
 	dragSplit     bool
 }
 
@@ -25,13 +26,13 @@ func newPickerComponent(p *Picker) *PickerComponent {
 }
 
 func (p *PickerComponent) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case pickerFeedMsg:
 		return p.handleFeed(msg)
 	case pickerDynamicTriggerMsg:
-		return p.handleDynamicTrigger(msg, cx)
+		return p.handleDynamicTrigger(cx, msg)
 	case pickerDynamicFeedMsg:
 		return p.handleDynamicFeed(msg)
 	case tea.WindowSizeMsg:
@@ -39,53 +40,63 @@ func (p *PickerComponent) HandleEvent(
 		p.state.clearPreviewCache()
 		return ignored(), nil
 	case tea.KeyPressMsg:
-		return p.handleKey(msg, cx)
+		return p.handleKey(cx, msg)
 	case tea.MouseClickMsg:
-		return p.handleMouseClick(msg, cx)
+		return p.handleMouseClick(cx, msg)
 	case tea.MouseMotionMsg:
-		return p.handleMouseMotion(msg, cx)
+		return p.handleMouseMotion(cx, msg)
 	case tea.MouseReleaseMsg:
 		return p.handleMouseRelease(msg)
 	case tea.MouseWheelMsg:
-		return p.handleMouseWheel(msg, cx)
+		return p.handleMouseWheel(cx, msg)
 	}
 	return ignored(), nil
 }
 
 func (p *PickerComponent) Layout(
-	screenW, screenH int, _ *Context,
-) (Bounds, bool) {
-	areaW, areaH := pickerOverlaySize(screenW, screenH)
-	if areaW < 4 || areaH < 4 {
-		return Bounds{}, false
+	_ *Context, screen geom.Size,
+) (geom.Area, bool) {
+	size := pickerOverlaySize(screen)
+	if size.Width < 4 || size.Height < 4 {
+		return geom.Area{}, false
 	}
-	left := (screenW - areaW) / 2
-	top := max((screenH-2-areaH)/2, 0)
-	return Bounds{x: left, y: top, w: areaW, h: areaH}, true
+	left := (screen.Width - size.Width) / 2
+	top := max((screen.Height-2-size.Height)/2, 0)
+	return geom.Area{
+		Point: geom.Point{X: left, Y: top},
+		Size:  size,
+	}, true
 }
 
-func (p *PickerComponent) PaintBuffer(pl Bounds, cx *Context) *tui.Buffer {
-	return p.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
-		p.paint(buf, pl, cx)
+func (p *PickerComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
+	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
+		p.paint(cx, buf, pl)
 	})
 }
 
-func (p *PickerComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
+func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	ps := p.state
-	areaW, areaH := pl.w, pl.h
+	areaW, areaH := pl.Width, pl.Height
 	p.bounds = pl
-	p.previewBounds = Bounds{}
-	p.splitBounds = Bounds{}
+	p.previewBounds = geom.Area{}
+	p.splitBounds = geom.Area{}
 
 	showPreview := areaW > pickerMinPreviewArea && previewEnabled(ps.source)
 	splitW := 0
 	if showPreview {
 		ratio := cx.pickerLayout.SplitRatioFor(ps.source.ID())
 		splitW = pickerSplitLeftWidth(areaW, ratio)
-		p.splitBounds = Bounds{x: 1 + splitW, y: 0, w: 1, h: areaH}
-		p.drawPickerBox(buf, 0, 0, areaW, areaH, splitW, cx)
+		p.splitBounds = geom.Area{
+			Point: geom.Point{X: 1 + splitW, Y: 0},
+			Size:  geom.Size{Width: 1, Height: areaH},
+		}
+		p.drawPickerBox(cx, buf, geom.Area{
+			Size: geom.Size{Width: areaW, Height: areaH},
+		}, splitW)
 	} else {
-		p.drawPickerPane(buf, 0, 0, areaW, areaH, cx)
+		p.drawPickerPane(cx, buf, geom.Area{
+			Size: geom.Size{Width: areaW, Height: areaH},
+		})
 	}
 
 	headerH := 0
@@ -96,15 +107,18 @@ func (p *PickerComponent) paint(buf *tui.Buffer, pl Bounds, cx *Context) {
 	if showPreview {
 		listW = splitW
 	}
-	p.listBounds = Bounds{x: 1, y: 3 + headerH, w: listW, h: ps.listHeight}
+	p.listBounds = geom.Area{
+		Point: geom.Point{X: 1, Y: 3 + headerH},
+		Size:  geom.Size{Width: listW, Height: ps.listHeight},
+	}
 
-	p.splitBounds = p.splitBounds.translate(pl.x, pl.y)
-	p.previewBounds = p.previewBounds.translate(pl.x, pl.y)
-	p.listBounds = p.listBounds.translate(pl.x, pl.y)
+	p.splitBounds = p.splitBounds.Translate(pl.Point)
+	p.previewBounds = p.previewBounds.Translate(pl.Point)
+	p.listBounds = p.listBounds.Translate(pl.Point)
 }
 
 func (p *PickerComponent) Cursor(
-	_, _ int, _ *Context,
+	*Context, geom.Size,
 ) (cur tea.Cursor, ok bool) {
 	return tea.Cursor{}, false
 }
@@ -119,7 +133,7 @@ func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 }
 
 func (p *PickerComponent) handleDynamicTrigger(
-	msg pickerDynamicTriggerMsg, cx *Context,
+	cx *Context, msg pickerDynamicTriggerMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
 	if msg.gen != ps.dynamicGen {
@@ -162,20 +176,19 @@ func (p *PickerComponent) handleDynamicFeed(
 }
 
 func (p *PickerComponent) handleMouseClick(
-	msg tea.MouseClickMsg, cx *Context,
+	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
-	if p.mouseOutside(msg.X, msg.Y) {
+	if p.mouseOutside(geom.Point{X: msg.X, Y: msg.Y}) {
 		return p.dismiss()
 	}
 	p.markDirty()
-	if msg.Button == tea.MouseLeft && p.splitBounds.contains(msg.X, msg.Y) {
+	clickPt := geom.Point{X: msg.X, Y: msg.Y}
+	if msg.Button == tea.MouseLeft && p.splitBounds.Contains(clickPt) {
 		p.dragSplit = true
-		p.updateSplitRatio(msg.X, cx)
+		p.updateSplitRatio(cx, msg.X)
 		return consumed(), nil
 	}
-	if idx, ok := listIndexAt(
-		p.listBounds, p.state.listScroll, msg.X, msg.Y,
-	); ok {
+	if idx, ok := listIndexAt(p.listBounds, p.state.listScroll, clickPt); ok {
 		if idx >= 0 && idx < len(p.state.matched) {
 			p.state.cursor = idx
 		}
@@ -184,13 +197,13 @@ func (p *PickerComponent) handleMouseClick(
 }
 
 func (p *PickerComponent) handleMouseMotion(
-	msg tea.MouseMotionMsg, cx *Context,
+	cx *Context, msg tea.MouseMotionMsg,
 ) (EventResult, tea.Cmd) {
 	if !p.dragSplit || msg.Button != tea.MouseLeft {
 		return consumed(), nil
 	}
 	p.markDirty()
-	p.updateSplitRatio(msg.X, cx)
+	p.updateSplitRatio(cx, msg.X)
 	return consumed(), nil
 }
 
@@ -203,12 +216,12 @@ func (p *PickerComponent) handleMouseRelease(
 	return consumed(), nil
 }
 
-func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
-	usable := p.bounds.w - pickerSplitFrameOverhead
+func (p *PickerComponent) updateSplitRatio(cx *Context, x int) {
+	usable := p.bounds.Width - pickerSplitFrameOverhead
 	if usable <= 0 {
 		return
 	}
-	left := x - (p.bounds.x + 1)
+	left := x - (p.bounds.X + 1)
 	ratio := float64(left) / float64(usable)
 	ratio = clampPickerSplitRatio(ratio)
 	opts := cx.pickerLayout.clone()
@@ -220,14 +233,14 @@ func (p *PickerComponent) updateSplitRatio(x int, cx *Context) {
 }
 
 func (p *PickerComponent) handleMouseWheel(
-	msg tea.MouseWheelMsg, cx *Context,
+	cx *Context, msg tea.MouseWheelMsg,
 ) (EventResult, tea.Cmd) {
 	step := cx.Editor.Options().ScrollLines
 	p.markDirty()
 	switch {
-	case p.listBounds.contains(msg.X, msg.Y):
+	case p.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}):
 		p.scrollListByWheel(msg.Button, step)
-	case p.previewBounds.contains(msg.X, msg.Y):
+	case p.previewBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}):
 		p.scrollPreviewByWheel(msg.Button, step)
 	}
 	return consumed(), nil
@@ -254,8 +267,8 @@ func (p *PickerComponent) scrollPreviewByWheel(
 	}
 }
 
-func (p *PickerComponent) mouseOutside(x, y int) bool {
-	return !p.bounds.contains(x, y)
+func (p *PickerComponent) mouseOutside(at geom.Point) bool {
+	return !p.bounds.Contains(at)
 }
 
 func (p *PickerComponent) dismiss() (EventResult, tea.Cmd) {
@@ -265,7 +278,7 @@ func (p *PickerComponent) dismiss() (EventResult, tea.Cmd) {
 		ps.dynamicStop()
 	}
 	ps.cancel()
-	return ignoredWith(func(comp *Compositor, _ *Context) tea.Cmd {
+	return ignoredWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
 		return nil
 	}), nil

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -258,7 +259,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 func TestViewArea(t *testing.T) {
 	t.Run("area is set by layout engine", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v, _ := e.FocusedView()
 		a := v.Area()
 		assert.Equal(t, 80, a.Width)
@@ -292,7 +293,7 @@ func TestViewConsumeDirty(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v, _ := e.FocusedView()
 		v.ConsumeDirty()
-		v.SetArea(view.Area{Width: 10, Height: 5})
+		v.SetArea(geom.Area{Size: geom.Size{Width: 10, Height: 5}})
 		assert.True(t, v.ConsumeDirty())
 	})
 
@@ -428,7 +429,7 @@ func TestSelectionPerView(t *testing.T) {
 	assert.NoError(t, err)
 
 	e := view.NewEditor(tmp)
-	e.ResizeTree(80, 24)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	v1, err := e.OpenFile(path)
 	assert.NoError(t, err)
 	// Create a second view into the same document via vertical split

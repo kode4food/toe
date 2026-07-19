@@ -10,6 +10,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -18,10 +19,9 @@ import (
 // renderPass bundles the state needed for a single render pass so every render
 // helper receives it without passing cx and ec separately
 type renderPass struct {
-	ec *EditorComponent
-	cx *Context
-	w  int
-	h  int
+	ec   *EditorComponent
+	cx   *Context
+	size geom.Size
 }
 
 const (
@@ -47,7 +47,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 	activeTUI := lipglossToTUIStyle(th.Get("ui.bufferline.active"))
 	inactiveTUI := lipglossToTUIStyle(th.Get("ui.bufferline"))
 
-	buf.SetString(0, y, strings.Repeat(" ", r.w), bgTUI)
+	buf.SetString(geom.Point{Y: y}, strings.Repeat(" ", r.size.Width), bgTUI)
 
 	focusedDoc, _ := r.cx.Editor.FocusedDocument()
 	docs := r.cx.Editor.AllDocuments()
@@ -70,7 +70,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 		if focusedDoc != nil && doc.ID() == focusedDoc.ID() {
 			style = activeTUI
 		}
-		buf.SetString(x, y, label, style)
+		buf.SetString(geom.Point{X: x, Y: y}, label, style)
 		x += runewidth.StringWidth(label)
 	}
 }
@@ -93,12 +93,12 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		// terminal lost focus: use underline so position is still visible
 		kind = view.CursorKindUnderline
 	}
-	x, y, ok := r.ec.caretScreenPos(r.cx)
+	at, ok := r.ec.caretScreenPos(r.cx)
 	if !ok {
 		return tea.Cursor{}, false
 	}
 	return tea.Cursor{
-		Position: tea.Position{X: x, Y: y},
+		Position: tea.Position{X: at.X, Y: at.Y},
 		Shape:    cursorKindToShape(kind),
 		Blink:    false,
 	}, true
@@ -144,21 +144,20 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		v.EnsureCursorVisible(text, sel, contentH, scrolloff, vf)
 	}
 	r.renderContent(renderContentArgs{
-		doc:     doc,
-		view:    v,
-		buf:     args.buf,
-		x:       editorX,
-		y:       args.y0 + a.Y,
-		width:   editorW,
-		height:  contentH,
+		doc:  doc,
+		view: v,
+		buf:  args.buf,
+		area: geom.Area{
+			Point: geom.Point{X: editorX, Y: args.y0 + a.Y},
+			Size:  geom.Size{Width: editorW, Height: contentH},
+		},
 		focused: args.focused,
 	})
 	r.renderStatus(renderStatusArgs{
 		doc:     doc,
 		view:    v,
 		buf:     args.buf,
-		x:       a.X,
-		y:       args.y0 + a.Y + contentH,
+		at:      geom.Point{X: a.X, Y: args.y0 + a.Y + contentH},
 		width:   a.Width,
 		focused: args.focused,
 	})
@@ -188,8 +187,8 @@ func (r *renderPass) forceFullRedraw(
 		force = true
 	}
 
-	if cache.lastW != r.w || cache.lastH != r.h {
-		cache.lastW, cache.lastH = r.w, r.h
+	if cache.lastW != r.size.Width || cache.lastH != r.size.Height {
+		cache.lastW, cache.lastH = r.size.Width, r.size.Height
 		force = true
 	}
 
@@ -275,11 +274,11 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	horizCells := make(map[[2]int]bool)
 	r.cx.Editor.Tree().WalkSeparators(func(s view.Separator) {
 		if s.Layout == view.LayoutVertical {
-			for row := s.Y; row < s.Y+s.H; row++ {
+			for row := s.Y; row < s.Y+s.Height; row++ {
 				vertCells[[2]int{s.X, row}] = true
 			}
 		} else {
-			for col := s.X; col < s.X+s.W; col++ {
+			for col := s.X; col < s.X+s.Width; col++ {
 				horizCells[[2]int{col, s.Y}] = true
 			}
 		}
@@ -295,7 +294,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				left, right,
 			)
 		}
-		buf.SetString(x, y0+y, ch, sepTUI)
+		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
 	for cell := range horizCells {
 		x, y := cell[0], cell[1]
@@ -312,10 +311,10 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				horizCells[[2]int{x + 1, y}],
 			)
 		}
-		buf.SetString(x, y0+y, ch, sepTUI)
+		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
 
-	r.renderCmdline(buf, r.h-1)
+	r.renderCmdline(buf, r.size.Height-1)
 
 	r.renderDiagnosticPopup(buf)
 
@@ -324,25 +323,25 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 }
 
-func paneUnderOverlay(cx *Context, a view.Area, y0 int) bool {
+func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
 	if !cx.OverlayRegionsPrecise {
 		return true
 	}
 	ax, ay := a.X, y0+a.Y
 	for _, b := range cx.OverlayRegions {
-		if ax < b.x+b.w && b.x < ax+a.Width &&
-			ay < b.y+b.h && b.y < ay+a.Height {
+		if ax < b.X+b.Width && b.X < ax+a.Width &&
+			ay < b.Y+b.Height && b.Y < ay+a.Height {
 			return true
 		}
 	}
 	return false
 }
 
-func clearPaneRect(buf *tui.Buffer, a view.Area, y0 int, style tui.Style) {
+func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
 	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
 	top := y0 + a.Y
 	for y := top; y < top+a.Height; y++ {
-		buf.FillRange(a.X, y, a.Width, style)
+		buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, style)
 	}
 }
 
@@ -380,16 +379,19 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	}
 	boxW := bodyW + 2 + 2*pop.padX
 	boxH := len(rawLines) + 2
-	x := max(r.w-boxW, 0)
-	y := max(r.h-boxH-1, 0)
+	x := max(r.size.Width-boxW, 0)
+	y := max(r.size.Height-boxH-1, 0)
 
-	area := pop.drawInto(buf, x, y, boxW, boxH)
+	area := pop.drawInto(buf, geom.Area{
+		Point: geom.Point{X: x, Y: y},
+		Size:  geom.Size{Width: boxW, Height: boxH},
+	})
 
 	if title != "" {
-		buf.SetString(x+1, y, " "+title+" ", popupTUI)
+		buf.SetString(geom.Point{X: x + 1, Y: y}, " "+title+" ", popupTUI)
 	}
 	for i, raw := range rawLines {
-		buf.SetString(area.x, area.y+i, raw, popupTUI)
+		buf.SetString(geom.Point{X: area.X, Y: area.Y + i}, raw, popupTUI)
 	}
 }
 

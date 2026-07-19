@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -18,9 +19,9 @@ func TestImagePane(t *testing.T) {
 		path := writeRenderImage(t, t.TempDir(), 20, 10, nil)
 		pane, err := ui.NewImagePane(e, path)
 		assert.NoError(t, err)
-		w, h := pane.Image().Size()
-		assert.Equal(t, 20, w)
-		assert.Equal(t, 10, h)
+		size := pane.Image().Size()
+		assert.Equal(t, 20, size.Width)
+		assert.Equal(t, 10, size.Height)
 		assert.Equal(t, view.ModeImage, pane.Mode())
 	})
 
@@ -51,7 +52,7 @@ func TestImagePane(t *testing.T) {
 
 	t.Run("supports pane commands", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		path := writeRenderImage(t, t.TempDir(), 20, 10, nil)
 		pane, err := ui.NewImagePane(e, path)
 		assert.NoError(t, err)

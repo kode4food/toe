@@ -1,13 +1,17 @@
 package view
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/kode4food/toe/internal/geom"
+)
 
 type (
 	// Tree manages the spatial layout of views as a split tree
 	Tree struct {
 		root   Id
 		focus  Id
-		area   Area
+		area   geom.Area
 		nodes  map[Id]*treeNode
 		nextID Id
 	}
@@ -17,8 +21,8 @@ type (
 		ID() Id
 		Path() string
 		SetID(Id)
-		Area() Area
-		SetArea(Area)
+		Area() geom.Area
+		SetArea(geom.Area)
 		MarkDirty()
 		Mode() Mode
 		SaveSession(*SessionWriter)
@@ -31,7 +35,7 @@ type (
 	treeContainer struct {
 		layout   Layout
 		children []Id
-		area     Area
+		area     geom.Area
 		ratios   []float64
 	}
 
@@ -67,11 +71,11 @@ const (
 	minPaneHeight = 4
 )
 
-func newTree(width, height int) *Tree {
+func newTree(size geom.Size) *Tree {
 	t := &Tree{
 		nodes: map[Id]*treeNode{},
 	}
-	t.area = Area{Width: width, Height: height}
+	t.area = geom.Area{Size: size}
 	// root is always a container node
 	t.nextID++
 	rootID := t.nextID
@@ -243,8 +247,8 @@ func (t *Tree) IsEmpty() bool {
 
 // Resize updates the total area and recalculates view areas. Returns true if
 // the area changed
-func (t *Tree) Resize(width, height int) bool {
-	a := Area{Width: width, Height: height}
+func (t *Tree) Resize(size geom.Size) bool {
+	a := geom.Area{Size: size}
 	if t.area == a {
 		return false
 	}

@@ -3,6 +3,7 @@ package ui
 import (
 	"charm.land/lipgloss/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
@@ -25,7 +26,7 @@ type previewLineCtx struct {
 	markerStyle tui.Style
 }
 
-func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
+func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	lgStyles := new(buildLipglossStyles(args.th, view.ModeNormal))
 	tuiStyles := buildTUIStyles(lgStyles)
 	hlLipgloss := previewHlStyleFn(hlStyleFnFor(args.th))
@@ -53,19 +54,27 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 	if len(args.diffLines) > 0 {
 		markerW = 1
 	}
-	contentX := x + markerW
-	contentW := args.w - markerW
+	contentX := args.area.X + markerW
+	contentW := args.area.Width - markerW
 
 	softWrap := args.format.SoftWrap && args.format.ViewportWidth > 0
-	anchorLine, vOff := previewAnchor(
-		args.text, args.format, softWrap, args.hlFrom, args.hlTo, args.h,
-	)
+	anchor := previewAnchor(previewAnchorArgs{
+		text:     args.text,
+		format:   args.format,
+		softWrap: softWrap,
+		from:     args.hlFrom,
+		to:       args.hlTo,
+		height:   args.area.Height,
+	})
+	anchorLine, vOff := anchor.line, anchor.verticalOffset
 	nLines := args.text.LenLines()
 	// clamp scroll to keep the last line pinned to the pane bottom, then
 	// write the applied delta back so stored scroll stays bounded
 	if args.scroll != 0 {
 		base := anchorLine
-		anchorLine = max(0, min(base+args.scroll, max(0, nLines-args.h)))
+		anchorLine = max(0, min(
+			base+args.scroll, max(0, nLines-args.area.Height),
+		))
 		args.scroll = anchorLine - base
 		vOff = 0 // moving off the anchor line starts at its first visual row
 	}
@@ -76,7 +85,7 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 
 	bufRow := 0
 	logLine := anchorLine
-	for bufRow < args.h && logLine < nLines {
+	for bufRow < args.area.Height && logLine < nLines {
 		lineNum := logLine
 		logLine++
 		start, err := args.text.LineToChar(lineNum)
@@ -98,7 +107,7 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 			hlSpans: args.spans, cursor: -1, cursorLine: -1,
 			lineNum: lineNum, lineStart: start, lineEnd: end,
 			softWrap: softWrap, hStart: 0, hWidth: contentW,
-			maxRows: args.h - bufRow + rowSkip,
+			maxRows: args.area.Height - bufRow + rowSkip,
 		}
 		rendered := rr.rows()
 		highlighted := args.hlFrom >= 0 &&
@@ -108,7 +117,7 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 			format: args.format, lgStyles: lgStyles,
 			fillTUI: fillTUI, popupBg: popupBg,
 			hlBg: hlBg, w: contentW,
-			rowSkip: rowSkip, maxH: args.h - bufRow,
+			rowSkip: rowSkip, maxH: args.area.Height - bufRow,
 			softWrap: softWrap, lStr: lStr,
 			highlighted: highlighted, markerW: markerW,
 		}
@@ -116,13 +125,15 @@ func renderPreviewDocInto(buf *tui.Buffer, x, y int, args *previewDocRender) {
 			lineCtx.marker, lineCtx.markerStyle =
 				previewDiffMarker(kind, tuiStyles)
 		}
-		bufRow += emitPreviewLine(buf, contentX, y+bufRow, rendered, lineCtx)
+		bufRow += emitPreviewLine(
+			buf, geom.Point{X: contentX, Y: args.area.Y + bufRow}, rendered,
+			lineCtx,
+		)
 	}
 }
 
 func emitPreviewLine(
-	buf *tui.Buffer, x, y int,
-	rendered []renderedRow, ctx previewLineCtx,
+	buf *tui.Buffer, at geom.Point, rendered []renderedRow, ctx previewLineCtx,
 ) int {
 	n := 0
 	if ctx.softWrap {
@@ -140,42 +151,47 @@ func emitPreviewLine(
 				row = prefixRow
 				row.append(cr)
 			}
+			rowAt := geom.Point{X: at.X, Y: at.Y + n}
 			row.writeToBuffer(rowWriteArgs{
-				buf: buf, x: x, y: y + n,
-				fillStyle: ctx.fillTUI, width: ctx.w,
+				buf:       buf,
+				at:        rowAt,
+				fillStyle: ctx.fillTUI,
+				width:     ctx.w,
 			})
-			buf.PatchBgRange(x, y+n, ctx.w, ctx.popupBg)
+			buf.PatchBgRange(rowAt, ctx.w, ctx.popupBg)
 			if ctx.highlighted {
-				buf.PatchBgRange(x, y+n, ctx.w, ctx.hlBg)
+				buf.PatchBgRange(rowAt, ctx.w, ctx.hlBg)
 			}
-			ctx.emitMarker(buf, x, y+n, n == 0)
+			ctx.emitMarker(buf, rowAt, n == 0)
 			n++
 		}
 	} else {
 		rendered[0].writeToBuffer(rowWriteArgs{
-			buf: buf, x: x, y: y,
-			fillStyle: ctx.fillTUI, width: ctx.w,
+			buf:       buf,
+			at:        at,
+			fillStyle: ctx.fillTUI,
+			width:     ctx.w,
 		})
-		buf.PatchBgRange(x, y, ctx.w, ctx.popupBg)
+		buf.PatchBgRange(at, ctx.w, ctx.popupBg)
 		if ctx.highlighted {
-			buf.PatchBgRange(x, y, ctx.w, ctx.hlBg)
+			buf.PatchBgRange(at, ctx.w, ctx.hlBg)
 		}
-		ctx.emitMarker(buf, x, y, true)
+		ctx.emitMarker(buf, at, true)
 		n = 1
 	}
 	return n
 }
 
-func (c previewLineCtx) emitMarker(buf *tui.Buffer, x, y int, first bool) {
+func (c previewLineCtx) emitMarker(buf *tui.Buffer, at geom.Point, first bool) {
 	if c.markerW == 0 {
 		return
 	}
-	mx := x - c.markerW
-	buf.FillRange(mx, y, c.markerW, c.fillTUI)
-	buf.PatchBgRange(mx, y, c.markerW, c.popupBg)
+	mAt := geom.Point{X: at.X - c.markerW, Y: at.Y}
+	buf.FillRange(mAt, c.markerW, c.fillTUI)
+	buf.PatchBgRange(mAt, c.markerW, c.popupBg)
 	if c.marker != "" && first {
 		st := c.markerStyle.Bg(c.popupBg)
-		buf.SetString(mx, y, c.marker, st)
+		buf.SetString(mAt, c.marker, st)
 	}
 }
 

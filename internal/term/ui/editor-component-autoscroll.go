@@ -57,7 +57,7 @@ func (e *EditorComponent) continueAxisScroll(
 	}
 	axis.scroll(cx.Editor, v, toLo)
 
-	r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
+	r := &renderPass{ec: e, cx: cx, size: e.size}
 	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLo); ok {
 		extendSelectionTo(cx, doc, v, pos)
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
@@ -43,15 +44,15 @@ func TestColor(t *testing.T) {
 
 func TestPlaceholderSymbol(t *testing.T) {
 	t.Run("encodes row and col", func(t *testing.T) {
-		sym := tui.PlaceholderSymbol(0, 0)
+		sym := tui.PlaceholderSymbol(geom.Point{})
 		runes := []rune(sym)
 		assert.Equal(t, tui.PlaceholderRune, runes[0])
 		assert.Len(t, runes, 3)
 	})
 
 	t.Run("distinct positions differ", func(t *testing.T) {
-		a := tui.PlaceholderSymbol(0, 0)
-		b := tui.PlaceholderSymbol(1, 0)
+		a := tui.PlaceholderSymbol(geom.Point{})
+		b := tui.PlaceholderSymbol(geom.Point{X: 1})
 		assert.NotEqual(t, a, b)
 	})
 }
@@ -82,17 +83,17 @@ func TestStyle(t *testing.T) {
 	})
 
 	t.Run("UlColor round-trips via render", func(t *testing.T) {
-		b := tui.NewBuffer(1, 1)
+		b := tui.NewBuffer(geom.Size{Width: 1, Height: 1})
 		st := tui.Style{}.UlColor(tui.ColorRGB(10, 20, 30))
-		b.SetString(0, 0, "x", st)
+		b.SetString(geom.Point{X: 0, Y: 0}, "x", st)
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "\x1b[58:2::10:20:30m")
 	})
 
 	t.Run("UlStyle round-trips via render", func(t *testing.T) {
-		b := tui.NewBuffer(1, 1)
+		b := tui.NewBuffer(geom.Size{Width: 1, Height: 1})
 		st := tui.Style{}.UlStyle(tui.UnderlineLine)
-		b.SetString(0, 0, "x", st)
+		b.SetString(geom.Point{X: 0, Y: 0}, "x", st)
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "\x1b[4m")
 	})

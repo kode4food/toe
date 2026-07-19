@@ -18,6 +18,7 @@ import (
 	"github.com/charmbracelet/x/vt"
 	"github.com/creack/pty"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -28,7 +29,7 @@ type (
 	TerminalPane struct {
 		id         view.Id
 		editor     *view.Editor
-		area       view.Area
+		area       geom.Area
 		dirty      bool
 		shell      string
 		emu        *vt.SafeEmulator
@@ -67,22 +68,23 @@ var (
 // NewTerminalPane spawns shell in a PTY and pumps its output into a VT emulator
 // sized w by h
 func NewTerminalPane(
-	e *view.Editor, shell string, w, h int,
+	e *view.Editor, shell string, size geom.Size,
 ) (*TerminalPane, error) {
-	return NewTerminalPaneInDir(e, shell, e.Cwd(), w, h)
+	return NewTerminalPaneInDir(e, shell, e.Cwd(), size)
 }
 
 // NewTerminalPaneInDir spawns shell in dir
 func NewTerminalPaneInDir(
-	e *view.Editor, shell, dir string, w, h int,
+	e *view.Editor, shell, dir string, size geom.Size,
 ) (*TerminalPane, error) {
-	w, h = max(w, 1), max(h, 1)
+	size.Width = max(size.Width, 1)
+	size.Height = max(size.Height, 1)
 	cmd := exec.Command(shell)
 	path := terminalPath(e, dir)
 	cmd.Dir = path
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{
-		Rows: uint16(h),
-		Cols: uint16(w),
+		Rows: uint16(size.Height),
+		Cols: uint16(size.Width),
 	})
 	if err != nil {
 		return nil, err
@@ -90,7 +92,7 @@ func NewTerminalPaneInDir(
 	tp := &TerminalPane{
 		editor:  e,
 		shell:   shell,
-		emu:     vt.NewSafeEmulator(w, h),
+		emu:     vt.NewSafeEmulator(size.Width, size.Height),
 		pty:     f,
 		cmd:     cmd,
 		clip:    e.Clipboard(),
@@ -124,7 +126,8 @@ func (t *TerminalPane) SetID(id view.Id) {
 // Split starts another terminal using the same shell
 func (t *TerminalPane) Split() (view.Pane, error) {
 	return NewTerminalPane(
-		t.editor, t.shell, t.area.Width, max(t.area.Height-1, 1),
+		t.editor, t.shell,
+		geom.Size{Width: t.area.Width, Height: max(t.area.Height-1, 1)},
 	)
 }
 
@@ -156,7 +159,7 @@ func (t *TerminalPane) Shutdown() {
 }
 
 // Area returns the screen rectangle assigned by the layout engine
-func (t *TerminalPane) Area() view.Area {
+func (t *TerminalPane) Area() geom.Area {
 	return t.area
 }
 
@@ -185,7 +188,7 @@ func (t *TerminalPane) SaveSession(w *view.SessionWriter) {
 
 // SetArea updates the pane's screen rectangle and resizes the PTY and
 // emulator to match, reflowing the shell
-func (t *TerminalPane) SetArea(a view.Area) {
+func (t *TerminalPane) SetArea(a geom.Area) {
 	if a == t.area {
 		return
 	}
@@ -485,7 +488,8 @@ func (t *TerminalPane) selectionText() string {
 		}
 		var b strings.Builder
 		for x := startX; x <= endX && x < w; x++ {
-			if c := t.cellAtAbsolute(x, y); c != nil && c.Content != "" {
+			c := t.cellAtAbsolute(geom.Point{X: x, Y: y})
+			if c != nil && c.Content != "" {
 				b.WriteString(c.Content)
 			} else {
 				b.WriteByte(' ')
@@ -497,12 +501,12 @@ func (t *TerminalPane) selectionText() string {
 	return strings.Join(lines, "\n")
 }
 
-func (t *TerminalPane) cellAtAbsolute(x, y int) *uv.Cell {
+func (t *TerminalPane) cellAtAbsolute(at geom.Point) *uv.Cell {
 	sbLen := t.emu.ScrollbackLen()
-	if y < sbLen {
-		return t.emu.Scrollback().CellAt(x, y)
+	if at.Y < sbLen {
+		return t.emu.Scrollback().CellAt(at.X, at.Y)
 	}
-	return t.emu.CellAt(x, y-sbLen)
+	return t.emu.CellAt(at.X, at.Y-sbLen)
 }
 
 func normalizeSelection(a, b uv.Position) selSpan {
@@ -536,6 +540,8 @@ func interactiveShell() string {
 func registerTerminalPane(e *view.Editor) {
 	e.RegisterPaneRestorer(view.SessionKindTerminal,
 		func(e *view.Editor, path string) (view.Pane, error) {
-			return NewTerminalPaneInDir(e, interactiveShell(), path, 0, 0)
+			return NewTerminalPaneInDir(
+				e, interactiveShell(), path, geom.Size{},
+			)
 		})
 }

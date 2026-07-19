@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
@@ -20,7 +21,7 @@ func TestBufferNavigation(t *testing.T) {
 		dir := t.TempDir()
 		km := command.NewKeymaps()
 		e := view.NewEditor(dir)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, _ = builtin.Register(ui.New(e, km), km)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)

@@ -205,7 +205,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		return nil, false, ErrSessionEmpty
 	}
 
-	t := newTree(e.tree.area.Width, e.tree.area.Height)
+	t := newTree(e.tree.area.Size)
 	t.nodes = map[Id]*treeNode{}
 	t.nextID = 0
 	rootID := t.allocID()

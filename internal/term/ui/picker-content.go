@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -29,13 +30,13 @@ const (
 )
 
 func writePickerPromptRow(
-	buf *tui.Buffer, x, y, w int, p *Picker, cx *Context,
+	cx *Context, buf *tui.Buffer, area geom.Area, p *Picker,
 ) {
 	th := cx.Theme()
 	count := fmt.Sprintf("%d/%d", len(p.matched), len(p.items))
 	cl := runewidth.StringWidth(count)
 
-	queryArea := max(w-2*pickerPadX-1-cl, 0)
+	queryArea := max(area.Width-2*pickerPadX-1-cl, 0)
 
 	displayQuery := p.query
 	ql := runewidth.StringWidth(p.query)
@@ -60,33 +61,46 @@ func writePickerPromptRow(
 		Background(promptSt.GetForeground()))
 	countTUI := lipglossToTUIStyle(pickerCountStyle(cx))
 
-	buf.FillRange(x, y, w, bgTUI)
-	buf.SetString(x+pickerPadX, y, displayQuery, queryTUI)
-	buf.SetString(x+pickerPadX+ql, y, " ", cursorTUI)
-	buf.SetString(x+pickerPadX+ql+1+gap, y, count, countTUI)
+	buf.FillRange(area.Point, area.Width, bgTUI)
+	buf.SetString(geom.Point{
+		X: area.X + pickerPadX,
+		Y: area.Y,
+	}, displayQuery, queryTUI)
+	buf.SetString(geom.Point{
+		X: area.X + pickerPadX + ql,
+		Y: area.Y,
+	}, " ", cursorTUI)
+	buf.SetString(geom.Point{
+		X: area.X + pickerPadX + ql + 1 + gap,
+		Y: area.Y,
+	}, count, countTUI)
 }
 
-func writePickerHeader(buf *tui.Buffer, x, y, w int, p *Picker, cx *Context) {
+func writePickerHeader(
+	cx *Context, buf *tui.Buffer, area geom.Area, p *Picker,
+) {
 	cols := p.source.Columns()
-	widths := pickerColumnWidths(p, max(w-pickerMarkerW-1, 0))
+	widths := pickerColumnWidths(p, max(area.Width-pickerMarkerW-1, 0))
 	bgTUI := lipglossToTUIStyle(pickerHeaderStyle(cx))
 	underlineColor := cx.Theme().Get("ui.text.inactive").GetForeground()
 	colTUI := lipglossToTUIStyle(
 		pickerHeaderStyle(cx).Underline(true).UnderlineColor(underlineColor),
 	)
-	buf.FillRange(x, y, w, bgTUI)
-	cur := x + pickerMarkerW
+	buf.FillRange(area.Point, area.Width, bgTUI)
+	cur := area.X + pickerMarkerW
 	for i, col := range cols {
 		if i > 0 {
 			cur++
 		}
 		text := ansi.Truncate(col, widths[i], "")
-		buf.SetString(cur, y, text, colTUI)
+		buf.SetString(geom.Point{X: cur, Y: area.Y}, text, colTUI)
 		cur += widths[i]
 	}
 }
 
-func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
+func writePickerItem(
+	buf *tui.Buffer, at geom.Point, args *pickerItemRender,
+) {
 	p := args.p
 	m := args.match
 	cx := args.cx
@@ -102,21 +116,25 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 		match = lipglossToTUIStyle(pickerMatchStyle(cx))
 	}
 
-	buf.FillRange(x, y, w, base)
-	buf.SetString(x, y, marker, base)
+	buf.FillRange(at, args.w, base)
+	buf.SetString(at, marker, base)
 
 	// Reserve 1 trailing cell for the right margin (matching the original
 	// base.Width(w) right-padding that kept the highlight flush to the border)
-	cellW := max(w-pickerMarkerW-1, 0)
-	cx2 := x + pickerMarkerW
+	cellW := max(args.w-pickerMarkerW-1, 0)
+	cx2 := at.X + pickerMarkerW
 	cols := p.source.Columns()
 	matchColumn := p.source.MatchColumn()
 
 	if len(cols) <= 1 {
-		itemBase := pickerColumnBase(base, m.item.StyleScopes, 0, cx)
+		itemBase := pickerColumnBase(cx, base, m.item.StyleScopes, 0)
 		writePickerMatched(buf, writePickerMatchedArgs{
-			x: cx2, y: y, maxW: cellW, text: m.item.Display,
-			indices: m.indices, base: itemBase, match: match,
+			at:      geom.Point{X: cx2, Y: at.Y},
+			maxW:    cellW,
+			text:    m.item.Display,
+			indices: m.indices,
+			base:    itemBase,
+			match:   match,
 		})
 	} else {
 		widths := pickerColumnWidths(p, cellW)
@@ -129,15 +147,19 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 			if i < len(m.item.Columns) {
 				val = m.item.Columns[i]
 			}
-			colBase := pickerColumnBase(base, m.item.StyleScopes, i, cx)
+			colBase := pickerColumnBase(cx, base, m.item.StyleScopes, i)
 			if i == matchColumn {
 				writePickerMatched(buf, writePickerMatchedArgs{
-					x: cur, y: y, maxW: widths[i], text: val,
-					indices: m.indices, base: colBase, match: match,
+					at:      geom.Point{X: cur, Y: at.Y},
+					maxW:    widths[i],
+					text:    val,
+					indices: m.indices,
+					base:    colBase,
+					match:   match,
 				})
 			} else {
 				text := ansi.Truncate(val, widths[i], "")
-				buf.SetString(cur, y, text, colBase)
+				buf.SetString(geom.Point{X: cur, Y: at.Y}, text, colBase)
 			}
 			cur += widths[i]
 		}
@@ -145,7 +167,7 @@ func writePickerItem(buf *tui.Buffer, x, y, w int, args *pickerItemRender) {
 }
 
 func pickerColumnBase(
-	base tui.Style, scopes []string, i int, cx *Context,
+	cx *Context, base tui.Style, scopes []string, i int,
 ) tui.Style {
 	if i >= len(scopes) || scopes[i] == "" {
 		return base
@@ -173,20 +195,24 @@ func pickerEmptyHint(ps *Picker) string {
 }
 
 func writePickerCenteredHint(
-	buf *tui.Buffer, x, y, w, h int, text string, cx *Context,
+	cx *Context, buf *tui.Buffer, area geom.Area, text string,
 ) {
-	if text == "" || h <= 0 {
+	if text == "" || area.Height <= 0 {
 		return
 	}
 	style := lipglossToTUIStyle(pickerCountStyle(cx))
-	hx := x + max((w-runewidth.StringWidth(text))/2, 0)
-	buf.SetString(hx, y+h/2, text, style)
+	hx := area.X + max((area.Width-runewidth.StringWidth(text))/2, 0)
+	buf.SetString(geom.Point{
+		X: hx,
+		Y: area.Y + area.Height/2,
+	}, text, style)
 }
 
-func pickerOverlaySize(w, h int) (int, int) {
-	areaW := w * 90 / 100
-	areaH := max((h-2)*90/100, 0)
-	return areaW, areaH
+func pickerOverlaySize(screen geom.Size) geom.Size {
+	return geom.Size{
+		Width:  screen.Width * 90 / 100,
+		Height: max((screen.Height-2)*90/100, 0),
+	}
 }
 
 func pickerSplitLeftWidth(w int, ratio float64) int {

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -13,7 +14,7 @@ import (
 func EditorWithText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")
-	e.ResizeTree(80, 24)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	SetEditorText(t, e, text)
 	return e
 }

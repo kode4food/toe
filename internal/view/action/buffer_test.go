@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -545,7 +546,7 @@ func TestGotoLastAccessedFileSwitches(t *testing.T) {
 		assert.NoError(t, os.WriteFile(f2, []byte("second"), 0o644))
 
 		e := view.NewEditor(dir)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(f1)
 		assert.NoError(t, err)
 		firstDocID := v1.DocID()
@@ -618,7 +619,7 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		assert.NoError(t, os.WriteFile(f2, []byte("second"), 0o644))
 
 		e := view.NewEditor(dir)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(f1)
 		assert.NoError(t, err)
 		firstDocID := v1.DocID()

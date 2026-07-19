@@ -4,6 +4,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -83,25 +84,32 @@ func (r *renderPass) paintContentOverlays(st *contentRenderState) {
 		rel := vcol - st.hOff
 		if rel >= 0 && rel < format.ViewportWidth {
 			sx := contentX + rel
-			for row := args.y; row < args.y+args.height; row++ {
-				buf.PatchBg(sx, row, st.cursorColumnBg)
+			for row := args.area.Y; row < args.area.Y+args.area.Height; row++ {
+				buf.PatchBg(geom.Point{X: sx, Y: row}, st.cursorColumnBg)
 			}
 		}
 	}
 	if len(st.rulers) > 0 {
-		applyRulers(
-			buf, contentX, args.y, format.ViewportWidth, args.height, st.hOff,
-			st.rulers, st.rulerBg,
-		)
+		applyRulers(applyRulersArgs{
+			buf: buf,
+			at:  geom.Point{X: contentX, Y: args.area.Y},
+			size: geom.Size{
+				Width:  format.ViewportWidth,
+				Height: args.area.Height,
+			},
+			hOff:    st.hOff,
+			rulers:  st.rulers,
+			rulerBg: st.rulerBg,
+		})
 	}
 }
 
 func (r *renderPass) renderContentRows(st *contentRenderState) {
 	args := st.args
 	buf := args.buf
-	x := args.x
-	y := args.y
-	height := args.height
+	x := args.area.X
+	y := args.area.Y
+	height := args.area.Height
 
 	rr := st.rr
 	gutter := st.gutter
@@ -141,12 +149,15 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 
 		if lineNum >= nLines {
 			if gutter.width > 0 {
-				gutter.renderBlank(buf, x, bufRow)
+				gutter.renderBlank(buf, geom.Point{X: x, Y: bufRow})
 			}
 			var blank renderedRow
 			blank.writeToBuffer(rowWriteArgs{
-				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
-				width: format.ViewportWidth, startCol: hOff,
+				buf:       buf,
+				at:        geom.Point{X: contentX, Y: bufRow},
+				fillStyle: fillTUI,
+				width:     format.ViewportWidth,
+				startCol:  hOff,
 			})
 			rowMap = append(rowMap, viewRowEntry{
 				logLine: max(nLines-1, 0),
@@ -159,7 +170,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 		if lineNum == nLines-1 && trailingEmpty {
 			if gutter.width > 0 {
 				gutter.renderTilde(
-					buf, x, bufRow, lineNum == cursorLine,
+					buf, geom.Point{X: x, Y: bufRow}, lineNum == cursorLine,
 				)
 			}
 			var row renderedRow
@@ -174,12 +185,16 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 			}
 			if cursorLineEnabled && lineNum == cursorLine {
 				buf.PatchBgRange(
-					contentX, bufRow, format.ViewportWidth, cursorLinePriBg,
+					geom.Point{X: contentX, Y: bufRow},
+					format.ViewportWidth, cursorLinePriBg,
 				)
 			}
 			row.writeToBuffer(rowWriteArgs{
-				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
-				width: format.ViewportWidth, startCol: hOff,
+				buf:       buf,
+				at:        geom.Point{X: contentX, Y: bufRow},
+				fillStyle: fillTUI,
+				width:     format.ViewportWidth,
+				startCol:  hOff,
 			})
 			rowMap = append(rowMap, viewRowEntry{logLine: lineNum})
 			bufRow++
@@ -207,7 +222,8 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 				num = lineNum + 1
 			}
 			gutter.renderLine(
-				buf, x, bufRow, lineNum, num, isAnyCursorLine,
+				buf, geom.Point{X: x, Y: bufRow}, lineNum, num,
+				isAnyCursorLine,
 			)
 		}
 
@@ -282,16 +298,15 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 				}
 				rowPrefixW := 0
 				if i > 0 && gutter.width > 0 {
-					gutter.renderBlank(buf, x, bufRow)
+					gutter.renderBlank(buf, geom.Point{X: x, Y: bufRow})
 				}
 				if paintCursorLine {
-					buf.PatchBgRange(
-						contentX, bufRow, format.ViewportWidth, cursorLineBg,
-					)
+					buf.PatchBgRange(geom.Point{X: contentX, Y: bufRow},
+						format.ViewportWidth, cursorLineBg)
 				}
 				if i == 0 {
 					cr.writeToBuffer(rowWriteArgs{
-						buf: buf, x: contentX, y: bufRow,
+						buf: buf, at: geom.Point{X: contentX, Y: bufRow},
 						fillStyle: fillTUI, width: format.ViewportWidth,
 						startCol: hOff,
 					})
@@ -299,7 +314,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 					cont := prefixRow
 					cont.append(cr)
 					cont.writeToBuffer(rowWriteArgs{
-						buf: buf, x: contentX, y: bufRow,
+						buf: buf, at: geom.Point{X: contentX, Y: bufRow},
 						fillStyle: fillTUI, width: format.ViewportWidth,
 						startCol: hOff,
 					})
@@ -312,13 +327,15 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 			}
 		} else {
 			if paintCursorLine {
-				buf.PatchBgRange(
-					contentX, bufRow, format.ViewportWidth, cursorLineBg,
-				)
+				buf.PatchBgRange(geom.Point{X: contentX, Y: bufRow},
+					format.ViewportWidth, cursorLineBg)
 			}
 			contentRows[0].writeToBuffer(rowWriteArgs{
-				buf: buf, x: contentX, y: bufRow, fillStyle: fillTUI,
-				width: format.ViewportWidth, startCol: hOff,
+				buf:       buf,
+				at:        geom.Point{X: contentX, Y: bufRow},
+				fillStyle: fillTUI,
+				width:     format.ViewportWidth,
+				startCol:  hOff,
 			})
 			rowMap = append(rowMap, viewRowEntry{logLine: lineNum})
 			bufRow++

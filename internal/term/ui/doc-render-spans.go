@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -12,9 +13,7 @@ type renderContentArgs struct {
 	doc     *view.Document
 	view    *view.View
 	buf     *tui.Buffer
-	x, y    int
-	width   int
-	height  int
+	area    geom.Area
 	focused bool
 }
 
@@ -149,10 +148,10 @@ func (r *renderPass) prepareContentRender(
 	insertMode := r.cx.Editor.Mode() == view.ModeInsert
 
 	format := doc.TextFormatForConfig(
-		args.width-gutterW, r.cx.Editor.Options(),
+		args.area.Width-gutterW, r.cx.Editor.Options(),
 	)
-	softWrap := format.SoftWrap && gutterW < args.width
-	contentW := args.width - gutterW
+	softWrap := format.SoftWrap && gutterW < args.area.Width
+	contentW := args.area.Width - gutterW
 	r.cx.Editor.SetViewContentWidth(contentW)
 
 	// Horizontal scrolling keeps the cursor visible when lines run past the
@@ -177,7 +176,7 @@ func (r *renderPass) prepareContentRender(
 	fillTUI := lipglossToTUIStyle(lgStyles.text)
 	cursorLinePriBg := tuiStyles.cursorLinePrim.BgColor()
 	cursorLineSecBg := tuiStyles.cursorLineSec.BgColor()
-	contentX := args.x + gutterW
+	contentX := args.area.X + gutterW
 	gutter := gutterSpec{
 		layout:          gutterLayout,
 		lineNumberW:     gutterLineNumberW,

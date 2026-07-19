@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -765,7 +766,7 @@ func TestGotoFile(t *testing.T) {
 		assert.NoError(t, os.WriteFile(docPath, []byte("rel.txt"), 0o644))
 
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, err := e.OpenFile(docPath)
 		assert.NoError(t, err)
 		testutil.SetCursor(t, e, 0)

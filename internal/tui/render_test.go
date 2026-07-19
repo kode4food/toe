@@ -6,24 +6,25 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
 func TestRenderEmpty(t *testing.T) {
 	t.Run("zero-width returns empty", func(t *testing.T) {
-		b := tui.NewBuffer(0, 5)
+		b := tui.NewBuffer(geom.Size{Width: 0, Height: 5})
 		assert.Equal(t, "", b.RenderToANSI())
 	})
 
 	t.Run("zero-height returns empty", func(t *testing.T) {
-		b := tui.NewBuffer(5, 0)
+		b := tui.NewBuffer(geom.Size{Width: 5, Height: 0})
 		assert.Equal(t, "", b.RenderToANSI())
 	})
 
 	t.Run("multi-row separated by newline", func(t *testing.T) {
-		b := tui.NewBuffer(2, 2)
-		b.SetString(0, 0, "ab", tui.Style{})
-		b.SetString(0, 1, "cd", tui.Style{})
+		b := tui.NewBuffer(geom.Size{Width: 2, Height: 2})
+		b.SetString(geom.Point{X: 0, Y: 0}, "ab", tui.Style{})
+		b.SetString(geom.Point{X: 0, Y: 1}, "cd", tui.Style{})
 		out := b.RenderToANSI()
 		rows := strings.Split(out, "\n")
 		assert.Len(t, rows, 2)
@@ -287,14 +288,14 @@ func TestEmitModifiers(t *testing.T) {
 }
 
 func render(s tui.Style) string {
-	b := tui.NewBuffer(1, 1)
-	b.SetString(0, 0, "x", s)
+	b := tui.NewBuffer(geom.Size{Width: 1, Height: 1})
+	b.SetString(geom.Point{X: 0, Y: 0}, "x", s)
 	return b.RenderToANSI()
 }
 
 func renderTwo(s0, s1 tui.Style) string {
-	b := tui.NewBuffer(2, 1)
-	b.SetString(0, 0, "a", s0)
-	b.SetString(1, 0, "b", s1)
+	b := tui.NewBuffer(geom.Size{Width: 2, Height: 1})
+	b.SetString(geom.Point{X: 0, Y: 0}, "a", s0)
+	b.SetString(geom.Point{X: 1, Y: 0}, "b", s1)
 	return b.RenderToANSI()
 }

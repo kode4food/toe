@@ -96,7 +96,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.markImageDirty()
 		return m, nil
 	default:
-		cmd := m.compositor.HandleEvent(msg, m.context)
+		cmd := m.compositor.HandleEvent(m.context, msg)
 		m.component.syncFileWatcher(m.context)
 		return m, tea.Batch(cmd, m.scheduleImageDisplayCmd())
 	}
@@ -104,7 +104,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the current frame via the compositor
 func (m Model) View() tea.View {
-	if m.compositor.width == 0 || m.compositor.height == 0 {
+	if m.compositor.size.Width == 0 || m.compositor.size.Height == 0 {
 		v := tea.NewView("")
 		v.AltScreen = true
 		return v
@@ -123,9 +123,7 @@ func (m Model) View() tea.View {
 
 func (m Model) pickerImageCmd() tea.Cmd {
 	if p, ok := m.compositor.activePicker(); ok {
-		return p.previewImageCmd(
-			m.context, m.compositor.width, m.compositor.height,
-		)
+		return p.previewImageCmd(m.context, m.compositor.size)
 	}
 	return nil
 }
@@ -144,9 +142,7 @@ func (m Model) scheduleImageDisplayCmd() tea.Cmd {
 
 func (m Model) hasImageSurface() bool {
 	if p, ok := m.compositor.activePicker(); ok {
-		if p.hasPreviewImage(
-			m.context, m.compositor.width, m.compositor.height,
-		) {
+		if p.hasPreviewImage(m.context, m.compositor.size) {
 			return true
 		}
 	}

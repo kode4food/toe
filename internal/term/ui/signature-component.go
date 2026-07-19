@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -49,7 +50,7 @@ func newSignatureHelpComponent(
 }
 
 func (s *signatureHelpComponent) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	key, ok := msg.(tea.KeyPressMsg)
 	if !ok {
@@ -73,52 +74,57 @@ func (s *signatureHelpComponent) HandleEvent(
 	}
 }
 
-func (s *signatureHelpComponent) Cursor(int, int, *Context) (tea.Cursor, bool) {
+func (s *signatureHelpComponent) Cursor(
+	*Context, geom.Size,
+) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
 func (s *signatureHelpComponent) Layout(
-	screenW, screenH int, cx *Context,
-) (Bounds, bool) {
+	cx *Context, screen geom.Size,
+) (geom.Area, bool) {
 	if len(s.help.Signatures) == 0 || !s.valid(cx) {
-		return Bounds{}, false
+		return geom.Area{}, false
 	}
 	sig := s.help.Signatures[s.cursor]
-	lines := popupTextLines(signatureDocs(sig), screenW-2)
+	lines := popupTextLines(signatureDocs(sig), screen.Width-2)
 	w := max(runewidth.StringWidth(sig.Label), popupTextWidth(lines)) + 2
 	if len(s.help.Signatures) > 1 {
 		w += runewidth.StringWidth(s.indexText()) + 1
 	}
-	w = min(max(w, 2), screenW)
+	w = min(max(w, 2), screen.Width)
 	h := min(max(len(lines)+4, 3), signaturePopupMaxH)
 	x, y := 0, 0
-	if cur, ok := s.ec.Cursor(screenW, screenH, cx); ok {
+	if cur, ok := s.ec.Cursor(cx, screen); ok {
 		x = s.openScreenX(cx)
 		y = cur.Y + 1
-		if y+h > screenH {
+		if y+h > screen.Height {
 			y = max(cur.Y-h-1, 0)
 		}
 	}
-	if x+w > screenW {
-		x = max(screenW-w, 0)
+	if x+w > screen.Width {
+		x = max(screen.Width-w, 0)
 	}
 	s.lines = lines
-	return Bounds{x: x, y: y, w: w, h: h}, true
+	return geom.Area{
+		Point: geom.Point{X: x, Y: y},
+		Size:  geom.Size{Width: w, Height: h},
+	}, true
 }
 
 func (s *signatureHelpComponent) PaintBuffer(
-	pl Bounds, cx *Context,
+	cx *Context, pl geom.Area,
 ) *tui.Buffer {
-	return s.maybePaint(pl.w, pl.h, cx, func(buf *tui.Buffer) {
-		s.paint(buf, pl, cx)
+	return s.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
+		s.paint(cx, buf, pl)
 	})
 }
 
 func (s *signatureHelpComponent) paint(
-	buf *tui.Buffer, pl Bounds, cx *Context,
+	cx *Context, buf *tui.Buffer, pl geom.Area,
 ) {
 	sig := s.help.Signatures[s.cursor]
-	w, h := pl.w, pl.h
+	w, h := pl.Width, pl.Height
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	border := lipgloss.RoundedBorder()
 	pop := popup{
@@ -127,20 +133,26 @@ func (s *signatureHelpComponent) paint(
 		contentStyle: st,
 		padX:         0,
 	}
-	area := pop.drawInto(buf, 0, 0, w, h)
-	s.renderSignature(buf, area, sig, cx)
+	area := pop.drawInto(buf, geom.Area{
+		Size: geom.Size{Width: w, Height: h},
+	})
+	s.renderSignature(cx, buf, area, sig)
 	if len(s.help.Signatures) > 1 {
 		index := s.indexText()
-		buf.SetString(area.x+area.w-runewidth.StringWidth(index),
-			area.y, index, st)
+		buf.SetString(geom.Point{
+			X: area.X + area.Width - runewidth.StringWidth(index),
+			Y: area.Y,
+		}, index, st)
 	}
-	if len(s.lines) == 0 || area.h < 3 {
+	if len(s.lines) == 0 || area.Height < 3 {
 		return
 	}
-	renderSignatureSeparator(buf, 0, area.y+1, w, border, st)
+	renderSignatureSeparator(
+		buf, geom.Point{Y: area.Y + 1}, w, border, st,
+	)
 	docArea := area
-	docArea.y += 2
-	docArea.h -= 2
+	docArea.Y += 2
+	docArea.Height -= 2
 	r := popupTextRenderer{buf: buf, cx: cx, area: docArea, base: st}
 	r.render(s.lines)
 }
@@ -156,7 +168,7 @@ func (s *signatureHelpComponent) openScreenX(cx *Context) int {
 	}
 	opts := cx.Editor.Options()
 	rowMap := s.ec.cache.viewRowMaps[v.ID()]
-	_, visualX := cursorScreenPos(cursorScreenPosArgs{
+	visual := cursorScreenPos(cursorScreenPosArgs{
 		text:    doc.Text(),
 		cursor:  s.call.open,
 		gutterW: gutterWidthFor(doc.Text(), opts.Gutters),
@@ -164,7 +176,7 @@ func (s *signatureHelpComponent) openScreenX(cx *Context) int {
 		tabW:    doc.TabWidth(),
 		hOff:    v.Offset().HorizontalOffset,
 	})
-	return v.Area().X + visualX
+	return v.Area().X + visual.X
 }
 
 func (s *signatureHelpComponent) move(n int) {
@@ -176,7 +188,7 @@ func (s *signatureHelpComponent) move(n int) {
 }
 
 func (s *signatureHelpComponent) refresh(
-	comp *Compositor, cx *Context,
+	cx *Context, comp *Compositor,
 ) tea.Cmd {
 	if !s.valid(cx) {
 		removeSignatureHelpLayer(comp)
@@ -211,7 +223,7 @@ func (s *signatureHelpComponent) refresh(
 	return nil
 }
 
-func (s *signatureHelpComponent) dismiss(comp *Compositor, _ *Context) tea.Cmd {
+func (s *signatureHelpComponent) dismiss(_ *Context, comp *Compositor) tea.Cmd {
 	s.ec.signatureHidden = &s.call
 	comp.Pop()
 	return nil
@@ -228,12 +240,12 @@ func (s *signatureHelpComponent) indexText() string {
 }
 
 func (s *signatureHelpComponent) renderSignature(
-	buf *tui.Buffer, area Bounds, sig view.SignatureInformation,
-	cx *Context,
+	cx *Context, buf *tui.Buffer, area geom.Area,
+	sig view.SignatureInformation,
 ) {
-	label := ansi.Truncate(sig.Label, area.w, "")
+	label := ansi.Truncate(sig.Label, area.Width, "")
 	base := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
-	buf.SetString(area.x, area.y, label, base)
+	buf.SetString(area.Point, label, base)
 	if sig.ActiveEnd <= sig.ActiveStart {
 		return
 	}
@@ -243,20 +255,20 @@ func (s *signatureHelpComponent) renderSignature(
 	if end <= start {
 		return
 	}
-	x := area.x + runewidth.StringWidth(string(rs[:start]))
+	x := area.X + runewidth.StringWidth(string(rs[:start]))
 	text := string(rs[start:end])
 	bg := cx.Theme().Get("ui.popup").GetBackground()
 	st := inheritStyleBackground(cx.Theme().Get("ui.selection"), bg)
-	buf.SetString(x, area.y, text, lipglossToTUIStyle(st))
+	buf.SetString(geom.Point{X: x, Y: area.Y}, text, lipglossToTUIStyle(st))
 }
 
 func renderSignatureSeparator(
-	buf *tui.Buffer, x, y, w int, border lipgloss.Border, st tui.Style,
+	buf *tui.Buffer, at geom.Point, w int, border lipgloss.Border, st tui.Style,
 ) {
 	line := border.MiddleLeft +
 		strings.Repeat(border.Top, max(w-2, 0)) +
 		border.MiddleRight
-	buf.SetString(x, y, line, st)
+	buf.SetString(at, line, st)
 }
 
 func pushSignatureHelpLayer(comp *Compositor, layer *signatureHelpComponent) {

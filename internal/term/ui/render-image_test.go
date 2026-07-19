@@ -16,6 +16,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/builtin/files"
@@ -345,7 +346,7 @@ func TestImageRestore(t *testing.T) {
 	path := writeRenderImage(t, root, 40, 20, nil)
 	session := filepath.Join(root, "session.toml")
 	e := view.NewEditor(root)
-	e.ResizeTree(80, 24)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	openRenderImagePane(t, e, path)
 	pane, err := ui.NewImagePane(e, path)
 	assert.NoError(t, err)

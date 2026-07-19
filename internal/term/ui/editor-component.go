@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -14,8 +15,7 @@ import (
 
 type (
 	EditorComponent struct {
-		w               int
-		h               int
+		size            geom.Size
 		buf             *tui.Buffer
 		pending         []command.KeyEvent
 		status          string
@@ -105,7 +105,7 @@ func newEditorComponent() *EditorComponent {
 				if toLo {
 					edgeY = area.Y
 				}
-				return r.screenCharPos(doc, v, fixed, edgeY)
+				return r.screenCharPos(doc, v, geom.Point{X: fixed, Y: edgeY})
 			},
 		},
 		autoScrollH: mouseAutoScrollAxis{
@@ -124,25 +124,24 @@ func newEditorComponent() *EditorComponent {
 				if toLo {
 					edgeX = area.X + gutterW
 				}
-				return r.screenCharPos(doc, v, edgeX, fixed)
+				return r.screenCharPos(doc, v, geom.Point{X: edgeX, Y: fixed})
 			},
 		},
 	}
 }
 
 func (e *EditorComponent) HandleEvent(
-	msg tea.Msg, cx *Context,
+	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	e.syncFileWatcher(cx)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		e.w = msg.Width
-		e.h = msg.Height
+		e.size = geom.Size{Width: msg.Width, Height: msg.Height}
 		e.resize(cx)
 		return consumed(), nil
 
 	case tea.KeyPressMsg:
-		result, cmd := e.handleKeyPress(msg, cx)
+		result, cmd := e.handleKeyPress(cx, msg)
 		if shown := bufferlineVisible(cx); shown != e.bufferlineShown {
 			e.bufferlineShown = shown
 			e.resize(cx)
@@ -189,7 +188,7 @@ func (e *EditorComponent) HandleEvent(
 		if len(msg.items) == 0 {
 			return consumed(), nil
 		}
-		return consumedWith(func(comp *Compositor, _ *Context) tea.Cmd {
+		return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 			c := &completionComponent{
 				ec:         e,
 				all:        msg.items,
@@ -241,8 +240,8 @@ func (e *EditorComponent) HandleEvent(
 		}
 		e.mouseDownDrag = nil
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
-			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
-			r.handleMouseClick(msg.X, msg.Y, msg.Mod)
+			r := &renderPass{ec: e, cx: cx, size: e.size}
+			r.handleMouseClick(geom.Point{X: msg.X, Y: msg.Y}, msg.Mod)
 		}
 		return consumed(), e.documentHighlightCmd(cx)
 
@@ -250,19 +249,20 @@ func (e *EditorComponent) HandleEvent(
 		e.completionGen++
 		if dc := e.mouseDownDrag; dc != nil &&
 			cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
-			return consumed(), dc.ContinueDrag(cx, msg.X, msg.Y)
+			at := geom.Point{X: msg.X, Y: msg.Y}
+			return consumed(), dc.ContinueDrag(cx, at)
 		}
 		var dragCmd tea.Cmd
 		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
-			if p, ok := paneAt(cx, msg.X, msg.Y); ok {
+			if p, ok := paneAt(cx, geom.Point{X: msg.X, Y: msg.Y}); ok {
 				if pi, ok := p.(PaneInput); ok {
-					if _, handled := pi.HandleEvent(msg, cx); handled {
+					if _, handled := pi.HandleEvent(cx, msg); handled {
 						return consumed(), nil
 					}
 				}
 			}
-			r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
-			dragCmd = r.handleMouseDrag(msg.X, msg.Y)
+			r := &renderPass{ec: e, cx: cx, size: e.size}
+			dragCmd = r.handleMouseDrag(geom.Point{X: msg.X, Y: msg.Y})
 		}
 		return consumed(), tea.Batch(dragCmd, e.documentHighlightCmd(cx))
 
@@ -279,16 +279,16 @@ func (e *EditorComponent) HandleEvent(
 		e.completionGen++
 		if dc := e.mouseDownDrag; dc != nil {
 			e.mouseDownDrag = nil
-			cmd := dc.EndDrag(cx, msg.X, msg.Y)
+			cmd := dc.EndDrag(cx, geom.Point{X: msg.X, Y: msg.Y})
 			e.syncEditorMessages(cx)
 			return consumed(), tea.Batch(cmd, e.documentHighlightCmd(cx))
 		}
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
-		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
+		if p, ok := paneAt(cx, geom.Point{X: msg.X, Y: msg.Y}); ok {
 			if pi, ok := p.(PaneInput); ok {
-				if _, handled := pi.HandleEvent(msg, cx); handled {
+				if _, handled := pi.HandleEvent(cx, msg); handled {
 					return consumed(), e.documentHighlightCmd(cx)
 				}
 			}
@@ -298,8 +298,9 @@ func (e *EditorComponent) HandleEvent(
 			e.handleMouseLeftRelease(cx)
 		case tea.MouseMiddle:
 			if cx.Editor.Options().MiddleClickPaste {
-				r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
-				r.handleMouseMiddleRelease(msg.X, msg.Y, msg.Mod)
+				r := &renderPass{ec: e, cx: cx, size: e.size}
+				at := geom.Point{X: msg.X, Y: msg.Y}
+				r.handleMouseMiddleRelease(at, msg.Mod)
 			}
 		}
 		return consumed(), e.documentHighlightCmd(cx)
@@ -310,15 +311,15 @@ func (e *EditorComponent) HandleEvent(
 		if !cx.Editor.Options().Mouse {
 			return consumed(), nil
 		}
-		if p, ok := paneAt(cx, msg.X, msg.Y); ok {
+		if p, ok := paneAt(cx, geom.Point{X: msg.X, Y: msg.Y}); ok {
 			if pi, ok := p.(PaneInput); ok {
-				if _, handled := pi.HandleEvent(msg, cx); handled {
+				if _, handled := pi.HandleEvent(cx, msg); handled {
 					return consumed(), nil
 				}
 			}
 		}
-		r := &renderPass{ec: e, cx: cx, w: e.w, h: e.h}
-		v, ok := r.contentViewAt(msg.X, msg.Y)
+		r := &renderPass{ec: e, cx: cx, size: e.size}
+		v, ok := r.contentViewAt(geom.Point{X: msg.X, Y: msg.Y})
 		if !ok {
 			return consumed(), nil
 		}
@@ -371,32 +372,34 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 
 // Render returns the editor's cell buffer for the compositor to blit overlays
 // onto, skipping an ANSI round-trip
-func (e *EditorComponent) Render(w, h int, cx *Context) *tui.Buffer {
-	if e.buf == nil || e.buf.Width != w || e.buf.Height != h {
-		e.buf = tui.NewBuffer(w, h)
+func (e *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
+	if e.buf == nil || e.buf.Size != screen {
+		e.buf = tui.NewBuffer(screen)
 	}
 	e.syncEditorMessages(cx)
 	e.cache.evictClosed(cx.Editor)
-	r := &renderPass{ec: e, cx: cx, w: w, h: h}
+	r := &renderPass{ec: e, cx: cx, size: screen}
 	r.renderEditorContent(e.buf)
 	return e.buf
 }
 
-func (e *EditorComponent) Cursor(w, h int, cx *Context) (tea.Cursor, bool) {
-	r := &renderPass{ec: e, cx: cx, w: w, h: h}
+func (e *EditorComponent) Cursor(
+	cx *Context, screen geom.Size,
+) (tea.Cursor, bool) {
+	r := &renderPass{ec: e, cx: cx, size: screen}
 	return r.editorCursor()
 }
 
 // reports the caret position regardless of cursor shape, so caret-anchored
 // overlays still work under the normal-mode block cursor that Cursor hides
-func (e *EditorComponent) caretScreenPos(cx *Context) (int, int, bool) {
+func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
-		return 0, 0, false
+		return geom.Point{}, false
 	}
 	v, ok := cx.Editor.FocusedView()
 	if !ok {
-		return 0, 0, false
+		return geom.Point{}, false
 	}
 	opts := cx.Editor.Options()
 	text := doc.Text()
@@ -406,23 +409,24 @@ func (e *EditorComponent) caretScreenPos(cx *Context) (int, int, bool) {
 	if bufferlineVisible(cx) {
 		yOff++
 	}
-	visualY, visualX := cursorScreenPos(cursorScreenPosArgs{
+	visual := cursorScreenPos(cursorScreenPosArgs{
 		text: text, cursor: cursor,
 		gutterW: gutterWidthFor(text, opts.Gutters),
 		rowMap:  e.cache.viewRowMaps[v.ID()],
 		tabW:    doc.TabWidth(),
 		hOff:    v.Offset().HorizontalOffset,
 	})
-	return area.X + visualX, yOff + visualY, true
+	return geom.Point{X: area.X + visual.X, Y: yOff + visual.Y}, true
 }
 
 func (e *EditorComponent) popupAnchorBelowCaret(
-	screenH int, cx *Context, fallbackRows int,
-) (int, int) {
-	if x, y, ok := e.caretScreenPos(cx); ok {
-		return x, y + 1
+	cx *Context, screenH, fallbackRows int,
+) geom.Point {
+	if at, ok := e.caretScreenPos(cx); ok {
+		at.Y++
+		return at
 	}
-	return 0, max(screenH-fallbackRows-2, 0)
+	return geom.Point{Y: max(screenH-fallbackRows-2, 0)}
 }
 
 func (e *EditorComponent) cancelPending(cx *Context) {
@@ -449,12 +453,14 @@ func (e *EditorComponent) resize(cx *Context) {
 	if bufferlineVisible(cx) {
 		overhead++
 	}
-	cx.Editor.SetViewHeight(e.h - overhead)
-	th := e.h - 1
+	cx.Editor.SetViewHeight(e.size.Height - overhead)
+	th := e.size.Height - 1
 	if bufferlineVisible(cx) {
 		th--
 	}
-	cx.Editor.ResizeTree(e.w, max(th, 0))
+	cx.Editor.ResizeTree(geom.Size{
+		Width: e.size.Width, Height: max(th, 0),
+	})
 }
 
 func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {

@@ -1,6 +1,10 @@
 package core
 
-import "unicode"
+import (
+	"unicode"
+
+	"github.com/kode4food/toe/internal/geom"
+)
 
 // VisualRowStarts returns the char offsets at which each soft-wrapped visual
 // row after the first begins; empty if the line fits on one row. Wraps at
@@ -104,26 +108,27 @@ func (v visualLine) rowCount() int {
 
 // posOf returns charOff's row and absolute visual column, including the
 // continuation prefix on wrapped rows
-func (v visualLine) posOf(charOff int) (row, col int) {
-	for row < len(v.rowStarts) && v.rowStarts[row] <= charOff {
-		row++
+func (v visualLine) posOf(charOff int) geom.Point {
+	var at geom.Point
+	for at.Y < len(v.rowStarts) && v.rowStarts[at.Y] <= charOff {
+		at.Y++
 	}
-	col = v.rowStartCol(row)
+	at.X = v.rowStartCol(at.Y)
 	tabW := v.format.TabWidth
-	for i := v.rowStartOffset(row); i < charOff && i < len(v.runes); i++ {
-		col += visualRuneW(v.runes[i], col, tabW)
+	for i := v.rowStartOffset(at.Y); i < charOff && i < len(v.runes); i++ {
+		at.X += visualRuneW(v.runes[i], at.X, tabW)
 	}
-	return
+	return at
 }
 
-func (v visualLine) charAtPos(targetRow, targetCol int) int {
-	start := v.rowStartOffset(targetRow)
-	end := v.rowStartOffset(targetRow + 1)
-	col := v.rowStartCol(targetRow)
+func (v visualLine) charAtPos(at geom.Point) int {
+	start := v.rowStartOffset(at.Y)
+	end := v.rowStartOffset(at.Y + 1)
+	col := v.rowStartCol(at.Y)
 	tabW := v.format.TabWidth
 	best := start
 	for i := start; i < end && i < len(v.runes); i++ {
-		if col > targetCol {
+		if col > at.X {
 			break
 		}
 		best = i

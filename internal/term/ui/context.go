@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/theme"
@@ -16,7 +17,7 @@ type Context struct {
 	SingleLayer bool
 	lastLayer   func(*view.Editor) layerFunc
 
-	OverlayRegions        []Bounds
+	OverlayRegions        []geom.Area
 	OverlayRegionsPrecise bool
 	OverlaysChanged       bool
 

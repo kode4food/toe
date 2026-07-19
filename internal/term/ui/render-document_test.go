@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -456,7 +457,7 @@ func TestThemeRender(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_, ok := e.VSplit(docB.ID())
 		assert.True(t, ok)
 		// vA (docA) sits on the left; the diagnostic popup always renders
@@ -919,7 +920,7 @@ func TestRenderAfterClose(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(100, 30)
+		e.ResizeTree(geom.Size{Width: 100, Height: 30})
 		_, ok := e.VSplit(docB.ID())
 		assert.True(t, ok)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
@@ -1151,7 +1152,7 @@ func TestCursorColumnRender(t *testing.T) {
 func TestSplitSeparatorJunctions(t *testing.T) {
 	junctions := func(build func(e *view.Editor)) string {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		build(e)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		return stripANSI(m.View().Content)
@@ -1350,7 +1351,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(100, 30)
+		e.ResizeTree(geom.Size{Width: 100, Height: 30})
 		_, ok := e.VSplit(docB.ID())
 		assert.True(t, ok)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
@@ -1390,7 +1391,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(100, 30)
+		e.ResizeTree(geom.Size{Width: 100, Height: 30})
 		_, ok := e.VSplit(docB.ID())
 		assert.True(t, ok)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
@@ -1414,7 +1415,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(101, 30)
+		e.ResizeTree(geom.Size{Width: 101, Height: 30})
 		_, ok := e.VSplit(docB.ID())
 		assert.True(t, ok)
 		m := resize(ui.New(e, command.NewKeymaps()), 101, 30)

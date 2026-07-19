@@ -1,10 +1,12 @@
 package ui
 
-func listIndexAt(b Bounds, scroll, x, y int) (int, bool) {
-	if !b.contains(x, y) {
+import "github.com/kode4food/toe/internal/geom"
+
+func listIndexAt(b geom.Area, scroll int, at geom.Point) (int, bool) {
+	if !b.Contains(at) {
 		return 0, false
 	}
-	return scroll + (y - b.y), true
+	return scroll + (at.Y - b.Y), true
 }
 
 func listScrollBy(scroll, count, rows, delta int) int {

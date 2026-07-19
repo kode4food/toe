@@ -8,6 +8,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/theme"
@@ -23,7 +24,7 @@ type (
 		editor *view.Editor
 		syntax *syntax.Cache
 		images *imageRegistry
-		w, h   int
+		size   geom.Size
 		// hlFrom < 0 means full preview, no highlight
 		hlFrom int
 		hlTo   int
@@ -36,7 +37,7 @@ type (
 		format    *language.TextFormat
 		opts      *view.Options
 		th        *theme.Theme
-		w, h      int
+		area      geom.Area
 		hlFrom    int
 		hlTo      int
 		diffLines map[int]diffGutterKind
@@ -44,12 +45,12 @@ type (
 	}
 )
 
-func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
+func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 	switch {
 	case p.item.Location.Target.ID != view.InvalidDocumentId:
 		doc, ok := p.editor.Document(p.item.Location.Target.ID)
 		if !ok {
-			p.blitPlaceholderInto(buf, x, y, "<Invalid file location>")
+			p.blitPlaceholderInto(buf, at, "<Invalid file location>")
 			return
 		}
 		if p.hlFrom < 0 {
@@ -60,17 +61,17 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, x, y int) {
 				p.hlFrom, p.hlTo = l, l
 			}
 		}
-		p.renderDocInto(buf, x, y, doc)
+		p.renderDocInto(buf, at, doc)
 	case p.item.Location.Target.Path != "":
 		path := p.item.Location.Target.Path
 		if doc := openDocumentPreview(path, p.editor); doc != nil {
-			p.renderDocInto(buf, x, y, doc)
+			p.renderDocInto(buf, at, doc)
 			return
 		}
-		p.renderFileInto(buf, x, y, path)
+		p.renderFileInto(buf, at, path)
 	case p.item.Preview != nil:
-		text := p.item.Preview(p.w, p.h)
-		p.blitPlaceholderInto(buf, x, y, text)
+		text := p.item.Preview(p.size)
+		p.blitPlaceholderInto(buf, at, text)
 	}
 }
 
@@ -82,19 +83,19 @@ func (p *previewCtx) previewSelection(doc *view.Document) core.Selection {
 }
 
 func (p *previewCtx) renderDocInto(
-	buf *tui.Buffer, x, y int, doc *view.Document,
+	buf *tui.Buffer, at geom.Point, doc *view.Document,
 ) {
 	entry := p.picker.previewCache.doc(p.syntax, doc)
-	format := doc.TextFormatForConfig(p.w, p.editor.Options())
+	format := doc.TextFormatForConfig(p.size.Width, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
 		format: format, opts: p.editor.Options(),
-		th: p.th, w: p.w, h: p.h,
+		th: p.th, area: geom.Area{Point: at, Size: p.size},
 		hlFrom: p.hlFrom, hlTo: p.hlTo,
 		diffLines: p.itemDiffLines(entry.rope),
 		scroll:    p.picker.previewScroll,
 	}
-	renderPreviewDocInto(buf, x, y, r)
+	renderPreviewDocInto(buf, r)
 	p.picker.previewScroll = r.scroll
 }
 
@@ -102,31 +103,34 @@ func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
 	return diffGutterLines(p.item.DiffHunks, text.LenLines())
 }
 
-func (p *previewCtx) renderFileInto(buf *tui.Buffer, x, y int, path string) {
-	p.picker.previewCache.path(p.syntax, path).renderInto(p, buf, x, y)
+func (p *previewCtx) renderFileInto(
+	buf *tui.Buffer, at geom.Point, path string,
+) {
+	p.picker.previewCache.path(p.syntax, path).renderInto(p, buf, at)
 }
 
 func (p *previewDocEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, x, y int,
+	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
 	opts := ctx.editor.Options()
 	format := language.TextFormatForConfig(
-		language.LoadLanguage(p.lang), opts.TextWidth, opts.SoftWrap, ctx.w,
+		language.LoadLanguage(p.lang), opts.TextWidth, opts.SoftWrap,
+		ctx.size.Width,
 	)
 	r := &previewDocRender{
 		text: p.rope, spans: p.spans,
 		format: format, opts: ctx.editor.Options(),
-		th: ctx.th, w: ctx.w, h: ctx.h,
+		th: ctx.th, area: geom.Area{Point: at, Size: ctx.size},
 		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
 		scroll:    ctx.picker.previewScroll,
 	}
-	renderPreviewDocInto(buf, x, y, r)
+	renderPreviewDocInto(buf, r)
 	ctx.picker.previewScroll = r.scroll
 }
 
 func (p *previewDirEntry) renderInto(
-	ctx *previewCtx, buf *tui.Buffer, x, y int,
+	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
 	fillTUI := lipglossToTUIStyle(
 		lipgloss.NewStyle().Background(
@@ -139,51 +143,59 @@ func (p *previewDirEntry) renderInto(
 		).Background(ctx.th.Get("ui.popup").GetBackground()),
 	)
 	for i, entry := range p.rows {
-		if i >= ctx.h {
+		if i >= ctx.size.Height {
 			return
 		}
 		st := fillTUI
 		if entry.dir {
 			st = dirTUI
 		}
-		buf.FillRange(x, y+i, ctx.w, fillTUI)
-		buf.SetString(x, y+i, ansi.Truncate(entry.name, ctx.w, ""), st)
+		rowAt := geom.Point{X: at.X, Y: at.Y + i}
+		buf.FillRange(rowAt, ctx.size.Width, fillTUI)
+		buf.SetString(
+			rowAt,
+			ansi.Truncate(entry.name, ctx.size.Width, ""),
+			st,
+		)
 	}
 }
 
-func (p noPreviewEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, x, y int) {
-	ctx.blitPlaceholderInto(buf, x, y, string(p))
+func (p noPreviewEntry) renderInto(
+	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
+) {
+	ctx.blitPlaceholderInto(buf, at, string(p))
 }
 
 // ANSI codes in callback preview strings are stripped so the popup style
 // applies
 func (p *previewCtx) blitPlaceholderInto(
-	buf *tui.Buffer, x, y int, text string,
+	buf *tui.Buffer, at geom.Point, text string,
 ) {
 	fillTUI := lipglossToTUIStyle(
 		lipgloss.NewStyle().Background(
 			p.th.Get("ui.popup").GetBackground(),
 		),
 	)
-	blitTextInto(buf, x, y, p.w, p.h, text, fillTUI)
+	blitTextInto(buf, geom.Area{Point: at, Size: p.size}, text, fillTUI)
 }
 
 func blitTextInto(
-	buf *tui.Buffer, x, y, w, h int, text string, fillStyle tui.Style,
+	buf *tui.Buffer, area geom.Area, text string, fillStyle tui.Style,
 ) {
-	lines := strings.SplitN(text, "\n", h+1)
-	if len(lines) > h {
-		lines = lines[:h]
+	lines := strings.SplitN(text, "\n", area.Height+1)
+	if len(lines) > area.Height {
+		lines = lines[:area.Height]
 	}
 	for i, line := range lines {
 		plain := ansi.Strip(line)
-		buf.FillRange(x, y+i, w, fillStyle)
-		if w > 0 && plain != "" {
+		at := geom.Point{X: area.X, Y: area.Y + i}
+		buf.FillRange(at, area.Width, fillStyle)
+		if area.Width > 0 && plain != "" {
 			s := plain
-			if runewidth.StringWidth(s) > w {
-				s = ansi.Truncate(s, w, "")
+			if runewidth.StringWidth(s) > area.Width {
+				s = ansi.Truncate(s, area.Width, "")
 			}
-			buf.SetString(x, y+i, s, fillStyle)
+			buf.SetString(at, s, fillStyle)
 		}
 	}
 }
@@ -213,31 +225,49 @@ func previewHlStyleFn(
 	}
 }
 
-func previewAnchor(
-	text core.Rope, format *language.TextFormat, softWrap bool, from, to, h int,
-) (int, int) {
-	if from < 0 {
-		return 0, 0
+type (
+	previewAnchorArgs struct {
+		text     core.Rope
+		format   *language.TextFormat
+		softWrap bool
+		from     int
+		to       int
+		height   int
+	}
+	previewAnchorRes struct {
+		line           int
+		verticalOffset int
+	}
+)
+
+func previewAnchor(args previewAnchorArgs) previewAnchorRes {
+	if args.from < 0 {
+		return previewAnchorRes{}
 	}
 	var vf *core.VisualMoveFormat
-	if softWrap {
+	if args.softWrap {
 		vf = &core.VisualMoveFormat{
-			ViewportWidth:    format.ViewportWidth,
-			TabWidth:         format.TabWidth,
-			MaxWrap:          format.MaxWrap,
-			MaxIndentRetain:  format.MaxIndentRetain,
-			WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
+			ViewportWidth:    args.format.ViewportWidth,
+			TabWidth:         args.format.TabWidth,
+			MaxWrap:          args.format.MaxWrap,
+			MaxIndentRetain:  args.format.MaxIndentRetain,
+			WrapIndicatorLen: runewidth.StringWidth(args.format.WrapIndicator),
 		}
 	} else {
 		vf = &core.VisualMoveFormat{}
 	}
-	if to-from >= h {
-		return from, 0
+	if args.to-args.from >= args.height {
+		return previewAnchorRes{line: args.from}
 	}
-	middle := from + (to-from)/2
-	anchorLine, vOff := vf.VisualScrollUp(text, middle, 0, h/2)
-	if from < anchorLine {
-		return from, 0
+	middle := args.from + (args.to-args.from)/2
+	anchor := vf.VisualScrollUp(core.VisualScrollUpArgs{
+		Doc:  args.text,
+		Line: middle,
+		Up:   args.height / 2,
+	})
+	line, vOff := anchor.Line, anchor.Row
+	if args.from < line {
+		return previewAnchorRes{line: args.from}
 	}
-	return anchorLine, vOff
+	return previewAnchorRes{line: line, verticalOffset: vOff}
 }

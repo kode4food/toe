@@ -1,12 +1,13 @@
 package view
 
+import "github.com/kode4food/toe/internal/geom"
+
 type (
 	// Separator describes the position and extent of the gap between two
 	// adjacent split panes in a container
 	Separator struct {
 		Layout Layout
-		X, Y   int
-		W, H   int
+		geom.Area
 	}
 
 	sepVisitor func(cID Id, childIdx int, sep Separator) bool
@@ -103,24 +104,36 @@ func (t *Tree) topOf(id Id) int {
 	return 0
 }
 
+type SeparatorAtRes struct {
+	ContainerID Id
+	ChildIdx    int
+	Layout      Layout
+}
+
 // SeparatorAt returns the container ID, left-child index, and layout of the
 // separator hit by the click at tree column x, tree row y (bufferline excluded)
-func (t *Tree) SeparatorAt(
-	x, y int,
-) (containerID Id, childIdx int, layout Layout, ok bool) {
+// SeparatorAtRes identifies a separator and its owning child
+func (t *Tree) SeparatorAt(at geom.Point) (SeparatorAtRes, bool) {
 	if t.IsEmpty() {
-		return
+		return SeparatorAtRes{}, false
 	}
+	var res SeparatorAtRes
+	ok := false
 	t.walkSepWithID(t.root,
 		func(cID Id, idx int, s Separator) bool {
-			if x >= s.X && x < s.X+s.W && y >= s.Y && y < s.Y+s.H {
-				containerID, childIdx, layout, ok = cID, idx, s.Layout, true
+			if s.Contains(at) {
+				res = SeparatorAtRes{
+					ContainerID: cID,
+					ChildIdx:    idx,
+					Layout:      s.Layout,
+				}
+				ok = true
 				return false
 			}
 			return true
 		},
 	)
-	return
+	return res, ok
 }
 
 func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
@@ -137,7 +150,7 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 			continue
 		}
 		cn := t.nodes[child]
-		var a Area
+		var a geom.Area
 		if cn.pane != nil {
 			a = cn.pane.Area()
 		} else {
@@ -148,10 +161,10 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 			// 1-column gap between panes; separator is that gap column
 			s := Separator{
 				Layout: LayoutVertical,
-				X:      a.X + a.Width,
-				Y:      c.area.Y,
-				W:      1,
-				H:      c.area.Height,
+				Area: geom.Area{
+					Point: geom.Point{X: a.X + a.Width, Y: c.area.Y},
+					Size:  geom.Size{Width: 1, Height: c.area.Height},
+				},
 			}
 			if !fn(id, i, s) {
 				return false
@@ -160,10 +173,10 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 			// 1-row gap after child[i]; separator is that gap row
 			s := Separator{
 				Layout: LayoutHorizontal,
-				X:      c.area.X,
-				Y:      a.Y + a.Height,
-				W:      c.area.Width,
-				H:      1,
+				Area: geom.Area{
+					Point: geom.Point{X: c.area.X, Y: a.Y + a.Height},
+					Size:  geom.Size{Width: c.area.Width, Height: 1},
+				},
 			}
 			if !fn(id, i, s) {
 				return false

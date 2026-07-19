@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -14,7 +15,7 @@ func (m Model) TerminalAction() command.KeyAction {
 		if _, ok := e.Tree().Get(e.Tree().Focus()).(*TerminalPane); ok {
 			return nil
 		}
-		tp, err := NewTerminalPane(e, interactiveShell(), 0, 0)
+		tp, err := NewTerminalPane(e, interactiveShell(), geom.Size{})
 		if err != nil {
 			e.SetStatusMsg(err.Error())
 			return nil

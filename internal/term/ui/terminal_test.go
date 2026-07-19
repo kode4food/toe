@@ -12,6 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -23,7 +24,7 @@ import (
 func TestTerminalPane(t *testing.T) {
 	t.Run("supports pane split", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
-		e.ResizeTree(80, 24)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		m := renderedModel(e)
 		_ = m.TerminalAction()(e)
 		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
@@ -206,7 +207,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
 		next := view.NewEditor(dir)
-		next.ResizeTree(80, 24)
+		next.ResizeTree(geom.Size{Width: 80, Height: 24})
 		_ = ui.New(next, command.NewKeymaps()) // registers pane restorers
 		_, restored, err := next.RestoreSession(sessionPath)
 		assert.NoError(t, err)
@@ -820,13 +821,15 @@ func TestTerminalPane(t *testing.T) {
 func TestTerminalResize(t *testing.T) {
 	t.Run("reflows the emulator synchronously", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		tp, err := ui.NewTerminalPane(e, "cat", 20, 10)
+		tp, err := ui.NewTerminalPane(
+			e, "cat", geom.Size{Width: 20, Height: 10},
+		)
 		if !assert.NoError(t, err) {
 			return
 		}
 		t.Cleanup(func() { _ = tp.Stop() })
 
-		tp.SetArea(view.Area{Width: 30, Height: 12})
+		tp.SetArea(geom.Area{Size: geom.Size{Width: 30, Height: 12}})
 
 		// no debounce: the emulator matches the new area at once, reserving
 		// the bottom row for the status line

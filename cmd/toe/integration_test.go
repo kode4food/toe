@@ -3,6 +3,7 @@
 package main_test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -27,13 +28,15 @@ type tui struct {
 	ptmx *os.File
 	done chan error
 
-	mu sync.Mutex
-	vt *vt.SafeEmulator
+	mu  sync.Mutex
+	raw bytes.Buffer
+	vt  *vt.SafeEmulator
 }
 
 const (
 	binEnv      = "TOE_INTEGRATION_BIN"
 	waitTimeout = 10 * time.Second
+	pollPause   = 20 * time.Millisecond
 
 	termCols = 80
 	termRows = 24
@@ -392,7 +395,7 @@ func (tt *tui) waitFor(want string) {
 		if strings.Contains(tt.screen(), want) {
 			return
 		}
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(pollPause)
 	}
 	tt.t.Fatalf("timed out waiting for %q; screen:\n%s", want, tt.screen())
 }
@@ -410,7 +413,7 @@ func (tt *tui) waitFileContent(path, want string) {
 				return
 			}
 		}
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(pollPause)
 	}
 	tt.t.Fatalf(
 		"file %s = %q, want %q; screen:\n%s",
@@ -440,12 +443,19 @@ func (tt *tui) screen() string {
 	return tt.vt.String()
 }
 
+func (t *tui) transmittedImage() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return bytes.Contains(t.raw.Bytes(), []byte("\x1b_G"))
+}
+
 func (tt *tui) pump() {
 	buf := make([]byte, 4096)
 	for {
 		n, err := tt.ptmx.Read(buf)
 		if n > 0 {
 			tt.mu.Lock()
+			_, _ = tt.raw.Write(buf[:n])
 			_, _ = tt.vt.Write(buf[:n])
 			tt.mu.Unlock()
 		}

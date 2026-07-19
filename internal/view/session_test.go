@@ -797,7 +797,7 @@ kind = "bogus"
 		// the pane rebuilds itself through its registered restorer, keyed by
 		// the kind it persisted — no switch on pane type
 		next.RegisterPaneRestorer(view.SessionKindTerminal,
-			func(e *view.Editor, _ string) (view.Pane, error) {
+			func(e *view.Editor, _ *view.PaneSession) (view.Pane, error) {
 				return &fakePane{editor: e}, nil
 			})
 		_, restored, err := next.RestoreSession(sessionPath)

@@ -35,22 +35,23 @@ type (
 	}
 
 	sessionNode struct {
-		Kind             string        `toml:"kind"`
-		Path             string        `toml:"path,omitempty"`
-		Layout           string        `toml:"layout,omitempty"`
-		Ratios           []float64     `toml:"ratios,omitempty"`
-		Document         int           `toml:"document,omitempty"`
-		DocumentHistory  []int         `toml:"document-history,omitempty"`
-		Mode             string        `toml:"mode,omitempty"`
-		Anchor           int           `toml:"anchor,omitempty"`
-		HorizontalOffset int           `toml:"horizontal-offset,omitempty"`
-		VerticalOffset   int           `toml:"vertical-offset,omitempty"`
-		FreeScroll       bool          `toml:"free-scroll,omitempty"`
-		Focused          bool          `toml:"focused,omitempty"`
-		Selection        sessionSelect `toml:"selection"`
-		JumpHead         int           `toml:"jump-head,omitempty"`
-		Jumps            []sessionJump `toml:"jump,omitempty"`
-		Children         []sessionNode `toml:"child"`
+		Kind             string         `toml:"kind"`
+		Path             string         `toml:"path,omitempty"`
+		Values           map[string]any `toml:"value,omitempty"`
+		Layout           string         `toml:"layout,omitempty"`
+		Ratios           []float64      `toml:"ratios,omitempty"`
+		Document         int            `toml:"document,omitempty"`
+		DocumentHistory  []int          `toml:"document-history,omitempty"`
+		Mode             string         `toml:"mode,omitempty"`
+		Anchor           int            `toml:"anchor,omitempty"`
+		HorizontalOffset int            `toml:"horizontal-offset,omitempty"`
+		VerticalOffset   int            `toml:"vertical-offset,omitempty"`
+		FreeScroll       bool           `toml:"free-scroll,omitempty"`
+		Focused          bool           `toml:"focused,omitempty"`
+		Selection        sessionSelect  `toml:"selection"`
+		JumpHead         int            `toml:"jump-head,omitempty"`
+		Jumps            []sessionJump  `toml:"jump,omitempty"`
+		Children         []sessionNode  `toml:"child"`
 	}
 
 	sessionSelect struct {
@@ -129,10 +130,10 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		docIndex[d.ID()] = len(s.Documents) + 1
 		s.Documents = append(s.Documents, e.sessionDocument(d, base))
 	}
-	if len(s.Documents) == 0 {
+	s.Layout = e.sessionNodeFor(e.tree.root, docIndex, base)
+	if len(s.Documents) == 0 && !layoutHasReopenablePane(s.Layout) {
 		return nil
 	}
-	s.Layout = e.sessionNodeFor(e.tree.root, docIndex, base)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -158,7 +159,8 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	if s.Version != sessionVersion {
 		return nil, false, ErrSessionUnsupported
 	}
-	if len(s.Documents) == 0 {
+	reopenable := layoutHasReopenablePane(s.Layout)
+	if len(s.Documents) == 0 && !reopenable {
 		return nil, false, ErrSessionEmpty
 	}
 	base := sessionBase(path)
@@ -201,7 +203,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		nextDocs[doc.ID()] = doc
 		docs[i+1] = doc.ID()
 	}
-	if len(nextDocs) == 0 {
+	if len(nextDocs) == 0 && !reopenable {
 		return nil, false, ErrSessionEmpty
 	}
 
@@ -278,4 +280,14 @@ func sessionBase(path string) string {
 		return filepath.Dir(dir)
 	}
 	return dir
+}
+
+func layoutHasReopenablePane(n sessionNode) bool {
+	switch n.Kind {
+	case SessionKindImage, SessionKindTerminal:
+		return true
+	case SessionKindSplit:
+		return slices.ContainsFunc(n.Children, layoutHasReopenablePane)
+	}
+	return false
 }

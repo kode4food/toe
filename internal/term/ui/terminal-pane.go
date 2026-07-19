@@ -539,9 +539,9 @@ func interactiveShell() string {
 
 func registerTerminalPane(e *view.Editor) {
 	e.RegisterPaneRestorer(view.SessionKindTerminal,
-		func(e *view.Editor, path string) (view.Pane, error) {
+		func(e *view.Editor, session *view.PaneSession) (view.Pane, error) {
 			return NewTerminalPaneInDir(
-				e, interactiveShell(), path, geom.Size{},
+				e, interactiveShell(), session.Path(), geom.Size{},
 			)
 		})
 }

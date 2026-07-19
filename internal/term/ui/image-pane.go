@@ -45,6 +45,8 @@ const (
 	imageZoomStep    = 25
 	minImageZoom     = 25
 	maxImageZoom     = 400
+
+	imageSessionZoomKey = "zoom"
 )
 
 // ErrInvalidImage reports a file that cannot be decoded as an image
@@ -172,6 +174,7 @@ func (p *ImagePane) Path() string {
 // SaveSession stores the image path so the pane can be reopened
 func (p *ImagePane) SaveSession(w *view.SessionWriter) {
 	w.SaveSlot(view.SessionKindImage, p.path)
+	w.SaveValue(imageSessionZoomKey, p.zoom)
 }
 
 // Image returns the decoded image
@@ -230,9 +233,28 @@ func (p *ImagePane) setZoom(zoom int) {
 	}
 }
 
+func (p *ImagePane) restoreZoom(session *view.PaneSession) {
+	value, ok := session.Value(imageSessionZoomKey)
+	if !ok {
+		return
+	}
+	switch zoom := value.(type) {
+	case int:
+		p.setZoom(zoom)
+	case int64:
+		zoom = min(max(zoom, int64(minImageZoom)), int64(maxImageZoom))
+		p.setZoom(int(zoom))
+	}
+}
+
 func registerImagePane(e *view.Editor) {
 	e.RegisterPaneRestorer(view.SessionKindImage,
-		func(e *view.Editor, path string) (view.Pane, error) {
-			return NewImagePane(e, path)
+		func(e *view.Editor, session *view.PaneSession) (view.Pane, error) {
+			pane, err := NewImagePane(e, session.Path())
+			if err != nil {
+				return nil, err
+			}
+			pane.restoreZoom(session)
+			return pane, nil
 		})
 }

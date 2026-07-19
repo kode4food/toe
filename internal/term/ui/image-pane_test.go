@@ -37,6 +37,8 @@ func TestImagePane(t *testing.T) {
 		_ = ui.New(e, command.NewKeymaps()) // registers the image pane factory
 		pane, err := ui.NewImagePane(e, writeRenderImage(t, dir, 20, 10, nil))
 		assert.NoError(t, err)
+		pane.ZoomIn()
+		pane.ZoomIn()
 		e.ReplacePane(e.Tree().Focus(), pane)
 		session := filepath.Join(dir, "session.toml")
 		assert.NoError(t, e.SaveSession(session, nil))
@@ -46,8 +48,9 @@ func TestImagePane(t *testing.T) {
 		_, restored, err := next.RestoreSession(session)
 		assert.NoError(t, err)
 		assert.True(t, restored)
-		_, ok := next.Tree().Get(next.Tree().Focus()).(*ui.ImagePane)
+		restoredPane, ok := next.Tree().Get(next.Tree().Focus()).(*ui.ImagePane)
 		assert.True(t, ok)
+		assert.Equal(t, 150, restoredPane.Zoom())
 	})
 
 	t.Run("supports pane commands", func(t *testing.T) {

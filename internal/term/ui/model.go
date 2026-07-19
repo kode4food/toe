@@ -2,8 +2,6 @@
 package ui
 
 import (
-	"time"
-
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/term/command"
@@ -74,31 +72,20 @@ func (m Model) Init() tea.Cmd {
 // Update delegates all events to the compositor
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case imageDisplayRequestMsg:
-		if msg.gen != m.context.imageGen {
-			return m, nil
-		}
-		return m, tea.Batch(m.imageDisplayCmd(), m.pickerImageCmd())
 	case imageTransmitMsg:
-		// The encode finished off the event loop; write the escape stream and
-		// then mark the image ready so its placeholder cells emit
+		// Mark ready only after the escape reaches Bubble Tea's writer
 		return m, tea.Sequence(tea.Raw(msg.raw), func() tea.Msg {
 			return imageReadyMsg{id: msg.id, size: msg.size}
 		})
 	case imageReadyMsg:
-		if m.context.images.placed[msg.id] != msg.size {
-			return m, nil
-		}
-		// the transmit has now been written; mark the image surfaces dirty so
-		// they repaint and, with ready set, actually emit their placeholder
-		// cells for the terminal to composite the picture over
+		// Another pass re-places a resize that arrived during transmission
 		m.context.images.ready[msg.id] = msg.size
 		m.markImageDirty()
-		return m, nil
+		return m, m.imageDisplayFrameCmd()
 	default:
 		cmd := m.compositor.HandleEvent(m.context, msg)
 		m.component.syncFileWatcher(m.context)
-		return m, tea.Batch(cmd, m.scheduleImageDisplayCmd())
+		return m, tea.Batch(cmd, m.imageDisplayFrameCmd())
 	}
 }
 
@@ -128,16 +115,12 @@ func (m Model) pickerImageCmd() tea.Cmd {
 	return nil
 }
 
-func (m Model) scheduleImageDisplayCmd() tea.Cmd {
+func (m Model) imageDisplayFrameCmd() tea.Cmd {
 	if !m.hasImageSurface() {
 		return nil
 	}
-	m.context.imageGen++
-	gen := m.context.imageGen
-	return func() tea.Msg {
-		time.Sleep(imageDisplayDelay)
-		return imageDisplayRequestMsg{gen: gen}
-	}
+	m.context.images.beginFrame()
+	return tea.Batch(m.imageDisplayCmd(), m.pickerImageCmd())
 }
 
 func (m Model) hasImageSurface() bool {

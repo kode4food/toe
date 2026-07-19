@@ -28,6 +28,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const imageEvictionCount = 30
+
 func TestImageRender(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
@@ -376,17 +378,16 @@ func TestImageResizeOrder(t *testing.T) {
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, oldCmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, firstCmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = m2.(ui.Model)
-	m2, newCmd := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-	m, rawMsgs := collectModelRawMsgs(m2.(ui.Model), newCmd)
-	raw := strings.Join(rawMsgs, "")
-	m, rawMsgs = collectModelRawMsgs(m, oldCmd)
-	oldRaw := strings.Join(rawMsgs, "")
+	m2, resizeCmd := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m, resizeRaw := collectModelRawMsgs(m2.(ui.Model), resizeCmd)
+	m, firstRaw := collectModelRawMsgs(m, firstCmd)
+	all := strings.Join(resizeRaw, "") + strings.Join(firstRaw, "")
 
-	// the live resize reputs at the new size; the superseded one is dropped
-	assert.Contains(t, raw, "p=1")
-	assert.Empty(t, oldRaw)
+	// a resize before the first transmit lands still re-places at the live size
+	assert.Equal(t, 1, strings.Count(all, "a=T"))
+	assert.Contains(t, all, "c=100,r=25")
 	assert.True(t, strings.ContainsRune(m.View().Content, tui.PlaceholderRune))
 }
 
@@ -413,6 +414,49 @@ func TestImageZoomKeepsReadyPlacement(t *testing.T) {
 	assert.NotContains(t,
 		stripANSI(content), i18n.Text(i18n.StatusImageLoading),
 	)
+}
+
+func TestImageEviction(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	t.Setenv("SSH_CONNECTION", "")
+	t.Setenv("SSH_TTY", "")
+	dir := t.TempDir()
+	for i := range imageEvictionCount {
+		writeDistinctImage(t, dir, i)
+	}
+
+	e := view.NewEditor(dir)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "file_picker", m.PickerAction(files.NewFilePickerInDir(dir)),
+		[]command.KeyEvent{char('p')},
+	)
+	m = resize(m, 120, 30)
+	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	m, raw := collectModelRawMsgs(m2.(ui.Model), cmd)
+
+	var all strings.Builder
+	all.WriteString(strings.Join(raw, ""))
+	for range imageEvictionCount {
+		m2, cmd = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+		var more []string
+		m, more = collectModelRawMsgs(m2.(ui.Model), cmd)
+		all.WriteString(strings.Join(more, ""))
+	}
+
+	assert.Contains(t, all.String(), "a=d")
+	assert.Contains(t, all.String(), "d=I")
+}
+
+func writeDistinctImage(t testing.TB, dir string, i int) {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 40, 20))
+	img.Set(0, 0, color.RGBA{R: uint8(i), G: uint8(i * 7), B: 255, A: 255})
+	var buf bytes.Buffer
+	assert.NoError(t, png.Encode(&buf, img))
+	path := filepath.Join(dir, fmt.Sprintf("pic%02d.png", i))
+	assert.NoError(t, os.WriteFile(path, buf.Bytes(), 0o644))
 }
 
 func writeRenderImage(

@@ -74,7 +74,13 @@ func (e *Editor) restoreSessionNode(
 			restore: rs,
 		}), nil
 	default:
-		pane, err := e.restorePane(sn.Kind, sessionAbsPath(rs.base, sn.Path))
+		pane, err := e.restorePane(restorePaneArgs{
+			kind: sn.Kind,
+			session: &PaneSession{
+				path:   sessionAbsPath(rs.base, sn.Path),
+				values: sn.Values,
+			},
+		})
 		if err != nil {
 			return 0, err
 		}

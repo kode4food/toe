@@ -63,6 +63,14 @@ func (w *SessionWriter) SaveSlot(kind, path string) {
 	}
 }
 
+// SaveValue stores module-owned pane state
+func (w *SessionWriter) SaveValue(key string, value any) {
+	if w.node.Values == nil {
+		w.node.Values = map[string]any{}
+	}
+	w.node.Values[key] = value
+}
+
 func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 	if d.Path() == "" {
 		return sessionDocument{

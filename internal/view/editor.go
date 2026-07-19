@@ -44,8 +44,14 @@ type (
 	}
 
 	// PaneRestorer rebuilds a leaf pane of a given session kind from its
-	// persisted path
-	PaneRestorer func(e *Editor, path string) (Pane, error)
+	// persisted state
+	PaneRestorer func(*Editor, *PaneSession) (Pane, error)
+
+	// PaneSession exposes module-owned state for a restored pane
+	PaneSession struct {
+		path   string
+		values map[string]any
+	}
 )
 
 var (
@@ -79,6 +85,17 @@ func NewEditor(cwd string) *Editor {
 	e.tree.Insert(v)
 	e.markDocAccessed()
 	return e
+}
+
+// Path returns the pane's persisted path
+func (s *PaneSession) Path() string {
+	return s.path
+}
+
+// Value returns module-owned pane state by key
+func (s *PaneSession) Value(key string) (any, bool) {
+	value, ok := s.values[key]
+	return value, ok
 }
 
 // Tree returns the layout tree
@@ -636,12 +653,17 @@ func (e *Editor) TakeHint() string {
 
 // restorePane rebuilds a leaf pane of the given kind via its registered
 // restorer
-func (e *Editor) restorePane(kind, path string) (Pane, error) {
-	fn, ok := e.paneRestorers[kind]
+type restorePaneArgs struct {
+	kind    string
+	session *PaneSession
+}
+
+func (e *Editor) restorePane(args restorePaneArgs) (Pane, error) {
+	fn, ok := e.paneRestorers[args.kind]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrSessionInvalid, kind)
+		return nil, fmt.Errorf("%w: %s", ErrSessionInvalid, args.kind)
 	}
-	return fn(e, path)
+	return fn(e, args.session)
 }
 
 // hasView reports whether any view in the tree satisfies pred

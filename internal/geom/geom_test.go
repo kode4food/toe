@@ -3,8 +3,9 @@ package geom_test
 import (
 	"testing"
 
-	"github.com/kode4food/toe/internal/geom"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/kode4food/toe/internal/geom"
 )
 
 func TestPoint(t *testing.T) {

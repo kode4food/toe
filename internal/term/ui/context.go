@@ -26,8 +26,7 @@ type Context struct {
 	theme        string
 	styleGen     int
 
-	images   *imageRegistry
-	imageGen int
+	images *imageRegistry
 }
 
 // StyleGen returns a counter that increments whenever the active theme changes,

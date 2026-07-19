@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/kode4food/toe/internal/core"
@@ -41,6 +42,7 @@ type (
 	previewImageEntry struct {
 		image *Image
 		id    uint32
+		path  string
 	}
 
 	previewDirRow struct {
@@ -122,9 +124,14 @@ func binaryPreview(path string) previewCacheEntry {
 	if err != nil {
 		return noPreviewEntry("<Binary file>")
 	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		abs = path
+	}
 	return &previewImageEntry{
 		image: img,
 		id:    kittyImageID(img.ContentID(), 0, true),
+		path:  abs,
 	}
 }
 

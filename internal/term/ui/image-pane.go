@@ -30,10 +30,12 @@ type (
 		zoom   int
 	}
 
-	// Image holds decoded image data and its content identifier
+	// Image holds decoded image data, its content identifier, and the decoded
+	// source format (e.g. "png") for transmission fast paths
 	Image struct {
 		image.Image
-		id uint32
+		id     uint32
+		format string
 	}
 )
 
@@ -59,13 +61,13 @@ func LoadImage(path string) (*Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	img, _, err := image.Decode(bytes.NewReader(data))
+	img, format, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrInvalidImage, path)
 	}
 	hash := fnv.New32a()
 	_, _ = hash.Write(data)
-	return &Image{Image: img, id: hash.Sum32()}, nil
+	return &Image{Image: img, id: hash.Sum32(), format: format}, nil
 }
 
 // NewImagePane loads path into an image pane

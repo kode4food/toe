@@ -464,16 +464,11 @@ func (t *TerminalPane) endSelection(pos uv.Position) string {
 	return t.selectionText()
 }
 
-type selectionRes struct {
-	span   selSpan
-	active bool
-}
-
-func (t *TerminalPane) selection() selectionRes {
+func (t *TerminalPane) selection() (selSpan, bool) {
 	if !t.selActive {
-		return selectionRes{}
+		return selSpan{}, false
 	}
-	return selectionRes{span: normalizeSelection(t.selA, t.selB), active: true}
+	return normalizeSelection(t.selA, t.selB), true
 }
 
 func (t *TerminalPane) selectionText() string {

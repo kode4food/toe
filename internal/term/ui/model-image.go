@@ -3,11 +3,14 @@ package ui
 import (
 	"bytes"
 	"image"
+	"math"
+	"os"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/kitty"
+	"golang.org/x/image/draw"
 
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -19,9 +22,16 @@ type (
 		ready        map[uint32][2]int
 		placeholders map[[2]int][]string
 		graphics     bool
+		remote       bool
 	}
 
 	imageReadyMsg struct {
+		id   uint32
+		size [2]int
+	}
+
+	imageTransmitMsg struct {
+		raw  string
 		id   uint32
 		size [2]int
 	}
@@ -37,6 +47,11 @@ const (
 	imageViewSalt     = 0x9E3779
 	imageCellAspect   = 2
 	imageDisplayDelay = 40 * time.Millisecond
+
+	// Assumed cell pixel size; only caps the transmit byte budget since kitty
+	// refits into the cell box. ponytail: query CSI 14 t if it ever blurs
+	cellPixelW = 10
+	cellPixelH = 20
 )
 
 func newImageRegistry() *imageRegistry {
@@ -45,48 +60,57 @@ func newImageRegistry() *imageRegistry {
 		ready:        map[uint32][2]int{},
 		placeholders: map[[2]int][]string{},
 		graphics:     graphicsSupported(),
+		remote:       isRemoteSession(),
 	}
 }
 
-func (r *imageRegistry) display(
-	id uint32, img image.Image, cols, rows int,
-) tea.Cmd {
+type displayArgs struct {
+	img        *Image
+	path       string
+	id         uint32
+	cols, rows int
+}
+
+func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	if !r.graphics {
 		return nil
 	}
-	size := [2]int{cols, rows}
-	placed, transmitted := r.placed[id]
+	size := [2]int{a.cols, a.rows}
+	placed, transmitted := r.placed[a.id]
 	if transmitted && placed == size {
 		return nil
 	}
 	r.preparePlaceholders(size)
+	r.placed[a.id] = size
 
-	// A fresh image is transmitted and placed in one command; a resize/zoom
-	// only re-places the already-transmitted image. Either way the old
-	// placement is deleted first so the terminal refits to the new cell box
-	var buf bytes.Buffer
-	writeKittyDelete(&buf, id)
-	if !transmitted {
-		opts := &kitty.Options{
-			Action: kitty.TransmitAndPut, Format: kitty.PNG,
-			Quiet: 2, ID: int(id), Columns: cols, Rows: rows,
-			VirtualPlacement: true, Transmission: kitty.Direct,
-			Chunk: true,
+	// Encode off the event loop: scaling a large image can take 100s of ms.
+	// Deleting the old placement first refits the terminal to the new box
+	remote := r.remote
+	return func() tea.Msg {
+		var buf bytes.Buffer
+		writeKittyDelete(&buf, a.id)
+		if !transmitted {
+			err := transmit(transmitArgs{
+				buf:    &buf,
+				img:    a.img,
+				path:   a.path,
+				id:     a.id,
+				cols:   a.cols,
+				rows:   a.rows,
+				remote: remote,
+			})
+			if err != nil {
+				return nil
+			}
+		} else {
+			opts := &kitty.Options{
+				Action: kitty.Put, Quiet: 2, ID: int(a.id),
+				Columns: a.cols, Rows: a.rows, VirtualPlacement: true,
+			}
+			buf.WriteString(ansi.KittyGraphics(nil, opts.Options()...))
 		}
-		if err := kitty.EncodeGraphics(&buf, img, opts); err != nil {
-			return nil
-		}
-	} else {
-		opts := &kitty.Options{
-			Action: kitty.Put, Quiet: 2, ID: int(id),
-			Columns: cols, Rows: rows, VirtualPlacement: true,
-		}
-		buf.WriteString(ansi.KittyGraphics(nil, opts.Options()...))
+		return imageTransmitMsg{raw: buf.String(), id: a.id, size: size}
 	}
-	r.placed[id] = size
-	return tea.Sequence(tea.Raw(buf.String()), func() tea.Msg {
-		return imageReadyMsg{id: id, size: size}
-	})
 }
 
 func (r *imageRegistry) placeholder(cols, rows, row, col int) string {
@@ -133,13 +157,76 @@ func (m Model) imageDisplayCmd() tea.Cmd {
 			return true
 		}
 		id := kittyImageID(img.ContentID(), uint32(pane.ID()), false)
-		cmds = append(cmds, m.context.images.display(id, img, cols, rows))
+		cmds = append(cmds, m.context.images.display(displayArgs{
+			img:  img,
+			path: pane.Path(),
+			id:   id,
+			cols: cols,
+			rows: rows,
+		}))
 		return true
 	})
 	if len(cmds) == 0 {
 		return nil
 	}
 	return tea.Sequence(cmds...)
+}
+
+func isRemoteSession() bool {
+	return os.Getenv("SSH_CONNECTION") != "" || os.Getenv("SSH_TTY") != ""
+}
+
+type transmitArgs struct {
+	buf        *bytes.Buffer
+	img        *Image
+	path       string
+	id         uint32
+	cols, rows int
+	remote     bool
+}
+
+// transmit encodes a fresh image into buf via the cheapest medium: a local PNG
+// is read off disk, other local sources use a temp file, SSH streams the pixels
+func transmit(args transmitArgs) error {
+	opts := &kitty.Options{
+		Action:           kitty.TransmitAndPut,
+		Format:           kitty.PNG,
+		Quiet:            2,
+		ID:               int(args.id),
+		Columns:          args.cols,
+		Rows:             args.rows,
+		VirtualPlacement: true,
+	}
+	switch {
+	case args.remote:
+		opts.Transmission, opts.Chunk = kitty.Direct, true
+		img := scaleForCells(args.img, args.cols, args.rows)
+		return kitty.EncodeGraphics(args.buf, img, opts)
+	case args.img.format == "png":
+		// the terminal reads the PNG off disk and scales it, so encode nothing
+		opts.Transmission, opts.File = kitty.File, args.path
+		return kitty.EncodeGraphics(args.buf, nil, opts)
+	default:
+		opts.Transmission = kitty.TempFile
+		img := scaleForCells(args.img, args.cols, args.rows)
+		return kitty.EncodeGraphics(args.buf, img, opts)
+	}
+}
+
+func scaleForCells(img image.Image, cols, rows int) image.Image {
+	b := img.Bounds()
+	sw, sh := b.Dx(), b.Dy()
+	tw, th := cols*cellPixelW, rows*cellPixelH
+	if sw <= tw && sh <= th {
+		return img
+	}
+	scale := math.Min(float64(tw)/float64(sw), float64(th)/float64(sh))
+	dw := max(int(float64(sw)*scale), 1)
+	dh := max(int(float64(sh)*scale), 1)
+	dst := image.NewRGBA(image.Rect(0, 0, dw, dh))
+	// ApproxBiLinear: CatmullRom dominated transmit time for no visible gain
+	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, b, draw.Over, nil)
+	return dst
 }
 
 func kittyImageID(content, surface uint32, preview bool) uint32 {

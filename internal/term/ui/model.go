@@ -79,6 +79,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m, tea.Batch(m.imageDisplayCmd(), m.pickerImageCmd())
+	case imageTransmitMsg:
+		// The encode finished off the event loop; write the escape stream and
+		// then mark the image ready so its placeholder cells emit
+		return m, tea.Sequence(tea.Raw(msg.raw), func() tea.Msg {
+			return imageReadyMsg{id: msg.id, size: msg.size}
+		})
 	case imageReadyMsg:
 		if m.context.images.placed[msg.id] != msg.size {
 			return m, nil

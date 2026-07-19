@@ -100,14 +100,13 @@ func (r *renderPass) renderTerminalStatus(
 }
 
 func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
-	sel := tp.selection()
-	if !sel.active {
+	sp, ok := tp.selection()
+	if !ok {
 		return
 	}
 	// span is in absolute (scrollback+screen) rows; translate to the rows
 	// currently visible in this viewport
 	start := tp.viewStart(scr.h)
-	sp := sel.span
 	y0, y1 := sp.start.Y-start, sp.end.Y-start
 	for y := max(y0, 0); y <= y1 && y < scr.h; y++ {
 		startX, endX := 0, scr.w-1

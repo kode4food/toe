@@ -36,6 +36,7 @@ require (
 	go.lsp.dev/jsonrpc2 v1.0.0
 	go.lsp.dev/protocol v1.0.0
 	go.lsp.dev/uri v1.0.0
+	golang.org/x/image v0.44.0
 )
 
 require (

@@ -49,6 +49,10 @@ const (
 	imageCellAspect   = 2
 	imageDisplayDelay = 40 * time.Millisecond
 
+	// imagePlacementID: fixed so each reput replaces the placement in place,
+	// never accumulating placements, so a resize needs no delete first
+	imagePlacementID = 1
+
 	// Assumed cell pixel size; only caps the transmit byte budget since kitty
 	// refits into the cell box. ponytail: query CSI 14 t if it ever blurs
 	cellPixelW = 10
@@ -85,11 +89,11 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	r.placed[a.id] = size
 
 	// Encode off the event loop: scaling a large image can take 100s of ms.
-	// Deleting the old placement first refits the terminal to the new box
+	// The reput reuses imagePlacementID, so the terminal refits the existing
+	// placement in place without a delete-then-put blink
 	remote := r.remote
 	return func() tea.Msg {
 		var buf bytes.Buffer
-		writeKittyDelete(&buf, a.id)
 		if !transmitted {
 			err := transmit(transmitArgs{
 				buf:    &buf,
@@ -107,6 +111,7 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 				Action:           kitty.Put,
 				Quiet:            2,
 				ID:               int(a.id),
+				PlacementID:      imagePlacementID,
 				Columns:          a.cells.Width,
 				Rows:             a.cells.Height,
 				VirtualPlacement: true,
@@ -201,6 +206,7 @@ func transmit(args transmitArgs) error {
 		Format:           kitty.PNG,
 		Quiet:            2,
 		ID:               int(args.id),
+		PlacementID:      imagePlacementID,
 		Columns:          args.cells.Width,
 		Rows:             args.cells.Height,
 		VirtualPlacement: true,
@@ -266,12 +272,4 @@ func imageCellSize(args imageCellSizeArgs) geom.Size {
 		cols = max(int(float64(rows)/ratio), 1)
 	}
 	return geom.Size{Width: cols, Height: rows}
-}
-
-func writeKittyDelete(buf *bytes.Buffer, id uint32) {
-	opts := &kitty.Options{
-		Action: kitty.Delete, Quiet: 2, ID: int(id),
-		Delete: kitty.DeleteID, DeleteResources: false,
-	}
-	buf.WriteString(ansi.KittyGraphics(nil, opts.Options()...))
 }

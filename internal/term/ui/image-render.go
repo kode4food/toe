@@ -71,42 +71,37 @@ func (r *renderPass) paintImage(
 		return
 	}
 	img := pane.Image()
-	pixels := img.Size()
-	cells := imagePaneCellSize(imagePaneCellSizeArgs{
-		pane:     pane,
-		maxCells: area.Size,
-		pixels:   pixels,
-	})
 	id := kittyImageID(img.ContentID(), uint32(pane.ID()), false)
-	if !r.cx.images.isReady(id, cells) {
-		if ready, ok := r.cx.images.readySize(id); ok {
-			cells = ready
-		} else {
-			r.renderImageLoading(buf, area)
-			return
-		}
+	// Draw at the put size, not the live zoom, so the grid, the placement's
+	// c=/r=, and the centering box cannot drift apart while a zoom settles
+	cells, ok := r.cx.images.readySize(id)
+	if !ok {
+		r.renderImageLoading(buf, area)
+		return
 	}
-	start := area.Center(cells)
-	// The cell background shows through transparent image pixels, so use the
-	// editor background rather than letting the terminal default bleed through
+	// editor background shows through transparent pixels
 	bg := lipglossToTUIStyle(r.activeTheme().Get("ui.background")).BgColor()
 	style := tui.Style{}.
 		Fg(tui.ImageColor(id)).
 		Bg(bg)
-	for row := range cells.Height {
-		py := start.Y + row
-		if py < area.Y || py >= area.Y+area.Height {
-			continue
-		}
-		for col := range cells.Width {
-			px := start.X + col
-			if px < area.X || px >= area.X+area.Width {
-				continue
-			}
+	// show the centered window of the grid, so a zoomed-in image crops
+	// symmetrically instead of pinning to the top-left
+	visW := min(cells.Width, area.Width)
+	visH := min(cells.Height, area.Height)
+	screen := geom.Point{
+		X: area.X + (area.Width-visW)/2,
+		Y: area.Y + (area.Height-visH)/2,
+	}
+	grid := geom.Point{
+		X: (cells.Width - visW) / 2,
+		Y: (cells.Height - visH) / 2,
+	}
+	for row := range visH {
+		for col := range visW {
 			sym := r.cx.images.placeholder(
-				cells, geom.Point{X: col, Y: row},
+				cells, geom.Point{X: grid.X + col, Y: grid.Y + row},
 			)
-			buf.Set(geom.Point{X: px, Y: py},
+			buf.Set(geom.Point{X: screen.X + col, Y: screen.Y + row},
 				tui.Cell{Symbol: sym, Style: style})
 		}
 	}

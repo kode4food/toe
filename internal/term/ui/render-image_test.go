@@ -52,8 +52,10 @@ func TestImageRender(t *testing.T) {
 	assert.Contains(t, out, "IMG")
 	assert.Contains(t, out, "40×20")
 	assert.NotContains(t, out, "UTF-8")
-	assert.Contains(t, raw, "d=i,a=d")
-	assert.NotContains(t, raw, "d=I")
+	// each put reuses a fixed placement id and no longer deletes first, so a
+	// resize replaces the placement in place without a blink
+	assert.Contains(t, raw, "p=1")
+	assert.NotContains(t, raw, "d=i")
 	assert.Contains(t, raw, "a=T")
 
 	matches := regexp.MustCompile(`(?:\x1b_G|,)i=(\d+)`).
@@ -239,8 +241,8 @@ func TestImagePickerPreviewTransmit(t *testing.T) {
 	_, rawMsgs := collectModelRawMsgs(m2.(ui.Model), cmd)
 	raw := strings.Join(rawMsgs, "")
 
-	assert.Contains(t, raw, "d=i,a=d")
-	assert.NotContains(t, raw, "d=I")
+	assert.Contains(t, raw, "p=1")
+	assert.NotContains(t, raw, "d=i")
 	assert.Contains(t, raw, "\x1b_Gf=100")
 	assert.Contains(t, raw, "U=1")
 }
@@ -362,7 +364,7 @@ func TestImageRestore(t *testing.T) {
 	m, rawMsgs := collectModelRawMsgs(m2.(ui.Model), cmd)
 	raw := strings.Join(rawMsgs, "")
 
-	assert.Equal(t, 2, strings.Count(raw, "d=i,a=d"))
+	assert.Equal(t, 2, strings.Count(raw, "p=1"))
 	assert.Equal(t, 2, strings.Count(raw, "\x1b_Gf=100"))
 	assert.True(t, strings.ContainsRune(m.View().Content, tui.PlaceholderRune))
 }
@@ -382,7 +384,8 @@ func TestImageResizeOrder(t *testing.T) {
 	m, rawMsgs = collectModelRawMsgs(m, oldCmd)
 	oldRaw := strings.Join(rawMsgs, "")
 
-	assert.Contains(t, raw, "d=i,a=d")
+	// the live resize reputs at the new size; the superseded one is dropped
+	assert.Contains(t, raw, "p=1")
 	assert.Empty(t, oldRaw)
 	assert.True(t, strings.ContainsRune(m.View().Content, tui.PlaceholderRune))
 }

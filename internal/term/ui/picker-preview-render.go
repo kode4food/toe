@@ -151,7 +151,7 @@ func emitPreviewLine(
 				row = prefixRow
 				row.append(cr)
 			}
-			rowAt := geom.Point{X: at.X, Y: at.Y + n}
+			rowAt := at.Add(geom.Point{Y: n})
 			row.writeToBuffer(rowWriteArgs{
 				buf:       buf,
 				at:        rowAt,
@@ -186,7 +186,7 @@ func (c previewLineCtx) emitMarker(buf *tui.Buffer, at geom.Point, first bool) {
 	if c.markerW == 0 {
 		return
 	}
-	mAt := geom.Point{X: at.X - c.markerW, Y: at.Y}
+	mAt := at.Sub(geom.Point{X: c.markerW})
 	buf.FillRange(mAt, c.markerW, c.fillTUI)
 	buf.PatchBgRange(mAt, c.markerW, c.popupBg)
 	if c.marker != "" && first {

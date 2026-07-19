@@ -120,7 +120,7 @@ func (p *PromptComponent) Cursor(
 	return tea.Cursor{
 		Position: tea.Position{
 			X: p.bounds.X + p.caretDisplayX(),
-			Y: p.bounds.Y + p.bounds.Height - 1,
+			Y: p.bounds.Bottom(),
 		},
 		Shape: cursorKindToShape(kind),
 		Blink: false,

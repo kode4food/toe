@@ -74,10 +74,7 @@ func (r *renderPass) drawDiagnosticPopup(
 		Size:  geom.Size{Width: w, Height: h},
 	})
 	for i, line := range lines {
-		buf.SetString(geom.Point{
-			X: area.X,
-			Y: area.Y + i,
-		}, line, st)
+		buf.SetString(area.Point.Add(geom.Point{Y: i}), line, st)
 	}
 }
 

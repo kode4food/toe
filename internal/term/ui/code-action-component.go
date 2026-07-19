@@ -85,16 +85,10 @@ func (m *codeActionMenu) Layout(
 	at := m.popupPos(cx, screen.Height)
 	w := m.width()
 	h := min(len(m.actions), codeActionMaxRows) + 2
-	if at.X+w > screen.Width {
-		at.X = max(screen.Width-w, 0)
-	}
-	if at.Y+h > screen.Height {
-		at.Y = max(at.Y-h-1, 0)
-	}
-	return geom.Area{
+	return fitPopup(geom.Area{
 		Point: at,
 		Size:  geom.Size{Width: w, Height: h},
-	}, true
+	}, screen), true
 }
 
 func (m *codeActionMenu) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
@@ -104,7 +98,7 @@ func (m *codeActionMenu) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 }
 
 func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
-	w, h := pl.Width, pl.Height
+	w := pl.Width
 	m.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
@@ -114,7 +108,7 @@ func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 		),
 		contentStyle: lipglossToTUIStyle(menu),
 	}
-	area := pop.drawInto(buf, geom.Area{Size: geom.Size{Width: w, Height: h}})
+	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	m.listBounds = area.Translate(pl.Point)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
@@ -131,10 +125,7 @@ func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 			style = sel
 		}
 		text := clipPad(" "+m.actions[idx].Title, listW)
-		buf.SetString(geom.Point{
-			X: area.X,
-			Y: area.Y + i,
-		}, text, style)
+		buf.SetString(area.Point.Add(geom.Point{Y: i}), text, style)
 	}
 	if overflow {
 		m.renderScroll(
@@ -250,9 +241,8 @@ func (m *codeActionMenu) renderScroll(
 	scrollH := min((rows*rows+len(m.actions)-1)/len(m.actions), rows)
 	scrollY := (rows - scrollH) * m.scroll / (len(m.actions) - rows)
 	for i := range scrollH {
-		buf.SetString(geom.Point{
-			X: at.X,
-			Y: at.Y + scrollY + i,
-		}, scrollbarThumb, style)
+		buf.SetString(
+			at.Add(geom.Point{Y: scrollY + i}), scrollbarThumb, style,
+		)
 	}
 }

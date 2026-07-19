@@ -155,16 +155,10 @@ func (c *completionComponent) Layout(
 	w := c.width()
 	rows := min(len(c.items), completionMaxRows)
 	h := rows + 2
-	if at.X+w > screen.Width {
-		at.X = max(screen.Width-w, 0)
-	}
-	if at.Y+h > screen.Height {
-		at.Y = max(at.Y-h-1, 0)
-	}
-	return geom.Area{
+	return fitPopup(geom.Area{
 		Point: at,
 		Size:  geom.Size{Width: w, Height: h},
-	}, true
+	}, screen), true
 }
 
 func (c *completionComponent) PaintBuffer(
@@ -180,7 +174,7 @@ func (c *completionComponent) paint(
 ) {
 	c.nerd = cx.Editor.Options().NerdFonts
 	query, _ := c.query(cx)
-	w, h := pl.Width, pl.Height
+	w := pl.Width
 	c.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
@@ -190,7 +184,7 @@ func (c *completionComponent) paint(
 		),
 		contentStyle: lipglossToTUIStyle(menu),
 	}
-	area := pop.drawInto(buf, geom.Area{Size: geom.Size{Width: w, Height: h}})
+	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	c.listBounds = area.Translate(pl.Point)
 	base := lipglossToTUIStyle(menu)
 	sel := lipglossToTUIStyle(selected)
@@ -220,7 +214,7 @@ func (c *completionComponent) paint(
 			infoStyle = selInfo
 		}
 		c.renderRow(renderCompletionRowArgs{
-			buf: buf, at: geom.Point{X: area.X, Y: area.Y + i},
+			buf: buf, at: area.Point.Add(geom.Point{Y: i}),
 			width: area.Width, listW: listW,
 			item: item, selected: selected, query: query,
 			base: style, match: matchStyle,

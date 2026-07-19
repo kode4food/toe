@@ -179,29 +179,27 @@ func (t *TerminalPane) scheduleDragTick(
 }
 
 func (t *TerminalPane) clampedMouse(cx *Context, at geom.Point) uv.Mouse {
-	yOff := 0
-	if bufferlineVisible(cx) {
-		yOff = 1
-	}
-	a := t.area
-	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
-	contentH := max(a.Height-1, 0)
-	localY := min(max((at.Y-yOff)-a.Y, 0), max(contentH-1, 0))
-	return uv.Mouse{X: localX, Y: localY}
+	a := t.mouseArea(cx)
+	local := a.Size.Clamp(at.Sub(a.Point))
+	return uv.Mouse{X: local.X, Y: local.Y}
 }
 
 func (t *TerminalPane) localMouse(cx *Context, at geom.Point) (uv.Mouse, bool) {
-	yOff := 0
-	if bufferlineVisible(cx) {
-		yOff = 1
-	}
-	a := t.Area()
-	localX, localY := at.X-a.X, (at.Y-yOff)-a.Y
-	contentH := max(a.Height-1, 0)
-	if localX < 0 || localX >= a.Width || localY < 0 || localY >= contentH {
+	a := t.mouseArea(cx)
+	local := at.Sub(a.Point)
+	if !a.Size.Contains(local) {
 		return uv.Mouse{}, false
 	}
-	return uv.Mouse{X: localX, Y: localY}, true
+	return uv.Mouse{X: local.X, Y: local.Y}, true
+}
+
+func (t *TerminalPane) mouseArea(cx *Context) geom.Area {
+	a := t.area
+	a.Height = max(a.Height-1, 0)
+	if bufferlineVisible(cx) {
+		a.Point = a.Point.Add(geom.Point{Y: 1})
+	}
+	return a
 }
 
 // the Ctrl-w prefix must reach the keymap even while a pane has raw input

@@ -86,10 +86,7 @@ func (r *renderPass) paintImage(
 			return
 		}
 	}
-	start := geom.Point{
-		X: area.X + (area.Width-cells.Width)/2,
-		Y: area.Y + (area.Height-cells.Height)/2,
-	}
+	start := area.Center(cells)
 	// The cell background shows through transparent image pixels, so use the
 	// editor background rather than letting the terminal default bleed through
 	bg := lipglossToTUIStyle(r.activeTheme().Get("ui.background")).BgColor()
@@ -131,7 +128,7 @@ func (r *renderPass) renderImageMessage(
 func renderImageMessage(
 	buf *tui.Buffer, area geom.Area, msg string, style tui.Style,
 ) {
-	if area.Width <= 0 || area.Height <= 0 {
+	if area.Empty() {
 		return
 	}
 	mw := runewidth.StringWidth(msg)
@@ -151,7 +148,7 @@ func imagePaneCellSize(args imagePaneCellSizeArgs) geom.Size {
 	cells := imageCellSize(imageCellSizeArgs{
 		maxCells: args.maxCells, pixels: args.pixels,
 	})
-	if cells.Width == 0 || cells.Height == 0 {
+	if cells.Empty() {
 		return geom.Size{}
 	}
 	zoom := args.pane.Zoom()

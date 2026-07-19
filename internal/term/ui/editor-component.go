@@ -120,7 +120,7 @@ func newEditorComponent() *EditorComponent {
 				gutterW := gutterWidthFor(
 					doc.Text(), r.cx.Editor.Options().Gutters,
 				)
-				edgeX := area.X + area.Width - 1
+				edgeX := area.Right()
 				if toLo {
 					edgeX = area.X + gutterW
 				}

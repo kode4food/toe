@@ -22,10 +22,9 @@ type (
 // in buffer coordinates
 func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 	for dy := range area.Height {
-		buf.FillRange(geom.Point{
-			X: area.X,
-			Y: area.Y + dy,
-		}, area.Width, p.contentStyle)
+		buf.FillRange(
+			area.Point.Add(geom.Point{Y: dy}), area.Width, p.contentStyle,
+		)
 	}
 	if area.Width >= 2 && area.Height >= 2 {
 		top := p.border.TopLeft +
@@ -37,28 +36,28 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		buf.SetString(area.Point, top, p.borderStyle)
 		buf.SetString(geom.Point{
 			X: area.X,
-			Y: area.Y + area.Height - 1,
+			Y: area.Bottom(),
 		}, bot, p.borderStyle)
 		for y := 1; y < area.Height-1; y++ {
-			buf.SetString(geom.Point{
-				X: area.X,
-				Y: area.Y + y,
-			}, p.border.Left, p.borderStyle)
+			buf.SetString(
+				area.Point.Add(geom.Point{Y: y}), p.border.Left, p.borderStyle,
+			)
 
 			buf.SetString(geom.Point{
-				X: area.X + area.Width - 1,
+				X: area.Right(),
 				Y: area.Y + y,
 			}, p.border.Right, p.borderStyle)
 		}
 	}
-	return geom.Area{
-		Point: geom.Point{
-			X: area.X + 1 + p.padX,
-			Y: area.Y + 1,
-		},
-		Size: geom.Size{
-			Width:  max(area.Width-2-2*p.padX, 0),
-			Height: max(area.Height-2, 0),
-		},
+	return area.Inset(geom.Size{Width: 1 + p.padX, Height: 1})
+}
+
+func fitPopup(area geom.Area, screen geom.Size) geom.Area {
+	if area.X+area.Width > screen.Width {
+		area.X = max(screen.Width-area.Width, 0)
 	}
+	if area.Y+area.Height > screen.Height {
+		area.Y = max(area.Y-area.Height-1, 0)
+	}
+	return area
 }

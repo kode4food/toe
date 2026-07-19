@@ -110,10 +110,10 @@ func (p *PromptComponent) paintCompletions(
 			if p.compSel != nil && *p.compSel == i {
 				style = selectedTUI
 			}
-			buf.SetString(geom.Point{
-				X: area.X + col*(colW+compGap),
-				Y: area.Y + row,
-			}, text, style)
+			buf.SetString(area.Point.Add(geom.Point{
+				X: col * (colW + compGap),
+				Y: row,
+			}), text, style)
 		}
 	}
 }

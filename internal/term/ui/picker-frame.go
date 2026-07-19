@@ -28,7 +28,7 @@ func (f pickerBoxFrame) drawSplit(
 	rw := max(area.Width-lw-3, 0)
 	for dy := range area.Height {
 		buf.FillRange(
-			geom.Point{X: area.X, Y: area.Y + dy}, area.Width, f.contentStyle,
+			area.Point.Add(geom.Point{Y: dy}), area.Width, f.contentStyle,
 		)
 	}
 	if area.Width < 2 || area.Height < 2 {
@@ -47,7 +47,7 @@ func (f pickerBoxFrame) drawSplit(
 	buf.SetString(area.Point, top, f.borderStyle)
 	buf.SetString(geom.Point{
 		X: area.X,
-		Y: area.Y + area.Height - 1,
+		Y: area.Bottom(),
 	}, bot, f.borderStyle)
 	for i := 0; i < area.Height-2; i++ {
 		ry := area.Y + 1 + i
@@ -57,7 +57,7 @@ func (f pickerBoxFrame) drawSplit(
 				f.border.MiddleRight
 			buf.SetString(geom.Point{X: area.X, Y: ry}, cut, f.borderStyle)
 			buf.SetString(geom.Point{
-				X: area.X + area.Width - 1,
+				X: area.Right(),
 				Y: ry,
 			}, f.border.Right, f.borderStyle)
 		} else {
@@ -69,18 +69,18 @@ func (f pickerBoxFrame) drawSplit(
 				Y: ry,
 			}, f.border.Left, f.borderStyle)
 			buf.SetString(geom.Point{
-				X: area.X + area.Width - 1,
+				X: area.Right(),
 				Y: ry,
 			}, f.border.Right, f.borderStyle)
 		}
 	}
 	return pickerBoxAreas{
 		left: geom.Area{
-			Point: geom.Point{X: area.X + 1, Y: area.Y + 1},
+			Point: area.Point.Add(geom.Point{X: 1, Y: 1}),
 			Size:  geom.Size{Width: lw, Height: area.Height - 2},
 		},
 		right: geom.Area{
-			Point: geom.Point{X: area.X + 2 + lw, Y: area.Y + 1},
+			Point: area.Point.Add(geom.Point{X: 2 + lw, Y: 1}),
 			Size:  geom.Size{Width: rw, Height: area.Height - 2},
 		},
 	}
@@ -91,7 +91,7 @@ func (f pickerBoxFrame) drawSingle(
 ) geom.Area {
 	innerW := max(area.Width-2, 0)
 	for dy := range area.Height {
-		buf.FillRange(geom.Point{X: area.X, Y: area.Y + dy},
+		buf.FillRange(area.Point.Add(geom.Point{Y: dy}),
 			area.Width, f.contentStyle)
 	}
 	if area.Width < 2 || area.Height < 2 {
@@ -106,7 +106,7 @@ func (f pickerBoxFrame) drawSingle(
 	buf.SetString(area.Point, top, f.borderStyle)
 	buf.SetString(geom.Point{
 		X: area.X,
-		Y: area.Y + area.Height - 1,
+		Y: area.Bottom(),
 	}, bot, f.borderStyle)
 	for i := 0; i < area.Height-2; i++ {
 		ry := area.Y + 1 + i
@@ -120,13 +120,10 @@ func (f pickerBoxFrame) drawSingle(
 				geom.Point{X: area.X, Y: ry}, f.border.Left, f.borderStyle,
 			)
 			buf.SetString(geom.Point{
-				X: area.X + area.Width - 1,
+				X: area.Right(),
 				Y: ry,
 			}, f.border.Right, f.borderStyle)
 		}
 	}
-	return geom.Area{
-		Point: geom.Point{X: area.X + 1, Y: area.Y + 1},
-		Size:  geom.Size{Width: innerW, Height: area.Height - 2},
-	}
+	return area.Inset(geom.Size{Width: 1, Height: 1})
 }

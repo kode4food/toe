@@ -162,7 +162,7 @@ func (m Model) imageDisplayCmd() tea.Cmd {
 			},
 			pixels: pixels,
 		})
-		if cells.Width == 0 || cells.Height == 0 {
+		if cells.Empty() {
 			return true
 		}
 		id := kittyImageID(img.ContentID(), uint32(pane.ID()), false)
@@ -254,8 +254,7 @@ type imageCellSizeArgs struct {
 }
 
 func imageCellSize(args imageCellSizeArgs) geom.Size {
-	if args.maxCells.Width <= 0 || args.maxCells.Height <= 0 ||
-		args.pixels.Width <= 0 || args.pixels.Height <= 0 {
+	if args.maxCells.Empty() || args.pixels.Empty() {
 		return geom.Size{}
 	}
 	cols := args.maxCells.Width

@@ -27,10 +27,7 @@ func (p *previewImageEntry) renderInto(
 		renderImageMessage(buf, area, msg, style)
 		return
 	}
-	start := geom.Point{
-		X: at.X + max((ctx.size.Width-cells.Width)/2, 0),
-		Y: at.Y + max((ctx.size.Height-cells.Height)/2, 0),
-	}
+	start := area.Center(cells)
 	bg := lipglossToTUIStyle(ctx.th.Get("ui.popup")).BgColor()
 	style = tui.Style{}.
 		Fg(tui.ImageColor(p.id)).
@@ -39,10 +36,7 @@ func (p *previewImageEntry) renderInto(
 		for col := range cells.Width {
 			cell := geom.Point{X: col, Y: row}
 			sym := ctx.images.placeholder(cells, cell)
-			buf.Set(
-				geom.Point{X: start.X + col, Y: start.Y + row},
-				tui.Cell{Symbol: sym, Style: style},
-			)
+			buf.Set(start.Add(cell), tui.Cell{Symbol: sym, Style: style})
 		}
 	}
 }
@@ -92,7 +86,7 @@ func (p *PickerComponent) previewImage(
 	cells := imageCellSize(imageCellSizeArgs{
 		maxCells: size, pixels: pixels,
 	})
-	if cells.Width == 0 || cells.Height == 0 {
+	if cells.Empty() {
 		return previewImageRes{}, false
 	}
 	return previewImageRes{entry: entry, cells: cells}, true

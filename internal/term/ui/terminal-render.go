@@ -23,22 +23,21 @@ func (s *tuiScreen) SetCell(at geom.Point, c *uv.Cell) {
 	if !s.area.Size.Contains(at) {
 		return
 	}
-	o := s.area.Point
+	dst := s.area.Point.Add(at)
 	if c == nil {
-		s.buf.Set(geom.Point{X: o.X + at.X, Y: o.Y + at.Y},
-			tui.Cell{Symbol: " "})
+		s.buf.Set(dst, tui.Cell{Symbol: " "})
 		return
 	}
 	content := c.Content
 	if content == "" {
 		content = " "
 	}
-	s.buf.Set(geom.Point{X: o.X + at.X, Y: o.Y + at.Y}, tui.Cell{
-		Symbol: content, Style: s.styleFor(c.Style),
+	s.buf.Set(dst, tui.Cell{
+		Symbol: content,
+		Style:  s.styleFor(c.Style),
 	})
 	for i := 1; i < c.Width; i++ {
-		s.buf.Set(geom.Point{X: o.X + at.X + i, Y: o.Y + at.Y},
-			tui.Cell{Skip: true})
+		s.buf.Set(dst.Add(geom.Point{X: i}), tui.Cell{Skip: true})
 	}
 }
 
@@ -83,7 +82,7 @@ func (r *renderPass) renderTerminalStatus(
 		statusKey = "ui.statusline"
 	}
 	st := lipglossToTUIStyle(th.Get(statusKey))
-	y := y0 + a.Y + a.Height - 1
+	y := y0 + a.Bottom()
 	buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, st)
 
 	modeSt := st
@@ -127,7 +126,7 @@ func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
 			endX = sp.end.X
 		}
 		for x := max(startX, 0); x <= endX && x < scr.area.Width; x++ {
-			p := geom.Point{X: scr.area.X + x, Y: scr.area.Y + y}
+			p := scr.area.Point.Add(geom.Point{X: x, Y: y})
 			c := scr.buf.Get(p)
 			c.Style = c.Style.Mod(tui.ModifierReversed)
 			scr.buf.Set(p, c)

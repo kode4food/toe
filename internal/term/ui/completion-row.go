@@ -121,10 +121,9 @@ func (c *completionComponent) renderScroll(
 		scrollY = (rows - scrollH) * c.scroll / (len(c.items) - rows)
 	}
 	for i := range scrollH {
-		buf.SetString(geom.Point{
-			X: at.X,
-			Y: at.Y + scrollY + i,
-		}, scrollbarThumb, style)
+		buf.SetString(
+			at.Add(geom.Point{Y: scrollY + i}), scrollbarThumb, style,
+		)
 	}
 }
 

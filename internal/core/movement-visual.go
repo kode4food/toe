@@ -83,7 +83,7 @@ func (v visualMover) moveVertically(
 		remaining := count
 		rowsBelow := total - 1 - cur.Y
 		if remaining <= rowsBelow {
-			off := vl.charAtPos(geom.Point{X: cur.X, Y: cur.Y + remaining})
+			off := vl.charAtPos(cur.Add(geom.Point{Y: remaining}))
 			return r.PutCursor(doc, lineStart+off, move == MovementExtend)
 		}
 		remaining -= rowsBelow + 1
@@ -116,7 +116,7 @@ func (v visualMover) moveVertically(
 	// DirectionBackward
 	remaining := count
 	if remaining <= cur.Y {
-		off := vl.charAtPos(geom.Point{X: cur.X, Y: cur.Y - remaining})
+		off := vl.charAtPos(cur.Sub(geom.Point{Y: remaining}))
 		return r.PutCursor(doc, lineStart+off, move == MovementExtend)
 	}
 	remaining -= cur.Y + 1

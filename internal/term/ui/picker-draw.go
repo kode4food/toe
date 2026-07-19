@@ -141,5 +141,5 @@ func (p *PickerComponent) drawPreviewInto(
 		ctx.hlFrom = lr.From
 		ctx.hlTo = lr.To
 	}
-	ctx.renderInto(buf, geom.Point{X: area.X + pickerPadX, Y: area.Y})
+	ctx.renderInto(buf, area.Point.Add(geom.Point{X: pickerPadX}))
 }

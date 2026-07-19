@@ -124,7 +124,7 @@ func (s *signatureHelpComponent) paint(
 	cx *Context, buf *tui.Buffer, pl geom.Area,
 ) {
 	sig := s.help.Signatures[s.cursor]
-	w, h := pl.Width, pl.Height
+	w := pl.Width
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	border := lipgloss.RoundedBorder()
 	pop := popup{
@@ -133,9 +133,7 @@ func (s *signatureHelpComponent) paint(
 		contentStyle: st,
 		padX:         0,
 	}
-	area := pop.drawInto(buf, geom.Area{
-		Size: geom.Size{Width: w, Height: h},
-	})
+	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	s.renderSignature(cx, buf, area, sig)
 	if len(s.help.Signatures) > 1 {
 		index := s.indexText()

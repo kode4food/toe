@@ -110,9 +110,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 		yOff = 1
 	}
 	sep, onSep :=
-		r.cx.Editor.Tree().SeparatorAt(
-			geom.Point{X: at.X, Y: at.Y - yOff},
-		)
+		r.cx.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
 	if onSep {
 		r.ec.mouseDownSep = &sepDrag{
 			containerID: sep.ContainerID,

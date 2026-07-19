@@ -150,7 +150,7 @@ func (p *previewDirEntry) renderInto(
 		if entry.dir {
 			st = dirTUI
 		}
-		rowAt := geom.Point{X: at.X, Y: at.Y + i}
+		rowAt := at.Add(geom.Point{Y: i})
 		buf.FillRange(rowAt, ctx.size.Width, fillTUI)
 		buf.SetString(
 			rowAt,
@@ -188,7 +188,7 @@ func blitTextInto(
 	}
 	for i, line := range lines {
 		plain := ansi.Strip(line)
-		at := geom.Point{X: area.X, Y: area.Y + i}
+		at := area.Point.Add(geom.Point{Y: i})
 		buf.FillRange(at, area.Width, fillStyle)
 		if area.Width > 0 && plain != "" {
 			s := plain

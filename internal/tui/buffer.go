@@ -63,7 +63,7 @@ func (b *Buffer) PatchBg(p geom.Point, bg Color) {
 // highlight behind already-rendered text
 func (b *Buffer) PatchBgRange(p geom.Point, width int, bg Color) {
 	for i := range width {
-		b.PatchBg(geom.Point{X: p.X + i, Y: p.Y}, bg)
+		b.PatchBg(p.Add(geom.Point{X: i}), bg)
 	}
 }
 

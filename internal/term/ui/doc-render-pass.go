@@ -327,14 +327,8 @@ func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
 	if !cx.OverlayRegionsPrecise {
 		return true
 	}
-	ax, ay := a.X, y0+a.Y
-	for _, b := range cx.OverlayRegions {
-		if ax < b.X+b.Width && b.X < ax+a.Width &&
-			ay < b.Y+b.Height && b.Y < ay+a.Height {
-			return true
-		}
-	}
-	return false
+	pane := a.Translate(geom.Point{Y: y0})
+	return slices.ContainsFunc(cx.OverlayRegions, pane.Intersects)
 }
 
 func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
@@ -391,7 +385,7 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 		buf.SetString(geom.Point{X: x + 1, Y: y}, " "+title+" ", popupTUI)
 	}
 	for i, raw := range rawLines {
-		buf.SetString(geom.Point{X: area.X, Y: area.Y + i}, raw, popupTUI)
+		buf.SetString(area.Point.Add(geom.Point{Y: i}), raw, popupTUI)
 	}
 }
 

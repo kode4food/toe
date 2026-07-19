@@ -104,7 +104,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the current frame via the compositor
 func (m Model) View() tea.View {
-	if m.compositor.size.Width == 0 || m.compositor.size.Height == 0 {
+	if m.compositor.size.Empty() {
 		v := tea.NewView("")
 		v.AltScreen = true
 		return v

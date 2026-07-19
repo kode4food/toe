@@ -64,8 +64,7 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 
 	// After all layers have processed the resize (viewHeight is now set),
 	// create and mount any deferred initial component
-	if _, ok := msg.(tea.WindowSizeMsg); ok &&
-		c.size.Width > 0 && c.size.Height > 0 {
+	if _, ok := msg.(tea.WindowSizeMsg); ok && !c.size.Empty() {
 		if fn := c.startup; fn != nil {
 			c.startup = nil
 			if layer, cmd := fn(cx); layer != nil {

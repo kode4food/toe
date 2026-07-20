@@ -443,10 +443,10 @@ func (tt *tui) screen() string {
 	return tt.vt.String()
 }
 
-func (t *tui) transmittedImage() bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return bytes.Contains(t.raw.Bytes(), []byte("\x1b_G"))
+func (tt *tui) transmittedImage() bool {
+	tt.mu.Lock()
+	defer tt.mu.Unlock()
+	return bytes.Contains(tt.raw.Bytes(), []byte("\x1b_G"))
 }
 
 func (tt *tui) pump() {

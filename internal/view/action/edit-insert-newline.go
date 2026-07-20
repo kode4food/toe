@@ -72,8 +72,11 @@ func InsertNewline(e *view.Editor) {
 			// Trim trailing whitespace then insert newline with indent
 			indent, continued := continuedIndent(e, doc, line, pos)
 			insert, off := newlineInsertForCursor(newlineInsertArgs{
-				editor: e, doc: doc, r: r,
-				indent: indent, continued: continued,
+				editor:    e,
+				doc:       doc,
+				rng:       r,
+				indent:    indent,
+				continued: continued,
 			})
 			changes = append(changes,
 				core.TextChange(firstTrailingWS, pos, insert))
@@ -83,8 +86,11 @@ func InsertNewline(e *view.Editor) {
 			// No trailing whitespace: plain newline with indent
 			indent, continued := continuedIndent(e, doc, line, pos)
 			insert, off := newlineInsertForCursor(newlineInsertArgs{
-				editor: e, doc: doc, r: r,
-				indent: indent, continued: continued,
+				editor:    e,
+				doc:       doc,
+				rng:       r,
+				indent:    indent,
+				continued: continued,
 			})
 			changes = append(changes, core.TextChange(pos, pos, insert))
 			targets[i] = pos
@@ -143,7 +149,12 @@ func continuedIndent(
 	text := doc.Text()
 	indent := leadingWhitespace(text, pos)
 	args := structuralIndentArgs{
-		e: e, text: text, line: line, pos: pos, indent: indent, doc: doc,
+		editor: e,
+		text:   text,
+		line:   line,
+		pos:    pos,
+		indent: indent,
+		doc:    doc,
 	}
 	if !e.Options().ContinueComments {
 		return structuralIndent(args), false
@@ -157,7 +168,7 @@ func continuedIndent(
 }
 
 type structuralIndentArgs struct {
-	e      *view.Editor
+	editor *view.Editor
 	text   core.Rope
 	line   int
 	pos    int
@@ -166,7 +177,8 @@ type structuralIndentArgs struct {
 }
 
 func structuralIndent(args structuralIndentArgs) string {
-	if next, ok := args.e.IndentForNewline(args.doc, args.line, args.pos); ok {
+	next, ok := args.editor.IndentForNewline(args.doc, args.line, args.pos)
+	if ok {
 		return next
 	}
 	ch, ok := lastCodeChar(args.text, args.line, args.pos)
@@ -225,7 +237,7 @@ func matchingCloseAt(text core.Rope, pos int, open rune) bool {
 type newlineInsertArgs struct {
 	editor    *view.Editor
 	doc       *view.Document
-	r         core.Range
+	rng       core.Range
 	indent    string
 	continued bool
 }
@@ -233,7 +245,7 @@ type newlineInsertArgs struct {
 func newlineInsertForCursor(args newlineInsertArgs) (string, int) {
 	text := args.doc.Text()
 	pairs, ok := autoPairsForDocument(args.editor, args.doc)
-	if args.continued || !ok || !betweenAutoPair(text, args.r, pairs) {
+	if args.continued || !ok || !betweenAutoPair(text, args.rng, pairs) {
 		insert := "\n" + args.indent
 		return insert, utf8.RuneCountInString(insert)
 	}

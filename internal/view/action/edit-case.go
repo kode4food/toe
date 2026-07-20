@@ -62,6 +62,9 @@ func switchCaseImpl(e *view.Editor, transform func(string) string) {
 		)
 	}
 	applyChangesFrom(e, applyChangesFromArgs{
-		text: text, sel: sel, ranges: ranges, changes: changes,
+		text:    text,
+		sel:     sel,
+		ranges:  ranges,
+		changes: changes,
 	})
 }

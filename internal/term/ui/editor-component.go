@@ -245,11 +245,12 @@ func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
 		yOff++
 	}
 	visual := cursorScreenPos(cursorScreenPosArgs{
-		text: text, cursor: cursor,
-		gutterW: gutterWidthFor(text, opts.Gutters),
-		rowMap:  e.cache.viewRowMaps[v.ID()],
-		tabW:    doc.TabWidth(),
-		hOff:    v.Offset().HorizontalOffset,
+		text:             text,
+		cursor:           cursor,
+		gutterWidth:      gutterWidthFor(text, opts.Gutters),
+		rowMap:           e.cache.viewRowMaps[v.ID()],
+		tabWidth:         doc.TabWidth(),
+		horizontalOffset: v.Offset().HorizontalOffset,
 	})
 	return geom.Point{X: area.X + visual.X, Y: yOff + visual.Y}, true
 }

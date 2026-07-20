@@ -20,7 +20,8 @@ func (p *previewImageEntry) renderInto(
 	}
 	pixels := p.image.Size()
 	cells := imageCellSize(imageCellSizeArgs{
-		maxCells: ctx.size, pixels: pixels,
+		maxCells: ctx.size,
+		pixels:   pixels,
 	})
 	if !ctx.images.isReady(p.id, cells) {
 		msg := i18n.Text(i18n.StatusImageLoading)
@@ -84,7 +85,8 @@ func (p *PickerComponent) previewImage(
 	size := p.previewImageSize(cx, screen)
 	pixels := entry.image.Size()
 	cells := imageCellSize(imageCellSizeArgs{
-		maxCells: size, pixels: pixels,
+		maxCells: size,
+		pixels:   pixels,
 	})
 	if cells.Empty() {
 		return previewImageRes{}, false

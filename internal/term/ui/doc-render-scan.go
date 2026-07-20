@@ -6,8 +6,13 @@ import (
 )
 
 type linePrefixArgs struct {
-	rev, lineNum, lineStart, lineEnd, tabW, hOff int
-	text                                         core.Rope
+	rev              int
+	lineNum          int
+	lineStart        int
+	lineEnd          int
+	tabWidth         int
+	horizontalOffset int
+	text             core.Rope
 }
 
 func scanLinePrefix(args linePrefixArgs) linePrefixScan {
@@ -17,7 +22,7 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 	indentDone := false
 	found := false
 	args.text.ForEachSegment(args.lineStart, args.lineEnd, func(seg string) {
-		if found || col >= args.hOff {
+		if found || col >= args.horizontalOffset {
 			return
 		}
 		for _, ch := range seg {
@@ -33,9 +38,9 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 			if uint32(ch)-0x20 < 0x5f { // printable ASCII
 				w = 1
 			} else {
-				w = view.RuneWidth(ch, col, args.tabW)
+				w = view.RuneWidth(ch, col, args.tabWidth)
 			}
-			if col+w > args.hOff {
+			if col+w > args.horizontalOffset {
 				found = true
 				return
 			}

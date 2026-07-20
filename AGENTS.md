@@ -35,6 +35,8 @@ Structs with an `Args` suffix are parameter bundles for a single function. Struc
 - **If a struct crosses more than one call site** it is not an Args/Res struct — rename it to a plain descriptive name (no suffix) and use pointer currency (`*T`) when passing it.
 - **Placement**: each Args/Res struct must be declared immediately before the function that accepts or returns it. If one function has both an Args and a Res struct, declare them together in a single `type (...)` block immediately before that function. Never group them with unrelated types at the top of the file.
 - **Value passing**: at their single call site, Args/Res structs are passed and returned by value (no `*`). They are small, short-lived, and stack-allocated by design.
+- **Field names must stand alone**: a name that worked as a positional function parameter (short, disambiguated by position and the surrounding call) does not automatically work as a named struct field read on its own at a call site. Spell out abbreviations that aren't immediately decodable without reading the function body: `st` → `style`, `w` → `width`, `bg` → `background`, `hOff` → `horizontalOffset`, `e` → `editor`, `v` → `view`. Two fields of the same type still need names that disambiguate them beyond position — `parent Id` next to `id Id` is exactly the same-type-adjacency hazard above; use `parent Id` / `viewID Id`.
+- **Literal formatting**: if a struct literal fits on one line, leave it on one line. If it wraps, use exactly one field per line — never pack two or more fields onto a wrapped line.
 
 ```go
 // Good — declared immediately before its function, used only at one call site
@@ -42,11 +44,31 @@ type renderPaneArgs struct {
     doc     *view.Document
     view    *view.View
     buf     *tui.Buffer
-    y0      int
+    yOffset int
     focused bool
 }
 
 func (r *renderPass) renderPane(args renderPaneArgs) { ... }
+
+// Good — fits on one line, stays on one line
+r.renderStatus(renderStatusArgs{doc: doc, view: v, buf: buf})
+
+// Good — wraps, so one field per line
+r.renderStatus(renderStatusArgs{
+    doc:     doc,
+    view:    v,
+    buf:     buf,
+    at:      geom.Point{X: a.X, Y: yOffset + a.Y + contentH},
+    width:   a.Width,
+    focused: focused,
+})
+
+// Bad — wrapped but multiple fields share a line
+r.renderStatus(renderStatusArgs{
+    doc: doc, view: v, buf: buf,
+    at: geom.Point{X: a.X, Y: yOffset + a.Y + contentH},
+    width: a.Width, focused: focused,
+})
 
 // Bad — declared in a top-level type block far from its function
 type (

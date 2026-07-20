@@ -13,26 +13,26 @@ import (
 
 type (
 	resolveClickPosRes struct {
-		doc *view.Document
-		v   *view.View
-		pos int
+		doc  *view.Document
+		view *view.View
+		pos  int
 	}
 
 	cursorScreenPosArgs struct {
-		text    core.Rope
-		cursor  int
-		gutterW int
-		rowMap  []viewRowEntry
-		tabW    int
-		hOff    int
+		text             core.Rope
+		cursor           int
+		gutterWidth      int
+		rowMap           []viewRowEntry
+		tabWidth         int
+		horizontalOffset int
 	}
 
 	charPosInLineSegArgs struct {
-		text    core.Rope
-		docLine int
-		charOff int
-		targetX int
-		tabW    int
+		text     core.Rope
+		docLine  int
+		charOff  int
+		targetX  int
+		tabWidth int
 	}
 )
 
@@ -60,8 +60,11 @@ func (r *renderPass) screenCharPos(
 	contentX := max(at.X-a.X-gutterW-entry.prefixW, 0) +
 		v.Offset().HorizontalOffset
 	return charPosInLineSeg(charPosInLineSegArgs{
-		text: text, docLine: entry.logLine, charOff: entry.offset,
-		targetX: contentX, tabW: doc.TabWidth(),
+		text:     text,
+		docLine:  entry.logLine,
+		charOff:  entry.offset,
+		targetX:  contentX,
+		tabWidth: doc.TabWidth(),
 	})
 }
 
@@ -128,7 +131,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 	}
 
 	text := res.doc.Text()
-	prevSel := res.doc.SelectionFor(res.v.ID())
+	prevSel := res.doc.SelectionFor(res.view.ID())
 	r.ec.mouseDownRange = new(prevSel.Primary())
 	r.ec.autoScrollV.last = at.Y - yOff
 	r.ec.autoScrollH.last = at.X
@@ -151,7 +154,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 	}
 	tx := core.NewTransaction(text).WithSelection(newSel)
 	_ = r.cx.Editor.Apply(tx)
-	res.v.BeginFreeScroll(res.doc.Revision(), newSel)
+	res.view.BeginFreeScroll(res.doc.Revision(), newSel)
 }
 
 func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
@@ -251,13 +254,13 @@ func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
 	if !ok {
 		return resolveClickPosRes{}, false
 	}
-	return resolveClickPosRes{doc: doc, v: v, pos: pos}, true
+	return resolveClickPosRes{doc: doc, view: v, pos: pos}, true
 }
 
 func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 	text := args.text
 	cursor := args.cursor
-	gutterW := args.gutterW
+	gutterW := args.gutterWidth
 	cursorLine, err := text.CharToLine(cursor)
 	if err != nil {
 		return geom.Point{X: gutterW}
@@ -300,12 +303,12 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 			break
 		}
 		if runeIdx >= segStart {
-			col += view.RuneWidth(ch, col, args.tabW)
+			col += view.RuneWidth(ch, col, args.tabWidth)
 		}
 		runeIdx++
 	}
 	return geom.Point{
-		X: gutterW + segPrefixW + col - args.hOff, Y: segY,
+		X: gutterW + segPrefixW + col - args.horizontalOffset, Y: segY,
 	}
 }
 
@@ -331,7 +334,7 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 		}
 		var w int
 		if ch == '\t' {
-			w = args.tabW - col%args.tabW
+			w = args.tabWidth - col%args.tabWidth
 		} else {
 			w = runewidth.RuneWidth(ch)
 		}

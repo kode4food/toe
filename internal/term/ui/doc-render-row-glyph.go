@@ -30,7 +30,7 @@ func (r *rowRender) isGuideAt(col, indentCol, startGuide, endGuide int) bool {
 }
 
 type rowGraphemeArgs struct {
-	ch         rune
+	char       rune
 	col        int
 	indentCol  int
 	startGuide int
@@ -40,7 +40,7 @@ type rowGraphemeArgs struct {
 func (r *rowRender) renderGrapheme(
 	args rowGraphemeArgs,
 ) (string, int, documentGlyph) {
-	ch := args.ch
+	ch := args.char
 	col := args.col
 	if ch >= runeFirstPrintableASCII && ch <= runeLastPrintableASCII {
 		return asciiTable[ch : ch+1], 1, documentGlyphNone

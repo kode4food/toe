@@ -32,12 +32,18 @@ type rowWriteArgs struct {
 
 func (r *renderedRow) writeToBuffer(args rowWriteArgs) {
 	cx := writeCellsWindowed(writeCellsArgs{
-		buf: args.buf, cells: r.cells, at: args.at,
-		width: args.width, startCol: args.startCol, cellsCol: r.colStart,
+		buf:      args.buf,
+		cells:    r.cells,
+		at:       args.at,
+		width:    args.width,
+		startCol: args.startCol,
+		cellsCol: r.colStart,
 	})
 	r.writeFillToBuffer(rowFillArgs{
-		buf: args.buf, at: geom.Point{X: cx, Y: args.at.Y},
-		width: max(args.at.X+args.width-cx, 0), style: args.fillStyle,
+		buf:   args.buf,
+		at:    geom.Point{X: cx, Y: args.at.Y},
+		width: max(args.at.X+args.width-cx, 0),
+		style: args.fillStyle,
 	})
 }
 
@@ -119,23 +125,23 @@ func writeCellsWindowed(a writeCellsArgs) int {
 
 // rulers are 1-based content columns
 type applyRulersArgs struct {
-	buf     *tui.Buffer
-	at      geom.Point
-	size    geom.Size
-	hOff    int
-	rulers  []int
-	rulerBg tui.Color
+	buf              *tui.Buffer
+	at               geom.Point
+	size             geom.Size
+	horizontalOffset int
+	rulers           []int
+	rulerBackground  tui.Color
 }
 
 func applyRulers(a applyRulersArgs) {
 	for _, ruler := range a.rulers {
-		rel := ruler - 1 - a.hOff
+		rel := ruler - 1 - a.horizontalOffset
 		if rel < 0 || rel >= a.size.Width {
 			continue
 		}
 		sx := a.at.X + rel
 		for y := a.at.Y; y < a.at.Y+a.size.Height; y++ {
-			a.buf.PatchBg(geom.Point{X: sx, Y: y}, a.rulerBg)
+			a.buf.PatchBg(geom.Point{X: sx, Y: y}, a.rulerBackground)
 		}
 	}
 }

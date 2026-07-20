@@ -60,8 +60,11 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	budget := args.listW
 	if parts.icon != "" {
 		next := writeCompletionPart(writeCompletionPartArgs{
-			buf: buf, at: geom.Point{X: labelX, Y: at.Y}, maxW: budget,
-			text: parts.icon, style: args.icon,
+			buf:   buf,
+			at:    geom.Point{X: labelX, Y: at.Y},
+			maxW:  budget,
+			text:  parts.icon,
+			style: args.icon,
 		})
 		budget -= next - labelX
 		labelX = next
@@ -92,8 +95,11 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	labelX++
 	budget--
 	writeCompletionPart(writeCompletionPartArgs{
-		buf: buf, at: geom.Point{X: labelX, Y: at.Y}, maxW: budget,
-		text: parts.info, style: args.info,
+		buf:   buf,
+		at:    geom.Point{X: labelX, Y: at.Y},
+		maxW:  budget,
+		text:  parts.info,
+		style: args.info,
 	})
 }
 

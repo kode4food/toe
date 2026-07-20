@@ -108,7 +108,7 @@ type renderPaneArgs struct {
 	doc     *view.Document
 	view    *view.View
 	buf     *tui.Buffer
-	y0      int
+	yOffset int
 	focused bool
 }
 
@@ -148,7 +148,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		view: v,
 		buf:  args.buf,
 		area: geom.Area{
-			Point: geom.Point{X: editorX, Y: args.y0 + a.Y},
+			Point: geom.Point{X: editorX, Y: args.yOffset + a.Y},
 			Size:  geom.Size{Width: editorW, Height: contentH},
 		},
 		focused: args.focused,
@@ -157,7 +157,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		doc:     doc,
 		view:    v,
 		buf:     args.buf,
-		at:      geom.Point{X: a.X, Y: args.y0 + a.Y + contentH},
+		at:      geom.Point{X: a.X, Y: args.yOffset + a.Y + contentH},
 		width:   a.Width,
 		focused: args.focused,
 	})
@@ -205,20 +205,29 @@ func (r *renderPass) forceFullRedraw(
 	return
 }
 
+type beginPaneRedrawArgs struct {
+	buf        *tui.Buffer
+	pane       view.Pane
+	yOffset    int
+	dirty      bool
+	redrawAll  bool
+	background tui.Style
+}
+
 // beginPaneRedraw reports whether pane needs repainting this frame, clearing
 // its cell rectangle first on an incremental (non-full) redraw
-func (r *renderPass) beginPaneRedraw(
-	buf *tui.Buffer, pane view.Pane, y0 int, dirty, redrawAll bool,
-	bg tui.Style,
-) bool {
-	forced := !r.cx.SingleLayer && paneUnderOverlay(r.cx, pane.Area(), y0)
-	if !redrawAll && !forced && !dirty {
+func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
+	forced := !r.cx.SingleLayer &&
+		paneUnderOverlay(r.cx, args.pane.Area(), args.yOffset)
+	switch {
+	case args.redrawAll:
+		return true
+	case forced || args.dirty:
+		clearPaneRect(args.buf, args.pane.Area(), args.yOffset, args.background)
+		return true
+	default:
 		return false
 	}
-	if !redrawAll {
-		clearPaneRect(buf, pane.Area(), y0, bg)
-	}
-	return true
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
@@ -248,21 +257,42 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			}
 			dirty := pane.ConsumeDirty()
 			dirty = doc.ConsumeDirty(pane.ID()) || dirty
-			if r.beginPaneRedraw(buf, pane, y0, dirty, redrawAll, bgTUI) {
+			if r.beginPaneRedraw(beginPaneRedrawArgs{
+				buf:        buf,
+				pane:       pane,
+				yOffset:    y0,
+				dirty:      dirty,
+				redrawAll:  redrawAll,
+				background: bgTUI,
+			}) {
 				r.renderPane(renderPaneArgs{
-					doc: doc, view: pane, buf: buf, y0: y0, focused: focused,
+					doc:     doc,
+					view:    pane,
+					buf:     buf,
+					yOffset: y0,
+					focused: focused,
 				})
 			}
 		case *ImagePane:
-			if r.beginPaneRedraw(
-				buf, pane, y0, pane.ConsumeDirty(), redrawAll, bgTUI,
-			) {
+			if r.beginPaneRedraw(beginPaneRedrawArgs{
+				buf:        buf,
+				pane:       pane,
+				yOffset:    y0,
+				dirty:      pane.ConsumeDirty(),
+				redrawAll:  redrawAll,
+				background: bgTUI,
+			}) {
 				r.renderImagePane(buf, pane, y0, focused)
 			}
 		case *TerminalPane:
-			if r.beginPaneRedraw(
-				buf, pane, y0, pane.ConsumeDirty(), redrawAll, bgTUI,
-			) {
+			if r.beginPaneRedraw(beginPaneRedrawArgs{
+				buf:        buf,
+				pane:       pane,
+				yOffset:    y0,
+				dirty:      pane.ConsumeDirty(),
+				redrawAll:  redrawAll,
+				background: bgTUI,
+			}) {
 				r.renderTerminalPane(buf, pane, y0, focused)
 			}
 		}

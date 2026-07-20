@@ -115,7 +115,9 @@ func (f *fileExplorerSource) readDir() []ui.PickerItem {
 		rel := filepath.ToSlash(entry.Name())
 		ignoreOpts := explorerIgnoreOptions(f.opts)
 		if ui.SkipPickerPath(ui.SkipPickerPathArgs{
-			Rel: rel, Path: full, Entry: entry,
+			Rel:     rel,
+			Path:    full,
+			Entry:   entry,
 			Ignores: ui.LoadIgnoreFiles(f.root, full, ignoreOpts),
 			Opts:    ignoreOpts,
 		}) {

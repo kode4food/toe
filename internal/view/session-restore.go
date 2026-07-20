@@ -68,7 +68,7 @@ func (e *Editor) restoreSessionNode(
 		return e.restoreSessionView(restoreSessionViewArgs{
 			tree:    t,
 			parent:  parent,
-			id:      id,
+			viewID:  id,
 			docID:   docID,
 			session: sn,
 			restore: rs,
@@ -97,7 +97,7 @@ func (e *Editor) restoreSessionNode(
 type restoreSessionViewArgs struct {
 	tree    *Tree
 	parent  Id
-	id      Id
+	viewID  Id
 	docID   DocumentId
 	session sessionNode
 	restore *sessionRestore
@@ -105,7 +105,7 @@ type restoreSessionViewArgs struct {
 
 func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	v := &View{
-		id:         args.id,
+		id:         args.viewID,
 		editor:     e,
 		docID:      args.docID,
 		mode:       ParseMode(args.session.Mode),
@@ -134,18 +134,18 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 		head = len(entries)
 	}
 	v.jumps.Restore(entries, head)
-	args.tree.nodes[args.id] = &treeNode{parent: args.parent, pane: v}
+	args.tree.nodes[args.viewID] = &treeNode{parent: args.parent, pane: v}
 	if doc, ok := args.restore.documents[args.docID]; ok {
 		sel := args.session.Selection.selection()
-		doc.SetSelectionFor(args.id, sel)
+		doc.SetSelectionFor(args.viewID, sel)
 		if v.freeScroll {
 			v.BeginFreeScroll(doc.Revision(), sel)
 		}
 	}
 	if args.session.Focused {
-		args.restore.focus = args.id
+		args.restore.focus = args.viewID
 	}
-	return args.id
+	return args.viewID
 }
 
 func (s sessionSelect) selection() core.Selection {

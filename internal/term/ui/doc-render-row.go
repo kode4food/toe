@@ -165,8 +165,11 @@ func (r *rowRender) rows() []renderedRow {
 			writeAnnotations(pos)
 		}
 		rendered, width, glyph := r.renderGrapheme(rowGraphemeArgs{
-			ch: ch, col: col, indentCol: indentCol,
-			startGuide: startGuide, endGuide: endGuide,
+			char:       ch,
+			col:        col,
+			indentCol:  indentCol,
+			startGuide: startGuide,
+			endGuide:   endGuide,
 		})
 		col += width
 		selAt := r.selectionAt(pos)

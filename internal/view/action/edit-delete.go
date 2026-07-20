@@ -37,7 +37,10 @@ func DeleteCharForward(e *view.Editor) {
 		changes = append(changes, core.DeleteChange(pos, next))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
-		text: text, sel: sel, ranges: ranges, changes: changes,
+		text:    text,
+		sel:     sel,
+		ranges:  ranges,
+		changes: changes,
 	})
 }
 
@@ -73,7 +76,10 @@ func DeleteWordBackward(e *view.Editor) {
 		changes = append(changes, core.DeleteChange(wordStart, pos))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
-		text: text, sel: sel, ranges: ranges, changes: changes,
+		text:    text,
+		sel:     sel,
+		ranges:  ranges,
+		changes: changes,
 	})
 }
 
@@ -110,7 +116,10 @@ func DeleteWordForward(e *view.Editor) {
 		changes = append(changes, core.DeleteChange(pos, wordEnd))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
-		text: text, sel: sel, ranges: ranges, changes: changes,
+		text:    text,
+		sel:     sel,
+		ranges:  ranges,
+		changes: changes,
 	})
 }
 

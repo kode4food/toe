@@ -97,9 +97,9 @@ func (r *renderPass) paintContentOverlays(st *contentRenderState) {
 				Width:  format.ViewportWidth,
 				Height: args.area.Height,
 			},
-			hOff:    st.hOff,
-			rulers:  st.rulers,
-			rulerBg: st.rulerBg,
+			horizontalOffset: st.hOff,
+			rulers:           st.rulers,
+			rulerBackground:  st.rulerBg,
 		})
 	}
 }
@@ -245,9 +245,13 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 		var rowIndentCol, rowLineStart, rowColOffset int
 		if !softWrap && hOff > 0 {
 			prefix := dc.ensureLinePrefix(linePrefixArgs{
-				rev: rev, lineNum: lineNum, lineStart: lineStart,
-				lineEnd: lineContentEnd, tabW: tabW, hOff: hOff,
-				text: text,
+				rev:              rev,
+				lineNum:          lineNum,
+				lineStart:        lineStart,
+				lineEnd:          lineContentEnd,
+				tabWidth:         tabW,
+				horizontalOffset: hOff,
+				text:             text,
 			})
 			rowIndentCol = prefix.indentCol
 			rowLineStart = prefix.windowPos
@@ -306,17 +310,21 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 				}
 				if i == 0 {
 					cr.writeToBuffer(rowWriteArgs{
-						buf: buf, at: geom.Point{X: contentX, Y: bufRow},
-						fillStyle: fillTUI, width: format.ViewportWidth,
-						startCol: hOff,
+						buf:       buf,
+						at:        geom.Point{X: contentX, Y: bufRow},
+						fillStyle: fillTUI,
+						width:     format.ViewportWidth,
+						startCol:  hOff,
 					})
 				} else {
 					cont := prefixRow
 					cont.append(cr)
 					cont.writeToBuffer(rowWriteArgs{
-						buf: buf, at: geom.Point{X: contentX, Y: bufRow},
-						fillStyle: fillTUI, width: format.ViewportWidth,
-						startCol: hOff,
+						buf:       buf,
+						at:        geom.Point{X: contentX, Y: bufRow},
+						fillStyle: fillTUI,
+						width:     format.ViewportWidth,
+						startCol:  hOff,
 					})
 					rowPrefixW = prefixW
 				}

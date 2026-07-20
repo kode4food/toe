@@ -31,9 +31,10 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 		}
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptRegex,
-				prompt: i18n.Text(i18n.PromptRename),
-				buf:    prefill,
+				ec:      ec,
+				kind:    promptRegex,
+				prompt:  i18n.Text(i18n.PromptRename),
+				prefill: prefill,
 				fn: func(e *view.Editor, name string) error {
 					return renameSymbol(e, name)
 				},

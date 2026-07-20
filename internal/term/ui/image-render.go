@@ -22,24 +22,33 @@ func (r *renderPass) renderImagePane(
 		Point: geom.Point{X: a.X, Y: y0 + a.Y},
 		Size:  geom.Size{Width: a.Width, Height: contentH},
 	})
-	r.renderImageStatus(
-		buf, pane, geom.Point{X: a.X, Y: y0 + a.Y + contentH},
-		a.Width, focused,
-	)
+	r.renderImageStatus(renderImageStatusArgs{
+		buf:     buf,
+		pane:    pane,
+		at:      geom.Point{X: a.X, Y: y0 + a.Y + contentH},
+		width:   a.Width,
+		focused: focused,
+	})
 }
 
-func (r *renderPass) renderImageStatus(
-	buf *tui.Buffer, pane *ImagePane, at geom.Point, width int, focused bool,
-) {
-	img := pane.Image()
+type renderImageStatusArgs struct {
+	buf     *tui.Buffer
+	pane    *ImagePane
+	at      geom.Point
+	width   int
+	focused bool
+}
+
+func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
+	buf := args.buf
+	pane := args.pane
+	at := args.at
+	width := args.width
 	th := r.activeTheme()
-	statusKey := "ui.statusline"
-	if !focused {
-		statusKey = "ui.statusline.inactive"
-	}
-	baseTUI := lipglossToTUIStyle(th.Get(statusKey))
+	baseTUI := lipglossToTUIStyle(th.Get("ui.statusline.inactive"))
 	modeSt := baseTUI
-	if focused {
+	if args.focused {
+		baseTUI = lipglossToTUIStyle(th.Get("ui.statusline"))
 		modeSt = lipglossToTUIStyle(th.Get("ui.statusline.normal"))
 	}
 	buf.SetString(at, strings.Repeat(" ", width), baseTUI)
@@ -53,7 +62,7 @@ func (r *renderPass) renderImageStatus(
 		" "+filepath.Base(pane.Path()), baseTUI,
 	)
 
-	pixels := img.Size()
+	pixels := pane.Image().Size()
 	info := fmt.Sprintf("%d×%d %d%% ", pixels.Width, pixels.Height, pane.Zoom())
 	buf.SetString(geom.Point{
 		X: at.X + width - runewidth.StringWidth(info),
@@ -141,7 +150,8 @@ type imagePaneCellSizeArgs struct {
 
 func imagePaneCellSize(args imagePaneCellSizeArgs) geom.Size {
 	cells := imageCellSize(imageCellSizeArgs{
-		maxCells: args.maxCells, pixels: args.pixels,
+		maxCells: args.maxCells,
+		pixels:   args.pixels,
 	})
 	if cells.Empty() {
 		return geom.Size{}

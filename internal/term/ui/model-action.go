@@ -63,7 +63,8 @@ func (m Model) CmdModeAction() command.KeyAction {
 	return func(_ *view.Editor) command.Continuation {
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptCmd,
+				ec:   ec,
+				kind: promptCmd,
 			}), nil
 		}
 		return nil
@@ -75,7 +76,9 @@ func (m Model) SearchAction(forward bool) command.KeyAction {
 	return func(_ *view.Editor) command.Continuation {
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptSearch, forward: forward,
+				ec:      ec,
+				kind:    promptSearch,
+				forward: forward,
 			}), nil
 		}
 		return nil
@@ -87,7 +90,10 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 	return func(_ *view.Editor) command.Continuation {
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptRegex, prompt: prompt, fn: fn,
+				ec:     ec,
+				kind:   promptRegex,
+				prompt: prompt,
+				fn:     fn,
 			}), nil
 		}
 		return nil
@@ -99,7 +105,10 @@ func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
 	return func(_ *view.Editor) command.Continuation {
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
-				ec: ec, kind: promptShell, prompt: prompt, fn: fn,
+				ec:     ec,
+				kind:   promptShell,
+				prompt: prompt,
+				fn:     fn,
 			}), nil
 		}
 		return nil

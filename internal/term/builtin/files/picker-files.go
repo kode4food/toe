@@ -88,8 +88,10 @@ func startFilePickerFeed(
 		walkPickerFiles(root, done, func(path, rel string) bool {
 			select {
 			case ch <- ui.PickerItem{
-				Display:  rel,
-				Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+				Display: rel,
+				Location: ui.PickerLocation{
+					Target: ui.PickerTarget{Path: path},
+				},
 			}:
 				return true
 			case <-done:
@@ -181,7 +183,9 @@ func (w *pickerWalker) walkDir(dir string) bool {
 		rel = filepath.ToSlash(rel)
 		ignoreOpts := ui.DefaultPickerIgnoreOptions()
 		if ui.SkipPickerPath(ui.SkipPickerPathArgs{
-			Rel: rel, Path: path, Entry: entry,
+			Rel:     rel,
+			Path:    path,
+			Entry:   entry,
 			Ignores: ui.LoadIgnoreFiles(w.root, path, ignoreOpts),
 			Opts:    ignoreOpts,
 		}) {

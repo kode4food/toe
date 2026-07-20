@@ -43,7 +43,8 @@ func (vf *VisualMoveFormat) VisualScrollUp(
 	for args.Up > 0 {
 		if args.Row >= args.Up {
 			return VisualScrollUpRes{
-				Line: args.Line, Row: args.Row - args.Up,
+				Line: args.Line,
+				Row:  args.Row - args.Up,
 			}
 		}
 		args.Up -= args.Row + 1

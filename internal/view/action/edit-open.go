@@ -88,7 +88,10 @@ func OpenAbove(e *view.Editor) {
 		}
 	}
 	applyNewlines(e, applyNewlinesArgs{
-		text: text, sel: sel, changes: changes, targets: targets,
+		text:    text,
+		sel:     sel,
+		changes: changes,
+		targets: targets,
 	})
 }
 

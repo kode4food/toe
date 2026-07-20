@@ -214,11 +214,17 @@ func (c *completionComponent) paint(
 			infoStyle = selInfo
 		}
 		c.renderRow(renderCompletionRowArgs{
-			buf: buf, at: area.Point.Add(geom.Point{Y: i}),
-			width: area.Width, listW: listW,
-			item: item, selected: selected, query: query,
-			base: style, match: matchStyle,
-			icon: iconStyle, info: infoStyle,
+			buf:      buf,
+			at:       area.Point.Add(geom.Point{Y: i}),
+			width:    area.Width,
+			listW:    listW,
+			item:     item,
+			selected: selected,
+			query:    query,
+			base:     style,
+			match:    matchStyle,
+			icon:     iconStyle,
+			info:     infoStyle,
 		})
 	}
 	if overflow {

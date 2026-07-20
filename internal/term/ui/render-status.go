@@ -156,7 +156,6 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	v := args.view
 	buf := args.buf
 	width := args.width
-	isFocused := args.focused
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	prim := sel.Primary()
@@ -175,16 +174,11 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	th := r.activeTheme()
 
-	statusKey := "ui.statusline"
-	if !isFocused {
-		statusKey = "ui.statusline.inactive"
-	}
-	st := th.Get(statusKey)
-
+	st := th.Get("ui.statusline.inactive")
 	modeSt := st
-	if isFocused {
-		scope := "ui.statusline." + v.Mode().Scope()
-		modeSt = th.Get(scope)
+	if args.focused {
+		st = th.Get("ui.statusline")
+		modeSt = th.Get("ui.statusline." + v.Mode().Scope())
 	}
 
 	sepSt := st

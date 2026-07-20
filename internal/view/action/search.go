@@ -50,8 +50,10 @@ func MakeSearchWordBounded(e *view.Editor) {
 // in the '/' register, and moves each cursor to the first match
 func SearchForward(e *view.Editor, pattern string) error {
 	return searchImpl(searchArgs{
-		editor: e, pattern: pattern,
-		forward: true, wrap: e.Options().SearchWrapAround,
+		editor:  e,
+		pattern: pattern,
+		forward: true,
+		wrap:    e.Options().SearchWrapAround,
 	})
 }
 
@@ -59,8 +61,9 @@ func SearchForward(e *view.Editor, pattern string) error {
 // it in the '/' register, and moves each cursor to the previous match
 func SearchBackward(e *view.Editor, pattern string) error {
 	return searchImpl(searchArgs{
-		editor: e, pattern: pattern,
-		wrap: e.Options().SearchWrapAround,
+		editor:  e,
+		pattern: pattern,
+		wrap:    e.Options().SearchWrapAround,
 	})
 }
 
@@ -71,8 +74,11 @@ func SearchNext(e *view.Editor) {
 		return
 	}
 	_ = searchImpl(searchArgs{
-		editor: e, pattern: pat, count: countOrOne(e), forward: true,
-		wrap: e.Options().SearchWrapAround,
+		editor:  e,
+		pattern: pat,
+		count:   countOrOne(e),
+		forward: true,
+		wrap:    e.Options().SearchWrapAround,
 	})
 }
 
@@ -83,8 +89,10 @@ func SearchPrev(e *view.Editor) {
 		return
 	}
 	_ = searchImpl(searchArgs{
-		editor: e, pattern: pat, count: countOrOne(e),
-		wrap: e.Options().SearchWrapAround,
+		editor:  e,
+		pattern: pat,
+		count:   countOrOne(e),
+		wrap:    e.Options().SearchWrapAround,
 	})
 }
 
@@ -95,8 +103,12 @@ func ExtendSearchNext(e *view.Editor) {
 		return
 	}
 	_ = searchImpl(searchArgs{
-		editor: e, pattern: pat, count: countOrOne(e), forward: true,
-		wrap: e.Options().SearchWrapAround, extend: true,
+		editor:  e,
+		pattern: pat,
+		count:   countOrOne(e),
+		forward: true,
+		wrap:    e.Options().SearchWrapAround,
+		extend:  true,
 	})
 }
 
@@ -107,8 +119,11 @@ func ExtendSearchPrev(e *view.Editor) {
 		return
 	}
 	_ = searchImpl(searchArgs{
-		editor: e, pattern: pat, count: countOrOne(e),
-		wrap: e.Options().SearchWrapAround, extend: true,
+		editor:  e,
+		pattern: pat,
+		count:   countOrOne(e),
+		wrap:    e.Options().SearchWrapAround,
+		extend:  true,
 	})
 }
 
@@ -158,9 +173,7 @@ type searchArgs struct {
 func searchImpl(args searchArgs) error {
 	e := args.editor
 	pattern := args.pattern
-	forward := args.forward
 	wrap := args.wrap
-	extend := args.extend
 	re, err := compileSearchRegexp(pattern, e.Options().SearchSmartCase)
 	if err != nil {
 		return err
@@ -190,7 +203,7 @@ func searchImpl(args searchArgs) error {
 		for i, r := range ranges {
 			cursor := r.Cursor(text)
 			var m searchMatch
-			if forward {
+			if args.forward {
 				m = findNextMatch(re, fullStr, cursor+1, wrap)
 			} else {
 				m = findPrevMatch(re, fullStr, cursor, wrap)
@@ -201,7 +214,7 @@ func searchImpl(args searchArgs) error {
 			}
 			matched = true
 			wrapped = wrapped || m.wrapped
-			newRanges[i] = r.PutCursor(text, m.pos, extend)
+			newRanges[i] = r.PutCursor(text, m.pos, args.extend)
 		}
 		setSearchStatus(e, matched, wrapped)
 		newSel, err2 := core.NewSelection(newRanges, sel.PrimaryIndex())

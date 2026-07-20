@@ -183,7 +183,7 @@ type promptComponentArgs struct {
 	kind     promptKind
 	forward  bool
 	prompt   string
-	buf      string
+	prefill  string
 	fn       promptHandler
 	pickerFn pickerBuilder
 }
@@ -194,8 +194,8 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 		kind:     args.kind,
 		forward:  args.forward,
 		prompt:   args.prompt,
-		buf:      args.buf,
-		caret:    len([]rune(args.buf)),
+		buf:      args.prefill,
+		caret:    len([]rune(args.prefill)),
 		fn:       args.fn,
 		pickerFn: args.pickerFn,
 	}

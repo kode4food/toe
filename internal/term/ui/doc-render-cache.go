@@ -244,11 +244,11 @@ func (dc *docRenderCache) ensureLineIndex(
 }
 
 func (dc *docRenderCache) ensureLinePrefix(args linePrefixArgs) linePrefixScan {
-	if dc.prefixRev != args.rev || dc.prefixHOff != args.hOff ||
-		dc.prefixTabW != args.tabW {
+	if dc.prefixRev != args.rev || dc.prefixHOff != args.horizontalOffset ||
+		dc.prefixTabW != args.tabWidth {
 		dc.prefixRev = args.rev
-		dc.prefixHOff = args.hOff
-		dc.prefixTabW = args.tabW
+		dc.prefixHOff = args.horizontalOffset
+		dc.prefixTabW = args.tabWidth
 		dc.linePrefix = make(map[int]linePrefixScan, len(dc.linePrefix))
 	}
 	if r, ok := dc.linePrefix[args.lineNum]; ok {

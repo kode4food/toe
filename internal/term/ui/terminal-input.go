@@ -273,19 +273,27 @@ func mouseFields(msg tea.Msg) (mouseFieldsRes, bool) {
 	switch e := msg.(type) {
 	case tea.MouseClickMsg:
 		return mouseFieldsRes{
-			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+			at:  geom.Point{X: e.X, Y: e.Y},
+			btn: e.Button,
+			mod: e.Mod,
 		}, true
 	case tea.MouseReleaseMsg:
 		return mouseFieldsRes{
-			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+			at:  geom.Point{X: e.X, Y: e.Y},
+			btn: e.Button,
+			mod: e.Mod,
 		}, true
 	case tea.MouseMotionMsg:
 		return mouseFieldsRes{
-			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+			at:  geom.Point{X: e.X, Y: e.Y},
+			btn: e.Button,
+			mod: e.Mod,
 		}, true
 	case tea.MouseWheelMsg:
 		return mouseFieldsRes{
-			at: geom.Point{X: e.X, Y: e.Y}, btn: e.Button, mod: e.Mod,
+			at:  geom.Point{X: e.X, Y: e.Y},
+			btn: e.Button,
+			mod: e.Mod,
 		}, true
 	}
 	return mouseFieldsRes{}, false

@@ -96,8 +96,13 @@ func (a *axisTicker) update(
 	pos, lo, hi, margin int,
 ) (atLo, atHi bool, clamped int) {
 	atLo, atHi, clamped = dragEdge(dragEdgeArgs{
-		pos: pos, last: a.last, lo: lo, hi: hi, margin: margin,
-		onLo: a.on && a.toLo, onHi: a.on && !a.toLo,
+		pos:    pos,
+		last:   a.last,
+		lo:     lo,
+		hi:     hi,
+		margin: margin,
+		onLo:   a.on && a.toLo,
+		onHi:   a.on && !a.toLo,
 	})
 	a.last = pos
 	a.interval = autoScrollInterval(pos, lo, hi, margin, atLo, atHi)

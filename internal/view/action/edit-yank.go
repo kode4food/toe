@@ -92,7 +92,10 @@ func ReplaceWithYanked(e *view.Editor) {
 		valueIdx++
 	}
 	applyChangesFrom(e, applyChangesFromArgs{
-		text: text, sel: sel, ranges: ranges, changes: changes,
+		text:    text,
+		sel:     sel,
+		ranges:  ranges,
+		changes: changes,
 	})
 }
 

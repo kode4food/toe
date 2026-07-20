@@ -124,7 +124,6 @@ func (s *signatureHelpComponent) paint(
 	cx *Context, buf *tui.Buffer, pl geom.Area,
 ) {
 	sig := s.help.Signatures[s.cursor]
-	w := pl.Width
 	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
 	border := lipgloss.RoundedBorder()
 	pop := popup{
@@ -145,9 +144,13 @@ func (s *signatureHelpComponent) paint(
 	if len(s.lines) == 0 || area.Height < 3 {
 		return
 	}
-	renderSignatureSeparator(
-		buf, geom.Point{Y: area.Y + 1}, w, border, st,
-	)
+	renderSignatureSeparator(renderSignatureSeparatorArgs{
+		buf:    buf,
+		at:     geom.Point{Y: area.Y + 1},
+		width:  pl.Width,
+		border: border,
+		style:  st,
+	})
 	docArea := area
 	docArea.Y += 2
 	docArea.Height -= 2
@@ -167,12 +170,12 @@ func (s *signatureHelpComponent) openScreenX(cx *Context) int {
 	opts := cx.Editor.Options()
 	rowMap := s.ec.cache.viewRowMaps[v.ID()]
 	visual := cursorScreenPos(cursorScreenPosArgs{
-		text:    doc.Text(),
-		cursor:  s.call.open,
-		gutterW: gutterWidthFor(doc.Text(), opts.Gutters),
-		rowMap:  rowMap,
-		tabW:    doc.TabWidth(),
-		hOff:    v.Offset().HorizontalOffset,
+		text:             doc.Text(),
+		cursor:           s.call.open,
+		gutterWidth:      gutterWidthFor(doc.Text(), opts.Gutters),
+		rowMap:           rowMap,
+		tabWidth:         doc.TabWidth(),
+		horizontalOffset: v.Offset().HorizontalOffset,
 	})
 	return v.Area().X + visual.X
 }
@@ -260,13 +263,19 @@ func (s *signatureHelpComponent) renderSignature(
 	buf.SetString(geom.Point{X: x, Y: area.Y}, text, lipglossToTUIStyle(st))
 }
 
-func renderSignatureSeparator(
-	buf *tui.Buffer, at geom.Point, w int, border lipgloss.Border, st tui.Style,
-) {
-	line := border.MiddleLeft +
-		strings.Repeat(border.Top, max(w-2, 0)) +
-		border.MiddleRight
-	buf.SetString(at, line, st)
+type renderSignatureSeparatorArgs struct {
+	buf    *tui.Buffer
+	at     geom.Point
+	width  int
+	border lipgloss.Border
+	style  tui.Style
+}
+
+func renderSignatureSeparator(args renderSignatureSeparatorArgs) {
+	line := args.border.MiddleLeft +
+		strings.Repeat(args.border.Top, max(args.width-2, 0)) +
+		args.border.MiddleRight
+	args.buf.SetString(args.at, line, args.style)
 }
 
 func pushSignatureHelpLayer(comp *Compositor, layer *signatureHelpComponent) {

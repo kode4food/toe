@@ -110,7 +110,9 @@ func deleteOrChange(e *view.Editor, yank, enterInsert bool) {
 		yankSelectionRanges(e, text, ranges)
 	}
 	if !applyDeletions(e, applyDeletionsArgs{
-		text: text, sel: sel, ranges: ranges,
+		text:   text,
+		sel:    sel,
+		ranges: ranges,
 	}) {
 		return
 	}

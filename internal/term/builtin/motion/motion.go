@@ -266,9 +266,11 @@ func CursorModule() command.Module {
 			{
 				Name:      actTillPrevChar,
 				DocString: "Move till previous occurrence of char",
-				Run:       kit.Continuation(findCharAction(false, false, false)),
-				Modes:     []string{"NOR"},
-				Keys:      kit.Keys(kit.Char('T')),
+				Run: kit.Continuation(
+					findCharAction(false, false, false),
+				),
+				Modes: []string{"NOR"},
+				Keys:  kit.Keys(kit.Char('T')),
 			},
 			{
 				Name:      actGotoLine,
@@ -676,13 +678,19 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 			if k.Code.Char != 0 && k.Mods == command.ModNone {
 				target := k.Code.Char
 				action.FindChar(action.FindCharArgs{
-					Editor: e, Ch: target, Forward: fwd,
-					Inclusive: inc, Extend: ext,
+					Editor:    e,
+					Ch:        target,
+					Forward:   fwd,
+					Inclusive: inc,
+					Extend:    ext,
 				})
 				e.SetLastMotion(func(e *view.Editor) {
 					action.FindChar(action.FindCharArgs{
-						Editor: e, Ch: target, Forward: fwd,
-						Inclusive: inc, Extend: ext,
+						Editor:    e,
+						Ch:        target,
+						Forward:   fwd,
+						Inclusive: inc,
+						Extend:    ext,
 					})
 				})
 			}

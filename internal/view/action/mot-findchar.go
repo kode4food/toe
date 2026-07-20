@@ -24,27 +24,23 @@ func FindChar(args FindCharArgs) {
 		cursorHead := core.NextGraphemeBoundary(doc, cursor)
 
 		// Compute first search start, preserving original skip semantics
-		var fwd, bwd int
+		var start int
+		search := findCharForward
 		if args.Forward {
-			fwd = cursorHead
+			start = cursorHead
 			if !args.Inclusive {
-				fwd = cursorHead + 1
+				start = cursorHead + 1
 			}
 		} else {
-			if args.Inclusive {
-				bwd = cursor - 1
-			} else if cursor > 0 {
-				bwd = cursor - 2
-			} else {
+			search = findCharBackward
+			switch {
+			case args.Inclusive:
+				start = cursor - 1
+			case cursor > 0:
+				start = cursor - 2
+			default:
 				return r
 			}
-		}
-
-		start := fwd
-		search := findCharForward
-		if !args.Forward {
-			start = bwd
-			search = findCharBackward
 		}
 		found := -1
 		for range n {

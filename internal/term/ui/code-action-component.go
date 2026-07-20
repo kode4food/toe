@@ -54,10 +54,10 @@ func (m *codeActionMenu) HandleEvent(
 		case tea.KeyEscape:
 			return consumedWith(popLayer), nil
 		case tea.KeyUp:
-			m.move(-1)
+			m.moveBy(-1)
 			return consumed(), nil
 		case tea.KeyDown:
-			m.move(1)
+			m.moveBy(1)
 			return consumed(), nil
 		case tea.KeyEnter:
 			return consumedWith(m.apply), nil
@@ -151,7 +151,7 @@ func (m *codeActionMenu) popupPos(
 	return m.ec.popupAnchorBelowCaret(cx, screenH, codeActionMaxRows)
 }
 
-func (m *codeActionMenu) move(n int) {
+func (m *codeActionMenu) moveBy(n int) {
 	m.markDirty()
 	m.cursor = (m.cursor + n + len(m.actions)) % len(m.actions)
 	m.scroll = listEnsureCursorVisible(

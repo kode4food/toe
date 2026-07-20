@@ -60,10 +60,10 @@ func (s *signatureHelpComponent) HandleEvent(
 	case key.Code == tea.KeyEscape:
 		return consumedWith(s.dismiss), nil
 	case key.Mod&tea.ModAlt != 0 && key.Text == "p":
-		s.move(-1)
+		s.moveBy(-1)
 		return consumed(), nil
 	case key.Mod&tea.ModAlt != 0 && key.Text == "n":
-		s.move(1)
+		s.moveBy(1)
 		return consumed(), nil
 	default:
 		k := FromTeaKey(key)
@@ -177,7 +177,7 @@ func (s *signatureHelpComponent) openScreenX(cx *Context) int {
 	return v.Area().X + visual.X
 }
 
-func (s *signatureHelpComponent) move(n int) {
+func (s *signatureHelpComponent) moveBy(n int) {
 	if len(s.help.Signatures) <= 1 {
 		return
 	}

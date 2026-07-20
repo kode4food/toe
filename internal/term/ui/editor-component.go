@@ -136,206 +136,41 @@ func (e *EditorComponent) HandleEvent(
 	e.syncFileWatcher(cx)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		e.size = geom.Size{Width: msg.Width, Height: msg.Height}
-		e.resize(cx)
-		return consumed(), nil
-
+		return e.handleWindowSize(cx, msg)
 	case tea.KeyPressMsg:
-		result, cmd := e.handleKeyPress(cx, msg)
-		if shown := bufferlineVisible(cx); shown != e.bufferlineShown {
-			e.bufferlineShown = shown
-			e.resize(cx)
-		}
-		return result, tea.Batch(
-			cmd, e.autoSaveCmd(cx), e.documentHighlightCmd(cx),
-		)
-
+		return e.handleKeyPressEvent(cx, msg)
 	case tea.FocusMsg:
-		e.focused = true
-		return ignored(), e.documentHighlightCmd(cx)
-
+		return e.handleFocus(cx)
 	case tea.BlurMsg:
-		e.focused = false
-		if cx.Editor.Options().AutoSaveFocusLost {
-			cx.Editor.SaveAll(false)
-		}
-		return ignored(), nil
-
+		return e.handleBlur(cx)
 	case autoSaveMsg:
-		if msg.gen == e.saveSlot.gen {
-			cx.Editor.SaveAll(false)
-		}
-		return consumed(), nil
-
+		return e.handleAutoSaveMsg(cx, msg)
 	case docHighlightMsg:
-		if msg.gen != e.docHighlightGen {
-			e.docHighlightPos = docHighlightPosition{}
-			return consumed(), e.documentHighlightCmd(cx)
-		}
-		return consumed(), nil
-
+		return e.handleDocHighlightMsg(cx, msg)
 	case completionMsg:
-		if msg.gen != e.completionGen {
-			return consumed(), nil
-		}
-		if !completionRequestValid(cx, msg.anchor) {
-			return consumed(), nil
-		}
-		if msg.err != nil {
-			cx.Editor.SetStatusMsg(msg.err.Error())
-			return consumed(), nil
-		}
-		if len(msg.items) == 0 {
-			return consumed(), nil
-		}
-		return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
-			c := &completionComponent{
-				ec:         e,
-				all:        msg.items,
-				items:      msg.items,
-				anchor:     msg.anchor,
-				incomplete: msg.incomplete,
-			}
-			c.resetCursor()
-			comp.Push(c)
-			return nil
-		}), nil
-
+		return e.handleCompletionMsg(cx, msg)
 	case externalFileChangedMsg:
-		cx.Editor.ProcessExternalFileChange(msg.path)
-		e.syncEditorMessages(cx)
-		return consumed(), e.fileWatchCmd(cx)
-
+		return e.handleExternalFileChanged(cx, msg)
 	case terminalPollMsg:
-		e.pollTerminals(cx)
-		return consumed(), terminalPollCmd()
-
+		return e.handleTerminalPoll(cx)
 	case vcsUpdatedMsg:
-		for _, doc := range cx.Editor.AllDocuments() {
-			doc.MarkDirty()
-		}
-		return consumed(), vcsUpdateCmd(cx)
-
+		return e.handleVCSUpdated(cx)
 	case vcsRefreshMsg:
-		if vc := cx.Editor.VersionControl(); vc != nil {
-			vc.Refresh()
-		}
-		return consumed(), vcsRefreshCmd(cx)
-
+		return e.handleVCSRefresh(cx)
 	case spinnerTickMsg:
-		if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
-			e.spinFrame++
-		} else {
-			e.spinFrame = 0
-		}
-		return consumed(), spinnerTickCmd()
-
+		return e.handleSpinnerTick(cx)
 	case tea.MouseClickMsg:
-		e.completionGen++
-		e.cancelPending(cx)
-		e.autoScrollV.stop()
-		e.autoScrollH.stop()
-		if dc := e.mouseDownDrag; dc != nil {
-			dc.CancelDrag()
-		}
-		e.mouseDownDrag = nil
-		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
-			r := &renderPass{ec: e, cx: cx, size: e.size}
-			r.handleMouseClick(geom.Point{X: msg.X, Y: msg.Y}, msg.Mod)
-		}
-		return consumed(), e.documentHighlightCmd(cx)
-
+		return e.handleMouseClick(cx, msg)
 	case tea.MouseMotionMsg:
-		e.completionGen++
-		if dc := e.mouseDownDrag; dc != nil &&
-			cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
-			at := geom.Point{X: msg.X, Y: msg.Y}
-			return consumed(), dc.ContinueDrag(cx, at)
-		}
-		var dragCmd tea.Cmd
-		if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
-			if p, ok := paneAt(cx, geom.Point{X: msg.X, Y: msg.Y}); ok {
-				if pi, ok := p.(PaneInput); ok {
-					if _, handled := pi.HandleEvent(cx, msg); handled {
-						return consumed(), nil
-					}
-				}
-			}
-			r := &renderPass{ec: e, cx: cx, size: e.size}
-			dragCmd = r.handleMouseDrag(geom.Point{X: msg.X, Y: msg.Y})
-		}
-		return consumed(), tea.Batch(dragCmd, e.documentHighlightCmd(cx))
-
+		return e.handleMouseMotion(cx, msg)
 	case mouseAxisScrollMsg:
-		if msg.gen != msg.axis.gen {
-			return consumed(), nil
-		}
-		return consumed(), e.continueAxisScroll(cx, msg.axis, msg.toLo)
-
+		return e.handleMouseAxisScroll(cx, msg)
 	case terminalDragScrollMsg:
 		return consumed(), msg.dc.DragTick(cx, msg.gen, msg.toTop)
-
 	case tea.MouseReleaseMsg:
-		e.completionGen++
-		if dc := e.mouseDownDrag; dc != nil {
-			e.mouseDownDrag = nil
-			cmd := dc.EndDrag(cx, geom.Point{X: msg.X, Y: msg.Y})
-			e.syncEditorMessages(cx)
-			return consumed(), tea.Batch(cmd, e.documentHighlightCmd(cx))
-		}
-		if !cx.Editor.Options().Mouse {
-			return consumed(), nil
-		}
-		if p, ok := paneAt(cx, geom.Point{X: msg.X, Y: msg.Y}); ok {
-			if pi, ok := p.(PaneInput); ok {
-				if _, handled := pi.HandleEvent(cx, msg); handled {
-					return consumed(), e.documentHighlightCmd(cx)
-				}
-			}
-		}
-		switch msg.Button {
-		case tea.MouseLeft:
-			e.handleMouseLeftRelease(cx)
-		case tea.MouseMiddle:
-			if cx.Editor.Options().MiddleClickPaste {
-				r := &renderPass{ec: e, cx: cx, size: e.size}
-				at := geom.Point{X: msg.X, Y: msg.Y}
-				r.handleMouseMiddleRelease(at, msg.Mod)
-			}
-		}
-		return consumed(), e.documentHighlightCmd(cx)
-
+		return e.handleMouseRelease(cx, msg)
 	case tea.MouseWheelMsg:
-		e.completionGen++
-		e.cancelPending(cx)
-		if !cx.Editor.Options().Mouse {
-			return consumed(), nil
-		}
-		if p, ok := paneAt(cx, geom.Point{X: msg.X, Y: msg.Y}); ok {
-			if pi, ok := p.(PaneInput); ok {
-				if _, handled := pi.HandleEvent(cx, msg); handled {
-					return consumed(), nil
-				}
-			}
-		}
-		r := &renderPass{ec: e, cx: cx, size: e.size}
-		v, ok := r.contentViewAt(geom.Point{X: msg.X, Y: msg.Y})
-		if !ok {
-			return consumed(), nil
-		}
-		n := cx.Editor.Options().ScrollLines
-		switch msg.Button {
-		case tea.MouseWheelLeft, tea.MouseWheelRight:
-			left := msg.Button == tea.MouseWheelLeft
-			act.ScrollViewColumns(cx.Editor, v, n, left)
-		default:
-			up := msg.Button == tea.MouseWheelUp
-			act.ScrollViewLines(cx.Editor, v, n, up)
-		}
-		if doc, ok := cx.Editor.Document(v.DocID()); ok {
-			v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
-		}
-		return consumed(), nil
+		return e.handleMouseWheel(cx, msg)
 	}
 	return ignored(), nil
 }
@@ -463,32 +298,6 @@ func (e *EditorComponent) resize(cx *Context) {
 	})
 }
 
-func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
-	e.autoScrollV.stop()
-	e.autoScrollH.stop()
-	if e.mouseDownSep != nil {
-		e.mouseDownSep = nil
-		return
-	}
-	if e.mouseDownRange == nil {
-		return
-	}
-	down := *e.mouseDownRange
-	e.mouseDownRange = nil
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
-		return
-	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
-		return
-	}
-	cur := doc.SelectionFor(v.ID()).Primary()
-	if cur.Anchor != down.Anchor || cur.Head != down.Head {
-		act.YankToPrimaryClipboard(cx.Editor)
-	}
-}
-
 func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	opts := cx.Editor.Options()
 	if !opts.AutoSaveAfterDelay {
@@ -499,33 +308,6 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	d := time.Duration(opts.AutoSaveDelayTimeout) * time.Millisecond
 	return tea.Tick(d, func(time.Time) tea.Msg {
 		return autoSaveMsg{gen: gen}
-	})
-}
-
-func vcsUpdateCmd(cx *Context) tea.Cmd {
-	vc := cx.Editor.VersionControl()
-	if vc == nil {
-		return nil
-	}
-	updates := vc.Updates()
-	return func() tea.Msg {
-		<-updates
-		return vcsUpdatedMsg{}
-	}
-}
-
-func vcsRefreshCmd(cx *Context) tea.Cmd {
-	if cx.Editor.VersionControl() == nil {
-		return nil
-	}
-	return tea.Tick(vcsRefreshInterval, func(time.Time) tea.Msg {
-		return vcsRefreshMsg{}
-	})
-}
-
-func spinnerTickCmd() tea.Cmd {
-	return tea.Tick(spinnerTickInterval, func(time.Time) tea.Msg {
-		return spinnerTickMsg{}
 	})
 }
 

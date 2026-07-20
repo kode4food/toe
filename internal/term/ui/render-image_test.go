@@ -433,7 +433,7 @@ func TestImageZoomPending(t *testing.T) {
 	m = m2.(ui.Model)
 	m2, duplicateCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m, duplicateRaw := collectModelRawMsgs(m2.(ui.Model), duplicateCmd)
-	m, firstRaw := collectModelRawMsgs(m, firstCmd)
+	_, firstRaw := collectModelRawMsgs(m, firstCmd)
 
 	assert.Empty(t, duplicateRaw)
 	assert.Equal(t, 1, strings.Count(strings.Join(firstRaw, ""), "a=p"))

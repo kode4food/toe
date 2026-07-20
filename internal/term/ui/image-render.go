@@ -92,6 +92,7 @@ func (r *renderPass) paintImage(
 	bg := lipglossToTUIStyle(r.activeTheme().Get("ui.background")).BgColor()
 	style := tui.Style{}.
 		Fg(tui.ImageColor(id)).
+		UlColor(tui.ImageColor(imagePlacementID(cells))).
 		Bg(bg)
 	// show the centered window of the grid, so a zoomed-in image crops
 	// symmetrically instead of pinning to the top-left

@@ -41,10 +41,11 @@ type (
 )
 
 const (
-	defaultImageZoom = 100
-	imageZoomStep    = 25
-	minImageZoom     = 25
-	maxImageZoom     = 400
+	defaultImageZoom   = 100
+	imageKeyZoomStep   = 25
+	imageWheelZoomStep = 5
+	minImageZoom       = 25
+	maxImageZoom       = 400
 
 	imageSessionZoomKey = "zoom"
 )
@@ -103,7 +104,7 @@ func (i *Image) ContentID() uint32 {
 // HandleEvent zooms the image on a wheel event and ignores everything else,
 // letting keys and other input fall through to the editor
 func (p *ImagePane) HandleEvent(
-	cx *Context, msg tea.Msg,
+	_ *Context, msg tea.Msg,
 ) (EventResult, bool) {
 	wheel, ok := msg.(tea.MouseWheelMsg)
 	if !ok {
@@ -111,13 +112,12 @@ func (p *ImagePane) HandleEvent(
 	}
 	switch wheel.Button {
 	case tea.MouseWheelUp:
-		p.ZoomIn()
+		p.setZoom(p.zoom + imageWheelZoomStep)
 	case tea.MouseWheelDown:
-		p.ZoomOut()
+		p.setZoom(p.zoom - imageWheelZoomStep)
 	default:
 		return ignored(), false
 	}
-	cx.Editor.FocusPane(p.id)
 	return consumed(), true
 }
 
@@ -189,12 +189,12 @@ func (p *ImagePane) Zoom() int {
 
 // ZoomIn increases the image scale
 func (p *ImagePane) ZoomIn() {
-	p.setZoom(p.zoom + imageZoomStep)
+	p.setZoom(p.zoom + imageKeyZoomStep)
 }
 
 // ZoomOut decreases the image scale
 func (p *ImagePane) ZoomOut() {
-	p.setZoom(p.zoom - imageZoomStep)
+	p.setZoom(p.zoom - imageKeyZoomStep)
 }
 
 // ResetZoom restores the fitted image scale

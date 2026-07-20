@@ -32,6 +32,7 @@ func (p *previewImageEntry) renderInto(
 	bg := lipglossToTUIStyle(ctx.th.Get("ui.popup")).BgColor()
 	style = tui.Style{}.
 		Fg(tui.ImageColor(p.id)).
+		UlColor(tui.ImageColor(imagePlacementID(cells))).
 		Bg(bg)
 	for row := range cells.Height {
 		for col := range cells.Width {

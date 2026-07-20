@@ -44,9 +44,9 @@ const (
 	imageCellAspect    = 2
 	imageTransmitDelay = 40 * time.Millisecond
 
-	// imagePlacementID is fixed so each re-put replaces the placement in place
-	// instead of stacking a new one, so a resize needs no delete first
-	imagePlacementID = 1
+	// Placement IDs use a 24-bit underline color, split across both dimensions
+	imagePlacementDimensionBits = 12
+	imagePlacementDimensionMask = 1<<imagePlacementDimensionBits - 1
 
 	// maxResidentImages caps images kept resident in the terminal. Soft: one
 	// shown this frame is never evicted, so the real ceiling is what fits
@@ -107,7 +107,11 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	size := a.cells
 	r.used[a.id] = r.frame
 	placed, transmitted := r.placed[a.id]
-	if transmitted && (r.ready[a.id] == size || placed == size) {
+	if transmitted && r.ready[a.id] == size {
+		r.placed[a.id] = size
+		return nil
+	}
+	if transmitted && placed == size {
 		return nil
 	}
 	if transmitted {
@@ -229,7 +233,7 @@ func transmit(args transmitArgs) error {
 		Format:           kitty.PNG,
 		Quiet:            2,
 		ID:               int(args.id),
-		PlacementID:      imagePlacementID,
+		PlacementID:      int(imagePlacementID(args.cells)),
 		Columns:          args.cells.Width,
 		Rows:             args.cells.Height,
 		VirtualPlacement: true,
@@ -247,14 +251,13 @@ func transmit(args transmitArgs) error {
 	}
 }
 
-// putSeq re-places a resident image on a new cell grid; kitty rescales and
-// crops its existing pixels, so no image data is sent
+// putSeq places a resident image on a new cell grid without sending pixels
 func putSeq(id uint32, cells geom.Size) string {
 	opts := &kitty.Options{
 		Action:           kitty.Put,
 		Quiet:            2,
 		ID:               int(id),
-		PlacementID:      imagePlacementID,
+		PlacementID:      int(imagePlacementID(cells)),
 		Columns:          cells.Width,
 		Rows:             cells.Height,
 		VirtualPlacement: true,
@@ -271,6 +274,12 @@ func deleteImageSeq(id uint32) string {
 		Quiet:           2,
 	}
 	return ansi.KittyGraphics(nil, opts.Options()...)
+}
+
+func imagePlacementID(cells geom.Size) uint32 {
+	width := uint32(cells.Width) & imagePlacementDimensionMask
+	height := uint32(cells.Height) & imagePlacementDimensionMask
+	return max(width<<imagePlacementDimensionBits|height, 1)
 }
 
 func kittyImageID(content, surface uint32, preview bool) uint32 {

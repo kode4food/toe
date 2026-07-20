@@ -54,9 +54,7 @@ func TestImageRender(t *testing.T) {
 	assert.Contains(t, out, "IMG")
 	assert.Contains(t, out, "40×20")
 	assert.NotContains(t, out, "UTF-8")
-	// each put reuses a fixed placement id and no longer deletes first, so a
-	// resize replaces the placement in place without a blink
-	assert.Contains(t, raw, "p=1")
+	assert.Contains(t, raw, ",p=")
 	assert.NotContains(t, raw, "d=i")
 	assert.Contains(t, raw, "a=T")
 
@@ -169,8 +167,8 @@ func TestImageInput(t *testing.T) {
 		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelUp,
 	})
 	m = m2.(ui.Model)
-	assert.Equal(t, pane.ID(), e.Tree().Focus())
-	assert.Equal(t, 125, pane.Zoom())
+	assert.Equal(t, docID, e.Tree().Focus())
+	assert.Equal(t, 105, pane.Zoom())
 	_, _ = m.Update(tea.MouseWheelMsg{
 		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown,
 	})
@@ -243,7 +241,7 @@ func TestImagePickerPreviewTransmit(t *testing.T) {
 	_, rawMsgs := collectModelRawMsgs(m2.(ui.Model), cmd)
 	raw := strings.Join(rawMsgs, "")
 
-	assert.Contains(t, raw, "p=1")
+	assert.Contains(t, raw, ",p=")
 	assert.NotContains(t, raw, "d=i")
 	assert.Contains(t, raw, "\x1b_Gf=100")
 	assert.Contains(t, raw, "U=1")
@@ -366,7 +364,7 @@ func TestImageRestore(t *testing.T) {
 	m, rawMsgs := collectModelRawMsgs(m2.(ui.Model), cmd)
 	raw := strings.Join(rawMsgs, "")
 
-	assert.Equal(t, 2, strings.Count(raw, "p=1"))
+	assert.Equal(t, 2, strings.Count(raw, ",p="))
 	assert.Equal(t, 2, strings.Count(raw, "\x1b_Gf=100"))
 	assert.True(t, strings.ContainsRune(m.View().Content, tui.PlaceholderRune))
 }
@@ -424,19 +422,45 @@ func TestImageZoomPending(t *testing.T) {
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
 	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = feedImageMsgs(m2.(ui.Model), cmd)
+	m, initialRaw := collectModelRawMsgs(m2.(ui.Model), cmd)
 
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
 	pane.ZoomOut()
 	m2, firstCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m = m2.(ui.Model)
+	pending := m.View().Content
 	m2, duplicateCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m, duplicateRaw := collectModelRawMsgs(m2.(ui.Model), duplicateCmd)
-	_, firstRaw := collectModelRawMsgs(m, firstCmd)
+	m, firstRaw := collectModelRawMsgs(m, firstCmd)
 
+	raw := strings.Join(firstRaw, "")
 	assert.Empty(t, duplicateRaw)
-	assert.Equal(t, 1, strings.Count(strings.Join(firstRaw, ""), "a=p"))
+	assert.Equal(t, 1, strings.Count(raw, "a=p"))
+
+	re := regexp.MustCompile(`(?:\x1b_G|,)p=(\d+)`)
+	initial := re.FindStringSubmatch(strings.Join(initialRaw, ""))
+	next := re.FindStringSubmatch(raw)
+	if !assert.NotEmpty(t, initial) || !assert.NotEmpty(t, next) {
+		return
+	}
+	assert.NotEqual(t, initial[1], next[1])
+
+	initialID, err := strconv.ParseUint(initial[1], 10, 32)
+	assert.NoError(t, err)
+	nextID, err := strconv.ParseUint(next[1], 10, 32)
+	assert.NoError(t, err)
+	initialColor := fmt.Sprintf(
+		"\x1b[58:2::%d:%d:%dm",
+		initialID>>16, initialID>>8&0xFF, initialID&0xFF,
+	)
+	nextColor := fmt.Sprintf(
+		"\x1b[58:2::%d:%d:%dm",
+		nextID>>16, nextID>>8&0xFF, nextID&0xFF,
+	)
+	assert.Contains(t, pending, initialColor)
+	assert.NotContains(t, pending, nextColor)
+	assert.Contains(t, m.View().Content, nextColor)
 }
 
 func TestImageEviction(t *testing.T) {

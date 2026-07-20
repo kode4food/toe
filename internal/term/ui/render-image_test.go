@@ -416,6 +416,29 @@ func TestImageZoomKeepsReadyPlacement(t *testing.T) {
 	)
 }
 
+func TestImageZoomPending(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	openRenderImagePane(t, e, path)
+	m := ui.New(e, command.NewKeymaps())
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	pane.ZoomOut()
+	m2, firstCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m = m2.(ui.Model)
+	m2, duplicateCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m, duplicateRaw := collectModelRawMsgs(m2.(ui.Model), duplicateCmd)
+	m, firstRaw := collectModelRawMsgs(m, firstCmd)
+
+	assert.Empty(t, duplicateRaw)
+	assert.Equal(t, 1, strings.Count(strings.Join(firstRaw, ""), "a=p"))
+}
+
 func TestImageEviction(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	t.Setenv("SSH_CONNECTION", "")

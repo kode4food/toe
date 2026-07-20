@@ -106,22 +106,23 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	}
 	size := a.cells
 	r.used[a.id] = r.frame
-	_, transmitted := r.placed[a.id]
-	if transmitted && r.ready[a.id] == size {
+	placed, transmitted := r.placed[a.id]
+	if transmitted && (r.ready[a.id] == size || placed == size) {
 		return nil
 	}
-	r.preparePlaceholders(size)
-	r.placed[a.id] = size
 	if transmitted {
-		// The ready message re-places at the live size after transmission
 		if _, ready := r.ready[a.id]; !ready {
 			return nil
 		}
+		r.preparePlaceholders(size)
+		r.placed[a.id] = size
 		put := putSeq(a.id, size)
 		return func() tea.Msg {
 			return imageTransmitMsg{raw: put, id: a.id, size: size}
 		}
 	}
+	r.preparePlaceholders(size)
+	r.placed[a.id] = size
 	evict := r.evict(a.id)
 	remote := r.remote
 	return func() tea.Msg {

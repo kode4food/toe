@@ -78,7 +78,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return imageReadyMsg{id: msg.id, size: msg.size}
 		})
 	case imageReadyMsg:
-		// Another pass re-places a resize that arrived during transmission
+		if m.context.images.placed[msg.id] != msg.size {
+			return m, nil
+		}
 		m.context.images.ready[msg.id] = msg.size
 		m.markImageDirty()
 		return m, m.imageDisplayFrameCmd()

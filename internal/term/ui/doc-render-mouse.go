@@ -8,7 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
-	act "github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 type (
@@ -222,7 +222,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 
 func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
 	if mod&tea.ModAlt != 0 {
-		act.PrimaryClipboardReplace(r.cx.Editor)
+		action.PrimaryClipboardReplace(r.cx.Editor)
 		return
 	}
 
@@ -233,7 +233,7 @@ func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
 	text := res.doc.Text()
 	tx := core.NewTransaction(text).WithSelection(core.PointSelection(res.pos))
 	_ = r.cx.Editor.Apply(tx)
-	act.PastePrimaryClipboardBefore(r.cx.Editor)
+	action.PastePrimaryClipboardBefore(r.cx.Editor)
 }
 
 func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {

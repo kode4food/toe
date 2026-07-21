@@ -66,6 +66,7 @@ const (
 	actSwapViewUp             = "swap_view_up"
 	actSwapViewRight          = "swap_view_right"
 	actRotateView             = "rotate_view"
+	actResizeView             = "resize_view"
 )
 
 // ViewModule returns the split, scroll, and view-option commands
@@ -387,6 +388,13 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.SwapViewRight),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys:      kit.Window(kit.Char('L')),
+			},
+			{
+				Name:      actResizeView,
+				DocString: "Resize split",
+				Run:       kit.Continuation(model.ResizeViewAction),
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:      kit.Window(kit.Char('r')),
 			},
 		},
 		Options: []command.Option{

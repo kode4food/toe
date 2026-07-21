@@ -1,6 +1,10 @@
 package view
 
-import "github.com/kode4food/toe/internal/geom"
+import (
+	"math"
+
+	"github.com/kode4food/toe/internal/geom"
+)
 
 type treeWork struct {
 	id   Id
@@ -42,10 +46,7 @@ func (t *Tree) recalculate() {
 				case i == ln-1:
 					childH = max(a.Y+a.Height-childY, 2)
 				case c.ratios != nil && i < len(c.ratios):
-					childH = max(
-						int(float64(usable)*c.ratios[i]),
-						minPaneHeight,
-					)
+					childH = max(ratioCells(usable, c.ratios[i]), minPaneHeight)
 				default:
 					childH = h
 				}
@@ -69,7 +70,7 @@ func (t *Tree) recalculate() {
 				case i == ln-1:
 					childW = max(a.X+a.Width-childX, 1)
 				case c.ratios != nil && i < len(c.ratios):
-					childW = max(int(float64(usable)*c.ratios[i]), minPaneWidth)
+					childW = max(ratioCells(usable, c.ratios[i]), minPaneWidth)
 				default:
 					childW = w
 				}
@@ -82,4 +83,10 @@ func (t *Tree) recalculate() {
 			}
 		}
 	}
+}
+
+// rounds rather than truncates: incremental resizes round-trip through ratios
+// repeatedly, and truncation would silently lose a cell each time
+func ratioCells(usable int, ratio float64) int {
+	return int(math.Round(float64(usable) * ratio))
 }

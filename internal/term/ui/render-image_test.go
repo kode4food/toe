@@ -168,7 +168,7 @@ func TestImageInput(t *testing.T) {
 	})
 	m = m2.(ui.Model)
 	assert.Equal(t, docID, e.Tree().Focus())
-	assert.Equal(t, 105, pane.Zoom())
+	assert.Equal(t, 110, pane.Zoom())
 	_, _ = m.Update(tea.MouseWheelMsg{
 		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown,
 	})

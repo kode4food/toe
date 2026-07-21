@@ -1,5 +1,66 @@
 package view
 
+import (
+	"slices"
+
+	"github.com/kode4food/toe/internal/geom"
+)
+
+// ResizeFocused pushes a border of the focused pane's split by delta cells in
+// dir, falling back to its other border if it has none on that side. False if
+// no ancestor splits along that axis
+func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
+	if delta <= 0 || t.IsEmpty() {
+		return false
+	}
+	layout := LayoutVertical
+	if dir == DirectionUp || dir == DirectionDown {
+		layout = LayoutHorizontal
+	}
+
+	branch := t.focus
+	parent := t.nodes[branch].parent
+	for {
+		c := t.nodes[parent].container
+		if c.layout == layout && len(c.children) > 1 {
+			break
+		}
+		if parent == t.root {
+			return false
+		}
+		branch = parent
+		parent = t.nodes[parent].parent
+	}
+
+	c := t.nodes[parent].container
+	idx := slices.Index(c.children, branch)
+	last := len(c.children) - 1
+	var boundary, sign int
+	switch dir {
+	case DirectionRight, DirectionDown:
+		sign = 1
+		boundary = idx
+		if idx == last {
+			boundary = idx - 1
+		}
+	default: // DirectionLeft, DirectionUp
+		sign = -1
+		boundary = idx - 1
+		if idx == 0 {
+			boundary = idx
+		}
+	}
+	a := t.areaOf(c.children[boundary])
+
+	switch layout {
+	case LayoutVertical:
+		t.moveSepVertical(parent, boundary, a.X+a.Width+sign*delta)
+	case LayoutHorizontal:
+		t.moveSepHorizontal(parent, boundary, a.Y+a.Height+sign*delta)
+	}
+	return true
+}
+
 // MoveSeparator adjusts the split between children[childIdx] and
 // children[childIdx+1] in containerID, in tree coordinates
 func (t *Tree) MoveSeparator(
@@ -11,6 +72,14 @@ func (t *Tree) MoveSeparator(
 	case LayoutHorizontal:
 		t.moveSepHorizontal(containerID, childIdx, newPos)
 	}
+}
+
+func (t *Tree) areaOf(id Id) geom.Area {
+	n := t.nodes[id]
+	if n.pane != nil {
+		return n.pane.Area()
+	}
+	return n.container.area
 }
 
 func (t *Tree) moveSepVertical(containerID Id, childIdx, newX int) {
@@ -37,10 +106,7 @@ func (t *Tree) moveSepVertical(containerID Id, childIdx, newX int) {
 
 	leftStart := c.area.X
 	for i := range childIdx {
-		leftStart += max(
-			int(float64(usable)*c.ratios[i]),
-			minPaneWidth,
-		) + innerGap
+		leftStart += max(ratioCells(usable, c.ratios[i]), minPaneWidth) + innerGap
 	}
 
 	minRatio := float64(minPaneWidth) / float64(usable)
@@ -84,10 +150,7 @@ func (t *Tree) moveSepHorizontal(containerID Id, childIdx, newY int) {
 
 	topStart := c.area.Y
 	for i := range childIdx {
-		topStart += max(
-			int(float64(usable)*c.ratios[i]),
-			minPaneHeight,
-		) + innerGap
+		topStart += max(ratioCells(usable, c.ratios[i]), minPaneHeight) + innerGap
 	}
 
 	minRatio := float64(minPaneHeight) / float64(usable) // min rows per pane

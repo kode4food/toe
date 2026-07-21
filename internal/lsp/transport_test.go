@@ -1406,7 +1406,7 @@ func (s *processServer) CodeAction(
 }
 
 func (s *processServer) CodeActionResolve(
-	_ context.Context, action *protocol.CodeAction,
+	_ context.Context, act *protocol.CodeAction,
 ) (*protocol.CodeAction, error) {
 	switch os.Getenv(testServerCAResolveEnv) {
 	case "error":
@@ -1414,7 +1414,7 @@ func (s *processServer) CodeActionResolve(
 	case "nil":
 		return nil, nil
 	}
-	return action, nil
+	return act, nil
 }
 
 func (s *processServer) navigationLocation() *protocol.Location {

@@ -10,7 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
-	act "github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 type (
@@ -94,7 +94,7 @@ func newEditorComponent() *EditorComponent {
 		fileWatcher: newEditorFileWatcher(),
 		autoScrollV: mouseAutoScrollAxis{
 			scroll: func(e *view.Editor, v *view.View, toLo bool) {
-				act.ScrollViewLines(e, v, 1, toLo)
+				action.ScrollViewLines(e, v, 1, toLo)
 			},
 			pos: func(
 				r *renderPass, doc *view.Document, v *view.View, fixed int,
@@ -110,7 +110,7 @@ func newEditorComponent() *EditorComponent {
 		},
 		autoScrollH: mouseAutoScrollAxis{
 			scroll: func(e *view.Editor, v *view.View, toLo bool) {
-				act.ScrollViewColumns(e, v, 1, toLo)
+				action.ScrollViewColumns(e, v, 1, toLo)
 			},
 			pos: func(
 				r *renderPass, doc *view.Document, v *view.View, fixed int,

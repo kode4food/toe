@@ -43,7 +43,7 @@ type (
 const (
 	defaultImageZoom   = 100
 	imageKeyZoomStep   = 25
-	imageWheelZoomStep = 5
+	imageWheelZoomStep = 10
 	minImageZoom       = 25
 	maxImageZoom       = 400
 

@@ -54,6 +54,7 @@ toe watches file-backed buffers for external changes. Clean buffers reload autom
 | `terminal` | | Open the user's shell in the focused pane |
 | `terminal_search` | | Search the focused terminal's scrollback |
 | `transpose_view` | | Transpose splits |
+| `resize_view` | | Enter interactive resize mode |
 | `wclose` | `wc` | Close window |
 | `wclose!` | `wc!` | Force close window |
 | `wonly` | `wo` | Close windows except current |

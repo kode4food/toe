@@ -61,6 +61,12 @@ func (e *Editor) Transpose() {
 	e.tree.Transpose()
 }
 
+// ResizeFocusedSplit pushes the border on the given side of the focused split
+// by delta cells, screen-direction style (see [Tree.ResizeFocused])
+func (e *Editor) ResizeFocusedSplit(dir Direction, delta int) {
+	e.tree.ResizeFocused(dir, delta)
+}
+
 // hasView reports whether any view in the tree satisfies pred
 func (e *Editor) hasView(pred func(*View) bool) bool {
 	return e.tree.Any(func(p Pane) bool {

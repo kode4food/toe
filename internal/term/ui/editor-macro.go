@@ -5,7 +5,7 @@ import (
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
-	act "github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 type macroSlot struct {
@@ -96,11 +96,9 @@ func (e *EditorComponent) replayMacro(
 			if replaySkip(k, mode) {
 				continue
 			}
-			action, found, _ := cx.Keymaps.Lookup(
-				modeStr, []command.KeyEvent{k},
-			)
+			act, found, _ := cx.Keymaps.Lookup(modeStr, []command.KeyEvent{k})
 			if found {
-				cont := action(cx.Editor)
+				cont := act(cx.Editor)
 				for cont != nil && i < len(keys) {
 					k = keys[i]
 					i++
@@ -108,7 +106,7 @@ func (e *EditorComponent) replayMacro(
 				}
 				cx.Editor.ResetCount()
 			} else if mode == view.ModeInsert && k.IsTypable() {
-				act.InsertChar(cx.Editor, k.Code.Char)
+				action.InsertChar(cx.Editor, k.Code.Char)
 			}
 		}
 	}

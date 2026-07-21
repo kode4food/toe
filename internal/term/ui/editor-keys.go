@@ -8,7 +8,7 @@ import (
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
-	act "github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 func (e *EditorComponent) handleKeyPress(
@@ -62,7 +62,7 @@ func (e *EditorComponent) handleKeyPress(
 	}
 
 	e.pending = append(e.pending, k)
-	action, found, prefix := cx.Keymaps.Lookup(modeStr, e.pending)
+	act, found, prefix := cx.Keymaps.Lookup(modeStr, e.pending)
 	switch {
 	case found:
 		e.pending = nil
@@ -70,7 +70,7 @@ func (e *EditorComponent) handleKeyPress(
 		e.cmdMsg = ""
 		e.infoTitle = ""
 		e.infoItems = nil
-		cont := action(cx.Editor)
+		cont := act(cx.Editor)
 		e.continuation = cont
 		if cont == nil {
 			e.hint = ""
@@ -134,7 +134,7 @@ func (e *EditorComponent) handleKeyPress(
 // keymapClaims reports whether k continues or completes a binding in the
 // focused pane's mode, so a raw-input pane must not swallow it first
 func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
-	if len(e.pending) > 0 {
+	if len(e.pending) > 0 || e.continuation != nil {
 		return true
 	}
 	if cx.Editor.Mode() == view.ModeTerminal && k.Mods == command.ModNone {
@@ -149,7 +149,7 @@ func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
 func (e *EditorComponent) insertTypable(
 	cx *Context, k command.KeyEvent,
 ) Callback {
-	act.InsertChar(cx.Editor, k.Code.Char)
+	action.InsertChar(cx.Editor, k.Code.Char)
 	e.pending = nil
 	e.status = ""
 	e.infoTitle = ""

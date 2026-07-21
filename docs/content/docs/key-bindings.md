@@ -197,10 +197,32 @@ weight: 30
 | `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
 | `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` | Jump to left/below/above/right split |
 | `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
+| `Ctrl+w r` | Enter resize mode |
 
 All `Ctrl+w` bindings also work with `Space+w`.
 
 When a document or image pane is split, the new pane shows the same document or image. Splitting a terminal starts a new shell.
+
+Splits can also be resized by dragging a separator with the mouse.
+
+#### Resize Mode
+
+`Ctrl+w r` enters an interactive resize mode: `h`/`j`/`k`/`l` (or the arrow
+keys) push a border of the split holding the focused pane in that literal
+screen direction, one cell at a time, repeating for as long as you keep
+pressing them. `Escape` or `Enter` exits back to normal key handling.
+
+| Key | Action |
+|-----|--------|
+| `h` / `Left` | Push the left border left |
+| `l` / `Right` | Push the right border right |
+| `j` / `Down` | Push the bottom border down |
+| `k` / `Up` | Push the top border up |
+| `Escape` / `Enter` | Exit resize mode |
+
+If the focused pane has no border on the requested side (it's first or last
+in its split), the opposite border is pushed instead, so every pane can
+always be grown and shrunk with the same four keys.
 
 ### Terminal Panes
 

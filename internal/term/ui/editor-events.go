@@ -8,7 +8,7 @@ import (
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
-	act "github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 func (e *EditorComponent) handleWindowSize(
@@ -245,10 +245,10 @@ func (e *EditorComponent) handleMouseWheel(
 	switch msg.Button {
 	case tea.MouseWheelLeft, tea.MouseWheelRight:
 		left := msg.Button == tea.MouseWheelLeft
-		act.ScrollViewColumns(cx.Editor, v, n, left)
+		action.ScrollViewColumns(cx.Editor, v, n, left)
 	default:
 		up := msg.Button == tea.MouseWheelUp
-		act.ScrollViewLines(cx.Editor, v, n, up)
+		action.ScrollViewLines(cx.Editor, v, n, up)
 	}
 	if doc, ok := cx.Editor.Document(v.DocID()); ok {
 		v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
@@ -278,7 +278,7 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 	}
 	cur := doc.SelectionFor(v.ID()).Primary()
 	if cur.Anchor != down.Anchor || cur.Head != down.Head {
-		act.YankToPrimaryClipboard(cx.Editor)
+		action.YankToPrimaryClipboard(cx.Editor)
 	}
 }
 

@@ -487,6 +487,39 @@ func TestTerminalPane(t *testing.T) {
 		assert.Same(t, tp, tp2)
 	})
 
+	t.Run("resize mode captures keys, not the shell", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		leftID := e.Tree().Focus()
+		action.VSplit(e)
+		e.Tree().SetFocus(leftID)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		focus := e.Tree().Focus()
+		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+		waitForResize(t, tp)
+
+		before := tp.Area().Width
+
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
+		m = m2.(ui.Model)
+		m2, _ = m.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
+		m = m2.(ui.Model)
+		_ = m.View()
+
+		assert.Equal(t, before+1, tp.Area().Width)
+	})
+
 	t.Run("Ctrl-backslash p pastes the clipboard register", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		clip := testutil.NewFakeClipboard()

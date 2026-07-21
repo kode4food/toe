@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/builtin/test"
+	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/testutil"
 )
 
@@ -196,4 +197,34 @@ func TestViewSwapCommands(t *testing.T) {
 			test.RunCmd(t, km, e, name)
 		})
 	}
+}
+
+func TestResizeView(t *testing.T) {
+	t.Run("l grows the focused left split", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		leftID := e.Tree().Focus()
+		test.RunCmd(t, km, e, "vsplit")
+		e.Tree().SetFocus(leftID)
+		before := e.Views()[0].View.Area().Width
+
+		res := test.RunCmd(t, km, e, "resize_view")
+		assert.NotNil(t, res.Continuation)
+		res.Continuation(e, command.KeyEvent{
+			Code: command.KeyCode{Char: 'l'},
+		})
+
+		assert.Equal(t, before+1, e.Views()[0].View.Area().Width)
+	})
+
+	t.Run("escape exits the mode", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		test.RunCmd(t, km, e, "vsplit")
+
+		res := test.RunCmd(t, km, e, "resize_view")
+		cont := res.Continuation(e, command.KeyEvent{
+			Code: command.KeyCode{Special: command.Escape},
+		})
+
+		assert.Nil(t, cont)
+	})
 }

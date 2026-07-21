@@ -636,3 +636,114 @@ func TestViewEdges(t *testing.T) {
 		assert.Equal(t, 0, v.Offset().VerticalOffset)
 	})
 }
+
+func TestResizeFocused(t *testing.T) {
+	t.Run("pushes left pane's right border right", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		leftID := e.Tree().Focus()
+		e.VSplitNew()
+		e.Tree().SetFocus(leftID)
+		before := e.Views()[0].View.Area().Width
+
+		ok := e.Tree().ResizeFocused(view.DirectionRight, 5)
+
+		assert.True(t, ok)
+		assert.Equal(t, before+5, e.Views()[0].View.Area().Width)
+	})
+
+	t.Run("shrinks left pane via only border", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		leftID := e.Tree().Focus()
+		e.VSplitNew()
+		e.Tree().SetFocus(leftID)
+		before := e.Views()[0].View.Area().Width
+
+		ok := e.Tree().ResizeFocused(view.DirectionLeft, 5)
+
+		assert.True(t, ok)
+		assert.Equal(t, before-5, e.Views()[0].View.Area().Width)
+	})
+
+	t.Run("pushes right pane's left border left", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		before := e.Views()[1].View.Area().Width
+
+		ok := e.Tree().ResizeFocused(view.DirectionLeft, 5)
+
+		assert.True(t, ok)
+		assert.Equal(t, before+5, e.Views()[1].View.Area().Width)
+	})
+
+	t.Run("pushes bottom pane's top border up", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.HSplitNew()
+		before := e.Views()[1].View.Area().Height
+
+		ok := e.Tree().ResizeFocused(view.DirectionUp, 3)
+
+		assert.True(t, ok)
+		assert.Equal(t, before+3, e.Views()[1].View.Area().Height)
+	})
+
+	t.Run("shrinks bottom pane via only border", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.HSplitNew()
+		before := e.Views()[1].View.Area().Height
+
+		ok := e.Tree().ResizeFocused(view.DirectionDown, 3)
+
+		assert.True(t, ok)
+		assert.Equal(t, before-3, e.Views()[1].View.Area().Height)
+	})
+
+	t.Run("resizes against nested sub-container", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 120, Height: 24})
+		p0 := e.Tree().Focus()
+		e.VSplitNew() // root(V)[p0, p1], focus p1
+		e.Tree().SetFocus(p0)
+		e.HSplitNew() // root(V)[subH(H)[p0, p2], p1], focus p2
+		p1 := e.Views()[2].View.ID()
+		e.Tree().SetFocus(p1)
+		before := e.Views()[2].View.Area().Width
+
+		ok := e.Tree().ResizeFocused(view.DirectionLeft, 4)
+
+		assert.True(t, ok)
+		assert.Equal(t, before+4, e.Views()[2].View.Area().Width)
+	})
+
+	t.Run("no matching axis returns false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+
+		ok := e.Tree().ResizeFocused(view.DirectionDown, 5)
+
+		assert.False(t, ok)
+	})
+
+	t.Run("zero delta returns false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+
+		ok := e.Tree().ResizeFocused(view.DirectionRight, 0)
+
+		assert.False(t, ok)
+	})
+
+	t.Run("empty tree returns false", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+
+		ok := e.Tree().ResizeFocused(view.DirectionRight, 5)
+
+		assert.False(t, ok)
+	})
+}

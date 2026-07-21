@@ -147,22 +147,22 @@ func (s *Session) ApplyCodeAction(
 }
 
 func (s *Session) resolveCodeAction(
-	client *Client, action *protocol.CodeAction,
+	client *Client, act *protocol.CodeAction,
 ) (*protocol.CodeAction, error) {
 	if !clientResolvesCodeAction(client) {
-		return action, nil
+		return act, nil
 	}
-	if action.Edit != nil && action.Command.Command != "" {
-		return action, nil
+	if act.Edit != nil && act.Command.Command != "" {
+		return act, nil
 	}
 	ctx, cancel := client.requestContext(s.ctx)
 	defer cancel()
-	resolved, err := client.server.CodeActionResolve(ctx, action)
+	resolved, err := client.server.CodeActionResolve(ctx, act)
 	if err != nil {
-		return action, s.completionError(client, err)
+		return act, s.completionError(client, err)
 	}
 	if resolved == nil {
-		return action, nil
+		return act, nil
 	}
 	return resolved, nil
 }

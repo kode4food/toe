@@ -8,7 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
-	act "github.com/kode4food/toe/internal/view/action"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 type (
@@ -258,7 +258,7 @@ func (c *completionComponent) handleKeyPress(
 		return c.handleAction(cx, name), nil
 	}
 	if cx.Editor.Mode() == view.ModeInsert && k.IsTypable() {
-		act.InsertChar(cx.Editor, k.Code.Char)
+		action.InsertChar(cx.Editor, k.Code.Char)
 		return consumedWith(c.refresh), nil
 	}
 	return ignoredWith(popLayer), nil

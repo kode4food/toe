@@ -110,7 +110,7 @@ func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 			action.NormalMode(e)
 			return nil
 		},
-		seqs: [][]command.KeyEvent{{special("esc")}},
+		seqs: [][]command.KeyEvent{{special(command.Escape)}},
 	})
 	m = resize(m, 80, 24)
 	return m, e

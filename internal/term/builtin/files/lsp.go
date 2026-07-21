@@ -33,7 +33,6 @@ const (
 
 // LspModule returns the language-server navigation and action commands
 func LspModule(model ui.Model) command.Module {
-	spc := kit.Prefixed(kit.Char(' '))
 	g := kit.Prefixed(kit.Char('g'))
 	return command.Module{
 		Commands: []command.Command{
@@ -77,28 +76,28 @@ func LspModule(model ui.Model) command.Module {
 				DocString: "Select symbol references",
 				Run:       kit.Continuation(model.SelectReferencesAction()),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('h'))),
+				Keys:      kit.Leader('h'),
 			},
 			{
 				Name:      actCodeAction,
 				DocString: "Perform code action",
 				Run:       kit.Continuation(model.CodeActionPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('a'))),
+				Keys:      kit.Leader('a'),
 			},
 			{
 				Name:      actHover,
 				DocString: "Show docs for item under cursor",
 				Run:       kit.Continuation(model.HoverAction()),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('k'))),
+				Keys:      kit.Leader('k'),
 			},
 			{
 				Name:      actRenameSymbol,
 				DocString: "Rename symbol",
 				Run:       kit.Continuation(model.RenameSymbolAction()),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('r'))),
+				Keys:      kit.Leader('r'),
 			},
 			{
 				Name:      actSignatureHelp,
@@ -111,14 +110,14 @@ func LspModule(model ui.Model) command.Module {
 				DocString: "Open symbol picker",
 				Run:       kit.Continuation(model.SymbolPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('s'))),
+				Keys:      kit.Leader('s'),
 			},
 			{
 				Name:      actWorkspaceSymbol,
 				DocString: "Open workspace symbol picker",
 				Run:       kit.Continuation(model.WorkspaceSymbolPickerAction()),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('S'))),
+				Keys:      kit.Leader('S'),
 			},
 			{
 				Name:      actLSPRestart,

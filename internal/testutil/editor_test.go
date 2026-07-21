@@ -75,9 +75,9 @@ func TestChar(t *testing.T) {
 }
 
 func TestSpecial(t *testing.T) {
-	ev := testutil.Special("enter")
+	ev := testutil.Special(command.Enter)
 
 	assert.Equal(t, command.KeyEvent{
-		Code: command.KeyCode{Special: "enter"},
+		Code: command.KeyCode{Special: command.Enter},
 	}, ev)
 }

@@ -178,9 +178,9 @@ func (e *Editor) RemovePane(id Id) {
 
 // RegisterPaneRestorer registers how to rebuild a leaf pane of the given
 // session kind
-func (e *Editor) RegisterPaneRestorer(kind string, fn PaneRestorer) {
+func (e *Editor) RegisterPaneRestorer(kind SessionKind, fn PaneRestorer) {
 	if e.paneRestorers == nil {
-		e.paneRestorers = map[string]PaneRestorer{}
+		e.paneRestorers = map[SessionKind]PaneRestorer{}
 	}
 	e.paneRestorers[kind] = fn
 }
@@ -201,7 +201,7 @@ func (e *Editor) discardView(v *View) {
 // restorePane rebuilds a leaf pane of the given kind via its registered
 // restorer
 type restorePaneArgs struct {
-	kind    string
+	kind    SessionKind
 	session *PaneSession
 }
 

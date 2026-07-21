@@ -44,14 +44,18 @@ func InsertModule() command.Module {
 				DocString: "Delete previous word",
 				Run:       kit.Runner(action.DeleteWordBackward),
 				Modes:     []string{"INS"},
-				Keys:      kit.Keys(kit.Ctrl('w'), kit.AltSpecial("backspace")),
+				Keys: kit.Keys(
+					kit.Ctrl('w'), kit.AltSpecial(command.Backspace),
+				),
 			},
 			{
 				Name:      actDeleteWordForward,
 				DocString: "Delete next word",
 				Run:       kit.Runner(action.DeleteWordForward),
 				Modes:     []string{"INS"},
-				Keys:      kit.Keys(kit.Alt('d'), kit.AltSpecial("del")),
+				Keys: kit.Keys(
+					kit.Alt('d'), kit.AltSpecial(command.Delete),
+				),
 			},
 			{
 				Name:      actKillToLineStart,
@@ -73,7 +77,7 @@ func InsertModule() command.Module {
 				Run:       kit.Runner(action.DeleteCharBackward),
 				Modes:     []string{"INS"},
 				Keys: kit.Keys(
-					kit.Ctrl('h'), kit.Special("backspace"), kit.Shift("backspace"),
+					kit.Ctrl('h'), kit.Bksp, kit.Shift(command.Backspace),
 				),
 			},
 			{
@@ -81,14 +85,14 @@ func InsertModule() command.Module {
 				DocString: "Delete next char",
 				Run:       kit.Runner(action.DeleteCharForward),
 				Modes:     []string{"INS"},
-				Keys:      kit.Keys(kit.Ctrl('d'), kit.Special("del")),
+				Keys:      kit.Keys(kit.Ctrl('d'), kit.Del),
 			},
 			{
 				Name:      actInsertNewline,
 				DocString: "Insert newline char",
 				Run:       kit.Runner(action.InsertNewline),
 				Modes:     []string{"INS"},
-				Keys:      kit.Keys(kit.Ctrl('j'), kit.Special("ret")),
+				Keys:      kit.Keys(kit.Ctrl('j'), kit.Ret),
 			},
 			{
 				Name: actSmartTab,
@@ -96,14 +100,14 @@ func InsertModule() command.Module {
 					"their left; otherwise, run a separate command",
 				Run:   kit.Runner(action.SmartTab),
 				Modes: []string{"INS"},
-				Keys:  kit.Keys(kit.Special("tab")),
+				Keys:  kit.Keys(kit.Tab),
 			},
 			{
 				Name:      actGotoLineEndNewline,
 				DocString: "Goto newline at line end",
 				Run:       kit.Runner(action.GotoLineEndNewline),
 				Modes:     []string{"INS"},
-				Keys:      kit.Keys(kit.Special("end")),
+				Keys:      kit.Keys(kit.End),
 			},
 		},
 	}

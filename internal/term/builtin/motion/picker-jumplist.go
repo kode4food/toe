@@ -18,8 +18,6 @@ type jumplistPickerSource struct {
 // separately from CursorModule so its position in the space-leader menu can
 // be controlled independently of the cursor-motion commands
 func JumplistModule(model ui.Model) command.Module {
-	spc := kit.Prefixed(kit.Char(' '))
-
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -27,7 +25,7 @@ func JumplistModule(model ui.Model) command.Module {
 				DocString: "Open jumplist picker",
 				Run:       kit.Continuation(model.PickerAction(JumplistPicker)),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('j'))),
+				Keys:      kit.Leader('j'),
 			},
 		},
 	}

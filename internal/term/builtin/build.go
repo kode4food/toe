@@ -67,7 +67,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 // which no single module owns
 func labelLeaders(km *command.Keymaps) {
 	for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
-		km.LabelNode(mode, kit.Char(' '), "Space")
+		km.LabelNode(mode, kit.LeaderBinding, "Leader")
 		km.LabelNode(mode, kit.Char('['), "Prev")
 		km.LabelNode(mode, kit.Char(']'), "Next")
 	}

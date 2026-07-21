@@ -28,7 +28,6 @@ const (
 // Module returns the generic, concern-independent pickers: the command
 // palette and reopen-last-picker
 func Module(model ui.Model) command.Module {
-	spc := kit.Prefixed(kit.Char(' '))
 	cfg := new(pickerSection)
 
 	return command.Module{
@@ -37,15 +36,15 @@ func Module(model ui.Model) command.Module {
 				Name:      actCommandPalette,
 				DocString: "Open command palette",
 				Run:       kit.Continuation(model.CommandPaletteAction()),
-				Modes:     []string{"NOR", "SEL", "IMG"},
-				Keys:      kit.Keys(spc(kit.Char('?'))),
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:      kit.Leader('?'),
 			},
 			{
 				Name:      actLastPicker,
 				DocString: "Reopen the last picker",
 				Run:       kit.Continuation(model.LastPickerAction()),
-				Modes:     []string{"NOR", "SEL", "IMG"},
-				Keys:      kit.Keys(spc(kit.Char('\''))),
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:      kit.Leader('\''),
 			},
 		},
 		Section: &command.Section{

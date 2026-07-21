@@ -204,6 +204,6 @@ func char(ch rune) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Char: ch}}
 }
 
-func special(name string) command.KeyEvent {
-	return command.KeyEvent{Code: command.KeyCode{Special: name}}
+func special(s command.Special) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Special: s}}
 }

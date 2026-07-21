@@ -56,7 +56,7 @@ func (v *View) SaveSession(w *SessionWriter) {
 }
 
 // SaveSlot stores a reopenable pane slot in the session
-func (w *SessionWriter) SaveSlot(kind, path string) {
+func (w *SessionWriter) SaveSlot(kind SessionKind, path string) {
 	w.node = sessionNode{Kind: kind, Focused: w.focused}
 	if path != "" {
 		w.node.Path = sessionPath(w.base, path)

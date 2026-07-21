@@ -18,57 +18,57 @@ func TestFromTeaKey(t *testing.T) {
 		down := ui.FromTeaKey(tea.KeyPressMsg{
 			Code: tea.KeyPgDown, Text: "pgdown",
 		})
-		assert.Equal(t, special("pageup"), up)
-		assert.Equal(t, special("pagedown"), down)
+		assert.Equal(t, special(command.PageUp), up)
+		assert.Equal(t, special(command.PageDown), down)
 	})
 
 	t.Run("keypad page keys", func(t *testing.T) {
 		up := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyKpPgUp})
 		down := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyKpPgDown})
-		assert.Equal(t, special("pageup"), up)
-		assert.Equal(t, special("pagedown"), down)
+		assert.Equal(t, special(command.PageUp), up)
+		assert.Equal(t, special(command.PageDown), down)
 	})
 
 	t.Run("enter key", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyEnter})
-		assert.Equal(t, special("ret"), got)
+		assert.Equal(t, special(command.Enter), got)
 	})
 
 	t.Run("backspace key", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyBackspace})
-		assert.Equal(t, special("backspace"), got)
+		assert.Equal(t, special(command.Backspace), got)
 	})
 
 	t.Run("delete key", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyDelete})
-		assert.Equal(t, special("del"), got)
+		assert.Equal(t, special(command.Delete), got)
 	})
 
 	t.Run("escape key", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyEscape})
-		assert.Equal(t, special("esc"), got)
+		assert.Equal(t, special(command.Escape), got)
 	})
 
 	t.Run("tab key", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyTab})
-		assert.Equal(t, special("tab"), got)
+		assert.Equal(t, special(command.Tab), got)
 	})
 
 	t.Run("arrow keys", func(t *testing.T) {
-		assert.Equal(t, special("up"),
+		assert.Equal(t, special(command.Up),
 			ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyUp}))
-		assert.Equal(t, special("down"),
+		assert.Equal(t, special(command.Down),
 			ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyDown}))
-		assert.Equal(t, special("left"),
+		assert.Equal(t, special(command.Left),
 			ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyLeft}))
-		assert.Equal(t, special("right"),
+		assert.Equal(t, special(command.Right),
 			ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyRight}))
 	})
 
 	t.Run("home and end keys", func(t *testing.T) {
-		assert.Equal(t, special("home"),
+		assert.Equal(t, special(command.Home),
 			ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyHome}))
-		assert.Equal(t, special("end"),
+		assert.Equal(t, special(command.End),
 			ui.FromTeaKey(tea.KeyPressMsg{Code: tea.KeyEnd}))
 	})
 
@@ -107,13 +107,21 @@ func TestFromTeaKey(t *testing.T) {
 		}, got)
 	})
 
+	t.Run("ctrl+punctuation from code when no text", func(t *testing.T) {
+		got := ui.FromTeaKey(tea.KeyPressMsg{Code: '\\', Mod: tea.ModCtrl})
+		assert.Equal(t, command.KeyEvent{
+			Code: command.KeyCode{Char: '\\'},
+			Mods: command.ModCtrl,
+		}, got)
+	})
+
 	t.Run("alt modifier on special key", func(t *testing.T) {
 		got := ui.FromTeaKey(tea.KeyPressMsg{
 			Code: tea.KeyEnter,
 			Mod:  tea.ModAlt,
 		})
 		assert.Equal(t, command.KeyEvent{
-			Code: command.KeyCode{Special: "ret"},
+			Code: command.KeyCode{Special: command.Enter},
 			Mods: command.ModAlt,
 		}, got)
 	})
@@ -124,7 +132,7 @@ func TestFromTeaKey(t *testing.T) {
 			Mod:  tea.ModShift,
 		})
 		assert.Equal(t, command.KeyEvent{
-			Code: command.KeyCode{Special: "tab"},
+			Code: command.KeyCode{Special: command.Tab},
 			Mods: command.ModShift,
 		}, got)
 	})

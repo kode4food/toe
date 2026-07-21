@@ -23,7 +23,6 @@ const (
 func Module(model ui.Model) command.Module {
 	prev := kit.Prefixed(kit.Char('['))
 	next := kit.Prefixed(kit.Char(']'))
-	spc := kit.Prefixed(kit.Char(' '))
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -33,7 +32,7 @@ func Module(model ui.Model) command.Module {
 					ui.NewChangedFilePicker,
 				)),
 				Modes: []string{"NOR", "SEL"},
-				Keys:  kit.Keys(spc(kit.Char('g'))),
+				Keys:  kit.Leader('g'),
 			},
 			{
 				Name:      actGotoNextChange,

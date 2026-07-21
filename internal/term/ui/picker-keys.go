@@ -25,36 +25,36 @@ func (p *PickerComponent) handleKey(
 		}), nil
 	}
 	switch {
-	case k.Code.Special == "esc" ||
+	case k.Code.Special == command.Escape ||
 		(k.Code.Char == 'c' && k.Mods == command.ModCtrl):
 		return dismiss()
-	case k.Code.Special == "ret":
+	case k.Code.Special == command.Enter:
 		return p.acceptItem(cx, ps, PickerAcceptReplace, dismiss)
 	case k.Code.Char == 's' && k.Mods == command.ModCtrl:
 		return p.acceptItem(cx, ps, PickerAcceptHorizontalSplit, dismiss)
 	case k.Code.Char == 'v' && k.Mods == command.ModCtrl:
 		return p.acceptItem(cx, ps, PickerAcceptVerticalSplit, dismiss)
-	case k.Code.Special == "up" ||
+	case k.Code.Special == command.Up ||
 		(k.Code.Char == 'p' && k.Mods == command.ModCtrl) ||
-		(k.Code.Special == "tab" && k.Mods == command.ModShift):
+		(k.Code.Special == command.Tab && k.Mods == command.ModShift):
 		ps.moveBy(-1)
-	case k.Code.Special == "down" ||
+	case k.Code.Special == command.Down ||
 		(k.Code.Char == 'n' && k.Mods == command.ModCtrl) ||
-		k.Code.Special == "tab":
+		k.Code.Special == command.Tab:
 		ps.moveBy(1)
-	case k.Code.Special == "pagedown" ||
+	case k.Code.Special == command.PageDown ||
 		(k.Code.Char == 'd' && k.Mods == command.ModCtrl):
 		ps.pageDown()
-	case k.Code.Special == "pageup" ||
+	case k.Code.Special == command.PageUp ||
 		(k.Code.Char == 'u' && k.Mods == command.ModCtrl):
 		ps.pageUp()
-	case k.Code.Special == "home":
+	case k.Code.Special == command.Home:
 		ps.cursor = 0
-	case k.Code.Special == "end":
+	case k.Code.Special == command.End:
 		if len(ps.matched) > 0 {
 			ps.cursor = len(ps.matched) - 1
 		}
-	case k.Code.Special == "backspace" ||
+	case k.Code.Special == command.Backspace ||
 		(k.Code.Char == 'h' && k.Mods == command.ModCtrl):
 		runes := []rune(ps.query)
 		if len(runes) > 0 {

@@ -128,7 +128,7 @@ func Char(ch rune) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Char: ch}}
 }
 
-// Special is a bare key event for a named special key
-func Special(name string) command.KeyEvent {
-	return command.KeyEvent{Code: command.KeyCode{Special: name}}
+// Special is a bare key event for a special key
+func Special(s command.Special) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Special: s}}
 }

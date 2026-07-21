@@ -27,12 +27,12 @@ func TestCompletionCommands(t *testing.T) {
 		name string
 		key  command.KeyEvent
 	}{
-		{name: "completion_previous", key: test.Special("up")},
-		{name: "completion_next", key: test.Special("down")},
-		{name: "completion_page_up", key: test.Special("pageup")},
-		{name: "completion_page_down", key: test.Special("pagedown")},
-		{name: "completion_first", key: test.Special("home")},
-		{name: "completion_last", key: test.Special("end")},
+		{name: "completion_previous", key: test.Special(command.Up)},
+		{name: "completion_next", key: test.Special(command.Down)},
+		{name: "completion_page_up", key: test.Special(command.PageUp)},
+		{name: "completion_page_down", key: test.Special(command.PageDown)},
+		{name: "completion_first", key: test.Special(command.Home)},
+		{name: "completion_last", key: test.Special(command.End)},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			e, km := test.Env(t, "")

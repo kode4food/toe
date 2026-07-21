@@ -182,6 +182,18 @@ func (p *ImagePane) Image() *Image {
 	return p.image
 }
 
+// Reload re-decodes the backing file after an external change; the new bytes
+// yield a new ContentID, so the display path retransmits automatically
+func (p *ImagePane) Reload() error {
+	img, err := LoadImage(p.path)
+	if err != nil {
+		return err
+	}
+	p.image = img
+	p.dirty = true
+	return nil
+}
+
 // Zoom returns the image scale as a percentage of its fitted size
 func (p *ImagePane) Zoom() int {
 	return p.zoom
@@ -257,4 +269,14 @@ func registerImagePane(e *view.Editor) {
 			pane.restoreZoom(session)
 			return pane, nil
 		})
+}
+
+// rangeImagePanes calls fn for each image pane in the editor's pane tree
+func rangeImagePanes(e *view.Editor, fn func(*ImagePane)) {
+	e.Tree().Range(func(p view.Pane) bool {
+		if img, ok := p.(*ImagePane); ok {
+			fn(img)
+		}
+		return true
+	})
 }

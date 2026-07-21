@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"unicode"
 
 	"github.com/stretchr/testify/assert"
 
@@ -108,7 +107,7 @@ func TestDefaults(t *testing.T) {
 		_, ok := km.ResolveCommand("goto_line_end_newline")
 		assert.True(t, ok)
 		_, found, prefix := km.Lookup("INS", []command.KeyEvent{
-			test.Special("end"),
+			test.Special(command.End),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -153,13 +152,53 @@ func TestDefaults(t *testing.T) {
 		}, keys)
 	})
 
-	t.Run("terminal paste hint is first", func(t *testing.T) {
+	t.Run("leader aliases share menus", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
+			spaceTitle, spaceHints := km.PendingHints(
+				mode, []command.KeyEvent{test.Char(' ')},
+			)
+			aliasTitle, aliasHints := km.PendingHints(
+				mode, []command.KeyEvent{ctrl('\\')},
+			)
+			assert.Equal(t, spaceTitle, aliasTitle)
+			assert.Equal(t, spaceHints, aliasHints)
+		}
+	})
+
+	t.Run("terminal window menu mirrors other panes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		_, hints := km.PendingHints("TRM", []command.KeyEvent{ctrl('w')})
+		labels := make(map[string]string, len(hints))
+		for _, h := range hints {
+			labels[h.Key] = h.Label
+		}
 
-		assert.Equal(t, "p", hints[0].Key)
-		assert.Equal(t, "Paste clipboard into terminal", hints[0].Label)
+		// terminal-specific addition
+		assert.Equal(t, "Search focused terminal's scrollback", labels["/"])
+		// pane-management commands shared with every other pane
+		assert.Equal(t, "Create a new scratch buffer", labels["n"])
+		assert.Equal(t, "Vertical right split", labels["v, C-v"])
+	})
+
+	t.Run("terminal space menu is filtered", func(t *testing.T) {
+		km := defaultKeymaps(t)
+
+		title, hints := km.PendingHints("TRM", []command.KeyEvent{
+			test.Char(' '),
+		})
+		labels := make(map[string]string, len(hints))
+		for _, h := range hints {
+			labels[h.Key] = h.Label
+		}
+
+		assert.Equal(t, "Leader", title)
+		assert.Equal(t, "Window", labels["w"])
+		assert.Equal(t, "Open file picker", labels["f"])
+		assert.Equal(t, "Paste clipboard into terminal", labels["p"])
+		assert.NotContains(t, labels, "y")
 	})
 
 	t.Run("image command prompt is bound", func(t *testing.T) {
@@ -200,7 +239,7 @@ func TestDefaults(t *testing.T) {
 			test.Char(' '),
 		})
 
-		assert.Equal(t, "Space", title)
+		assert.Equal(t, "Leader", title)
 		assert.Contains(t, hints, command.KeyHint{
 			Key:   "?",
 			Label: "Open command palette",
@@ -283,15 +322,14 @@ func TestDefaults(t *testing.T) {
 	t.Run("no conflicting default keybindings", func(t *testing.T) {
 		km := defaultKeymaps(t)
 		seqs := collectDefaultKeySeqs(km)
-		for key, names := range seqs {
-			if len(names) < 2 || allowedDuplicateKey(key, names) {
+		for key, info := range seqs {
+			if len(info.names) < 2 || allowedDuplicateKey(key, info.names) {
 				continue
 			}
-			assert.Failf(t, "duplicate key binding", "%s: %v", key, names)
+			assert.Failf(t, "duplicate key binding", "%s: %v", key, info.names)
 		}
-		for key := range seqs {
+		for key, info := range seqs {
 			mode, seq := splitKeySeq(key)
-			events := parseKeySeq(t, seq)
 			for other := range seqs {
 				otherMode, otherSeq := splitKeySeq(other)
 				if mode != otherMode || seq == otherSeq {
@@ -300,7 +338,7 @@ func TestDefaults(t *testing.T) {
 				if !strings.HasPrefix(otherSeq, seq+" ") {
 					continue
 				}
-				_, found, prefix := km.Lookup(mode, events)
+				_, found, prefix := km.Lookup(mode, info.events)
 				assert.False(t, found)
 				assert.True(t, prefix)
 			}
@@ -356,15 +394,23 @@ func ctrl(ch rune) command.KeyEvent {
 	return test.Char(ch).WithMods(command.ModCtrl)
 }
 
-func collectDefaultKeySeqs(km *command.Keymaps) map[string][]string {
-	seqs := map[string][]string{}
+type keySeqInfo struct {
+	names  []string
+	events []command.KeyEvent
+}
+
+func collectDefaultKeySeqs(km *command.Keymaps) map[string]keySeqInfo {
+	seqs := map[string]keySeqInfo{}
 	for _, cmd := range km.Commands() {
 		name := commandName(cmd)
 		for _, mode := range commandModes(cmd) {
 			for _, binding := range commandBindings(cmd, mode) {
 				for _, seq := range binding {
 					key := mode + "\t" + keySeqString(seq)
-					seqs[key] = append(seqs[key], name)
+					info := seqs[key]
+					info.names = append(info.names, name)
+					info.events = seq
+					seqs[key] = info
 				}
 			}
 		}
@@ -417,52 +463,6 @@ func allowedDuplicateKey(key string, names []string) bool {
 func splitKeySeq(key string) (string, string) {
 	mode, seq, _ := strings.Cut(key, "\t")
 	return mode, seq
-}
-
-func parseKeySeq(t *testing.T, seq string) []command.KeyEvent {
-	t.Helper()
-	if seq == "" {
-		return nil
-	}
-	parts := strings.Split(seq, " ")
-	out := make([]command.KeyEvent, 0, len(parts))
-	for _, part := range parts {
-		out = append(out, parseKeyPart(t, part))
-	}
-	return out
-}
-
-func parseKeyPart(t *testing.T, part string) command.KeyEvent {
-	t.Helper()
-	runes := []rune(part)
-	if len(runes) == 1 {
-		r := runes[0]
-		if unicode.IsUpper(r) {
-			return test.Char(r).WithMods(command.ModShift)
-		}
-		return test.Char(r)
-	}
-	if !strings.HasPrefix(part, "<") || !strings.HasSuffix(part, ">") {
-		return test.Special(part)
-	}
-	inner := strings.TrimSuffix(strings.TrimPrefix(part, "<"), ">")
-	if inner == "space" {
-		return test.Char(' ')
-	}
-	if value, ok := strings.CutPrefix(inner, "C-"); ok {
-		return test.Char(rune(value[0])).WithMods(command.ModCtrl)
-	}
-	if value, ok := strings.CutPrefix(inner, "A-"); ok {
-		return test.Char(rune(value[0])).WithMods(command.ModAlt)
-	}
-	if value, ok := strings.CutPrefix(inner, "S-"); ok {
-		r := []rune(value)
-		if len(r) == 1 {
-			return test.Char(r[0]).WithMods(command.ModShift)
-		}
-		return test.Special(value).WithMods(command.ModShift)
-	}
-	return test.Special(inner)
 }
 
 func documentedCommandNames(t *testing.T) []string {

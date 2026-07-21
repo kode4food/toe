@@ -14,6 +14,9 @@ import (
 )
 
 type (
+	// SessionKind identifies a leaf pane's restorer in a saved session
+	SessionKind string
+
 	editorSession struct {
 		Version   int               `toml:"version"`
 		Options   sessionOptions    `toml:"option,omitempty"`
@@ -35,7 +38,7 @@ type (
 	}
 
 	sessionNode struct {
-		Kind             string         `toml:"kind"`
+		Kind             SessionKind    `toml:"kind"`
 		Path             string         `toml:"path,omitempty"`
 		Values           map[string]any `toml:"value,omitempty"`
 		Layout           string         `toml:"layout,omitempty"`
@@ -75,10 +78,10 @@ const (
 	sessionVersion = 1
 	SessionFile    = "session.toml"
 
-	SessionKindSplit    = "split"
-	SessionKindView     = "view"
-	SessionKindImage    = "image"
-	SessionKindTerminal = "terminal"
+	SessionKindSplit    SessionKind = "split"
+	SessionKindView     SessionKind = "view"
+	SessionKindImage    SessionKind = "image"
+	SessionKindTerminal SessionKind = "terminal"
 )
 
 var (

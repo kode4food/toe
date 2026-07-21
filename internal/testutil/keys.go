@@ -7,7 +7,7 @@ func Char(ch rune) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Char: ch}}
 }
 
-// Special builds a KeyEvent for a named special key
-func Special(name string) command.KeyEvent {
-	return command.KeyEvent{Code: command.KeyCode{Special: name}}
+// Special builds a KeyEvent for a special key
+func Special(s command.Special) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Special: s}}
 }

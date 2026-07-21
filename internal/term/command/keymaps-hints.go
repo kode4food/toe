@@ -1,19 +1,23 @@
 package command
 
-func (k *Keymaps) LabelNode(mode string, seq []KeyEvent, name string) {
+// LabelNode names the node reached by each alternative in prefix, so a shared
+// menu (e.g. the Space and Ctrl-\ leaders) is labelled everywhere it is reached
+func (k *Keymaps) LabelNode(mode string, prefix KeyBinding, name string) {
 	root, ok := k.modes[mode]
 	if !ok {
 		return
 	}
-	node := root
-	for _, ev := range seq {
-		child, ok := node.children[ev]
-		if !ok {
-			return
+	for _, seq := range prefix {
+		node := root
+		for _, ev := range seq {
+			if node = node.children[ev]; node == nil {
+				break
+			}
 		}
-		node = child
+		if node != nil {
+			node.label = name
+		}
 	}
-	node.label = name
 }
 
 // PendingHints returns the title and (key, label) pairs for the node

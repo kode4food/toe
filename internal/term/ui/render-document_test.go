@@ -113,7 +113,7 @@ func TestRenderCrash(t *testing.T) {
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: "INS", name: "insert_newline",
 		fn:   act(action.InsertNewline),
-		seqs: [][]command.KeyEvent{{special("ret")}},
+		seqs: [][]command.KeyEvent{{special(command.Enter)}},
 	})
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: "INS", name: "insert_newline",

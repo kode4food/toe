@@ -79,7 +79,7 @@ func TestIntegration(t *testing.T) {
 		tt.send("echo TERMINAL_PANE_WORKS\r")
 		tt.waitFor("TERMINAL_PANE_WORKS")
 
-		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.send("\x17q") // Ctrl-w q closes the terminal
 		tt.waitFor("NOR")
 		tt.quit()
 	})
@@ -96,7 +96,7 @@ func TestIntegration(t *testing.T) {
 		tt.send(`printf '\033]0;MYTITLE\007'` + "\r")
 		tt.waitFor("MYTITLE")
 
-		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.send("\x17q") // Ctrl-w q closes the terminal
 		tt.quit()
 	})
 
@@ -141,7 +141,7 @@ func TestIntegration(t *testing.T) {
 			)
 		}
 
-		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.send("\x17q") // Ctrl-w q closes the terminal
 		tt.quit()
 	})
 
@@ -210,7 +210,7 @@ func TestIntegration(t *testing.T) {
 		tt.waitFor("scrollback")
 
 		tt.escape()
-		tt.send("\x1d") // Ctrl-]: close the pane and restore a scratch buffer
+		tt.send("\x17q") // Ctrl-w q closes the terminal
 		tt.quit()
 	})
 

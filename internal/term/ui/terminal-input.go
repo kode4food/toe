@@ -41,22 +41,12 @@ func (t *TerminalPane) HandleEvent(
 	return t.handleMouse(cx, msg)
 }
 
-// handleKey forwards msg to the shell, unless it is one of the leaders that
-// detach or close the pane
+// handleKey forwards msg to the shell; keys bound in terminal mode (the
+// Ctrl-w window chord, the Ctrl-\ leader) are claimed by the keymap upstream
 func (t *TerminalPane) handleKey(
-	cx *Context, msg tea.KeyPressMsg,
+	_ *Context, msg tea.KeyPressMsg,
 ) (EventResult, bool) {
 	k := msg.Key()
-	if k.Mod&tea.ModCtrl != 0 {
-		switch k.Code {
-		case '\\':
-			cx.Editor.FocusNextView()
-			return consumed(), true
-		case ']':
-			closeTerminal(cx.Editor, t)
-			return consumed(), true
-		}
-	}
 	t.SendKey(uv.KeyPressEvent(uv.Key{
 		Text: k.Text, Mod: k.Mod, Code: k.Code,
 		ShiftedCode: k.ShiftedCode, BaseCode: k.BaseCode, IsRepeat: k.IsRepeat,
@@ -200,16 +190,6 @@ func (t *TerminalPane) mouseArea(cx *Context) geom.Area {
 		a.Point = a.Point.Add(geom.Point{Y: 1})
 	}
 	return a
-}
-
-// the Ctrl-w prefix must reach the keymap even while a pane has raw input
-// focus, so it can't be treated as a normal keystroke
-func (e *EditorComponent) inWindowChord(msg tea.KeyPressMsg) bool {
-	if len(e.pending) > 0 {
-		return true
-	}
-	k := msg.Key()
-	return k.Mod&tea.ModCtrl != 0 && k.Code == 'w'
 }
 
 func (e *EditorComponent) pollTerminals(cx *Context) {

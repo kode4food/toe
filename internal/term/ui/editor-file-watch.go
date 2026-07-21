@@ -50,29 +50,36 @@ func (w *editorFileWatcher) sync(e *view.Editor) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	for _, doc := range e.AllDocuments() {
-		path := doc.Path()
-		if path == "" {
-			continue
-		}
-		dir := filepath.Dir(path)
-		if _, ok := w.dirs[dir]; ok {
-			continue
-		}
-		// The inotify instance is a limited per-user resource; open it only
-		// once there is a directory to watch
-		if w.watcher == nil {
-			watcher, err := fsnotify.NewWatcher()
-			if err != nil {
-				return
-			}
-			w.watcher = watcher
-			go w.run()
-		}
-		if err := w.watcher.Add(dir); err != nil {
-			continue
-		}
-		w.dirs[dir] = struct{}{}
+		w.watchPath(doc.Path())
 	}
+	rangeImagePanes(e, func(img *ImagePane) {
+		w.watchPath(img.Path())
+	})
+}
+
+// watchPath registers path's directory; the caller must hold w.mu
+func (w *editorFileWatcher) watchPath(path string) {
+	if path == "" {
+		return
+	}
+	dir := filepath.Dir(path)
+	if _, ok := w.dirs[dir]; ok {
+		return
+	}
+	// The inotify instance is a limited per-user resource; open it only
+	// once there is a directory to watch
+	if w.watcher == nil {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			return
+		}
+		w.watcher = watcher
+		go w.run()
+	}
+	if err := w.watcher.Add(dir); err != nil {
+		return
+	}
+	w.dirs[dir] = struct{}{}
 }
 
 func (w *editorFileWatcher) nextCmd(e *view.Editor) tea.Cmd {

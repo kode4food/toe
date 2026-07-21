@@ -14,17 +14,17 @@ import (
 func (e *EditorComponent) handleKeyPress(
 	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
-	if !e.inWindowChord(msg) {
-		p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
-		if pi, ok := p.(PaneInput); ok {
-			if result, handled := pi.HandleEvent(cx, msg); handled {
-				return result, nil
-			}
+	p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
+	k := FromTeaKey(msg)
+	// a raw-input pane (terminal) forwards keystrokes to its child, so let the
+	// keymap claim anything bound in the current mode before the pane sees it
+	if pi, ok := p.(PaneInput); ok && !e.keymapClaims(cx, k) {
+		if result, handled := pi.HandleEvent(cx, msg); handled {
+			return result, nil
 		}
 	}
 
 	e.completionGen++
-	k := FromTeaKey(msg)
 
 	if len(e.pending) == 0 && k.Code.Char == 'z' && k.Mods == command.ModCtrl {
 		return consumed(), tea.Suspend
@@ -50,7 +50,7 @@ func (e *EditorComponent) handleKeyPress(
 	modeStr := mode.String()
 
 	noPending := len(e.pending) == 0 && k.Mods == command.ModNone &&
-		k.Code.Special == ""
+		k.Code.Special == command.SpecialNone
 	if noPending && mode == view.ModeSelect {
 		ch := k.Code.Char
 		cur := cx.Editor.Count()
@@ -129,6 +129,21 @@ func (e *EditorComponent) handleKeyPress(
 		cx.Editor.ResetCount()
 		return consumed(), nil
 	}
+}
+
+// keymapClaims reports whether k continues or completes a binding in the
+// focused pane's mode, so a raw-input pane must not swallow it first
+func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
+	if len(e.pending) > 0 {
+		return true
+	}
+	if cx.Editor.Mode() == view.ModeTerminal && k.Mods == command.ModNone {
+		return false
+	}
+	_, found, prefix := cx.Keymaps.Lookup(
+		cx.Editor.Mode().String(), []command.KeyEvent{k},
+	)
+	return found || prefix
 }
 
 func (e *EditorComponent) insertTypable(

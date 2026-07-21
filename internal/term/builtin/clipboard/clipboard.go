@@ -30,8 +30,6 @@ const (
 
 // DocumentModule returns clipboard commands for document panes
 func DocumentModule() command.Module {
-	spc := kit.Prefixed(kit.Char(' '))
-
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -68,14 +66,14 @@ func DocumentModule() command.Module {
 				DocString: "Yank selections to clipboard",
 				Run:       kit.Runner(action.YankToClipboard),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('y'))),
+				Keys:      kit.Leader('y'),
 			},
 			{
 				Name:      actYankMainToClipboard,
 				DocString: "Yank main selection to clipboard",
 				Run:       kit.Runner(action.YankMainToClipboard),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('Y'))),
+				Keys:      kit.Leader('Y'),
 			},
 			{
 				Name:      actPasteClipboardAfter,
@@ -83,7 +81,7 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.PasteClipboardAfter),
 				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"clipboard-paste-after"},
-				Keys:      kit.Keys(spc(kit.Char('p'))),
+				Keys:      kit.Leader('p'),
 			},
 			{
 				Name:      actPasteClipboardBefore,
@@ -91,14 +89,14 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.PasteClipboardBefore),
 				Modes:     []string{"NOR", "SEL"},
 				Aliases:   []string{"clipboard-paste-before"},
-				Keys:      kit.Keys(spc(kit.Char('P'))),
+				Keys:      kit.Leader('P'),
 			},
 			{
 				Name:      actClipboardReplace,
 				DocString: "Replace selections by clipboard content",
 				Run:       kit.Runner(action.ClipboardReplace),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(spc(kit.Char('R'))),
+				Keys:      kit.Leader('R'),
 				Signature: kit.Sig(),
 			},
 			{
@@ -168,14 +166,13 @@ func DocumentModule() command.Module {
 
 // TerminalModule returns clipboard commands used by terminal panes
 func TerminalModule() command.Module {
-	cw := kit.Prefixed(kit.Ctrl('w'))
 	return command.Module{
 		Commands: []command.Command{{
 			Name:      actPasteClipboardIntoPane,
 			DocString: "Paste clipboard into terminal",
 			Run:       pasteClipboardIntoPane,
 			Modes:     []string{"TRM"},
-			Keys:      kit.Keys(cw(kit.Char('p'))),
+			Keys:      kit.Leader('p'),
 			Signature: kit.Sig(),
 		}},
 	}

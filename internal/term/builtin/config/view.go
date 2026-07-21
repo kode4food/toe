@@ -73,8 +73,7 @@ func ViewModule(model ui.Model) command.Module {
 	cfg := new(viewSection)
 	z := kit.Prefixed(kit.Char('z'))
 	Z := kit.Prefixed(kit.Char('Z'))
-	Spc := kit.Prefixed(kit.Char(' '))
-	Spcw := kit.Prefixed(Spc(kit.Char('w')))
+	Spcw := kit.Prefixed(kit.LeaderPrefix(kit.Char('w')))
 	Cw := kit.Prefixed(kit.Ctrl('w'))
 
 	return command.Module{
@@ -112,9 +111,9 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageUp),
 				Modes:     []string{"NOR", "SEL", "INS"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{kit.Ctrl('b'), kit.Special("pageup")},
-					{z(kit.Ctrl('b')), z(kit.Special("pageup"))},
-					{Z(kit.Ctrl('b')), Z(kit.Special("pageup"))},
+					kit.Or(kit.Ctrl('b'), kit.PgUp),
+					kit.Or(z(kit.Ctrl('b')), z(kit.PgUp)),
+					kit.Or(Z(kit.Ctrl('b')), Z(kit.PgUp)),
 				}},
 			},
 			{
@@ -123,9 +122,9 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageDown),
 				Modes:     []string{"NOR", "SEL", "INS"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{kit.Ctrl('f'), kit.Special("pagedown")},
-					{z(kit.Ctrl('f')), z(kit.Special("pagedown"))},
-					{Z(kit.Ctrl('f')), Z(kit.Special("pagedown"))},
+					kit.Or(kit.Ctrl('f'), kit.PgDn),
+					kit.Or(z(kit.Ctrl('f')), z(kit.PgDn)),
+					kit.Or(Z(kit.Ctrl('f')), Z(kit.PgDn)),
 				}},
 			},
 			{
@@ -134,9 +133,9 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageCursorHalfUp),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{kit.Ctrl('u')},
-					{z(kit.Ctrl('u')), z(kit.Special("backspace"))},
-					{Z(kit.Ctrl('u')), Z(kit.Special("backspace"))},
+					kit.Or(kit.Ctrl('u')),
+					kit.Or(z(kit.Ctrl('u')), z(kit.Bksp)),
+					kit.Or(Z(kit.Ctrl('u')), Z(kit.Bksp)),
 				}},
 			},
 			{
@@ -145,9 +144,9 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.PageCursorHalfDown),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{kit.Ctrl('d')},
-					{z(kit.Ctrl('d')), z(kit.Char(' '))},
-					{Z(kit.Ctrl('d')), Z(kit.Char(' '))},
+					kit.Or(kit.Ctrl('d')),
+					kit.Or(z(kit.Ctrl('d')), z(kit.Char(' '))),
+					kit.Or(Z(kit.Ctrl('d')), Z(kit.Char(' '))),
 				}},
 			},
 			{
@@ -182,8 +181,8 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.AlignViewCenter),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{z(kit.Char('z')), z(kit.Char('c'))},
-					{Z(kit.Char('z')), Z(kit.Char('c'))},
+					kit.Or(z(kit.Char('z')), z(kit.Char('c'))),
+					kit.Or(Z(kit.Char('z')), Z(kit.Char('c'))),
 				}},
 			},
 			{
@@ -192,8 +191,8 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.AlignViewTop),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{z(kit.Char('.')), z(kit.Char('t'))},
-					{Z(kit.Char('.')), Z(kit.Char('t'))},
+					kit.Or(z(kit.Char('.')), z(kit.Char('t'))),
+					kit.Or(Z(kit.Char('.')), Z(kit.Char('t'))),
 				}},
 			},
 			{
@@ -202,8 +201,8 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.AlignViewBottom),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{z(kit.Char('b'))},
-					{Z(kit.Char('b'))},
+					kit.Or(z(kit.Char('b'))),
+					kit.Or(Z(kit.Char('b'))),
 				}},
 			},
 			{
@@ -212,8 +211,8 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.ScrollUp),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{z(kit.Char('k')), z(kit.Special("up"))},
-					{Z(kit.Char('k')), Z(kit.Special("up"))},
+					kit.Or(z(kit.Char('k')), z(kit.Up)),
+					kit.Or(Z(kit.Char('k')), Z(kit.Up)),
 				}},
 			},
 			{
@@ -222,8 +221,8 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.ScrollDown),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{z(kit.Char('j')), z(kit.Special("down"))},
-					{Z(kit.Char('j')), Z(kit.Special("down"))},
+					kit.Or(z(kit.Char('j')), z(kit.Down)),
+					kit.Or(Z(kit.Char('j')), Z(kit.Down)),
 				}},
 			},
 			{
@@ -232,8 +231,8 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Continuation(model.TerminalAction()),
 				Modes:     []string{"NOR", "SEL", "IMG"},
 				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('x'))},
-					{Spcw(kit.Char('x'))},
+					kit.Or(Cw(kit.Char('x'))),
+					kit.Or(Spcw(kit.Char('x'))),
 				}},
 				Signature: kit.Sig(),
 			},
@@ -242,10 +241,7 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Search focused terminal's scrollback",
 				Run:       kit.Continuation(model.TerminalSearchAction()),
 				Modes:     []string{"TRM"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('/'))},
-					{Spcw(kit.Char('/'))},
-				}},
+				Keys:      kit.Window(kit.Char('/')),
 				Signature: kit.Sig(),
 			},
 			{
@@ -253,10 +249,7 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Vertical right split",
 				Run:       kit.Runner(action.VSplit),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('v')), Cw(kit.Ctrl('v'))},
-					{Spcw(kit.Char('v')), Spcw(kit.Ctrl('v'))},
-				}},
+				Keys:      kit.Window(kit.Char('v'), kit.Ctrl('v')),
 				Aliases:   []string{"vs"},
 				Signature: kit.Sig(),
 			},
@@ -265,10 +258,7 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Horizontal bottom split",
 				Run:       kit.Runner(action.HSplit),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('s')), Cw(kit.Ctrl('s'))},
-					{Spcw(kit.Char('s')), Spcw(kit.Ctrl('s'))},
-				}},
+				Keys:      kit.Window(kit.Char('s'), kit.Ctrl('s')),
 				Aliases:   []string{"hs", "sp"},
 				Signature: kit.Sig(),
 			},
@@ -299,20 +289,14 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Transpose splits",
 				Run:       kit.Runner(action.TransposeView),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('t')), Cw(kit.Ctrl('t'))},
-					{Spcw(kit.Char('t')), Spcw(kit.Ctrl('t'))},
-				}},
+				Keys:      kit.Window(kit.Char('t'), kit.Ctrl('t')),
 			},
 			{
 				Name:      actCloseCurrentView,
 				DocString: "Close window",
 				Run:       kit.Runner(action.CloseCurrentView),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('q')), Cw(kit.Ctrl('q'))},
-					{Spcw(kit.Char('q')), Spcw(kit.Ctrl('q'))},
-				}},
+				Keys:      kit.Window(kit.Char('q'), kit.Ctrl('q')),
 				Aliases:   []string{"wc"},
 				Signature: kit.Sig(),
 			},
@@ -329,10 +313,7 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Close windows except current",
 				Run:       kit.Runner(action.CloseOtherViews),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('o')), Cw(kit.Ctrl('o'))},
-					{Spcw(kit.Char('o')), Spcw(kit.Ctrl('o'))},
-				}},
+				Keys:      kit.Window(kit.Char('o'), kit.Ctrl('o')),
 				Aliases:   []string{"wo"},
 				Signature: kit.Sig(),
 			},
@@ -341,90 +322,71 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Goto next window",
 				Run:       kit.Runner(action.RotateView),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('w')), Cw(kit.Ctrl('w'))},
-					{Spcw(kit.Char('w')), Spcw(kit.Ctrl('w'))},
-				}},
+				Keys:      kit.Window(kit.Char('w'), kit.Ctrl('w')),
 			},
 			{
 				Name:      actJumpViewLeft,
 				DocString: "Jump to left split",
 				Run:       kit.Runner(action.JumpViewLeft),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('h')), Cw(kit.Ctrl('h')), Cw(kit.Special("left"))},
-					{Spcw(kit.Char('h')), Spcw(kit.Ctrl('h')), Spcw(kit.Special("left"))},
-				}},
+				Keys: kit.Window(
+					kit.Char('h'), kit.Ctrl('h'), kit.Left,
+				),
 			},
 			{
 				Name:      actJumpViewDown,
 				DocString: "Jump to split below",
 				Run:       kit.Runner(action.JumpViewDown),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('j')), Cw(kit.Ctrl('j')), Cw(kit.Special("down"))},
-					{Spcw(kit.Char('j')), Spcw(kit.Ctrl('j')), Spcw(kit.Special("down"))},
-				}},
+				Keys: kit.Window(
+					kit.Char('j'), kit.Ctrl('j'), kit.Down,
+				),
 			},
 			{
 				Name:      actJumpViewUp,
 				DocString: "Jump to split above",
 				Run:       kit.Runner(action.JumpViewUp),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('k')), Cw(kit.Ctrl('k')), Cw(kit.Special("up"))},
-					{Spcw(kit.Char('k')), Spcw(kit.Ctrl('k')), Spcw(kit.Special("up"))},
-				}},
+				Keys: kit.Window(
+					kit.Char('k'), kit.Ctrl('k'), kit.Up,
+				),
 			},
 			{
 				Name:      actJumpViewRight,
 				DocString: "Jump to right split",
 				Run:       kit.Runner(action.JumpViewRight),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('l')), Cw(kit.Ctrl('l')), Cw(kit.Special("right"))},
-					{Spcw(kit.Char('l')), Spcw(kit.Ctrl('l')), Spcw(kit.Special("right"))},
-				}},
+				Keys: kit.Window(
+					kit.Char('l'), kit.Ctrl('l'), kit.Right,
+				),
 			},
 			{
 				Name:      actSwapViewLeft,
 				DocString: "Swap with left split",
 				Run:       kit.Runner(action.SwapViewLeft),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('H'))},
-					{Spcw(kit.Char('H'))},
-				}},
+				Keys:      kit.Window(kit.Char('H')),
 			},
 			{
 				Name:      actSwapViewDown,
 				DocString: "Swap with split below",
 				Run:       kit.Runner(action.SwapViewDown),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('J'))},
-					{Spcw(kit.Char('J'))},
-				}},
+				Keys:      kit.Window(kit.Char('J')),
 			},
 			{
 				Name:      actSwapViewUp,
 				DocString: "Swap with split above",
 				Run:       kit.Runner(action.SwapViewUp),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('K'))},
-					{Spcw(kit.Char('K'))},
-				}},
+				Keys:      kit.Window(kit.Char('K')),
 			},
 			{
 				Name:      actSwapViewRight,
 				DocString: "Swap with right split",
 				Run:       kit.Runner(action.SwapViewRight),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
-				Keys: map[string][]command.KeyBinding{"*": {
-					{Cw(kit.Char('L'))},
-					{Spcw(kit.Char('L'))},
-				}},
+				Keys:      kit.Window(kit.Char('L')),
 			},
 		},
 		Options: []command.Option{
@@ -654,7 +616,10 @@ func ViewModule(model ui.Model) command.Module {
 			kit.Label("View", kit.Char('z'), "NOR", "SEL"),
 			kit.Label("View", kit.Char('Z'), "NOR", "SEL"),
 			kit.Label("Window", kit.Ctrl('w'), "NOR", "SEL", "TRM", "IMG"),
-			kit.Label("Window", Spc(kit.Char('w')), "NOR", "SEL", "IMG"),
+			kit.Label(
+				"Window", kit.LeaderPrefix(kit.Char('w')),
+				"NOR", "SEL", "TRM", "IMG",
+			),
 		},
 	}
 }

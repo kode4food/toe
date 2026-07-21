@@ -40,7 +40,6 @@ const (
 
 // PickerModule returns the file, buffer, and explorer picker commands
 func PickerModule(model ui.Model) command.Module {
-	spc := kit.Prefixed(kit.Char(' '))
 	cfg := new(filesPickerSection)
 
 	return command.Module{
@@ -49,8 +48,8 @@ func PickerModule(model ui.Model) command.Module {
 				Name:      actFilePicker,
 				DocString: "Open file picker",
 				Run:       kit.Continuation(model.PickerAction(NewFilePicker)),
-				Modes:     []string{"NOR", "SEL", "IMG"},
-				Keys:      kit.Keys(spc(kit.Char('f'))),
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:      kit.Leader('f'),
 			},
 			{
 				Name:      actFilePickerInCWD,
@@ -58,8 +57,8 @@ func PickerModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewFilePickerInCWD),
 				),
-				Modes: []string{"NOR", "SEL", "IMG"},
-				Keys:  kit.Keys(spc(kit.Char('F'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('F'),
 			},
 			{
 				Name:      actFileExplorer,
@@ -71,8 +70,8 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: []string{"NOR", "SEL", "IMG"},
-				Keys:  kit.Keys(spc(kit.Char('e'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('e'),
 			},
 			{
 				Name:      actFileExplorerForPane,
@@ -84,8 +83,8 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: []string{"NOR", "SEL", "IMG"},
-				Keys:  kit.Keys(spc(kit.Char('.'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('.'),
 			},
 			{
 				Name:      actBufferPicker,
@@ -97,8 +96,8 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: []string{"NOR", "SEL", "IMG"},
-				Keys:  kit.Keys(spc(kit.Char('b'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('b'),
 			},
 		},
 		Section: &command.Section{
@@ -112,8 +111,6 @@ func PickerModule(model ui.Model) command.Module {
 // separately from PickerModule, allowing independent placement in the
 // space-leader menu
 func DiagnosticsModule(model ui.Model) command.Module {
-	spc := kit.Prefixed(kit.Char(' '))
-
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -122,8 +119,8 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewDiagnosticPicker),
 				),
-				Modes: []string{"NOR", "SEL"},
-				Keys:  kit.Keys(spc(kit.Char('d'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('d'),
 			},
 			{
 				Name:      actWorkspaceDiagnostics,
@@ -131,8 +128,8 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewWorkspaceDiagnosticPicker),
 				),
-				Modes: []string{"NOR", "SEL", "IMG"},
-				Keys:  kit.Keys(spc(kit.Char('D'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('D'),
 			},
 			{
 				Name:      actGlobalSearch,
@@ -140,8 +137,8 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewGlobalSearchPicker),
 				),
-				Modes: []string{"NOR", "SEL", "IMG"},
-				Keys:  kit.Keys(spc(kit.Char('/'))),
+				Modes: []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:  kit.Leader('/'),
 			},
 		},
 	}

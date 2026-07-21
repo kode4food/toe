@@ -23,7 +23,7 @@ type (
 		docObservers  []DocumentObserver
 		langServers   LanguageServerController
 		indenter      Indenter
-		paneRestorers map[string]PaneRestorer
+		paneRestorers map[SessionKind]PaneRestorer
 
 		versionControl VersionControl
 

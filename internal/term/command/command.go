@@ -18,7 +18,7 @@ type (
 	// hint popup, letting a module label the prefixes it owns
 	PrefixLabel struct {
 		Modes []string
-		Seq   []KeyEvent
+		Seq   KeyBinding
 		Label string
 	}
 

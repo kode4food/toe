@@ -110,8 +110,8 @@ func CursorModule() command.Module {
 				Run:       kit.Runner(action.MoveLeft),
 				Modes:     []string{"NOR", "INS"},
 				Keys: map[string][]command.KeyBinding{
-					"*":   kit.KeyBinding(kit.Char('h'), kit.Special("left")),
-					"INS": kit.KeyBinding(kit.Special("left")),
+					"*":   kit.KeyBinding(kit.Char('h'), kit.Left),
+					"INS": kit.KeyBinding(kit.Left),
 				},
 			},
 			{
@@ -120,8 +120,8 @@ func CursorModule() command.Module {
 				Run:       kit.Runner(action.MoveDown),
 				Modes:     []string{"NOR", "INS"},
 				Keys: map[string][]command.KeyBinding{
-					"*":   kit.KeyBinding(kit.Char('j'), kit.Special("down")),
-					"INS": kit.KeyBinding(kit.Special("down")),
+					"*":   kit.KeyBinding(kit.Char('j'), kit.Down),
+					"INS": kit.KeyBinding(kit.Down),
 				},
 			},
 			{
@@ -130,8 +130,8 @@ func CursorModule() command.Module {
 				Run:       kit.Runner(action.MoveUp),
 				Modes:     []string{"NOR", "INS"},
 				Keys: map[string][]command.KeyBinding{
-					"*":   kit.KeyBinding(kit.Char('k'), kit.Special("up")),
-					"INS": kit.KeyBinding(kit.Special("up")),
+					"*":   kit.KeyBinding(kit.Char('k'), kit.Up),
+					"INS": kit.KeyBinding(kit.Up),
 				},
 			},
 			{
@@ -140,8 +140,8 @@ func CursorModule() command.Module {
 				Run:       kit.Runner(action.MoveRight),
 				Modes:     []string{"NOR", "INS"},
 				Keys: map[string][]command.KeyBinding{
-					"*":   kit.KeyBinding(kit.Char('l'), kit.Special("right")),
-					"INS": kit.KeyBinding(kit.Special("right")),
+					"*":   kit.KeyBinding(kit.Char('l'), kit.Right),
+					"INS": kit.KeyBinding(kit.Right),
 				},
 			},
 			{
@@ -233,14 +233,14 @@ func CursorModule() command.Module {
 				DocString: "Goto line start",
 				Run:       kit.Runner(action.MoveLineStart),
 				Modes:     []string{"NOR", "INS"},
-				Keys:      kit.Keys(kit.Special("home")),
+				Keys:      kit.Keys(kit.Home),
 			},
 			{
 				Name:      actGotoLineEnd,
 				DocString: "Goto line end",
 				Run:       kit.Runner(action.MoveLineEnd),
 				Modes:     []string{"NOR"},
-				Keys:      kit.Keys(kit.Special("end")),
+				Keys:      kit.Keys(kit.End),
 			},
 			{
 				Name:      actFindNextChar,
@@ -361,7 +361,7 @@ func CursorModule() command.Module {
 				DocString: "Jump forward on jumplist",
 				Run:       kit.Runner(action.JumpForward),
 				Modes:     []string{"NOR", "SEL"},
-				Keys:      kit.Keys(kit.Ctrl('i'), kit.Special("tab")),
+				Keys:      kit.Keys(kit.Ctrl('i'), kit.Tab),
 			},
 			{
 				Name:      actJumpBackward,
@@ -396,28 +396,28 @@ func CursorModule() command.Module {
 				DocString: "Extend left",
 				Run:       kit.Runner(action.ExtendCharLeft),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Char('h'), kit.Special("left")),
+				Keys:      kit.Keys(kit.Char('h'), kit.Left),
 			},
 			{
 				Name:      actExtendVisualLineDown,
 				DocString: "Extend down",
 				Run:       kit.Runner(action.ExtendLineDown),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Char('j'), kit.Special("down")),
+				Keys:      kit.Keys(kit.Char('j'), kit.Down),
 			},
 			{
 				Name:      actExtendVisualLineUp,
 				DocString: "Extend up",
 				Run:       kit.Runner(action.ExtendLineUp),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Char('k'), kit.Special("up")),
+				Keys:      kit.Keys(kit.Char('k'), kit.Up),
 			},
 			{
 				Name:      actExtendCharRight,
 				DocString: "Extend right",
 				Run:       kit.Runner(action.ExtendCharRight),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Char('l'), kit.Special("right")),
+				Keys:      kit.Keys(kit.Char('l'), kit.Right),
 			},
 			{
 				Name:      actExtendNextWordStart,
@@ -536,14 +536,14 @@ func CursorModule() command.Module {
 				DocString: "Extend to line start",
 				Run:       kit.Runner(action.ExtendToLineStart),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Special("home")),
+				Keys:      kit.Keys(kit.Home),
 			},
 			{
 				Name:      actExtendToLineEnd,
 				DocString: "Extend to line end",
 				Run:       kit.Runner(action.ExtendToLineEnd),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Special("end")),
+				Keys:      kit.Keys(kit.End),
 			},
 			{
 				Name:      actExtendToLineEndNewline,

@@ -51,7 +51,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Continuation(model.SearchAction(true)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{
-					"*": {{kit.Char('/')}, {z(kit.Char('/'))}, {Z(kit.Char('/'))}},
+					"*": {kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/'))},
 				},
 			},
 			{
@@ -60,7 +60,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Continuation(model.SearchAction(false)),
 				Modes:     []string{"NOR", "SEL"},
 				Keys: map[string][]command.KeyBinding{
-					"*": {{kit.Char('?')}, {z(kit.Char('?'))}, {Z(kit.Char('?'))}},
+					"*": {kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?'))},
 				},
 			},
 			{
@@ -69,7 +69,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.SearchNext),
 				Modes:     []string{"NOR"},
 				Keys: map[string][]command.KeyBinding{
-					"*": {{kit.Char('n')}, {z(kit.Char('n'))}, {Z(kit.Char('n'))}},
+					"*": {kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n'))},
 				},
 			},
 			{
@@ -78,7 +78,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.SearchPrev),
 				Modes:     []string{"NOR"},
 				Keys: map[string][]command.KeyBinding{
-					"*": {{kit.Char('N')}, {z(kit.Char('N'))}, {Z(kit.Char('N'))}},
+					"*": {kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N'))},
 				},
 			},
 			{
@@ -109,7 +109,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.ExtendSearchNext),
 				Modes:     []string{"SEL"},
 				Keys: map[string][]command.KeyBinding{
-					"*": {{kit.Char('n')}, {z(kit.Char('n'))}, {Z(kit.Char('n'))}},
+					"*": {kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n'))},
 				},
 			},
 			{
@@ -118,7 +118,7 @@ func SearchModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.ExtendSearchPrev),
 				Modes:     []string{"SEL"},
 				Keys: map[string][]command.KeyBinding{
-					"*": {{kit.Char('N')}, {z(kit.Char('N'))}, {Z(kit.Char('N'))}},
+					"*": {kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N'))},
 				},
 			},
 		},

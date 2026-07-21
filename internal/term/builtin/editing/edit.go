@@ -76,7 +76,7 @@ func EditModule() command.Module {
 				DocString: "Enter normal mode",
 				Run:       kit.Continuation(normalModeAction),
 				Modes:     command.DocumentModes(),
-				Keys:      kit.Keys(kit.Special("esc")),
+				Keys:      kit.Keys(kit.Esc),
 			},
 			{
 				Name:      actInsertMode,
@@ -125,7 +125,7 @@ func EditModule() command.Module {
 				DocString: "Exit selection mode",
 				Run:       kit.Continuation(normalModeAction),
 				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Special("esc")),
+				Keys:      kit.Keys(kit.Esc),
 			},
 			{
 				Name:      actReplace,

@@ -13,8 +13,8 @@ func char(ch rune) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Char: ch}}
 }
 
-func special(name string) command.KeyEvent {
-	return command.KeyEvent{Code: command.KeyCode{Special: name}}
+func special(s command.Special) command.KeyEvent {
+	return command.KeyEvent{Code: command.KeyCode{Special: s}}
 }
 
 func TestKeyEventString(t *testing.T) {
@@ -23,7 +23,7 @@ func TestKeyEventString(t *testing.T) {
 	})
 
 	t.Run("special key", func(t *testing.T) {
-		assert.Equal(t, "enter", special("enter").String())
+		assert.Equal(t, "ret", special(command.Enter).String())
 	})
 
 	t.Run("ctrl modifier", func(t *testing.T) {
@@ -220,8 +220,8 @@ func TestModeIsolation(t *testing.T) {
 			Run:   run,
 			Modes: []string{"NOR", "INS"},
 			Keys: map[string][]command.KeyBinding{
-				"*":   {{{char('h')}, {special("left")}}},
-				"INS": {{{special("left")}}},
+				"*":   {{{char('h')}, {special(command.Left)}}},
+				"INS": {{{special(command.Left)}}},
 			},
 		})
 
@@ -231,7 +231,7 @@ func TestModeIsolation(t *testing.T) {
 		assert.False(t, found)
 
 		_, found, _ = km.Lookup(
-			"INS", []command.KeyEvent{special("left")},
+			"INS", []command.KeyEvent{special(command.Left)},
 		)
 		assert.True(t, found)
 
@@ -264,7 +264,7 @@ func TestIsTypable(t *testing.T) {
 	})
 
 	t.Run("special key is not typable", func(t *testing.T) {
-		assert.False(t, special("enter").IsTypable())
+		assert.False(t, special(command.Enter).IsTypable())
 	})
 }
 
@@ -332,7 +332,7 @@ func TestLabelNode(t *testing.T) {
 	})
 
 	t.Run("sets label on prefix node", func(t *testing.T) {
-		km.LabelNode("NOR", []command.KeyEvent{char('g')}, "Goto")
+		km.LabelNode("NOR", command.KeyBinding{{char('g')}}, "Goto")
 		title, hints := km.PendingHints("NOR", []command.KeyEvent{
 			char('g'),
 		})
@@ -341,7 +341,7 @@ func TestLabelNode(t *testing.T) {
 	})
 
 	t.Run("LabelNode on unknown mode is no-op", func(t *testing.T) {
-		km.LabelNode("UNK", []command.KeyEvent{char('g')}, "X")
+		km.LabelNode("UNK", command.KeyBinding{{char('g')}}, "X")
 		title, hints := km.PendingHints("UNK", []command.KeyEvent{
 			char('g'),
 		})
@@ -350,7 +350,7 @@ func TestLabelNode(t *testing.T) {
 	})
 
 	t.Run("LabelNode on nonexistent key is no-op", func(t *testing.T) {
-		km.LabelNode("NOR", []command.KeyEvent{char('z')}, "Z")
+		km.LabelNode("NOR", command.KeyBinding{{char('z')}}, "Z")
 		_, hints := km.PendingHints("NOR", []command.KeyEvent{
 			char('z'),
 		})

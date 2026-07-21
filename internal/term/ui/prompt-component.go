@@ -212,23 +212,23 @@ func (p *PromptComponent) handleKey(
 		})
 	}
 	switch {
-	case k.Code.Special == "esc":
+	case k.Code.Special == command.Escape:
 		return pop(nil)
 
-	case k.Code.Special == "ret":
+	case k.Code.Special == command.Enter:
 		return p.accept(cx, pop)
 
-	case k.Code.Special == "tab" && k.Mods.Has(command.ModShift):
+	case k.Code.Special == command.Tab && k.Mods.Has(command.ModShift):
 		p.changeCompletion(-1)
 
-	case k.Code.Special == "tab":
+	case k.Code.Special == command.Tab:
 		p.changeCompletion(1)
 
 	// word deletions come before char deletions so a modified backspace or
 	// delete is not swallowed by the plain case
 	case k.Code.Char == 'w' && k.Mods == command.ModCtrl,
-		k.Code.Special == "backspace" && k.Mods.Has(command.ModCtrl),
-		k.Code.Special == "backspace" && k.Mods.Has(command.ModAlt):
+		k.Code.Special == command.Backspace && k.Mods.Has(command.ModCtrl),
+		k.Code.Special == command.Backspace && k.Mods.Has(command.ModAlt):
 		runes := []rune(p.buf)
 		start := promptWordLeft(runes, p.caret)
 		p.buf = string(slices.Delete(runes, start, p.caret))
@@ -236,14 +236,14 @@ func (p *PromptComponent) handleKey(
 		p.recalculateCompletion(cx)
 
 	case k.Code.Char == 'd' && k.Mods == command.ModAlt,
-		k.Code.Special == "del" && k.Mods.Has(command.ModCtrl),
-		k.Code.Special == "del" && k.Mods.Has(command.ModAlt):
+		k.Code.Special == command.Delete && k.Mods.Has(command.ModCtrl),
+		k.Code.Special == command.Delete && k.Mods.Has(command.ModAlt):
 		runes := []rune(p.buf)
 		end := promptWordRight(runes, p.caret)
 		p.buf = string(slices.Delete(runes, p.caret, end))
 		p.recalculateCompletion(cx)
 
-	case k.Code.Special == "backspace",
+	case k.Code.Special == command.Backspace,
 		k.Code.Char == 'h' && k.Mods == command.ModCtrl:
 		if p.caret > 0 {
 			runes := []rune(p.buf)
@@ -252,7 +252,7 @@ func (p *PromptComponent) handleKey(
 		}
 		p.recalculateCompletion(cx)
 
-	case k.Code.Special == "del",
+	case k.Code.Special == command.Delete,
 		k.Code.Char == 'd' && k.Mods == command.ModCtrl:
 		runes := []rune(p.buf)
 		if p.caret < len(runes) {
@@ -269,27 +269,27 @@ func (p *PromptComponent) handleKey(
 		p.caret = 0
 		p.recalculateCompletion(cx)
 
-	case k.Code.Special == "left" && k.Mods.Has(command.ModCtrl),
+	case k.Code.Special == command.Left && k.Mods.Has(command.ModCtrl),
 		k.Code.Char == 'b' && k.Mods == command.ModAlt:
 		p.caret = promptWordLeft([]rune(p.buf), p.caret)
 
-	case k.Code.Special == "right" && k.Mods.Has(command.ModCtrl),
+	case k.Code.Special == command.Right && k.Mods.Has(command.ModCtrl),
 		k.Code.Char == 'f' && k.Mods == command.ModAlt:
 		p.caret = promptWordRight([]rune(p.buf), p.caret)
 
-	case k.Code.Special == "left",
+	case k.Code.Special == command.Left,
 		k.Code.Char == 'b' && k.Mods == command.ModCtrl:
 		p.caret = max(p.caret-1, 0)
 
-	case k.Code.Special == "right",
+	case k.Code.Special == command.Right,
 		k.Code.Char == 'f' && k.Mods == command.ModCtrl:
 		p.caret = min(p.caret+1, len([]rune(p.buf)))
 
-	case k.Code.Special == "home",
+	case k.Code.Special == command.Home,
 		k.Code.Char == 'a' && k.Mods == command.ModCtrl:
 		p.caret = 0
 
-	case k.Code.Special == "end",
+	case k.Code.Special == command.End,
 		k.Code.Char == 'e' && k.Mods == command.ModCtrl:
 		p.caret = len([]rune(p.buf))
 

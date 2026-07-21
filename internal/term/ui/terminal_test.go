@@ -36,33 +36,6 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, ok)
 	})
 
-	t.Run("opens in place and restores on close", func(t *testing.T) {
-		e := editorWithText(t, "hello toe")
-		m := renderedModel(e)
-
-		focus := e.Tree().Focus()
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
-
-		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
-		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Stop() })
-
-		select {
-		case <-tp.Updates():
-		case <-time.After(2 * time.Second):
-			t.Fatal("expected an update signal for the shell's startup output")
-		}
-
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: ']'})
-		m = m2.(ui.Model)
-		_ = m.View()
-
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		assert.Equal(t, focus, v.ID())
-	})
-
 	t.Run("second invocation is a no-op", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
@@ -349,30 +322,6 @@ func TestTerminalPane(t *testing.T) {
 		assert.False(t, tp.SearchScrollback("does-not-exist"))
 	})
 
-	t.Run("Ctrl-backslash detaches without closing", func(t *testing.T) {
-		e := editorWithText(t, "hello toe")
-		m := renderedModel(e)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		_, ok = e.VSplit(doc.ID())
-		assert.True(t, ok)
-		focus := e.Tree().Focus()
-
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
-		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
-		assert.True(t, ok)
-		t.Cleanup(func() { _ = tp.Stop() })
-
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
-		m = m2.(ui.Model)
-		_ = m.View()
-
-		assert.NotEqual(t, focus, e.Tree().Focus())
-		_, ok = e.Tree().Get(focus).(*ui.TerminalPane)
-		assert.True(t, ok)
-	})
-
 	t.Run("wheel down scrolls toward live output", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
@@ -538,7 +487,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Same(t, tp, tp2)
 	})
 
-	t.Run("Ctrl-w p pastes the clipboard register", func(t *testing.T) {
+	t.Run("Ctrl-backslash p pastes the clipboard register", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)
@@ -557,13 +506,90 @@ func TestTerminalPane(t *testing.T) {
 
 		e.WriteRegister(view.RegisterClipboard, []string{"pasted-text"})
 
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		// the shell owns a bare Space, so the terminal's leader is Ctrl-\
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
 		m = m2.(ui.Model)
 		_ = sendKey(m, 'p')
 
 		assert.Eventually(t, func() bool {
 			return strings.Contains(tp.Emulator().String(), "pasted-text")
 		}, time.Second, 5*time.Millisecond)
+	})
+
+	t.Run("terminal menu uses space trie", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+
+		space := func(ch rune) []command.KeyEvent {
+			return []command.KeyEvent{
+				{Code: command.KeyCode{Char: ' '}},
+				{Code: command.KeyCode{Char: ch}},
+			}
+		}
+		// Terminal has the same canonical trie, filtered by terminal mode. Raw
+		// Space bypasses keymap dispatch while Ctrl-\ aliases the Space node
+		for _, ch := range []rune{'f', 'b'} {
+			nor, found, _ := km.LookupCommand("NOR", space(ch))
+			assert.True(t, found)
+			trm, found, _ := km.LookupCommand("TRM", space(ch))
+			assert.True(t, found)
+			assert.Equal(t, nor, trm)
+		}
+	})
+
+	t.Run("Ctrl-backslash aliases document space", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+
+		before := len(e.AllDocuments())
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
+		m = m2.(ui.Model)
+		m = sendKey(m, 'w')
+		_ = sendKey(m, 'n')
+
+		assert.Len(t, e.AllDocuments(), before+1)
+	})
+
+	t.Run("Ctrl-backslash opens the space menu file picker", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 100, 30)
+
+		cont := m.TerminalAction()(e)
+		assert.Nil(t, cont)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+		waitForResize(t, tp)
+
+		// Ctrl-\ is the terminal's Space leader, since the shell needs a Space
+		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
+		m = m2.(ui.Model)
+		m = sendKey(m, 'f')
+		m = sendSpecial(m, tea.KeyEnter)
+		_ = m.View()
+
+		// picking the file replaces the terminal, so its shell is gone
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		want, _ := filepath.EvalSymlinks(path)
+		got, _ := filepath.EvalSymlinks(doc.Path())
+		assert.Equal(t, want, got)
+		_, stillTerm := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.False(t, stillTerm)
 	})
 
 	t.Run("OSC 52 syncs nested clipboard writes", func(t *testing.T) {

@@ -12,12 +12,16 @@ type (
 	// KeyModifiers is a bitmask of modifier keys
 	KeyModifiers uint8
 
+	// Special enumerates the non-printable keys; SpecialNone means the key is
+	// a printable [KeyCode.Char] instead
+	Special uint8
+
 	// KeyCode represents a single keyboard key
 	KeyCode struct {
 		// Char holds the rune for printable characters; 0 for special keys
 		Char rune
-		// Special holds the special key name when Char is 0
-		Special string
+		// Special names the key when Char is 0
+		Special Special
 	}
 
 	// KeyEvent is a key code combined with modifier state
@@ -45,6 +49,50 @@ const (
 	ModAlt
 )
 
+const (
+	SpecialNone Special = iota
+	SpecialUnknown
+	Enter
+	Backspace
+	Delete
+	Escape
+	Tab
+	Up
+	Down
+	Left
+	Right
+	Home
+	End
+	PageUp
+	PageDown
+)
+
+// specialNames gives the compact keycap form for each special key, indexed by
+// its [Special] value
+var specialNames = []string{
+	SpecialUnknown: "?",
+	Enter:          "ret",
+	Backspace:      "bksp",
+	Delete:         "del",
+	Escape:         "esc",
+	Tab:            "tab",
+	Up:             "up",
+	Down:           "down",
+	Left:           "left",
+	Right:          "right",
+	Home:           "home",
+	End:            "end",
+	PageUp:         "pgup",
+	PageDown:       "pgdn",
+}
+
+func (s Special) String() string {
+	if int(s) < len(specialNames) {
+		return specialNames[s]
+	}
+	return ""
+}
+
 func (k KeyModifiers) Has(mod KeyModifiers) bool {
 	return k&mod != 0
 }
@@ -54,10 +102,13 @@ func (k KeyModifiers) HasOnly(mod KeyModifiers) bool {
 }
 
 func (k KeyCode) String() string {
+	if k.Char == ' ' {
+		return "spc"
+	}
 	if k.Char != 0 {
 		return string(k.Char)
 	}
-	return k.Special
+	return k.Special.String()
 }
 
 func (k KeyEvent) String() string {

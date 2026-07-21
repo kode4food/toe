@@ -1,11 +1,13 @@
 package ui
 
 import (
+	"path/filepath"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/view"
 	act "github.com/kode4food/toe/internal/view/action"
 )
 
@@ -96,8 +98,22 @@ func (e *EditorComponent) handleExternalFileChanged(
 	cx *Context, msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
 	cx.Editor.ProcessExternalFileChange(msg.path)
+	reloadChangedImages(cx.Editor, msg.path)
 	e.syncEditorMessages(cx)
 	return consumed(), e.fileWatchCmd(cx)
+}
+
+// reloadChangedImages re-decodes any image pane whose file matches path
+func reloadChangedImages(e *view.Editor, path string) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return
+	}
+	rangeImagePanes(e, func(img *ImagePane) {
+		if img.Path() == abs {
+			_ = img.Reload()
+		}
+	})
 }
 
 func (e *EditorComponent) handleTerminalPoll(

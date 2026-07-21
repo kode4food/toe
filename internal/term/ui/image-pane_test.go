@@ -25,6 +25,22 @@ func TestImagePane(t *testing.T) {
 		assert.Equal(t, view.ModeImage, pane.Mode())
 	})
 
+	t.Run("reloads after external change", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		dir := t.TempDir()
+		path := writeRenderImage(t, dir, 20, 10, nil)
+		pane, err := ui.NewImagePane(e, path)
+		assert.NoError(t, err)
+		before := pane.Image().ContentID()
+
+		// overwrite pic.png at the same path with different dimensions
+		writeRenderImage(t, dir, 30, 12, nil)
+		assert.NoError(t, pane.Reload())
+
+		assert.NotEqual(t, before, pane.Image().ContentID())
+		assert.Equal(t, geom.Size{Width: 30, Height: 12}, pane.Image().Size())
+	})
+
 	t.Run("document rejects image", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		_, err := e.OpenFile(writeRenderImage(t, t.TempDir(), 20, 10, nil))

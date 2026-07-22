@@ -35,7 +35,7 @@ func (s *Session) RestartLanguageServers(
 ) ([]string, error) {
 	lang, ok := s.languageForDocument(doc)
 	if !ok {
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	selected, err := selectLanguageServers(lang, names)
 	if err != nil {
@@ -56,7 +56,7 @@ func (s *Session) StopLanguageServers(
 ) ([]string, error) {
 	lang, ok := s.languageForDocument(doc)
 	if !ok {
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	selected, err := selectLanguageServers(lang, names)
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *Session) ExecuteWorkspaceCommand(
 	}
 	switch len(matches) {
 	case 0:
-		return fmt.Errorf("%w: %s", ErrWorkspaceCommand, name)
+		return fmt.Errorf("%w: %s", view.ErrWorkspaceCommand, name)
 	case 1:
 		params := &protocol.ExecuteCommandParams{
 			Command:   name,
@@ -88,7 +88,7 @@ func (s *Session) ExecuteWorkspaceCommand(
 		}
 		return matches[0].ExecuteCommand(s.ctx, params)
 	default:
-		return fmt.Errorf("%w: %s", ErrWorkspaceCommand, name)
+		return fmt.Errorf("%w: %s", view.ErrWorkspaceCommand, name)
 	}
 }
 
@@ -349,7 +349,9 @@ func selectLanguageServers(
 	out := make([]string, 0, len(requested))
 	for _, name := range requested {
 		if !valid[name] {
-			return nil, fmt.Errorf("%w: %s", ErrUnknownLanguageServer, name)
+			return nil, fmt.Errorf("%w: %s",
+				view.ErrUnknownLanguageServer, name,
+			)
 		}
 		out = append(out, name)
 	}

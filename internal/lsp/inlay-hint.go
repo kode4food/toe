@@ -64,7 +64,7 @@ func (s *Session) InlayHints(
 	}
 	if !sent {
 		doc.ClearInlayHints(viewID)
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	slices.SortStableFunc(out, func(a, b view.InlayHint) int {
 		if n := cmp.Compare(a.Pos, b.Pos); n != 0 {

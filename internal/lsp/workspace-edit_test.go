@@ -358,8 +358,10 @@ func attachWorkspaceEditSession(t *testing.T, dir, path string) *lsp.Session {
 	// the visible buffer has started before exercising it by name
 	assert.Eventually(t, func() bool {
 		return !errors.Is(
-			session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{}),
-			lsp.ErrUnknownLanguageServer,
+			session.ApplyWorkspaceEdit(
+				"session-test", protocol.WorkspaceEdit{},
+			),
+			view.ErrUnknownLanguageServer,
 		)
 	}, 2*time.Second, 5*time.Millisecond)
 	return session

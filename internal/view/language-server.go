@@ -1,5 +1,25 @@
 package view
 
+import "errors"
+
+var (
+	// ErrNoLanguageServer reports that no language server is configured for a
+	// document's language
+	ErrNoLanguageServer = errors.New("LSP not defined for document")
+
+	// ErrUnknownLanguageServer reports that a named language server was not
+	// found among the document's configured servers
+	ErrUnknownLanguageServer = errors.New("unknown language server")
+
+	// ErrWorkspaceCommand reports that a requested workspace command is not
+	// offered by any configured language server
+	ErrWorkspaceCommand = errors.New("workspace command unavailable")
+
+	// ErrFormatSelection reports that range formatting cannot be performed for
+	// the current selection
+	ErrFormatSelection = errors.New("format selection unsupported")
+)
+
 type (
 	// CompletionResult is a normalized language-server completion response
 	CompletionResult struct {

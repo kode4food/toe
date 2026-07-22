@@ -143,7 +143,7 @@ func TestSessionMethods(t *testing.T) {
 			doc, "session.afterCompletion", nil,
 		)
 
-		assert.False(t, errors.Is(err, lsp.ErrWorkspaceCommand))
+		assert.False(t, errors.Is(err, view.ErrWorkspaceCommand))
 	})
 
 	t.Run("stops language servers", func(t *testing.T) {
@@ -226,7 +226,7 @@ func TestSessionMethods(t *testing.T) {
 
 		_, err = session.StopLanguageServers(doc, []string{"unknown-server"})
 
-		assert.ErrorIs(t, err, lsp.ErrUnknownLanguageServer)
+		assert.ErrorIs(t, err, view.ErrUnknownLanguageServer)
 	})
 
 	t.Run("stop scratch doc no language", func(t *testing.T) {
@@ -238,7 +238,7 @@ func TestSessionMethods(t *testing.T) {
 
 		_, err := session.StopLanguageServers(doc, nil)
 
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 
 	t.Run("restart rejects unknown server", func(t *testing.T) {
@@ -260,7 +260,7 @@ func TestSessionMethods(t *testing.T) {
 			doc, []string{"unknown-server"},
 		)
 
-		assert.ErrorIs(t, err, lsp.ErrUnknownLanguageServer)
+		assert.ErrorIs(t, err, view.ErrUnknownLanguageServer)
 	})
 
 	t.Run("restart scratch doc no language", func(t *testing.T) {
@@ -272,7 +272,7 @@ func TestSessionMethods(t *testing.T) {
 
 		_, err := session.RestartLanguageServers(doc, nil)
 
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 
 	t.Run("unknown workspace command errors", func(t *testing.T) {
@@ -292,7 +292,7 @@ func TestSessionMethods(t *testing.T) {
 
 		err = session.ExecuteWorkspaceCommand(doc, "session.unknown", nil)
 
-		assert.ErrorIs(t, err, lsp.ErrWorkspaceCommand)
+		assert.ErrorIs(t, err, view.ErrWorkspaceCommand)
 	})
 
 	t.Run("executes workspace command with args", func(t *testing.T) {
@@ -314,7 +314,7 @@ func TestSessionMethods(t *testing.T) {
 			doc, "session.afterCompletion", []string{"arg1"},
 		)
 
-		assert.False(t, errors.Is(err, lsp.ErrWorkspaceCommand))
+		assert.False(t, errors.Is(err, view.ErrWorkspaceCommand))
 	})
 }
 
@@ -459,7 +459,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		err := session.ApplyWorkspaceEdit(
 			"nonexistent", protocol.WorkspaceEdit{},
 		)
-		assert.ErrorIs(t, err, lsp.ErrUnknownLanguageServer)
+		assert.ErrorIs(t, err, view.ErrUnknownLanguageServer)
 	})
 
 	t.Run("file operation options", func(t *testing.T) {
@@ -705,7 +705,7 @@ func TestSessionPullDiagnostics(t *testing.T) {
 
 		err = session.PullDiagnostics(doc)
 
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 }
 
@@ -1152,7 +1152,7 @@ func TestSessionWithoutEditor(t *testing.T) {
 
 	t.Run("rejects nil document", func(t *testing.T) {
 		_, err := session.StopLanguageServers(nil, nil)
-		assert.True(t, errors.Is(err, lsp.ErrNoLanguageServer))
+		assert.True(t, errors.Is(err, view.ErrNoLanguageServer))
 	})
 
 	t.Run("no attached editor", func(t *testing.T) {
@@ -1189,7 +1189,7 @@ func TestSessionMultiServer(t *testing.T) {
 			doc, "session.afterCompletion", nil,
 		)
 
-		assert.True(t, errors.Is(err, lsp.ErrWorkspaceCommand))
+		assert.True(t, errors.Is(err, view.ErrWorkspaceCommand))
 	})
 
 	t.Run("serves folders for every server", func(t *testing.T) {
@@ -1258,15 +1258,15 @@ func TestSessionBareServer(t *testing.T) {
 	})
 	t.Run("rename prefill unsupported", func(t *testing.T) {
 		_, err := session.RenameSymbolPrefill(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("rename unsupported", func(t *testing.T) {
 		err := session.RenameSymbol(doc, v.ID(), "new")
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("format unsupported", func(t *testing.T) {
 		err := session.FormatDocument(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("format selection multi range", func(t *testing.T) {
 		sel, err := core.NewSelection([]core.Range{
@@ -1276,7 +1276,7 @@ func TestSessionBareServer(t *testing.T) {
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		assert.ErrorIs(t,
-			session.FormatSelection(doc, v.ID()), lsp.ErrFormatSelection,
+			session.FormatSelection(doc, v.ID()), view.ErrFormatSelection,
 		)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 	})
@@ -1302,11 +1302,11 @@ func TestSessionBareServer(t *testing.T) {
 	})
 	t.Run("document links unsupported", func(t *testing.T) {
 		_, err := session.DocumentLinks(doc)
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("inlay hints unsupported", func(t *testing.T) {
 		_, err := session.InlayHints(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("pull diagnostics unsupported", func(t *testing.T) {
 		assert.NoError(t, session.PullDiagnostics(doc))
@@ -1338,19 +1338,19 @@ func TestSessionUnconfiguredDocument(t *testing.T) {
 
 	t.Run("code actions no server", func(t *testing.T) {
 		_, err := session.CodeActions(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("rename prefill no server", func(t *testing.T) {
 		_, err := session.RenameSymbolPrefill(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("rename no server", func(t *testing.T) {
 		err := session.RenameSymbol(doc, v.ID(), "new")
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 	t.Run("format no server", func(t *testing.T) {
 		err := session.FormatDocument(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 }
 
@@ -1737,8 +1737,10 @@ func waitForWorkspaceServer(t *testing.T, session *lsp.Session) {
 	t.Helper()
 	assert.Eventually(t, func() bool {
 		return !errors.Is(
-			session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{}),
-			lsp.ErrUnknownLanguageServer,
+			session.ApplyWorkspaceEdit(
+				"session-test", protocol.WorkspaceEdit{},
+			),
+			view.ErrUnknownLanguageServer,
 		)
 	}, 2*time.Second, 5*time.Millisecond)
 }

@@ -34,7 +34,7 @@ func (s *Session) ApplyWorkspaceEdit(
 ) error {
 	client, ok := s.servers.client(server)
 	if !ok {
-		return ErrUnknownLanguageServer
+		return view.ErrUnknownLanguageServer
 	}
 	return s.applyWorkspaceEdit(edit, client.OffsetEncoding())
 }

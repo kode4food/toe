@@ -34,7 +34,7 @@ func (s *Session) PullDiagnostics(doc *view.Document) error {
 	}
 	clients := s.clientsForDocument(doc)
 	if len(clients) == 0 {
-		return ErrNoLanguageServer
+		return view.ErrNoLanguageServer
 	}
 	if id := s.servers.languageID(doc.Lang()); id != "" {
 		snap.LanguageID = id

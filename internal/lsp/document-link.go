@@ -93,7 +93,7 @@ func (s *Session) DocumentLinks(
 	}
 	if !sent {
 		doc.ClearDocumentLinks()
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	slices.SortFunc(out, func(a, b view.DocumentLink) int {
 		if n := cmp.Compare(a.From, b.From); n != 0 {

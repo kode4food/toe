@@ -67,14 +67,14 @@ func (s *Session) FormatDocument(doc *view.Document, _ view.Id) error {
 func (s *Session) FormatSelection(doc *view.Document, viewID view.Id) error {
 	sel := doc.SelectionFor(viewID)
 	if len(sel.Ranges()) != 1 {
-		return ErrFormatSelection
+		return view.ErrFormatSelection
 	}
 	return s.formatDocument(doc, new(sel.Primary()))
 }
 
 func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
 	if s.editor == nil {
-		return ErrNoLanguageServer
+		return view.ErrNoLanguageServer
 	}
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
@@ -82,7 +82,7 @@ func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
 	}
 	clients := s.clientsForDocument(doc)
 	if len(clients) == 0 {
-		return ErrNoLanguageServer
+		return view.ErrNoLanguageServer
 	}
 	opts := formattingOptions(doc)
 	var err error
@@ -103,7 +103,7 @@ func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
 	if err != nil {
 		return err
 	}
-	return ErrNoLanguageServer
+	return view.ErrNoLanguageServer
 }
 
 func (c *Client) formatRequest(

@@ -60,7 +60,7 @@ func (s *Session) DocumentColors(
 	}
 	if !sent {
 		doc.ClearDocumentColors()
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	slices.SortFunc(out, func(a, b view.DocumentColor) int {
 		if n := cmp.Compare(a.From, b.From); n != 0 {

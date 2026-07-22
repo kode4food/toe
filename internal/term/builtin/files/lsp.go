@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -209,13 +208,13 @@ func lspCommandContext(
 
 func lspCommandError(err error) command.Result {
 	switch {
-	case errors.Is(err, lsp.ErrNoLanguageServer):
+	case errors.Is(err, view.ErrNoLanguageServer):
 		return command.Result{
 			Message: i18n.Text(i18n.ErrorLSPUndefined),
 		}
-	case errors.Is(err, lsp.ErrUnknownLanguageServer):
+	case errors.Is(err, view.ErrUnknownLanguageServer):
 		return command.Result{Message: "error: " + err.Error()}
-	case errors.Is(err, lsp.ErrWorkspaceCommand):
+	case errors.Is(err, view.ErrWorkspaceCommand):
 		return command.Result{Message: "error: " + err.Error()}
 	default:
 		return command.Result{Message: "error: " + err.Error()}

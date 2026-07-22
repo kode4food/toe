@@ -1,13 +1,9 @@
 package files
 
 import (
-	"bytes"
 	"errors"
-	"os/exec"
 	"strconv"
 
-	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -111,36 +107,14 @@ func runFormatter(e *view.Editor) command.Result {
 		return runLSPFormatter(e, doc, v.ID())
 	}
 
-	text := doc.Text().String()
-	cmd := exec.Command(lang.Formatter.Command, lang.Formatter.Args...)
-	cmd.Stdin = bytes.NewBufferString(text)
-	var out, errOut bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &errOut
-	if err := cmd.Run(); err != nil {
-		msg := lang.Formatter.Command + ": " + err.Error()
-		if errOut.Len() > 0 {
-			msg = lang.Formatter.Command + ": " + errOut.String()
-		}
-		return command.Result{Message: "error: " + msg}
-	}
-
-	formatted := out.String()
-	if formatted == text {
-		return command.Result{}
-	}
-
-	rope := doc.Text()
-	n := rope.LenChars()
-	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, n, formatted),
+	err := action.RunFormatter(action.RunFormatterArgs{
+		Editor:  e,
+		Doc:     doc,
+		ViewID:  v.ID(),
+		Command: lang.Formatter.Command,
+		Argv:    lang.Formatter.Args,
 	})
 	if err != nil {
-		return command.Result{Message: "error: " + err.Error()}
-	}
-	sel := doc.SelectionFor(v.ID())
-	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(sel)
-	if err := e.Apply(tx); err != nil {
 		return command.Result{Message: "error: " + err.Error()}
 	}
 	return command.Result{}
@@ -156,7 +130,7 @@ func runLSPFormatter(
 		}
 	}
 	err := ctl.FormatDocument(doc, viewID)
-	if errors.Is(err, lsp.ErrNoLanguageServer) {
+	if errors.Is(err, view.ErrNoLanguageServer) {
 		return command.Result{
 			Message: "no formatter configured for " + doc.Lang(),
 		}
@@ -194,13 +168,13 @@ func runFormatSelection(e *view.Editor, _ *command.Args) command.Result {
 		}
 	}
 	err := ctl.FormatSelection(doc, v.ID())
-	if errors.Is(err, lsp.ErrNoLanguageServer) {
+	if errors.Is(err, view.ErrNoLanguageServer) {
 		return command.Result{
 			Message: "error: No configured language server supports " +
 				"range formatting",
 		}
 	}
-	if errors.Is(err, lsp.ErrFormatSelection) {
+	if errors.Is(err, view.ErrFormatSelection) {
 		return command.Result{
 			Message: "error: format_selections only supports " +
 				"a single selection for now",

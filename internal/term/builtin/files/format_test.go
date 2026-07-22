@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -245,7 +244,7 @@ func TestLSPFormatCommands(t *testing.T) {
 	t.Run("ErrNoLanguageServer no formatter", func(t *testing.T) {
 		e, km := test.Env(t, "hello\n")
 		e.SetLanguageServerController(&stubController{
-			formatDocErr: lsp.ErrNoLanguageServer,
+			formatDocErr: view.ErrNoLanguageServer,
 		})
 		res := test.RunCmd(t, km, e, "format")
 		assert.Contains(t, res.Message, "no formatter")
@@ -270,7 +269,7 @@ func TestLSPFormatCommands(t *testing.T) {
 	t.Run("ErrNoLanguageServer no range formatter", func(t *testing.T) {
 		e, km := test.Env(t, "hello\n")
 		e.SetLanguageServerController(&stubController{
-			formatSelErr: lsp.ErrNoLanguageServer,
+			formatSelErr: view.ErrNoLanguageServer,
 		})
 		res := test.RunCmd(t, km, e, "format_selections")
 		assert.Contains(t, res.Message, "language server")
@@ -279,7 +278,7 @@ func TestLSPFormatCommands(t *testing.T) {
 	t.Run("format_selection selection count error", func(t *testing.T) {
 		e, km := test.Env(t, "hello\n")
 		e.SetLanguageServerController(&stubController{
-			formatSelErr: lsp.ErrFormatSelection,
+			formatSelErr: view.ErrFormatSelection,
 		})
 		res := test.RunCmd(t, km, e, "format_selections")
 		assert.Contains(t, res.Message, "single selection")

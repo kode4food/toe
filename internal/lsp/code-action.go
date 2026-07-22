@@ -85,7 +85,7 @@ func (s *Session) CodeActions(
 	r := doc.SelectionFor(viewID).Primary()
 	clients := s.clientsForDocument(doc)
 	if len(clients) == 0 {
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	var out []view.CodeAction
 	raw := map[string]codeActionCandidate{}

@@ -87,7 +87,7 @@ Because document text is a persistent `Rope`, background workers can keep the te
 ## Extension Points
 
 - **Languages and language servers** — add or override `[[language]]` entries and `[language-server.<name>]` sections in the merged `languages.toml` data. No code changes are needed for a new server. Tree-sitter highlighting for a new language requires adding the grammar import to `internal/term/syntax`, registering it in the language registry, and bundling a highlight query.
-- **VCS providers** — implement the `vcs.Provider` interface. The registry currently installs Git directly in `NewRegistry`, so adding another provider also requires wiring it into that constructor. The editor consumes only the `view.VersionControl` seam.
+- **VCS providers** — implement the `vcs.Provider` interface. `vcs.Attach` constructs the session with `Git{}` as its provider directly; adding another provider means threading a `Provider` value through `Attach` from `cmd/toe/internal/app.go` rather than hardcoding a second choice inside `vcs`. The editor consumes only the `view.VersionControl` seam.
 - **Commands** — add a command module under `term/builtin` that registers signatures against the command registry. Registered commands automatically participate in key binding, prompt completion, and the command palette.
 - **Actions** — put reusable editing behavior in `view/action` so commands, keymaps, and UI components can share it.
 - **Themes** — themes are TOML scope-to-style maps decoded by `internal/term/theme` and loaded through `loader`. The four embedded Catppuccin variants (`latte`, `frappe`, `macchiato`, `mocha`) are the supported theme names today.

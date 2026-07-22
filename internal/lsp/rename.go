@@ -73,7 +73,7 @@ func (s *Session) RenameSymbolPrefill(
 	pos := documentCursor(doc, viewID)
 	clients := s.clientsForDocument(doc)
 	if len(clients) == 0 {
-		return "", ErrNoLanguageServer
+		return "", view.ErrNoLanguageServer
 	}
 	supported := false
 	var err error
@@ -93,7 +93,7 @@ func (s *Session) RenameSymbolPrefill(
 		return renamePrefillFromResult(doc, viewID, client, result)
 	}
 	if !supported {
-		return "", ErrNoLanguageServer
+		return "", view.ErrNoLanguageServer
 	}
 	return renamePrefillFromWord(doc, viewID), err
 }
@@ -109,7 +109,7 @@ func (s *Session) RenameSymbol(
 	pos := documentCursor(doc, viewID)
 	clients := s.clientsForDocument(doc)
 	if len(clients) == 0 {
-		return ErrNoLanguageServer
+		return view.ErrNoLanguageServer
 	}
 	var err error
 	for _, client := range clients {
@@ -130,7 +130,7 @@ func (s *Session) RenameSymbol(
 	if err != nil {
 		return err
 	}
-	return ErrNoLanguageServer
+	return view.ErrNoLanguageServer
 }
 
 func (c *Client) supportsPrepareRename() bool {

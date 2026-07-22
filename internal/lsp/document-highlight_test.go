@@ -137,7 +137,7 @@ func TestDocumentHighlightLifecycle(t *testing.T) {
 		assert.Empty(t, doc.DocumentHighlights(v.ID()))
 		assert.Empty(t, doc.Diagnostics())
 		_, err = session.DocumentHighlights(doc, v.ID())
-		assert.ErrorIs(t, err, lsp.ErrNoLanguageServer)
+		assert.ErrorIs(t, err, view.ErrNoLanguageServer)
 	})
 }
 

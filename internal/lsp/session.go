@@ -37,13 +37,9 @@ type (
 )
 
 var (
-	ErrNoLanguageServer        = errors.New("LSP not defined for document")
-	ErrUnknownLanguageServer   = errors.New("unknown language server")
-	ErrWorkspaceCommand        = errors.New("workspace command unavailable")
 	ErrCompletionUnavailable   = errors.New("completion unavailable")
 	ErrCodeActionUnavailable   = errors.New("code action unavailable")
 	ErrDocumentLinkUnavailable = errors.New("document link unavailable")
-	ErrFormatSelection         = errors.New("format selection unsupported")
 	ErrLanguageServerExited    = errors.New("language server exited")
 	ErrLanguageServerRequest   = errors.New("language server request failed")
 )

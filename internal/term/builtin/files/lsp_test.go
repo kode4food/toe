@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -173,7 +172,7 @@ func TestLSPCommandErrors(t *testing.T) {
 
 	t.Run("ErrNoLanguageServer", func(t *testing.T) {
 		e, km, _ := test.EnvWithRegistry(t, "")
-		ctl := &fakeLanguageServerController{err: lsp.ErrNoLanguageServer}
+		ctl := &fakeLanguageServerController{err: view.ErrNoLanguageServer}
 		e.SetLanguageServerController(ctl)
 		res := test.RunCmdArgs(t, km, e, "lsp-restart", "gopls")
 		assert.Contains(t, res.Message, "LSP not defined")
@@ -181,7 +180,7 @@ func TestLSPCommandErrors(t *testing.T) {
 
 	t.Run("ErrUnknownLanguageServer", func(t *testing.T) {
 		e, km, _ := test.EnvWithRegistry(t, "")
-		ctl := &fakeLanguageServerController{err: lsp.ErrUnknownLanguageServer}
+		ctl := &fakeLanguageServerController{err: view.ErrUnknownLanguageServer}
 		e.SetLanguageServerController(ctl)
 		res := test.RunCmdArgs(t, km, e, "lsp-restart", "gopls")
 		assert.Contains(t, res.Message, "error")
@@ -189,7 +188,7 @@ func TestLSPCommandErrors(t *testing.T) {
 
 	t.Run("ErrWorkspaceCommand", func(t *testing.T) {
 		e, km, _ := test.EnvWithRegistry(t, "")
-		ctl := &fakeLanguageServerController{err: lsp.ErrWorkspaceCommand}
+		ctl := &fakeLanguageServerController{err: view.ErrWorkspaceCommand}
 		e.SetLanguageServerController(ctl)
 		res := test.RunCmdArgs(t, km, e, "lsp-restart", "gopls")
 		assert.Contains(t, res.Message, "error")

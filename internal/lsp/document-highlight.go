@@ -67,7 +67,7 @@ func (s *Session) DocumentHighlights(
 	}
 	if !sent {
 		doc.ClearDocumentHighlights(viewID)
-		return nil, ErrNoLanguageServer
+		return nil, view.ErrNoLanguageServer
 	}
 	merged := mergeDocumentHighlightRanges(out)
 	highlights := viewDocumentHighlights(merged)

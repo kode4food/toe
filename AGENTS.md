@@ -114,6 +114,131 @@ func rotateRight(n *node) *node {
 
 ---
 
+## Modularity and Package Boundaries
+
+toe's package layers, top to bottom: `internal/core` → `internal/view`
+(+ `view/action`, `view/config`, `view/language`, `view/register`) →
+`internal/term/command` → `internal/term/builtin` → `internal/term/ui`, with
+`internal/lsp` and `internal/vcs` as services plugged in through `view`-owned
+interfaces, and `cmd/toe/internal/app.go` as the composition root. Dependencies
+point downward, toward more stable semantics — `core`'s editing semantics
+change far less often than `term/ui`'s rendering details.
+
+**Rules:**
+
+1. **One authoritative owner per concept.** Every concept (selections,
+   diagnostics, diffs, completions) has exactly one package that owns its
+   state and invariants. Other packages consume it through that owner, never
+   reimplement or shadow it.
+2. **Dependencies point toward stability.** `core` depends on nothing else in
+   the editor. `view` depends only on `core`. Commands and UI depend on
+   `view`, never the reverse.
+3. **Boundaries follow authority and reasons to change, not file/line count.**
+   Split a package because two parts change for different reasons and are
+   owned by different concerns — not because a file got long (see "Do not
+   split packages solely because they are large" below).
+4. **State stays with the module that preserves its invariants.** See
+   Configuration Boundaries above for the config-specific version of this
+   rule; it applies equally to runtime state, caches, and lifecycle state.
+5. **`view.Editor` holds capability seams, not module implementation state.**
+   `Editor` may hold a `VersionControl`, `LanguageServerController`, or
+   similar interface value (see `SetVersionControl`/`SetLanguageServerController`
+   in `internal/view`). It must not grow fields that belong to `lsp` or `vcs`
+   internals (client transports, provider state, differs).
+6. **Interfaces are consumer-defined and minimal.** `view.VersionControl` and
+   `view.LanguageServerController` are declared in `view` because `view` is
+   the consumer; they expose only what `view`/commands/UI need, not the full
+   surface of `vcs.Provider` or the LSP protocol.
+7. **Don't add an interface just because a package boundary is crossed.**
+   A concrete type passed and used directly is fine. Introduce an interface
+   only when there is a real substitutable implementation or the consumer
+   needs to decouple from a concrete lifecycle.
+8. **Boundary values speak the receiving package's language.** `vcs.Session`
+   returns `view.DiffHunk`/`view.FileChange`; `lsp` results are normalized
+   into `view.CompletionItem`, `view.Location`, `view.Symbol`, etc. before
+   crossing into `view`. Provider/protocol-shaped types (raw LSP structs, git
+   plumbing types) never leak past their owning package.
+9. **Generic mechanisms don't import concrete registrations.** `term/command`
+   (signatures, tokenizer, registry, keymaps) must not import `term/builtin`
+   or any specific command module. `vcs.NewRegistry` installing `Git` directly
+   is the one accepted exception today (see Extension Points in
+   `docs/content/docs/architecture.md`); new providers should still register
+   through the app composition root where practical, not by having the
+   mechanism import every provider.
+10. **Concrete assembly belongs in `cmd/toe/internal/app.go`.** Wiring
+    `lsp.Attach`, `vcs.Attach`, `builtin.Register`, and clipboard providers
+    together is `app.go`'s job. Packages below it should not know about each
+    other's concrete constructors.
+11. **Commands orchestrate; they don't implement.** A `term/builtin` command
+    handler calls `view/action`, `view`, `lsp`, or `vcs` APIs — it must not
+    contain substantial editing, rendering, LSP protocol, VCS diffing, or
+    persistence logic inline. If a handler is doing real work, that work
+    belongs in the owning package.
+12. **Reusable editing lives in `view/action`; pure text semantics live in
+    `core`.** `core` never depends on `view` or terminal packages. Anything
+    that needs a `Document`/`Editor`/`View` but is reusable across commands
+    and UI belongs in `view/action`, not duplicated per command module.
+13. **Calls request; observers/events announce.** `view.DocumentObserver`
+    methods (`DocumentOpened`, `DocumentChanged`, `DocumentSaved`,
+    `DocumentClosed`) report facts that already happened — implementations
+    must not treat them as a place to request further mutation of the same
+    document mid-notification. A direct method call (`SetVersionControl`,
+    `DiffHunks`) requests behavior and expects a synchronous answer.
+14. **No dumping-ground packages.** Do not create `util`, `common`, `helpers`,
+    `models`, or similarly named packages. A shared helper needs a name that
+    describes the concept it owns (`internal/glob`, `internal/loader`), not
+    the fact that it's shared.
+15. **Exported surface stays much smaller than the implementation.** If a
+    package's exported API is nearly as large as its unexported internals,
+    that's a sign the boundary is in the wrong place or too much is exported
+    by default.
+16. **Large is not a reason to split.** `internal/view/action` and
+    `internal/lsp` are both large because they own a large, cohesive concept
+    (reusable editing operations; the LSP client surface). Split only per
+    rule 3.
+17. **Don't move code to satisfy a layering ideal.** Preserve cohesion.
+    Moving a function to a "more correct" layer that adds indirection
+    (forwarding wrappers, an interface with one implementation) without
+    changing an actual dependency problem is a net loss.
+18. **Proposing a new package requires stating:**
+    - what concept it owns;
+    - which invariants it preserves;
+    - what it may import;
+    - what may import it;
+    - why the existing owner is incorrect.
+
+**Dependency guide:**
+
+- `internal/core` must not import `view`, any `term/*` package, `lsp`, or
+  `vcs`.
+- `internal/view` (and subpackages) must not import `term/ui`, `term/builtin`,
+  or `cmd/toe/internal`.
+- `internal/lsp` and `internal/vcs` must not import `term/ui` or
+  `term/builtin`; they depend on `core` and `view` only.
+- `internal/term/command` must not import `term/builtin` or concrete service
+  packages (`lsp`, `vcs`); it is the generic command mechanism.
+- `internal/term/builtin` may import `term/command`, `term/ui`, `view`,
+  `view/action`, `lsp`, and `vcs` — it is where commands bridge to services.
+- `cmd/toe/internal/app.go` may import any concrete module; it is the only
+  place allowed to wire everything together.
+
+**Before moving code, answer:**
+
+- Who owns this concept today?
+- What independent reason to change justifies moving it?
+- Does the move reduce the number of packages a caller must understand?
+- Does the proposed package have a coherent name and responsibility?
+- Will the move introduce forwarding wrappers, dependency inversion with no
+  substitutable implementation, or a generic helper package?
+- Can the boundary be enforced through imports alone or a narrow
+  consumer-owned interface, without new indirection?
+
+See also Configuration Boundaries and Args/Res Structs above, and Interface
+Names / Interface Compliance below, for the naming and shape rules that apply
+within these boundaries.
+
+---
+
 # Go Style Guide
 
 ## Naming Conventions
@@ -740,6 +865,32 @@ Package-level `var` declarations are permitted only for:
 - Sentinel error values (`var ErrNotFound = errors.New(...)`)
 - Compile-time interface assertions (`var _ Foo = (*Bar)(nil)`)
 - Truly immutable lookup tables that are never reassigned (treat them as constants; document if a slice element could be mutated)
+
+## No Cross-Package Var Aliasing
+
+**Never declare `var Foo = otherpkg.Foo` to re-export another package's
+identifier under a local name.** Go's `var x = y` exists for local
+refactoring inside a package, not as a general-purpose re-export or
+aliasing mechanism between packages. If a package needs a value another
+package already owns, import that package and reference the value directly
+— `view.ErrNoLanguageServer`, not a same-named local copy that happens to
+equal it.
+
+```go
+// Bad — lsp package re-exports view's sentinel under its own name
+var ErrNoLanguageServer = view.ErrNoLanguageServer
+...
+return ErrNoLanguageServer
+
+// Good — call sites use the owning package's identifier directly
+return view.ErrNoLanguageServer
+```
+
+This applies to sentinel errors, constants, and any other exported value:
+if `view` owns it (see Modularity and Package Boundaries above — interfaces
+and their errors are consumer-owned), every package that needs it imports
+`view` and writes `view.X`. Don't introduce a second name for the same
+value just because a package boundary is in the way.
 
 ## Interface Compliance
 

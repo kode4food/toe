@@ -851,6 +851,26 @@ The only valid reason to roll your own is when the library genuinely has no equi
 
 ---
 
+# i18n Policy
+
+Any user-facing English prose — status messages, prompts, hints shown during
+an interactive mode — must go through `internal/i18n`, not a hardcoded Go
+string constant. Add a `Key` in `internal/i18n/keys.go` and a translation
+entry in each locale file (`en.json`, `de.json`, `fr.json`, `it.json`) under
+`internal/i18n/translations/`, then reference it with `i18n.Text(key, ...)`.
+
+`internal/i18n/translations/common.json` is reserved for values shared
+identically across all locales (e.g. the `:` command prompt) — not a catch-all
+or a place to skip translating a new message into the other languages.
+
+The one exception is a hint that echoes a literal keystroke sequence back at
+the user (`"ms ..."`, `"r ..."`, `"^r ..."`) — that's not language, so it
+stays a plain Go string. A hint that also contains descriptive prose (e.g.
+`"h/j/k/l or ←/↓/↑/→ resize, esc/enter exits"`) is not exempt and must be
+translated.
+
+---
+
 # Tools
 
 Use the **Serena MCP** for all code navigation and editing tasks: symbol lookup, find references, rename, go-to-definition, diagnostics. Prefer it over shell commands (`grep`, `find`, `sed`) for anything code-structural.

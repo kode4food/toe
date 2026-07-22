@@ -627,10 +627,10 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		// Modify first doc then switch to second
 		doc1, _ := e.FocusedDocument()
 		rope := doc1.Text()
-		cs, err2 := core.NewChangeSetFromChanges(
+		cs, err := core.NewChangeSetFromChanges(
 			rope, []core.Change{core.TextChange(0, 0, "x")},
 		)
-		assert.NoError(t, err2)
+		assert.NoError(t, err)
 		_ = e.Apply(core.NewTransaction(rope).WithChanges(cs))
 
 		// Split and open file2 to record file1 as last modified

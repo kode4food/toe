@@ -164,7 +164,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	row, col := 1, 1
 	if l, err := text.CharToLine(cursor); err == nil {
 		row = l + 1
-		if lineStart, err2 := text.LineToChar(l); err2 == nil {
+		if lineStart, err := text.LineToChar(l); err == nil {
 			col = cursor - lineStart + 1
 		}
 	}

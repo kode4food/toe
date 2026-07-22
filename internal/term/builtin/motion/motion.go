@@ -3,6 +3,7 @@ package motion
 import (
 	"strconv"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -703,17 +704,19 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 func gotoFileAction(e *view.Editor) command.Continuation {
 	target, err := action.GotoFileTarget(e)
 	if err != nil {
-		e.SetStatusMsg("error: " + err.Error())
+		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{"message": err}))
 		return nil
 	}
 	if target.URL != "" {
-		if err2 := action.OpenExternalURL(target.URL); err2 != nil {
-			e.SetStatusMsg("error: " + err2.Error())
+		if err := action.OpenExternalURL(target.URL); err != nil {
+			e.SetStatusMsg(
+				i18n.Text(i18n.ErrorMessage, i18n.Vars{"message": err}),
+			)
 		}
 		return nil
 	}
-	if _, err2 := e.OpenFile(target.Path); err2 != nil {
-		e.SetStatusMsg("error: " + err2.Error())
+	if _, err := e.OpenFile(target.Path); err != nil {
+		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{"message": err}))
 	}
 	return nil
 }

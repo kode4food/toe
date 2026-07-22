@@ -101,12 +101,12 @@ func ClipboardReplace(e *view.Editor) {
 	for _, r := range ranges {
 		changes = append(changes, core.TextChange(r.From(), r.To(), val))
 	}
-	cs, err2 := core.NewChangeSetFromChanges(text, changes)
-	if err2 != nil {
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
 		return
 	}
-	newSel, err2 := sel.Map(cs)
-	if err2 != nil {
+	newSel, err := sel.Map(cs)
+	if err != nil {
 		return
 	}
 	_ = e.Apply(

@@ -217,8 +217,8 @@ func searchImpl(args searchArgs) error {
 			newRanges[i] = r.PutCursor(text, m.pos, args.extend)
 		}
 		setSearchStatus(e, matched, wrapped)
-		newSel, err2 := core.NewSelection(newRanges, sel.PrimaryIndex())
-		if err2 != nil {
+		newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
+		if err != nil {
 			return nil
 		}
 		doc.SetSelectionFor(v.ID(), newSel)

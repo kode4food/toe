@@ -54,5 +54,6 @@
   "status.fileChanged": "'{file}' è stato modificato sul disco; usa :reload o :write",
   "status.reloadFailed": "ricaricamento non riuscito: {error}",
   "status.fileReloaded": "'{file}' ricaricato",
-  "status.fileWatchUnavailable": "monitoraggio dei file non disponibile: {error}"
+  "status.fileWatchUnavailable": "monitoraggio dei file non disponibile: {error}",
+  "hint.resize": "h/j/k/l o ←/↓/↑/→ ridimensiona, esc/invio esce"
 }

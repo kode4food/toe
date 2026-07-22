@@ -54,5 +54,6 @@
   "status.fileChanged": "'{file}' wurde auf dem Datenträger geändert; :reload oder :write verwenden",
   "status.reloadFailed": "Neu laden fehlgeschlagen: {error}",
   "status.fileReloaded": "'{file}' neu geladen",
-  "status.fileWatchUnavailable": "Dateiüberwachung nicht verfügbar: {error}"
+  "status.fileWatchUnavailable": "Dateiüberwachung nicht verfügbar: {error}",
+  "hint.resize": "h/j/k/l oder ←/↓/↑/→ skalieren, esc/enter beendet"
 }

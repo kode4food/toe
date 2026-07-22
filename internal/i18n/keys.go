@@ -63,4 +63,6 @@ const (
 	StatusReloadFailed         Key = "status.reloadFailed"
 	StatusFileReloaded         Key = "status.fileReloaded"
 	StatusFileWatchUnavailable Key = "status.fileWatchUnavailable"
+
+	HintResize Key = "hint.resize"
 )

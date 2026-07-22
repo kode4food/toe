@@ -54,5 +54,6 @@
   "status.fileChanged": "'{file}' changed on disk; use :reload or :write",
   "status.reloadFailed": "reload failed: {error}",
   "status.fileReloaded": "'{file}' reloaded",
-  "status.fileWatchUnavailable": "file watching unavailable: {error}"
+  "status.fileWatchUnavailable": "file watching unavailable: {error}",
+  "hint.resize": "h/j/k/l or ←/↓/↑/→ resize, esc/enter exits"
 }

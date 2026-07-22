@@ -85,8 +85,8 @@ func FindBlockComments(
 				continue
 			}
 			startFrag, err1 := slice.Slice(startPos, afterStart)
-			endFrag, err2 := slice.Slice(beforeEnd+1, endPos+1)
-			if err1 != nil || err2 != nil {
+			endFrag, err := slice.Slice(beforeEnd+1, endPos+1)
+			if err1 != nil || err != nil {
 				continue
 			}
 			startMatch := startFrag.String() == tok.Start

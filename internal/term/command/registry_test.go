@@ -220,14 +220,14 @@ func TestRegistry(t *testing.T) {
 	t.Run("OptionCompleter filters by prefix", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		completer := reg.OptionCompleter()
-		results := completer(nil, "s")
+		results := completer(nil, nil, "s")
 		assert.NotEmpty(t, results)
 	})
 
 	t.Run("BoolOptionCompleter filters by prefix", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		completer := reg.BoolOptionCompleter()
-		results := completer(nil, "c")
+		results := completer(nil, nil, "c")
 		assert.NotEmpty(t, results)
 	})
 

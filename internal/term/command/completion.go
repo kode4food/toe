@@ -14,14 +14,15 @@ type (
 		Display string
 	}
 
-	// CompletionFunc returns completions for command-line input
-	CompletionFunc func(*view.Editor, string) []Completion
-
 	// Completer describes positional and raw argument completion
 	Completer struct {
 		Positionals []CompletionFunc
 		Raw         CompletionFunc
 	}
+
+	// CompletionFunc returns completions for command-line input, given the
+	// arguments already parsed for the current command
+	CompletionFunc func(*view.Editor, *Args, string) []Completion
 )
 
 // PositionalCompleter completes positionals by argument index
@@ -31,7 +32,7 @@ func PositionalCompleter(c ...CompletionFunc) Completer {
 
 // StaticCompleter completes from a fixed string set
 func StaticCompleter(items ...string) CompletionFunc {
-	return func(_ *view.Editor, input string) []Completion {
+	return func(_ *view.Editor, _ *Args, input string) []Completion {
 		return matchPrefix(items, input)
 	}
 }
@@ -52,18 +53,21 @@ func (c Completer) Complete(
 	if state.Kind == CompletionStateFlag {
 		return completeFlagsAt(start, token, sig.Flags)
 	}
-	if sig.RawAfter > 0 && args.Len() >= sig.RawAfter && c.Raw != nil {
-		return offsetCompletions(c.Raw(e, input[start:]), start)
-	}
 	idx := args.Len()
 	if token != "" && !strings.HasSuffix(input, " ") &&
 		!strings.HasSuffix(input, "\t") {
 		idx--
 	}
-	if idx < 0 || idx >= len(c.Positionals) || c.Positionals[idx] == nil {
+	if idx < 0 {
 		return nil
 	}
-	return offsetCompletions(c.Positionals[idx](e, token), start)
+	if sig.RawAfter > 0 && idx >= sig.RawAfter && c.Raw != nil {
+		return offsetCompletions(c.Raw(e, args, input[start:]), start)
+	}
+	if idx >= len(c.Positionals) || c.Positionals[idx] == nil {
+		return nil
+	}
+	return offsetCompletions(c.Positionals[idx](e, args, token), start)
 }
 
 func completionToken(input string) (int, string) {

@@ -20,19 +20,19 @@ func TestStaticCompleter(t *testing.T) {
 	fn := command.StaticCompleter("foo", "bar", "baz")
 
 	t.Run("matches prefix", func(t *testing.T) {
-		got := fn(nil, "ba")
+		got := fn(nil, nil, "ba")
 		assert.Equal(t, 2, len(got))
 		assert.Equal(t, "bar", got[0].Text)
 		assert.Equal(t, "baz", got[1].Text)
 	})
 
 	t.Run("empty input matches all", func(t *testing.T) {
-		got := fn(nil, "")
+		got := fn(nil, nil, "")
 		assert.Equal(t, 3, len(got))
 	})
 
 	t.Run("no match returns empty", func(t *testing.T) {
-		got := fn(nil, "z")
+		got := fn(nil, nil, "z")
 		assert.Equal(t, 0, len(got))
 	})
 }

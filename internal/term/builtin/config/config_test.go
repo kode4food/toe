@@ -79,6 +79,13 @@ func TestConfigDocumentOptions(t *testing.T) {
 		)
 	})
 
+	t.Run("line ending accepts native", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		assert.NotContains(t, test.RunCmdArgs(
+			t, km, e, "set_line_ending", "native").Message, "error",
+		)
+	})
+
 	t.Run("line ending rejects junk", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		res := test.RunCmdArgs(t, km, e, "set_line_ending", "bogus")

@@ -189,6 +189,12 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineSpinner,
 }
 
+// cursorKinds is the single source of truth for valid CursorKind values;
+// UnmarshalText and CursorKindNames both derive from it
+var cursorKinds = []CursorKind{
+	CursorKindBlock, CursorKindBar, CursorKindUnderline, CursorKindHidden,
+}
+
 func ParseCursorKind(value string) (CursorKind, error) {
 	var c CursorKind
 	if err := c.UnmarshalText([]byte(value)); err != nil {
@@ -255,12 +261,10 @@ func (g *Gutter) LineNumberMinWidth() int {
 }
 
 func (c *CursorKind) UnmarshalText(text []byte) error {
-	switch CursorKind(text) {
-	case CursorKindBlock, CursorKindBar, CursorKindUnderline, CursorKindHidden:
-		*c = CursorKind(text)
-	default:
+	if !slices.Contains(cursorKinds, CursorKind(text)) {
 		return fmt.Errorf("%w: %s", ErrInvalidCursorKind, text)
 	}
+	*c = CursorKind(text)
 	return nil
 }
 
@@ -422,6 +426,15 @@ func (w *WhitespaceCharacters) TabpadRune() rune {
 
 func (w *WhitespaceCharacters) NewlineRune() rune {
 	return runeOrDefault(w.Newline, DefaultWSNewline)
+}
+
+// CursorKindNames returns the recognized CursorKind values as strings
+func CursorKindNames() []string {
+	names := make([]string, len(cursorKinds))
+	for i, k := range cursorKinds {
+		names[i] = string(k)
+	}
+	return names
 }
 
 func intOr(p *int, fallback int) int {

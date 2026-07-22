@@ -11,7 +11,9 @@ import (
 
 // FileCompleter completes a positional argument against filesystem entries
 // under the editor's working directory
-func FileCompleter(e *view.Editor, input string) []command.Completion {
+func FileCompleter(
+	e *view.Editor, _ *command.Args, input string,
+) []command.Completion {
 	dir, pfx := filepath.Split(input)
 	base := dir
 	if base == "" {

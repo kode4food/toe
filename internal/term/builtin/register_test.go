@@ -371,6 +371,30 @@ func TestOptionCompleters(t *testing.T) {
 		}
 		assert.True(t, len(allComps) > 0)
 	})
+
+	t.Run("set completes option keys", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		cmd, ok := km.ResolveCommand("set_option")
+		assert.True(t, ok)
+		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "sc")
+		texts := make([]string, len(comps))
+		for i, c := range comps {
+			texts[i] = c.Text
+		}
+		assert.Contains(t, texts, "scrolloff")
+	})
+
+	t.Run("set completes option value", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		cmd, ok := km.ResolveCommand("set_option")
+		assert.True(t, ok)
+		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "theme moc")
+		texts := make([]string, len(comps))
+		for i, c := range comps {
+			texts[i] = c.Text
+		}
+		assert.Contains(t, texts, "mocha")
+	})
 }
 
 func defaultKeymaps(t *testing.T) *command.Keymaps {

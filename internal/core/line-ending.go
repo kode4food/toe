@@ -31,6 +31,21 @@ func (l *LineEnding) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// ParseLineEnding parses a "lf", "crlf", or "native" option value
+func ParseLineEnding(value string) (LineEnding, error) {
+	var l LineEnding
+	if err := l.UnmarshalText([]byte(value)); err != nil {
+		return "", err
+	}
+	return l, nil
+}
+
+// LineEndingNames returns the recognized line-ending option values, in
+// display order
+func LineEndingNames() []string {
+	return []string{"lf", "crlf", "native"}
+}
+
 func LineEndingFromChar(ch rune) (LineEnding, bool) {
 	switch ch {
 	case '\n', '\r', '\v', '\f', '\u0085', '\u2028', '\u2029':

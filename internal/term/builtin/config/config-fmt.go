@@ -49,7 +49,7 @@ func configFormatCmds() []command.Command {
 		{
 			Name: actSetLineEnding,
 			DocString: "Set the document's default line ending. Options: " +
-				"crlf, lf",
+				"crlf, lf, native",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					doc, ok := e.FocusedDocument()
@@ -66,13 +66,8 @@ func configFormatCmds() []command.Command {
 					}
 				}
 				name, _ := args.First()
-				var le core.LineEnding
-				switch name {
-				case "lf":
-					le = core.LineEndingLF
-				case "crlf":
-					le = core.LineEndingCRLF
-				default:
+				le, err := core.ParseLineEnding(name)
+				if err != nil {
 					return command.Result{
 						Message: "error: unknown line ending: " + name,
 					}
@@ -82,9 +77,11 @@ func configFormatCmds() []command.Command {
 				}
 				return command.Result{Message: ""}
 			},
-			Modes:     command.DocumentModes(),
-			Aliases:   []string{"line-ending"},
-			Signature: kit.StaticSig(kit.OptionalArg(), "crlf", "lf"),
+			Modes:   command.DocumentModes(),
+			Aliases: []string{"line-ending"},
+			Signature: kit.StaticSig(
+				kit.OptionalArg(), core.LineEndingNames()...,
+			),
 		},
 		{
 			Name: actIndentStyle,
@@ -153,6 +150,7 @@ func cursorShapeOption(
 			set(e.Options(), v)
 			return nil
 		},
+		Complete: command.StaticCompleter(view.CursorKindNames()...),
 	}
 }
 

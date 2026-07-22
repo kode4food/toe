@@ -25,12 +25,13 @@ type (
 	// Option describes a runtime editor option owned by a module. Toggle is
 	// nil for options that are not boolean-toggleable
 	Option struct {
-		Key    string
-		Get    OptionGetter
-		Set    OptionSetter
-		KeyGet OptionKeyGetter
-		KeySet OptionKeySetter
-		Toggle OptionGetter
+		Key      string
+		Get      OptionGetter
+		Set      OptionSetter
+		KeyGet   OptionKeyGetter
+		KeySet   OptionKeySetter
+		Toggle   OptionGetter
+		Complete CompletionFunc
 	}
 
 	// OptionGetter reads an option's current value from the editor

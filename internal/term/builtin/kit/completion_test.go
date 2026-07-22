@@ -23,7 +23,7 @@ func TestFileCompleter(t *testing.T) {
 		e := view.NewEditor(dir)
 
 		var texts []string
-		for _, c := range kit.FileCompleter(e, "al") {
+		for _, c := range kit.FileCompleter(e, nil, "al") {
 			texts = append(texts, c.Text)
 		}
 		assert.Contains(t, texts, "alpha.txt")
@@ -33,7 +33,7 @@ func TestFileCompleter(t *testing.T) {
 
 	t.Run("unreadable base yields nothing", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		assert.Empty(t, kit.FileCompleter(e, "no_such_dir/x"))
+		assert.Empty(t, kit.FileCompleter(e, nil, "no_such_dir/x"))
 	})
 }
 

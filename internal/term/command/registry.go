@@ -109,6 +109,7 @@ func (r *Registry) LookupOption(key string) (Option, bool) {
 		Set: func(e *view.Editor, value string) error {
 			return o.KeySet(e, key, value)
 		},
+		Complete: o.Complete,
 	}, true
 }
 
@@ -187,14 +188,31 @@ func (r *Registry) BoolOptionKeys() []string {
 }
 
 func (r *Registry) OptionCompleter() CompletionFunc {
-	return func(_ *view.Editor, input string) []Completion {
+	return func(_ *view.Editor, _ *Args, input string) []Completion {
 		return matchPrefix(r.OptionKeys(), input)
 	}
 }
 
 func (r *Registry) BoolOptionCompleter() CompletionFunc {
-	return func(_ *view.Editor, input string) []Completion {
+	return func(_ *view.Editor, _ *Args, input string) []Completion {
 		return matchPrefix(r.BoolOptionKeys(), input)
+	}
+}
+
+// OptionValueCompleter completes an option's value, dispatching to the
+// completer registered against the option named by the already-parsed first
+// positional argument (e.g. the key in "set <key> <value>")
+func (r *Registry) OptionValueCompleter() CompletionFunc {
+	return func(e *view.Editor, args *Args, input string) []Completion {
+		key, ok := args.Get(0)
+		if !ok {
+			return nil
+		}
+		o, ok := r.LookupOption(key)
+		if !ok || o.Complete == nil {
+			return nil
+		}
+		return o.Complete(e, args, input)
 	}
 }
 

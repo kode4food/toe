@@ -78,5 +78,6 @@ func EditorBoolOption(
 			set(e, v)
 			return strconv.FormatBool(v), nil
 		},
+		Complete: command.StaticCompleter("true", "false"),
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -68,6 +69,7 @@ func ConfigurationModule(r *command.Registry) command.Module {
 					e.Options().Theme = s
 					return nil
 				},
+				Complete: command.StaticCompleter(loader.ThemeNames()...),
 			},
 			kit.EditorBoolOption("mouse",
 				func(e *view.Editor) bool {
@@ -137,6 +139,7 @@ func ConfigurationModule(r *command.Registry) command.Module {
 					e.Options().DefaultLineEnding = le
 					return nil
 				},
+				Complete: command.StaticCompleter(core.LineEndingNames()...),
 			},
 			cursorShapeOption("cursor-shape.normal", "NOR",
 				func(o *view.Options, v view.CursorKind) {
@@ -275,9 +278,12 @@ func configOptionCmds(r *command.Registry) []command.Command {
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 2, Max: 2},
 				RawAfter:    1,
-				Completer: command.PositionalCompleter(
-					r.OptionCompleter(),
-				),
+				Completer: command.Completer{
+					Positionals: []command.CompletionFunc{
+						r.OptionCompleter(),
+					},
+					Raw: r.OptionValueCompleter(),
+				},
 			},
 		},
 		{

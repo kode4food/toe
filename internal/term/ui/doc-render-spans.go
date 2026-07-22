@@ -104,8 +104,12 @@ func (r *renderPass) prepareContentRender(
 	if r.cx.Editor.Mode() != view.ModeSelect && r.ec.mouseDownRange == nil {
 		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
 	}
-	docLinks := documentLinkSpans(doc.DocumentLinks())
-	docColors := documentColorSpans(doc.DocumentColors())
+	var docLinks []matchSpan
+	var docColors []colorSpan
+	if r.cx.Editor.Mode() == view.ModeNormal {
+		docLinks = documentLinkSpans(doc.DocumentLinks())
+		docColors = documentColorSpans(doc.DocumentColors())
+	}
 
 	// styles rebuilt only when theme or mode changes
 	th := r.activeTheme()
@@ -131,12 +135,16 @@ func (r *renderPass) prepareContentRender(
 	}
 
 	diagnostics := diagnosticSpans(docDiagnostics, tuiStyles)
-	annotations := inlayHintAnnotations(doc.InlayHints(v.ID()), tuiStyles)
-	colorAnnotations := documentColorAnnotations(doc.DocumentColors())
-	annotations = append(annotations, colorAnnotations...)
-	slices.SortStableFunc(annotations, func(a, b inlineAnnotation) int {
-		return cmp.Compare(a.pos, b.pos)
-	})
+	var annotations []inlineAnnotation
+	if r.cx.Editor.Mode() == view.ModeNormal {
+		annotations = inlayHintAnnotations(doc.InlayHints(v.ID()), tuiStyles)
+		annotations = append(
+			annotations, documentColorAnnotations(doc.DocumentColors())...,
+		)
+		slices.SortStableFunc(annotations, func(a, b inlineAnnotation) int {
+			return cmp.Compare(a.pos, b.pos)
+		})
+	}
 
 	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&

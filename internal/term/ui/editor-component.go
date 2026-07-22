@@ -188,7 +188,7 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 		return nil
 	}
 	ls := cx.Editor.LanguageServerController()
-	if ls == nil {
+	if ls == nil || cx.Editor.Mode() != view.ModeNormal {
 		doc.ClearDocumentHighlights(v.ID())
 		return nil
 	}

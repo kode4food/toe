@@ -178,57 +178,44 @@ func (r *rowRender) rows() []renderedRow {
 		if r.docColors != nil {
 			colorStyle, colorOK = r.colorAt(pos)
 		}
-		var diagStyle tui.Style
+		var diag diagnosticSpan
 		diagOK := false
 		if r.diagnostics != nil {
-			diagStyle, diagOK = r.diagnosticAt(pos)
+			diag, diagOK = r.diagnosticAt(pos)
 		}
+		var style tui.Style
 		switch {
 		case selAt.cursor && selAt.primary && r.cursorIsBlock:
-			writeRendered(rendered, width, ts.cursorPrim)
+			style = ts.cursorPrim
 		case selAt.cursor && selAt.primary && r.mode != view.ModeInsert:
-			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.selection,
-			))
+			style = overlaySelStyle(r.baseStyleAt(pos, glyph), ts.selection)
 		case selAt.cursor && !selAt.primary:
-			writeRendered(rendered, width, ts.cursor)
+			style = ts.cursor
 		case selAt.selected:
-			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.selection,
-			))
+			style = overlaySelStyle(r.baseStyleAt(pos, glyph), ts.selection)
 		case r.mode == view.ModeSelect:
-			writeRendered(rendered, width, r.baseStyleAt(pos, glyph))
+			style = r.baseStyleAt(pos, glyph)
 		case rangeMatch(r.docHighlights, pos):
-			writeRendered(rendered, width, overlaySelStyle(
+			style = overlaySelStyle(
 				r.baseStyleAt(pos, glyph), ts.documentHighlight,
-			))
+			)
 		case rangeMatch(r.docLinks, pos):
-			writeRendered(rendered, width, overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.documentLink,
-			))
+			style = overlaySelStyle(r.baseStyleAt(pos, glyph), ts.documentLink)
 		case colorOK:
-			writeRendered(rendered, width, colorStyle)
+			style = colorStyle
 		case rangeMatch(r.searchMatches, pos):
-			writeRendered(rendered, width, overlayBgStyle(
-				r.baseStyleAt(pos, glyph), ts.searchMatch,
-			))
-		case diagOK:
-			writeRendered(rendered, width, overlayDiagnosticStyle(
-				r.baseStyleAt(pos, glyph), diagStyle,
-			))
+			style = overlayBgStyle(r.baseStyleAt(pos, glyph), ts.searchMatch)
 		case glyph == documentGlyphGuide:
-			writeRendered(rendered, width, ts.indentGuide)
+			style = ts.indentGuide
 		case glyph == documentGlyphWhitespace:
-			writeRendered(rendered, width, ts.whitespace)
-		case r.hlSpans != nil:
-			if scope, ok := r.hlScopeAt(pos); ok {
-				writeRendered(rendered, width, r.hlStyle(scope))
-			} else {
-				writeRendered(rendered, width, ts.text)
-			}
+			style = ts.whitespace
 		default:
-			writeRendered(rendered, width, ts.text)
+			style = r.baseStyleAt(pos, glyph)
 		}
+		if diagOK {
+			style = overlayDiagnosticStyle(style, diag.style)
+		}
+		writeRendered(rendered, width, style)
 		pos++
 	}
 	if r.annotations != nil {

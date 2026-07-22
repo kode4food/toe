@@ -1009,6 +1009,110 @@ func TestBaseStyleAtCases(t *testing.T) {
 	})
 }
 
+func TestErroredIdentifierGating(t *testing.T) {
+	// "Bork" is a type_identifier; Tree-sitter tags it @type purely from
+	// parse-tree shape, with no idea whether Bork actually exists
+	const goSrc = "package main\n\nvar x Bork\n"
+	bork := strings.Index(goSrc, "Bork")
+	typeColoredBork := "\x1b[38;2;249;226;175mBork" // type yellow
+
+	newGoDoc := func(t *testing.T) (*view.Editor, *view.Document) {
+		t.Helper()
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		path := filepath.Join(root, "main.go")
+		err := os.WriteFile(path, []byte(goSrc), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Options().Theme = "mocha"
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		return e, doc
+	}
+
+	t.Run("no diagnostic keeps color", func(t *testing.T) {
+		e, _ := newGoDoc(t)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, typeColoredBork)
+	})
+
+	t.Run("error renders plain", func(t *testing.T) {
+		e, doc := newGoDoc(t)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: bork, To: bork + 4},
+			Severity: view.DiagnosticSeverityError,
+			Message:  "undefined: Bork",
+		}})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.NotContains(t, out, typeColoredBork)
+		// no distinct color escape before "Bork" means it blends into the
+		// surrounding plain-text run rather than keeping its syntax color
+		assert.Contains(t, out, " x \x1b[58:2::243:139:168m\x1b[4:3mBork")
+	})
+
+	t.Run("warning keeps color", func(t *testing.T) {
+		e, doc := newGoDoc(t)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: bork, To: bork + 4},
+			Severity: view.DiagnosticSeverityWarning,
+			Message:  "unused",
+		}})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		// warning-severity diagnostics overlay an underline but don't gate
+		// the base color, so the type-yellow fg code still precedes "Bork"
+		assert.Contains(t,
+			out, "\x1b[38;2;249;226;175m\x1b[58:2::249:226:175m\x1b[4:3mBork")
+	})
+
+	t.Run("highlight and diagnostic both apply", func(t *testing.T) {
+		e, doc := newGoDoc(t)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
+			{From: bork, To: bork + 4},
+		})
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+			Range:    view.DiagnosticRange{From: bork, To: bork + 4},
+			Severity: view.DiagnosticSeverityWarning,
+			Message:  "unused",
+		}})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		// occurrence-highlight background (surface2) and diagnostic
+		// underline both land on "Bork" rather than one hiding the other
+		assert.Contains(t, out,
+			"\x1b[48;2;88;91;112m\x1b[58:2::249:226:175m\x1b[4:3mBork")
+	})
+
+	t.Run("highlight without diagnostic", func(t *testing.T) {
+		e, doc := newGoDoc(t)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
+			{From: bork, To: bork + 4},
+		})
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, "\x1b[48;2;88;91;112mBork")
+	})
+}
+
 func TestSplitViewRender(t *testing.T) {
 	t.Run("vsplit and hsplit render separators", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -1336,6 +1440,30 @@ func TestTextAnnotationRender(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, ": T")
+	})
+
+	t.Run("hidden outside normal mode", func(t *testing.T) {
+		e := editorWithText(t, "hello\n")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc.SetInlayHints(v.ID(), []view.InlayHint{
+			{Pos: 5, Label: ": string", Kind: "type"},
+		})
+		doc.SetDocumentColors([]view.DocumentColor{
+			{From: 0, To: 5, Red: 255},
+		})
+		doc.SetDocumentLinks([]view.DocumentLink{
+			{From: 0, To: 5, Target: "/some/path"},
+		})
+		e.SetMode(view.ModeInsert)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "■")
+		assert.NotContains(t, out, ": string")
 	})
 }
 

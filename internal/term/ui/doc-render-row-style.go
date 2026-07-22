@@ -5,6 +5,7 @@ import (
 
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type selectionAtRes struct {
@@ -41,7 +42,7 @@ func (r *rowRender) colorAt(pos int) (tui.Style, bool) {
 	return tui.Style{}, false
 }
 
-func (r *rowRender) diagnosticAt(pos int) (tui.Style, bool) {
+func (r *rowRender) diagnosticAt(pos int) (diagnosticSpan, bool) {
 	var best diagnosticSpan
 	ok := false
 	for _, sp := range r.diagnostics {
@@ -56,7 +57,7 @@ func (r *rowRender) diagnosticAt(pos int) (tui.Style, bool) {
 			ok = true
 		}
 	}
-	return best.style, ok
+	return best, ok
 }
 
 // baseStyleAt returns the syntax/glyph style that would apply to pos absent any
@@ -68,9 +69,18 @@ func (r *rowRender) baseStyleAt(pos int, glyph documentGlyph) tui.Style {
 	case glyph == documentGlyphWhitespace:
 		return r.tuiStyles.whitespace
 	case r.hlSpans != nil:
-		if scope, ok := r.hlScopeAt(pos); ok {
+		scope, ok := r.hlScopeAt(pos)
+		if !ok {
+			break
+		}
+		if !isIdentifierScope(scope) {
 			return r.hlStyle(scope)
 		}
+		if diag, dOk := r.diagnosticAt(pos); dOk &&
+			diag.severity >= view.DiagnosticSeverityError {
+			return r.tuiStyles.text
+		}
+		return r.hlStyle(scope)
 	}
 	return r.tuiStyles.text
 }
@@ -86,6 +96,17 @@ func (r *rowRender) hlScopeAt(pos int) (string, bool) {
 		return spans[r.hlIdx].Scope, true
 	}
 	return "", false
+}
+
+func isIdentifierScope(scope string) bool {
+	switch scope {
+	case "variable", "variable.parameter", "variable.other.member",
+		"function", "function.macro", "type", "type.enum.variant",
+		"namespace", "constructor":
+		return true
+	default:
+		return false
+	}
 }
 
 func rangeMatch(ranges []matchSpan, pos int) bool {

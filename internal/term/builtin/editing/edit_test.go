@@ -41,7 +41,7 @@ func TestEditModeCommands(t *testing.T) {
 	t.Run("exit select returns to normal", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		test.RunCmd(t, km, e, "select_mode")
-		test.RunCmd(t, km, e, "exit_select_mode")
+		test.RunCmd(t, km, e, "normal_mode")
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
 }

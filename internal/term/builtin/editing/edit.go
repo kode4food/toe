@@ -55,7 +55,6 @@ const (
 	actAppendToLine             = "append_to_line"
 	actOpenBelow                = "open_below"
 	actOpenAbove                = "open_above"
-	actExitSelectMode           = "exit_select_mode"
 	actNormalMode               = "normal_mode"
 )
 
@@ -119,13 +118,6 @@ func EditModule() command.Module {
 				Run:       kit.Continuation(openAboveAction),
 				Modes:     []string{"NOR", "SEL"},
 				Keys:      kit.Keys(kit.Char('O')),
-			},
-			{
-				Name:      actExitSelectMode,
-				DocString: "Exit selection mode",
-				Run:       kit.Continuation(normalModeAction),
-				Modes:     []string{"SEL"},
-				Keys:      kit.Keys(kit.Esc),
 			},
 			{
 				Name:      actReplace,

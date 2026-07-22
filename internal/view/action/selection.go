@@ -160,6 +160,17 @@ func GotoLastModification(e *view.Editor) {
 	doc.SetSelectionFor(v.ID(), newSel)
 }
 
+// ApplySelection applies sel to the focused document as a selection-only
+// transaction, so cursor moves driven by input (mouse, jumps) go through the
+// same insert-group and history bookkeeping as an edit
+func ApplySelection(e *view.Editor, sel core.Selection) {
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	_ = e.Apply(core.NewTransaction(doc.Text()).WithSelection(sel))
+}
+
 func jumpTo(e *view.Editor, fn jumpResolver) {
 	v, ok := e.FocusedView()
 	if !ok {

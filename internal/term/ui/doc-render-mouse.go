@@ -152,8 +152,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 	default:
 		newSel = core.PointSelection(res.pos)
 	}
-	tx := core.NewTransaction(text).WithSelection(newSel)
-	_ = r.cx.Editor.Apply(tx)
+	action.ApplySelection(r.cx.Editor, newSel)
 	res.view.BeginFreeScroll(res.doc.Revision(), newSel)
 }
 
@@ -230,9 +229,7 @@ func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
 	if !ok {
 		return
 	}
-	text := res.doc.Text()
-	tx := core.NewTransaction(text).WithSelection(core.PointSelection(res.pos))
-	_ = r.cx.Editor.Apply(tx)
+	action.ApplySelection(r.cx.Editor, core.PointSelection(res.pos))
 	action.PastePrimaryClipboardBefore(r.cx.Editor)
 }
 
@@ -358,8 +355,7 @@ func extendSelectionTo(
 	if err != nil {
 		return false
 	}
-	tx := core.NewTransaction(text).WithSelection(newSel)
-	_ = cx.Editor.Apply(tx)
+	action.ApplySelection(cx.Editor, newSel)
 	v.BeginFreeScroll(doc.Revision(), newSel)
 	return true
 }

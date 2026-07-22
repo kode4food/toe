@@ -110,10 +110,10 @@ func expandVariable(e *view.Editor, name string) (string, error) {
 		return findWorkspace(e.Cwd()), nil
 
 	case "language":
-		if lang := doc.Lang(); lang != "" && lang != "text" {
+		if lang := doc.Lang(); lang != "" && lang != view.DefaultLanguage {
 			return lang, nil
 		}
-		return "text", nil
+		return view.DefaultLanguage, nil
 
 	case "selection":
 		if sl, err := text.Slice(prim.From(), prim.To()); err == nil {

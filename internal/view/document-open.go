@@ -25,7 +25,7 @@ func newDocument(id DocumentId, opts *Options) *Document {
 			hints:      map[Id][]InlayHint{},
 		},
 	}
-	d.SetLang("text")
+	d.SetLang(DefaultLanguage)
 	return d
 }
 

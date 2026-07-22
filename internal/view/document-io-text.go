@@ -85,7 +85,7 @@ func detectLang(path, content string) string {
 	if lex := lexers.Analyse(content); lex != nil {
 		return strings.ToLower(lex.Config().Name)
 	}
-	return "text"
+	return DefaultLanguage
 }
 
 func defaultLineEnding(le core.LineEnding) core.LineEnding {

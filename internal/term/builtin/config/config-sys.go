@@ -114,7 +114,7 @@ func configThemeCmds() []command.Command {
 				}
 				name, _ := args.First()
 				if name == "default" {
-					name = "mocha"
+					name = view.DefaultTheme
 				}
 				th, _, err := theme.Load(name)
 				if err != nil {
@@ -140,7 +140,7 @@ func configThemeCmds() []command.Command {
 func languageNames() []string {
 	langs, ok := language.LoadBundledLanguages()
 	if !ok {
-		return []string{"text"}
+		return []string{view.DefaultLanguage}
 	}
 	names := make([]string, 0, len(langs.Languages)+1)
 	for _, l := range langs.Languages {
@@ -148,7 +148,7 @@ func languageNames() []string {
 			names = append(names, l.Name)
 		}
 	}
-	names = append(names, "text")
+	names = append(names, view.DefaultLanguage)
 	return names
 }
 

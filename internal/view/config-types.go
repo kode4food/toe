@@ -96,6 +96,10 @@ type (
 const (
 	DefaultTheme = "mocha"
 
+	// DefaultLanguage is the document language name used when no language
+	// could be detected or was explicitly cleared
+	DefaultLanguage = "text"
+
 	BufferLineNever    BufferLine = "never"
 	BufferLineAlways   BufferLine = "always"
 	BufferLineMultiple BufferLine = "multiple"

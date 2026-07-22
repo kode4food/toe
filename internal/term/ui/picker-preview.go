@@ -210,7 +210,7 @@ func openDocumentPreview(path string, editor *view.Editor) *view.Document {
 }
 
 func previewSpans(sc *syntax.Cache, text, lang string) []highlight.Span {
-	if lang == "text" {
+	if lang == view.DefaultLanguage {
 		return nil
 	}
 	return sc.Tokenize(text, lang)

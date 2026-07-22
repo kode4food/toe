@@ -124,9 +124,9 @@ func ConfigurationModule(r *command.Registry) command.Module {
 				Get: func(e *view.Editor) (string, error) {
 					switch e.Options().DefaultLineEnding {
 					case core.LineEndingLF:
-						return "lf", nil
+						return core.LineEndingNameLF, nil
 					case core.LineEndingCRLF:
-						return "crlf", nil
+						return core.LineEndingNameCRLF, nil
 					default:
 						return "", nil
 					}

@@ -13,17 +13,24 @@ const (
 	LineEndingCRLF LineEnding = "\r\n"
 )
 
+// Line-ending option value names, as used in config, completion, and status
+const (
+	LineEndingNameLF     = "lf"
+	LineEndingNameCRLF   = "crlf"
+	LineEndingNameNative = "native"
+)
+
 var ErrInvalidLineEnding = errors.New("invalid line ending")
 
 // NativeLineEnding is defined in platform-specific files
 
 func (l *LineEnding) UnmarshalText(text []byte) error {
 	switch string(text) {
-	case "lf":
+	case LineEndingNameLF:
 		*l = LineEndingLF
-	case "crlf":
+	case LineEndingNameCRLF:
 		*l = LineEndingCRLF
-	case "native":
+	case LineEndingNameNative:
 		*l = NativeLineEnding()
 	default:
 		return fmt.Errorf("%w: %s", ErrInvalidLineEnding, text)
@@ -43,7 +50,7 @@ func ParseLineEnding(value string) (LineEnding, error) {
 // LineEndingNames returns the recognized line-ending option values, in
 // display order
 func LineEndingNames() []string {
-	return []string{"lf", "crlf", "native"}
+	return []string{LineEndingNameLF, LineEndingNameCRLF, LineEndingNameNative}
 }
 
 func LineEndingFromChar(ch rune) (LineEnding, bool) {

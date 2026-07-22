@@ -31,12 +31,12 @@ func configFormatCmds() []command.Command {
 				if args == nil || args.Empty() {
 					lang := doc.Lang()
 					if lang == "" {
-						lang = "text"
+						lang = view.DefaultLanguage
 					}
 					return command.Result{Message: lang}
 				}
 				lang, _ := args.First()
-				if lang == "text" {
+				if lang == view.DefaultLanguage {
 					lang = ""
 				}
 				doc.SetLang(lang)
@@ -60,7 +60,9 @@ func configFormatCmds() []command.Command {
 					}
 					switch doc.LineEnding() {
 					case core.LineEndingCRLF:
-						return command.Result{Message: "crlf"}
+						return command.Result{
+							Message: core.LineEndingNameCRLF,
+						}
 					default:
 						return command.Result{Message: "line feed"}
 					}
@@ -126,7 +128,7 @@ func configFormatCmds() []command.Command {
 			Name:      actEncoding,
 			DocString: "Set encoding",
 			Run: func(_ *view.Editor, _ *command.Args) command.Result {
-				return command.Result{Message: "utf-8"}
+				return command.Result{Message: view.EncodingUTF8}
 			},
 			Modes:     command.DocumentModes(),
 			Signature: kit.Sig(),

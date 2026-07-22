@@ -167,14 +167,14 @@ func (dc *docRenderCache) ensureRawText(rev int, text core.Rope) string {
 func (dc *docRenderCache) ensureHL(
 	sc *syntax.Cache, rev int, lang, rawText string,
 ) []highlight.Span {
-	if lang != "text" && (dc.hlRev != rev || dc.hlLang != lang) {
+	if lang != view.DefaultLanguage && (dc.hlRev != rev || dc.hlLang != lang) {
 		dc.hlRev = rev
 		dc.hlLang = lang
 		dc.hlSpans = sc.Tokenize(
 			highlight.NormalizeNewlines(rawText), lang,
 		)
 	}
-	if lang == "text" {
+	if lang == view.DefaultLanguage {
 		return nil
 	}
 	return dc.hlSpans

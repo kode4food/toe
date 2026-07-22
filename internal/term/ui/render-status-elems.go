@@ -135,9 +135,9 @@ func statusElemTotalLines(s *statusElemCtx) statusElem {
 }
 
 func statusElemEncoding(s *statusElemCtx) statusElem {
-	label := "utf-8"
+	label := view.EncodingUTF8
 	if s.doc.HasBOM() {
-		label = "utf-8-bom"
+		label = view.EncodingUTF8BOM
 	}
 	return statusElem{text: label, style: s.baseTUI}
 }
@@ -147,9 +147,9 @@ func statusElemSpacer(s *statusElemCtx) statusElem {
 }
 
 func statusElemLineEnding(s *statusElemCtx) statusElem {
-	label := "lf"
+	label := core.LineEndingNameLF
 	if s.doc.LineEnding() == core.LineEndingCRLF {
-		label = "crlf"
+		label = core.LineEndingNameCRLF
 	}
 	return statusElem{text: label, style: s.baseTUI}
 }
@@ -168,7 +168,7 @@ func statusElemIndentStyle(s *statusElemCtx) statusElem {
 func statusElemFileType(s *statusElemCtx) statusElem {
 	lang := s.doc.Lang()
 	if lang == "" {
-		lang = "text"
+		lang = view.DefaultLanguage
 	}
 	return statusElem{text: lang, style: s.baseTUI}
 }

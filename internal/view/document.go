@@ -97,6 +97,11 @@ const (
 	InvalidDocumentId DocumentId = 0
 	// ScratchBufferName is the display name used for unnamed scratch documents
 	ScratchBufferName = "[scratch]"
+
+	// EncodingUTF8 and EncodingUTF8BOM are the text-encoding display names
+	// used in config and status display
+	EncodingUTF8    = "utf-8"
+	EncodingUTF8BOM = "utf-8-bom"
 )
 
 const (

@@ -33,6 +33,10 @@ func (s *stubVC) DiffHunksForPath(string) []view.DiffHunk {
 	return s.hunks
 }
 
+func (s *stubVC) DiffBaseForPath(string) (string, bool) {
+	return s.base, s.base != ""
+}
+
 func (s *stubVC) HeadName(*view.Document) (string, bool) {
 	return "", false
 }

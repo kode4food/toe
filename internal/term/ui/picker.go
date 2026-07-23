@@ -31,7 +31,8 @@ type (
 		previewScroll    int
 		previewScrollFor int
 
-		previewCache previewCache
+		previewCache  previewCache
+		diffBaseCache map[string]diffBaseResult
 
 		feedCmd tea.Cmd
 		cancel  StopFunc
@@ -92,6 +93,9 @@ type (
 		Location    PickerLocation
 		Payload     any
 		DiffHunks   []view.DiffHunk
+		DiffPreview bool
+		DiffKind    view.FileChangeKind
+		BasePath    string
 	}
 
 	// PreviewRenderer renders a picker item's preview at the given size
@@ -151,9 +155,10 @@ const (
 // caller after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
-		source:       source,
-		previewCache: previewCache{},
-		cancel:       func() {},
+		source:        source,
+		previewCache:  previewCache{},
+		diffBaseCache: map[string]diffBaseResult{},
+		cancel:        func() {},
 	}
 	items, feed, stop := source.Load(e)
 	p.cancel = stop
@@ -314,6 +319,7 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 
 func (p *Picker) clearPreviewCache() {
 	clear(p.previewCache)
+	clear(p.diffBaseCache)
 }
 
 // AcceptDocumentID opens the document by id, splitting per action, and

@@ -21,6 +21,7 @@ var _ view.VersionControl = (*vcsStub)(nil)
 
 func (s *vcsStub) DiffHunks(*view.Document) []view.DiffHunk { return s.hunks }
 func (s *vcsStub) DiffHunksForPath(string) []view.DiffHunk  { return s.hunks }
+func (s *vcsStub) DiffBaseForPath(string) (string, bool)    { return "", false }
 func (s *vcsStub) HeadName(*view.Document) (string, bool)   { return "", false }
 func (s *vcsStub) ChangedFiles() ([]view.FileChange, error) { return nil, nil }
 func (s *vcsStub) Refresh()                                 {}

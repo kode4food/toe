@@ -134,12 +134,19 @@ func changedFileItem(
 			" → " + display
 	}
 	hunks := changedFileHunks(vc, fc)
+	basePath := fc.Path
+	if fc.Kind == view.FileChangeRenamed {
+		basePath = fc.FromPath
+	}
 	return PickerItem{
 		Display:     display,
 		Columns:     []string{changedFileIcon(fc.Kind, nerd), display},
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
 		SortKey:     display,
 		DiffHunks:   hunks,
+		DiffPreview: fc.Kind != view.FileChangeConflict,
+		DiffKind:    fc.Kind,
+		BasePath:    basePath,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: fc.Path},
 			Lines:  firstChangeLines(hunks),

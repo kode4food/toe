@@ -103,6 +103,17 @@ func (s *Session) DiffHunksForPath(path string) []view.DiffHunk {
 	return Diff(baseRope(base), baseRope(data))
 }
 
+// DiffBaseForPath returns the checked-in base text of an arbitrary workspace
+// file. It shells out to the provider, so it is intended for on-demand use such
+// as picker diff previews
+func (s *Session) DiffBaseForPath(path string) (string, bool) {
+	base, err := s.provider.DiffBase(path)
+	if err != nil {
+		return "", false
+	}
+	return baseRope(base).String(), true
+}
+
 // HeadName returns the head display name for the document's repository
 func (s *Session) HeadName(doc *view.Document) (string, bool) {
 	s.mu.Lock()

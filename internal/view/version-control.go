@@ -16,6 +16,10 @@ type (
 		// on-disk contents of an arbitrary workspace file
 		DiffHunksForPath(path string) []DiffHunk
 
+		// DiffBaseForPath returns the version-control base text of an
+		// arbitrary workspace file, for on-demand use such as diff previews
+		DiffBaseForPath(path string) (string, bool)
+
 		// HeadName returns a short display name for the current head of the
 		// repository containing the document
 		HeadName(*Document) (string, bool)

@@ -46,6 +46,10 @@ type (
 )
 
 func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
+	if p.item.DiffPreview {
+		p.renderDiffInto(buf, at)
+		return
+	}
 	switch {
 	case p.item.Location.Target.ID != view.InvalidDocumentId:
 		doc, ok := p.editor.Document(p.item.Location.Target.ID)
@@ -101,6 +105,52 @@ func (p *previewCtx) renderDocInto(
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
 	return diffGutterLines(p.item.DiffHunks, text.LenLines())
+}
+
+func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
+	vc := p.editor.VersionControl()
+	if vc == nil {
+		p.blitPlaceholderInto(buf, at, "<No version control>")
+		return
+	}
+	base, _ := p.picker.diffBaseFor(vc, p.item.BasePath)
+	working, spans, lang := p.workingPreview()
+	opts := p.editor.Options()
+	r := &diffPreviewRender{
+		working: working, base: base, spans: spans,
+		lines: buildDiffPreviewLines(
+			p.item.DiffKind, working, base, p.item.DiffHunks,
+		),
+		format: language.TextFormatForConfig(
+			language.LoadLanguage(lang), opts.TextWidth, opts.SoftWrap,
+			p.size.Width,
+		),
+		opts: opts, th: p.th,
+		area:   geom.Area{Point: at, Size: p.size},
+		scroll: p.picker.previewScroll,
+	}
+	renderDiffPreviewInto(buf, r)
+	p.picker.previewScroll = r.scroll
+}
+
+// workingPreview returns the working-copy rope, syntax spans, and language for
+// the diff's right side; empty for a deleted or unreadable file
+func (p *previewCtx) workingPreview() (core.Rope, []highlight.Span, string) {
+	if p.item.Location.Target.ID != view.InvalidDocumentId {
+		if doc, ok := p.editor.Document(p.item.Location.Target.ID); ok {
+			e := p.picker.previewCache.doc(p.syntax, doc)
+			return e.rope, e.spans, e.lang
+		}
+	}
+	path := p.item.Location.Target.Path
+	if doc := openDocumentPreview(path, p.editor); doc != nil {
+		e := p.picker.previewCache.doc(p.syntax, doc)
+		return e.rope, e.spans, e.lang
+	}
+	if e, ok := p.picker.previewCache.path(p.syntax, path).(*previewDocEntry); ok {
+		return e.rope, e.spans, e.lang
+	}
+	return core.NewRope(""), nil, view.DefaultLanguage
 }
 
 func (p *previewCtx) renderFileInto(

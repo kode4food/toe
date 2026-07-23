@@ -178,6 +178,23 @@ func TestSession(t *testing.T) {
 		assert.Nil(t, s.DiffHunksForPath(filepath.Join(repo, "nope.txt")))
 	})
 
+	t.Run("serves base text for unopened paths", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
+		testutil.WriteFile(t, path, "one\nCHANGED\nthree\n")
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		defer s.Close()
+
+		base, ok := s.DiffBaseForPath(path)
+		assert.True(t, ok)
+		assert.Equal(t, "one\ntwo\nthree\n", base)
+
+		_, ok = s.DiffBaseForPath(filepath.Join(repo, "untracked.txt"))
+		assert.False(t, ok)
+	})
+
 	t.Run("changed files fails outside a repo", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		s := vcs.Attach(e)

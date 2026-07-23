@@ -100,7 +100,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	}
 
 	headerH := 0
-	if len(ps.source.Columns()) > 1 {
+	if pickerHasHeader(ps.source.Columns()) && len(ps.matched) > 0 {
 		headerH = 1
 	}
 	listW := areaW - 2

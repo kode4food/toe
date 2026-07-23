@@ -100,11 +100,39 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		// line 50 is far below the preview fold; it only shows when the preview
-		// is centered on the first hunk
+		// line 50 is far below the preview fold; it only shows when the diff
+		// preview anchors on the first hunk. The inline diff shows the removed
+		// base line and the added working line with sign-column markers
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "CHANGED-DEEP")
-		assert.Contains(t, out, "▍")
+		assert.Contains(t, out, "+ CHANGED-DEEP")
+		assert.Contains(t, out, "- line")
+	})
+
+	t.Run("added file preview shows all additions", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "tracked.txt", "keep\n")
+		testutil.WriteFile(
+			t, filepath.Join(repo, "added.txt"), "alpha\nbeta\n",
+		)
+
+		m := changedFilePicker(t, repo)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "+ alpha")
+		assert.Contains(t, out, "+ beta")
+	})
+
+	t.Run("deleted file preview shows removed base", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		gone := testutil.GitCommitFile(t, repo, "gone.txt", "first\nsecond\n")
+		assert.NoError(t, os.Remove(gone))
+
+		m := changedFilePicker(t, repo)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "- first")
+		assert.Contains(t, out, "- second")
+		assert.NotContains(t, out, "<File not found>")
 	})
 
 	t.Run("lists deleted and renamed files", func(t *testing.T) {
@@ -131,6 +159,41 @@ func TestChangedFilePicker(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "two")
+	})
+
+	t.Run("click selects the clicked file", func(t *testing.T) {
+		// the changed-file picker uses empty-label columns, so it renders no
+		// header row; a click must resolve to the row actually under it
+		repo := testutil.GitRepo(t)
+		for _, f := range []struct{ name, body string }{
+			{"a.txt", "AAA\n"}, {"b.txt", "BBB\n"}, {"c.txt", "CCC\n"},
+		} {
+			testutil.GitCommitFile(t, repo, f.name, "base\n")
+			testutil.WriteFile(t, filepath.Join(repo, f.name), f.body)
+		}
+
+		m := changedFilePicker(t, repo)
+		// first item (a.txt) is selected on open
+		assert.Contains(t, stripANSI(m.View().Content), "+ AAA")
+
+		lines := strings.Split(m.View().Content, "\n")
+		clickX, clickY := -1, -1
+		for y, line := range lines {
+			if col := strings.Index(stripANSI(line), "b.txt"); col >= 0 {
+				clickX, clickY = col, y
+				break
+			}
+		}
+		assert.GreaterOrEqual(t, clickY, 0)
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: clickX, Y: clickY, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "+ BBB")
+		assert.NotContains(t, out, "+ AAA")
 	})
 
 	t.Run("accept selects the first hunk", func(t *testing.T) {

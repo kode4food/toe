@@ -46,7 +46,7 @@ type (
 	}
 
 	// Layout describes how child panes are arranged within a split container
-	Layout int
+	Layout bool
 
 	// Direction is used to navigate between splits
 	Direction int
@@ -54,9 +54,9 @@ type (
 
 const (
 	// LayoutVertical places splits side by side
-	LayoutVertical Layout = iota
+	LayoutVertical Layout = false
 	// LayoutHorizontal stacks splits one above the other
-	LayoutHorizontal
+	LayoutHorizontal Layout = true
 )
 
 const (
@@ -298,12 +298,12 @@ func (t *Tree) Traverse() []Pane {
 func (t *Tree) ContainerLayoutAt(id Id) (Layout, bool) {
 	n, ok := t.nodes[id]
 	if !ok {
-		return 0, false
+		return LayoutVertical, false
 	}
 	parent := n.parent
 	pn, ok := t.nodes[parent]
 	if !ok || pn.container == nil {
-		return 0, false
+		return LayoutVertical, false
 	}
 	return pn.container.layout, true
 }

@@ -52,10 +52,9 @@ func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 	}
 	a := t.areaOf(c.children[boundary])
 
-	switch layout {
-	case LayoutVertical:
+	if layout == LayoutVertical {
 		t.moveSepVertical(parent, boundary, a.X+a.Width+sign*delta)
-	case LayoutHorizontal:
+	} else {
 		t.moveSepHorizontal(parent, boundary, a.Y+a.Height+sign*delta)
 	}
 	return true
@@ -66,10 +65,9 @@ func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 func (t *Tree) MoveSeparator(
 	containerID Id, childIdx int, layout Layout, newPos int,
 ) {
-	switch layout {
-	case LayoutVertical:
+	if layout == LayoutVertical {
 		t.moveSepVertical(containerID, childIdx, newPos)
-	case LayoutHorizontal:
+	} else {
 		t.moveSepHorizontal(containerID, childIdx, newPos)
 	}
 }

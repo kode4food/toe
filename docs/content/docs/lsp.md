@@ -5,7 +5,7 @@ weight: 50
 
 # Language Servers
 
-toe is a Go editor. LSP support is built around `gopls` for Go, with additional servers available for web languages (TypeScript, HTML, CSS) and other tools in the Go ecosystem. Each language specifies which server to use; you configure servers in your `languages.toml`.
+toe is a Go editor, and its LSP support is built around `gopls`. Bundled language definitions also cover common project formats and web languages. Language servers are external programs that must be installed on your `PATH`; `languages.toml` selects and configures them.
 
 ## Configuring a Language Server
 
@@ -33,22 +33,23 @@ Language server config in `.toe/languages.toml` is merged on top of user config,
 
 | Feature | Key | Command |
 |---------|-----|---------|
-| Go to definition | `gd` | `goto_definition` |
-| Go to declaration | `gD` | `goto_declaration` |
-| Go to type definition | `gy` | `goto_type_definition` |
-| Go to implementation | `gi` | `goto_implementation` |
-| Go to references | `gr` | `goto_reference` |
-| Select all references | `Space+h` | `select_references_to_symbol_under_cursor` |
+| Go to definition | `gd` | `goto-definition` |
+| Go to declaration | `gD` | `goto-declaration` |
+| Go to type definition | `gy` | `goto-type-definition` |
+| Go to implementation | `gi` | `goto-implementation` |
+| Go to references | `gr` | `goto-reference` |
+| Select all references | `Space+h` | `select-references-to-symbol-under-cursor` |
 | Hover docs | `Space+k` | `hover` |
-| Rename symbol | `Space+r` | `rename_symbol` |
-| Code actions | `Space+a` | `code_action` |
-| Format document | `=` | `format_selections` |
+| Rename symbol | `Space+r` | `rename-symbol` |
+| Code actions | `Space+a` | `code-action` |
+| Format selection | `=` | `format-selections` |
+| Format document | `:format` | `format` |
 | Signature help | (auto in Insert) | `signature-help` |
 | Completion | `Ctrl+x` (or auto) | `completion` |
-| Document symbols | `Space+s` | `symbol_picker` |
-| Workspace symbols | `Space+S` | `workspace_symbol_picker` |
+| Document symbols | `Space+s` | `symbol-picker` |
+| Workspace symbols | `Space+S` | `workspace-symbol-picker` |
 
-Workspace symbol searches query every running language server, not only the server for the focused document. A language server starts when a document for its language is opened.
+Workspace symbol searches query every running language server, not only the server for the focused document.
 
 Diagnostics (errors and warnings) appear as underlines in the document, markers in the gutter, counts in the status bar, and a popup when the cursor rests on a diagnostic.
 

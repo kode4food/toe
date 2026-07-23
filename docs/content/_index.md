@@ -12,11 +12,11 @@ title: "toe"
 
 toe is opinionated because it is built for one tight workflow: editing Go projects from a terminal without growing into a general-purpose IDE. It favors modal editing, `gopls`, TOML config, project-local state, Git-aware navigation, and a small set of deliberate defaults over plugin sprawl or endless knobs.
 
-- Modal editing: normal, insert, and selection modes; multi-cursor editing; persistent undo history
+- Modal editing: normal, insert, and selection modes; multi-cursor editing; undo and redo
 - Project navigation: multiple buffers, split views, fuzzy file/buffer pickers, global search, live previews, image panes, and an integrated terminal pane
 - Go-focused language tooling: syntax highlighting, LSP completion, hover, signature help, formatting, symbols, code actions, rename, go-to navigation, and diagnostics
 - Editor display: soft wrap, rulers, whitespace rendering, indent guides, gutters, configurable cursor shapes, and statusline elements
-- Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker, and statusline element
+- Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker with unified diff previews, and statusline element
 - Project state: workspace trust, user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
 - 4 Catppuccin themes: frappe, latte, macchiato, mocha
 

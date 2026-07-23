@@ -5,7 +5,7 @@ weight: 55
 
 # Version Control
 
-toe has built-in git support for changed files and per-line diffs. The version-control provider is detected from the current workspace; git is the only provider today.
+toe has built-in Git support for changed files and per-line diffs.
 
 ## Diff Gutters
 
@@ -16,24 +16,22 @@ When a file is tracked by git, toe shows line changes in the gutter:
 | `▍` | Added or modified lines |
 | `▔` | Removed lines |
 
-The gutter updates as buffers change and after files are saved or reloaded.
-
 ## Change Navigation
 
 | Key | Command | Action |
 |-----|---------|--------|
-| `]g` | `goto_next_change` | Jump to the next changed hunk |
-| `[g` | `goto_prev_change` | Jump to the previous changed hunk |
-| `]G` | `goto_last_change` | Jump to the last changed hunk |
-| `[G` | `goto_first_change` | Jump to the first changed hunk |
+| `]g` | `goto-next-change` | Jump to the next changed hunk |
+| `[g` | `goto-prev-change` | Jump to the previous changed hunk |
+| `]G` | `goto-last-change` | Jump to the last changed hunk |
+| `[G` | `goto-first-change` | Jump to the first changed hunk |
 
 ## Changed Files
 
-Use `Space+g` or `:changed_file_picker` to open the changed-file picker. It lists changed workspace files and previews the first diff hunk for the selected file.
+Use `Space+g` or `:changed-file-picker` to list changed workspace files and preview their diffs.
 
 ## Resetting Changes
 
-Use `:reset_diff_change` to reset the changed hunk under each selection back to the git base version.
+Use `:reset-diff-change` to reset the changed hunk under each selection back to the git base version.
 
 Aliases:
 

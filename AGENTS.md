@@ -516,6 +516,21 @@ type DocumentId string
 
 Markdown files should expect to be soft-wrapped. Do not hard-wrap prose to the code line-width limit; keep paragraphs as readable logical lines and let the editor wrap them. Preserve deliberate line breaks in lists, tables, code fences, quoted text, and other Markdown structures where the newline carries meaning.
 
+### User Documentation
+
+`README.md` and user-facing pages under `docs/content` should help competent users operate toe:
+
+- Include what a feature does, how to use it, and choices or consequences that affect a user's workflow.
+- State the general rule first, followed by meaningful exceptions.
+- Keep command, keybinding, and configuration references complete and accurate.
+- Use kebab-case command names in user documentation; underscore names are internal identifiers.
+- Omit implementation details, internal mechanics, incidental behavior, tuning constants, and obvious facts.
+- Do not document a change merely because it is observable; include it only when knowing it materially helps someone use toe.
+- Avoid patronizing explanations and negative-space descriptions that force readers to infer the main behavior.
+- Keep prose concise and avoid repeating information already clear from a table or another appropriate page.
+
+The architecture page is developer-facing and may describe internals, but its details must serve architectural understanding rather than catalog implementation trivia.
+
 ### Line Width
 
 Maximum 80 characters per line (tabs count as 4 spaces). This applies to code _and_ comments, not Markdown prose. Keep short argument lists on a single line when they fit; only break lines when the 80-character limit would be exceeded. When wrapping function signatures or call arguments, pack as many arguments per line as will fit under the limit before wrapping again. When you must wrap, break after the opening paren:

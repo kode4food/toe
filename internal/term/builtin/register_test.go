@@ -53,6 +53,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 		for _, name := range documentedCommandNames(t) {
 			t.Run(name, func(t *testing.T) {
+				assert.NotContains(t, name, "_")
 				_, ok := km.ResolveCommand(name)
 				assert.True(t, ok)
 			})

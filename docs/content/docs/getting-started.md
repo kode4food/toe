@@ -9,12 +9,21 @@ toe is a modal terminal editor built for Go development. toe edits Go projects, 
 
 ## Requirements
 
-- Go 1.26 or later
+- Go 1.26 or later when building from source
 - A terminal with ANSI color support
+- `gopls` on `PATH` for Go language features
 - A Kitty graphics capable terminal for inline image display: kitty, Ghostty, WezTerm, or Konsole
 - Optional Nerd Font glyphs for richer picker/completion icons; set `nerd-fonts = false` for ASCII fallbacks
 
 ## Installing
+
+Install the latest stable release with Homebrew (recommended):
+
+```sh
+brew install kode4food/tap/toe
+```
+
+To build and install the current source:
 
 ```sh
 git clone https://github.com/kode4food/toe
@@ -22,7 +31,7 @@ cd toe
 make install   # installs to $GOPATH/bin
 ```
 
-Or build without installing:
+To build without installing:
 
 ```sh
 make build   # writes to dist/toe
@@ -34,7 +43,10 @@ make build   # writes to dist/toe
 toe                        # open in current directory
 toe path/to/file.go        # open a single file
 toe file1.go file2.go      # open multiple files
+toe path/to/project        # use a directory as the project root
 ```
+
+Only the first positional argument may be a directory.
 
 ## Modes
 
@@ -61,6 +73,8 @@ Escape        return to Normal mode
 u             undo
 U             redo
 ```
+
+Use `Space` or `Ctrl+\` to open the leader menu. In terminal panes, use `Ctrl+\`.
 
 ### Saving and Quitting
 
@@ -96,6 +110,6 @@ Ctrl+w h/j/k/l  navigate between splits
 
 ### Command Mode
 
-Press `:` in Normal mode to type a command. Commands support aliases and tab completion via the command palette (`Space+?`).
+Press `:` in Normal mode to type a command. Use `Tab` and `Shift+Tab` to cycle completions. `Space+?` opens the command palette.
 
 → See [Key Bindings]({{< relref "/docs/key-bindings" >}}) for the complete reference.

@@ -68,9 +68,9 @@ Packages: `internal/lsp`, `internal/vcs`.
 
 ### Support
 
-Packages: `internal/loader`, `internal/glob`, `internal/health`, `internal/testutil`.
+Packages: `internal/geom`, `internal/i18n`, `internal/locale`, `internal/loader`, `internal/glob`, `internal/health`, `internal/testutil`.
 
-Runtime path lookup, embedded assets, TOML merge helpers, theme loading, and workspace trust live in `loader`. `glob` provides glob matching used by language/config behavior. `health` powers the runtime health checks; `testutil` holds shared test infrastructure.
+`geom` owns shared points, sizes, areas, and clamping used by layout and rendering. `locale` derives the startup locale fallback chain from the environment, while `i18n` loads embedded message catalogs and formats localized messages and errors. Runtime path lookup, embedded assets, TOML merge helpers, theme loading, and workspace trust live in `loader`. `glob` provides glob matching used by language/config behavior. `health` powers the runtime health checks; `testutil` holds shared test infrastructure.
 
 ## Data Flow
 

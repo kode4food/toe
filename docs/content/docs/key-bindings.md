@@ -5,6 +5,8 @@ weight: 30
 
 # Key Bindings
 
+`Space` and `Ctrl+\` open the leader menu. In terminal panes, use `Ctrl+\`.
+
 ## Normal Mode
 
 ### Motion
@@ -182,7 +184,7 @@ weight: 30
 | `Ctrl+u` | Move page and cursor half up |
 | `Ctrl+d` | Move page and cursor half down |
 
-### Splits (`Ctrl+w` or `Space+w`)
+### Splits (`Ctrl+w` or `Leader+w`)
 
 | Key | Action |
 |-----|--------|
@@ -195,11 +197,11 @@ weight: 30
 | `Ctrl+w q` / `Ctrl+w Ctrl+q` | Close window |
 | `Ctrl+w o` / `Ctrl+w Ctrl+o` | Close windows except current |
 | `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
-| `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` | Jump to left/below/above/right split |
+| `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` / `Ctrl+w ←/↓/↑/→` | Jump to left/below/above/right split |
 | `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
 | `Ctrl+w r` | Enter resize mode |
 
-All `Ctrl+w` bindings also work with `Space+w`.
+All `Ctrl+w` bindings also work through the leader menu with `Space+w` or `Ctrl+\ w`.
 
 When a document or image pane is split, the new pane shows the same document or image. Splitting a terminal starts a new shell.
 
@@ -207,10 +209,7 @@ Splits can also be resized by dragging a separator with the mouse.
 
 #### Resize Mode
 
-`Ctrl+w r` enters an interactive resize mode: `h`/`j`/`k`/`l` (or the arrow
-keys) push a border of the split holding the focused pane in that literal
-screen direction, one cell at a time, repeating for as long as you keep
-pressing them. `Escape` or `Enter` exits back to normal key handling.
+`Ctrl+w r` enters resize mode.
 
 | Key | Action |
 |-----|--------|
@@ -220,25 +219,25 @@ pressing them. `Escape` or `Enter` exits back to normal key handling.
 | `k` / `Up` | Push the top border up |
 | `Escape` / `Enter` | Exit resize mode |
 
-If the focused pane has no border on the requested side (it's first or last
-in its split), the opposite border is pushed instead, so every pane can
-always be grown and shrunk with the same four keys.
-
 ### Terminal Panes
 
-While a terminal pane has focus, all keys pass through to the shell except
-`Ctrl+w`, which still opens the window-management prefix above.
+While a terminal pane has focus, nearly all keys pass through directly to the shell. The exceptions are `Ctrl+w`, which opens the window menu, and `Ctrl+\`, which opens the filtered leader menu.
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+\` | Detach: focus another pane, leaving the shell running |
-| `Ctrl+]` | Close: kill the shell and restore what the pane showed before |
+| `Ctrl+w` | Open the window menu |
+| `Ctrl+w /` | Search the focused terminal's scrollback |
+| `Ctrl+w q` | Close the pane and kill its shell |
+| `Ctrl+\` | Open the terminal's filtered leader menu |
+| `Ctrl+\ p` | Paste the clipboard into the terminal |
+| `Ctrl+\ f` / `Ctrl+\ b` | Open the file / buffer picker |
 | Mouse wheel | Scroll into scrollback; any keypress returns to live output |
-| Mouse click/drag/wheel | Forwarded to the shell if it enabled mouse tracking (e.g. vim, htop) |
+| Mouse click/drag | Select and copy terminal text when mouse tracking is off |
+| Mouse click/drag/wheel | Forwarded to the shell when it enables mouse tracking (e.g. vim, htop) |
 
 ### Image Panes
 
-Image panes use IMG mode. The command prompt and window menu still work, filtered to commands that apply to images.
+Image panes support the command prompt and window menu.
 
 | Key | Action |
 |-----|--------|
@@ -250,7 +249,7 @@ Image panes use IMG mode. The command prompt and window menu still work, filtere
 | Mouse click | Focus image pane |
 | `Ctrl+w` / `Space+w` | Window menu |
 
-### Space Menu
+### Leader Menu (`Space` or `Ctrl+\`)
 
 | Key | Action |
 |-----|--------|
@@ -273,6 +272,8 @@ Image panes use IMG mode. The command prompt and window menu still work, filtere
 | `Space+.` | Open file explorer at current pane's directory |
 | `Space+b` | Open buffer picker |
 | `Space+j` | Open jumplist picker |
+| `Space+d` | Open diagnostic picker |
+| `Space+D` | Open workspace diagnostic picker |
 | `Space+/` | Global search in workspace folder |
 | `Space+?` | Open command palette |
 | `Space+'` | Reopen the last picker |
@@ -367,14 +368,13 @@ Select mode extends the current selection. Motion keys move the selection's head
 | `n` / `N` | Add next/previous search match to selection |
 | `Escape` | Exit selection mode |
 
-All other Normal mode commands (editing, clipboard, search) work the same in
-Select mode.
+All other Normal mode commands (editing, clipboard, search) work the same in Select mode.
 
 ---
 
 ## Command Line
 
-The command line (`:`), search (`/`, `?`), and other text prompts such as symbol rename share a single-line editor with the insert-mode cursor shape.
+These keys apply to the command line (`:`), search (`/`, `?`), and other text prompts.
 
 | Key | Action |
 |-----|--------|

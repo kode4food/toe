@@ -12,22 +12,31 @@ Experimental but usable. Keep your work in Git or another backup.
 
 toe is opinionated because it is built for one tight workflow: editing Go projects from a terminal without growing into a general-purpose IDE. It favors modal editing, `gopls`, TOML config, project-local state, Git-aware navigation, and a small set of deliberate defaults over plugin sprawl or endless knobs.
 
-- Modal editing: normal, insert, and selection modes; multi-cursor editing; persistent undo history
+- Modal editing: normal, insert, and selection modes; multi-cursor editing; undo and redo
 - Project navigation: multiple buffers, split views, fuzzy file/buffer pickers, global search, live previews, image panes, and an integrated terminal pane
 - Go-focused language tooling: syntax highlighting, LSP completion, hover, signature help, formatting, symbols, code actions, rename, go-to navigation, and diagnostics
 - Editor display: soft wrap, rulers, whitespace rendering, indent guides, gutters, configurable cursor shapes, and statusline elements
-- Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker, and statusline element
+- Version control: git diff gutters, change navigation, reset-diff-change, changed-file picker with unified diff previews, and statusline element
 - Project state: workspace trust, user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
 - 4 Catppuccin themes: frappe, latte, macchiato, mocha
 
 ## Requirements
 
-- Go 1.26
+- Go 1.26 when building from source
 - A terminal with ANSI color support
+- `gopls` on `PATH` for Go language features
 - A Kitty graphics capable terminal for inline image display: kitty, Ghostty, WezTerm, or Konsole
 - Optional Nerd Font glyphs for richer picker/completion icons; set `nerd-fonts = false` for ASCII fallbacks
 
-## Build and install
+## Install
+
+Install the latest stable release with Homebrew (recommended):
+
+```sh
+brew install kode4food/tap/toe
+```
+
+To build the current source:
 
 ```sh
 make build    # writes to dist/toe
@@ -40,7 +49,10 @@ make install  # installs to $GOPATH/bin
 toe
 toe path/to/file.go
 toe file1 file2
+toe path/to/project
 ```
+
+When the first argument is a directory, toe uses it as the project root.
 
 ## Configuration
 
@@ -54,8 +66,8 @@ Workspace config goes in `.toe/config.toml` and `.toe/languages.toml` at the pro
 Workspace config is trust-gated. See `docs/content/docs/configuration.md` for details.
 
 ```text
-:workspace_trust
-:workspace_untrust
+:workspace-trust
+:workspace-untrust
 ```
 
 ## Development

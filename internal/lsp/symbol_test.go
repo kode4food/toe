@@ -73,6 +73,39 @@ func TestSymbol(t *testing.T) {
 			},
 		}, symbols)
 	})
+
+	t.Run("queries all running servers", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+
+		dir := t.TempDir()
+		firstPath := filepath.Join(dir, "first.one")
+		secondPath := filepath.Join(dir, "second.two")
+		writeAllWorkspaceSymbolLanguages(t, exe)
+		for _, path := range []string{firstPath, secondPath} {
+			assert.NoError(t, os.WriteFile(path, []byte("target\n"), 0o644))
+		}
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(firstPath)
+		assert.NoError(t, err)
+		first, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		first.SetLang("one")
+		_, err = e.OpenFile(secondPath)
+		assert.NoError(t, err)
+		second, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		second.SetLang("two")
+
+		session := lsp.NewSession(t.Context(), dir)
+		defer func() { _ = session.Close() }()
+		session.DocumentOpened(first)
+		session.DocumentOpened(second)
+
+		_, err = session.WorkspaceSymbols(second, "main")
+
+		assert.ErrorContains(t, err, "session-test-one")
+	})
 }
 
 func TestManySymbolKinds(t *testing.T) {
@@ -173,6 +206,44 @@ name = "session"
 language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
+`
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeAllWorkspaceSymbolLanguages(t *testing.T, exe string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := `[language-server.session-test-one]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerAllErrorEnv + ` = "1", ` +
+		testServerWorkspaceSymbolsEnv + ` = "1" }
+
+[language-server.session-test-two]
+command = "` + exe + `"
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { ` + testServerEnv + ` = "1", ` +
+		testServerWorkspaceSymbolsEnv + ` = "1" }
+
+[[language]]
+name = "one"
+language-id = "one"
+file-types = ["one"]
+language-servers = ["session-test-one"]
+
+[[language]]
+name = "two"
+language-id = "two"
+file-types = ["two"]
+language-servers = ["session-test-two"]
 `
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,

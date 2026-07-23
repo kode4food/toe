@@ -97,13 +97,14 @@ func (s *Session) DocumentSymbols(doc *view.Document) ([]view.Symbol, error) {
 	return out, err
 }
 
-// WorkspaceSymbols returns workspace symbols matching query from all servers
+// WorkspaceSymbols returns workspace symbols from all running servers
 func (s *Session) WorkspaceSymbols(
 	doc *view.Document, query string,
 ) ([]view.Symbol, error) {
+	s.clientsForDocument(doc)
 	var out []view.Symbol
 	var err error
-	for _, client := range s.clientsForDocument(doc) {
+	for _, client := range s.servers.allClients() {
 		result, sent, e := client.WorkspaceSymbols(s.ctx, query)
 		if e != nil {
 			err = errors.Join(err, s.completionError(client, e))

@@ -543,6 +543,94 @@ func ViewModule(model ui.Model) command.Module {
 					return nil
 				},
 			},
+			whitespaceRenderOption("whitespace.render.space",
+				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
+					return w.SpaceRender()
+				},
+				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
+					w.Space = v
+				},
+			),
+			whitespaceRenderOption("whitespace.render.nbsp",
+				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
+					return w.NbspRender()
+				},
+				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
+					w.Nbsp = v
+				},
+			),
+			whitespaceRenderOption("whitespace.render.nnbsp",
+				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
+					return w.NnbspRender()
+				},
+				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
+					w.Nnbsp = v
+				},
+			),
+			whitespaceRenderOption("whitespace.render.tab",
+				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
+					return w.TabRender()
+				},
+				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
+					w.Tab = v
+				},
+			),
+			whitespaceRenderOption("whitespace.render.newline",
+				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
+					return w.NewlineRender()
+				},
+				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
+					w.Newline = v
+				},
+			),
+			runeOption("whitespace.characters.space",
+				func(o *view.Options) rune {
+					return o.Whitespace.Characters.SpaceRune()
+				},
+				func(o *view.Options, s string) {
+					o.Whitespace.Characters.Space = s
+				},
+			),
+			runeOption("whitespace.characters.nbsp",
+				func(o *view.Options) rune {
+					return o.Whitespace.Characters.NbspRune()
+				},
+				func(o *view.Options, s string) {
+					o.Whitespace.Characters.Nbsp = s
+				},
+			),
+			runeOption("whitespace.characters.nnbsp",
+				func(o *view.Options) rune {
+					return o.Whitespace.Characters.NnbspRune()
+				},
+				func(o *view.Options, s string) {
+					o.Whitespace.Characters.Nnbsp = s
+				},
+			),
+			runeOption("whitespace.characters.tab",
+				func(o *view.Options) rune {
+					return o.Whitespace.Characters.TabRune()
+				},
+				func(o *view.Options, s string) {
+					o.Whitespace.Characters.Tab = s
+				},
+			),
+			runeOption("whitespace.characters.tabpad",
+				func(o *view.Options) rune {
+					return o.Whitespace.Characters.TabpadRune()
+				},
+				func(o *view.Options, s string) {
+					o.Whitespace.Characters.Tabpad = s
+				},
+			),
+			runeOption("whitespace.characters.newline",
+				func(o *view.Options) rune {
+					return o.Whitespace.Characters.NewlineRune()
+				},
+				func(o *view.Options, s string) {
+					o.Whitespace.Characters.Newline = s
+				},
+			),
 			kit.EditorBoolOption("indent-guides.render",
 				func(e *view.Editor) bool {
 					return e.Options().IndentGuides.Render
@@ -566,20 +654,39 @@ func ViewModule(model ui.Model) command.Module {
 					return nil
 				},
 			},
+			runeOption("indent-guides.character",
+				func(o *view.Options) rune {
+					return o.IndentGuides.CharRune()
+				},
+				func(o *view.Options, s string) {
+					o.IndentGuides.Character = s
+				},
+			),
 			{
-				Key: "indent-guides.character",
+				Key: "gutters.layout",
 				Get: func(e *view.Editor) (string, error) {
-					return string(e.Options().IndentGuides.CharRune()), nil
+					layout := e.Options().Gutters.GutterLayout()
+					values := make([]string, len(layout))
+					for i, gutter := range layout {
+						values[i] = string(gutter)
+					}
+					return viewcfg.FormatStringSlice(values), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := viewcfg.ParseStringLiteral(s)
+					values, err := viewcfg.ParseStringSlice(s)
 					if err != nil {
 						return err
 					}
-					if utf8.RuneCountInString(v) != 1 {
-						return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, v)
+					layout := make([]view.GutterType, len(values))
+					for i, value := range values {
+						if err := layout[i].UnmarshalText(
+							[]byte(value),
+						); err != nil {
+							return err
+						}
 					}
-					e.Options().IndentGuides.Character = v
+					e.Options().Gutters.Present = true
+					e.Options().Gutters.Layout = layout
 					return nil
 				},
 			},
@@ -628,6 +735,51 @@ func ViewModule(model ui.Model) command.Module {
 				"Window", kit.LeaderPrefix(kit.Char('w')),
 				"NOR", "SEL", "TRM", "IMG",
 			),
+		},
+	}
+}
+
+func whitespaceRenderOption(
+	key string, get wsRenderGetter, set wsRenderSetter,
+) command.Option {
+	return command.Option{
+		Key: key,
+		Get: func(e *view.Editor) (string, error) {
+			return string(get(&e.Options().Whitespace.Render)), nil
+		},
+		Set: func(e *view.Editor, s string) error {
+			v, err := view.ParseWhitespaceRenderValue(s)
+			if err != nil {
+				return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, s)
+			}
+			set(&e.Options().Whitespace.Render, &v)
+			return nil
+		},
+		Complete: command.StaticCompleter(
+			string(view.WhitespaceRenderNone),
+			string(view.WhitespaceRenderAll),
+		),
+	}
+}
+
+func runeOption(
+	key string, get optionGetter[rune], set optionSetter[string],
+) command.Option {
+	return command.Option{
+		Key: key,
+		Get: func(e *view.Editor) (string, error) {
+			return string(get(e.Options())), nil
+		},
+		Set: func(e *view.Editor, s string) error {
+			v, err := viewcfg.ParseStringLiteral(s)
+			if err != nil {
+				return err
+			}
+			if utf8.RuneCountInString(v) != 1 {
+				return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, v)
+			}
+			set(e.Options(), v)
+			return nil
 		},
 	}
 }

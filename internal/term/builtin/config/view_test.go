@@ -156,13 +156,16 @@ func TestViewWonly(t *testing.T) {
 
 func TestViewOptionsExtra(t *testing.T) {
 	cases := []struct{ key, val string }{
-		{"rulers", "[80, 100]"},
-		{"whitespace.render", "all"},
-		{"indent-guides.render", "true"},
-		{"indent-guides.skip-levels", "2"},
-		{"indent-guides.character", `"│"`},
-		{"gutters.line-numbers.min-width", "3"},
-		{"soft-wrap.wrap-indicator", `"↩"`},
+		{key: "rulers", val: "[80, 100]"},
+		{key: "whitespace.render", val: "all"},
+		{key: "whitespace.render.space", val: "all"},
+		{key: "whitespace.characters.space", val: `"·"`},
+		{key: "indent-guides.render", val: "true"},
+		{key: "indent-guides.skip-levels", val: "2"},
+		{key: "indent-guides.character", val: `"│"`},
+		{key: "gutters.layout", val: `["line-numbers", "diff"]`},
+		{key: "gutters.line-numbers.min-width", val: "3"},
+		{key: "soft-wrap.wrap-indicator", val: `"↩"`},
 	}
 	for _, tc := range cases {
 		t.Run("set/get "+tc.key, func(t *testing.T) {
@@ -186,6 +189,27 @@ func TestViewOptionsExtra(t *testing.T) {
 			t, km, e, "toggle_option", "soft-wrap.wrap-at-text-width",
 		)
 		assert.Contains(t, res.Message, "is now set to")
+	})
+
+	t.Run("rejects invalid whitespace render", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option",
+			"whitespace.render.space bogus")
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("rejects invalid whitespace rune", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option",
+			`whitespace.characters.space "xx"`)
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("rejects malformed whitespace rune", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option",
+			`whitespace.characters.space "`)
+		assert.Contains(t, res.Message, "error")
 	})
 }
 

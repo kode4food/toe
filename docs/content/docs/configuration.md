@@ -63,7 +63,19 @@ insecure = true
 
 ## Editor Configuration
 
-Except for the top-level `theme` key, the settings below belong under `[editor]` in `config.toml`. Most scalar settings can also be changed for the current session with `:set <key> <value>`, `:get <key>`, and `:toggle <key>` for booleans. Completion after `:set ` shows the runtime keys; settings that are TOML-only are identified below.
+Except for the top-level `theme` key, the settings below belong under `[editor]` in `config.toml`. They can also be changed for the current session with `:set <key> <value>`, `:get <key>`, and `:toggle <key>` for booleans. Lists and tables use TOML syntax. Completion after `:set ` shows the available keys.
+
+Examples:
+
+```text
+:set gutters.layout ["diagnostics", "line-numbers", "diff"]
+:set statusline.left ["mode!", "file-name"]
+:set whitespace.render.tab all
+:set whitespace.characters.tab "→"
+:set auto-pairs {"(" = ")", "[" = "]"}
+:set buffer-picker.start-position previous
+:toggle file-explorer.hidden
+```
 
 ### Theme
 
@@ -130,7 +142,7 @@ tabpad = " "
 newline = "⏎"
 ```
 
-At runtime, `whitespace.render` changes the global `none` or `all` setting. Per-character rendering and replacement characters are TOML-only.
+Use `whitespace.render.<type>` and `whitespace.characters.<type>` to change individual values at runtime.
 
 To change gutter order or visibility:
 
@@ -141,8 +153,6 @@ layout = ["diagnostics", "spacer", "line-numbers", "spacer", "diff"]
 [editor.gutters.line-numbers]
 min-width = 3
 ```
-
-`gutters.layout` is TOML-only. `gutters.line-numbers.min-width` can also be changed at runtime.
 
 ### Editing
 
@@ -161,7 +171,7 @@ min-width = 3
 auto-pairs = { "(" = ")", "[" = "]", "{" = "}" }
 ```
 
-At runtime, `auto-pairs` accepts a boolean. Custom pairs are TOML-only.
+At runtime, `auto-pairs` accepts a boolean or an inline table of custom pairs.
 
 ### Auto-Save
 
@@ -223,8 +233,6 @@ left = ["mode", "file-name", "file-modified-indicator"]
 right = ["version-control", "diagnostics", "position"]
 ```
 
-The `left` and `right` lists are TOML-only. The separator and mode labels can also be changed at runtime.
-
 ### Pickers
 
 Picker split ratios can be changed at runtime with commands such as `:set editor.picker.split-ratios.diagnostics 0.65` and are saved by auto-session.
@@ -241,8 +249,6 @@ Picker split ratios can be changed at runtime with commands such as `:set editor
 | `file-explorer.git-global` | bool | `false` | Respect global gitignore |
 | `file-explorer.git-exclude` | bool | `false` | Respect git exclude rules |
 | `file-explorer.flatten-dirs` | bool | `true` | Collapse single-child directories |
-
-Buffer picker and file explorer settings are TOML-only.
 
 ### Shell
 

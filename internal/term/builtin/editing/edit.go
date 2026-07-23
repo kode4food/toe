@@ -1,7 +1,13 @@
 package editing
 
 import (
+	"fmt"
+	"maps"
+	"slices"
 	"strconv"
+	"strings"
+
+	"github.com/BurntSushi/toml"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
@@ -306,18 +312,10 @@ func EditModule() command.Module {
 			{
 				Key: "auto-pairs",
 				Get: func(e *view.Editor) (string, error) {
-					return strconv.FormatBool(e.Options().HasAutoPairs), nil
+					return formatAutoPairs(e.Options()), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseBool(s)
-					if err != nil {
-						return err
-					}
-					if v {
-						e.Options().AutoPairMap = core.DefaultAutoPairs()
-					}
-					e.Options().HasAutoPairs = v
-					return nil
+					return setAutoPairs(e.Options(), s)
 				},
 				Toggle: func(e *view.Editor) (string, error) {
 					v := !e.Options().HasAutoPairs
@@ -408,6 +406,51 @@ func EditModule() command.Module {
 			},
 		},
 	}
+}
+
+func formatAutoPairs(opts *view.Options) string {
+	if !opts.HasAutoPairs {
+		return "false"
+	}
+	if maps.Equal(opts.AutoPairMap, core.DefaultAutoPairs()) {
+		return "true"
+	}
+	opens := make([]rune, 0, len(opts.AutoPairMap))
+	for ch, pair := range opts.AutoPairMap {
+		if ch == pair.Open {
+			opens = append(opens, ch)
+		}
+	}
+	slices.Sort(opens)
+	values := make([]string, len(opens))
+	for i, open := range opens {
+		pair := opts.AutoPairMap[open]
+		values[i] = fmt.Sprintf("%s = %s",
+			strconv.Quote(string(pair.Open)),
+			strconv.Quote(string(pair.Close)),
+		)
+	}
+	return "{ " + strings.Join(values, ", ") + " }"
+}
+
+func setAutoPairs(opts *view.Options, value string) error {
+	if enabled, err := config.ParseBool(value); err == nil {
+		opts.HasAutoPairs = enabled
+		if enabled {
+			opts.AutoPairMap = core.DefaultAutoPairs()
+		}
+		return nil
+	}
+	var raw struct {
+		Value language.AutoPairConfig `toml:"value"`
+	}
+	if _, err := toml.Decode("value = "+value, &raw); err != nil {
+		return fmt.Errorf("%w: %s", config.ErrInvalidOption, value)
+	}
+	pairs, ok := raw.Value.AutoPairs()
+	opts.AutoPairMap = pairs
+	opts.HasAutoPairs = ok
+	return nil
 }
 
 func selectModeAction(e *view.Editor) command.Continuation {

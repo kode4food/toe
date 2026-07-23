@@ -16,14 +16,14 @@ type (
 	}
 
 	fileExplorerConfig struct {
-		Hidden         *bool `toml:"hidden"`
-		FollowSymlinks *bool `toml:"follow-symlinks"`
-		Parents        *bool `toml:"parents"`
-		Ignore         *bool `toml:"ignore"`
-		GitIgnore      *bool `toml:"git-ignore"`
-		GitGlobal      *bool `toml:"git-global"`
-		GitExclude     *bool `toml:"git-exclude"`
-		FlattenDirs    *bool `toml:"flatten-dirs"`
+		Hidden         bool `toml:"hidden"`
+		FollowSymlinks bool `toml:"follow-symlinks"`
+		Parents        bool `toml:"parents"`
+		Ignore         bool `toml:"ignore"`
+		GitIgnore      bool `toml:"git-ignore"`
+		GitGlobal      bool `toml:"git-global"`
+		GitExclude     bool `toml:"git-exclude"`
+		FlattenDirs    bool `toml:"flatten-dirs"`
 	}
 )
 
@@ -41,6 +41,11 @@ const (
 // PickerModule returns the file, buffer, and explorer picker commands
 func PickerModule(model ui.Model) command.Module {
 	cfg := new(filesPickerSection)
+	reset := func() {
+		*cfg = filesPickerSection{}
+		cfg.Editor.FileExplorer.FlattenDirs = true
+	}
+	reset()
 
 	return command.Module{
 		Commands: []command.Command{
@@ -66,7 +71,7 @@ func PickerModule(model ui.Model) command.Module {
 				Run: kit.Continuation(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
 						return NewFileExplorer(
-							e, fileExplorerOptions(cfg.Editor.FileExplorer),
+							e, FileExplorerOptions(cfg.Editor.FileExplorer),
 						)
 					},
 				)),
@@ -79,7 +84,7 @@ func PickerModule(model ui.Model) command.Module {
 				Run: kit.Continuation(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
 						return NewFocusedPaneDirExplorer(
-							e, fileExplorerOptions(cfg.Editor.FileExplorer),
+							e, FileExplorerOptions(cfg.Editor.FileExplorer),
 						)
 					},
 				)),
@@ -100,9 +105,46 @@ func PickerModule(model ui.Model) command.Module {
 				Keys:  kit.Leader('b'),
 			},
 		},
+		Options: []command.Option{
+			bufferPickerStartOption(
+				&cfg.Editor.BufferPicker.StartPosition,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.hidden",
+				&cfg.Editor.FileExplorer.Hidden,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.follow-symlinks",
+				&cfg.Editor.FileExplorer.FollowSymlinks,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.parents",
+				&cfg.Editor.FileExplorer.Parents,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.ignore",
+				&cfg.Editor.FileExplorer.Ignore,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.git-ignore",
+				&cfg.Editor.FileExplorer.GitIgnore,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.git-global",
+				&cfg.Editor.FileExplorer.GitGlobal,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.git-exclude",
+				&cfg.Editor.FileExplorer.GitExclude,
+			),
+			fileExplorerBoolOption(
+				"file-explorer.flatten-dirs",
+				&cfg.Editor.FileExplorer.FlattenDirs,
+			),
+		},
 		Section: &command.Section{
 			Config: cfg,
-			Reset:  func() { *cfg = filesPickerSection{} },
+			Reset:  reset,
 		},
 	}
 }
@@ -144,38 +186,43 @@ func DiagnosticsModule(model ui.Model) command.Module {
 	}
 }
 
+func bufferPickerStartOption(value *PickerStartPosition) command.Option {
+	return command.Option{
+		Key: "buffer-picker.start-position",
+		Get: func(*view.Editor) (string, error) {
+			if *value == "" {
+				return string(PickerStartTop), nil
+			}
+			return string(*value), nil
+		},
+		Set: func(_ *view.Editor, s string) error {
+			var next PickerStartPosition
+			if err := next.UnmarshalText([]byte(s)); err != nil {
+				return err
+			}
+			*value = next
+			return nil
+		},
+		Complete: command.StaticCompleter(
+			string(PickerStartTop), string(PickerStartPrevious),
+		),
+	}
+}
+
+func fileExplorerBoolOption(key string, value *bool) command.Option {
+	return kit.EditorBoolOption(key,
+		func(*view.Editor) bool {
+			return *value
+		},
+		func(_ *view.Editor, next bool) {
+			*value = next
+		},
+	)
+}
+
 func bufferPickerOptions(cfg BufferPickerOptions) BufferPickerOptions {
 	if cfg.StartPosition == "" {
 		cfg.StartPosition = PickerStartTop
 	}
 	return cfg
-}
-
-func fileExplorerOptions(cfg fileExplorerConfig) FileExplorerOptions {
-	opts := DefaultFileExplorerOptions()
-	if cfg.Hidden != nil {
-		opts.Hidden = *cfg.Hidden
-	}
-	if cfg.FollowSymlinks != nil {
-		opts.FollowSymlinks = *cfg.FollowSymlinks
-	}
-	if cfg.Parents != nil {
-		opts.Parents = *cfg.Parents
-	}
-	if cfg.Ignore != nil {
-		opts.Ignore = *cfg.Ignore
-	}
-	if cfg.GitIgnore != nil {
-		opts.GitIgnore = *cfg.GitIgnore
-	}
-	if cfg.GitGlobal != nil {
-		opts.GitGlobal = *cfg.GitGlobal
-	}
-	if cfg.GitExclude != nil {
-		opts.GitExclude = *cfg.GitExclude
-	}
-	if cfg.FlattenDirs != nil {
-		opts.FlattenDirs = *cfg.FlattenDirs
-	}
-	return opts
 }

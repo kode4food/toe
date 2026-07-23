@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/config"
 )
 
 type uiSection struct {
@@ -164,13 +165,33 @@ func ConfigurationModule(r *command.Registry) command.Module {
 					o.CursorShape.Insert = v
 				},
 			),
+			statuslineItemsOption("statusline.left",
+				func(o *view.Options) []view.StatusLineItem {
+					return o.StatusLineLeft()
+				},
+				func(o *view.Options, v []view.StatusLineItem) {
+					o.StatusLine.Left = v
+				},
+			),
+			statuslineItemsOption("statusline.right",
+				func(o *view.Options) []view.StatusLineItem {
+					return o.StatusLineRight()
+				},
+				func(o *view.Options, v []view.StatusLineItem) {
+					o.StatusLine.Right = v
+				},
+			),
 			{
 				Key: "statusline.separator",
 				Get: func(e *view.Editor) (string, error) {
 					return e.Options().StatusLineSeparator(), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					e.Options().StatusLine.Separator = s
+					v, err := config.ParseStringLiteral(s)
+					if err != nil {
+						return err
+					}
+					e.Options().StatusLine.Separator = v
 					return nil
 				},
 			},

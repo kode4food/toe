@@ -71,18 +71,18 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 	t.Run("line ending accepts lf and crlf", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		assert.NotContains(t, test.RunCmdArgs(
-			t, km, e, "set_line_ending", "crlf").Message, "error",
+		assert.NotContains(t, test.RunCmdArgs(t,
+			km, e, "set_line_ending", "crlf").Message, "error",
 		)
-		assert.NotContains(t, test.RunCmdArgs(
-			t, km, e, "set_line_ending", "lf").Message, "error",
+		assert.NotContains(t, test.RunCmdArgs(t,
+			km, e, "set_line_ending", "lf").Message, "error",
 		)
 	})
 
 	t.Run("line ending accepts native", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		assert.NotContains(t, test.RunCmdArgs(
-			t, km, e, "set_line_ending", "native").Message, "error",
+		assert.NotContains(t, test.RunCmdArgs(t,
+			km, e, "set_line_ending", "native").Message, "error",
 		)
 	})
 
@@ -162,6 +162,28 @@ func TestConfigOptions(t *testing.T) {
 		test.RunCmdArgs(t, km, e, "set_option", "statusline.separator |")
 		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.separator")
 		assert.Equal(t, "|", res.Message)
+	})
+
+	t.Run("get/set statusline items", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		value := `["mode!", "file-name"]`
+		test.RunCmdArgs(t, km, e, "set_option", "statusline.left "+value)
+		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.left")
+		assert.Equal(t, value, res.Message)
+	})
+
+	t.Run("rejects invalid statusline items", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option",
+			`statusline.left ["unknown"]`)
+		assert.Contains(t, res.Message, "error")
+	})
+
+	t.Run("rejects malformed statusline list", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option",
+			`statusline.left ["mode"`)
+		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("get/set statusline mode names", func(t *testing.T) {

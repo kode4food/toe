@@ -224,6 +224,17 @@ func TestRegistry(t *testing.T) {
 		assert.NotEmpty(t, results)
 	})
 
+	t.Run("completes key prefixes", func(t *testing.T) {
+		store := &prefixStore{values: map[string]string{}}
+		reg := registryWithPrefixOption(t, store)
+		results := reg.OptionCompleter()(nil, nil, "editor")
+		texts := make([]string, len(results))
+		for i, result := range results {
+			texts[i] = result.Text
+		}
+		assert.Contains(t, texts, "editor.test.")
+	})
+
 	t.Run("BoolOptionCompleter filters by prefix", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		completer := reg.BoolOptionCompleter()

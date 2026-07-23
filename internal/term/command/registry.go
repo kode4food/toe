@@ -189,7 +189,12 @@ func (r *Registry) BoolOptionKeys() []string {
 
 func (r *Registry) OptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
-		return matchPrefix(r.OptionKeys(), input)
+		keys := r.OptionKeys()
+		for _, o := range r.prefixes {
+			keys = append(keys, o.Key)
+		}
+		slices.Sort(keys)
+		return matchPrefix(keys, input)
 	}
 }
 

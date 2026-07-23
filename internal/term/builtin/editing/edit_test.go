@@ -189,6 +189,14 @@ func TestEditOptions(t *testing.T) {
 		assert.Contains(t, res.Message, "is now set to")
 	})
 
+	t.Run("set custom auto-pairs", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		value := `{"(" = ")", "[" = "]"}`
+		test.RunCmdArgs(t, km, e, "set_option", "auto-pairs "+value)
+		res := test.RunCmdArgs(t, km, e, "get_option", "auto-pairs")
+		assert.Equal(t, `{ "(" = ")", "[" = "]" }`, res.Message)
+	})
+
 	t.Run("toggle continue-comments", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "toggle_option", "continue-comments")

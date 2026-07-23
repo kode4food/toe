@@ -13,7 +13,13 @@ import (
 	viewcfg "github.com/kode4food/toe/internal/view/config"
 )
 
-type optionSetter[T any] func(*view.Options, T)
+type (
+	optionGetter[T any] func(*view.Options) T
+	optionSetter[T any] func(*view.Options, T)
+
+	wsRenderGetter func(*view.WhitespaceRender) view.WhitespaceRenderValue
+	wsRenderSetter func(*view.WhitespaceRender, *view.WhitespaceRenderValue)
+)
 
 var (
 	errNoDocument        = i18n.NewError(i18n.ErrorNoDocument)
@@ -155,6 +161,40 @@ func cursorShapeOption(
 	}
 }
 
+func statuslineItemsOption(
+	key string, get optionGetter[[]view.StatusLineItem],
+	set optionSetter[[]view.StatusLineItem],
+) command.Option {
+	return command.Option{
+		Key: key,
+		Get: func(e *view.Editor) (string, error) {
+			items := get(e.Options())
+			values := make([]string, len(items))
+			for i, item := range items {
+				values[i] = string(item.Element)
+				if item.Pinned {
+					values[i] += "!"
+				}
+			}
+			return viewcfg.FormatStringSlice(values), nil
+		},
+		Set: func(e *view.Editor, s string) error {
+			values, err := viewcfg.ParseStringSlice(s)
+			if err != nil {
+				return err
+			}
+			items := make([]view.StatusLineItem, len(values))
+			for i, value := range values {
+				if err := items[i].UnmarshalText([]byte(value)); err != nil {
+					return err
+				}
+			}
+			set(e.Options(), items)
+			return nil
+		},
+	}
+}
+
 func statuslineModeOption(
 	key, mode string, set optionSetter[string],
 ) command.Option {
@@ -164,7 +204,11 @@ func statuslineModeOption(
 			return e.Options().ModeNameForMode(mode), nil
 		},
 		Set: func(e *view.Editor, s string) error {
-			set(e.Options(), s)
+			v, err := viewcfg.ParseStringLiteral(s)
+			if err != nil {
+				return err
+			}
+			set(e.Options(), v)
 			return nil
 		},
 	}

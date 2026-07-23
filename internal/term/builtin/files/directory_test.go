@@ -23,8 +23,9 @@ func TestDirectoryChange(t *testing.T) {
 
 	t.Run("cd to a missing directory errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "change_directory",
-			filepath.Join(e.Cwd(), "nope"))
+		res := test.RunCmdArgs(t,
+			km, e, "change_directory", filepath.Join(e.Cwd(), "nope"),
+		)
 		assert.Contains(t, res.Message, "error")
 	})
 

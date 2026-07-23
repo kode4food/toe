@@ -174,15 +174,17 @@ func TestConfigOptions(t *testing.T) {
 
 	t.Run("rejects invalid statusline items", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "set_option",
-			`statusline.left ["unknown"]`)
+		res := test.RunCmdArgs(t,
+			km, e, "set_option", `statusline.left ["unknown"]`,
+		)
 		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("rejects malformed statusline list", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "set_option",
-			`statusline.left ["mode"`)
+		res := test.RunCmdArgs(t,
+			km, e, "set_option", `statusline.left ["mode"`,
+		)
 		assert.Contains(t, res.Message, "error")
 	})
 

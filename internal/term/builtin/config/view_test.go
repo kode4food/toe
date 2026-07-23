@@ -193,22 +193,25 @@ func TestViewOptionsExtra(t *testing.T) {
 
 	t.Run("rejects invalid whitespace render", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "set_option",
-			"whitespace.render.space bogus")
+		res := test.RunCmdArgs(t,
+			km, e, "set_option", "whitespace.render.space bogus",
+		)
 		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("rejects invalid whitespace rune", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "set_option",
-			`whitespace.characters.space "xx"`)
+		res := test.RunCmdArgs(t,
+			km, e, "set_option", `whitespace.characters.space "xx"`,
+		)
 		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("rejects malformed whitespace rune", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "set_option",
-			`whitespace.characters.space "`)
+		res := test.RunCmdArgs(t,
+			km, e, "set_option", `whitespace.characters.space "`,
+		)
 		assert.Contains(t, res.Message, "error")
 	})
 }

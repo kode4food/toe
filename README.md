@@ -4,7 +4,7 @@
 
 **toe** is a modal terminal editor for Go development. toe edits Go projects, not the universe.
 
-Work in progress. Assume it will lose your edits.
+Experimental but usable. Keep your work in Git or another backup.
 
 ![toe screenshot](./docs/img/screenshot.png)
 

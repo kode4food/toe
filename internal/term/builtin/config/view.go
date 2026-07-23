@@ -411,6 +411,10 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().LineNumber = v
 					return nil
 				},
+				Complete: command.StaticCompleter(
+					view.LineNumberAbsolute,
+					view.LineNumberRelative,
+				),
 			},
 			kit.EditorBoolOption("cursorline",
 				func(e *view.Editor) bool {
@@ -518,6 +522,11 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().BufferLine = v
 					return nil
 				},
+				Complete: command.StaticCompleter(
+					view.BufferLineNever,
+					view.BufferLineAlways,
+					view.BufferLineMultiple,
+				),
 			},
 			{
 				Key: "whitespace.render",
@@ -542,6 +551,10 @@ func ViewModule(model ui.Model) command.Module {
 					ws.Render.Newline = nil
 					return nil
 				},
+				Complete: command.StaticCompleter(
+					view.WhitespaceRenderNone,
+					view.WhitespaceRenderAll,
+				),
 			},
 			whitespaceRenderOption("whitespace.render.space",
 				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
@@ -689,6 +702,12 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().Gutters.Layout = layout
 					return nil
 				},
+				Complete: sliceCompleter(
+					view.GutterTypeDiagnostics,
+					view.GutterTypeLineNumbers,
+					view.GutterTypeSpacer,
+					view.GutterTypeDiff,
+				),
 			},
 			{
 				Key: "gutters.line-numbers.min-width",
@@ -756,8 +775,8 @@ func whitespaceRenderOption(
 			return nil
 		},
 		Complete: command.StaticCompleter(
-			string(view.WhitespaceRenderNone),
-			string(view.WhitespaceRenderAll),
+			view.WhitespaceRenderNone,
+			view.WhitespaceRenderAll,
 		),
 	}
 }

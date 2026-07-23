@@ -441,6 +441,15 @@ func CursorKindNames() []string {
 	return names
 }
 
+// StatusLineElementNames returns the recognized statusline elements
+func StatusLineElementNames() []string {
+	names := make([]string, len(allStatusLineElements))
+	for i, e := range allStatusLineElements {
+		names[i] = string(e)
+	}
+	return names
+}
+
 func intOr(p *int, fallback int) int {
 	if p != nil {
 		return *p

@@ -204,7 +204,7 @@ func bufferPickerStartOption(value *PickerStartPosition) command.Option {
 			return nil
 		},
 		Complete: command.StaticCompleter(
-			string(PickerStartTop), string(PickerStartPrevious),
+			PickerStartTop, PickerStartPrevious,
 		),
 	}
 }

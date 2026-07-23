@@ -214,10 +214,20 @@ func (r *Registry) OptionValueCompleter() CompletionFunc {
 			return nil
 		}
 		o, ok := r.LookupOption(key)
-		if !ok || o.Complete == nil {
+		if !ok {
 			return nil
 		}
-		return o.Complete(e, args, input)
+		if o.Complete != nil {
+			return o.Complete(e, args, input)
+		}
+		if o.Get == nil {
+			return nil
+		}
+		value, err := o.Get(e)
+		if err != nil {
+			return nil
+		}
+		return matchPrefix([]string{value}, input)
 	}
 }
 

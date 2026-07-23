@@ -325,6 +325,7 @@ func EditModule() command.Module {
 					e.Options().HasAutoPairs = v
 					return strconv.FormatBool(v), nil
 				},
+				Complete: command.StaticCompleter("true", "false"),
 			},
 			kit.EditorBoolOption("continue-comments",
 				func(e *view.Editor) bool {

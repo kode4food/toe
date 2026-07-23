@@ -450,16 +450,32 @@ func TestOptionCompleters(t *testing.T) {
 		assert.Contains(t, texts, "scrolloff")
 	})
 
-	t.Run("set completes option value", func(t *testing.T) {
+	t.Run("set completes option values", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		cmd, ok := km.ResolveCommand("set_option")
 		assert.True(t, ok)
-		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "theme moc")
-		texts := make([]string, len(comps))
-		for i, c := range comps {
-			texts[i] = c.Text
+		cases := []struct{ input, want string }{
+			{input: "theme moc", want: "mocha"},
+			{input: "line-number r", want: "relative"},
+			{input: "bufferline m", want: "multiple"},
+			{input: "whitespace.render n", want: "none"},
+			{input: "statusline.left [", want: `["mode"]`},
+			{input: "gutters.layout [", want: `["diagnostics"]`},
+			{input: "auto-pairs f", want: "false"},
+			{input: "rulers ", want: "[]"},
 		}
-		assert.Contains(t, texts, "mocha")
+		for _, tc := range cases {
+			t.Run(tc.input, func(t *testing.T) {
+				comps := cmd.Signature.Completer.Complete(
+					e, cmd.Signature, tc.input,
+				)
+				texts := make([]string, len(comps))
+				for i, c := range comps {
+					texts[i] = c.Text
+				}
+				assert.Contains(t, texts, tc.want)
+			})
+		}
 	})
 }
 

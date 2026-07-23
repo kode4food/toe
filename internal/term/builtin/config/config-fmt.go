@@ -192,6 +192,7 @@ func statuslineItemsOption(
 			set(e.Options(), items)
 			return nil
 		},
+		Complete: sliceCompleter(view.StatusLineElementNames()...),
 	}
 }
 
@@ -212,4 +213,12 @@ func statuslineModeOption(
 			return nil
 		},
 	}
+}
+
+func sliceCompleter[T ~string](items ...T) command.CompletionFunc {
+	values := make([]string, len(items))
+	for i, item := range items {
+		values[i] = viewcfg.FormatStringSlice([]string{string(item)})
+	}
+	return command.StaticCompleter(values...)
 }

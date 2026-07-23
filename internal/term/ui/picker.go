@@ -32,7 +32,7 @@ type (
 		previewScrollFor int
 
 		previewCache  previewCache
-		diffBaseCache map[string]diffBaseResult
+		diffBaseCache map[string]core.Rope
 
 		feedCmd tea.Cmd
 		cancel  StopFunc
@@ -157,7 +157,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
 		source:        source,
 		previewCache:  previewCache{},
-		diffBaseCache: map[string]diffBaseResult{},
+		diffBaseCache: map[string]core.Rope{},
 		cancel:        func() {},
 	}
 	items, feed, stop := source.Load(e)

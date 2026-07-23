@@ -32,10 +32,6 @@ type (
 		line int // index into working (context/added) or base (removed) rope
 	}
 
-	diffBaseResult struct {
-		rope core.Rope
-		ok   bool
-	}
 	diffLineKind uint8
 )
 
@@ -102,16 +98,13 @@ func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
 }
 
 // ponytail: shell-out per distinct path, cached; fine for a picker's lifetime
-func (p *Picker) diffBaseFor(
-	vc view.VersionControl, path string,
-) (core.Rope, bool) {
-	if res, ok := p.diffBaseCache[path]; ok {
-		return res.rope, res.ok
+func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
+	if rope, ok := p.diffBaseCache[path]; ok {
+		return rope
 	}
-	text, ok := vc.DiffBaseForPath(path)
-	res := diffBaseResult{rope: core.NewRope(text), ok: ok}
-	p.diffBaseCache[path] = res
-	return res.rope, res.ok
+	rope := core.NewRope(vc.DiffBaseForPath(path))
+	p.diffBaseCache[path] = rope
+	return rope
 }
 
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
@@ -143,12 +136,8 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	contentW := args.area.Width - diffGutterW
 
 	anchor := max(0, firstChangedLine(args.lines)-diffPreviewLead)
-	start := clampDiffScroll(diffScrollArgs{
-		anchor: anchor,
-		nLines: len(args.lines),
-		height: args.area.Height,
-		scroll: args.scroll,
-	})
+	maxStart := max(0, len(args.lines)-args.area.Height)
+	start := max(0, min(anchor+args.scroll, maxStart))
 	args.scroll = start - anchor
 
 	for row := range args.area.Height {
@@ -187,7 +176,7 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		})
 		buf.PatchBgRange(at, contentW, popupBg)
 
-		sign, signStyle := " ", fillTUI.Bg(popupBg)
+		sign, signStyle := " ", fillTUI
 		switch dl.kind {
 		case diffLineAdded:
 			buf.PatchBgRange(at, contentW, addedBg)
@@ -195,23 +184,11 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		case diffLineRemoved:
 			buf.PatchBgRange(at, contentW, removedBg)
 			sign, signStyle = "-", tuiStyles.diffRemoved.Bg(popupBg)
-		default:
+		case diffLineContext:
 			// no-op
 		}
 		buf.SetString(signAt, sign, signStyle)
 	}
-}
-
-type diffScrollArgs struct {
-	anchor int
-	nLines int
-	height int
-	scroll int
-}
-
-func clampDiffScroll(a diffScrollArgs) int {
-	base := max(0, a.nLines-a.height)
-	return max(0, min(a.anchor+a.scroll, base))
 }
 
 func tintToward(base, accent color.Color) tui.Color {

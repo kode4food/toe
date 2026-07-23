@@ -113,16 +113,16 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		p.blitPlaceholderInto(buf, at, "<No version control>")
 		return
 	}
-	base, _ := p.picker.diffBaseFor(vc, p.item.BasePath)
-	working, spans, lang := p.workingPreview()
+	base := p.picker.diffBaseFor(vc, p.item.BasePath)
+	work := p.workingPreview()
 	opts := p.editor.Options()
 	r := &diffPreviewRender{
-		working: working, base: base, spans: spans,
+		working: work.rope, base: base, spans: work.spans,
 		lines: buildDiffPreviewLines(
-			p.item.DiffKind, working, base, p.item.DiffHunks,
+			p.item.DiffKind, work.rope, base, p.item.DiffHunks,
 		),
 		format: language.TextFormatForConfig(
-			language.LoadLanguage(lang), opts.TextWidth, opts.SoftWrap,
+			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,
 			p.size.Width,
 		),
 		opts: opts, th: p.th,
@@ -135,22 +135,21 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 
 // workingPreview returns the working-copy rope, syntax spans, and language for
 // the diff's right side; empty for a deleted or unreadable file
-func (p *previewCtx) workingPreview() (core.Rope, []highlight.Span, string) {
+func (p *previewCtx) workingPreview() previewDocEntry {
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
 		if doc, ok := p.editor.Document(p.item.Location.Target.ID); ok {
-			e := p.picker.previewCache.doc(p.syntax, doc)
-			return e.rope, e.spans, e.lang
+			return *p.picker.previewCache.doc(p.syntax, doc)
 		}
 	}
 	path := p.item.Location.Target.Path
 	if doc := openDocumentPreview(path, p.editor); doc != nil {
-		e := p.picker.previewCache.doc(p.syntax, doc)
-		return e.rope, e.spans, e.lang
+		return *p.picker.previewCache.doc(p.syntax, doc)
 	}
-	if e, ok := p.picker.previewCache.path(p.syntax, path).(*previewDocEntry); ok {
-		return e.rope, e.spans, e.lang
+	e, ok := p.picker.previewCache.path(p.syntax, path).(*previewDocEntry)
+	if ok {
+		return *e
 	}
-	return core.NewRope(""), nil, view.DefaultLanguage
+	return previewDocEntry{rope: core.NewRope(""), lang: view.DefaultLanguage}
 }
 
 func (p *previewCtx) renderFileInto(

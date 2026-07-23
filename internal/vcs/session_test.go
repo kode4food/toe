@@ -187,12 +187,8 @@ func TestSession(t *testing.T) {
 		s := vcs.Attach(e)
 		defer s.Close()
 
-		base, ok := s.DiffBaseForPath(path)
-		assert.True(t, ok)
-		assert.Equal(t, "one\ntwo\nthree\n", base)
-
-		_, ok = s.DiffBaseForPath(filepath.Join(repo, "untracked.txt"))
-		assert.False(t, ok)
+		assert.Equal(t, "one\ntwo\nthree\n", s.DiffBaseForPath(path))
+		assert.Empty(t, s.DiffBaseForPath(filepath.Join(repo, "untracked.txt")))
 	})
 
 	t.Run("changed files fails outside a repo", func(t *testing.T) {

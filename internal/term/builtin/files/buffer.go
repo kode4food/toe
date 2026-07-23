@@ -1,6 +1,7 @@
 package files
 
 import (
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -15,6 +16,11 @@ const (
 	actBufferPrevious    = "buffer_previous"
 )
 
+var (
+	errUnsavedBufferClose    = i18n.NewError(i18n.ErrorUnsavedBufferClose)
+	errUnsavedBufferCloseAll = i18n.NewError(i18n.ErrorUnsavedBufferCloseAll)
+)
+
 // BufferModule returns the buffer navigation and close commands
 func BufferModule() command.Module {
 	g := kit.Prefixed(kit.Char('g'))
@@ -26,10 +32,7 @@ func BufferModule() command.Module {
 				DocString: "Close the current buffer",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					if doc, ok := e.FocusedDocument(); ok && doc.Modified() {
-						return command.Result{
-							Message: "document has unsaved changes (use " +
-								":buffer-close! to force)",
-						}
+						return command.Result{Error: errUnsavedBufferClose}
 					}
 					e.CloseCurrentView()
 					return command.Result{Message: "buffer closed"}
@@ -75,8 +78,7 @@ func BufferModule() command.Module {
 					for _, doc := range e.AllDocuments() {
 						if doc.Modified() {
 							return command.Result{
-								Message: "documents have unsaved changes " +
-									"(use :buffer-close-all! to force)",
+								Error: errUnsavedBufferCloseAll,
 							}
 						}
 					}

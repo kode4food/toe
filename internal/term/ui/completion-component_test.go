@@ -1232,7 +1232,7 @@ func TestCompletionComponent(t *testing.T) {
 		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
 		_ = feedCmds(m2.(ui.Model), cmd)
 
-		assert.Equal(t, "completion failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: completion failed", e.TakeStatusMsg())
 	})
 
 	t.Run("apply error sets status", func(t *testing.T) {
@@ -1255,7 +1255,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		assert.Equal(t, "apply failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: apply failed", e.TakeStatusMsg())
 	})
 
 }

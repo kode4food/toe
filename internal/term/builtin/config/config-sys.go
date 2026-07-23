@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -11,6 +12,14 @@ import (
 
 type pathProvider func() (string, bool)
 
+var (
+	errThemeTrueColor     = i18n.NewError(i18n.ErrorThemeTrueColor)
+	errThemeLoad          = i18n.NewError(i18n.ErrorThemeLoad)
+	errConfigUnavailable  = i18n.NewError(i18n.ErrorConfigUnavailable)
+	errWorkspaceUntrusted = i18n.NewError(i18n.ErrorWorkspaceUntrustedHint)
+	errLogUnavailable     = i18n.NewError(i18n.ErrorLogUnavailable)
+)
+
 func configSystemCmds() []command.Command {
 	return []command.Command{
 		{
@@ -18,7 +27,7 @@ func configSystemCmds() []command.Command {
 			DocString: "Open the user config.toml file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(
-					e, loader.ConfigFile, "config path unavailable",
+					e, loader.ConfigFile, errConfigUnavailable,
 				)
 			},
 			Modes:     command.PaneModes(),
@@ -31,14 +40,11 @@ func configSystemCmds() []command.Command {
 				if !loader.QueryWorkspaceTrust(
 					e.Cwd(), e.Options().Insecure,
 				) {
-					return command.Result{
-						Message: "workspace untrusted; " +
-							"run :workspace_trust to enable",
-					}
+					return command.Result{Error: errWorkspaceUntrusted}
 				}
 				path := loader.WorkspaceConfigFile(e.Cwd())
 				if _, err := e.OpenFile(path); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{}
 			},
@@ -50,7 +56,7 @@ func configSystemCmds() []command.Command {
 			DocString: "Refresh user config",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := e.ReloadConfig(); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: "config reloaded"}
 			},
@@ -61,9 +67,7 @@ func configSystemCmds() []command.Command {
 			Name:      actLogOpen,
 			DocString: "Open the editor log file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				return openFromPath(
-					e, loader.LogFile, "log path unavailable",
-				)
+				return openFromPath(e, loader.LogFile, errLogUnavailable)
 			},
 			Modes:     command.PaneModes(),
 			Signature: kit.Sig(),
@@ -74,7 +78,7 @@ func configSystemCmds() []command.Command {
 				"workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := loader.TrustWorkspace(e.Cwd()); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: "workspace trusted"}
 			},
@@ -87,7 +91,7 @@ func configSystemCmds() []command.Command {
 				"workspaces",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := loader.UntrustWorkspace(e.Cwd()); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: "workspace untrusted"}
 			},
@@ -119,14 +123,13 @@ func configThemeCmds() []command.Command {
 				th, _, err := theme.Load(name)
 				if err != nil {
 					return command.Result{
-						Message: "error: could not load theme: " +
-							err.Error(),
+						Error: errThemeLoad.WithVars(i18n.Vars{
+							"message": err,
+						}),
 					}
 				}
 				if !(terminalTrueColor() || th.Is16Color()) {
-					return command.Result{
-						Message: "error: theme requires true color support",
-					}
+					return command.Result{Error: errThemeTrueColor}
 				}
 				e.Options().Theme = name
 				return command.Result{}
@@ -153,14 +156,14 @@ func languageNames() []string {
 }
 
 func openFromPath(
-	e *view.Editor, pathFn pathProvider, unavailMsg string,
+	e *view.Editor, pathFn pathProvider, unavailable error,
 ) command.Result {
 	path, ok := pathFn()
 	if !ok {
-		return command.Result{Message: "error: " + unavailMsg}
+		return command.Result{Error: unavailable}
 	}
 	if _, err := e.OpenFile(path); err != nil {
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	}
 	return command.Result{}
 }

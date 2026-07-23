@@ -1,6 +1,10 @@
 package ui
 
-import tea "charm.land/bubbletea/v2"
+import (
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/kode4food/toe/internal/i18n"
+)
 
 func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 	c.markDirty()
@@ -52,7 +56,7 @@ func (c *completionComponent) handleRefreshMsg(
 		return consumed(), nil
 	}
 	if msg.err != nil {
-		cx.Editor.SetStatusMsg(msg.err.Error())
+		cx.Editor.SetStatusMsg(i18n.ErrorText(msg.err))
 		return consumed(), nil
 	}
 	c.markDirty()

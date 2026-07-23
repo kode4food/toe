@@ -26,7 +26,7 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 		}
 		prefill, err := ls.RenameSymbolPrefill(doc, v.ID())
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
@@ -82,7 +82,7 @@ func (m Model) HoverAction() command.KeyAction {
 		}
 		text, err := ls.Hover(doc, v.ID())
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		if text == "" {
@@ -120,7 +120,7 @@ func (m Model) SignatureHelpAction() command.KeyAction {
 		ec.signatureHidden = nil
 		help, err := ls.SignatureHelp(doc, v.ID())
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		if len(help.Signatures) == 0 {

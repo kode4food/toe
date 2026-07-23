@@ -16,41 +16,10 @@ import (
 )
 
 type (
-	lipglossStyles struct {
-		text              lipgloss.Style
-		line              lipgloss.Style
-		lineSelected      lipgloss.Style
-		selection         lipgloss.Style
-		cursor            lipgloss.Style
-		cursorPrim        lipgloss.Style
-		cursorLinePrim    lipgloss.Style
-		cursorLineSec     lipgloss.Style
-		cursorColumn      lipgloss.Style
-		whitespace        lipgloss.Style
-		indentGuide       lipgloss.Style
-		ruler             lipgloss.Style
-		inlayHint         lipgloss.Style
-		inlayHintType     lipgloss.Style
-		inlayHintParam    lipgloss.Style
-		severityHint      lipgloss.Style
-		severityInfo      lipgloss.Style
-		severityWarning   lipgloss.Style
-		severityError     lipgloss.Style
-		diagnostic        lipgloss.Style
-		diagnosticHint    lipgloss.Style
-		diagnosticInfo    lipgloss.Style
-		diagnosticWarning lipgloss.Style
-		diagnosticError   lipgloss.Style
-		documentHighlight lipgloss.Style
-		documentLink      lipgloss.Style
-		searchMatch       lipgloss.Style
-		diffAdded         lipgloss.Style
-		diffModified      lipgloss.Style
-		diffRemoved       lipgloss.Style
-	}
-
 	tuiStyles struct {
 		text              tui.Style
+		line              tui.Style
+		lineSelected      tui.Style
 		selection         tui.Style
 		cursor            tui.Style
 		cursorPrim        tui.Style
@@ -59,6 +28,7 @@ type (
 		cursorColumn      tui.Style
 		whitespace        tui.Style
 		indentGuide       tui.Style
+		ruler             tui.Style
 		inlayHint         tui.Style
 		inlayHintType     tui.Style
 		inlayHintParam    tui.Style
@@ -112,12 +82,14 @@ type (
 
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	w := r.size.Width
-	isErr := r.ec.cmdMsg != "" &&
-		strings.HasPrefix(r.ec.cmdMsg, "error:")
-	st := r.cmdlineStyle(isErr)
-	tuiSt := lipglossToTUIStyle(st)
+	errorMsg := r.ec.cmdMsg != nil && r.ec.cmdMsg.error
+	st := r.cmdlineStyle(errorMsg)
+	tuiSt := styleToTUI(st)
 
-	left := r.ec.cmdMsg
+	left := ""
+	if r.ec.cmdMsg != nil {
+		left = r.ec.cmdMsg.value
+	}
 	right := r.ec.hint
 	if right == "" {
 		right = r.ec.status
@@ -203,14 +175,14 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		busy = ls.Busy()
 	}
 
-	baseTUI := lipglossToTUIStyle(st)
+	baseTUI := styleToTUI(st)
 
 	src := &statusElemCtx{
 		doc: doc, opts: opts, mode: mode,
 		baseTUI: baseTUI,
-		modeSt:  lipglossToTUIStyle(modeSt),
-		sepSt:   lipglossToTUIStyle(sepSt),
-		spinSt:  lipglossToTUIStyle(spinSt),
+		modeSt:  styleToTUI(modeSt),
+		sepSt:   styleToTUI(sepSt),
+		spinSt:  styleToTUI(spinSt),
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		cursor:    geom.Point{X: col, Y: row},

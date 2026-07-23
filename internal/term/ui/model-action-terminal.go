@@ -17,7 +17,7 @@ func (m Model) TerminalAction() command.KeyAction {
 		}
 		tp, err := NewTerminalPane(e, interactiveShell(), geom.Size{})
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		tp.restore = e.ReplacePane(e.Tree().Focus(), tp)

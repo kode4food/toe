@@ -240,7 +240,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		cont := m.SymbolPickerAction()(e)
 
 		assert.Nil(t, cont)
-		assert.Equal(t, "symbols failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: symbols failed", e.TakeStatusMsg())
 	})
 
 	for _, tc := range []struct {
@@ -320,7 +320,7 @@ func TestSelectReferencesAction(t *testing.T) {
 		cont := m.SelectReferencesAction()(e)
 
 		assert.Nil(t, cont)
-		assert.Equal(t, "highlights failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: highlights failed", e.TakeStatusMsg())
 	})
 
 	t.Run("no results returns nil", func(t *testing.T) {
@@ -497,7 +497,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		cont := m.CodeActionPickerAction()(e)
 
 		assert.Nil(t, cont)
-		assert.Equal(t, "code actions failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: code actions failed", e.TakeStatusMsg())
 	})
 
 	t.Run("selects preferred action", func(t *testing.T) {
@@ -838,7 +838,7 @@ func TestGotoActions(t *testing.T) {
 		cont := m.GotoDeclarationAction()(e)
 
 		assert.Nil(t, cont)
-		assert.Equal(t, "location failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: location failed", e.TakeStatusMsg())
 	})
 
 	for _, tc := range gotoActionCases {

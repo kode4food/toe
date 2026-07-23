@@ -5,6 +5,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -179,19 +180,19 @@ func (c *completionComponent) paint(
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
 		border: lipgloss.RoundedBorder(),
-		borderStyle: lipglossToTUIStyle(
+		borderStyle: styleToTUI(
 			menu.Foreground(pickerFrameStyle(cx).GetForeground()),
 		),
-		contentStyle: lipglossToTUIStyle(menu),
+		contentStyle: styleToTUI(menu),
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	c.listBounds = area.Translate(pl.Point)
-	base := lipglossToTUIStyle(menu)
-	sel := lipglossToTUIStyle(selected)
-	match := lipglossToTUIStyle(pickerMatchStyle(cx))
-	selMatch := lipglossToTUIStyle(pickerSelMatchStyle(cx))
-	info := lipglossToTUIStyle(completionInfoStyle(cx, false))
-	selInfo := lipglossToTUIStyle(completionInfoStyle(cx, true))
+	base := styleToTUI(menu)
+	sel := styleToTUI(selected)
+	match := styleToTUI(pickerMatchStyle(cx))
+	selMatch := styleToTUI(pickerSelMatchStyle(cx))
+	info := styleToTUI(completionInfoStyle(cx, false))
+	selInfo := styleToTUI(completionInfoStyle(cx, true))
 	c.clampScroll(area.Height)
 	overflow := len(c.items) > area.Height
 	listW := area.Width
@@ -205,7 +206,7 @@ func (c *completionComponent) paint(
 		matchStyle := match
 		infoStyle := info
 		selected := idx == c.cursor
-		iconStyle := lipglossToTUIStyle(
+		iconStyle := styleToTUI(
 			completionIconStyle(cx, item.Kind, selected),
 		)
 		if selected {
@@ -313,7 +314,7 @@ func (c *completionComponent) accept(cx *Context) {
 		return
 	}
 	if err := ls.ApplyCompletion(doc, v.ID(), item); err != nil {
-		cx.Editor.SetStatusMsg(err.Error())
+		cx.Editor.SetStatusMsg(i18n.ErrorText(err))
 	}
 }
 

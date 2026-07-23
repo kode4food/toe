@@ -2,6 +2,8 @@ package i18n_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -25,6 +27,27 @@ func TestText(t *testing.T) {
 	t.Run("returns missing key", func(t *testing.T) {
 		key := i18n.Key("missing.message")
 		assert.Equal(t, "missing.message", i18n.Text(key))
+	})
+
+	t.Run("formats translated error", func(t *testing.T) {
+		assert.Equal(t, "error: no document",
+			i18n.ErrorText(i18n.NewError(i18n.ErrorNoDocument)),
+		)
+		err := i18n.NewError(i18n.ErrorNoSuchCommand)
+		withVars := err.WithVars(i18n.Vars{"name": "nope"})
+		assert.NotSame(t, err, withVars)
+		assert.Equal(t, "error: no such command: `nope`",
+			i18n.ErrorText(withVars),
+		)
+		assert.Equal(t, "error: no such command: `nope`",
+			i18n.ErrorText(fmt.Errorf("%w: context", withVars)),
+		)
+	})
+
+	t.Run("formats literal error", func(t *testing.T) {
+		assert.Equal(t, "error: nope",
+			i18n.ErrorText(errors.New("nope")),
+		)
 	})
 }
 

@@ -704,19 +704,17 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 func gotoFileAction(e *view.Editor) command.Continuation {
 	target, err := action.GotoFileTarget(e)
 	if err != nil {
-		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{"message": err}))
+		e.SetStatusMsg(i18n.ErrorText(err))
 		return nil
 	}
 	if target.URL != "" {
 		if err := action.OpenExternalURL(target.URL); err != nil {
-			e.SetStatusMsg(
-				i18n.Text(i18n.ErrorMessage, i18n.Vars{"message": err}),
-			)
+			e.SetStatusMsg(i18n.ErrorText(err))
 		}
 		return nil
 	}
 	if _, err := e.OpenFile(target.Path); err != nil {
-		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{"message": err}))
+		e.SetStatusMsg(i18n.ErrorText(err))
 	}
 	return nil
 }

@@ -115,7 +115,7 @@ func softWrapPrefix(format *language.TextFormat, indent int) string {
 }
 
 func softWrapContinuationRow(
-	format *language.TextFormat, indent int, lipglossStyles *lipglossStyles,
+	format *language.TextFormat, indent int, styles *tuiStyles,
 ) renderedRow {
 	prefix := softWrapPrefix(format, indent)
 	indentW := max(runewidth.StringWidth(prefix)-
@@ -123,12 +123,10 @@ func softWrapContinuationRow(
 	wrapW := runewidth.StringWidth(format.WrapIndicator)
 	row := renderedRow{}
 	if indentW > 0 {
-		row.write(strings.Repeat(" ", indentW), indentW,
-			lipglossToTUIStyle(lipglossStyles.text))
+		row.write(strings.Repeat(" ", indentW), indentW, styles.text)
 	}
 	if wrapW > 0 {
-		row.write(format.WrapIndicator, wrapW,
-			lipglossToTUIStyle(lipglossStyles.whitespace))
+		row.write(format.WrapIndicator, wrapW, styles.whitespace)
 	}
 	return row
 }

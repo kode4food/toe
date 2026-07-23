@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -18,6 +19,12 @@ const (
 	actCquitForce   = "cquit!"
 )
 
+var (
+	errUnsavedQuit    = i18n.NewError(i18n.ErrorUnsavedQuit)
+	errUnsavedQuitAll = i18n.NewError(i18n.ErrorUnsavedQuitAll)
+	errUnsavedCquit   = i18n.NewError(i18n.ErrorUnsavedCquit)
+)
+
 // LifecycleModule returns the quit and force-quit commands
 func LifecycleModule() command.Module {
 	modes := []string{"NOR", "SEL", "INS", "TRM", "IMG"}
@@ -29,10 +36,7 @@ func LifecycleModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
 						if doc.Modified() {
-							return command.Result{
-								Message: "document has unsaved changes " +
-									"(use :quit! to force)",
-							}
+							return command.Result{Error: errUnsavedQuit}
 						}
 					}
 					return command.Result{Signal: command.SignalQuit}
@@ -58,10 +62,7 @@ func LifecycleModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
 						if doc.Modified() {
-							return command.Result{
-								Message: "documents have unsaved changes " +
-									"(use :quit-all! to force)",
-							}
+							return command.Result{Error: errUnsavedQuitAll}
 						}
 					}
 					return command.Result{Signal: command.SignalQuit}
@@ -86,10 +87,7 @@ func LifecycleModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					for _, doc := range e.AllDocuments() {
 						if doc.Modified() {
-							return command.Result{
-								Message: "document has unsaved changes " +
-									"(use :cquit! to force)",
-							}
+							return command.Result{Error: errUnsavedCquit}
 						}
 					}
 					ui.CloseAllTerminalPanes(e)

@@ -82,7 +82,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImageZoomIn,
 				DocString: "Zoom image in",
-				Run:       kit.Runner(action.ImageZoomIn),
+				Run:       kit.Runner(imageZoomIn),
 				Modes:     []string{"IMG"},
 				Keys:      kit.Keys(kit.Char('+'), kit.Char('=')),
 				Aliases:   []string{"zoom-in"},
@@ -91,7 +91,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImageZoomOut,
 				DocString: "Zoom image out",
-				Run:       kit.Runner(action.ImageZoomOut),
+				Run:       kit.Runner(imageZoomOut),
 				Modes:     []string{"IMG"},
 				Keys:      kit.Keys(kit.Char('-')),
 				Aliases:   []string{"zoom-out"},
@@ -100,7 +100,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImageZoomReset,
 				DocString: "Fit image to pane",
-				Run:       kit.Runner(action.ImageZoomReset),
+				Run:       kit.Runner(imageZoomReset),
 				Modes:     []string{"IMG"},
 				Keys:      kit.Keys(kit.Char('0')),
 				Aliases:   []string{"zoom-reset"},
@@ -629,5 +629,23 @@ func ViewModule(model ui.Model) command.Module {
 				"NOR", "SEL", "TRM", "IMG",
 			),
 		},
+	}
+}
+
+func imageZoomIn(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.ZoomIn()
+	}
+}
+
+func imageZoomOut(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.ZoomOut()
+	}
+}
+
+func imageZoomReset(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.ResetZoom()
 	}
 }

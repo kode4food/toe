@@ -11,122 +11,91 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-func buildLipglossStyles(th *theme.Theme, mode view.Mode) lipglossStyles {
+func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
 	sel := th.Get("ui.selection")
 	cur, _ := modeCursorStyleFor(th, mode, false)
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
 	cl := th.Get("ui.cursorline.primary")
-	st := lipglossStyles{
-		text:              th.Get("ui.text"),
-		line:              th.Get("ui.linenr"),
-		lineSelected:      th.Get("ui.linenr.selected"),
-		selection:         sel,
-		cursor:            cur,
-		cursorPrim:        curPrim,
-		cursorLinePrim:    cl,
-		cursorLineSec:     cl,
-		cursorColumn:      cl,
-		whitespace:        th.Get("ui.virtual.whitespace"),
-		indentGuide:       th.Get("ui.virtual.indent-guide"),
-		ruler:             th.Get("ui.virtual.ruler"),
-		inlayHint:         th.Get("ui.virtual"),
-		inlayHintType:     th.Get("ui.virtual"),
-		inlayHintParam:    th.Get("ui.virtual"),
-		severityHint:      th.Get("hint"),
-		severityInfo:      th.Get("info"),
-		severityWarning:   th.Get("warning"),
-		severityError:     th.Get("error"),
-		diagnostic:        th.Get("diagnostic"),
-		diagnosticHint:    th.Get("diagnostic.hint"),
-		diagnosticInfo:    th.Get("diagnostic.info"),
-		diagnosticWarning: th.Get("diagnostic.warning"),
-		diagnosticError:   th.Get("diagnostic.error"),
-		documentHighlight: th.Get("ui.highlight"),
-		documentLink:      th.Get("markup.link.url"),
-		searchMatch:       searchMatchStyle(),
-		diffAdded:         th.Get("diff.plus.gutter"),
-		diffModified:      th.Get("diff.delta.gutter"),
-		diffRemoved:       th.Get("diff.minus.gutter"),
+	st := &tuiStyles{
+		text:              styleToTUI(th.Get("ui.text")),
+		line:              styleToTUI(th.Get("ui.linenr")),
+		lineSelected:      styleToTUI(th.Get("ui.linenr.selected")),
+		selection:         styleToTUI(sel),
+		cursor:            styleToTUI(cur),
+		cursorPrim:        styleToTUI(curPrim),
+		cursorLinePrim:    styleToTUI(cl),
+		cursorLineSec:     styleToTUI(cl),
+		cursorColumn:      styleToTUI(cl),
+		whitespace:        styleToTUI(th.Get("ui.virtual.whitespace")),
+		indentGuide:       styleToTUI(th.Get("ui.virtual.indent-guide")),
+		ruler:             styleToTUI(th.Get("ui.virtual.ruler")),
+		inlayHint:         styleToTUI(th.Get("ui.virtual")),
+		inlayHintType:     styleToTUI(th.Get("ui.virtual")),
+		inlayHintParam:    styleToTUI(th.Get("ui.virtual")),
+		severityHint:      styleToTUI(th.Get("hint")),
+		severityInfo:      styleToTUI(th.Get("info")),
+		severityWarning:   styleToTUI(th.Get("warning")),
+		severityError:     styleToTUI(th.Get("error")),
+		diagnostic:        styleToTUI(th.Get("diagnostic")),
+		diagnosticHint:    styleToTUI(th.Get("diagnostic.hint")),
+		diagnosticInfo:    styleToTUI(th.Get("diagnostic.info")),
+		diagnosticWarning: styleToTUI(th.Get("diagnostic.warning")),
+		diagnosticError:   styleToTUI(th.Get("diagnostic.error")),
+		documentHighlight: styleToTUI(th.Get("ui.highlight")),
+		documentLink:      styleToTUI(th.Get("markup.link.url")),
+		searchMatch:       styleToTUI(searchMatchStyle()),
+		diffAdded:         styleToTUI(th.Get("diff.plus.gutter")),
+		diffModified:      styleToTUI(th.Get("diff.delta.gutter")),
+		diffRemoved:       styleToTUI(th.Get("diff.minus.gutter")),
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint"); ok {
-		st.inlayHint = next
-		st.inlayHintType = next
-		st.inlayHintParam = next
+		converted := styleToTUI(next)
+		st.inlayHint = converted
+		st.inlayHintType = converted
+		st.inlayHintParam = converted
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint.type"); ok {
-		st.inlayHintType = next
+		st.inlayHintType = styleToTUI(next)
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint.parameter"); ok {
-		st.inlayHintParam = next
+		st.inlayHintParam = styleToTUI(next)
 	}
 	if next, ok := th.TryGetExact("markup.link"); ok {
-		st.documentLink = next
+		st.documentLink = styleToTUI(next)
 	}
 	if next, ok := th.TryGetExact("markup.link.url"); ok {
-		st.documentLink = next
+		st.documentLink = styleToTUI(next)
 	}
 	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
-		st.selection = next
+		st.selection = styleToTUI(next)
 	}
 	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
-		st.cursorLineSec = next
+		st.cursorLineSec = styleToTUI(next)
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
-		st.cursorColumn = next
+		st.cursorColumn = styleToTUI(next)
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
-		st.cursorColumn = next
+		st.cursorColumn = styleToTUI(next)
 	}
 	if next, ok := th.TryGet("ui.search.match"); ok {
-		st.searchMatch = next
+		st.searchMatch = styleToTUI(next)
 	}
 	return st
 }
 
-func buildTUIStyles(s *lipglossStyles) *tuiStyles {
-	return &tuiStyles{
-		text:              lipglossToTUIStyle(s.text),
-		selection:         lipglossToTUIStyle(s.selection),
-		cursor:            lipglossToTUIStyle(s.cursor),
-		cursorPrim:        lipglossToTUIStyle(s.cursorPrim),
-		cursorLinePrim:    lipglossToTUIStyle(s.cursorLinePrim),
-		cursorLineSec:     lipglossToTUIStyle(s.cursorLineSec),
-		cursorColumn:      lipglossToTUIStyle(s.cursorColumn),
-		whitespace:        lipglossToTUIStyle(s.whitespace),
-		indentGuide:       lipglossToTUIStyle(s.indentGuide),
-		inlayHint:         lipglossToTUIStyle(s.inlayHint),
-		inlayHintType:     lipglossToTUIStyle(s.inlayHintType),
-		inlayHintParam:    lipglossToTUIStyle(s.inlayHintParam),
-		severityHint:      lipglossToTUIStyle(s.severityHint),
-		severityInfo:      lipglossToTUIStyle(s.severityInfo),
-		severityWarning:   lipglossToTUIStyle(s.severityWarning),
-		severityError:     lipglossToTUIStyle(s.severityError),
-		diagnostic:        lipglossToTUIStyle(s.diagnostic),
-		diagnosticHint:    lipglossToTUIStyle(s.diagnosticHint),
-		diagnosticInfo:    lipglossToTUIStyle(s.diagnosticInfo),
-		diagnosticWarning: lipglossToTUIStyle(s.diagnosticWarning),
-		diagnosticError:   lipglossToTUIStyle(s.diagnosticError),
-		documentHighlight: lipglossToTUIStyle(s.documentHighlight),
-		documentLink:      lipglossToTUIStyle(s.documentLink),
-		searchMatch:       lipglossToTUIStyle(s.searchMatch),
-		diffAdded:         lipglossToTUIStyle(s.diffAdded),
-		diffModified:      lipglossToTUIStyle(s.diffModified),
-		diffRemoved:       lipglossToTUIStyle(s.diffRemoved),
-	}
-}
-
 func clearStyleBackground(st lipgloss.Style) lipgloss.Style {
-	if lipglossColorToTUI(st.GetBackground()).IsReset() {
+	if colorToTUI(st.GetBackground()).IsReset() {
 		return st
 	}
 	return st.Background(lipgloss.NoColor{})
 }
 
 func inheritStyleBackground(st lipgloss.Style, bg color.Color) lipgloss.Style {
-	if lipglossColorToTUI(bg).IsReset() {
+	if colorToTUI(bg).IsReset() {
 		return st
 	}
-	if !lipglossColorToTUI(st.GetBackground()).IsReset() {
+	if !colorToTUI(st.GetBackground()).IsReset() {
 		return st
 	}
 	return st.Background(bg)

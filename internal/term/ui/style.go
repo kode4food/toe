@@ -156,12 +156,12 @@ func pickerFrameStyle(cx *Context) lipgloss.Style {
 		Background(popup.GetBackground())
 }
 
-func lipglossToTUIStyle(s lipgloss.Style) tui.Style {
+func styleToTUI(s lipgloss.Style) tui.Style {
 	st := tui.Style{}
-	st = st.Fg(lipglossColorToTUI(s.GetForeground()))
-	st = st.Bg(lipglossColorToTUI(s.GetBackground()))
-	st = st.UlColor(lipglossColorToTUI(s.GetUnderlineColor()))
-	st = st.UlStyle(lipglossUnderlineToTUI(s.GetUnderlineStyle()))
+	st = st.Fg(colorToTUI(s.GetForeground()))
+	st = st.Bg(colorToTUI(s.GetBackground()))
+	st = st.UlColor(colorToTUI(s.GetUnderlineColor()))
+	st = st.UlStyle(underlineToTUI(s.GetUnderlineStyle()))
 	var m tui.Modifier
 	if s.GetBold() {
 		m |= tui.ModifierBold
@@ -187,7 +187,7 @@ func lipglossToTUIStyle(s lipgloss.Style) tui.Style {
 	return st
 }
 
-func lipglossColorToTUI(c color.Color) tui.Color {
+func colorToTUI(c color.Color) tui.Color {
 	if c == nil {
 		return tui.ColorReset
 	}
@@ -211,7 +211,7 @@ func basicTUIColor(idx uint8) tui.Color {
 	return tui.ColorIndexed(idx)
 }
 
-func lipglossUnderlineToTUI(u lipgloss.Underline) tui.UnderlineStyle {
+func underlineToTUI(u lipgloss.Underline) tui.UnderlineStyle {
 	if int(u) >= len(underlineTUIStyles) {
 		return tui.UnderlineReset
 	}

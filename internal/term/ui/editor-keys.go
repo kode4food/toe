@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -67,7 +68,7 @@ func (e *EditorComponent) handleKeyPress(
 	case found:
 		e.pending = nil
 		e.status = ""
-		e.cmdMsg = ""
+		e.clearCommandMessage()
 		e.infoTitle = ""
 		e.infoItems = nil
 		cont := act(cx.Editor)
@@ -229,7 +230,7 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 	e.signatureHidden = nil
 	help, err := ls.TriggerSignatureHelp(doc, v.ID())
 	if err != nil {
-		cx.Editor.SetStatusMsg(err.Error())
+		cx.Editor.SetStatusMsg(i18n.ErrorText(err))
 		return nil
 	}
 	if len(help.Signatures) == 0 {

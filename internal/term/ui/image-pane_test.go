@@ -78,7 +78,7 @@ func TestImagePane(t *testing.T) {
 		old := e.ReplacePane(e.Tree().Focus(), pane)
 		e.DiscardPane(old)
 
-		action.ImageZoomIn(e)
+		pane.ZoomIn()
 		assert.Equal(t, 125, pane.Zoom())
 
 		action.VSplit(e)

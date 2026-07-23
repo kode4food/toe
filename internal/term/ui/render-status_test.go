@@ -535,13 +535,47 @@ func TestCommandlineThemeRender(t *testing.T) {
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(root)
 		e.Options().Theme = "mocha"
-		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		km := command.NewKeymaps()
+		assert.NoError(t, km.Register("message", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Message: "error: harmless"}
+			},
+			Modes:   []string{"NOR"},
+			Aliases: []string{"message"},
+		}))
+		assert.NoError(t, km.Register("failure", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Error: assert.AnError}
+			},
+			Modes:   []string{"NOR"},
+			Aliases: []string{"failure"},
+		}))
+		assert.NoError(t, km.Register("empty", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{}
+			},
+			Modes:   []string{"NOR"},
+			Aliases: []string{"empty"},
+			Keys: map[string][]command.KeyBinding{
+				"*": {[][]command.KeyEvent{{char('x')}}},
+			},
+		}))
+		m := resize(ui.New(e, km), 80, 24)
 
 		prompt := sendKey(m, ':').View().Content
-		errOut := m.ExecTypable("not-a-command").View().Content
+		errOut := m.ExecTypable("failure").View().Content
+		m = m.ExecTypable("message")
+		msgOut := m.View().Content
+		m = m.ExecTypable("empty")
+		emptyOut := m.View().Content
+		m = sendKey(m, 'x')
+		clearedOut := m.View().Content
 
 		assert.Contains(t, prompt, "\x1b[38;2;205;214;244m")
 		assert.Contains(t, errOut, "\x1b[38;2;243;139;168m")
+		assert.Contains(t, msgOut, "\x1b[38;2;205;214;244m")
+		assert.Contains(t, stripANSI(emptyOut), "error: harmless")
+		assert.NotContains(t, stripANSI(clearedOut), "error: harmless")
 	})
 }
 

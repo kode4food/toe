@@ -85,10 +85,10 @@ func (p *PromptComponent) paintCompletions(
 	menuStyle, selected := promptCompletionStyles(cx)
 	pop := popup{
 		border: lipgloss.RoundedBorder(),
-		borderStyle: lipglossToTUIStyle(
+		borderStyle: styleToTUI(
 			menuStyle.Foreground(pickerFrameStyle(cx).GetForeground()),
 		),
-		contentStyle: lipglossToTUIStyle(menuStyle),
+		contentStyle: styleToTUI(menuStyle),
 		padX:         compPadX,
 	}
 	innerW := bounds.Width - 2 - 2*compPadX
@@ -96,8 +96,8 @@ func (p *PromptComponent) paintCompletions(
 		(innerW-compGap*(p.comp.Width-1))/p.comp.Width, 1,
 	)
 	area := pop.drawInto(buf, bounds)
-	menuTUI := lipglossToTUIStyle(menuStyle)
-	selectedTUI := lipglossToTUIStyle(selected)
+	menuTUI := styleToTUI(menuStyle)
+	selectedTUI := styleToTUI(selected)
 
 	for row := range p.comp.Height {
 		for col := range p.comp.Width {

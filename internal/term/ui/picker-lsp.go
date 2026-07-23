@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -180,7 +181,7 @@ func (l *lspWorkspaceSymbolSource) Load(
 	}
 	symbols, err := ctl.WorkspaceSymbols(doc, l.query)
 	if err != nil {
-		e.SetStatusMsg(err.Error())
+		e.SetStatusMsg(i18n.ErrorText(err))
 		return nil, nil, func() {}
 	}
 	items := make([]PickerItem, 0, len(symbols))

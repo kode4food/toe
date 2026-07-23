@@ -15,6 +15,12 @@ import (
 
 type optionSetter[T any] func(*view.Options, T)
 
+var (
+	errNoDocument        = i18n.NewError(i18n.ErrorNoDocument)
+	errUnknownLineEnding = i18n.NewError(i18n.ErrorUnknownLineEnding)
+	errExpectedIndent    = i18n.NewError(i18n.ErrorExpectedIndent)
+)
+
 func configFormatCmds() []command.Command {
 	return []command.Command{
 		{
@@ -24,9 +30,7 @@ func configFormatCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				doc, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoDocument),
-					}
+					return command.Result{Error: errNoDocument}
 				}
 				if args == nil || args.Empty() {
 					lang := doc.Lang()
@@ -54,9 +58,7 @@ func configFormatCmds() []command.Command {
 				if args == nil || args.Empty() {
 					doc, ok := e.FocusedDocument()
 					if !ok {
-						return command.Result{
-							Message: i18n.Text(i18n.ErrorNoDocument),
-						}
+						return command.Result{Error: errNoDocument}
 					}
 					switch doc.LineEnding() {
 					case core.LineEndingCRLF:
@@ -71,11 +73,13 @@ func configFormatCmds() []command.Command {
 				le, err := core.ParseLineEnding(name)
 				if err != nil {
 					return command.Result{
-						Message: "error: unknown line ending: " + name,
+						Error: errUnknownLineEnding.WithVars(i18n.Vars{
+							"name": name,
+						}),
 					}
 				}
 				if err := action.SetLineEnding(e, le); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: ""}
 			},
@@ -92,9 +96,7 @@ func configFormatCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				doc, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoDocument),
-					}
+					return command.Result{Error: errNoDocument}
 				}
 				if args == nil || args.Empty() {
 					return command.Result{
@@ -108,10 +110,7 @@ func configFormatCmds() []command.Command {
 				default:
 					n, err := strconv.Atoi(arg)
 					if err != nil || n < 1 || n > core.MaxIndent {
-						return command.Result{
-							Message: "error: expected 'tab' or spaces " +
-								"count (1-16)",
-						}
+						return command.Result{Error: errExpectedIndent}
 					}
 					doc.SetIndentStyle(core.Spaces(uint8(n)))
 				}

@@ -69,9 +69,7 @@ func Module(model ui.Model) command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					n, err := action.ResetDiffChange(e)
 					if err != nil {
-						return command.Result{
-							Message: "error: " + err.Error(),
-						}
+						return command.Result{Error: err}
 					}
 					msg := fmt.Sprintf("Reset %d change", n)
 					if n != 1 {

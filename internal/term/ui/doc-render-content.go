@@ -30,7 +30,6 @@ type contentRenderState struct {
 	lineIdx []lineIndexEntry
 	rowMap  []viewRowEntry
 
-	lgStyles  *lipglossStyles
 	tuiStyles *tuiStyles
 
 	diagnostics []diagnosticSpan
@@ -114,7 +113,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 	rr := st.rr
 	gutter := st.gutter
 	format := st.format
-	lgStyles := st.lgStyles
+	tuiStyles := st.tuiStyles
 	fillTUI := st.fillTUI
 	hOff := st.hOff
 	contentX := st.contentX
@@ -179,7 +178,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 				if err == nil && cursor == lineStart {
 					row.write(
 						" ", 1,
-						lipglossToTUIStyle(lgStyles.cursorPrim),
+						tuiStyles.cursorPrim,
 					)
 				}
 			}
@@ -291,7 +290,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 
 		if softWrap {
 			indent := indentWidth(lStr, tabW)
-			prefixRow := softWrapContinuationRow(format, indent, lgStyles)
+			prefixRow := softWrapContinuationRow(format, indent, tuiStyles)
 			prefixW := runewidth.StringWidth(softWrapPrefix(format, indent))
 			for i, cr := range contentRows {
 				if i < rowSkip {

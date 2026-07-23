@@ -31,6 +31,7 @@ func TestDirectoryChange(t *testing.T) {
 	t.Run("cd without args errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmd(t, km, e, "change_directory")
+		assert.Error(t, res.Error)
 		assert.Contains(t, res.Message, "error")
 	})
 

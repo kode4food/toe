@@ -11,7 +11,7 @@ import (
 
 type previewLineCtx struct {
 	format      *language.TextFormat
-	lgStyles    *lipglossStyles
+	styles      *tuiStyles
 	fillTUI     tui.Style
 	popupBg     tui.Color
 	hlBg        tui.Color
@@ -27,15 +27,14 @@ type previewLineCtx struct {
 }
 
 func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
-	lgStyles := new(buildLipglossStyles(args.th, view.ModeNormal))
-	tuiStyles := buildTUIStyles(lgStyles)
+	tuiStyles := buildTUIStyles(args.th, view.ModeNormal)
 	hlLipgloss := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)
 	hlStyleFn := func(scope string) tui.Style {
 		if st, ok := hlCache[scope]; ok {
 			return st
 		}
-		st := lipglossToTUIStyle(hlLipgloss(scope))
+		st := styleToTUI(hlLipgloss(scope))
 		hlCache[scope] = st
 		return st
 	}
@@ -43,7 +42,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	ig := args.opts.IndentGuides
 	// syntax spans have stripped backgrounds; patch popup bg onto every row
 	// so the pane provides it uniformly rather than showing terminal default
-	fillTUI := lipglossToTUIStyle(
+	fillTUI := styleToTUI(
 		lipgloss.NewStyle().Background(
 			args.th.Get("ui.popup").GetBackground(),
 		),
@@ -80,7 +79,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	}
 	var hlBg tui.Color
 	if args.hlFrom >= 0 {
-		hlBg = lipglossToTUIStyle(args.th.Get("ui.highlight")).BgColor()
+		hlBg = styleToTUI(args.th.Get("ui.highlight")).BgColor()
 	}
 
 	bufRow := 0
@@ -102,24 +101,40 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 			rowSkip = vOff
 		}
 		rr := rowRender{
-			lineStr: lStr, lgStyles: lgStyles, tuiStyles: tuiStyles,
-			hlStyle: hlStyleFn, format: args.format, ws: ws, ig: ig,
-			hlSpans: args.spans, cursor: -1, cursorLine: -1,
-			lineNum: lineNum, lineStart: start, lineEnd: end,
-			softWrap: softWrap, hStart: 0, hWidth: contentW,
-			maxRows: args.area.Height - bufRow + rowSkip,
+			lineStr:    lStr,
+			tuiStyles:  tuiStyles,
+			hlStyle:    hlStyleFn,
+			format:     args.format,
+			ws:         ws,
+			ig:         ig,
+			hlSpans:    args.spans,
+			cursor:     -1,
+			cursorLine: -1,
+			lineNum:    lineNum,
+			lineStart:  start,
+			lineEnd:    end,
+			softWrap:   softWrap,
+			hStart:     0,
+			hWidth:     contentW,
+			maxRows:    args.area.Height - bufRow + rowSkip,
 		}
 		rendered := rr.rows()
 		highlighted := args.hlFrom >= 0 &&
 			lineNum >= args.hlFrom && lineNum <= args.hlTo
 
 		lineCtx := previewLineCtx{
-			format: args.format, lgStyles: lgStyles,
-			fillTUI: fillTUI, popupBg: popupBg,
-			hlBg: hlBg, w: contentW,
-			rowSkip: rowSkip, maxH: args.area.Height - bufRow,
-			softWrap: softWrap, lStr: lStr,
-			highlighted: highlighted, markerW: markerW,
+			format:      args.format,
+			styles:      tuiStyles,
+			fillTUI:     fillTUI,
+			popupBg:     popupBg,
+			hlBg:        hlBg,
+			w:           contentW,
+			rowSkip:     rowSkip,
+			maxH:        args.area.Height - bufRow,
+			softWrap:    softWrap,
+			lStr:        lStr,
+			highlighted: highlighted,
+			markerW:     markerW,
 		}
 		if kind, ok := args.diffLines[lineNum]; ok {
 			lineCtx.marker, lineCtx.markerStyle =
@@ -138,7 +153,7 @@ func emitPreviewLine(
 	n := 0
 	if ctx.softWrap {
 		indent := indentWidth(ctx.lStr, ctx.format.TabWidth)
-		prefixRow := softWrapContinuationRow(ctx.format, indent, ctx.lgStyles)
+		prefixRow := softWrapContinuationRow(ctx.format, indent, ctx.styles)
 		for i, cr := range rendered {
 			if i < ctx.rowSkip {
 				continue

@@ -5,33 +5,34 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 )
 
+var errNoSuchCommand = i18n.NewError(i18n.ErrorNoSuchCommand)
+
 func (m Model) ExecTypable(input string) Model {
-	_, m.component.cmdMsg = execTypable(m.context, input)
+	res := execTypable(m.context, input)
+	m.component.setCommandResult(res)
 	return m
 }
 
-func execTypable(cx *Context, input string) (command.Signal, string) {
+func execTypable(cx *Context, input string) command.Result {
 	if input == "" {
-		return command.SignalNone, ""
+		return command.Result{}
 	}
 	name, rest, _ := command.SplitCommandLine(input)
 	if name == "" {
-		return command.SignalNone, ""
+		return command.Result{}
 	}
 	cmd, ok := cx.Keymaps.ResolveCommandIn(cx.Editor.Mode().String(), name)
 	if !ok {
-		return command.SignalNone,
-			i18n.Text(i18n.ErrorNoSuchCommand, i18n.Vars{
+		return command.Result{
+			Error: errNoSuchCommand.WithVars(i18n.Vars{
 				"name": name,
-			})
+			}),
+		}
 	}
 	expand := NewTokenExpander(cx.Editor)
 	parsed, err := command.ParseArgs(rest, cmd.Signature, true, expand)
 	if err != nil {
-		return command.SignalNone, i18n.Text(
-			i18n.ErrorMessage, i18n.Vars{"message": err},
-		)
+		return command.Result{Error: err}
 	}
-	res := cmd.Run(cx.Editor, parsed)
-	return res.Signal, res.Message
+	return cmd.Run(cx.Editor, parsed)
 }

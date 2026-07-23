@@ -181,12 +181,12 @@ func (p *previewDocEntry) renderInto(
 func (p *previewDirEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
-	fillTUI := lipglossToTUIStyle(
+	fillTUI := styleToTUI(
 		lipgloss.NewStyle().Background(
 			ctx.th.Get("ui.popup").GetBackground(),
 		),
 	)
-	dirTUI := lipglossToTUIStyle(
+	dirTUI := styleToTUI(
 		lipgloss.NewStyle().Foreground(
 			ctx.th.Get("ui.text.directory").GetForeground(),
 		).Background(ctx.th.Get("ui.popup").GetBackground()),
@@ -220,7 +220,7 @@ func (p noPreviewEntry) renderInto(
 func (p *previewCtx) blitPlaceholderInto(
 	buf *tui.Buffer, at geom.Point, text string,
 ) {
-	fillTUI := lipglossToTUIStyle(
+	fillTUI := styleToTUI(
 		lipgloss.NewStyle().Background(
 			p.th.Get("ui.popup").GetBackground(),
 		),

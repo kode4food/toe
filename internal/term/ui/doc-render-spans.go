@@ -116,12 +116,10 @@ func (r *renderPass) prepareContentRender(
 	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
 	if c.stylesKey != key {
 		c.stylesKey = key
-		c.lgStyles = new(buildLipglossStyles(th, r.cx.Editor.Mode()))
-		c.tuiStyles = buildTUIStyles(c.lgStyles)
+		c.tuiStyles = buildTUIStyles(th, r.cx.Editor.Mode())
 		c.hlFn = hlStyleFnFor(th)
 		c.hlTUICache = make(map[string]tui.Style, 64)
 	}
-	lgStyles := c.lgStyles
 	tuiStyles := c.tuiStyles
 	hlLipgloss := c.hlFn
 	hlTUICache := c.hlTUICache
@@ -129,7 +127,7 @@ func (r *renderPass) prepareContentRender(
 		if st, ok := hlTUICache[scope]; ok {
 			return st
 		}
-		st := lipglossToTUIStyle(hlLipgloss(scope))
+		st := styleToTUI(hlLipgloss(scope))
 		hlTUICache[scope] = st
 		return st
 	}
@@ -178,10 +176,10 @@ func (r *renderPass) prepareContentRender(
 	}
 	hOff := v.Offset().HorizontalOffset
 
-	lineTUI := lipglossToTUIStyle(lgStyles.line)
-	lineSelTUI := lipglossToTUIStyle(lgStyles.lineSelected)
-	rulerTUI := lipglossToTUIStyle(lgStyles.ruler)
-	fillTUI := lipglossToTUIStyle(lgStyles.text)
+	lineTUI := tuiStyles.line
+	lineSelTUI := tuiStyles.lineSelected
+	rulerTUI := tuiStyles.ruler
+	fillTUI := tuiStyles.text
 	cursorLinePriBg := tuiStyles.cursorLinePrim.BgColor()
 	cursorLineSecBg := tuiStyles.cursorLineSec.BgColor()
 	contentX := args.area.X + gutterW
@@ -203,7 +201,6 @@ func (r *renderPass) prepareContentRender(
 	}
 
 	rr := rowRender{
-		lgStyles:      lgStyles,
 		tuiStyles:     tuiStyles,
 		hlStyle:       hlStyleFn,
 		format:        format,
@@ -246,7 +243,6 @@ func (r *renderPass) prepareContentRender(
 		lineIdx: lineIdx,
 		rowMap:  rowMap,
 
-		lgStyles:  lgStyles,
 		tuiStyles: tuiStyles,
 
 		diagnostics: diagnostics,

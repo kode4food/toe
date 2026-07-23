@@ -12,6 +12,7 @@ import (
 )
 
 type fakeLanguageServerController struct {
+	view.LanguageServerController
 	restarted []string
 	stopped   []string
 	executed  string
@@ -276,48 +277,6 @@ func (c *fakeLanguageServerController) WorkspaceCommands(
 	return []string{"test"}
 }
 
-func (c *fakeLanguageServerController) Completions(
-	*view.Document, view.Id,
-) (view.CompletionResult, error) {
-	return view.CompletionResult{}, c.err
-}
-
-func (c *fakeLanguageServerController) TriggerCompletions(
-	*view.Document, view.Id,
-) (view.CompletionResult, error) {
-	return view.CompletionResult{}, c.err
-}
-
-func (c *fakeLanguageServerController) ResolveCompletion(
-	_ *view.Document, _ view.Id, item view.CompletionItem,
-) (view.CompletionItem, error) {
-	return item, c.err
-}
-
-func (c *fakeLanguageServerController) ApplyCompletion(
-	*view.Document, view.Id, view.CompletionItem,
-) error {
-	return c.err
-}
-
-func (c *fakeLanguageServerController) Hover(
-	*view.Document, view.Id,
-) (string, error) {
-	return "", c.err
-}
-
-func (c *fakeLanguageServerController) SignatureHelp(
-	*view.Document, view.Id,
-) (view.SignatureHelp, error) {
-	return view.SignatureHelp{}, c.err
-}
-
-func (c *fakeLanguageServerController) TriggerSignatureHelp(
-	*view.Document, view.Id,
-) (view.SignatureHelp, error) {
-	return view.SignatureHelp{}, c.err
-}
-
 func (c *fakeLanguageServerController) GotoDeclaration(
 	*view.Document, view.Id,
 ) ([]view.Location, error) {
@@ -379,36 +338,6 @@ func (c *fakeLanguageServerController) ApplyCodeAction(
 	return c.err
 }
 
-func (c *fakeLanguageServerController) DocumentHighlights(
-	*view.Document, view.Id,
-) ([]view.DocumentHighlight, error) {
-	return nil, c.err
-}
-
-func (c *fakeLanguageServerController) DocumentLinks(
-	*view.Document,
-) ([]view.DocumentLink, error) {
-	return nil, c.err
-}
-
-func (c *fakeLanguageServerController) ResolveDocumentLink(
-	_ *view.Document, link view.DocumentLink,
-) (view.DocumentLink, error) {
-	return link, c.err
-}
-
-func (c *fakeLanguageServerController) FormatDocument(
-	*view.Document, view.Id,
-) error {
-	return c.err
-}
-
-func (c *fakeLanguageServerController) FormatSelection(
-	*view.Document, view.Id,
-) error {
-	return c.err
-}
-
 func (c *fakeLanguageServerController) DocumentSymbols(
 	*view.Document,
 ) ([]view.Symbol, error) {
@@ -419,8 +348,4 @@ func (c *fakeLanguageServerController) WorkspaceSymbols(
 	*view.Document, string,
 ) ([]view.Symbol, error) {
 	return c.symbols, c.err
-}
-
-func (c *fakeLanguageServerController) Busy() bool {
-	return false
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -124,7 +125,7 @@ func (s *signatureHelpComponent) paint(
 	cx *Context, buf *tui.Buffer, pl geom.Area,
 ) {
 	sig := s.help.Signatures[s.cursor]
-	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
+	st := styleToTUI(cx.Theme().Get("ui.popup"))
 	border := lipgloss.RoundedBorder()
 	pop := popup{
 		border:       border,
@@ -212,7 +213,7 @@ func (s *signatureHelpComponent) refresh(
 	}
 	help, err := ls.SignatureHelp(doc, v.ID())
 	if err != nil {
-		cx.Editor.SetStatusMsg(err.Error())
+		cx.Editor.SetStatusMsg(i18n.ErrorText(err))
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
@@ -245,7 +246,7 @@ func (s *signatureHelpComponent) renderSignature(
 	sig view.SignatureInformation,
 ) {
 	label := ansi.Truncate(sig.Label, area.Width, "")
-	base := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
+	base := styleToTUI(cx.Theme().Get("ui.popup"))
 	buf.SetString(area.Point, label, base)
 	if sig.ActiveEnd <= sig.ActiveStart {
 		return
@@ -260,7 +261,7 @@ func (s *signatureHelpComponent) renderSignature(
 	text := string(rs[start:end])
 	bg := cx.Theme().Get("ui.popup").GetBackground()
 	st := inheritStyleBackground(cx.Theme().Get("ui.selection"), bg)
-	buf.SetString(geom.Point{X: x, Y: area.Y}, text, lipglossToTUIStyle(st))
+	buf.SetString(geom.Point{X: x, Y: area.Y}, text, styleToTUI(st))
 }
 
 type renderSignatureSeparatorArgs struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -103,15 +104,15 @@ func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
 		border: lipgloss.RoundedBorder(),
-		borderStyle: lipglossToTUIStyle(
+		borderStyle: styleToTUI(
 			menu.Foreground(pickerFrameStyle(cx).GetForeground()),
 		),
-		contentStyle: lipglossToTUIStyle(menu),
+		contentStyle: styleToTUI(menu),
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	m.listBounds = area.Translate(pl.Point)
-	base := lipglossToTUIStyle(menu)
-	sel := lipglossToTUIStyle(selected)
+	base := styleToTUI(menu)
+	sel := styleToTUI(selected)
 	m.scroll = listClampScroll(m.scroll, len(m.actions), area.Height)
 	overflow := len(m.actions) > area.Height
 	listW := area.Width
@@ -184,7 +185,7 @@ func (m *codeActionMenu) apply(cx *Context, comp *Compositor) tea.Cmd {
 		return nil
 	}
 	if err := ls.ApplyCodeAction(doc, v.ID(), m.actions[m.cursor]); err != nil {
-		cx.Editor.SetStatusMsg(err.Error())
+		cx.Editor.SetStatusMsg(i18n.ErrorText(err))
 	}
 	return nil
 }

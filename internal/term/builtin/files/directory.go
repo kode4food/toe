@@ -3,6 +3,7 @@ package files
 import (
 	"strings"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -15,6 +16,8 @@ const (
 	actPushDirectory      = "push_directory"
 	actPopDirectory       = "pop_directory"
 )
+
+var errNoDirectory = i18n.NewError(i18n.ErrorNoDirectory)
 
 // DirectoryModule returns the working-directory commands
 func DirectoryModule() command.Module {
@@ -68,7 +71,7 @@ func DirectoryModule() command.Module {
 					"and cd to the new top directory",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					if err := e.PopDirectory(); err != nil {
-						return command.Result{Message: "error: " + err.Error()}
+						return command.Result{Error: err}
 					}
 					return command.Result{Message: "directory: " + e.Cwd()}
 				},
@@ -84,11 +87,11 @@ func cdResult(
 	e *view.Editor, args *command.Args, fn func(string) error,
 ) command.Result {
 	if args == nil || args.Empty() {
-		return command.Result{Message: "error: no directory given"}
+		return command.Result{Error: errNoDirectory}
 	}
 	path, _ := args.First()
 	if err := fn(path); err != nil {
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	}
 	return command.Result{Message: "directory: " + e.Cwd()}
 }

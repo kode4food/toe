@@ -108,21 +108,20 @@ func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
 }
 
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
-	lgStyles := new(buildLipglossStyles(args.th, view.ModeNormal))
-	tuiStyles := buildTUIStyles(lgStyles)
+	tuiStyles := buildTUIStyles(args.th, view.ModeNormal)
 	hlLipgloss := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)
 	hlStyleFn := func(scope string) tui.Style {
 		if st, ok := hlCache[scope]; ok {
 			return st
 		}
-		st := lipglossToTUIStyle(hlLipgloss(scope))
+		st := styleToTUI(hlLipgloss(scope))
 		hlCache[scope] = st
 		return st
 	}
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
-	fillTUI := lipglossToTUIStyle(
+	fillTUI := styleToTUI(
 		lipgloss.NewStyle().Background(
 			args.th.Get("ui.popup").GetBackground(),
 		),
@@ -163,12 +162,21 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			continue
 		}
 		rr := rowRender{
-			lineStr:  lineString(src, lineStart, lineEnd),
-			lgStyles: lgStyles, tuiStyles: tuiStyles, hlStyle: hlStyleFn,
-			format: args.format, ws: ws, ig: ig, hlSpans: spans,
-			cursor: -1, cursorLine: -1, lineNum: dl.line,
-			lineStart: lineStart, lineEnd: lineEnd,
-			hStart: 0, hWidth: contentW, maxRows: 1,
+			lineStr:    lineString(src, lineStart, lineEnd),
+			tuiStyles:  tuiStyles,
+			hlStyle:    hlStyleFn,
+			format:     args.format,
+			ws:         ws,
+			ig:         ig,
+			hlSpans:    spans,
+			cursor:     -1,
+			cursorLine: -1,
+			lineNum:    dl.line,
+			lineStart:  lineStart,
+			lineEnd:    lineEnd,
+			hStart:     0,
+			hWidth:     contentW,
+			maxRows:    1,
 		}
 		rendered := rr.rows()
 		rendered[0].writeToBuffer(rowWriteArgs{

@@ -23,7 +23,6 @@ type (
 
 		// rebuilt only when theme or mode changes between frames
 		stylesKey  styleKey
-		lgStyles   *lipglossStyles
 		tuiStyles  *tuiStyles
 		hlFn       func(string) lipgloss.Style
 		hlTUICache map[string]tui.Style

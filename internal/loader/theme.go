@@ -4,7 +4,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 
@@ -16,20 +15,23 @@ var (
 	ErrThemeCycle    = errors.New("theme inheritance cycle")
 )
 
-var (
-	//go:embed assets/themes
-	embeddedThemes embed.FS
-
-	supportedThemeNames = slices.Sorted(slices.Values([]string{
-		"frappe",
-		"latte",
-		"macchiato",
-		"mocha",
-	}))
-)
+//go:embed assets/themes
+var embeddedThemes embed.FS
 
 func ThemeNames() []string {
-	return slices.Clone(supportedThemeNames)
+	entries, err := embeddedThemes.ReadDir("assets/themes")
+	if err != nil {
+		return nil
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() && strings.HasSuffix(name, ".toml") {
+			names = append(names, strings.TrimSuffix(name, ".toml"))
+		}
+	}
+	slices.Sort(names)
+	return names
 }
 
 func LoadThemeTOML(name string) (map[string]any, error) {
@@ -37,28 +39,23 @@ func LoadThemeTOML(name string) (map[string]any, error) {
 }
 
 func loadThemeTOML(name string, seen map[string]bool) (map[string]any, error) {
-	path, err := themeFileForLoad(name, seen)
-	if err != nil {
-		return nil, err
+	if seen[name] {
+		return nil, fmt.Errorf("%w: %s", ErrThemeCycle, name)
 	}
-	var data []byte
-	if embPath, ok := strings.CutPrefix(path, "embed:"); ok {
-		data, err = embeddedThemes.ReadFile(embPath)
-	} else {
-		data, err = os.ReadFile(path)
-	}
+	seen[name] = true
+	data, err := embeddedThemes.ReadFile("assets/themes/" + name + ".toml")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", ErrThemeNotFound, name)
 	}
 	theme, err := decodeThemeTOML(string(data))
 	if err != nil {
 		return nil, err
 	}
-	return resolveInherits(theme, name, seen)
+	return resolveInherits(theme, seen)
 }
 
 func resolveInherits(
-	theme map[string]any, _ string, seen map[string]bool,
+	theme map[string]any, seen map[string]bool,
 ) (map[string]any, error) {
 	parent, ok := theme["inherits"].(string)
 	if !ok {
@@ -69,22 +66,6 @@ func resolveInherits(
 		return nil, err
 	}
 	return mergeThemes(parentTheme, theme), nil
-}
-
-func themeFileForLoad(name string, seen map[string]bool) (string, error) {
-	if !supportedThemeName(name) {
-		return "", fmt.Errorf("%w: %s", ErrThemeNotFound, name)
-	}
-	embPath := "assets/themes/" + name + ".toml"
-	if _, err := embeddedThemes.Open(embPath); err == nil {
-		key := "embed:" + embPath
-		if seen[key] {
-			return "", fmt.Errorf("%w: %s", ErrThemeCycle, name)
-		}
-		seen[key] = true
-		return "embed:" + embPath, nil
-	}
-	return "", fmt.Errorf("%w: %s", ErrThemeNotFound, name)
 }
 
 func mergeThemes(parent, theme map[string]any) map[string]any {
@@ -108,11 +89,6 @@ func mergeThemePalette(parent, theme any) any {
 	default:
 		return map[string]any{}
 	}
-}
-
-func supportedThemeName(name string) bool {
-	_, found := slices.BinarySearch(supportedThemeNames, name)
-	return found
 }
 
 func decodeThemeTOML(text string) (map[string]any, error) {

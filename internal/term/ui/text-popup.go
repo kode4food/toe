@@ -180,10 +180,10 @@ func (r *popupTextRenderer) writeRun(
 func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
 	bg := r.cx.Theme().Get("ui.popup").GetBackground()
 	if st, ok := r.cx.Theme().TryGet(scope); ok {
-		return lipglossToTUIStyle(inheritStyleBackground(st, bg))
+		return styleToTUI(inheritStyleBackground(st, bg))
 	}
 	st := inheritStyleBackground(highlight.DefaultStyle(scope), bg)
-	return lipglossToTUIStyle(st)
+	return styleToTUI(st)
 }
 
 func trimPopupLines(lines []popupLine, maxVisible int) []popupLine {
@@ -215,7 +215,7 @@ func measureTextPopup(maxSize geom.Size, text string) ([]popupLine, geom.Size) {
 }
 
 func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
-	st := lipglossToTUIStyle(cx.Theme().Get("ui.popup"))
+	st := styleToTUI(cx.Theme().Get("ui.popup"))
 	pop := popup{
 		border:       lipgloss.RoundedBorder(),
 		borderStyle:  st,

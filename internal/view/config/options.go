@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	ErrUnknownOption = errors.New("unknown option")
 	ErrInvalidOption = errors.New("invalid option")
 )
 

@@ -54,12 +54,12 @@ func writePickerPromptRow(
 	popupBg := lipgloss.NewStyle().Background(popup.GetBackground())
 	promptSt := th.Get("ui.prompt")
 
-	bgTUI := lipglossToTUIStyle(popupBg)
-	queryTUI := lipglossToTUIStyle(applyAccentStyle(popupBg, promptSt))
-	cursorTUI := lipglossToTUIStyle(lipgloss.NewStyle().
+	bgTUI := styleToTUI(popupBg)
+	queryTUI := styleToTUI(applyAccentStyle(popupBg, promptSt))
+	cursorTUI := styleToTUI(lipgloss.NewStyle().
 		Foreground(popupBg.GetBackground()).
 		Background(promptSt.GetForeground()))
-	countTUI := lipglossToTUIStyle(pickerCountStyle(cx))
+	countTUI := styleToTUI(pickerCountStyle(cx))
 
 	buf.FillRange(area.Point, area.Width, bgTUI)
 	buf.SetString(geom.Point{
@@ -81,9 +81,9 @@ func writePickerHeader(
 ) {
 	cols := p.source.Columns()
 	widths := pickerColumnWidths(p, max(area.Width-pickerMarkerW-1, 0))
-	bgTUI := lipglossToTUIStyle(pickerHeaderStyle(cx))
+	bgTUI := styleToTUI(pickerHeaderStyle(cx))
 	underlineColor := cx.Theme().Get("ui.text.inactive").GetForeground()
-	colTUI := lipglossToTUIStyle(
+	colTUI := styleToTUI(
 		pickerHeaderStyle(cx).Underline(true).UnderlineColor(underlineColor),
 	)
 	buf.FillRange(area.Point, area.Width, bgTUI)
@@ -108,12 +108,12 @@ func writePickerItem(
 	var base, match tui.Style
 	if args.selected {
 		marker = " > "
-		base = lipglossToTUIStyle(pickerSelStyle(cx))
-		match = lipglossToTUIStyle(pickerSelMatchStyle(cx))
+		base = styleToTUI(pickerSelStyle(cx))
+		match = styleToTUI(pickerSelMatchStyle(cx))
 	} else {
 		marker = strings.Repeat(" ", pickerMarkerW)
-		base = lipglossToTUIStyle(pickerItemStyle(cx))
-		match = lipglossToTUIStyle(pickerMatchStyle(cx))
+		base = styleToTUI(pickerItemStyle(cx))
+		match = styleToTUI(pickerMatchStyle(cx))
 	}
 
 	buf.FillRange(at, args.w, base)
@@ -172,7 +172,7 @@ func pickerColumnBase(
 	if i >= len(scopes) || scopes[i] == "" {
 		return base
 	}
-	fg := lipglossColorToTUI(cx.Theme().Get(scopes[i]).GetForeground())
+	fg := colorToTUI(cx.Theme().Get(scopes[i]).GetForeground())
 	if fg.IsReset() {
 		return base
 	}
@@ -200,7 +200,7 @@ func writePickerCenteredHint(
 	if text == "" || area.Height <= 0 {
 		return
 	}
-	style := lipglossToTUIStyle(pickerCountStyle(cx))
+	style := styleToTUI(pickerCountStyle(cx))
 	hx := area.X + max((area.Width-runewidth.StringWidth(text))/2, 0)
 	buf.SetString(geom.Point{
 		X: hx,

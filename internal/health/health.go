@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
 
 	"github.com/kode4food/toe/internal/loader"
@@ -26,69 +25,6 @@ type (
 
 var (
 	ErrFailed = errors.New("health check failed")
-)
-
-var (
-	expectedLanguages = []string{
-		"bash",
-		"css",
-		"diff",
-		"dockerfile",
-		"env",
-		"gitcommit",
-		"gitattributes",
-		"gitignore",
-		"go",
-		"gomod",
-		"graphql",
-		"hcl",
-		"html",
-		"javascript",
-		"json",
-		"jsonc",
-		"makefile",
-		"markdown",
-		"markdown.inline",
-		"protobuf",
-		"sql",
-		"toml",
-		"tsx",
-		"typescript",
-		"yaml",
-	}
-
-	expectedGrammars = []string{
-		"bash",
-		"css",
-		"diff",
-		"dockerfile",
-		"gitattributes",
-		"gitcommit",
-		"gitignore",
-		"go",
-		"gomod",
-		"graphql",
-		"hcl",
-		"html",
-		"javascript",
-		"json",
-		"makefile",
-		"markdown",
-		"markdown_inline",
-		"proto",
-		"sql",
-		"toml",
-		"tsx",
-		"typescript",
-		"yaml",
-	}
-
-	expectedThemes = []string{
-		"frappe",
-		"latte",
-		"macchiato",
-		"mocha",
-	}
 )
 
 func CheckRuntime() Report {
@@ -145,11 +81,11 @@ func checkLanguages() Check {
 	if !ok {
 		return failed("languages", "bundled languages.toml did not parse")
 	}
-	names := make([]string, 0, len(langs.Languages))
-	for _, l := range langs.Languages {
-		names = append(names, l.Name)
+	return Check{
+		Name:   "languages",
+		OK:     true,
+		Detail: fmt.Sprintf("%d supported", len(langs.Languages)),
 	}
-	return checkBundled("languages", names, expectedLanguages, "%d supported")
 }
 
 func checkGrammars() Check {
@@ -157,27 +93,16 @@ func checkGrammars() Check {
 	if !ok {
 		return failed("grammars", "bundled languages.toml did not parse")
 	}
-	names := make([]string, 0, len(langs.Grammars))
-	for _, g := range langs.Grammars {
-		names = append(names, g.Name)
-	}
-	return checkBundled("grammars", names, expectedGrammars, "%d configured")
-}
-
-func checkBundled(name string, names, expected []string, detail string) Check {
-	slices.Sort(names)
-	errs := compareNames(expected, names)
 	return Check{
-		Name:   name,
-		OK:     len(errs) == 0,
-		Detail: fmt.Sprintf(detail, len(names)),
-		Errors: errs,
+		Name:   "grammars",
+		OK:     true,
+		Detail: fmt.Sprintf("%d configured", len(langs.Grammars)),
 	}
 }
 
 func checkThemes() Check {
 	names := loader.ThemeNames()
-	errs := compareNames(expectedThemes, names)
+	var errs []string
 	for _, name := range names {
 		data, err := loader.LoadThemeTOML(name)
 		if err != nil {
@@ -215,19 +140,4 @@ func checkSyntaxQueries() Check {
 
 func failed(name, msg string) Check {
 	return Check{Name: name, OK: false, Errors: []string{msg}}
-}
-
-func compareNames(expected, actual []string) []string {
-	var errs []string
-	for _, name := range expected {
-		if !slices.Contains(actual, name) {
-			errs = append(errs, fmt.Sprintf("missing %s", name))
-		}
-	}
-	for _, name := range actual {
-		if !slices.Contains(expected, name) {
-			errs = append(errs, fmt.Sprintf("unexpected %s", name))
-		}
-	}
-	return errs
 }

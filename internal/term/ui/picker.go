@@ -372,9 +372,7 @@ func AcceptPath(
 	}
 	v, ok, err := OpenPath(e, path, action)
 	if err != nil {
-		e.SetStatusMsg(i18n.Text(i18n.ErrorMessage, i18n.Vars{
-			"message": err,
-		}))
+		e.SetStatusMsg(i18n.ErrorText(err))
 		return nil, false
 	}
 	return v, ok

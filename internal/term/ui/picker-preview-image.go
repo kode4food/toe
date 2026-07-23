@@ -12,7 +12,7 @@ func (p *previewImageEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
 	area := geom.Area{Point: at, Size: ctx.size}
-	style := lipglossToTUIStyle(ctx.th.Get("ui.text"))
+	style := styleToTUI(ctx.th.Get("ui.text"))
 	if ctx.images == nil || !ctx.images.graphics {
 		msg := i18n.Text(i18n.StatusImageUnsupported)
 		renderImageMessage(buf, area, msg, style)
@@ -29,7 +29,7 @@ func (p *previewImageEntry) renderInto(
 		return
 	}
 	start := area.Center(cells)
-	bg := lipglossToTUIStyle(ctx.th.Get("ui.popup")).BgColor()
+	bg := styleToTUI(ctx.th.Get("ui.popup")).BgColor()
 	style = tui.Style{}.
 		Fg(tui.ImageColor(p.id)).
 		UlColor(tui.ImageColor(imagePlacementID(cells))).

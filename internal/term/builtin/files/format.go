@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -16,6 +17,14 @@ const (
 	actReflow             = "reflow"
 	actSort               = "sort"
 	actReindentSelections = "format_selections"
+)
+
+var (
+	errInvalidWidth          = i18n.NewError(i18n.ErrorInvalidWidth)
+	errBufferReadOnly        = i18n.NewError(i18n.ErrorBufferReadOnly)
+	errNoFormatter           = i18n.NewError(i18n.StatusNoFormatter)
+	errNoRangeFormatting     = i18n.NewError(i18n.ErrorNoRangeFormatting)
+	errFormatSelectionSingle = i18n.NewError(i18n.ErrorFormatSelectionSingle)
 )
 
 // FormatModule returns the document and selection format commands
@@ -53,9 +62,7 @@ func FormatModule() command.Module {
 						s, _ := args.First()
 						n, err := strconv.Atoi(s)
 						if err != nil || n < 1 {
-							return command.Result{
-								Message: "error: invalid width",
-							}
+							return command.Result{Error: errInvalidWidth}
 						}
 						width = n
 					}
@@ -73,7 +80,7 @@ func FormatModule() command.Module {
 					insensitive := args != nil && args.HasFlag("insensitive")
 					err := action.SortSelections(e, reverse, insensitive)
 					if err != nil {
-						return command.Result{Message: "error: " + err.Error()}
+						return command.Result{Error: err}
 					}
 					return command.Result{}
 				},
@@ -99,7 +106,7 @@ func runFormatter(e *view.Editor) command.Result {
 		return command.Result{}
 	}
 	if doc.ReadOnly() {
-		return command.Result{Message: "error: buffer is read-only"}
+		return command.Result{Error: errBufferReadOnly}
 	}
 
 	lang := language.LoadLanguage(doc.Lang())
@@ -115,7 +122,7 @@ func runFormatter(e *view.Editor) command.Result {
 		Argv:    lang.Formatter.Args,
 	})
 	if err != nil {
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	}
 	return command.Result{}
 }
@@ -126,17 +133,21 @@ func runLSPFormatter(
 	ctl := e.LanguageServerController()
 	if ctl == nil {
 		return command.Result{
-			Message: "no formatter configured for " + doc.Lang(),
+			Error: errNoFormatter.WithVars(i18n.Vars{
+				"lang": doc.Lang(),
+			}),
 		}
 	}
 	err := ctl.FormatDocument(doc, viewID)
 	if errors.Is(err, view.ErrNoLanguageServer) {
 		return command.Result{
-			Message: "no formatter configured for " + doc.Lang(),
+			Error: errNoFormatter.WithVars(i18n.Vars{
+				"lang": doc.Lang(),
+			}),
 		}
 	}
 	if err != nil {
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	}
 	return command.Result{}
 }
@@ -162,26 +173,17 @@ func runFormatSelection(e *view.Editor, _ *command.Args) command.Result {
 	}
 	ctl := e.LanguageServerController()
 	if ctl == nil {
-		return command.Result{
-			Message: "error: No configured language server supports " +
-				"range formatting",
-		}
+		return command.Result{Error: errNoRangeFormatting}
 	}
 	err := ctl.FormatSelection(doc, v.ID())
 	if errors.Is(err, view.ErrNoLanguageServer) {
-		return command.Result{
-			Message: "error: No configured language server supports " +
-				"range formatting",
-		}
+		return command.Result{Error: errNoRangeFormatting}
 	}
 	if errors.Is(err, view.ErrFormatSelection) {
-		return command.Result{
-			Message: "error: format_selections only supports " +
-				"a single selection for now",
-		}
+		return command.Result{Error: errFormatSelectionSingle}
 	}
 	if err != nil {
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	}
 	return command.Result{}
 }

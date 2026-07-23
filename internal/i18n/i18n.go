@@ -3,6 +3,7 @@ package i18n
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,12 @@ type (
 
 	// Vars supplies named values for message interpolation
 	Vars map[string]any
+
+	// Error identifies a localizable error and its interpolation variables
+	Error struct {
+		key  Key
+		vars Vars
+	}
 
 	catalog      []translations
 	translations map[Key]string
@@ -31,9 +38,41 @@ var (
 	localeTranslations = loadTranslations()
 )
 
+// NewError returns an error backed by a localized message
+func NewError[S ~string](key S) *Error {
+	return &Error{key: Key(key)}
+}
+
 // Text returns a localized message with optional named interpolation
 func Text(key Key, vars ...Vars) string {
 	return defaultCatalog.text(key, vars...)
+}
+
+// ErrorText returns a localized error message
+func ErrorText(err error) string {
+	key := Key(err.Error())
+	message := err.Error()
+	var vars Vars
+	if localized, ok := errors.AsType[*Error](err); ok {
+		key = localized.key
+		vars = localized.vars
+	}
+	for _, tr := range defaultCatalog {
+		if _, ok := tr[key]; ok {
+			message = Text(key, vars)
+			break
+		}
+	}
+	return Text(ErrorMessage, Vars{"message": message})
+}
+
+// WithVars returns a copy with interpolation variables attached
+func (e *Error) WithVars(vars Vars) *Error {
+	return &Error{key: e.key, vars: vars}
+}
+
+func (e *Error) Error() string {
+	return string(e.key)
 }
 
 func (c catalog) text(key Key, vars ...Vars) string {

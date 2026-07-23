@@ -23,8 +23,8 @@ func (p *PickerComponent) drawPickerBox(
 
 	frame := pickerBoxFrame{
 		border:       lipgloss.RoundedBorder(),
-		borderStyle:  lipglossToTUIStyle(pickerFrameStyle(cx)),
-		contentStyle: lipglossToTUIStyle(pickerContentStyle(cx)),
+		borderStyle:  styleToTUI(pickerFrameStyle(cx)),
+		contentStyle: styleToTUI(pickerContentStyle(cx)),
 	}
 	areas := frame.drawSplit(buf, area, lw, 2)
 
@@ -80,8 +80,8 @@ func (p *PickerComponent) drawPickerPane(
 
 	frame := pickerBoxFrame{
 		border:       lipgloss.RoundedBorder(),
-		borderStyle:  lipglossToTUIStyle(pickerFrameStyle(cx)),
-		contentStyle: lipglossToTUIStyle(pickerContentStyle(cx)),
+		borderStyle:  styleToTUI(pickerFrameStyle(cx)),
+		contentStyle: styleToTUI(pickerContentStyle(cx)),
 	}
 	area = frame.drawSingle(buf, area, 2)
 

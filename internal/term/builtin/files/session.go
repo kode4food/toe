@@ -23,9 +23,7 @@ func SessionModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					path := view.WorkspaceSessionFile(e.Cwd())
 					if err := e.SaveSession(path, nil); err != nil {
-						return command.Result{
-							Message: "error: " + err.Error(),
-						}
+						return command.Result{Error: err}
 					}
 					return command.Result{Message: "session saved"}
 				},
@@ -39,9 +37,7 @@ func SessionModule() command.Module {
 					path := view.WorkspaceSessionFile(e.Cwd())
 					_, ok, err := e.RestoreSession(path)
 					if err != nil {
-						return command.Result{
-							Message: "error: " + err.Error(),
-						}
+						return command.Result{Error: err}
 					}
 					if !ok {
 						return command.Result{Message: "no session found"}

@@ -1,12 +1,14 @@
 package config_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 )
 
@@ -75,10 +77,24 @@ func TestViewSplit(t *testing.T) {
 }
 
 func TestImageMode(t *testing.T) {
-	_, km := test.Env(t, "")
+	e, km := test.Env(t, "")
 	assert.NotEmpty(t, km.Bindings("IMG", "image_zoom_in"))
 	assert.NotEmpty(t, km.Bindings("IMG", "vsplit"))
 	assert.Empty(t, km.Bindings("IMG", "page_up"))
+
+	path := filepath.Join("..", "..", "..", "..", "docs", "img", "logo.png")
+	pane, err := ui.NewImagePane(e, path)
+	assert.NoError(t, err)
+	old := e.ReplacePane(e.Tree().Focus(), pane)
+	e.DiscardPane(old)
+
+	test.RunCmd(t, km, e, "image_zoom_in")
+	assert.Equal(t, 125, pane.Zoom())
+	test.RunCmd(t, km, e, "image_zoom_out")
+	assert.Equal(t, 100, pane.Zoom())
+	pane.ZoomIn()
+	test.RunCmd(t, km, e, "image_zoom_reset")
+	assert.Equal(t, 100, pane.Zoom())
 }
 
 func TestViewNavigation(t *testing.T) {

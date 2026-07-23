@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -21,7 +22,7 @@ type (
 		status          string
 		hint            string
 		continuation    command.Continuation
-		cmdMsg          string
+		cmdMsg          *commandMessage
 		saveSlot        *saveGenSlot
 		cache           *renderCache
 		macroSlot       *macroSlot
@@ -41,6 +42,11 @@ type (
 		autoScrollV     mouseAutoScrollAxis
 		autoScrollH     mouseAutoScrollAxis
 		spinFrame       int
+	}
+
+	commandMessage struct {
+		value string
+		error bool
 	}
 
 	saveGenSlot struct{ gen int }
@@ -280,8 +286,33 @@ func (e *EditorComponent) syncEditorMessages(cx *Context) {
 		e.hint = h
 	}
 	if m := cx.Editor.TakeStatusMsg(); m != "" {
-		e.cmdMsg = m
+		e.setCommandMessage(m)
 	}
+}
+
+func (e *EditorComponent) setCommandResult(res command.Result) {
+	if res.Error != nil {
+		e.setCommandError(res.Error)
+		return
+	}
+	if res.Message != "" {
+		e.setCommandMessage(res.Message)
+	}
+}
+
+func (e *EditorComponent) setCommandError(err error) {
+	e.cmdMsg = &commandMessage{
+		value: i18n.ErrorText(err),
+		error: true,
+	}
+}
+
+func (e *EditorComponent) setCommandMessage(msg string) {
+	e.cmdMsg = &commandMessage{value: msg}
+}
+
+func (e *EditorComponent) clearCommandMessage() {
+	e.cmdMsg = nil
 }
 
 func (e *EditorComponent) resize(cx *Context) {

@@ -17,65 +17,35 @@ type locationGetter func(
 func (m Model) GotoDeclarationAction() command.KeyAction {
 	return m.gotoLocationAction(
 		i18n.Text(i18n.StatusNoDeclaration),
-		func(
-			ls view.LanguageServerController,
-			doc *view.Document,
-			viewID view.Id,
-		) ([]view.Location, error) {
-			return ls.GotoDeclaration(doc, viewID)
-		},
+		view.LanguageServerController.GotoDeclaration,
 	)
 }
 
 func (m Model) GotoDefinitionAction() command.KeyAction {
 	return m.gotoLocationAction(
 		i18n.Text(i18n.StatusNoDefinition),
-		func(
-			ls view.LanguageServerController,
-			doc *view.Document,
-			viewID view.Id,
-		) ([]view.Location, error) {
-			return ls.GotoDefinition(doc, viewID)
-		},
+		view.LanguageServerController.GotoDefinition,
 	)
 }
 
 func (m Model) GotoTypeDefinitionAction() command.KeyAction {
 	return m.gotoLocationAction(
 		i18n.Text(i18n.StatusNoTypeDefinition),
-		func(
-			ls view.LanguageServerController,
-			doc *view.Document,
-			viewID view.Id,
-		) ([]view.Location, error) {
-			return ls.GotoTypeDefinition(doc, viewID)
-		},
+		view.LanguageServerController.GotoTypeDefinition,
 	)
 }
 
 func (m Model) GotoImplementationAction() command.KeyAction {
 	return m.gotoLocationAction(
 		i18n.Text(i18n.StatusNoImplementation),
-		func(
-			ls view.LanguageServerController,
-			doc *view.Document,
-			viewID view.Id,
-		) ([]view.Location, error) {
-			return ls.GotoImplementation(doc, viewID)
-		},
+		view.LanguageServerController.GotoImplementation,
 	)
 }
 
 func (m Model) GotoReferenceAction() command.KeyAction {
 	return m.gotoLocationAction(
 		i18n.Text(i18n.StatusNoReferences),
-		func(
-			ls view.LanguageServerController,
-			doc *view.Document,
-			viewID view.Id,
-		) ([]view.Location, error) {
-			return ls.GotoReference(doc, viewID)
-		},
+		view.LanguageServerController.GotoReference,
 	)
 }
 
@@ -96,7 +66,7 @@ func (m Model) SelectReferencesAction() command.KeyAction {
 		}
 		highlights, err := ls.DocumentHighlights(doc, v.ID())
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		if len(highlights) == 0 {
@@ -129,7 +99,7 @@ func (m Model) gotoLocationAction(
 		}
 		locations, err := get(ls, doc, v.ID())
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		switch len(locations) {
@@ -163,7 +133,7 @@ func jumpToLocation(e *view.Editor, loc view.Location) {
 	action.SaveSelection(e)
 	v, err := e.OpenFile(loc.Path)
 	if err != nil {
-		e.SetStatusMsg(err.Error())
+		e.SetStatusMsg(i18n.ErrorText(err))
 		return
 	}
 	doc, ok := e.FocusedDocument()

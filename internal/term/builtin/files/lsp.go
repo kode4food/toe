@@ -30,6 +30,8 @@ const (
 	actLSPWorkspaceCommand = "lsp-workspace-command"
 )
 
+var errLSPUndefined = i18n.NewError(i18n.ErrorLSPUndefined)
+
 // LspModule returns the language-server navigation and action commands
 func LspModule(model ui.Model) command.Module {
 	g := kit.Prefixed(kit.Char('g'))
@@ -148,9 +150,7 @@ func LspModule(model ui.Model) command.Module {
 func runLSPRestart(e *view.Editor, args *command.Args) command.Result {
 	doc, ctl, ok := lspCommandContext(e)
 	if !ok {
-		return command.Result{
-			Message: i18n.Text(i18n.ErrorLSPUndefined),
-		}
+		return command.Result{Error: errLSPUndefined}
 	}
 	names, err := ctl.RestartLanguageServers(doc, positionals(args))
 	if err != nil {
@@ -162,9 +162,7 @@ func runLSPRestart(e *view.Editor, args *command.Args) command.Result {
 func runLSPStop(e *view.Editor, args *command.Args) command.Result {
 	doc, ctl, ok := lspCommandContext(e)
 	if !ok {
-		return command.Result{
-			Message: i18n.Text(i18n.ErrorLSPUndefined),
-		}
+		return command.Result{Error: errLSPUndefined}
 	}
 	names, err := ctl.StopLanguageServers(doc, positionals(args))
 	if err != nil {
@@ -177,9 +175,7 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 	return func(e *view.Editor, args *command.Args) command.Result {
 		doc, ctl, ok := lspCommandContext(e)
 		if !ok {
-			return command.Result{
-				Message: i18n.Text(i18n.ErrorLSPUndefined),
-			}
+			return command.Result{Error: errLSPUndefined}
 		}
 		if args == nil || args.Empty() {
 			return kit.Continuation(model.PickerAction(
@@ -209,15 +205,13 @@ func lspCommandContext(
 func lspCommandError(err error) command.Result {
 	switch {
 	case errors.Is(err, view.ErrNoLanguageServer):
-		return command.Result{
-			Message: i18n.Text(i18n.ErrorLSPUndefined),
-		}
+		return command.Result{Error: errLSPUndefined}
 	case errors.Is(err, view.ErrUnknownLanguageServer):
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	case errors.Is(err, view.ErrWorkspaceCommand):
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	default:
-		return command.Result{Message: "error: " + err.Error()}
+		return command.Result{Error: err}
 	}
 }
 

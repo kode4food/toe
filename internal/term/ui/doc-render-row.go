@@ -12,7 +12,6 @@ import (
 type (
 	rowRender struct {
 		lineStr       string
-		lgStyles      *lipglossStyles
 		tuiStyles     *tuiStyles
 		hlStyle       func(string) tui.Style
 		format        *language.TextFormat

@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -74,7 +75,7 @@ func (e *EditorComponent) handleCompletionMsg(
 		return consumed(), nil
 	}
 	if msg.err != nil {
-		cx.Editor.SetStatusMsg(msg.err.Error())
+		cx.Editor.SetStatusMsg(i18n.ErrorText(msg.err))
 		return consumed(), nil
 	}
 	if len(msg.items) == 0 {

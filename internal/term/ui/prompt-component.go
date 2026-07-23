@@ -310,9 +310,9 @@ func (p *PromptComponent) accept(
 ) EventResult {
 	switch p.kind {
 	case promptCmd:
-		sig, msg := execTypable(cx, strings.TrimSpace(p.buf))
-		p.ec.cmdMsg = msg
-		return pop(signalToCmd(sig))
+		res := execTypable(cx, strings.TrimSpace(p.buf))
+		p.ec.setCommandResult(res)
+		return pop(signalToCmd(res.Signal))
 
 	case promptSearch:
 		pat := strings.TrimSpace(p.buf)
@@ -321,7 +321,7 @@ func (p *PromptComponent) accept(
 			pat, _ = cx.Editor.FirstRegister(view.RegisterSearch)
 		}
 		if pat == "" {
-			p.ec.cmdMsg = ""
+			p.ec.clearCommandMessage()
 			return pop(nil)
 		}
 		var err error
@@ -331,11 +331,9 @@ func (p *PromptComponent) accept(
 			err = action.SearchBackward(cx.Editor, pat)
 		}
 		if err != nil {
-			p.ec.cmdMsg = i18n.Text(i18n.ErrorMessage, i18n.Vars{
-				"message": err.Error(),
-			})
+			p.ec.setCommandError(err)
 		} else {
-			p.ec.cmdMsg = ""
+			p.ec.clearCommandMessage()
 		}
 		return pop(nil)
 
@@ -346,9 +344,7 @@ func (p *PromptComponent) accept(
 		if p.pickerFn != nil {
 			picker, err := p.pickerFn(cx.Editor, p.buf)
 			if err != nil {
-				p.ec.cmdMsg = i18n.Text(i18n.ErrorMessage, i18n.Vars{
-					"message": err.Error(),
-				})
+				p.ec.setCommandError(err)
 				return pop(nil)
 			}
 			if picker == nil {
@@ -364,11 +360,9 @@ func (p *PromptComponent) accept(
 		}
 		if p.fn != nil {
 			if err := p.fn(cx.Editor, p.buf); err != nil {
-				p.ec.cmdMsg = i18n.Text(i18n.ErrorMessage, i18n.Vars{
-					"message": err.Error(),
-				})
+				p.ec.setCommandError(err)
 			} else {
-				p.ec.cmdMsg = ""
+				p.ec.clearCommandMessage()
 			}
 		}
 		return pop(nil)
@@ -381,12 +375,8 @@ func (p *PromptComponent) paintLine(
 	th := cx.Theme()
 	rowBg := lipgloss.NewStyle().
 		Background(th.Get("ui.cursorline.primary").GetBackground())
-	labelSt := lipglossToTUIStyle(
-		applyAccentStyle(rowBg, th.Get("ui.prompt")),
-	)
-	textSt := lipglossToTUIStyle(
-		rowBg.Foreground(th.Get("ui.text").GetForeground()),
-	)
+	labelSt := styleToTUI(applyAccentStyle(rowBg, th.Get("ui.prompt")))
+	textSt := styleToTUI(rowBg.Foreground(th.Get("ui.text").GetForeground()))
 
 	label := p.promptLabel()
 	buf.FillRange(area.Point, area.Width, textSt)

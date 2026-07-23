@@ -3,6 +3,7 @@ package config
 import (
 	"strconv"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -14,6 +15,11 @@ const (
 	actEcho          = "echo"
 	actRedraw        = "redraw"
 	actGoto          = "goto"
+)
+
+var (
+	errNoLineNumber      = i18n.NewError(i18n.ErrorNoLineNumber)
+	errInvalidLineNumber = i18n.NewError(i18n.ErrorInvalidLineNumber)
 )
 
 // SupportModule returns the help, echo, and misc support commands
@@ -57,16 +63,12 @@ func SupportModule() command.Module {
 				DocString: "Goto line number",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					if args == nil || args.Empty() {
-						return command.Result{
-							Message: "error: no line number given",
-						}
+						return command.Result{Error: errNoLineNumber}
 					}
 					lineStr, _ := args.First()
 					n, err := strconv.Atoi(lineStr)
 					if err != nil || n < 1 {
-						return command.Result{
-							Message: "error: invalid line number",
-						}
+						return command.Result{Error: errInvalidLineNumber}
 					}
 					action.GotoLine(e, n)
 					return command.Result{}

@@ -38,6 +38,12 @@ const (
 	actRead                  = "read"
 )
 
+var (
+	errNoFilename  = i18n.NewError(i18n.ErrorNoFilename)
+	errNoDocument  = i18n.NewError(i18n.ErrorNoDocument)
+	errUnsavedMove = i18n.NewError(i18n.ErrorUnsavedMove)
+)
+
 // FileModule returns the file open, write, and manage commands
 func FileModule() command.Module {
 	cfg := new(fileSection)
@@ -98,7 +104,7 @@ func fileWriteCmds() []command.Command {
 				setPathFromArgs(e, args)
 				autoFormat(e)
 				if err := e.Save(false); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				if doc, ok := e.FocusedDocument(); ok {
 					return command.Result{
@@ -142,9 +148,7 @@ func fileWriteCmds() []command.Command {
 			DocString: "Write changes from all buffers to disk",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if errs := e.SaveAll(false); len(errs) > 0 {
-					return command.Result{
-						Message: "error: " + errs[0].Error(),
-					}
+					return command.Result{Error: errs[0]}
 				}
 				return command.Result{
 					Message: i18n.Text(i18n.StatusAllWritten),
@@ -178,7 +182,7 @@ func fileWriteCmds() []command.Command {
 				setPathFromArgs(e, args)
 				autoFormat(e)
 				if err := e.Save(false); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
@@ -206,9 +210,7 @@ func fileWriteCmds() []command.Command {
 				"all views",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if errs := e.SaveAll(false); len(errs) > 0 {
-					return command.Result{
-						Message: "error: " + errs[0].Error(),
-					}
+					return command.Result{Error: errs[0]}
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
@@ -240,7 +242,7 @@ func fileWriteCmds() []command.Command {
 				setPathFromArgs(e, args)
 				autoFormat(e)
 				if err := e.Save(false); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				e.CloseCurrentView()
 				return command.Result{
@@ -284,7 +286,7 @@ func fileManageCmds() []command.Command {
 				}
 				autoFormat(e)
 				if err := e.Save(false); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{
 					Message: "'" + doc.RelativeName(e.Cwd()) + "' written",
@@ -299,14 +301,12 @@ func fileManageCmds() []command.Command {
 			DocString: "Open a file from disk into the current view",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoFilename),
-					}
+					return command.Result{Error: errNoFilename}
 				}
 				path, _ := args.First()
 				_, _, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
 				if err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				if doc, ok := e.FocusedDocument(); ok {
 					return command.Result{
@@ -337,7 +337,7 @@ func fileManageCmds() []command.Command {
 			DocString: "Discard changes and reload from the source file",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if err := e.Reload(); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				if doc, ok := e.FocusedDocument(); ok {
 					return command.Result{
@@ -357,9 +357,7 @@ func fileManageCmds() []command.Command {
 				"the source files",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if errs := e.ReloadAll(); len(errs) > 0 {
-					return command.Result{
-						Message: "error: " + errs[0].Error(),
-					}
+					return command.Result{Error: errs[0]}
 				}
 				return command.Result{Message: "all documents reloaded"}
 			},
@@ -373,25 +371,18 @@ func fileManageCmds() []command.Command {
 				"file to a different path",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoFilename),
-					}
+					return command.Result{Error: errNoFilename}
 				}
 				doc, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoDocument),
-					}
+					return command.Result{Error: errNoDocument}
 				}
 				if doc.Modified() {
-					return command.Result{
-						Message: "error: unsaved changes (use move! " +
-							"to force)",
-					}
+					return command.Result{Error: errUnsavedMove}
 				}
 				path, _ := args.First()
 				if err := e.MoveFocusedFile(path, false); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: "moved to '" + path + "'"}
 			},
@@ -406,15 +397,11 @@ func fileManageCmds() []command.Command {
 				"subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoFilename),
-					}
+					return command.Result{Error: errNoFilename}
 				}
 				_, ok := e.FocusedDocument()
 				if !ok {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoDocument),
-					}
+					return command.Result{Error: errNoDocument}
 				}
 				path, _ := args.First()
 				_ = e.MoveFocusedFile(path, true)
@@ -429,13 +416,11 @@ func fileManageCmds() []command.Command {
 			DocString: "Load a file into buffer",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					return command.Result{
-						Message: i18n.Text(i18n.ErrorNoFilename),
-					}
+					return command.Result{Error: errNoFilename}
 				}
 				path, _ := args.First()
 				if err := action.ReadFile(e, path); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: "'" + path + "' inserted"}
 			},

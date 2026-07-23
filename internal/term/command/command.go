@@ -78,6 +78,7 @@ type (
 	Result struct {
 		Signal       Signal
 		Message      string
+		Error        error
 		Continuation Continuation
 	}
 
@@ -89,7 +90,7 @@ type (
 )
 
 const (
-	SignalNone Signal = iota
+	_ Signal = iota
 	SignalQuit
 	SignalClearScreen
 )

@@ -23,7 +23,7 @@ func (m Model) SymbolPickerAction() command.KeyAction {
 		}
 		symbols, err := ls.DocumentSymbols(doc)
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		if len(symbols) == 0 {
@@ -75,7 +75,7 @@ func (m Model) CodeActionPickerAction() command.KeyAction {
 		}
 		actions, err := ls.CodeActions(doc, v.ID())
 		if err != nil {
-			e.SetStatusMsg(err.Error())
+			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
 		if len(actions) == 0 {

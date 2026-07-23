@@ -81,13 +81,13 @@ func (r *renderPass) renderTerminalStatus(
 	if focused {
 		statusKey = "ui.statusline"
 	}
-	st := lipglossToTUIStyle(th.Get(statusKey))
+	st := styleToTUI(th.Get(statusKey))
 	y := y0 + a.Bottom()
 	buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, st)
 
 	modeSt := st
 	if focused {
-		modeSt = lipglossToTUIStyle(th.Get("ui.statusline.terminal"))
+		modeSt = styleToTUI(th.Get("ui.statusline.terminal"))
 	}
 	label := " TRM "
 	if tp.ConsumeBell(focused) && !focused {
@@ -136,9 +136,9 @@ func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
 
 func uvStyleToTUI(st uv.Style) tui.Style {
 	out := tui.Style{}
-	out = out.Fg(lipglossColorToTUI(st.Fg))
-	out = out.Bg(lipglossColorToTUI(st.Bg))
-	out = out.UlColor(lipglossColorToTUI(st.UnderlineColor))
+	out = out.Fg(colorToTUI(st.Fg))
+	out = out.Bg(colorToTUI(st.Bg))
+	out = out.UlColor(colorToTUI(st.UnderlineColor))
 	out = out.UlStyle(ansiUnderlineToTUI(st.Underline))
 	var m tui.Modifier
 	if st.Attrs&uv.AttrBold != 0 {

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -81,7 +82,7 @@ func RunCmd(
 	if cmd.Run == nil {
 		return command.Result{}
 	}
-	return cmd.Run(e, nil)
+	return resultText(cmd.Run(e, nil))
 }
 
 // RunCmdArgs resolves a command and runs it with positional args parsed from
@@ -94,7 +95,7 @@ func RunCmdArgs(
 	assert.True(t, ok)
 	args, err := command.ParseArgs(input, cmd.Signature, false, nil)
 	assert.NoError(t, err)
-	return cmd.Run(e, args)
+	return resultText(cmd.Run(e, args))
 }
 
 // DocText returns the focused document's full text
@@ -131,4 +132,11 @@ func Char(ch rune) command.KeyEvent {
 // Special is a bare key event for a special key
 func Special(s command.Special) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Special: s}}
+}
+
+func resultText(res command.Result) command.Result {
+	if res.Error != nil {
+		res.Message = i18n.ErrorText(res.Error)
+	}
+	return res
 }

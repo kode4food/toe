@@ -5,11 +5,11 @@ import (
 	"os"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
-	viewcfg "github.com/kode4food/toe/internal/view/config"
 )
 
 type uiSection struct {
@@ -42,6 +42,14 @@ const (
 	actSetLineEnding       = "set_line_ending"
 	actIndentStyle         = "indent_style"
 	actEncoding            = "encoding"
+)
+
+var (
+	errUsageGet      = i18n.NewError(i18n.ErrorUsageGet)
+	errUsageSet      = i18n.NewError(i18n.ErrorUsageSet)
+	errUsageToggle   = i18n.NewError(i18n.ErrorUsageToggle)
+	errUnknownOption = i18n.NewError(i18n.ErrorUnknownOptionKey)
+	errInvalidOption = i18n.NewError(i18n.ErrorInvalidOptionKey)
 )
 
 func terminalTrueColor() bool {
@@ -223,21 +231,20 @@ func configOptionCmds(r *command.Registry) []command.Command {
 			DocString: "Get the current value of a config option",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					return command.Result{
-						Message: "error: usage: get <key>",
-					}
+					return command.Result{Error: errUsageGet}
 				}
 				key, _ := args.First()
 				o, ok := r.LookupOption(key)
 				if !ok {
 					return command.Result{
-						Message: "error: " +
-							viewcfg.ErrUnknownOption.Error() + ": " + key,
+						Error: errUnknownOption.WithVars(i18n.Vars{
+							"key": key,
+						}),
 					}
 				}
 				value, err := o.Get(e)
 				if err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{Message: value}
 			},
@@ -255,21 +262,20 @@ func configOptionCmds(r *command.Registry) []command.Command {
 			DocString: "Set a config option at runtime",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Len() < 2 {
-					return command.Result{
-						Message: "error: usage: set <key> <value>",
-					}
+					return command.Result{Error: errUsageSet}
 				}
 				key, _ := args.Get(0)
 				val, _ := args.Get(1)
 				o, ok := r.LookupOption(key)
 				if !ok {
 					return command.Result{
-						Message: "error: " +
-							viewcfg.ErrUnknownOption.Error() + ": " + key,
+						Error: errUnknownOption.WithVars(i18n.Vars{
+							"key": key,
+						}),
 					}
 				}
 				if err := o.Set(e, val); err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{}
 			},
@@ -291,21 +297,20 @@ func configOptionCmds(r *command.Registry) []command.Command {
 			DocString: "Toggle a config option at runtime",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					return command.Result{
-						Message: "error: usage: toggle <key>",
-					}
+					return command.Result{Error: errUsageToggle}
 				}
 				key, _ := args.First()
 				o, ok := r.LookupOption(key)
 				if !ok || o.Toggle == nil {
 					return command.Result{
-						Message: "error: " +
-							viewcfg.ErrInvalidOption.Error() + ": " + key,
+						Error: errInvalidOption.WithVars(i18n.Vars{
+							"key": key,
+						}),
 					}
 				}
 				value, err := o.Toggle(e)
 				if err != nil {
-					return command.Result{Message: "error: " + err.Error()}
+					return command.Result{Error: err}
 				}
 				return command.Result{
 					Message: "'" + key + "' is now set to " + value,

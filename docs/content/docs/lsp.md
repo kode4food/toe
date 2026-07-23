@@ -48,6 +48,8 @@ Language server config in `.toe/languages.toml` is merged on top of user config,
 | Document symbols | `Space+s` | `symbol_picker` |
 | Workspace symbols | `Space+S` | `workspace_symbol_picker` |
 
+Workspace symbol searches query every running language server, not only the server for the focused document. A language server starts when a document for its language is opened.
+
 Diagnostics (errors and warnings) appear as underlines in the document, markers in the gutter, counts in the status bar, and a popup when the cursor rests on a diagnostic.
 
 ## Restarting Servers

@@ -319,8 +319,9 @@ func TestIntegration(t *testing.T) {
 		tt.escape()
 		tt.send(":write\r") // closing a modified doc needs it saved first
 		tt.send("\x17q")    // ctrl-w q: close the focused split
-		tt.waitFor("hello world")
-		assert.Equal(t, 1, strings.Count(tt.screen(), "hello world"))
+		// "hello world" already shows in both splits, so wait on the count
+		// dropping to 1 rather than on its presence
+		tt.waitForCount("hello world", 1)
 		tt.quit()
 	})
 
@@ -398,6 +399,26 @@ func (tt *tui) waitFor(want string) {
 		time.Sleep(pollPause)
 	}
 	tt.t.Fatalf("timed out waiting for %q; screen:\n%s", want, tt.screen())
+}
+
+// waitForCount polls until want appears on screen exactly n times, needed
+// when the wanted text already exists and the action changes its count
+// (e.g. closing a split that duplicated a document)
+func (tt *tui) waitForCount(want string, n int) {
+	tt.t.Helper()
+	deadline := time.Now().Add(waitTimeout)
+	var last int
+	for time.Now().Before(deadline) {
+		last = strings.Count(tt.screen(), want)
+		if last == n {
+			return
+		}
+		time.Sleep(pollPause)
+	}
+	tt.t.Fatalf(
+		"timed out waiting for %d× %q, saw %d; screen:\n%s",
+		n, want, last, tt.screen(),
+	)
 }
 
 // waitFileContent polls a file on disk until it holds the wanted content

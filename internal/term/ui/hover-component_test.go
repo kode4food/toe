@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -148,6 +149,29 @@ func TestHoverComponent(t *testing.T) {
 		// the literal --- becomes a border-tied horizontal rule
 		assert.NotContains(t, out, "---")
 		assert.Contains(t, out, "├─")
+	})
+
+	t.Run("wraps long text and breaks long words", func(t *testing.T) {
+		e := editorWithText(t, "Println")
+		e.SetMode(view.ModeNormal)
+		e.SetLanguageServerController(&completionController{
+			editor: e,
+			hoverText: strings.Repeat("word ", 40) +
+				strings.Repeat("x", 200),
+		})
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, ' ')
+		m = sendKey(m, 'k')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "word word")
+		assert.Contains(t, out, strings.Repeat("x", 30))
+		assert.NotContains(t, out, strings.Repeat("x", 200))
 	})
 
 	t.Run("renders code block in hover popup", func(t *testing.T) {

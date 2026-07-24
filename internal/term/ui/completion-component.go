@@ -2,7 +2,6 @@ package ui
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
@@ -179,7 +178,6 @@ func (c *completionComponent) paint(
 	c.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  menu.Fg(pickerFrameStyle(cx).FgColor()),
 		contentStyle: menu,
 	}

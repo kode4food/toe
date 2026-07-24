@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -54,7 +54,6 @@ func (r *renderPass) drawDiagnosticPopup(
 	}
 	st := diagnosticPopupStyle(r.cx, severity)
 	pop := popup{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  st,
 		contentStyle: st,
 		padX:         1,
@@ -224,7 +223,8 @@ func diagnosticPopupLines(text string, width, maxLines int) []string {
 		return nil
 	}
 	var lines []string
-	for line := range strings.SplitSeq(lipgloss.Wrap(text, width, ""), "\n") {
+	wrapped := core.ReflowHardWrap(text, width)
+	for line := range strings.SplitSeq(wrapped, "\n") {
 		line = strings.TrimRight(line, " \t")
 		if line == "" {
 			continue

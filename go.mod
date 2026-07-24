@@ -6,7 +6,6 @@ toolchain go1.26.4
 
 require (
 	charm.land/bubbletea/v2 v2.0.8
-	charm.land/lipgloss/v2 v2.0.5
 	github.com/BurntSushi/toml v1.6.0
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/charmbracelet/ultraviolet v0.0.0-20260713092251-4bee1914c0cf
@@ -42,7 +41,9 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
+	github.com/aymanbagabas/go-udiff v0.4.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
+	github.com/charmbracelet/x/exp/golden v0.0.0-20250806222409-83e3a29d542f // indirect
 	github.com/charmbracelet/x/exp/ordered v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect

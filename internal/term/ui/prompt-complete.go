@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -86,7 +85,6 @@ func (p *PromptComponent) paintCompletions(
 ) {
 	menuStyle, selected := promptCompletionStyles(cx)
 	pop := popup{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  menuStyle.Fg(pickerFrameStyle(cx).FgColor()),
 		contentStyle: menuStyle,
 		padX:         compPadX,

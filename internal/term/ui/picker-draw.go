@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -22,7 +20,6 @@ func (p *PickerComponent) drawPickerBox(
 	ps.list.height = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  pickerFrameStyle(cx),
 		contentStyle: pickerContentStyle(cx),
 	}
@@ -79,7 +76,6 @@ func (p *PickerComponent) drawPickerPane(
 	ps.list.height = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  pickerFrameStyle(cx),
 		contentStyle: pickerContentStyle(cx),
 	}

@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
@@ -126,9 +125,7 @@ func (s *signatureHelpComponent) paint(
 ) {
 	sig := s.help.Signatures[s.cursor]
 	st := cx.Theme().Get("ui.popup")
-	border := lipgloss.RoundedBorder()
 	pop := popup{
-		border:       border,
 		borderStyle:  st,
 		contentStyle: st,
 		padX:         0,
@@ -146,11 +143,10 @@ func (s *signatureHelpComponent) paint(
 		return
 	}
 	renderSignatureSeparator(renderSignatureSeparatorArgs{
-		buf:    buf,
-		at:     geom.Point{Y: area.Y + 1},
-		width:  pl.Width,
-		border: border,
-		style:  st,
+		buf:   buf,
+		at:    geom.Point{Y: area.Y + 1},
+		width: pl.Width,
+		style: st,
 	})
 	docArea := area
 	docArea.Y += 2
@@ -265,17 +261,14 @@ func (s *signatureHelpComponent) renderSignature(
 }
 
 type renderSignatureSeparatorArgs struct {
-	buf    *tui.Buffer
-	at     geom.Point
-	width  int
-	border lipgloss.Border
-	style  tui.Style
+	buf   *tui.Buffer
+	at    geom.Point
+	width int
+	style tui.Style
 }
 
 func renderSignatureSeparator(args renderSignatureSeparatorArgs) {
-	line := args.border.MiddleLeft +
-		strings.Repeat(args.border.Top, max(args.width-2, 0)) +
-		args.border.MiddleRight
+	line := borderML + strings.Repeat(borderH, max(args.width-2, 0)) + borderMR
 	args.buf.SetString(args.at, line, args.style)
 }
 

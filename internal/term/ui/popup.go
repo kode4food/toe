@@ -3,15 +3,12 @@ package ui
 import (
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
 type (
 	popup struct {
-		border       lipgloss.Border
 		borderStyle  tui.Style
 		contentStyle tui.Style
 		padX         int
@@ -27,12 +24,8 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		)
 	}
 	if area.Width >= 2 && area.Height >= 2 {
-		top := p.border.TopLeft +
-			strings.Repeat(p.border.Top, area.Width-2) +
-			p.border.TopRight
-		bot := p.border.BottomLeft +
-			strings.Repeat(p.border.Bottom, area.Width-2) +
-			p.border.BottomRight
+		top := borderTL + strings.Repeat(borderH, area.Width-2) + borderTR
+		bot := borderBL + strings.Repeat(borderH, area.Width-2) + borderBR
 		buf.SetString(area.Point, top, p.borderStyle)
 		buf.SetString(geom.Point{
 			X: area.X,
@@ -40,13 +33,13 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		}, bot, p.borderStyle)
 		for y := 1; y < area.Height-1; y++ {
 			buf.SetString(
-				area.Point.Add(geom.Point{Y: y}), p.border.Left, p.borderStyle,
+				area.Point.Add(geom.Point{Y: y}), borderV, p.borderStyle,
 			)
 
 			buf.SetString(geom.Point{
 				X: area.Right(),
 				Y: area.Y + y,
-			}, p.border.Right, p.borderStyle)
+			}, borderV, p.borderStyle)
 		}
 	}
 	return area.Inset(geom.Size{Width: 1 + p.padX, Height: 1})

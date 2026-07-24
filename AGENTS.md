@@ -2,7 +2,7 @@
 
 ## Project
 
-Thom's Own Editor: a Go-native modal terminal editor using Go 1.26, Bubbletea, Lipgloss, and Chroma. Module: `github.com/kode4food/toe`
+Thom's Own Editor: a Go-native modal terminal editor. Module: `github.com/kode4food/toe`
 
 ## CRITICAL: Do Exactly What Is Asked
 
@@ -1003,13 +1003,12 @@ const (
 
 # UI Library Policy
 
-**Always prefer Bubbletea and Lipgloss over home-grown alternatives.** Before writing custom terminal UI code, check whether the library already handles it:
+**Prefer Bubbletea and the `tui` buffer layer over home-grown alternatives.** Before writing custom terminal UI code, check whether an existing primitive already handles it:
 
-- Use `lipgloss.Style` for padding, truncation, colour, borders — not manual ANSI or `strings.Repeat`.
-- Use `lipgloss.Wrap` for ANSI-aware word wrapping.
-- Use `ansi.StringWidth` / `ansi.Truncate` when you need raw cell widths without wrapping (e.g. clipping a single preview row).
-- Use `lipgloss.JoinVertical` / `JoinHorizontal` / `PlaceHorizontal` for layout instead of manual gap calculations.
-- For overlay panels, implement `BufferOverlayComponent` (`RenderOverBuffer`) rather than `OverlayComponent` (`RenderOver` with lipgloss layers). The buffer-native path skips the ANSI round-trip and is significantly faster for complex overlays. Use `OverlayComponent` / `lipgloss.NewLayer` + `lipgloss.NewCompositor` only for simple string-based overlays (e.g. the command prompt).
+- Use `tui.Style` for colour and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing — not manual ANSI or ad-hoc `strings.Repeat` frames.
+- Use `wrapText` (`internal/term/ui/wrap.go`) for word wrapping. Always wrap plain text first, then apply styling per cell — never feed styled/ANSI text to the wrapper; by then it is too late to wrap well.
+- Use `ansi.StringWidth` / `ansi.Truncate` when you need raw cell widths or single-row clipping (e.g. clipping a single preview row).
+- For overlay panels, implement `BufferOverlayComponent` and draw into the `tui.Buffer` directly. The buffer-native path skips the ANSI round-trip and is fast for complex overlays.
 - Use the `popup` struct (`internal/term/ui/popup.go`) for any bordered popup window — it fills the box with the content style and draws the border in one pass, so callers write per-cell content without worrying about ANSI background resets.
 - Use `tea.View.Cursor` for cursor shape and position instead of raw DECSCUSR escapes in content strings.
 

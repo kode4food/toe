@@ -5,7 +5,7 @@ weight: 60
 
 # Architecture
 
-toe is a Go-native modal terminal editor built on Bubbletea, Lipgloss, Tree-sitter, and Chroma. This page explains the current package layout, the main data flow, and the integration points that exist in the code today.
+toe is a Go-native modal terminal editor built on Bubbletea, Tree-sitter, and Chroma. This page explains the current package layout, the main data flow, and the integration points that exist in the code today.
 
 ## Design Principles
 
@@ -55,7 +55,7 @@ Every overlay (completion, hover, signature help, code actions, pickers, the com
 
 Packages: `internal/term/syntax`, `internal/term/highlight`, `internal/term/theme`.
 
-`syntax` owns the Tree-sitter language registry, embedded highlight, injection, and textobject queries, query inheritance, parser/query caches, Tree-sitter tokenization, syntax-aware selection, bracket matching, and surround-pair lookup for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto Lipgloss styles. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path. Binary picker previews decode PNG, JPEG, and GIF files into image previews when supported.
+`syntax` owns the Tree-sitter language registry, embedded highlight, injection, and textobject queries, query inheritance, parser/query caches, Tree-sitter tokenization, syntax-aware selection, bracket matching, and surround-pair lookup for the supported languages. `highlight` is the Chroma fallback and also provides language detection and fallback styles. `theme` decodes embedded Catppuccin themes and maps scope names onto `tui.Style` values. Editor rendering caches highlight spans per document revision; picker previews cache spans for open documents by revision and file previews by path. Binary picker previews decode PNG, JPEG, and GIF files into image previews when supported.
 
 Highlight queries are bundled for every supported Tree-sitter language. Injection and textobject queries are bundled where toe has behavior that consumes them.
 

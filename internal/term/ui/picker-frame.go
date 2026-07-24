@@ -3,15 +3,12 @@ package ui
 import (
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
 
 type (
 	pickerBoxFrame struct {
-		border       lipgloss.Border
 		borderStyle  tui.Style
 		contentStyle tui.Style
 	}
@@ -34,16 +31,10 @@ func (f pickerBoxFrame) drawSplit(
 	if area.Width < 2 || area.Height < 2 {
 		return pickerBoxAreas{}
 	}
-	top := f.border.TopLeft +
-		strings.Repeat(f.border.Top, lw) +
-		f.border.MiddleTop +
-		strings.Repeat(f.border.Top, rw) +
-		f.border.TopRight
-	bot := f.border.BottomLeft +
-		strings.Repeat(f.border.Bottom, lw) +
-		f.border.MiddleBottom +
-		strings.Repeat(f.border.Bottom, rw) +
-		f.border.BottomRight
+	top := borderTL + strings.Repeat(borderH, lw) + borderMT +
+		strings.Repeat(borderH, rw) + borderTR
+	bot := borderBL + strings.Repeat(borderH, lw) + borderMB +
+		strings.Repeat(borderH, rw) + borderBR
 	buf.SetString(area.Point, top, f.borderStyle)
 	buf.SetString(geom.Point{
 		X: area.X,
@@ -52,26 +43,24 @@ func (f pickerBoxFrame) drawSplit(
 	for i := 0; i < area.Height-2; i++ {
 		ry := area.Y + 1 + i
 		if cutY > 0 && i == cutY-1 {
-			cut := f.border.MiddleLeft +
-				strings.Repeat(f.border.Top, lw) +
-				f.border.MiddleRight
+			cut := borderML + strings.Repeat(borderH, lw) + borderMR
 			buf.SetString(geom.Point{X: area.X, Y: ry}, cut, f.borderStyle)
 			buf.SetString(geom.Point{
 				X: area.Right(),
 				Y: ry,
-			}, f.border.Right, f.borderStyle)
+			}, borderV, f.borderStyle)
 		} else {
 			buf.SetString(
-				geom.Point{X: area.X, Y: ry}, f.border.Left, f.borderStyle,
+				geom.Point{X: area.X, Y: ry}, borderV, f.borderStyle,
 			)
 			buf.SetString(geom.Point{
 				X: area.X + 1 + lw,
 				Y: ry,
-			}, f.border.Left, f.borderStyle)
+			}, borderV, f.borderStyle)
 			buf.SetString(geom.Point{
 				X: area.Right(),
 				Y: ry,
-			}, f.border.Right, f.borderStyle)
+			}, borderV, f.borderStyle)
 		}
 	}
 	return pickerBoxAreas{
@@ -97,12 +86,8 @@ func (f pickerBoxFrame) drawSingle(
 	if area.Width < 2 || area.Height < 2 {
 		return geom.Area{}
 	}
-	top := f.border.TopLeft +
-		strings.Repeat(f.border.Top, innerW) +
-		f.border.TopRight
-	bot := f.border.BottomLeft +
-		strings.Repeat(f.border.Bottom, innerW) +
-		f.border.BottomRight
+	top := borderTL + strings.Repeat(borderH, innerW) + borderTR
+	bot := borderBL + strings.Repeat(borderH, innerW) + borderBR
 	buf.SetString(area.Point, top, f.borderStyle)
 	buf.SetString(geom.Point{
 		X: area.X,
@@ -111,18 +96,14 @@ func (f pickerBoxFrame) drawSingle(
 	for i := 0; i < area.Height-2; i++ {
 		ry := area.Y + 1 + i
 		if cutY > 0 && i == cutY-1 {
-			cut := f.border.MiddleLeft +
-				strings.Repeat(f.border.Top, innerW) +
-				f.border.MiddleRight
+			cut := borderML + strings.Repeat(borderH, innerW) + borderMR
 			buf.SetString(geom.Point{X: area.X, Y: ry}, cut, f.borderStyle)
 		} else {
-			buf.SetString(
-				geom.Point{X: area.X, Y: ry}, f.border.Left, f.borderStyle,
-			)
+			buf.SetString(geom.Point{X: area.X, Y: ry}, borderV, f.borderStyle)
 			buf.SetString(geom.Point{
 				X: area.Right(),
 				Y: ry,
-			}, f.border.Right, f.borderStyle)
+			}, borderV, f.borderStyle)
 		}
 	}
 	return area.Inset(geom.Size{Width: 1, Height: 1})

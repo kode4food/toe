@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
@@ -24,21 +23,11 @@ type renderPass struct {
 	size geom.Size
 }
 
-const (
-	splitIntersect = "\u253c" // '┼' - box drawings light cross
-	splitLeftT     = "\u251c" // '├' - box drawings light left T
-	splitRightT    = "\u2524" // '┤' - box drawings light vertical and left
-	vertSplit      = "\u2502" // '│' - box drawings light vertical
-	splitUpT       = "\u2534" // '┴' - box drawings light up and horizontal
-	splitDownT     = "\u252c" // '┬' - box drawings light down T
-	horizSplit     = "\u2500" // '─' - box drawings light horizontal
-)
-
 var splitSepIntersectionChars = [...]string{
-	horizSplit, horizSplit, horizSplit, vertSplit,
-	horizSplit, horizSplit, horizSplit, splitRightT,
-	horizSplit, horizSplit, horizSplit, splitLeftT,
-	horizSplit, splitUpT, splitDownT, splitIntersect,
+	borderH, borderH, borderH, borderV,
+	borderH, borderH, borderH, borderMR,
+	borderH, borderH, borderH, borderML,
+	borderH, borderMB, borderMT, borderX,
 }
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
@@ -317,7 +306,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		x, y := cell[0], cell[1]
 		left := horizCells[[2]int{x - 1, y}]
 		right := horizCells[[2]int{x + 1, y}]
-		ch := vertSplit
+		ch := borderV
 		if left || right {
 			ch = splitSepIntersectionChar(
 				vertCells[[2]int{x, y - 1}], vertCells[[2]int{x, y + 1}],
@@ -333,7 +322,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		}
 		above := vertCells[[2]int{x, y - 1}]
 		below := vertCells[[2]int{x, y + 1}]
-		ch := horizSplit
+		ch := borderH
 		if above || below {
 			ch = splitSepIntersectionChar(
 				above, below,
@@ -396,7 +385,6 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	}
 
 	pop := popup{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  popupTUI,
 		contentStyle: popupTUI,
 		padX:         1,

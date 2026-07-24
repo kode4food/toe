@@ -4,10 +4,10 @@ import (
 	"regexp"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/tui"
@@ -99,7 +99,8 @@ func (p *popupMarkdown) appendWrapped(text string, heading bool) {
 	if p.width <= 0 {
 		return
 	}
-	for line := range strings.SplitSeq(lipgloss.Wrap(text, p.width, ""), "\n") {
+	wrapped := core.ReflowHardWrap(text, p.width)
+	for line := range strings.SplitSeq(wrapped, "\n") {
 		p.lines = append(p.lines, popupLine{
 			text:    line,
 			heading: heading,
@@ -121,7 +122,7 @@ func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 	if line.rule {
 		// span the full box, tying into border like the picker cut-separator
 		w := r.area.Width + 2*r.padX
-		rule := splitLeftT + strings.Repeat(horizSplit, w) + splitRightT
+		rule := borderML + strings.Repeat(borderH, w) + borderMR
 		r.buf.SetString(geom.Point{
 			X: r.area.X - 1 - r.padX,
 			Y: y,
@@ -217,7 +218,6 @@ func measureTextPopup(maxSize geom.Size, text string) ([]popupLine, geom.Size) {
 func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
 	st := cx.Theme().Get("ui.popup")
 	pop := popup{
-		border:       lipgloss.RoundedBorder(),
 		borderStyle:  st,
 		contentStyle: st,
 		padX:         popupPadX,

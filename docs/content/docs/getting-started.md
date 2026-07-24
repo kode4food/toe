@@ -12,8 +12,8 @@ toe is a modal terminal editor built for Go development. toe edits Go projects, 
 - Go 1.26 or later when building from source
 - A terminal with ANSI color support
 - `gopls` on `PATH` for Go language features
-- A Kitty graphics capable terminal for inline image display: kitty, Ghostty, WezTerm, or Konsole
-- Optional Nerd Font glyphs for richer picker/completion icons; set `nerd-fonts = false` for ASCII fallbacks
+- A Kitty graphics capable terminal
+- Nerd Font glyphs for enhanced UI
 
 ## Installing
 

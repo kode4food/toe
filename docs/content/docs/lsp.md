@@ -5,7 +5,7 @@ weight: 50
 
 # Language Servers
 
-toe is a Go editor, and its LSP support is built around `gopls`. Bundled language definitions also cover common project formats and web languages. Language servers are external programs that must be installed on your `PATH`; `languages.toml` selects and configures them.
+toe uses `gopls` for Go language features. Other language servers can be selected and configured in `languages.toml`; each server must be installed on your `PATH`.
 
 ## Configuring a Language Server
 

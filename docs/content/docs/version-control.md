@@ -42,4 +42,4 @@ Aliases:
 
 ## Statusline
 
-The `version-control` statusline element displays the current git head or branch name when available.
+When configured, the `version-control` statusline element displays the current git head or branch name.

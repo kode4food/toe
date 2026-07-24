@@ -23,8 +23,8 @@ toe is opinionated because it is built for one tight workflow: editing Go projec
 ## Quick Start
 
 ```sh
-make install        # install to $GOPATH/bin
-toe path/to/file    # open a file
+brew install kode4food/tap/toe   # install
+toe path/to/file                 # open a file
 ```
 
 Press `i` to insert text. `Escape` returns to Normal mode. `:wq` saves and quits.

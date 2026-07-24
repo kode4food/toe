@@ -8,54 +8,62 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Context holds shared mutable state accessible to all compositor layers
-type Context struct {
-	Editor  *view.Editor
-	Keymaps *command.Keymaps
-	Syntax  *syntax.Cache
+type (
+	// Context holds shared mutable state accessible to all compositor layers
+	Context struct {
+		Editor  *view.Editor
+		Keymaps *command.Keymaps
+		Syntax  *syntax.Cache
 
-	SingleLayer bool
-	lastLayer   func(*view.Editor) layerFunc
+		composition compositionState
+		theme       themeState
 
-	OverlayRegions        []geom.Area
-	OverlayRegionsPrecise bool
-	OverlaysChanged       bool
+		lastLayer    func(*view.Editor) layerFunc
+		pickerLayout PickerLayoutOptions
+		images       *imageRegistry
+	}
 
-	pickerLayout PickerLayoutOptions
-	loadedTheme  *theme.Theme
-	theme        string
-	styleGen     int
+	compositionState struct {
+		singleLayer bool
+		regions     []geom.Area
+		precise     bool
+		changed     bool
+	}
 
-	images *imageRegistry
-}
+	themeState struct {
+		loaded     *theme.Theme
+		name       string
+		generation int
+	}
+)
 
 // StyleGen returns a counter that increments whenever the active theme changes,
 // letting cached overlay buffers know they must repaint even without their own
 // content changing
 func (c *Context) StyleGen() int {
-	return c.styleGen
+	return c.theme.generation
 }
 
 // Theme returns the active theme, reloading it if the configured name
 // changed, falling back to the embedded default on load failure
 func (c *Context) Theme() *theme.Theme {
 	name := c.Editor.Options().Theme
-	if name == c.theme {
-		return c.loadedTheme
+	if name == c.theme.name {
+		return c.theme.loaded
 	}
-	c.theme = name
-	c.styleGen++
+	c.theme.name = name
+	c.theme.generation++
 	if th, _, err := theme.Load(name); err == nil {
-		c.loadedTheme = th
-		return c.loadedTheme
+		c.theme.loaded = th
+		return c.theme.loaded
 	}
 	th, _, err := theme.Default()
 	if err != nil {
-		c.loadedTheme = fallbackTheme()
-		return c.loadedTheme
+		c.theme.loaded = fallbackTheme()
+		return c.theme.loaded
 	}
-	c.loadedTheme = th
-	return c.loadedTheme
+	c.theme.loaded = th
+	return c.theme.loaded
 }
 
 func fallbackTheme() *theme.Theme {

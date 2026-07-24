@@ -12,7 +12,7 @@ type SessionWriter struct {
 
 // SaveSession stores this view's document state in w
 func (v *View) SaveSession(w *SessionWriter) {
-	doc, ok := v.editor.docs[v.docID]
+	doc, ok := v.editor.documents.byID[v.docID]
 	if !ok {
 		w.node = sessionNode{Kind: SessionKindView}
 		return
@@ -90,12 +90,12 @@ func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 func (e *Editor) sessionNodeFor(
 	id Id, docIndex map[DocumentId]int, base string,
 ) sessionNode {
-	n := e.tree.nodes[id]
+	n := e.panes.tree.nodes[id]
 	if n.pane != nil {
 		w := &SessionWriter{
 			docIndex: docIndex,
 			base:     base,
-			focused:  e.tree.focus == id,
+			focused:  e.panes.tree.focus == id,
 		}
 		n.pane.SaveSession(w)
 		return w.node

@@ -109,7 +109,7 @@ func (r *renderPass) renderTerminalStatus(
 }
 
 func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
-	sp, ok := tp.selection()
+	sp, ok := tp.selectedSpan()
 	if !ok {
 		return
 	}

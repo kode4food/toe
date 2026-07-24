@@ -110,7 +110,7 @@ func (m Model) gotoLocationAction(
 		default:
 			opener := locationPickerLayer(locations)
 			cx.lastLayer = opener
-			ec.nextLayer = opener(e)
+			ec.keys.nextLayer = opener(e)
 		}
 		return nil
 	}
@@ -121,8 +121,8 @@ func locationPickerLayer(
 ) func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPLocationPicker(e, locations)
-		cmd := p.feedCmd
-		p.feedCmd = nil
+		cmd := p.load.feedCmd
+		p.load.feedCmd = nil
 		return func(_ *Context) (Component, tea.Cmd) {
 			return newPickerComponent(p), cmd
 		}

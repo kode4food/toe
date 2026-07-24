@@ -32,7 +32,7 @@ func (m Model) SymbolPickerAction() command.KeyAction {
 		}
 		opener := symbolPickerLayer(symbols)
 		cx.lastLayer = opener
-		ec.nextLayer = opener(e)
+		ec.keys.nextLayer = opener(e)
 		return nil
 	}
 }
@@ -52,7 +52,7 @@ func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
 		}
 		opener := workspaceSymbolPickerLayer()
 		cx.lastLayer = opener
-		ec.nextLayer = opener(e)
+		ec.keys.nextLayer = opener(e)
 		return nil
 	}
 }
@@ -84,7 +84,7 @@ func (m Model) CodeActionPickerAction() command.KeyAction {
 		}
 		docID := doc.ID()
 		viewID := v.ID()
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newCodeActionMenu(ec, docID, viewID, actions), nil
 		}
 		return nil
@@ -94,8 +94,8 @@ func (m Model) CodeActionPickerAction() command.KeyAction {
 func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPSymbolPicker(e, symbols)
-		cmd := p.feedCmd
-		p.feedCmd = nil
+		cmd := p.load.feedCmd
+		p.load.feedCmd = nil
 		return func(_ *Context) (Component, tea.Cmd) {
 			return newPickerComponent(p), cmd
 		}
@@ -105,8 +105,8 @@ func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
 func workspaceSymbolPickerLayer() func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPWorkspaceSymbolPicker(e)
-		cmd := p.feedCmd
-		p.feedCmd = nil
+		cmd := p.load.feedCmd
+		p.load.feedCmd = nil
 		return func(_ *Context) (Component, tea.Cmd) {
 			return newPickerComponent(p), cmd
 		}

@@ -226,7 +226,7 @@ func (s *signatureHelpComponent) refresh(
 }
 
 func (s *signatureHelpComponent) dismiss(_ *Context, comp *Compositor) tea.Cmd {
-	s.ec.signatureHidden = &s.call
+	s.ec.language.signatureHidden = &s.call
 	comp.Pop()
 	return nil
 }

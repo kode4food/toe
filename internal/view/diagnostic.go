@@ -39,17 +39,17 @@ const (
 
 // ReplaceDiagnostics replaces all diagnostics from provider with diags
 func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
-	d.ls.Lock()
-	before := slices.Clone(d.ls.diagnostics)
-	out := d.ls.diagnostics[:0]
-	for _, diag := range d.ls.diagnostics {
+	d.overlays.Lock()
+	before := slices.Clone(d.overlays.diagnostics)
+	out := d.overlays.diagnostics[:0]
+	for _, diag := range d.overlays.diagnostics {
 		if diag.Provider != provider {
 			out = append(out, diag)
 		}
 	}
-	d.ls.diagnostics = append(out, diags...)
-	changed := !slices.Equal(before, d.ls.diagnostics)
-	d.ls.Unlock()
+	d.overlays.diagnostics = append(out, diags...)
+	changed := !slices.Equal(before, d.overlays.diagnostics)
+	d.overlays.Unlock()
 	if changed {
 		d.MarkDirty()
 	}
@@ -57,10 +57,10 @@ func (d *Document) ReplaceDiagnostics(provider string, diags []Diagnostic) {
 
 // ClearDiagnostics removes all diagnostics from the document
 func (d *Document) ClearDiagnostics() {
-	d.ls.Lock()
-	changed := len(d.ls.diagnostics) != 0
-	d.ls.diagnostics = nil
-	d.ls.Unlock()
+	d.overlays.Lock()
+	changed := len(d.overlays.diagnostics) != 0
+	d.overlays.diagnostics = nil
+	d.overlays.Unlock()
 	if changed {
 		d.MarkDirty()
 	}
@@ -68,17 +68,17 @@ func (d *Document) ClearDiagnostics() {
 
 // Diagnostics returns a snapshot of all current diagnostics
 func (d *Document) Diagnostics() []Diagnostic {
-	d.ls.RLock()
-	defer d.ls.RUnlock()
-	return slices.Clone(d.ls.diagnostics)
+	d.overlays.RLock()
+	defer d.overlays.RUnlock()
+	return slices.Clone(d.overlays.diagnostics)
 }
 
 // DiagnosticCounts returns severity counts for all current diagnostics
 func (d *Document) DiagnosticCounts() DiagnosticCounts {
-	d.ls.RLock()
-	defer d.ls.RUnlock()
+	d.overlays.RLock()
+	defer d.overlays.RUnlock()
 	var counts DiagnosticCounts
-	for _, diag := range d.ls.diagnostics {
+	for _, diag := range d.overlays.diagnostics {
 		switch diag.Severity {
 		case DiagnosticSeverityError:
 			counts.Errors++

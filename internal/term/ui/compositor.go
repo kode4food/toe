@@ -83,8 +83,8 @@ func (c *Compositor) Render(cx *Context) string {
 	if len(c.layers) == 0 {
 		return ""
 	}
-	cx.SingleLayer = len(c.layers) == 1
-	cx.OverlaysChanged = !slices.Equal(c.lastOverlays, c.layers[1:])
+	cx.composition.singleLayer = len(c.layers) == 1
+	cx.composition.changed = !slices.Equal(c.lastOverlays, c.layers[1:])
 	c.lastOverlays = slices.Clone(c.layers[1:])
 	content := c.renderViaBuffer(cx)
 	if content == c.cachedView {
@@ -131,6 +131,7 @@ func (c *Compositor) renderViaBuffer(cx *Context) string {
 		frame.Blit(buf, p.bounds.Point)
 		regions = append(regions, p.bounds)
 	}
-	cx.OverlayRegions, cx.OverlayRegionsPrecise = regions, true
+	cx.composition.regions = regions
+	cx.composition.precise = true
 	return frame.RenderToANSI()
 }

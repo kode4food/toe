@@ -12,13 +12,13 @@ type diskSnapshot struct {
 }
 
 func (d *Document) refreshDiskSnapshot() {
-	d.disk = snapshotDisk(d.Path())
-	d.external = ExternalStateClean
+	d.file.snapshot = snapshotDisk(d.Path())
+	d.file.external = ExternalStateClean
 }
 
 func (d *Document) diskChanged() (diskSnapshot, bool) {
 	snap := snapshotDisk(d.Path())
-	return snap, snap != d.disk
+	return snap, snap != d.file.snapshot
 }
 
 func snapshotDisk(path string) diskSnapshot {

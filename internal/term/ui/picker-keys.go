@@ -15,10 +15,10 @@ func (p *PickerComponent) handleKey(
 	ps := p.state
 	p.markDirty()
 	dismiss := func() (EventResult, tea.Cmd) {
-		if ps.dynamicStop != nil {
-			ps.dynamicStop()
+		if ps.load.dynamicStop != nil {
+			ps.load.dynamicStop()
 		}
-		ps.cancel()
+		ps.load.cancel()
 		return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
 			comp.Pop()
 			return nil
@@ -49,20 +49,20 @@ func (p *PickerComponent) handleKey(
 		(k.Code.Char == 'u' && k.Mods == command.ModCtrl):
 		ps.pageUp()
 	case k.Code.Special == command.Home:
-		ps.cursor = 0
+		ps.list.cursor = 0
 	case k.Code.Special == command.End:
-		if len(ps.matched) > 0 {
-			ps.cursor = len(ps.matched) - 1
+		if len(ps.list.matched) > 0 {
+			ps.list.cursor = len(ps.list.matched) - 1
 		}
 	case k.Code.Special == command.Backspace ||
 		(k.Code.Char == 'h' && k.Mods == command.ModCtrl):
-		runes := []rune(ps.query)
+		runes := []rune(ps.list.query)
 		if len(runes) > 0 {
 			return consumed(), ps.setQuery(string(runes[:len(runes)-1]))
 		}
 	default:
 		if k.IsTypable() {
-			return consumed(), ps.setQuery(ps.query + string(k.Code.Char))
+			return consumed(), ps.setQuery(ps.list.query + string(k.Code.Char))
 		}
 	}
 	// keyboard navigation keeps the selection on screen, unlike the wheel
@@ -101,12 +101,12 @@ func (p *PickerComponent) navigateItem(
 	if next == nil {
 		return EventResult{}, nil, false
 	}
-	feedCmd := next.feedCmd
-	next.feedCmd = nil
-	if ps.dynamicStop != nil {
-		ps.dynamicStop()
+	feedCmd := next.load.feedCmd
+	next.load.feedCmd = nil
+	if ps.load.dynamicStop != nil {
+		ps.load.dynamicStop()
 	}
-	ps.cancel()
+	ps.load.cancel()
 	return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
 		comp.Push(newPickerComponent(next))

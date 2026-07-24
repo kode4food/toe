@@ -35,7 +35,7 @@ func (e *Editor) Save(force bool) error {
 // view
 func (e *Editor) NewDocument() *View {
 	doc := e.newDocument()
-	e.docs[doc.ID()] = doc
+	e.documents.byID[doc.ID()] = doc
 	e.documentOpened(doc)
 	v, ok := e.FocusedView()
 	if ok {
@@ -45,12 +45,12 @@ func (e *Editor) NewDocument() *View {
 		return v
 	}
 	nv := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-	if e.tree.Get(e.tree.Focus()) == nil {
-		e.tree.Insert(nv)
+	if e.panes.tree.Get(e.panes.tree.Focus()) == nil {
+		e.panes.tree.Insert(nv)
 		e.markDocAccessed()
 		return nv
 	}
-	old := e.ReplacePane(e.tree.Focus(), nv)
+	old := e.ReplacePane(e.panes.tree.Focus(), nv)
 	e.DiscardPane(old)
 	e.markDocAccessed()
 	return nv
@@ -60,7 +60,7 @@ func (e *Editor) NewDocument() *View {
 // unsafe overwrite (changed on disk, or read-only)
 func (e *Editor) SaveAll(force bool) []error {
 	var errs []error
-	for _, doc := range e.docs {
+	for _, doc := range e.documents.byID {
 		if doc.Modified() {
 			creating := fileMissing(doc.Path())
 			if ops, ok := e.fileOperationController(); ok && creating {
@@ -142,7 +142,7 @@ func (e *Editor) Reload() error {
 // ReloadAll reloads all documents that have a file path
 func (e *Editor) ReloadAll() []error {
 	var errs []error
-	for _, doc := range e.docs {
+	for _, doc := range e.documents.byID {
 		if doc.Path() != "" {
 			if err := doc.Reload(); err != nil {
 				errs = append(errs, err)
@@ -161,30 +161,30 @@ func (e *Editor) Chdir(path string) error {
 	if err := os.Chdir(abs); err != nil {
 		return err
 	}
-	e.cwd = abs
+	e.workspace.cwd = abs
 	return nil
 }
 
 // PushDirectory pushes the current directory onto the stack then chdirs
 func (e *Editor) PushDirectory(path string) error {
-	e.dirStack = append(e.dirStack, e.cwd)
+	e.workspace.dirStack = append(e.workspace.dirStack, e.workspace.cwd)
 	return e.Chdir(path)
 }
 
 // PopDirectory changes to the top of the directory stack, if any
 func (e *Editor) PopDirectory() error {
-	if len(e.dirStack) == 0 {
+	if len(e.workspace.dirStack) == 0 {
 		return ErrEmptyDirStack
 	}
-	top := e.dirStack[len(e.dirStack)-1]
-	e.dirStack = e.dirStack[:len(e.dirStack)-1]
+	top := e.workspace.dirStack[len(e.workspace.dirStack)-1]
+	e.workspace.dirStack = e.workspace.dirStack[:len(e.workspace.dirStack)-1]
 	return e.Chdir(top)
 }
 
 // DirStack returns a copy of the directory stack (bottom to top)
 func (e *Editor) DirStack() []string {
-	cp := make([]string, len(e.dirStack))
-	copy(cp, e.dirStack)
+	cp := make([]string, len(e.workspace.dirStack))
+	copy(cp, e.workspace.dirStack)
 	return cp
 }
 
@@ -195,7 +195,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, d := range e.docs {
+	for _, d := range e.documents.byID {
 		if d.Path() == absPath {
 			e.recordPrevDoc()
 			if v, ok := e.FocusedView(); ok {
@@ -213,7 +213,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 		return nil, err
 	}
 	e.recordPrevDoc()
-	e.docs[doc.ID()] = doc
+	e.documents.byID[doc.ID()] = doc
 	e.documentOpened(doc)
 	if v, ok := e.FocusedView(); ok {
 		v.docID = doc.ID()
@@ -228,7 +228,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 // document by ID. Returns false if the document does not exist or there is no
 // focused view
 func (e *Editor) SwitchBuffer(did DocumentId) bool {
-	if _, ok := e.docs[did]; !ok {
+	if _, ok := e.documents.byID[did]; !ok {
 		return false
 	}
 	e.recordPrevDoc()
@@ -246,11 +246,11 @@ func (e *Editor) ShowDocument(did DocumentId) (*View, bool) {
 	if e.SwitchBuffer(did) {
 		return e.FocusedView()
 	}
-	if _, ok := e.docs[did]; !ok {
+	if _, ok := e.documents.byID[did]; !ok {
 		return nil, false
 	}
-	id := e.tree.Focus()
-	if e.tree.Get(id) == nil {
+	id := e.panes.tree.Focus()
+	if e.panes.tree.Get(id) == nil {
 		return nil, false
 	}
 	v := &View{editor: e, docID: did, mode: ModeNormal}
@@ -266,8 +266,8 @@ func (e *Editor) SwitchOrOpenDoc(path string) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := e.docs[doc.ID()]; !ok {
-		e.docs[doc.ID()] = doc
+	if _, ok := e.documents.byID[doc.ID()]; !ok {
+		e.documents.byID[doc.ID()] = doc
 		e.documentOpened(doc)
 	}
 	return doc, nil
@@ -279,7 +279,7 @@ func (e *Editor) PeekDoc(path string) (*Document, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, d := range e.docs {
+	for _, d := range e.documents.byID {
 		if d.Path() == absPath {
 			return d, nil
 		}
@@ -288,13 +288,13 @@ func (e *Editor) PeekDoc(path string) (*Document, error) {
 }
 
 func (e *Editor) newDocument() *Document {
-	e.nextDocID++
-	return newDocument(e.nextDocID, &e.opts)
+	e.documents.nextID++
+	return newDocument(e.documents.nextID, &e.opts)
 }
 
 func (e *Editor) openFile(path string) (*Document, error) {
-	e.nextDocID++
-	return openDocument(e.nextDocID, path, &e.opts)
+	e.documents.nextID++
+	return openDocument(e.documents.nextID, path, &e.opts)
 }
 
 func (e *Editor) fileOperationController() (FileOperationController, bool) {

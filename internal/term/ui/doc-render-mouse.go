@@ -102,7 +102,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 		r.cx.Editor.FocusPane(p.ID())
 		if sp, ok := p.(Draggable); ok {
 			if wasFocused && sp.BeginDrag(r.cx, at, mod) {
-				r.ec.mouseDownDrag = sp
+				r.ec.mouse.downDrag = sp
 			}
 			return
 		}
@@ -115,7 +115,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 	sep, onSep :=
 		r.cx.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
 	if onSep {
-		r.ec.mouseDownSep = &sepDrag{
+		r.ec.mouse.downSep = &sepDrag{
 			containerID: sep.ContainerID,
 			childIdx:    sep.ChildIdx,
 			layout:      sep.Layout,
@@ -132,9 +132,9 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 
 	text := res.doc.Text()
 	prevSel := res.doc.SelectionFor(res.view.ID())
-	r.ec.mouseDownRange = new(prevSel.Primary())
-	r.ec.autoScrollV.last = at.Y - yOff
-	r.ec.autoScrollH.last = at.X
+	r.ec.mouse.downRange = new(prevSel.Primary())
+	r.ec.mouse.vertical.last = at.Y - yOff
+	r.ec.mouse.horizontal.last = at.X
 
 	var newSel core.Selection
 	switch {
@@ -162,8 +162,8 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		yOff = 1
 	}
 
-	if r.ec.mouseDownSep != nil {
-		sep := r.ec.mouseDownSep
+	if r.ec.mouse.downSep != nil {
+		sep := r.ec.mouse.downSep
 		newPos := at.X
 		if sep.layout == view.LayoutHorizontal {
 			newPos = at.Y - yOff
@@ -174,7 +174,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		return nil
 	}
 
-	if r.ec.mouseDownRange == nil {
+	if r.ec.mouse.downRange == nil {
 		return nil
 	}
 
@@ -192,7 +192,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	contentH := max(area.Height-1, 0)
 	scrollOff := r.cx.Editor.Options().ScrollOff
 
-	atTop, atBottom, clampedY := r.ec.autoScrollV.update(
+	atTop, atBottom, clampedY := r.ec.mouse.vertical.update(
 		contentY, area.Y, area.Y+contentH-1,
 		autoScrollMargin(contentH, scrollOff),
 	)
@@ -200,7 +200,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	gutterW := gutterWidthFor(doc.Text(), r.cx.Editor.Options().Gutters)
 	contentX := area.X + gutterW
 	contentW := max(area.Width-gutterW, 0)
-	atLeft, atRight, clampedX := r.ec.autoScrollH.update(
+	atLeft, atRight, clampedX := r.ec.mouse.horizontal.update(
 		at.X, contentX, contentX+contentW-1,
 		autoScrollMargin(contentW, scrollOff),
 	)
@@ -213,7 +213,8 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		return nil
 	}
 
-	vAxis, hAxis := &r.ec.autoScrollV, &r.ec.autoScrollH
+	vAxis := &r.ec.mouse.vertical
+	hAxis := &r.ec.mouse.horizontal
 	vCmd := vAxis.trigger(atTop, atBottom, clampedX, vAxis.schedule)
 	hCmd := hAxis.trigger(atLeft, atRight, clampedY, hAxis.schedule)
 	return tea.Batch(vCmd, hCmd)

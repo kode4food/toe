@@ -21,61 +21,63 @@ const (
 )
 
 func (p *PromptComponent) recalculateCompletion(cx *Context) {
-	p.compDone = true
-	p.compSel = nil
+	p.completion.done = true
+	p.completion.selected = nil
 	if p.kind != promptCmd {
-		p.comps = nil
+		p.completion.items = nil
 		return
 	}
-	p.comps = completeCommandLine(cx, p.buf)
+	p.completion.items = completeCommandLine(cx, p.buf)
 }
 
 func (p *PromptComponent) changeCompletion(dir int) {
-	if len(p.comps) == 0 {
+	if len(p.completion.items) == 0 {
 		return
 	}
 	idx := 0
-	if p.compSel != nil {
-		idx = *p.compSel + dir
+	if p.completion.selected != nil {
+		idx = *p.completion.selected + dir
 	}
-	idx = ((idx % len(p.comps)) + len(p.comps)) % len(p.comps)
-	p.compSel = &idx
+	n := len(p.completion.items)
+	idx = ((idx % n) + n) % n
+	p.completion.selected = &idx
 
-	c := p.comps[idx]
+	c := p.completion.items[idx]
 	start := min(max(c.Start, 0), len(p.buf))
 	p.buf = p.buf[:start] + c.Text
 	p.caret = len([]rune(p.buf))
 }
 
 func (p *PromptComponent) completionMenuHeight(screen geom.Size) int {
-	if len(p.comps) == 0 || screen.Width <= 4 || screen.Height <= 3 {
-		p.comp = geom.Size{}
+	items := p.completion.items
+	if len(items) == 0 || screen.Width <= 4 || screen.Height <= 3 {
+		p.completion.size = geom.Size{}
 		return 0
 	}
 	innerW := screen.Width - 2 - 2*compPadX
 	maxRows := min(compMaxRows, screen.Height-3)
-	widths := make([]int, len(p.comps))
-	for i, c := range p.comps {
+	widths := make([]int, len(items))
+	for i, c := range items {
 		widths[i] = runewidth.StringWidth(c.completionText())
 	}
 	slices.Sort(widths)
 	colW := max(widths[len(widths)-1], 1)
 	fullCols := max(1, (innerW+compGap)/(colW+compGap))
-	if len(p.comps) > fullCols*maxRows {
+	if len(items) > fullCols*maxRows {
 		idx := (len(widths) - 1) * compWidthPct / 100
 		colW = max(widths[idx], 1)
 	}
-	cols := min(len(p.comps), max(1,
+	cols := min(len(items), max(1,
 		(innerW+compGap)/(colW+compGap),
 	))
-	rowCount := (len(p.comps) + cols - 1) / cols
+	rowCount := (len(items) + cols - 1) / cols
 	rowCount = min(rowCount, maxRows)
 	if rowCount <= 0 {
-		p.comp = geom.Size{}
+		p.completion.size = geom.Size{}
 		return 0
 	}
-	cols = min(cols, (len(p.comps)+rowCount-1)/rowCount)
-	p.comp = geom.Size{Width: cols, Height: rowCount}
+	cols = min(cols, (len(items)+rowCount-1)/rowCount)
+	p.completion.size = geom.Size{Width: cols, Height: rowCount}
 	return rowCount + 2
 }
 
@@ -92,22 +94,24 @@ func (p *PromptComponent) paintCompletions(
 		padX:         compPadX,
 	}
 	innerW := bounds.Width - 2 - 2*compPadX
+	size := p.completion.size
 	colW := max(
-		(innerW-compGap*(p.comp.Width-1))/p.comp.Width, 1,
+		(innerW-compGap*(size.Width-1))/size.Width, 1,
 	)
 	area := pop.drawInto(buf, bounds)
 	menuTUI := styleToTUI(menuStyle)
 	selectedTUI := styleToTUI(selected)
 
-	for row := range p.comp.Height {
-		for col := range p.comp.Width {
-			i := col*p.comp.Height + row
-			if i >= len(p.comps) {
+	for row := range size.Height {
+		for col := range size.Width {
+			i := col*size.Height + row
+			if i >= len(p.completion.items) {
 				continue
 			}
-			text := clipPad(p.comps[i].completionText(), colW)
+			text := clipPad(p.completion.items[i].completionText(), colW)
 			style := menuTUI
-			if p.compSel != nil && *p.compSel == i {
+			if p.completion.selected != nil &&
+				*p.completion.selected == i {
 				style = selectedTUI
 			}
 			buf.SetString(area.Point.Add(geom.Point{

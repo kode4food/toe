@@ -12,34 +12,54 @@ type (
 	// Editor holds the full state of the editor session: all open documents,
 	// the view layout tree, and shared editor state
 	Editor struct {
-		docs          map[DocumentId]*Document
-		tree          *Tree
-		cwd           string
-		dirStack      []string
-		opts          Options
-		configReload  func() error
-		registers     register.Registers
-		clipboard     Clipboard
-		docObservers  []DocumentObserver
-		langServers   LanguageServerController
-		indenter      Indenter
-		paneRestorers map[SessionKind]PaneRestorer
+		documents documentState
+		panes     paneState
+		workspace workspaceState
+		registers registerState
+		command   commandState
+		messages  messageState
 
+		opts           Options
+		configReload   func() error
+		docObservers   []DocumentObserver
+		langServers    LanguageServerController
+		indenter       Indenter
 		versionControl VersionControl
+	}
 
-		nextDocID          DocumentId
-		nextAccess         int64
-		lastModifiedDocIDs [2]DocumentId
+	documentState struct {
+		byID            map[DocumentId]*Document
+		nextID          DocumentId
+		nextAccess      int64
+		lastModifiedIDs [2]DocumentId
+	}
 
+	paneState struct {
+		tree        *Tree
+		restorers   map[SessionKind]PaneRestorer
+		contentSize geom.Size
+	}
+
+	workspaceState struct {
+		cwd      string
+		dirStack []string
+	}
+
+	registerState struct {
+		values    register.Registers
+		clipboard Clipboard
+	}
+
+	commandState struct {
 		count          int
 		activeRegister rune
 		lastMotion     func(*Editor)
+	}
 
-		viewSize geom.Size
-
-		statusMsg   string
-		statusMsgMu sync.Mutex
-		hint        string
+	messageState struct {
+		status   string
+		statusMu sync.Mutex
+		hint     string
 	}
 
 	// PaneRestorer rebuilds a leaf pane of a given session kind from its
@@ -71,17 +91,25 @@ var (
 // NewEditor creates an empty editor with one scratch document and view
 func NewEditor(cwd string) *Editor {
 	e := &Editor{
-		docs:      map[DocumentId]*Document{},
-		tree:      newTree(geom.Size{}),
-		cwd:       cwd,
-		opts:      defaultOptions(),
-		registers: register.New(),
-		clipboard: noopClipboard{},
+		documents: documentState{
+			byID: map[DocumentId]*Document{},
+		},
+		panes: paneState{
+			tree: newTree(geom.Size{}),
+		},
+		workspace: workspaceState{
+			cwd: cwd,
+		},
+		registers: registerState{
+			values:    register.New(),
+			clipboard: noopClipboard{},
+		},
+		opts: defaultOptions(),
 	}
 	doc := e.newDocument()
-	e.docs[doc.ID()] = doc
+	e.documents.byID[doc.ID()] = doc
 	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-	e.tree.Insert(v)
+	e.panes.tree.Insert(v)
 	e.markDocAccessed()
 	return e
 }
@@ -99,22 +127,22 @@ func (s *PaneSession) Value(key string) (any, bool) {
 
 // Tree returns the layout tree
 func (e *Editor) Tree() *Tree {
-	return e.tree
+	return e.panes.tree
 }
 
 // ResizeTree resizes the layout tree to the given content area dimensions
 func (e *Editor) ResizeTree(size geom.Size) {
-	e.tree.Resize(size)
+	e.panes.tree.Resize(size)
 }
 
 // SetLastMotion records fn as the last repeatable motion
 func (e *Editor) SetLastMotion(fn func(*Editor)) {
-	e.lastMotion = fn
+	e.command.lastMotion = fn
 }
 
 // LastMotion returns the most recently recorded repeatable motion
 func (e *Editor) LastMotion() func(*Editor) {
-	return e.lastMotion
+	return e.command.lastMotion
 }
 
 // Options returns the typed runtime config values for the editor session
@@ -141,21 +169,21 @@ func (e *Editor) ReloadConfig() error {
 
 // View returns a view by id
 func (e *Editor) View(vid Id) (*View, bool) {
-	v, ok := e.tree.Get(vid).(*View)
+	v, ok := e.panes.tree.Get(vid).(*View)
 	return v, ok
 }
 
 // Document returns a document by id
 func (e *Editor) Document(did DocumentId) (*Document, bool) {
-	d, ok := e.docs[did]
+	d, ok := e.documents.byID[did]
 	return d, ok
 }
 
 // DeleteDocument removes a document without closing its views; affected views
 // will report no focused document
 func (e *Editor) DeleteDocument(did DocumentId) {
-	delete(e.docs, did)
-	e.tree.Range(func(p Pane) bool {
+	delete(e.documents.byID, did)
+	e.panes.tree.Range(func(p Pane) bool {
 		if v, ok := p.(*View); ok {
 			v.removeDocHistory(did)
 		}
@@ -174,7 +202,7 @@ func (e *Editor) FocusedDocument() (*Document, bool) {
 
 // Mode returns the mode of the focused view
 func (e *Editor) Mode() Mode {
-	if p := e.tree.Get(e.tree.Focus()); p != nil {
+	if p := e.panes.tree.Get(e.panes.tree.Focus()); p != nil {
 		return p.Mode()
 	}
 	return ModeNormal
@@ -189,78 +217,78 @@ func (e *Editor) SetMode(m Mode) {
 
 // Count returns the pending numeric count argument (0 = none)
 func (e *Editor) Count() int {
-	return e.count
+	return e.command.count
 }
 
 // SetCount sets the pending numeric count
 func (e *Editor) SetCount(n int) {
-	e.count = n
+	e.command.count = n
 }
 
 // ResetCount clears the pending count
 func (e *Editor) ResetCount() {
-	e.count = 0
+	e.command.count = 0
 }
 
 // ActiveRegister returns the pending register rune (0 = default)
 func (e *Editor) ActiveRegister() rune {
-	return e.activeRegister
+	return e.command.activeRegister
 }
 
 // SetRegister sets the pending register selection
 func (e *Editor) SetRegister(r rune) {
-	e.activeRegister = r
+	e.command.activeRegister = r
 }
 
 // ResetRegister clears the pending register to the default
 func (e *Editor) ResetRegister() {
-	e.activeRegister = 0
+	e.command.activeRegister = 0
 }
 
 // Registers returns the editor's register store
 func (e *Editor) Registers() register.Registers {
-	return e.registers
+	return e.registers.values
 }
 
 func (e *Editor) Clipboard() Clipboard {
-	return e.clipboard
+	return e.registers.clipboard
 }
 
 func (e *Editor) SetClipboard(c Clipboard) {
-	e.clipboard = c
+	e.registers.clipboard = c
 }
 
 // ViewHeight returns the last-reported content area height
 func (e *Editor) ViewHeight() int {
-	return e.viewSize.Height
+	return e.panes.contentSize.Height
 }
 
 // SetViewHeight sets the content area height (called by the UI on resize)
 func (e *Editor) SetViewHeight(h int) {
-	e.viewSize.Height = h
+	e.panes.contentSize.Height = h
 }
 
 // ViewContentWidth returns the last-reported text content width (viewport minus
 // gutter), used for visual-line movement when soft-wrap is active
 func (e *Editor) ViewContentWidth() int {
-	return e.viewSize.Width
+	return e.panes.contentSize.Width
 }
 
 // SetViewContentWidth stores the text content width (called by the renderer
 // after computing the gutter width for the focused document)
 func (e *Editor) SetViewContentWidth(w int) {
-	e.viewSize.Width = w
+	e.panes.contentSize.Width = w
 }
 
 // Cwd returns the editor working directory
 func (e *Editor) Cwd() string {
-	return e.cwd
+	return e.workspace.cwd
 }
 
 // AllDocuments returns all open documents
 func (e *Editor) AllDocuments() []*Document {
-	out := make([]*Document, 0, len(e.docs))
-	for _, d := range e.docs {
+	out := make([]*Document, 0, len(e.documents.byID))
+	for _, d := range e.documents.byID {
 		out = append(out, d)
 	}
 	return out
@@ -268,8 +296,8 @@ func (e *Editor) AllDocuments() []*Document {
 
 // AllViews returns all open views in DFS order
 func (e *Editor) AllViews() []*View {
-	out := make([]*View, 0, e.tree.Count())
-	e.tree.Range(func(p Pane) bool {
+	out := make([]*View, 0, e.panes.tree.Count())
+	e.panes.tree.Range(func(p Pane) bool {
 		if v, ok := p.(*View); ok {
 			out = append(out, v)
 		}
@@ -283,12 +311,12 @@ func (e *Editor) Views() []struct {
 	View    *View
 	Focused bool
 } {
-	focus := e.tree.Focus()
+	focus := e.panes.tree.Focus()
 	var out []struct {
 		View    *View
 		Focused bool
 	}
-	e.tree.Range(func(p Pane) bool {
+	e.panes.tree.Range(func(p Pane) bool {
 		if v, ok := p.(*View); ok {
 			out = append(out, struct {
 				View    *View
@@ -304,12 +332,12 @@ func (e *Editor) Views() []struct {
 func (e *Editor) VisibleDocuments() []*Document {
 	seen := map[DocumentId]bool{}
 	var out []*Document
-	e.tree.Range(func(p Pane) bool {
+	e.panes.tree.Range(func(p Pane) bool {
 		v, ok := p.(*View)
 		if !ok || seen[v.docID] {
 			return true
 		}
-		if doc, ok := e.docs[v.docID]; ok {
+		if doc, ok := e.documents.byID[v.docID]; ok {
 			seen[v.docID] = true
 			out = append(out, doc)
 		}
@@ -320,7 +348,7 @@ func (e *Editor) VisibleDocuments() []*Document {
 
 // CloseCurrentView closes the focused pane
 func (e *Editor) CloseCurrentView() {
-	p := e.tree.Get(e.tree.Focus())
+	p := e.panes.tree.Get(e.panes.tree.Focus())
 	if p == nil {
 		return
 	}
@@ -329,8 +357,8 @@ func (e *Editor) CloseCurrentView() {
 
 // CloseAllOtherViews closes all views except the focused one
 func (e *Editor) CloseAllOtherViews() {
-	focused := e.tree.Focus()
-	for _, p := range e.tree.Traverse() {
+	focused := e.panes.tree.Focus()
+	for _, p := range e.panes.tree.Traverse() {
 		if p.ID() != focused {
 			e.ClosePane(p.ID())
 		}
@@ -340,28 +368,28 @@ func (e *Editor) CloseAllOtherViews() {
 // SetStatusMsg stores a transient status message to be displayed after the
 // current keypress. The UI clears it via TakeStatusMsg
 func (e *Editor) SetStatusMsg(msg string) {
-	e.statusMsgMu.Lock()
-	e.statusMsg = msg
-	e.statusMsgMu.Unlock()
+	e.messages.statusMu.Lock()
+	e.messages.status = msg
+	e.messages.statusMu.Unlock()
 }
 
 // TakeStatusMsg returns the pending status message and clears it
 func (e *Editor) TakeStatusMsg() string {
-	e.statusMsgMu.Lock()
-	msg := e.statusMsg
-	e.statusMsg = ""
-	e.statusMsgMu.Unlock()
+	e.messages.statusMu.Lock()
+	msg := e.messages.status
+	e.messages.status = ""
+	e.messages.statusMu.Unlock()
 	return msg
 }
 
 // SetHint stores a transient hint shown during an active continuation
 func (e *Editor) SetHint(h string) {
-	e.hint = h
+	e.messages.hint = h
 }
 
 // TakeHint returns the pending hint and clears it
 func (e *Editor) TakeHint() string {
-	h := e.hint
-	e.hint = ""
+	h := e.messages.hint
+	e.messages.hint = ""
 	return h
 }

@@ -20,20 +20,27 @@ import (
 type (
 	PromptComponent struct {
 		overlayBuf
-		ec       *EditorComponent
-		bounds   geom.Area
-		kind     promptKind
-		forward  bool
-		prompt   string
-		buf      string
-		caret    int
-		hOff     int
-		comps    []promptCompletion
-		compSel  *int
-		compDone bool
-		comp     geom.Size
+
+		completion completionState
+
+		ec      *EditorComponent
+		bounds  geom.Area
+		kind    promptKind
+		forward bool
+		prompt  string
+		buf     string
+		caret   int
+		hOff    int
+
 		fn       promptHandler
 		pickerFn pickerBuilder
+	}
+
+	completionState struct {
+		items    []promptCompletion
+		selected *int
+		done     bool
+		size     geom.Size
 	}
 
 	promptCompletion struct {
@@ -77,7 +84,7 @@ func (p *PromptComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
 	p.markDirty()
-	if !p.compDone {
+	if !p.completion.done {
 		p.recalculateCompletion(cx)
 	}
 	menuH := p.completionMenuHeight(screen)
@@ -91,11 +98,11 @@ func (p *PromptComponent) Layout(
 
 func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
-		if p.comp.Height > 0 {
+		if p.completion.size.Height > 0 {
 			p.paintCompletions(cx, buf, geom.Area{
 				Size: geom.Size{
 					Width:  pl.Width,
-					Height: p.comp.Height + 2,
+					Height: p.completion.size.Height + 2,
 				},
 			})
 		}
@@ -350,8 +357,8 @@ func (p *PromptComponent) accept(
 			if picker == nil {
 				return pop(nil)
 			}
-			feedCmd := picker.feedCmd
-			picker.feedCmd = nil
+			feedCmd := picker.load.feedCmd
+			picker.load.feedCmd = nil
 			return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 				comp.Pop()
 				comp.Push(newPickerComponent(picker))

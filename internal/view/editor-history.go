@@ -92,28 +92,27 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 	if !ok {
 		return false
 	}
-	doc.buf.Lock()
-	before := doc.buf.text
-	txns := doc.buf.history.Earlier(kind)
+	doc.content.Lock()
+	before := doc.content.text
+	txns := doc.edits.history.Earlier(kind)
 	for _, tx := range txns {
-		newText, err := tx.Apply(doc.buf.text)
+		newText, err := tx.Apply(doc.content.text)
 		if err != nil {
-			doc.buf.Unlock()
+			doc.content.Unlock()
 			return false
 		}
-		doc.buf.text = newText
+		doc.content.text = newText
 		if txSel := tx.Selection(); txSel != nil {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.buf.unsaved = doc.Modified()
 	if len(txns) == 0 {
-		doc.buf.Unlock()
+		doc.content.Unlock()
 		return false
 	}
-	doc.buf.version++
-	afterStr := doc.buf.text.String()
-	doc.buf.Unlock()
+	doc.content.version++
+	afterStr := doc.content.text.String()
+	doc.content.Unlock()
 	doc.MarkDirty()
 	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
 	return true
@@ -129,28 +128,27 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 	if !ok {
 		return false
 	}
-	doc.buf.Lock()
-	before := doc.buf.text
-	txns := doc.buf.history.Later(kind)
+	doc.content.Lock()
+	before := doc.content.text
+	txns := doc.edits.history.Later(kind)
 	for _, tx := range txns {
-		newText, err := tx.Apply(doc.buf.text)
+		newText, err := tx.Apply(doc.content.text)
 		if err != nil {
-			doc.buf.Unlock()
+			doc.content.Unlock()
 			return false
 		}
-		doc.buf.text = newText
+		doc.content.text = newText
 		if txSel := tx.Selection(); txSel != nil {
 			doc.SetSelectionFor(v.ID(), *txSel)
 		}
 	}
-	doc.buf.unsaved = doc.Modified()
 	if len(txns) == 0 {
-		doc.buf.Unlock()
+		doc.content.Unlock()
 		return false
 	}
-	doc.buf.version++
-	afterStr := doc.buf.text.String()
-	doc.buf.Unlock()
+	doc.content.version++
+	afterStr := doc.content.text.String()
+	doc.content.Unlock()
 	doc.MarkDirty()
 	e.documentChanged(doc, wholeDocumentChange(before, afterStr))
 	return true

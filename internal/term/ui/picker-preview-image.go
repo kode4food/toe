@@ -77,7 +77,7 @@ func (p *PickerComponent) previewImage(
 	if item == nil || item.Location.Target.Path == "" {
 		return previewImageRes{}, false
 	}
-	entry, ok := p.state.previewCache.path(
+	entry, ok := p.state.preview.cache.path(
 		cx.Syntax, item.Location.Target.Path,
 	).(*previewImageEntry)
 	if !ok {

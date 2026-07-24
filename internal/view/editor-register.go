@@ -31,7 +31,7 @@ func (e *Editor) ReadRegister(name rune) []string {
 	case RegisterClipboard, RegisterPrimaryClipboard:
 		return e.clipboardRegister(name)
 	default:
-		return e.registers.Read(name)
+		return e.registers.values.Read(name)
 	}
 }
 
@@ -53,13 +53,13 @@ func (e *Editor) WriteRegister(name rune, values []string) {
 	case RegisterSelectionIndices, RegisterSelectionText, RegisterDocumentPath:
 		return
 	case RegisterClipboard:
-		e.registers.Write(name, values)
-		_ = e.clipboard.Write(strings.Join(values, "\n"))
+		e.registers.values.Write(name, values)
+		_ = e.registers.clipboard.Write(strings.Join(values, "\n"))
 	case RegisterPrimaryClipboard:
-		e.registers.Write(name, values)
-		_ = e.clipboard.WritePrimary(strings.Join(values, "\n"))
+		e.registers.values.Write(name, values)
+		_ = e.registers.clipboard.WritePrimary(strings.Join(values, "\n"))
 	default:
-		e.registers.Write(name, values)
+		e.registers.values.Write(name, values)
 	}
 }
 
@@ -114,11 +114,11 @@ func (e *Editor) clipboardRegister(name rune) []string {
 	var val string
 	var err error
 	if name == RegisterClipboard {
-		val, err = e.clipboard.Read()
+		val, err = e.registers.clipboard.Read()
 	} else {
-		val, err = e.clipboard.ReadPrimary()
+		val, err = e.registers.clipboard.ReadPrimary()
 	}
-	saved := e.registers.Read(name)
+	saved := e.registers.values.Read(name)
 	if err != nil {
 		return saved
 	}

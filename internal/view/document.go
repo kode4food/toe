@@ -10,59 +10,65 @@ import (
 )
 
 type (
-	// Document holds metadata for an open buffer; editing and LSP state live in
-	// the buf and ls sub-structs respectively
+	// Document holds an open buffer and its editing, file, view, and render
+	// state
 	Document struct {
+		identity identityState
+		content  contentState
+		edits    editState
+		views    viewState
+		format   formatState
+		file     fileState
+		overlays overlayState
+		render   renderState
+	}
+
+	identityState struct {
 		id         DocumentId
 		accessedAt int64
-		hasBOM     bool
-
-		indent        core.IndentStyle
-		tabWidth      int
-		lineEnding    core.LineEnding
-		editorConfig  *config.EditorConfig
-		readOnly      bool
-		langDef       *language.Language
-		restoreCursor bool
-		disk          diskSnapshot
-		external      ExternalState
-		pending       *pendingLoad
-
-		buf bufState
-		ls  lsState
-
-		track renderTrack
 	}
 
-	// pendingLoad marks a session buffer whose file has not been read yet. The
-	// path and language are known; content and everything derived from it load
-	// on first access
-	pendingLoad struct {
-		opts *Options
-		lang string
-	}
-
-	// bufState: path/lang/text/version are read by async LSP goroutines under
-	// the embedded RWMutex; everything else is main-goroutine only
-	bufState struct {
+	contentState struct {
 		sync.RWMutex
-		path       string
-		lang       string
-		text       core.Rope
-		version    int
-		history    core.History
-		insertAcc  *insertAccum
-		selections map[Id]core.Selection
-		lastSel    core.Selection
-		searchHL   map[Id]bool
-		unsaved    bool
-		savePoint  int
-		modified   bool
+		path    string
+		lang    string
+		text    core.Rope
+		version int
+		pending *pendingLoad
 	}
 
-	// lsState holds all language-server-managed overlays for the document,
+	editState struct {
+		history            core.History
+		insertAcc          *insertAccum
+		savePoint          int
+		changedSinceAccess bool
+	}
+
+	viewState struct {
+		selections       map[Id]core.Selection
+		lastSelection    core.Selection
+		searchHighlights map[Id]bool
+		restoreCursor    bool
+	}
+
+	formatState struct {
+		hasBOM       bool
+		indent       core.IndentStyle
+		tabWidth     int
+		lineEnding   core.LineEnding
+		editorConfig *config.EditorConfig
+		language     *language.Language
+	}
+
+	fileState struct {
+		snapshot diskSnapshot
+		external ExternalState
+		readOnly bool
+	}
+
+	// overlayState holds all language-server-managed overlays for the document,
 	// protected by an embedded RWMutex so async LSP goroutines write safely
-	lsState struct {
+	overlayState struct {
 		sync.RWMutex
 		highlights  map[Id][]DocumentHighlight
 		links       []DocumentLink
@@ -71,11 +77,18 @@ type (
 		diagnostics []Diagnostic
 	}
 
-	// renderTrack tracks, per view, whether anything render-relevant has
+	// renderState tracks, per view, whether anything render-relevant has
 	// changed since ConsumeDirty last checked
-	renderTrack struct {
+	renderState struct {
 		sync.Mutex
 		dirty map[Id]bool
+	}
+
+	// pendingLoad defers reading a restored file until its content is first
+	// accessed
+	pendingLoad struct {
+		opts *Options
+		lang string
 	}
 
 	// DocumentId is the unique identifier for an open document
@@ -113,80 +126,80 @@ const (
 // RestoreCursor reports whether the next exit from insert mode should move the
 // cursor back by one grapheme
 func (d *Document) RestoreCursor() bool {
-	return d.restoreCursor
+	return d.views.restoreCursor
 }
 
 // SetRestoreCursor marks whether the next insert-mode exit should restore the
 // cursor one grapheme to the left
 func (d *Document) SetRestoreCursor(v bool) {
-	d.restoreCursor = v
+	d.views.restoreCursor = v
 }
 
 // ID returns the unique document identifier
 func (d *Document) ID() DocumentId {
-	return d.id
+	return d.identity.id
 }
 
 // AccessedAt returns the monotonic focus/access sequence for MRU ordering
 func (d *Document) AccessedAt() int64 {
-	return d.accessedAt
+	return d.identity.accessedAt
 }
 
 // Text returns the current rope text
 func (d *Document) Text() core.Rope {
 	d.ensureLoaded()
-	d.buf.RLock()
-	defer d.buf.RUnlock()
-	return d.buf.text
+	d.content.RLock()
+	defer d.content.RUnlock()
+	return d.content.text
 }
 
 // Path returns the file path, or empty string for scratch buffers
 func (d *Document) Path() string {
-	d.buf.RLock()
-	defer d.buf.RUnlock()
-	return d.buf.path
+	d.content.RLock()
+	defer d.content.RUnlock()
+	return d.content.path
 }
 
 // SetPath sets the file path for this document
 func (d *Document) SetPath(path string) {
-	d.buf.Lock()
-	d.buf.path = path
-	d.buf.Unlock()
+	d.content.Lock()
+	d.content.path = path
+	d.content.Unlock()
 }
 
 // Modified reports whether the document has unsaved changes
 func (d *Document) Modified() bool {
-	return d.buf.history.CurrentRevision() != d.buf.savePoint
+	return d.edits.history.CurrentRevision() != d.edits.savePoint
 }
 
 // Loaded reports whether the backing file has been read; a restored session
 // buffer stays unloaded until its content is first accessed
 func (d *Document) Loaded() bool {
-	d.buf.RLock()
-	defer d.buf.RUnlock()
-	return d.pending == nil
+	d.content.RLock()
+	defer d.content.RUnlock()
+	return d.content.pending == nil
 }
 
 // ExternalState reports any unresolved change made to the backing file by
 // another process
 func (d *Document) ExternalState() ExternalState {
-	return d.external
+	return d.file.external
 }
 
 // Lang returns the language identifier for syntax highlighting
 func (d *Document) Lang() string {
-	d.buf.RLock()
-	defer d.buf.RUnlock()
-	return d.buf.lang
+	d.content.RLock()
+	defer d.content.RUnlock()
+	return d.content.lang
 }
 
 // SetLang sets the language identifier and resolves its definition once so
 // the render path reads the cached *language.Language directly
 func (d *Document) SetLang(lang string) {
-	d.langDef = language.LoadLanguage(lang)
-	d.buf.Lock()
-	d.buf.lang = lang
-	d.buf.Unlock()
+	d.format.language = language.LoadLanguage(lang)
+	d.content.Lock()
+	d.content.lang = lang
+	d.content.Unlock()
 	d.MarkDirty()
 }
 
@@ -200,63 +213,64 @@ func (d *Document) TextFormatForConfig(
 	w int, opts *Options,
 ) *language.TextFormat {
 	d.ensureLoaded()
-	langDef := d.langDef
-	if d.editorConfig != nil && d.editorConfig.MaxLineLength != nil {
+	langDef := d.format.language
+	if d.format.editorConfig != nil &&
+		d.format.editorConfig.MaxLineLength != nil {
 		cpy := *langDef
-		cpy.TextWidth = d.editorConfig.MaxLineLength
+		cpy.TextWidth = d.format.editorConfig.MaxLineLength
 		langDef = &cpy
 	}
 	format := language.TextFormatForConfig(
 		langDef, opts.TextWidth, opts.SoftWrap, w,
 	)
-	format.TabWidth = d.tabWidth
+	format.TabWidth = d.format.tabWidth
 	return format
 }
 
 // ReadOnly reports whether the document is read-only
 func (d *Document) ReadOnly() bool {
-	return d.readOnly
+	return d.file.readOnly
 }
 
 // SetReadOnly marks the document as read-only or writable
 func (d *Document) SetReadOnly(v bool) {
-	d.readOnly = v
+	d.file.readOnly = v
 }
 
 // IndentStyle returns the active indentation style
 func (d *Document) IndentStyle() core.IndentStyle {
 	d.ensureLoaded()
-	return d.indent
+	return d.format.indent
 }
 
 // SetIndentStyle updates the indent style for this document
 func (d *Document) SetIndentStyle(s core.IndentStyle) {
-	d.indent = s
+	d.format.indent = s
 	d.MarkDirty()
 }
 
 // TabWidth returns the display tab width
 func (d *Document) TabWidth() int {
 	d.ensureLoaded()
-	return d.tabWidth
+	return d.format.tabWidth
 }
 
 // LineEnding returns the document's line-ending style
 func (d *Document) LineEnding() core.LineEnding {
 	d.ensureLoaded()
-	return d.lineEnding
+	return d.format.lineEnding
 }
 
 // HasBOM reports whether the document was loaded with a UTF-8 BOM, which is
 // preserved on save
 func (d *Document) HasBOM() bool {
 	d.ensureLoaded()
-	return d.hasBOM
+	return d.format.hasBOM
 }
 
 // SetLineEnding updates the line ending for this document
 func (d *Document) SetLineEnding(le core.LineEnding) {
-	d.lineEnding = le
+	d.format.lineEnding = le
 }
 
 // DisplayName returns the short display name for the document
@@ -271,7 +285,7 @@ func (d *Document) RelativeName(basedir string) string {
 
 // SelectionFor returns the selection for a given view
 func (d *Document) SelectionFor(vid Id) core.Selection {
-	if sel, ok := d.buf.selections[vid]; ok {
+	if sel, ok := d.views.selections[vid]; ok {
 		return sel
 	}
 	return d.Selection()
@@ -279,8 +293,8 @@ func (d *Document) SelectionFor(vid Id) core.Selection {
 
 // Selection returns the buffer's canonical cursor, independent of any view
 func (d *Document) Selection() core.Selection {
-	if len(d.buf.lastSel.Ranges()) > 0 {
-		return d.buf.lastSel
+	if len(d.views.lastSelection.Ranges()) > 0 {
+		return d.views.lastSelection
 	}
 	return core.PointSelection(0)
 }
@@ -288,78 +302,78 @@ func (d *Document) Selection() core.Selection {
 // SetSelectionFor sets the selection for a view. Changing the selection clears
 // any search-match highlighting for that view
 func (d *Document) SetSelectionFor(vid Id, sel core.Selection) {
-	if old, ok := d.buf.selections[vid]; !ok || !old.Equal(sel) {
+	if old, ok := d.views.selections[vid]; !ok || !old.Equal(sel) {
 		d.markViewDirty(vid)
 	}
-	d.buf.selections[vid] = sel
-	delete(d.buf.searchHL, vid)
+	d.views.selections[vid] = sel
+	delete(d.views.searchHighlights, vid)
 }
 
 // ShowSearchHighlights marks a view's search matches as visible. Search actions
 // call this after moving the selection to their match
 func (d *Document) ShowSearchHighlights(vid Id) {
-	if d.buf.searchHL == nil {
-		d.buf.searchHL = make(map[Id]bool)
+	if d.views.searchHighlights == nil {
+		d.views.searchHighlights = make(map[Id]bool)
 	}
-	d.buf.searchHL[vid] = true
+	d.views.searchHighlights[vid] = true
 }
 
 // SearchHighlightsActive reports whether search matches should be highlighted
 // for a view
 func (d *Document) SearchHighlightsActive(vid Id) bool {
-	return d.buf.searchHL[vid]
+	return d.views.searchHighlights[vid]
 }
 
 // RemoveView cleans up selection and LSP state for a closed view
 func (d *Document) RemoveView(vid Id) {
 	d.rememberSelection(vid)
-	delete(d.buf.selections, vid)
-	delete(d.buf.searchHL, vid)
-	d.ls.Lock()
-	delete(d.ls.highlights, vid)
-	delete(d.ls.hints, vid)
-	d.ls.Unlock()
-	d.track.Lock()
-	delete(d.track.dirty, vid)
-	d.track.Unlock()
+	delete(d.views.selections, vid)
+	delete(d.views.searchHighlights, vid)
+	d.overlays.Lock()
+	delete(d.overlays.highlights, vid)
+	delete(d.overlays.hints, vid)
+	d.overlays.Unlock()
+	d.render.Lock()
+	delete(d.render.dirty, vid)
+	d.render.Unlock()
 }
 
 // LastEditPos returns the char offset of the most recently committed change
 func (d *Document) LastEditPos() int {
-	return d.buf.history.LastEditPos()
+	return d.edits.history.LastEditPos()
 }
 
 // Revision returns the document version used for render-cache invalidation
 func (d *Document) Revision() int {
-	d.buf.RLock()
-	defer d.buf.RUnlock()
-	return d.buf.version
+	d.content.RLock()
+	defer d.content.RUnlock()
+	return d.content.version
 }
 
 func (d *Document) MarkDirty() {
-	d.track.Lock()
-	defer d.track.Unlock()
-	if d.track.dirty == nil {
-		d.track.dirty = map[Id]bool{}
+	d.render.Lock()
+	defer d.render.Unlock()
+	if d.render.dirty == nil {
+		d.render.dirty = map[Id]bool{}
 	}
-	// track.dirty (not buf.selections, empty until a view's own cursor
+	// render.dirty (not views.selections, empty until a view's own cursor
 	// first moves) is the reliable registry: ConsumeDirty runs for every
 	// visible view on every render regardless of selection state
-	for vid := range d.track.dirty {
-		d.track.dirty[vid] = true
+	for vid := range d.render.dirty {
+		d.render.dirty[vid] = true
 	}
 }
 
 // ConsumeDirty reports whether vid's rendered state changed since the last
 // call for vid, clearing the flag. A vid never seen before is dirty
 func (d *Document) ConsumeDirty(vid Id) bool {
-	d.track.Lock()
-	defer d.track.Unlock()
-	wasDirty, ok := d.track.dirty[vid]
-	if d.track.dirty == nil {
-		d.track.dirty = map[Id]bool{}
+	d.render.Lock()
+	defer d.render.Unlock()
+	wasDirty, ok := d.render.dirty[vid]
+	if d.render.dirty == nil {
+		d.render.dirty = map[Id]bool{}
 	}
-	d.track.dirty[vid] = false
+	d.render.dirty[vid] = false
 	return !ok || wasDirty
 }
 
@@ -372,16 +386,16 @@ func (d *DocumentOpenError) Unwrap() error {
 }
 
 func (d *Document) markViewDirty(vid Id) {
-	d.track.Lock()
-	defer d.track.Unlock()
-	if d.track.dirty == nil {
-		d.track.dirty = map[Id]bool{}
+	d.render.Lock()
+	defer d.render.Unlock()
+	if d.render.dirty == nil {
+		d.render.dirty = map[Id]bool{}
 	}
-	d.track.dirty[vid] = true
+	d.render.dirty[vid] = true
 }
 
 func (d *Document) rememberSelection(vid Id) {
-	if sel, ok := d.buf.selections[vid]; ok {
-		d.buf.lastSel = sel
+	if sel, ok := d.views.selections[vid]; ok {
+		d.views.lastSelection = sel
 	}
 }

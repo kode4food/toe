@@ -29,7 +29,7 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
 				ec:      ec,
 				kind:    promptRegex,
@@ -57,7 +57,7 @@ func (m Model) CompletionAction() command.KeyAction {
 		if ls == nil {
 			return nil
 		}
-		ec.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return nil, ec.completionCmd(cx, false)
 		}
 		return nil
@@ -90,7 +90,7 @@ func (m Model) HoverAction() command.KeyAction {
 			return nil
 		}
 		anchor := newHoverAnchor(doc, v)
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newHoverComponent(ec, anchor, text), nil
 		}
 		return nil
@@ -117,7 +117,7 @@ func (m Model) SignatureHelpAction() command.KeyAction {
 		if !ok {
 			return nil
 		}
-		ec.signatureHidden = nil
+		ec.language.signatureHidden = nil
 		help, err := ls.SignatureHelp(doc, v.ID())
 		if err != nil {
 			e.SetStatusMsg(i18n.ErrorText(err))
@@ -126,7 +126,7 @@ func (m Model) SignatureHelpAction() command.KeyAction {
 		if len(help.Signatures) == 0 {
 			return nil
 		}
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newSignatureHelpComponent(ec, call, help), nil
 		}
 		return nil

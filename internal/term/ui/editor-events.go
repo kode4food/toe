@@ -58,8 +58,8 @@ func (e *EditorComponent) handleAutoSaveMsg(
 func (e *EditorComponent) handleDocHighlightMsg(
 	cx *Context, msg docHighlightMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.docHighlightGen {
-		e.docHighlightPos = docHighlightPosition{}
+	if msg.gen != e.language.highlightGen {
+		e.language.highlightPos = docHighlightPosition{}
 		return consumed(), e.documentHighlightCmd(cx)
 	}
 	return consumed(), nil
@@ -68,7 +68,7 @@ func (e *EditorComponent) handleDocHighlightMsg(
 func (e *EditorComponent) handleCompletionMsg(
 	cx *Context, msg completionMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.completionGen {
+	if msg.gen != e.language.completionGen {
 		return consumed(), nil
 	}
 	if !completionRequestValid(cx, msg.anchor) {
@@ -152,14 +152,14 @@ func (e *EditorComponent) handleSpinnerTick(
 func (e *EditorComponent) handleMouseClick(
 	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
-	e.completionGen++
+	e.language.completionGen++
 	e.cancelPending(cx)
-	e.autoScrollV.stop()
-	e.autoScrollH.stop()
-	if dc := e.mouseDownDrag; dc != nil {
+	e.mouse.vertical.stop()
+	e.mouse.horizontal.stop()
+	if dc := e.mouse.downDrag; dc != nil {
 		dc.CancelDrag()
 	}
-	e.mouseDownDrag = nil
+	e.mouse.downDrag = nil
 	if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 		r := &renderPass{ec: e, cx: cx, size: e.size}
 		r.handleMouseClick(geom.Point{X: msg.X, Y: msg.Y}, msg.Mod)
@@ -170,9 +170,9 @@ func (e *EditorComponent) handleMouseClick(
 func (e *EditorComponent) handleMouseMotion(
 	cx *Context, msg tea.MouseMotionMsg,
 ) (EventResult, tea.Cmd) {
-	e.completionGen++
+	e.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if dc := e.mouseDownDrag; dc != nil &&
+	if dc := e.mouse.downDrag; dc != nil &&
 		cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 		return consumed(), dc.ContinueDrag(cx, at)
 	}
@@ -199,10 +199,10 @@ func (e *EditorComponent) handleMouseAxisScroll(
 func (e *EditorComponent) handleMouseRelease(
 	cx *Context, msg tea.MouseReleaseMsg,
 ) (EventResult, tea.Cmd) {
-	e.completionGen++
+	e.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if dc := e.mouseDownDrag; dc != nil {
-		e.mouseDownDrag = nil
+	if dc := e.mouse.downDrag; dc != nil {
+		e.mouse.downDrag = nil
 		cmd := dc.EndDrag(cx, at)
 		e.syncEditorMessages(cx)
 		return consumed(), tea.Batch(cmd, e.documentHighlightCmd(cx))
@@ -228,7 +228,7 @@ func (e *EditorComponent) handleMouseRelease(
 func (e *EditorComponent) handleMouseWheel(
 	cx *Context, msg tea.MouseWheelMsg,
 ) (EventResult, tea.Cmd) {
-	e.completionGen++
+	e.language.completionGen++
 	e.cancelPending(cx)
 	if !cx.Editor.Options().Mouse {
 		return consumed(), nil
@@ -258,17 +258,17 @@ func (e *EditorComponent) handleMouseWheel(
 }
 
 func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
-	e.autoScrollV.stop()
-	e.autoScrollH.stop()
-	if e.mouseDownSep != nil {
-		e.mouseDownSep = nil
+	e.mouse.vertical.stop()
+	e.mouse.horizontal.stop()
+	if e.mouse.downSep != nil {
+		e.mouse.downSep = nil
 		return
 	}
-	if e.mouseDownRange == nil {
+	if e.mouse.downRange == nil {
 		return
 	}
-	down := *e.mouseDownRange
-	e.mouseDownRange = nil
+	down := *e.mouse.downRange
+	e.mouse.downRange = nil
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
 		return

@@ -89,7 +89,7 @@ func (p *previewCtx) previewSelection(doc *view.Document) core.Selection {
 func (p *previewCtx) renderDocInto(
 	buf *tui.Buffer, at geom.Point, doc *view.Document,
 ) {
-	entry := p.picker.previewCache.doc(p.syntax, doc)
+	entry := p.picker.preview.cache.doc(p.syntax, doc)
 	format := doc.TextFormatForConfig(p.size.Width, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
@@ -97,10 +97,10 @@ func (p *previewCtx) renderDocInto(
 		th: p.th, area: geom.Area{Point: at, Size: p.size},
 		hlFrom: p.hlFrom, hlTo: p.hlTo,
 		diffLines: p.itemDiffLines(entry.rope),
-		scroll:    p.picker.previewScroll,
+		scroll:    p.picker.preview.scroll,
 	}
 	renderPreviewDocInto(buf, r)
-	p.picker.previewScroll = r.scroll
+	p.picker.preview.scroll = r.scroll
 }
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
@@ -127,10 +127,10 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		),
 		opts: opts, th: p.th,
 		area:   geom.Area{Point: at, Size: p.size},
-		scroll: p.picker.previewScroll,
+		scroll: p.picker.preview.scroll,
 	}
 	renderDiffPreviewInto(buf, r)
-	p.picker.previewScroll = r.scroll
+	p.picker.preview.scroll = r.scroll
 }
 
 // workingPreview returns the working-copy rope, syntax spans, and language for
@@ -138,14 +138,14 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 func (p *previewCtx) workingPreview() previewDocEntry {
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
 		if doc, ok := p.editor.Document(p.item.Location.Target.ID); ok {
-			return *p.picker.previewCache.doc(p.syntax, doc)
+			return *p.picker.preview.cache.doc(p.syntax, doc)
 		}
 	}
 	path := p.item.Location.Target.Path
 	if doc := openDocumentPreview(path, p.editor); doc != nil {
-		return *p.picker.previewCache.doc(p.syntax, doc)
+		return *p.picker.preview.cache.doc(p.syntax, doc)
 	}
-	e, ok := p.picker.previewCache.path(p.syntax, path).(*previewDocEntry)
+	e, ok := p.picker.preview.cache.path(p.syntax, path).(*previewDocEntry)
 	if ok {
 		return *e
 	}
@@ -155,7 +155,7 @@ func (p *previewCtx) workingPreview() previewDocEntry {
 func (p *previewCtx) renderFileInto(
 	buf *tui.Buffer, at geom.Point, path string,
 ) {
-	p.picker.previewCache.path(p.syntax, path).renderInto(p, buf, at)
+	p.picker.preview.cache.path(p.syntax, path).renderInto(p, buf, at)
 }
 
 func (p *previewDocEntry) renderInto(
@@ -172,10 +172,10 @@ func (p *previewDocEntry) renderInto(
 		th: ctx.th, area: geom.Area{Point: at, Size: ctx.size},
 		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
-		scroll:    ctx.picker.previewScroll,
+		scroll:    ctx.picker.preview.scroll,
 	}
 	renderPreviewDocInto(buf, r)
-	ctx.picker.previewScroll = r.scroll
+	ctx.picker.preview.scroll = r.scroll
 }
 
 func (p *previewDirEntry) renderInto(

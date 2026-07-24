@@ -8,10 +8,10 @@ import (
 )
 
 func (p *Picker) setQuery(q string) tea.Cmd {
-	if q == p.query {
+	if q == p.list.query {
 		return nil
 	}
-	p.query = q
+	p.list.query = q
 	p.clearPreviewCache()
 	if _, ok := p.source.(DynamicPickerSource); ok {
 		return p.dynamicTriggerCmd()
@@ -22,33 +22,39 @@ func (p *Picker) setQuery(q string) tea.Cmd {
 
 func (p *Picker) refilter() {
 	p.rebuildMatches()
-	if p.query != "" {
-		p.cursor = 0
+	if p.list.query != "" {
+		p.list.cursor = 0
 	}
-	if p.cursor >= len(p.matched) {
-		p.cursor = max(0, len(p.matched)-1)
+	if p.list.cursor >= len(p.list.matched) {
+		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
-	p.listScroll = 0
-	p.previewScroll = 0
+	p.list.scroll = 0
+	p.preview.scroll = 0
 	p.clampScroll()
 }
 
 func (p *Picker) rebuildMatches() {
 	src, _ := p.source.(StaticPickerSource)
-	p.matched = p.matched[:0]
-	for i := range p.items {
-		item := &p.items[i]
+	p.list.matched = p.list.matched[:0]
+	for i := range p.list.items {
+		item := &p.list.items[i]
 		if src == nil {
-			p.matched = append(p.matched, pickerMatch{item: item})
+			p.list.matched = append(p.list.matched, pickerMatch{item: item})
 			continue
 		}
-		score, indices, ok := src.Match(p.query, *item)
+		score, indices, ok := src.Match(p.list.query, *item)
 		if !ok {
 			continue
 		}
-		p.matched = append(p.matched, pickerMatch{item, score, indices})
+		p.list.matched = append(
+			p.list.matched, pickerMatch{
+				item:    item,
+				score:   score,
+				indices: indices,
+			},
+		)
 	}
-	slices.SortStableFunc(p.matched, func(a, b pickerMatch) int {
+	slices.SortStableFunc(p.list.matched, func(a, b pickerMatch) int {
 		return cmp.Compare(b.score, a.score)
 	})
 }
@@ -67,43 +73,43 @@ func (p *PickerItem) columnText(col int) string {
 }
 
 func (p *Picker) selection() *PickerItem {
-	if p.cursor >= 0 && p.cursor < len(p.matched) {
-		return p.matched[p.cursor].item
+	if p.list.cursor >= 0 && p.list.cursor < len(p.list.matched) {
+		return p.list.matched[p.list.cursor].item
 	}
 	return nil
 }
 
 func (p *Picker) moveBy(n int) {
-	if len(p.matched) == 0 {
+	if len(p.list.matched) == 0 {
 		return
 	}
-	p.cursor = min(max(p.cursor+n, 0), len(p.matched)-1)
+	p.list.cursor = min(max(p.list.cursor+n, 0), len(p.list.matched)-1)
 }
 
 func (p *Picker) pageDown() {
-	p.moveBy(max(p.listHeight, 1))
+	p.moveBy(max(p.list.height, 1))
 }
 
 func (p *Picker) pageUp() {
-	p.moveBy(-max(p.listHeight, 1))
+	p.moveBy(-max(p.list.height, 1))
 }
 
 func (p *Picker) clampScroll() {
-	p.listScroll = listClampScroll(
-		p.listScroll, len(p.matched), p.listHeight,
+	p.list.scroll = listClampScroll(
+		p.list.scroll, len(p.list.matched), p.list.height,
 	)
 }
 
 func (p *Picker) scrollBy(delta int) {
-	p.listScroll = listScrollBy(
-		p.listScroll, len(p.matched), p.listHeight, delta,
+	p.list.scroll = listScrollBy(
+		p.list.scroll, len(p.list.matched), p.list.height, delta,
 	)
 }
 
 // ensureCursorVisible scrolls the list the minimum amount needed to bring the
 // selected row into view, used after keyboard navigation
 func (p *Picker) ensureCursorVisible() {
-	p.listScroll = listEnsureCursorVisible(
-		p.listScroll, p.cursor, len(p.matched), p.listHeight,
+	p.list.scroll = listEnsureCursorVisible(
+		p.list.scroll, p.list.cursor, len(p.list.matched), p.list.height,
 	)
 }

@@ -100,7 +100,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	}
 
 	headerH := 0
-	if pickerHasHeader(ps.source.Columns()) && len(ps.matched) > 0 {
+	if pickerHasHeader(ps.source.Columns()) && len(ps.list.matched) > 0 {
 		headerH = 1
 	}
 	listW := areaW - 2
@@ -109,7 +109,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	}
 	p.listBounds = geom.Area{
 		Point: geom.Point{X: 1, Y: 3 + headerH},
-		Size:  geom.Size{Width: listW, Height: ps.listHeight},
+		Size:  geom.Size{Width: listW, Height: ps.list.height},
 	}
 
 	p.splitBounds = p.splitBounds.Translate(pl.Point)
@@ -136,7 +136,7 @@ func (p *PickerComponent) handleDynamicTrigger(
 	cx *Context, msg pickerDynamicTriggerMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
-	if msg.gen != ps.dynamicGen {
+	if msg.gen != ps.load.dynamicGen {
 		return consumed(), nil
 	}
 	src, ok := ps.source.(DynamicPickerSource)
@@ -146,16 +146,16 @@ func (p *PickerComponent) handleDynamicTrigger(
 	p.markDirty()
 	src.Search(msg.query)
 	items, ch, stop := src.Load(cx.Editor)
-	ps.dynamicStop = stop
-	ps.items = items
-	ps.matched = make([]pickerMatch, len(items))
+	ps.load.dynamicStop = stop
+	ps.list.items = items
+	ps.list.matched = make([]pickerMatch, len(items))
 	for i := range items {
-		ps.matched[i] = pickerMatch{item: &items[i]}
+		ps.list.matched[i] = pickerMatch{item: &items[i]}
 	}
 	if ch != nil {
 		return consumed(), drainDynamicFeed(msg.gen, ch)
 	}
-	ps.dynamicPending = false
+	ps.load.dynamicPending = false
 	return consumed(), nil
 }
 
@@ -163,7 +163,7 @@ func (p *PickerComponent) handleDynamicFeed(
 	msg pickerDynamicFeedMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
-	if msg.gen != ps.dynamicGen {
+	if msg.gen != ps.load.dynamicGen {
 		return consumed(), nil
 	}
 	p.markDirty()
@@ -171,7 +171,7 @@ func (p *PickerComponent) handleDynamicFeed(
 	if msg.feed != nil {
 		return consumed(), drainDynamicFeed(msg.gen, msg.feed)
 	}
-	ps.dynamicPending = false
+	ps.load.dynamicPending = false
 	return consumed(), nil
 }
 
@@ -188,9 +188,9 @@ func (p *PickerComponent) handleMouseClick(
 		p.updateSplitRatio(cx, msg.X)
 		return consumed(), nil
 	}
-	if idx, ok := listIndexAt(p.listBounds, p.state.listScroll, clickPt); ok {
-		if idx >= 0 && idx < len(p.state.matched) {
-			p.state.cursor = idx
+	if idx, ok := listIndexAt(p.listBounds, p.state.list.scroll, clickPt); ok {
+		if idx >= 0 && idx < len(p.state.list.matched) {
+			p.state.list.cursor = idx
 		}
 	}
 	return consumed(), nil
@@ -261,9 +261,9 @@ func (p *PickerComponent) scrollPreviewByWheel(
 	// clamped by the renderer, which knows the document length
 	switch button {
 	case tea.MouseWheelUp:
-		p.state.previewScroll -= step
+		p.state.preview.scroll -= step
 	case tea.MouseWheelDown:
-		p.state.previewScroll += step
+		p.state.preview.scroll += step
 	}
 }
 
@@ -274,10 +274,10 @@ func (p *PickerComponent) mouseOutside(at geom.Point) bool {
 func (p *PickerComponent) dismiss() (EventResult, tea.Cmd) {
 	ps := p.state
 	p.dragSplit = false
-	if ps.dynamicStop != nil {
-		ps.dynamicStop()
+	if ps.load.dynamicStop != nil {
+		ps.load.dynamicStop()
 	}
-	ps.cancel()
+	ps.load.cancel()
 	return ignoredWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
 		return nil

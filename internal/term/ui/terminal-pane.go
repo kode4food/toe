@@ -27,26 +27,36 @@ type (
 	// emulator, so full-screen programs (editors, pagers, TUIs) render
 	// correctly
 	TerminalPane struct {
-		id         view.Id
-		editor     *view.Editor
-		area       geom.Area
-		dirty      bool
-		shell      string
-		emu        *vt.SafeEmulator
-		pty        *os.File
-		cmd        *exec.Cmd
-		clip       view.Clipboard
-		updates    chan struct{}
-		closed     chan struct{}
-		restore    view.Pane
-		stateMu    sync.Mutex
-		path       string
-		title      string
-		bellRung   bool
-		scrollN    int
-		mouseOn    atomic.Bool
-		selActive  bool
-		selA, selB uv.Position
+		id     view.Id
+		editor *view.Editor
+
+		metadata  metadataState
+		selection selectionState
+
+		area    geom.Area
+		dirty   bool
+		shell   string
+		emu     *vt.SafeEmulator
+		pty     *os.File
+		cmd     *exec.Cmd
+		clip    view.Clipboard
+		updates chan struct{}
+		closed  chan struct{}
+		restore view.Pane
+		scrollN int
+		mouseOn atomic.Bool
+	}
+
+	metadataState struct {
+		sync.Mutex
+		path     string
+		title    string
+		bellRung bool
+	}
+
+	selectionState struct {
+		active     bool
+		start, end uv.Position
 		drag       axisTicker
 	}
 
@@ -90,13 +100,15 @@ func NewTerminalPaneInDir(
 		return nil, err
 	}
 	tp := &TerminalPane{
-		editor:  e,
-		shell:   shell,
-		emu:     vt.NewSafeEmulator(size.Width, size.Height),
-		pty:     f,
-		cmd:     cmd,
-		clip:    e.Clipboard(),
-		path:    path,
+		editor: e,
+		shell:  shell,
+		emu:    vt.NewSafeEmulator(size.Width, size.Height),
+		pty:    f,
+		cmd:    cmd,
+		clip:   e.Clipboard(),
+		metadata: metadataState{
+			path: path,
+		},
 		updates: make(chan struct{}, 1),
 		closed:  make(chan struct{}),
 	}
@@ -176,9 +188,9 @@ func (t *TerminalPane) Mode() view.Mode {
 
 // Path returns the shell working directory most recently reported by OSC 7
 func (t *TerminalPane) Path() string {
-	t.stateMu.Lock()
-	defer t.stateMu.Unlock()
-	return t.path
+	t.metadata.Lock()
+	defer t.metadata.Unlock()
+	return t.metadata.path
 }
 
 // SaveSession stores a terminal slot so a fresh shell can be reopened
@@ -240,9 +252,9 @@ func (t *TerminalPane) Emulator() *vt.SafeEmulator {
 // Title returns the terminal title most recently set by the shell or the
 // program running in it (OSC 0/2), or "" if none has been set yet
 func (t *TerminalPane) Title() string {
-	t.stateMu.Lock()
-	defer t.stateMu.Unlock()
-	return t.title
+	t.metadata.Lock()
+	defer t.metadata.Unlock()
+	return t.metadata.title
 }
 
 // SendKey forwards a key event to the shell. Printable text bypasses vt's
@@ -333,11 +345,11 @@ func (t *TerminalPane) IngestOutput(data []byte) {
 // rung bell only clears when read while focused, so it stays visible in the
 // status line until the pane is actually looked at
 func (t *TerminalPane) ConsumeBell(focused bool) bool {
-	t.stateMu.Lock()
-	defer t.stateMu.Unlock()
-	rung := t.bellRung
+	t.metadata.Lock()
+	defer t.metadata.Unlock()
+	rung := t.metadata.bellRung
 	if focused {
-		t.bellRung = false
+		t.metadata.bellRung = false
 	}
 	return rung
 }
@@ -350,16 +362,16 @@ func (t *TerminalPane) Paste(text string) {
 }
 
 func (t *TerminalPane) setTitle(s string) {
-	t.stateMu.Lock()
-	t.title = s
-	t.stateMu.Unlock()
+	t.metadata.Lock()
+	t.metadata.title = s
+	t.metadata.Unlock()
 	t.dirty = true
 }
 
 func (t *TerminalPane) onBell() {
-	t.stateMu.Lock()
-	t.bellRung = true
-	t.stateMu.Unlock()
+	t.metadata.Lock()
+	t.metadata.bellRung = true
+	t.metadata.Unlock()
 	t.dirty = true
 }
 
@@ -407,9 +419,9 @@ func (t *TerminalPane) handleOSC7(data []byte) bool {
 	if err != nil || u.Scheme != "file" || u.Path == "" {
 		return false
 	}
-	t.stateMu.Lock()
-	t.path = u.Path
-	t.stateMu.Unlock()
+	t.metadata.Lock()
+	t.metadata.path = u.Path
+	t.metadata.Unlock()
 	return true
 }
 
@@ -443,39 +455,39 @@ func (t *TerminalPane) toAbsolute(pos uv.Position) uv.Position {
 }
 
 func (t *TerminalPane) beginSelection(pos uv.Position) {
-	t.selActive = true
+	t.selection.active = true
 	abs := t.toAbsolute(pos)
-	t.selA, t.selB = abs, abs
+	t.selection.start, t.selection.end = abs, abs
 	t.dirty = true
 }
 
 func (t *TerminalPane) extendSelection(pos uv.Position) {
-	if !t.selActive {
+	if !t.selection.active {
 		return
 	}
-	t.selB = t.toAbsolute(pos)
+	t.selection.end = t.toAbsolute(pos)
 	t.dirty = true
 }
 
 func (t *TerminalPane) endSelection(pos uv.Position) string {
-	if !t.selActive {
+	if !t.selection.active {
 		return ""
 	}
-	t.selB = t.toAbsolute(pos)
-	t.selActive = false
+	t.selection.end = t.toAbsolute(pos)
+	t.selection.active = false
 	t.dirty = true
 	return t.selectionText()
 }
 
-func (t *TerminalPane) selection() (selSpan, bool) {
-	if !t.selActive {
+func (t *TerminalPane) selectedSpan() (selSpan, bool) {
+	if !t.selection.active {
 		return selSpan{}, false
 	}
-	return normalizeSelection(t.selA, t.selB), true
+	return normalizeSelection(t.selection.start, t.selection.end), true
 }
 
 func (t *TerminalPane) selectionText() string {
-	sp := normalizeSelection(t.selA, t.selB)
+	sp := normalizeSelection(t.selection.start, t.selection.end)
 	w := t.emu.Width()
 	lines := make([]string, 0, sp.end.Y-sp.start.Y+1)
 	for y := sp.start.Y; y <= sp.end.Y; y++ {

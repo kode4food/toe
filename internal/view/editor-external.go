@@ -14,7 +14,7 @@ func (e *Editor) ProcessExternalFileChange(path string) bool {
 		return false
 	}
 	handled := false
-	for _, doc := range e.docs {
+	for _, doc := range e.documents.byID {
 		if doc.Path() != abs {
 			continue
 		}
@@ -31,18 +31,18 @@ func (e *Editor) processExternalChange(doc *Document) bool {
 		return false
 	}
 	if !snap.exists {
-		doc.disk = snap
-		doc.external = ExternalStateDeleted
+		doc.file.snapshot = snap
+		doc.file.external = ExternalStateDeleted
 		e.SetStatusMsg(i18n.Text(i18n.StatusFileDeleted, i18n.Vars{
-			"file": doc.RelativeName(e.cwd),
+			"file": doc.RelativeName(e.workspace.cwd),
 		}))
 		return true
 	}
 	if doc.Modified() {
-		doc.disk = snap
-		doc.external = ExternalStateChanged
+		doc.file.snapshot = snap
+		doc.file.external = ExternalStateChanged
 		e.SetStatusMsg(i18n.Text(i18n.StatusFileChanged, i18n.Vars{
-			"file": doc.RelativeName(e.cwd),
+			"file": doc.RelativeName(e.workspace.cwd),
 		}))
 		return true
 	}
@@ -59,7 +59,7 @@ func (e *Editor) processExternalChange(doc *Document) bool {
 		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
 	}
 	e.SetStatusMsg(i18n.Text(i18n.StatusFileReloaded, i18n.Vars{
-		"file": doc.RelativeName(e.cwd),
+		"file": doc.RelativeName(e.workspace.cwd),
 	}))
 	return true
 }

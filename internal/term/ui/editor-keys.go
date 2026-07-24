@@ -25,9 +25,10 @@ func (e *EditorComponent) handleKeyPress(
 		}
 	}
 
-	e.completionGen++
+	e.language.completionGen++
 
-	if len(e.pending) == 0 && k.Code.Char == 'z' && k.Mods == command.ModCtrl {
+	if len(e.keys.pending) == 0 &&
+		k.Code.Char == 'z' && k.Mods == command.ModCtrl {
 		return consumed(), tea.Suspend
 	}
 
@@ -35,11 +36,11 @@ func (e *EditorComponent) handleKeyPress(
 		e.macroSlot.keys = append(e.macroSlot.keys, k)
 	}
 
-	if e.continuation != nil {
-		cont := e.continuation(cx.Editor, k)
-		e.continuation = cont
+	if e.keys.continuation != nil {
+		cont := e.keys.continuation(cx.Editor, k)
+		e.keys.continuation = cont
 		if cont == nil {
-			e.hint = ""
+			e.keys.hint = ""
 			cx.Editor.ResetCount()
 		}
 		e.syncEditorMessages(cx)
@@ -50,38 +51,38 @@ func (e *EditorComponent) handleKeyPress(
 	mode := cx.Editor.Mode()
 	modeStr := mode.String()
 
-	noPending := len(e.pending) == 0 && k.Mods == command.ModNone &&
+	noPending := len(e.keys.pending) == 0 && k.Mods == command.ModNone &&
 		k.Code.Special == command.SpecialNone
 	if noPending && mode == view.ModeSelect {
 		ch := k.Code.Char
 		cur := cx.Editor.Count()
 		if ch >= '1' && ch <= '9' || (ch == '0' && cur > 0) {
 			cx.Editor.SetCount(cur*10 + int(ch-'0'))
-			e.status = fmt.Sprintf("%d", cx.Editor.Count())
+			e.keys.status = fmt.Sprintf("%d", cx.Editor.Count())
 			return consumed(), nil
 		}
 	}
 
-	e.pending = append(e.pending, k)
-	act, found, prefix := cx.Keymaps.Lookup(modeStr, e.pending)
+	e.keys.pending = append(e.keys.pending, k)
+	act, found, prefix := cx.Keymaps.Lookup(modeStr, e.keys.pending)
 	switch {
 	case found:
-		e.pending = nil
-		e.status = ""
+		e.keys.pending = nil
+		e.keys.status = ""
 		e.clearCommandMessage()
-		e.infoTitle = ""
-		e.infoItems = nil
+		e.keys.infoTitle = ""
+		e.keys.infoItems = nil
 		cont := act(cx.Editor)
-		e.continuation = cont
+		e.keys.continuation = cont
 		if cont == nil {
-			e.hint = ""
+			e.keys.hint = ""
 			cx.Editor.ResetCount()
 		}
 		e.syncEditorMessages(cx)
 		e.handleReplay(cx)
 
-		if ov := e.nextLayer; ov != nil {
-			e.nextLayer = nil
+		if ov := e.keys.nextLayer; ov != nil {
+			e.keys.nextLayer = nil
 			return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
 				layer, cmd := ov(cx)
 				if layer != nil {
@@ -93,9 +94,11 @@ func (e *EditorComponent) handleKeyPress(
 		return consumed(), nil
 
 	case prefix:
-		if mode == view.ModeInsert && len(e.pending) == 1 {
-			if e.pending[0].IsTypable() {
-				if layer := e.insertTypable(cx, e.pending[0]); layer != nil {
+		if mode == view.ModeInsert && len(e.keys.pending) == 1 {
+			if e.keys.pending[0].IsTypable() {
+				if layer := e.insertTypable(
+					cx, e.keys.pending[0],
+				); layer != nil {
 					return consumedWith(layer), nil
 				}
 				return consumed(), nil
@@ -105,28 +108,30 @@ func (e *EditorComponent) handleKeyPress(
 		if c := cx.Editor.Count(); c > 0 {
 			_, _ = fmt.Fprintf(&sb, "%d", c)
 		}
-		for _, pk := range e.pending {
+		for _, pk := range e.keys.pending {
 			sb.WriteString(pk.String())
 		}
-		e.status = sb.String()
-		title, items := cx.Keymaps.PendingHints(modeStr, e.pending)
-		e.infoTitle = title
-		e.infoItems = items
+		e.keys.status = sb.String()
+		title, items := cx.Keymaps.PendingHints(modeStr, e.keys.pending)
+		e.keys.infoTitle = title
+		e.keys.infoItems = items
 		return consumed(), nil
 
 	default:
-		if mode == view.ModeInsert && len(e.pending) == 1 {
-			if e.pending[0].IsTypable() {
-				if layer := e.insertTypable(cx, e.pending[0]); layer != nil {
+		if mode == view.ModeInsert && len(e.keys.pending) == 1 {
+			if e.keys.pending[0].IsTypable() {
+				if layer := e.insertTypable(
+					cx, e.keys.pending[0],
+				); layer != nil {
 					return consumedWith(layer), nil
 				}
 				return consumed(), nil
 			}
 		}
-		e.pending = nil
-		e.status = ""
-		e.infoTitle = ""
-		e.infoItems = nil
+		e.keys.pending = nil
+		e.keys.status = ""
+		e.keys.infoTitle = ""
+		e.keys.infoItems = nil
 		cx.Editor.ResetCount()
 		return consumed(), nil
 	}
@@ -135,7 +140,7 @@ func (e *EditorComponent) handleKeyPress(
 // keymapClaims reports whether k continues or completes a binding in the
 // focused pane's mode, so a raw-input pane must not swallow it first
 func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
-	if len(e.pending) > 0 || e.continuation != nil {
+	if len(e.keys.pending) > 0 || e.keys.continuation != nil {
 		return true
 	}
 	if cx.Editor.Mode() == view.ModeTerminal && k.Mods == command.ModNone {
@@ -151,10 +156,10 @@ func (e *EditorComponent) insertTypable(
 	cx *Context, k command.KeyEvent,
 ) Callback {
 	action.InsertChar(cx.Editor, k.Code.Char)
-	e.pending = nil
-	e.status = ""
-	e.infoTitle = ""
-	e.infoItems = nil
+	e.keys.pending = nil
+	e.keys.status = ""
+	e.keys.infoTitle = ""
+	e.keys.infoItems = nil
 	cx.Editor.ResetCount()
 	if layer := e.triggerSignatureHelpLayer(cx); layer != nil {
 		return layer
@@ -186,8 +191,8 @@ func (e *EditorComponent) completionCmd(cx *Context, trigger bool) tea.Cmd {
 		return nil
 	}
 	anchor := newCompletionAnchor(doc, v.ID())
-	e.completionGen++
-	gen := e.completionGen
+	e.language.completionGen++
+	gen := e.language.completionGen
 	return func() tea.Msg {
 		var res view.CompletionResult
 		var err error
@@ -221,13 +226,14 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 	}
 	call, ok := currentSignatureCall(cx)
 	if !ok {
-		e.signatureHidden = nil
+		e.language.signatureHidden = nil
 		return nil
 	}
-	if e.signatureHidden != nil && *e.signatureHidden == call {
+	if e.language.signatureHidden != nil &&
+		*e.language.signatureHidden == call {
 		return nil
 	}
-	e.signatureHidden = nil
+	e.language.signatureHidden = nil
 	help, err := ls.TriggerSignatureHelp(doc, v.ID())
 	if err != nil {
 		cx.Editor.SetStatusMsg(i18n.ErrorText(err))

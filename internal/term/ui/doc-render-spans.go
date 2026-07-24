@@ -101,7 +101,7 @@ func (r *renderPass) prepareContentRender(
 	searchMatches := dc.smSpans
 	docDiagnostics := doc.Diagnostics()
 	var docHighlights []matchSpan
-	if r.cx.Editor.Mode() != view.ModeSelect && r.ec.mouseDownRange == nil {
+	if r.cx.Editor.Mode() != view.ModeSelect && r.ec.mouse.downRange == nil {
 		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
 	}
 	var docLinks []matchSpan

@@ -105,17 +105,17 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	for _, key := range keys {
 		s.Options[key] = opts[key]
 	}
-	regKeys := slices.Sorted(maps.Keys(e.registers))
+	regKeys := slices.Sorted(maps.Keys(e.registers.values))
 	if len(regKeys) > 0 {
 		s.Registers = sessionRegisters{}
 	}
 	for _, k := range regKeys {
-		if vals := e.registers.Read(k); len(vals) > 0 {
+		if vals := e.registers.values.Read(k); len(vals) > 0 {
 			s.Registers[string(k)] = vals
 		}
 	}
 	for _, v := range e.AllViews() {
-		d, ok := e.docs[v.docID]
+		d, ok := e.documents.byID[v.docID]
 		if !ok {
 			continue
 		}
@@ -133,7 +133,7 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		docIndex[d.ID()] = len(s.Documents) + 1
 		s.Documents = append(s.Documents, e.sessionDocument(d, base))
 	}
-	s.Layout = e.sessionNodeFor(e.tree.root, docIndex, base)
+	s.Layout = e.sessionNodeFor(e.panes.tree.root, docIndex, base)
 	if len(s.Documents) == 0 && !layoutHasReopenablePane(s.Layout) {
 		return nil
 	}
@@ -186,22 +186,22 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				continue
 			}
 		}
-		e.nextDocID++
-		id := e.nextDocID
+		e.documents.nextID++
+		id := e.documents.nextID
 		var doc *Document
 		if sd.Scratch {
 			doc = newDocument(id, &e.opts)
-			doc.buf.text = core.NewRope(sd.Text)
-			doc.buf.version++
+			doc.content.text = core.NewRope(sd.Text)
+			doc.content.version++
 			if sd.Lang != "" {
 				doc.SetLang(sd.Lang)
 			}
-			doc.buf.lastSel = clampSelection(
-				sd.Selection.selection(), doc.buf.text.LenChars(),
+			doc.views.lastSelection = clampSelection(
+				sd.Selection.selection(), doc.content.text.LenChars(),
 			)
 		} else {
 			doc = newPendingDocument(id, absPath, sd.Lang, &e.opts)
-			doc.buf.lastSel = sd.Selection.selection()
+			doc.views.lastSelection = sd.Selection.selection()
 		}
 		nextDocs[doc.ID()] = doc
 		docs[i+1] = doc.ID()
@@ -210,7 +210,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		return nil, false, ErrSessionEmpty
 	}
 
-	t := newTree(e.tree.area.Size)
+	t := newTree(e.panes.tree.area.Size)
 	t.nodes = map[Id]*treeNode{}
 	t.nextID = 0
 	rootID := t.allocID()
@@ -236,16 +236,16 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	}
 	t.recalculate()
 
-	e.docs = nextDocs
-	e.tree = t
-	e.lastModifiedDocIDs = [2]DocumentId{}
+	e.documents.byID = nextDocs
+	e.panes.tree = t
+	e.documents.lastModifiedIDs = [2]DocumentId{}
 	e.markDocAccessed()
 
-	e.registers.ClearAll()
+	e.registers.values.ClearAll()
 	for name, values := range s.Registers {
 		runes := []rune(name)
 		if len(runes) == 1 {
-			e.registers.Write(runes[0], values)
+			e.registers.values.Write(runes[0], values)
 		}
 	}
 

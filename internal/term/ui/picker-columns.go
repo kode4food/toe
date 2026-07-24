@@ -30,7 +30,7 @@ func pickerColumnWidths(p *Picker, w int) []int {
 	for i, col := range cols {
 		widths[i] = runewidth.StringWidth(col)
 	}
-	for _, m := range p.matched {
+	for _, m := range p.list.matched {
 		for i := range min(len(m.item.Columns), n) {
 			widths[i] = max(widths[i], runewidth.StringWidth(m.item.Columns[i]))
 		}

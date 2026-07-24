@@ -33,15 +33,15 @@ func writePickerPromptRow(
 	cx *Context, buf *tui.Buffer, area geom.Area, p *Picker,
 ) {
 	th := cx.Theme()
-	count := fmt.Sprintf("%d/%d", len(p.matched), len(p.items))
+	count := fmt.Sprintf("%d/%d", len(p.list.matched), len(p.list.items))
 	cl := runewidth.StringWidth(count)
 
 	queryArea := max(area.Width-2*pickerPadX-1-cl, 0)
 
-	displayQuery := p.query
-	ql := runewidth.StringWidth(p.query)
+	displayQuery := p.list.query
+	ql := runewidth.StringWidth(p.list.query)
 	if ql > queryArea {
-		runes := []rune(p.query)
+		runes := []rune(p.list.query)
 		for len(runes) > 0 && runewidth.StringWidth(string(runes)) > queryArea {
 			runes = runes[1:]
 		}
@@ -180,14 +180,14 @@ func pickerColumnBase(
 }
 
 func pickerEmptyHint(ps *Picker) string {
-	if len(ps.matched) > 0 {
+	if len(ps.list.matched) > 0 {
 		return ""
 	}
 	if _, ok := ps.source.(DynamicPickerSource); ok {
 		switch {
-		case ps.query == "":
+		case ps.list.query == "":
 			return i18n.Text(i18n.StatusPickerTypeToSearch)
-		case ps.dynamicPending:
+		case ps.load.dynamicPending:
 			return i18n.Text(i18n.StatusPickerSearching)
 		}
 	}

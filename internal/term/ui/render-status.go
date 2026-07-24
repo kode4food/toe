@@ -82,17 +82,17 @@ type (
 
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	w := r.size.Width
-	errorMsg := r.ec.cmdMsg != nil && r.ec.cmdMsg.error
+	errorMsg := r.ec.keys.message != nil && r.ec.keys.message.error
 	st := r.cmdlineStyle(errorMsg)
 	tuiSt := styleToTUI(st)
 
 	left := ""
-	if r.ec.cmdMsg != nil {
-		left = r.ec.cmdMsg.value
+	if r.ec.keys.message != nil {
+		left = r.ec.keys.message.value
 	}
-	right := r.ec.hint
+	right := r.ec.keys.hint
 	if right == "" {
-		right = r.ec.status
+		right = r.ec.keys.status
 	}
 	if r.ec.macroSlot.recording {
 		right += fmt.Sprintf("[%c]", r.ec.macroSlot.reg)

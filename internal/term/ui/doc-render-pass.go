@@ -176,14 +176,14 @@ func (r *renderPass) forceFullRedraw(
 		force = true
 	}
 
-	if r.cx.OverlaysChanged {
+	if r.cx.composition.changed {
 		force = true
 	}
 
-	if cache.lastInfoTitle != r.ec.infoTitle ||
-		!slices.Equal(cache.lastInfoItems, r.ec.infoItems) {
-		cache.lastInfoTitle = r.ec.infoTitle
-		cache.lastInfoItems = r.ec.infoItems
+	if cache.lastInfoTitle != r.ec.keys.infoTitle ||
+		!slices.Equal(cache.lastInfoItems, r.ec.keys.infoItems) {
+		cache.lastInfoTitle = r.ec.keys.infoTitle
+		cache.lastInfoItems = r.ec.keys.infoItems
 		force = true
 	}
 
@@ -217,7 +217,7 @@ type beginPaneRedrawArgs struct {
 // beginPaneRedraw reports whether pane needs repainting this frame, clearing
 // its cell rectangle first on an incremental (non-full) redraw
 func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
-	forced := !r.cx.SingleLayer &&
+	forced := !r.cx.composition.singleLayer &&
 		paneUnderOverlay(r.cx, args.pane.Area(), args.yOffset)
 	switch {
 	case args.redrawAll:
@@ -348,17 +348,17 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 
 	r.renderDiagnosticPopup(buf)
 
-	if r.ec.infoTitle != "" || len(r.ec.infoItems) > 0 {
+	if r.ec.keys.infoTitle != "" || len(r.ec.keys.infoItems) > 0 {
 		r.renderInfoOverlay(buf)
 	}
 }
 
 func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
-	if !cx.OverlayRegionsPrecise {
+	if !cx.composition.precise {
 		return true
 	}
 	pane := a.Translate(geom.Point{Y: y0})
-	return slices.ContainsFunc(cx.OverlayRegions, pane.Intersects)
+	return slices.ContainsFunc(cx.composition.regions, pane.Intersects)
 }
 
 func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
@@ -370,8 +370,8 @@ func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
 }
 
 func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
-	items := r.ec.infoItems
-	title := r.ec.infoTitle
+	items := r.ec.keys.infoItems
+	title := r.ec.keys.infoTitle
 	th := r.activeTheme()
 
 	popupSt := th.Get("ui.popup")

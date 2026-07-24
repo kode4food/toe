@@ -43,7 +43,9 @@ func PickerModule(model ui.Model) command.Module {
 	cfg := new(filesPickerSection)
 	reset := func() {
 		*cfg = filesPickerSection{}
-		cfg.Editor.FileExplorer.FlattenDirs = true
+		cfg.Editor.FileExplorer = fileExplorerConfig(
+			DefaultFileExplorerOptions(),
+		)
 	}
 	reset()
 

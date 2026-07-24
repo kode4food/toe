@@ -14,12 +14,12 @@ func (p *PickerComponent) drawPickerBox(
 	innerH := area.Height - 2
 
 	cols := ps.source.Columns()
-	showHeader := pickerHasHeader(cols) && len(ps.matched) > 0
+	showHeader := pickerHasHeader(cols) && len(ps.list.matched) > 0
 	headerH := 0
 	if showHeader {
 		headerH = 1
 	}
-	ps.listHeight = max(innerH-2-headerH, 1)
+	ps.list.height = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
 		border:       lipgloss.RoundedBorder(),
@@ -38,25 +38,25 @@ func (p *PickerComponent) drawPickerBox(
 		itemY++
 	}
 	ps.clampScroll()
-	for i := range ps.listHeight {
-		idx := ps.listScroll + i
-		if idx >= len(ps.matched) {
+	for i := range ps.list.height {
+		idx := ps.list.scroll + i
+		if idx >= len(ps.list.matched) {
 			break
 		}
 		writePickerItem(
 			buf, geom.Point{X: areas.left.X, Y: itemY + i},
 			&pickerItemRender{
-				p: ps, match: ps.matched[idx], w: areas.left.Width,
-				selected: idx == ps.cursor, cx: cx,
+				p: ps, match: ps.list.matched[idx], w: areas.left.Width,
+				selected: idx == ps.list.cursor, cx: cx,
 			},
 		)
 	}
-	if len(ps.matched) == 0 {
+	if len(ps.list.matched) == 0 {
 		writePickerCenteredHint(cx, buf, geom.Area{
 			Point: geom.Point{X: areas.left.X, Y: itemY},
 			Size: geom.Size{
 				Width:  areas.left.Width,
-				Height: ps.listHeight,
+				Height: ps.list.height,
 			},
 		}, pickerEmptyHint(ps))
 	}
@@ -71,12 +71,12 @@ func (p *PickerComponent) drawPickerPane(
 	innerH := area.Height - 2
 
 	cols := ps.source.Columns()
-	showHeader := pickerHasHeader(cols) && len(ps.matched) > 0
+	showHeader := pickerHasHeader(cols) && len(ps.list.matched) > 0
 	headerH := 0
 	if showHeader {
 		headerH = 1
 	}
-	ps.listHeight = max(innerH-2-headerH, 1)
+	ps.list.height = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
 		border:       lipgloss.RoundedBorder(),
@@ -95,20 +95,24 @@ func (p *PickerComponent) drawPickerPane(
 		itemY++
 	}
 	ps.clampScroll()
-	for i := 0; ps.listScroll+i < len(ps.matched) && i < ps.listHeight; i++ {
-		idx := ps.listScroll + i
+	for i := 0; ps.list.scroll+i < len(ps.list.matched) &&
+		i < ps.list.height; i++ {
+		idx := ps.list.scroll + i
 		writePickerItem(buf,
 			geom.Point{X: area.X, Y: itemY + i},
 			&pickerItemRender{
-				p: ps, match: ps.matched[idx], w: area.Width,
-				selected: idx == ps.cursor, cx: cx,
+				p: ps, match: ps.list.matched[idx], w: area.Width,
+				selected: idx == ps.list.cursor, cx: cx,
 			},
 		)
 	}
-	if len(ps.matched) == 0 {
+	if len(ps.list.matched) == 0 {
 		writePickerCenteredHint(cx, buf, geom.Area{
 			Point: geom.Point{X: area.X, Y: itemY},
-			Size:  geom.Size{Width: area.Width, Height: ps.listHeight},
+			Size: geom.Size{
+				Width:  area.Width,
+				Height: ps.list.height,
+			},
 		}, pickerEmptyHint(ps))
 	}
 }
@@ -118,9 +122,9 @@ func (p *PickerComponent) drawPreviewInto(
 ) {
 	ps := p.state
 	p.previewBounds = area
-	if ps.cursor != ps.previewScrollFor {
-		ps.previewScroll = 0
-		ps.previewScrollFor = ps.cursor
+	if ps.list.cursor != ps.preview.scrollFor {
+		ps.preview.scroll = 0
+		ps.preview.scrollFor = ps.list.cursor
 	}
 	item := ps.selection()
 	if item == nil {

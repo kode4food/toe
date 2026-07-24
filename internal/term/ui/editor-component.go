@@ -16,32 +16,45 @@ import (
 
 type (
 	EditorComponent struct {
+		keys     keyState
+		mouse    mouseState
+		language languageState
+
 		size            geom.Size
 		buf             *tui.Buffer
-		pending         []command.KeyEvent
-		status          string
-		hint            string
-		continuation    command.Continuation
-		cmdMsg          *commandMessage
 		saveSlot        *saveGenSlot
 		cache           *renderCache
 		macroSlot       *macroSlot
-		nextLayer       layerFunc
 		bufferlineShown bool
 		focused         bool
-		infoTitle       string
-		infoItems       []command.KeyHint
-		mouseDownRange  *core.Range
-		mouseDownSep    *sepDrag
-		mouseDownDrag   Draggable
-		signatureHidden *signatureCall
-		docHighlightGen int
-		docHighlightPos docHighlightPosition
-		completionGen   int
 		fileWatcher     *editorFileWatcher
-		autoScrollV     mouseAutoScrollAxis
-		autoScrollH     mouseAutoScrollAxis
 		spinFrame       int
+	}
+
+	keyState struct {
+		pending      []command.KeyEvent
+		status       string
+		hint         string
+		continuation command.Continuation
+		message      *commandMessage
+		nextLayer    layerFunc
+		infoTitle    string
+		infoItems    []command.KeyHint
+	}
+
+	mouseState struct {
+		downRange  *core.Range
+		downSep    *sepDrag
+		downDrag   Draggable
+		vertical   mouseAutoScrollAxis
+		horizontal mouseAutoScrollAxis
+	}
+
+	languageState struct {
+		signatureHidden *signatureCall
+		highlightGen    int
+		highlightPos    docHighlightPosition
+		completionGen   int
 	}
 
 	commandMessage struct {
@@ -98,39 +111,45 @@ func newEditorComponent() *EditorComponent {
 		macroSlot:   &macroSlot{macros: map[rune][]command.KeyEvent{}},
 		focused:     true,
 		fileWatcher: newEditorFileWatcher(),
-		autoScrollV: mouseAutoScrollAxis{
-			scroll: func(e *view.Editor, v *view.View, toLo bool) {
-				action.ScrollViewLines(e, v, 1, toLo)
+		mouse: mouseState{
+			vertical: mouseAutoScrollAxis{
+				scroll: func(e *view.Editor, v *view.View, toLo bool) {
+					action.ScrollViewLines(e, v, 1, toLo)
+				},
+				pos: func(
+					r *renderPass, doc *view.Document, v *view.View, fixed int,
+					toLo bool,
+				) (int, bool) {
+					area := v.Area()
+					edgeY := area.Y + max(area.Height-1, 0) - 1
+					if toLo {
+						edgeY = area.Y
+					}
+					return r.screenCharPos(doc, v, geom.Point{
+						X: fixed, Y: edgeY,
+					})
+				},
 			},
-			pos: func(
-				r *renderPass, doc *view.Document, v *view.View, fixed int,
-				toLo bool,
-			) (int, bool) {
-				area := v.Area()
-				edgeY := area.Y + max(area.Height-1, 0) - 1
-				if toLo {
-					edgeY = area.Y
-				}
-				return r.screenCharPos(doc, v, geom.Point{X: fixed, Y: edgeY})
-			},
-		},
-		autoScrollH: mouseAutoScrollAxis{
-			scroll: func(e *view.Editor, v *view.View, toLo bool) {
-				action.ScrollViewColumns(e, v, 1, toLo)
-			},
-			pos: func(
-				r *renderPass, doc *view.Document, v *view.View, fixed int,
-				toLo bool,
-			) (int, bool) {
-				area := v.Area()
-				gutterW := gutterWidthFor(
-					doc.Text(), r.cx.Editor.Options().Gutters,
-				)
-				edgeX := area.Right()
-				if toLo {
-					edgeX = area.X + gutterW
-				}
-				return r.screenCharPos(doc, v, geom.Point{X: edgeX, Y: fixed})
+			horizontal: mouseAutoScrollAxis{
+				scroll: func(e *view.Editor, v *view.View, toLo bool) {
+					action.ScrollViewColumns(e, v, 1, toLo)
+				},
+				pos: func(
+					r *renderPass, doc *view.Document, v *view.View, fixed int,
+					toLo bool,
+				) (int, bool) {
+					area := v.Area()
+					gutterW := gutterWidthFor(
+						doc.Text(), r.cx.Editor.Options().Gutters,
+					)
+					edgeX := area.Right()
+					if toLo {
+						edgeX = area.X + gutterW
+					}
+					return r.screenCharPos(doc, v, geom.Point{
+						X: edgeX, Y: fixed,
+					})
+				},
 			},
 		},
 	}
@@ -182,7 +201,7 @@ func (e *EditorComponent) HandleEvent(
 }
 
 func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
-	if e.mouseDownRange != nil {
+	if e.mouse.downRange != nil {
 		return nil
 	}
 	doc, ok := cx.Editor.FocusedDocument()
@@ -199,12 +218,12 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 		return nil
 	}
 	pos := documentHighlightPositionFor(doc, v)
-	if e.docHighlightPos == pos {
+	if e.language.highlightPos == pos {
 		return nil
 	}
-	e.docHighlightPos = pos
-	e.docHighlightGen++
-	gen := e.docHighlightGen
+	e.language.highlightPos = pos
+	e.language.highlightGen++
+	gen := e.language.highlightGen
 	return func() tea.Msg {
 		_, _ = ls.DocumentHighlights(doc, v.ID())
 		return docHighlightMsg{gen: gen}
@@ -272,18 +291,18 @@ func (e *EditorComponent) popupAnchorBelowCaret(
 }
 
 func (e *EditorComponent) cancelPending(cx *Context) {
-	e.pending = nil
-	e.status = ""
-	e.infoTitle = ""
-	e.infoItems = nil
-	e.continuation = nil
-	e.hint = ""
+	e.keys.pending = nil
+	e.keys.status = ""
+	e.keys.infoTitle = ""
+	e.keys.infoItems = nil
+	e.keys.continuation = nil
+	e.keys.hint = ""
 	cx.Editor.ResetCount()
 }
 
 func (e *EditorComponent) syncEditorMessages(cx *Context) {
 	if h := cx.Editor.TakeHint(); h != "" {
-		e.hint = h
+		e.keys.hint = h
 	}
 	if m := cx.Editor.TakeStatusMsg(); m != "" {
 		e.setCommandMessage(m)
@@ -301,18 +320,18 @@ func (e *EditorComponent) setCommandResult(res command.Result) {
 }
 
 func (e *EditorComponent) setCommandError(err error) {
-	e.cmdMsg = &commandMessage{
+	e.keys.message = &commandMessage{
 		value: i18n.ErrorText(err),
 		error: true,
 	}
 }
 
 func (e *EditorComponent) setCommandMessage(msg string) {
-	e.cmdMsg = &commandMessage{value: msg}
+	e.keys.message = &commandMessage{value: msg}
 }
 
 func (e *EditorComponent) clearCommandMessage() {
-	e.cmdMsg = nil
+	e.keys.message = nil
 }
 
 func (e *EditorComponent) resize(cx *Context) {

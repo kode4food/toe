@@ -20,23 +20,30 @@ type (
 	Picker struct {
 		source PickerSource
 
+		list    listState
+		preview previewState
+		load    loadState
+	}
+
+	listState struct {
 		items   []PickerItem
 		matched []pickerMatch
 		query   string
+		cursor  int
+		scroll  int
+		height  int
+	}
 
-		cursor     int
-		listScroll int
-		listHeight int
-
-		previewScroll    int
-		previewScrollFor int
-
-		previewCache  previewCache
+	previewState struct {
+		scroll        int
+		scrollFor     int
+		cache         previewCache
 		diffBaseCache map[string]core.Rope
+	}
 
-		feedCmd tea.Cmd
-		cancel  StopFunc
-
+	loadState struct {
+		feedCmd        tea.Cmd
+		cancel         StopFunc
 		dynamicGen     int
 		dynamicStop    StopFunc
 		dynamicPending bool
@@ -155,29 +162,33 @@ const (
 // caller after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
-		source:        source,
-		previewCache:  previewCache{},
-		diffBaseCache: map[string]core.Rope{},
-		cancel:        func() {},
+		source: source,
+		preview: previewState{
+			cache:         previewCache{},
+			diffBaseCache: map[string]core.Rope{},
+		},
+		load: loadState{
+			cancel: func() {},
+		},
 	}
 	items, feed, stop := source.Load(e)
-	p.cancel = stop
+	p.load.cancel = stop
 	_, isStatic := source.(StaticPickerSource)
-	p.items = items
+	p.list.items = items
 	if isStatic {
 		p.refilter()
 	} else {
-		p.matched = make([]pickerMatch, len(items))
+		p.list.matched = make([]pickerMatch, len(items))
 		for i := range items {
-			p.matched[i] = pickerMatch{item: &items[i]}
+			p.list.matched[i] = pickerMatch{item: &items[i]}
 		}
 	}
 	if feed != nil {
 		done := make(chan struct{})
 		closeDone := sync.OnceFunc(func() { close(done) })
-		oldStop := p.cancel
-		p.cancel = func() { oldStop(); closeDone() }
-		p.feedCmd = drainPickerFeed(feed, done)
+		oldStop := p.load.cancel
+		p.load.cancel = func() { oldStop(); closeDone() }
+		p.load.feedCmd = drainPickerFeed(feed, done)
 	}
 	return p
 }
@@ -229,13 +240,13 @@ func (p PickerBase) Match(query string, item PickerItem) (int, []int, bool) {
 
 // MatchCount reports how many items currently match the query
 func (p *Picker) MatchCount() int {
-	return len(p.matched)
+	return len(p.list.matched)
 }
 
 // SelectIndex moves the cursor to i when it is a valid match index
 func (p *Picker) SelectIndex(i int) {
-	if i >= 0 && i < len(p.matched) {
-		p.cursor = i
+	if i >= 0 && i < len(p.list.matched) {
+		p.list.cursor = i
 	}
 }
 
@@ -244,34 +255,34 @@ func (p *Picker) addItems(items []PickerItem) {
 		return
 	}
 	target, hadSelection := p.selectedTarget()
-	p.items = append(p.items, items...)
-	SortPickerItems(p.items)
+	p.list.items = append(p.list.items, items...)
+	SortPickerItems(p.list.items)
 	p.rebuildMatches()
 	if hadSelection {
 		p.restoreSelection(target)
-	} else if p.cursor >= len(p.matched) {
-		p.cursor = max(0, len(p.matched)-1)
+	} else if p.list.cursor >= len(p.list.matched) {
+		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
 	p.clampScroll()
 }
 
 func (p *Picker) selectedTarget() (PickerTarget, bool) {
-	if p.cursor < 0 || p.cursor >= len(p.matched) {
+	if p.list.cursor < 0 || p.list.cursor >= len(p.list.matched) {
 		return PickerTarget{}, false
 	}
-	target := p.matched[p.cursor].item.Location.Target
+	target := p.list.matched[p.list.cursor].item.Location.Target
 	return target, target.Valid()
 }
 
 func (p *Picker) restoreSelection(target PickerTarget) {
-	for i, m := range p.matched {
+	for i, m := range p.list.matched {
 		if m.item.Location.Target == target {
-			p.cursor = i
+			p.list.cursor = i
 			return
 		}
 	}
-	if p.cursor >= len(p.matched) {
-		p.cursor = max(0, len(p.matched)-1)
+	if p.list.cursor >= len(p.list.matched) {
+		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
 }
 
@@ -279,13 +290,13 @@ func (p *Picker) addDynamicItems(items []PickerItem) {
 	if len(items) == 0 {
 		return
 	}
-	p.items = append(p.items, items...)
-	p.matched = make([]pickerMatch, len(p.items))
-	for i := range p.items {
-		p.matched[i] = pickerMatch{item: &p.items[i]}
+	p.list.items = append(p.list.items, items...)
+	p.list.matched = make([]pickerMatch, len(p.list.items))
+	for i := range p.list.items {
+		p.list.matched[i] = pickerMatch{item: &p.list.items[i]}
 	}
-	if p.cursor >= len(p.matched) {
-		p.cursor = max(0, len(p.matched)-1)
+	if p.list.cursor >= len(p.list.matched) {
+		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
 }
 
@@ -294,23 +305,23 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	if !isDynamic {
 		return nil
 	}
-	if p.dynamicStop != nil {
-		p.dynamicStop()
-		p.dynamicStop = nil
+	if p.load.dynamicStop != nil {
+		p.load.dynamicStop()
+		p.load.dynamicStop = nil
 	}
-	p.items = nil
-	p.matched = nil
-	p.cursor = 0
-	p.listScroll = 0
-	p.previewScroll = 0
-	p.dynamicGen++
-	gen := p.dynamicGen
-	q := p.query
+	p.list.items = nil
+	p.list.matched = nil
+	p.list.cursor = 0
+	p.list.scroll = 0
+	p.preview.scroll = 0
+	p.load.dynamicGen++
+	gen := p.load.dynamicGen
+	q := p.list.query
 	if q == "" {
-		p.dynamicPending = false
+		p.load.dynamicPending = false
 		return nil
 	}
-	p.dynamicPending = true
+	p.load.dynamicPending = true
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
 		return pickerDynamicTriggerMsg{gen: gen, query: q}
@@ -318,8 +329,8 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 }
 
 func (p *Picker) clearPreviewCache() {
-	clear(p.previewCache)
-	clear(p.diffBaseCache)
+	clear(p.preview.cache)
+	clear(p.preview.diffBaseCache)
 }
 
 // AcceptDocumentID opens the document by id, splitting per action, and

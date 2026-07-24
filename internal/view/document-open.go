@@ -11,16 +11,22 @@ import (
 
 func newDocument(id DocumentId, opts *Options) *Document {
 	d := &Document{
-		id:         id,
-		indent:     core.Tabs(),
-		tabWidth:   4,
-		lineEnding: defaultLineEnding(opts.DefaultLineEnding),
-		buf: bufState{
-			text:       core.NewRope(""),
-			history:    core.NewHistory(),
+		identity: identityState{id: id},
+		content: contentState{
+			text: core.NewRope(""),
+		},
+		edits: editState{
+			history: core.NewHistory(),
+		},
+		views: viewState{
 			selections: map[Id]core.Selection{},
 		},
-		ls: lsState{
+		format: formatState{
+			indent:     core.Tabs(),
+			tabWidth:   4,
+			lineEnding: defaultLineEnding(opts.DefaultLineEnding),
+		},
+		overlays: overlayState{
 			highlights: map[Id][]DocumentHighlight{},
 			hints:      map[Id][]InlayHint{},
 		},
@@ -44,22 +50,22 @@ func openDocument(
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			doc := newDocument(id, opts)
-			doc.buf.path = absPath
-			doc.editorConfig = ec
+			doc.content.path = absPath
+			doc.format.editorConfig = ec
 			doc.SetLang(detectLang(absPath, ""))
-			lang := doc.langDef
+			lang := doc.format.language
 			if ec != nil && ec.LineEnding != nil {
-				doc.lineEnding = *ec.LineEnding
+				doc.format.lineEnding = *ec.LineEnding
 			}
 			if ec != nil && ec.IndentStyle != nil {
-				doc.indent = *ec.IndentStyle
+				doc.format.indent = *ec.IndentStyle
 			} else if lang.Indent.Unit != "" {
-				doc.indent = core.ParseIndentStyle(lang.Indent.Unit)
+				doc.format.indent = core.ParseIndentStyle(lang.Indent.Unit)
 			}
 			if ec != nil && ec.TabWidth != nil {
-				doc.tabWidth = *ec.TabWidth
+				doc.format.tabWidth = *ec.TabWidth
 			} else if lang.Indent.TabWidth != nil {
-				doc.tabWidth = *lang.Indent.TabWidth
+				doc.format.tabWidth = *lang.Indent.TabWidth
 			}
 			doc.refreshDiskSnapshot()
 			return doc, nil
@@ -73,43 +79,49 @@ func openDocument(
 	}
 	rope := core.NewRope(string(data))
 	doc := &Document{
-		id:           id,
-		tabWidth:     4,
-		lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
-		editorConfig: ec,
-		hasBOM:       hasBOM,
-		buf: bufState{
-			path:       absPath,
-			text:       rope,
-			history:    core.NewHistory(),
+		identity: identityState{id: id},
+		content: contentState{
+			path: absPath,
+			text: rope,
+		},
+		edits: editState{
+			history: core.NewHistory(),
+		},
+		views: viewState{
 			selections: map[Id]core.Selection{},
 		},
-		ls: lsState{
+		format: formatState{
+			tabWidth:     4,
+			lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
+			editorConfig: ec,
+			hasBOM:       hasBOM,
+		},
+		overlays: overlayState{
 			highlights: map[Id][]DocumentHighlight{},
 			hints:      map[Id][]InlayHint{},
 		},
 	}
 	doc.SetLang(detectLang(absPath, string(data)))
 
-	lang := doc.langDef
+	lang := doc.format.language
 	if ec != nil && ec.IndentStyle != nil {
-		doc.indent = *ec.IndentStyle
+		doc.format.indent = *ec.IndentStyle
 	} else if style, ok := core.AutoDetect(rope); ok {
-		doc.indent = style
+		doc.format.indent = style
 	} else if lang.Indent.Unit != "" {
-		doc.indent = core.ParseIndentStyle(lang.Indent.Unit)
+		doc.format.indent = core.ParseIndentStyle(lang.Indent.Unit)
 	} else {
-		doc.indent = core.Tabs()
+		doc.format.indent = core.Tabs()
 	}
 	if ec != nil && ec.TabWidth != nil {
-		doc.tabWidth = *ec.TabWidth
+		doc.format.tabWidth = *ec.TabWidth
 	} else if lang.Indent.TabWidth != nil {
-		doc.tabWidth = *lang.Indent.TabWidth
+		doc.format.tabWidth = *lang.Indent.TabWidth
 	}
 	if ec != nil && ec.LineEnding != nil {
-		doc.lineEnding = *ec.LineEnding
+		doc.format.lineEnding = *ec.LineEnding
 	} else if le, ok := core.AutoDetectLineEndingString(string(data)); ok {
-		doc.lineEnding = le
+		doc.format.lineEnding = le
 	}
 	doc.refreshDiskSnapshot()
 
@@ -120,8 +132,8 @@ func newPendingDocument(
 	id DocumentId, absPath, lang string, opts *Options,
 ) *Document {
 	d := newDocument(id, opts)
-	d.buf.path = absPath
-	d.pending = &pendingLoad{opts: opts, lang: lang}
+	d.content.path = absPath
+	d.content.pending = &pendingLoad{opts: opts, lang: lang}
 	if lang != "" {
 		d.SetLang(lang)
 	}
@@ -131,39 +143,34 @@ func newPendingDocument(
 // ensureLoaded reads the backing file the first time a pending buffer's content
 // is touched, copying the content-derived state onto the placeholder
 func (d *Document) ensureLoaded() {
-	d.buf.RLock()
-	pending := d.pending != nil
-	d.buf.RUnlock()
+	d.content.RLock()
+	pending := d.content.pending != nil
+	d.content.RUnlock()
 	if !pending {
 		return
 	}
-	d.buf.Lock()
-	defer d.buf.Unlock()
-	p := d.pending
+	d.content.Lock()
+	defer d.content.Unlock()
+	p := d.content.pending
 	if p == nil {
 		return
 	}
-	loaded, err := openDocument(d.id, d.buf.path, p.opts)
+	loaded, err := openDocument(d.identity.id, d.content.path, p.opts)
 	if err != nil {
 		return
 	}
-	d.pending = nil
-	d.hasBOM = loaded.hasBOM
-	d.indent = loaded.indent
-	d.tabWidth = loaded.tabWidth
-	d.lineEnding = loaded.lineEnding
-	d.editorConfig = loaded.editorConfig
-	d.disk = loaded.disk
-	d.external = loaded.external
-	d.buf.text = loaded.buf.text
-	d.buf.version = loaded.buf.version
-	d.buf.history = loaded.buf.history
+	d.content.pending = nil
+	d.format = loaded.format
+	d.file = loaded.file
+	d.content.text = loaded.content.text
+	d.content.version = loaded.content.version
+	d.edits.history = loaded.edits.history
 	if p.lang == "" {
-		d.buf.lang = loaded.buf.lang
-		d.langDef = loaded.langDef
+		d.content.lang = loaded.content.lang
+		d.format.language = loaded.format.language
 	}
-	d.buf.lastSel = clampSelection(
-		d.buf.lastSel, d.buf.text.LenChars(),
+	d.views.lastSelection = clampSelection(
+		d.views.lastSelection, d.content.text.LenChars(),
 	)
 }
 

@@ -99,11 +99,11 @@ func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
 
 // ponytail: shell-out per distinct path, cached; fine for a picker's lifetime
 func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
-	if rope, ok := p.diffBaseCache[path]; ok {
+	if rope, ok := p.preview.diffBaseCache[path]; ok {
 		return rope
 	}
 	rope := core.NewRope(vc.DiffBaseForPath(path))
-	p.diffBaseCache[path] = rope
+	p.preview.diffBaseCache[path] = rope
 	return rope
 }
 

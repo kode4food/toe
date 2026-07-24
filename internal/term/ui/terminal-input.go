@@ -116,17 +116,19 @@ func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
 	a := t.Area()
 	contentH := max(a.Height-1, 0)
 	scrollOff := cx.Editor.Options().ScrollOff
-	atTop, atBottom, clampedY := t.drag.update(
+	atTop, atBottom, clampedY := t.selection.drag.update(
 		at.Y-yOff, a.Y, a.Y+contentH-1, autoScrollMargin(contentH, scrollOff),
 	)
 	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
 	t.extendSelection(uv.Position{X: localX, Y: clampedY - a.Y})
-	return t.drag.trigger(atTop, atBottom, localX, t.scheduleDragTick)
+	return t.selection.drag.trigger(
+		atTop, atBottom, localX, t.scheduleDragTick,
+	)
 }
 
 // EndDrag finalizes the selection at (x, y), copying it to the clipboard
 func (t *TerminalPane) EndDrag(cx *Context, at geom.Point) tea.Cmd {
-	t.drag.stop()
+	t.selection.drag.stop()
 	m := t.clampedMouse(cx, at)
 	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
 		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
@@ -137,13 +139,13 @@ func (t *TerminalPane) EndDrag(cx *Context, at geom.Point) tea.Cmd {
 
 // CancelDrag stops any pending auto-scroll tick, without side effects
 func (t *TerminalPane) CancelDrag() {
-	t.drag.stop()
+	t.selection.drag.stop()
 }
 
 // DragTick continues scrolling toward toTop if gen still matches the
 // scheduling tick, or is a no-op if a newer drag has since superseded it
 func (t *TerminalPane) DragTick(_ *Context, gen int, toTop bool) tea.Cmd {
-	if gen != t.drag.gen {
+	if gen != t.selection.drag.gen {
 		return nil
 	}
 	if toTop {
@@ -156,8 +158,8 @@ func (t *TerminalPane) DragTick(_ *Context, gen int, toTop bool) tea.Cmd {
 	if toTop {
 		edgeY = 0
 	}
-	t.extendSelection(uv.Position{X: t.drag.fixed, Y: edgeY})
-	return t.drag.tick(toTop, t.scheduleDragTick)
+	t.extendSelection(uv.Position{X: t.selection.drag.fixed, Y: edgeY})
+	return t.selection.drag.tick(toTop, t.scheduleDragTick)
 }
 
 func (t *TerminalPane) scheduleDragTick(

@@ -30,8 +30,8 @@ func (m Model) WithInitialPicker(fn PickerFunc) Model {
 		if p == nil {
 			return nil, nil
 		}
-		cmd := p.feedCmd
-		p.feedCmd = nil
+		cmd := p.load.feedCmd
+		p.load.feedCmd = nil
 		return newPickerComponent(p), cmd
 	}
 	return m
@@ -45,8 +45,8 @@ func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
 		if p == nil {
 			return nil
 		}
-		cmd := p.feedCmd
-		p.feedCmd = nil
+		cmd := p.load.feedCmd
+		p.load.feedCmd = nil
 		return func(_ *Context) (Component, tea.Cmd) {
 			return newPickerComponent(p), cmd
 		}
@@ -57,7 +57,7 @@ func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
 			return nil
 		}
 		cx.lastLayer = opener
-		ec.nextLayer = layer
+		ec.keys.nextLayer = layer
 		return nil
 	}
 }
@@ -65,7 +65,7 @@ func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
 func (m Model) CmdModeAction() command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
 				ec:   ec,
 				kind: promptCmd,
@@ -78,7 +78,7 @@ func (m Model) CmdModeAction() command.KeyAction {
 func (m Model) SearchAction(forward bool) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
 				ec:      ec,
 				kind:    promptSearch,
@@ -92,7 +92,7 @@ func (m Model) SearchAction(forward bool) command.KeyAction {
 func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
 				ec:     ec,
 				kind:   promptRegex,
@@ -107,7 +107,7 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
 			return newPromptComponent(promptComponentArgs{
 				ec:     ec,
 				kind:   promptShell,
@@ -124,15 +124,15 @@ func (m Model) CommandPaletteAction() command.KeyAction {
 	cx := m.context
 	opener := func(e *view.Editor) layerFunc {
 		p := CommandPalettePicker(e, cx.Keymaps)
-		cmd := p.feedCmd
-		p.feedCmd = nil
+		cmd := p.load.feedCmd
+		p.load.feedCmd = nil
 		return func(_ *Context) (Component, tea.Cmd) {
 			return newPickerComponent(p), cmd
 		}
 	}
 	return func(e *view.Editor) command.Continuation {
 		cx.lastLayer = opener
-		ec.nextLayer = opener(e)
+		ec.keys.nextLayer = opener(e)
 		return nil
 	}
 }
@@ -144,7 +144,7 @@ func (m Model) LastPickerAction() command.KeyAction {
 		if cx.lastLayer == nil {
 			return nil
 		}
-		ec.nextLayer = cx.lastLayer(e)
+		ec.keys.nextLayer = cx.lastLayer(e)
 		return nil
 	}
 }

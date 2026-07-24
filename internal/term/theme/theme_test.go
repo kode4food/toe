@@ -4,11 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"charm.land/lipgloss/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/theme"
+	"github.com/kode4food/toe/internal/tui"
 )
 
 func TestTheme(t *testing.T) {
@@ -21,7 +21,7 @@ func TestTheme(t *testing.T) {
 
 		assert.Empty(t, warnings)
 		assert.True(t, ok)
-		assert.Equal(t, lipgloss.Color("#ffffff"), style.GetForeground())
+		assert.Equal(t, tui.ColorRGB(0xff, 0xff, 0xff), style.FgColor())
 	})
 
 	t.Run("parses palette alias", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestTheme(t *testing.T) {
 		style := th.Get("keyword")
 
 		assert.Empty(t, warnings)
-		assert.Equal(t, lipgloss.Color("#ffffff"), style.GetForeground())
+		assert.Equal(t, tui.ColorRGB(0xff, 0xff, 0xff), style.FgColor())
 	})
 
 	t.Run("invalid palette falls back to default", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestTheme(t *testing.T) {
 		style := th.Get("keyword")
 
 		assert.NotEmpty(t, warnings)
-		assert.Equal(t, lipgloss.NoColor{}, style.GetForeground())
+		assert.Equal(t, tui.ColorReset, style.FgColor())
 	})
 
 	t.Run("parses short RGB colors", func(t *testing.T) {
@@ -66,8 +66,8 @@ func TestTheme(t *testing.T) {
 		sel := th.Get("ui.selection")
 
 		assert.Empty(t, warnings)
-		assert.Equal(t, lipgloss.Color("#aabbcc"), kw.GetForeground())
-		assert.Equal(t, lipgloss.Color("#001122"), sel.GetForeground())
+		assert.Equal(t, tui.ColorRGB(0xaa, 0xbb, 0xcc), kw.FgColor())
+		assert.Equal(t, tui.ColorRGB(0x00, 0x11, 0x22), sel.FgColor())
 		assert.False(t, th.Is16Color())
 	})
 
@@ -86,12 +86,12 @@ func TestTheme(t *testing.T) {
 		style := th.Get("keyword")
 
 		assert.Empty(t, warnings)
-		assert.Equal(t, lipgloss.Color("#ffffff"), style.GetForeground())
-		assert.Equal(t, lipgloss.Color("#000000"), style.GetBackground())
-		assert.True(t, style.GetBold())
-		assert.True(t, style.GetItalic())
-		assert.True(t, style.GetBlink())
-		assert.True(t, style.GetReverse())
+		assert.Equal(t, tui.ColorRGB(0xff, 0xff, 0xff), style.FgColor())
+		assert.Equal(t, tui.ColorRGB(0x00, 0x00, 0x00), style.BgColor())
+		assert.True(t, style.HasMod(tui.ModifierBold))
+		assert.True(t, style.HasMod(tui.ModifierItalic))
+		assert.True(t, style.HasMod(tui.ModifierSlowBlink))
+		assert.True(t, style.HasMod(tui.ModifierReversed))
 	})
 
 	t.Run("parses underline table", func(t *testing.T) {
@@ -107,8 +107,9 @@ func TestTheme(t *testing.T) {
 		style := th.Get("diagnostic.error")
 
 		assert.Empty(t, warnings)
-		assert.Equal(t, lipgloss.UnderlineCurly, style.GetUnderlineStyle())
-		assert.Equal(t, lipgloss.Color("#ff0000"), style.GetUnderlineColor())
+		assert.Equal(t, tui.UnderlineCurl, style.UnderlineStyle())
+		assert.Equal(t, tui.ColorRGB(0xff, 0x00, 0x00),
+			style.UnderlineColor())
 	})
 
 	t.Run("underline color implies line", func(t *testing.T) {
@@ -123,8 +124,9 @@ func TestTheme(t *testing.T) {
 		style := th.Get("diagnostic.warning")
 
 		assert.Empty(t, warnings)
-		assert.True(t, style.GetUnderline())
-		assert.Equal(t, lipgloss.Color("#ffaa00"), style.GetUnderlineColor())
+		assert.Equal(t, tui.UnderlineLine, style.UnderlineStyle())
+		assert.Equal(t, tui.ColorRGB(0xff, 0xaa, 0x00),
+			style.UnderlineColor())
 	})
 
 	t.Run("invalid underline warns", func(t *testing.T) {
@@ -150,7 +152,7 @@ func TestTheme(t *testing.T) {
 		assert.Empty(t, warnings)
 		assert.True(t, ok)
 		assert.False(t, exact)
-		assert.Equal(t, lipgloss.Color("15"), style.GetForeground())
+		assert.Equal(t, tui.ColorANSI(15), style.FgColor())
 	})
 
 	t.Run("missing scope returns false", func(t *testing.T) {
@@ -185,7 +187,7 @@ func TestTheme(t *testing.T) {
 
 		assert.Empty(t, warnings)
 		assert.True(t, ok)
-		assert.Equal(t, lipgloss.Color("1"), style.GetForeground())
+		assert.Equal(t, tui.ColorANSI(1), style.FgColor())
 		assert.Equal(t, 6, th.RainbowLength())
 		assert.Len(t, th.Scopes(), 7)
 	})
@@ -205,8 +207,8 @@ func TestTheme(t *testing.T) {
 
 		assert.Empty(t, warnings)
 		assert.False(t, old)
-		assert.Equal(t, lipgloss.Color("#010203"), first.GetForeground())
-		assert.Equal(t, lipgloss.Color("3"), second.GetForeground())
+		assert.Equal(t, tui.ColorRGB(0x01, 0x02, 0x03), first.FgColor())
+		assert.Equal(t, tui.ColorANSI(3), second.FgColor())
 		assert.Equal(t, 2, th.RainbowLength())
 		assert.False(t, th.Is16Color())
 	})
@@ -220,7 +222,7 @@ func TestTheme(t *testing.T) {
 		style := th.Get("rainbow.0")
 
 		assert.NotEmpty(t, warnings)
-		assert.Equal(t, lipgloss.Color("1"), style.GetForeground())
+		assert.Equal(t, tui.ColorANSI(1), style.FgColor())
 	})
 
 	t.Run("detects RGB foreground and background", func(t *testing.T) {
@@ -272,7 +274,7 @@ func TestTheme(t *testing.T) {
 
 		assert.Empty(t, warnings)
 		assert.True(t, ok)
-		assert.Equal(t, lipgloss.Color("#cdd6f4"), style.GetForeground())
+		assert.Equal(t, tui.ColorRGB(0xcd, 0xd6, 0xf4), style.FgColor())
 		assert.NotEmpty(t, th.Scopes())
 	})
 }
@@ -287,7 +289,7 @@ func TestLoad(t *testing.T) {
 		assert.Empty(t, warnings)
 		assert.Equal(t, "mocha", th.Name())
 		assert.True(t, ok)
-		assert.Equal(t, lipgloss.Color("#cdd6f4"), style.GetForeground())
+		assert.Equal(t, tui.ColorRGB(0xcd, 0xd6, 0xf4), style.FgColor())
 	})
 
 	t.Run("rejects unsupported theme", func(t *testing.T) {
@@ -308,7 +310,7 @@ func TestCatppuccinThemes(t *testing.T) {
 			assert.Equal(t, name, th.Name())
 			assert.NoError(t, th.Validate())
 			assert.True(t, ok)
-			assert.NotNil(t, style.GetForeground())
+			assert.False(t, style.FgColor().IsReset())
 			assert.NotEmpty(t, th.Scopes())
 		})
 	}
@@ -387,7 +389,7 @@ func TestModifiers(t *testing.T) {
 		})
 		assert.Empty(t, warnings)
 		style := th.Get("keyword")
-		assert.True(t, style.GetFaint())
+		assert.True(t, style.HasMod(tui.ModifierDim))
 	})
 
 	t.Run("underlined modifier", func(t *testing.T) {
@@ -398,7 +400,7 @@ func TestModifiers(t *testing.T) {
 		})
 		assert.Empty(t, warnings)
 		style := th.Get("keyword")
-		assert.True(t, style.GetUnderline())
+		assert.Equal(t, tui.UnderlineLine, style.UnderlineStyle())
 	})
 
 	t.Run("crossed_out modifier", func(t *testing.T) {
@@ -409,7 +411,7 @@ func TestModifiers(t *testing.T) {
 		})
 		assert.Empty(t, warnings)
 		style := th.Get("keyword")
-		assert.True(t, style.GetStrikethrough())
+		assert.True(t, style.HasMod(tui.ModifierCrossedOut))
 	})
 
 	t.Run("hidden modifier skipped", func(t *testing.T) {

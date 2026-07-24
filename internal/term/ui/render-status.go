@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
@@ -84,7 +83,7 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	w := r.size.Width
 	errorMsg := r.ec.keys.message != nil && r.ec.keys.message.error
 	st := r.cmdlineStyle(errorMsg)
-	tuiSt := styleToTUI(st)
+	tuiSt := st
 
 	left := ""
 	if r.ec.keys.message != nil {
@@ -175,14 +174,14 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		busy = ls.Busy()
 	}
 
-	baseTUI := styleToTUI(st)
+	baseTUI := st
 
 	src := &statusElemCtx{
 		doc: doc, opts: opts, mode: mode,
 		baseTUI: baseTUI,
-		modeSt:  styleToTUI(modeSt),
-		sepSt:   styleToTUI(sepSt),
-		spinSt:  styleToTUI(spinSt),
+		modeSt:  modeSt,
+		sepSt:   sepSt,
+		spinSt:  spinSt,
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		cursor:    geom.Point{X: col, Y: row},
@@ -266,7 +265,7 @@ func (r *renderPass) activeTheme() *theme.Theme {
 	return r.cx.Theme()
 }
 
-func (r *renderPass) cmdlineStyle(errorMsg bool) lipgloss.Style {
+func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
 	th := r.activeTheme()
 	if errorMsg {
 		return th.Get("error")

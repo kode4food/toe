@@ -86,11 +86,9 @@ func (p *PromptComponent) paintCompletions(
 ) {
 	menuStyle, selected := promptCompletionStyles(cx)
 	pop := popup{
-		border: lipgloss.RoundedBorder(),
-		borderStyle: styleToTUI(
-			menuStyle.Foreground(pickerFrameStyle(cx).GetForeground()),
-		),
-		contentStyle: styleToTUI(menuStyle),
+		border:       lipgloss.RoundedBorder(),
+		borderStyle:  menuStyle.Fg(pickerFrameStyle(cx).FgColor()),
+		contentStyle: menuStyle,
 		padX:         compPadX,
 	}
 	innerW := bounds.Width - 2 - 2*compPadX
@@ -99,9 +97,6 @@ func (p *PromptComponent) paintCompletions(
 		(innerW-compGap*(size.Width-1))/size.Width, 1,
 	)
 	area := pop.drawInto(buf, bounds)
-	menuTUI := styleToTUI(menuStyle)
-	selectedTUI := styleToTUI(selected)
-
 	for row := range size.Height {
 		for col := range size.Width {
 			i := col*size.Height + row
@@ -109,10 +104,10 @@ func (p *PromptComponent) paintCompletions(
 				continue
 			}
 			text := clipPad(p.completion.items[i].completionText(), colW)
-			style := menuTUI
+			style := menuStyle
 			if p.completion.selected != nil &&
 				*p.completion.selected == i {
-				style = selectedTUI
+				style = selected
 			}
 			buf.SetString(area.Point.Add(geom.Point{
 				X: col * (colW + compGap),
@@ -122,7 +117,7 @@ func (p *PromptComponent) paintCompletions(
 	}
 }
 
-func promptCompletionStyles(cx *Context) (lipgloss.Style, lipgloss.Style) {
+func promptCompletionStyles(cx *Context) (tui.Style, tui.Style) {
 	return pickerItemStyle(cx), pickerSelStyle(cx)
 }
 

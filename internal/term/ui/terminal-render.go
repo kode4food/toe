@@ -19,6 +19,15 @@ type tuiScreen struct {
 	styleOk  bool
 }
 
+var ansiUnderlineTUIStyles = [...]tui.UnderlineStyle{
+	ansi.UnderlineNone:   tui.UnderlineReset,
+	ansi.UnderlineSingle: tui.UnderlineLine,
+	ansi.UnderlineDouble: tui.UnderlineDoubleLine,
+	ansi.UnderlineCurly:  tui.UnderlineCurl,
+	ansi.UnderlineDotted: tui.UnderlineDotted,
+	ansi.UnderlineDashed: tui.UnderlineDashed,
+}
+
 func (s *tuiScreen) SetCell(at geom.Point, c *uv.Cell) {
 	if !s.area.Size.Contains(at) {
 		return
@@ -56,8 +65,10 @@ func (r *renderPass) renderTerminalPane(
 	a := tp.Area()
 	contentH := max(a.Height-1, 0)
 	emu := tp.Emulator()
-	bg := r.activeTheme().Get("ui.background").GetBackground()
-	emu.SetBackgroundColor(bg)
+	bg := r.activeTheme().Get("ui.background").BgColor()
+	if emu.BackgroundColor() != bg {
+		emu.SetBackgroundColor(bg)
+	}
 	scr := &tuiScreen{
 		buf: buf,
 		area: geom.Area{
@@ -81,13 +92,13 @@ func (r *renderPass) renderTerminalStatus(
 	if focused {
 		statusKey = "ui.statusline"
 	}
-	st := styleToTUI(th.Get(statusKey))
+	st := th.Get(statusKey)
 	y := y0 + a.Bottom()
 	buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, st)
 
 	modeSt := st
 	if focused {
-		modeSt = styleToTUI(th.Get("ui.statusline.terminal"))
+		modeSt = th.Get("ui.statusline.terminal")
 	}
 	label := " TRM "
 	if tp.ConsumeBell(focused) && !focused {
@@ -166,10 +177,10 @@ func uvStyleToTUI(st uv.Style) tui.Style {
 }
 
 func ansiUnderlineToTUI(u ansi.Underline) tui.UnderlineStyle {
-	if int(u) >= len(underlineTUIStyles) {
+	if int(u) >= len(ansiUnderlineTUIStyles) {
 		return tui.UnderlineReset
 	}
-	return underlineTUIStyles[u]
+	return ansiUnderlineTUIStyles[u]
 }
 
 func drawViewport(

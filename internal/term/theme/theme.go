@@ -6,14 +6,13 @@ import (
 	"slices"
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/tui"
 )
 
 type Theme struct {
 	name          string
-	styles        map[string]lipgloss.Style
+	styles        map[string]tui.Style
 	scopes        []string
 	rainbowLength int
 	rgb           bool
@@ -26,7 +25,7 @@ var (
 
 func Decode(data map[string]any) (*Theme, []string) {
 	pal, warnings := decodePalette(data["palette"])
-	styles := map[string]lipgloss.Style{}
+	styles := map[string]tui.Style{}
 	var scopes []string
 	var rgb bool
 	rainbow, rainbowRGB, err := pal.parseStyleArray(data["rainbow"])
@@ -84,12 +83,12 @@ func (t *Theme) Name() string {
 	return t.name
 }
 
-func (t *Theme) Get(scope string) lipgloss.Style {
+func (t *Theme) Get(scope string) tui.Style {
 	style, _ := t.TryGet(scope)
 	return style
 }
 
-func (t *Theme) TryGet(scope string) (lipgloss.Style, bool) {
+func (t *Theme) TryGet(scope string) (tui.Style, bool) {
 	for s := scope; s != ""; {
 		style, ok := t.styles[s]
 		if ok {
@@ -101,10 +100,10 @@ func (t *Theme) TryGet(scope string) (lipgloss.Style, bool) {
 		}
 		s = s[:idx]
 	}
-	return lipgloss.Style{}, false
+	return tui.Style{}, false
 }
 
-func (t *Theme) TryGetExact(scope string) (lipgloss.Style, bool) {
+func (t *Theme) TryGetExact(scope string) (tui.Style, bool) {
 	style, ok := t.styles[scope]
 	return style, ok
 }

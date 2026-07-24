@@ -1,13 +1,11 @@
 package ui
 
 import (
-	"image/color"
-
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/theme"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -17,94 +15,90 @@ func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
 	cl := th.Get("ui.cursorline.primary")
 	st := &tuiStyles{
-		text:              styleToTUI(th.Get("ui.text")),
-		line:              styleToTUI(th.Get("ui.linenr")),
-		lineSelected:      styleToTUI(th.Get("ui.linenr.selected")),
-		selection:         styleToTUI(sel),
-		cursor:            styleToTUI(cur),
-		cursorPrim:        styleToTUI(curPrim),
-		cursorLinePrim:    styleToTUI(cl),
-		cursorLineSec:     styleToTUI(cl),
-		cursorColumn:      styleToTUI(cl),
-		whitespace:        styleToTUI(th.Get("ui.virtual.whitespace")),
-		indentGuide:       styleToTUI(th.Get("ui.virtual.indent-guide")),
-		ruler:             styleToTUI(th.Get("ui.virtual.ruler")),
-		inlayHint:         styleToTUI(th.Get("ui.virtual")),
-		inlayHintType:     styleToTUI(th.Get("ui.virtual")),
-		inlayHintParam:    styleToTUI(th.Get("ui.virtual")),
-		severityHint:      styleToTUI(th.Get("hint")),
-		severityInfo:      styleToTUI(th.Get("info")),
-		severityWarning:   styleToTUI(th.Get("warning")),
-		severityError:     styleToTUI(th.Get("error")),
-		diagnostic:        styleToTUI(th.Get("diagnostic")),
-		diagnosticHint:    styleToTUI(th.Get("diagnostic.hint")),
-		diagnosticInfo:    styleToTUI(th.Get("diagnostic.info")),
-		diagnosticWarning: styleToTUI(th.Get("diagnostic.warning")),
-		diagnosticError:   styleToTUI(th.Get("diagnostic.error")),
-		documentHighlight: styleToTUI(th.Get("ui.highlight")),
-		documentLink:      styleToTUI(th.Get("markup.link.url")),
-		searchMatch:       styleToTUI(searchMatchStyle()),
-		diffAdded:         styleToTUI(th.Get("diff.plus.gutter")),
-		diffModified:      styleToTUI(th.Get("diff.delta.gutter")),
-		diffRemoved:       styleToTUI(th.Get("diff.minus.gutter")),
+		text:              th.Get("ui.text"),
+		line:              th.Get("ui.linenr"),
+		lineSelected:      th.Get("ui.linenr.selected"),
+		selection:         sel,
+		cursor:            cur,
+		cursorPrim:        curPrim,
+		cursorLinePrim:    cl,
+		cursorLineSec:     cl,
+		cursorColumn:      cl,
+		whitespace:        th.Get("ui.virtual.whitespace"),
+		indentGuide:       th.Get("ui.virtual.indent-guide"),
+		ruler:             th.Get("ui.virtual.ruler"),
+		inlayHint:         th.Get("ui.virtual"),
+		inlayHintType:     th.Get("ui.virtual"),
+		inlayHintParam:    th.Get("ui.virtual"),
+		severityHint:      th.Get("hint"),
+		severityInfo:      th.Get("info"),
+		severityWarning:   th.Get("warning"),
+		severityError:     th.Get("error"),
+		diagnostic:        th.Get("diagnostic"),
+		diagnosticHint:    th.Get("diagnostic.hint"),
+		diagnosticInfo:    th.Get("diagnostic.info"),
+		diagnosticWarning: th.Get("diagnostic.warning"),
+		diagnosticError:   th.Get("diagnostic.error"),
+		documentHighlight: th.Get("ui.highlight"),
+		documentLink:      th.Get("markup.link.url"),
+		searchMatch:       searchMatchStyle(),
+		diffAdded:         th.Get("diff.plus.gutter"),
+		diffModified:      th.Get("diff.delta.gutter"),
+		diffRemoved:       th.Get("diff.minus.gutter"),
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint"); ok {
-		converted := styleToTUI(next)
-		st.inlayHint = converted
-		st.inlayHintType = converted
-		st.inlayHintParam = converted
+		st.inlayHint = next
+		st.inlayHintType = next
+		st.inlayHintParam = next
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint.type"); ok {
-		st.inlayHintType = styleToTUI(next)
+		st.inlayHintType = next
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint.parameter"); ok {
-		st.inlayHintParam = styleToTUI(next)
+		st.inlayHintParam = next
 	}
 	if next, ok := th.TryGetExact("markup.link"); ok {
-		st.documentLink = styleToTUI(next)
+		st.documentLink = next
 	}
 	if next, ok := th.TryGetExact("markup.link.url"); ok {
-		st.documentLink = styleToTUI(next)
+		st.documentLink = next
 	}
 	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
-		st.selection = styleToTUI(next)
+		st.selection = next
 	}
 	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
-		st.cursorLineSec = styleToTUI(next)
+		st.cursorLineSec = next
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
-		st.cursorColumn = styleToTUI(next)
+		st.cursorColumn = next
 	}
 	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
-		st.cursorColumn = styleToTUI(next)
+		st.cursorColumn = next
 	}
 	if next, ok := th.TryGet("ui.search.match"); ok {
-		st.searchMatch = styleToTUI(next)
+		st.searchMatch = next
 	}
 	return st
 }
 
-func clearStyleBackground(st lipgloss.Style) lipgloss.Style {
-	if colorToTUI(st.GetBackground()).IsReset() {
-		return st
-	}
-	return st.Background(lipgloss.NoColor{})
+func clearStyleBackground(st tui.Style) tui.Style {
+	return st.Bg(tui.ColorReset)
 }
 
-func inheritStyleBackground(st lipgloss.Style, bg color.Color) lipgloss.Style {
-	if colorToTUI(bg).IsReset() {
+func inheritStyleBackground(st tui.Style, bg tui.Color) tui.Style {
+	if bg.IsReset() {
 		return st
 	}
-	if !colorToTUI(st.GetBackground()).IsReset() {
+	if !st.BgColor().IsReset() {
 		return st
 	}
-	return st.Background(bg)
+	return st.Bg(bg)
 }
 
 // Resolved styles render transparently over lower layers unless the theme
 // gives the scope an explicit background
-func hlStyleFnFor(th *theme.Theme) func(string) lipgloss.Style {
-	return func(scope string) lipgloss.Style {
+func hlStyleFnFor(th *theme.Theme) func(string) tui.Style {
+	return func(scope string) tui.Style {
 		if s, ok := th.TryGet(scope); ok {
 			return s
 		}
@@ -114,7 +108,7 @@ func hlStyleFnFor(th *theme.Theme) func(string) lipgloss.Style {
 
 func modeCursorStyleFor(
 	th *theme.Theme, mode view.Mode, primary bool,
-) (lipgloss.Style, bool) {
+) (tui.Style, bool) {
 	scope := "ui.cursor." + mode.Scope()
 	if primary {
 		scope = "ui.cursor.primary." + mode.Scope()

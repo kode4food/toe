@@ -6,9 +6,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
+
+	"github.com/kode4food/toe/internal/tui"
 )
 
 // Span represents a highlighted region in the document
@@ -19,29 +20,29 @@ type Span struct {
 }
 
 var (
-	defaultStyles = map[string]lipgloss.Style{
-		"keyword":                     ansiStyle("3").Bold(true),
-		"keyword.function":            ansiStyle("13").Bold(true),
-		"keyword.operator":            ansiStyle("5"),
-		"namespace":                   ansiStyle("13").Bold(true),
-		"type":                        ansiStyle("11").Bold(true),
-		"type.builtin":                ansiStyle("3").Bold(true),
-		"string":                      ansiStyle("2"),
-		"string.special":              ansiStyle("6"),
-		"constant.character.escape":   ansiStyle("6"),
-		"comment":                     ansiStyle("8").Italic(true),
-		"comment.block.documentation": ansiStyle("12").Italic(true),
-		"constant.numeric":            ansiStyle("14"),
-		"constant":                    ansiStyle("14"),
-		"operator":                    ansiStyle("5"),
-		"function":                    ansiStyle("12"),
-		"function.builtin":            ansiStyle("6"),
-		"variable.builtin":            ansiStyle("6"),
-		"attribute":                   ansiStyle("10"),
-		"tag":                         ansiStyle("4").Bold(true),
-		"diff.plus":                   ansiStyle("2"),
-		"diff.minus":                  ansiStyle("1"),
-		"markup.heading":              lipgloss.NewStyle().Bold(true),
+	defaultStyles = map[string]tui.Style{
+		"keyword":                     ansiStyle(3).Mod(tui.ModifierBold),
+		"keyword.function":            ansiStyle(13).Mod(tui.ModifierBold),
+		"keyword.operator":            ansiStyle(5),
+		"namespace":                   ansiStyle(13).Mod(tui.ModifierBold),
+		"type":                        ansiStyle(11).Mod(tui.ModifierBold),
+		"type.builtin":                ansiStyle(3).Mod(tui.ModifierBold),
+		"string":                      ansiStyle(2),
+		"string.special":              ansiStyle(6),
+		"constant.character.escape":   ansiStyle(6),
+		"comment":                     ansiStyle(8).Mod(tui.ModifierItalic),
+		"comment.block.documentation": ansiStyle(12).Mod(tui.ModifierItalic),
+		"constant.numeric":            ansiStyle(14),
+		"constant":                    ansiStyle(14),
+		"operator":                    ansiStyle(5),
+		"function":                    ansiStyle(12),
+		"function.builtin":            ansiStyle(6),
+		"variable.builtin":            ansiStyle(6),
+		"attribute":                   ansiStyle(10),
+		"tag":                         ansiStyle(4).Mod(tui.ModifierBold),
+		"diff.plus":                   ansiStyle(2),
+		"diff.minus":                  ansiStyle(1),
+		"markup.heading":              tui.Style{}.Mod(tui.ModifierBold),
 	}
 
 	chromaScopes = map[chroma.TokenType]string{
@@ -135,7 +136,7 @@ func DetectLanguage(path, content string) string {
 
 // DefaultStyle returns the fallback ANSI style for a scope name when no
 // theme is active or the theme does not define the scope
-func DefaultStyle(scope string) lipgloss.Style {
+func DefaultStyle(scope string) tui.Style {
 	// Walk up the scope hierarchy (e.g. "keyword.function" → "keyword")
 	for s := scope; s != ""; {
 		if style, ok := defaultStyles[s]; ok {
@@ -147,7 +148,7 @@ func DefaultStyle(scope string) lipgloss.Style {
 		}
 		s = s[:idx]
 	}
-	return lipgloss.NewStyle()
+	return tui.Style{}
 }
 
 // NormalizeNewlines replaces \r\n with \n for consistent tokenization
@@ -166,6 +167,6 @@ func scopeFor(t chroma.TokenType) (string, bool) {
 	return "", false
 }
 
-func ansiStyle(c string) lipgloss.Style {
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(c))
+func ansiStyle(c uint8) tui.Style {
+	return tui.Style{}.Fg(tui.ColorANSI(c))
 }

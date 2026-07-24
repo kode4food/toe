@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/kitty"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -86,10 +87,40 @@ var (
 	ColorLightCyan    = Color{kind: colorLightCyan}
 	ColorLightGray    = Color{kind: colorLightGray}
 	ColorWhite        = Color{kind: colorWhite}
+
+	ansiColors = [...]Color{
+		ColorBlack, ColorRed, ColorGreen, ColorYellow,
+		ColorBlue, ColorMagenta, ColorCyan, ColorLightGray,
+		ColorGray, ColorLightRed, ColorLightGreen, ColorLightYellow,
+		ColorLightBlue, ColorLightMagenta, ColorLightCyan, ColorWhite,
+	}
 )
+
+// RGBA returns the color's red, green, blue, and alpha values
+func (c Color) RGBA() (uint32, uint32, uint32, uint32) {
+	switch c.kind {
+	case colorReset:
+		return 0, 0, 0, 0
+	case colorIndexed:
+		return ansi.IndexedColor(c.r).RGBA()
+	case colorRGB:
+		return uint32(c.r) * 0x101, uint32(c.g) * 0x101,
+			uint32(c.b) * 0x101, 0xffff
+	default:
+		return ansi.BasicColor(c.kind - 1).RGBA()
+	}
+}
 
 func ColorIndexed(idx uint8) Color {
 	return Color{kind: colorIndexed, r: idx}
+}
+
+// ColorANSI returns the terminal color for an ANSI palette index
+func ColorANSI(idx uint8) Color {
+	if idx < 16 {
+		return ansiColors[idx]
+	}
+	return ColorIndexed(idx)
 }
 
 func ColorRGB(r, g, b uint8) Color {

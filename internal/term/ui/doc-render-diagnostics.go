@@ -101,12 +101,12 @@ func currentDiagnosticPopupKey(cx *Context) diagPopupKey {
 func diagnosticPopupStyle(
 	cx *Context, severity view.DiagnosticSeverity,
 ) tui.Style {
-	bg := styleToTUI(cx.Theme().Get("ui.popup")).BgColor()
+	bg := cx.Theme().Get("ui.popup").BgColor()
 	if severity <= 0 || int(severity) >= len(diagnosticPopupScopes) {
-		return styleToTUI(cx.Theme().Get("ui.popup"))
+		return cx.Theme().Get("ui.popup")
 	}
 	scope := diagnosticPopupScopes[severity]
-	st := styleToTUI(cx.Theme().Get(scope))
+	st := cx.Theme().Get(scope)
 	fg := st.FgColor()
 	if fg.IsReset() {
 		fg = st.UnderlineColor()

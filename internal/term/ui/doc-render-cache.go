@@ -4,8 +4,6 @@ import (
 	"regexp"
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -24,7 +22,7 @@ type (
 		// rebuilt only when theme or mode changes between frames
 		stylesKey  styleKey
 		tuiStyles  *tuiStyles
-		hlFn       func(string) lipgloss.Style
+		hlFn       func(string) tui.Style
 		hlTUICache map[string]tui.Style
 
 		viewRowMaps map[view.Id][]viewRowEntry
@@ -39,7 +37,7 @@ type (
 		lastSpinFrame int
 	}
 
-	// styleKey identifies the theme+mode combination the cached lipgloss/tui
+	// styleKey identifies the theme+mode combination for cached styles
 	// styles were built for
 	styleKey struct {
 		theme string

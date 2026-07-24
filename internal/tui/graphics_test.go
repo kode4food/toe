@@ -27,6 +27,14 @@ func TestColor(t *testing.T) {
 		assert.NotEqual(t, a, c)
 	})
 
+	t.Run("implements standard color", func(t *testing.T) {
+		r, g, b, a := tui.ColorRGB(1, 2, 3).RGBA()
+		assert.Equal(t, uint32(0x0101), r)
+		assert.Equal(t, uint32(0x0202), g)
+		assert.Equal(t, uint32(0x0303), b)
+		assert.Equal(t, uint32(0xffff), a)
+	})
+
 	t.Run("Indexed color equality", func(t *testing.T) {
 		a := tui.ColorIndexed(240)
 		b := tui.ColorIndexed(240)

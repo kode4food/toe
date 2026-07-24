@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -28,13 +26,13 @@ type previewLineCtx struct {
 
 func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	tuiStyles := buildTUIStyles(args.th, view.ModeNormal)
-	hlLipgloss := previewHlStyleFn(hlStyleFnFor(args.th))
+	hlStyle := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)
 	hlStyleFn := func(scope string) tui.Style {
 		if st, ok := hlCache[scope]; ok {
 			return st
 		}
-		st := styleToTUI(hlLipgloss(scope))
+		st := hlStyle(scope)
 		hlCache[scope] = st
 		return st
 	}
@@ -42,11 +40,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	ig := args.opts.IndentGuides
 	// syntax spans have stripped backgrounds; patch popup bg onto every row
 	// so the pane provides it uniformly rather than showing terminal default
-	fillTUI := styleToTUI(
-		lipgloss.NewStyle().Background(
-			args.th.Get("ui.popup").GetBackground(),
-		),
-	)
+	fillTUI := tui.Style{}.Bg(args.th.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
 
 	markerW := 0
@@ -79,7 +73,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	}
 	var hlBg tui.Color
 	if args.hlFrom >= 0 {
-		hlBg = styleToTUI(args.th.Get("ui.highlight")).BgColor()
+		hlBg = args.th.Get("ui.highlight").BgColor()
 	}
 
 	bufRow := 0

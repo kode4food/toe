@@ -179,20 +179,18 @@ func (c *completionComponent) paint(
 	c.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
-		border: lipgloss.RoundedBorder(),
-		borderStyle: styleToTUI(
-			menu.Foreground(pickerFrameStyle(cx).GetForeground()),
-		),
-		contentStyle: styleToTUI(menu),
+		border:       lipgloss.RoundedBorder(),
+		borderStyle:  menu.Fg(pickerFrameStyle(cx).FgColor()),
+		contentStyle: menu,
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	c.listBounds = area.Translate(pl.Point)
-	base := styleToTUI(menu)
-	sel := styleToTUI(selected)
-	match := styleToTUI(pickerMatchStyle(cx))
-	selMatch := styleToTUI(pickerSelMatchStyle(cx))
-	info := styleToTUI(completionInfoStyle(cx, false))
-	selInfo := styleToTUI(completionInfoStyle(cx, true))
+	base := menu
+	sel := selected
+	match := pickerMatchStyle(cx)
+	selMatch := pickerSelMatchStyle(cx)
+	info := completionInfoStyle(cx, false)
+	selInfo := completionInfoStyle(cx, true)
 	c.clampScroll(area.Height)
 	overflow := len(c.items) > area.Height
 	listW := area.Width
@@ -206,9 +204,7 @@ func (c *completionComponent) paint(
 		matchStyle := match
 		infoStyle := info
 		selected := idx == c.cursor
-		iconStyle := styleToTUI(
-			completionIconStyle(cx, item.Kind, selected),
-		)
+		iconStyle := completionIconStyle(cx, item.Kind, selected)
 		if selected {
 			style = sel
 			matchStyle = selMatch

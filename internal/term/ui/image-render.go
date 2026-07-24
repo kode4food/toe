@@ -45,11 +45,11 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	at := args.at
 	width := args.width
 	th := r.activeTheme()
-	baseTUI := styleToTUI(th.Get("ui.statusline.inactive"))
+	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if args.focused {
-		baseTUI = styleToTUI(th.Get("ui.statusline"))
-		modeSt = styleToTUI(th.Get("ui.statusline.normal"))
+		baseTUI = th.Get("ui.statusline")
+		modeSt = th.Get("ui.statusline.normal")
 	}
 	buf.SetString(at, strings.Repeat(" ", width), baseTUI)
 
@@ -89,7 +89,7 @@ func (r *renderPass) paintImage(
 		return
 	}
 	// editor background shows through transparent pixels
-	bg := styleToTUI(r.activeTheme().Get("ui.background")).BgColor()
+	bg := r.activeTheme().Get("ui.background").BgColor()
 	style := tui.Style{}.
 		Fg(tui.ImageColor(id)).
 		UlColor(tui.ImageColor(imagePlacementID(cells))).
@@ -126,7 +126,7 @@ func (r *renderPass) renderImageLoading(
 func (r *renderPass) renderImageMessage(
 	buf *tui.Buffer, area geom.Area, key i18n.Key,
 ) {
-	style := styleToTUI(r.activeTheme().Get("ui.text"))
+	style := r.activeTheme().Get("ui.text")
 	renderImageMessage(buf, area, i18n.Text(key), style)
 }
 

@@ -43,9 +43,9 @@ var splitSepIntersectionChars = [...]string{
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 	th := r.activeTheme()
-	bgTUI := styleToTUI(th.Get("ui.bufferline.background"))
-	activeTUI := styleToTUI(th.Get("ui.bufferline.active"))
-	inactiveTUI := styleToTUI(th.Get("ui.bufferline"))
+	bgTUI := th.Get("ui.bufferline.background")
+	activeTUI := th.Get("ui.bufferline.active")
+	inactiveTUI := th.Get("ui.bufferline")
 
 	buf.SetString(geom.Point{Y: y}, strings.Repeat(" ", r.size.Width), bgTUI)
 
@@ -235,7 +235,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	cache := r.ec.cache
 
 	redrawAll := r.forceFullRedraw(cache, th)
-	bgTUI := styleToTUI(th.Get("ui.background"))
+	bgTUI := th.Get("ui.background")
 	if redrawAll {
 		buf.Fill(bgTUI)
 	}
@@ -299,7 +299,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		return true
 	})
 
-	sepTUI := styleToTUI(th.Get("ui.border"))
+	sepTUI := th.Get("ui.border")
 	vertCells := make(map[[2]int]bool)
 	horizCells := make(map[[2]int]bool)
 	r.cx.Editor.Tree().WalkSeparators(func(s view.Separator) {
@@ -375,7 +375,7 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	th := r.activeTheme()
 
 	popupSt := th.Get("ui.popup")
-	popupTUI := styleToTUI(popupSt)
+	popupTUI := popupSt
 
 	keyW := 0
 	for _, item := range items {

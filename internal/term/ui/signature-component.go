@@ -125,7 +125,7 @@ func (s *signatureHelpComponent) paint(
 	cx *Context, buf *tui.Buffer, pl geom.Area,
 ) {
 	sig := s.help.Signatures[s.cursor]
-	st := styleToTUI(cx.Theme().Get("ui.popup"))
+	st := cx.Theme().Get("ui.popup")
 	border := lipgloss.RoundedBorder()
 	pop := popup{
 		border:       border,
@@ -246,7 +246,7 @@ func (s *signatureHelpComponent) renderSignature(
 	sig view.SignatureInformation,
 ) {
 	label := ansi.Truncate(sig.Label, area.Width, "")
-	base := styleToTUI(cx.Theme().Get("ui.popup"))
+	base := cx.Theme().Get("ui.popup")
 	buf.SetString(area.Point, label, base)
 	if sig.ActiveEnd <= sig.ActiveStart {
 		return
@@ -259,9 +259,9 @@ func (s *signatureHelpComponent) renderSignature(
 	}
 	x := area.X + runewidth.StringWidth(string(rs[:start]))
 	text := string(rs[start:end])
-	bg := cx.Theme().Get("ui.popup").GetBackground()
+	bg := cx.Theme().Get("ui.popup").BgColor()
 	st := inheritStyleBackground(cx.Theme().Get("ui.selection"), bg)
-	buf.SetString(geom.Point{X: x, Y: area.Y}, text, styleToTUI(st))
+	buf.SetString(geom.Point{X: x, Y: area.Y}, text, st)
 }
 
 type renderSignatureSeparatorArgs struct {

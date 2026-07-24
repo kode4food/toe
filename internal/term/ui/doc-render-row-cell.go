@@ -13,8 +13,7 @@ type (
 		colStart int
 	}
 
-	// renderedCell stores plain text + tui.Style rather than pre-rendered ANSI,
-	// keeping lipgloss.Style.Render() out of the per-rune character loop
+	// renderedCell stores plain text and style for deferred ANSI rendering
 	renderedCell struct {
 		text  string
 		width int

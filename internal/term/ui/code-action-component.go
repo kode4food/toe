@@ -103,16 +103,14 @@ func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	m.bounds = pl
 	menu, selected := promptCompletionStyles(cx)
 	pop := popup{
-		border: lipgloss.RoundedBorder(),
-		borderStyle: styleToTUI(
-			menu.Foreground(pickerFrameStyle(cx).GetForeground()),
-		),
-		contentStyle: styleToTUI(menu),
+		border:       lipgloss.RoundedBorder(),
+		borderStyle:  menu.Fg(pickerFrameStyle(cx).FgColor()),
+		contentStyle: menu,
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	m.listBounds = area.Translate(pl.Point)
-	base := styleToTUI(menu)
-	sel := styleToTUI(selected)
+	base := menu
+	sel := selected
 	m.scroll = listClampScroll(m.scroll, len(m.actions), area.Height)
 	overflow := len(m.actions) > area.Height
 	listW := area.Width

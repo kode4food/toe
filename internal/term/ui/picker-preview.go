@@ -3,7 +3,6 @@ package ui
 import (
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
@@ -181,16 +180,11 @@ func (p *previewDocEntry) renderInto(
 func (p *previewDirEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
-	fillTUI := styleToTUI(
-		lipgloss.NewStyle().Background(
-			ctx.th.Get("ui.popup").GetBackground(),
-		),
-	)
-	dirTUI := styleToTUI(
-		lipgloss.NewStyle().Foreground(
-			ctx.th.Get("ui.text.directory").GetForeground(),
-		).Background(ctx.th.Get("ui.popup").GetBackground()),
-	)
+	popupBg := ctx.th.Get("ui.popup").BgColor()
+	fillTUI := tui.Style{}.Bg(popupBg)
+	dirTUI := tui.Style{}.
+		Fg(ctx.th.Get("ui.text.directory").FgColor()).
+		Bg(popupBg)
 	for i, entry := range p.rows {
 		if i >= ctx.size.Height {
 			return
@@ -220,11 +214,7 @@ func (p noPreviewEntry) renderInto(
 func (p *previewCtx) blitPlaceholderInto(
 	buf *tui.Buffer, at geom.Point, text string,
 ) {
-	fillTUI := styleToTUI(
-		lipgloss.NewStyle().Background(
-			p.th.Get("ui.popup").GetBackground(),
-		),
-	)
+	fillTUI := tui.Style{}.Bg(p.th.Get("ui.popup").BgColor())
 	blitTextInto(buf, geom.Area{Point: at, Size: p.size}, text, fillTUI)
 }
 
@@ -267,9 +257,9 @@ func previewSpans(sc *syntax.Cache, text, lang string) []highlight.Span {
 
 // span backgrounds are stripped so the pane provides the background uniformly
 func previewHlStyleFn(
-	fn func(string) lipgloss.Style,
-) func(string) lipgloss.Style {
-	return func(scope string) lipgloss.Style {
+	fn func(string) tui.Style,
+) func(string) tui.Style {
+	return func(scope string) tui.Style {
 		return clearStyleBackground(fn(scope))
 	}
 }

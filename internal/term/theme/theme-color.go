@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"strings"
 
-	"charm.land/lipgloss/v2"
+	"github.com/kode4food/toe/internal/tui"
 )
 
-var underlineStyles = map[string]lipgloss.Underline{
-	"line":        lipgloss.UnderlineSingle,
-	"curl":        lipgloss.UnderlineCurly,
-	"dashed":      lipgloss.UnderlineDashed,
-	"dotted":      lipgloss.UnderlineDotted,
-	"double_line": lipgloss.UnderlineDouble,
+var underlineStyles = map[string]tui.UnderlineStyle{
+	"line":        tui.UnderlineLine,
+	"curl":        tui.UnderlineCurl,
+	"dashed":      tui.UnderlineDashed,
+	"dotted":      tui.UnderlineDotted,
+	"double_line": tui.UnderlineDoubleLine,
 }
 
 func (p palette) parseColor(value any) (colorSpec, error) {
@@ -39,23 +39,27 @@ func parseRawColor(s string) (colorSpec, error) {
 			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
 				ErrInvalidTheme, s)
 		}
-		if _, err := strconv.ParseUint(s[1:], 16, 32); err != nil {
+		n, err := strconv.ParseUint(s[1:], 16, 32)
+		if err != nil {
 			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
 				ErrInvalidTheme, s)
 		}
-		return colorSpec{color: lipgloss.Color(s), rgb: true}, nil
+		return colorSpec{
+			color: tui.ColorRGB(uint8(n>>16), uint8(n>>8), uint8(n)),
+			rgb:   true,
+		}, nil
 	}
 	n, err := strconv.Atoi(s)
 	if err != nil || n < 0 || n > 255 {
 		return colorSpec{}, fmt.Errorf("%w: malformed ANSI: %s",
 			ErrInvalidTheme, s)
 	}
-	return colorSpec{color: lipgloss.Color(s)}, nil
+	return colorSpec{color: tui.ColorANSI(uint8(n))}, nil
 }
 
 func (p palette) parseUnderline(
-	style lipgloss.Style, value any,
-) (lipgloss.Style, error) {
+	style tui.Style, value any,
+) (tui.Style, error) {
 	m, ok := value.(map[string]any)
 	if !ok {
 		return style, fmt.Errorf("%w: underline must be table", ErrInvalidTheme)
@@ -69,39 +73,39 @@ func (p palette) parseUnderline(
 			if err != nil {
 				return style, err
 			}
-			style = style.UnderlineColor(c.color)
+			style = style.UlColor(c.color)
 		case "style":
 			u, err := parseUnderlineStyle(value)
 			if err != nil {
 				return style, err
 			}
-			style = style.UnderlineStyle(u)
+			style = style.UlStyle(u)
 		default:
 			return style, fmt.Errorf("%w: invalid underline attribute: %s",
 				ErrInvalidTheme, name)
 		}
 	}
 	if seen["color"] && !seen["style"] {
-		style = style.Underline(true)
+		style = style.UlStyle(tui.UnderlineLine)
 	}
 	return style, nil
 }
 
-func parseUnderlineStyle(value any) (lipgloss.Underline, error) {
+func parseUnderlineStyle(value any) (tui.UnderlineStyle, error) {
 	s, ok := value.(string)
 	if !ok {
-		return lipgloss.UnderlineNone,
+		return tui.UnderlineReset,
 			fmt.Errorf("%w: invalid underline style: %v",
 				ErrInvalidTheme, value)
 	}
 	if u, ok := underlineStyles[s]; ok {
 		return u, nil
 	}
-	return lipgloss.UnderlineNone,
+	return tui.UnderlineReset,
 		fmt.Errorf("%w: invalid underline style: %s", ErrInvalidTheme, s)
 }
 
-func parseModifiers(style lipgloss.Style, value any) (lipgloss.Style, error) {
+func parseModifiers(style tui.Style, value any) (tui.Style, error) {
 	values, ok := value.([]any)
 	if !ok {
 		return style, fmt.Errorf("%w: modifiers should be an array",
@@ -115,21 +119,21 @@ func parseModifiers(style lipgloss.Style, value any) (lipgloss.Style, error) {
 		}
 		switch s {
 		case "bold":
-			style = style.Bold(true)
+			style = style.Mod(tui.ModifierBold)
 		case "dim":
-			style = style.Faint(true)
+			style = style.Mod(tui.ModifierDim)
 		case "italic":
-			style = style.Italic(true)
+			style = style.Mod(tui.ModifierItalic)
 		case "slow_blink", "rapid_blink":
-			style = style.Blink(true)
+			style = style.Mod(tui.ModifierSlowBlink)
 		case "underlined":
-			style = style.Underline(true)
+			style = style.UlStyle(tui.UnderlineLine)
 		case "reversed":
-			style = style.Reverse(true)
+			style = style.Mod(tui.ModifierReversed)
 		case "hidden":
 			continue
 		case "crossed_out":
-			style = style.Strikethrough(true)
+			style = style.Mod(tui.ModifierCrossedOut)
 		default:
 			return style, fmt.Errorf("%w: invalid modifier: %s",
 				ErrInvalidTheme, s)

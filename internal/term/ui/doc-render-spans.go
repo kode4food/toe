@@ -121,13 +121,13 @@ func (r *renderPass) prepareContentRender(
 		c.hlTUICache = make(map[string]tui.Style, 64)
 	}
 	tuiStyles := c.tuiStyles
-	hlLipgloss := c.hlFn
+	hlStyle := c.hlFn
 	hlTUICache := c.hlTUICache
 	hlStyleFn := func(scope string) tui.Style {
 		if st, ok := hlTUICache[scope]; ok {
 			return st
 		}
-		st := styleToTUI(hlLipgloss(scope))
+		st := hlStyle(scope)
 		hlTUICache[scope] = st
 		return st
 	}

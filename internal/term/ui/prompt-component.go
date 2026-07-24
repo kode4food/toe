@@ -6,7 +6,6 @@ import (
 	"unicode"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -380,10 +379,9 @@ func (p *PromptComponent) paintLine(
 	cx *Context, buf *tui.Buffer, area geom.Area,
 ) {
 	th := cx.Theme()
-	rowBg := lipgloss.NewStyle().
-		Background(th.Get("ui.cursorline.primary").GetBackground())
-	labelSt := styleToTUI(applyAccentStyle(rowBg, th.Get("ui.prompt")))
-	textSt := styleToTUI(rowBg.Foreground(th.Get("ui.text").GetForeground()))
+	rowBg := tui.Style{}.Bg(th.Get("ui.cursorline.primary").BgColor())
+	labelSt := applyAccentStyle(rowBg, th.Get("ui.prompt"))
+	textSt := rowBg.Fg(th.Get("ui.text").FgColor())
 
 	label := p.promptLabel()
 	buf.FillRange(area.Point, area.Width, textSt)

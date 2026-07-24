@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
@@ -51,15 +50,15 @@ func writePickerPromptRow(
 	gap := max(queryArea-ql, 0)
 
 	popup := th.Get("ui.popup")
-	popupBg := lipgloss.NewStyle().Background(popup.GetBackground())
+	popupBg := tui.Style{}.Bg(popup.BgColor())
 	promptSt := th.Get("ui.prompt")
 
-	bgTUI := styleToTUI(popupBg)
-	queryTUI := styleToTUI(applyAccentStyle(popupBg, promptSt))
-	cursorTUI := styleToTUI(lipgloss.NewStyle().
-		Foreground(popupBg.GetBackground()).
-		Background(promptSt.GetForeground()))
-	countTUI := styleToTUI(pickerCountStyle(cx))
+	bgTUI := popupBg
+	queryTUI := applyAccentStyle(popupBg, promptSt)
+	cursorTUI := tui.Style{}.
+		Fg(popupBg.BgColor()).
+		Bg(promptSt.FgColor())
+	countTUI := pickerCountStyle(cx)
 
 	buf.FillRange(area.Point, area.Width, bgTUI)
 	buf.SetString(geom.Point{
@@ -81,11 +80,11 @@ func writePickerHeader(
 ) {
 	cols := p.source.Columns()
 	widths := pickerColumnWidths(p, max(area.Width-pickerMarkerW-1, 0))
-	bgTUI := styleToTUI(pickerHeaderStyle(cx))
-	underlineColor := cx.Theme().Get("ui.text.inactive").GetForeground()
-	colTUI := styleToTUI(
-		pickerHeaderStyle(cx).Underline(true).UnderlineColor(underlineColor),
-	)
+	bgTUI := pickerHeaderStyle(cx)
+	underlineColor := cx.Theme().Get("ui.text.inactive").FgColor()
+	colTUI := pickerHeaderStyle(cx).
+		UlStyle(tui.UnderlineLine).
+		UlColor(underlineColor)
 	buf.FillRange(area.Point, area.Width, bgTUI)
 	cur := area.X + pickerMarkerW
 	for i, col := range cols {
@@ -108,12 +107,12 @@ func writePickerItem(
 	var base, match tui.Style
 	if args.selected {
 		marker = " > "
-		base = styleToTUI(pickerSelStyle(cx))
-		match = styleToTUI(pickerSelMatchStyle(cx))
+		base = pickerSelStyle(cx)
+		match = pickerSelMatchStyle(cx)
 	} else {
 		marker = strings.Repeat(" ", pickerMarkerW)
-		base = styleToTUI(pickerItemStyle(cx))
-		match = styleToTUI(pickerMatchStyle(cx))
+		base = pickerItemStyle(cx)
+		match = pickerMatchStyle(cx)
 	}
 
 	buf.FillRange(at, args.w, base)
@@ -172,7 +171,7 @@ func pickerColumnBase(
 	if i >= len(scopes) || scopes[i] == "" {
 		return base
 	}
-	fg := colorToTUI(cx.Theme().Get(scopes[i]).GetForeground())
+	fg := cx.Theme().Get(scopes[i]).FgColor()
 	if fg.IsReset() {
 		return base
 	}
@@ -200,7 +199,7 @@ func writePickerCenteredHint(
 	if text == "" || area.Height <= 0 {
 		return
 	}
-	style := styleToTUI(pickerCountStyle(cx))
+	style := pickerCountStyle(cx)
 	hx := area.X + max((area.Width-runewidth.StringWidth(text))/2, 0)
 	buf.SetString(geom.Point{
 		X: hx,

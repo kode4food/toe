@@ -1,10 +1,6 @@
 package ui
 
 import (
-	"image/color"
-
-	"charm.land/lipgloss/v2"
-
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -30,6 +26,11 @@ type (
 	diffPreviewLine struct {
 		kind diffLineKind
 		line int // index into working (context/added) or base (removed) rope
+	}
+
+	tintColors struct {
+		base   tui.Color
+		accent tui.Color
 	}
 
 	diffLineKind uint8
@@ -109,27 +110,28 @@ func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
 
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	tuiStyles := buildTUIStyles(args.th, view.ModeNormal)
-	hlLipgloss := previewHlStyleFn(hlStyleFnFor(args.th))
+	hlStyle := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)
 	hlStyleFn := func(scope string) tui.Style {
 		if st, ok := hlCache[scope]; ok {
 			return st
 		}
-		st := styleToTUI(hlLipgloss(scope))
+		st := hlStyle(scope)
 		hlCache[scope] = st
 		return st
 	}
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
-	fillTUI := styleToTUI(
-		lipgloss.NewStyle().Background(
-			args.th.Get("ui.popup").GetBackground(),
-		),
-	)
+	fillTUI := tui.Style{}.Bg(args.th.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
-	popupLg := args.th.Get("ui.popup").GetBackground()
-	addedBg := tintToward(popupLg, args.th.Get("diff.plus").GetForeground())
-	removedBg := tintToward(popupLg, args.th.Get("diff.minus").GetForeground())
+	addedBg := tintToward(&tintColors{
+		base:   popupBg,
+		accent: args.th.Get("diff.plus").FgColor(),
+	})
+	removedBg := tintToward(&tintColors{
+		base:   popupBg,
+		accent: args.th.Get("diff.minus").FgColor(),
+	})
 
 	contentX := args.area.X + diffGutterW
 	contentW := args.area.Width - diffGutterW
@@ -199,18 +201,32 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	}
 }
 
-func tintToward(base, accent color.Color) tui.Color {
-	br, bg, bb := rgb8(base)
-	ar, ag, ab := rgb8(accent)
+func tintToward(colors *tintColors) tui.Color {
+	base := rgb8(colors.base)
+	accent := rgb8(colors.accent)
 	mix := func(from, to uint8) uint8 {
 		return uint8(float64(from) + (float64(to)-float64(from))*diffTintAmount)
 	}
-	return tui.ColorRGB(mix(br, ar), mix(bg, ag), mix(bb, ab))
+	return tui.ColorRGB(
+		mix(base.red, accent.red),
+		mix(base.green, accent.green),
+		mix(base.blue, accent.blue),
+	)
 }
 
-func rgb8(c color.Color) (uint8, uint8, uint8) {
+type rgb8Res struct {
+	red   uint8
+	green uint8
+	blue  uint8
+}
+
+func rgb8(c tui.Color) rgb8Res {
 	r, g, b, _ := c.RGBA()
-	return uint8(r >> 8), uint8(g >> 8), uint8(b >> 8)
+	return rgb8Res{
+		red:   uint8(r >> 8),
+		green: uint8(g >> 8),
+		blue:  uint8(b >> 8),
+	}
 }
 
 func firstChangedLine(lines []diffPreviewLine) int {

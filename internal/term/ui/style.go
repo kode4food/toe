@@ -3,21 +3,12 @@ package ui
 import (
 	"image/color"
 
-	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/kode4food/toe/internal/tui"
 )
 
 var (
-	ansiBasicColors = [16]tui.Color{
-		tui.ColorBlack, tui.ColorRed, tui.ColorGreen, tui.ColorYellow,
-		tui.ColorBlue, tui.ColorMagenta, tui.ColorCyan, tui.ColorLightGray,
-		tui.ColorGray, tui.ColorLightRed, tui.ColorLightGreen,
-		tui.ColorLightYellow, tui.ColorLightBlue, tui.ColorLightMagenta,
-		tui.ColorLightCyan, tui.ColorWhite,
-	}
-
 	completionKindStyleScopes = map[string]string{
 		"function":    "function",
 		"method":      "function",
@@ -45,61 +36,50 @@ var (
 		"color":       "string",
 		"event":       "string",
 	}
-
-	underlineTUIStyles = [...]tui.UnderlineStyle{
-		lipgloss.UnderlineNone:   tui.UnderlineReset,
-		lipgloss.UnderlineSingle: tui.UnderlineLine,
-		lipgloss.UnderlineDouble: tui.UnderlineDoubleLine,
-		lipgloss.UnderlineCurly:  tui.UnderlineCurl,
-		lipgloss.UnderlineDotted: tui.UnderlineDotted,
-		lipgloss.UnderlineDashed: tui.UnderlineDashed,
-	}
 )
 
-func searchMatchStyle() lipgloss.Style {
-	return lipgloss.NewStyle().
-		Background(lipgloss.Color("3")).
-		Foreground(lipgloss.Color("0"))
+func searchMatchStyle() tui.Style {
+	return tui.Style{}.Bg(tui.ColorANSI(3)).Fg(tui.ColorANSI(0))
 }
 
-func pickerContentStyle(cx *Context) lipgloss.Style {
+func pickerContentStyle(cx *Context) tui.Style {
 	popup := cx.Theme().Get("ui.popup")
-	return lipgloss.NewStyle().Background(popup.GetBackground())
+	return tui.Style{}.Bg(popup.BgColor())
 }
 
-func pickerCountStyle(cx *Context) lipgloss.Style {
+func pickerCountStyle(cx *Context) tui.Style {
 	th := cx.Theme()
-	bg := lipgloss.NewStyle().Background(th.Get("ui.popup").GetBackground())
-	return bg.Foreground(th.Get("ui.text.inactive").GetForeground())
+	bg := tui.Style{}.Bg(th.Get("ui.popup").BgColor())
+	return bg.Fg(th.Get("ui.text.inactive").FgColor())
 }
 
-func pickerHeaderStyle(cx *Context) lipgloss.Style {
+func pickerHeaderStyle(cx *Context) tui.Style {
 	th := cx.Theme()
-	bg := lipgloss.NewStyle().Background(th.Get("ui.popup").GetBackground())
-	return bg.Foreground(th.Get("ui.text.focus").GetForeground()).Bold(true)
+	bg := tui.Style{}.Bg(th.Get("ui.popup").BgColor())
+	return bg.Fg(th.Get("ui.text.focus").FgColor()).Mod(tui.ModifierBold)
 }
 
-func pickerItemStyle(cx *Context) lipgloss.Style {
+func pickerItemStyle(cx *Context) tui.Style {
 	return cx.Theme().Get("ui.menu")
 }
 
-func pickerSelStyle(cx *Context) lipgloss.Style {
+func pickerSelStyle(cx *Context) tui.Style {
 	return cx.Theme().Get("ui.menu.selected")
 }
 
-func pickerMatchStyle(cx *Context) lipgloss.Style {
+func pickerMatchStyle(cx *Context) tui.Style {
 	s := cx.Theme().Get("ui.picker.match")
-	return pickerItemStyle(cx).Foreground(s.GetForeground()).Bold(true)
+	return pickerItemStyle(cx).Fg(s.FgColor()).Mod(tui.ModifierBold)
 }
 
-func pickerSelMatchStyle(cx *Context) lipgloss.Style {
+func pickerSelMatchStyle(cx *Context) tui.Style {
 	s := cx.Theme().Get("ui.picker.match")
-	return pickerSelStyle(cx).Foreground(s.GetForeground()).Bold(true)
+	return pickerSelStyle(cx).Fg(s.FgColor()).Mod(tui.ModifierBold)
 }
 
 func completionIconStyle(
 	cx *Context, kind string, selected bool,
-) lipgloss.Style {
+) tui.Style {
 	base := completionBaseStyle(cx, selected)
 	scope := completionKindStyleScope(kind)
 	icon, ok := cx.Theme().TryGet(scope)
@@ -109,7 +89,7 @@ func completionIconStyle(
 	return applyAccentStyle(base, icon)
 }
 
-func completionInfoStyle(cx *Context, selected bool) lipgloss.Style {
+func completionInfoStyle(cx *Context, selected bool) tui.Style {
 	base := completionBaseStyle(cx, selected)
 	info, ok := cx.Theme().TryGet("comment")
 	if !ok {
@@ -118,7 +98,7 @@ func completionInfoStyle(cx *Context, selected bool) lipgloss.Style {
 	return applyAccentStyle(base, info)
 }
 
-func completionBaseStyle(cx *Context, selected bool) lipgloss.Style {
+func completionBaseStyle(cx *Context, selected bool) tui.Style {
 	base := pickerItemStyle(cx)
 	if selected {
 		base = pickerSelStyle(cx)
@@ -126,18 +106,18 @@ func completionBaseStyle(cx *Context, selected bool) lipgloss.Style {
 	return base
 }
 
-func applyAccentStyle(base, accent lipgloss.Style) lipgloss.Style {
-	if fg := accent.GetForeground(); fg != nil {
-		base = base.Foreground(fg)
+func applyAccentStyle(base, accent tui.Style) tui.Style {
+	if fg := accent.FgColor(); !fg.IsReset() {
+		base = base.Fg(fg)
 	}
-	if accent.GetBold() {
-		base = base.Bold(true)
+	if accent.HasMod(tui.ModifierBold) {
+		base = base.Mod(tui.ModifierBold)
 	}
-	if accent.GetFaint() {
-		base = base.Faint(true)
+	if accent.HasMod(tui.ModifierDim) {
+		base = base.Mod(tui.ModifierDim)
 	}
-	if accent.GetItalic() {
-		base = base.Italic(true)
+	if accent.HasMod(tui.ModifierItalic) {
+		base = base.Mod(tui.ModifierItalic)
 	}
 	return base
 }
@@ -149,42 +129,9 @@ func completionKindStyleScope(kind string) string {
 	return "ui.text.inactive"
 }
 
-func pickerFrameStyle(cx *Context) lipgloss.Style {
+func pickerFrameStyle(cx *Context) tui.Style {
 	popup := cx.Theme().Get("ui.popup")
-	return lipgloss.NewStyle().
-		Foreground(popup.GetForeground()).
-		Background(popup.GetBackground())
-}
-
-func styleToTUI(s lipgloss.Style) tui.Style {
-	st := tui.Style{}
-	st = st.Fg(colorToTUI(s.GetForeground()))
-	st = st.Bg(colorToTUI(s.GetBackground()))
-	st = st.UlColor(colorToTUI(s.GetUnderlineColor()))
-	st = st.UlStyle(underlineToTUI(s.GetUnderlineStyle()))
-	var m tui.Modifier
-	if s.GetBold() {
-		m |= tui.ModifierBold
-	}
-	if s.GetFaint() {
-		m |= tui.ModifierDim
-	}
-	if s.GetItalic() {
-		m |= tui.ModifierItalic
-	}
-	if s.GetBlink() {
-		m |= tui.ModifierSlowBlink
-	}
-	if s.GetReverse() {
-		m |= tui.ModifierReversed
-	}
-	if s.GetStrikethrough() {
-		m |= tui.ModifierCrossedOut
-	}
-	if m != 0 {
-		st = st.Mod(m)
-	}
-	return st
+	return tui.Style{}.Fg(popup.FgColor()).Bg(popup.BgColor())
 }
 
 func colorToTUI(c color.Color) tui.Color {
@@ -192,28 +139,14 @@ func colorToTUI(c color.Color) tui.Color {
 		return tui.ColorReset
 	}
 	switch v := c.(type) {
-	case lipgloss.NoColor:
-		return tui.ColorReset
+	case tui.Color:
+		return v
 	case ansi.BasicColor:
-		return basicTUIColor(uint8(v))
+		return tui.ColorANSI(uint8(v))
 	case ansi.IndexedColor:
 		return tui.ColorIndexed(uint8(v))
 	default:
 		r, g, b, _ := c.RGBA()
 		return tui.ColorRGB(uint8(r>>8), uint8(g>>8), uint8(b>>8))
 	}
-}
-
-func basicTUIColor(idx uint8) tui.Color {
-	if idx < 16 {
-		return ansiBasicColors[idx]
-	}
-	return tui.ColorIndexed(idx)
-}
-
-func underlineToTUI(u lipgloss.Underline) tui.UnderlineStyle {
-	if int(u) >= len(underlineTUIStyles) {
-		return tui.UnderlineReset
-	}
-	return underlineTUIStyles[u]
 }

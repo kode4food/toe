@@ -173,6 +173,11 @@ func resize(m ui.Model, w, h int) ui.Model {
 	return m2.(ui.Model)
 }
 
+func mouse(m ui.Model, msg tea.Msg) ui.Model {
+	m2, _ := m.Update(msg)
+	return m2.(ui.Model)
+}
+
 type bindTestActionArgs struct {
 	km   *command.Keymaps
 	mode string

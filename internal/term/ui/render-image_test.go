@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -143,36 +144,317 @@ func TestImageInput(t *testing.T) {
 	e.FocusPane(docID)
 
 	a := pane.Area()
-	m2, _ := m.Update(tea.MouseClickMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseLeft,
-	})
-	m = m2.(ui.Model)
-	assert.Equal(t, pane.ID(), e.Tree().Focus())
+	e.FocusPane(pane.ID())
 	assert.Equal(t, view.ModeImage, e.Mode())
 
-	m2, _ = m.Update(tea.KeyPressMsg{Code: '=', Text: "="})
-	m = m2.(ui.Model)
+	// feed each update so the transmit lands and the paced wheel is not dropped
+	feed := func(msg tea.Msg) {
+		m2, cmd := m.Update(msg)
+		m = feedImageMsgs(m2.(ui.Model), cmd)
+	}
+	feed(tea.KeyPressMsg{Code: '=', Text: "="})
 	assert.Equal(t, 125, pane.Zoom())
-	m2, _ = m.Update(tea.KeyPressMsg{Code: '-', Text: "-"})
-	m = m2.(ui.Model)
+	feed(tea.KeyPressMsg{Code: '-', Text: "-"})
 	assert.Equal(t, 100, pane.Zoom())
-	m2, _ = m.Update(tea.KeyPressMsg{Code: '+', Text: "+"})
-	m = m2.(ui.Model)
+	feed(tea.KeyPressMsg{Code: '+', Text: "+"})
 	assert.Equal(t, 125, pane.Zoom())
-	_, _ = m.Update(tea.KeyPressMsg{Code: '0', Text: "0"})
+	feed(tea.KeyPressMsg{Code: '0', Text: "0"})
 	assert.Equal(t, 100, pane.Zoom())
 
+	// a modified wheel zooms without stealing focus from the document
 	e.FocusPane(docID)
-	m2, _ = m.Update(tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelUp,
+	feed(tea.MouseWheelMsg{
+		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelUp, Mod: tea.ModCtrl,
 	})
-	m = m2.(ui.Model)
 	assert.Equal(t, docID, e.Tree().Focus())
 	assert.Equal(t, 110, pane.Zoom())
-	_, _ = m.Update(tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown,
+	feed(tea.MouseWheelMsg{
+		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown, Mod: tea.ModCtrl,
 	})
 	assert.Equal(t, 100, pane.Zoom())
+}
+
+// readyImage drives a transmit/ready cycle at the current zoom, then renders so
+// the pan bounds are established for the panning tests
+func readyImage(m ui.Model) ui.Model {
+	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	_ = m.View()
+	return m
+}
+
+func TestImagePan(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	openRenderImagePane(t, e, path)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+
+	// zoom past the pane so the grid overflows and can be panned
+	for range 12 {
+		pane.ZoomIn()
+	}
+	assert.Equal(t, 400, pane.Zoom())
+	m = readyImage(m) // transmit + render at the zoomed size
+
+	m = sendSpecialText(m, 'l', "l")
+	right := pane.Pan().X
+	assert.Positive(t, right)
+	m = sendSpecialText(m, 'h', "h")
+	assert.Equal(t, 0, pane.Pan().X)
+	m = sendSpecialText(m, 'j', "j")
+	assert.Positive(t, pane.Pan().Y)
+	m = sendSpecialText(m, 'k', "k")
+	assert.Equal(t, 0, pane.Pan().Y)
+
+	// panning past the edge clamps rather than running away
+	for range 200 {
+		m = sendSpecialText(m, 'l', "l")
+	}
+	clamped := pane.Pan().X
+	sendSpecialText(m, 'l', "l")
+	assert.Equal(t, clamped, pane.Pan().X)
+	assert.Greater(t, clamped, right)
+}
+
+func TestImageWheelDefault(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	openRenderImagePane(t, e, path)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	for range 12 {
+		pane.ZoomIn()
+	}
+	m = readyImage(m)
+	a := pane.Area()
+
+	// a bare wheel pans; a modified wheel zooms
+	m = mouse(m, tea.MouseWheelMsg{
+		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelRight,
+	})
+	assert.Positive(t, pane.Pan().X)
+	assert.Equal(t, 400, pane.Zoom())
+	mouse(m, tea.MouseWheelMsg{
+		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown, Mod: tea.ModCtrl,
+	})
+	assert.Equal(t, 390, pane.Zoom())
+}
+
+func TestImageWheelGestureLatch(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	openRenderImagePane(t, e, path)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	for range 12 {
+		pane.ZoomIn()
+	}
+	m = readyImage(m)
+	a := pane.Area()
+	feed := func(msg tea.Msg) {
+		m2, cmd := m.Update(msg)
+		m = feedImageMsgs(m2.(ui.Model), cmd)
+	}
+
+	// a modified wheel starts a zoom gesture
+	feed(tea.MouseWheelMsg{
+		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown, Mod: tea.ModCtrl,
+	})
+	assert.Equal(t, 390, pane.Zoom())
+
+	// a bare wheel in the same stream stays a zoom, not a pan
+	feed(tea.MouseWheelMsg{X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown})
+	assert.Equal(t, 380, pane.Zoom())
+	assert.Equal(t, 0, pane.Pan().Y)
+
+	// after the gesture gap a bare wheel pans again
+	time.Sleep(220 * time.Millisecond)
+	feed(tea.MouseWheelMsg{X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown})
+	assert.Equal(t, 380, pane.Zoom())
+	assert.Positive(t, pane.Pan().Y)
+}
+
+func TestImageClickZoom(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	docID := e.Tree().Focus()
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m = resize(m, 80, 24)
+	pane, err := ui.NewImagePane(e, path)
+	assert.NoError(t, err)
+	assert.True(t, e.SplitPane(pane, view.LayoutVertical))
+	e.FocusPane(docID)
+	a := pane.Area()
+
+	// a click zooms in
+	m = mouse(m, tea.MouseClickMsg{X: a.X + 1, Y: a.Y, Button: tea.MouseLeft})
+	assert.Equal(t, pane.ID(), e.Tree().Focus())
+	assert.Equal(t, 125, pane.Zoom())
+
+	// a modified click zooms out
+	mouse(m, tea.MouseClickMsg{
+		X: a.X + 1, Y: a.Y, Button: tea.MouseLeft, Mod: tea.ModCtrl,
+	})
+	assert.Equal(t, 100, pane.Zoom())
+}
+
+func TestImagePanRestore(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	session := filepath.Join(root, "session.toml")
+
+	// session 1: zoom and pan through the model, then save
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	openRenderImagePane(t, e, path)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	for range 12 {
+		pane.ZoomIn()
+	}
+	m = readyImage(m)
+	m = sendSpecialText(m, 'l', "l")
+	sendSpecialText(m, 'j', "j")
+	want := pane.Pan()
+	assert.NotEqual(t, geom.Point{}, want)
+	assert.NoError(t, e.SaveSession(session, nil))
+
+	// session 2: faithful startup — restore before the first WindowSize
+	next := view.NewEditor(root)
+	next.Options().Mouse = true
+	nm := ui.New(next, command.NewKeymaps())
+	_, restored, err := next.RestoreSession(session)
+	assert.NoError(t, err)
+	assert.True(t, restored)
+	nm2, ncmd := nm.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	nm = feedImageMsgs(nm2.(ui.Model), ncmd)
+	_ = nm.View()
+	restoredPane, ok := next.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	assert.Equal(t, want, restoredPane.Pan())
+}
+
+// A render at a smaller bound (a shrunk window, or a layout transient during
+// restore) must not rewrite the stored pan: only a zoom converges it, so the
+// offset survives a resize round-trip
+func TestImagePanSurvivesResize(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	openRenderImagePane(t, e, path)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	for range 12 {
+		pane.ZoomIn()
+	}
+	m = readyImage(m)
+	for range 40 {
+		m = sendSpecialText(m, 'l', "l")
+		m = sendSpecialText(m, 'j', "j")
+	}
+	want := pane.Pan()
+	assert.NotEqual(t, geom.Point{}, want)
+
+	// shrink the window (bound gets smaller), render, then restore the size
+	m2, cmd = m.Update(tea.WindowSizeMsg{Width: 30, Height: 10})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	_ = m.View()
+	m2, cmd = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	_ = m.View()
+
+	assert.Equal(t, want, pane.Pan())
+}
+
+// Zooming out shrinks the overflow, so the pan converges to center; once fitted
+// there is no pan left, and zooming back in starts from center, not the old
+// offset
+func TestImagePanForgottenOnZoomOut(t *testing.T) {
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, nil)
+	e := view.NewEditor(root)
+	e.Options().Mouse = true
+	openRenderImagePane(t, e, path)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = feedImageMsgs(m2.(ui.Model), cmd)
+	pane, ok := e.FocusedPane().(*ui.ImagePane)
+	assert.True(t, ok)
+	for range 12 {
+		pane.ZoomIn()
+	}
+	m = readyImage(m)
+	m = sendSpecialText(m, 'l', "l")
+	m = sendSpecialText(m, 'j', "j")
+	assert.NotEqual(t, geom.Point{}, pane.Pan())
+
+	// zoom out to a fit: the pan converges to center
+	for range 12 {
+		pane.ZoomOut()
+	}
+	assert.Equal(t, 100, pane.Zoom())
+	m = readyImage(m)
+	assert.Equal(t, geom.Point{}, pane.Pan())
+
+	// zoom back in: still centered, the old offset is gone
+	for range 12 {
+		pane.ZoomIn()
+	}
+	readyImage(m)
+	assert.Equal(t, geom.Point{}, pane.Pan())
 }
 
 func walkCmdMsgs(cmd tea.Cmd, fn func(tea.Msg)) {

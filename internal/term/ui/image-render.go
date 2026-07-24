@@ -94,17 +94,18 @@ func (r *renderPass) paintImage(
 		Fg(tui.ImageColor(id)).
 		UlColor(tui.ImageColor(imagePlacementID(cells))).
 		Bg(bg)
-	// show the centered window of the grid, so a zoomed-in image crops
-	// symmetrically instead of pinning to the top-left
+	// show a centered window into the grid; pan scrolls it so a zoomed-in image
+	// exposes its clipped edges instead of pinning to the top-left
 	visW := min(cells.Width, area.Width)
 	visH := min(cells.Height, area.Height)
 	screen := geom.Point{
 		X: area.X + (area.Width-visW)/2,
 		Y: area.Y + (area.Height-visH)/2,
 	}
+	pan := pane.Pan()
 	grid := geom.Point{
-		X: (cells.Width - visW) / 2,
-		Y: (cells.Height - visH) / 2,
+		X: min(max((cells.Width-visW)/2+pan.X, 0), cells.Width-visW),
+		Y: min(max((cells.Height-visH)/2+pan.Y, 0), cells.Height-visH),
 	}
 	for row := range visH {
 		for col := range visW {

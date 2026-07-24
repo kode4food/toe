@@ -244,9 +244,12 @@ Image panes support the command prompt and window menu.
 | `:` | Enter command mode |
 | `+` / `=` | Zoom image in |
 | `-` | Zoom image out |
-| `0` | Fit image to pane |
-| Mouse wheel | Zoom image in or out |
-| Mouse click | Focus image pane |
+| `0` | Fit image to pane and recenter |
+| `h` `j` `k` `l` / arrows | Pan a zoomed-in image |
+| Mouse click | Zoom image in |
+| `Mod` + click | Zoom image out |
+| Mouse wheel / two-finger swipe | Pan a zoomed-in image |
+| `Mod` + wheel | Zoom image in or out |
 | `Ctrl+w` / `Space+w` | Window menu |
 
 ### Leader Menu (`Space` or `Ctrl+\`)

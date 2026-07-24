@@ -68,6 +68,11 @@ func (r *imageRegistry) beginFrame() {
 	r.frame++
 }
 
+func (r *imageRegistry) inFlight(id uint32) bool {
+	placed, ok := r.placed[id]
+	return ok && r.ready[id] != placed
+}
+
 // evict removes stale images, excluding keep and this frame's images, and
 // returns their terminal deletion sequences
 func (r *imageRegistry) evict(keep uint32) string {

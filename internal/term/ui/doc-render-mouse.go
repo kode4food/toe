@@ -100,6 +100,14 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 	if p, ok := paneAt(r.cx, at); ok {
 		wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
 		r.cx.Editor.FocusPane(p.ID())
+		if pi, ok := p.(PaneInput); ok {
+			click := tea.MouseClickMsg{
+				X: at.X, Y: at.Y, Button: tea.MouseLeft, Mod: mod,
+			}
+			if _, handled := pi.HandleEvent(r.cx, click); handled {
+				return
+			}
+		}
 		if sp, ok := p.(Draggable); ok {
 			if wasFocused && sp.BeginDrag(r.cx, at, mod) {
 				r.ec.mouse.downDrag = sp

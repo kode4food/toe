@@ -47,6 +47,10 @@ const (
 	actImageZoomIn            = "image_zoom_in"
 	actImageZoomOut           = "image_zoom_out"
 	actImageZoomReset         = "image_zoom_reset"
+	actImagePanLeft           = "image_pan_left"
+	actImagePanDown           = "image_pan_down"
+	actImagePanUp             = "image_pan_up"
+	actImagePanRight          = "image_pan_right"
 	actVSplitView             = "vsplit"
 	actHSplitView             = "split"
 	actVSplitNew              = "vsplit_new"
@@ -104,6 +108,42 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     []string{"IMG"},
 				Keys:      kit.Keys(kit.Char('0')),
 				Aliases:   []string{"zoom-reset"},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actImagePanLeft,
+				DocString: "Pan image left",
+				Run:       kit.Runner(imagePanLeft),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('h'), kit.Left),
+				Aliases:   []string{"pan-left"},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actImagePanDown,
+				DocString: "Pan image down",
+				Run:       kit.Runner(imagePanDown),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('j'), kit.Down),
+				Aliases:   []string{"pan-down"},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actImagePanUp,
+				DocString: "Pan image up",
+				Run:       kit.Runner(imagePanUp),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('k'), kit.Up),
+				Aliases:   []string{"pan-up"},
+				Signature: kit.Sig(),
+			},
+			{
+				Name:      actImagePanRight,
+				DocString: "Pan image right",
+				Run:       kit.Runner(imagePanRight),
+				Modes:     []string{"IMG"},
+				Keys:      kit.Keys(kit.Char('l'), kit.Right),
+				Aliases:   []string{"pan-right"},
 				Signature: kit.Sig(),
 			},
 			{
@@ -818,5 +858,29 @@ func imageZoomOut(e *view.Editor) {
 func imageZoomReset(e *view.Editor) {
 	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
 		p.ResetZoom()
+	}
+}
+
+func imagePanLeft(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.PanLeft()
+	}
+}
+
+func imagePanDown(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.PanDown()
+	}
+}
+
+func imagePanUp(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.PanUp()
+	}
+}
+
+func imagePanRight(e *view.Editor) {
+	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+		p.PanRight()
 	}
 }

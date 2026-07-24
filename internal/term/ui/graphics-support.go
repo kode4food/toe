@@ -18,7 +18,6 @@ var graphicsTerms = []graphicsTerm{
 	{env: "TERM", value: "xterm-kitty"},   // kitty
 	{env: "TERM", value: "xterm-ghostty"}, // ghostty
 	{env: "TERM_PROGRAM", value: "ghostty"},
-	{env: "TERM_PROGRAM", value: "WezTerm"},
 	{env: "KONSOLE_VERSION"}, // konsole
 }
 

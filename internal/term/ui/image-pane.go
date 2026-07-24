@@ -11,6 +11,7 @@ import (
 	_ "image/png"
 	"os"
 	"path/filepath"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -19,16 +20,28 @@ import (
 )
 
 type (
-	// ImagePane displays an image in the editor's pane tree. It owns its own
-	// input: mouse wheel zooms via MouseHandler, and it shows no text cursor
+	// ImagePane displays an image in the editor's pane tree, zooming and
+	// panning it in response to keys and mouse, and shows no text cursor
 	ImagePane struct {
+		viewport viewportState
+		wheel    wheelState
+
 		id     view.Id
 		editor *view.Editor
 		area   geom.Area
 		dirty  bool
 		path   string
 		image  *Image
-		zoom   int
+	}
+
+	viewportState struct {
+		zoom int
+		pan  geom.Point
+	}
+
+	wheelState struct {
+		at      time.Time
+		zooming bool
 	}
 
 	// Image holds decoded image data, its content identifier, and the decoded
@@ -46,8 +59,18 @@ const (
 	imageWheelZoomStep = 10
 	minImageZoom       = 25
 	maxImageZoom       = 400
+	imageKeyPanStep    = 4
+	// wheelGestureGap is the longest pause that still counts as one continuous
+	// scroll, covering the cadence of momentum events after a key is released
+	wheelGestureGap = 200 * time.Millisecond
 
 	imageSessionZoomKey = "zoom"
+	imageSessionPanXKey = "pan_x"
+	imageSessionPanYKey = "pan_y"
+
+	// wheelMods: holding any of these swaps the bare-wheel action between pan
+	// and zoom, the closest a terminal gets to pinch-to-zoom
+	wheelMods = tea.ModCtrl | tea.ModAlt | tea.ModSuper
 )
 
 // ErrInvalidImage reports a file that cannot be decoded as an image
@@ -85,8 +108,8 @@ func NewImagePane(e *view.Editor, path string) (*ImagePane, error) {
 		return nil, err
 	}
 	return &ImagePane{
-		editor: e, path: abs, image: img, zoom: defaultImageZoom,
-		dirty: true,
+		editor: e, path: abs, image: img, dirty: true,
+		viewport: viewportState{zoom: defaultImageZoom},
 	}, nil
 }
 
@@ -101,24 +124,45 @@ func (i *Image) ContentID() uint32 {
 	return i.id
 }
 
-// HandleEvent zooms the image on a wheel event and ignores everything else,
-// letting keys and other input fall through to the editor
+// HandleEvent handles image mouse input: a click zooms in, a modified click
+// zooms out, a bare wheel pans, and a modified wheel zooms. Everything else
+// falls through to the editor
 func (p *ImagePane) HandleEvent(
-	_ *Context, msg tea.Msg,
+	cx *Context, msg tea.Msg,
 ) (EventResult, bool) {
-	wheel, ok := msg.(tea.MouseWheelMsg)
-	if !ok {
-		return ignored(), false
-	}
-	switch wheel.Button {
-	case tea.MouseWheelUp:
-		p.setZoom(p.zoom + imageWheelZoomStep)
-	case tea.MouseWheelDown:
-		p.setZoom(p.zoom - imageWheelZoomStep)
+	switch m := msg.(type) {
+	case tea.MouseClickMsg:
+		if m.Button != tea.MouseLeft {
+			return ignored(), false
+		}
+		if m.Mod&wheelMods != 0 {
+			p.ZoomOut()
+		} else {
+			p.ZoomIn()
+		}
+		return consumed(), true
+	case tea.MouseWheelMsg:
+		zooming := m.Mod&wheelMods != 0
+		// hold a zoom gesture through the modifier-less momentum tail, but let
+		// a pan gesture switch to zoom the moment the modifier appears
+		if !zooming && p.wheel.zooming &&
+			time.Since(p.wheel.at) < wheelGestureGap {
+			zooming = true
+		}
+		p.wheel.at, p.wheel.zooming = time.Now(), zooming
+		// drop input while the last change is still transmitting, so a fast
+		// burst is paced to the pipeline instead of queuing a laggy tail
+		id := kittyImageID(p.image.ContentID(), uint32(p.id), false)
+		if cx.images.inFlight(id) {
+			return consumed(), true
+		}
+		if zooming {
+			return p.wheelZoom(m.Button)
+		}
+		return p.wheelPan(m.Button)
 	default:
 		return ignored(), false
 	}
-	return consumed(), true
 }
 
 // Cursor reports that an image pane shows no text cursor
@@ -174,7 +218,9 @@ func (p *ImagePane) Path() string {
 // SaveSession stores the image path so the pane can be reopened
 func (p *ImagePane) SaveSession(w *view.SessionWriter) {
 	w.SaveSlot(view.SessionKindImage, p.path)
-	w.SaveValue(imageSessionZoomKey, p.zoom)
+	w.SaveValue(imageSessionZoomKey, p.viewport.zoom)
+	w.SaveValue(imageSessionPanXKey, p.viewport.pan.X)
+	w.SaveValue(imageSessionPanYKey, p.viewport.pan.Y)
 }
 
 // Image returns the decoded image
@@ -196,29 +242,51 @@ func (p *ImagePane) Reload() error {
 
 // Zoom returns the image scale as a percentage of its fitted size
 func (p *ImagePane) Zoom() int {
-	return p.zoom
+	return p.viewport.zoom
 }
 
 // ZoomIn increases the image scale
 func (p *ImagePane) ZoomIn() {
-	p.setZoom(p.zoom + imageKeyZoomStep)
+	p.setZoom(p.viewport.zoom + imageKeyZoomStep)
 }
 
 // ZoomOut decreases the image scale
 func (p *ImagePane) ZoomOut() {
-	p.setZoom(p.zoom - imageKeyZoomStep)
+	p.setZoom(p.viewport.zoom - imageKeyZoomStep)
 }
 
-// ResetZoom restores the fitted image scale
+// ResetZoom restores the fitted image scale and recenters the view
 func (p *ImagePane) ResetZoom() {
 	p.setZoom(defaultImageZoom)
+	p.setPan(geom.Point{})
 }
+
+// Pan returns the view offset from center, in grid cells
+func (p *ImagePane) Pan() geom.Point {
+	return p.viewport.pan
+}
+
+// PanBy shifts the view by the given cell delta
+func (p *ImagePane) PanBy(delta geom.Point) {
+	p.setPan(geom.Point{
+		X: p.viewport.pan.X + delta.X,
+		Y: p.viewport.pan.Y + delta.Y,
+	})
+}
+
+func (p *ImagePane) PanLeft()  { p.PanBy(geom.Point{X: -imageKeyPanStep}) }
+func (p *ImagePane) PanRight() { p.PanBy(geom.Point{X: imageKeyPanStep}) }
+func (p *ImagePane) PanUp()    { p.PanBy(geom.Point{Y: -imageKeyPanStep}) }
+func (p *ImagePane) PanDown()  { p.PanBy(geom.Point{Y: imageKeyPanStep}) }
 
 // Split returns another pane displaying the same image
 func (p *ImagePane) Split() (view.Pane, error) {
 	return &ImagePane{
-		editor: p.editor, path: p.path, image: p.image, dirty: true,
-		zoom: p.zoom,
+		editor:   p.editor,
+		path:     p.path,
+		image:    p.image,
+		dirty:    true,
+		viewport: p.viewport,
 	}, nil
 }
 
@@ -237,11 +305,65 @@ func (p *ImagePane) Discard() {
 func (p *ImagePane) Shutdown() {
 }
 
+func (p *ImagePane) wheelZoom(button tea.MouseButton) (EventResult, bool) {
+	switch button {
+	case tea.MouseWheelUp:
+		p.setZoom(p.viewport.zoom + imageWheelZoomStep)
+	case tea.MouseWheelDown:
+		p.setZoom(p.viewport.zoom - imageWheelZoomStep)
+	default:
+		return ignored(), false
+	}
+	return consumed(), true
+}
+
+func (p *ImagePane) wheelPan(button tea.MouseButton) (EventResult, bool) {
+	switch button {
+	case tea.MouseWheelUp:
+		p.PanUp()
+	case tea.MouseWheelDown:
+		p.PanDown()
+	case tea.MouseWheelLeft:
+		p.PanLeft()
+	case tea.MouseWheelRight:
+		p.PanRight()
+	default:
+		return ignored(), false
+	}
+	return consumed(), true
+}
+
+func (p *ImagePane) setPan(pan geom.Point) {
+	bound := p.panBound()
+	pan.X = min(max(pan.X, -bound.X), bound.X)
+	pan.Y = min(max(pan.Y, -bound.Y), bound.Y)
+	if pan != p.viewport.pan {
+		p.viewport.pan = pan
+		p.dirty = true
+	}
+}
+
 func (p *ImagePane) setZoom(zoom int) {
 	zoom = min(max(zoom, minImageZoom), maxImageZoom)
-	if zoom != p.zoom {
-		p.zoom = zoom
+	if zoom != p.viewport.zoom {
+		p.viewport.zoom = zoom
+		p.setPan(p.viewport.pan)
 		p.dirty = true
+	}
+}
+
+func (p *ImagePane) panBound() geom.Point {
+	contentH := max(p.area.Height-1, 0)
+	cells := imagePaneCellSize(imagePaneCellSizeArgs{
+		pane:     p,
+		maxCells: geom.Size{Width: p.area.Width, Height: contentH},
+		pixels:   p.image.Size(),
+	})
+	visW := min(cells.Width, p.area.Width)
+	visH := min(cells.Height, contentH)
+	return geom.Point{
+		X: (cells.Width - visW + 1) / 2,
+		Y: (cells.Height - visH + 1) / 2,
 	}
 }
 
@@ -259,6 +381,34 @@ func (p *ImagePane) restoreZoom(session *view.PaneSession) {
 	}
 }
 
+// restorePan sets the saved offset directly, not via setPan: panMax is zero
+// until the first render, which would clamp it to center; render reclamps later
+func (p *ImagePane) restorePan(session *view.PaneSession) {
+	x, okX := sessionInt(session, imageSessionPanXKey)
+	y, okY := sessionInt(session, imageSessionPanYKey)
+	if !okX && !okY {
+		return
+	}
+	p.viewport.pan = geom.Point{X: x, Y: y}
+	p.dirty = true
+}
+
+// sessionInt reads an int session value, tolerating the int64 that a
+// round-tripped session yields
+func sessionInt(session *view.PaneSession, key string) (int, bool) {
+	value, ok := session.Value(key)
+	if !ok {
+		return 0, false
+	}
+	switch v := value.(type) {
+	case int:
+		return v, true
+	case int64:
+		return int(v), true
+	}
+	return 0, false
+}
+
 func registerImagePane(e *view.Editor) {
 	e.RegisterPaneRestorer(view.SessionKindImage,
 		func(e *view.Editor, session *view.PaneSession) (view.Pane, error) {
@@ -267,6 +417,7 @@ func registerImagePane(e *view.Editor) {
 				return nil, err
 			}
 			pane.restoreZoom(session)
+			pane.restorePan(session)
 			return pane, nil
 		})
 }

@@ -102,7 +102,10 @@ const (
 	spinnerTickInterval = 80 * time.Millisecond
 )
 
-var _ BufferRenderer = (*EditorComponent)(nil)
+var (
+	_ BufferRenderer     = (*EditorComponent)(nil)
+	_ highlightRefresher = (*EditorComponent)(nil)
+)
 
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{

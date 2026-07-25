@@ -212,9 +212,9 @@ func (p *PromptComponent) handleKey(
 ) EventResult {
 	k := FromTeaKey(msg)
 	pop := func(cmd tea.Cmd) EventResult {
-		return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
+		return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
 			comp.Pop()
-			return cmd
+			return tea.Batch(cmd, comp.refreshEditorHighlight(cx))
 		})
 	}
 	switch {

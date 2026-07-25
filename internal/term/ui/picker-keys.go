@@ -21,7 +21,7 @@ func (p *PickerComponent) handleKey(
 		ps.load.cancel()
 		return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
 			comp.Pop()
-			return nil
+			return comp.refreshEditorHighlight(cx)
 		}), nil
 	}
 	switch {

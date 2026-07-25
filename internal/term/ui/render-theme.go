@@ -41,7 +41,7 @@ func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
 		diagnosticError:   th.Get("diagnostic.error"),
 		documentHighlight: th.Get("ui.highlight"),
 		documentLink:      th.Get("markup.link.url"),
-		searchMatch:       searchMatchStyle(),
+		searchMatch:       searchMatchStyle(th),
 		diffAdded:         th.Get("diff.plus.gutter"),
 		diffModified:      th.Get("diff.delta.gutter"),
 		diffRemoved:       th.Get("diff.minus.gutter"),

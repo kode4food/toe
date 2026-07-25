@@ -19,7 +19,10 @@ type PickerComponent struct {
 
 const pickerMinPreviewArea = 72
 
-var _ BufferOverlayComponent = (*PickerComponent)(nil)
+var (
+	_ BufferOverlayComponent = (*PickerComponent)(nil)
+	_ previewImager          = (*PickerComponent)(nil)
+)
 
 func newPickerComponent(p *Picker) *PickerComponent {
 	return &PickerComponent{state: p}
@@ -278,8 +281,8 @@ func (p *PickerComponent) dismiss() (EventResult, tea.Cmd) {
 		ps.load.dynamicStop()
 	}
 	ps.load.cancel()
-	return ignoredWith(func(_ *Context, comp *Compositor) tea.Cmd {
+	return ignoredWith(func(cx *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
-		return nil
+		return comp.refreshEditorHighlight(cx)
 	}), nil
 }

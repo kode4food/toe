@@ -111,7 +111,7 @@ func (m Model) View() tea.View {
 }
 
 func (m Model) pickerImageCmd() tea.Cmd {
-	if p, ok := m.compositor.activePicker(); ok {
+	if p, ok := m.compositor.activePreviewImager(); ok {
 		return p.previewImageCmd(m.context, m.compositor.size)
 	}
 	return nil
@@ -126,7 +126,7 @@ func (m Model) imageDisplayFrameCmd() tea.Cmd {
 }
 
 func (m Model) hasImageSurface() bool {
-	if p, ok := m.compositor.activePicker(); ok {
+	if p, ok := m.compositor.activePreviewImager(); ok {
 		if p.hasPreviewImage(m.context, m.compositor.size) {
 			return true
 		}
@@ -146,7 +146,7 @@ func (m Model) markImageDirty() {
 		}
 		return true
 	})
-	if p, ok := m.compositor.activePicker(); ok {
+	if p, ok := m.compositor.activePreviewImager(); ok {
 		p.markDirty()
 	}
 }

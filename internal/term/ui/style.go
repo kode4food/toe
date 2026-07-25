@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 )
 
@@ -38,8 +39,8 @@ var (
 	}
 )
 
-func searchMatchStyle() tui.Style {
-	return tui.Style{}.Bg(tui.ColorANSI(3)).Fg(tui.ColorANSI(0))
+func searchMatchStyle(th *theme.Theme) tui.Style {
+	return th.Get("ui.selection")
 }
 
 func pickerContentStyle(cx *Context) tui.Style {

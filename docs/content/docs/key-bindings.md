@@ -5,9 +5,31 @@ weight: 30
 
 # Key Bindings
 
-`Space` and `Ctrl+\` open the leader menu. In terminal panes, use `Ctrl+\`.
+## How Keys Work
+
+Every key press is dispatched through the keymap for the **current mode**. Normal, Select, and Insert are the editing modes; terminal panes, image panes, the command line, and pickers each have their own bindings. The same physical key can do different things in different contexts, which is why this page is grouped by mode and context rather than by key.
+
+**Key sequences and prefixes.** Many commands are bound to a sequence of keys, not a single press — `g` then `d`, or `Ctrl+w` then `v`. The first key of a sequence is a *prefix*; pressing it opens a popup listing the keys that can follow. The main prefixes are `g` (goto), `m` (match and surround), `z` and `Z` (view — the two are interchangeable), `[` and `]` (previous/next), `Ctrl+w` (windows), and the leader.
+
+**Leader.** `Space` opens the leader menu. `Ctrl+\` is equivalent and also works in terminal and image panes, where `Space` is passed through instead. See [Leader Menu](#leader-menu).
+
+**Counts.** In Normal and Select mode, typing digits before a command repeats it that many times: `5j` moves down five lines, `10G` goes to line 10. A leading `0` is a command (line start), not a count. The pending count shows in the status line and clears once the command runs.
+
+**Placeholders.** Some commands capture the next key(s) directly. In the tables these appear as:
+
+- `<char>` — a literal character to act on, e.g. `f<char>`, `r<char>`, `ms<char>`.
+- `<reg>` — a register letter, e.g. `"<reg>` before a yank or paste, `Ctrl+r <reg>` in insert mode.
+- `<n>` — a count typed before the key.
+
+**Registers.** `"<reg>` chooses the register the next yank or paste uses; without it they use the default register. Yanks and pastes that go through the system clipboard live under the leader (`Space+y`, `Space+p`).
+
+**Insert mode.** Any printable key with no binding is inserted as text; the Insert Mode bindings below are the exceptions that edit or move instead.
+
+The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal and image panes, the command line, and picker navigation.
 
 ## Normal Mode
+
+Normal mode is the default. Keys are commands, not text: you move the cursor, manipulate selections, and launch edits from here.
 
 ### Motion
 
@@ -29,18 +51,21 @@ weight: 30
 | `T<char>` | Move till previous occurrence of char |
 | `Home` | Goto line start |
 | `End` | Goto line end |
-| `gg` / `<n>gg` | Goto line number `<n>` else file start |
-| `G` / `<n>G` | Goto line |
-| `gs` | Goto first non-blank in line |
-| `ge` | Goto last line |
-| `g\|` / `<n>g\|` | Goto column |
-| `]p` | Goto next paragraph |
-| `[p` | Goto previous paragraph |
 
-### Goto Prefix (`g`)
+### Goto (`g`)
+
+The `g` prefix jumps somewhere; a count changes what `gg` does.
 
 | Key | Action |
 |-----|--------|
+| `gg` / `<n>gg` | Goto line number `<n>` else file start |
+| `G` / `<n>G` | Goto line number `<n>` |
+| `gs` | Goto first non-blank in line |
+| `ge` | Goto last line |
+| `g\|` / `<n>g\|` | Goto column |
+| `gt` | Goto window top |
+| `gc` | Goto window center |
+| `gb` | Goto window bottom |
 | `gd` | Goto definition |
 | `gD` | Goto declaration |
 | `gy` | Goto type definition |
@@ -52,9 +77,21 @@ weight: 30
 | `ga` | Goto last accessed file |
 | `gm` | Goto last modified file |
 | `g.` | Goto last modification |
-| `gt` | Goto window top |
-| `gc` | Goto window center |
-| `gb` | Goto window bottom |
+
+### Previous / Next (`[` / `]`)
+
+The `[` and `]` prefixes step backward and forward through the same kind of target.
+
+| Key | Action |
+|-----|--------|
+| `[p` | Goto previous paragraph |
+| `]p` | Goto next paragraph |
+| `[g` | Goto previous change |
+| `]g` | Goto next change |
+| `[G` | Goto first change |
+| `]G` | Goto last change |
+| `[␣` | Add newline above |
+| `]␣` | Add newline below |
 
 ### Jumplist
 
@@ -64,7 +101,7 @@ weight: 30
 | `Ctrl+i` / `Tab` | Jump forward on jumplist |
 | `Ctrl+s` | Save current selection to jumplist |
 
-### Entering Other Modes
+### Switching Modes
 
 | Key | Action |
 |-----|--------|
@@ -86,10 +123,6 @@ weight: 30
 | `c` | Change selection |
 | `Alt+c` | Change selection without yanking |
 | `r<char>` | Replace with new char |
-| `u` | Undo change |
-| `U` | Redo change |
-| `Alt+u` | Move backward in history |
-| `Alt+U` | Move forward in history |
 | `~` | Switch (toggle) case |
 | `` ` `` | Switch to lowercase |
 | `Alt+`` ` `` | Switch to uppercase |
@@ -102,6 +135,10 @@ weight: 30
 | `Ctrl+a` | Increment item under cursor |
 | `Ctrl+x` | Decrement item under cursor |
 | `=` | Format selection |
+| `u` | Undo change |
+| `U` | Redo change |
+| `Alt+u` | Move backward in history |
+| `Alt+U` | Move forward in history |
 
 ### Yank and Paste
 
@@ -111,12 +148,9 @@ weight: 30
 | `p` | Paste after selection |
 | `P` | Paste before selection |
 | `R` | Replace with yanked text |
-| `Space+y` | Yank selections to clipboard |
-| `Space+Y` | Yank main selection to clipboard |
-| `Space+p` | Paste clipboard after selections |
-| `Space+P` | Paste clipboard before selections |
-| `Space+R` | Replace selections by clipboard content |
-| `"<reg>` | Select register |
+| `"<reg>` | Select register for the next yank or paste |
+
+Clipboard yanks and pastes are under the [Leader Menu](#leader-menu) (`Space+y`, `Space+p`, …).
 
 ### Search
 
@@ -129,7 +163,7 @@ weight: 30
 | `*` | Use current selection as search pattern, word bounded |
 | `Alt+*` | Use current selection as search pattern |
 
-### Selection Manipulation
+### Selection
 
 | Key | Action |
 |-----|--------|
@@ -159,7 +193,7 @@ weight: 30
 | `Alt+_` | Merge consecutive selections |
 | `Alt+.` | Repeat last motion |
 
-### Match (`m` prefix)
+### Match and Surround (`m`)
 
 | Key | Action |
 |-----|--------|
@@ -170,21 +204,102 @@ weight: 30
 | `ma<char>` | Select around object |
 | `mi<char>` | Select inside object |
 
-### View / Scroll (`z` / `Z` prefix)
+### View and Scroll (`z` / `Z`)
+
+`z` and `Z` are the same prefix; either works.
 
 | Key | Action |
 |-----|--------|
-| `zz` / `zc` / `Zz` / `Zc` | Align view center |
-| `zt` / `z.` / `Zt` / `Z.` | Align view top |
-| `zb` / `Zb` | Align view bottom |
-| `zk` / `z↑` / `Zk` / `Z↑` | Scroll view up |
-| `zj` / `z↓` / `Zj` / `Z↓` | Scroll view down |
+| `zz` / `zc` | Align view center |
+| `zt` / `z.` | Align view top |
+| `zb` | Align view bottom |
+| `zk` / `z↑` | Scroll view up |
+| `zj` / `z↓` | Scroll view down |
 | `Ctrl+b` / `PageUp` | Move page up |
 | `Ctrl+f` / `PageDown` | Move page down |
 | `Ctrl+u` | Move page and cursor half up |
 | `Ctrl+d` | Move page and cursor half down |
 
-### Splits (`Ctrl+w` or `Leader+w`)
+### Comments and Macros
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+c` | Comment/uncomment selections |
+| `Q` | Record macro |
+| `q` | Replay macro |
+
+Comment variants (line, block) are on the [Leader Menu](#leader-menu) under `Space+c`.
+
+### Shell
+
+| Key | Action |
+|-----|--------|
+| `\|` | Pipe selections through shell command |
+| `Alt+\|` | Pipe selections into shell command ignoring output |
+| `!` | Insert shell command output before selections |
+| `Alt+!` | Append shell command output after selections |
+| `$` | Filter selections with shell predicate |
+
+## Select Mode
+
+Select mode extends the current selection: motion keys move the selection's head instead of collapsing it. Enter it with `v`, leave it with `Escape`. Every Normal-mode command (editing, yank, search, and the rest) works the same here.
+
+| Key | Action |
+|-----|--------|
+| `h/j/k/l` | Extend selection |
+| `w/b/e/W/B/E` | Extend by word |
+| `f/t/F/T<char>` | Extend to character |
+| `Home` / `End` | Extend to line start/end |
+| `x` | Select current line, if already selected, extend to next line |
+| `gg` / `<n>gg` | Extend to line number `<n>` else file start |
+| `ge` | Extend to last line |
+| `g\|` | Extend to column |
+| `n` / `N` | Add next/previous search match to selection |
+| `Escape` | Exit selection mode |
+
+## Insert Mode
+
+Printable keys type text. The bindings below edit or move instead; anything unbound is inserted.
+
+| Key | Action |
+|-----|--------|
+| `Escape` | Enter normal mode |
+| `←` / `→` | Move by character |
+| `↑` / `↓` | Move by line |
+| `Home` | Goto line start |
+| `End` | Goto newline at line end |
+| `Ctrl+r <reg>` | Insert register |
+| `Ctrl+s` | Commit changes to new checkpoint |
+| `Ctrl+h` / `Backspace` | Delete previous char |
+| `Ctrl+d` / `Delete` | Delete next char |
+| `Ctrl+w` / `Alt+Backspace` | Delete previous word |
+| `Alt+d` / `Alt+Delete` | Delete next word |
+| `Ctrl+u` | Delete till start of line |
+| `Ctrl+k` | Delete till end of line |
+| `Ctrl+j` / `Return` | Insert newline char |
+| `Tab` | Insert tab if all cursors have only whitespace to their left, else complete current word |
+| `Ctrl+x` | Complete current word |
+| `PageUp` / `Ctrl+b` | Move page up |
+| `PageDown` / `Ctrl+f` | Move page down |
+
+### Completion Popup
+
+While the completion popup is open:
+
+| Key | Action |
+|-----|--------|
+| `Return` / `Tab` | Accept completion |
+| `Escape` | Cancel completion |
+| `↑` / `Ctrl+p` | Previous completion |
+| `↓` / `Ctrl+n` | Next completion |
+| `PageUp` | Previous completion page |
+| `PageDown` | Next completion page |
+| `Home` | First completion |
+| `End` | Last completion |
+
+## Windows and Splits
+
+Window management works from any editing mode. The `Ctrl+w` chord and the leader's `w` menu (`Space+w` or `Ctrl+\ w`) bind the same commands.
 
 | Key | Action |
 |-----|--------|
@@ -197,62 +312,27 @@ weight: 30
 | `Ctrl+w q` / `Ctrl+w Ctrl+q` | Close window |
 | `Ctrl+w o` / `Ctrl+w Ctrl+o` | Close windows except current |
 | `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
-| `Ctrl+w h/j/k/l` / `Ctrl+w Ctrl+h/j/k/l` / `Ctrl+w ←/↓/↑/→` | Jump to left/below/above/right split |
+| `Ctrl+w h/j/k/l` / `Ctrl+w ←/↓/↑/→` | Jump to left/below/above/right split |
 | `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
 | `Ctrl+w r` | Enter resize mode |
 
-All `Ctrl+w` bindings also work through the leader menu with `Space+w` or `Ctrl+\ w`.
+Splitting a document or image pane opens another view of the same document or image; splitting a terminal starts a new shell. Splits can also be resized by dragging a separator with the mouse.
 
-When a document or image pane is split, the new pane shows the same document or image. Splitting a terminal starts a new shell.
-
-Splits can also be resized by dragging a separator with the mouse.
-
-#### Resize Mode
+### Resize Mode
 
 `Ctrl+w r` enters resize mode.
 
 | Key | Action |
 |-----|--------|
-| `h` / `Left` | Push the left border left |
-| `l` / `Right` | Push the right border right |
-| `j` / `Down` | Push the bottom border down |
-| `k` / `Up` | Push the top border up |
+| `h` / `←` | Push the left border left |
+| `l` / `→` | Push the right border right |
+| `j` / `↓` | Push the bottom border down |
+| `k` / `↑` | Push the top border up |
 | `Escape` / `Enter` | Exit resize mode |
 
-### Terminal Panes
+## Leader Menu
 
-While a terminal pane has focus, nearly all keys pass through directly to the shell. The exceptions are `Ctrl+w`, which opens the window menu, and `Ctrl+\`, which opens the filtered leader menu.
-
-| Key | Action |
-|-----|--------|
-| `Ctrl+w` | Open the window menu |
-| `Ctrl+w /` | Search the focused terminal's scrollback |
-| `Ctrl+w q` | Close the pane and kill its shell |
-| `Ctrl+\` | Open the terminal's filtered leader menu |
-| `Ctrl+\ p` | Paste the clipboard into the terminal |
-| `Ctrl+\ f` / `Ctrl+\ b` | Open the file / buffer picker |
-| Mouse wheel | Scroll into scrollback; any keypress returns to live output |
-| Mouse click/drag | Select and copy terminal text when mouse tracking is off |
-| Mouse click/drag/wheel | Forwarded to the shell when it enables mouse tracking (e.g. vim, htop) |
-
-### Image Panes
-
-Image panes support the command prompt and window menu.
-
-| Key | Action |
-|-----|--------|
-| `:` | Enter command mode |
-| `+` / `=` | Zoom image in |
-| `-` | Zoom image out |
-| `0` | Fit image to pane and recenter |
-| `h` `j` `k` `l` / arrows | Pan a zoomed-in image |
-| Mouse click | Zoom image in |
-| `Mod` + click | Zoom image out |
-| Mouse wheel / two-finger swipe | Pan a zoomed-in image |
-| `Mod` + wheel | Zoom image in or out |
-| `Ctrl+w` / `Space+w` | Window menu |
-
-### Leader Menu (`Space` or `Ctrl+\`)
+`Space` (or `Ctrl+\`) opens the leader menu, a shared set of commands reachable from every mode. Pressing the leader shows a popup of the entries below.
 
 | Key | Action |
 |-----|--------|
@@ -261,7 +341,7 @@ Image panes support the command prompt and window menu.
 | `Space+p` | Paste clipboard after selections |
 | `Space+P` | Paste clipboard before selections |
 | `Space+R` | Replace selections by clipboard content |
-| `Space+w` | Window (see Splits) |
+| `Space+w` | Window menu (see [Windows and Splits](#windows-and-splits)) |
 | `Space+h` | Select symbol references |
 | `Space+a` | Perform code action |
 | `Space+k` | Show docs for item under cursor |
@@ -284,96 +364,38 @@ Image panes support the command prompt and window menu.
 | `Space+Alt+c` | Line comment/uncomment selections |
 | `Space+C` | Block comment/uncomment selections |
 
-### Prev/Next (`[` / `]`)
+## Terminal Panes
+
+While a terminal pane has focus, keys pass straight to the shell. The exceptions are `Ctrl+w`, which opens the window menu, and `Ctrl+\`, which opens the leader menu (`Space` is not intercepted here).
 
 | Key | Action |
 |-----|--------|
-| `[p` | Goto previous paragraph |
-| `]p` | Goto next paragraph |
-| `[g` | Goto previous change |
-| `]g` | Goto next change |
-| `[G` | Goto first change |
-| `]G` | Goto last change |
-| `[␣` | Add newline above |
-| `]␣` | Add newline below |
+| `Ctrl+w` | Open the window menu |
+| `Ctrl+w /` | Search the focused terminal's scrollback |
+| `Ctrl+w q` | Close the pane and kill its shell |
+| `Ctrl+\` | Open the terminal's leader menu |
+| `Ctrl+\ p` | Paste the clipboard into the terminal |
+| `Ctrl+\ f` / `Ctrl+\ b` | Open the file / buffer picker |
+| Mouse wheel | Scroll into scrollback; any keypress returns to live output |
+| Mouse click/drag | Select and copy terminal text when mouse tracking is off |
+| Mouse click/drag/wheel | Forwarded to the shell when it enables mouse tracking (e.g. vim, htop) |
 
-### Comments and Macros
+## Image Panes
 
-| Key | Action |
-|-----|--------|
-| `Ctrl+c` | Comment/uncomment selections |
-| `Q` | Record macro |
-| `q` | Replay macro |
-
-### Shell
+Image panes support the command prompt, window menu, and leader.
 
 | Key | Action |
 |-----|--------|
-| `\|` | Pipe selections through shell command |
-| `Alt+\|` | Pipe selections into shell command ignoring output |
-| `!` | Insert shell command output before selections |
-| `Alt+!` | Append shell command output after selections |
-| `$` | Filter selections with shell predicate |
-
----
-
-## Insert Mode
-
-| Key | Action |
-|-----|--------|
-| `Escape` | Enter normal mode |
-| `←↓↑→` | Move cursor |
-| `Home` | Goto line start |
-| `End` | Goto newline at line end |
-| `Ctrl+r <reg>` | Insert register |
-| `Ctrl+s` | Commit changes to new checkpoint |
-| `Ctrl+h` / `Backspace` | Delete previous char |
-| `Ctrl+d` / `Delete` | Delete next char |
-| `Ctrl+w` / `Alt+Backspace` | Delete previous word |
-| `Alt+d` / `Alt+Delete` | Delete next word |
-| `Ctrl+u` | Delete till start of line |
-| `Ctrl+k` | Delete till end of line |
-| `Ctrl+j` / `Return` | Insert newline char |
-| `Tab` | Insert tab if all cursors have all whitespace to their left, else complete current word |
-| `Ctrl+x` | Complete current word |
-| `PageUp` / `Ctrl+b` | Move page up |
-| `PageDown` / `Ctrl+f` | Move page down |
-
-### Completion Popup
-
-| Key | Action |
-|-----|--------|
-| `Return` / `Tab` | Accept completion |
-| `Escape` | Cancel completion |
-| `↑` / `Ctrl+p` | Previous completion |
-| `↓` / `Ctrl+n` | Next completion |
-| `PageUp` | Previous completion page |
-| `PageDown` | Next completion page |
-| `Home` | First completion |
-| `End` | Last completion |
-
----
-
-## Select Mode
-
-Select mode extends the current selection. Motion keys move the selection's head rather than collapsing it.
-
-| Key | Action |
-|-----|--------|
-| `h/j/k/l` | Extend selection |
-| `w/b/e/W/B/E` | Extend by word |
-| `f/t/F/T` | Extend to character |
-| `Home` / `End` | Extend to line start/end |
-| `x` | Select current line, if already selected, extend to next line |
-| `gg` | Extend to line number `<n>` else file start |
-| `ge` | Extend to last line |
-| `g\|` | Extend to column |
-| `n` / `N` | Add next/previous search match to selection |
-| `Escape` | Exit selection mode |
-
-All other Normal mode commands (editing, clipboard, search) work the same in Select mode.
-
----
+| `:` | Enter command mode |
+| `+` / `=` | Zoom image in |
+| `-` | Zoom image out |
+| `0` | Fit image to pane and recenter |
+| `h` `j` `k` `l` / arrows | Pan a zoomed-in image |
+| Mouse click | Zoom image in |
+| `Mod` + click | Zoom image out |
+| Mouse wheel / two-finger swipe | Pan a zoomed-in image |
+| `Mod` + wheel | Zoom image in or out |
+| `Ctrl+w` / `Space+w` | Window menu |
 
 ## Command Line
 
@@ -394,8 +416,6 @@ These keys apply to the command line (`:`), search (`/`, `?`), and other text pr
 | `Tab` / `Shift+Tab` | Next/previous completion |
 | `Return` | Submit |
 | `Escape` | Cancel |
-
----
 
 ## Picker Navigation
 

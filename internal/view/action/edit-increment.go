@@ -49,7 +49,8 @@ func incrementImpl(e *view.Editor, sign int) {
 	for _, r := range sel.Ranges() {
 		from, to := r.From(), r.To()
 		if from == to {
-			from, to = wordBoundsAt(text, from)
+			bounds := wordBoundsAt(text, from)
+			from, to = bounds.From(), bounds.To()
 		}
 		key := selectionBoundsKey{from: from, to: to}
 		if seenKey[key] {
@@ -83,7 +84,7 @@ func incrementImpl(e *view.Editor, sign int) {
 	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
-func wordBoundsAt(text core.Rope, pos int) (int, int) {
+func wordBoundsAt(text core.Rope, pos int) core.Range {
 	n := text.LenChars()
 	from := pos
 	for from > 0 {
@@ -101,7 +102,7 @@ func wordBoundsAt(text core.Rope, pos int) (int, int) {
 		}
 		to++
 	}
-	return from, to
+	return core.NewRange(from, to)
 }
 
 func isWordChar(ch rune) bool {

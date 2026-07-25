@@ -2,7 +2,7 @@ package core
 
 import "errors"
 
-type surroundPosFinder func(Range) (int, int, error)
+type surroundPosFinder func(Range) (Range, error)
 
 var (
 	ErrPairNotFound = errors.New(
@@ -16,11 +16,10 @@ var (
 )
 
 // FindNthClosestPairsPos finds the nth-nearest surrounding bracket pair around
-// r (plaintext only). Returns (anchor, head) in the original range direction,
-// preserving direction semantics from the source range
+// r (plaintext only). The returned Range keeps the source range's direction
 func FindNthClosestPairsPos(
 	doc Rope, r Range, skip int,
-) (anchor, head int, err error) {
+) (Range, error) {
 	pos := r.From()
 	closePos := pos
 	if pos > 0 {
@@ -58,23 +57,23 @@ func FindNthClosestPairsPos(
 			continue
 		}
 		if r.Direction() == DirectionForward {
-			return openPos, closePos, nil
+			return NewRange(openPos, closePos), nil
 		}
-		return closePos, openPos, nil
+		return NewRange(closePos, openPos), nil
 	}
-	return 0, 0, ErrPairNotFound
+	return Range{}, ErrPairNotFound
 }
 
 // FindNthPairsPos finds the nth surrounding pair for character ch around r
 // (plaintext only). ch may be either opening or closing
 func FindNthPairsPos(
 	doc Rope, ch rune, r Range, n int,
-) (anchor, head int, err error) {
+) (Range, error) {
 	if doc.LenChars() < 2 {
-		return 0, 0, ErrPairNotFound
+		return Range{}, ErrPairNotFound
 	}
 	if r.To() >= doc.LenChars() {
-		return 0, 0, ErrRangeExceedsText
+		return Range{}, ErrRangeExceedsText
 	}
 	openCh, closeCh := GetPair(ch)
 	pos := r.Cursor(doc)
@@ -87,7 +86,7 @@ func FindNthPairsPos(
 		if e == nil && cur == openCh {
 			match, ok := FindMatchingBracket(doc, pos)
 			if !ok {
-				return 0, 0, ErrCursorOnAmbiguousPair
+				return Range{}, ErrCursorOnAmbiguousPair
 			}
 			if match > pos {
 				openPos, closePos = pos, match
@@ -109,19 +108,19 @@ func FindNthPairsPos(
 	}
 
 	if !openOk || !closeOk {
-		return 0, 0, ErrPairNotFound
+		return Range{}, ErrPairNotFound
 	}
 	if r.Direction() == DirectionForward {
-		return openPos, closePos, nil
+		return NewRange(openPos, closePos), nil
 	}
-	return closePos, openPos, nil
+	return NewRange(closePos, openPos), nil
 }
 
 // GetSurroundPos returns flat pairs of [open, close] positions for every
 // range in sel, auto-detecting the nearest pair. skip controls how many
 // pairs to step over
 func GetSurroundPos(doc Rope, sel Selection, skip int) ([]int, error) {
-	return collectSurroundPos(sel, func(r Range) (int, int, error) {
+	return collectSurroundPos(sel, func(r Range) (Range, error) {
 		return FindNthClosestPairsPos(doc, r, skip)
 	})
 }
@@ -132,7 +131,7 @@ func GetSurroundPos(doc Rope, sel Selection, skip int) ([]int, error) {
 func GetSurroundPosFor(
 	doc Rope, sel Selection, ch rune, skip int,
 ) ([]int, error) {
-	return collectSurroundPos(sel, func(r Range) (int, int, error) {
+	return collectSurroundPos(sel, func(r Range) (Range, error) {
 		return FindNthPairsPos(doc, ch, r, skip)
 	})
 }
@@ -140,12 +139,12 @@ func GetSurroundPosFor(
 func collectSurroundPos(sel Selection, find surroundPosFinder) ([]int, error) {
 	var positions []int
 	for _, r := range sel.Ranges() {
-		openPos, closePos, err := find(r)
+		pair, err := find(r)
 		if err != nil {
 			return nil, err
 		}
-		anchor := min(openPos, closePos)
-		head := max(openPos, closePos)
+		anchor := pair.From()
+		head := pair.To()
 		for _, p := range positions {
 			if p == anchor || p == head {
 				return nil, ErrSurroundCursorOverlap

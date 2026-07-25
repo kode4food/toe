@@ -81,12 +81,12 @@ func completionTransaction(
 	if err != nil {
 		return core.Transaction{}, err
 	}
-	from, to, ok := completionRange(text, editOffset, cursor)
+	editRange, ok := completionRange(text, editOffset, cursor)
 	if !ok {
 		return core.Transaction{}, ErrCompletionUnavailable
 	}
-	from, to = completionPrimaryRange(text, from, to, cursor)
-	removed, err := text.SliceString(from, to)
+	editRange = completionPrimaryRange(text, editRange, cursor)
+	removed, err := text.SliceString(editRange.From(), editRange.To())
 	if err != nil {
 		return core.Transaction{}, err
 	}
@@ -109,12 +109,14 @@ func completionTransaction(
 	return tx, nil
 }
 
-func completionPrimaryRange(text core.Rope, from, to, cursor int) (int, int) {
-	wordFrom, wordTo := findCompletionRange(text, cursor)
-	if from <= wordFrom && to >= wordTo {
-		return from, to
+func completionPrimaryRange(
+	text core.Rope, r core.Range, cursor int,
+) core.Range {
+	word := findCompletionRange(text, cursor)
+	if r.From() <= word.From() && r.To() >= word.To() {
+		return r
 	}
-	return wordFrom, wordTo
+	return word
 }
 
 func completionEdit(
@@ -154,47 +156,48 @@ func completionChanges(
 	changes := make([]core.Change, 0, len(ranges))
 	for _, r := range ranges {
 		cursor := r.Cursor(text)
-		from, to := completionRangeForCursor(text, op.offset, cursor)
-		got, err := text.SliceString(from, to)
+		edit := completionRangeForCursor(text, op.offset, cursor)
+		got, err := text.SliceString(edit.From(), edit.To())
 		if err != nil {
 			return nil, err
 		}
 		if got != op.removed {
-			from, to = findCompletionRange(text, cursor)
+			edit = findCompletionRange(text, cursor)
 		}
-		changes = append(changes, core.TextChange(from, to, op.newText))
+		changes = append(
+			changes, core.TextChange(edit.From(), edit.To(), op.newText),
+		)
 	}
 	return changes, nil
 }
 
 func completionRangeForCursor(
 	text core.Rope, offset *completionEditOffset, cursor int,
-) (int, int) {
-	if from, to, ok := completionRange(text, offset, cursor); ok {
-		return from, to
+) core.Range {
+	if r, ok := completionRange(text, offset, cursor); ok {
+		return r
 	}
 	return findCompletionRange(text, cursor)
 }
 
 func completionRange(
 	text core.Rope, offset *completionEditOffset, cursor int,
-) (int, int, bool) {
+) (core.Range, bool) {
 	if offset == nil {
-		from, to := findCompletionRange(text, cursor)
-		return from, to, true
+		return findCompletionRange(text, cursor), true
 	}
 	from := cursor + offset.from
 	to := cursor + offset.to
 	if from < 0 || to > text.LenChars() || from > to {
-		return 0, 0, false
+		return core.Range{}, false
 	}
-	return from, to, true
+	return core.NewRange(from, to), true
 }
 
-func findCompletionRange(text core.Rope, cursor int) (int, int) {
+func findCompletionRange(text core.Rope, cursor int) core.Range {
 	before, _ := text.SliceString(0, cursor)
 	from := cursor - countWordSuffix(before)
-	return from, cursor
+	return core.NewRange(from, cursor)
 }
 
 func countWordSuffix(s string) int {

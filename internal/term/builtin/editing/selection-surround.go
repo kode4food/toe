@@ -95,22 +95,17 @@ func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 			)
 		}
 		if !found {
-			var coreFrom, coreTo int
+			var pair core.Range
 			var err error
 			if ch == 'm' {
-				coreFrom, coreTo, err = core.FindNthClosestPairsPos(
-					text, r, skip,
-				)
+				pair, err = core.FindNthClosestPairsPos(text, r, skip)
 			} else {
-				coreFrom, coreTo, err = core.FindNthPairsPos(text, ch, r, skip)
+				pair, err = core.FindNthPairsPos(text, ch, r, skip)
 			}
 			if err != nil {
 				return nil, false
 			}
-			res = syntax.Range{
-				From: min(coreFrom, coreTo),
-				To:   max(coreFrom, coreTo),
-			}
+			res = syntax.Range{From: pair.From(), To: pair.To()}
 		}
 		anchor, head := min(res.From, res.To), max(res.From, res.To)
 		for _, p := range positions {

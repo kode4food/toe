@@ -120,8 +120,11 @@ func diagnosticAtCursor(
 	var best view.Diagnostic
 	ok := false
 	for _, diag := range doc.Diagnostics() {
-		from, to := diagnosticRangeBounds(diag)
-		if cursor < from || cursor >= to || diag.Message == "" {
+		if diag.Message == "" {
+			continue
+		}
+		bounds := diagnosticRangeBounds(diag)
+		if cursor < bounds.From() || cursor >= bounds.To() {
 			continue
 		}
 		if !ok || diag.Severity > best.Severity {
@@ -132,7 +135,7 @@ func diagnosticAtCursor(
 	return best, ok
 }
 
-func diagnosticRangeBounds(diag view.Diagnostic) (int, int) {
+func diagnosticRangeBounds(diag view.Diagnostic) core.Range {
 	from := diag.Range.From
 	to := diag.Range.To
 	if from > to {
@@ -141,7 +144,7 @@ func diagnosticRangeBounds(diag view.Diagnostic) (int, int) {
 	if from == to {
 		to++
 	}
-	return from, to
+	return core.NewRange(from, to)
 }
 
 func diagnosticPopupText(diag view.Diagnostic) string {

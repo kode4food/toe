@@ -11,13 +11,23 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// DocumentSnapshot is the LSP-visible state of a file-backed document
-type DocumentSnapshot struct {
-	URI        uri.URI
-	LanguageID string
-	Version    int32
-	Text       string
-}
+type (
+	// DocumentSnapshot is the LSP-visible state of a file-backed document
+	DocumentSnapshot struct {
+		URI        uri.URI
+		LanguageID string
+		Version    int32
+		Text       string
+	}
+
+	saveMode int
+)
+
+const (
+	saveDisabled saveMode = iota
+	saveWithoutText
+	saveWithText
+)
 
 // DidOpen sends a textDocument/didOpen notification when supported
 func (c *Client) DidOpen(
@@ -90,8 +100,8 @@ func (c *Client) DidChangeDocument(
 func (c *Client) DidSave(
 	ctx context.Context, doc DocumentSnapshot,
 ) (bool, error) {
-	include, ok := c.saveEnabled()
-	if !ok {
+	mode := c.saveMode()
+	if mode == saveDisabled {
 		return false, nil
 	}
 	params := &protocol.DidSaveTextDocumentParams{
@@ -99,7 +109,7 @@ func (c *Client) DidSave(
 			URI: doc.URI,
 		},
 	}
-	if include {
+	if mode == saveWithText {
 		params.Text = &doc.Text
 	}
 	return true, c.server.DidSave(ctx, params)
@@ -165,22 +175,28 @@ func (c *Client) changeSyncKind() (protocol.TextDocumentSyncKind, bool) {
 	}
 }
 
-func (c *Client) saveEnabled() (bool, bool) {
+func (c *Client) saveMode() saveMode {
 	sync := c.textDocumentSync()
 	if _, ok := sync.(protocol.TextDocumentSyncKind); ok {
-		return false, true
+		return saveWithoutText
 	}
 	opts, ok := sync.(*protocol.TextDocumentSyncOptions)
 	if !ok {
-		return false, false
+		return saveDisabled
 	}
 	switch v := opts.Save.(type) {
 	case protocol.Boolean:
-		return false, bool(v)
+		if bool(v) {
+			return saveWithoutText
+		}
+		return saveDisabled
 	case *protocol.SaveOptions:
-		return v.IncludeText != nil && *v.IncludeText, true
+		if v.IncludeText != nil && *v.IncludeText {
+			return saveWithText
+		}
+		return saveWithoutText
 	default:
-		return false, false
+		return saveDisabled
 	}
 }
 

@@ -60,6 +60,20 @@ func TestDefaults(t *testing.T) {
 		}
 	})
 
+	t.Run("every command is documented", func(t *testing.T) {
+		km := defaultKeymaps(t)
+		documented := map[string]bool{}
+		for _, name := range documentedCommandNames(t) {
+			documented[name] = true
+		}
+		for _, cmd := range km.Commands() {
+			name := commandName(cmd)
+			t.Run(name, func(t *testing.T) {
+				assert.True(t, documented[name])
+			})
+		}
+	})
+
 	t.Run("registers module options", func(t *testing.T) {
 		reg := defaultRegistry(t)
 		for _, key := range []string{

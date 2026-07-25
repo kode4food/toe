@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
@@ -72,7 +73,7 @@ type (
 		totalLines int
 		reg        rune
 		cwd        string
-		cursor     geom.Point
+		cursor     core.Position
 		vcsHead    string
 		busy       bool
 		spinFrame  int
@@ -132,12 +133,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	prim := sel.Primary()
 	cursor := prim.Cursor(text)
 
-	row, col := 1, 1
-	if l, err := text.CharToLine(cursor); err == nil {
-		row = l + 1
-		if lineStart, err := text.LineToChar(l); err == nil {
-			col = cursor - lineStart + 1
-		}
+	at := core.Position{Line: 1, Col: 1}
+	if p, err := text.Position(cursor); err == nil {
+		at = p
 	}
 
 	opts := r.cx.Editor.Options()
@@ -184,7 +182,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		spinSt:  spinSt,
 		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
-		cursor:    geom.Point{X: col, Y: row},
+		cursor:    at,
 		vcsHead:   vcsHead,
 		busy:      busy,
 		spinFrame: r.ec.spinFrame,

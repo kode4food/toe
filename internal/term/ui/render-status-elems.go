@@ -111,7 +111,7 @@ func statusElemPrimaryLen(s *statusElemCtx) statusElem {
 
 func statusElemPosition(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  fmt.Sprintf("%d:%d", s.cursor.Y, s.cursor.X),
+		text:  fmt.Sprintf("%d:%d", s.cursor.Line, s.cursor.Col),
 		style: s.baseTUI,
 	}
 }
@@ -119,7 +119,7 @@ func statusElemPosition(s *statusElemCtx) statusElem {
 func statusElemPercent(s *statusElemCtx) statusElem {
 	pct := 0
 	if s.totalLines > 0 {
-		pct = (s.cursor.Y * 100) / s.totalLines
+		pct = (s.cursor.Line * 100) / s.totalLines
 	}
 	return statusElem{
 		text:  fmt.Sprintf("%d%%", pct),

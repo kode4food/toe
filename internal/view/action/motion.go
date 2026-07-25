@@ -191,7 +191,14 @@ func MoveFileEnd(e *view.Editor) {
 // GotoLine moves (or extends in select mode) the cursor to line n (1-based)
 // If n is 0 the command is a no-op. Clamps to the last non-empty line
 func GotoLine(e *view.Editor, n int) {
-	if n <= 0 {
+	GotoPosition(e, core.Position{Line: n})
+}
+
+// GotoPosition moves (or extends in select mode) the cursor to a 1-based line
+// and column. A Col <= 1 lands on the line start; otherwise the cursor is
+// clamped to the line end. A Line <= 0 is a no-op
+func GotoPosition(e *view.Editor, at core.Position) {
+	if at.Line <= 0 {
 		return
 	}
 	SaveSelection(e)
@@ -206,10 +213,16 @@ func GotoLine(e *view.Editor, n int) {
 				maxLine--
 			}
 		}
-		line := min(n-1, maxLine)
-		pos, err := doc.LineToChar(line)
+		target := min(at.Line-1, maxLine)
+		pos, err := doc.LineToChar(target)
 		if err != nil {
 			return r
+		}
+		if at.Col > 1 {
+			end, err := doc.LineEndCharIndex(target)
+			if err == nil {
+				pos = min(pos+at.Col-1, end)
+			}
 		}
 		return r.PutCursor(doc, pos, extend)
 	})

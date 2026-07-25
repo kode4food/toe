@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -70,6 +72,33 @@ func TestSupportGoto(t *testing.T) {
 		e, km := test.Env(t, "l0\n")
 		assert.Contains(t, test.RunCmd(t, km, e, "goto").Message, "no line number")
 	})
+
+	t.Run("goto line:col moves to column", func(t *testing.T) {
+		// line 1 ("abcdef") starts at char 3; col 3 -> char 5
+		e, km := test.Env(t, "l0\nabcdef\n")
+		res := test.RunCmdArgs(t, km, e, "goto", "2:3")
+		assert.NotContains(t, res.Message, "error")
+		assert.Equal(t, 1, test.CursorLine(t, e))
+		assert.Equal(t, 5, testutil.CursorPos(t, e))
+	})
+
+	t.Run("goto column clamps to line end", func(t *testing.T) {
+		// line 1 ("ab") ends at char 5, before its newline
+		e, km := test.Env(t, "l0\nab\n")
+		test.RunCmdArgs(t, km, e, "goto", "2:99")
+		assert.Equal(t, 5, testutil.CursorPos(t, e))
+	})
+
+	t.Run("goto path:line opens the file", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "target.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("x0\nx1\nx2\n"), 0o644))
+		e, km := test.Env(t, "orig\n")
+		res := test.RunCmdArgs(t, km, e, "goto", path+":2")
+		assert.NotContains(t, res.Message, "error")
+		assert.Equal(t, "x0\nx1\nx2\n", test.DocText(t, e))
+		assert.Equal(t, 1, test.CursorLine(t, e))
+	})
 }
 
 func TestSupportSelectionOps(t *testing.T) {
@@ -98,7 +127,8 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("reflow rejects bad width", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		assert.Contains(t, test.RunCmdArgs(t, km, e, "reflow", "0").Message, "error")
+		assert.Contains(t,
+			test.RunCmdArgs(t, km, e, "reflow", "0").Message, "error")
 	})
 
 	t.Run("toggle comments runs", func(t *testing.T) {

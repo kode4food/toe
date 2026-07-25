@@ -840,6 +840,120 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 	return e
 }
 
+func TestGotoLineKeySequence(t *testing.T) {
+	newModel := func(t *testing.T) (ui.Model, *view.Editor) {
+		var b strings.Builder
+		for i := range 10 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		return m, e
+	}
+
+	cursorLine := func(t *testing.T, e *view.Editor) int {
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
+		assert.NoError(t, err)
+		return line
+	}
+
+	t.Run("g <n> g goes to line n", func(t *testing.T) {
+		m, e := newModel(t)
+		m = sendKey(m, 'g')
+		m = sendKey(m, '5')
+		_ = sendKey(m, 'g')
+		// count 5 targets line 5 (1-based), i.e. index 4
+		assert.Equal(t, 4, cursorLine(t, e))
+	})
+
+	t.Run("g g goes to file start", func(t *testing.T) {
+		m, e := newModel(t)
+		testutil.SetCursor(t, e, 25)
+		m = sendKey(m, 'g')
+		_ = sendKey(m, 'g')
+		assert.Equal(t, 0, cursorLine(t, e))
+	})
+
+	t.Run("multi-digit count", func(t *testing.T) {
+		m, e := newModel(t)
+		m = sendKey(m, 'g')
+		m = sendKey(m, '1')
+		m = sendKey(m, '0')
+		_ = sendKey(m, 'g')
+		assert.Equal(t, 9, cursorLine(t, e))
+	})
+
+	t.Run("status renders keys then count", func(t *testing.T) {
+		m, _ := newModel(t)
+		m = sendKey(m, 'g')
+		m = sendKey(m, '5')
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "g → 5")
+		assert.NotContains(t, out, "5g")
+	})
+
+	t.Run("right status leaves bottom-right cell blank", func(t *testing.T) {
+		m, _ := newModel(t)
+		m = resize(m, 8, 6)
+		// a bare count (no pending key) renders right-aligned on the cmdline
+		// with no popup; width 7 would fill the final column without the guard
+		for _, ch := range "1234567" {
+			m = sendKey(m, ch)
+		}
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		cmdline := []rune(lines[len(lines)-1])
+		// writing the final column auto-wraps the terminal; it must stay blank
+		assert.Equal(t, ' ', cmdline[len(cmdline)-1])
+		assert.Contains(t, string(cmdline), "123456")
+		for _, ln := range lines {
+			assert.LessOrEqual(t, len([]rune(ln)), 8)
+		}
+	})
+}
+
+func TestCountMotionKeySequence(t *testing.T) {
+	t.Run("5j moves down 5 lines in NOR", func(t *testing.T) {
+		var b strings.Builder
+		for i := range 10 {
+			_, _ = fmt.Fprintf(&b, "line%d\n", i)
+		}
+		e := editorWithText(t, b.String())
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+
+		m = sendKey(m, '5')
+		_ = sendKey(m, 'j')
+
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
+		assert.NoError(t, err)
+		assert.Equal(t, 5, line)
+	})
+
+	t.Run("3w advances 3 words in NOR", func(t *testing.T) {
+		e := editorWithText(t, "aa bb cc dd ee")
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+
+		m = sendKey(m, '3')
+		_ = sendKey(m, 'w')
+
+		// count 3 advances past aa/bb/cc into the run before "dd"; a plain w
+		// stops one word short, so this asserts the count took effect
+		assert.Equal(t, 8, testutil.CursorPos(t, e))
+	})
+}
+
 func TestFocusMessages(t *testing.T) {
 	t.Run("focus message handled", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())

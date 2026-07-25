@@ -101,15 +101,15 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	if left == "" && right == "" {
 		return
 	}
+
+	avail := max(w-1, 0)
+	right = ansi.Truncate(right, avail, "")
 	rightW := runewidth.StringWidth(right)
-	leftW := max(w-rightW, 0)
+	leftW := max(avail-rightW, 0)
 	leftStr := ansi.Truncate(left, leftW, "")
 	buf.SetString(geom.Point{X: 0, Y: y}, leftStr, tuiSt)
-	if rightW > 0 && rightW <= w {
-		buf.SetString(geom.Point{
-			X: w - rightW,
-			Y: y,
-		}, right, tuiSt)
+	if rightW > 0 {
+		buf.SetString(geom.Point{X: avail - rightW, Y: y}, right, tuiSt)
 	}
 }
 

@@ -31,7 +31,9 @@ func NthPrevGraphemeBoundary(doc Rope, charIdx, n int) int {
 	pos := 0
 	state := -1
 	for text != "" {
-		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(text, state)
+		cl, rest, _, newState := uniseg.FirstGraphemeClusterInString(
+			text, state,
+		)
 		pos += utf8.RuneCountInString(cl)
 		text = rest
 		state = newState

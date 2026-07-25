@@ -12,6 +12,8 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
+const countArrow = "\u2192" // '→' - rightwards arrow
+
 func (e *EditorComponent) handleKeyPress(
 	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
@@ -51,14 +53,12 @@ func (e *EditorComponent) handleKeyPress(
 	mode := cx.Editor.Mode()
 	modeStr := mode.String()
 
-	noPending := len(e.keys.pending) == 0 && k.Mods == command.ModNone &&
-		k.Code.Special == command.SpecialNone
-	if noPending && mode == view.ModeSelect {
+	if countable(mode, k) {
 		ch := k.Code.Char
 		cur := cx.Editor.Count()
 		if ch >= '1' && ch <= '9' || (ch == '0' && cur > 0) {
 			cx.Editor.SetCount(cur*10 + int(ch-'0'))
-			e.keys.status = fmt.Sprintf("%d", cx.Editor.Count())
+			e.keys.status = e.pendingStatus(cx)
 			return consumed(), nil
 		}
 	}
@@ -104,14 +104,7 @@ func (e *EditorComponent) handleKeyPress(
 				return consumed(), nil
 			}
 		}
-		var sb strings.Builder
-		if c := cx.Editor.Count(); c > 0 {
-			_, _ = fmt.Fprintf(&sb, "%d", c)
-		}
-		for _, pk := range e.keys.pending {
-			sb.WriteString(pk.String())
-		}
-		e.keys.status = sb.String()
+		e.keys.status = e.pendingStatus(cx)
 		title, items := cx.Keymaps.PendingHints(modeStr, e.keys.pending)
 		e.keys.infoTitle = title
 		e.keys.infoItems = items
@@ -135,6 +128,20 @@ func (e *EditorComponent) handleKeyPress(
 		cx.Editor.ResetCount()
 		return consumed(), nil
 	}
+}
+
+func (e *EditorComponent) pendingStatus(cx *Context) string {
+	var sb strings.Builder
+	for _, pk := range e.keys.pending {
+		sb.WriteString(pk.String())
+	}
+	if c := cx.Editor.Count(); c > 0 {
+		if sb.Len() > 0 {
+			_, _ = fmt.Fprintf(&sb, " %s ", countArrow)
+		}
+		_, _ = fmt.Fprintf(&sb, "%d", c)
+	}
+	return sb.String()
 }
 
 // keymapClaims reports whether k continues or completes a binding in the
@@ -246,6 +253,12 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 		pushSignatureHelpLayer(comp, newSignatureHelpComponent(e, call, help))
 		return nil
 	}
+}
+
+func countable(mode view.Mode, k command.KeyEvent) bool {
+	return k.Mods == command.ModNone &&
+		k.Code.Special == command.SpecialNone &&
+		(mode == view.ModeNormal || mode == view.ModeSelect)
 }
 
 func newCompletionAnchor(doc *view.Document, viewID view.Id) completionAnchor {

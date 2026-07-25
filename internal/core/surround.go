@@ -17,9 +17,7 @@ var (
 
 // FindNthClosestPairsPos finds the nth-nearest surrounding bracket pair around
 // r (plaintext only). The returned Range keeps the source range's direction
-func FindNthClosestPairsPos(
-	doc Rope, r Range, skip int,
-) (Range, error) {
+func FindNthClosestPairsPos(doc Rope, r Range, skip int) (Range, error) {
 	pos := r.From()
 	closePos := pos
 	if pos > 0 {
@@ -66,9 +64,7 @@ func FindNthClosestPairsPos(
 
 // FindNthPairsPos finds the nth surrounding pair for character ch around r
 // (plaintext only). ch may be either opening or closing
-func FindNthPairsPos(
-	doc Rope, ch rune, r Range, n int,
-) (Range, error) {
+func FindNthPairsPos(doc Rope, ch rune, r Range, n int) (Range, error) {
 	if doc.LenChars() < 2 {
 		return Range{}, ErrPairNotFound
 	}

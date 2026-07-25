@@ -24,7 +24,7 @@ func TestOpenPathImage(t *testing.T) {
 	// presents the unsupported message and skips transmission
 	t.Run("unsupported terminal opens pane", func(t *testing.T) {
 		for _, k := range []string{
-			"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM", "KONSOLE_VERSION",
+			"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
 		} {
 			t.Setenv(k, "")
 		}

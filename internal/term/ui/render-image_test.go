@@ -92,7 +92,7 @@ func TestImageLoading(t *testing.T) {
 
 func TestImageUnsupported(t *testing.T) {
 	for _, k := range []string{
-		"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM", "KONSOLE_VERSION",
+		"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
 	} {
 		t.Setenv(k, "")
 	}

@@ -12,7 +12,6 @@ type (
 	Compositor struct {
 		layers       []Component
 		size         geom.Size
-		cachedView   string
 		startup      layerFunc
 		lastOverlays []Component
 	}
@@ -98,12 +97,7 @@ func (c *Compositor) Render(cx *Context) string {
 	cx.composition.singleLayer = len(c.layers) == 1
 	cx.composition.changed = !slices.Equal(c.lastOverlays, c.layers[1:])
 	c.lastOverlays = slices.Clone(c.layers[1:])
-	content := c.renderViaBuffer(cx)
-	if content == c.cachedView {
-		return c.cachedView
-	}
-	c.cachedView = content
-	return content
+	return c.renderViaBuffer(cx)
 }
 
 func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {

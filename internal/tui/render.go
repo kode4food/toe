@@ -201,11 +201,7 @@ func emitRow(e *ansiEmitter, row []Cell, style Style) Style {
 			e.emitStyle(c.Style)
 			style = c.Style
 		}
-		sym := c.Symbol
-		if sym == "" {
-			sym = " "
-		}
-		e.w.WriteString(sym)
+		e.w.WriteString(c.Symbol)
 	}
 	return style
 }

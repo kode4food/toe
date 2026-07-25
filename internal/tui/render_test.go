@@ -29,6 +29,14 @@ func TestRenderEmpty(t *testing.T) {
 		rows := strings.Split(out, "\n")
 		assert.Len(t, rows, 2)
 	})
+
+	// guards the emit invariant: unwritten cells carry " ", not "", so a
+	// blank buffer renders as spaces rather than collapsing to empty
+	t.Run("unwritten cells render as spaces", func(t *testing.T) {
+		b := tui.NewBuffer(geom.Size{Width: 3, Height: 1})
+		b.SetString(geom.Point{X: 0, Y: 0}, "x", tui.Style{})
+		assert.Equal(t, "x  ", b.RenderToANSI())
+	})
 }
 
 func TestEmitFgColor(t *testing.T) {

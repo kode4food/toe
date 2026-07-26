@@ -134,13 +134,12 @@ func (s *Session) RenameSymbol(
 }
 
 func (c *Client) supportsPrepareRename() bool {
-	capabilities, ok := c.Capabilities()
-	if !ok {
-		return false
+	if capabilities, ok := c.Capabilities(); ok {
+		opts, ok := capabilities.RenameProvider.(*protocol.RenameOptions)
+		return ok && opts != nil &&
+			opts.PrepareProvider != nil && *opts.PrepareProvider
 	}
-	opts, ok := capabilities.RenameProvider.(*protocol.RenameOptions)
-	return ok && opts != nil &&
-		opts.PrepareProvider != nil && *opts.PrepareProvider
+	return false
 }
 
 func documentCursor(doc *view.Document, viewID view.Id) int {
@@ -173,15 +172,13 @@ func renamePrefillFromWord(doc *view.Document, viewID view.Id) string {
 	sel := doc.SelectionFor(viewID)
 	r := sel.Primary()
 	if r.Len() > 1 {
-		text, err := r.Fragment(doc.Text())
-		if err == nil {
+		if text, err := r.Fragment(doc.Text()); err == nil {
 			return text
 		}
 	}
 	r = core.TextObjectWord(doc.Text(), r, core.TextObjectInside, false)
-	text, err := r.Fragment(doc.Text())
-	if err != nil {
-		return ""
+	if text, err := r.Fragment(doc.Text()); err == nil {
+		return text
 	}
-	return text
+	return ""
 }

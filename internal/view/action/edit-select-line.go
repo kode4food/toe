@@ -152,9 +152,9 @@ func selectLineImpl(e *view.Editor, above bool) {
 		ranges[i] = core.NewRange(anchor, head)
 	}
 	e.ResetCount()
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }

@@ -300,15 +300,14 @@ func currentSignatureCall(cx *Context) (signatureCall, bool) {
 	}
 	sel := doc.SelectionFor(v.ID())
 	pos := sel.Primary().Cursor(doc.Text())
-	open, ok := signatureCallOpen(doc, pos)
-	if !ok {
-		return signatureCall{}, false
+	if open, ok := signatureCallOpen(doc, pos); ok {
+		return signatureCall{
+			docID:  doc.ID(),
+			viewID: v.ID(),
+			open:   open,
+		}, true
 	}
-	return signatureCall{
-		docID:  doc.ID(),
-		viewID: v.ID(),
-		open:   open,
-	}, true
+	return signatureCall{}, false
 }
 
 func signatureCallOpen(doc *view.Document, pos int) (int, bool) {

@@ -186,9 +186,8 @@ func clampSelection(sel core.Selection, maxChars int) core.Selection {
 			min(max(r.Head, 0), maxChars),
 		)
 	}
-	out, err := core.NewSelection(clamped, sel.PrimaryIndex())
-	if err != nil {
-		return core.PointSelection(0)
+	if out, err := core.NewSelection(clamped, sel.PrimaryIndex()); err == nil {
+		return out
 	}
-	return out
+	return core.PointSelection(0)
 }

@@ -52,9 +52,9 @@ func ResolveWorkspace(req WorkspaceRequest) (string, bool) {
 	}
 }
 
-// RequiredRootFound reports whether any required root pattern matches a
+// RootFound reports whether any required root pattern matches a
 // directory entry
-func RequiredRootFound(root string, patterns []string) (bool, error) {
+func RootFound(root string, patterns []string) (bool, error) {
 	if len(patterns) == 0 {
 		return true, nil
 	}
@@ -94,11 +94,10 @@ func cleanAbs(path string) (string, bool) {
 	if path == "" {
 		return "", false
 	}
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", false
+	if abs, err := filepath.Abs(path); err == nil {
+		return filepath.Clean(abs), true
 	}
-	return filepath.Clean(abs), true
+	return "", false
 }
 
 func inside(path, root string) bool {

@@ -22,15 +22,12 @@ func (d *docState) previousDiagnosticID(
 ) *string {
 	d.RLock()
 	defer d.RUnlock()
-	ids, ok := d.diagIDs[id]
-	if !ok {
-		return nil
+	if ids, ok := d.diagIDs[id]; ok {
+		if prev, ok := ids[provider]; ok {
+			return &prev
+		}
 	}
-	prev, ok := ids[provider]
-	if !ok {
-		return nil
-	}
-	return &prev
+	return nil
 }
 
 func (d *docState) setPreviousDiagnosticID(

@@ -209,17 +209,15 @@ func getOverlayMap[T any](state *overlayState, m map[Id][]T, vid Id) []T {
 }
 
 func remapRange(cs core.ChangeSet, from, to int) (int, int) {
-	r, err := cs.MapRange(core.NewRange(from, to))
-	if err != nil {
-		return from, to
+	if r, err := cs.MapRange(core.NewRange(from, to)); err == nil {
+		return r.Anchor, r.Head
 	}
-	return r.Anchor, r.Head
+	return from, to
 }
 
 func remapPos(cs core.ChangeSet, pos int) int {
-	p, err := cs.MapPos(pos, core.AssocAfterSticky)
-	if err != nil {
-		return pos
+	if p, err := cs.MapPos(pos, core.AssocAfterSticky); err == nil {
+		return p
 	}
-	return p
+	return pos
 }

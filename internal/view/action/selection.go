@@ -20,11 +20,10 @@ func GotoLineEndNewline(e *view.Editor) {
 		if err != nil {
 			return r
 		}
-		lineEnd, err := doc.LineEndCharIndex(line)
-		if err != nil {
-			return r
+		if lineEnd, err := doc.LineEndCharIndex(line); err == nil {
+			return r.PutCursor(doc, lineEnd, false)
 		}
-		return r.PutCursor(doc, lineEnd, false)
+		return r
 	})
 }
 
@@ -37,11 +36,10 @@ func ExtendToLineEndNewline(e *view.Editor) {
 		if err != nil {
 			return r
 		}
-		lineEnd, err := doc.LineEndCharIndex(line)
-		if err != nil {
-			return r
+		if lineEnd, err := doc.LineEndCharIndex(line); err == nil {
+			return r.PutCursor(doc, lineEnd, true)
 		}
-		return r.PutCursor(doc, lineEnd, true)
+		return r
 	})
 }
 
@@ -92,11 +90,9 @@ func RemovePrimarySelection(e *view.Editor) {
 		e.SetStatusMsg(i18n.Text(i18n.StatusNoSelections))
 		return
 	}
-	newSel, err := sel.Remove(sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := sel.Remove(sel.PrimaryIndex()); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 // MergeSelections merges all selection ranges into one spanning range
@@ -164,11 +160,9 @@ func GotoLastModification(e *view.Editor) {
 // transaction, so cursor moves driven by input (mouse, jumps) go through the
 // same insert-group and history bookkeeping as an edit
 func ApplySelection(e *view.Editor, sel core.Selection) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return
+	if doc, ok := e.FocusedDocument(); ok {
+		_ = e.Apply(core.NewTransaction(doc.Text()).WithSelection(sel))
 	}
-	_ = e.Apply(core.NewTransaction(doc.Text()).WithSelection(sel))
 }
 
 func jumpTo(e *view.Editor, fn jumpResolver) {
@@ -262,9 +256,9 @@ func applyMove(e *view.Editor, fn rangeMover) {
 	for i, r := range ranges {
 		ranges[i] = fn(text, r)
 	}
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }

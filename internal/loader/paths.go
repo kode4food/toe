@@ -20,8 +20,7 @@ const (
 // ExpandUserPath expands leading home-directory shorthand and environment vars
 func ExpandUserPath(path string) string {
 	if path == "~" || strings.HasPrefix(path, "~/") {
-		home, err := os.UserHomeDir()
-		if err == nil {
+		if home, err := os.UserHomeDir(); err == nil {
 			return filepath.Join(home, strings.TrimPrefix(path, "~/"))
 		}
 	}
@@ -53,11 +52,10 @@ func ConfigDir() (string, bool) {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", false
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".config", DirName), true
 	}
-	return filepath.Join(home, ".config", DirName), true
+	return "", false
 }
 
 func LogFile() (string, bool) {
@@ -71,22 +69,20 @@ func CacheDir() (string, bool) {
 	if dir := os.Getenv("XDG_CACHE_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", false
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".cache", DirName), true
 	}
-	return filepath.Join(home, ".cache", DirName), true
+	return "", false
 }
 
 func DataDir() (string, bool) {
 	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", false
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".local", "share", DirName), true
 	}
-	return filepath.Join(home, ".local", "share", DirName), true
+	return "", false
 }
 
 func WorkspaceConfigFile(dir string) string {
@@ -126,21 +122,19 @@ func FindWorkspace(dir string) (string, bool) {
 }
 
 func TrustWorkspace(dir string) error {
-	path, ok := WorkspaceTrustFile()
-	if !ok {
-		return ErrPathUnavailable
+	if path, ok := WorkspaceTrustFile(); ok {
+		root, _ := FindWorkspace(dir)
+		return updateWorkspaceSet(path, root, true)
 	}
-	root, _ := FindWorkspace(dir)
-	return updateWorkspaceSet(path, root, true)
+	return ErrPathUnavailable
 }
 
 func UntrustWorkspace(dir string) error {
-	path, ok := WorkspaceTrustFile()
-	if !ok {
-		return ErrPathUnavailable
+	if path, ok := WorkspaceTrustFile(); ok {
+		root, _ := FindWorkspace(dir)
+		return updateWorkspaceSet(path, root, false)
 	}
-	root, _ := FindWorkspace(dir)
-	return updateWorkspaceSet(path, root, false)
+	return ErrPathUnavailable
 }
 
 func updateWorkspaceSet(path, workspace string, add bool) error {

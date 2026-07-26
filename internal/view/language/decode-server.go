@@ -9,8 +9,7 @@ func decodeLanguageServers(value any) map[string]Server {
 	}
 	out := make(map[string]Server, len(m))
 	for name, value := range m {
-		cfg, ok := decodeLanguageServer(value)
-		if ok {
+		if cfg, ok := decodeLanguageServer(value); ok {
 			out[name] = cfg
 		}
 	}
@@ -22,18 +21,17 @@ func decodeLanguageServer(value any) (Server, bool) {
 	if !ok {
 		return Server{}, false
 	}
-	cmd, ok := m["command"].(string)
-	if !ok {
-		return Server{}, false
+	if cmd, ok := m["command"].(string); ok {
+		return Server{
+			Command:      cmd,
+			Args:         decodeStringSlice(m["args"]),
+			Environment:  decodeStringMap(m["environment"]),
+			Config:       decodeAnyMap(m["config"]),
+			Timeout:      intValueFromMap(m, "timeout", 20),
+			RootPatterns: decodeStringSlice(m["required-root-patterns"]),
+		}, true
 	}
-	return Server{
-		Command:              cmd,
-		Args:                 decodeStringSlice(m["args"]),
-		Environment:          decodeStringMap(m["environment"]),
-		Config:               decodeAnyMap(m["config"]),
-		Timeout:              intValueFromMap(m, "timeout", 20),
-		RequiredRootPatterns: decodeStringSlice(m["required-root-patterns"]),
-	}, true
+	return Server{}, false
 }
 
 func decodeLanguageServerFeatures(value any) []ServerFeatures {
@@ -69,12 +67,11 @@ func decodeFormatter(value any) (Formatter, bool) {
 	if !ok {
 		return Formatter{}, false
 	}
-	cmd, ok := m["command"].(string)
-	if !ok {
-		return Formatter{}, false
+	if cmd, ok := m["command"].(string); ok {
+		return Formatter{
+			Command: cmd,
+			Args:    decodeStringSlice(m["args"]),
+		}, true
 	}
-	return Formatter{
-		Command: cmd,
-		Args:    decodeStringSlice(m["args"]),
-	}, true
+	return Formatter{}, false
 }

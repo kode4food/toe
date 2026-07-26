@@ -90,8 +90,7 @@ func (t *Theme) Get(scope string) tui.Style {
 
 func (t *Theme) TryGet(scope string) (tui.Style, bool) {
 	for s := scope; s != ""; {
-		style, ok := t.styles[s]
-		if ok {
+		if style, ok := t.styles[s]; ok {
 			return style, true
 		}
 		idx := strings.LastIndexByte(s, '.')

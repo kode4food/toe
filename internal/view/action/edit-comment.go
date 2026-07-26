@@ -140,11 +140,9 @@ func toggleBlockCommentsWithTokens(
 	if !ok {
 		return
 	}
-	v, ok := e.FocusedView()
-	if !ok {
-		return
+	if v, ok := e.FocusedView(); ok {
+		toggleBlockCommentsSelection(e, doc.SelectionFor(v.ID()), tokens)
 	}
-	toggleBlockCommentsSelection(e, doc.SelectionFor(v.ID()), tokens)
 }
 
 func toggleBlockCommentsSelection(

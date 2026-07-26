@@ -68,15 +68,14 @@ func decodeGrammarSource(value any) (GrammarSource, bool) {
 	if path, ok := m["path"].(string); ok {
 		return GrammarSource{Path: path}, true
 	}
-	git, ok := m["git"].(string)
-	if !ok {
-		return GrammarSource{}, false
+	if git, ok := m["git"].(string); ok {
+		return GrammarSource{
+			Git:     git,
+			Rev:     stringValueFromMap(m, "rev"),
+			Subpath: stringValueFromMap(m, "subpath"),
+		}, true
 	}
-	return GrammarSource{
-		Git:     git,
-		Rev:     stringValueFromMap(m, "rev"),
-		Subpath: stringValueFromMap(m, "subpath"),
-	}, true
+	return GrammarSource{}, false
 }
 
 func languageValues(value any) ([]map[string]any, bool) {

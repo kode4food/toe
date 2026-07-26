@@ -14,11 +14,10 @@ var (
 )
 
 func ParseBool(value string) (bool, error) {
-	v, err := strconv.ParseBool(value)
-	if err != nil {
-		return false, fmt.Errorf("%w: %s", ErrInvalidOption, value)
+	if v, err := strconv.ParseBool(value); err == nil {
+		return v, nil
 	}
-	return v, nil
+	return false, fmt.Errorf("%w: %s", ErrInvalidOption, value)
 }
 
 func ParsePositiveInt(value string) (int, error) {

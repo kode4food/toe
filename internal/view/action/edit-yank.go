@@ -222,11 +222,10 @@ func pastePosition(
 		if err != nil {
 			return 0, false
 		}
-		pos, err := text.LineToChar(line)
-		if err != nil {
-			return 0, false
+		if pos, err := text.LineToChar(line); err == nil {
+			return pos, true
 		}
-		return pos, true
+		return 0, false
 	}
 	line, err := text.CharToLine(r.To())
 	if err != nil {
@@ -236,9 +235,8 @@ func pastePosition(
 	if next >= text.LenLines() {
 		return text.LenChars(), true
 	}
-	pos, err := text.LineToChar(next)
-	if err != nil {
-		return 0, false
+	if pos, err := text.LineToChar(next); err == nil {
+		return pos, true
 	}
-	return pos, true
+	return 0, false
 }

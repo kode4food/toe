@@ -121,19 +121,18 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 }
 
 func binaryPreview(path string) previewCacheEntry {
-	img, err := LoadImage(path)
-	if err != nil {
-		return noPreviewEntry("<Binary file>")
+	if img, err := LoadImage(path); err == nil {
+		abs := path
+		if value, err := filepath.Abs(path); err == nil {
+			abs = value
+		}
+		return &previewImageEntry{
+			image: img,
+			id:    kittyImageID(img.ContentID(), 0, true),
+			path:  abs,
+		}
 	}
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		abs = path
-	}
-	return &previewImageEntry{
-		image: img,
-		id:    kittyImageID(img.ContentID(), 0, true),
-		path:  abs,
-	}
+	return noPreviewEntry("<Binary file>")
 }
 
 func previewDirRows(path string) []previewDirRow {

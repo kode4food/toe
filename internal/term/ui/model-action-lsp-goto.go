@@ -140,11 +140,9 @@ func jumpToLocation(e *view.Editor, loc view.Location) {
 	if !ok {
 		return
 	}
-	sel, err := locationSelection(loc)
-	if err != nil {
-		return
+	if sel, err := locationSelection(loc); err == nil {
+		doc.SetSelectionFor(v.ID(), sel)
 	}
-	doc.SetSelectionFor(v.ID(), sel)
 }
 
 func setSelectionFromHighlights(
@@ -161,9 +159,7 @@ func setSelectionFromHighlights(
 		}
 		ranges = append(ranges, r)
 	}
-	sel, err := core.NewSelection(ranges, primary)
-	if err != nil {
-		return
+	if sel, err := core.NewSelection(ranges, primary); err == nil {
+		doc.SetSelectionFor(viewID, sel)
 	}
-	doc.SetSelectionFor(viewID, sel)
 }

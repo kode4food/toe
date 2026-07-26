@@ -151,12 +151,10 @@ func gotoEdgeChange(e *view.Editor, last bool) {
 	if !ok {
 		return
 	}
-	newSel, err := core.NewSelection([]core.Range{r}, 0)
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection([]core.Range{r}, 0); err == nil {
+		SaveSelection(e)
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	SaveSelection(e)
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 func focusedDiffHunks(

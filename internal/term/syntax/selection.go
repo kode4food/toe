@@ -91,8 +91,7 @@ func nodePathAt(text, lang string, cursor int) ([]Range, bool) {
 	var nodes []Range
 	for n != nil {
 		if n.IsNamed() && !n.IsExtra() && n.EndByte() > n.StartByte() {
-			r, ok := nodeCharRange(n, b2c)
-			if ok {
+			if r, ok := nodeCharRange(n, b2c); ok {
 				nodes = append(nodes, r)
 			}
 		}

@@ -70,11 +70,10 @@ func FindEditorConfig(file string) *EditorConfig {
 }
 
 func loadEditorConfigFile(file string) (editorConfigINI, bool) {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return editorConfigINI{}, false
+	if data, err := os.ReadFile(file); err == nil {
+		return parseEditorConfig(string(data)), true
 	}
-	return parseEditorConfig(string(data)), true
+	return editorConfigINI{}, false
 }
 
 func parseEditorConfig(data string) editorConfigINI {

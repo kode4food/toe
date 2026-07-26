@@ -119,20 +119,18 @@ func paragraphLineBlank(doc Rope, line, nLines int) bool {
 	if line < 0 || line >= nLines {
 		return true
 	}
-	lineRope, err := doc.Line(line)
-	if err != nil {
-		return true
+	if lineRope, err := doc.Line(line); err == nil {
+		return isBlankLine(lineRope.String())
 	}
-	return isBlankLine(lineRope.String())
+	return true
 }
 
 func paragraphLineToChar(doc Rope, line int) int {
 	if line >= doc.LenLines() {
 		return doc.LenChars()
 	}
-	pos, err := doc.LineToChar(line)
-	if err != nil {
-		return doc.LenChars()
+	if pos, err := doc.LineToChar(line); err == nil {
+		return pos
 	}
-	return pos
+	return doc.LenChars()
 }

@@ -30,12 +30,10 @@ func (e *Editor) PopPrevDocID() (DocumentId, bool) {
 // recordPrevDoc adds the current document to the focused view's access history
 // before replacing it
 func (e *Editor) recordPrevDoc() {
-	v, ok := e.FocusedView()
-	if !ok {
-		return
+	if v, ok := e.FocusedView(); ok {
+		v.addDocHistory(v.DocID())
+		e.recordLeavingDocFor(v)
 	}
-	v.addDocHistory(v.DocID())
-	e.recordLeavingDocFor(v)
 }
 
 func (e *Editor) recordLeavingDoc() {

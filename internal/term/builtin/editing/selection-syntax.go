@@ -49,11 +49,9 @@ func syntaxSelect(
 	if !changed {
 		return
 	}
-	sel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if sel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
+		doc.SetSelectionFor(v.ID(), sel)
 	}
-	doc.SetSelectionFor(v.ID(), sel)
 }
 
 func syntaxMatchBrackets(e *view.Editor) {
@@ -89,9 +87,9 @@ func syntaxMatchBrackets(e *view.Editor) {
 	if !changed {
 		return
 	}
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }

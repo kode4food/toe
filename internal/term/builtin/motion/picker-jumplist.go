@@ -94,9 +94,8 @@ func jumpSelection(j view.JumpEntry) core.Selection {
 func jumpLineRange(
 	text core.Rope, sel core.Selection,
 ) (int, *ui.PickerLineRange) {
-	line, err := sel.Primary().CursorLine(text)
-	if err != nil {
-		return 0, nil
+	if line, err := sel.Primary().CursorLine(text); err == nil {
+		return line, &ui.PickerLineRange{From: line, To: line}
 	}
-	return line, &ui.PickerLineRange{From: line, To: line}
+	return 0, nil
 }

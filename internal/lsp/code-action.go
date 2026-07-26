@@ -176,8 +176,7 @@ func (s *Session) codeActionDiagnostics(
 		if !r.Overlaps(dr) {
 			continue
 		}
-		converted, ok := protocolDiagnostic(doc, diag, encoding)
-		if ok {
+		if converted, ok := protocolDiagnostic(doc, diag, encoding); ok {
 			out = append(out, converted)
 		}
 	}

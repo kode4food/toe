@@ -103,11 +103,11 @@ func InsertNewline(e *view.Editor) {
 	}
 	newRanges := make([]core.Range, len(ranges))
 	for i := range ranges {
-		pos, err := cs.MapPos(targets[i], core.AssocBefore)
-		if err != nil {
-			return
+		if pos, err := cs.MapPos(targets[i], core.AssocBefore); err == nil {
+			newRanges[i] = core.PointRange(pos + targetOffs[i])
+			continue
 		}
-		newRanges[i] = core.PointRange(pos + targetOffs[i])
+		return
 	}
 	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 	if err != nil {

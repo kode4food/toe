@@ -82,19 +82,18 @@ func completionIconStyle(
 	cx *Context, kind string, selected bool,
 ) tui.Style {
 	base := completionBaseStyle(cx, selected)
-	scope := completionKindStyleScope(kind)
-	icon, ok := cx.Theme().TryGet(scope)
-	if !ok {
-		icon = cx.Theme().Get("ui.text.inactive")
+	icon := cx.Theme().Get("ui.text.inactive")
+	if style, ok := cx.Theme().TryGet(completionKindStyleScope(kind)); ok {
+		icon = style
 	}
 	return applyAccentStyle(base, icon)
 }
 
 func completionInfoStyle(cx *Context, selected bool) tui.Style {
 	base := completionBaseStyle(cx, selected)
-	info, ok := cx.Theme().TryGet("comment")
-	if !ok {
-		info = cx.Theme().Get("ui.text.inactive")
+	info := cx.Theme().Get("ui.text.inactive")
+	if style, ok := cx.Theme().TryGet("comment"); ok {
+		info = style
 	}
 	return applyAccentStyle(base, info)
 }

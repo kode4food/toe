@@ -44,8 +44,7 @@ func DeleteCharBackward(e *view.Editor) {
 			continue
 		}
 		if pairEnabled {
-			del, newR, ok := core.HookDelete(text, r, pairs)
-			if ok {
+			if del, newR, ok := core.HookDelete(text, r, pairs); ok {
 				entries = append(entries, insertEntry{
 					del:  del,
 					newR: newR,
@@ -80,18 +79,17 @@ func DeleteCharBackward(e *view.Editor) {
 	for i, r := range ranges {
 		en := entries[i]
 		if en.pair && (en.del.From != en.del.To) {
-			mapped, err := cs.MapRange(en.newR)
-			if err != nil {
-				return
+			if mapped, err := cs.MapRange(en.newR); err == nil {
+				newRanges[i] = mapped
+				continue
 			}
-			newRanges[i] = mapped
-		} else {
-			mapped, err := cs.MapRange(r)
-			if err != nil {
-				return
-			}
-			newRanges[i] = core.PointRange(mapped.Anchor)
+			return
 		}
+		if mapped, err := cs.MapRange(r); err == nil {
+			newRanges[i] = core.PointRange(mapped.Anchor)
+			continue
+		}
+		return
 	}
 	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 	if err != nil {

@@ -95,11 +95,11 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 	if err != nil {
 		return
 	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
+	if newSel, err := sel.Map(cs); err == nil {
+		_ = e.Apply(
+			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
+		)
 	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
 // YankJoin yanks all selection text joined by a separator to the active
@@ -140,10 +140,9 @@ func gotoColumn(e *view.Editor, extend bool) {
 		if err != nil {
 			return r
 		}
-		lineEnd, err := doc.LineEndCharIndex(line)
-		if err != nil {
-			return r
+		if lineEnd, err := doc.LineEndCharIndex(line); err == nil {
+			return r.PutCursor(doc, min(lineStart+col-1, lineEnd), extend)
 		}
-		return r.PutCursor(doc, min(lineStart+col-1, lineEnd), extend)
+		return r
 	})
 }

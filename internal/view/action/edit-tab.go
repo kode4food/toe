@@ -83,9 +83,9 @@ func InsertTab(e *view.Editor) {
 	if err != nil {
 		return
 	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
+	if newSel, err := sel.Map(cs); err == nil {
+		_ = e.Apply(
+			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
+		)
 	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }

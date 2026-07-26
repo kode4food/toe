@@ -77,11 +77,11 @@ func incrementImpl(e *view.Editor, sign int) {
 	if err != nil {
 		return
 	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
+	if newSel, err := sel.Map(cs); err == nil {
+		_ = e.Apply(
+			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
+		)
 	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
 func wordBoundsAt(text core.Rope, pos int) core.Range {
@@ -112,15 +112,13 @@ func isWordChar(ch rune) bool {
 func incrementInteger(s string, delta int) (string, bool) {
 	s = strings.TrimSpace(s)
 	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
-		n, err := strconv.ParseInt(s[2:], 16, 64)
-		if err != nil {
-			return "", false
+		if n, err := strconv.ParseInt(s[2:], 16, 64); err == nil {
+			return s[:2] + strconv.FormatInt(n+int64(delta), 16), true
 		}
-		return s[:2] + strconv.FormatInt(n+int64(delta), 16), true
-	}
-	n, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
 		return "", false
 	}
-	return strconv.FormatInt(n+int64(delta), 10), true
+	if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return strconv.FormatInt(n+int64(delta), 10), true
+	}
+	return "", false
 }

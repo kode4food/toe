@@ -75,9 +75,7 @@ func TrimSelections(e *view.Editor) {
 			break
 		}
 	}
-	newSel, err := core.NewSelection(out, primary)
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(out, primary); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }

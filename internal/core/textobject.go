@@ -97,8 +97,7 @@ func wordBoundaryForward(doc Rope, pos int, long bool) int {
 	}
 	var prev CharCategory
 	if pos-1 >= 0 {
-		ch, err := doc.CharAt(pos - 1)
-		if err == nil {
+		if ch, err := doc.CharAt(pos - 1); err == nil {
 			prev = CategorizeChar(ch)
 		} else {
 			prev = CharCategoryWhitespace

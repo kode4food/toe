@@ -40,11 +40,11 @@ func CollapseSelection(e *view.Editor) {
 		pos := r.Cursor(text)
 		ranges[i] = core.PointRange(pos)
 	}
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 // FlipSelections swaps anchor and head for every selection range
@@ -62,11 +62,11 @@ func FlipSelections(e *view.Editor) {
 	for i, r := range ranges {
 		ranges[i] = r.Flip()
 	}
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 // KeepPrimarySelection discards all but the primary selection range

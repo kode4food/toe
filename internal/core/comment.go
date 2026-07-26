@@ -189,9 +189,8 @@ func commentLineEndChar(text Rope, lineNum int) int {
 	if next >= text.LenLines() {
 		return text.LenChars()
 	}
-	pos, err := text.LineToChar(next)
-	if err != nil {
-		return text.LenChars()
+	if pos, err := text.LineToChar(next); err == nil {
+		return pos
 	}
-	return pos
+	return text.LenChars()
 }

@@ -59,11 +59,11 @@ func InsertChar(e *view.Editor, ch rune) {
 			newRanges[i] = r
 			continue
 		}
-		mapped, err := cs.MapRange(r)
-		if err != nil {
-			return
+		if mapped, err := cs.MapRange(r); err == nil {
+			newRanges[i] = mapped
+			continue
 		}
-		newRanges[i] = mapped
+		return
 	}
 	newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 	if err != nil {

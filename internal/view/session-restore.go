@@ -156,11 +156,10 @@ func (s sessionSelect) selection() core.Selection {
 	for _, r := range s.Ranges {
 		ranges = append(ranges, core.NewRange(r.Anchor, r.Head))
 	}
-	sel, err := core.NewSelection(ranges, s.Primary)
-	if err != nil {
-		return core.PointSelection(0)
+	if sel, err := core.NewSelection(ranges, s.Primary); err == nil {
+		return sel
 	}
-	return sel
+	return core.PointSelection(0)
 }
 
 func sessionLayout(name string) Layout {

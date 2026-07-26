@@ -160,11 +160,10 @@ func ExtendToLineStart(e *view.Editor) {
 		if err != nil {
 			return r
 		}
-		start, err := doc.LineToChar(line)
-		if err != nil {
-			return r
+		if start, err := doc.LineToChar(line); err == nil {
+			return r.PutCursor(doc, start, true)
 		}
-		return r.PutCursor(doc, start, true)
+		return r
 	})
 }
 

@@ -30,19 +30,17 @@ func GotoNextParagraph(e *view.Editor) {
 				found++
 				if found >= n || l >= nLines {
 					target := min(l, nLines-1)
-					pos, err := doc.LineToChar(target)
-					if err != nil {
-						return r
+					if pos, err := doc.LineToChar(target); err == nil {
+						return r.PutCursor(doc, pos, extend)
 					}
-					return r.PutCursor(doc, pos, extend)
+					return r
 				}
 			}
 		}
-		pos, err := doc.LineToChar(nLines - 1)
-		if err != nil {
-			return r
+		if pos, err := doc.LineToChar(nLines - 1); err == nil {
+			return r.PutCursor(doc, pos, extend)
 		}
-		return r.PutCursor(doc, pos, extend)
+		return r
 	})
 }
 
@@ -70,19 +68,17 @@ func GotoPrevParagraph(e *view.Editor) {
 				found++
 				if found >= n || l <= 0 {
 					target := max(l-1, 0)
-					pos, err := doc.LineToChar(target)
-					if err != nil {
-						return r
+					if pos, err := doc.LineToChar(target); err == nil {
+						return r.PutCursor(doc, pos, extend)
 					}
-					return r.PutCursor(doc, pos, extend)
+					return r
 				}
 			}
 		}
-		pos, err := doc.LineToChar(0)
-		if err != nil {
-			return r
+		if pos, err := doc.LineToChar(0); err == nil {
+			return r.PutCursor(doc, pos, extend)
 		}
-		return r.PutCursor(doc, pos, extend)
+		return r
 	})
 }
 

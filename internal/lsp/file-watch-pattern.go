@@ -29,8 +29,7 @@ func fileWatches(
 ) []fileWatch {
 	out := make([]fileWatch, 0, len(opts.Watchers))
 	for _, watcher := range opts.Watchers {
-		watch, ok := fileWatchFor(watcher.GlobPattern)
-		if ok {
+		if watch, ok := fileWatchFor(watcher.GlobPattern); ok {
 			out = append(out, watch)
 		}
 	}

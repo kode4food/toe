@@ -300,9 +300,9 @@ func (s *serverState) reset(langs language.Languages) []*Client {
 }
 
 func loadLanguages(cwd string) language.Languages {
-	global, ok := loader.LanguagesFile()
-	if !ok {
-		global = ""
+	global := ""
+	if path, ok := loader.LanguagesFile(); ok {
+		global = path
 	}
 	workspace := loader.WorkspaceLanguagesFile(cwd)
 	langs, ok := language.LoadLanguagesForWorkspace(global, workspace, cwd)

@@ -75,11 +75,9 @@ func SplitSelectionOnNewline(e *view.Editor) {
 	if len(newRanges) == 0 {
 		return
 	}
-	newSel, err := core.NewSelection(newRanges, 0)
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(newRanges, 0); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 // DeleteSelectionNoYank deletes each selection without yanking first
@@ -159,11 +157,11 @@ func applyChangesFrom(e *view.Editor, args applyChangesFromArgs) {
 	}
 	newRanges := make([]core.Range, len(args.ranges))
 	for i, r := range args.ranges {
-		mapped, err := cs.MapRange(r)
-		if err != nil {
-			return
+		if mapped, err := cs.MapRange(r); err == nil {
+			newRanges[i] = core.PointRange(mapped.From())
+			continue
 		}
-		newRanges[i] = core.PointRange(mapped.From())
+		return
 	}
 	newSel, err := core.NewSelection(newRanges, args.sel.PrimaryIndex())
 	if err != nil {

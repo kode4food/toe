@@ -66,11 +66,9 @@ func SurroundAdd(e *view.Editor, ch rune) {
 // SurroundDelete removes the surrounding pair identified by ch around each
 // selection, then switches to normal mode
 func SurroundDelete(e *view.Editor, ch rune) {
-	res, ok := resolveSurroundPos(e, ch)
-	if !ok {
-		return
+	if res, ok := resolveSurroundPos(e, ch); ok {
+		SurroundDeleteAt(e, res.text, res.positions)
 	}
-	SurroundDeleteAt(e, res.text, res.positions)
 }
 
 // SurroundDeleteAt deletes the brackets at flat [open, close, ...] positions
@@ -92,11 +90,9 @@ func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 // SurroundReplace replaces the surrounding pair identified by from with the
 // pair matching to. Called after two key prompts resolved by the model
 func SurroundReplace(e *view.Editor, from, to rune) {
-	res, ok := resolveSurroundPos(e, from)
-	if !ok {
-		return
+	if res, ok := resolveSurroundPos(e, from); ok {
+		SurroundReplaceAt(e, res.text, res.positions, to)
 	}
-	SurroundReplaceAt(e, res.text, res.positions, to)
 }
 
 // SurroundReplaceAt replaces brackets at flat [open, close, ...] positions with

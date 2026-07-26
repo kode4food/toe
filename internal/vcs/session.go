@@ -92,26 +92,22 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 // contents of an arbitrary workspace file. It shells out to the provider and is
 // intended for on-demand use such as picker previews
 func (s *Session) DiffHunksForPath(path string) []view.DiffHunk {
-	base, err := s.provider.DiffBase(path)
-	if err != nil {
-		return nil
+	if base, err := s.provider.DiffBase(path); err == nil {
+		if data, err := os.ReadFile(path); err == nil {
+			return Diff(baseRope(base), baseRope(data))
+		}
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	return Diff(baseRope(base), baseRope(data))
+	return nil
 }
 
 // DiffBaseForPath returns the checked-in base text of an arbitrary workspace
 // file. It shells out to the provider, so it is intended for on-demand use such
 // as picker diff previews
 func (s *Session) DiffBaseForPath(path string) string {
-	base, err := s.provider.DiffBase(path)
-	if err != nil {
-		return ""
+	if base, err := s.provider.DiffBase(path); err == nil {
+		return baseRope(base).String()
 	}
-	return baseRope(base).String()
+	return ""
 }
 
 // HeadName returns the head display name for the document's repository

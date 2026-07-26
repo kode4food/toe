@@ -52,12 +52,12 @@ type (
 	}
 
 	Server struct {
-		Command              string
-		Args                 []string
-		Environment          map[string]string
-		Config               map[string]any
-		Timeout              int
-		RequiredRootPatterns []string
+		Command      string
+		Args         []string
+		Environment  map[string]string
+		Config       map[string]any
+		Timeout      int
+		RootPatterns []string
 	}
 
 	Formatter struct {

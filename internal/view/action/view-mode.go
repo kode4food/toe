@@ -39,8 +39,9 @@ func NormalMode(e *view.Editor) {
 			}
 			ranges[i] = core.NewRange(r.From(), head)
 		}
-		newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-		if err == nil {
+		if newSel, err := core.NewSelection(
+			ranges, sel.PrimaryIndex(),
+		); err == nil {
 			doc.SetSelectionFor(v.ID(), newSel)
 		}
 	}
@@ -80,8 +81,9 @@ func SelectMode(e *view.Editor) {
 		}
 	}
 	if changed {
-		newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-		if err == nil {
+		if newSel, err := core.NewSelection(
+			ranges, sel.PrimaryIndex(),
+		); err == nil {
 			doc.SetSelectionFor(v.ID(), newSel)
 		}
 	}
@@ -104,12 +106,12 @@ func InsertMode(e *view.Editor) {
 		// Cursor lands at the start (from) of the selection
 		ranges[i] = core.PointRange(r.From())
 	}
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
+		e.SetMode(view.ModeInsert)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
-	e.SetMode(view.ModeInsert)
 }
 
 // AppendMode enters insert mode with cursors one grapheme past the end of
@@ -138,13 +140,13 @@ func AppendMode(e *view.Editor) {
 			ranges[i] = core.NewRange(r.From(), head)
 		}
 	}
-	newSel, err := core.NewSelection(ranges, sel.PrimaryIndex())
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
+		doc.SetRestoreCursor(true)
+		e.SetMode(view.ModeInsert)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
-	doc.SetRestoreCursor(true)
-	e.SetMode(view.ModeInsert)
 }
 
 // InsertAtLineStart moves each cursor to the first non-whitespace char of

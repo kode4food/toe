@@ -25,11 +25,10 @@ func runRead(cmd []string) (string, error) {
 	if cmd == nil {
 		return "", ErrNoClipboardProvider
 	}
-	out, err := exec.Command(cmd[0], cmd[1:]...).Output()
-	if err != nil {
-		return "", ErrNoClipboardProvider
+	if out, err := exec.Command(cmd[0], cmd[1:]...).Output(); err == nil {
+		return string(out), nil
 	}
-	return string(out), nil
+	return "", ErrNoClipboardProvider
 }
 
 func runWrite(cmd []string, text string) error {

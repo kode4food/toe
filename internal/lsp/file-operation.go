@@ -291,9 +291,8 @@ func ignoreCase(opts *protocol.FileOperationPatternOptions) bool {
 }
 
 func fileOperationURI(path string) string {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return string(uri.File(path))
+	if abs, err := filepath.Abs(path); err == nil {
+		return string(uri.File(abs))
 	}
-	return string(uri.File(abs))
+	return string(uri.File(path))
 }

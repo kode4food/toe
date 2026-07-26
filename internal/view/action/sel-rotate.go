@@ -49,11 +49,9 @@ func RotateSelectionsBackward(e *view.Editor) {
 	}
 	count := max(e.Count(), 1)
 	prev := (sel.PrimaryIndex() + n - count%n) % n
-	newSel, err := core.NewSelection(sel.Ranges(), prev)
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(sel.Ranges(), prev); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 // RotateContentsForward rotates the text content of each selection
@@ -91,11 +89,11 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 	steps := min(count, n)
 	texts := make([]string, n)
 	for i, r := range ranges {
-		slice, err := text.Slice(r.From(), r.To())
-		if err != nil {
-			return
+		if slice, err := text.Slice(r.From(), r.To()); err == nil {
+			texts[i] = slice.String()
+			continue
 		}
-		texts[i] = slice.String()
+		return
 	}
 	rotated := make([]string, n)
 	var newPrimary int
@@ -120,11 +118,11 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 		return
 	}
 	newRanges := rangesAfterReplace(ranges, rotated)
-	newSel, err := core.NewSelection(newRanges, newPrimary)
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(newRanges, newPrimary); err == nil {
+		_ = e.Apply(
+			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
+		)
 	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
 func rangesAfterReplace(

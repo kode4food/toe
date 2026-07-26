@@ -149,11 +149,10 @@ func visualLineRunes(doc Rope, lineIdx int) []rune {
 	if lineEnd <= lineStart {
 		return nil
 	}
-	sl, err := doc.Slice(lineStart, lineEnd)
-	if err != nil {
-		return nil
+	if sl, err := doc.Slice(lineStart, lineEnd); err == nil {
+		return []rune(sl.String())
 	}
-	return []rune(sl.String())
+	return nil
 }
 
 func visualPrefixWidth(

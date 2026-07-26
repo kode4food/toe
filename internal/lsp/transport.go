@@ -64,7 +64,7 @@ func Start(cfg *TransportConfig) (context.Context, *Client, error) {
 	if root == "" {
 		root = "."
 	}
-	ok, err := RequiredRootFound(root, cfg.Server.RequiredRootPatterns)
+	ok, err := RootFound(root, cfg.Server.RootPatterns)
 	if err != nil {
 		return ctx, nil, err
 	}

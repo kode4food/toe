@@ -149,11 +149,10 @@ func MoveLineStart(e *view.Editor) {
 		if err != nil {
 			return r
 		}
-		start, err := doc.LineToChar(line)
-		if err != nil {
-			return r
+		if start, err := doc.LineToChar(line); err == nil {
+			return r.PutCursor(doc, start, false)
 		}
-		return r.PutCursor(doc, start, false)
+		return r
 	})
 }
 
@@ -292,11 +291,10 @@ func moveFileEnd(e *view.Editor, extend bool) {
 				lineIdx--
 			}
 		}
-		pos, err := doc.LineToChar(lineIdx)
-		if err != nil {
-			return r
+		if pos, err := doc.LineToChar(lineIdx); err == nil {
+			return r.PutCursor(doc, pos, extend)
 		}
-		return r.PutCursor(doc, pos, extend)
+		return r
 	})
 }
 

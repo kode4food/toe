@@ -25,13 +25,12 @@ func snapshotDisk(path string) diskSnapshot {
 	if path == "" {
 		return diskSnapshot{}
 	}
-	info, err := os.Stat(path)
-	if err != nil {
-		return diskSnapshot{}
+	if info, err := os.Stat(path); err == nil {
+		return diskSnapshot{
+			modTime: info.ModTime(),
+			size:    info.Size(),
+			exists:  true,
+		}
 	}
-	return diskSnapshot{
-		modTime: info.ModTime(),
-		size:    info.Size(),
-		exists:  true,
-	}
+	return diskSnapshot{}
 }

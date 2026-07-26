@@ -105,7 +105,7 @@ func TestWorkspace(t *testing.T) {
 		root := t.TempDir()
 		writeFile(t, filepath.Join(root, "go.mod"))
 
-		ok, err := lsp.RequiredRootFound(root, []string{"go.*"})
+		ok, err := lsp.RootFound(root, []string{"go.*"})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -117,8 +117,8 @@ func TestWorkspace(t *testing.T) {
 			Ctx:  t.Context(),
 			Name: "test",
 			Server: language.Server{
-				Command:              "unused",
-				RequiredRootPatterns: []string{"go.mod"},
+				Command:      "unused",
+				RootPatterns: []string{"go.mod"},
 			},
 			Dir: root,
 		})

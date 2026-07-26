@@ -102,11 +102,9 @@ func (s *Session) handleFileWatchEvent(event fsnotify.Event) {
 	if event.Op&fsnotify.Create != 0 {
 		s.addCreatedWatchPath(path)
 	}
-	kind, ok := fileWatchChangeType(event.Op)
-	if !ok {
-		return
+	if kind, ok := fileWatchChangeType(event.Op); ok {
+		s.didChangeWatchedFileEvent(fileWatchEvent{path: path, kind: kind})
 	}
-	s.didChangeWatchedFileEvent(fileWatchEvent{path: path, kind: kind})
 }
 
 func (s *Session) addCreatedWatchPath(path string) {

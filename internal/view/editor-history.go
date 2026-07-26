@@ -69,11 +69,9 @@ func (e *Editor) CommitInsertHistory() {
 	if !ok {
 		return
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
-		return
+	if doc, ok := e.Document(v.DocID()); ok {
+		doc.CommitInsertHistory(v.ID())
 	}
-	doc.CommitInsertHistory(v.ID())
 }
 
 // Undo reverts one history step in the focused document

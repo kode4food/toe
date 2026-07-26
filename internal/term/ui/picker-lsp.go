@@ -186,8 +186,7 @@ func (l *lspWorkspaceSymbolSource) Load(
 	}
 	items := make([]PickerItem, 0, len(symbols))
 	for _, sym := range symbols {
-		item, ok := l.item(e, sym)
-		if ok {
+		if item, ok := l.item(e, sym); ok {
 			items = append(items, item)
 		}
 	}

@@ -94,11 +94,9 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 		}
 	}
 
-	newSel, err := core.NewSelection(out, newPrimary)
-	if err != nil {
-		return
+	if newSel, err := core.NewSelection(out, newPrimary); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
 	}
-	doc.SetSelectionFor(v.ID(), newSel)
 }
 
 func hasDuplicateHead(ranges []core.Range, r core.Range) bool {

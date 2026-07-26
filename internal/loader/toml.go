@@ -45,17 +45,15 @@ func MergeTOMLValues(left, right any, depth int) any {
 		}
 		return out
 	case []map[string]any:
-		r, ok := AnySlice(right)
-		if !ok {
-			return right
+		if r, ok := AnySlice(right); ok {
+			return mergeTOMLArrays(mapSliceToAny(l), r, depth)
 		}
-		return mergeTOMLArrays(mapSliceToAny(l), r, depth)
+		return right
 	case []any:
-		r, ok := AnySlice(right)
-		if !ok {
-			return right
+		if r, ok := AnySlice(right); ok {
+			return mergeTOMLArrays(l, r, depth)
 		}
-		return mergeTOMLArrays(l, r, depth)
+		return right
 	default:
 		return right
 	}
@@ -130,9 +128,8 @@ func mergeTOMLArrays(left, right []any, depth int) []any {
 	}
 	out := slices.Clone(left)
 	for _, rv := range right {
-		name, ok := valueName(rv)
 		idx := -1
-		if ok {
+		if name, ok := valueName(rv); ok {
 			idx = namedValueIndex(out, name)
 		}
 		if idx >= 0 {
@@ -182,10 +179,9 @@ func namedValueIndex(values []any, name string) int {
 }
 
 func valueName(value any) (string, bool) {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return "", false
+	if m, ok := value.(map[string]any); ok {
+		name, ok := m["name"].(string)
+		return name, ok
 	}
-	name, ok := m["name"].(string)
-	return name, ok
+	return "", false
 }

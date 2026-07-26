@@ -95,9 +95,8 @@ func lineString(text core.Rope, from, to int) string {
 	if from >= to {
 		return ""
 	}
-	s, err := text.SliceString(from, to)
-	if err != nil {
-		return ""
+	if s, err := text.SliceString(from, to); err == nil {
+		return s
 	}
-	return s
+	return ""
 }

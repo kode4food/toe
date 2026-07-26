@@ -140,9 +140,8 @@ func (c *completionComponent) query(cx *Context) (string, bool) {
 		return "", false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
-	query, err := doc.Text().SliceString(c.anchor.pos, pos)
-	if err != nil {
-		return "", false
+	if query, err := doc.Text().SliceString(c.anchor.pos, pos); err == nil {
+		return query, true
 	}
-	return query, true
+	return "", false
 }

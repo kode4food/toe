@@ -181,8 +181,7 @@ func spaceJoinSelection(spans []commentSpan) (core.Selection, bool) {
 func commentTokenAt(text core.Rope, tokens []string, pos int) string {
 	for _, token := range tokens {
 		end := pos + utf8.RuneCountInString(token)
-		s, err := text.Slice(pos, end)
-		if err == nil && s.String() == token {
+		if s, err := text.Slice(pos, end); err == nil && s.String() == token {
 			return token
 		}
 	}

@@ -113,20 +113,19 @@ func applyNewlines(e *view.Editor, args applyNewlinesArgs) {
 	}
 	newRanges := make([]core.Range, len(args.targets))
 	for i, target := range args.targets {
-		pos, err := cs.MapPos(target.pos, core.AssocBefore)
-		if err != nil {
-			return
+		if pos, err := cs.MapPos(target.pos, core.AssocBefore); err == nil {
+			newRanges[i] = core.PointRange(pos + target.off)
+			continue
 		}
-		newRanges[i] = core.PointRange(pos + target.off)
-	}
-	primary := min(args.sel.PrimaryIndex(), len(newRanges)-1)
-	newSel, err := core.NewSelection(newRanges, primary)
-	if err != nil {
 		return
 	}
-	tx := core.NewTransaction(args.text).WithChanges(cs).WithSelection(newSel)
-	_ = e.Apply(tx)
-	e.SetMode(view.ModeInsert)
+	primary := min(args.sel.PrimaryIndex(), len(newRanges)-1)
+	if newSel, err := core.NewSelection(newRanges, primary); err == nil {
+		tx := core.NewTransaction(args.text).WithChanges(cs).
+			WithSelection(newSel)
+		_ = e.Apply(tx)
+		e.SetMode(view.ModeInsert)
+	}
 }
 
 func addNewlineImpl(e *view.Editor, above bool) {
@@ -175,9 +174,9 @@ func addNewlineImpl(e *view.Editor, above bool) {
 	if err != nil {
 		return
 	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
+	if newSel, err := sel.Map(cs); err == nil {
+		_ = e.Apply(
+			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
+		)
 	}
-	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }

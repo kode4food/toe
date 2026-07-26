@@ -3,7 +3,6 @@ package ui
 import (
 	"bytes"
 	"os"
-	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -38,11 +37,10 @@ type (
 )
 
 const (
-	imageIDMask        = 0x7FFFFF
-	previewImageMask   = 0x800000
-	imageViewSalt      = 0x9E3779
-	imageCellAspect    = 2
-	imageTransmitDelay = 40 * time.Millisecond
+	imageIDMask      = 0x7FFFFF
+	previewImageMask = 0x800000
+	imageViewSalt    = 0x9E3779
+	imageCellAspect  = 2
 
 	// Placement IDs use a 24-bit underline color, split across both dimensions
 	imagePlacementDimensionBits = 12
@@ -135,9 +133,6 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	evict := r.evict(a.id)
 	remote := r.remote
 	return func() tea.Msg {
-		// Let Bubble Tea enter the alternate screen before Kitty receives image
-		// data that the screen transition can discard
-		time.Sleep(imageTransmitDelay)
 		var buf bytes.Buffer
 		buf.WriteString(evict)
 		if err := transmit(transmitArgs{

@@ -39,8 +39,9 @@ func (s *Session) Busy() bool {
 
 func (s *Session) createProgress(server string, token protocol.ProgressToken) {
 	s.progress.Lock()
-	defer s.progress.Unlock()
 	s.progress.forServer(server)[progressTokenKey(token)] = progressEntry{}
+	s.progress.Unlock()
+	s.redraw()
 }
 
 func (s *Session) updateProgress(
@@ -56,10 +57,13 @@ func (s *Session) updateProgress(
 	switch kind.Kind {
 	case "begin":
 		s.beginProgress(server, params.Token, params.Value)
+		s.redraw()
 	case "report":
 		s.reportProgress(server, params.Token, params.Value)
+		s.redraw()
 	case "end":
 		s.endProgress(server, params.Token, params.Value)
+		s.redraw()
 	}
 }
 
@@ -171,6 +175,12 @@ func (s *Session) showProgress(server string, entry progressEntry) {
 	msg := progressMessage(server, entry)
 	if msg != "" {
 		s.editor.SetStatusMsg(msg)
+	}
+}
+
+func (s *Session) redraw() {
+	if s.editor != nil {
+		s.editor.Tree().Redraw()
 	}
 }
 

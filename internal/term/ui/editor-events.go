@@ -35,6 +35,7 @@ func (e *EditorComponent) handleKeyPressEvent(
 
 func (e *EditorComponent) handleFocus(cx *Context) (EventResult, tea.Cmd) {
 	e.focused = true
+	refreshVCS(cx)
 	return ignored(), e.documentHighlightCmd(cx)
 }
 
@@ -100,6 +101,7 @@ func (e *EditorComponent) handleExternalFileChanged(
 ) (EventResult, tea.Cmd) {
 	cx.Editor.ProcessExternalFileChange(msg.path)
 	reloadChangedImages(cx.Editor, msg.path)
+	refreshVCS(cx)
 	e.syncEditorMessages(cx)
 	return consumed(), e.fileWatchCmd(cx)
 }
@@ -107,7 +109,13 @@ func (e *EditorComponent) handleExternalFileChanged(
 func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
 	// the frame repaints on its own; we only reap closed terminals, then re-arm
 	e.pollTerminals(cx)
-	return consumed(), e.redrawCmd()
+	cmd := e.redrawCmd()
+	if ls := cx.Editor.LanguageServerController(); !e.spinning &&
+		ls != nil && ls.Busy() {
+		e.spinning = true
+		cmd = tea.Batch(cmd, spinnerTickCmd())
+	}
+	return consumed(), cmd
 }
 
 // the hook handed to panes that mutate off the event loop; a pane calls it to
@@ -133,22 +141,16 @@ func (e *EditorComponent) handleVCSUpdated(cx *Context) (EventResult, tea.Cmd) {
 	return consumed(), vcsUpdateCmd(cx)
 }
 
-func (e *EditorComponent) handleVCSRefresh(cx *Context) (EventResult, tea.Cmd) {
-	if vc := cx.Editor.VersionControl(); vc != nil {
-		vc.Refresh()
-	}
-	return consumed(), vcsRefreshCmd(cx)
-}
-
 func (e *EditorComponent) handleSpinnerTick(
 	cx *Context,
 ) (EventResult, tea.Cmd) {
 	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
 		e.spinFrame++
-	} else {
-		e.spinFrame = 0
+		return consumed(), spinnerTickCmd()
 	}
-	return consumed(), spinnerTickCmd()
+	e.spinFrame = 0
+	e.spinning = false
+	return consumed(), nil
 }
 
 func (e *EditorComponent) handleMouseClick(
@@ -310,13 +312,10 @@ func vcsUpdateCmd(cx *Context) tea.Cmd {
 	}
 }
 
-func vcsRefreshCmd(cx *Context) tea.Cmd {
-	if cx.Editor.VersionControl() == nil {
-		return nil
+func refreshVCS(cx *Context) {
+	if vc := cx.Editor.VersionControl(); vc != nil {
+		vc.Refresh()
 	}
-	return tea.Tick(vcsRefreshInterval, func(time.Time) tea.Msg {
-		return vcsRefreshMsg{}
-	})
 }
 
 func spinnerTickCmd() tea.Cmd {

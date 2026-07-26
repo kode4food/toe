@@ -29,6 +29,7 @@ type (
 		focused         bool
 		fileWatcher     *editorFileWatcher
 		spinFrame       int
+		spinning        bool
 		redraw          chan struct{}
 	}
 
@@ -93,17 +94,12 @@ type (
 
 	vcsUpdatedMsg struct{}
 
-	vcsRefreshMsg struct{}
-
 	spinnerTickMsg struct{}
 
 	redrawMsg struct{}
 )
 
-const (
-	vcsRefreshInterval  = 5 * time.Second
-	spinnerTickInterval = 80 * time.Millisecond
-)
+const spinnerTickInterval = 80 * time.Millisecond
 
 var (
 	_ BufferRenderer     = (*EditorComponent)(nil)
@@ -187,8 +183,6 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleRedraw(cx)
 	case vcsUpdatedMsg:
 		return e.handleVCSUpdated(cx)
-	case vcsRefreshMsg:
-		return e.handleVCSRefresh(cx)
 	case spinnerTickMsg:
 		return e.handleSpinnerTick(cx)
 	case tea.MouseClickMsg:

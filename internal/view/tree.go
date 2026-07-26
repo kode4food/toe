@@ -107,6 +107,13 @@ func (t *Tree) SetRedraw(fn func()) {
 	}
 }
 
+// Redraw wakes the renderer after asynchronous editor state changes
+func (t *Tree) Redraw() {
+	if t.redraw != nil {
+		t.redraw()
+	}
+}
+
 // Insert adds a pane as the next sibling after the currently focused pane
 func (t *Tree) Insert(p Pane) Id {
 	focus := t.focus

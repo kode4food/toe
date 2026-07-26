@@ -26,6 +26,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 	})
 	ec := newEditorComponent()
 	editor.Tree().SetRedraw(ec.requestRedraw)
+	ec.requestRedraw()
 	registerImagePane(editor)
 	registerTerminalPane(editor)
 	cx := &Context{
@@ -44,8 +45,6 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		initCmd: tea.Batch(
 			ec.fileWatchCmd(cx),
 			vcsUpdateCmd(cx),
-			vcsRefreshCmd(cx),
-			spinnerTickCmd(),
 			ec.redrawCmd(),
 		),
 	}

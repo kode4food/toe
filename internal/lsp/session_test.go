@@ -850,7 +850,7 @@ func TestSessionPullDiagnosticsUnchanged(t *testing.T) {
 }
 
 func TestSessionProgress(t *testing.T) {
-	t.Run("receives begin/report/end progress", func(t *testing.T) {
+	t.Run("progress wakes renderer", func(t *testing.T) {
 		exe, err := os.Executable()
 		assert.NoError(t, err)
 		dir := t.TempDir()
@@ -860,15 +860,25 @@ func TestSessionProgress(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
+		redraw := make(chan struct{}, 1)
+		e.Tree().SetRedraw(func() {
+			select {
+			case redraw <- struct{}{}:
+			default:
+			}
+		})
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
-		// Trigger initialization and wait for progress callbacks to fire
 		_, _ = session.Completions(doc, v.ID())
-		time.Sleep(100 * time.Millisecond)
+		select {
+		case <-redraw:
+		case <-time.After(time.Second):
+			t.Fatal("progress did not wake renderer")
+		}
 	})
 
 	t.Run("reports busy during progress", func(t *testing.T) {

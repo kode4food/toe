@@ -17,6 +17,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -963,6 +964,34 @@ func TestFocusMessages(t *testing.T) {
 		m = m2.(ui.Model)
 
 		assert.NotEmpty(t, m.View().Content)
+	})
+
+	t.Run("focus refreshes version control", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		e := view.NewEditor(repo)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		s := vcs.Attach(e)
+		defer s.Close()
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Eventually(t, func() bool {
+			base, ok := s.DiffBase(doc)
+			return ok && base == "one\n"
+		}, time.Second, 5*time.Millisecond)
+
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "a.txt")
+		testutil.RunGit(t, repo, "commit", "-m", "external")
+
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		_, _ = m.Update(tea.FocusMsg{})
+		assert.Eventually(t, func() bool {
+			base, ok := s.DiffBase(doc)
+			return ok && base == "two\n"
+		}, time.Second, 5*time.Millisecond)
 	})
 
 	t.Run("blur focus lost triggers autosave", func(t *testing.T) {

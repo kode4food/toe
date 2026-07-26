@@ -23,11 +23,10 @@ func (o PickerLayoutOptions) clone() PickerLayoutOptions {
 
 // SplitRatioFor returns the saved split ratio for a picker key
 func (o PickerLayoutOptions) SplitRatioFor(key string) float64 {
-	ratio, ok := o.SplitRatios[key]
-	if !ok {
-		return DefaultPickerSplitRatio
+	if ratio, ok := o.SplitRatios[key]; ok {
+		return clampPickerSplitRatio(ratio)
 	}
-	return clampPickerSplitRatio(ratio)
+	return DefaultPickerSplitRatio
 }
 
 func clampPickerSplitRatio(ratio float64) float64 {

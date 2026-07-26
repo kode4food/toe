@@ -201,11 +201,10 @@ func (c *Client) saveMode() saveMode {
 }
 
 func (c *Client) textDocumentSync() protocol.TextDocumentSync {
-	capabilities, ok := c.Capabilities()
-	if !ok {
-		return nil
+	if capabilities, ok := c.Capabilities(); ok {
+		return capabilities.TextDocumentSync
 	}
-	return capabilities.TextDocumentSync
+	return nil
 }
 
 func (c *Client) diagnosticIdentifier() (*string, bool) {

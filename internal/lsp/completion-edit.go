@@ -124,23 +124,25 @@ func completionEdit(
 ) (*completionEditOffset, string, error) {
 	switch edit := item.TextEdit.(type) {
 	case *protocol.TextEdit:
-		cr, ok := lspRangeToChars(ctx.doc, edit.Range, ctx.encoding)
-		if !ok {
-			return nil, "", ErrCompletionUnavailable
+		if cr, ok := lspRangeToChars(
+			ctx.doc, edit.Range, ctx.encoding,
+		); ok {
+			return &completionEditOffset{
+				from: cr.From() - ctx.cursor,
+				to:   cr.To() - ctx.cursor,
+			}, edit.NewText, nil
 		}
-		return &completionEditOffset{
-			from: cr.From() - ctx.cursor,
-			to:   cr.To() - ctx.cursor,
-		}, edit.NewText, nil
+		return nil, "", ErrCompletionUnavailable
 	case *protocol.InsertReplaceEdit:
-		cr, ok := lspRangeToChars(ctx.doc, edit.Insert, ctx.encoding)
-		if !ok {
-			return nil, "", ErrCompletionUnavailable
+		if cr, ok := lspRangeToChars(
+			ctx.doc, edit.Insert, ctx.encoding,
+		); ok {
+			return &completionEditOffset{
+				from: cr.From() - ctx.cursor,
+				to:   cr.To() - ctx.cursor,
+			}, edit.NewText, nil
 		}
-		return &completionEditOffset{
-			from: cr.From() - ctx.cursor,
-			to:   cr.To() - ctx.cursor,
-		}, edit.NewText, nil
+		return nil, "", ErrCompletionUnavailable
 	default:
 		if text, ok := item.InsertText.Get(); ok {
 			return nil, text, nil

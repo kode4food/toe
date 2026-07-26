@@ -114,10 +114,7 @@ func (c *Client) Name() string {
 // SupportsFeature reports whether the server supports the given LSP feature
 func (c *Client) SupportsFeature(feature Feature) bool {
 	capabilities, ok := c.Capabilities()
-	if !ok {
-		return false
-	}
-	return SupportsFeature(capabilities, feature)
+	return ok && SupportsFeature(capabilities, feature)
 }
 
 // ExecuteCommand executes a workspace command on the server

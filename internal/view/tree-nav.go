@@ -52,6 +52,7 @@ func (t *Tree) Prev() Id {
 
 // Transpose flips the layout of the container holding the focused pane
 func (t *Tree) Transpose() {
+	t.Unmaximize()
 	parent := t.nodes[t.focus].parent
 	if c := t.nodes[parent].container; c != nil {
 		if c.layout == LayoutVertical {
@@ -91,6 +92,7 @@ func (t *Tree) FindSplitInDirection(id Id, dir Direction) (Id, bool) {
 // SwapSplitInDirection swaps the focused pane with the nearest pane in the
 // given direction
 func (t *Tree) SwapSplitInDirection(dir Direction) bool {
+	t.Unmaximize()
 	target, ok := t.FindSplitInDirection(t.focus, dir)
 	if !ok {
 		return false

@@ -670,7 +670,7 @@ The only exception is single-field structs where the field name adds no informat
 
 ### Early Returns
 
-Use guard clauses to minimize nesting. No else when early return works:
+Use guard clauses to reject invalid preconditions before substantial main logic. No else when an early return avoids nesting:
 
 ```go
 // Good
@@ -697,6 +697,27 @@ func processStep(step *StepInfo) error {
 	} else {
 		return ErrNilStep
 	}
+}
+```
+
+Do not mechanically use guard clauses in simple or linear functions. When a value and success indicator are used only by a short success path, always declare them in the `if` initializer, keep the value scoped to that branch, and put the fallback afterward. Use this form when the condition is only the success indicator, or the success indicator plus one simple boolean, nil, equality, or predicate check. If the condition needs more than two checks, becomes multi-line, or the success branch contains substantial logic, use guard clauses instead.
+
+```go
+// Good
+func lookup(name string) (Value, bool) {
+	if value, ok := values[name]; ok && value.Available() {
+		return value, true
+	}
+	return Value{}, false
+}
+
+// Bad — value and ok escape the only branch that uses them
+func lookup(name string) (Value, bool) {
+	value, ok := values[name]
+	if !ok || !value.Available() {
+		return Value{}, false
+	}
+	return value, true
 }
 ```
 

@@ -29,27 +29,24 @@ func ExpandUserPath(path string) string {
 }
 
 func ConfigFile() (string, bool) {
-	dir, ok := ConfigDir()
-	if !ok {
-		return "", false
+	if dir, ok := ConfigDir(); ok {
+		return filepath.Join(dir, "config.toml"), true
 	}
-	return filepath.Join(dir, "config.toml"), true
+	return "", false
 }
 
 func LanguagesFile() (string, bool) {
-	dir, ok := ConfigDir()
-	if !ok {
-		return "", false
+	if dir, ok := ConfigDir(); ok {
+		return filepath.Join(dir, "languages.toml"), true
 	}
-	return filepath.Join(dir, "languages.toml"), true
+	return "", false
 }
 
 func ConfigIgnoreFile() string {
-	dir, ok := ConfigDir()
-	if !ok {
-		return ""
+	if dir, ok := ConfigDir(); ok {
+		return filepath.Join(dir, "ignore")
 	}
-	return filepath.Join(dir, "ignore")
+	return ""
 }
 
 func ConfigDir() (string, bool) {
@@ -64,11 +61,10 @@ func ConfigDir() (string, bool) {
 }
 
 func LogFile() (string, bool) {
-	dir, ok := CacheDir()
-	if !ok {
-		return "", false
+	if dir, ok := CacheDir(); ok {
+		return filepath.Join(dir, LogFileName), true
 	}
-	return filepath.Join(dir, LogFileName), true
+	return "", false
 }
 
 func CacheDir() (string, bool) {
@@ -104,11 +100,10 @@ func WorkspaceLanguagesFile(dir string) string {
 }
 
 func WorkspaceTrustFile() (string, bool) {
-	dir, ok := DataDir()
-	if !ok {
-		return "", false
+	if dir, ok := DataDir(); ok {
+		return filepath.Join(dir, "trusted_workspaces"), true
 	}
-	return filepath.Join(dir, "trusted_workspaces"), true
+	return "", false
 }
 
 func FindWorkspace(dir string) (string, bool) {

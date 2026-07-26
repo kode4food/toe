@@ -13,6 +13,7 @@ func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 	if delta <= 0 || t.IsEmpty() {
 		return false
 	}
+	t.Unmaximize()
 	layout := LayoutVertical
 	if dir == DirectionUp || dir == DirectionDown {
 		layout = LayoutHorizontal
@@ -65,6 +66,7 @@ func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 func (t *Tree) MoveSeparator(
 	containerID Id, childIdx int, layout Layout, newPos int,
 ) {
+	t.Unmaximize()
 	if layout == LayoutVertical {
 		t.moveSepVertical(containerID, childIdx, newPos)
 	} else {

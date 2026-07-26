@@ -249,10 +249,21 @@ func (t *Tree) Maximized() bool {
 // ToggleMaximized maximizes the focused pane or restores the split layout
 func (t *Tree) ToggleMaximized() {
 	if t.maximized != 0 {
-		t.maximized = 0
-	} else if t.Count() > 1 {
+		t.Unmaximize()
+		return
+	}
+	if t.Count() > 1 {
 		t.maximized = t.focus
 	}
+	t.recalculate()
+}
+
+// Unmaximize restores the preserved split layout
+func (t *Tree) Unmaximize() {
+	if t.maximized == 0 {
+		return
+	}
+	t.maximized = 0
 	t.recalculate()
 }
 

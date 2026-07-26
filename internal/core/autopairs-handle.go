@@ -39,18 +39,18 @@ func handleInsertOpen(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 
 func handleInsertClose(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	cursor := r.Cursor(doc)
-	ch, ok := autoPairCharAt(doc, cursor)
-	if !ok || ch != pair.Close {
-		return Change{}, Range{}, false
+	if ch, ok := autoPairCharAt(doc, cursor); ok && ch == pair.Close {
+		return TextChange(cursor, cursor, ""), skipOverRange(doc, r, cursor), true
 	}
-	return TextChange(cursor, cursor, ""), skipOverRange(doc, r, cursor), true
+	return Change{}, Range{}, false
 }
 
 func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	cursor := r.Cursor(doc)
-	ch, ok := autoPairCharAt(doc, cursor)
-	if ok && ch == pair.Open {
-		return TextChange(cursor, cursor, ""), skipOverRange(doc, r, cursor), true
+	if ch, ok := autoPairCharAt(doc, cursor); ok && ch == pair.Open {
+		return TextChange(cursor, cursor, ""),
+			skipOverRange(doc, r, cursor),
+			true
 	}
 	if !pair.ShouldClose(doc, r) {
 		return Change{}, Range{}, false
@@ -134,28 +134,25 @@ func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 
 func nextIsNotAlphaPair(doc Rope, r Range) bool {
 	cursor := r.Cursor(doc)
-	ch, ok := autoPairCharAt(doc, cursor)
-	if !ok {
-		return true
+	if ch, ok := autoPairCharAt(doc, cursor); ok {
+		return !CharIsWord(ch)
 	}
-	return !CharIsWord(ch)
+	return true
 }
 
 func prevIsNotAlphaPair(doc Rope, r Range) bool {
 	cursor := r.Cursor(doc)
-	ch, ok := autoPairPrevChar(doc, cursor)
-	if !ok {
-		return true
+	if ch, ok := autoPairPrevChar(doc, cursor); ok {
+		return !CharIsWord(ch)
 	}
-	return !CharIsWord(ch)
+	return true
 }
 
 func autoPairCharAt(doc Rope, pos int) (rune, bool) {
-	ch, err := doc.CharAt(pos)
-	if err != nil {
-		return 0, false
+	if ch, err := doc.CharAt(pos); err == nil {
+		return ch, true
 	}
-	return ch, true
+	return 0, false
 }
 
 func autoPairPrevChar(doc Rope, pos int) (rune, bool) {

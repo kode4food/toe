@@ -111,6 +111,42 @@ func TestTreeMaximized(t *testing.T) {
 		assert.Equal(t, before[0], panes[0].Area())
 		assert.Equal(t, before[1], panes[1].Area())
 	})
+
+	t.Run("transpose restores layout", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		tree := e.Tree()
+		tree.ToggleMaximized()
+
+		tree.Transpose()
+
+		assert.False(t, tree.Maximized())
+	})
+
+	t.Run("swap restores layout", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		tree := e.Tree()
+		tree.ToggleMaximized()
+
+		tree.SwapSplitInDirection(view.DirectionLeft)
+
+		assert.False(t, tree.Maximized())
+	})
+
+	t.Run("resize restores layout", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		tree := e.Tree()
+		tree.ToggleMaximized()
+
+		tree.ResizeFocused(view.DirectionLeft, 5)
+
+		assert.False(t, tree.Maximized())
+	})
 }
 
 func TestMoveSeparator(t *testing.T) {

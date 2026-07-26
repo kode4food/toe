@@ -202,8 +202,8 @@ func enabledCodeActions(
 ) []protocol.CommandOrCodeAction {
 	out := make([]protocol.CommandOrCodeAction, 0, len(items))
 	for _, item := range items {
-		action, ok := item.(*protocol.CodeAction)
-		if ok && action.Disabled.Reason != "" {
+		if action, ok := item.(*protocol.CodeAction); ok &&
+			action.Disabled.Reason != "" {
 			continue
 		}
 		out = append(out, item)

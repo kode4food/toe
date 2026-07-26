@@ -132,11 +132,10 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 
 // Reload reloads the focused document from disk
 func (e *Editor) Reload() error {
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return ErrNoDocument
+	if doc, ok := e.FocusedDocument(); ok {
+		return doc.Reload()
 	}
-	return doc.Reload()
+	return ErrNoDocument
 }
 
 // ReloadAll reloads all documents that have a file path

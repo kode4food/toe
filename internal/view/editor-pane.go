@@ -206,9 +206,8 @@ type restorePaneArgs struct {
 }
 
 func (e *Editor) restorePane(args restorePaneArgs) (Pane, error) {
-	fn, ok := e.panes.restorers[args.kind]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrSessionInvalid, args.kind)
+	if fn, ok := e.panes.restorers[args.kind]; ok {
+		return fn(e, args.session)
 	}
-	return fn(e, args.session)
+	return nil, fmt.Errorf("%w: %s", ErrSessionInvalid, args.kind)
 }

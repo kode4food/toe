@@ -122,12 +122,11 @@ func (a *AutoPairConfig) AutoPairs() (core.AutoPairs, bool) {
 }
 
 func (a *AutoPairConfig) UnmarshalTOML(value any) error {
-	cfg, ok := decodeAutoPairConfig(value)
-	if !ok {
-		return fmt.Errorf("%w: %v", ErrInvalidAutoPairConfig, value)
+	if cfg, ok := decodeAutoPairConfig(value); ok {
+		*a = cfg
+		return nil
 	}
-	*a = cfg
-	return nil
+	return fmt.Errorf("%w: %v", ErrInvalidAutoPairConfig, value)
 }
 
 func LoadLanguage(lang string) *Language {
@@ -166,11 +165,10 @@ func DetectLanguage(path, content string) (string, bool) {
 }
 
 func LoadBundledLanguages() (Languages, bool) {
-	base, ok := loader.LoadDefaultLanguagesTOML()
-	if !ok {
-		return Languages{}, false
+	if base, ok := loader.LoadDefaultLanguagesTOML(); ok {
+		return decodeLanguagesMap(base)
 	}
-	return decodeLanguagesMap(base)
+	return Languages{}, false
 }
 
 func LoadLanguagesForWorkspace(
@@ -184,11 +182,10 @@ func LoadLanguagesForWorkspace(
 	if loader.QueryWorkspaceTrust(dir, false) {
 		paths = append(paths, workspace)
 	}
-	merged, ok := loader.LoadMergedTOMLWithBase(base, paths, 3)
-	if !ok {
-		return Languages{}, false
+	if merged, ok := loader.LoadMergedTOMLWithBase(base, paths, 3); ok {
+		return decodeLanguagesMap(merged)
 	}
-	return decodeLanguagesMap(merged)
+	return Languages{}, false
 }
 
 func loadUserWorkspaceLanguages() (Languages, bool) {

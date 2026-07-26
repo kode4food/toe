@@ -103,11 +103,10 @@ func (e *Editor) selectionTextRegister() []string {
 }
 
 func (e *Editor) documentPathRegister() []string {
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return nil
+	if doc, ok := e.FocusedDocument(); ok {
+		return []string{doc.Path()}
 	}
-	return []string{doc.Path()}
+	return nil
 }
 
 func (e *Editor) clipboardRegister(name rune) []string {

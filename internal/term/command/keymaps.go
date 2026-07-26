@@ -90,20 +90,18 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 
 // ResolveCommand looks up a command by typeable alias
 func (k *Keymaps) ResolveCommand(name string) (Command, bool) {
-	idx, ok := k.byAlias[name]
-	if !ok {
-		return Command{}, false
+	if idx, ok := k.byAlias[name]; ok {
+		return k.commands[idx], true
 	}
-	return k.commands[idx], true
+	return Command{}, false
 }
 
 // ResolveCommandIn looks up a command by alias and filters it by mode
 func (k *Keymaps) ResolveCommandIn(mode, name string) (Command, bool) {
-	cmd, ok := k.ResolveCommand(name)
-	if !ok || !cmd.availableIn(mode) {
-		return Command{}, false
+	if cmd, ok := k.ResolveCommand(name); ok && cmd.availableIn(mode) {
+		return cmd, true
 	}
-	return cmd, true
+	return Command{}, false
 }
 
 // Commands returns all registered commands in registration order
@@ -193,11 +191,10 @@ func (k *Keymaps) lookup(
 }
 
 func (k *Keymaps) command(name string) (Command, bool) {
-	idx, ok := k.byName[name]
-	if !ok {
-		return Command{}, false
+	if idx, ok := k.byName[name]; ok {
+		return k.commands[idx], true
 	}
-	return k.commands[idx], true
+	return Command{}, false
 }
 
 func (c Command) availableIn(mode string) bool {

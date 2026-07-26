@@ -45,14 +45,13 @@ func fileWatchFor(pattern protocol.GlobPattern) (fileWatch, bool) {
 		if p == nil {
 			return fileWatch{}, false
 		}
-		base, ok := relativePatternBase(p.BaseURI)
-		if !ok {
-			return fileWatch{}, false
+		if base, ok := relativePatternBase(p.BaseURI); ok {
+			return fileWatch{
+				pattern: filepath.FromSlash(string(p.Pattern)),
+				base:    base,
+			}, true
 		}
-		return fileWatch{
-			pattern: filepath.FromSlash(string(p.Pattern)),
-			base:    base,
-		}, true
+		return fileWatch{}, false
 	default:
 		return fileWatch{}, false
 	}

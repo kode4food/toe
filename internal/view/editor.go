@@ -193,11 +193,10 @@ func (e *Editor) DeleteDocument(did DocumentId) {
 
 // FocusedDocument returns the document displayed by the focused view
 func (e *Editor) FocusedDocument() (*Document, bool) {
-	v, ok := e.FocusedView()
-	if !ok {
-		return nil, false
+	if v, ok := e.FocusedView(); ok {
+		return e.Document(v.DocID())
 	}
-	return e.Document(v.DocID())
+	return nil, false
 }
 
 // Mode returns the mode of the focused view

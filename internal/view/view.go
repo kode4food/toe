@@ -177,11 +177,10 @@ func (v *View) DocID() DocumentId {
 
 // Path returns the path of the document this view displays
 func (v *View) Path() string {
-	doc, ok := v.editor.Document(v.docID)
-	if !ok {
-		return ""
+	if doc, ok := v.editor.Document(v.docID); ok {
+		return doc.Path()
 	}
-	return doc.Path()
+	return ""
 }
 
 // Mode returns the current editing mode

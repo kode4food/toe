@@ -29,37 +29,35 @@ func decodeLanguagesMap(m map[string]any) (Languages, bool) {
 }
 
 func decodeGrammarSelection(value any) GrammarSelection {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return GrammarSelection{}
+	if m, ok := value.(map[string]any); ok {
+		return GrammarSelection{
+			Only:   decodeStringSlice(m["only"]),
+			Except: decodeStringSlice(m["except"]),
+		}
 	}
-	return GrammarSelection{
-		Only:   decodeStringSlice(m["only"]),
-		Except: decodeStringSlice(m["except"]),
-	}
+	return GrammarSelection{}
 }
 
 func decodeGrammars(value any) []Grammar {
-	values, ok := loader.AnySlice(value)
-	if !ok {
-		return nil
-	}
-	out := make([]Grammar, 0, len(values))
-	for _, value := range values {
-		m, ok := value.(map[string]any)
-		if !ok {
-			continue
+	if values, ok := loader.AnySlice(value); ok {
+		out := make([]Grammar, 0, len(values))
+		for _, value := range values {
+			m, ok := value.(map[string]any)
+			if !ok {
+				continue
+			}
+			source, ok := decodeGrammarSource(m["source"])
+			if !ok {
+				continue
+			}
+			out = append(out, Grammar{
+				Name:   stringValueFromMap(m, "name"),
+				Source: source,
+			})
 		}
-		source, ok := decodeGrammarSource(m["source"])
-		if !ok {
-			continue
-		}
-		out = append(out, Grammar{
-			Name:   stringValueFromMap(m, "name"),
-			Source: source,
-		})
+		return out
 	}
-	return out
+	return nil
 }
 
 func decodeGrammarSource(value any) (GrammarSource, bool) {

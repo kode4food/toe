@@ -32,11 +32,10 @@ var (
 func (s *Session) ApplyWorkspaceEdit(
 	server string, edit protocol.WorkspaceEdit,
 ) error {
-	client, ok := s.servers.client(server)
-	if !ok {
-		return view.ErrUnknownLanguageServer
+	if client, ok := s.servers.client(server); ok {
+		return s.applyWorkspaceEdit(edit, client.OffsetEncoding())
 	}
-	return s.applyWorkspaceEdit(edit, client.OffsetEncoding())
+	return view.ErrUnknownLanguageServer
 }
 
 func (s *Session) applyWorkspaceEdit(

@@ -74,11 +74,10 @@ func decodeStringMap(value any) map[string]string {
 }
 
 func decodeAnyMap(value any) map[string]any {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return nil
+	if m, ok := value.(map[string]any); ok {
+		return m
 	}
-	return m
+	return nil
 }
 
 // Low-level helpers

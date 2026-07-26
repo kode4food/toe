@@ -27,11 +27,10 @@ func (r Registers) Read(name rune) []string {
 	if name == '_' {
 		return nil
 	}
-	vals, ok := r[name]
-	if !ok || len(vals) == 0 {
-		return nil
+	if vals, ok := r[name]; ok && len(vals) != 0 {
+		return vals
 	}
-	return vals
+	return nil
 }
 
 // First returns the first value stored under name, or ("", false)

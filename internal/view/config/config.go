@@ -24,12 +24,11 @@ type (
 )
 
 func (a *AutoSave) UnmarshalTOML(value any) error {
-	cfg, ok := decodeAutoSave(value)
-	if !ok {
-		return fmt.Errorf("%w: %v", ErrInvalidOption, value)
+	if cfg, ok := decodeAutoSave(value); ok {
+		*a = cfg
+		return nil
 	}
-	*a = cfg
-	return nil
+	return fmt.Errorf("%w: %v", ErrInvalidOption, value)
 }
 
 // LoadRawConfig returns the raw merged TOML map for the given config file path
@@ -40,13 +39,12 @@ func LoadRawConfig(path string) (map[string]any, bool) {
 // LoadRawConfigForDir returns user config merged with dir's trusted workspace
 // config
 func LoadRawConfigForDir(dir string) (map[string]any, bool) {
-	path, ok := loader.ConfigFile()
-	if !ok {
-		return nil, false
+	if path, ok := loader.ConfigFile(); ok {
+		return LoadRawConfigForWorkspace(
+			path, loader.WorkspaceConfigFile(dir), dir,
+		)
 	}
-	return LoadRawConfigForWorkspace(
-		path, loader.WorkspaceConfigFile(dir), dir,
-	)
+	return nil, false
 }
 
 func LoadRawConfigForWorkspace(
@@ -64,12 +62,11 @@ func LoadRawConfigForWorkspace(
 }
 
 func decodeInsecure(m map[string]any) bool {
-	editor, ok := m["editor"].(map[string]any)
-	if !ok {
-		return false
+	if editor, ok := m["editor"].(map[string]any); ok {
+		v, _ := editor["insecure"].(bool)
+		return v
 	}
-	v, _ := editor["insecure"].(bool)
-	return v
+	return false
 }
 
 func decodeAutoSave(value any) (AutoSave, bool) {
@@ -89,12 +86,11 @@ func decodeAutoSave(value any) (AutoSave, bool) {
 }
 
 func decodeAutoSaveAfterDelay(value any) AutoSaveAfterDelay {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return AutoSaveAfterDelay{}
+	if m, ok := value.(map[string]any); ok {
+		return AutoSaveAfterDelay{
+			Enable:  loader.BoolPtr(m["enable"]),
+			Timeout: loader.IntPtrOrNil(m["timeout"]),
+		}
 	}
-	return AutoSaveAfterDelay{
-		Enable:  loader.BoolPtr(m["enable"]),
-		Timeout: loader.IntPtrOrNil(m["timeout"]),
-	}
+	return AutoSaveAfterDelay{}
 }

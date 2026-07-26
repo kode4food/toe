@@ -160,11 +160,10 @@ func continuedIndent(
 		return structuralIndent(args), false
 	}
 	lang := language.LoadLanguage(doc.Lang())
-	token, ok := core.GetCommentToken(text, lang.CommentTokens, line)
-	if !ok {
-		return structuralIndent(args), false
+	if token, ok := core.GetCommentToken(text, lang.CommentTokens, line); ok {
+		return indent + token + " ", true
 	}
-	return indent + token + " ", true
+	return structuralIndent(args), false
 }
 
 type structuralIndentArgs struct {

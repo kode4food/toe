@@ -77,27 +77,25 @@ func writeReport(w io.Writer, r Report) {
 }
 
 func checkLanguages() Check {
-	langs, ok := language.LoadBundledLanguages()
-	if !ok {
-		return failed("languages", "bundled languages.toml did not parse")
+	if langs, ok := language.LoadBundledLanguages(); ok {
+		return Check{
+			Name:   "languages",
+			OK:     true,
+			Detail: fmt.Sprintf("%d supported", len(langs.Languages)),
+		}
 	}
-	return Check{
-		Name:   "languages",
-		OK:     true,
-		Detail: fmt.Sprintf("%d supported", len(langs.Languages)),
-	}
+	return failed("languages", "bundled languages.toml did not parse")
 }
 
 func checkGrammars() Check {
-	langs, ok := language.LoadBundledLanguages()
-	if !ok {
-		return failed("grammars", "bundled languages.toml did not parse")
+	if langs, ok := language.LoadBundledLanguages(); ok {
+		return Check{
+			Name:   "grammars",
+			OK:     true,
+			Detail: fmt.Sprintf("%d configured", len(langs.Grammars)),
+		}
 	}
-	return Check{
-		Name:   "grammars",
-		OK:     true,
-		Detail: fmt.Sprintf("%d configured", len(langs.Grammars)),
-	}
+	return failed("grammars", "bundled languages.toml did not parse")
 }
 
 func checkThemes() Check {

@@ -11,6 +11,7 @@ import (
 // j/k (or up/down) push the focused split's border in that literal screen
 // direction, one cell per keypress, until Escape or Enter exits
 func (m Model) ResizeViewAction(e *view.Editor) command.Continuation {
+	e.Tree().Unmaximize()
 	e.SetHint(i18n.Text(i18n.HintResize))
 	var cont command.Continuation
 	cont = func(e *view.Editor, k command.KeyEvent) command.Continuation {

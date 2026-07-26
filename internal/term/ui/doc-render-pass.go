@@ -82,15 +82,14 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		// terminal lost focus: use underline so position is still visible
 		kind = view.CursorKindUnderline
 	}
-	at, ok := r.ec.caretScreenPos(r.cx)
-	if !ok {
-		return tea.Cursor{}, false
+	if at, ok := r.ec.caretScreenPos(r.cx); ok {
+		return tea.Cursor{
+			Position: tea.Position{X: at.X, Y: at.Y},
+			Shape:    cursorKindToShape(kind),
+			Blink:    false,
+		}, true
 	}
-	return tea.Cursor{
-		Position: tea.Position{X: at.X, Y: at.Y},
-		Shape:    cursorKindToShape(kind),
-		Blink:    false,
-	}, true
+	return tea.Cursor{}, false
 }
 
 type renderPaneArgs struct {

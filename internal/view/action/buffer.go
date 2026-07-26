@@ -9,14 +9,12 @@ import (
 
 // GotoLastAccessedFile switches to the most recently accessed alternate file
 func GotoLastAccessedFile(e *view.Editor) {
-	did, ok := e.PopPrevDocID()
-	if !ok {
-		return
-	}
-	for _, v := range e.AllViews() {
-		if v.DocID() == did {
-			e.FocusView(v.ID())
-			return
+	if did, ok := e.PopPrevDocID(); ok {
+		for _, v := range e.AllViews() {
+			if v.DocID() == did {
+				e.FocusView(v.ID())
+				return
+			}
 		}
 	}
 }

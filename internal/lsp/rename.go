@@ -154,11 +154,12 @@ func renamePrefillFromResult(
 ) (string, error) {
 	switch r := result.(type) {
 	case *protocol.Range:
-		cr, ok := lspRangeToChars(doc, *r, client.OffsetEncoding())
-		if !ok {
-			return "", ErrWorkspaceEditRange
+		if cr, ok := lspRangeToChars(
+			doc, *r, client.OffsetEncoding(),
+		); ok {
+			return doc.Text().SliceString(cr.From(), cr.To())
 		}
-		return doc.Text().SliceString(cr.From(), cr.To())
+		return "", ErrWorkspaceEditRange
 	case *protocol.PrepareRenamePlaceholder:
 		return r.Placeholder, nil
 	case *protocol.PrepareRenameDefaultBehavior:

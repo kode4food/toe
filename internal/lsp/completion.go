@@ -68,15 +68,14 @@ func (s *Session) Completions(
 func (s *Session) TriggerCompletions(
 	doc *view.Document, viewID view.Id,
 ) (view.CompletionResult, error) {
-	trigger, ok := s.completionTrigger(doc, viewID)
-	if !ok {
-		return view.CompletionResult{}, nil
+	if trigger, ok := s.completionTrigger(doc, viewID); ok {
+		ctx := protocol.CompletionContext{
+			TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
+			TriggerCharacter: &trigger,
+		}
+		return s.completions(doc, viewID, ctx)
 	}
-	ctx := protocol.CompletionContext{
-		TriggerKind:      protocol.CompletionTriggerKindTriggerCharacter,
-		TriggerCharacter: &trigger,
-	}
-	return s.completions(doc, viewID, ctx)
+	return view.CompletionResult{}, nil
 }
 
 // ApplyCompletion applies the selected completion item to the document

@@ -110,11 +110,10 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 }
 
 func (c *Compositor) refreshEditorHighlight(cx *Context) tea.Cmd {
-	root, ok := c.layers[0].(highlightRefresher)
-	if !ok {
-		return nil
+	if root, ok := c.layers[0].(highlightRefresher); ok {
+		return root.documentHighlightCmd(cx)
 	}
-	return root.documentHighlightCmd(cx)
+	return nil
 }
 
 func (c *Compositor) activePreviewImager() (previewImager, bool) {

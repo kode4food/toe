@@ -69,8 +69,9 @@ func SkipPickerPath(args SkipPickerPathArgs) bool {
 		return true
 	}
 	for _, ig := range args.Ignores {
-		sub, ok := ignorePathForBase(args.Rel, args.Path, ig)
-		if ok && ig.ig.MatchesPath(sub) {
+		if sub, ok := ignorePathForBase(
+			args.Rel, args.Path, ig,
+		); ok && ig.ig.MatchesPath(sub) {
 			return true
 		}
 	}

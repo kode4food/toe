@@ -92,11 +92,10 @@ func LoadMergedTOML(paths []string, depth int) (map[string]any, bool) {
 
 // BoolPtr converts a TOML any value to *bool, returning nil for non-bool
 func BoolPtr(value any) *bool {
-	v, ok := value.(bool)
-	if !ok {
-		return nil
+	if v, ok := value.(bool); ok {
+		return &v
 	}
-	return &v
+	return nil
 }
 
 // IntPtr converts a TOML any value to (*int, bool)
@@ -119,11 +118,10 @@ func IntPtrOrNil(value any) *int {
 
 // StringPtr converts a TOML any value to *string, returning nil for non-string
 func StringPtr(value any) *string {
-	v, ok := value.(string)
-	if !ok {
-		return nil
+	if v, ok := value.(string); ok {
+		return &v
 	}
-	return &v
+	return nil
 }
 
 func mergeTOMLArrays(left, right []any, depth int) []any {

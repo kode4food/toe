@@ -55,11 +55,10 @@ func decodeLanguageServerFeature(value any) (ServerFeatures, bool) {
 	case string:
 		return ServerFeatures{Name: v}, true
 	case map[string]any:
-		name, ok := v["name"].(string)
-		if !ok {
-			return ServerFeatures{}, false
+		if name, ok := v["name"].(string); ok {
+			return ServerFeatures{Name: name}, true
 		}
-		return ServerFeatures{Name: name}, true
+		return ServerFeatures{}, false
 	default:
 		return ServerFeatures{}, false
 	}

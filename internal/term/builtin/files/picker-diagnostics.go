@@ -142,11 +142,10 @@ func diagnosticPickerDocuments(
 		})
 		return docs
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
-		return nil
+	if doc, ok := e.FocusedDocument(); ok {
+		return []*view.Document{doc}
 	}
-	return []*view.Document{doc}
+	return nil
 }
 
 func diagnosticPickerColumns(workspace bool) []string {

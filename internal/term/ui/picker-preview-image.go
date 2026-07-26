@@ -46,16 +46,15 @@ func (p *previewImageEntry) renderInto(
 func (p *PickerComponent) previewImageCmd(
 	cx *Context, screen geom.Size,
 ) tea.Cmd {
-	res, ok := p.previewImage(cx, screen)
-	if !ok {
-		return nil
+	if res, ok := p.previewImage(cx, screen); ok {
+		return cx.images.display(displayArgs{
+			img:   res.entry.image,
+			path:  res.entry.path,
+			id:    res.entry.id,
+			cells: res.cells,
+		})
 	}
-	return cx.images.display(displayArgs{
-		img:   res.entry.image,
-		path:  res.entry.path,
-		id:    res.entry.id,
-		cells: res.cells,
-	})
+	return nil
 }
 
 func (p *PickerComponent) hasPreviewImage(

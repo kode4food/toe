@@ -167,11 +167,10 @@ func (s *Session) workspaceFolders() []protocol.WorkspaceFolder {
 func (s *Session) offsetForProvider(
 	provider string,
 ) protocol.PositionEncodingKind {
-	client, ok := s.servers.client(provider)
-	if !ok {
-		return protocol.PositionEncodingKindUTF16
+	if client, ok := s.servers.client(provider); ok {
+		return client.OffsetEncoding()
 	}
-	return client.OffsetEncoding()
+	return protocol.PositionEncodingKindUTF16
 }
 
 func (s *Session) workspaceRoot(
@@ -255,11 +254,10 @@ func (s *serverState) language(name string) (language.Language, bool) {
 }
 
 func (s *serverState) languageID(name string) string {
-	lang, ok := s.language(name)
-	if !ok {
-		return ""
+	if lang, ok := s.language(name); ok {
+		return lang.LanguageID
 	}
-	return lang.LanguageID
+	return ""
 }
 
 func (s *serverState) removeNamed(names []string) []*Client {
@@ -359,11 +357,12 @@ func selectLanguageServers(
 }
 
 func clientSupportsCommand(client *Client, name string) bool {
-	capabilities, ok := client.Capabilities()
-	if !ok {
-		return false
+	if capabilities, ok := client.Capabilities(); ok {
+		return slices.Contains(
+			capabilities.ExecuteCommandProvider.Commands, name,
+		)
 	}
-	return slices.Contains(capabilities.ExecuteCommandProvider.Commands, name)
+	return false
 }
 
 func stringsToLSPAny(args []string) []protocol.LSPAny {

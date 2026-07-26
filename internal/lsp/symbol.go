@@ -220,11 +220,10 @@ func (s *Session) nestedSymbols(
 func workspaceSymbolLocation(
 	sym protocol.WorkspaceSymbol,
 ) (protocol.Location, bool) {
-	loc, ok := sym.Location.(*protocol.Location)
-	if !ok || loc == nil {
-		return protocol.Location{}, false
+	if loc, ok := sym.Location.(*protocol.Location); ok && loc != nil {
+		return *loc, true
 	}
-	return *loc, true
+	return protocol.Location{}, false
 }
 
 func symbolKind(kind protocol.SymbolKind) string {

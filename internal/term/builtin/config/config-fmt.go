@@ -27,7 +27,7 @@ var (
 	errExpectedIndent    = i18n.NewError(i18n.ErrorExpectedIndent)
 )
 
-func configFormatCmds() []command.Command {
+func formatCmds() []command.Command {
 	return []command.Command{
 		{
 			Name: actSetLanguage,

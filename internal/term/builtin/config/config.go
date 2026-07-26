@@ -62,10 +62,10 @@ func terminalTrueColor() bool {
 // ConfigurationModule returns the option and config commands
 func ConfigurationModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
-	cmds := configOptionCmds(r)
-	cmds = append(cmds, configSystemCmds()...)
-	cmds = append(cmds, configThemeCmds()...)
-	cmds = append(cmds, configFormatCmds()...)
+	cmds := optionCmds(r)
+	cmds = append(cmds, systemCmds()...)
+	cmds = append(cmds, themeCmds()...)
+	cmds = append(cmds, formatCmds()...)
 	return command.Module{
 		Commands: cmds,
 		Options: []command.Option{
@@ -245,7 +245,7 @@ func ConfigurationModule(r *command.Registry) command.Module {
 	}
 }
 
-func configOptionCmds(r *command.Registry) []command.Command {
+func optionCmds(r *command.Registry) []command.Command {
 	return []command.Command{
 		{
 			Name:      actGetOption,

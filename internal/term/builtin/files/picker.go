@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	filesPickerSection struct {
+	pickerSection struct {
 		Editor struct {
 			BufferPicker BufferPickerOptions `toml:"buffer-picker"`
 			FileExplorer fileExplorerConfig  `toml:"file-explorer"`
@@ -40,9 +40,9 @@ const (
 
 // PickerModule returns the file, buffer, and explorer picker commands
 func PickerModule(model ui.Model) command.Module {
-	cfg := new(filesPickerSection)
+	cfg := new(pickerSection)
 	reset := func() {
-		*cfg = filesPickerSection{}
+		*cfg = pickerSection{}
 		cfg.Editor.FileExplorer = fileExplorerConfig(
 			DefaultFileExplorerOptions(),
 		)

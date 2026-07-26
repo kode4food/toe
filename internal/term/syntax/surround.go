@@ -109,7 +109,7 @@ func isBracketNodeAny(n *sitter.Node) bool {
 		return false
 	}
 	fk, lk := first.Kind(), last.Kind()
-	for _, pair := range syntaxBrackets {
+	for _, pair := range brackets {
 		if fk == string(pair[0]) && lk == string(pair[1]) {
 			return true
 		}

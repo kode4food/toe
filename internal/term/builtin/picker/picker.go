@@ -13,22 +13,22 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-type pickerSection struct {
+type section struct {
 	Editor struct {
 		Picker ui.PickerLayoutOptions `toml:"picker"`
 	} `toml:"editor"`
 }
 
 const (
-	actCommandPalette       = "command_palette"
-	actLastPicker           = "last_picker"
-	pickerSplitRatiosPrefix = "editor.picker.split-ratios."
+	actCommandPalette = "command_palette"
+	actLastPicker     = "last_picker"
+	splitRatiosPrefix = "picker.split-ratios."
 )
 
 // Module returns the generic, concern-independent pickers: the command
 // palette and reopen-last-picker
 func Module(model ui.Model) command.Module {
-	cfg := new(pickerSection)
+	cfg := new(section)
 
 	return command.Module{
 		Commands: []command.Command{
@@ -49,25 +49,25 @@ func Module(model ui.Model) command.Module {
 		},
 		Section: &command.Section{
 			Config: cfg,
-			Reset:  func() { *cfg = pickerSection{} },
+			Reset:  func() { *cfg = section{} },
 			Apply: func(*view.Editor) {
 				model.SetPickerLayoutOptions(cfg.Editor.Picker)
 			},
 		},
 		Options: []command.Option{
-			pickerSplitRatiosOption(model),
+			splitRatiosOption(model),
 		},
 	}
 }
 
-func pickerSplitRatiosOption(model ui.Model) command.Option {
+func splitRatiosOption(model ui.Model) command.Option {
 	return command.Option{
-		Key: pickerSplitRatiosPrefix,
+		Key: splitRatiosPrefix,
 		KeyGet: func(*view.Editor) (map[string]string, error) {
 			ratios := model.PickerLayoutOptions().SplitRatios
 			out := make(map[string]string, len(ratios))
 			for key, ratio := range ratios {
-				out[pickerSplitRatiosPrefix+key] = strconv.FormatFloat(
+				out[splitRatiosPrefix+key] = strconv.FormatFloat(
 					ratio, 'f', -1, 64,
 				)
 			}
@@ -75,10 +75,10 @@ func pickerSplitRatiosOption(model ui.Model) command.Option {
 		},
 		KeySet: func(_ *view.Editor, key, s string) error {
 			name := strings.TrimSpace(key)
-			if len(name) <= len(pickerSplitRatiosPrefix) {
+			if len(name) <= len(splitRatiosPrefix) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, key)
 			}
-			name = name[len(pickerSplitRatiosPrefix):]
+			name = name[len(splitRatiosPrefix):]
 			ratio, err := strconv.ParseFloat(s, 64)
 			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)

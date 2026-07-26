@@ -10,7 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-type shellSection struct {
+type section struct {
 	Editor struct {
 		Shell []string `toml:"shell"`
 	} `toml:"editor"`
@@ -26,7 +26,7 @@ const (
 
 // Module returns the shell-pipe and shell command bindings
 func Module(model ui.Model) command.Module {
-	cfg := new(shellSection)
+	cfg := new(section)
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -96,7 +96,7 @@ func Module(model ui.Model) command.Module {
 		},
 		Section: &command.Section{
 			Config: cfg,
-			Reset:  func() { *cfg = shellSection{} },
+			Reset:  func() { *cfg = section{} },
 			Apply: func(e *view.Editor) {
 				if len(cfg.Editor.Shell) > 0 {
 					e.Options().Shell = cfg.Editor.Shell

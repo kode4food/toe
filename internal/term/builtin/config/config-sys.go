@@ -20,7 +20,7 @@ var (
 	errLogUnavailable     = i18n.NewError(i18n.ErrorLogUnavailable)
 )
 
-func configSystemCmds() []command.Command {
+func systemCmds() []command.Command {
 	return []command.Command{
 		{
 			Name:      actConfigOpen,
@@ -101,7 +101,7 @@ func configSystemCmds() []command.Command {
 	}
 }
 
-func configThemeCmds() []command.Command {
+func themeCmds() []command.Command {
 	return []command.Command{
 		{
 			Name: actTheme,

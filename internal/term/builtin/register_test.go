@@ -136,7 +136,7 @@ func TestDefaults(t *testing.T) {
 			"statusline.mode.normal",
 			"statusline.mode.insert",
 			"statusline.mode.select",
-			"editor.picker.split-ratios.diagnostics",
+			"picker.split-ratios.diagnostics",
 			"buffer-picker.start-position",
 			"file-explorer.hidden",
 			"file-explorer.follow-symlinks",

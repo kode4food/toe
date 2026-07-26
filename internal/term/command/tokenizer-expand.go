@@ -46,7 +46,7 @@ func (t *Tokenizer) parsePercentToken() (Token, error) {
 	}
 
 	contentStart := t.pos + 1
-	kind, ok := commandExpansionKind(kindText)
+	kind, ok := expansionKind(kindText)
 	if !ok && t.validate {
 		return Token{}, &SyntaxError{
 			Kind: SyntaxErrorUnknownExpansion,
@@ -102,7 +102,7 @@ func (t *Tokenizer) parseDelimited(openDelim, closeDelim byte) (string, bool) {
 	return t.input[start:], false
 }
 
-func commandExpansionKind(name string) (ExpansionKind, bool) {
+func expansionKind(name string) (ExpansionKind, bool) {
 	k, ok := expansionKindNames[name]
 	return k, ok
 }

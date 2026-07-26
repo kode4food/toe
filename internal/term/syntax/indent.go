@@ -35,7 +35,7 @@ func IndentForNewline(
 	if !ok || !indentAfter(ch) || matchingCloseAt(src, chPos+1, ch) {
 		return indent, true
 	}
-	if syntaxStringOrComment(src, language, chPos) {
+	if stringOrComment(src, language, chPos) {
 		return indent, true
 	}
 	return indent + style.AsStr(), true
@@ -111,7 +111,7 @@ func matchingCloseAt(src string, pos int, open rune) bool {
 	}
 }
 
-func syntaxStringOrComment(
+func stringOrComment(
 	src string, language *sitter.Language, pos int,
 ) bool {
 	p := sitter.NewParser()

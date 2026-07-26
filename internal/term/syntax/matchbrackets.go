@@ -2,7 +2,7 @@ package syntax
 
 import sitter "github.com/tree-sitter/go-tree-sitter"
 
-var syntaxBrackets = [][2]rune{
+var brackets = [][2]rune{
 	{'(', ')'},
 	{'{', '}'},
 	{'[', ']'},
@@ -72,7 +72,7 @@ func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 }
 
 func bracketPairFor(ch rune) (open, close rune, ok bool) {
-	for _, p := range syntaxBrackets {
+	for _, p := range brackets {
 		if p[0] == ch || p[1] == ch {
 			return p[0], p[1], true
 		}

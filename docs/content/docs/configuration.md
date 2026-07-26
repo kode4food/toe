@@ -100,7 +100,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | Config key | Type | Default | Description |
 |--------|------|---------|-------------|
 | `line-number` | string | `"absolute"` | `absolute` or `relative` |
-| `cursorline` | bool | `true` | Highlight cursor line |
+| `cursorline` | bool | `false` | Highlight cursor line |
 | `cursorcolumn` | bool | `false` | Highlight cursor column |
 | `text-width` | int | `80` | Text width (used by rulers and reflow) |
 | `rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
@@ -235,7 +235,7 @@ right = ["version-control", "diagnostics", "position"]
 
 ### Pickers
 
-Picker split ratios can be changed at runtime with commands such as `:set editor.picker.split-ratios.diagnostics 0.65` and are saved by auto-session.
+Picker split ratios can be changed at runtime with commands such as `:set picker.split-ratios.diagnostics 0.65` and are saved by auto-session.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|

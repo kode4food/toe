@@ -48,12 +48,6 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
 
-		select {
-		case <-tp.Updates():
-		case <-time.After(2 * time.Second):
-			t.Fatal("expected an update signal for the shell's startup output")
-		}
-
 		cont = m.TerminalAction()(e)
 		assert.Nil(t, cont)
 
@@ -104,11 +98,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
 
-		select {
-		case <-tp.Updates():
-		case <-time.After(2 * time.Second):
-			t.Fatal("expected the fallback shell to produce output")
-		}
+		waitForShellOutput(t, tp)
 	})
 
 	t.Run("renders every underline style", func(t *testing.T) {
@@ -911,6 +901,25 @@ func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {
 	case <-time.After(d):
 		return nil, false
 	}
+}
+
+// waitForShellOutput blocks until the shell produces any output, seen as the
+// cursor advancing or a visible cell on the first row
+func waitForShellOutput(t *testing.T, tp *ui.TerminalPane) {
+	t.Helper()
+	emu := tp.Emulator()
+	assert.Eventually(t, func() bool {
+		if pos := emu.CursorPosition(); pos.X != 0 || pos.Y != 0 {
+			return true
+		}
+		for x := range emu.Width() {
+			if c := emu.CellAt(x, 0); c != nil && c.Content != "" &&
+				c.Content != " " {
+				return true
+			}
+		}
+		return false
+	}, 5*time.Second, 5*time.Millisecond)
 }
 
 // waitForResize confirms writes use the pane's real dimensions; synchronous

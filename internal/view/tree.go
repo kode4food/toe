@@ -15,6 +15,7 @@ type (
 		area      geom.Area
 		nodes     map[Id]*treeNode
 		nextID    Id
+		redraw    func()
 	}
 
 	// Pane is the interface implemented by every split tree leaf
@@ -31,6 +32,12 @@ type (
 		Close()
 		Discard()
 		Shutdown()
+	}
+
+	// AsyncRenderer marks a pane that mutates outside the event loop; the tree
+	// hands it a redraw hook on insertion so it can wake the render loop
+	AsyncRenderer interface {
+		SetRedraw(func())
 	}
 
 	treeContainer struct {
@@ -89,13 +96,24 @@ func newTree(size geom.Size) *Tree {
 	return t
 }
 
+// SetRedraw installs the hook the tree hands to [AsyncRenderer] panes on
+// insertion, wiring any that are already present
+func (t *Tree) SetRedraw(fn func()) {
+	t.redraw = fn
+	for _, n := range t.nodes {
+		if ar, ok := n.pane.(AsyncRenderer); ok {
+			ar.SetRedraw(fn)
+		}
+	}
+}
+
 // Insert adds a pane as the next sibling after the currently focused pane
 func (t *Tree) Insert(p Pane) Id {
 	focus := t.focus
 	parent := t.nodes[focus].parent
 
 	id := t.allocID()
-	p.SetID(id)
+	t.attach(p, id)
 	t.nodes[id] = &treeNode{parent: parent, pane: p}
 
 	c := t.nodes[parent].container
@@ -117,7 +135,7 @@ func (t *Tree) ReplacePane(id Id, p Pane) {
 	if !ok || n.pane == nil {
 		return
 	}
-	p.SetID(id)
+	t.attach(p, id)
 	p.SetArea(n.pane.Area())
 	n.pane = p
 	if t.focus == id {
@@ -162,7 +180,7 @@ func (t *Tree) Split(p Pane, layout Layout) Id {
 	parent := t.nodes[focus].parent
 
 	id := t.allocID()
-	p.SetID(id)
+	t.attach(p, id)
 	t.nodes[id] = &treeNode{pane: p}
 
 	parentC := t.nodes[parent].container
@@ -392,4 +410,15 @@ func (t *Tree) rangePane(id Id, fn func(Pane) bool) bool {
 		}
 	}
 	return true
+}
+
+// wires the pane id and, for async panes, its redraw hook on insertion
+func (t *Tree) attach(p Pane, id Id) {
+	p.SetID(id)
+	if t.redraw == nil {
+		return
+	}
+	if ar, ok := p.(AsyncRenderer); ok {
+		ar.SetRedraw(t.redraw)
+	}
 }

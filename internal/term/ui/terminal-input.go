@@ -11,16 +11,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type (
-	terminalDragScrollMsg struct {
-		dc    Draggable
-		gen   int
-		toTop bool
-	}
-	terminalPollMsg struct{}
-)
-
-const terminalPollInterval = 40 * time.Millisecond
+type terminalDragScrollMsg struct {
+	dc    Draggable
+	gen   int
+	toTop bool
+}
 
 // CloseAllTerminalPanes kills every open terminal's shell, including ones
 // stashed behind a replacement, so the process doesn't orphan them on exit
@@ -228,12 +223,6 @@ func paneAt(cx *Context, at geom.Point) (view.Pane, bool) {
 		return true
 	})
 	return found, found != nil
-}
-
-func terminalPollCmd() tea.Cmd {
-	return tea.Tick(terminalPollInterval, func(time.Time) tea.Msg {
-		return terminalPollMsg{}
-	})
 }
 
 func closeTerminal(e *view.Editor, tp *TerminalPane) {

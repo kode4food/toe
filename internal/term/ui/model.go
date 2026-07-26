@@ -24,6 +24,8 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 			doc.Text(), doc.Lang(), line, pos, doc.IndentStyle(),
 		)
 	})
+	ec := newEditorComponent()
+	editor.Tree().SetRedraw(ec.requestRedraw)
 	registerImagePane(editor)
 	registerTerminalPane(editor)
 	cx := &Context{
@@ -33,7 +35,6 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		images:       newImageRegistry(),
 		pickerLayout: PickerLayoutOptions{},
 	}
-	ec := newEditorComponent()
 	comp := &Compositor{}
 	comp.Push(ec)
 	return Model{
@@ -45,7 +46,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 			vcsUpdateCmd(cx),
 			vcsRefreshCmd(cx),
 			spinnerTickCmd(),
-			terminalPollCmd(),
+			ec.redrawCmd(),
 		),
 	}
 }

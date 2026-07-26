@@ -104,24 +104,26 @@ func (e *EditorComponent) handleExternalFileChanged(
 	return consumed(), e.fileWatchCmd(cx)
 }
 
-// reloadChangedImages re-decodes any image pane whose file matches path
-func reloadChangedImages(e *view.Editor, path string) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return
-	}
-	rangeImagePanes(e, func(img *ImagePane) {
-		if img.Path() == abs {
-			_ = img.Reload()
-		}
-	})
+func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
+	// the frame repaints on its own; we only reap closed terminals, then re-arm
+	e.pollTerminals(cx)
+	return consumed(), e.redrawCmd()
 }
 
-func (e *EditorComponent) handleTerminalPoll(
-	cx *Context,
-) (EventResult, tea.Cmd) {
-	e.pollTerminals(cx)
-	return consumed(), terminalPollCmd()
+// the hook handed to panes that mutate off the event loop; a pane calls it to
+// signal a change, leaving the frame policy to the render loop
+func (e *EditorComponent) requestRedraw() {
+	select {
+	case e.redraw <- struct{}{}:
+	default:
+	}
+}
+
+func (e *EditorComponent) redrawCmd() tea.Cmd {
+	return func() tea.Msg {
+		<-e.redraw
+		return redrawMsg{}
+	}
 }
 
 func (e *EditorComponent) handleVCSUpdated(cx *Context) (EventResult, tea.Cmd) {
@@ -281,6 +283,19 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 	if cur.Anchor != down.Anchor || cur.Head != down.Head {
 		action.YankToPrimaryClipboard(cx.Editor)
 	}
+}
+
+// reloadChangedImages re-decodes any image pane whose file matches path
+func reloadChangedImages(e *view.Editor, path string) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return
+	}
+	rangeImagePanes(e, func(img *ImagePane) {
+		if img.Path() == abs {
+			_ = img.Reload()
+		}
+	})
 }
 
 func vcsUpdateCmd(cx *Context) tea.Cmd {

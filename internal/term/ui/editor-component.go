@@ -29,6 +29,7 @@ type (
 		focused         bool
 		fileWatcher     *editorFileWatcher
 		spinFrame       int
+		redraw          chan struct{}
 	}
 
 	keyState struct {
@@ -95,6 +96,8 @@ type (
 	vcsRefreshMsg struct{}
 
 	spinnerTickMsg struct{}
+
+	redrawMsg struct{}
 )
 
 const (
@@ -114,6 +117,7 @@ func newEditorComponent() *EditorComponent {
 		macroSlot:   &macroSlot{macros: map[rune][]command.KeyEvent{}},
 		focused:     true,
 		fileWatcher: newEditorFileWatcher(),
+		redraw:      make(chan struct{}, 1),
 		mouse: mouseState{
 			vertical: mouseAutoScrollAxis{
 				scroll: func(e *view.Editor, v *view.View, toLo bool) {
@@ -179,8 +183,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleCompletionMsg(cx, msg)
 	case externalFileChangedMsg:
 		return e.handleExternalFileChanged(cx, msg)
-	case terminalPollMsg:
-		return e.handleTerminalPoll(cx)
+	case redrawMsg:
+		return e.handleRedraw(cx)
 	case vcsUpdatedMsg:
 		return e.handleVCSUpdated(cx)
 	case vcsRefreshMsg:

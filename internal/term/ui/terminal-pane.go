@@ -40,7 +40,7 @@ type (
 		pty     *os.File
 		cmd     *exec.Cmd
 		clip    view.Clipboard
-		updates chan struct{}
+		notify  func()
 		closed  chan struct{}
 		restore view.Pane
 		scrollN int
@@ -68,11 +68,12 @@ type (
 var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
 
 var (
-	_ view.Pane  = (*TerminalPane)(nil)
-	_ PaneInput  = (*TerminalPane)(nil)
-	_ PaneCursor = (*TerminalPane)(nil)
-	_ Pasteable  = (*TerminalPane)(nil)
-	_ Draggable  = (*TerminalPane)(nil)
+	_ view.Pane          = (*TerminalPane)(nil)
+	_ view.AsyncRenderer = (*TerminalPane)(nil)
+	_ PaneInput          = (*TerminalPane)(nil)
+	_ PaneCursor         = (*TerminalPane)(nil)
+	_ Pasteable          = (*TerminalPane)(nil)
+	_ Draggable          = (*TerminalPane)(nil)
 )
 
 // NewTerminalPane spawns shell in a PTY and pumps its output into a VT emulator
@@ -106,11 +107,11 @@ func NewTerminalPaneInDir(
 		pty:    f,
 		cmd:    cmd,
 		clip:   e.Clipboard(),
+		notify: func() {},
 		metadata: metadataState{
 			path: path,
 		},
-		updates: make(chan struct{}, 1),
-		closed:  make(chan struct{}),
+		closed: make(chan struct{}),
 	}
 	tp.emu.SetCallbacks(vt.Callbacks{
 		Title:       tp.setTitle,
@@ -180,6 +181,12 @@ func (t *TerminalPane) MarkDirty() {
 	t.dirty = true
 }
 
+// SetRedraw installs the hook the shell calls to wake the render loop when it
+// mutates the pane off the event loop; the tree wires it on insertion
+func (t *TerminalPane) SetRedraw(fn func()) {
+	t.notify = fn
+}
+
 // Mode reports [view.ModeTerminal], since a terminal pane has no
 // insert/select/normal distinction
 func (t *TerminalPane) Mode() view.Mode {
@@ -232,11 +239,6 @@ func (t *TerminalPane) Cursor(cx *Context) (tea.Cursor, bool) {
 		Position: tea.Position{X: a.X + pos.X, Y: yOff + pos.Y},
 		Shape:    tea.CursorBlock,
 	}, true
-}
-
-// Updates delivers a signal each time new output arrives from the shell
-func (t *TerminalPane) Updates() <-chan struct{} {
-	return t.updates
 }
 
 // Closed delivers a signal once the shell process has exited
@@ -335,10 +337,7 @@ func (t *TerminalPane) Stop() error {
 func (t *TerminalPane) IngestOutput(data []byte) {
 	_, _ = t.emu.Write(data)
 	t.dirty = true
-	select {
-	case t.updates <- struct{}{}:
-	default:
-	}
+	t.notify()
 }
 
 // ConsumeBell reports whether the bell has rung since it was last consumed. A
@@ -434,6 +433,7 @@ func (t *TerminalPane) pump() {
 		}
 		if err != nil {
 			close(t.closed)
+			t.notify()
 			return
 		}
 	}

@@ -80,7 +80,7 @@ func (r *renderPass) contentViewAt(at geom.Point) (*view.View, bool) {
 		return nil, false
 	}
 	var found *view.View
-	r.cx.Editor.Tree().Range(func(p view.Pane) bool {
+	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		v, ok := p.(*view.View)
 		if !ok {
 			return true

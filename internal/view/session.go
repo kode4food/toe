@@ -21,6 +21,7 @@ type (
 		Version   int               `toml:"version"`
 		Options   sessionOptions    `toml:"option,omitempty"`
 		Registers sessionRegisters  `toml:"register,omitempty"`
+		Maximized bool              `toml:"maximized,omitempty"`
 		Documents []sessionDocument `toml:"document"`
 		Layout    sessionNode       `toml:"layout"`
 	}
@@ -96,7 +97,8 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	docIndex := map[DocumentId]int{}
 	base := sessionBase(path)
 	s := editorSession{
-		Version: sessionVersion,
+		Version:   sessionVersion,
+		Maximized: e.panes.tree.Maximized(),
 	}
 	keys := slices.Sorted(maps.Keys(opts))
 	if len(keys) > 0 {
@@ -233,6 +235,9 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		t.focus = rs.focus
 	} else {
 		t.focus = t.Traverse()[0].ID()
+	}
+	if s.Maximized && t.Count() > 1 {
+		t.maximized = t.focus
 	}
 	t.recalculate()
 

@@ -70,6 +70,7 @@ const (
 	actSwapViewUp             = "swap_view_up"
 	actSwapViewRight          = "swap_view_right"
 	actRotateView             = "rotate_view"
+	actTogglePaneMaximized    = "toggle_pane_maximized"
 	actResizeView             = "resize_view"
 )
 
@@ -364,6 +365,14 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(action.RotateView),
 				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
 				Keys:      kit.Window(kit.Char('w'), kit.Ctrl('w')),
+			},
+			{
+				Name:      actTogglePaneMaximized,
+				DocString: "Toggle focused pane maximized",
+				Run:       kit.Runner(action.TogglePaneMaximized),
+				Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
+				Keys:      kit.Window(kit.Char('z')),
+				Signature: kit.Sig(),
 			},
 			{
 				Name:      actJumpViewLeft,

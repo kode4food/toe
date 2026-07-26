@@ -183,7 +183,7 @@ func (r *imageRegistry) readySize(id uint32) (geom.Size, bool) {
 
 func (m Model) imageDisplayCmd() tea.Cmd {
 	var cmds []tea.Cmd
-	m.context.Editor.Tree().Range(func(p view.Pane) bool {
+	m.context.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		pane, ok := p.(*ImagePane)
 		if !ok {
 			return true

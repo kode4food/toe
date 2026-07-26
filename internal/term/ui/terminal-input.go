@@ -219,7 +219,7 @@ func paneAt(cx *Context, at geom.Point) (view.Pane, bool) {
 	}
 	at.Y -= yOff
 	var found view.Pane
-	cx.Editor.Tree().Range(func(p view.Pane) bool {
+	cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		a := p.Area()
 		if a.Contains(at) {
 			found = p

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -49,11 +50,7 @@ var (
 )
 
 func statusElemMode(s *statusElemCtx) statusElem {
-	return statusElem{
-		text:    " " + s.opts.ModeNameForMode(s.mode) + " ",
-		style:   s.modeSt,
-		compact: true,
-	}
+	return statusBadge(s.opts.ModeNameForMode(s.mode), s.modeSt)
 }
 
 func statusElemSeparator(s *statusElemCtx) statusElem {
@@ -219,5 +216,14 @@ func statusElemRegister(s *statusElemCtx) statusElem {
 	return statusElem{
 		text:  fmt.Sprintf("reg=%c", s.reg),
 		style: s.baseTUI,
+	}
+}
+
+func statusBadge(text string, style tui.Style) statusElem {
+	return statusElem{
+		text:    " " + text + " ",
+		style:   style,
+		pinned:  true,
+		compact: true,
 	}
 }

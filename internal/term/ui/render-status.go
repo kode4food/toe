@@ -10,6 +10,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -200,7 +201,62 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	left := collectElems(opts.StatusLineLeft())
 	right := collectElems(opts.StatusLineRight())
+	right = r.withMaximizedStatus(right)
+	renderStatusElems(renderStatusElemsArgs{
+		buf:       buf,
+		at:        args.at,
+		width:     width,
+		baseStyle: baseTUI,
+		left:      left,
+		right:     right,
+	})
+}
 
+func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
+	if !r.cx.Editor.Tree().Maximized() {
+		return elems
+	}
+	return append(
+		elems,
+		statusBadge(
+			i18n.Text(i18n.StatusPaneMaximized),
+			r.activeTheme().Get("ui.statusline.maximized"),
+		),
+	)
+}
+
+func (r *renderPass) activeTheme() *theme.Theme {
+	return r.cx.Theme()
+}
+
+func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
+	th := r.activeTheme()
+	if errorMsg {
+		return th.Get("error")
+	}
+	return th.Get("ui.statusline")
+}
+
+func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {
+	if fn, ok := statusElemFns[e.Element]; ok {
+		se := fn(s)
+		se.kind = e.Element
+		se.pinned = se.pinned || e.Pinned
+		return se
+	}
+	return statusElem{}
+}
+
+type renderStatusElemsArgs struct {
+	buf       *tui.Buffer
+	at        geom.Point
+	width     int
+	baseStyle tui.Style
+	left      []statusElem
+	right     []statusElem
+}
+
+func renderStatusElems(args renderStatusElemsArgs) {
 	elemsWidth := func(elems []statusElem) int {
 		w := 0
 		for _, e := range elems {
@@ -226,7 +282,8 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		}
 		return elems, false
 	}
-	for elemsWidth(left)+elemsWidth(right) > width {
+	left, right := args.left, args.right
+	for elemsWidth(left)+elemsWidth(right) > args.width {
 		var ok bool
 		if right, ok = dropOne(right, false); ok {
 			continue
@@ -239,44 +296,27 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	writeElems := func(elems []statusElem, x int) {
 		for _, e := range elems {
 			if !e.compact {
-				buf.SetString(geom.Point{X: x, Y: args.at.Y}, " ", baseTUI)
+				args.buf.SetString(
+					geom.Point{X: x, Y: args.at.Y}, " ", args.baseStyle,
+				)
 				x++
 			}
-			buf.SetString(geom.Point{X: x, Y: args.at.Y}, e.text, e.style)
+			args.buf.SetString(
+				geom.Point{X: x, Y: args.at.Y}, e.text, e.style,
+			)
 			x += runewidth.StringWidth(e.text)
 			if !e.compact {
-				buf.SetString(geom.Point{X: x, Y: args.at.Y}, " ", baseTUI)
+				args.buf.SetString(
+					geom.Point{X: x, Y: args.at.Y}, " ", args.baseStyle,
+				)
 				x++
 			}
 		}
 	}
 
-	buf.SetString(args.at, strings.Repeat(" ", width), baseTUI)
-
+	args.buf.SetString(
+		args.at, strings.Repeat(" ", args.width), args.baseStyle,
+	)
 	writeElems(left, args.at.X)
-
-	rightW := elemsWidth(right)
-	writeElems(right, args.at.X+width-rightW)
-}
-
-func (r *renderPass) activeTheme() *theme.Theme {
-	return r.cx.Theme()
-}
-
-func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
-	th := r.activeTheme()
-	if errorMsg {
-		return th.Get("error")
-	}
-	return th.Get("ui.statusline")
-}
-
-func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {
-	if fn, ok := statusElemFns[e.Element]; ok {
-		se := fn(s)
-		se.kind = e.Element
-		se.pinned = e.Pinned
-		return se
-	}
-	return statusElem{}
+	writeElems(right, args.at.X+args.width-elemsWidth(right))
 }

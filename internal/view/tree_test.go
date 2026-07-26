@@ -62,6 +62,57 @@ func TestSeparatorAt(t *testing.T) {
 	})
 }
 
+func TestTreeMaximized(t *testing.T) {
+	t.Run("restores split layout", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		tree := e.Tree()
+		panes := tree.Traverse()
+		before := []geom.Area{panes[0].Area(), panes[1].Area()}
+
+		tree.ToggleMaximized()
+
+		assert.True(t, tree.Maximized())
+		assert.Equal(t,
+			geom.Area{Size: geom.Size{Width: 80, Height: 24}},
+			e.FocusedPane().Area(),
+		)
+		visible := 0
+		tree.RangeVisible(func(view.Pane) bool {
+			visible++
+			return true
+		})
+		assert.Equal(t, 1, visible)
+		_, ok := tree.SeparatorAt(geom.Point{X: before[0].Width})
+		assert.False(t, ok)
+
+		tree.ToggleMaximized()
+
+		assert.False(t, tree.Maximized())
+		assert.Equal(t, before[0], panes[0].Area())
+		assert.Equal(t, before[1], panes[1].Area())
+	})
+
+	t.Run("focus change restores layout", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		tree := e.Tree()
+		panes := tree.Traverse()
+		before := []geom.Area{panes[0].Area(), panes[1].Area()}
+		tree.ToggleMaximized()
+
+		tree.SetFocus(tree.Focus())
+		assert.True(t, tree.Maximized())
+
+		tree.SetFocus(panes[0].ID())
+		assert.False(t, tree.Maximized())
+		assert.Equal(t, before[0], panes[0].Area())
+		assert.Equal(t, before[1], panes[1].Area())
+	})
+}
+
 func TestMoveSeparator(t *testing.T) {
 	t.Run("vertical split resizes panes", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

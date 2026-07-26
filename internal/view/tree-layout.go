@@ -16,6 +16,10 @@ func (t *Tree) recalculate() {
 		t.focus = t.root
 		return
 	}
+	if t.maximized != 0 {
+		t.nodes[t.maximized].pane.SetArea(t.area)
+		return
+	}
 
 	stack := []treeWork{{id: t.root, area: t.area}}
 

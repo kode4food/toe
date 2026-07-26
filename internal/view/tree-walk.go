@@ -17,7 +17,7 @@ type (
 // seps have W=1 and span the container height; horizontal seps have H=1 and
 // span the container width
 func (t *Tree) WalkSeparators(fn func(Separator)) {
-	if !t.IsEmpty() {
+	if !t.IsEmpty() && !t.Maximized() {
 		t.walkSep(t.root, fn)
 	}
 }
@@ -114,7 +114,7 @@ type SeparatorAtRes struct {
 // separator hit by the click at tree column x, tree row y (bufferline excluded)
 // SeparatorAtRes identifies a separator and its owning child
 func (t *Tree) SeparatorAt(at geom.Point) (SeparatorAtRes, bool) {
-	if t.IsEmpty() {
+	if t.IsEmpty() || t.Maximized() {
 		return SeparatorAtRes{}, false
 	}
 	var res SeparatorAtRes

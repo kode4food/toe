@@ -84,6 +84,7 @@ const (
 	StatusPickerNoResults    Key = "status.pickerNoResults"
 	StatusImageLoading       Key = "status.imageLoading"
 	StatusImageUnsupported   Key = "status.imageUnsupported"
+	StatusPaneMaximized      Key = "status.paneMaximized"
 
 	StatusFileDeleted          Key = "status.fileDeleted"
 	StatusFileChanged          Key = "status.fileChanged"

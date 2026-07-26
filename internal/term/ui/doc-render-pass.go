@@ -236,7 +236,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 
 	focus := r.cx.Editor.Tree().Focus()
-	r.cx.Editor.Tree().Range(func(p view.Pane) bool {
+	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		focused := p.ID() == focus
 		switch pane := p.(type) {
 		case *view.View:

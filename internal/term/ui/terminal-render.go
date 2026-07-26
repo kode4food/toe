@@ -5,7 +5,6 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
@@ -100,11 +99,10 @@ func (r *renderPass) renderTerminalStatus(
 	if focused {
 		modeSt = th.Get("ui.statusline.terminal")
 	}
-	label := " TRM "
+	label := "TRM"
 	if tp.ConsumeBell(focused) && !focused {
-		label = " TRM* "
+		label = "TRM*"
 	}
-	buf.SetString(geom.Point{X: a.X, Y: y}, label, modeSt)
 
 	title := tp.Title()
 	if title == "" {
@@ -113,10 +111,17 @@ func (r *renderPass) renderTerminalStatus(
 	if n := tp.ScrollOffset(); n > 0 {
 		title = fmt.Sprintf("%s [scrollback -%d]", title, n)
 	}
-	buf.SetString(geom.Point{
-		X: a.X + runewidth.StringWidth(label),
-		Y: y,
-	}, " "+title, st)
+	renderStatusElems(renderStatusElemsArgs{
+		buf:       buf,
+		at:        geom.Point{X: a.X, Y: y},
+		width:     a.Width,
+		baseStyle: st,
+		left: []statusElem{
+			statusBadge(label, modeSt),
+			{text: title, style: st},
+		},
+		right: r.withMaximizedStatus(nil),
+	})
 }
 
 func highlightSelection(scr *tuiScreen, tp *TerminalPane) {

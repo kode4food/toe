@@ -312,6 +312,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `wclose!` | `wc!` | Force close window |
 | `wonly` | `wo` | Close windows except current |
 | `rotate-view` |  | Goto next window |
+| `toggle-pane-maximized` |  | Toggle focused pane maximized |
 | `jump-view-left` |  | Jump to left split |
 | `jump-view-down` |  | Jump to split below |
 | `jump-view-up` |  | Jump to split above |
@@ -322,7 +323,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `swap-view-right` |  | Swap with right split |
 | `resize-view` |  | Resize split |
 
-Splitting a document or image pane creates another view of the same document or image. Splitting a terminal starts a new shell.
+Splitting a document or image pane creates another view of the same document or image. Splitting a terminal starts a new shell. `Ctrl+w z` temporarily maximizes the focused pane; press it again to restore the preserved split layout.
 
 ## View and Scroll
 

@@ -186,7 +186,7 @@ func (c *Client) saveMode() saveMode {
 	}
 	switch v := opts.Save.(type) {
 	case protocol.Boolean:
-		if bool(v) {
+		if v {
 			return saveWithoutText
 		}
 		return saveDisabled

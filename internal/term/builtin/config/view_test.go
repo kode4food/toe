@@ -154,6 +154,20 @@ func TestViewWonly(t *testing.T) {
 	})
 }
 
+func TestPaneMaximized(t *testing.T) {
+	e, km := test.Env(t, "abc")
+	for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
+		assert.NotEmpty(t, km.Bindings(mode, "toggle_pane_maximized"))
+	}
+	test.RunCmd(t, km, e, "vsplit")
+
+	test.RunCmd(t, km, e, "toggle_pane_maximized")
+	assert.True(t, e.Tree().Maximized())
+
+	test.RunCmd(t, km, e, "toggle_pane_maximized")
+	assert.False(t, e.Tree().Maximized())
+}
+
 func TestViewOptionsExtra(t *testing.T) {
 	cases := []struct{ key, val string }{
 		{key: "rulers", val: "[80, 100]"},

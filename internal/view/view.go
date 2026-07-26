@@ -95,7 +95,7 @@ var modeScopes = [...]string{
 	ModeInsert:   "insert",
 	ModeSelect:   "select",
 	ModeTerminal: "normal",
-	ModeImage:    "normal",
+	ModeImage:    "image",
 }
 
 var modeNames = [...]string{

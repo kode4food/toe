@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/mattn/go-runewidth"
 
@@ -40,34 +39,34 @@ type renderImageStatusArgs struct {
 }
 
 func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
-	buf := args.buf
 	pane := args.pane
-	at := args.at
-	width := args.width
 	th := r.activeTheme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if args.focused {
 		baseTUI = th.Get("ui.statusline")
-		modeSt = th.Get("ui.statusline.normal")
+		modeSt = th.Get("ui.statusline." + pane.Mode().Scope())
 	}
-	buf.SetString(at, strings.Repeat(" ", width), baseTUI)
-
-	cx := at.X
-	mode := " IMG "
-	buf.SetString(geom.Point{X: cx, Y: at.Y}, mode, modeSt)
-	cx += runewidth.StringWidth(mode)
-	buf.SetString(
-		geom.Point{X: cx, Y: at.Y},
-		" "+filepath.Base(pane.Path()), baseTUI,
-	)
 
 	pixels := pane.Image().Size()
-	info := fmt.Sprintf("%d×%d %d%% ", pixels.Width, pixels.Height, pane.Zoom())
-	buf.SetString(geom.Point{
-		X: at.X + width - runewidth.StringWidth(info),
-		Y: at.Y,
-	}, info, baseTUI)
+	right := []statusElem{{
+		text: fmt.Sprintf(
+			"%d×%d %d%%", pixels.Width, pixels.Height, pane.Zoom(),
+		),
+		style: baseTUI,
+	}}
+	right = r.withMaximizedStatus(right)
+	renderStatusElems(renderStatusElemsArgs{
+		buf:       args.buf,
+		at:        args.at,
+		width:     args.width,
+		baseStyle: baseTUI,
+		left: []statusElem{
+			statusBadge("IMG", modeSt),
+			{text: filepath.Base(pane.Path()), style: baseTUI},
+		},
+		right: right,
+	})
 }
 
 // paintImage fills a width by height cell region with centered kitty Unicode

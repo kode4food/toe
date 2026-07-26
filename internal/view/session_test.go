@@ -681,6 +681,29 @@ document = 1
 		assert.InDelta(t, 30, views[0].Area().Width, 1)
 	})
 
+	t.Run("restores maximized pane", func(t *testing.T) {
+		dir := t.TempDir()
+		sessionPath := filepath.Join(dir, view.SessionFile)
+		e := view.NewEditor(dir)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.VSplitNew()
+		e.TogglePaneMaximized()
+
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(geom.Size{Width: 80, Height: 24})
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		assert.True(t, next.Tree().Maximized())
+		assert.Len(t, next.Tree().Traverse(), 2)
+		assert.Equal(t,
+			geom.Area{Size: geom.Size{Width: 80, Height: 24}},
+			next.FocusedPane().Area(),
+		)
+	})
+
 	t.Run("restores registers", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "file.go")

@@ -69,6 +69,11 @@ func (e *Editor) ResizeFocusedSplit(dir Direction, delta int) {
 	e.panes.tree.ResizeFocused(dir, delta)
 }
 
+// TogglePaneMaximized maximizes the focused pane or restores the split layout
+func (e *Editor) TogglePaneMaximized() {
+	e.panes.tree.ToggleMaximized()
+}
+
 // hasView reports whether any view in the tree satisfies pred
 func (e *Editor) hasView(pred func(*View) bool) bool {
 	return e.panes.tree.Any(func(p Pane) bool {

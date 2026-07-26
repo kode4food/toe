@@ -102,9 +102,10 @@ Image files open in image panes when the terminal supports the Kitty graphics pr
 ### Splits
 
 ```
-Ctrl+w s      horizontal split
-Ctrl+w v      vertical split
-Ctrl+w q      close current split
+Ctrl+w s        horizontal split
+Ctrl+w v        vertical split
+Ctrl+w q        close current split
+Ctrl+w z        toggle pane maximize
 Ctrl+w h/j/k/l  navigate between splits
 ```
 

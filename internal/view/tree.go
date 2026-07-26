@@ -9,11 +9,12 @@ import (
 type (
 	// Tree manages the spatial layout of views as a split tree
 	Tree struct {
-		root   Id
-		focus  Id
-		area   geom.Area
-		nodes  map[Id]*treeNode
-		nextID Id
+		root      Id
+		focus     Id
+		maximized Id
+		area      geom.Area
+		nodes     map[Id]*treeNode
+		nextID    Id
 	}
 
 	// Pane is the interface implemented by every split tree leaf
@@ -105,7 +106,7 @@ func (t *Tree) Insert(p Pane) Id {
 		c.children = slices.Insert(c.children, pos+1, id)
 	}
 	c.ratios = nil
-	t.focus = id
+	t.setFocus(id)
 	t.recalculate()
 	return id
 }
@@ -186,7 +187,7 @@ func (t *Tree) Split(p Pane, layout Layout) Id {
 		parentC.children[pos] = subID
 	}
 
-	t.focus = id
+	t.setFocus(id)
 	t.recalculate()
 	return id
 }
@@ -195,7 +196,7 @@ func (t *Tree) Split(p Pane, layout Layout) Id {
 // before removal. Empty containers are collapsed
 func (t *Tree) Remove(id Id) {
 	if t.focus == id {
-		t.focus = t.Prev()
+		t.setFocus(t.Prev())
 	}
 
 	parent := t.nodes[id].parent
@@ -210,6 +211,9 @@ func (t *Tree) Remove(id Id) {
 		t.removeOrReplace(parent, sibling)
 	}
 
+	if t.Count() < 2 {
+		t.maximized = 0
+	}
 	t.recalculate()
 }
 
@@ -228,16 +232,28 @@ func (t *Tree) Focus() Id {
 
 // SetFocus moves focus to the given view id
 func (t *Tree) SetFocus(id Id) {
-	if id == t.focus {
+	maximized := t.Maximized()
+	if !t.setFocus(id) {
 		return
 	}
-	if old, ok := t.nodes[t.focus]; ok {
-		old.pane.MarkDirty()
+	if maximized {
+		t.recalculate()
 	}
-	if n, ok := t.nodes[id]; ok {
-		n.pane.MarkDirty()
+}
+
+// Maximized reports whether one pane temporarily occupies the full tree area
+func (t *Tree) Maximized() bool {
+	return t.maximized != 0
+}
+
+// ToggleMaximized maximizes the focused pane or restores the split layout
+func (t *Tree) ToggleMaximized() {
+	if t.maximized != 0 {
+		t.maximized = 0
+	} else if t.Count() > 1 {
+		t.maximized = t.focus
 	}
-	t.focus = id
+	t.recalculate()
 }
 
 // IsEmpty reports whether the tree has no views
@@ -261,6 +277,15 @@ func (t *Tree) Resize(size geom.Size) bool {
 // top-to-bottom), stopping early if fn returns false. It does not allocate
 func (t *Tree) Range(fn func(Pane) bool) {
 	t.rangePane(t.root, fn)
+}
+
+// RangeVisible calls fn for each pane currently visible in the layout
+func (t *Tree) RangeVisible(fn func(Pane) bool) {
+	if t.maximized != 0 {
+		fn(t.nodes[t.maximized].pane)
+		return
+	}
+	t.Range(fn)
 }
 
 // Any reports whether any leaf pane satisfies pred, without allocating
@@ -306,6 +331,21 @@ func (t *Tree) ContainerLayoutAt(id Id) (Layout, bool) {
 		return LayoutVertical, false
 	}
 	return pn.container.layout, true
+}
+
+func (t *Tree) setFocus(id Id) bool {
+	if id == t.focus {
+		return false
+	}
+	if old, ok := t.nodes[t.focus]; ok && old.pane != nil {
+		old.pane.MarkDirty()
+	}
+	if n, ok := t.nodes[id]; ok && n.pane != nil {
+		n.pane.MarkDirty()
+	}
+	t.focus = id
+	t.maximized = 0
+	return true
 }
 
 func (t *Tree) allocID() Id {

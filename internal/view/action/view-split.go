@@ -89,6 +89,11 @@ func CloseOtherViews(e *view.Editor) {
 	e.CloseAllOtherViews()
 }
 
+// TogglePaneMaximized maximizes the focused pane or restores the split layout
+func TogglePaneMaximized(e *view.Editor) {
+	e.TogglePaneMaximized()
+}
+
 // ResizeViewLeft pushes the focused split's border in the left direction by
 // count cells (see [view.Editor.ResizeFocusedSplit])
 func ResizeViewLeft(e *view.Editor) {

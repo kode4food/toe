@@ -1126,6 +1126,21 @@ func TestSplitViewRender(t *testing.T) {
 	})
 }
 
+func TestMaximizedPaneRender(t *testing.T) {
+	e := view.NewEditor(t.TempDir())
+	v, ok := e.FocusedView()
+	assert.True(t, ok)
+	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+	e.VSplit(v.DocID())
+	e.TogglePaneMaximized()
+
+	content := m.View().Content
+	out := stripANSI(content)
+
+	assert.Contains(t, out, " MAX ")
+	assert.Contains(t, content, "\x1b[48;2;137;180;250m MAX ")
+}
+
 func TestIndentGuideRender(t *testing.T) {
 	t.Run("renders indent guides", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())

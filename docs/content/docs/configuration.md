@@ -102,7 +102,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `line-number` | string | `"absolute"` | `absolute` or `relative` |
 | `cursorline` | bool | `false` | Highlight cursor line |
 | `cursorcolumn` | bool | `false` | Highlight cursor column |
-| `text-width` | int | `80` | Text width (used by rulers and reflow) |
+| `text-width` | int | `80` | Wrap column for `:reflow` and for soft wrap when `wrap-at-text-width` is on |
 | `rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
 | `bufferline` | string | `"never"` | Show buffer tabs: `never`, `always`, `multiple` |
 

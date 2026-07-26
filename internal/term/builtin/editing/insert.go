@@ -96,8 +96,8 @@ func InsertModule() command.Module {
 			},
 			{
 				Name: actSmartTab,
-				DocString: "Insert tab if all cursors have all whitespace to " +
-					"their left; otherwise, run a separate command",
+				DocString: "Insert tab in leading whitespace; otherwise, " +
+					"complete current word",
 				Run:   kit.Runner(action.SmartTab),
 				Modes: []string{"INS"},
 				Keys:  kit.Keys(kit.Tab),

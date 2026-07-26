@@ -162,7 +162,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `delete-char-backward` |  | Delete previous char |
 | `delete-char-forward` |  | Delete next char |
 | `insert-newline` |  | Insert newline char |
-| `smart-tab` |  | Insert tab if all cursors have all whitespace to their left; otherwise, run a separate command |
+| `smart-tab` |  | Insert tab in leading whitespace; otherwise, complete current word |
 | `replace` |  | Replace with new char |
 | `delete-selection` |  | Delete selection |
 | `delete-selection-noyank` |  | Delete selection without yanking |

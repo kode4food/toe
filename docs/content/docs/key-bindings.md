@@ -312,11 +312,14 @@ Window management works from any editing mode. The `Ctrl+w` chord and the leader
 | `Ctrl+w q` / `Ctrl+w Ctrl+q` | Close window |
 | `Ctrl+w o` / `Ctrl+w Ctrl+o` | Close windows except current |
 | `Ctrl+w w` / `Ctrl+w Ctrl+w` | Goto next window |
+| `Ctrl+w z` | Toggle focused pane maximized |
 | `Ctrl+w h/j/k/l` / `Ctrl+w ←/↓/↑/→` | Jump to left/below/above/right split |
 | `Ctrl+w H/J/K/L` | Swap with left/below/above/right split |
 | `Ctrl+w r` | Enter resize mode |
 
 Splitting a document or image pane opens another view of the same document or image; splitting a terminal starts a new shell. Splits can also be resized by dragging a separator with the mouse.
+
+`Ctrl+w z` temporarily gives the focused pane the full editor area while preserving the split layout. The status line shows `MAX` while active. Press the key again to restore the layout.
 
 ### Resize Mode
 

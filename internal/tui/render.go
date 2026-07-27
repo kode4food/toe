@@ -6,13 +6,23 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-type ansiEmitter struct {
-	w        *strings.Builder
-	fg, bg   Color
-	ulColor  Color
-	ulStyle  UnderlineStyle
-	modifier Modifier
-}
+type (
+	ansiEmitter struct {
+		w        *strings.Builder
+		fg, bg   Color
+		ulColor  Color
+		ulStyle  UnderlineStyle
+		modifier Modifier
+	}
+
+	colorEsc struct {
+		named   namedEsc
+		indexed string
+		rgb     string
+	}
+
+	namedEsc [colorWhite + 1]string
+)
 
 const (
 	csi           = "\x1b["
@@ -61,8 +71,17 @@ var (
 		UnderlineDoubleLine: sgrUnderlineDoubleLine,
 	}
 
-	fgNamedEsc = buildNamedEsc(0)
-	bgNamedEsc = buildNamedEsc(10)
+	fgColorEsc = colorEsc{
+		named:   buildNamedEsc(0),
+		indexed: sgrForegroundIndexed,
+		rgb:     sgrForegroundRGB,
+	}
+
+	bgColorEsc = colorEsc{
+		named:   buildNamedEsc(10),
+		indexed: sgrBackgroundIndexed,
+		rgb:     sgrBackgroundRGB,
+	}
 )
 
 // RenderToANSI serializes the buffer as rows joined by '\n', emitting style
@@ -151,11 +170,11 @@ func (a *ansiEmitter) emitModifiers(m Modifier) {
 
 func (a *ansiEmitter) emitColors(fg, bg Color) {
 	if fg != a.fg {
-		emitFgColor(a.w, fg)
+		fgColorEsc.emit(a.w, fg)
 		a.fg = fg
 	}
 	if bg != a.bg {
-		emitBgColor(a.w, bg)
+		bgColorEsc.emit(a.w, bg)
 		a.bg = bg
 	}
 }
@@ -174,34 +193,23 @@ func (a *ansiEmitter) emitUnderline(uc Color, us UnderlineStyle) {
 	a.ulStyle = us
 }
 
-func emitFgColor(w *strings.Builder, c Color) {
-	emitColorTo(w, c, &fgNamedEsc, sgrForegroundIndexed, sgrForegroundRGB)
-}
-
-func emitBgColor(w *strings.Builder, c Color) {
-	emitColorTo(w, c, &bgNamedEsc, sgrBackgroundIndexed, sgrBackgroundRGB)
-}
-
-func emitColorTo(
-	w *strings.Builder, c Color, named *[colorWhite + 1]string,
-	indexedPfx, rgbPfx string,
-) {
-	if c.kind <= colorWhite {
-		_, _ = w.WriteString(named[c.kind])
+func (c *colorEsc) emit(w *strings.Builder, col Color) {
+	if col.kind <= colorWhite {
+		_, _ = w.WriteString(c.named[col.kind])
 		return
 	}
-	switch c.kind {
+	switch col.kind {
 	case colorIndexed:
-		w.WriteString(indexedPfx)
-		writeUint8(w, c.r)
+		w.WriteString(c.indexed)
+		writeUint8(w, col.r)
 		w.WriteByte(sgrTerminator)
 	case colorRGB:
-		w.WriteString(rgbPfx)
-		writeUint8(w, c.r)
+		w.WriteString(c.rgb)
+		writeUint8(w, col.r)
 		w.WriteByte(';')
-		writeUint8(w, c.g)
+		writeUint8(w, col.g)
 		w.WriteByte(';')
-		writeUint8(w, c.b)
+		writeUint8(w, col.b)
 		w.WriteByte(sgrTerminator)
 	default:
 	}
@@ -261,7 +269,7 @@ func writeUint8(w *strings.Builder, n uint8) {
 }
 
 // offset 10 shifts the whole foreground set to its background counterpart
-func buildNamedEsc(offset int) [colorWhite + 1]string {
+func buildNamedEsc(offset int) namedEsc {
 	codes := [colorWhite + 1]ansi.Attr{
 		colorReset:        ansi.AttrDefaultForegroundColor,
 		colorBlack:        ansi.AttrBlackForegroundColor,
@@ -281,7 +289,7 @@ func buildNamedEsc(offset int) [colorWhite + 1]string {
 		colorLightGray:    ansi.AttrWhiteForegroundColor,
 		colorWhite:        ansi.AttrBrightWhiteForegroundColor,
 	}
-	var t [colorWhite + 1]string
+	var t namedEsc
 	for i, c := range codes {
 		t[i] = ansi.SGR(c + offset)
 	}

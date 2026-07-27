@@ -55,36 +55,37 @@ Diagnostics (errors and warnings) appear as underlines in the document, markers 
 
 ## Completion Kinds
 
-The completion popup marks each candidate with its kind. Terminals without a
-Nerd Font show the short label instead:
+The completion popup marks each candidate with its kind, colored by the theme
+scope in the last column. Terminals without a Nerd Font show the short label
+instead:
 
-| Icon | Kind | Plain |
-|------|------|-------|
-| {{< glyph "symbol-key" >}} | `text` | `Txt` |
-| {{< glyph "symbol-method" >}} | `function` | `Fun` |
-| {{< glyph "symbol-method" >}} | `method` | `Mth` |
-| {{< glyph "symbol-method" >}} | `constructor` | `Ctr` |
-| {{< glyph "symbol-field" >}} | `field` | `Fld` |
-| {{< glyph "symbol-variable" >}} | `variable` | `Var` |
-| {{< glyph "symbol-class" >}} | `class` | `Cls` |
-| {{< glyph "symbol-interface" >}} | `interface` | `Ifc` |
-| {{< glyph "symbol-namespace" >}} | `module` | `Mod` |
-| {{< glyph "symbol-property" >}} | `property` | `Prp` |
-| {{< glyph "symbol-ruler" >}} | `unit` | `Unt` |
-| {{< glyph "symbol-enum" >}} | `value` | `Val` |
-| {{< glyph "symbol-enum" >}} | `enum` | `Enm` |
-| {{< glyph "symbol-keyword" >}} | `keyword` | `Kwd` |
-| {{< glyph "symbol-snippet" >}} | `snippet` | `Snp` |
-| {{< glyph "symbol-color" >}} | `color` | `Clr` |
-| {{< glyph "file" >}} | `file` | `Fil` |
-| {{< glyph "go-to-file" >}} | `reference` | `Ref` |
-| {{< glyph "folder" >}} | `folder` | `Dir` |
-| {{< glyph "symbol-constant" >}} | `constant` | `Cst` |
-| {{< glyph "symbol-structure" >}} | `struct` | `Sct` |
-| {{< glyph "symbol-event" >}} | `event` | `Evt` |
-| {{< glyph "symbol-operator" >}} | `operator` | `Opr` |
-| {{< glyph "symbol-parameter" >}} | `type param` | `Tpm` |
-| {{< glyph "symbol-enum-member" >}} | `enum member` | `Emb` |
+| Icon | Kind | Plain | Theme scope |
+|------|------|-------|-------------|
+| {{< glyph "symbol-key" "kind-string" >}} | `text` | `Txt` | `string` |
+| {{< glyph "symbol-method" "kind-function" >}} | `function` | `Fun` | `function` |
+| {{< glyph "symbol-method" "kind-function" >}} | `method` | `Mth` | `function` |
+| {{< glyph "symbol-method" "kind-function" >}} | `constructor` | `Ctr` | `function` |
+| {{< glyph "symbol-field" "kind-variable-other-member" >}} | `field` | `Fld` | `variable.other.member` |
+| {{< glyph "symbol-variable" "kind-variable-parameter" >}} | `variable` | `Var` | `variable.parameter` |
+| {{< glyph "symbol-class" "kind-type" >}} | `class` | `Cls` | `type` |
+| {{< glyph "symbol-interface" "kind-type" >}} | `interface` | `Ifc` | `type` |
+| {{< glyph "symbol-namespace" "kind-namespace" >}} | `module` | `Mod` | `namespace` |
+| {{< glyph "symbol-property" "kind-variable-other-member" >}} | `property` | `Prp` | `variable.other.member` |
+| {{< glyph "symbol-ruler" "kind-type" >}} | `unit` | `Unt` | `type` |
+| {{< glyph "symbol-enum" "kind-constant" >}} | `value` | `Val` | `constant` |
+| {{< glyph "symbol-enum" "kind-constant" >}} | `enum` | `Enm` | `constant` |
+| {{< glyph "symbol-keyword" "kind-keyword" >}} | `keyword` | `Kwd` | `keyword` |
+| {{< glyph "symbol-snippet" "kind-string" >}} | `snippet` | `Snp` | `string` |
+| {{< glyph "symbol-color" "kind-string" >}} | `color` | `Clr` | `string` |
+| {{< glyph "file" "kind-string" >}} | `file` | `Fil` | `string` |
+| {{< glyph "go-to-file" "kind-variable-other-member" >}} | `reference` | `Ref` | `variable.other.member` |
+| {{< glyph "folder" "kind-string" >}} | `folder` | `Dir` | `string` |
+| {{< glyph "symbol-constant" "kind-constant" >}} | `constant` | `Cst` | `constant` |
+| {{< glyph "symbol-structure" "kind-type" >}} | `struct` | `Sct` | `type` |
+| {{< glyph "symbol-event" "kind-string" >}} | `event` | `Evt` | `string` |
+| {{< glyph "symbol-operator" "kind-operator" >}} | `operator` | `Opr` | `operator` |
+| {{< glyph "symbol-parameter" "kind-type" >}} | `type param` | `Tpm` | `type` |
+| {{< glyph "symbol-enum-member" "kind-constant" >}} | `enum member` | `Emb` | `constant` |
 
 ## Restarting Servers
 

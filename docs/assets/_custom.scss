@@ -36,3 +36,35 @@
 .vcs-conflict {
   color: #f38ba8;
 }
+
+// LSP completion kind colors, from the default mocha theme
+
+.kind-constant {
+  color: #fab387;
+}
+
+.kind-function,
+.kind-variable-other-member {
+  color: #89b4fa;
+}
+
+.kind-keyword {
+  color: #cba6f7;
+}
+
+.kind-namespace,
+.kind-type {
+  color: #f9e2af;
+}
+
+.kind-operator {
+  color: #89dceb;
+}
+
+.kind-string {
+  color: #a6e3a1;
+}
+
+.kind-variable-parameter {
+  color: #eba0ac;
+}

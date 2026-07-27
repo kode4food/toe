@@ -177,7 +177,7 @@ func BenchmarkRenderTerminal(b *testing.B) {
 }
 
 // BenchmarkRenderTerminalColored exercises the realistic case of many short
-// same-style runs (coloured ls/grep/build output), where the style memo has a
+// same-style runs (colored ls/grep/build output), where the style memo has a
 // lower but still winning hit rate
 func BenchmarkRenderTerminalColored(b *testing.B) {
 	colors := []string{"31", "32", "33", "34", "36"}

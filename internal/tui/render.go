@@ -1,8 +1,9 @@
 package tui
 
 import (
-	"strconv"
 	"strings"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 type ansiEmitter struct {
@@ -13,21 +14,58 @@ type ansiEmitter struct {
 	modifier Modifier
 }
 
+const (
+	csi           = "\x1b["
+	sgrTerminator = 'm'
+
+	sgrBold            = csi + "1m"
+	sgrDim             = csi + "2m"
+	sgrItalic          = csi + "3m"
+	sgrSlowBlink       = csi + "5m"
+	sgrRapidBlink      = csi + "6m"
+	sgrReversed        = csi + "7m"
+	sgrHidden          = csi + "8m"
+	sgrCrossedOut      = csi + "9m"
+	sgrNoItalic        = csi + "23m"
+	sgrNoBlink         = csi + "25m"
+	sgrNoReversed      = csi + "27m"
+	sgrNoHidden        = csi + "28m"
+	sgrNoCrossedOut    = csi + "29m"
+	sgrNormalIntensity = csi + "22m" // clears bold and dim together
+
+	sgrForegroundIndexed = csi + "38;5;"
+	sgrForegroundRGB     = csi + "38;2;"
+	sgrBackgroundIndexed = csi + "48;5;"
+	sgrBackgroundRGB     = csi + "48;2;"
+
+	sgrUnderlineIndexed = csi + "58:5:"
+	// the trailing separator is the empty color-space field RGB requires
+	sgrUnderlineRGB          = csi + "58:2::"
+	sgrUnderlineColorDefault = csi + "59m"
+
+	sgrNoUnderline         = csi + "24m"
+	sgrUnderlineLine       = csi + "4m"
+	sgrUnderlineCurl       = csi + "4:3m"
+	sgrUnderlineDotted     = csi + "4:4m"
+	sgrUnderlineDashed     = csi + "4:5m"
+	sgrUnderlineDoubleLine = csi + "4:2m"
+)
+
 var (
 	underlineEsc = [UnderlineDoubleLine + 1]string{
-		UnderlineReset:      "\x1b[24m",
-		UnderlineLine:       "\x1b[4m",
-		UnderlineCurl:       "\x1b[4:3m",
-		UnderlineDotted:     "\x1b[4:4m",
-		UnderlineDashed:     "\x1b[4:5m",
-		UnderlineDoubleLine: "\x1b[21m",
+		UnderlineReset:      sgrNoUnderline,
+		UnderlineLine:       sgrUnderlineLine,
+		UnderlineCurl:       sgrUnderlineCurl,
+		UnderlineDotted:     sgrUnderlineDotted,
+		UnderlineDashed:     sgrUnderlineDashed,
+		UnderlineDoubleLine: sgrUnderlineDoubleLine,
 	}
 
 	fgNamedEsc = buildNamedEsc(0)
 	bgNamedEsc = buildNamedEsc(10)
 )
 
-// RenderToANSI serialises the buffer as rows joined by '\n', emitting style
+// RenderToANSI serializes the buffer as rows joined by '\n', emitting style
 // escapes only on changes — used to bridge into the string-based render path
 func (b *Buffer) RenderToANSI() string {
 	if b.Empty() {
@@ -61,52 +99,52 @@ func (a *ansiEmitter) emitModifiers(m Modifier) {
 	removed := a.modifier &^ m
 	added := m &^ a.modifier
 	if removed.has(ModifierReversed) {
-		_, _ = a.w.WriteString("\x1b[27m")
+		_, _ = a.w.WriteString(sgrNoReversed)
 	}
 	if removed.has(ModifierBold) {
-		_, _ = a.w.WriteString("\x1b[22m")
+		_, _ = a.w.WriteString(sgrNormalIntensity)
 		if m.has(ModifierDim) {
-			_, _ = a.w.WriteString("\x1b[2m")
+			_, _ = a.w.WriteString(sgrDim)
 		}
 	}
 	if removed.has(ModifierItalic) {
-		_, _ = a.w.WriteString("\x1b[23m")
+		_, _ = a.w.WriteString(sgrNoItalic)
 	}
 	if removed.has(ModifierDim) {
-		_, _ = a.w.WriteString("\x1b[22m")
+		_, _ = a.w.WriteString(sgrNormalIntensity)
 	}
 	if removed.has(ModifierCrossedOut) {
-		_, _ = a.w.WriteString("\x1b[29m")
+		_, _ = a.w.WriteString(sgrNoCrossedOut)
 	}
 	if removed.has(ModifierSlowBlink) || removed.has(ModifierRapidBlink) {
-		_, _ = a.w.WriteString("\x1b[25m")
+		_, _ = a.w.WriteString(sgrNoBlink)
 	}
 	if removed.has(ModifierHidden) {
-		_, _ = a.w.WriteString("\x1b[28m")
+		_, _ = a.w.WriteString(sgrNoHidden)
 	}
 	if added.has(ModifierReversed) {
-		_, _ = a.w.WriteString("\x1b[7m")
+		_, _ = a.w.WriteString(sgrReversed)
 	}
 	if added.has(ModifierBold) {
-		_, _ = a.w.WriteString("\x1b[1m")
+		_, _ = a.w.WriteString(sgrBold)
 	}
 	if added.has(ModifierItalic) {
-		_, _ = a.w.WriteString("\x1b[3m")
+		_, _ = a.w.WriteString(sgrItalic)
 	}
 	if added.has(ModifierDim) {
-		_, _ = a.w.WriteString("\x1b[2m")
+		_, _ = a.w.WriteString(sgrDim)
 	}
 	if added.has(ModifierCrossedOut) {
-		_, _ = a.w.WriteString("\x1b[9m")
+		_, _ = a.w.WriteString(sgrCrossedOut)
 	}
 	if added.has(ModifierSlowBlink) {
-		_, _ = a.w.WriteString("\x1b[5m")
+		_, _ = a.w.WriteString(sgrSlowBlink)
 	}
 	if added.has(ModifierRapidBlink) {
-		_, _ = a.w.WriteString("\x1b[6m")
+		_, _ = a.w.WriteString(sgrRapidBlink)
 	}
 	if added.has(ModifierHidden) {
-		_, _ = a.w.WriteString("\x1b[8m")
+		_, _ = a.w.WriteString(sgrHidden)
 	}
 	a.modifier = m
 }
@@ -137,11 +175,11 @@ func (a *ansiEmitter) emitUnderline(uc Color, us UnderlineStyle) {
 }
 
 func emitFgColor(w *strings.Builder, c Color) {
-	emitColorTo(w, c, &fgNamedEsc, "\x1b[38;5;", "\x1b[38;2;")
+	emitColorTo(w, c, &fgNamedEsc, sgrForegroundIndexed, sgrForegroundRGB)
 }
 
 func emitBgColor(w *strings.Builder, c Color) {
-	emitColorTo(w, c, &bgNamedEsc, "\x1b[48;5;", "\x1b[48;2;")
+	emitColorTo(w, c, &bgNamedEsc, sgrBackgroundIndexed, sgrBackgroundRGB)
 }
 
 func emitColorTo(
@@ -156,7 +194,7 @@ func emitColorTo(
 	case colorIndexed:
 		w.WriteString(indexedPfx)
 		writeUint8(w, c.r)
-		w.WriteByte('m')
+		w.WriteByte(sgrTerminator)
 	case colorRGB:
 		w.WriteString(rgbPfx)
 		writeUint8(w, c.r)
@@ -164,31 +202,31 @@ func emitColorTo(
 		writeUint8(w, c.g)
 		w.WriteByte(';')
 		writeUint8(w, c.b)
-		w.WriteByte('m')
+		w.WriteByte(sgrTerminator)
 	default:
 	}
 }
 
 func emitUlColor(w *strings.Builder, c Color) {
 	if c.kind == colorReset {
-		_, _ = w.WriteString("\x1b[59m")
+		_, _ = w.WriteString(sgrUnderlineColorDefault)
 		return
 	}
 	switch c.kind {
 	case colorIndexed:
-		w.WriteString("\x1b[58:5:")
+		w.WriteString(sgrUnderlineIndexed)
 		writeUint8(w, c.r)
-		w.WriteByte('m')
+		w.WriteByte(sgrTerminator)
 	case colorRGB:
-		w.WriteString("\x1b[58:2::")
+		w.WriteString(sgrUnderlineRGB)
 		writeUint8(w, c.r)
 		w.WriteByte(':')
 		writeUint8(w, c.g)
 		w.WriteByte(':')
 		writeUint8(w, c.b)
-		w.WriteByte('m')
+		w.WriteByte(sgrTerminator)
 	default:
-		_, _ = w.WriteString("\x1b[59m")
+		_, _ = w.WriteString(sgrUnderlineColorDefault)
 	}
 }
 
@@ -222,29 +260,30 @@ func writeUint8(w *strings.Builder, n uint8) {
 	w.WriteByte('0' + n)
 }
 
+// offset 10 shifts the whole foreground set to its background counterpart
 func buildNamedEsc(offset int) [colorWhite + 1]string {
-	codes := [colorWhite + 1]int{
-		colorReset:        39,
-		colorBlack:        30,
-		colorRed:          31,
-		colorGreen:        32,
-		colorYellow:       33,
-		colorBlue:         34,
-		colorMagenta:      35,
-		colorCyan:         36,
-		colorGray:         90,
-		colorLightRed:     91,
-		colorLightGreen:   92,
-		colorLightYellow:  93,
-		colorLightBlue:    94,
-		colorLightMagenta: 95,
-		colorLightCyan:    96,
-		colorLightGray:    37,
-		colorWhite:        97,
+	codes := [colorWhite + 1]ansi.Attr{
+		colorReset:        ansi.AttrDefaultForegroundColor,
+		colorBlack:        ansi.AttrBlackForegroundColor,
+		colorRed:          ansi.AttrRedForegroundColor,
+		colorGreen:        ansi.AttrGreenForegroundColor,
+		colorYellow:       ansi.AttrYellowForegroundColor,
+		colorBlue:         ansi.AttrBlueForegroundColor,
+		colorMagenta:      ansi.AttrMagentaForegroundColor,
+		colorCyan:         ansi.AttrCyanForegroundColor,
+		colorGray:         ansi.AttrBrightBlackForegroundColor,
+		colorLightRed:     ansi.AttrBrightRedForegroundColor,
+		colorLightGreen:   ansi.AttrBrightGreenForegroundColor,
+		colorLightYellow:  ansi.AttrBrightYellowForegroundColor,
+		colorLightBlue:    ansi.AttrBrightBlueForegroundColor,
+		colorLightMagenta: ansi.AttrBrightMagentaForegroundColor,
+		colorLightCyan:    ansi.AttrBrightCyanForegroundColor,
+		colorLightGray:    ansi.AttrWhiteForegroundColor,
+		colorWhite:        ansi.AttrBrightWhiteForegroundColor,
 	}
 	var t [colorWhite + 1]string
 	for i, c := range codes {
-		t[i] = "\x1b[" + strconv.Itoa(c+offset) + "m"
+		t[i] = ansi.SGR(c + offset)
 	}
 	return t
 }

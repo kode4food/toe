@@ -11,7 +11,7 @@ import (
 )
 
 func TestBuffer(t *testing.T) {
-	t.Run("NewBuffer initialises to spaces", func(t *testing.T) {
+	t.Run("NewBuffer initializes to spaces", func(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 3, Height: 2})
 		for y := range 2 {
 			for x := range 3 {

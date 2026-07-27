@@ -1026,14 +1026,14 @@ const (
 
 **Prefer Bubbletea and the `tui` buffer layer over home-grown alternatives.** Before writing custom terminal UI code, check whether an existing primitive already handles it:
 
-- Use `tui.Style` for colour and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing — not manual ANSI or ad-hoc `strings.Repeat` frames.
+- Use `tui.Style` for color and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing — not manual ANSI or ad-hoc `strings.Repeat` frames.
 - Use `wrapText` (`internal/term/ui/wrap.go`) for word wrapping. Always wrap plain text first, then apply styling per cell — never feed styled/ANSI text to the wrapper; by then it is too late to wrap well.
 - Use `ansi.StringWidth` / `ansi.Truncate` when you need raw cell widths or single-row clipping (e.g. clipping a single preview row).
 - For overlay panels, implement `BufferOverlayComponent` and draw into the `tui.Buffer` directly. The buffer-native path skips the ANSI round-trip and is fast for complex overlays.
 - Use the `popup` struct (`internal/term/ui/popup.go`) for any bordered popup window — it fills the box with the content style and draws the border in one pass, so callers write per-cell content without worrying about ANSI background resets.
 - Use `tea.View.Cursor` for cursor shape and position instead of raw DECSCUSR escapes in content strings.
 
-The only valid reason to roll your own is when the library genuinely has no equivalent (e.g. tab expansion, custom fuzzy-match highlight, per-character cursor/selection colouring in the editor viewport).
+The only valid reason to roll your own is when the library genuinely has no equivalent (e.g. tab expansion, custom fuzzy-match highlight, per-character cursor/selection coloring in the editor viewport).
 
 ---
 

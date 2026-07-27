@@ -160,7 +160,7 @@ func TestEmitUnderline(t *testing.T) {
 		{"curl", tui.UnderlineCurl, "\x1b[4:3m"},
 		{"dotted", tui.UnderlineDotted, "\x1b[4:4m"},
 		{"dashed", tui.UnderlineDashed, "\x1b[4:5m"},
-		{"double", tui.UnderlineDoubleLine, "\x1b[21m"},
+		{"double", tui.UnderlineDoubleLine, "\x1b[4:2m"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

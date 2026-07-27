@@ -127,7 +127,7 @@ func ColorRGB(r, g, b uint8) Color {
 	return Color{kind: colorRGB, r: r, g: g, b: b}
 }
 
-// ImageColor encodes a 24-bit image id as a terminal colour
+// ImageColor encodes a 24-bit image id as a terminal color
 func ImageColor(id uint32) Color {
 	return ColorRGB(uint8(id>>16), uint8(id>>8), uint8(id))
 }

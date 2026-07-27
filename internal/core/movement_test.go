@@ -136,7 +136,6 @@ func TestRangeCursorAndPutCursor(t *testing.T) {
 }
 
 func TestMoveNextWordStart(t *testing.T) {
-	// test_behaviour_when_moving_to_start_of_next_words
 	tests := []wordTest{
 		{
 			"Basic forward motion stops at the first space",
@@ -188,7 +187,6 @@ func TestMoveNextWordStart(t *testing.T) {
 }
 
 func TestMovePrevWordStart(t *testing.T) {
-	// test_behaviour_when_moving_to_start_of_previous_words
 	tests := []wordTest{
 		{
 			"Basic backward motion from the middle of a word",

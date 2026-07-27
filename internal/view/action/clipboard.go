@@ -1,10 +1,10 @@
 package action
 
 import (
-	"encoding/base64"
 	"errors"
-	"fmt"
 	"os"
+
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
@@ -178,11 +178,10 @@ func writeTTY(text string, primary bool) bool {
 		return false
 	}
 	defer func() { _ = f.Close() }()
-	selection := 'c'
+	var selection byte = ansi.SystemClipboard
 	if primary {
-		selection = 'p'
+		selection = ansi.PrimaryClipboard
 	}
-	data := base64.StdEncoding.EncodeToString([]byte(text))
-	_, err = fmt.Fprintf(f, "\x1b]52;%c;%s\a", selection, data)
+	_, err = f.WriteString(ansi.SetClipboard(selection, text))
 	return err == nil
 }

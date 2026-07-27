@@ -893,6 +893,10 @@ func TestSessionProgress(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
+		states := make(chan bool, 16)
+		e.Tree().SetRedraw(func() {
+			states <- session.Busy()
+		})
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
 		v, ok := e.FocusedView()
@@ -900,9 +904,17 @@ func TestSessionProgress(t *testing.T) {
 
 		_, _ = session.Completions(doc, v.ID())
 
-		assert.Eventually(t, session.Busy, time.Second, 5*time.Millisecond)
-		assert.Eventually(t, func() bool { return !session.Busy() },
-			time.Second, 5*time.Millisecond)
+		var sawBusy, sawIdle bool
+		timeout := time.After(time.Second)
+		for !sawBusy || !sawIdle {
+			select {
+			case busy := <-states:
+				sawBusy = sawBusy || busy
+				sawIdle = sawIdle || sawBusy && !busy
+			case <-timeout:
+				t.Fatal("missing busy progress transition")
+			}
+		}
 	})
 }
 

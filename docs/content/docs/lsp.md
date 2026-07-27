@@ -53,6 +53,39 @@ Workspace symbol searches query every running language server, not only the serv
 
 Diagnostics (errors and warnings) appear as underlines in the document, markers in the gutter, counts in the status bar, and a popup when the cursor rests on a diagnostic.
 
+## Completion Kinds
+
+The completion popup marks each candidate with its kind. Terminals without a
+Nerd Font show the short label instead:
+
+| Icon | Kind | Plain |
+|------|------|-------|
+| {{< glyph "symbol-key" >}} | `text` | `Txt` |
+| {{< glyph "symbol-method" >}} | `function` | `Fun` |
+| {{< glyph "symbol-method" >}} | `method` | `Mth` |
+| {{< glyph "symbol-method" >}} | `constructor` | `Ctr` |
+| {{< glyph "symbol-field" >}} | `field` | `Fld` |
+| {{< glyph "symbol-variable" >}} | `variable` | `Var` |
+| {{< glyph "symbol-class" >}} | `class` | `Cls` |
+| {{< glyph "symbol-interface" >}} | `interface` | `Ifc` |
+| {{< glyph "symbol-namespace" >}} | `module` | `Mod` |
+| {{< glyph "symbol-property" >}} | `property` | `Prp` |
+| {{< glyph "symbol-ruler" >}} | `unit` | `Unt` |
+| {{< glyph "symbol-enum" >}} | `value` | `Val` |
+| {{< glyph "symbol-enum" >}} | `enum` | `Enm` |
+| {{< glyph "symbol-keyword" >}} | `keyword` | `Kwd` |
+| {{< glyph "symbol-snippet" >}} | `snippet` | `Snp` |
+| {{< glyph "symbol-color" >}} | `color` | `Clr` |
+| {{< glyph "file" >}} | `file` | `Fil` |
+| {{< glyph "go-to-file" >}} | `reference` | `Ref` |
+| {{< glyph "folder" >}} | `folder` | `Dir` |
+| {{< glyph "symbol-constant" >}} | `constant` | `Cst` |
+| {{< glyph "symbol-structure" >}} | `struct` | `Sct` |
+| {{< glyph "symbol-event" >}} | `event` | `Evt` |
+| {{< glyph "symbol-operator" >}} | `operator` | `Opr` |
+| {{< glyph "symbol-parameter" >}} | `type param` | `Tpm` |
+| {{< glyph "symbol-enum-member" >}} | `enum member` | `Emb` |
+
 ## Restarting Servers
 
 ```

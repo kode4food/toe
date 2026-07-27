@@ -2,6 +2,9 @@ baseURL = "https://kode4food.github.io/toe/"
 locale = "en-us"
 title = "toe"
 
+[markup.goldmark.renderer]
+  unsafe = true
+
 [module]
   [[module.mounts]]
     source = "content"

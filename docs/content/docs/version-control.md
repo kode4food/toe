@@ -13,8 +13,11 @@ When a file is tracked by git, toe shows line changes in the gutter:
 
 | Marker | Meaning |
 |--------|---------|
-| `▍` | Added or modified lines |
-| `▔` | Removed lines |
+| <span class="gutter-mark vcs-added">▍</span> | Added lines |
+| <span class="gutter-mark vcs-modified">▍</span> | Modified lines |
+| <span class="gutter-mark vcs-removed">▔</span> | Removed lines |
+
+Colors follow the active theme; the swatches above use the default `mocha`.
 
 ## Change Navigation
 
@@ -28,6 +31,18 @@ When a file is tracked by git, toe shows line changes in the gutter:
 ## Changed Files
 
 Use `Space+g` or `:changed-file-picker` to list changed workspace files and preview their diffs.
+
+Each entry carries its change status. With `nerd-fonts` disabled, the short
+label in the second column is shown instead of the glyph:
+
+| Status | Plain | Meaning |
+|--------|-------|---------|
+| {{< glyph "diff-added-16" "vcs-added" >}} | `A` | Added file |
+| {{< glyph "diff-modified-16" "vcs-modified" >}} | `M` | Modified file |
+| {{< glyph "diff-removed-16" "vcs-removed" >}} | `D` | Deleted file |
+| {{< glyph "diff-renamed-16" "vcs-renamed" >}} | `R` | Renamed file |
+| {{< glyph "question-16" "vcs-untracked" >}} | `?` | Untracked file |
+| {{< glyph "alert-16" "vcs-conflict" >}} | `!` | Conflicted file |
 
 ## Resetting Changes
 

@@ -1,0 +1,8 @@
+{{- $name := .Get 0 -}}
+{{- $class := default "" (.Get 1) -}}
+{{- $icon := resources.Get (printf "icons/%s.svg" $name) -}}
+{{- with $icon -}}
+<span class="doc-icon {{ $class }}" aria-hidden="true">{{ .Content | safeHTML }}</span>
+{{- else -}}
+{{- errorf "glyph: no icon asset named %q" $name -}}
+{{- end -}}

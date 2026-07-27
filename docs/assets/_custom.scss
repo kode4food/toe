@@ -1,0 +1,38 @@
+// inline glyph, sized to the surrounding text
+.doc-icon {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: -0.15em;
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+
+  // octicons ship without a fill attribute, codicons carry currentColor
+  svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+}
+
+// the gutter markers are real terminal glyphs, so they only need enlarging
+.gutter-mark {
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+// change-status colors, from the default mocha theme
+.vcs-added,
+.vcs-untracked {
+  color: #a6e3a1;
+}
+
+.vcs-modified,
+.vcs-renamed {
+  color: #89b4fa;
+}
+
+.vcs-removed,
+.vcs-conflict {
+  color: #f38ba8;
+}

@@ -110,10 +110,17 @@ func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
 	// the frame repaints on its own; we only reap closed terminals, then re-arm
 	e.pollTerminals(cx)
 	cmd := e.redrawCmd()
-	if ls := cx.Editor.LanguageServerController(); !e.spinning &&
-		ls != nil && ls.Busy() {
-		e.spinning = true
-		cmd = tea.Batch(cmd, spinnerTickCmd())
+	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
+		if !e.spinner.active {
+			e.spinner.active = true
+			e.spinner.frame = 0
+			e.spinner.gen++
+			cmd = tea.Batch(cmd, spinnerTickCmd(e.spinner.gen))
+		}
+	} else if e.spinner.active {
+		e.spinner.frame = 0
+		e.spinner.active = false
+		e.spinner.gen++
 	}
 	return consumed(), cmd
 }
@@ -142,14 +149,18 @@ func (e *EditorComponent) handleVCSUpdated(cx *Context) (EventResult, tea.Cmd) {
 }
 
 func (e *EditorComponent) handleSpinnerTick(
-	cx *Context,
+	cx *Context, msg spinnerTickMsg,
 ) (EventResult, tea.Cmd) {
-	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
-		e.spinFrame++
-		return consumed(), spinnerTickCmd()
+	if msg.gen != e.spinner.gen || !e.spinner.active {
+		return consumed(), nil
 	}
-	e.spinFrame = 0
-	e.spinning = false
+	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
+		e.spinner.frame++
+		return consumed(), spinnerTickCmd(msg.gen)
+	}
+	e.spinner.frame = 0
+	e.spinner.active = false
+	e.spinner.gen++
 	return consumed(), nil
 }
 
@@ -318,9 +329,9 @@ func refreshVCS(cx *Context) {
 	}
 }
 
-func spinnerTickCmd() tea.Cmd {
+func spinnerTickCmd(gen int) tea.Cmd {
 	return tea.Tick(spinnerTickInterval, func(time.Time) tea.Msg {
-		return spinnerTickMsg{}
+		return spinnerTickMsg{gen: gen}
 	})
 }
 

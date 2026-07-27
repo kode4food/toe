@@ -186,7 +186,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		cursor:    at,
 		vcsHead:   vcsHead,
 		busy:      busy,
-		spinFrame: r.ec.spinFrame,
+		spinFrame: r.ec.spinner.frame,
 	}
 
 	collectElems := func(items []view.StatusLineItem) []statusElem {

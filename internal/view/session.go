@@ -213,6 +213,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	}
 
 	t := newTree(e.panes.tree.area.Size)
+	t.redraw = e.panes.tree.redraw
 	t.nodes = map[Id]*treeNode{}
 	t.nextID = 0
 	rootID := t.allocID()

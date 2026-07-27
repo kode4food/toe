@@ -4,7 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
@@ -178,6 +180,39 @@ func TestSpinnerColorRender(t *testing.T) {
 		out := m.View().Content
 
 		assert.Contains(t, out, "\x1b[38;2;137;180;250m")
+	})
+
+	t.Run("busy transition redraws spinner", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		ctl := &completionController{}
+		e.SetLanguageServerController(ctl)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		_ = m.View()
+
+		batch, ok := m.Init()().(tea.BatchMsg)
+		assert.True(t, ok)
+		var redraw tea.Cmd
+		for _, cmd := range batch {
+			if msg, ok := runWithTimeout(cmd, 20*time.Millisecond); ok {
+				next, cmd := m.Update(msg)
+				m = next.(ui.Model)
+				redraw = cmd
+			}
+		}
+		if !assert.NotNil(t, redraw) {
+			return
+		}
+
+		ctl.busy = true
+		e.Tree().Redraw()
+		msg, ok := runWithTimeout(redraw, time.Second)
+		if !assert.True(t, ok) {
+			return
+		}
+		next, _ := m.Update(msg)
+		m = next.(ui.Model)
+
+		assert.Contains(t, stripANSI(m.View().Content), "⠋")
 	})
 }
 

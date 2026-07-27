@@ -32,9 +32,9 @@ type (
 
 		lastOptionsGen int
 
-		lastW, lastH  int
-		lastDiagKey   diagPopupKey
-		lastSpinFrame int
+		lastW, lastH int
+		lastDiagKey  diagPopupKey
+		lastSpinner  spinnerState
 	}
 
 	// styleKey identifies the theme+mode combination for cached styles

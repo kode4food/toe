@@ -185,8 +185,8 @@ func (r *renderPass) forceFullRedraw(
 		force = true
 	}
 
-	if cache.lastSpinFrame != r.ec.spinFrame {
-		cache.lastSpinFrame = r.ec.spinFrame
+	if cache.lastSpinner != r.ec.spinner {
+		cache.lastSpinner = r.ec.spinner
 		force = true
 	}
 

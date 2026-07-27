@@ -121,6 +121,28 @@ func TestSession(t *testing.T) {
 		assert.Nil(t, values)
 	})
 
+	t.Run("preserves redraw hook", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		redrawn := false
+		next.Tree().SetRedraw(func() { redrawn = true })
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		next.Tree().Redraw()
+		assert.True(t, redrawn)
+	})
+
 	t.Run("workspace session file path", func(t *testing.T) {
 		dir := t.TempDir()
 		path := view.WorkspaceSessionFile(dir)

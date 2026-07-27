@@ -19,6 +19,7 @@ type (
 		keys     keyState
 		mouse    mouseState
 		language languageState
+		spinner  spinnerState
 
 		size            geom.Size
 		buf             *tui.Buffer
@@ -28,8 +29,6 @@ type (
 		bufferlineShown bool
 		focused         bool
 		fileWatcher     *editorFileWatcher
-		spinFrame       int
-		spinning        bool
 		redraw          chan struct{}
 	}
 
@@ -57,6 +56,12 @@ type (
 		highlightGen    int
 		highlightPos    docHighlightPosition
 		completionGen   int
+	}
+
+	spinnerState struct {
+		frame  int
+		gen    int
+		active bool
 	}
 
 	commandMessage struct {
@@ -94,7 +99,7 @@ type (
 
 	vcsUpdatedMsg struct{}
 
-	spinnerTickMsg struct{}
+	spinnerTickMsg struct{ gen int }
 
 	redrawMsg struct{}
 )
@@ -184,7 +189,7 @@ func (e *EditorComponent) HandleEvent(
 	case vcsUpdatedMsg:
 		return e.handleVCSUpdated(cx)
 	case spinnerTickMsg:
-		return e.handleSpinnerTick(cx)
+		return e.handleSpinnerTick(cx, msg)
 	case tea.MouseClickMsg:
 		return e.handleMouseClick(cx, msg)
 	case tea.MouseMotionMsg:

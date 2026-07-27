@@ -85,7 +85,7 @@ func (e *Editor) restoreSessionNode(
 			return 0, err
 		}
 		id := t.allocID()
-		pane.SetID(id)
+		t.attach(pane, id)
 		t.nodes[id] = &treeNode{parent: parent, pane: pane}
 		if sn.Focused {
 			rs.focus = id

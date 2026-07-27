@@ -22,6 +22,7 @@ type fakePane struct {
 	editor *view.Editor
 	area   geom.Area
 	dirty  bool
+	redraw func()
 }
 
 func TestSession(t *testing.T) {
@@ -839,6 +840,8 @@ kind = "bogus"
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(geom.Size{Width: 80, Height: 24})
+		redrawn := false
+		next.Tree().SetRedraw(func() { redrawn = true })
 		// the pane rebuilds itself through its registered restorer, keyed by
 		// the kind it persisted — no switch on pane type
 		next.RegisterPaneRestorer(view.SessionKindTerminal,
@@ -849,13 +852,18 @@ kind = "bogus"
 		assert.NoError(t, err)
 		assert.True(t, restored)
 
-		var restoredFake bool
+		var restoredFake *fakePane
 		for _, p := range next.Tree().Traverse() {
-			if _, ok := p.(*fakePane); ok {
-				restoredFake = true
+			if fp, ok := p.(*fakePane); ok {
+				restoredFake = fp
 			}
 		}
-		assert.True(t, restoredFake)
+		if !assert.NotNil(t, restoredFake) ||
+			!assert.NotNil(t, restoredFake.redraw) {
+			return
+		}
+		restoredFake.redraw()
+		assert.True(t, redrawn)
 	})
 }
 
@@ -874,6 +882,7 @@ func (p *fakePane) Shutdown()           {}
 func (p *fakePane) Area() geom.Area     { return p.area }
 func (p *fakePane) SetArea(a geom.Area) { p.area = a }
 func (p *fakePane) MarkDirty()          { p.dirty = true }
+func (p *fakePane) SetRedraw(fn func()) { p.redraw = fn }
 
 // ConsumeDirty reports whether MarkDirty was called since the last check
 func (p *fakePane) ConsumeDirty() bool {

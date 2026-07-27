@@ -3,9 +3,11 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -168,10 +170,32 @@ func (e *EditorComponent) insertTypable(
 	e.keys.infoTitle = ""
 	e.keys.infoItems = nil
 	cx.Editor.ResetCount()
+	tick := e.autoCompletionTick(cx)
 	if layer := e.triggerSignatureHelpLayer(cx); layer != nil {
-		return layer
+		return layerWithCmd(layer, tick)
 	}
-	return e.triggerCompletionLayer(cx)
+	if layer := e.triggerCompletionLayer(cx); layer != nil {
+		return layerWithCmd(layer, tick)
+	}
+	if tick == nil {
+		return nil
+	}
+	return func(*Context, *Compositor) tea.Cmd {
+		return tick
+	}
+}
+
+func (e *EditorComponent) autoCompletionTick(cx *Context) tea.Cmd {
+	e.language.autoGen++
+	opts := e.completion
+	if !opts.Auto || !wordPrefixReady(cx, opts.TriggerLen) {
+		return nil
+	}
+	gen := e.language.autoGen
+	d := time.Duration(opts.Delay) * time.Millisecond
+	return tea.Tick(d, func(time.Time) tea.Msg {
+		return autoCompletionMsg{gen: gen}
+	})
 }
 
 func (e *EditorComponent) triggerCompletionLayer(cx *Context) Callback {
@@ -285,4 +309,40 @@ func completionRequestValid(cx *Context, anchor completionAnchor) bool {
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
 	return pos == anchor.pos
+}
+
+// wordPrefixReady reports whether the limit characters before the cursor are
+// all word characters, reading only those so a long line costs no more
+func wordPrefixReady(cx *Context, limit int) bool {
+	doc, ok := cx.Editor.FocusedDocument()
+	if !ok {
+		return false
+	}
+	v, ok := cx.Editor.FocusedView()
+	if !ok {
+		return false
+	}
+	text := doc.Text()
+	pos := doc.SelectionFor(v.ID()).Primary().Cursor(text)
+	if pos < limit {
+		return false
+	}
+	left, err := text.SliceString(pos-limit, pos)
+	if err != nil {
+		return false
+	}
+	return !strings.ContainsFunc(left, notWordChar)
+}
+
+func notWordChar(r rune) bool {
+	return !core.CharIsWord(r)
+}
+
+func layerWithCmd(layer Callback, cmd tea.Cmd) Callback {
+	if cmd == nil {
+		return layer
+	}
+	return func(cx *Context, comp *Compositor) tea.Cmd {
+		return tea.Batch(layer(cx, comp), cmd)
+	}
 }

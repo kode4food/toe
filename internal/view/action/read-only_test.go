@@ -42,7 +42,7 @@ func TestReadOnlyActions(t *testing.T) {
 		{"replace yanked", action.ReplaceWithYanked},
 		{"rotate contents backward", action.RotateContentsBackward},
 		{"rotate contents forward", action.RotateContentsForward},
-		{"smart tab", action.SmartTab},
+		{"insert tab", action.InsertTab},
 		{"switch case", action.SwitchCase},
 		{"lowercase", action.SwitchToLowercase},
 		{"uppercase", action.SwitchToUppercase},

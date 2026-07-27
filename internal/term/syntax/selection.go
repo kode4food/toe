@@ -55,6 +55,17 @@ func ShrinkSelection(args SelectionArgs) (Range, bool) {
 	return Range{}, false
 }
 
+// ParentNodeEnd returns the end of the innermost named node at the cursor,
+// which is where a syntax-aware tab jumps to; false means no node was found,
+// which is not the same as a node whose end the cursor already sits on
+func ParentNodeEnd(args SelectionArgs) (int, bool) {
+	nodes, ok := nodePathFor(args.Text, args.Lang, args.Cursor, false)
+	if !ok {
+		return 0, false
+	}
+	return nodes[0].To, true
+}
+
 func (r Range) bounds() Range {
 	if r.From > r.To {
 		return Range{From: r.To, To: r.From}
@@ -63,6 +74,10 @@ func (r Range) bounds() Range {
 }
 
 func nodePathAt(text, lang string, cursor int) ([]Range, bool) {
+	return nodePathFor(text, lang, cursor, true)
+}
+
+func nodePathFor(text, lang string, cursor int, widen bool) ([]Range, bool) {
 	language, ok := languageFor(lang)
 	if !ok {
 		return nil, false
@@ -82,7 +97,7 @@ func nodePathAt(text, lang string, cursor int) ([]Range, bool) {
 	cursor = min(max(cursor, 0), len(c2b)-1)
 	b := c2b[cursor]
 	end := b
-	if end < len(src) {
+	if widen && end < len(src) {
 		end++
 	}
 	root := tree.RootNode()

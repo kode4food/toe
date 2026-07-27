@@ -4,6 +4,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 func syntaxExpandSelection(e *view.Editor) {
@@ -79,6 +80,56 @@ func syntaxMatchBrackets(e *view.Editor) {
 			continue
 		}
 		nr := r.PutCursor(text, match, false)
+		if nr != r {
+			ranges[i] = nr
+			changed = true
+		}
+	}
+	if !changed {
+		return
+	}
+	if newSel, err := core.NewSelection(
+		ranges, sel.PrimaryIndex(),
+	); err == nil {
+		doc.SetSelectionFor(v.ID(), newSel)
+	}
+}
+
+// smartTab indents inside leading whitespace, and otherwise moves each cursor
+// past the enclosing syntax node; a literal tab is Shift+Tab
+func smartTab(e *view.Editor) {
+	if action.InLeadingWhitespace(e) {
+		action.InsertTab(e)
+		return
+	}
+	syntaxMoveParentNodeEnd(e)
+}
+
+func syntaxMoveParentNodeEnd(e *view.Editor) {
+	v, ok := e.FocusedView()
+	if !ok {
+		return
+	}
+	doc, ok := e.FocusedDocument()
+	if !ok {
+		return
+	}
+	text := doc.Text()
+	src := text.String()
+	lang := doc.Lang()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	changed := false
+	for i, r := range ranges {
+		end, ok := syntax.ParentNodeEnd(syntax.SelectionArgs{
+			Text:   src,
+			Lang:   lang,
+			Cursor: r.Cursor(text),
+		})
+		if !ok {
+			continue
+		}
+		nr := r.PutCursor(text, end, false)
 		if nr != r {
 			ranges[i] = nr
 			changed = true

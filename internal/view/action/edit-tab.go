@@ -1,25 +1,26 @@
 package action
 
 import (
+	"strings"
+	"unicode"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
-// SmartTab inserts a tab when all cursors have only whitespace to their left;
-// otherwise jumps to the next snippet tabstop or parent node end (no-op when
-// those subsystems are absent)
-func SmartTab(e *view.Editor) {
+// InLeadingWhitespace reports whether every cursor has only whitespace between
+// it and the start of its line
+func InLeadingWhitespace(e *view.Editor) bool {
 	v, ok := e.FocusedView()
 	if !ok {
-		return
+		return false
 	}
 	doc, ok := e.FocusedDocument()
 	if !ok {
-		return
+		return false
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	allWhitespace := true
 	for _, r := range sel.Ranges() {
 		cursor := r.Cursor(text)
 		lineNum, err := text.CharToLine(cursor)
@@ -34,20 +35,11 @@ func SmartTab(e *view.Editor) {
 		if err != nil {
 			continue
 		}
-		for _, ch := range left.String() {
-			if ch != ' ' && ch != '\t' {
-				allWhitespace = false
-				break
-			}
-		}
-		if !allWhitespace {
-			break
+		if strings.ContainsFunc(left.String(), notSpace) {
+			return false
 		}
 	}
-	if !allWhitespace {
-		return
-	}
-	InsertTab(e)
+	return true
 }
 
 // InsertTab inserts one indentation unit (tab or spaces) at each cursor
@@ -88,4 +80,8 @@ func InsertTab(e *view.Editor) {
 			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
 		)
 	}
+}
+
+func notSpace(r rune) bool {
+	return !unicode.IsSpace(r)
 }

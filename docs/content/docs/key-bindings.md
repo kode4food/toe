@@ -277,7 +277,8 @@ Printable keys type text. The bindings below edit or move instead; anything unbo
 | `Ctrl+u` | Delete till start of line |
 | `Ctrl+k` | Delete till end of line |
 | `Ctrl+j` / `Return` | Insert newline char |
-| `Tab` | Insert tab or complete current word |
+| `Tab` | Insert tab in leading whitespace, otherwise move past the enclosing syntax node |
+| `Shift+Tab` | Insert tab |
 | `Ctrl+x` | Complete current word |
 | `PageUp` / `Ctrl+b` | Move page up |
 | `PageDown` / `Ctrl+f` | Move page down |

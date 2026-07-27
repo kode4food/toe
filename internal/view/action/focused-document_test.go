@@ -111,7 +111,7 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"select all", action.SelectAll},
 		{"select mode", action.SelectMode},
 		{"shrink line bounds", action.ShrinkToLineBounds},
-		{"smart tab", action.SmartTab},
+		{"insert tab", action.InsertTab},
 		{"split newline", action.SplitSelectionOnNewline},
 		{"surround add", func(e *view.Editor) { action.SurroundAdd(e, '(') }},
 		{"surround delete", func(e *view.Editor) {

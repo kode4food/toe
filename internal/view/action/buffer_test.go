@@ -406,21 +406,6 @@ func TestGotoLastModifiedFile(t *testing.T) {
 	})
 }
 
-func TestSmartTabNotAllWhitespace(t *testing.T) {
-	t.Run("noop with non-whitespace to left", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "hello")
-		e.SetMode(view.ModeInsert)
-		testutil.SetCursor(t, e, 5)
-
-		before, _ := e.FocusedDocument()
-		textBefore := before.Text().String()
-		action.SmartTab(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.Equal(t, textBefore, doc.Text().String())
-	})
-}
-
 func TestRepeatLastMotion(t *testing.T) {
 	t.Run("replays last motion", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\n\nb\n\nc")

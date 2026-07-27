@@ -56,6 +56,18 @@ func (e *EditorComponent) handleAutoSaveMsg(
 	return consumed(), nil
 }
 
+func (e *EditorComponent) handleAutoCompletionMsg(
+	cx *Context, msg autoCompletionMsg,
+) (EventResult, tea.Cmd) {
+	if msg.gen != e.language.autoGen {
+		return consumed(), nil
+	}
+	if cx.Editor.Mode() != view.ModeInsert {
+		return consumed(), nil
+	}
+	return consumed(), e.completionCmd(cx, false)
+}
+
 func (e *EditorComponent) handleDocHighlightMsg(
 	cx *Context, msg docHighlightMsg,
 ) (EventResult, tea.Cmd) {

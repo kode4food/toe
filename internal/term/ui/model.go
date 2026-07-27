@@ -64,6 +64,16 @@ func (m Model) SetPickerLayoutOptions(opts PickerLayoutOptions) {
 	m.context.pickerLayout = opts
 }
 
+// CompletionOptions returns the UI-owned automatic completion settings
+func (m Model) CompletionOptions() CompletionOptions {
+	return m.component.completion
+}
+
+// SetCompletionOptions applies UI-owned automatic completion settings
+func (m Model) SetCompletionOptions(opts CompletionOptions) {
+	m.component.completion = opts
+}
+
 // Init fires the startup cmd if one was set before the program started
 func (m Model) Init() tea.Cmd {
 	return m.initCmd

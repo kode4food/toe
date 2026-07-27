@@ -2,8 +2,7 @@
 
 ## Redistributed here
 
-These SVGs are copied from upstream unmodified, resolved by codepoint from the
-glyphs toe renders:
+These SVGs are copied from upstream unmodified, resolved by codepoint from the glyphs toe renders:
 
 | Files | Source | License |
 |-------|--------|---------|
@@ -16,5 +15,4 @@ glyphs toe renders:
 |------|--------|---------|
 | The glyph codepoints toe renders in the terminal (`internal/term/ui/completion-icons.go`, `picker-vcs.go`, `picker-buffer.go`), and the `glyphnames.json` mapping used to resolve them | [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) — Ryan L McIntyre | Multi-licensed: project source MIT, fonts and glyph SVGs [SIL OFL 1.1](https://openfontlicense.org/) |
 
-No Nerd Font files are bundled with toe or with these docs — the editor emits
-the codepoints and the user's terminal font supplies the glyphs.
+No Nerd Font files are bundled with toe or with these docs — the editor emits the codepoints and the user's terminal font supplies the glyphs.

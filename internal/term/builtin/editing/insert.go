@@ -17,6 +17,7 @@ const (
 	actDeleteCharBackward   = "delete_char_backward"
 	actDeleteCharForward    = "delete_char_forward"
 	actInsertNewline        = "insert_newline"
+	actInsertTab            = "insert_tab"
 	actSmartTab             = "smart_tab"
 	actGotoLineEndNewline   = "goto_line_end_newline"
 )
@@ -96,11 +97,18 @@ func InsertModule() command.Module {
 			},
 			{
 				Name: actSmartTab,
-				DocString: "Insert tab in leading whitespace; otherwise, " +
-					"complete current word",
-				Run:   kit.Runner(action.SmartTab),
+				DocString: "Insert tab in leading whitespace; otherwise " +
+					"move past the enclosing syntax node",
+				Run:   kit.Runner(smartTab),
 				Modes: []string{"INS"},
 				Keys:  kit.Keys(kit.Tab),
+			},
+			{
+				Name:      actInsertTab,
+				DocString: "Insert tab at each cursor",
+				Run:       kit.Runner(action.InsertTab),
+				Modes:     []string{"INS"},
+				Keys:      kit.Keys(kit.Shift(command.Tab)),
 			},
 			{
 				Name:      actGotoLineEndNewline,

@@ -33,6 +33,7 @@ type completionController struct {
 	incomplete          bool
 	refreshIncomplete   bool
 	busy                bool
+	triggerEmpty        bool
 }
 
 //goland:noinspection GoRedundantConversion
@@ -1304,6 +1305,9 @@ func (c *completionController) Completions(
 func (c *completionController) TriggerCompletions(
 	doc *view.Document, viewID view.Id,
 ) (view.CompletionResult, error) {
+	if c.triggerEmpty {
+		return view.CompletionResult{}, nil
+	}
 	return c.Completions(doc, viewID)
 }
 
@@ -1526,4 +1530,60 @@ func completionPopupWidth(t *testing.T, out string) int {
 	}
 	t.Fatal("completion popup border not found")
 	return 0
+}
+
+func TestAutoCompletion(t *testing.T) {
+	t.Run("opens after typing without a keypress", func(t *testing.T) {
+		m, e := autoCompletionModel(t, ui.CompletionOptions{
+			Auto: true, Delay: 1, TriggerLen: 2,
+		})
+		m = sendKeyAndFeed(m, 'P')
+		m = sendKeyAndFeed(m, 'r')
+
+		assert.Contains(t, stripANSI(m.View().Content), "Println")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "Pr", doc.Text().String())
+	})
+
+	t.Run("stays closed below the trigger length", func(t *testing.T) {
+		m, _ := autoCompletionModel(t, ui.CompletionOptions{
+			Auto: true, Delay: 1, TriggerLen: 3,
+		})
+		m = sendKeyAndFeed(m, 'P')
+		m = sendKeyAndFeed(m, 'r')
+
+		assert.NotContains(t, stripANSI(m.View().Content), "Println")
+	})
+
+	t.Run("stays closed when disabled", func(t *testing.T) {
+		m, _ := autoCompletionModel(t, ui.CompletionOptions{
+			Auto: false, Delay: 1, TriggerLen: 2,
+		})
+		m = sendKeyAndFeed(m, 'P')
+		m = sendKeyAndFeed(m, 'r')
+
+		assert.NotContains(t, stripANSI(m.View().Content), "Println")
+	})
+}
+
+func autoCompletionModel(
+	t *testing.T, opts ui.CompletionOptions,
+) (ui.Model, *view.Editor) {
+	t.Helper()
+	e := editorWithText(t, "")
+	e.SetMode(view.ModeInsert)
+	e.SetLanguageServerController(&completionController{
+		editor:       e,
+		triggerEmpty: true,
+		items: []view.CompletionItem{
+			{Label: "Println", Insert: "Println", Kind: "function"},
+		},
+	})
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	m.SetCompletionOptions(opts)
+	return resize(m, 80, 24), e
 }

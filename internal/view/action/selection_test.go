@@ -366,19 +366,6 @@ func TestRotateView(t *testing.T) {
 	})
 }
 
-func TestSmartTab(t *testing.T) {
-	t.Run("inserts tab in leading whitespace", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "\thello")
-		e.SetMode(view.ModeInsert)
-		testutil.SetCursor(t, e, 1)
-
-		action.SmartTab(e)
-
-		doc, _ := e.FocusedDocument()
-		assert.True(t, len(doc.Text().String()) > len("\thello"))
-	})
-}
-
 func TestSelectionIsLinewise(t *testing.T) {
 	t.Run("linewise selection via ChangeSelection", func(t *testing.T) {
 		// "hello\nworld\n" — Range(0,12) covers both complete lines exactly

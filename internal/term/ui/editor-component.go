@@ -24,6 +24,7 @@ type (
 		size            geom.Size
 		buf             *tui.Buffer
 		saveSlot        *saveGenSlot
+		completion      CompletionOptions
 		cache           *renderCache
 		macroSlot       *macroSlot
 		bufferlineShown bool
@@ -56,6 +57,7 @@ type (
 		highlightGen    int
 		highlightPos    docHighlightPosition
 		completionGen   int
+		autoGen         int
 	}
 
 	spinnerState struct {
@@ -95,6 +97,8 @@ type (
 
 	autoSaveMsg struct{ gen int }
 
+	autoCompletionMsg struct{ gen int }
+
 	docHighlightMsg struct{ gen int }
 
 	vcsUpdatedMsg struct{}
@@ -114,6 +118,7 @@ var (
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
 		saveSlot:    &saveGenSlot{},
+		completion:  DefaultCompletionOptions(),
 		cache:       newRenderCache(),
 		macroSlot:   &macroSlot{macros: map[rune][]command.KeyEvent{}},
 		focused:     true,
@@ -178,6 +183,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleBlur(cx)
 	case autoSaveMsg:
 		return e.handleAutoSaveMsg(cx, msg)
+	case autoCompletionMsg:
+		return e.handleAutoCompletionMsg(cx, msg)
 	case docHighlightMsg:
 		return e.handleDocHighlightMsg(cx, msg)
 	case completionMsg:

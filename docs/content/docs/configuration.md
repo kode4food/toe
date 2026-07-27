@@ -182,6 +182,16 @@ At runtime, `auto-pairs` accepts a boolean or an inline table of custom pairs.
 | `auto-save.after-delay.enable` | bool | `false` | Save after idle delay |
 | `auto-save.after-delay.timeout` | int | `3000` | Idle delay in milliseconds |
 
+### Completion
+
+| Config key | Type | Default | Description |
+|--------|------|---------|-------------|
+| `completion.auto` | bool | `true` | Show the completion popup while typing |
+| `completion.delay` | int | `250` | Idle milliseconds before an automatic request |
+| `completion.trigger-len` | int | `2` | Word characters typed before an automatic request |
+
+Automatic completion is in addition to `Ctrl+x`, which requests completions at any time, and to the trigger characters a language server advertises.
+
 ### Search
 
 | Config key | Type | Default | Description |

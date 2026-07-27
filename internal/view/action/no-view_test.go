@@ -162,7 +162,7 @@ func TestNoViewActions(t *testing.T) {
 		{"window bottom", action.GotoWindowBottom},
 		{"select all", action.SelectAll},
 		{"shrink line bounds", action.ShrinkToLineBounds},
-		{"smart tab", action.SmartTab},
+		{"insert tab", action.InsertTab},
 		{"split newline", action.SplitSelectionOnNewline},
 		{"surround add", func(e *view.Editor) { action.SurroundAdd(e, '(') }},
 		{"surround delete", func(e *view.Editor) {

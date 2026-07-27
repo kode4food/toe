@@ -32,8 +32,7 @@ Colors follow the active theme; the swatches above use the default `mocha`.
 
 Use `Space+g` or `:changed-file-picker` to list changed workspace files and preview their diffs.
 
-Each entry carries its change status. With `nerd-fonts` disabled, the short
-label in the second column is shown instead of the glyph:
+Each entry carries its change status. With `nerd-fonts` disabled, the short label in the second column is shown instead of the glyph:
 
 | Status | Plain | Meaning |
 |--------|-------|---------|

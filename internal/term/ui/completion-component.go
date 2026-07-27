@@ -12,6 +12,14 @@ import (
 )
 
 type (
+	// CompletionOptions controls the completion popup that appears while
+	// typing, without an explicit completion keypress
+	CompletionOptions struct {
+		Auto       bool `toml:"auto"`
+		Delay      int  `toml:"delay"`
+		TriggerLen int  `toml:"trigger-len"`
+	}
+
 	completionComponent struct {
 		overlayBuf
 		ec         *EditorComponent
@@ -76,11 +84,28 @@ const (
 )
 
 const (
+	// DefaultCompletionDelay is the idle time before an automatic request,
+	// long enough that a fast typist does not queue one per keystroke
+	DefaultCompletionDelay = 250
+
+	DefaultCompletionTriggerLen = 2
+)
+
+const (
 	completionMinWidth  = 1
 	completionMaxRows   = 10
 	completionPageRows  = completionMaxRows - 1
 	completionScrollGap = 1
 )
+
+// DefaultCompletionOptions returns the automatic completion defaults
+func DefaultCompletionOptions() CompletionOptions {
+	return CompletionOptions{
+		Auto:       true,
+		Delay:      DefaultCompletionDelay,
+		TriggerLen: DefaultCompletionTriggerLen,
+	}
+}
 
 func (c *completionComponent) HandleEvent(
 	cx *Context, msg tea.Msg,

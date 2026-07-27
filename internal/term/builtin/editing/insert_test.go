@@ -1,6 +1,7 @@
 package editing_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestInsertRegister(t *testing.T) {
@@ -47,4 +49,80 @@ func TestCompletionCommands(t *testing.T) {
 			assert.Nil(t, act(e))
 		})
 	}
+}
+
+func TestSmartTab(t *testing.T) {
+	t.Run("indents in leading whitespace", func(t *testing.T) {
+		e, km := test.Env(t, "\tabc")
+		testutil.SetCursor(t, e, 1)
+		test.RunCmd(t, km, e, "smart_tab")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "\t\tabc", doc.Text().String())
+	})
+
+	t.Run("moves past enclosing node", func(t *testing.T) {
+		src := "package main\n\nfunc main() {\n\tprintln(alpha)\n}\n"
+		e, km := test.Env(t, src)
+		test.RunCmdArgs(t, km, e, "set_language", "go")
+		pos := strings.Index(src, "alpha") + 1
+		testutil.SetCursor(t, e, pos)
+		test.RunCmd(t, km, e, "smart_tab")
+		v, ok := e.FocusedView()
+		assert.True(t, ok)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		text := doc.Text()
+		cursor := doc.SelectionFor(v.ID()).Primary().Cursor(text)
+		assert.Equal(t, strings.Index(src, "alpha")+len("alpha"), cursor)
+		assert.Equal(t, src, text.String())
+	})
+
+	t.Run("keeps text when already at node end", func(t *testing.T) {
+		src := "package main\n\nfunc main() {\n\tprintln(alpha)\n}\n"
+		e, km := test.Env(t, src)
+		test.RunCmdArgs(t, km, e, "set_language", "go")
+		testutil.SetCursor(t, e, strings.Index(src, "alpha")+len("alpha"))
+		test.RunCmd(t, km, e, "smart_tab")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, src, doc.Text().String())
+	})
+
+	t.Run("does nothing without a syntax tree", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		testutil.SetCursor(t, e, 3)
+		test.RunCmd(t, km, e, "smart_tab")
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "abc", doc.Text().String())
+	})
+}
+
+func TestInsertTab(t *testing.T) {
+	t.Run("bound to shift+tab in insert", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		e.SetMode(view.ModeInsert)
+		testutil.SetCursor(t, e, 3)
+		act, found, prefix := km.Lookup("INS", []command.KeyEvent{{
+			Code: command.KeyCode{Special: command.Tab},
+			Mods: command.ModShift,
+		}})
+		assert.True(t, found)
+		assert.False(t, prefix)
+		assert.Nil(t, act(e))
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "abc\t", doc.Text().String())
+	})
+
+	t.Run("inserts at cursor", func(t *testing.T) {
+		e, km := test.Env(t, "    abc")
+		testutil.SetCursor(t, e, 7)
+		res := test.RunCmd(t, km, e, "insert_tab")
+		assert.Nil(t, res.Continuation)
+		doc, ok := e.FocusedDocument()
+		assert.True(t, ok)
+		assert.Equal(t, "    abc\t", doc.Text().String())
+	})
 }

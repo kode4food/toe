@@ -125,21 +125,23 @@ func (i *Image) ContentID() uint32 {
 	return i.id
 }
 
-// HandleEvent handles image mouse input: a click zooms in, a modified click
-// zooms out, a bare wheel pans, and a modified wheel zooms. Everything else
-// falls through to the editor
+// HandleEvent handles image mouse input: a left click zooms in, a right or
+// modified left click zooms out, a bare wheel pans, and a modified wheel zooms.
+// Everything else falls through to the editor
 func (p *ImagePane) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, bool) {
 	switch m := msg.(type) {
 	case tea.MouseClickMsg:
-		if m.Button != tea.MouseLeft {
-			return ignored(), false
-		}
-		if m.Mod&wheelMods != 0 {
+		switch {
+		case m.Button == tea.MouseRight:
 			p.ZoomOut()
-		} else {
+		case m.Button == tea.MouseLeft && m.Mod&wheelMods != 0:
+			p.ZoomOut()
+		case m.Button == tea.MouseLeft:
 			p.ZoomIn()
+		default:
+			return ignored(), false
 		}
 		return consumed(), true
 	case tea.MouseWheelMsg:

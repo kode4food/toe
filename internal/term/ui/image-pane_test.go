@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -60,6 +61,24 @@ func TestImagePane(t *testing.T) {
 		assert.True(t, e.RevertPane(id))
 		assert.NotNil(t, pane.Image())
 		assert.Equal(t, geom.Size{Width: 20, Height: 10}, pane.Image().Size())
+	})
+
+	t.Run("mouse zooms in and out", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		pane, err := ui.NewImagePane(
+			e, writeRenderImage(t, t.TempDir(), 20, 10, nil),
+		)
+		assert.NoError(t, err)
+		e.ReplacePane(e.Tree().Focus(), pane)
+		m := renderedModel(e)
+
+		m2, _ := m.Update(tea.MouseClickMsg{X: 2, Y: 2, Button: tea.MouseRight})
+		m = m2.(ui.Model)
+		assert.Equal(t, 75, pane.Zoom())
+
+		m2, _ = m.Update(tea.MouseClickMsg{X: 2, Y: 2, Button: tea.MouseLeft})
+		_ = m2.(ui.Model)
+		assert.Equal(t, 100, pane.Zoom())
 	})
 
 	t.Run("document rejects image", func(t *testing.T) {

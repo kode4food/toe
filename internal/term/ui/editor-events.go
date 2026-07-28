@@ -187,9 +187,9 @@ func (e *EditorComponent) handleMouseClick(
 		dc.CancelDrag()
 	}
 	e.mouse.downDrag = nil
-	if cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
+	if cx.Editor.Options().Mouse {
 		r := &renderPass{ec: e, cx: cx, size: e.size}
-		r.handleMouseClick(geom.Point{X: msg.X, Y: msg.Y}, msg.Mod)
+		r.handleMouseClick(msg)
 	}
 	return consumed(), e.documentHighlightCmd(cx)
 }

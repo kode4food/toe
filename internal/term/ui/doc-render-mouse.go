@@ -96,24 +96,25 @@ func (r *renderPass) contentViewAt(at geom.Point) (*view.View, bool) {
 	return found, found != nil
 }
 
-func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
+func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
+	at := geom.Point{X: msg.X, Y: msg.Y}
 	if p, ok := paneAt(r.cx, at); ok {
 		wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
 		r.cx.Editor.FocusPane(p.ID())
 		if pi, ok := p.(PaneInput); ok {
-			click := tea.MouseClickMsg{
-				X: at.X, Y: at.Y, Button: tea.MouseLeft, Mod: mod,
-			}
-			if _, handled := pi.HandleEvent(r.cx, click); handled {
+			if _, handled := pi.HandleEvent(r.cx, msg); handled {
 				return
 			}
 		}
-		if sp, ok := p.(Draggable); ok {
-			if wasFocused && sp.BeginDrag(r.cx, at, mod) {
+		if sp, ok := p.(Draggable); ok && msg.Button == tea.MouseLeft {
+			if wasFocused && sp.BeginDrag(r.cx, at, msg.Mod) {
 				r.ec.mouse.downDrag = sp
 			}
 			return
 		}
+	}
+	if msg.Button != tea.MouseLeft {
+		return
 	}
 
 	yOff := 0
@@ -146,7 +147,7 @@ func (r *renderPass) handleMouseClick(at geom.Point, mod tea.KeyMod) {
 
 	var newSel core.Selection
 	switch {
-	case mod&tea.ModAlt != 0:
+	case msg.Mod&tea.ModAlt != 0:
 		newSel = prevSel.Push(core.PointRange(res.pos))
 	case r.cx.Editor.Mode() == view.ModeSelect:
 		// In select mode a click extends the primary selection rather than

@@ -105,6 +105,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `text-width` | int | `80` | Wrap column for `:reflow` and for soft wrap when `wrap-at-text-width` is on |
 | `rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
 | `bufferline` | string | `"never"` | Show buffer tabs: `never`, `always`, `multiple` |
+| `inactive-dim` | int | `10` | Percent to darken unfocused editor panes; `0` disables |
 
 ### Soft Wrap
 

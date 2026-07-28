@@ -96,21 +96,6 @@ var (
 	}
 )
 
-// RGBA returns the color's red, green, blue, and alpha values
-func (c Color) RGBA() (uint32, uint32, uint32, uint32) {
-	switch c.kind {
-	case colorReset:
-		return 0, 0, 0, 0
-	case colorIndexed:
-		return ansi.IndexedColor(c.r).RGBA()
-	case colorRGB:
-		return uint32(c.r) * 0x101, uint32(c.g) * 0x101,
-			uint32(c.b) * 0x101, 0xffff
-	default:
-		return ansi.BasicColor(c.kind - 1).RGBA()
-	}
-}
-
 func ColorIndexed(idx uint8) Color {
 	return Color{kind: colorIndexed, r: idx}
 }
@@ -139,6 +124,34 @@ func PlaceholderSymbol(at geom.Point) string {
 	})
 }
 
+// RGBA returns the color's red, green, blue, and alpha values
+func (c Color) RGBA() (uint32, uint32, uint32, uint32) {
+	switch c.kind {
+	case colorReset:
+		return 0, 0, 0, 0
+	case colorIndexed:
+		return ansi.IndexedColor(c.r).RGBA()
+	case colorRGB:
+		return uint32(c.r) * 0x101, uint32(c.g) * 0x101,
+			uint32(c.b) * 0x101, 0xffff
+	default:
+		return ansi.BasicColor(c.kind - 1).RGBA()
+	}
+}
+
+// Darkened scales the color toward black by pct/100 (pct<100 darkens). Reset
+// stays reset; named and indexed colors resolve to rgb first
+func (c Color) Darkened(pct int) Color {
+	if c.IsReset() {
+		return c
+	}
+	r, g, b, _ := c.RGBA()
+	scale := func(v uint32) uint8 {
+		return uint8(v >> 8 * uint32(pct) / 100)
+	}
+	return ColorRGB(scale(r), scale(g), scale(b))
+}
+
 func (s Style) Fg(c Color) Style {
 	s.fg = c
 	return s
@@ -161,6 +174,15 @@ func (s Style) UlStyle(u UnderlineStyle) Style {
 
 func (s Style) Mod(m Modifier) Style {
 	s.modifier |= m
+	return s
+}
+
+// Darkened darkens the foreground, background, and underline colors so an
+// unfocused pane recedes
+func (s Style) Darkened(pct int) Style {
+	s.fg = s.fg.Darkened(pct)
+	s.bg = s.bg.Darkened(pct)
+	s.underlineColor = s.underlineColor.Darkened(pct)
 	return s
 }
 

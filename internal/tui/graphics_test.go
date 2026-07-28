@@ -48,6 +48,17 @@ func TestColor(t *testing.T) {
 			tui.ColorRGB(0x12, 0x34, 0x56), tui.ImageColor(0x123456),
 		)
 	})
+
+	t.Run("Darkened scales rgb toward black", func(t *testing.T) {
+		r, g, b, _ := tui.ColorRGB(200, 100, 50).Darkened(50).RGBA()
+		assert.Equal(t, uint32(100), r>>8)
+		assert.Equal(t, uint32(50), g>>8)
+		assert.Equal(t, uint32(25), b>>8)
+	})
+
+	t.Run("Darkened leaves reset alone", func(t *testing.T) {
+		assert.True(t, tui.ColorReset.Darkened(50).IsReset())
+	})
 }
 
 func TestPlaceholderSymbol(t *testing.T) {

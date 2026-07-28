@@ -137,6 +137,7 @@ const (
 	DefaultScrollOff     = 5
 	DefaultScrollLines   = 3
 	DefaultAutoSaveDelay = 3000
+	DefaultInactiveDim   = 10
 
 	WhitespaceRenderNone WhitespaceRenderValue = "none"
 	WhitespaceRenderAll  WhitespaceRenderValue = "all"

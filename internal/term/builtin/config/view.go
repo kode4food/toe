@@ -18,6 +18,7 @@ import (
 type viewSection struct {
 	Editor struct {
 		LineNumber   view.LineNumber   `toml:"line-number"`
+		InactiveDim  *int              `toml:"inactive-dim"`
 		CursorLine   *bool             `toml:"cursorline"`
 		CursorColumn *bool             `toml:"cursorcolumn"`
 		TextWidth    *int              `toml:"text-width"`
@@ -545,6 +546,20 @@ func ViewModule(model ui.Model) command.Module {
 				},
 			),
 			{
+				Key: "inactive-dim",
+				Get: func(e *view.Editor) (string, error) {
+					return strconv.Itoa(e.Options().InactiveDim), nil
+				},
+				Set: func(e *view.Editor, s string) error {
+					v, err := viewcfg.ParseNonNegInt(s)
+					if err != nil {
+						return err
+					}
+					e.Options().InactiveDim = v
+					return nil
+				},
+			},
+			{
 				Key: "rulers",
 				Get: func(e *view.Editor) (string, error) {
 					return viewcfg.FormatIntSlice(e.Options().Rulers), nil
@@ -781,6 +796,9 @@ func ViewModule(model ui.Model) command.Module {
 				opts := e.Options()
 				opts.LineNumber = cmp.Or(
 					cfg.Editor.LineNumber, view.LineNumberAbsolute,
+				)
+				opts.InactiveDim = kit.IntOr(
+					cfg.Editor.InactiveDim, view.DefaultInactiveDim,
 				)
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)

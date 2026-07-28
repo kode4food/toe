@@ -235,6 +235,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 
 	focus := r.cx.Editor.Tree().Focus()
+	dim := min(max(r.cx.Editor.Options().InactiveDim, 0), 90)
 	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		focused := p.ID() == focus
 		switch pane := p.(type) {
@@ -260,6 +261,9 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 					yOffset: y0,
 					focused: focused,
 				})
+				if !focused && dim > 0 {
+					r.dimPane(buf, pane.Area(), y0, dim)
+				}
 			}
 		case *ImagePane:
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
@@ -338,6 +342,21 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 
 	if r.ec.keys.infoTitle != "" || len(r.ec.keys.infoItems) > 0 {
 		r.renderInfoOverlay(buf)
+	}
+}
+
+// dimPane darkens every cell in an unfocused pane by dim percent so the focused
+// one stands out. Callers skip it entirely when dim is 0
+func (r *renderPass) dimPane(buf *tui.Buffer, a geom.Area, y0, dim int) {
+	brightness := 100 - dim
+	top := y0 + a.Y
+	for y := top; y < top+a.Height; y++ {
+		for x := a.X; x < a.X+a.Width; x++ {
+			p := geom.Point{X: x, Y: y}
+			c := buf.Get(p)
+			c.Style = c.Style.Darkened(brightness)
+			buf.Set(p, c)
+		}
 	}
 }
 

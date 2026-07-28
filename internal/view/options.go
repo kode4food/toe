@@ -14,6 +14,7 @@ type Options struct {
 	Theme                string
 	ScrollOff            int
 	ScrollLines          int
+	InactiveDim          int
 	Mouse                bool
 	MiddleClickPaste     bool
 	NerdFonts            bool
@@ -139,6 +140,7 @@ func defaultOptions() Options {
 		},
 		ScrollOff:            DefaultScrollOff,
 		ScrollLines:          DefaultScrollLines,
+		InactiveDim:          DefaultInactiveDim,
 		Mouse:                true,
 		MiddleClickPaste:     true,
 		NerdFonts:            true,

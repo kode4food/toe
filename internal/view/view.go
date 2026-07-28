@@ -581,8 +581,8 @@ func visualRowsToCursor(
 }
 
 // VisualColumn returns the display column of position to, measured from from,
-// expanding tabs to the next tabW boundary. It folds rune widths over the
-// range directly, allocating no intermediate substring
+// expanding tabs to the next tabW boundary. It folds rune widths over the range
+// directly, allocating no intermediate substring
 func VisualColumn(doc core.Rope, from, to, tabW int) int {
 	col := 0
 	doc.ForEachSegment(from, to, func(seg string) {

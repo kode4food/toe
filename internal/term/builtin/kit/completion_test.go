@@ -50,12 +50,20 @@ func TestStaticSig(t *testing.T) {
 
 func TestFileSig(t *testing.T) {
 	dir := t.TempDir()
-	assert.NoError(t, os.WriteFile(filepath.Join(dir, "x.go"), []byte("x"), 0o644))
+	assert.NoError(t,
+		os.WriteFile(filepath.Join(dir, "x.go"), []byte("x"), 0o644))
 	sig := kit.FileSig(kit.Sig())
 	e := view.NewEditor(dir)
 
 	got := sig.Completer.Complete(e, sig, "x")
 	assert.Contains(t, completionTexts(got), "x.go")
+
+	t.Setenv("HOME", dir)
+	args, err := command.ParseArgs("~/x.go", sig, true, nil)
+	assert.NoError(t, err)
+	path, ok := args.First()
+	assert.True(t, ok)
+	assert.Equal(t, filepath.Join(dir, "x.go"), path)
 }
 
 func completionTexts(cs []command.Completion) []string {

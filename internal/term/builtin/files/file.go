@@ -118,7 +118,7 @@ func fileWriteCmds() []command.Command {
 			},
 			Modes:     command.DocumentModes(),
 			Aliases:   []string{"w"},
-			Signature: kit.Sig(),
+			Signature: kit.FileSig(kit.Sig()),
 		},
 		{
 			Name: actWriteForce,
@@ -141,7 +141,7 @@ func fileWriteCmds() []command.Command {
 			},
 			Modes:     command.DocumentModes(),
 			Aliases:   []string{"w!"},
-			Signature: kit.Sig(),
+			Signature: kit.FileSig(kit.Sig()),
 		},
 		{
 			Name:      actWriteAll,
@@ -251,7 +251,7 @@ func fileWriteCmds() []command.Command {
 			},
 			Modes:     command.DocumentModes(),
 			Aliases:   []string{"wbc"},
-			Signature: kit.Sig(),
+			Signature: kit.FileSig(kit.Sig()),
 		},
 		{
 			Name: actWriteBufferCloseForce,
@@ -269,7 +269,7 @@ func fileWriteCmds() []command.Command {
 			},
 			Modes:     command.DocumentModes(),
 			Aliases:   []string{"wbc!"},
-			Signature: kit.Sig(),
+			Signature: kit.FileSig(kit.Sig()),
 		},
 	}
 }

@@ -41,9 +41,10 @@ func FileCompleter(
 	return out
 }
 
-// FileSig attaches file-path completion to a signature's positionals
+// FileSig attaches file-path expansion and completion to positionals
 func FileSig(sig command.Signature) command.Signature {
 	sig.Completer = command.PositionalCompleter(FileCompleter)
+	sig.Positionals.Map = expandHome
 	return sig
 }
 
@@ -53,4 +54,18 @@ func StaticSig(sig command.Signature, items ...string) command.Signature {
 		command.StaticCompleter(items...),
 	)
 	return sig
+}
+
+func expandHome(path string) (string, error) {
+	if path != "~" && !strings.HasPrefix(path, "~/") {
+		return path, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if path == "~" {
+		return home, nil
+	}
+	return filepath.Join(home, path[2:]), nil
 }

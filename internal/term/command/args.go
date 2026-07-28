@@ -38,6 +38,7 @@ type (
 	Positionals struct {
 		Min int
 		Max int // 0 = no maximum
+		Map func(string) (string, error)
 	}
 
 	// ParseErrorKind identifies a parser validation failure
@@ -156,6 +157,13 @@ func (a *Args) Push(arg string) error {
 	}
 	if !a.onlyPositionals && strings.HasPrefix(arg, "-") {
 		return a.pushFlag(arg)
+	}
+	if fn := a.signature.Positionals.Map; fn != nil {
+		next, err := fn(arg)
+		if err != nil {
+			return err
+		}
+		arg = next
 	}
 	a.positionals = append(a.positionals, arg)
 	a.state = argsCompletionState{kind: argsCompletionPositional}

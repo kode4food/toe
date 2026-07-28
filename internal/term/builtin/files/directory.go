@@ -31,7 +31,7 @@ func DirectoryModule() command.Module {
 				},
 				Modes:     command.PaneModes(),
 				Aliases:   []string{"change-current-directory", "cd"},
-				Signature: kit.MinArgs(1),
+				Signature: kit.FileSig(kit.MinArgs(1)),
 			},
 			{
 				Name:      actShowDirectory,
@@ -63,7 +63,7 @@ func DirectoryModule() command.Module {
 				},
 				Modes:     command.PaneModes(),
 				Aliases:   []string{"pushd"},
-				Signature: kit.MinArgs(1),
+				Signature: kit.FileSig(kit.MinArgs(1)),
 			},
 			{
 				Name: actPopDirectory,

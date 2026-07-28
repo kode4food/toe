@@ -28,6 +28,7 @@ type (
 		hlFrom int
 		hlTo   int
 		th     *theme.Theme
+		styles *tuiStyles
 	}
 
 	previewDocRender struct {
@@ -41,6 +42,7 @@ type (
 		hlTo      int
 		diffLines map[int]diffGutterKind
 		scroll    int
+		styles    *tuiStyles
 	}
 )
 
@@ -97,6 +99,7 @@ func (p *previewCtx) renderDocInto(
 		hlFrom: p.hlFrom, hlTo: p.hlTo,
 		diffLines: p.itemDiffLines(entry.rope),
 		scroll:    p.picker.preview.scroll,
+		styles:    p.styles,
 	}
 	renderPreviewDocInto(buf, r)
 	p.picker.preview.scroll = r.scroll
@@ -127,6 +130,7 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		opts: opts, th: p.th,
 		area:   geom.Area{Point: at, Size: p.size},
 		scroll: p.picker.preview.scroll,
+		styles: p.styles,
 	}
 	renderDiffPreviewInto(buf, r)
 	p.picker.preview.scroll = r.scroll
@@ -172,6 +176,7 @@ func (p *previewDocEntry) renderInto(
 		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
 		scroll:    ctx.picker.preview.scroll,
+		styles:    ctx.styles,
 	}
 	renderPreviewDocInto(buf, r)
 	ctx.picker.preview.scroll = r.scroll

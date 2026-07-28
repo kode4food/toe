@@ -9,11 +9,27 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	rulerBackgroundPct = 0.06
+	cursorHighlightPct = 0.03
+)
+
 func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
+	return buildTUIStylesWithBackground(
+		th, mode, th.Get("ui.background").BgColor(),
+	)
+}
+
+func buildTUIStylesWithBackground(
+	th *theme.Theme, mode view.Mode, bg tui.Color,
+) *tuiStyles {
 	sel := th.Get("ui.selection")
 	cur, _ := modeCursorStyleFor(th, mode, false)
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
-	cl := th.Get("ui.cursorline.primary")
+	light := isLightTheme(th)
+	ruler := deriveBackground(bg, rulerBackgroundPct, light)
+	cursorHighlight := deriveBackground(bg, cursorHighlightPct, light)
+	cl := tui.Style{}.Bg(cursorHighlight)
 	st := &tuiStyles{
 		text:              th.Get("ui.text"),
 		line:              th.Get("ui.linenr"),
@@ -26,7 +42,7 @@ func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
 		cursorColumn:      cl,
 		whitespace:        th.Get("ui.virtual.whitespace"),
 		indentGuide:       th.Get("ui.virtual.indent-guide"),
-		ruler:             th.Get("ui.virtual.ruler"),
+		rulerBg:           ruler,
 		inlayHint:         th.Get("ui.virtual"),
 		inlayHintType:     th.Get("ui.virtual"),
 		inlayHintParam:    th.Get("ui.virtual"),
@@ -66,19 +82,27 @@ func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
 	if next, ok := th.TryGetExact("ui.selection.primary"); ok {
 		st.selection = next
 	}
-	if next, ok := th.TryGet("ui.cursorline.secondary"); ok {
-		st.cursorLineSec = next
-	}
-	if next, ok := th.TryGetExact("ui.cursorcolumn"); ok {
-		st.cursorColumn = next
-	}
-	if next, ok := th.TryGetExact("ui.cursorcolumn.primary"); ok {
-		st.cursorColumn = next
-	}
 	if next, ok := th.TryGet("ui.search.match"); ok {
 		st.searchMatch = next
 	}
 	return st
+}
+
+func isLightTheme(th *theme.Theme) bool {
+	return th.Name() == "latte"
+}
+
+func deriveBackground(bg tui.Color, pct float64, light bool) tui.Color {
+	r, g, b, _ := bg.RGBA()
+	red, green, blue := uint8(r>>8), uint8(g>>8), uint8(b>>8)
+	toward := 255.0
+	if light {
+		toward = 0
+	}
+	shift := func(v uint8) uint8 {
+		return uint8(float64(v) + (toward-float64(v))*pct)
+	}
+	return tui.ColorRGB(shift(red), shift(green), shift(blue))
 }
 
 func clearStyleBackground(st tui.Style) tui.Style {

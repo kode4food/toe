@@ -109,7 +109,7 @@ func (p *PickerComponent) navigateItem(
 	ps.load.cancel()
 	return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
-		comp.Push(newPickerComponent(next))
+		comp.Push(newPickerComponent(cx, next))
 		return feedCmd
 	}), nil, true
 }

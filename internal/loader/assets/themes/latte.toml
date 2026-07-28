@@ -28,7 +28,6 @@ base = "#eff1f5"
 mantle = "#e6e9ef"
 crust = "#dce0e8"
 
-cursorline = "#e8ecf1"
 secondary_cursor = "#e1a99d"
 secondary_cursor_normal = "#97a7fb"
 secondary_cursor_insert = "#74b867"

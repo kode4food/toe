@@ -34,8 +34,8 @@ func (m Model) TerminalSearchAction() command.KeyAction {
 		if !ok {
 			return nil
 		}
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newPromptComponent(promptComponentArgs{
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return newPromptComponent(cx, promptComponentArgs{
 				ec:     ec,
 				kind:   promptTerminalSearch,
 				prompt: i18n.Text(i18n.PromptScrollbackSearch),

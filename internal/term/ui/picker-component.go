@@ -5,10 +5,12 @@ import (
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type PickerComponent struct {
 	overlayBuf
+	styles        *tuiStyles
 	state         *Picker
 	bounds        geom.Area
 	listBounds    geom.Area
@@ -24,8 +26,14 @@ var (
 	_ previewImager          = (*PickerComponent)(nil)
 )
 
-func newPickerComponent(p *Picker) *PickerComponent {
-	return &PickerComponent{state: p}
+func newPickerComponent(cx *Context, p *Picker) *PickerComponent {
+	th := cx.Theme()
+	return &PickerComponent{
+		styles: buildTUIStylesWithBackground(
+			th, view.ModeNormal, th.Get("ui.popup").BgColor(),
+		),
+		state: p,
+	}
 }
 
 func (p *PickerComponent) HandleEvent(

@@ -96,7 +96,6 @@
 "ui.text.directory" = { fg = "blue" }
 
 "ui.virtual" = "overlay0"
-"ui.virtual.ruler" = { bg = "surface0" }
 "ui.virtual.indent-guide" = "surface0"
 "ui.virtual.inlay-hint" = { fg = "surface1", bg = "mantle" }
 "ui.virtual.jump-label" = { fg = "rosewater", modifiers = ["bold"] }
@@ -114,8 +113,6 @@
 "ui.cursor.normal" = { fg = "base", bg = "secondary_cursor_normal" }
 "ui.cursor.insert" = { fg = "base", bg = "secondary_cursor_insert" }
 "ui.cursor.select" = { fg = "base", bg = "secondary_cursor_select" }
-
-"ui.cursorline.primary" = { bg = "cursorline" }
 
 "ui.highlight" = { bg = "surface2" }
 
@@ -164,7 +161,6 @@ base = "#1e1e2e"
 mantle = "#181825"
 crust = "#11111b"
 
-cursorline = "#2a2b3c"
 secondary_cursor = "#b5a6a8"
 secondary_cursor_select = "#878ec0"
 secondary_cursor_normal = "#b5a6a8"

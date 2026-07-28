@@ -54,14 +54,16 @@ func (c *Context) Theme() *theme.Theme {
 	c.theme.name = name
 	c.theme.generation++
 	if th, _, err := theme.Load(name); err == nil {
-		c.theme.loaded = th
-		return c.theme.loaded
+		return c.setTheme(th)
 	}
 	th, _, err := theme.Default()
 	if err != nil {
-		c.theme.loaded = fallbackTheme()
-		return c.theme.loaded
+		return c.setTheme(fallbackTheme())
 	}
+	return c.setTheme(th)
+}
+
+func (c *Context) setTheme(th *theme.Theme) *theme.Theme {
 	c.theme.loaded = th
 	return c.theme.loaded
 }

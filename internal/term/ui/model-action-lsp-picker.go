@@ -96,8 +96,8 @@ func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
 		p := newLSPSymbolPicker(e, symbols)
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
+		return func(cx *Context) (Component, tea.Cmd) {
+			return newPickerComponent(cx, p), cmd
 		}
 	}
 }
@@ -107,8 +107,8 @@ func workspaceSymbolPickerLayer() func(*view.Editor) layerFunc {
 		p := newLSPWorkspaceSymbolPicker(e)
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
+		return func(cx *Context) (Component, tea.Cmd) {
+			return newPickerComponent(cx, p), cmd
 		}
 	}
 }

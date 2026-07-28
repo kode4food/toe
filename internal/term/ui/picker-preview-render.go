@@ -3,7 +3,6 @@ package ui
 import (
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
-	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
 
@@ -25,7 +24,7 @@ type previewLineCtx struct {
 }
 
 func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
-	tuiStyles := buildTUIStyles(args.th, view.ModeNormal)
+	tuiStyles := args.styles
 	hlStyle := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)
 	hlStyleFn := func(scope string) tui.Style {
@@ -139,6 +138,27 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 			lineCtx,
 		)
 	}
+	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
+		Point: geom.Point{X: contentX, Y: args.area.Y},
+		Size:  geom.Size{Width: contentW, Height: bufRow},
+	}, tuiStyles.rulerBg)
+}
+
+// applyPreviewRulers draws vertical rulers across a preview content area,
+// tinted off the pane background so they stay visible in any theme
+func applyPreviewRulers(
+	buf *tui.Buffer, rulers []int, content geom.Area, rulerBg tui.Color,
+) {
+	if len(rulers) == 0 {
+		return
+	}
+	applyRulers(applyRulersArgs{
+		buf:             buf,
+		at:              content.Point,
+		size:            content.Size,
+		rulers:          rulers,
+		rulerBackground: rulerBg,
+	})
 }
 
 func emitPreviewLine(

@@ -178,7 +178,6 @@ func (r *renderPass) prepareContentRender(
 
 	lineTUI := tuiStyles.line
 	lineSelTUI := tuiStyles.lineSelected
-	rulerTUI := tuiStyles.ruler
 	fillTUI := tuiStyles.text
 	cursorLinePriBg := tuiStyles.cursorLinePrim.BgColor()
 	cursorLineSecBg := tuiStyles.cursorLineSec.BgColor()
@@ -266,7 +265,7 @@ func (r *renderPass) prepareContentRender(
 		cursorColumnEnabled: opts.CursorColumn,
 		cursorColumnBg:      tuiStyles.cursorColumn.BgColor(),
 		rulers:              opts.Rulers,
-		rulerBg:             rulerTUI.BgColor(),
+		rulerBg:             tuiStyles.rulerBg,
 
 		gutter: gutter,
 		rr:     rr,

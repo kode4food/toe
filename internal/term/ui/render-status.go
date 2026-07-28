@@ -29,7 +29,7 @@ type (
 		cursorColumn      tui.Style
 		whitespace        tui.Style
 		indentGuide       tui.Style
-		ruler             tui.Style
+		rulerBg           tui.Color
 		inlayHint         tui.Style
 		inlayHintType     tui.Style
 		inlayHintParam    tui.Style

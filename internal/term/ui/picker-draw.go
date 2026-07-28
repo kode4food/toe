@@ -135,6 +135,7 @@ func (p *PickerComponent) drawPreviewInto(
 		images: cx.images,
 		size:   geom.Size{Width: innerW, Height: area.Height},
 		th:     cx.Theme(),
+		styles: p.styles,
 		hlFrom: -1,
 	}
 	if lr := item.Location.Lines; lr != nil {

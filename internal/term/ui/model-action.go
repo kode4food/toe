@@ -32,7 +32,7 @@ func (m Model) WithInitialPicker(fn PickerFunc) Model {
 		}
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
-		return newPickerComponent(p), cmd
+		return newPickerComponent(cx, p), cmd
 	}
 	return m
 }
@@ -47,8 +47,8 @@ func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
 		}
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
+		return func(cx *Context) (Component, tea.Cmd) {
+			return newPickerComponent(cx, p), cmd
 		}
 	}
 	return func(e *view.Editor) command.Continuation {
@@ -65,8 +65,8 @@ func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
 func (m Model) CmdModeAction() command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newPromptComponent(promptComponentArgs{
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return newPromptComponent(cx, promptComponentArgs{
 				ec:   ec,
 				kind: promptCmd,
 			}), nil
@@ -78,8 +78,8 @@ func (m Model) CmdModeAction() command.KeyAction {
 func (m Model) SearchAction(forward bool) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newPromptComponent(promptComponentArgs{
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return newPromptComponent(cx, promptComponentArgs{
 				ec:      ec,
 				kind:    promptSearch,
 				forward: forward,
@@ -92,8 +92,8 @@ func (m Model) SearchAction(forward bool) command.KeyAction {
 func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newPromptComponent(promptComponentArgs{
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return newPromptComponent(cx, promptComponentArgs{
 				ec:     ec,
 				kind:   promptRegex,
 				prompt: prompt,
@@ -107,8 +107,8 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
 	ec := m.component
 	return func(_ *view.Editor) command.Continuation {
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newPromptComponent(promptComponentArgs{
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return newPromptComponent(cx, promptComponentArgs{
 				ec:     ec,
 				kind:   promptShell,
 				prompt: prompt,
@@ -126,8 +126,8 @@ func (m Model) CommandPaletteAction() command.KeyAction {
 		p := CommandPalettePicker(e, cx.Keymaps)
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
+		return func(cx *Context) (Component, tea.Cmd) {
+			return newPickerComponent(cx, p), cmd
 		}
 	}
 	return func(e *view.Editor) command.Continuation {

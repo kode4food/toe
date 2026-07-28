@@ -29,8 +29,8 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newPromptComponent(promptComponentArgs{
+		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+			return newPromptComponent(cx, promptComponentArgs{
 				ec:      ec,
 				kind:    promptRegex,
 				prompt:  i18n.Text(i18n.PromptRename),

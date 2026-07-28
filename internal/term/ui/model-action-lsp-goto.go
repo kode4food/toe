@@ -123,8 +123,8 @@ func locationPickerLayer(
 		p := newLSPLocationPicker(e, locations)
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
-		return func(_ *Context) (Component, tea.Cmd) {
-			return newPickerComponent(p), cmd
+		return func(cx *Context) (Component, tea.Cmd) {
+			return newPickerComponent(cx, p), cmd
 		}
 	}
 }

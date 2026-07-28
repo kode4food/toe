@@ -21,6 +21,7 @@ type (
 		th      *theme.Theme
 		area    geom.Area
 		scroll  int
+		styles  *tuiStyles
 	}
 
 	diffPreviewLine struct {
@@ -109,7 +110,7 @@ func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
 }
 
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
-	tuiStyles := buildTUIStyles(args.th, view.ModeNormal)
+	tuiStyles := args.styles
 	hlStyle := previewHlStyleFn(hlStyleFnFor(args.th))
 	hlCache := make(map[string]tui.Style, 32)
 	hlStyleFn := func(scope string) tui.Style {
@@ -199,6 +200,10 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		}
 		buf.SetString(signAt, sign, signStyle)
 	}
+	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
+		Point: geom.Point{X: contentX, Y: args.area.Y},
+		Size:  geom.Size{Width: contentW, Height: args.area.Height},
+	}, tuiStyles.rulerBg)
 }
 
 func tintToward(colors *tintColors) tui.Color {

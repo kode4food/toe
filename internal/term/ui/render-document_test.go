@@ -497,7 +497,7 @@ func TestThemeRender(t *testing.T) {
 
 		out := m.View().Content
 
-		marker := "\x1b[48;2;49;50;68m"
+		marker := "\x1b[48;2;43;43;58m"
 		assert.Contains(t, out, marker)
 		for line := range strings.SplitSeq(out, "\n") {
 			pfx, _, ok := strings.Cut(line, marker)
@@ -506,6 +506,10 @@ func TestThemeRender(t *testing.T) {
 			}
 			assert.Equal(t, 16, ansi.StringWidth(pfx))
 		}
+
+		e.Options().Theme = "latte"
+		m = resize(m, 40, 10)
+		assert.Contains(t, m.View().Content, "\x1b[48;2;224;226;230m")
 	})
 
 	t.Run("renders rulers cleanly", func(t *testing.T) {
@@ -1228,7 +1232,9 @@ func TestMouseDragNoop(t *testing.T) {
 
 func TestCursorColumnRender(t *testing.T) {
 	t.Run("cursorcolumn highlights column", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
+		e.Options().Theme = "mocha"
 		e.Options().CursorColumn = true
 		doc, ok := e.FocusedDocument()
 		assert.True(t, ok)
@@ -1239,8 +1245,14 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		out := stripANSI(m.View().Content)
+		raw := m.View().Content
+		out := stripANSI(raw)
 		assert.Contains(t, out, "hello")
+		assert.Contains(t, raw, "\x1b[48;2;36;36;52m")
+
+		e.Options().Theme = "latte"
+		m = resize(m, 80, 24)
+		assert.Contains(t, m.View().Content, "\x1b[48;2;231;233;237m")
 	})
 
 	t.Run("multi-cursor secondary column", func(t *testing.T) {

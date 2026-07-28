@@ -21,6 +21,7 @@ type (
 		overlayBuf
 
 		completion completionState
+		bg         tui.Color
 
 		ec      *EditorComponent
 		bounds  geom.Area
@@ -194,8 +195,15 @@ type promptComponentArgs struct {
 	pickerFn pickerBuilder
 }
 
-func newPromptComponent(args promptComponentArgs) *PromptComponent {
+func newPromptComponent(
+	cx *Context, args promptComponentArgs,
+) *PromptComponent {
+	th := cx.Theme()
+	bg := deriveBackground(
+		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
+	)
 	return &PromptComponent{
+		bg:       bg,
 		ec:       args.ec,
 		kind:     args.kind,
 		forward:  args.forward,
@@ -360,7 +368,7 @@ func (p *PromptComponent) accept(
 			picker.load.feedCmd = nil
 			return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 				comp.Pop()
-				comp.Push(newPickerComponent(picker))
+				comp.Push(newPickerComponent(cx, picker))
 				return feedCmd
 			})
 		}
@@ -379,7 +387,7 @@ func (p *PromptComponent) paintLine(
 	cx *Context, buf *tui.Buffer, area geom.Area,
 ) {
 	th := cx.Theme()
-	rowBg := tui.Style{}.Bg(th.Get("ui.cursorline.primary").BgColor())
+	rowBg := tui.Style{}.Bg(p.bg)
 	labelSt := applyAccentStyle(rowBg, th.Get("ui.prompt"))
 	textSt := rowBg.Fg(th.Get("ui.text").FgColor())
 

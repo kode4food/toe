@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/mattn/go-runewidth"
@@ -153,6 +154,28 @@ func TestCompletionComponent(t *testing.T) {
 			rawLineContaining(t, after, "Printf"),
 			"repainted buffer must reflect the moved selection",
 		)
+	})
+
+	t.Run("highlights activation-letter prefix", func(t *testing.T) {
+		m, _ := autoCompletionModel(t, ui.CompletionOptions{
+			Auto: true, Delay: 1, TriggerLen: 2,
+		})
+		m = sendKeyAndFeed(m, 'P')
+		m = sendKeyAndFeed(m, 'r')
+
+		line := rawLineContaining(t, m.View().Content, "Println")
+		fg := fgCols(line)
+		plain := stripANSI(line)
+		start := utf8.RuneCountInString(
+			plain[:strings.Index(plain, "Println")],
+		)
+
+		// the 'Pr' that activated auto-completion is part of the word, so it
+		// must be highlighted like any other matched prefix, not left base
+		matchFg := fg[start]
+		assert.NotEqual(t, "", matchFg)
+		assert.Equal(t, matchFg, fg[start+1], "activation letters highlighted")
+		assert.NotEqual(t, matchFg, fg[start+2], "rest of word stays base")
 	})
 
 	t.Run("opens after trigger character", func(t *testing.T) {
@@ -1162,7 +1185,7 @@ func TestCompletionComponent(t *testing.T) {
 	})
 
 	t.Run("does not render before anchor", func(t *testing.T) {
-		e := editorWithText(t, "alpha")
+		e := editorWithText(t, ".alpha")
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
@@ -1175,6 +1198,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.True(t, ok)
 		v, ok := e.FocusedView()
 		assert.True(t, ok)
+		// cursor inside "alpha"; the anchor backs up to the word start (1)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -1185,7 +1209,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		assert.Contains(t, stripANSI(m.View().Content), "Println")
 
-		doc.SetSelectionFor(v.ID(), core.PointSelection(1))
+		doc.SetSelectionFor(v.ID(), core.PointSelection(0))
 		out := stripANSI(m.View().Content)
 
 		assert.NotContains(t, out, "Println")
@@ -1586,4 +1610,44 @@ func autoCompletionModel(
 	assert.NoError(t, err)
 	m.SetCompletionOptions(opts)
 	return resize(m, 80, 24), e
+}
+
+// fgCols returns the SGR foreground token in effect at each visible column of a
+// rendered line, so a test can assert which columns share a highlight style
+func fgCols(line string) []string {
+	var cols []string
+	fg := ""
+	for len(line) > 0 {
+		if strings.HasPrefix(line, "\x1b[") {
+			end := strings.IndexByte(line, 'm')
+			if end < 0 {
+				break
+			}
+			fg = updateFg(fg, strings.Split(line[2:end], ";"))
+			line = line[end+1:]
+			continue
+		}
+		_, n := utf8.DecodeRuneInString(line)
+		cols = append(cols, fg)
+		line = line[n:]
+	}
+	return cols
+}
+
+func updateFg(fg string, parts []string) string {
+	for i := 0; i < len(parts); i++ {
+		switch p := parts[i]; {
+		case p == "0" || p == "39":
+			fg = ""
+		case p == "38" && i+4 < len(parts) && parts[i+1] == "2":
+			fg = strings.Join(parts[i:i+5], ";")
+			i += 4
+		case p == "38" && i+2 < len(parts) && parts[i+1] == "5":
+			fg = strings.Join(parts[i:i+3], ";")
+			i += 2
+		case len(p) == 2 && (p[0] == '3' || p[0] == '9') && p[1] <= '7':
+			fg = p
+		}
+	}
+	return fg
 }

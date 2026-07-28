@@ -133,7 +133,7 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 // Reload reloads the focused document from disk
 func (e *Editor) Reload() error {
 	if doc, ok := e.FocusedDocument(); ok {
-		return doc.Reload()
+		return e.reloadDocument(doc)
 	}
 	return ErrNoDocument
 }
@@ -143,7 +143,7 @@ func (e *Editor) ReloadAll() []error {
 	var errs []error
 	for _, doc := range e.documents.byID {
 		if doc.Path() != "" {
-			if err := doc.Reload(); err != nil {
+			if err := e.reloadDocument(doc); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -299,6 +299,20 @@ func (e *Editor) openFile(path string) (*Document, error) {
 func (e *Editor) fileOperationController() (FileOperationController, bool) {
 	ops, ok := e.langServers.(FileOperationController)
 	return ops, ok
+}
+
+// reloadDocument reloads from disk and notifies observers so the language
+// server re-syncs and republishes diagnostics, else stale ones linger
+func (e *Editor) reloadDocument(doc *Document) error {
+	before := doc.Text()
+	rev := doc.Revision()
+	if err := doc.Reload(); err != nil {
+		return err
+	}
+	if doc.Revision() != rev {
+		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
+	}
+	return nil
 }
 
 func fileMissing(path string) bool {

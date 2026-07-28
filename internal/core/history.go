@@ -1,7 +1,5 @@
 package core
 
-import "time"
-
 type (
 	// State is the document and selection at a point before a transaction
 	State struct {
@@ -26,7 +24,6 @@ type (
 		lastChild   int
 		transaction Transaction
 		inversion   Transaction
-		timestamp   time.Time
 	}
 )
 
@@ -36,7 +33,6 @@ func NewHistory() History {
 		lastChild:   -1,
 		transaction: NewTransaction(NewRope("")),
 		inversion:   NewTransaction(NewRope("")),
-		timestamp:   time.Now(),
 	}
 	return History{revisions: []revision{root}}
 }
@@ -50,12 +46,6 @@ func (h *History) AtRoot() bool {
 }
 
 func (h *History) CommitRevision(tx Transaction, st State) error {
-	return h.CommitRevisionAt(tx, st, time.Now())
-}
-
-func (h *History) CommitRevisionAt(
-	tx Transaction, st State, timestamp time.Time,
-) error {
 	inv, err := tx.Invert(st.Doc)
 	if err != nil {
 		return err
@@ -72,7 +62,6 @@ func (h *History) CommitRevisionAt(
 		lastChild:   -1,
 		transaction: tx,
 		inversion:   inv,
-		timestamp:   timestamp,
 	})
 	h.current = next
 	return nil

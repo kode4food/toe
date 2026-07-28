@@ -2,7 +2,6 @@ package core_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -19,13 +18,13 @@ func TestHistory(t *testing.T) {
 
 		commit(commitArgs{
 			t: t, h: &h, st: &st,
-			c: core.TextChange(5, 5, " world!"), when: time.Now(),
+			c: core.TextChange(5, 5, " world!"),
 		})
 		assert.Equal(t, "hello world!", st.Doc.String())
 
 		commit(commitArgs{
 			t: t, h: &h, st: &st,
-			c: core.TextChange(6, 11, "世界"), when: time.Now(),
+			c: core.TextChange(6, 11, "世界"),
 		})
 		assert.Equal(t, "hello 世界!", st.Doc.String())
 
@@ -62,12 +61,12 @@ func TestHistory(t *testing.T) {
 		assert.Equal(t, 0, h.CurrentRevision())
 		commit(commitArgs{
 			t: t, h: &h, st: &st,
-			c: core.TextChange(1, 1, "b"), when: time.Now(),
+			c: core.TextChange(1, 1, "b"),
 		})
 		assert.Equal(t, 1, h.CurrentRevision())
 	})
 
-	t.Run("CommitRevision uses current time", func(t *testing.T) {
+	t.Run("CommitRevision advances the tip", func(t *testing.T) {
 		h := core.NewHistory()
 		st := core.State{
 			Doc:       core.NewRope("hello"),
@@ -87,7 +86,7 @@ func TestHistory(t *testing.T) {
 		}
 		commit(commitArgs{
 			t: t, h: &h, st: &st,
-			c: core.TextChange(3, 3, "X"), when: time.Now(),
+			c: core.TextChange(3, 3, "X"),
 		})
 		assert.Equal(t, 3, h.LastEditPos())
 	})
@@ -118,13 +117,12 @@ func TestHistory(t *testing.T) {
 			Doc:       core.NewRope("a"),
 			Selection: core.PointSelection(0),
 		}
-		now := time.Now()
 		commit(commitArgs{
-			t: t, h: &h, st: &st, c: core.TextChange(1, 1, "b"), when: now,
+			t: t, h: &h, st: &st, c: core.TextChange(1, 1, "b"),
 		})
 		applyUndo(t, &h, &st)
 		commit(commitArgs{
-			t: t, h: &h, st: &st, c: core.TextChange(1, 1, "c"), when: now,
+			t: t, h: &h, st: &st, c: core.TextChange(1, 1, "c"),
 		})
 
 		applyUndo(t, &h, &st)
@@ -142,44 +140,36 @@ func historyFixture(t *testing.T) (*core.History, core.State) {
 		Doc:       core.NewRope("a\n"),
 		Selection: core.PointSelection(0),
 	}
-	t0 := time.Now()
-
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.TextChange(1, 1, " b"), when: t0,
+		t: t, h: &h, st: &st, c: core.TextChange(1, 1, " b"),
 	})
 	commit(commitArgs{
-		t: t, h: &h, st: &st,
-		c: core.TextChange(3, 3, " c"), when: t0.Add(10 * time.Second),
+		t: t, h: &h, st: &st, c: core.TextChange(3, 3, " c"),
 	})
 	commit(commitArgs{
-		t: t, h: &h, st: &st,
-		c: core.TextChange(5, 5, " d"), when: t0.Add(20 * time.Second),
+		t: t, h: &h, st: &st, c: core.TextChange(5, 5, " d"),
 	})
 	applyUndo(t, &h, &st)
 	commit(commitArgs{
-		t: t, h: &h, st: &st,
-		c: core.TextChange(5, 5, " e"), when: t0.Add(30 * time.Second),
+		t: t, h: &h, st: &st, c: core.TextChange(5, 5, " e"),
 	})
 	applyUndo(t, &h, &st)
 	applyUndo(t, &h, &st)
 	commit(commitArgs{
-		t: t, h: &h, st: &st,
-		c: core.DeleteChange(1, 3), when: t0.Add(40 * time.Second),
+		t: t, h: &h, st: &st, c: core.DeleteChange(1, 3),
 	})
 	commit(commitArgs{
-		t: t, h: &h, st: &st,
-		c: core.TextChange(1, 1, " f"), when: t0.Add(50 * time.Second),
+		t: t, h: &h, st: &st, c: core.TextChange(1, 1, " f"),
 	})
 
 	return &h, st
 }
 
 type commitArgs struct {
-	t    *testing.T
-	h    *core.History
-	st   *core.State
-	c    core.Change
-	when time.Time
+	t  *testing.T
+	h  *core.History
+	st *core.State
+	c  core.Change
 }
 
 func commit(args commitArgs) {
@@ -187,7 +177,7 @@ func commit(args commitArgs) {
 
 	tx, err := transaction(args.st.Doc, args.c)
 	assert.NoError(args.t, err)
-	err = args.h.CommitRevisionAt(tx, *args.st, args.when)
+	err = args.h.CommitRevision(tx, *args.st)
 	assert.NoError(args.t, err)
 	args.st.Doc, err = tx.Apply(args.st.Doc)
 	assert.NoError(args.t, err)

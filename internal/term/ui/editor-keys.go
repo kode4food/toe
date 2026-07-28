@@ -287,12 +287,24 @@ func countable(mode view.Mode, k command.KeyEvent) bool {
 
 func newCompletionAnchor(doc *view.Document, viewID view.Id) completionAnchor {
 	sel := doc.SelectionFor(viewID)
+	text := doc.Text()
 	return completionAnchor{
 		docID:  doc.ID(),
 		viewID: viewID,
 		rev:    doc.Revision(),
-		pos:    sel.Primary().Cursor(doc.Text()),
+		pos:    wordStart(text, sel.Primary().Cursor(text)),
 	}
+}
+
+func wordStart(text core.Rope, pos int) int {
+	for pos > 0 {
+		ch, err := text.CharAt(pos - 1)
+		if err != nil || !core.CharIsWord(ch) {
+			break
+		}
+		pos--
+	}
+	return pos
 }
 
 func completionRequestValid(cx *Context, anchor completionAnchor) bool {
@@ -308,7 +320,7 @@ func completionRequestValid(cx *Context, anchor completionAnchor) bool {
 		return false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
-	return pos == anchor.pos
+	return pos >= anchor.pos
 }
 
 // wordPrefixReady reports whether the limit characters before the cursor are

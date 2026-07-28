@@ -12,7 +12,7 @@ import (
 // TerminalAction opens the user's shell in the focused pane
 func (m Model) TerminalAction() command.KeyAction {
 	return func(e *view.Editor) command.Continuation {
-		if _, ok := e.Tree().Get(e.Tree().Focus()).(*TerminalPane); ok {
+		if _, ok := e.Tree().Get(e.Tree().Focus()).(view.Displaceable); !ok {
 			return nil
 		}
 		tp, err := NewTerminalPane(e, interactiveShell(), geom.Size{})
@@ -20,7 +20,7 @@ func (m Model) TerminalAction() command.KeyAction {
 			e.SetStatusMsg(i18n.ErrorText(err))
 			return nil
 		}
-		tp.restore = e.ReplacePane(e.Tree().Focus(), tp)
+		e.DisplacePane(e.Tree().Focus(), tp)
 		return nil
 	}
 }

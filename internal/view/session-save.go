@@ -98,7 +98,13 @@ func (e *Editor) sessionNodeFor(
 			focused:  e.panes.tree.focus == id,
 		}
 		n.pane.SaveSession(w)
-		return w.node
+		node := w.node
+		for _, displaced := range n.history {
+			hw := &SessionWriter{docIndex: docIndex, base: base}
+			displaced.SaveSession(hw)
+			node.History = append(node.History, hw.node)
+		}
+		return node
 	}
 	c := n.container
 	out := sessionNode{

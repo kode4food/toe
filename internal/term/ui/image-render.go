@@ -15,6 +15,9 @@ import (
 func (r *renderPass) renderImagePane(
 	buf *tui.Buffer, pane *ImagePane, y0 int, focused bool,
 ) {
+	if pane.Image() == nil {
+		return
+	}
 	a := pane.Area()
 	contentH := max(a.Height-1, 0)
 	r.paintImage(buf, pane, geom.Area{

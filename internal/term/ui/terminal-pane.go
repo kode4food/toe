@@ -42,7 +42,6 @@ type (
 		clip    view.Clipboard
 		notify  func()
 		closed  chan struct{}
-		restore view.Pane
 		scrollN int
 		mouseOn atomic.Bool
 	}
@@ -144,31 +143,23 @@ func (t *TerminalPane) Split() (view.Pane, error) {
 	)
 }
 
-// Close terminates this terminal and closes its pane
+// Close terminates this terminal and closes its pane. The tree discards any
+// panes stashed behind it when the node is removed
 func (t *TerminalPane) Close() {
 	_ = t.Stop()
-	if t.restore != nil {
-		t.restore.Discard()
-	}
 	if t.editor != nil {
 		t.editor.RemovePane(t.id)
 	}
 }
 
-// Discard terminates this displaced terminal and everything behind it
+// Discard terminates this terminal when its slot is vacated without reverting
 func (t *TerminalPane) Discard() {
 	_ = t.Stop()
-	if t.restore != nil {
-		t.restore.Discard()
-	}
 }
 
-// Shutdown terminates this terminal and terminals behind it
+// Shutdown terminates this terminal, releasing its PTY
 func (t *TerminalPane) Shutdown() {
 	_ = t.Stop()
-	if t.restore != nil {
-		t.restore.Shutdown()
-	}
 }
 
 // Area returns the screen rectangle assigned by the layout engine

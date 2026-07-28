@@ -17,8 +17,8 @@ type terminalDragScrollMsg struct {
 	toTop bool
 }
 
-// CloseAllTerminalPanes kills every open terminal's shell, including ones
-// stashed behind a replacement, so the process doesn't orphan them on exit
+// CloseAllTerminalPanes kills every open terminal's shell so the process does
+// not orphan them on exit
 func CloseAllTerminalPanes(e *view.Editor) {
 	e.Tree().Range(func(p view.Pane) bool {
 		p.Shutdown()
@@ -227,11 +227,9 @@ func paneAt(cx *Context, at geom.Point) (view.Pane, bool) {
 
 func closeTerminal(e *view.Editor, tp *TerminalPane) {
 	_ = tp.Stop()
-	if tp.restore != nil {
-		e.ReplacePane(tp.ID(), tp.restore)
-		return
+	if !e.RevertPane(tp.ID()) {
+		e.ClosePane(tp.ID())
 	}
-	e.ClosePane(tp.ID())
 }
 
 type mouseFieldsRes struct {

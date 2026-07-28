@@ -40,6 +40,13 @@ type (
 		SetRedraw(func())
 	}
 
+	// Displaceable marks a pane that frees heavy resources while stashed behind
+	// another pane and reacquires them when reverted back into view
+	Displaceable interface {
+		OnDisplace()
+		OnRevert()
+	}
+
 	treeContainer struct {
 		layout   Layout
 		children []Id
@@ -50,6 +57,7 @@ type (
 	treeNode struct {
 		parent    Id
 		pane      Pane
+		history   []Pane
 		container *treeContainer
 	}
 
@@ -78,6 +86,10 @@ const (
 	minPaneWidth  = 16
 	minPaneHeight = 4
 )
+
+// maxPaneHistory caps how many displaced panes a slot remembers, so a long
+// chain of replacements can't pin documents in memory indefinitely
+const maxPaneHistory = 10
 
 func newTree(size geom.Size) *Tree {
 	t := &Tree{
@@ -148,6 +160,55 @@ func (t *Tree) ReplacePane(id Id, p Pane) {
 	if t.focus == id {
 		p.MarkDirty()
 	}
+}
+
+// DisplacePane swaps the pane at id for p, stashing the displaced pane on the
+// node so RevertPane can bring it back when p closes. The oldest entry is
+// discarded once the stack exceeds maxPaneHistory
+func (t *Tree) DisplacePane(id Id, p Pane) {
+	n, ok := t.nodes[id]
+	if !ok || n.pane == nil {
+		return
+	}
+	displaced := n.pane
+	t.ReplacePane(id, p)
+	stashPane(displaced)
+	n.history = append(n.history, displaced)
+	if len(n.history) > maxPaneHistory {
+		n.history[0].Discard()
+		n.history = slices.Delete(n.history, 0, 1)
+	}
+}
+
+// RevertPane restores the most recently displaced pane at id, reporting whether
+// one was available
+func (t *Tree) RevertPane(id Id) bool {
+	n, ok := t.nodes[id]
+	if !ok || len(n.history) == 0 {
+		return false
+	}
+	last := len(n.history) - 1
+	prev := n.history[last]
+	n.history = n.history[:last]
+	if d, ok := prev.(Displaceable); ok {
+		d.OnRevert()
+	}
+	t.ReplacePane(id, prev)
+	t.recalculate()
+	return true
+}
+
+// DiscardHistory discards every pane stashed behind id, for when the slot is
+// vacated without reverting
+func (t *Tree) DiscardHistory(id Id) {
+	n, ok := t.nodes[id]
+	if !ok {
+		return
+	}
+	for _, p := range n.history {
+		p.Discard()
+	}
+	n.history = nil
 }
 
 // CanSplit reports whether there is enough room to split the focused pane in
@@ -390,6 +451,9 @@ func (t *Tree) allocID() Id {
 }
 
 func (t *Tree) removeOrReplace(child Id, replacement Id) {
+	for _, p := range t.nodes[child].history {
+		p.Discard()
+	}
 	parent := t.nodes[child].parent
 	delete(t.nodes, child)
 
@@ -427,5 +491,12 @@ func (t *Tree) attach(p Pane, id Id) {
 	}
 	if ar, ok := p.(AsyncRenderer); ok {
 		ar.SetRedraw(t.redraw)
+	}
+}
+
+// stashPane lets a pane release heavy resources once it is hidden in history
+func stashPane(p Pane) {
+	if d, ok := p.(Displaceable); ok {
+		d.OnDisplace()
 	}
 }

@@ -137,6 +137,18 @@ func (e *Editor) ReplacePane(id Id, p Pane) Pane {
 	return old
 }
 
+// DisplacePane swaps the pane at id for p, stashing the displaced pane on the
+// node so RevertPane can restore it when p closes
+func (e *Editor) DisplacePane(id Id, p Pane) {
+	e.panes.tree.DisplacePane(id, p)
+}
+
+// RevertPane restores the pane most recently displaced at id, reporting whether
+// one was available
+func (e *Editor) RevertPane(id Id) bool {
+	return e.panes.tree.RevertPane(id)
+}
+
 // DiscardPane closes p's document, if p is a view and this was its last
 // reference — for a displaced pane the caller has decided not to keep
 func (e *Editor) DiscardPane(p Pane) {
@@ -154,6 +166,7 @@ func (e *Editor) ClosePane(id Id) {
 		doc := e.newDocument()
 		e.documents.byID[doc.ID()] = doc
 		v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+		e.panes.tree.DiscardHistory(id)
 		e.panes.tree.ReplacePane(id, v)
 		p.Discard()
 		e.markDocAccessed()
@@ -169,6 +182,7 @@ func (e *Editor) RemovePane(id Id) {
 		doc := e.newDocument()
 		e.documents.byID[doc.ID()] = doc
 		v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+		e.panes.tree.DiscardHistory(id)
 		e.panes.tree.ReplacePane(id, v)
 		e.markDocAccessed()
 		return

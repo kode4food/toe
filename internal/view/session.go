@@ -56,6 +56,7 @@ type (
 		JumpHead         int            `toml:"jump-head,omitempty"`
 		Jumps            []sessionJump  `toml:"jump,omitempty"`
 		Children         []sessionNode  `toml:"child"`
+		History          []sessionNode  `toml:"history,omitempty"`
 	}
 
 	sessionSelect struct {

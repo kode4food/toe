@@ -77,9 +77,10 @@ const (
 var ErrInvalidImage = errors.New("invalid image")
 
 var (
-	_ view.Pane  = (*ImagePane)(nil)
-	_ PaneInput  = (*ImagePane)(nil)
-	_ PaneCursor = (*ImagePane)(nil)
+	_ view.Pane         = (*ImagePane)(nil)
+	_ view.Displaceable = (*ImagePane)(nil)
+	_ PaneInput         = (*ImagePane)(nil)
+	_ PaneCursor        = (*ImagePane)(nil)
 )
 
 // LoadImage reads path and returns a decoded image
@@ -226,6 +227,17 @@ func (p *ImagePane) SaveSession(w *view.SessionWriter) {
 // Image returns the decoded image
 func (p *ImagePane) Image() *Image {
 	return p.image
+}
+
+// OnDisplace drops the decoded bitmap while the pane is stashed behind another
+// pane, freeing its memory
+func (p *ImagePane) OnDisplace() {
+	p.image = nil
+}
+
+// OnRevert re-decodes the backing file when the pane returns to view
+func (p *ImagePane) OnRevert() {
+	_ = p.Reload()
 }
 
 // Reload re-decodes the backing file after an external change; the new bytes

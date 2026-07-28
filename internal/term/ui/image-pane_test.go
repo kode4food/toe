@@ -41,6 +41,27 @@ func TestImagePane(t *testing.T) {
 		assert.Equal(t, geom.Size{Width: 30, Height: 12}, pane.Image().Size())
 	})
 
+	t.Run("drops and reloads bitmap across displace", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		dir := t.TempDir()
+		pane, err := ui.NewImagePane(e, writeRenderImage(t, dir, 20, 10, nil))
+		assert.NoError(t, err)
+		e.ReplacePane(e.Tree().Focus(), pane)
+		id := e.Tree().Focus()
+
+		other, err := ui.NewImagePane(
+			e, writeRenderImage(t, t.TempDir(), 8, 8, nil),
+		)
+		assert.NoError(t, err)
+		e.DisplacePane(id, other)
+		assert.Nil(t, pane.Image())
+
+		assert.True(t, e.RevertPane(id))
+		assert.NotNil(t, pane.Image())
+		assert.Equal(t, geom.Size{Width: 20, Height: 10}, pane.Image().Size())
+	})
+
 	t.Run("document rejects image", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		_, err := e.OpenFile(writeRenderImage(t, t.TempDir(), 20, 10, nil))

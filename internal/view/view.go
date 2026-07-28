@@ -144,6 +144,13 @@ func (v *View) Discard() {
 func (v *View) Shutdown() {
 }
 
+// OnDisplace marks this view as stashed behind another pane. A view holds no
+// heavy resources of its own, so there is nothing to release
+func (v *View) OnDisplace() {}
+
+// OnRevert marks this view as returned to the foreground. Nothing to reacquire
+func (v *View) OnRevert() {}
+
 // Area returns the screen rectangle assigned by the layout engine
 func (v *View) Area() geom.Area {
 	return v.area

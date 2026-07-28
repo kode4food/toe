@@ -865,6 +865,56 @@ kind = "bogus"
 		restoredFake.redraw()
 		assert.True(t, redrawn)
 	})
+
+	t.Run("restores a reopenable pane's displaced pane", func(t *testing.T) {
+		dir := t.TempDir()
+		filePath := filepath.Join(dir, "main.go")
+		assert.NoError(t,
+			os.WriteFile(filePath, []byte("package main\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		v, err := e.OpenFile(filePath)
+		assert.NoError(t, err)
+
+		// displace the editor view with a fake terminal; the tree stashes the
+		// view so RevertPane can bring it back
+		e.DisplacePane(v.ID(), &fakePane{editor: e})
+
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(geom.Size{Width: 80, Height: 24})
+		next.RegisterPaneRestorer(view.SessionKindTerminal,
+			func(e *view.Editor, _ *view.PaneSession) (view.Pane, error) {
+				return &fakePane{editor: e}, nil
+			})
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		var fakeID view.Id
+		for _, p := range next.Tree().Traverse() {
+			if _, ok := p.(*fakePane); ok {
+				fakeID = p.ID()
+			}
+		}
+		if !assert.NotEqual(t, view.InvalidViewId, fakeID) {
+			return
+		}
+		// reverting the restored fake terminal must reveal the displaced view
+		assert.True(t, next.RevertPane(fakeID))
+		reverted, ok := next.Tree().Get(fakeID).(*view.View)
+		if !assert.True(t, ok) {
+			return
+		}
+		doc, ok := next.Document(reverted.DocID())
+		assert.True(t, ok)
+		assert.Equal(t, filePath, doc.Path())
+	})
 }
 
 func (p *fakePane) ID() view.Id      { return p.id }

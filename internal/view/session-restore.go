@@ -86,7 +86,13 @@ func (e *Editor) restoreSessionNode(
 		}
 		id := t.allocID()
 		t.attach(pane, id)
-		t.nodes[id] = &treeNode{parent: parent, pane: pane}
+		node := &treeNode{parent: parent, pane: pane}
+		for _, h := range sn.History {
+			if hp := e.restoreDisplacedPane(t, id, &h, rs); hp != nil {
+				node.history = append(node.history, hp)
+			}
+		}
+		t.nodes[id] = node
 		if sn.Focused {
 			rs.focus = id
 		}
@@ -104,6 +110,17 @@ type restoreSessionViewArgs struct {
 }
 
 func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
+	v := e.newSessionView(args)
+	args.tree.nodes[args.viewID] = &treeNode{parent: args.parent, pane: v}
+	if args.session.Focused {
+		args.restore.focus = args.viewID
+	}
+	return args.viewID
+}
+
+// newSessionView rebuilds a view from its session node without attaching it to
+// the tree or touching focus, so it can serve as a detached restore pane
+func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 	v := &View{
 		id:         args.viewID,
 		editor:     e,
@@ -134,7 +151,6 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 		head = len(entries)
 	}
 	v.jumps.Restore(entries, head)
-	args.tree.nodes[args.viewID] = &treeNode{parent: args.parent, pane: v}
 	if doc, ok := args.restore.documents[args.docID]; ok {
 		sel := args.session.Selection.selection()
 		doc.SetSelectionFor(args.viewID, sel)
@@ -142,10 +158,44 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 			v.BeginFreeScroll(doc.Revision(), sel)
 		}
 	}
-	if args.session.Focused {
-		args.restore.focus = args.viewID
+	return v
+}
+
+// restoreDisplacedPane rebuilds a stashed pane detached from the tree, or nil
+// when its document or kind cannot be resolved
+func (e *Editor) restoreDisplacedPane(
+	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
+) Pane {
+	if sn == nil {
+		return nil
 	}
-	return args.viewID
+	if sn.Kind == SessionKindView {
+		docID, ok := rs.docs[sn.Document]
+		if !ok {
+			return nil
+		}
+		return e.newSessionView(restoreSessionViewArgs{
+			tree:    t,
+			parent:  parent,
+			viewID:  t.allocID(),
+			docID:   docID,
+			session: *sn,
+			restore: rs,
+		})
+	}
+	pane, err := e.restorePane(restorePaneArgs{
+		kind: sn.Kind,
+		session: &PaneSession{
+			path:   sessionAbsPath(rs.base, sn.Path),
+			values: sn.Values,
+		},
+	})
+	if err != nil {
+		return nil
+	}
+	t.attach(pane, t.allocID())
+	stashPane(pane)
+	return pane
 }
 
 func (s sessionSelect) selection() core.Selection {

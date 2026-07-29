@@ -109,7 +109,7 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 }
 
 func (s *Session) ensureDidOpen(
-	doc *view.Document, clients []*Client, lang language.Language,
+	doc *view.Document, clients []*Client, lang *language.Language,
 ) {
 	if len(clients) == 0 {
 		return

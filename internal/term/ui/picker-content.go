@@ -131,7 +131,7 @@ func writePickerItem(
 			at:      geom.Point{X: cx2, Y: at.Y},
 			maxW:    cellW,
 			text:    m.item.Display,
-			indices: m.indices,
+			indices: m.result.Indices,
 			base:    itemBase,
 			match:   match,
 		})
@@ -152,7 +152,7 @@ func writePickerItem(
 					at:      geom.Point{X: cur, Y: at.Y},
 					maxW:    widths[i],
 					text:    val,
-					indices: m.indices,
+					indices: m.result.Indices,
 					base:    colBase,
 					match:   match,
 				})

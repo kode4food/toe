@@ -212,7 +212,7 @@ func (fixedPickerSource) ColumnProportions() []int {
 }
 
 func (fixedPickerSource) Accept(
-	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,
+	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
 ) {
 }
 

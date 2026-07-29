@@ -22,8 +22,8 @@ const completionPreviewMaxWidth = 40
 
 func (c *completionComponent) width() int {
 	w := completionMinWidth
-	for _, item := range c.items {
-		w = max(w, c.rowWidth(item, true)+2)
+	for i := range c.items {
+		w = max(w, c.rowWidth(&c.items[i], true)+2)
 	}
 	if len(c.items) > completionMaxRows {
 		w += completionScrollGap
@@ -32,7 +32,7 @@ func (c *completionComponent) width() int {
 }
 
 func (c *completionComponent) rowWidth(
-	item view.CompletionItem, selected bool,
+	item *view.CompletionItem, selected bool,
 ) int {
 	return runewidth.StringWidth(c.rowLeft(item, selected))
 }
@@ -42,7 +42,7 @@ type renderCompletionRowArgs struct {
 	at       geom.Point
 	width    int
 	listW    int
-	item     view.CompletionItem
+	item     *view.CompletionItem
 	selected bool
 	query    string
 	base     tui.Style
@@ -104,13 +104,13 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 }
 
 func (c *completionComponent) rowLeft(
-	item view.CompletionItem, selected bool,
+	item *view.CompletionItem, selected bool,
 ) string {
 	return completionRowText(c.rowParts(item, selected))
 }
 
 func (c *completionComponent) rowParts(
-	item view.CompletionItem, selected bool,
+	item *view.CompletionItem, selected bool,
 ) completionRowParts {
 	return completionRowPartsFor(item, selected, c.nerd)
 }
@@ -134,7 +134,7 @@ func (c *completionComponent) renderScroll(
 }
 
 func completionRowPartsFor(
-	item view.CompletionItem, selected, nerd bool,
+	item *view.CompletionItem, selected, nerd bool,
 ) completionRowParts {
 	parts := completionRowParts{
 		icon:  completionKindMarker(item.Kind, nerd),
@@ -169,7 +169,7 @@ func completionRowText(parts completionRowParts) string {
 	return out
 }
 
-func completionRowDetail(item view.CompletionItem) string {
+func completionRowDetail(item *view.CompletionItem) string {
 	detail := strings.Join(strings.Fields(item.Detail), " ")
 	labelDetail := strings.Join(strings.Fields(item.LabelDetail), " ")
 	if detail == "" || detail == labelDetail {

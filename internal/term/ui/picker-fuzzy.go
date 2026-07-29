@@ -23,23 +23,22 @@ const (
 )
 
 func fuzzyMatchItem(
-	query string, item PickerItem, columns []string, matchColumn int,
-) (int, []int, bool) {
+	query string, item *PickerItem, columns []string, matchColumn int,
+) (MatchResult, bool) {
 	fields := parsePickerQuery(columns, matchColumn, query)
-	score := 0
-	var indices []int
+	var out MatchResult
 	for col, pat := range fields {
 		key := item.columnText(col)
-		s, idx, ok := fuzzyMatch(pat, key)
+		res, ok := fuzzyMatch(pat, key)
 		if !ok {
-			return 0, nil, false
+			return MatchResult{}, false
 		}
-		score += s
+		out.Score += res.Score
 		if col == matchColumn {
-			indices = idx
+			out.Indices = res.Indices
 		}
 	}
-	return score, indices, true
+	return out, true
 }
 
 func parsePickerQuery(
@@ -117,23 +116,32 @@ func matchPickerColumn(columns []string, prefix string) (int, bool) {
 	return best, best >= 0
 }
 
-func fuzzyMatch(pat, text string) (int, []int, bool) {
+func fuzzyMatch(pat, text string) (MatchResult, bool) {
 	if pat == "" {
-		return 0, nil, true
+		return MatchResult{}, true
 	}
 	pr := []rune(strings.ToLower(pat))
 	tr := []rune(text)
 	if !fuzzyHasMatch(pr, tr) {
-		return 0, nil, false
+		return MatchResult{}, false
 	}
 	if len(pr) == len(tr) {
-		return fuzzyScoreMax, fuzzySequence(len(pr)), true
+		return MatchResult{
+			Score:   fuzzyScoreMax,
+			Indices: fuzzySequence(len(pr)),
+		}, true
 	}
 	if len(tr) > fuzzyMaxLen {
-		return -fuzzyScoreMax, fuzzySequence(len(pr)), true
+		return MatchResult{
+			Score:   -fuzzyScoreMax,
+			Indices: fuzzySequence(len(pr)),
+		}, true
 	}
 	score, indices := fuzzyAlign(pr, tr)
-	return int(math.Round(score * fuzzyScale)), indices, true
+	return MatchResult{
+		Score:   int(math.Round(score * fuzzyScale)),
+		Indices: indices,
+	}, true
 }
 
 func fuzzyHasMatch(pat, text []rune) bool {

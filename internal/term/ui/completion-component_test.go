@@ -1336,22 +1336,23 @@ func (c *completionController) TriggerCompletions(
 }
 
 func (c *completionController) ResolveCompletion(
-	_ *view.Document, _ view.Id, item view.CompletionItem,
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
 ) (view.CompletionItem, error) {
-	item.Docs = c.docs
-	if item.Docs == "" {
-		item.Docs = "resolved docs"
+	out := *item
+	out.Docs = c.docs
+	if out.Docs == "" {
+		out.Docs = "resolved docs"
 	}
-	return item, nil
+	return out, nil
 }
 
 func (c *completionController) ApplyCompletion(
-	_ *view.Document, _ view.Id, item view.CompletionItem,
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
 ) error {
 	if c.applyErr != nil {
 		return c.applyErr
 	}
-	c.item = item
+	c.item = *item
 	text := item.Insert
 	if text == "" {
 		text = item.Label

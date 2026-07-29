@@ -15,8 +15,8 @@ import (
 type Registry struct {
 	km       *Keymaps
 	sections []Section
-	options  map[string]Option
-	prefixes []Option
+	options  map[string]*Option
+	prefixes []*Option
 }
 
 func NewRegistry(km *Keymaps) *Registry {
@@ -52,15 +52,15 @@ func (r *Registry) RegisterModule(m Module) error {
 			r.km.LabelNode(mode, lbl.Seq, lbl.Label)
 		}
 	}
-	for _, o := range m.Options {
+	for i, o := range m.Options {
 		if r.options == nil {
-			r.options = make(map[string]Option)
+			r.options = make(map[string]*Option)
 		}
 		if o.KeyGet != nil || o.KeySet != nil {
-			r.prefixes = append(r.prefixes, o)
+			r.prefixes = append(r.prefixes, &m.Options[i])
 			continue
 		}
-		r.options[normalizeOptionKey(o.Key)] = o
+		r.options[normalizeOptionKey(o.Key)] = &m.Options[i]
 	}
 	return nil
 }
@@ -89,15 +89,15 @@ func (r *Registry) ApplyTOML(e *view.Editor, raw map[string]any) error {
 }
 
 // LookupOption returns the registered Option for the given key, if any
-func (r *Registry) LookupOption(key string) (Option, bool) {
+func (r *Registry) LookupOption(key string) (*Option, bool) {
 	if o, ok := r.options[normalizeOptionKey(key)]; ok {
 		return o, true
 	}
 	o, ok := r.lookupPrefixOption(key)
 	if !ok || o.KeySet == nil {
-		return Option{}, false
+		return nil, false
 	}
-	return Option{
+	return &Option{
 		Key: key,
 		Get: func(e *view.Editor) (string, error) {
 			values, err := o.KeyGet(e)
@@ -113,14 +113,14 @@ func (r *Registry) LookupOption(key string) (Option, bool) {
 	}, true
 }
 
-func (r *Registry) lookupPrefixOption(key string) (Option, bool) {
+func (r *Registry) lookupPrefixOption(key string) (*Option, bool) {
 	key = normalizeOptionKey(key)
 	for _, o := range r.prefixes {
 		if strings.HasPrefix(key, normalizeOptionKey(o.Key)) {
 			return o, true
 		}
 	}
-	return Option{}, false
+	return nil, false
 }
 
 // OptionKeys returns all registered option keys in sorted order

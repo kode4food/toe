@@ -222,7 +222,7 @@ func (c *completionComponent) paint(
 	}
 	for i := 0; i < area.Height && c.scroll+i < len(c.items); i++ {
 		idx := c.scroll + i
-		item := c.items[idx]
+		item := &c.items[idx]
 		style := base
 		matchStyle := match
 		infoStyle := info
@@ -319,7 +319,7 @@ func (c *completionComponent) accept(cx *Context) {
 	if c.cursor < 0 || c.cursor >= len(c.items) {
 		return
 	}
-	item := c.items[c.cursor]
+	item := &c.items[c.cursor]
 	doc, ok := cx.Editor.FocusedDocument()
 	if !ok {
 		return

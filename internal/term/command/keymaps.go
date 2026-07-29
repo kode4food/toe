@@ -89,32 +89,36 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 }
 
 // ResolveCommand looks up a command by typeable alias
-func (k *Keymaps) ResolveCommand(name string) (Command, bool) {
+func (k *Keymaps) ResolveCommand(name string) (*Command, bool) {
 	if idx, ok := k.byAlias[name]; ok {
-		return k.commands[idx], true
+		return &k.commands[idx], true
 	}
-	return Command{}, false
+	return nil, false
 }
 
 // ResolveCommandIn looks up a command by alias and filters it by mode
-func (k *Keymaps) ResolveCommandIn(mode, name string) (Command, bool) {
+func (k *Keymaps) ResolveCommandIn(mode, name string) (*Command, bool) {
 	if cmd, ok := k.ResolveCommand(name); ok && cmd.availableIn(mode) {
 		return cmd, true
 	}
-	return Command{}, false
+	return nil, false
 }
 
 // Commands returns all registered commands in registration order
-func (k *Keymaps) Commands() []Command {
-	return slices.Clone(k.commands)
+func (k *Keymaps) Commands() []*Command {
+	out := make([]*Command, 0, len(k.commands))
+	for i := range k.commands {
+		out = append(out, &k.commands[i])
+	}
+	return out
 }
 
 // CommandsIn returns registered commands available in the named mode
-func (k *Keymaps) CommandsIn(mode string) []Command {
-	out := make([]Command, 0, len(k.commands))
-	for _, cmd := range k.commands {
-		if cmd.availableIn(mode) {
-			out = append(out, cmd)
+func (k *Keymaps) CommandsIn(mode string) []*Command {
+	out := make([]*Command, 0, len(k.commands))
+	for i := range k.commands {
+		if k.commands[i].availableIn(mode) {
+			out = append(out, &k.commands[i])
 		}
 	}
 	return out

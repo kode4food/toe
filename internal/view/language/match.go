@@ -9,18 +9,18 @@ import (
 	"github.com/kode4food/toe/internal/glob"
 )
 
-func languageForFilename(langs Languages, path string) (Language, bool) {
+func languageForFilename(langs Languages, path string) (*Language, bool) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		abs = path
 	}
-	var found Language
+	var found *Language
 	foundLen := -1
-	for _, lang := range langs.Languages {
+	for i, lang := range langs.Languages {
 		for _, ft := range lang.FileTypes {
 			if ft.Glob != "" && glob.Match(ft.Glob, abs) {
 				if n := len(ft.Glob); n > foundLen {
-					found = lang
+					found = &langs.Languages[i]
 					foundLen = n
 				}
 			}
@@ -31,17 +31,17 @@ func languageForFilename(langs Languages, path string) (Language, bool) {
 	}
 	ext := strings.TrimPrefix(filepath.Ext(path), ".")
 	name := filepath.Base(path)
-	for _, lang := range langs.Languages {
+	for i, lang := range langs.Languages {
 		for _, ft := range lang.FileTypes {
 			if ext != "" && ft.Extension == ext {
-				return lang, true
+				return &langs.Languages[i], true
 			}
 			if ft.Extension == name {
-				return lang, true
+				return &langs.Languages[i], true
 			}
 		}
 	}
-	return Language{}, false
+	return nil, false
 }
 
 func languageForMatch(langs Languages, text string) (string, bool) {

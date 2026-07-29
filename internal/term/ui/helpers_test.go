@@ -19,6 +19,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type feedPickerSource struct {
+	ui.PickerBase
+	paths []string
+}
+
 func stripANSI(s string) string {
 	re := regexp.MustCompile(`\x1b\[[0-9;:?]*[ -/]*[@-~]`)
 	return strings.TrimRight(re.ReplaceAllString(s, ""), "\n")
@@ -211,4 +216,47 @@ func char(ch rune) command.KeyEvent {
 
 func special(s command.Special) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Special: s}}
+}
+
+func (s feedPickerSource) Load(
+	*view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	ch := make(chan ui.PickerItem, len(s.paths))
+	for _, p := range s.paths {
+		ch <- ui.PickerItem{
+			Display:  p,
+			SortKey:  p,
+			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p}},
+		}
+	}
+	close(ch)
+	return nil, ch, func() {}
+}
+
+func (feedPickerSource) Accept(
+	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
+) {
+}
+
+func (feedPickerSource) SkipPreview() {}
+
+func feedPickerModel(t testing.TB, paths []string) ui.Model {
+	// the picker is bound to 'p' but not yet opened, so callers can time
+	// the open and its feed themselves
+	t.Helper()
+	src := feedPickerSource{
+		PickerBase: ui.NewPickerBase("feed", []string{"path"}, 0, nil),
+		paths:      paths,
+	}
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "feed_picker",
+		m.PickerAction(func(*view.Editor) *ui.Picker {
+			return ui.NewPicker(e, src)
+		}),
+		[]command.KeyEvent{char('p')},
+	)
+	return resize(m, 100, 30)
 }

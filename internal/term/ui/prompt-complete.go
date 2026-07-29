@@ -156,13 +156,13 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 				continue
 			}
 			seen[name] = true
-			score, _, ok := fuzzyMatch(input, name)
-			if !ok || score < 0 {
+			res, ok := fuzzyMatch(input, name)
+			if !ok || res.Score < 0 {
 				continue
 			}
 			out = append(out, promptCompletion{
 				Completion: command.Completion{Text: name},
-				score:      score,
+				score:      res.Score,
 			})
 		}
 	}

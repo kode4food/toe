@@ -249,7 +249,7 @@ func (noPreviewPickerSource) Load(
 }
 
 func (noPreviewPickerSource) Accept(
-	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,
+	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
 ) {
 }
 
@@ -285,11 +285,13 @@ func (columnPickerSource) Load(
 	}}, nil, func() {}
 }
 
-func (columnPickerSource) Match(string, ui.PickerItem) (int, []int, bool) {
-	return 1, nil, true
+func (columnPickerSource) Match(
+	string, *ui.PickerItem,
+) (ui.MatchResult, bool) {
+	return ui.MatchResult{Score: 1}, true
 }
 
 func (columnPickerSource) Accept(
-	*view.Editor, ui.PickerItem, ui.PickerAcceptAction,
+	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
 ) {
 }

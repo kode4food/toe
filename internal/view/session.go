@@ -137,7 +137,7 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		s.Documents = append(s.Documents, e.sessionDocument(d, base))
 	}
 	s.Layout = e.sessionNodeFor(e.panes.tree.root, docIndex, base)
-	if len(s.Documents) == 0 && !layoutHasReopenablePane(s.Layout) {
+	if len(s.Documents) == 0 && !layoutHasReopenablePane(&s.Layout) {
 		return nil
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -165,7 +165,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	if s.Version != sessionVersion {
 		return nil, false, ErrSessionUnsupported
 	}
-	reopenable := layoutHasReopenablePane(s.Layout)
+	reopenable := layoutHasReopenablePane(&s.Layout)
 	if len(s.Documents) == 0 && !reopenable {
 		return nil, false, ErrSessionEmpty
 	}
@@ -227,7 +227,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		},
 	}
 	rs := sessionRestore{base: base, docs: docs, documents: nextDocs}
-	if err := e.restoreSessionRoot(t, rootID, s.Layout, &rs); err != nil {
+	if err := e.restoreSessionRoot(t, rootID, &s.Layout, &rs); err != nil {
 		return nil, false, err
 	}
 	if t.IsEmpty() {
@@ -292,12 +292,16 @@ func sessionBase(path string) string {
 	return dir
 }
 
-func layoutHasReopenablePane(n sessionNode) bool {
+func layoutHasReopenablePane(n *sessionNode) bool {
 	switch n.Kind {
 	case SessionKindImage, SessionKindTerminal:
 		return true
 	case SessionKindSplit:
-		return slices.ContainsFunc(n.Children, layoutHasReopenablePane)
+		for i := range n.Children {
+			if layoutHasReopenablePane(&n.Children[i]) {
+				return true
+			}
+		}
 	}
 	return false
 }

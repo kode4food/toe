@@ -12,7 +12,7 @@ import (
 
 type (
 	completionMatch struct {
-		item  view.CompletionItem
+		item  *view.CompletionItem
 		score int
 		order int
 	}
@@ -32,10 +32,10 @@ func filterCompletionItems(
 		return slices.Clone(items)
 	}
 	matches := make([]completionMatch, 0, len(items))
-	for i, item := range items {
-		if score, ok := completionMatchScore(item, query); ok {
+	for i := range items {
+		if score, ok := completionMatchScore(&items[i], query); ok {
 			matches = append(matches, completionMatch{
-				item:  item,
+				item:  &items[i],
 				score: score,
 				order: i,
 			})
@@ -52,12 +52,14 @@ func filterCompletionItems(
 	})
 	out := make([]view.CompletionItem, 0, len(matches))
 	for _, m := range matches {
-		out = append(out, m.item)
+		out = append(out, *m.item)
 	}
 	return out
 }
 
-func completionMatchScore(item view.CompletionItem, query string) (int, bool) {
+func completionMatchScore(
+	item *view.CompletionItem, query string,
+) (int, bool) {
 	text := item.Filter
 	if text == "" {
 		text = item.Label
@@ -65,7 +67,7 @@ func completionMatchScore(item view.CompletionItem, query string) (int, bool) {
 	return fuzzyCompletionScore(text, query)
 }
 
-func keyOfCompletionItem(item view.CompletionItem) completionItemKey {
+func keyOfCompletionItem(item *view.CompletionItem) completionItemKey {
 	if item.ID != "" {
 		return completionItemKey{id: item.ID}
 	}

@@ -150,7 +150,7 @@ func TestSparseCommands(t *testing.T) {
 		})
 
 		assert.False(t, ok)
-		assert.Nil(t, cmd.Run)
+		assert.Nil(t, cmd)
 		assert.True(t, found)
 		assert.False(t, prefix)
 		action(nil)

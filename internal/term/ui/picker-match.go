@@ -3,6 +3,7 @@ package ui
 import (
 	"cmp"
 	"slices"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -11,17 +12,27 @@ func (p *Picker) setQuery(q string) tea.Cmd {
 	if q == p.list.query {
 		return nil
 	}
+	narrowed := canNarrowQuery(p.list.query, q)
 	p.list.query = q
 	p.clearPreviewCache()
 	if _, ok := p.source.(DynamicPickerSource); ok {
 		return p.dynamicTriggerCmd()
 	}
-	p.refilter()
+	if narrowed {
+		p.narrowMatches()
+	} else {
+		p.rebuildMatches()
+	}
+	p.resetCursor()
 	return nil
 }
 
 func (p *Picker) refilter() {
 	p.rebuildMatches()
+	p.resetCursor()
+}
+
+func (p *Picker) resetCursor() {
 	if p.list.query != "" {
 		p.list.cursor = 0
 	}
@@ -35,27 +46,70 @@ func (p *Picker) refilter() {
 
 func (p *Picker) rebuildMatches() {
 	src, _ := p.source.(StaticPickerSource)
-	p.list.matched = p.list.matched[:0]
+	out := p.list.matched[:0]
 	for i := range p.list.items {
 		item := &p.list.items[i]
 		if src == nil {
-			p.list.matched = append(p.list.matched, pickerMatch{item: item})
+			out = append(out, pickerMatch{item: item, itemIndex: i})
 			continue
 		}
-		score, indices, ok := src.Match(p.list.query, *item)
-		if !ok {
-			continue
+		if m, ok := p.scoreItem(src, item, i); ok {
+			out = append(out, m)
 		}
-		p.list.matched = append(
-			p.list.matched, pickerMatch{
-				item:    item,
-				score:   score,
-				indices: indices,
-			},
-		)
 	}
-	slices.SortStableFunc(p.list.matched, func(a, b pickerMatch) int {
-		return cmp.Compare(b.score, a.score)
+	p.list.matched = out
+	p.sortMatches()
+}
+
+func (p *Picker) narrowMatches() {
+	// a longer query matches a subset of what its prefix matched, so the
+	// rows already filtered out cannot come back
+	src, ok := p.source.(StaticPickerSource)
+	if !ok {
+		return
+	}
+	out := p.list.matched[:0]
+	for _, prev := range p.list.matched {
+		if m, ok := p.scoreItem(src, prev.item, prev.itemIndex); ok {
+			out = append(out, m)
+		}
+	}
+	p.list.matched = out
+	p.sortMatches()
+}
+
+func (p *Picker) scoreItem(
+	src StaticPickerSource, item *PickerItem, index int,
+) (pickerMatch, bool) {
+	key := pickerScoreKey{
+		query: p.list.query,
+		text:  item.columnText(p.source.MatchColumn()),
+	}
+	cached, ok := p.list.scores[key]
+	if !ok {
+		if res, matched := src.Match(key.query, item); matched {
+			cached = &res
+		}
+		if canCacheQuery(key.query) {
+			p.list.scores[key] = cached
+		}
+	}
+	if cached == nil {
+		return pickerMatch{}, false
+	}
+	return pickerMatch{
+		item:      item,
+		itemIndex: index,
+		result:    *cached,
+	}, true
+}
+
+func (p *Picker) sortMatches() {
+	slices.SortFunc(p.list.matched, func(a, b pickerMatch) int {
+		if c := cmp.Compare(b.result.Score, a.result.Score); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.itemIndex, b.itemIndex)
 	})
 }
 
@@ -112,4 +166,14 @@ func (p *Picker) ensureCursorVisible() {
 	p.list.scroll = listEnsureCursorVisible(
 		p.list.scroll, p.list.cursor, len(p.list.matched), p.list.height,
 	)
+}
+
+func canCacheQuery(query string) bool {
+	// `%` and `\` route parts of the query to other columns, so the match
+	// column's text no longer decides the score
+	return !strings.ContainsAny(query, `%\`)
+}
+
+func canNarrowQuery(prev, next string) bool {
+	return prev != "" && strings.HasPrefix(next, prev) && canCacheQuery(next)
 }

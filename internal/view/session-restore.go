@@ -10,7 +10,7 @@ type sessionRestore struct {
 }
 
 func (e *Editor) restoreSessionRoot(
-	t *Tree, root Id, sn sessionNode, rs *sessionRestore,
+	t *Tree, root Id, sn *sessionNode, rs *sessionRestore,
 ) error {
 	if sn.Kind == SessionKindView || sn.Kind == SessionKindImage ||
 		sn.Kind == SessionKindTerminal {
@@ -27,8 +27,8 @@ func (e *Editor) restoreSessionRoot(
 	c := t.nodes[root].container
 	c.layout = sessionLayout(sn.Layout)
 	c.ratios = sn.Ratios
-	for _, child := range sn.Children {
-		id, err := e.restoreSessionNode(t, root, child, rs)
+	for i := range sn.Children {
+		id, err := e.restoreSessionNode(t, root, &sn.Children[i], rs)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func (e *Editor) restoreSessionRoot(
 }
 
 func (e *Editor) restoreSessionNode(
-	t *Tree, parent Id, sn sessionNode, rs *sessionRestore,
+	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
 ) (Id, error) {
 	switch sn.Kind {
 	case SessionKindSplit:
@@ -50,8 +50,8 @@ func (e *Editor) restoreSessionNode(
 				ratios: sn.Ratios,
 			},
 		}
-		for _, child := range sn.Children {
-			childID, err := e.restoreSessionNode(t, id, child, rs)
+		for i := range sn.Children {
+			childID, err := e.restoreSessionNode(t, id, &sn.Children[i], rs)
 			if err != nil {
 				return 0, err
 			}
@@ -105,7 +105,7 @@ type restoreSessionViewArgs struct {
 	parent  Id
 	viewID  Id
 	docID   DocumentId
-	session sessionNode
+	session *sessionNode
 	restore *sessionRestore
 }
 
@@ -179,7 +179,7 @@ func (e *Editor) restoreDisplacedPane(
 			parent:  parent,
 			viewID:  t.allocID(),
 			docID:   docID,
-			session: *sn,
+			session: sn,
 			restore: rs,
 		})
 	}
@@ -219,7 +219,7 @@ func sessionLayout(name string) Layout {
 	return LayoutVertical
 }
 
-func sessionPosition(sn sessionNode) Position {
+func sessionPosition(sn *sessionNode) Position {
 	return Position{
 		Anchor:           sn.Anchor,
 		HorizontalOffset: sn.HorizontalOffset,

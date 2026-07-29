@@ -635,13 +635,13 @@ func (c *locationController) TriggerCompletions(
 }
 
 func (c *locationController) ResolveCompletion(
-	_ *view.Document, _ view.Id, item view.CompletionItem,
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
 ) (view.CompletionItem, error) {
-	return item, nil
+	return *item, nil
 }
 
 func (c *locationController) ApplyCompletion(
-	*view.Document, view.Id, view.CompletionItem,
+	*view.Document, view.Id, *view.CompletionItem,
 ) error {
 	return nil
 }

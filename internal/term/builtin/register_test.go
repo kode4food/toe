@@ -538,21 +538,21 @@ func collectDefaultKeySeqs(km *command.Keymaps) map[string]keySeqInfo {
 	return seqs
 }
 
-func commandName(cmd command.Command) string {
+func commandName(cmd *command.Command) string {
 	if len(cmd.Aliases) == 0 {
 		return ""
 	}
 	return cmd.Aliases[0]
 }
 
-func commandModes(cmd command.Command) []string {
+func commandModes(cmd *command.Command) []string {
 	if len(cmd.Modes) == 0 {
 		return []string{"NOR", "SEL", "INS"}
 	}
 	return cmd.Modes
 }
 
-func commandBindings(cmd command.Command, mode string) []command.KeyBinding {
+func commandBindings(cmd *command.Command, mode string) []command.KeyBinding {
 	if bindings, ok := cmd.Keys[mode]; ok {
 		return bindings
 	}

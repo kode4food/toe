@@ -79,7 +79,7 @@ func (l *lspWorkspaceCommandSource) Load(
 }
 
 func (l *lspWorkspaceCommandSource) Accept(
-	e *view.Editor, item PickerItem, _ PickerAcceptAction,
+	e *view.Editor, item *PickerItem, _ PickerAcceptAction,
 ) {
 	name, ok := item.Payload.(string)
 	if !ok {
@@ -121,7 +121,7 @@ func (l *lspLocationSource) Load(
 }
 
 func (l *lspLocationSource) Accept(
-	e *view.Editor, item PickerItem, action PickerAcceptAction,
+	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
 }
@@ -156,7 +156,7 @@ func (l *lspSymbolSource) Load(
 }
 
 func (l *lspSymbolSource) Accept(
-	e *view.Editor, item PickerItem, action PickerAcceptAction,
+	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
 }
@@ -219,7 +219,7 @@ func (l *lspWorkspaceSymbolSource) item(
 }
 
 func (l *lspWorkspaceSymbolSource) Accept(
-	e *view.Editor, item PickerItem, action PickerAcceptAction,
+	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
 }
@@ -241,7 +241,7 @@ func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 }
 
 func acceptLocation(
-	e *view.Editor, item PickerItem, action PickerAcceptAction,
+	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	loc, ok := item.Payload.(view.Location)
 	if !ok {

@@ -63,7 +63,7 @@ func (d *diagnosticPickerSource) Load(
 }
 
 func (d *diagnosticPickerSource) Accept(
-	e *view.Editor, item ui.PickerItem, action ui.PickerAcceptAction,
+	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	payload, ok := item.Payload.(diagnosticPickerPayload)
 	if !ok {

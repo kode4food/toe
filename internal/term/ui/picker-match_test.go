@@ -75,4 +75,51 @@ func TestPickerMatch(t *testing.T) {
 		assert.Contains(t, out, "alpha.go")
 		assert.NotContains(t, out, "[scratch]")
 	})
+
+	t.Run("narrowed equals rebuilt", func(t *testing.T) {
+		narrowed := stripANSI(typeQuery(narrowPicker(t), "ale").View().Content)
+		m := typeQuery(narrowPicker(t), "alex")
+		rebuilt := stripANSI(sendSpecial(m, tea.KeyBackspace).View().Content)
+		assert.Equal(t, rebuilt, narrowed)
+		assert.Contains(t, narrowed, "ale.go")
+		assert.NotContains(t, narrowed, "main.go")
+	})
+
+	t.Run("column query is not narrowed", func(t *testing.T) {
+		m := typeQuery(narrowPicker(t), "%path ale")
+		direct := stripANSI(m.View().Content)
+		m = typeQuery(narrowPicker(t), "%path alex")
+		back := stripANSI(sendSpecial(m, tea.KeyBackspace).View().Content)
+		assert.Equal(t, back, direct)
+		assert.Contains(t, direct, "ale.go")
+	})
+
+	t.Run("clearing restores every row", func(t *testing.T) {
+		full := stripANSI(narrowPicker(t).View().Content)
+		m := typeQuery(narrowPicker(t), "ale")
+		for range 3 {
+			m = sendSpecial(m, tea.KeyBackspace)
+		}
+		assert.Equal(t, full, stripANSI(m.View().Content))
+	})
+}
+
+func narrowPicker(t *testing.T) ui.Model {
+	t.Helper()
+	m := feedPickerModel(t, []string{
+		"internal/term/ale.go",
+		"internal/lsp/capabilities.go",
+		"internal/view/action/selection-lines.go",
+		"alembic/config.toml",
+		"docs/scale-guide.md",
+		"cmd/toe/main.go",
+	})
+	return sendKeyAndFeed(m, 'p')
+}
+
+func typeQuery(m ui.Model, query string) ui.Model {
+	for _, ch := range query {
+		m = sendKey(m, ch)
+	}
+	return m
 }

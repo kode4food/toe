@@ -72,7 +72,7 @@ func (f *fileExplorerSource) Load(
 }
 
 func (f *fileExplorerSource) Accept(
-	e *view.Editor, item ui.PickerItem, action ui.PickerAcceptAction,
+	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	path := item.Location.Target.Path
 	if path == "" {
@@ -82,7 +82,7 @@ func (f *fileExplorerSource) Accept(
 }
 
 func (f *fileExplorerSource) Navigate(
-	_ *view.Editor, item ui.PickerItem,
+	_ *view.Editor, item *ui.PickerItem,
 ) ui.PickerFunc {
 	entry, ok := item.Payload.(explorerEntry)
 	if !ok || !entry.isDir {

@@ -80,7 +80,7 @@ func (s *Session) TriggerCompletions(
 
 // ApplyCompletion applies the selected completion item to the document
 func (s *Session) ApplyCompletion(
-	doc *view.Document, viewID view.Id, item view.CompletionItem,
+	doc *view.Document, viewID view.Id, item *view.CompletionItem,
 ) error {
 	if s.editor == nil {
 		return ErrCompletionUnavailable
@@ -111,23 +111,23 @@ func (s *Session) ApplyCompletion(
 
 // ResolveCompletion fetches extra completion item details
 func (s *Session) ResolveCompletion(
-	_ *view.Document, _ view.Id, item view.CompletionItem,
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
 ) (view.CompletionItem, error) {
 	c, ok := s.completion(item.ID)
 	if !ok {
-		return item, ErrCompletionUnavailable
+		return *item, ErrCompletionUnavailable
 	}
 	if !clientResolvesCompletion(c.client) {
-		return item, nil
+		return *item, nil
 	}
 	ctx, cancel := c.client.requestContext(s.ctx)
 	defer cancel()
 	resolved, err := c.client.server.CompletionResolve(ctx, &c.item)
 	if err != nil {
-		return item, s.completionError(c.client, err)
+		return *item, s.completionError(c.client, err)
 	}
 	if resolved == nil {
-		return item, nil
+		return *item, nil
 	}
 	c.item = *resolved
 	s.storeCompletion(item.ID, c)

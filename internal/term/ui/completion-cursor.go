@@ -28,8 +28,8 @@ func (c *completionComponent) resetCursor() {
 
 func (c *completionComponent) restoreCursor(selected completionItemKey) {
 	if selected != (completionItemKey{}) {
-		for i, item := range c.items {
-			if keyOfCompletionItem(item) == selected {
+		for i := range c.items {
+			if keyOfCompletionItem(&c.items[i]) == selected {
 				c.cursor = i
 				c.ensureCursorVisible(c.visibleRows())
 				return
@@ -43,7 +43,7 @@ func (c *completionComponent) selectedKey() completionItemKey {
 	if c.cursor < 0 || c.cursor >= len(c.items) {
 		return completionItemKey{}
 	}
-	return keyOfCompletionItem(c.items[c.cursor])
+	return keyOfCompletionItem(&c.items[c.cursor])
 }
 
 func (c *completionComponent) clampScroll(rows int) {

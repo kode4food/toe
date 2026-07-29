@@ -65,7 +65,7 @@ func (g *globalSearchSource) Load(
 }
 
 func (g *globalSearchSource) Accept(
-	e *view.Editor, item ui.PickerItem, action ui.PickerAcceptAction,
+	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	path := item.Location.Target.Path
 	lr := item.Location.Lines

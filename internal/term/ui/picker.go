@@ -28,6 +28,7 @@ type (
 	listState struct {
 		items   []PickerItem
 		matched []pickerMatch
+		scores  map[pickerScoreKey]*MatchResult
 		query   string
 		cursor  int
 		scroll  int
@@ -62,7 +63,7 @@ type (
 		MatchColumn() int
 		ColumnProportions() []int
 		Load(*view.Editor) ([]PickerItem, <-chan PickerItem, StopFunc)
-		Accept(*view.Editor, PickerItem, PickerAcceptAction)
+		Accept(*view.Editor, *PickerItem, PickerAcceptAction)
 	}
 
 	// PickerPreviewSkipper marks picker sources that never render previews
@@ -73,7 +74,7 @@ type (
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
 	StaticPickerSource interface {
 		PickerSource
-		Match(query string, item PickerItem) (score int, indices []int, ok bool)
+		Match(query string, item *PickerItem) (MatchResult, bool)
 	}
 
 	// DynamicPickerSource extends PickerSource with query-driven search
@@ -87,7 +88,7 @@ type (
 	// picker, or nil to fall through to Accept
 	NavigablePickerSource interface {
 		PickerSource
-		Navigate(*view.Editor, PickerItem) PickerFunc
+		Navigate(*view.Editor, *PickerItem) PickerFunc
 	}
 
 	// PickerItem is a single row shown in the picker list
@@ -127,10 +128,11 @@ type (
 
 	PickerAcceptAction int
 
-	pickerMatch struct {
-		item    *PickerItem
-		score   int
-		indices []int
+	// MatchResult is a source's verdict on one item: its rank against the
+	// query, and the rune offsets to highlight in the matched column
+	MatchResult struct {
+		Score   int
+		Indices []int
 	}
 
 	// PickerBase is an optional starting point a source can embed for default
@@ -141,6 +143,17 @@ type (
 		columns     []string
 		matchColumn int
 		proportions []int
+	}
+
+	pickerMatch struct {
+		item      *PickerItem
+		itemIndex int
+		result    MatchResult
+	}
+
+	pickerScoreKey struct {
+		query string
+		text  string
 	}
 
 	pickerDynamicTriggerMsg struct {
@@ -163,6 +176,9 @@ const (
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
 		source: source,
+		list: listState{
+			scores: map[pickerScoreKey]*MatchResult{},
+		},
 		preview: previewState{
 			cache:         previewCache{},
 			diffBaseCache: map[string]core.Rope{},
@@ -180,7 +196,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	} else {
 		p.list.matched = make([]pickerMatch, len(items))
 		for i := range items {
-			p.list.matched[i] = pickerMatch{item: &items[i]}
+			p.list.matched[i] = pickerMatch{item: &items[i], itemIndex: i}
 		}
 	}
 	if feed != nil {
@@ -234,7 +250,7 @@ func (p PickerBase) ColumnProportions() []int {
 	return defaultColumnProportions(len(p.columns))
 }
 
-func (p PickerBase) Match(query string, item PickerItem) (int, []int, bool) {
+func (p PickerBase) Match(query string, item *PickerItem) (MatchResult, bool) {
 	return fuzzyMatchItem(query, item, p.columns, p.matchColumn)
 }
 
@@ -293,7 +309,7 @@ func (p *Picker) addDynamicItems(items []PickerItem) {
 	p.list.items = append(p.list.items, items...)
 	p.list.matched = make([]pickerMatch, len(p.list.items))
 	for i := range p.list.items {
-		p.list.matched[i] = pickerMatch{item: &p.list.items[i]}
+		p.list.matched[i] = pickerMatch{item: &p.list.items[i], itemIndex: i}
 	}
 	if p.list.cursor >= len(p.list.matched) {
 		p.list.cursor = max(0, len(p.list.matched)-1)

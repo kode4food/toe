@@ -106,8 +106,10 @@ type (
 		WorkspaceCommands(*Document) []string
 		Completions(*Document, Id) (CompletionResult, error)
 		TriggerCompletions(*Document, Id) (CompletionResult, error)
-		ResolveCompletion(*Document, Id, CompletionItem) (CompletionItem, error)
-		ApplyCompletion(*Document, Id, CompletionItem) error
+		ResolveCompletion(
+			*Document, Id, *CompletionItem,
+		) (CompletionItem, error)
+		ApplyCompletion(*Document, Id, *CompletionItem) error
 		Hover(*Document, Id) (string, error)
 		SignatureHelp(*Document, Id) (SignatureHelp, error)
 		TriggerSignatureHelp(*Document, Id) (SignatureHelp, error)

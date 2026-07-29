@@ -61,7 +61,7 @@ func (f *filePickerSource) Load(
 }
 
 func (f *filePickerSource) Accept(
-	e *view.Editor, item ui.PickerItem, action ui.PickerAcceptAction,
+	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	path := item.Location.Target.Path
 	ui.AcceptPath(e, path, action)

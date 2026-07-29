@@ -100,7 +100,7 @@ func (b *bufferPickerSource) Load(
 }
 
 func (b *bufferPickerSource) Accept(
-	e *view.Editor, item ui.PickerItem, action ui.PickerAcceptAction,
+	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	id := item.Location.Target.ID
 	if id == view.InvalidDocumentId {

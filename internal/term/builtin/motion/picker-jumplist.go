@@ -71,7 +71,7 @@ func (j *jumplistPickerSource) Load(
 }
 
 func (j *jumplistPickerSource) Accept(
-	e *view.Editor, item ui.PickerItem, action ui.PickerAcceptAction,
+	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	entry, ok := item.Payload.(view.JumpEntry)
 	if !ok {

@@ -662,6 +662,6 @@ func (c *controlledDynamicSource) Load(
 }
 
 func (c *controlledDynamicSource) Accept(
-	_ *view.Editor, _ ui.PickerItem, _ ui.PickerAcceptAction,
+	_ *view.Editor, _ *ui.PickerItem, _ ui.PickerAcceptAction,
 ) {
 }

@@ -78,16 +78,16 @@ func (p *PickerComponent) acceptItem(
 		return dismiss()
 	}
 	if action == PickerAcceptReplace {
-		if r, cmd, ok := p.navigateItem(cx, ps, *item); ok {
+		if r, cmd, ok := p.navigateItem(cx, ps, item); ok {
 			return r, cmd
 		}
 	}
-	ps.source.Accept(cx.Editor, *item, action)
+	ps.source.Accept(cx.Editor, item, action)
 	return dismiss()
 }
 
 func (p *PickerComponent) navigateItem(
-	cx *Context, ps *Picker, item PickerItem,
+	cx *Context, ps *Picker, item *PickerItem,
 ) (EventResult, tea.Cmd, bool) {
 	nav, ok := ps.source.(NavigablePickerSource)
 	if !ok {

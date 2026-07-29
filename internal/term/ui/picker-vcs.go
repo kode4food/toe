@@ -107,7 +107,7 @@ func (c *changedFilePickerSource) Load(
 }
 
 func (c *changedFilePickerSource) Accept(
-	e *view.Editor, item PickerItem, action PickerAcceptAction,
+	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	v, ok := AcceptPath(e, item.Location.Target.Path, action)
 	if !ok {

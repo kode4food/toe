@@ -24,7 +24,7 @@ type serverState struct {
 	sync.RWMutex
 	starting  sync.Mutex
 	registry  *Registry
-	languages map[string]language.Language
+	languages map[string]*language.Language
 	clients   map[string]*Client
 	roots     map[string]string
 }
@@ -108,19 +108,19 @@ func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 
 func (s *Session) languageForDocument(
 	doc *view.Document,
-) (language.Language, bool) {
+) (*language.Language, bool) {
 	if doc == nil {
-		return language.Language{}, false
+		return nil, false
 	}
 	lang, ok := s.servers.language(doc.Lang())
 	if !ok || len(lang.LanguageServers) == 0 {
-		return language.Language{}, false
+		return nil, false
 	}
 	return lang, true
 }
 
 func (s *Session) ensureClient(
-	name string, doc *view.Document, lang language.Language,
+	name string, doc *view.Document, lang *language.Language,
 ) (*Client, bool) {
 	s.servers.starting.Lock()
 	defer s.servers.starting.Unlock()
@@ -131,7 +131,7 @@ func (s *Session) ensureClient(
 }
 
 func (s *Session) startClient(
-	name string, doc *view.Document, lang language.Language,
+	name string, doc *view.Document, lang *language.Language,
 ) (*Client, bool) {
 	root := s.workspaceRoot(doc, lang)
 	handler := &clientHandler{session: s, name: name}
@@ -174,7 +174,7 @@ func (s *Session) offsetForProvider(
 }
 
 func (s *Session) workspaceRoot(
-	doc *view.Document, lang language.Language,
+	doc *view.Document, lang *language.Language,
 ) string {
 	workspace, ok := ResolveWorkspace(WorkspaceRequest{
 		FilePath:       doc.Path(),
@@ -246,7 +246,7 @@ func (s *serverState) startRegistry(
 	return s.registry.Start(ctx, name, root, handler)
 }
 
-func (s *serverState) language(name string) (language.Language, bool) {
+func (s *serverState) language(name string) (*language.Language, bool) {
 	s.RLock()
 	defer s.RUnlock()
 	lang, ok := s.languages[name]
@@ -312,10 +312,12 @@ func loadLanguages(cwd string) language.Languages {
 	return langs
 }
 
-func languagesByName(langs language.Languages) map[string]language.Language {
-	out := make(map[string]language.Language, len(langs.Languages))
-	for _, lang := range langs.Languages {
-		out[lang.Name] = lang
+func languagesByName(
+	langs language.Languages,
+) map[string]*language.Language {
+	out := make(map[string]*language.Language, len(langs.Languages))
+	for i, lang := range langs.Languages {
+		out[lang.Name] = &langs.Languages[i]
 	}
 	return out
 }
@@ -334,7 +336,7 @@ func serverNames(features []language.ServerFeatures) []string {
 }
 
 func selectLanguageServers(
-	lang language.Language, requested []string,
+	lang *language.Language, requested []string,
 ) ([]string, error) {
 	names := serverNames(lang.LanguageServers)
 	if len(requested) == 0 {

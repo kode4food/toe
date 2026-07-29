@@ -49,9 +49,9 @@ func (c *commandPaletteSource) Load(
 }
 
 func (c *commandPaletteSource) Accept(
-	e *view.Editor, item PickerItem, _ PickerAcceptAction,
+	e *view.Editor, item *PickerItem, _ PickerAcceptAction,
 ) {
-	cmd, ok := item.Payload.(command.Command)
+	cmd, ok := item.Payload.(*command.Command)
 	if !ok || cmd.Run == nil || len(cmd.Aliases) == 0 {
 		return
 	}

@@ -1,6 +1,26 @@
 package ui
 
-import "strings"
+import (
+	"math"
+	"strings"
+	"unicode"
+)
+
+const (
+	fuzzyGapLeading  = -0.005
+	fuzzyGapTrailing = -0.005
+	fuzzyGapInner    = -0.01
+	fuzzyConsecutive = 1.0
+	fuzzyBonusSlash  = 0.9
+	fuzzyBonusWord   = 0.8
+	fuzzyBonusCap    = 0.7
+	fuzzyBonusDot    = 0.6
+
+	fuzzyScoreMin = -math.MaxFloat64
+	fuzzyScoreMax = math.MaxInt32
+	fuzzyScale    = 1000
+	fuzzyMaxLen   = 1024
+)
 
 func fuzzyMatchItem(
 	query string, item PickerItem, columns []string, matchColumn int,
@@ -10,8 +30,8 @@ func fuzzyMatchItem(
 	var indices []int
 	for col, pat := range fields {
 		key := item.columnText(col)
-		s, idx := fuzzyMatch(strings.ToLower(pat), key)
-		if s < 0 {
+		s, idx, ok := fuzzyMatch(pat, key)
+		if !ok {
 			return 0, nil, false
 		}
 		score += s
@@ -97,46 +117,131 @@ func matchPickerColumn(columns []string, prefix string) (int, bool) {
 	return best, best >= 0
 }
 
-func fuzzyMatch(pat, text string) (int, []int) {
-	if len(pat) == 0 {
-		return 0, nil
+func fuzzyMatch(pat, text string) (int, []int, bool) {
+	if pat == "" {
+		return 0, nil, true
 	}
-	pr := []rune(pat)
+	pr := []rune(strings.ToLower(pat))
 	tr := []rune(text)
-	tl := []rune(strings.ToLower(text))
-	if len(pr) > len(tr) {
-		return -1, nil
+	if !fuzzyHasMatch(pr, tr) {
+		return 0, nil, false
 	}
+	if len(pr) == len(tr) {
+		return fuzzyScoreMax, fuzzySequence(len(pr)), true
+	}
+	if len(tr) > fuzzyMaxLen {
+		return -fuzzyScoreMax, fuzzySequence(len(pr)), true
+	}
+	score, indices := fuzzyAlign(pr, tr)
+	return int(math.Round(score * fuzzyScale)), indices, true
+}
 
-	indices := make([]int, 0, len(pr))
+func fuzzyHasMatch(pat, text []rune) bool {
 	j := 0
-	for i, c := range tl {
-		if j < len(pr) && c == pr[j] {
-			indices = append(indices, i)
-			j++
+	for _, c := range text {
+		if unicode.ToLower(c) != pat[j] {
+			continue
+		}
+		if j++; j == len(pat) {
+			return true
 		}
 	}
-	if j < len(pr) {
-		return -1, nil
-	}
+	return false
+}
 
-	score := 0
-	prev := -2
-	for _, idx := range indices {
-		if prev >= 0 && idx == prev+1 {
-			score += 5
-		}
-		switch idx {
-		case 0:
-			score += 10
-		default:
-			switch tr[idx-1] {
-			case '/', '\\', '.', '-', '_', ' ':
-				score += 8
-			}
-		}
-		prev = idx
+func fuzzySequence(n int) []int {
+	out := make([]int, n)
+	for i := range out {
+		out[i] = i
 	}
-	score -= len(tr) / 4
-	return score, indices
+	return out
+}
+
+func fuzzyAlign(pat, text []rune) (float64, []int) {
+	// end[i][j] scores the best alignment of pat[:i+1] ending with pat[i] on
+	// text[j]; best[i][j] the best alignment of pat[:i+1] within text[:j+1]
+	n, m := len(pat), len(text)
+	bonus := fuzzyBonuses(text)
+	best := make([]float64, n*m)
+	end := make([]float64, n*m)
+	for i := range pat {
+		gap := fuzzyGapInner
+		if i == n-1 {
+			gap = fuzzyGapTrailing
+		}
+		prev := fuzzyScoreMin
+		for j, c := range text {
+			k := i*m + j
+			switch {
+			case pat[i] != unicode.ToLower(c):
+				end[k] = fuzzyScoreMin
+				prev += gap
+			default:
+				score := fuzzyScoreMin
+				switch {
+				case i == 0:
+					score = float64(j)*fuzzyGapLeading + bonus[j]
+				case j > 0:
+					score = max(
+						best[(i-1)*m+j-1]+bonus[j],
+						end[(i-1)*m+j-1]+fuzzyConsecutive,
+					)
+				}
+				end[k] = score
+				prev = max(score, prev+gap)
+			}
+			best[k] = prev
+		}
+	}
+	return best[n*m-1], fuzzyPositions(best, end, n, m)
+}
+
+func fuzzyPositions(best, end []float64, n, m int) []int {
+	out := make([]int, n)
+	consecutive := false
+	j := m - 1
+	for i := n - 1; i >= 0; i-- {
+		for ; j >= 0; j-- {
+			k := i*m + j
+			if end[k] == fuzzyScoreMin || (!consecutive && end[k] != best[k]) {
+				continue
+			}
+			consecutive = i > 0 && j > 0 &&
+				best[k] == end[(i-1)*m+j-1]+fuzzyConsecutive
+			out[i] = j
+			j--
+			break
+		}
+	}
+	return out
+}
+
+func fuzzyBonuses(text []rune) []float64 {
+	out := make([]float64, len(text))
+	prev := '/'
+	for i, c := range text {
+		out[i] = fuzzyBonus(prev, c)
+		prev = c
+	}
+	return out
+}
+
+func fuzzyBonus(prev, cur rune) float64 {
+	switch {
+	case unicode.IsUpper(cur):
+		if unicode.IsLower(prev) {
+			return fuzzyBonusCap
+		}
+	case !unicode.IsLower(cur) && !unicode.IsDigit(cur):
+		return 0
+	}
+	switch prev {
+	case '/', '\\':
+		return fuzzyBonusSlash
+	case '-', '_', ' ':
+		return fuzzyBonusWord
+	case '.':
+		return fuzzyBonusDot
+	}
+	return 0
 }

@@ -196,7 +196,7 @@ func changedFileScope(kind view.FileChangeKind) string {
 func lineRangeSelection(
 	text core.Rope, lr *PickerLineRange,
 ) (core.Selection, bool) {
-	if lr == nil || lr.From < 0 {
+	if lr == nil {
 		return core.Selection{}, false
 	}
 	lineStart, err := text.LineToChar(lr.From)

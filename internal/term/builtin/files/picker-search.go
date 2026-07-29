@@ -69,7 +69,7 @@ func (g *globalSearchSource) Accept(
 ) {
 	path := item.Location.Target.Path
 	lr := item.Location.Lines
-	if path == "" || lr == nil || lr.From < 0 {
+	if lr == nil {
 		return
 	}
 	lineIdx := lr.From

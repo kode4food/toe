@@ -56,6 +56,9 @@ type (
 	// StopFunc cancels an in-progress feed or search
 	StopFunc func()
 
+	// PickerMatcher matches picker items against a prepared query
+	PickerMatcher func(*PickerItem) (MatchResult, bool)
+
 	// PickerSource is implemented by every picker data source
 	PickerSource interface {
 		ID() string
@@ -74,7 +77,7 @@ type (
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
 	StaticPickerSource interface {
 		PickerSource
-		Match(query string, item *PickerItem) (MatchResult, bool)
+		PrepareMatcher(query string) PickerMatcher
 	}
 
 	// DynamicPickerSource extends PickerSource with query-driven search
@@ -250,8 +253,10 @@ func (p PickerBase) ColumnProportions() []int {
 	return defaultColumnProportions(len(p.columns))
 }
 
-func (p PickerBase) Match(query string, item *PickerItem) (MatchResult, bool) {
-	return fuzzyMatchItem(query, item, p.columns, p.matchColumn)
+// PrepareMatcher prepares a query for matching multiple items
+func (p PickerBase) PrepareMatcher(query string) PickerMatcher {
+	f := newMatcher(query, p.columns, p.matchColumn)
+	return f.match
 }
 
 // MatchCount reports how many items currently match the query

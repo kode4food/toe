@@ -11,7 +11,7 @@ import (
 func TestPickerFuzzy(t *testing.T) {
 	base := ui.NewPickerBase("test", []string{"path"}, 0, nil)
 	match := func(query, path string) (ui.MatchResult, bool) {
-		return base.Match(query, &ui.PickerItem{Display: path})
+		return base.PrepareMatcher(query)(&ui.PickerItem{Display: path})
 	}
 	best := func(query string, paths ...string) string {
 		out, score := "", 0

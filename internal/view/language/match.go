@@ -9,7 +9,7 @@ import (
 	"github.com/kode4food/toe/internal/glob"
 )
 
-func languageForFilename(langs Languages, path string) (*Language, bool) {
+func languageForFilename(langs Languages, path string) *Language {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		abs = path
@@ -27,21 +27,21 @@ func languageForFilename(langs Languages, path string) (*Language, bool) {
 		}
 	}
 	if foundLen >= 0 {
-		return found, true
+		return found
 	}
 	ext := strings.TrimPrefix(filepath.Ext(path), ".")
 	name := filepath.Base(path)
 	for i, lang := range langs.Languages {
 		for _, ft := range lang.FileTypes {
 			if ext != "" && ft.Extension == ext {
-				return &langs.Languages[i], true
+				return &langs.Languages[i]
 			}
 			if ft.Extension == name {
-				return &langs.Languages[i], true
+				return &langs.Languages[i]
 			}
 		}
 	}
-	return nil, false
+	return nil
 }
 
 func languageForMatch(langs Languages, text string) (string, bool) {

@@ -6,6 +6,15 @@ import (
 	"unicode"
 )
 
+type matcher struct {
+	fields      map[int][]rune
+	matchColumn int
+	text        []rune
+	bonus       []float64
+	best        []float64
+	end         []float64
+}
+
 const (
 	fuzzyGapLeading  = -0.005
 	fuzzyGapTrailing = -0.005
@@ -22,23 +31,112 @@ const (
 	fuzzyMaxLen   = 1024
 )
 
-func fuzzyMatchItem(
-	query string, item *PickerItem, columns []string, matchColumn int,
-) (MatchResult, bool) {
+func newMatcher(query string, columns []string, matchColumn int) *matcher {
 	fields := parsePickerQuery(columns, matchColumn, query)
-	var out MatchResult
+	patterns := make(map[int][]rune, len(fields))
 	for col, pat := range fields {
+		patterns[col] = []rune(strings.ToLower(pat))
+	}
+	return &matcher{fields: patterns, matchColumn: matchColumn}
+}
+
+func (m *matcher) match(item *PickerItem) (MatchResult, bool) {
+	var out MatchResult
+	for col, pat := range m.fields {
 		key := item.columnText(col)
-		res, ok := fuzzyMatch(pat, key)
+		res, ok := m.matchText(pat, key)
 		if !ok {
 			return MatchResult{}, false
 		}
 		out.Score += res.Score
-		if col == matchColumn {
+		if col == m.matchColumn {
 			out.Indices = res.Indices
 		}
 	}
 	return out, true
+}
+
+func (m *matcher) matchText(pat []rune, text string) (MatchResult, bool) {
+	if len(pat) == 0 {
+		return MatchResult{}, true
+	}
+	m.text = m.text[:0]
+	for _, ch := range text {
+		m.text = append(m.text, ch)
+	}
+	if !fuzzyHasMatch(fuzzyHasMatchArgs{pattern: pat, text: m.text}) {
+		return MatchResult{}, false
+	}
+	if len(pat) == len(m.text) {
+		return MatchResult{
+			Score:   fuzzyScoreMax,
+			Indices: fuzzySequence(len(pat)),
+		}, true
+	}
+	if len(m.text) > fuzzyMaxLen {
+		return MatchResult{
+			Score:   -fuzzyScoreMax,
+			Indices: fuzzySequence(len(pat)),
+		}, true
+	}
+	score, indices := m.align(pat)
+	return MatchResult{
+		Score:   int(math.Round(score * fuzzyScale)),
+		Indices: indices,
+	}, true
+}
+
+func (m *matcher) align(pat []rune) (float64, []int) {
+	// end[i][j] scores the best alignment of pat[:i+1] ending with pat[i] on
+	// text[j]; best[i][j] the best alignment of pat[:i+1] within text[:j+1]
+	n, width := len(pat), len(m.text)
+	m.fillBonuses()
+	m.best = growFuzzyScores(m.best, n*width)
+	m.end = growFuzzyScores(m.end, n*width)
+	for i := range pat {
+		gap := fuzzyGapInner
+		if i == n-1 {
+			gap = fuzzyGapTrailing
+		}
+		prev := fuzzyScoreMin
+		for j, c := range m.text {
+			k := i*width + j
+			switch {
+			case pat[i] != unicode.ToLower(c):
+				m.end[k] = fuzzyScoreMin
+				prev += gap
+			default:
+				score := fuzzyScoreMin
+				switch {
+				case i == 0:
+					score = float64(j)*fuzzyGapLeading + m.bonus[j]
+				case j > 0:
+					score = max(
+						m.best[(i-1)*width+j-1]+m.bonus[j],
+						m.end[(i-1)*width+j-1]+fuzzyConsecutive,
+					)
+				}
+				m.end[k] = score
+				prev = max(score, prev+gap)
+			}
+			m.best[k] = prev
+		}
+	}
+	return m.best[n*width-1], fuzzyPositions(fuzzyPositionsArgs{
+		best:          m.best,
+		end:           m.end,
+		patternLength: n,
+		textWidth:     width,
+	})
+}
+
+func (m *matcher) fillBonuses() {
+	m.bonus = growFuzzyScores(m.bonus, len(m.text))
+	prev := '/'
+	for i, c := range m.text {
+		m.bonus[i] = fuzzyBonus(fuzzyBonusArgs{previous: prev, current: c})
+		prev = c
+	}
 }
 
 func parsePickerQuery(
@@ -116,41 +214,28 @@ func matchPickerColumn(columns []string, prefix string) (int, bool) {
 	return best, best >= 0
 }
 
-func fuzzyMatch(pat, text string) (MatchResult, bool) {
-	if pat == "" {
-		return MatchResult{}, true
-	}
-	pr := []rune(strings.ToLower(pat))
-	tr := []rune(text)
-	if !fuzzyHasMatch(pr, tr) {
-		return MatchResult{}, false
-	}
-	if len(pr) == len(tr) {
-		return MatchResult{
-			Score:   fuzzyScoreMax,
-			Indices: fuzzySequence(len(pr)),
-		}, true
-	}
-	if len(tr) > fuzzyMaxLen {
-		return MatchResult{
-			Score:   -fuzzyScoreMax,
-			Indices: fuzzySequence(len(pr)),
-		}, true
-	}
-	score, indices := fuzzyAlign(pr, tr)
-	return MatchResult{
-		Score:   int(math.Round(score * fuzzyScale)),
-		Indices: indices,
-	}, true
+type fuzzyMatchArgs struct {
+	pattern string
+	text    string
 }
 
-func fuzzyHasMatch(pat, text []rune) bool {
+func fuzzyMatch(args fuzzyMatchArgs) (MatchResult, bool) {
+	var m matcher
+	return m.matchText([]rune(strings.ToLower(args.pattern)), args.text)
+}
+
+type fuzzyHasMatchArgs struct {
+	pattern []rune
+	text    []rune
+}
+
+func fuzzyHasMatch(args fuzzyHasMatchArgs) bool {
 	j := 0
-	for _, c := range text {
-		if unicode.ToLower(c) != pat[j] {
+	for _, c := range args.text {
+		if unicode.ToLower(c) != args.pattern[j] {
 			continue
 		}
-		if j++; j == len(pat) {
+		if j++; j == len(args.pattern) {
 			return true
 		}
 	}
@@ -165,57 +250,27 @@ func fuzzySequence(n int) []int {
 	return out
 }
 
-func fuzzyAlign(pat, text []rune) (float64, []int) {
-	// end[i][j] scores the best alignment of pat[:i+1] ending with pat[i] on
-	// text[j]; best[i][j] the best alignment of pat[:i+1] within text[:j+1]
-	n, m := len(pat), len(text)
-	bonus := fuzzyBonuses(text)
-	best := make([]float64, n*m)
-	end := make([]float64, n*m)
-	for i := range pat {
-		gap := fuzzyGapInner
-		if i == n-1 {
-			gap = fuzzyGapTrailing
-		}
-		prev := fuzzyScoreMin
-		for j, c := range text {
-			k := i*m + j
-			switch {
-			case pat[i] != unicode.ToLower(c):
-				end[k] = fuzzyScoreMin
-				prev += gap
-			default:
-				score := fuzzyScoreMin
-				switch {
-				case i == 0:
-					score = float64(j)*fuzzyGapLeading + bonus[j]
-				case j > 0:
-					score = max(
-						best[(i-1)*m+j-1]+bonus[j],
-						end[(i-1)*m+j-1]+fuzzyConsecutive,
-					)
-				}
-				end[k] = score
-				prev = max(score, prev+gap)
-			}
-			best[k] = prev
-		}
-	}
-	return best[n*m-1], fuzzyPositions(best, end, n, m)
+type fuzzyPositionsArgs struct {
+	best          []float64
+	end           []float64
+	patternLength int
+	textWidth     int
 }
 
-func fuzzyPositions(best, end []float64, n, m int) []int {
-	out := make([]int, n)
+func fuzzyPositions(args fuzzyPositionsArgs) []int {
+	out := make([]int, args.patternLength)
 	consecutive := false
-	j := m - 1
-	for i := n - 1; i >= 0; i-- {
+	j := args.textWidth - 1
+	for i := args.patternLength - 1; i >= 0; i-- {
 		for ; j >= 0; j-- {
-			k := i*m + j
-			if end[k] == fuzzyScoreMin || (!consecutive && end[k] != best[k]) {
+			k := i*args.textWidth + j
+			if args.end[k] == fuzzyScoreMin ||
+				(!consecutive && args.end[k] != args.best[k]) {
 				continue
 			}
 			consecutive = i > 0 && j > 0 &&
-				best[k] == end[(i-1)*m+j-1]+fuzzyConsecutive
+				args.best[k] ==
+					args.end[(i-1)*args.textWidth+j-1]+fuzzyConsecutive
 			out[i] = j
 			j--
 			break
@@ -224,26 +279,28 @@ func fuzzyPositions(best, end []float64, n, m int) []int {
 	return out
 }
 
-func fuzzyBonuses(text []rune) []float64 {
-	out := make([]float64, len(text))
-	prev := '/'
-	for i, c := range text {
-		out[i] = fuzzyBonus(prev, c)
-		prev = c
+func growFuzzyScores(scores []float64, n int) []float64 {
+	if cap(scores) < n {
+		return make([]float64, n)
 	}
-	return out
+	return scores[:n]
 }
 
-func fuzzyBonus(prev, cur rune) float64 {
+type fuzzyBonusArgs struct {
+	previous rune
+	current  rune
+}
+
+func fuzzyBonus(args fuzzyBonusArgs) float64 {
 	switch {
-	case unicode.IsUpper(cur):
-		if unicode.IsLower(prev) {
+	case unicode.IsUpper(args.current):
+		if unicode.IsLower(args.previous) {
 			return fuzzyBonusCap
 		}
-	case !unicode.IsLower(cur) && !unicode.IsDigit(cur):
+	case !unicode.IsLower(args.current) && !unicode.IsDigit(args.current):
 		return 0
 	}
-	switch prev {
+	switch args.previous {
 	case '/', '\\':
 		return fuzzyBonusSlash
 	case '-', '_', ' ':

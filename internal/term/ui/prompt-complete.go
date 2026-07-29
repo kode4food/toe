@@ -156,7 +156,7 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 				continue
 			}
 			seen[name] = true
-			res, ok := fuzzyMatch(input, name)
+			res, ok := fuzzyMatch(fuzzyMatchArgs{pattern: input, text: name})
 			if !ok || res.Score < 0 {
 				continue
 			}

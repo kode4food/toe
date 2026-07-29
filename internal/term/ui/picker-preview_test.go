@@ -22,45 +22,6 @@ import (
 // Location.Target.Path set to the given path
 type pathPickerSource struct{ path string }
 
-func (p *pathPickerSource) ID() string {
-	return "test"
-}
-
-func (p *pathPickerSource) Columns() []string {
-	return []string{"name"}
-}
-
-func (p *pathPickerSource) MatchColumn() int {
-	return 0
-}
-
-func (p *pathPickerSource) ColumnProportions() []int {
-	return []int{1}
-}
-
-func (p *pathPickerSource) Accept(
-	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
-) {
-}
-
-func (p *pathPickerSource) Load(
-	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	items := []ui.PickerItem{{
-		Display:  "item",
-		Columns:  []string{"item"},
-		SortKey:  "item",
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
-	}}
-	return items, nil, func() {}
-}
-
-func (p *pathPickerSource) Match(
-	_ string, _ *ui.PickerItem,
-) (ui.MatchResult, bool) {
-	return ui.MatchResult{}, true
-}
-
 const (
 	testPickerPreviewWidth   = 100
 	narrowPickerPreviewWidth = 60
@@ -566,4 +527,43 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "now here")
 	})
+}
+
+func (p *pathPickerSource) ID() string {
+	return "test"
+}
+
+func (p *pathPickerSource) Columns() []string {
+	return []string{"name"}
+}
+
+func (p *pathPickerSource) MatchColumn() int {
+	return 0
+}
+
+func (p *pathPickerSource) ColumnProportions() []int {
+	return []int{1}
+}
+
+func (p *pathPickerSource) Accept(
+	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
+) {
+}
+
+func (p *pathPickerSource) Load(
+	*view.Editor,
+) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+	items := []ui.PickerItem{{
+		Display:  "item",
+		Columns:  []string{"item"},
+		SortKey:  "item",
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
+	}}
+	return items, nil, func() {}
+}
+
+func (p *pathPickerSource) PrepareMatcher(string) ui.PickerMatcher {
+	return func(*ui.PickerItem) (ui.MatchResult, bool) {
+		return ui.MatchResult{}, true
+	}
 }

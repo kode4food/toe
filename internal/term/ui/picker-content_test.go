@@ -285,10 +285,10 @@ func (columnPickerSource) Load(
 	}}, nil, func() {}
 }
 
-func (columnPickerSource) Match(
-	string, *ui.PickerItem,
-) (ui.MatchResult, bool) {
-	return ui.MatchResult{Score: 1}, true
+func (columnPickerSource) PrepareMatcher(string) ui.PickerMatcher {
+	return func(*ui.PickerItem) (ui.MatchResult, bool) {
+		return ui.MatchResult{Score: 1}, true
+	}
 }
 
 func (columnPickerSource) Accept(

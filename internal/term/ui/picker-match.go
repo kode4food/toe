@@ -46,6 +46,7 @@ func (p *Picker) resetCursor() {
 
 func (p *Picker) rebuildMatches() {
 	src, _ := p.source.(StaticPickerSource)
+	match := p.prepareMatcher(src)
 	out := p.list.matched[:0]
 	for i := range p.list.items {
 		item := &p.list.items[i]
@@ -53,7 +54,7 @@ func (p *Picker) rebuildMatches() {
 			out = append(out, pickerMatch{item: item, itemIndex: i})
 			continue
 		}
-		if m, ok := p.scoreItem(src, item, i); ok {
+		if m, ok := p.scoreItem(match, item, i); ok {
 			out = append(out, m)
 		}
 	}
@@ -68,9 +69,10 @@ func (p *Picker) narrowMatches() {
 	if !ok {
 		return
 	}
+	match := p.prepareMatcher(src)
 	out := p.list.matched[:0]
 	for _, prev := range p.list.matched {
-		if m, ok := p.scoreItem(src, prev.item, prev.itemIndex); ok {
+		if m, ok := p.scoreItem(match, prev.item, prev.itemIndex); ok {
 			out = append(out, m)
 		}
 	}
@@ -79,7 +81,7 @@ func (p *Picker) narrowMatches() {
 }
 
 func (p *Picker) scoreItem(
-	src StaticPickerSource, item *PickerItem, index int,
+	match PickerMatcher, item *PickerItem, index int,
 ) (pickerMatch, bool) {
 	key := pickerScoreKey{
 		query: p.list.query,
@@ -87,7 +89,7 @@ func (p *Picker) scoreItem(
 	}
 	cached, ok := p.list.scores[key]
 	if !ok {
-		if res, matched := src.Match(key.query, item); matched {
+		if res, matched := match(item); matched {
 			cached = &res
 		}
 		if canCacheQuery(key.query) {
@@ -102,6 +104,13 @@ func (p *Picker) scoreItem(
 		itemIndex: index,
 		result:    *cached,
 	}, true
+}
+
+func (p *Picker) prepareMatcher(src StaticPickerSource) PickerMatcher {
+	if src == nil {
+		return nil
+	}
+	return src.PrepareMatcher(p.list.query)
 }
 
 func (p *Picker) sortMatches() {

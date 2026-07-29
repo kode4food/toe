@@ -291,11 +291,13 @@ func previewAnchor(args previewAnchorArgs) previewAnchorRes {
 	var vf *core.VisualMoveFormat
 	if args.softWrap {
 		vf = &core.VisualMoveFormat{
-			ViewportWidth:    args.format.ViewportWidth,
-			TabWidth:         args.format.TabWidth,
-			MaxWrap:          args.format.MaxWrap,
-			MaxIndentRetain:  args.format.MaxIndentRetain,
-			WrapIndicatorLen: runewidth.StringWidth(args.format.WrapIndicator),
+			ViewportWidth:   args.format.ViewportWidth,
+			TabWidth:        args.format.TabWidth,
+			MaxWrap:         args.format.MaxWrap,
+			MaxIndentRetain: args.format.MaxIndentRetain,
+			WrapIndicatorLen: runewidth.StringWidth(
+				args.format.WrapIndicatorPrefix(),
+			),
 		}
 	} else {
 		vf = &core.VisualMoveFormat{}

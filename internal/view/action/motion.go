@@ -325,6 +325,6 @@ func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
 		TabWidth:         format.TabWidth,
 		MaxWrap:          format.MaxWrap,
 		MaxIndentRetain:  format.MaxIndentRetain,
-		WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
+		WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicatorPrefix()),
 	}
 }

@@ -11,7 +11,8 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-// renderImagePane draws Kitty placeholder cells and an image status line
+const imageSizeTimes = "\u00d7" // '×' - multiplication sign
+
 func (r *renderPass) renderImagePane(
 	buf *tui.Buffer, pane *ImagePane, y0 int, focused bool,
 ) {
@@ -53,8 +54,8 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 
 	pixels := pane.Image().Size()
 	right := []statusElem{{
-		text: fmt.Sprintf(
-			"%d×%d %d%%", pixels.Width, pixels.Height, pane.Zoom(),
+		text: fmt.Sprintf("%d%s%d %d%%",
+			pixels.Width, imageSizeTimes, pixels.Height, pane.Zoom(),
 		),
 		style: baseTUI,
 	}}

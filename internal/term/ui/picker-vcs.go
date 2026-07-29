@@ -13,12 +13,14 @@ type changedFilePickerSource struct {
 }
 
 const (
-	fileModifiedIcon  = "\uf459" //  - nf-oct-diff_modified
-	fileAddedIcon     = "\uf457" //  - nf-oct-diff_added
-	fileRemovedIcon   = "\uf458" //  - nf-oct-diff_removed
-	fileRenamedIcon   = "\uf45a" //  - nf-oct-diff_renamed
-	fileUntrackedIcon = "\uf420" //  - nf-oct-question
-	fileConflictIcon  = "\uf421" //  - nf-oct-alert
+	fileModifiedIcon  = "\uf459" // '' - nf-oct-diff_modified
+	fileAddedIcon     = "\uf457" // '' - nf-oct-diff_added
+	fileRemovedIcon   = "\uf458" // '' - nf-oct-diff_removed
+	fileRenamedIcon   = "\uf45a" // '' - nf-oct-diff_renamed
+	fileUntrackedIcon = "\uf420" // '' - nf-oct-question
+	fileConflictIcon  = "\uf421" // '' - nf-oct-alert
+
+	renamedArrow = "\u2192" // '→' - rightwards arrow
 )
 
 var (
@@ -128,8 +130,8 @@ func changedFileItem(
 ) PickerItem {
 	display := view.DocumentRelativeName(fc.Path, cwd)
 	if fc.Kind == view.FileChangeRenamed {
-		display = view.DocumentRelativeName(fc.FromPath, cwd) +
-			" → " + display
+		from := view.DocumentRelativeName(fc.FromPath, cwd)
+		display = from + " " + renamedArrow + " " + display
 	}
 	hunks := changedFileHunks(vc, fc)
 	basePath := fc.Path

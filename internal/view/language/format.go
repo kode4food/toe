@@ -1,13 +1,5 @@
 package language
 
-const (
-	DefaultTextWidth       = 80
-	DefaultTabWidth        = 4
-	DefaultMaxWrap         = 20
-	DefaultMaxIndentRetain = 40
-	DefaultWrapIndicator   = "\u21aa " // '↪' - rightwards arrow with hook
-)
-
 type TextFormat struct {
 	ViewportWidth       int
 	TabWidth            int
@@ -17,6 +9,14 @@ type TextFormat struct {
 	WrapIndicator       string
 	SoftWrapAtTextWidth bool
 }
+
+const (
+	DefaultTextWidth       = 80
+	DefaultTabWidth        = 4
+	DefaultMaxWrap         = 20
+	DefaultMaxIndentRetain = 40
+	DefaultWrapIndicator   = "\u21aa" // '↪' - rightwards arrow with hook
+)
 
 func TextFormatForConfig(
 	lang *Language, textWidth *int, softWrap SoftWrap, w int,
@@ -67,4 +67,13 @@ func DefaultTextFormat(w int) *TextFormat {
 		MaxIndentRetain: min(DefaultMaxIndentRetain, w*2/5),
 		WrapIndicator:   DefaultWrapIndicator,
 	}
+}
+
+// WrapIndicatorPrefix is the indicator plus its gap, as drawn at the start of
+// a soft-wrapped continuation row
+func (t *TextFormat) WrapIndicatorPrefix() string {
+	if t.WrapIndicator == "" {
+		return ""
+	}
+	return t.WrapIndicator + " "
 }

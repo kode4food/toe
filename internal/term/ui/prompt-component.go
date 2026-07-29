@@ -62,6 +62,8 @@ const (
 	promptTerminalSearch
 )
 
+const promptEllipsis = "\u2026" // '…' - horizontal ellipsis
+
 // one column so the end-of-buffer caret cell stays on screen
 const promptRightPad = 1
 
@@ -418,13 +420,13 @@ func (p *PromptComponent) paintLine(
 		buf.SetString(geom.Point{
 			X: area.X + x,
 			Y: area.Y,
-		}, "…", textSt)
+		}, promptEllipsis, textSt)
 	}
 	if truncEnd {
 		buf.SetString(geom.Point{
 			X: area.X + x + col,
 			Y: area.Y,
-		}, "…", textSt)
+		}, promptEllipsis, textSt)
 	}
 }
 

@@ -120,11 +120,13 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	var vf *core.VisualMoveFormat
 	if format.SoftWrap && gutterW < editorW {
 		vf = &core.VisualMoveFormat{
-			ViewportWidth:    format.ViewportWidth,
-			TabWidth:         format.TabWidth,
-			MaxWrap:          format.MaxWrap,
-			MaxIndentRetain:  format.MaxIndentRetain,
-			WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicator),
+			ViewportWidth:   format.ViewportWidth,
+			TabWidth:        format.TabWidth,
+			MaxWrap:         format.MaxWrap,
+			MaxIndentRetain: format.MaxIndentRetain,
+			WrapIndicatorLen: runewidth.StringWidth(
+				format.WrapIndicatorPrefix(),
+			),
 		}
 	}
 	sel := doc.SelectionFor(v.ID())

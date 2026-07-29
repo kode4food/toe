@@ -77,8 +77,7 @@ type (
 	}
 )
 
-// scrollbarThumb is the marker drawn in a list's scrollbar column
-const scrollbarThumb = "▌"
+const scrollbarThumb = "\u258c" // '▌' - left half block
 
 func (o *overlayBuf) maybePaint(
 	cx *Context, size geom.Size, paint func(buf *tui.Buffer),

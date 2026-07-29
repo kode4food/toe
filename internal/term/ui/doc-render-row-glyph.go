@@ -102,7 +102,7 @@ func (r *rowRender) softWrapBreaks(tabW int) []int {
 		TabWidth:         r.format.TabWidth,
 		MaxWrap:          r.format.MaxWrap,
 		MaxIndentRetain:  r.format.MaxIndentRetain,
-		WrapIndicatorLen: runewidth.StringWidth(r.format.WrapIndicator),
+		WrapIndicatorLen: runewidth.StringWidth(r.format.WrapIndicatorPrefix()),
 	}
 	return vf.VisualRowStarts([]rune(r.lineStr))
 }
@@ -111,22 +111,22 @@ func softWrapPrefix(format *language.TextFormat, indent int) string {
 	if indent > format.MaxIndentRetain {
 		indent = 0
 	}
-	return strings.Repeat(" ", indent) + format.WrapIndicator
+	return strings.Repeat(" ", indent) + format.WrapIndicatorPrefix()
 }
 
 func softWrapContinuationRow(
 	format *language.TextFormat, indent int, styles *tuiStyles,
 ) renderedRow {
 	prefix := softWrapPrefix(format, indent)
-	indentW := max(runewidth.StringWidth(prefix)-
-		runewidth.StringWidth(format.WrapIndicator), 0)
-	wrapW := runewidth.StringWidth(format.WrapIndicator)
+	wrap := format.WrapIndicatorPrefix()
+	wrapW := runewidth.StringWidth(wrap)
+	indentW := max(runewidth.StringWidth(prefix)-wrapW, 0)
 	row := renderedRow{}
 	if indentW > 0 {
 		row.write(strings.Repeat(" ", indentW), indentW, styles.text)
 	}
 	if wrapW > 0 {
-		row.write(format.WrapIndicator, wrapW, styles.whitespace)
+		row.write(wrap, wrapW, styles.whitespace)
 	}
 	return row
 }

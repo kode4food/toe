@@ -29,6 +29,8 @@ type (
 	}
 )
 
+const progressDot = "\u00b7" // '·' - middle dot
+
 // Busy reports whether any language server has an in-flight progress
 // notification, for the status-line activity spinner
 func (s *Session) Busy() bool {
@@ -193,7 +195,7 @@ func progressMessage(server string, entry progressEntry) string {
 	}
 	b.WriteString(entry.title)
 	if entry.title != "" && entry.message != "" {
-		b.WriteString(" · ")
+		b.WriteString(" " + progressDot + " ")
 	}
 	b.WriteString(entry.message)
 	msg := b.String()

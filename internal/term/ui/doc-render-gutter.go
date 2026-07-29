@@ -36,8 +36,11 @@ const (
 	diffGutterRemoved
 )
 
-// diagnosticGutterMark is the dot drawn in the diagnostics gutter column
-const diagnosticGutterMark = "●"
+const (
+	diagnosticGutterMark = "\u25cf" // '●' - black circle
+	diffGutterBar        = "\u258d" // '▍' - left one quarter block
+	diffGutterTop        = "\u2594" // '▔' - upper one eighth block
+)
 
 func (g gutterSpec) renderBlank(buf *tui.Buffer, at geom.Point) {
 	buf.FillRange(at, g.width, g.lineStyle)
@@ -130,11 +133,11 @@ func (g gutterSpec) diagnosticStyle(
 func (g gutterSpec) diffMarker(kind diffGutterKind) (string, tui.Style) {
 	switch kind {
 	case diffGutterAdded:
-		return "▍", g.diffAdded
+		return diffGutterBar, g.diffAdded
 	case diffGutterRemoved:
-		return "▔", g.diffRemoved
+		return diffGutterTop, g.diffRemoved
 	default:
-		return "▍", g.diffModified
+		return diffGutterBar, g.diffModified
 	}
 }
 

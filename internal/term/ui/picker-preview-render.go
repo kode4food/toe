@@ -229,10 +229,10 @@ func previewDiffMarker(
 ) (string, tui.Style) {
 	switch kind {
 	case diffGutterAdded:
-		return "▍", styles.diffAdded
+		return diffGutterBar, styles.diffAdded
 	case diffGutterRemoved:
-		return "▔", styles.diffRemoved
+		return diffGutterTop, styles.diffRemoved
 	default:
-		return "▍", styles.diffModified
+		return diffGutterBar, styles.diffModified
 	}
 }

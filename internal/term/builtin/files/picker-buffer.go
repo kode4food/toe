@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	bufferPickerModifiedIcon      = "\uf448" //  - pencil icon
+	bufferPickerModifiedIcon      = "\uf448" // '' - pencil icon
 	bufferPickerModifiedIconAscii = "*"
 )
 

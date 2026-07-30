@@ -418,12 +418,14 @@ wrap-indicator = "↪ "
 }
 
 func TestPickerPreviewPlaceholders(t *testing.T) {
-	t.Run("binary file shows placeholder", func(t *testing.T) {
+	t.Run("binary file shows dump", func(t *testing.T) {
 		tmp := t.TempDir()
+		data := make([]byte, 256)
+		for i := range data {
+			data[i] = byte(i)
+		}
 		assert.NoError(t, os.WriteFile(
-			filepath.Join(tmp, "binary.bin"),
-			[]byte{0x00, 0x01, 0x02, 0x03},
-			0o644,
+			filepath.Join(tmp, "binary.bin"), data, 0o644,
 		))
 		e := view.NewEditor(tmp)
 		km := command.NewKeymaps()
@@ -435,22 +437,18 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
 		out := stripANSI(m.View().Content)
-		msg := "<Binary file>"
-		assert.Contains(t, out, msg)
-		lines := strings.Split(out, "\n")
-		row := -1
-		for i, line := range lines {
-			if strings.Contains(line, msg) {
-				row = i
-				break
-			}
-		}
-		if !assert.NotEqual(t, -1, row) {
-			return
-		}
-		assert.Greater(t, row, len(lines)/3)
-		assert.Less(t, row, len(lines)*2/3)
-		assert.Greater(t, strings.Index(lines[row], msg), len(lines[row])/2)
+		assert.Contains(t, out, "00000000  00 01 02 03 04 05 06 07")
+		assert.Contains(t, out, "00000008  08 09 0a 0b 0c 0d 0e 0f")
+		assert.Contains(t, out, "│........│")
+		assert.NotContains(t, out, "<Binary file>")
+
+		m2, _ := m.Update(tea.MouseWheelMsg{
+			X: 90, Y: 10, Button: tea.MouseWheelDown,
+		})
+		m = m2.(ui.Model)
+		out = stripANSI(m.View().Content)
+		assert.NotContains(t, out, "00000000  ")
+		assert.Contains(t, out, "00000018  18 19 1a 1b 1c 1d 1e 1f")
 	})
 
 	t.Run("nonexistent path shows placeholder", func(t *testing.T) {
@@ -502,7 +500,9 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		path := filepath.Join(tmp, "huge.txt")
 		f, err := os.Create(path)
 		assert.NoError(t, err)
-		_, err = f.Write(make([]byte, 10*1024*1024+1))
+		_, err = f.WriteString(strings.Repeat(
+			"a", ui.PickerMaxPreview+1,
+		))
 		assert.NoError(t, err)
 		assert.NoError(t, f.Close())
 
@@ -517,6 +517,28 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		m = sendKey(m, 'p')
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "<File too large to preview>")
+	})
+
+	t.Run("large binary shows dump", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "huge.bin")
+		f, err := os.Create(path)
+		assert.NoError(t, err)
+		assert.NoError(t, f.Truncate(ui.PickerMaxPreview+1))
+		assert.NoError(t, f.Close())
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "00000000  00 00 00 00 00 00 00 00")
+		assert.NotContains(t, out, "<File too large to preview>")
 	})
 
 	t.Run("invalidates not found preview", func(t *testing.T) {

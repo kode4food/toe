@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestViewScrollCommands(t *testing.T) {
@@ -97,6 +99,24 @@ func TestImageMode(t *testing.T) {
 	assert.Equal(t, 100, pane.Zoom())
 }
 
+func TestBinaryMode(t *testing.T) {
+	e, km := test.Env(t, "")
+	assert.NotEmpty(t, km.Bindings("BIN", "vsplit"))
+	assert.NotEmpty(t, km.Bindings("BIN", "toggle_pane_maximized"))
+	assert.Empty(t, km.Bindings("BIN", "image_zoom_in"))
+	assert.Empty(t, km.Bindings("BIN", "page_up"))
+
+	path := filepath.Join(t.TempDir(), "tool")
+	assert.NoError(t, os.WriteFile(path, []byte{0, 1, 2, 3}, 0o755))
+	pane, err := ui.NewBinaryPane(e, path)
+	assert.NoError(t, err)
+	old := e.ReplacePane(e.Tree().Focus(), pane)
+	e.DiscardPane(old)
+
+	test.RunCmd(t, km, e, "toggle_pane_maximized")
+	assert.Equal(t, view.ModeBinary, e.Mode())
+}
+
 func TestViewNavigation(t *testing.T) {
 	for _, name := range []string{
 		"jump_view_left", "jump_view_right",
@@ -156,7 +176,7 @@ func TestViewWonly(t *testing.T) {
 
 func TestPaneMaximized(t *testing.T) {
 	e, km := test.Env(t, "abc")
-	for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
+	for _, mode := range command.PaneModes {
 		assert.NotEmpty(t, km.Bindings(mode, "toggle_pane_maximized"))
 	}
 	test.RunCmd(t, km, e, "vsplit")

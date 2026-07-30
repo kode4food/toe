@@ -40,7 +40,7 @@ func TestFileExplorer(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), "ALPHACONTENT")
 	})
 
-	t.Run("accepting a binary file shows an error", func(t *testing.T) {
+	t.Run("accepting a binary file opens dump", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(dir, "alpha.bin"), []byte("bin\x00ary"), 0o644,
@@ -50,9 +50,9 @@ func TestFileExplorer(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 		m = sendSpecial(m, tea.KeyEnter)
-		// the error must render on this very frame, with no further key
-		// press needed to flush the pending status message
-		assert.Contains(t, stripANSI(m.View().Content), "error")
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "BIN")
+		assert.Contains(t, out, "62 69 6e 00 61 72 79")
 	})
 
 	t.Run("dir preview lists contents", func(t *testing.T) {

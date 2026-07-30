@@ -3,10 +3,7 @@ package ui
 import (
 	"cmp"
 	"errors"
-	"mime"
-	"path/filepath"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -372,7 +369,7 @@ func AcceptDocumentID(
 	}
 }
 
-// OpenPath opens a text document or image pane at path
+// OpenPath opens a text document, image pane, or binary dump at path
 func OpenPath(
 	e *view.Editor, path string, action PickerAcceptAction,
 ) (*view.View, bool, error) {
@@ -387,15 +384,16 @@ func OpenPath(
 	if !errors.Is(err, core.ErrBinaryFile) {
 		return nil, false, err
 	}
-	ext := strings.ToLower(filepath.Ext(path))
-	if !strings.HasPrefix(mime.TypeByExtension(ext), "image/") {
-		return nil, false, err
+	var pane view.Pane
+	if isImagePath(path) {
+		pane, err = NewImagePane(e, path)
+	} else {
+		pane, err = NewBinaryPane(e, path)
 	}
-	pane, err := NewImagePane(e, path)
 	if err != nil {
 		return nil, false, err
 	}
-	if !acceptImagePane(e, pane, action) {
+	if !acceptPickerPane(e, pane, action) {
 		return nil, false, view.ErrNoView
 	}
 	return nil, true, nil
@@ -474,8 +472,8 @@ func alignAcceptedSelection(
 	v.SetOffset(offset)
 }
 
-func acceptImagePane(
-	e *view.Editor, pane *ImagePane, action PickerAcceptAction,
+func acceptPickerPane(
+	e *view.Editor, pane view.Pane, action PickerAcceptAction,
 ) bool {
 	switch action {
 	case PickerAcceptHorizontalSplit:

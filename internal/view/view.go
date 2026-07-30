@@ -79,8 +79,8 @@ const (
 	ModeInsert
 	ModeSelect
 	ModeTerminal
-	// ModeImage is the mode for image panes
 	ModeImage
+	ModeBinary
 )
 
 const (
@@ -96,6 +96,7 @@ var modeScopes = [...]string{
 	ModeSelect:   "select",
 	ModeTerminal: "normal",
 	ModeImage:    "image",
+	ModeBinary:   "normal",
 }
 
 var modeNames = [...]string{
@@ -104,6 +105,7 @@ var modeNames = [...]string{
 	ModeSelect:   "SEL",
 	ModeTerminal: "TRM",
 	ModeImage:    "IMG",
+	ModeBinary:   "BIN",
 }
 
 // ID returns the view identifier

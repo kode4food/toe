@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -47,18 +46,20 @@ func TestOpenPathImage(t *testing.T) {
 		assert.True(t, isImage)
 	})
 
-	t.Run("executable remains binary", func(t *testing.T) {
+	t.Run("executable opens binary pane", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		path := filepath.Join(t.TempDir(), "tool")
 		assert.NoError(t, os.WriteFile(
 			path, []byte{0xCF, 0xFA, 0xED, 0xFE}, 0o755,
 		))
 
-		_, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
+		v, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
 
-		assert.False(t, ok)
-		assert.ErrorIs(t, err, core.ErrBinaryFile)
-		assert.NotErrorIs(t, err, ui.ErrInvalidImage)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		assert.Nil(t, v)
+		_, binary := e.FocusedPane().(*ui.BinaryPane)
+		assert.True(t, binary)
 	})
 
 	t.Run("malformed image remains invalid", func(t *testing.T) {

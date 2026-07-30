@@ -41,9 +41,6 @@ func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
 	ec := m.component
 	cx := m.context
 	return func(e *view.Editor) command.Continuation {
-		if e.FocusedDocument() == nil {
-			return nil
-		}
 		ls := e.LanguageServerController()
 		if ls == nil {
 			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoWorkSymbols))

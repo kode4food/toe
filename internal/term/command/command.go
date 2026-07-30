@@ -95,12 +95,20 @@ const (
 	SignalClearScreen
 )
 
-// DocumentModes returns modes backed by editable document views
-func DocumentModes() []string {
-	return []string{"NOR", "SEL", "INS"}
-}
+var (
+	// AllModes contains every editing and pane mode
+	AllModes = []string{"NOR", "SEL", "INS", "TRM", "IMG", "BIN"}
 
-// PaneModes returns modes for commands that apply to every pane kind
-func PaneModes() []string {
-	return []string{"NOR", "SEL", "INS", "TRM", "IMG"}
-}
+	// DocNormalModes contains non-insert document modes
+	DocNormalModes = []string{"NOR", "SEL"}
+
+	// DocModes contains all modes backed by editable document views
+	DocModes = []string{"NOR", "SEL", "INS"}
+
+	// PaneModes contains modes for commands that apply to every pane kind
+	PaneModes = []string{"NOR", "SEL", "TRM", "IMG", "BIN"}
+
+	// CmdKeyModes contains every pane mode except terminal, where keystrokes
+	// belong to the shell
+	CmdKeyModes = []string{"NOR", "SEL", "IMG", "BIN"}
+)

@@ -155,7 +155,7 @@ func DetectLanguage(path, content string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	if lang := LanguageForFilename(langs, path); lang != nil {
+	if lang := ForFilename(langs, path); lang != nil {
 		return lang.Name, true
 	}
 	if lang, ok := languageForShebang(langs, content); ok {

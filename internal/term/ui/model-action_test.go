@@ -181,16 +181,19 @@ func TestSymbolPickerAction(t *testing.T) {
 
 	t.Run("tops oversized workspace symbol", func(t *testing.T) {
 		dir := t.TempDir()
-		source := filepath.Join(dir, "source.go")
+		source := filepath.Join(dir, "source.bin")
 		target := filepath.Join(dir, "target.go")
 		prefix := strings.Repeat("line\n", 30)
 		body := strings.Repeat("target\n", 40)
 		text := prefix + body + strings.Repeat("tail\n", 30)
-		assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
+		assert.NoError(t, os.WriteFile(source, []byte{0, 1, 2}, 0o600))
 		assert.NoError(t, os.WriteFile(target, []byte(text), 0o600))
 		e := view.NewEditor(dir)
-		_, err := e.OpenFile(source)
+		_, ok, err := ui.OpenPath(e, source, ui.PickerAcceptReplace)
 		assert.NoError(t, err)
+		assert.True(t, ok)
+		_, ok = e.FocusedPane().(*ui.BinaryPane)
+		assert.True(t, ok)
 		e.SetLanguageServerController(&locationController{
 			symbols: []view.Symbol{
 				{
@@ -206,11 +209,13 @@ func TestSymbolPickerAction(t *testing.T) {
 		})
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
-		bindNormalTestAction(
-			km, "workspace_symbol_picker",
-			m.WorkspaceSymbolPickerAction(),
-			[]command.KeyEvent{char('w')},
-		)
+		bindTestAction(bindTestActionArgs{
+			km:   km,
+			mode: "BIN",
+			name: "workspace_symbol_picker",
+			fn:   m.WorkspaceSymbolPickerAction(),
+			seqs: [][]command.KeyEvent{{char('w')}},
+		})
 		m = resize(m, 80, 24)
 
 		before := len(e.AllDocuments())

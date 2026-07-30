@@ -116,7 +116,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusWritten),
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"w"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
@@ -139,7 +139,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusWritten),
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"w!"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
@@ -154,7 +154,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusAllWritten),
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.PaneModes,
 			Aliases:   []string{"wa"},
 			Signature: kit.Sig(),
 		},
@@ -170,7 +170,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusAllWritten),
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.PaneModes,
 			Aliases:   []string{"wa!"},
 			Signature: kit.Sig(),
 		},
@@ -186,7 +186,7 @@ func fileWriteCmds() []command.Command {
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"wq", "exit", "x", "xit"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
@@ -200,7 +200,7 @@ func fileWriteCmds() []command.Command {
 				_ = e.Save(true)
 				return command.Result{Signal: command.SignalQuit}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"wq!", "exit!", "x!", "xit!"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
@@ -214,7 +214,7 @@ func fileWriteCmds() []command.Command {
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.PaneModes,
 			Aliases:   []string{"wqa", "xa"},
 			Signature: kit.Sig(),
 		},
@@ -229,7 +229,7 @@ func fileWriteCmds() []command.Command {
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.PaneModes,
 			Aliases:   []string{"wqa!", "xa!"},
 			Signature: kit.Sig(),
 		},
@@ -249,7 +249,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusWrittenAndClosed),
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"wbc"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
@@ -267,7 +267,7 @@ func fileWriteCmds() []command.Command {
 					Message: i18n.Text(i18n.StatusWrittenAndClosed),
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"wbc!"},
 			Signature: kit.FileSig(kit.Sig()),
 		},
@@ -292,7 +292,7 @@ func fileManageCmds() []command.Command {
 					Message: "'" + doc.RelativeName(e.Cwd()) + "' written",
 				}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"u"},
 			Signature: kit.Sig(),
 		},
@@ -316,7 +316,7 @@ func fileManageCmds() []command.Command {
 				}
 				return command.Result{Message: "opened"}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.PaneModes,
 			Aliases:   []string{"o", "edit", "e"},
 			Signature: kit.FileSig(kit.MinArgs(1)),
 		},
@@ -327,7 +327,7 @@ func fileManageCmds() []command.Command {
 				e.NewDocument()
 				return command.Result{Message: "[scratch]"}
 			},
-			Modes:     []string{"NOR", "SEL", "TRM", "IMG"},
+			Modes:     command.PaneModes,
 			Keys:      kit.Window(kit.Char('n')),
 			Aliases:   []string{"n"},
 			Signature: kit.Sig(),
@@ -347,7 +347,7 @@ func fileManageCmds() []command.Command {
 				}
 				return command.Result{Message: "reloaded"}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"rl"},
 			Signature: kit.Sig(),
 		},
@@ -361,7 +361,7 @@ func fileManageCmds() []command.Command {
 				}
 				return command.Result{Message: "all documents reloaded"}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.PaneModes,
 			Aliases:   []string{"rla"},
 			Signature: kit.Sig(),
 		},
@@ -386,7 +386,7 @@ func fileManageCmds() []command.Command {
 				}
 				return command.Result{Message: "moved to '" + path + "'"}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"mv"},
 			Signature: kit.FileSig(kit.MinArgs(1)),
 		},
@@ -406,7 +406,7 @@ func fileManageCmds() []command.Command {
 				_ = e.MoveFocusedFile(path, true)
 				return command.Result{Message: "moved to '" + path + "'"}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"mv!"},
 			Signature: kit.FileSig(kit.MinArgs(1)),
 		},
@@ -423,7 +423,7 @@ func fileManageCmds() []command.Command {
 				}
 				return command.Result{Message: "'" + path + "' inserted"}
 			},
-			Modes:     command.DocumentModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"r"},
 			Signature: kit.FileSig(kit.MinArgs(1)),
 		},

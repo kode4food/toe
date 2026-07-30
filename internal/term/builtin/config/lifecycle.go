@@ -27,7 +27,6 @@ var (
 
 // LifecycleModule returns the quit and force-quit commands
 func LifecycleModule() command.Module {
-	modes := []string{"NOR", "SEL", "INS", "TRM", "IMG"}
 	return command.Module{
 		Commands: []command.Command{
 			{
@@ -41,7 +40,7 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     modes,
+				Modes:     command.AllModes,
 				Aliases:   []string{"q"},
 				Signature: kit.Sig(),
 			},
@@ -52,7 +51,7 @@ func LifecycleModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     modes,
+				Modes:     command.AllModes,
 				Aliases:   []string{"q!"},
 				Signature: kit.Sig(),
 			},
@@ -67,7 +66,7 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     modes,
+				Modes:     command.AllModes,
 				Aliases:   []string{"qa"},
 				Signature: kit.Sig(),
 			},
@@ -77,7 +76,7 @@ func LifecycleModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     modes,
+				Modes:     command.AllModes,
 				Aliases:   []string{"qa!"},
 				Signature: kit.Sig(),
 			},
@@ -94,7 +93,7 @@ func LifecycleModule() command.Module {
 					os.Exit(1)
 					return command.Result{}
 				},
-				Modes:     modes,
+				Modes:     command.AllModes,
 				Aliases:   []string{"cq"},
 				Signature: kit.Sig(),
 			},
@@ -107,7 +106,7 @@ func LifecycleModule() command.Module {
 					os.Exit(1)
 					return command.Result{}
 				},
-				Modes:     modes,
+				Modes:     command.AllModes,
 				Aliases:   []string{"cq!"},
 				Signature: kit.Sig(),
 			},

@@ -230,7 +230,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("leader aliases share menus", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
+		for _, mode := range command.PaneModes {
 			spaceTitle, spaceHints := km.PendingHints(
 				mode, []command.KeyEvent{test.Char(' ')},
 			)
@@ -276,15 +276,39 @@ func TestDefaults(t *testing.T) {
 		assert.NotContains(t, labels, "y")
 	})
 
-	t.Run("image command prompt is bound", func(t *testing.T) {
+	t.Run("read-only command prompts are bound", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, found, prefix := km.Lookup("IMG", []command.KeyEvent{
-			test.Char(':'),
-		})
+		for _, mode := range []string{"IMG", "BIN"} {
+			_, found, prefix := km.Lookup(mode, []command.KeyEvent{
+				test.Char(':'),
+			})
 
-		assert.True(t, found)
-		assert.False(t, prefix)
+			assert.True(t, found)
+			assert.False(t, prefix)
+		}
+	})
+
+	t.Run("read-only pane commands are available", func(t *testing.T) {
+		km := defaultKeymaps(t)
+		names := []string{
+			"open",
+			"write-all",
+			"write-all!",
+			"write-quit-all",
+			"write-quit-all!",
+			"reload-all",
+			"workspace-symbol-picker",
+			"changed-file-picker",
+			"change-directory",
+			"save-session",
+			"clear-register",
+		}
+		for _, mode := range []string{"IMG", "BIN"} {
+			for _, name := range names {
+				assert.NotNil(t, km.ResolveCommandIn(mode, name))
+			}
+		}
 	})
 
 	t.Run("image window hints are filtered", func(t *testing.T) {
@@ -542,7 +566,7 @@ func commandName(cmd *command.Command) string {
 
 func commandModes(cmd *command.Command) []string {
 	if len(cmd.Modes) == 0 {
-		return []string{"NOR", "SEL", "INS"}
+		return command.DocModes
 	}
 	return cmd.Modes
 }

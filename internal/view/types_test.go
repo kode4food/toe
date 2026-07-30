@@ -15,6 +15,7 @@ func TestMode(t *testing.T) {
 	assert.Equal(t, "SEL", view.ModeSelect.String())
 	assert.Equal(t, "TRM", view.ModeTerminal.String())
 	assert.Equal(t, "IMG", view.ModeImage.String())
+	assert.Equal(t, "BIN", view.ModeBinary.String())
 	assert.Equal(t, "NOR", view.Mode(99).String())
 }
 

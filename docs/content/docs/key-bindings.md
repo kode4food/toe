@@ -7,7 +7,7 @@ weight: 30
 
 ## How Keys Work
 
-Every key press is dispatched through the keymap for the **current mode**. Normal, Select, and Insert are the editing modes; terminal panes, image panes, the command line, and pickers each have their own bindings. The same physical key can do different things in different contexts, which is why this page is grouped by mode and context rather than by key.
+Every key press is dispatched through the keymap for the **current mode**. Normal, Select, and Insert are the editing modes; terminal panes, image panes, binary panes, the command line, and pickers each have their own bindings. The same physical key can do different things in different contexts, which is why this page is grouped by mode and context rather than by key.
 
 **Key sequences and prefixes.** Many commands are bound to a sequence of keys, not a single press — `g` then `d`, or `Ctrl+w` then `v`. The first key of a sequence is a *prefix*; pressing it opens a popup listing the keys that can follow. The main prefixes are `g` (goto), `m` (match and surround), `z` and `Z` (view — the two are interchangeable), `[` and `]` (previous/next), `Ctrl+w` (windows), and the leader.
 
@@ -25,7 +25,7 @@ Every key press is dispatched through the keymap for the **current mode**. Norma
 
 **Insert mode.** Any printable key with no binding is inserted as text; the Insert Mode bindings below are the exceptions that edit or move instead.
 
-The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal and image panes, the command line, and picker navigation.
+The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal, image, and binary panes, the command line, and picker navigation.
 
 ## Normal Mode
 
@@ -395,10 +395,28 @@ Image panes support the command prompt, window menu, and leader.
 | `-` | Zoom image out |
 | `0` | Fit image to pane and recenter |
 | `h` `j` `k` `l` / arrows | Pan a zoomed-in image |
+| `g a` / `g m` | Goto last accessed / modified file |
 | Mouse click | Zoom image in |
-| `Mod` + click | Zoom image out |
+| Right click / `Mod` + click | Zoom image out |
 | Mouse wheel / two-finger swipe | Pan a zoomed-in image |
 | `Mod` + wheel | Zoom image in or out |
+| `Ctrl+w` / `Space+w` | Window menu |
+
+## Binary Panes
+
+Files that are neither text nor a supported image open as a read-only
+hexadecimal dump. Binary panes support the command prompt, window menu, and
+leader.
+
+| Key | Action |
+|-----|--------|
+| `:` | Enter command mode |
+| `j` / `k` / arrows | Scroll one row |
+| `PgDn` / `PgUp` | Scroll one page |
+| `Home` | Jump to start |
+| `G` / `End` | Jump to end |
+| `g a` / `g m` | Goto last accessed / modified file |
+| Mouse wheel | Scroll |
 | `Ctrl+w` / `Space+w` | Window menu |
 
 ## Command Line

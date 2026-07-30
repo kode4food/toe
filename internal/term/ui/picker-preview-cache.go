@@ -3,6 +3,7 @@ package ui
 import (
 	"cmp"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -44,6 +45,11 @@ type (
 		image *Image
 		id    uint32
 		path  string
+	}
+
+	previewBinaryEntry struct {
+		path string
+		size int64
 	}
 
 	previewDirRow struct {
@@ -103,6 +109,9 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 		return &previewDirEntry{rows: previewDirRows(path)}
 	}
 	if info.Size() > PickerMaxPreview {
+		if !isImagePath(path) && pathLooksBinary(path) {
+			return &previewBinaryEntry{path: path, size: info.Size()}
+		}
 		return noPreviewEntry("<File too large to preview>")
 	}
 	data, err := core.LoadText(path)
@@ -121,18 +130,38 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 }
 
 func binaryPreview(path string) previewCacheEntry {
-	if img, err := LoadImage(path); err == nil {
-		abs := path
-		if value, err := filepath.Abs(path); err == nil {
-			abs = value
-		}
-		return &previewImageEntry{
-			image: img,
-			id:    kittyImageID(img.ContentID(), 0, true),
-			path:  abs,
+	if isImagePath(path) {
+		if img, err := LoadImage(path); err == nil {
+			abs := path
+			if value, err := filepath.Abs(path); err == nil {
+				abs = value
+			}
+			return &previewImageEntry{
+				image: img,
+				id:    kittyImageID(img.ContentID(), 0, true),
+				path:  abs,
+			}
 		}
 	}
-	return noPreviewEntry("<Binary file>")
+	info, err := os.Stat(path)
+	if err != nil {
+		return noPreviewEntry("<File not found>")
+	}
+	return &previewBinaryEntry{path: path, size: info.Size()}
+}
+
+func pathLooksBinary(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = f.Close() }()
+	var sample [core.BinarySampleSize]byte
+	n, err := f.Read(sample[:])
+	if err != nil && err != io.EOF {
+		return false
+	}
+	return core.LooksBinary(sample[:n])
 }
 
 func previewDirRows(path string) []previewDirRow {

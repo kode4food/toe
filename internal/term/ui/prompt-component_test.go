@@ -800,7 +800,7 @@ func testCommand(name string) command.Command {
 			return command.Result{}
 		},
 		Aliases:   []string{name},
-		Modes:     command.PaneModes(),
+		Modes:     command.PaneModes,
 		Signature: command.DefaultSignature(),
 	}
 }

@@ -13,7 +13,7 @@ func (e *Editor) restoreSessionRoot(
 	t *Tree, root Id, sn *sessionNode, rs *sessionRestore,
 ) error {
 	if sn.Kind == SessionKindView || sn.Kind == SessionKindImage ||
-		sn.Kind == SessionKindTerminal {
+		sn.Kind == SessionKindTerminal || sn.Kind == SessionKindBinary {
 		id, err := e.restoreSessionNode(t, root, sn, rs)
 		if err != nil {
 			return err

@@ -172,9 +172,6 @@ func (l *lspWorkspaceSymbolSource) Load(
 		return nil, nil, func() {}
 	}
 	doc := e.FocusedDocument()
-	if doc == nil {
-		return nil, nil, func() {}
-	}
 	ctl := e.LanguageServerController()
 	if ctl == nil {
 		return nil, nil, func() {}

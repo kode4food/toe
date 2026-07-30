@@ -9,8 +9,10 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"mime"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -434,6 +436,11 @@ func registerImagePane(e *view.Editor) {
 			pane.restorePan(session)
 			return pane, nil
 		})
+}
+
+func isImagePath(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return strings.HasPrefix(mime.TypeByExtension(ext), "image/")
 }
 
 // rangeImagePanes calls fn for each image pane in the editor's pane tree

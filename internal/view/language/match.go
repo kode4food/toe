@@ -9,8 +9,8 @@ import (
 	"github.com/kode4food/toe/internal/glob"
 )
 
-// LanguageForFilename returns the configured language matching path
-func LanguageForFilename(langs Languages, path string) *Language {
+// ForFilename returns the configured language matching path
+func ForFilename(langs Languages, path string) *Language {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		abs = path

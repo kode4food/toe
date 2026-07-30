@@ -29,6 +29,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 	ec.requestRedraw()
 	registerImagePane(editor)
 	registerTerminalPane(editor)
+	registerBinaryPane(editor)
 	cx := &Context{
 		Editor:       editor,
 		Keymaps:      km,

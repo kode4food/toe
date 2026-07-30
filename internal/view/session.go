@@ -84,6 +84,7 @@ const (
 	SessionKindView     SessionKind = "view"
 	SessionKindImage    SessionKind = "image"
 	SessionKindTerminal SessionKind = "terminal"
+	SessionKindBinary   SessionKind = "binary"
 )
 
 var (
@@ -294,7 +295,7 @@ func sessionBase(path string) string {
 
 func layoutHasReopenablePane(n *sessionNode) bool {
 	switch n.Kind {
-	case SessionKindImage, SessionKindTerminal:
+	case SessionKindImage, SessionKindTerminal, SessionKindBinary:
 		return true
 	case SessionKindSplit:
 		for i := range n.Children {

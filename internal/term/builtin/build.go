@@ -66,7 +66,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 // labelLeaders names the top-level leader keys shared across many modules,
 // which no single module owns
 func labelLeaders(km *command.Keymaps) {
-	for _, mode := range []string{"NOR", "SEL", "TRM", "IMG"} {
+	for _, mode := range command.PaneModes {
 		km.LabelNode(mode, kit.LeaderBinding, "Leader")
 		km.LabelNode(mode, kit.Char('['), "Prev")
 		km.LabelNode(mode, kit.Char(']'), "Next")

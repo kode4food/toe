@@ -58,6 +58,7 @@ toe is a modal editor. Every key press means something different depending on th
 | **Insert** | `i`, `a`, `o`, `A`, `I`, `O` | Type text |
 | **Select** | `v` | Extend and manipulate selections |
 | **Image** | Open or focus an image pane | Zoom and window commands |
+| **Binary** | Open a non-text, non-image file | Scroll a read-only hex dump |
 | **Terminal** | Open or focus a terminal pane | Shell input and window commands |
 
 The mode is shown in the status bar at the bottom of the screen.
@@ -97,7 +98,7 @@ Space+/       global search
 
 Start typing to filter. `Enter` opens the selection.
 
-Image files open in image panes when the terminal supports the Kitty graphics protocol. File picker previews also show PNG, JPEG, and GIF images in the preview pane.
+Image files open in image panes when the terminal supports the Kitty graphics protocol. File picker previews also show PNG, JPEG, and GIF images in the preview pane. Other non-text files open as a read-only hexadecimal dump.
 
 ### Splits
 

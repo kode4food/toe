@@ -47,6 +47,7 @@ You can save or restore at any time regardless of the auto-session setting:
 |------|-------|
 | Open documents | ✓ |
 | Image panes | ✓ |
+| Binary panes | ✓ |
 | Terminal panes | Fresh shells |
 | Split layout | ✓ |
 | Cursor and view state | ✓ |

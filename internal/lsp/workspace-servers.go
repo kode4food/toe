@@ -73,7 +73,7 @@ func (s *Session) discoverWorkspaceServers() []*workspaceServer {
 			}
 			return nil
 		}
-		if lang := language.LanguageForFilename(langs, path); lang != nil {
+		if lang := language.ForFilename(langs, path); lang != nil {
 			root := s.cwd
 			langID := lang.Name
 			if lang.LanguageID != "" {

@@ -289,6 +289,20 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			}) {
 				r.renderTerminalPane(buf, pane, y0, focused)
 			}
+		case *BinaryPane:
+			if r.beginPaneRedraw(beginPaneRedrawArgs{
+				buf:        buf,
+				pane:       pane,
+				yOffset:    y0,
+				dirty:      pane.ConsumeDirty(),
+				redrawAll:  redrawAll,
+				background: bgTUI,
+			}) {
+				r.renderBinaryPane(buf, pane, y0, focused)
+				if !focused && dim > 0 {
+					r.dimPane(buf, pane.Area(), y0, dim)
+				}
+			}
 		}
 		return true
 	})

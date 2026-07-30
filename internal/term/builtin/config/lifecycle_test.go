@@ -27,11 +27,13 @@ func TestLifecycleQuit(t *testing.T) {
 			command.SignalQuit, test.RunCmd(t, km, e, "quit!").Signal)
 	})
 
-	t.Run("quit! resolves in image mode", func(t *testing.T) {
+	t.Run("quit! resolves in pane modes", func(t *testing.T) {
 		_, km := test.Env(t, "")
-		cmd := km.ResolveCommandIn("IMG", "q!")
-		assert.NotNil(t, cmd)
-		assert.Equal(t, "quit!", cmd.Name)
+		for _, mode := range []string{"IMG", "BIN"} {
+			cmd := km.ResolveCommandIn(mode, "q!")
+			assert.NotNil(t, cmd)
+			assert.Equal(t, "quit!", cmd.Name)
+		}
 	})
 
 	t.Run("quit_all on clean signals quit", func(t *testing.T) {

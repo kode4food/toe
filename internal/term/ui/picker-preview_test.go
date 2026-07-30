@@ -435,7 +435,22 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		m = resize(m, 120, 30)
 		m = sendKey(m, 'p')
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "<Binary file>")
+		msg := "<Binary file>"
+		assert.Contains(t, out, msg)
+		lines := strings.Split(out, "\n")
+		row := -1
+		for i, line := range lines {
+			if strings.Contains(line, msg) {
+				row = i
+				break
+			}
+		}
+		if !assert.NotEqual(t, -1, row) {
+			return
+		}
+		assert.Greater(t, row, len(lines)/3)
+		assert.Less(t, row, len(lines)*2/3)
+		assert.Greater(t, strings.Index(lines[row], msg), len(lines[row])/2)
 	})
 
 	t.Run("nonexistent path shows placeholder", func(t *testing.T) {

@@ -206,6 +206,18 @@ func TestLoadBundledLanguages(t *testing.T) {
 			roots,
 		)
 	})
+
+	t.Run("tsx language ID", func(t *testing.T) {
+		langs, ok := language.LoadBundledLanguages()
+		assert.True(t, ok)
+		var id string
+		for _, l := range langs.Languages {
+			if l.Name == "tsx" {
+				id = l.LanguageID
+			}
+		}
+		assert.Equal(t, "typescriptreact", id)
+	})
 }
 
 func TestExpandGlobBraces(t *testing.T) {

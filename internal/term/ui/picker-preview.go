@@ -211,7 +211,10 @@ func (p *previewDirEntry) renderInto(
 func (p noPreviewEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
-	ctx.blitPlaceholderInto(buf, at, string(p))
+	style := tui.Style{}.Bg(ctx.th.Get("ui.popup").BgColor())
+	renderCenteredMessage(
+		buf, geom.Area{Point: at, Size: ctx.size}, string(p), style,
+	)
 }
 
 // ANSI codes in callback preview strings are stripped so the popup style

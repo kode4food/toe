@@ -50,6 +50,7 @@
   "status.pickerNoResults": "No results",
   "status.imageLoading": "Loading image…",
   "status.imageUnsupported": "Images not supported by this terminal",
+  "status.terminalStarting": "Starting terminal…",
   "status.fileDeleted": "'{file}' deleted on disk",
   "status.fileChanged": "'{file}' changed on disk; use :reload or :write",
   "status.reloadFailed": "reload failed: {error}",

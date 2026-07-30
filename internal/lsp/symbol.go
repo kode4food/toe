@@ -102,6 +102,7 @@ func (s *Session) WorkspaceSymbols(
 	doc *view.Document, query string,
 ) ([]view.Symbol, error) {
 	_, err := s.clientsForDocumentResult(doc)
+	s.ensureWorkspaceServers()
 	var out []view.Symbol
 	for _, client := range s.servers.allClients() {
 		result, sent, e := client.WorkspaceSymbols(s.ctx, query)

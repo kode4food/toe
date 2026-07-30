@@ -5,9 +5,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 )
+
+func TestTerminalLoading(t *testing.T) {
+	e := editorWithText(t, "hello toe")
+	tp, err := ui.NewTerminalPane(e, "cat", geom.Size{})
+	assert.NoError(t, err)
+	t.Cleanup(func() { _ = tp.Stop() })
+	e.ReplacePane(e.Tree().Focus(), tp)
+	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+	starting := i18n.Text(i18n.StatusTerminalStarting)
+	assert.Contains(t, stripANSI(m.View().Content), starting)
+
+	tp.IngestOutput([]byte("ready"))
+	assert.NotContains(t, stripANSI(m.View().Content), starting)
+}
 
 func TestScrollbackThemeBackground(t *testing.T) {
 	t.Run("keeps the themed background", func(t *testing.T) {

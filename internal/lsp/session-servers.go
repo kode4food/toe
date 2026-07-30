@@ -25,7 +25,7 @@ type (
 		sync.RWMutex
 		starting  sync.Mutex
 		registry  *Registry
-		languages map[string]*language.Language
+		languages language.Languages
 		clients   map[string]*Client
 		roots     map[string]string
 	}
@@ -138,18 +138,23 @@ func (s *Session) languageForDocument(
 func (s *Session) ensureClient(
 	name string, doc *view.Document, lang *language.Language,
 ) (*Client, error) {
-	s.servers.starting.Lock()
-	defer s.servers.starting.Unlock()
-	if client := s.servers.client(name); client != nil {
-		return client, nil
-	}
-	return s.startClient(name, doc, lang)
+	target := &workspaceServer{name: name, root: s.workspaceRoot(doc, lang)}
+	client, _, err := s.ensureServer(target)
+	return client, err
 }
 
-func (s *Session) startClient(
-	name string, doc *view.Document, lang *language.Language,
-) (*Client, error) {
-	root := s.workspaceRoot(doc, lang)
+func (s *Session) ensureServer(target *workspaceServer) (*Client, bool, error) {
+	s.servers.starting.Lock()
+	defer s.servers.starting.Unlock()
+	if client := s.servers.client(target.name); client != nil {
+		return client, false, nil
+	}
+	client, err := s.startClient(target)
+	return client, err == nil, err
+}
+
+func (s *Session) startClient(target *workspaceServer) (*Client, error) {
+	name, root := target.name, target.root
 	options, err := constructInitOptions(name, root)
 	if err != nil {
 		return nil, err
@@ -199,19 +204,24 @@ func (s *Session) offsetForProvider(
 func (s *Session) workspaceRoot(
 	doc *view.Document, lang *language.Language,
 ) string {
-	workspace, ok := ResolveWorkspace(WorkspaceRequest{
-		FilePath:       doc.Path(),
-		Workspace:      s.cwd,
-		WorkspaceIsCWD: true,
-		RootMarkers:    lang.Roots,
-	})
-	if ok {
-		return workspace
+	if root, ok := s.resolveWorkspaceRoot(doc.Path(), lang); ok {
+		return root
 	}
 	if dir := filepath.Dir(doc.Path()); dir != "." {
 		return dir
 	}
 	return s.cwd
+}
+
+func (s *Session) resolveWorkspaceRoot(
+	path string, lang *language.Language,
+) (string, bool) {
+	return ResolveWorkspace(WorkspaceRequest{
+		FilePath:       path,
+		Workspace:      s.cwd,
+		WorkspaceIsCWD: true,
+		RootMarkers:    lang.Roots,
+	})
 }
 
 func (s *Session) stopClients(names []string) {
@@ -271,7 +281,19 @@ func (s *serverState) startRegistry(
 func (s *serverState) language(name string) *language.Language {
 	s.RLock()
 	defer s.RUnlock()
-	return s.languages[name]
+	for i := range s.languages.Languages {
+		lang := &s.languages.Languages[i]
+		if lang.Name == name {
+			return lang
+		}
+	}
+	return nil
+}
+
+func (s *serverState) languageConfig() language.Languages {
+	s.RLock()
+	defer s.RUnlock()
+	return s.languages
 }
 
 func (s *serverState) languageID(name string) string {
@@ -314,7 +336,7 @@ func (s *serverState) reset(langs language.Languages) []*Client {
 		clients = append(clients, client)
 	}
 	s.registry = NewRegistry(langs.LanguageServers)
-	s.languages = languagesByName(langs)
+	s.languages = langs
 	s.clients = map[string]*Client{}
 	s.roots = map[string]string{}
 	return clients
@@ -331,16 +353,6 @@ func loadLanguages(cwd string) language.Languages {
 		return language.Languages{}
 	}
 	return langs
-}
-
-func languagesByName(
-	langs language.Languages,
-) map[string]*language.Language {
-	out := make(map[string]*language.Language, len(langs.Languages))
-	for i, lang := range langs.Languages {
-		out[lang.Name] = &langs.Languages[i]
-	}
-	return out
 }
 
 func serverNames(features []language.ServerFeatures) []string {

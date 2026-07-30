@@ -3,7 +3,10 @@ package ui
 import (
 	"cmp"
 	"errors"
+	"mime"
+	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -382,6 +385,10 @@ func OpenPath(
 		return v, v != nil, nil
 	}
 	if !errors.Is(err, core.ErrBinaryFile) {
+		return nil, false, err
+	}
+	ext := strings.ToLower(filepath.Ext(path))
+	if !strings.HasPrefix(mime.TypeByExtension(ext), "image/") {
 		return nil, false, err
 	}
 	pane, err := NewImagePane(e, path)

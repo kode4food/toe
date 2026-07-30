@@ -44,6 +44,7 @@ type (
 		closed  chan struct{}
 		scrollN int
 		mouseOn atomic.Bool
+		output  atomic.Bool
 	}
 
 	metadataState struct {
@@ -327,6 +328,9 @@ func (t *TerminalPane) Stop() error {
 // PTY, letting tests simulate shell output without a real child process
 func (t *TerminalPane) IngestOutput(data []byte) {
 	_, _ = t.emu.Write(data)
+	if len(data) > 0 {
+		t.output.Store(true)
+	}
 	t.dirty = true
 	t.notify()
 }
@@ -349,6 +353,10 @@ func (t *TerminalPane) ConsumeBell(focused bool) bool {
 func (t *TerminalPane) Paste(text string) {
 	t.ScrollToBottom()
 	t.emu.Paste(text)
+}
+
+func (t *TerminalPane) hasOutput() bool {
+	return t.output.Load()
 }
 
 func (t *TerminalPane) setTitle(s string) {

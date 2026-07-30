@@ -50,6 +50,7 @@
   "status.pickerNoResults": "Nessun risultato",
   "status.imageLoading": "Caricamento immagine…",
   "status.imageUnsupported": "Immagini non supportate da questo terminale",
+  "status.terminalStarting": "Avvio del terminale…",
   "status.fileDeleted": "'{file}' è stato eliminato dal disco",
   "status.fileChanged": "'{file}' è stato modificato sul disco; usa :reload o :write",
   "status.reloadFailed": "ricaricamento non riuscito: {error}",

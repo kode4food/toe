@@ -18,6 +18,7 @@ type (
 		editor *view.Editor
 
 		servers    serverState
+		workspace  workspaceServerState
 		docs       docState
 		candidates candidateState
 		progress   progressState
@@ -57,7 +58,7 @@ func NewSession(ctx context.Context, cwd string) *Session {
 		cwd: cwd,
 		servers: serverState{
 			registry:  NewRegistry(langs.LanguageServers),
-			languages: languagesByName(langs),
+			languages: langs,
 			clients:   map[string]*Client{},
 			roots:     map[string]string{},
 		},
@@ -96,6 +97,7 @@ func Attach(ctx context.Context, e *view.Editor) *Session {
 			}
 			s.DocumentOpened(doc)
 		}
+		s.ensureWorkspaceServers()
 	}()
 	return s
 }
@@ -236,6 +238,7 @@ func (s *Session) resetConfig(langs language.Languages) []*Client {
 	s.candidates.reset()
 	s.progress.reset()
 	s.watch.reset()
+	s.workspace.reset()
 	return clients
 }
 

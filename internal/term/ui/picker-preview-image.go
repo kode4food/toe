@@ -15,7 +15,7 @@ func (p *previewImageEntry) renderInto(
 	style := ctx.th.Get("ui.text")
 	if ctx.images == nil || !ctx.images.graphics {
 		msg := i18n.Text(i18n.StatusImageUnsupported)
-		renderImageMessage(buf, area, msg, style)
+		renderCenteredMessage(buf, area, msg, style)
 		return
 	}
 	pixels := p.image.Size()
@@ -25,7 +25,7 @@ func (p *previewImageEntry) renderInto(
 	})
 	if !ctx.images.isReady(p.id, cells) {
 		msg := i18n.Text(i18n.StatusImageLoading)
-		renderImageMessage(buf, area, msg, style)
+		renderCenteredMessage(buf, area, msg, style)
 		return
 	}
 	start := area.Center(cells)

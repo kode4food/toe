@@ -3,9 +3,12 @@ package lsp_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.lsp.dev/uri"
 
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
@@ -98,31 +101,40 @@ func TestSymbol(t *testing.T) {
 
 		dir := t.TempDir()
 		firstPath := filepath.Join(dir, "first.one")
-		secondPath := filepath.Join(dir, "second.two")
-		writeAllWorkspaceSymbolLanguages(t, exe)
-		for _, path := range []string{firstPath, secondPath} {
+		rootless := filepath.Join(dir, "a", "first.two")
+		secondDir := filepath.Join(dir, "b")
+		secondPath := filepath.Join(secondDir, "first.test.two")
+		assert.NoError(t, os.MkdirAll(filepath.Dir(rootless), 0o755))
+		assert.NoError(t, os.Mkdir(secondDir, 0o755))
+		for _, path := range []string{
+			firstPath,
+			rootless,
+			secondPath,
+		} {
 			assert.NoError(t, os.WriteFile(path, []byte("target\n"), 0o644))
 		}
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(secondDir, "project.root"), nil, 0o644,
+		))
+		marker := writeAllWorkspaceSymbolLanguages(t, exe)
 		e := view.NewEditor(dir)
 		_, err = e.OpenFile(firstPath)
 		assert.NoError(t, err)
-		first := e.FocusedDocument()
-		assert.NotNil(t, first)
-		first.SetLang("one")
-		_, err = e.OpenFile(secondPath)
-		assert.NoError(t, err)
-		second := e.FocusedDocument()
-		assert.NotNil(t, second)
-		second.SetLang("two")
-
-		session := lsp.NewSession(t.Context(), dir)
+		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		session.DocumentOpened(first)
-		session.DocumentOpened(second)
 
-		_, err = session.WorkspaceSymbols(second, "main")
+		_, err = session.WorkspaceSymbols(e.FocusedDocument(), "main")
 
 		assert.ErrorContains(t, err, "session-test-one")
+		var data []byte
+		assert.Eventually(t, func() bool {
+			var err error
+			data, err = os.ReadFile(marker)
+			return err == nil && len(data) > 0
+		}, time.Second, 10*time.Millisecond)
+		lines := strings.Split(string(data), "\n")
+		assert.Equal(t, string(uri.File(secondPath)), lines[0])
+		assert.Contains(t, lines, string(uri.File(secondDir)))
 	})
 }
 
@@ -231,11 +243,12 @@ language-servers = ["session-test"]
 	t.Setenv("XDG_CONFIG_HOME", root)
 }
 
-func writeAllWorkspaceSymbolLanguages(t *testing.T, exe string) {
+func writeAllWorkspaceSymbolLanguages(t *testing.T, exe string) string {
 	t.Helper()
 	root := t.TempDir()
 	dir := filepath.Join(root, "toe")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	marker := filepath.Join(t.TempDir(), "starts")
 	text := `[language-server.session-test-one]
 command = "` + exe + `"
 args = ["-test.run=TestLSPServerProcess"]
@@ -249,6 +262,8 @@ command = "` + exe + `"
 args = ["-test.run=TestLSPServerProcess"]
 timeout = 1
 environment = { ` + testServerEnv + ` = "1", ` +
+		testServerDidOpenFileEnv + ` = "` + marker + `", ` +
+		testServerWorkspaceFoldersEnv + ` = "1", ` +
 		testServerWorkspaceSymbolsEnv + ` = "1" }
 
 [[language]]
@@ -259,14 +274,16 @@ language-servers = ["session-test-one"]
 
 [[language]]
 name = "two"
-language-id = "two"
+language-id = "typescript"
 file-types = ["two"]
+roots = ["project.root"]
 language-servers = ["session-test-two"]
 `
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
 	))
 	t.Setenv("XDG_CONFIG_HOME", root)
+	return marker
 }
 
 func writeWorkspaceSymbolSliceLanguages(t *testing.T, exe, target string) {

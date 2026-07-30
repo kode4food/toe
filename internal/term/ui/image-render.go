@@ -2,13 +2,11 @@ package ui
 
 import (
 	"fmt"
-	"path/filepath"
-
-	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 const imageSizeTimes = "\u00d7" // '×' - multiplication sign
@@ -60,6 +58,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		style: baseTUI,
 	}}
 	right = r.withMaximizedStatus(right)
+	name := view.DocumentRelativeName(pane.Path(), r.cx.Editor.Cwd())
 	renderStatusElems(renderStatusElemsArgs{
 		buf:       args.buf,
 		at:        args.at,
@@ -67,7 +66,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		baseStyle: baseTUI,
 		left: []statusElem{
 			statusBadge("IMG", modeSt),
-			{text: filepath.Base(pane.Path()), style: baseTUI},
+			{text: name, style: baseTUI},
 		},
 		right: right,
 	})
@@ -131,20 +130,7 @@ func (r *renderPass) renderImageMessage(
 	buf *tui.Buffer, area geom.Area, key i18n.Key,
 ) {
 	style := r.activeTheme().Get("ui.text")
-	renderImageMessage(buf, area, i18n.Text(key), style)
-}
-
-func renderImageMessage(
-	buf *tui.Buffer, area geom.Area, msg string, style tui.Style,
-) {
-	if area.Empty() {
-		return
-	}
-	mw := runewidth.StringWidth(msg)
-	buf.SetString(geom.Point{
-		X: area.X + max((area.Width-mw)/2, 0),
-		Y: area.Y + area.Height/2,
-	}, msg, style)
+	renderCenteredMessage(buf, area, i18n.Text(key), style)
 }
 
 type imagePaneCellSizeArgs struct {

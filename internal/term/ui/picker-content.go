@@ -199,12 +199,7 @@ func writePickerCenteredHint(
 	if text == "" || area.Height <= 0 {
 		return
 	}
-	style := pickerCountStyle(cx)
-	hx := area.X + max((area.Width-runewidth.StringWidth(text))/2, 0)
-	buf.SetString(geom.Point{
-		X: hx,
-		Y: area.Y + area.Height/2,
-	}, text, style)
+	renderCenteredMessage(buf, area, text, pickerCountStyle(cx))
 }
 
 func pickerOverlaySize(screen geom.Size) geom.Size {

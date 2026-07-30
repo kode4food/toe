@@ -1,10 +1,13 @@
 package ui_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -42,5 +45,32 @@ func TestOpenPathImage(t *testing.T) {
 		assert.True(t, ok)
 		_, isImage := e.Tree().Get(e.Tree().Focus()).(*ui.ImagePane)
 		assert.True(t, isImage)
+	})
+
+	t.Run("executable remains binary", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		path := filepath.Join(t.TempDir(), "tool")
+		assert.NoError(t, os.WriteFile(
+			path, []byte{0xCF, 0xFA, 0xED, 0xFE}, 0o755,
+		))
+
+		_, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
+
+		assert.False(t, ok)
+		assert.ErrorIs(t, err, core.ErrBinaryFile)
+		assert.NotErrorIs(t, err, ui.ErrInvalidImage)
+	})
+
+	t.Run("malformed image remains invalid", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		path := filepath.Join(t.TempDir(), "broken.png")
+		assert.NoError(t, os.WriteFile(
+			path, []byte{0x89, 'P', 'N', 'G', 0, 0, 0, 0}, 0o644,
+		))
+
+		_, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
+
+		assert.False(t, ok)
+		assert.ErrorIs(t, err, ui.ErrInvalidImage)
 	})
 }

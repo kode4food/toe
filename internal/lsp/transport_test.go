@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -562,11 +563,12 @@ func (s *processServer) DidOpen(
 	if path == "" {
 		return nil
 	}
-	text := string(p.TextDocument.URI)
-	if len(s.folders) > 0 {
-		text += "\n" + string(s.folders[0].URI)
+	var text strings.Builder
+	text.WriteString(string(p.TextDocument.URI))
+	for _, folder := range s.folders {
+		text.WriteString("\n" + string(folder.URI))
 	}
-	return os.WriteFile(path, []byte(text), 0o644)
+	return os.WriteFile(path, []byte(text.String()), 0o644)
 }
 
 func (s *processServer) Completion(

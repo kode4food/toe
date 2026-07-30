@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
 )
 
@@ -75,10 +76,17 @@ func (r *renderPass) renderTerminalPane(
 			Size:  geom.Size{Width: a.Width, Height: contentH},
 		},
 	}
-	drawViewport(scr, tp, tp.ScrollOffset(), geom.Size{
-		Width: a.Width, Height: contentH,
-	})
-	highlightSelection(scr, tp)
+	if tp.hasOutput() {
+		drawViewport(scr, tp, tp.ScrollOffset(), geom.Size{
+			Width: a.Width, Height: contentH,
+		})
+		highlightSelection(scr, tp)
+	} else {
+		style := r.activeTheme().Get("ui.text")
+		renderCenteredMessage(
+			buf, scr.area, i18n.Text(i18n.StatusTerminalStarting), style,
+		)
+	}
 	r.renderTerminalStatus(buf, tp, y0, focused)
 }
 

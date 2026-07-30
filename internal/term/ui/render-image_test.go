@@ -34,7 +34,9 @@ const imageEvictionCount = 30
 func TestImageRender(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
-	path := writeRenderImage(t, root, 40, 20, color.RGBA{G: 255, A: 255})
+	dir := filepath.Join(root, "images")
+	assert.NoError(t, os.Mkdir(dir, 0o755))
+	path := writeRenderImage(t, dir, 40, 20, color.RGBA{G: 255, A: 255})
 
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
@@ -53,6 +55,7 @@ func TestImageRender(t *testing.T) {
 	// status shows IMG and image dimensions, not text-oriented fields
 	out := stripANSI(content)
 	assert.Contains(t, out, "IMG")
+	assert.Contains(t, out, filepath.Join("images", "pic.png"))
 	assert.Contains(t, out, "40×20")
 	assert.NotContains(t, out, "UTF-8")
 	assert.Contains(t, content, "\x1b[48;2;249;226;175m IMG ")

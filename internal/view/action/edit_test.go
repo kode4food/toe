@@ -18,7 +18,7 @@ func TestEdit(t *testing.T) {
 
 		action.InsertChar(e, 'e')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
@@ -29,7 +29,7 @@ func TestEdit(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "(\n\t\n)", doc.Text().String())
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})
@@ -40,7 +40,7 @@ func TestEdit(t *testing.T) {
 
 		action.DeleteCharBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "x", doc.Text().String())
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
@@ -51,7 +51,7 @@ func TestEdit(t *testing.T) {
 
 		action.ChangeSelection(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "c", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
@@ -84,8 +84,8 @@ func TestSelectAll(t *testing.T) {
 
 		action.SelectAll(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 5, sel.Primary().To())
@@ -96,8 +96,8 @@ func TestSelectAll(t *testing.T) {
 
 		action.SelectAll(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 0, sel.Primary().To())
@@ -111,8 +111,8 @@ func TestCollapseSelection(t *testing.T) {
 
 		action.CollapseSelection(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		r := sel.Primary()
 		assert.Equal(t, r.From(), r.To())
@@ -127,8 +127,8 @@ func TestCollapseSelection(t *testing.T) {
 
 		action.CollapseSelection(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		for _, r := range sel.Ranges() {
 			assert.Equal(t, r.From(), r.To())
@@ -143,8 +143,8 @@ func TestFlipSelections(t *testing.T) {
 
 		action.FlipSelections(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, sel.Primary().Anchor)
 		assert.Equal(t, 1, sel.Primary().Head)
@@ -162,8 +162,8 @@ func TestKeepPrimarySelection(t *testing.T) {
 
 		action.KeepPrimarySelection(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 		assert.Equal(t, 0, sel.PrimaryIndex())
@@ -177,8 +177,8 @@ func TestExtendLineBelow(t *testing.T) {
 
 		action.ExtendLineBelow(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 3, sel.Primary().To())
@@ -190,8 +190,8 @@ func TestExtendLineBelow(t *testing.T) {
 
 		action.ExtendLineBelow(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 6, sel.Primary().To())
@@ -205,8 +205,8 @@ func TestExtendLineBelowLastLine(t *testing.T) {
 
 		action.ExtendLineBelow(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, sel.Primary().From())
 		assert.Equal(t, 5, sel.Primary().To())
@@ -220,8 +220,8 @@ func TestSelectLineBelow(t *testing.T) {
 
 		action.SelectLineBelow(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 3, sel.Primary().To())
@@ -233,8 +233,8 @@ func TestSelectLineBelow(t *testing.T) {
 
 		action.SelectLineBelow(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.GreaterOrEqual(t, sel.Primary().To()-sel.Primary().From(), 0)
 	})
@@ -247,8 +247,8 @@ func TestSelectLineBelow(t *testing.T) {
 
 		action.SelectLineBelow(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 6, sel.Primary().To())
@@ -262,8 +262,8 @@ func TestSelectLineAbove(t *testing.T) {
 
 		action.SelectLineAbove(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		// includes at least two lines worth of content
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 3)
@@ -275,8 +275,8 @@ func TestSelectLineAbove(t *testing.T) {
 
 		action.SelectLineAbove(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.GreaterOrEqual(t, sel.Primary().To()-sel.Primary().From(), 0)
 	})
@@ -289,8 +289,8 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 
 		action.SplitSelectionOnNewline(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t,
 			[]core.Range{core.PointRange(1)},
 			doc.SelectionFor(v.ID()).Ranges(),
@@ -303,8 +303,8 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 
 		action.SplitSelectionOnNewline(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t,
 			[]core.Range{core.NewRange(0, 2), core.NewRange(3, 5)},
 			doc.SelectionFor(v.ID()).Ranges(),
@@ -317,8 +317,8 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 
 		action.SplitSelectionOnNewline(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t,
 			[]core.Range{core.NewRange(-2, -1)},
 			doc.SelectionFor(v.ID()).Ranges(),
@@ -333,7 +333,7 @@ func TestDeleteSelection(t *testing.T) {
 
 		action.DeleteSelection(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, " world", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
@@ -355,7 +355,7 @@ func TestDeleteCharForward(t *testing.T) {
 
 		action.DeleteCharForward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "ac", doc.Text().String())
 	})
 
@@ -365,7 +365,7 @@ func TestDeleteCharForward(t *testing.T) {
 
 		action.DeleteCharForward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a", doc.Text().String())
 	})
 }
@@ -418,7 +418,7 @@ func TestPasteAfter(t *testing.T) {
 
 		action.PasteAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xbyz", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
@@ -428,7 +428,7 @@ func TestPasteAfter(t *testing.T) {
 
 		action.PasteAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -439,7 +439,7 @@ func TestPasteAfter(t *testing.T) {
 
 		action.PasteAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "ghi")
 	})
 
@@ -453,7 +453,7 @@ func TestPasteAfter(t *testing.T) {
 
 		action.PasteAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "axbcxd", doc.Text().String())
 	})
 
@@ -464,7 +464,7 @@ func TestPasteAfter(t *testing.T) {
 
 		action.PasteAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -484,7 +484,7 @@ func TestPasteBefore(t *testing.T) {
 
 		action.PasteBefore(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xyz", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
@@ -496,7 +496,7 @@ func TestPasteBefore(t *testing.T) {
 
 		action.PasteBefore(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -515,8 +515,8 @@ func TestSplitSelectionOnNewline(t *testing.T) {
 
 		action.SplitSelectionOnNewline(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, len(sel.Ranges()))
 	})
@@ -527,8 +527,8 @@ func TestSplitSelectionOnNewline(t *testing.T) {
 
 		action.SplitSelectionOnNewline(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 	})
@@ -602,7 +602,7 @@ func TestAppendMode(t *testing.T) {
 		action.InsertChar(e, 'X')
 		action.InsertChar(e, 'Y')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abXYcde", doc.Text().String())
 	})
 }
@@ -623,8 +623,8 @@ func TestSelectMode(t *testing.T) {
 
 		action.SelectMode(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 1)
 	})
@@ -661,7 +661,7 @@ func TestAppendToLine(t *testing.T) {
 			action.InsertChar(e, ch)
 		}
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello world", doc.Text().String())
 	})
 }
@@ -674,7 +674,7 @@ func TestDeleteSelectionNoYank(t *testing.T) {
 
 		action.DeleteSelectionNoYank(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, " world", doc.Text().String())
 		assert.Equal(t, "saved", testutil.RegisteredValue(t, e, '"'))
 		assert.Equal(t, view.ModeNormal, e.Mode())
@@ -702,7 +702,7 @@ func TestLinewisePaste(t *testing.T) {
 
 		action.PasteAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "abc")
 	})
@@ -714,7 +714,7 @@ func TestLinewisePaste(t *testing.T) {
 
 		action.PasteBefore(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "abc")
 	})
@@ -747,7 +747,7 @@ func TestChangeSelectionNoYank(t *testing.T) {
 
 		action.ChangeSelectionNoYank(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "c", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
 		assert.Equal(t, "safe", testutil.RegisteredValue(t, e, '"'))
@@ -778,7 +778,7 @@ func TestNormalModeRestoreCursor(t *testing.T) {
 
 		action.NormalMode(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Equal(t, view.ModeNormal, e.Mode())
 		assert.NotContains(t, text, "\n\t")
@@ -796,7 +796,7 @@ func TestTryRestoreIndent(t *testing.T) {
 
 		action.NormalMode(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.NotContains(t, text, "    ")
 	})
@@ -810,7 +810,7 @@ func TestTryRestoreIndent(t *testing.T) {
 
 		action.NormalMode(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "  x")
 	})
 }
@@ -823,7 +823,7 @@ func TestDeleteCharBackwardAtLineStart(t *testing.T) {
 
 		action.DeleteCharBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -834,7 +834,7 @@ func TestDeleteCharBackwardAtLineStart(t *testing.T) {
 
 		action.DeleteCharBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "ac", doc.Text().String())
 		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
@@ -848,7 +848,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "\n")
 	})
@@ -860,7 +860,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "(\n\t\n)", doc.Text().String())
 	})
 
@@ -871,7 +871,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "if ok {\n\t", doc.Text().String())
 	})
 
@@ -882,7 +882,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "call(a,\n\t", doc.Text().String())
 	})
 
@@ -898,7 +898,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "    else:\n    ", doc.Text().String())
 	})
 
@@ -915,7 +915,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc\ndef", doc.Text().String())
 	})
 
@@ -929,7 +929,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\nbc", doc.Text().String())
 	})
 
@@ -940,7 +940,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "\nabc", doc.Text().String())
 	})
 }
@@ -973,7 +973,7 @@ func TestAddNewlineEdges(t *testing.T) {
 
 		action.AddNewlineAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -986,7 +986,7 @@ func TestAddNewlineEdges(t *testing.T) {
 
 		action.AddNewlineAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "\nabc", doc.Text().String())
 	})
 
@@ -996,7 +996,7 @@ func TestAddNewlineEdges(t *testing.T) {
 
 		action.AddNewlineBelow(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
@@ -1009,7 +1009,7 @@ func TestAutoPairsDisabled(t *testing.T) {
 
 		action.InsertChar(e, '(')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "(", doc.Text().String())
 	})
 }
@@ -1025,7 +1025,7 @@ func TestInsertNewlineDuplicateCursors(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, 2, doc.Text().LenLines())
 	})
 }
@@ -1038,7 +1038,7 @@ func TestCountOrOne(t *testing.T) {
 
 		action.AddNewlineAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\n\nb\nc", doc.Text().String())
 	})
 
@@ -1049,7 +1049,7 @@ func TestCountOrOne(t *testing.T) {
 
 		action.AddNewlineAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\n\n\nb", doc.Text().String())
 	})
 }
@@ -1064,7 +1064,7 @@ func TestInsertCharDuplicate(t *testing.T) {
 
 		action.InsertChar(e, 'x')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xabc", doc.Text().String())
 	})
 }
@@ -1077,7 +1077,7 @@ func TestDeleteCharBackwardAutoPair(t *testing.T) {
 
 		action.DeleteCharBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "", doc.Text().String())
 	})
 }
@@ -1089,7 +1089,7 @@ func TestInsertCharAutoPair(t *testing.T) {
 
 		action.InsertChar(e, '(')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "()", doc.Text().String())
 		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
@@ -1100,7 +1100,7 @@ func TestInsertCharAutoPair(t *testing.T) {
 
 		action.InsertChar(e, ')')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, len(doc.Text().String()) >= 2)
 	})
 }
@@ -1115,7 +1115,7 @@ func TestDeleteCharForwardDuplicate(t *testing.T) {
 
 		action.DeleteCharForward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "bc", doc.Text().String())
 	})
 }
@@ -1130,7 +1130,7 @@ func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "\n")
 		assert.NotContains(t, text, "  \n")
@@ -1143,7 +1143,7 @@ func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "\n")
 	})
@@ -1157,7 +1157,7 @@ func TestDeleteCharBackwardDedent(t *testing.T) {
 
 		action.DeleteCharBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -1182,7 +1182,7 @@ func TestInsertNewlineIndented(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "  ")
 	})
 
@@ -1194,7 +1194,7 @@ func TestInsertNewlineIndented(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "\n")
 	})
 
@@ -1207,7 +1207,7 @@ func TestInsertNewlineIndented(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "//")
 	})
 }
@@ -1226,7 +1226,7 @@ func TestChangeSelectionNoYankLinewise(t *testing.T) {
 func TestSelectAllNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 
 		action.SelectAll(e)
@@ -1236,7 +1236,7 @@ func TestSelectAllNoView(t *testing.T) {
 func TestInsertTabNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 
 		action.InsertTab(e)
@@ -1246,7 +1246,7 @@ func TestInsertTabNoView(t *testing.T) {
 func TestDeleteSelectionNoYankNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 
 		action.DeleteSelectionNoYank(e)
@@ -1256,7 +1256,7 @@ func TestDeleteSelectionNoYankNoView(t *testing.T) {
 func TestChangeSelectionNoYankNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 
 		action.ChangeSelectionNoYank(e)

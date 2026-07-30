@@ -29,10 +29,10 @@ func TestSessionConcurrentClientStart(t *testing.T) {
 	assert.NoError(t, err)
 	session := lsp.Attach(t.Context(), e)
 	defer func() { _ = session.Close() }()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 
 	var wg sync.WaitGroup
 	for range 8 {

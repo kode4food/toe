@@ -89,19 +89,19 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 }
 
 // ResolveCommand looks up a command by typeable alias
-func (k *Keymaps) ResolveCommand(name string) (*Command, bool) {
+func (k *Keymaps) ResolveCommand(name string) *Command {
 	if idx, ok := k.byAlias[name]; ok {
-		return &k.commands[idx], true
+		return &k.commands[idx]
 	}
-	return nil, false
+	return nil
 }
 
 // ResolveCommandIn looks up a command by alias and filters it by mode
-func (k *Keymaps) ResolveCommandIn(mode, name string) (*Command, bool) {
-	if cmd, ok := k.ResolveCommand(name); ok && cmd.availableIn(mode) {
-		return cmd, true
+func (k *Keymaps) ResolveCommandIn(mode, name string) *Command {
+	if cmd := k.ResolveCommand(name); cmd != nil && cmd.availableIn(mode) {
+		return cmd
 	}
-	return nil, false
+	return nil
 }
 
 // Commands returns all registered commands in registration order

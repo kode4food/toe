@@ -8,8 +8,8 @@ import (
 // Save saves the focused document to disk. Unless force is set, it refuses
 // an unsafe overwrite (changed on disk, or read-only)
 func (e *Editor) Save(force bool) error {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return ErrNoDocument
 	}
 	creating := fileMissing(doc.Path())
@@ -37,8 +37,8 @@ func (e *Editor) NewDocument() *View {
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
 	e.documentOpened(doc)
-	v, ok := e.FocusedView()
-	if ok {
+	v := e.FocusedView()
+	if v != nil {
 		v.docID = doc.ID()
 		v.offset = Position{}
 		e.markDocAccessed()
@@ -88,8 +88,8 @@ func (e *Editor) SaveAll(force bool) []error {
 // MoveFocusedFile renames the focused document's backing file and updates the
 // document path
 func (e *Editor) MoveFocusedFile(path string, force bool) error {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return ErrNoDocument
 	}
 	if doc.Modified() && !force {
@@ -132,7 +132,7 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 
 // Reload reloads the focused document from disk
 func (e *Editor) Reload() error {
-	if doc, ok := e.FocusedDocument(); ok {
+	if doc := e.FocusedDocument(); doc != nil {
 		return e.reloadDocument(doc)
 	}
 	return ErrNoDocument
@@ -197,7 +197,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 	for _, d := range e.documents.byID {
 		if d.Path() == absPath {
 			e.recordPrevDoc()
-			if v, ok := e.FocusedView(); ok {
+			if v := e.FocusedView(); v != nil {
 				v.docID = d.ID()
 				v.offset = Position{}
 				e.markDocAccessed()
@@ -214,7 +214,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 	e.recordPrevDoc()
 	e.documents.byID[doc.ID()] = doc
 	e.documentOpened(doc)
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		v.docID = doc.ID()
 		v.offset = Position{}
 		e.markDocAccessed()
@@ -231,7 +231,7 @@ func (e *Editor) SwitchBuffer(did DocumentId) bool {
 		return false
 	}
 	e.recordPrevDoc()
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		v.docID = did
 		v.offset = Position{}
 		e.markDocAccessed()
@@ -241,22 +241,22 @@ func (e *Editor) SwitchBuffer(did DocumentId) bool {
 }
 
 // ShowDocument displays an open document in the focused pane
-func (e *Editor) ShowDocument(did DocumentId) (*View, bool) {
+func (e *Editor) ShowDocument(did DocumentId) *View {
 	if e.SwitchBuffer(did) {
 		return e.FocusedView()
 	}
 	if _, ok := e.documents.byID[did]; !ok {
-		return nil, false
+		return nil
 	}
 	id := e.panes.tree.Focus()
 	if e.panes.tree.Get(id) == nil {
-		return nil, false
+		return nil
 	}
 	v := &View{editor: e, docID: did, mode: ModeNormal}
 	old := e.ReplacePane(id, v)
 	e.DiscardPane(old)
 	e.markDocAccessed()
-	return v, true
+	return v
 }
 
 // SwitchOrOpenDoc returns an existing document for path, opening it if needed

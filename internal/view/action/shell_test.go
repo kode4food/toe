@@ -22,7 +22,7 @@ func TestShellPipeTo(t *testing.T) {
 		err := action.ShellPipeTo(e, "cat > /dev/null")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
@@ -140,7 +140,7 @@ func TestShellEdgeSelections(t *testing.T) {
 		err := action.ShellPipe(e, "cat")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -151,7 +151,7 @@ func TestShellEdgeSelections(t *testing.T) {
 		err := action.ShellPipeTo(e, "cat")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -162,7 +162,7 @@ func TestShellEdgeSelections(t *testing.T) {
 		err := action.ShellKeepPipe(e, "cat")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -173,8 +173,8 @@ func TestShellEdgeSelections(t *testing.T) {
 		err := action.ShellKeepPipe(e, "false")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, []core.Range{core.NewRange(0, 3)}, sel.Ranges())
 	})
@@ -190,7 +190,7 @@ func TestShellEdgeSelections(t *testing.T) {
 		err := action.ShellAppendOutput(e, "printf x")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "axbc", doc.Text().String())
 	})
 }
@@ -203,7 +203,7 @@ func TestShell(t *testing.T) {
 		err := action.ShellPipe(e, "tr a-z A-Z")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "ABC", doc.Text().String())
 	})
 
@@ -214,7 +214,7 @@ func TestShell(t *testing.T) {
 		err := action.ShellPipe(e, "cat; printf '\\n'")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -225,7 +225,7 @@ func TestShell(t *testing.T) {
 		err := action.ShellPipe(e, "cat")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc\n", doc.Text().String())
 	})
 
@@ -236,7 +236,7 @@ func TestShell(t *testing.T) {
 		err := action.ShellInsertOutput(e, "printf hello")
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hellox", doc.Text().String())
 
 		e = testutil.EditorWithText(t, "x")
@@ -245,7 +245,7 @@ func TestShell(t *testing.T) {
 		err = action.ShellAppendOutput(e, "printf hello")
 
 		assert.NoError(t, err)
-		doc, _ = e.FocusedDocument()
+		doc = e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 	})
 
@@ -263,8 +263,8 @@ func TestShell(t *testing.T) {
 		err := action.ShellKeepPipe(e, "grep a")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 		assert.Equal(t, core.NewRange(0, 1), sel.Ranges()[0])
@@ -285,8 +285,8 @@ func TestShell(t *testing.T) {
 		err := action.ShellKeepPipe(e, "grep -v y")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, core.NewRange(4, 5), sel.Primary())
 	})
@@ -307,8 +307,8 @@ func TestShell(t *testing.T) {
 		err := action.ShellKeepPipe(e, "grep -v y")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, core.NewRange(2, 3), sel.Primary())
 	})
@@ -324,7 +324,7 @@ func TestShell(t *testing.T) {
 		err := action.ReadFile(e, path)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 	})
 
@@ -339,7 +339,7 @@ func TestShell(t *testing.T) {
 		err := action.ReadFile(e, path)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\nb\n", doc.Text().String())
 	})
 
@@ -358,7 +358,7 @@ func TestShell(t *testing.T) {
 		err := action.ReadFile(e, path)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xab", doc.Text().String())
 	})
 }

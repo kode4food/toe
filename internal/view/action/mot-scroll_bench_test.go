@@ -14,8 +14,8 @@ import (
 func BenchmarkScrollViewColumns(b *testing.B) {
 	line := strings.Repeat("x", 1_000_000)
 	e := view.NewEditor(b.TempDir())
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		b.Fatal("missing focused document")
 	}
 	rope := doc.Text()
@@ -31,8 +31,8 @@ func BenchmarkScrollViewColumns(b *testing.B) {
 	if err := e.Apply(tx); err != nil {
 		b.Fatal(err)
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		b.Fatal("missing focused view")
 	}
 	b.ReportAllocs()

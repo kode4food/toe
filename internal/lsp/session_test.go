@@ -80,8 +80,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		session.DocumentSaved(doc)
 	})
@@ -98,8 +98,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		session.DocumentClosed(doc)
 	})
@@ -116,8 +116,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		commands := session.WorkspaceCommands(doc)
 
@@ -136,8 +136,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.ExecuteWorkspaceCommand(
 			doc, "session.afterCompletion", nil,
@@ -158,8 +158,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		names, err := session.StopLanguageServers(doc, nil)
 
@@ -179,8 +179,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		names, err := session.RestartLanguageServers(doc, nil)
 
@@ -200,8 +200,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		names, err := session.StopLanguageServers(doc, []string{"session-test"})
 
@@ -221,8 +221,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		_, err = session.StopLanguageServers(doc, []string{"unknown-server"})
 
@@ -233,8 +233,8 @@ func TestSessionMethods(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		_, err := session.StopLanguageServers(doc, nil)
 
@@ -253,8 +253,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		_, err = session.RestartLanguageServers(
 			doc, []string{"unknown-server"},
@@ -267,8 +267,8 @@ func TestSessionMethods(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		_, err := session.RestartLanguageServers(doc, nil)
 
@@ -287,8 +287,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.ExecuteWorkspaceCommand(doc, "session.unknown", nil)
 
@@ -307,8 +307,8 @@ func TestSessionMethods(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.ExecuteWorkspaceCommand(
 			doc, "session.afterCompletion", []string{"arg1"},
@@ -355,8 +355,8 @@ func TestWorkspaceEdit(t *testing.T) {
 		doc, err := e.SwitchOrOpenDoc(target)
 		assert.NoError(t, err)
 		assert.Equal(t, "new\n", doc.Text().String())
-		focused, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		focused := e.FocusedDocument()
+		assert.NotNil(t, focused)
 		assert.Equal(t, source, focused.Path())
 	})
 
@@ -401,8 +401,8 @@ func TestWorkspaceEdit(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "aBc\n", doc.Text().String())
 	})
 
@@ -626,10 +626,10 @@ func TestSessionCallbacks(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		// triggers initialization; server fires all callbacks during init
 		_, err = session.Completions(doc, v.ID())
@@ -653,8 +653,8 @@ func TestSessionPullDiagnosticsWithServer(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.PullDiagnostics(doc)
 
@@ -674,8 +674,8 @@ func TestSessionPullDiagnosticsWithServer(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		// First call: stores the resultID from the Full report
 		err = session.PullDiagnostics(doc)
@@ -700,8 +700,8 @@ func TestSessionPullDiagnostics(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		session := lsp.NewSession(t.Context(), dir)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.PullDiagnostics(doc)
 
@@ -716,10 +716,10 @@ func TestSessionScratchDocument(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
 		session := lsp.NewSession(t.Context(), t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		return session, doc, v.ID()
 	}
 
@@ -749,10 +749,10 @@ func TestSessionScratchDocument(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		err := session.FormatSelection(doc, v.ID())
 		assert.NoError(t, err)
 	})
@@ -798,8 +798,8 @@ func TestSessionPullDiagnosticsError(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.PullDiagnostics(doc)
 		assert.Error(t, err)
@@ -819,8 +819,8 @@ func TestSessionPullDiagnosticsRegOptions(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.PullDiagnostics(doc)
 		assert.NoError(t, err)
@@ -841,8 +841,8 @@ func TestSessionPullDiagnosticsUnchanged(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.PullDiagnostics(doc)
 		assert.NoError(t, err)
@@ -869,10 +869,10 @@ func TestSessionProgress(t *testing.T) {
 		})
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		_, _ = session.Completions(doc, v.ID())
 		select {
 		case <-redraw:
@@ -897,10 +897,10 @@ func TestSessionProgress(t *testing.T) {
 		e.Tree().SetRedraw(func() {
 			states <- session.Busy()
 		})
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		_, _ = session.Completions(doc, v.ID())
 
@@ -932,10 +932,10 @@ func TestFileWatching(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		// Trigger initialization; server registers file watcher
 		_, _ = session.Completions(doc, v.ID())
@@ -963,10 +963,10 @@ func TestFileWatching(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		_, _ = session.Completions(doc, v.ID())
 
@@ -994,10 +994,10 @@ func TestInlayHints(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		hints, err := session.InlayHints(doc, v.ID())
 		assert.NoError(t, err)
@@ -1016,10 +1016,10 @@ func TestInlayHints(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		assert.Eventually(t, func() bool {
 			return len(doc.InlayHints(v.ID())) > 0
@@ -1047,8 +1047,8 @@ func TestDocumentColors(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		colors, err := session.DocumentColors(doc)
 		assert.NoError(t, err)
@@ -1068,10 +1068,10 @@ func TestSessionAllOperationsError(t *testing.T) {
 	assert.NoError(t, err)
 	session := lsp.Attach(t.Context(), e)
 	defer func() { _ = session.Close() }()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 
 	t.Run("hover returns error", func(t *testing.T) {
 		_, err := session.Hover(doc, v.ID())
@@ -1181,8 +1181,8 @@ func TestSessionWithoutEditor(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		names, err := session.StopLanguageServers(doc, nil)
 
@@ -1204,8 +1204,8 @@ func TestSessionMultiServer(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		err = session.ExecuteWorkspaceCommand(
 			doc, "session.afterCompletion", nil,
@@ -1226,10 +1226,10 @@ func TestSessionMultiServer(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		_, err = session.Completions(doc, v.ID())
 		assert.NoError(t, err)
@@ -1247,8 +1247,8 @@ func TestSessionMultiServer(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		commands := session.WorkspaceCommands(doc)
 
@@ -1268,10 +1268,10 @@ func TestSessionBareServer(t *testing.T) {
 	assert.NoError(t, err)
 	session := lsp.Attach(t.Context(), e)
 	defer func() { _ = session.Close() }()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 
 	t.Run("code actions unsupported", func(t *testing.T) {
 		actions, err := session.CodeActions(doc, v.ID())
@@ -1353,10 +1353,10 @@ func TestSessionUnconfiguredDocument(t *testing.T) {
 	assert.NoError(t, err)
 	session := lsp.Attach(t.Context(), e)
 	defer func() { _ = session.Close() }()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 
 	t.Run("code actions no server", func(t *testing.T) {
 		_, err := session.CodeActions(doc, v.ID())

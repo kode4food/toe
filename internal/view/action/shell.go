@@ -17,12 +17,12 @@ var ErrShellCommand = errors.New("shell command failed")
 // ShellPipe pipes each selection through a shell command, replacing the
 // selection with the command's stdout
 func ShellPipe(e *view.Editor, cmdStr string) error {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	if doc.ReadOnly() {
@@ -60,12 +60,12 @@ func ShellPipe(e *view.Editor, cmdStr string) error {
 
 // ShellPipeTo pipes each selection to a shell command, discarding output
 func ShellPipeTo(e *view.Editor, cmdStr string) error {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()
@@ -100,12 +100,12 @@ func ShellAppendOutput(e *view.Editor, cmdStr string) error {
 // ShellKeepPipe pipes each selection through a shell command and keeps only
 // selections for which the command exits with status 0
 func ShellKeepPipe(e *view.Editor, cmdStr string) error {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()
@@ -151,12 +151,12 @@ func ReadFile(e *view.Editor, path string) error {
 	if err != nil {
 		return err
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	if doc.ReadOnly() {
@@ -198,12 +198,12 @@ func shellOutputAt(
 	if err != nil {
 		return err
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	if doc.ReadOnly() {

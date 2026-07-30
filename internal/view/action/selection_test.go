@@ -22,8 +22,8 @@ func TestSelection(t *testing.T) {
 
 		action.TrimSelections(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, sel.Primary().Anchor)
 		assert.Equal(t, 4, sel.Primary().Head)
@@ -35,8 +35,8 @@ func TestSelection(t *testing.T) {
 
 		action.TrimSelections(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		// collapses to primary cursor position (head clamped by block cursor)
 		assert.Equal(t, 1, len(sel.Ranges()))
@@ -50,7 +50,7 @@ func TestSelection(t *testing.T) {
 
 		action.JoinSelections(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a b", doc.Text().String())
 	})
 
@@ -68,8 +68,8 @@ func TestSelection(t *testing.T) {
 
 		action.RotateSelectionsForward(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t, 1, doc.SelectionFor(v.ID()).PrimaryIndex())
 
 		action.RotateSelectionsBackward(e)
@@ -90,8 +90,8 @@ func TestSelection(t *testing.T) {
 
 		action.RotateContentsForward(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "cab", doc.Text().String())
 		assert.Equal(t, 1, doc.SelectionFor(v.ID()).PrimaryIndex())
 	})
@@ -102,7 +102,7 @@ func TestSelection(t *testing.T) {
 
 		action.ToggleComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "# hello", doc.Text().String())
 
 		testutil.SetCursor(t, e, 0)
@@ -119,7 +119,7 @@ func TestToggleLineComments(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		// "text" lang uses "#" as default comment token
 		assert.Equal(t, "# hello", doc.Text().String())
 	})
@@ -130,7 +130,7 @@ func TestToggleLineComments(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -142,7 +142,7 @@ func TestToggleBlockComments(t *testing.T) {
 
 		action.ToggleBlockComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		// default block comment tokens for "text" lang
 		result := doc.Text().String()
 		assert.NotEqual(t, "hello", result)
@@ -152,7 +152,7 @@ func TestToggleBlockComments(t *testing.T) {
 func TestToggleCommentsBlockCommented(t *testing.T) {
 	t.Run("removes inline block comment", func(t *testing.T) {
 		e := testutil.EditorWithText(t, blockCommentedSource)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetLang("go")
 		testutil.SetSelection(t, e, []core.Range{
 			core.NewRange(6, len(blockCommentedSource)),
@@ -171,7 +171,7 @@ func TestJoinSelectionsSpace(t *testing.T) {
 
 		action.JoinSelectionsSpace(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a b", doc.Text().String())
 	})
 }
@@ -194,8 +194,8 @@ func TestExtendToLineEndNewline(t *testing.T) {
 
 		action.ExtendToLineEndNewline(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		// PutCursor with extend=true advances one grapheme past newline pos
@@ -217,7 +217,7 @@ func TestRotateContentsBackward(t *testing.T) {
 
 		action.RotateContentsBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "bca", doc.Text().String())
 	})
 }
@@ -229,7 +229,7 @@ func TestSaveSelection(t *testing.T) {
 
 		assert.NotPanics(t, func() { action.SaveSelection(e) })
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abcdef", doc.Text().String())
 	})
 }
@@ -240,7 +240,7 @@ func TestCommitUndoCheckpoint(t *testing.T) {
 
 		action.CommitUndoCheckpoint(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -325,8 +325,8 @@ func TestScrollUpDown(t *testing.T) {
 
 		action.ScrollUp(e)
 
-		doc, _ := e.FocusedDocument()
-		v, _ := e.FocusedView()
+		doc := e.FocusedDocument()
+		v := e.FocusedView()
 		sel := doc.SelectionFor(v.ID())
 		assert.Less(t, sel.Primary().Cursor(doc.Text()), 8)
 	})
@@ -355,13 +355,13 @@ func TestHSplitVSplit(t *testing.T) {
 func TestRotateView(t *testing.T) {
 	t.Run("cycles to next view", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.VSplit(v.DocID())
-		before, _ := e.FocusedView()
+		before := e.FocusedView()
 
 		action.RotateView(e)
 
-		after, _ := e.FocusedView()
+		after := e.FocusedView()
 		assert.NotEqual(t, before.ID(), after.ID())
 	})
 }
@@ -398,7 +398,7 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.True(t, len(result) >= len("hello"))
 	})
@@ -412,7 +412,7 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 
 		action.ToggleBlockComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, len(doc.Text().String()) > 0)
 	})
 }
@@ -424,7 +424,7 @@ func TestToggleCommentsMultiLine(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.True(t, len(text) > len("hello\nworld"))
 	})
@@ -439,7 +439,7 @@ func TestToggleLineCommentsWithLangToken(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "// hello", doc.Text().String())
 	})
 
@@ -451,7 +451,7 @@ func TestToggleLineCommentsWithLangToken(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -465,7 +465,7 @@ func TestToggleLineCommentsBlockLang(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.NotEqual(t, "hello", result)
 	})
@@ -480,7 +480,7 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 
 		action.ToggleComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.NotEqual(t, "hello", result)
 	})
@@ -493,7 +493,7 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 
 		action.ToggleComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.NotContains(t, result, "/*")
 	})
@@ -508,7 +508,7 @@ func TestToggleBlockCommentsWithLang(t *testing.T) {
 
 		action.ToggleBlockComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.Contains(t, result, "/*")
 		assert.Contains(t, result, "*/")
@@ -522,7 +522,7 @@ func TestToggleBlockCommentsWithLang(t *testing.T) {
 
 		action.ToggleBlockComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.NotContains(t, result, "/*")
 	})
@@ -537,7 +537,7 @@ func TestToggleCommentsWithLineToken(t *testing.T) {
 
 		action.ToggleComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "// hello", doc.Text().String())
 	})
 }
@@ -571,7 +571,7 @@ func TestToggleBlockCommentsLineFallback(t *testing.T) {
 
 		action.ToggleBlockComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.Contains(t, result, "//")
 	})
@@ -647,7 +647,7 @@ func TestToggleCommentsLineCommentedBranch(t *testing.T) {
 
 		action.ToggleComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.NotContains(t, result, "/*")
 	})

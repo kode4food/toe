@@ -57,8 +57,8 @@ func TestReadOnlyActions(t *testing.T) {
 
 			tc.fn(e)
 
-			doc, ok := e.FocusedDocument()
-			assert.True(t, ok)
+			doc := e.FocusedDocument()
+			assert.NotNil(t, doc)
 			assert.Equal(t, "1\nabc\n", doc.Text().String())
 		})
 	}
@@ -96,8 +96,8 @@ func TestReadOnlyShellActions(t *testing.T) {
 func editorWithReadOnlyText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := testutil.EditorWithText(t, text)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	setReadOnly(doc)
 	return e
 }

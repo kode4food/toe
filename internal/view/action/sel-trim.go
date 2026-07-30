@@ -11,12 +11,12 @@ import (
 // range. Empty or all-whitespace ranges are dropped. When all ranges are
 // dropped the selection falls back to a single cursor at the primary position
 func TrimSelections(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()

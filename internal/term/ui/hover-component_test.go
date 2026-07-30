@@ -68,10 +68,10 @@ func TestHoverComponent(t *testing.T) {
 		m = sendKey(m, 'k')
 		assert.Contains(t, stripANSI(m.View().Content), "hover docs")
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		out := stripANSI(m.View().Content)
 

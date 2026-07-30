@@ -56,11 +56,11 @@ func TestGlobalSearch(t *testing.T) {
 	t.Run("accept opens match", func(t *testing.T) {
 		m, e := globalSearchModel(t, "findme")
 		_ = sendSpecial(m, tea.KeyEnter)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.True(t, strings.HasSuffix(doc.Path(), "a.txt"))
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		line, err := doc.Text().CharToLine(
 			doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()),
 		)
@@ -174,8 +174,8 @@ func TestGlobalSearch(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, rope.LenChars(), "memory needle\n"),

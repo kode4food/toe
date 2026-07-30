@@ -11,8 +11,8 @@ import (
 func TestDiagnostics(t *testing.T) {
 	t.Run("replaces provider diagnostics", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{
@@ -45,8 +45,8 @@ func TestDiagnostics(t *testing.T) {
 
 	t.Run("counts severities", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Severity: view.DiagnosticSeverityError},
 			{Severity: view.DiagnosticSeverityWarning},
@@ -64,8 +64,8 @@ func TestDiagnostics(t *testing.T) {
 
 	t.Run("clears diagnostics", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Severity: view.DiagnosticSeverityError},
 		})

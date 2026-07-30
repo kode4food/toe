@@ -73,7 +73,7 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 		b.Fatal(err)
 	}
 	e.ResizeTree(geom.Size{Width: 100, Height: 40})
-	if _, ok := e.VSplit(docB.ID()); !ok {
+	if e.VSplit(docB.ID()) == nil {
 		b.Fatal("vsplit failed")
 	}
 	m := tea.Model(resize(ui.New(e, command.NewKeymaps()), 100, 40))

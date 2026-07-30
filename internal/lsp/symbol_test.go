@@ -26,8 +26,8 @@ func TestSymbol(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		symbols, err := session.DocumentSymbols(doc)
 
@@ -59,8 +59,8 @@ func TestSymbol(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		symbols, err := session.WorkspaceSymbols(doc, "main")
 
@@ -88,13 +88,13 @@ func TestSymbol(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err = e.OpenFile(firstPath)
 		assert.NoError(t, err)
-		first, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		first := e.FocusedDocument()
+		assert.NotNil(t, first)
 		first.SetLang("one")
 		_, err = e.OpenFile(secondPath)
 		assert.NoError(t, err)
-		second, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		second := e.FocusedDocument()
+		assert.NotNil(t, second)
 		second.SetLang("two")
 
 		session := lsp.NewSession(t.Context(), dir)
@@ -122,8 +122,8 @@ func TestManySymbolKinds(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		symbols, err := session.DocumentSymbols(doc)
 
@@ -148,8 +148,8 @@ func TestWorkspaceSymbolSlice(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		symbols, err := session.WorkspaceSymbols(doc, "main")
 

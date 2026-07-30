@@ -239,8 +239,8 @@ func TestMoveSeparator(t *testing.T) {
 func TestCanSplit(t *testing.T) {
 	t.Run("empty tree allows split", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 
 		assert.True(t, e.Tree().CanSplit(view.LayoutVertical))
@@ -310,18 +310,18 @@ func TestTreeSplitEdges(t *testing.T) {
 	t.Run("removing nested split collapses parent", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 120, Height: 40})
-		left, ok := e.FocusedView()
-		assert.True(t, ok)
-		right, ok := e.VSplit(left.DocID())
-		assert.True(t, ok)
-		bottom, ok := e.HSplit(right.DocID())
-		assert.True(t, ok)
+		left := e.FocusedView()
+		assert.NotNil(t, left)
+		right := e.VSplit(left.DocID())
+		assert.NotNil(t, right)
+		bottom := e.HSplit(right.DocID())
+		assert.NotNil(t, bottom)
 
 		e.CloseView(bottom.ID())
 
 		views := e.Views()
 		assert.Equal(t, 2, len(views))
-		_, ok = e.Tree().ContainerLayoutAt(right.ID())
+		_, ok := e.Tree().ContainerLayoutAt(right.ID())
 		assert.True(t, ok)
 	})
 }
@@ -588,8 +588,8 @@ func TestTreeEdges(t *testing.T) {
 	t.Run("set focus changes focused view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		first, ok := e.FocusedView()
-		assert.True(t, ok)
+		first := e.FocusedView()
+		assert.NotNil(t, first)
 		second := e.VSplitNew()
 		assert.NotNil(t, second)
 
@@ -605,8 +605,8 @@ func TestTreeEdges(t *testing.T) {
 	t.Run("set focus marks old and new view dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		first, ok := e.FocusedView()
-		assert.True(t, ok)
+		first := e.FocusedView()
+		assert.NotNil(t, first)
 		second := e.VSplitNew()
 		assert.NotNil(t, second)
 		first.ConsumeDirty()
@@ -620,8 +620,8 @@ func TestTreeEdges(t *testing.T) {
 
 	t.Run("set focus to same id is a no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		v.ConsumeDirty()
 
 		e.Tree().SetFocus(v.ID())
@@ -631,8 +631,8 @@ func TestTreeEdges(t *testing.T) {
 
 	t.Run("remove last view empties tree", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		e.Tree().Remove(v.ID())
 
@@ -645,8 +645,8 @@ func TestTreeReplacePane(t *testing.T) {
 	t.Run("keeps position and marks pane dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		id := v.ID()
 		area := v.Area()
 		replacement := &fakePane{}
@@ -661,8 +661,8 @@ func TestTreeReplacePane(t *testing.T) {
 	t.Run("does not mark an unfocused pane dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		first, ok := e.FocusedView()
-		assert.True(t, ok)
+		first := e.FocusedView()
+		assert.NotNil(t, first)
 		e.VSplitNew()
 		replacement := &fakePane{}
 
@@ -682,8 +682,8 @@ func TestTreeReplacePane(t *testing.T) {
 func TestViewEdges(t *testing.T) {
 	t.Run("jump list keeps newest entries", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		for i := range 70 {
 			v.PushJump(view.DocumentId(i+1), i, core.PointSelection(i))
 		}
@@ -701,8 +701,8 @@ func TestViewEdges(t *testing.T) {
 
 	t.Run("horizontal width zero resets offset", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		v.SetOffset(view.Position{HorizontalOffset: 8})
 
 		v.EnsureCursorVisibleHorizontal(
@@ -714,8 +714,8 @@ func TestViewEdges(t *testing.T) {
 
 	t.Run("cursor below viewport scrolls by line", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc := core.NewRope("a\nb\nc\nd\ne\n")
 		v.EnsureCursorVisible(doc, core.PointSelection(8), 3, 1, nil)
 

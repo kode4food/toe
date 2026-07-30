@@ -265,8 +265,8 @@ func (e *EditorComponent) handleMouseWheel(
 		return consumed(), nil
 	}
 	r := &renderPass{ec: e, cx: cx, size: e.size}
-	v, ok := r.contentViewAt(at)
-	if !ok {
+	v := r.contentViewAt(at)
+	if v == nil {
 		return consumed(), nil
 	}
 	n := cx.Editor.Options().ScrollLines
@@ -278,7 +278,7 @@ func (e *EditorComponent) handleMouseWheel(
 		up := msg.Button == tea.MouseWheelUp
 		action.ScrollViewLines(cx.Editor, v, n, up)
 	}
-	if doc, ok := cx.Editor.Document(v.DocID()); ok {
+	if doc := cx.Editor.Document(v.DocID()); doc != nil {
 		v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
 	}
 	return consumed(), nil
@@ -296,12 +296,12 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 	}
 	down := *e.mouse.downRange
 	e.mouse.downRange = nil
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return
 	}
 	cur := doc.SelectionFor(v.ID()).Primary()

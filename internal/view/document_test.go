@@ -19,8 +19,8 @@ func TestNewDocument(t *testing.T) {
 	t.Run("creates scratch document with unique id", func(t *testing.T) {
 		e1 := view.NewEditor("/tmp")
 		e2 := view.NewEditor("/tmp")
-		d1, _ := e1.FocusedDocument()
-		d2, _ := e2.FocusedDocument()
+		d1 := e1.FocusedDocument()
+		d2 := e2.FocusedDocument()
 		assert.NotEqual(t, view.InvalidDocumentId, d1.ID())
 		assert.Equal(t, "", d1.Path())
 		assert.False(t, d1.Modified())
@@ -30,13 +30,13 @@ func TestNewDocument(t *testing.T) {
 
 	t.Run("text is empty rope", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "", d.Text().String())
 	})
 
 	t.Run("lang defaults to text", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "text", d.Lang())
 	})
 
@@ -46,7 +46,7 @@ func TestNewDocument(t *testing.T) {
 
 		e.NewDocument()
 
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 
@@ -56,7 +56,7 @@ func TestNewDocument(t *testing.T) {
 
 		e.NewDocument()
 
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 }
@@ -70,7 +70,7 @@ func TestOpenDocument(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "hello world", d.Text().String())
 		assert.False(t, d.Modified())
 	})
@@ -92,7 +92,7 @@ func TestOpenDocument(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "", d.Text().String())
 		assert.Equal(t, path, d.Path())
 	})
@@ -107,7 +107,7 @@ func TestOpenDocument(t *testing.T) {
 		_, err = e.OpenFile(path)
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 
@@ -131,7 +131,7 @@ end_of_line = crlf
 		_, err = e.OpenFile(path)
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.False(t, d.IndentStyle().IsTabs())
 		assert.Equal(t, uint8(2), d.IndentStyle().Width())
 		assert.Equal(t, 8, d.TabWidth())
@@ -156,7 +156,7 @@ indent = { tab-width = 8, unit = "  " }
 		_, err = e.OpenFile(path)
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.False(t, d.IndentStyle().IsTabs())
 		assert.Equal(t, uint8(2), d.IndentStyle().Width())
 		assert.Equal(t, 8, d.TabWidth())
@@ -178,7 +178,7 @@ indent = { tab-width = 8, unit = "  " }
 		_, err := e.OpenFile(path)
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.False(t, d.IndentStyle().IsTabs())
 		assert.Equal(t, uint8(2), d.IndentStyle().Width())
 		assert.Equal(t, 8, d.TabWidth())
@@ -203,7 +203,7 @@ end_of_line = crlf
 		_, err = e.OpenFile(path)
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, 4, d.TabWidth())
 		assert.Equal(t, core.LineEndingLF, d.LineEnding())
 	})
@@ -217,7 +217,7 @@ end_of_line = crlf
 		_, err := e.OpenFile(path)
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 	})
 
@@ -237,7 +237,7 @@ max_line_length = 40
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		enabled := true
 		opts := view.Options{
 			TextWidth: new(80),
@@ -273,7 +273,7 @@ func TestDocumentSave(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		e := testutil.EditorWithText(t, "hello")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 
 		err := e.Save(false)
@@ -290,7 +290,7 @@ func TestDocumentSave(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		e := testutil.EditorWithText(t, "hello")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 
 		err := e.Save(false)
@@ -308,7 +308,7 @@ func TestDocumentSave(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		e := testutil.EditorWithText(t, "hello")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 		doc.SetLineEnding(core.LineEndingCRLF)
 
@@ -327,7 +327,7 @@ func TestDocumentSave(t *testing.T) {
 		e.Options().TrimTrailingWS = true
 		e.Options().TrimFinalNewlines = true
 		e.Options().InsertFinalNewline = true
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 
 		err := e.Save(false)
@@ -344,7 +344,7 @@ func TestDocumentSave(t *testing.T) {
 		path := filepath.Join(tmp, "out.txt")
 		e := testutil.EditorWithText(t, "hello")
 		e.Options().InsertFinalNewline = false
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 
 		err := e.Save(false)
@@ -372,7 +372,7 @@ trim_trailing_whitespace = true
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, rope.LenChars(), "hello  "),
@@ -453,7 +453,7 @@ func TestDocumentSaveSafety(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, rope.LenChars(), "changed"),
@@ -506,7 +506,7 @@ func TestDocumentReload(t *testing.T) {
 		err = e.Reload()
 
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "new", d.Text().String())
 		assert.False(t, d.Modified())
 	})
@@ -520,7 +520,7 @@ func TestDocumentReload(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(3, 3, "!"),
@@ -552,7 +552,7 @@ func TestDocumentExternalChange(t *testing.T) {
 
 		ok := e.ProcessExternalFileChange(path)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, ok)
 		assert.Equal(t, "new content", doc.Text().String())
 		assert.False(t, doc.Modified())
@@ -569,15 +569,15 @@ func TestDocumentExternalChange(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
-		v2, ok := e.VSplit(doc.ID())
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		v2 := e.VSplit(doc.ID())
+		assert.NotNil(t, v2)
 		doc.SetSelectionFor(v1.ID(), core.PointSelection(4))
 		doc.SetSelectionFor(v2.ID(), core.PointSelection(8))
 		err = os.WriteFile(path, []byte("0123456789012345"), 0o644)
 		assert.NoError(t, err)
 
-		ok = e.ProcessExternalFileChange(path)
+		ok := e.ProcessExternalFileChange(path)
 
 		assert.True(t, ok)
 		assert.Equal(t, 4, doc.SelectionFor(v1.ID()).Primary().Head)
@@ -592,7 +592,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		e := view.NewEditor(tmp)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(), core.PointSelection(8))
 		err = os.WriteFile(path, []byte("012"), 0o644)
 		assert.NoError(t, err)
@@ -611,7 +611,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		e := view.NewEditor(tmp)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
 			core.NewRange(-5, 20),
 		}, 0))
@@ -633,7 +633,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		e := view.NewEditor(tmp)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(), core.PointSelection(6))
 		err = os.WriteFile(path, []byte("new alpha beta"), 0o644)
 		assert.NoError(t, err)
@@ -652,7 +652,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		e := view.NewEditor(tmp)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(), core.PointSelection(10))
 		err = os.WriteFile(path, []byte("alpha beta"), 0o644)
 		assert.NoError(t, err)
@@ -677,7 +677,7 @@ func TestDocumentExternalChange(t *testing.T) {
 
 		ok := e.ProcessExternalFileChange(path)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, ok)
 		assert.Equal(t, "local", doc.Text().String())
 		assert.True(t, doc.Modified())
@@ -698,7 +698,7 @@ func TestDocumentExternalChange(t *testing.T) {
 
 		ok := e.ProcessExternalFileChange(path)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, ok)
 		assert.Equal(t, "old", doc.Text().String())
 		assert.Equal(t, view.ExternalStateDeleted, doc.ExternalState())
@@ -716,7 +716,7 @@ func TestDocumentExternalChange(t *testing.T) {
 
 		ok := e.ProcessExternalFileChange(path)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.False(t, ok)
 		assert.Equal(t, view.ExternalStateClean, doc.ExternalState())
 	})
@@ -737,7 +737,7 @@ func TestDocumentRelativeName(t *testing.T) {
 
 func TestDocumentAccessors(t *testing.T) {
 	e := view.NewEditor("/tmp")
-	d, _ := e.FocusedDocument()
+	d := e.FocusedDocument()
 
 	t.Run("SetLang", func(t *testing.T) {
 		d.SetLang("go")
@@ -775,8 +775,8 @@ func TestDocumentAccessors(t *testing.T) {
 	})
 
 	t.Run("tracks search highlights", func(t *testing.T) {
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		assert.False(t, d.SearchHighlightsActive(v.ID()))
 		d.ShowSearchHighlights(v.ID())
@@ -797,7 +797,7 @@ func TestDocumentBOM(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "hello", d.Text().String())
 		assert.True(t, d.HasBOM())
 	})
@@ -851,7 +851,7 @@ func TestDocumentBOM(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NoError(t, e.Reload())
 
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "v2\n", d.Text().String())
 		assert.True(t, d.HasBOM())
 		assert.NoError(t, e.Save(false))
@@ -865,13 +865,13 @@ func TestDocumentBOM(t *testing.T) {
 func TestDocumentRestoreCursor(t *testing.T) {
 	t.Run("defaults to false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.False(t, d.RestoreCursor())
 	})
 
 	t.Run("set and clear", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		d.SetRestoreCursor(true)
 		assert.True(t, d.RestoreCursor())
 		d.SetRestoreCursor(false)
@@ -882,7 +882,7 @@ func TestDocumentRestoreCursor(t *testing.T) {
 func TestDocumentSetIndentStyle(t *testing.T) {
 	t.Run("updates indent style", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		spaces := core.ParseIndentStyle("  ")
 		d.SetIndentStyle(spaces)
 		assert.Equal(t, spaces, d.IndentStyle())
@@ -893,7 +893,7 @@ func TestDocumentTextFormat(t *testing.T) {
 	t.Run("returns format without error", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		f := d.TextFormat(80)
 		assert.NotNil(t, f)
 		assert.Equal(t, 4, f.TabWidth)
@@ -903,19 +903,19 @@ func TestDocumentTextFormat(t *testing.T) {
 func TestDocumentRevisionAndLastEditPos(t *testing.T) {
 	t.Run("revision starts at zero", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, 0, d.Revision())
 	})
 
 	t.Run("revision increments on apply", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Greater(t, d.Revision(), 0)
 	})
 
 	t.Run("LastEditPos after edit", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.GreaterOrEqual(t, d.LastEditPos(), 0)
 	})
 
@@ -926,8 +926,8 @@ func TestDocumentRevisionAndLastEditPos(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
-		v, _ := e.FocusedView()
+		d := e.FocusedDocument()
+		v := e.FocusedView()
 		tx := core.NewTransaction(
 			d.Text()).WithSelection(core.PointSelection(3))
 
@@ -941,8 +941,8 @@ func TestDocumentRevisionAndLastEditPos(t *testing.T) {
 func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 	t.Run("accumulated changes become one revision", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 
 		d.BeginInsertGroup(v.ID())
 
@@ -970,8 +970,8 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 
 	t.Run("begin is idempotent when already active", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.BeginInsertGroup(v.ID())
 		d.BeginInsertGroup(v.ID())
 		d.CommitInsertHistory(v.ID())
@@ -979,16 +979,16 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 
 	t.Run("commit with no accumulation is no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.CommitInsertHistory(v.ID())
 		assert.Equal(t, 0, d.Revision())
 	})
 
 	t.Run("empty changeset commit is no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.BeginInsertGroup(v.ID())
 		d.CommitInsertHistory(v.ID())
 		assert.Equal(t, 0, d.Revision())
@@ -998,8 +998,8 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 func TestDocumentApplyBranches(t *testing.T) {
 	t.Run("apply with selection update", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "xyz"),
@@ -1014,8 +1014,8 @@ func TestDocumentApplyBranches(t *testing.T) {
 
 	t.Run("apply in insert group with selection", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.BeginInsertGroup(v.ID())
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
@@ -1031,8 +1031,8 @@ func TestDocumentApplyBranches(t *testing.T) {
 
 	t.Run("maps selection when transaction omits it", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		cs, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
 			core.TextChange(0, 0, "abc\n"),
 		})
@@ -1061,9 +1061,9 @@ func TestDocumentApplyBranches(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		v2, ok := e.VSplit(v1.DocID())
-		assert.True(t, ok)
-		doc, _ := e.Document(v1.DocID())
+		v2 := e.VSplit(v1.DocID())
+		assert.NotNil(t, v2)
+		doc := e.Document(v1.DocID())
 		doc.SetSelectionFor(v2.ID(), core.PointSelection(3))
 
 		rope := doc.Text()
@@ -1084,7 +1084,7 @@ func TestDocumentAtomicSave(t *testing.T) {
 		e := testutil.EditorWithText(t, "atomic content")
 		e.Options().AtomicSave = true
 		e.Options().InsertFinalNewline = false
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 		err := e.Save(false)
 		assert.NoError(t, err)
@@ -1103,13 +1103,13 @@ func TestDocumentDetectLang(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "go", d.Lang())
 	})
 
 	t.Run("unknown extension falls back to text", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "text", d.Lang())
 	})
 }
@@ -1132,9 +1132,9 @@ func TestDocumentReloadPreservesSelections(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		v2, ok := e.VSplit(v1.DocID())
-		assert.True(t, ok)
-		doc, _ := e.Document(v1.DocID())
+		v2 := e.VSplit(v1.DocID())
+		assert.NotNil(t, v2)
+		doc := e.Document(v1.DocID())
 		doc.SetSelectionFor(v1.ID(), core.PointSelection(5))
 		doc.SetSelectionFor(v2.ID(), core.PointSelection(8))
 		err = os.WriteFile(path, []byte("hello big world"), 0o644)
@@ -1153,7 +1153,7 @@ func TestDocumentTrimTrailingWhitespaceWithCRLF(t *testing.T) {
 		e := testutil.EditorWithText(t, "line  \r\nend  ")
 		e.Options().TrimTrailingWS = true
 		e.Options().InsertFinalNewline = false
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 		doc.SetLineEnding(core.LineEndingCRLF)
 
@@ -1176,7 +1176,7 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.NotEqual(t, "", d.Lang())
 	})
 
@@ -1190,7 +1190,7 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.NotEqual(t, "text", d.Lang())
 	})
 
@@ -1205,7 +1205,7 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		_ = d.Lang() // may or may not match; just covers lexers.Analyse path
 	})
 
@@ -1219,7 +1219,7 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "text", d.Lang())
 	})
 }
@@ -1231,7 +1231,7 @@ func TestDocumentTrimFinalNewlinesSingleEnding(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello\n")
 		e.Options().TrimFinalNewlines = true
 		e.Options().InsertFinalNewline = false
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 
 		err := e.Save(false)
@@ -1260,7 +1260,7 @@ tab_width = 2
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, core.LineEndingCRLF, d.LineEnding())
 		assert.False(t, d.IndentStyle().IsTabs())
 		assert.Equal(t, 2, d.TabWidth())
@@ -1270,23 +1270,23 @@ tab_width = 2
 func TestDocumentConsumeDirty(t *testing.T) {
 	t.Run("unseen view is dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		assert.True(t, d.ConsumeDirty(v.ID()))
 	})
 
 	t.Run("consuming clears the flag", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.ConsumeDirty(v.ID())
 		assert.False(t, d.ConsumeDirty(v.ID()))
 	})
 
 	t.Run("editing text marks every view dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.ConsumeDirty(v.ID())
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
@@ -1300,8 +1300,8 @@ func TestDocumentConsumeDirty(t *testing.T) {
 
 	t.Run("changing selection marks that view dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.SetSelectionFor(v.ID(), core.PointSelection(0))
 		d.ConsumeDirty(v.ID())
 		d.SetSelectionFor(v.ID(), core.PointSelection(0))
@@ -1312,8 +1312,8 @@ func TestDocumentConsumeDirty(t *testing.T) {
 
 	t.Run("removing a view forgets its dirty state", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		d.ConsumeDirty(v.ID())
 		d.RemoveView(v.ID())
 		assert.True(t, d.ConsumeDirty(v.ID()))

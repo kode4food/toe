@@ -59,8 +59,8 @@ func TestVCSModule(t *testing.T) {
 				{BaseFrom: 3, BaseTo: 3, From: 3, To: 4},
 			},
 		})
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		// select all lines to cover both hunks
 		testutil.SetSelection(t, e, []core.Range{
 			core.NewRange(0, doc.Text().LenChars()),

@@ -11,12 +11,12 @@ import (
 func (m Model) RenameSymbolAction() command.KeyAction {
 	ec := m.component
 	return func(e *view.Editor) command.Continuation {
-		doc, ok := e.FocusedDocument()
-		if !ok {
+		doc := e.FocusedDocument()
+		if doc == nil {
 			return nil
 		}
-		v, ok := e.FocusedView()
-		if !ok {
+		v := e.FocusedView()
+		if v == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()
@@ -47,10 +47,10 @@ func (m Model) RenameSymbolAction() command.KeyAction {
 func (m Model) CompletionAction() command.KeyAction {
 	ec := m.component
 	return func(e *view.Editor) command.Continuation {
-		if _, ok := e.FocusedDocument(); !ok {
+		if e.FocusedDocument() == nil {
 			return nil
 		}
-		if _, ok := e.FocusedView(); !ok {
+		if e.FocusedView() == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()
@@ -67,12 +67,12 @@ func (m Model) CompletionAction() command.KeyAction {
 func (m Model) HoverAction() command.KeyAction {
 	ec := m.component
 	return func(e *view.Editor) command.Continuation {
-		doc, ok := e.FocusedDocument()
-		if !ok {
+		doc := e.FocusedDocument()
+		if doc == nil {
 			return nil
 		}
-		v, ok := e.FocusedView()
-		if !ok {
+		v := e.FocusedView()
+		if v == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()
@@ -100,12 +100,12 @@ func (m Model) HoverAction() command.KeyAction {
 func (m Model) SignatureHelpAction() command.KeyAction {
 	ec := m.component
 	return func(e *view.Editor) command.Continuation {
-		doc, ok := e.FocusedDocument()
-		if !ok {
+		doc := e.FocusedDocument()
+		if doc == nil {
 			return nil
 		}
-		v, ok := e.FocusedView()
-		if !ok {
+		v := e.FocusedView()
+		if v == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()
@@ -134,12 +134,12 @@ func (m Model) SignatureHelpAction() command.KeyAction {
 }
 
 func renameSymbol(e *view.Editor, name string) error {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
 	ls := e.LanguageServerController()

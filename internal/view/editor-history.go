@@ -6,12 +6,12 @@ type historyOp func(*Document, Id) bool
 
 // Apply applies a transaction to the focused document for the focused view
 func (e *Editor) Apply(tx core.Transaction) error {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return ErrNoView
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return ErrNoDocument
 	}
 	if v.Mode() == ModeInsert {
@@ -37,10 +37,10 @@ func (e *Editor) ApplyToDocument(doc *Document, tx core.Transaction) error {
 	if doc == nil {
 		return ErrNoDocument
 	}
-	v, ok := e.viewForDocument(doc.ID())
-	if !ok {
-		v, ok = e.FocusedView()
-		if !ok {
+	v := e.viewForDocument(doc.ID())
+	if v == nil {
+		v = e.FocusedView()
+		if v == nil {
 			return ErrNoView
 		}
 	}
@@ -65,11 +65,11 @@ func (e *Editor) ApplyToDocument(doc *Document, tx core.Transaction) error {
 // CommitInsertHistory flushes any pending insert-mode history accumulation on
 // the focused document into a single history revision
 func (e *Editor) CommitInsertHistory() {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	if doc, ok := e.Document(v.DocID()); ok {
+	if doc := e.Document(v.DocID()); doc != nil {
 		doc.CommitInsertHistory(v.ID())
 	}
 }
@@ -82,12 +82,12 @@ func (e *Editor) Redo() bool { return e.applyUndoRedo((*Document).Redo) }
 
 // Earlier navigates history backward by the given UndoKind
 func (e *Editor) Earlier(kind core.UndoKind) bool {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return false
 	}
 	doc.content.Lock()
@@ -118,12 +118,12 @@ func (e *Editor) Earlier(kind core.UndoKind) bool {
 
 // Later navigates history forward by the given UndoKind
 func (e *Editor) Later(kind core.UndoKind) bool {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return false
 	}
 	doc.content.Lock()
@@ -153,12 +153,12 @@ func (e *Editor) Later(kind core.UndoKind) bool {
 }
 
 func (e *Editor) applyUndoRedo(fn historyOp) bool {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return false
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return false
 	}
 	before := doc.Text()
@@ -169,11 +169,11 @@ func (e *Editor) applyUndoRedo(fn historyOp) bool {
 	return true
 }
 
-func (e *Editor) viewForDocument(id DocumentId) (*View, bool) {
+func (e *Editor) viewForDocument(id DocumentId) *View {
 	for _, v := range e.AllViews() {
 		if v.DocID() == id {
-			return v, true
+			return v
 		}
 	}
-	return nil, false
+	return nil
 }

@@ -8,12 +8,12 @@ import (
 // KillToLineEnd deletes from the cursor to the end of the current line. If the
 // cursor is already at the line ending, the newline itself is deleted
 func KillToLineEnd(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -63,12 +63,12 @@ func KillToLineEnd(e *view.Editor) {
 // KillToLineStart deletes from the cursor to the start of the current line
 // If the cursor is at the start, deletes the preceding newline (joins lines)
 func KillToLineStart(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

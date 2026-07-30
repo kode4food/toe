@@ -22,15 +22,15 @@ func TestNewEditor(t *testing.T) {
 
 	t.Run("focused view exists", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		assert.NotNil(t, v)
 	})
 
 	t.Run("focused document exists", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		d, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		d := e.FocusedDocument()
+		assert.NotNil(t, d)
 		assert.NotNil(t, d)
 	})
 }
@@ -81,14 +81,14 @@ func TestEditorRegister(t *testing.T) {
 func TestEditorCloseView(t *testing.T) {
 	t.Run("closing last view clears focus", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		assert.Equal(t, 0, len(e.AllViews()))
 	})
 
 	t.Run("closing a view removes unreferenced doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		docCount := len(e.AllDocuments())
 		e.CloseView(v.ID())
 		assert.Equal(t, docCount-1, len(e.AllDocuments()))
@@ -123,7 +123,7 @@ func TestEditorTree(t *testing.T) {
 	t.Run("ResizeTree delegates to tree", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		a := v.Area()
 		assert.Equal(t, 80, a.Width)
 		assert.Equal(t, 24, a.Height)
@@ -134,17 +134,16 @@ func TestEditorSplits(t *testing.T) {
 	t.Run("HSplit creates second view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		d, _ := e.FocusedDocument()
-		v, ok := e.HSplit(d.ID())
-		assert.True(t, ok)
+		d := e.FocusedDocument()
+		v := e.HSplit(d.ID())
+		assert.NotNil(t, v)
 		assert.NotNil(t, v)
 		assert.Equal(t, 2, len(e.AllViews()))
 	})
 
 	t.Run("HSplit with invalid docID fails", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		_, ok := e.HSplit(view.InvalidDocumentId)
-		assert.False(t, ok)
+		assert.Nil(t, e.HSplit(view.InvalidDocumentId))
 	})
 
 	t.Run("VSplitNew adds new doc", func(t *testing.T) {
@@ -179,34 +178,32 @@ func TestEditorSplits(t *testing.T) {
 		assert.Equal(t, 1, len(e.AllDocuments()))
 	})
 
-	t.Run("VSplit returns false when too narrow", func(t *testing.T) {
+	t.Run("VSplit returns nil when too narrow", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 20, Height: 24})
-		d, _ := e.FocusedDocument()
-		v, ok := e.VSplit(d.ID())
-		assert.False(t, ok)
+		d := e.FocusedDocument()
+		v := e.VSplit(d.ID())
 		assert.Nil(t, v)
 	})
 
-	t.Run("HSplit returns false when too short", func(t *testing.T) {
+	t.Run("HSplit returns nil when too short", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 8})
-		d, _ := e.FocusedDocument()
-		v, ok := e.HSplit(d.ID())
-		assert.False(t, ok)
+		d := e.FocusedDocument()
+		v := e.HSplit(d.ID())
 		assert.Nil(t, v)
 	})
 
 	t.Run("VSplit inherits jump list", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		d, _ := e.FocusedDocument()
-		src, _ := e.FocusedView()
+		d := e.FocusedDocument()
+		src := e.FocusedView()
 		src.PushJump(d.ID(), 0, core.PointSelection(0))
 		src.PushJump(d.ID(), 5, core.PointSelection(5))
 
-		v, ok := e.VSplit(d.ID())
-		assert.True(t, ok)
+		v := e.VSplit(d.ID())
+		assert.NotNil(t, v)
 		assert.Equal(t, src.Jumps(), v.Jumps())
 
 		// splits are independent copies, not shared state
@@ -220,9 +217,9 @@ func TestEditorFocusNavigation(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		e.VSplitNew()
-		v1, _ := e.FocusedView()
+		v1 := e.FocusedView()
 		e.FocusNextView()
-		v2, _ := e.FocusedView()
+		v2 := e.FocusedView()
 		assert.NotEqual(t, v1.ID(), v2.ID())
 	})
 
@@ -230,9 +227,9 @@ func TestEditorFocusNavigation(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		e.VSplitNew()
-		v1, _ := e.FocusedView()
+		v1 := e.FocusedView()
 		e.FocusPrevView()
-		v2, _ := e.FocusedView()
+		v2 := e.FocusedView()
 		assert.NotEqual(t, v1.ID(), v2.ID())
 	})
 
@@ -240,17 +237,17 @@ func TestEditorFocusNavigation(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
 		e.VSplitNew()
-		fv, _ := e.FocusedView()
+		fv := e.FocusedView()
 		e.FocusDirection(view.DirectionLeft)
-		lv, _ := e.FocusedView()
+		lv := e.FocusedView()
 		assert.NotEqual(t, fv.ID(), lv.ID())
 	})
 
 	t.Run("FocusDirection no-op when no split", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.FocusDirection(view.DirectionLeft)
-		after, _ := e.FocusedView()
+		after := e.FocusedView()
 		assert.Equal(t, v.ID(), after.ID())
 	})
 
@@ -262,17 +259,17 @@ func TestEditorFocusNavigation(t *testing.T) {
 		e.FocusDirection(view.DirectionLeft)
 		e.HSplitNew()
 		e.VSplitNew()
-		inner, _ := e.FocusedView()
+		inner := e.FocusedView()
 		e.HSplitNew()
 		e.FocusDirection(view.DirectionRight)
-		right, _ := e.FocusedView()
+		right := e.FocusedView()
 		assert.NotEqual(t, inner.ID(), right.ID())
 		e.HSplitNew()
-		bottomRight, _ := e.FocusedView()
+		bottomRight := e.FocusedView()
 
 		e.FocusDirection(view.DirectionLeft)
 
-		focused, _ := e.FocusedView()
+		focused := e.FocusedView()
 		assert.NotEqual(t, bottomRight.ID(), focused.ID())
 		assert.Equal(t, inner.ID(), focused.ID())
 	})
@@ -283,7 +280,7 @@ func TestEditorSwapAndTranspose(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
 		e.VSplitNew()
-		fv, _ := e.FocusedView()
+		fv := e.FocusedView()
 		e.SwapSplitInDirection(view.DirectionLeft)
 		all := e.AllViews()
 		assert.Equal(t, 2, len(all))
@@ -337,9 +334,9 @@ func TestEditorPrevDocID(t *testing.T) {
 	t.Run("pops prev after buffer switch", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		first, _ := e.FocusedDocument()
+		first := e.FocusedDocument()
 		e.VSplitNew()
-		second, _ := e.FocusedDocument()
+		second := e.FocusedDocument()
 
 		ok := e.SwitchBuffer(first.ID())
 
@@ -354,11 +351,11 @@ func TestEditorPrevDocID(t *testing.T) {
 	t.Run("focus keeps per-view prev", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		firstView, _ := e.FocusedView()
-		firstDoc, _ := e.FocusedDocument()
+		firstView := e.FocusedView()
+		firstDoc := e.FocusedDocument()
 		e.VSplitNew()
-		secondView, _ := e.FocusedView()
-		secondDoc, _ := e.FocusedDocument()
+		secondView := e.FocusedView()
+		secondDoc := e.FocusedDocument()
 		assert.True(t, e.SwitchBuffer(firstDoc.ID()))
 
 		e.FocusView(firstView.ID())
@@ -374,9 +371,9 @@ func TestEditorPrevDocID(t *testing.T) {
 	t.Run("false when prev doc closed", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		first, _ := e.FocusedDocument()
+		first := e.FocusedDocument()
 		e.VSplitNew()
-		second, _ := e.FocusedDocument()
+		second := e.FocusedDocument()
 		assert.True(t, e.SwitchBuffer(first.ID()))
 		e.DeleteDocument(second.ID())
 
@@ -390,7 +387,7 @@ func TestEditorCommitInsertHistory(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.SetMode(view.ModeInsert)
 		rope := func() *view.Editor {
-			doc, _ := e.FocusedDocument()
+			doc := e.FocusedDocument()
 			_ = doc
 			return e
 		}()
@@ -400,7 +397,7 @@ func TestEditorCommitInsertHistory(t *testing.T) {
 
 	t.Run("commit with no focused view is no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		e.CommitInsertHistory()
 	})
@@ -419,7 +416,7 @@ func TestEditorSaveAll(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "all.txt")
 		e := testutil.EditorWithText(t, "content")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetPath(path)
 		errs := e.SaveAll(false)
 		assert.Empty(t, errs)
@@ -463,7 +460,7 @@ func TestEditorReloadAll(t *testing.T) {
 		assert.NoError(t, err)
 		errs := e.ReloadAll()
 		assert.Empty(t, errs)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "v2", d.Text().String())
 	})
 }
@@ -556,7 +553,7 @@ func TestEditorSwitchBuffer(t *testing.T) {
 		all := e.AllDocuments()
 		assert.Equal(t, 2, len(all))
 		var other *view.Document
-		fv, _ := e.FocusedView()
+		fv := e.FocusedView()
 		for _, d := range all {
 			if d.ID() != fv.DocID() {
 				other = d
@@ -565,7 +562,7 @@ func TestEditorSwitchBuffer(t *testing.T) {
 		assert.NotNil(t, other)
 		ok := e.SwitchBuffer(other.ID())
 		assert.True(t, ok)
-		fv2, _ := e.FocusedView()
+		fv2 := e.FocusedView()
 		assert.Equal(t, other.ID(), fv2.DocID())
 	})
 
@@ -577,11 +574,11 @@ func TestEditorSwitchBuffer(t *testing.T) {
 
 	t.Run("delete removes document", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		e.DeleteDocument(doc.ID())
-		ok = e.SwitchBuffer(doc.ID())
+		ok := e.SwitchBuffer(doc.ID())
 
 		assert.False(t, ok)
 	})
@@ -596,7 +593,7 @@ func TestEditorSwitchOrOpenDoc(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d1, _ := e.FocusedDocument()
+		d1 := e.FocusedDocument()
 		d2, err := e.SwitchOrOpenDoc(path)
 		assert.NoError(t, err)
 		assert.Equal(t, d1.ID(), d2.ID())
@@ -638,7 +635,7 @@ func TestEditorPeekDoc(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		opened, _ := e.FocusedDocument()
+		opened := e.FocusedDocument()
 		before := len(e.AllDocuments())
 
 		d, err := e.PeekDoc(path)
@@ -679,14 +676,14 @@ func TestEditorEarlierLater(t *testing.T) {
 
 	t.Run("Earlier no view returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		assert.False(t, e.Earlier(core.UndoSteps(1)))
 	})
 
 	t.Run("Later no view returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		assert.False(t, e.Later(core.UndoSteps(1)))
 	})
@@ -698,7 +695,7 @@ func TestEditorEarlierLater(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 1, "b"),
@@ -717,7 +714,7 @@ func TestEditorEarlierLater(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 1, "b"),
@@ -748,7 +745,7 @@ func TestEditorApplyInsertMode(t *testing.T) {
 	t.Run("apply in insert mode accumulates", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.SetMode(view.ModeInsert)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "hi"),
@@ -756,7 +753,7 @@ func TestEditorApplyInsertMode(t *testing.T) {
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
 		assert.NoError(t, e.Apply(tx))
-		d2, _ := e.FocusedDocument()
+		d2 := e.FocusedDocument()
 		assert.Equal(t, "hi", d2.Text().String())
 	})
 }
@@ -764,16 +761,15 @@ func TestEditorApplyInsertMode(t *testing.T) {
 func TestEditorViewByID(t *testing.T) {
 	t.Run("view returns existing", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		got, ok := e.View(v.ID())
-		assert.True(t, ok)
+		v := e.FocusedView()
+		got := e.View(v.ID())
+		assert.NotNil(t, got)
 		assert.Equal(t, v.ID(), got.ID())
 	})
 
 	t.Run("view returns false for invalid id", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		_, ok := e.View(view.InvalidViewId)
-		assert.False(t, ok)
+		assert.Nil(t, e.View(view.InvalidViewId))
 	})
 }
 
@@ -804,16 +800,16 @@ func TestTreeViews(t *testing.T) {
 func TestTreeNext(t *testing.T) {
 	t.Run("single view next wraps to self", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		next := e.Tree().Next()
 		assert.Equal(t, v.ID(), next)
 	})
 
 	t.Run("two views cycle", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v1, _ := e.FocusedView()
+		v1 := e.FocusedView()
 		e.VSplitNew()
-		v2, _ := e.FocusedView()
+		v2 := e.FocusedView()
 		assert.Equal(t, v1.ID(), e.Tree().Next())
 		e.Tree().SetFocus(v1.ID())
 		assert.Equal(t, v2.ID(), e.Tree().Next())
@@ -828,7 +824,7 @@ func TestTreeNext(t *testing.T) {
 
 	t.Run("empty tree returns current focus", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		next := e.Tree().Next()
 		assert.Equal(t, e.Tree().Focus(), next)
@@ -838,7 +834,7 @@ func TestTreeNext(t *testing.T) {
 func TestTreePrev(t *testing.T) {
 	t.Run("single view prev wraps to self", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		assert.Equal(t, v.ID(), e.Tree().Prev())
 	})
 
@@ -851,7 +847,7 @@ func TestTreePrev(t *testing.T) {
 
 	t.Run("empty tree returns current focus", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		prev := e.Tree().Prev()
 		assert.Equal(t, e.Tree().Focus(), prev)
@@ -878,7 +874,7 @@ func TestTreeTranspose(t *testing.T) {
 func TestTreeContainerLayoutAt(t *testing.T) {
 	t.Run("returns layout for valid view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		layout, ok := e.Tree().ContainerLayoutAt(v.ID())
 		assert.True(t, ok)
 		assert.Equal(t, view.LayoutVertical, layout)
@@ -929,7 +925,7 @@ func TestTreeFindSplitInDirection(t *testing.T) {
 	t.Run("find right split", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
-		v1, _ := e.FocusedView()
+		v1 := e.FocusedView()
 		e.VSplitNew()
 		e.Tree().SetFocus(v1.ID())
 		id, ok := e.Tree().FindSplitInDirection(
@@ -941,7 +937,7 @@ func TestTreeFindSplitInDirection(t *testing.T) {
 
 	t.Run("no split in direction when only one view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		_, ok := e.Tree().FindSplitInDirection(
 			v.ID(), view.DirectionRight,
 		)
@@ -953,9 +949,9 @@ func TestTreeSwapSplitInDirection(t *testing.T) {
 	t.Run("swap in direction when split exists", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
-		v1, _ := e.FocusedView()
+		v1 := e.FocusedView()
 		e.VSplitNew()
-		v2, _ := e.FocusedView()
+		v2 := e.FocusedView()
 		ok := e.Tree().SwapSplitInDirection(view.DirectionLeft)
 		assert.True(t, ok)
 		all := e.Tree().Traverse()
@@ -1000,7 +996,7 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 40})
 		e.HSplitNew()
-		fv, _ := e.FocusedView()
+		fv := e.FocusedView()
 		_, ok := e.Tree().FindSplitInDirection(
 			fv.ID(), view.DirectionUp,
 		)
@@ -1125,12 +1121,12 @@ func TestEditorSwitchFileReuseDoc(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d1, _ := e.FocusedDocument()
+		d1 := e.FocusedDocument()
 		firstDocID := d1.ID()
 		e.VSplitNew()
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		d2, _ := e.FocusedDocument()
+		d2 := e.FocusedDocument()
 		assert.Equal(t, firstDocID, d2.ID())
 	})
 }
@@ -1140,7 +1136,7 @@ func TestEditorUndoRedoWithHistory(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		ok := e.Undo()
 		assert.True(t, ok)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "", d.Text().String())
 	})
 
@@ -1149,7 +1145,7 @@ func TestEditorUndoRedoWithHistory(t *testing.T) {
 		e.Undo()
 		ok := e.Redo()
 		assert.True(t, ok)
-		d, _ := e.FocusedDocument()
+		d := e.FocusedDocument()
 		assert.Equal(t, "hello", d.Text().String())
 	})
 }
@@ -1157,7 +1153,7 @@ func TestEditorUndoRedoWithHistory(t *testing.T) {
 func TestEditorModeNoView(t *testing.T) {
 	t.Run("Mode returns normal when no focused view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
@@ -1166,7 +1162,7 @@ func TestEditorModeNoView(t *testing.T) {
 func TestEditorNewDocumentNoView(t *testing.T) {
 	t.Run("no view inserts new view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		nv := e.NewDocument()
 		assert.NotNil(t, nv)
@@ -1177,7 +1173,7 @@ func TestEditorNewDocumentNoView(t *testing.T) {
 func TestEditorSaveNoDoc(t *testing.T) {
 	t.Run("Save returns error when no doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		err := e.Save(false)
 		assert.Error(t, err)
@@ -1187,7 +1183,7 @@ func TestEditorSaveNoDoc(t *testing.T) {
 func TestEditorReloadNoDoc(t *testing.T) {
 	t.Run("Reload returns error when no doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		err := e.Reload()
 		assert.Error(t, err)
@@ -1197,7 +1193,7 @@ func TestEditorReloadNoDoc(t *testing.T) {
 func TestEditorApplyNoView(t *testing.T) {
 	t.Run("Apply returns error when no view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		rope := core.NewRope("")
 		tx := core.NewTransaction(rope)
@@ -1210,7 +1206,7 @@ func TestEditorRecordPrevDocModified(t *testing.T) {
 	t.Run("lastModifiedDocIDs updated on doc change", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.VSplitNew()
-		d2, _ := e.FocusedDocument()
+		d2 := e.FocusedDocument()
 		secondID := d2.ID()
 		rope := d2.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
@@ -1241,7 +1237,7 @@ func TestTreeSwapCrossContainer(t *testing.T) {
 func TestEditorUndoNoView(t *testing.T) {
 	t.Run("Undo returns false when no view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		assert.False(t, e.Undo())
 	})
@@ -1250,7 +1246,7 @@ func TestEditorUndoNoView(t *testing.T) {
 func TestEditorRedoNoView(t *testing.T) {
 	t.Run("Redo returns false when no view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		assert.False(t, e.Redo())
 	})
@@ -1267,7 +1263,7 @@ func TestEditorSaveAllWithError(t *testing.T) {
 func TestMoveFocusedFile(t *testing.T) {
 	t.Run("returns error when no document", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		err := e.MoveFocusedFile("newpath.txt", false)
 		assert.ErrorIs(t, err, view.ErrNoDocument)
@@ -1285,8 +1281,8 @@ func TestMoveFocusedFile(t *testing.T) {
 		newPath := filepath.Join(dir, "newfile.txt")
 		err := e.MoveFocusedFile(newPath, true)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, newPath, doc.Path())
 	})
 
@@ -1300,8 +1296,8 @@ func TestMoveFocusedFile(t *testing.T) {
 		assert.NoError(t, err)
 		err = e.MoveFocusedFile(newPath, false)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, newPath, doc.Path())
 		_, statErr := os.Stat(newPath)
 		assert.NoError(t, statErr)
@@ -1322,8 +1318,8 @@ func TestMoveFocusedFile(t *testing.T) {
 func TestEditorCommitInsertHistoryNoDoc(t *testing.T) {
 	t.Run("CommitInsertHistory when no doc is no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		_ = doc
 		e.CloseView(v.ID())
 		e.CommitInsertHistory()
@@ -1333,7 +1329,7 @@ func TestEditorCommitInsertHistoryNoDoc(t *testing.T) {
 func TestTreeSeparatorAt(t *testing.T) {
 	t.Run("empty tree returns not ok", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 
 		_, ok := e.Tree().SeparatorAt(geom.Point{})
@@ -1417,8 +1413,8 @@ func TestApplyToDocument(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 5, "world"),
@@ -1438,8 +1434,8 @@ func TestApplyToDocument(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		e.SetMode(view.ModeInsert)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 5, "world"),
@@ -1486,8 +1482,8 @@ func TestEditorSaveWithFileOps(t *testing.T) {
 		newPath := filepath.Join(dir, "new.txt")
 		e := testutil.EditorWithText(t, "hello\n")
 		e.SetLanguageServerController(&fileOpController{})
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetPath(newPath)
 		assert.NoError(t, e.Save(false))
 		_, err := os.Stat(newPath)
@@ -1501,8 +1497,8 @@ func TestEditorSaveAllWithFileOps(t *testing.T) {
 		newPath := filepath.Join(dir, "new.txt")
 		e := testutil.EditorWithText(t, "hello\n")
 		e.SetLanguageServerController(&fileOpController{})
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetPath(newPath)
 		errs := e.SaveAll(false)
 		assert.Empty(t, errs)
@@ -1530,8 +1526,8 @@ func TestMoveFocusedFileWithOps(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(oldPath)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 5, "world"),
@@ -1564,8 +1560,8 @@ func TestSwitchFileEdgeCases(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		_, err = e.OpenFile(path)
 		assert.ErrorIs(t, err, view.ErrNoView)
@@ -1584,8 +1580,8 @@ func TestSwitchFileEdgeCases(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		path2 := filepath.Join(dir, "c.txt")
 		assert.NoError(t, os.WriteFile(path2, []byte("hi\n"), 0o644))
@@ -1598,12 +1594,12 @@ func TestSwitchBufferNoView(t *testing.T) {
 	t.Run("returns false when no focused view", func(t *testing.T) {
 		dir := t.TempDir()
 		e := view.NewEditor(dir)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
-		ok = e.SwitchBuffer(doc.ID())
+		ok := e.SwitchBuffer(doc.ID())
 		assert.False(t, ok)
 	})
 }
@@ -1633,7 +1629,7 @@ func TestReloadAllError(t *testing.T) {
 func TestEditorReplacePane(t *testing.T) {
 	t.Run("swaps and returns the displaced pane", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		id := v.ID()
 
 		old := e.ReplacePane(id, &fakePane{editor: e})
@@ -1647,7 +1643,7 @@ func TestEditorReplacePane(t *testing.T) {
 func TestEditorDiscardPane(t *testing.T) {
 	t.Run("closes the doc when it was the last view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		old := e.ReplacePane(v.ID(), &fakePane{editor: e})
 		docCount := len(e.AllDocuments())
 
@@ -1659,7 +1655,7 @@ func TestEditorDiscardPane(t *testing.T) {
 	t.Run("keeps the doc if still referenced", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.VSplit(v.DocID())
 		old := e.ReplacePane(v.ID(), &fakePane{editor: e})
 		docCount := len(e.AllDocuments())
@@ -1678,7 +1674,7 @@ func TestEditorDiscardPane(t *testing.T) {
 func TestEditorClosePane(t *testing.T) {
 	t.Run("replaces the sole pane with scratch", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		id := v.ID()
 
 		e.ClosePane(id)
@@ -1693,7 +1689,7 @@ func TestEditorClosePane(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		e.VSplitNew()
 		count := e.Tree().Count()
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 
 		e.ClosePane(v.ID())
 

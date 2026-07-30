@@ -12,12 +12,12 @@ import (
 // same visual column (the maximum column among all cursors). Only operates
 // when there are multiple selection ranges, all on different lines
 func AlignSelections(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -76,12 +76,12 @@ func AlignSelections(e *view.Editor) {
 // ReplaceChar replaces every grapheme in each selection with ch and exits
 // select mode
 func ReplaceChar(e *view.Editor, ch rune) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

@@ -124,8 +124,8 @@ func TestSignatureHelpComponent(t *testing.T) {
 
 		m = sendKeyAndFeed(m, ',')
 		out := stripANSI(m.View().Content)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.Equal(t, "(,)", doc.Text().String())
 		assert.Contains(t, out, "args parameter")
@@ -166,10 +166,10 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = sendKeyAndFeed(m, '(')
 		assert.Contains(t, stripANSI(m.View().Content), "signature docs")
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 		out := stripANSI(m.View().Content)
 
@@ -193,8 +193,8 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = sendSpecialAndFeed(m, tea.KeyEscape)
 		m = sendKeyAndFeed(m, ',')
 		out := stripANSI(m.View().Content)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.Equal(t, "(,)", doc.Text().String())
 		assert.NotContains(t, out, "signature docs")

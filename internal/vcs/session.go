@@ -73,7 +73,7 @@ func Attach(e *view.Editor) *Session {
 // DiffHunks returns the current hunks for the document, loading its diff base
 // on first request for a buffer that was not open at startup
 func (s *Session) DiffHunks(doc *view.Document) []view.DiffHunk {
-	if d, ok := s.differ(doc); ok {
+	if d := s.differ(doc); d != nil {
 		return d.Hunks()
 	}
 	s.ensureDiffBase(doc)
@@ -82,7 +82,7 @@ func (s *Session) DiffHunks(doc *view.Document) []view.DiffHunk {
 
 // DiffBase returns the version-control base text for the document
 func (s *Session) DiffBase(doc *view.Document) (string, bool) {
-	if d, ok := s.differ(doc); ok {
+	if d := s.differ(doc); d != nil {
 		return d.Base().String(), true
 	}
 	return "", false
@@ -130,7 +130,7 @@ func (s *Session) Refresh() {
 		if path == "" || !s.headMoved(doc, path) {
 			continue
 		}
-		if _, ok := s.differ(doc); !ok {
+		if s.differ(doc) == nil {
 			continue
 		}
 		text := doc.Text()
@@ -151,7 +151,7 @@ func (s *Session) DocumentOpened(doc *view.Document) {
 
 // DocumentChanged feeds the new document text to the differ
 func (s *Session) DocumentChanged(doc *view.Document, _ view.DocumentChange) {
-	if d, ok := s.differ(doc); ok {
+	if d := s.differ(doc); d != nil {
 		d.SetDoc(doc.Text())
 	}
 }
@@ -213,11 +213,10 @@ func (s *Session) ensureDiffBase(doc *view.Document) {
 	}()
 }
 
-func (s *Session) differ(doc *view.Document) (*Differ, bool) {
+func (s *Session) differ(doc *view.Document) *Differ {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	d, ok := s.differs[doc.ID()]
-	return d, ok
+	return s.differs[doc.ID()]
 }
 
 func (s *Session) headMoved(doc *view.Document, path string) bool {

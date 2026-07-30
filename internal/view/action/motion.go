@@ -312,8 +312,8 @@ func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
 	if w <= 0 {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	format := doc.TextFormatForConfig(w, e.Options())

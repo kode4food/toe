@@ -32,7 +32,7 @@ func surroundReplaceAction(e *view.Editor) command.Continuation {
 			if k.Code.Char != 0 && k.Mods == command.ModNone {
 				to := k.Code.Char
 				if positions, ok := syntaxSurroundPos(e, from); ok {
-					if doc, dOK := e.FocusedDocument(); dOK {
+					if doc := e.FocusedDocument(); doc != nil {
 						action.SurroundReplaceAt(e, doc.Text(), positions, to)
 						e.SetHint("")
 						return nil
@@ -52,7 +52,7 @@ func surroundDeleteAction(e *view.Editor) command.Continuation {
 		if k.Code.Char != 0 && k.Mods == command.ModNone {
 			ch := k.Code.Char
 			if positions, ok := syntaxSurroundPos(e, ch); ok {
-				if doc, dOK := e.FocusedDocument(); dOK {
+				if doc := e.FocusedDocument(); doc != nil {
 					action.SurroundDeleteAt(e, doc.Text(), positions)
 					e.SetHint("")
 					return nil
@@ -68,12 +68,12 @@ func surroundDeleteAction(e *view.Editor) command.Continuation {
 // syntaxSurroundPos uses Tree-sitter for surrounding brackets, falling back
 // to plaintext for each range it cannot handle
 func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil, false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil, false
 	}
 	text := doc.Text()

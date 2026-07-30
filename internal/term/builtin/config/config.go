@@ -255,8 +255,8 @@ func optionCmds(r *command.Registry) []command.Command {
 					return command.Result{Error: errUsageGet}
 				}
 				key, _ := args.First()
-				o, ok := r.LookupOption(key)
-				if !ok {
+				o := r.LookupOption(key)
+				if o == nil {
 					return command.Result{
 						Error: errUnknownOption.WithVars(i18n.Vars{
 							"key": key,
@@ -287,8 +287,8 @@ func optionCmds(r *command.Registry) []command.Command {
 				}
 				key, _ := args.Get(0)
 				val, _ := args.Get(1)
-				o, ok := r.LookupOption(key)
-				if !ok {
+				o := r.LookupOption(key)
+				if o == nil {
 					return command.Result{
 						Error: errUnknownOption.WithVars(i18n.Vars{
 							"key": key,
@@ -321,8 +321,8 @@ func optionCmds(r *command.Registry) []command.Command {
 					return command.Result{Error: errUsageToggle}
 				}
 				key, _ := args.First()
-				o, ok := r.LookupOption(key)
-				if !ok || o.Toggle == nil {
+				o := r.LookupOption(key)
+				if o == nil || o.Toggle == nil {
 					return command.Result{
 						Error: errInvalidOption.WithVars(i18n.Vars{
 							"key": key,

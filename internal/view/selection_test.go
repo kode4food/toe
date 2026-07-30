@@ -21,8 +21,8 @@ func TestSelectAll(t *testing.T) {
 
 func TestCollapseSelection(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(),
 		newSelection(t, []core.Range{core.NewRange(0, 3)}, 0),
 	)
@@ -33,8 +33,8 @@ func TestCollapseSelection(t *testing.T) {
 
 func TestFlipSelections(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(),
 		newSelection(t, []core.Range{core.NewRange(1, 4)}, 0),
 	)
@@ -46,8 +46,8 @@ func TestFlipSelections(t *testing.T) {
 
 func TestKeepPrimarySelection(t *testing.T) {
 	e := testutil.EditorWithText(t, "abcdef")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
 		core.NewRange(0, 2),
 		core.NewRange(3, 5),
@@ -62,20 +62,20 @@ func TestKeepPrimarySelection(t *testing.T) {
 func TestDeleteSelection(t *testing.T) {
 	t.Run("deletes selected range", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world")
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(),
 			newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
 		)
 		action.DeleteSelection(e)
-		doc, _ = e.FocusedDocument()
+		doc = e.FocusedDocument()
 		assert.Equal(t, " world", doc.Text().String())
 	})
 
 	t.Run("deletes char under collapsed cursor", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		action.DeleteSelection(e)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "bc", doc.Text().String())
 	})
 
@@ -98,8 +98,8 @@ func TestExtendLineBelow(t *testing.T) {
 
 	t.Run("extends when line already selected", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\ndef\n")
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(),
 			newSelection(t, []core.Range{core.NewRange(0, 4)}, 0),
 		)
@@ -128,8 +128,8 @@ func TestShrinkToLineBounds(t *testing.T) {
 
 func TestRotateSelections(t *testing.T) {
 	e := testutil.EditorWithText(t, "abcdef")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
 		core.NewRange(0, 1),
 		core.NewRange(2, 3),
@@ -147,7 +147,7 @@ name = "custom"
 comment-token = "//"
 `)
 		e := testutil.EditorWithText(t, "// foo\n// bar\n")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetLang("custom")
 
 		action.JoinSelections(e)
@@ -160,8 +160,8 @@ comment-token = "//"
 
 		action.JoinSelectionsSpace(e)
 
-		doc, _ := e.FocusedDocument()
-		v, _ := e.FocusedView()
+		doc := e.FocusedDocument()
+		v := e.FocusedView()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, "foo bar\n", doc.Text().String())
 		assert.Equal(t, 3, sel.Primary().Cursor(doc.Text()))
@@ -175,7 +175,7 @@ func TestSetLineEnding(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingCRLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\r\nb\r\n", doc.Text().String())
 		assert.Equal(t, core.LineEndingCRLF, doc.LineEnding())
 	})
@@ -186,7 +186,7 @@ func TestSetLineEnding(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\nb\n", doc.Text().String())
 		assert.Equal(t, core.LineEndingLF, doc.LineEnding())
 	})

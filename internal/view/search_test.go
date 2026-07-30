@@ -32,7 +32,7 @@ func TestSearchConfig(t *testing.T) {
 	t.Run("disabled wrap around stops at end", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar")
 		e.Options().SearchWrapAround = false
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		testutil.SetCursor(t, e, doc.Text().LenChars())
 
 		err := action.SearchForward(e, "foo")

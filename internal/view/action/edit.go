@@ -25,12 +25,12 @@ func ChangeSelection(e *view.Editor) {
 // SplitSelectionOnNewline splits each selection range on line boundaries,
 // producing one sub-range per line (excluding the line ending itself)
 func SplitSelectionOnNewline(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -92,12 +92,12 @@ func ChangeSelectionNoYank(e *view.Editor) {
 }
 
 func deleteOrChange(e *view.Editor, yank, enterInsert bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok || doc.ReadOnly() {
+	doc := e.FocusedDocument()
+	if doc == nil || doc.ReadOnly() {
 		return
 	}
 	text := doc.Text()

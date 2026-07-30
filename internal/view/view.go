@@ -184,7 +184,7 @@ func (v *View) DocID() DocumentId {
 
 // Path returns the path of the document this view displays
 func (v *View) Path() string {
-	if doc, ok := v.editor.Document(v.docID); ok {
+	if doc := v.editor.Document(v.docID); doc != nil {
 		return doc.Path()
 	}
 	return ""

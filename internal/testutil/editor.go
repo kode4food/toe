@@ -22,8 +22,8 @@ func EditorWithText(t *testing.T, text string) *view.Editor {
 // SetEditorText inserts text into an existing editor's focused document
 func SetEditorText(t *testing.T, e *view.Editor, text string) {
 	t.Helper()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 		core.TextChange(0, 0, text),
@@ -38,10 +38,10 @@ func SetEditorText(t *testing.T, e *view.Editor, text string) {
 // CursorPos returns the cursor position in the focused document
 func CursorPos(t *testing.T, e *view.Editor) int {
 	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	sel := doc.SelectionFor(v.ID())
 	return sel.Primary().Cursor(doc.Text())
 }
@@ -49,10 +49,10 @@ func CursorPos(t *testing.T, e *view.Editor) int {
 // SetCursor moves the focused view's cursor to pos
 func SetCursor(t *testing.T, e *view.Editor, pos int) {
 	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	doc.SetSelectionFor(v.ID(), core.PointSelection(pos))
 }
 
@@ -61,10 +61,10 @@ func SetSelection(
 	t *testing.T, e *view.Editor, ranges []core.Range, primary int,
 ) {
 	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	sel, err := core.NewSelection(ranges, primary)
 	assert.NoError(t, err)
 	doc.SetSelectionFor(v.ID(), sel)

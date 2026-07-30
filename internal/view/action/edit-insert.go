@@ -9,12 +9,12 @@ import (
 // InsertChar inserts a character at every cursor position in insert mode
 // Auto-pairs are applied when the character matches an opener or closer
 func InsertChar(e *view.Editor, ch rune) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

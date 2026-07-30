@@ -64,12 +64,12 @@ func (e *Editor) WriteRegister(name rune, values []string) {
 }
 
 func (e *Editor) selectionIndexRegister() []string {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	n := len(doc.SelectionFor(v.ID()).Ranges())
@@ -81,12 +81,12 @@ func (e *Editor) selectionIndexRegister() []string {
 }
 
 func (e *Editor) selectionTextRegister() []string {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()
@@ -103,7 +103,7 @@ func (e *Editor) selectionTextRegister() []string {
 }
 
 func (e *Editor) documentPathRegister() []string {
-	if doc, ok := e.FocusedDocument(); ok {
+	if doc := e.FocusedDocument(); doc != nil {
 		return []string{doc.Path()}
 	}
 	return nil

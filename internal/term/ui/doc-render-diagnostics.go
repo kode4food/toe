@@ -21,12 +21,12 @@ var diagnosticPopupScopes = [...]string{
 }
 
 func (r *renderPass) renderDiagnosticPopup(buf *tui.Buffer) {
-	doc, ok := r.cx.Editor.FocusedDocument()
-	if !ok {
+	doc := r.cx.Editor.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	v, ok := r.cx.Editor.FocusedView()
-	if !ok {
+	v := r.cx.Editor.FocusedView()
+	if v == nil {
 		return
 	}
 	diag, ok := diagnosticAtCursor(doc, v)
@@ -78,12 +78,12 @@ func (r *renderPass) drawDiagnosticPopup(
 }
 
 func currentDiagnosticPopupKey(cx *Context) diagPopupKey {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return diagPopupKey{}
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return diagPopupKey{}
 	}
 	diag, ok := diagnosticAtCursor(doc, v)

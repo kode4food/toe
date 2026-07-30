@@ -656,10 +656,10 @@ func TestSearchPromptAccept(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		m = m2.(ui.Model)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		first := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
 		assert.Equal(t, 2, first)
 

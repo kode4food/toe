@@ -159,8 +159,8 @@ func TestTokenExpander(t *testing.T) {
 
 	t.Run("variable with no document returns error", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		expand := ui.NewTokenExpander(e)
 		tok := command.Token{
@@ -398,8 +398,8 @@ func TestExpandVariables(t *testing.T) {
 
 	t.Run("language returns document language", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetLang("go")
 		result, err := expandVar(t, e, "language")
 		assert.NoError(t, err)
@@ -408,8 +408,8 @@ func TestExpandVariables(t *testing.T) {
 
 	t.Run("selection returns selected text", func(t *testing.T) {
 		e := expandEditorWithText(t, "hello world\n")
-		doc, _ := e.FocusedDocument()
-		v, _ := e.FocusedView()
+		doc := e.FocusedDocument()
+		v := e.FocusedView()
 		doc.SetSelectionFor(v.ID(), core.SingleSelection(0, 5))
 		result, err := expandVar(t, e, "selection")
 		assert.NoError(t, err)
@@ -445,8 +445,8 @@ func expandEditorWithText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := view.NewEditor(t.TempDir())
 	e.NewDocument()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 		core.TextChange(0, 0, text),

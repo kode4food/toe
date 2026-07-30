@@ -35,10 +35,10 @@ func TestSearch(t *testing.T) {
 func TestSearchHighlightLifecycle(t *testing.T) {
 	t.Run("cursor move clears highlights", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar foo")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.False(t, doc.SearchHighlightsActive(v.ID()))
 
@@ -317,7 +317,7 @@ func TestKillToLine(t *testing.T) {
 
 		action.KillToLineEnd(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
@@ -329,7 +329,7 @@ func TestKillToLine(t *testing.T) {
 
 		action.KillToLineEnd(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "helloworld", doc.Text().String())
 	})
 
@@ -340,7 +340,7 @@ func TestKillToLine(t *testing.T) {
 
 		action.KillToLineStart(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "world", doc.Text().String())
 	})
 
@@ -352,7 +352,7 @@ func TestKillToLine(t *testing.T) {
 
 		action.KillToLineStart(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "helloworld", doc.Text().String())
 	})
 }
@@ -364,7 +364,7 @@ func TestOpenAbove(t *testing.T) {
 
 		action.OpenAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "\nhello", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
@@ -375,7 +375,7 @@ func TestOpenAbove(t *testing.T) {
 
 		action.OpenAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\n\nb", doc.Text().String())
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
@@ -387,7 +387,7 @@ func TestOpenAbove(t *testing.T) {
 
 		action.OpenAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "\n\nhello", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
@@ -401,7 +401,7 @@ func TestOpenAbove(t *testing.T) {
 
 		action.OpenAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "\nabc", doc.Text().String())
 	})
 
@@ -411,7 +411,7 @@ func TestOpenAbove(t *testing.T) {
 
 		action.OpenAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "\nabc", doc.Text().String())
 		assert.Equal(t, view.ModeInsert, e.Mode())
 	})
@@ -461,7 +461,7 @@ func TestReplaceChar(t *testing.T) {
 
 		action.ReplaceChar(e, 'x')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "axc", doc.Text().String())
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
@@ -472,7 +472,7 @@ func TestReplaceChar(t *testing.T) {
 
 		action.ReplaceChar(e, 'x')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
@@ -485,7 +485,7 @@ func TestReplaceWithYanked(t *testing.T) {
 
 		action.ReplaceWithYanked(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "aXYc", doc.Text().String())
 	})
 
@@ -496,7 +496,7 @@ func TestReplaceWithYanked(t *testing.T) {
 
 		action.ReplaceWithYanked(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -511,7 +511,7 @@ func TestReplaceWithYanked(t *testing.T) {
 
 		action.ReplaceWithYanked(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xxbxxd", doc.Text().String())
 	})
 
@@ -522,7 +522,7 @@ func TestReplaceWithYanked(t *testing.T) {
 
 		action.ReplaceWithYanked(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -543,7 +543,7 @@ func TestSwitchCase(t *testing.T) {
 
 		action.SwitchCase(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hELLO", doc.Text().String())
 	})
 
@@ -553,7 +553,7 @@ func TestSwitchCase(t *testing.T) {
 
 		action.SwitchCase(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "A1B", doc.Text().String())
 	})
 
@@ -563,7 +563,7 @@ func TestSwitchCase(t *testing.T) {
 
 		action.SwitchCase(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
@@ -575,7 +575,7 @@ func TestSwitchToUppercase(t *testing.T) {
 
 		action.SwitchToUppercase(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "HELLO", doc.Text().String())
 	})
 }
@@ -587,7 +587,7 @@ func TestSwitchToLowercase(t *testing.T) {
 
 		action.SwitchToLowercase(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -599,8 +599,8 @@ func TestExtendToLineBounds(t *testing.T) {
 
 		action.ExtendToLineBounds(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 		assert.Equal(t, 3, sel.Primary().To())
@@ -614,8 +614,8 @@ func TestShrinkToLineBounds(t *testing.T) {
 
 		action.ShrinkToLineBounds(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() > sel.Primary().From())
 	})
@@ -626,8 +626,8 @@ func TestShrinkToLineBounds(t *testing.T) {
 
 		action.ShrinkToLineBounds(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, sel.Primary().From())
 		assert.Equal(t, 4, sel.Primary().To())
@@ -640,8 +640,8 @@ func TestShrinkToLineBounds(t *testing.T) {
 
 		action.ShrinkToLineBounds(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -658,8 +658,8 @@ func TestRemovePrimarySelection(t *testing.T) {
 
 		action.RemovePrimarySelection(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, len(sel.Ranges()))
 	})
@@ -670,8 +670,8 @@ func TestRemovePrimarySelection(t *testing.T) {
 
 		action.RemovePrimarySelection(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 	})
@@ -685,7 +685,7 @@ func TestDeleteWordBackwardForward(t *testing.T) {
 
 		action.DeleteWordBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, len(doc.Text().String()) < 11)
 	})
 
@@ -696,7 +696,7 @@ func TestDeleteWordBackwardForward(t *testing.T) {
 
 		action.DeleteWordBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
@@ -707,7 +707,7 @@ func TestDeleteWordBackwardForward(t *testing.T) {
 
 		action.DeleteWordForward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, len(doc.Text().String()) < 11)
 	})
 
@@ -718,7 +718,7 @@ func TestDeleteWordBackwardForward(t *testing.T) {
 
 		action.DeleteWordForward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -743,8 +743,8 @@ func TestSelectTextObjects(t *testing.T) {
 
 			action.SelectTextObjectAround(e, tc.ch)
 
-			v, _ := e.FocusedView()
-			doc, _ := e.FocusedDocument()
+			v := e.FocusedView()
+			doc := e.FocusedDocument()
 			sel := doc.SelectionFor(v.ID())
 			assert.True(t, sel.Primary().To() >= sel.Primary().From())
 		})
@@ -755,8 +755,8 @@ func TestSelectTextObjects(t *testing.T) {
 
 			action.SelectTextObjectInside(e, tc.ch)
 
-			v, _ := e.FocusedView()
-			doc, _ := e.FocusedDocument()
+			v := e.FocusedView()
+			doc := e.FocusedDocument()
 			sel := doc.SelectionFor(v.ID())
 			assert.True(t, sel.Primary().To() >= sel.Primary().From())
 		})
@@ -773,8 +773,8 @@ func TestMergeSelections(t *testing.T) {
 
 		action.MergeSelections(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 	})
@@ -790,8 +790,8 @@ func TestMergeConsecutive(t *testing.T) {
 
 		action.MergeConsecutive(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 	})
@@ -804,8 +804,8 @@ func TestEnsureForward(t *testing.T) {
 
 		action.EnsureForward(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, core.DirectionForward, sel.Primary().Direction())
 	})
@@ -818,7 +818,7 @@ func TestIndentUnindent(t *testing.T) {
 
 		action.Indent(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.True(t, text[0] == ' ' || text[0] == '\t')
 	})
@@ -829,7 +829,7 @@ func TestIndentUnindent(t *testing.T) {
 
 		action.Indent(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.True(t, len(text) > len("hello\n\nworld"))
 	})
@@ -840,7 +840,7 @@ func TestIndentUnindent(t *testing.T) {
 
 		action.Unindent(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
@@ -850,7 +850,7 @@ func TestIndentUnindent(t *testing.T) {
 
 		action.Unindent(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello\nworld", doc.Text().String())
 	})
 
@@ -860,7 +860,7 @@ func TestIndentUnindent(t *testing.T) {
 
 		action.Unindent(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -924,8 +924,8 @@ func TestCopyOnNextLine(t *testing.T) {
 
 		action.CopyOnNextLine(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, len(sel.Ranges()))
 	})
@@ -938,8 +938,8 @@ func TestCopyOnPrevLine(t *testing.T) {
 
 		action.CopyOnPrevLine(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, len(sel.Ranges()))
 	})
@@ -955,8 +955,8 @@ func TestCopyOnNextLineDuplicateHead(t *testing.T) {
 
 		action.CopyOnNextLine(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, len(sel.Ranges()))
 	})
@@ -969,7 +969,7 @@ func TestJoinWithEmptyNextLine(t *testing.T) {
 
 		action.JoinSelectionsSpace(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.NotContains(t, text, "\n\n")
 	})
@@ -1002,12 +1002,12 @@ func TestIndentWithSpaces(t *testing.T) {
 	t.Run("indent with space style aligns to stop", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetCursor(t, e, 0)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetIndentStyle(core.Spaces(2))
 
 		action.Indent(e)
 
-		text, _ := e.FocusedDocument()
+		text := e.FocusedDocument()
 		assert.True(t, len(text.Text().String()) > len("hello"))
 	})
 
@@ -1018,7 +1018,7 @@ func TestIndentWithSpaces(t *testing.T) {
 
 		action.Indent(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.True(t, len(doc.Text().String()) > len("hello"))
 	})
 }
@@ -1053,7 +1053,7 @@ func TestSurroundAdd(t *testing.T) {
 
 		action.SurroundAdd(e, '(')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		result := doc.Text().String()
 		assert.True(t, len(result) > len("hello"))
 		assert.Equal(t, view.ModeNormal, e.Mode())
@@ -1067,7 +1067,7 @@ func TestSurroundDelete(t *testing.T) {
 
 		action.SurroundDelete(e, '(')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -1079,7 +1079,7 @@ func TestSurroundReplace(t *testing.T) {
 
 		action.SurroundReplace(e, '(', '[')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "[hello]", doc.Text().String())
 	})
 }
@@ -1219,8 +1219,8 @@ func TestExtendToLineBoundsLastLine(t *testing.T) {
 
 		action.ExtendToLineBounds(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, sel.Primary().From())
 		assert.Equal(t, 5, sel.Primary().To())
@@ -1274,14 +1274,14 @@ func TestExtendSearchNoPattern(t *testing.T) {
 func TestMergeNoView(t *testing.T) {
 	t.Run("MergeSelections noop without view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		action.MergeSelections(e)
 	})
 
 	t.Run("MergeConsecutive noop without view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.CloseView(v.ID())
 		action.MergeConsecutive(e)
 	})

@@ -117,7 +117,7 @@ func stringValueFromMap(m map[string]any, key string) string {
 }
 
 func intValueFromMap(m map[string]any, key string, fallback int) int {
-	if n, ok := loader.IntPtr(m[key]); ok {
+	if n := loader.IntPtr(m[key]); n != nil {
 		return *n
 	}
 	return fallback

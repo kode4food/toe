@@ -10,12 +10,12 @@ import (
 // RotateSelectionsForward rotates the primary selection index forward by
 // count steps (wrapping around)
 func RotateSelectionsForward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -34,12 +34,12 @@ func RotateSelectionsForward(e *view.Editor) {
 // RotateSelectionsBackward rotates the primary selection index backward by
 // count steps (wrapping around)
 func RotateSelectionsBackward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -67,12 +67,12 @@ func RotateContentsBackward(e *view.Editor) {
 }
 
 func rotateSelectionContents(e *view.Editor, forward bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

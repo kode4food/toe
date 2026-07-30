@@ -12,8 +12,8 @@ import (
 
 func TestDocumentColors(t *testing.T) {
 	e := testutil.EditorWithText(t, "color: #123456\n")
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 
 	colors := []view.DocumentColor{
 		{From: 7, To: 14, Red: 0x12, Green: 0x34, Blue: 0x56},
@@ -31,8 +31,8 @@ func TestDocumentColors(t *testing.T) {
 
 func TestDocumentLinks(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello world\n")
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 
 	links := []view.DocumentLink{
 		{From: 0, To: 5, Target: "/a"},
@@ -51,10 +51,10 @@ func TestDocumentLinks(t *testing.T) {
 
 func TestDocumentHighlights(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello world\n")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	vid := v.ID()
 
 	highlights := []view.DocumentHighlight{
@@ -74,10 +74,10 @@ func TestDocumentHighlights(t *testing.T) {
 
 func TestDocumentHighlightsAll(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello world\n")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	other := view.Id(999)
 
 	highlights := []view.DocumentHighlight{{From: 0, To: 5}}
@@ -92,10 +92,10 @@ func TestDocumentHighlightsAll(t *testing.T) {
 
 func TestDocumentInlayHints(t *testing.T) {
 	e := testutil.EditorWithText(t, "fn main() {}\n")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	vid := v.ID()
 
 	hints := []view.InlayHint{
@@ -120,10 +120,10 @@ func TestDocumentInlayHints(t *testing.T) {
 
 func TestDocumentInlayHintsAll(t *testing.T) {
 	e := testutil.EditorWithText(t, "fn main() {}\n")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	other := view.Id(999)
 
 	hints := []view.InlayHint{{Pos: 2, Label: ": ()"}}
@@ -139,8 +139,8 @@ func TestDocumentInlayHintsAll(t *testing.T) {
 func TestOverlayAnchoring(t *testing.T) {
 	t.Run("diagnostic shifts with insert before it", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "func foo() {}\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Range: view.DiagnosticRange{From: 5, To: 8}},
 		})
@@ -155,8 +155,8 @@ func TestOverlayAnchoring(t *testing.T) {
 
 	t.Run("link shifts with insert before it", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{{From: 6, To: 11}})
 
 		insertTextAt(t, e, doc, 0, "xx")
@@ -169,8 +169,8 @@ func TestOverlayAnchoring(t *testing.T) {
 
 	t.Run("color shifts with insert before it", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "color: #123456\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentColors([]view.DocumentColor{{From: 7, To: 14}})
 
 		insertTextAt(t, e, doc, 0, "xx")
@@ -183,10 +183,10 @@ func TestOverlayAnchoring(t *testing.T) {
 
 	t.Run("highlight shifts with insert before it", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world\n")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: 6, To: 11},
 		})
@@ -201,10 +201,10 @@ func TestOverlayAnchoring(t *testing.T) {
 
 	t.Run("inlay hint shifts with insert before it", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "fn main() {}\n")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetInlayHints(v.ID(), []view.InlayHint{{Pos: 8, Label: ": ()"}})
 
 		insertTextAt(t, e, doc, 0, "xx")
@@ -216,8 +216,8 @@ func TestOverlayAnchoring(t *testing.T) {
 
 	t.Run("diagnostic unaffected by edit after it", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "func foo() {}\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Range: view.DiagnosticRange{From: 5, To: 8}},
 		})
@@ -232,8 +232,8 @@ func TestOverlayAnchoring(t *testing.T) {
 
 	t.Run("diagnostic shift survives undo and redo", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "func foo() {}\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Range: view.DiagnosticRange{From: 5, To: 8}},
 		})

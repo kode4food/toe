@@ -5,8 +5,8 @@ import sitter "github.com/tree-sitter/go-tree-sitter"
 // FindSurroundPair returns the Range of the skip-th bracket pair enclosing
 // cursor, or (Range{}, false) if none exists at that depth
 func FindSurroundPair(text, lang string, cursor, skip int) (Range, bool) {
-	language, langOK := languageFor(lang)
-	if !langOK {
+	language := languageFor(lang)
+	if language == nil {
 		return Range{}, false
 	}
 	runes := []rune(text)
@@ -56,8 +56,8 @@ func FindSurroundPairFor(
 	if !pairOK {
 		return Range{}, false
 	}
-	language, langOK := languageFor(lang)
-	if !langOK {
+	language := languageFor(lang)
+	if language == nil {
 		return Range{}, false
 	}
 	runes := []rune(text)

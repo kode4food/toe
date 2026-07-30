@@ -42,8 +42,8 @@ func TestDiagnostics(t *testing.T) {
 			},
 		)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		diags := doc.Diagnostics()
 
 		assert.NoError(t, err)
@@ -88,8 +88,8 @@ func TestDiagnostics(t *testing.T) {
 				},
 			},
 		)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		diags := doc.Diagnostics()
 		assert.NoError(t, err)
 		assert.Len(t, diags, 3)
@@ -122,8 +122,8 @@ func TestDiagnostics(t *testing.T) {
 			},
 		)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.NoError(t, err)
 		assert.Empty(t, doc.Diagnostics())

@@ -78,8 +78,8 @@ func nodePathAt(text, lang string, cursor int) ([]Range, bool) {
 }
 
 func nodePathFor(text, lang string, cursor int, widen bool) ([]Range, bool) {
-	language, ok := languageFor(lang)
-	if !ok {
+	language := languageFor(lang)
+	if language == nil {
 		return nil, false
 	}
 	src := []byte(text)

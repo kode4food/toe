@@ -13,8 +13,8 @@ func BenchmarkVisualColumn(b *testing.B) {
 	doc := core.NewRope(line)
 	sel := core.PointSelection(5000)
 	e := view.NewEditor(b.TempDir())
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		b.Fatal("missing focused view")
 	}
 	b.ReportAllocs()

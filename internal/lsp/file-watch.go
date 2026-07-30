@@ -146,7 +146,7 @@ func (s *Session) clientsWatching(path string) []*Client {
 	s.watch.RUnlock()
 	var out []*Client
 	for _, server := range servers {
-		if client, ok := s.servers.client(server); ok {
+		if client := s.servers.client(server); client != nil {
 			out = append(out, client)
 		}
 	}

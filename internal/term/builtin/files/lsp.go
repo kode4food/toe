@@ -194,8 +194,8 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 func lspCommandContext(
 	e *view.Editor,
 ) (*view.Document, view.LanguageServerController, bool) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil, nil, false
 	}
 	ctl := e.LanguageServerController()

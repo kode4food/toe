@@ -7,12 +7,12 @@ import (
 
 // SelectAll selects the entire document in the focused view
 func SelectAll(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	n := doc.Text().LenChars()
@@ -25,12 +25,12 @@ func SelectAll(e *view.Editor) {
 
 // CollapseSelection collapses every selection to its cursor position
 func CollapseSelection(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -49,12 +49,12 @@ func CollapseSelection(e *view.Editor) {
 
 // FlipSelections swaps anchor and head for every selection range
 func FlipSelections(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -71,12 +71,12 @@ func FlipSelections(e *view.Editor) {
 
 // KeepPrimarySelection discards all but the primary selection range
 func KeepPrimarySelection(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())

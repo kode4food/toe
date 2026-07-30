@@ -55,7 +55,7 @@ func (c *commandPaletteSource) Accept(
 	if !ok || cmd.Run == nil || len(cmd.Aliases) == 0 {
 		return
 	}
-	if _, ok := c.km.ResolveCommandIn(e.Mode().String(), cmd.Aliases[0]); !ok {
+	if c.km.ResolveCommandIn(e.Mode().String(), cmd.Aliases[0]) == nil {
 		return
 	}
 	cmd.Run(e, nil)

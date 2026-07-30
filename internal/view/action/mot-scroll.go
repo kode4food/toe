@@ -111,8 +111,8 @@ func GotoWindowCenter(e *view.Editor) {
 // Used for mouse-wheel events; the view remains free-scrolled until that view
 // receives cursor-moving keyboard input
 func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	if n < 1 {
@@ -142,8 +142,8 @@ func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 // ScrollViewColumns scrolls a view horizontally by n columns without moving
 // the cursor; scrolling right is clamped to keep one column of content visible
 func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	if n < 1 {
@@ -161,12 +161,12 @@ func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
 }
 
 func alignViewImpl(e *view.Editor, relOffset int) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -190,12 +190,12 @@ func alignViewImpl(e *view.Editor, relOffset int) {
 // gotoWindowImpl moves to the viewport position selected by align: 0 top,
 // 1 center, 2 bottom; select mode extends the selection
 func gotoWindowImpl(e *view.Editor, align int) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -234,14 +234,14 @@ func gotoWindowImpl(e *view.Editor, align int) {
 }
 
 func scrollView(e *view.Editor, lines int, up bool) {
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		scrollViewBy(e, v, max(e.ViewHeight(), 1), lines, up)
 	}
 }
 
 func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	if lines < 1 {

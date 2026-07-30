@@ -67,8 +67,8 @@ func TestCompletionComponent(t *testing.T) {
 		assert.Contains(t, out, "Println")
 
 		_ = sendSpecial(m, tea.KeyEnter)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.Equal(t, "Println", doc.Text().String())
 		assert.Equal(t, "Println", ctl.item.Label)
@@ -121,8 +121,8 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		_ = sendSpecialAndFeed(m, tea.KeyTab)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "Println", doc.Text().String())
 		assert.Equal(t, "Println", ctl.item.Label)
 	})
@@ -879,10 +879,10 @@ func TestCompletionComponent(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 		out = stripANSI(m.View().Content)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		assert.NotContains(t, out, "Println")
 		assert.Equal(t, 3, doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()))
@@ -912,8 +912,8 @@ func TestCompletionComponent(t *testing.T) {
 			X: x, Y: y, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "", doc.Text().String())
 		assert.Empty(t, ctl.item.Label)
 
@@ -973,8 +973,8 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 40, 8)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 		m2, _ := m.Update(tea.MouseWheelMsg{
 			X: 30, Y: 0, Button: tea.MouseWheelDown,
@@ -1010,8 +1010,8 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendKey(m, 'P')
 		out = stripANSI(m.View().Content)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.Equal(t, "P", doc.Text().String())
 		assert.Contains(t, out, "Println")
@@ -1177,8 +1177,8 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		_ = sendKey(m, '.')
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.Equal(t, ".", doc.Text().String())
 		assert.Empty(t, ctl.item.Label)
@@ -1194,10 +1194,10 @@ func TestCompletionComponent(t *testing.T) {
 			},
 		}
 		e.SetLanguageServerController(ctl)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		// cursor inside "alpha"; the anchor backs up to the word start (1)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		km := command.NewKeymaps()
@@ -1566,8 +1566,8 @@ func TestAutoCompletion(t *testing.T) {
 		m = sendKeyAndFeed(m, 'r')
 
 		assert.Contains(t, stripANSI(m.View().Content), "Println")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "Pr", doc.Text().String())
 	})
 

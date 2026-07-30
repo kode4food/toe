@@ -31,7 +31,7 @@ func BufferModule() command.Module {
 				Name:      actBufferClose,
 				DocString: "Close the current buffer",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					if doc, ok := e.FocusedDocument(); ok && doc.Modified() {
+					if doc := e.FocusedDocument(); doc != nil && doc.Modified() {
 						return command.Result{Error: errUnsavedBufferClose}
 					}
 					e.CloseCurrentView()
@@ -57,7 +57,7 @@ func BufferModule() command.Module {
 				Name:      actBufferCloseOthers,
 				DocString: "Close all buffers but the currently focused one",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					focused, _ := e.FocusedView()
+					focused := e.FocusedView()
 					for _, v := range e.AllViews() {
 						if focused == nil || v.ID() != focused.ID() {
 							e.CloseView(v.ID())

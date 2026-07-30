@@ -232,8 +232,8 @@ func TestFileReloadError(t *testing.T) {
 func TestFileMoveErrors(t *testing.T) {
 	t.Run("move no document returns error", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmdArgs(t, km, e, "move", "/tmp/dest.txt")
 		assert.Contains(t, res.Message, "error")
@@ -250,8 +250,8 @@ func TestFileMoveErrors(t *testing.T) {
 
 	t.Run("move! no document returns error", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmdArgs(t, km, e, "move!", "/tmp/dest.txt")
 		assert.Contains(t, res.Message, "error")

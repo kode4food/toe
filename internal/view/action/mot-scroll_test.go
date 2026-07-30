@@ -46,9 +46,9 @@ func TestPageSelect(t *testing.T) {
 
 func primaryRange(t *testing.T, e *view.Editor) (*view.Document, core.Range) {
 	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	return doc, doc.SelectionFor(v.ID()).Primary()
 }

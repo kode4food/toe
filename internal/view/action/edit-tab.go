@@ -11,12 +11,12 @@ import (
 // InLeadingWhitespace reports whether every cursor has only whitespace between
 // it and the start of its line
 func InLeadingWhitespace(e *view.Editor) bool {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return false
 	}
 	text := doc.Text()
@@ -44,12 +44,12 @@ func InLeadingWhitespace(e *view.Editor) bool {
 
 // InsertTab inserts one indentation unit (tab or spaces) at each cursor
 func InsertTab(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

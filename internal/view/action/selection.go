@@ -45,12 +45,12 @@ func ExtendToLineEndNewline(e *view.Editor) {
 
 // SaveSelection pushes the current cursor position to the view's jump list
 func SaveSelection(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -77,12 +77,12 @@ func JumpForward(e *view.Editor) {
 // RemovePrimarySelection removes the primary selection range. If only one
 // range exists, the command is a no-op
 func RemovePrimarySelection(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -97,12 +97,12 @@ func RemovePrimarySelection(e *view.Editor) {
 
 // MergeSelections merges all selection ranges into one spanning range
 func MergeSelections(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -111,12 +111,12 @@ func MergeSelections(e *view.Editor) {
 
 // MergeConsecutive merges overlapping or adjacent selection ranges
 func MergeConsecutive(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -134,12 +134,12 @@ func EnsureForward(e *view.Editor) {
 // GotoLastModification moves each cursor to the position of the most recent
 // committed change in the current document
 func GotoLastModification(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	pos := doc.LastEditPos()
@@ -160,22 +160,22 @@ func GotoLastModification(e *view.Editor) {
 // transaction, so cursor moves driven by input (mouse, jumps) go through the
 // same insert-group and history bookkeeping as an edit
 func ApplySelection(e *view.Editor, sel core.Selection) {
-	if doc, ok := e.FocusedDocument(); ok {
+	if doc := e.FocusedDocument(); doc != nil {
 		_ = e.Apply(core.NewTransaction(doc.Text()).WithSelection(sel))
 	}
 }
 
 func jumpTo(e *view.Editor, fn jumpResolver) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
 	_, pos, ok := fn(v)
 	if !ok {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	newSel, err := core.NewSelection([]core.Range{core.PointRange(pos)}, 0)
@@ -242,12 +242,12 @@ func selectionIsLinewise(text core.Rope, sel core.Selection) bool {
 }
 
 func applyMove(e *view.Editor, fn rangeMover) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()

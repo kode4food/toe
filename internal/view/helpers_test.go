@@ -14,10 +14,10 @@ import (
 
 func selectionAnchorHead(t *testing.T, e *view.Editor) (anchor, head int) {
 	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	sel := doc.SelectionFor(v.ID())
 	r := sel.Primary()
 	return r.Anchor, r.Head
@@ -47,8 +47,8 @@ func newSelection(
 
 func replaceFocusedText(t *testing.T, e *view.Editor, text string) {
 	t.Helper()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 		core.TextChange(0, rope.LenChars(), text),

@@ -18,12 +18,12 @@ func syntaxShrinkSelection(e *view.Editor) {
 func syntaxSelect(
 	e *view.Editor, fn func(syntax.SelectionArgs) (syntax.Range, bool),
 ) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -56,12 +56,12 @@ func syntaxSelect(
 }
 
 func syntaxMatchBrackets(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -106,12 +106,12 @@ func smartTab(e *view.Editor) {
 }
 
 func syntaxMoveParentNodeEnd(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()

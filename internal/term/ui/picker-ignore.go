@@ -134,7 +134,7 @@ func appendIgnore(ignores []PickerIgnore, dir, name string) []PickerIgnore {
 }
 
 func appendIgnorePath(ignores []PickerIgnore, dir, path string) []PickerIgnore {
-	if ig, ok := compileIgnore(path); ok {
+	if ig := compileIgnore(path); ig != nil {
 		return append(ignores, PickerIgnore{dir: dir, ig: ig})
 	}
 	return ignores
@@ -166,9 +166,12 @@ func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
 	}
 }
 
-func compileIgnore(path string) (*gitignore.GitIgnore, bool) {
+func compileIgnore(path string) *gitignore.GitIgnore {
 	ig, err := gitignore.CompileIgnoreFile(path)
-	return ig, err == nil
+	if err != nil {
+		return nil
+	}
+	return ig
 }
 
 func gitGlobalIgnorePath() string {

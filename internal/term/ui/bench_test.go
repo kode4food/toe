@@ -50,7 +50,7 @@ func BenchmarkRenderLongLine(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), core.PointSelection(len(line)))
 
 	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -138,7 +138,7 @@ func BenchmarkRenderLongLineCursorStart(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), core.PointSelection(0))
 
 	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)

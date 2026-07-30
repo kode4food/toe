@@ -132,8 +132,8 @@ func completeCommandLine(cx *Context, input string) []promptCompletion {
 		return completeCommandNames(cx, name)
 	}
 	mode := cx.Editor.Mode().String()
-	cmd, ok := cx.Keymaps.ResolveCommandIn(mode, name)
-	if !ok {
+	cmd := cx.Keymaps.ResolveCommandIn(mode, name)
+	if cmd == nil {
 		return nil
 	}
 	items := cmd.Signature.Completer.Complete(cx.Editor, cmd.Signature, rest)

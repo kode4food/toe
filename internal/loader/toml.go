@@ -96,22 +96,16 @@ func BoolPtr(value any) *bool {
 	return nil
 }
 
-// IntPtr converts a TOML any value to (*int, bool)
-func IntPtr(value any) (*int, bool) {
+// IntPtr converts a TOML any value to *int, returning nil for non-int
+func IntPtr(value any) *int {
 	switch v := value.(type) {
 	case int:
-		return &v, true
+		return &v
 	case int64:
-		return new(int(v)), true
+		return new(int(v))
 	default:
-		return nil, false
+		return nil
 	}
-}
-
-// IntPtrOrNil converts a TOML any value to *int, returning nil for non-int
-func IntPtrOrNil(value any) *int {
-	v, _ := IntPtr(value)
-	return v
 }
 
 // StringPtr converts a TOML any value to *string, returning nil for non-string

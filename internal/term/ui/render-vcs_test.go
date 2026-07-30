@@ -216,10 +216,10 @@ func TestChangedFilePicker(t *testing.T) {
 		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.Document(v.DocID())
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.Document(v.DocID())
+		assert.NotNil(t, doc)
 		line, err := doc.SelectionFor(v.ID()).Primary().CursorLine(doc.Text())
 		assert.NoError(t, err)
 		assert.Equal(t, 49, line)
@@ -245,8 +245,8 @@ func repoEditor(
 ) (*view.Editor, *vcs.Session) {
 	t.Helper()
 	e, s := repoEditorNoWait(t, committed, current)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
 		if len(s.DiffHunks(doc)) > 0 {

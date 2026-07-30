@@ -37,8 +37,8 @@ func TestEditorMacro(t *testing.T) {
 		m = sendKey(m, 'v')
 		_ = sendKey(m, 'a')
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "XX", doc.Text().String())
 	})
 
@@ -55,8 +55,8 @@ func TestEditorMacro(t *testing.T) {
 		m = sendKey(m, 'v')
 		_ = sendKey(m, 'a')
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "xx", doc.Text().String())
 	})
 }

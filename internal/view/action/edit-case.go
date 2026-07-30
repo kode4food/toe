@@ -36,12 +36,12 @@ func SwitchToLowercase(e *view.Editor) {
 }
 
 func switchCaseImpl(e *view.Editor, transform func(string) string) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

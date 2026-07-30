@@ -89,14 +89,14 @@ func TestClipboard(t *testing.T) {
 		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		action.PasteClipboardAfter(e)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 
 		e = testutil.EditorWithText(t, "x")
 		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
 		action.PasteClipboardBefore(e)
-		doc, _ = e.FocusedDocument()
+		doc = e.FocusedDocument()
 		assert.Equal(t, "hellox", doc.Text().String())
 	})
 
@@ -121,7 +121,7 @@ func TestClipboard(t *testing.T) {
 
 		action.PasteClipboardAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "waxycz", doc.Text().String())
 	})
 
@@ -148,7 +148,7 @@ func TestClipboard(t *testing.T) {
 
 		action.ClipboardReplace(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "aXYc", doc.Text().String())
 	})
 
@@ -172,7 +172,7 @@ func TestClipboard(t *testing.T) {
 
 		action.PastePrimaryClipboardAfter(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "xhi", doc.Text().String())
 	})
 
@@ -185,7 +185,7 @@ func TestClipboard(t *testing.T) {
 
 		action.PastePrimaryClipboardBefore(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hix", doc.Text().String())
 	})
 
@@ -198,7 +198,7 @@ func TestClipboard(t *testing.T) {
 
 		action.PrimaryClipboardReplace(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "aZc", doc.Text().String())
 	})
 }

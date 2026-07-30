@@ -59,10 +59,10 @@ func TestTerminalPane(t *testing.T) {
 	t.Run("mouse click focuses it", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		_, ok = e.VSplit(doc.ID())
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		split := e.VSplit(doc.ID())
+		assert.NotNil(t, split)
 
 		cont := m.TerminalAction()(e)
 		assert.Nil(t, cont)
@@ -431,8 +431,8 @@ func TestTerminalPane(t *testing.T) {
 			}
 		}
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		assert.Equal(t, focus, v.ID())
 	})
 
@@ -606,8 +606,8 @@ func TestTerminalPane(t *testing.T) {
 		_ = m.View()
 
 		// picking the file replaces the terminal, so its shell is gone
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		want, _ := filepath.EvalSymlinks(path)
 		got, _ := filepath.EvalSymlinks(doc.Path())
 		assert.Equal(t, want, got)
@@ -656,10 +656,10 @@ func TestTerminalPane(t *testing.T) {
 	t.Run("bell marks status until focused", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		_, ok = e.VSplit(doc.ID())
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		split := e.VSplit(doc.ID())
+		assert.NotNil(t, split)
 
 		cont := m.TerminalAction()(e)
 		assert.Nil(t, cont)
@@ -795,10 +795,10 @@ func TestTerminalPane(t *testing.T) {
 		m := ui.New(e, command.NewKeymaps())
 		m = resize(m, 80, 24)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		_, ok = e.VSplit(doc.ID())
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		split := e.VSplit(doc.ID())
+		assert.NotNil(t, split)
 
 		cont := m.TerminalAction()(e)
 		assert.Nil(t, cont)

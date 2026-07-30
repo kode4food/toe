@@ -81,10 +81,10 @@ func TestCommandRegistry(t *testing.T) {
 	}
 
 	_ = km.Register("open", registered)
-	cmd, ok := km.ResolveCommand("edit")
+	cmd := km.ResolveCommand("edit")
 	list := km.Commands()
 
-	assert.True(t, ok)
+	assert.NotNil(t, cmd)
 	assert.Equal(t, registered.Aliases, cmd.Aliases)
 	assert.Equal(t, sig, cmd.Signature)
 	assert.Equal(t, 1, len(list))
@@ -106,12 +106,12 @@ func TestSparseCommands(t *testing.T) {
 			},
 		})
 
-		cmd, ok := km.ResolveCommand("w")
+		cmd := km.ResolveCommand("w")
 		action, found, prefix := km.Lookup("NOR", []command.KeyEvent{
 			char('w'),
 		})
 
-		assert.True(t, ok)
+		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
 		assert.Nil(t, action)
 		assert.False(t, found)
@@ -144,12 +144,11 @@ func TestSparseCommands(t *testing.T) {
 			Keys:  map[string][]command.KeyBinding{"*": {{{char('h')}}}},
 		})
 
-		cmd, ok := km.ResolveCommand("move-left")
+		cmd := km.ResolveCommand("move-left")
 		action, found, prefix := km.Lookup("NOR", []command.KeyEvent{
 			char('h'),
 		})
 
-		assert.False(t, ok)
 		assert.Nil(t, cmd)
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -170,12 +169,12 @@ func TestSparseCommands(t *testing.T) {
 			Aliases: []string{"quit", "q"},
 		})
 
-		cmd, ok := km.ResolveCommand("q")
+		cmd := km.ResolveCommand("q")
 		action, found, prefix := km.Lookup("NOR", []command.KeyEvent{
 			char('q'),
 		})
 
-		assert.True(t, ok)
+		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -197,12 +196,12 @@ func TestSparseCommands(t *testing.T) {
 			Aliases: []string{"quit", "q"},
 		})
 
-		cmd, ok := km.ResolveCommand("q")
+		cmd := km.ResolveCommand("q")
 		action, found, prefix := km.Lookup("NOR", []command.KeyEvent{
 			char('q'),
 		})
 
-		assert.True(t, ok)
+		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
 		assert.True(t, found)
 		assert.False(t, prefix)
@@ -561,10 +560,8 @@ func TestKeymapsModeFilters(t *testing.T) {
 		Aliases: []string{"i"},
 	})
 
-	_, ok := km.ResolveCommandIn("normal", "n")
-	assert.True(t, ok)
-	_, ok = km.ResolveCommandIn("image", "n")
-	assert.False(t, ok)
+	assert.NotNil(t, km.ResolveCommandIn("normal", "n"))
+	assert.Nil(t, km.ResolveCommandIn("image", "n"))
 
 	cmds := km.CommandsIn("image")
 	assert.Len(t, cmds, 1)

@@ -7,12 +7,12 @@ import (
 
 // DeleteCharForward deletes the grapheme cluster under each cursor
 func DeleteCharForward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -47,12 +47,12 @@ func DeleteCharForward(e *view.Editor) {
 // DeleteWordBackward deletes from the cursor to the start of the previous
 // word, for use in insert mode (C-w)
 func DeleteWordBackward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -86,12 +86,12 @@ func DeleteWordBackward(e *view.Editor) {
 // DeleteWordForward deletes from the cursor to the end of the next word,
 // for use in insert mode (A-d)
 func DeleteWordForward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

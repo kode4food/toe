@@ -8,13 +8,13 @@ import (
 
 func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 	c.markDirty()
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		comp.Pop()
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		comp.Pop()
 		return nil
 	}
@@ -83,12 +83,12 @@ func (c *completionComponent) refreshCmd(cx *Context) tea.Cmd {
 	if !c.incomplete {
 		return nil
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return nil
 	}
 	ls := cx.Editor.LanguageServerController()
@@ -118,12 +118,12 @@ func (c *completionComponent) refreshValid(
 	if !c.valid(cx) {
 		return false
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok || doc.Revision() != msg.rev {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil || doc.Revision() != msg.rev {
 		return false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
@@ -131,12 +131,12 @@ func (c *completionComponent) refreshValid(
 }
 
 func (c *completionComponent) query(cx *Context) (string, bool) {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return "", false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return "", false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())

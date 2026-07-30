@@ -38,7 +38,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 
 	buf.SetString(geom.Point{Y: y}, strings.Repeat(" ", r.size.Width), bgTUI)
 
-	focusedDoc, _ := r.cx.Editor.FocusedDocument()
+	focusedDoc := r.cx.Editor.FocusedDocument()
 	docs := r.cx.Editor.AllDocuments()
 	slices.SortFunc(docs, func(a, b *view.Document) int {
 		return int(a.ID() - b.ID())
@@ -242,8 +242,8 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		focused := p.ID() == focus
 		switch pane := p.(type) {
 		case *view.View:
-			doc, ok := r.cx.Editor.Document(pane.DocID())
-			if !ok {
+			doc := r.cx.Editor.Document(pane.DocID())
+			if doc == nil {
 				return true
 			}
 			dirty := pane.ConsumeDirty()

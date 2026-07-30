@@ -86,12 +86,13 @@ func (h *hoverComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 }
 
 func (h *hoverComponent) valid(cx *Context) bool {
-	v, ok := cx.Editor.FocusedView()
-	if !ok || v.ID() != h.anchor.viewID || v.DocID() != h.anchor.docID {
+	v := cx.Editor.FocusedView()
+	if v == nil || v.ID() != h.anchor.viewID ||
+		v.DocID() != h.anchor.docID {
 		return false
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok || doc.ID() != h.anchor.docID {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil || doc.ID() != h.anchor.docID {
 		return false
 	}
 	sel := doc.SelectionFor(v.ID())

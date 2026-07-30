@@ -29,8 +29,8 @@ func (s *stubLSP) ResolveDocumentLink(
 func editorWithNoView(t *testing.T) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 	e.CloseView(v.ID())
 	return e
 }

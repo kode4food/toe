@@ -33,12 +33,12 @@ func textObjectAction(around bool) command.KeyAction {
 }
 
 func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) bool {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return false
 	}
 	text := doc.Text()

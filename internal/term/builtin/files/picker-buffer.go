@@ -61,7 +61,7 @@ func (b *bufferPickerSource) Load(
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
 	docs := e.AllDocuments()
 	id := view.InvalidDocumentId
-	if doc, _ := e.FocusedDocument(); doc != nil {
+	if doc := e.FocusedDocument(); doc != nil {
 		id = doc.ID()
 	}
 	slices.SortStableFunc(docs, func(a, b *view.Document) int {
@@ -106,11 +106,11 @@ func (b *bufferPickerSource) Accept(
 	if id == view.InvalidDocumentId {
 		return
 	}
-	v, ok := ui.AcceptDocumentID(e, id, action)
-	if !ok {
+	v := ui.AcceptDocumentID(e, id, action)
+	if v == nil {
 		return
 	}
-	if doc, ok := e.Document(v.DocID()); ok {
+	if doc := e.Document(v.DocID()); doc != nil {
 		ui.AlignAcceptedView(e, v, doc)
 	}
 }

@@ -132,10 +132,10 @@ func TestGotoChange(t *testing.T) {
 
 		action.GotoNextChange(e)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		r := doc.SelectionFor(v.ID()).Primary()
 		assert.Equal(t, 0, r.Anchor)
 		assert.Equal(t, 12, r.Head)
@@ -182,8 +182,8 @@ func TestResetDiffChange(t *testing.T) {
 		n, err := action.ResetDiffChange(e)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, n)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "one\ntwo\nthree\n", doc.Text().String())
 	})
 
@@ -199,8 +199,8 @@ func TestResetDiffChange(t *testing.T) {
 		n, err := action.ResetDiffChange(e)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, n)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "one\ntwo\nthree\n", doc.Text().String())
 	})
 
@@ -221,8 +221,8 @@ func TestResetDiffChange(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, 2, n)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "one\ntwo\nthree\n", doc.Text().String())
 	})
 

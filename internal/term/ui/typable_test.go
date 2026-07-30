@@ -25,9 +25,9 @@ func TestConfigCommands(t *testing.T) {
 		m := runTypable(newTestModel(t, e), "config-open")
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-		doc, ok := e.FocusedDocument()
+		doc := e.FocusedDocument()
 
-		assert.True(t, ok)
+		assert.NotNil(t, doc)
 		assert.Equal(t,
 			filepath.Join(root, loader.DirName, "config.toml"), doc.Path())
 	})
@@ -49,9 +49,9 @@ func TestConfigCommands(t *testing.T) {
 		)
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-		doc, ok := e.FocusedDocument()
+		doc := e.FocusedDocument()
 
-		assert.True(t, ok)
+		assert.NotNil(t, doc)
 		assert.Equal(t,
 			filepath.Join(work, loader.WorkspaceDirName, "config.toml"),
 			doc.Path())
@@ -64,9 +64,9 @@ func TestConfigCommands(t *testing.T) {
 		m := runTypable(newTestModel(t, e), "log-open")
 
 		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-		doc, ok := e.FocusedDocument()
+		doc := e.FocusedDocument()
 
-		assert.True(t, ok)
+		assert.NotNil(t, doc)
 		assert.Equal(t,
 			filepath.Join(root, loader.DirName, loader.LogFileName),
 			doc.Path())

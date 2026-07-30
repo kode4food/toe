@@ -37,7 +37,6 @@ func SupportedLanguages() []string {
 	return slices.Sorted(maps.Keys(langRegistry))
 }
 
-func languageFor(name string) (*sitter.Language, bool) {
-	l, ok := langRegistry[name]
-	return l, ok
+func languageFor(name string) *sitter.Language {
+	return langRegistry[name]
 }

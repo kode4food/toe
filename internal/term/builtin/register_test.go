@@ -44,8 +44,7 @@ func TestDefaults(t *testing.T) {
 			"reflow",
 			"wclose!",
 		} {
-			_, ok := km.ResolveCommand(name)
-			assert.True(t, ok)
+			assert.NotNil(t, km.ResolveCommand(name))
 		}
 	})
 
@@ -54,8 +53,7 @@ func TestDefaults(t *testing.T) {
 		for _, name := range documentedCommandNames(t) {
 			t.Run(name, func(t *testing.T) {
 				assert.NotContains(t, name, "_")
-				_, ok := km.ResolveCommand(name)
-				assert.True(t, ok)
+				assert.NotNil(t, km.ResolveCommand(name))
 			})
 		}
 	})
@@ -149,8 +147,7 @@ func TestDefaults(t *testing.T) {
 			"shell",
 		} {
 			t.Run(key, func(t *testing.T) {
-				_, ok := reg.LookupOption(key)
-				assert.True(t, ok)
+				assert.NotNil(t, reg.LookupOption(key))
 			})
 		}
 	})
@@ -172,8 +169,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("buffer next distinct", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, ok := km.ResolveCommand("buffer_next")
-		assert.True(t, ok)
+		assert.NotNil(t, km.ResolveCommand("buffer_next"))
 		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
 			test.Char('g'), test.Char('n'),
 		})
@@ -184,8 +180,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("insert end newline-aware", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, ok := km.ResolveCommand("goto_line_end_newline")
-		assert.True(t, ok)
+		assert.NotNil(t, km.ResolveCommand("goto_line_end_newline"))
 		_, found, prefix := km.Lookup("INS", []command.KeyEvent{
 			test.Special(command.End),
 		})
@@ -429,8 +424,8 @@ func TestDefaults(t *testing.T) {
 func TestOptionCompleters(t *testing.T) {
 	t.Run("get completes all option keys", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		cmd, ok := km.ResolveCommand("get_option")
-		assert.True(t, ok)
+		cmd := km.ResolveCommand("get_option")
+		assert.NotNil(t, cmd)
 		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "sc")
 		texts := make([]string, len(comps))
 		for i, c := range comps {
@@ -441,8 +436,8 @@ func TestOptionCompleters(t *testing.T) {
 
 	t.Run("toggle completes only bool option keys", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		cmd, ok := km.ResolveCommand("toggle_option")
-		assert.True(t, ok)
+		cmd := km.ResolveCommand("toggle_option")
+		assert.NotNil(t, cmd)
 		allComps := cmd.Signature.Completer.Complete(
 			e, cmd.Signature, "",
 		)
@@ -454,8 +449,8 @@ func TestOptionCompleters(t *testing.T) {
 
 	t.Run("set completes option keys", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		cmd, ok := km.ResolveCommand("set_option")
-		assert.True(t, ok)
+		cmd := km.ResolveCommand("set_option")
+		assert.NotNil(t, cmd)
 		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "sc")
 		texts := make([]string, len(comps))
 		for i, c := range comps {
@@ -466,8 +461,8 @@ func TestOptionCompleters(t *testing.T) {
 
 	t.Run("set completes option values", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		cmd, ok := km.ResolveCommand("set_option")
-		assert.True(t, ok)
+		cmd := km.ResolveCommand("set_option")
+		assert.NotNil(t, cmd)
 		cases := []struct{ input, want string }{
 			{input: "theme moc", want: "mocha"},
 			{input: "line-number r", want: "relative"},

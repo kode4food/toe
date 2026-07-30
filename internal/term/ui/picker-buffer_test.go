@@ -42,8 +42,8 @@ func TestBufferPicker(t *testing.T) {
 		}
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "AAA")
 	})
 
@@ -75,8 +75,8 @@ func TestBufferPicker(t *testing.T) {
 		}
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "BBB")
 	})
 
@@ -84,8 +84,8 @@ func TestBufferPicker(t *testing.T) {
 		m, e := bufferPickerMRUModel(t)
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "CCC")
 	})
 
@@ -96,8 +96,8 @@ func TestBufferPicker(t *testing.T) {
 		})
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "BBB")
 	})
 
@@ -107,8 +107,8 @@ func TestBufferPicker(t *testing.T) {
 		_ = sendModified(m, 's', tea.ModCtrl)
 
 		assert.Equal(t, before+1, len(e.AllViews()))
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "CCC")
 	})
 
@@ -118,8 +118,8 @@ func TestBufferPicker(t *testing.T) {
 		_ = sendModified(m, 'v', tea.ModCtrl)
 
 		assert.Equal(t, before+1, len(e.AllViews()))
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "CCC")
 	})
 }

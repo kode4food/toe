@@ -11,13 +11,13 @@ func NormalMode(e *view.Editor) {
 	if e.Mode() == view.ModeNormal {
 		return
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		e.SetMode(view.ModeNormal)
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		e.SetMode(view.ModeNormal)
 		return
 	}
@@ -60,12 +60,12 @@ func ExitSelectMode(e *view.Editor) {
 // SelectMode enters select mode, adjusting any empty end-of-document selection
 // to be one grapheme wide so it is always visible
 func SelectMode(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -92,12 +92,12 @@ func SelectMode(e *view.Editor) {
 
 // InsertMode enters insert mode with cursors at the start of each selection
 func InsertMode(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	sel := doc.SelectionFor(v.ID())
@@ -117,12 +117,12 @@ func InsertMode(e *view.Editor) {
 // AppendMode enters insert mode with cursors one grapheme past the end of
 // each selection
 func AppendMode(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()

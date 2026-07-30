@@ -13,12 +13,12 @@ func SelectWithinRegex(e *view.Editor, pattern string) error {
 	if err != nil {
 		return err
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()
@@ -58,12 +58,12 @@ func SplitSelectionByRegex(e *view.Editor, pattern string) error {
 	if err != nil {
 		return err
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()
@@ -123,12 +123,12 @@ func filterSelectionsImpl(e *view.Editor, pattern string, remove bool) error {
 	if err != nil {
 		return err
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()

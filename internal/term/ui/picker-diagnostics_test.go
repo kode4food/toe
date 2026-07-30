@@ -25,8 +25,8 @@ func TestDiagnosticPicker(t *testing.T) {
 		e := view.NewEditor(dir)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.Document(v.DocID())
-		assert.True(t, ok)
+		doc := e.Document(v.DocID())
+		assert.NotNil(t, doc)
 		from := strings.Index(text, "main()")
 		assert.NotEqual(t, -1, from)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
@@ -45,8 +45,8 @@ func TestDiagnosticPicker(t *testing.T) {
 		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		v, ok = e.FocusedView()
-		assert.True(t, ok)
+		v = e.FocusedView()
+		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, from, sel.Primary().Cursor(doc.Text()))
 	})
@@ -107,8 +107,8 @@ func TestDiagnosticPicker(t *testing.T) {
 			e := view.NewEditor(dir)
 			v, err := e.OpenFile(path)
 			assert.NoError(t, err)
-			doc, ok := e.Document(v.DocID())
-			assert.True(t, ok)
+			doc := e.Document(v.DocID())
+			assert.NotNil(t, doc)
 			doc.ReplaceDiagnostics("test", []view.Diagnostic{
 				{
 					Severity: tc.sev,

@@ -207,8 +207,8 @@ func TestLSPCommandErrors(t *testing.T) {
 
 	t.Run("stop no document", func(t *testing.T) {
 		e, km, _ := test.EnvWithRegistry(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmdArgs(t, km, e, "lsp-stop", "gopls")
 		assert.Contains(t, res.Message, "error")
@@ -216,8 +216,8 @@ func TestLSPCommandErrors(t *testing.T) {
 
 	t.Run("workspace command no document", func(t *testing.T) {
 		e, km, _ := test.EnvWithRegistry(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmdArgs(t, km, e, "lsp-workspace-command", "test {}")
 		assert.Contains(t, res.Message, "error")

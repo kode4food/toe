@@ -29,8 +29,8 @@ func TestLifecycleQuit(t *testing.T) {
 
 	t.Run("quit! resolves in image mode", func(t *testing.T) {
 		_, km := test.Env(t, "")
-		cmd, ok := km.ResolveCommandIn("IMG", "q!")
-		assert.True(t, ok)
+		cmd := km.ResolveCommandIn("IMG", "q!")
+		assert.NotNil(t, cmd)
 		assert.Equal(t, "quit!", cmd.Name)
 	})
 

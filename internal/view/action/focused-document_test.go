@@ -149,8 +149,7 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 
 			tc.fn(e)
 
-			_, ok := e.FocusedDocument()
-			assert.False(t, ok)
+			assert.Nil(t, e.FocusedDocument())
 		})
 	}
 }
@@ -226,11 +225,10 @@ func TestFocusedDocumentGuardStrings(t *testing.T) {
 func editorWithMissingFocusedDocument(t *testing.T) *view.Editor {
 	t.Helper()
 	e := testutil.EditorWithText(t, "1\nabc\n")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 	deleteDocument(e, v.DocID())
-	_, ok = e.FocusedDocument()
-	assert.False(t, ok)
+	assert.Nil(t, e.FocusedDocument())
 	return e
 }
 

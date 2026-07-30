@@ -37,7 +37,7 @@ func TestMotion(t *testing.T) {
 
 		action.AddNewlineAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "ab\n\ncd", doc.Text().String())
 
 		e = testutil.EditorWithText(t, "ab\ncd")
@@ -45,7 +45,7 @@ func TestMotion(t *testing.T) {
 
 		action.AddNewlineBelow(e)
 
-		doc, _ = e.FocusedDocument()
+		doc = e.FocusedDocument()
 		assert.Equal(t, "ab\n\ncd", doc.Text().String())
 	})
 
@@ -56,7 +56,7 @@ func TestMotion(t *testing.T) {
 
 		action.AddNewlineAbove(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "ab\n\n\ncd", doc.Text().String())
 	})
 
@@ -88,8 +88,8 @@ func TestMoveLineEndEmpty(t *testing.T) {
 
 		action.ExtendToLineEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 	})
@@ -295,8 +295,8 @@ func TestExtendToLineStart(t *testing.T) {
 
 		action.ExtendToLineStart(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 	})
@@ -309,8 +309,8 @@ func TestExtendToLineEnd(t *testing.T) {
 
 		action.ExtendToLineEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() > 0)
 	})
@@ -323,8 +323,8 @@ func TestExtendToFileStart(t *testing.T) {
 
 		action.ExtendToFileStart(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 0, sel.Primary().From())
 	})
@@ -337,8 +337,8 @@ func TestExtendToLastLine(t *testing.T) {
 
 		action.ExtendToLastLine(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= 4)
 	})
@@ -351,8 +351,8 @@ func TestExtendToFileEnd(t *testing.T) {
 
 		action.ExtendToFileEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, sel.Primary().To())
 	})
@@ -365,8 +365,8 @@ func TestExtendCharLeftRight(t *testing.T) {
 
 		action.ExtendCharLeft(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 1)
 	})
@@ -377,8 +377,8 @@ func TestExtendCharLeftRight(t *testing.T) {
 
 		action.ExtendCharRight(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 1)
 	})
@@ -391,8 +391,8 @@ func TestExtendLineUpDown(t *testing.T) {
 
 		action.ExtendLineUp(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 0)
 	})
@@ -403,8 +403,8 @@ func TestExtendLineUpDown(t *testing.T) {
 
 		action.ExtendLineDown(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To()-sel.Primary().From() >= 0)
 	})
@@ -417,8 +417,8 @@ func TestExtendWordMotions(t *testing.T) {
 
 		action.ExtendNextWordStart(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() > sel.Primary().From())
 	})
@@ -429,8 +429,8 @@ func TestExtendWordMotions(t *testing.T) {
 
 		action.ExtendPrevWordStart(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -441,8 +441,8 @@ func TestExtendWordMotions(t *testing.T) {
 
 		action.ExtendNextWordEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -453,8 +453,8 @@ func TestExtendWordMotions(t *testing.T) {
 
 		action.ExtendNextLongWordStart(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -465,8 +465,8 @@ func TestExtendWordMotions(t *testing.T) {
 
 		action.ExtendPrevWordEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -479,8 +479,8 @@ func TestExtendToNonWhitespace(t *testing.T) {
 
 		action.ExtendToNonWhitespace(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= 3)
 	})
@@ -539,8 +539,8 @@ func TestExtendLongWordMotions(t *testing.T) {
 
 		action.ExtendPrevLongWordStart(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -551,8 +551,8 @@ func TestExtendLongWordMotions(t *testing.T) {
 
 		action.ExtendNextLongWordEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -563,8 +563,8 @@ func TestExtendLongWordMotions(t *testing.T) {
 
 		action.ExtendPrevLongWordEnd(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().To() >= sel.Primary().From())
 	})
@@ -588,8 +588,8 @@ func TestExtendSubWordMotions(t *testing.T) {
 
 			tc.fn(e)
 
-			v, _ := e.FocusedView()
-			doc, _ := e.FocusedDocument()
+			v := e.FocusedView()
+			doc := e.FocusedDocument()
 			sel := doc.SelectionFor(v.ID())
 			assert.True(t, sel.Primary().To() >= 0)
 		})
@@ -782,8 +782,8 @@ func TestGotoFile(t *testing.T) {
 		path := filepath.Join(dir, "target.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("x"), 0o644))
 		e := testutil.EditorWithText(t, "not-a-real-path")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 15, Target: "file://" + path},
 		})
@@ -797,8 +797,8 @@ func TestGotoFile(t *testing.T) {
 
 	t.Run("returns external target", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "https://example.com")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 19, Target: "https://example.com"},
 		})
@@ -837,7 +837,7 @@ func TestAlignSelections(t *testing.T) {
 
 		action.AlignSelections(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "x \nyyy", doc.Text().String())
 	})
 
@@ -847,7 +847,7 @@ func TestAlignSelections(t *testing.T) {
 
 		action.AlignSelections(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
@@ -855,8 +855,8 @@ func TestAlignSelections(t *testing.T) {
 func TestScrollViewLines(t *testing.T) {
 	t.Run("scrolls view down", func(t *testing.T) {
 		e := testutil.EditorWithText(t, scrollViewLinesText)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		action.ScrollViewLines(e, v, 3, false)
 
@@ -866,8 +866,8 @@ func TestScrollViewLines(t *testing.T) {
 
 	t.Run("scrolls view up", func(t *testing.T) {
 		e := testutil.EditorWithText(t, scrollViewLinesText)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		action.ScrollViewLines(e, v, 5, false)
 
 		action.ScrollViewLines(e, v, 3, true)
@@ -878,8 +878,8 @@ func TestScrollViewLines(t *testing.T) {
 
 	t.Run("zero lines clamps to one", func(t *testing.T) {
 		e := testutil.EditorWithText(t, scrollViewLinesText)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 		action.ScrollViewLines(e, v, 0, false)
 		assert.GreaterOrEqual(t, v.Offset().Anchor, before)
@@ -889,8 +889,8 @@ func TestScrollViewLines(t *testing.T) {
 func TestScrollViewColumns(t *testing.T) {
 	t.Run("scrolls view right", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdefghij\n")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		action.ScrollViewColumns(e, v, 3, false)
 
@@ -899,8 +899,8 @@ func TestScrollViewColumns(t *testing.T) {
 
 	t.Run("right clamps to widest visible line", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdefghij\n")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		action.ScrollViewColumns(e, v, 100, false)
 
@@ -909,8 +909,8 @@ func TestScrollViewColumns(t *testing.T) {
 
 	t.Run("left clamps to zero", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdefghij\n")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		action.ScrollViewColumns(e, v, 3, false)
 
 		action.ScrollViewColumns(e, v, 100, true)
@@ -920,8 +920,8 @@ func TestScrollViewColumns(t *testing.T) {
 
 	t.Run("zero columns clamps to one", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdefghij\n")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		action.ScrollViewColumns(e, v, 0, false)
 

@@ -28,12 +28,12 @@ func AddNewlineBelow(e *view.Editor) {
 // OpenAbove inserts a new line above each cursor's current line, places
 // the cursor at the start of the new line, and enters insert mode
 func OpenAbove(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -129,12 +129,12 @@ func applyNewlines(e *view.Editor, args applyNewlinesArgs) {
 }
 
 func addNewlineImpl(e *view.Editor, above bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

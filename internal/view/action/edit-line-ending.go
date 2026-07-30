@@ -8,11 +8,11 @@ import (
 // SetLineEnding changes the document line-ending style and rewrites existing
 // line endings in the focused buffer to match
 func SetLineEnding(e *view.Editor, le core.LineEnding) error {
-	if _, ok := e.FocusedView(); !ok {
+	if e.FocusedView() == nil {
 		return view.ErrNoView
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return view.ErrNoDocument
 	}
 	text := doc.Text()

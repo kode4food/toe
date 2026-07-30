@@ -82,8 +82,8 @@ func (s *Session) notifyChange(doc *view.Document, change view.DocumentChange) {
 }
 
 func (s *Session) clientsForDocument(doc *view.Document) []*Client {
-	lang, ok := s.languageForDocument(doc)
-	if !ok {
+	lang := s.languageForDocument(doc)
+	if lang == nil {
 		return nil
 	}
 	names := serverNames(lang.LanguageServers)
@@ -93,11 +93,10 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 
 	out := make([]*Client, 0, len(names))
 	for _, name := range names {
-		client, ok := s.servers.client(name)
-		if !ok {
-			var started bool
-			client, started = s.ensureClient(name, doc, lang)
-			if !started {
+		client := s.servers.client(name)
+		if client == nil {
+			client = s.ensureClient(name, doc, lang)
+			if client == nil {
 				continue
 			}
 		}
@@ -163,8 +162,8 @@ func (s *Session) clearDocumentHighlightsForServers(names []string) {
 		selected[name] = true
 	}
 	for _, doc := range s.editor.AllDocuments() {
-		lang, ok := s.languageForDocument(doc)
-		if !ok {
+		lang := s.languageForDocument(doc)
+		if lang == nil {
 			continue
 		}
 		for _, name := range serverNames(lang.LanguageServers) {

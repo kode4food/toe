@@ -128,12 +128,12 @@ func ExtendSearchPrev(e *view.Editor) {
 }
 
 func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
 	text := doc.Text()
@@ -180,12 +180,12 @@ func searchImpl(args searchArgs) error {
 	}
 	e.WriteRegister(view.RegisterSearch, []string{pattern})
 
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	// text and its string form are stable across repeats; only the selection

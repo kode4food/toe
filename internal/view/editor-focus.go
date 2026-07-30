@@ -1,9 +1,9 @@
 package view
 
 // FocusedView returns the currently focused view
-func (e *Editor) FocusedView() (*View, bool) {
-	v, ok := e.panes.tree.Get(e.panes.tree.Focus()).(*View)
-	return v, ok
+func (e *Editor) FocusedView() *View {
+	v, _ := e.panes.tree.Get(e.panes.tree.Focus()).(*View)
+	return v
 }
 
 // FocusedPane returns the currently focused pane

@@ -70,14 +70,14 @@ func (r *renderPass) screenCharPos(
 
 // contentViewAt returns the view whose content area contains screen point
 // (x, y); a click on the pane's own status row or the command line misses
-func (r *renderPass) contentViewAt(at geom.Point) (*view.View, bool) {
+func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 	yOff := 0
 	if bufferlineVisible(r.cx) {
 		yOff = 1
 	}
 	contentY := at.Y - yOff
 	if contentY < 0 {
-		return nil, false
+		return nil
 	}
 	var found *view.View
 	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
@@ -93,7 +93,7 @@ func (r *renderPass) contentViewAt(at geom.Point) (*view.View, bool) {
 		}
 		return true
 	})
-	return found, found != nil
+	return found
 }
 
 func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
@@ -187,12 +187,12 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		return nil
 	}
 
-	doc, ok := r.cx.Editor.FocusedDocument()
-	if !ok {
+	doc := r.cx.Editor.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := r.cx.Editor.FocusedView()
-	if !ok {
+	v := r.cx.Editor.FocusedView()
+	if v == nil {
 		return nil
 	}
 
@@ -244,13 +244,13 @@ func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
 }
 
 func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
-	v, ok := r.contentViewAt(at)
-	if !ok {
+	v := r.contentViewAt(at)
+	if v == nil {
 		return resolveClickPosRes{}, false
 	}
 	r.cx.Editor.FocusView(v.ID())
-	doc, ok := r.cx.Editor.Document(v.DocID())
-	if !ok {
+	doc := r.cx.Editor.Document(v.DocID())
+	if doc == nil {
 		return resolveClickPosRes{}, false
 	}
 	contentY := at.Y

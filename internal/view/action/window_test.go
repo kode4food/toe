@@ -12,7 +12,7 @@ import (
 func TestCloseCurrentView(t *testing.T) {
 	t.Run("blocks modified view when others exist", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		// Create two additional splits so there are 3 views total
 		e.VSplit(v.DocID())
 		e.VSplit(v.DocID())
@@ -39,7 +39,7 @@ func TestCloseCurrentView(t *testing.T) {
 
 func TestCloseOtherViews(t *testing.T) {
 	e := testutil.EditorWithText(t, "abc")
-	v, _ := e.FocusedView()
+	v := e.FocusedView()
 	// Create two additional splits
 	e.VSplit(v.DocID())
 	e.VSplit(v.DocID())

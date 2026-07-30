@@ -10,19 +10,19 @@ import (
 
 func TestEditorFocusView(t *testing.T) {
 	e := view.NewEditor("/tmp")
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 	e.FocusView(v.ID())
-	v2, ok := e.FocusedView()
-	assert.True(t, ok)
+	v2 := e.FocusedView()
+	assert.NotNil(t, v2)
 	assert.Equal(t, v.ID(), v2.ID())
 }
 
 func TestEditorView(t *testing.T) {
 	e := view.NewEditor("/tmp")
-	v, _ := e.FocusedView()
-	got, ok := e.View(v.ID())
-	assert.True(t, ok)
+	v := e.FocusedView()
+	got := e.View(v.ID())
+	assert.NotNil(t, got)
 	assert.Equal(t, v.ID(), got.ID())
 }
 

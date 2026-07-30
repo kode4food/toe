@@ -19,8 +19,8 @@ func FindTextObject(
 	if !ok {
 		return Range{}, false
 	}
-	language, ok := languageFor(lang)
-	if !ok {
+	language := languageFor(lang)
+	if language == nil {
 		return Range{}, false
 	}
 	qb, ok := embeddedTextobjectQuery(lang)

@@ -14,8 +14,8 @@ import (
 func TestEditorWithText(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
 
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	assert.Equal(t, "hello", doc.Text().String())
 	assert.Equal(t, 0, testutil.CursorPos(t, e))
 }
@@ -24,8 +24,8 @@ func TestSetEditorText(t *testing.T) {
 	e := testutil.EditorWithText(t, "")
 	testutil.SetEditorText(t, e, "world")
 
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	assert.Equal(t, "world", doc.Text().String())
 }
 
@@ -49,10 +49,10 @@ func TestSetSelection(t *testing.T) {
 		[]core.Range{core.NewRange(1, 4)}, 0,
 	)
 
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	sel := doc.SelectionFor(v.ID())
 	r := sel.Primary()
 	assert.Equal(t, 1, r.Anchor)

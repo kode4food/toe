@@ -3,41 +3,41 @@ package view
 import "fmt"
 
 // VSplit opens docID in a new vertical split (side by side)
-func (e *Editor) VSplit(docID DocumentId) (*View, bool) {
+func (e *Editor) VSplit(docID DocumentId) *View {
 	doc, ok := e.documents.byID[docID]
 	if !ok {
-		return nil, false
+		return nil
 	}
 	if !e.panes.tree.CanSplit(LayoutVertical) {
-		return nil, false
+		return nil
 	}
 	e.recordLeavingDoc()
 	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-	if src, ok := e.FocusedView(); ok {
+	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
 	e.panes.tree.Split(v, LayoutVertical)
 	e.markDocAccessed()
-	return v, true
+	return v
 }
 
 // HSplit opens docID in a new horizontal split (stacked)
-func (e *Editor) HSplit(docID DocumentId) (*View, bool) {
+func (e *Editor) HSplit(docID DocumentId) *View {
 	doc, ok := e.documents.byID[docID]
 	if !ok {
-		return nil, false
+		return nil
 	}
 	if !e.panes.tree.CanSplit(LayoutHorizontal) {
-		return nil, false
+		return nil
 	}
 	e.recordLeavingDoc()
 	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-	if src, ok := e.FocusedView(); ok {
+	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
 	e.panes.tree.Split(v, LayoutHorizontal)
 	e.markDocAccessed()
-	return v, true
+	return v
 }
 
 // SplitFocused opens the focused pane in a new split
@@ -78,7 +78,7 @@ func (e *Editor) VSplitNew() *View {
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
 	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-	if src, ok := e.FocusedView(); ok {
+	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
 	e.panes.tree.Split(v, LayoutVertical)
@@ -94,7 +94,7 @@ func (e *Editor) HSplitNew() *View {
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
 	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-	if src, ok := e.FocusedView(); ok {
+	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
 	e.panes.tree.Split(v, LayoutHorizontal)

@@ -168,15 +168,14 @@ func (e *Editor) ReloadConfig() error {
 }
 
 // View returns a view by id
-func (e *Editor) View(vid Id) (*View, bool) {
-	v, ok := e.panes.tree.Get(vid).(*View)
-	return v, ok
+func (e *Editor) View(vid Id) *View {
+	v, _ := e.panes.tree.Get(vid).(*View)
+	return v
 }
 
 // Document returns a document by id
-func (e *Editor) Document(did DocumentId) (*Document, bool) {
-	d, ok := e.documents.byID[did]
-	return d, ok
+func (e *Editor) Document(did DocumentId) *Document {
+	return e.documents.byID[did]
 }
 
 // DeleteDocument removes a document without closing its views; affected views
@@ -192,11 +191,11 @@ func (e *Editor) DeleteDocument(did DocumentId) {
 }
 
 // FocusedDocument returns the document displayed by the focused view
-func (e *Editor) FocusedDocument() (*Document, bool) {
-	if v, ok := e.FocusedView(); ok {
+func (e *Editor) FocusedDocument() *Document {
+	if v := e.FocusedView(); v != nil {
 		return e.Document(v.DocID())
 	}
-	return nil, false
+	return nil
 }
 
 // Mode returns the mode of the focused view
@@ -209,7 +208,7 @@ func (e *Editor) Mode() Mode {
 
 // SetMode sets the mode of the focused view
 func (e *Editor) SetMode(m Mode) {
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		v.SetMode(m)
 	}
 }

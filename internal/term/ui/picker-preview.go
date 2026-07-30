@@ -53,8 +53,8 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 	}
 	switch {
 	case p.item.Location.Target.ID != view.InvalidDocumentId:
-		doc, ok := p.editor.Document(p.item.Location.Target.ID)
-		if !ok {
+		doc := p.editor.Document(p.item.Location.Target.ID)
+		if doc == nil {
 			p.blitPlaceholderInto(buf, at, "<Invalid file location>")
 			return
 		}
@@ -81,7 +81,7 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 }
 
 func (p *previewCtx) previewSelection(doc *view.Document) core.Selection {
-	if fv, ok := p.editor.FocusedView(); ok && fv.DocID() == doc.ID() {
+	if fv := p.editor.FocusedView(); fv != nil && fv.DocID() == doc.ID() {
 		return doc.SelectionFor(fv.ID())
 	}
 	return doc.Selection()
@@ -140,7 +140,7 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 // the diff's right side; empty for a deleted or unreadable file
 func (p *previewCtx) workingPreview() previewDocEntry {
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
-		if doc, ok := p.editor.Document(p.item.Location.Target.ID); ok {
+		if doc := p.editor.Document(p.item.Location.Target.ID); doc != nil {
 			return *p.picker.preview.cache.doc(p.syntax, doc)
 		}
 	}

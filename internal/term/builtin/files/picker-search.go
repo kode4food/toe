@@ -77,8 +77,8 @@ func (g *globalSearchSource) Accept(
 	if !ok {
 		return
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	text := doc.Text()

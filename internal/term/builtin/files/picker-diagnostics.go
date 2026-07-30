@@ -69,12 +69,12 @@ func (d *diagnosticPickerSource) Accept(
 	if !ok {
 		return
 	}
-	v, ok := ui.AcceptDocumentID(e, payload.id, action)
-	if !ok {
+	v := ui.AcceptDocumentID(e, payload.id, action)
+	if v == nil {
 		return
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	sel, err := diagnosticSelection(payload.diag)
@@ -142,7 +142,7 @@ func diagnosticPickerDocuments(
 		})
 		return docs
 	}
-	if doc, ok := e.FocusedDocument(); ok {
+	if doc := e.FocusedDocument(); doc != nil {
 		return []*view.Document{doc}
 	}
 	return nil

@@ -26,10 +26,10 @@ func TestCodeAction(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		sel, err := core.NewSelection([]core.Range{
 			core.NewRange(0, 3),
 		}, 0)
@@ -60,10 +60,10 @@ func TestMultiCodeAction(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		sel, err := core.NewSelection([]core.Range{
 			core.NewRange(0, 3),
 		}, 0)
@@ -107,10 +107,10 @@ func TestCodeActionResolveModes(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		t.Cleanup(func() { _ = session.Close() })
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		return session, doc, v.ID()
 	}
 
@@ -155,10 +155,10 @@ func TestCodeActionDiagnosticFilter(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
 			{Range: view.DiagnosticRange{From: 5, To: 7}},
 			{Range: view.DiagnosticRange{From: 0, To: 9999}},
@@ -188,10 +188,10 @@ func TestCodeActionWithDiagnostics(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
 			{
 				Range:    view.DiagnosticRange{From: 0, To: 3},
@@ -231,10 +231,10 @@ func TestCodeActionUnavailable(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
 		session := lsp.NewSession(t.Context(), t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		err := session.ApplyCodeAction(doc, v.ID(), view.CodeAction{ID: "server:0"})
 		assert.ErrorIs(t, err, lsp.ErrCodeActionUnavailable)
 	})

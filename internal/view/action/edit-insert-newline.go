@@ -12,12 +12,12 @@ import (
 // InsertNewline inserts a newline at every cursor in insert mode, then
 // replicates the previous line's leading whitespace (auto-indent)
 func InsertNewline(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

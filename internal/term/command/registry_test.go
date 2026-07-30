@@ -41,8 +41,8 @@ func TestRegistry(t *testing.T) {
 		}
 		assert.NoError(t, reg.RegisterCommand("write_all", cmd))
 
-		got, ok := km.ResolveCommand("write_all")
-		assert.True(t, ok)
+		got := km.ResolveCommand("write_all")
+		assert.NotNil(t, got)
 		assert.Equal(t, []string{"write-all", "write"}, got.Aliases)
 	})
 
@@ -59,8 +59,7 @@ func TestRegistry(t *testing.T) {
 			},
 		}))
 
-		_, ok := km.ResolveCommand("noop")
-		assert.True(t, ok)
+		assert.NotNil(t, km.ResolveCommand("noop"))
 	})
 
 	t.Run("Bindings returns registered sequences", func(t *testing.T) {
@@ -188,21 +187,19 @@ func TestRegistry(t *testing.T) {
 
 	t.Run("LookupOption is case-insensitive", func(t *testing.T) {
 		reg := registryWithOptions(t)
-		_, ok := reg.LookupOption(" ScrollOff ")
-		assert.True(t, ok)
+		assert.NotNil(t, reg.LookupOption(" ScrollOff "))
 	})
 
 	t.Run("LookupOption misses unknown keys", func(t *testing.T) {
 		reg := registryWithOptions(t)
-		_, ok := reg.LookupOption("no.such.option")
-		assert.False(t, ok)
+		assert.Nil(t, reg.LookupOption("no.such.option"))
 	})
 
 	t.Run("LookupOption finds prefix key", func(t *testing.T) {
 		store := &prefixStore{values: map[string]string{"editor.test.x": "v"}}
 		reg := registryWithPrefixOption(t, store)
-		opt, ok := reg.LookupOption("editor.test.x")
-		assert.True(t, ok)
+		opt := reg.LookupOption("editor.test.x")
+		assert.NotNil(t, opt)
 		e := view.NewEditor(t.TempDir())
 		got, err := opt.Get(e)
 		assert.NoError(t, err)
@@ -213,8 +210,7 @@ func TestRegistry(t *testing.T) {
 
 	t.Run("rejects prefix without setter", func(t *testing.T) {
 		reg := registryWithReadOnlyPrefixOption(t)
-		_, ok := reg.LookupOption("ro.key")
-		assert.False(t, ok)
+		assert.Nil(t, reg.LookupOption("ro.key"))
 	})
 
 	t.Run("OptionCompleter filters by prefix", func(t *testing.T) {

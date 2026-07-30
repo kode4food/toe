@@ -37,12 +37,12 @@ func GotoLastChange(e *view.Editor) {
 // ResetDiffChange reverts every diff hunk that intersects the selection back to
 // the version-control base text. It returns how many hunks were reset
 func ResetDiffChange(e *view.Editor) (int, error) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return 0, view.ErrNoView
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return 0, view.ErrNoDocument
 	}
 	vc := e.VersionControl()
@@ -160,12 +160,12 @@ func gotoEdgeChange(e *view.Editor, last bool) {
 func focusedDiffHunks(
 	e *view.Editor,
 ) (*view.Document, *view.View, []view.DiffHunk, bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil, nil, nil, false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil, nil, nil, false
 	}
 	vc := e.VersionControl()

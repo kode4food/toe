@@ -97,12 +97,12 @@ func FormatModule() command.Module {
 }
 
 func runFormatter(e *view.Editor) command.Result {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return command.Result{}
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return command.Result{}
 	}
 	if doc.ReadOnly() {
@@ -153,8 +153,8 @@ func runLSPFormatter(
 }
 
 func autoFormat(e *view.Editor) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if language.LoadLanguage(doc.Lang()).AutoFormat {
@@ -163,12 +163,12 @@ func autoFormat(e *view.Editor) {
 }
 
 func runFormatSelection(e *view.Editor, _ *command.Args) command.Result {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return command.Result{}
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return command.Result{}
 	}
 	ctl := e.LanguageServerController()

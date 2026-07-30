@@ -168,12 +168,12 @@ func (m *codeActionMenu) apply(cx *Context, comp *Compositor) tea.Cmd {
 	if m.cursor < 0 || m.cursor >= len(m.actions) {
 		return nil
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return nil
 	}
 	ls := cx.Editor.LanguageServerController()
@@ -187,12 +187,12 @@ func (m *codeActionMenu) apply(cx *Context, comp *Compositor) tea.Cmd {
 }
 
 func (m *codeActionMenu) valid(cx *Context) bool {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok || doc.ID() != m.docID {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil || doc.ID() != m.docID {
 		return false
 	}
-	v, ok := cx.Editor.FocusedView()
-	return ok && v.ID() == m.viewID
+	v := cx.Editor.FocusedView()
+	return v != nil && v.ID() == m.viewID
 }
 
 func (m *codeActionMenu) handleMouseClick(msg tea.MouseClickMsg) EventResult {

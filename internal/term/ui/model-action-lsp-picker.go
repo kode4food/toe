@@ -12,8 +12,8 @@ func (m Model) SymbolPickerAction() command.KeyAction {
 	ec := m.component
 	cx := m.context
 	return func(e *view.Editor) command.Continuation {
-		doc, ok := e.FocusedDocument()
-		if !ok {
+		doc := e.FocusedDocument()
+		if doc == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()
@@ -41,8 +41,7 @@ func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
 	ec := m.component
 	cx := m.context
 	return func(e *view.Editor) command.Continuation {
-		_, ok := e.FocusedDocument()
-		if !ok {
+		if e.FocusedDocument() == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()
@@ -60,12 +59,12 @@ func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
 func (m Model) CodeActionPickerAction() command.KeyAction {
 	ec := m.component
 	return func(e *view.Editor) command.Continuation {
-		doc, ok := e.FocusedDocument()
-		if !ok {
+		doc := e.FocusedDocument()
+		if doc == nil {
 			return nil
 		}
-		v, ok := e.FocusedView()
-		if !ok {
+		v := e.FocusedView()
+		if v == nil {
 			return nil
 		}
 		ls := e.LanguageServerController()

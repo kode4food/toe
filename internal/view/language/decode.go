@@ -111,7 +111,7 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	if injection, ok := m["injection-regex"].(string); ok {
 		l.InjectionRegex = injection
 	}
-	if n, ok := loader.IntPtr(m["text-width"]); ok {
+	if n := loader.IntPtr(m["text-width"]); n != nil {
 		l.TextWidth = n
 	}
 	l.FileTypes = decodeFileTypes(m["file-types"])
@@ -174,7 +174,7 @@ func decodeAutoPairMap(m map[string]any) (AutoPairConfig, bool) {
 
 func decodeIndent(m map[string]any) Indent {
 	return Indent{
-		TabWidth: loader.IntPtrOrNil(m["tab-width"]),
+		TabWidth: loader.IntPtr(m["tab-width"]),
 		Unit:     stringValueFromMap(m, "unit"),
 	}
 }
@@ -208,8 +208,8 @@ func decodeFileTypes(value any) []FileType {
 func decodeSoftWrap(m map[string]any) SoftWrap {
 	return SoftWrap{
 		Enable:          loader.BoolPtr(m["enable"]),
-		MaxWrap:         loader.IntPtrOrNil(m["max-wrap"]),
-		MaxIndentRetain: loader.IntPtrOrNil(m["max-indent-retain"]),
+		MaxWrap:         loader.IntPtr(m["max-wrap"]),
+		MaxIndentRetain: loader.IntPtr(m["max-indent-retain"]),
 		WrapIndicator:   loader.StringPtr(m["wrap-indicator"]),
 		WrapAtTextWidth: loader.BoolPtr(m["wrap-at-text-width"]),
 	}

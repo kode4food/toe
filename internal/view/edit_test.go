@@ -16,7 +16,7 @@ func TestInsertChar(t *testing.T) {
 	e := testutil.EditorWithText(t, "hllo")
 	testutil.SetCursor(t, e, 1)
 	action.InsertChar(e, 'e')
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "hello", doc.Text().String())
 	assert.Equal(t, 2, testutil.CursorPos(t, e))
 }
@@ -25,7 +25,7 @@ func TestInsertNewline(t *testing.T) {
 	e := testutil.EditorWithText(t, "ab")
 	testutil.SetCursor(t, e, 1)
 	action.InsertNewline(e)
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "a\nb", doc.Text().String())
 }
 
@@ -33,7 +33,7 @@ func TestInsertNewlineAutoPair(t *testing.T) {
 	e := testutil.EditorWithText(t, "()")
 	testutil.SetCursor(t, e, 1)
 	action.InsertNewline(e)
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "(\n\t\n)", doc.Text().String())
 	assert.Equal(t, 3, testutil.CursorPos(t, e))
 }
@@ -45,7 +45,7 @@ func TestAutoPairConfig(t *testing.T) {
 
 		action.InsertChar(e, '(')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "(", doc.Text().String())
 		assert.Equal(t, 1, testutil.CursorPos(t, e))
 	})
@@ -57,7 +57,7 @@ func TestAutoPairConfig(t *testing.T) {
 
 		action.InsertNewline(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "(\n)", doc.Text().String())
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
@@ -69,7 +69,7 @@ func TestAutoPairConfig(t *testing.T) {
 
 		action.DeleteCharBackward(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, ")", doc.Text().String())
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
@@ -89,7 +89,7 @@ name = "custom"
 		assert.True(t, ok)
 		assert.Equal(t, core.Pair{Open: '<', Close: '>'}, pair)
 		e := testutil.EditorWithText(t, "")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetLang("custom")
 
 		action.InsertChar(e, '(')
@@ -108,7 +108,7 @@ name = "custom"
 comment-token = "//"
 `)
 		e := testutil.EditorWithText(t, "  // hello")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetLang("custom")
 		testutil.SetCursor(t, e, doc.Text().LenChars())
 
@@ -125,7 +125,7 @@ name = "custom"
 comment-token = "//"
 `)
 		e := testutil.EditorWithText(t, "  // hello")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetLang("custom")
 
 		action.OpenAbove(e)
@@ -142,7 +142,7 @@ comment-token = "//"
 `)
 		e := testutil.EditorWithText(t, "  // hello")
 		e.Options().ContinueComments = false
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		doc.SetLang("custom")
 		testutil.SetCursor(t, e, doc.Text().LenChars())
 
@@ -157,8 +157,8 @@ comment-token = "//"
 
 		action.OpenAbove(e)
 
-		doc, _ := e.FocusedDocument()
-		v, _ := e.FocusedView()
+		doc := e.FocusedDocument()
+		v := e.FocusedView()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, "\n\nhello", doc.Text().String())
 		assert.Equal(t, []core.Range{
@@ -172,7 +172,7 @@ func TestDeleteCharBackward(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
 	testutil.SetCursor(t, e, 3)
 	action.DeleteCharBackward(e)
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "helo", doc.Text().String())
 	assert.Equal(t, 2, testutil.CursorPos(t, e))
 }
@@ -180,14 +180,14 @@ func TestDeleteCharBackward(t *testing.T) {
 func TestDeleteCharBackwardAtStart(t *testing.T) {
 	e := testutil.EditorWithText(t, "hi")
 	action.DeleteCharBackward(e)
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "hi", doc.Text().String())
 }
 
 func TestDeleteCharForward(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
 	action.DeleteCharForward(e)
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "ello", doc.Text().String())
 	assert.Equal(t, 0, testutil.CursorPos(t, e))
 }
@@ -196,20 +196,20 @@ func TestDeleteCharForwardAtEnd(t *testing.T) {
 	e := testutil.EditorWithText(t, "hi")
 	testutil.SetCursor(t, e, 2)
 	action.DeleteCharForward(e)
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "hi", doc.Text().String())
 }
 
 func TestInsertCharMultiCursor(t *testing.T) {
 	e := testutil.EditorWithText(t, "ab")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
 		core.PointRange(0),
 		core.PointRange(1),
 	}, 0))
 	action.InsertChar(e, 'x')
-	doc, _ = e.FocusedDocument()
+	doc = e.FocusedDocument()
 	assert.Equal(t, "xaxb", doc.Text().String())
 }
 
@@ -217,17 +217,17 @@ func TestUndoRedo(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
 	testutil.SetCursor(t, e, 5)
 	action.InsertChar(e, '!')
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	assert.Equal(t, "hello!", doc.Text().String())
 
 	ok := e.Undo()
 	assert.True(t, ok)
-	doc, _ = e.FocusedDocument()
+	doc = e.FocusedDocument()
 	assert.Equal(t, "hello", doc.Text().String())
 
 	ok = e.Redo()
 	assert.True(t, ok)
-	doc, _ = e.FocusedDocument()
+	doc = e.FocusedDocument()
 	assert.Equal(t, "hello!", doc.Text().String())
 }
 
@@ -235,8 +235,8 @@ func TestUndoRedoMarksDirty(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
 	testutil.SetCursor(t, e, 5)
 	action.InsertChar(e, '!')
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 
 	doc.ConsumeDirty(v.ID()) // clear dirty from the edit
 	assert.True(t, e.Undo())
@@ -249,8 +249,8 @@ func TestUndoRedoMarksDirty(t *testing.T) {
 
 func TestChangeSelection(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello world")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
 		v.ID(), newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
 	)

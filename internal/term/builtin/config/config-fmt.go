@@ -34,8 +34,8 @@ func formatCmds() []command.Command {
 			DocString: "Set the language of current buffer (show current " +
 				"language if no value specified)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				doc, ok := e.FocusedDocument()
-				if !ok {
+				doc := e.FocusedDocument()
+				if doc == nil {
 					return command.Result{Error: errNoDocument}
 				}
 				if args == nil || args.Empty() {
@@ -62,8 +62,8 @@ func formatCmds() []command.Command {
 				"crlf, lf, native",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
-					doc, ok := e.FocusedDocument()
-					if !ok {
+					doc := e.FocusedDocument()
+					if doc == nil {
 						return command.Result{Error: errNoDocument}
 					}
 					switch doc.LineEnding() {
@@ -100,8 +100,8 @@ func formatCmds() []command.Command {
 			DocString: "Set the indentation style for editing. ('t' for tabs " +
 				"or 1-16 for number of spaces)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				doc, ok := e.FocusedDocument()
-				if !ok {
+				doc := e.FocusedDocument()
+				if doc == nil {
 					return command.Result{Error: errNoDocument}
 				}
 				if args == nil || args.Empty() {

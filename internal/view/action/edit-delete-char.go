@@ -9,12 +9,12 @@ import (
 // Dedents when the cursor is at the end of leading whitespace; otherwise
 // deletes an auto-pair if applicable, or one grapheme backward
 func DeleteCharBackward(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

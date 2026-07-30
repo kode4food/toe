@@ -16,13 +16,13 @@ import (
 func TestNewView(t *testing.T) {
 	t.Run("creates view with unique id", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v1, _ := e.FocusedView()
+		v1 := e.FocusedView()
 		assert.NotEqual(t, view.InvalidViewId, v1.ID())
 	})
 
 	t.Run("default mode is normal", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		assert.Equal(t, view.ModeNormal, v.Mode())
 	})
 }
@@ -30,7 +30,7 @@ func TestNewView(t *testing.T) {
 func TestViewMode(t *testing.T) {
 	t.Run("mode can be changed", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		v.SetMode(view.ModeInsert)
 		assert.Equal(t, view.ModeInsert, v.Mode())
 		v.SetMode(view.ModeSelect)
@@ -41,13 +41,13 @@ func TestViewMode(t *testing.T) {
 func TestViewOffset(t *testing.T) {
 	t.Run("default offset is zero", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		assert.Equal(t, view.Position{}, v.Offset())
 	})
 
 	t.Run("set offset", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		p := view.Position{Anchor: 5, HorizontalOffset: 2}
 		v.SetOffset(p)
 		assert.Equal(t, p, v.Offset())
@@ -57,15 +57,15 @@ func TestViewOffset(t *testing.T) {
 func TestViewJumpList(t *testing.T) {
 	t.Run("backward on empty list returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		_, _, ok := v.JumpBackward()
 		assert.False(t, ok)
 	})
 
 	t.Run("push and backward retrieves previous", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		v.PushJump(d.ID(), 0, core.PointSelection(0))
 		v.PushJump(d.ID(), 10, core.PointSelection(10))
 		docID, anchor, ok := v.JumpBackward()
@@ -76,8 +76,8 @@ func TestViewJumpList(t *testing.T) {
 
 	t.Run("forward after backward returns next", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		v.PushJump(d.ID(), 0, core.PointSelection(0))
 		v.PushJump(d.ID(), 10, core.PointSelection(10))
 		v.JumpBackward()
@@ -89,7 +89,7 @@ func TestViewJumpList(t *testing.T) {
 
 	t.Run("forward on empty returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		_, _, ok := v.JumpForward()
 		assert.False(t, ok)
 	})
@@ -98,7 +98,7 @@ func TestViewJumpList(t *testing.T) {
 func TestViewEnsureCursorVisible(t *testing.T) {
 	t.Run("scrolls when cursor below visible area", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("line1\nline2\nline3\nline4\nline5\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(24)}, 0)
 		v.EnsureCursorVisible(doc, sel, 2, 0, nil)
@@ -107,7 +107,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 	t.Run("no scroll when cursor already visible", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("line1\nline2\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
 		v.EnsureCursorVisible(doc, sel, 10, 5, nil)
@@ -116,7 +116,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 	t.Run("zero height is a no-op", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("abc")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
 		v.EnsureCursorVisible(doc, sel, 0, 5, nil)
@@ -125,7 +125,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 	t.Run("mid-viewport cursor does not scroll", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		// line 1 is a long unbreakable run that wraps to 8 visual rows; the
 		// cursor sits on line 2, well within the viewport in visual rows even
 		// though its text-line index is adjacent to the anchor line
@@ -148,7 +148,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 	t.Run("scrolls within a tall line", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		// a single line of 80 cells wraps to 8 visual rows at width 10; with a
 		// 4-row viewport cannot show the cursor near the end by anchoring at
 		// the line start, so the view must scroll into the line itself
@@ -166,7 +166,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 	t.Run("visual scrolls up above anchor", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("a\nb\nc\nd\n")
 		line2, _ := doc.LineToChar(2)
 		v.SetOffset(view.Position{Anchor: line2})
@@ -180,7 +180,7 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 
 	t.Run("visual scrolls below wrapped lines", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		long := strings.Repeat("x", 40)
 		doc := core.NewRope(long + "\n" + long + "\nend")
 		last, _ := doc.LineToChar(2)
@@ -197,7 +197,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 	// width 10, no scrolloff, tab width 4 throughout unless noted
 	t.Run("scrolls right past right edge", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(15)}, 0)
 		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 0)
@@ -207,7 +207,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 
 	t.Run("scrolls back to zero at line start", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		v.SetOffset(view.Position{HorizontalOffset: 6})
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
@@ -217,7 +217,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 
 	t.Run("no scroll when cursor already visible", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(5)}, 0)
 		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 0)
@@ -226,7 +226,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 
 	t.Run("non-positive width resets offset", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		v.SetOffset(view.Position{HorizontalOffset: 6})
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(15)}, 0)
@@ -236,7 +236,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 
 	t.Run("tabs expand into the visual column", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		// three tabs (tab width 4) -> visual column 12 at char offset 3
 		doc := core.NewRope("\t\t\tx")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(3)}, 0)
@@ -247,7 +247,7 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 
 	t.Run("scrolloff keeps a left margin", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(15)}, 0)
 		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 2)
@@ -260,7 +260,7 @@ func TestViewArea(t *testing.T) {
 	t.Run("area is set by layout engine", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		a := v.Area()
 		assert.Equal(t, 80, a.Width)
 		assert.Equal(t, 24, a.Height)
@@ -270,20 +270,20 @@ func TestViewArea(t *testing.T) {
 func TestViewConsumeDirty(t *testing.T) {
 	t.Run("new view starts dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		assert.True(t, v.ConsumeDirty())
 	})
 
 	t.Run("consuming clears the flag", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		v.ConsumeDirty()
 		assert.False(t, v.ConsumeDirty())
 	})
 
 	t.Run("setting area to same value stays clean", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		v.ConsumeDirty()
 		v.SetArea(v.Area())
 		assert.False(t, v.ConsumeDirty())
@@ -291,7 +291,7 @@ func TestViewConsumeDirty(t *testing.T) {
 
 	t.Run("setting area to new value marks dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		v.ConsumeDirty()
 		v.SetArea(geom.Area{Size: geom.Size{Width: 10, Height: 5}})
 		assert.True(t, v.ConsumeDirty())
@@ -299,7 +299,7 @@ func TestViewConsumeDirty(t *testing.T) {
 
 	t.Run("mark dirty forces dirty on next consume", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		v.ConsumeDirty()
 		v.MarkDirty()
 		assert.True(t, v.ConsumeDirty())
@@ -310,7 +310,7 @@ func TestViewConsumeDirty(t *testing.T) {
 func TestViewFreeScroll(t *testing.T) {
 	t.Run("begin and end round-trips", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		assert.False(t, v.FreeScroll())
 		v.BeginFreeScroll(0, core.PointSelection(0))
 		assert.True(t, v.FreeScroll())
@@ -320,7 +320,7 @@ func TestViewFreeScroll(t *testing.T) {
 
 	t.Run("sync keeps unchanged state", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		sel := core.PointSelection(0)
 		v.BeginFreeScroll(1, sel)
 		assert.True(t, v.SyncFreeScroll(1, sel))
@@ -329,7 +329,7 @@ func TestViewFreeScroll(t *testing.T) {
 
 	t.Run("sync ends on selection change", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		v.BeginFreeScroll(1, core.PointSelection(0))
 		assert.False(t, v.SyncFreeScroll(1, core.PointSelection(3)))
 		assert.False(t, v.FreeScroll())
@@ -337,7 +337,7 @@ func TestViewFreeScroll(t *testing.T) {
 
 	t.Run("sync ends on revision change", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		sel := core.PointSelection(0)
 		v.BeginFreeScroll(1, sel)
 		assert.False(t, v.SyncFreeScroll(2, sel))
@@ -346,7 +346,7 @@ func TestViewFreeScroll(t *testing.T) {
 
 	t.Run("sync inactive reports false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		assert.False(t, v.SyncFreeScroll(0, core.PointSelection(0)))
 	})
 }
@@ -354,8 +354,8 @@ func TestViewFreeScroll(t *testing.T) {
 func TestViewJumps(t *testing.T) {
 	t.Run("entries includes pushed jumps", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		v.PushJump(d.ID(), 0, core.PointSelection(0))
 		v.PushJump(d.ID(), 5, core.PointSelection(5))
 		entries := v.Jumps()
@@ -366,8 +366,8 @@ func TestViewJumps(t *testing.T) {
 
 	t.Run("deduplicates adjacent jumps", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
-		d, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		d := e.FocusedDocument()
 		v.PushJump(d.ID(), 0, core.PointSelection(0))
 		v.PushJump(d.ID(), 0, core.PointSelection(0))
 		entries := v.Jumps()
@@ -377,7 +377,7 @@ func TestViewJumps(t *testing.T) {
 
 	t.Run("empty jumps returns empty slice", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		entries := v.Jumps()
 		assert.Empty(t, entries)
 	})
@@ -386,7 +386,7 @@ func TestViewJumps(t *testing.T) {
 func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 	t.Run("scrolloff clamped when height is small", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope(
 			"line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n",
 		)
@@ -397,7 +397,7 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 
 	t.Run("scrolls up when cursor above visible", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		doc := core.NewRope("line1\nline2\nline3\nline4\nline5\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(24)}, 0)
 		v.EnsureCursorVisible(doc, sel, 2, 0, nil)
@@ -409,7 +409,7 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 
 	t.Run("keeps bottom margin past EOF", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		// lines 0..29; cursor on the last line, height 10, scrolloff 5
 		doc := core.NewRope(strings.Repeat("x\n", 30))
 		last, _ := doc.LineToChar(29)
@@ -433,10 +433,10 @@ func TestSelectionPerView(t *testing.T) {
 	v1, err := e.OpenFile(path)
 	assert.NoError(t, err)
 	// Create a second view into the same document via vertical split
-	v2, ok := e.VSplit(v1.DocID())
-	assert.True(t, ok)
-	doc, ok := e.Document(v1.DocID())
-	assert.True(t, ok)
+	v2 := e.VSplit(v1.DocID())
+	assert.NotNil(t, v2)
+	doc := e.Document(v1.DocID())
+	assert.NotNil(t, doc)
 
 	doc.SetSelectionFor(v1.ID(), core.PointSelection(1))
 	doc.SetSelectionFor(v2.ID(), core.PointSelection(4))

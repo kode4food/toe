@@ -9,12 +9,12 @@ import (
 // ToggleComments toggles the most appropriate comment style for the language:
 // block comments if already block-commented, line comments otherwise
 func ToggleComments(e *view.Editor) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -59,8 +59,8 @@ func ToggleComments(e *view.Editor) {
 
 // ToggleLineComments toggles line comments on the selected lines
 func ToggleLineComments(e *view.Editor) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	lang := language.LoadLanguage(doc.Lang())
@@ -70,8 +70,8 @@ func ToggleLineComments(e *view.Editor) {
 		return
 	}
 	if len(lang.BlockCommentTokens) > 0 {
-		v, ok := e.FocusedView()
-		if !ok {
+		v := e.FocusedView()
+		if v == nil {
 			return
 		}
 		sel, err := core.SplitLinesOfSelection(
@@ -88,8 +88,8 @@ func ToggleLineComments(e *view.Editor) {
 
 // ToggleBlockComments toggles block comments on each selection range
 func ToggleBlockComments(e *view.Editor) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	lang := language.LoadLanguage(doc.Lang())
@@ -111,12 +111,12 @@ func firstCommentToken(lang *language.Language) (string, bool) {
 }
 
 func toggleLineCommentsWithToken(e *view.Editor, token string) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -136,11 +136,11 @@ func toggleLineCommentsWithToken(e *view.Editor, token string) {
 func toggleBlockCommentsWithTokens(
 	e *view.Editor, tokens []core.BlockCommentToken,
 ) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		toggleBlockCommentsSelection(e, doc.SelectionFor(v.ID()), tokens)
 	}
 }
@@ -148,8 +148,8 @@ func toggleBlockCommentsWithTokens(
 func toggleBlockCommentsSelection(
 	e *view.Editor, sel core.Selection, tokens []core.BlockCommentToken,
 ) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

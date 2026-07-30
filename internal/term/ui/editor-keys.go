@@ -209,12 +209,12 @@ func (e *EditorComponent) triggerCompletionLayer(cx *Context) Callback {
 }
 
 func (e *EditorComponent) completionCmd(cx *Context, trigger bool) tea.Cmd {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return nil
 	}
 	ls := cx.Editor.LanguageServerController()
@@ -243,12 +243,12 @@ func (e *EditorComponent) completionCmd(cx *Context, trigger bool) tea.Cmd {
 }
 
 func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return nil
 	}
 	ls := cx.Editor.LanguageServerController()
@@ -311,12 +311,13 @@ func completionRequestValid(cx *Context, anchor completionAnchor) bool {
 	if cx.Editor.Mode() != view.ModeInsert {
 		return false
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok || doc.ID() != anchor.docID || doc.Revision() != anchor.rev {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil || doc.ID() != anchor.docID ||
+		doc.Revision() != anchor.rev {
 		return false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok || v.ID() != anchor.viewID {
+	v := cx.Editor.FocusedView()
+	if v == nil || v.ID() != anchor.viewID {
 		return false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
@@ -326,12 +327,12 @@ func completionRequestValid(cx *Context, anchor completionAnchor) bool {
 // wordPrefixReady reports whether the limit characters before the cursor are
 // all word characters, reading only those so a long line costs no more
 func wordPrefixReady(cx *Context, limit int) bool {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return false
 	}
 	text := doc.Text()

@@ -10,27 +10,27 @@ import (
 
 func (sc *Cache) langCacheFor(
 	lang string, language *sitter.Language,
-) (*langEntry, bool) {
+) *langEntry {
 	sc.mu.RLock()
 	if e, ok := sc.langCache[lang]; ok {
 		sc.mu.RUnlock()
-		return e, true
+		return e
 	}
 	sc.mu.RUnlock()
 
 	qb, ok := sc.queryFor(lang)
 	if !ok {
-		return nil, false
+		return nil
 	}
 	p := sitter.NewParser()
 	if err := p.SetLanguage(language); err != nil {
 		p.Close()
-		return nil, false
+		return nil
 	}
 	q, qErr := sitter.NewQuery(language, string(qb))
 	if qErr != nil {
 		p.Close()
-		return nil, false
+		return nil
 	}
 	e := &langEntry{
 		parser:   p,
@@ -46,7 +46,7 @@ func (sc *Cache) langCacheFor(
 	sc.mu.Lock()
 	sc.langCache[lang] = e
 	sc.mu.Unlock()
-	return e, true
+	return e
 }
 
 func (sc *Cache) queryFor(lang string) ([]byte, bool) {

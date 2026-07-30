@@ -59,12 +59,12 @@ func expandExpansion(e *view.Editor, tok command.Token) (string, error) {
 }
 
 func expandVariable(e *view.Editor, name string) (string, error) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return "", ErrNoFocusedDocument
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return "", ErrNoFocusedView
 	}
 	text := doc.Text()

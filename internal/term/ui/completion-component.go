@@ -258,12 +258,12 @@ func (c *completionComponent) valid(cx *Context) bool {
 	if cx.Editor.Mode() != view.ModeInsert {
 		return false
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok || doc.ID() != c.anchor.docID {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil || doc.ID() != c.anchor.docID {
 		return false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok || v.ID() != c.anchor.viewID {
+	v := cx.Editor.FocusedView()
+	if v == nil || v.ID() != c.anchor.viewID {
 		return false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
@@ -320,12 +320,12 @@ func (c *completionComponent) accept(cx *Context) {
 		return
 	}
 	item := &c.items[c.cursor]
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return
 	}
 	ls := cx.Editor.LanguageServerController()

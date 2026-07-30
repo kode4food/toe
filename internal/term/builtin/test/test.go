@@ -77,8 +77,8 @@ func RunCmd(
 	t *testing.T, km *command.Keymaps, e *view.Editor, name string,
 ) command.Result {
 	t.Helper()
-	cmd, ok := km.ResolveCommand(name)
-	assert.True(t, ok)
+	cmd := km.ResolveCommand(name)
+	assert.NotNil(t, cmd)
 	if cmd.Run == nil {
 		return command.Result{}
 	}
@@ -91,8 +91,8 @@ func RunCmdArgs(
 	t *testing.T, km *command.Keymaps, e *view.Editor, name, input string,
 ) command.Result {
 	t.Helper()
-	cmd, ok := km.ResolveCommand(name)
-	assert.True(t, ok)
+	cmd := km.ResolveCommand(name)
+	assert.NotNil(t, cmd)
 	args, err := command.ParseArgs(input, cmd.Signature, false, nil)
 	assert.NoError(t, err)
 	return resultText(cmd.Run(e, args))
@@ -101,16 +101,16 @@ func RunCmdArgs(
 // DocText returns the focused document's full text
 func DocText(t *testing.T, e *view.Editor) string {
 	t.Helper()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	return doc.Text().String()
 }
 
 // CursorLine returns the focused document's primary cursor line
 func CursorLine(t *testing.T, e *view.Editor) int {
 	t.Helper()
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
 	assert.NoError(t, err)
 	return line
@@ -119,8 +119,8 @@ func CursorLine(t *testing.T, e *view.Editor) int {
 // MustFocusedView returns the focused view, failing the test if there is none
 func MustFocusedView(t *testing.T, e *view.Editor) *view.View {
 	t.Helper()
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 	return v
 }
 

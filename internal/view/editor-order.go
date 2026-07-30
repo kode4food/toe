@@ -9,8 +9,8 @@ func (e *Editor) LastModifiedDocIDs() [2]DocumentId {
 // PopPrevDocID returns and removes the most recently accessed document for the
 // focused view
 func (e *Editor) PopPrevDocID() (DocumentId, bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return InvalidDocumentId, false
 	}
 	for len(v.docHistory) > 0 {
@@ -30,14 +30,14 @@ func (e *Editor) PopPrevDocID() (DocumentId, bool) {
 // recordPrevDoc adds the current document to the focused view's access history
 // before replacing it
 func (e *Editor) recordPrevDoc() {
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		v.addDocHistory(v.DocID())
 		e.recordLeavingDocFor(v)
 	}
 }
 
 func (e *Editor) recordLeavingDoc() {
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		e.recordLeavingDocFor(v)
 	}
 }
@@ -58,7 +58,7 @@ func (e *Editor) recordLeavingDocFor(v *View) {
 }
 
 func (e *Editor) markDocAccessed() {
-	if v, ok := e.FocusedView(); ok {
+	if v := e.FocusedView(); v != nil {
 		if doc, ok := e.documents.byID[v.DocID()]; ok {
 			e.documents.nextAccess++
 			doc.identity.accessedAt = e.documents.nextAccess

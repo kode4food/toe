@@ -88,10 +88,10 @@ func TestWatchRegistrationEdgeCases(t *testing.T) {
 		assert.NoError(t, err)
 		session := lsp.Attach(t.Context(), e)
 		defer func() { _ = session.Close() }()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		// Trigger initialization; the fake server registers, then fully
 		// unregisters, a "*.watched" watcher via a mix of nil, mismatched,

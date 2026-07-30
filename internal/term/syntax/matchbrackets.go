@@ -23,8 +23,8 @@ func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 	}
 	isOpen := ch == openCh
 
-	language, ok := languageFor(lang)
-	if !ok {
+	language := languageFor(lang)
+	if language == nil {
 		return 0, false
 	}
 	src := []byte(text)

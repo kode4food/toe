@@ -115,8 +115,8 @@ func (c *changedFilePickerSource) Accept(
 	if !ok {
 		return
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	if sel, ok := lineRangeSelection(doc.Text(), item.Location.Lines); ok {

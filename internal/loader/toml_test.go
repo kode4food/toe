@@ -262,24 +262,17 @@ func TestTOMLValuePointers(t *testing.T) {
 	})
 
 	t.Run("int", func(t *testing.T) {
-		v, ok := loader.IntPtr(3)
+		v := loader.IntPtr(3)
 
-		assert.True(t, ok)
 		assert.NotNil(t, v)
 		assert.Equal(t, 3, *v)
 
-		v, ok = loader.IntPtr(int64(4))
+		v = loader.IntPtr(int64(4))
 
-		assert.True(t, ok)
 		assert.NotNil(t, v)
 		assert.Equal(t, 4, *v)
 
-		v, ok = loader.IntPtr("4")
-
-		assert.False(t, ok)
-		assert.Nil(t, v)
-		assert.Nil(t, loader.IntPtrOrNil("4"))
-		assert.Equal(t, 5, *loader.IntPtrOrNil(5))
+		assert.Nil(t, loader.IntPtr("4"))
 	})
 
 	t.Run("string", func(t *testing.T) {

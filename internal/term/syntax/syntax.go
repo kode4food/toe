@@ -57,12 +57,12 @@ func (sc *Cache) Tokenize(text, lang string) []highlight.Span {
 }
 
 func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
-	language, ok := languageFor(lang)
-	if !ok {
+	language := languageFor(lang)
+	if language == nil {
 		return nil
 	}
-	lc, ok := sc.langCacheFor(lang, language)
-	if !ok {
+	lc := sc.langCacheFor(lang, language)
+	if lc == nil {
 		return nil
 	}
 

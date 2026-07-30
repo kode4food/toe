@@ -274,8 +274,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
@@ -298,8 +298,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
@@ -323,8 +323,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
@@ -350,8 +350,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityWarning,
@@ -376,8 +376,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityInfo,
@@ -401,8 +401,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityHint,
@@ -426,15 +426,15 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "cursor warning",
 		}})
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(6))
 		e.Options().Theme = "mocha"
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -458,13 +458,13 @@ func TestThemeRender(t *testing.T) {
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		_, ok := e.VSplit(docB.ID())
-		assert.True(t, ok)
+		split := e.VSplit(docB.ID())
+		assert.NotNil(t, split)
 		// vA (docA) sits on the left; the diagnostic popup always renders
 		// in the screen's top-right corner, over the OTHER (docB) pane
 		e.FocusView(vA.ID())
-		docA, ok := e.Document(vA.DocID())
-		assert.True(t, ok)
+		docA := e.Document(vA.DocID())
+		assert.NotNil(t, docA)
 		docA.ReplaceDiagnostics("test", []view.Diagnostic{{
 			Range:    view.DiagnosticRange{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
@@ -598,8 +598,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ShowSearchHighlights(v.ID())
 		e.Registers().Set('/', "z-index")
 		e.Options().Theme = "mocha"
@@ -621,8 +621,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		sel, err := core.NewSelection([]core.Range{
 			core.NewRange(0, 2),
 			core.NewRange(3, 5),
@@ -688,8 +688,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		sel, err := core.NewSelection([]core.Range{
 			core.NewRange(1, 4),
 		}, 0)
@@ -721,8 +721,8 @@ func TestThemeRender(t *testing.T) {
 		e := view.NewEditor(root)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: 0, To: 5},
 		})
@@ -886,10 +886,10 @@ func TestLineContentRender(t *testing.T) {
 	t.Run("block cursor lands after CRLF line", func(t *testing.T) {
 		t.Setenv("COLORTERM", "truecolor")
 		e := editorWithText(t, "abc\r\nxyz")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		m := resize(ui.New(e, command.NewKeymaps()), 40, 6)
 
@@ -925,8 +925,8 @@ func TestRenderAfterClose(t *testing.T) {
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
 		e.ResizeTree(geom.Size{Width: 100, Height: 30})
-		_, ok := e.VSplit(docB.ID())
-		assert.True(t, ok)
+		split := e.VSplit(docB.ID())
+		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "ALPHA")
@@ -951,8 +951,8 @@ func TestBaseStyleAtCases(t *testing.T) {
 		e := view.NewEditor(root)
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 7)}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
@@ -968,16 +968,16 @@ func TestBaseStyleAtCases(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().IndentGuides = view.IndentGuides{Render: true}
 		e.Options().Theme = "mocha"
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "\thello\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 1)}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
@@ -994,16 +994,16 @@ func TestBaseStyleAtCases(t *testing.T) {
 			Default: new(view.WhitespaceRenderAll),
 		}
 		e.Options().Theme = "mocha"
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "  hello\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 2)}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
@@ -1032,8 +1032,8 @@ func TestErroredIdentifierGating(t *testing.T) {
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		e.Options().Theme = "mocha"
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		return e, doc
 	}
 
@@ -1082,8 +1082,8 @@ func TestErroredIdentifierGating(t *testing.T) {
 
 	t.Run("highlight and diagnostic both apply", func(t *testing.T) {
 		e, doc := newGoDoc(t)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: bork, To: bork + 4},
 		})
@@ -1104,8 +1104,8 @@ func TestErroredIdentifierGating(t *testing.T) {
 
 	t.Run("highlight without diagnostic", func(t *testing.T) {
 		e, doc := newGoDoc(t)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: bork, To: bork + 4},
 		})
@@ -1120,8 +1120,8 @@ func TestErroredIdentifierGating(t *testing.T) {
 func TestSplitViewRender(t *testing.T) {
 	t.Run("vsplit and hsplit render separators", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		e.VSplit(v.DocID())
 		e.HSplit(v.DocID())
@@ -1132,8 +1132,8 @@ func TestSplitViewRender(t *testing.T) {
 
 func TestMaximizedPaneRender(t *testing.T) {
 	e := view.NewEditor(t.TempDir())
-	v, ok := e.FocusedView()
-	assert.True(t, ok)
+	v := e.FocusedView()
+	assert.NotNil(t, v)
 	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 	e.VSplit(v.DocID())
 	e.TogglePaneMaximized()
@@ -1150,8 +1150,8 @@ func TestIndentGuideRender(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().IndentGuides = view.IndentGuides{Render: true}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "\thello\n\tworld\n"),
@@ -1170,8 +1170,8 @@ func TestWhitespaceRender(t *testing.T) {
 			Default: new(view.WhitespaceRenderAll),
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "hello world end\t!\n"),
@@ -1199,8 +1199,8 @@ func TestMouseDragNoop(t *testing.T) {
 	t.Run("drag after click extends selection", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().Mouse = true
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "hello world\n"),
@@ -1236,8 +1236,8 @@ func TestCursorColumnRender(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().Theme = "mocha"
 		e.Options().CursorColumn = true
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "hello world\n"),
@@ -1258,16 +1258,16 @@ func TestCursorColumnRender(t *testing.T) {
 	t.Run("multi-cursor secondary column", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().CursorColumn = true
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		sel, err := core.NewSelection([]core.Range{
 			core.PointRange(0),
 			core.PointRange(3),
@@ -1367,16 +1367,16 @@ func TestSoftWrapRender(t *testing.T) {
 func TestHorizontalScrollRender(t *testing.T) {
 	t.Run("scan prefix on scrolled long line", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, horizontalLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		action.MoveLineEnd(e)
 		v.SetOffset(view.Position{HorizontalOffset: 50})
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -1387,16 +1387,16 @@ func TestHorizontalScrollRender(t *testing.T) {
 	t.Run("cursorcolumn with scrolled long line", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		e.Options().CursorColumn = true
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, cursorColumnLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		testutil.SetSelection(t, e,
 			[]core.Range{core.PointRange(24), core.PointRange(28)},
 			0,
@@ -1413,10 +1413,10 @@ func TestHorizontalScrollRender(t *testing.T) {
 func TestDocumentHighlightAndLinkRender(t *testing.T) {
 	t.Run("renders with document highlights set", func(t *testing.T) {
 		e := editorWithText(t, "hello world\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetDocumentHighlights(v.ID(), []view.DocumentHighlight{
 			{From: 0, To: 5},
 			{From: 6, To: 11},
@@ -1435,10 +1435,10 @@ func TestDocumentHighlightAndLinkRender(t *testing.T) {
 func TestTextAnnotationRender(t *testing.T) {
 	t.Run("renders inlay hints and color swatches", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetInlayHints(v.ID(), []view.InlayHint{
 			{Pos: 5, Label: ": string", Kind: "type"},
 		})
@@ -1454,10 +1454,10 @@ func TestTextAnnotationRender(t *testing.T) {
 
 	t.Run("renders parameter and unknown hint kinds", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetInlayHints(v.ID(), []view.InlayHint{
 			{Pos: 5, Label: ": T", Kind: "parameter"},
 			{Pos: 5, Label: ": U", Kind: "other"},
@@ -1471,10 +1471,10 @@ func TestTextAnnotationRender(t *testing.T) {
 
 	t.Run("hidden outside normal mode", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		doc.SetInlayHints(v.ID(), []view.InlayHint{
 			{Pos: 5, Label: ": string", Kind: "type"},
 		})
@@ -1507,12 +1507,12 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
 		e.ResizeTree(geom.Size{Width: 100, Height: 30})
-		_, ok := e.VSplit(docB.ID())
-		assert.True(t, ok)
+		split := e.VSplit(docB.ID())
+		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
 
-		docA, ok := e.Document(vA.DocID())
-		assert.True(t, ok)
+		docA := e.Document(vA.DocID())
+		assert.NotNil(t, docA)
 		before := stripANSI(m.View().Content)
 		assert.Contains(t, before, "hello world")
 		assert.Contains(t, before, "second file")
@@ -1547,8 +1547,8 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
 		e.ResizeTree(geom.Size{Width: 100, Height: 30})
-		_, ok := e.VSplit(docB.ID())
-		assert.True(t, ok)
+		split := e.VSplit(docB.ID())
+		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
 
 		before := m.View().Content
@@ -1571,8 +1571,8 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
 		e.ResizeTree(geom.Size{Width: 101, Height: 30})
-		_, ok := e.VSplit(docB.ID())
-		assert.True(t, ok)
+		split := e.VSplit(docB.ID())
+		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 101, 30)
 		before := stripANSI(m.View().Content)
 		assert.Contains(t, before, "hello world")
@@ -1593,8 +1593,8 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		_ = m.View().Content
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(0, 0, "zzz"),

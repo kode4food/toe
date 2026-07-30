@@ -358,7 +358,7 @@ func (p *Picker) clearPreviewCache() {
 // returns the view now showing it
 func AcceptDocumentID(
 	e *view.Editor, id view.DocumentId, action PickerAcceptAction,
-) (*view.View, bool) {
+) *view.View {
 	switch action {
 	case PickerAcceptHorizontalSplit:
 		return e.HSplit(id)
@@ -378,8 +378,8 @@ func OpenPath(
 	}
 	doc, err := e.SwitchOrOpenDoc(path)
 	if err == nil {
-		v, ok := AcceptDocumentID(e, doc.ID(), action)
-		return v, ok, nil
+		v := AcceptDocumentID(e, doc.ID(), action)
+		return v, v != nil, nil
 	}
 	if !errors.Is(err, core.ErrBinaryFile) {
 		return nil, false, err

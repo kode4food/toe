@@ -21,8 +21,8 @@ var (
 func IndentForNewline(
 	text core.Rope, lang string, line, pos int, style core.IndentStyle,
 ) (string, bool) {
-	language, ok := languageFor(lang)
-	if !ok {
+	language := languageFor(lang)
+	if language == nil {
 		return "", false
 	}
 	src := text.String()

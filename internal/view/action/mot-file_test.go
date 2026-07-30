@@ -24,8 +24,8 @@ func TestGotoFileTarget(t *testing.T) {
 
 	t.Run("URL target returns URL", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "some text\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 4, Target: "https://example.com"},
 		})
@@ -40,8 +40,8 @@ func TestGotoFileTarget(t *testing.T) {
 		path := filepath.Join(dir, "linked.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("hi"), 0o644))
 		e := testutil.EditorWithText(t, "some text\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 4, Target: "file://" + path},
 		})
@@ -53,8 +53,8 @@ func TestGotoFileTarget(t *testing.T) {
 
 	t.Run("empty target no controller errors", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "some text\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 4, Target: ""},
 		})
@@ -65,8 +65,8 @@ func TestGotoFileTarget(t *testing.T) {
 
 	t.Run("non-existent file path errors", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "some text\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 4, Target: "/nonexistent/path/file.txt"},
 		})
@@ -77,8 +77,8 @@ func TestGotoFileTarget(t *testing.T) {
 
 	t.Run("non-localhost host errors", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "some text\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 0, To: 4, Target: "file://remotehost/path"},
 		})
@@ -92,8 +92,8 @@ func TestGotoFileTarget(t *testing.T) {
 		path := filepath.Join(dir, "ref.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("hi"), 0o644))
 		e := testutil.EditorWithText(t, "see here\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 4, To: 8, Target: "file://" + path},
 		})
@@ -108,8 +108,8 @@ func TestGotoFileTarget(t *testing.T) {
 		path := filepath.Join(dir, "resolved.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("hi"), 0o644))
 		e := testutil.EditorWithText(t, "link\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
 		e.SetLanguageServerController(&stubLSP{
 			resolveLink: func(
@@ -127,8 +127,8 @@ func TestGotoFileTarget(t *testing.T) {
 
 	t.Run("controller returns error on resolve", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "link\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
 		e.SetLanguageServerController(&stubLSP{
 			resolveLink: func(
@@ -144,8 +144,8 @@ func TestGotoFileTarget(t *testing.T) {
 
 	t.Run("empty resolved target errors", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "link\n")
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
 		e.SetLanguageServerController(&stubLSP{
 			resolveLink: func(

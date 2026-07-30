@@ -18,12 +18,12 @@ func CopyOnPrevLine(e *view.Editor) {
 }
 
 func copySelectionOnLine(e *view.Editor, forward bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()

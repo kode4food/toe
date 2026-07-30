@@ -21,7 +21,7 @@ func TestIncrementHex(t *testing.T) {
 
 		action.Increment(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "0x100", doc.Text().String())
 	})
 }
@@ -33,7 +33,7 @@ func TestBuffer(t *testing.T) {
 
 		action.Increment(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "2", doc.Text().String())
 
 		action.Decrement(e)
@@ -65,7 +65,7 @@ func TestInsertTab(t *testing.T) {
 
 		action.InsertTab(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.True(t, len(text) > 3)
 		assert.Equal(t, 'a', rune(text[0]))
@@ -80,8 +80,8 @@ func TestExtendToColumn(t *testing.T) {
 
 		action.ExtendToColumn(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		// col 4 = pos 3; PutCursor with extend advances one grapheme -> pos 4
 		assert.Equal(t, 4, sel.Primary().To())
@@ -96,8 +96,8 @@ func TestSelectWithinRegex(t *testing.T) {
 		err := action.SelectWithinRegex(e, `\b\w+\b`)
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, len(sel.Ranges()))
 	})
@@ -120,8 +120,8 @@ func TestSplitSelectionByRegex(t *testing.T) {
 		err := action.SplitSelectionByRegex(e, ",")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, len(sel.Ranges()))
 	})
@@ -148,8 +148,8 @@ func TestKeepSelectionsMatching(t *testing.T) {
 		err := action.KeepSelectionsMatching(e, "ba")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, len(sel.Ranges()))
 	})
@@ -167,8 +167,8 @@ func TestRemoveSelectionsMatching(t *testing.T) {
 		err := action.RemoveSelectionsMatching(e, "ba")
 
 		assert.NoError(t, err)
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
 	})
@@ -186,7 +186,7 @@ func TestSortSelections(t *testing.T) {
 		err := action.SortSelections(e, false, false)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "apple\nbanana\ncherry", doc.Text().String())
 	})
 
@@ -201,7 +201,7 @@ func TestSortSelections(t *testing.T) {
 		err := action.SortSelections(e, true, false)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "c\nb\na", doc.Text().String())
 	})
 
@@ -224,7 +224,7 @@ func TestSortSelections(t *testing.T) {
 		err := action.SortSelections(e, false, true)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "apple\nBanana", doc.Text().String())
 	})
 
@@ -238,7 +238,7 @@ func TestSortSelections(t *testing.T) {
 		err := action.SortSelections(e, false, false)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.True(t, len(text) > 0)
 	})
@@ -253,7 +253,7 @@ func TestSortSelections(t *testing.T) {
 		err := action.SortSelections(e, false, false)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\na", doc.Text().String())
 	})
 }
@@ -265,7 +265,7 @@ func TestReflowSelections(t *testing.T) {
 
 		action.ReflowSelections(e, 10)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		// text is wrapped at 10 chars
 		result := doc.Text().String()
 		assert.NotEqual(t, "hello world foo bar", result)
@@ -279,7 +279,7 @@ func TestSetLineEnding(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingCRLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\r\nb", doc.Text().String())
 	})
 
@@ -289,7 +289,7 @@ func TestSetLineEnding(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\nb", doc.Text().String())
 	})
 }
@@ -302,7 +302,7 @@ func TestPasteRegisterAtCursor(t *testing.T) {
 
 		action.PasteRegisterAtCursor(e, 'x')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 
@@ -312,7 +312,7 @@ func TestPasteRegisterAtCursor(t *testing.T) {
 
 		action.PasteRegisterAtCursor(e, 'z')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
@@ -331,7 +331,7 @@ func TestCloseCurrentViewForce(t *testing.T) {
 func TestTransposeView(t *testing.T) {
 	t.Run("does not panic", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		v, _ := e.FocusedView()
+		v := e.FocusedView()
 		e.VSplit(v.DocID())
 
 		assert.NotPanics(t, func() { action.TransposeView(e) })
@@ -497,7 +497,7 @@ func TestSetLineEndingCRLFConversion(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingCRLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\r\nb\r\nc", doc.Text().String())
 	})
 
@@ -507,7 +507,7 @@ func TestSetLineEndingCRLFConversion(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\nb", doc.Text().String())
 	})
 
@@ -517,7 +517,7 @@ func TestSetLineEndingCRLFConversion(t *testing.T) {
 		err := action.SetLineEnding(e, core.LineEndingCRLF)
 
 		assert.NoError(t, err)
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a\r\nb", doc.Text().String())
 	})
 }
@@ -540,14 +540,14 @@ func TestGotoLastAccessedFileSwitches(t *testing.T) {
 		e.HSplit(firstDocID)
 		_, err = e.OpenFile(f2)
 		assert.NoError(t, err)
-		v2, _ := e.FocusedView()
+		v2 := e.FocusedView()
 		secondDocID := v2.DocID()
 		assert.NotEqual(t, firstDocID, secondDocID)
 
 		// Now GotoLastAccessedFile should find a view showing file1
 		action.GotoLastAccessedFile(e)
 
-		vAfter, _ := e.FocusedView()
+		vAfter := e.FocusedView()
 		assert.Equal(t, firstDocID, vAfter.DocID())
 	})
 }
@@ -559,7 +559,7 @@ func TestCommentTokenAt(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 
@@ -569,7 +569,7 @@ func TestCommentTokenAt(t *testing.T) {
 
 		action.ToggleLineComments(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Contains(t, doc.Text().String(), "hello")
 		assert.True(t, len(doc.Text().String()) > len("hello"))
 	})
@@ -610,7 +610,7 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		firstDocID := v1.DocID()
 
 		// Modify first doc then switch to second
-		doc1, _ := e.FocusedDocument()
+		doc1 := e.FocusedDocument()
 		rope := doc1.Text()
 		cs, err := core.NewChangeSetFromChanges(
 			rope, []core.Change{core.TextChange(0, 0, "x")},
@@ -623,13 +623,13 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		_, err = e.OpenFile(f2)
 		assert.NoError(t, err)
 
-		v2, _ := e.FocusedView()
+		v2 := e.FocusedView()
 		secondDocID := v2.DocID()
 		assert.NotEqual(t, firstDocID, secondDocID)
 
 		action.GotoLastModifiedFile(e)
 
-		vAfter, _ := e.FocusedView()
+		vAfter := e.FocusedView()
 		assert.Equal(t, firstDocID, vAfter.DocID())
 	})
 }
@@ -645,7 +645,7 @@ func TestIncrementWithHashRegister(t *testing.T) {
 
 		action.Increment(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "2")
 		assert.Contains(t, text, "3")
@@ -659,7 +659,7 @@ func TestJoinSelectionsCommented(t *testing.T) {
 
 		action.JoinSelections(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.NotContains(t, text, "\n")
 	})
@@ -672,7 +672,7 @@ func TestJoinSelectionsCommented(t *testing.T) {
 
 		action.JoinSelections(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.NotContains(t, text, "\n")
 	})
@@ -683,7 +683,7 @@ func TestJoinSelectionsCommented(t *testing.T) {
 
 		action.JoinSelectionsSpace(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "a b", doc.Text().String())
 	})
 }
@@ -708,7 +708,7 @@ func TestIncrementNonNumber(t *testing.T) {
 
 		action.Increment(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "hello", doc.Text().String())
 	})
 }
@@ -723,7 +723,7 @@ func TestInsertTabDuplicateCursors(t *testing.T) {
 
 		action.InsertTab(e)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.True(t, len(text) > 2)
 	})
@@ -740,7 +740,7 @@ func TestPasteRegisterAtCursorDuplicate(t *testing.T) {
 
 		action.PasteRegisterAtCursor(e, 'x')
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abc", doc.Text().String())
 	})
 }
@@ -753,8 +753,8 @@ func TestExtendToColumnEdge(t *testing.T) {
 
 		action.ExtendToColumn(e)
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.True(t, sel.Primary().From() <= sel.Primary().To())
 	})
@@ -781,7 +781,7 @@ func TestReflowSelectionsWidth(t *testing.T) {
 
 		action.ReflowSelections(e, 5)
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		text := doc.Text().String()
 		assert.Contains(t, text, "\n")
 	})

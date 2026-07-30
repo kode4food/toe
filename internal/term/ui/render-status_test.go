@@ -56,8 +56,8 @@ func TestStatuslineAltBranches(t *testing.T) {
 		e := view.NewEditor(root)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetLineEnding(core.LineEndingCRLF)
 		doc.SetIndentStyle(core.ParseIndentStyle("\t"))
 		opts := e.Options()
@@ -80,8 +80,8 @@ func TestStatuslineAltBranches(t *testing.T) {
 func TestStatuslineReadOnly(t *testing.T) {
 	t.Run("readonly indicator appears", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetReadOnly(true)
 		opts := e.Options()
 		opts.StatusLine.Left = []view.StatusLineItem{
@@ -99,8 +99,8 @@ func TestStatuslineReadOnly(t *testing.T) {
 func TestStatuslineDiagnostics(t *testing.T) {
 	t.Run("renders diagnostic counts", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Severity: view.DiagnosticSeverityError},
 			{Severity: view.DiagnosticSeverityWarning},
@@ -121,8 +121,8 @@ func TestStatuslineDiagnostics(t *testing.T) {
 
 	t.Run("info and hint counts", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 			{Severity: view.DiagnosticSeverityInfo},
 			{Severity: view.DiagnosticSeverityHint},
@@ -289,8 +289,8 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			element: view.StatusLineReadOnly,
 			setup: func(t *testing.T) *view.Editor {
 				e := view.NewEditor(t.TempDir())
-				doc, ok := e.FocusedDocument()
-				assert.True(t, ok)
+				doc := e.FocusedDocument()
+				assert.NotNil(t, doc)
 				doc.SetReadOnly(true)
 				return e
 			},
@@ -309,8 +309,8 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			element: view.StatusLineFileIndentStyle,
 			setup: func(t *testing.T) *view.Editor {
 				e := view.NewEditor(t.TempDir())
-				doc, ok := e.FocusedDocument()
-				assert.True(t, ok)
+				doc := e.FocusedDocument()
+				assert.NotNil(t, doc)
 				doc.SetIndentStyle(core.ParseIndentStyle("\t"))
 				return e
 			},
@@ -321,8 +321,8 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			element: view.StatusLineDiagnostics,
 			setup: func(t *testing.T) *view.Editor {
 				e := view.NewEditor(t.TempDir())
-				doc, ok := e.FocusedDocument()
-				assert.True(t, ok)
+				doc := e.FocusedDocument()
+				assert.NotNil(t, doc)
 				doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
 					{Severity: view.DiagnosticSeverityError},
 				})
@@ -545,8 +545,8 @@ func TestStatuslineEdgeElements(t *testing.T) {
 
 	t.Run("spaces indent and default file type", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetIndentStyle(core.Spaces(2))
 		doc.SetLang("")
 		e.Options().StatusLine.Left = []view.StatusLineItem{

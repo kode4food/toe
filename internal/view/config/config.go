@@ -89,7 +89,7 @@ func decodeAutoSaveAfterDelay(value any) AutoSaveAfterDelay {
 	if m, ok := value.(map[string]any); ok {
 		return AutoSaveAfterDelay{
 			Enable:  loader.BoolPtr(m["enable"]),
-			Timeout: loader.IntPtrOrNil(m["timeout"]),
+			Timeout: loader.IntPtr(m["timeout"]),
 		}
 	}
 	return AutoSaveAfterDelay{}

@@ -13,8 +13,8 @@ import (
 
 func TestYank(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello world")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
 		v.ID(), newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
 	)
@@ -26,8 +26,8 @@ func TestYank(t *testing.T) {
 
 func TestPasteAfter(t *testing.T) {
 	e := testutil.EditorWithText(t, "ab")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
 		v.ID(), newSelection(t, []core.Range{core.NewRange(1, 2)}, 0),
 	)
@@ -42,8 +42,8 @@ func TestPasteAfter(t *testing.T) {
 
 func TestPasteBefore(t *testing.T) {
 	e := testutil.EditorWithText(t, "ab")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
 		v.ID(), newSelection(t, []core.Range{core.NewRange(1, 2)}, 0),
 	)
@@ -84,8 +84,8 @@ func TestSetClipboard(t *testing.T) {
 
 func TestPasteAfterLinewise(t *testing.T) {
 	e := testutil.EditorWithText(t, "foo\nbar")
-	v, _ := e.FocusedView()
-	doc, _ := e.FocusedDocument()
+	v := e.FocusedView()
+	doc := e.FocusedDocument()
 	e.Registers().Write('"', []string{"baz\n"})
 
 	doc.SetSelectionFor(v.ID(), core.PointSelection(0))

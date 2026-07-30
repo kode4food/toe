@@ -41,16 +41,16 @@ func JumplistPicker(e *view.Editor) *ui.Picker {
 func (j *jumplistPickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil, nil, func() {}
 	}
 	jumps := v.Jumps()
 	items := make([]ui.PickerItem, 0, len(jumps))
 	for i := len(jumps) - 1; i >= 0; i-- {
 		entry := jumps[i]
-		doc, ok := e.Document(entry.DocID)
-		if !ok {
+		doc := e.Document(entry.DocID)
+		if doc == nil {
 			continue
 		}
 		name := doc.RelativeName(e.Cwd())
@@ -77,11 +77,11 @@ func (j *jumplistPickerSource) Accept(
 	if !ok {
 		return
 	}
-	v, ok := ui.AcceptDocumentID(e, entry.DocID, action)
-	if !ok {
+	v := ui.AcceptDocumentID(e, entry.DocID, action)
+	if v == nil {
 		return
 	}
-	if doc, ok := e.Document(v.DocID()); ok {
+	if doc := e.Document(v.DocID()); doc != nil {
 		doc.SetSelectionFor(v.ID(), jumpSelection(entry))
 		ui.AlignAcceptedView(e, v, doc)
 	}

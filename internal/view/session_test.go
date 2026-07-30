@@ -50,8 +50,8 @@ func TestSession(t *testing.T) {
 			HorizontalOffset: 2,
 			VerticalOffset:   3,
 		})
-		firstDoc, ok := e.Document(first.DocID())
-		assert.True(t, ok)
+		firstDoc := e.Document(first.DocID())
+		assert.NotNil(t, firstDoc)
 		firstSel, err := core.NewSelection(
 			[]core.Range{core.NewRange(1, 4)}, 0,
 		)
@@ -60,8 +60,8 @@ func TestSession(t *testing.T) {
 
 		secondDoc, err := e.SwitchOrOpenDoc(secondPath)
 		assert.NoError(t, err)
-		second, ok := e.HSplit(secondDoc.ID())
-		assert.True(t, ok)
+		second := e.HSplit(secondDoc.ID())
+		assert.NotNil(t, second)
 		second.SetMode(view.ModeInsert)
 		secondSel := core.PointSelection(5)
 		secondDoc.SetSelectionFor(second.ID(), secondSel)
@@ -95,8 +95,8 @@ func TestSession(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, view.LayoutHorizontal, layout)
 
-		doc, ok := next.Document(views[0].DocID())
-		assert.True(t, ok)
+		doc := next.Document(views[0].DocID())
+		assert.NotNil(t, doc)
 		assert.Equal(t,
 			firstSel.Ranges(), doc.SelectionFor(views[0].ID()).Ranges(),
 		)
@@ -104,8 +104,8 @@ func TestSession(t *testing.T) {
 			firstSel.PrimaryIndex(),
 			doc.SelectionFor(views[0].ID()).PrimaryIndex(),
 		)
-		doc, ok = next.Document(views[1].DocID())
-		assert.True(t, ok)
+		doc = next.Document(views[1].DocID())
+		assert.NotNil(t, doc)
 		assert.Equal(t,
 			secondSel.Ranges(), doc.SelectionFor(views[1].ID()).Ranges(),
 		)
@@ -161,8 +161,8 @@ func TestSession(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		tx := core.NewTransaction(doc.Text()).
 			WithSelection(core.PointSelection(3))
 		assert.NoError(t, e.Apply(tx))
@@ -175,8 +175,8 @@ func TestSession(t *testing.T) {
 		assert.True(t, restored)
 		views := next.AllViews()
 		assert.NotEmpty(t, views)
-		nextDoc, ok := next.Document(views[0].DocID())
-		assert.True(t, ok)
+		nextDoc := next.Document(views[0].DocID())
+		assert.NotNil(t, nextDoc)
 		assert.Equal(t, 3, nextDoc.Selection().Primary().Head)
 	})
 
@@ -269,8 +269,8 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, restored)
 
-		doc, ok := next.FocusedDocument()
-		assert.True(t, ok)
+		doc := next.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.True(t, doc.Loaded())
 	})
 
@@ -287,8 +287,8 @@ func TestSession(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		va, err := e.OpenFile(aPath)
 		assert.NoError(t, err)
-		aDoc, ok := e.Document(va.DocID())
-		assert.True(t, ok)
+		aDoc := e.Document(va.DocID())
+		assert.NotNil(t, aDoc)
 		sel, err := core.NewSelection([]core.Range{core.NewRange(3, 7)}, 0)
 		assert.NoError(t, err)
 		aDoc.SetSelectionFor(va.ID(), sel)
@@ -326,8 +326,8 @@ func TestSession(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		va, err := e.OpenFile(aPath)
 		assert.NoError(t, err)
-		aDoc, ok := e.Document(va.DocID())
-		assert.True(t, ok)
+		aDoc := e.Document(va.DocID())
+		assert.NotNil(t, aDoc)
 		sel, err := core.NewSelection([]core.Range{core.NewRange(8, 11)}, 0)
 		assert.NoError(t, err)
 		aDoc.SetSelectionFor(va.ID(), sel)
@@ -629,8 +629,8 @@ focused = true
 		_, restored, err := e.RestoreSession(sessionPath)
 		assert.NoError(t, err)
 		assert.True(t, restored)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, "scratch text\n", doc.Text().String())
 		assert.Equal(t, "go", doc.Lang())
 	})
@@ -678,8 +678,8 @@ document = 1
 		assert.NoError(t, err)
 		rightDoc, err := e.SwitchOrOpenDoc(rightPath)
 		assert.NoError(t, err)
-		_, ok := e.VSplit(rightDoc.ID())
-		assert.True(t, ok)
+		v := e.VSplit(rightDoc.ID())
+		assert.NotNil(t, v)
 
 		// drag separator: left pane gets ~30 cols
 		vs := e.Views()
@@ -768,7 +768,7 @@ document = 1
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		va, err := e.OpenFile(aPath)
 		assert.NoError(t, err)
-		docA, _ := e.Document(va.DocID())
+		docA := e.Document(va.DocID())
 		docB, err := e.SwitchOrOpenDoc(bPath)
 		assert.NoError(t, err)
 
@@ -911,8 +911,8 @@ kind = "bogus"
 		if !assert.True(t, ok) {
 			return
 		}
-		doc, ok := next.Document(reverted.DocID())
-		assert.True(t, ok)
+		doc := next.Document(reverted.DocID())
+		assert.NotNil(t, doc)
 		assert.Equal(t, filePath, doc.Path())
 	})
 }

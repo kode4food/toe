@@ -59,7 +59,7 @@ func TestConfigDocumentOptions(t *testing.T) {
 	t.Run("set language updates the buffer", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_language", "go")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "go", doc.Lang())
 	})
 
@@ -108,8 +108,8 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 	t.Run("set language no document errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmd(t, km, e, "set_language")
 		assert.Contains(t, res.Message, "error")
@@ -117,8 +117,8 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 	t.Run("line ending no document errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmd(t, km, e, "set_line_ending")
 		assert.Contains(t, res.Message, "error")
@@ -126,8 +126,8 @@ func TestConfigDocumentOptions(t *testing.T) {
 
 	t.Run("indent style no document errors", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		e.CloseView(v.ID())
 		res := test.RunCmd(t, km, e, "indent_style")
 		assert.Contains(t, res.Message, "error")
@@ -297,7 +297,7 @@ func TestConfigThemeExtra(t *testing.T) {
 	t.Run("set_language text sets empty lang", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_language", "text")
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "", doc.Lang())
 	})
 

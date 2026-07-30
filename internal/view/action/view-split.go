@@ -5,7 +5,7 @@ import "github.com/kode4food/toe/internal/view"
 // CloseCurrentView closes the focused view. If the document has unsaved
 // changes and there are other views, the close is blocked
 func CloseCurrentView(e *view.Editor) {
-	doc, _ := e.FocusedDocument()
+	doc := e.FocusedDocument()
 	if doc != nil && doc.Modified() {
 		if e.Tree().Count() > 1 {
 			return

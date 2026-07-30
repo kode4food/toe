@@ -29,8 +29,8 @@ func TestSession(t *testing.T) {
 
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		hunks := waitHunks(t, s, doc)
 		assert.Equal(t, []view.DiffHunk{
@@ -57,8 +57,8 @@ func TestSession(t *testing.T) {
 
 		s := vcs.Attach(e)
 		defer s.Close()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Len(t, waitHunks(t, s, doc), 1)
 	})
 
@@ -66,10 +66,10 @@ func TestSession(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		s := vcs.Attach(e)
 		defer s.Close()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Empty(t, s.DiffHunks(doc))
-		_, ok = s.DiffBase(doc)
+		_, ok := s.DiffBase(doc)
 		assert.False(t, ok)
 		_, ok = s.HeadName(doc)
 		assert.False(t, ok)
@@ -100,8 +100,8 @@ func TestSession(t *testing.T) {
 		defer s.Close()
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		waitBase(t, s, doc, "one\n")
 
 		testutil.WriteFile(t, path, "two\n")
@@ -126,8 +126,8 @@ func TestSession(t *testing.T) {
 
 		v, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		waitDiffer(t, s, doc)
 
 		// consume any pending update token, then edit the document

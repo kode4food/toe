@@ -11,12 +11,12 @@ import (
 // Yank copies the text of every selection range to the active register
 // (defaulting to '"') and exits select mode
 func Yank(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -46,12 +46,12 @@ func PasteBefore(e *view.Editor) {
 // ReplaceWithYanked replaces each selection with the corresponding value from
 // the active register (default '"'). Exits select mode
 func ReplaceWithYanked(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -112,12 +112,12 @@ func yankFragments(text core.Rope, sel core.Selection) []string {
 }
 
 func pasteImpl(e *view.Editor, before bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {

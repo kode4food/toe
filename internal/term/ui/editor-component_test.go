@@ -51,8 +51,8 @@ func TestInsertMode(t *testing.T) {
 		m = sendKey(m, 'a')
 		m = sendSpecial(m, tea.KeySpace)
 		_ = sendKey(m, 'b')
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 
 		assert.Equal(t, "a b", doc.Text().String())
 	})
@@ -83,7 +83,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		})
 		_ = m2
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abXYcd", doc.Text().String())
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
@@ -101,7 +101,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		})
 		_ = m2
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abcd", doc.Text().String())
 	})
 
@@ -118,7 +118,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		})
 		_ = m2
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "aXYd", doc.Text().String())
 	})
 
@@ -134,7 +134,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 		})
 		_ = m2
 
-		doc, _ := e.FocusedDocument()
+		doc := e.FocusedDocument()
 		assert.Equal(t, "abcd", doc.Text().String())
 	})
 }
@@ -148,8 +148,8 @@ func TestMouseWheelScroll(t *testing.T) {
 		e.SetViewHeight(6)
 		m := renderedModel(e)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
@@ -165,8 +165,8 @@ func TestMouseWheelScroll(t *testing.T) {
 		e.SetViewHeight(6)
 		m := renderedModel(e)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
 		// 40×8 window, no bufferline: ResizeTree gives the pane height=7,
@@ -183,8 +183,8 @@ func TestMouseWheelScroll(t *testing.T) {
 		e := editorWithText(t, strings.Repeat("x", 60)+"\nshort")
 		m := renderedModel(e)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
 			X: 5, Y: 0, Button: tea.MouseWheelRight,
@@ -203,8 +203,8 @@ func TestMouseWheelScroll(t *testing.T) {
 		e.SetViewHeight(6)
 		m := renderedModel(e)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
 		// Y=7 is the command line, outside any editor pane in this window
@@ -273,8 +273,8 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m2
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, len(sel.Ranges()))
 		assert.Equal(t, 1, sel.PrimaryIndex())
@@ -290,8 +290,8 @@ func TestMouseClickPositioning(t *testing.T) {
 		})
 		_ = m2
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, []core.Range{core.NewRange(0, 4)}, sel.Ranges())
 	})
@@ -344,10 +344,10 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		_ = m.View()
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		_, ok = e.VSplit(v.DocID())
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		split := e.VSplit(v.DocID())
+		assert.NotNil(t, split)
 		_ = m.View()
 
 		views := e.Views()
@@ -370,10 +370,10 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		_ = m.View()
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		_, ok = e.HSplit(v.DocID())
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		split := e.HSplit(v.DocID())
+		assert.NotNil(t, split)
 		_ = m.View()
 
 		views := e.Views()
@@ -409,8 +409,8 @@ func TestMouseDragBounds(t *testing.T) {
 		})
 		_ = m2
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t,
 			[]core.Range{core.NewRange(1, 2)},
 			doc.SelectionFor(v.ID()).Ranges(),
@@ -431,8 +431,8 @@ func TestMouseDragBounds(t *testing.T) {
 		})
 		_ = m2
 
-		v, _ := e.FocusedView()
-		doc, _ := e.FocusedDocument()
+		v := e.FocusedView()
+		doc := e.FocusedDocument()
 		assert.Equal(t,
 			[]core.Range{core.NewRange(1, 6)},
 			doc.SelectionFor(v.ID()).Ranges(),
@@ -452,8 +452,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
 		m = m2.(ui.Model)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
 		// dragging past the pane's bottom edge starts an auto-scroll tick
@@ -480,10 +480,10 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		}
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		anchor, err := doc.Text().LineToChar(20)
 		assert.NoError(t, err)
 		v.SetOffset(view.Position{Anchor: anchor})
@@ -518,10 +518,10 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		anchor, err := doc.Text().LineToChar(20)
 		assert.NoError(t, err)
 		v.SetOffset(view.Position{Anchor: anchor})
@@ -584,12 +584,12 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		startAnchor, err := doc.Text().LineToChar(20)
 		assert.NoError(t, err)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 
 		var lines []int
 		for row := range 8 {
@@ -662,8 +662,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
 		m = m2.(ui.Model)
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
 		// the tick scheduled before release must be a no-op now
@@ -686,8 +686,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		_ = m.View()
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		area := v.Area()
 
 		m2, _ := m.Update(tea.MouseClickMsg{
@@ -744,12 +744,12 @@ func TestFreeScroll(t *testing.T) {
 	t.Run("keypress keeps other scrolled view", func(t *testing.T) {
 		e := editorWithText(t, strings.Repeat("0123456789abcdef\n", 20))
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
-		v1, ok := e.FocusedView()
-		assert.True(t, ok)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v2, ok := e.VSplit(doc.ID())
-		assert.True(t, ok)
+		v1 := e.FocusedView()
+		assert.NotNil(t, v1)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v2 := e.VSplit(doc.ID())
+		assert.NotNil(t, v2)
 		assert.Equal(t, v2.ID(), e.Tree().Focus())
 		anchor, err := doc.Text().LineToChar(10)
 		assert.NoError(t, err)
@@ -782,8 +782,8 @@ func TestFreeScroll(t *testing.T) {
 		}
 		_ = m.View()
 
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		before := v.Offset()
 
 		// the last content row before the status/command line is well inside
@@ -827,8 +827,8 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")
 	e.Options().Theme = view.DefaultTheme
-	doc, ok := e.FocusedDocument()
-	assert.True(t, ok)
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 		core.TextChange(0, 0, text),
@@ -856,8 +856,8 @@ func TestGotoLineKeySequence(t *testing.T) {
 	}
 
 	cursorLine := func(t *testing.T, e *view.Editor) int {
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
 		assert.NoError(t, err)
 		return line
@@ -932,8 +932,8 @@ func TestCountMotionKeySequence(t *testing.T) {
 		m = sendKey(m, '5')
 		_ = sendKey(m, 'j')
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		line, err := doc.Text().CharToLine(testutil.CursorPos(t, e))
 		assert.NoError(t, err)
 		assert.Equal(t, 5, line)
@@ -975,8 +975,8 @@ func TestFocusMessages(t *testing.T) {
 		assert.NoError(t, err)
 		s := vcs.Attach(e)
 		defer s.Close()
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Eventually(t, func() bool {
 			base, ok := s.DiffBase(doc)
 			return ok && base == "one\n"
@@ -1088,10 +1088,10 @@ func TestDocumentHighlightRefresh(t *testing.T) {
 		assert.NotNil(t, cmd)
 		drainCmd(m, cmd)
 
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
-		v, ok := e.FocusedView()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
 		assert.Equal(t, ctl.highlights, doc.DocumentHighlights(v.ID()))
 	})
 }

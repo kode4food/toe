@@ -89,13 +89,13 @@ func (r *Registry) ApplyTOML(e *view.Editor, raw map[string]any) error {
 }
 
 // LookupOption returns the registered Option for the given key, if any
-func (r *Registry) LookupOption(key string) (*Option, bool) {
+func (r *Registry) LookupOption(key string) *Option {
 	if o, ok := r.options[normalizeOptionKey(key)]; ok {
-		return o, true
+		return o
 	}
-	o, ok := r.lookupPrefixOption(key)
-	if !ok || o.KeySet == nil {
-		return nil, false
+	o := r.lookupPrefixOption(key)
+	if o == nil || o.KeySet == nil {
+		return nil
 	}
 	return &Option{
 		Key: key,
@@ -110,17 +110,17 @@ func (r *Registry) LookupOption(key string) (*Option, bool) {
 			return o.KeySet(e, key, value)
 		},
 		Complete: o.Complete,
-	}, true
+	}
 }
 
-func (r *Registry) lookupPrefixOption(key string) (*Option, bool) {
+func (r *Registry) lookupPrefixOption(key string) *Option {
 	key = normalizeOptionKey(key)
 	for _, o := range r.prefixes {
 		if strings.HasPrefix(key, normalizeOptionKey(o.Key)) {
-			return o, true
+			return o
 		}
 	}
-	return nil, false
+	return nil
 }
 
 // OptionKeys returns all registered option keys in sorted order
@@ -164,8 +164,8 @@ func (r *Registry) ApplyOptionValues(
 	e *view.Editor, values map[string]string,
 ) error {
 	for key, value := range values {
-		o, ok := r.LookupOption(key)
-		if !ok {
+		o := r.LookupOption(key)
+		if o == nil {
 			continue
 		}
 		if err := o.Set(e, value); err != nil {
@@ -213,8 +213,8 @@ func (r *Registry) OptionValueCompleter() CompletionFunc {
 		if !ok {
 			return nil
 		}
-		o, ok := r.LookupOption(key)
-		if !ok {
+		o := r.LookupOption(key)
+		if o == nil {
 			return nil
 		}
 		if o.Complete != nil {

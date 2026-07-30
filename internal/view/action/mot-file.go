@@ -29,12 +29,12 @@ var (
 
 // GotoFileTarget resolves the file or URL target under the primary cursor
 func GotoFileTarget(e *view.Editor) (GotoTarget, error) {
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return GotoTarget{}, view.ErrNoDocument
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return GotoTarget{}, view.ErrNoView
 	}
 	text := doc.Text()

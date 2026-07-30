@@ -85,8 +85,8 @@ func (l *lspWorkspaceCommandSource) Accept(
 	if !ok {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if ctl := e.LanguageServerController(); ctl != nil {
@@ -171,8 +171,8 @@ func (l *lspWorkspaceSymbolSource) Load(
 	if l.query == "" {
 		return nil, nil, func() {}
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil, nil, func() {}
 	}
 	ctl := e.LanguageServerController()
@@ -228,7 +228,7 @@ func (l *lspWorkspaceSymbolSource) Accept(
 func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 	ctl := e.LanguageServerController()
 	var commands []string
-	if doc, ok := e.FocusedDocument(); ok && ctl != nil {
+	if doc := e.FocusedDocument(); doc != nil && ctl != nil {
 		commands = ctl.WorkspaceCommands(doc)
 	}
 	return NewPicker(e, &lspWorkspaceCommandSource{
@@ -251,8 +251,8 @@ func acceptLocation(
 	if !ok {
 		return
 	}
-	doc, ok := e.Document(v.DocID())
-	if !ok {
+	doc := e.Document(v.DocID())
+	if doc == nil {
 		return
 	}
 	sel, err := locationSelection(loc)

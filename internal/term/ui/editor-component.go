@@ -217,12 +217,12 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	if e.mouse.downRange != nil {
 		return nil
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return nil
 	}
 	ls := cx.Editor.LanguageServerController()
@@ -266,12 +266,12 @@ func (e *EditorComponent) Cursor(
 // reports the caret position regardless of cursor shape, so caret-anchored
 // overlays still work under the normal-mode block cursor that Cursor hides
 func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return geom.Point{}, false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return geom.Point{}, false
 	}
 	opts := cx.Editor.Options()

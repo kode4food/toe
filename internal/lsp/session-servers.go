@@ -33,8 +33,8 @@ type serverState struct {
 func (s *Session) RestartLanguageServers(
 	doc *view.Document, names []string,
 ) ([]string, error) {
-	lang, ok := s.languageForDocument(doc)
-	if !ok {
+	lang := s.languageForDocument(doc)
+	if lang == nil {
 		return nil, view.ErrNoLanguageServer
 	}
 	selected, err := selectLanguageServers(lang, names)
@@ -44,7 +44,7 @@ func (s *Session) RestartLanguageServers(
 	s.clearDocumentHighlightsForServers(selected)
 	s.stopClients(selected)
 	for _, name := range selected {
-		_, _ = s.ensureClient(name, doc, lang)
+		s.ensureClient(name, doc, lang)
 	}
 	s.notify(doc, (*Client).DidOpen)
 	return selected, nil
@@ -54,8 +54,8 @@ func (s *Session) RestartLanguageServers(
 func (s *Session) StopLanguageServers(
 	doc *view.Document, names []string,
 ) ([]string, error) {
-	lang, ok := s.languageForDocument(doc)
-	if !ok {
+	lang := s.languageForDocument(doc)
+	if lang == nil {
 		return nil, view.ErrNoLanguageServer
 	}
 	selected, err := selectLanguageServers(lang, names)
@@ -108,45 +108,45 @@ func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 
 func (s *Session) languageForDocument(
 	doc *view.Document,
-) (*language.Language, bool) {
+) *language.Language {
 	if doc == nil {
-		return nil, false
+		return nil
 	}
-	lang, ok := s.servers.language(doc.Lang())
-	if !ok || len(lang.LanguageServers) == 0 {
-		return nil, false
+	lang := s.servers.language(doc.Lang())
+	if lang == nil || len(lang.LanguageServers) == 0 {
+		return nil
 	}
-	return lang, true
+	return lang
 }
 
 func (s *Session) ensureClient(
 	name string, doc *view.Document, lang *language.Language,
-) (*Client, bool) {
+) *Client {
 	s.servers.starting.Lock()
 	defer s.servers.starting.Unlock()
-	if client, ok := s.servers.client(name); ok {
-		return client, true
+	if client := s.servers.client(name); client != nil {
+		return client
 	}
 	return s.startClient(name, doc, lang)
 }
 
 func (s *Session) startClient(
 	name string, doc *view.Document, lang *language.Language,
-) (*Client, bool) {
+) *Client {
 	root := s.workspaceRoot(doc, lang)
 	handler := &clientHandler{session: s, name: name}
 	client, err := s.servers.startRegistry(s.ctx, name, root, handler)
 	if err != nil {
-		return nil, false
+		return nil
 	}
 	s.servers.setRoot(name, root)
 	params := NewInitializeParams(InitializeConfig{WorkspaceRoot: root})
 	if _, err := client.Initialize(s.ctx, params); err != nil {
 		_ = client.Close()
-		return nil, false
+		return nil
 	}
 	s.servers.setClient(name, client)
-	return client, true
+	return client
 }
 
 func (s *Session) workspaceFolders() []protocol.WorkspaceFolder {
@@ -167,7 +167,7 @@ func (s *Session) workspaceFolders() []protocol.WorkspaceFolder {
 func (s *Session) offsetForProvider(
 	provider string,
 ) protocol.PositionEncodingKind {
-	if client, ok := s.servers.client(provider); ok {
+	if client := s.servers.client(provider); client != nil {
 		return client.OffsetEncoding()
 	}
 	return protocol.PositionEncodingKindUTF16
@@ -203,11 +203,10 @@ func (s *Session) dropClient(name string, client *Client) {
 	_ = client.Close()
 }
 
-func (s *serverState) client(name string) (*Client, bool) {
+func (s *serverState) client(name string) *Client {
 	s.RLock()
 	defer s.RUnlock()
-	client, ok := s.clients[name]
-	return client, ok
+	return s.clients[name]
 }
 
 func (s *serverState) allClients() []*Client {
@@ -246,15 +245,14 @@ func (s *serverState) startRegistry(
 	return s.registry.Start(ctx, name, root, handler)
 }
 
-func (s *serverState) language(name string) (*language.Language, bool) {
+func (s *serverState) language(name string) *language.Language {
 	s.RLock()
 	defer s.RUnlock()
-	lang, ok := s.languages[name]
-	return lang, ok
+	return s.languages[name]
 }
 
 func (s *serverState) languageID(name string) string {
-	if lang, ok := s.language(name); ok {
+	if lang := s.language(name); lang != nil {
 		return lang.LanguageID
 	}
 	return ""

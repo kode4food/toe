@@ -34,8 +34,8 @@ func TestEditorRegisters(t *testing.T) {
 
 	t.Run("document path is computed", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		doc.SetPath("/tmp/example.txt")
 
 		assert.Equal(t, []string{"/tmp/example.txt"}, e.ReadRegister('%'))

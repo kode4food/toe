@@ -27,12 +27,12 @@ func SelectTextObjectInside(e *view.Editor, ch rune) {
 // SurroundAdd wraps each selection with the pair that matches ch, then switches
 // to normal mode. ch may be either the opening or closing bracket character
 func SurroundAdd(e *view.Editor, ch rune) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	openCh, closeCh := core.GetPair(ch)
@@ -124,12 +124,12 @@ func SurroundReplaceAt(
 }
 
 func textObjectSelect(e *view.Editor, ch rune, kind core.TextObjectKind) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	n := max(countOrOne(e), 1)
@@ -167,12 +167,12 @@ type resolveSurroundPosRes struct {
 }
 
 func resolveSurroundPos(e *view.Editor, ch rune) (resolveSurroundPosRes, bool) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return resolveSurroundPosRes{}, false
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return resolveSurroundPosRes{}, false
 	}
 	text := doc.Text()

@@ -121,8 +121,8 @@ func TestOpenEditorFiles(t *testing.T) {
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
 		a.Files = []string{path}
 		assert.NoError(t, a.OpenEditorFiles())
-		doc, ok := a.Editor.FocusedDocument()
-		assert.True(t, ok)
+		doc := a.Editor.FocusedDocument()
+		assert.NotNil(t, doc)
 		assert.Equal(t, path, doc.Path())
 	})
 }

@@ -217,7 +217,7 @@ func (h *clientHandler) ApplyEdit(
 	_ context.Context, params *protocol.ApplyWorkspaceEditParams,
 ) (*protocol.ApplyWorkspaceEditResult, error) {
 	encoding := protocol.PositionEncodingKindUTF16
-	if client, ok := h.session.servers.client(h.name); ok {
+	if client := h.session.servers.client(h.name); client != nil {
 		encoding = client.OffsetEncoding()
 	}
 	if err := h.session.applyWorkspaceEdit(params.Edit, encoding); err != nil {

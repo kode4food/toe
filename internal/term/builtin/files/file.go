@@ -106,7 +106,7 @@ func fileWriteCmds() []command.Command {
 				if err := e.Save(false); err != nil {
 					return command.Result{Error: err}
 				}
-				if doc, ok := e.FocusedDocument(); ok {
+				if doc := e.FocusedDocument(); doc != nil {
 					return command.Result{
 						Message: "'" + doc.RelativeName(e.Cwd()) +
 							"' written",
@@ -129,7 +129,7 @@ func fileWriteCmds() []command.Command {
 				setPathFromArgs(e, args)
 				autoFormat(e)
 				_ = e.Save(true)
-				if doc, ok := e.FocusedDocument(); ok {
+				if doc := e.FocusedDocument(); doc != nil {
 					return command.Result{
 						Message: "'" + doc.RelativeName(e.Cwd()) +
 							"' written",
@@ -280,8 +280,8 @@ func fileManageCmds() []command.Command {
 			Name:      actUpdate,
 			DocString: "Write changes only if the file has been modified",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				doc, ok := e.FocusedDocument()
-				if !ok || !doc.Modified() {
+				doc := e.FocusedDocument()
+				if doc == nil || !doc.Modified() {
 					return command.Result{Message: "no changes to write"}
 				}
 				autoFormat(e)
@@ -308,7 +308,7 @@ func fileManageCmds() []command.Command {
 				if err != nil {
 					return command.Result{Error: err}
 				}
-				if doc, ok := e.FocusedDocument(); ok {
+				if doc := e.FocusedDocument(); doc != nil {
 					return command.Result{
 						Message: "'" + doc.RelativeName(e.Cwd()) +
 							"' opened",
@@ -339,7 +339,7 @@ func fileManageCmds() []command.Command {
 				if err := e.Reload(); err != nil {
 					return command.Result{Error: err}
 				}
-				if doc, ok := e.FocusedDocument(); ok {
+				if doc := e.FocusedDocument(); doc != nil {
 					return command.Result{
 						Message: "'" + doc.RelativeName(e.Cwd()) +
 							"' reloaded",
@@ -373,8 +373,8 @@ func fileManageCmds() []command.Command {
 				if args == nil || args.Empty() {
 					return command.Result{Error: errNoFilename}
 				}
-				doc, ok := e.FocusedDocument()
-				if !ok {
+				doc := e.FocusedDocument()
+				if doc == nil {
 					return command.Result{Error: errNoDocument}
 				}
 				if doc.Modified() {
@@ -399,8 +399,7 @@ func fileManageCmds() []command.Command {
 				if args == nil || args.Empty() {
 					return command.Result{Error: errNoFilename}
 				}
-				_, ok := e.FocusedDocument()
-				if !ok {
+				if e.FocusedDocument() == nil {
 					return command.Result{Error: errNoDocument}
 				}
 				path, _ := args.First()
@@ -439,7 +438,7 @@ func setPathFromArgs(e *view.Editor, args *command.Args) {
 	if !ok {
 		return
 	}
-	if doc, ok := e.FocusedDocument(); ok {
+	if doc := e.FocusedDocument(); doc != nil {
 		doc.SetPath(path)
 	}
 }

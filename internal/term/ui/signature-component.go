@@ -156,12 +156,12 @@ func (s *signatureHelpComponent) paint(
 }
 
 func (s *signatureHelpComponent) openScreenX(cx *Context) int {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return 0
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return 0
 	}
 	opts := cx.Editor.Options()
@@ -192,13 +192,13 @@ func (s *signatureHelpComponent) refresh(
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
@@ -290,12 +290,12 @@ func removeSignatureHelpLayer(comp *Compositor) {
 }
 
 func currentSignatureCall(cx *Context) (signatureCall, bool) {
-	doc, ok := cx.Editor.FocusedDocument()
-	if !ok {
+	doc := cx.Editor.FocusedDocument()
+	if doc == nil {
 		return signatureCall{}, false
 	}
-	v, ok := cx.Editor.FocusedView()
-	if !ok {
+	v := cx.Editor.FocusedView()
+	if v == nil {
 		return signatureCall{}, false
 	}
 	sel := doc.SelectionFor(v.ID())

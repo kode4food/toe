@@ -56,8 +56,8 @@ func TestPickerFiles(t *testing.T) {
 		m = sendKey(m, 'p')
 		m = sendSpecial(m, tea.KeyEnter)
 		out := stripANSI(m.View().Content)
-		doc, ok := e.FocusedDocument()
-		if !assert.True(t, ok) {
+		doc := e.FocusedDocument()
+		if !assert.NotNil(t, doc) {
 			return
 		}
 		wantPath, err := filepath.EvalSymlinks(path)
@@ -591,8 +591,8 @@ func TestPickerFiles(t *testing.T) {
 		e := view.NewEditor(tmp)
 		v, err := e.OpenFile(alpha)
 		assert.NoError(t, err)
-		doc, ok := e.FocusedDocument()
-		assert.True(t, ok)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
 		pos, err := doc.Text().LineToChar(18)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(pos))

@@ -35,12 +35,12 @@ func YankToClipboard(e *view.Editor) {
 
 // YankMainToClipboard copies only the primary selection to clipboard
 func YankMainToClipboard(e *view.Editor) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -83,12 +83,12 @@ func ClipboardReplace(e *view.Editor) {
 	if err != nil || val == "" {
 		return
 	}
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	if doc.ReadOnly() {
@@ -143,12 +143,12 @@ func PrimaryClipboardReplace(e *view.Editor) {
 }
 
 func selectionFragments(e *view.Editor) []string {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()

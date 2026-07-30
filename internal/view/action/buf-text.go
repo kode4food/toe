@@ -13,12 +13,12 @@ import (
 // SortSelections sorts the text of each selection range lexicographically,
 // replacing each range with the sorted text. Mirrors :sort in the reference
 func SortSelections(e *view.Editor, reverse, insensitive bool) error {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return nil
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return nil
 	}
 	text := doc.Text()
@@ -84,12 +84,12 @@ func SortSelections(e *view.Editor, reverse, insensitive bool) error {
 // ReflowSelections reflows the text of each selection range to the given
 // column width. Mirrors :reflow in the reference
 func ReflowSelections(e *view.Editor, width int) {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return
 	}
 	text := doc.Text()
@@ -121,12 +121,12 @@ func ReflowSelections(e *view.Editor, width int) {
 // CharInfo returns a string describing the grapheme at the primary cursor.
 // Format: "<printable>" (U+XXXX ...) [Dec N] Hex xx [+xx ...]
 func CharInfo(e *view.Editor) string {
-	v, ok := e.FocusedView()
-	if !ok {
+	v := e.FocusedView()
+	if v == nil {
 		return ""
 	}
-	doc, ok := e.FocusedDocument()
-	if !ok {
+	doc := e.FocusedDocument()
+	if doc == nil {
 		return ""
 	}
 	text := doc.Text()

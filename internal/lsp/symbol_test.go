@@ -44,6 +44,24 @@ func TestSymbol(t *testing.T) {
 		}, symbols)
 	})
 
+	t.Run("reports unavailable server", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		writeSymbolLanguages(t, filepath.Join(t.TempDir(), "missing"))
+		assert.NoError(t, os.WriteFile(path, []byte("test\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+
+		_, err = session.DocumentSymbols(doc)
+
+		assert.ErrorContains(t, err, "session-test")
+	})
+
 	t.Run("requests workspace symbols", func(t *testing.T) {
 		exe, err := os.Executable()
 		assert.NoError(t, err)

@@ -25,7 +25,7 @@ func TestWorkspace(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("uses top marker", func(t *testing.T) {
+	t.Run("uses nearest marker", func(t *testing.T) {
 		root := t.TempDir()
 		project := filepath.Join(root, "project")
 		pkg := filepath.Join(project, "pkg")
@@ -40,7 +40,7 @@ func TestWorkspace(t *testing.T) {
 		})
 
 		assert.True(t, ok)
-		assert.Equal(t, project, ws)
+		assert.Equal(t, pkg, ws)
 	})
 
 	t.Run("workspace fallback", func(t *testing.T) {

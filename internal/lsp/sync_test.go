@@ -253,12 +253,13 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("UTF-8 encoding incremental change", func(t *testing.T) {
+		changed := make(chan *protocol.DidChangeTextDocumentParams, 1)
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
 				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			positionEncoding: protocol.PositionEncodingKindUTF8,
-			changed:          make(chan *protocol.DidChangeTextDocumentParams, 1),
+			changed:          changed,
 			initialized:      make(chan struct{}),
 		}
 		ctx, client, closeClient := newSyncClient(t, server)
@@ -285,12 +286,13 @@ func TestTextSync(t *testing.T) {
 	})
 
 	t.Run("UTF-32 encoding incremental change", func(t *testing.T) {
+		changed := make(chan *protocol.DidChangeTextDocumentParams, 1)
 		server := &syncServer{
 			sync: &protocol.TextDocumentSyncOptions{
 				Change: new(protocol.TextDocumentSyncKindIncremental),
 			},
 			positionEncoding: protocol.PositionEncodingKindUTF32,
-			changed:          make(chan *protocol.DidChangeTextDocumentParams, 1),
+			changed:          changed,
 			initialized:      make(chan struct{}),
 		}
 		ctx, client, closeClient := newSyncClient(t, server)
@@ -376,7 +378,10 @@ func TestTextSync(t *testing.T) {
 		ctx, client, closeClient := newSyncClient(t, server)
 		defer closeClient()
 
-		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go"), Text: "hello\n"}
+		doc := lsp.DocumentSnapshot{
+			URI:  uri.File("/tmp/main.go"),
+			Text: "hello\n",
+		}
 		ok, err := client.DidChange(ctx, doc)
 		assert.NoError(t, err)
 		assert.True(t, ok)

@@ -80,9 +80,9 @@ func (s *Session) DocumentSymbols(doc *view.Document) ([]view.Symbol, error) {
 	if !ok {
 		return nil, nil
 	}
+	clients, err := s.clientsForDocumentResult(doc)
 	var out []view.Symbol
-	var err error
-	for _, client := range s.clientsForDocument(doc) {
+	for _, client := range clients {
 		result, sent, e := client.DocumentSymbols(s.ctx, snap)
 		if e != nil {
 			err = errors.Join(err, s.completionError(client, e))
@@ -101,9 +101,8 @@ func (s *Session) DocumentSymbols(doc *view.Document) ([]view.Symbol, error) {
 func (s *Session) WorkspaceSymbols(
 	doc *view.Document, query string,
 ) ([]view.Symbol, error) {
-	s.clientsForDocument(doc)
+	_, err := s.clientsForDocumentResult(doc)
 	var out []view.Symbol
-	var err error
 	for _, client := range s.servers.allClients() {
 		result, sent, e := client.WorkspaceSymbols(s.ctx, query)
 		if e != nil {

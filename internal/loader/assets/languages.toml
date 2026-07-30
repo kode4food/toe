@@ -147,6 +147,7 @@ name = "toml"
 scope = "source.toml"
 injection-regex = "toml"
 file-types = ["toml"]
+roots = [".taplo.toml", "taplo.toml"]
 comment-token = "#"
 language-servers = ["taplo"]
 indent = { tab-width = 2, unit = "  " }
@@ -206,6 +207,7 @@ scope = "source.proto"
 injection-regex = "protobuf|proto"
 file-types = ["proto"]
 grammar = "proto"
+roots = ["buf.yaml", "buf.work.yaml"]
 comment-token = "//"
 block-comment-tokens = [{ start = "/*", end = "*/" }]
 language-servers = ["buf"]
@@ -216,6 +218,19 @@ name = "graphql"
 scope = "source.graphql"
 injection-regex = "graphql"
 file-types = ["graphql", "gql"]
+roots = [
+  ".graphqlrc",
+  ".graphqlrc.yml",
+  ".graphqlrc.yaml",
+  ".graphqlrc.json",
+  ".graphqlrc.toml",
+  ".graphqlrc.js",
+  ".graphqlrc.ts",
+  "graphql.config.json",
+  "graphql.config.toml",
+  "graphql.config.js",
+  "graphql.config.ts",
+]
 comment-token = "#"
 language-servers = ["graphql-language-service"]
 indent = { tab-width = 2, unit = "  " }
@@ -242,6 +257,7 @@ name = "javascript"
 scope = "source.js"
 injection-regex = "js|javascript"
 file-types = ["js", "mjs", "cjs"]
+roots = ["package.json", "tsconfig.json", "jsconfig.json"]
 comment-token = "//"
 block-comment-tokens = [{ start = "/*", end = "*/" }]
 language-servers = ["typescript-language-server"]
@@ -252,6 +268,7 @@ name = "typescript"
 scope = "source.ts"
 injection-regex = "ts|typescript"
 file-types = ["ts", "mts", "cts"]
+roots = ["package.json", "tsconfig.json", "jsconfig.json"]
 comment-token = "//"
 block-comment-tokens = [{ start = "/*", end = "*/" }]
 language-servers = ["typescript-language-server"]
@@ -262,6 +279,7 @@ name = "tsx"
 scope = "source.tsx"
 injection-regex = "tsx"
 file-types = ["tsx", "jsx"]
+roots = ["package.json", "tsconfig.json", "jsconfig.json"]
 comment-token = "//"
 block-comment-tokens = [{ start = "/*", end = "*/" }]
 language-servers = ["typescript-language-server"]
@@ -272,6 +290,7 @@ name = "markdown"
 scope = "source.md"
 injection-regex = "md|markdown"
 file-types = ["md", "markdown"]
+roots = [".marksman.toml"]
 comment-token = "<!--"
 language-servers = ["marksman"]
 soft-wrap = { enable = true }

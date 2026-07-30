@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/go-json-experiment/json"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -79,7 +78,7 @@ func (s *Session) registerCapability(
 			continue
 		}
 		var opts protocol.DidChangeWatchedFilesRegistrationOptions
-		if err := json.Unmarshal(reg.RegisterOptions, &opts); err != nil {
+		if err := protocol.Unmarshal(reg.RegisterOptions, &opts); err != nil {
 			return err
 		}
 		s.registerWatches(server, reg.ID, fileWatches(opts))

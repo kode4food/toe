@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -203,13 +202,7 @@ func setInitializeWorkspace(params *protocol.InitializeParams, root string) {
 		return
 	}
 	u := uri.File(abs)
-	raw := fmt.Appendf(nil,
-		`{"workspaceFolders":[{"uri":%q,"name":%q}]}`,
-		string(u), filepath.Base(abs),
-	)
-	var folders protocol.WorkspaceFoldersInitializeParams
-	if err := protocol.Unmarshal(raw, &folders); err != nil {
-		return
-	}
-	params.WorkspaceFoldersInitializeParams = folders
+	params.WorkspaceFolders = protocol.NewNullable([]protocol.WorkspaceFolder{
+		{URI: u, Name: filepath.Base(abs)},
+	})
 }

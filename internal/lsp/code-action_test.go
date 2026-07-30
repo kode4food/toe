@@ -235,7 +235,9 @@ func TestCodeActionUnavailable(t *testing.T) {
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		err := session.ApplyCodeAction(doc, v.ID(), view.CodeAction{ID: "server:0"})
+		err := session.ApplyCodeAction(
+			doc, v.ID(), view.CodeAction{ID: "server:0"},
+		)
 		assert.ErrorIs(t, err, lsp.ErrCodeActionUnavailable)
 	})
 }

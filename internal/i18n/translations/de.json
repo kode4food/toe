@@ -80,6 +80,6 @@
   "error.unsavedMove": "Ungespeicherte Änderungen (move! erzwingt)",
   "error.unsavedBufferClose": "Ungespeicherte Änderungen (:buffer-close! erzwingt)",
   "error.unsavedBufferCloseAll": "Ungespeicherte Änderungen (:buffer-close-all! erzwingt)",
-  "error.workspaceUntrustedHint": "Arbeitsbereich nicht vertrauenswürdig; :workspace_trust zum Aktivieren ausführen",
+  "error.workspaceUntrustedHint": "Arbeitsbereich nicht vertrauenswürdig; Konfiguration mit :workspace_trust aktivieren",
   "error.logUnavailable": "Protokollpfad nicht verfügbar"
 }

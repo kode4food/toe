@@ -100,6 +100,19 @@ func TestResolveSession(t *testing.T) {
 		assert.Equal(t, "", a.PickerDir)
 		assert.Equal(t, []string{"main.go", "other.go"}, a.Files)
 	})
+
+	t.Run("external file changes root", func(t *testing.T) {
+		assert.NoError(t, os.Mkdir(filepath.Join(cwd, ".git"), 0o755))
+		dir := t.TempDir()
+		path := filepath.Join(dir, "outside.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("outside"), 0o644))
+		a := &app.App{}
+
+		assert.NoError(t, a.ResolveSession([]string{path}, cwd))
+
+		assert.Equal(t, dir, a.Root)
+		assert.Equal(t, []string{path}, a.Files)
+	})
 }
 
 func TestOpenEditorFiles(t *testing.T) {
@@ -221,6 +234,25 @@ func TestMaybeRestoreSession(t *testing.T) {
 		assert.NoError(t, a.MaybeRestoreSession(func() bool { return true }))
 		assert.Equal(t, "", a.PickerDir)
 	})
+
+	t.Run("directory argument restores session", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
+		first := view.NewEditor(dir)
+		assert.NoError(t,
+			first.SaveSession(view.WorkspaceSessionFile(dir), nil))
+		a := &app.App{}
+		assert.NoError(t, a.ResolveSession([]string{dir}, t.TempDir()))
+		a.Editor = view.NewEditor(a.Root)
+		assert.NoError(t, a.InitReg())
+
+		assert.NoError(t,
+			a.MaybeRestoreSession(func() bool { return true }))
+
+		assert.Equal(t, dir, a.Root)
+		assert.Empty(t, a.Files)
+		assert.Equal(t, "", a.PickerDir)
+	})
 }
 
 func TestInitLSP(t *testing.T) {
@@ -243,6 +275,30 @@ func TestMaybeSaveSession(t *testing.T) {
 	t.Run("skipped when workspace not trusted", func(t *testing.T) {
 		a := newTestApp(t)
 		assert.NoError(t, a.MaybeSaveSession(map[string]string{}))
+	})
+
+	t.Run("external file keeps current session", func(t *testing.T) {
+		current := t.TempDir()
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		assert.NoError(t,
+			os.Mkdir(filepath.Join(current, ".git"), 0o755))
+		assert.NoError(t, loader.TrustWorkspace(current))
+		sessionPath := view.WorkspaceSessionFile(current)
+		assert.NoError(t, os.MkdirAll(filepath.Dir(sessionPath), 0o755))
+		assert.NoError(t,
+			os.WriteFile(sessionPath, []byte("original"), 0o644))
+		outside := filepath.Join(t.TempDir(), "outside.txt")
+		assert.NoError(t, os.WriteFile(outside, []byte("outside"), 0o644))
+		a := &app.App{}
+		assert.NoError(t, a.ResolveSession([]string{outside}, current))
+		a.Editor = view.NewEditor(a.Root)
+		assert.NoError(t, a.InitReg())
+
+		assert.NoError(t, a.MaybeSaveSession(map[string]string{}))
+
+		data, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		assert.Equal(t, "original", string(data))
 	})
 
 	t.Run("saves when workspace trusted", func(t *testing.T) {

@@ -1,6 +1,8 @@
 package lsp
 
 import (
+	"errors"
+
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -82,21 +84,31 @@ func (s *Session) notifyChange(doc *view.Document, change view.DocumentChange) {
 }
 
 func (s *Session) clientsForDocument(doc *view.Document) []*Client {
+	clients, _ := s.clientsForDocumentResult(doc)
+	return clients
+}
+
+func (s *Session) clientsForDocumentResult(
+	doc *view.Document,
+) ([]*Client, error) {
 	lang := s.languageForDocument(doc)
 	if lang == nil {
-		return nil
+		return nil, nil
 	}
 	names := serverNames(lang.LanguageServers)
 	if len(names) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	out := make([]*Client, 0, len(names))
+	var startErr error
 	for _, name := range names {
 		client := s.servers.client(name)
 		if client == nil {
-			client = s.ensureClient(name, doc, lang)
-			if client == nil {
+			var err error
+			client, err = s.ensureClient(name, doc, lang)
+			if err != nil {
+				startErr = errors.Join(startErr, err)
 				continue
 			}
 		}
@@ -104,7 +116,7 @@ func (s *Session) clientsForDocument(doc *view.Document) []*Client {
 	}
 	s.docs.setServerNames(doc.ID(), names)
 	s.ensureDidOpen(doc, out, lang)
-	return out
+	return out, startErr
 }
 
 func (s *Session) ensureDidOpen(

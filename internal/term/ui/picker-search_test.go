@@ -53,8 +53,12 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NotEqual(t, otherBg, matchBg)
 	})
 
-	t.Run("accept opens match", func(t *testing.T) {
-		m, e := globalSearchModel(t, "findme")
+	t.Run("accept opens and centers match", func(t *testing.T) {
+		prefix := strings.Repeat("line\n", 30)
+		m, e := globalSearchModel(t, "findme", map[string]string{
+			"a.txt": prefix + "findme here\n",
+			"b.txt": "beta\n",
+		})
 		_ = sendSpecial(m, tea.KeyEnter)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
@@ -65,7 +69,10 @@ func TestGlobalSearch(t *testing.T) {
 			doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()),
 		)
 		assert.NoError(t, err)
-		assert.Equal(t, 1, line) // 0-indexed line 2 holds "findme here"
+		assert.Equal(t, 30, line)
+		anchorLine, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		assert.Equal(t, (v.Area().Height-2)/2, 30-anchorLine)
 	})
 
 	t.Run("empty query has no matches", func(t *testing.T) {

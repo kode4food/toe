@@ -38,6 +38,7 @@ const testServerExitOnCompletionEnv = "TOE_LSP_EXIT_ON_COMPLETION"
 const testServerSilentExitOnCompletionEnv = "TOE_LSP_SILENT_EXIT"
 const testServerStaleCompletionEnv = "TOE_LSP_STALE_COMPLETION"
 const testServerWorkspaceFoldersEnv = "TOE_LSP_WORKSPACE_FOLDERS"
+const testServerInitializationOptionsEnv = "TOE_LSP_INITIALIZATION_OPTIONS"
 const testServerNavigationEnv = "TOE_LSP_NAVIGATION"
 const testServerNavigationTargetEnv = "TOE_LSP_NAVIGATION_TARGET"
 const testServerSymbolsEnv = "TOE_LSP_SYMBOLS"
@@ -137,7 +138,9 @@ func TestLSPServerProcess(t *testing.T) {
 		return
 	}
 	if marker := os.Getenv(testServerStartMarkerEnv); marker != "" {
-		f, err := os.OpenFile(marker, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		f, err := os.OpenFile(
+			marker, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644,
+		)
 		if err == nil {
 			_, _ = f.WriteString("x\n")
 			_ = f.Close()
@@ -154,10 +157,19 @@ func TestLSPServerProcess(t *testing.T) {
 }
 
 func (s *processServer) Initialize(
-	ctx context.Context, _ *protocol.InitializeParams,
+	ctx context.Context, params *protocol.InitializeParams,
 ) (*protocol.InitializeResult, error) {
-	if ms, err := strconv.Atoi(os.Getenv(testServerInitDelayMsEnv)); err == nil {
+	if ms, err := strconv.Atoi(
+		os.Getenv(testServerInitDelayMsEnv),
+	); err == nil {
 		time.Sleep(time.Duration(ms) * time.Millisecond)
+	}
+	if path := os.Getenv(testServerInitializationOptionsEnv); path != "" {
+		if err := os.WriteFile(
+			path, params.InitializationOptions, 0o644,
+		); err != nil {
+			return nil, err
+		}
 	}
 	var completionProvider *protocol.CompletionOptions
 	if os.Getenv(testServerCompletionEnv) == "1" {

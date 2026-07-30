@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/health"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/term/builtin"
@@ -51,6 +52,9 @@ func Run(args []string, out io.Writer) error {
 		return err
 	}
 	a.Editor = view.NewEditor(a.Root)
+	if err := a.Editor.Chdir(a.Root); err != nil {
+		return err
+	}
 	a.Editor.SetClipboard(
 		action.NewOSC52Clipboard(action.NewSystemClipboard()),
 	)
@@ -115,6 +119,22 @@ func (a *App) ResolveSession(args []string, cwd string) error {
 			return err
 		}
 		a.Root = abs
+		return nil
+	}
+	if len(a.Files) > 0 {
+		path := a.Files[0]
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(cwd, path)
+		}
+		abs, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		root, _ := loader.FindWorkspace(cwd)
+		rel, err := filepath.Rel(root, abs)
+		if err != nil || !filepath.IsLocal(rel) {
+			a.Root = filepath.Dir(abs)
+		}
 	}
 	return nil
 }
@@ -219,7 +239,7 @@ func (a *App) ConfigureModel() error {
 	trusted := loader.QueryWorkspaceTrust(a.Root, a.Editor.Options().Insecure)
 	if !a.Editor.Options().Insecure && !workspaceFallback && !trusted {
 		a.Model = a.Model.WithStartupMessage(
-			"Workspace untrusted; run :workspace_trust to enable config",
+			i18n.Text(i18n.ErrorWorkspaceUntrustedHint),
 		)
 	}
 	return nil

@@ -163,6 +163,49 @@ func TestLoadBundledLanguages(t *testing.T) {
 		}
 		assert.True(t, found)
 	})
+
+	t.Run("bundled project roots", func(t *testing.T) {
+		langs, ok := language.LoadBundledLanguages()
+		assert.True(t, ok)
+		roots := map[string][]string{}
+		for _, l := range langs.Languages {
+			if len(l.Roots) > 0 {
+				roots[l.Name] = l.Roots
+			}
+		}
+		assert.Equal(t,
+			map[string][]string{
+				"go":       {"go.work", "go.mod"},
+				"gomod":    {"go.work", "go.mod"},
+				"toml":     {".taplo.toml", "taplo.toml"},
+				"protobuf": {"buf.yaml", "buf.work.yaml"},
+				"graphql": {
+					".graphqlrc",
+					".graphqlrc.yml",
+					".graphqlrc.yaml",
+					".graphqlrc.json",
+					".graphqlrc.toml",
+					".graphqlrc.js",
+					".graphqlrc.ts",
+					"graphql.config.json",
+					"graphql.config.toml",
+					"graphql.config.js",
+					"graphql.config.ts",
+				},
+				"javascript": {
+					"package.json", "tsconfig.json", "jsconfig.json",
+				},
+				"typescript": {
+					"package.json", "tsconfig.json", "jsconfig.json",
+				},
+				"tsx": {
+					"package.json", "tsconfig.json", "jsconfig.json",
+				},
+				"markdown": {".marksman.toml"},
+			},
+			roots,
+		)
+	})
 }
 
 func TestExpandGlobBraces(t *testing.T) {

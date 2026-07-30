@@ -85,12 +85,13 @@ func (c *Client) GotoReference(
 		call: func(
 			ctx context.Context, tdp protocol.TextDocumentPositionParams,
 		) ([]protocol.Location, bool, error) {
-			locations, err := c.server.References(ctx, &protocol.ReferenceParams{
+			params := &protocol.ReferenceParams{
 				TextDocumentPositionParams: tdp,
 				Context: protocol.ReferenceContext{
 					IncludeDeclaration: true,
 				},
-			})
+			}
+			locations, err := c.server.References(ctx, params)
 			if err != nil {
 				return nil, true, err
 			}

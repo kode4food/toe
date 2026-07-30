@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-json-experiment/json"
 	"go.lsp.dev/protocol"
 )
 
@@ -53,7 +52,7 @@ func (s *Session) updateProgress(
 		return
 	}
 	var kind progressKind
-	if err := json.Unmarshal(params.Value, &kind); err != nil {
+	if err := protocol.Unmarshal(params.Value, &kind); err != nil {
 		return
 	}
 	switch kind.Kind {
@@ -73,7 +72,7 @@ func (s *Session) beginProgress(
 	server string, token protocol.ProgressToken, value protocol.LSPAny,
 ) {
 	var begin protocol.WorkDoneProgressBegin
-	if err := json.Unmarshal(value, &begin); err != nil {
+	if err := protocol.Unmarshal(value, &begin); err != nil {
 		return
 	}
 	entry := progressEntry{
@@ -92,7 +91,7 @@ func (s *Session) reportProgress(
 	server string, token protocol.ProgressToken, value protocol.LSPAny,
 ) {
 	var report protocol.WorkDoneProgressReport
-	if err := json.Unmarshal(value, &report); err != nil {
+	if err := protocol.Unmarshal(value, &report); err != nil {
 		return
 	}
 	entry, ok := s.lookupProgress(server, token)
@@ -114,7 +113,7 @@ func (s *Session) endProgress(
 	server string, token protocol.ProgressToken, value protocol.LSPAny,
 ) {
 	var end protocol.WorkDoneProgressEnd
-	if err := json.Unmarshal(value, &end); err != nil {
+	if err := protocol.Unmarshal(value, &end); err != nil {
 		return
 	}
 	entry, ok := s.lookupProgress(server, token)

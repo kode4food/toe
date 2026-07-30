@@ -80,6 +80,6 @@
   "error.unsavedMove": "modifications non enregistrées (move! pour forcer)",
   "error.unsavedBufferClose": "modifications non enregistrées (:buffer-close! pour forcer)",
   "error.unsavedBufferCloseAll": "modifications non enregistrées (:buffer-close-all! pour forcer)",
-  "error.workspaceUntrustedHint": "espace de travail non approuvé ; exécutez :workspace_trust pour activer",
+  "error.workspaceUntrustedHint": "Espace de travail non approuvé ; activer la configuration avec :workspace_trust",
   "error.logUnavailable": "chemin du journal indisponible"
 }

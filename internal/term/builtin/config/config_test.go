@@ -360,7 +360,7 @@ func TestConfigCommands(t *testing.T) {
 	t.Run("config_open_workspace rejects untrusted", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmd(t, km, e, "config_open_workspace")
-		assert.Contains(t, res.Message, "workspace untrusted")
+		assert.Contains(t, res.Message, "Workspace untrusted")
 	})
 
 	t.Run("config_open_workspace opens trusted", func(t *testing.T) {

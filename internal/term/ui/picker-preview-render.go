@@ -50,15 +50,15 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	contentW := args.area.Width - markerW
 
 	softWrap := args.format.SoftWrap && args.format.ViewportWidth > 0
-	anchor := previewAnchor(previewAnchorArgs{
-		text:     args.text,
-		format:   args.format,
-		softWrap: softWrap,
-		from:     args.hlFrom,
-		to:       args.hlTo,
-		height:   args.area.Height,
-	})
-	anchorLine, vOff := anchor.line, anchor.verticalOffset
+	anchor := (&selectionViewport{
+		text:      args.text,
+		format:    args.format,
+		from:      args.hlFrom,
+		to:        args.hlTo,
+		height:    args.area.Height,
+		scrolloff: args.opts.ScrollOff,
+	}).anchor()
+	anchorLine, vOff := anchor.line, anchor.offset
 	nLines := args.text.LenLines()
 	// clamp scroll to keep the last line pinned to the pane bottom, then
 	// write the applied delta back so stored scroll stays bounded

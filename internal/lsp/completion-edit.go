@@ -39,7 +39,9 @@ func (s *Session) applyAdditionalCompletionEdits(
 		if !ok {
 			return ErrCompletionUnavailable
 		}
-		changes = append(changes, core.TextChange(cr.From(), cr.To(), edit.NewText))
+		changes = append(changes,
+			core.TextChange(cr.From(), cr.To(), edit.NewText),
+		)
 	}
 	cs, err := core.NewChangeSetFromChanges(doc.Text(), changes)
 	if err != nil {

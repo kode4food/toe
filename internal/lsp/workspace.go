@@ -25,21 +25,14 @@ func ResolveWorkspace(req WorkspaceRequest) (string, bool) {
 	if !ok || !inside(file, workspace) {
 		return "", false
 	}
-	var marked string
 	for dir := file; ; dir = filepath.Dir(dir) {
 		if dirHasAny(dir, req.RootMarkers) {
-			marked = dir
+			return dir, true
 		}
 		if matchesRootDir(workspace, dir, req.RootDirs) {
-			if marked != "" {
-				return marked, true
-			}
 			return workspace, true
 		}
 		if dir == workspace {
-			if marked != "" {
-				return marked, true
-			}
 			if !req.WorkspaceIsCWD {
 				return workspace, true
 			}

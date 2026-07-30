@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -125,11 +126,14 @@ func TestLocationAction(t *testing.T) {
 }
 
 func TestSymbolPickerAction(t *testing.T) {
-	t.Run("opens and accepts symbol", func(t *testing.T) {
+	t.Run("centers fitting symbol", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "main.go")
+		prefix := strings.Repeat("line\n", 30)
+		body := strings.Repeat("body\n", 4)
+		text := prefix + body + strings.Repeat("tail\n", 30)
 		assert.NoError(t, os.WriteFile(
-			path, []byte("package main\nfunc main() {}\n"), 0o600,
+			path, []byte(text), 0o600,
 		))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
@@ -138,7 +142,11 @@ func TestSymbolPickerAction(t *testing.T) {
 			symbols: []view.Symbol{
 				{
 					Name: "main", Kind: "function", Container: "package",
-					Location: view.Location{Path: path, From: 18, To: 22},
+					Location: view.Location{
+						Path: path,
+						From: len(prefix),
+						To:   len(prefix) + len(body),
+					},
 				},
 			},
 		})
@@ -162,15 +170,24 @@ func TestSymbolPickerAction(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, core.NewRange(22, 18), sel.Primary())
+		assert.Equal(t,
+			core.NewRange(len(prefix)+len(body), len(prefix)), sel.Primary(),
+		)
+		line, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		height := v.Area().Height - 1
+		assert.Equal(t, 30-(height-4)/2, line)
 	})
 
-	t.Run("opens workspace symbol picker", func(t *testing.T) {
+	t.Run("tops oversized workspace symbol", func(t *testing.T) {
 		dir := t.TempDir()
 		source := filepath.Join(dir, "source.go")
 		target := filepath.Join(dir, "target.go")
+		prefix := strings.Repeat("line\n", 30)
+		body := strings.Repeat("target\n", 40)
+		text := prefix + body + strings.Repeat("tail\n", 30)
 		assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
-		assert.NoError(t, os.WriteFile(target, []byte("target\n"), 0o600))
+		assert.NoError(t, os.WriteFile(target, []byte(text), 0o600))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(source)
 		assert.NoError(t, err)
@@ -180,7 +197,9 @@ func TestSymbolPickerAction(t *testing.T) {
 					Name: "WorkspaceMain", Kind: "function",
 					Container: "workspace",
 					Location: view.Location{
-						Path: target, From: 3, To: 6,
+						Path: target,
+						From: len(prefix),
+						To:   len(prefix) + len(body),
 					},
 				},
 			},
@@ -222,7 +241,14 @@ func TestSymbolPickerAction(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, core.NewRange(6, 3), sel.Primary())
+		assert.Equal(t,
+			core.NewRange(len(prefix)+len(body), len(prefix)), sel.Primary(),
+		)
+		line, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		height := v.Area().Height - 1
+		scrolloff := min(e.Options().ScrollOff, max(height-1, 0)/2)
+		assert.Equal(t, 30-scrolloff, line)
 	})
 
 	t.Run("symbol error sets status", func(t *testing.T) {

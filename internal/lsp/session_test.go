@@ -65,6 +65,35 @@ func TestSession(t *testing.T) {
 		}, time.Second, 10*time.Millisecond)
 	})
 
+	t.Run("sets TypeScript server path", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+
+		repo := t.TempDir()
+		web := filepath.Join(repo, "web")
+		file := writeFile(t, filepath.Join(web, "main.ts"))
+		writeFile(t, filepath.Join(web, "package.json"))
+		tsserver := writeFile(t, filepath.Join(
+			web, "node_modules", "typescript", "lib", "tsserver.js",
+		))
+		marker := filepath.Join(repo, "initialization-options")
+		writeTypeScriptLanguages(t, exe, marker)
+
+		e := view.NewEditor(repo)
+		_, err = e.OpenFile(file)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+
+		var got []byte
+		assert.Eventually(t, func() bool {
+			var err error
+			got, err = os.ReadFile(marker)
+			return err == nil && len(got) > 0
+		}, time.Second, 10*time.Millisecond)
+		want := fmt.Sprintf(`{"tsserver":{"path":%q}}`, tsserver)
+		assert.JSONEq(t, want, string(got))
+	})
 }
 
 func TestSessionMethods(t *testing.T) {
@@ -1393,6 +1422,30 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerDidOpenFileEnv, marker)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeTypeScriptLanguages(t *testing.T, exe, marker string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`
+[language-server.typescript-language-server]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+environment = { %s = "1", %s = %q }
+
+[[language]]
+name = "typescript"
+language-id = "typescript"
+file-types = ["ts"]
+roots = ["package.json"]
+language-servers = ["typescript-language-server"]
+`, exe, testServerEnv, testServerInitializationOptionsEnv, marker)
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
 	))

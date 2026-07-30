@@ -424,6 +424,49 @@ func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
 	)
 }
 
+func alignAcceptedSelection(
+	e *view.Editor, v *view.View, doc *view.Document,
+) {
+	text := doc.Text()
+	primary := doc.SelectionFor(v.ID()).Primary()
+	from := primary.From()
+	fromLine, err := text.CharToLine(from)
+	if err != nil {
+		return
+	}
+	to := primary.To()
+	if to > from {
+		to--
+	}
+	toLine, err := text.CharToLine(to)
+	if err != nil {
+		return
+	}
+	height := v.Area().Height - 1
+	if height <= 0 {
+		height = max(e.ViewHeight(), 1)
+	}
+	opts := e.Options()
+	width := max(v.Area().Width-gutterWidthFor(text, opts.Gutters), 0)
+	format := doc.TextFormatForConfig(width, opts)
+	anchor := (&selectionViewport{
+		text:      text,
+		format:    format,
+		from:      fromLine,
+		to:        toLine,
+		height:    height,
+		scrolloff: opts.ScrollOff,
+	}).anchor()
+	at, err := text.LineToChar(anchor.line)
+	if err != nil {
+		return
+	}
+	offset := v.Offset()
+	offset.Anchor = at
+	offset.VerticalOffset = anchor.offset
+	v.SetOffset(offset)
+}
+
 func acceptImagePane(
 	e *view.Editor, pane *ImagePane, action PickerAcceptAction,
 ) bool {

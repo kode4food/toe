@@ -80,6 +80,6 @@
   "error.unsavedMove": "modifiche non salvate (move! per forzare)",
   "error.unsavedBufferClose": "modifiche non salvate (:buffer-close! per forzare)",
   "error.unsavedBufferCloseAll": "modifiche non salvate (:buffer-close-all! per forzare)",
-  "error.workspaceUntrustedHint": "area di lavoro non attendibile; esegui :workspace_trust per abilitare",
+  "error.workspaceUntrustedHint": "Area di lavoro non attendibile; abilita la configurazione con :workspace_trust",
   "error.logUnavailable": "percorso del log non disponibile"
 }

@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type dismissFunc func() (EventResult, tea.Cmd)
@@ -83,6 +84,7 @@ func (p *PickerComponent) acceptItem(
 		}
 	}
 	ps.source.Accept(cx.Editor, item, action)
+	alignAcceptedItem(cx.Editor, item)
 	return dismiss()
 }
 
@@ -112,4 +114,27 @@ func (p *PickerComponent) navigateItem(
 		comp.Push(newPickerComponent(cx, next))
 		return feedCmd
 	}), nil, true
+}
+
+func alignAcceptedItem(e *view.Editor, item *PickerItem) {
+	if item.Location.Lines == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	doc := e.Document(v.DocID())
+	if doc == nil {
+		return
+	}
+	target := item.Location.Target
+	if target.ID != view.InvalidDocumentId && target.ID != doc.ID() {
+		return
+	}
+	if target.Path != "" && target.Path != doc.Path() {
+		return
+	}
+	AlignAcceptedView(e, v, doc)
+	alignAcceptedSelection(e, v, doc)
 }

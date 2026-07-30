@@ -154,7 +154,9 @@ func TestWorkspaceEditDocumentChangesErrors(t *testing.T) {
 				DocumentChanges: []protocol.DocumentChange{
 					&protocol.TextDocumentEdit{
 						TextDocument: versionedTextDocumentID(uri.File(path)),
-						Edits:        []protocol.TextDocumentEditElement{new(hugeRangeEdit())},
+						Edits: []protocol.TextDocumentEditElement{
+							new(hugeRangeEdit()),
+						},
 					},
 				},
 			})

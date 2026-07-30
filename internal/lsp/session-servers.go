@@ -3,9 +3,9 @@ package lsp
 import (
 	"cmp"
 	"context"
-	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
 	"path/filepath"
 	"slices"
 	"sync"
@@ -18,15 +18,25 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-// serverState owns the attached language-server clients, the language config
-// they were started from, and each server's workspace root
-type serverState struct {
-	sync.RWMutex
-	starting  sync.Mutex
-	registry  *Registry
-	languages map[string]*language.Language
-	clients   map[string]*Client
-	roots     map[string]string
+type (
+	// serverState owns the attached language-server clients, the language
+	// config they were started from, and each server's workspace root
+	serverState struct {
+		sync.RWMutex
+		starting  sync.Mutex
+		registry  *Registry
+		languages map[string]*language.Language
+		clients   map[string]*Client
+		roots     map[string]string
+	}
+
+	initOptionsFunc func(string) (protocol.LSPAny, error)
+)
+
+const typescriptServerName = "typescript-language-server"
+
+var langInitOptions = map[string]initOptionsFunc{
+	typescriptServerName: tsInitOptions,
 }
 
 // RestartLanguageServers stops and restarts the named servers for the document
@@ -44,7 +54,9 @@ func (s *Session) RestartLanguageServers(
 	s.clearDocumentHighlightsForServers(selected)
 	s.stopClients(selected)
 	for _, name := range selected {
-		s.ensureClient(name, doc, lang)
+		if _, err := s.ensureClient(name, doc, lang); err != nil {
+			return nil, err
+		}
 	}
 	s.notify(doc, (*Client).DidOpen)
 	return selected, nil
@@ -82,9 +94,13 @@ func (s *Session) ExecuteWorkspaceCommand(
 	case 0:
 		return fmt.Errorf("%w: %s", view.ErrWorkspaceCommand, name)
 	case 1:
+		values, err := stringsToLSPAny(args)
+		if err != nil {
+			return err
+		}
 		params := &protocol.ExecuteCommandParams{
 			Command:   name,
-			Arguments: stringsToLSPAny(args),
+			Arguments: values,
 		}
 		return matches[0].ExecuteCommand(s.ctx, params)
 	default:
@@ -121,32 +137,39 @@ func (s *Session) languageForDocument(
 
 func (s *Session) ensureClient(
 	name string, doc *view.Document, lang *language.Language,
-) *Client {
+) (*Client, error) {
 	s.servers.starting.Lock()
 	defer s.servers.starting.Unlock()
 	if client := s.servers.client(name); client != nil {
-		return client
+		return client, nil
 	}
 	return s.startClient(name, doc, lang)
 }
 
 func (s *Session) startClient(
 	name string, doc *view.Document, lang *language.Language,
-) *Client {
+) (*Client, error) {
 	root := s.workspaceRoot(doc, lang)
+	options, err := constructInitOptions(name, root)
+	if err != nil {
+		return nil, err
+	}
 	handler := &clientHandler{session: s, name: name}
 	client, err := s.servers.startRegistry(s.ctx, name, root, handler)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("%s: %w", name, err)
 	}
 	s.servers.setRoot(name, root)
-	params := NewInitializeParams(InitializeConfig{WorkspaceRoot: root})
+	params := NewInitializeParams(InitializeConfig{
+		WorkspaceRoot:         root,
+		InitializationOptions: options,
+	})
 	if _, err := client.Initialize(s.ctx, params); err != nil {
 		_ = client.Close()
-		return nil
+		return nil, fmt.Errorf("%s: %w", name, err)
 	}
 	s.servers.setClient(name, client)
-	return client
+	return client, nil
 }
 
 func (s *Session) workspaceFolders() []protocol.WorkspaceFolder {
@@ -365,14 +388,40 @@ func clientSupportsCommand(client *Client, name string) bool {
 	return false
 }
 
-func stringsToLSPAny(args []string) []protocol.LSPAny {
+func stringsToLSPAny(args []string) ([]protocol.LSPAny, error) {
 	if len(args) == 0 {
-		return nil
+		return nil, nil
 	}
 	out := make([]protocol.LSPAny, len(args))
 	for i, arg := range args {
-		b, _ := json.Marshal(arg)
-		out[i] = b
+		value, err := protocol.Marshal(arg)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = value
 	}
-	return out
+	return out, nil
+}
+
+func constructInitOptions(name, root string) (protocol.LSPAny, error) {
+	if init, ok := langInitOptions[name]; ok {
+		return init(root)
+	}
+	return nil, nil
+}
+
+func tsInitOptions(root string) (protocol.LSPAny, error) {
+	for _, rel := range []string{
+		"node_modules/typescript/lib/tsserver.js",
+		".vscode/pnpify/typescript/lib/tsserver.js",
+		".yarn/sdks/typescript/lib/tsserver.js",
+	} {
+		path := filepath.Join(root, rel)
+		if _, err := os.Stat(path); err == nil {
+			return protocol.Marshal(map[string]any{
+				"tsserver": map[string]string{"path": path},
+			})
+		}
+	}
+	return nil, nil
 }

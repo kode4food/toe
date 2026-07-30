@@ -83,6 +83,6 @@ make coverage
 toe is possible because of excellent terminal UI, parsing, syntax highlighting, and theme projects:
 
 - The [Charm team](https://charm.land/) for [Bubble Tea](https://github.com/charmbracelet/bubbletea), which gives toe its TUI runtime, input handling, and terminal output
-- The [Tree-sitter project](https://tree-sitter.github.io/tree-sitter/) for the incremental parsing stack, official Go bindings, and grammars behind toe's Tree-sitter highlighting
+- The [Tree-sitter project](https://tree-sitter.github.io/tree-sitter/) for the incremental parsing stack and grammars behind toe's Tree-sitter highlighting
 - The [Chroma project](https://github.com/alecthomas/chroma), the pure-Go syntax highlighter toe uses as its highlighting fallback
 - The [Catppuccin project](https://catppuccin.com/) for the Latte, Frappe, Macchiato, and Mocha palettes. toe ships only Catppuccin themes because I love them and I don't care if you don't ;-)

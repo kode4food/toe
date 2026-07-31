@@ -1,7 +1,6 @@
 package files
 
 import (
-	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -27,8 +26,8 @@ func SessionModule() command.Module {
 					}
 					return command.Result{Message: "session saved"}
 				},
-				Modes:     command.PaneModes,
-				Signature: kit.Sig(),
+				Modes:     command.PaneModes(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actRestoreSession,
@@ -44,8 +43,8 @@ func SessionModule() command.Module {
 					}
 					return command.Result{}
 				},
-				Modes:     command.PaneModes,
-				Signature: kit.Sig(),
+				Modes:     command.PaneModes(),
+				Signature: command.DefaultSignature(),
 			},
 		},
 	}

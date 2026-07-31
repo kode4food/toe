@@ -30,8 +30,8 @@ func systemCmds() []command.Command {
 					e, loader.ConfigFile, errConfigUnavailable,
 				)
 			},
-			Modes:     command.PaneModes,
-			Signature: kit.Sig(),
+			Modes:     command.PaneModes(),
+			Signature: command.DefaultSignature(),
 		},
 		{
 			Name:      actConfigOpenWorkspace,
@@ -48,8 +48,8 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{}
 			},
-			Modes:     command.PaneModes,
-			Signature: kit.Sig(),
+			Modes:     command.PaneModes(),
+			Signature: command.DefaultSignature(),
 		},
 		{
 			Name:      actConfigReload,
@@ -60,8 +60,8 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "config reloaded"}
 			},
-			Modes:     command.PaneModes,
-			Signature: kit.Sig(),
+			Modes:     command.PaneModes(),
+			Signature: command.DefaultSignature(),
 		},
 		{
 			Name:      actLogOpen,
@@ -69,8 +69,8 @@ func systemCmds() []command.Command {
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(e, loader.LogFile, errLogUnavailable)
 			},
-			Modes:     command.PaneModes,
-			Signature: kit.Sig(),
+			Modes:     command.PaneModes(),
+			Signature: command.DefaultSignature(),
 		},
 		{
 			Name: actWorkspaceTrust,
@@ -82,8 +82,8 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace trusted"}
 			},
-			Modes:     command.PaneModes,
-			Signature: kit.Sig(),
+			Modes:     command.PaneModes(),
+			Signature: command.DefaultSignature(),
 		},
 		{
 			Name: actWorkspaceUntrust,
@@ -95,8 +95,8 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace untrusted"}
 			},
-			Modes:     command.PaneModes,
-			Signature: kit.Sig(),
+			Modes:     command.PaneModes(),
+			Signature: command.DefaultSignature(),
 		},
 	}
 }
@@ -134,7 +134,7 @@ func themeCmds() []command.Command {
 				e.Options().Theme = name
 				return command.Result{}
 			},
-			Modes:     command.PaneModes,
+			Modes:     command.PaneModes(),
 			Signature: kit.StaticSig(kit.OptionalArg(), loader.ThemeNames()...),
 		},
 	}

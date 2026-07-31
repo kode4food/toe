@@ -37,9 +37,9 @@ func BufferModule() command.Module {
 					e.CloseCurrentView()
 					return command.Result{Message: "buffer closed"}
 				},
-				Modes:     command.PaneModes,
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"bc", "bclose"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name: actBufferCloseForce,
@@ -49,9 +49,9 @@ func BufferModule() command.Module {
 					e.CloseCurrentView()
 					return command.Result{Message: "buffer closed"}
 				},
-				Modes:     command.PaneModes,
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"buffer-close!", "bc!", "bclose!"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actBufferCloseOthers,
@@ -65,11 +65,11 @@ func BufferModule() command.Module {
 					}
 					return command.Result{Message: "other buffers closed"}
 				},
-				Modes: command.PaneModes,
+				Modes: command.PaneModes(),
 				Aliases: []string{
 					"bco", "bcloseother",
 				},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actBufferCloseAll,
@@ -87,27 +87,27 @@ func BufferModule() command.Module {
 					}
 					return command.Result{Message: "all buffers closed"}
 				},
-				Modes:     command.PaneModes,
+				Modes:     command.PaneModes(),
 				Aliases:   []string{"bca", "bcloseall"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actBufferNext,
 				DocString: "Goto next buffer",
 				Run:       kit.Runner((*view.Editor).FocusNextView),
-				Modes:     command.PaneModes,
+				Modes:     command.PaneModes(),
 				Keys:      kit.Keys(g(kit.Char('n'))),
 				Aliases:   []string{"bn", "bnext"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actBufferPrevious,
 				DocString: "Goto previous buffer",
 				Run:       kit.Runner((*view.Editor).FocusPrevView),
-				Modes:     command.PaneModes,
+				Modes:     command.PaneModes(),
 				Keys:      kit.Keys(g(kit.Char('p'))),
 				Aliases:   []string{"bp", "bprev"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 		},
 	}

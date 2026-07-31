@@ -24,7 +24,7 @@ func JumplistModule(model ui.Model) command.Module {
 				Name:      actJumplistPicker,
 				DocString: "Open jumplist picker",
 				Run:       kit.Continuation(model.PickerAction(JumplistPicker)),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys:      kit.Leader('j'),
 			},
 		},

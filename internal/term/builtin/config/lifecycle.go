@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -40,9 +39,9 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes,
+				Modes:     command.AllModes(),
 				Aliases:   []string{"q"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name: actQuitForce,
@@ -51,9 +50,9 @@ func LifecycleModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes,
+				Modes:     command.AllModes(),
 				Aliases:   []string{"q!"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actQuitAll,
@@ -66,9 +65,9 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes,
+				Modes:     command.AllModes(),
 				Aliases:   []string{"qa"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actQuitAllForce,
@@ -76,9 +75,9 @@ func LifecycleModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes,
+				Modes:     command.AllModes(),
 				Aliases:   []string{"qa!"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actCquit,
@@ -93,9 +92,9 @@ func LifecycleModule() command.Module {
 					os.Exit(1)
 					return command.Result{}
 				},
-				Modes:     command.AllModes,
+				Modes:     command.AllModes(),
 				Aliases:   []string{"cq"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name: actCquitForce,
@@ -106,9 +105,9 @@ func LifecycleModule() command.Module {
 					os.Exit(1)
 					return command.Result{}
 				},
-				Modes:     command.AllModes,
+				Modes:     command.AllModes(),
 				Aliases:   []string{"cq!"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 		},
 	}

@@ -35,9 +35,9 @@ func SupportModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: action.CharInfo(e)}
 				},
-				Modes:     command.DocModes,
+				Modes:     command.DocModes(),
 				Aliases:   []string{"char"},
-				Signature: kit.Sig(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actEcho,
@@ -48,8 +48,8 @@ func SupportModule() command.Module {
 					}
 					return command.Result{Message: args.Join(" ")}
 				},
-				Modes:     command.PaneModes,
-				Signature: kit.Sig(),
+				Modes:     command.PaneModes(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actRedraw,
@@ -57,8 +57,8 @@ func SupportModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalClearScreen}
 				},
-				Modes:     command.PaneModes,
-				Signature: kit.Sig(),
+				Modes:     command.PaneModes(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actGoto,
@@ -80,7 +80,7 @@ func SupportModule() command.Module {
 					action.GotoPosition(e, at)
 					return command.Result{}
 				},
-				Modes:     command.DocModes,
+				Modes:     command.DocModes(),
 				Aliases:   []string{"g"},
 				Signature: kit.MinArgs(1),
 			},

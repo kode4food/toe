@@ -145,11 +145,6 @@ func Label(
 	return command.PrefixLabel{Modes: modes, Seq: prefix, Label: label}
 }
 
-// Sig is the default command signature
-func Sig() command.Signature {
-	return command.DefaultSignature()
-}
-
 // MinArgs is a signature requiring at least n positional arguments
 func MinArgs(n int) command.Signature {
 	return command.Signature{Positionals: command.Positionals{Min: n}}

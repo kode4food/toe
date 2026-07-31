@@ -31,41 +31,41 @@ func Module(model ui.Model) command.Module {
 				Run: kit.Continuation(model.PickerAction(
 					ui.NewChangedFilePicker,
 				)),
-				Modes: command.PaneModes,
+				Modes: command.PaneModes(),
 				Keys:  kit.Leader('g'),
 			},
 			{
 				Name:      actGotoNextChange,
 				DocString: "Goto next change",
 				Run:       kit.Runner(action.GotoNextChange),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys:      kit.Keys(next(kit.Char('g'))),
 			},
 			{
 				Name:      actGotoPrevChange,
 				DocString: "Goto previous change",
 				Run:       kit.Runner(action.GotoPrevChange),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys:      kit.Keys(prev(kit.Char('g'))),
 			},
 			{
 				Name:      actGotoFirstChange,
 				DocString: "Goto first change",
 				Run:       kit.Runner(action.GotoFirstChange),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys:      kit.Keys(prev(kit.Char('G'))),
 			},
 			{
 				Name:      actGotoLastChange,
 				DocString: "Goto last change",
 				Run:       kit.Runner(action.GotoLastChange),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys:      kit.Keys(next(kit.Char('G'))),
 			},
 			{
 				Name:      actResetDiffChange,
 				DocString: "Reset the diff changes under the selections",
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					n, err := action.ResetDiffChange(e)
 					if err != nil {

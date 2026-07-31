@@ -176,7 +176,7 @@ func TestViewWonly(t *testing.T) {
 
 func TestPaneMaximized(t *testing.T) {
 	e, km := test.Env(t, "abc")
-	for _, mode := range command.PaneModes {
+	for _, mode := range command.PaneModes() {
 		assert.NotEmpty(t, km.Bindings(mode, "toggle_pane_maximized"))
 	}
 	test.RunCmd(t, km, e, "vsplit")

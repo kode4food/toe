@@ -269,7 +269,7 @@ func optionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{Message: value}
 			},
-			Modes:   command.PaneModes,
+			Modes:   command.PaneModes(),
 			Aliases: []string{"get"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},
@@ -300,7 +300,7 @@ func optionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{}
 			},
-			Modes:   command.PaneModes,
+			Modes:   command.PaneModes(),
 			Aliases: []string{"set"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 2, Max: 2},
@@ -337,7 +337,7 @@ func optionCmds(r *command.Registry) []command.Command {
 					Message: "'" + key + "' is now set to " + value,
 				}
 			},
-			Modes:   command.PaneModes,
+			Modes:   command.PaneModes(),
 			Aliases: []string{"toggle"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},

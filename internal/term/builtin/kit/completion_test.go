@@ -38,7 +38,7 @@ func TestFileCompleter(t *testing.T) {
 }
 
 func TestStaticSig(t *testing.T) {
-	sig := kit.StaticSig(kit.Sig(), "one", "two")
+	sig := kit.StaticSig(command.DefaultSignature(), "one", "two")
 	e := view.NewEditor(t.TempDir())
 
 	var texts []string
@@ -52,7 +52,7 @@ func TestFileSig(t *testing.T) {
 	dir := t.TempDir()
 	assert.NoError(t,
 		os.WriteFile(filepath.Join(dir, "x.go"), []byte("x"), 0o644))
-	sig := kit.FileSig(kit.Sig())
+	sig := kit.FileSig(command.DefaultSignature())
 	e := view.NewEditor(dir)
 
 	got := sig.Completer.Complete(e, sig, "x")

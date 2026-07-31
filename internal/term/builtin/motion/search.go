@@ -42,14 +42,14 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actCommandMode,
 				DocString: "Enter command mode",
 				Run:       kit.Continuation(model.CmdModeAction()),
-				Modes:     command.CmdKeyModes,
+				Modes:     command.CmdKeyModes(),
 				Keys:      kit.Keys(kit.Char(':')),
 			},
 			{
 				Name:      actSearch,
 				DocString: "Search for regex pattern",
 				Run:       kit.Continuation(model.SearchAction(true)),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys: map[string][]command.KeyBinding{
 					"*": {kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/'))},
 				},
@@ -58,7 +58,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actSearchReverse,
 				DocString: "Reverse search for regex pattern",
 				Run:       kit.Continuation(model.SearchAction(false)),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys: map[string][]command.KeyBinding{
 					"*": {kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?'))},
 				},
@@ -86,21 +86,21 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Use current selection as the search pattern," +
 					" automatically wrapping with `\\b` on word boundaries",
 				Run:   kit.Runner(action.SearchSelectionWord),
-				Modes: command.DocNormalModes,
+				Modes: command.DocNormalModes(),
 				Keys:  kit.Keys(kit.Char('*')),
 			},
 			{
 				Name:      actMakeSearchWordBounded,
 				DocString: "Modify current search to make it word bounded",
 				Run:       kit.Runner(action.MakeSearchWordBounded),
-				Modes:     command.DocNormalModes,
-				Signature: kit.Sig(),
+				Modes:     command.DocNormalModes(),
+				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actSearchSelection,
 				DocString: "Use current selection as search pattern",
 				Run:       kit.Runner(action.SearchSelection),
-				Modes:     command.DocNormalModes,
+				Modes:     command.DocNormalModes(),
 				Keys:      kit.Keys(kit.Alt('*')),
 			},
 			{

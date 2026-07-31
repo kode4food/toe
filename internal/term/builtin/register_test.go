@@ -230,7 +230,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("leader aliases share menus", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		for _, mode := range command.PaneModes {
+		for _, mode := range command.PaneModes() {
 			spaceTitle, spaceHints := km.PendingHints(
 				mode, []command.KeyEvent{test.Char(' ')},
 			)
@@ -566,7 +566,7 @@ func commandName(cmd *command.Command) string {
 
 func commandModes(cmd *command.Command) []string {
 	if len(cmd.Modes) == 0 {
-		return command.DocModes
+		return command.DocModes()
 	}
 	return cmd.Modes
 }

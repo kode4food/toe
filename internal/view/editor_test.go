@@ -1638,6 +1638,16 @@ func TestEditorReplacePane(t *testing.T) {
 		_, ok := e.Tree().Get(id).(*fakePane)
 		assert.True(t, ok)
 	})
+
+	t.Run("discards the evicted pane's history", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		id := e.FocusedView().ID()
+		e.DisplacePane(id, &fakePane{editor: e})
+
+		e.ReplacePane(id, &fakePane{editor: e})
+
+		assert.False(t, e.RevertPane(id))
+	})
 }
 
 func TestEditorDiscardPane(t *testing.T) {

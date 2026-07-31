@@ -129,10 +129,11 @@ func (e *Editor) CloseView(vid Id) {
 	}
 }
 
-// ReplacePane swaps the pane at id for p in place, with no split or reflow, and
-// returns the displaced pane so a caller can restore it later
+// ReplacePane swaps the pane at id for p in place, discarding any panes stashed
+// behind id, and returns the evicted pane for the caller to dispose of
 func (e *Editor) ReplacePane(id Id, p Pane) Pane {
 	old := e.panes.tree.Get(id)
+	e.panes.tree.DiscardHistory(id)
 	e.panes.tree.ReplacePane(id, p)
 	return old
 }

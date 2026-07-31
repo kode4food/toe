@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"os"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -17,6 +18,7 @@ type (
 	imageRegistry struct {
 		placed       map[uint32]geom.Size
 		ready        map[uint32]geom.Size
+		sent         map[uint32]bool
 		used         map[uint32]int
 		placeholders map[geom.Size][]string
 		frame        int
@@ -42,9 +44,9 @@ const (
 	imageViewSalt    = 0x9E3779
 	imageCellAspect  = 2
 
-	// Placement IDs use a 24-bit underline color, split across both dimensions
-	imagePlacementDimensionBits = 12
-	imagePlacementDimensionMask = 1<<imagePlacementDimensionBits - 1
+	// imageTransmitDelay lets Bubble Tea enter the alternate screen before
+	// Kitty receives image data that the screen transition can discard
+	imageTransmitDelay = 40 * time.Millisecond
 
 	// maxResidentImages caps images kept resident in the terminal. Soft: one
 	// shown this frame is never evicted, so the real ceiling is what fits
@@ -55,6 +57,7 @@ func newImageRegistry() *imageRegistry {
 	return &imageRegistry{
 		placed:       map[uint32]geom.Size{},
 		ready:        map[uint32]geom.Size{},
+		sent:         map[uint32]bool{},
 		used:         map[uint32]int{},
 		placeholders: map[geom.Size][]string{},
 		graphics:     graphicsSupported(),
@@ -109,30 +112,35 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	}
 	size := a.cells
 	r.used[a.id] = r.frame
-	placed, transmitted := r.placed[a.id]
-	if transmitted && r.ready[a.id] == size {
+	if r.ready[a.id] == size {
 		r.placed[a.id] = size
 		return nil
 	}
-	if transmitted && placed == size {
+	if r.placed[a.id] == size {
+		// already requested this exact size; wait for its response rather
+		// than queuing a duplicate
 		return nil
 	}
-	if transmitted {
-		if _, ready := r.ready[a.id]; !ready {
-			return nil
-		}
-		r.preparePlaceholders(size)
-		r.placed[a.id] = size
+	// an unsent initial transmit is still in flight; a put now would
+	// reference an id the terminal doesn't have yet and get dropped
+	_, everEmitted := r.placed[a.id]
+	if everEmitted && !r.sent[a.id] {
+		return nil
+	}
+	r.preparePlaceholders(size)
+	r.placed[a.id] = size
+	if r.sent[a.id] {
 		put := putSeq(a.id, size)
 		return func() tea.Msg {
 			return imageTransmitMsg{raw: put, id: a.id, size: size}
 		}
 	}
-	r.preparePlaceholders(size)
-	r.placed[a.id] = size
 	evict := r.evict(a.id)
 	remote := r.remote
 	return func() tea.Msg {
+		// Let Bubble Tea enter the alternate screen before Kitty receives image
+		// data that the screen transition can discard
+		time.Sleep(imageTransmitDelay)
 		var buf bytes.Buffer
 		buf.WriteString(evict)
 		if err := transmit(transmitArgs{
@@ -233,7 +241,7 @@ func transmit(args transmitArgs) error {
 		Format:           kitty.PNG,
 		Quiet:            2,
 		ID:               int(args.id),
-		PlacementID:      int(imagePlacementID(args.cells)),
+		PlacementID:      int(imagePlacementID(args.id)),
 		Columns:          args.cells.Width,
 		Rows:             args.cells.Height,
 		VirtualPlacement: true,
@@ -257,12 +265,18 @@ func putSeq(id uint32, cells geom.Size) string {
 		Action:           kitty.Put,
 		Quiet:            2,
 		ID:               int(id),
-		PlacementID:      int(imagePlacementID(cells)),
+		PlacementID:      int(imagePlacementID(id)),
 		Columns:          cells.Width,
 		Rows:             cells.Height,
 		VirtualPlacement: true,
 	}
 	return ansi.KittyGraphics(nil, opts.Options()...)
+}
+
+// imagePlacementID is stable for an image id's life, so a resize PUT moves
+// the existing placement instead of leaking a new one per size
+func imagePlacementID(id uint32) uint32 {
+	return max((id+1)&0xFFFFFF, 1)
 }
 
 func deleteImageSeq(id uint32) string {
@@ -274,12 +288,6 @@ func deleteImageSeq(id uint32) string {
 		Quiet:           2,
 	}
 	return ansi.KittyGraphics(nil, opts.Options()...)
-}
-
-func imagePlacementID(cells geom.Size) uint32 {
-	width := uint32(cells.Width) & imagePlacementDimensionMask
-	height := uint32(cells.Height) & imagePlacementDimensionMask
-	return max(width<<imagePlacementDimensionBits|height, 1)
 }
 
 func kittyImageID(content, surface uint32, preview bool) uint32 {

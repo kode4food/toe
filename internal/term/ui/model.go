@@ -89,11 +89,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return imageReadyMsg{id: msg.id, size: msg.size}
 		})
 	case imageReadyMsg:
-		if m.context.images.placed[msg.id] != msg.size {
-			return m, nil
+		m.context.images.sent[msg.id] = true
+		if m.context.images.placed[msg.id] == msg.size {
+			m.context.images.ready[msg.id] = msg.size
+			m.markImageDirty()
 		}
-		m.context.images.ready[msg.id] = msg.size
-		m.markImageDirty()
+		// re-query even when a size was requested while this was in flight,
+		// so a starved request is retried now that the id is confirmed sent
 		return m, m.imageDisplayFrameCmd()
 	default:
 		cmd := m.compositor.HandleEvent(m.context, msg)

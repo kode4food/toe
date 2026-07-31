@@ -40,16 +40,16 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		withA := m.View().Content
+		withA := stripANSI(m.View().Content)
 		m = sendKey(m, 'l')
-		withAl := m.View().Content
+		withAl := stripANSI(m.View().Content)
 
 		assert.Contains(t, withA, "alpha")
 		assert.Contains(t, withA, "alias")
 		assert.NotContains(t, withA, "beta")
 		assert.Contains(t, withAl, "alpha")
 		assert.NotContains(t, withAl, "beta")
-		assert.Contains(t, stripANSI(withAl), "╭")
+		assert.Contains(t, withAl, "╭")
 		for line := range strings.SplitSeq(stripANSI(withAl), "\n") {
 			if strings.Contains(line, "alpha") ||
 				strings.Contains(line, "╭") ||
@@ -236,11 +236,15 @@ func TestPromptCompletion(t *testing.T) {
 		)
 		// ANSI style carries across lines when unchanged, so the menu bg escape
 		// before "alpha" must be found over the whole stream, not re-split per
-		// line
-		idx := strings.Index(content, "alpha")
-		if !assert.GreaterOrEqual(t, idx, 0) {
+		// line. The matched "a" is styled separately from the rest, so allow
+		// ANSI escapes between each rune.
+		re := regexp.MustCompile(`a(?:\x1b\[[0-9;]*m)*l(?:\x1b\[[0-9;]*m)*` +
+			`p(?:\x1b\[[0-9;]*m)*h(?:\x1b\[[0-9;]*m)*a`)
+		loc := re.FindStringIndex(content)
+		if !assert.NotNil(t, loc) {
 			return
 		}
+		idx := loc[0]
 		before := content[:idx]
 		bgIdx := strings.LastIndex(before, "48;2;49;50;68m")
 		if assert.GreaterOrEqual(t, bgIdx, 0) {

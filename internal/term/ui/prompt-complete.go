@@ -94,6 +94,8 @@ func (p *PromptComponent) paintCompletions(
 	colW := max(
 		(innerW-compGap*(size.Width-1))/size.Width, 1,
 	)
+	matchStyle := pickerMatchStyle(cx)
+	selMatchStyle := pickerSelMatchStyle(cx)
 	area := pop.drawInto(buf, bounds)
 	for row := range size.Height {
 		for col := range size.Width {
@@ -101,16 +103,27 @@ func (p *PromptComponent) paintCompletions(
 			if i >= len(p.completion.items) {
 				continue
 			}
-			text := clipPad(p.completion.items[i].completionText(), colW)
+			item := p.completion.items[i]
+			at := area.Point.Add(geom.Point{
+				X: col * (colW + compGap),
+				Y: row,
+			})
 			style := menuStyle
+			match := matchStyle
 			if p.completion.selected != nil &&
 				*p.completion.selected == i {
 				style = selected
+				match = selMatchStyle
 			}
-			buf.SetString(area.Point.Add(geom.Point{
-				X: col * (colW + compGap),
-				Y: row,
-			}), text, style)
+			buf.FillRange(at, colW, style)
+			writePickerMatched(buf, writePickerMatchedArgs{
+				at:      at,
+				maxW:    colW,
+				text:    item.completionText(),
+				indices: item.Indices,
+				base:    style,
+				match:   match,
+			})
 		}
 	}
 }
@@ -161,8 +174,10 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 				continue
 			}
 			out = append(out, promptCompletion{
-				Completion: command.Completion{Text: name},
-				score:      res.Score,
+				Completion: command.Completion{
+					Text: name, Indices: res.Indices,
+				},
+				score: res.Score,
 			})
 		}
 	}

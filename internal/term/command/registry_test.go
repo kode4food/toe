@@ -238,6 +238,16 @@ func TestRegistry(t *testing.T) {
 		assert.NotEmpty(t, results)
 	})
 
+	t.Run("matches a non-prefix subsequence", func(t *testing.T) {
+		reg := registryWithOptions(t)
+		results := reg.OptionCompleter()(nil, nil, "off")
+		texts := make([]string, len(results))
+		for i, result := range results {
+			texts[i] = result.Text
+		}
+		assert.Contains(t, texts, "scrolloff")
+	})
+
 	t.Run("ApplyTOML decodes sections", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		reg := registryWithSection(t)

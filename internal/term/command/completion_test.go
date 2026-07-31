@@ -32,8 +32,14 @@ func TestStaticCompleter(t *testing.T) {
 	})
 
 	t.Run("no match returns empty", func(t *testing.T) {
-		got := fn(nil, nil, "z")
+		got := fn(nil, nil, "q")
 		assert.Equal(t, 0, len(got))
+	})
+
+	t.Run("fuzzy matches non-prefix subsequence", func(t *testing.T) {
+		got := fn(nil, nil, "z")
+		assert.Equal(t, 1, len(got))
+		assert.Equal(t, "baz", got[0].Text)
 	})
 }
 

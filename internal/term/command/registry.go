@@ -194,13 +194,13 @@ func (r *Registry) OptionCompleter() CompletionFunc {
 			keys = append(keys, o.Key)
 		}
 		slices.Sort(keys)
-		return matchPrefix(keys, input)
+		return matchFuzzy(keys, input)
 	}
 }
 
 func (r *Registry) BoolOptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
-		return matchPrefix(r.BoolOptionKeys(), input)
+		return matchFuzzy(r.BoolOptionKeys(), input)
 	}
 }
 
@@ -224,7 +224,7 @@ func (r *Registry) OptionValueCompleter() CompletionFunc {
 			return nil
 		}
 		if value, err := o.Get(e); err == nil {
-			return matchPrefix([]string{value}, input)
+			return matchFuzzy([]string{value}, input)
 		}
 		return nil
 	}

@@ -1,8 +1,11 @@
 package command
 
 import (
+	"cmp"
+	"slices"
 	"strings"
 
+	"github.com/kode4food/toe/internal/fuzzy"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -12,6 +15,7 @@ type (
 		Start   int
 		Text    string
 		Display string
+		Indices []int
 	}
 
 	// Completer describes positional and raw argument completion
@@ -33,7 +37,7 @@ func PositionalCompleter(c ...CompletionFunc) Completer {
 // StaticCompleter completes from a fixed string set
 func StaticCompleter[T ~string](items ...T) CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
-		return matchPrefix(items, input)
+		return matchFuzzy(items, input)
 	}
 }
 
@@ -87,29 +91,24 @@ func completionToken(input string) (int, string) {
 }
 
 func completeFlagsAt(start int, token string, flags []Flag) []Completion {
-	out := make([]Completion, 0, len(flags)*2)
+	names := make([]string, 0, len(flags)*2)
 	for _, f := range flags {
-		long := "--" + f.Name
-		if strings.HasPrefix(long, token) {
-			out = append(out, Completion{Start: start, Text: long})
+		names = append(names, "--"+f.Name)
+		if f.Alias != 0 {
+			names = append(names, "-"+string(f.Alias))
 		}
-		if f.Alias == 0 {
-			continue
-		}
-		short := "-" + string(f.Alias)
-		if strings.HasPrefix(short, token) {
-			out = append(out, Completion{Start: start, Text: short})
-		}
+	}
+	out := matchFuzzy(names, token)
+	for i := range out {
+		out[i].Start = start
 	}
 	return out
 }
 
 func completeStaticAt(start int, token string, items []string) []Completion {
-	out := make([]Completion, 0, len(items))
-	for _, item := range items {
-		if strings.HasPrefix(item, token) {
-			out = append(out, Completion{Start: start, Text: item})
-		}
+	out := matchFuzzy(items, token)
+	for i := range out {
+		out[i].Start = start
 	}
 	return out
 }
@@ -123,13 +122,34 @@ func offsetCompletions(items []Completion, offset int) []Completion {
 	return out
 }
 
-func matchPrefix[T ~string](items []T, input string) []Completion {
-	out := make([]Completion, 0, len(items))
-	for _, item := range items {
+func matchFuzzy[T ~string](items []T, input string) []Completion {
+	type scored struct {
+		Completion
+		score int
+		order int
+	}
+	m := fuzzy.NewMatcher(input)
+	matches := make([]scored, 0, len(items))
+	for i, item := range items {
 		text := string(item)
-		if strings.HasPrefix(text, input) {
-			out = append(out, Completion{Text: text})
+		res, ok := m.Match(text)
+		if !ok {
+			continue
 		}
+		matches = append(matches, scored{
+			Completion: Completion{Text: text, Indices: res.Indices},
+			score:      res.Score,
+			order:      i,
+		})
+	}
+	slices.SortStableFunc(matches, func(a, b scored) int {
+		return cmp.Or(
+			cmp.Compare(b.score, a.score), cmp.Compare(a.order, b.order),
+		)
+	})
+	out := make([]Completion, len(matches))
+	for i, m := range matches {
+		out[i] = m.Completion
 	}
 	return out
 }

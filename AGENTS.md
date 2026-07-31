@@ -721,6 +721,24 @@ func lookup(name string) (Value, bool) {
 }
 ```
 
+### Multi-Assignment
+
+Never assign multiple variables in one statement from independent sources — `a, b := x, y` where `x` and `y` are separate expressions. This is unreadable: the reader must visually pair each name on the left with its value on the right instead of reading top to bottom. The only exception is routing a single call's multiple return values, where the pairing is already fixed by the function's signature.
+
+```go
+// Good — routing one call's multi-return
+value, ok := lookup(name)
+
+// Good — independent sources, one per line
+style := menuStyle
+match := matchStyle
+
+// Bad — independent sources crammed into one statement
+style, match := menuStyle, matchStyle
+```
+
+This applies to plain assignment (`=`) as well as `:=`.
+
 ### Nesting Limit
 
 Maximum one level of conditional nesting. Exception: when early return would cause code duplication.

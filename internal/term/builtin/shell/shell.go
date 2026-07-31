@@ -35,7 +35,7 @@ func Module(model ui.Model) command.Module {
 				Run: kit.Continuation(model.ShellAction(
 					i18n.Text(i18n.PromptPipe), action.ShellPipe,
 				)),
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('|')),
 			},
 			{
@@ -45,7 +45,7 @@ func Module(model ui.Model) command.Module {
 					i18n.Text(i18n.PromptInsertOutput),
 					action.ShellInsertOutput,
 				)),
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('!')),
 			},
 			{
@@ -55,7 +55,7 @@ func Module(model ui.Model) command.Module {
 					i18n.Text(i18n.PromptFilter),
 					action.ShellKeepPipe,
 				)),
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('$')),
 			},
 			{
@@ -64,7 +64,7 @@ func Module(model ui.Model) command.Module {
 				Run: kit.Continuation(model.ShellAction(
 					i18n.Text(i18n.PromptPipeTo), action.ShellPipeTo,
 				)),
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Alt('|')),
 			},
 			{
@@ -74,7 +74,7 @@ func Module(model ui.Model) command.Module {
 					i18n.Text(i18n.PromptAppendOutput),
 					action.ShellAppendOutput,
 				)),
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Alt('!')),
 			},
 		},

@@ -52,7 +52,7 @@ func formatCmds() []command.Command {
 				doc.SetLang(lang)
 				return command.Result{Message: ""}
 			},
-			Modes:     command.DocModes(),
+			Modes:     command.DocModes,
 			Aliases:   []string{"lang"},
 			Signature: kit.StaticSig(kit.OptionalArg(), languageNames()...),
 		},
@@ -89,7 +89,7 @@ func formatCmds() []command.Command {
 				}
 				return command.Result{Message: ""}
 			},
-			Modes:   command.DocModes(),
+			Modes:   command.DocModes,
 			Aliases: []string{"line-ending"},
 			Signature: kit.StaticSig(
 				kit.OptionalArg(), core.LineEndingNames()...,
@@ -122,7 +122,7 @@ func formatCmds() []command.Command {
 				}
 				return command.Result{Message: "indent style set"}
 			},
-			Modes: command.DocModes(),
+			Modes: command.DocModes,
 			Signature: kit.StaticSig(
 				command.DefaultSignature(),
 				"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",
@@ -135,14 +135,14 @@ func formatCmds() []command.Command {
 			Run: func(_ *view.Editor, _ *command.Args) command.Result {
 				return command.Result{Message: view.EncodingUTF8}
 			},
-			Modes:     command.DocModes(),
+			Modes:     command.DocModes,
 			Signature: command.DefaultSignature(),
 		},
 	}
 }
 
 func cursorShapeOption(
-	key, mode string, set optionSetter[view.CursorKind],
+	key string, mode view.Mode, set optionSetter[view.CursorKind],
 ) command.Option {
 	return command.Option{
 		Key: key,
@@ -193,25 +193,6 @@ func statuslineItemsOption(
 			return nil
 		},
 		Complete: sliceCompleter(view.StatusLineElementNames()...),
-	}
-}
-
-func statuslineModeOption(
-	key, mode string, set optionSetter[string],
-) command.Option {
-	return command.Option{
-		Key: key,
-		Get: func(e *view.Editor) (string, error) {
-			return e.Options().ModeNameForMode(mode), nil
-		},
-		Set: func(e *view.Editor, s string) error {
-			v, err := viewcfg.ParseStringLiteral(s)
-			if err != nil {
-				return err
-			}
-			set(e.Options(), v)
-			return nil
-		},
 	}
 }
 

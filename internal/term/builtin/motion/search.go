@@ -42,43 +42,51 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actCommandMode,
 				DocString: "Enter command mode",
 				Run:       kit.Continuation(model.CmdModeAction()),
-				Modes:     command.CmdKeyModes(),
+				Modes:     command.CmdKeyModes,
 				Keys:      kit.Keys(kit.Char(':')),
 			},
 			{
 				Name:      actSearch,
 				DocString: "Search for regex pattern",
 				Run:       kit.Continuation(model.SearchAction(true)),
-				Modes:     command.DocNormalModes(),
-				Keys: map[string][]command.KeyBinding{
-					"*": {kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/'))},
+				Modes:     command.DocNormalModes,
+				Keys: map[view.Mode][]command.KeyBinding{
+					view.ModeAny: {
+						kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/')),
+					},
 				},
 			},
 			{
 				Name:      actSearchReverse,
 				DocString: "Reverse search for regex pattern",
 				Run:       kit.Continuation(model.SearchAction(false)),
-				Modes:     command.DocNormalModes(),
-				Keys: map[string][]command.KeyBinding{
-					"*": {kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?'))},
+				Modes:     command.DocNormalModes,
+				Keys: map[view.Mode][]command.KeyBinding{
+					view.ModeAny: {
+						kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?')),
+					},
 				},
 			},
 			{
 				Name:      actSearchNext,
 				DocString: "Select next search match",
 				Run:       kit.Runner(action.SearchNext),
-				Modes:     []string{"NOR"},
-				Keys: map[string][]command.KeyBinding{
-					"*": {kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n'))},
+				Modes:     view.ModeNormal,
+				Keys: map[view.Mode][]command.KeyBinding{
+					view.ModeAny: {
+						kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n')),
+					},
 				},
 			},
 			{
 				Name:      actSearchPrev,
 				DocString: "Select previous search match",
 				Run:       kit.Runner(action.SearchPrev),
-				Modes:     []string{"NOR"},
-				Keys: map[string][]command.KeyBinding{
-					"*": {kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N'))},
+				Modes:     view.ModeNormal,
+				Keys: map[view.Mode][]command.KeyBinding{
+					view.ModeAny: {
+						kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N')),
+					},
 				},
 			},
 			{
@@ -86,39 +94,43 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Use current selection as the search pattern," +
 					" automatically wrapping with `\\b` on word boundaries",
 				Run:   kit.Runner(action.SearchSelectionWord),
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('*')),
 			},
 			{
 				Name:      actMakeSearchWordBounded,
 				DocString: "Modify current search to make it word bounded",
 				Run:       kit.Runner(action.MakeSearchWordBounded),
-				Modes:     command.DocNormalModes(),
+				Modes:     command.DocNormalModes,
 				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actSearchSelection,
 				DocString: "Use current selection as search pattern",
 				Run:       kit.Runner(action.SearchSelection),
-				Modes:     command.DocNormalModes(),
+				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('*')),
 			},
 			{
 				Name:      actExtendSearchNext,
 				DocString: "Add next search match to selection",
 				Run:       kit.Runner(action.ExtendSearchNext),
-				Modes:     []string{"SEL"},
-				Keys: map[string][]command.KeyBinding{
-					"*": {kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n'))},
+				Modes:     view.ModeSelect,
+				Keys: map[view.Mode][]command.KeyBinding{
+					view.ModeAny: {
+						kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n')),
+					},
 				},
 			},
 			{
 				Name:      actExtendSearchPrev,
 				DocString: "Add previous search match to selection",
 				Run:       kit.Runner(action.ExtendSearchPrev),
-				Modes:     []string{"SEL"},
-				Keys: map[string][]command.KeyBinding{
-					"*": {kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N'))},
+				Modes:     view.ModeSelect,
+				Keys: map[view.Mode][]command.KeyBinding{
+					view.ModeAny: {
+						kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N')),
+					},
 				},
 			},
 		},

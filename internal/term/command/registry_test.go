@@ -32,7 +32,7 @@ func TestRegistry(t *testing.T) {
 		reg := command.NewRegistry(km)
 		cmd := command.Command{
 			Aliases: []string{"write"},
-			Modes:   []string{"NOR"},
+			Modes:   view.ModeNormal,
 			Run: func(
 				*view.Editor, *command.Args,
 			) command.Result {
@@ -53,7 +53,7 @@ func TestRegistry(t *testing.T) {
 			Commands: []command.Command{
 				{
 					Name:  "noop",
-					Modes: []string{"NOR"},
+					Modes: view.ModeNormal,
 					Run:   registryCommand().Run,
 				},
 			},
@@ -65,26 +65,22 @@ func TestRegistry(t *testing.T) {
 	t.Run("Bindings returns registered sequences", func(t *testing.T) {
 		km := command.NewKeymaps()
 		err := km.Register("noop", command.Command{
-			Run: registryCommand().Run,
-			Modes: []string{
-				"NOR",
-			},
-			Keys: map[string][]command.KeyBinding{
-				"*": {{
-					{{Code: command.KeyCode{Char: 'g'}}},
-				}},
+			Run:   registryCommand().Run,
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{
+				view.ModeAny: {{{{Code: command.KeyCode{Char: 'g'}}}}},
 			},
 		})
 		assert.NoError(t, err)
 
-		km.Bind("NOR", "noop", []command.KeyEvent{
+		km.Bind(view.ModeNormal, "noop", []command.KeyEvent{
 			{Code: command.KeyCode{Char: 'x'}},
 		})
 
 		assert.Equal(t, []command.KeyBinding{
 			{{{Code: command.KeyCode{Char: 'g'}}}},
 			{{{Code: command.KeyCode{Char: 'x'}}}},
-		}, km.Bindings("NOR", "noop"))
+		}, km.Bindings(view.ModeNormal, "noop"))
 	})
 
 	t.Run("OptionKeys returns sorted option keys", func(t *testing.T) {
@@ -284,7 +280,7 @@ func TestRegistry(t *testing.T) {
 
 func registryCommand() command.Command {
 	return command.Command{
-		Modes: []string{"NOR"},
+		Modes: view.ModeNormal,
 		Run: func(*view.Editor, *command.Args) command.Result {
 			return command.Result{}
 		},

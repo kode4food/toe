@@ -211,7 +211,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		m := ui.New(e, km)
 		bindTestAction(bindTestActionArgs{
 			km:   km,
-			mode: "BIN",
+			mode: view.ModeBinary,
 			name: "workspace_symbol_picker",
 			fn:   m.WorkspaceSymbolPickerAction(),
 			seqs: [][]command.KeyEvent{{char('w')}},

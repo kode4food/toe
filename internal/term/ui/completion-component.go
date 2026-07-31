@@ -54,10 +54,6 @@ type (
 )
 
 const (
-	// CompletionMode is the keymap mode used while the completion popup is
-	// focused
-	CompletionMode = "COM"
-
 	// CompletionAcceptAction accepts the selected completion item
 	CompletionAcceptAction = "completion_accept"
 
@@ -128,7 +124,7 @@ func (c *completionComponent) lookupAction(
 	cx *Context, k command.KeyEvent,
 ) (string, bool) {
 	name, found, _ := cx.Keymaps.LookupCommand(
-		CompletionMode, []command.KeyEvent{k},
+		view.ModeCompletion, []command.KeyEvent{k},
 	)
 	return name, found
 }

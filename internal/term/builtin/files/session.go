@@ -26,7 +26,7 @@ func SessionModule() command.Module {
 					}
 					return command.Result{Message: "session saved"}
 				},
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Signature: command.DefaultSignature(),
 			},
 			{
@@ -43,7 +43,7 @@ func SessionModule() command.Module {
 					}
 					return command.Result{}
 				},
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Signature: command.DefaultSignature(),
 			},
 		},

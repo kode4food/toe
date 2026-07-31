@@ -188,30 +188,6 @@ func TestConfigOptions(t *testing.T) {
 		assert.Contains(t, res.Message, "error")
 	})
 
-	t.Run("get/set statusline mode names", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		test.RunCmdArgs(t, km, e, "set_option", `statusline.mode.normal NOR`)
-		res := test.RunCmdArgs(t,
-			km, e, "get_option", "statusline.mode.normal")
-		assert.Equal(t, "NOR", res.Message)
-	})
-
-	t.Run("get/set statusline mode insert", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		test.RunCmdArgs(t, km, e, "set_option", "statusline.mode.insert INS")
-		res := test.RunCmdArgs(t,
-			km, e, "get_option", "statusline.mode.insert")
-		assert.Equal(t, "INS", res.Message)
-	})
-
-	t.Run("get/set statusline mode select", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		test.RunCmdArgs(t, km, e, "set_option", "statusline.mode.select SEL")
-		res := test.RunCmdArgs(t,
-			km, e, "get_option", "statusline.mode.select")
-		assert.Equal(t, "SEL", res.Message)
-	})
-
 	t.Run("get/set cursor-shape normal", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "cursor-shape.normal bar")

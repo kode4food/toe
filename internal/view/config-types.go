@@ -17,10 +17,9 @@ type (
 	CursorKind string
 
 	StatusLine struct {
-		Left      []StatusLineItem    `toml:"left"`
-		Right     []StatusLineItem    `toml:"right"`
-		Separator string              `toml:"separator"`
-		Mode      StatusLineModeNames `toml:"mode"`
+		Left      []StatusLineItem `toml:"left"`
+		Right     []StatusLineItem `toml:"right"`
+		Separator string           `toml:"separator"`
 	}
 
 	// StatusLineItem is one configured status bar element. In TOML it is the
@@ -32,12 +31,6 @@ type (
 	}
 
 	StatusLineElement string
-
-	StatusLineModeNames struct {
-		Normal string `toml:"normal"`
-		Insert string `toml:"insert"`
-		Select string `toml:"select"`
-	}
 
 	LineNumber string
 

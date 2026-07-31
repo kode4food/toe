@@ -21,7 +21,7 @@ func execTypable(cx *Context, input string) command.Result {
 	if name == "" {
 		return command.Result{}
 	}
-	cmd := cx.Keymaps.ResolveCommandIn(cx.Editor.Mode().String(), name)
+	cmd := cx.Keymaps.ResolveCommandIn(cx.Editor.Mode(), name)
 	if cmd == nil {
 		return command.Result{
 			Error: errNoSuchCommand.WithVars(i18n.Vars{

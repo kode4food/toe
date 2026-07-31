@@ -47,7 +47,7 @@ func TestCommandPalettePicker(t *testing.T) {
 				return command.Result{}
 			},
 			Aliases: []string{"image_probe"},
-			Modes:   []string{"IMG"},
+			Modes:   view.ModeImage,
 		})
 		_ = km.Register("document_probe", command.Command{
 			DocString: "Document command",
@@ -55,7 +55,7 @@ func TestCommandPalettePicker(t *testing.T) {
 				return command.Result{}
 			},
 			Aliases: []string{"document_probe"},
-			Modes:   []string{"NOR"},
+			Modes:   view.ModeNormal,
 		})
 		m := ui.New(e, km).WithInitialPicker(func(e *view.Editor) *ui.Picker {
 			return ui.CommandPalettePicker(e, km)
@@ -81,16 +81,12 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 			return command.Result{}
 		},
 		Aliases: []string{"palette_probe"},
-		Modes:   []string{"NOR"},
-		Keys: map[string][]command.KeyBinding{
-			"*": {
-				{
-					{char('g'), char('p')},
-				},
-			},
+		Modes:   view.ModeNormal,
+		Keys: map[view.Mode][]command.KeyBinding{
+			view.ModeAny: {{{char('g'), char('p')}}},
 		},
 	})
-	km.Bind("NOR", "palette_probe", []command.KeyEvent{
+	km.Bind(view.ModeNormal, "palette_probe", []command.KeyEvent{
 		char('a'), char('b'), char('c'), char('d'), char('e'), char('f'),
 		char('g'), char('h'), char('i'), char('j'), char('k'), char('l'),
 	})

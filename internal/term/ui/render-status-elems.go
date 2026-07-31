@@ -50,7 +50,7 @@ var (
 )
 
 func statusElemMode(s *statusElemCtx) statusElem {
-	return statusBadge(s.opts.ModeNameForMode(s.mode), s.modeSt)
+	return statusBadge(s.mode.String(), s.modeSt)
 }
 
 func statusElemSeparator(s *statusElemCtx) statusElem {

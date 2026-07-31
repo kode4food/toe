@@ -222,9 +222,6 @@ Automatic completion is in addition to `Ctrl+x`, which requests completions at a
 | `statusline.left` | string[] | built-in | Left-aligned statusline elements |
 | `statusline.right` | string[] | built-in | Right-aligned statusline elements |
 | `statusline.separator` | string | `"│"` | Separator between status items |
-| `statusline.mode.normal` | string | `"NOR"` | Label for Normal mode |
-| `statusline.mode.insert` | string | `"INS"` | Label for Insert mode |
-| `statusline.mode.select` | string | `"SEL"` | Label for Select mode |
 
 Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spacer`, `spinner`, `register`, and `version-control`.
 

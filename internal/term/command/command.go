@@ -17,7 +17,7 @@ type (
 	// PrefixLabel names an intermediate key-sequence node for the pending-key
 	// hint popup, letting a module label the prefixes it owns
 	PrefixLabel struct {
-		Modes []string
+		Modes view.Mode
 		Seq   KeyBinding
 		Label string
 	}
@@ -59,8 +59,8 @@ type (
 		Name      string
 		Run       Run
 		DocString string
-		Modes     []string
-		Keys      map[string][]KeyBinding
+		Modes     view.Mode
+		Keys      map[view.Mode][]KeyBinding
 		Aliases   []string
 		Signature Signature
 	}
@@ -95,28 +95,35 @@ const (
 	SignalClearScreen
 )
 
-// AllModes returns every editing and pane mode
-func AllModes() []string {
-	return []string{"NOR", "SEL", "INS", "TRM", "IMG", "BIN"}
-}
+const (
+	// AllModes is every editing and pane mode
+	AllModes = view.ModeNormal |
+		view.ModeSelect |
+		view.ModeInsert |
+		view.ModeTerminal |
+		view.ModeImage |
+		view.ModeBinary
 
-// DocNormalModes returns non-insert document modes
-func DocNormalModes() []string {
-	return []string{"NOR", "SEL"}
-}
+	// DocNormalModes is the non-insert document modes
+	DocNormalModes = view.ModeNormal |
+		view.ModeSelect
 
-// DocModes returns all modes backed by editable document views
-func DocModes() []string {
-	return []string{"NOR", "SEL", "INS"}
-}
+	// DocModes is every mode backed by an editable document view
+	DocModes = view.ModeNormal |
+		view.ModeSelect |
+		view.ModeInsert
 
-// PaneModes returns modes for commands that apply to every pane kind
-func PaneModes() []string {
-	return []string{"NOR", "SEL", "TRM", "IMG", "BIN"}
-}
+	// PaneModes is every mode for commands that apply to every pane kind
+	PaneModes = view.ModeNormal |
+		view.ModeSelect |
+		view.ModeTerminal |
+		view.ModeImage |
+		view.ModeBinary
 
-// CmdKeyModes returns every pane mode except terminal, where keystrokes
-// belong to the shell
-func CmdKeyModes() []string {
-	return []string{"NOR", "SEL", "IMG", "BIN"}
-}
+	// CmdKeyModes is every pane mode except terminal, where keystrokes
+	// belong to the shell
+	CmdKeyModes = view.ModeNormal |
+		view.ModeSelect |
+		view.ModeImage |
+		view.ModeBinary
+)

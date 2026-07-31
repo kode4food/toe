@@ -119,9 +119,9 @@ func TestShellAction(t *testing.T) {
 				fn := func(_ *view.Editor, _ string) error { return nil }
 				return command.Result{Continuation: m.ShellAction("$", fn)(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{
-				"*": {[][]command.KeyEvent{{char('!')}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{
+				view.ModeAny: {[][]command.KeyEvent{{char('!')}}},
 			},
 		})
 		m = resize(m, 80, 24)

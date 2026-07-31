@@ -230,7 +230,7 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 		m := ui.New(e, km)
 		bindTestAction(bindTestActionArgs{
 			km:   km,
-			mode: "IMG",
+			mode: view.ModeImage,
 			name: "explorer_pane",
 			fn:   m.PickerAction(bufferDirExplorer),
 			seqs: [][]command.KeyEvent{{char('e')}},

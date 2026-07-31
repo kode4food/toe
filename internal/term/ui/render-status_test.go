@@ -216,20 +216,6 @@ func TestSpinnerColorRender(t *testing.T) {
 	})
 }
 
-func TestStatuslineConfigRender(t *testing.T) {
-	t.Run("uses configured mode label", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		e := view.NewEditor(t.TempDir())
-		e.Options().StatusLine.Mode.Normal = "NORMAL"
-		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-
-		out := m.View().Content
-
-		assert.Contains(t, out, " NORMAL ")
-		assert.NotContains(t, out, " NOR ")
-	})
-}
-
 func TestStatuslineSpacing(t *testing.T) {
 	t.Run("custom spinner location", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -575,24 +561,24 @@ func TestCommandlineThemeRender(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Message: "error: harmless"}
 			},
-			Modes:   []string{"NOR"},
+			Modes:   view.ModeNormal,
 			Aliases: []string{"message"},
 		}))
 		assert.NoError(t, km.Register("failure", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Error: assert.AnError}
 			},
-			Modes:   []string{"NOR"},
+			Modes:   view.ModeNormal,
 			Aliases: []string{"failure"},
 		}))
 		assert.NoError(t, km.Register("empty", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{}
 			},
-			Modes:   []string{"NOR"},
+			Modes:   view.ModeNormal,
 			Aliases: []string{"empty"},
-			Keys: map[string][]command.KeyBinding{
-				"*": {[][]command.KeyEvent{{char('x')}}},
+			Keys: map[view.Mode][]command.KeyBinding{
+				view.ModeAny: {[][]command.KeyEvent{{char('x')}}},
 			},
 		}))
 		m := resize(ui.New(e, km), 80, 24)

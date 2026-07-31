@@ -70,7 +70,7 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		return pc.Cursor(r.cx)
 	}
 	opts := r.cx.Editor.Options()
-	kind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
+	kind := opts.CursorShapeForMode(r.cx.Editor.Mode())
 	switch kind {
 	case view.CursorKindHidden:
 		return tea.Cursor{}, false

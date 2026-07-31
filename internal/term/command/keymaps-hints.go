@@ -1,8 +1,10 @@
 package command
 
+import "github.com/kode4food/toe/internal/view"
+
 // LabelNode names the node reached by each alternative in prefix, so a shared
 // menu (e.g. the Space and Ctrl-\ leaders) is labelled everywhere it is reached
-func (k *Keymaps) LabelNode(mode string, prefix KeyBinding, name string) {
+func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 	root, ok := k.modes[mode]
 	if !ok {
 		return
@@ -23,7 +25,7 @@ func (k *Keymaps) LabelNode(mode string, prefix KeyBinding, name string) {
 // PendingHints returns the title and (key, label) pairs for the node
 // reached by seq in mode, used to populate the pending-key info popup
 func (k *Keymaps) PendingHints(
-	mode string, seq []KeyEvent,
+	mode view.Mode, seq []KeyEvent,
 ) (string, []KeyHint) {
 	root, ok := k.modes[mode]
 	if !ok {

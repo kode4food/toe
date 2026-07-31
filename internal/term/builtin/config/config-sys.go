@@ -30,7 +30,7 @@ func systemCmds() []command.Command {
 					e, loader.ConfigFile, errConfigUnavailable,
 				)
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: command.DefaultSignature(),
 		},
 		{
@@ -48,7 +48,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{}
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: command.DefaultSignature(),
 		},
 		{
@@ -60,7 +60,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "config reloaded"}
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: command.DefaultSignature(),
 		},
 		{
@@ -69,7 +69,7 @@ func systemCmds() []command.Command {
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(e, loader.LogFile, errLogUnavailable)
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: command.DefaultSignature(),
 		},
 		{
@@ -82,7 +82,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace trusted"}
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: command.DefaultSignature(),
 		},
 		{
@@ -95,7 +95,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace untrusted"}
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: command.DefaultSignature(),
 		},
 	}
@@ -134,7 +134,7 @@ func themeCmds() []command.Command {
 				e.Options().Theme = name
 				return command.Result{}
 			},
-			Modes:     command.PaneModes(),
+			Modes:     command.PaneModes,
 			Signature: kit.StaticSig(kit.OptionalArg(), loader.ThemeNames()...),
 		},
 	}

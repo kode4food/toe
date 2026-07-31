@@ -80,9 +80,9 @@ func TestViewSplit(t *testing.T) {
 
 func TestImageMode(t *testing.T) {
 	e, km := test.Env(t, "")
-	assert.NotEmpty(t, km.Bindings("IMG", "image_zoom_in"))
-	assert.NotEmpty(t, km.Bindings("IMG", "vsplit"))
-	assert.Empty(t, km.Bindings("IMG", "page_up"))
+	assert.NotEmpty(t, km.Bindings(view.ModeImage, "image_zoom_in"))
+	assert.NotEmpty(t, km.Bindings(view.ModeImage, "vsplit"))
+	assert.Empty(t, km.Bindings(view.ModeImage, "page_up"))
 
 	path := filepath.Join("..", "..", "..", "..", "docs", "img", "logo.png")
 	pane, err := ui.NewImagePane(e, path)
@@ -101,10 +101,10 @@ func TestImageMode(t *testing.T) {
 
 func TestBinaryMode(t *testing.T) {
 	e, km := test.Env(t, "")
-	assert.NotEmpty(t, km.Bindings("BIN", "vsplit"))
-	assert.NotEmpty(t, km.Bindings("BIN", "toggle_pane_maximized"))
-	assert.Empty(t, km.Bindings("BIN", "image_zoom_in"))
-	assert.Empty(t, km.Bindings("BIN", "page_up"))
+	assert.NotEmpty(t, km.Bindings(view.ModeBinary, "vsplit"))
+	assert.NotEmpty(t, km.Bindings(view.ModeBinary, "toggle_pane_maximized"))
+	assert.Empty(t, km.Bindings(view.ModeBinary, "image_zoom_in"))
+	assert.Empty(t, km.Bindings(view.ModeBinary, "page_up"))
 
 	path := filepath.Join(t.TempDir(), "tool")
 	assert.NoError(t, os.WriteFile(path, []byte{0, 1, 2, 3}, 0o755))
@@ -176,7 +176,7 @@ func TestViewWonly(t *testing.T) {
 
 func TestPaneMaximized(t *testing.T) {
 	e, km := test.Env(t, "abc")
-	for _, mode := range command.PaneModes() {
+	for _, mode := range command.PaneModes.Split() {
 		assert.NotEmpty(t, km.Bindings(mode, "toggle_pane_maximized"))
 	}
 	test.RunCmd(t, km, e, "vsplit")

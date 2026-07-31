@@ -48,7 +48,7 @@ func (r *Registry) RegisterModule(m Module) error {
 		r.sections = append(r.sections, *m.Section)
 	}
 	for _, lbl := range m.Labels {
-		for _, mode := range lbl.Modes {
+		for _, mode := range lbl.Modes.Split() {
 			r.km.LabelNode(mode, lbl.Seq, lbl.Label)
 		}
 	}

@@ -89,7 +89,7 @@ func TestCompletionComponent(t *testing.T) {
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		km.Bind(
-			ui.CompletionMode, ui.CompletionAcceptAction,
+			view.ModeCompletion, ui.CompletionAcceptAction,
 			[]command.KeyEvent{{
 				Code: command.KeyCode{Char: 'j'}, Mods: command.ModCtrl,
 			}},

@@ -38,7 +38,7 @@ func FormatModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return runFormatter(e)
 				},
-				Modes:     command.DocModes(),
+				Modes:     command.DocModes,
 				Aliases:   []string{"fmt"},
 				Signature: command.DefaultSignature(),
 			},
@@ -46,7 +46,7 @@ func FormatModule() command.Module {
 				Name:      actReindentSelections,
 				DocString: "Format selection",
 				Run:       runFormatSelection,
-				Modes:     command.DocNormalModes(),
+				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('=')),
 			},
 			{
@@ -69,7 +69,7 @@ func FormatModule() command.Module {
 					action.ReflowSelections(e, width)
 					return command.Result{}
 				},
-				Modes:     command.DocNormalModes(),
+				Modes:     command.DocNormalModes,
 				Signature: kit.OptionalArg(),
 			},
 			{
@@ -84,7 +84,7 @@ func FormatModule() command.Module {
 					}
 					return command.Result{}
 				},
-				Modes: command.DocNormalModes(),
+				Modes: command.DocNormalModes,
 				Signature: command.Signature{
 					Flags: []command.Flag{
 						{Name: "reverse", Alias: 'r'},

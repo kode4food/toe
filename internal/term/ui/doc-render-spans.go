@@ -144,7 +144,7 @@ func (r *renderPass) prepareContentRender(
 		})
 	}
 
-	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode().String())
+	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
 		args.focused
 	cursorLineEnabled := opts.CursorLine

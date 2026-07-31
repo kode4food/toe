@@ -105,11 +105,11 @@ func (r *renderPass) renderTerminalStatus(
 
 	modeSt := st
 	if focused {
-		modeSt = th.Get("ui.statusline.terminal")
+		modeSt = th.Get("ui.statusline." + tp.Mode().Scope())
 	}
-	label := "TRM"
+	label := tp.Mode().String()
 	if tp.ConsumeBell(focused) && !focused {
-		label = "TRM*"
+		label += "*"
 	}
 
 	title := tp.Title()

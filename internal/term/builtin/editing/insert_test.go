@@ -8,7 +8,6 @@ import (
 
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -42,7 +41,7 @@ func TestCompletionCommands(t *testing.T) {
 			assert.Empty(t, res.Message)
 
 			act, found, prefix := km.Lookup(
-				ui.CompletionMode, []command.KeyEvent{tt.key},
+				view.ModeCompletion, []command.KeyEvent{tt.key},
 			)
 			assert.True(t, found)
 			assert.False(t, prefix)
@@ -104,7 +103,7 @@ func TestInsertTab(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		e.SetMode(view.ModeInsert)
 		testutil.SetCursor(t, e, 3)
-		act, found, prefix := km.Lookup("INS", []command.KeyEvent{{
+		act, found, prefix := km.Lookup(view.ModeInsert, []command.KeyEvent{{
 			Code: command.KeyCode{Special: command.Tab},
 			Mods: command.ModShift,
 		}})

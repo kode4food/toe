@@ -61,8 +61,7 @@ type (
 
 	statusElemCtx struct {
 		doc        *view.Document
-		opts       *view.Options
-		mode       string
+		mode       view.Mode
 		baseTUI    tui.Style
 		modeSt     tui.Style
 		sepSt      tui.Style
@@ -140,7 +139,6 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	}
 
 	opts := r.cx.Editor.Options()
-	mode := v.Mode().String()
 
 	th := r.activeTheme()
 
@@ -174,9 +172,9 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	}
 
 	baseTUI := st
-
 	src := &statusElemCtx{
-		doc: doc, opts: opts, mode: mode,
+		doc:     doc,
+		mode:    v.Mode(),
 		baseTUI: baseTUI,
 		modeSt:  modeSt,
 		sepSt:   sepSt,

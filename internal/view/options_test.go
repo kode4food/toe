@@ -66,70 +66,39 @@ func TestOptionsStatusLine(t *testing.T) {
 	})
 }
 
-func TestOptionsModeNames(t *testing.T) {
-	t.Run("default normal", func(t *testing.T) {
-		o := view.Options{}
-		assert.Equal(t, "NOR", o.ModeNameForMode("NOR"))
-	})
-
-	t.Run("default insert", func(t *testing.T) {
-		o := view.Options{}
-		assert.Equal(t, "INS", o.ModeNameForMode("insert"))
-	})
-
-	t.Run("default select via sel", func(t *testing.T) {
-		o := view.Options{}
-		assert.Equal(t, "SEL", o.ModeNameForMode("sel"))
-	})
-
-	t.Run("custom normal", func(t *testing.T) {
-		o := view.Options{StatusLine: view.StatusLine{
-			Mode: view.StatusLineModeNames{Normal: "NRM"},
-		}}
-		assert.Equal(t, "NRM", o.ModeNameForMode("normal"))
-	})
-
-	t.Run("custom insert", func(t *testing.T) {
-		o := view.Options{StatusLine: view.StatusLine{
-			Mode: view.StatusLineModeNames{Insert: "I"},
-		}}
-		assert.Equal(t, "I", o.ModeNameForMode("ins"))
-	})
-
-	t.Run("custom select", func(t *testing.T) {
-		o := view.Options{StatusLine: view.StatusLine{
-			Mode: view.StatusLineModeNames{Select: "S"},
-		}}
-		assert.Equal(t, "S", o.ModeNameForMode("select"))
-	})
-}
-
 func TestOptionsCursorShape(t *testing.T) {
 	t.Run("default returns block", func(t *testing.T) {
 		o := view.Options{}
-		assert.Equal(t, view.CursorKindBlock, o.CursorShapeForMode("NOR"))
-		assert.Equal(t, view.CursorKindBlock, o.CursorShapeForMode("INS"))
-		assert.Equal(t, view.CursorKindBlock, o.CursorShapeForMode("SEL"))
+		assert.Equal(t,
+			view.CursorKindBlock, o.CursorShapeForMode(view.ModeNormal))
+		assert.Equal(t,
+			view.CursorKindBlock, o.CursorShapeForMode(view.ModeInsert))
+		assert.Equal(t,
+			view.CursorKindBlock, o.CursorShapeForMode(view.ModeSelect))
 	})
 
 	t.Run("custom normal shape", func(t *testing.T) {
 		o := view.Options{CursorShape: view.CursorShape{
 			Normal: view.CursorKindBar,
 		}}
-		assert.Equal(t, view.CursorKindBar, o.CursorShapeForMode("NOR"))
+		assert.Equal(t,
+			view.CursorKindBar, o.CursorShapeForMode(view.ModeNormal))
 	})
 
 	t.Run("custom insert shape", func(t *testing.T) {
 		o := view.Options{CursorShape: view.CursorShape{
 			Insert: view.CursorKindBar,
 		}}
-		assert.Equal(t, view.CursorKindBar, o.CursorShapeForMode("INS"))
+		assert.Equal(t,
+			view.CursorKindBar, o.CursorShapeForMode(view.ModeInsert))
 	})
 
 	t.Run("custom select shape", func(t *testing.T) {
 		o := view.Options{CursorShape: view.CursorShape{
 			Select: view.CursorKindUnderline,
 		}}
-		assert.Equal(t, view.CursorKindUnderline, o.CursorShapeForMode("SEL"))
+		assert.Equal(t,
+			view.CursorKindUnderline, o.CursorShapeForMode(view.ModeSelect),
+		)
 	})
 }

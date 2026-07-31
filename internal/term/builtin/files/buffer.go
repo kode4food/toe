@@ -37,7 +37,7 @@ func BufferModule() command.Module {
 					e.CloseCurrentView()
 					return command.Result{Message: "buffer closed"}
 				},
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Aliases:   []string{"bc", "bclose"},
 				Signature: command.DefaultSignature(),
 			},
@@ -49,7 +49,7 @@ func BufferModule() command.Module {
 					e.CloseCurrentView()
 					return command.Result{Message: "buffer closed"}
 				},
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Aliases:   []string{"buffer-close!", "bc!", "bclose!"},
 				Signature: command.DefaultSignature(),
 			},
@@ -65,7 +65,7 @@ func BufferModule() command.Module {
 					}
 					return command.Result{Message: "other buffers closed"}
 				},
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Aliases: []string{
 					"bco", "bcloseother",
 				},
@@ -87,7 +87,7 @@ func BufferModule() command.Module {
 					}
 					return command.Result{Message: "all buffers closed"}
 				},
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Aliases:   []string{"bca", "bcloseall"},
 				Signature: command.DefaultSignature(),
 			},
@@ -95,7 +95,7 @@ func BufferModule() command.Module {
 				Name:      actBufferNext,
 				DocString: "Goto next buffer",
 				Run:       kit.Runner((*view.Editor).FocusNextView),
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Keys:      kit.Keys(g(kit.Char('n'))),
 				Aliases:   []string{"bn", "bnext"},
 				Signature: command.DefaultSignature(),
@@ -104,7 +104,7 @@ func BufferModule() command.Module {
 				Name:      actBufferPrevious,
 				DocString: "Goto previous buffer",
 				Run:       kit.Runner((*view.Editor).FocusPrevView),
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Keys:      kit.Keys(g(kit.Char('p'))),
 				Aliases:   []string{"bp", "bprev"},
 				Signature: command.DefaultSignature(),

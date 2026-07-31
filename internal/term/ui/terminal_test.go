@@ -555,9 +555,9 @@ func TestTerminalPane(t *testing.T) {
 		// Terminal has the same canonical trie, filtered by terminal mode. Raw
 		// Space bypasses keymap dispatch while Ctrl-\ aliases the Space node
 		for _, ch := range []rune{'f', 'b'} {
-			nor, found, _ := km.LookupCommand("NOR", space(ch))
+			nor, found, _ := km.LookupCommand(view.ModeNormal, space(ch))
 			assert.True(t, found)
-			trm, found, _ := km.LookupCommand("TRM", space(ch))
+			trm, found, _ := km.LookupCommand(view.ModeTerminal, space(ch))
 			assert.True(t, found)
 			assert.Equal(t, nor, trm)
 		}

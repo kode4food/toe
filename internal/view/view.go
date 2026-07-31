@@ -74,13 +74,23 @@ type (
 	}
 )
 
+// ModeAny is the zero value; it is not a pane mode. It is the wildcard key
+// in a Command's per-mode Keys map, applying to every mode the command
+// supports unless a specific mode overrides it
+const ModeAny Mode = 0
+
+//go:generate go tool stringer -type=Mode -linecomment
 const (
-	ModeNormal Mode = iota
-	ModeInsert
-	ModeSelect
-	ModeTerminal
-	ModeImage
-	ModeBinary
+	ModeNormal   Mode = 1 << iota // NOR
+	ModeInsert                    // INS
+	ModeSelect                    // SEL
+	ModeTerminal                  // TRM
+	ModeImage                     // IMG
+	ModeBinary                    // BIN
+
+	// ModeCompletion is not a pane mode; it is the keymap dispatch bucket
+	// used only while the completion popup owns key handling
+	ModeCompletion // COM
 )
 
 const (
@@ -90,23 +100,22 @@ const (
 	jumpListCap = 64
 )
 
-var modeScopes = [...]string{
-	ModeNormal:   "normal",
-	ModeInsert:   "insert",
-	ModeSelect:   "select",
-	ModeTerminal: "normal",
-	ModeImage:    "image",
-	ModeBinary:   "normal",
-}
+var (
+	// allModes lists every single-bit Mode value, for decomposing an ORed set
+	allModes = []Mode{
+		ModeNormal, ModeInsert, ModeSelect, ModeTerminal, ModeImage, ModeBinary,
+		ModeCompletion,
+	}
 
-var modeNames = [...]string{
-	ModeNormal:   "NOR",
-	ModeInsert:   "INS",
-	ModeSelect:   "SEL",
-	ModeTerminal: "TRM",
-	ModeImage:    "IMG",
-	ModeBinary:   "BIN",
-}
+	modeScopes = map[Mode]string{
+		ModeNormal:   "normal",
+		ModeInsert:   "insert",
+		ModeSelect:   "select",
+		ModeTerminal: "terminal",
+		ModeImage:    "image",
+		ModeBinary:   "binary",
+	}
+)
 
 // ID returns the view identifier
 func (v *View) ID() Id {
@@ -355,27 +364,33 @@ func (v *View) cachedVisualColumn(doc core.Rope, from, to, tabW int) int {
 	return col
 }
 
-func (m Mode) String() string {
-	if m < 0 || int(m) >= len(modeNames) {
-		return modeNames[ModeNormal]
+// Scope returns the theme scope suffix for the pane's status line and, for
+// document panes, the cursor style: e.g. normal, insert, terminal, binary
+func (m Mode) Scope() string {
+	if s, ok := modeScopes[m]; ok {
+		return s
 	}
-	return modeNames[m]
+	return modeScopes[ModeNormal]
 }
 
-// Scope returns the theme scope suffix for the mode: normal, insert, or select
-func (m Mode) Scope() string {
-	if m < 0 || int(m) >= len(modeScopes) {
-		return modeScopes[ModeNormal]
+// Split decomposes an ORed set of modes into its constituent single-bit
+// values, in declaration order
+func (m Mode) Split() []Mode {
+	out := make([]Mode, 0, len(allModes))
+	for _, v := range allModes {
+		if m&v != 0 {
+			out = append(out, v)
+		}
 	}
-	return modeScopes[m]
+	return out
 }
 
 // ParseMode returns the Mode for a short name (NOR, INS, …), defaulting to
 // ModeNormal for anything unrecognized
 func ParseMode(name string) Mode {
-	for m, n := range modeNames {
-		if n == name {
-			return Mode(m)
+	for _, m := range allModes {
+		if m.String() == name {
+			return m
 		}
 	}
 	return ModeNormal

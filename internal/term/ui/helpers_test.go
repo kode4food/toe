@@ -185,7 +185,7 @@ func mouse(m ui.Model, msg tea.Msg) ui.Model {
 
 type bindTestActionArgs struct {
 	km   *command.Keymaps
-	mode string
+	mode view.Mode
 	name string
 	fn   command.KeyAction
 	seqs [][]command.KeyEvent
@@ -196,8 +196,8 @@ func bindTestAction(args bindTestActionArgs) {
 		Run: func(e *view.Editor, _ *command.Args) command.Result {
 			return command.Result{Continuation: args.fn(e)}
 		},
-		Modes: []string{args.mode},
-		Keys:  map[string][]command.KeyBinding{"*": {args.seqs}},
+		Modes: args.mode,
+		Keys:  map[view.Mode][]command.KeyBinding{view.ModeAny: {args.seqs}},
 	})
 }
 
@@ -206,7 +206,7 @@ func bindNormalTestAction(
 	seqs ...[]command.KeyEvent,
 ) {
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: "NOR", name: name, fn: fn, seqs: seqs,
+		km: km, mode: view.ModeNormal, name: name, fn: fn, seqs: seqs,
 	})
 }
 

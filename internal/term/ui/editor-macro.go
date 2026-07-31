@@ -92,11 +92,10 @@ func (e *EditorComponent) replayMacro(
 			k := keys[i]
 			i++
 			mode := cx.Editor.Mode()
-			modeStr := mode.String()
 			if replaySkip(k, mode) {
 				continue
 			}
-			act, found, _ := cx.Keymaps.Lookup(modeStr, []command.KeyEvent{k})
+			act, found, _ := cx.Keymaps.Lookup(mode, []command.KeyEvent{k})
 			if found {
 				cont := act(cx.Editor)
 				for cont != nil && i < len(keys) {

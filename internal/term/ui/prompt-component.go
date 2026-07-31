@@ -122,7 +122,7 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 func (p *PromptComponent) Cursor(
 	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
-	kind := cx.Editor.Options().CursorShapeForMode(view.ModeInsert.String())
+	kind := cx.Editor.Options().CursorShapeForMode(view.ModeInsert)
 	if kind == view.CursorKindHidden {
 		return tea.Cursor{}, false
 	}

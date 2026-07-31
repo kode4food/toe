@@ -72,7 +72,7 @@ func (r *renderPass) renderBinaryStatus(
 	modeSt := baseTUI
 	if focused {
 		baseTUI = th.Get("ui.statusline")
-		modeSt = th.Get("ui.statusline.normal")
+		modeSt = th.Get("ui.statusline." + pane.Mode().Scope())
 	}
 	name := view.DocumentRelativeName(pane.path, r.cx.Editor.Cwd())
 	right := []statusElem{{
@@ -86,7 +86,7 @@ func (r *renderPass) renderBinaryStatus(
 		width:     a.Width,
 		baseStyle: baseTUI,
 		left: []statusElem{
-			statusBadge("BIN", modeSt),
+			statusBadge(pane.Mode().String(), modeSt),
 			{text: name, style: baseTUI},
 		},
 		right: right,

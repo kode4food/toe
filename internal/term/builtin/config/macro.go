@@ -4,6 +4,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 const (
@@ -19,14 +20,14 @@ func MacroModule(model ui.Model) command.Module {
 				Name:      actRecordMacro,
 				DocString: "Record macro",
 				Run:       kit.Continuation(model.MacroRecordAction),
-				Modes:     []string{"NOR"},
+				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('Q')),
 			},
 			{
 				Name:      actReplayMacro,
 				DocString: "Replay macro",
 				Run:       kit.Continuation(model.MacroReplayAction),
-				Modes:     []string{"NOR"},
+				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('q')),
 			},
 		},

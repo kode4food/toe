@@ -27,10 +27,10 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		alpha := testCommand("alpha")
 		alpha.Aliases = append(alpha.Aliases, "alias")
@@ -69,15 +69,15 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"IMG"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeImage,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		img := testCommand("image-only")
-		img.Modes = []string{"IMG"}
+		img.Modes = view.ModeImage
 		doc := testCommand("document-only")
-		doc.Modes = []string{"NOR"}
+		doc.Modes = view.ModeNormal
 		_ = km.Register("image_only", img)
 		_ = km.Register("document_only", doc)
 		m = resize(m, 60, 12)
@@ -98,10 +98,10 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		for _, name := range []string{
 			"match-a", "match-b", "match-c", "match-d",
@@ -141,10 +141,10 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -165,10 +165,10 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -191,10 +191,10 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -218,10 +218,10 @@ func TestPromptCompletion(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{
-				{char(':')},
-			}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(':')}},
+			}},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -804,7 +804,7 @@ func testCommand(name string) command.Command {
 			return command.Result{}
 		},
 		Aliases:   []string{name},
-		Modes:     command.PaneModes(),
+		Modes:     command.PaneModes,
 		Signature: command.DefaultSignature(),
 	}
 }

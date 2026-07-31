@@ -2,7 +2,6 @@ package view
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view/language"
@@ -58,27 +57,6 @@ func (o *Options) StatusLineSeparator() string {
 	return DefaultStatusLineSeparator
 }
 
-// ModeNameForMode returns the display name for the given mode string
-func (o *Options) ModeNameForMode(mode string) string {
-	switch strings.ToLower(mode) {
-	case "ins", "insert":
-		if o.StatusLine.Mode.Insert != "" {
-			return o.StatusLine.Mode.Insert
-		}
-		return "INS"
-	case "sel", "select":
-		if o.StatusLine.Mode.Select != "" {
-			return o.StatusLine.Mode.Select
-		}
-		return "SEL"
-	default:
-		if o.StatusLine.Mode.Normal != "" {
-			return o.StatusLine.Mode.Normal
-		}
-		return "NOR"
-	}
-}
-
 // StatusLineLeft returns the left status line items with defaults
 func (o *Options) StatusLineLeft() []StatusLineItem {
 	if len(o.StatusLine.Left) > 0 {
@@ -112,14 +90,13 @@ func (o *Options) AutoPairs() (core.AutoPairs, bool) {
 	return o.AutoPairMap, o.HasAutoPairs
 }
 
-// CursorShapeForMode returns the cursor shape for the given mode string
-// ("NOR", "INS", "SEL")
-func (o *Options) CursorShapeForMode(mode string) CursorKind {
+// CursorShapeForMode returns the cursor shape for the given mode
+func (o *Options) CursorShapeForMode(mode Mode) CursorKind {
 	var k CursorKind
 	switch mode {
-	case "INS":
+	case ModeInsert:
 		k = o.CursorShape.Insert
-	case "SEL":
+	case ModeSelect:
 		k = o.CursorShape.Select
 	default:
 		k = o.CursorShape.Normal

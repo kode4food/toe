@@ -105,7 +105,7 @@ func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 			return nil
 		}, []command.KeyEvent{char('i')})
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: "INS", name: "to_normal",
+		km: km, mode: view.ModeInsert, name: "to_normal",
 		fn: func(e *view.Editor) command.Continuation {
 			action.NormalMode(e)
 			return nil

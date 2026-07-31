@@ -17,6 +17,18 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type (
+	keySeqKey struct {
+		mode view.Mode
+		seq  string
+	}
+
+	keySeqInfo struct {
+		names  []string
+		events []command.KeyEvent
+	}
+)
+
 func TestDefaults(t *testing.T) {
 	t.Run("registers command-line actions", func(t *testing.T) {
 		km := defaultKeymaps(t)
@@ -131,9 +143,6 @@ func TestDefaults(t *testing.T) {
 			"statusline.left",
 			"statusline.right",
 			"statusline.separator",
-			"statusline.mode.normal",
-			"statusline.mode.insert",
-			"statusline.mode.select",
 			"picker.split-ratios.diagnostics",
 			"buffer-picker.start-position",
 			"file-explorer.hidden",
@@ -160,7 +169,7 @@ func TestDefaults(t *testing.T) {
 			{test.Char(' '), test.Char('w'), test.Char('w')},
 			{test.Char(' '), test.Char('w'), ctrl('w')},
 		} {
-			_, found, prefix := km.Lookup("NOR", seq)
+			_, found, prefix := km.Lookup(view.ModeNormal, seq)
 			assert.True(t, found)
 			assert.False(t, prefix)
 		}
@@ -170,7 +179,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		assert.NotNil(t, km.ResolveCommand("buffer_next"))
-		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('g'), test.Char('n'),
 		})
 		assert.True(t, found)
@@ -181,7 +190,7 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		assert.NotNil(t, km.ResolveCommand("goto_line_end_newline"))
-		_, found, prefix := km.Lookup("INS", []command.KeyEvent{
+		_, found, prefix := km.Lookup(view.ModeInsert, []command.KeyEvent{
 			test.Special(command.End),
 		})
 		assert.True(t, found)
@@ -191,7 +200,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital bindings use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char(' '), test.Char('F').WithMods(command.ModShift),
 		})
 		assert.True(t, found)
@@ -201,7 +210,9 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital hints omit shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints("NOR", []command.KeyEvent{test.Char(' ')})
+		_, hints := km.PendingHints(
+			view.ModeNormal, []command.KeyEvent{test.Char(' ')},
+		)
 
 		assert.Contains(t, hints, command.KeyHint{
 			Key:   "F",
@@ -212,7 +223,9 @@ func TestDefaults(t *testing.T) {
 	t.Run("space hints are ordered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints("NOR", []command.KeyEvent{test.Char(' ')})
+		_, hints := km.PendingHints(
+			view.ModeNormal, []command.KeyEvent{test.Char(' ')},
+		)
 		keys := make([]string, 0, len(hints))
 		for _, h := range hints {
 			keys = append(keys, h.Key)
@@ -230,7 +243,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("leader aliases share menus", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		for _, mode := range command.PaneModes() {
+		for _, mode := range command.PaneModes.Split() {
 			spaceTitle, spaceHints := km.PendingHints(
 				mode, []command.KeyEvent{test.Char(' ')},
 			)
@@ -245,7 +258,9 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal window menu mirrors other panes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints("TRM", []command.KeyEvent{ctrl('w')})
+		_, hints := km.PendingHints(
+			view.ModeTerminal, []command.KeyEvent{ctrl('w')},
+		)
 		labels := make(map[string]string, len(hints))
 		for _, h := range hints {
 			labels[h.Key] = h.Label
@@ -261,7 +276,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal space menu is filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints("TRM", []command.KeyEvent{
+		title, hints := km.PendingHints(view.ModeTerminal, []command.KeyEvent{
 			test.Char(' '),
 		})
 		labels := make(map[string]string, len(hints))
@@ -279,7 +294,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("read-only command prompts are bound", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		for _, mode := range []string{"IMG", "BIN"} {
+		for _, mode := range []view.Mode{view.ModeImage, view.ModeBinary} {
 			_, found, prefix := km.Lookup(mode, []command.KeyEvent{
 				test.Char(':'),
 			})
@@ -304,7 +319,7 @@ func TestDefaults(t *testing.T) {
 			"save-session",
 			"clear-register",
 		}
-		for _, mode := range []string{"IMG", "BIN"} {
+		for _, mode := range []view.Mode{view.ModeImage, view.ModeBinary} {
 			for _, name := range names {
 				assert.NotNil(t, km.ResolveCommandIn(mode, name))
 			}
@@ -314,7 +329,9 @@ func TestDefaults(t *testing.T) {
 	t.Run("image window hints are filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints("IMG", []command.KeyEvent{ctrl('w')})
+		title, hints := km.PendingHints(
+			view.ModeImage, []command.KeyEvent{ctrl('w')},
+		)
 
 		assert.Equal(t, "Window", title)
 		assert.Contains(t, hints, command.KeyHint{
@@ -334,7 +351,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("image space hints are filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints("IMG", []command.KeyEvent{
+		title, hints := km.PendingHints(view.ModeImage, []command.KeyEvent{
 			test.Char(' '),
 		})
 
@@ -356,7 +373,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital prefixes use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints("NOR", []command.KeyEvent{
+		title, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
 			test.Char('Z').WithMods(command.ModShift),
 		})
 
@@ -367,31 +384,31 @@ func TestDefaults(t *testing.T) {
 	t.Run("paragraph keys use unimpaired prefixes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, found, prefix := km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('['),
 		})
 		assert.False(t, found)
 		assert.True(t, prefix)
 
-		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('['), test.Char('p'),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
 
-		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char(']'),
 		})
 		assert.False(t, found)
 		assert.True(t, prefix)
 
-		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char(']'), test.Char('p'),
 		})
 		assert.True(t, found)
 		assert.False(t, prefix)
 
-		_, found, prefix = km.Lookup("NOR", []command.KeyEvent{
+		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('p'),
 		})
 		assert.True(t, found)
@@ -405,13 +422,13 @@ func TestDefaults(t *testing.T) {
 			for _, mode := range commandModes(cmd) {
 				for _, binding := range commandBindings(cmd, mode) {
 					for _, seq := range binding {
-						t.Run(mode+"/"+name+"/"+keySeqString(seq),
-							func(t *testing.T) {
-								_, found, prefix := km.Lookup(mode, seq)
-								assert.True(t, found)
-								assert.False(t, prefix)
-							},
-						)
+						label := mode.String() + "/" + name +
+							"/" + keySeqString(seq)
+						t.Run(label, func(t *testing.T) {
+							_, found, prefix := km.Lookup(mode, seq)
+							assert.True(t, found)
+							assert.False(t, prefix)
+						})
 					}
 				}
 			}
@@ -425,19 +442,19 @@ func TestDefaults(t *testing.T) {
 			if len(info.names) < 2 || allowedDuplicateKey(key, info.names) {
 				continue
 			}
-			assert.Failf(t, "duplicate key binding", "%s: %v", key, info.names)
+			assert.Failf(t, "duplicate key binding",
+				"%s %s: %v", key.mode, key.seq, info.names,
+			)
 		}
 		for key, info := range seqs {
-			mode, seq := splitKeySeq(key)
 			for other := range seqs {
-				otherMode, otherSeq := splitKeySeq(other)
-				if mode != otherMode || seq == otherSeq {
+				if key.mode != other.mode || key.seq == other.seq {
 					continue
 				}
-				if !strings.HasPrefix(otherSeq, seq+" ") {
+				if !strings.HasPrefix(other.seq, key.seq+" ") {
 					continue
 				}
-				_, found, prefix := km.Lookup(mode, info.events)
+				_, found, prefix := km.Lookup(key.mode, info.events)
 				assert.False(t, found)
 				assert.True(t, prefix)
 			}
@@ -533,19 +550,14 @@ func ctrl(ch rune) command.KeyEvent {
 	return test.Char(ch).WithMods(command.ModCtrl)
 }
 
-type keySeqInfo struct {
-	names  []string
-	events []command.KeyEvent
-}
-
-func collectDefaultKeySeqs(km *command.Keymaps) map[string]keySeqInfo {
-	seqs := map[string]keySeqInfo{}
+func collectDefaultKeySeqs(km *command.Keymaps) map[keySeqKey]keySeqInfo {
+	seqs := map[keySeqKey]keySeqInfo{}
 	for _, cmd := range km.Commands() {
 		name := commandName(cmd)
 		for _, mode := range commandModes(cmd) {
 			for _, binding := range commandBindings(cmd, mode) {
 				for _, seq := range binding {
-					key := mode + "\t" + keySeqString(seq)
+					key := keySeqKey{mode: mode, seq: keySeqString(seq)}
 					info := seqs[key]
 					info.names = append(info.names, name)
 					info.events = seq
@@ -564,18 +576,21 @@ func commandName(cmd *command.Command) string {
 	return cmd.Aliases[0]
 }
 
-func commandModes(cmd *command.Command) []string {
-	if len(cmd.Modes) == 0 {
-		return command.DocModes()
+func commandModes(cmd *command.Command) []view.Mode {
+	modes := cmd.Modes
+	if modes == 0 {
+		modes = command.DocModes
 	}
-	return cmd.Modes
+	return modes.Split()
 }
 
-func commandBindings(cmd *command.Command, mode string) []command.KeyBinding {
+func commandBindings(
+	cmd *command.Command, mode view.Mode,
+) []command.KeyBinding {
 	if bindings, ok := cmd.Keys[mode]; ok {
 		return bindings
 	}
-	return cmd.Keys["*"]
+	return cmd.Keys[view.ModeAny]
 }
 
 func keySeqString(seq []command.KeyEvent) string {
@@ -590,18 +605,12 @@ func keySeqString(seq []command.KeyEvent) string {
 	return strings.Join(parts, " ")
 }
 
-func allowedDuplicateKey(key string, names []string) bool {
-	_, seq := splitKeySeq(key)
-	if seq != "esc" || len(names) != 2 {
+func allowedDuplicateKey(key keySeqKey, names []string) bool {
+	if key.seq != "esc" || len(names) != 2 {
 		return false
 	}
 	return slices.Contains(names, "normal-mode") &&
 		slices.Contains(names, "exit-select-mode")
-}
-
-func splitKeySeq(key string) (string, string) {
-	mode, seq, _ := strings.Cut(key, "\t")
-	return mode, seq
 }
 
 func documentedCommandNames(t *testing.T) []string {

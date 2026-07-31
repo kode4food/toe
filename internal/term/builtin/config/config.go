@@ -150,17 +150,17 @@ func ConfigurationModule(r *command.Registry) command.Module {
 				},
 				Complete: command.StaticCompleter(core.LineEndingNames()...),
 			},
-			cursorShapeOption("cursor-shape.normal", "NOR",
+			cursorShapeOption("cursor-shape.normal", view.ModeNormal,
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Normal = v
 				},
 			),
-			cursorShapeOption("cursor-shape.select", "SEL",
+			cursorShapeOption("cursor-shape.select", view.ModeSelect,
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Select = v
 				},
 			),
-			cursorShapeOption("cursor-shape.insert", "INS",
+			cursorShapeOption("cursor-shape.insert", view.ModeInsert,
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Insert = v
 				},
@@ -195,21 +195,6 @@ func ConfigurationModule(r *command.Registry) command.Module {
 					return nil
 				},
 			},
-			statuslineModeOption("statusline.mode.normal", "normal",
-				func(o *view.Options, s string) {
-					o.StatusLine.Mode.Normal = s
-				},
-			),
-			statuslineModeOption("statusline.mode.insert", "insert",
-				func(o *view.Options, s string) {
-					o.StatusLine.Mode.Insert = s
-				},
-			),
-			statuslineModeOption("statusline.mode.select", "select",
-				func(o *view.Options, s string) {
-					o.StatusLine.Mode.Select = s
-				},
-			),
 		},
 		Section: &command.Section{
 			Config: cfg,
@@ -269,7 +254,7 @@ func optionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{Message: value}
 			},
-			Modes:   command.PaneModes(),
+			Modes:   command.PaneModes,
 			Aliases: []string{"get"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},
@@ -300,7 +285,7 @@ func optionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{}
 			},
-			Modes:   command.PaneModes(),
+			Modes:   command.PaneModes,
 			Aliases: []string{"set"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 2, Max: 2},
@@ -337,7 +322,7 @@ func optionCmds(r *command.Registry) []command.Command {
 					Message: "'" + key + "' is now set to " + value,
 				}
 			},
-			Modes:   command.PaneModes(),
+			Modes:   command.PaneModes,
 			Aliases: []string{"toggle"},
 			Signature: command.Signature{
 				Positionals: command.Positionals{Min: 1, Max: 1},

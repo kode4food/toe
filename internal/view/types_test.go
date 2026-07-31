@@ -16,7 +16,8 @@ func TestMode(t *testing.T) {
 	assert.Equal(t, "TRM", view.ModeTerminal.String())
 	assert.Equal(t, "IMG", view.ModeImage.String())
 	assert.Equal(t, "BIN", view.ModeBinary.String())
-	assert.Equal(t, "NOR", view.Mode(99).String())
+	assert.Equal(t, "COM", view.ModeCompletion.String())
+	assert.Equal(t, "Mode(99)", view.Mode(99).String())
 }
 
 func TestDocumentDisplayName(t *testing.T) {

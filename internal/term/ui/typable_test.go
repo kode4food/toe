@@ -234,7 +234,7 @@ text-width = 72
 				return command.Result{Message: "ran"}
 			},
 			Aliases: []string{"normal-probe"},
-			Modes:   []string{"NOR"},
+			Modes:   view.ModeNormal,
 		})
 
 		m = runTypable(m, "normal-probe")

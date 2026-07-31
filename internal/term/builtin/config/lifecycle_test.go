@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestLifecycleQuit(t *testing.T) {
@@ -29,7 +30,7 @@ func TestLifecycleQuit(t *testing.T) {
 
 	t.Run("quit! resolves in pane modes", func(t *testing.T) {
 		_, km := test.Env(t, "")
-		for _, mode := range []string{"IMG", "BIN"} {
+		for _, mode := range []view.Mode{view.ModeImage, view.ModeBinary} {
 			cmd := km.ResolveCommandIn(mode, "q!")
 			assert.NotNil(t, cmd)
 			assert.Equal(t, "quit!", cmd.Name)

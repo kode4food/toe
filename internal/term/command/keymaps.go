@@ -11,7 +11,7 @@ import (
 type (
 	// Keymaps is the combined command registry and key-event dispatch trie
 	Keymaps struct {
-		modes    map[string]*keyTrieNode
+		modes    map[view.Mode]*keyTrieNode
 		commands []Command
 		byName   map[string]int
 		byAlias  map[string]int
@@ -35,7 +35,7 @@ var (
 // NewKeymaps creates an empty Keymaps
 func NewKeymaps() *Keymaps {
 	return &Keymaps{
-		modes:   map[string]*keyTrieNode{},
+		modes:   map[view.Mode]*keyTrieNode{},
 		byName:  map[string]int{},
 		byAlias: map[string]int{},
 	}
@@ -51,14 +51,14 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 	if cmd.Name == "" {
 		cmd.Name = name
 	}
-	if len(cmd.Modes) == 0 {
+	if cmd.Modes == 0 {
 		return fmt.Errorf("%w: %s", ErrNoModes, name)
 	}
 	idx := len(k.commands)
 	k.commands = append(k.commands, cmd)
 	k.byName[name] = idx
 	for mode := range cmd.Keys {
-		if mode != "*" && !slices.Contains(cmd.Modes, mode) {
+		if mode != view.ModeAny && cmd.Modes&mode == 0 {
 			return fmt.Errorf("%w: %s in %s", ErrUnknownMode, mode, name)
 		}
 	}
@@ -70,10 +70,10 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 		action := func(e *view.Editor) Continuation {
 			return k.commands[idx].Run(e, nil).Continuation
 		}
-		for _, mode := range cmd.Modes {
+		for _, mode := range cmd.Modes.Split() {
 			bindings, ok := cmd.Keys[mode]
 			if !ok {
-				bindings = cmd.Keys["*"]
+				bindings = cmd.Keys[view.ModeAny]
 			}
 			for _, binding := range bindings {
 				k.bindCommandWithLabel(
@@ -97,7 +97,7 @@ func (k *Keymaps) ResolveCommand(name string) *Command {
 }
 
 // ResolveCommandIn looks up a command by alias and filters it by mode
-func (k *Keymaps) ResolveCommandIn(mode, name string) *Command {
+func (k *Keymaps) ResolveCommandIn(mode view.Mode, name string) *Command {
 	if cmd := k.ResolveCommand(name); cmd != nil && cmd.availableIn(mode) {
 		return cmd
 	}
@@ -114,7 +114,7 @@ func (k *Keymaps) Commands() []*Command {
 }
 
 // CommandsIn returns registered commands available in the named mode
-func (k *Keymaps) CommandsIn(mode string) []*Command {
+func (k *Keymaps) CommandsIn(mode view.Mode) []*Command {
 	out := make([]*Command, 0, len(k.commands))
 	for i := range k.commands {
 		if k.commands[i].availableIn(mode) {
@@ -125,7 +125,7 @@ func (k *Keymaps) CommandsIn(mode string) []*Command {
 }
 
 // Bindings returns key sequences bound to a command in a mode
-func (k *Keymaps) Bindings(mode, name string) []KeyBinding {
+func (k *Keymaps) Bindings(mode view.Mode, name string) []KeyBinding {
 	root, ok := k.modes[mode]
 	if !ok {
 		return nil
@@ -136,7 +136,7 @@ func (k *Keymaps) Bindings(mode, name string) []KeyBinding {
 }
 
 // Bind adds extra key sequences to an already-registered command
-func (k *Keymaps) Bind(mode string, name string, seqs ...[]KeyEvent) {
+func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
 	cmd, ok := k.command(name)
 	if !ok || cmd.Run == nil {
 		return
@@ -150,7 +150,7 @@ func (k *Keymaps) Bind(mode string, name string, seqs ...[]KeyEvent) {
 // Lookup traverses the key trie. Returns (action, true, false) on a complete
 // match, (nil, false, true) on a valid prefix, (nil, false, false) otherwise
 func (k *Keymaps) Lookup(
-	mode string, seq []KeyEvent,
+	mode view.Mode, seq []KeyEvent,
 ) (action KeyAction, found, prefix bool) {
 	node, found, prefix := k.lookup(mode, seq)
 	if !found {
@@ -161,7 +161,7 @@ func (k *Keymaps) Lookup(
 
 // LookupCommand traverses the key trie and returns the registered command name
 func (k *Keymaps) LookupCommand(
-	mode string, seq []KeyEvent,
+	mode view.Mode, seq []KeyEvent,
 ) (name string, found, prefix bool) {
 	node, found, prefix := k.lookup(mode, seq)
 	if !found {
@@ -171,7 +171,7 @@ func (k *Keymaps) LookupCommand(
 }
 
 func (k *Keymaps) lookup(
-	mode string, seq []KeyEvent,
+	mode view.Mode, seq []KeyEvent,
 ) (*keyTrieNode, bool, bool) {
 	root, ok := k.modes[mode]
 	if !ok {
@@ -201,12 +201,13 @@ func (k *Keymaps) command(name string) (Command, bool) {
 	return Command{}, false
 }
 
-func (c Command) availableIn(mode string) bool {
-	return slices.Contains(c.Modes, mode)
+func (c Command) availableIn(mode view.Mode) bool {
+	return c.Modes&mode != 0
 }
 
 func (k *Keymaps) bindCommandWithLabel(
-	mode, name string, action KeyAction, label string, seqs ...[]KeyEvent,
+	mode view.Mode, name string, action KeyAction, label string,
+	seqs ...[]KeyEvent,
 ) {
 	root, ok := k.modes[mode]
 	if !ok {

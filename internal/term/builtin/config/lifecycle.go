@@ -39,7 +39,7 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes(),
+				Modes:     command.AllModes,
 				Aliases:   []string{"q"},
 				Signature: command.DefaultSignature(),
 			},
@@ -50,7 +50,7 @@ func LifecycleModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes(),
+				Modes:     command.AllModes,
 				Aliases:   []string{"q!"},
 				Signature: command.DefaultSignature(),
 			},
@@ -65,7 +65,7 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes(),
+				Modes:     command.AllModes,
 				Aliases:   []string{"qa"},
 				Signature: command.DefaultSignature(),
 			},
@@ -75,7 +75,7 @@ func LifecycleModule() command.Module {
 				Run: func(_ *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes(),
+				Modes:     command.AllModes,
 				Aliases:   []string{"qa!"},
 				Signature: command.DefaultSignature(),
 			},
@@ -92,7 +92,7 @@ func LifecycleModule() command.Module {
 					os.Exit(1)
 					return command.Result{}
 				},
-				Modes:     command.AllModes(),
+				Modes:     command.AllModes,
 				Aliases:   []string{"cq"},
 				Signature: command.DefaultSignature(),
 			},
@@ -105,7 +105,7 @@ func LifecycleModule() command.Module {
 					os.Exit(1)
 					return command.Result{}
 				},
-				Modes:     command.AllModes(),
+				Modes:     command.AllModes,
 				Aliases:   []string{"cq!"},
 				Signature: command.DefaultSignature(),
 			},

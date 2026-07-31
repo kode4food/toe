@@ -53,7 +53,6 @@ func (e *EditorComponent) handleKeyPress(
 	}
 
 	mode := cx.Editor.Mode()
-	modeStr := mode.String()
 
 	if countable(mode, k) {
 		ch := k.Code.Char
@@ -66,7 +65,7 @@ func (e *EditorComponent) handleKeyPress(
 	}
 
 	e.keys.pending = append(e.keys.pending, k)
-	act, found, prefix := cx.Keymaps.Lookup(modeStr, e.keys.pending)
+	act, found, prefix := cx.Keymaps.Lookup(mode, e.keys.pending)
 	switch {
 	case found:
 		e.keys.pending = nil
@@ -107,7 +106,7 @@ func (e *EditorComponent) handleKeyPress(
 			}
 		}
 		e.keys.status = e.pendingStatus(cx)
-		title, items := cx.Keymaps.PendingHints(modeStr, e.keys.pending)
+		title, items := cx.Keymaps.PendingHints(mode, e.keys.pending)
 		e.keys.infoTitle = title
 		e.keys.infoItems = items
 		return consumed(), nil
@@ -156,7 +155,7 @@ func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
 		return false
 	}
 	_, found, prefix := cx.Keymaps.Lookup(
-		cx.Editor.Mode().String(), []command.KeyEvent{k},
+		cx.Editor.Mode(), []command.KeyEvent{k},
 	)
 	return found || prefix
 }

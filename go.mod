@@ -85,6 +85,7 @@ require (
 
 tool (
 	golang.org/x/tools/cmd/goimports
+	golang.org/x/tools/cmd/stringer
 	honnef.co/go/tools/cmd/staticcheck
 )
 

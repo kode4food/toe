@@ -55,7 +55,7 @@ func PickerModule(model ui.Model) command.Module {
 				Name:      actFilePicker,
 				DocString: "Open file picker",
 				Run:       kit.Continuation(model.PickerAction(NewFilePicker)),
-				Modes:     command.PaneModes(),
+				Modes:     command.PaneModes,
 				Keys:      kit.Leader('f'),
 			},
 			{
@@ -64,7 +64,7 @@ func PickerModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewFilePickerInCWD),
 				),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('F'),
 			},
 			{
@@ -77,7 +77,7 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('e'),
 			},
 			{
@@ -90,7 +90,7 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('.'),
 			},
 			{
@@ -103,7 +103,7 @@ func PickerModule(model ui.Model) command.Module {
 						)
 					},
 				)),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('b'),
 			},
 		},
@@ -163,7 +163,7 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewDiagnosticPicker),
 				),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('d'),
 			},
 			{
@@ -172,7 +172,7 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewWorkspaceDiagnosticPicker),
 				),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('D'),
 			},
 			{
@@ -181,7 +181,7 @@ func DiagnosticsModule(model ui.Model) command.Module {
 				Run: kit.Continuation(
 					model.PickerAction(NewGlobalSearchPicker),
 				),
-				Modes: command.PaneModes(),
+				Modes: command.PaneModes,
 				Keys:  kit.Leader('/'),
 			},
 		},

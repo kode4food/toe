@@ -79,9 +79,9 @@ func TestPromptAccept(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Continuation: m.CmdModeAction()(e)}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{
-				"*": {[][]command.KeyEvent{{char(':')}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{
+				view.ModeAny: {[][]command.KeyEvent{{char(':')}}},
 			},
 		})
 		m = resize(m, 80, 24)
@@ -106,17 +106,17 @@ func TestRenderCrash(t *testing.T) {
 		}
 	}
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: "NOR", name: "insert_mode",
+		km: km, mode: view.ModeNormal, name: "insert_mode",
 		fn:   act(action.InsertMode),
 		seqs: [][]command.KeyEvent{{char('i')}},
 	})
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: "INS", name: "insert_newline",
+		km: km, mode: view.ModeInsert, name: "insert_newline",
 		fn:   act(action.InsertNewline),
 		seqs: [][]command.KeyEvent{{special(command.Enter)}},
 	})
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: "INS", name: "insert_newline",
+		km: km, mode: view.ModeInsert, name: "insert_newline",
 		fn: act(action.InsertNewline),
 		seqs: [][]command.KeyEvent{{
 			char('j').WithMods(command.ModCtrl),
@@ -537,10 +537,10 @@ func TestThemeRender(t *testing.T) {
 			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{}
 			},
-			Modes: []string{"NOR"},
-			Keys: map[string][]command.KeyBinding{"*": {[][]command.KeyEvent{{
-				char(' '), char('界'),
-			}}}},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				[][]command.KeyEvent{{char(' '), char('界')}},
+			}},
 		})
 		m := resize(ui.New(e, km), 40, 10)
 

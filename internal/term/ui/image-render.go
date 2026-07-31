@@ -65,7 +65,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		width:     args.width,
 		baseStyle: baseTUI,
 		left: []statusElem{
-			statusBadge("IMG", modeSt),
+			statusBadge(pane.Mode().String(), modeSt),
 			{text: name, style: baseTUI},
 		},
 		right: right,

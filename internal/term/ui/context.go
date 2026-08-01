@@ -34,6 +34,7 @@ type (
 		active     *theme.Theme
 		dimmed     *theme.Theme
 		name       string
+		dim        int
 		generation int
 	}
 )
@@ -62,25 +63,28 @@ func (c *Context) ThemeFor(focused bool) *theme.Theme {
 	return c.theme.dimmed
 }
 
-// ensureTheme reloads the theme and its dimmed variant when the configured
-// name changed, falling back to the embedded default on load failure
+// reloads on theme-name change (falling back to the default), rebuilds
+// dimmed on either a theme or dim-percent change
 func (c *Context) ensureTheme() {
 	name := c.Editor.Options().Theme
-	if name == c.theme.name {
-		return
-	}
-	c.theme.name = name
-	c.theme.generation++
-	th, _, err := theme.Load(name)
-	if err != nil {
-		th, _, err = theme.Default()
-		if err != nil {
-			th = fallbackTheme()
-		}
-	}
 	dim := min(max(c.Editor.Options().InactiveDim, 0), 90)
-	c.theme.active = th
-	c.theme.dimmed = th.Dimmed(100 - dim)
+	reload := name != c.theme.name
+	if reload {
+		c.theme.name = name
+		c.theme.generation++
+		th, _, err := theme.Load(name)
+		if err != nil {
+			th, _, err = theme.Default()
+			if err != nil {
+				th = fallbackTheme()
+			}
+		}
+		c.theme.active = th
+	}
+	if reload || dim != c.theme.dim {
+		c.theme.dim = dim
+		c.theme.dimmed = c.theme.active.Dimmed(100 - dim)
+	}
 }
 
 func fallbackTheme() *theme.Theme {

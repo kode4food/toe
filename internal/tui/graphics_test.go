@@ -135,4 +135,15 @@ func TestStyle(t *testing.T) {
 		assert.True(t, s.HasMod(tui.ModifierBold))
 		assert.True(t, s.HasMod(tui.ModifierItalic))
 	})
+
+	t.Run("Darkened darkens fg, bg, and underline color", func(t *testing.T) {
+		s := tui.Style{}.
+			Fg(tui.ColorRGB(200, 100, 50)).
+			Bg(tui.ColorRGB(200, 100, 50)).
+			UlColor(tui.ColorRGB(200, 100, 50)).
+			Darkened(50)
+		assert.Equal(t, tui.ColorRGB(100, 50, 25), s.FgColor())
+		assert.Equal(t, tui.ColorRGB(100, 50, 25), s.BgColor())
+		assert.Equal(t, tui.ColorRGB(100, 50, 25), s.UnderlineColor())
+	})
 }

@@ -31,7 +31,8 @@ type (
 	}
 
 	themeState struct {
-		loaded     *theme.Theme
+		active     *theme.Theme
+		dimmed     *theme.Theme
 		name       string
 		generation int
 	}
@@ -47,25 +48,39 @@ func (c *Context) StyleGen() int {
 // Theme returns the active theme, reloading it if the configured name
 // changed, falling back to the embedded default on load failure
 func (c *Context) Theme() *theme.Theme {
+	c.ensureTheme()
+	return c.theme.active
+}
+
+// ThemeFor returns the active theme, or its dimmed variant for an unfocused
+// pane
+func (c *Context) ThemeFor(focused bool) *theme.Theme {
+	c.ensureTheme()
+	if focused {
+		return c.theme.active
+	}
+	return c.theme.dimmed
+}
+
+// ensureTheme reloads the theme and its dimmed variant when the configured
+// name changed, falling back to the embedded default on load failure
+func (c *Context) ensureTheme() {
 	name := c.Editor.Options().Theme
 	if name == c.theme.name {
-		return c.theme.loaded
+		return
 	}
 	c.theme.name = name
 	c.theme.generation++
-	if th, _, err := theme.Load(name); err == nil {
-		return c.setTheme(th)
-	}
-	th, _, err := theme.Default()
+	th, _, err := theme.Load(name)
 	if err != nil {
-		return c.setTheme(fallbackTheme())
+		th, _, err = theme.Default()
+		if err != nil {
+			th = fallbackTheme()
+		}
 	}
-	return c.setTheme(th)
-}
-
-func (c *Context) setTheme(th *theme.Theme) *theme.Theme {
-	c.theme.loaded = th
-	return c.theme.loaded
+	dim := min(max(c.Editor.Options().InactiveDim, 0), 90)
+	c.theme.active = th
+	c.theme.dimmed = th.Dimmed(100 - dim)
 }
 
 func fallbackTheme() *theme.Theme {

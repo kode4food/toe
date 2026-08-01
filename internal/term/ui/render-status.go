@@ -11,7 +11,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -140,7 +139,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 
 	opts := r.cx.Editor.Options()
 
-	th := r.activeTheme()
+	th := r.cx.Theme()
 
 	st := th.Get("ui.statusline.inactive")
 	modeSt := st
@@ -218,17 +217,13 @@ func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
 		elems,
 		statusBadge(
 			i18n.Text(i18n.StatusPaneMaximized),
-			r.activeTheme().Get("ui.statusline.maximized"),
+			r.cx.Theme().Get("ui.statusline.maximized"),
 		),
 	)
 }
 
-func (r *renderPass) activeTheme() *theme.Theme {
-	return r.cx.Theme()
-}
-
 func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
-	th := r.activeTheme()
+	th := r.cx.Theme()
 	if errorMsg {
 		return th.Get("error")
 	}

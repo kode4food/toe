@@ -17,6 +17,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -34,6 +35,27 @@ func TestTerminalPane(t *testing.T) {
 		assert.Equal(t, 2, e.Tree().Count())
 		_, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
+	})
+
+	t.Run("dims background when unfocused", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		e.Options().InactiveDim = 50
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		docID := e.Tree().Focus()
+		action.VSplit(e)
+		_ = m.TerminalAction()(e)
+		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		waitForShellOutput(t, tp)
+		e.FocusPane(docID)
+
+		_ = m.View()
+
+		// mocha ui.background (30,30,46) darkened 50%
+		assert.Equal(t,
+			tui.ColorRGB(15, 15, 23), tp.Emulator().BackgroundColor(),
+		)
 	})
 
 	t.Run("second invocation is a no-op", func(t *testing.T) {

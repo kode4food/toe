@@ -5,6 +5,7 @@ import (
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -19,10 +20,11 @@ func (r *renderPass) renderImagePane(
 	}
 	a := pane.Area()
 	contentH := max(a.Height-1, 0)
+	th := r.cx.ThemeFor(focused)
 	r.paintImage(buf, pane, geom.Area{
 		Point: geom.Point{X: a.X, Y: y0 + a.Y},
 		Size:  geom.Size{Width: a.Width, Height: contentH},
-	})
+	}, th)
 	r.renderImageStatus(renderImageStatusArgs{
 		buf:     buf,
 		pane:    pane,
@@ -42,7 +44,7 @@ type renderImageStatusArgs struct {
 
 func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	pane := args.pane
-	th := r.activeTheme()
+	th := r.cx.Theme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if args.focused {
@@ -75,10 +77,11 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 // paintImage fills a width by height cell region with centered kitty Unicode
 // placeholder cells; the terminal paints the transmitted image over them
 func (r *renderPass) paintImage(
-	buf *tui.Buffer, pane *ImagePane, area geom.Area,
+	buf *tui.Buffer, pane *ImagePane, area geom.Area, th *theme.Theme,
 ) {
+	bg := th.Get("ui.background").BgColor()
 	if !r.cx.images.graphics {
-		r.renderImageMessage(buf, area, i18n.StatusImageUnsupported)
+		r.renderImageMessage(buf, area, i18n.StatusImageUnsupported, th)
 		return
 	}
 	img := pane.Image()
@@ -87,11 +90,9 @@ func (r *renderPass) paintImage(
 	// c=/r=, and the centering box cannot drift apart while a zoom settles
 	cells, ok := r.cx.images.readySize(id)
 	if !ok {
-		r.renderImageLoading(buf, area)
+		r.renderImageLoading(buf, area, th)
 		return
 	}
-	// editor background shows through transparent pixels
-	bg := r.activeTheme().Get("ui.background").BgColor()
 	style := tui.Style{}.
 		Fg(tui.ImageColor(id)).
 		UlColor(tui.ImageColor(imagePlacementID(id))).
@@ -121,15 +122,15 @@ func (r *renderPass) paintImage(
 }
 
 func (r *renderPass) renderImageLoading(
-	buf *tui.Buffer, area geom.Area,
+	buf *tui.Buffer, area geom.Area, th *theme.Theme,
 ) {
-	r.renderImageMessage(buf, area, i18n.StatusImageLoading)
+	r.renderImageMessage(buf, area, i18n.StatusImageLoading, th)
 }
 
 func (r *renderPass) renderImageMessage(
-	buf *tui.Buffer, area geom.Area, key i18n.Key,
+	buf *tui.Buffer, area geom.Area, key i18n.Key, th *theme.Theme,
 ) {
-	style := r.activeTheme().Get("ui.text")
+	style := th.Get("ui.text")
 	renderCenteredMessage(buf, area, i18n.Text(key), style)
 }
 

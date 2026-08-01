@@ -34,7 +34,7 @@ func (r *renderPass) renderBinaryPane(
 		Point: geom.Point{X: a.X, Y: y0 + a.Y},
 		Size:  geom.Size{Width: a.Width, Height: max(a.Height-1, 0)},
 	}
-	th := r.activeTheme()
+	th := r.cx.ThemeFor(focused)
 	style := th.Get("ui.text")
 	data, err := pane.readVisible()
 	if err != nil {
@@ -67,7 +67,7 @@ func (r *renderPass) renderBinaryStatus(
 	buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool,
 ) {
 	a := pane.Area()
-	th := r.activeTheme()
+	th := r.cx.Theme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if focused {

@@ -31,7 +31,7 @@ var splitSepIntersectionChars = [...]string{
 }
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
-	th := r.activeTheme()
+	th := r.cx.Theme()
 	bgTUI := th.Get("ui.bufferline.background")
 	activeTUI := th.Get("ui.bufferline.active")
 	inactiveTUI := th.Get("ui.bufferline")
@@ -201,27 +201,30 @@ type beginPaneRedrawArgs struct {
 	yOffset    int
 	dirty      bool
 	redrawAll  bool
+	focused    bool
 	background tui.Style
 }
 
-// beginPaneRedraw reports whether pane needs repainting this frame, clearing
-// its cell rectangle first on an incremental (non-full) redraw
+// a focused pane's background already matches the frame's base fill, so a
+// full redraw re-clears only an unfocused (dimmed) one
 func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
-	forced := !r.cx.composition.singleLayer &&
-		paneUnderOverlay(r.cx, args.pane.Area(), args.yOffset)
-	switch {
-	case args.redrawAll:
-		return true
-	case forced || args.dirty:
-		clearPaneRect(args.buf, args.pane.Area(), args.yOffset, args.background)
-		return true
-	default:
+	redraw := args.redrawAll
+	if !redraw {
+		forced := !r.cx.composition.singleLayer &&
+			paneUnderOverlay(r.cx, args.pane.Area(), args.yOffset)
+		redraw = forced || args.dirty
+	}
+	if !redraw {
 		return false
 	}
+	if !args.redrawAll || !args.focused {
+		clearPaneRect(args.buf, args.pane.Area(), args.yOffset, args.background)
+	}
+	return true
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
-	th := r.activeTheme()
+	th := r.cx.Theme()
 	cache := r.ec.cache
 
 	redrawAll := r.forceFullRedraw(cache, th)
@@ -237,9 +240,9 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 
 	focus := r.cx.Editor.Tree().Focus()
-	dim := min(max(r.cx.Editor.Options().InactiveDim, 0), 90)
 	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		focused := p.ID() == focus
+		paneBg := r.cx.ThemeFor(focused).Get("ui.background")
 		switch pane := p.(type) {
 		case *view.View:
 			doc := r.cx.Editor.Document(pane.DocID())
@@ -254,7 +257,8 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				yOffset:    y0,
 				dirty:      dirty,
 				redrawAll:  redrawAll,
-				background: bgTUI,
+				focused:    focused,
+				background: paneBg,
 			}) {
 				r.renderPane(renderPaneArgs{
 					doc:     doc,
@@ -263,9 +267,6 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 					yOffset: y0,
 					focused: focused,
 				})
-				if !focused && dim > 0 {
-					r.dimPane(buf, pane.Area(), y0, dim)
-				}
 			}
 		case *ImagePane:
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
@@ -274,7 +275,8 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				yOffset:    y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
-				background: bgTUI,
+				focused:    focused,
+				background: paneBg,
 			}) {
 				r.renderImagePane(buf, pane, y0, focused)
 			}
@@ -285,7 +287,8 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				yOffset:    y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
-				background: bgTUI,
+				focused:    focused,
+				background: paneBg,
 			}) {
 				r.renderTerminalPane(buf, pane, y0, focused)
 			}
@@ -296,12 +299,10 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				yOffset:    y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
-				background: bgTUI,
+				focused:    focused,
+				background: paneBg,
 			}) {
 				r.renderBinaryPane(buf, pane, y0, focused)
-				if !focused && dim > 0 {
-					r.dimPane(buf, pane.Area(), y0, dim)
-				}
 			}
 		}
 		return true
@@ -361,21 +362,6 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 }
 
-// dimPane darkens every cell in an unfocused pane by dim percent so the focused
-// one stands out. Callers skip it entirely when dim is 0
-func (r *renderPass) dimPane(buf *tui.Buffer, a geom.Area, y0, dim int) {
-	brightness := 100 - dim
-	top := y0 + a.Y
-	for y := top; y < top+a.Height; y++ {
-		for x := a.X; x < a.X+a.Width; x++ {
-			p := geom.Point{X: x, Y: y}
-			c := buf.Get(p)
-			c.Style = c.Style.Darkened(brightness)
-			buf.Set(p, c)
-		}
-	}
-}
-
 func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
 	if !cx.composition.precise {
 		return true
@@ -395,7 +381,7 @@ func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
 func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	items := r.ec.keys.infoItems
 	title := r.ec.keys.infoTitle
-	th := r.activeTheme()
+	th := r.cx.Theme()
 
 	popupSt := th.Get("ui.popup")
 	popupTUI := popupSt

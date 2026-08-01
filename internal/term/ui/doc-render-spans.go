@@ -112,23 +112,25 @@ func (r *renderPass) prepareContentRender(
 	}
 
 	// styles rebuilt only when theme or mode changes
-	th := r.activeTheme()
-	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
+	th := r.cx.Theme()
+	mode := r.cx.Editor.Mode()
+	key := styleKey{theme: th.Name(), mode: mode}
 	if c.stylesKey != key {
 		c.stylesKey = key
-		c.tuiStyles = buildTUIStyles(th, r.cx.Editor.Mode())
-		c.hlFn = hlStyleFnFor(th)
-		c.hlTUICache = make(map[string]tui.Style, 64)
+		c.styles = newDocStyleSet(th, mode)
+		c.stylesDim = newDocStyleSet(r.cx.ThemeFor(false), mode)
 	}
-	tuiStyles := c.tuiStyles
-	hlStyle := c.hlFn
-	hlTUICache := c.hlTUICache
+	set := c.styles
+	if !args.focused {
+		set = c.stylesDim
+	}
+	tuiStyles := set.tuiStyles
 	hlStyleFn := func(scope string) tui.Style {
-		if st, ok := hlTUICache[scope]; ok {
+		if st, ok := set.hlTUICache[scope]; ok {
 			return st
 		}
-		st := hlStyle(scope)
-		hlTUICache[scope] = st
+		st := set.hlFn(scope)
+		set.hlTUICache[scope] = st
 		return st
 	}
 

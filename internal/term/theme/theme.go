@@ -83,6 +83,21 @@ func (t *Theme) Name() string {
 	return t.name
 }
 
+// Dimmed returns a copy of the theme with every style darkened by pct,
+// for rendering unfocused panes
+func (t *Theme) Dimmed(pct int) *Theme {
+	if pct >= 100 {
+		return t
+	}
+	styles := make(map[string]tui.Style, len(t.styles))
+	for scope, style := range t.styles {
+		styles[scope] = style.Darkened(pct)
+	}
+	dimmed := *t
+	dimmed.styles = styles
+	return &dimmed
+}
+
 func (t *Theme) Get(scope string) tui.Style {
 	style, _ := t.TryGet(scope)
 	return style

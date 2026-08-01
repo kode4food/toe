@@ -78,6 +78,48 @@ func TestImageRender(t *testing.T) {
 	assert.Contains(t, content, fg)
 }
 
+func TestImageDim(t *testing.T) {
+	t.Run("dims background only when unfocused", func(t *testing.T) {
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		root := t.TempDir()
+		dir := filepath.Join(root, "images")
+		assert.NoError(t, os.Mkdir(dir, 0o755))
+		path := writeRenderImage(t, dir, 40, 20, color.RGBA{G: 255, A: 255})
+
+		e := view.NewEditor(root)
+		e.Options().InactiveDim = 50
+		docID := e.Tree().Focus()
+		m := ui.New(e, command.NewKeymaps())
+		m2, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = m2.(ui.Model)
+
+		pane, err := ui.NewImagePane(e, path)
+		assert.NoError(t, err)
+		assert.True(t, e.SplitPane(pane, view.LayoutVertical))
+		e.FocusPane(docID)
+
+		m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m = m2.(ui.Model)
+		var rawMsgs []string
+		m, rawMsgs = collectModelRawMsgs(m, cmd)
+		raw := strings.Join(rawMsgs, "")
+		content := m.View().Content
+
+		matches := regexp.MustCompile(`(?:\x1b_G|,)i=(\d+)`).
+			FindAllStringSubmatch(raw, -1)
+		assert.NotEmpty(t, matches)
+		id, err := strconv.ParseUint(matches[0][1], 10, 32)
+		assert.NoError(t, err)
+		fg := fmt.Sprintf(
+			"\x1b[38;2;%d;%d;%dm", id>>16, id>>8&0xFF, id&0xFF,
+		)
+		// fg still carries the untouched image-id encoding
+		assert.Contains(t, content, fg)
+		// mocha's ui.background bg (#1e1e2e -> 30,30,46) darkened 50%
+		assert.Contains(t, content, "\x1b[48;2;15;15;23m")
+	})
+}
+
 func TestImageLoading(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()

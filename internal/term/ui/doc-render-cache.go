@@ -8,6 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
+	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -19,11 +20,11 @@ type (
 		// each other's tokenization every frame
 		docCaches map[view.DocumentId]*docRenderCache
 
-		// rebuilt only when theme or mode changes between frames
-		stylesKey  styleKey
-		tuiStyles  *tuiStyles
-		hlFn       func(string) tui.Style
-		hlTUICache map[string]tui.Style
+		// rebuilt only when theme or mode changes between frames; stylesDim
+		// renders unfocused panes using the precomputed dimmed theme
+		stylesKey styleKey
+		styles    docStyleSet
+		stylesDim docStyleSet
 
 		viewRowMaps map[view.Id][]viewRowEntry
 
@@ -42,6 +43,14 @@ type (
 	styleKey struct {
 		theme string
 		mode  view.Mode
+	}
+
+	// docStyleSet bundles a theme's derived style tables so a focused and a
+	// dimmed variant are always selected as one unit, never field by field
+	docStyleSet struct {
+		tuiStyles  *tuiStyles
+		hlFn       func(string) tui.Style
+		hlTUICache map[string]tui.Style
 	}
 
 	// diagPopupKey identifies the diagnostic popup's rendered content, so a
@@ -116,6 +125,14 @@ type (
 		style tui.Style
 	}
 )
+
+func newDocStyleSet(th *theme.Theme, mode view.Mode) docStyleSet {
+	return docStyleSet{
+		tuiStyles:  buildTUIStyles(th, mode),
+		hlFn:       hlStyleFnFor(th),
+		hlTUICache: make(map[string]tui.Style, 64),
+	}
+}
 
 func newRenderCache() *renderCache {
 	return &renderCache{

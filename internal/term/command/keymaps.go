@@ -76,9 +76,13 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 				bindings = cmd.Keys[view.ModeAny]
 			}
 			for _, binding := range bindings {
-				k.bindCommandWithLabel(
-					mode, name, action, label, binding...,
-				)
+				k.bindCommand(bindCommandArgs{
+					mode:   mode,
+					name:   name,
+					action: action,
+					label:  label,
+					seqs:   binding,
+				})
 			}
 		}
 	}
@@ -144,7 +148,12 @@ func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
 	action := func(e *view.Editor) Continuation {
 		return cmd.Run(e, nil).Continuation
 	}
-	k.bindCommandWithLabel(mode, name, action, "", seqs...)
+	k.bindCommand(bindCommandArgs{
+		mode:   mode,
+		name:   name,
+		action: action,
+		seqs:   seqs,
+	})
 }
 
 // Lookup traverses the key trie. Returns (action, true, false) on a complete
@@ -205,16 +214,21 @@ func (c Command) availableIn(mode view.Mode) bool {
 	return c.Modes&mode != 0
 }
 
-func (k *Keymaps) bindCommandWithLabel(
-	mode view.Mode, name string, action KeyAction, label string,
-	seqs ...[]KeyEvent,
-) {
-	root, ok := k.modes[mode]
+type bindCommandArgs struct {
+	mode   view.Mode
+	name   string
+	action KeyAction
+	label  string
+	seqs   [][]KeyEvent
+}
+
+func (k *Keymaps) bindCommand(args bindCommandArgs) {
+	root, ok := k.modes[args.mode]
 	if !ok {
 		root = &keyTrieNode{children: map[KeyEvent]*keyTrieNode{}}
-		k.modes[mode] = root
+		k.modes[args.mode] = root
 	}
-	for _, seq := range seqs {
+	for _, seq := range args.seqs {
 		node := root
 		for _, ev := range seq {
 			child, ok := node.children[ev]
@@ -226,10 +240,10 @@ func (k *Keymaps) bindCommandWithLabel(
 			}
 			node = child
 		}
-		node.action = action
-		node.name = name
-		if label != "" {
-			node.label = label
+		node.action = args.action
+		node.name = args.name
+		if args.label != "" {
+			node.label = args.label
 		}
 	}
 }

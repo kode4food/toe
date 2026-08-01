@@ -103,10 +103,28 @@ func (c *Compositor) Render(cx *Context) string {
 func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	for i := len(c.layers) - 1; i >= 0; i-- {
 		if cur, ok = c.layers[i].Cursor(cx, c.size); ok {
+			if c.cursorCovered(cx, i+1, cur) {
+				return tea.Cursor{}, false
+			}
 			return
 		}
 	}
 	return tea.Cursor{}, false
+}
+
+func (c *Compositor) cursorCovered(cx *Context, from int, cur tea.Cursor) bool {
+	at := geom.Point{X: cur.X, Y: cur.Y}
+	for _, layer := range c.layers[from:] {
+		ov, ok := layer.(BufferOverlayComponent)
+		if !ok {
+			continue
+		}
+		area, active := ov.Layout(cx, c.size)
+		if active && area.Contains(at) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Compositor) refreshEditorHighlight(cx *Context) tea.Cmd {

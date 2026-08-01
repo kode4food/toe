@@ -3,6 +3,7 @@ package ui
 import (
 	"cmp"
 	"errors"
+	"os"
 	"slices"
 	"sync"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -48,6 +50,8 @@ type (
 		dynamicGen     int
 		dynamicStop    StopFunc
 		dynamicPending bool
+		refreshGen     int
+		pending        map[string]struct{}
 	}
 
 	// PickerFunc constructs a Picker from the editor
@@ -72,6 +76,15 @@ type (
 	// PickerPreviewSkipper marks picker sources that never render previews
 	PickerPreviewSkipper interface {
 		SkipPreview()
+	}
+
+	// FileBackedPickerSource is a picker whose rows are workspace files, each
+	// reconciled one changed path at a time
+	FileBackedPickerSource interface {
+		PickerSource
+		// ItemForPath returns the current row for path and whether the source
+		// contains it
+		ItemForPath(e *view.Editor, path string) (PickerItem, bool)
 	}
 
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
@@ -163,6 +176,10 @@ type (
 		gen   int
 		query string
 	}
+
+	pickerRefreshMsg struct {
+		gen int
+	}
 )
 
 const pickerDynamicDelay = 275 * time.Millisecond
@@ -190,25 +207,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 			cancel: func() {},
 		},
 	}
-	items, feed, stop := source.Load(e)
-	p.load.cancel = stop
-	_, isStatic := source.(StaticPickerSource)
-	p.list.items = items
-	if isStatic {
-		p.refilter()
-	} else {
-		p.list.matched = make([]pickerMatch, len(items))
-		for i := range items {
-			p.list.matched[i] = pickerMatch{item: &items[i], itemIndex: i}
-		}
-	}
-	if feed != nil {
-		done := make(chan struct{})
-		closeDone := sync.OnceFunc(func() { close(done) })
-		oldStop := p.load.cancel
-		p.load.cancel = func() { oldStop(); closeDone() }
-		p.load.feedCmd = drainPickerFeed(feed, done)
-	}
+	p.load.feedCmd = p.loadItems(e)
 	return p
 }
 
@@ -271,6 +270,107 @@ func (p *Picker) SelectIndex(i int) {
 	}
 }
 
+func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
+	items, feed, stop := p.source.Load(e)
+	p.load.cancel = stop
+	_, static := p.source.(StaticPickerSource)
+	p.list.items = items
+	if static {
+		p.refilter()
+	} else {
+		p.list.matched = make([]pickerMatch, len(items))
+		for i := range items {
+			p.list.matched[i] = pickerMatch{item: &items[i], itemIndex: i}
+		}
+	}
+	if feed == nil {
+		return nil
+	}
+	done := make(chan struct{})
+	closeDone := sync.OnceFunc(func() { close(done) })
+	oldStop := p.load.cancel
+	p.load.cancel = func() { oldStop(); closeDone() }
+	return drainPickerFeed(feed, done)
+}
+
+func (p *Picker) reload(e *view.Editor) tea.Cmd {
+	p.load.cancel()
+	target, hadSelection := p.selectedTarget()
+	cmd := p.loadItems(e)
+	if hadSelection {
+		p.restoreSelection(target)
+	}
+	return cmd
+}
+
+func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
+	if _, ok := p.source.(DynamicPickerSource); ok {
+		return p.dynamicTriggerCmd()
+	}
+	if _, ok := p.source.(FileBackedPickerSource); !ok {
+		return nil
+	}
+	if p.load.pending == nil {
+		p.load.pending = map[string]struct{}{}
+	}
+	p.load.pending[path] = struct{}{}
+	p.load.refreshGen++
+	gen := p.load.refreshGen
+	return func() tea.Msg {
+		time.Sleep(pickerDynamicDelay)
+		return pickerRefreshMsg{gen: gen}
+	}
+}
+
+func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
+	pending := p.load.pending
+	p.load.pending = nil
+	src, ok := p.source.(FileBackedPickerSource)
+	if !ok {
+		return nil
+	}
+	for path := range pending {
+		// a directory event carries coalesced changes with unknown members;
+		// a full reload covers the batch
+		if info, err := os.Lstat(path); err == nil && info.IsDir() {
+			return p.reload(e)
+		}
+		item, exists := src.ItemForPath(e, path)
+		p.reconcilePath(path, item, exists)
+	}
+	return nil
+}
+
+func (p *Picker) reconcilePath(path string, item PickerItem, exists bool) {
+	target, hadSelection := p.selectedTarget()
+	idx := p.findItemIndexByPath(path)
+	switch {
+	case exists && idx >= 0:
+		p.list.items[idx] = item
+	case exists:
+		p.list.items = append(p.list.items, item)
+		SortPickerItems(p.list.items)
+	case idx >= 0:
+		p.list.items = slices.Delete(p.list.items, idx, idx+1)
+	default:
+		return
+	}
+	p.rematchPreservingSelection(target, hadSelection)
+}
+
+func (p *Picker) findItemIndexByPath(path string) int {
+	exact := slices.IndexFunc(p.list.items, func(it PickerItem) bool {
+		return it.Location.Target.Path == path
+	})
+	if exact >= 0 {
+		return exact
+	}
+	key := loader.CanonicalPath(path)
+	return slices.IndexFunc(p.list.items, func(it PickerItem) bool {
+		return loader.CanonicalPath(it.Location.Target.Path) == key
+	})
+}
+
 func (p *Picker) addItems(items []PickerItem) {
 	if len(items) == 0 {
 		return
@@ -278,6 +378,12 @@ func (p *Picker) addItems(items []PickerItem) {
 	target, hadSelection := p.selectedTarget()
 	p.list.items = append(p.list.items, items...)
 	SortPickerItems(p.list.items)
+	p.rematchPreservingSelection(target, hadSelection)
+}
+
+func (p *Picker) rematchPreservingSelection(
+	target PickerTarget, hadSelection bool,
+) {
 	p.rebuildMatches()
 	if hadSelection {
 		p.restoreSelection(target)
@@ -506,6 +612,14 @@ func defaultColumnProportions(n int) []int {
 func previewEnabled(source PickerSource) bool {
 	_, skip := source.(PickerPreviewSkipper)
 	return !skip
+}
+
+func wantsFileWatchTree(source PickerSource) bool {
+	if _, ok := source.(FileBackedPickerSource); ok {
+		return true
+	}
+	_, ok := source.(DynamicPickerSource)
+	return ok
 }
 
 // SortPickerItems sorts items by display text, the default ordering for

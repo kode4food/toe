@@ -126,6 +126,52 @@ func TestPaths(t *testing.T) {
 	})
 }
 
+func TestCanonicalPath(t *testing.T) {
+	t.Run("resolves a symlinked parent directory", func(t *testing.T) {
+		target := t.TempDir()
+		link := filepath.Join(t.TempDir(), "link")
+		assert.NoError(t, os.Symlink(target, link))
+
+		got := loader.CanonicalPath(filepath.Join(link, "file.txt"))
+
+		resolved, err := filepath.EvalSymlinks(target)
+		assert.NoError(t, err)
+		assert.Equal(t, filepath.Join(resolved, "file.txt"), got)
+	})
+
+	t.Run("two forms of the same file compare equal", func(t *testing.T) {
+		target := t.TempDir()
+		link := filepath.Join(t.TempDir(), "link")
+		assert.NoError(t, os.Symlink(target, link))
+
+		viaLink := loader.CanonicalPath(filepath.Join(link, "a.txt"))
+		viaReal := loader.CanonicalPath(filepath.Join(target, "a.txt"))
+
+		assert.Equal(t, viaReal, viaLink)
+	})
+
+	t.Run("keeps a just-deleted file's key stable", func(t *testing.T) {
+		dir := t.TempDir()
+		gone := filepath.Join(dir, "gone.txt")
+
+		// the directory resolves though the file is absent; its base
+		// carries through to the returned key
+		got := loader.CanonicalPath(gone)
+
+		resolved, err := filepath.EvalSymlinks(dir)
+		assert.NoError(t, err)
+		assert.Equal(t, filepath.Join(resolved, "gone.txt"), got)
+	})
+
+	t.Run("absolute fallback", func(t *testing.T) {
+		got := loader.CanonicalPath(
+			filepath.Join(t.TempDir(), "no-such-dir", "f.txt"),
+		)
+		assert.True(t, filepath.IsAbs(got))
+		assert.Contains(t, got, filepath.Join("no-such-dir", "f.txt"))
+	})
+}
+
 func TestWorkspace(t *testing.T) {
 	t.Run("finds git marker", func(t *testing.T) {
 		root := t.TempDir()

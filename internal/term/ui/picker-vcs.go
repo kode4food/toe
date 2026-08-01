@@ -5,6 +5,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -106,6 +107,33 @@ func (c *changedFilePickerSource) Load(
 		}
 	}
 	return nil, feed, stop
+}
+
+// ItemForPath returns the current VCS row for path and whether it is still a
+// changed file
+func (c *changedFilePickerSource) ItemForPath(
+	e *view.Editor, path string,
+) (PickerItem, bool) {
+	vc := e.VersionControl()
+	if vc == nil {
+		return PickerItem{}, false
+	}
+	changes, err := vc.ChangedFiles()
+	if err != nil {
+		return PickerItem{}, false
+	}
+	cwd := e.Cwd()
+	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
+		cwd = resolved
+	}
+	key := loader.CanonicalPath(path)
+	nerd := e.Options().NerdFonts
+	for _, fc := range changes {
+		if loader.CanonicalPath(fc.Path) == key {
+			return changedFileItem(vc, fc, cwd, nerd), true
+		}
+	}
+	return PickerItem{}, false
 }
 
 func (c *changedFilePickerSource) Accept(

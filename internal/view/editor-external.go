@@ -1,21 +1,17 @@
 package view
 
 import (
-	"path/filepath"
-
 	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/loader"
 )
 
 // ProcessExternalFileChange updates any open document whose backing file
 // changed outside the editor
 func (e *Editor) ProcessExternalFileChange(path string) bool {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return false
-	}
+	target := loader.CanonicalPath(path)
 	handled := false
 	for _, doc := range e.documents.byID {
-		if doc.Path() != abs {
+		if loader.CanonicalPath(doc.Path()) != target {
 			continue
 		}
 		if e.processExternalChange(doc) {

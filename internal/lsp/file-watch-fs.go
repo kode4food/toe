@@ -1,10 +1,9 @@
 package lsp
 
 import (
-	"os"
 	"path/filepath"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/rjeczalik/notify"
 
 	"github.com/kode4food/toe/internal/i18n"
 )
@@ -16,22 +15,10 @@ func (s *Session) ensureFileWatcher() {
 	}
 	s.watch.Lock()
 	if s.watch.watcher == nil {
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			s.watch.Unlock()
-			if s.editor != nil {
-				s.editor.SetStatusMsg(i18n.Text(
-					i18n.StatusFileWatchUnavailable, i18n.Vars{
-						"error": err,
-					},
-				))
-			}
-			return
-		}
 		state := &fsWatcher{
-			watcher: watcher,
-			done:    make(chan struct{}),
-			dirs:    map[string]struct{}{},
+			ch:    make(chan notify.EventInfo, 256),
+			done:  make(chan struct{}),
+			roots: map[string]struct{}{},
 		}
 		s.watch.watcher = state
 		go s.runFileWatcher(state)
@@ -51,7 +38,7 @@ func (s *Session) closeFileWatcher() {
 		return
 	}
 	close(state.done)
-	_ = state.watcher.Close()
+	notify.Stop(state.ch)
 }
 
 func (s *Session) fileWatchRoots() []string {
@@ -82,68 +69,48 @@ func (s *Session) fileWatchRoots() []string {
 func (s *Session) runFileWatcher(state *fsWatcher) {
 	for {
 		select {
-		case event, ok := <-state.watcher.Events:
+		case ev, ok := <-state.ch:
 			if !ok {
 				return
 			}
-			s.handleFileWatchEvent(event)
-		case _, ok := <-state.watcher.Errors:
-			if !ok {
-				return
-			}
+			s.handleFileWatchEvent(ev)
 		case <-state.done:
 			return
 		}
 	}
 }
 
-func (s *Session) handleFileWatchEvent(event fsnotify.Event) {
-	path := filepath.Clean(event.Name)
-	if event.Op&fsnotify.Create != 0 {
-		s.addCreatedWatchPath(path)
-	}
-	if kind, ok := fileWatchChangeType(event.Op); ok {
+func (s *Session) handleFileWatchEvent(ev notify.EventInfo) {
+	path := filepath.Clean(ev.Path())
+	if kind, ok := fileWatchChangeType(ev.Event()); ok {
 		s.didChangeWatchedFileEvent(fileWatchEvent{path: path, kind: kind})
 	}
 }
 
-func (s *Session) addCreatedWatchPath(path string) {
-	info, err := os.Stat(path)
-	if err != nil || !info.IsDir() {
-		return
-	}
-	s.addFileWatchRoot(path)
-}
-
 func (s *Session) addFileWatchRoot(root string) {
-	_ = filepath.WalkDir(root, func(
-		path string, d os.DirEntry, err error,
-	) error {
-		if err != nil || !d.IsDir() {
-			return nil
-		}
-		s.addFileWatchDir(path)
-		return nil
-	})
-}
-
-func (s *Session) addFileWatchDir(path string) {
-	path = filepath.Clean(path)
+	root = filepath.Clean(root)
 	s.watch.Lock()
 	state := s.watch.watcher
 	if state == nil {
 		s.watch.Unlock()
 		return
 	}
-	if _, ok := state.dirs[path]; ok {
+	if _, ok := state.roots[root]; ok {
 		s.watch.Unlock()
 		return
 	}
-	state.dirs[path] = struct{}{}
+	state.roots[root] = struct{}{}
 	s.watch.Unlock()
-	if err := state.watcher.Add(path); err != nil {
-		s.watch.Lock()
-		delete(state.dirs, path)
-		s.watch.Unlock()
+	err := notify.Watch(filepath.Join(root, "..."), state.ch, notify.All)
+	if err == nil {
+		return
+	}
+	s.watch.Lock()
+	delete(state.roots, root)
+	s.watch.Unlock()
+	if s.editor != nil {
+		s.editor.SetStatusMsg(i18n.Text(
+			i18n.StatusFileWatchUnavailable, i18n.Vars{"error": err},
+		))
 	}
 }

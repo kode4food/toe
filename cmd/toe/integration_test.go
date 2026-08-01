@@ -365,6 +365,82 @@ func TestIntegration(t *testing.T) {
 		tt.waitFor("after")
 		tt.quit()
 	})
+
+	t.Run("auto-reloads an external change", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "before\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("before")
+
+		err := os.WriteFile(path, []byte("after\n"), 0o644)
+		assert.NoError(t, err)
+		tt.waitFor("after")
+		tt.quit()
+	})
+
+	t.Run("picker preview reflects disk change", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "target.txt", "before\n")
+		other := writeFile(t, dir, "other.txt", "other\n")
+
+		tt := startTUI(t, dir, other)
+		tt.waitFor("NOR")
+		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
+
+		tt.send(" f")
+		tt.send("target")
+		tt.waitFor("before")
+
+		err := os.WriteFile(path, []byte("after\n"), 0o644)
+		assert.NoError(t, err)
+		tt.waitFor("after")
+
+		tt.escape()
+		tt.quit()
+	})
+
+	t.Run("open-doc preview updates live", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "README.md", "before\n")
+		gitInit(t, dir)
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("before")
+		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
+
+		// spc-f enters tree-watch mode; select the already-open README
+		tt.send(" f")
+		tt.send("README")
+		tt.waitFor("before")
+
+		assert.NoError(t, os.WriteFile(path, []byte("AFTER_EDIT\n"), 0o644))
+		tt.waitFor("AFTER_EDIT")
+
+		tt.escape()
+		tt.quit()
+	})
+
+	t.Run("auto-reload survives picker lifecycle", func(t *testing.T) {
+		dir := t.TempDir()
+		path := writeFile(t, dir, "note.txt", "before\n")
+
+		tt := startTUI(t, dir, path)
+		tt.waitFor("before")
+		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
+
+		assert.NoError(t, os.WriteFile(path, []byte("first\n"), 0o644))
+		tt.waitFor("first")
+
+		tt.send(" f")
+		tt.waitFor("note.txt")
+		tt.escape()
+		tt.waitFor("NOR")
+
+		assert.NoError(t, os.WriteFile(path, []byte("second\n"), 0o644))
+		tt.waitFor("second")
+		tt.quit()
+	})
 }
 
 // send types keystrokes one byte at a time so the process sees distinct key
@@ -378,6 +454,17 @@ func (tt *tui) send(keys string) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	time.Sleep(50 * time.Millisecond)
+}
+
+func (t *tui) resize(size pty.Winsize) {
+	t.t.Helper()
+	t.mu.Lock()
+	t.vt.Resize(int(size.Cols), int(size.Rows))
+	t.mu.Unlock()
+	if err := pty.Setsize(t.ptmx, &size); err != nil {
+		t.t.Fatalf("resize pty: %v", err)
+	}
+	time.Sleep(escPause)
 }
 
 // escape sends a bare escape key and waits out the escape timeout
@@ -550,4 +637,19 @@ func writeFile(t *testing.T, dir, name, content string) string {
 		t.Fatalf("write %s: %v", path, err)
 	}
 	return path
+}
+
+func gitInit(t *testing.T, dir string) {
+	t.Helper()
+	for _, args := range [][]string{
+		{"init", "-b", "main"},
+		{"add", "."},
+		{"-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "-m", "x"},
+	} {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
 }

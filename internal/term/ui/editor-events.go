@@ -35,7 +35,6 @@ func (e *EditorComponent) handleKeyPressEvent(
 
 func (e *EditorComponent) handleFocus(cx *Context) (EventResult, tea.Cmd) {
 	e.focused = true
-	refreshVCS(cx)
 	return ignored(), e.documentHighlightCmd(cx)
 }
 
@@ -115,7 +114,7 @@ func (e *EditorComponent) handleExternalFileChanged(
 	reloadChangedImages(cx.Editor, msg.path)
 	refreshVCS(cx)
 	e.syncEditorMessages(cx)
-	return consumed(), e.fileWatchCmd(cx)
+	return consumed(), cx.fileWatcher.nextCmd(cx.Editor)
 }
 
 func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {

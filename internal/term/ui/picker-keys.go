@@ -16,14 +16,7 @@ func (p *PickerComponent) handleKey(
 	ps := p.state
 	p.markDirty()
 	dismiss := func() (EventResult, tea.Cmd) {
-		if ps.load.dynamicStop != nil {
-			ps.load.dynamicStop()
-		}
-		ps.load.cancel()
-		return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
-			comp.Pop()
-			return comp.refreshEditorHighlight(cx)
-		}), nil
+		return p.dismiss(consumed())
 	}
 	switch {
 	case k.Code.Special == command.Escape ||

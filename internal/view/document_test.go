@@ -560,6 +560,27 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.Contains(t, e.TakeStatusMsg(), "reloaded")
 	})
 
+	t.Run("canonical event path reloads", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "reload.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		err = os.WriteFile(path, []byte("new content"), 0o644)
+		assert.NoError(t, err)
+
+		// a file watcher may canonicalize the reported path (notify does on
+		// macOS: /var -> /private/var); the stored document path is not
+		resolved, err := filepath.EvalSymlinks(path)
+		assert.NoError(t, err)
+		ok := e.ProcessExternalFileChange(resolved)
+
+		assert.True(t, ok)
+		assert.Equal(t, "new content", e.FocusedDocument().Text().String())
+	})
+
 	t.Run("clean reload preserves selections", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "cursor.txt")

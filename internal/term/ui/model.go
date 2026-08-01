@@ -25,6 +25,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		)
 	})
 	ec := newEditorComponent()
+	w := newFileWatcher()
 	editor.Tree().SetRedraw(ec.requestRedraw)
 	ec.requestRedraw()
 	registerImagePane(editor)
@@ -36,6 +37,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		Syntax:       syntax.NewSyntaxCache(),
 		images:       newImageRegistry(),
 		pickerLayout: PickerLayoutOptions{},
+		fileWatcher:  w,
 	}
 	comp := &Compositor{}
 	comp.Push(ec)
@@ -44,11 +46,16 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		context:    cx,
 		component:  ec,
 		initCmd: tea.Batch(
-			ec.fileWatchCmd(cx),
+			w.nextCmd(editor),
 			vcsUpdateCmd(cx),
 			ec.redrawCmd(),
 		),
 	}
+}
+
+// Close releases the model's long-lived resources, such as file watches
+func (m Model) Close() {
+	m.context.fileWatcher.close()
 }
 
 // PickerLayoutOptions returns the UI-owned picker layout settings
@@ -99,7 +106,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.imageDisplayFrameCmd()
 	default:
 		cmd := m.compositor.HandleEvent(m.context, msg)
-		m.component.syncFileWatcher(m.context)
+		m.context.fileWatcher.sync(m.context.Editor)
 		return m, tea.Batch(cmd, m.imageDisplayFrameCmd())
 	}
 }

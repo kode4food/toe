@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/rjeczalik/notify"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -104,13 +104,13 @@ func matchWatchPattern(pattern, path string) bool {
 	return false
 }
 
-func fileWatchChangeType(op fsnotify.Op) (protocol.FileChangeType, bool) {
+func fileWatchChangeType(ev notify.Event) (protocol.FileChangeType, bool) {
 	switch {
-	case op&(fsnotify.Remove|fsnotify.Rename) != 0:
+	case ev&(notify.Remove|notify.Rename) != 0:
 		return protocol.FileChangeTypeDeleted, true
-	case op&fsnotify.Create != 0:
+	case ev&notify.Create != 0:
 		return protocol.FileChangeTypeCreated, true
-	case op&fsnotify.Write != 0:
+	case ev&notify.Write != 0:
 		return protocol.FileChangeTypeChanged, true
 	default:
 		return 0, false

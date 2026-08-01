@@ -28,6 +28,7 @@ var (
 
 func newPickerComponent(cx *Context, p *Picker) *PickerComponent {
 	th := cx.Theme()
+	cx.fileWatcher.setTreeWanted(cx.Editor, wantsFileWatchTree(p.source))
 	return &PickerComponent{
 		styles: buildTUIStylesWithBackground(
 			th, view.ModeNormal, th.Get("ui.popup").BgColor(),
@@ -46,6 +47,10 @@ func (p *PickerComponent) HandleEvent(
 		return p.handleDynamicTrigger(cx, msg)
 	case pickerDynamicFeedMsg:
 		return p.handleDynamicFeed(msg)
+	case pickerRefreshMsg:
+		return p.handleRefresh(cx, msg)
+	case externalFileChangedMsg:
+		return p.handleExternalFileChange(msg)
 	case tea.WindowSizeMsg:
 		p.markDirty()
 		p.state.clearPreviewCache()
@@ -186,11 +191,31 @@ func (p *PickerComponent) handleDynamicFeed(
 	return consumed(), nil
 }
 
+func (p *PickerComponent) handleRefresh(
+	cx *Context, msg pickerRefreshMsg,
+) (EventResult, tea.Cmd) {
+	ps := p.state
+	if msg.gen != ps.load.refreshGen {
+		return consumed(), nil
+	}
+	p.markDirty()
+	return consumed(), ps.flushFileChanges(cx.Editor)
+}
+
+func (p *PickerComponent) handleExternalFileChange(
+	msg externalFileChangedMsg,
+) (EventResult, tea.Cmd) {
+	ps := p.state
+	ps.preview.cache.invalidatePath(msg.path)
+	p.markDirty()
+	return ignored(), ps.scheduleFileRefresh(msg.path)
+}
+
 func (p *PickerComponent) handleMouseClick(
 	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
 	if p.mouseOutside(geom.Point{X: msg.X, Y: msg.Y}) {
-		return p.dismiss()
+		return p.dismiss(ignored())
 	}
 	p.markDirty()
 	clickPt := geom.Point{X: msg.X, Y: msg.Y}
@@ -282,15 +307,17 @@ func (p *PickerComponent) mouseOutside(at geom.Point) bool {
 	return !p.bounds.Contains(at)
 }
 
-func (p *PickerComponent) dismiss() (EventResult, tea.Cmd) {
+func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 	ps := p.state
 	p.dragSplit = false
 	if ps.load.dynamicStop != nil {
 		ps.load.dynamicStop()
 	}
 	ps.load.cancel()
-	return ignoredWith(func(cx *Context, comp *Compositor) tea.Cmd {
+	result.Callback = func(cx *Context, comp *Compositor) tea.Cmd {
+		cx.fileWatcher.setTreeWanted(cx.Editor, false)
 		comp.Pop()
 		return comp.refreshEditorHighlight(cx)
-	}), nil
+	}
+	return result, nil
 }

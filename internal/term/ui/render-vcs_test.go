@@ -64,6 +64,40 @@ func TestDiffGutter(t *testing.T) {
 	})
 }
 
+func TestVersionControlFileWatch(t *testing.T) {
+	testutil.RequireGit(t)
+
+	t.Run("refreshes on an external commit", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		e := view.NewEditor(repo)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		s := vcs.Attach(e)
+		defer s.Close()
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Eventually(t, func() bool {
+			base, ok := s.DiffBase(doc)
+			return ok && base == "one\n"
+		}, time.Second, 5*time.Millisecond)
+
+		// the watcher must already be registered before the external
+		// change happens, exactly as it would in a running editor
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "a.txt")
+		testutil.RunGit(t, repo, "commit", "-m", "external")
+		drainFileWatch(t, m)
+
+		assert.Eventually(t, func() bool {
+			base, ok := s.DiffBase(doc)
+			return ok && base == "two\n"
+		}, time.Second, 5*time.Millisecond)
+	})
+}
+
 func TestChangedFilePicker(t *testing.T) {
 	testutil.RequireGit(t)
 

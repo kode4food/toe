@@ -1,6 +1,7 @@
 package files
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,6 +59,40 @@ func (f *filePickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
 	return startFilePickerFeed(f.dir, pickerListRows(e))
+}
+
+// ItemForPath returns the row for a regular file at path and whether the walk
+// includes it; symlinks resolve on a full reload
+func (f *filePickerSource) ItemForPath(
+	_ *view.Editor, path string,
+) (ui.PickerItem, bool) {
+	root := resolvePickerWalkRoot(f.dir)
+	if !pathWithinRoot(path, root) {
+		return ui.PickerItem{}, false
+	}
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return ui.PickerItem{}, false
+	}
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return ui.PickerItem{}, false
+	}
+	rel = filepath.ToSlash(rel)
+	ignoreOpts := ui.DefaultPickerIgnoreOptions()
+	if ui.SkipPickerPath(ui.SkipPickerPathArgs{
+		Rel:     rel,
+		Path:    path,
+		Entry:   fs.FileInfoToDirEntry(info),
+		Ignores: ui.LoadIgnoreFiles(root, path, ignoreOpts),
+		Opts:    ignoreOpts,
+	}) {
+		return ui.PickerItem{}, false
+	}
+	return ui.PickerItem{
+		Display:  rel,
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+	}, true
 }
 
 func (f *filePickerSource) Accept(

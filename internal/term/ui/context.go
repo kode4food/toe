@@ -21,6 +21,7 @@ type (
 		lastLayer    func(*view.Editor) layerFunc
 		pickerLayout PickerLayoutOptions
 		images       *imageRegistry
+		fileWatcher  *fileWatcher
 	}
 
 	compositionState struct {

@@ -4,13 +4,13 @@ import (
 	"context"
 	"sync"
 
-	"github.com/fsnotify/fsnotify"
+	"github.com/rjeczalik/notify"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 
 type (
-	// watchState owns the fsnotify watcher and each server's registered
+	// watchState owns the notify watcher and each server's registered
 	// file-watch patterns
 	watchState struct {
 		sync.RWMutex
@@ -19,9 +19,9 @@ type (
 	}
 
 	fsWatcher struct {
-		watcher *fsnotify.Watcher
-		done    chan struct{}
-		dirs    map[string]struct{}
+		ch    chan notify.EventInfo
+		done  chan struct{}
+		roots map[string]struct{}
 	}
 
 	fileWatchEvent struct {

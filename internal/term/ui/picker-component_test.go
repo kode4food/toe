@@ -11,6 +11,7 @@ import (
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -190,6 +191,28 @@ func TestPickerScroll(t *testing.T) {
 		m := fixedPicker(t, 1, 3, 3)
 		out := stripANSI(m.View().Content)
 		assert.NotContains(t, out, "fixed")
+	})
+
+	t.Run("overlay hides editor cursor", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		testutil.SetEditorText(t, e, strings.Repeat("0123456789\n", 6))
+		testutil.SetCursor(t, e, 65)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "fixed_picker",
+			m.PickerAction(func(*view.Editor) *ui.Picker {
+				return ui.NewPicker(e, fixedPickerSource{
+					items: fixedPickerItems(1),
+				})
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+		m = sendKey(resize(m, 120, 20), 'p')
+		m2, _ := m.Update(tea.BlurMsg{})
+		m = m2.(ui.Model)
+
+		assert.Nil(t, m.View().Cursor)
 	})
 }
 

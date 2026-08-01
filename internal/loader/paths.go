@@ -17,6 +17,21 @@ const (
 	WorkspaceDirName = "." + DirName
 )
 
+// CanonicalPath resolves symlinks in path's parent directory and joins the
+// unresolved final element
+func CanonicalPath(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+	dir, base := filepath.Split(abs)
+	resolved, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return abs
+	}
+	return filepath.Join(resolved, base)
+}
+
 // ExpandUserPath expands leading home-directory shorthand and environment vars
 func ExpandUserPath(path string) string {
 	if path == "~" || strings.HasPrefix(path, "~/") {

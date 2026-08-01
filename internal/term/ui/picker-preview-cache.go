@@ -92,6 +92,10 @@ func (p previewCache) path(sc *syntax.Cache, path string) previewCacheEntry {
 	return entry
 }
 
+func (p previewCache) invalidatePath(path string) {
+	delete(p, previewPathKey(path))
+}
+
 func previewDocKey(id view.DocumentId) previewCacheKey {
 	return previewCacheKey{id: id}
 }

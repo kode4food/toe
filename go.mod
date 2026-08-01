@@ -12,11 +12,11 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.7
 	github.com/charmbracelet/x/vt v0.0.0-20260719004043-bb9a97036f23
 	github.com/creack/pty v1.1.24
-	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/mattn/go-runewidth v0.0.24
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/rivo/uniseg v0.4.7
+	github.com/rjeczalik/notify v0.9.3
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/stretchr/testify v1.11.1
 	github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.0

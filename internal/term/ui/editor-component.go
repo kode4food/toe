@@ -29,7 +29,6 @@ type (
 		macroSlot       *macroSlot
 		bufferlineShown bool
 		focused         bool
-		fileWatcher     *editorFileWatcher
 		redraw          chan struct{}
 	}
 
@@ -117,13 +116,12 @@ var (
 
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
-		saveSlot:    &saveGenSlot{},
-		completion:  DefaultCompletionOptions(),
-		cache:       newRenderCache(),
-		macroSlot:   &macroSlot{macros: map[rune][]command.KeyEvent{}},
-		focused:     true,
-		fileWatcher: newEditorFileWatcher(),
-		redraw:      make(chan struct{}, 1),
+		saveSlot:   &saveGenSlot{},
+		completion: DefaultCompletionOptions(),
+		cache:      newRenderCache(),
+		macroSlot:  &macroSlot{macros: map[rune][]command.KeyEvent{}},
+		focused:    true,
+		redraw:     make(chan struct{}, 1),
 		mouse: mouseState{
 			vertical: mouseAutoScrollAxis{
 				scroll: func(e *view.Editor, v *view.View, toLo bool) {
@@ -171,7 +169,7 @@ func newEditorComponent() *EditorComponent {
 func (e *EditorComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
-	e.syncFileWatcher(cx)
+	cx.fileWatcher.sync(cx.Editor)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		return e.handleWindowSize(cx, msg)

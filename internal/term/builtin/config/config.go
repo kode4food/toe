@@ -22,6 +22,7 @@ type uiSection struct {
 		Insecure          *bool            `toml:"insecure"`
 		EditorConfig      *bool            `toml:"editor-config"`
 		AutoSession       *bool            `toml:"auto-session"`
+		FileWatch         *bool            `toml:"file-watch"`
 		DefaultLineEnding core.LineEnding  `toml:"default-line-ending"`
 		CursorShape       view.CursorShape `toml:"cursor-shape"`
 		StatusLine        view.StatusLine  `toml:"statusline"`
@@ -128,6 +129,14 @@ func ConfigurationModule(r *command.Registry) command.Module {
 					e.Options().AutoSession = v
 				},
 			),
+			kit.EditorBoolOption("file-watch",
+				func(e *view.Editor) bool {
+					return e.Options().FileWatch
+				},
+				func(e *view.Editor, v bool) {
+					e.Options().FileWatch = v
+				},
+			),
 			{
 				Key: "default-line-ending",
 				Get: func(e *view.Editor) (string, error) {
@@ -212,6 +221,7 @@ func ConfigurationModule(r *command.Registry) command.Module {
 				opts.AutoSession = kit.BoolOr(
 					cfg.Editor.AutoSession, true,
 				)
+				opts.FileWatch = kit.BoolOr(cfg.Editor.FileWatch, true)
 				opts.DefaultLineEnding = cfg.Editor.DefaultLineEnding
 				opts.CursorShape = view.CursorShape{
 					Normal: cmp.Or(

@@ -80,6 +80,7 @@ func Run(args []string, out io.Writer) error {
 		return err
 	}
 	defer ui.CloseAllTerminalPanes(a.Editor)
+	defer a.Model.Close()
 	if _, err := tea.NewProgram(a.Model).Run(); err != nil {
 		return err
 	}

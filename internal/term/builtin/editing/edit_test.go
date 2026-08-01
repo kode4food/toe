@@ -168,7 +168,6 @@ func TestEditOptions(t *testing.T) {
 	cases := []struct{ key, val string }{
 		{"auto-pairs", "true"},
 		{"continue-comments", "true"},
-		{"auto-save", "true"},
 		{"auto-save.focus-lost", "true"},
 		{"auto-save.after-delay.enable", "true"},
 		{"auto-save.after-delay.timeout", "1000"},
@@ -205,7 +204,7 @@ func TestEditOptions(t *testing.T) {
 
 	t.Run("toggle auto-save", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		res := test.RunCmdArgs(t, km, e, "toggle_option", "auto-save")
+		res := test.RunCmdArgs(t, km, e, "toggle_option", "auto-save.focus-lost")
 		assert.Contains(t, res.Message, "is now set to")
 	})
 }

@@ -150,7 +150,7 @@ func TestFileExplorer(t *testing.T) {
 			filepath.Join(dir, "ignored.txt"), []byte("x"), 0o644,
 		))
 		opts := files.DefaultFileExplorerOptions()
-		opts.Ignore = true
+		opts.IgnoreFiles = true
 
 		out := stripANSI(explorerModel(t, dir, opts).View().Content)
 

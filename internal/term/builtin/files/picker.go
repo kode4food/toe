@@ -19,10 +19,7 @@ type (
 		Hidden         bool `toml:"hidden"`
 		FollowSymlinks bool `toml:"follow-symlinks"`
 		Parents        bool `toml:"parents"`
-		Ignore         bool `toml:"ignore"`
-		GitIgnore      bool `toml:"git-ignore"`
-		GitGlobal      bool `toml:"git-global"`
-		GitExclude     bool `toml:"git-exclude"`
+		IgnoreFiles    bool `toml:"ignore-files"`
 		FlattenDirs    bool `toml:"flatten-dirs"`
 	}
 )
@@ -124,20 +121,8 @@ func PickerModule(model ui.Model) command.Module {
 				&cfg.Editor.FileExplorer.Parents,
 			),
 			fileExplorerBoolOption(
-				"file-explorer.ignore",
-				&cfg.Editor.FileExplorer.Ignore,
-			),
-			fileExplorerBoolOption(
-				"file-explorer.git-ignore",
-				&cfg.Editor.FileExplorer.GitIgnore,
-			),
-			fileExplorerBoolOption(
-				"file-explorer.git-global",
-				&cfg.Editor.FileExplorer.GitGlobal,
-			),
-			fileExplorerBoolOption(
-				"file-explorer.git-exclude",
-				&cfg.Editor.FileExplorer.GitExclude,
+				"file-explorer.ignore-files",
+				&cfg.Editor.FileExplorer.IgnoreFiles,
 			),
 			fileExplorerBoolOption(
 				"file-explorer.flatten-dirs",

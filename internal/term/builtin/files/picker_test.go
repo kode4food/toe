@@ -14,10 +14,7 @@ func TestPickerOptions(t *testing.T) {
 		{key: "file-explorer.hidden", value: "true"},
 		{key: "file-explorer.follow-symlinks", value: "true"},
 		{key: "file-explorer.parents", value: "true"},
-		{key: "file-explorer.ignore", value: "true"},
-		{key: "file-explorer.git-ignore", value: "true"},
-		{key: "file-explorer.git-global", value: "true"},
-		{key: "file-explorer.git-exclude", value: "true"},
+		{key: "file-explorer.ignore-files", value: "true"},
 		{key: "file-explorer.flatten-dirs", value: "false"},
 	}
 	for _, tc := range cases {

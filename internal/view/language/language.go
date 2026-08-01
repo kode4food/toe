@@ -90,8 +90,6 @@ type (
 
 	SoftWrap struct {
 		Enable          *bool   `toml:"enable"`
-		MaxWrap         *int    `toml:"max-wrap"`
-		MaxIndentRetain *int    `toml:"max-indent-retain"`
 		WrapIndicator   *string `toml:"wrap-indicator"`
 		WrapAtTextWidth *bool   `toml:"wrap-at-text-width"`
 	}

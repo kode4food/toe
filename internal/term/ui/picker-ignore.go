@@ -20,12 +20,9 @@ type (
 	}
 
 	PickerIgnoreOptions struct {
-		Hidden     bool
-		Parents    bool
-		Ignore     bool
-		GitIgnore  bool
-		GitGlobal  bool
-		GitExclude bool
+		Hidden      bool
+		Parents     bool
+		IgnoreFiles bool
 	}
 )
 
@@ -103,29 +100,22 @@ func ignorePathForBase(rel, path string, ig PickerIgnore) (string, bool) {
 func LoadIgnoreFiles(
 	root, path string, opts PickerIgnoreOptions,
 ) []PickerIgnore {
+	if !opts.IgnoreFiles {
+		return nil
+	}
 	var ignores []PickerIgnore
 	for _, dir := range ignoreDirs(root, path, opts.Parents) {
-		if opts.Ignore {
-			ignores = appendIgnore(ignores, dir, ".ignore")
-			ignores = appendIgnore(
-				ignores, dir, filepath.Join(loader.WorkspaceDirName, "ignore"),
-			)
-		}
-		if opts.GitIgnore {
-			ignores = appendIgnore(ignores, dir, ".gitignore")
-		}
-	}
-	if opts.GitExclude {
+		ignores = appendIgnore(ignores, dir, ".ignore")
 		ignores = appendIgnore(
-			ignores, root, filepath.Join(".git", "info", "exclude"),
+			ignores, dir, filepath.Join(loader.WorkspaceDirName, "ignore"),
 		)
+		ignores = appendIgnore(ignores, dir, ".gitignore")
 	}
-	if opts.GitGlobal {
-		ignores = appendIgnorePath(ignores, root, gitGlobalIgnorePath())
-	}
-	if opts.Ignore {
-		ignores = appendIgnorePath(ignores, "", loader.ConfigIgnoreFile())
-	}
+	ignores = appendIgnore(
+		ignores, root, filepath.Join(".git", "info", "exclude"),
+	)
+	ignores = appendIgnorePath(ignores, root, gitGlobalIgnorePath())
+	ignores = appendIgnorePath(ignores, "", loader.ConfigIgnoreFile())
 	return ignores
 }
 
@@ -161,8 +151,7 @@ func ignoreDirs(root, path string, parents bool) []string {
 // when a caller does not need to customize it
 func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
 	return PickerIgnoreOptions{
-		Hidden: true, Parents: true, Ignore: true,
-		GitIgnore: true, GitGlobal: true, GitExclude: true,
+		Hidden: true, Parents: true, IgnoreFiles: true,
 	}
 }
 

@@ -154,7 +154,6 @@ func TestWhitespaceRender(t *testing.T) {
 		w := view.WhitespaceRender{}
 		assert.Equal(t, view.WhitespaceRenderNone, w.SpaceRender())
 		assert.Equal(t, view.WhitespaceRenderNone, w.NbspRender())
-		assert.Equal(t, view.WhitespaceRenderNone, w.NnbspRender())
 		assert.Equal(t, view.WhitespaceRenderNone, w.TabRender())
 		assert.Equal(t, view.WhitespaceRenderNone, w.NewlineRender())
 	})
@@ -195,12 +194,10 @@ func TestWhitespaceRender(t *testing.T) {
 		err := w.UnmarshalTOML(map[string]any{
 			"default": "all",
 			"nbsp":    "all",
-			"nnbsp":   "all",
 			"newline": "all",
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, view.WhitespaceRenderAll, w.NbspRender())
-		assert.Equal(t, view.WhitespaceRenderAll, w.NnbspRender())
 		assert.Equal(t, view.WhitespaceRenderAll, w.NewlineRender())
 	})
 
@@ -235,7 +232,6 @@ func TestWhitespaceCharacters(t *testing.T) {
 		w := view.WhitespaceCharacters{}
 		assert.Equal(t, view.DefaultWSSpace, w.SpaceRune())
 		assert.Equal(t, view.DefaultWSNbsp, w.NbspRune())
-		assert.Equal(t, view.DefaultWSNnbsp, w.NnbspRune())
 		assert.Equal(t, view.DefaultWSTab, w.TabRune())
 		assert.Equal(t, view.DefaultWSTabpad, w.TabpadRune())
 		assert.Equal(t, view.DefaultWSNewline, w.NewlineRune())

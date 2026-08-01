@@ -208,8 +208,6 @@ func decodeFileTypes(value any) []FileType {
 func decodeSoftWrap(m map[string]any) SoftWrap {
 	return SoftWrap{
 		Enable:          loader.BoolPtr(m["enable"]),
-		MaxWrap:         loader.IntPtr(m["max-wrap"]),
-		MaxIndentRetain: loader.IntPtr(m["max-indent-retain"]),
 		WrapIndicator:   loader.StringPtr(m["wrap-indicator"]),
 		WrapAtTextWidth: loader.BoolPtr(m["wrap-at-text-width"]),
 	}

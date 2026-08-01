@@ -206,7 +206,6 @@ func TestPickerPreview(t *testing.T) {
 		e := view.NewEditor(tmp)
 		e.Options().SoftWrap.Enable = new(true)
 		e.Options().SoftWrap.WrapIndicator = new("» ")
-		e.Options().SoftWrap.MaxIndentRetain = new(8)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(

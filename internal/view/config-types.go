@@ -48,7 +48,6 @@ type (
 		Default *WhitespaceRenderValue
 		Space   *WhitespaceRenderValue
 		Nbsp    *WhitespaceRenderValue
-		Nnbsp   *WhitespaceRenderValue
 		Tab     *WhitespaceRenderValue
 		Newline *WhitespaceRenderValue
 	}
@@ -58,7 +57,6 @@ type (
 	WhitespaceCharacters struct {
 		Space   string `toml:"space"`
 		Nbsp    string `toml:"nbsp"`
-		Nnbsp   string `toml:"nnbsp"`
 		Tab     string `toml:"tab"`
 		Tabpad  string `toml:"tabpad"`
 		Newline string `toml:"newline"`
@@ -137,7 +135,6 @@ const (
 
 	DefaultWSSpace        = '\u00b7' // '·' - middle dot (·)
 	DefaultWSNbsp         = '\u237d' // '⍽' - shouldered open box (⍽)
-	DefaultWSNnbsp        = '\u2423' // '␣' - open box (␣)
 	DefaultWSTab          = '\u2192' // '→' - rightwards arrow (→)
 	DefaultWSNewline      = '\u23ce' // '⏎' - return symbol (⏎)
 	DefaultWSTabpad  rune = ' '
@@ -348,10 +345,6 @@ func (w *WhitespaceRender) NbspRender() WhitespaceRenderValue {
 	return whitespaceRenderFor(w.Nbsp, w.Default)
 }
 
-func (w *WhitespaceRender) NnbspRender() WhitespaceRenderValue {
-	return whitespaceRenderFor(w.Nnbsp, w.Default)
-}
-
 func (w *WhitespaceRender) TabRender() WhitespaceRenderValue {
 	return whitespaceRenderFor(w.Tab, w.Default)
 }
@@ -387,8 +380,6 @@ func (w *WhitespaceRender) UnmarshalTOML(value any) error {
 				w.Space = &rv
 			case "nbsp":
 				w.Nbsp = &rv
-			case "nnbsp":
-				w.Nnbsp = &rv
 			case "tab":
 				w.Tab = &rv
 			case "newline":
@@ -408,10 +399,6 @@ func (w *WhitespaceCharacters) SpaceRune() rune {
 
 func (w *WhitespaceCharacters) NbspRune() rune {
 	return runeOrDefault(w.Nbsp, DefaultWSNbsp)
-}
-
-func (w *WhitespaceCharacters) NnbspRune() rune {
-	return runeOrDefault(w.Nnbsp, DefaultWSNnbsp)
 }
 
 func (w *WhitespaceCharacters) TabRune() rune {

@@ -388,8 +388,6 @@ func TestTextFormat(t *testing.T) {
 		sw := language.SoftWrap{}
 		sw.Enable = new(true)
 		sw.WrapAtTextWidth = new(true)
-		sw.MaxWrap = new(20)
-		sw.MaxIndentRetain = new(40)
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(

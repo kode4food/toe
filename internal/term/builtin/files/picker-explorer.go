@@ -16,10 +16,7 @@ type (
 		Hidden         bool
 		FollowSymlinks bool
 		Parents        bool
-		Ignore         bool
-		GitIgnore      bool
-		GitGlobal      bool
-		GitExclude     bool
+		IgnoreFiles    bool
 		FlattenDirs    bool
 	}
 
@@ -165,9 +162,9 @@ func (f *fileExplorerSource) readDir() []ui.PickerItem {
 
 func explorerIgnoreOptions(cfg FileExplorerOptions) ui.PickerIgnoreOptions {
 	return ui.PickerIgnoreOptions{
-		Hidden: cfg.Hidden, Parents: cfg.Parents, Ignore: cfg.Ignore,
-		GitIgnore: cfg.GitIgnore, GitGlobal: cfg.GitGlobal,
-		GitExclude: cfg.GitExclude,
+		Hidden:      cfg.Hidden,
+		Parents:     cfg.Parents,
+		IgnoreFiles: cfg.IgnoreFiles,
 	}
 }
 

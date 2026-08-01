@@ -71,14 +71,9 @@ func (r *rowRender) renderGrapheme(
 			return string(wsChars.SpaceRune()), 1, documentGlyphWhitespace
 		}
 		return " ", 1, documentGlyphNone
-	case runeNbsp:
+	case runeNbsp, runeNnbsp:
 		if wsRender.NbspRender() == view.WhitespaceRenderAll {
 			return string(wsChars.NbspRune()), 1, documentGlyphWhitespace
-		}
-		return string(ch), 1, documentGlyphNone
-	case runeNnbsp:
-		if wsRender.NnbspRender() == view.WhitespaceRenderAll {
-			return string(wsChars.NnbspRune()), 1, documentGlyphWhitespace
 		}
 		return string(ch), 1, documentGlyphNone
 	default:

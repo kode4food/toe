@@ -500,24 +500,6 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().SoftWrap.Enable = &v
 				},
 			),
-			kit.EditorNullableIntOption("soft-wrap.max-wrap",
-				language.DefaultMaxWrap,
-				func(e *view.Editor) *int {
-					return e.Options().SoftWrap.MaxWrap
-				},
-				func(e *view.Editor, v *int) {
-					e.Options().SoftWrap.MaxWrap = v
-				},
-			),
-			kit.EditorNullableIntOption("soft-wrap.max-indent-retain",
-				language.DefaultMaxIndentRetain,
-				func(e *view.Editor) *int {
-					return e.Options().SoftWrap.MaxIndentRetain
-				},
-				func(e *view.Editor, v *int) {
-					e.Options().SoftWrap.MaxIndentRetain = v
-				},
-			),
 			{
 				Key: "soft-wrap.wrap-indicator",
 				Get: func(e *view.Editor) (string, error) {
@@ -610,7 +592,6 @@ func ViewModule(model ui.Model) command.Module {
 					ws.Render.Default = &rv
 					ws.Render.Space = nil
 					ws.Render.Nbsp = nil
-					ws.Render.Nnbsp = nil
 					ws.Render.Tab = nil
 					ws.Render.Newline = nil
 					return nil
@@ -634,14 +615,6 @@ func ViewModule(model ui.Model) command.Module {
 				},
 				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
 					w.Nbsp = v
-				},
-			),
-			whitespaceRenderOption("whitespace.render.nnbsp",
-				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
-					return w.NnbspRender()
-				},
-				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
-					w.Nnbsp = v
 				},
 			),
 			whitespaceRenderOption("whitespace.render.tab",
@@ -674,14 +647,6 @@ func ViewModule(model ui.Model) command.Module {
 				},
 				func(o *view.Options, s string) {
 					o.Whitespace.Characters.Nbsp = s
-				},
-			),
-			runeOption("whitespace.characters.nnbsp",
-				func(o *view.Options) rune {
-					return o.Whitespace.Characters.NnbspRune()
-				},
-				func(o *view.Options, s string) {
-					o.Whitespace.Characters.Nnbsp = s
 				},
 			),
 			runeOption("whitespace.characters.tab",

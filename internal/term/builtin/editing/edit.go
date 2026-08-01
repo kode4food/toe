@@ -335,14 +335,6 @@ func EditModule() command.Module {
 					e.Options().ContinueComments = v
 				},
 			),
-			kit.EditorBoolOption("auto-save",
-				func(e *view.Editor) bool {
-					return e.Options().AutoSaveFocusLost
-				},
-				func(e *view.Editor, v bool) {
-					e.Options().AutoSaveFocusLost = v
-				},
-			),
 			kit.EditorBoolOption("auto-save.focus-lost",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSaveFocusLost

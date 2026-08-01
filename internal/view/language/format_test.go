@@ -85,26 +85,6 @@ func TestTextFormatForConfig(t *testing.T) {
 		assert.False(t, f.SoftWrapAtTextWidth)
 	})
 
-	t.Run("max wrap from language", func(t *testing.T) {
-		lang := &language.Language{
-			SoftWrap: language.SoftWrap{MaxWrap: new(5)},
-		}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
-		assert.Equal(t, 5, f.MaxWrap)
-	})
-
-	t.Run("max indent retain from language", func(t *testing.T) {
-		lang := &language.Language{
-			SoftWrap: language.SoftWrap{MaxIndentRetain: new(10)},
-		}
-		f := language.TextFormatForConfig(
-			lang, nil, language.SoftWrap{}, 80,
-		)
-		assert.Equal(t, 10, f.MaxIndentRetain)
-	})
-
 	t.Run("text width from language", func(t *testing.T) {
 		lang := &language.Language{TextWidth: new(60)}
 		f := language.TextFormatForConfig(

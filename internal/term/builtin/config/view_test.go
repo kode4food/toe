@@ -138,8 +138,6 @@ func TestViewOptions(t *testing.T) {
 		{"cursorcolumn", "true"},
 		{"text-width", "72"},
 		{"soft-wrap.enable", "true"},
-		{"soft-wrap.max-wrap", "10"},
-		{"soft-wrap.max-indent-retain", "20"},
 		{"soft-wrap.wrap-at-text-width", "true"},
 		{"bufferline", "always"},
 	}

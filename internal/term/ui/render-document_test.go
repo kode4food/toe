@@ -1353,7 +1353,6 @@ func TestSoftWrapRender(t *testing.T) {
 	t.Run("renders continuation rows", func(t *testing.T) {
 		e := editorWithText(t, "alpha bravo charlie delta echo\n")
 		e.Options().SoftWrap.Enable = new(true)
-		e.Options().SoftWrap.MaxWrap = new(4)
 		e.Options().SoftWrap.WrapIndicator = new(">> ")
 		m := resize(ui.New(e, command.NewKeymaps()), 18, 8)
 

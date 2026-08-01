@@ -40,16 +40,6 @@ func TextFormatForConfig(
 	enabled := boolValue(lang.SoftWrap.Enable, softWrap.Enable, false)
 	format := DefaultTextFormat(w)
 	format.SoftWrap = enabled && w > MinSoftWrapWidth
-	format.MaxWrap = min(
-		intValue(lang.SoftWrap.MaxWrap, softWrap.MaxWrap, DefaultMaxWrap),
-		w/4,
-	)
-	retain := intValue(
-		lang.SoftWrap.MaxIndentRetain,
-		softWrap.MaxIndentRetain,
-		DefaultMaxIndentRetain,
-	)
-	format.MaxIndentRetain = min(retain, w*2/5)
 	format.WrapIndicator = stringValue(
 		lang.SoftWrap.WrapIndicator, softWrap.WrapIndicator,
 		DefaultWrapIndicator,

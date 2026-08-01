@@ -112,8 +112,6 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | Config key | Type | Default | Description |
 |--------|------|---------|-------------|
 | `soft-wrap.enable` | bool | `false` | Enable soft wrap |
-| `soft-wrap.max-wrap` | int | `20` | Maximum visual indentation when wrapping |
-| `soft-wrap.max-indent-retain` | int | `40` | Max indent levels to retain |
 | `soft-wrap.wrap-indicator` | string | `"↪ "` | Continuation indicator |
 | `soft-wrap.wrap-at-text-width` | bool | `false` | Wrap at `text-width` instead of window width |
 
@@ -128,7 +126,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `gutters.layout` | string[] | built-in | Ordered list of `diagnostics`, `line-numbers`, `diff`, and `spacer` gutters |
 | `gutters.line-numbers.min-width` | int | `3` | Minimum gutter width |
 
-Whitespace rendering can be set separately for `space`, `nbsp`, `nnbsp`, `tab`, and `newline`, and each display character can be replaced:
+Whitespace rendering can be set separately for `space`, `nbsp`, `tab`, and `newline`, and each display character can be replaced:
 
 ```toml
 [editor.whitespace]
@@ -137,7 +135,6 @@ render = { default = "none", tab = "all", newline = "all" }
 [editor.whitespace.characters]
 space = "·"
 nbsp = "⍽"
-nnbsp = "␣"
 tab = "→"
 tabpad = " "
 newline = "⏎"
@@ -178,7 +175,6 @@ At runtime, `auto-pairs` accepts a boolean or an inline table of custom pairs.
 
 | Config key | Type | Default | Description |
 |--------|------|---------|-------------|
-| `auto-save` | bool | `false` | Save when focus is lost (alias for `auto-save.focus-lost`) |
 | `auto-save.focus-lost` | bool | `false` | Save when focus leaves the view |
 | `auto-save.after-delay.enable` | bool | `false` | Save after idle delay |
 | `auto-save.after-delay.timeout` | int | `3000` | Idle delay in milliseconds |
@@ -252,10 +248,7 @@ Picker split ratios can be changed at runtime with commands such as `:set picker
 | `file-explorer.hidden` | bool | `false` | Show hidden files |
 | `file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |
 | `file-explorer.parents` | bool | `false` | Include parent directories |
-| `file-explorer.ignore` | bool | `false` | Respect `.ignore` files |
-| `file-explorer.git-ignore` | bool | `false` | Respect `.gitignore` |
-| `file-explorer.git-global` | bool | `false` | Respect global gitignore |
-| `file-explorer.git-exclude` | bool | `false` | Respect git exclude rules |
+| `file-explorer.ignore-files` | bool | `false` | Respect `.ignore`, `.gitignore`, and git exclude rules |
 | `file-explorer.flatten-dirs` | bool | `true` | Collapse single-child directories |
 
 ### Shell

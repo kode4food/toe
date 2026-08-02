@@ -23,11 +23,18 @@ type (
 )
 
 var (
-	diagnosticSeverityTexts = [...]string{
-		view.DiagnosticSeverityHint:    "HINT",
-		view.DiagnosticSeverityInfo:    "INFO",
-		view.DiagnosticSeverityWarning: "WARN",
-		view.DiagnosticSeverityError:   "ERROR",
+	diagnosticSeverityIcons = [...]string{
+		view.DiagnosticSeverityHint:    "\uea61", // '' - cod-lightbulb
+		view.DiagnosticSeverityInfo:    "\uea74", // '' - cod-info
+		view.DiagnosticSeverityWarning: "\uea6c", // '' - cod-warning
+		view.DiagnosticSeverityError:   "\uea87", // '' - cod-error
+	}
+
+	diagnosticSeverityASCII = [...]string{
+		view.DiagnosticSeverityHint:    "H",
+		view.DiagnosticSeverityInfo:    "I",
+		view.DiagnosticSeverityWarning: "W",
+		view.DiagnosticSeverityError:   "E",
 	}
 
 	diagnosticSeverityScopes = [...]string{
@@ -90,17 +97,15 @@ func (d *diagnosticPickerSource) item(
 ) ui.PickerItem {
 	name := doc.RelativeName(e.Cwd())
 	line, lines := diagnosticLineRange(doc.Text(), diag)
-	display := fmt.Sprintf(
-		"%s:%d %s %s", name, line+1, diagnosticSeverityText(diag.Severity),
-		diag.Message,
-	)
+	display := fmt.Sprintf("%s:%d %s", name, line+1, diag.Message)
 	columns := []string{
-		diagnosticSeverityText(diag.Severity), diag.Source, "", diag.Message,
+		diagnosticSeverityIcon(diag.Severity, e.Options().NerdFonts),
+		diag.Message,
 	}
-	scopes := []string{diagnosticSeverityScope(diag.Severity), "", "", ""}
+	scopes := []string{diagnosticSeverityScope(diag.Severity), ""}
 	if d.workspace {
-		columns = slices.Insert(columns, 3, name)
-		scopes = slices.Insert(scopes, 3, "")
+		columns = append(columns, name)
+		scopes = append(scopes, "ui.picker.secondary")
 	}
 	return ui.PickerItem{
 		Display:     display,
@@ -117,16 +122,17 @@ func (d *diagnosticPickerSource) item(
 
 func newDiagnosticPicker(e *view.Editor, workspace bool) *ui.Picker {
 	id := "diagnostics"
-	matchColumn := 3
-	proportions := []int{0, 0, 0, 1}
+	columns := []string{"", ""}
+	matchColumn := 1
+	proportions := []int{0, 1}
 	if workspace {
 		id = "workspace-diagnostics"
-		matchColumn = 4
-		proportions = []int{0, 0, 0, 1, 2}
+		columns = []string{"", "message", "path"}
+		proportions = []int{0, 2, 1}
 	}
 	return ui.NewPicker(e, &diagnosticPickerSource{
 		PickerBase: ui.NewPickerBase(
-			id, diagnosticPickerColumns(workspace), matchColumn, proportions,
+			id, columns, matchColumn, proportions,
 		),
 		workspace: workspace,
 	})
@@ -146,14 +152,6 @@ func diagnosticPickerDocuments(
 		return []*view.Document{doc}
 	}
 	return nil
-}
-
-func diagnosticPickerColumns(workspace bool) []string {
-	cols := []string{"severity", "source", "code", "message"}
-	if workspace {
-		return slices.Insert(cols, 3, "path")
-	}
-	return cols
 }
 
 func sortDiagnosticPickerItems(items []ui.PickerItem) {
@@ -192,11 +190,15 @@ func diagnosticSelection(diag view.Diagnostic) (core.Selection, error) {
 	)
 }
 
-func diagnosticSeverityText(sev view.DiagnosticSeverity) string {
-	if sev <= 0 || int(sev) >= len(diagnosticSeverityTexts) {
-		return "HINT"
+func diagnosticSeverityIcon(sev view.DiagnosticSeverity, nerd bool) string {
+	icons := diagnosticSeverityIcons
+	if !nerd {
+		icons = diagnosticSeverityASCII
 	}
-	return diagnosticSeverityTexts[sev]
+	if sev <= 0 || int(sev) >= len(icons) {
+		return icons[view.DiagnosticSeverityHint]
+	}
+	return icons[sev]
 }
 
 func diagnosticSeverityScope(sev view.DiagnosticSeverity) string {

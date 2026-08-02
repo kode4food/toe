@@ -85,7 +85,11 @@ func TestDiagnosticPicker(t *testing.T) {
 
 		assert.Contains(t, out, "bad a")
 		assert.Contains(t, out, "bad b")
-		assert.Contains(t, out, "severity")
+		assert.NotContains(t, out, "code")
+		assert.NotContains(t, out, "source")
+		assert.Contains(t, out, "message")
+		assert.Contains(t, out, "path")
+		assert.Less(t, strings.Index(out, "message"), strings.Index(out, "path"))
 	})
 
 	for _, tc := range []struct {
@@ -93,10 +97,10 @@ func TestDiagnosticPicker(t *testing.T) {
 		sev  view.DiagnosticSeverity
 		want string
 	}{
-		{"colors error severity", view.DiagnosticSeverityError, "ERROR"},
-		{"colors warning severity", view.DiagnosticSeverityWarning, "WARN"},
-		{"colors info severity", view.DiagnosticSeverityInfo, "INFO"},
-		{"colors hint severity", view.DiagnosticSeverityHint, "HINT"},
+		{"error icon", view.DiagnosticSeverityError, ""},
+		{"warning icon", view.DiagnosticSeverityWarning, ""},
+		{"info icon", view.DiagnosticSeverityInfo, ""},
+		{"hint icon", view.DiagnosticSeverityHint, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
@@ -119,7 +123,9 @@ func TestDiagnosticPicker(t *testing.T) {
 			})
 
 			m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
-			assert.Contains(t, stripANSI(m.View().Content), tc.want)
+			out := stripANSI(m.View().Content)
+			assert.Contains(t, out, tc.want)
+			assert.NotContains(t, out, "message")
 		})
 	}
 }

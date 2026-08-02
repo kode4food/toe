@@ -203,10 +203,12 @@ func (l *lspWorkspaceSymbolSource) item(
 	kind := symbolKind(sym.Kind)
 	icon := completionKindIcon(kind, e.Options().NerdFonts)
 	return PickerItem{
-		Display:     fmt.Sprintf("%s:%d %s", path, line+1, sym.Name),
-		Columns:     []string{icon, sym.Name, path},
-		StyleScopes: []string{completionKindStyleScope(kind), "", ""},
-		SortKey:     sym.Name,
+		Display: fmt.Sprintf("%s:%d %s", path, line+1, sym.Name),
+		Columns: []string{icon, sym.Name, path},
+		StyleScopes: []string{
+			completionKindStyleScope(kind), "", "ui.picker.secondary",
+		},
+		SortKey: sym.Name,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},
 			Lines:  lines,

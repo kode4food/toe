@@ -19,8 +19,12 @@ import (
 type (
 	noPreviewPickerSource struct{}
 
-	columnPickerSource struct{}
+	columnPickerSource struct {
+		outlier bool
+	}
 )
+
+const outlierPickerColumn = "an-extraordinarily-long-symbol-kind"
 
 func TestPickerRender(t *testing.T) {
 	t.Run("file picker preview pane", func(t *testing.T) {
@@ -218,8 +222,42 @@ func TestPickerRender(t *testing.T) {
 
 		assert.Contains(t, out, "uvwxyz")
 		assert.Contains(t, out, " > go")
-		assert.Contains(t, out, "internal/ter")
+		assert.Contains(t, out, "kind path description")
+		assert.Contains(t, out, "inte")
 		assert.Contains(t, out, "non")
+	})
+
+	t.Run("content columns ignore outliers", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "column_picker",
+			m.PickerAction(func(e *view.Editor) *ui.Picker {
+				return ui.NewPicker(e, columnPickerSource{outlier: true})
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 30, 12)
+		m = sendKey(m, 'p')
+		narrow := stripANSI(m.View().Content)
+
+		assert.Contains(t, narrow, "kind path description")
+		assert.Contains(t, narrow, "inte")
+		assert.NotContains(t, narrow, outlierPickerColumn)
+
+		m = resize(m, 220, 12)
+		m = dragPickerSplit(m, 110, 180)
+		wide := stripANSI(m.View().Content)
+
+		assert.Contains(t, wide, outlierPickerColumn)
+		assert.Contains(t, wide,
+			"internal/term/ui/picker-render-with-a-very-long-name.go",
+		)
+		assert.Contains(t, wide,
+			"non-primary columns clip before the primary one",
+		)
 	})
 }
 
@@ -269,10 +307,10 @@ func (columnPickerSource) ColumnProportions() []int {
 	return []int{0, 4, 1}
 }
 
-func (columnPickerSource) Load(
+func (c columnPickerSource) Load(
 	*view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	return []ui.PickerItem{{
+	items := []ui.PickerItem{{
 		Display: "first",
 		Columns: []string{
 			"go",
@@ -282,7 +320,27 @@ func (columnPickerSource) Load(
 	}, {
 		Display: "second",
 		Columns: []string{"txt", "README.md", "short"},
-	}}, nil, func() {}
+	}}
+	if c.outlier {
+		items[0].Columns[0] = outlierPickerColumn
+		for range 14 {
+			items = append(items, ui.PickerItem{
+				Display: "ordinary",
+				Columns: []string{"go", "ordinary.go", "ordinary"},
+			})
+		}
+		for range 4 {
+			items = append(items, ui.PickerItem{
+				Display: "outlier",
+				Columns: []string{
+					outlierPickerColumn,
+					"outlier.go",
+					"outlier",
+				},
+			})
+		}
+	}
+	return items, nil, func() {}
 }
 
 func (columnPickerSource) PrepareMatcher(string) ui.PickerMatcher {

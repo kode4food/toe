@@ -153,44 +153,44 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Move page up",
 				Run:       kit.Runner(action.PageUp),
 				Modes:     command.DocModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(kit.Ctrl('b'), kit.PgUp),
 					kit.Or(z(kit.Ctrl('b')), z(kit.PgUp)),
 					kit.Or(Z(kit.Ctrl('b')), Z(kit.PgUp)),
-				}},
+				)},
 			},
 			{
 				Name:      actPageDown,
 				DocString: "Move page down",
 				Run:       kit.Runner(action.PageDown),
 				Modes:     command.DocModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(kit.Ctrl('f'), kit.PgDn),
 					kit.Or(z(kit.Ctrl('f')), z(kit.PgDn)),
 					kit.Or(Z(kit.Ctrl('f')), Z(kit.PgDn)),
-				}},
+				)},
 			},
 			{
 				Name:      actPageCursorHalfUp,
 				DocString: "Move page and cursor half up",
 				Run:       kit.Runner(action.PageCursorHalfUp),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(kit.Ctrl('u')),
 					kit.Or(z(kit.Ctrl('u')), z(kit.Bksp)),
 					kit.Or(Z(kit.Ctrl('u')), Z(kit.Bksp)),
-				}},
+				)},
 			},
 			{
 				Name:      actPageCursorHalfDown,
 				DocString: "Move page and cursor half down",
 				Run:       kit.Runner(action.PageCursorHalfDown),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(kit.Ctrl('d')),
 					kit.Or(z(kit.Ctrl('d')), z(kit.Char(' '))),
 					kit.Or(Z(kit.Ctrl('d')), Z(kit.Char(' '))),
-				}},
+				)},
 			},
 			{
 				Name:      actHalfPageUp,
@@ -223,66 +223,66 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Align view center",
 				Run:       kit.Runner(action.AlignViewCenter),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('z')), z(kit.Char('c'))),
 					kit.Or(Z(kit.Char('z')), Z(kit.Char('c'))),
-				}},
+				)},
 			},
 			{
 				Name:      actCenterCursorLineTop,
 				DocString: "Align view top",
 				Run:       kit.Runner(action.AlignViewTop),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('.')), z(kit.Char('t'))),
 					kit.Or(Z(kit.Char('.')), Z(kit.Char('t'))),
-				}},
+				)},
 			},
 			{
 				Name:      actCenterCursorLineBottom,
 				DocString: "Align view bottom",
 				Run:       kit.Runner(action.AlignViewBottom),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('b'))),
 					kit.Or(Z(kit.Char('b'))),
-				}},
+				)},
 			},
 			{
 				Name:      actScrollUp,
 				DocString: "Scroll view up",
 				Run:       kit.Runner(action.ScrollUp),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('k')), z(kit.Up)),
 					kit.Or(Z(kit.Char('k')), Z(kit.Up)),
-				}},
+				)},
 			},
 			{
 				Name:      actScrollDown,
 				DocString: "Scroll view down",
 				Run:       kit.Runner(action.ScrollDown),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('j')), z(kit.Down)),
 					kit.Or(Z(kit.Char('j')), Z(kit.Down)),
-				}},
+				)},
 			},
 			{
 				Name:      actTerminal,
 				DocString: "Open a new terminal",
-				Run:       kit.Continuation(model.TerminalAction()),
+				Run:       kit.Runner(model.TerminalAction),
 				Modes:     command.CmdKeyModes,
-				Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(Cw(kit.Char('x'))),
 					kit.Or(Spcw(kit.Char('x'))),
-				}},
+				)},
 				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actTerminalSearch,
 				DocString: "Search focused terminal's scrollback",
-				Run:       kit.Continuation(model.TerminalSearchAction()),
+				Run:       kit.Runner(model.TerminalSearchAction),
 				Modes:     view.ModeTerminal,
 				Keys:      kit.Window(kit.Char('/')),
 				Signature: command.DefaultSignature(),

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -38,6 +39,9 @@ type (
 	// KeyAction handles a key sequence and may return a continuation
 	KeyAction func(*view.Editor) Continuation
 
+	// KeyResultAction handles a key sequence and returns its command result
+	KeyResultAction func(*view.Editor) Result
+
 	// KeyBinding describes default key sequences for a command
 	KeyBinding [][]KeyEvent
 )
@@ -65,6 +69,11 @@ const (
 	End
 	PageUp
 	PageDown
+)
+
+var (
+	// ErrInvalidKey reports malformed keycap notation
+	ErrInvalidKey = i18n.NewError(i18n.ErrorInvalidKey)
 )
 
 // specialNames gives the compact keycap form for each special key, indexed by
@@ -97,10 +106,6 @@ func (k KeyModifiers) Has(mod KeyModifiers) bool {
 	return k&mod != 0
 }
 
-func (k KeyModifiers) HasOnly(mod KeyModifiers) bool {
-	return k == mod
-}
-
 func (k KeyCode) String() string {
 	if k.Char == ' ' {
 		return "spc"
@@ -120,7 +125,7 @@ func (k KeyEvent) String() string {
 		parts = append(parts, "A")
 	}
 	if k.Mods.Has(ModShift) {
-		if !k.Mods.HasOnly(ModShift) || !unicode.IsUpper(k.Code.Char) {
+		if k.Mods != ModShift || !unicode.IsUpper(k.Code.Char) {
 			parts = append(parts, "S")
 		}
 	}
@@ -145,4 +150,67 @@ func (k KeyEvent) WithMods(m KeyModifiers) KeyEvent {
 // ModShift alone is fine; it is already reflected in the Char value
 func (k KeyEvent) IsTypable() bool {
 	return k.Code.Char != 0 && !k.Mods.Has(ModCtrl) && !k.Mods.Has(ModAlt)
+}
+
+// ParseKeySequence parses a space-separated sequence of keycap names
+func ParseKeySequence(input string) ([]KeyEvent, error) {
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return nil, ErrInvalidKey
+	}
+	res := make([]KeyEvent, len(parts))
+	for i, part := range parts {
+		key, err := parseKey(part)
+		if err != nil {
+			return nil, err
+		}
+		res[i] = key
+	}
+	return res, nil
+}
+
+func parseKey(input string) (KeyEvent, error) {
+	s := input
+	var mods KeyModifiers
+	for len(s) > 2 {
+		var mod KeyModifiers
+		switch s[:2] {
+		case "C-":
+			mod = ModCtrl
+		case "A-":
+			mod = ModAlt
+		case "S-":
+			mod = ModShift
+		default:
+			goto parseCode
+		}
+		if mods.Has(mod) {
+			return KeyEvent{}, fmt.Errorf("%w: %s", ErrInvalidKey, input)
+		}
+		mods |= mod
+		s = s[2:]
+	}
+
+parseCode:
+	if s == "spc" {
+		return KeyEvent{Code: KeyCode{Char: ' '}, Mods: mods}, nil
+	}
+	for special, name := range specialNames {
+		if special != int(SpecialUnknown) && name == s {
+			return KeyEvent{
+				Code: KeyCode{Special: Special(special)}, Mods: mods,
+			}, nil
+		}
+	}
+	runes := []rune(s)
+	if len(runes) != 1 {
+		return KeyEvent{}, fmt.Errorf("%w: %s", ErrInvalidKey, input)
+	}
+	ch := runes[0]
+	if unicode.IsUpper(ch) {
+		mods |= ModShift
+	} else if mods.Has(ModShift) {
+		ch = unicode.ToUpper(ch)
+	}
+	return KeyEvent{Code: KeyCode{Char: ch}, Mods: mods}, nil
 }

@@ -110,9 +110,9 @@ func CursorModule() command.Module {
 				DocString: "Move left",
 				Run:       kit.Runner(action.MoveLeft),
 				Modes:     view.ModeNormal | view.ModeInsert,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny:    kit.KeyBinding(kit.Char('h'), kit.Left),
-					view.ModeInsert: kit.KeyBinding(kit.Left),
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny:    kit.Or(kit.Char('h'), kit.Left),
+					view.ModeInsert: kit.Left,
 				},
 			},
 			{
@@ -120,9 +120,9 @@ func CursorModule() command.Module {
 				DocString: "Move down",
 				Run:       kit.Runner(action.MoveDown),
 				Modes:     view.ModeNormal | view.ModeInsert,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny:    kit.KeyBinding(kit.Char('j'), kit.Down),
-					view.ModeInsert: kit.KeyBinding(kit.Down),
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny:    kit.Or(kit.Char('j'), kit.Down),
+					view.ModeInsert: kit.Down,
 				},
 			},
 			{
@@ -130,9 +130,9 @@ func CursorModule() command.Module {
 				DocString: "Move up",
 				Run:       kit.Runner(action.MoveUp),
 				Modes:     view.ModeNormal | view.ModeInsert,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny:    kit.KeyBinding(kit.Char('k'), kit.Up),
-					view.ModeInsert: kit.KeyBinding(kit.Up),
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny:    kit.Or(kit.Char('k'), kit.Up),
+					view.ModeInsert: kit.Up,
 				},
 			},
 			{
@@ -140,9 +140,9 @@ func CursorModule() command.Module {
 				DocString: "Move right",
 				Run:       kit.Runner(action.MoveRight),
 				Modes:     view.ModeNormal | view.ModeInsert,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny:    kit.KeyBinding(kit.Char('l'), kit.Right),
-					view.ModeInsert: kit.KeyBinding(kit.Right),
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny:    kit.Or(kit.Char('l'), kit.Right),
+					view.ModeInsert: kit.Right,
 				},
 			},
 			{
@@ -276,21 +276,21 @@ func CursorModule() command.Module {
 			{
 				Name:      actGotoLine,
 				DocString: "Goto line",
-				Run:       kit.Continuation(gotoLineAction),
+				Run:       kit.Runner(gotoLineAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('G')),
 			},
 			{
 				Name:      actGotoLineOrFileStart,
 				DocString: "Goto line number `<n>` else file start",
-				Run:       kit.Continuation(gotoLineOrFileStartAction),
+				Run:       kit.Runner(gotoLineOrFileStartAction),
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(g(kit.Char('g'))),
 			},
 			{
 				Name:      actGotoFile,
 				DocString: "Goto files/URLs in selections",
-				Run:       kit.Continuation(gotoFileAction),
+				Run:       kit.Runner(gotoFileAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('f'))),
 			},
@@ -563,7 +563,7 @@ func CursorModule() command.Module {
 			{
 				Name:      actGotoLineOrExtendFileStart,
 				DocString: "Extend to line number `<n>` else file start",
-				Run:       kit.Continuation(gotoLineOrExtendFileStartAction),
+				Run:       kit.Runner(gotoLineOrExtendFileStartAction),
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(g(kit.Char('g'))),
 			},
@@ -640,32 +640,29 @@ func CursorModule() command.Module {
 	}
 }
 
-func gotoLineAction(e *view.Editor) command.Continuation {
+func gotoLineAction(e *view.Editor) {
 	if n := e.Count(); n > 0 {
 		action.GotoLine(e, n)
 	}
 	e.ResetCount()
-	return nil
 }
 
-func gotoLineOrFileStartAction(e *view.Editor) command.Continuation {
+func gotoLineOrFileStartAction(e *view.Editor) {
 	if n := e.Count(); n > 0 {
 		action.GotoLine(e, n)
 	} else {
 		action.MoveFileStart(e)
 	}
 	e.ResetCount()
-	return nil
 }
 
-func gotoLineOrExtendFileStartAction(e *view.Editor) command.Continuation {
+func gotoLineOrExtendFileStartAction(e *view.Editor) {
 	if n := e.Count(); n > 0 {
 		action.GotoLine(e, n)
 	} else {
 		action.ExtendToFileStart(e)
 	}
 	e.ResetCount()
-	return nil
 }
 
 func findCharAction(fwd, inc, ext bool) command.KeyAction {
@@ -703,20 +700,19 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 	}
 }
 
-func gotoFileAction(e *view.Editor) command.Continuation {
+func gotoFileAction(e *view.Editor) {
 	target, err := action.GotoFileTarget(e)
 	if err != nil {
 		e.SetStatusMsg(i18n.ErrorText(err))
-		return nil
+		return
 	}
 	if target.URL != "" {
 		if err := action.OpenExternalURL(target.URL); err != nil {
 			e.SetStatusMsg(i18n.ErrorText(err))
 		}
-		return nil
+		return
 	}
 	if _, err := e.OpenFile(target.Path); err != nil {
 		e.SetStatusMsg(i18n.ErrorText(err))
 	}
-	return nil
 }

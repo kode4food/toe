@@ -66,7 +66,7 @@ func TestCommandPaletteAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "palette", m.CommandPaletteAction(),
+			km, "palette", m.CommandPaletteAction,
 			[]command.KeyEvent{char('f')},
 		)
 		m = resize(m, 80, 24)
@@ -82,7 +82,7 @@ func TestLastPickerAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "last", m.LastPickerAction(), []command.KeyEvent{char('l')},
+			km, "last", m.LastPickerAction, []command.KeyEvent{char('l')},
 		)
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'l')
@@ -94,11 +94,11 @@ func TestLastPickerAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "palette", m.CommandPaletteAction(),
+			km, "palette", m.CommandPaletteAction,
 			[]command.KeyEvent{char('f')},
 		)
 		bindNormalTestAction(
-			km, "last", m.LastPickerAction(), []command.KeyEvent{char('l')},
+			km, "last", m.LastPickerAction, []command.KeyEvent{char('l')},
 		)
 		m = resize(m, 80, 24)
 		m = sendKey(m, 'f')
@@ -117,11 +117,12 @@ func TestShellAction(t *testing.T) {
 		_ = km.Register("shell", command.Command{
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				fn := func(_ *view.Editor, _ string) error { return nil }
-				return command.Result{Continuation: m.ShellAction("$", fn)(e)}
+				m.ShellAction("$", fn)(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {[][]command.KeyEvent{{char('!')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char('!')}},
 			},
 		})
 		m = resize(m, 80, 24)

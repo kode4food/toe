@@ -67,15 +67,13 @@ func commandKeyString(km *command.Keymaps, mode view.Mode, name string) string {
 	return commandModeKeyString(km.Bindings(mode, name))
 }
 
-func commandModeKeyString(bindings []command.KeyBinding) string {
+func commandModeKeyString(bindings command.KeyBinding) string {
 	parts := make([]string, 0, len(bindings))
-	for _, binding := range bindings {
-		for _, seq := range binding {
-			if len(seq) == 0 {
-				continue
-			}
-			parts = append(parts, commandKeySeqString(seq))
+	for _, seq := range bindings {
+		if len(seq) == 0 {
+			continue
 		}
+		parts = append(parts, commandKeySeqString(seq))
 	}
 	return strings.Join(parts, " ")
 }

@@ -735,7 +735,10 @@ func TestEditorConfigReload(t *testing.T) {
 	t.Run("reload fn is called", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		called := false
-		e.SetConfigReload(func() error { called = true; return nil })
+		e.SetConfigReload(func() error {
+			called = true
+			return nil
+		})
 		assert.NoError(t, e.ReloadConfig())
 		assert.True(t, called)
 	})

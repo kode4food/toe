@@ -65,20 +65,21 @@ func (e *EditorComponent) handleKeyPress(
 	}
 
 	e.keys.pending = append(e.keys.pending, k)
-	act, found, prefix := cx.Keymaps.Lookup(mode, e.keys.pending)
+	lookup, ok := cx.Keymaps.Lookup(mode, e.keys.pending)
 	switch {
-	case found:
+	case ok:
 		e.keys.pending = nil
 		e.keys.status = ""
 		e.clearCommandMessage()
 		e.keys.infoTitle = ""
 		e.keys.infoItems = nil
-		cont := act(cx.Editor)
-		e.keys.continuation = cont
-		if cont == nil {
+		res := lookup.Action(cx.Editor)
+		e.keys.continuation = res.Continuation
+		if res.Continuation == nil {
 			e.keys.hint = ""
 			cx.Editor.ResetCount()
 		}
+		e.setCommandResult(res)
 		e.syncEditorMessages(cx)
 		e.handleReplay(cx)
 
@@ -90,11 +91,11 @@ func (e *EditorComponent) handleKeyPress(
 					comp.Push(layer)
 				}
 				return cmd
-			}), nil
+			}), signalToCmd(res.Signal)
 		}
-		return consumed(), nil
+		return consumed(), signalToCmd(res.Signal)
 
-	case prefix:
+	case lookup.Prefix:
 		if mode == view.ModeInsert && len(e.keys.pending) == 1 {
 			if e.keys.pending[0].IsTypable() {
 				if layer := e.insertTypable(
@@ -154,10 +155,10 @@ func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
 	if cx.Editor.Mode() == view.ModeTerminal && k.Mods == command.ModNone {
 		return false
 	}
-	_, found, prefix := cx.Keymaps.Lookup(
+	lookup, ok := cx.Keymaps.Lookup(
 		cx.Editor.Mode(), []command.KeyEvent{k},
 	)
-	return found || prefix
+	return ok || lookup.Prefix
 }
 
 func (e *EditorComponent) insertTypable(

@@ -41,30 +41,30 @@ func SearchModule(model ui.Model) command.Module {
 			{
 				Name:      actCommandMode,
 				DocString: "Enter command mode",
-				Run:       kit.Continuation(model.CmdModeAction()),
+				Run:       kit.Runner(model.CmdModeAction),
 				Modes:     command.CmdKeyModes,
 				Keys:      kit.Keys(kit.Char(':')),
 			},
 			{
 				Name:      actSearch,
 				DocString: "Search for regex pattern",
-				Run:       kit.Continuation(model.SearchAction(true)),
+				Run:       kit.Runner(model.SearchAction(true)),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny: kit.Or(
 						kit.Char('/'), z(kit.Char('/')), Z(kit.Char('/')),
-					},
+					),
 				},
 			},
 			{
 				Name:      actSearchReverse,
 				DocString: "Reverse search for regex pattern",
-				Run:       kit.Continuation(model.SearchAction(false)),
+				Run:       kit.Runner(model.SearchAction(false)),
 				Modes:     command.DocNormalModes,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny: kit.Or(
 						kit.Char('?'), z(kit.Char('?')), Z(kit.Char('?')),
-					},
+					),
 				},
 			},
 			{
@@ -72,10 +72,10 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Select next search match",
 				Run:       kit.Runner(action.SearchNext),
 				Modes:     view.ModeNormal,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny: kit.Or(
 						kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n')),
-					},
+					),
 				},
 			},
 			{
@@ -83,10 +83,10 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Select previous search match",
 				Run:       kit.Runner(action.SearchPrev),
 				Modes:     view.ModeNormal,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny: kit.Or(
 						kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N')),
-					},
+					),
 				},
 			},
 			{
@@ -116,10 +116,10 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Add next search match to selection",
 				Run:       kit.Runner(action.ExtendSearchNext),
 				Modes:     view.ModeSelect,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny: kit.Or(
 						kit.Char('n'), z(kit.Char('n')), Z(kit.Char('n')),
-					},
+					),
 				},
 			},
 			{
@@ -127,10 +127,10 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Add previous search match to selection",
 				Run:       kit.Runner(action.ExtendSearchPrev),
 				Modes:     view.ModeSelect,
-				Keys: map[view.Mode][]command.KeyBinding{
-					view.ModeAny: {
+				Keys: map[view.Mode]command.KeyBinding{
+					view.ModeAny: kit.Or(
 						kit.Char('N'), z(kit.Char('N')), Z(kit.Char('N')),
-					},
+					),
 				},
 			},
 		},

@@ -115,21 +115,15 @@ func Prefixed(
 	}
 }
 
-// KeyBinding unions alternatives into the one-element binding list a mode maps
-// to, for building a per-mode Keys map by hand
-func KeyBinding(alts ...command.KeyBinding) []command.KeyBinding {
-	return []command.KeyBinding{Or(alts...)}
-}
-
 // Keys builds the any-mode binding map from the given alternatives
-func Keys(alts ...command.KeyBinding) map[view.Mode][]command.KeyBinding {
-	return map[view.Mode][]command.KeyBinding{view.ModeAny: KeyBinding(alts...)}
+func Keys(alts ...command.KeyBinding) map[view.Mode]command.KeyBinding {
+	return map[view.Mode]command.KeyBinding{view.ModeAny: Or(alts...)}
 }
 
 // Leader binds ch under the shared leader (see [LeaderPrefix])
-func Leader(ch rune) map[view.Mode][]command.KeyBinding {
-	return map[view.Mode][]command.KeyBinding{
-		view.ModeAny: {LeaderPrefix(Char(ch))},
+func Leader(ch rune) map[view.Mode]command.KeyBinding {
+	return map[view.Mode]command.KeyBinding{
+		view.ModeAny: LeaderPrefix(Char(ch)),
 	}
 }
 
@@ -137,9 +131,9 @@ func Leader(ch rune) map[view.Mode][]command.KeyBinding {
 // so window management shares the leader wherever the leader is reachable
 func Window(
 	subs ...command.KeyBinding,
-) map[view.Mode][]command.KeyBinding {
+) map[view.Mode]command.KeyBinding {
 	prefix := Prefixed(Or(Ctrl('w'), LeaderPrefix(Char('w'))))
-	return map[view.Mode][]command.KeyBinding{view.ModeAny: {prefix(subs...)}}
+	return map[view.Mode]command.KeyBinding{view.ModeAny: prefix(subs...)}
 }
 
 // Label names a prefix key sequence for the pending-key hint popup

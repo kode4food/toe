@@ -153,7 +153,7 @@ func benchTerminal(b *testing.B, fill string) {
 	e := view.NewEditor(b.TempDir())
 	e.Options().Theme = view.DefaultTheme
 	m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-	_ = m.TerminalAction()(e)
+	m.TerminalAction(e)
 	tp := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 	b.Cleanup(func() { _ = tp.Stop() })
 	tp.IngestOutput([]byte(fill))

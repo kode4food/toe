@@ -21,6 +21,8 @@ const (
 	ErrorNoFilename    Key = "error.noFilename"
 	ErrorLSPUndefined  Key = "error.lspUndefined"
 	ErrorNoSuchCommand Key = "error.noSuchCommand"
+	ErrorInvalidKey    Key = "error.invalidKey"
+	ErrorBindingExists Key = "error.bindingExists"
 
 	ErrorUnknownOptionKey       Key = "error.unknownOptionKey"
 	ErrorInvalidOptionKey       Key = "error.invalidOptionKey"

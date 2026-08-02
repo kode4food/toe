@@ -5,7 +5,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -14,105 +13,99 @@ type locationGetter func(
 	view.LanguageServerController, *view.Document, view.Id,
 ) ([]view.Location, error)
 
-func (m Model) GotoDeclarationAction() command.KeyAction {
-	return m.gotoLocationAction(
+func (m Model) GotoDeclarationAction(e *view.Editor) {
+	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoDeclaration),
 		view.LanguageServerController.GotoDeclaration,
 	)
 }
 
-func (m Model) GotoDefinitionAction() command.KeyAction {
-	return m.gotoLocationAction(
+func (m Model) GotoDefinitionAction(e *view.Editor) {
+	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoDefinition),
 		view.LanguageServerController.GotoDefinition,
 	)
 }
 
-func (m Model) GotoTypeDefinitionAction() command.KeyAction {
-	return m.gotoLocationAction(
+func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
+	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoTypeDefinition),
 		view.LanguageServerController.GotoTypeDefinition,
 	)
 }
 
-func (m Model) GotoImplementationAction() command.KeyAction {
-	return m.gotoLocationAction(
+func (m Model) GotoImplementationAction(e *view.Editor) {
+	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoImplementation),
 		view.LanguageServerController.GotoImplementation,
 	)
 }
 
-func (m Model) GotoReferenceAction() command.KeyAction {
-	return m.gotoLocationAction(
+func (m Model) GotoReferenceAction(e *view.Editor) {
+	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoReferences),
 		view.LanguageServerController.GotoReference,
 	)
 }
 
-func (m Model) SelectReferencesAction() command.KeyAction {
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		v := e.FocusedView()
-		if v == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHighlights))
-			return nil
-		}
-		highlights, err := ls.DocumentHighlights(doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		if len(highlights) == 0 {
-			e.SetStatusMsg(i18n.Text(i18n.StatusNoSymbolReferences))
-			return nil
-		}
-		setSelectionFromHighlights(doc, v.ID(), highlights)
-		return nil
+func (m Model) SelectReferencesAction(e *view.Editor) {
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
 	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHighlights))
+		return
+	}
+	highlights, err := ls.DocumentHighlights(doc, v.ID())
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	if len(highlights) == 0 {
+		e.SetStatusMsg(i18n.Text(i18n.StatusNoSymbolReferences))
+		return
+	}
+	setSelectionFromHighlights(doc, v.ID(), highlights)
 }
 
-func (m Model) gotoLocationAction(
-	notFound string, get locationGetter,
-) command.KeyAction {
+func (m Model) gotoLocation(
+	e *view.Editor, notFound string, get locationGetter,
+) {
 	ec := m.component
 	cx := m.context
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		v := e.FocusedView()
-		if v == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoNavigation))
-			return nil
-		}
-		locations, err := get(ls, doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		switch len(locations) {
-		case 0:
-			e.SetStatusMsg(notFound)
-		case 1:
-			jumpToLocation(e, locations[0])
-		default:
-			opener := locationPickerLayer(locations)
-			cx.lastLayer = opener
-			ec.keys.nextLayer = opener(e)
-		}
-		return nil
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoNavigation))
+		return
+	}
+	locations, err := get(ls, doc, v.ID())
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	switch len(locations) {
+	case 0:
+		e.SetStatusMsg(notFound)
+	case 1:
+		jumpToLocation(e, locations[0])
+	default:
+		opener := locationPickerLayer(locations)
+		cx.lastLayer = opener
+		ec.keys.nextLayer = opener(e)
 	}
 }
 

@@ -25,12 +25,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		alpha := testCommand("alpha")
 		alpha.Aliases = append(alpha.Aliases, "alias")
@@ -67,12 +68,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeImage,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		img := testCommand("image-only")
 		img.Modes = view.ModeImage
@@ -96,12 +98,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		for _, name := range []string{
 			"match-a", "match-b", "match-c", "match-d",
@@ -139,12 +142,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -163,12 +167,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -189,12 +194,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)
@@ -216,12 +222,13 @@ func TestPromptCompletion(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(':')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
 		m = resize(m, 60, 12)

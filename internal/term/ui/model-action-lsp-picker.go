@@ -4,86 +4,78 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
 
-func (m Model) SymbolPickerAction() command.KeyAction {
+func (m Model) SymbolPickerAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoDocSymbols))
-			return nil
-		}
-		symbols, err := ls.DocumentSymbols(doc)
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		if len(symbols) == 0 {
-			e.SetStatusMsg(i18n.Text(i18n.StatusNoDocumentSymbols))
-			return nil
-		}
-		opener := symbolPickerLayer(symbols)
-		cx.lastLayer = opener
-		ec.keys.nextLayer = opener(e)
-		return nil
+
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
 	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoDocSymbols))
+		return
+	}
+	symbols, err := ls.DocumentSymbols(doc)
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	if len(symbols) == 0 {
+		e.SetStatusMsg(i18n.Text(i18n.StatusNoDocumentSymbols))
+		return
+	}
+	opener := symbolPickerLayer(symbols)
+	cx.lastLayer = opener
+	ec.keys.nextLayer = opener(e)
 }
 
-func (m Model) WorkspaceSymbolPickerAction() command.KeyAction {
+func (m Model) WorkspaceSymbolPickerAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
-	return func(e *view.Editor) command.Continuation {
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoWorkSymbols))
-			return nil
-		}
-		opener := workspaceSymbolPickerLayer()
-		cx.lastLayer = opener
-		ec.keys.nextLayer = opener(e)
-		return nil
+
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoWorkSymbols))
+		return
 	}
+	opener := workspaceSymbolPickerLayer()
+	cx.lastLayer = opener
+	ec.keys.nextLayer = opener(e)
 }
 
-func (m Model) CodeActionPickerAction() command.KeyAction {
+func (m Model) CodeActionPickerAction(e *view.Editor) {
 	ec := m.component
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		v := e.FocusedView()
-		if v == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoCodeActions))
-			return nil
-		}
-		actions, err := ls.CodeActions(doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		if len(actions) == 0 {
-			e.SetStatusMsg(i18n.Text(i18n.StatusNoCodeActions))
-			return nil
-		}
-		docID := doc.ID()
-		viewID := v.ID()
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newCodeActionMenu(ec, docID, viewID, actions), nil
-		}
-		return nil
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoCodeActions))
+		return
+	}
+	actions, err := ls.CodeActions(doc, v.ID())
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	if len(actions) == 0 {
+		e.SetStatusMsg(i18n.Text(i18n.StatusNoCodeActions))
+		return
+	}
+	docID := doc.ID()
+	viewID := v.ID()
+	ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		return newCodeActionMenu(ec, docID, viewID, actions), nil
 	}
 }
 

@@ -577,8 +577,8 @@ func TestCommandlineThemeRender(t *testing.T) {
 			},
 			Modes:   view.ModeNormal,
 			Aliases: []string{"empty"},
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {[][]command.KeyEvent{{char('x')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char('x')}},
 			},
 		}))
 		m := resize(ui.New(e, km), 80, 24)

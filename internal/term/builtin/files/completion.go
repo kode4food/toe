@@ -42,7 +42,7 @@ func CompletionModule(model ui.Model) command.Module {
 			{
 				Name:      actCompletion,
 				DocString: "Complete current word",
-				Run:       kit.Continuation(model.CompletionAction()),
+				Run:       kit.Runner(model.CompletionAction),
 				Modes:     view.ModeInsert,
 				Keys:      kit.Keys(kit.Ctrl('x')),
 			},

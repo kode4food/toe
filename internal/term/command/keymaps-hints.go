@@ -5,18 +5,8 @@ import "github.com/kode4food/toe/internal/view"
 // LabelNode names the node reached by each alternative in prefix, so a shared
 // menu (e.g. the Space and Ctrl-\ leaders) is labelled everywhere it is reached
 func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
-	root, ok := k.modes[mode]
-	if !ok {
-		return
-	}
 	for _, seq := range prefix {
-		node := root
-		for _, ev := range seq {
-			if node = node.children[ev]; node == nil {
-				break
-			}
-		}
-		if node != nil {
+		if node := k.lookup(mode, seq); node != nil {
 			node.label = name
 		}
 	}
@@ -27,19 +17,8 @@ func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 func (k *Keymaps) PendingHints(
 	mode view.Mode, seq []KeyEvent,
 ) (string, []KeyHint) {
-	root, ok := k.modes[mode]
-	if !ok {
-		return "", nil
-	}
-	node := root
-	for _, ev := range seq {
-		child, ok := node.children[ev]
-		if !ok {
-			return "", nil
-		}
-		node = child
-	}
-	if len(node.children) == 0 {
+	node := k.lookup(mode, seq)
+	if node == nil || len(node.children) == 0 {
 		return "", nil
 	}
 	// Iterate in insertion order so hints remain stable across renders
@@ -49,7 +28,7 @@ func (k *Keymaps) PendingHints(
 		child := node.children[ev]
 		lbl := child.label
 		if lbl == "" {
-			lbl = ev.String()
+			continue
 		}
 		if idx, ok := seen[lbl]; ok {
 			hints[idx].Key += ", " + ev.String()

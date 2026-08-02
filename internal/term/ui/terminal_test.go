@@ -27,7 +27,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		m := renderedModel(e)
-		_ = m.TerminalAction()(e)
+		m.TerminalAction(e)
 		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
 
 		action.VSplit(e)
@@ -43,7 +43,7 @@ func TestTerminalPane(t *testing.T) {
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		docID := e.Tree().Focus()
 		action.VSplit(e)
-		_ = m.TerminalAction()(e)
+		m.TerminalAction(e)
 		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
@@ -63,15 +63,13 @@ func TestTerminalPane(t *testing.T) {
 		m := renderedModel(e)
 
 		focus := e.Tree().Focus()
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
 
-		cont = m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 
 		tp2, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
@@ -86,8 +84,7 @@ func TestTerminalPane(t *testing.T) {
 		split := e.VSplit(doc.ID())
 		assert.NotNil(t, split)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 
 		termID := e.Tree().Focus()
 		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
@@ -113,8 +110,7 @@ func TestTerminalPane(t *testing.T) {
 		m := renderedModel(e)
 		focus := e.Tree().Focus()
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
@@ -127,8 +123,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -147,8 +142,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 
 		termID := e.Tree().Focus()
 		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
@@ -177,8 +171,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -209,8 +202,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -227,8 +219,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -241,8 +232,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -256,8 +246,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -271,8 +260,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -299,8 +287,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -320,8 +307,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -338,8 +324,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -362,8 +347,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -390,8 +374,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -414,8 +397,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -436,8 +418,7 @@ func TestTerminalPane(t *testing.T) {
 		m := renderedModel(e)
 		focus := e.Tree().Focus()
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
 
@@ -462,8 +443,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 
@@ -480,8 +460,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		focus := e.Tree().Focus()
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
@@ -511,8 +490,7 @@ func TestTerminalPane(t *testing.T) {
 		action.VSplit(e)
 		e.Tree().SetFocus(leftID)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		focus := e.Tree().Focus()
 		tp, ok := e.Tree().Get(focus).(*ui.TerminalPane)
 		assert.True(t, ok)
@@ -542,8 +520,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -577,11 +554,11 @@ func TestTerminalPane(t *testing.T) {
 		// Terminal has the same canonical trie, filtered by terminal mode. Raw
 		// Space bypasses keymap dispatch while Ctrl-\ aliases the Space node
 		for _, ch := range []rune{'f', 'b'} {
-			nor, found, _ := km.LookupCommand(view.ModeNormal, space(ch))
-			assert.True(t, found)
-			trm, found, _ := km.LookupCommand(view.ModeTerminal, space(ch))
-			assert.True(t, found)
-			assert.Equal(t, nor, trm)
+			nor, ok := km.Lookup(view.ModeNormal, space(ch))
+			assert.True(t, ok)
+			trm, ok := km.Lookup(view.ModeTerminal, space(ch))
+			assert.True(t, ok)
+			assert.Equal(t, nor.Name, trm.Name)
 		}
 	})
 
@@ -613,8 +590,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 100, 30)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -643,8 +619,7 @@ func TestTerminalPane(t *testing.T) {
 		e.SetClipboard(clip)
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -663,8 +638,7 @@ func TestTerminalPane(t *testing.T) {
 		e.SetClipboard(clip)
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -683,8 +657,7 @@ func TestTerminalPane(t *testing.T) {
 		split := e.VSplit(doc.ID())
 		assert.NotNil(t, split)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		termID := e.Tree().Focus()
 		tp, ok := e.Tree().Get(termID).(*ui.TerminalPane)
 		assert.True(t, ok)
@@ -710,8 +683,7 @@ func TestTerminalPane(t *testing.T) {
 		e.SetClipboard(clip)
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -745,8 +717,7 @@ func TestTerminalPane(t *testing.T) {
 		e.SetClipboard(clip)
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -781,8 +752,7 @@ func TestTerminalPane(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := renderedModel(e)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -822,8 +792,7 @@ func TestTerminalPane(t *testing.T) {
 		split := e.VSplit(doc.ID())
 		assert.NotNil(t, split)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })
@@ -869,8 +838,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })

@@ -64,6 +64,51 @@ func TestKeyEventString(t *testing.T) {
 	})
 }
 
+func TestParseKeySequence(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  []command.KeyEvent
+	}{
+		{
+			name:  "characters",
+			input: "g d",
+			want:  []command.KeyEvent{char('g'), char('d')},
+		},
+		{
+			name:  "modifiers",
+			input: "C-S-f",
+			want: []command.KeyEvent{{
+				Code: command.KeyCode{Char: 'F'},
+				Mods: command.ModCtrl | command.ModShift,
+			}},
+		},
+		{
+			name:  "special keys",
+			input: "spc A-left",
+			want: []command.KeyEvent{
+				char(' '),
+				{
+					Code: command.KeyCode{Special: command.Left},
+					Mods: command.ModAlt,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := command.ParseKeySequence(tt.input)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
+	t.Run("invalid key", func(t *testing.T) {
+		_, err := command.ParseKeySequence("C-no-such-key")
+		assert.ErrorIs(t, err, command.ErrInvalidKey)
+	})
+}
+
 func TestCommandRegistry(t *testing.T) {
 	km := command.NewKeymaps()
 	sig := command.Signature{
@@ -82,15 +127,11 @@ func TestCommandRegistry(t *testing.T) {
 
 	_ = km.Register("open", registered)
 	cmd := km.ResolveCommand("edit")
-	list := km.Commands()
 
 	assert.NotNil(t, cmd)
 	assert.Equal(t, registered.Aliases, cmd.Aliases)
 	assert.Equal(t, sig, cmd.Signature)
-	assert.Equal(t, 1, len(list))
-	assert.Equal(t, registered.Aliases, list[0].Aliases)
-	assert.Equal(t, registered.Signature, list[0].Signature)
-	assert.NotNil(t, list[0].Run)
+	assert.NotNil(t, cmd.Run)
 }
 
 func TestSparseCommands(t *testing.T) {
@@ -107,15 +148,15 @@ func TestSparseCommands(t *testing.T) {
 		})
 
 		cmd := km.ResolveCommand("w")
-		action, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('w'),
 		})
 
 		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
-		assert.Nil(t, action)
-		assert.False(t, found)
-		assert.False(t, prefix)
+		assert.Nil(t, lookup.Action)
+		assert.False(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 
 	t.Run("missing modes errors", func(t *testing.T) {
@@ -141,20 +182,20 @@ func TestSparseCommands(t *testing.T) {
 				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {{{char('h')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char('h')}},
 			},
 		})
 
 		cmd := km.ResolveCommand("move-left")
-		action, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('h'),
 		})
 
-		assert.Nil(t, cmd)
-		assert.True(t, found)
-		assert.False(t, prefix)
-		action(nil)
+		assert.NotNil(t, cmd)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
+		lookup.Action(nil)
 		assert.True(t, called)
 	})
 
@@ -167,22 +208,22 @@ func TestSparseCommands(t *testing.T) {
 				return command.Result{Message: "quit"}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {{{char('q')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char('q')}},
 			},
 			Aliases: []string{"quit", "q"},
 		})
 
 		cmd := km.ResolveCommand("q")
-		action, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('q'),
 		})
 
 		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
-		assert.True(t, found)
-		assert.False(t, prefix)
-		action(nil)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
+		lookup.Action(nil)
 		assert.True(t, called)
 	})
 
@@ -196,22 +237,22 @@ func TestSparseCommands(t *testing.T) {
 				return command.Result{Message: "typed"}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {{{char('q')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char('q')}},
 			},
 			Aliases: []string{"quit", "q"},
 		})
 
 		cmd := km.ResolveCommand("q")
-		action, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('q'),
 		})
 
 		assert.NotNil(t, cmd)
 		assert.NotNil(t, cmd.Run)
-		assert.True(t, found)
-		assert.False(t, prefix)
-		assert.Nil(t, action(nil))
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
+		assert.Nil(t, lookup.Action(nil).Continuation)
 	})
 }
 
@@ -224,24 +265,24 @@ func TestModeIsolation(t *testing.T) {
 		_ = km.Register("move_char_left", command.Command{
 			Run:   run,
 			Modes: view.ModeNormal | view.ModeInsert,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny:    {{{char('h')}, {special(command.Left)}}},
-				view.ModeInsert: {{{special(command.Left)}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny:    {{char('h')}, {special(command.Left)}},
+				view.ModeInsert: {{special(command.Left)}},
 			},
 		})
 
-		_, found, _ := km.Lookup(
+		_, ok := km.Lookup(
 			view.ModeInsert, []command.KeyEvent{char('h')},
 		)
-		assert.False(t, found)
+		assert.False(t, ok)
 
-		_, found, _ = km.Lookup(
+		_, ok = km.Lookup(
 			view.ModeInsert, []command.KeyEvent{special(command.Left)},
 		)
-		assert.True(t, found)
+		assert.True(t, ok)
 
-		_, found, _ = km.Lookup(view.ModeNormal, []command.KeyEvent{char('h')})
-		assert.True(t, found)
+		_, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{char('h')})
+		assert.True(t, ok)
 	})
 }
 
@@ -281,22 +322,20 @@ func TestKeyBind(t *testing.T) {
 			called = true
 			return command.Result{}
 		},
-		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('a')}}},
-		},
+		Modes:   view.ModeNormal,
+		Keys:    map[view.Mode]command.KeyBinding{view.ModeAny: {{char('a')}}},
 		Aliases: []string{"act"},
 	})
 
 	t.Run("Bind adds extra sequence", func(t *testing.T) {
 		km.Bind(view.ModeNormal, "act", []command.KeyEvent{char('b')})
-		a, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('b'),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 		called = false
-		a(nil)
+		lookup.Action(nil)
 		assert.True(t, called)
 	})
 
@@ -304,27 +343,54 @@ func TestKeyBind(t *testing.T) {
 		km.Bind(view.ModeNormal, "nonexistent",
 			[]command.KeyEvent{char('z')},
 		)
-		_, found, _ := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		_, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('z'),
 		})
-		assert.False(t, found)
+		assert.False(t, ok)
 	})
 
 	t.Run("Bind command without Run is no-op", func(t *testing.T) {
 		km2 := command.NewKeymaps()
 		_ = km2.Register("norun", command.Command{
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {{{char('x')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char('x')}},
 			},
 		})
 		km2.Bind(view.ModeNormal, "norun",
 			[]command.KeyEvent{char('y')},
 		)
-		_, found, _ := km2.Lookup(view.ModeNormal, []command.KeyEvent{
+		_, ok := km2.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('y'),
 		})
-		assert.False(t, found)
+		assert.False(t, ok)
+	})
+
+	t.Run("BindResultAction adds sequence", func(t *testing.T) {
+		action := func(*view.Editor) command.Result {
+			return command.Result{Message: "custom"}
+		}
+		err := km.BindResultAction(
+			[]view.Mode{view.ModeNormal}, action, "Custom",
+			[]command.KeyEvent{char('c')},
+		)
+		assert.NoError(t, err)
+		lookup, ok := km.Lookup(
+			view.ModeNormal, []command.KeyEvent{char('c')},
+		)
+		assert.True(t, ok)
+		assert.Equal(t, "custom", lookup.Action(nil).Message)
+	})
+
+	t.Run("BindResultAction rejects duplicate", func(t *testing.T) {
+		action := func(*view.Editor) command.Result {
+			return command.Result{}
+		}
+		err := km.BindResultAction(
+			[]view.Mode{view.ModeNormal}, action, "Duplicate",
+			[]command.KeyEvent{char('a')},
+		)
+		assert.ErrorIs(t, err, command.ErrBindingExists)
 	})
 }
 
@@ -334,9 +400,10 @@ func TestLabelNode(t *testing.T) {
 		Run: func(*view.Editor, *command.Args) command.Result {
 			return command.Result{}
 		},
-		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('g'), char('f')}}},
+		DocString: "File",
+		Modes:     view.ModeNormal,
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('f')}},
 		},
 	})
 
@@ -350,8 +417,8 @@ func TestLabelNode(t *testing.T) {
 	})
 
 	t.Run("LabelNode on unknown mode is no-op", func(t *testing.T) {
-		km.LabelNode(view.ModeImage, command.KeyBinding{{char('g')}}, "X")
-		title, hints := km.PendingHints(view.ModeImage, []command.KeyEvent{
+		km.LabelNode(view.ModeBinary, command.KeyBinding{{char('g')}}, "X")
+		title, hints := km.PendingHints(view.ModeBinary, []command.KeyEvent{
 			char('g'),
 		})
 		assert.Equal(t, "", title)
@@ -373,24 +440,34 @@ func TestPendingHints(t *testing.T) {
 		return command.Result{}
 	}
 	_ = km.Register("ga", command.Command{
-		Run:   run,
-		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('g'), char('a')}}},
+		Run:       run,
+		DocString: "A",
+		Modes:     view.ModeNormal,
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('a')}},
 		},
 	})
 	_ = km.Register("gb", command.Command{
-		Run:   run,
-		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('g'), char('b')}}},
+		Run:       run,
+		DocString: "B",
+		Modes:     view.ModeNormal,
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('b')}},
 		},
 	})
 	_ = km.Register("gF", command.Command{
+		Run:       run,
+		DocString: "F",
+		Modes:     view.ModeNormal,
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('F').WithMods(command.ModShift)}},
+		},
+	})
+	_ = km.Register("gc", command.Command{
 		Run:   run,
 		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('g'), char('F').WithMods(command.ModShift)}}},
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('c')}},
 		},
 	})
 
@@ -408,8 +485,15 @@ func TestPendingHints(t *testing.T) {
 		assert.Contains(t, hints, command.KeyHint{Key: "F", Label: "F"})
 	})
 
+	t.Run("omits undocumented commands", func(t *testing.T) {
+		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+			char('g'),
+		})
+		assert.NotContains(t, hints, command.KeyHint{Key: "c"})
+	})
+
 	t.Run("returns empty for unknown mode", func(t *testing.T) {
-		title, hints := km.PendingHints(view.ModeImage, []command.KeyEvent{
+		title, hints := km.PendingHints(view.ModeBinary, []command.KeyEvent{
 			char('g'),
 		})
 		assert.Equal(t, "", title)
@@ -439,17 +523,6 @@ func TestKeyModifiers(t *testing.T) {
 		assert.False(t, m.Has(command.ModShift))
 	})
 
-	t.Run("HasOnly matches exact bits", func(t *testing.T) {
-		assert.True(t, command.ModShift.HasOnly(command.ModShift))
-		assert.True(t,
-			(command.ModCtrl | command.ModShift).
-				HasOnly(command.ModCtrl|command.ModShift),
-		)
-		assert.False(t,
-			(command.ModCtrl | command.ModShift).HasOnly(command.ModShift),
-		)
-		assert.False(t, command.ModNone.HasOnly(command.ModShift))
-	})
 }
 
 func TestKeymapsBindAndLookup(t *testing.T) {
@@ -476,87 +549,83 @@ func TestKeymapsBindAndLookup(t *testing.T) {
 	_ = km.Register("quit", command.Command{
 		Run:   run(cmdQuit),
 		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('q')}}},
-		},
+		Keys:  map[view.Mode]command.KeyBinding{view.ModeAny: {{char('q')}}},
 	})
 	_ = km.Register("save", command.Command{
 		Run:   run(cmdSave),
 		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('w').WithMods(command.ModCtrl)}}},
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('w').WithMods(command.ModCtrl)}},
 		},
 	})
 	_ = km.Register("goto", command.Command{
 		Run:   run(cmdGoTo),
 		Modes: view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('g'), char('g')}}},
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('g')}},
 		},
 	})
 
 	t.Run("single key binding found", func(t *testing.T) {
-		a, found, prefix := km.Lookup(
+		lookup, ok := km.Lookup(
 			view.ModeNormal, []command.KeyEvent{char('q')},
 		)
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 		called = ""
-		a(nil)
+		lookup.Action(nil)
 		assert.Equal(t, "quit", called)
 	})
 
 	t.Run("command name found", func(t *testing.T) {
-		name, found, prefix := km.LookupCommand(
+		lookup, ok := km.Lookup(
 			view.ModeNormal, []command.KeyEvent{char('q')},
 		)
-		assert.True(t, found)
-		assert.False(t, prefix)
-		assert.Equal(t, "quit", name)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
+		assert.Equal(t, "quit", lookup.Name)
 	})
 
 	t.Run("two-key sequence found", func(t *testing.T) {
-		a, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('g'), char('g'),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 		called = ""
-		a(nil)
+		lookup.Action(nil)
 		assert.Equal(t, "goto", called)
 	})
 
 	t.Run("prefix returns prefix=true", func(t *testing.T) {
-		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('g'),
 		})
-		assert.False(t, found)
-		assert.True(t, prefix)
+		assert.False(t, ok)
+		assert.True(t, lookup.Prefix)
 	})
 
 	t.Run("command prefix returns prefix=true", func(t *testing.T) {
-		name, found, prefix := km.LookupCommand(
+		lookup, ok := km.Lookup(
 			view.ModeNormal, []command.KeyEvent{char('g')},
 		)
-		assert.False(t, found)
-		assert.True(t, prefix)
-		assert.Empty(t, name)
+		assert.False(t, ok)
+		assert.True(t, lookup.Prefix)
+		assert.Empty(t, lookup.Name)
 	})
 
 	t.Run("unknown key returns false", func(t *testing.T) {
-		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			char('z'),
 		})
-		assert.False(t, found)
-		assert.False(t, prefix)
+		assert.False(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 
 	t.Run("unknown mode returns false", func(t *testing.T) {
-		_, found, prefix := km.Lookup(
-			view.ModeInsert, []command.KeyEvent{char('q')},
-		)
-		assert.False(t, found)
-		assert.False(t, prefix)
+		lookup, ok := km.Lookup(view.ModeInsert, []command.KeyEvent{char('q')})
+		assert.False(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 }
 

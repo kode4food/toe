@@ -17,6 +17,8 @@
   "error.noFilename": "nome file mancante",
   "error.lspUndefined": "nessun LSP definito per il documento",
   "error.noSuchCommand": "comando sconosciuto: `{name}`",
+  "error.invalidKey": "sequenza di tasti non valida",
+  "error.bindingExists": "la combinazione di tasti esiste già",
   "status.written": "salvato",
   "status.allWritten": "tutti i documenti salvati",
   "status.writtenAndClosed": "salvato e chiuso",

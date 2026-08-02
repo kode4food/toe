@@ -33,7 +33,7 @@ type (
 
 	gotoActionCase struct {
 		desc   string
-		action func(ui.Model) command.KeyAction
+		action func(ui.Model, *view.Editor)
 	}
 )
 
@@ -66,9 +66,8 @@ func TestLocationAction(t *testing.T) {
 		})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.GotoDefinitionAction()(e)
+		m.GotoDefinitionAction(e)
 
-		assert.Nil(t, cont)
 		doc = e.FocusedDocument()
 		assert.NotNil(t, doc)
 		assert.Equal(t, target, doc.Path())
@@ -99,7 +98,7 @@ func TestLocationAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "goto_definition", m.GotoDefinitionAction(),
+			km, "goto_definition", m.GotoDefinitionAction,
 			[]command.KeyEvent{char('d')},
 		)
 		m = resize(m, 80, 24)
@@ -153,7 +152,7 @@ func TestSymbolPickerAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "symbol_picker", m.SymbolPickerAction(),
+			km, "symbol_picker", m.SymbolPickerAction,
 			[]command.KeyEvent{char('s')},
 		)
 		m = resize(m, 80, 24)
@@ -213,7 +212,10 @@ func TestSymbolPickerAction(t *testing.T) {
 			km:   km,
 			mode: view.ModeBinary,
 			name: "workspace_symbol_picker",
-			fn:   m.WorkspaceSymbolPickerAction(),
+			fn: func(e *view.Editor) command.Continuation {
+				m.WorkspaceSymbolPickerAction(e)
+				return nil
+			},
 			seqs: [][]command.KeyEvent{{char('w')}},
 		})
 		m = resize(m, 80, 24)
@@ -268,9 +270,8 @@ func TestSymbolPickerAction(t *testing.T) {
 		})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.SymbolPickerAction()(e)
+		m.SymbolPickerAction(e)
 
-		assert.Nil(t, cont)
 		assert.Equal(t, "error: symbols failed", e.TakeStatusMsg())
 	})
 
@@ -300,7 +301,7 @@ func TestSymbolPickerAction(t *testing.T) {
 			km := command.NewKeymaps()
 			m := ui.New(e, km)
 			bindNormalTestAction(
-				km, "sym_kind_test", m.SymbolPickerAction(),
+				km, "sym_kind_test", m.SymbolPickerAction,
 				[]command.KeyEvent{char('s')},
 			)
 			m = resize(m, 80, 24)
@@ -326,9 +327,8 @@ func TestSelectReferencesAction(t *testing.T) {
 		})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.SelectReferencesAction()(e)
+		m.SelectReferencesAction(e)
 
-		assert.Nil(t, cont)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
@@ -348,9 +348,8 @@ func TestSelectReferencesAction(t *testing.T) {
 		})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.SelectReferencesAction()(e)
+		m.SelectReferencesAction(e)
 
-		assert.Nil(t, cont)
 		assert.Equal(t, "error: highlights failed", e.TakeStatusMsg())
 	})
 
@@ -364,9 +363,7 @@ func TestSelectReferencesAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.SelectReferencesAction()(e)
-
-		assert.Nil(t, cont)
+		m.SelectReferencesAction(e)
 	})
 
 	t.Run("selects ranges at offset", func(t *testing.T) {
@@ -389,9 +386,8 @@ func TestSelectReferencesAction(t *testing.T) {
 		assert.NotNil(t, v)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 
-		cont := m.SelectReferencesAction()(e)
+		m.SelectReferencesAction(e)
 
-		assert.Nil(t, cont)
 		sel := doc.SelectionFor(v.ID())
 		assert.Len(t, sel.Ranges(), 2)
 	})
@@ -410,7 +406,7 @@ func TestRenameSymbolAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "rename_symbol", m.RenameSymbolAction(),
+			km, "rename_symbol", m.RenameSymbolAction,
 			[]command.KeyEvent{char('r')},
 		)
 		m = resize(m, 80, 24)
@@ -439,9 +435,8 @@ func TestRenameSymbolAction(t *testing.T) {
 		assert.NoError(t, err)
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.RenameSymbolAction()(e)
+		m.RenameSymbolAction(e)
 
-		assert.Nil(t, cont)
 		doc := e.FocusedDocument()
 		v := e.FocusedView()
 		_ = doc.SelectionFor(v.ID())
@@ -468,7 +463,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "code_action", m.CodeActionPickerAction(),
+			km, "code_action", m.CodeActionPickerAction,
 			[]command.KeyEvent{char('a')},
 		)
 		m = resize(m, 80, 24)
@@ -492,9 +487,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		assert.NoError(t, err)
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.CodeActionPickerAction()(e)
-
-		assert.Nil(t, cont)
+		m.CodeActionPickerAction(e)
 	})
 
 	t.Run("no code actions sets status", func(t *testing.T) {
@@ -507,9 +500,8 @@ func TestCodeActionPickerAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.CodeActionPickerAction()(e)
+		m.CodeActionPickerAction(e)
 
-		assert.Nil(t, cont)
 		assert.Contains(t, e.TakeStatusMsg(), "No code actions")
 	})
 
@@ -525,9 +517,8 @@ func TestCodeActionPickerAction(t *testing.T) {
 		})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.CodeActionPickerAction()(e)
+		m.CodeActionPickerAction(e)
 
-		assert.Nil(t, cont)
 		assert.Equal(t, "error: code actions failed", e.TakeStatusMsg())
 	})
 
@@ -611,7 +602,7 @@ func codeActionModel(
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
 	bindNormalTestAction(
-		km, "code_action", m.CodeActionPickerAction(),
+		km, "code_action", m.CodeActionPickerAction,
 		[]command.KeyEvent{char('a')},
 	)
 	return resize(m, 80, 24), ctl
@@ -832,9 +823,8 @@ func TestGotoActions(t *testing.T) {
 		assert.NoError(t, err)
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.GotoDeclarationAction()(e)
+		m.GotoDeclarationAction(e)
 
-		assert.Nil(t, cont)
 		assert.Contains(t, e.TakeStatusMsg(), "No configured language server")
 	})
 
@@ -848,9 +838,8 @@ func TestGotoActions(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.GotoDeclarationAction()(e)
+		m.GotoDeclarationAction(e)
 
-		assert.Nil(t, cont)
 		assert.Contains(t, e.TakeStatusMsg(), "No declaration")
 	})
 
@@ -866,9 +855,8 @@ func TestGotoActions(t *testing.T) {
 		})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.GotoDeclarationAction()(e)
+		m.GotoDeclarationAction(e)
 
-		assert.Nil(t, cont)
 		assert.Equal(t, "error: location failed", e.TakeStatusMsg())
 	})
 
@@ -893,9 +881,8 @@ func TestGotoActions(t *testing.T) {
 			})
 			m := ui.New(e, command.NewKeymaps())
 
-			cont := tc.action(m)(e)
+			tc.action(m, e)
 
-			assert.Nil(t, cont)
 			doc := e.FocusedDocument()
 			assert.NotNil(t, doc)
 			assert.Equal(t, target, doc.Path())
@@ -908,9 +895,7 @@ func TestHoverAction(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.HoverAction()(e)
-
-		assert.Nil(t, cont)
+		m.HoverAction(e)
 	})
 
 	t.Run("no server sets status", func(t *testing.T) {
@@ -922,9 +907,7 @@ func TestHoverAction(t *testing.T) {
 		assert.NoError(t, err)
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.HoverAction()(e)
-
-		assert.Nil(t, cont)
+		m.HoverAction(e)
 	})
 
 	t.Run("empty hover sets status", func(t *testing.T) {
@@ -937,9 +920,7 @@ func TestHoverAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		cont := m.HoverAction()(e)
-
-		assert.Nil(t, cont)
+		m.HoverAction(e)
 	})
 }
 
@@ -948,7 +929,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.SignatureHelpAction()(e))
+		m.SignatureHelpAction(e)
 	})
 
 	t.Run("no language server sets status", func(t *testing.T) {
@@ -960,7 +941,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		assert.NoError(t, err)
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.SignatureHelpAction()(e))
+		m.SignatureHelpAction(e)
 		assert.Contains(t, e.TakeStatusMsg(), "signature help")
 	})
 
@@ -974,7 +955,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.SignatureHelpAction()(e))
+		m.SignatureHelpAction(e)
 	})
 
 	t.Run("empty signatures returns nil", func(t *testing.T) {
@@ -990,7 +971,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.SignatureHelpAction()(e))
+		m.SignatureHelpAction(e)
 	})
 
 	t.Run("opens signature help layer", func(t *testing.T) {
@@ -1012,7 +993,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
 		bindNormalTestAction(
-			km, "sig_help", m.SignatureHelpAction(),
+			km, "sig_help", m.SignatureHelpAction,
 			[]command.KeyEvent{char('s')},
 		)
 		m = resize(m, 80, 24)
@@ -1026,7 +1007,7 @@ func TestCompletionAction(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.CompletionAction()(e))
+		m.CompletionAction(e)
 	})
 
 	t.Run("no language server returns nil", func(t *testing.T) {
@@ -1038,7 +1019,7 @@ func TestCompletionAction(t *testing.T) {
 		assert.NoError(t, err)
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.CompletionAction()(e))
+		m.CompletionAction(e)
 	})
 
 	t.Run("no completions returns nil", func(t *testing.T) {
@@ -1051,7 +1032,7 @@ func TestCompletionAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{})
 		m := ui.New(e, command.NewKeymaps())
 
-		assert.Nil(t, m.CompletionAction()(e))
+		m.CompletionAction(e)
 	})
 }
 

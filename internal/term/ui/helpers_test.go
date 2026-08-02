@@ -197,11 +197,29 @@ func bindTestAction(args bindTestActionArgs) {
 			return command.Result{Continuation: args.fn(e)}
 		},
 		Modes: args.mode,
-		Keys:  map[view.Mode][]command.KeyBinding{view.ModeAny: {args.seqs}},
+		Keys:  map[view.Mode]command.KeyBinding{view.ModeAny: args.seqs},
 	})
 }
 
 func bindNormalTestAction(
+	km *command.Keymaps, name string, fn command.Action,
+	seqs ...[]command.KeyEvent,
+) {
+	bindTestAction(bindTestActionArgs{
+		km:   km,
+		mode: view.ModeNormal,
+		name: name,
+		fn: func(e *view.Editor) command.Continuation {
+			fn(e)
+			return nil
+		},
+		seqs: seqs,
+	})
+}
+
+// bindNormalTestKeyAction binds a continuation-returning action, for the
+// multi-key cases bindNormalTestAction's plain Action cannot express
+func bindNormalTestKeyAction(
 	km *command.Keymaps, name string, fn command.KeyAction,
 	seqs ...[]command.KeyEvent,
 ) {

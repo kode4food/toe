@@ -1282,7 +1282,6 @@ func TestCompletionComponent(t *testing.T) {
 
 		assert.Equal(t, "error: apply failed", e.TakeStatusMsg())
 	})
-
 }
 
 func (c *completionController) RestartLanguageServers(

@@ -4,132 +4,119 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
 
-func (m Model) RenameSymbolAction() command.KeyAction {
+func (m Model) RenameSymbolAction(e *view.Editor) {
 	ec := m.component
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		v := e.FocusedView()
-		if v == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoRename))
-			return nil
-		}
-		prefill, err := ls.RenameSymbolPrefill(doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
-			return newPromptComponent(cx, promptComponentArgs{
-				ec:      ec,
-				kind:    promptRegex,
-				prompt:  i18n.Text(i18n.PromptRename),
-				prefill: prefill,
-				fn: func(e *view.Editor, name string) error {
-					return renameSymbol(e, name)
-				},
-			}), nil
-		}
-		return nil
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoRename))
+		return
+	}
+	prefill, err := ls.RenameSymbolPrefill(doc, v.ID())
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		return newPromptComponent(cx, promptComponentArgs{
+			ec:      ec,
+			kind:    promptRegex,
+			prompt:  i18n.Text(i18n.PromptRename),
+			prefill: prefill,
+			fn: func(e *view.Editor, name string) error {
+				return renameSymbol(e, name)
+			},
+		}), nil
 	}
 }
 
-func (m Model) CompletionAction() command.KeyAction {
+func (m Model) CompletionAction(e *view.Editor) {
 	ec := m.component
-	return func(e *view.Editor) command.Continuation {
-		if e.FocusedDocument() == nil {
-			return nil
-		}
-		if e.FocusedView() == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			return nil
-		}
-		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
-			return nil, ec.completionCmd(cx, false)
-		}
-		return nil
+	if e.FocusedDocument() == nil {
+		return
+	}
+	if e.FocusedView() == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		return
+	}
+	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		return nil, ec.completionCmd(cx, false)
 	}
 }
 
-func (m Model) HoverAction() command.KeyAction {
+func (m Model) HoverAction(e *view.Editor) {
 	ec := m.component
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		v := e.FocusedView()
-		if v == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHover))
-			return nil
-		}
-		text, err := ls.Hover(doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		if text == "" {
-			e.SetStatusMsg(i18n.Text(i18n.StatusNoHoverResults))
-			return nil
-		}
-		anchor := newHoverAnchor(doc, v)
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newHoverComponent(ec, anchor, text), nil
-		}
-		return nil
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHover))
+		return
+	}
+	text, err := ls.Hover(doc, v.ID())
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	if text == "" {
+		e.SetStatusMsg(i18n.Text(i18n.StatusNoHoverResults))
+		return
+	}
+	anchor := newHoverAnchor(doc, v)
+	ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		return newHoverComponent(ec, anchor, text), nil
 	}
 }
 
-func (m Model) SignatureHelpAction() command.KeyAction {
+func (m Model) SignatureHelpAction(e *view.Editor) {
 	ec := m.component
-	return func(e *view.Editor) command.Continuation {
-		doc := e.FocusedDocument()
-		if doc == nil {
-			return nil
-		}
-		v := e.FocusedView()
-		if v == nil {
-			return nil
-		}
-		ls := e.LanguageServerController()
-		if ls == nil {
-			e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoSignatureHelp))
-			return nil
-		}
-		call, ok := currentSignatureCall(m.context)
-		if !ok {
-			return nil
-		}
-		ec.language.signatureHidden = nil
-		help, err := ls.SignatureHelp(doc, v.ID())
-		if err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return nil
-		}
-		if len(help.Signatures) == 0 {
-			return nil
-		}
-		ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
-			return newSignatureHelpComponent(ec, call, help), nil
-		}
-		return nil
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoSignatureHelp))
+		return
+	}
+	call, ok := currentSignatureCall(m.context)
+	if !ok {
+		return
+	}
+	ec.language.signatureHidden = nil
+	help, err := ls.SignatureHelp(doc, v.ID())
+	if err != nil {
+		e.SetStatusMsg(i18n.ErrorText(err))
+		return
+	}
+	if len(help.Signatures) == 0 {
+		return
+	}
+	ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+		return newSignatureHelpComponent(ec, call, help), nil
 	}
 }
 

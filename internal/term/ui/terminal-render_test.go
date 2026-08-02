@@ -33,8 +33,7 @@ func TestScrollbackThemeBackground(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		cont := m.TerminalAction()(e)
-		assert.Nil(t, cont)
+		m.TerminalAction(e)
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
 		assert.True(t, ok)
 		t.Cleanup(func() { _ = tp.Stop() })

@@ -40,84 +40,84 @@ func LspModule(model ui.Model) command.Module {
 			{
 				Name:      actGotoDeclaration,
 				DocString: "Goto declaration",
-				Run:       kit.Continuation(model.GotoDeclarationAction()),
+				Run:       kit.Runner(model.GotoDeclarationAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('D'))),
 			},
 			{
 				Name:      actGotoDefinition,
 				DocString: "Goto definition",
-				Run:       kit.Continuation(model.GotoDefinitionAction()),
+				Run:       kit.Runner(model.GotoDefinitionAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('d'))),
 			},
 			{
 				Name:      actGotoTypeDefinition,
 				DocString: "Goto type definition",
-				Run:       kit.Continuation(model.GotoTypeDefinitionAction()),
+				Run:       kit.Runner(model.GotoTypeDefinitionAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('y'))),
 			},
 			{
 				Name:      actGotoImplementation,
 				DocString: "Goto implementation",
-				Run:       kit.Continuation(model.GotoImplementationAction()),
+				Run:       kit.Runner(model.GotoImplementationAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('i'))),
 			},
 			{
 				Name:      actGotoReference,
 				DocString: "Goto references",
-				Run:       kit.Continuation(model.GotoReferenceAction()),
+				Run:       kit.Runner(model.GotoReferenceAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('r'))),
 			},
 			{
 				Name:      actSelectReferences,
 				DocString: "Select symbol references",
-				Run:       kit.Continuation(model.SelectReferencesAction()),
+				Run:       kit.Runner(model.SelectReferencesAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Leader('h'),
 			},
 			{
 				Name:      actCodeAction,
 				DocString: "Perform code action",
-				Run:       kit.Continuation(model.CodeActionPickerAction()),
+				Run:       kit.Runner(model.CodeActionPickerAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Leader('a'),
 			},
 			{
 				Name:      actHover,
 				DocString: "Show docs for item under cursor",
-				Run:       kit.Continuation(model.HoverAction()),
+				Run:       kit.Runner(model.HoverAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Leader('k'),
 			},
 			{
 				Name:      actRenameSymbol,
 				DocString: "Rename symbol",
-				Run:       kit.Continuation(model.RenameSymbolAction()),
+				Run:       kit.Runner(model.RenameSymbolAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Leader('r'),
 			},
 			{
 				Name:      actSignatureHelp,
 				DocString: "Show signature help",
-				Run:       kit.Continuation(model.SignatureHelpAction()),
+				Run:       kit.Runner(model.SignatureHelpAction),
 				Modes:     view.ModeInsert,
 			},
 			{
 				Name:      actSymbolPicker,
 				DocString: "Open symbol picker",
-				Run:       kit.Continuation(model.SymbolPickerAction()),
+				Run:       kit.Runner(model.SymbolPickerAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Leader('s'),
 			},
 			{
 				Name:      actWorkspaceSymbol,
 				DocString: "Open workspace symbol picker",
-				Run: kit.Continuation(
-					model.WorkspaceSymbolPickerAction(),
+				Run: kit.Runner(
+					model.WorkspaceSymbolPickerAction,
 				),
 				Modes: command.PaneModes,
 				Keys:  kit.Leader('S'),
@@ -180,7 +180,7 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 			return command.Result{Error: errLSPUndefined}
 		}
 		if args == nil || args.Empty() {
-			return kit.Continuation(model.PickerAction(
+			return kit.Runner(model.PickerAction(
 				ui.LSPWorkspaceCommandPicker,
 			))(e, args)
 		}

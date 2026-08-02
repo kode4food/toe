@@ -35,14 +35,14 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actCommandPalette,
 				DocString: "Open command palette",
-				Run:       kit.Continuation(model.CommandPaletteAction()),
+				Run:       kit.Runner(model.CommandPaletteAction),
 				Modes:     command.PaneModes,
 				Keys:      kit.Leader('?'),
 			},
 			{
 				Name:      actLastPicker,
 				DocString: "Reopen the last picker",
-				Run:       kit.Continuation(model.LastPickerAction()),
+				Run:       kit.Runner(model.LastPickerAction),
 				Modes:     command.PaneModes,
 				Keys:      kit.Leader('\''),
 			},

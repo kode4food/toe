@@ -28,7 +28,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actChangedFilePicker,
 				DocString: "Open changed file picker",
-				Run: kit.Continuation(model.PickerAction(
+				Run: kit.Runner(model.PickerAction(
 					ui.NewChangedFilePicker,
 				)),
 				Modes: command.PaneModes,

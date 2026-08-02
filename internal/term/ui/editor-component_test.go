@@ -1028,7 +1028,7 @@ func TestSyncEditorMessages(t *testing.T) {
 		m := ui.New(e, km)
 		// No LSP sets "No configured language server"
 		bindNormalTestAction(
-			km, "goto_decl", m.GotoDeclarationAction(),
+			km, "goto_decl", m.GotoDeclarationAction,
 			[]command.KeyEvent{char('g')},
 		)
 		m = resize(m, 80, 24)

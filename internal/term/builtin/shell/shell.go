@@ -32,7 +32,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actShellPipe,
 				DocString: "Pipe selections through shell command",
-				Run: kit.Continuation(model.ShellAction(
+				Run: kit.Runner(model.ShellAction(
 					i18n.Text(i18n.PromptPipe), action.ShellPipe,
 				)),
 				Modes: command.DocNormalModes,
@@ -41,7 +41,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actShellInsertOutput,
 				DocString: "Insert shell command output before selections",
-				Run: kit.Continuation(model.ShellAction(
+				Run: kit.Runner(model.ShellAction(
 					i18n.Text(i18n.PromptInsertOutput),
 					action.ShellInsertOutput,
 				)),
@@ -51,7 +51,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actShellKeepPipe,
 				DocString: "Filter selections with shell predicate",
-				Run: kit.Continuation(model.ShellAction(
+				Run: kit.Runner(model.ShellAction(
 					i18n.Text(i18n.PromptFilter),
 					action.ShellKeepPipe,
 				)),
@@ -61,7 +61,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actShellPipeTo,
 				DocString: "Pipe selections into shell command ignoring output",
-				Run: kit.Continuation(model.ShellAction(
+				Run: kit.Runner(model.ShellAction(
 					i18n.Text(i18n.PromptPipeTo), action.ShellPipeTo,
 				)),
 				Modes: command.DocNormalModes,
@@ -70,7 +70,7 @@ func Module(model ui.Model) command.Module {
 			{
 				Name:      actShellAppendOutput,
 				DocString: "Append shell command output after selections",
-				Run: kit.Continuation(model.ShellAction(
+				Run: kit.Runner(model.ShellAction(
 					i18n.Text(i18n.PromptAppendOutput),
 					action.ShellAppendOutput,
 				)),

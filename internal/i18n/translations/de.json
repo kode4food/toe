@@ -17,6 +17,8 @@
   "error.noFilename": "Dateiname fehlt",
   "error.lspUndefined": "LSP für Dokument nicht definiert",
   "error.noSuchCommand": "Befehl nicht gefunden: `{name}`",
+  "error.invalidKey": "ungültige Tastenfolge",
+  "error.bindingExists": "Tastenbelegung existiert bereits",
   "status.written": "gespeichert",
   "status.allWritten": "alle Dokumente gespeichert",
   "status.writtenAndClosed": "gespeichert und geschlossen",

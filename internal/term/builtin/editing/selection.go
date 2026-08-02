@@ -96,7 +96,7 @@ func SelectionModule(model ui.Model) command.Module {
 			{
 				Name:      actSelectWithinRegex,
 				DocString: "Select all regex matches inside selections",
-				Run: kit.Continuation(model.RegexAction(
+				Run: kit.Runner(model.RegexAction(
 					i18n.Text(i18n.PromptSelect),
 					action.SelectWithinRegex,
 				)),
@@ -106,7 +106,7 @@ func SelectionModule(model ui.Model) command.Module {
 			{
 				Name:      actSplitSelectionByRegex,
 				DocString: "Split selections on regex matches",
-				Run: kit.Continuation(model.RegexAction(
+				Run: kit.Runner(model.RegexAction(
 					i18n.Text(i18n.PromptSplit),
 					action.SplitSelectionByRegex,
 				)),
@@ -116,7 +116,7 @@ func SelectionModule(model ui.Model) command.Module {
 			{
 				Name:      actKeepSelectionsMatching,
 				DocString: "Keep selections matching regex",
-				Run: kit.Continuation(model.RegexAction(
+				Run: kit.Runner(model.RegexAction(
 					i18n.Text(i18n.PromptKeep),
 					action.KeepSelectionsMatching,
 				)),
@@ -126,7 +126,7 @@ func SelectionModule(model ui.Model) command.Module {
 			{
 				Name:      actRemoveSelectionsMatching,
 				DocString: "Remove selections matching regex",
-				Run: kit.Continuation(model.RegexAction(
+				Run: kit.Runner(model.RegexAction(
 					i18n.Text(i18n.PromptRemove),
 					action.RemoveSelectionsMatching,
 				)),

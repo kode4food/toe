@@ -76,7 +76,7 @@ func TestDefaults(t *testing.T) {
 		for _, name := range documentedCommandNames(t) {
 			documented[name] = true
 		}
-		for _, cmd := range km.Commands() {
+		for _, cmd := range allCommands(km) {
 			name := commandName(cmd)
 			t.Run(name, func(t *testing.T) {
 				assert.True(t, documented[name])
@@ -161,9 +161,9 @@ func TestDefaults(t *testing.T) {
 			{test.Char(' '), test.Char('w'), test.Char('w')},
 			{test.Char(' '), test.Char('w'), ctrl('w')},
 		} {
-			_, found, prefix := km.Lookup(view.ModeNormal, seq)
-			assert.True(t, found)
-			assert.False(t, prefix)
+			lookup, ok := km.Lookup(view.ModeNormal, seq)
+			assert.True(t, ok)
+			assert.False(t, lookup.Prefix)
 		}
 	})
 
@@ -171,32 +171,32 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		assert.NotNil(t, km.ResolveCommand("buffer_next"))
-		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('g'), test.Char('n'),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 
 	t.Run("insert end newline-aware", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		assert.NotNil(t, km.ResolveCommand("goto_line_end_newline"))
-		_, found, prefix := km.Lookup(view.ModeInsert, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeInsert, []command.KeyEvent{
 			test.Special(command.End),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 
 	t.Run("capital bindings use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char(' '), test.Char('F').WithMods(command.ModShift),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 
 	t.Run("capital hints omit shift", func(t *testing.T) {
@@ -287,12 +287,12 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		for _, mode := range []view.Mode{view.ModeImage, view.ModeBinary} {
-			_, found, prefix := km.Lookup(mode, []command.KeyEvent{
+			lookup, ok := km.Lookup(mode, []command.KeyEvent{
 				test.Char(':'),
 			})
 
-			assert.True(t, found)
-			assert.False(t, prefix)
+			assert.True(t, ok)
+			assert.False(t, lookup.Prefix)
 		}
 	})
 
@@ -376,52 +376,50 @@ func TestDefaults(t *testing.T) {
 	t.Run("paragraph keys use unimpaired prefixes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, found, prefix := km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('['),
 		})
-		assert.False(t, found)
-		assert.True(t, prefix)
+		assert.False(t, ok)
+		assert.True(t, lookup.Prefix)
 
-		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('['), test.Char('p'),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 
-		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char(']'),
 		})
-		assert.False(t, found)
-		assert.True(t, prefix)
+		assert.False(t, ok)
+		assert.True(t, lookup.Prefix)
 
-		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char(']'), test.Char('p'),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 
-		_, found, prefix = km.Lookup(view.ModeNormal, []command.KeyEvent{
+		lookup, ok = km.Lookup(view.ModeNormal, []command.KeyEvent{
 			test.Char('p'),
 		})
-		assert.True(t, found)
-		assert.False(t, prefix)
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
 	})
 
 	t.Run("default keybindings resolve", func(t *testing.T) {
 		km := defaultKeymaps(t)
-		for _, cmd := range km.Commands() {
+		for _, cmd := range allCommands(km) {
 			name := commandName(cmd)
 			for _, mode := range commandModes(cmd) {
-				for _, binding := range commandBindings(cmd, mode) {
-					for _, seq := range binding {
-						label := mode.String() + "/" + name +
-							"/" + keySeqString(seq)
-						t.Run(label, func(t *testing.T) {
-							_, found, prefix := km.Lookup(mode, seq)
-							assert.True(t, found)
-							assert.False(t, prefix)
-						})
-					}
+				for _, seq := range commandBindings(cmd, mode) {
+					label := mode.String() + "/" + name +
+						"/" + keySeqString(seq)
+					t.Run(label, func(t *testing.T) {
+						lookup, ok := km.Lookup(mode, seq)
+						assert.True(t, ok)
+						assert.False(t, lookup.Prefix)
+					})
 				}
 			}
 		}
@@ -446,9 +444,9 @@ func TestDefaults(t *testing.T) {
 				if !strings.HasPrefix(other.seq, key.seq+" ") {
 					continue
 				}
-				_, found, prefix := km.Lookup(key.mode, info.events)
-				assert.False(t, found)
-				assert.True(t, prefix)
+				lookup, ok := km.Lookup(key.mode, info.events)
+				assert.False(t, ok)
+				assert.True(t, lookup.Prefix)
 			}
 		}
 	})
@@ -544,17 +542,15 @@ func ctrl(ch rune) command.KeyEvent {
 
 func collectDefaultKeySeqs(km *command.Keymaps) map[keySeqKey]keySeqInfo {
 	seqs := map[keySeqKey]keySeqInfo{}
-	for _, cmd := range km.Commands() {
+	for _, cmd := range allCommands(km) {
 		name := commandName(cmd)
 		for _, mode := range commandModes(cmd) {
-			for _, binding := range commandBindings(cmd, mode) {
-				for _, seq := range binding {
-					key := keySeqKey{mode: mode, seq: keySeqString(seq)}
-					info := seqs[key]
-					info.names = append(info.names, name)
-					info.events = seq
-					seqs[key] = info
-				}
+			for _, seq := range commandBindings(cmd, mode) {
+				key := keySeqKey{mode: mode, seq: keySeqString(seq)}
+				info := seqs[key]
+				info.names = append(info.names, name)
+				info.events = seq
+				seqs[key] = info
 			}
 		}
 	}
@@ -576,9 +572,13 @@ func commandModes(cmd *command.Command) []view.Mode {
 	return modes.Split()
 }
 
+func allCommands(km *command.Keymaps) []*command.Command {
+	return km.CommandsIn(command.AllModes | view.ModeCompletion)
+}
+
 func commandBindings(
 	cmd *command.Command, mode view.Mode,
-) []command.KeyBinding {
+) command.KeyBinding {
 	if bindings, ok := cmd.Keys[mode]; ok {
 		return bindings
 	}

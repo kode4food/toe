@@ -17,6 +17,8 @@
   "error.noFilename": "no filename given",
   "error.lspUndefined": "LSP not defined for document",
   "error.noSuchCommand": "no such command: `{name}`",
+  "error.invalidKey": "invalid key sequence",
+  "error.bindingExists": "key binding already exists",
   "status.written": "written",
   "status.allWritten": "all documents written",
   "status.writtenAndClosed": "written and closed",

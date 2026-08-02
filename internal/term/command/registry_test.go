@@ -67,8 +67,8 @@ func TestRegistry(t *testing.T) {
 		err := km.Register("noop", command.Command{
 			Run:   registryCommand().Run,
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {{{{Code: command.KeyCode{Char: 'g'}}}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{{Code: command.KeyCode{Char: 'g'}}}},
 			},
 		})
 		assert.NoError(t, err)
@@ -77,9 +77,9 @@ func TestRegistry(t *testing.T) {
 			{Code: command.KeyCode{Char: 'x'}},
 		})
 
-		assert.Equal(t, []command.KeyBinding{
-			{{{Code: command.KeyCode{Char: 'g'}}}},
-			{{{Code: command.KeyCode{Char: 'x'}}}},
+		assert.Equal(t, command.KeyBinding{
+			{{Code: command.KeyCode{Char: 'g'}}},
+			{{Code: command.KeyCode{Char: 'x'}}},
 		}, km.Bindings(view.ModeNormal, "noop"))
 	})
 

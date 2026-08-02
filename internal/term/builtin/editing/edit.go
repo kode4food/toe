@@ -72,56 +72,56 @@ func EditModule() command.Module {
 			{
 				Name:      actSelectMode,
 				DocString: "Enter selection extend mode",
-				Run:       kit.Continuation(selectModeAction),
+				Run:       kit.Runner(action.SelectMode),
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('v')),
 			},
 			{
 				Name:      actNormalMode,
 				DocString: "Enter normal mode",
-				Run:       kit.Continuation(normalModeAction),
+				Run:       kit.Runner(action.NormalMode),
 				Modes:     command.DocModes,
 				Keys:      kit.Keys(kit.Esc),
 			},
 			{
 				Name:      actInsertMode,
 				DocString: "Insert before selection",
-				Run:       kit.Continuation(insertModeAction),
+				Run:       kit.Runner(action.InsertMode),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('i')),
 			},
 			{
 				Name:      actInsertAtLineStart,
 				DocString: "Insert at start of line",
-				Run:       kit.Continuation(insertAtLineStartAction),
+				Run:       kit.Runner(action.InsertAtLineStart),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('I')),
 			},
 			{
 				Name:      actAppendMode,
 				DocString: "Append after selection",
-				Run:       kit.Continuation(appendModeAction),
+				Run:       kit.Runner(action.AppendMode),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('a')),
 			},
 			{
 				Name:      actAppendToLine,
 				DocString: "Insert at end of line",
-				Run:       kit.Continuation(appendToLineAction),
+				Run:       kit.Runner(action.AppendToLine),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('A')),
 			},
 			{
 				Name:      actOpenBelow,
 				DocString: "Open new line below selection",
-				Run:       kit.Continuation(openBelowAction),
+				Run:       kit.Runner(openBelowAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('o')),
 			},
 			{
 				Name:      actOpenAbove,
 				DocString: "Open new line above selection",
-				Run:       kit.Continuation(openAboveAction),
+				Run:       kit.Runner(openAboveAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('O')),
 			},
@@ -163,28 +163,28 @@ func EditModule() command.Module {
 			{
 				Name:      actUndo,
 				DocString: "Undo change",
-				Run:       kit.Continuation(undoAction),
+				Run:       kit.Runner(undoAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('u')),
 			},
 			{
 				Name:      actRedo,
 				DocString: "Redo change",
-				Run:       kit.Continuation(redoAction),
+				Run:       kit.Runner(redoAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('U')),
 			},
 			{
 				Name:      actEarlier,
 				DocString: "Move backward in history",
-				Run:       kit.Continuation(earlierAction),
+				Run:       kit.Runner(earlierAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('u')),
 			},
 			{
 				Name:      actLater,
 				DocString: "Move forward in history",
-				Run:       kit.Continuation(laterAction),
+				Run:       kit.Runner(laterAction),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('U')),
 			},
@@ -446,49 +446,17 @@ func setAutoPairs(opts *view.Options, value string) error {
 	return nil
 }
 
-func selectModeAction(e *view.Editor) command.Continuation {
-	action.SelectMode(e)
-	return nil
-}
-
-func normalModeAction(e *view.Editor) command.Continuation {
-	action.NormalMode(e)
-	return nil
-}
-
-func insertModeAction(e *view.Editor) command.Continuation {
-	action.InsertMode(e)
-	return nil
-}
-
-func insertAtLineStartAction(e *view.Editor) command.Continuation {
-	action.InsertAtLineStart(e)
-	return nil
-}
-
-func appendModeAction(e *view.Editor) command.Continuation {
-	action.AppendMode(e)
-	return nil
-}
-
-func appendToLineAction(e *view.Editor) command.Continuation {
-	action.AppendToLine(e)
-	return nil
-}
-
-func openBelowAction(e *view.Editor) command.Continuation {
+func openBelowAction(e *view.Editor) {
 	action.MoveLineEnd(e)
 	action.InsertNewline(e)
 	e.SetMode(view.ModeInsert)
-	return nil
 }
 
-func openAboveAction(e *view.Editor) command.Continuation {
+func openAboveAction(e *view.Editor) {
 	action.MoveLineStart(e)
 	action.InsertNewline(e)
 	action.MoveUp(e)
 	e.SetMode(view.ModeInsert)
-	return nil
 }
 
 func replaceCharAction(e *view.Editor) command.Continuation {
@@ -502,30 +470,26 @@ func replaceCharAction(e *view.Editor) command.Continuation {
 	}
 }
 
-func undoAction(e *view.Editor) command.Continuation {
+func undoAction(e *view.Editor) {
 	e.Undo()
-	return nil
 }
 
-func redoAction(e *view.Editor) command.Continuation {
+func redoAction(e *view.Editor) {
 	e.Redo()
-	return nil
 }
 
-func earlierAction(e *view.Editor) command.Continuation {
+func earlierAction(e *view.Editor) {
 	n := e.Count()
 	if n == 0 {
 		n = 1
 	}
 	e.Earlier(core.UndoSteps(n))
-	return nil
 }
 
-func laterAction(e *view.Editor) command.Continuation {
+func laterAction(e *view.Editor) {
 	n := e.Count()
 	if n == 0 {
 		n = 1
 	}
 	e.Later(core.UndoSteps(n))
-	return nil
 }

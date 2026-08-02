@@ -77,11 +77,12 @@ func TestPromptAccept(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("command_mode", command.Command{
 			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Continuation: m.CmdModeAction()(e)}
+				m.CmdModeAction(e)
+				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{
-				view.ModeAny: {[][]command.KeyEvent{{char(':')}}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
 			},
 		})
 		m = resize(m, 80, 24)
@@ -538,9 +539,9 @@ func TestThemeRender(t *testing.T) {
 				return command.Result{}
 			},
 			Modes: view.ModeNormal,
-			Keys: map[view.Mode][]command.KeyBinding{view.ModeAny: {
-				[][]command.KeyEvent{{char(' '), char('界')}},
-			}},
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(' '), char('界')}},
+			},
 		})
 		m := resize(ui.New(e, km), 40, 10)
 

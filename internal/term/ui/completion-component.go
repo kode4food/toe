@@ -123,10 +123,10 @@ func (c *completionComponent) HandleEvent(
 func (c *completionComponent) lookupAction(
 	cx *Context, k command.KeyEvent,
 ) (string, bool) {
-	name, found, _ := cx.Keymaps.LookupCommand(
+	lookup, ok := cx.Keymaps.Lookup(
 		view.ModeCompletion, []command.KeyEvent{k},
 	)
-	return name, found
+	return lookup.Name, ok
 }
 
 func (c *completionComponent) handleAction(

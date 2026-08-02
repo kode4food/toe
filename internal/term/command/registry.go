@@ -34,7 +34,6 @@ func (r *Registry) RegisterCommand(name string, c Command) error {
 	if err := r.km.Register(name, c); err != nil {
 		return err
 	}
-	r.km.byAlias[name] = r.km.byName[name]
 	return nil
 }
 

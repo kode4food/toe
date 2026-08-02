@@ -51,23 +51,21 @@ func PickerModule(model ui.Model) command.Module {
 			{
 				Name:      actFilePicker,
 				DocString: "Open file picker",
-				Run:       kit.Continuation(model.PickerAction(NewFilePicker)),
+				Run:       kit.Runner(model.PickerAction(NewFilePicker)),
 				Modes:     command.PaneModes,
 				Keys:      kit.Leader('f'),
 			},
 			{
 				Name:      actFilePickerInCWD,
 				DocString: "Open file picker at current working directory",
-				Run: kit.Continuation(
-					model.PickerAction(NewFilePickerInCWD),
-				),
-				Modes: command.PaneModes,
-				Keys:  kit.Leader('F'),
+				Run:       kit.Runner(model.PickerAction(NewFilePickerInCWD)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Leader('F'),
 			},
 			{
 				Name:      actFileExplorer,
 				DocString: "Open file explorer at workspace root",
-				Run: kit.Continuation(model.PickerAction(
+				Run: kit.Runner(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
 						return NewFileExplorer(
 							e, FileExplorerOptions(cfg.Editor.FileExplorer),
@@ -80,7 +78,7 @@ func PickerModule(model ui.Model) command.Module {
 			{
 				Name:      actFileExplorerForPane,
 				DocString: "Open file explorer at current pane's directory",
-				Run: kit.Continuation(model.PickerAction(
+				Run: kit.Runner(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
 						return NewFocusedPaneDirExplorer(
 							e, FileExplorerOptions(cfg.Editor.FileExplorer),
@@ -93,7 +91,7 @@ func PickerModule(model ui.Model) command.Module {
 			{
 				Name:      actBufferPicker,
 				DocString: "Open buffer picker",
-				Run: kit.Continuation(model.PickerAction(
+				Run: kit.Runner(model.PickerAction(
 					func(e *view.Editor) *ui.Picker {
 						return NewBufferPicker(
 							e, bufferPickerOptions(cfg.Editor.BufferPicker),
@@ -145,16 +143,14 @@ func DiagnosticsModule(model ui.Model) command.Module {
 			{
 				Name:      actDiagnosticPicker,
 				DocString: "Open diagnostic picker",
-				Run: kit.Continuation(
-					model.PickerAction(NewDiagnosticPicker),
-				),
-				Modes: command.PaneModes,
-				Keys:  kit.Leader('d'),
+				Run:       kit.Runner(model.PickerAction(NewDiagnosticPicker)),
+				Modes:     command.PaneModes,
+				Keys:      kit.Leader('d'),
 			},
 			{
 				Name:      actWorkspaceDiagnostics,
 				DocString: "Open workspace diagnostic picker",
-				Run: kit.Continuation(
+				Run: kit.Runner(
 					model.PickerAction(NewWorkspaceDiagnosticPicker),
 				),
 				Modes: command.PaneModes,
@@ -163,7 +159,7 @@ func DiagnosticsModule(model ui.Model) command.Module {
 			{
 				Name:      actGlobalSearch,
 				DocString: "Global search in workspace folder",
-				Run: kit.Continuation(
+				Run: kit.Runner(
 					model.PickerAction(NewGlobalSearchPicker),
 				),
 				Modes: command.PaneModes,

@@ -232,7 +232,10 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 			km:   km,
 			mode: view.ModeImage,
 			name: "explorer_pane",
-			fn:   m.PickerAction(bufferDirExplorer),
+			fn: func(e *view.Editor) command.Continuation {
+				m.PickerAction(bufferDirExplorer)(e)
+				return nil
+			},
 			seqs: [][]command.KeyEvent{{char('e')}},
 		})
 

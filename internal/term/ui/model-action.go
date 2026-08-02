@@ -37,7 +37,7 @@ func (m Model) WithInitialPicker(fn PickerFunc) Model {
 	return m
 }
 
-func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
+func (m Model) PickerAction(fn PickerFunc) command.Action {
 	ec := m.component
 	cx := m.context
 	opener := func(e *view.Editor) layerFunc {
@@ -51,33 +51,29 @@ func (m Model) PickerAction(fn PickerFunc) command.KeyAction {
 			return newPickerComponent(cx, p), cmd
 		}
 	}
-	return func(e *view.Editor) command.Continuation {
+	return func(e *view.Editor) {
 		layer := opener(e)
 		if layer == nil {
-			return nil
+			return
 		}
 		cx.lastLayer = opener
 		ec.keys.nextLayer = layer
-		return nil
 	}
 }
 
-func (m Model) CmdModeAction() command.KeyAction {
+func (m Model) CmdModeAction(_ *view.Editor) {
 	ec := m.component
-	return func(_ *view.Editor) command.Continuation {
-		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
-			return newPromptComponent(cx, promptComponentArgs{
-				ec:   ec,
-				kind: promptCmd,
-			}), nil
-		}
-		return nil
+	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		return newPromptComponent(cx, promptComponentArgs{
+			ec:   ec,
+			kind: promptCmd,
+		}), nil
 	}
 }
 
-func (m Model) SearchAction(forward bool) command.KeyAction {
+func (m Model) SearchAction(forward bool) command.Action {
 	ec := m.component
-	return func(_ *view.Editor) command.Continuation {
+	return func(_ *view.Editor) {
 		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				ec:      ec,
@@ -85,13 +81,12 @@ func (m Model) SearchAction(forward bool) command.KeyAction {
 				forward: forward,
 			}), nil
 		}
-		return nil
 	}
 }
 
-func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
+func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
-	return func(_ *view.Editor) command.Continuation {
+	return func(_ *view.Editor) {
 		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				ec:     ec,
@@ -100,13 +95,12 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.KeyAction {
 				fn:     fn,
 			}), nil
 		}
-		return nil
 	}
 }
 
-func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
+func (m Model) ShellAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
-	return func(_ *view.Editor) command.Continuation {
+	return func(_ *view.Editor) {
 		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				ec:     ec,
@@ -115,11 +109,10 @@ func (m Model) ShellAction(prompt string, fn promptHandler) command.KeyAction {
 				fn:     fn,
 			}), nil
 		}
-		return nil
 	}
 }
 
-func (m Model) CommandPaletteAction() command.KeyAction {
+func (m Model) CommandPaletteAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
 	opener := func(e *view.Editor) layerFunc {
@@ -130,23 +123,18 @@ func (m Model) CommandPaletteAction() command.KeyAction {
 			return newPickerComponent(cx, p), cmd
 		}
 	}
-	return func(e *view.Editor) command.Continuation {
-		cx.lastLayer = opener
-		ec.keys.nextLayer = opener(e)
-		return nil
-	}
+
+	cx.lastLayer = opener
+	ec.keys.nextLayer = opener(e)
 }
 
-func (m Model) LastPickerAction() command.KeyAction {
+func (m Model) LastPickerAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
-	return func(e *view.Editor) command.Continuation {
-		if cx.lastLayer == nil {
-			return nil
-		}
-		ec.keys.nextLayer = cx.lastLayer(e)
-		return nil
+	if cx.lastLayer == nil {
+		return
 	}
+	ec.keys.nextLayer = cx.lastLayer(e)
 }
 
 func (m Model) MacroRecordAction(e *view.Editor) command.Continuation {

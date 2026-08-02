@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -14,13 +15,12 @@ type (
 		modes    map[view.Mode]*keyTrieNode
 		commands []Command
 		byName   map[string]int
-		byAlias  map[string]int
 	}
 
 	keyTrieNode struct {
 		children map[KeyEvent]*keyTrieNode
 		order    []KeyEvent // insertion order for info popup display
-		action   KeyAction
+		action   KeyResultAction
 		name     string
 		label    string
 	}
@@ -30,14 +30,15 @@ var (
 	ErrDuplicateCommand = errors.New("duplicate command registration")
 	ErrNoModes          = errors.New("command has no modes")
 	ErrUnknownMode      = errors.New("keys references mode not in modes")
+
+	ErrBindingExists = i18n.NewError(i18n.ErrorBindingExists)
 )
 
 // NewKeymaps creates an empty Keymaps
 func NewKeymaps() *Keymaps {
 	return &Keymaps{
-		modes:   map[view.Mode]*keyTrieNode{},
-		byName:  map[string]int{},
-		byAlias: map[string]int{},
+		modes:  map[view.Mode]*keyTrieNode{},
+		byName: map[string]int{},
 	}
 }
 
@@ -64,37 +65,32 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 	}
 	if cmd.Run != nil {
 		label := cmd.DocString
-		if label == "" && len(cmd.Aliases) > 0 {
-			label = cmd.Aliases[0]
-		}
-		action := func(e *view.Editor) Continuation {
-			return k.commands[idx].Run(e, nil).Continuation
+		action := func(e *view.Editor) Result {
+			return k.commands[idx].Run(e, nil)
 		}
 		for _, mode := range cmd.Modes.Split() {
 			bindings, ok := cmd.Keys[mode]
 			if !ok {
 				bindings = cmd.Keys[view.ModeAny]
 			}
-			for _, binding := range bindings {
-				k.bindCommand(bindCommandArgs{
-					mode:   mode,
-					name:   name,
-					action: action,
-					label:  label,
-					seqs:   binding,
-				})
-			}
+			k.bindCommand(bindCommandArgs{
+				mode:   mode,
+				name:   name,
+				action: action,
+				label:  label,
+				seqs:   bindings,
+			})
 		}
 	}
 	for _, alias := range cmd.Aliases {
-		k.byAlias[alias] = idx
+		k.byName[alias] = idx
 	}
 	return nil
 }
 
 // ResolveCommand looks up a command by typeable alias
 func (k *Keymaps) ResolveCommand(name string) *Command {
-	if idx, ok := k.byAlias[name]; ok {
+	if idx, ok := k.byName[name]; ok {
 		return &k.commands[idx]
 	}
 	return nil
@@ -106,15 +102,6 @@ func (k *Keymaps) ResolveCommandIn(mode view.Mode, name string) *Command {
 		return cmd
 	}
 	return nil
-}
-
-// Commands returns all registered commands in registration order
-func (k *Keymaps) Commands() []*Command {
-	out := make([]*Command, 0, len(k.commands))
-	for i := range k.commands {
-		out = append(out, &k.commands[i])
-	}
-	return out
 }
 
 // CommandsIn returns registered commands available in the named mode
@@ -129,85 +116,105 @@ func (k *Keymaps) CommandsIn(mode view.Mode) []*Command {
 }
 
 // Bindings returns key sequences bound to a command in a mode
-func (k *Keymaps) Bindings(mode view.Mode, name string) []KeyBinding {
+func (k *Keymaps) Bindings(mode view.Mode, name string) KeyBinding {
 	root, ok := k.modes[mode]
 	if !ok {
 		return nil
 	}
-	var bindings []KeyBinding
+	var bindings KeyBinding
 	root.collectBindings(name, nil, &bindings)
 	return bindings
 }
 
 // Bind adds extra key sequences to an already-registered command
 func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
-	cmd, ok := k.command(name)
-	if !ok || cmd.Run == nil {
+	cmd := k.ResolveCommand(name)
+	if cmd == nil || cmd.Run == nil {
 		return
 	}
-	action := func(e *view.Editor) Continuation {
-		return cmd.Run(e, nil).Continuation
+	action := func(e *view.Editor) Result {
+		return cmd.Run(e, nil)
 	}
 	k.bindCommand(bindCommandArgs{
 		mode:   mode,
-		name:   name,
+		name:   cmd.Name,
 		action: action,
 		seqs:   seqs,
 	})
 }
 
-// Lookup traverses the key trie. Returns (action, true, false) on a complete
-// match, (nil, false, true) on a valid prefix, (nil, false, false) otherwise
-func (k *Keymaps) Lookup(
-	mode view.Mode, seq []KeyEvent,
-) (action KeyAction, found, prefix bool) {
-	node, found, prefix := k.lookup(mode, seq)
-	if !found {
-		return nil, false, prefix
+// BindResultAction adds key sequences for a result-returning action
+func (k *Keymaps) BindResultAction(
+	modes []view.Mode, action KeyResultAction, label string, seqs ...[]KeyEvent,
+) error {
+	for _, mode := range modes {
+		for _, seq := range seqs {
+			if k.bindingConflict(mode, seq) {
+				return fmt.Errorf("%w in mode %s", ErrBindingExists, mode)
+			}
+		}
 	}
-	return node.action, true, false
+	for _, mode := range modes {
+		k.bindCommand(bindCommandArgs{
+			mode:   mode,
+			action: action,
+			label:  label,
+			seqs:   seqs,
+		})
+	}
+	return nil
 }
 
-// LookupCommand traverses the key trie and returns the registered command name
-func (k *Keymaps) LookupCommand(
-	mode view.Mode, seq []KeyEvent,
-) (name string, found, prefix bool) {
-	node, found, prefix := k.lookup(mode, seq)
-	if !found {
-		return "", false, prefix
-	}
-	return node.name, true, false
+// LookupRes is the result of traversing the key trie
+type LookupRes struct {
+	Action KeyResultAction
+	Name   string
+	Prefix bool
 }
 
-func (k *Keymaps) lookup(
-	mode view.Mode, seq []KeyEvent,
-) (*keyTrieNode, bool, bool) {
+// Lookup traverses the key trie. The bool reports a complete match
+func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (LookupRes, bool) {
+	node := k.lookup(mode, seq)
+	if node == nil {
+		return LookupRes{}, false
+	}
+	if node.isPrefix() {
+		return LookupRes{Prefix: true}, false
+	}
+	return LookupRes{Action: node.action, Name: node.name}, true
+}
+
+func (k *Keymaps) bindingConflict(mode view.Mode, seq []KeyEvent) bool {
+	node, ok := k.modes[mode]
+	if !ok {
+		return false
+	}
+	for _, ev := range seq {
+		if node.action != nil {
+			return true
+		}
+		node, ok = node.children[ev]
+		if !ok {
+			return false
+		}
+	}
+	return node.action != nil || len(node.children) > 0
+}
+
+func (k *Keymaps) lookup(mode view.Mode, seq []KeyEvent) *keyTrieNode {
 	root, ok := k.modes[mode]
 	if !ok {
-		return nil, false, false
+		return nil
 	}
 	node := root
 	for _, ev := range seq {
 		child, ok := node.children[ev]
 		if !ok {
-			return nil, false, false
+			return nil
 		}
 		node = child
 	}
-	if node.action != nil {
-		return node, true, false
-	}
-	if len(node.children) > 0 {
-		return nil, false, true
-	}
-	return nil, false, false
-}
-
-func (k *Keymaps) command(name string) (Command, bool) {
-	if idx, ok := k.byName[name]; ok {
-		return k.commands[idx], true
-	}
-	return Command{}, false
+	return node
 }
 
 func (c Command) availableIn(mode view.Mode) bool {
@@ -217,7 +224,7 @@ func (c Command) availableIn(mode view.Mode) bool {
 type bindCommandArgs struct {
 	mode   view.Mode
 	name   string
-	action KeyAction
+	action KeyResultAction
 	label  string
 	seqs   [][]KeyEvent
 }
@@ -255,11 +262,15 @@ func (k *keyTrieNode) set(ev KeyEvent, child *keyTrieNode) {
 	k.children[ev] = child
 }
 
+func (k *keyTrieNode) isPrefix() bool {
+	return k.action == nil && len(k.children) > 0
+}
+
 func (k *keyTrieNode) collectBindings(
-	name string, seq []KeyEvent, bindings *[]KeyBinding,
+	name string, seq []KeyEvent, bindings *KeyBinding,
 ) {
 	if k.action != nil && k.name == name {
-		*bindings = append(*bindings, KeyBinding{slices.Clone(seq)})
+		*bindings = append(*bindings, slices.Clone(seq))
 	}
 	for _, ev := range k.order {
 		child := k.children[ev]

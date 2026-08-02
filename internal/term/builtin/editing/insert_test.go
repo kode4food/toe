@@ -40,12 +40,12 @@ func TestCompletionCommands(t *testing.T) {
 			res := test.RunCmd(t, km, e, tt.name)
 			assert.Empty(t, res.Message)
 
-			act, found, prefix := km.Lookup(
+			lookup, ok := km.Lookup(
 				view.ModeCompletion, []command.KeyEvent{tt.key},
 			)
-			assert.True(t, found)
-			assert.False(t, prefix)
-			assert.Nil(t, act(e))
+			assert.True(t, ok)
+			assert.False(t, lookup.Prefix)
+			assert.Nil(t, lookup.Action(e).Continuation)
 		})
 	}
 }
@@ -103,13 +103,13 @@ func TestInsertTab(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		e.SetMode(view.ModeInsert)
 		testutil.SetCursor(t, e, 3)
-		act, found, prefix := km.Lookup(view.ModeInsert, []command.KeyEvent{{
+		lookup, ok := km.Lookup(view.ModeInsert, []command.KeyEvent{{
 			Code: command.KeyCode{Special: command.Tab},
 			Mods: command.ModShift,
 		}})
-		assert.True(t, found)
-		assert.False(t, prefix)
-		assert.Nil(t, act(e))
+		assert.True(t, ok)
+		assert.False(t, lookup.Prefix)
+		assert.Nil(t, lookup.Action(e).Continuation)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		assert.Equal(t, "abc\t", doc.Text().String())

@@ -60,7 +60,7 @@ type (
 		Run       Run
 		DocString string
 		Modes     view.Mode
-		Keys      map[view.Mode][]KeyBinding
+		Keys      map[view.Mode]KeyBinding
 		Aliases   []string
 		Signature Signature
 	}

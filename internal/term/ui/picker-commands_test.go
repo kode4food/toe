@@ -82,8 +82,8 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 		},
 		Aliases: []string{"palette_probe"},
 		Modes:   view.ModeNormal,
-		Keys: map[view.Mode][]command.KeyBinding{
-			view.ModeAny: {{{char('g'), char('p')}}},
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('g'), char('p')}},
 		},
 	})
 	km.Bind(view.ModeNormal, "palette_probe", []command.KeyEvent{

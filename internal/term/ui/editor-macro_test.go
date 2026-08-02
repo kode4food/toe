@@ -68,12 +68,12 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	bindNormalTestAction(km, "rec", m.MacroRecordAction,
+	bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
 		[]command.KeyEvent{char('z')})
-	bindNormalTestAction(km, "play", m.MacroReplayAction,
+	bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
 		[]command.KeyEvent{char('v')})
 	// 'g' returns a continuation; followed by 'x' it inserts "X"
-	bindNormalTestAction(km, "g-prefix",
+	bindNormalTestKeyAction(km, "g-prefix",
 		func(ed *view.Editor) command.Continuation {
 			return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
 				if k.Code.Char == 'x' {
@@ -95,14 +95,13 @@ func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
-	bindNormalTestAction(km, "rec", m.MacroRecordAction,
+	bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
 		[]command.KeyEvent{char('z')})
-	bindNormalTestAction(km, "play", m.MacroReplayAction,
+	bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
 		[]command.KeyEvent{char('v')})
 	bindNormalTestAction(km, "to_insert",
-		func(e *view.Editor) command.Continuation {
+		func(e *view.Editor) {
 			action.InsertMode(e)
-			return nil
 		}, []command.KeyEvent{char('i')})
 	bindTestAction(bindTestActionArgs{
 		km: km, mode: view.ModeInsert, name: "to_normal",

@@ -17,6 +17,8 @@
   "error.noFilename": "nom de fichier manquant",
   "error.lspUndefined": "aucun LSP défini pour le document",
   "error.noSuchCommand": "commande inconnue : `{name}`",
+  "error.invalidKey": "séquence de touches invalide",
+  "error.bindingExists": "le raccourci clavier existe déjà",
   "status.written": "enregistré",
   "status.allWritten": "tous les documents enregistrés",
   "status.writtenAndClosed": "enregistré et fermé",

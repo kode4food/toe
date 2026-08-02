@@ -41,7 +41,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		config.ViewModule(model),
 		clipboard.DocumentModule(),
 		shell.Module(model),
-		files.SessionModule(),
+		files.SessionModule(r),
 		config.LifecycleModule(),
 		files.FormatModule(),
 		files.LspModule(model),

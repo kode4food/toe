@@ -21,6 +21,7 @@ type viewSection struct {
 		InactiveDim  *int              `toml:"inactive-dim"`
 		CursorLine   *bool             `toml:"cursorline"`
 		CursorColumn *bool             `toml:"cursorcolumn"`
+		AutoSize     *bool             `toml:"auto-size"`
 		TextWidth    *int              `toml:"text-width"`
 		SoftWrap     language.SoftWrap `toml:"soft-wrap"`
 		Rulers       []int             `toml:"rulers"`
@@ -482,6 +483,14 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().CursorColumn = v
 				},
 			),
+			kit.EditorBoolOption("auto-size",
+				func(*view.Editor) bool {
+					return model.AutoSize()
+				},
+				func(_ *view.Editor, v bool) {
+					model.SetAutoSize(v)
+				},
+			),
 			kit.EditorNullableIntOption("text-width",
 				language.DefaultTextWidth,
 				func(e *view.Editor) *int {
@@ -767,6 +776,7 @@ func ViewModule(model ui.Model) command.Module {
 				)
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)
+				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize, false))
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
 				opts.Rulers = cfg.Editor.Rulers
@@ -824,7 +834,7 @@ func runeOption(
 	return command.Option{
 		Key: key,
 		Get: func(e *view.Editor) (string, error) {
-			return string(get(e.Options())), nil
+			return strconv.Quote(string(get(e.Options()))), nil
 		},
 		Set: func(e *view.Editor, s string) error {
 			v, err := viewcfg.ParseStringLiteral(s)

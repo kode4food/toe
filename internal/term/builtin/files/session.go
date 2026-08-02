@@ -10,18 +10,21 @@ const (
 	actRestoreSession = "restore_session"
 )
 
-// SessionModule provides explicit save/restore commands for layout and open
-// documents. Option persistence is handled by auto-session at startup/shutdown
-// SessionModule returns the session save and restore commands
-func SessionModule() command.Module {
+// SessionModule provides explicit commands for saving and restoring sessions
+// with the registry's current runtime options
+func SessionModule(r *command.Registry) command.Module {
 	return command.Module{
 		Commands: []command.Command{
 			{
 				Name:      actSaveSession,
 				DocString: "Save session to the workspace session file",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
+					values, err := r.OptionValues(e)
+					if err != nil {
+						return command.Result{Error: err}
+					}
 					path := view.WorkspaceSessionFile(e.Cwd())
-					if err := e.SaveSession(path, nil); err != nil {
+					if err := e.SaveSession(path, values); err != nil {
 						return command.Result{Error: err}
 					}
 					return command.Result{Message: "session saved"}
@@ -34,12 +37,15 @@ func SessionModule() command.Module {
 				DocString: "Restore session from the workspace session file",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					path := view.WorkspaceSessionFile(e.Cwd())
-					_, ok, err := e.RestoreSession(path)
+					values, ok, err := e.RestoreSession(path)
 					if err != nil {
 						return command.Result{Error: err}
 					}
 					if !ok {
 						return command.Result{Message: "no session found"}
+					}
+					if err := r.ApplyOptionValues(e, values); err != nil {
+						return command.Result{Error: err}
 					}
 					return command.Result{}
 				},

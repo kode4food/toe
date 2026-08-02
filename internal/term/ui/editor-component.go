@@ -20,6 +20,7 @@ type (
 		mouse    mouseState
 		language languageState
 		spinner  spinnerState
+		autoSize autoSizeState
 
 		size            geom.Size
 		buf             *tui.Buffer
@@ -195,6 +196,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleVCSUpdated(cx)
 	case spinnerTickMsg:
 		return e.handleSpinnerTick(cx, msg)
+	case autoSizeTickMsg:
+		return e.handleAutoSizeTick(cx, msg)
 	case tea.MouseClickMsg:
 		return e.handleMouseClick(cx, msg)
 	case tea.MouseMotionMsg:

@@ -61,6 +61,41 @@ func (t *Tree) ResizeFocused(dir Direction, delta int) bool {
 	return true
 }
 
+// GrowFocusedWidth widens the focused pane by moving the nearest vertical
+// split, constrained by the minimum width of its sibling
+func (t *Tree) GrowFocusedWidth(delta int) bool {
+	if delta <= 0 || t.IsEmpty() {
+		return false
+	}
+	if t.Maximized() {
+		return false
+	}
+	branch := t.focus
+	parent := t.nodes[branch].parent
+	for {
+		c := t.nodes[parent].container
+		if c.layout == LayoutVertical && len(c.children) > 1 {
+			break
+		}
+		if parent == t.root {
+			return false
+		}
+		branch = parent
+		parent = t.nodes[parent].parent
+	}
+
+	c := t.nodes[parent].container
+	idx := slices.Index(c.children, branch)
+	if idx < len(c.children)-1 {
+		a := t.areaOf(branch)
+		t.moveSepVertical(parent, idx, a.X+a.Width+delta)
+		return true
+	}
+	a := t.areaOf(branch)
+	t.moveSepVertical(parent, idx-1, a.X-delta-1)
+	return true
+}
+
 // MoveSeparator adjusts the split between children[childIdx] and
 // children[childIdx+1] in containerID, in tree coordinates
 func (t *Tree) MoveSeparator(

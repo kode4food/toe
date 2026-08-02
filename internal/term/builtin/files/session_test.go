@@ -41,6 +41,23 @@ func TestSession(t *testing.T) {
 		assert.Len(t, e2.AllViews(), 1)
 	})
 
+	t.Run("restore restores options", func(t *testing.T) {
+		dir := t.TempDir()
+		e, km := sessionEnv(t, dir, "file.go")
+		test.RunCmdArgs(t, km, e, "set_option", "auto-size true")
+		test.RunCmdArgs(t, km, e, "set_option", "file-watch false")
+		res := test.RunCmd(t, km, e, "save_session")
+		assert.Equal(t, "session saved", res.Message)
+
+		e2, km2 := sessionEditorInDir(t, dir)
+		res = test.RunCmd(t, km2, e2, "restore_session")
+		assert.Empty(t, res.Message)
+		res = test.RunCmdArgs(t, km2, e2, "get_option", "auto-size")
+		assert.Equal(t, "true", res.Message)
+		res = test.RunCmdArgs(t, km2, e2, "get_option", "file-watch")
+		assert.Equal(t, "false", res.Message)
+	})
+
 	t.Run("restore invalid session errors", func(t *testing.T) {
 		dir := t.TempDir()
 		sessionDir := filepath.Join(dir, ".toe")

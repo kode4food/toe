@@ -105,9 +105,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// so a starved request is retried now that the id is confirmed sent
 		return m, m.imageDisplayFrameCmd()
 	default:
+		m.component.cancelAutoSizeFor(msg)
 		cmd := m.compositor.HandleEvent(m.context, msg)
 		m.context.fileWatcher.sync(m.context.Editor)
-		return m, tea.Batch(cmd, m.imageDisplayFrameCmd())
+		return m, tea.Batch(
+			cmd, m.component.autoSizeCmd(m.context), m.imageDisplayFrameCmd(),
+		)
 	}
 }
 

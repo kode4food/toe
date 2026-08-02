@@ -146,7 +146,7 @@ func ConfigurationModule(r *command.Registry) command.Module {
 					case core.LineEndingCRLF:
 						return core.LineEndingNameCRLF, nil
 					default:
-						return "", nil
+						return core.LineEndingNameNative, nil
 					}
 				},
 				Set: func(e *view.Editor, s string) error {

@@ -456,13 +456,13 @@ func (tt *tui) send(keys string) {
 	time.Sleep(50 * time.Millisecond)
 }
 
-func (t *tui) resize(size pty.Winsize) {
-	t.t.Helper()
-	t.mu.Lock()
-	t.vt.Resize(int(size.Cols), int(size.Rows))
-	t.mu.Unlock()
-	if err := pty.Setsize(t.ptmx, &size); err != nil {
-		t.t.Fatalf("resize pty: %v", err)
+func (tt *tui) resize(size pty.Winsize) {
+	tt.t.Helper()
+	tt.mu.Lock()
+	tt.vt.Resize(int(size.Cols), int(size.Rows))
+	tt.mu.Unlock()
+	if err := pty.Setsize(tt.ptmx, &size); err != nil {
+		tt.t.Fatalf("resize pty: %v", err)
 	}
 	time.Sleep(escPause)
 }

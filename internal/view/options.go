@@ -50,6 +50,13 @@ type Options struct {
 	Gen                  int
 }
 
+// SetRulers stores ruler columns as a sorted, deduplicated set
+func (o *Options) SetRulers(rulers []int) {
+	rulers = slices.Clone(rulers)
+	slices.Sort(rulers)
+	o.Rulers = slices.Compact(rulers)
+}
+
 // StatusLineSeparator returns the status line separator string with default
 func (o *Options) StatusLineSeparator() string {
 	if o.StatusLine.Separator != "" {

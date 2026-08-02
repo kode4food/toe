@@ -560,7 +560,7 @@ func ViewModule(model ui.Model) command.Module {
 					if err != nil {
 						return err
 					}
-					e.Options().Rulers = v
+					e.Options().SetRulers(v)
 					return nil
 				},
 			},
@@ -779,7 +779,7 @@ func ViewModule(model ui.Model) command.Module {
 				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize, false))
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
-				opts.Rulers = cfg.Editor.Rulers
+				opts.SetRulers(cfg.Editor.Rulers)
 				opts.BufferLine = cmp.Or(
 					cfg.Editor.BufferLine, view.BufferLineNever,
 				)

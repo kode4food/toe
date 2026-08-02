@@ -24,12 +24,12 @@ const (
 	autoSizeStep         = 3
 )
 
-// AutoSize reports whether focused editor panes grow to show their first ruler
+// AutoSize reports whether focused editor panes grow to show the leftmost ruler
 func (m Model) AutoSize() bool {
 	return m.component.autoSize.enabled
 }
 
-// SetAutoSize controls whether focused editor panes grow to show their first
+// SetAutoSize controls whether focused editor panes grow to show their leftmost
 // ruler
 func (m Model) SetAutoSize(enabled bool) {
 	m.component.cancelAutoSize()

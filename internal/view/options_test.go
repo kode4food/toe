@@ -66,6 +66,12 @@ func TestOptionsStatusLine(t *testing.T) {
 	})
 }
 
+func TestOptionsRulers(t *testing.T) {
+	o := view.Options{}
+	o.SetRulers([]int{120, 80, 120, 80})
+	assert.Equal(t, []int{80, 120}, o.Rulers)
+}
+
 func TestOptionsCursorShape(t *testing.T) {
 	t.Run("default returns block", func(t *testing.T) {
 		o := view.Options{}

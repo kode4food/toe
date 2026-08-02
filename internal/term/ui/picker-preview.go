@@ -69,7 +69,7 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 		p.renderDocInto(buf, at, doc)
 	case p.item.Location.Target.Path != "":
 		path := p.item.Location.Target.Path
-		if doc := openDocumentPreview(path, p.editor); doc != nil {
+		if doc := openDocumentPreview(p.editor, path); doc != nil {
 			p.renderDocInto(buf, at, doc)
 			return
 		}
@@ -145,7 +145,7 @@ func (p *previewCtx) workingPreview() previewDocEntry {
 		}
 	}
 	path := p.item.Location.Target.Path
-	if doc := openDocumentPreview(path, p.editor); doc != nil {
+	if doc := openDocumentPreview(p.editor, path); doc != nil {
 		return *p.picker.preview.cache.doc(p.syntax, doc)
 	}
 	e, ok := p.picker.preview.cache.path(p.syntax, path).(*previewDocEntry)
@@ -247,8 +247,8 @@ func blitTextInto(
 	}
 }
 
-func openDocumentPreview(path string, editor *view.Editor) *view.Document {
-	for _, doc := range editor.AllDocuments() {
+func openDocumentPreview(e *view.Editor, path string) *view.Document {
+	for _, doc := range e.AllDocuments() {
 		if doc.Path() == path {
 			return doc
 		}

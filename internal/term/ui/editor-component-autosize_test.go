@@ -15,7 +15,7 @@ func TestAutoSize(t *testing.T) {
 	e := view.NewEditor(t.TempDir())
 	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
 	e.VSplitNew()
-	e.Options().Rulers = []int{80}
+	e.Options().SetRulers([]int{120, 80, 120})
 	m.SetAutoSize(true)
 	before := e.FocusedView().Area().Width
 

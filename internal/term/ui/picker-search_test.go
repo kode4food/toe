@@ -232,10 +232,13 @@ func openGlobalSearch(t *testing.T, e *view.Editor, query string) ui.Model {
 	)
 	m = resize(m, 120, 30)
 	m = sendKeyAndFeed(m, 's')
+	var cmd tea.Cmd
 	for _, ch := range query {
-		m = sendKeyAndFeed(m, ch)
+		m2, next := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+		m = m2.(ui.Model)
+		cmd = next
 	}
-	return m
+	return feedCmds(m, cmd)
 }
 
 var previewCellBgRE = regexp.MustCompile(`48;2;\d+;\d+;\d+`)

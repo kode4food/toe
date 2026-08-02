@@ -18,21 +18,21 @@ type Model struct {
 }
 
 // New creates an initialized Model for the given editor and keymaps
-func New(editor *view.Editor, km *command.Keymaps) Model {
-	editor.SetIndenter(func(doc *view.Document, line, pos int) (string, bool) {
+func New(e *view.Editor, km *command.Keymaps) Model {
+	e.SetIndenter(func(doc *view.Document, line, pos int) (string, bool) {
 		return syntax.IndentForNewline(
 			doc.Text(), doc.Lang(), line, pos, doc.IndentStyle(),
 		)
 	})
 	ec := newEditorComponent()
 	w := newFileWatcher()
-	editor.Tree().SetRedraw(ec.requestRedraw)
+	e.Tree().SetRedraw(ec.requestRedraw)
 	ec.requestRedraw()
-	registerImagePane(editor)
-	registerTerminalPane(editor)
-	registerBinaryPane(editor)
+	registerImagePane(e)
+	registerTerminalPane(e)
+	registerBinaryPane(e)
 	cx := &Context{
-		Editor:       editor,
+		Editor:       e,
 		Keymaps:      km,
 		Syntax:       syntax.NewSyntaxCache(),
 		images:       newImageRegistry(),
@@ -46,7 +46,7 @@ func New(editor *view.Editor, km *command.Keymaps) Model {
 		context:    cx,
 		component:  ec,
 		initCmd: tea.Batch(
-			w.nextCmd(editor),
+			w.nextCmd(e),
 			vcsUpdateCmd(cx),
 			ec.redrawCmd(),
 		),

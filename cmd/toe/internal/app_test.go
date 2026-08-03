@@ -20,7 +20,7 @@ import (
 
 func newTestApp(t *testing.T) *app.App {
 	t.Helper()
-	dir := t.TempDir()
+	dir := chTemp(t)
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
 	a, err := app.New(nil, dir)
@@ -139,7 +139,8 @@ func TestOpenEditorFiles(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	a, err := app.New(nil, t.TempDir())
+	dir := chTemp(t)
+	a, err := app.New(nil, dir)
 	assert.NoError(t, err)
 	assert.NotNil(t, a.Editor)
 	assert.NotNil(t, a.Model)
@@ -186,7 +187,8 @@ func TestApplyConfigFiles(t *testing.T) {
 func TestApplyInitFile(t *testing.T) {
 	t.Run("missing file is ok", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		a, err := app.New(nil, t.TempDir())
+		root := chTemp(t)
+		a, err := app.New(nil, root)
 		assert.NoError(t, err)
 		assert.NoError(t, a.ApplyInitFile())
 	})
@@ -203,7 +205,8 @@ func TestApplyInitFile(t *testing.T) {
 			),
 			0o644,
 		))
-		a, err := app.New(nil, t.TempDir())
+		root := chTemp(t)
+		a, err := app.New(nil, root)
 		assert.NoError(t, err)
 		assert.NoError(t, a.ApplyInitFile())
 	})
@@ -216,7 +219,8 @@ func TestApplyInitFile(t *testing.T) {
 		assert.NoError(t, os.WriteFile(
 			filepath.Join(cfg, "init.ale"), []byte(`(`), 0o644,
 		))
-		a, err := app.New(nil, t.TempDir())
+		root := chTemp(t)
+		a, err := app.New(nil, root)
 		assert.NoError(t, err)
 		err = a.ApplyInitFile()
 		assert.Error(t, err)
@@ -239,7 +243,7 @@ func TestApplyInitFile(t *testing.T) {
 			filepath.Join(cfg, "init.ale"), src, 0o644,
 		))
 
-		root := t.TempDir()
+		root := chTemp(t)
 		assert.NoError(t, os.Mkdir(filepath.Join(root, ".git"), 0o755))
 		wdir := filepath.Join(root, loader.WorkspaceDirName)
 		assert.NoError(t, os.Mkdir(wdir, 0o755))
@@ -258,7 +262,7 @@ func TestApplyInitFile(t *testing.T) {
 
 	t.Run("skips untrusted workspace", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		root := t.TempDir()
+		root := chTemp(t)
 		assert.NoError(t, os.Mkdir(filepath.Join(root, ".git"), 0o755))
 		wdir := filepath.Join(root, loader.WorkspaceDirName)
 		assert.NoError(t, os.Mkdir(wdir, 0o755))
@@ -451,8 +455,15 @@ func TestRunHealth(t *testing.T) {
 
 func TestRunErrors(t *testing.T) {
 	t.Run("directory as non-first arg errors", func(t *testing.T) {
-		dir1, dir2 := t.TempDir(), t.TempDir()
+		dir1, dir2 := chTemp(t), t.TempDir()
 		err := app.Run([]string{dir1, dir2}, nil)
 		assert.True(t, errors.Is(err, app.ErrDirectoryArgument))
 	})
+}
+
+func chTemp(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	t.Chdir(dir)
+	return dir
 }

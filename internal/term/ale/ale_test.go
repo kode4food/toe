@@ -74,6 +74,32 @@ func TestRuntime(t *testing.T) {
 		assert.ErrorIs(t, res.Error, want)
 	})
 
+	t.Run("validates command calls", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		reg := command.NewRegistry(km)
+		err := reg.RegisterCommand("record", command.Command{
+			Modes: command.DocModes,
+			Signature: command.Signature{
+				Positionals: command.Positionals{Min: 1, Max: 1},
+			},
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{}
+			},
+		})
+		assert.NoError(t, err)
+		rt, err := ale.NewRuntime(e, km)
+		assert.NoError(t, err)
+		assert.Error(t, execute(t, rt, `(toe/record 1)`))
+		assert.Error(t, execute(t, rt, `(toe/record "one" "two")`))
+		assert.Error(t, execute(t, rt, `(toe/record)`))
+		assert.NoError(t, execute(t, rt,
+			`(eq (toe/record "one") (toe/record "one"))`,
+		))
+		e.SetMode(view.ModeTerminal)
+		assert.Error(t, execute(t, rt, `(toe/record "one")`))
+	})
+
 	t.Run("binds modes and keys", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
@@ -90,18 +116,21 @@ func TestRuntime(t *testing.T) {
 		rt, err := ale.NewRuntime(e, km)
 		assert.NoError(t, err)
 		assert.NoError(t, execute(t, rt, `
-			(toe/bind :modes [:normal :select]
+			(toe/bind :modes [:normal :insert :select "terminal" :image]
 			          :keys ["g x" "g y"] :doc "Record"
 			          (toe/record))
 		`))
 
-		for _, key := range []string{"g x", "g y"} {
-			seq, err := command.ParseKeySequence(key)
-			assert.NoError(t, err)
-			_, ok := km.Lookup(view.ModeNormal, seq)
-			assert.True(t, ok)
-			_, ok = km.Lookup(view.ModeSelect, seq)
-			assert.True(t, ok)
+		for _, mode := range []view.Mode{
+			view.ModeNormal, view.ModeInsert, view.ModeSelect,
+			view.ModeTerminal, view.ModeImage,
+		} {
+			for _, key := range []string{"g x", "g y"} {
+				seq, err := command.ParseKeySequence(key)
+				assert.NoError(t, err)
+				_, ok := km.Lookup(mode, seq)
+				assert.True(t, ok)
+			}
 		}
 		seq, err := command.ParseKeySequence("g")
 		assert.NoError(t, err)
@@ -181,6 +210,15 @@ func TestRuntime(t *testing.T) {
 		)
 	})
 
+	t.Run("ignores plain action values", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		rt, km, _ := recordingRuntime(t, e)
+		assert.NoError(t, execute(t, rt,
+			`(toe/bind :modes :normal :keys "x" 1)`,
+		))
+		press(t, km, e, view.ModeNormal)
+	})
+
 	t.Run("rejects missing action body", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		rt, err := ale.NewRuntime(e, command.NewKeymaps())
@@ -202,6 +240,47 @@ func TestRuntime(t *testing.T) {
 		message := i18n.ErrorText(err)
 		assert.Contains(t, message, "\narguments:")
 		assert.Contains(t, message, `[:normal "x" `)
+	})
+
+	t.Run("rejects malformed options", func(t *testing.T) {
+		tests := []struct {
+			name string
+			src  string
+		}{
+			{name: "unpaired", src: `(toe/bind* :modes :normal)`},
+			{name: "invalid action", src: `(toe/bind*
+				:modes :normal :keys "x" 1)`},
+			{name: "option name", src: `(toe/bind* "modes" :normal :keys "x"
+				(lambda (ctx) 1))`},
+			{name: "duplicate", src: `(toe/bind :mode :normal :modes :insert
+				:keys "x" 1)`},
+			{name: "mode type", src: `(toe/bind :modes 1 :keys "x" 1)`},
+			{name: "key type", src: `(toe/bind :modes :normal :keys 1 1)`},
+			{name: "doc type", src: `(toe/bind
+				:modes :normal :keys "x" :doc 1 1)`},
+			{name: "when type", src: `(toe/bind*
+				:modes :normal :keys "x" :when 1
+				(lambda (ctx) 1))`},
+			{name: "unknown", src: `(toe/bind
+				:modes :normal :keys "x" :wat 1 1)`},
+			{name: "invalid key", src: `(toe/bind
+				:modes :normal :keys "C-no-such-key" 1)`},
+			{name: "missing modes", src: `(toe/bind* :keys "x" :doc "x"
+				(lambda (ctx) 1))`},
+			{name: "empty modes", src: `(toe/bind :modes [] :keys "x" 1)`},
+			{name: "missing keys", src: `(toe/bind* :modes :normal :doc "x"
+				(lambda (ctx) 1))`},
+			{name: "empty keys", src: `(toe/bind
+				:modes :normal :keys [] 1)`},
+		}
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				e := view.NewEditor(t.TempDir())
+				rt, err := ale.NewRuntime(e, command.NewKeymaps())
+				assert.NoError(t, err)
+				assert.Error(t, execute(t, rt, test.src))
+			})
+		}
 	})
 
 	t.Run("isolates evaluations", func(t *testing.T) {

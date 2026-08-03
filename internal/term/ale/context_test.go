@@ -28,10 +28,11 @@ func TestContext(t *testing.T) {
 		rt, km, got := recordingRuntime(t, e)
 		bindContext(t, rt, `
 			(toe/record (:missing ctx "fallback"))
+			(toe/record (:missing (:pane ctx) "none"))
 			(toe/record (:path (:document (:pane ctx)) "none"))
 		`)
 		press(t, km, e, view.ModeNormal)
-		assert.Equal(t, []string{"fallback", "none"}, *got)
+		assert.Equal(t, []string{"fallback", "none", "none"}, *got)
 	})
 
 	t.Run("reports pane kind and mode", func(t *testing.T) {
@@ -50,10 +51,16 @@ func TestContext(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		rt, km, got := recordingRuntime(t, e)
 		bindContext(t, rt, `(toe/record (str (:mode (:pane ctx))))`)
-		press(t, km, e, view.ModeNormal)
-		e.SetMode(view.ModeInsert)
-		press(t, km, e, view.ModeInsert)
-		assert.Equal(t, []string{":normal", ":insert"}, *got)
+		for _, mode := range []view.Mode{
+			view.ModeNormal, view.ModeInsert, view.ModeSelect,
+			view.ModeTerminal, view.ModeImage,
+		} {
+			e.SetMode(mode)
+			press(t, km, e, mode)
+		}
+		assert.Equal(t, []string{
+			":normal", ":insert", ":select", ":terminal", ":image",
+		}, *got)
 	})
 
 	t.Run("reports document properties", func(t *testing.T) {
@@ -72,6 +79,34 @@ func TestContext(t *testing.T) {
 		assert.Equal(t, []string{
 			"[scratch]", "#f", "#f",
 			"[scratch]", "#t", "#f",
+		}, *got)
+	})
+
+	t.Run("reports optional properties", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc := e.FocusedDocument()
+		doc.SetPath("test.go")
+		doc.SetLang("go")
+		doc.SetReadOnly(true)
+		rt, km, got := recordingRuntime(t, e)
+		bindContext(t, rt, `
+			(toe/record
+			  (:path (:pane ctx))
+			  (:path (:document (:pane ctx)))
+			  (:language (:document (:pane ctx)))
+			  (str (:read-only (:document (:pane ctx))))
+			  (str (eq ctx ctx))
+			  (str (eq (:pane ctx) (:pane ctx)))
+			  (str (eq (:document (:pane ctx))
+			           (:document (:pane ctx))))
+			  (str (eq (:selection (:pane ctx))
+			           (:selection (:pane ctx))))
+			  (:missing (:selection (:pane ctx)) "none"))
+		`)
+		press(t, km, e, view.ModeNormal)
+		assert.Equal(t, []string{
+			"test.go", "test.go", "go", "#t",
+			"#t", "#t", "#t", "#t", "none",
 		}, *got)
 	})
 
@@ -102,7 +137,8 @@ func TestContext(t *testing.T) {
 func bindContext(t *testing.T, rt *ale.Runtime, body string) {
 	t.Helper()
 	assert.NoError(t, execute(t, rt, fmt.Sprintf(
-		`(toe/bind :modes [:normal :insert :select] :keys "x" %s)`, body,
+		`(toe/bind :modes [:normal :insert :select :terminal :image]
+		  :keys "x" %s)`, body,
 	)))
 }
 

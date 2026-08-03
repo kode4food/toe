@@ -80,6 +80,10 @@ github.com/kevinburke/ssh_config v1.6.0 h1:J1FBfmuVosPHf5GRdltRLhPJtJpTlMdKTBjRg
 github.com/kevinburke/ssh_config v1.6.0/go.mod h1:q2RIzfka+BXARoNexmF9gkxEX7DmvbW9P4hIVx2Kg4M=
 github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV913Dw=
 github.com/klauspost/cpuid/v2 v2.4.0/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
+github.com/kode4food/ale v0.3.1-0.20260525064642-5a3c602e1b33 h1:L5dYDOg8bl1mBPObzIXJhq67bsqd/48hYpkJx5TQ53Q=
+github.com/kode4food/ale v0.3.1-0.20260525064642-5a3c602e1b33/go.mod h1:nsJEFRyJAkop43x/NSNIC/Q79vWrzCEOggUqznzVO8Q=
+github.com/kode4food/gen-maxkind v0.1.2 h1:nPf0AV+rExLgXSZqqoP15i08UDVmijFU5JJfhZJ5s0w=
+github.com/kode4food/gen-maxkind v0.1.2/go.mod h1:4vJTMFzmvbdvbf488Ae76vHrgms5LGDr3ryx9bnPVoM=
 github.com/kode4food/x/ansi v0.0.0-20260713053449-8db6e0a952d5 h1:oOqd6Nldh/weq0PsVUgk+siK8/b6jDYuhm93/rQoLdY=
 github.com/kode4food/x/ansi v0.0.0-20260713053449-8db6e0a952d5/go.mod h1:/qftUAZmerQbtk4JNTsOyt21xT6mfFrWt9KCwk7CmQI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

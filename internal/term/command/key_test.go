@@ -370,10 +370,12 @@ func TestKeyBind(t *testing.T) {
 		action := func(*view.Editor) command.Result {
 			return command.Result{Message: "custom"}
 		}
-		err := km.BindResultAction(
-			[]view.Mode{view.ModeNormal}, action, "Custom",
-			[]command.KeyEvent{char('c')},
-		)
+		err := km.BindResultAction(command.BindActionArgs{
+			Modes:  []view.Mode{view.ModeNormal},
+			Action: action,
+			Label:  "Custom",
+			Seqs:   [][]command.KeyEvent{{char('c')}},
+		})
 		assert.NoError(t, err)
 		lookup, ok := km.Lookup(
 			view.ModeNormal, []command.KeyEvent{char('c')},
@@ -386,11 +388,75 @@ func TestKeyBind(t *testing.T) {
 		action := func(*view.Editor) command.Result {
 			return command.Result{}
 		}
-		err := km.BindResultAction(
-			[]view.Mode{view.ModeNormal}, action, "Duplicate",
-			[]command.KeyEvent{char('a')},
-		)
+		err := km.BindResultAction(command.BindActionArgs{
+			Modes:  []view.Mode{view.ModeNormal},
+			Action: action,
+			Label:  "Duplicate",
+			Seqs:   [][]command.KeyEvent{{char('a')}},
+		})
 		assert.ErrorIs(t, err, command.ErrBindingExists)
+	})
+}
+
+func TestConditionalBinding(t *testing.T) {
+	action := func(*view.Editor) command.Result {
+		return command.Result{}
+	}
+
+	t.Run("nil when stays enabled", func(t *testing.T) {
+		km := command.NewKeymaps()
+		err := km.BindResultAction(command.BindActionArgs{
+			Modes:  []view.Mode{view.ModeNormal},
+			Action: action,
+			Seqs:   [][]command.KeyEvent{{char('x')}},
+		})
+		assert.NoError(t, err)
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('x')})
+		assert.True(t, ok)
+		assert.True(t, lookup.Enabled(nil))
+	})
+
+	t.Run("false when disables match", func(t *testing.T) {
+		km := command.NewKeymaps()
+		err := km.BindResultAction(command.BindActionArgs{
+			Modes:  []view.Mode{view.ModeNormal},
+			Action: action,
+			When:   func(*view.Editor) bool { return false },
+			Seqs:   [][]command.KeyEvent{{char('x')}},
+		})
+		assert.NoError(t, err)
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{char('x')})
+		assert.True(t, ok)
+		assert.False(t, lookup.Enabled(nil))
+	})
+
+	t.Run("hints omit unavailable", func(t *testing.T) {
+		km := command.NewKeymaps()
+		yes := func(*view.Editor) bool { return true }
+		no := func(*view.Editor) bool { return false }
+		assert.NoError(t, km.BindResultAction(command.BindActionArgs{
+			Modes:  []view.Mode{view.ModeNormal},
+			Action: action,
+			When:   yes,
+			Label:  "Shown",
+			Seqs:   [][]command.KeyEvent{{char(' '), char('a')}},
+		}))
+		assert.NoError(t, km.BindResultAction(command.BindActionArgs{
+			Modes:  []view.Mode{view.ModeNormal},
+			Action: action,
+			When:   no,
+			Label:  "Hidden",
+			Seqs:   [][]command.KeyEvent{{char(' '), char('b')}},
+		}))
+		_, hints := km.PendingHints(
+			nil, view.ModeNormal, []command.KeyEvent{char(' ')},
+		)
+		labels := make([]string, len(hints))
+		for i, h := range hints {
+			labels[i] = h.Label
+		}
+		assert.Contains(t, labels, "Shown")
+		assert.NotContains(t, labels, "Hidden")
 	})
 }
 
@@ -409,25 +475,29 @@ func TestLabelNode(t *testing.T) {
 
 	t.Run("sets label on prefix node", func(t *testing.T) {
 		km.LabelNode(view.ModeNormal, command.KeyBinding{{char('g')}}, "Goto")
-		title, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
-			char('g'),
-		})
+		title, hints := km.PendingHints(
+			nil, view.ModeNormal, []command.KeyEvent{
+				char('g'),
+			},
+		)
 		assert.Equal(t, "Goto", title)
 		assert.Equal(t, 1, len(hints))
 	})
 
 	t.Run("LabelNode on unknown mode is no-op", func(t *testing.T) {
 		km.LabelNode(view.ModeBinary, command.KeyBinding{{char('g')}}, "X")
-		title, hints := km.PendingHints(view.ModeBinary, []command.KeyEvent{
-			char('g'),
-		})
+		title, hints := km.PendingHints(
+			nil, view.ModeBinary, []command.KeyEvent{
+				char('g'),
+			},
+		)
 		assert.Equal(t, "", title)
 		assert.Nil(t, hints)
 	})
 
 	t.Run("LabelNode on nonexistent key is no-op", func(t *testing.T) {
 		km.LabelNode(view.ModeNormal, command.KeyBinding{{char('z')}}, "Z")
-		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('z'),
 		})
 		assert.Nil(t, hints)
@@ -472,43 +542,45 @@ func TestPendingHints(t *testing.T) {
 	})
 
 	t.Run("returns hints for prefix", func(t *testing.T) {
-		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'),
 		})
 		assert.Equal(t, 3, len(hints))
 	})
 
 	t.Run("displays shifted uppercase char", func(t *testing.T) {
-		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'),
 		})
 		assert.Contains(t, hints, command.KeyHint{Key: "F", Label: "F"})
 	})
 
 	t.Run("omits undocumented commands", func(t *testing.T) {
-		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'),
 		})
 		assert.NotContains(t, hints, command.KeyHint{Key: "c"})
 	})
 
 	t.Run("returns empty for unknown mode", func(t *testing.T) {
-		title, hints := km.PendingHints(view.ModeBinary, []command.KeyEvent{
-			char('g'),
-		})
+		title, hints := km.PendingHints(
+			nil, view.ModeBinary, []command.KeyEvent{
+				char('g'),
+			},
+		)
 		assert.Equal(t, "", title)
 		assert.Nil(t, hints)
 	})
 
 	t.Run("returns empty at leaf node", func(t *testing.T) {
-		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'), char('a'),
 		})
 		assert.Nil(t, hints)
 	})
 
 	t.Run("returns empty for unknown key in mode", func(t *testing.T) {
-		_, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('z'),
 		})
 		assert.Nil(t, hints)

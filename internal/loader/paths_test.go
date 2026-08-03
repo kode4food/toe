@@ -124,6 +124,18 @@ func TestPaths(t *testing.T) {
 		assert.Equal(t,
 			filepath.Join(work, "."+loader.DirName, "languages.toml"), path)
 	})
+
+	t.Run("resolves workspace init file", func(t *testing.T) {
+		root := t.TempDir()
+		work := filepath.Join(root, "work")
+		err := os.MkdirAll(filepath.Join(work, ".git"), 0o755)
+		assert.NoError(t, err)
+
+		path := loader.WorkspaceInitFile(work)
+
+		assert.Equal(t,
+			filepath.Join(work, "."+loader.DirName, "init.ale"), path)
+	})
 }
 
 func TestCanonicalPath(t *testing.T) {

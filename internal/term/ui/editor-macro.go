@@ -96,7 +96,7 @@ func (e *EditorComponent) replayMacro(
 				continue
 			}
 			lookup, ok := cx.Keymaps.Lookup(mode, []command.KeyEvent{k})
-			if ok {
+			if ok && lookup.Enabled(cx.Editor) {
 				cont := lookup.Action(cx.Editor).Continuation
 				for cont != nil && i < len(keys) {
 					k = keys[i]

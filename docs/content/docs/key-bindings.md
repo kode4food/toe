@@ -27,6 +27,8 @@ Every key press is dispatched through the keymap for the **current mode**. Norma
 
 The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal, image, and binary panes, the command line, and picker navigation.
 
+Keys can be rebound and new actions scripted in Ale — see [Scripting]({{< relref "/docs/scripting" >}}).
+
 ## Normal Mode
 
 Normal mode is the default. Keys are commands, not text: you move the cursor, manipulate selections, and launch edits from here.

@@ -13,6 +13,7 @@ require (
 	github.com/charmbracelet/x/vt v0.0.0-20260719004043-bb9a97036f23
 	github.com/creack/pty v1.1.24
 	github.com/go-git/go-git/v5 v5.19.1
+	github.com/kode4food/ale v0.3.1-0.20260525064642-5a3c602e1b33
 	github.com/mattn/go-runewidth v0.0.24
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/rivo/uniseg v0.4.7
@@ -61,6 +62,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.6.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
+	github.com/kode4food/gen-maxkind v0.1.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect

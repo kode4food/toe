@@ -110,6 +110,12 @@ func WorkspaceLanguagesFile(dir string) string {
 	return filepath.Join(root, WorkspaceDirName, "languages.toml")
 }
 
+// WorkspaceInitFile returns the workspace Ale initialization path
+func WorkspaceInitFile(dir string) string {
+	root, _ := FindWorkspace(dir)
+	return filepath.Join(root, WorkspaceDirName, "init.ale")
+}
+
 func WorkspaceTrustFile() (string, bool) {
 	if dir, ok := DataDir(); ok {
 		return filepath.Join(dir, "trusted_workspaces"), true

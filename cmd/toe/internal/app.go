@@ -14,6 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/term/ale"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
@@ -32,40 +33,62 @@ type App struct {
 	Editor     *view.Editor
 	Model      ui.Model
 	Reg        *command.Registry
+	keymaps    *command.Keymaps
 }
 
 var ErrDirectoryArgument = errors.New(
 	"expected a path to file, but found a directory",
 )
 
-func Run(args []string, out io.Writer) error {
-	if len(args) == 1 && args[0] == "--health" {
-		return health.Run(out)
-	}
-	a := &App{}
+func New(args []string, cwd string) (*App, error) {
+	a := &App{keymaps: command.NewKeymaps()}
 	args = a.ParseConfigFlag(args)
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
 	if err := a.ResolveSession(args, cwd); err != nil {
-		return err
+		return nil, err
 	}
 	a.Editor = view.NewEditor(a.Root)
 	if err := a.Editor.Chdir(a.Root); err != nil {
-		return err
+		return nil, err
 	}
 	a.Editor.SetClipboard(
 		action.NewOSC52Clipboard(action.NewSystemClipboard()),
 	)
+	if err := a.InitReg(); err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+func (a *App) InitReg() error {
+	if a.keymaps == nil {
+		a.keymaps = command.NewKeymaps()
+	}
+	a.Model = ui.New(a.Editor, a.keymaps)
+	var err error
+	a.Reg, err = builtin.Register(a.Model, a.keymaps)
+	return err
+}
+
+func Run(args []string, out io.Writer) error {
+	if len(args) == 1 && args[0] == "--health" {
+		return health.Run(out)
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	a, err := New(args, cwd)
+	if err != nil {
+		return err
+	}
 	if err := a.OpenEditorFiles(); err != nil {
 		return err
 	}
 	defer vcs.Attach(a.Editor).Close()
-	if err := a.InitReg(); err != nil {
+	if err := a.ApplyConfigFiles(); err != nil {
 		return err
 	}
-	if err := a.ApplyConfigFiles(); err != nil {
+	if err := a.ApplyInitFile(); err != nil {
 		return err
 	}
 	baseValues, err := a.Reg.OptionValues(a.Editor)
@@ -157,13 +180,21 @@ func (a *App) OpenEditorFiles() error {
 	return nil
 }
 
-// InitReg wires up keymaps, model, and command registry
-func (a *App) InitReg() error {
-	km := command.NewKeymaps()
-	a.Model = ui.New(a.Editor, km)
-	var err error
-	a.Reg, err = builtin.Register(a.Model, km)
-	return err
+// ApplyInitFile evaluates user and trusted workspace init.ale files
+func (a *App) ApplyInitFile() error {
+	rt, err := ale.NewRuntime(a.Editor, a.keymaps)
+	if err != nil {
+		return err
+	}
+	if dir, ok := loader.ConfigDir(); ok {
+		if err := evalInitFile(rt, filepath.Join(dir, "init.ale")); err != nil {
+			return err
+		}
+	}
+	if !a.WorkspaceTrusted() {
+		return nil
+	}
+	return evalInitFile(rt, loader.WorkspaceInitFile(a.Root))
 }
 
 // ApplyConfigFiles merges workspace and explicit config TOML into the editor
@@ -270,4 +301,18 @@ func ChangedOptionValues(base, values map[string]string) map[string]string {
 		}
 	}
 	return out
+}
+
+func evalInitFile(rt *ale.Runtime, path string) error {
+	src, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if err := rt.Eval(string(src)); err != nil {
+		return fmt.Errorf("%s:\n%s", path, i18n.ErrorText(err))
+	}
+	return nil
 }

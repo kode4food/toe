@@ -18,11 +18,12 @@ type (
 	}
 
 	keyTrieNode struct {
-		children map[KeyEvent]*keyTrieNode
-		order    []KeyEvent // insertion order for info popup display
-		action   KeyResultAction
-		name     string
-		label    string
+		children  map[KeyEvent]*keyTrieNode
+		order     []KeyEvent // insertion order for info popup display
+		action    KeyResultAction
+		available func(*view.Editor) bool
+		name      string
+		label     string
 	}
 )
 
@@ -143,23 +144,31 @@ func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
 	})
 }
 
+// BindActionArgs bundles the inputs for BindResultAction
+type BindActionArgs struct {
+	Modes  []view.Mode
+	Action KeyResultAction
+	When   func(*view.Editor) bool
+	Label  string
+	Seqs   [][]KeyEvent
+}
+
 // BindResultAction adds key sequences for a result-returning action
-func (k *Keymaps) BindResultAction(
-	modes []view.Mode, action KeyResultAction, label string, seqs ...[]KeyEvent,
-) error {
-	for _, mode := range modes {
-		for _, seq := range seqs {
+func (k *Keymaps) BindResultAction(args BindActionArgs) error {
+	for _, mode := range args.Modes {
+		for _, seq := range args.Seqs {
 			if k.bindingConflict(mode, seq) {
 				return fmt.Errorf("%w in mode %s", ErrBindingExists, mode)
 			}
 		}
 	}
-	for _, mode := range modes {
+	for _, mode := range args.Modes {
 		k.bindCommand(bindCommandArgs{
-			mode:   mode,
-			action: action,
-			label:  label,
-			seqs:   seqs,
+			mode:      mode,
+			action:    args.Action,
+			available: args.When,
+			label:     args.Label,
+			seqs:      args.Seqs,
 		})
 	}
 	return nil
@@ -168,8 +177,14 @@ func (k *Keymaps) BindResultAction(
 // LookupRes is the result of traversing the key trie
 type LookupRes struct {
 	Action KeyResultAction
+	When   func(*view.Editor) bool
 	Name   string
 	Prefix bool
+}
+
+// Enabled reports whether a matched binding's :when predicate allows it
+func (r LookupRes) Enabled(e *view.Editor) bool {
+	return r.When == nil || r.When(e)
 }
 
 // Lookup traverses the key trie. The bool reports a complete match
@@ -181,7 +196,11 @@ func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (LookupRes, bool) {
 	if node.isPrefix() {
 		return LookupRes{Prefix: true}, false
 	}
-	return LookupRes{Action: node.action, Name: node.name}, true
+	return LookupRes{
+		Action: node.action,
+		When:   node.available,
+		Name:   node.name,
+	}, true
 }
 
 func (k *Keymaps) bindingConflict(mode view.Mode, seq []KeyEvent) bool {
@@ -222,11 +241,12 @@ func (c Command) availableIn(mode view.Mode) bool {
 }
 
 type bindCommandArgs struct {
-	mode   view.Mode
-	name   string
-	action KeyResultAction
-	label  string
-	seqs   [][]KeyEvent
+	mode      view.Mode
+	name      string
+	action    KeyResultAction
+	available func(*view.Editor) bool
+	label     string
+	seqs      [][]KeyEvent
 }
 
 func (k *Keymaps) bindCommand(args bindCommandArgs) {
@@ -248,6 +268,7 @@ func (k *Keymaps) bindCommand(args bindCommandArgs) {
 			node = child
 		}
 		node.action = args.action
+		node.available = args.available
 		node.name = args.name
 		if args.label != "" {
 			node.label = args.label

@@ -19,6 +19,13 @@ func TestDetectLanguage(t *testing.T) {
 		assert.Equal(t, "go", name)
 	})
 
+	t.Run("detects Ale as Scheme", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		name, ok := language.DetectLanguage("init.ale", "")
+		assert.True(t, ok)
+		assert.Equal(t, "scheme", name)
+	})
+
 	t.Run("detects language by shebang", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]

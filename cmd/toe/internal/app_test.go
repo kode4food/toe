@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	app "github.com/kode4food/toe/cmd/toe/internal"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
-	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -23,11 +23,9 @@ func newTestApp(t *testing.T) *app.App {
 	dir := t.TempDir()
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
-	e := view.NewEditor(dir)
-	km := command.NewKeymaps()
-	reg, err := builtin.Register(ui.New(e, km), km)
+	a, err := app.New(nil, dir)
 	assert.NoError(t, err)
-	return &app.App{Root: dir, Editor: e, Reg: reg}
+	return a
 }
 
 func TestParseConfigFlag(t *testing.T) {
@@ -140,13 +138,12 @@ func TestOpenEditorFiles(t *testing.T) {
 	})
 }
 
-func TestInitReg(t *testing.T) {
-	t.Run("wires up model and reg", func(t *testing.T) {
-		dir := t.TempDir()
-		a := &app.App{Root: dir, Editor: view.NewEditor(dir)}
-		assert.NoError(t, a.InitReg())
-		assert.NotNil(t, a.Reg)
-	})
+func TestNew(t *testing.T) {
+	a, err := app.New(nil, t.TempDir())
+	assert.NoError(t, err)
+	assert.NotNil(t, a.Editor)
+	assert.NotNil(t, a.Model)
+	assert.NotNil(t, a.Reg)
 }
 
 func TestApplyConfigFiles(t *testing.T) {
@@ -183,6 +180,94 @@ func TestApplyConfigFiles(t *testing.T) {
 		assert.NoError(t, loader.TrustWorkspace(a.Root))
 		assert.NoError(t, a.ApplyConfigFiles())
 		assert.False(t, a.Editor.Options().Mouse)
+	})
+}
+
+func TestApplyInitFile(t *testing.T) {
+	t.Run("missing file is ok", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		a, err := app.New(nil, t.TempDir())
+		assert.NoError(t, err)
+		assert.NoError(t, a.ApplyInitFile())
+	})
+
+	t.Run("evaluates Ale", func(t *testing.T) {
+		dir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", dir)
+		cfg := filepath.Join(dir, loader.DirName)
+		assert.NoError(t, os.MkdirAll(cfg, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(cfg, "init.ale"),
+			[]byte(
+				`(toe/bind :modes :normal :keys "C-A-x" (toe/write))`,
+			),
+			0o644,
+		))
+		a, err := app.New(nil, t.TempDir())
+		assert.NoError(t, err)
+		assert.NoError(t, a.ApplyInitFile())
+	})
+
+	t.Run("returns script error", func(t *testing.T) {
+		dir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", dir)
+		cfg := filepath.Join(dir, loader.DirName)
+		assert.NoError(t, os.MkdirAll(cfg, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(cfg, "init.ale"), []byte(`(`), 0o644,
+		))
+		a, err := app.New(nil, t.TempDir())
+		assert.NoError(t, err)
+		err = a.ApplyInitFile()
+		assert.Error(t, err)
+		assert.Contains(t,
+			err.Error(),
+			filepath.Join(cfg, "init.ale")+":\n",
+		)
+	})
+
+	t.Run("user binding blocks workspace", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		dir := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", dir)
+		cfg := filepath.Join(dir, loader.DirName)
+		assert.NoError(t, os.MkdirAll(cfg, 0o755))
+		src := []byte(
+			`(toe/bind :modes :normal :keys "C-A-x" (toe/write))`,
+		)
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(cfg, "init.ale"), src, 0o644,
+		))
+
+		root := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(root, ".git"), 0o755))
+		wdir := filepath.Join(root, loader.WorkspaceDirName)
+		assert.NoError(t, os.Mkdir(wdir, 0o755))
+		path := filepath.Join(wdir, "init.ale")
+		assert.NoError(t, os.WriteFile(path, src, 0o644))
+
+		a, err := app.New(nil, root)
+		assert.NoError(t, err)
+		assert.NoError(t, loader.TrustWorkspace(root))
+		err = a.ApplyInitFile()
+		assert.Contains(t,
+			err.Error(), i18n.Text(i18n.ErrorBindingExists),
+		)
+		assert.Contains(t, err.Error(), path+":\n")
+	})
+
+	t.Run("skips untrusted workspace", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		root := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(root, ".git"), 0o755))
+		wdir := filepath.Join(root, loader.WorkspaceDirName)
+		assert.NoError(t, os.Mkdir(wdir, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(wdir, "init.ale"), []byte(`(`), 0o644,
+		))
+		a, err := app.New(nil, root)
+		assert.NoError(t, err)
+		assert.NoError(t, a.ApplyInitFile())
 	})
 }
 

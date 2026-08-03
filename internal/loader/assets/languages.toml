@@ -76,6 +76,14 @@ language-servers = ["bash-language-server"]
 indent = { tab-width = 2, unit = "  " }
 
 [[language]]
+name = "scheme"
+scope = "source.scheme"
+injection-regex = "scheme"
+file-types = ["scm", "ss", "ale"]
+comment-token = ";"
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
 name = "dockerfile"
 scope = "source.dockerfile"
 injection-regex = "dockerfile|containerfile"

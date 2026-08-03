@@ -66,6 +66,9 @@ func (e *EditorComponent) handleKeyPress(
 
 	e.keys.pending = append(e.keys.pending, k)
 	lookup, ok := cx.Keymaps.Lookup(mode, e.keys.pending)
+	if ok && !lookup.Enabled(cx.Editor) {
+		ok = false
+	}
 	switch {
 	case ok:
 		e.keys.pending = nil
@@ -107,7 +110,7 @@ func (e *EditorComponent) handleKeyPress(
 			}
 		}
 		e.keys.status = e.pendingStatus(cx)
-		title, items := cx.Keymaps.PendingHints(mode, e.keys.pending)
+		title, items := cx.Keymaps.PendingHints(cx.Editor, mode, e.keys.pending)
 		e.keys.infoTitle = title
 		e.keys.infoItems = items
 		return consumed(), nil
@@ -158,6 +161,9 @@ func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
 	lookup, ok := cx.Keymaps.Lookup(
 		cx.Editor.Mode(), []command.KeyEvent{k},
 	)
+	if ok && !lookup.Enabled(cx.Editor) {
+		return false
+	}
 	return ok || lookup.Prefix
 }
 

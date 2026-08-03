@@ -12,10 +12,11 @@ func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 	}
 }
 
-// PendingHints returns the title and (key, label) pairs for the node
-// reached by seq in mode, used to populate the pending-key info popup
+// PendingHints returns the title and (key, label) pairs for the node reached by
+// seq in mode, used to populate the pending-key info popup. A binding whose
+// :when predicate rejects the editor is omitted
 func (k *Keymaps) PendingHints(
-	mode view.Mode, seq []KeyEvent,
+	e *view.Editor, mode view.Mode, seq []KeyEvent,
 ) (string, []KeyHint) {
 	node := k.lookup(mode, seq)
 	if node == nil || len(node.children) == 0 {
@@ -28,6 +29,9 @@ func (k *Keymaps) PendingHints(
 		child := node.children[ev]
 		lbl := child.label
 		if lbl == "" {
+			continue
+		}
+		if child.available != nil && !child.available(e) {
 			continue
 		}
 		if idx, ok := seen[lbl]; ok {

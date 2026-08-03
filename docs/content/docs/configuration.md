@@ -7,20 +7,26 @@ weight: 20
 
 ## Config Files
 
-toe reads config in this order (later values override earlier ones):
+toe reads configuration in this order:
 
 | File | Purpose |
 |------|---------|
 | `$XDG_CONFIG_HOME/toe/config.toml` | User config |
+| `$XDG_CONFIG_HOME/toe/init.ale` | Ale commands and custom key bindings |
 | `$XDG_CONFIG_HOME/toe/languages.toml` | User language config |
 | `.toe/config.toml` | Workspace config (trusted workspaces only) |
+| `.toe/init.ale` | Workspace Ale bindings (trusted workspaces only) |
 | `.toe/languages.toml` | Workspace language config (trusted workspaces only) |
 
 `$XDG_CONFIG_HOME` defaults to `~/.config`.
 
+Later TOML values override earlier ones. Ale initialization runs user-level `init.ale` before workspace `init.ale`; an existing binding cannot be rebound, so user-level bindings win conflicts.
+
 Open your user config directly: `:config-open`
 Open workspace config: `:config-open-workspace`
 Reload after editing: `:config-reload`
+
+Changes to `init.ale` take effect the next time toe starts. See [Scripting]({{< relref "/docs/scripting" >}}) for the scripting interface.
 
 ## Interface Language
 
@@ -34,7 +40,7 @@ Until a workspace is trusted:
 
 - normal file editing, `:write`, `:write-all`, and `:move` still work
 - automatic workspace session restore/save is skipped
-- workspace-local config files (`.toe/config.toml` and `.toe/languages.toml`) are not loaded
+- workspace-local config files (`.toe/config.toml`, `.toe/init.ale`, and `.toe/languages.toml`) are not loaded
 - workspace-configured language servers and formatter commands are not started from workspace config
 - `:config-open-workspace` refuses to create or open workspace config until you trust the workspace
 

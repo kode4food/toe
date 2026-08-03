@@ -202,7 +202,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital hints omit shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(
+		_, hints := km.PendingHints(nil,
 			view.ModeNormal, []command.KeyEvent{test.Char(' ')},
 		)
 
@@ -215,7 +215,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("space hints are ordered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(
+		_, hints := km.PendingHints(nil,
 			view.ModeNormal, []command.KeyEvent{test.Char(' ')},
 		)
 		keys := make([]string, 0, len(hints))
@@ -236,10 +236,10 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		for _, mode := range command.PaneModes.Split() {
-			spaceTitle, spaceHints := km.PendingHints(
+			spaceTitle, spaceHints := km.PendingHints(nil,
 				mode, []command.KeyEvent{test.Char(' ')},
 			)
-			aliasTitle, aliasHints := km.PendingHints(
+			aliasTitle, aliasHints := km.PendingHints(nil,
 				mode, []command.KeyEvent{ctrl('\\')},
 			)
 			assert.Equal(t, spaceTitle, aliasTitle)
@@ -250,7 +250,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal window menu mirrors other panes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(
+		_, hints := km.PendingHints(nil,
 			view.ModeTerminal, []command.KeyEvent{ctrl('w')},
 		)
 		labels := make(map[string]string, len(hints))
@@ -268,7 +268,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal space menu is filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(view.ModeTerminal, []command.KeyEvent{
+		title, hints := km.PendingHints(nil, view.ModeTerminal, []command.KeyEvent{
 			test.Char(' '),
 		})
 		labels := make(map[string]string, len(hints))
@@ -321,7 +321,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("image window hints are filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(
+		title, hints := km.PendingHints(nil,
 			view.ModeImage, []command.KeyEvent{ctrl('w')},
 		)
 
@@ -343,7 +343,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("image space hints are filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(view.ModeImage, []command.KeyEvent{
+		title, hints := km.PendingHints(nil, view.ModeImage, []command.KeyEvent{
 			test.Char(' '),
 		})
 
@@ -365,7 +365,7 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital prefixes use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(view.ModeNormal, []command.KeyEvent{
+		title, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			test.Char('Z').WithMods(command.ModShift),
 		})
 

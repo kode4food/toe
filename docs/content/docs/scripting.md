@@ -37,15 +37,18 @@ Binding an occupied key sequence is an error.
 
 ## Reading Editor State
 
-Every binding action receives `ctx`, a read-only snapshot of the editor taken when the key is pressed, so an action can branch on where the cursor is, which language is active, or what is selected. Commands remain the only way to change state.
+Every binding action receives `ctx`, a read-only view of the editor, so an action can branch on where the cursor is, which language is active, or what is selected. Commands remain the only way to change state.
 
 Properties are keyword-accessed, and a missing property returns nothing unless you supply a default:
 
 ```scheme
-(toe/bind :modes :normal :keys "spc F" :doc "Format Go"
-  (let [doc (:document (:pane ctx))]
-    (when (eq "go" (:language doc "")) (toe/format))))
+(toe/bind :modes :normal :keys "spc t"
+  (if (eq "go" (:language (:document (:pane ctx)) ""))
+    (toe/set-language "text")
+    (toe/set-language "go")))
 ```
+
+To gate a whole binding on state instead of branching inside it, use `:when` (below).
 
 The context root:
 
@@ -81,7 +84,7 @@ The selection:
 | `:primary` | Zero-based primary range index |
 | `:ranges` | Vector of range objects |
 
-Each range is a concrete object of zero-based character offsets. `:anchor` and `:head` preserve direction; `:from`, `:to`, and `:cursor` expose the derived range:
+Each range has zero-based character offsets. `:anchor` and `:head` preserve direction; `:from`, `:to`, and `:cursor` expose the derived range:
 
 ```scheme
 {:anchor 10 :head 15 :from 10 :to 15 :cursor 14}

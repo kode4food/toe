@@ -11,7 +11,7 @@ toe is scripted with [Ale](https://github.com/kode4food/ale), a small Lisp. Conf
 
 Bind keys with `toe/bind`. Every command in the command reference is available in the `toe` namespace under its primary kebab-case name:
 
-```scheme
+```clojure
 (toe/bind :modes :normal :keys "C-s" :doc "Write"
   (toe/write))
 
@@ -28,7 +28,7 @@ Separate keys in a sequence with spaces. Printable characters name themselves; u
 
 Command arguments are strings:
 
-```scheme
+```clojure
 (toe/bind :modes :normal :keys "spc l"
   (toe/set-language "go"))
 ```
@@ -41,7 +41,7 @@ Every binding action receives `ctx`, a read-only view of the editor, so an actio
 
 Properties are keyword-accessed, and a missing property returns nothing unless you supply a default:
 
-```scheme
+```clojure
 (toe/bind :modes :normal :keys "spc t"
   (if (eq "go" (:language (:document (:pane ctx)) ""))
     (toe/set-language "text")
@@ -86,7 +86,7 @@ The selection:
 
 Each range has zero-based character offsets. `:anchor` and `:head` preserve direction; `:from`, `:to`, and `:cursor` expose the derived range:
 
-```scheme
+```clojure
 {:anchor 10 :head 15 :from 10 :to 15 :cursor 14}
 ```
 
@@ -94,7 +94,7 @@ Each range has zero-based character offsets. `:anchor` and `:head` preserve dire
 
 An optional `:when` expression makes a binding available only when it evaluates to true. Unlike branching inside the action, `:when` also hides the key from the pending-key menu while it is unavailable. The expression is wrapped like the action body, so `ctx` is in scope — no `lambda` needed:
 
-```scheme
+```clojure
 (toe/bind :modes :normal :keys "spc F" :doc "Format Go"
   :when (eq "go" (:language (:document (:pane ctx)) ""))
   (toe/format))
@@ -102,7 +102,7 @@ An optional `:when` expression makes a binding available only when it evaluates 
 
 Negate it to bind a key only when the current document is *not* already Go:
 
-```scheme
+```clojure
 (toe/bind :modes [:normal] :keys ["spc l"] :doc "Set language to Go"
   :when (not (eq "go" (:language (:document (:pane ctx)) "")))
   (toe/set-language "go"))

@@ -8,75 +8,167 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// buildContext snapshots editor state for a binding action as a nested Ale
-// object; absent optional keys are omitted so lookups can supply a default
-func buildContext(e *view.Editor) *data.Object {
-	pairs := []data.Pair{
-		data.NewCons(kw("cwd"), data.String(e.Cwd())),
+// contextValue is a live, read-only view of editor state for Ale; each lookup
+// reads current state and builds only the requested branch
+type (
+	contextValue struct {
+		editor *view.Editor
 	}
-	if p := e.FocusedPane(); p != nil {
-		pairs = append(pairs, data.NewCons(kw("pane"), buildPane(e, p)))
+
+	paneValue struct {
+		editor *view.Editor
+		pane   view.Pane
 	}
-	return data.NewObject(pairs...)
+
+	documentValue struct {
+		doc *view.Document
+	}
+
+	selectionValue struct {
+		doc    *view.Document
+		viewID view.Id
+	}
+)
+
+const (
+	keyCWD       data.Keyword = "cwd"
+	keyPane      data.Keyword = "pane"
+	keyKind      data.Keyword = "kind"
+	keyMode      data.Keyword = "mode"
+	keyPath      data.Keyword = "path"
+	keyDocument  data.Keyword = "document"
+	keySelection data.Keyword = "selection"
+	keyName      data.Keyword = "name"
+	keyLanguage  data.Keyword = "language"
+	keyModified  data.Keyword = "modified"
+	keyReadOnly  data.Keyword = "read-only"
+	keyPrimary   data.Keyword = "primary"
+	keyRanges    data.Keyword = "ranges"
+	keyAnchor    data.Keyword = "anchor"
+	keyHead      data.Keyword = "head"
+	keyFrom      data.Keyword = "from"
+	keyTo        data.Keyword = "to"
+	keyCursor    data.Keyword = "cursor"
+)
+
+func buildContext(e *view.Editor) contextValue {
+	return contextValue{editor: e}
 }
 
-func buildPane(e *view.Editor, p view.Pane) *data.Object {
-	pairs := []data.Pair{
-		data.NewCons(kw("kind"), paneKind(p)),
-		data.NewCons(kw("mode"), modeKeyword(p.Mode())),
-	}
-	if path := p.Path(); path != "" {
-		pairs = append(pairs, data.NewCons(kw("path"), data.String(path)))
-	}
-	if v, ok := p.(*view.View); ok {
-		if doc := e.Document(v.DocID()); doc != nil {
-			pairs = append(pairs,
-				data.NewCons(kw("document"), buildDocument(doc)),
-				data.NewCons(kw("selection"), buildSelection(doc, v.ID())),
-			)
+func (c contextValue) Get(key ale.Value) (ale.Value, bool) {
+	switch key {
+	case keyCWD:
+		return data.String(c.editor.Cwd()), true
+	case keyPane:
+		if p := c.editor.FocusedPane(); p != nil {
+			return paneValue{editor: c.editor, pane: p}, true
 		}
 	}
-	return data.NewObject(pairs...)
+	return data.Null, false
 }
 
-func buildDocument(doc *view.Document) *data.Object {
-	pairs := []data.Pair{
-		data.NewCons(kw("name"), data.String(doc.DisplayName())),
-		data.NewCons(kw("modified"), data.Bool(doc.Modified())),
-		data.NewCons(kw("read-only"), data.Bool(doc.ReadOnly())),
-	}
-	if path := doc.Path(); path != "" {
-		pairs = append(pairs, data.NewCons(kw("path"), data.String(path)))
-	}
-	if lang := doc.Lang(); lang != "" {
-		pairs = append(pairs, data.NewCons(kw("language"), data.String(lang)))
-	}
-	return data.NewObject(pairs...)
+func (c contextValue) Equal(other ale.Value) bool {
+	o, ok := other.(contextValue)
+	return ok && o == c
 }
 
-func buildSelection(doc *view.Document, viewID view.Id) *data.Object {
-	sel := doc.SelectionFor(viewID)
-	text := doc.Text()
-	ranges := sel.Ranges()
-	values := make([]ale.Value, len(ranges))
-	for i, r := range ranges {
-		values[i] = rangeObject(r, text)
+func (p paneValue) Get(key ale.Value) (ale.Value, bool) {
+	switch key {
+	case keyKind:
+		return paneKind(p.pane), true
+	case keyMode:
+		return modeKeyword(p.pane.Mode()), true
+	case keyPath:
+		if path := p.pane.Path(); path != "" {
+			return data.String(path), true
+		}
+	case keyDocument:
+		if doc, _, ok := p.document(); ok {
+			return documentValue{doc: doc}, true
+		}
+	case keySelection:
+		if doc, id, ok := p.document(); ok {
+			return selectionValue{doc: doc, viewID: id}, true
+		}
 	}
-	return data.NewObject(
-		data.NewCons(kw("primary"), data.Integer(sel.PrimaryIndex())),
-		data.NewCons(kw("ranges"), data.NewVector(values...)),
-	)
+	return data.Null, false
 }
 
-// rangeObject builds a concrete Ale object for a range; :anchor and :head
-// keep direction, :from/:to/:cursor are derived zero-based offsets
+func (p paneValue) Equal(other ale.Value) bool {
+	o, ok := other.(paneValue)
+	return ok && o == p
+}
+
+// document resolves the focused view's document, reporting absence for non-view
+// panes and views without a backing document
+func (p paneValue) document() (*view.Document, view.Id, bool) {
+	v, ok := p.pane.(*view.View)
+	if !ok {
+		return nil, 0, false
+	}
+	doc := p.editor.Document(v.DocID())
+	if doc == nil {
+		return nil, 0, false
+	}
+	return doc, v.ID(), true
+}
+
+func (d documentValue) Get(key ale.Value) (ale.Value, bool) {
+	switch key {
+	case keyName:
+		return data.String(d.doc.DisplayName()), true
+	case keyPath:
+		if path := d.doc.Path(); path != "" {
+			return data.String(path), true
+		}
+	case keyLanguage:
+		if lang := d.doc.Lang(); lang != "" {
+			return data.String(lang), true
+		}
+	case keyModified:
+		return data.Bool(d.doc.Modified()), true
+	case keyReadOnly:
+		return data.Bool(d.doc.ReadOnly()), true
+	}
+	return data.Null, false
+}
+
+func (d documentValue) Equal(other ale.Value) bool {
+	o, ok := other.(documentValue)
+	return ok && o == d
+}
+
+func (s selectionValue) Get(key ale.Value) (ale.Value, bool) {
+	sel := s.doc.SelectionFor(s.viewID)
+	switch key {
+	case keyPrimary:
+		return data.Integer(sel.PrimaryIndex()), true
+	case keyRanges:
+		text := s.doc.Text()
+		ranges := sel.Ranges()
+		values := make([]ale.Value, len(ranges))
+		for i, r := range ranges {
+			values[i] = rangeObject(r, text)
+		}
+		return data.NewVector(values...), true
+	}
+	return data.Null, false
+}
+
+func (s selectionValue) Equal(other ale.Value) bool {
+	o, ok := other.(selectionValue)
+	return ok && o == s
+}
+
+// rangeObject builds a concrete Ale object for a range; :anchor and :head keep
+// direction, :from/:to/:cursor are derived zero-based offsets
 func rangeObject(r core.Range, text core.Rope) *data.Object {
 	return data.NewObject(
-		data.NewCons(kw("anchor"), data.Integer(r.Anchor)),
-		data.NewCons(kw("head"), data.Integer(r.Head)),
-		data.NewCons(kw("from"), data.Integer(r.From())),
-		data.NewCons(kw("to"), data.Integer(r.To())),
-		data.NewCons(kw("cursor"), data.Integer(r.Cursor(text))),
+		data.NewCons(keyAnchor, data.Integer(r.Anchor)),
+		data.NewCons(keyHead, data.Integer(r.Head)),
+		data.NewCons(keyFrom, data.Integer(r.From())),
+		data.NewCons(keyTo, data.Integer(r.To())),
+		data.NewCons(keyCursor, data.Integer(r.Cursor(text))),
 	)
 }
 
@@ -103,8 +195,4 @@ func modeKeyword(mode view.Mode) data.Keyword {
 	default:
 		return modeNormal
 	}
-}
-
-func kw(name string) data.Keyword {
-	return data.Keyword(name)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -702,6 +703,105 @@ document = 1
 		assert.Len(t, views, 2)
 		// left pane width should be close to 30 (within 1 due to int rounding)
 		assert.InDelta(t, 30, views[0].Area().Width, 1)
+	})
+
+	t.Run("restores focus recency", func(t *testing.T) {
+		dir := t.TempDir()
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.VSplitNew()
+		e.VSplitNew()
+		// revisit the left pane, making the middle one the stalest
+		left := e.AllViews()[0]
+		e.FocusView(left.ID())
+		e.FocusView(e.AllViews()[2].ID())
+
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(geom.Size{Width: 160, Height: 24})
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		views := next.AllViews()
+		assert.Len(t, views, 3)
+		// focus is derived from the sequence, not a stored flag
+		assert.Equal(t, views[2].ID(), next.Tree().Focus())
+		origLeft := views[0].Area().Width
+		origMid := views[1].Area().Width
+
+		assert.True(t, next.Tree().GrowFocusedWidth(20))
+
+		views = next.AllViews()
+		assert.Equal(t, origMid-20, views[1].Area().Width)
+		assert.Equal(t, origLeft, views[0].Area().Width)
+	})
+
+	t.Run("restores focus to a middle pane", func(t *testing.T) {
+		dir := t.TempDir()
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.VSplitNew()
+		e.VSplitNew()
+		e.FocusView(e.AllViews()[1].ID())
+
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(geom.Size{Width: 160, Height: 24})
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		views := next.AllViews()
+		assert.Len(t, views, 3)
+		assert.Equal(t, views[1].ID(), next.Tree().Focus())
+	})
+
+	t.Run("survives a corrupt focus sequence", func(t *testing.T) {
+		dir := t.TempDir()
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.VSplitNew()
+		e.VSplitNew()
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		// poison the saved sequence with values that would overflow a counter
+		raw, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		pattern := regexp.MustCompile(`focus-seq = \d+`)
+		assert.Len(t, pattern.FindAllString(string(raw), -1), 4)
+		poisoned := pattern.ReplaceAllString(
+			string(raw), "focus-seq = 9223372036854775807",
+		)
+		assert.NoError(t, os.WriteFile(sessionPath, []byte(poisoned), 0o644))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(geom.Size{Width: 160, Height: 24})
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		// the sequence is rebased, so focusing still orders above everything
+		views := next.AllViews()
+		assert.Len(t, views, 3)
+		next.FocusView(views[0].ID())
+		next.FocusView(views[2].ID())
+		origLeft := views[0].Area().Width
+		origMid := views[1].Area().Width
+
+		assert.True(t, next.Tree().GrowFocusedWidth(20))
+
+		views = next.AllViews()
+		assert.Equal(t, origMid-20, views[1].Area().Width)
+		assert.Equal(t, origLeft, views[0].Area().Width)
 	})
 
 	t.Run("restores maximized pane", func(t *testing.T) {

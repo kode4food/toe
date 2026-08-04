@@ -7,7 +7,6 @@ type SessionWriter struct {
 	node     sessionNode
 	docIndex map[DocumentId]int
 	base     string
-	focused  bool
 }
 
 // SaveSession stores this view's document state in w
@@ -42,7 +41,6 @@ func (v *View) SaveSession(w *SessionWriter) {
 		Anchor:           v.offset.Anchor,
 		HorizontalOffset: v.offset.HorizontalOffset,
 		VerticalOffset:   v.offset.VerticalOffset,
-		Focused:          w.focused,
 		Selection:        sessionSelection(doc.SelectionFor(v.id)),
 		JumpHead:         newHead,
 		Jumps:            jumps,
@@ -56,7 +54,7 @@ func (v *View) SaveSession(w *SessionWriter) {
 
 // SaveSlot stores a reopenable pane slot in the session
 func (w *SessionWriter) SaveSlot(kind SessionKind, path string) {
-	w.node = sessionNode{Kind: kind, Focused: w.focused}
+	w.node = sessionNode{Kind: kind}
 	if path != "" {
 		w.node.Path = sessionPath(w.base, path)
 	}
@@ -91,13 +89,10 @@ func (e *Editor) sessionNodeFor(
 ) sessionNode {
 	n := e.panes.tree.nodes[id]
 	if n.pane != nil {
-		w := &SessionWriter{
-			docIndex: docIndex,
-			base:     base,
-			focused:  e.panes.tree.focus == id,
-		}
+		w := &SessionWriter{docIndex: docIndex, base: base}
 		n.pane.SaveSession(w)
 		node := w.node
+		node.FocusSeq = n.focusSeq
 		for _, displaced := range n.history {
 			hw := &SessionWriter{docIndex: docIndex, base: base}
 			displaced.SaveSession(hw)
@@ -110,6 +105,7 @@ func (e *Editor) sessionNodeFor(
 		Kind:     SessionKindSplit,
 		Layout:   sessionLayoutName(c.layout),
 		Ratios:   c.ratios,
+		FocusSeq: n.focusSeq,
 		Children: make([]sessionNode, 0, len(c.children)),
 	}
 	for _, child := range c.children {

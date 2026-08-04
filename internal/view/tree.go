@@ -1,6 +1,7 @@
 package view
 
 import (
+	"cmp"
 	"slices"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -15,6 +16,7 @@ type (
 		area      geom.Area
 		nodes     map[Id]*treeNode
 		nextID    Id
+		focusSeq  int
 		redraw    func()
 	}
 
@@ -59,6 +61,7 @@ type (
 		pane      Pane
 		history   []Pane
 		container *treeContainer
+		focusSeq  int
 	}
 
 	// Layout describes how child panes are arranged within a split container
@@ -442,7 +445,56 @@ func (t *Tree) setFocus(id Id) bool {
 	}
 	t.focus = id
 	t.maximized = 0
+	t.advanceFocusSeq(id)
 	return true
+}
+
+func (t *Tree) advanceFocusSeq(id Id) {
+	t.focusSeq++
+	for {
+		n, ok := t.nodes[id]
+		if !ok {
+			return
+		}
+		n.focusSeq = t.focusSeq
+		if id == t.root {
+			return
+		}
+		id = n.parent
+	}
+}
+
+func (t *Tree) leafWithLatestFocus() (Id, bool) {
+	var best Id
+	var seq int
+	for id, n := range t.nodes {
+		if n.pane == nil {
+			continue
+		}
+		// only a corrupt session ties; lowest id keeps the pick deterministic
+		tie := n.focusSeq == seq && (best == 0 || id < best)
+		if n.focusSeq > seq || tie {
+			best, seq = id, n.focusSeq
+		}
+	}
+	return best, seq > 0
+}
+
+func (t *Tree) compactFocusSeq() {
+	ids := make([]Id, 0, len(t.nodes))
+	for id := range t.nodes {
+		ids = append(ids, id)
+	}
+	slices.SortFunc(ids, func(a, b Id) int {
+		if c := cmp.Compare(t.nodes[a].focusSeq, t.nodes[b].focusSeq); c != 0 {
+			return c
+		}
+		return cmp.Compare(a, b)
+	})
+	for i, id := range ids {
+		t.nodes[id].focusSeq = i + 1
+	}
+	t.focusSeq = len(ids)
 }
 
 func (t *Tree) allocID() Id {

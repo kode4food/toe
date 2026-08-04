@@ -50,7 +50,7 @@ type (
 		Anchor           int            `toml:"anchor,omitempty"`
 		HorizontalOffset int            `toml:"horizontal-offset,omitempty"`
 		VerticalOffset   int            `toml:"vertical-offset,omitempty"`
-		Focused          bool           `toml:"focused,omitempty"`
+		FocusSeq         int            `toml:"focus-seq,omitempty"`
 		Selection        sessionSelect  `toml:"selection"`
 		JumpHead         int            `toml:"jump-head,omitempty"`
 		Jumps            []sessionJump  `toml:"jump,omitempty"`
@@ -97,6 +97,7 @@ var (
 func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	docIndex := map[DocumentId]int{}
 	base := sessionBase(path)
+	e.panes.tree.compactFocusSeq()
 	s := editorSession{
 		Version:   sessionVersion,
 		Maximized: e.panes.tree.Maximized(),
@@ -224,11 +225,14 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	if t.IsEmpty() {
 		return nil, false, ErrSessionEmpty
 	}
-	if rs.focus != InvalidViewId {
-		t.focus = rs.focus
+	// read before compacting, while a zero sequence still means never focused
+	if id, ok := t.leafWithLatestFocus(); ok {
+		t.focus = id
 	} else {
 		t.focus = t.Traverse()[0].ID()
 	}
+	t.compactFocusSeq()
+	t.advanceFocusSeq(t.focus)
 	if s.Maximized && t.Count() > 1 {
 		t.maximized = t.focus
 	}

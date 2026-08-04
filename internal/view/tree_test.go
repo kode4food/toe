@@ -236,6 +236,67 @@ func TestMoveSeparator(t *testing.T) {
 	})
 }
 
+func TestGrowFocusedWidth(t *testing.T) {
+	t.Run("stalest sibling pays first", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.VSplitNew()
+		e.VSplitNew()
+		tree := e.Tree()
+
+		// focus order was left, middle, right, so left is the stalest
+		vs := e.Views()
+		origLeft := vs[0].View.Area().Width
+		origMid := vs[1].View.Area().Width
+		origRight := vs[2].View.Area().Width
+
+		assert.True(t, tree.GrowFocusedWidth(20))
+
+		vs2 := e.Views()
+		assert.Equal(t, origRight+20, vs2[2].View.Area().Width)
+		assert.Equal(t, origLeft-20, vs2[0].View.Area().Width)
+		assert.Equal(t, origMid, vs2[1].View.Area().Width)
+	})
+
+	t.Run("spills past a sibling pinned at minimum", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.VSplitNew()
+		e.VSplitNew()
+		tree := e.Tree()
+
+		// squeeze the middle pane to its minimum
+		vs := e.Views()
+		sepX := vs[0].View.Area().X + vs[0].View.Area().Width
+		res, _ := tree.SeparatorAt(geom.Point{X: sepX})
+		tree.MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 200)
+
+		vs = e.Views()
+		origLeft := vs[0].View.Area().Width
+		origRight := vs[2].View.Area().Width
+		assert.Equal(t, 16, vs[1].View.Area().Width)
+
+		assert.True(t, tree.GrowFocusedWidth(20))
+
+		vs2 := e.Views()
+		assert.Greater(t, vs2[2].View.Area().Width, origRight)
+		assert.Less(t, vs2[0].View.Area().Width, origLeft)
+		assert.Equal(t, 16, vs2[1].View.Area().Width)
+	})
+
+	t.Run("no growth when siblings are at minimum", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 33, Height: 24})
+		e.VSplitNew()
+		tree := e.Tree()
+
+		vs := e.Views()
+		assert.Equal(t, 16, vs[0].View.Area().Width)
+
+		assert.False(t, tree.GrowFocusedWidth(10))
+	})
+}
+
 func TestCanSplit(t *testing.T) {
 	t.Run("empty tree allows split", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

@@ -6,7 +6,6 @@ type sessionRestore struct {
 	base      string
 	docs      map[int]DocumentId
 	documents map[DocumentId]*Document
-	focus     Id
 }
 
 func (e *Editor) restoreSessionRoot(
@@ -27,6 +26,7 @@ func (e *Editor) restoreSessionRoot(
 	c := t.nodes[root].container
 	c.layout = sessionLayout(sn.Layout)
 	c.ratios = sn.Ratios
+	t.nodes[root].focusSeq = sn.FocusSeq
 	for i := range sn.Children {
 		id, err := e.restoreSessionNode(t, root, &sn.Children[i], rs)
 		if err != nil {
@@ -38,6 +38,17 @@ func (e *Editor) restoreSessionRoot(
 }
 
 func (e *Editor) restoreSessionNode(
+	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
+) (Id, error) {
+	id, err := e.restoreSessionKind(t, parent, sn, rs)
+	if err != nil {
+		return 0, err
+	}
+	t.nodes[id].focusSeq = sn.FocusSeq
+	return id, nil
+}
+
+func (e *Editor) restoreSessionKind(
 	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
 ) (Id, error) {
 	switch sn.Kind {
@@ -93,9 +104,6 @@ func (e *Editor) restoreSessionNode(
 			}
 		}
 		t.nodes[id] = node
-		if sn.Focused {
-			rs.focus = id
-		}
 		return id, nil
 	}
 }
@@ -112,9 +120,6 @@ type restoreSessionViewArgs struct {
 func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	v := e.newSessionView(args)
 	args.tree.nodes[args.viewID] = &treeNode{parent: args.parent, pane: v}
-	if args.session.Focused {
-		args.restore.focus = args.viewID
-	}
 	return args.viewID
 }
 

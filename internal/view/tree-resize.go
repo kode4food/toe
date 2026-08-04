@@ -1,6 +1,7 @@
 package view
 
 import (
+	"cmp"
 	"slices"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -91,25 +92,81 @@ func (t *Tree) growFocused(layout Layout, delta int) bool {
 		return false
 	}
 	c := t.nodes[p.container].container
-	idx := slices.Index(c.children, p.branch)
-	boundary := idx
-	last := idx == len(c.children)-1
-	if last {
-		boundary--
+	usable := t.ensureRatios(c, layout)
+	if usable == 0 {
+		return false
 	}
-	a := t.areaOf(p.branch)
-	start := a.X
-	size := a.Width
+	minSize := minPaneWidth
 	if layout == LayoutHorizontal {
-		start = a.Y
-		size = a.Height
+		minSize = minPaneHeight
 	}
-	pos := start + size + delta
-	if last {
-		pos = start - delta - 1
+	idx := slices.Index(c.children, p.branch)
+	got := t.takeFromSiblings(takeFromSiblingsArgs{
+		container: c,
+		childIdx:  idx,
+		wantRatio: float64(delta) / float64(usable),
+		minRatio:  float64(minSize) / float64(usable),
+	})
+	if got <= 0 {
+		return false
 	}
-	t.moveSeparatorAt(p.container, boundary, layout, pos)
+	c.ratios[idx] += got
+	t.recalculate()
 	return true
+}
+
+type takeFromSiblingsArgs struct {
+	container *treeContainer
+	childIdx  int
+	wantRatio float64
+	minRatio  float64
+}
+
+func (t *Tree) takeFromSiblings(args takeFromSiblingsArgs) float64 {
+	c := args.container
+	order := make([]int, 0, len(c.children)-1)
+	for i := range c.children {
+		if i != args.childIdx {
+			order = append(order, i)
+		}
+	}
+	slices.SortStableFunc(order, func(a, b int) int {
+		return cmp.Compare(
+			t.nodes[c.children[a]].focusSeq, t.nodes[c.children[b]].focusSeq,
+		)
+	})
+	var got float64
+	for _, i := range order {
+		if got >= args.wantRatio {
+			break
+		}
+		take := min(args.wantRatio-got, max(c.ratios[i]-args.minRatio, 0))
+		c.ratios[i] -= take
+		got += take
+	}
+	return got
+}
+
+func (t *Tree) ensureRatios(c *treeContainer, layout Layout) int {
+	ln := len(c.children)
+	if ln == 0 {
+		return 0
+	}
+	size, sizeOf := c.area.Width, t.widthOf
+	if layout == LayoutHorizontal {
+		size, sizeOf = c.area.Height, t.heightOf
+	}
+	usable := max(size-(ln-1), 0)
+	if usable == 0 {
+		return 0
+	}
+	if c.ratios == nil {
+		c.ratios = make([]float64, ln)
+		for i, child := range c.children {
+			c.ratios[i] = float64(sizeOf(child)) / float64(usable)
+		}
+	}
+	return usable
 }
 
 func (t *Tree) focusedParent(layout Layout) (resizeParent, bool) {
@@ -148,29 +205,18 @@ func (t *Tree) moveSeparatorAt(
 	if childIdx < 0 || childIdx >= ln-1 {
 		return
 	}
-	innerGap := 1
-	size := c.area.Width
 	start := c.area.X
 	minSize := minPaneWidth
-	sizeOf := t.widthOf
 	if layout == LayoutHorizontal {
-		size = c.area.Height
 		start = c.area.Y
 		minSize = minPaneHeight
-		sizeOf = t.heightOf
 	}
-	usable := max(size-(ln-1)*innerGap, 0)
+	usable := t.ensureRatios(c, layout)
 	if usable == 0 {
 		return
 	}
-	if c.ratios == nil {
-		c.ratios = make([]float64, ln)
-		for i, child := range c.children {
-			c.ratios[i] = float64(sizeOf(child)) / float64(usable)
-		}
-	}
 	for i := range childIdx {
-		start += max(ratioCells(usable, c.ratios[i]), minSize) + innerGap
+		start += max(ratioCells(usable, c.ratios[i]), minSize) + 1
 	}
 	minRatio := float64(minSize) / float64(usable)
 	total := c.ratios[childIdx] + c.ratios[childIdx+1]

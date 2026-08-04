@@ -5,6 +5,9 @@ title = "toe"
 [markup.goldmark.renderer]
   unsafe = true
 
+[markup.highlight]
+  style = "catppuccin-macchiato"
+
 [module]
   [[module.mounts]]
     source = "content"
@@ -34,7 +37,7 @@ title = "toe"
     path = "github.com/alex-shpak/hugo-book"
 
 [params]
-  BookTheme = "auto"
+  BookTheme = "toe-auto"
   BookSearch = true
   BookToC = true
   BookLogo = "img/logo.svg"

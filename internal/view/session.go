@@ -155,20 +155,11 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 // returns any runtime option strings stored in the session for the caller to
 // apply through the command registry
 func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
-	var s editorSession
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return nil, false, nil
-	}
-	if _, err := toml.DecodeFile(path, &s); err != nil {
-		return nil, false, err
-	}
-	if s.Version != sessionVersion {
-		return nil, false, ErrSessionUnsupported
+	s, ok, err := readSession(path)
+	if !ok || err != nil {
+		return nil, ok, err
 	}
 	reopenable := layoutHasReopenablePane(&s.Layout)
-	if len(s.Documents) == 0 && !reopenable {
-		return nil, false, ErrSessionEmpty
-	}
 	base := sessionBase(path)
 
 	docs := map[int]DocumentId{}
@@ -268,6 +259,23 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 func WorkspaceSessionFile(dir string) string {
 	root, _ := loader.FindWorkspace(dir)
 	return filepath.Join(root, loader.WorkspaceDirName, SessionFile)
+}
+
+func readSession(path string) (editorSession, bool, error) {
+	var s editorSession
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return s, false, nil
+	}
+	if _, err := toml.DecodeFile(path, &s); err != nil {
+		return s, false, err
+	}
+	if s.Version != sessionVersion {
+		return s, false, ErrSessionUnsupported
+	}
+	if len(s.Documents) == 0 && !layoutHasReopenablePane(&s.Layout) {
+		return s, false, ErrSessionEmpty
+	}
+	return s, true, nil
 }
 
 func sessionPath(base, path string) string {

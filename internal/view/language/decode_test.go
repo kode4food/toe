@@ -33,7 +33,7 @@ name = "lsptest"
 		assert.NotNil(t, l)
 	})
 
-	t.Run("language server features decoded", func(t *testing.T) {
+	t.Run("language servers decoded", func(t *testing.T) {
 		setUserLangs(t, `
 [language-server.testlsp]
 command = "testlsp"
@@ -46,46 +46,25 @@ KEY = "val"
 
 [[language]]
 name = "testlang"
-scope = "source.testlang"
 language-servers = [
-  {
-    name = "testlsp",
-    only-features = ["completion"],
-    except-features = ["formatting"]
-  },
+  { name = "testlsp", only-features = ["completion"] },
   "testlsp"
 ]
 `)
 		l := language.LoadLanguage("testlang")
 		assert.NotNil(t, l)
 		assert.Equal(t, "testlang", l.Name)
-	})
-}
-
-func TestDecodeLanguageServerFeatures(t *testing.T) {
-	t.Run("string form server feature", func(t *testing.T) {
-		setUserLangs(t, `
-[[language]]
-name = "lang-str-srv"
-language-servers = ["my-lsp"]
-`)
-		// Exercise through DetectLanguage loading
-		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+		assert.Equal(t, []string{"testlsp", "testlsp"}, l.LanguageServers)
 	})
 
-	t.Run("map form with only and except features", func(t *testing.T) {
+	t.Run("unnamed server map skipped", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
-name = "lang-map-srv"
-language-servers = [
-  {
-    name = "my-lsp",
-    only-features = ["completion"],
-    except-features = ["diagnostics"]
-  }
-]
+name = "nonamelang"
+language-servers = [{ only-features = ["completion"] }]
 `)
-		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+		l := language.LoadLanguage("nonamelang")
+		assert.Empty(t, l.LanguageServers)
 	})
 }
 
@@ -124,64 +103,6 @@ absolute-paths = true
 		name, ok := language.DetectLanguage("main.dbg", "")
 		assert.True(t, ok)
 		assert.Equal(t, "debuglang", name)
-	})
-}
-
-func TestDecodeGrammarConfig(t *testing.T) {
-	t.Run("grammar selection only", func(t *testing.T) {
-		setUserLangs(t, `
-[use-grammars]
-only = ["go", "json"]
-
-[[language]]
-name = "gramlang"
-`)
-		l := language.LoadLanguage("gramlang")
-		assert.NotNil(t, l)
-	})
-
-	t.Run("grammar source path form", func(t *testing.T) {
-		setUserLangs(t, `
-[[grammar]]
-name = "mygram"
-
-[grammar.source]
-path = "/tmp/mygram"
-
-[[language]]
-name = "gramlang2"
-`)
-		l := language.LoadLanguage("gramlang2")
-		assert.NotNil(t, l)
-	})
-
-	t.Run("grammar source git form", func(t *testing.T) {
-		setUserLangs(t, `
-[[grammar]]
-name = "gitgram"
-
-[grammar.source]
-git = "https://github.com/example/grammar"
-rev = "main"
-subpath = "src"
-
-[[language]]
-name = "gramlang3"
-`)
-		l := language.LoadLanguage("gramlang3")
-		assert.NotNil(t, l)
-	})
-
-	t.Run("grammar without source is skipped", func(t *testing.T) {
-		setUserLangs(t, `
-[[grammar]]
-name = "nosrcgram"
-
-[[language]]
-name = "gramlang4"
-`)
-		l := language.LoadLanguage("gramlang4")
-		assert.NotNil(t, l)
 	})
 }
 
@@ -270,7 +191,6 @@ func TestLoadLanguage(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
 name = "knownlang"
-scope = "source.knownlang"
 `)
 		l := language.LoadLanguage("knownlang")
 		assert.NotNil(t, l)
@@ -455,16 +375,6 @@ formatter = { args = ["-s"] }
 `)
 		l := language.LoadLanguage("nocmdlang")
 		assert.Nil(t, l.Formatter)
-	})
-
-	t.Run("skips unnamed server feature map", func(t *testing.T) {
-		setUserLangs(t, `
-[[language]]
-name = "nonamelang"
-language-servers = [{ only-features = ["completion"] }]
-`)
-		l := language.LoadLanguage("nonamelang")
-		assert.Empty(t, l.LanguageServers)
 	})
 }
 

@@ -13,10 +13,8 @@ func decodeLanguagesMap(m map[string]any) (Languages, bool) {
 		return Languages{}, false
 	}
 	langs := Languages{
-		Languages:        make([]Language, 0, len(values)),
-		LanguageServers:  decodeLanguageServers(m["language-server"]),
-		GrammarSelection: decodeGrammarSelection(m["use-grammars"]),
-		Grammars:         decodeGrammars(m["grammar"]),
+		Languages:       make([]Language, 0, len(values)),
+		LanguageServers: decodeLanguageServers(m["language-server"]),
 	}
 	for _, value := range values {
 		l, ok := decodeLanguage(value)
@@ -26,56 +24,6 @@ func decodeLanguagesMap(m map[string]any) (Languages, bool) {
 		langs.Languages = append(langs.Languages, l)
 	}
 	return langs, true
-}
-
-func decodeGrammarSelection(value any) GrammarSelection {
-	if m, ok := value.(map[string]any); ok {
-		return GrammarSelection{
-			Only:   decodeStringSlice(m["only"]),
-			Except: decodeStringSlice(m["except"]),
-		}
-	}
-	return GrammarSelection{}
-}
-
-func decodeGrammars(value any) []Grammar {
-	if values, ok := loader.AnySlice(value); ok {
-		out := make([]Grammar, 0, len(values))
-		for _, value := range values {
-			m, ok := value.(map[string]any)
-			if !ok {
-				continue
-			}
-			source, ok := decodeGrammarSource(m["source"])
-			if !ok {
-				continue
-			}
-			out = append(out, Grammar{
-				Name:   stringValueFromMap(m, "name"),
-				Source: source,
-			})
-		}
-		return out
-	}
-	return nil
-}
-
-func decodeGrammarSource(value any) (GrammarSource, bool) {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return GrammarSource{}, false
-	}
-	if path, ok := m["path"].(string); ok {
-		return GrammarSource{Path: path}, true
-	}
-	if git, ok := m["git"].(string); ok {
-		return GrammarSource{
-			Git:     git,
-			Rev:     stringValueFromMap(m, "rev"),
-			Subpath: stringValueFromMap(m, "subpath"),
-		}, true
-	}
-	return GrammarSource{}, false
 }
 
 func languageValues(value any) ([]map[string]any, bool) {
@@ -105,9 +53,6 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	if id, ok := m["language-id"].(string); ok {
 		l.LanguageID = id
 	}
-	if scope, ok := m["scope"].(string); ok {
-		l.Scope = scope
-	}
 	if injection, ok := m["injection-regex"].(string); ok {
 		l.InjectionRegex = injection
 	}
@@ -117,7 +62,7 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	l.FileTypes = decodeFileTypes(m["file-types"])
 	l.Shebangs = decodeStringSlice(m["shebangs"])
 	l.Roots = decodeStringSlice(m["roots"])
-	l.LanguageServers = decodeLanguageServerFeatures(m["language-servers"])
+	l.LanguageServers = decodeLanguageServerNames(m["language-servers"])
 	l.CommentTokens = decodeCommentTokens(m)
 	l.BlockCommentTokens = decodeBlockCommentTokens(m["block-comment-tokens"])
 	if indent, ok := m["indent"].(map[string]any); ok {

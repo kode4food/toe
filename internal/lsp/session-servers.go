@@ -355,15 +355,15 @@ func loadLanguages(cwd string) language.Languages {
 	return langs
 }
 
-func serverNames(features []language.ServerFeatures) []string {
-	out := make([]string, 0, len(features))
+func serverNames(names []string) []string {
+	out := make([]string, 0, len(names))
 	seen := map[string]bool{}
-	for _, feature := range features {
-		if feature.Name == "" || seen[feature.Name] {
+	for _, name := range names {
+		if name == "" || seen[name] {
 			continue
 		}
-		seen[feature.Name] = true
-		out = append(out, feature.Name)
+		seen[name] = true
+		out = append(out, name)
 	}
 	return out
 }

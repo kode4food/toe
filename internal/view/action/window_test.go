@@ -36,15 +36,3 @@ func TestCloseCurrentView(t *testing.T) {
 		assert.Equal(t, 0, viewCount(t, e))
 	})
 }
-
-func TestCloseOtherViews(t *testing.T) {
-	e := testutil.EditorWithText(t, "abc")
-	v := e.FocusedView()
-	// Create two additional splits
-	e.VSplit(v.DocID())
-	e.VSplit(v.DocID())
-
-	action.CloseOtherViews(e)
-
-	assert.Equal(t, 1, viewCount(t, e))
-}

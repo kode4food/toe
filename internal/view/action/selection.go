@@ -58,12 +58,6 @@ func SaveSelection(e *view.Editor) {
 	v.PushJump(v.DocID(), sel.Primary().Cursor(text), sel)
 }
 
-// CommitUndoCheckpoint explicitly commits any pending insert-mode changes to
-// history, creating an undo boundary mid-session
-func CommitUndoCheckpoint(e *view.Editor) {
-	e.CommitInsertHistory()
-}
-
 // JumpBackward navigates to the previous position in the view's jump list
 func JumpBackward(e *view.Editor) {
 	jumpTo(e, (*view.View).JumpBackward)

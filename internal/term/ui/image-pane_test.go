@@ -128,10 +128,10 @@ func TestImagePane(t *testing.T) {
 		assert.Equal(t, pane.Zoom(), split.Zoom())
 		first := e.Tree().Focus()
 
-		action.RotateView(e)
+		e.FocusNextView()
 		assert.NotEqual(t, first, e.Tree().Focus())
 
-		action.CloseOtherViews(e)
+		e.CloseAllOtherViews()
 		assert.Equal(t, 1, e.Tree().Count())
 
 		action.CloseCurrentView(e)

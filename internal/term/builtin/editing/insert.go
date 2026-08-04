@@ -36,7 +36,7 @@ func InsertModule() command.Module {
 			{
 				Name:      actCommitUndoCheckpoint,
 				DocString: "Commit changes to new checkpoint",
-				Run:       kit.Runner(action.CommitUndoCheckpoint),
+				Run:       kit.Runner((*view.Editor).CommitInsertHistory),
 				Modes:     view.ModeInsert,
 				Keys:      kit.Keys(kit.Ctrl('s')),
 			},

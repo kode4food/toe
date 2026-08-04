@@ -11,22 +11,19 @@ import (
 
 type (
 	Languages struct {
-		Languages        []Language
-		LanguageServers  map[string]Server
-		GrammarSelection GrammarSelection
-		Grammars         []Grammar
+		Languages       []Language
+		LanguageServers map[string]Server
 	}
 
 	Language struct {
 		TextWidth          *int   `toml:"text-width"`
 		Name               string `toml:"name"`
 		LanguageID         string `toml:"language-id"`
-		Scope              string `toml:"scope"`
 		InjectionRegex     string `toml:"injection-regex"`
 		FileTypes          []FileType
 		Shebangs           []string `toml:"shebangs"`
 		Roots              []string `toml:"roots"`
-		LanguageServers    []ServerFeatures
+		LanguageServers    []string
 		CommentTokens      []string
 		BlockCommentTokens []core.BlockCommentToken
 		Indent             Indent
@@ -47,10 +44,6 @@ type (
 		Glob      string
 	}
 
-	ServerFeatures struct {
-		Name string
-	}
-
 	Server struct {
 		Command      string
 		Args         []string
@@ -63,23 +56,6 @@ type (
 	Formatter struct {
 		Command string
 		Args    []string
-	}
-
-	GrammarSelection struct {
-		Only   []string
-		Except []string
-	}
-
-	Grammar struct {
-		Name   string
-		Source GrammarSource
-	}
-
-	GrammarSource struct {
-		Path    string
-		Git     string
-		Rev     string
-		Subpath string
 	}
 
 	AutoPairConfig struct {

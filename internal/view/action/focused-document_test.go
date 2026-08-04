@@ -34,7 +34,6 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"change selection", action.ChangeSelection},
 		{"change no yank", action.ChangeSelectionNoYank},
 		{"collapse selection", action.CollapseSelection},
-		{"commit undo", action.CommitUndoCheckpoint},
 		{"delete backward", action.DeleteCharBackward},
 		{"delete forward", action.DeleteCharForward},
 		{"delete selection", action.DeleteSelection},

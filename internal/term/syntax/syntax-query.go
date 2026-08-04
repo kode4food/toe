@@ -1,8 +1,6 @@
 package syntax
 
 import (
-	"strings"
-
 	sitter "github.com/tree-sitter/go-tree-sitter"
 
 	"github.com/kode4food/toe/internal/term/highlight"
@@ -57,7 +55,7 @@ func (sc *Cache) queryFor(lang string) ([]byte, bool) {
 	}
 	sc.mu.RUnlock()
 
-	b, ok := resolveQuery(lang, map[string]bool{})
+	b, ok := resolveQueryDir("queries", lang, map[string]bool{})
 	if !ok {
 		return nil, false
 	}
@@ -150,37 +148,4 @@ func injectionLanguage(
 		}
 	}
 	return ""
-}
-
-func resolveQuery(lang string, seen map[string]bool) ([]byte, bool) {
-	if seen[lang] {
-		return nil, false
-	}
-	seen[lang] = true
-
-	raw, ok := embeddedQuery(lang)
-	if !ok {
-		return nil, false
-	}
-
-	var out []byte
-	for line := range strings.SplitSeq(string(raw), "\n") {
-		trimmed := strings.TrimSpace(line)
-		if after, ok := strings.CutPrefix(trimmed, "; inherits:"); ok {
-			for parent := range strings.SplitSeq(after, ",") {
-				parent = strings.TrimSpace(parent)
-				if parent == "" {
-					continue
-				}
-				if pb, ok := resolveQuery(parent, seen); ok {
-					out = append(out, pb...)
-					out = append(out, '\n')
-				}
-			}
-			continue
-		}
-		out = append(out, line...)
-		out = append(out, '\n')
-	}
-	return out, true
 }

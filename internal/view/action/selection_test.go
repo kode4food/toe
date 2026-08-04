@@ -234,17 +234,6 @@ func TestSaveSelection(t *testing.T) {
 	})
 }
 
-func TestCommitUndoCheckpoint(t *testing.T) {
-	t.Run("does not change text", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "hello")
-
-		action.CommitUndoCheckpoint(e)
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "hello", doc.Text().String())
-	})
-}
-
 func TestGotoLastModification(t *testing.T) {
 	t.Run("moves cursor to last edit position", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
@@ -349,20 +338,6 @@ func TestHSplitVSplit(t *testing.T) {
 		action.VSplit(e)
 
 		assert.Equal(t, before+1, viewCount(t, e))
-	})
-}
-
-func TestRotateView(t *testing.T) {
-	t.Run("cycles to next view", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "abc")
-		v := e.FocusedView()
-		e.VSplit(v.DocID())
-		before := e.FocusedView()
-
-		action.RotateView(e)
-
-		after := e.FocusedView()
-		assert.NotEqual(t, before.ID(), after.ID())
 	})
 }
 

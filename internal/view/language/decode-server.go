@@ -34,32 +34,23 @@ func decodeLanguageServer(value any) (Server, bool) {
 	return Server{}, false
 }
 
-func decodeLanguageServerFeatures(value any) []ServerFeatures {
+func decodeLanguageServerNames(value any) []string {
 	values, ok := loader.AnySlice(value)
 	if !ok {
 		return nil
 	}
-	out := make([]ServerFeatures, 0, len(values))
+	out := make([]string, 0, len(values))
 	for _, value := range values {
-		if features, ok := decodeLanguageServerFeature(value); ok {
-			out = append(out, features)
+		switch value := value.(type) {
+		case string:
+			out = append(out, value)
+		case map[string]any:
+			if name, ok := value["name"].(string); ok {
+				out = append(out, name)
+			}
 		}
 	}
 	return out
-}
-
-func decodeLanguageServerFeature(value any) (ServerFeatures, bool) {
-	switch v := value.(type) {
-	case string:
-		return ServerFeatures{Name: v}, true
-	case map[string]any:
-		if name, ok := v["name"].(string); ok {
-			return ServerFeatures{Name: name}, true
-		}
-		return ServerFeatures{}, false
-	default:
-		return ServerFeatures{}, false
-	}
 }
 
 func decodeFormatter(value any) (Formatter, bool) {

@@ -30,7 +30,6 @@ var (
 func CheckRuntime() Report {
 	return Report{
 		checkLanguages(),
-		checkGrammars(),
 		checkThemes(),
 		checkSyntaxQueries(),
 	}
@@ -85,17 +84,6 @@ func checkLanguages() Check {
 		}
 	}
 	return failed("languages", "bundled languages.toml did not parse")
-}
-
-func checkGrammars() Check {
-	if langs, ok := language.LoadBundledLanguages(); ok {
-		return Check{
-			Name:   "grammars",
-			OK:     true,
-			Detail: fmt.Sprintf("%d configured", len(langs.Grammars)),
-		}
-	}
-	return failed("grammars", "bundled languages.toml did not parse")
 }
 
 func checkThemes() Check {

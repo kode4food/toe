@@ -14,7 +14,7 @@ func TestHealth(t *testing.T) {
 		rep := health.CheckRuntime()
 
 		assert.True(t, rep.OK())
-		assert.Len(t, rep, 4)
+		assert.Len(t, rep, 3)
 	})
 
 	t.Run("writes report", func(t *testing.T) {

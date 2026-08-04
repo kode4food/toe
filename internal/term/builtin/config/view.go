@@ -93,7 +93,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImageZoomIn,
 				DocString: "Zoom image in",
-				Run:       kit.Runner(imageZoomIn),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).ZoomIn)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('+'), kit.Char('=')),
 				Aliases:   []string{"zoom-in"},
@@ -102,7 +102,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImageZoomOut,
 				DocString: "Zoom image out",
-				Run:       kit.Runner(imageZoomOut),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).ZoomOut)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('-')),
 				Aliases:   []string{"zoom-out"},
@@ -111,7 +111,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImageZoomReset,
 				DocString: "Fit image to pane",
-				Run:       kit.Runner(imageZoomReset),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).ResetZoom)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('0')),
 				Aliases:   []string{"zoom-reset"},
@@ -120,7 +120,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImagePanLeft,
 				DocString: "Pan image left",
-				Run:       kit.Runner(imagePanLeft),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).PanLeft)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('h'), kit.Left),
 				Aliases:   []string{"pan-left"},
@@ -129,7 +129,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImagePanDown,
 				DocString: "Pan image down",
-				Run:       kit.Runner(imagePanDown),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).PanDown)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('j'), kit.Down),
 				Aliases:   []string{"pan-down"},
@@ -138,7 +138,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImagePanUp,
 				DocString: "Pan image up",
-				Run:       kit.Runner(imagePanUp),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).PanUp)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('k'), kit.Up),
 				Aliases:   []string{"pan-up"},
@@ -147,7 +147,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actImagePanRight,
 				DocString: "Pan image right",
-				Run:       kit.Runner(imagePanRight),
+				Run:       kit.Runner(runImgAction((*ui.ImagePane).PanRight)),
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('l'), kit.Right),
 				Aliases:   []string{"pan-right"},
@@ -335,7 +335,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actTransposeView,
 				DocString: "Transpose splits",
-				Run:       kit.Runner(action.TransposeView),
+				Run:       kit.Runner((*view.Editor).Transpose),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('t'), kit.Ctrl('t')),
 			},
@@ -351,7 +351,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actCloseCurrentViewForce,
 				DocString: "Force close window",
-				Run:       kit.Runner(action.CloseCurrentViewForce),
+				Run:       kit.Runner((*view.Editor).CloseCurrentView),
 				Modes:     command.PaneModes,
 				Aliases:   []string{"wc!"},
 				Signature: command.DefaultSignature(),
@@ -359,7 +359,7 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actCloseOtherViews,
 				DocString: "Close windows except current",
-				Run:       kit.Runner(action.CloseOtherViews),
+				Run:       kit.Runner((*view.Editor).CloseAllOtherViews),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('o'), kit.Ctrl('o')),
 				Aliases:   []string{"wo"},
@@ -368,14 +368,14 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actRotateView,
 				DocString: "Goto next window",
-				Run:       kit.Runner(action.RotateView),
+				Run:       kit.Runner((*view.Editor).FocusNextView),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('w'), kit.Ctrl('w')),
 			},
 			{
 				Name:      actTogglePaneMaximized,
 				DocString: "Toggle focused pane maximized",
-				Run:       kit.Runner(action.TogglePaneMaximized),
+				Run:       kit.Runner((*view.Editor).TogglePaneMaximized),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('z')),
 				Signature: command.DefaultSignature(),
@@ -383,8 +383,10 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actJumpViewLeft,
 				DocString: "Jump to left split",
-				Run:       kit.Runner(action.JumpViewLeft),
-				Modes:     command.PaneModes,
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).FocusDirection, view.DirectionLeft,
+				)),
+				Modes: command.PaneModes,
 				Keys: kit.Window(
 					kit.Char('h'), kit.Ctrl('h'), kit.Left,
 				),
@@ -392,8 +394,10 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actJumpViewDown,
 				DocString: "Jump to split below",
-				Run:       kit.Runner(action.JumpViewDown),
-				Modes:     command.PaneModes,
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).FocusDirection, view.DirectionDown,
+				)),
+				Modes: command.PaneModes,
 				Keys: kit.Window(
 					kit.Char('j'), kit.Ctrl('j'), kit.Down,
 				),
@@ -401,8 +405,10 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actJumpViewUp,
 				DocString: "Jump to split above",
-				Run:       kit.Runner(action.JumpViewUp),
-				Modes:     command.PaneModes,
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).FocusDirection, view.DirectionUp,
+				)),
+				Modes: command.PaneModes,
 				Keys: kit.Window(
 					kit.Char('k'), kit.Ctrl('k'), kit.Up,
 				),
@@ -410,8 +416,10 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actJumpViewRight,
 				DocString: "Jump to right split",
-				Run:       kit.Runner(action.JumpViewRight),
-				Modes:     command.PaneModes,
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).FocusDirection, view.DirectionRight,
+				)),
+				Modes: command.PaneModes,
 				Keys: kit.Window(
 					kit.Char('l'), kit.Ctrl('l'), kit.Right,
 				),
@@ -419,30 +427,38 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Name:      actSwapViewLeft,
 				DocString: "Swap with left split",
-				Run:       kit.Runner(action.SwapViewLeft),
-				Modes:     command.PaneModes,
-				Keys:      kit.Window(kit.Char('H')),
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).SwapSplitInDirection, view.DirectionLeft,
+				)),
+				Modes: command.PaneModes,
+				Keys:  kit.Window(kit.Char('H')),
 			},
 			{
 				Name:      actSwapViewDown,
 				DocString: "Swap with split below",
-				Run:       kit.Runner(action.SwapViewDown),
-				Modes:     command.PaneModes,
-				Keys:      kit.Window(kit.Char('J')),
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).SwapSplitInDirection, view.DirectionDown,
+				)),
+				Modes: command.PaneModes,
+				Keys:  kit.Window(kit.Char('J')),
 			},
 			{
 				Name:      actSwapViewUp,
 				DocString: "Swap with split above",
-				Run:       kit.Runner(action.SwapViewUp),
-				Modes:     command.PaneModes,
-				Keys:      kit.Window(kit.Char('K')),
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).SwapSplitInDirection, view.DirectionUp,
+				)),
+				Modes: command.PaneModes,
+				Keys:  kit.Window(kit.Char('K')),
 			},
 			{
 				Name:      actSwapViewRight,
 				DocString: "Swap with right split",
-				Run:       kit.Runner(action.SwapViewRight),
-				Modes:     command.PaneModes,
-				Keys:      kit.Window(kit.Char('L')),
+				Run: kit.Runner(runDirAction(
+					(*view.Editor).SwapSplitInDirection, view.DirectionRight,
+				)),
+				Modes: command.PaneModes,
+				Keys:  kit.Window(kit.Char('L')),
 			},
 			{
 				Name:      actResizeView,
@@ -881,44 +897,16 @@ func runeOption(
 	}
 }
 
-func imageZoomIn(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.ZoomIn()
+func runImgAction(fn func(*ui.ImagePane)) command.Action {
+	return func(e *view.Editor) {
+		if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
+			fn(p)
+		}
 	}
 }
 
-func imageZoomOut(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.ZoomOut()
-	}
-}
-
-func imageZoomReset(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.ResetZoom()
-	}
-}
-
-func imagePanLeft(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.PanLeft()
-	}
-}
-
-func imagePanDown(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.PanDown()
-	}
-}
-
-func imagePanUp(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.PanUp()
-	}
-}
-
-func imagePanRight(e *view.Editor) {
-	if p, ok := e.FocusedPane().(*ui.ImagePane); ok {
-		p.PanRight()
-	}
+func runDirAction(
+	fn func(*view.Editor, view.Direction), dir view.Direction,
+) command.Action {
+	return func(e *view.Editor) { fn(e, dir) }
 }

@@ -84,7 +84,7 @@ func TestSession(t *testing.T) {
 		assert.Len(t, views, 2)
 		assert.Equal(t, view.ModeSelect, views[0].Mode())
 		assert.Equal(t, view.ModeInsert, views[1].Mode())
-		assert.True(t, views[1].FreeScroll())
+		assert.False(t, views[1].FreeScroll())
 		assert.Equal(t, view.Position{
 			Anchor:           1,
 			HorizontalOffset: 2,

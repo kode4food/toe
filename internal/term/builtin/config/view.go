@@ -11,17 +11,21 @@ import (
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	viewcfg "github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/config"
 	"github.com/kode4food/toe/internal/view/language"
 )
 
 type viewSection struct {
 	Editor struct {
-		LineNumber   view.LineNumber   `toml:"line-number"`
-		InactiveDim  *int              `toml:"inactive-dim"`
-		CursorLine   *bool             `toml:"cursorline"`
-		CursorColumn *bool             `toml:"cursorcolumn"`
-		AutoSize     *bool             `toml:"auto-size"`
+		LineNumber   view.LineNumber `toml:"line-number"`
+		InactiveDim  *int            `toml:"inactive-dim"`
+		CursorLine   *bool           `toml:"cursorline"`
+		CursorColumn *bool           `toml:"cursorcolumn"`
+		Animation    *bool           `toml:"animation"`
+		AutoSize     struct {
+			Enable      *bool `toml:"enable"`
+			VerticalPct *int  `toml:"vertical-percent"`
+		} `toml:"auto-size"`
 		TextWidth    *int              `toml:"text-width"`
 		SoftWrap     language.SoftWrap `toml:"soft-wrap"`
 		Rulers       []int             `toml:"rulers"`
@@ -457,7 +461,7 @@ func ViewModule(model ui.Model) command.Module {
 				Set: func(e *view.Editor, s string) error {
 					v, err := view.ParseLineNumber(s)
 					if err != nil {
-						return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, s)
+						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 					}
 					e.Options().LineNumber = v
 					return nil
@@ -483,7 +487,15 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().CursorColumn = v
 				},
 			),
-			kit.EditorBoolOption("auto-size",
+			kit.EditorBoolOption("animation",
+				func(*view.Editor) bool {
+					return model.Animation()
+				},
+				func(_ *view.Editor, v bool) {
+					model.SetAnimation(v)
+				},
+			),
+			kit.EditorBoolOption("auto-size.enable",
 				func(*view.Editor) bool {
 					return model.AutoSize()
 				},
@@ -491,6 +503,20 @@ func ViewModule(model ui.Model) command.Module {
 					model.SetAutoSize(v)
 				},
 			),
+			{
+				Key: "auto-size.vertical-percent",
+				Get: func(*view.Editor) (string, error) {
+					return strconv.Itoa(model.AutoSizeVerticalPercent()), nil
+				},
+				Set: func(_ *view.Editor, s string) error {
+					percent, err := config.ParsePercent(s)
+					if err != nil {
+						return err
+					}
+					model.SetAutoSizeVerticalPercent(percent)
+					return nil
+				},
+			},
 			kit.EditorNullableIntOption("text-width",
 				language.DefaultTextWidth,
 				func(e *view.Editor) *int {
@@ -519,7 +545,7 @@ func ViewModule(model ui.Model) command.Module {
 					return wi, nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := viewcfg.ParseStringLiteral(s)
+					v, err := config.ParseStringLiteral(s)
 					if err != nil {
 						return err
 					}
@@ -542,7 +568,7 @@ func ViewModule(model ui.Model) command.Module {
 					return strconv.Itoa(e.Options().InactiveDim), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := viewcfg.ParseNonNegInt(s)
+					v, err := config.ParseNonNegInt(s)
 					if err != nil {
 						return err
 					}
@@ -553,10 +579,10 @@ func ViewModule(model ui.Model) command.Module {
 			{
 				Key: "rulers",
 				Get: func(e *view.Editor) (string, error) {
-					return viewcfg.FormatIntSlice(e.Options().Rulers), nil
+					return config.FormatIntSlice(e.Options().Rulers), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := viewcfg.ParseIntSlice(s)
+					v, err := config.ParseIntSlice(s)
 					if err != nil {
 						return err
 					}
@@ -572,7 +598,7 @@ func ViewModule(model ui.Model) command.Module {
 				Set: func(e *view.Editor, s string) error {
 					v, err := view.ParseBufferLine(s)
 					if err != nil {
-						return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, s)
+						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 					}
 					e.Options().BufferLine = v
 					return nil
@@ -595,7 +621,7 @@ func ViewModule(model ui.Model) command.Module {
 				Set: func(e *view.Editor, s string) error {
 					rv, err := view.ParseWhitespaceRenderValue(s)
 					if err != nil {
-						return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, s)
+						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 					}
 					ws := &e.Options().Whitespace
 					ws.Render.Default = &rv
@@ -697,7 +723,7 @@ func ViewModule(model ui.Model) command.Module {
 					return strconv.Itoa(n), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := viewcfg.ParseNonNegInt(s)
+					v, err := config.ParseNonNegInt(s)
 					if err != nil {
 						return err
 					}
@@ -721,10 +747,10 @@ func ViewModule(model ui.Model) command.Module {
 					for i, gutter := range layout {
 						values[i] = string(gutter)
 					}
-					return viewcfg.FormatStringSlice(values), nil
+					return config.FormatStringSlice(values), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					values, err := viewcfg.ParseStringSlice(s)
+					values, err := config.ParseStringSlice(s)
 					if err != nil {
 						return err
 					}
@@ -754,7 +780,7 @@ func ViewModule(model ui.Model) command.Module {
 					return strconv.Itoa(n), nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					v, err := viewcfg.ParsePositiveInt(s)
+					v, err := config.ParsePositiveInt(s)
 					if err != nil {
 						return err
 					}
@@ -776,7 +802,12 @@ func ViewModule(model ui.Model) command.Module {
 				)
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)
-				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize, false))
+				model.SetAnimation(kit.BoolOr(cfg.Editor.Animation, true))
+				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize.Enable, false))
+				model.SetAutoSizeVerticalPercent(kit.IntOr(
+					cfg.Editor.AutoSize.VerticalPct,
+					ui.DefaultAutoSizeVerticalPct,
+				))
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
 				opts.SetRulers(cfg.Editor.Rulers)
@@ -816,7 +847,7 @@ func whitespaceRenderOption(
 		Set: func(e *view.Editor, s string) error {
 			v, err := view.ParseWhitespaceRenderValue(s)
 			if err != nil {
-				return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, s)
+				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 			}
 			set(&e.Options().Whitespace.Render, &v)
 			return nil
@@ -837,12 +868,12 @@ func runeOption(
 			return strconv.Quote(string(get(e.Options()))), nil
 		},
 		Set: func(e *view.Editor, s string) error {
-			v, err := viewcfg.ParseStringLiteral(s)
+			v, err := config.ParseStringLiteral(s)
 			if err != nil {
 				return err
 			}
 			if utf8.RuneCountInString(v) != 1 {
-				return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, v)
+				return fmt.Errorf("%w: %s", config.ErrInvalidOption, v)
 			}
 			set(e.Options(), v)
 			return nil

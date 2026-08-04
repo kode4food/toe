@@ -6,6 +6,13 @@ import (
 	"github.com/kode4food/toe/internal/geom"
 )
 
+// horizontalParent locates the nearest horizontal-split ancestor of the focus:
+// the container to resize within and the child branch holding the focus
+type horizontalParent struct {
+	container Id
+	branch    Id
+}
+
 // ResizeFocused pushes a border of the focused pane's split by delta cells in
 // dir, falling back to its other border if it has none on that side. False if
 // no ancestor splits along that axis
@@ -96,6 +103,42 @@ func (t *Tree) GrowFocusedWidth(delta int) bool {
 	return true
 }
 
+// GrowFocusedHeight grows the focused pane by moving the nearest horizontal
+// split, constrained by the minimum height of its sibling
+func (t *Tree) GrowFocusedHeight(delta int) bool {
+	if delta <= 0 || t.IsEmpty() {
+		return false
+	}
+	if t.Maximized() {
+		return false
+	}
+	hp, ok := t.focusedHorizontalParent()
+	if !ok {
+		return false
+	}
+
+	c := t.nodes[hp.container].container
+	idx := slices.Index(c.children, hp.branch)
+	if idx < len(c.children)-1 {
+		a := t.areaOf(hp.branch)
+		t.moveSepHorizontal(hp.container, idx, a.Y+a.Height+delta)
+		return true
+	}
+	a := t.areaOf(hp.branch)
+	t.moveSepHorizontal(hp.container, idx-1, a.Y-delta-1)
+	return true
+}
+
+// FocusedParentHeight reports the height of the nearest horizontal-split
+// container above the focused pane, the pool its vertical size is drawn from
+func (t *Tree) FocusedParentHeight() (int, bool) {
+	hp, ok := t.focusedHorizontalParent()
+	if !ok {
+		return 0, false
+	}
+	return t.nodes[hp.container].container.area.Height, true
+}
+
 // MoveSeparator adjusts the split between children[childIdx] and
 // children[childIdx+1] in containerID, in tree coordinates
 func (t *Tree) MoveSeparator(
@@ -106,6 +149,24 @@ func (t *Tree) MoveSeparator(
 		t.moveSepVertical(containerID, childIdx, newPos)
 	} else {
 		t.moveSepHorizontal(containerID, childIdx, newPos)
+	}
+}
+
+// focusedHorizontalParent walks up from the focus to the nearest
+// horizontal-split ancestor
+func (t *Tree) focusedHorizontalParent() (horizontalParent, bool) {
+	branch := t.focus
+	parent := t.nodes[branch].parent
+	for {
+		c := t.nodes[parent].container
+		if c.layout == LayoutHorizontal && len(c.children) > 1 {
+			return horizontalParent{container: parent, branch: branch}, true
+		}
+		if parent == t.root {
+			return horizontalParent{}, false
+		}
+		branch = parent
+		parent = t.nodes[parent].parent
 	}
 }
 

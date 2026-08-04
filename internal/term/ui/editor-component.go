@@ -30,6 +30,7 @@ type (
 		macroSlot       *macroSlot
 		bufferlineShown bool
 		focused         bool
+		animation       bool
 		redraw          chan struct{}
 	}
 
@@ -118,10 +119,12 @@ var (
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
 		saveSlot:   &saveGenSlot{},
+		autoSize:   autoSizeState{verticalPct: DefaultAutoSizeVerticalPct},
 		completion: DefaultCompletionOptions(),
 		cache:      newRenderCache(),
 		macroSlot:  &macroSlot{macros: map[rune][]command.KeyEvent{}},
 		focused:    true,
+		animation:  true,
 		redraw:     make(chan struct{}, 1),
 		mouse: mouseState{
 			vertical: mouseAutoScrollAxis{
@@ -165,6 +168,17 @@ func newEditorComponent() *EditorComponent {
 			},
 		},
 	}
+}
+
+// Animation reports whether UI animations (such as auto-size growth) play
+func (m Model) Animation() bool {
+	return m.component.animation
+}
+
+// SetAnimation controls whether UI animations play; when off they snap to
+// their final state
+func (m Model) SetAnimation(enabled bool) {
+	m.component.animation = enabled
 }
 
 func (e *EditorComponent) HandleEvent(

@@ -19,11 +19,7 @@ type (
 		offset     Position
 		mode       Mode
 		jumps      JumpList
-		freeScroll bool
-		// fsRev and fsSel snapshot the document state when free scroll
-		// began; free scroll ends when either changes
-		fsRev int
-		fsSel core.Selection
+		freeScroll freeScrollState
 		// area is the screen rectangle assigned by the layout engine
 		area geom.Area
 		// vcol memoizes the last VisualColumn result; Rope is immutable
@@ -39,6 +35,14 @@ type (
 		cursor int
 		tabW   int
 		col    int
+	}
+
+	freeScrollState struct {
+		active bool
+		// rev and sel snapshot the document when free scroll began;
+		// free scroll ends when either changes
+		rev int
+		sel core.Selection
 	}
 
 	// Id is the unique identifier for an open view
@@ -226,31 +230,28 @@ func (v *View) SetOffset(p Position) {
 
 // FreeScroll reports whether the viewport is decoupled from the cursor
 func (v *View) FreeScroll() bool {
-	return v.freeScroll
+	return v.freeScroll.active
 }
 
 // BeginFreeScroll decouples the viewport from the cursor. The revision and
 // selection snapshot the document state at this moment; free scroll ends
 // automatically when either changes
 func (v *View) BeginFreeScroll(rev int, sel core.Selection) {
-	v.freeScroll = true
-	v.fsRev = rev
-	v.fsSel = sel
+	v.freeScroll = freeScrollState{active: true, rev: rev, sel: sel}
 }
 
 // EndFreeScroll re-couples the viewport to the cursor
 func (v *View) EndFreeScroll() {
-	v.freeScroll = false
-	v.fsSel = core.Selection{}
+	v.freeScroll = freeScrollState{}
 }
 
 // SyncFreeScroll ends free scroll when the document revision or selection
 // changed since BeginFreeScroll, and reports whether it remains active
 func (v *View) SyncFreeScroll(rev int, sel core.Selection) bool {
-	if !v.freeScroll {
+	if !v.freeScroll.active {
 		return false
 	}
-	if rev != v.fsRev || !sel.Equal(v.fsSel) {
+	if rev != v.freeScroll.rev || !sel.Equal(v.freeScroll.sel) {
 		v.EndFreeScroll()
 		return false
 	}

@@ -29,6 +29,8 @@ The rest of this page covers the three editing modes (Normal, Select, Insert) fi
 
 Keys can be rebound and new actions scripted in Ale — see [Scripting]({{< relref "/docs/scripting" >}}).
 
+<a href="../../downloads/toe-cheatsheet.pdf" download>Download the printable Toe cheatsheet (PDF)</a>.
+
 ## Normal Mode
 
 Normal mode is the default. Keys are commands, not text: you move the cursor, manipulate selections, and launch edits from here.

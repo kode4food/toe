@@ -122,12 +122,11 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 // the tree or touching focus, so it can serve as a detached restore pane
 func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 	v := &View{
-		id:         args.viewID,
-		editor:     e,
-		docID:      args.docID,
-		mode:       ParseMode(args.session.Mode),
-		offset:     sessionPosition(args.session),
-		freeScroll: args.session.FreeScroll,
+		id:     args.viewID,
+		editor: e,
+		docID:  args.docID,
+		mode:   ParseMode(args.session.Mode),
+		offset: sessionPosition(args.session),
 	}
 	for _, idx := range args.session.DocumentHistory {
 		if did, ok := args.restore.docs[idx]; ok {
@@ -152,11 +151,7 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 	}
 	v.jumps.Restore(entries, head)
 	if doc, ok := args.restore.documents[args.docID]; ok {
-		sel := args.session.Selection.selection()
-		doc.SetSelectionFor(args.viewID, sel)
-		if v.freeScroll {
-			v.BeginFreeScroll(doc.Revision(), sel)
-		}
+		doc.SetSelectionFor(args.viewID, args.session.Selection.selection())
 	}
 	return v
 }

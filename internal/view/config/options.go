@@ -36,6 +36,14 @@ func ParseNonNegInt(value string) (int, error) {
 	return v, nil
 }
 
+func ParsePercent(value string) (int, error) {
+	v, err := strconv.Atoi(value)
+	if err != nil || v < 0 || v > 100 {
+		return 0, fmt.Errorf("%w: %s", ErrInvalidOption, value)
+	}
+	return v, nil
+}
+
 func ParseIntSlice(value string) ([]int, error) {
 	var raw struct {
 		Value []int `toml:"value"`

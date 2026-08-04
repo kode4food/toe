@@ -10,7 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
-	viewcfg "github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/config"
 )
 
 type (
@@ -152,7 +152,7 @@ func cursorShapeOption(
 		Set: func(e *view.Editor, s string) error {
 			v, err := view.ParseCursorKind(s)
 			if err != nil {
-				return fmt.Errorf("%w: %s", viewcfg.ErrInvalidOption, s)
+				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 			}
 			set(e.Options(), v)
 			return nil
@@ -176,10 +176,10 @@ func statuslineItemsOption(
 					values[i] += "!"
 				}
 			}
-			return viewcfg.FormatStringSlice(values), nil
+			return config.FormatStringSlice(values), nil
 		},
 		Set: func(e *view.Editor, s string) error {
-			values, err := viewcfg.ParseStringSlice(s)
+			values, err := config.ParseStringSlice(s)
 			if err != nil {
 				return err
 			}
@@ -199,7 +199,7 @@ func statuslineItemsOption(
 func sliceCompleter[T ~string](items ...T) command.CompletionFunc {
 	values := make([]string, len(items))
 	for i, item := range items {
-		values[i] = viewcfg.FormatStringSlice([]string{string(item)})
+		values[i] = config.FormatStringSlice([]string{string(item)})
 	}
 	return command.StaticCompleter(values...)
 }

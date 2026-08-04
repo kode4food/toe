@@ -1,8 +1,9 @@
 DIST_DIR ?= ./dist
 EXE = $(DIST_DIR)/toe
 GO ?= go
+PYTHON ?= python3
 
-.PHONY: all install build format check test pre-commit coverage clean
+.PHONY: all install build format check test pre-commit coverage cheatsheet clean
 
 all: build
 
@@ -30,6 +31,9 @@ pre-commit: format test
 coverage:
 	$(GO) test ./... -coverprofile=coverage.out
 	$(GO) tool cover -func=coverage.out
+
+cheatsheet:
+	$(PYTHON) docs/cheatsheet.py
 
 clean:
 	@rm -f $(EXE)

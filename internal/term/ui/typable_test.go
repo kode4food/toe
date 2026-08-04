@@ -14,7 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
-	viewconfig "github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/config"
 )
 
 func TestConfigCommands(t *testing.T) {
@@ -254,7 +254,7 @@ func newTestModel(t *testing.T, e *view.Editor) ui.Model {
 	reg, err := builtin.Register(m, km)
 	assert.NoError(t, err)
 	e.SetConfigReload(func() error {
-		raw, _ := viewconfig.LoadRawConfigForDir(e.Cwd())
+		raw, _ := config.LoadRawConfigForDir(e.Cwd())
 		if raw == nil {
 			raw = map[string]any{}
 		}

@@ -50,7 +50,6 @@ type (
 		Anchor           int            `toml:"anchor,omitempty"`
 		HorizontalOffset int            `toml:"horizontal-offset,omitempty"`
 		VerticalOffset   int            `toml:"vertical-offset,omitempty"`
-		FreeScroll       bool           `toml:"free-scroll,omitempty"`
 		Focused          bool           `toml:"focused,omitempty"`
 		Selection        sessionSelect  `toml:"selection"`
 		JumpHead         int            `toml:"jump-head,omitempty"`

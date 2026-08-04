@@ -42,7 +42,6 @@ func (v *View) SaveSession(w *SessionWriter) {
 		Anchor:           v.offset.Anchor,
 		HorizontalOffset: v.offset.HorizontalOffset,
 		VerticalOffset:   v.offset.VerticalOffset,
-		FreeScroll:       v.freeScroll,
 		Focused:          w.focused,
 		Selection:        sessionSelection(doc.SelectionFor(v.id)),
 		JumpHead:         newHead,

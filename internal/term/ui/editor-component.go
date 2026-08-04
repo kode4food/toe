@@ -119,7 +119,6 @@ var (
 func newEditorComponent() *EditorComponent {
 	return &EditorComponent{
 		saveSlot:   &saveGenSlot{},
-		autoSize:   autoSizeState{verticalPct: DefaultAutoSizeVerticalPct},
 		completion: DefaultCompletionOptions(),
 		cache:      newRenderCache(),
 		macroSlot:  &macroSlot{macros: map[rune][]command.KeyEvent{}},

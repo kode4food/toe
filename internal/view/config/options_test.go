@@ -99,29 +99,6 @@ func TestParseHelpers(t *testing.T) {
 		assert.ErrorIs(t, err, config.ErrInvalidOption)
 	})
 
-	for _, tc := range []struct {
-		name    string
-		value   string
-		want    int
-		invalid bool
-	}{
-		{name: "percent value", value: "50", want: 50},
-		{name: "percent zero", value: "0"},
-		{name: "percent above hundred", value: "101", invalid: true},
-		{name: "percent negative", value: "-1", invalid: true},
-		{name: "percent non-number", value: "half", invalid: true},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			v, err := config.ParsePercent(tc.value)
-			if tc.invalid {
-				assert.ErrorIs(t, err, config.ErrInvalidOption)
-				return
-			}
-			assert.NoError(t, err)
-			assert.Equal(t, tc.want, v)
-		})
-	}
-
 	t.Run("FormatIntSlice", func(t *testing.T) {
 		s := config.FormatIntSlice([]int{80, 120})
 		assert.Equal(t, "[80, 120]", s)

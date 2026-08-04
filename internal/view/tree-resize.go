@@ -73,22 +73,6 @@ func (t *Tree) GrowFocusedWidth(delta int) bool {
 	return t.growFocused(LayoutVertical, delta)
 }
 
-// GrowFocusedHeight grows the focused pane by moving the nearest horizontal
-// split, constrained by the minimum height of its sibling
-func (t *Tree) GrowFocusedHeight(delta int) bool {
-	return t.growFocused(LayoutHorizontal, delta)
-}
-
-// FocusedParentHeight reports the height of the nearest horizontal-split
-// container above the focused pane, the pool its vertical size is drawn from
-func (t *Tree) FocusedParentHeight() (int, bool) {
-	p, ok := t.focusedParent(LayoutHorizontal)
-	if !ok {
-		return 0, false
-	}
-	return t.nodes[p.container].container.area.Height, true
-}
-
 // MoveSeparator adjusts the split between children[childIdx] and
 // children[childIdx+1] in containerID, in tree coordinates
 func (t *Tree) MoveSeparator(

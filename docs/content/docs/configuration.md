@@ -110,8 +110,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `cursorline` | bool | `false` | Highlight cursor line |
 | `cursorcolumn` | bool | `false` | Highlight cursor column |
 | `animation` | bool | `true` | Animate UI transitions; when off they snap instantly |
-| `auto-size.enable` | bool | `false` | Grow a focused pane to show its leftmost ruler |
-| `auto-size.vertical-percent` | int | `67` | Percent of parent split height a focused pane grows to; `0` disables |
+| `auto-size` | bool | `false` | Widen a focused pane to fit its content: the leftmost ruler for text, a full hex row for binary, 80 columns for terminals |
 | `text-width` | int | `80` | Wrap column for `:reflow` and for soft wrap when `wrap-at-text-width` is on |
 | `rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
 | `bufferline` | string | `"never"` | Show buffer tabs: `never`, `always`, `multiple` |

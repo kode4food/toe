@@ -24,6 +24,8 @@ const (
 	binaryGroupBytes     = 8
 	binaryGroupWidth     = binaryGroupBytes*4 + 1
 	binaryMinOffsetWidth = 8
+	binaryRowPadding     = 4
+	binaryTargetGroups   = 2
 )
 
 func (r *renderPass) renderBinaryPane(
@@ -161,9 +163,13 @@ type binaryBytesPerRowArgs struct {
 
 func binaryBytesPerRow(args binaryBytesPerRowArgs) int {
 	groups := max(
-		(args.width-args.offsetWidth-4)/binaryGroupWidth, 1,
+		(args.width-args.offsetWidth-binaryRowPadding)/binaryGroupWidth, 1,
 	)
 	return groups * binaryGroupBytes
+}
+
+func binaryTargetWidth(offsetWidth int) int {
+	return offsetWidth + binaryRowPadding + binaryTargetGroups*binaryGroupWidth
 }
 
 func binaryOffsetWidth(size int64) int {

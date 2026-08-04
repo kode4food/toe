@@ -17,15 +17,12 @@ import (
 
 type viewSection struct {
 	Editor struct {
-		LineNumber   view.LineNumber `toml:"line-number"`
-		InactiveDim  *int            `toml:"inactive-dim"`
-		CursorLine   *bool           `toml:"cursorline"`
-		CursorColumn *bool           `toml:"cursorcolumn"`
-		Animation    *bool           `toml:"animation"`
-		AutoSize     struct {
-			Enable      *bool `toml:"enable"`
-			VerticalPct *int  `toml:"vertical-percent"`
-		} `toml:"auto-size"`
+		LineNumber   view.LineNumber   `toml:"line-number"`
+		InactiveDim  *int              `toml:"inactive-dim"`
+		CursorLine   *bool             `toml:"cursorline"`
+		CursorColumn *bool             `toml:"cursorcolumn"`
+		Animation    *bool             `toml:"animation"`
+		AutoSize     *bool             `toml:"auto-size"`
 		TextWidth    *int              `toml:"text-width"`
 		SoftWrap     language.SoftWrap `toml:"soft-wrap"`
 		Rulers       []int             `toml:"rulers"`
@@ -511,7 +508,7 @@ func ViewModule(model ui.Model) command.Module {
 					model.SetAnimation(v)
 				},
 			),
-			kit.EditorBoolOption("auto-size.enable",
+			kit.EditorBoolOption("auto-size",
 				func(*view.Editor) bool {
 					return model.AutoSize()
 				},
@@ -519,20 +516,6 @@ func ViewModule(model ui.Model) command.Module {
 					model.SetAutoSize(v)
 				},
 			),
-			{
-				Key: "auto-size.vertical-percent",
-				Get: func(*view.Editor) (string, error) {
-					return strconv.Itoa(model.AutoSizeVerticalPercent()), nil
-				},
-				Set: func(_ *view.Editor, s string) error {
-					percent, err := config.ParsePercent(s)
-					if err != nil {
-						return err
-					}
-					model.SetAutoSizeVerticalPercent(percent)
-					return nil
-				},
-			},
 			kit.EditorNullableIntOption("text-width",
 				language.DefaultTextWidth,
 				func(e *view.Editor) *int {
@@ -819,11 +802,7 @@ func ViewModule(model ui.Model) command.Module {
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)
 				model.SetAnimation(kit.BoolOr(cfg.Editor.Animation, true))
-				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize.Enable, false))
-				model.SetAutoSizeVerticalPercent(kit.IntOr(
-					cfg.Editor.AutoSize.VerticalPct,
-					ui.DefaultAutoSizeVerticalPct,
-				))
+				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize, false))
 				opts.TextWidth = cfg.Editor.TextWidth
 				opts.SoftWrap = cfg.Editor.SoftWrap
 				opts.SetRulers(cfg.Editor.Rulers)

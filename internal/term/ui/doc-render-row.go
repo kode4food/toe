@@ -11,12 +11,13 @@ import (
 
 type (
 	rowRender struct {
-		lineStr       string
-		tuiStyles     *tuiStyles
-		hlStyle       func(string) tui.Style
-		format        *language.TextFormat
-		ws            view.Whitespace
-		ig            view.IndentGuides
+		lineStr   string
+		tuiStyles *tuiStyles
+		hlStyle   func(string) tui.Style
+		format    *language.TextFormat
+		ws        view.Whitespace
+		ig        view.IndentGuides
+
 		hlSpans       []highlight.Span
 		searchMatches []matchSpan
 		docHighlights []matchSpan
@@ -25,29 +26,26 @@ type (
 		diagnostics   []diagnosticSpan
 		annotations   []inlineAnnotation
 		selSpans      []selectionSpan
-		cursor        int
-		cursorLine    int
-		lineNum       int
-		lineStart     int
-		lineEnd       int
-		// indentCol is the visual column where the line's indentation ends,
-		// pre-computed by the caller so rows() never needs to re-scan lineStr
-		// from position 0 when lineStr has been sliced to the visible window
-		indentCol int
-		// visual column where lineStr starts (0 unless windowed)
-		colOffset     int
+
+		cursor     int
+		cursorLine int
+		lineNum    int
+		lineStart  int
+		lineEnd    int
+		indentCol  int
+		colOffset  int
+
 		softWrap      bool
 		cursorIsBlock bool
 		mode          view.Mode
-		hStart        int
-		hWidth        int
-		maxRows       int
-		// reused across rows() calls when not soft-wrapping; the returned
-		// row must be consumed before the next call
+
+		hStart  int
+		hWidth  int
+		maxRows int
+
 		cellScratch []renderedCell
 		rowScratch  []renderedRow
-		// index of the current highlight span; pos only moves forward
-		hlIdx int
+		hlIdx       int
 	}
 
 	selectionSpan struct {

@@ -20,29 +20,34 @@ type (
 	previewCtx struct {
 		picker *Picker
 		item   *PickerItem
+
 		editor *view.Editor
 		syntax *syntax.Cache
 		images *imageRegistry
+
 		size   geom.Size
-		// hlFrom < 0 means full preview, no highlight
 		hlFrom int
 		hlTo   int
+
 		th     *theme.Theme
 		styles *tuiStyles
 	}
 
 	previewDocRender struct {
-		text      core.Rope
-		spans     []highlight.Span
-		format    *language.TextFormat
-		opts      *view.Options
-		th        *theme.Theme
-		area      geom.Area
+		text   core.Rope
+		spans  []highlight.Span
+		format *language.TextFormat
+		opts   *view.Options
+
+		area   geom.Area
+		scroll int
+
 		hlFrom    int
 		hlTo      int
 		diffLines map[int]diffGutterKind
-		scroll    int
-		styles    *tuiStyles
+
+		th     *theme.Theme
+		styles *tuiStyles
 	}
 )
 

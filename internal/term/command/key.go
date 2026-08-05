@@ -20,8 +20,7 @@ type (
 	// KeyCode represents a single keyboard key
 	KeyCode struct {
 		// Char holds the rune for printable characters; 0 for special keys
-		Char rune
-		// Special names the key when Char is 0
+		Char    rune
 		Special Special
 	}
 
@@ -95,6 +94,7 @@ var specialNames = []string{
 	PageDown:       "pgdn",
 }
 
+// String returns the binding name of a special key
 func (s Special) String() string {
 	if int(s) < len(specialNames) {
 		return specialNames[s]
@@ -102,10 +102,12 @@ func (s Special) String() string {
 	return ""
 }
 
+// Has reports whether every modifier in mod is set
 func (k KeyModifiers) Has(mod KeyModifiers) bool {
 	return k&mod != 0
 }
 
+// String returns the binding name of a key code
 func (k KeyCode) String() string {
 	if k.Char == ' ' {
 		return "spc"
@@ -116,6 +118,7 @@ func (k KeyCode) String() string {
 	return k.Special.String()
 }
 
+// String returns the binding notation for a key press
 func (k KeyEvent) String() string {
 	var parts []string
 	if k.Mods.Has(ModCtrl) {

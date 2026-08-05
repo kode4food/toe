@@ -105,6 +105,7 @@ var (
 	}
 )
 
+// ColorIndexed returns a color naming a 256-color palette entry
 func ColorIndexed(idx uint8) Color {
 	return Color{kind: colorIndexed, r: idx}
 }
@@ -117,6 +118,7 @@ func ColorANSI(idx uint8) Color {
 	return ColorIndexed(idx)
 }
 
+// ColorRGB returns a 24-bit color
 func ColorRGB(r, g, b uint8) Color {
 	return Color{kind: colorRGB, r: r, g: g, b: b}
 }
@@ -183,26 +185,31 @@ func (c Color) Quantized() Color {
 	return ColorIndexed(uint8(best))
 }
 
+// Fg returns a copy with the foreground set
 func (s Style) Fg(c Color) Style {
 	s.fg = c
 	return s
 }
 
+// Bg returns a copy with the background set
 func (s Style) Bg(c Color) Style {
 	s.bg = c
 	return s
 }
 
+// UlColor returns a copy with the underline color set
 func (s Style) UlColor(c Color) Style {
 	s.underlineColor = c
 	return s
 }
 
+// UlStyle returns a copy with the underline variant set
 func (s Style) UlStyle(u UnderlineStyle) Style {
 	s.underlineStyle = u
 	return s
 }
 
+// Mod returns a copy with the given modifier bits added
 func (s Style) Mod(m Modifier) Style {
 	s.modifier |= m
 	return s
@@ -226,10 +233,12 @@ func (s Style) Quantized() Style {
 	return s
 }
 
+// FgColor returns the style foreground color
 func (s Style) FgColor() Color {
 	return s.fg
 }
 
+// BgColor returns the style background color
 func (s Style) BgColor() Color {
 	return s.bg
 }
@@ -249,10 +258,12 @@ func (s Style) Modifier() Modifier {
 	return s.modifier
 }
 
+// HasMod reports whether every bit in m is set
 func (s Style) HasMod(m Modifier) bool {
 	return s.modifier&m == m
 }
 
+// IsReset reports whether the color defers to the terminal default
 func (c Color) IsReset() bool {
 	return c.kind == colorReset
 }

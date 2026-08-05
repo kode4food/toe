@@ -15,13 +15,8 @@ import (
 
 type (
 	renderCache struct {
-		// docCaches holds per-document raw-text, highlight, and search-match
-		// caches so multiple panes showing different documents do not evict
-		// each other's tokenization every frame
 		docCaches map[view.DocumentId]*docRenderCache
 
-		// rebuilt only when theme or mode changes between frames; stylesDim
-		// renders unfocused panes using the precomputed dimmed theme
 		stylesKey styleKey
 		styles    docStyleSet
 		stylesDim docStyleSet
@@ -85,13 +80,8 @@ type (
 		prefixHOff int
 		prefixTabW int
 
-		// linePrefix caches scanLinePrefix results per line; a change to
-		// the revision, horizontal offset, or tab width invalidates all
-		// lines at once
 		linePrefix map[int]linePrefixScan
 
-		// lineIndex holds one entry per line plus a sentinel, built in a
-		// single pass over rawTextCached
 		lineIndex []lineIndexEntry
 		liRev     int
 	}

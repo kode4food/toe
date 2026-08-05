@@ -59,12 +59,14 @@ func (s *Session) PullDiagnostics(doc *view.Document) error {
 	return err
 }
 
+// PublishDiagnostics receives diagnostics pushed by the server
 func (h *clientHandler) PublishDiagnostics(
 	_ context.Context, params *protocol.PublishDiagnosticsParams,
 ) error {
 	return h.session.publishDiagnostics(h.name, params)
 }
 
+// DiagnosticRefresh receives the server's request to re-pull diagnostics
 func (h *clientHandler) DiagnosticRefresh(context.Context) error {
 	h.session.pullAllDiagnosticsAsync()
 	return nil

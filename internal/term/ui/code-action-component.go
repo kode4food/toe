@@ -45,6 +45,7 @@ func newCodeActionMenu(
 	}
 }
 
+// HandleEvent drives selection and acceptance
 func (m *codeActionMenu) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -72,10 +73,12 @@ func (m *codeActionMenu) HandleEvent(
 	return ignored(), nil
 }
 
+// Cursor leaves the cursor to the layer below
 func (m *codeActionMenu) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
+// Layout places the menu near the cursor, inside the frame
 func (m *codeActionMenu) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -91,6 +94,7 @@ func (m *codeActionMenu) Layout(
 	}, screen), true
 }
 
+// PaintBuffer draws the code action menu
 func (m *codeActionMenu) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return m.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
 		m.paint(cx, buf, pl)

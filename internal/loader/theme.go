@@ -18,6 +18,7 @@ var (
 //go:embed assets/themes
 var embeddedThemes embed.FS
 
+// ThemeNames lists the embedded themes, sorted
 func ThemeNames() []string {
 	entries, err := embeddedThemes.ReadDir("assets/themes")
 	if err != nil {
@@ -34,6 +35,7 @@ func ThemeNames() []string {
 	return names
 }
 
+// LoadThemeTOML reads an embedded theme, resolving its inherits chain
 func LoadThemeTOML(name string) (map[string]any, error) {
 	return loadThemeTOML(name, map[string]bool{})
 }

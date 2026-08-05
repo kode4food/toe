@@ -11,19 +11,22 @@ type (
 
 	// CompletionItem is a normalized language-server completion candidate
 	CompletionItem struct {
-		ID               string
+		ID     string
+		Server string
+		Kind   string
+
 		Label            string
 		LabelDetail      string
 		LabelDescription string
 		Detail           string
-		Filter           string
-		Sort             string
-		Insert           string
-		Kind             string
 		Docs             string
-		Server           string
-		Preselect        bool
-		Deprecated       bool
+
+		Filter string
+		Sort   string
+		Insert string
+
+		Preselect  bool
+		Deprecated bool
 	}
 
 	// SignatureHelp is a normalized callable signature response

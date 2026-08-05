@@ -32,6 +32,7 @@ func newHoverComponent(
 	return &hoverComponent{ec: ec, anchor: anchor, text: text}
 }
 
+// HandleEvent dismisses the popup on any key or click
 func (h *hoverComponent) HandleEvent(
 	_ *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -47,10 +48,12 @@ func (h *hoverComponent) HandleEvent(
 	}
 }
 
+// Cursor leaves the cursor to the layer below
 func (h *hoverComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
+// Layout places the popup near the cursor, inside the frame
 func (h *hoverComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -79,6 +82,7 @@ func (h *hoverComponent) Layout(
 	}, true
 }
 
+// PaintBuffer draws the hover documentation popup
 func (h *hoverComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return h.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
 		paintTextPopup(cx, buf, h.lines)

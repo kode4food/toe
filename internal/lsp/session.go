@@ -132,12 +132,14 @@ func (s *Session) Close() error {
 	return err
 }
 
+// PublishDiagnostics forwards server diagnostics to the editor
 func (s *Session) PublishDiagnostics(
 	_ context.Context, params *protocol.PublishDiagnosticsParams,
 ) error {
 	return s.publishDiagnostics("lsp", params)
 }
 
+// Configuration answers the server's request for settings
 func (h *clientHandler) Configuration(
 	_ context.Context, params *protocol.ConfigurationParams,
 ) ([]protocol.LSPAny, error) {
@@ -148,18 +150,21 @@ func (h *clientHandler) Configuration(
 	return out, nil
 }
 
+// WorkspaceFolders answers the server's request for the open folders
 func (h *clientHandler) WorkspaceFolders(
 	context.Context,
 ) ([]protocol.WorkspaceFolder, error) {
 	return h.session.workspaceFolders(), nil
 }
 
+// RegisterCapability accepts a capability the server registers at runtime
 func (h *clientHandler) RegisterCapability(
 	_ context.Context, params *protocol.RegistrationParams,
 ) error {
 	return h.session.registerCapability(h.name, params)
 }
 
+// UnregisterCapability accepts a capability the server withdraws
 func (h *clientHandler) UnregisterCapability(
 	_ context.Context, params *protocol.UnregistrationParams,
 ) error {
@@ -167,6 +172,7 @@ func (h *clientHandler) UnregisterCapability(
 	return nil
 }
 
+// WorkDoneProgressCreate accepts the server's request for a progress token
 func (h *clientHandler) WorkDoneProgressCreate(
 	_ context.Context, params *protocol.WorkDoneProgressCreateParams,
 ) error {
@@ -174,6 +180,7 @@ func (h *clientHandler) WorkDoneProgressCreate(
 	return nil
 }
 
+// Progress receives a progress update from the server
 func (h *clientHandler) Progress(
 	_ context.Context, params *protocol.ProgressParams,
 ) error {
@@ -181,40 +188,47 @@ func (h *clientHandler) Progress(
 	return nil
 }
 
+// LogTrace receives a server trace message
 func (h *clientHandler) LogTrace(
 	context.Context, *protocol.LogTraceParams,
 ) error {
 	return nil
 }
 
+// ShowMessage receives a message the server wants displayed
 func (h *clientHandler) ShowMessage(
 	context.Context, *protocol.ShowMessageParams,
 ) error {
 	return nil
 }
 
+// ShowMessageRequest receives a message the server wants answered
 func (h *clientHandler) ShowMessageRequest(
 	context.Context, *protocol.ShowMessageRequestParams,
 ) (*protocol.MessageActionItem, error) {
 	return nil, nil
 }
 
+// LogMessage receives a message the server wants logged
 func (h *clientHandler) LogMessage(
 	context.Context, *protocol.LogMessageParams,
 ) error {
 	return nil
 }
 
+// ShowDocument receives the server's request to open a document
 func (h *clientHandler) ShowDocument(
 	context.Context, *protocol.ShowDocumentParams,
 ) (*protocol.ShowDocumentResult, error) {
 	return &protocol.ShowDocumentResult{Success: false}, nil
 }
 
+// Telemetry discards the server's telemetry events
 func (h *clientHandler) Telemetry(context.Context, protocol.LSPAny) error {
 	return nil
 }
 
+// ApplyEdit receives a workspace edit the server wants applied
 func (h *clientHandler) ApplyEdit(
 	_ context.Context, params *protocol.ApplyWorkspaceEditParams,
 ) (*protocol.ApplyWorkspaceEditResult, error) {

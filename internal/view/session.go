@@ -39,23 +39,28 @@ type (
 	}
 
 	sessionNode struct {
-		Kind             SessionKind    `toml:"kind"`
-		Path             string         `toml:"path,omitempty"`
-		Values           map[string]any `toml:"value,omitempty"`
-		Layout           string         `toml:"layout,omitempty"`
-		Ratios           []float64      `toml:"ratios,omitempty"`
-		Document         int            `toml:"document,omitempty"`
-		DocumentHistory  []int          `toml:"document-history,omitempty"`
-		Mode             string         `toml:"mode,omitempty"`
-		Anchor           int            `toml:"anchor,omitempty"`
-		HorizontalOffset int            `toml:"horizontal-offset,omitempty"`
-		VerticalOffset   int            `toml:"vertical-offset,omitempty"`
-		FocusSeq         int            `toml:"focus-seq,omitempty"`
-		Selection        sessionSelect  `toml:"selection"`
-		JumpHead         int            `toml:"jump-head,omitempty"`
-		Jumps            []sessionJump  `toml:"jump,omitempty"`
-		Children         []sessionNode  `toml:"child"`
-		History          []sessionNode  `toml:"history,omitempty"`
+		Kind   SessionKind    `toml:"kind"`
+		Path   string         `toml:"path,omitempty"`
+		Values map[string]any `toml:"value,omitempty"`
+
+		Layout string    `toml:"layout,omitempty"`
+		Ratios []float64 `toml:"ratios,omitempty"`
+
+		Document        int    `toml:"document,omitempty"`
+		DocumentHistory []int  `toml:"document-history,omitempty"`
+		Mode            string `toml:"mode,omitempty"`
+
+		Anchor           int `toml:"anchor,omitempty"`
+		HorizontalOffset int `toml:"horizontal-offset,omitempty"`
+		VerticalOffset   int `toml:"vertical-offset,omitempty"`
+		FocusSeq         int `toml:"focus-seq,omitempty"`
+
+		Selection sessionSelect `toml:"selection"`
+		JumpHead  int           `toml:"jump-head,omitempty"`
+		Jumps     []sessionJump `toml:"jump,omitempty"`
+
+		Children []sessionNode `toml:"child"`
+		History  []sessionNode `toml:"history,omitempty"`
 	}
 
 	sessionSelect struct {

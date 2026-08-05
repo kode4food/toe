@@ -290,10 +290,17 @@ func (p *ImagePane) PanBy(delta geom.Point) {
 	})
 }
 
-func (p *ImagePane) PanLeft()  { p.PanBy(geom.Point{X: -imageKeyPanStep}) }
+// PanLeft shifts the viewport one step left
+func (p *ImagePane) PanLeft() { p.PanBy(geom.Point{X: -imageKeyPanStep}) }
+
+// PanRight shifts the viewport one step right
 func (p *ImagePane) PanRight() { p.PanBy(geom.Point{X: imageKeyPanStep}) }
-func (p *ImagePane) PanUp()    { p.PanBy(geom.Point{Y: -imageKeyPanStep}) }
-func (p *ImagePane) PanDown()  { p.PanBy(geom.Point{Y: imageKeyPanStep}) }
+
+// PanUp shifts the viewport one step up
+func (p *ImagePane) PanUp() { p.PanBy(geom.Point{Y: -imageKeyPanStep}) }
+
+// PanDown shifts the viewport one step down
+func (p *ImagePane) PanDown() { p.PanBy(geom.Point{Y: imageKeyPanStep}) }
 
 // Split returns another pane displaying the same image
 func (p *ImagePane) Split() (view.Pane, error) {

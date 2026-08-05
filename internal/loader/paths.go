@@ -42,6 +42,7 @@ func ExpandUserPath(path string) string {
 	return os.ExpandEnv(path)
 }
 
+// ConfigFile returns the user's config.toml path
 func ConfigFile() (string, bool) {
 	if dir, ok := ConfigDir(); ok {
 		return filepath.Join(dir, "config.toml"), true
@@ -49,6 +50,7 @@ func ConfigFile() (string, bool) {
 	return "", false
 }
 
+// LanguagesFile returns the user's languages.toml path
 func LanguagesFile() (string, bool) {
 	if dir, ok := ConfigDir(); ok {
 		return filepath.Join(dir, "languages.toml"), true
@@ -56,6 +58,7 @@ func LanguagesFile() (string, bool) {
 	return "", false
 }
 
+// ConfigIgnoreFile returns the user's picker ignore-file path
 func ConfigIgnoreFile() string {
 	if dir, ok := ConfigDir(); ok {
 		return filepath.Join(dir, "ignore")
@@ -63,6 +66,7 @@ func ConfigIgnoreFile() string {
 	return ""
 }
 
+// ConfigDir returns the user's toe configuration directory
 func ConfigDir() (string, bool) {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
@@ -73,6 +77,7 @@ func ConfigDir() (string, bool) {
 	return "", false
 }
 
+// LogFile returns the editor's log path
 func LogFile() (string, bool) {
 	if dir, ok := CacheDir(); ok {
 		return filepath.Join(dir, LogFileName), true
@@ -80,6 +85,7 @@ func LogFile() (string, bool) {
 	return "", false
 }
 
+// CacheDir returns the user's toe cache directory
 func CacheDir() (string, bool) {
 	if dir := os.Getenv("XDG_CACHE_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
@@ -90,6 +96,7 @@ func CacheDir() (string, bool) {
 	return "", false
 }
 
+// DataDir returns the user's toe data directory
 func DataDir() (string, bool) {
 	if dir := os.Getenv("XDG_DATA_HOME"); dir != "" {
 		return filepath.Join(dir, DirName), true
@@ -100,11 +107,13 @@ func DataDir() (string, bool) {
 	return "", false
 }
 
+// WorkspaceConfigFile returns the workspace config.toml path under dir
 func WorkspaceConfigFile(dir string) string {
 	root, _ := FindWorkspace(dir)
 	return filepath.Join(root, WorkspaceDirName, "config.toml")
 }
 
+// WorkspaceLanguagesFile returns the workspace languages.toml path under dir
 func WorkspaceLanguagesFile(dir string) string {
 	root, _ := FindWorkspace(dir)
 	return filepath.Join(root, WorkspaceDirName, "languages.toml")
@@ -116,6 +125,7 @@ func WorkspaceInitFile(dir string) string {
 	return filepath.Join(root, WorkspaceDirName, "init.ale")
 }
 
+// WorkspaceTrustFile returns the path of the trusted-workspace list
 func WorkspaceTrustFile() (string, bool) {
 	if dir, ok := DataDir(); ok {
 		return filepath.Join(dir, "trusted_workspaces"), true
@@ -123,6 +133,8 @@ func WorkspaceTrustFile() (string, bool) {
 	return "", false
 }
 
+// FindWorkspace walks up for a .git or .toe directory. The bool reports a
+// fallback to dir itself, not success
 func FindWorkspace(dir string) (string, bool) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
@@ -142,6 +154,7 @@ func FindWorkspace(dir string) (string, bool) {
 	}
 }
 
+// TrustWorkspace adds the workspace containing dir to the trusted list
 func TrustWorkspace(dir string) error {
 	if path, ok := WorkspaceTrustFile(); ok {
 		root, _ := FindWorkspace(dir)
@@ -150,6 +163,7 @@ func TrustWorkspace(dir string) error {
 	return ErrPathUnavailable
 }
 
+// UntrustWorkspace drops the workspace containing dir from the trusted list
 func UntrustWorkspace(dir string) error {
 	if path, ok := WorkspaceTrustFile(); ok {
 		root, _ := FindWorkspace(dir)

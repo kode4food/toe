@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// Hover requests documentation for the symbol at a position
 func (c *Client) Hover(
 	ctx context.Context, doc DocumentSnapshot, pos int,
 ) (*protocol.Hover, bool, error) {

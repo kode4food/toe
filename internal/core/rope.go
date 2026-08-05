@@ -21,10 +21,12 @@ var (
 	ErrRopeLineOutOfRange  = errors.New("rope line out of range")
 )
 
+// NewRope returns a rope holding text
 func NewRope(text string) Rope {
 	return Rope{root: buildRopeNode(text)}
 }
 
+// LenChars is the character count of the whole rope
 func (r Rope) LenChars() int {
 	if r.root == nil {
 		return 0
@@ -32,6 +34,7 @@ func (r Rope) LenChars() int {
 	return r.root.chars
 }
 
+// LenLines is the line count, counting a trailing ending as a new line
 func (r Rope) LenLines() int {
 	if r.root == nil {
 		return 1
@@ -39,12 +42,14 @@ func (r Rope) LenLines() int {
 	return r.root.lines + 1
 }
 
+// String returns the whole rope as text
 func (r Rope) String() string {
 	var b strings.Builder
 	writeRopeString(&b, r.root)
 	return b.String()
 }
 
+// Slice returns the characters in from..to as a new rope
 func (r Rope) Slice(from, to int) (Rope, error) {
 	if from < 0 || to < from || to > r.LenChars() {
 		return Rope{}, fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange,
@@ -88,6 +93,7 @@ func (r Rope) ForEachSegment(from, to int, fn func(string)) {
 	forEachSegmentNode(r.root, from, to, fn)
 }
 
+// Insert returns a rope with text added at pos
 func (r Rope) Insert(pos int, text string) (Rope, error) {
 	if pos < 0 || pos > r.LenChars() {
 		return Rope{}, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)
@@ -97,6 +103,7 @@ func (r Rope) Insert(pos int, text string) (Rope, error) {
 	return Rope{root: concatRopeNode(concatRopeNode(left, ins), right)}, nil
 }
 
+// Delete returns a rope without the characters in from..to
 func (r Rope) Delete(from, to int) (Rope, error) {
 	if from < 0 || to < from || to > r.LenChars() {
 		return Rope{}, fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange,
@@ -107,6 +114,7 @@ func (r Rope) Delete(from, to int) (Rope, error) {
 	return Rope{root: concatRopeNode(left, right)}, nil
 }
 
+// CharAt returns the character at pos
 func (r Rope) CharAt(pos int) (rune, error) {
 	if pos < 0 || pos >= r.LenChars() {
 		return 0, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)
@@ -114,6 +122,7 @@ func (r Rope) CharAt(pos int) (rune, error) {
 	return charAtRopeNode(r.root, pos), nil
 }
 
+// Line returns the line's text, including its ending
 func (r Rope) Line(line int) (Rope, error) {
 	if line < 0 || line >= r.LenLines() {
 		return Rope{}, fmt.Errorf("%w: %d", ErrRopeLineOutOfRange, line)
@@ -132,6 +141,7 @@ func (r Rope) Line(line int) (Rope, error) {
 	return r.Slice(from, to)
 }
 
+// LineToChar returns the position where the line starts
 func (r Rope) LineToChar(line int) (int, error) {
 	if line < 0 || line >= r.LenLines() {
 		return 0, fmt.Errorf("%w: %d", ErrRopeLineOutOfRange, line)
@@ -142,6 +152,7 @@ func (r Rope) LineToChar(line int) (int, error) {
 	return lineToCharRopeNode(r.root, line), nil
 }
 
+// CharToLine returns the line containing pos
 func (r Rope) CharToLine(pos int) (int, error) {
 	if pos < 0 || pos > r.LenChars() {
 		return 0, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)
@@ -149,6 +160,8 @@ func (r Rope) CharToLine(pos int) (int, error) {
 	return charToLineRopeNode(r.root, pos), nil
 }
 
+// LineEndCharIndex returns the position after the line's last character,
+// excluding its ending
 func (r Rope) LineEndCharIndex(line int) (int, error) {
 	start, err := r.LineToChar(line)
 	if err != nil {

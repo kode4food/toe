@@ -38,11 +38,13 @@ func GitCommitFile(t *testing.T, repo, name, content string) string {
 	return path
 }
 
+// WriteFile writes content to path, failing the test on error
 func WriteFile(t *testing.T, path, content string) {
 	t.Helper()
 	assert.NoError(t, os.WriteFile(path, []byte(content), 0o644))
 }
 
+// RunGit runs a git command in dir, failing the test on error
 func RunGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
 	all := append([]string{"-C", dir}, args...)

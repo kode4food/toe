@@ -41,6 +41,8 @@ var ErrDirectoryArgument = errors.New(
 	"expected a path to file, but found a directory",
 )
 
+// New builds an app from command-line arguments, resolving the workspace root
+// and registering commands
 func New(args []string, cwd string) (*App, error) {
 	a := &App{keymaps: command.NewKeymaps()}
 	args = a.ParseConfigFlag(args)
@@ -60,6 +62,7 @@ func New(args []string, cwd string) (*App, error) {
 	return a, nil
 }
 
+// InitReg builds the model and registers the builtin command modules
 func (a *App) InitReg() error {
 	if a.keymaps == nil {
 		a.keymaps = command.NewKeymaps()
@@ -70,6 +73,8 @@ func (a *App) InitReg() error {
 	return err
 }
 
+// Run starts the editor, or writes the health report when --health is the only
+// argument
 func Run(args []string, out io.Writer) error {
 	if len(args) == 1 && args[0] == "--health" {
 		return health.Run(out)

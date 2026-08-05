@@ -7,6 +7,7 @@ import (
 
 var errNoSuchCommand = i18n.NewError(i18n.ErrorNoSuchCommand)
 
+// ExecTypable runs a typed command line, reporting unknown commands
 func (m Model) ExecTypable(input string) Model {
 	res := execTypable(m.context, input)
 	m.component.setCommandResult(res)

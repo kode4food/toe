@@ -10,8 +10,7 @@ type (
 	}
 
 	Buffer struct {
-		cells []Cell
-		// lastANSILen pre-sizes the next RenderToANSI output
+		cells       []Cell
 		lastANSILen int
 		geom.Size
 	}
@@ -32,6 +31,7 @@ var (
 	}()
 )
 
+// NewBuffer returns a buffer of blank cells
 func NewBuffer(size geom.Size) *Buffer {
 	n := max(size.Width*size.Height, 0)
 	cells := make([]Cell, n)
@@ -41,6 +41,7 @@ func NewBuffer(size geom.Size) *Buffer {
 	return &Buffer{cells: cells, Size: size}
 }
 
+// Set writes a cell, ignoring points outside the buffer
 func (b *Buffer) Set(p geom.Point, c Cell) {
 	if !b.Size.Contains(p) {
 		return
@@ -96,6 +97,7 @@ func (b *Buffer) Blit(src *Buffer, at geom.Point) {
 	}
 }
 
+// Get reads a cell, returning the zero cell outside the buffer
 func (b *Buffer) Get(p geom.Point) Cell {
 	if !b.Size.Contains(p) {
 		return defaultCell
@@ -103,6 +105,7 @@ func (b *Buffer) Get(p geom.Point) Cell {
 	return b.cells[p.Y*b.Width+p.X]
 }
 
+// Clear resets every cell to blank
 func (b *Buffer) Clear() {
 	for i := range b.cells {
 		b.cells[i] = defaultCell

@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 )
 
+// Apply runs the change set against doc, returning the resulting rope
 func (c ChangeSet) Apply(doc Rope) (Rope, error) {
 	if doc.LenChars() != c.len {
 		return Rope{}, fmt.Errorf("%w: %d != %d", ErrChangeSetLengthMismatch,
@@ -34,6 +35,8 @@ func (c ChangeSet) Apply(doc Rope) (Rope, error) {
 	return out, nil
 }
 
+// Invert returns the change set undoing this one, given the document it was
+// built against
 func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 	if original.LenChars() != c.len {
 		return ChangeSet{}, fmt.Errorf("%w: %d != %d",
@@ -60,6 +63,8 @@ func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 	return out, nil
 }
 
+// MapPos rebases a position onto the resulting document; assoc decides which
+// side of an insertion at pos it lands on
 func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
 	if pos < 0 || pos > c.len {
 		return 0, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)
@@ -91,6 +96,7 @@ func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
 	return newPos, nil
 }
 
+// MapRange rebases both ends of a range onto the resulting document
 func (c ChangeSet) MapRange(r Range) (Range, error) {
 	var a Assoc
 	var h Assoc

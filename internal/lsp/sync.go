@@ -54,6 +54,7 @@ func (c *Client) DidChange(
 	return c.DidChangeDocument(ctx, doc, view.DocumentChange{})
 }
 
+// DidChangeDocument notifies the server that a document was edited
 func (c *Client) DidChangeDocument(
 	ctx context.Context, doc DocumentSnapshot, change view.DocumentChange,
 ) (bool, error) {
@@ -130,6 +131,7 @@ func (c *Client) DidClose(
 	return true, c.server.DidClose(ctx, params)
 }
 
+// DocumentDiagnostics pulls diagnostics for a document
 func (c *Client) DocumentDiagnostics(
 	ctx context.Context, doc DocumentSnapshot, previousID *string,
 ) (protocol.DocumentDiagnosticReport, bool, error) {

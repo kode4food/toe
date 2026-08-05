@@ -10,44 +10,55 @@ import (
 // Options holds the editor's typed runtime config values. Fields are exported
 // so module Apply functions can write to them directly
 type Options struct {
-	Theme                string
-	ScrollOff            int
-	ScrollLines          int
-	InactiveDim          int
-	Mouse                bool
-	MiddleClickPaste     bool
-	NerdFonts            bool
-	Shell                []string
+	Theme       string
+	ScrollOff   int
+	ScrollLines int
+	InactiveDim int
+
+	Mouse            bool
+	MiddleClickPaste bool
+	NerdFonts        bool
+	Shell            []string
+
 	AutoSaveFocusLost    bool
 	AutoSaveAfterDelay   bool
 	AutoSaveDelayTimeout int
-	AtomicSave           bool
-	InsertFinalNewline   bool
-	TrimFinalNewlines    bool
-	TrimTrailingWS       bool
-	EditorConfig         bool
-	AutoSession          bool
-	FileWatch            bool
-	Insecure             bool
-	ContinueComments     bool
-	SearchSmartCase      bool
-	SearchWrapAround     bool
-	CursorLine           bool
-	CursorColumn         bool
-	TextWidth            *int
-	SoftWrap             language.SoftWrap
-	DefaultLineEnding    core.LineEnding
-	Rulers               []int
-	LineNumber           LineNumber
-	Gutters              Gutter
-	Whitespace           Whitespace
-	IndentGuides         IndentGuides
-	CursorShape          CursorShape
-	StatusLine           StatusLine
-	AutoPairMap          core.AutoPairs
-	HasAutoPairs         bool
-	BufferLine           BufferLine
-	Gen                  int
+
+	AtomicSave         bool
+	InsertFinalNewline bool
+	TrimFinalNewlines  bool
+	TrimTrailingWS     bool
+	EditorConfig       bool
+
+	AutoSession      bool
+	FileWatch        bool
+	Insecure         bool
+	ContinueComments bool
+
+	SearchSmartCase  bool
+	SearchWrapAround bool
+
+	TextWidth         *int
+	SoftWrap          language.SoftWrap
+	DefaultLineEnding core.LineEnding
+	Rulers            []int
+
+	LineNumber LineNumber
+	Gutters    Gutter
+	BufferLine BufferLine
+	StatusLine StatusLine
+
+	CursorLine   bool
+	CursorColumn bool
+	CursorShape  CursorShape
+
+	Whitespace   Whitespace
+	IndentGuides IndentGuides
+
+	AutoPairMap  core.AutoPairs
+	HasAutoPairs bool
+
+	Gen int
 }
 
 // SetRulers stores ruler columns as a sorted, deduplicated set

@@ -12,28 +12,34 @@ type FakeClipboard struct {
 
 var _ view.Clipboard = (*FakeClipboard)(nil)
 
+// NewFakeClipboard returns an in-memory clipboard for tests
 func NewFakeClipboard() *FakeClipboard {
 	return &FakeClipboard{Ready: true}
 }
 
+// Available always reports true
 func (c *FakeClipboard) Available() bool {
 	return c.Ready
 }
 
+// Write stores text as the clipboard contents
 func (c *FakeClipboard) Write(text string) error {
 	c.System = text
 	return nil
 }
 
+// WritePrimary stores text as the primary selection
 func (c *FakeClipboard) WritePrimary(text string) error {
 	c.Primary = text
 	return nil
 }
 
+// Read returns the stored clipboard contents
 func (c *FakeClipboard) Read() (string, error) {
 	return c.System, nil
 }
 
+// ReadPrimary returns the stored primary selection
 func (c *FakeClipboard) ReadPrimary() (string, error) {
 	return c.Primary, nil
 }

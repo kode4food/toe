@@ -350,6 +350,7 @@ func (d *Document) Revision() int {
 	return d.content.version
 }
 
+// MarkDirty flags every view of this document for repaint
 func (d *Document) MarkDirty() {
 	d.render.Lock()
 	defer d.render.Unlock()
@@ -377,10 +378,12 @@ func (d *Document) ConsumeDirty(vid Id) bool {
 	return !ok || wasDirty
 }
 
+// Error names the path that could not be opened
 func (d *DocumentOpenError) Error() string {
 	return fmt.Sprintf("open %s: %v", d.Path, d.Err)
 }
 
+// Unwrap returns the underlying filesystem error
 func (d *DocumentOpenError) Unwrap() error {
 	return d.Err
 }

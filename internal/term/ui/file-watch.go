@@ -14,16 +14,20 @@ import (
 
 type (
 	fileWatcher struct {
-		mu             sync.Mutex
-		dirs           map[string]*watchRegistration
-		wantedDirs     map[string]int
+		mu sync.Mutex
+
+		dirs       map[string]*watchRegistration
+		wantedDirs map[string]int
+
 		tree           *watchRegistration
 		treeRoot       string
 		wantedTreeRoot string
-		events         chan fileWatchEvent
-		done           chan struct{}
-		enabled        atomic.Bool
-		closed         bool
+
+		events chan fileWatchEvent
+		done   chan struct{}
+
+		enabled atomic.Bool
+		closed  bool
 	}
 
 	fileWatchEvent struct {

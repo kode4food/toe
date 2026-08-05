@@ -34,6 +34,7 @@ const (
 
 var ErrInvalidPickerStart = errors.New("invalid picker start position")
 
+// NewBufferPicker returns a picker over the open buffers
 func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
 	p := ui.NewPicker(e, &bufferPickerSource{
 		PickerBase: ui.NewPickerBase(
@@ -46,6 +47,7 @@ func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
 	return p
 }
 
+// UnmarshalText parses which entry the picker starts on
 func (p *PickerStartPosition) UnmarshalText(text []byte) error {
 	switch PickerStartPosition(text) {
 	case PickerStartTop, PickerStartPrevious:
@@ -56,6 +58,7 @@ func (p *PickerStartPosition) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// Load lists the open buffers, most recently used first
 func (b *bufferPickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
@@ -99,6 +102,7 @@ func (b *bufferPickerSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept switches the focused pane to the chosen buffer
 func (b *bufferPickerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {

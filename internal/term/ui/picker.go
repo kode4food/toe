@@ -113,9 +113,11 @@ type (
 		Columns     []string
 		StyleScopes []string
 		SortKey     string
-		Preview     PreviewRenderer
-		Location    PickerLocation
-		Payload     any
+
+		Preview  PreviewRenderer
+		Location PickerLocation
+		Payload  any
+
 		DiffHunks   []view.DiffHunk
 		DiffPreview bool
 		DiffKind    view.FileChangeKind
@@ -229,18 +231,22 @@ func NewPickerBase(
 	}
 }
 
+// ID is the picker's identifier, used to restore the last picker
 func (p PickerBase) ID() string {
 	return p.id
 }
 
+// Columns are the picker's column headings
 func (p PickerBase) Columns() []string {
 	return p.columns
 }
 
+// MatchColumn is the column the filter query matches against
 func (p PickerBase) MatchColumn() int {
 	return p.matchColumn
 }
 
+// ColumnProportions are the relative widths of the columns
 func (p PickerBase) ColumnProportions() []int {
 	if len(p.proportions) == len(p.columns) {
 		for _, proportion := range p.proportions {

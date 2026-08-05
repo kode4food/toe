@@ -38,14 +38,17 @@ func (c *TransportConfig) context() context.Context {
 	return c.Ctx
 }
 
+// Read reads from the server's stdout
 func (p pipeConn) Read(b []byte) (int, error) {
 	return p.r.Read(b)
 }
 
+// Write writes to the server's stdin
 func (p pipeConn) Write(b []byte) (int, error) {
 	return p.w.Write(b)
 }
 
+// Close closes both ends of the pipe
 func (p pipeConn) Close() error {
 	err := p.r.Close()
 	if werr := p.w.Close(); err == nil {

@@ -66,6 +66,7 @@ func NewChangedFilePicker(e *view.Editor) *Picker {
 	})
 }
 
+// Load lists the files changed against version control
 func (c *changedFilePickerSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -136,6 +137,7 @@ func (c *changedFilePickerSource) ItemForPath(
 	return PickerItem{}, false
 }
 
+// Accept opens the chosen file
 func (c *changedFilePickerSource) Accept(
 	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {

@@ -84,6 +84,7 @@ func NewTokenizer(input string, validate bool) *Tokenizer {
 	return &Tokenizer{input: input, validate: validate}
 }
 
+// Error describes where the command line failed to tokenize
 func (s *SyntaxError) Error() string {
 	switch s.Kind {
 	case SyntaxErrorUnterminatedToken:
@@ -102,14 +103,18 @@ func (s *SyntaxError) Error() string {
 	}
 }
 
+// Is matches the shared command-line parse sentinel
 func (s *SyntaxError) Is(target error) bool {
 	return target == ErrCommandLineParse
 }
 
+// Pos is the offset the tokenizer has consumed to
 func (t *Tokenizer) Pos() int {
 	return t.pos
 }
 
+// Rest consumes everything left as one unterminated expansion token, for
+// commands taking a raw trailing argument
 func (t *Tokenizer) Rest() (Token, bool) {
 	t.skipBlanks()
 	if t.pos == len(t.input) {
@@ -125,6 +130,7 @@ func (t *Tokenizer) Rest() (Token, bool) {
 	}, true
 }
 
+// Next consumes the next token, reporting false at end of input
 func (t *Tokenizer) Next() (Token, bool, error) {
 	t.skipBlanks()
 	if t.pos == len(t.input) {

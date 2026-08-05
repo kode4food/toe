@@ -36,16 +36,19 @@ type (
 	layerFunc func(*Context) (Component, tea.Cmd)
 )
 
+// Push adds a layer above the current top
 func (c *Compositor) Push(layer Component) {
 	c.layers = append(c.layers, layer)
 }
 
+// Pop removes the topmost layer
 func (c *Compositor) Pop() {
 	if len(c.layers) > 1 {
 		c.layers = c.layers[:len(c.layers)-1]
 	}
 }
 
+// HandleEvent offers a message to each layer from the top down
 func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	if ws, ok := msg.(tea.WindowSizeMsg); ok {
 		c.size = geom.Size{Width: ws.Width, Height: ws.Height}
@@ -90,6 +93,7 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// Render paints every layer bottom up into one frame
 func (c *Compositor) Render(cx *Context) string {
 	if len(c.layers) == 0 {
 		return ""
@@ -100,6 +104,7 @@ func (c *Compositor) Render(cx *Context) string {
 	return c.renderViaBuffer(cx)
 }
 
+// Cursor returns the cursor of the topmost layer that wants one
 func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 	for i := len(c.layers) - 1; i >= 0; i-- {
 		if cur, ok = c.layers[i].Cursor(cx, c.size); ok {

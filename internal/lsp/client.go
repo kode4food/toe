@@ -15,20 +15,24 @@ import (
 type (
 	// Client manages a connection to a single language server process
 	Client struct {
-		name          string
-		cmd           *exec.Cmd
-		conn          jsonrpc2.Conn
-		server        protocol.Server
-		capabilities  protocol.ServerCapabilities
-		state         ClientState
-		offset        protocol.PositionEncodingKind
-		timeout       time.Duration
+		name   string
+		cmd    *exec.Cmd
+		conn   jsonrpc2.Conn
+		server protocol.Server
+
+		capabilities protocol.ServerCapabilities
+		offset       protocol.PositionEncodingKind
+		timeout      time.Duration
+
+		state       ClientState
+		initialized bool
+
 		processDone   chan struct{}
 		processErr    error
 		processExited bool
 		stderr        *stderrTail
-		initialized   bool
-		mu            sync.RWMutex
+
+		mu sync.RWMutex
 	}
 
 	stderrTail struct {
@@ -229,6 +233,7 @@ func (c *Client) stderrText() string {
 	return c.stderr.String()
 }
 
+// Write keeps the most recent server stderr for error reporting
 func (s *stderrTail) Write(b []byte) (int, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -239,6 +244,7 @@ func (s *stderrTail) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
+// String returns the retained stderr tail
 func (s *stderrTail) String() string {
 	s.RLock()
 	defer s.RUnlock()

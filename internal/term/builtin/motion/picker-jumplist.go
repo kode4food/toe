@@ -38,6 +38,7 @@ func JumplistPicker(e *view.Editor) *ui.Picker {
 	})
 }
 
+// Load lists the focused pane's jump history
 func (j *jumplistPickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
@@ -70,6 +71,7 @@ func (j *jumplistPickerSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept jumps to the chosen entry
 func (j *jumplistPickerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {

@@ -19,7 +19,7 @@ type (
 
 	keyTrieNode struct {
 		children  map[KeyEvent]*keyTrieNode
-		order     []KeyEvent // insertion order for info popup display
+		order     []KeyEvent
 		action    KeyResultAction
 		available func(*view.Editor) bool
 		name      string

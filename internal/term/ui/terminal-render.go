@@ -28,6 +28,7 @@ var ansiUnderlineTUIStyles = [...]tui.UnderlineStyle{
 	ansi.UnderlineDashed: tui.UnderlineDashed,
 }
 
+// SetCell copies an emulator cell into the pane's buffer
 func (s *tuiScreen) SetCell(at geom.Point, c *uv.Cell) {
 	if !s.area.Size.Contains(at) {
 		return

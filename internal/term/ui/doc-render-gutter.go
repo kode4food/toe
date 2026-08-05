@@ -11,20 +11,23 @@ import (
 
 type (
 	gutterSpec struct {
-		layout          []view.GutterType
-		lineNumberW     int
-		width           int
-		lineStyle       tui.Style
-		lineSelected    tui.Style
+		layout      []view.GutterType
+		lineNumberW int
+		width       int
+
+		lineStyle    tui.Style
+		lineSelected tui.Style
+
 		diagLines       map[int]view.DiagnosticSeverity
-		diffLines       map[int]diffGutterKind
 		severityHint    tui.Style
 		severityInfo    tui.Style
 		severityWarning tui.Style
 		severityError   tui.Style
-		diffAdded       tui.Style
-		diffModified    tui.Style
-		diffRemoved     tui.Style
+
+		diffLines    map[int]diffGutterKind
+		diffAdded    tui.Style
+		diffModified tui.Style
+		diffRemoved  tui.Style
 	}
 
 	diffGutterKind byte

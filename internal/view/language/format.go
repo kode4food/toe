@@ -18,6 +18,7 @@ const (
 	DefaultWrapIndicator   = "\u21aa" // '↪' - rightwards arrow with hook
 )
 
+// TextFormatForConfig builds the render format for a language and width
 func TextFormatForConfig(
 	lang *Language, textWidth *int, softWrap SoftWrap, w int,
 ) *TextFormat {
@@ -48,6 +49,7 @@ func TextFormatForConfig(
 	return format
 }
 
+// DefaultTextFormat builds the render format used when no language matches
 func DefaultTextFormat(w int) *TextFormat {
 	return &TextFormat{
 		ViewportWidth:   w,

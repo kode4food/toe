@@ -22,16 +22,19 @@ type (
 		spinner  spinnerState
 		autoSize autoSizeState
 
-		size            geom.Size
-		buf             *tui.Buffer
-		saveSlot        *saveGenSlot
-		completion      CompletionOptions
-		cache           *renderCache
-		macroSlot       *macroSlot
+		size  geom.Size
+		buf   *tui.Buffer
+		cache *renderCache
+
+		completion CompletionOptions
+		saveSlot   *saveGenSlot
+		macroSlot  *macroSlot
+
 		bufferlineShown bool
 		focused         bool
 		animation       bool
-		redraw          chan struct{}
+
+		redraw chan struct{}
 	}
 
 	keyState struct {
@@ -180,6 +183,7 @@ func (m Model) SetAnimation(enabled bool) {
 	m.component.animation = enabled
 }
 
+// HandleEvent routes keys, mouse, and editor messages to the panes
 func (e *EditorComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -270,6 +274,7 @@ func (e *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
 	return e.buf
 }
 
+// Cursor returns the focused pane's cursor position and shape
 func (e *EditorComponent) Cursor(
 	cx *Context, screen geom.Size,
 ) (tea.Cursor, bool) {

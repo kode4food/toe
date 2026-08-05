@@ -69,6 +69,7 @@ const promptRightPad = 1
 
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
+// HandleEvent drives editing, history, and completion of the input line
 func (p *PromptComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -82,6 +83,7 @@ func (p *PromptComponent) HandleEvent(
 	return ignored(), nil
 }
 
+// Layout claims the command line at the foot of the frame
 func (p *PromptComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -98,6 +100,7 @@ func (p *PromptComponent) Layout(
 	return p.bounds, true
 }
 
+// PaintBuffer draws the prompt and its input line
 func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
 		if p.completion.size.Height > 0 {
@@ -119,6 +122,7 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	})
 }
 
+// Cursor returns the caret position within the input line
 func (p *PromptComponent) Cursor(
 	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {

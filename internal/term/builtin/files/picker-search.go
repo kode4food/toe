@@ -40,10 +40,12 @@ func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 	})
 }
 
+// Search restarts the workspace grep for a new query
 func (g *globalSearchSource) Search(query string) {
 	g.query = query
 }
 
+// Load streams matches for the current query
 func (g *globalSearchSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
@@ -64,6 +66,7 @@ func (g *globalSearchSource) Load(
 	return nil, ch, cancel
 }
 
+// Accept jumps to the chosen match
 func (g *globalSearchSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {

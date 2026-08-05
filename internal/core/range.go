@@ -22,14 +22,17 @@ const (
 	DirectionForward
 )
 
+// NewRange returns the range from anchor to head
 func NewRange(anchor, head int) Range {
 	return Range{Anchor: anchor, Head: head}
 }
 
+// PointRange returns an empty range at head
 func PointRange(head int) Range {
 	return NewRange(head, head)
 }
 
+// From is the lower of anchor and head
 func (r Range) From() int {
 	if r.Anchor < r.Head {
 		return r.Anchor
@@ -37,6 +40,7 @@ func (r Range) From() int {
 	return r.Head
 }
 
+// To is the higher of anchor and head
 func (r Range) To() int {
 	if r.Anchor > r.Head {
 		return r.Anchor
@@ -44,14 +48,17 @@ func (r Range) To() int {
 	return r.Head
 }
 
+// Len is the character count the range covers
 func (r Range) Len() int {
 	return r.To() - r.From()
 }
 
+// Empty reports whether anchor and head coincide
 func (r Range) Empty() bool {
 	return r.Anchor == r.Head
 }
 
+// Direction reports which side of the range the head sits on
 func (r Range) Direction() Direction {
 	if r.Head < r.Anchor {
 		return DirectionBackward
@@ -59,10 +66,12 @@ func (r Range) Direction() Direction {
 	return DirectionForward
 }
 
+// Flip swaps anchor and head, reversing direction
 func (r Range) Flip() Range {
 	return Range{Anchor: r.Head, Head: r.Anchor}
 }
 
+// WithDirection flips the range only when it faces the other way
 func (r Range) WithDirection(dir Direction) Range {
 	if r.Direction() == dir {
 		return r
@@ -70,18 +79,23 @@ func (r Range) WithDirection(dir Direction) Range {
 	return r.Flip()
 }
 
+// Overlaps reports whether the two ranges share any character
 func (r Range) Overlaps(q Range) bool {
 	return r.From() == q.From() || (r.To() > q.From() && q.To() > r.From())
 }
 
+// ContainsRange reports whether q falls entirely inside this range
 func (r Range) ContainsRange(q Range) bool {
 	return r.From() <= q.From() && r.To() >= q.To()
 }
 
+// Contains reports whether pos falls inside this range
 func (r Range) Contains(pos int) bool {
 	return r.From() <= pos && pos < r.To()
 }
 
+// LineRange returns the inclusive line span the range touches. An empty range
+// covers one line; a non-empty one excludes an end on a line start
 func (r Range) LineRange(text Rope) (LineRange, error) {
 	from := r.From()
 	to := r.To()
@@ -99,6 +113,7 @@ func (r Range) LineRange(text Rope) (LineRange, error) {
 	return LineRange{From: start, To: end}, nil
 }
 
+// Extend grows the range to also cover from..to, keeping its direction
 func (r Range) Extend(from, to int) Range {
 	if r.Anchor <= r.Head {
 		return Range{Anchor: min(r.Anchor, from), Head: max(r.Head, to)}
@@ -191,6 +206,7 @@ func (r Range) CursorLine(doc Rope) (int, error) {
 	return doc.CharToLine(r.Cursor(doc))
 }
 
+// Merge returns the range spanning both, backward only when both are
 func (r Range) Merge(q Range) Range {
 	if r.Anchor > r.Head && q.Anchor > q.Head {
 		return Range{Anchor: max(r.Anchor, q.Anchor), Head: min(r.Head, q.Head)}

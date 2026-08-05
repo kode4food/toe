@@ -9,6 +9,7 @@ import (
 
 type promptHandler func(*view.Editor, string) error
 
+// WithStartupCmd returns a model that runs cmd once on start
 func (m Model) WithStartupCmd(cmd tea.Cmd) Model {
 	m.initCmd = tea.Batch(m.initCmd, cmd)
 	return m
@@ -24,6 +25,7 @@ func (m Model) WithStartupMessage(msg string) Model {
 	return m
 }
 
+// WithInitialPicker returns a model that opens a picker on start
 func (m Model) WithInitialPicker(fn PickerFunc) Model {
 	m.compositor.startup = func(cx *Context) (Component, tea.Cmd) {
 		p := fn(cx.Editor)
@@ -37,6 +39,7 @@ func (m Model) WithInitialPicker(fn PickerFunc) Model {
 	return m
 }
 
+// PickerAction returns an action opening the picker fn builds
 func (m Model) PickerAction(fn PickerFunc) command.Action {
 	ec := m.component
 	cx := m.context
@@ -61,6 +64,7 @@ func (m Model) PickerAction(fn PickerFunc) command.Action {
 	}
 }
 
+// CmdModeAction opens the command prompt
 func (m Model) CmdModeAction(_ *view.Editor) {
 	ec := m.component
 	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
@@ -71,6 +75,7 @@ func (m Model) CmdModeAction(_ *view.Editor) {
 	}
 }
 
+// SearchAction returns an action opening the search prompt
 func (m Model) SearchAction(forward bool) command.Action {
 	ec := m.component
 	return func(_ *view.Editor) {
@@ -84,6 +89,7 @@ func (m Model) SearchAction(forward bool) command.Action {
 	}
 }
 
+// RegexAction returns an action prompting for a pattern, then running fn
 func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
 	return func(_ *view.Editor) {
@@ -98,6 +104,7 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 	}
 }
 
+// ShellAction returns an action prompting for a command, then running fn
 func (m Model) ShellAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
 	return func(_ *view.Editor) {
@@ -112,6 +119,7 @@ func (m Model) ShellAction(prompt string, fn promptHandler) command.Action {
 	}
 }
 
+// CommandPaletteAction opens the command palette
 func (m Model) CommandPaletteAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
@@ -128,6 +136,7 @@ func (m Model) CommandPaletteAction(e *view.Editor) {
 	ec.keys.nextLayer = opener(e)
 }
 
+// LastPickerAction reopens the picker used most recently
 func (m Model) LastPickerAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
@@ -137,10 +146,12 @@ func (m Model) LastPickerAction(e *view.Editor) {
 	ec.keys.nextLayer = cx.lastLayer(e)
 }
 
+// MacroRecordAction starts or stops recording a macro
 func (m Model) MacroRecordAction(e *view.Editor) command.Continuation {
 	return m.component.MacroRecordAction(e)
 }
 
+// MacroReplayAction replays the recorded macro
 func (m Model) MacroReplayAction(e *view.Editor) command.Continuation {
 	return m.component.MacroReplayAction(e)
 }

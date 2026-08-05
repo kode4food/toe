@@ -236,6 +236,7 @@ func (a *Args) CompletionState() CompletionState {
 	}
 }
 
+// Error describes which argument failed to parse
 func (p *ParseError) Error() string {
 	switch p.Kind {
 	case ParseErrorWrongPositionalCount:
@@ -264,6 +265,7 @@ func (p *ParseError) Error() string {
 	}
 }
 
+// Is matches the shared command-line parse sentinel
 func (p *ParseError) Is(target error) bool {
 	return target == ErrCommandLineParse
 }

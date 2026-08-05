@@ -23,6 +23,7 @@ type (
 	}
 )
 
+// UnmarshalTOML accepts either a bool or a table of auto-save triggers
 func (a *AutoSave) UnmarshalTOML(value any) error {
 	if cfg, ok := decodeAutoSave(value); ok {
 		*a = cfg
@@ -47,6 +48,7 @@ func LoadRawConfigForDir(dir string) (map[string]any, bool) {
 	return nil, false
 }
 
+// LoadRawConfigForWorkspace merges the user and workspace config TOML
 func LoadRawConfigForWorkspace(
 	global, workspace, dir string,
 ) (map[string]any, bool) {

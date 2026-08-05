@@ -60,6 +60,7 @@ var (
 	)
 )
 
+// NewRuntime returns an ale interpreter wired to the editor and keymaps
 func NewRuntime(e *view.Editor, km *command.Keymaps) (*Runtime, error) {
 	r := &Runtime{
 		editor:      e,
@@ -102,6 +103,7 @@ func (r *Runtime) Eval(src string) (err error) {
 	return err
 }
 
+// Equal reports whether other is the same command result
 func (r *cmdResult) Equal(other ale.Value) bool {
 	return r == other
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// SignatureHelp requests parameter hints for the call at a position
 func (c *Client) SignatureHelp(
 	ctx context.Context, doc DocumentSnapshot, pos int,
 	shCtx protocol.SignatureHelpContext,

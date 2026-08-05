@@ -7,6 +7,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// SymbolPickerAction opens a picker over the focused document's symbols
 func (m Model) SymbolPickerAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
@@ -34,6 +35,7 @@ func (m Model) SymbolPickerAction(e *view.Editor) {
 	ec.keys.nextLayer = opener(e)
 }
 
+// WorkspaceSymbolPickerAction opens a picker over workspace symbols
 func (m Model) WorkspaceSymbolPickerAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
@@ -48,6 +50,7 @@ func (m Model) WorkspaceSymbolPickerAction(e *view.Editor) {
 	ec.keys.nextLayer = opener(e)
 }
 
+// CodeActionPickerAction opens a menu of code actions at the cursor
 func (m Model) CodeActionPickerAction(e *view.Editor) {
 	ec := m.component
 	doc := e.FocusedDocument()

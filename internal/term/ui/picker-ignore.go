@@ -97,6 +97,8 @@ func ignorePathForBase(rel, path string, ig PickerIgnore) (string, bool) {
 	return sub, ok
 }
 
+// LoadIgnoreFiles collects .ignore, .toe/ignore, and .gitignore rules that
+// apply to path, nearest directory last
 func LoadIgnoreFiles(
 	root, path string, opts PickerIgnoreOptions,
 ) []PickerIgnore {

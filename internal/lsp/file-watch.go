@@ -35,6 +35,7 @@ type (
 	}
 )
 
+// DidChangeWatchedFile notifies the server that a watched file changed
 func (c *Client) DidChangeWatchedFile(ctx context.Context, path string) error {
 	return c.DidChangeWatchedFiles(ctx, []fileWatchEvent{{
 		path: path,
@@ -42,6 +43,7 @@ func (c *Client) DidChangeWatchedFile(ctx context.Context, path string) error {
 	}})
 }
 
+// DidChangeWatchedFiles notifies the server that watched files changed
 func (c *Client) DidChangeWatchedFiles(
 	ctx context.Context, events []fileWatchEvent,
 ) error {

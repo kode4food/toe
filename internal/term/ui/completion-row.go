@@ -38,17 +38,19 @@ func (c *completionComponent) rowWidth(
 }
 
 type renderCompletionRowArgs struct {
-	buf      *tui.Buffer
-	at       geom.Point
-	width    int
-	listW    int
+	buf   *tui.Buffer
+	at    geom.Point
+	width int
+	listW int
+
 	item     *view.CompletionItem
 	selected bool
 	query    string
-	base     tui.Style
-	match    tui.Style
-	icon     tui.Style
-	info     tui.Style
+
+	base  tui.Style
+	match tui.Style
+	icon  tui.Style
+	info  tui.Style
 }
 
 func (c *completionComponent) renderRow(args renderCompletionRowArgs) {

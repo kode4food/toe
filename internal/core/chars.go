@@ -13,6 +13,7 @@ const (
 	CharCategoryUnknown
 )
 
+// CategorizeChar classifies ch for word-wise motion
 func CategorizeChar(ch rune) CharCategory {
 	if CharIsLineEnding(ch) {
 		return CharCategoryEOL
@@ -29,11 +30,13 @@ func CategorizeChar(ch rune) CharCategory {
 	return CharCategoryUnknown
 }
 
+// CharIsLineEnding reports whether ch terminates a line
 func CharIsLineEnding(ch rune) bool {
 	_, ok := LineEndingFromChar(ch)
 	return ok
 }
 
+// CharIsWhitespace reports whether ch is a space or tab
 func CharIsWhitespace(ch rune) bool {
 	switch ch {
 	case '\u0009', '\u0020', '\u00A0', '\u180E', '\u202F',
@@ -43,10 +46,12 @@ func CharIsWhitespace(ch rune) bool {
 	return ch >= '\u2000' && ch <= '\u200B'
 }
 
+// CharIsPunctuation reports whether ch is punctuation or a symbol
 func CharIsPunctuation(ch rune) bool {
 	return unicode.IsPunct(ch) || unicode.IsSymbol(ch)
 }
 
+// CharIsWord reports whether ch may appear inside a word
 func CharIsWord(ch rune) bool {
 	return ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch)
 }

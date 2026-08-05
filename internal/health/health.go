@@ -27,6 +27,7 @@ var (
 	ErrFailed = errors.New("health check failed")
 )
 
+// CheckRuntime runs every bundled-asset check
 func CheckRuntime() Report {
 	return Report{
 		checkLanguages(),
@@ -35,6 +36,7 @@ func CheckRuntime() Report {
 	}
 }
 
+// OK reports whether every check passed
 func (r Report) OK() bool {
 	for _, c := range r {
 		if !c.OK {
@@ -44,6 +46,7 @@ func (r Report) OK() bool {
 	return true
 }
 
+// Run writes the runtime report to w, erroring when a check failed
 func Run(w io.Writer) error {
 	rep := CheckRuntime()
 	writeReport(w, rep)

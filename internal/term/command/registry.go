@@ -19,6 +19,7 @@ type Registry struct {
 	prefixes []*Option
 }
 
+// NewRegistry returns an empty command registry bound to keymaps
 func NewRegistry(km *Keymaps) *Registry {
 	return &Registry{km: km}
 }
@@ -37,6 +38,7 @@ func (r *Registry) RegisterCommand(name string, c Command) error {
 	return nil
 }
 
+// RegisterModule adds a module's commands, options, and bindings
 func (r *Registry) RegisterModule(m Module) error {
 	for _, c := range m.Commands {
 		if err := r.RegisterCommand(c.Name, c); err != nil {
@@ -186,6 +188,7 @@ func (r *Registry) BoolOptionKeys() []string {
 	return keys
 }
 
+// OptionCompleter completes every registered option key
 func (r *Registry) OptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
 		keys := r.OptionKeys()
@@ -197,6 +200,7 @@ func (r *Registry) OptionCompleter() CompletionFunc {
 	}
 }
 
+// BoolOptionCompleter completes only the boolean option keys
 func (r *Registry) BoolOptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
 		return matchFuzzy(r.BoolOptionKeys(), input)

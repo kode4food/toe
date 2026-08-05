@@ -48,7 +48,7 @@ type (
 
 	// Section declares a module's live config pointer and Apply hook
 	Section struct {
-		Config any // *ConcreteConfig, pre-filled with defaults
+		Config any
 		Reset  func()
 		Apply  func(*view.Editor)
 	}

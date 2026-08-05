@@ -55,6 +55,7 @@ func NewFilePickerInDir(dir string) ui.PickerFunc {
 	}
 }
 
+// Load walks the workspace for files, honouring ignore rules
 func (f *filePickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
@@ -95,6 +96,7 @@ func (f *filePickerSource) ItemForPath(
 	}, true
 }
 
+// Accept opens the chosen file
 func (f *filePickerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {

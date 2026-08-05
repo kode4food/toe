@@ -49,6 +49,7 @@ func newSignatureHelpComponent(
 	}
 }
 
+// HandleEvent cycles overloads and dismisses the popup
 func (s *signatureHelpComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -74,12 +75,14 @@ func (s *signatureHelpComponent) HandleEvent(
 	}
 }
 
+// Cursor leaves the cursor to the layer below
 func (s *signatureHelpComponent) Cursor(
 	*Context, geom.Size,
 ) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
+// Layout places the popup near the cursor, inside the frame
 func (s *signatureHelpComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -112,6 +115,7 @@ func (s *signatureHelpComponent) Layout(
 	}, true
 }
 
+// PaintBuffer draws the signature popup with the active parameter marked
 func (s *signatureHelpComponent) PaintBuffer(
 	cx *Context, pl geom.Area,
 ) *tui.Buffer {

@@ -13,6 +13,7 @@ type locationGetter func(
 	view.LanguageServerController, *view.Document, view.Id,
 ) ([]view.Location, error)
 
+// GotoDeclarationAction jumps to the declaration of the symbol at the cursor
 func (m Model) GotoDeclarationAction(e *view.Editor) {
 	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoDeclaration),
@@ -20,6 +21,7 @@ func (m Model) GotoDeclarationAction(e *view.Editor) {
 	)
 }
 
+// GotoDefinitionAction jumps to the definition of the symbol at the cursor
 func (m Model) GotoDefinitionAction(e *view.Editor) {
 	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoDefinition),
@@ -27,6 +29,7 @@ func (m Model) GotoDefinitionAction(e *view.Editor) {
 	)
 }
 
+// GotoTypeDefinitionAction jumps to the type of the symbol at the cursor
 func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
 	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoTypeDefinition),
@@ -34,6 +37,7 @@ func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
 	)
 }
 
+// GotoImplementationAction jumps to implementations of the symbol at the cursor
 func (m Model) GotoImplementationAction(e *view.Editor) {
 	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoImplementation),
@@ -41,6 +45,7 @@ func (m Model) GotoImplementationAction(e *view.Editor) {
 	)
 }
 
+// GotoReferenceAction jumps to references to the symbol at the cursor
 func (m Model) GotoReferenceAction(e *view.Editor) {
 	m.gotoLocation(e,
 		i18n.Text(i18n.StatusNoReferences),
@@ -48,6 +53,7 @@ func (m Model) GotoReferenceAction(e *view.Editor) {
 	)
 }
 
+// SelectReferencesAction selects every reference to the symbol at the cursor
 func (m Model) SelectReferencesAction(e *view.Editor) {
 	doc := e.FocusedDocument()
 	if doc == nil {

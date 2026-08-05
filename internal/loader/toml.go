@@ -25,6 +25,8 @@ func LoadDefaultLanguagesTOML() (map[string]any, bool) {
 	return defaultLanguages()
 }
 
+// MergeTOMLValues overlays right onto left, merging maps only while depth
+// remains; below that right replaces left outright
 func MergeTOMLValues(left, right any, depth int) any {
 	switch l := left.(type) {
 	case map[string]any:
@@ -84,6 +86,7 @@ func LoadMergedTOMLWithBase(
 	return out, ok
 }
 
+// LoadMergedTOML overlays each readable path onto the previous ones
 func LoadMergedTOML(paths []string, depth int) (map[string]any, bool) {
 	return LoadMergedTOMLWithBase(nil, paths, depth)
 }

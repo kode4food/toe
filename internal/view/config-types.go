@@ -190,6 +190,7 @@ var cursorKinds = []CursorKind{
 	CursorKindBlock, CursorKindBar, CursorKindUnderline, CursorKindHidden,
 }
 
+// ParseCursorKind parses a cursor shape name
 func ParseCursorKind(value string) (CursorKind, error) {
 	var c CursorKind
 	if err := c.UnmarshalText([]byte(value)); err != nil {
@@ -198,6 +199,7 @@ func ParseCursorKind(value string) (CursorKind, error) {
 	return c, nil
 }
 
+// ParseLineNumber parses a line-number mode name
 func ParseLineNumber(value string) (LineNumber, error) {
 	var l LineNumber
 	if err := l.UnmarshalText([]byte(value)); err != nil {
@@ -206,6 +208,7 @@ func ParseLineNumber(value string) (LineNumber, error) {
 	return l, nil
 }
 
+// ParseBufferLine parses a buffer-line visibility name
 func ParseBufferLine(value string) (BufferLine, error) {
 	var b BufferLine
 	if err := b.UnmarshalText([]byte(value)); err != nil {
@@ -214,6 +217,7 @@ func ParseBufferLine(value string) (BufferLine, error) {
 	return b, nil
 }
 
+// ParseWhitespaceRenderValue parses a whitespace rendering mode name
 func ParseWhitespaceRenderValue(s string) (WhitespaceRenderValue, error) {
 	switch WhitespaceRenderValue(s) {
 	case WhitespaceRenderNone, WhitespaceRenderAll:
@@ -223,10 +227,12 @@ func ParseWhitespaceRenderValue(s string) (WhitespaceRenderValue, error) {
 	}
 }
 
+// CharRune is the glyph drawn for an indent guide
 func (i IndentGuides) CharRune() rune {
 	return runeOrDefault(i.Character, DefaultIndentGuideChar)
 }
 
+// GetSkipLevels is the number of leading indent levels left undrawn
 func (i IndentGuides) GetSkipLevels() int {
 	if i.SkipLevels != nil {
 		return *i.SkipLevels
@@ -234,6 +240,7 @@ func (i IndentGuides) GetSkipLevels() int {
 	return 0
 }
 
+// GutterLayout is the configured column order, or the default
 func (g *Gutter) GutterLayout() []GutterType {
 	if g.Present {
 		return g.Layout
@@ -247,14 +254,17 @@ func (g *Gutter) GutterLayout() []GutterType {
 	}
 }
 
+// HasGutterType reports whether the layout includes a column
 func (g *Gutter) HasGutterType(gt GutterType) bool {
 	return slices.Contains(g.GutterLayout(), gt)
 }
 
+// LineNumberMinWidth is the narrowest the line-number column may draw
 func (g *Gutter) LineNumberMinWidth() int {
 	return intOr(g.LineNumbers.MinWidth, DefaultGutterLineNumberMinWidth)
 }
 
+// UnmarshalText parses a cursor shape name
 func (c *CursorKind) UnmarshalText(text []byte) error {
 	if !slices.Contains(cursorKinds, CursorKind(text)) {
 		return fmt.Errorf("%w: %s", ErrInvalidCursorKind, text)
@@ -263,6 +273,7 @@ func (c *CursorKind) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// UnmarshalText parses a line-number mode name
 func (l *LineNumber) UnmarshalText(text []byte) error {
 	switch LineNumber(text) {
 	case LineNumberAbsolute, LineNumberRelative:
@@ -273,6 +284,7 @@ func (l *LineNumber) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// UnmarshalText parses a status line item name
 func (s *StatusLineItem) UnmarshalText(text []byte) error {
 	name, pinned := strings.CutSuffix(string(text), "!")
 	e := StatusLineElement(name)
@@ -283,6 +295,7 @@ func (s *StatusLineItem) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// UnmarshalText parses a buffer-line visibility name
 func (b *BufferLine) UnmarshalText(text []byte) error {
 	switch BufferLine(text) {
 	case BufferLineNever, BufferLineAlways, BufferLineMultiple:
@@ -293,6 +306,7 @@ func (b *BufferLine) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// UnmarshalText parses a gutter column name
 func (g *GutterType) UnmarshalText(text []byte) error {
 	switch GutterType(text) {
 	case GutterTypeDiagnostics, GutterTypeLineNumbers,
@@ -304,6 +318,7 @@ func (g *GutterType) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// UnmarshalTOML accepts either a column list or a table of gutter settings
 func (g *Gutter) UnmarshalTOML(value any) error {
 	switch v := value.(type) {
 	case []any:
@@ -337,22 +352,27 @@ func (g *Gutter) UnmarshalTOML(value any) error {
 	return nil
 }
 
+// SpaceRender is the rendering mode for spaces
 func (w *WhitespaceRender) SpaceRender() WhitespaceRenderValue {
 	return whitespaceRenderFor(w.Space, w.Default)
 }
 
+// NbspRender is the rendering mode for non-breaking spaces
 func (w *WhitespaceRender) NbspRender() WhitespaceRenderValue {
 	return whitespaceRenderFor(w.Nbsp, w.Default)
 }
 
+// TabRender is the rendering mode for tabs
 func (w *WhitespaceRender) TabRender() WhitespaceRenderValue {
 	return whitespaceRenderFor(w.Tab, w.Default)
 }
 
+// NewlineRender is the rendering mode for line endings
 func (w *WhitespaceRender) NewlineRender() WhitespaceRenderValue {
 	return whitespaceRenderFor(w.Newline, w.Default)
 }
 
+// UnmarshalTOML accepts either one mode for everything or a table per kind
 func (w *WhitespaceRender) UnmarshalTOML(value any) error {
 	switch v := value.(type) {
 	case string:
@@ -393,22 +413,27 @@ func (w *WhitespaceRender) UnmarshalTOML(value any) error {
 	return nil
 }
 
+// SpaceRune is the glyph drawn for a space
 func (w *WhitespaceCharacters) SpaceRune() rune {
 	return runeOrDefault(w.Space, DefaultWSSpace)
 }
 
+// NbspRune is the glyph drawn for a non-breaking space
 func (w *WhitespaceCharacters) NbspRune() rune {
 	return runeOrDefault(w.Nbsp, DefaultWSNbsp)
 }
 
+// TabRune is the glyph drawn at the start of a tab
 func (w *WhitespaceCharacters) TabRune() rune {
 	return runeOrDefault(w.Tab, DefaultWSTab)
 }
 
+// TabpadRune is the glyph filling the rest of a tab
 func (w *WhitespaceCharacters) TabpadRune() rune {
 	return runeOrDefault(w.Tabpad, DefaultWSTabpad)
 }
 
+// NewlineRune is the glyph drawn for a line ending
 func (w *WhitespaceCharacters) NewlineRune() rune {
 	return runeOrDefault(w.Newline, DefaultWSNewline)
 }

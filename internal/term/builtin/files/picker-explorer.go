@@ -62,12 +62,14 @@ func DefaultFileExplorerOptions() FileExplorerOptions {
 	return FileExplorerOptions{FlattenDirs: true}
 }
 
+// Load lists the entries of the current directory
 func (f *fileExplorerSource) Load(
 	_ *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
 	return f.readDir(), nil, func() {}
 }
 
+// Accept opens the chosen file, or descends into a directory
 func (f *fileExplorerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
@@ -78,6 +80,7 @@ func (f *fileExplorerSource) Accept(
 	ui.AcceptPath(e, path, action)
 }
 
+// Navigate moves the explorer to another directory
 func (f *fileExplorerSource) Navigate(
 	_ *view.Editor, item *ui.PickerItem,
 ) ui.PickerFunc {

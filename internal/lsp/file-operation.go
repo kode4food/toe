@@ -14,6 +14,7 @@ type fileOpSelector func(
 	*protocol.FileOperationOptions,
 ) protocol.FileOperationRegistrationOptions
 
+// WillCreateFile asks the server for edits to make before a file is created
 func (c *Client) WillCreateFile(
 	ctx context.Context, path string, dir bool,
 ) (*protocol.WorkspaceEdit, bool, error) {
@@ -29,6 +30,7 @@ func (c *Client) WillCreateFile(
 	return edit, true, err
 }
 
+// DidCreateFile notifies the server that a file was created
 func (c *Client) DidCreateFile(
 	ctx context.Context, path string, dir bool,
 ) (bool, error) {
@@ -41,6 +43,7 @@ func (c *Client) DidCreateFile(
 	return true, c.server.DidCreateFiles(ctx, params)
 }
 
+// WillRenameFile asks the server for edits to make before a file is renamed
 func (c *Client) WillRenameFile(
 	ctx context.Context, oldPath, newPath string, dir bool,
 ) (*protocol.WorkspaceEdit, bool, error) {
@@ -59,6 +62,7 @@ func (c *Client) WillRenameFile(
 	return edit, true, err
 }
 
+// DidRenameFile notifies the server that a file was renamed
 func (c *Client) DidRenameFile(
 	ctx context.Context, oldPath, newPath string, dir bool,
 ) (bool, error) {
@@ -74,6 +78,7 @@ func (c *Client) DidRenameFile(
 	return true, c.server.DidRenameFiles(ctx, params)
 }
 
+// WillDeleteFile asks the server for edits to make before a file is deleted
 func (c *Client) WillDeleteFile(
 	ctx context.Context, path string, dir bool,
 ) (*protocol.WorkspaceEdit, bool, error) {
@@ -89,6 +94,7 @@ func (c *Client) WillDeleteFile(
 	return edit, true, err
 }
 
+// DidDeleteFile notifies the server that a file was deleted
 func (c *Client) DidDeleteFile(
 	ctx context.Context, path string, dir bool,
 ) (bool, error) {
@@ -101,6 +107,7 @@ func (c *Client) DidDeleteFile(
 	return true, c.server.DidDeleteFiles(ctx, params)
 }
 
+// WillCreateFile applies any edits servers want made before creating path
 func (s *Session) WillCreateFile(path string, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
@@ -116,6 +123,7 @@ func (s *Session) WillCreateFile(path string, dir bool) error {
 	return err
 }
 
+// DidCreateFile tells every server that path was created
 func (s *Session) DidCreateFile(path string, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
@@ -127,6 +135,7 @@ func (s *Session) DidCreateFile(path string, dir bool) error {
 	return err
 }
 
+// WillRenameFile applies any edits servers want made before renaming
 func (s *Session) WillRenameFile(oldPath, newPath string, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
@@ -142,6 +151,7 @@ func (s *Session) WillRenameFile(oldPath, newPath string, dir bool) error {
 	return err
 }
 
+// DidRenameFile tells every server that a path was renamed
 func (s *Session) DidRenameFile(oldPath, newPath string, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
@@ -153,6 +163,7 @@ func (s *Session) DidRenameFile(oldPath, newPath string, dir bool) error {
 	return err
 }
 
+// WillDeleteFile applies any edits servers want made before deleting path
 func (s *Session) WillDeleteFile(path string, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
@@ -168,6 +179,7 @@ func (s *Session) WillDeleteFile(path string, dir bool) error {
 	return err
 }
 
+// DidDeleteFile tells every server that path was deleted
 func (s *Session) DidDeleteFile(path string, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(

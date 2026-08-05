@@ -55,6 +55,7 @@ func buildContext(e *view.Editor) contextValue {
 	return contextValue{editor: e}
 }
 
+// Get resolves an editor context field for a script
 func (c contextValue) Get(key ale.Value) (ale.Value, bool) {
 	switch key {
 	case keyCWD:
@@ -67,11 +68,13 @@ func (c contextValue) Get(key ale.Value) (ale.Value, bool) {
 	return data.Null, false
 }
 
+// Equal reports whether other is the same context
 func (c contextValue) Equal(other ale.Value) bool {
 	o, ok := other.(contextValue)
 	return ok && o == c
 }
 
+// Get resolves a pane field for a script
 func (p paneValue) Get(key ale.Value) (ale.Value, bool) {
 	switch key {
 	case keyKind:
@@ -94,6 +97,7 @@ func (p paneValue) Get(key ale.Value) (ale.Value, bool) {
 	return data.Null, false
 }
 
+// Equal reports whether other wraps the same pane
 func (p paneValue) Equal(other ale.Value) bool {
 	o, ok := other.(paneValue)
 	return ok && o == p
@@ -113,6 +117,7 @@ func (p paneValue) document() (*view.Document, view.Id, bool) {
 	return doc, v.ID(), true
 }
 
+// Get resolves a document field for a script
 func (d documentValue) Get(key ale.Value) (ale.Value, bool) {
 	switch key {
 	case keyName:
@@ -133,11 +138,13 @@ func (d documentValue) Get(key ale.Value) (ale.Value, bool) {
 	return data.Null, false
 }
 
+// Equal reports whether other wraps the same document
 func (d documentValue) Equal(other ale.Value) bool {
 	o, ok := other.(documentValue)
 	return ok && o == d
 }
 
+// Get resolves a selection field for a script
 func (s selectionValue) Get(key ale.Value) (ale.Value, bool) {
 	sel := s.doc.SelectionFor(s.viewID)
 	switch key {
@@ -155,6 +162,7 @@ func (s selectionValue) Get(key ale.Value) (ale.Value, bool) {
 	return data.Null, false
 }
 
+// Equal reports whether other wraps the same selection
 func (s selectionValue) Equal(other ale.Value) bool {
 	o, ok := other.(selectionValue)
 	return ok && o == s

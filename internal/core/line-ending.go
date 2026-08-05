@@ -24,6 +24,8 @@ var ErrInvalidLineEnding = errors.New("invalid line ending")
 
 // NativeLineEnding is defined in platform-specific files
 
+// UnmarshalText parses a line ending name, resolving native to the platform
+// default
 func (l *LineEnding) UnmarshalText(text []byte) error {
 	switch string(text) {
 	case LineEndingNameLF:
@@ -53,6 +55,8 @@ func LineEndingNames() []string {
 	return []string{LineEndingNameLF, LineEndingNameCRLF, LineEndingNameNative}
 }
 
+// LineEndingFromChar reports whether ch terminates a line, normalizing every
+// single-character terminator to LF
 func LineEndingFromChar(ch rune) (LineEnding, bool) {
 	switch ch {
 	case '\n', '\r', '\v', '\f', '\u0085', '\u2028', '\u2029':
@@ -61,6 +65,8 @@ func LineEndingFromChar(ch rune) (LineEnding, bool) {
 	return "", false
 }
 
+// AutoDetectLineEndingString infers the ending from the first terminator found,
+// giving up after 100 ambiguous ones
 func AutoDetectLineEndingString(s string) (LineEnding, bool) {
 	runes := []rune(s)
 	lines := 0
@@ -81,6 +87,7 @@ func AutoDetectLineEndingString(s string) (LineEnding, bool) {
 	return "", false
 }
 
+// GetLineEndingOfString reports the ending that s itself terminates with
 func GetLineEndingOfString(s string) (LineEnding, bool) {
 	if len(s) >= 2 && s[len(s)-2:] == string(LineEndingCRLF) {
 		return LineEndingCRLF, true

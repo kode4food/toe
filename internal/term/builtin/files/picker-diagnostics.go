@@ -55,6 +55,7 @@ func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 	return newDiagnosticPicker(e, true)
 }
 
+// Load lists every diagnostic across open documents
 func (d *diagnosticPickerSource) Load(
 	e *view.Editor,
 ) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
@@ -69,6 +70,7 @@ func (d *diagnosticPickerSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept jumps to the chosen diagnostic
 func (d *diagnosticPickerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {

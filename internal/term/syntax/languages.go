@@ -33,6 +33,7 @@ var langRegistry = map[string]*sitter.Language{
 	"yaml":       sitter.NewLanguage(yaml.Language()),
 }
 
+// SupportedLanguages lists the languages with bundled highlighters
 func SupportedLanguages() []string {
 	return slices.Sorted(maps.Keys(langRegistry))
 }

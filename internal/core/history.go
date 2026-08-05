@@ -11,7 +11,7 @@ type (
 	History struct {
 		revisions   []revision
 		current     int
-		lastEditPos int // char offset of most recent committed change
+		lastEditPos int
 	}
 
 	// UndoKind selects how many steps history navigation travels
@@ -27,6 +27,7 @@ type (
 	}
 )
 
+// NewHistory returns an empty history positioned at the root revision
 func NewHistory() History {
 	root := revision{
 		parent:      0,
@@ -37,14 +38,18 @@ func NewHistory() History {
 	return History{revisions: []revision{root}}
 }
 
+// CurrentRevision is the index of the revision in effect
 func (h *History) CurrentRevision() int {
 	return h.current
 }
 
+// AtRoot reports whether there is nothing left to undo
 func (h *History) AtRoot() bool {
 	return h.current == 0
 }
 
+// CommitRevision records tx as a new revision branching from the current one,
+// storing its inverse for undo
 func (h *History) CommitRevision(tx Transaction, st State) error {
 	inv, err := tx.Invert(st.Doc)
 	if err != nil {
@@ -72,6 +77,7 @@ func (h *History) LastEditPos() int {
 	return h.lastEditPos
 }
 
+// Undo steps back one revision, returning the transaction to apply
 func (h *History) Undo() (Transaction, bool) {
 	if h.AtRoot() {
 		return Transaction{}, false
@@ -81,6 +87,7 @@ func (h *History) Undo() (Transaction, bool) {
 	return rev.inversion, true
 }
 
+// Redo steps forward one revision, returning the transaction to apply
 func (h *History) Redo() (Transaction, bool) {
 	rev := h.revisions[h.current]
 	if rev.lastChild < 0 {
@@ -90,10 +97,14 @@ func (h *History) Redo() (Transaction, bool) {
 	return h.revisions[h.current].transaction, true
 }
 
+// Earlier returns the transactions that walk back by kind, without applying
+// them
 func (h *History) Earlier(kind UndoKind) []Transaction {
 	return h.jumpBackward(kind.steps)
 }
 
+// Later returns the transactions that walk forward by kind, without applying
+// them
 func (h *History) Later(kind UndoKind) []Transaction {
 	return h.jumpForward(kind.steps)
 }
@@ -156,6 +167,7 @@ func (h *History) jumpForward(delta int) []Transaction {
 	return h.jumpTo(to)
 }
 
+// UndoSteps counts revisions rather than elapsed time
 func UndoSteps(n int) UndoKind {
 	return UndoKind{steps: n}
 }

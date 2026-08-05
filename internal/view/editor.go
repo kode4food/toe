@@ -248,10 +248,12 @@ func (e *Editor) Registers() register.Registers {
 	return e.registers.values
 }
 
+// Clipboard returns the clipboard provider in use
 func (e *Editor) Clipboard() Clipboard {
 	return e.registers.clipboard
 }
 
+// SetClipboard installs the clipboard provider
 func (e *Editor) SetClipboard(c Clipboard) {
 	e.registers.clipboard = c
 }

@@ -8,6 +8,7 @@ import (
 //go:embed queries
 var embeddedQueryFS embed.FS
 
+// HasHighlightQuery reports whether a highlight query ships for lang
 func HasHighlightQuery(lang string) bool {
 	_, ok := embeddedQuery(lang)
 	return ok

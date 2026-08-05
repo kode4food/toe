@@ -24,6 +24,7 @@ func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
 	})
 }
 
+// Load lists every command available in the current mode
 func (c *commandPaletteSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -48,6 +49,7 @@ func (c *commandPaletteSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept runs the chosen command
 func (c *commandPaletteSource) Accept(
 	e *view.Editor, item *PickerItem, _ PickerAcceptAction,
 ) {
@@ -61,6 +63,7 @@ func (c *commandPaletteSource) Accept(
 	cmd.Run(e, nil)
 }
 
+// SkipPreview leaves the palette without a preview pane
 func (c *commandPaletteSource) SkipPreview() {}
 
 func commandKeyString(km *command.Keymaps, mode view.Mode, name string) string {

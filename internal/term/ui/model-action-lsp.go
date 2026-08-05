@@ -7,6 +7,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// RenameSymbolAction prompts for a new name and applies the server's edits
 func (m Model) RenameSymbolAction(e *view.Editor) {
 	ec := m.component
 	doc := e.FocusedDocument()
@@ -40,6 +41,7 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 	}
 }
 
+// CompletionAction requests completions at the cursor
 func (m Model) CompletionAction(e *view.Editor) {
 	ec := m.component
 	if e.FocusedDocument() == nil {
@@ -57,6 +59,7 @@ func (m Model) CompletionAction(e *view.Editor) {
 	}
 }
 
+// HoverAction requests documentation for the symbol at the cursor
 func (m Model) HoverAction(e *view.Editor) {
 	ec := m.component
 	doc := e.FocusedDocument()
@@ -87,6 +90,7 @@ func (m Model) HoverAction(e *view.Editor) {
 	}
 }
 
+// SignatureHelpAction requests parameter hints for the call at the cursor
 func (m Model) SignatureHelpAction(e *view.Editor) {
 	ec := m.component
 	doc := e.FocusedDocument()

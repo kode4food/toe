@@ -16,22 +16,27 @@ type (
 	}
 
 	Language struct {
-		TextWidth          *int   `toml:"text-width"`
-		Name               string `toml:"name"`
-		LanguageID         string `toml:"language-id"`
-		InjectionRegex     string `toml:"injection-regex"`
-		FileTypes          []FileType
-		Shebangs           []string `toml:"shebangs"`
-		Roots              []string `toml:"roots"`
-		LanguageServers    []string
+		Name           string `toml:"name"`
+		LanguageID     string `toml:"language-id"`
+		InjectionRegex string `toml:"injection-regex"`
+
+		FileTypes []FileType
+		Shebangs  []string `toml:"shebangs"`
+		Roots     []string `toml:"roots"`
+
 		CommentTokens      []string
 		BlockCommentTokens []core.BlockCommentToken
-		Indent             Indent
-		AutoPairs          AutoPairConfig
-		AutoFormat         bool `toml:"auto-format"`
-		Formatter          *Formatter
-		SoftWrap           SoftWrap `toml:"soft-wrap"`
-		Rulers             []int    `toml:"rulers"`
+
+		Indent    Indent
+		AutoPairs AutoPairConfig
+
+		TextWidth *int     `toml:"text-width"`
+		SoftWrap  SoftWrap `toml:"soft-wrap"`
+		Rulers    []int    `toml:"rulers"`
+
+		LanguageServers []string
+		AutoFormat      bool `toml:"auto-format"`
+		Formatter       *Formatter
 	}
 
 	Indent struct {
@@ -75,6 +80,7 @@ var ErrInvalidAutoPairConfig = errors.New("invalid auto-pair config")
 
 const MinSoftWrapWidth = 10
 
+// OrDefault returns the configured pairs, or the built-in set when unset
 func (a *AutoPairConfig) OrDefault() (core.AutoPairs, bool) {
 	if !a.Present {
 		return core.DefaultAutoPairs(), true
@@ -82,6 +88,7 @@ func (a *AutoPairConfig) OrDefault() (core.AutoPairs, bool) {
 	return a.AutoPairs()
 }
 
+// AutoPairs returns the configured pairs only
 func (a *AutoPairConfig) AutoPairs() (core.AutoPairs, bool) {
 	if a.Enable != nil {
 		if !*a.Enable {
@@ -95,6 +102,7 @@ func (a *AutoPairConfig) AutoPairs() (core.AutoPairs, bool) {
 	return core.NewAutoPairs(a.Pairs), true
 }
 
+// UnmarshalTOML accepts either a bool or a table of pair characters
 func (a *AutoPairConfig) UnmarshalTOML(value any) error {
 	if cfg, ok := decodeAutoPairConfig(value); ok {
 		*a = cfg
@@ -103,6 +111,7 @@ func (a *AutoPairConfig) UnmarshalTOML(value any) error {
 	return fmt.Errorf("%w: %v", ErrInvalidAutoPairConfig, value)
 }
 
+// LoadLanguage returns the bundled definition for a language name
 func LoadLanguage(lang string) *Language {
 	if langs, ok := loadUserWorkspaceLanguages(); ok {
 		for _, l := range langs.Languages {
@@ -114,6 +123,7 @@ func LoadLanguage(lang string) *Language {
 	return &Language{}
 }
 
+// DetectLanguage identifies a language from the file name, then its shebang
 func DetectLanguage(path, content string) (string, bool) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -138,6 +148,7 @@ func DetectLanguage(path, content string) (string, bool) {
 	return languageForMatch(langs, content)
 }
 
+// LoadBundledLanguages returns the definitions embedded in the binary
 func LoadBundledLanguages() (Languages, bool) {
 	if base, ok := loader.LoadDefaultLanguagesTOML(); ok {
 		return decodeLanguagesMap(base)
@@ -145,6 +156,7 @@ func LoadBundledLanguages() (Languages, bool) {
 	return Languages{}, false
 }
 
+// LoadLanguagesForWorkspace merges bundled, user, and workspace definitions
 func LoadLanguagesForWorkspace(
 	global, workspace, dir string,
 ) (Languages, bool) {

@@ -14,19 +14,22 @@ type (
 	diffPreviewRender struct {
 		working core.Rope
 		base    core.Rope
-		spans   []highlight.Span // working-text spans; nil for removed lines
+		spans   []highlight.Span
 		lines   []diffPreviewLine
-		format  *language.TextFormat
-		opts    *view.Options
-		th      *theme.Theme
-		area    geom.Area
-		scroll  int
-		styles  *tuiStyles
+
+		format *language.TextFormat
+		opts   *view.Options
+
+		area   geom.Area
+		scroll int
+
+		th     *theme.Theme
+		styles *tuiStyles
 	}
 
 	diffPreviewLine struct {
 		kind diffLineKind
-		line int // index into working (context/added) or base (removed) rope
+		line int
 	}
 
 	tintColors struct {

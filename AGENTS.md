@@ -856,13 +856,12 @@ Do not keep broad mixed test files once the source has been split cleanly.
 // History stores committed document revisions and supports undo/redo
 // navigation by step count or time period
 type History struct {
-```
 
-Skip godoc when the name is self-documenting:
-
-```go
+// NewHistory returns an empty history positioned at the root revision
 func NewHistory() History {
 ```
+
+Sentinel error vars are the one exception: the message is the documentation.
 
 **Unexported** funcs and methods get no godoc by default. Only add one — capped at 2 lines — when the behavior is genuinely non-trivial and needs explanation:
 
@@ -1091,8 +1090,12 @@ Use the **Serena MCP** for all code navigation and editing tasks: symbol lookup,
 
 ---
 
-# CRITICAL: Git Commits
+# CRITICAL: Git Commits and Staging
 
 **NEVER COMMIT. EVER.** Do not use `git commit` under any circumstances unless explicitly and directly instructed by the user in that exact session. Do not ask permission. Do not commit. Period.
 
 The only exception is if the user explicitly says "commit" or "create a commit" in their current message.
+
+**NEVER STAGE OR UNSTAGE.** Do not use `git add`, `git reset`, `git restore --staged`, or `git stash` unless explicitly and directly instructed in that exact session. The staged set is the user's own record of what he has reviewed; git keeps no index history, so unstaging destroys it permanently.
+
+When told to stage a specific set, stage exactly that set and touch nothing else — an instruction to stage some files never implies unstaging others.

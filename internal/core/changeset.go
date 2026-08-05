@@ -63,6 +63,7 @@ var (
 	ErrChangeOrder             = errors.New("change order invalid")
 )
 
+// NewChangeSet returns an empty change set sized for doc
 func NewChangeSet(doc Rope) ChangeSet {
 	n := doc.LenChars()
 	return ChangeSet{len: n, lenAfter: n}
@@ -73,14 +74,18 @@ func (c Change) Text() string {
 	return c.text
 }
 
+// TextChange replaces the characters in from..to with text
 func TextChange(from, to int, text string) Change {
 	return Change{From: from, To: to, text: text}
 }
 
+// DeleteChange removes the characters in from..to
 func DeleteChange(from, to int) Change {
 	return Change{From: from, To: to}
 }
 
+// NewChangeSetFromChanges builds a change set from non-overlapping changes,
+// which must be ordered by position
 func NewChangeSetFromChanges(doc Rope, changes []Change) (ChangeSet, error) {
 	cs := ChangeSet{}
 	last := 0
@@ -105,10 +110,12 @@ func NewChangeSetFromChanges(doc Rope, changes []Change) (ChangeSet, error) {
 	return cs.retain(n - last), nil
 }
 
+// Kind reports whether the operation retains, deletes, or inserts
 func (o Operation) Kind() OperationKind {
 	return o.kind
 }
 
+// LenChars is the character count the operation inserts or spans
 func (o Operation) LenChars() int {
 	if o.kind == OperationInsert {
 		return utf8.RuneCountInString(o.text)
@@ -116,18 +123,22 @@ func (o Operation) LenChars() int {
 	return o.n
 }
 
+// Text is the inserted text, empty for retain and delete
 func (o Operation) Text() string {
 	return o.text
 }
 
+// Sticky reports whether a position stays put across an insertion at it
 func (a Assoc) Sticky() bool {
 	return a == AssocBeforeSticky || a == AssocAfterSticky
 }
 
+// Operations returns a copy of the operation sequence
 func (c ChangeSet) Operations() []Operation {
 	return slices.Clone(c.ops)
 }
 
+// Changes returns the operations rebuilt as position-based edits
 func (c ChangeSet) Changes() []Change {
 	var out []Change
 	pos := 0
@@ -153,14 +164,17 @@ func (c ChangeSet) Changes() []Change {
 	return out
 }
 
+// Len is the document length the change set expects as input
 func (c ChangeSet) Len() int {
 	return c.len
 }
 
+// LenAfter is the document length the change set produces
 func (c ChangeSet) LenAfter() int {
 	return c.lenAfter
 }
 
+// Empty reports whether the change set would leave a document unaltered
 func (c ChangeSet) Empty() bool {
 	return len(c.ops) == 0 ||
 		(len(c.ops) == 1 && c.ops[0].kind == OperationRetain &&

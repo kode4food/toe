@@ -16,17 +16,14 @@ type (
 		editor     *Editor
 		docID      DocumentId
 		docHistory []DocumentId
+
 		offset     Position
 		mode       Mode
 		jumps      JumpList
 		freeScroll freeScrollState
-		// area is the screen rectangle assigned by the layout engine
-		area geom.Area
-		// vcol memoizes the last VisualColumn result; Rope is immutable
-		// and comparable, so equal fields mean an identical result
-		vcol vcolCache
-		// dirty is set whenever area or offset changes value, or MarkDirty
-		// is called; render code consumes it to decide whether to repaint
+
+		area  geom.Area
+		vcol  vcolCache
 		dirty bool
 	}
 
@@ -39,10 +36,8 @@ type (
 
 	freeScrollState struct {
 		active bool
-		// rev and sel snapshot the document when free scroll began;
-		// free scroll ends when either changes
-		rev int
-		sel core.Selection
+		rev    int
+		sel    core.Selection
 	}
 
 	// Id is the unique identifier for an open view
@@ -56,12 +51,9 @@ type (
 
 	// Position holds the scroll offset for a view
 	Position struct {
-		// Anchor is the first visible char position in the document
-		Anchor int
-		// HorizontalOffset is the number of columns scrolled right
+		Anchor           int
 		HorizontalOffset int
-		// VerticalOffset is lines of context above the visible area
-		VerticalOffset int
+		VerticalOffset   int
 	}
 
 	// JumpList manages a bounded history of cursor positions

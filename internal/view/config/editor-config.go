@@ -37,6 +37,7 @@ type (
 	}
 )
 
+// FindEditorConfig resolves the .editorconfig settings applying to file
 func FindEditorConfig(file string) *EditorConfig {
 	var configs []editorConfigFile
 	for dir := filepath.Dir(file); ; dir = filepath.Dir(dir) {

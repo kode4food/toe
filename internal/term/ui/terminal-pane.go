@@ -33,16 +33,19 @@ type (
 		metadata  metadataState
 		selection selectionState
 
+		shell string
+		cmd   *exec.Cmd
+		pty   *os.File
+		emu   *vt.SafeEmulator
+
 		area    geom.Area
 		dirty   bool
-		shell   string
-		emu     *vt.SafeEmulator
-		pty     *os.File
-		cmd     *exec.Cmd
-		clip    view.Clipboard
-		notify  func()
-		closed  chan struct{}
 		scrollN int
+
+		clip   view.Clipboard
+		notify func()
+
+		closed  chan struct{}
 		mouseOn atomic.Bool
 		output  atomic.Bool
 	}

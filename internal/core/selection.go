@@ -20,6 +20,8 @@ var (
 	ErrRangeIndexNotFound   = errors.New("range index not found")
 )
 
+// NewSelection returns a selection over ranges, sorted and merged, with the
+// range at primaryIndex kept primary
 func NewSelection(ranges []Range, primaryIndex int) (Selection, error) {
 	if len(ranges) == 0 {
 		return Selection{}, ErrEmptySelection
@@ -35,6 +37,7 @@ func NewSelection(ranges []Range, primaryIndex int) (Selection, error) {
 	return s.normalize(), nil
 }
 
+// SingleSelection returns a selection of one range
 func SingleSelection(anchor, head int) Selection {
 	return Selection{
 		ranges:       []Range{NewRange(anchor, head)},
@@ -42,18 +45,22 @@ func SingleSelection(anchor, head int) Selection {
 	}
 }
 
+// PointSelection returns a selection of one empty range at pos
 func PointSelection(pos int) Selection {
 	return SingleSelection(pos, pos)
 }
 
+// Primary is the range that cursor operations act on
 func (s Selection) Primary() Range {
 	return s.ranges[s.primaryIndex]
 }
 
+// Ranges returns a copy of every range, in document order
 func (s Selection) Ranges() []Range {
 	return slices.Clone(s.ranges)
 }
 
+// PrimaryIndex is the position of the primary range in Ranges
 func (s Selection) PrimaryIndex() int {
 	return s.primaryIndex
 }
@@ -65,6 +72,7 @@ func (s Selection) Equal(other Selection) bool {
 		slices.Equal(s.ranges, other.ranges)
 }
 
+// SetPrimaryIndex makes the range at idx primary
 func (s Selection) SetPrimaryIndex(idx int) (Selection, error) {
 	if idx < 0 || idx >= len(s.ranges) {
 		return Selection{}, fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound,
@@ -74,6 +82,7 @@ func (s Selection) SetPrimaryIndex(idx int) (Selection, error) {
 	return s, nil
 }
 
+// IntoSingle discards every range but the primary
 func (s Selection) IntoSingle() Selection {
 	if len(s.ranges) == 1 {
 		return s
@@ -81,12 +90,14 @@ func (s Selection) IntoSingle() Selection {
 	return Selection{ranges: []Range{s.Primary()}, primaryIndex: 0}
 }
 
+// Push adds r and makes it primary
 func (s Selection) Push(r Range) Selection {
 	s.ranges = append(s.Ranges(), r)
 	s.primaryIndex = len(s.ranges) - 1
 	return s.normalize()
 }
 
+// Remove drops the range at idx, erroring when it is the only one
 func (s Selection) Remove(idx int) (Selection, error) {
 	if len(s.ranges) == 1 {
 		return Selection{}, ErrLastRangeRemoval
@@ -101,6 +112,7 @@ func (s Selection) Remove(idx int) (Selection, error) {
 	return s, nil
 }
 
+// Replace swaps the range at idx for r
 func (s Selection) Replace(idx int, r Range) (Selection, error) {
 	if idx < 0 || idx >= len(s.ranges) {
 		return Selection{}, fmt.Errorf("%w: %d", ErrRangeIndexNotFound, idx)
@@ -110,12 +122,15 @@ func (s Selection) Replace(idx int, r Range) (Selection, error) {
 	return s.normalize(), nil
 }
 
+// MergeRanges collapses every range into one spanning first to last
 func (s Selection) MergeRanges() Selection {
 	first := s.ranges[0]
 	last := s.ranges[len(s.ranges)-1]
 	return Selection{ranges: []Range{first.Merge(last)}, primaryIndex: 0}
 }
 
+// MergeConsecutiveRanges joins only ranges that touch end to start, leaving
+// separated ranges alone
 func (s Selection) MergeConsecutiveRanges() Selection {
 	sel := s.normalize()
 	if len(sel.ranges) < 2 {
@@ -140,6 +155,7 @@ func (s Selection) MergeConsecutiveRanges() Selection {
 	return sel
 }
 
+// Transform applies f to every range, then re-sorts and re-merges
 func (s Selection) Transform(f func(Range) Range) Selection {
 	ranges := s.Ranges()
 	for i, r := range ranges {
@@ -149,6 +165,7 @@ func (s Selection) Transform(f func(Range) Range) Selection {
 	return s.normalize()
 }
 
+// Map rebases every range onto the document produced by cs
 func (s Selection) Map(cs ChangeSet) (Selection, error) {
 	ranges := s.Ranges()
 	for i, r := range ranges {
@@ -162,6 +179,7 @@ func (s Selection) Map(cs ChangeSet) (Selection, error) {
 	return s.normalize(), nil
 }
 
+// LineRanges returns the line span each range touches
 func (s Selection) LineRanges(text Rope) ([]LineRange, error) {
 	out := make([]LineRange, 0, len(s.ranges))
 	for _, r := range s.ranges {

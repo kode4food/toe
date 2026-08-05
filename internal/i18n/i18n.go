@@ -71,6 +71,7 @@ func (e *Error) WithVars(vars Vars) *Error {
 	return &Error{key: e.key, vars: vars}
 }
 
+// Error returns the translated message for the current locale
 func (e *Error) Error() string {
 	return string(e.key)
 }

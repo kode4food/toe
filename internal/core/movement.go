@@ -26,10 +26,8 @@ type (
 	}
 
 	visualLine struct {
-		runes  []rune
-		format *VisualMoveFormat
-		// rowStarts holds the char offset (from line start) where each visual
-		// row after the first begins; empty for a line that fits one row
+		runes     []rune
+		format    *VisualMoveFormat
 		rowStarts []int
 		prefixW   int
 	}
@@ -144,6 +142,8 @@ func MovePrevSubWordEnd(doc Rope, r Range, count int) Range {
 	return wordMove(doc, r, count, WordMotionPrevSubWordEnd)
 }
 
+// MoveVertically moves the cursor by count lines, keeping the column the caller
+// last moved to horizontally
 func (r Range) MoveVertically(
 	doc Rope, dir Direction, count int, move Movement,
 ) Range {

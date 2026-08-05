@@ -17,36 +17,43 @@ import (
 
 type (
 	tuiStyles struct {
-		text              tui.Style
-		line              tui.Style
-		lineSelected      tui.Style
-		selection         tui.Style
-		cursor            tui.Style
-		cursorPrim        tui.Style
-		cursorLinePrim    tui.Style
-		cursorLineSec     tui.Style
-		cursorColumn      tui.Style
-		whitespace        tui.Style
-		indentGuide       tui.Style
-		rulerBg           tui.Color
-		inlayHint         tui.Style
-		inlayHintType     tui.Style
-		inlayHintParam    tui.Style
-		severityHint      tui.Style
-		severityInfo      tui.Style
-		severityWarning   tui.Style
-		severityError     tui.Style
+		text         tui.Style
+		line         tui.Style
+		lineSelected tui.Style
+
+		selection      tui.Style
+		cursor         tui.Style
+		cursorPrim     tui.Style
+		cursorLinePrim tui.Style
+		cursorLineSec  tui.Style
+		cursorColumn   tui.Style
+
+		whitespace  tui.Style
+		indentGuide tui.Style
+		rulerBg     tui.Color
+
+		inlayHint      tui.Style
+		inlayHintType  tui.Style
+		inlayHintParam tui.Style
+
+		severityHint    tui.Style
+		severityInfo    tui.Style
+		severityWarning tui.Style
+		severityError   tui.Style
+
 		diagnostic        tui.Style
 		diagnosticHint    tui.Style
 		diagnosticInfo    tui.Style
 		diagnosticWarning tui.Style
 		diagnosticError   tui.Style
+
 		documentHighlight tui.Style
 		documentLink      tui.Style
 		searchMatch       tui.Style
-		diffAdded         tui.Style
-		diffModified      tui.Style
-		diffRemoved       tui.Style
+
+		diffAdded    tui.Style
+		diffModified tui.Style
+		diffRemoved  tui.Style
 	}
 
 	// statusElem is a single rendered piece of a status bar
@@ -59,23 +66,27 @@ type (
 	}
 
 	statusElemCtx struct {
-		doc        *view.Document
-		mode       view.Mode
-		baseTUI    tui.Style
-		modeSt     tui.Style
-		sepSt      tui.Style
-		spinSt     tui.Style
-		sep        string
+		doc  *view.Document
+		mode view.Mode
+
+		baseTUI tui.Style
+		modeSt  tui.Style
+		sepSt   tui.Style
+		spinSt  tui.Style
+		sep     string
+
+		cursor     core.Position
 		nSel       int
 		primIdx    int
 		primLen    int
 		totalLines int
-		reg        rune
-		cwd        string
-		cursor     core.Position
-		vcsHead    string
-		busy       bool
-		spinFrame  int
+
+		reg     rune
+		cwd     string
+		vcsHead string
+
+		busy      bool
+		spinFrame int
 	}
 )
 

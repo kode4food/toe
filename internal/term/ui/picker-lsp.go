@@ -63,6 +63,7 @@ func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	})
 }
 
+// Load lists the commands the language servers offer
 func (l *lspWorkspaceCommandSource) Load(
 	_ *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -78,6 +79,7 @@ func (l *lspWorkspaceCommandSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept executes the chosen server command
 func (l *lspWorkspaceCommandSource) Accept(
 	e *view.Editor, item *PickerItem, _ PickerAcceptAction,
 ) {
@@ -94,6 +96,7 @@ func (l *lspWorkspaceCommandSource) Accept(
 	}
 }
 
+// Load lists the locations the request returned
 func (l *lspLocationSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -120,12 +123,14 @@ func (l *lspLocationSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept jumps to the chosen location
 func (l *lspLocationSource) Accept(
 	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
 }
 
+// Load lists the symbols in the focused document
 func (l *lspSymbolSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -155,16 +160,19 @@ func (l *lspSymbolSource) Load(
 	return items, nil, func() {}
 }
 
+// Accept jumps to the chosen symbol
 func (l *lspSymbolSource) Accept(
 	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	acceptLocation(e, item, action)
 }
 
+// Search re-queries the servers for a new symbol name
 func (l *lspWorkspaceSymbolSource) Search(query string) {
 	l.query = query
 }
 
+// Load lists workspace symbols matching the current query
 func (l *lspWorkspaceSymbolSource) Load(
 	e *view.Editor,
 ) ([]PickerItem, <-chan PickerItem, StopFunc) {
@@ -216,6 +224,7 @@ func (l *lspWorkspaceSymbolSource) item(
 	}, true
 }
 
+// Accept jumps to the chosen symbol
 func (l *lspWorkspaceSymbolSource) Accept(
 	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {

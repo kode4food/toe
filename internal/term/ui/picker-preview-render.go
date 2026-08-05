@@ -7,19 +7,23 @@ import (
 )
 
 type previewLineCtx struct {
-	format      *language.TextFormat
-	styles      *tuiStyles
-	fillTUI     tui.Style
-	popupBg     tui.Color
-	hlBg        tui.Color
-	w           int
-	rowSkip     int
-	maxH        int
-	softWrap    bool
+	format   *language.TextFormat
+	styles   *tuiStyles
+	softWrap bool
+
+	fillTUI tui.Style
+	popupBg tui.Color
+	hlBg    tui.Color
+
+	w       int
+	maxH    int
+	rowSkip int
+
 	lStr        string
 	highlighted bool
-	markerW     int
+
 	marker      string
+	markerW     int
 	markerStyle tui.Style
 }
 

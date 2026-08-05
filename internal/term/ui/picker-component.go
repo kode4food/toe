@@ -37,6 +37,7 @@ func newPickerComponent(cx *Context, p *Picker) *PickerComponent {
 	}
 }
 
+// HandleEvent drives filtering, selection, and acceptance
 func (p *PickerComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -69,6 +70,7 @@ func (p *PickerComponent) HandleEvent(
 	return ignored(), nil
 }
 
+// Layout centres the picker, sizing the preview to the space left
 func (p *PickerComponent) Layout(
 	_ *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -84,6 +86,7 @@ func (p *PickerComponent) Layout(
 	}, true
 }
 
+// PaintBuffer draws the picker list, its input, and any preview
 func (p *PickerComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
 		p.paint(cx, buf, pl)
@@ -133,6 +136,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	p.listBounds = p.listBounds.Translate(pl.Point)
 }
 
+// Cursor returns the caret position within the filter input
 func (p *PickerComponent) Cursor(
 	*Context, geom.Size,
 ) (cur tea.Cursor, ok bool) {

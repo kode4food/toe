@@ -22,14 +22,18 @@ type (
 
 	completionComponent struct {
 		overlayBuf
-		ec         *EditorComponent
-		all        []view.CompletionItem
-		items      []view.CompletionItem
-		anchor     completionAnchor
-		cursor     int
-		scroll     int
+		ec *EditorComponent
+
+		all   []view.CompletionItem
+		items []view.CompletionItem
+
+		anchor completionAnchor
+		cursor int
+		scroll int
+
 		bounds     geom.Area
 		listBounds geom.Area
+
 		refreshGen int
 		manual     bool
 		incomplete bool
@@ -103,6 +107,7 @@ func DefaultCompletionOptions() CompletionOptions {
 	}
 }
 
+// HandleEvent drives selection, filtering, and acceptance
 func (c *completionComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
@@ -161,10 +166,12 @@ func (c *completionComponent) handleAction(
 	}
 }
 
+// Cursor leaves the cursor to the layer below
 func (c *completionComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 	return tea.Cursor{}, false
 }
 
+// Layout places the list near the cursor, inside the frame
 func (c *completionComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -182,6 +189,7 @@ func (c *completionComponent) Layout(
 	}, screen), true
 }
 
+// PaintBuffer draws the completion list and its documentation
 func (c *completionComponent) PaintBuffer(
 	cx *Context, pl geom.Area,
 ) *tui.Buffer {

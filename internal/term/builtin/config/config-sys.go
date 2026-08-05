@@ -6,7 +6,6 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/theme"
-	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -14,7 +13,6 @@ import (
 type pathProvider func() (string, bool)
 
 var (
-	errThemeTrueColor     = i18n.NewError(i18n.ErrorThemeTrueColor)
 	errThemeLoad          = i18n.NewError(i18n.ErrorThemeLoad)
 	errConfigUnavailable  = i18n.NewError(i18n.ErrorConfigUnavailable)
 	errWorkspaceUntrusted = i18n.NewError(i18n.ErrorWorkspaceUntrustedHint)
@@ -111,8 +109,8 @@ func themeCmds() []command.Command {
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					name := e.Options().Theme
-					if _, _, err := theme.Load(name); err != nil {
-						th, _, _ := theme.Default()
+					if _, err := theme.Load(name); err != nil {
+						th, _ := theme.Default()
 						name = th.Name()
 					}
 					return command.Result{Message: name}
@@ -121,16 +119,12 @@ func themeCmds() []command.Command {
 				if name == "default" {
 					name = view.DefaultTheme
 				}
-				th, _, err := theme.Load(name)
-				if err != nil {
+				if _, err := theme.Load(name); err != nil {
 					return command.Result{
 						Error: errThemeLoad.WithVars(i18n.Vars{
 							"message": err,
 						}),
 					}
-				}
-				if !(ui.TrueColorSupported() || th.Is16Color()) {
-					return command.Result{Error: errThemeTrueColor}
 				}
 				e.Options().Theme = name
 				return command.Result{}

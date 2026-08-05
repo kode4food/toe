@@ -12,6 +12,7 @@ import (
 const (
 	rulerBackgroundPct = 0.06
 	cursorHighlightPct = 0.03
+	grayRampStep       = 10
 )
 
 func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
@@ -93,6 +94,9 @@ func isLightTheme(th *theme.Theme) bool {
 }
 
 func deriveBackground(bg tui.Color, pct float64, light bool) tui.Color {
+	if !TrueColorSupported() {
+		return rampBackground(bg, pct, light)
+	}
 	r, g, b, _ := bg.RGBA()
 	red, green, blue := uint8(r>>8), uint8(g>>8), uint8(b>>8)
 	toward := 255.0
@@ -103,6 +107,18 @@ func deriveBackground(bg tui.Color, pct float64, light bool) tui.Color {
 		return uint8(float64(v) + (toward-float64(v))*pct)
 	}
 	return tui.ColorRGB(shift(red), shift(green), shift(blue))
+}
+
+func rampBackground(bg tui.Color, pct float64, light bool) tui.Color {
+	// a 3% tint is finer than the color cube can express, and the background
+	// quantizes too, so step from the entry it actually lands on
+	lum := colorLuma(bg.Quantized()) / lumaScale
+	steps := int(pct/cursorHighlightPct + 0.5)
+	if light {
+		steps = -steps
+	}
+	v := uint8(min(max(lum+steps*grayRampStep, 0), 255))
+	return tui.ColorRGB(v, v, v).Quantized()
 }
 
 func clearStyleBackground(st tui.Style) tui.Style {

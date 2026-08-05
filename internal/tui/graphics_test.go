@@ -59,6 +59,27 @@ func TestColor(t *testing.T) {
 	t.Run("Darkened leaves reset alone", func(t *testing.T) {
 		assert.True(t, tui.ColorReset.Darkened(50).IsReset())
 	})
+
+	// per-channel rounding sends this one to navy 17
+	t.Run("Quantized picks the nearest entry", func(t *testing.T) {
+		assert.Equal(t,
+			tui.ColorIndexed(236), tui.ColorRGB(0x24, 0x27, 0x3a).Quantized(),
+		)
+	})
+
+	t.Run("Quantized keeps an exact match", func(t *testing.T) {
+		assert.Equal(t,
+			tui.ColorIndexed(240), tui.ColorRGB(88, 88, 88).Quantized(),
+		)
+	})
+
+	t.Run("Quantized leaves non-rgb alone", func(t *testing.T) {
+		assert.Equal(t, tui.ColorReset, tui.ColorReset.Quantized())
+		assert.Equal(t, tui.ColorRed, tui.ColorRed.Quantized())
+		assert.Equal(t,
+			tui.ColorIndexed(42), tui.ColorIndexed(42).Quantized(),
+		)
+	})
 }
 
 func TestPlaceholderSymbol(t *testing.T) {

@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"math"
+
 	"github.com/charmbracelet/x/ansi"
 	"github.com/charmbracelet/x/ansi/kitty"
 
@@ -45,6 +47,13 @@ const (
 	ModifierReversed   Modifier = 0b0000_0100_0000
 	ModifierHidden     Modifier = 0b0000_1000_0000
 	ModifierCrossedOut Modifier = 0b0001_0000_0000
+)
+
+// indices below 16 are terminal-configurable, so their nominal values are not
+// reliable match targets
+const (
+	paletteFirst = 16
+	paletteSize  = 256
 )
 
 const (
@@ -152,6 +161,28 @@ func (c Color) Darkened(pct int) Color {
 	return ColorRGB(scale(r), scale(g), scale(b))
 }
 
+// Quantized returns the nearest 256-color palette entry, by true distance
+// rather than the per-channel rounding a terminal library would apply
+func (c Color) Quantized() Color {
+	if c.kind != colorRGB {
+		return c
+	}
+	r, g, b, _ := c.RGBA()
+	best := paletteFirst
+	bestDist := math.MaxInt
+	for i := paletteFirst; i < paletteSize; i++ {
+		pr, pg, pb, _ := ansi.IndexedColor(i).RGBA()
+		dr := int(r>>8) - int(pr>>8)
+		dg := int(g>>8) - int(pg>>8)
+		db := int(b>>8) - int(pb>>8)
+		if d := dr*dr + dg*dg + db*db; d < bestDist {
+			best = i
+			bestDist = d
+		}
+	}
+	return ColorIndexed(uint8(best))
+}
+
 func (s Style) Fg(c Color) Style {
 	s.fg = c
 	return s
@@ -183,6 +214,15 @@ func (s Style) Darkened(pct int) Style {
 	s.fg = s.fg.Darkened(pct)
 	s.bg = s.bg.Darkened(pct)
 	s.underlineColor = s.underlineColor.Darkened(pct)
+	return s
+}
+
+// Quantized snaps the foreground, background, and underline colors onto the
+// 256-color palette
+func (s Style) Quantized() Style {
+	s.fg = s.fg.Quantized()
+	s.bg = s.bg.Quantized()
+	s.underlineColor = s.underlineColor.Quantized()
 	return s
 }
 

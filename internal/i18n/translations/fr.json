@@ -88,7 +88,6 @@
   "error.unknownLineEnding": "fin de ligne inconnue : {name}",
   "error.expectedIndent": "'tab' ou nombre d'espaces (1-16) attendu",
   "error.themeLoad": "impossible de charger le thème : {message}",
-  "error.themeTrueColor": "thème incompatible sans True Color",
   "error.noDirectory": "aucun répertoire fourni",
   "error.invalidWidth": "largeur invalide",
   "error.bufferReadOnly": "tampon en lecture seule",

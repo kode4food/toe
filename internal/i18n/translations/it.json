@@ -88,7 +88,6 @@
   "error.unknownLineEnding": "fine riga sconosciuta: {name}",
   "error.expectedIndent": "previsto 'tab' o numero di spazi (1-16)",
   "error.themeLoad": "impossibile caricare il tema: {message}",
-  "error.themeTrueColor": "il tema richiede True Color",
   "error.noDirectory": "nessuna directory fornita",
   "error.invalidWidth": "larghezza non valida",
   "error.bufferReadOnly": "buffer in sola lettura",

@@ -88,7 +88,6 @@
   "error.unknownLineEnding": "unbekanntes Zeilenende: {name}",
   "error.expectedIndent": "'tab' oder Leerzeichenanzahl (1-16) erwartet",
   "error.themeLoad": "Theme konnte nicht geladen werden: {message}",
-  "error.themeTrueColor": "Theme erfordert True Color",
   "error.noDirectory": "kein Verzeichnis angegeben",
   "error.invalidWidth": "ungültige Breite",
   "error.bufferReadOnly": "Puffer schreibgeschützt",

@@ -95,9 +95,12 @@ func checkThemes() Check {
 			errs = append(errs, fmt.Sprintf("%s did not load: %v", name, err))
 			continue
 		}
-		th, _ := theme.Decode(data)
+		th, warnings := theme.Decode(data)
 		if err := th.Validate(); err != nil {
 			errs = append(errs, fmt.Sprintf("%s is invalid: %v", name, err))
+		}
+		for _, w := range warnings {
+			errs = append(errs, fmt.Sprintf("%s: %s", name, w))
 		}
 	}
 	return Check{

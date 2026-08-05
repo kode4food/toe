@@ -281,19 +281,18 @@ func TestTheme(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 	t.Run("loads and decodes built-in theme", func(t *testing.T) {
-		th, warnings, err := theme.Load("mocha")
+		th, err := theme.Load("mocha")
 
 		style, ok := th.TryGet("ui.text")
 
 		assert.NoError(t, err)
-		assert.Empty(t, warnings)
 		assert.Equal(t, "mocha", th.Name())
 		assert.True(t, ok)
 		assert.Equal(t, tui.ColorRGB(0xcd, 0xd6, 0xf4), style.FgColor())
 	})
 
 	t.Run("rejects unsupported theme", func(t *testing.T) {
-		_, _, err := theme.Load("bad")
+		_, err := theme.Load("bad")
 
 		assert.True(t, errors.Is(err, loader.ErrThemeNotFound))
 	})
@@ -302,11 +301,15 @@ func TestLoad(t *testing.T) {
 func TestCatppuccinThemes(t *testing.T) {
 	for _, name := range loader.ThemeNames() {
 		t.Run(name, func(t *testing.T) {
-			th, warnings, err := theme.Load(name)
+			data, err := loader.LoadThemeTOML(name)
+			assert.NoError(t, err)
+			_, warnings := theme.Decode(data)
+			assert.Empty(t, warnings)
+
+			th, err := theme.Load(name)
 			style, ok := th.TryGet("ui.text")
 
 			assert.NoError(t, err)
-			assert.Empty(t, warnings)
 			assert.Equal(t, name, th.Name())
 			assert.NoError(t, th.Validate())
 			assert.True(t, ok)
@@ -318,11 +321,10 @@ func TestCatppuccinThemes(t *testing.T) {
 
 func TestThemeDefault(t *testing.T) {
 	t.Run("Default loads mocha theme", func(t *testing.T) {
-		th, warnings, err := theme.Default()
+		th, err := theme.Default()
 		assert.NoError(t, err)
 		assert.NotNil(t, th)
 		assert.Equal(t, "mocha", th.Name())
-		_ = warnings
 	})
 }
 

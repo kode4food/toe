@@ -5,6 +5,15 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// rec. 601 luma coefficients, scaled to stay in integer math
+const (
+	lumaRed      = 299
+	lumaGreen    = 587
+	lumaBlue     = 114
+	lumaScale    = 1000
+	lumaMidpoint = 128 * lumaScale
+)
+
 func documentColorSpans(colors []view.DocumentColor) []colorSpan {
 	if len(colors) == 0 {
 		return nil
@@ -42,12 +51,13 @@ func documentColorAnnotations(colors []view.DocumentColor) []inlineAnnotation {
 func documentColorStyle(color view.DocumentColor) tui.Style {
 	bg := tui.ColorRGB(color.Red, color.Green, color.Blue)
 	fg := tui.ColorWhite
-	if colorLuma(color) > 128000 {
+	if colorLuma(bg) > lumaMidpoint {
 		fg = tui.ColorBlack
 	}
 	return tui.Style{}.Fg(fg).Bg(bg)
 }
 
-func colorLuma(color view.DocumentColor) int {
-	return int(color.Red)*299 + int(color.Green)*587 + int(color.Blue)*114
+func colorLuma(c tui.Color) int {
+	r, g, b, _ := c.RGBA()
+	return lumaRed*int(r>>8) + lumaGreen*int(g>>8) + lumaBlue*int(b>>8)
 }

@@ -181,20 +181,6 @@ text-width = 72
 		clearColorEnv(t)
 		e := view.NewEditor(t.TempDir())
 		e.Options().Theme = "latte"
-		m := resize(newTestModel(t, e), 80, 24)
-
-		m = runTypable(m, "theme mocha")
-
-		assert.NotEqual(t, "mocha", e.Options().Theme)
-		assert.Equal(t, "latte", e.Options().Theme)
-		assert.Contains(t, m.View().Content, "theme requires true color")
-	})
-
-	t.Run("theme: RGB with true color", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		t.Setenv("COLORTERM", "truecolor")
-		t.Setenv("WSL_DISTRO_NAME", "")
-		e := view.NewEditor(t.TempDir())
 
 		_ = runTypable(newTestModel(t, e), "theme mocha")
 

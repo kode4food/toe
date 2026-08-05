@@ -88,7 +88,6 @@
   "error.unknownLineEnding": "unknown line ending: {name}",
   "error.expectedIndent": "expected 'tab' or spaces count (1-16)",
   "error.themeLoad": "could not load theme: {message}",
-  "error.themeTrueColor": "theme requires true color support",
   "error.noDirectory": "no directory given",
   "error.invalidWidth": "invalid width",
   "error.bufferReadOnly": "buffer is read-only",

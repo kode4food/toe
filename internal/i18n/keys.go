@@ -53,7 +53,6 @@ const (
 	ErrorUnknownLineEnding      Key = "error.unknownLineEnding"
 	ErrorExpectedIndent         Key = "error.expectedIndent"
 	ErrorThemeLoad              Key = "error.themeLoad"
-	ErrorThemeTrueColor         Key = "error.themeTrueColor"
 	ErrorConfigUnavailable      Key = "error.configUnavailable"
 	ErrorNoDirectory            Key = "error.noDirectory"
 	ErrorInvalidWidth           Key = "error.invalidWidth"

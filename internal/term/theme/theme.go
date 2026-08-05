@@ -18,6 +18,8 @@ type Theme struct {
 	rgb           bool
 }
 
+const defaultThemeName = "mocha"
+
 var (
 	ErrMissingSelection = errors.New("missing required ui.selection scope")
 	ErrInvalidTheme     = errors.New("invalid theme")
@@ -62,21 +64,18 @@ func Decode(data map[string]any) (*Theme, []string) {
 	}, warnings
 }
 
-func Load(name string) (*Theme, []string, error) {
+func Load(name string) (*Theme, error) {
 	data, err := loader.LoadThemeTOML(name)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	th, warnings := Decode(data)
+	th, _ := Decode(data)
 	th.name = name
-	if err := th.Validate(); err != nil {
-		return nil, warnings, err
-	}
-	return th, warnings, nil
+	return th, nil
 }
 
-func Default() (*Theme, []string, error) {
-	return Load("mocha")
+func Default() (*Theme, error) {
+	return Load(defaultThemeName)
 }
 
 func (t *Theme) Name() string {
@@ -96,6 +95,18 @@ func (t *Theme) Dimmed(pct int) *Theme {
 	dimmed := *t
 	dimmed.styles = styles
 	return &dimmed
+}
+
+// Quantized returns a copy of the theme with every style snapped onto the
+// 256-color palette, for terminals without true color
+func (t *Theme) Quantized() *Theme {
+	styles := make(map[string]tui.Style, len(t.styles))
+	for scope, style := range t.styles {
+		styles[scope] = style.Quantized()
+	}
+	quantized := *t
+	quantized.styles = styles
+	return &quantized
 }
 
 func (t *Theme) Get(scope string) tui.Style {

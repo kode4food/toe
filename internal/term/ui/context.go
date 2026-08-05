@@ -73,19 +73,26 @@ func (c *Context) ensureTheme() {
 	if reload {
 		c.theme.name = name
 		c.theme.generation++
-		th, _, err := theme.Load(name)
+		th, err := theme.Load(name)
 		if err != nil {
-			th, _, err = theme.Default()
+			th, err = theme.Default()
 			if err != nil {
 				th = fallbackTheme()
 			}
 		}
-		c.theme.active = th
+		c.theme.active = paletteFor(th)
 	}
 	if reload || dim != c.theme.dim {
 		c.theme.dim = dim
-		c.theme.dimmed = c.theme.active.Dimmed(100 - dim)
+		c.theme.dimmed = paletteFor(c.theme.active.Dimmed(100 - dim))
 	}
+}
+
+func paletteFor(th *theme.Theme) *theme.Theme {
+	if TrueColorSupported() {
+		return th
+	}
+	return th.Quantized()
 }
 
 func fallbackTheme() *theme.Theme {

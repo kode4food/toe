@@ -513,6 +513,50 @@ func TestThemeRender(t *testing.T) {
 		assert.Contains(t, m.View().Content, "\x1b[48;2;224;226;230m")
 	})
 
+	t.Run("rulers fall back to the gray ramp", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		clearColorEnv(t)
+		path := filepath.Join(root, "note.txt")
+		err := os.WriteFile(path, []byte("a\nb\n"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(root)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		e.Options().Theme = "mocha"
+		e.Options().Rulers = []int{10}
+		e.Options().CursorLine = true
+		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
+
+		out := m.View().Content
+
+		// nothing stays rgb, and both derived highlights clear the background
+		// rather than landing on it
+		assert.NotContains(t, out, "\x1b[48;2;")
+		assert.Contains(t, out, "\x1b[48;5;235m")
+		assert.Contains(t, out, "\x1b[48;5;236m")
+		assert.Contains(t, out, "\x1b[48;5;237m")
+
+		e.Options().Theme = "latte"
+		m = resize(m, 40, 10)
+		assert.Contains(t, m.View().Content, "\x1b[48;5;253m")
+	})
+
+	// per-channel rounding sent this one to navy; nearest-match keeps it gray
+	t.Run("dark theme stays neutral", func(t *testing.T) {
+		root := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		clearColorEnv(t)
+		e := view.NewEditor(root)
+		e.Options().Theme = "macchiato"
+		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
+
+		out := m.View().Content
+
+		assert.NotContains(t, out, "\x1b[48;5;17m")
+		assert.Contains(t, out, "\x1b[48;5;236m")
+	})
+
 	t.Run("renders rulers cleanly", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())

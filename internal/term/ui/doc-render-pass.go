@@ -153,9 +153,9 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	})
 }
 
-func (r *renderPass) forceFullRedraw(
-	cache *renderCache, th *theme.Theme,
-) (force bool) {
+func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
+	var force bool
+
 	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
 	if cache.stylesKey != key {
 		force = true
@@ -192,7 +192,7 @@ func (r *renderPass) forceFullRedraw(
 		force = true
 	}
 
-	return
+	return force
 }
 
 type beginPaneRedrawArgs struct {

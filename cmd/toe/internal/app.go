@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/colorprofile"
 
 	"github.com/kode4food/toe/internal/health"
 	"github.com/kode4food/toe/internal/i18n"
@@ -104,7 +105,7 @@ func Run(args []string, out io.Writer) error {
 	}
 	defer ui.CloseAllTerminalPanes(a.Editor)
 	defer a.Model.Close()
-	if _, err := tea.NewProgram(a.Model).Run(); err != nil {
+	if _, err := tea.NewProgram(a.Model, teaOptions()...).Run(); err != nil {
 		return err
 	}
 	return a.MaybeSaveSession(baseValues)
@@ -301,6 +302,13 @@ func ChangedOptionValues(base, values map[string]string) map[string]string {
 		}
 	}
 	return out
+}
+
+func teaOptions() []tea.ProgramOption {
+	if !ui.TrueColorSupported() {
+		return nil
+	}
+	return []tea.ProgramOption{tea.WithColorProfile(colorprofile.TrueColor)}
 }
 
 func evalInitFile(rt *ale.Runtime, path string) error {

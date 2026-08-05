@@ -2,7 +2,6 @@ package config
 
 import (
 	"cmp"
-	"os"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
@@ -53,12 +52,6 @@ var (
 	errUnknownOption = i18n.NewError(i18n.ErrorUnknownOptionKey)
 	errInvalidOption = i18n.NewError(i18n.ErrorInvalidOptionKey)
 )
-
-func terminalTrueColor() bool {
-	ct := os.Getenv("COLORTERM")
-	return ct == "truecolor" || ct == "24bit" ||
-		os.Getenv("WSL_DISTRO_NAME") != ""
-}
 
 // ConfigurationModule returns the option and config commands
 func ConfigurationModule(r *command.Registry) command.Module {

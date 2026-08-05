@@ -6,6 +6,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/theme"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -128,7 +129,7 @@ func themeCmds() []command.Command {
 						}),
 					}
 				}
-				if !(terminalTrueColor() || th.Is16Color()) {
+				if !(ui.TrueColorSupported() || th.Is16Color()) {
 					return command.Result{Error: errThemeTrueColor}
 				}
 				e.Options().Theme = name

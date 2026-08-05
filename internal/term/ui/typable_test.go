@@ -178,8 +178,7 @@ text-width = 72
 
 	t.Run("theme: RGB without true color", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		t.Setenv("COLORTERM", "")
-		t.Setenv("WSL_DISTRO_NAME", "")
+		clearColorEnv(t)
 		e := view.NewEditor(t.TempDir())
 		e.Options().Theme = "latte"
 		m := resize(newTestModel(t, e), 80, 24)

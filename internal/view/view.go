@@ -242,6 +242,10 @@ func (v *View) BeginFreeScroll(rev int, sel core.Selection) {
 
 // EndFreeScroll re-couples the viewport to the cursor
 func (v *View) EndFreeScroll() {
+	if !v.freeScroll.active {
+		return
+	}
+	v.dirty = true
 	v.freeScroll = freeScrollState{}
 }
 

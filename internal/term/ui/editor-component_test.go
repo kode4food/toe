@@ -765,7 +765,7 @@ func TestFreeScroll(t *testing.T) {
 		assert.False(t, v2.FreeScroll())
 	})
 
-	t.Run("click near viewport edge does not scroll", func(t *testing.T) {
+	t.Run("click near viewport edge recouples", func(t *testing.T) {
 		var b strings.Builder
 		for i := range 60 {
 			_, _ = fmt.Fprintf(&b, "line%d\n", i)
@@ -785,9 +785,8 @@ func TestFreeScroll(t *testing.T) {
 		assert.NotNil(t, v)
 		before := v.Offset()
 
-		// the last content row before the status/command line is well inside
-		// the default 5-line scrolloff margin, which used to force a
-		// re-center on click
+		// the last content row before the status/command line sits inside the
+		// default 5-line scrolloff margin, so re-coupling scrolls to honour it
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
 		clickY := -1
 		for y := len(lines) - 2; y >= 0; y-- {
@@ -804,13 +803,41 @@ func TestFreeScroll(t *testing.T) {
 		m = m2.(ui.Model)
 		_ = m.View()
 
-		assert.True(t, v.FreeScroll())
-		assert.Equal(t, before, v.Offset())
-
-		m = sendKey(m, 'j')
-		_ = m.View()
-
 		assert.False(t, v.FreeScroll())
+		assert.NotEqual(t, before, v.Offset())
+	})
+
+	t.Run("repeat click past line end recouples", func(t *testing.T) {
+		e := editorWithText(t, strings.Repeat("x", 200)+"\nshort\n")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		km := command.NewKeymaps()
+		m := resize(ui.New(e, km), 80, 24)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+
+		// row 1 holds "short", scrolled entirely off to the left, so clicking
+		// it resolves to a cursor outside the window. The second pass repeats
+		// the click verbatim, leaving the selection unchanged
+		for range 2 {
+			off := v.Offset()
+			off.HorizontalOffset = 100
+			v.SetOffset(off)
+			v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
+			_ = m.View()
+
+			m2, _ := m.Update(tea.MouseClickMsg{
+				X: 60, Y: 1, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+			_ = m.View()
+
+			assert.False(t, v.FreeScroll())
+			assert.Equal(t, 0, v.Offset().HorizontalOffset)
+		}
 	})
 }
 

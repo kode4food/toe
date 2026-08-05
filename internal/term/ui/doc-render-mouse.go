@@ -162,7 +162,7 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 		newSel = core.PointSelection(res.pos)
 	}
 	action.ApplySelection(r.cx.Editor, newSel)
-	res.view.BeginFreeScroll(res.doc.Revision(), newSel)
+	res.view.EndFreeScroll()
 }
 
 func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {

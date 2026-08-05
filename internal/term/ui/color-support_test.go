@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,16 @@ var colorEnvKeys = []string{
 	"COLORTERM", "TERM", "TERM_PROGRAM", "VTE_VERSION",
 	"WSL_DISTRO_NAME", "KITTY_WINDOW_ID", "WEZTERM_EXECUTABLE",
 	"ALACRITTY_WINDOW_ID", "KONSOLE_VERSION", "WT_SESSION",
+}
+
+// renders assert rgb escapes, so the package must not inherit whatever the
+// terminal running the tests happens to advertise
+func TestMain(m *testing.M) {
+	for _, k := range colorEnvKeys {
+		_ = os.Unsetenv(k)
+	}
+	_ = os.Setenv("COLORTERM", "truecolor")
+	os.Exit(m.Run())
 }
 
 func TestTrueColorSupported(t *testing.T) {

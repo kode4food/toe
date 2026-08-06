@@ -89,7 +89,45 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.NotContains(t, out, "source")
 		assert.Contains(t, out, "message")
 		assert.Contains(t, out, "path")
-		assert.Less(t, strings.Index(out, "message"), strings.Index(out, "path"))
+		assert.Less(t,
+			strings.Index(out, "message"), strings.Index(out, "path"))
+		// grouping is shared with the current-file picker
+		assert.Greater(t,
+			sectionRow(out, "Warnings"), sectionRow(out, "Errors"),
+		)
+	})
+
+	t.Run("groups by severity", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package a\n"), 0o644))
+
+		e := view.NewEditor(dir)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.Document(v.DocID())
+		assert.NotNil(t, doc)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{
+			{
+				Severity: view.DiagnosticSeverityWarning,
+				Message:  "careful", Source: "test", Provider: "test",
+			},
+			{
+				Severity: view.DiagnosticSeverityError,
+				Message:  "broken", Source: "test", Provider: "test",
+			},
+		})
+
+		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
+		out := stripANSI(m.View().Content)
+
+		errors := sectionRow(out, "Errors")
+		warnings := sectionRow(out, "Warnings")
+		assert.GreaterOrEqual(t, errors, 0)
+		assert.Greater(t, warnings, errors)
+		// no info or hint diagnostics, so those labels stay hidden
+		assert.Equal(t, -1, sectionRow(out, "Information"))
+		assert.Equal(t, -1, sectionRow(out, "Hints"))
 	})
 
 	for _, tc := range []struct {

@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -43,6 +44,13 @@ var (
 		view.DiagnosticSeverityWarning: "warning",
 		view.DiagnosticSeverityError:   "error",
 	}
+
+	diagnosticSeverityLabels = [...]i18n.Key{
+		view.DiagnosticSeverityHint:    i18n.StatusPickerHints,
+		view.DiagnosticSeverityInfo:    i18n.StatusPickerInfo,
+		view.DiagnosticSeverityWarning: i18n.StatusPickerWarnings,
+		view.DiagnosticSeverityError:   i18n.StatusPickerErrors,
+	}
 )
 
 // NewDiagnosticPicker lists diagnostics for the focused document
@@ -66,8 +74,8 @@ func (d *diagnosticPickerSource) Load(
 			items = append(items, d.item(e, doc, diag))
 		}
 	}
-	sortDiagnosticPickerItems(items)
-	return items, nil, func() {}
+	ui.SortPickerItems(items)
+	return append(diagnosticSections(), items...), nil, func() {}
 }
 
 // Accept jumps to the chosen diagnostic
@@ -111,6 +119,7 @@ func (d *diagnosticPickerSource) item(
 	}
 	return ui.PickerItem{
 		Display:     display,
+		Group:       diagnosticSeverityGroup(diag.Severity),
 		Columns:     columns,
 		StyleScopes: scopes,
 		SortKey:     display,
@@ -156,22 +165,6 @@ func diagnosticPickerDocuments(
 	return nil
 }
 
-func sortDiagnosticPickerItems(items []ui.PickerItem) {
-	slices.SortStableFunc(items, func(a, b ui.PickerItem) int {
-		aPayload, aOK := a.Payload.(diagnosticPickerPayload)
-		bPayload, bOK := b.Payload.(diagnosticPickerPayload)
-		if !aOK || !bOK {
-			return cmp.Compare(a.SortKey, b.SortKey)
-		}
-		if c := cmp.Compare(
-			bPayload.diag.Severity, aPayload.diag.Severity,
-		); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.SortKey, b.SortKey)
-	})
-}
-
 func diagnosticLineRange(
 	text core.Rope, diag view.Diagnostic,
 ) (int, *ui.PickerLineRange) {
@@ -201,6 +194,25 @@ func diagnosticSeverityIcon(sev view.DiagnosticSeverity, nerd bool) string {
 		return icons[view.DiagnosticSeverityHint]
 	}
 	return icons[sev]
+}
+
+func diagnosticSections() []ui.PickerItem {
+	out := make([]ui.PickerItem, 0, view.DiagnosticSeverityError)
+	for sev := view.DiagnosticSeverityError; sev > 0; sev-- {
+		out = append(out, ui.PickerItem{
+			Display: i18n.Text(diagnosticSeverityLabels[sev]),
+			Group:   diagnosticSeverityGroup(sev),
+			Section: true,
+		})
+	}
+	return out
+}
+
+func diagnosticSeverityGroup(sev view.DiagnosticSeverity) int {
+	if sev <= 0 || int(sev) >= len(diagnosticSeverityLabels) {
+		sev = view.DiagnosticSeverityHint
+	}
+	return int(view.DiagnosticSeverityError - sev)
 }
 
 func diagnosticSeverityScope(sev view.DiagnosticSeverity) string {

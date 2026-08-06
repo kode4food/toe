@@ -138,7 +138,7 @@ func newDiagnosticPicker(e *view.Editor, workspace bool) *ui.Picker {
 	proportions := []int{0, 1}
 	if workspace {
 		id = "workspace-diagnostics"
-		columns = []string{"", "message", "path"}
+		columns = []string{"", "", ""}
 		proportions = []int{0, 2, 1}
 	}
 	return ui.NewPicker(e, &diagnosticPickerSource{

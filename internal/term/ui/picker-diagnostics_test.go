@@ -87,10 +87,9 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.Contains(t, out, "bad b")
 		assert.NotContains(t, out, "code")
 		assert.NotContains(t, out, "source")
-		assert.Contains(t, out, "message")
-		assert.Contains(t, out, "path")
-		assert.Less(t,
-			strings.Index(out, "message"), strings.Index(out, "path"))
+		assert.Contains(t, out, "b.go")
+		assert.Less(t, strings.Index(out, "bad b"), strings.Index(out, "b.go"))
+		assert.Equal(t, -1, sectionRow(out, "path"))
 		// grouping is shared with the current-file picker
 		assert.Greater(t,
 			sectionRow(out, "Warnings"), sectionRow(out, "Errors"),

@@ -56,7 +56,7 @@ func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &lspWorkspaceSymbolSource{
 		PickerBase: PickerBase{
 			id:          "lsp-workspace-symbols",
-			columns:     []string{"", "name", "path"},
+			columns:     []string{"", "", ""},
 			matchColumn: 1,
 			proportions: []int{0, 0, 1},
 		},

@@ -38,8 +38,8 @@ func TestSlab(t *testing.T) {
 			}
 		})
 
-		// fixed SlabSize chunking would need one array per SlabSize items;
-		// doubling growth covers the same set in far fewer arrays
+		// fixed SlabInitSize chunking would need one array per SlabInitSize
+		// items; doubling growth covers the same set in far fewer arrays
 		assert.Less(t, int(segments), fixedSegments)
 	})
 }

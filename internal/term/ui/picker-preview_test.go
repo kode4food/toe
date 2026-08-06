@@ -588,8 +588,8 @@ func (p *pathPickerSource) Accept(
 
 func (p *pathPickerSource) Load(
 	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	items := []ui.PickerItem{{
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+	items := []*ui.PickerItem{{
 		Display:  "item",
 		Columns:  []string{"item"},
 		SortKey:  "item",

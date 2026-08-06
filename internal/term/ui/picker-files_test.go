@@ -564,7 +564,7 @@ func TestPickerFiles(t *testing.T) {
 		m = next.(ui.Model)
 		assert.NotNil(t, cmd)
 
-		src.ch <- ui.PickerItem{Display: "alpha.go:1"}
+		src.ch <- &ui.PickerItem{Display: "alpha.go:1"}
 		msg = runTestCmd(t, cmd)
 		next, _ = m.Update(msg)
 		m = next.(ui.Model)
@@ -632,12 +632,12 @@ func runTestCmd(t *testing.T, cmd tea.Cmd) tea.Msg {
 }
 
 type controlledDynamicSource struct {
-	ch    chan ui.PickerItem
+	ch    chan *ui.PickerItem
 	query string
 }
 
 func newControlledDynamicSource() *controlledDynamicSource {
-	return &controlledDynamicSource{ch: make(chan ui.PickerItem, 1)}
+	return &controlledDynamicSource{ch: make(chan *ui.PickerItem, 1)}
 }
 
 func (c *controlledDynamicSource) ID() string { return "dynamic" }
@@ -654,7 +654,7 @@ func (c *controlledDynamicSource) Search(query string) { c.query = query }
 
 func (c *controlledDynamicSource) Load(
 	_ *view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	if c.query == "" {
 		return nil, nil, func() {}
 	}

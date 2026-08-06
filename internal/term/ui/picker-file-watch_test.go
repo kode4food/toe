@@ -327,16 +327,16 @@ func (*countingPathSource) Accept(
 
 func (s *countingPathSource) Load(
 	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	s.loadCalls++
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
 		return nil, nil, func() {}
 	}
-	items := make([]ui.PickerItem, 0, len(entries))
+	items := make([]*ui.PickerItem, 0, len(entries))
 	for _, entry := range entries {
 		path := filepath.Join(s.dir, entry.Name())
-		items = append(items, ui.PickerItem{
+		items = append(items, &ui.PickerItem{
 			Display:  entry.Name(),
 			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 		})
@@ -346,12 +346,12 @@ func (s *countingPathSource) Load(
 
 func (*countingPathSource) ItemForPath(
 	_ *view.Editor, path string,
-) (ui.PickerItem, bool) {
+) (*ui.PickerItem, bool) {
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() {
-		return ui.PickerItem{}, false
+		return nil, false
 	}
-	return ui.PickerItem{
+	return &ui.PickerItem{
 		Display:  filepath.Base(path),
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	}, true

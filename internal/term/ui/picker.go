@@ -28,8 +28,8 @@ type (
 	}
 
 	listState struct {
-		items           []PickerItem
-		sections        []PickerItem
+		items           []*PickerItem
+		sections        []*PickerItem
 		matched         []pickerMatch
 		matchedSections int
 		scores          map[pickerScoreKey]*MatchResult
@@ -63,7 +63,7 @@ type (
 	// refresh can replace the list without a visible rebuild
 	SnapshotPickerSource interface {
 		PickerSource
-		Items(e *view.Editor) []PickerItem
+		Items(e *view.Editor) []*PickerItem
 	}
 
 	// PickerFunc constructs a Picker from the editor
@@ -81,7 +81,7 @@ type (
 		Columns() []string
 		MatchColumn() int
 		ColumnProportions() []int
-		Load(*view.Editor) ([]PickerItem, <-chan PickerItem, StopFunc)
+		Load(*view.Editor) ([]*PickerItem, <-chan *PickerItem, StopFunc)
 		Accept(*view.Editor, *PickerItem, PickerAcceptAction)
 	}
 
@@ -96,7 +96,7 @@ type (
 		PickerSource
 		// ItemForPath returns the current row for path and whether the source
 		// contains it
-		ItemForPath(e *view.Editor, path string) (PickerItem, bool)
+		ItemForPath(e *view.Editor, path string) (*PickerItem, bool)
 	}
 
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
@@ -140,6 +140,9 @@ type (
 		DiffKind    view.FileChangeKind
 		BasePath    string
 	}
+
+	// PickerItemSlab is a Slab specialized for PickerItem
+	PickerItemSlab = core.Slab[PickerItem]
 
 	// PreviewRenderer renders a picker item's preview at the given size
 	PreviewRenderer func(geom.Size) string
@@ -401,7 +404,7 @@ func (p *Picker) refreshItems(e *view.Editor) {
 	p.rematchPreservingSelection(target, hadSelection)
 }
 
-func (p *Picker) reconcilePath(path string, item PickerItem, exists bool) {
+func (p *Picker) reconcilePath(path string, item *PickerItem, exists bool) {
 	target, hadSelection := p.selectedTarget()
 	idx := p.findItemIndexByPath(path)
 	switch {
@@ -419,21 +422,21 @@ func (p *Picker) reconcilePath(path string, item PickerItem, exists bool) {
 }
 
 func (p *Picker) findItemIndexByPath(path string) int {
-	exact := slices.IndexFunc(p.list.items, func(it PickerItem) bool {
+	exact := slices.IndexFunc(p.list.items, func(it *PickerItem) bool {
 		return it.Location.Target.Path == path
 	})
 	if exact >= 0 {
 		return exact
 	}
 	key := loader.CanonicalPath(path)
-	return slices.IndexFunc(p.list.items, func(it PickerItem) bool {
+	return slices.IndexFunc(p.list.items, func(it *PickerItem) bool {
 		return loader.CanonicalPath(it.Location.Target.Path) == key
 	})
 }
 
 // takeSections moves section rows into their own list, so matching, sorting and
 // path lookup only ever see real rows
-func (p *Picker) takeSections(items []PickerItem) []PickerItem {
+func (p *Picker) takeSections(items []*PickerItem) []*PickerItem {
 	out := items[:0]
 	for _, item := range items {
 		if item.Section {
@@ -445,7 +448,7 @@ func (p *Picker) takeSections(items []PickerItem) []PickerItem {
 	return out
 }
 
-func (p *Picker) addItems(items []PickerItem) {
+func (p *Picker) addItems(items []*PickerItem) {
 	items = p.takeSections(items)
 	if len(items) == 0 {
 		return
@@ -487,7 +490,7 @@ func (p *Picker) restoreSelection(target PickerTarget) {
 	}
 }
 
-func (p *Picker) addDynamicItems(items []PickerItem) {
+func (p *Picker) addDynamicItems(items []*PickerItem) {
 	if len(items) == 0 {
 		return
 	}
@@ -497,9 +500,9 @@ func (p *Picker) addDynamicItems(items []PickerItem) {
 
 func (p *Picker) resetMatchesFromItems() {
 	p.list.matched = p.list.matched[:0]
-	for i := range p.list.items {
+	for i, item := range p.list.items {
 		p.list.matched = append(
-			p.list.matched, pickerMatch{item: &p.list.items[i], itemIndex: i},
+			p.list.matched, pickerMatch{item: item, itemIndex: i},
 		)
 	}
 	p.insertSections()
@@ -706,8 +709,8 @@ func wantsFileWatchTree(source PickerSource) bool {
 
 // SortPickerItems sorts items by display text, the default ordering for static
 // picker sources
-func SortPickerItems(items []PickerItem) {
-	slices.SortStableFunc(items, func(a, b PickerItem) int {
+func SortPickerItems(items []*PickerItem) {
+	slices.SortStableFunc(items, func(a, b *PickerItem) int {
 		return cmp.Compare(a.Display, b.Display)
 	})
 }

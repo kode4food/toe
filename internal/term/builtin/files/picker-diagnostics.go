@@ -66,12 +66,13 @@ func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 // Load lists every diagnostic across open documents
 func (d *diagnosticPickerSource) Load(
 	e *view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	docs := diagnosticPickerDocuments(e, d.workspace)
-	items := make([]ui.PickerItem, 0)
+	items := make([]*ui.PickerItem, 0)
+	var slab ui.PickerItemSlab
 	for _, doc := range docs {
 		for _, diag := range doc.Diagnostics() {
-			items = append(items, d.item(e, doc, diag))
+			items = append(items, d.item(&slab, e, doc, diag))
 		}
 	}
 	ui.SortPickerItems(items)
@@ -103,8 +104,9 @@ func (d *diagnosticPickerSource) Accept(
 }
 
 func (d *diagnosticPickerSource) item(
-	e *view.Editor, doc *view.Document, diag view.Diagnostic,
-) ui.PickerItem {
+	slab *ui.PickerItemSlab, e *view.Editor, doc *view.Document,
+	diag view.Diagnostic,
+) *ui.PickerItem {
 	name := doc.RelativeName(e.Cwd())
 	line, lines := diagnosticLineRange(doc.Text(), diag)
 	display := fmt.Sprintf("%s:%d %s", name, line+1, diag.Message)
@@ -117,7 +119,7 @@ func (d *diagnosticPickerSource) item(
 		columns = append(columns, name)
 		scopes = append(scopes, "ui.picker.secondary")
 	}
-	return ui.PickerItem{
+	return slab.Add(ui.PickerItem{
 		Display:     display,
 		Group:       diagnosticSeverityGroup(diag.Severity),
 		Columns:     columns,
@@ -128,7 +130,7 @@ func (d *diagnosticPickerSource) item(
 			Lines:  lines,
 		},
 		Payload: diagnosticPickerPayload{id: doc.ID(), diag: diag},
-	}
+	})
 }
 
 func newDiagnosticPicker(e *view.Editor, workspace bool) *ui.Picker {
@@ -196,10 +198,10 @@ func diagnosticSeverityIcon(sev view.DiagnosticSeverity, nerd bool) string {
 	return icons[sev]
 }
 
-func diagnosticSections() []ui.PickerItem {
-	out := make([]ui.PickerItem, 0, view.DiagnosticSeverityError)
+func diagnosticSections() []*ui.PickerItem {
+	out := make([]*ui.PickerItem, 0, view.DiagnosticSeverityError)
 	for sev := view.DiagnosticSeverityError; sev > 0; sev-- {
-		out = append(out, ui.PickerItem{
+		out = append(out, &ui.PickerItem{
 			Display: i18n.Text(diagnosticSeverityLabels[sev]),
 			Group:   diagnosticSeverityGroup(sev),
 			Section: true,

@@ -8,15 +8,15 @@ import (
 
 type (
 	pickerFeedMsg struct {
-		items []PickerItem
-		feed  <-chan PickerItem
+		items []*PickerItem
+		feed  <-chan *PickerItem
 		done  <-chan struct{}
 	}
 
 	pickerDynamicFeedMsg struct {
 		gen   int
-		items []PickerItem
-		feed  <-chan PickerItem
+		items []*PickerItem
+		feed  <-chan *PickerItem
 	}
 )
 
@@ -25,9 +25,9 @@ const (
 	pickerFeedFlushWait = 40 * time.Millisecond
 )
 
-func drainPickerFeed(ch <-chan PickerItem, done <-chan struct{}) tea.Cmd {
+func drainPickerFeed(ch <-chan *PickerItem, done <-chan struct{}) tea.Cmd {
 	return func() tea.Msg {
-		batch := make([]PickerItem, 0, pickerFeedBatchSize)
+		batch := make([]*PickerItem, 0, pickerFeedBatchSize)
 		var flush <-chan time.Time
 		for {
 			select {
@@ -51,9 +51,9 @@ func drainPickerFeed(ch <-chan PickerItem, done <-chan struct{}) tea.Cmd {
 	}
 }
 
-func drainDynamicFeed(gen int, ch <-chan PickerItem) tea.Cmd {
+func drainDynamicFeed(gen int, ch <-chan *PickerItem) tea.Cmd {
 	return func() tea.Msg {
-		batch := make([]PickerItem, 0, pickerFeedBatchSize)
+		batch := make([]*PickerItem, 0, pickerFeedBatchSize)
 		var flush <-chan time.Time
 		for {
 			select {

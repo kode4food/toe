@@ -279,8 +279,8 @@ func (noPreviewPickerSource) ColumnProportions() []int {
 
 func (noPreviewPickerSource) Load(
 	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	return []ui.PickerItem{{
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+	return []*ui.PickerItem{{
 		Display: "plain",
 		Columns: []string{"plain"},
 	}}, nil, func() {}
@@ -309,8 +309,8 @@ func (columnPickerSource) ColumnProportions() []int {
 
 func (c columnPickerSource) Load(
 	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	items := []ui.PickerItem{{
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+	items := []*ui.PickerItem{{
 		Display: "first",
 		Columns: []string{
 			"go",
@@ -324,13 +324,13 @@ func (c columnPickerSource) Load(
 	if c.outlier {
 		items[0].Columns[0] = outlierPickerColumn
 		for range 14 {
-			items = append(items, ui.PickerItem{
+			items = append(items, &ui.PickerItem{
 				Display: "ordinary",
 				Columns: []string{"go", "ordinary.go", "ordinary"},
 			})
 		}
 		for range 4 {
-			items = append(items, ui.PickerItem{
+			items = append(items, &ui.PickerItem{
 				Display: "outlier",
 				Columns: []string{
 					outlierPickerColumn,

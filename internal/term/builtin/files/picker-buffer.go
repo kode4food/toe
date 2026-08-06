@@ -61,7 +61,7 @@ func (p *PickerStartPosition) UnmarshalText(text []byte) error {
 // Load lists the open buffers, most recently used first
 func (b *bufferPickerSource) Load(
 	e *view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	docs := e.AllDocuments()
 	id := view.InvalidDocumentId
 	if doc := e.FocusedDocument(); doc != nil {
@@ -83,21 +83,22 @@ func (b *bufferPickerSource) Load(
 	if !e.Options().NerdFonts {
 		modifiedIcon = bufferPickerModifiedIconAscii
 	}
-	items := make([]ui.PickerItem, 0, len(docs))
+	items := make([]*ui.PickerItem, 0, len(docs))
+	var slab ui.PickerItemSlab
 	for _, doc := range docs {
 		flags := ""
 		if doc.Modified() {
 			flags = modifiedIcon
 		}
 		name := doc.RelativeName(e.Cwd())
-		items = append(items, ui.PickerItem{
+		items = append(items, slab.Add(ui.PickerItem{
 			Display: name,
 			Columns: []string{flags, name},
 			SortKey: name,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{ID: doc.ID()},
 			},
-		})
+		}))
 	}
 	return items, nil, func() {}
 }

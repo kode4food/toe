@@ -19,7 +19,7 @@ import (
 // of items in a known order, each previewing distinct content. The preview of
 // the selected item reveals the selection, independent of the scroll position
 type fixedPickerSource struct {
-	items []ui.PickerItem
+	items []*ui.PickerItem
 	title string
 }
 
@@ -241,7 +241,7 @@ func (fixedPickerSource) Accept(
 
 func (s fixedPickerSource) Load(
 	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	return s.items, nil, func() {}
 }
 
@@ -291,11 +291,11 @@ func fixedPickers(t *testing.T, w, h int) ui.Model {
 	return resize(m, w, h)
 }
 
-func fixedPickerItems(n int) []ui.PickerItem {
-	items := make([]ui.PickerItem, n)
+func fixedPickerItems(n int) []*ui.PickerItem {
+	items := make([]*ui.PickerItem, n)
 	for i := range n {
 		body := fmt.Sprintf("CONTENT-%02d", i)
-		items[i] = ui.PickerItem{
+		items[i] = &ui.PickerItem{
 			Display: fmt.Sprintf("item%02d", i),
 			Columns: []string{fmt.Sprintf("item%02d", i)},
 			Preview: func(geom.Size) string { return body },

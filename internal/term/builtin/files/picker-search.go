@@ -24,11 +24,12 @@ type (
 	}
 
 	globalSearcher struct {
-		ch       chan ui.PickerItem
+		ch       chan *ui.PickerItem
 		done     chan struct{}
 		re       *regexp.Regexp
 		root     string
 		openDocs []docSnap
+		slab     ui.PickerItemSlab
 	}
 )
 
@@ -48,7 +49,7 @@ func (g *globalSearchSource) Search(query string) {
 // Load streams matches for the current query
 func (g *globalSearchSource) Load(
 	e *view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	if g.query == "" {
 		return nil, nil, func() {}
 	}
@@ -119,14 +120,14 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 		}
 		ln := lineNum
 		select {
-		case gs.ch <- ui.PickerItem{
+		case gs.ch <- gs.slab.Add(ui.PickerItem{
 			Display: fmt.Sprintf("%s:%d", rel, ln),
 			SortKey: fmt.Sprintf("%s:%06d", rel, ln),
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{Path: path},
 				Lines:  &ui.PickerLineRange{From: ln - 1, To: ln - 1},
 			},
-		}:
+		}):
 		case <-gs.done:
 			return false
 		}
@@ -167,8 +168,8 @@ func (gs *globalSearcher) walk() {
 
 func globalSearchQuery(
 	root string, openDocs []docSnap, pattern string, smartCase bool,
-) (<-chan ui.PickerItem, ui.StopFunc) {
-	ch := make(chan ui.PickerItem, 256)
+) (<-chan *ui.PickerItem, ui.StopFunc) {
+	ch := make(chan *ui.PickerItem, 256)
 	rePattern := pattern
 	if smartCase && !patternHasUpper(pattern) {
 		rePattern = "(?i)" + pattern

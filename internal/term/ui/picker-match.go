@@ -49,8 +49,7 @@ func (p *Picker) rebuildMatches() {
 	src, _ := p.source.(StaticPickerSource)
 	match := p.prepareMatcher(src)
 	out := p.list.matched[:0]
-	for i := range p.list.items {
-		item := &p.list.items[i]
+	for i, item := range p.list.items {
 		if src == nil {
 			out = append(out, pickerMatch{item: item, itemIndex: i})
 			continue
@@ -104,9 +103,9 @@ func (p *Picker) insertSections() {
 }
 
 func (p *Picker) sectionFor(group int) *PickerItem {
-	for i := range p.list.sections {
-		if p.list.sections[i].Group == group {
-			return &p.list.sections[i]
+	for _, section := range p.list.sections {
+		if section.Group == group {
+			return section
 		}
 	}
 	return nil

@@ -238,14 +238,15 @@ func special(s command.Special) command.KeyEvent {
 
 func (s feedPickerSource) Load(
 	*view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
-	ch := make(chan ui.PickerItem, len(s.paths))
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+	ch := make(chan *ui.PickerItem, len(s.paths))
+	var slab ui.PickerItemSlab
 	for _, p := range s.paths {
-		ch <- ui.PickerItem{
+		ch <- slab.Add(ui.PickerItem{
 			Display:  p,
 			SortKey:  p,
 			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p}},
-		}
+		})
 	}
 	close(ch)
 	return nil, ch, func() {}

@@ -66,15 +66,16 @@ func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 // Load lists the commands the language servers offer
 func (l *lspWorkspaceCommandSource) Load(
 	_ *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
-	items := make([]PickerItem, 0, len(l.commands))
+) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+	items := make([]*PickerItem, 0, len(l.commands))
+	var slab PickerItemSlab
 	for _, command := range l.commands {
-		items = append(items, PickerItem{
+		items = append(items, slab.Add(PickerItem{
 			Display: command,
 			Columns: []string{command},
 			SortKey: command,
 			Payload: command,
-		})
+		}))
 	}
 	return items, nil, func() {}
 }
@@ -99,8 +100,9 @@ func (l *lspWorkspaceCommandSource) Accept(
 // Load lists the locations the request returned
 func (l *lspLocationSource) Load(
 	e *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
-	items := make([]PickerItem, 0, len(l.locations))
+) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+	items := make([]*PickerItem, 0, len(l.locations))
+	var slab PickerItemSlab
 	for _, loc := range l.locations {
 		doc, err := e.PeekDoc(loc.Path)
 		if err != nil {
@@ -109,7 +111,7 @@ func (l *lspLocationSource) Load(
 		line, lines := locationLineRange(doc.Text(), loc)
 		name := doc.RelativeName(e.Cwd())
 		display := fmt.Sprintf("%s:%d", name, line+1)
-		items = append(items, PickerItem{
+		items = append(items, slab.Add(PickerItem{
 			Display: display,
 			Columns: []string{display},
 			SortKey: display,
@@ -118,7 +120,7 @@ func (l *lspLocationSource) Load(
 				Lines:  lines,
 			},
 			Payload: loc,
-		})
+		}))
 	}
 	return items, nil, func() {}
 }
@@ -133,9 +135,10 @@ func (l *lspLocationSource) Accept(
 // Load lists the symbols in the focused document
 func (l *lspSymbolSource) Load(
 	e *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
+) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
 	nerd := e.Options().NerdFonts
-	items := make([]PickerItem, 0, len(l.symbols))
+	items := make([]*PickerItem, 0, len(l.symbols))
+	var slab PickerItemSlab
 	for _, sym := range l.symbols {
 		loc := sym.Location
 		doc, err := e.PeekDoc(loc.Path)
@@ -145,7 +148,7 @@ func (l *lspSymbolSource) Load(
 		_, lines := locationLineRange(doc.Text(), loc)
 		kind := symbolKind(sym.Kind)
 		name := symbolName(sym)
-		items = append(items, PickerItem{
+		items = append(items, slab.Add(PickerItem{
 			Display:     name,
 			Columns:     []string{completionKindIcon(kind, nerd), name},
 			StyleScopes: []string{completionKindStyleScope(kind), ""},
@@ -155,7 +158,7 @@ func (l *lspSymbolSource) Load(
 				Lines:  lines,
 			},
 			Payload: loc,
-		})
+		}))
 	}
 	return items, nil, func() {}
 }
@@ -175,7 +178,7 @@ func (l *lspWorkspaceSymbolSource) Search(query string) {
 // Load lists workspace symbols matching the current query
 func (l *lspWorkspaceSymbolSource) Load(
 	e *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
+) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
 	if l.query == "" {
 		return nil, nil, func() {}
 	}
@@ -188,9 +191,10 @@ func (l *lspWorkspaceSymbolSource) Load(
 	if err != nil {
 		e.SetStatusMsg(i18n.ErrorText(err))
 	}
-	items := make([]PickerItem, 0, len(symbols))
+	items := make([]*PickerItem, 0, len(symbols))
+	var slab PickerItemSlab
 	for _, sym := range symbols {
-		if item, ok := l.item(e, sym); ok {
+		if item, ok := l.item(&slab, e, sym); ok {
 			items = append(items, item)
 		}
 	}
@@ -198,18 +202,18 @@ func (l *lspWorkspaceSymbolSource) Load(
 }
 
 func (l *lspWorkspaceSymbolSource) item(
-	e *view.Editor, sym view.Symbol,
-) (PickerItem, bool) {
+	slab *PickerItemSlab, e *view.Editor, sym view.Symbol,
+) (*PickerItem, bool) {
 	loc := sym.Location
 	doc, err := e.PeekDoc(loc.Path)
 	if err != nil {
-		return PickerItem{}, false
+		return nil, false
 	}
 	line, lines := locationLineRange(doc.Text(), loc)
 	path := doc.RelativeName(e.Cwd())
 	kind := symbolKind(sym.Kind)
 	icon := completionKindIcon(kind, e.Options().NerdFonts)
-	return PickerItem{
+	return slab.Add(PickerItem{
 		Display: fmt.Sprintf("%s:%d %s", path, line+1, sym.Name),
 		Columns: []string{icon, sym.Name, path},
 		StyleScopes: []string{
@@ -221,7 +225,7 @@ func (l *lspWorkspaceSymbolSource) item(
 			Lines:  lines,
 		},
 		Payload: loc,
-	}, true
+	}), true
 }
 
 // Accept jumps to the chosen symbol

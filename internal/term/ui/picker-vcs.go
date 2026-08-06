@@ -75,7 +75,7 @@ func NewChangedFilePicker(e *view.Editor) *Picker {
 // Load lists the files changed against version control
 func (c *changedFilePickerSource) Load(
 	e *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
+) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
 	vc := e.VersionControl()
 	if vc == nil {
 		return nil, nil, func() {}
@@ -93,7 +93,7 @@ func (c *changedFilePickerSource) Load(
 	}
 
 	nerd := e.Options().NerdFonts
-	feed := make(chan PickerItem)
+	feed := make(chan *PickerItem)
 	done := make(chan struct{})
 	go func() {
 		defer close(feed)
@@ -117,7 +117,7 @@ func (c *changedFilePickerSource) Load(
 
 // Items returns the whole row set at once, letting a refresh swap the list
 // in place rather than emptying and re-streaming it
-func (c *changedFilePickerSource) Items(e *view.Editor) []PickerItem {
+func (c *changedFilePickerSource) Items(e *view.Editor) []*PickerItem {
 	vc := e.VersionControl()
 	if vc == nil {
 		return nil
@@ -137,14 +137,14 @@ func (c *changedFilePickerSource) Items(e *view.Editor) []PickerItem {
 // changed file
 func (c *changedFilePickerSource) ItemForPath(
 	e *view.Editor, path string,
-) (PickerItem, bool) {
+) (*PickerItem, bool) {
 	vc := e.VersionControl()
 	if vc == nil {
-		return PickerItem{}, false
+		return nil, false
 	}
 	changes, err := vc.ChangedFiles()
 	if err != nil {
-		return PickerItem{}, false
+		return nil, false
 	}
 	cwd := e.Cwd()
 	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
@@ -154,10 +154,12 @@ func (c *changedFilePickerSource) ItemForPath(
 	nerd := e.Options().NerdFonts
 	for _, fc := range changes {
 		if loader.CanonicalPath(fc.Path) == key {
-			return changedFileItem(vc, fc, cwd, nerd), true
+			return changedFileItem(changedFileItemArgs{
+				vc: vc, fc: fc, cwd: cwd, nerd: nerd,
+			}), true
 		}
 	}
-	return PickerItem{}, false
+	return nil, false
 }
 
 // Accept opens the chosen file
@@ -180,16 +182,23 @@ func (c *changedFilePickerSource) Accept(
 
 func changedFileRows(
 	vc view.VersionControl, changes []view.FileChange, cwd string, nerd bool,
-) []PickerItem {
+) []*PickerItem {
 	out := changedFileSections()
+	var slab PickerItemSlab
 	for _, fc := range changes {
-		out = append(out, changedFileItem(vc, fc, cwd, nerd))
+		out = append(out, changedFileItem(changedFileItemArgs{
+			slab: &slab,
+			vc:   vc,
+			fc:   fc,
+			cwd:  cwd,
+			nerd: nerd,
+		}))
 	}
 	return out
 }
 
-func changedFileSections() []PickerItem {
-	return []PickerItem{
+func changedFileSections() []*PickerItem {
+	return []*PickerItem{
 		{
 			Display: i18n.Text(i18n.StatusPickerStaged),
 			Group:   changedFileStaged,
@@ -203,15 +212,22 @@ func changedFileSections() []PickerItem {
 	}
 }
 
-func changedFileItem(
-	vc view.VersionControl, fc view.FileChange, cwd string, nerd bool,
-) PickerItem {
-	display := view.DocumentRelativeName(fc.Path, cwd)
+type changedFileItemArgs struct {
+	slab *PickerItemSlab
+	vc   view.VersionControl
+	fc   view.FileChange
+	cwd  string
+	nerd bool
+}
+
+func changedFileItem(args changedFileItemArgs) *PickerItem {
+	fc := args.fc
+	display := view.DocumentRelativeName(fc.Path, args.cwd)
 	if fc.Kind == view.FileChangeRenamed {
-		from := view.DocumentRelativeName(fc.FromPath, cwd)
+		from := view.DocumentRelativeName(fc.FromPath, args.cwd)
 		display = from + " " + renamedArrow + " " + display
 	}
-	hunks := changedFileHunks(vc, fc)
+	hunks := changedFileHunks(args.vc, fc)
 	basePath := fc.Path
 	if fc.Kind == view.FileChangeRenamed {
 		basePath = fc.FromPath
@@ -220,10 +236,10 @@ func changedFileItem(
 	if fc.Staged {
 		group = changedFileStaged
 	}
-	return PickerItem{
+	item := PickerItem{
 		Display:     display,
 		Group:       group,
-		Columns:     []string{changedFileIcon(fc.Kind, nerd), display},
+		Columns:     []string{changedFileIcon(fc.Kind, args.nerd), display},
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
 		SortKey:     display,
 		DiffHunks:   hunks,
@@ -235,6 +251,10 @@ func changedFileItem(
 			Lines:  firstChangeLines(hunks),
 		},
 	}
+	if args.slab != nil {
+		return args.slab.Add(item)
+	}
+	return &item
 }
 
 func changedFileHunks(

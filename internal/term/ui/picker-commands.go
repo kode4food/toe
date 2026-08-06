@@ -27,16 +27,17 @@ func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
 // Load lists every command available in the current mode
 func (c *commandPaletteSource) Load(
 	e *view.Editor,
-) ([]PickerItem, <-chan PickerItem, StopFunc) {
+) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
 	mode := e.Mode()
 	cmds := c.km.CommandsIn(mode)
-	items := make([]PickerItem, 0, len(cmds))
+	items := make([]*PickerItem, 0, len(cmds))
+	var slab PickerItemSlab
 	for _, cmd := range cmds {
 		if cmd.Run == nil || len(cmd.Aliases) == 0 {
 			continue
 		}
 		name := cmd.Aliases[0]
-		items = append(items, PickerItem{
+		items = append(items, slab.Add(PickerItem{
 			Display: name,
 			Columns: []string{
 				name, commandKeyString(c.km, mode, cmd.Name),
@@ -44,7 +45,7 @@ func (c *commandPaletteSource) Load(
 			},
 			SortKey: name,
 			Payload: cmd,
-		})
+		}))
 	}
 	return items, nil, func() {}
 }

@@ -169,8 +169,8 @@ func (p *PickerComponent) handleDynamicTrigger(
 	ps.load.dynamicStop = stop
 	ps.list.items = items
 	ps.list.matched = make([]pickerMatch, len(items))
-	for i := range items {
-		ps.list.matched[i] = pickerMatch{item: &items[i]}
+	for i, item := range items {
+		ps.list.matched[i] = pickerMatch{item: item}
 	}
 	if ch != nil {
 		return consumed(), drainDynamicFeed(msg.gen, ch)

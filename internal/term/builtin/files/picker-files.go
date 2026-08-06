@@ -58,7 +58,7 @@ func NewFilePickerInDir(dir string) ui.PickerFunc {
 // Load walks the workspace for files, honouring ignore rules
 func (f *filePickerSource) Load(
 	e *view.Editor,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	return startFilePickerFeed(f.dir, pickerListRows(e))
 }
 
@@ -66,18 +66,18 @@ func (f *filePickerSource) Load(
 // includes it; symlinks resolve on a full reload
 func (f *filePickerSource) ItemForPath(
 	_ *view.Editor, path string,
-) (ui.PickerItem, bool) {
+) (*ui.PickerItem, bool) {
 	root := resolvePickerWalkRoot(f.dir)
 	if !pathWithinRoot(path, root) {
-		return ui.PickerItem{}, false
+		return nil, false
 	}
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() {
-		return ui.PickerItem{}, false
+		return nil, false
 	}
 	rel, err := filepath.Rel(root, path)
 	if err != nil {
-		return ui.PickerItem{}, false
+		return nil, false
 	}
 	rel = filepath.ToSlash(rel)
 	ignoreOpts := ui.DefaultPickerIgnoreOptions()
@@ -88,9 +88,9 @@ func (f *filePickerSource) ItemForPath(
 		Ignores: ui.LoadIgnoreFiles(root, path, ignoreOpts),
 		Opts:    ignoreOpts,
 	}) {
-		return ui.PickerItem{}, false
+		return nil, false
 	}
-	return ui.PickerItem{
+	return &ui.PickerItem{
 		Display:  rel,
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	}, true
@@ -113,23 +113,24 @@ func newFilePickerSource(dir string) *filePickerSource {
 
 func startFilePickerFeed(
 	root string, count int,
-) ([]ui.PickerItem, <-chan ui.PickerItem, ui.StopFunc) {
+) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
 	root = resolvePickerWalkRoot(root)
 	done := make(chan struct{})
 	var once sync.Once
 	cancel := func() { once.Do(func() { close(done) }) }
 
-	ch := make(chan ui.PickerItem, 256)
+	ch := make(chan *ui.PickerItem, 256)
 	go func() {
 		defer close(ch)
+		var slab ui.PickerItemSlab
 		walkPickerFiles(root, done, func(path, rel string) bool {
 			select {
-			case ch <- ui.PickerItem{
+			case ch <- slab.Add(ui.PickerItem{
 				Display: rel,
 				Location: ui.PickerLocation{
 					Target: ui.PickerTarget{Path: path},
 				},
-			}:
+			}):
 				return true
 			case <-done:
 				return false
@@ -137,7 +138,7 @@ func startFilePickerFeed(
 		})
 	}()
 
-	var initial []ui.PickerItem
+	var initial []*ui.PickerItem
 	for len(initial) < count {
 		item, ok := <-ch
 		if !ok {

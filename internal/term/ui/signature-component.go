@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -245,7 +244,7 @@ func (s *signatureHelpComponent) renderSignature(
 	cx *Context, buf *tui.Buffer, area geom.Area,
 	sig view.SignatureInformation,
 ) {
-	label := ansi.Truncate(sig.Label, area.Width, "")
+	label := runewidth.Truncate(sig.Label, area.Width, "")
 	base := cx.Theme().Get("ui.popup")
 	buf.SetString(area.Point, label, base)
 	if sig.ActiveEnd <= sig.ActiveStart {

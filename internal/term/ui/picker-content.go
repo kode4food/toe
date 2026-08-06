@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -32,7 +31,9 @@ func writePickerPromptRow(
 	cx *Context, buf *tui.Buffer, area geom.Area, p *Picker,
 ) {
 	th := cx.Theme()
-	count := fmt.Sprintf("%d/%d", len(p.list.matched), len(p.list.items))
+	count := fmt.Sprintf(
+		"%d/%d", p.matchedCount(), len(p.list.items),
+	)
 	cl := runewidth.StringWidth(count)
 
 	queryArea := max(area.Width-2*pickerPadX-1-cl, 0)
@@ -91,10 +92,21 @@ func writePickerHeader(
 		if i > 0 {
 			cur++
 		}
-		text := ansi.Truncate(col, widths[i], "")
+		text := runewidth.Truncate(col, widths[i], "")
 		buf.SetString(geom.Point{X: cur, Y: area.Y}, text, colTUI)
 		cur += widths[i]
 	}
+}
+
+func writePickerSection(
+	buf *tui.Buffer, at geom.Point, args *pickerItemRender,
+) {
+	base := pickerSectionStyle(args.cx)
+	buf.FillRange(at, args.w, base)
+	label := runewidth.Truncate(
+		args.match.item.Display, max(args.w-pickerPadX-1, 0), "",
+	)
+	buf.SetString(geom.Point{X: at.X + pickerPadX, Y: at.Y}, label, base)
 }
 
 func writePickerItem(
@@ -103,6 +115,10 @@ func writePickerItem(
 	p := args.p
 	m := args.match
 	cx := args.cx
+	if m.item.Section {
+		writePickerSection(buf, at, args)
+		return
+	}
 	var marker string
 	var base, match tui.Style
 	if args.selected {
@@ -157,7 +173,7 @@ func writePickerItem(
 					match:   match,
 				})
 			} else {
-				text := ansi.Truncate(val, widths[i], "")
+				text := runewidth.Truncate(val, widths[i], "")
 				buf.SetString(geom.Point{X: cur, Y: at.Y}, text, colBase)
 			}
 			cur += widths[i]

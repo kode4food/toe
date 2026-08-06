@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
@@ -114,10 +113,10 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	}
 
 	avail := max(w-1, 0)
-	right = ansi.Truncate(right, avail, "")
+	right = runewidth.Truncate(right, avail, "")
 	rightW := runewidth.StringWidth(right)
 	leftW := max(avail-rightW, 0)
-	leftStr := ansi.Truncate(left, leftW, "")
+	leftStr := runewidth.Truncate(left, leftW, "")
 	buf.SetString(geom.Point{X: 0, Y: y}, leftStr, tuiSt)
 	if rightW > 0 {
 		buf.SetString(geom.Point{X: avail - rightW, Y: y}, right, tuiSt)

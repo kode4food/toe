@@ -256,9 +256,18 @@ func fileWatchOp(ev notify.Event) bool {
 	return ev&(notify.Create|notify.Write|notify.Remove|notify.Rename) != 0
 }
 
-// Git commands can emit large event bursts from .git that no picker consumes
+// Git commands can emit large event bursts from .git that no picker consumes,
+// except the index, which is the only record that staging happened
 func isFileWatchPathExcluded(path string) bool {
+	if isGitIndexPath(path) {
+		return false
+	}
 	sep := string(filepath.Separator)
 	return strings.Contains(path, sep+".git"+sep) ||
 		strings.HasSuffix(path, sep+".git")
+}
+
+func isGitIndexPath(path string) bool {
+	sep := string(filepath.Separator)
+	return strings.HasSuffix(path, sep+".git"+sep+"index")
 }

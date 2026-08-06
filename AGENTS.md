@@ -1045,7 +1045,7 @@ const (
 
 - Use `tui.Style` for color and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing — not manual ANSI or ad-hoc `strings.Repeat` frames.
 - Use `wrapText` (`internal/term/ui/wrap.go`) for word wrapping. Always wrap plain text first, then apply styling per cell — never feed styled/ANSI text to the wrapper; by then it is too late to wrap well.
-- Use `ansi.StringWidth` / `ansi.Truncate` when you need raw cell widths or single-row clipping (e.g. clipping a single preview row).
+- Use `runewidth.StringWidth` / `runewidth.Truncate` for cell widths and single-row clipping. `runewidth` is a direct dependency for exactly this: it walks runes and slices the input, so it allocates nothing, while the `ansi` equivalents scan for escape sequences and build through a `strings.Builder` (measured: 2–3 allocations and ~28% slower per call). Reach for `ansi.StringWidth` / `ansi.Truncate` only when the string genuinely carries escape sequences, which in practice means terminal-pane content — everywhere else toe styles per cell, so the text is plain by the time it is measured or clipped.
 - For overlay panels, implement `BufferOverlayComponent` and draw into the `tui.Buffer` directly. The buffer-native path skips the ANSI round-trip and is fast for complex overlays.
 - Use the `popup` struct (`internal/term/ui/popup.go`) for any bordered popup window — it fills the box with the content style and draws the border in one pass, so callers write per-cell content without worrying about ANSI background resets.
 - Use `tea.View.Cursor` for cursor shape and position instead of raw DECSCUSR escapes in content strings.

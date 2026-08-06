@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
@@ -112,9 +112,9 @@ func renderBinaryRow(args renderBinaryRowArgs) {
 		if remaining <= 0 {
 			return
 		}
-		text = ansi.Truncate(text, remaining, "")
+		text = runewidth.Truncate(text, remaining, "")
 		args.buf.SetString(geom.Point{X: x, Y: args.at.Y}, text, style)
-		width := ansi.StringWidth(text)
+		width := runewidth.StringWidth(text)
 		x += width
 		remaining -= width
 	}

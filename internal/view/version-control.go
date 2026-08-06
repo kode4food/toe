@@ -44,11 +44,14 @@ type (
 		To       int
 	}
 
-	// FileChange describes one changed file reported by version control
+	// FileChange describes one change to one file reported by version control.
+	// A file edited both in the index and the working tree yields two changes,
+	// one per stage
 	FileChange struct {
 		Kind     FileChangeKind
 		Path     string
 		FromPath string // original path, set only for FileChangeRenamed
+		Staged   bool
 	}
 
 	// FileChangeKind classifies a FileChange

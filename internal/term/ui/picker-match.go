@@ -39,6 +39,7 @@ func (p *Picker) resetCursor() {
 	if p.list.cursor >= len(p.list.matched) {
 		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
+	p.ensureSelectable()
 	p.list.scroll = 0
 	p.preview.scroll = 0
 	p.clampScroll()
@@ -60,6 +61,7 @@ func (p *Picker) rebuildMatches() {
 	}
 	p.list.matched = out
 	p.sortMatches()
+	p.insertSections()
 }
 
 func (p *Picker) narrowMatches() {
@@ -78,6 +80,36 @@ func (p *Picker) narrowMatches() {
 	}
 	p.list.matched = out
 	p.sortMatches()
+	p.insertSections()
+}
+
+func (p *Picker) insertSections() {
+	p.list.matchedSections = 0
+	if len(p.list.sections) == 0 {
+		return
+	}
+	out := make([]pickerMatch, 0, len(p.list.matched)+len(p.list.sections))
+	group := 0
+	for i, m := range p.list.matched {
+		if i == 0 || m.item.Group != group {
+			if label := p.sectionFor(m.item.Group); label != nil {
+				out = append(out, pickerMatch{item: label})
+				p.list.matchedSections++
+			}
+		}
+		group = m.item.Group
+		out = append(out, m)
+	}
+	p.list.matched = out
+}
+
+func (p *Picker) sectionFor(group int) *PickerItem {
+	for i := range p.list.sections {
+		if p.list.sections[i].Group == group {
+			return &p.list.sections[i]
+		}
+	}
+	return nil
 }
 
 func (p *Picker) scoreItem(
@@ -115,6 +147,9 @@ func (p *Picker) prepareMatcher(src StaticPickerSource) PickerMatcher {
 
 func (p *Picker) sortMatches() {
 	slices.SortFunc(p.list.matched, func(a, b pickerMatch) int {
+		if c := cmp.Compare(a.item.Group, b.item.Group); c != 0 {
+			return c
+		}
 		if c := cmp.Compare(b.result.Score, a.result.Score); c != 0 {
 			return c
 		}
@@ -135,9 +170,15 @@ func (p *PickerItem) columnText(col int) string {
 	return p.Display
 }
 
+func (p *Picker) matchedCount() int {
+	return len(p.list.matched) - p.list.matchedSections
+}
+
 func (p *Picker) selection() *PickerItem {
 	if p.list.cursor >= 0 && p.list.cursor < len(p.list.matched) {
-		return p.list.matched[p.list.cursor].item
+		if item := p.list.matched[p.list.cursor].item; !item.Section {
+			return item
+		}
 	}
 	return nil
 }
@@ -146,7 +187,41 @@ func (p *Picker) moveBy(n int) {
 	if len(p.list.matched) == 0 {
 		return
 	}
-	p.list.cursor = min(max(p.list.cursor+n, 0), len(p.list.matched)-1)
+	step := 1
+	if n < 0 {
+		step, n = -1, -n
+	}
+	cur := p.list.cursor
+	for ; n > 0; n-- {
+		next := p.nextSelectable(cur, step)
+		if next == cur {
+			break
+		}
+		cur = next
+	}
+	p.list.cursor = min(max(cur, 0), len(p.list.matched)-1)
+	// an explicit move supersedes a restore still waiting on a refill
+	p.load.wantSet = false
+}
+
+func (p *Picker) ensureSelectable() {
+	if p.selection() != nil || len(p.list.matched) == 0 {
+		return
+	}
+	if next := p.nextSelectable(p.list.cursor, 1); next != p.list.cursor {
+		p.list.cursor = next
+		return
+	}
+	p.list.cursor = p.nextSelectable(p.list.cursor, -1)
+}
+
+func (p *Picker) nextSelectable(from, step int) int {
+	for i := from + step; i >= 0 && i < len(p.list.matched); i += step {
+		if !p.list.matched[i].item.Section {
+			return i
+		}
+	}
+	return from
 }
 
 func (p *Picker) pageDown() {

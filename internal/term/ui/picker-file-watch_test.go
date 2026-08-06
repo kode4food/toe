@@ -225,6 +225,44 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.Contains(t, selectedPickerLine(m), "beta.txt")
 	})
 
+	t.Run("staging externally regroups the row", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "alpha.txt", "one\n")
+		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), "two\n")
+
+		m := changedFilePicker(t, repo)
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "Staged Changes")
+
+		// staging rewrites .git/index and leaves the working file alone
+		testutil.RunGit(t, repo, "add", "alpha.txt")
+		m = drainFileWatch(t, m)
+
+		out = stripANSI(m.View().Content)
+		assert.Contains(t, out, "Staged Changes")
+		assert.Contains(t, out, "alpha.txt")
+	})
+
+	t.Run("staging another file keeps selection", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		for _, name := range []string{"alpha.txt", "beta.txt", "gamma.txt"} {
+			testutil.GitCommitFile(t, repo, name, "one\n")
+			testutil.WriteFile(t, filepath.Join(repo, name), "two\n")
+		}
+
+		m := changedFilePicker(t, repo)
+		m = sendSpecial(m, tea.KeyDown)
+		assert.Contains(t, selectedPickerLine(m), "beta.txt")
+
+		testutil.RunGit(t, repo, "add", "gamma.txt")
+		m = drainFileWatch(t, m)
+
+		assert.Contains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.Contains(t, selectedPickerLine(m), "beta.txt")
+	})
+
 	t.Run("diff preview updates live", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)

@@ -207,7 +207,7 @@ func (p *previewDirEntry) renderInto(
 		buf.FillRange(rowAt, ctx.size.Width, fillTUI)
 		buf.SetString(
 			rowAt,
-			ansi.Truncate(entry.name, ctx.size.Width, ""),
+			runewidth.Truncate(entry.name, ctx.size.Width, ""),
 			st,
 		)
 	}
@@ -243,10 +243,7 @@ func blitTextInto(
 		at := area.Point.Add(geom.Point{Y: i})
 		buf.FillRange(at, area.Width, fillStyle)
 		if area.Width > 0 && plain != "" {
-			s := plain
-			if runewidth.StringWidth(s) > area.Width {
-				s = ansi.Truncate(s, area.Width, "")
-			}
+			s := runewidth.Truncate(plain, area.Width, "")
 			buf.SetString(at, s, fillStyle)
 		}
 	}

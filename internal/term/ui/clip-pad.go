@@ -3,15 +3,15 @@ package ui
 import (
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
 )
 
 func clipPad(s string, w int) string {
 	if w <= 0 {
 		return ""
 	}
-	s = ansi.Truncate(s, w, "")
-	if n := ansi.StringWidth(s); n < w {
+	s = runewidth.Truncate(s, w, "")
+	if n := runewidth.StringWidth(s); n < w {
 		return s + strings.Repeat(" ", w-n)
 	}
 	return s

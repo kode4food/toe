@@ -68,6 +68,8 @@
   "status.pickerTypeToSearch": "Zum Suchen tippen…",
   "status.pickerSearching": "Wird gesucht…",
   "status.pickerNoResults": "Keine Ergebnisse",
+  "status.pickerStaged": "Vorgemerkte \u00c4nderungen",
+  "status.pickerUnstaged": "\u00c4nderungen",
   "status.imageLoading": "Bild wird geladen…",
   "status.imageUnsupported": "Bilder werden von diesem Terminal nicht unterstützt",
   "status.terminalStarting": "Terminal wird gestartet…",

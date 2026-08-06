@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/charmbracelet/x/ansi"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
@@ -137,12 +136,12 @@ func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 	if line.heading {
 		st = st.Mod(tui.ModifierBold)
 	}
-	text := ansi.Truncate(line.text, r.area.Width, "")
+	text := runewidth.Truncate(line.text, r.area.Width, "")
 	r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, st)
 }
 
 func (r *popupTextRenderer) renderCode(line popupLine, y int) {
-	text := ansi.Truncate(line.text, r.area.Width, "")
+	text := runewidth.Truncate(line.text, r.area.Width, "")
 	spans := highlight.Tokenize(text, line.lang)
 	if len(spans) == 0 {
 		r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, r.base)

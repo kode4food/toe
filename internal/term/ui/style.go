@@ -68,6 +68,11 @@ func pickerSelStyle(cx *Context) tui.Style {
 	return cx.Theme().Get("ui.menu.selected")
 }
 
+func pickerSectionStyle(cx *Context) tui.Style {
+	s := cx.Theme().Get("ui.text.directory")
+	return pickerItemStyle(cx).Fg(s.FgColor()).Mod(tui.ModifierBold)
+}
+
 func pickerMatchStyle(cx *Context) tui.Style {
 	s := cx.Theme().Get("ui.picker.match")
 	return pickerItemStyle(cx).Fg(s.FgColor()).Mod(tui.ModifierBold)

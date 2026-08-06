@@ -28,13 +28,15 @@ type (
 	}
 
 	listState struct {
-		items   []PickerItem
-		matched []pickerMatch
-		scores  map[pickerScoreKey]*MatchResult
-		query   string
-		cursor  int
-		scroll  int
-		height  int
+		items           []PickerItem
+		sections        []PickerItem
+		matched         []pickerMatch
+		matchedSections int
+		scores          map[pickerScoreKey]*MatchResult
+		query           string
+		cursor          int
+		scroll          int
+		height          int
 	}
 
 	previewState struct {
@@ -52,6 +54,16 @@ type (
 		dynamicPending bool
 		refreshGen     int
 		pending        map[string]struct{}
+
+		wantTarget PickerTarget
+		wantSet    bool
+	}
+
+	// SnapshotPickerSource returns its whole row set synchronously, so a
+	// refresh can replace the list without a visible rebuild
+	SnapshotPickerSource interface {
+		PickerSource
+		Items(e *view.Editor) []PickerItem
 	}
 
 	// PickerFunc constructs a Picker from the editor
@@ -107,12 +119,17 @@ type (
 		Navigate(*view.Editor, *PickerItem) PickerFunc
 	}
 
-	// PickerItem is a single row shown in the picker list
+	// PickerItem is a single row shown in the picker list. A Section row
+	// labels the group its Group ordinal names; it never matches a query and
+	// the cursor skips it
 	PickerItem struct {
 		Display     string
 		Columns     []string
 		StyleScopes []string
 		SortKey     string
+
+		Group   int
+		Section bool
 
 		Preview  PreviewRenderer
 		Location PickerLocation
@@ -273,6 +290,7 @@ func (p *Picker) MatchCount() int {
 func (p *Picker) SelectIndex(i int) {
 	if i >= 0 && i < len(p.list.matched) {
 		p.list.cursor = i
+		p.load.wantSet = false
 	}
 }
 
@@ -280,14 +298,12 @@ func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
 	items, feed, stop := p.source.Load(e)
 	p.load.cancel = stop
 	_, static := p.source.(StaticPickerSource)
-	p.list.items = items
+	p.list.sections = nil
+	p.list.items = p.takeSections(items)
 	if static {
 		p.refilter()
 	} else {
-		p.list.matched = make([]pickerMatch, len(items))
-		for i := range items {
-			p.list.matched[i] = pickerMatch{item: &items[i], itemIndex: i}
-		}
+		p.resetMatchesFromItems()
 	}
 	if feed == nil {
 		return nil
@@ -301,12 +317,30 @@ func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
 
 func (p *Picker) reload(e *view.Editor) tea.Cmd {
 	p.load.cancel()
-	target, hadSelection := p.selectedTarget()
-	cmd := p.loadItems(e)
-	if hadSelection {
-		p.restoreSelection(target)
+	// a reload landing mid-refill would otherwise capture whatever row the
+	// half-filled list is sitting on, losing the row the user chose
+	if !p.load.wantSet {
+		p.load.wantTarget, p.load.wantSet = p.selectedTarget()
 	}
+	cmd := p.loadItems(e)
+	p.applyWantedSelection()
 	return cmd
+}
+
+func (p *Picker) applyWantedSelection() {
+	if p.load.wantSet && p.selectTarget(p.load.wantTarget) {
+		p.load.wantSet = false
+	}
+}
+
+func (p *Picker) selectTarget(target PickerTarget) bool {
+	for i, m := range p.list.matched {
+		if !m.item.Section && m.item.Location.Target == target {
+			p.list.cursor = i
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
@@ -336,8 +370,12 @@ func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
 		return nil
 	}
 	for path := range pending {
-		// a directory event carries coalesced changes with unknown members;
-		// a full reload covers the batch
+		// a directory event carries coalesced changes with unknown members,
+		// and an index write restages rows; either way reload the batch
+		if isGitIndexPath(path) {
+			p.refreshItems(e)
+			continue
+		}
 		if info, err := os.Lstat(path); err == nil && info.IsDir() {
 			return p.reload(e)
 		}
@@ -345,6 +383,22 @@ func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
 		p.reconcilePath(path, item, exists)
 	}
 	return nil
+}
+
+func (p *Picker) refreshItems(e *view.Editor) {
+	src, ok := p.source.(SnapshotPickerSource)
+	if !ok {
+		return
+	}
+	items := src.Items(e)
+	if len(items) == 0 {
+		return
+	}
+	target, hadSelection := p.selectedTarget()
+	p.list.sections = nil
+	p.list.items = p.takeSections(items)
+	SortPickerItems(p.list.items)
+	p.rematchPreservingSelection(target, hadSelection)
 }
 
 func (p *Picker) reconcilePath(path string, item PickerItem, exists bool) {
@@ -377,7 +431,22 @@ func (p *Picker) findItemIndexByPath(path string) int {
 	})
 }
 
+// takeSections moves section rows into their own list, so matching, sorting and
+// path lookup only ever see real rows
+func (p *Picker) takeSections(items []PickerItem) []PickerItem {
+	out := items[:0]
+	for _, item := range items {
+		if item.Section {
+			p.list.sections = append(p.list.sections, item)
+			continue
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
 func (p *Picker) addItems(items []PickerItem) {
+	items = p.takeSections(items)
 	if len(items) == 0 {
 		return
 	}
@@ -396,6 +465,8 @@ func (p *Picker) rematchPreservingSelection(
 	} else if p.list.cursor >= len(p.list.matched) {
 		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
+	p.applyWantedSelection()
+	p.ensureSelectable()
 	p.clampScroll()
 }
 
@@ -408,11 +479,8 @@ func (p *Picker) selectedTarget() (PickerTarget, bool) {
 }
 
 func (p *Picker) restoreSelection(target PickerTarget) {
-	for i, m := range p.list.matched {
-		if m.item.Location.Target == target {
-			p.list.cursor = i
-			return
-		}
+	if p.selectTarget(target) {
+		return
 	}
 	if p.list.cursor >= len(p.list.matched) {
 		p.list.cursor = max(0, len(p.list.matched)-1)
@@ -423,14 +491,22 @@ func (p *Picker) addDynamicItems(items []PickerItem) {
 	if len(items) == 0 {
 		return
 	}
-	p.list.items = append(p.list.items, items...)
-	p.list.matched = make([]pickerMatch, len(p.list.items))
+	p.list.items = append(p.list.items, p.takeSections(items)...)
+	p.resetMatchesFromItems()
+}
+
+func (p *Picker) resetMatchesFromItems() {
+	p.list.matched = p.list.matched[:0]
 	for i := range p.list.items {
-		p.list.matched[i] = pickerMatch{item: &p.list.items[i], itemIndex: i}
+		p.list.matched = append(
+			p.list.matched, pickerMatch{item: &p.list.items[i], itemIndex: i},
+		)
 	}
+	p.insertSections()
 	if p.list.cursor >= len(p.list.matched) {
 		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
+	p.ensureSelectable()
 }
 
 func (p *Picker) dynamicTriggerCmd() tea.Cmd {
@@ -628,8 +704,8 @@ func wantsFileWatchTree(source PickerSource) bool {
 	return ok
 }
 
-// SortPickerItems sorts items by display text, the default ordering for
-// static picker sources
+// SortPickerItems sorts items by display text, the default ordering for static
+// picker sources
 func SortPickerItems(items []PickerItem) {
 	slices.SortStableFunc(items, func(a, b PickerItem) int {
 		return cmp.Compare(a.Display, b.Display)

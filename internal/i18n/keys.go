@@ -102,6 +102,8 @@ const (
 	StatusPickerTypeToSearch Key = "status.pickerTypeToSearch"
 	StatusPickerSearching    Key = "status.pickerSearching"
 	StatusPickerNoResults    Key = "status.pickerNoResults"
+	StatusPickerStaged       Key = "status.pickerStaged"
+	StatusPickerUnstaged     Key = "status.pickerUnstaged"
 	StatusImageLoading       Key = "status.imageLoading"
 	StatusImageUnsupported   Key = "status.imageUnsupported"
 	StatusTerminalStarting   Key = "status.terminalStarting"

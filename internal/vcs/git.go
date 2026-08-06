@@ -12,9 +12,18 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Git reads HEAD state through go-git in-process and reports working-tree
-// status by shelling out to the git binary found on PATH
-type Git struct{}
+type (
+	// Git reads HEAD state through go-git in-process and reports working-tree
+	// status by shelling out to the git binary found on PATH
+	Git struct{}
+
+	gitStatus struct {
+		staged      view.FileChangeKind
+		unstaged    view.FileChangeKind
+		hasStaged   bool
+		hasUnstaged bool
+	}
+)
 
 var (
 	ErrGitCommand   = errors.New("git command failed")
@@ -137,14 +146,14 @@ func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
 		if x == ' ' && y == ' ' {
 			continue
 		}
-		kind := changeKind(x, y)
+		status := splitChangeKind(x, y)
 		fc := view.FileChange{
-			Kind: kind, Path: filepath.Join(root, filepath.FromSlash(p)),
+			Path: filepath.Join(root, filepath.FromSlash(p)),
 		}
-		if kind == view.FileChangeRenamed && fs.Extra != "" {
+		if renamed(status) && fs.Extra != "" {
 			fc.FromPath = filepath.Join(root, filepath.FromSlash(fs.Extra))
 		}
-		changes = append(changes, fc)
+		changes = appendChanges(changes, status, fc)
 	}
 	return changes, nil
 }
@@ -163,38 +172,75 @@ func parseGitStatus(root, out string) ([]view.FileChange, error) {
 			return nil, fmt.Errorf("%w: %q", ErrGitBadStatus, entry)
 		}
 		x, y := entry[0], entry[1]
-		kind := changeKind(x, y)
+		st := splitChangeKind(x, y)
 		fc := view.FileChange{
-			Kind: kind,
 			Path: filepath.Join(root, filepath.FromSlash(entry[3:])),
 		}
-		if kind == view.FileChangeRenamed {
+		if renamed(st) {
 			if i+1 >= len(fields) {
 				return nil, fmt.Errorf("%w: %q", ErrGitBadStatus, entry)
 			}
 			i++
 			fc.FromPath = filepath.Join(root, filepath.FromSlash(fields[i]))
 		}
-		changes = append(changes, fc)
+		changes = appendChanges(changes, st, fc)
 	}
 	return changes, nil
 }
 
-func changeKind(x, y byte) view.FileChangeKind {
+func splitChangeKind(x, y byte) gitStatus {
 	switch {
 	case x == '?' && y == '?':
-		return view.FileChangeUntracked
+		return gitStatus{
+			unstaged: view.FileChangeUntracked, hasUnstaged: true,
+		}
 	case gitConflict(x, y):
-		return view.FileChangeConflict
-	case x == 'R' || y == 'R':
+		return gitStatus{
+			unstaged: view.FileChangeConflict, hasUnstaged: true,
+		}
+	}
+	var st gitStatus
+	if x != ' ' && x != '?' {
+		st.staged, st.hasStaged = changeKind(x), true
+	}
+	if y != ' ' && y != '?' {
+		st.unstaged, st.hasUnstaged = changeKind(y), true
+	}
+	return st
+}
+
+func changeKind(c byte) view.FileChangeKind {
+	switch c {
+	case 'R':
 		return view.FileChangeRenamed
-	case x == 'D' || y == 'D':
+	case 'D':
 		return view.FileChangeDeleted
-	case x == 'A':
+	case 'A', 'C':
 		return view.FileChangeAdded
 	default:
 		return view.FileChangeModified
 	}
+}
+
+func renamed(st gitStatus) bool {
+	return (st.hasStaged && st.staged == view.FileChangeRenamed) ||
+		(st.hasUnstaged && st.unstaged == view.FileChangeRenamed)
+}
+
+func appendChanges(
+	changes []view.FileChange, st gitStatus, base view.FileChange,
+) []view.FileChange {
+	if st.hasStaged {
+		fc := base
+		fc.Kind, fc.Staged = st.staged, true
+		changes = append(changes, fc)
+	}
+	if st.hasUnstaged {
+		fc := base
+		fc.Kind, fc.Staged = st.unstaged, false
+		changes = append(changes, fc)
+	}
+	return changes
 }
 
 func gitConflict(x, y byte) bool {

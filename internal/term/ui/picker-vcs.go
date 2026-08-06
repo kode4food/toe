@@ -24,6 +24,12 @@ const (
 	renamedArrow = "\u2192" // '→' - rightwards arrow
 )
 
+// git reports the index first, so staged rows lead the list
+const (
+	changedFileStaged = iota
+	changedFileUnstaged
+)
+
 var (
 	changedFileScopes = [...]string{
 		view.FileChangeUntracked: "diff.plus",
@@ -91,8 +97,7 @@ func (c *changedFilePickerSource) Load(
 	done := make(chan struct{})
 	go func() {
 		defer close(feed)
-		for _, fc := range changes {
-			item := changedFileItem(vc, fc, cwd, nerd)
+		for _, item := range changedFileRows(vc, changes, cwd, nerd) {
 			select {
 			case feed <- item:
 			case <-done:
@@ -108,6 +113,24 @@ func (c *changedFilePickerSource) Load(
 		}
 	}
 	return nil, feed, stop
+}
+
+// Items returns the whole row set at once, letting a refresh swap the list
+// in place rather than emptying and re-streaming it
+func (c *changedFilePickerSource) Items(e *view.Editor) []PickerItem {
+	vc := e.VersionControl()
+	if vc == nil {
+		return nil
+	}
+	changes, err := vc.ChangedFiles()
+	if err != nil {
+		return nil
+	}
+	cwd := e.Cwd()
+	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
+		cwd = resolved
+	}
+	return changedFileRows(vc, changes, cwd, e.Options().NerdFonts)
 }
 
 // ItemForPath returns the current VCS row for path and whether it is still a
@@ -155,6 +178,31 @@ func (c *changedFilePickerSource) Accept(
 	AlignAcceptedView(e, v, doc)
 }
 
+func changedFileRows(
+	vc view.VersionControl, changes []view.FileChange, cwd string, nerd bool,
+) []PickerItem {
+	out := changedFileSections()
+	for _, fc := range changes {
+		out = append(out, changedFileItem(vc, fc, cwd, nerd))
+	}
+	return out
+}
+
+func changedFileSections() []PickerItem {
+	return []PickerItem{
+		{
+			Display: i18n.Text(i18n.StatusPickerStaged),
+			Group:   changedFileStaged,
+			Section: true,
+		},
+		{
+			Display: i18n.Text(i18n.StatusPickerUnstaged),
+			Group:   changedFileUnstaged,
+			Section: true,
+		},
+	}
+}
+
 func changedFileItem(
 	vc view.VersionControl, fc view.FileChange, cwd string, nerd bool,
 ) PickerItem {
@@ -168,8 +216,13 @@ func changedFileItem(
 	if fc.Kind == view.FileChangeRenamed {
 		basePath = fc.FromPath
 	}
+	group := changedFileUnstaged
+	if fc.Staged {
+		group = changedFileStaged
+	}
 	return PickerItem{
 		Display:     display,
+		Group:       group,
 		Columns:     []string{changedFileIcon(fc.Kind, nerd), display},
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
 		SortKey:     display,

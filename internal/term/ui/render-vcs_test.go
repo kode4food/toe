@@ -119,6 +119,35 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "\uf457 staged.txt") //  nf-oct-diff_added
 	})
 
+	t.Run("groups staged apart from unstaged", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "both.txt", "one\n")
+		testutil.WriteFile(t, filepath.Join(repo, "both.txt"), "two\n")
+		testutil.RunGit(t, repo, "add", "both.txt")
+		testutil.WriteFile(t, filepath.Join(repo, "both.txt"), "three\n")
+
+		m := changedFilePicker(t, repo)
+
+		out := stripANSI(m.View().Content)
+		staged := sectionRow(out, "Staged Changes")
+		unstaged := sectionRow(out, "Changes")
+		assert.GreaterOrEqual(t, staged, 0)
+		assert.Greater(t, unstaged, staged)
+		// edited in the index and again in the tree, so it lands in both
+		assert.Equal(t, 2, strings.Count(out, "both.txt"))
+	})
+
+	t.Run("section hides when its group empties", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.WriteFile(t, filepath.Join(repo, "solo.txt"), "new\n")
+
+		m := changedFilePicker(t, repo)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "Changes")
+		assert.NotContains(t, out, "Staged Changes")
+	})
+
 	t.Run("preview opens on the first change", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		lines := make([]string, 60)
@@ -304,4 +333,14 @@ func repoEditorNoWait(
 	_, err := e.OpenFile(path)
 	assert.NoError(t, err)
 	return e, s
+}
+
+func sectionRow(out, label string) int {
+	for i, line := range strings.Split(out, "\n") {
+		body := strings.Trim(line, " \u2502")
+		if strings.TrimSpace(body) == label {
+			return i
+		}
+	}
+	return -1
 }

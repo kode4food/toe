@@ -68,6 +68,8 @@
   "status.pickerTypeToSearch": "Saisissez pour rechercher…",
   "status.pickerSearching": "Recherche en cours…",
   "status.pickerNoResults": "Aucun résultat",
+  "status.pickerStaged": "Modifications index\u00e9es",
+  "status.pickerUnstaged": "Modifications",
   "status.imageLoading": "Chargement de l’image…",
   "status.imageUnsupported": "Images non prises en charge par ce terminal",
   "status.terminalStarting": "Démarrage du terminal…",

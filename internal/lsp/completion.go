@@ -10,6 +10,7 @@ import (
 
 	"go.lsp.dev/protocol"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -17,7 +18,7 @@ type (
 
 	// CompletionList is a normalized completion response
 	CompletionList struct {
-		Items      []view.CompletionItem
+		Items      []*view.CompletionItem
 		Raw        []protocol.CompletionItem
 		Incomplete bool
 	}
@@ -26,6 +27,8 @@ type (
 		client *Client
 		item   protocol.CompletionItem
 	}
+
+	completionItemSlab = core.Slab[view.CompletionItem]
 )
 
 // Completion requests completion items from the server at the given position
@@ -112,28 +115,28 @@ func (s *Session) ApplyCompletion(
 // ResolveCompletion fetches extra completion item details
 func (s *Session) ResolveCompletion(
 	_ *view.Document, _ view.Id, item *view.CompletionItem,
-) (view.CompletionItem, error) {
+) (*view.CompletionItem, error) {
 	c, ok := s.completion(item.ID)
 	if !ok {
-		return *item, ErrCompletionUnavailable
+		return item, ErrCompletionUnavailable
 	}
 	if !clientResolvesCompletion(c.client) {
-		return *item, nil
+		return item, nil
 	}
 	ctx, cancel := c.client.requestContext(s.ctx)
 	defer cancel()
 	resolved, err := c.client.server.CompletionResolve(ctx, &c.item)
 	if err != nil {
-		return *item, s.completionError(c.client, err)
+		return item, s.completionError(c.client, err)
 	}
 	if resolved == nil {
-		return *item, nil
+		return item, nil
 	}
 	c.item = *resolved
 	s.storeCompletion(item.ID, c)
 	out := normalizeCompletionItem(c.client.Name(), c.item)
 	out.ID = item.ID
-	return out, nil
+	return &out, nil
 }
 
 func (s *Session) completions(
@@ -146,7 +149,7 @@ func (s *Session) completions(
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
 	clients := s.clientsForDocument(doc)
-	var out []view.CompletionItem
+	var out []*view.CompletionItem
 	raw := map[string]completionCandidate{}
 	var err error
 	incomplete := false
@@ -227,8 +230,8 @@ func clientResolvesCompletion(c *Client) bool {
 		*capabilities.CompletionProvider.ResolveProvider
 }
 
-func sortCompletions(items []view.CompletionItem) {
-	slices.SortStableFunc(items, func(a, b view.CompletionItem) int {
+func sortCompletions(items []*view.CompletionItem) {
+	slices.SortStableFunc(items, func(a, b *view.CompletionItem) int {
 		if a.Preselect != b.Preselect {
 			if a.Preselect {
 				return -1

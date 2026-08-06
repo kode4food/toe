@@ -80,7 +80,7 @@ type (
 	completionMsg struct {
 		gen        int
 		anchor     completionAnchor
-		items      []view.CompletionItem
+		items      []*view.CompletionItem
 		incomplete bool
 		err        error
 	}

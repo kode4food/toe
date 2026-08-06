@@ -658,8 +658,8 @@ func (c *locationController) TriggerCompletions(
 
 func (c *locationController) ResolveCompletion(
 	_ *view.Document, _ view.Id, item *view.CompletionItem,
-) (view.CompletionItem, error) {
-	return *item, nil
+) (*view.CompletionItem, error) {
+	return item, nil
 }
 
 func (c *locationController) ApplyCompletion(

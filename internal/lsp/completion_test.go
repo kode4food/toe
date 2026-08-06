@@ -40,7 +40,7 @@ func TestCompletion(t *testing.T) {
 		if len(items) != 1 {
 			return
 		}
-		err = session.ApplyCompletion(doc, v.ID(), &items[0])
+		err = session.ApplyCompletion(doc, v.ID(), items[0])
 
 		assert.NoError(t, err)
 		assert.Equal(t, "Println\n// add\n", doc.Text().String())
@@ -72,7 +72,7 @@ func TestCompletion(t *testing.T) {
 		if len(items) != 1 {
 			return
 		}
-		err = session.ApplyCompletion(doc, v.ID(), &items[0])
+		err = session.ApplyCompletion(doc, v.ID(), items[0])
 
 		assert.NoError(t, err)
 		assert.Equal(t, "Println\n// add\n", doc.Text().String())
@@ -192,7 +192,7 @@ func TestCompletion(t *testing.T) {
 		if len(items) != 1 {
 			return
 		}
-		resolved, err := session.ResolveCompletion(doc, v.ID(), &items[0])
+		resolved, err := session.ResolveCompletion(doc, v.ID(), items[0])
 
 		assert.NoError(t, err)
 		assert.Contains(t, resolved.Docs, "func Println")
@@ -300,7 +300,7 @@ func TestAltCompletion(t *testing.T) {
 		assert.Equal(t, "fmt", items[0].LabelDescription)
 		assert.Contains(t, items[0].Docs, "Prints a line")
 
-		err = session.ApplyCompletion(doc, v.ID(), &items[0])
+		err = session.ApplyCompletion(doc, v.ID(), items[0])
 		assert.NoError(t, err)
 		assert.Equal(t, "Println\n", doc.Text().String())
 	})
@@ -337,7 +337,7 @@ func TestAltCompletion(t *testing.T) {
 		// Printf and Puts both have Sort="zzz"; Printf < Puts alphabetically
 		assert.Equal(t, "Printf", items[2].Label)
 		assert.Equal(t, "Puts", items[3].Label)
-		err = session.ApplyCompletion(doc, v.ID(), &items[2])
+		err = session.ApplyCompletion(doc, v.ID(), items[2])
 		assert.NoError(t, err)
 		assert.Equal(t, "Printf\n", doc.Text().String())
 	})
@@ -398,7 +398,7 @@ func TestCompletionResolveEdgeCases(t *testing.T) {
 			return
 		}
 
-		_, err = session.ResolveCompletion(doc, v.ID(), &res.Items[0])
+		_, err = session.ResolveCompletion(doc, v.ID(), res.Items[0])
 		assert.True(t, errors.Is(err, lsp.ErrLanguageServerRequest))
 	})
 
@@ -427,7 +427,7 @@ func TestCompletionResolveEdgeCases(t *testing.T) {
 			return
 		}
 
-		resolved, err := session.ResolveCompletion(doc, v.ID(), &res.Items[0])
+		resolved, err := session.ResolveCompletion(doc, v.ID(), res.Items[0])
 		assert.NoError(t, err)
 		assert.Equal(t, res.Items[0], resolved)
 	})

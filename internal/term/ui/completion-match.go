@@ -26,16 +26,16 @@ type (
 )
 
 func filterCompletionItems(
-	items []view.CompletionItem, query string,
-) []view.CompletionItem {
+	items []*view.CompletionItem, query string,
+) []*view.CompletionItem {
 	if query == "" {
 		return slices.Clone(items)
 	}
 	matches := make([]completionMatch, 0, len(items))
-	for i := range items {
-		if score, ok := completionMatchScore(&items[i], query); ok {
+	for i, item := range items {
+		if score, ok := completionMatchScore(item, query); ok {
 			matches = append(matches, completionMatch{
-				item:  &items[i],
+				item:  item,
 				score: score,
 				order: i,
 			})
@@ -50,9 +50,9 @@ func filterCompletionItems(
 		}
 		return a.order - b.order
 	})
-	out := make([]view.CompletionItem, 0, len(matches))
+	out := make([]*view.CompletionItem, 0, len(matches))
 	for _, m := range matches {
-		out = append(out, *m.item)
+		out = append(out, m.item)
 	}
 	return out
 }

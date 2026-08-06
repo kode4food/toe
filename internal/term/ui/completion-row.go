@@ -22,8 +22,8 @@ const completionPreviewMaxWidth = 40
 
 func (c *completionComponent) width() int {
 	w := completionMinWidth
-	for i := range c.items {
-		w = max(w, c.rowWidth(&c.items[i], true)+2)
+	for _, item := range c.items {
+		w = max(w, c.rowWidth(item, true)+2)
 	}
 	if len(c.items) > completionMaxRows {
 		w += completionScrollGap

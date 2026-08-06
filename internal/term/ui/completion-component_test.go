@@ -20,8 +20,8 @@ import (
 
 type completionController struct {
 	editor              *view.Editor
-	items               []view.CompletionItem
-	refreshItems        []view.CompletionItem
+	items               []*view.CompletionItem
+	refreshItems        []*view.CompletionItem
 	item                view.CompletionItem
 	docs                string
 	hoverText           string
@@ -44,7 +44,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Printf", Insert: "Printf", Kind: "function"},
 				{
 					Label:     "Println",
@@ -79,7 +79,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println"},
 			},
 		}
@@ -107,7 +107,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println"},
 			},
 		}
@@ -132,7 +132,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Printf", Insert: "Printf", Kind: "function"},
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
@@ -183,7 +183,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Name", Insert: "Name", Kind: "field"},
 			},
 		}
@@ -206,7 +206,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					Label:  "Printf",
 					Insert: "Printf",
@@ -234,7 +234,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					Label:  "Printf",
 					Insert: "Printf",
@@ -268,7 +268,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					Label:  "Printf",
 					Insert: "Printf",
@@ -297,7 +297,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					Label:       "Printf",
 					LabelDetail: "(format)",
@@ -328,7 +328,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					Label:  "A",
 					Insert: "A",
@@ -363,7 +363,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Printf", Insert: "Printf", Kind: "function"},
 			},
 		}
@@ -477,7 +477,7 @@ func TestCompletionComponent(t *testing.T) {
 				e.SetMode(view.ModeInsert)
 				ctl := &completionController{
 					editor: e,
-					items: []view.CompletionItem{
+					items: []*view.CompletionItem{
 						{Label: "Item", Insert: "Item", Kind: tc.kind},
 					},
 				}
@@ -501,7 +501,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					Label:            "Printf",
 					LabelDetail:      "(format string)",
@@ -533,7 +533,7 @@ func TestCompletionComponent(t *testing.T) {
 		ctl := &completionController{
 			editor: e,
 			docs:   "completion docs should stay hidden",
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					ID:     "one",
 					Label:  "Println",
@@ -562,7 +562,7 @@ func TestCompletionComponent(t *testing.T) {
 		ctl := &completionController{
 			editor: e,
 			docs:   "# Println\n\n```unknownlang\nhello\n```",
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					ID:     "one",
 					Label:  "Println",
@@ -591,7 +591,7 @@ func TestCompletionComponent(t *testing.T) {
 		ctl := &completionController{
 			editor: e,
 			docs:   "# Println\n\n```go\nfunc main() {}\n```",
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					ID:     "one",
 					Label:  "Println",
@@ -621,7 +621,7 @@ func TestCompletionComponent(t *testing.T) {
 		ctl := &completionController{
 			editor: e,
 			docs:   "docs for narrow screen",
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{
 					ID:     "one",
 					Label:  "Println",
@@ -648,9 +648,9 @@ func TestCompletionComponent(t *testing.T) {
 	t.Run("shows scroll thumb", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
-		items := make([]view.CompletionItem, 0, 12)
+		items := make([]*view.CompletionItem, 0, 12)
 		for i := range 12 {
-			items = append(items, view.CompletionItem{
+			items = append(items, &view.CompletionItem{
 				Label:     "long_completion_" + string(rune('a'+i)),
 				Insert:    string(rune('a' + i)),
 				Kind:      "method",
@@ -677,10 +677,10 @@ func TestCompletionComponent(t *testing.T) {
 	t.Run("page down moves selection", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
-		items := make([]view.CompletionItem, 0, 12)
+		items := make([]*view.CompletionItem, 0, 12)
 		for i := range 12 {
 			label := "item_" + string(rune('a'+i))
-			items = append(items, view.CompletionItem{
+			items = append(items, &view.CompletionItem{
 				Label:  label,
 				Insert: label,
 			})
@@ -703,10 +703,10 @@ func TestCompletionComponent(t *testing.T) {
 	t.Run("page up moves selection", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
-		items := make([]view.CompletionItem, 0, 12)
+		items := make([]*view.CompletionItem, 0, 12)
 		for i := range 12 {
 			label := "item_" + string(rune('a'+i))
-			items = append(items, view.CompletionItem{
+			items = append(items, &view.CompletionItem{
 				Label:  label,
 				Insert: label,
 			})
@@ -732,7 +732,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -756,7 +756,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Alpha", Insert: "Alpha"},
 				{Label: "Beta", Insert: "Beta"},
 				{Label: "Gamma", Insert: "Gamma"},
@@ -782,7 +782,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Alpha", Insert: "Alpha"},
 				{Label: "Beta", Insert: "Beta"},
 				{Label: "Gamma", Insert: "Gamma"},
@@ -807,7 +807,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Alpha", Insert: "Alpha"},
 				{Label: "Beta", Insert: "Beta"},
 				{Label: "Gamma", Insert: "Gamma"},
@@ -832,7 +832,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -859,7 +859,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.Options().Mouse = true
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -894,7 +894,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.Options().Mouse = true
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Alpha", Insert: "Alpha"},
 				{Label: "Beta", Insert: "Beta"},
 			},
@@ -927,10 +927,10 @@ func TestCompletionComponent(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)
 		e.Options().Mouse = true
-		items := make([]view.CompletionItem, 15)
+		items := make([]*view.CompletionItem, 15)
 		for i := range items {
 			label := "item" + string(rune('A'+i))
-			items[i] = view.CompletionItem{Label: label, Insert: label}
+			items[i] = &view.CompletionItem{Label: label, Insert: label}
 		}
 		ctl := &completionController{editor: e, items: items}
 		e.SetLanguageServerController(ctl)
@@ -961,7 +961,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetViewHeight(6)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -991,7 +991,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 				{Label: "Scanln", Insert: "Scanln", Kind: "function"},
 			},
@@ -1023,7 +1023,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Close", Insert: "Close", Kind: "method"},
 				{Label: "Clear", Insert: "Clear", Kind: "method"},
 				{Label: "Cancel", Insert: "Cancel", Kind: "method"},
@@ -1054,7 +1054,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Panic", Insert: "Panic", Kind: "function"},
 				{Label: "Println", Insert: "Println", Kind: "function"},
 				{Label: "Scanln", Insert: "Scanln", Kind: "function"},
@@ -1083,10 +1083,10 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Alpha", Insert: "Alpha"},
 			},
-			refreshItems: []view.CompletionItem{
+			refreshItems: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println"},
 			},
 			incomplete: true,
@@ -1114,7 +1114,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "SomethingPrint", Insert: "SomethingPrint"},
 				{Label: "Println", Insert: "Println"},
 			},
@@ -1138,7 +1138,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Close", Insert: "Close", Kind: "method"},
 				{Label: "Clear", Insert: "Clear", Kind: "method"},
 				{Label: "Clone", Insert: "Clone", Kind: "method"},
@@ -1164,7 +1164,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -1189,7 +1189,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -1220,7 +1220,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
@@ -1265,7 +1265,7 @@ func TestCompletionComponent(t *testing.T) {
 		e.SetMode(view.ModeInsert)
 		ctl := &completionController{
 			editor: e,
-			items: []view.CompletionItem{
+			items: []*view.CompletionItem{
 				{Label: "Println", Insert: "Println"},
 			},
 			applyErr: errors.New("apply failed"),
@@ -1336,13 +1336,13 @@ func (c *completionController) TriggerCompletions(
 
 func (c *completionController) ResolveCompletion(
 	_ *view.Document, _ view.Id, item *view.CompletionItem,
-) (view.CompletionItem, error) {
+) (*view.CompletionItem, error) {
 	out := *item
 	out.Docs = c.docs
 	if out.Docs == "" {
 		out.Docs = "resolved docs"
 	}
-	return out, nil
+	return &out, nil
 }
 
 func (c *completionController) ApplyCompletion(
@@ -1600,7 +1600,7 @@ func autoCompletionModel(
 	e.SetLanguageServerController(&completionController{
 		editor:       e,
 		triggerEmpty: true,
-		items: []view.CompletionItem{
+		items: []*view.CompletionItem{
 			{Label: "Println", Insert: "Println", Kind: "function"},
 		},
 	})

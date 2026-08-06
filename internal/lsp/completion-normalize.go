@@ -57,10 +57,11 @@ func normalizeCompletionResult(
 
 func normalizeCompletionItems(
 	server string, items []protocol.CompletionItem,
-) []view.CompletionItem {
-	out := make([]view.CompletionItem, 0, len(items))
+) []*view.CompletionItem {
+	out := make([]*view.CompletionItem, 0, len(items))
+	var slab completionItemSlab
 	for _, item := range items {
-		out = append(out, normalizeCompletionItem(server, item))
+		out = append(out, slab.Add(normalizeCompletionItem(server, item)))
 	}
 	return out
 }

@@ -5,7 +5,7 @@ import "errors"
 type (
 	// CompletionResult is a normalized language-server completion response
 	CompletionResult struct {
-		Items      []CompletionItem
+		Items      []*CompletionItem
 		Incomplete bool
 	}
 
@@ -111,7 +111,7 @@ type (
 		TriggerCompletions(*Document, Id) (CompletionResult, error)
 		ResolveCompletion(
 			*Document, Id, *CompletionItem,
-		) (CompletionItem, error)
+		) (*CompletionItem, error)
 		ApplyCompletion(*Document, Id, *CompletionItem) error
 		Hover(*Document, Id) (string, error)
 		SignatureHelp(*Document, Id) (SignatureHelp, error)

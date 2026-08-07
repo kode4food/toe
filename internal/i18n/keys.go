@@ -85,7 +85,6 @@ const (
 	StatusNoDefinition       Key = "status.noDefinition"
 	StatusNoTypeDefinition   Key = "status.noTypeDefinition"
 	StatusNoImplementation   Key = "status.noImplementation"
-	StatusNoReferences       Key = "status.noReferences"
 	StatusNoSymbolReferences Key = "status.noSymbolReferences"
 	StatusNoDocumentSymbols  Key = "status.noDocumentSymbols"
 	StatusNoCodeActions      Key = "status.noCodeActions"

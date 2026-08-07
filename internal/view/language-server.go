@@ -1,6 +1,10 @@
 package view
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/kode4food/toe/internal/core"
+)
 
 type (
 	// CompletionResult is a normalized language-server completion response
@@ -44,12 +48,26 @@ type (
 		ActiveEnd   int
 	}
 
-	// Location is a normalized language-server target location
+	// Location is a normalized language-server target location, holding the
+	// server's own positions so listing never reads the files; ResolveRange
+	// converts them against a document at jump time
 	Location struct {
-		Path string
-		From int
-		To   int
+		Path     string
+		From     ServerPosition
+		To       ServerPosition
+		Encoding PositionEncoding
 	}
+
+	// ServerPosition is a zero-based line and in-line character offset, the
+	// character counted in the server's PositionEncoding
+	ServerPosition struct {
+		Line      int
+		Character int
+	}
+
+	// PositionEncoding names the units a language server counts a line's
+	// characters in
+	PositionEncoding int
 
 	// Symbol is a normalized language-server document or workspace symbol
 	Symbol struct {
@@ -147,6 +165,14 @@ type (
 	}
 )
 
+// Position encodings a language server may count line characters in; UTF-16 is
+// the protocol default
+const (
+	PositionEncodingUTF16 PositionEncoding = iota
+	PositionEncodingUTF8
+	PositionEncodingUTF32
+)
+
 var (
 	// ErrNoLanguageServer reports that no language server is configured for a
 	// document's language
@@ -165,6 +191,58 @@ var (
 	ErrFormatSelection = errors.New("format selection unsupported")
 )
 
+// ResolveRange converts the location's server positions into a character range
+// in text, reversed so the cursor lands on the start of the target
+func (l Location) ResolveRange(text core.Rope) (core.Range, bool) {
+	from, ok := l.From.Resolve(text, l.Encoding)
+	if !ok {
+		return core.Range{}, false
+	}
+	to, ok := l.To.Resolve(text, l.Encoding)
+	if !ok {
+		to = from
+	}
+	return core.NewRange(to, from), true
+}
+
+// Resolve converts a server position into a character offset in text
+func (p ServerPosition) Resolve(
+	text core.Rope, encoding PositionEncoding,
+) (int, bool) {
+	lineStart, err := text.LineToChar(p.Line)
+	if err != nil {
+		return 0, false
+	}
+	lineEnd, err := text.LineEndCharIndex(p.Line)
+	if err != nil {
+		return 0, false
+	}
+	line, err := text.SliceString(lineStart, lineEnd)
+	if err != nil {
+		return 0, false
+	}
+	chars, ok := encoding.charsToOffset(line, p.Character)
+	if !ok {
+		return 0, false
+	}
+	return lineStart + chars, true
+}
+
+// RuneLen reports how many encoding units ch occupies
+func (e PositionEncoding) RuneLen(ch rune) int {
+	switch e {
+	case PositionEncodingUTF8:
+		return len(string(ch))
+	case PositionEncodingUTF32:
+		return 1
+	default:
+		if ch > 0xffff {
+			return 2
+		}
+		return 1
+	}
+}
+
 // SetLanguageServerController installs the language-server request handler
 func (e *Editor) SetLanguageServerController(c LanguageServerController) {
 	e.langServers = c
@@ -173,4 +251,24 @@ func (e *Editor) SetLanguageServerController(c LanguageServerController) {
 // LanguageServerController returns the installed language-server controller
 func (e *Editor) LanguageServerController() LanguageServerController {
 	return e.langServers
+}
+
+// charsToOffset converts an in-line encoded offset into a rune count
+func (e PositionEncoding) charsToOffset(line string, target int) (int, bool) {
+	units := 0
+	chars := 0
+	for _, ch := range line {
+		if units == target {
+			return chars, true
+		}
+		units += e.RuneLen(ch)
+		chars++
+		if units > target {
+			return 0, false
+		}
+	}
+	if units == target {
+		return chars, true
+	}
+	return 0, false
 }

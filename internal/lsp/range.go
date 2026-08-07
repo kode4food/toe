@@ -8,13 +8,13 @@ import (
 )
 
 func lspRange(
-	doc core.Rope, r core.Range, encoding protocol.PositionEncodingKind,
+	doc core.Rope, r core.Range, enc protocol.PositionEncodingKind,
 ) (protocol.Range, error) {
-	start, err := lspPosition(doc, r.From(), encoding)
+	start, err := lspPosition(doc, r.From(), enc)
 	if err != nil {
 		return protocol.Range{}, err
 	}
-	end, err := lspPosition(doc, r.To(), encoding)
+	end, err := lspPosition(doc, r.To(), enc)
 	if err != nil {
 		return protocol.Range{}, err
 	}
@@ -22,11 +22,10 @@ func lspRange(
 }
 
 func lspRangeToChars(
-	doc *view.Document, r protocol.Range,
-	encoding protocol.PositionEncodingKind,
+	doc *view.Document, r protocol.Range, enc protocol.PositionEncodingKind,
 ) (core.Range, bool) {
-	if from, ok := lspPositionToChar(doc, r.Start, encoding); ok {
-		if to, ok := lspPositionToChar(doc, r.End, encoding); ok {
+	if from, ok := lspPositionToChar(doc, r.Start, enc); ok {
+		if to, ok := lspPositionToChar(doc, r.End, enc); ok {
 			return core.NewRange(from, to), true
 		}
 	}
@@ -35,44 +34,25 @@ func lspRangeToChars(
 
 func lspPositionToChar(
 	doc *view.Document, pos protocol.Position,
-	encoding protocol.PositionEncodingKind,
+	enc protocol.PositionEncodingKind,
 ) (int, bool) {
-	lineStart, err := doc.Text().LineToChar(int(pos.Line))
-	if err != nil {
-		return 0, false
-	}
-	lineEnd, err := doc.Text().LineEndCharIndex(int(pos.Line))
-	if err != nil {
-		return 0, false
-	}
-	line, err := doc.Text().SliceString(lineStart, lineEnd)
-	if err != nil {
-		return 0, false
-	}
-	chars, ok := encodedPositionToChar(line, int(pos.Character), encoding)
-	if !ok {
-		return 0, false
-	}
-	return lineStart + chars, true
+	return serverPosition(pos).Resolve(doc.Text(), viewEncoding(enc))
 }
 
-func encodedPositionToChar(
-	line string, target int, encoding protocol.PositionEncodingKind,
-) (int, bool) {
-	units := 0
-	chars := 0
-	for _, ch := range line {
-		if units == target {
-			return chars, true
-		}
-		units += encodedRuneLen(ch, encoding)
-		chars++
-		if units > target {
-			return 0, false
-		}
+func serverPosition(pos protocol.Position) view.ServerPosition {
+	return view.ServerPosition{
+		Line:      int(pos.Line),
+		Character: int(pos.Character),
 	}
-	if units == target {
-		return chars, true
+}
+
+func viewEncoding(enc protocol.PositionEncodingKind) view.PositionEncoding {
+	switch enc {
+	case protocol.PositionEncodingKindUTF8:
+		return view.PositionEncodingUTF8
+	case protocol.PositionEncodingKindUTF32:
+		return view.PositionEncodingUTF32
+	default:
+		return view.PositionEncodingUTF16
 	}
-	return 0, false
 }

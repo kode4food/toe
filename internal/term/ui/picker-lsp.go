@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
@@ -16,8 +17,11 @@ type (
 
 	lspLocationSource struct {
 		PickerBase
-		locations []view.Location
+		request locationRequest
 	}
+
+	// locationRequest fetches the locations a location picker lists
+	locationRequest func() ([]view.Location, error)
 
 	lspSymbolSource struct {
 		PickerBase
@@ -30,14 +34,14 @@ type (
 	}
 )
 
-func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
+func newLSPLocationPicker(e *view.Editor, request locationRequest) *Picker {
 	return NewPicker(e, &lspLocationSource{
 		PickerBase: PickerBase{
 			Ident: "lsp-locations",
 			Label: "Locations",
 			Cols:  []string{"location"},
 		},
-		locations: locations,
+		request: request,
 	})
 }
 
@@ -100,32 +104,47 @@ func (l *lspWorkspaceCommandSource) Accept(
 	}
 }
 
-// Load lists the locations the request returned
+// Load streams the request's locations in as they arrive
 func (l *lspLocationSource) Load(
 	e *view.Editor,
 ) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
-	items := make([]*PickerItem, 0, len(l.locations))
-	var slab PickerItemSlab
-	for _, loc := range l.locations {
-		doc, err := e.PeekDoc(loc.Path)
-		if err != nil {
-			continue
+	cwd := e.Cwd()
+	ch := make(chan *PickerItem, pickerFeedBatchSize)
+	done := make(chan struct{})
+	var once sync.Once
+	cancel := func() { once.Do(func() { close(done) }) }
+	go func() {
+		defer close(ch)
+		locations, _ := l.request()
+		var slab PickerItemSlab
+		for _, loc := range locations {
+			select {
+			case ch <- locationItem(&slab, loc, cwd):
+			case <-done:
+				return
+			}
 		}
-		line, lines := locationLineRange(doc.Text(), loc)
-		name := doc.RelativeName(e.Cwd())
-		display := fmt.Sprintf("%s:%d", name, line+1)
-		items = append(items, slab.Add(PickerItem{
-			Display: display,
-			Columns: []string{display},
-			SortKey: display,
-			Location: PickerLocation{
-				Target: PickerTarget{Path: loc.Path},
-				Lines:  lines,
-			},
-			Payload: loc,
-		}))
-	}
-	return items, nil, func() {}
+	}()
+	return nil, ch, cancel
+}
+
+func locationItem(
+	slab *PickerItemSlab, loc view.Location, cwd string,
+) *PickerItem {
+	line, lines := locationLineRange(loc)
+	display := fmt.Sprintf(
+		"%s:%d", view.DocumentRelativeName(loc.Path, cwd), line+1,
+	)
+	return slab.Add(PickerItem{
+		Display: display,
+		Columns: []string{display},
+		SortKey: display,
+		Location: PickerLocation{
+			Target: PickerTarget{Path: loc.Path},
+			Lines:  lines,
+		},
+		Payload: loc,
+	})
 }
 
 // Accept jumps to the chosen location
@@ -144,11 +163,7 @@ func (l *lspSymbolSource) Load(
 	var slab PickerItemSlab
 	for _, sym := range l.symbols {
 		loc := sym.Location
-		doc, err := e.PeekDoc(loc.Path)
-		if err != nil {
-			continue
-		}
-		_, lines := locationLineRange(doc.Text(), loc)
+		_, lines := locationLineRange(loc)
 		kind := symbolKind(sym.Kind)
 		name := symbolName(sym)
 		items = append(items, slab.Add(PickerItem{
@@ -208,12 +223,8 @@ func (l *lspWorkspaceSymbolSource) item(
 	slab *PickerItemSlab, e *view.Editor, sym view.Symbol,
 ) (*PickerItem, bool) {
 	loc := sym.Location
-	doc, err := e.PeekDoc(loc.Path)
-	if err != nil {
-		return nil, false
-	}
-	line, lines := locationLineRange(doc.Text(), loc)
-	path := doc.RelativeName(e.Cwd())
+	line, lines := locationLineRange(loc)
+	path := view.DocumentRelativeName(loc.Path, e.Cwd())
 	kind := symbolKind(sym.Kind)
 	icon := completionKindIcon(kind, e.Options().NerdFonts)
 	return slab.Add(PickerItem{
@@ -270,32 +281,29 @@ func acceptLocation(
 	if doc == nil {
 		return
 	}
-	sel, err := locationSelection(loc)
-	if err != nil {
+	sel, ok := locationSelection(doc.Text(), loc)
+	if !ok {
 		return
 	}
 	doc.SetSelectionFor(v.ID(), sel)
 	AlignAcceptedView(e, v, doc)
 }
 
-func locationLineRange(
-	text core.Rope, loc view.Location,
-) (int, *PickerLineRange) {
-	from, err := text.CharToLine(loc.From)
-	if err != nil {
-		return 0, nil
-	}
-	to, err := text.CharToLine(loc.To)
-	if err != nil {
-		to = from
-	}
+func locationLineRange(loc view.Location) (int, *PickerLineRange) {
+	from := loc.From.Line
+	to := max(loc.To.Line, from)
 	return from, &PickerLineRange{From: from, To: to}
 }
 
-func locationSelection(loc view.Location) (core.Selection, error) {
-	return core.NewSelection(
-		[]core.Range{core.NewRange(loc.To, loc.From)}, 0,
-	)
+func locationSelection(
+	text core.Rope, loc view.Location,
+) (core.Selection, bool) {
+	r, ok := loc.ResolveRange(text)
+	if !ok {
+		return core.Selection{}, false
+	}
+	sel, err := core.NewSelection([]core.Range{r}, 0)
+	return sel, err == nil
 }
 
 func symbolName(sym view.Symbol) string {

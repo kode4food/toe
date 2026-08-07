@@ -47,13 +47,13 @@ type (
 	}
 
 	loadState struct {
-		feedCmd        tea.Cmd
-		cancel         StopFunc
-		dynamicGen     int
-		dynamicStop    StopFunc
-		dynamicPending bool
-		refreshGen     int
-		pending        map[string]struct{}
+		feedCmd     tea.Cmd
+		cancel      StopFunc
+		loading     bool
+		dynamicGen  int
+		dynamicStop StopFunc
+		refreshGen  int
+		pending     map[string]struct{}
 
 		wantTarget PickerTarget
 		wantSet    bool
@@ -283,6 +283,11 @@ func (p *Picker) MatchCount() int {
 	return len(p.list.matched)
 }
 
+func (p *Picker) awaitingQuery() bool {
+	_, ok := p.source.(DynamicPickerSource)
+	return ok && p.list.query == ""
+}
+
 // SelectIndex moves the cursor to i when it is a valid match index
 func (p *Picker) SelectIndex(i int) {
 	if i >= 0 && i < len(p.list.matched) {
@@ -303,8 +308,10 @@ func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
 		p.resetMatchesFromItems()
 	}
 	if feed == nil {
+		p.load.loading = false
 		return nil
 	}
+	p.load.loading = true
 	done := make(chan struct{})
 	closeDone := sync.OnceFunc(func() { close(done) })
 	oldStop := p.load.cancel
@@ -524,10 +531,10 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	gen := p.load.dynamicGen
 	q := p.list.query
 	if q == "" {
-		p.load.dynamicPending = false
+		p.load.loading = false
 		return nil
 	}
-	p.load.dynamicPending = true
+	p.load.loading = true
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
 		return pickerDynamicTriggerMsg{gen: gen, query: q}

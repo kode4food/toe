@@ -195,18 +195,16 @@ func pickerColumnBase(
 }
 
 func pickerEmptyHint(ps *Picker) string {
-	if len(ps.list.matched) > 0 {
+	switch {
+	case len(ps.list.matched) > 0:
 		return ""
+	case ps.awaitingQuery():
+		return i18n.Text(i18n.StatusPickerTypeToSearch)
+	case ps.load.loading:
+		return i18n.Text(i18n.StatusPickerSearching)
+	default:
+		return i18n.Text(i18n.StatusPickerNoResults)
 	}
-	if _, ok := ps.source.(DynamicPickerSource); ok {
-		switch {
-		case ps.list.query == "":
-			return i18n.Text(i18n.StatusPickerTypeToSearch)
-		case ps.load.dynamicPending:
-			return i18n.Text(i18n.StatusPickerSearching)
-		}
-	}
-	return i18n.Text(i18n.StatusPickerNoResults)
 }
 
 func writePickerCenteredHint(

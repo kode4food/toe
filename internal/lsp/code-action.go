@@ -168,7 +168,7 @@ func (s *Session) resolveCodeAction(
 }
 
 func (s *Session) codeActionDiagnostics(
-	doc *view.Document, r core.Range, encoding protocol.PositionEncodingKind,
+	doc *view.Document, r core.Range, enc protocol.PositionEncodingKind,
 ) []protocol.Diagnostic {
 	var out []protocol.Diagnostic
 	for _, diag := range doc.Diagnostics() {
@@ -176,7 +176,7 @@ func (s *Session) codeActionDiagnostics(
 		if !r.Overlaps(dr) {
 			continue
 		}
-		if converted, ok := protocolDiagnostic(doc, diag, encoding); ok {
+		if converted, ok := protocolDiagnostic(doc, diag, enc); ok {
 			out = append(out, converted)
 		}
 	}

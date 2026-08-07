@@ -20,6 +20,12 @@ type (
 		Text       string
 	}
 
+	// editedText is a document's text on both sides of an edit
+	editedText struct {
+		before core.Rope
+		after  core.Rope
+	}
+
 	saveMode int
 )
 
@@ -77,7 +83,8 @@ func (c *Client) DidChangeDocument(
 		next := core.NewRope(doc.Text)
 		var err error
 		changes, err = incrementalChanges(
-			change.Before, next, change.Changes, c.OffsetEncoding(),
+			editedText{before: change.Before, after: next},
+			change.Changes, c.OffsetEncoding(),
 		)
 		if err != nil {
 			return false, err
@@ -238,8 +245,7 @@ func SnapshotDocument(doc *view.Document) (DocumentSnapshot, bool) {
 }
 
 func incrementalChanges(
-	before, after core.Rope, cs core.ChangeSet,
-	encoding protocol.PositionEncodingKind,
+	edited editedText, cs core.ChangeSet, enc protocol.PositionEncodingKind,
 ) ([]protocol.TextDocumentContentChangeEvent, error) {
 	ops := cs.Operations()
 	changes := make([]protocol.TextDocumentContentChangeEvent, 0, len(ops))
@@ -256,24 +262,32 @@ func incrementalChanges(
 		case core.OperationRetain:
 			newPos += oldLen
 		case core.OperationDelete:
-			change, err := partialChange(
-				before, after, oldPos, oldEnd, newPos, "", encoding,
-			)
+			change, err := partialChange(partialChangeArgs{
+				edited:   edited,
+				oldFrom:  oldPos,
+				oldTo:    oldEnd,
+				newFrom:  newPos,
+				encoding: enc,
+			})
 			if err != nil {
 				return nil, err
 			}
 			changes = append(changes, change)
 		case core.OperationInsert:
-			text := op.Text()
-			newPos += utf8.RuneCountInString(text)
+			inserted := op.Text()
+			newPos += utf8.RuneCountInString(inserted)
 			if i+1 < len(ops) && ops[i+1].Kind() == core.OperationDelete {
 				i++
 				oldEnd = oldPos + ops[i].LenChars()
 			}
-			change, err := partialChange(
-				before, after, oldPos, oldEnd, newPos-lenRunes(text),
-				text, encoding,
-			)
+			change, err := partialChange(partialChangeArgs{
+				edited:   edited,
+				oldFrom:  oldPos,
+				oldTo:    oldEnd,
+				newFrom:  newPos - lenRunes(inserted),
+				inserted: inserted,
+				encoding: enc,
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -284,30 +298,38 @@ func incrementalChanges(
 	return changes, nil
 }
 
+type partialChangeArgs struct {
+	edited   editedText
+	oldFrom  int
+	oldTo    int
+	newFrom  int
+	inserted string
+	encoding protocol.PositionEncodingKind
+}
+
 func partialChange(
-	before, after core.Rope, oldFrom, oldTo, newFrom int, text string,
-	encoding protocol.PositionEncodingKind,
+	args partialChangeArgs,
 ) (protocol.TextDocumentContentChangeEvent, error) {
-	start, err := lspPosition(after, newFrom, encoding)
+	start, err := lspPosition(args.edited.after, args.newFrom, args.encoding)
 	if err != nil {
 		return nil, err
 	}
-	oldText, err := before.SliceString(oldFrom, oldTo)
+	oldText, err := args.edited.before.SliceString(args.oldFrom, args.oldTo)
 	if err != nil {
 		return nil, err
 	}
-	end := traversePosition(start, oldText, encoding)
+	end := traversePosition(start, oldText, args.encoding)
 	return &protocol.TextDocumentContentChangePartial{
 		Range: protocol.Range{
 			Start: start,
 			End:   end,
 		},
-		Text: text,
+		Text: args.inserted,
 	}, nil
 }
 
 func lspPosition(
-	doc core.Rope, pos int, encoding protocol.PositionEncodingKind,
+	doc core.Rope, pos int, enc protocol.PositionEncodingKind,
 ) (protocol.Position, error) {
 	line, err := doc.CharToLine(pos)
 	if err != nil {
@@ -323,13 +345,12 @@ func lspPosition(
 	}
 	return protocol.Position{
 		Line:      uint32(line),
-		Character: uint32(encodedLen(text, encoding)),
+		Character: uint32(encodedLen(text, enc)),
 	}, nil
 }
 
 func traversePosition(
-	pos protocol.Position, text string,
-	encoding protocol.PositionEncodingKind,
+	pos protocol.Position, text string, enc protocol.PositionEncodingKind,
 ) protocol.Position {
 	runes := []rune(text)
 	for i := 0; i < len(runes); i++ {
@@ -342,13 +363,13 @@ func traversePosition(
 			pos.Character = 0
 			continue
 		}
-		pos.Character += uint32(encodedRuneLen(ch, encoding))
+		pos.Character += uint32(viewEncoding(enc).RuneLen(ch))
 	}
 	return pos
 }
 
-func encodedLen(text string, encoding protocol.PositionEncodingKind) int {
-	switch encoding {
+func encodedLen(text string, enc protocol.PositionEncodingKind) int {
+	switch enc {
 	case protocol.PositionEncodingKindUTF8:
 		return len(text)
 	case protocol.PositionEncodingKindUTF32:
@@ -356,23 +377,9 @@ func encodedLen(text string, encoding protocol.PositionEncodingKind) int {
 	default:
 		n := 0
 		for _, ch := range text {
-			n += encodedRuneLen(ch, protocol.PositionEncodingKindUTF16)
+			n += view.PositionEncodingUTF16.RuneLen(ch)
 		}
 		return n
-	}
-}
-
-func encodedRuneLen(ch rune, encoding protocol.PositionEncodingKind) int {
-	switch encoding {
-	case protocol.PositionEncodingKindUTF8:
-		return len(string(ch))
-	case protocol.PositionEncodingKindUTF32:
-		return 1
-	default:
-		if ch > 0xffff {
-			return 2
-		}
-		return 1
 	}
 }
 

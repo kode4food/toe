@@ -149,6 +149,7 @@ func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 	if msg.feed != nil {
 		return consumed(), drainPickerFeed(msg.feed, msg.done)
 	}
+	p.state.load.loading = false
 	return consumed(), nil
 }
 
@@ -175,7 +176,7 @@ func (p *PickerComponent) handleDynamicTrigger(
 	if ch != nil {
 		return consumed(), drainDynamicFeed(msg.gen, ch)
 	}
-	ps.load.dynamicPending = false
+	ps.load.loading = false
 	return consumed(), nil
 }
 
@@ -191,7 +192,7 @@ func (p *PickerComponent) handleDynamicFeed(
 	if msg.feed != nil {
 		return consumed(), drainDynamicFeed(msg.gen, msg.feed)
 	}
-	ps.load.dynamicPending = false
+	ps.load.loading = false
 	return consumed(), nil
 }
 

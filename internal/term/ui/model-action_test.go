@@ -41,7 +41,6 @@ var gotoActionCases = []gotoActionCase{
 	{"GotoDeclarationAction", ui.Model.GotoDeclarationAction},
 	{"GotoTypeDefinitionAction", ui.Model.GotoTypeDefinitionAction},
 	{"GotoImplementationAction", ui.Model.GotoImplementationAction},
-	{"GotoReferenceAction", ui.Model.GotoReferenceAction},
 }
 
 func TestLocationAction(t *testing.T) {
@@ -61,7 +60,11 @@ func TestLocationAction(t *testing.T) {
 		doc.SetSelectionFor(v.ID(), core.PointSelection(2))
 		e.SetLanguageServerController(&locationController{
 			locations: []view.Location{
-				{Path: target, From: 3, To: 3},
+				{
+					Path: target,
+					From: view.ServerPosition{Line: 0, Character: 3},
+					To:   view.ServerPosition{Line: 0, Character: 3},
+				},
 			},
 		})
 		m := ui.New(e, command.NewKeymaps())
@@ -91,8 +94,16 @@ func TestLocationAction(t *testing.T) {
 		assert.NoError(t, err)
 		e.SetLanguageServerController(&locationController{
 			locations: []view.Location{
-				{Path: first, From: 2, To: 5},
-				{Path: second, From: 3, To: 6},
+				{
+					Path: first,
+					From: view.ServerPosition{Line: 0, Character: 2},
+					To:   view.ServerPosition{Line: 0, Character: 5},
+				},
+				{
+					Path: second,
+					From: view.ServerPosition{Line: 0, Character: 3},
+					To:   view.ServerPosition{Line: 0, Character: 6},
+				},
 			},
 		})
 		km := command.NewKeymaps()
@@ -104,7 +115,7 @@ func TestLocationAction(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		before := len(e.AllDocuments())
-		m = sendKey(m, 'd')
+		m = sendKeyAndFeed(m, 'd')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "first.go:1")
@@ -143,8 +154,12 @@ func TestSymbolPickerAction(t *testing.T) {
 					Name: "main", Kind: "function", Container: "package",
 					Location: view.Location{
 						Path: path,
-						From: len(prefix),
-						To:   len(prefix) + len(body),
+						From: view.ServerPosition{
+							Line: strings.Count(prefix, "\n"),
+						},
+						To: view.ServerPosition{
+							Line: strings.Count(prefix+body, "\n"),
+						},
 					},
 				},
 			},
@@ -200,8 +215,12 @@ func TestSymbolPickerAction(t *testing.T) {
 					Container: "workspace",
 					Location: view.Location{
 						Path: target,
-						From: len(prefix),
-						To:   len(prefix) + len(body),
+						From: view.ServerPosition{
+							Line: strings.Count(prefix, "\n"),
+						},
+						To: view.ServerPosition{
+							Line: strings.Count(prefix+body, "\n"),
+						},
 					},
 				},
 			},
@@ -876,7 +895,11 @@ func TestGotoActions(t *testing.T) {
 			assert.NoError(t, err)
 			e.SetLanguageServerController(&locationController{
 				locations: []view.Location{
-					{Path: target, From: 3, To: 3},
+					{
+						Path: target,
+						From: view.ServerPosition{Line: 0, Character: 3},
+						To:   view.ServerPosition{Line: 0, Character: 3},
+					},
 				},
 			})
 			m := ui.New(e, command.NewKeymaps())
@@ -888,6 +911,37 @@ func TestGotoActions(t *testing.T) {
 			assert.Equal(t, target, doc.Path())
 		})
 	}
+
+	t.Run("references list a single hit in the picker", func(t *testing.T) {
+		dir := t.TempDir()
+		source := filepath.Join(dir, "source.go")
+		target := filepath.Join(dir, "target.go")
+		assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
+		assert.NoError(t, os.WriteFile(target, []byte("target\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(source)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			locations: []view.Location{
+				{
+					Path: target,
+					From: view.ServerPosition{Line: 0, Character: 3},
+					To:   view.ServerPosition{Line: 0, Character: 3},
+				},
+			},
+		})
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "goto_reference", m.GotoReferenceAction,
+			[]command.KeyEvent{char('r')},
+		)
+		m = resize(m, 80, 24)
+
+		m = sendKeyAndFeed(m, 'r')
+
+		assert.Contains(t, stripANSI(m.View().Content), "target.go:1")
+	})
 }
 
 func TestHoverAction(t *testing.T) {

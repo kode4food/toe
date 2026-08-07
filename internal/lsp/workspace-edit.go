@@ -39,18 +39,16 @@ func (s *Session) ApplyWorkspaceEdit(
 }
 
 func (s *Session) applyWorkspaceEdit(
-	edit protocol.WorkspaceEdit,
-	encoding protocol.PositionEncodingKind,
+	edit protocol.WorkspaceEdit, enc protocol.PositionEncodingKind,
 ) error {
 	if len(edit.DocumentChanges) > 0 {
-		return s.applyDocumentChanges(edit.DocumentChanges, encoding)
+		return s.applyDocumentChanges(edit.DocumentChanges, enc)
 	}
-	return s.applyWorkspaceChanges(edit.Changes, encoding)
+	return s.applyWorkspaceChanges(edit.Changes, enc)
 }
 
 func (s *Session) applyWorkspaceChanges(
-	changes map[uri.URI][]protocol.TextEdit,
-	encoding protocol.PositionEncodingKind,
+	changes map[uri.URI][]protocol.TextEdit, enc protocol.PositionEncodingKind,
 ) error {
 	uris := slices.Collect(maps.Keys(changes))
 	slices.SortFunc(uris, func(a, b uri.URI) int {
@@ -58,7 +56,7 @@ func (s *Session) applyWorkspaceChanges(
 	})
 	for _, u := range uris {
 		docEdit, err := s.workspaceDocumentEdit(
-			u, changes[u], encoding,
+			u, changes[u], enc,
 		)
 		if err != nil {
 			return err
@@ -71,13 +69,12 @@ func (s *Session) applyWorkspaceChanges(
 }
 
 func (s *Session) applyDocumentChanges(
-	changes []protocol.DocumentChange,
-	encoding protocol.PositionEncodingKind,
+	changes []protocol.DocumentChange, enc protocol.PositionEncodingKind,
 ) error {
 	for _, change := range changes {
 		switch c := change.(type) {
 		case *protocol.TextDocumentEdit:
-			docEdit, err := s.textDocumentEdit(c, encoding)
+			docEdit, err := s.textDocumentEdit(c, enc)
 			if err != nil {
 				return err
 			}
@@ -106,14 +103,13 @@ func (s *Session) applyDocumentChanges(
 }
 
 func (s *Session) workspaceDocumentEdit(
-	u uri.URI, edits []protocol.TextEdit,
-	encoding protocol.PositionEncodingKind,
+	u uri.URI, edits []protocol.TextEdit, enc protocol.PositionEncodingKind,
 ) (workspaceDocumentEdit, error) {
 	doc, err := s.documentForURI(u)
 	if err != nil {
 		return workspaceDocumentEdit{}, err
 	}
-	changes, err := textEditsToChanges(doc, edits, encoding)
+	changes, err := textEditsToChanges(doc, edits, enc)
 	if err != nil {
 		return workspaceDocumentEdit{}, err
 	}
@@ -121,8 +117,7 @@ func (s *Session) workspaceDocumentEdit(
 }
 
 func (s *Session) textDocumentEdit(
-	edit *protocol.TextDocumentEdit,
-	encoding protocol.PositionEncodingKind,
+	edit *protocol.TextDocumentEdit, enc protocol.PositionEncodingKind,
 ) (workspaceDocumentEdit, error) {
 	doc, err := s.documentForURI(edit.TextDocument.URI)
 	if err != nil {
@@ -145,7 +140,7 @@ func (s *Session) textDocumentEdit(
 			)
 		}
 	}
-	changes, err := textEditsToChanges(doc, edits, encoding)
+	changes, err := textEditsToChanges(doc, edits, enc)
 	if err != nil {
 		return workspaceDocumentEdit{}, err
 	}
@@ -185,11 +180,11 @@ func workspaceEditPath(u uri.URI) (string, error) {
 
 func textEditsToChanges(
 	doc *view.Document, edits []protocol.TextEdit,
-	encoding protocol.PositionEncodingKind,
+	enc protocol.PositionEncodingKind,
 ) ([]core.Change, error) {
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {
-		cr, ok := lspRangeToChars(doc, edit.Range, encoding)
+		cr, ok := lspRangeToChars(doc, edit.Range, enc)
 		if !ok {
 			return nil, ErrWorkspaceEditRange
 		}

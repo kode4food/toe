@@ -38,11 +38,19 @@ func TestSymbol(t *testing.T) {
 		assert.Equal(t, []view.Symbol{
 			{
 				Name: "outer", Kind: "function",
-				Location: view.Location{Path: path, From: 5, To: 10},
+				Location: view.Location{
+					Path: path,
+					From: view.ServerPosition{Line: 0, Character: 5},
+					To:   view.ServerPosition{Line: 0, Character: 10},
+				},
 			},
 			{
 				Name: "inner", Kind: "variable", Container: "outer",
-				Location: view.Location{Path: path, From: 20, To: 25},
+				Location: view.Location{
+					Path: path,
+					From: view.ServerPosition{Line: 1, Character: 4},
+					To:   view.ServerPosition{Line: 1, Character: 9},
+				},
 			},
 		}, symbols)
 	})
@@ -90,7 +98,11 @@ func TestSymbol(t *testing.T) {
 			{
 				Name: "WorkspaceMain", Kind: "function",
 				Container: "workspace",
-				Location:  view.Location{Path: target, From: 3, To: 6},
+				Location: view.Location{
+					Path: target,
+					From: view.ServerPosition{Line: 0, Character: 3},
+					To:   view.ServerPosition{Line: 0, Character: 6},
+				},
 			},
 		}, symbols)
 	})
@@ -188,7 +200,11 @@ func TestWorkspaceSymbolSlice(t *testing.T) {
 			{
 				Name: "WorkspaceMain", Kind: "function",
 				Container: "workspace",
-				Location:  view.Location{Path: target, From: 3, To: 6},
+				Location: view.Location{
+					Path: target,
+					From: view.ServerPosition{Line: 0, Character: 3},
+					To:   view.ServerPosition{Line: 0, Character: 6},
+				},
 			},
 		}, symbols)
 	})

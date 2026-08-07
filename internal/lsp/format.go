@@ -118,12 +118,12 @@ func (c *Client) formatRequest(
 
 func (s *Session) applyFormattingEdits(
 	doc *view.Document, edits []protocol.TextEdit,
-	encoding protocol.PositionEncodingKind,
+	enc protocol.PositionEncodingKind,
 ) error {
 	if len(edits) == 0 {
 		return nil
 	}
-	changes, err := textEditsToChanges(doc, edits, encoding)
+	changes, err := textEditsToChanges(doc, edits, enc)
 	if err != nil {
 		return err
 	}

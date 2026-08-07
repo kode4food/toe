@@ -45,12 +45,9 @@ func (m Model) GotoImplementationAction(e *view.Editor) {
 	)
 }
 
-// GotoReferenceAction jumps to references to the symbol at the cursor
+// GotoReferenceAction lists references to the symbol at the cursor
 func (m Model) GotoReferenceAction(e *view.Editor) {
-	m.gotoLocation(e,
-		i18n.Text(i18n.StatusNoReferences),
-		view.LanguageServerController.GotoReference,
-	)
+	m.gotoLocationPicker(e, view.LanguageServerController.GotoReference)
 }
 
 // SelectReferencesAction selects every reference to the symbol at the cursor
@@ -109,17 +106,43 @@ func (m Model) gotoLocation(
 	case 1:
 		jumpToLocation(e, locations[0])
 	default:
-		opener := locationPickerLayer(locations)
+		opener := locationPickerLayer(func() ([]view.Location, error) {
+			return locations, nil
+		})
 		cx.lastLayer = opener
 		ec.keys.nextLayer = opener(e)
 	}
 }
 
+func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {
+	ec := m.component
+	cx := m.context
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	ls := e.LanguageServerController()
+	if ls == nil {
+		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoNavigation))
+		return
+	}
+	viewID := v.ID()
+	opener := locationPickerLayer(func() ([]view.Location, error) {
+		return get(ls, doc, viewID)
+	})
+	cx.lastLayer = opener
+	ec.keys.nextLayer = opener(e)
+}
+
 func locationPickerLayer(
-	locations []view.Location,
+	request locationRequest,
 ) func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
-		p := newLSPLocationPicker(e, locations)
+		p := newLSPLocationPicker(e, request)
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
 		return func(cx *Context) (Component, tea.Cmd) {
@@ -139,7 +162,7 @@ func jumpToLocation(e *view.Editor, loc view.Location) {
 	if doc == nil {
 		return
 	}
-	if sel, err := locationSelection(loc); err == nil {
+	if sel, ok := locationSelection(doc.Text(), loc); ok {
 		doc.SetSelectionFor(v.ID(), sel)
 	}
 }

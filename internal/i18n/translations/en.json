@@ -52,7 +52,6 @@
   "status.noDefinition": "No definition found.",
   "status.noTypeDefinition": "No type definition found.",
   "status.noImplementation": "No implementation found.",
-  "status.noReferences": "No references found.",
   "status.noSymbolReferences": "No symbol references found.",
   "status.noDocumentSymbols": "No document symbols found.",
   "status.noCodeActions": "No code actions available.",

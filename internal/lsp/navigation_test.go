@@ -38,7 +38,11 @@ func TestNavigation(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 
@@ -67,7 +71,11 @@ func TestNavigation(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 
@@ -96,7 +104,11 @@ func TestNavigation(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 
@@ -125,7 +137,11 @@ func TestNavigation(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 
@@ -154,7 +170,11 @@ func TestNavigation(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 }
@@ -185,7 +205,11 @@ func TestNavigationLinkSlices(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 
@@ -214,7 +238,11 @@ func TestNavigationLinkSlices(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 }
@@ -244,13 +272,21 @@ func TestNavigationLocationSlice(t *testing.T) {
 		locations, err := session.GotoDeclaration(doc, v.ID())
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 
 		locations, err = session.GotoDefinition(doc, v.ID())
 		assert.NoError(t, err)
 		assert.Equal(t, []view.Location{
-			{Path: target, From: 3, To: 6},
+			{
+				Path: target,
+				From: view.ServerPosition{Line: 0, Character: 3},
+				To:   view.ServerPosition{Line: 0, Character: 6},
+			},
 		}, locations)
 	})
 }

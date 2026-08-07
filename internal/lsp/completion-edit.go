@@ -28,14 +28,14 @@ type (
 
 func (s *Session) applyAdditionalCompletionEdits(
 	doc *view.Document, edits []protocol.TextEdit,
-	encoding protocol.PositionEncodingKind,
+	enc protocol.PositionEncodingKind,
 ) error {
 	if len(edits) == 0 {
 		return nil
 	}
 	changes := make([]core.Change, 0, len(edits))
 	for _, edit := range edits {
-		cr, ok := lspRangeToChars(doc, edit.Range, encoding)
+		cr, ok := lspRangeToChars(doc, edit.Range, enc)
 		if !ok {
 			return ErrCompletionUnavailable
 		}

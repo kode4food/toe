@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"errors"
+	"path/filepath"
 
 	"go.lsp.dev/protocol"
 
@@ -240,23 +241,19 @@ func (s *Session) viewLocations(
 func (s *Session) viewLocation(
 	client *Client, loc protocol.Location,
 ) (view.Location, bool) {
-	if !loc.URI.IsFile() || s.editor == nil {
+	if !loc.URI.IsFile() {
 		return view.Location{}, false
 	}
-	doc, err := s.editor.PeekDoc(loc.URI.FsPath())
+	path, err := filepath.Abs(loc.URI.FsPath())
 	if err != nil {
 		return view.Location{}, false
 	}
-	encoding := client.OffsetEncoding()
-	from, ok := lspPositionToChar(doc, loc.Range.Start, encoding)
-	if !ok {
-		return view.Location{}, false
-	}
-	to, ok := lspPositionToChar(doc, loc.Range.End, encoding)
-	if !ok {
-		to = from
-	}
-	return view.Location{Path: doc.Path(), From: from, To: to}, true
+	return view.Location{
+		Path:     path,
+		From:     serverPosition(loc.Range.Start),
+		To:       serverPosition(loc.Range.End),
+		Encoding: viewEncoding(client.OffsetEncoding()),
+	}, true
 }
 
 func locationResultLocations(result any) []protocol.Location {

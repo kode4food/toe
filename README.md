@@ -14,7 +14,7 @@ toe is opinionated because it is built for one tight workflow: editing Go projec
 
 - Modal editing: normal, insert, and selection modes; multi-cursor editing; undo and redo
 - Project navigation: multiple buffers, split views, fuzzy file/buffer pickers, global search, file and diff previews, image panes, binary/hex panes, and an integrated terminal pane
-- Go-focused language tooling: syntax highlighting, LSP completion, hover, signature help, formatting, symbols, code actions, rename, go-to navigation, and diagnostics
+- Go-focused language tooling: syntax highlighting, language server completion, hover, signature help, formatting, symbols, code actions, rename, go-to navigation, and diagnostics
 - Editor display: soft wrap, rulers, whitespace rendering, indent guides, gutters, configurable cursor shapes, and statusline elements
 - Version control: git diff gutters, changed-hunk navigation and reset, and a changed-file picker with unified diff previews
 - Project state: workspace trust, user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads

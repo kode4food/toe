@@ -383,7 +383,7 @@ Splitting a document or image pane creates another view of the same document or 
 | `last-picker` |  | Reopen the last picker |
 | `changed-file-picker` |  | Open changed file picker |
 
-## LSP
+## Language Server
 
 | Command | Aliases | Description |
 |---------|---------|-------------|

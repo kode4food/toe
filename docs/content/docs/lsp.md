@@ -29,7 +29,7 @@ language-servers = ["gopls"]
 
 Language server config in `.toe/languages.toml` is merged on top of user config, letting you override per-project without touching global settings.
 
-## Available LSP Features
+## Available Language Server Features
 
 | Feature | Key | Command |
 |---------|-----|---------|

@@ -78,6 +78,7 @@ type (
 	// PickerSource is implemented by every picker data source
 	PickerSource interface {
 		ID() string
+		Title() string
 		Columns() []string
 		MatchColumn() int
 		ColumnProportions() []int
@@ -174,13 +175,14 @@ type (
 	}
 
 	// PickerBase is an optional starting point a source can embed for default
-	// id, column, and fuzzy-match behavior; a source is free to implement
-	// those methods itself instead
+	// id, title, column, and fuzzy-match behavior; a source is free to
+	// implement those methods itself instead
 	PickerBase struct {
-		id          string
-		columns     []string
-		matchColumn int
-		proportions []int
+		Ident       string
+		Label       string
+		Cols        []string
+		MatchCol    int
+		Proportions []int
 	}
 
 	pickerMatch struct {
@@ -238,49 +240,41 @@ func (p PickerTarget) Valid() bool {
 	return p.Path != "" || p.ID != view.InvalidDocumentId
 }
 
-// NewPickerBase builds the fixed metadata a source embeds: kebab-case id,
-// column headers, the column matched against, and each column's flex weight
-func NewPickerBase(
-	id string, columns []string, matchColumn int, proportions []int,
-) PickerBase {
-	return PickerBase{
-		id:          id,
-		columns:     columns,
-		matchColumn: matchColumn,
-		proportions: proportions,
-	}
-}
-
 // ID is the picker's identifier, used to restore the last picker
 func (p PickerBase) ID() string {
-	return p.id
+	return p.Ident
+}
+
+// Title is the picker's display title, drawn in the frame's top border
+func (p PickerBase) Title() string {
+	return p.Label
 }
 
 // Columns are the picker's column headings
 func (p PickerBase) Columns() []string {
-	return p.columns
+	return p.Cols
 }
 
 // MatchColumn is the column the filter query matches against
 func (p PickerBase) MatchColumn() int {
-	return p.matchColumn
+	return p.MatchCol
 }
 
 // ColumnProportions are the relative widths of the columns
 func (p PickerBase) ColumnProportions() []int {
-	if len(p.proportions) == len(p.columns) {
-		for _, proportion := range p.proportions {
+	if len(p.Proportions) == len(p.Cols) {
+		for _, proportion := range p.Proportions {
 			if proportion > 0 {
-				return p.proportions
+				return p.Proportions
 			}
 		}
 	}
-	return defaultColumnProportions(len(p.columns))
+	return defaultColumnProportions(len(p.Cols))
 }
 
 // PrepareMatcher prepares a query for matching multiple items
 func (p PickerBase) PrepareMatcher(query string) PickerMatcher {
-	f := newMatcher(query, p.columns, p.matchColumn)
+	f := newMatcher(query, p.Cols, p.MatchCol)
 	return f.match
 }
 

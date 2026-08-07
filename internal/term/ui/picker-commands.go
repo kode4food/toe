@@ -16,9 +16,10 @@ type commandPaletteSource struct {
 func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
 	return NewPicker(e, &commandPaletteSource{
 		PickerBase: PickerBase{
-			id:          "command-palette",
-			columns:     []string{"name", "bindings", "doc"},
-			proportions: []int{0, 1, 2},
+			Ident:       "command-palette",
+			Label:       "Command Palette",
+			Cols:        []string{"name", "bindings", "doc"},
+			Proportions: []int{0, 1, 2},
 		},
 		km: km,
 	})

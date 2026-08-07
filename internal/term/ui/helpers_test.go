@@ -264,8 +264,12 @@ func feedPickerModel(t testing.TB, paths []string) ui.Model {
 	// the open and its feed themselves
 	t.Helper()
 	src := feedPickerSource{
-		PickerBase: ui.NewPickerBase("feed", []string{"path"}, 0, nil),
-		paths:      paths,
+		PickerBase: ui.PickerBase{
+			Ident: "feed",
+			Label: "Feed",
+			Cols:  []string{"path"},
+		},
+		paths: paths,
 	}
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()

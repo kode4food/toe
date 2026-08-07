@@ -569,6 +569,10 @@ func (p *pathPickerSource) ID() string {
 	return "test"
 }
 
+func (p *pathPickerSource) Title() string {
+	return "Test"
+}
+
 func (p *pathPickerSource) Columns() []string {
 	return []string{"name"}
 }

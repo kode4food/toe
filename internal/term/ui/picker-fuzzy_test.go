@@ -9,7 +9,11 @@ import (
 )
 
 func TestPickerFuzzy(t *testing.T) {
-	base := ui.NewPickerBase("test", []string{"path"}, 0, nil)
+	base := ui.PickerBase{
+		Ident: "test",
+		Label: "Test",
+		Cols:  []string{"path"},
+	}
 	match := func(query, path string) (ui.MatchResult, bool) {
 		return base.PrepareMatcher(query)(&ui.PickerItem{Display: path})
 	}

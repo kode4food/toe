@@ -55,12 +55,29 @@ var (
 
 // NewDiagnosticPicker lists diagnostics for the focused document
 func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
-	return newDiagnosticPicker(e, false)
+	return ui.NewPicker(e, &diagnosticPickerSource{
+		PickerBase: ui.PickerBase{
+			Ident:       "diagnostics",
+			Label:       "Diagnostics",
+			Cols:        []string{"", ""},
+			MatchCol:    1,
+			Proportions: []int{0, 1},
+		},
+	})
 }
 
 // NewWorkspaceDiagnosticPicker lists diagnostics for all open documents
 func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
-	return newDiagnosticPicker(e, true)
+	return ui.NewPicker(e, &diagnosticPickerSource{
+		PickerBase: ui.PickerBase{
+			Ident:       "workspace-diagnostics",
+			Label:       "Workspace Diagnostics",
+			Cols:        []string{"", "", ""},
+			MatchCol:    1,
+			Proportions: []int{0, 2, 1},
+		},
+		workspace: true,
+	})
 }
 
 // Load lists every diagnostic across open documents
@@ -130,24 +147,6 @@ func (d *diagnosticPickerSource) item(
 			Lines:  lines,
 		},
 		Payload: diagnosticPickerPayload{id: doc.ID(), diag: diag},
-	})
-}
-
-func newDiagnosticPicker(e *view.Editor, workspace bool) *ui.Picker {
-	id := "diagnostics"
-	columns := []string{"", ""}
-	matchColumn := 1
-	proportions := []int{0, 1}
-	if workspace {
-		id = "workspace-diagnostics"
-		columns = []string{"", "", ""}
-		proportions = []int{0, 2, 1}
-	}
-	return ui.NewPicker(e, &diagnosticPickerSource{
-		PickerBase: ui.NewPickerBase(
-			id, columns, matchColumn, proportions,
-		),
-		workspace: workspace,
 	})
 }
 

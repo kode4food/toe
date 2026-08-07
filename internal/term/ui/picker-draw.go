@@ -22,6 +22,7 @@ func (p *PickerComponent) drawPickerBox(
 	frame := pickerBoxFrame{
 		borderStyle:  pickerFrameStyle(cx),
 		contentStyle: pickerContentStyle(cx),
+		title:        ps.source.Title(),
 	}
 	areas := frame.drawSplit(buf, area, lw, 2)
 
@@ -78,6 +79,7 @@ func (p *PickerComponent) drawPickerPane(
 	frame := pickerBoxFrame{
 		borderStyle:  pickerFrameStyle(cx),
 		contentStyle: pickerContentStyle(cx),
+		title:        ps.source.Title(),
 	}
 	area = frame.drawSingle(buf, area, 2)
 

@@ -265,6 +265,10 @@ func (noPreviewPickerSource) ID() string {
 	return "Plain"
 }
 
+func (noPreviewPickerSource) Title() string {
+	return "Plain"
+}
+
 func (noPreviewPickerSource) Columns() []string {
 	return []string{"name"}
 }
@@ -292,6 +296,10 @@ func (noPreviewPickerSource) Accept(
 }
 
 func (columnPickerSource) ID() string {
+	return "Columns"
+}
+
+func (columnPickerSource) Title() string {
 	return "Columns"
 }
 

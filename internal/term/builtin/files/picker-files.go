@@ -106,8 +106,12 @@ func (f *filePickerSource) Accept(
 
 func newFilePickerSource(dir string) *filePickerSource {
 	return &filePickerSource{
-		PickerBase: ui.NewPickerBase("open-file", []string{"path"}, 0, nil),
-		dir:        dir,
+		PickerBase: ui.PickerBase{
+			Ident: "open-file",
+			Label: "Open File",
+			Cols:  []string{"path"},
+		},
+		dir: dir,
 	}
 }
 

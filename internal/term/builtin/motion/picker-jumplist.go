@@ -34,7 +34,12 @@ func JumplistModule(model ui.Model) command.Module {
 // JumplistPicker opens a picker listing the jump history for the focused view
 func JumplistPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &jumplistPickerSource{
-		PickerBase: ui.NewPickerBase("jumplist", []string{"path"}, 0, []int{1}),
+		PickerBase: ui.PickerBase{
+			Ident:       "jumplist",
+			Label:       "Jump List",
+			Cols:        []string{"path"},
+			Proportions: []int{1},
+		},
 	})
 }
 

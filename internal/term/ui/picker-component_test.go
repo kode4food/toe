@@ -223,6 +223,10 @@ func (s fixedPickerSource) ID() string {
 	return "fixed"
 }
 
+func (fixedPickerSource) Title() string {
+	return ""
+}
+
 func (fixedPickerSource) Columns() []string {
 	return []string{"name"}
 }

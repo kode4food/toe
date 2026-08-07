@@ -642,6 +642,8 @@ func newControlledDynamicSource() *controlledDynamicSource {
 
 func (c *controlledDynamicSource) ID() string { return "dynamic" }
 
+func (c *controlledDynamicSource) Title() string { return "Dynamic" }
+
 func (c *controlledDynamicSource) Columns() []string { return []string{"path"} }
 
 func (c *controlledDynamicSource) MatchColumn() int { return 0 }

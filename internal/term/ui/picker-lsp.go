@@ -33,8 +33,9 @@ type (
 func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
 	return NewPicker(e, &lspLocationSource{
 		PickerBase: PickerBase{
-			id:      "lsp-locations",
-			columns: []string{"location"},
+			Ident: "lsp-locations",
+			Label: "Locations",
+			Cols:  []string{"location"},
 		},
 		locations: locations,
 	})
@@ -43,10 +44,11 @@ func newLSPLocationPicker(e *view.Editor, locations []view.Location) *Picker {
 func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 	return NewPicker(e, &lspSymbolSource{
 		PickerBase: PickerBase{
-			id:          "lsp-symbols",
-			columns:     []string{"", ""},
-			matchColumn: 1,
-			proportions: []int{0, 1},
+			Ident:       "lsp-symbols",
+			Label:       "Document Symbols",
+			Cols:        []string{"", ""},
+			MatchCol:    1,
+			Proportions: []int{0, 1},
 		},
 		symbols: symbols,
 	})
@@ -55,10 +57,11 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &lspWorkspaceSymbolSource{
 		PickerBase: PickerBase{
-			id:          "lsp-workspace-symbols",
-			columns:     []string{"", "", ""},
-			matchColumn: 1,
-			proportions: []int{0, 0, 1},
+			Ident:       "lsp-workspace-symbols",
+			Label:       "Workspace Symbols",
+			Cols:        []string{"", "", ""},
+			MatchCol:    1,
+			Proportions: []int{0, 0, 1},
 		},
 	})
 }
@@ -244,8 +247,9 @@ func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 	}
 	return NewPicker(e, &lspWorkspaceCommandSource{
 		PickerBase: PickerBase{
-			id:      "lsp-workspace-command",
-			columns: []string{"command"},
+			Ident: "lsp-workspace-command",
+			Label: "Language Server Commands",
+			Cols:  []string{"command"},
 		},
 		commands: commands,
 	})

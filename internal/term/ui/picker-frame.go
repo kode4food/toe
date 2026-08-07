@@ -3,6 +3,8 @@ package ui
 import (
 	"strings"
 
+	"github.com/mattn/go-runewidth"
+
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -11,6 +13,7 @@ type (
 	pickerBoxFrame struct {
 		borderStyle  tui.Style
 		contentStyle tui.Style
+		title        string
 	}
 
 	pickerBoxAreas struct {
@@ -36,6 +39,7 @@ func (f pickerBoxFrame) drawSplit(
 	bot := borderBL + strings.Repeat(borderH, lw) + borderMB +
 		strings.Repeat(borderH, rw) + borderBR
 	buf.SetString(area.Point, top, f.borderStyle)
+	f.drawTitle(buf, area)
 	buf.SetString(geom.Point{
 		X: area.X,
 		Y: area.Bottom(),
@@ -89,6 +93,7 @@ func (f pickerBoxFrame) drawSingle(
 	top := borderTL + strings.Repeat(borderH, innerW) + borderTR
 	bot := borderBL + strings.Repeat(borderH, innerW) + borderBR
 	buf.SetString(area.Point, top, f.borderStyle)
+	f.drawTitle(buf, area)
 	buf.SetString(geom.Point{
 		X: area.X,
 		Y: area.Bottom(),
@@ -107,4 +112,20 @@ func (f pickerBoxFrame) drawSingle(
 		}
 	}
 	return area.Inset(geom.Size{Width: 1, Height: 1})
+}
+
+// drawTitle overwrites the top-left of the border with the frame's title,
+// truncated to fit inside the corners
+func (f pickerBoxFrame) drawTitle(buf *tui.Buffer, area geom.Area) {
+	if f.title == "" {
+		return
+	}
+	maxW := area.Width - 2
+	if maxW < 2 {
+		return
+	}
+	title := " " + runewidth.Truncate(f.title, maxW-2, "") + " "
+	buf.SetString(
+		area.Point.Add(geom.Point{X: 1}), title, f.borderStyle,
+	)
 }

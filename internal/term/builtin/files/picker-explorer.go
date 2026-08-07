@@ -98,9 +98,13 @@ func newFileExplorerSource(
 	root string, opts FileExplorerOptions,
 ) *fileExplorerSource {
 	return &fileExplorerSource{
-		PickerBase: ui.NewPickerBase("file-explorer", []string{"name"}, 0, nil),
-		root:       root,
-		opts:       opts,
+		PickerBase: ui.PickerBase{
+			Ident: "file-explorer",
+			Label: "File Explorer",
+			Cols:  []string{"name"},
+		},
+		root: root,
+		opts: opts,
 	}
 }
 

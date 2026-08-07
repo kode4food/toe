@@ -37,7 +37,11 @@ type (
 // workspace as the query is typed
 func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &globalSearchSource{
-		PickerBase: ui.NewPickerBase("global-search", []string{"path"}, 0, nil),
+		PickerBase: ui.PickerBase{
+			Ident: "global-search",
+			Label: "Search Workspace",
+			Cols:  []string{"path"},
+		},
 	})
 }
 

@@ -316,10 +316,26 @@ func TestPickerFileWatch(t *testing.T) {
 	})
 }
 
-func (s *countingPathSource) ID() string             { return "counting" }
-func (*countingPathSource) Columns() []string        { return []string{"name"} }
-func (*countingPathSource) MatchColumn() int         { return 0 }
-func (*countingPathSource) ColumnProportions() []int { return []int{1} }
+func (s *countingPathSource) ID() string {
+	return "counting"
+}
+
+func (*countingPathSource) Title() string {
+	return "Counting"
+}
+
+func (*countingPathSource) Columns() []string {
+	return []string{"name"}
+}
+
+func (*countingPathSource) MatchColumn() int {
+	return 0
+}
+
+func (*countingPathSource) ColumnProportions() []int {
+	return []int{1}
+}
+
 func (*countingPathSource) Accept(
 	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
 ) {

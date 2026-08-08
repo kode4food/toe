@@ -22,7 +22,7 @@ const (
 )
 
 // indentGuides describes where indent guides are drawn on a row: guides run
-// from level Start up to (not including) End, within the indent columns
+// from level start up to (not including) end, within the indent columns
 type indentGuides struct {
 	indentCol int
 	start     int

@@ -598,6 +598,8 @@ func (e JumpEntry) equal(other JumpEntry) bool {
 		e.Selection.Equal(other.Selection)
 }
 
+// Outlined slow path to allow inlining of RuneWidth's fast path
+//
 //go:noinline
 func runeWidthSlow(ch rune, at core.TabStop) int {
 	if ch == '\t' {

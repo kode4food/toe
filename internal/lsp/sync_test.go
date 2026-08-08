@@ -102,7 +102,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(5, 5, "!"),
+			core.TextChange(core.Span{From: 5, To: 5}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -135,7 +135,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(0, 5, ""),
+			core.TextChange(core.Span{From: 0, To: 5}, ""),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -168,7 +168,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(0, 5, "world"),
+			core.TextChange(core.Span{From: 0, To: 5}, "world"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -201,7 +201,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\nworld\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(0, 6, ""),
+			core.TextChange(core.Span{From: 0, To: 6}, ""),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -233,7 +233,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hi\r\nbye\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(0, 4, ""),
+			core.TextChange(core.Span{From: 0, To: 4}, ""),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -267,7 +267,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(5, 5, "!"),
+			core.TextChange(core.Span{From: 5, To: 5}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -300,7 +300,7 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hi\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(2, 2, "!"),
+			core.TextChange(core.Span{From: 2, To: 2}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
@@ -332,7 +332,7 @@ func TestTextSync(t *testing.T) {
 		// "😀" is U+1F600, requires a UTF-16 surrogate pair (counts as 2)
 		before := core.NewRope("😀\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(1, 1, "!"),
+			core.TextChange(core.Span{From: 1, To: 1}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{

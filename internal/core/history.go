@@ -109,7 +109,9 @@ func (h *History) Later(kind UndoKind) []Transaction {
 	return h.jumpForward(kind.steps)
 }
 
-func (h *History) lowestCommonAncestor(a, b int) int {
+func (h *History) lowestCommonAncestor(pair Span) int {
+	a := pair.From
+	b := pair.To
 	seen := map[int]bool{}
 	for {
 		seen[a] = true
@@ -124,9 +126,10 @@ func (h *History) lowestCommonAncestor(a, b int) int {
 	}
 }
 
-func (h *History) pathUp(n, ancestor int) []int {
+func (h *History) pathUp(pair Span) []int {
+	n := pair.From
 	var path []int
-	for n != ancestor {
+	for n != pair.To {
 		path = append(path, n)
 		n = h.revisions[n].parent
 	}
@@ -134,9 +137,9 @@ func (h *History) pathUp(n, ancestor int) []int {
 }
 
 func (h *History) jumpTo(to int) []Transaction {
-	lca := h.lowestCommonAncestor(h.current, to)
-	up := h.pathUp(h.current, lca)
-	down := h.pathUp(to, lca)
+	lca := h.lowestCommonAncestor(Span{From: h.current, To: to})
+	up := h.pathUp(Span{From: h.current, To: lca})
+	down := h.pathUp(Span{From: to, To: lca})
 	h.current = to
 
 	txns := make([]Transaction, 0, len(up)+len(down))

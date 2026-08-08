@@ -58,7 +58,7 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 	dedup := map[joinDedupKey]bool{}
 
 	for _, r := range sel.Ranges() {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			continue
 		}
@@ -74,7 +74,10 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 		if err != nil {
 			continue
 		}
-		firstPos = skipHorizontalWhitespace(text, firstPos, firstEnd)
+		firstPos = skipHorizontalWhitespace(text, core.Span{
+			From: firstPos,
+			To:   firstEnd,
+		})
 		currentToken := commentTokenAt(text, commentTokens, firstPos)
 		for l := lr.From; l < endLine; l++ {
 			span, token, ok := joinLinePair(
@@ -100,7 +103,7 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 
 	changes := make([]core.Change, len(spans))
 	for i, s := range spans {
-		changes[i] = core.TextChange(s.from, s.to, s.sep)
+		changes[i] = core.TextChange(core.Span{From: s.from, To: s.to}, s.sep)
 	}
 	cs, err := core.NewChangeSetFromChanges(text, changes)
 	if err != nil {
@@ -118,15 +121,15 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
 }
 
-func skipHorizontalWhitespace(text core.Rope, from, to int) int {
-	for from < to {
-		ch, err := text.CharAt(from)
+func skipHorizontalWhitespace(text core.Rope, s core.Span) int {
+	for s.From < s.To {
+		ch, err := text.CharAt(s.From)
 		if err != nil || (ch != ' ' && ch != '\t') {
-			return from
+			return s.From
 		}
-		from++
+		s.From++
 	}
-	return from
+	return s.From
 }
 
 func joinLinePair(
@@ -144,11 +147,17 @@ func joinLinePair(
 	if err != nil {
 		return commentSpan{}, currentToken, false
 	}
-	skip := skipHorizontalWhitespace(text, nextStart, nextLineEnd)
+	skip := skipHorizontalWhitespace(text, core.Span{
+		From: nextStart,
+		To:   nextLineEnd,
+	})
 	if token := commentTokenAt(text, tokens, skip); token != "" {
 		if token == currentToken {
 			skip += utf8.RuneCountInString(token)
-			skip = skipHorizontalWhitespace(text, skip, nextLineEnd)
+			skip = skipHorizontalWhitespace(text, core.Span{
+				From: skip,
+				To:   nextLineEnd,
+			})
 		} else {
 			currentToken = token
 		}
@@ -181,7 +190,10 @@ func spaceJoinSelection(spans []commentSpan) (core.Selection, bool) {
 func commentTokenAt(text core.Rope, tokens []string, pos int) string {
 	for _, token := range tokens {
 		end := pos + utf8.RuneCountInString(token)
-		if s, err := text.Slice(pos, end); err == nil && s.String() == token {
+		if s, err := text.Slice(core.Span{
+			From: pos,
+			To:   end,
+		}); err == nil && s.String() == token {
 			return token
 		}
 	}

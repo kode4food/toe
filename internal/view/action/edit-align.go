@@ -57,7 +57,10 @@ func AlignSelections(e *view.Editor) {
 		}
 		pos := r.Cursor(text)
 		changes = append(changes,
-			core.TextChange(pos, pos, strings.Repeat(" ", pad)))
+			core.TextChange(core.Span{
+				From: pos,
+				To:   pos,
+			}, strings.Repeat(" ", pad)))
 	}
 	if len(changes) == 0 {
 		return
@@ -105,7 +108,10 @@ func ReplaceChar(e *view.Editor, ch rune) {
 		for range utf8.RuneCountInString(frag) {
 			b.WriteString(replacement)
 		}
-		changes = append(changes, core.TextChange(r.From(), r.To(), b.String()))
+		changes = append(changes, core.TextChange(core.Span{
+			From: r.From(),
+			To:   r.To(),
+		}, b.String()))
 	}
 	applyChangesFrom(e, applyChangesFromArgs{
 		text:    text,

@@ -116,8 +116,8 @@ func jumplistSelectionModel(t *testing.T) (
 	doc := e.FocusedDocument()
 	assert.NotNil(t, doc)
 	sel, err := core.NewSelection([]core.Range{
-		core.NewRange(0, 2),
-		core.NewRange(jumplistAnchor, jumplistAnchor+6),
+		{Anchor: 0, Head: 2},
+		{Anchor: jumplistAnchor, Head: jumplistAnchor + 6},
 	}, 1)
 	assert.NoError(t, err)
 	v.PushJump(v.DocID(), sel.Primary().Cursor(doc.Text()), sel)

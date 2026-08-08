@@ -38,9 +38,9 @@ type (
 		pty   *os.File
 		emu   *vt.SafeEmulator
 
-		area    geom.Area
-		dirty   bool
-		scrollN int
+		area      geom.Area
+		dirty     bool
+		scrollOff int
 
 		clip   view.Clipboard
 		notify func()
@@ -58,13 +58,15 @@ type (
 	}
 
 	selectionState struct {
-		active     bool
-		start, end uv.Position
-		drag       axisTicker
+		active bool
+		span   selSpan
+		drag   axisTicker
 	}
 
+	// selSpan is a terminal selection's start and end positions
 	selSpan struct {
-		start, end uv.Position
+		start uv.Position
+		end   uv.Position
 	}
 )
 
@@ -84,29 +86,40 @@ var (
 func NewTerminalPane(
 	e *view.Editor, shell string, size geom.Size,
 ) (*TerminalPane, error) {
-	return NewTerminalPaneInDir(e, shell, e.Cwd(), size)
+	return NewTerminalPaneInDir(e, TerminalPaneArgs{
+		Shell: shell,
+		Dir:   e.Cwd(),
+		Size:  size,
+	})
 }
 
-// NewTerminalPaneInDir spawns shell in dir
+// TerminalPaneArgs names the shell to spawn and the directory to run it in
+type TerminalPaneArgs struct {
+	Shell string
+	Dir   string
+	Size  geom.Size
+}
+
+// NewTerminalPaneInDir spawns the shell in the given directory
 func NewTerminalPaneInDir(
-	e *view.Editor, shell, dir string, size geom.Size,
+	e *view.Editor, args TerminalPaneArgs,
 ) (*TerminalPane, error) {
-	size.Width = max(size.Width, 1)
-	size.Height = max(size.Height, 1)
-	cmd := exec.Command(shell)
-	path := terminalPath(e, dir)
+	args.Size.Width = max(args.Size.Width, 1)
+	args.Size.Height = max(args.Size.Height, 1)
+	cmd := exec.Command(args.Shell)
+	path := terminalPath(e, args.Dir)
 	cmd.Dir = path
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{
-		Rows: uint16(size.Height),
-		Cols: uint16(size.Width),
+		Rows: uint16(args.Size.Height),
+		Cols: uint16(args.Size.Width),
 	})
 	if err != nil {
 		return nil, err
 	}
 	tp := &TerminalPane{
 		editor: e,
-		shell:  shell,
-		emu:    vt.NewSafeEmulator(size.Width, size.Height),
+		shell:  args.Shell,
+		emu:    vt.NewSafeEmulator(args.Size.Width, args.Size.Height),
 		pty:    f,
 		cmd:    cmd,
 		clip:   e.Clipboard(),
@@ -279,7 +292,7 @@ func (t *TerminalPane) SendMouse(m uv.MouseEvent) {
 
 // ScrollOffset returns the number of lines scrolled back from live output
 func (t *TerminalPane) ScrollOffset() int {
-	return t.scrollN
+	return t.scrollOff
 }
 
 // ScrollLines moves the view n lines back into scrollback (n < 0 moves toward
@@ -289,14 +302,14 @@ func (t *TerminalPane) ScrollLines(n int) {
 		return
 	}
 	limit := t.emu.ScrollbackLen()
-	t.scrollN = min(limit, max(0, t.scrollN+n))
+	t.scrollOff = min(limit, max(0, t.scrollOff+n))
 	t.dirty = true
 }
 
 // ScrollToBottom returns the view to live output
 func (t *TerminalPane) ScrollToBottom() {
-	if t.scrollN != 0 {
-		t.scrollN = 0
+	if t.scrollOff != 0 {
+		t.scrollOff = 0
 		t.dirty = true
 	}
 }
@@ -310,10 +323,10 @@ func (t *TerminalPane) SearchScrollback(pattern string) bool {
 	sb := t.emu.Scrollback()
 	sbLen := sb.Len()
 	pattern = strings.ToLower(pattern)
-	top := sbLen - 1 - t.scrollN
+	top := sbLen - 1 - t.scrollOff
 	for i := top - 1; i >= 0; i-- {
 		if strings.Contains(strings.ToLower(sb.Line(i).String()), pattern) {
-			t.scrollN = sbLen - 1 - i
+			t.scrollOff = sbLen - 1 - i
 			t.dirty = true
 			return true
 		}
@@ -445,7 +458,7 @@ func (t *TerminalPane) pump() {
 // calculation
 func (t *TerminalPane) viewStart(h int) int {
 	total := t.emu.ScrollbackLen() + t.emu.Height()
-	return max(total-h-t.scrollN, 0)
+	return max(total-h-t.scrollOff, 0)
 }
 
 func (t *TerminalPane) contentHeight() int {
@@ -459,7 +472,7 @@ func (t *TerminalPane) toAbsolute(pos uv.Position) uv.Position {
 func (t *TerminalPane) beginSelection(pos uv.Position) {
 	t.selection.active = true
 	abs := t.toAbsolute(pos)
-	t.selection.start, t.selection.end = abs, abs
+	t.selection.span = selSpan{start: abs, end: abs}
 	t.dirty = true
 }
 
@@ -467,7 +480,7 @@ func (t *TerminalPane) extendSelection(pos uv.Position) {
 	if !t.selection.active {
 		return
 	}
-	t.selection.end = t.toAbsolute(pos)
+	t.selection.span.end = t.toAbsolute(pos)
 	t.dirty = true
 }
 
@@ -475,7 +488,7 @@ func (t *TerminalPane) endSelection(pos uv.Position) string {
 	if !t.selection.active {
 		return ""
 	}
-	t.selection.end = t.toAbsolute(pos)
+	t.selection.span.end = t.toAbsolute(pos)
 	t.selection.active = false
 	t.dirty = true
 	return t.selectionText()
@@ -485,11 +498,11 @@ func (t *TerminalPane) selectedSpan() (selSpan, bool) {
 	if !t.selection.active {
 		return selSpan{}, false
 	}
-	return normalizeSelection(t.selection.start, t.selection.end), true
+	return normalizeSelection(t.selection.span), true
 }
 
 func (t *TerminalPane) selectionText() string {
-	sp := normalizeSelection(t.selection.start, t.selection.end)
+	sp := normalizeSelection(t.selection.span)
 	w := t.emu.Width()
 	lines := make([]string, 0, sp.end.Y-sp.start.Y+1)
 	for y := sp.start.Y; y <= sp.end.Y; y++ {
@@ -523,11 +536,12 @@ func (t *TerminalPane) cellAtAbsolute(at geom.Point) *uv.Cell {
 	return t.emu.CellAt(at.X, at.Y-sbLen)
 }
 
-func normalizeSelection(a, b uv.Position) selSpan {
-	if a.Y > b.Y || (a.Y == b.Y && a.X > b.X) {
-		a, b = b, a
+func normalizeSelection(s selSpan) selSpan {
+	if s.start.Y > s.end.Y ||
+		(s.start.Y == s.end.Y && s.start.X > s.end.X) {
+		return selSpan{start: s.end, end: s.start}
 	}
-	return selSpan{start: a, end: b}
+	return s
 }
 
 func terminalPath(e *view.Editor, dir string) string {
@@ -554,8 +568,9 @@ func interactiveShell() string {
 func registerTerminalPane(e *view.Editor) {
 	e.RegisterPaneRestorer(view.SessionKindTerminal,
 		func(e *view.Editor, session *view.PaneSession) (view.Pane, error) {
-			return NewTerminalPaneInDir(
-				e, interactiveShell(), session.Path(), geom.Size{},
-			)
+			return NewTerminalPaneInDir(e, TerminalPaneArgs{
+				Shell: interactiveShell(),
+				Dir:   session.Path(),
+			})
 		})
 }

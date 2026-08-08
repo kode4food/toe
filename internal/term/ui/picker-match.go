@@ -12,7 +12,7 @@ func (p *Picker) setQuery(q string) tea.Cmd {
 	if q == p.list.query {
 		return nil
 	}
-	narrowed := canNarrowQuery(p.list.query, q)
+	narrowed := canNarrowQuery(canNarrowQueryArgs{prev: p.list.query, next: q})
 	p.list.query = q
 	p.clearPreviewCache()
 	if _, ok := p.source.(DynamicPickerSource); ok {
@@ -41,7 +41,8 @@ func (p *Picker) resetCursor() {
 	}
 	p.ensureSelectable()
 	p.list.scroll = 0
-	p.preview.scroll = 0
+	p.preview.vScroll = 0
+	p.preview.hScroll = 0
 	p.clampScroll()
 }
 
@@ -192,7 +193,7 @@ func (p *Picker) moveBy(n int) {
 	}
 	cur := p.list.cursor
 	for ; n > 0; n-- {
-		next := p.nextSelectable(cur, step)
+		next := p.nextSelectable(nextSelectableArgs{from: cur, step: step})
 		if next == cur {
 			break
 		}
@@ -207,20 +208,30 @@ func (p *Picker) ensureSelectable() {
 	if p.selection() != nil || len(p.list.matched) == 0 {
 		return
 	}
-	if next := p.nextSelectable(p.list.cursor, 1); next != p.list.cursor {
+	next := p.nextSelectable(nextSelectableArgs{from: p.list.cursor, step: 1})
+	if next != p.list.cursor {
 		p.list.cursor = next
 		return
 	}
-	p.list.cursor = p.nextSelectable(p.list.cursor, -1)
+	p.list.cursor = p.nextSelectable(nextSelectableArgs{
+		from: p.list.cursor,
+		step: -1,
+	})
 }
 
-func (p *Picker) nextSelectable(from, step int) int {
-	for i := from + step; i >= 0 && i < len(p.list.matched); i += step {
+type nextSelectableArgs struct {
+	from int
+	step int
+}
+
+func (p *Picker) nextSelectable(args nextSelectableArgs) int {
+	step := args.step
+	for i := args.from + step; i >= 0 && i < len(p.list.matched); i += step {
 		if !p.list.matched[i].item.Section {
 			return i
 		}
 	}
-	return from
+	return args.from
 }
 
 func (p *Picker) pageDown() {
@@ -232,23 +243,30 @@ func (p *Picker) pageUp() {
 }
 
 func (p *Picker) clampScroll() {
-	p.list.scroll = listClampScroll(
-		p.list.scroll, len(p.list.matched), p.list.height,
-	)
+	p.list.scroll = listScroll{
+		scroll: p.list.scroll,
+		count:  len(p.list.matched),
+		rows:   p.list.height,
+	}.clamped()
 }
 
 func (p *Picker) scrollBy(delta int) {
-	p.list.scroll = listScrollBy(
-		p.list.scroll, len(p.list.matched), p.list.height, delta,
-	)
+	p.list.scroll = listScroll{
+		scroll: p.list.scroll,
+		count:  len(p.list.matched),
+		rows:   p.list.height,
+	}.scrollBy(delta)
 }
 
 // ensureCursorVisible scrolls the list the minimum amount needed to bring the
 // selected row into view, used after keyboard navigation
 func (p *Picker) ensureCursorVisible() {
-	p.list.scroll = listEnsureCursorVisible(
-		p.list.scroll, p.list.cursor, len(p.list.matched), p.list.height,
-	)
+	p.list.scroll = listScroll{
+		scroll: p.list.scroll,
+		cursor: p.list.cursor,
+		count:  len(p.list.matched),
+		rows:   p.list.height,
+	}.ensureCursorVisible()
 }
 
 func canCacheQuery(query string) bool {
@@ -257,6 +275,13 @@ func canCacheQuery(query string) bool {
 	return !strings.ContainsAny(query, `%\`)
 }
 
-func canNarrowQuery(prev, next string) bool {
+type canNarrowQueryArgs struct {
+	prev string
+	next string
+}
+
+func canNarrowQuery(args canNarrowQueryArgs) bool {
+	prev := args.prev
+	next := args.next
 	return prev != "" && strings.HasPrefix(next, prev) && canCacheQuery(next)
 }

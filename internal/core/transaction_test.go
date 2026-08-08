@@ -23,7 +23,7 @@ func TestTransaction(t *testing.T) {
 	t.Run("applies and inverts changes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(2, 4, "YY"),
+			core.TextChange(core.Span{From: 2, To: 4}, "YY"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(doc).WithChanges(cs)
@@ -42,17 +42,17 @@ func TestTransaction(t *testing.T) {
 	t.Run("other selection wins on compose", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(2, 4, "YY"),
+			core.TextChange(core.Span{From: 2, To: 4}, "YY"),
 		})
 		assert.NoError(t, err)
 		txA := core.NewTransaction(doc).WithChanges(csA)
 		mid, err := txA.Apply(doc)
 		assert.NoError(t, err)
 		csB, err := core.NewChangeSetFromChanges(mid, []core.Change{
-			core.DeleteChange(0, 2),
+			core.DeleteChange(core.Span{From: 0, To: 2}),
 		})
 		assert.NoError(t, err)
-		sel := core.SingleSelection(1, 3)
+		sel := core.SingleSelection(core.Range{Anchor: 1, Head: 3})
 		txB := core.NewTransaction(mid).WithChanges(csB).WithSelection(sel)
 
 		composed := txA.Compose(txB)
@@ -65,7 +65,7 @@ func TestTransaction(t *testing.T) {
 
 	t.Run("stores explicit selection", func(t *testing.T) {
 		doc := core.NewRope("abc")
-		s := core.SingleSelection(1, 2)
+		s := core.SingleSelection(core.Range{Anchor: 1, Head: 2})
 		tx := core.NewTransaction(doc).WithSelection(s)
 
 		assert.Equal(t, &s, tx.Selection())

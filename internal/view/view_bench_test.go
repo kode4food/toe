@@ -17,8 +17,15 @@ func BenchmarkVisualColumn(b *testing.B) {
 	if v == nil {
 		b.Fatal("missing focused view")
 	}
+	cs := &view.CursorScroll{
+		Doc:       doc,
+		Selection: sel,
+		Width:     80,
+		TabWidth:  4,
+		ScrollOff: 5,
+	}
 	b.ReportAllocs()
 	for b.Loop() {
-		v.EnsureCursorVisibleHorizontal(doc, sel, 80, 4, 5)
+		v.EnsureCursorVisibleHorizontal(cs)
 	}
 }

@@ -29,8 +29,8 @@ type (
 		hlFrom int
 		hlTo   int
 
-		th     *theme.Theme
-		styles *tuiStyles
+		theme  *theme.Theme
+		styles *styles
 	}
 
 	previewDocRender struct {
@@ -39,15 +39,16 @@ type (
 		format *language.TextFormat
 		opts   *view.Options
 
-		area   geom.Area
-		scroll int
+		area    geom.Area
+		vScroll int
+		hScroll int
 
 		hlFrom    int
 		hlTo      int
 		diffLines map[int]diffGutterKind
 
-		th     *theme.Theme
-		styles *tuiStyles
+		theme  *theme.Theme
+		styles *styles
 	}
 )
 
@@ -100,14 +101,16 @@ func (p *previewCtx) renderDocInto(
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
 		format: format, opts: p.editor.Options(),
-		th: p.th, area: geom.Area{Point: at, Size: p.size},
+		theme: p.theme, area: geom.Area{Point: at, Size: p.size},
 		hlFrom: p.hlFrom, hlTo: p.hlTo,
 		diffLines: p.itemDiffLines(entry.rope),
-		scroll:    p.picker.preview.scroll,
+		vScroll:   p.picker.preview.vScroll,
+		hScroll:   p.picker.preview.hScroll,
 		styles:    p.styles,
 	}
 	renderPreviewDocInto(buf, r)
-	p.picker.preview.scroll = r.scroll
+	p.picker.preview.vScroll = r.vScroll
+	p.picker.preview.hScroll = r.hScroll
 }
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
@@ -125,20 +128,25 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 	opts := p.editor.Options()
 	r := &diffPreviewRender{
 		working: work.rope, base: base, spans: work.spans,
-		lines: buildDiffPreviewLines(
-			p.item.DiffKind, work.rope, base, p.item.DiffHunks,
-		),
+		lines: buildDiffPreviewLines(buildDiffPreviewLinesArgs{
+			kind:    p.item.DiffKind,
+			working: work.rope,
+			base:    base,
+			hunks:   p.item.DiffHunks,
+		}),
 		format: language.TextFormatForConfig(
 			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,
 			p.size.Width,
 		),
-		opts: opts, th: p.th,
-		area:   geom.Area{Point: at, Size: p.size},
-		scroll: p.picker.preview.scroll,
-		styles: p.styles,
+		opts: opts, theme: p.theme,
+		area:    geom.Area{Point: at, Size: p.size},
+		vScroll: p.picker.preview.vScroll,
+		hScroll: p.picker.preview.hScroll,
+		styles:  p.styles,
 	}
 	renderDiffPreviewInto(buf, r)
-	p.picker.preview.scroll = r.scroll
+	p.picker.preview.vScroll = r.vScroll
+	p.picker.preview.hScroll = r.hScroll
 }
 
 // workingPreview returns the working-copy rope, syntax spans, and language for
@@ -177,23 +185,25 @@ func (p *previewDocEntry) renderInto(
 	r := &previewDocRender{
 		text: p.rope, spans: p.spans,
 		format: format, opts: ctx.editor.Options(),
-		th: ctx.th, area: geom.Area{Point: at, Size: ctx.size},
+		theme: ctx.theme, area: geom.Area{Point: at, Size: ctx.size},
 		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
-		scroll:    ctx.picker.preview.scroll,
+		vScroll:   ctx.picker.preview.vScroll,
+		hScroll:   ctx.picker.preview.hScroll,
 		styles:    ctx.styles,
 	}
 	renderPreviewDocInto(buf, r)
-	ctx.picker.preview.scroll = r.scroll
+	ctx.picker.preview.vScroll = r.vScroll
+	ctx.picker.preview.hScroll = r.hScroll
 }
 
 func (p *previewDirEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
-	popupBg := ctx.th.Get("ui.popup").BgColor()
+	popupBg := ctx.theme.Get("ui.popup").BgColor()
 	fillTUI := tui.Style{}.Bg(popupBg)
 	dirTUI := tui.Style{}.
-		Fg(ctx.th.Get("ui.text.directory").FgColor()).
+		Fg(ctx.theme.Get("ui.text.directory").FgColor()).
 		Bg(popupBg)
 	for i, entry := range p.rows {
 		if i >= ctx.size.Height {
@@ -216,7 +226,7 @@ func (p *previewDirEntry) renderInto(
 func (p noPreviewEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
-	style := tui.Style{}.Bg(ctx.th.Get("ui.popup").BgColor())
+	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	renderCenteredMessage(
 		buf, geom.Area{Point: at, Size: ctx.size}, string(p), style,
 	)
@@ -227,7 +237,7 @@ func (p noPreviewEntry) renderInto(
 func (p *previewCtx) blitPlaceholderInto(
 	buf *tui.Buffer, at geom.Point, text string,
 ) {
-	fillTUI := tui.Style{}.Bg(p.th.Get("ui.popup").BgColor())
+	fillTUI := tui.Style{}.Bg(p.theme.Get("ui.popup").BgColor())
 	blitTextInto(buf, geom.Area{Point: at, Size: p.size}, text, fillTUI)
 }
 
@@ -258,18 +268,57 @@ func openDocumentPreview(e *view.Editor, path string) *view.Document {
 	return nil
 }
 
-func previewSpans(sc *syntax.Cache, text, lang string) []highlight.Span {
-	if lang == view.DefaultLanguage {
+type previewSpansArgs struct {
+	cache *syntax.Cache
+	text  string
+	lang  string
+}
+
+func previewSpans(args previewSpansArgs) []highlight.Span {
+	if args.lang == view.DefaultLanguage {
 		return nil
 	}
-	return sc.Tokenize(text, lang)
+	return args.cache.Tokenize(core.Source{Text: args.text, Lang: args.lang})
 }
 
 // span backgrounds are stripped so the pane provides the background uniformly
-func previewHlStyleFn(
-	fn func(string) tui.Style,
-) func(string) tui.Style {
+func previewHighlighter(fn func(string) tui.Style) func(string) tui.Style {
 	return func(scope string) tui.Style {
 		return clearStyleBackground(fn(scope))
 	}
+}
+
+type clampPreviewHScrollArgs struct {
+	hScroll      int
+	text         core.Rope
+	lines        core.Span
+	contentWidth int
+}
+
+// clampPreviewHScroll bounds a horizontal offset to the widest of the lines in
+// the range, so panning stops at the longest visible line
+func clampPreviewHScroll(args clampPreviewHScrollArgs) int {
+	if args.hScroll <= 0 {
+		return 0
+	}
+	widest := 0
+	for line := args.lines.From; line <= args.lines.To; line++ {
+		widest = max(widest, lineDisplayWidth(args.text, line))
+	}
+	return min(args.hScroll, max(widest-args.contentWidth, 0))
+}
+
+func lineDisplayWidth(text core.Rope, line int) int {
+	start, err := text.LineToChar(line)
+	if err != nil {
+		return 0
+	}
+	end, err := text.LineEndCharIndex(line)
+	if err != nil {
+		return 0
+	}
+	return runewidth.StringWidth(lineString(text, core.Span{
+		From: start,
+		To:   end,
+	}))
 }

@@ -21,6 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type styledRuneStyle struct {
+	fg string
+	bg string
+}
+
 const (
 	cursorColumnLongLine = "abcdefghijabcdefghijabcdefghijabcdefghij\n"
 	horizontalLongLine   = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
@@ -278,7 +283,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
 		}})
 		e.Options().Theme = "mocha"
@@ -302,7 +307,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
 		}})
 		e.Options().Theme = "mocha"
@@ -327,7 +332,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
 			Message:  "unused value",
 		}})
@@ -354,7 +359,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityWarning,
 			Source:   "lint",
 			Message:  "warning msg",
@@ -380,7 +385,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityInfo,
 			Message:  "info msg",
 		}})
@@ -405,7 +410,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityHint,
 			Message:  "hint msg",
 		}})
@@ -430,7 +435,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "cursor warning",
 		}})
@@ -467,7 +472,7 @@ func TestThemeRender(t *testing.T) {
 		docA := e.Document(vA.DocID())
 		assert.NotNil(t, docA)
 		docA.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: 0, To: 5},
+			Range:    core.Span{From: 0, To: 5},
 			Severity: view.DiagnosticSeverityError,
 			Message:  "unused value",
 		}})
@@ -669,8 +674,8 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		sel, err := core.NewSelection([]core.Range{
-			core.NewRange(0, 2),
-			core.NewRange(3, 5),
+			{Anchor: 0, Head: 2},
+			{Anchor: 3, Head: 5},
 		}, 1)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
@@ -736,7 +741,7 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		sel, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 4),
+			{Anchor: 1, Head: 4},
 		}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
@@ -824,11 +829,6 @@ func styledRunes(s string) map[rune]string {
 		s = s[n:]
 	}
 	return out
-}
-
-type styledRuneStyle struct {
-	fg string
-	bg string
 }
 
 func styledRuneStyles(s string) map[rune]styledRuneStyle {
@@ -998,7 +998,10 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 7)}, 0)
+		sel, err := core.NewSelection([]core.Range{{
+			Anchor: 0,
+			Head:   7,
+		}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		e.Options().Theme = "mocha"
@@ -1017,13 +1020,16 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "\thello\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "\thello\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 1)}, 0)
+		sel, err := core.NewSelection([]core.Range{{
+			Anchor: 0,
+			Head:   1,
+		}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -1043,13 +1049,16 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "  hello\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "  hello\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		sel, err := core.NewSelection([]core.Range{core.NewRange(0, 2)}, 0)
+		sel, err := core.NewSelection([]core.Range{{
+			Anchor: 0,
+			Head:   2,
+		}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -1094,7 +1103,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 	t.Run("error renders plain", func(t *testing.T) {
 		e, doc := newGoDoc(t)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: bork, To: bork + 4},
+			Range:    core.Span{From: bork, To: bork + 4},
 			Severity: view.DiagnosticSeverityError,
 			Message:  "undefined: Bork",
 		}})
@@ -1111,7 +1120,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 	t.Run("warning keeps color", func(t *testing.T) {
 		e, doc := newGoDoc(t)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: bork, To: bork + 4},
+			Range:    core.Span{From: bork, To: bork + 4},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "unused",
 		}})
@@ -1133,7 +1142,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 			{From: bork, To: bork + 4},
 		})
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    view.DiagnosticRange{From: bork, To: bork + 4},
+			Range:    core.Span{From: bork, To: bork + 4},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "unused",
 		}})
@@ -1199,7 +1208,7 @@ func TestIndentGuideRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "\thello\n\tworld\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "\thello\n\tworld\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1219,7 +1228,7 @@ func TestWhitespaceRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "hello world end\t!\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "hello world end\t!\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1248,7 +1257,7 @@ func TestMouseDragNoop(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "hello world\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1285,7 +1294,7 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "hello world\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1307,7 +1316,7 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "hello world\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1415,7 +1424,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, horizontalLongLine),
+			core.TextChange(core.Span{From: 0, To: 0}, horizontalLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1435,7 +1444,7 @@ func TestHorizontalScrollRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, cursorColumnLongLine),
+			core.TextChange(core.Span{From: 0, To: 0}, cursorColumnLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1641,7 +1650,7 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "zzz"),
+			core.TextChange(core.Span{From: 0, To: 0}, "zzz"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))

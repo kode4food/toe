@@ -10,9 +10,15 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// SortSelectionsArgs selects the sort order and whether case is ignored
+type SortSelectionsArgs struct {
+	Reverse     bool
+	Insensitive bool
+}
+
 // SortSelections sorts the text of each selection range lexicographically,
-// replacing each range with the sorted text. Mirrors :sort in the reference
-func SortSelections(e *view.Editor, reverse, insensitive bool) error {
+// replacing each range with the sorted text
+func SortSelections(e *view.Editor, args SortSelectionsArgs) error {
 	v := e.FocusedView()
 	if v == nil {
 		return nil
@@ -35,13 +41,13 @@ func SortSelections(e *view.Editor, reverse, insensitive bool) error {
 		if start > end {
 			start, end = end, start
 		}
-		sl, _ := text.Slice(start, end)
+		sl, _ := text.Slice(core.Span{From: start, To: end})
 		fragments[i] = sl.String()
 	}
 
 	cmp := func(a, b string) int {
 		ka, kb := a, b
-		if insensitive {
+		if args.Insensitive {
 			ka = strings.ToLower(a)
 			kb = strings.ToLower(b)
 		}
@@ -55,7 +61,7 @@ func SortSelections(e *view.Editor, reverse, insensitive bool) error {
 	}
 	slices.SortStableFunc(fragments, func(a, b string) int {
 		c := cmp(a, b)
-		if reverse {
+		if args.Reverse {
 			return -c
 		}
 		return c
@@ -67,7 +73,10 @@ func SortSelections(e *view.Editor, reverse, insensitive bool) error {
 		if start > end {
 			start, end = end, start
 		}
-		changes[i] = core.TextChange(start, end, fragments[i])
+		changes[i] = core.TextChange(core.Span{
+			From: start,
+			To:   end,
+		}, fragments[i])
 	}
 	cs, err := core.NewChangeSetFromChanges(text, changes)
 	if err != nil {
@@ -102,9 +111,12 @@ func ReflowSelections(e *view.Editor, width int) {
 		if start > end {
 			start, end = end, start
 		}
-		fragRope, _ := text.Slice(start, end)
+		fragRope, _ := text.Slice(core.Span{From: start, To: end})
 		reflowed := core.ReflowHardWrap(fragRope.String(), width)
-		changes = append(changes, core.TextChange(start, end, reflowed))
+		changes = append(changes, core.TextChange(core.Span{
+			From: start,
+			To:   end,
+		}, reflowed))
 	}
 	cs, err := core.NewChangeSetFromChanges(text, changes)
 	if err != nil {
@@ -136,7 +148,7 @@ func CharInfo(e *view.Editor) string {
 	if start == end {
 		return ""
 	}
-	gr, err := text.Slice(start, end)
+	gr, err := text.Slice(core.Span{From: start, To: end})
 	if err != nil {
 		return ""
 	}

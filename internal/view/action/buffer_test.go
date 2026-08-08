@@ -46,8 +46,8 @@ func TestBuffer(t *testing.T) {
 		testutil.SetSelection(
 			t, e,
 			[]core.Range{
-				core.NewRange(0, 1),
-				core.NewRange(2, 3),
+				{Anchor: 0, Head: 1},
+				{Anchor: 2, Head: 3},
 			},
 			0,
 		)
@@ -91,7 +91,10 @@ func TestExtendToColumn(t *testing.T) {
 func TestSelectWithinRegex(t *testing.T) {
 	t.Run("keeps only matching subranges", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar baz")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   11,
+		}}, 0)
 
 		err := action.SelectWithinRegex(e, `\b\w+\b`)
 
@@ -115,7 +118,10 @@ func TestSelectWithinRegex(t *testing.T) {
 func TestSplitSelectionByRegex(t *testing.T) {
 	t.Run("splits on separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a,b,c")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		err := action.SplitSelectionByRegex(e, ",")
 
@@ -140,9 +146,9 @@ func TestKeepSelectionsMatching(t *testing.T) {
 	t.Run("retains matching ranges", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo\nbar\nbaz")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 3),
-			core.NewRange(4, 7),
-			core.NewRange(8, 11),
+			{Anchor: 0, Head: 3},
+			{Anchor: 4, Head: 7},
+			{Anchor: 8, Head: 11},
 		}, 0)
 
 		err := action.KeepSelectionsMatching(e, "ba")
@@ -159,9 +165,9 @@ func TestRemoveSelectionsMatching(t *testing.T) {
 	t.Run("removes matching ranges", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo\nbar\nbaz")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 3),
-			core.NewRange(4, 7),
-			core.NewRange(8, 11),
+			{Anchor: 0, Head: 3},
+			{Anchor: 4, Head: 7},
+			{Anchor: 8, Head: 11},
 		}, 0)
 
 		err := action.RemoveSelectionsMatching(e, "ba")
@@ -178,12 +184,12 @@ func TestSortSelections(t *testing.T) {
 	t.Run("sorts selections lexicographically", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "banana\napple\ncherry")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 6),
-			core.NewRange(7, 12),
-			core.NewRange(13, 19),
+			{Anchor: 0, Head: 6},
+			{Anchor: 7, Head: 12},
+			{Anchor: 13, Head: 19},
 		}, 0)
 
-		err := action.SortSelections(e, false, false)
+		err := action.SortSelections(e, action.SortSelectionsArgs{})
 
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
@@ -193,12 +199,14 @@ func TestSortSelections(t *testing.T) {
 	t.Run("sorts reverse", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 1),
-			core.NewRange(2, 3),
-			core.NewRange(4, 5),
+			{Anchor: 0, Head: 1},
+			{Anchor: 2, Head: 3},
+			{Anchor: 4, Head: 5},
 		}, 0)
 
-		err := action.SortSelections(e, true, false)
+		err := action.SortSelections(e, action.SortSelectionsArgs{
+			Reverse: true,
+		})
 
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
@@ -209,7 +217,7 @@ func TestSortSelections(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		testutil.SetCursor(t, e, 0)
 
-		err := action.SortSelections(e, false, false)
+		err := action.SortSelections(e, action.SortSelectionsArgs{})
 
 		assert.Error(t, err)
 	})
@@ -217,11 +225,13 @@ func TestSortSelections(t *testing.T) {
 	t.Run("sorts case insensitive", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "Banana\napple")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 6),
-			core.NewRange(7, 12),
+			{Anchor: 0, Head: 6},
+			{Anchor: 7, Head: 12},
 		}, 0)
 
-		err := action.SortSelections(e, false, true)
+		err := action.SortSelections(e, action.SortSelectionsArgs{
+			Insensitive: true,
+		})
 
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
@@ -231,11 +241,11 @@ func TestSortSelections(t *testing.T) {
 	t.Run("sorts backward selection ranges", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "b\na")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(1, 0),
-			core.NewRange(3, 2),
+			{Anchor: 1, Head: 0},
+			{Anchor: 3, Head: 2},
 		}, 0)
 
-		err := action.SortSelections(e, false, false)
+		err := action.SortSelections(e, action.SortSelectionsArgs{})
 
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
@@ -246,11 +256,11 @@ func TestSortSelections(t *testing.T) {
 	t.Run("equal elements gives 0 comparison", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\na")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 1),
-			core.NewRange(2, 3),
+			{Anchor: 0, Head: 1},
+			{Anchor: 2, Head: 3},
 		}, 0)
 
-		err := action.SortSelections(e, false, false)
+		err := action.SortSelections(e, action.SortSelectionsArgs{})
 
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
@@ -261,7 +271,10 @@ func TestSortSelections(t *testing.T) {
 func TestReflowSelections(t *testing.T) {
 	t.Run("reflows text to width", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world foo bar")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 19)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   19,
+		}}, 0)
 
 		action.ReflowSelections(e, 10)
 
@@ -540,7 +553,10 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		doc1 := e.FocusedDocument()
 		rope := doc1.Text()
 		cs, err := core.NewChangeSetFromChanges(
-			rope, []core.Change{core.TextChange(0, 0, "x")},
+			rope, []core.Change{core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "x")},
 		)
 		assert.NoError(t, err)
 		_ = e.Apply(core.NewTransaction(rope).WithChanges(cs))
@@ -565,8 +581,8 @@ func TestIncrementWithHashRegister(t *testing.T) {
 	t.Run("each selection gets different increment", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "1\n1")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 1),
-			core.NewRange(2, 3),
+			{Anchor: 0, Head: 1},
+			{Anchor: 2, Head: 3},
 		}, 0)
 		e.SetRegister('#')
 
@@ -582,7 +598,10 @@ func TestIncrementWithHashRegister(t *testing.T) {
 func TestJoinSelectionsCommented(t *testing.T) {
 	t.Run("join merges commented lines into one", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "# foo\n# bar")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 11)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   11,
+		}}, 0)
 
 		action.JoinSelections(e)
 
@@ -595,7 +614,10 @@ func TestJoinSelectionsCommented(t *testing.T) {
 		writeTextLangConfigBuf(t, "//")
 
 		e := testutil.EditorWithText(t, "// foo\n// bar")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 13)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   13,
+		}}, 0)
 
 		action.JoinSelections(e)
 
@@ -606,7 +628,10 @@ func TestJoinSelectionsCommented(t *testing.T) {
 
 	t.Run("join with space separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		action.JoinSelectionsSpace(e)
 
@@ -691,8 +716,8 @@ func TestFilterSelectionsImplEdge(t *testing.T) {
 	t.Run("no matches leaves single range", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\ndef\nghi")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 3),
-			core.NewRange(4, 7),
+			{Anchor: 0, Head: 3},
+			{Anchor: 4, Head: 7},
 		}, 0)
 
 		err := action.KeepSelectionsMatching(e, "xyz")
@@ -704,7 +729,10 @@ func TestFilterSelectionsImplEdge(t *testing.T) {
 func TestReflowSelectionsWidth(t *testing.T) {
 	t.Run("reflow with explicit width", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar baz qux")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 15)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   15,
+		}}, 0)
 
 		action.ReflowSelections(e, 5)
 
@@ -717,7 +745,10 @@ func TestReflowSelectionsWidth(t *testing.T) {
 func TestYankJoinSingleRange(t *testing.T) {
 	t.Run("single range joins without separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		action.YankJoin(e, ",")
 

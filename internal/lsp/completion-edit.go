@@ -40,7 +40,10 @@ func (s *Session) applyAdditionalCompletionEdits(
 			return ErrCompletionUnavailable
 		}
 		changes = append(changes,
-			core.TextChange(cr.From(), cr.To(), edit.NewText),
+			core.TextChange(core.Span{
+				From: cr.From(),
+				To:   cr.To(),
+			}, edit.NewText),
 		)
 	}
 	cs, err := core.NewChangeSetFromChanges(doc.Text(), changes)
@@ -78,7 +81,11 @@ func completionTransaction(
 	sel := doc.SelectionFor(args.viewID)
 	text := doc.Text()
 	cursor := sel.Primary().Cursor(text)
-	ctx := completionEditCtx{doc: doc, encoding: args.encoding, cursor: cursor}
+	ctx := completionEditCtx{
+		doc:      doc,
+		encoding: args.encoding,
+		cursor:   cursor,
+	}
 	editOffset, newText, err := completionEdit(ctx, args.item)
 	if err != nil {
 		return core.Transaction{}, err
@@ -88,7 +95,7 @@ func completionTransaction(
 		return core.Transaction{}, ErrCompletionUnavailable
 	}
 	editRange = completionPrimaryRange(text, editRange, cursor)
-	removed, err := text.SliceString(editRange.From(), editRange.To())
+	removed, err := text.SliceString(editRange.Span())
 	if err != nil {
 		return core.Transaction{}, err
 	}
@@ -161,7 +168,7 @@ func completionChanges(
 	for _, r := range ranges {
 		cursor := r.Cursor(text)
 		edit := completionRangeForCursor(text, op.offset, cursor)
-		got, err := text.SliceString(edit.From(), edit.To())
+		got, err := text.SliceString(edit.Span())
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +176,10 @@ func completionChanges(
 			edit = findCompletionRange(text, cursor)
 		}
 		changes = append(
-			changes, core.TextChange(edit.From(), edit.To(), op.newText),
+			changes, core.TextChange(core.Span{
+				From: edit.From(),
+				To:   edit.To(),
+			}, op.newText),
 		)
 	}
 	return changes, nil
@@ -195,13 +205,13 @@ func completionRange(
 	if from < 0 || to > text.LenChars() || from > to {
 		return core.Range{}, false
 	}
-	return core.NewRange(from, to), true
+	return core.Range{Anchor: from, Head: to}, true
 }
 
 func findCompletionRange(text core.Rope, cursor int) core.Range {
-	before, _ := text.SliceString(0, cursor)
+	before, _ := text.SliceString(core.Span{From: 0, To: cursor})
 	from := cursor - countWordSuffix(before)
-	return core.NewRange(from, cursor)
+	return core.Range{Anchor: from, Head: cursor}
 }
 
 func countWordSuffix(s string) int {

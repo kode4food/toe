@@ -3,8 +3,8 @@ package core
 import "unicode/utf8"
 
 type composeCtx struct {
-	a, b         []Operation
-	ai, bi       int
+	aOp, bOp     []Operation
+	aIdx, bIdx   int
 	aKind, bKind OperationKind
 	aRem, bRem   int
 	aStr, bStr   string
@@ -20,21 +20,21 @@ func (c ChangeSet) Compose(other ChangeSet) ChangeSet {
 	if len(other.ops) == 0 {
 		return c
 	}
-	ctx := &composeCtx{a: c.ops, b: other.ops}
+	ctx := &composeCtx{aOp: c.ops, bOp: other.ops}
 	ctx.loadA()
 	ctx.loadB()
 	return ctx.run()
 }
 
 func (c *composeCtx) loadA() {
-	if c.ai < len(c.a) {
-		op := c.a[c.ai]
-		c.ai++
+	if c.aIdx < len(c.aOp) {
+		op := c.aOp[c.aIdx]
+		c.aIdx++
 		c.aKind = op.kind
 		if op.kind == OperationInsert {
 			c.aStr = op.text
 		} else {
-			c.aRem = op.n
+			c.aRem = op.charCount
 		}
 	} else {
 		c.aKind = 0
@@ -42,14 +42,14 @@ func (c *composeCtx) loadA() {
 }
 
 func (c *composeCtx) loadB() {
-	if c.bi < len(c.b) {
-		op := c.b[c.bi]
-		c.bi++
+	if c.bIdx < len(c.bOp) {
+		op := c.bOp[c.bIdx]
+		c.bIdx++
 		c.bKind = op.kind
 		if op.kind == OperationInsert {
 			c.bStr = op.text
 		} else {
-			c.bRem = op.n
+			c.bRem = op.charCount
 		}
 	} else {
 		c.bKind = 0
@@ -111,9 +111,9 @@ func (c *composeCtx) stepInsertRetain() {
 		c.loadA()
 		c.loadB()
 	} else {
-		before, after := runeSplitAt(c.aStr, c.bRem)
-		c.out = c.out.insert(before)
-		c.aStr = after
+		split := runeSplitAt(c.aStr, c.bRem)
+		c.out = c.out.insert(split.before)
+		c.aStr = split.after
 		c.loadB()
 	}
 }

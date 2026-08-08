@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/syntax"
 )
 
@@ -19,33 +20,57 @@ func TestFindSurroundPair(t *testing.T) {
 	braceClose := strings.LastIndex(src, "}")
 
 	t.Run("skip 1 finds innermost pair", func(t *testing.T) {
-		r, ok := syntax.FindSurroundPair(src, "go", cursor, 1)
+		r, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: src, Lang: "go"},
+			Cursor: cursor,
+			Skip:   1,
+		})
 		assert.True(t, ok)
 		assert.Equal(t, parenOpen, r.From)
 		assert.Equal(t, parenClose, r.To)
 	})
 
 	t.Run("skip 2 finds next outer pair", func(t *testing.T) {
-		r, ok := syntax.FindSurroundPair(src, "go", cursor, 2)
+		r, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: src, Lang: "go"},
+			Cursor: cursor,
+			Skip:   2,
+		})
 		assert.True(t, ok)
 		assert.Equal(t, braceOpen, r.From)
 		assert.Equal(t, braceClose, r.To)
 	})
 
 	t.Run("skip beyond depth returns false", func(t *testing.T) {
-		_, ok := syntax.FindSurroundPair(src, "go", cursor, 99)
+		_, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: src, Lang: "go"},
+			Cursor: cursor,
+			Skip:   99,
+		})
 		assert.False(t, ok)
 	})
 
 	t.Run("unknown language returns false", func(t *testing.T) {
-		_, ok := syntax.FindSurroundPair(src, "nope", cursor, 1)
+		_, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: src, Lang: "nope"},
+			Cursor: cursor,
+			Skip:   1,
+		})
 		assert.False(t, ok)
 	})
 
 	t.Run("out-of-bounds cursor returns false", func(t *testing.T) {
-		_, ok := syntax.FindSurroundPair(src, "go", -1, 1)
+		_, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: src, Lang: "go"},
+			Cursor: -1,
+			Skip:   1,
+		})
 		assert.False(t, ok)
-		_, ok = syntax.FindSurroundPair(src, "go", len([]rune(src)), 1)
+		_, ok = syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: src, Lang: "go"},
+			Cursor: len([]rune(src)),
+			Skip:   1,
+		})
 		assert.False(t, ok)
 	})
 
@@ -53,7 +78,11 @@ func TestFindSurroundPair(t *testing.T) {
 		strSrc := "package main\n\nfunc main() {\n" +
 			"\tx := \"(foo)\"\n\t_ = x\n}\n"
 		inStr := strings.Index(strSrc, "(foo)") + 2
-		r, ok := syntax.FindSurroundPair(strSrc, "go", inStr, 1)
+		r, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+			Source: core.Source{Text: strSrc, Lang: "go"},
+			Cursor: inStr,
+			Skip:   1,
+		})
 		assert.True(t, ok)
 		// must not match the parens inside the string; first real pair is {}
 		brOpen := strings.Index(strSrc, "{")
@@ -72,38 +101,74 @@ func TestFindSurroundPairFor(t *testing.T) {
 	braceClose := strings.LastIndex(src, "}")
 
 	t.Run("find paren pair", func(t *testing.T) {
-		r, ok := syntax.FindSurroundPairFor(src, "go", cursor, '(', 1)
+		r, ok := syntax.FindSurroundPairFor(syntax.FindSurroundPairForArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   '(',
+			Skip:   1,
+		})
 		assert.True(t, ok)
 		assert.Equal(t, parenOpen, r.From)
 		assert.Equal(t, parenClose, r.To)
 	})
 
 	t.Run("closing bracket also matches pair", func(t *testing.T) {
-		r, ok := syntax.FindSurroundPairFor(src, "go", cursor, ')', 1)
+		r, ok := syntax.FindSurroundPairFor(syntax.FindSurroundPairForArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   ')',
+			Skip:   1,
+		})
 		assert.True(t, ok)
 		assert.Equal(t, parenOpen, r.From)
 		assert.Equal(t, parenClose, r.To)
 	})
 
 	t.Run("find brace pair skip 1", func(t *testing.T) {
-		r, ok := syntax.FindSurroundPairFor(src, "go", cursor, '{', 1)
+		r, ok := syntax.FindSurroundPairFor(syntax.FindSurroundPairForArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   '{',
+			Skip:   1,
+		})
 		assert.True(t, ok)
 		assert.Equal(t, braceOpen, r.From)
 		assert.Equal(t, braceClose, r.To)
 	})
 
 	t.Run("symmetric char returns false", func(t *testing.T) {
-		_, ok := syntax.FindSurroundPairFor(src, "go", cursor, '"', 1)
+		_, ok := syntax.FindSurroundPairFor(syntax.FindSurroundPairForArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   '"',
+			Skip:   1,
+		})
 		assert.False(t, ok)
 	})
 
 	t.Run("unknown language returns false", func(t *testing.T) {
-		_, ok := syntax.FindSurroundPairFor(src, "nope", cursor, '(', 1)
+		_, ok := syntax.FindSurroundPairFor(syntax.FindSurroundPairForArgs{
+			Text:   src,
+			Lang:   "nope",
+			Cursor: cursor,
+			Char:   '(',
+			Skip:   1,
+		})
 		assert.False(t, ok)
 	})
 
 	t.Run("out-of-bounds cursor returns false", func(t *testing.T) {
-		_, ok := syntax.FindSurroundPairFor(src, "go", -1, '(', 1)
+		_, ok := syntax.FindSurroundPairFor(syntax.FindSurroundPairForArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: -1,
+			Char:   '(',
+			Skip:   1,
+		})
 		assert.False(t, ok)
 	})
 }

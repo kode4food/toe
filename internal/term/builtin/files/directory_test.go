@@ -52,7 +52,9 @@ func TestDirectoryStack(t *testing.T) {
 
 		test.RunCmdArgs(t, km, e, "push_directory", sub)
 		assert.True(t, strings.HasSuffix(e.Cwd(), "sub"))
-		assert.NotEmpty(t, test.RunCmd(t, km, e, "show_directory_stack").Message)
+		assert.NotEmpty(t,
+			test.RunCmd(t, km, e, "show_directory_stack").Message,
+		)
 
 		test.RunCmd(t, km, e, "pop_directory")
 		assert.Equal(t, start, e.Cwd())

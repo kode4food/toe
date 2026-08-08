@@ -44,7 +44,7 @@ func TestFindNthClosestPairsPos(t *testing.T) {
 	t.Run("skips pair closed before selection end", func(t *testing.T) {
 		// "(xyz)abc" with sel(3,8): the `)` at 4 < r.To()-1=7, skip it
 		doc := core.NewRope("(xyz)abc")
-		r := core.NewRange(3, 8)
+		r := core.Range{Anchor: 3, Head: 8}
 		_, err := core.FindNthClosestPairsPos(doc, r, 1)
 		assert.True(t, errors.Is(err, core.ErrPairNotFound))
 	})
@@ -60,7 +60,7 @@ func TestFindNthClosestPairsPos(t *testing.T) {
 
 	t.Run("backward range reverses positions", func(t *testing.T) {
 		doc := core.NewRope("(hello)")
-		r := core.NewRange(4, 2)
+		r := core.Range{Anchor: 4, Head: 2}
 		pair, err := core.FindNthClosestPairsPos(doc, r, 1)
 		assert.NoError(t, err)
 		assert.Equal(t, 6, pair.Anchor)
@@ -117,7 +117,7 @@ func TestFindNthPairsPos(t *testing.T) {
 
 	t.Run("backward range reverses positions", func(t *testing.T) {
 		doc := core.NewRope("(some) (chars)\n(newline)")
-		r := core.NewRange(10, 8)
+		r := core.Range{Anchor: 10, Head: 8}
 		pair, err := core.FindNthPairsPos(doc, '(', r, 1)
 		assert.NoError(t, err)
 		assert.Equal(t, 13, pair.Anchor)

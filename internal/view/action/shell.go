@@ -12,6 +12,12 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// shellRun is a command line and the text piped to it on stdin
+type shellRun struct {
+	command string
+	input   string
+}
+
 var ErrShellCommand = errors.New("shell command failed")
 
 // ShellPipe pipes each selection through a shell command, replacing the
@@ -37,11 +43,14 @@ func ShellPipe(e *view.Editor, cmdStr string) error {
 		if err != nil {
 			continue
 		}
-		out, err := runShell(e, cmdStr, frag)
+		out, err := runShell(e, shellRun{command: cmdStr, input: frag})
 		if err != nil {
 			return err
 		}
-		changes = append(changes, core.TextChange(r.From(), r.To(), out))
+		changes = append(changes, core.TextChange(core.Span{
+			From: r.From(),
+			To:   r.To(),
+		}, out))
 	}
 	if len(changes) == 0 {
 		return nil
@@ -174,7 +183,10 @@ func ReadFile(e *view.Editor, path string) error {
 			continue
 		}
 		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, content))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, content))
 	}
 	if len(changes) == 0 {
 		return nil
@@ -191,10 +203,20 @@ func ReadFile(e *view.Editor, path string) error {
 	return e.Apply(tx)
 }
 
+func (r shellRun) trimOutput(out string) string {
+	if _, ok := core.GetLineEndingOfString(r.input); ok {
+		return out
+	}
+	if before, ok := strings.CutSuffix(out, "\r\n"); ok {
+		return before
+	}
+	return strings.TrimSuffix(out, "\n")
+}
+
 func shellOutputAt(
 	e *view.Editor, cmdStr string, pos func(core.Range) int,
 ) error {
-	out, err := runShell(e, cmdStr, "")
+	out, err := runShell(e, shellRun{command: cmdStr})
 	if err != nil {
 		return err
 	}
@@ -220,7 +242,10 @@ func shellOutputAt(
 			continue
 		}
 		seen[p] = true
-		changes = append(changes, core.TextChange(p, p, out))
+		changes = append(changes, core.TextChange(core.Span{
+			From: p,
+			To:   p,
+		}, out))
 	}
 	if len(changes) == 0 {
 		return nil
@@ -243,9 +268,9 @@ func makeShellCmd(e *view.Editor, cmdStr string) *exec.Cmd {
 	return exec.Command(sh[0], args...)
 }
 
-func runShell(e *view.Editor, cmdStr, input string) (string, error) {
-	cmd := makeShellCmd(e, cmdStr)
-	cmd.Stdin = strings.NewReader(input)
+func runShell(e *view.Editor, run shellRun) (string, error) {
+	cmd := makeShellCmd(e, run.command)
+	cmd.Stdin = strings.NewReader(run.input)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -257,15 +282,5 @@ func runShell(e *view.Editor, cmdStr, input string) (string, error) {
 		}
 		return "", fmt.Errorf("%w: %s", ErrShellCommand, msg)
 	}
-	return trimShellOutput(out.String(), input), nil
-}
-
-func trimShellOutput(out, input string) string {
-	if _, ok := core.GetLineEndingOfString(input); ok {
-		return out
-	}
-	if before, ok := strings.CutSuffix(out, "\r\n"); ok {
-		return before
-	}
-	return strings.TrimSuffix(out, "\n")
+	return run.trimOutput(out.String()), nil
 }

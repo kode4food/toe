@@ -87,7 +87,10 @@ func ReplaceWithYanked(e *view.Editor) {
 			continue
 		}
 		changes = append(changes,
-			core.TextChange(r.From(), r.To(), valueFor(valueIdx)),
+			core.TextChange(core.Span{
+				From: r.From(),
+				To:   r.To(),
+			}, valueFor(valueIdx)),
 		)
 		valueIdx++
 	}
@@ -157,12 +160,20 @@ func pasteImpl(e *view.Editor, before bool) {
 	}
 	changes := make([]core.Change, 0, len(ranges))
 	for i, r := range ranges {
-		pos, ok := pastePosition(text, r, linewise, before)
+		pos, ok := pastePosition(pastePositionArgs{
+			text:     text,
+			rng:      r,
+			linewise: linewise,
+			before:   before,
+		})
 		if !ok {
 			continue
 		}
 		pastePos[i] = pos
-		changes = append(changes, core.TextChange(pos, pos, valueFor(i)))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, valueFor(i)))
 	}
 	if len(changes) == 0 {
 		return
@@ -208,16 +219,23 @@ func setYankStatus(e *view.Editor, reg rune, n int) {
 	}))
 }
 
-func pastePosition(
-	text core.Rope, r core.Range, linewise, before bool,
-) (int, bool) {
-	if !linewise {
-		if before {
+type pastePositionArgs struct {
+	text     core.Rope
+	rng      core.Range
+	linewise bool
+	before   bool
+}
+
+func pastePosition(args pastePositionArgs) (int, bool) {
+	text := args.text
+	r := args.rng
+	if !args.linewise {
+		if args.before {
 			return r.From(), true
 		}
 		return r.To(), true
 	}
-	if before {
+	if args.before {
 		line, err := text.CharToLine(r.From())
 		if err != nil {
 			return 0, false

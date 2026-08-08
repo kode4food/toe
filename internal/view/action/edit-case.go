@@ -58,7 +58,10 @@ func switchCaseImpl(e *view.Editor, transform func(string) string) {
 			continue
 		}
 		changes = append(changes,
-			core.TextChange(r.From(), r.To(), transform(frag)),
+			core.TextChange(core.Span{
+				From: r.From(),
+				To:   r.To(),
+			}, transform(frag)),
 		)
 	}
 	applyChangesFrom(e, applyChangesFromArgs{

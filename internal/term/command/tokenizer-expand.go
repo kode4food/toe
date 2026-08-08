@@ -2,6 +2,12 @@ package command
 
 import "strings"
 
+// delimiterPair is the opening and closing byte of an expansion's delimiters
+type delimiterPair struct {
+	open  byte
+	close byte
+}
+
 var (
 	expansionKindNames = map[string]ExpansionKind{
 		"":    ExpansionVariable,
@@ -28,13 +34,12 @@ func (t *Tokenizer) parsePercentToken() (Token, error) {
 		t.pos++
 	}
 	kindText := t.input[kindStart:t.pos]
-	start, end, ok := expansionDelimiters(t.byte())
+	delims, ok := expansionDelimiters(t.byte())
 	if !ok {
 		tok := Token{
 			Kind:         TokenExpansionKind,
 			ContentStart: kindStart,
 			Content:      kindText,
-			Terminated:   false,
 		}
 		if !t.validate {
 			return tok, nil
@@ -53,7 +58,7 @@ func (t *Tokenizer) parsePercentToken() (Token, error) {
 			Text: kindText,
 		}
 	}
-	content, terminated := t.parseDelimited(start, end)
+	content, terminated := t.parseDelimited(delims)
 	tok := Token{
 		Kind:         TokenExpansion,
 		Expansion:    kind,
@@ -73,23 +78,24 @@ func (t *Tokenizer) parsePercentToken() (Token, error) {
 	return tok, nil
 }
 
-func (t *Tokenizer) parseDelimited(openDelim, closeDelim byte) (string, bool) {
-	if openDelim == closeDelim {
-		return t.parseQuoted(openDelim)
+func (t *Tokenizer) parseDelimited(delims delimiterPair) (string, bool) {
+	open := delims.open
+	if open == delims.close {
+		return t.parseQuoted(open)
 	}
 	t.pos++
 	start := t.pos
 	level := 1
 	for t.pos < len(t.input) {
 		idx := strings.IndexAny(
-			t.input[t.pos:], string([]byte{openDelim, closeDelim}),
+			t.input[t.pos:], string([]byte{open, delims.close}),
 		)
 		if idx < 0 {
 			break
 		}
 		idx += t.pos
 		t.pos = idx + 1
-		if t.input[idx] == openDelim {
+		if t.input[idx] == open {
 			level++
 			continue
 		}
@@ -111,9 +117,9 @@ func lowerASCII(ch byte) bool {
 	return ch >= 'a' && ch <= 'z'
 }
 
-func expansionDelimiters(ch byte) (byte, byte, bool) {
+func expansionDelimiters(ch byte) (delimiterPair, bool) {
 	if pair, ok := expansionDelimPairs[ch]; ok {
-		return pair[0], pair[1], true
+		return delimiterPair{open: pair[0], close: pair[1]}, true
 	}
-	return 0, 0, false
+	return delimiterPair{}, false
 }

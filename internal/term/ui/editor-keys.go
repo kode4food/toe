@@ -285,12 +285,6 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 	}
 }
 
-func countable(mode view.Mode, k command.KeyEvent) bool {
-	return k.Mods == command.ModNone &&
-		k.Code.Special == command.SpecialNone &&
-		(mode == view.ModeNormal || mode == view.ModeSelect)
-}
-
 func newCompletionAnchor(doc *view.Document, viewID view.Id) completionAnchor {
 	sel := doc.SelectionFor(viewID)
 	text := doc.Text()
@@ -300,6 +294,12 @@ func newCompletionAnchor(doc *view.Document, viewID view.Id) completionAnchor {
 		rev:    doc.Revision(),
 		pos:    wordStart(text, sel.Primary().Cursor(text)),
 	}
+}
+
+func countable(mode view.Mode, k command.KeyEvent) bool {
+	return k.Mods == command.ModNone &&
+		k.Code.Special == command.SpecialNone &&
+		(mode == view.ModeNormal || mode == view.ModeSelect)
 }
 
 func wordStart(text core.Rope, pos int) int {
@@ -346,7 +346,7 @@ func wordPrefixReady(cx *Context, limit int) bool {
 	if pos < limit {
 		return false
 	}
-	left, err := text.SliceString(pos-limit, pos)
+	left, err := text.SliceString(core.Span{From: pos - limit, To: pos})
 	if err != nil {
 		return false
 	}

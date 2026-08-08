@@ -20,11 +20,11 @@ type stubController struct {
 	formatSelErr error
 }
 
-func (s *stubController) FormatDocument(_ *view.Document, _ view.Id) error {
+func (s *stubController) FormatDocument(*view.Document, view.Id) error {
 	return s.formatDocErr
 }
 
-func (s *stubController) FormatSelection(_ *view.Document, _ view.Id) error {
+func (s *stubController) FormatSelection(*view.Document, view.Id) error {
 	return s.formatSelErr
 }
 

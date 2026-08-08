@@ -62,7 +62,10 @@ func FindEditorConfig(file string) *EditorConfig {
 		}
 		rel = filepath.ToSlash(rel)
 		for _, section := range cfg.cfg.sections {
-			if editorConfigSectionMatches(section.pattern, rel) {
+			if editorConfigSectionMatches(glob.Candidate{
+				Pattern: section.pattern,
+				Path:    rel,
+			}) {
 				maps.Copy(pairs, section.pairs)
 			}
 		}
@@ -111,14 +114,14 @@ func parseEditorConfig(data string) editorConfigINI {
 	return ini
 }
 
-func editorConfigSectionMatches(pattern, rel string) bool {
+func editorConfigSectionMatches(c glob.Candidate) bool {
 	// Per spec: **.ext → **/*.ext to match .ext recursively
-	pattern = strings.ReplaceAll(pattern, "**.", "**/*.")
+	pattern := strings.ReplaceAll(c.Pattern, "**.", "**/*.")
 	// Non-relative patterns (no '/' outside brackets) match at any depth
 	if !isEditorConfigGlobRelative(pattern) {
 		pattern = "**/" + pattern
 	}
-	return glob.Match(pattern, rel)
+	return glob.Match(glob.Candidate{Pattern: pattern, Path: c.Path})
 }
 
 // isEditorConfigGlobRelative reports whether a glob pattern contains '/'
@@ -168,7 +171,9 @@ func editorConfigIndentStyle(
 		width := 4
 		if pairs["indent_size"] == "tab" && tabWidth != nil {
 			width = *tabWidth
-		} else if n := parsePositiveEditorConfigInt(pairs["indent_size"]); n != nil {
+		} else if n := parsePositiveEditorConfigInt(
+			pairs["indent_size"],
+		); n != nil {
 			width = *n
 		}
 		return new(core.Spaces(uint8(width)))

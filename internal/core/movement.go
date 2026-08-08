@@ -13,11 +13,17 @@ type (
 	// row positions when soft-wrap is active. A zero-value (ViewportWidth == 0)
 	// causes MoveVerticallyVisual to fall back to text-line movement
 	VisualMoveFormat struct {
-		ViewportWidth    int
-		TabWidth         int
-		MaxWrap          int
-		MaxIndentRetain  int
-		WrapIndicatorLen int
+		ViewportWidth      int
+		TabWidth           int
+		MaxWrap            int
+		MaxIndentRetain    int
+		WrapIndicatorWidth int
+	}
+
+	// charStep is the character pair straddling a candidate word boundary
+	charStep struct {
+		prev rune
+		next rune
 	}
 
 	visualMover struct {
@@ -26,10 +32,10 @@ type (
 	}
 
 	visualLine struct {
-		runes     []rune
-		format    *VisualMoveFormat
-		rowStarts []int
-		prefixW   int
+		runes       []rune
+		format      *VisualMoveFormat
+		rowStarts   []int
+		prefixWidth int
 	}
 
 	// charIter is a bidirectional rune iterator over a Rope's characters
@@ -67,9 +73,15 @@ func (r Range) MoveHorizontally(
 	pos := r.Cursor(doc)
 	var newPos int
 	if dir == DirectionForward {
-		newPos = NthNextGraphemeBoundary(doc, pos, count)
+		newPos = NthNextGraphemeBoundary(doc, GraphemeStep{
+			From:  pos,
+			Count: count,
+		})
 	} else {
-		newPos = NthPrevGraphemeBoundary(doc, pos, count)
+		newPos = NthPrevGraphemeBoundary(doc, GraphemeStep{
+			From:  pos,
+			Count: count,
+		})
 	}
 	return r.PutCursor(doc, newPos, move == MovementExtend)
 }
@@ -204,12 +216,13 @@ func (vf *VisualMoveFormat) ExtendVerticallyVisual(
 	}.moveVertically(doc, r, dir, count)
 }
 
-func isWordBoundary(a, b rune) bool {
-	return CategorizeChar(a) != CategorizeChar(b)
+func isWordBoundary(step charStep) bool {
+	return CategorizeChar(step.prev) != CategorizeChar(step.next)
 }
 
-func isLongWordBoundary(a, b rune) bool {
-	ca, cb := CategorizeChar(a), CategorizeChar(b)
+func isLongWordBoundary(step charStep) bool {
+	ca := CategorizeChar(step.prev)
+	cb := CategorizeChar(step.next)
 	switch {
 	case ca == CharCategoryWord && cb == CharCategoryPunctuation:
 		return false
@@ -220,8 +233,11 @@ func isLongWordBoundary(a, b rune) bool {
 	}
 }
 
-func isSubWordBoundary(a, b rune, dir Direction) bool {
-	ca, cb := CategorizeChar(a), CategorizeChar(b)
+func isSubWordBoundary(step charStep, dir Direction) bool {
+	a := step.prev
+	b := step.next
+	ca := CategorizeChar(a)
+	cb := CategorizeChar(b)
 	if ca == CharCategoryWord && cb == CharCategoryWord {
 		if (a == '_') != (b == '_') {
 			return true
@@ -257,20 +273,20 @@ func isPrevWordMotion(t WordMotionTarget) bool {
 	}
 }
 
-func atWordStartPos(next rune) bool {
-	return CharIsLineEnding(next) || !isWhitespaceChar(next)
+func atWordStartPos(step charStep) bool {
+	return CharIsLineEnding(step.next) || !isWhitespaceChar(step.next)
 }
 
-func atWordEndPos(prev, next rune) bool {
-	return !isWhitespaceChar(prev) || CharIsLineEnding(next)
+func atWordEndPos(step charStep) bool {
+	return !isWhitespaceChar(step.prev) || CharIsLineEnding(step.next)
 }
 
-func atSubWordStartPos(next rune) bool {
-	return CharIsLineEnding(next) || !isSubWordStop(next)
+func atSubWordStartPos(step charStep) bool {
+	return CharIsLineEnding(step.next) || !isSubWordStop(step.next)
 }
 
-func atSubWordEndPos(prev, next rune) bool {
-	return !isSubWordStop(prev) || CharIsLineEnding(next)
+func atSubWordEndPos(step charStep) bool {
+	return !isSubWordStop(step.prev) || CharIsLineEnding(step.next)
 }
 
 func isSubWordStop(ch rune) bool {

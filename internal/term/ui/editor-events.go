@@ -95,7 +95,7 @@ func (e *EditorComponent) handleCompletionMsg(
 	}
 	return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		c := &completionComponent{
-			ec:         e,
+			editor:     e,
 			all:        msg.items,
 			items:      msg.items,
 			anchor:     msg.anchor,
@@ -187,7 +187,7 @@ func (e *EditorComponent) handleMouseClick(
 	}
 	e.mouse.downDrag = nil
 	if cx.Editor.Options().Mouse {
-		r := &renderPass{ec: e, cx: cx, size: e.size}
+		r := &renderPass{editor: e, context: cx, size: e.size}
 		r.handleMouseClick(msg)
 	}
 	return consumed(), e.documentHighlightCmd(cx)
@@ -207,7 +207,7 @@ func (e *EditorComponent) handleMouseMotion(
 		if dispatchToPaneInput(cx, at, msg) {
 			return consumed(), nil
 		}
-		r := &renderPass{ec: e, cx: cx, size: e.size}
+		r := &renderPass{editor: e, context: cx, size: e.size}
 		dragCmd = r.handleMouseDrag(at)
 	}
 	return consumed(), tea.Batch(dragCmd, e.documentHighlightCmd(cx))
@@ -219,7 +219,7 @@ func (e *EditorComponent) handleMouseAxisScroll(
 	if msg.gen != msg.axis.gen {
 		return consumed(), nil
 	}
-	return consumed(), e.continueAxisScroll(cx, msg.axis, msg.toLo)
+	return consumed(), e.continueAxisScroll(cx, msg.axis, msg.toLow)
 }
 
 func (e *EditorComponent) handleMouseRelease(
@@ -244,7 +244,7 @@ func (e *EditorComponent) handleMouseRelease(
 		e.handleMouseLeftRelease(cx)
 	case tea.MouseMiddle:
 		if cx.Editor.Options().MiddleClickPaste {
-			r := &renderPass{ec: e, cx: cx, size: e.size}
+			r := &renderPass{editor: e, context: cx, size: e.size}
 			r.handleMouseMiddleRelease(at, msg.Mod)
 		}
 	}
@@ -263,7 +263,7 @@ func (e *EditorComponent) handleMouseWheel(
 	if dispatchToPaneInput(cx, at, msg) {
 		return consumed(), nil
 	}
-	r := &renderPass{ec: e, cx: cx, size: e.size}
+	r := &renderPass{editor: e, context: cx, size: e.size}
 	v := r.contentViewAt(at)
 	if v == nil {
 		return consumed(), nil

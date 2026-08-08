@@ -16,20 +16,15 @@ type (
 	}
 )
 
-var (
-	defaultCell = Cell{Symbol: " "}
+// asciiPrintable holds the printable ASCII bytes in order, starting at space.
+// Slicing one byte out of it yields a string that shares this backing array,
+// so cell symbols for ASCII content are produced without allocation
+const asciiPrintable = "" +
+	` !"#$%&'()*+,-./0123456789:;<=>?` +
+	`@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_` +
+	"`abcdefghijklmnopqrstuvwxyz{|}~"
 
-	// asciiTable holds bytes 0x00..0x7f in order; asciiTable[ch:ch+1] yields a
-	// single-byte string that shares this backing array, so cell symbols for
-	// ASCII content are produced without allocation
-	asciiTable = func() string {
-		var b [128]byte
-		for i := range b {
-			b[i] = byte(i)
-		}
-		return string(b[:])
-	}()
-)
+var defaultCell = Cell{Symbol: " "}
 
 // NewBuffer returns a buffer of blank cells
 func NewBuffer(size geom.Size) *Buffer {
@@ -110,4 +105,11 @@ func (b *Buffer) Clear() {
 	for i := range b.cells {
 		b.cells[i] = defaultCell
 	}
+}
+
+// ASCIIString returns a single-character string for ch without allocating.
+// ch must be printable ASCII: 0x20 (space) through 0x7e (tilde)
+func ASCIIString(ch rune) string {
+	i := ch - ' '
+	return asciiPrintable[i : i+1]
 }

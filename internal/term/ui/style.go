@@ -91,7 +91,7 @@ func completionIconStyle(
 	if style, ok := cx.Theme().TryGet(completionKindStyleScope(kind)); ok {
 		icon = style
 	}
-	return applyAccentStyle(base, icon)
+	return applyAccentStyle(styleOverlay{base: base, overlay: icon})
 }
 
 func completionInfoStyle(cx *Context, selected bool) tui.Style {
@@ -100,7 +100,7 @@ func completionInfoStyle(cx *Context, selected bool) tui.Style {
 	if style, ok := cx.Theme().TryGet("comment"); ok {
 		info = style
 	}
-	return applyAccentStyle(base, info)
+	return applyAccentStyle(styleOverlay{base: base, overlay: info})
 }
 
 func completionBaseStyle(cx *Context, selected bool) tui.Style {
@@ -111,17 +111,18 @@ func completionBaseStyle(cx *Context, selected bool) tui.Style {
 	return base
 }
 
-func applyAccentStyle(base, accent tui.Style) tui.Style {
-	if fg := accent.FgColor(); !fg.IsReset() {
+func applyAccentStyle(args styleOverlay) tui.Style {
+	base := args.base
+	if fg := args.overlay.FgColor(); !fg.IsReset() {
 		base = base.Fg(fg)
 	}
-	if accent.HasMod(tui.ModifierBold) {
+	if args.overlay.HasMod(tui.ModifierBold) {
 		base = base.Mod(tui.ModifierBold)
 	}
-	if accent.HasMod(tui.ModifierDim) {
+	if args.overlay.HasMod(tui.ModifierDim) {
 		base = base.Mod(tui.ModifierDim)
 	}
-	if accent.HasMod(tui.ModifierItalic) {
+	if args.overlay.HasMod(tui.ModifierItalic) {
 		base = base.Mod(tui.ModifierItalic)
 	}
 	return base

@@ -2,6 +2,12 @@ package core
 
 import "slices"
 
+// BracketPair is the open and close characters of a bracket pair
+type BracketPair struct {
+	Open  rune
+	Close rune
+}
+
 const MaxPlaintextScan = 10000
 
 var (
@@ -38,11 +44,11 @@ func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 	if err != nil || !IsValidBracket(bracket) {
 		return 0, false
 	}
-	openCh, closeCh := GetPair(bracket)
-	matching := closeCh
-	isOpen := openCh == bracket
+	pair := GetPair(bracket)
+	matching := pair.Close
+	isOpen := pair.Open == bracket
 	if !isOpen {
-		matching = openCh
+		matching = pair.Open
 	}
 
 	count := 1
@@ -84,14 +90,14 @@ func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 }
 
 // GetPair returns the open and close characters for a bracket pair. If ch is
-// not in any pair, returns (ch, ch)
-func GetPair(ch rune) (openCh, closeCh rune) {
+// not in any pair, both sides are ch
+func GetPair(ch rune) BracketPair {
 	for _, p := range bracketPairTable {
 		if p[0] == ch || p[1] == ch {
-			return p[0], p[1]
+			return BracketPair{Open: p[0], Close: p[1]}
 		}
 	}
-	return ch, ch
+	return BracketPair{Open: ch, Close: ch}
 }
 
 // IsOpenBracket reports whether ch is an opening bracket

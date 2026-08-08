@@ -35,20 +35,27 @@ func (r *Registry) Server(name string) (language.Server, bool) {
 	return cfg, ok
 }
 
+// RegistryStartArgs names the server to launch and the directory to run it in
+type RegistryStartArgs struct {
+	Name    string
+	Dir     string
+	Handler protocol.Client
+}
+
 // Start launches a named server and returns the resulting client
 func (r *Registry) Start(
-	ctx context.Context, name, dir string, handler protocol.Client,
+	ctx context.Context, args RegistryStartArgs,
 ) (*Client, error) {
-	cfg, ok := r.Server(name)
+	cfg, ok := r.Server(args.Name)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrServerNotFound, name)
+		return nil, fmt.Errorf("%w: %s", ErrServerNotFound, args.Name)
 	}
 	_, client, err := Start(&TransportConfig{
-		Ctx:     ctx,
-		Name:    name,
+		Context: ctx,
+		Name:    args.Name,
 		Server:  cfg,
-		Dir:     dir,
-		Handler: handler,
+		Dir:     args.Dir,
+		Handler: args.Handler,
 	})
 	if err != nil {
 		return nil, err

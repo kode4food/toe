@@ -114,8 +114,8 @@ func TestWorkspace(t *testing.T) {
 	t.Run("missing required root", func(t *testing.T) {
 		root := t.TempDir()
 		_, _, err := lsp.Start(&lsp.TransportConfig{
-			Ctx:  t.Context(),
-			Name: "test",
+			Context: t.Context(),
+			Name:    "test",
 			Server: language.Server{
 				Command:      "unused",
 				RootPatterns: []string{"go.mod"},
@@ -132,7 +132,6 @@ func TestWorkspaceEmptyPath(t *testing.T) {
 		root := t.TempDir()
 
 		_, ok := lsp.ResolveWorkspace(lsp.WorkspaceRequest{
-			FilePath:  "",
 			Workspace: root,
 		})
 
@@ -143,8 +142,7 @@ func TestWorkspaceEmptyPath(t *testing.T) {
 		root := t.TempDir()
 
 		_, ok := lsp.ResolveWorkspace(lsp.WorkspaceRequest{
-			FilePath:  filepath.Join(root, "main.go"),
-			Workspace: "",
+			FilePath: filepath.Join(root, "main.go"),
 		})
 
 		assert.False(t, ok)

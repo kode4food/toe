@@ -16,7 +16,9 @@ import (
 func TestSupportQuit(t *testing.T) {
 	t.Run("quit clean signals quit", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Equal(t, command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal)
+		assert.Equal(t,
+			command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal,
+		)
 	})
 
 	t.Run("quit dirty warns", func(t *testing.T) {
@@ -26,7 +28,9 @@ func TestSupportQuit(t *testing.T) {
 
 	t.Run("quit all clean signals quit", func(t *testing.T) {
 		e, km := test.Env(t, "")
-		assert.Equal(t, command.SignalQuit, test.RunCmd(t, km, e, "quit_all").Signal)
+		assert.Equal(t,
+			command.SignalQuit, test.RunCmd(t, km, e, "quit_all").Signal,
+		)
 	})
 
 	t.Run("redraw signals clear screen", func(t *testing.T) {
@@ -51,7 +55,9 @@ func TestSupportEchoInfo(t *testing.T) {
 
 	t.Run("no formatter for plain text", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		assert.Contains(t, test.RunCmd(t, km, e, "format").Message, "no formatter")
+		assert.Contains(t,
+			test.RunCmd(t, km, e, "format").Message, "no formatter",
+		)
 	})
 }
 
@@ -65,12 +71,16 @@ func TestSupportGoto(t *testing.T) {
 
 	t.Run("goto rejects junk", func(t *testing.T) {
 		e, km := test.Env(t, "l0\nl1\n")
-		assert.Contains(t, test.RunCmdArgs(t, km, e, "goto", "x").Message, "invalid")
+		assert.Contains(t,
+			test.RunCmdArgs(t, km, e, "goto", "x").Message, "invalid",
+		)
 	})
 
 	t.Run("goto without args errors", func(t *testing.T) {
 		e, km := test.Env(t, "l0\n")
-		assert.Contains(t, test.RunCmd(t, km, e, "goto").Message, "no line number")
+		assert.Contains(t,
+			test.RunCmd(t, km, e, "goto").Message, "no line number",
+		)
 	})
 
 	t.Run("goto line:col moves to column", func(t *testing.T) {
@@ -106,14 +116,20 @@ func TestSupportSelectionOps(t *testing.T) {
 		// sort reorders the contents of multiple selections among themselves
 		e, km := test.Env(t, "b\na\n")
 		testutil.SetSelection(t, e,
-			[]core.Range{core.NewRange(0, 1), core.NewRange(2, 3)}, 0)
+			[]core.Range{
+				{Anchor: 0, Head: 1},
+				{Anchor: 2, Head: 3},
+			}, 0)
 		assert.NotContains(t, test.RunCmd(t, km, e, "sort").Message, "error")
 		assert.Equal(t, "a\nb\n", test.DocText(t, e))
 	})
 
 	t.Run("reflow runs over a selection", func(t *testing.T) {
 		e, km := test.Env(t, "one two three four five\n")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   20,
+		}}, 0)
 		assert.NotContains(t,
 			test.RunCmdArgs(t, km, e, "reflow", "10").Message, "error")
 	})
@@ -121,7 +137,10 @@ func TestSupportSelectionOps(t *testing.T) {
 	t.Run("reflow uses configured text width", func(t *testing.T) {
 		e, km := test.Env(t, "one two three four five\n")
 		e.Options().TextWidth = new(10)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 20)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   20,
+		}}, 0)
 		assert.Empty(t, test.RunCmd(t, km, e, "reflow").Message)
 	})
 
@@ -133,7 +152,10 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("toggle comments runs", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		assert.Empty(t, test.RunCmd(t, km, e, "toggle_comments").Message)
 	})
 }

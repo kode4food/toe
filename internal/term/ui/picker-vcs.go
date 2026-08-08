@@ -74,17 +74,15 @@ func NewChangedFilePicker(e *view.Editor) *Picker {
 }
 
 // Load lists the files changed against version control
-func (c *changedFilePickerSource) Load(
-	e *view.Editor,
-) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+func (c *changedFilePickerSource) Load(e *view.Editor) PickerLoad {
 	vc := e.VersionControl()
 	if vc == nil {
-		return nil, nil, func() {}
+		return PickerLoad{Stop: func() {}}
 	}
 	changes, err := vc.ChangedFiles()
 	if err != nil {
 		e.SetStatusMsg(i18n.ErrorText(err))
-		return nil, nil, func() {}
+		return PickerLoad{Stop: func() {}}
 	}
 	// providers report symlink-resolved paths; resolve the workspace root
 	// the same way so names relativize cleanly
@@ -113,7 +111,7 @@ func (c *changedFilePickerSource) Load(
 			close(done)
 		}
 	}
-	return nil, feed, stop
+	return PickerLoad{Feed: feed, Stop: stop}
 }
 
 // Items returns the whole row set at once, letting a refresh swap the list
@@ -156,7 +154,7 @@ func (c *changedFilePickerSource) ItemForPath(
 	for _, fc := range changes {
 		if loader.CanonicalPath(fc.Path) == key {
 			return changedFileItem(changedFileItemArgs{
-				vc: vc, fc: fc, cwd: cwd, nerd: nerd,
+				vcs: vc, change: fc, cwd: cwd, nerd: nerd,
 			}), true
 		}
 	}
@@ -188,11 +186,11 @@ func changedFileRows(
 	var slab PickerItemSlab
 	for _, fc := range changes {
 		out = append(out, changedFileItem(changedFileItemArgs{
-			slab: &slab,
-			vc:   vc,
-			fc:   fc,
-			cwd:  cwd,
-			nerd: nerd,
+			slab:   &slab,
+			vcs:    vc,
+			change: fc,
+			cwd:    cwd,
+			nerd:   nerd,
 		}))
 	}
 	return out
@@ -214,21 +212,27 @@ func changedFileSections() []*PickerItem {
 }
 
 type changedFileItemArgs struct {
-	slab *PickerItemSlab
-	vc   view.VersionControl
-	fc   view.FileChange
-	cwd  string
-	nerd bool
+	slab   *PickerItemSlab
+	vcs    view.VersionControl
+	change view.FileChange
+	cwd    string
+	nerd   bool
 }
 
 func changedFileItem(args changedFileItemArgs) *PickerItem {
-	fc := args.fc
-	display := view.DocumentRelativeName(fc.Path, args.cwd)
+	fc := args.change
+	display := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+		Path:    fc.Path,
+		BaseDir: args.cwd,
+	})
 	if fc.Kind == view.FileChangeRenamed {
-		from := view.DocumentRelativeName(fc.FromPath, args.cwd)
+		from := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+			Path:    fc.FromPath,
+			BaseDir: args.cwd,
+		})
 		display = from + " " + renamedArrow + " " + display
 	}
-	hunks := changedFileHunks(args.vc, fc)
+	hunks := changedFileHunks(args.vcs, fc)
 	basePath := fc.Path
 	if fc.Kind == view.FileChangeRenamed {
 		basePath = fc.FromPath
@@ -271,12 +275,12 @@ func changedFileHunks(
 	}
 }
 
-func firstChangeLines(hunks []view.DiffHunk) *PickerLineRange {
+func firstChangeLines(hunks []view.DiffHunk) *core.Span {
 	if len(hunks) == 0 {
 		return nil
 	}
 	h := hunks[0]
-	return &PickerLineRange{From: h.From, To: max(h.From, h.To-1)}
+	return &core.Span{From: h.From, To: max(h.From, h.To-1)}
 }
 
 func changedFileIcon(kind view.FileChangeKind, nerd bool) string {
@@ -300,7 +304,7 @@ func changedFileScope(kind view.FileChangeKind) string {
 }
 
 func lineRangeSelection(
-	text core.Rope, lr *PickerLineRange,
+	text core.Rope, lr *core.Span,
 ) (core.Selection, bool) {
 	if lr == nil {
 		return core.Selection{}, false
@@ -314,7 +318,7 @@ func lineRangeSelection(
 		lineEnd = end
 	}
 	sel, err := core.NewSelection(
-		[]core.Range{core.NewRange(lineStart, lineEnd)}, 0,
+		[]core.Range{{Anchor: lineStart, Head: lineEnd}}, 0,
 	)
 	if err != nil {
 		return core.Selection{}, false

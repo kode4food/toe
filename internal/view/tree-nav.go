@@ -106,7 +106,10 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 		fi := slices.Index(c.children, focus)
 		ti := slices.Index(c.children, target)
 		c.children[fi], c.children[ti] = c.children[ti], c.children[fi]
-		swapPaneAreas(t.nodes[focus].pane, t.nodes[target].pane)
+		swapPaneAreas(swapPaneAreasArgs{
+			from: t.nodes[focus].pane,
+			to:   t.nodes[target].pane,
+		})
 	} else {
 		fc := t.nodes[focusParent].container
 		tc := t.nodes[targetParent].container
@@ -115,13 +118,21 @@ func (t *Tree) SwapSplitInDirection(dir Direction) bool {
 		fc.children[fi], tc.children[ti] = tc.children[ti], fc.children[fi]
 		t.nodes[focus].parent = targetParent
 		t.nodes[target].parent = focusParent
-		swapPaneAreas(t.nodes[focus].pane, t.nodes[target].pane)
+		swapPaneAreas(swapPaneAreasArgs{
+			from: t.nodes[focus].pane,
+			to:   t.nodes[target].pane,
+		})
 	}
 	return true
 }
 
-func swapPaneAreas(a, b Pane) {
-	aArea, bArea := a.Area(), b.Area()
-	a.SetArea(bArea)
-	b.SetArea(aArea)
+type swapPaneAreasArgs struct {
+	from Pane
+	to   Pane
+}
+
+func swapPaneAreas(args swapPaneAreasArgs) {
+	fromArea := args.from.Area()
+	args.from.SetArea(args.to.Area())
+	args.to.SetArea(fromArea)
 }

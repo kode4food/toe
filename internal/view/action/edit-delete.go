@@ -30,11 +30,17 @@ func DeleteCharForward(e *view.Editor) {
 			continue
 		}
 		seen[pos] = true
-		next := core.NthNextGraphemeBoundary(text, pos, 1)
+		next := core.NthNextGraphemeBoundary(text, core.GraphemeStep{
+			From:  pos,
+			Count: 1,
+		})
 		if next <= pos {
 			continue
 		}
-		changes = append(changes, core.DeleteChange(pos, next))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: pos,
+			To:   next,
+		}))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text:    text,
@@ -73,7 +79,10 @@ func DeleteWordBackward(e *view.Editor) {
 		wordStart := core.MovePrevWordStart(
 			text, core.PointRange(pos), 1,
 		).From()
-		changes = append(changes, core.DeleteChange(wordStart, pos))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: wordStart,
+			To:   pos,
+		}))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text:    text,
@@ -113,7 +122,10 @@ func DeleteWordForward(e *view.Editor) {
 		if wordEnd <= pos {
 			continue
 		}
-		changes = append(changes, core.DeleteChange(pos, wordEnd))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: pos,
+			To:   wordEnd,
+		}))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text:    text,
@@ -133,7 +145,10 @@ func applyDeletions(e *view.Editor, args applyDeletionsArgs) bool {
 	changes := make([]core.Change, 0, len(args.ranges))
 	for _, r := range args.ranges {
 		eff := r.MinWidth1(args.text)
-		changes = append(changes, core.DeleteChange(eff.From(), eff.To()))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: eff.From(),
+			To:   eff.To(),
+		}))
 	}
 	cs, err := core.NewChangeSetFromChanges(args.text, changes)
 	if err != nil {

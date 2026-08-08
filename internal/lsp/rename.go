@@ -156,7 +156,7 @@ func renamePrefillFromResult(
 		if cr, ok := lspRangeToChars(
 			doc, *r, client.OffsetEncoding(),
 		); ok {
-			return doc.Text().SliceString(cr.From(), cr.To())
+			return doc.Text().SliceString(cr.Span())
 		}
 		return "", ErrWorkspaceEditRange
 	case *protocol.PrepareRenamePlaceholder:

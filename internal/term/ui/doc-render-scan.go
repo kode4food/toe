@@ -6,13 +6,13 @@ import (
 )
 
 type linePrefixArgs struct {
-	rev              int
-	lineNum          int
-	lineStart        int
-	lineEnd          int
-	tabWidth         int
-	horizontalOffset int
-	text             core.Rope
+	rev       int
+	lineNum   int
+	lineStart int
+	lineEnd   int
+	tabWidth  int
+	horzOff   int
+	text      core.Rope
 }
 
 func scanLinePrefix(args linePrefixArgs) linePrefixScan {
@@ -21,8 +21,11 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 	indentCol := 0
 	indentDone := false
 	found := false
-	args.text.ForEachSegment(args.lineStart, args.lineEnd, func(seg string) {
-		if found || col >= args.horizontalOffset {
+	args.text.ForEachSegment(core.Span{
+		From: args.lineStart,
+		To:   args.lineEnd,
+	}, func(seg string) {
+		if found || col >= args.horzOff {
 			return
 		}
 		for _, ch := range seg {
@@ -35,12 +38,15 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 				}
 			}
 			var w int
-			if uint32(ch)-0x20 < 0x5f { // printable ASCII
+			if uint32(ch)-0x20 < 0x5f {
 				w = 1
 			} else {
-				w = view.RuneWidth(ch, col, args.tabWidth)
+				w = view.RuneWidth(ch, core.TabStop{
+					Column:   col,
+					TabWidth: args.tabWidth,
+				})
 			}
-			if col+w > args.horizontalOffset {
+			if col+w > args.horzOff {
 				found = true
 				return
 			}
@@ -48,6 +54,7 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 			pos++
 		}
 	})
+
 	if !indentDone {
 		indentCol = col
 	}
@@ -58,17 +65,23 @@ func scanLinePrefix(args linePrefixArgs) linePrefixScan {
 	}
 }
 
-// visualColOf returns the visual column of the character at charOffset within
-// lStr, expanding tabs to tabW-width stops
-func visualColOf(lStr string, charOffset, tabW int) int {
+type visualColOfArgs struct {
+	line     string
+	charOff  int
+	tabWidth int
+}
+
+// visualColOf returns the visual column of the character at CharOffset within
+// the line, expanding tabs to TabWidth-wide stops
+func visualColOf(args visualColOfArgs) int {
 	col, charIdx := 0, 0
-	for _, ch := range lStr {
-		if charIdx >= charOffset {
+	for _, ch := range args.line {
+		if charIdx >= args.charOff {
 			break
 		}
 		charIdx++
 		if ch == runeTab {
-			col += tabW - col%tabW
+			col += args.tabWidth - col%args.tabWidth
 		} else {
 			col++
 		}
@@ -91,11 +104,11 @@ func indentWidth(lineStr string, tabW int) int {
 	return col
 }
 
-func lineString(text core.Rope, from, to int) string {
-	if from >= to {
+func lineString(text core.Rope, span core.Span) string {
+	if span.From >= span.To {
 		return ""
 	}
-	if s, err := text.SliceString(from, to); err == nil {
+	if s, err := text.SliceString(span); err == nil {
 		return s
 	}
 	return ""

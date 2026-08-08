@@ -84,11 +84,11 @@ func normalizeCompletionItem(
 	detail, _ := item.Detail.Get()
 	preselect, _ := item.Preselect.Get()
 	deprecated := completionDeprecated(item.Tags)
-	labelDetail, labelDescription := completionLabelDetails(item)
+	lbl := completionLabelDetails(item)
 	return view.CompletionItem{
 		Label:            item.Label,
-		LabelDetail:      labelDetail,
-		LabelDescription: labelDescription,
+		LabelDetail:      lbl.detail,
+		LabelDescription: lbl.description,
 		Detail:           detail,
 		Filter:           filter,
 		Sort:             sortText,
@@ -101,19 +101,25 @@ func normalizeCompletionItem(
 	}
 }
 
-func completionLabelDetails(item protocol.CompletionItem) (string, string) {
+type completionLabelDetailsRes struct {
+	detail      string
+	description string
+}
+
+func completionLabelDetails(
+	item protocol.CompletionItem,
+) completionLabelDetailsRes {
 	if item.LabelDetails == nil {
-		return "", ""
+		return completionLabelDetailsRes{}
 	}
-	detail := ""
+	var res completionLabelDetailsRes
 	if item.LabelDetails.Detail != nil {
-		detail = *item.LabelDetails.Detail
+		res.detail = *item.LabelDetails.Detail
 	}
-	description := ""
 	if item.LabelDetails.Description != nil {
-		description = *item.LabelDetails.Description
+		res.description = *item.LabelDetails.Description
 	}
-	return detail, description
+	return res
 }
 
 func completionDeprecated(tags []protocol.CompletionItemTag) bool {

@@ -9,6 +9,7 @@ import (
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -52,7 +53,7 @@ func TestDiagnostics(t *testing.T) {
 		assert.Equal(t, "bad identifier", diags[0].Message)
 		assert.Equal(t, "gopls", diags[0].Source)
 		assert.Equal(t, "lsp", diags[0].Provider)
-		assert.Equal(t, view.DiagnosticRange{From: 0, To: 1}, diags[0].Range)
+		assert.Equal(t, core.Span{From: 0, To: 1}, diags[0].Range)
 	})
 
 	t.Run("maps all severity levels", func(t *testing.T) {

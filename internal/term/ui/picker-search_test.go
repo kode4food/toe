@@ -185,7 +185,10 @@ func TestGlobalSearch(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, rope.LenChars(), "memory needle\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   rope.LenChars(),
+			}, "memory needle\n"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).

@@ -7,8 +7,14 @@ import (
 )
 
 type (
+	// colorPair is a foreground and background color emitted together
+	colorPair struct {
+		fg Color
+		bg Color
+	}
+
 	ansiEmitter struct {
-		w        *strings.Builder
+		out      *strings.Builder
 		fg, bg   Color
 		ulColor  Color
 		ulStyle  UnderlineStyle
@@ -92,7 +98,7 @@ func (b *Buffer) RenderToANSI() string {
 	}
 	var sb strings.Builder
 	sb.Grow(max(b.lastANSILen, b.Width*b.Height+max(b.Height-1, 0)))
-	e := &ansiEmitter{w: &sb}
+	e := &ansiEmitter{out: &sb}
 	style := Style{}
 	for y := range b.Height {
 		if y > 0 {
@@ -107,7 +113,7 @@ func (b *Buffer) RenderToANSI() string {
 
 func (a *ansiEmitter) emitStyle(s Style) {
 	a.emitModifiers(s.modifier)
-	a.emitColors(s.fg, s.bg)
+	a.emitColors(colorPair{fg: s.fg, bg: s.bg})
 	a.emitUnderline(s.underlineColor, s.underlineStyle)
 }
 
@@ -118,77 +124,77 @@ func (a *ansiEmitter) emitModifiers(m Modifier) {
 	removed := a.modifier &^ m
 	added := m &^ a.modifier
 	if removed.has(ModifierReversed) {
-		_, _ = a.w.WriteString(sgrNoReversed)
+		_, _ = a.out.WriteString(sgrNoReversed)
 	}
 	if removed.has(ModifierBold) {
-		_, _ = a.w.WriteString(sgrNormalIntensity)
+		_, _ = a.out.WriteString(sgrNormalIntensity)
 		if m.has(ModifierDim) {
-			_, _ = a.w.WriteString(sgrDim)
+			_, _ = a.out.WriteString(sgrDim)
 		}
 	}
 	if removed.has(ModifierItalic) {
-		_, _ = a.w.WriteString(sgrNoItalic)
+		_, _ = a.out.WriteString(sgrNoItalic)
 	}
 	if removed.has(ModifierDim) {
-		_, _ = a.w.WriteString(sgrNormalIntensity)
+		_, _ = a.out.WriteString(sgrNormalIntensity)
 	}
 	if removed.has(ModifierCrossedOut) {
-		_, _ = a.w.WriteString(sgrNoCrossedOut)
+		_, _ = a.out.WriteString(sgrNoCrossedOut)
 	}
 	if removed.has(ModifierSlowBlink) || removed.has(ModifierRapidBlink) {
-		_, _ = a.w.WriteString(sgrNoBlink)
+		_, _ = a.out.WriteString(sgrNoBlink)
 	}
 	if removed.has(ModifierHidden) {
-		_, _ = a.w.WriteString(sgrNoHidden)
+		_, _ = a.out.WriteString(sgrNoHidden)
 	}
 	if added.has(ModifierReversed) {
-		_, _ = a.w.WriteString(sgrReversed)
+		_, _ = a.out.WriteString(sgrReversed)
 	}
 	if added.has(ModifierBold) {
-		_, _ = a.w.WriteString(sgrBold)
+		_, _ = a.out.WriteString(sgrBold)
 	}
 	if added.has(ModifierItalic) {
-		_, _ = a.w.WriteString(sgrItalic)
+		_, _ = a.out.WriteString(sgrItalic)
 	}
 	if added.has(ModifierDim) {
-		_, _ = a.w.WriteString(sgrDim)
+		_, _ = a.out.WriteString(sgrDim)
 	}
 	if added.has(ModifierCrossedOut) {
-		_, _ = a.w.WriteString(sgrCrossedOut)
+		_, _ = a.out.WriteString(sgrCrossedOut)
 	}
 	if added.has(ModifierSlowBlink) {
-		_, _ = a.w.WriteString(sgrSlowBlink)
+		_, _ = a.out.WriteString(sgrSlowBlink)
 	}
 	if added.has(ModifierRapidBlink) {
-		_, _ = a.w.WriteString(sgrRapidBlink)
+		_, _ = a.out.WriteString(sgrRapidBlink)
 	}
 	if added.has(ModifierHidden) {
-		_, _ = a.w.WriteString(sgrHidden)
+		_, _ = a.out.WriteString(sgrHidden)
 	}
 	a.modifier = m
 }
 
-func (a *ansiEmitter) emitColors(fg, bg Color) {
-	if fg != a.fg {
-		fgColorEsc.emit(a.w, fg)
-		a.fg = fg
+func (a *ansiEmitter) emitColors(c colorPair) {
+	if c.fg != a.fg {
+		fgColorEsc.emit(a.out, c.fg)
+		a.fg = c.fg
 	}
-	if bg != a.bg {
-		bgColorEsc.emit(a.w, bg)
-		a.bg = bg
+	if c.bg != a.bg {
+		bgColorEsc.emit(a.out, c.bg)
+		a.bg = c.bg
 	}
 }
 
 func (a *ansiEmitter) emitUnderline(uc Color, us UnderlineStyle) {
 	if uc != a.ulColor {
-		emitUlColor(a.w, uc)
+		emitUlColor(a.out, uc)
 		a.ulColor = uc
 	}
 	if us == a.ulStyle {
 		return
 	}
 	if us < UnderlineStyle(len(underlineEsc)) {
-		_, _ = a.w.WriteString(underlineEsc[us])
+		_, _ = a.out.WriteString(underlineEsc[us])
 	}
 	a.ulStyle = us
 }
@@ -247,7 +253,7 @@ func emitRow(e *ansiEmitter, row []Cell, style Style) Style {
 			e.emitStyle(c.Style)
 			style = c.Style
 		}
-		e.w.WriteString(c.Symbol)
+		e.out.WriteString(c.Symbol)
 	}
 	return style
 }

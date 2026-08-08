@@ -23,7 +23,7 @@ type (
 		completion completionState
 		bg         tui.Color
 
-		ec      *EditorComponent
+		editor  *EditorComponent
 		bounds  geom.Area
 		kind    promptKind
 		forward bool
@@ -32,8 +32,8 @@ type (
 		caret   int
 		hOff    int
 
-		fn       promptHandler
-		pickerFn pickerBuilder
+		handler promptHandler
+		builder pickerBuilder
 	}
 
 	completionState struct {
@@ -68,6 +68,36 @@ const promptEllipsis = "\u2026" // '…' - horizontal ellipsis
 const promptRightPad = 1
 
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
+
+type promptComponentArgs struct {
+	editor  *EditorComponent
+	kind    promptKind
+	forward bool
+	prompt  string
+	prefill string
+	handler promptHandler
+	builder pickerBuilder
+}
+
+func newPromptComponent(
+	cx *Context, args promptComponentArgs,
+) *PromptComponent {
+	th := cx.Theme()
+	bg := deriveBackground(
+		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
+	)
+	return &PromptComponent{
+		bg:      bg,
+		editor:  args.editor,
+		kind:    args.kind,
+		forward: args.forward,
+		prompt:  args.prompt,
+		buf:     args.prefill,
+		caret:   len([]rune(args.prefill)),
+		handler: args.handler,
+		builder: args.builder,
+	}
+}
 
 // HandleEvent drives editing, history, and completion of the input line
 func (p *PromptComponent) HandleEvent(
@@ -136,7 +166,6 @@ func (p *PromptComponent) Cursor(
 			Y: p.bounds.Bottom(),
 		},
 		Shape: cursorKindToShape(kind),
-		Blink: false,
 	}, true
 }
 
@@ -174,7 +203,8 @@ func (p *PromptComponent) syncScroll() {
 func (p *PromptComponent) caretDisplayX() int {
 	p.syncScroll()
 	label := runewidth.StringWidth(p.promptLabel())
-	return label + runewidth.StringWidth(string([]rune(p.buf)[p.hOff:p.caret]))
+	shown := []rune(p.buf)[p.hOff:p.caret]
+	return label + runewidth.StringWidth(string(shown))
 }
 
 func (p *PromptComponent) promptLabel() string {
@@ -188,36 +218,6 @@ func (p *PromptComponent) promptLabel() string {
 		return i18n.Text(i18n.PromptSearchBackward) + ": "
 	default:
 		return p.prompt + ": "
-	}
-}
-
-type promptComponentArgs struct {
-	ec       *EditorComponent
-	kind     promptKind
-	forward  bool
-	prompt   string
-	prefill  string
-	fn       promptHandler
-	pickerFn pickerBuilder
-}
-
-func newPromptComponent(
-	cx *Context, args promptComponentArgs,
-) *PromptComponent {
-	th := cx.Theme()
-	bg := deriveBackground(
-		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
-	)
-	return &PromptComponent{
-		bg:       bg,
-		ec:       args.ec,
-		kind:     args.kind,
-		forward:  args.forward,
-		prompt:   args.prompt,
-		buf:      args.prefill,
-		caret:    len([]rune(args.prefill)),
-		fn:       args.fn,
-		pickerFn: args.pickerFn,
 	}
 }
 
@@ -331,7 +331,7 @@ func (p *PromptComponent) accept(
 	switch p.kind {
 	case promptCmd:
 		res := execTypable(cx, strings.TrimSpace(p.buf))
-		p.ec.setCommandResult(res)
+		p.editor.setCommandResult(res)
 		return pop(signalToCmd(res.Signal))
 
 	case promptSearch:
@@ -341,7 +341,7 @@ func (p *PromptComponent) accept(
 			pat, _ = cx.Editor.FirstRegister(view.RegisterSearch)
 		}
 		if pat == "" {
-			p.ec.clearCommandMessage()
+			p.editor.clearCommandMessage()
 			return pop(nil)
 		}
 		var err error
@@ -351,9 +351,9 @@ func (p *PromptComponent) accept(
 			err = action.SearchBackward(cx.Editor, pat)
 		}
 		if err != nil {
-			p.ec.setCommandError(err)
+			p.editor.setCommandError(err)
 		} else {
-			p.ec.clearCommandMessage()
+			p.editor.clearCommandMessage()
 		}
 		return pop(nil)
 
@@ -361,10 +361,10 @@ func (p *PromptComponent) accept(
 		if p.buf == "" {
 			return pop(nil)
 		}
-		if p.pickerFn != nil {
-			picker, err := p.pickerFn(cx.Editor, p.buf)
+		if p.builder != nil {
+			picker, err := p.builder(cx.Editor, p.buf)
 			if err != nil {
-				p.ec.setCommandError(err)
+				p.editor.setCommandError(err)
 				return pop(nil)
 			}
 			if picker == nil {
@@ -378,11 +378,11 @@ func (p *PromptComponent) accept(
 				return feedCmd
 			})
 		}
-		if p.fn != nil {
-			if err := p.fn(cx.Editor, p.buf); err != nil {
-				p.ec.setCommandError(err)
+		if p.handler != nil {
+			if err := p.handler(cx.Editor, p.buf); err != nil {
+				p.editor.setCommandError(err)
 			} else {
-				p.ec.clearCommandMessage()
+				p.editor.clearCommandMessage()
 			}
 		}
 		return pop(nil)
@@ -394,7 +394,10 @@ func (p *PromptComponent) paintLine(
 ) {
 	th := cx.Theme()
 	rowBg := tui.Style{}.Bg(p.bg)
-	labelSt := applyAccentStyle(rowBg, th.Get("ui.prompt"))
+	labelSt := applyAccentStyle(styleOverlay{
+		base:    rowBg,
+		overlay: th.Get("ui.prompt"),
+	})
 	textSt := rowBg.Fg(th.Get("ui.text").FgColor())
 
 	label := p.promptLabel()
@@ -405,7 +408,8 @@ func (p *PromptComponent) paintLine(
 	p.syncScroll()
 	runes := []rune(p.buf)
 	avail := p.textWidth()
-	truncEnd := runewidth.StringWidth(string(runes[p.hOff:])) > avail
+	tailWidth := runewidth.StringWidth(string(runes[p.hOff:]))
+	truncEnd := tailWidth > avail
 
 	limit := avail
 	if truncEnd {

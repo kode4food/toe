@@ -24,10 +24,10 @@ func TextObjectWord(doc Rope, r Range, kind TextObjectKind, long bool) Range {
 		end = wordBoundaryForward(doc, pos+1, long)
 	}
 	if start == end {
-		return NewRange(start, end)
+		return Range{Anchor: start, Head: end}
 	}
 	if kind == TextObjectInside {
-		return NewRange(start, end)
+		return Range{Anchor: start, Head: end}
 	}
 	// Around: include trailing whitespace, or leading if none on right
 	wsRight := 0
@@ -42,7 +42,7 @@ func TextObjectWord(doc Rope, r Range, kind TextObjectKind, long bool) Range {
 		wsRight++
 	}
 	if wsRight > 0 {
-		return NewRange(start, end+wsRight)
+		return Range{Anchor: start, Head: end + wsRight}
 	}
 	wsLeft := 0
 	for i := start - 1; i >= 0; i-- {
@@ -55,7 +55,7 @@ func TextObjectWord(doc Rope, r Range, kind TextObjectKind, long bool) Range {
 		}
 		wsLeft++
 	}
-	return NewRange(start-wsLeft, end)
+	return Range{Anchor: start - wsLeft, Head: end}
 }
 
 func wordBoundaryBackward(doc Rope, pos int, long bool) int {

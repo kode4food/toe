@@ -45,7 +45,8 @@ func TestModelLifecycle(t *testing.T) {
 
 	t.Run("initial picker mounts on resize", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(files.NewFilePicker)
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(files.NewFilePicker)
 		m = resize(m, 80, 24)
 		assert.NotEmpty(t, m.View().Content)
 	})
@@ -53,7 +54,7 @@ func TestModelLifecycle(t *testing.T) {
 	t.Run("initial nil picker is ignored", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(
-			func(_ *view.Editor) *ui.Picker { return nil },
+			func(*view.Editor) *ui.Picker { return nil },
 		)
 		m = resize(m, 80, 24)
 		assert.NotEmpty(t, m.View().Content)
@@ -116,7 +117,7 @@ func TestShellAction(t *testing.T) {
 		m := ui.New(e, km)
 		_ = km.Register("shell", command.Command{
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				fn := func(_ *view.Editor, _ string) error { return nil }
+				fn := func(*view.Editor, string) error { return nil }
 				m.ShellAction("$", fn)(e)
 				return command.Result{}
 			},

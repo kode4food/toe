@@ -9,13 +9,13 @@ import (
 )
 
 type macroSlot struct {
-	recording bool
-	reg       rune
-	keys      []command.KeyEvent
-	macros    map[rune][]command.KeyEvent
-	replayReg rune
-	replayN   int
-	hasReplay bool
+	recording   bool
+	reg         rune
+	keys        []command.KeyEvent
+	macros      map[rune][]command.KeyEvent
+	replayReg   rune
+	replayCount int
+	hasReplay   bool
 }
 
 // MacroRecordAction starts or stops macro recording. When not recording,
@@ -68,7 +68,7 @@ func (e *EditorComponent) MacroReplayAction(
 			n = 1
 		}
 		ms.replayReg = k.Code.Char
-		ms.replayN = n
+		ms.replayCount = n
 		ms.hasReplay = true
 		return nil
 	}
@@ -80,7 +80,7 @@ func (e *EditorComponent) handleReplay(cx *Context) {
 		return
 	}
 	ms.hasReplay = false
-	e.replayMacro(cx, ms.macros[ms.replayReg], ms.replayN)
+	e.replayMacro(cx, ms.macros[ms.replayReg], ms.replayCount)
 }
 
 func (e *EditorComponent) replayMacro(

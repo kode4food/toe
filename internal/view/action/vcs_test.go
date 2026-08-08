@@ -214,7 +214,7 @@ func TestResetDiffChange(t *testing.T) {
 			},
 		})
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(4, 24),
+			{Anchor: 4, Head: 24},
 		}, 0)
 
 		n, err := action.ResetDiffChange(e)

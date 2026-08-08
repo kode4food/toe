@@ -5,14 +5,21 @@ import (
 	"strings"
 )
 
-// Match reports whether path matches the glob pattern, expanding brace
+// Candidate is a glob pattern and the path being tested against it
+type Candidate struct {
+	Pattern string
+	Path    string
+}
+
+// Match reports whether Path matches the glob Pattern, expanding brace
 // alternatives and matching with both native and slash separators
-func Match(pattern, path string) bool {
-	for _, p := range expandBraces(pattern) {
-		if matchPath(p, filepath.ToSlash(path)) {
+func Match(c Candidate) bool {
+	path := c.Path
+	for _, p := range expandBraces(c.Pattern) {
+		if matchPath(Candidate{Pattern: p, Path: filepath.ToSlash(path)}) {
 			return true
 		}
-		if matchPath(p, path) {
+		if matchPath(Candidate{Pattern: p, Path: path}) {
 			return true
 		}
 	}
@@ -39,20 +46,31 @@ func expandBraces(pattern string) []string {
 	return out
 }
 
-func matchPath(pattern, path string) bool {
-	parts := strings.Split(pattern, "/")
-	pathParts := strings.Split(path, "/")
-	if strings.HasPrefix(pattern, "*/") {
+func matchPath(c Candidate) bool {
+	parts := strings.Split(c.Pattern, "/")
+	pathParts := strings.Split(c.Path, "/")
+	if strings.HasPrefix(c.Pattern, "*/") {
 		for i := range len(pathParts) {
-			if matchParts(parts, pathParts[i:]) {
+			if matchParts(matchPartsArgs{
+				pattern: parts,
+				path:    pathParts[i:],
+			}) {
 				return true
 			}
 		}
 	}
-	return matchParts(parts, pathParts)
+	return matchParts(matchPartsArgs{pattern: parts, path: pathParts})
 }
 
-func matchParts(pattern, path []string) bool {
+// matchPartsArgs is a Candidate already split on slashes
+type matchPartsArgs struct {
+	pattern []string
+	path    []string
+}
+
+func matchParts(c matchPartsArgs) bool {
+	pattern := c.pattern
+	path := c.path
 	for len(pattern) > 0 {
 		part := pattern[0]
 		pattern = pattern[1:]
@@ -61,7 +79,10 @@ func matchParts(pattern, path []string) bool {
 				return true
 			}
 			for i := range len(path) + 1 {
-				if matchParts(pattern, path[i:]) {
+				if matchParts(matchPartsArgs{
+					pattern: pattern,
+					path:    path[i:],
+				}) {
 					return true
 				}
 			}

@@ -57,7 +57,7 @@ func incrementImpl(e *view.Editor, sign int) {
 			continue
 		}
 		seenKey[key] = true
-		slice, err := text.Slice(from, to)
+		slice, err := text.Slice(core.Span{From: from, To: to})
 		if err != nil {
 			amount += increaseBy
 			continue
@@ -67,7 +67,10 @@ func incrementImpl(e *view.Editor, sign int) {
 			amount += increaseBy
 			continue
 		}
-		changes = append(changes, core.TextChange(from, to, newS))
+		changes = append(changes, core.TextChange(core.Span{
+			From: from,
+			To:   to,
+		}, newS))
 		amount += increaseBy
 	}
 	if len(changes) == 0 {
@@ -102,7 +105,7 @@ func wordBoundsAt(text core.Rope, pos int) core.Range {
 		}
 		to++
 	}
-	return core.NewRange(from, to)
+	return core.Range{Anchor: from, Head: to}
 }
 
 func isWordChar(ch rune) bool {

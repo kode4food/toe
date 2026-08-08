@@ -71,9 +71,7 @@ func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 }
 
 // Load lists the commands the language servers offer
-func (l *lspWorkspaceCommandSource) Load(
-	_ *view.Editor,
-) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+func (l *lspWorkspaceCommandSource) Load(*view.Editor) PickerLoad {
 	items := make([]*PickerItem, 0, len(l.commands))
 	var slab PickerItemSlab
 	for _, command := range l.commands {
@@ -84,7 +82,7 @@ func (l *lspWorkspaceCommandSource) Load(
 			Payload: command,
 		}))
 	}
-	return items, nil, func() {}
+	return PickerLoad{Items: items, Stop: func() {}}
 }
 
 // Accept executes the chosen server command
@@ -107,7 +105,7 @@ func (l *lspWorkspaceCommandSource) Accept(
 // Load streams the request's locations in as they arrive
 func (l *lspLocationSource) Load(
 	e *view.Editor,
-) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+) PickerLoad {
 	cwd := e.Cwd()
 	ch := make(chan *PickerItem, pickerFeedBatchSize)
 	done := make(chan struct{})
@@ -125,26 +123,7 @@ func (l *lspLocationSource) Load(
 			}
 		}
 	}()
-	return nil, ch, cancel
-}
-
-func locationItem(
-	slab *PickerItemSlab, loc view.Location, cwd string,
-) *PickerItem {
-	line, lines := locationLineRange(loc)
-	display := fmt.Sprintf(
-		"%s:%d", view.DocumentRelativeName(loc.Path, cwd), line+1,
-	)
-	return slab.Add(PickerItem{
-		Display: display,
-		Columns: []string{display},
-		SortKey: display,
-		Location: PickerLocation{
-			Target: PickerTarget{Path: loc.Path},
-			Lines:  lines,
-		},
-		Payload: loc,
-	})
+	return PickerLoad{Feed: ch, Stop: cancel}
 }
 
 // Accept jumps to the chosen location
@@ -157,7 +136,7 @@ func (l *lspLocationSource) Accept(
 // Load lists the symbols in the focused document
 func (l *lspSymbolSource) Load(
 	e *view.Editor,
-) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+) PickerLoad {
 	nerd := e.Options().NerdFonts
 	items := make([]*PickerItem, 0, len(l.symbols))
 	var slab PickerItemSlab
@@ -178,7 +157,7 @@ func (l *lspSymbolSource) Load(
 			Payload: loc,
 		}))
 	}
-	return items, nil, func() {}
+	return PickerLoad{Items: items, Stop: func() {}}
 }
 
 // Accept jumps to the chosen symbol
@@ -196,14 +175,14 @@ func (l *lspWorkspaceSymbolSource) Search(query string) {
 // Load lists workspace symbols matching the current query
 func (l *lspWorkspaceSymbolSource) Load(
 	e *view.Editor,
-) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+) PickerLoad {
 	if l.query == "" {
-		return nil, nil, func() {}
+		return PickerLoad{Stop: func() {}}
 	}
 	doc := e.FocusedDocument()
 	ctl := e.LanguageServerController()
 	if ctl == nil {
-		return nil, nil, func() {}
+		return PickerLoad{Stop: func() {}}
 	}
 	symbols, err := ctl.WorkspaceSymbols(doc, l.query)
 	if err != nil {
@@ -216,7 +195,14 @@ func (l *lspWorkspaceSymbolSource) Load(
 			items = append(items, item)
 		}
 	}
-	return items, nil, func() {}
+	return PickerLoad{Items: items, Stop: func() {}}
+}
+
+// Accept jumps to the chosen symbol
+func (l *lspWorkspaceSymbolSource) Accept(
+	e *view.Editor, item *PickerItem, action PickerAcceptAction,
+) {
+	acceptLocation(e, item, action)
 }
 
 func (l *lspWorkspaceSymbolSource) item(
@@ -224,7 +210,10 @@ func (l *lspWorkspaceSymbolSource) item(
 ) (*PickerItem, bool) {
 	loc := sym.Location
 	line, lines := locationLineRange(loc)
-	path := view.DocumentRelativeName(loc.Path, e.Cwd())
+	path := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+		Path:    loc.Path,
+		BaseDir: e.Cwd(),
+	})
 	kind := symbolKind(sym.Kind)
 	icon := completionKindIcon(kind, e.Options().NerdFonts)
 	return slab.Add(PickerItem{
@@ -242,13 +231,6 @@ func (l *lspWorkspaceSymbolSource) item(
 	}), true
 }
 
-// Accept jumps to the chosen symbol
-func (l *lspWorkspaceSymbolSource) Accept(
-	e *view.Editor, item *PickerItem, action PickerAcceptAction,
-) {
-	acceptLocation(e, item, action)
-}
-
 // LSPWorkspaceCommandPicker opens commands exposed by language servers
 func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 	ctl := e.LanguageServerController()
@@ -263,6 +245,28 @@ func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 			Cols:  []string{"command"},
 		},
 		commands: commands,
+	})
+}
+
+func locationItem(
+	slab *PickerItemSlab, loc view.Location, cwd string,
+) *PickerItem {
+	line, lines := locationLineRange(loc)
+	display := fmt.Sprintf(
+		"%s:%d", view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+			Path:    loc.Path,
+			BaseDir: cwd,
+		}), line+1,
+	)
+	return slab.Add(PickerItem{
+		Display: display,
+		Columns: []string{display},
+		SortKey: display,
+		Location: PickerLocation{
+			Target: PickerTarget{Path: loc.Path},
+			Lines:  lines,
+		},
+		Payload: loc,
 	})
 }
 
@@ -289,10 +293,10 @@ func acceptLocation(
 	AlignAcceptedView(e, v, doc)
 }
 
-func locationLineRange(loc view.Location) (int, *PickerLineRange) {
+func locationLineRange(loc view.Location) (int, *core.Span) {
 	from := loc.From.Line
 	to := max(loc.To.Line, from)
-	return from, &PickerLineRange{From: from, To: to}
+	return from, &core.Span{From: from, To: to}
 }
 
 func locationSelection(

@@ -33,8 +33,8 @@ func lineNumberDigits(text core.Rope) int {
 
 func gutterWidthFor(text core.Rope, g view.Gutter) int {
 	layout := g.GutterLayout()
-	lineNumberW := gutterLineNumberWidth(text, g, layout)
-	return gutterLayoutWidth(layout, lineNumberW)
+	lineNumW := gutterLineNumberWidth(text, g, layout)
+	return gutterLayoutWidth(layout, lineNumW)
 }
 
 func bufferlineVisible(cx *Context) bool {

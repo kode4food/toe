@@ -70,10 +70,10 @@ func FileModule() command.Module {
 			),
 			kit.EditorBoolOption("trim-trailing-whitespace",
 				func(e *view.Editor) bool {
-					return e.Options().TrimTrailingWS
+					return e.Options().TrimTrailingWhitespace
 				},
 				func(e *view.Editor, v bool) {
-					e.Options().TrimTrailingWS = v
+					e.Options().TrimTrailingWhitespace = v
 				},
 			),
 		},
@@ -88,7 +88,9 @@ func FileModule() command.Module {
 				opts.TrimFinalNewlines = kit.BoolOr(
 					cfg.Editor.TrimFinalNewlines, false,
 				)
-				opts.TrimTrailingWS = kit.BoolOr(cfg.Editor.TrimTrailingWS, false)
+				opts.TrimTrailingWhitespace = kit.BoolOr(
+					cfg.Editor.TrimTrailingWS, false,
+				)
 			},
 		},
 	}

@@ -8,6 +8,8 @@ import (
 
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
+
+	"github.com/kode4food/toe/internal/view"
 )
 
 type fileOpSelector func(
@@ -45,15 +47,15 @@ func (c *Client) DidCreateFile(
 
 // WillRenameFile asks the server for edits to make before a file is renamed
 func (c *Client) WillRenameFile(
-	ctx context.Context, oldPath, newPath string, dir bool,
+	ctx context.Context, rename view.FileRename, dir bool,
 ) (*protocol.WorkspaceEdit, bool, error) {
-	if !c.fileOperationInterested(fileOpWillRename, oldPath, dir) {
+	if !c.fileOperationInterested(fileOpWillRename, rename.OldPath, dir) {
 		return nil, false, nil
 	}
 	params := &protocol.RenameFilesParams{
 		Files: []protocol.FileRename{{
-			OldURI: fileOperationURI(oldPath),
-			NewURI: fileOperationURI(newPath),
+			OldURI: fileOperationURI(rename.OldPath),
+			NewURI: fileOperationURI(rename.NewPath),
 		}},
 	}
 	ctx, cancel := c.requestContext(ctx)
@@ -64,15 +66,15 @@ func (c *Client) WillRenameFile(
 
 // DidRenameFile notifies the server that a file was renamed
 func (c *Client) DidRenameFile(
-	ctx context.Context, oldPath, newPath string, dir bool,
+	ctx context.Context, rename view.FileRename, dir bool,
 ) (bool, error) {
-	if !c.fileOperationInterested(fileOpDidRename, newPath, dir) {
+	if !c.fileOperationInterested(fileOpDidRename, rename.NewPath, dir) {
 		return false, nil
 	}
 	params := &protocol.RenameFilesParams{
 		Files: []protocol.FileRename{{
-			OldURI: fileOperationURI(oldPath),
-			NewURI: fileOperationURI(newPath),
+			OldURI: fileOperationURI(rename.OldPath),
+			NewURI: fileOperationURI(rename.NewPath),
 		}},
 	}
 	return true, c.server.DidRenameFiles(ctx, params)
@@ -136,12 +138,12 @@ func (s *Session) DidCreateFile(path string, dir bool) error {
 }
 
 // WillRenameFile applies any edits servers want made before renaming
-func (s *Session) WillRenameFile(oldPath, newPath string, dir bool) error {
+func (s *Session) WillRenameFile(rename view.FileRename, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
-		fileOpWillRename, oldPath, dir,
+		fileOpWillRename, rename.OldPath, dir,
 	) {
-		edit, _, e := client.WillRenameFile(s.ctx, oldPath, newPath, dir)
+		edit, _, e := client.WillRenameFile(s.ctx, rename, dir)
 		if e != nil {
 			err = errors.Join(err, e)
 			continue
@@ -152,12 +154,12 @@ func (s *Session) WillRenameFile(oldPath, newPath string, dir bool) error {
 }
 
 // DidRenameFile tells every server that a path was renamed
-func (s *Session) DidRenameFile(oldPath, newPath string, dir bool) error {
+func (s *Session) DidRenameFile(rename view.FileRename, dir bool) error {
 	var err error
 	for _, client := range s.fileOperationClients(
-		fileOpDidRename, newPath, dir,
+		fileOpDidRename, rename.NewPath, dir,
 	) {
-		_, e := client.DidRenameFile(s.ctx, oldPath, newPath, dir)
+		_, e := client.DidRenameFile(s.ctx, rename, dir)
 		err = errors.Join(err, e)
 	}
 	return err
@@ -274,7 +276,10 @@ func fileOperationMatches(
 			pattern = strings.ToLower(pattern)
 			candidate = strings.ToLower(candidate)
 		}
-		if matchWatchPattern(pattern, candidate) {
+		if matchWatchPattern(matchWatchPatternArgs{
+			pattern: pattern,
+			path:    candidate,
+		}) {
 			return true
 		}
 	}

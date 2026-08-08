@@ -16,19 +16,19 @@ func (p *previewBinaryEntry) renderInto(
 	})
 	rows := (p.size + int64(width) - 1) / int64(width)
 	maxScroll := max(int(rows)-ctx.size.Height, 0)
-	scroll := min(max(ctx.picker.preview.scroll, 0), maxScroll)
-	ctx.picker.preview.scroll = scroll
+	scroll := min(max(ctx.picker.preview.vScroll, 0), maxScroll)
+	ctx.picker.preview.vScroll = scroll
 	offset := int64(scroll * width)
 	data, err := readBinaryRange(
 		p.path, offset, width*ctx.size.Height,
 	)
 	area := geom.Area{Point: at, Size: ctx.size}
-	style := tui.Style{}.Bg(ctx.th.Get("ui.popup").BgColor())
+	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	if err != nil {
 		renderCenteredMessage(buf, area, i18n.ErrorText(err), style)
 		return
 	}
-	styles := binaryStyles(ctx.th, style)
+	styles := binaryStyles(ctx.theme, style)
 	for row := range ctx.size.Height {
 		start := row * width
 		if start >= len(data) {

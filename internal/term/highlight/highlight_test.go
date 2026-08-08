@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
 )
 
@@ -17,7 +18,10 @@ func TestNormalizeNewlines(t *testing.T) {
 func TestTokenizeUnknown(t *testing.T) {
 	// Unknown lang falls back to Chroma's Fallback lexer, so spans may be empty
 	// but we should not panic
-	spans := highlight.Tokenize("hello world", "totally-unknown-lang-xyzzy")
+	spans := highlight.Tokenize(core.Source{
+		Text: "hello world",
+		Lang: "totally-unknown-lang-xyzzy",
+	})
 	// We don't assert a specific result — just that it doesn't panic
 	_ = spans
 }
@@ -31,7 +35,7 @@ func main() {
 	fmt.Println("hello")
 }
 `
-	spans := highlight.Tokenize(src, "go")
+	spans := highlight.Tokenize(core.Source{Text: src, Lang: "go"})
 	assert.NotEmpty(t, spans)
 
 	// Every span must have Start < End
@@ -47,14 +51,14 @@ func main() {
 }
 
 func TestTokenizeEmpty(t *testing.T) {
-	spans := highlight.Tokenize("", "go")
+	spans := highlight.Tokenize(core.Source{Lang: "go"})
 	// Should return without panicking; empty text has no tokens
 	assert.Empty(t, spans)
 }
 
 func TestTokenizePython(t *testing.T) {
 	src := "def foo(x):\n    return x + 1\n"
-	spans := highlight.Tokenize(src, "python")
+	spans := highlight.Tokenize(core.Source{Text: src, Lang: "python"})
 	assert.NotEmpty(t, spans)
 	for _, sp := range spans {
 		assert.Less(t, sp.Start, sp.End)
@@ -108,7 +112,10 @@ function greet(name) {
 
 	for _, tc := range cases {
 		t.Run(tc.lang, func(t *testing.T) {
-			spans := highlight.Tokenize(tc.src, tc.lang)
+			spans := highlight.Tokenize(core.Source{
+				Text: tc.src,
+				Lang: tc.lang,
+			})
 			// Some langs may produce no highlights — just verify no panic
 			for _, sp := range spans {
 				assert.Less(t, sp.Start, sp.End)
@@ -119,26 +126,6 @@ function greet(name) {
 			}
 		})
 	}
-}
-
-func TestDetectLanguage(t *testing.T) {
-	t.Run("detects by path", func(t *testing.T) {
-		lang := highlight.DetectLanguage("main.go", "")
-		assert.Equal(t, "go", lang)
-	})
-
-	t.Run("detects by content shebang", func(t *testing.T) {
-		lang := highlight.DetectLanguage(
-			"script.xyz_unknown_ext",
-			"#!/usr/bin/env python3\nprint('hi')\n",
-		)
-		assert.NotEmpty(t, lang)
-	})
-
-	t.Run("unknown returns text", func(t *testing.T) {
-		lang := highlight.DetectLanguage("", "")
-		assert.Equal(t, "text", lang)
-	})
 }
 
 func TestDefaultStyle(t *testing.T) {

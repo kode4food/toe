@@ -11,12 +11,12 @@ import (
 
 type (
 	rowRender struct {
-		lineStr   string
-		tuiStyles *tuiStyles
-		hlStyle   func(string) tui.Style
-		format    *language.TextFormat
-		ws        view.Whitespace
-		ig        view.IndentGuides
+		lineText   string
+		styles     *styles
+		hlStyle    func(string) tui.Style
+		format     *language.TextFormat
+		whitespace view.Whitespace
+		indents    view.IndentGuides
 
 		hlSpans       []highlight.Span
 		searchMatches []matchSpan
@@ -33,7 +33,7 @@ type (
 		lineStart  int
 		lineEnd    int
 		indentCol  int
-		colOffset  int
+		colOff     int
 
 		softWrap      bool
 		cursorIsBlock bool
@@ -49,8 +49,8 @@ type (
 	}
 
 	selectionSpan struct {
-		from, to, cur int
-		primary       bool
+		from, to, cursor int
+		primary          bool
 	}
 
 	documentGlyph uint8
@@ -62,34 +62,19 @@ const (
 	documentGlyphGuide
 )
 
-const asciiTable = "" +
-	"\x00\x01\x02\x03\x04\x05\x06\x07" +
-	"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" +
-	"\x10\x11\x12\x13\x14\x15\x16\x17" +
-	"\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" +
-	" !\"#$%&'" +
-	"()*+,-./" +
-	"01234567" +
-	"89:;<=>?" +
-	"@ABCDEFG" +
-	"HIJKLMNO" +
-	"PQRSTUVW" +
-	"XYZ[\\]^_" +
-	"`abcdefg" +
-	"hijklmno" +
-	"pqrstuvw" +
-	"xyz{|}~\x7f"
-
 func (r *rowRender) rows() []renderedRow {
 	tabW := r.format.TabWidth
 	indentCol := r.indentCol
-	endGuide := indentCol / tabW
-	startGuide := r.ig.GetSkipLevels()
+	guides := indentGuides{
+		indentCol: indentCol,
+		start:     r.indents.GetSkipLevels(),
+		end:       indentCol / tabW,
+	}
 
 	// A visual row holds at most ViewportWidth cells (one per column), capped
 	// by the line's byte length. Pre-sizing cells avoids the geometric regrowth
 	// of appending grapheme-by-grapheme from nil — the dominant per-frame alloc
-	cellCap := min(len(r.lineStr)+1, r.format.ViewportWidth+1)
+	cellCap := min(len(r.lineText)+1, r.format.ViewportWidth+1)
 
 	var row renderedRow
 	if r.softWrap {
@@ -100,7 +85,7 @@ func (r *rowRender) rows() []renderedRow {
 		}
 		row.cells = r.cellScratch[:0]
 	}
-	col := r.colOffset
+	col := r.colOff
 	pos := r.lineStart
 	if r.hlSpans != nil {
 		r.hlIdx = spanLowerBound(r.hlSpans, pos)
@@ -130,12 +115,12 @@ func (r *rowRender) rows() []renderedRow {
 	windowed := !r.softWrap && r.hWidth > 0
 	hEnd := r.hStart + r.hWidth
 	if windowed {
-		row.colStart = r.colOffset
+		row.colStart = r.colOff
 	}
 
-	wsRender := r.ws.Render
-	wsChars := r.ws.Characters
-	ts := r.tuiStyles
+	wsRender := r.whitespace.Render
+	wsChars := r.whitespace.Characters
+	ts := r.styles
 	annIdx := 0
 	writeAnnotations := func(pos int) {
 		for annIdx < len(r.annotations) && r.annotations[annIdx].pos == pos {
@@ -146,7 +131,7 @@ func (r *rowRender) rows() []renderedRow {
 			annIdx++
 		}
 	}
-	for _, ch := range r.lineStr {
+	for _, ch := range r.lineText {
 		if r.softWrap && breakIdx < len(breaks) &&
 			pos-r.lineStart == breaks[breakIdx] {
 			flushRow(breaks[breakIdx])
@@ -161,14 +146,10 @@ func (r *rowRender) rows() []renderedRow {
 		if r.annotations != nil {
 			writeAnnotations(pos)
 		}
-		rendered, width, glyph := r.renderGrapheme(rowGraphemeArgs{
-			char:       ch,
-			col:        col,
-			indentCol:  indentCol,
-			startGuide: startGuide,
-			endGuide:   endGuide,
-		})
-		col += width
+		res := r.renderGrapheme(ch, col, guides)
+		rendered := res.text
+		glyph := res.glyph
+		col += res.width
 		selAt := r.selectionAt(pos)
 		var colorStyle tui.Style
 		colorOK := false
@@ -185,23 +166,37 @@ func (r *rowRender) rows() []renderedRow {
 		case selAt.cursor && selAt.primary && r.cursorIsBlock:
 			style = ts.cursorPrim
 		case selAt.cursor && selAt.primary && r.mode != view.ModeInsert:
-			style = overlaySelStyle(r.baseStyleAt(pos, glyph), ts.selection)
+			style = overlaySelStyle(styleOverlay{
+				base:    r.baseStyleAt(pos, glyph),
+				overlay: ts.selection,
+			})
 		case selAt.cursor && !selAt.primary:
 			style = ts.cursor
 		case selAt.selected:
-			style = overlaySelStyle(r.baseStyleAt(pos, glyph), ts.selection)
+			style = overlaySelStyle(styleOverlay{
+				base:    r.baseStyleAt(pos, glyph),
+				overlay: ts.selection,
+			})
 		case r.mode == view.ModeSelect:
 			style = r.baseStyleAt(pos, glyph)
 		case rangeMatch(r.docHighlights, pos):
-			style = overlaySelStyle(
-				r.baseStyleAt(pos, glyph), ts.documentHighlight,
-			)
+			style = overlaySelStyle(styleOverlay{
+				base:    r.baseStyleAt(pos, glyph),
+				overlay: ts.documentHighlight,
+			})
+
 		case rangeMatch(r.docLinks, pos):
-			style = overlaySelStyle(r.baseStyleAt(pos, glyph), ts.documentLink)
+			style = overlaySelStyle(styleOverlay{
+				base:    r.baseStyleAt(pos, glyph),
+				overlay: ts.documentLink,
+			})
 		case colorOK:
 			style = colorStyle
 		case rangeMatch(r.searchMatches, pos):
-			style = overlayBgStyle(r.baseStyleAt(pos, glyph), ts.searchMatch)
+			style = overlayBgStyle(styleOverlay{
+				base:    r.baseStyleAt(pos, glyph),
+				overlay: ts.searchMatch,
+			})
 		case glyph == documentGlyphGuide:
 			style = ts.indentGuide
 		case glyph == documentGlyphWhitespace:
@@ -210,9 +205,12 @@ func (r *rowRender) rows() []renderedRow {
 			style = r.baseStyleAt(pos, glyph)
 		}
 		if diagOK {
-			style = overlayDiagnosticStyle(style, diag.style)
+			style = overlayDiagnosticStyle(styleOverlay{
+				base:    style,
+				overlay: diag.style,
+			})
 		}
-		writeRendered(rendered, width, style)
+		writeRendered(rendered, res.width, style)
 		pos++
 	}
 	if r.annotations != nil {
@@ -232,15 +230,17 @@ func (r *rowRender) rows() []renderedRow {
 		case selEnd.cursor && selEnd.primary && r.cursorIsBlock:
 			writeRendered(" ", 1, ts.cursorPrim)
 		case selEnd.cursor && selEnd.primary && r.mode != view.ModeInsert:
-			writeRendered(" ", 1, overlaySelStyle(
-				r.baseStyleAt(r.lineEnd, glyph), ts.selection,
-			))
+			writeRendered(" ", 1, overlaySelStyle(styleOverlay{
+				base:    r.baseStyleAt(r.lineEnd, glyph),
+				overlay: ts.selection,
+			}))
 		case selEnd.cursor && !selEnd.primary:
 			writeRendered(" ", 1, ts.cursor)
 		case selEnd.selected:
-			writeRendered(" ", 1, overlaySelStyle(
-				r.baseStyleAt(r.lineEnd, glyph), ts.selection,
-			))
+			writeRendered(" ", 1, overlaySelStyle(styleOverlay{
+				base:    r.baseStyleAt(r.lineEnd, glyph),
+				overlay: ts.selection,
+			}))
 		default:
 			writeRendered(string(wsChars.NewlineRune()), 1, ts.whitespace)
 		}

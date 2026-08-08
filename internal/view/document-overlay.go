@@ -104,26 +104,28 @@ func (d *Document) remapOverlays(cs core.ChangeSet) {
 	d.overlays.Lock()
 	defer d.overlays.Unlock()
 	for i := range d.overlays.diagnostics {
-		from, to := remapRange(
-			cs, d.overlays.diagnostics[i].Range.From,
-			d.overlays.diagnostics[i].Range.To,
-		)
-		d.overlays.diagnostics[i].Range.From = from
-		d.overlays.diagnostics[i].Range.To = to
+		r := &d.overlays.diagnostics[i].Range
+		s := remapSpan(cs, core.Span{From: r.From, To: r.To})
+		r.From = s.From
+		r.To = s.To
 	}
 	for i := range d.overlays.links {
-		d.overlays.links[i].From, d.overlays.links[i].To = remapRange(
-			cs, d.overlays.links[i].From, d.overlays.links[i].To,
-		)
+		l := &d.overlays.links[i]
+		s := remapSpan(cs, core.Span{From: l.From, To: l.To})
+		l.From = s.From
+		l.To = s.To
 	}
 	for i := range d.overlays.colors {
-		d.overlays.colors[i].From, d.overlays.colors[i].To = remapRange(
-			cs, d.overlays.colors[i].From, d.overlays.colors[i].To,
-		)
+		c := &d.overlays.colors[i]
+		s := remapSpan(cs, core.Span{From: c.From, To: c.To})
+		c.From = s.From
+		c.To = s.To
 	}
 	for _, hl := range d.overlays.highlights {
 		for i := range hl {
-			hl[i].From, hl[i].To = remapRange(cs, hl[i].From, hl[i].To)
+			s := remapSpan(cs, core.Span{From: hl[i].From, To: hl[i].To})
+			hl[i].From = s.From
+			hl[i].To = s.To
 		}
 	}
 	for _, hints := range d.overlays.hints {
@@ -208,11 +210,14 @@ func getOverlayMap[T any](state *overlayState, m map[Id][]T, vid Id) []T {
 	return slices.Clone(m[vid])
 }
 
-func remapRange(cs core.ChangeSet, from, to int) (int, int) {
-	if r, err := cs.MapRange(core.NewRange(from, to)); err == nil {
-		return r.Anchor, r.Head
+func remapSpan(cs core.ChangeSet, s core.Span) core.Span {
+	if r, err := cs.MapRange(core.Range{
+		Anchor: s.From,
+		Head:   s.To,
+	}); err == nil {
+		return core.Span{From: r.Anchor, To: r.Head}
 	}
-	return from, to
+	return s
 }
 
 func remapPos(cs core.ChangeSet, pos int) int {

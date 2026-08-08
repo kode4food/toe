@@ -314,7 +314,10 @@ func partialChange(
 	if err != nil {
 		return nil, err
 	}
-	oldText, err := args.edited.before.SliceString(args.oldFrom, args.oldTo)
+	oldText, err := args.edited.before.SliceString(core.Span{
+		From: args.oldFrom,
+		To:   args.oldTo,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +342,7 @@ func lspPosition(
 	if err != nil {
 		return protocol.Position{}, err
 	}
-	text, err := doc.SliceString(lineStart, pos)
+	text, err := doc.SliceString(core.Span{From: lineStart, To: pos})
 	if err != nil {
 		return protocol.Position{}, err
 	}

@@ -31,7 +31,8 @@ func BufferModule() command.Module {
 				Name:      actBufferClose,
 				DocString: "Close the current buffer",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					if doc := e.FocusedDocument(); doc != nil && doc.Modified() {
+					doc := e.FocusedDocument()
+					if doc != nil && doc.Modified() {
 						return command.Result{Error: errUnsavedBufferClose}
 					}
 					e.CloseCurrentView()

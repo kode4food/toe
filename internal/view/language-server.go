@@ -153,13 +153,19 @@ type (
 		Busy() bool
 	}
 
+	// FileRename is a path change, from OldPath to NewPath
+	FileRename struct {
+		OldPath string
+		NewPath string
+	}
+
 	// FileOperationController handles user-initiated filesystem operations
 	// for language-server clients interested in workspace file operations
 	FileOperationController interface {
 		WillCreateFile(path string, dir bool) error
 		DidCreateFile(path string, dir bool) error
-		WillRenameFile(oldPath, newPath string, dir bool) error
-		DidRenameFile(oldPath, newPath string, dir bool) error
+		WillRenameFile(rename FileRename, dir bool) error
+		DidRenameFile(rename FileRename, dir bool) error
 		WillDeleteFile(path string, dir bool) error
 		DidDeleteFile(path string, dir bool) error
 	}
@@ -202,7 +208,7 @@ func (l Location) ResolveRange(text core.Rope) (core.Range, bool) {
 	if !ok {
 		to = from
 	}
-	return core.NewRange(to, from), true
+	return core.Range{Anchor: to, Head: from}, true
 }
 
 // Resolve converts a server position into a character offset in text
@@ -217,7 +223,7 @@ func (p ServerPosition) Resolve(
 	if err != nil {
 		return 0, false
 	}
-	line, err := text.SliceString(lineStart, lineEnd)
+	line, err := text.SliceString(core.Span{From: lineStart, To: lineEnd})
 	if err != nil {
 		return 0, false
 	}

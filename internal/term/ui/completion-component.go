@@ -22,7 +22,7 @@ type (
 
 	completionComponent struct {
 		overlayBuf
-		ec *EditorComponent
+		editor *EditorComponent
 
 		all   []*view.CompletionItem
 		items []*view.CompletionItem
@@ -125,6 +125,38 @@ func (c *completionComponent) HandleEvent(
 	}
 }
 
+// Cursor leaves the cursor to the layer below
+func (c *completionComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
+	return tea.Cursor{}, false
+}
+
+// Layout places the list near the cursor, inside the frame
+func (c *completionComponent) Layout(
+	cx *Context, screen geom.Size,
+) (geom.Area, bool) {
+	if !c.valid(cx) || len(c.items) == 0 {
+		return geom.Area{}, false
+	}
+	c.nerd = cx.Editor.Options().NerdFonts
+	at := c.popupPos(cx, screen.Height)
+	w := c.width()
+	rows := min(len(c.items), completionMaxRows)
+	h := rows + 2
+	return fitPopup(geom.Area{
+		Point: at,
+		Size:  geom.Size{Width: w, Height: h},
+	}, screen), true
+}
+
+// PaintBuffer draws the completion list and its documentation
+func (c *completionComponent) PaintBuffer(
+	cx *Context, pl geom.Area,
+) *tui.Buffer {
+	return c.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
+		c.paint(cx, buf, pl)
+	})
+}
+
 func (c *completionComponent) lookupAction(
 	cx *Context, k command.KeyEvent,
 ) (string, bool) {
@@ -166,38 +198,6 @@ func (c *completionComponent) handleAction(
 	}
 }
 
-// Cursor leaves the cursor to the layer below
-func (c *completionComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
-	return tea.Cursor{}, false
-}
-
-// Layout places the list near the cursor, inside the frame
-func (c *completionComponent) Layout(
-	cx *Context, screen geom.Size,
-) (geom.Area, bool) {
-	if !c.valid(cx) || len(c.items) == 0 {
-		return geom.Area{}, false
-	}
-	c.nerd = cx.Editor.Options().NerdFonts
-	at := c.popupPos(cx, screen.Height)
-	w := c.width()
-	rows := min(len(c.items), completionMaxRows)
-	h := rows + 2
-	return fitPopup(geom.Area{
-		Point: at,
-		Size:  geom.Size{Width: w, Height: h},
-	}, screen), true
-}
-
-// PaintBuffer draws the completion list and its documentation
-func (c *completionComponent) PaintBuffer(
-	cx *Context, pl geom.Area,
-) *tui.Buffer {
-	return c.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
-		c.paint(cx, buf, pl)
-	})
-}
-
 func (c *completionComponent) paint(
 	cx *Context, buf *tui.Buffer, pl geom.Area,
 ) {
@@ -205,15 +205,15 @@ func (c *completionComponent) paint(
 	query, _ := c.query(cx)
 	w := pl.Width
 	c.bounds = pl
-	menu, selected := promptCompletionStyles(cx)
+	styles := promptCompletionStyles(cx)
 	pop := popup{
-		borderStyle:  menu.Fg(pickerFrameStyle(cx).FgColor()),
-		contentStyle: menu,
+		borderStyle:  styles.item.Fg(pickerFrameStyle(cx).FgColor()),
+		contentStyle: styles.item,
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	c.listBounds = area.Translate(pl.Point)
-	base := menu
-	sel := selected
+	base := styles.item
+	sel := styles.selected
 	match := pickerMatchStyle(cx)
 	selMatch := pickerSelMatchStyle(cx)
 	info := completionInfoStyle(cx, false)
@@ -238,17 +238,17 @@ func (c *completionComponent) paint(
 			infoStyle = selInfo
 		}
 		c.renderRow(renderCompletionRowArgs{
-			buf:      buf,
-			at:       area.Point.Add(geom.Point{Y: i}),
-			width:    area.Width,
-			listW:    listW,
-			item:     item,
-			selected: selected,
-			query:    query,
-			base:     style,
-			match:    matchStyle,
-			icon:     iconStyle,
-			info:     infoStyle,
+			buf:       buf,
+			at:        area.Point.Add(geom.Point{Y: i}),
+			width:     area.Width,
+			listWidth: listW,
+			item:      item,
+			selected:  selected,
+			query:     query,
+			base:      style,
+			match:     matchStyle,
+			icon:      iconStyle,
+			info:      infoStyle,
 		})
 	}
 	if overflow {
@@ -344,5 +344,8 @@ func (c *completionComponent) accept(cx *Context) {
 func (c *completionComponent) popupPos(
 	cx *Context, screenH int,
 ) geom.Point {
-	return c.ec.popupAnchorBelowCaret(cx, screenH, completionMaxRows)
+	return c.editor.popupAnchorBelowCaret(cx, popupAnchorArgs{
+		screenHeight: screenH,
+		fallbackRows: completionMaxRows,
+	})
 }

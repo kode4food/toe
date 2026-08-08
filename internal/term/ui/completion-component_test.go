@@ -885,7 +885,9 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotNil(t, v)
 
 		assert.NotContains(t, out, "Println")
-		assert.Equal(t, 3, doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()))
+		assert.Equal(t,
+			3, doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text()),
+		)
 	})
 
 	t.Run("inside click selects without accepting", func(t *testing.T) {
@@ -1381,7 +1383,7 @@ func (c *completionController) SignatureHelp(
 	if doc != nil && len(c.signatureAfterComma.Signatures) > 0 {
 		sel := doc.SelectionFor(viewID)
 		pos := sel.Primary().Cursor(doc.Text())
-		before, err := doc.Text().SliceString(0, pos)
+		before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
 		if err == nil && strings.Contains(before, ",") {
 			return c.signatureAfterComma, nil
 		}
@@ -1409,7 +1411,7 @@ func (c *completionController) TriggerSignatureHelp(
 	}
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(0, pos)
+	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
 	if err != nil || !strings.HasSuffix(before, "(") {
 		return view.SignatureHelp{}, nil
 	}
@@ -1582,7 +1584,7 @@ func TestAutoCompletion(t *testing.T) {
 
 	t.Run("stays closed when disabled", func(t *testing.T) {
 		m, _ := autoCompletionModel(t, ui.CompletionOptions{
-			Auto: false, Delay: 1, TriggerLen: 2,
+			Delay: 1, TriggerLen: 2,
 		})
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')

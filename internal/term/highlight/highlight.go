@@ -9,6 +9,7 @@ import (
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/tui"
 )
 
@@ -99,14 +100,14 @@ var (
 // Tokenize parses text using Chroma and returns highlight spans with theme
 // scope names. Prefer calling syntax.Tokenize which tries Tree-sitter
 // first and uses this as a fallback
-func Tokenize(text, lang string) []Span {
-	lex := lexers.Get(lang)
+func Tokenize(src core.Source) []Span {
+	lex := lexers.Get(src.Lang)
 	if lex == nil {
 		lex = lexers.Fallback
 	}
 	lex = chroma.Coalesce(lex)
 
-	iter, err := lex.Tokenise(nil, text)
+	iter, err := lex.Tokenise(nil, src.Text)
 	if err != nil {
 		return nil
 	}
@@ -121,17 +122,6 @@ func Tokenize(text, lang string) []Span {
 		pos += n
 	}
 	return spans
-}
-
-// DetectLanguage returns a Chroma-compatible language name for path/content
-func DetectLanguage(path, content string) string {
-	if lex := lexers.Match(path); lex != nil {
-		return strings.ToLower(lex.Config().Name)
-	}
-	if lex := lexers.Analyse(content); lex != nil {
-		return strings.ToLower(lex.Config().Name)
-	}
-	return "text"
 }
 
 // DefaultStyle returns the fallback ANSI style for a scope name when no

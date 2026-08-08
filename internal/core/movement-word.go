@@ -54,15 +54,27 @@ func wordMove(doc Rope, r Range, count int, target WordMotionTarget) Range {
 	var start Range
 	if prev {
 		if r.Anchor < r.Head {
-			start = NewRange(r.Head, PrevGraphemeBoundary(doc, r.Head))
+			start = Range{
+				Anchor: r.Head,
+				Head:   PrevGraphemeBoundary(doc, r.Head),
+			}
 		} else {
-			start = NewRange(NextGraphemeBoundary(doc, r.Head), r.Head)
+			start = Range{
+				Anchor: NextGraphemeBoundary(doc, r.Head),
+				Head:   r.Head,
+			}
 		}
 	} else {
 		if r.Anchor < r.Head {
-			start = NewRange(PrevGraphemeBoundary(doc, r.Head), r.Head)
+			start = Range{
+				Anchor: PrevGraphemeBoundary(doc, r.Head),
+				Head:   r.Head,
+			}
 		} else {
-			start = NewRange(r.Head, NextGraphemeBoundary(doc, r.Head))
+			start = Range{
+				Anchor: r.Head,
+				Head:   NextGraphemeBoundary(doc, r.Head),
+			}
 		}
 	}
 
@@ -131,7 +143,8 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 		if !ok {
 			break
 		}
-		if !hasPrev || reachedTarget(target, prevCh, nextCh) {
+		step := charStep{prev: prevCh, next: nextCh}
+		if !hasPrev || reachedTarget(target, step) {
 			if head == headStart {
 				anchor = head
 			} else {
@@ -143,31 +156,31 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 		head = advance(head)
 	}
 
-	return NewRange(anchor, head)
+	return Range{Anchor: anchor, Head: head}
 }
 
-func reachedTarget(target WordMotionTarget, prev, next rune) bool {
+func reachedTarget(target WordMotionTarget, step charStep) bool {
 	switch target {
 	case WordMotionNextWordStart, WordMotionPrevWordEnd:
-		return isWordBoundary(prev, next) && atWordStartPos(next)
+		return isWordBoundary(step) && atWordStartPos(step)
 	case WordMotionNextWordEnd, WordMotionPrevWordStart:
-		return isWordBoundary(prev, next) && atWordEndPos(prev, next)
+		return isWordBoundary(step) && atWordEndPos(step)
 	case WordMotionNextLongWordStart, WordMotionPrevLongWordEnd:
-		return isLongWordBoundary(prev, next) && atWordStartPos(next)
+		return isLongWordBoundary(step) && atWordStartPos(step)
 	case WordMotionNextLongWordEnd, WordMotionPrevLongWordStart:
-		return isLongWordBoundary(prev, next) && atWordEndPos(prev, next)
+		return isLongWordBoundary(step) && atWordEndPos(step)
 	case WordMotionNextSubWordStart:
-		return isSubWordBoundary(prev, next, DirectionForward) &&
-			atSubWordStartPos(next)
+		return isSubWordBoundary(step, DirectionForward) &&
+			atSubWordStartPos(step)
 	case WordMotionPrevSubWordEnd:
-		return isSubWordBoundary(prev, next, DirectionBackward) &&
-			atSubWordStartPos(next)
+		return isSubWordBoundary(step, DirectionBackward) &&
+			atSubWordStartPos(step)
 	case WordMotionNextSubWordEnd:
-		return isSubWordBoundary(prev, next, DirectionForward) &&
-			atSubWordEndPos(prev, next)
+		return isSubWordBoundary(step, DirectionForward) &&
+			atSubWordEndPos(step)
 	case WordMotionPrevSubWordStart:
-		return isSubWordBoundary(prev, next, DirectionBackward) &&
-			atSubWordEndPos(prev, next)
+		return isSubWordBoundary(step, DirectionBackward) &&
+			atSubWordEndPos(step)
 	default:
 		return false
 	}

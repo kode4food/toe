@@ -106,7 +106,9 @@ func TestGutter(t *testing.T) {
 
 	t.Run("map layout rejects non-array", func(t *testing.T) {
 		g := view.Gutter{}
-		assert.Error(t, g.UnmarshalTOML(map[string]any{"layout": "not-an-array"}))
+		assert.Error(t,
+			g.UnmarshalTOML(map[string]any{"layout": "not-an-array"}),
+		)
 	})
 
 	t.Run("non-string in layout array", func(t *testing.T) {
@@ -138,7 +140,9 @@ func TestGutter(t *testing.T) {
 			"line-numbers": map[string]any{"min-width": "bad"},
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth())
+		assert.Equal(t,
+			view.DefaultGutterLineNumberMinWidth, g.LineNumberMinWidth(),
+		)
 	})
 
 	t.Run("bad string in map layout", func(t *testing.T) {

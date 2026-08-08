@@ -1,6 +1,10 @@
 package syntax
 
-import sitter "github.com/tree-sitter/go-tree-sitter"
+import (
+	sitter "github.com/tree-sitter/go-tree-sitter"
+
+	"github.com/kode4food/toe/internal/core"
+)
 
 type (
 	// SelectionArgs describes an editor range for syntax selection
@@ -22,7 +26,9 @@ type (
 // contains the current range, or the smallest named node at the cursor for an
 // empty range
 func ExpandSelection(args SelectionArgs) (Range, bool) {
-	nodes, ok := nodePathAt(args.Text, args.Lang, args.Cursor)
+	nodes, ok := nodePathAt(core.Source{Text: args.Text, Lang: args.Lang},
+
+		args.Cursor)
 	if !ok {
 		return Range{}, false
 	}
@@ -41,7 +47,9 @@ func ExpandSelection(args SelectionArgs) (Range, bool) {
 // ShrinkSelection returns the largest Tree-sitter named node under the cursor
 // that is strictly contained by the current range
 func ShrinkSelection(args SelectionArgs) (Range, bool) {
-	nodes, ok := nodePathAt(args.Text, args.Lang, args.Cursor)
+	nodes, ok := nodePathAt(core.Source{Text: args.Text, Lang: args.Lang},
+
+		args.Cursor)
 	if !ok {
 		return Range{}, false
 	}
@@ -59,7 +67,9 @@ func ShrinkSelection(args SelectionArgs) (Range, bool) {
 // which is where a syntax-aware tab jumps to; false means no node was found,
 // which is not the same as a node whose end the cursor already sits on
 func ParentNodeEnd(args SelectionArgs) (int, bool) {
-	nodes, ok := nodePathFor(args.Text, args.Lang, args.Cursor, false)
+	nodes, ok := nodePathFor(core.Source{Text: args.Text, Lang: args.Lang},
+
+		args.Cursor, false)
 	if !ok {
 		return 0, false
 	}
@@ -73,12 +83,15 @@ func (r Range) bounds() Range {
 	return r
 }
 
-func nodePathAt(text, lang string, cursor int) ([]Range, bool) {
-	return nodePathFor(text, lang, cursor, true)
+func nodePathAt(source core.Source, cursor int) ([]Range, bool) {
+	return nodePathFor(source, cursor, true)
 }
 
-func nodePathFor(text, lang string, cursor int, widen bool) ([]Range, bool) {
-	language := languageFor(lang)
+func nodePathFor(
+	source core.Source, cursor int, widen bool,
+) ([]Range, bool) {
+	text := source.Text
+	language := languageFor(source.Lang)
 	if language == nil {
 		return nil, false
 	}

@@ -20,9 +20,13 @@ type Model struct {
 // New creates an initialized Model for the given editor and keymaps
 func New(e *view.Editor, km *command.Keymaps) Model {
 	e.SetIndenter(func(doc *view.Document, line, pos int) (string, bool) {
-		return syntax.IndentForNewline(
-			doc.Text(), doc.Lang(), line, pos, doc.IndentStyle(),
-		)
+		return syntax.IndentForNewline(syntax.IndentForNewlineArgs{
+			Text:  doc.Text(),
+			Lang:  doc.Lang(),
+			Line:  line,
+			Pos:   pos,
+			Style: doc.IndentStyle(),
+		})
 	})
 	ec := newEditorComponent()
 	w := newFileWatcher()

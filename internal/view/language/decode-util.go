@@ -81,32 +81,19 @@ func decodeAnyMap(value any) map[string]any {
 
 // Low-level helpers
 
-func boolValue(lang, editor *bool, fallback bool) bool {
-	if lang != nil {
-		return *lang
-	}
-	if editor != nil {
-		return *editor
-	}
-	return fallback
+// settingValueArgs is a value that a language definition may override, falling
+// back to the editor-wide settingValueArgs when the language leaves it unset
+type settingValueArgs[T any] struct {
+	lang   *T
+	editor *T
 }
 
-func intValue(lang, editor *int, fallback int) int {
-	if lang != nil {
-		return *lang
+func settingValue[T any](s settingValueArgs[T], fallback T) T {
+	if s.lang != nil {
+		return *s.lang
 	}
-	if editor != nil {
-		return *editor
-	}
-	return fallback
-}
-
-func stringValue(lang, editor *string, fallback string) string {
-	if lang != nil {
-		return *lang
-	}
-	if editor != nil {
-		return *editor
+	if s.editor != nil {
+		return *s.editor
 	}
 	return fallback
 }

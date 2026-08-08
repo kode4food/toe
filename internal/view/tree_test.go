@@ -757,7 +757,10 @@ func TestViewEdges(t *testing.T) {
 	})
 
 	t.Run("wide rune width uses fallback", func(t *testing.T) {
-		assert.Equal(t, 2, view.RuneWidth('界', 0, 4))
+		assert.Equal(t, 2, view.RuneWidth('界', core.TabStop{
+			Column:   0,
+			TabWidth: 4,
+		}))
 	})
 
 	t.Run("horizontal width zero resets offset", func(t *testing.T) {
@@ -766,9 +769,13 @@ func TestViewEdges(t *testing.T) {
 		assert.NotNil(t, v)
 		v.SetOffset(view.Position{HorizontalOffset: 8})
 
-		v.EnsureCursorVisibleHorizontal(
-			core.NewRope("abc"), core.PointSelection(0), 0, 4, 1,
-		)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       core.NewRope("abc"),
+			Selection: core.PointSelection(0),
+			Width:     0,
+			TabWidth:  4,
+			ScrollOff: 1,
+		})
 
 		assert.Equal(t, 0, v.Offset().HorizontalOffset)
 	})
@@ -778,7 +785,12 @@ func TestViewEdges(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		doc := core.NewRope("a\nb\nc\nd\ne\n")
-		v.EnsureCursorVisible(doc, core.PointSelection(8), 3, 1, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: core.PointSelection(8),
+			Height:    3,
+			ScrollOff: 1,
+		})
 
 		assert.Greater(t, v.Offset().Anchor, 0)
 		assert.Equal(t, 0, v.Offset().VerticalOffset)

@@ -109,7 +109,10 @@ func TestMouseMiddlePaste(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		clip.Primary = "XY"
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   3,
+		}}, 0)
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
@@ -292,7 +295,10 @@ func TestMouseClickPositioning(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, []core.Range{core.NewRange(0, 4)}, sel.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 0,
+			Head:   4,
+		}}, sel.Ranges())
 	})
 
 	t.Run("bufferline row is ignored", func(t *testing.T) {
@@ -411,7 +417,7 @@ func TestMouseDragBounds(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		assert.Equal(t,
-			[]core.Range{core.NewRange(1, 2)},
+			[]core.Range{{Anchor: 1, Head: 2}},
 			doc.SelectionFor(v.ID()).Ranges(),
 		)
 	})
@@ -433,7 +439,7 @@ func TestMouseDragBounds(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		assert.Equal(t,
-			[]core.Range{core.NewRange(1, 6)},
+			[]core.Range{{Anchor: 1, Head: 6}},
 			doc.SelectionFor(v.ID()).Ranges(),
 		)
 	})
@@ -857,7 +863,7 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, 0, text),
+		core.TextChange(core.Span{From: 0, To: 0}, text),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).

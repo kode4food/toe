@@ -8,7 +8,7 @@ import (
 // FindCharArgs holds the parameters for a FindChar operation
 type FindCharArgs struct {
 	Editor    *view.Editor
-	Ch        rune
+	Char      rune
 	Forward   bool
 	Inclusive bool
 	Extend    bool
@@ -44,7 +44,9 @@ func FindChar(args FindCharArgs) {
 		}
 		found := -1
 		for range n {
-			found, start = search(doc, start, args.Ch)
+			res := search(doc, start, args.Char)
+			found = res.found
+			start = res.next
 			if found == -1 {
 				return r
 			}
@@ -66,28 +68,35 @@ func FindChar(args FindCharArgs) {
 	})
 }
 
-func findCharForward(doc core.Rope, start int, ch rune) (int, int) {
+// charSearchRes is where a character was found and where the next search
+// resumes; found is -1 when the character is not present
+type charSearchRes struct {
+	found int
+	next  int
+}
+
+func findCharForward(doc core.Rope, start int, ch rune) charSearchRes {
 	for j := start; j < doc.LenChars(); j++ {
 		c, err := doc.CharAt(j)
 		if err != nil {
 			break
 		}
 		if c == ch {
-			return j, j + 1
+			return charSearchRes{found: j, next: j + 1}
 		}
 	}
-	return -1, start
+	return charSearchRes{found: -1, next: start}
 }
 
-func findCharBackward(doc core.Rope, start int, ch rune) (int, int) {
+func findCharBackward(doc core.Rope, start int, ch rune) charSearchRes {
 	for j := start; j >= 0; j-- {
 		c, err := doc.CharAt(j)
 		if err != nil {
 			break
 		}
 		if c == ch {
-			return j, j - 1
+			return charSearchRes{found: j, next: j - 1}
 		}
 	}
-	return -1, start
+	return charSearchRes{found: -1, next: start}
 }

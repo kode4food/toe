@@ -77,21 +77,21 @@ func TestFindMatchingBracket(t *testing.T) {
 
 func TestGetPair(t *testing.T) {
 	t.Run("open paren returns paren pair", func(t *testing.T) {
-		o, c := core.GetPair('(')
-		assert.Equal(t, '(', o)
-		assert.Equal(t, ')', c)
+		pair := core.GetPair('(')
+		assert.Equal(t, '(', pair.Open)
+		assert.Equal(t, ')', pair.Close)
 	})
 
 	t.Run("close paren returns paren pair", func(t *testing.T) {
-		o, c := core.GetPair(')')
-		assert.Equal(t, '(', o)
-		assert.Equal(t, ')', c)
+		pair := core.GetPair(')')
+		assert.Equal(t, '(', pair.Open)
+		assert.Equal(t, ')', pair.Close)
 	})
 
 	t.Run("unknown char returns identity pair", func(t *testing.T) {
-		o, c := core.GetPair('x')
-		assert.Equal(t, 'x', o)
-		assert.Equal(t, 'x', c)
+		pair := core.GetPair('x')
+		assert.Equal(t, 'x', pair.Open)
+		assert.Equal(t, 'x', pair.Close)
 	})
 }
 

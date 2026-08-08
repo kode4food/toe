@@ -28,14 +28,15 @@ func CreateBlockCommentTransaction(
 				em = 1
 			}
 			changes = append(changes,
-				DeleteChange(
-					from+ch.StartPos,
-					from+ch.StartPos+startLen+sm,
-				),
-				DeleteChange(
-					from+ch.EndPos-endLen-em+1,
-					from+ch.EndPos+1,
-				),
+				DeleteChange(Span{
+					From: from + ch.StartPos,
+					To:   from + ch.StartPos + startLen + sm,
+				}),
+
+				DeleteChange(Span{
+					From: from + ch.EndPos - endLen - em + 1,
+					To:   from + ch.EndPos + 1,
+				}),
 			)
 		} else {
 			switch ch.Kind {
@@ -45,18 +46,20 @@ func CreateBlockCommentTransaction(
 				sp := from + ch.StartPos
 				ep := from + ch.EndPos
 				changes = append(changes,
-					TextChange(sp, sp, ch.StartToken+" "),
-					TextChange(ep+1, ep+1, " "+ch.EndToken),
+					TextChange(Span{From: sp, To: sp}, ch.StartToken+" "),
+					TextChange(Span{From: ep + 1, To: ep + 1}, " "+ch.EndToken),
 				)
 				offset := startLen + endLen + 2
-				rng := NewRange(
-					from+offs, from+offs+ch.EndPos+1+offset,
-				).WithDirection(ch.Range.Direction())
+				rng := Range{
+					Anchor: from + offs,
+					Head:   from + offs + ch.EndPos + 1 + offset,
+				}.
+					WithDirection(ch.Range.Direction())
 				ranges = append(ranges, rng)
 				offs += offset
 			default:
 				f, t := ch.Range.From()+offs, ch.Range.To()+offs
-				ranges = append(ranges, NewRange(f, t))
+				ranges = append(ranges, Range{Anchor: f, Head: t})
 			}
 		}
 	}

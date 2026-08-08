@@ -38,10 +38,10 @@ func (c *completionComponent) rowWidth(
 }
 
 type renderCompletionRowArgs struct {
-	buf   *tui.Buffer
-	at    geom.Point
-	width int
-	listW int
+	buf       *tui.Buffer
+	at        geom.Point
+	width     int
+	listWidth int
 
 	item     *view.CompletionItem
 	selected bool
@@ -54,19 +54,19 @@ type renderCompletionRowArgs struct {
 }
 
 func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
-	buf := args.buf
 	at := args.at
+	buf := args.buf
 	buf.SetString(at, clipPad("", args.width), args.base)
 	parts := c.rowParts(args.item, args.selected)
 	labelX := at.X
-	budget := args.listW
+	budget := args.listWidth
 	if parts.icon != "" {
 		next := writeCompletionPart(writeCompletionPartArgs{
-			buf:   buf,
-			at:    geom.Point{X: labelX, Y: at.Y},
-			maxW:  budget,
-			text:  parts.icon,
-			style: args.icon,
+			buf:      buf,
+			at:       geom.Point{X: labelX, Y: at.Y},
+			maxWidth: budget,
+			text:     parts.icon,
+			style:    args.icon,
 		})
 		budget -= next - labelX
 		labelX = next
@@ -80,12 +80,15 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 		return
 	}
 	writePickerMatched(buf, writePickerMatchedArgs{
-		at:      geom.Point{X: labelX, Y: at.Y},
-		maxW:    budget,
-		text:    parts.label,
-		indices: completionLabelMatchIndices(parts.label, args.query),
-		base:    args.base,
-		match:   args.match,
+		at:       geom.Point{X: labelX, Y: at.Y},
+		maxWidth: budget,
+		text:     parts.label,
+		indices: completionLabelMatchIndices(queryMatch{
+			text:  parts.label,
+			query: args.query,
+		}),
+		base:  args.base,
+		match: args.match,
 	})
 	used := min(runewidth.StringWidth(parts.label), budget)
 	labelX += used
@@ -97,11 +100,11 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	labelX++
 	budget--
 	writeCompletionPart(writeCompletionPartArgs{
-		buf:   buf,
-		at:    geom.Point{X: labelX, Y: at.Y},
-		maxW:  budget,
-		text:  parts.info,
-		style: args.info,
+		buf:      buf,
+		at:       geom.Point{X: labelX, Y: at.Y},
+		maxWidth: budget,
+		text:     parts.info,
+		style:    args.info,
 	})
 }
 
@@ -114,7 +117,11 @@ func (c *completionComponent) rowLeft(
 func (c *completionComponent) rowParts(
 	item *view.CompletionItem, selected bool,
 ) completionRowParts {
-	return completionRowPartsFor(item, selected, c.nerd)
+	return completionRowPartsFor(completionRowPartsArgs{
+		item:     item,
+		selected: selected,
+		nerd:     c.nerd,
+	})
 }
 
 func (c *completionComponent) renderScroll(
@@ -135,14 +142,19 @@ func (c *completionComponent) renderScroll(
 	}
 }
 
-func completionRowPartsFor(
-	item *view.CompletionItem, selected, nerd bool,
-) completionRowParts {
+type completionRowPartsArgs struct {
+	item     *view.CompletionItem
+	selected bool
+	nerd     bool
+}
+
+func completionRowPartsFor(args completionRowPartsArgs) completionRowParts {
+	item := args.item
 	parts := completionRowParts{
-		icon:  completionKindMarker(item.Kind, nerd),
+		icon:  completionKindMarker(item.Kind, args.nerd),
 		label: item.Label,
 	}
-	if selected {
+	if args.selected {
 		parts.label += strings.Join(strings.Fields(item.LabelDetail), " ")
 		var info []string
 		if detail := completionRowDetail(item); detail != "" {
@@ -188,38 +200,38 @@ func completionPreview(s string) string {
 }
 
 type writeCompletionPartArgs struct {
-	buf   *tui.Buffer
-	at    geom.Point
-	maxW  int
-	text  string
-	style tui.Style
+	buf      *tui.Buffer
+	at       geom.Point
+	maxWidth int
+	text     string
+	style    tui.Style
 }
 
 func writeCompletionPart(args writeCompletionPartArgs) int {
-	if args.maxW <= 0 || args.text == "" {
+	if args.maxWidth <= 0 || args.text == "" {
 		return args.at.X
 	}
-	text := runewidth.Truncate(args.text, args.maxW, "")
+	text := runewidth.Truncate(args.text, args.maxWidth, "")
 	args.buf.SetString(args.at, text, args.style)
 	return args.at.X + runewidth.StringWidth(text)
 }
 
-func completionLabelMatchIndices(label, query string) []int {
-	if query == "" {
+func completionLabelMatchIndices(at queryMatch) []int {
+	if at.query == "" {
 		return nil
 	}
-	rs := []rune(label)
-	if strings.HasPrefix(strings.ToLower(label), strings.ToLower(query)) {
-		n := min(utf8.RuneCountInString(query), len(rs))
+	rs := []rune(at.text)
+	if strings.HasPrefix(strings.ToLower(at.text), strings.ToLower(at.query)) {
+		n := min(utf8.RuneCountInString(at.query), len(rs))
 		indices := make([]int, n)
 		for i := range n {
 			indices[i] = i
 		}
 		return indices
 	}
-	indices := make([]int, 0, utf8.RuneCountInString(query))
+	indices := make([]int, 0, utf8.RuneCountInString(at.query))
 	from := 0
-	for _, q := range query {
+	for _, q := range at.query {
 		q = unicode.ToLower(q)
 		found := -1
 		for i := from; i < len(rs); i++ {

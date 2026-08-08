@@ -142,7 +142,7 @@ func TestOverlayAnchoring(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
-			{Range: view.DiagnosticRange{From: 5, To: 8}},
+			{Range: core.Span{From: 5, To: 8}},
 		})
 
 		insertTextAt(t, e, doc, 0, "// x\n")
@@ -219,7 +219,7 @@ func TestOverlayAnchoring(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
-			{Range: view.DiagnosticRange{From: 5, To: 8}},
+			{Range: core.Span{From: 5, To: 8}},
 		})
 
 		insertTextAt(t, e, doc, 12, "xx")
@@ -235,7 +235,7 @@ func TestOverlayAnchoring(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
-			{Range: view.DiagnosticRange{From: 5, To: 8}},
+			{Range: core.Span{From: 5, To: 8}},
 		})
 
 		insertTextAt(t, e, doc, 0, "// x\n")
@@ -255,7 +255,7 @@ func insertTextAt(
 	t.Helper()
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(at, at, s),
+		core.TextChange(core.Span{From: at, To: at}, s),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).WithChanges(cs)

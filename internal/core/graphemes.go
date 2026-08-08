@@ -6,19 +6,35 @@ import (
 	"github.com/rivo/uniseg"
 )
 
-// TabWidthAt returns the visual width of a tab character at the given x
-// position
-func TabWidthAt(visualX, tabWidth int) int {
-	return tabWidth - (visualX % tabWidth)
+type (
+	// TabStop is a visual column and the tab width in effect there
+	TabStop struct {
+		Column   int
+		TabWidth int
+	}
+
+	// GraphemeStep is a starting char index and a count of grapheme clusters
+	// to move by
+	GraphemeStep struct {
+		From  int
+		Count int
+	}
+)
+
+// TabWidthAt returns the visual width of a tab character at the stop's column
+func TabWidthAt(at TabStop) int {
+	return at.TabWidth - (at.Column % at.TabWidth)
 }
 
-// NthPrevGraphemeBoundary returns the char index n grapheme clusters before
-// charIdx
-func NthPrevGraphemeBoundary(doc Rope, charIdx, n int) int {
+// NthPrevGraphemeBoundary returns the char index Count grapheme clusters
+// before the step's start
+func NthPrevGraphemeBoundary(doc Rope, step GraphemeStep) int {
+	charIdx := step.From
+	n := step.Count
 	if charIdx == 0 || n == 0 {
 		return charIdx
 	}
-	s, err := doc.Slice(0, charIdx)
+	s, err := doc.Slice(Span{From: 0, To: charIdx})
 	if err != nil {
 		return 0
 	}
@@ -46,14 +62,16 @@ func NthPrevGraphemeBoundary(doc Rope, charIdx, n int) int {
 	return ring[(count-1-n)%(n+1)]
 }
 
-// NthNextGraphemeBoundary returns the char index n grapheme clusters after
-// charIdx
-func NthNextGraphemeBoundary(doc Rope, charIdx, n int) int {
+// NthNextGraphemeBoundary returns the char index Count grapheme clusters
+// after the step's start
+func NthNextGraphemeBoundary(doc Rope, step GraphemeStep) int {
+	charIdx := step.From
+	n := step.Count
 	total := doc.LenChars()
 	if charIdx >= total || n == 0 {
 		return charIdx
 	}
-	s, err := doc.Slice(charIdx, total)
+	s, err := doc.Slice(Span{From: charIdx, To: total})
 	if err != nil {
 		return total
 	}
@@ -75,13 +93,13 @@ func NthNextGraphemeBoundary(doc Rope, charIdx, n int) int {
 // PrevGraphemeBoundary returns the char index one grapheme cluster before
 // charIdx
 func PrevGraphemeBoundary(doc Rope, charIdx int) int {
-	return NthPrevGraphemeBoundary(doc, charIdx, 1)
+	return NthPrevGraphemeBoundary(doc, GraphemeStep{From: charIdx, Count: 1})
 }
 
 // NextGraphemeBoundary returns the char index one grapheme cluster after
 // charIdx
 func NextGraphemeBoundary(doc Rope, charIdx int) int {
-	return NthNextGraphemeBoundary(doc, charIdx, 1)
+	return NthNextGraphemeBoundary(doc, GraphemeStep{From: charIdx, Count: 1})
 }
 
 // EnsureGraphemeBoundaryNext snaps charIdx to the next grapheme boundary if it

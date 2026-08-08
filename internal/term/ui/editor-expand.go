@@ -116,7 +116,7 @@ func expandVariable(e *view.Editor, name string) (string, error) {
 		return view.DefaultLanguage, nil
 
 	case "selection":
-		if sl, err := text.Slice(prim.From(), prim.To()); err == nil {
+		if sl, err := text.Slice(prim.Span()); err == nil {
 			return sl.String(), nil
 		}
 		return "", nil

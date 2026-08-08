@@ -427,19 +427,28 @@ func TestChangedOptionValues(t *testing.T) {
 	t.Run("returns only changed keys", func(t *testing.T) {
 		base := map[string]string{"a": "1", "b": "2", "c": "3"}
 		values := map[string]string{"a": "1", "b": "99", "c": "3"}
-		got := app.ChangedOptionValues(base, values)
+		got := app.ChangedOptionValues(app.ChangedOptionValuesArgs{
+			Base:   base,
+			Values: values,
+		})
 		assert.Equal(t, map[string]string{"b": "99"}, got)
 	})
 
 	t.Run("returns all when base empty", func(t *testing.T) {
 		values := map[string]string{"x": "1", "y": "2"}
-		got := app.ChangedOptionValues(map[string]string{}, values)
+		got := app.ChangedOptionValues(app.ChangedOptionValuesArgs{
+			Base:   map[string]string{},
+			Values: values,
+		})
 		assert.Equal(t, values, got)
 	})
 
 	t.Run("returns empty when nothing changed", func(t *testing.T) {
 		base := map[string]string{"a": "1"}
-		got := app.ChangedOptionValues(base, map[string]string{"a": "1"})
+		got := app.ChangedOptionValues(app.ChangedOptionValuesArgs{
+			Base:   base,
+			Values: map[string]string{"a": "1"},
+		})
 		assert.Empty(t, got)
 	})
 }

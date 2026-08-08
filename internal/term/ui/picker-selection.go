@@ -34,7 +34,7 @@ func (s *selectionViewport) anchor() selectionAnchor {
 			TabWidth:        s.format.TabWidth,
 			MaxWrap:         s.format.MaxWrap,
 			MaxIndentRetain: s.format.MaxIndentRetain,
-			WrapIndicatorLen: runewidth.StringWidth(
+			WrapIndicatorWidth: runewidth.StringWidth(
 				s.format.WrapIndicatorPrefix(),
 			),
 		}

@@ -38,7 +38,11 @@ func surroundReplaceAction(e *view.Editor) command.Continuation {
 						return nil
 					}
 				}
-				action.SurroundReplace(e, from, to)
+				action.SurroundReplace(action.SurroundReplaceArgs{
+					Editor:  e,
+					Current: from,
+					Wanted:  to,
+				})
 			}
 			e.SetHint("")
 			return nil
@@ -88,10 +92,20 @@ func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 		var res syntax.Range
 		var found bool
 		if ch == 'm' {
-			res, found = syntax.FindSurroundPair(src, lang, cursor, skip)
+			res, found = syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
+				Source: core.Source{Text: src, Lang: lang},
+				Cursor: cursor,
+				Skip:   skip,
+			})
 		} else {
 			res, found = syntax.FindSurroundPairFor(
-				src, lang, cursor, ch, skip,
+				syntax.FindSurroundPairForArgs{
+					Text:   src,
+					Lang:   lang,
+					Cursor: cursor,
+					Char:   ch,
+					Skip:   skip,
+				},
 			)
 		}
 		if !found {

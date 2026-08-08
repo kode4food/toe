@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
@@ -24,7 +25,7 @@ type (
 
 	signatureHelpComponent struct {
 		overlayBuf
-		ec     *EditorComponent
+		editor *EditorComponent
 		call   signatureCall
 		help   view.SignatureHelp
 		cursor int
@@ -44,7 +45,7 @@ func newSignatureHelpComponent(
 		cursor = 0
 	}
 	return &signatureHelpComponent{
-		ec: ec, call: call, help: help, cursor: cursor,
+		editor: ec, call: call, help: help, cursor: cursor,
 	}
 }
 
@@ -97,7 +98,7 @@ func (s *signatureHelpComponent) Layout(
 	w = min(max(w, 2), screen.Width)
 	h := min(max(len(lines)+4, 3), signaturePopupMaxH)
 	x, y := 0, 0
-	if cur, ok := s.ec.Cursor(cx, screen); ok {
+	if cur, ok := s.editor.Cursor(cx, screen); ok {
 		x = s.openScreenX(cx)
 		y = cur.Y + 1
 		if y+h > screen.Height {
@@ -154,7 +155,7 @@ func (s *signatureHelpComponent) paint(
 	docArea := area
 	docArea.Y += 2
 	docArea.Height -= 2
-	r := popupTextRenderer{buf: buf, cx: cx, area: docArea, base: st}
+	r := popupTextRenderer{buf: buf, context: cx, area: docArea, base: st}
 	r.render(s.lines)
 }
 
@@ -168,14 +169,14 @@ func (s *signatureHelpComponent) openScreenX(cx *Context) int {
 		return 0
 	}
 	opts := cx.Editor.Options()
-	rowMap := s.ec.cache.viewRowMaps[v.ID()]
+	rowMap := s.editor.cache.viewRowMaps[v.ID()]
 	visual := cursorScreenPos(cursorScreenPosArgs{
-		text:             doc.Text(),
-		cursor:           s.call.open,
-		gutterWidth:      gutterWidthFor(doc.Text(), opts.Gutters),
-		rowMap:           rowMap,
-		tabWidth:         doc.TabWidth(),
-		horizontalOffset: v.Offset().HorizontalOffset,
+		text:        doc.Text(),
+		cursor:      s.call.open,
+		gutterWidth: gutterWidthFor(doc.Text(), opts.Gutters),
+		rowMap:      rowMap,
+		tabWidth:    doc.TabWidth(),
+		horzOff:     v.Offset().HorizontalOffset,
 	})
 	return v.Area().X + visual.X
 }
@@ -220,12 +221,14 @@ func (s *signatureHelpComponent) refresh(
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
-	pushSignatureHelpLayer(comp, newSignatureHelpComponent(s.ec, s.call, help))
+	pushSignatureHelpLayer(
+		comp, newSignatureHelpComponent(s.editor, s.call, help),
+	)
 	return nil
 }
 
 func (s *signatureHelpComponent) dismiss(_ *Context, comp *Compositor) tea.Cmd {
-	s.ec.language.signatureHidden = &s.call
+	s.editor.language.signatureHidden = &s.call
 	comp.Pop()
 	return nil
 }
@@ -314,7 +317,7 @@ func currentSignatureCall(cx *Context) (signatureCall, bool) {
 }
 
 func signatureCallOpen(doc *view.Document, pos int) (int, bool) {
-	before, err := doc.Text().SliceString(0, pos)
+	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
 	if err != nil {
 		return 0, false
 	}

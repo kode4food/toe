@@ -341,13 +341,11 @@ func (*countingPathSource) Accept(
 ) {
 }
 
-func (s *countingPathSource) Load(
-	*view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (s *countingPathSource) Load(*view.Editor) ui.PickerLoad {
 	s.loadCalls++
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
-		return nil, nil, func() {}
+		return ui.PickerLoad{Stop: func() {}}
 	}
 	items := make([]*ui.PickerItem, 0, len(entries))
 	for _, entry := range entries {
@@ -357,7 +355,7 @@ func (s *countingPathSource) Load(
 			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 		})
 	}
-	return items, nil, func() {}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
 func (*countingPathSource) ItemForPath(

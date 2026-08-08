@@ -51,7 +51,7 @@ func replaceFocusedText(t *testing.T, e *view.Editor, text string) {
 	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, rope.LenChars(), text),
+		core.TextChange(core.Span{From: 0, To: rope.LenChars()}, text),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).WithChanges(cs)

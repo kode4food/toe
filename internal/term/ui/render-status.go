@@ -15,7 +15,7 @@ import (
 )
 
 type (
-	tuiStyles struct {
+	styles struct {
 		text         tui.Style
 		line         tui.Style
 		lineSelected tui.Style
@@ -75,7 +75,7 @@ type (
 		sep     string
 
 		cursor     core.Position
-		nSel       int
+		selCount   int
 		primIdx    int
 		primLen    int
 		totalLines int
@@ -91,20 +91,20 @@ type (
 
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	w := r.size.Width
-	errorMsg := r.ec.keys.message != nil && r.ec.keys.message.error
+	errorMsg := r.editor.keys.message != nil && r.editor.keys.message.error
 	st := r.cmdlineStyle(errorMsg)
 	tuiSt := st
 
 	left := ""
-	if r.ec.keys.message != nil {
-		left = r.ec.keys.message.value
+	if r.editor.keys.message != nil {
+		left = r.editor.keys.message.value
 	}
-	right := r.ec.keys.hint
+	right := r.editor.keys.hint
 	if right == "" {
-		right = r.ec.keys.status
+		right = r.editor.keys.status
 	}
-	if r.ec.macroSlot.recording {
-		right += fmt.Sprintf("[%c]", r.ec.macroSlot.reg)
+	if r.editor.macroSlot.recording {
+		right += fmt.Sprintf("[%c]", r.editor.macroSlot.reg)
 	}
 
 	buf.SetString(geom.Point{X: 0, Y: y}, strings.Repeat(" ", w), tuiSt)
@@ -142,14 +142,14 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	prim := sel.Primary()
 	cursor := prim.Cursor(text)
 
-	at := core.Position{Line: 1, Col: 1}
+	at := core.Position{Line: 1, Column: 1}
 	if p, err := text.Position(cursor); err == nil {
 		at = p
 	}
 
-	opts := r.cx.Editor.Options()
+	opts := r.context.Editor.Options()
 
-	th := r.cx.Theme()
+	th := r.context.Theme()
 
 	st := th.Get("ui.statusline.inactive")
 	modeSt := st
@@ -162,21 +162,24 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	if s, ok := th.TryGet("ui.statusline.separator"); ok {
 		sepSt = s
 	}
-	spinSt := applyAccentStyle(st, th.Get("ui.prompt"))
+	spinSt := applyAccentStyle(styleOverlay{
+		base:    st,
+		overlay: th.Get("ui.prompt"),
+	})
 
 	nSel := len(sel.Ranges())
 	primIdx := sel.PrimaryIndex()
 	primLen := prim.Len()
 	totalLines := text.LenLines()
-	reg := r.cx.Editor.ActiveRegister()
-	cwd := r.cx.Editor.Cwd()
+	reg := r.context.Editor.ActiveRegister()
+	cwd := r.context.Editor.Cwd()
 	sep := opts.StatusLineSeparator()
 	var vcsHead string
-	if vc := r.cx.Editor.VersionControl(); vc != nil {
+	if vc := r.context.Editor.VersionControl(); vc != nil {
 		vcsHead, _ = vc.HeadName(doc)
 	}
 	var busy bool
-	if ls := r.cx.Editor.LanguageServerController(); ls != nil {
+	if ls := r.context.Editor.LanguageServerController(); ls != nil {
 		busy = ls.Busy()
 	}
 
@@ -188,12 +191,12 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		modeSt:  modeSt,
 		sepSt:   sepSt,
 		spinSt:  spinSt,
-		sep:     sep, nSel: nSel, primIdx: primIdx, primLen: primLen,
+		sep:     sep, selCount: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
 		cursor:    at,
 		vcsHead:   vcsHead,
 		busy:      busy,
-		spinFrame: r.ec.spinner.frame,
+		spinFrame: r.editor.spinner.frame,
 	}
 
 	collectElems := func(items []view.StatusLineItem) []statusElem {
@@ -220,20 +223,20 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 }
 
 func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
-	if !r.cx.Editor.Tree().Maximized() {
+	if !r.context.Editor.Tree().Maximized() {
 		return elems
 	}
 	return append(
 		elems,
 		statusBadge(
 			i18n.Text(i18n.StatusPaneMaximized),
-			r.cx.Theme().Get("ui.statusline.maximized"),
+			r.context.Theme().Get("ui.statusline.maximized"),
 		),
 	)
 }
 
 func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
-	th := r.cx.Theme()
+	th := r.context.Theme()
 	if errorMsg {
 		return th.Get("error")
 	}

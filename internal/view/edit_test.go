@@ -252,7 +252,10 @@ func TestChangeSelection(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
-		v.ID(), newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
+		v.ID(), newSelection(t, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0),
 	)
 
 	action.ChangeSelection(e)

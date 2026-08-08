@@ -24,7 +24,12 @@ func (p *PickerComponent) drawPickerBox(
 		contentStyle: pickerContentStyle(cx),
 		title:        ps.source.Title(),
 	}
-	areas := frame.drawSplit(buf, area, lw, 2)
+	areas := frame.drawSplit(drawSplitArgs{
+		buffer:    buf,
+		area:      area,
+		leftWidth: lw,
+		cutY:      2,
+	})
 
 	writePickerPromptRow(cx, buf, areas.left, ps)
 	itemY := areas.left.Y + 2 // row 1 is the cut-separator, skip it
@@ -44,8 +49,9 @@ func (p *PickerComponent) drawPickerBox(
 		writePickerItem(
 			buf, geom.Point{X: areas.left.X, Y: itemY + i},
 			&pickerItemRender{
-				p: ps, match: ps.list.matched[idx], w: areas.left.Width,
-				selected: idx == ps.list.cursor, cx: cx,
+				picker: ps, match: ps.list.matched[idx],
+				width:    areas.left.Width,
+				selected: idx == ps.list.cursor, context: cx,
 			},
 		)
 	}
@@ -99,8 +105,9 @@ func (p *PickerComponent) drawPickerPane(
 		writePickerItem(buf,
 			geom.Point{X: area.X, Y: itemY + i},
 			&pickerItemRender{
-				p: ps, match: ps.list.matched[idx], w: area.Width,
-				selected: idx == ps.list.cursor, cx: cx,
+				picker: ps, match: ps.list.matched[idx],
+				width:    area.Width,
+				selected: idx == ps.list.cursor, context: cx,
 			},
 		)
 	}
@@ -121,7 +128,8 @@ func (p *PickerComponent) drawPreviewInto(
 	ps := p.state
 	p.previewBounds = area
 	if ps.list.cursor != ps.preview.scrollFor {
-		ps.preview.scroll = 0
+		ps.preview.vScroll = 0
+		ps.preview.hScroll = 0
 		ps.preview.scrollFor = ps.list.cursor
 	}
 	item := ps.selection()
@@ -136,7 +144,7 @@ func (p *PickerComponent) drawPreviewInto(
 		syntax: cx.Syntax,
 		images: cx.images,
 		size:   geom.Size{Width: innerW, Height: area.Height},
-		th:     cx.Theme(),
+		theme:  cx.Theme(),
 		styles: p.styles,
 		hlFrom: -1,
 	}

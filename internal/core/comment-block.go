@@ -84,8 +84,11 @@ func FindBlockComments(
 			if contentLen < startLen+endLen {
 				continue
 			}
-			startFrag, err1 := slice.Slice(startPos, afterStart)
-			endFrag, err := slice.Slice(beforeEnd+1, endPos+1)
+			startFrag, err1 := slice.Slice(Span{From: startPos, To: afterStart})
+			endFrag, err := slice.Slice(Span{
+				From: beforeEnd + 1,
+				To:   endPos + 1,
+			})
 			if err1 != nil || err != nil {
 				continue
 			}

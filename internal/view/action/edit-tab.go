@@ -31,7 +31,7 @@ func InLeadingWhitespace(e *view.Editor) bool {
 		if err != nil {
 			continue
 		}
-		left, err := text.Slice(lineStart, cursor)
+		left, err := text.Slice(core.Span{From: lineStart, To: cursor})
 		if err != nil {
 			continue
 		}
@@ -66,7 +66,10 @@ func InsertTab(e *view.Editor) {
 			continue
 		}
 		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, tab))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, tab))
 	}
 	if len(changes) == 0 {
 		return

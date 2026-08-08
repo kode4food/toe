@@ -16,7 +16,10 @@ func TestYank(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
-		v.ID(), newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
+		v.ID(), newSelection(t, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0),
 	)
 
 	action.Yank(e)
@@ -29,11 +32,14 @@ func TestPasteAfter(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
-		v.ID(), newSelection(t, []core.Range{core.NewRange(1, 2)}, 0),
+		v.ID(), newSelection(t, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0),
 	)
 	action.Yank(e)
 
-	blockA := newSelection(t, []core.Range{core.NewRange(0, 1)}, 0)
+	blockA := newSelection(t, []core.Range{{Anchor: 0, Head: 1}}, 0)
 	doc.SetSelectionFor(v.ID(), blockA)
 	action.PasteAfter(e)
 
@@ -45,7 +51,10 @@ func TestPasteBefore(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
-		v.ID(), newSelection(t, []core.Range{core.NewRange(1, 2)}, 0),
+		v.ID(), newSelection(t, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0),
 	)
 	action.Yank(e)
 

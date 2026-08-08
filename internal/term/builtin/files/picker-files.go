@@ -33,7 +33,20 @@ type (
 		file bool
 	}
 
-	pickerVisitor func(path, rel string) bool
+	// walkedFile is a file the walk reached, named both absolutely and
+	// relative to the walk root
+	walkedFile struct {
+		path string
+		rel  string
+	}
+
+	// rootedPath is a path together with the root it is resolved against
+	rootedPath struct {
+		path string
+		root string
+	}
+
+	pickerVisitor func(file walkedFile) bool
 )
 
 // NewFilePicker opens a file picker rooted at the workspace directory
@@ -55,10 +68,19 @@ func NewFilePickerInDir(dir string) ui.PickerFunc {
 	}
 }
 
+func newFilePickerSource(dir string) *filePickerSource {
+	return &filePickerSource{
+		PickerBase: ui.PickerBase{
+			Ident: "open-file",
+			Label: "Open File",
+			Cols:  []string{"path"},
+		},
+		dir: dir,
+	}
+}
+
 // Load walks the workspace for files, honouring ignore rules
-func (f *filePickerSource) Load(
-	e *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (f *filePickerSource) Load(e *view.Editor) ui.PickerLoad {
 	return startFilePickerFeed(f.dir, pickerListRows(e))
 }
 
@@ -68,7 +90,7 @@ func (f *filePickerSource) ItemForPath(
 	_ *view.Editor, path string,
 ) (*ui.PickerItem, bool) {
 	root := resolvePickerWalkRoot(f.dir)
-	if !pathWithinRoot(path, root) {
+	if !pathWithinRoot(rootedPath{path: path, root: root}) {
 		return nil, false
 	}
 	info, err := os.Lstat(path)
@@ -82,11 +104,14 @@ func (f *filePickerSource) ItemForPath(
 	rel = filepath.ToSlash(rel)
 	ignoreOpts := ui.DefaultPickerIgnoreOptions()
 	if ui.SkipPickerPath(ui.SkipPickerPathArgs{
-		Rel:     rel,
-		Path:    path,
-		Entry:   fs.FileInfoToDirEntry(info),
-		Ignores: ui.LoadIgnoreFiles(root, path, ignoreOpts),
-		Opts:    ignoreOpts,
+		Rel:   rel,
+		Path:  path,
+		Entry: fs.FileInfoToDirEntry(info),
+		Ignores: ui.LoadIgnoreFiles(ui.IgnoreTarget{
+			Root: root,
+			Path: path,
+		}, ignoreOpts),
+		Opts: ignoreOpts,
 	}) {
 		return nil, false
 	}
@@ -104,20 +129,68 @@ func (f *filePickerSource) Accept(
 	ui.AcceptPath(e, path, action)
 }
 
-func newFilePickerSource(dir string) *filePickerSource {
-	return &filePickerSource{
-		PickerBase: ui.PickerBase{
-			Ident: "open-file",
-			Label: "Open File",
-			Cols:  []string{"path"},
-		},
-		dir: dir,
+func (w *pickerWalker) walkDir(dir string) bool {
+	realDir, err := filepath.EvalSymlinks(dir)
+	if err == nil {
+		if w.seen[realDir] {
+			return true
+		}
+		w.seen[realDir] = true
 	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return true
+	}
+	for _, entry := range entries {
+		select {
+		case <-w.done:
+			return false
+		default:
+		}
+		path := filepath.Join(dir, entry.Name())
+		rel, err := filepath.Rel(w.root, path)
+		if err != nil {
+			continue
+		}
+		rel = filepath.ToSlash(rel)
+		ignoreOpts := ui.DefaultPickerIgnoreOptions()
+		if ui.SkipPickerPath(ui.SkipPickerPathArgs{
+			Rel:   rel,
+			Path:  path,
+			Entry: entry,
+			Ignores: ui.LoadIgnoreFiles(ui.IgnoreTarget{
+				Root: w.root,
+				Path: path,
+			}, ignoreOpts),
+			Opts: ignoreOpts,
+		}) {
+			continue
+		}
+		if !w.walkEntry(walkedFile{path: path, rel: rel}, entry) {
+			return false
+		}
+	}
+	return true
 }
 
-func startFilePickerFeed(
-	root string, count int,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (w *pickerWalker) walkEntry(file walkedFile, entry os.DirEntry) bool {
+	follow, err := pickerFollowEntry(rootedPath{
+		path: file.path,
+		root: w.rootReal,
+	}, entry)
+	if err != nil || (!follow.dir && !follow.file) {
+		return true
+	}
+	if follow.dir {
+		return w.walkDir(file.path)
+	}
+	if follow.file {
+		return w.visit(file)
+	}
+	return true
+}
+
+func startFilePickerFeed(root string, count int) ui.PickerLoad {
 	root = resolvePickerWalkRoot(root)
 	done := make(chan struct{})
 	var once sync.Once
@@ -127,12 +200,12 @@ func startFilePickerFeed(
 	go func() {
 		defer close(ch)
 		var slab ui.PickerItemSlab
-		walkPickerFiles(root, done, func(path, rel string) bool {
+		walkPickerFiles(root, done, func(file walkedFile) bool {
 			select {
 			case ch <- slab.Add(ui.PickerItem{
-				Display: rel,
+				Display: file.rel,
 				Location: ui.PickerLocation{
-					Target: ui.PickerTarget{Path: path},
+					Target: ui.PickerTarget{Path: file.path},
 				},
 			}):
 				return true
@@ -147,7 +220,7 @@ func startFilePickerFeed(
 		item, ok := <-ch
 		if !ok {
 			ui.SortPickerItems(initial)
-			return initial, nil, cancel
+			return ui.PickerLoad{Items: initial, Stop: cancel}
 		}
 		initial = append(initial, item)
 	}
@@ -156,12 +229,12 @@ func startFilePickerFeed(
 		case item, ok := <-ch:
 			if !ok {
 				ui.SortPickerItems(initial)
-				return initial, nil, cancel
+				return ui.PickerLoad{Items: initial, Stop: cancel}
 			}
 			initial = append(initial, item)
 		default:
 			ui.SortPickerItems(initial)
-			return initial, ch, cancel
+			return ui.PickerLoad{Items: initial, Feed: ch, Stop: cancel}
 		}
 	}
 }
@@ -199,81 +272,26 @@ func walkPickerFiles(root string, done <-chan struct{}, visit pickerVisitor) {
 	w.walkDir(root)
 }
 
-func (w *pickerWalker) walkDir(dir string) bool {
-	realDir, err := filepath.EvalSymlinks(dir)
-	if err == nil {
-		if w.seen[realDir] {
-			return true
-		}
-		w.seen[realDir] = true
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return true
-	}
-	for _, entry := range entries {
-		select {
-		case <-w.done:
-			return false
-		default:
-		}
-		path := filepath.Join(dir, entry.Name())
-		rel, err := filepath.Rel(w.root, path)
-		if err != nil {
-			continue
-		}
-		rel = filepath.ToSlash(rel)
-		ignoreOpts := ui.DefaultPickerIgnoreOptions()
-		if ui.SkipPickerPath(ui.SkipPickerPathArgs{
-			Rel:     rel,
-			Path:    path,
-			Entry:   entry,
-			Ignores: ui.LoadIgnoreFiles(w.root, path, ignoreOpts),
-			Opts:    ignoreOpts,
-		}) {
-			continue
-		}
-		if !w.walkEntry(path, rel, entry) {
-			return false
-		}
-	}
-	return true
-}
-
-func (w *pickerWalker) walkEntry(path, rel string, entry os.DirEntry) bool {
-	follow, err := pickerFollowEntry(path, w.rootReal, entry)
-	if err != nil || (!follow.dir && !follow.file) {
-		return true
-	}
-	if follow.dir {
-		return w.walkDir(path)
-	}
-	if follow.file {
-		return w.visit(path, rel)
-	}
-	return true
-}
-
 func pickerFollowEntry(
-	path, rootReal string, entry os.DirEntry,
+	at rootedPath, entry os.DirEntry,
 ) (pickerFollow, error) {
-	info, err := os.Stat(path)
+	info, err := os.Stat(at.path)
 	if err != nil {
 		return pickerFollow{}, err
 	}
 	if entry.Type()&os.ModeSymlink != 0 {
-		realPath, err := filepath.EvalSymlinks(path)
+		realPath, err := filepath.EvalSymlinks(at.path)
 		if err != nil {
 			return pickerFollow{}, err
 		}
-		if pathWithinRoot(realPath, rootReal) {
+		if pathWithinRoot(rootedPath{path: realPath, root: at.root}) {
 			return pickerFollow{}, nil
 		}
 	}
 	return pickerFollow{dir: info.IsDir(), file: info.Mode().IsRegular()}, nil
 }
 
-func pathWithinRoot(path, root string) bool {
-	rel, err := filepath.Rel(root, path)
+func pathWithinRoot(at rootedPath) bool {
+	rel, err := filepath.Rel(at.root, at.path)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, "../")
 }

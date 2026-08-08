@@ -9,6 +9,12 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// Overlay is a base value and the value layered on top of it
+type Overlay[T any] struct {
+	Base T
+	Over T
+}
+
 //go:embed assets/languages.toml
 var defaultLanguagesTOML string
 
@@ -25,10 +31,11 @@ func LoadDefaultLanguagesTOML() (map[string]any, bool) {
 	return defaultLanguages()
 }
 
-// MergeTOMLValues overlays right onto left, merging maps only while depth
-// remains; below that right replaces left outright
-func MergeTOMLValues(left, right any, depth int) any {
-	switch l := left.(type) {
+// MergeTOMLValues overlays Over onto Base, merging maps only while depth
+// remains; below that Over replaces Base outright
+func MergeTOMLValues(values Overlay[any], depth int) any {
+	right := values.Over
+	switch l := values.Base.(type) {
 	case map[string]any:
 		r, ok := right.(map[string]any)
 		if !ok {
@@ -40,7 +47,10 @@ func MergeTOMLValues(left, right any, depth int) any {
 		out := maps.Clone(l)
 		for key, rv := range r {
 			if lv, ok := out[key]; ok {
-				out[key] = MergeTOMLValues(lv, rv, depth-1)
+				out[key] = MergeTOMLValues(Overlay[any]{
+					Base: lv,
+					Over: rv,
+				}, depth-1)
 				continue
 			}
 			out[key] = rv
@@ -48,12 +58,15 @@ func MergeTOMLValues(left, right any, depth int) any {
 		return out
 	case []map[string]any:
 		if r, ok := AnySlice(right); ok {
-			return mergeTOMLArrays(mapSliceToAny(l), r, depth)
+			return mergeTOMLArrays(Overlay[[]any]{
+				Base: mapSliceToAny(l),
+				Over: r,
+			}, depth)
 		}
 		return right
 	case []any:
 		if r, ok := AnySlice(right); ok {
-			return mergeTOMLArrays(l, r, depth)
+			return mergeTOMLArrays(Overlay[[]any]{Base: l, Over: r}, depth)
 		}
 		return right
 	default:
@@ -77,7 +90,10 @@ func LoadMergedTOMLWithBase(
 			loaded = true
 			continue
 		}
-		merged = MergeTOMLValues(merged, next, depth)
+		merged = MergeTOMLValues(Overlay[any]{
+			Base: merged,
+			Over: next,
+		}, depth)
 	}
 	if !loaded {
 		return nil, false
@@ -119,35 +135,6 @@ func StringPtr(value any) *string {
 	return nil
 }
 
-func mergeTOMLArrays(left, right []any, depth int) []any {
-	if depth <= 0 {
-		return right
-	}
-	out := slices.Clone(left)
-	for _, rv := range right {
-		idx := -1
-		if name, ok := valueName(rv); ok {
-			idx = namedValueIndex(out, name)
-		}
-		if idx >= 0 {
-			lv := out[idx]
-			out = slices.Delete(out, idx, idx+1)
-			out = append(out, MergeTOMLValues(lv, rv, depth-1))
-			continue
-		}
-		out = append(out, rv)
-	}
-	return out
-}
-
-func mapSliceToAny(values []map[string]any) []any {
-	out := make([]any, len(values))
-	for i, value := range values {
-		out[i] = value
-	}
-	return out
-}
-
 // AnySlice coerces common TOML slice types to []any
 func AnySlice(value any) ([]any, bool) {
 	switch v := value.(type) {
@@ -164,6 +151,38 @@ func AnySlice(value any) ([]any, bool) {
 	default:
 		return nil, false
 	}
+}
+
+func mergeTOMLArrays(values Overlay[[]any], depth int) []any {
+	if depth <= 0 {
+		return values.Over
+	}
+	out := slices.Clone(values.Base)
+	for _, rv := range values.Over {
+		idx := -1
+		if name, ok := valueName(rv); ok {
+			idx = namedValueIndex(out, name)
+		}
+		if idx >= 0 {
+			lv := out[idx]
+			out = slices.Delete(out, idx, idx+1)
+			out = append(out, MergeTOMLValues(Overlay[any]{
+				Base: lv,
+				Over: rv,
+			}, depth-1))
+			continue
+		}
+		out = append(out, rv)
+	}
+	return out
+}
+
+func mapSliceToAny(values []map[string]any) []any {
+	out := make([]any, len(values))
+	for i, value := range values {
+		out[i] = value
+	}
+	return out
 }
 
 func namedValueIndex(values []any, name string) int {

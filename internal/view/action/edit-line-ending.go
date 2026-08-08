@@ -38,15 +38,19 @@ func lineEndingChanges(s string, le core.LineEnding) []core.Change {
 	for i := 0; i < len(runes); i++ {
 		if runes[i] == '\r' && i+1 < len(runes) && runes[i+1] == '\n' {
 			if le != core.LineEndingCRLF {
-				changes = append(changes, core.TextChange(
-					i, i+2, string(le),
-				))
+				changes = append(changes, core.TextChange(core.Span{
+					From: i,
+					To:   i + 2,
+				}, string(le)))
 			}
 			i++
 			continue
 		}
 		if runes[i] == '\n' && le != core.LineEndingLF {
-			changes = append(changes, core.TextChange(i, i+1, string(le)))
+			changes = append(changes, core.TextChange(core.Span{
+				From: i,
+				To:   i + 1,
+			}, string(le)))
 		}
 	}
 	return changes

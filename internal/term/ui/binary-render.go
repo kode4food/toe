@@ -36,7 +36,7 @@ func (r *renderPass) renderBinaryPane(
 		Point: geom.Point{X: a.X, Y: y0 + a.Y},
 		Size:  geom.Size{Width: a.Width, Height: max(a.Height-1, 0)},
 	}
-	th := r.cx.ThemeFor(focused)
+	th := r.context.ThemeFor(focused)
 	style := th.Get("ui.text")
 	data, err := pane.readVisible()
 	if err != nil {
@@ -69,14 +69,17 @@ func (r *renderPass) renderBinaryStatus(
 	buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool,
 ) {
 	a := pane.Area()
-	th := r.cx.Theme()
+	th := r.context.Theme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if focused {
 		baseTUI = th.Get("ui.statusline")
 		modeSt = th.Get("ui.statusline." + pane.Mode().Scope())
 	}
-	name := view.DocumentRelativeName(pane.path, r.cx.Editor.Cwd())
+	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+		Path:    pane.path,
+		BaseDir: r.context.Editor.Cwd(),
+	})
 	right := []statusElem{{
 		text:  fmt.Sprintf("%d / %d bytes", pane.offset, pane.size),
 		style: baseTUI,
@@ -150,9 +153,18 @@ func renderBinaryRow(args renderBinaryRowArgs) {
 func binaryStyles(th *theme.Theme, base tui.Style) binaryRowStyles {
 	return binaryRowStyles{
 		location: th.Get("ui.linenr"),
-		hex:      applyAccentStyle(base, th.Get("constant")),
-		chars:    applyAccentStyle(base, th.Get("string")),
-		border:   applyAccentStyle(base, th.Get("ui.border")),
+		hex: applyAccentStyle(styleOverlay{
+			base:    base,
+			overlay: th.Get("constant"),
+		}),
+		chars: applyAccentStyle(styleOverlay{
+			base:    base,
+			overlay: th.Get("string"),
+		}),
+		border: applyAccentStyle(styleOverlay{
+			base:    base,
+			overlay: th.Get("ui.border"),
+		}),
 	}
 }
 

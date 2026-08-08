@@ -81,26 +81,26 @@ func HookInsert(
 	return Change{}, Range{}, false
 }
 
-// HookDelete returns a Deletion and updated Range when backspace should erase
-// an auto-inserted pair, or ok=false when no action is needed
-func HookDelete(doc Rope, r Range, pairs AutoPairs) (Deletion, Range, bool) {
+// HookDelete returns a Span and updated Range when backspace should erase an
+// auto-inserted pair, or ok=false when no action is needed
+func HookDelete(doc Rope, r Range, pairs AutoPairs) (Span, Range, bool) {
 	cursor := r.Cursor(doc)
 
 	cur, ok := autoPairCharAt(doc, cursor)
 	if !ok {
-		return Deletion{}, Range{}, false
+		return Span{}, Range{}, false
 	}
 	prev, ok := autoPairPrevChar(doc, cursor)
 	if !ok {
-		return Deletion{}, Range{}, false
+		return Span{}, Range{}, false
 	}
 
 	pair, ok := pairs.Get(cur)
 	if !ok {
-		return Deletion{}, Range{}, false
+		return Span{}, Range{}, false
 	}
 	if pair.Open != prev || pair.Close != cur {
-		return Deletion{}, Range{}, false
+		return Span{}, Range{}, false
 	}
 	return handleDeletePair(doc, r)
 }

@@ -55,7 +55,10 @@ func (sc *Cache) queryFor(lang string) ([]byte, bool) {
 	}
 	sc.mu.RUnlock()
 
-	b, ok := resolveQueryDir("queries", lang, map[string]bool{})
+	b, ok := resolveQueryDir(resolveQueryDirArgs{
+		dir:  "queries",
+		lang: lang,
+	}, map[string]bool{})
 	if !ok {
 		return nil, false
 	}

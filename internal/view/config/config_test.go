@@ -46,7 +46,11 @@ soft-wrap.wrap-indicator = "» "
 		err = loader.TrustWorkspace(work)
 		assert.NoError(t, err)
 
-		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, work)
+		langs, ok := language.LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+			Global:    global,
+			Workspace: workspace,
+			Dir:       work,
+		})
 
 		assert.True(t, ok)
 		lang, ok := findLanguage(langs, "markdown")
@@ -80,7 +84,11 @@ text-width = 72
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
-		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, work)
+		langs, ok := language.LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+			Global:    global,
+			Workspace: workspace,
+			Dir:       work,
+		})
 
 		assert.True(t, ok)
 		lang, ok := findLanguage(langs, "markdown")
@@ -97,7 +105,11 @@ text-width = 80
 `)
 		workspace := filepath.Join(root, "missing.toml")
 
-		langs, ok := language.LoadLanguagesForWorkspace(global, workspace, root)
+		langs, ok := language.LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+			Global:    global,
+			Workspace: workspace,
+			Dir:       root,
+		})
 
 		assert.True(t, ok)
 		lang, ok := findLanguage(langs, "markdown")
@@ -209,9 +221,11 @@ insecure = true
 		err = loader.TrustWorkspace(work)
 		assert.NoError(t, err)
 
-		raw, ok := config.LoadRawConfigForWorkspace(
-			global, workspace, work,
-		)
+		raw, ok := config.LoadRawConfigForWorkspace(loader.WorkspaceFiles{
+			Global:    global,
+			Workspace: workspace,
+			Dir:       work,
+		})
 
 		assert.True(t, ok)
 		assert.Equal(t, "dracula", raw["theme"])
@@ -257,9 +271,11 @@ insecure = true
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
-		raw, ok := config.LoadRawConfigForWorkspace(
-			global, workspace, work,
-		)
+		raw, ok := config.LoadRawConfigForWorkspace(loader.WorkspaceFiles{
+			Global:    global,
+			Workspace: workspace,
+			Dir:       work,
+		})
 
 		assert.True(t, ok)
 		assert.Equal(t, "mocha", raw["theme"])
@@ -282,9 +298,11 @@ insecure = true
 		assert.NoError(t, err)
 		t.Setenv("XDG_DATA_HOME", t.TempDir())
 
-		raw, ok := config.LoadRawConfigForWorkspace(
-			global, workspace, work,
-		)
+		raw, ok := config.LoadRawConfigForWorkspace(loader.WorkspaceFiles{
+			Global:    global,
+			Workspace: workspace,
+			Dir:       work,
+		})
 
 		assert.True(t, ok)
 		assert.Equal(t, "dracula", raw["theme"])
@@ -425,9 +443,10 @@ name = "custom"
 file-types = ["foo"]
 `)
 
-		lang, ok := language.DetectLanguage(filepath.Join(root, "main.foo"), "")
+		lang := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: filepath.Join(root, "main.foo"),
+		})
 
-		assert.True(t, ok)
 		assert.Equal(t, "custom", lang)
 	})
 
@@ -443,11 +462,10 @@ name = "glob"
 file-types = [{ glob = "special.conf" }]
 `)
 
-		lang, ok := language.DetectLanguage(
-			filepath.Join(root, "special.conf"), "",
-		)
+		lang := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: filepath.Join(root, "special.conf"),
+		})
 
-		assert.True(t, ok)
 		assert.Equal(t, "glob", lang)
 	})
 
@@ -464,9 +482,10 @@ file-types = [{ glob = "project/src/*.conf" }]
 `)
 		path := filepath.Join(root, "project", "src", "special.conf")
 
-		lang, ok := language.DetectLanguage(path, "")
+		lang := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: path,
+		})
 
-		assert.True(t, ok)
 		assert.Equal(t, "long", lang)
 	})
 
@@ -481,16 +500,14 @@ file-types = [
 ]
 `)
 
-		langName, ok := language.DetectLanguage(
-			filepath.Join(root, "custom-addon", "views", "main.hbs"), "",
-		)
-
-		assert.True(t, ok)
+		langName := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: filepath.Join(root, "custom-addon", "views", "main.hbs"),
+		})
 		assert.Equal(t, "config", langName)
-		langName, ok = language.DetectLanguage(
-			filepath.Join(root, "myjsconfig.json"), "",
-		)
-		assert.True(t, ok)
+
+		langName = language.DetectLanguage(language.DetectLanguageArgs{
+			Path: filepath.Join(root, "myjsconfig.json"),
+		})
 		assert.Equal(t, "config", langName)
 	})
 
@@ -503,9 +520,10 @@ file-types = [{ glob = "myconf/*/*.{inc,conf}" }]
 `)
 		path := filepath.Join(root, "myconf", "machine", "default.inc")
 
-		lang, ok := language.DetectLanguage(path, "")
+		lang := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: path,
+		})
 
-		assert.True(t, ok)
 		assert.Equal(t, "conf", lang)
 	})
 
@@ -517,11 +535,11 @@ name = "script"
 shebangs = ["customsh"]
 `)
 
-		lang, ok := language.DetectLanguage(
-			"no-language-match", "#!/usr/bin/env customsh\n",
-		)
+		lang := language.DetectLanguage(language.DetectLanguageArgs{
+			Path:    "no-language-match",
+			Content: "#!/usr/bin/env customsh\n",
+		})
 
-		assert.True(t, ok)
 		assert.Equal(t, "script", lang)
 	})
 
@@ -537,11 +555,11 @@ name = "long"
 injection-regex = "foo-bar"
 `)
 
-		lang, ok := language.DetectLanguage(
-			"no-language-match", "embedded foo-bar marker",
-		)
+		lang := language.DetectLanguage(language.DetectLanguageArgs{
+			Path:    "no-language-match",
+			Content: "embedded foo-bar marker",
+		})
 
-		assert.True(t, ok)
 		assert.Equal(t, "long", lang)
 	})
 }

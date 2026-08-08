@@ -12,7 +12,7 @@ func (p *previewImageEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
 	area := geom.Area{Point: at, Size: ctx.size}
-	style := ctx.th.Get("ui.text")
+	style := ctx.theme.Get("ui.text")
 	if ctx.images == nil || !ctx.images.graphics {
 		msg := i18n.Text(i18n.StatusImageUnsupported)
 		renderCenteredMessage(buf, area, msg, style)
@@ -29,7 +29,7 @@ func (p *previewImageEntry) renderInto(
 		return
 	}
 	start := area.Center(cells)
-	bg := ctx.th.Get("ui.popup").BgColor()
+	bg := ctx.theme.Get("ui.popup").BgColor()
 	style = tui.Style{}.
 		Fg(tui.ImageColor(p.id)).
 		UlColor(tui.ImageColor(imagePlacementID(p.id))).

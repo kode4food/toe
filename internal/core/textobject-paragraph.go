@@ -1,12 +1,18 @@
 package core
 
+// paragraphLines is a document and its line count, for blank-line tests
+type paragraphLines struct {
+	doc       Rope
+	lineCount int
+}
+
 // TextObjectParagraph selects the paragraph containing the cursor. A paragraph
 // is a contiguous sequence of non-empty lines around=TextObjectAround includes
 // the trailing empty lines
 func TextObjectParagraph(
 	doc Rope, r Range, kind TextObjectKind, count int,
 ) Range {
-	nLines := doc.LenLines()
+	lines := paragraphLines{doc: doc, lineCount: doc.LenLines()}
 	cursor := r.Cursor(doc)
 	line, err := doc.CharToLine(cursor)
 	if err != nil {
@@ -16,9 +22,9 @@ func TextObjectParagraph(
 		count = 1
 	}
 
-	prevEmpty := paragraphLineBlank(doc, line-1, nLines)
-	currEmpty := paragraphLineBlank(doc, line, nLines)
-	nextEmpty := line+1 >= nLines || paragraphLineBlank(doc, line+1, nLines)
+	prevEmpty := lines.blank(line - 1)
+	currEmpty := lines.blank(line)
+	nextEmpty := line+1 >= lines.lineCount || lines.blank(line+1)
 	nextStart := paragraphLineToChar(doc, line+1)
 	lastChar := PrevGraphemeBoundary(doc, nextStart) == cursor
 	prevEmptyToLine := prevEmpty && !currEmpty
@@ -29,10 +35,10 @@ func TextObjectParagraph(
 		lineBack++
 	}
 	if !(currEmptyToLine && lastChar) {
-		for lineBack > 0 && paragraphLineBlank(doc, lineBack-1, nLines) {
+		for lineBack > 0 && lines.blank(lineBack-1) {
 			lineBack--
 		}
-		for lineBack > 0 && !paragraphLineBlank(doc, lineBack-1, nLines) {
+		for lineBack > 0 && !lines.blank(lineBack-1) {
 			lineBack--
 		}
 	}
@@ -43,34 +49,34 @@ func TextObjectParagraph(
 	countDone := 0
 	for range count {
 		done := false
-		for line < nLines && !paragraphLineBlank(doc, line, nLines) {
+		for line < lines.lineCount && !lines.blank(line) {
 			line++
 			done = true
 		}
-		for line < nLines && paragraphLineBlank(doc, line, nLines) {
+		for line < lines.lineCount && lines.blank(line) {
 			line++
 		}
 		if done {
 			countDone++
 		}
 	}
-	if countDone != count && line >= nLines {
-		for lineBack > 0 && paragraphLineBlank(doc, lineBack-1, nLines) {
+	if countDone != count && line >= lines.lineCount {
+		for lineBack > 0 && lines.blank(lineBack-1) {
 			lineBack--
 		}
-		for lineBack > 0 && !paragraphLineBlank(doc, lineBack-1, nLines) {
+		for lineBack > 0 && !lines.blank(lineBack-1) {
 			lineBack--
 		}
 	}
 	if kind == TextObjectInside {
-		for line > lineBack && paragraphLineBlank(doc, line-1, nLines) {
+		for line > lineBack && lines.blank(line-1) {
 			line--
 		}
 	}
 
 	from := paragraphLineToChar(doc, lineBack)
 	to := paragraphLineToChar(doc, line)
-	return NewRange(from, to)
+	return Range{Anchor: from, Head: to}
 }
 
 // TextObjectPairSurround selects the pair surrounding the cursor. ch,
@@ -101,9 +107,19 @@ func (r Range) TextObjectPairSurround(
 		head = NextGraphemeBoundary(doc, head)
 	}
 	if r.Direction() == DirectionForward {
-		return NewRange(anchor, head)
+		return Range{Anchor: anchor, Head: head}
 	}
-	return NewRange(head, anchor)
+	return Range{Anchor: head, Head: anchor}
+}
+
+func (p paragraphLines) blank(line int) bool {
+	if line < 0 || line >= p.lineCount {
+		return true
+	}
+	if lineRope, err := p.doc.Line(line); err == nil {
+		return isBlankLine(lineRope.String())
+	}
+	return true
 }
 
 func isBlankLine(s string) bool {
@@ -111,16 +127,6 @@ func isBlankLine(s string) bool {
 		if ch != ' ' && ch != '\t' && !CharIsLineEnding(ch) {
 			return false
 		}
-	}
-	return true
-}
-
-func paragraphLineBlank(doc Rope, line, nLines int) bool {
-	if line < 0 || line >= nLines {
-		return true
-	}
-	if lineRope, err := doc.Line(line); err == nil {
-		return isBlankLine(lineRope.String())
 	}
 	return true
 }

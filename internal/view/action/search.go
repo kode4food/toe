@@ -144,7 +144,7 @@ func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
 		if from >= to {
 			continue
 		}
-		slice, err := text.Slice(from, to)
+		slice, err := text.Slice(core.Span{From: from, To: to})
 		if err != nil {
 			continue
 		}
@@ -216,7 +216,10 @@ func searchImpl(args searchArgs) error {
 			wrapped = wrapped || m.wrapped
 			newRanges[i] = r.PutCursor(text, m.pos, args.extend)
 		}
-		setSearchStatus(e, matched, wrapped)
+		setSearchStatus(e, setSearchStatusArgs{
+			matched: matched,
+			wrapped: wrapped,
+		})
 		newSel, err := core.NewSelection(newRanges, sel.PrimaryIndex())
 		if err != nil {
 			return nil
@@ -227,12 +230,17 @@ func searchImpl(args searchArgs) error {
 	return nil
 }
 
-func setSearchStatus(e *view.Editor, matched, wrapped bool) {
-	if !matched {
+type setSearchStatusArgs struct {
+	matched bool
+	wrapped bool
+}
+
+func setSearchStatus(e *view.Editor, status setSearchStatusArgs) {
+	if !status.matched {
 		e.SetStatusMsg(i18n.Text(i18n.StatusNoMoreMatches))
 		return
 	}
-	if wrapped {
+	if status.wrapped {
 		e.SetStatusMsg(i18n.Text(i18n.StatusSearchWrapped))
 	}
 }

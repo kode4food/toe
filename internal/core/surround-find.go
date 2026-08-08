@@ -1,20 +1,27 @@
 package core
 
+// surroundSearch is a scan start position and how many enclosing pairs to skip
+type surroundSearch struct {
+	pos int
+	nth int
+}
+
 func (r Rope) surroundFindNthOpen(
-	openCh, closeCh rune, pos, n int,
+	pair BracketPair, at surroundSearch,
 ) (int, bool) {
+	pos := at.pos
 	if pos >= r.LenChars() {
 		return 0, false
 	}
-	if ch, err := r.CharAt(pos); err == nil && ch == openCh {
+	if ch, err := r.CharAt(pos); err == nil && ch == pair.Open {
 		return pos, true
 	}
 	if pos > 0 {
-		if ch, err := r.CharAt(pos - 1); err == nil && ch == openCh {
+		if ch, err := r.CharAt(pos - 1); err == nil && ch == pair.Open {
 			return pos - 1, true
 		}
 	}
-	for range n {
+	for range at.nth {
 		stepOver := 0
 		found := false
 		for i := pos - 1; i >= 0; i-- {
@@ -22,9 +29,9 @@ func (r Rope) surroundFindNthOpen(
 			if err != nil {
 				return 0, false
 			}
-			if ch == closeCh {
+			if ch == pair.Close {
 				stepOver++
-			} else if ch == openCh {
+			} else if ch == pair.Open {
 				if stepOver == 0 {
 					pos = i
 					found = true
@@ -41,15 +48,16 @@ func (r Rope) surroundFindNthOpen(
 }
 
 func (r Rope) surroundFindNthClose(
-	openCh, closeCh rune, pos, n int,
+	pair BracketPair, at surroundSearch,
 ) (int, bool) {
+	pos := at.pos
 	if pos >= r.LenChars() {
 		return 0, false
 	}
-	if ch, err := r.CharAt(pos); err == nil && ch == closeCh {
+	if ch, err := r.CharAt(pos); err == nil && ch == pair.Close {
 		return pos, true
 	}
-	for range n {
+	for range at.nth {
 		stepOver := 0
 		found := false
 		for i := pos + 1; i < r.LenChars(); i++ {
@@ -57,9 +65,9 @@ func (r Rope) surroundFindNthClose(
 			if err != nil {
 				return 0, false
 			}
-			if ch == openCh {
+			if ch == pair.Open {
 				stepOver++
-			} else if ch == closeCh {
+			} else if ch == pair.Close {
 				if stepOver == 0 {
 					pos = i
 					found = true

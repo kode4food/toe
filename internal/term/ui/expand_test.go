@@ -410,7 +410,10 @@ func TestExpandVariables(t *testing.T) {
 		e := expandEditorWithText(t, "hello world\n")
 		doc := e.FocusedDocument()
 		v := e.FocusedView()
-		doc.SetSelectionFor(v.ID(), core.SingleSelection(0, 5))
+		doc.SetSelectionFor(v.ID(), core.SingleSelection(core.Range{
+			Anchor: 0,
+			Head:   5,
+		}))
 		result, err := expandVar(t, e, "selection")
 		assert.NoError(t, err)
 		assert.Equal(t, "hello", result)
@@ -449,7 +452,7 @@ func expandEditorWithText(t *testing.T, text string) *view.Editor {
 	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, 0, text),
+		core.TextChange(core.Span{From: 0, To: 0}, text),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).

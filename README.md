@@ -4,7 +4,7 @@
 
 **toe** is a modal terminal editor for Go development. toe edits Go projects, not the universe.
 
-Experimental but usable. Keep your work in Git or another backup.
+toe is my daily driver. It is 0.x software: the editing core is settled, while configuration keys, commands, and defaults can still change between releases.
 
 ![toe screenshot](./docs/img/screenshot.png)
 
@@ -19,6 +19,14 @@ toe is opinionated because it is built for one tight workflow: editing Go projec
 - Version control: git diff gutters, changed-hunk navigation and reset, and a changed-file picker with unified diff previews
 - Project state: workspace trust, user/workspace TOML config, EditorConfig, session persistence, external file change detection, and clean-buffer reloads
 - 4 Catppuccin themes: frappe, latte, macchiato, mocha
+
+## Scope
+
+- **Go first.** Other language servers are configurable in `languages.toml`; Go with `gopls` is the workflow toe is designed and tested around.
+- **Version control is Git.** Diff gutters, hunk navigation and reset, and the changed-file picker all run against the git binary.
+- **Extension.** toe is extended through commands, key bindings, and conditional bindings.
+- **Terminal capability.** Image panes need a terminal that speaks the Kitty graphics protocol; other binary files open as a read-only hex dump. Nerd Font glyphs are on by default and fall back to short ASCII labels.
+- **Clipboard.** toe uses `pbcopy`/`pbpaste`, `xclip`, `xsel`, or `wl-copy`/`wl-paste` when present, with an OSC 52 fallback so copies reach the clipboard over SSH.
 
 ## Requirements
 
@@ -69,6 +77,10 @@ Workspace config is trust-gated. See `docs/content/docs/configuration.md` for de
 :workspace-trust
 :workspace-untrust
 ```
+
+## Changes
+
+See [CHANGELOG.md](./CHANGELOG.md) for what shipped in each release.
 
 ## Development
 

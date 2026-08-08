@@ -83,7 +83,8 @@ func (p *PromptComponent) completionMenuHeight(screen geom.Size) int {
 func (p *PromptComponent) paintCompletions(
 	cx *Context, buf *tui.Buffer, bounds geom.Area,
 ) {
-	menuStyle, selected := promptCompletionStyles(cx)
+	styles := promptCompletionStyles(cx)
+	menuStyle := styles.item
 	pop := popup{
 		borderStyle:  menuStyle.Fg(pickerFrameStyle(cx).FgColor()),
 		contentStyle: menuStyle,
@@ -112,24 +113,20 @@ func (p *PromptComponent) paintCompletions(
 			match := matchStyle
 			if p.completion.selected != nil &&
 				*p.completion.selected == i {
-				style = selected
+				style = styles.selected
 				match = selMatchStyle
 			}
 			buf.FillRange(at, colW, style)
 			writePickerMatched(buf, writePickerMatchedArgs{
-				at:      at,
-				maxW:    colW,
-				text:    item.completionText(),
-				indices: item.Indices,
-				base:    style,
-				match:   match,
+				at:       at,
+				maxWidth: colW,
+				text:     item.completionText(),
+				indices:  item.Indices,
+				base:     style,
+				match:    match,
 			})
 		}
 	}
-}
-
-func promptCompletionStyles(cx *Context) (tui.Style, tui.Style) {
-	return pickerItemStyle(cx), pickerSelStyle(cx)
 }
 
 func (p promptCompletion) completionText() string {
@@ -139,18 +136,32 @@ func (p promptCompletion) completionText() string {
 	return p.Text
 }
 
-func completeCommandLine(cx *Context, input string) []promptCompletion {
-	name, rest, complete := command.SplitCommandLine(input)
-	if complete {
-		return completeCommandNames(cx, name)
+type promptCompletionStylesRes struct {
+	item     tui.Style
+	selected tui.Style
+}
+
+func promptCompletionStyles(cx *Context) promptCompletionStylesRes {
+	return promptCompletionStylesRes{
+		item:     pickerItemStyle(cx),
+		selected: pickerSelStyle(cx),
 	}
-	cmd := cx.Keymaps.ResolveCommandIn(cx.Editor.Mode(), name)
+}
+
+func completeCommandLine(cx *Context, input string) []promptCompletion {
+	line, complete := command.SplitCommandLine(input)
+	if complete {
+		return completeCommandNames(cx, line.Name)
+	}
+	cmd := cx.Keymaps.ResolveCommandIn(cx.Editor.Mode(), line.Name)
 	if cmd == nil {
 		return nil
 	}
-	items := cmd.Signature.Completer.Complete(cx.Editor, cmd.Signature, rest)
+	items := cmd.Signature.Completer.Complete(
+		cx.Editor, cmd.Signature, line.Rest,
+	)
 	out := make([]promptCompletion, 0, len(items))
-	offset := len(name) + 1
+	offset := len(line.Name) + 1
 	for _, item := range items {
 		item.Start += offset
 		out = append(out, promptCompletion{Completion: item})

@@ -47,20 +47,29 @@ func (c *completionComponent) selectedKey() completionItemKey {
 }
 
 func (c *completionComponent) clampScroll(rows int) {
-	c.scroll = listClampScroll(c.scroll, len(c.items), rows)
+	c.scroll = listScroll{
+		scroll: c.scroll,
+		count:  len(c.items),
+		rows:   rows,
+	}.clamped()
 }
 
 func (c *completionComponent) scrollBy(delta int) {
 	c.markDirty()
-	c.scroll = listScrollBy(
-		c.scroll, len(c.items), c.visibleRows(), delta,
-	)
+	c.scroll = listScroll{
+		scroll: c.scroll,
+		count:  len(c.items),
+		rows:   c.visibleRows(),
+	}.scrollBy(delta)
 }
 
 func (c *completionComponent) ensureCursorVisible(rows int) {
-	c.scroll = listEnsureCursorVisible(
-		c.scroll, c.cursor, len(c.items), rows,
-	)
+	c.scroll = listScroll{
+		scroll: c.scroll,
+		cursor: c.cursor,
+		count:  len(c.items),
+		rows:   rows,
+	}.ensureCursorVisible()
 }
 
 func (c *completionComponent) visibleRows() int {

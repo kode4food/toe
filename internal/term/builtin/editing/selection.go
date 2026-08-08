@@ -43,32 +43,32 @@ const (
 )
 
 type textObjectEntry struct {
-	ch    rune
+	char  rune
 	label string
 }
 
 var textObjectEntries = []textObjectEntry{
-	{ch: 'f', label: "function"},
-	{ch: 't', label: "type definition"},
-	{ch: 'a', label: "argument/parameter"},
-	{ch: 'c', label: "call"},
-	{ch: 'e', label: "data structure entry"},
-	{ch: 'w', label: "word"},
-	{ch: 'W', label: "WORD"},
-	{ch: 'p', label: "paragraph"},
-	{ch: 'm', label: "closest surrounding pair"},
-	{ch: '(', label: "parentheses"},
-	{ch: ')', label: "parentheses"},
-	{ch: '{', label: "curly braces"},
-	{ch: '}', label: "curly braces"},
-	{ch: '[', label: "square brackets"},
-	{ch: ']', label: "square brackets"},
-	{ch: '<', label: "angled brackets"},
-	{ch: '>', label: "angled brackets"},
-	{ch: '"', label: "double quotes"},
-	{ch: '\'', label: "single quotes"},
-	{ch: '`', label: "backticks"},
-	{ch: '|', label: "pipes"},
+	{char: 'f', label: "function"},
+	{char: 't', label: "type definition"},
+	{char: 'a', label: "argument/parameter"},
+	{char: 'c', label: "call"},
+	{char: 'e', label: "data structure entry"},
+	{char: 'w', label: "word"},
+	{char: 'W', label: "WORD"},
+	{char: 'p', label: "paragraph"},
+	{char: 'm', label: "closest surrounding pair"},
+	{char: '(', label: "parentheses"},
+	{char: ')', label: "parentheses"},
+	{char: '{', label: "curly braces"},
+	{char: '}', label: "curly braces"},
+	{char: '[', label: "square brackets"},
+	{char: ']', label: "square brackets"},
+	{char: '<', label: "angled brackets"},
+	{char: '>', label: "angled brackets"},
+	{char: '"', label: "double quotes"},
+	{char: '\'', label: "single quotes"},
+	{char: '`', label: "backticks"},
+	{char: '|', label: "pipes"},
 }
 
 // SelectionModule returns the selection, surround, and text-object commands
@@ -319,10 +319,10 @@ func SelectionModule(model ui.Model) command.Module {
 	for _, e := range textObjectEntries {
 		mod.Labels = append(mod.Labels,
 			kit.Label(e.label,
-				m(append(kit.Char('a'), kit.Char(e.ch)...)),
+				m(append(kit.Char('a'), kit.Char(e.char)...)),
 				command.DocNormalModes),
 			kit.Label(e.label,
-				m(append(kit.Char('i'), kit.Char(e.ch)...)),
+				m(append(kit.Char('i'), kit.Char(e.char)...)),
 				command.DocNormalModes),
 		)
 	}

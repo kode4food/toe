@@ -35,10 +35,10 @@ const diffDebounce = 50 * time.Millisecond
 
 // NewDiffer starts a differ for the given base and document text. notify is
 // invoked from the worker goroutine after every recompute
-func NewDiffer(base, doc core.Rope, notify func()) *Differ {
+func NewDiffer(sides DiffSides, notify func()) *Differ {
 	d := &Differ{
-		base:   base,
-		doc:    doc,
+		base:   sides.Base,
+		doc:    sides.Doc,
 		events: make(chan differEvent, 64),
 		done:   make(chan struct{}),
 		notify: notify,
@@ -131,7 +131,7 @@ func (d *Differ) recompute() {
 	d.mu.RLock()
 	base, doc := d.base, d.doc
 	d.mu.RUnlock()
-	hunks := Diff(base, doc)
+	hunks := Diff(DiffSides{Base: base, Doc: doc})
 	d.mu.Lock()
 	d.hunks = hunks
 	d.mu.Unlock()

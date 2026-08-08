@@ -38,16 +38,15 @@ func NewSelection(ranges []Range, primaryIndex int) (Selection, error) {
 }
 
 // SingleSelection returns a selection of one range
-func SingleSelection(anchor, head int) Selection {
+func SingleSelection(r Range) Selection {
 	return Selection{
-		ranges:       []Range{NewRange(anchor, head)},
-		primaryIndex: 0,
+		ranges: []Range{r},
 	}
 }
 
 // PointSelection returns a selection of one empty range at pos
 func PointSelection(pos int) Selection {
-	return SingleSelection(pos, pos)
+	return SingleSelection(PointRange(pos))
 }
 
 // Primary is the range that cursor operations act on
@@ -180,10 +179,10 @@ func (s Selection) Map(cs ChangeSet) (Selection, error) {
 }
 
 // LineRanges returns the line span each range touches
-func (s Selection) LineRanges(text Rope) ([]LineRange, error) {
-	out := make([]LineRange, 0, len(s.ranges))
+func (s Selection) LineRanges(text Rope) ([]Span, error) {
+	out := make([]Span, 0, len(s.ranges))
 	for _, r := range s.ranges {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			return nil, err
 		}

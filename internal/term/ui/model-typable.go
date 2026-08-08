@@ -18,7 +18,8 @@ func execTypable(cx *Context, input string) command.Result {
 	if input == "" {
 		return command.Result{}
 	}
-	name, rest, _ := command.SplitCommandLine(input)
+	line, _ := command.SplitCommandLine(input)
+	name := line.Name
 	if name == "" {
 		return command.Result{}
 	}
@@ -31,7 +32,7 @@ func execTypable(cx *Context, input string) command.Result {
 		}
 	}
 	expand := NewTokenExpander(cx.Editor)
-	parsed, err := command.ParseArgs(rest, cmd.Signature, true, expand)
+	parsed, err := command.ParseArgs(line.Rest, cmd.Signature, true, expand)
 	if err != nil {
 		return command.Result{Error: err}
 	}

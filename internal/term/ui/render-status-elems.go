@@ -90,11 +90,11 @@ func statusElemModified(s *statusElemCtx) statusElem {
 }
 
 func statusElemSelections(s *statusElemCtx) statusElem {
-	if s.nSel == 1 {
+	if s.selCount == 1 {
 		return statusElem{text: "1 sel", style: s.baseTUI}
 	}
 	return statusElem{
-		text:  fmt.Sprintf("%d/%d sels", s.primIdx+1, s.nSel),
+		text:  fmt.Sprintf("%d/%d sels", s.primIdx+1, s.selCount),
 		style: s.baseTUI,
 	}
 }
@@ -108,7 +108,7 @@ func statusElemPrimaryLen(s *statusElemCtx) statusElem {
 
 func statusElemPosition(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  fmt.Sprintf("%d:%d", s.cursor.Line, s.cursor.Col),
+		text:  fmt.Sprintf("%d:%d", s.cursor.Line, s.cursor.Column),
 		style: s.baseTUI,
 	}
 }

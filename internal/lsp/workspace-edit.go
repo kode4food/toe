@@ -189,7 +189,10 @@ func textEditsToChanges(
 			return nil, ErrWorkspaceEditRange
 		}
 		changes = append(
-			changes, core.TextChange(cr.From(), cr.To(), edit.NewText),
+			changes, core.TextChange(core.Span{
+				From: cr.From(),
+				To:   cr.To(),
+			}, edit.NewText),
 		)
 	}
 	slices.SortStableFunc(changes, func(a, b core.Change) int {

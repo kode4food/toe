@@ -19,6 +19,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type controlledDynamicSource struct {
+	ch    chan *ui.PickerItem
+	query string
+}
+
 func TestPickerTarget(t *testing.T) {
 	t.Run("valid path", func(t *testing.T) {
 		target := ui.PickerTarget{Path: "main.go"}
@@ -631,11 +636,6 @@ func runTestCmd(t *testing.T, cmd tea.Cmd) tea.Msg {
 	}
 }
 
-type controlledDynamicSource struct {
-	ch    chan *ui.PickerItem
-	query string
-}
-
 func newControlledDynamicSource() *controlledDynamicSource {
 	return &controlledDynamicSource{ch: make(chan *ui.PickerItem, 1)}
 }
@@ -654,13 +654,11 @@ func (c *controlledDynamicSource) ColumnProportions() []int {
 
 func (c *controlledDynamicSource) Search(query string) { c.query = query }
 
-func (c *controlledDynamicSource) Load(
-	_ *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (c *controlledDynamicSource) Load(*view.Editor) ui.PickerLoad {
 	if c.query == "" {
-		return nil, nil, func() {}
+		return ui.PickerLoad{Stop: func() {}}
 	}
-	return nil, c.ch, func() {}
+	return ui.PickerLoad{Feed: c.ch, Stop: func() {}}
 }
 
 func (c *controlledDynamicSource) Accept(

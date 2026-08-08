@@ -14,15 +14,17 @@ import (
 func TestDetectLanguage(t *testing.T) {
 	t.Run("detects go by extension", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name, ok := language.DetectLanguage("main.go", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "main.go",
+		})
 		assert.Equal(t, "go", name)
 	})
 
 	t.Run("detects Ale as Scheme", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name, ok := language.DetectLanguage("init.ale", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "init.ale",
+		})
 		assert.Equal(t, "scheme", name)
 	})
 
@@ -32,32 +34,38 @@ func TestDetectLanguage(t *testing.T) {
 name = "python"
 shebangs = ["python3"]
 `)
-		name, ok := language.DetectLanguage(
-			"script", "#!/usr/bin/env python3\nprint('hi')\n",
-		)
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path:    "script",
+			Content: "#!/usr/bin/env python3\nprint('hi')\n",
+		})
 		assert.Equal(t, "python", name)
 	})
 
-	t.Run("returns false for unknown", func(t *testing.T) {
+	t.Run("unknown falls back to the default", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		_, ok := language.DetectLanguage("unknown.xyz99qwerty", "")
-		assert.False(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path:    "unknown.xyz99qwerty",
+			Default: "fallback",
+		})
+		assert.Equal(t, "fallback", name)
 	})
 
 	t.Run("detects bash by shebang", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name, ok := language.DetectLanguage(
-			"run", "#!/bin/bash\necho hi\n",
-		)
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path:    "run",
+			Content: "#!/bin/bash\necho hi\n",
+		})
 		assert.Equal(t, "bash", name)
 	})
 
-	t.Run("empty shebang fields returns false", func(t *testing.T) {
+	t.Run("empty shebang fields use the default", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		_, ok := language.DetectLanguage("", "#!")
-		assert.False(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Content: "#!",
+			Default: "fallback",
+		})
+		assert.Equal(t, "fallback", name)
 	})
 }
 
@@ -234,8 +242,9 @@ func TestExpandGlobBraces(t *testing.T) {
 name = "c"
 file-types = [{ glob = "*.{c,h}" }]
 `)
-		name, ok := language.DetectLanguage("main.c", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "main.c",
+		})
 		assert.Equal(t, "c", name)
 	})
 
@@ -245,8 +254,9 @@ file-types = [{ glob = "*.{c,h}" }]
 name = "c"
 file-types = [{ glob = "*.{c,h}" }]
 `)
-		name, ok := language.DetectLanguage("types.h", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "types.h",
+		})
 		assert.Equal(t, "c", name)
 	})
 }
@@ -258,19 +268,23 @@ func TestLanguageForMatch(t *testing.T) {
 name = "injlang"
 injection-regex = "injlang|il"
 `)
-		name, ok := language.DetectLanguage("", "il")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Content: "il",
+		})
 		assert.Equal(t, "injlang", name)
 	})
 
-	t.Run("injection regex no match returns false", func(t *testing.T) {
+	t.Run("injection regex no match uses the default", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
 name = "injlang2"
 injection-regex = "uniqueinjlang2_abc"
 `)
-		_, ok := language.DetectLanguage("", "ZZZNOMATCH_ABCDEF_123")
-		assert.False(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Content: "ZZZNOMATCH_ABCDEF_123",
+			Default: "fallback",
+		})
+		assert.Equal(t, "fallback", name)
 	})
 
 	t.Run("invalid injection regex skipped", func(t *testing.T) {
@@ -280,8 +294,11 @@ name = "badregexlang"
 injection-regex = "["
 `)
 		// content doesn't match name → 2nd loop tries invalid regex, skips it
-		_, ok := language.DetectLanguage("", "ZZZNOMATCH_ABCDEF_123")
-		assert.False(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Content: "ZZZNOMATCH_ABCDEF_123",
+			Default: "fallback",
+		})
+		assert.Equal(t, "fallback", name)
 	})
 }
 
@@ -294,8 +311,9 @@ func TestGlobMatch(t *testing.T) {
 name = "abslang"
 file-types = [{glob = %q}]
 `, target))
-		name, ok := language.DetectLanguage(target, "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: target,
+		})
 		assert.Equal(t, "abslang", name)
 	})
 
@@ -305,8 +323,9 @@ file-types = [{glob = %q}]
 name = "starlang"
 file-types = [{ glob = "*/foo.star" }]
 `)
-		name, ok := language.DetectLanguage("/any/dir/foo.star", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "/any/dir/foo.star",
+		})
 		assert.Equal(t, "starlang", name)
 	})
 
@@ -316,8 +335,9 @@ file-types = [{ glob = "*/foo.star" }]
 name = "dblstar"
 file-types = [{ glob = "**" }]
 `)
-		name, ok := language.DetectLanguage("anything/foo.xyz", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "anything/foo.xyz",
+		})
 		assert.Equal(t, "dblstar", name)
 	})
 
@@ -327,8 +347,11 @@ file-types = [{ glob = "**" }]
 name = "nomatch"
 file-types = [{ glob = "**/nope.nomatch" }]
 `)
-		_, ok := language.DetectLanguage("some/path/other.txt", "")
-		assert.False(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path:    "some/path/other.xyz99qwerty",
+			Default: "fallback",
+		})
+		assert.Equal(t, "fallback", name)
 	})
 }
 

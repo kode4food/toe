@@ -139,27 +139,47 @@ func TestPatchBgRange(t *testing.T) {
 func TestSetRightAlignedInt(t *testing.T) {
 	t.Run("writes integer right-aligned", func(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 5, Height: 1})
-		b.SetRightAlignedInt(geom.Point{X: 0, Y: 0}, 5, 42, tui.Style{})
+		b.SetRightAlignedInt(tui.RightAlignedIntArgs{
+			At:    geom.Point{X: 0, Y: 0},
+			Width: 5,
+			Value: 42,
+			Style: tui.Style{},
+		})
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "42")
 	})
 
 	t.Run("writes zero", func(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 3, Height: 1})
-		b.SetRightAlignedInt(geom.Point{X: 0, Y: 0}, 3, 0, tui.Style{})
+		b.SetRightAlignedInt(tui.RightAlignedIntArgs{
+			At:    geom.Point{X: 0, Y: 0},
+			Width: 3,
+			Value: 0,
+			Style: tui.Style{},
+		})
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "0")
 	})
 
 	t.Run("clips left padding", func(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 3, Height: 1})
-		b.SetRightAlignedInt(geom.Point{X: -2, Y: 0}, 5, 42, tui.Style{})
+		b.SetRightAlignedInt(tui.RightAlignedIntArgs{
+			At:    geom.Point{X: -2, Y: 0},
+			Width: 5,
+			Value: 42,
+			Style: tui.Style{},
+		})
 		assert.Contains(t, b.RenderToANSI(), "42")
 	})
 
 	t.Run("ignores out-of-bounds row", func(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 3, Height: 1})
-		b.SetRightAlignedInt(geom.Point{X: 0, Y: 5}, 3, 42, tui.Style{})
+		b.SetRightAlignedInt(tui.RightAlignedIntArgs{
+			At:    geom.Point{X: 0, Y: 5},
+			Width: 3,
+			Value: 42,
+			Style: tui.Style{},
+		})
 		assert.Equal(t, " ", b.Get(geom.Point{X: 0, Y: 0}).Symbol)
 	})
 }

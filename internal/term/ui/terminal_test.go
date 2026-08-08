@@ -578,7 +578,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Len(t, e.AllDocuments(), before+1)
 	})
 
-	t.Run("Ctrl-backslash opens the space menu file picker", func(t *testing.T) {
+	t.Run("ctrl-backslash opens space menu", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "main.go")
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))

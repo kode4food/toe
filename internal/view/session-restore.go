@@ -88,7 +88,10 @@ func (e *Editor) restoreSessionKind(
 		pane, err := e.restorePane(restorePaneArgs{
 			kind: sn.Kind,
 			session: &PaneSession{
-				path:   sessionAbsPath(rs.base, sn.Path),
+				path: sessionAbsPath(sessionRef{
+					base: rs.base,
+					path: sn.Path,
+				}),
 				values: sn.Values,
 			},
 		})
@@ -186,7 +189,7 @@ func (e *Editor) restoreDisplacedPane(
 	pane, err := e.restorePane(restorePaneArgs{
 		kind: sn.Kind,
 		session: &PaneSession{
-			path:   sessionAbsPath(rs.base, sn.Path),
+			path:   sessionAbsPath(sessionRef{base: rs.base, path: sn.Path}),
 			values: sn.Values,
 		},
 	})
@@ -204,7 +207,7 @@ func (s sessionSelect) selection() core.Selection {
 	}
 	ranges := make([]core.Range, 0, len(s.Ranges))
 	for _, r := range s.Ranges {
-		ranges = append(ranges, core.NewRange(r.Anchor, r.Head))
+		ranges = append(ranges, core.Range{Anchor: r.Anchor, Head: r.Head})
 	}
 	if sel, err := core.NewSelection(ranges, s.Primary); err == nil {
 		return sel

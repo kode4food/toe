@@ -38,12 +38,21 @@ func (b *Buffer) FillRange(p geom.Point, width int, style Style) {
 	}
 }
 
-// SetRightAlignedInt writes n as decimal digits right-aligned in a field of
-// width starting at p, padding left with spaces
-func (b *Buffer) SetRightAlignedInt(
-	p geom.Point, width, n int, style Style,
-) {
-	x, y := p.X, p.Y
+// RightAlignedIntArgs is a number and the field it is right-aligned within
+type RightAlignedIntArgs struct {
+	At    geom.Point
+	Width int
+	Value int
+	Style Style
+}
+
+// SetRightAlignedInt writes Value as decimal digits right-aligned in a field of
+// Width starting at At, padding left with spaces
+func (b *Buffer) SetRightAlignedInt(args RightAlignedIntArgs) {
+	width := args.Width
+	style := args.Style
+	n := args.Value
+	x, y := args.At.X, args.At.Y
 	if y < 0 || y >= b.Height || width <= 0 || x >= b.Width {
 		return
 	}
@@ -120,7 +129,7 @@ func (b *Buffer) setASCIICell(p geom.Point, ch byte, style Style) {
 	if style.BgColor().IsReset() {
 		style = style.Bg(b.cells[idx].Style.BgColor())
 	}
-	b.cells[idx] = Cell{Symbol: asciiTable[ch : ch+1], Style: style}
+	b.cells[idx] = Cell{Symbol: ASCIIString(rune(ch)), Style: style}
 }
 
 func (b *Buffer) setASCIIString(
@@ -142,7 +151,7 @@ func (b *Buffer) setASCIIString(
 				st = style.Bg(b.cells[idx].Style.BgColor())
 			}
 			b.cells[idx] = Cell{
-				Symbol: asciiTable[ch : ch+1],
+				Symbol: ASCIIString(rune(ch)),
 				Style:  st,
 			}
 		}

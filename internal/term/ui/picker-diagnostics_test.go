@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -31,7 +32,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.NotEqual(t, -1, from)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
 			{
-				Range: view.DiagnosticRange{
+				Range: core.Span{
 					From: from,
 					To:   from + len("main"),
 				},

@@ -16,9 +16,9 @@ func (s *Session) ensureFileWatcher() {
 	s.watch.Lock()
 	if s.watch.watcher == nil {
 		state := &fsWatcher{
-			ch:    make(chan notify.EventInfo, 256),
-			done:  make(chan struct{}),
-			roots: map[string]struct{}{},
+			events: make(chan notify.EventInfo, 256),
+			done:   make(chan struct{}),
+			roots:  map[string]struct{}{},
 		}
 		s.watch.watcher = state
 		go s.runFileWatcher(state)
@@ -38,7 +38,7 @@ func (s *Session) closeFileWatcher() {
 		return
 	}
 	close(state.done)
-	notify.Stop(state.ch)
+	notify.Stop(state.events)
 }
 
 func (s *Session) fileWatchRoots() []string {
@@ -69,7 +69,7 @@ func (s *Session) fileWatchRoots() []string {
 func (s *Session) runFileWatcher(state *fsWatcher) {
 	for {
 		select {
-		case ev, ok := <-state.ch:
+		case ev, ok := <-state.events:
 			if !ok {
 				return
 			}
@@ -101,7 +101,7 @@ func (s *Session) addFileWatchRoot(root string) {
 	}
 	state.roots[root] = struct{}{}
 	s.watch.Unlock()
-	err := notify.Watch(filepath.Join(root, "..."), state.ch, notify.All)
+	err := notify.Watch(filepath.Join(root, "..."), state.events, notify.All)
 	if err == nil {
 		return
 	}

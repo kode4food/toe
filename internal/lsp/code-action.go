@@ -102,7 +102,11 @@ func (s *Session) CodeActions(
 		}
 		for i, action := range actions {
 			id := candidateID(client.Name(), i)
-			item, ok := viewCodeAction(id, client.Name(), action)
+			item, ok := viewCodeAction(viewCodeActionArgs{
+				id:     id,
+				server: client.Name(),
+				item:   action,
+			})
 			if !ok {
 				continue
 			}
@@ -172,7 +176,7 @@ func (s *Session) codeActionDiagnostics(
 ) []protocol.Diagnostic {
 	var out []protocol.Diagnostic
 	for _, diag := range doc.Diagnostics() {
-		dr := core.NewRange(diag.Range.From, diag.Range.To)
+		dr := core.Range{Anchor: diag.Range.From, Head: diag.Range.To}
 		if !r.Overlaps(dr) {
 			continue
 		}
@@ -225,16 +229,22 @@ func compareCodeActionItems(a, b protocol.CommandOrCodeAction) int {
 	return compareBoolDesc(codeActionPreferred(a), codeActionPreferred(b))
 }
 
-func viewCodeAction(
-	id, server string, item protocol.CommandOrCodeAction,
-) (view.CodeAction, bool) {
-	switch action := item.(type) {
+type viewCodeActionArgs struct {
+	id     string
+	server string
+	item   protocol.CommandOrCodeAction
+}
+
+func viewCodeAction(args viewCodeActionArgs) (view.CodeAction, bool) {
+	switch action := args.item.(type) {
 	case *protocol.Command:
 		if action.Title == "" {
 			return view.CodeAction{}, false
 		}
 		return view.CodeAction{
-			ID: id, Title: action.Title, Server: server,
+			ID:     args.id,
+			Title:  action.Title,
+			Server: args.server,
 		}, true
 	case *protocol.CodeAction:
 		if action.Title == "" {
@@ -245,8 +255,11 @@ func viewCodeAction(
 			kind = string(*action.Kind)
 		}
 		return view.CodeAction{
-			ID: id, Title: action.Title, Kind: kind,
-			Server: server, Preferred: codeActionPreferred(item),
+			ID:        args.id,
+			Title:     action.Title,
+			Kind:      kind,
+			Server:    args.server,
+			Preferred: codeActionPreferred(args.item),
 		}, true
 	default:
 		return view.CodeAction{}, false
@@ -312,7 +325,10 @@ func protocolDiagnostic(
 	doc *view.Document, diag view.Diagnostic, enc protocol.PositionEncodingKind,
 ) (protocol.Diagnostic, bool) {
 	r, err := lspRange(
-		doc.Text(), core.NewRange(diag.Range.From, diag.Range.To), enc,
+		doc.Text(), core.Range{
+			Anchor: diag.Range.From,
+			Head:   diag.Range.To,
+		}, enc,
 	)
 	if err != nil {
 		return protocol.Diagnostic{}, false

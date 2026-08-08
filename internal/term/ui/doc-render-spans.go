@@ -23,7 +23,7 @@ func (r *renderPass) prepareContentRender(
 	doc := args.doc
 	v := args.view
 
-	opts := r.cx.Editor.Options()
+	opts := r.context.Editor.Options()
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	primary := sel.Primary()
@@ -36,14 +36,14 @@ func (r *renderPass) prepareContentRender(
 		selSpans = append(selSpans, selectionSpan{
 			from:    rng.From(),
 			to:      rng.To(),
-			cur:     rng.Cursor(text),
+			cursor:  rng.Cursor(text),
 			primary: i == primaryIdx,
 		})
 	}
 
 	cursorLines := make(map[int]struct{}, len(allRanges))
 	for _, sp := range selSpans {
-		if l, err := text.CharToLine(sp.cur); err == nil {
+		if l, err := text.CharToLine(sp.cursor); err == nil {
 			cursorLines[l] = struct{}{}
 		}
 	}
@@ -80,7 +80,7 @@ func (r *renderPass) prepareContentRender(
 	docID := doc.ID()
 	rev := doc.Revision()
 
-	c := r.ec.cache
+	c := r.editor.cache
 	rowMap := c.viewRowMaps[v.ID()][:0]
 
 	dc := c.docCaches[docID]
@@ -90,54 +90,64 @@ func (r *renderPass) prepareContentRender(
 	}
 
 	rawText := dc.ensureRawText(rev, text)
-	hlSpans := dc.ensureHL(r.cx.Syntax, rev, lang, rawText)
+	hlSpans := dc.ensureHightlight(ensureHighlightArgs{
+		cache:   r.context.Syntax,
+		rev:     rev,
+		lang:    lang,
+		rawText: rawText,
+	})
 	lineIdx := dc.ensureLineIndex(rev, rawText)
 
-	pat, hasPat := r.cx.Editor.FirstRegister('/')
+	pat, hasPat := r.context.Editor.FirstRegister('/')
 	if !hasPat || !doc.SearchHighlightsActive(v.ID()) {
 		pat = ""
 	}
-	dc.ensureSearchSpans(rev, pat, rawText)
-	searchMatches := dc.smSpans
+	dc.ensureSearchSpans(ensureSearchSpansArgs{
+		rev:     rev,
+		pattern: pat,
+		rawText: rawText,
+	})
+	searchMatches := dc.searchSpans
 	docDiagnostics := doc.Diagnostics()
 	var docHighlights []matchSpan
-	if r.cx.Editor.Mode() != view.ModeSelect && r.ec.mouse.downRange == nil {
+	if r.context.Editor.Mode() != view.ModeSelect &&
+		r.editor.mouse.downRange == nil {
 		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
 	}
 	var docLinks []matchSpan
 	var docColors []colorSpan
-	if r.cx.Editor.Mode() == view.ModeNormal {
+	if r.context.Editor.Mode() == view.ModeNormal {
 		docLinks = documentLinkSpans(doc.DocumentLinks())
 		docColors = documentColorSpans(doc.DocumentColors())
 	}
 
 	// styles rebuilt only when theme or mode changes
-	th := r.cx.Theme()
-	mode := r.cx.Editor.Mode()
+	th := r.context.Theme()
+	mode := r.context.Editor.Mode()
 	key := styleKey{theme: th.Name(), mode: mode}
 	if c.stylesKey != key {
 		c.stylesKey = key
 		c.styles = newDocStyleSet(th, mode)
-		c.stylesDim = newDocStyleSet(r.cx.ThemeFor(false), mode)
+		c.stylesDim = newDocStyleSet(r.context.ThemeFor(false), mode)
 	}
 	set := c.styles
 	if !args.focused {
 		set = c.stylesDim
 	}
-	tuiStyles := set.tuiStyles
-	hlStyleFn := func(scope string) tui.Style {
-		if st, ok := set.hlTUICache[scope]; ok {
+	styles := set.styles
+	highlight := func(scope string) tui.Style {
+		if st, ok := set.hlCache[scope]; ok {
 			return st
 		}
-		st := set.hlFn(scope)
-		set.hlTUICache[scope] = st
+		st := set.highlight(scope)
+		set.hlCache[scope] = st
 		return st
 	}
 
-	diagnostics := diagnosticSpans(docDiagnostics, tuiStyles)
+	diagnostics := diagnosticSpans(docDiagnostics, styles)
 	var annotations []inlineAnnotation
-	if r.cx.Editor.Mode() == view.ModeNormal {
-		annotations = inlayHintAnnotations(doc.InlayHints(v.ID()), tuiStyles)
+	if r.context.Editor.Mode() == view.ModeNormal {
+		annotations = inlayHintAnnotations(doc.InlayHints(v.ID()), styles)
 		annotations = append(
 			annotations, documentColorAnnotations(doc.DocumentColors())...,
 		)
@@ -146,21 +156,21 @@ func (r *renderPass) prepareContentRender(
 		})
 	}
 
-	cursorKind := opts.CursorShapeForMode(r.cx.Editor.Mode())
-	cursorIsBlock := cursorKind == view.CursorKindBlock && r.ec.focused &&
+	cursorKind := opts.CursorShapeForMode(r.context.Editor.Mode())
+	cursorIsBlock := cursorKind == view.CursorKindBlock && r.editor.focused &&
 		args.focused
 	cursorLineEnabled := opts.CursorLine
 	ws := opts.Whitespace
 	ig := opts.IndentGuides
 	relativeLineNumbers := opts.LineNumber == view.LineNumberRelative
-	insertMode := r.cx.Editor.Mode() == view.ModeInsert
+	insertMode := r.context.Editor.Mode() == view.ModeInsert
 
 	format := doc.TextFormatForConfig(
-		args.area.Width-gutterW, r.cx.Editor.Options(),
+		args.area.Width-gutterW, r.context.Editor.Options(),
 	)
 	softWrap := format.SoftWrap && gutterW < args.area.Width
 	contentW := args.area.Width - gutterW
-	r.cx.Editor.SetViewContentWidth(contentW)
+	r.context.Editor.SetViewContentWidth(contentW)
 
 	// Horizontal scrolling keeps the cursor visible when lines run past the
 	// content area. Disabled (offset reset to 0) under soft-wrap by passing a
@@ -172,41 +182,47 @@ func (r *renderPass) prepareContentRender(
 	// Free scroll decouples the horizontal offset from the cursor too, but
 	// soft-wrap must still reset the offset to 0
 	if !v.FreeScroll() || softWrap {
-		v.EnsureCursorVisibleHorizontal(
-			text, sel, hWidth, format.TabWidth, opts.ScrollOff,
-		)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       text,
+			Selection: sel,
+			Width:     hWidth,
+			TabWidth:  format.TabWidth,
+			ScrollOff: opts.ScrollOff,
+		})
 	}
 	hOff := v.Offset().HorizontalOffset
 
-	lineTUI := tuiStyles.line
-	lineSelTUI := tuiStyles.lineSelected
-	fillTUI := tuiStyles.text
-	cursorLinePriBg := tuiStyles.cursorLinePrim.BgColor()
-	cursorLineSecBg := tuiStyles.cursorLineSec.BgColor()
+	lineTUI := styles.line
+	lineSelTUI := styles.lineSelected
+	fillTUI := styles.text
+	cursorLinePriBg := styles.cursorLinePrim.BgColor()
+	cursorLineSecBg := styles.cursorLineSec.BgColor()
 	contentX := args.area.X + gutterW
 	gutter := gutterSpec{
-		layout:          gutterLayout,
-		lineNumberW:     gutterLineNumberW,
-		width:           gutterLayoutWidth(gutterLayout, gutterLineNumberW),
-		lineStyle:       lineTUI,
-		lineSelected:    lineSelTUI,
-		diagLines:       diagnosticGutterLines(text, docDiagnostics),
-		diffLines:       documentDiffLines(r.cx.Editor, doc, text.LenLines()),
-		severityHint:    tuiStyles.severityHint,
-		severityInfo:    tuiStyles.severityInfo,
-		severityWarning: tuiStyles.severityWarning,
-		severityError:   tuiStyles.severityError,
-		diffAdded:       tuiStyles.diffAdded,
-		diffModified:    tuiStyles.diffModified,
-		diffRemoved:     tuiStyles.diffRemoved,
+		layout:       gutterLayout,
+		lineNumWidth: gutterLineNumberW,
+		width:        gutterLayoutWidth(gutterLayout, gutterLineNumberW),
+		lineStyle:    lineTUI,
+		lineSelected: lineSelTUI,
+		diagLines:    diagnosticGutterLines(text, docDiagnostics),
+		diffLines: documentDiffLines(
+			r.context.Editor, doc, text.LenLines(),
+		),
+		severityHint:    styles.severityHint,
+		severityInfo:    styles.severityInfo,
+		severityWarning: styles.severityWarning,
+		severityError:   styles.severityError,
+		diffAdded:       styles.diffAdded,
+		diffModified:    styles.diffModified,
+		diffRemoved:     styles.diffRemoved,
 	}
 
 	rr := rowRender{
-		tuiStyles:     tuiStyles,
-		hlStyle:       hlStyleFn,
+		styles:        styles,
+		hlStyle:       highlight,
 		format:        format,
-		ws:            ws,
-		ig:            ig,
+		whitespace:    ws,
+		indents:       ig,
 		hlSpans:       hlSpans,
 		searchMatches: searchMatches,
 		docHighlights: docHighlights,
@@ -218,7 +234,7 @@ func (r *renderPass) prepareContentRender(
 		cursorLine:    cursorLine,
 		softWrap:      softWrap,
 		cursorIsBlock: cursorIsBlock,
-		mode:          r.cx.Editor.Mode(),
+		mode:          r.context.Editor.Mode(),
 		hStart:        hOff,
 		hWidth:        format.ViewportWidth,
 	}
@@ -235,16 +251,16 @@ func (r *renderPass) prepareContentRender(
 		anchorLine:  anchorLine,
 		vOff:        vOff,
 
-		nLines:        nLines,
+		lineCount:     nLines,
 		trailingEmpty: trailingEmpty,
 
-		dc:      dc,
-		rev:     rev,
-		rawText: rawText,
-		lineIdx: lineIdx,
-		rowMap:  rowMap,
+		docCache: dc,
+		rev:      rev,
+		rawText:  rawText,
+		lineIdx:  lineIdx,
+		rowMap:   rowMap,
 
-		tuiStyles: tuiStyles,
+		styles: styles,
 
 		diagnostics: diagnostics,
 		annotations: annotations,
@@ -265,12 +281,12 @@ func (r *renderPass) prepareContentRender(
 		contentX:        contentX,
 
 		cursorColumnEnabled: opts.CursorColumn,
-		cursorColumnBg:      tuiStyles.cursorColumn.BgColor(),
+		cursorColumnBg:      styles.cursorColumn.BgColor(),
 		rulers:              opts.Rulers,
-		rulerBg:             tuiStyles.rulerBg,
+		rulerBg:             styles.rulerBg,
 
 		gutter: gutter,
-		rr:     rr,
+		row:    rr,
 	}
 }
 
@@ -301,7 +317,7 @@ func documentLinkSpans(links []view.DocumentLink) []matchSpan {
 }
 
 func inlayHintAnnotations(
-	hints []view.InlayHint, styles *tuiStyles,
+	hints []view.InlayHint, styles *styles,
 ) []inlineAnnotation {
 	if len(hints) == 0 {
 		return nil
@@ -329,7 +345,7 @@ func inlayHintAnnotations(
 	return out
 }
 
-func inlayHintStyle(kind string, styles *tuiStyles) tui.Style {
+func inlayHintStyle(kind string, styles *styles) tui.Style {
 	switch kind {
 	case "type":
 		return styles.inlayHintType

@@ -8,6 +8,12 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
+// saveTarget is a file being written and the directory its temporaries go in
+type saveTarget struct {
+	path string
+	dir  string
+}
+
 // Save writes the document to its current path. Unless force is set, it
 // refuses an unsafe overwrite (changed on disk, or read-only)
 func (d *Document) Save(opts *Options, force bool) error {
@@ -40,17 +46,18 @@ func (d *Document) Save(opts *Options, force bool) error {
 	} else {
 		data = []byte(text)
 	}
+	target := saveTarget{path: path, dir: dir}
 	var backup string
 	if opts.AtomicSave {
 		if _, statErr := os.Stat(path); statErr == nil {
-			if b, err := renameToBackup(path, dir); err == nil {
+			if b, err := renameToBackup(target); err == nil {
 				backup = b
 			}
 		}
 	}
 	var err error
 	if opts.AtomicSave {
-		err = atomicWrite(path, dir, data)
+		err = atomicWrite(target, data)
 	} else {
 		err = writeFileSynced(path, data, 0o644)
 	}
@@ -161,13 +168,21 @@ func DocumentDisplayName(path string) string {
 	return filepath.Base(path)
 }
 
-// DocumentRelativeName returns path relative to basedir,
-// falling back to the absolute path on error
-func DocumentRelativeName(path, basedir string) string {
+// DocumentRelativeNameArgs is a document path and the directory to make it
+// relative to
+type DocumentRelativeNameArgs struct {
+	Path    string
+	BaseDir string
+}
+
+// DocumentRelativeName returns Path relative to BaseDir, falling back to the
+// absolute path on error
+func DocumentRelativeName(args DocumentRelativeNameArgs) string {
+	path := args.Path
 	if path == "" {
 		return ScratchBufferName
 	}
-	rel, err := filepath.Rel(basedir, path)
+	rel, err := filepath.Rel(args.BaseDir, path)
 	if err != nil {
 		return path
 	}
@@ -177,8 +192,9 @@ func DocumentRelativeName(path, basedir string) string {
 	return path
 }
 
-func renameToBackup(path, dir string) (string, error) {
-	f, err := os.CreateTemp(dir, filepath.Base(path)+".bck-*")
+func renameToBackup(target saveTarget) (string, error) {
+	path := target.path
+	f, err := os.CreateTemp(target.dir, filepath.Base(path)+".bck-*")
 	if err != nil {
 		return "", err
 	}
@@ -195,8 +211,8 @@ func renameToBackup(path, dir string) (string, error) {
 	return tmp, nil
 }
 
-func atomicWrite(path, dir string, data []byte) error {
-	f, err := os.CreateTemp(dir, ".toe-save-*")
+func atomicWrite(target saveTarget, data []byte) error {
+	f, err := os.CreateTemp(target.dir, ".toe-save-*")
 	if err != nil {
 		return err
 	}
@@ -215,7 +231,7 @@ func atomicWrite(path, dir string, data []byte) error {
 		_ = os.Remove(tmp)
 		return err
 	}
-	return os.Rename(tmp, path)
+	return os.Rename(tmp, target.path)
 }
 
 func writeFileSynced(path string, data []byte, perm os.FileMode) error {

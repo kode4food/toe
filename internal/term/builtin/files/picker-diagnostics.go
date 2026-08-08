@@ -81,9 +81,7 @@ func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 }
 
 // Load lists every diagnostic across open documents
-func (d *diagnosticPickerSource) Load(
-	e *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (d *diagnosticPickerSource) Load(e *view.Editor) ui.PickerLoad {
 	docs := diagnosticPickerDocuments(e, d.workspace)
 	items := make([]*ui.PickerItem, 0)
 	var slab ui.PickerItemSlab
@@ -93,7 +91,10 @@ func (d *diagnosticPickerSource) Load(
 		}
 	}
 	ui.SortPickerItems(items)
-	return append(diagnosticSections(), items...), nil, func() {}
+	return ui.PickerLoad{
+		Items: append(diagnosticSections(), items...),
+		Stop:  func() {},
+	}
 }
 
 // Accept jumps to the chosen diagnostic
@@ -168,7 +169,7 @@ func diagnosticPickerDocuments(
 
 func diagnosticLineRange(
 	text core.Rope, diag view.Diagnostic,
-) (int, *ui.PickerLineRange) {
+) (int, *core.Span) {
 	from, err := text.CharToLine(diag.Range.From)
 	if err != nil {
 		return 0, nil
@@ -177,12 +178,15 @@ func diagnosticLineRange(
 	if err != nil {
 		to = from
 	}
-	return from, &ui.PickerLineRange{From: from, To: to}
+	return from, &core.Span{From: from, To: to}
 }
 
 func diagnosticSelection(diag view.Diagnostic) (core.Selection, error) {
 	return core.NewSelection(
-		[]core.Range{core.NewRange(diag.Range.To, diag.Range.From)}, 0,
+		[]core.Range{{
+			Anchor: diag.Range.To,
+			Head:   diag.Range.From,
+		}}, 0,
 	)
 }
 

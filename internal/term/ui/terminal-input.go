@@ -12,9 +12,9 @@ import (
 )
 
 type terminalDragScrollMsg struct {
-	dc    Draggable
-	gen   int
-	toTop bool
+	draggable Draggable
+	gen       int
+	toLow     bool
 }
 
 // CloseAllTerminalPanes kills every open terminal's shell so the process does
@@ -34,6 +34,86 @@ func (t *TerminalPane) HandleEvent(
 		return t.handleKey(cx, key)
 	}
 	return t.handleMouse(cx, msg)
+}
+
+// BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or
+// forwards the click to it otherwise
+func (t *TerminalPane) BeginDrag(
+	cx *Context, at geom.Point, mod tea.KeyMod,
+) bool {
+	m, ok := t.localMouse(cx, at)
+	if !ok {
+		return false
+	}
+	if t.MouseEnabled() {
+		t.SendMouse(uv.MouseClickEvent(uv.Mouse{
+			X: m.X, Y: m.Y, Button: tea.MouseLeft, Mod: mod,
+		}))
+		return false
+	}
+	t.beginSelection(uv.Position{X: m.X, Y: m.Y})
+	return true
+}
+
+// ContinueDrag extends the selection to (x, y), auto-scrolling and
+// scheduling further ticks if the drag has crossed the pane's top or
+// bottom edge
+func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
+	yOff := 0
+	if bufferlineVisible(cx) {
+		yOff = 1
+	}
+	a := t.Area()
+	contentH := max(a.Height-1, 0)
+	scrollOff := cx.Editor.Options().ScrollOff
+	edge := t.selection.drag.update(dragBounds{
+		pos:      at.Y - yOff,
+		lowEdge:  a.Y,
+		highEdge: a.Y + contentH - 1,
+		margin: autoScrollMargin(autoScrollMarginArgs{
+			span:      contentH,
+			scrollOff: scrollOff,
+		}),
+	})
+	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
+	t.extendSelection(uv.Position{X: localX, Y: edge.clamped - a.Y})
+	return t.selection.drag.trigger(edge, localX, t.scheduleDragTick)
+}
+
+// EndDrag finalizes the selection at (x, y), copying it to the clipboard
+func (t *TerminalPane) EndDrag(cx *Context, at geom.Point) tea.Cmd {
+	t.selection.drag.stop()
+	m := t.clampedMouse(cx, at)
+	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
+		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
+		cx.Editor.SetStatusMsg(i18n.Text(i18n.StatusClipboardCopied))
+	}
+	return nil
+}
+
+// CancelDrag stops any pending auto-scroll tick, without side effects
+func (t *TerminalPane) CancelDrag() {
+	t.selection.drag.stop()
+}
+
+// DragTick continues scrolling toward toLow if gen still matches the
+// scheduling tick, or is a no-op if a newer drag has since superseded it
+func (t *TerminalPane) DragTick(_ *Context, gen int, toLow bool) tea.Cmd {
+	if gen != t.selection.drag.gen {
+		return nil
+	}
+	if toLow {
+		t.ScrollLines(1)
+	} else {
+		t.ScrollLines(-1)
+	}
+	contentH := max(t.Area().Height-1, 0)
+	edgeY := contentH - 1
+	if toLow {
+		edgeY = 0
+	}
+	t.extendSelection(uv.Position{X: t.selection.drag.fixed, Y: edgeY})
+	return t.selection.drag.tick(toLow, t.scheduleDragTick)
 }
 
 // handleKey forwards msg to the shell; keys bound in terminal mode (the
@@ -81,87 +161,11 @@ func (t *TerminalPane) handleMouse(
 	return consumed(), true
 }
 
-// BeginDrag starts a selection if the shell hasn't grabbed mouse tracking, or
-// forwards the click to it otherwise
-func (t *TerminalPane) BeginDrag(
-	cx *Context, at geom.Point, mod tea.KeyMod,
-) bool {
-	m, ok := t.localMouse(cx, at)
-	if !ok {
-		return false
-	}
-	if t.MouseEnabled() {
-		t.SendMouse(uv.MouseClickEvent(uv.Mouse{
-			X: m.X, Y: m.Y, Button: tea.MouseLeft, Mod: mod,
-		}))
-		return false
-	}
-	t.beginSelection(uv.Position{X: m.X, Y: m.Y})
-	return true
-}
-
-// ContinueDrag extends the selection to (x, y), auto-scrolling and
-// scheduling further ticks if the drag has crossed the pane's top or
-// bottom edge
-func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
-	yOff := 0
-	if bufferlineVisible(cx) {
-		yOff = 1
-	}
-	a := t.Area()
-	contentH := max(a.Height-1, 0)
-	scrollOff := cx.Editor.Options().ScrollOff
-	atTop, atBottom, clampedY := t.selection.drag.update(
-		at.Y-yOff, a.Y, a.Y+contentH-1, autoScrollMargin(contentH, scrollOff),
-	)
-	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
-	t.extendSelection(uv.Position{X: localX, Y: clampedY - a.Y})
-	return t.selection.drag.trigger(
-		atTop, atBottom, localX, t.scheduleDragTick,
-	)
-}
-
-// EndDrag finalizes the selection at (x, y), copying it to the clipboard
-func (t *TerminalPane) EndDrag(cx *Context, at geom.Point) tea.Cmd {
-	t.selection.drag.stop()
-	m := t.clampedMouse(cx, at)
-	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
-		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
-		cx.Editor.SetStatusMsg(i18n.Text(i18n.StatusClipboardCopied))
-	}
-	return nil
-}
-
-// CancelDrag stops any pending auto-scroll tick, without side effects
-func (t *TerminalPane) CancelDrag() {
-	t.selection.drag.stop()
-}
-
-// DragTick continues scrolling toward toTop if gen still matches the
-// scheduling tick, or is a no-op if a newer drag has since superseded it
-func (t *TerminalPane) DragTick(_ *Context, gen int, toTop bool) tea.Cmd {
-	if gen != t.selection.drag.gen {
-		return nil
-	}
-	if toTop {
-		t.ScrollLines(1)
-	} else {
-		t.ScrollLines(-1)
-	}
-	contentH := max(t.Area().Height-1, 0)
-	edgeY := contentH - 1
-	if toTop {
-		edgeY = 0
-	}
-	t.extendSelection(uv.Position{X: t.selection.drag.fixed, Y: edgeY})
-	return t.selection.drag.tick(toTop, t.scheduleDragTick)
-}
-
 func (t *TerminalPane) scheduleDragTick(
-	toTop bool, gen int, interval time.Duration,
+	toLow bool, gen int, interval time.Duration,
 ) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return terminalDragScrollMsg{dc: t, gen: gen, toTop: toTop}
+		return terminalDragScrollMsg{draggable: t, gen: gen, toLow: toLow}
 	})
 }
 

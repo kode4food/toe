@@ -13,6 +13,10 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type fileOpController struct {
+	view.LanguageServerController
+}
+
 func TestNewEditor(t *testing.T) {
 	t.Run("has one view and one document initially", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
@@ -698,7 +702,7 @@ func TestEditorEarlierLater(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 1, "b"),
+			core.TextChange(core.Span{From: 0, To: 1}, "b"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -717,7 +721,7 @@ func TestEditorEarlierLater(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 1, "b"),
+			core.TextChange(core.Span{From: 0, To: 1}, "b"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -751,7 +755,7 @@ func TestEditorApplyInsertMode(t *testing.T) {
 		d := e.FocusedDocument()
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "hi"),
+			core.TextChange(core.Span{From: 0, To: 0}, "hi"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -895,7 +899,7 @@ func TestTreeWalkSeparators(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
 		var count int
-		e.Tree().WalkSeparators(func(_ view.Separator) {
+		e.Tree().WalkSeparators(func(view.Separator) {
 			count++
 		})
 		assert.Equal(t, 0, count)
@@ -906,7 +910,7 @@ func TestTreeWalkSeparators(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
 		e.VSplitNew()
 		var count int
-		e.Tree().WalkSeparators(func(_ view.Separator) {
+		e.Tree().WalkSeparators(func(view.Separator) {
 			count++
 		})
 		assert.Equal(t, 1, count)
@@ -917,7 +921,7 @@ func TestTreeWalkSeparators(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 100, Height: 40})
 		e.HSplitNew()
 		var count int
-		e.Tree().WalkSeparators(func(_ view.Separator) {
+		e.Tree().WalkSeparators(func(view.Separator) {
 			count++
 		})
 		assert.Equal(t, 1, count)
@@ -1213,7 +1217,7 @@ func TestEditorRecordPrevDocModified(t *testing.T) {
 		secondID := d2.ID()
 		rope := d2.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "x"),
+			core.TextChange(core.Span{From: 0, To: 0}, "x"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1349,7 +1353,7 @@ func TestTreeSeparatorAt(t *testing.T) {
 		e.HSplitNew()
 
 		var count int
-		e.Tree().WalkSeparators(func(_ view.Separator) {
+		e.Tree().WalkSeparators(func(view.Separator) {
 			count++
 		})
 
@@ -1400,7 +1404,7 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NoError(t, err)
 		rope := docB.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 3, "xxx"),
+			core.TextChange(core.Span{From: 0, To: 3}, "xxx"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1420,7 +1424,7 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 5, "world"),
+			core.TextChange(core.Span{From: 0, To: 5}, "world"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1441,7 +1445,7 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 5, "world"),
+			core.TextChange(core.Span{From: 0, To: 5}, "world"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1451,31 +1455,27 @@ func TestApplyToDocument(t *testing.T) {
 	})
 }
 
-type fileOpController struct {
-	view.LanguageServerController
-}
-
-func (c *fileOpController) WillCreateFile(_ string, _ bool) error {
+func (c *fileOpController) WillCreateFile(string, bool) error {
 	return nil
 }
 
-func (c *fileOpController) DidCreateFile(_ string, _ bool) error {
+func (c *fileOpController) DidCreateFile(string, bool) error {
 	return nil
 }
 
-func (c *fileOpController) WillRenameFile(_, _ string, _ bool) error {
+func (c *fileOpController) WillRenameFile(view.FileRename, bool) error {
 	return nil
 }
 
-func (c *fileOpController) DidRenameFile(_, _ string, _ bool) error {
+func (c *fileOpController) DidRenameFile(view.FileRename, bool) error {
 	return nil
 }
 
-func (c *fileOpController) WillDeleteFile(_ string, _ bool) error {
+func (c *fileOpController) WillDeleteFile(string, bool) error {
 	return nil
 }
 
-func (c *fileOpController) DidDeleteFile(_ string, _ bool) error {
+func (c *fileOpController) DidDeleteFile(string, bool) error {
 	return nil
 }
 
@@ -1533,7 +1533,7 @@ func TestMoveFocusedFileWithOps(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 5, "world"),
+			core.TextChange(core.Span{From: 0, To: 5}, "world"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)

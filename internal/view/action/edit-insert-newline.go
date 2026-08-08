@@ -64,13 +64,19 @@ func InsertNewline(e *view.Editor) {
 			// Entire line up to pos is whitespace: insert bare newline at
 			// line start, leaving old whitespace on the new line
 			changes = append(changes,
-				core.TextChange(lineStart, lineStart, "\n"),
+				core.TextChange(core.Span{
+					From: lineStart,
+					To:   lineStart,
+				}, "\n"),
 			)
 			targets[i] = lineStart
 			targetOffs[i] = 1
 		} else if firstTrailingWS < pos {
 			// Trim trailing whitespace then insert newline with indent
-			indent, continued := continuedIndent(e, doc, line, pos)
+			indent, continued := continuedIndent(e, doc, core.LinePos{
+				Line: line,
+				Pos:  pos,
+			})
 			insert, off := newlineInsertForCursor(newlineInsertArgs{
 				editor:    e,
 				doc:       doc,
@@ -79,12 +85,18 @@ func InsertNewline(e *view.Editor) {
 				continued: continued,
 			})
 			changes = append(changes,
-				core.TextChange(firstTrailingWS, pos, insert))
+				core.TextChange(core.Span{
+					From: firstTrailingWS,
+					To:   pos,
+				}, insert))
 			targets[i] = firstTrailingWS
 			targetOffs[i] = off
 		} else {
 			// No trailing whitespace: plain newline with indent
-			indent, continued := continuedIndent(e, doc, line, pos)
+			indent, continued := continuedIndent(e, doc, core.LinePos{
+				Line: line,
+				Pos:  pos,
+			})
 			insert, off := newlineInsertForCursor(newlineInsertArgs{
 				editor:    e,
 				doc:       doc,
@@ -92,7 +104,10 @@ func InsertNewline(e *view.Editor) {
 				indent:    indent,
 				continued: continued,
 			})
-			changes = append(changes, core.TextChange(pos, pos, insert))
+			changes = append(changes, core.TextChange(core.Span{
+				From: pos,
+				To:   pos,
+			}, insert))
 			targets[i] = pos
 			targetOffs[i] = off
 		}
@@ -114,6 +129,26 @@ func InsertNewline(e *view.Editor) {
 		return
 	}
 	_ = e.Apply(core.NewTransaction(text).WithChanges(cs).WithSelection(newSel))
+}
+
+type newlineInsertArgs struct {
+	editor    *view.Editor
+	doc       *view.Document
+	rng       core.Range
+	indent    string
+	continued bool
+}
+
+func newlineInsertForCursor(args newlineInsertArgs) (string, int) {
+	text := args.doc.Text()
+	pairs, ok := autoPairsForDocument(args.editor, args.doc)
+	if args.continued || !ok || !betweenAutoPair(text, args.rng, pairs) {
+		insert := "\n" + args.indent
+		return insert, utf8.RuneCountInString(insert)
+	}
+	inner := args.indent + args.doc.IndentStyle().AsStr()
+	insert := "\n" + inner + "\n" + args.indent
+	return insert, 1 + utf8.RuneCountInString(inner)
 }
 
 func leadingWhitespace(text core.Rope, pos int) string {
@@ -144,15 +179,15 @@ func leadingWhitespace(text core.Rope, pos int) string {
 }
 
 func continuedIndent(
-	e *view.Editor, doc *view.Document, line, pos int,
+	e *view.Editor, doc *view.Document, at core.LinePos,
 ) (string, bool) {
 	text := doc.Text()
-	indent := leadingWhitespace(text, pos)
+	indent := leadingWhitespace(text, at.Pos)
 	args := structuralIndentArgs{
 		editor: e,
 		text:   text,
-		line:   line,
-		pos:    pos,
+		line:   at.Line,
+		pos:    at.Pos,
 		indent: indent,
 		doc:    doc,
 	}
@@ -160,7 +195,8 @@ func continuedIndent(
 		return structuralIndent(args), false
 	}
 	lang := language.LoadLanguage(doc.Lang())
-	if token, ok := core.GetCommentToken(text, lang.CommentTokens, line); ok {
+	token, ok := core.GetCommentToken(text, lang.CommentTokens, at.Line)
+	if ok {
 		return indent + token + " ", true
 	}
 	return structuralIndent(args), false
@@ -176,11 +212,18 @@ type structuralIndentArgs struct {
 }
 
 func structuralIndent(args structuralIndentArgs) string {
-	next, ok := args.editor.IndentForNewline(args.doc, args.line, args.pos)
+	next, ok := args.editor.IndentForNewline(view.IndentForNewlineArgs{
+		Doc:  args.doc,
+		Line: args.line,
+		Pos:  args.pos,
+	})
 	if ok {
 		return next
 	}
-	ch, ok := lastCodeChar(args.text, args.line, args.pos)
+	ch, ok := lastCodeChar(args.text, core.LinePos{
+		Line: args.line,
+		Pos:  args.pos,
+	})
 	if !ok || !indentAfter(ch) {
 		return args.indent
 	}
@@ -190,12 +233,12 @@ func structuralIndent(args structuralIndentArgs) string {
 	return args.indent + args.doc.IndentStyle().AsStr()
 }
 
-func lastCodeChar(text core.Rope, line, pos int) (rune, bool) {
-	lineStart, err := text.LineToChar(line)
+func lastCodeChar(text core.Rope, at core.LinePos) (rune, bool) {
+	lineStart, err := text.LineToChar(at.Line)
 	if err != nil {
 		return 0, false
 	}
-	for i := pos - 1; i >= lineStart; i-- {
+	for i := at.Pos - 1; i >= lineStart; i-- {
 		ch, err := text.CharAt(i)
 		if err != nil {
 			return 0, false
@@ -231,26 +274,6 @@ func matchingCloseAt(text core.Rope, pos int, open rune) bool {
 	}
 	ch, err := text.CharAt(pos)
 	return err == nil && ch == cl
-}
-
-type newlineInsertArgs struct {
-	editor    *view.Editor
-	doc       *view.Document
-	rng       core.Range
-	indent    string
-	continued bool
-}
-
-func newlineInsertForCursor(args newlineInsertArgs) (string, int) {
-	text := args.doc.Text()
-	pairs, ok := autoPairsForDocument(args.editor, args.doc)
-	if args.continued || !ok || !betweenAutoPair(text, args.rng, pairs) {
-		insert := "\n" + args.indent
-		return insert, utf8.RuneCountInString(insert)
-	}
-	inner := args.indent + args.doc.IndentStyle().AsStr()
-	insert := "\n" + inner + "\n" + args.indent
-	return insert, 1 + utf8.RuneCountInString(inner)
 }
 
 func betweenAutoPair(text core.Rope, r core.Range, pairs core.AutoPairs) bool {

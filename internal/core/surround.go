@@ -38,12 +38,15 @@ func FindNthClosestPairsPos(doc Rope, r Range, skip int) (Range, error) {
 		if !IsCloseBracket(ch) {
 			continue
 		}
-		open, _ := GetPair(ch)
+		open := GetPair(ch).Open
 		if len(stack) > 0 && stack[len(stack)-1] == open {
 			stack = stack[:len(stack)-1]
 			continue
 		}
-		openPos, ok := doc.surroundFindNthOpen(open, ch, closePos, 1)
+		openPos, ok := doc.surroundFindNthOpen(
+			BracketPair{Open: open, Close: ch},
+			surroundSearch{pos: closePos, nth: 1},
+		)
 		if !ok {
 			continue
 		}
@@ -55,9 +58,9 @@ func FindNthClosestPairsPos(doc Rope, r Range, skip int) (Range, error) {
 			continue
 		}
 		if r.Direction() == DirectionForward {
-			return NewRange(openPos, closePos), nil
+			return Range{Anchor: openPos, Head: closePos}, nil
 		}
-		return NewRange(closePos, openPos), nil
+		return Range{Anchor: closePos, Head: openPos}, nil
 	}
 	return Range{}, ErrPairNotFound
 }
@@ -71,15 +74,15 @@ func FindNthPairsPos(doc Rope, ch rune, r Range, n int) (Range, error) {
 	if r.To() >= doc.LenChars() {
 		return Range{}, ErrRangeExceedsText
 	}
-	openCh, closeCh := GetPair(ch)
+	pair := GetPair(ch)
 	pos := r.Cursor(doc)
 
 	var openPos, closePos int
 	var openOk, closeOk bool
 
-	if openCh == closeCh {
+	if pair.Open == pair.Close {
 		cur, e := doc.CharAt(pos)
-		if e == nil && cur == openCh {
+		if e == nil && cur == pair.Open {
 			match, ok := FindMatchingBracket(doc, pos)
 			if !ok {
 				return Range{}, ErrCursorOnAmbiguousPair
@@ -92,24 +95,25 @@ func FindNthPairsPos(doc Rope, ch rune, r Range, n int) (Range, error) {
 			openOk, closeOk = true, true
 		} else {
 			openPos, openOk = doc.FindNthChar(
-				n, openCh, pos, DirectionBackward,
+				n, pair.Open, pos, DirectionBackward,
 			)
 			closePos, closeOk = doc.FindNthChar(
-				n, closeCh, pos, DirectionForward,
+				n, pair.Close, pos, DirectionForward,
 			)
 		}
 	} else {
-		openPos, openOk = doc.surroundFindNthOpen(openCh, closeCh, pos, n)
-		closePos, closeOk = doc.surroundFindNthClose(openCh, closeCh, pos, n)
+		at := surroundSearch{pos: pos, nth: n}
+		openPos, openOk = doc.surroundFindNthOpen(pair, at)
+		closePos, closeOk = doc.surroundFindNthClose(pair, at)
 	}
 
 	if !openOk || !closeOk {
 		return Range{}, ErrPairNotFound
 	}
 	if r.Direction() == DirectionForward {
-		return NewRange(openPos, closePos), nil
+		return Range{Anchor: openPos, Head: closePos}, nil
 	}
-	return NewRange(closePos, openPos), nil
+	return Range{Anchor: closePos, Head: openPos}, nil
 }
 
 // GetSurroundPos returns flat pairs of [open, close] positions for every

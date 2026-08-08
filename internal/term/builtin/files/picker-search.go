@@ -24,9 +24,9 @@ type (
 	}
 
 	globalSearcher struct {
-		ch       chan *ui.PickerItem
+		results  chan *ui.PickerItem
 		done     chan struct{}
-		re       *regexp.Regexp
+		pattern  *regexp.Regexp
 		root     string
 		openDocs []docSnap
 		slab     ui.PickerItemSlab
@@ -51,11 +51,9 @@ func (g *globalSearchSource) Search(query string) {
 }
 
 // Load streams matches for the current query
-func (g *globalSearchSource) Load(
-	e *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (g *globalSearchSource) Load(e *view.Editor) ui.PickerLoad {
 	if g.query == "" {
-		return nil, nil, func() {}
+		return ui.PickerLoad{Stop: func() {}}
 	}
 	g.smartCase = e.Options().SearchSmartCase
 	g.openDocs = nil
@@ -68,7 +66,7 @@ func (g *globalSearchSource) Load(
 		}
 	}
 	ch, cancel := globalSearchQuery(e.Cwd(), g.openDocs, g.query, g.smartCase)
-	return nil, ch, cancel
+	return ui.PickerLoad{Feed: ch, Stop: cancel}
 }
 
 // Accept jumps to the chosen match
@@ -104,7 +102,7 @@ func (g *globalSearchSource) Accept(
 		lineEnd = text.LenChars()
 	}
 	sel, err := core.NewSelection(
-		[]core.Range{core.NewRange(lineStart, lineEnd)}, 0,
+		[]core.Range{{Anchor: lineStart, Head: lineEnd}}, 0,
 	)
 	if err != nil {
 		return
@@ -119,17 +117,17 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineNum++
-		if !gs.re.MatchString(line) {
+		if !gs.pattern.MatchString(line) {
 			continue
 		}
 		ln := lineNum
 		select {
-		case gs.ch <- gs.slab.Add(ui.PickerItem{
+		case gs.results <- gs.slab.Add(ui.PickerItem{
 			Display: fmt.Sprintf("%s:%d", rel, ln),
 			SortKey: fmt.Sprintf("%s:%06d", rel, ln),
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{Path: path},
-				Lines:  &ui.PickerLineRange{From: ln - 1, To: ln - 1},
+				Lines:  &core.Span{From: ln - 1, To: ln - 1},
 			},
 		}):
 		case <-gs.done:
@@ -164,9 +162,9 @@ func (gs *globalSearcher) searchFile(path string) bool {
 }
 
 func (gs *globalSearcher) walk() {
-	defer close(gs.ch)
-	walkPickerFiles(gs.root, gs.done, func(path, _ string) bool {
-		return gs.searchFile(path)
+	defer close(gs.results)
+	walkPickerFiles(gs.root, gs.done, func(file walkedFile) bool {
+		return gs.searchFile(file.path)
 	})
 }
 
@@ -187,7 +185,7 @@ func globalSearchQuery(
 	var once sync.Once
 	cancel := func() { once.Do(func() { close(done) }) }
 	gs := &globalSearcher{
-		ch: ch, done: done, re: re, root: root, openDocs: openDocs,
+		results: ch, done: done, pattern: re, root: root, openDocs: openDocs,
 	}
 	go gs.walk()
 	return ch, cancel

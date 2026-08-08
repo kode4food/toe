@@ -118,7 +118,11 @@ func (r *Runtime) bind(args ...ale.Value) ale.Value {
 	for i, key := range opts.keys {
 		seq, err := command.ParseKeySequence(key)
 		if err != nil {
-			panic(aleError(i18n.ErrorInvalidKey, key, arguments))
+			panic(aleError(aleErrorArgs{
+				kind:      i18n.ErrorInvalidKey,
+				reason:    key,
+				arguments: arguments,
+			}))
 		}
 		seqs[i] = seq
 	}
@@ -386,16 +390,24 @@ func bindingError(
 	if vars == nil {
 		vars = i18n.Vars{}
 	}
-	return aleError(
-		i18n.ErrorInvalidBinding, i18n.Text(key, vars), arguments,
-	)
+	return aleError(aleErrorArgs{
+		kind:      i18n.ErrorInvalidBinding,
+		reason:    i18n.Text(key, vars),
+		arguments: arguments,
+	})
 }
 
-func aleError(kind i18n.Key, reason, arguments string) error {
+type aleErrorArgs struct {
+	kind      i18n.Key
+	reason    string
+	arguments string
+}
+
+func aleError(args aleErrorArgs) error {
 	return i18n.NewError(i18n.ErrorAleContext).WithVars(i18n.Vars{
-		"arguments": arguments,
-		"kind":      i18n.Text(kind),
-		"reason":    reason,
+		"arguments": args.arguments,
+		"kind":      i18n.Text(args.kind),
+		"reason":    args.reason,
 	})
 }
 

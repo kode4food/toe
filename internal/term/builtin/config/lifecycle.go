@@ -47,7 +47,7 @@ func LifecycleModule() command.Module {
 				Name: actQuitForce,
 				DocString: "Force close the current view, ignoring unsaved " +
 					"changes",
-				Run: func(_ *view.Editor, _ *command.Args) command.Result {
+				Run: func(*view.Editor, *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
 				Modes:     command.AllModes,
@@ -72,7 +72,7 @@ func LifecycleModule() command.Module {
 			{
 				Name:      actQuitAllForce,
 				DocString: "Force close all views ignoring unsaved changes",
-				Run: func(_ *view.Editor, _ *command.Args) command.Result {
+				Run: func(*view.Editor, *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
 				Modes:     command.AllModes,

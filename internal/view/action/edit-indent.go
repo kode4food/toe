@@ -58,7 +58,10 @@ func Indent(e *view.Editor) {
 				ins = ins[offset:]
 			}
 		}
-		changes = append(changes, core.TextChange(pos, pos, ins))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, ins))
 	}
 	applyWithSelMap(e, text, sel, changes)
 }
@@ -114,7 +117,10 @@ func Unindent(e *view.Editor) {
 		if err != nil {
 			continue
 		}
-		changes = append(changes, core.DeleteChange(start, start+pos))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: start,
+			To:   start + pos,
+		}))
 	}
 	applyWithSelMap(e, text, sel, changes)
 }

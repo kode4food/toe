@@ -117,7 +117,11 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 			action.SurroundDelete(e, '(')
 		}},
 		{"surround replace", func(e *view.Editor) {
-			action.SurroundReplace(e, '(', '[')
+			action.SurroundReplace(action.SurroundReplaceArgs{
+				Editor:  e,
+				Current: '(',
+				Wanted:  '[',
+			})
 		}},
 		{"switch case", action.SwitchCase},
 		{"text object around", func(e *view.Editor) {
@@ -160,7 +164,7 @@ func TestFocusedDocumentGuardErrors(t *testing.T) {
 			return action.SetLineEnding(e, core.LineEndingCRLF)
 		}, view.ErrNoDocument},
 		{"sort", func(e *view.Editor) error {
-			return action.SortSelections(e, false, false)
+			return action.SortSelections(e, action.SortSelectionsArgs{})
 		}, nil},
 		{"search forward", func(e *view.Editor) error {
 			return action.SearchForward(e, "a")

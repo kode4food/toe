@@ -414,6 +414,45 @@ wrap-indicator = "↪ "
 		assert.Contains(t, out, "LINE-00")
 		assert.NotContains(t, out, "LINE-79")
 	})
+
+	t.Run("wheel pans the preview horizontally", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "wide.txt")
+		line := strings.Repeat("left", 20) + strings.Repeat("right", 20)
+		assert.NoError(t, os.WriteFile(path, []byte(line+"\n"), 0o644))
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		src := &pathPickerSource{path: path}
+		bindNormalTestAction(
+			km, "wide_picker",
+			m.PickerAction(func(ed *view.Editor) *ui.Picker {
+				return ui.NewPicker(ed, src)
+			}),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+
+		assert.Contains(t, stripANSI(m.View().Content), "leftleft")
+
+		wheel := func(button tea.MouseButton, times int) {
+			for range times {
+				// X=100 lands in the preview pane rather than the list
+				m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
+			}
+		}
+
+		wheel(tea.MouseWheelRight, 40)
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "rightright")
+		assert.NotContains(t, out, "leftleft")
+
+		wheel(tea.MouseWheelLeft, 40)
+		out = stripANSI(m.View().Content)
+		assert.Contains(t, out, "leftleft")
+	})
 }
 
 func TestPickerPreviewPlaceholders(t *testing.T) {
@@ -563,6 +602,7 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "now here")
 	})
+
 }
 
 func (p *pathPickerSource) ID() string {
@@ -590,16 +630,14 @@ func (p *pathPickerSource) Accept(
 ) {
 }
 
-func (p *pathPickerSource) Load(
-	*view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (p *pathPickerSource) Load(*view.Editor) ui.PickerLoad {
 	items := []*ui.PickerItem{{
 		Display:  "item",
 		Columns:  []string{"item"},
 		SortKey:  "item",
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
 	}}
-	return items, nil, func() {}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
 func (p *pathPickerSource) PrepareMatcher(string) ui.PickerMatcher {

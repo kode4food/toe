@@ -18,7 +18,7 @@ import (
 type (
 	// TransportConfig describes a language server process to start
 	TransportConfig struct {
-		Ctx     context.Context
+		Context context.Context
 		Name    string
 		Server  language.Server
 		Dir     string
@@ -26,32 +26,32 @@ type (
 	}
 
 	pipeConn struct {
-		r io.ReadCloser
-		w io.WriteCloser
+		reader io.ReadCloser
+		writer io.WriteCloser
 	}
 )
 
 func (c *TransportConfig) context() context.Context {
-	if c.Ctx == nil {
+	if c.Context == nil {
 		return context.Background()
 	}
-	return c.Ctx
+	return c.Context
 }
 
 // Read reads from the server's stdout
 func (p pipeConn) Read(b []byte) (int, error) {
-	return p.r.Read(b)
+	return p.reader.Read(b)
 }
 
 // Write writes to the server's stdin
 func (p pipeConn) Write(b []byte) (int, error) {
-	return p.w.Write(b)
+	return p.writer.Write(b)
 }
 
 // Close closes both ends of the pipe
 func (p pipeConn) Close() error {
-	err := p.r.Close()
-	if werr := p.w.Close(); err == nil {
+	err := p.reader.Close()
+	if werr := p.writer.Close(); err == nil {
 		err = werr
 	}
 	return err
@@ -92,7 +92,9 @@ func Start(cfg *TransportConfig) (context.Context, *Client, error) {
 	if err := cmd.Start(); err != nil {
 		return ctx, nil, err
 	}
-	ctx, client := NewClient(ctx, pipeConn{r: stdout, w: stdin}, cfg.Handler)
+	ctx, client := NewClient(
+		ctx, pipeConn{reader: stdout, writer: stdin}, cfg.Handler,
+	)
 	client.name = cfg.Name
 	client.cmd = cmd
 	client.timeout = time.Duration(cfg.Server.Timeout) * time.Second

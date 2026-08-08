@@ -268,9 +268,9 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal space menu is filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(nil, view.ModeTerminal, []command.KeyEvent{
-			test.Char(' '),
-		})
+		title, hints := km.PendingHints(
+			nil, view.ModeTerminal, []command.KeyEvent{test.Char(' ')},
+		)
 		labels := make(map[string]string, len(hints))
 		for _, h := range hints {
 			labels[h.Key] = h.Label
@@ -365,9 +365,10 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital prefixes use shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
-			test.Char('Z').WithMods(command.ModShift),
-		})
+		title, hints := km.PendingHints(
+			nil, view.ModeNormal,
+			[]command.KeyEvent{test.Char('Z').WithMods(command.ModShift)},
+		)
 
 		assert.Equal(t, "View", title)
 		assert.NotNil(t, hints)

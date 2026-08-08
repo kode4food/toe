@@ -35,7 +35,7 @@ func BenchmarkTerminalScrollOutput(b *testing.B) {
 	cases := []terminalOutputBench{
 		{name: "single-pane", scrollOpt: true},
 		{name: "single-pane-relative", relative: true, scrollOpt: true},
-		{name: "single-pane-no-scroll-opt", scrollOpt: false},
+		{name: "single-pane-no-scroll-opt"},
 		{name: "vertical-split", split: true, scrollOpt: true},
 		{
 			name:      "vertical-split-relative",

@@ -22,6 +22,38 @@ func (t *Tree) WalkSeparators(fn func(Separator)) {
 	}
 }
 
+type SeparatorAtRes struct {
+	ContainerID Id
+	ChildIdx    int
+	Layout      Layout
+}
+
+// SeparatorAt returns the container ID, left-child index, and layout of the
+// separator hit by the click at tree column x, tree row y (bufferline excluded)
+// SeparatorAtRes identifies a separator and its owning child
+func (t *Tree) SeparatorAt(at geom.Point) (SeparatorAtRes, bool) {
+	if t.IsEmpty() || t.Maximized() {
+		return SeparatorAtRes{}, false
+	}
+	var res SeparatorAtRes
+	ok := false
+	t.walkSepWithID(t.root,
+		func(cID Id, idx int, s Separator) bool {
+			if s.Contains(at) {
+				res = SeparatorAtRes{
+					ContainerID: cID,
+					ChildIdx:    idx,
+					Layout:      s.Layout,
+				}
+				ok = true
+				return false
+			}
+			return true
+		},
+	)
+	return res, ok
+}
+
 func (t *Tree) findChild(id Id, children []Id, dir Direction) (Id, bool) {
 	var childID Id
 	switch dir {
@@ -102,38 +134,6 @@ func (t *Tree) topOf(id Id) int {
 		return t.topOf(n.container.children[0])
 	}
 	return 0
-}
-
-type SeparatorAtRes struct {
-	ContainerID Id
-	ChildIdx    int
-	Layout      Layout
-}
-
-// SeparatorAt returns the container ID, left-child index, and layout of the
-// separator hit by the click at tree column x, tree row y (bufferline excluded)
-// SeparatorAtRes identifies a separator and its owning child
-func (t *Tree) SeparatorAt(at geom.Point) (SeparatorAtRes, bool) {
-	if t.IsEmpty() || t.Maximized() {
-		return SeparatorAtRes{}, false
-	}
-	var res SeparatorAtRes
-	ok := false
-	t.walkSepWithID(t.root,
-		func(cID Id, idx int, s Separator) bool {
-			if s.Contains(at) {
-				res = SeparatorAtRes{
-					ContainerID: cID,
-					ChildIdx:    idx,
-					Layout:      s.Layout,
-				}
-				ok = true
-				return false
-			}
-			return true
-		},
-	)
-	return res, ok
 }
 
 func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {

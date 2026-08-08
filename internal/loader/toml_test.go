@@ -30,7 +30,10 @@ func TestMergeTOMLValues(t *testing.T) {
 			},
 		}
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		assert.Equal(t, []any{
 			map[string]any{
@@ -47,7 +50,10 @@ func TestMergeTOMLValues(t *testing.T) {
 		left := map[string]any{"a": map[string]any{"b": 1}}
 		right := map[string]any{"a": map[string]any{"c": 2}}
 
-		merged := loader.MergeTOMLValues(left, right, 1)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 1)
 
 		assert.Equal(t, map[string]any{
 			"a": map[string]any{"c": 2},
@@ -60,7 +66,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := map[string]any{"a": 1}
 		right := "string"
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		assert.Equal(t, "string", merged)
 	})
@@ -69,7 +78,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := "not-a-slice"
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		assert.Equal(t, "not-a-slice", merged)
 	})
@@ -78,7 +90,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []map[string]any{{"name": "x", "val": "left"}}
 		right := []any{map[string]any{"name": "x", "val": "right"}}
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		arr, ok := merged.([]any)
 		assert.True(t, ok)
@@ -89,7 +104,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []map[string]any{{"name": "x", "val": "left"}}
 		right := []map[string]any{{"name": "x", "val": "right"}}
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		arr, ok := merged.([]any)
 		assert.True(t, ok)
@@ -99,7 +117,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 	t.Run("map slice with scalar right", func(t *testing.T) {
 		left := []map[string]any{{"name": "x"}}
 
-		merged := loader.MergeTOMLValues(left, "not-a-slice", 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: "not-a-slice",
+		}, 3)
 
 		assert.Equal(t, "not-a-slice", merged)
 	})
@@ -108,7 +129,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{map[string]any{"val": "no-name"}}
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		arr, ok := merged.([]any)
 		assert.True(t, ok)
@@ -119,7 +143,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "a"}}
 		right := []any{map[string]any{"name": "b"}}
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		arr, ok := merged.([]any)
 		assert.True(t, ok)
@@ -130,7 +157,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{"string-element"}
 
-		merged := loader.MergeTOMLValues(left, right, 3)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 3)
 
 		arr, ok := merged.([]any)
 		assert.True(t, ok)
@@ -141,7 +171,10 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{map[string]any{"name": "y"}}
 
-		merged := loader.MergeTOMLValues(left, right, 0)
+		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+			Base: left,
+			Over: right,
+		}, 0)
 
 		assert.Equal(t, right, merged)
 	})

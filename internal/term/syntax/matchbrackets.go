@@ -1,6 +1,10 @@
 package syntax
 
-import sitter "github.com/tree-sitter/go-tree-sitter"
+import (
+	sitter "github.com/tree-sitter/go-tree-sitter"
+
+	"github.com/kode4food/toe/internal/core"
+)
 
 var brackets = [][2]rune{
 	{'(', ')'},
@@ -11,19 +15,22 @@ var brackets = [][2]rune{
 // FindMatchingBracket returns the char position of the bracket matching the
 // one at cursorPos, using the parse tree so string/comment brackets don't
 // falsely match
-func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
+func FindMatchingBracket(
+	source core.Source, cursorPos int,
+) (int, bool) {
+	text := source.Text
 	runes := []rune(text)
 	if cursorPos < 0 || cursorPos >= len(runes) {
 		return 0, false
 	}
 	ch := runes[cursorPos]
-	openCh, closeCh, ok := bracketPairFor(ch)
+	pair, ok := bracketPairFor(ch)
 	if !ok {
 		return 0, false
 	}
-	isOpen := ch == openCh
+	isOpen := ch == pair.Open
 
-	language := languageFor(lang)
+	language := languageFor(source.Lang)
 	if language == nil {
 		return 0, false
 	}
@@ -47,7 +54,7 @@ func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 	if isOpen {
 		n := root.DescendantForByteRange(b, b+1)
 		for n != nil {
-			if n.StartByte() == b && isBracketNode(n, openCh, closeCh) {
+			if n.StartByte() == b && isBracketNode(n, pair) {
 				lastChar := b2c[n.EndByte()] - 1
 				if lastChar >= 0 && lastChar < len(runes) {
 					return lastChar, true
@@ -59,7 +66,7 @@ func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 		bEnd := uint(c2b[cursorPos+1])
 		n := root.DescendantForByteRange(b, bEnd)
 		for n != nil {
-			if n.EndByte() == bEnd && isBracketNode(n, openCh, closeCh) {
+			if n.EndByte() == bEnd && isBracketNode(n, pair) {
 				firstChar := b2c[n.StartByte()]
 				if firstChar >= 0 && firstChar < len(runes) {
 					return firstChar, true
@@ -71,24 +78,24 @@ func FindMatchingBracket(text, lang string, cursorPos int) (int, bool) {
 	return 0, false
 }
 
-func bracketPairFor(ch rune) (open, close rune, ok bool) {
+func bracketPairFor(ch rune) (core.BracketPair, bool) {
 	for _, p := range brackets {
 		if p[0] == ch || p[1] == ch {
-			return p[0], p[1], true
+			return core.BracketPair{Open: p[0], Close: p[1]}, true
 		}
 	}
-	return 0, 0, false
+	return core.BracketPair{}, false
 }
 
 // anonymous first/last children confirm real bracket delimiters, not nodes
 // whose content merely starts/ends with a bracket character
-func isBracketNode(n *sitter.Node, openCh, closeCh rune) bool {
+func isBracketNode(n *sitter.Node, pair core.BracketPair) bool {
 	count := n.ChildCount()
 	if count == 0 {
 		return false
 	}
 	first := n.Child(0)
 	last := n.Child(count - 1)
-	return !first.IsNamed() && first.Kind() == string(openCh) &&
-		!last.IsNamed() && last.Kind() == string(closeCh)
+	return !first.IsNamed() && first.Kind() == string(pair.Open) &&
+		!last.IsNamed() && last.Kind() == string(pair.Close)
 }

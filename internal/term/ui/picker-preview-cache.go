@@ -14,6 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -74,8 +75,12 @@ func (p previewCache) doc(
 	text := highlight.NormalizeNewlines(doc.Text().String())
 	entry = &previewDocEntry{
 		rev: rev, lang: lang,
-		rope:  core.NewRope(text),
-		spans: previewSpans(sc, text, lang),
+		rope: core.NewRope(text),
+		spans: previewSpans(previewSpansArgs{
+			cache: sc,
+			text:  text,
+			lang:  lang,
+		}),
 	}
 	p[key] = entry
 	return entry
@@ -126,9 +131,18 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 		return noPreviewEntry("<File not found>")
 	}
 	text := highlight.NormalizeNewlines(string(data))
-	lang := highlight.DetectLanguage(path, text)
+	lang := language.DetectLanguage(language.DetectLanguageArgs{
+		Path:    path,
+		Content: text,
+		Default: view.DefaultLanguage,
+	})
 	return &previewDocEntry{
-		rope: core.NewRope(text), spans: previewSpans(sc, text, lang),
+		rope: core.NewRope(text),
+		spans: previewSpans(previewSpansArgs{
+			cache: sc,
+			text:  text,
+			lang:  lang,
+		}),
 		lang: lang,
 	}
 }
@@ -142,8 +156,12 @@ func binaryPreview(path string) previewCacheEntry {
 			}
 			return &previewImageEntry{
 				image: img,
-				id:    kittyImageID(img.ContentID(), 0, true),
-				path:  abs,
+				id: kittyImageID(kittyImageIDArgs{
+					content: img.ContentID(),
+					surface: 0,
+					preview: true,
+				}),
+				path: abs,
 			}
 		}
 	}

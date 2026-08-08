@@ -77,7 +77,7 @@ func (m Model) CodeActionPickerAction(e *view.Editor) {
 	}
 	docID := doc.ID()
 	viewID := v.ID()
-	ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+	ec.keys.nextLayer = func(*Context) (Component, tea.Cmd) {
 		return newCodeActionMenu(ec, docID, viewID, actions), nil
 	}
 }

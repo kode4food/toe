@@ -69,26 +69,26 @@ func TestCommandLine(t *testing.T) {
 
 func TestSplitCommandLine(t *testing.T) {
 	t.Run("splits command and args", func(t *testing.T) {
-		name, rest, complete := command.SplitCommandLine("open file")
+		line, complete := command.SplitCommandLine("open file")
 
-		assert.Equal(t, "open", name)
-		assert.Equal(t, "file", rest)
+		assert.Equal(t, "open", line.Name)
+		assert.Equal(t, "file", line.Rest)
 		assert.False(t, complete)
 	})
 
 	t.Run("detects incomplete command name", func(t *testing.T) {
-		name, rest, complete := command.SplitCommandLine("op")
+		line, complete := command.SplitCommandLine("op")
 
-		assert.Equal(t, "op", name)
-		assert.Equal(t, "", rest)
+		assert.Equal(t, "op", line.Name)
+		assert.Equal(t, "", line.Rest)
 		assert.True(t, complete)
 	})
 
 	t.Run("detects completed command name", func(t *testing.T) {
-		name, rest, complete := command.SplitCommandLine("open ")
+		line, complete := command.SplitCommandLine("open ")
 
-		assert.Equal(t, "open", name)
-		assert.Equal(t, "", rest)
+		assert.Equal(t, "open", line.Name)
+		assert.Equal(t, "", line.Rest)
 		assert.False(t, complete)
 	})
 }

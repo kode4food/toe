@@ -2,27 +2,26 @@ package core
 
 import "strings"
 
-func fillHardWrap(
-	text string, width int, initial, subsequent, ending string,
-) string {
+func fillHardWrap(uw *hardWrapUnfilled, width int) string {
+	body := strings.TrimSuffix(uw.text, uw.ending)
 	words := hardWrapWordItems(
-		hardWrapWords(text), hardWrapCapacity(width, initial, subsequent),
+		hardWrapWords(body), hardWrapCapacity(uw, width),
 	)
 	if len(words) == 0 {
 		return ""
 	}
 
-	breaks := hardWrapBreaks(words, width, initial, subsequent)
+	breaks := hardWrapBreaks(words, uw, width)
 	var b strings.Builder
 	start := 0
 	for i, end := range breaks {
 		if i > 0 {
-			b.WriteString(ending)
+			b.WriteString(uw.ending)
 		}
 		if i == 0 {
-			b.WriteString(initial)
+			b.WriteString(uw.initial)
 		} else {
-			b.WriteString(subsequent)
+			b.WriteString(uw.subsequent)
 		}
 		writeHardWrapWords(&b, words[start:end])
 		start = end
@@ -30,10 +29,10 @@ func fillHardWrap(
 	return b.String()
 }
 
-func hardWrapCapacity(width int, initial, subsequent string) int {
-	capacity := width - textWidth(initial)
-	if subsequent != "" {
-		capacity = min(capacity, width-textWidth(subsequent))
+func hardWrapCapacity(uw *hardWrapUnfilled, width int) int {
+	capacity := width - textWidth(uw.initial)
+	if uw.subsequent != "" {
+		capacity = min(capacity, width-textWidth(uw.subsequent))
 	}
 	return max(capacity, 1)
 }
@@ -42,19 +41,22 @@ func hardWrapWordItems(words []string, capacity int) []hardWrapWord {
 	res := make([]hardWrapWord, 0, len(words))
 	for _, word := range words {
 		for word != "" {
-			part, rest := hardWrapTake(word, capacity)
-			if part == "" {
-				part, rest = hardWrapTake(word, 1)
+			split := hardWrapTake(word, capacity)
+			if split.before == "" {
+				split = hardWrapTake(word, 1)
 			}
-			res = append(res, hardWrapWord{text: part, width: textWidth(part)})
-			word = rest
+			res = append(res, hardWrapWord{
+				text:  split.before,
+				width: textWidth(split.before),
+			})
+			word = split.after
 		}
 	}
 	return res
 }
 
 func hardWrapBreaks(
-	words []hardWrapWord, width int, initial, subsequent string,
+	words []hardWrapWord, uw *hardWrapUnfilled, width int,
 ) []int {
 	n := len(words)
 	cost := make([]int, n+1)
@@ -62,9 +64,9 @@ func hardWrapBreaks(
 	for i := n - 1; i >= 0; i-- {
 		bestCost := int(^uint(0) >> 1)
 		bestNext := i + 1
-		limit := width - textWidth(subsequent)
+		limit := width - textWidth(uw.subsequent)
 		if i == 0 {
-			limit = width - textWidth(initial)
+			limit = width - textWidth(uw.initial)
 		}
 		limit = max(limit, 1)
 		lineW := 0
@@ -76,7 +78,14 @@ func hardWrapBreaks(
 			if lineW > limit {
 				break
 			}
-			c := hardWrapLineCost(words, i, j+1, lineW, limit, n)
+			c := hardWrapLineCost(hardWrapLineCostArgs{
+				words:     words,
+				start:     i,
+				end:       j + 1,
+				lineWidth: lineW,
+				limit:     limit,
+				count:     n,
+			})
 			if j+1 < n {
 				c += wrapLinePenalty + cost[j+1]
 			}
@@ -96,16 +105,25 @@ func hardWrapBreaks(
 	return breaks
 }
 
-func hardWrapLineCost(
-	words []hardWrapWord, start, end, lineW, limit, n int,
-) int {
-	if end == n {
-		if end-start == 1 && words[start].width*wrapShortTailDiv < limit {
+type hardWrapLineCostArgs struct {
+	words     []hardWrapWord
+	start     int
+	end       int
+	lineWidth int
+	limit     int
+	count     int
+}
+
+func hardWrapLineCost(args hardWrapLineCostArgs) int {
+	if args.end == args.count {
+		last := args.words[args.start]
+		if args.end-args.start == 1 &&
+			last.width*wrapShortTailDiv < args.limit {
 			return wrapShortTailCost
 		}
 		return 0
 	}
-	gap := limit - lineW
+	gap := args.limit - args.lineWidth
 	return gap * gap
 }
 
@@ -124,16 +142,16 @@ func hardWrapWords(text string) []string {
 	})
 }
 
-func hardWrapTake(s string, width int) (string, string) {
+func hardWrapTake(s string, width int) stringSplit {
 	w := 0
 	for i, ch := range s {
 		next := w + graphemeWidth(string(ch))
 		if next > width {
-			return s[:i], s[i:]
+			return stringSplit{before: s[:i], after: s[i:]}
 		}
 		w = next
 	}
-	return s, ""
+	return stringSplit{before: s}
 }
 
 func textWidth(s string) int {

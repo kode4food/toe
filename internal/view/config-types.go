@@ -354,22 +354,34 @@ func (g *Gutter) UnmarshalTOML(value any) error {
 
 // SpaceRender is the rendering mode for spaces
 func (w *WhitespaceRender) SpaceRender() WhitespaceRenderValue {
-	return whitespaceRenderFor(w.Space, w.Default)
+	return whitespaceRenderFor(whitespaceRenderArgs{
+		specific: w.Space,
+		fallback: w.Default,
+	})
 }
 
 // NbspRender is the rendering mode for non-breaking spaces
 func (w *WhitespaceRender) NbspRender() WhitespaceRenderValue {
-	return whitespaceRenderFor(w.Nbsp, w.Default)
+	return whitespaceRenderFor(whitespaceRenderArgs{
+		specific: w.Nbsp,
+		fallback: w.Default,
+	})
 }
 
 // TabRender is the rendering mode for tabs
 func (w *WhitespaceRender) TabRender() WhitespaceRenderValue {
-	return whitespaceRenderFor(w.Tab, w.Default)
+	return whitespaceRenderFor(whitespaceRenderArgs{
+		specific: w.Tab,
+		fallback: w.Default,
+	})
 }
 
 // NewlineRender is the rendering mode for line endings
 func (w *WhitespaceRender) NewlineRender() WhitespaceRenderValue {
-	return whitespaceRenderFor(w.Newline, w.Default)
+	return whitespaceRenderFor(whitespaceRenderArgs{
+		specific: w.Newline,
+		fallback: w.Default,
+	})
 }
 
 // UnmarshalTOML accepts either one mode for everything or a table per kind
@@ -490,13 +502,18 @@ func decodeGutterLayout(items []any) ([]GutterType, error) {
 	return layout, nil
 }
 
-func whitespaceRenderFor(
-	specific, def *WhitespaceRenderValue,
-) WhitespaceRenderValue {
-	if specific != nil {
-		return *specific
+// whitespaceRenderArgs is a per-kind whitespace setting and the whitespace
+// default it falls back to
+type whitespaceRenderArgs struct {
+	specific *WhitespaceRenderValue
+	fallback *WhitespaceRenderValue
+}
+
+func whitespaceRenderFor(args whitespaceRenderArgs) WhitespaceRenderValue {
+	if args.specific != nil {
+		return *args.specific
 	}
-	if def != nil {
+	if def := args.fallback; def != nil {
 		return *def
 	}
 	return WhitespaceRenderNone

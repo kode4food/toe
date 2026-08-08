@@ -407,7 +407,10 @@ func TestOpenAbove(t *testing.T) {
 
 	t.Run("negative range inserts at top", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(-2, -1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: -2,
+			Head:   -1,
+		}}, 0)
 
 		action.OpenAbove(e)
 
@@ -457,7 +460,10 @@ func TestGotoLineTrailingNewline(t *testing.T) {
 func TestReplaceChar(t *testing.T) {
 	t.Run("replaces selected grapheme", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0)
 
 		action.ReplaceChar(e, 'x')
 
@@ -480,7 +486,10 @@ func TestReplaceChar(t *testing.T) {
 func TestReplaceWithYanked(t *testing.T) {
 	t.Run("replaces selection with yanked text", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0)
 		e.Registers().Write('"', []string{"XY"})
 
 		action.ReplaceWithYanked(e)
@@ -491,7 +500,10 @@ func TestReplaceWithYanked(t *testing.T) {
 
 	t.Run("noop when register empty", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0)
 		e.Registers().Clear('"')
 
 		action.ReplaceWithYanked(e)
@@ -503,7 +515,10 @@ func TestReplaceWithYanked(t *testing.T) {
 	t.Run("multiple selections repeat fallback", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
 		testutil.SetSelection(t, e,
-			[]core.Range{core.NewRange(0, 1), core.NewRange(2, 3)},
+			[]core.Range{{
+				Anchor: 0,
+				Head:   1,
+			}, {Anchor: 2, Head: 3}},
 			0,
 		)
 		e.Registers().Write('"', []string{"x"})
@@ -539,7 +554,10 @@ func TestReplaceWithYanked(t *testing.T) {
 func TestSwitchCase(t *testing.T) {
 	t.Run("toggles case", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "Hello")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		action.SwitchCase(e)
 
@@ -549,7 +567,10 @@ func TestSwitchCase(t *testing.T) {
 
 	t.Run("non-alpha chars unchanged", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a1b")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		action.SwitchCase(e)
 
@@ -571,7 +592,10 @@ func TestSwitchCase(t *testing.T) {
 func TestSwitchToUppercase(t *testing.T) {
 	t.Run("uppercases selection", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		action.SwitchToUppercase(e)
 
@@ -583,7 +607,10 @@ func TestSwitchToUppercase(t *testing.T) {
 func TestSwitchToLowercase(t *testing.T) {
 	t.Run("lowercases selection", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "HELLO")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		action.SwitchToLowercase(e)
 
@@ -610,7 +637,10 @@ func TestExtendToLineBounds(t *testing.T) {
 func TestShrinkToLineBounds(t *testing.T) {
 	t.Run("shrinks multiline selection", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 6)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   6,
+		}}, 0)
 
 		action.ShrinkToLineBounds(e)
 
@@ -622,7 +652,10 @@ func TestShrinkToLineBounds(t *testing.T) {
 
 	t.Run("single-line selection unchanged", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdef")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 4)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   4,
+		}}, 0)
 
 		action.ShrinkToLineBounds(e)
 
@@ -636,7 +669,10 @@ func TestShrinkToLineBounds(t *testing.T) {
 	t.Run("backward multiline selection shrinks", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
 		// Backward selection from mid-second-line to mid-first-line
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(5, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 5,
+			Head:   1,
+		}}, 0)
 
 		action.ShrinkToLineBounds(e)
 
@@ -767,8 +803,8 @@ func TestMergeSelections(t *testing.T) {
 	t.Run("merges overlapping selections", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcde")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 3),
-			core.NewRange(2, 5),
+			{Anchor: 0, Head: 3},
+			{Anchor: 2, Head: 5},
 		}, 0)
 
 		action.MergeSelections(e)
@@ -784,8 +820,8 @@ func TestMergeConsecutive(t *testing.T) {
 	t.Run("merges adjacent selections", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcde")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 2),
-			core.NewRange(2, 4),
+			{Anchor: 0, Head: 2},
+			{Anchor: 2, Head: 4},
 		}, 0)
 
 		action.MergeConsecutive(e)
@@ -800,7 +836,10 @@ func TestMergeConsecutive(t *testing.T) {
 func TestEnsureForward(t *testing.T) {
 	t.Run("reverses backward selection to forward", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcde")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(3, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 3,
+			Head:   1,
+		}}, 0)
 
 		action.EnsureForward(e)
 
@@ -825,7 +864,10 @@ func TestIndentUnindent(t *testing.T) {
 
 	t.Run("Indent skips blank lines", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello\n\nworld")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 12)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   12,
+		}}, 0)
 
 		action.Indent(e)
 
@@ -846,7 +888,10 @@ func TestIndentUnindent(t *testing.T) {
 
 	t.Run("Unindent multiple lines", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "\thello\n\tworld")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 13)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   13,
+		}}, 0)
 
 		action.Unindent(e)
 
@@ -868,7 +913,10 @@ func TestIndentUnindent(t *testing.T) {
 func TestSearchSelection(t *testing.T) {
 	t.Run("stores selection as search pattern", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		action.SearchSelection(e)
 
@@ -882,7 +930,10 @@ func TestSearchSelection(t *testing.T) {
 func TestSearchSelectionWord(t *testing.T) {
 	t.Run("stores word-bounded pattern", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		action.SearchSelectionWord(e)
 
@@ -965,7 +1016,10 @@ func TestCopyOnNextLineDuplicateHead(t *testing.T) {
 func TestJoinWithEmptyNextLine(t *testing.T) {
 	t.Run("join with empty next line uses no sep", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\n\ndef")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 8)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   8,
+		}}, 0)
 
 		action.JoinSelectionsSpace(e)
 
@@ -1049,7 +1103,10 @@ func TestFindPrevMatchFromZero(t *testing.T) {
 func TestSurroundAdd(t *testing.T) {
 	t.Run("wraps selection with parens", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   4,
+		}}, 0)
 
 		action.SurroundAdd(e, '(')
 
@@ -1077,7 +1134,11 @@ func TestSurroundReplace(t *testing.T) {
 		e := testutil.EditorWithText(t, "(hello)")
 		testutil.SetCursor(t, e, 1)
 
-		action.SurroundReplace(e, '(', '[')
+		action.SurroundReplace(action.SurroundReplaceArgs{
+			Editor:  e,
+			Current: '(',
+			Wanted:  '[',
+		})
 
 		doc := e.FocusedDocument()
 		assert.Equal(t, "[hello]", doc.Text().String())
@@ -1108,7 +1169,7 @@ func TestFindChar(t *testing.T) {
 
 		action.FindChar(action.FindCharArgs{
 			Editor:    e,
-			Ch:        'c',
+			Char:      'c',
 			Forward:   true,
 			Inclusive: true,
 		})
@@ -1122,8 +1183,7 @@ func TestFindChar(t *testing.T) {
 
 		action.FindChar(action.FindCharArgs{
 			Editor:    e,
-			Ch:        'b',
-			Forward:   false,
+			Char:      'b',
 			Inclusive: true,
 		})
 
@@ -1135,10 +1195,9 @@ func TestFindChar(t *testing.T) {
 		testutil.SetCursor(t, e, 0)
 
 		action.FindChar(action.FindCharArgs{
-			Editor:    e,
-			Ch:        'c',
-			Forward:   true,
-			Inclusive: false,
+			Editor:  e,
+			Char:    'c',
+			Forward: true,
 		})
 
 		assert.Equal(t, 1, testutil.CursorPos(t, e))
@@ -1149,10 +1208,8 @@ func TestFindChar(t *testing.T) {
 		testutil.SetCursor(t, e, 4)
 
 		action.FindChar(action.FindCharArgs{
-			Editor:    e,
-			Ch:        'b',
-			Forward:   false,
-			Inclusive: false,
+			Editor: e,
+			Char:   'b',
 		})
 
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
@@ -1163,10 +1220,8 @@ func TestFindChar(t *testing.T) {
 		testutil.SetCursor(t, e, 0)
 
 		action.FindChar(action.FindCharArgs{
-			Editor:    e,
-			Ch:        'a',
-			Forward:   false,
-			Inclusive: false,
+			Editor: e,
+			Char:   'a',
 		})
 
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
@@ -1234,7 +1289,7 @@ func TestFindCharNotFound(t *testing.T) {
 
 		action.FindChar(action.FindCharArgs{
 			Editor:    e,
-			Ch:        'z',
+			Char:      'z',
 			Forward:   true,
 			Inclusive: true,
 		})
@@ -1247,10 +1302,8 @@ func TestFindCharNotFound(t *testing.T) {
 		testutil.SetCursor(t, e, 4)
 
 		action.FindChar(action.FindCharArgs{
-			Editor:    e,
-			Ch:        'z',
-			Forward:   false,
-			Inclusive: true,
+			Editor: e,
+			Char:   'z',
 		})
 
 		assert.Equal(t, 4, testutil.CursorPos(t, e))

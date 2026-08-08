@@ -13,7 +13,7 @@ import (
 
 // Registry owns installed commands, runtime options, and config sections
 type Registry struct {
-	km       *Keymaps
+	keymaps  *Keymaps
 	sections []Section
 	options  map[string]*Option
 	prefixes []*Option
@@ -21,7 +21,7 @@ type Registry struct {
 
 // NewRegistry returns an empty command registry bound to keymaps
 func NewRegistry(km *Keymaps) *Registry {
-	return &Registry{km: km}
+	return &Registry{keymaps: km}
 }
 
 // RegisterCommand registers a command with its kebab-cased name as the first
@@ -32,7 +32,7 @@ func (r *Registry) RegisterCommand(name string, c Command) error {
 	}
 	alias := strings.ReplaceAll(name, "_", "-")
 	c.Aliases = append([]string{alias}, c.Aliases...)
-	if err := r.km.Register(name, c); err != nil {
+	if err := r.keymaps.Register(name, c); err != nil {
 		return err
 	}
 	return nil
@@ -50,7 +50,7 @@ func (r *Registry) RegisterModule(m Module) error {
 	}
 	for _, lbl := range m.Labels {
 		for _, mode := range lbl.Modes.Split() {
-			r.km.LabelNode(mode, lbl.Seq, lbl.Label)
+			r.keymaps.LabelNode(mode, lbl.Seq, lbl.Label)
 		}
 	}
 	for i, o := range m.Options {
@@ -112,16 +112,6 @@ func (r *Registry) LookupOption(key string) *Option {
 		},
 		Complete: o.Complete,
 	}
-}
-
-func (r *Registry) lookupPrefixOption(key string) *Option {
-	key = normalizeOptionKey(key)
-	for _, o := range r.prefixes {
-		if strings.HasPrefix(key, normalizeOptionKey(o.Key)) {
-			return o
-		}
-	}
-	return nil
 }
 
 // OptionKeys returns all registered option keys in sorted order
@@ -231,6 +221,16 @@ func (r *Registry) OptionValueCompleter() CompletionFunc {
 		}
 		return nil
 	}
+}
+
+func (r *Registry) lookupPrefixOption(key string) *Option {
+	key = normalizeOptionKey(key)
+	for _, o := range r.prefixes {
+		if strings.HasPrefix(key, normalizeOptionKey(o.Key)) {
+			return o
+		}
+	}
+	return nil
 }
 
 func normalizeOptionKey(key string) string {

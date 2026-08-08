@@ -39,23 +39,32 @@ func DeleteCharBackward(e *view.Editor) {
 		seen[pos] = true
 		// Dedent: if everything from line start to cursor is whitespace,
 		// delete one indent unit
-		if del, ok := dedentDelete(text, r, tabWidth, indentWidth); ok {
+		del, ok := dedentDelete(dedentDeleteArgs{
+			text:        text,
+			rng:         r,
+			tabWidth:    tabWidth,
+			indentWidth: indentWidth,
+		})
+		if ok {
 			entries = append(entries, insertEntry{del: del})
 			continue
 		}
 		if pairEnabled {
 			if del, newR, ok := core.HookDelete(text, r, pairs); ok {
 				entries = append(entries, insertEntry{
-					del:  del,
-					newR: newR,
-					pair: true,
+					del:      del,
+					newRange: newR,
+					pair:     true,
 				})
 				continue
 			}
 		}
-		prev := core.NthPrevGraphemeBoundary(text, pos, 1)
+		prev := core.NthPrevGraphemeBoundary(text, core.GraphemeStep{
+			From:  pos,
+			Count: 1,
+		})
 		entries = append(entries, insertEntry{
-			del: core.Deletion{From: prev, To: pos},
+			del: core.Span{From: prev, To: pos},
 		})
 	}
 
@@ -64,7 +73,10 @@ func DeleteCharBackward(e *view.Editor) {
 		if en.del.From == en.del.To {
 			continue
 		}
-		changes = append(changes, core.DeleteChange(en.del.From, en.del.To))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: en.del.From,
+			To:   en.del.To,
+		}))
 	}
 	if len(changes) == 0 {
 		return
@@ -79,7 +91,7 @@ func DeleteCharBackward(e *view.Editor) {
 	for i, r := range ranges {
 		en := entries[i]
 		if en.pair && (en.del.From != en.del.To) {
-			if mapped, err := cs.MapRange(en.newR); err == nil {
+			if mapped, err := cs.MapRange(en.newRange); err == nil {
 				newRanges[i] = mapped
 				continue
 			}
@@ -99,27 +111,36 @@ func DeleteCharBackward(e *view.Editor) {
 	_ = e.Apply(tx)
 }
 
-func dedentDelete(
-	text core.Rope, r core.Range, tabWidth, indentWidth int,
-) (core.Deletion, bool) {
+type dedentDeleteArgs struct {
+	text        core.Rope
+	rng         core.Range
+	tabWidth    int
+	indentWidth int
+}
+
+func dedentDelete(args dedentDeleteArgs) (core.Span, bool) {
+	text := args.text
+	r := args.rng
+	tabWidth := args.tabWidth
+	indentWidth := args.indentWidth
 	pos := r.Cursor(text)
 	line, err := text.CharToLine(pos)
 	if err != nil {
-		return core.Deletion{}, false
+		return core.Span{}, false
 	}
 	lineStart, err := text.LineToChar(line)
 	if err != nil {
-		return core.Deletion{}, false
+		return core.Span{}, false
 	}
 	if pos == lineStart {
-		return core.Deletion{}, false
+		return core.Span{}, false
 	}
 	// Verify the slice [lineStart, pos) is all whitespace
 	width := 0
 	for i := lineStart; i < pos; i++ {
 		ch, err := text.CharAt(i)
 		if err != nil || (ch != ' ' && ch != '\t') {
-			return core.Deletion{}, false
+			return core.Span{}, false
 		}
 		if ch == '\t' {
 			width += tabWidth
@@ -130,10 +151,10 @@ func dedentDelete(
 	// If last char is a tab, delete one tab
 	prevCh, err := text.CharAt(pos - 1)
 	if err != nil {
-		return core.Deletion{}, false
+		return core.Span{}, false
 	}
 	if prevCh == '\t' {
-		return core.Deletion{From: pos - 1, To: pos}, true
+		return core.Span{From: pos - 1, To: pos}, true
 	}
 	// Otherwise delete enough spaces to reach the previous indent stop
 	drop := width % indentWidth
@@ -148,5 +169,5 @@ func dedentDelete(
 		}
 		start--
 	}
-	return core.Deletion{From: start, To: pos}, true
+	return core.Span{From: start, To: pos}, true
 }

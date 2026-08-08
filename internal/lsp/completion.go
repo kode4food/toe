@@ -202,7 +202,7 @@ func (s *Session) completionTrigger(
 ) (string, bool) {
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(0, pos)
+	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
 	if err != nil {
 		return "", false
 	}
@@ -219,6 +219,25 @@ func (s *Session) completionTrigger(
 		}
 	}
 	return "", false
+}
+
+func (s *Session) storeCompletions(items map[string]completionCandidate) {
+	s.candidates.Lock()
+	defer s.candidates.Unlock()
+	s.candidates.completions = items
+}
+
+func (s *Session) storeCompletion(id string, item completionCandidate) {
+	s.candidates.Lock()
+	defer s.candidates.Unlock()
+	s.candidates.completions[id] = item
+}
+
+func (s *Session) completion(id string) (completionCandidate, bool) {
+	s.candidates.RLock()
+	defer s.candidates.RUnlock()
+	c, ok := s.candidates.completions[id]
+	return c, ok
 }
 
 func clientResolvesCompletion(c *Client) bool {
@@ -252,23 +271,4 @@ func sortCompletions(items []*view.CompletionItem) {
 		}
 		return 0
 	})
-}
-
-func (s *Session) storeCompletions(items map[string]completionCandidate) {
-	s.candidates.Lock()
-	defer s.candidates.Unlock()
-	s.candidates.completions = items
-}
-
-func (s *Session) storeCompletion(id string, item completionCandidate) {
-	s.candidates.Lock()
-	defer s.candidates.Unlock()
-	s.candidates.completions[id] = item
-}
-
-func (s *Session) completion(id string) (completionCandidate, bool) {
-	s.candidates.RLock()
-	defer s.candidates.RUnlock()
-	c, ok := s.candidates.completions[id]
-	return c, ok
 }

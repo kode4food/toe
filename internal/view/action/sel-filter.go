@@ -27,7 +27,7 @@ func SelectWithinRegex(e *view.Editor, pattern string) error {
 	primary := 0
 	for i, r := range sel.Ranges() {
 		from, to := r.From(), r.To()
-		slice, err := text.Slice(from, to)
+		slice, err := text.Slice(core.Span{From: from, To: to})
 		if err != nil {
 			continue
 		}
@@ -35,7 +35,7 @@ func SelectWithinRegex(e *view.Editor, pattern string) error {
 		for _, loc := range re.FindAllStringIndex(s, -1) {
 			start := from + byteOffsetToRuneOffset(s, loc[0])
 			end := from + byteOffsetToRuneOffset(s, loc[1])
-			out = append(out, core.NewRange(start, end))
+			out = append(out, core.Range{Anchor: start, Head: end})
 		}
 		if i == sel.PrimaryIndex() && len(out) > 0 {
 			primary = len(out) - 1
@@ -72,7 +72,7 @@ func SplitSelectionByRegex(e *view.Editor, pattern string) error {
 	primary := 0
 	for i, r := range sel.Ranges() {
 		from, to := r.From(), r.To()
-		slice, err := text.Slice(from, to)
+		slice, err := text.Slice(core.Span{From: from, To: to})
 		if err != nil {
 			continue
 		}
@@ -81,17 +81,18 @@ func SplitSelectionByRegex(e *view.Editor, pattern string) error {
 		prev := 0
 		for _, loc := range indices {
 			if loc[0] > prev {
-				out = append(out, core.NewRange(
-					from+byteOffsetToRuneOffset(s, prev),
-					from+byteOffsetToRuneOffset(s, loc[0]),
-				))
+				out = append(out, core.Range{
+					Anchor: from + byteOffsetToRuneOffset(s, prev),
+					Head:   from + byteOffsetToRuneOffset(s, loc[0]),
+				})
 			}
 			prev = loc[1]
 		}
 		if prev < len(s) {
-			out = append(out, core.NewRange(
-				from+byteOffsetToRuneOffset(s, prev), to,
-			))
+			out = append(out, core.Range{
+				Anchor: from + byteOffsetToRuneOffset(s, prev),
+				Head:   to,
+			})
 		}
 		if i == sel.PrimaryIndex() && len(out) > 0 {
 			primary = len(out) - 1
@@ -136,7 +137,7 @@ func filterSelectionsImpl(e *view.Editor, pattern string, remove bool) error {
 	var out []core.Range
 	primary := 0
 	for i, r := range sel.Ranges() {
-		slice, err := text.Slice(r.From(), r.To())
+		slice, err := text.Slice(r.Span())
 		if err != nil {
 			continue
 		}

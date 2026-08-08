@@ -26,7 +26,7 @@ func lspRangeToChars(
 ) (core.Range, bool) {
 	if from, ok := lspPositionToChar(doc, r.Start, enc); ok {
 		if to, ok := lspPositionToChar(doc, r.End, enc); ok {
-			return core.NewRange(from, to), true
+			return core.Range{Anchor: from, Head: to}, true
 		}
 	}
 	return core.Range{}, false

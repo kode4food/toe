@@ -19,9 +19,9 @@ type (
 	}
 
 	fsWatcher struct {
-		ch    chan notify.EventInfo
-		done  chan struct{}
-		roots map[string]struct{}
+		events chan notify.EventInfo
+		done   chan struct{}
+		roots  map[string]struct{}
 	}
 
 	fileWatchEvent struct {
@@ -83,7 +83,11 @@ func (s *Session) registerCapability(
 		if err := protocol.Unmarshal(reg.RegisterOptions, &opts); err != nil {
 			return err
 		}
-		s.registerWatches(server, reg.ID, fileWatches(opts))
+		s.registerWatches(registerWatchesArgs{
+			server:  server,
+			id:      reg.ID,
+			watches: fileWatches(opts),
+		})
 	}
 	return nil
 }
@@ -107,14 +111,20 @@ func (s *Session) unregisterCapability(
 	}
 }
 
-func (s *Session) registerWatches(server, id string, watches []fileWatch) {
+type registerWatchesArgs struct {
+	server  string
+	id      string
+	watches []fileWatch
+}
+
+func (s *Session) registerWatches(args registerWatchesArgs) {
 	s.watch.Lock()
-	if s.watch.registrations[server] == nil {
-		s.watch.registrations[server] = map[string][]fileWatch{}
+	if s.watch.registrations[args.server] == nil {
+		s.watch.registrations[args.server] = map[string][]fileWatch{}
 	}
-	s.watch.registrations[server][id] = watches
+	s.watch.registrations[args.server][args.id] = args.watches
 	s.watch.Unlock()
-	if len(watches) > 0 {
+	if len(args.watches) > 0 {
 		go s.ensureFileWatcher()
 	}
 }

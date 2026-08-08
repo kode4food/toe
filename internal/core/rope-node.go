@@ -5,25 +5,21 @@ import (
 	"unicode/utf8"
 )
 
-type ropeNode struct {
-	left  *ropeNode
-	right *ropeNode
-	text  string
-	chars int
-	lines int
-	depth int
-}
+type (
+	ropeNode struct {
+		left  *ropeNode
+		right *ropeNode
+		text  string
+		chars int
+		lines int
+		depth int
+	}
 
-func buildRopeNode(text string) *ropeNode {
-	if text == "" {
-		return nil
+	ropePair struct {
+		left  *ropeNode
+		right *ropeNode
 	}
-	if utf8.RuneCountInString(text) <= DefaultRopeLeafChars {
-		return newLeafRopeNode(text)
-	}
-	left, right := splitStringAtChar(text, utf8.RuneCountInString(text)/2)
-	return concatRopeNode(buildRopeNode(left), buildRopeNode(right))
-}
+)
 
 func newLeafRopeNode(text string) *ropeNode {
 	return &ropeNode{
@@ -34,34 +30,63 @@ func newLeafRopeNode(text string) *ropeNode {
 	}
 }
 
-func concatRopeNode(left, right *ropeNode) *ropeNode {
-	if left == nil {
-		return right
+func buildRopeNode(text string) *ropeNode {
+	if text == "" {
+		return nil
 	}
-	if right == nil {
-		return left
+	if utf8.RuneCountInString(text) <= DefaultRopeLeafChars {
+		return newLeafRopeNode(text)
 	}
-	n := &ropeNode{left: left, right: right}
+	split := splitStringAtChar(text, utf8.RuneCountInString(text)/2)
+	return concatRopeNode(ropePair{
+		left:  buildRopeNode(split.before),
+		right: buildRopeNode(split.after),
+	})
+}
+
+func concatRopeNode(pair ropePair) *ropeNode {
+	if pair.left == nil {
+		return pair.right
+	}
+	if pair.right == nil {
+		return pair.left
+	}
+	n := &ropeNode{left: pair.left, right: pair.right}
 	refreshRopeNode(n)
 	return balanceRopeNode(n)
 }
 
-func splitRopeNode(n *ropeNode, pos int) (*ropeNode, *ropeNode) {
+func splitRopeNode(n *ropeNode, pos int) ropePair {
 	if n == nil {
-		return nil, nil
+		return ropePair{}
 	}
 	if n.left == nil && n.right == nil {
-		left, right := splitStringAtChar(n.text, pos)
-		return buildRopeNode(left), buildRopeNode(right)
+		split := splitStringAtChar(n.text, pos)
+		return ropePair{
+			left:  buildRopeNode(split.before),
+			right: buildRopeNode(split.after),
+		}
 	}
 
 	leftChars := ropeChars(n.left)
 	if pos < leftChars {
-		a, b := splitRopeNode(n.left, pos)
-		return a, concatRopeNode(b, n.right)
+		pair := splitRopeNode(n.left, pos)
+		return ropePair{
+			left: pair.left,
+			right: concatRopeNode(ropePair{
+				left:  pair.right,
+				right: n.right,
+			}),
+		}
 	}
-	a, b := splitRopeNode(n.right, pos-leftChars)
-	return concatRopeNode(n.left, a), b
+	pair := splitRopeNode(n.right, pos-leftChars)
+	return ropePair{
+		left: concatRopeNode(ropePair{
+			left:  n.left,
+			right: pair.left,
+		}),
+		right: pair.right,
+	}
 }
 
 func balanceRopeNode(n *ropeNode) *ropeNode {

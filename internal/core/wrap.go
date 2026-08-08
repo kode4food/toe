@@ -14,6 +14,19 @@ type (
 		trailing   bool
 	}
 
+	// hardWrapPrefixes is the prefix carried by a paragraph's first line and
+	// the one carried by every line after it
+	hardWrapPrefixes struct {
+		initial    string
+		subsequent string
+	}
+
+	// stringPair is two strings compared against each other
+	stringPair struct {
+		left  string
+		right string
+	}
+
 	hardWrapWord struct {
 		text  string
 		width int
@@ -38,10 +51,7 @@ func ReflowHardWrap(text string, width int) string {
 	}
 
 	uw := unfillHardWrap(text)
-	body := strings.TrimSuffix(uw.text, uw.ending)
-	refilled := fillHardWrap(
-		body, width, uw.initial, uw.subsequent, uw.ending,
-	)
+	refilled := fillHardWrap(&uw, width)
 	if uw.trailing && refilled != "" {
 		refilled += uw.ending
 	}
@@ -63,14 +73,14 @@ func unfillHardWrap(text string) hardWrapUnfilled {
 		return hardWrapUnfilled{ending: ending, trailing: trailing}
 	}
 
-	initial, subsequent := detectHardWrapPrefixes(lines)
+	prefixes := detectHardWrapPrefixes(lines)
 
 	var b strings.Builder
 	for i, line := range lines {
-		prefix := initial
+		prefix := prefixes.initial
 		if i > 0 {
 			b.WriteByte(' ')
-			prefix = subsequent
+			prefix = prefixes.subsequent
 		}
 		if len(line) <= len(prefix) {
 			continue
@@ -82,26 +92,27 @@ func unfillHardWrap(text string) hardWrapUnfilled {
 	}
 	return hardWrapUnfilled{
 		text:       b.String(),
-		initial:    initial,
-		subsequent: subsequent,
+		initial:    prefixes.initial,
+		subsequent: prefixes.subsequent,
 		ending:     ending,
 		trailing:   trailing,
 	}
 }
 
-func detectHardWrapPrefixes(lines []string) (string, string) {
+func detectHardWrapPrefixes(lines []string) hardWrapPrefixes {
 	initial := hardWrapPrefix(lines[0])
 	if len(lines) == 1 {
-		return initial, ""
+		return hardWrapPrefixes{initial: initial}
 	}
 
 	subsequent := hardWrapPrefix(lines[1])
 	for _, line := range lines[2:] {
-		subsequent = commonHardWrapPrefix(
-			subsequent, hardWrapPrefix(line),
-		)
+		subsequent = commonHardWrapPrefix(stringPair{
+			left:  subsequent,
+			right: hardWrapPrefix(line),
+		})
 	}
-	return initial, subsequent
+	return hardWrapPrefixes{initial: initial, subsequent: subsequent}
 }
 
 func hardWrapPrefix(line string) string {
@@ -113,17 +124,17 @@ func hardWrapPrefix(line string) string {
 	return line
 }
 
-func commonHardWrapPrefix(a, b string) string {
+func commonHardWrapPrefix(pair stringPair) string {
 	i := 0
-	for i < len(a) && i < len(b) {
-		ra, aw := utf8.DecodeRuneInString(a[i:])
-		rb, bw := utf8.DecodeRuneInString(b[i:])
+	for i < len(pair.left) && i < len(pair.right) {
+		ra, aw := utf8.DecodeRuneInString(pair.left[i:])
+		rb, bw := utf8.DecodeRuneInString(pair.right[i:])
 		if ra != rb {
-			return a[:i]
+			return pair.left[:i]
 		}
 		i += min(aw, bw)
 	}
-	return a[:i]
+	return pair.left[:i]
 }
 
 func hardWrapPrefixChar(ch rune) bool {

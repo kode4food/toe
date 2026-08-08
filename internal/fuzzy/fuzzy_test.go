@@ -38,7 +38,7 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("empty pattern matches everything", func(t *testing.T) {
-		res, ok := fuzzy.Match(fuzzy.MatchArgs{Pattern: "", Text: "anything"})
+		res, ok := fuzzy.Match(fuzzy.MatchArgs{Text: "anything"})
 		assert.True(t, ok)
 		assert.Empty(t, res.Indices)
 	})

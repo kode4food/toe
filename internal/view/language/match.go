@@ -19,7 +19,10 @@ func ForFilename(langs Languages, path string) *Language {
 	foundLen := -1
 	for i, lang := range langs.Languages {
 		for _, ft := range lang.FileTypes {
-			if ft.Glob != "" && glob.Match(ft.Glob, abs) {
+			if ft.Glob != "" && glob.Match(glob.Candidate{
+				Pattern: ft.Glob,
+				Path:    abs,
+			}) {
 				if n := len(ft.Glob); n > foundLen {
 					found = &langs.Languages[i]
 					foundLen = n

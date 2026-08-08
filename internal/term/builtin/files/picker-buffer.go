@@ -63,9 +63,7 @@ func (p *PickerStartPosition) UnmarshalText(text []byte) error {
 }
 
 // Load lists the open buffers, most recently used first
-func (b *bufferPickerSource) Load(
-	e *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (b *bufferPickerSource) Load(e *view.Editor) ui.PickerLoad {
 	docs := e.AllDocuments()
 	id := view.InvalidDocumentId
 	if doc := e.FocusedDocument(); doc != nil {
@@ -104,7 +102,7 @@ func (b *bufferPickerSource) Load(
 			},
 		}))
 	}
-	return items, nil, func() {}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
 // Accept switches the focused pane to the chosen buffer

@@ -94,7 +94,10 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 func (s *Session) DiffHunksForPath(path string) []view.DiffHunk {
 	if base, err := s.provider.DiffBase(path); err == nil {
 		if data, err := os.ReadFile(path); err == nil {
-			return Diff(baseRope(base), baseRope(data))
+			return Diff(DiffSides{
+				Base: baseRope(base),
+				Doc:  baseRope(data),
+			})
 		}
 	}
 	return nil
@@ -251,7 +254,7 @@ func (s *Session) loadDiffBase(
 		d.SetBase(rope)
 		return
 	}
-	d := NewDiffer(rope, text, s.notifyUpdate)
+	d := NewDiffer(DiffSides{Base: rope, Doc: text}, s.notifyUpdate)
 	s.differs[doc.ID()] = d
 	s.heads[doc.ID()] = name
 	s.headIDs[doc.ID()] = head

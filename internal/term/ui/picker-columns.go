@@ -20,12 +20,6 @@ const (
 	pickerColumnPercentile = 90
 )
 
-func pickerColumnWidths(p *Picker, w int) []int {
-	s := newPickerColumnSizing(p, w)
-	s.allocate()
-	return s.widths
-}
-
 func newPickerColumnSizing(p *Picker, w int) *pickerColumnSizing {
 	cols := p.source.Columns()
 	n := len(cols)
@@ -102,6 +96,12 @@ func (s *pickerColumnSizing) grow(target []int, pinned bool) {
 		s.widths[best]++
 		s.spare--
 	}
+}
+
+func pickerColumnWidths(p *Picker, w int) []int {
+	s := newPickerColumnSizing(p, w)
+	s.allocate()
+	return s.widths
 }
 
 func pickerHasHeader(cols []string) bool {

@@ -30,7 +30,7 @@ func TestHealth(t *testing.T) {
 
 	t.Run("failing check reports not ok", func(t *testing.T) {
 		rep := health.Report{
-			health.Check{Name: "test", OK: false, Errors: []string{"bad"}},
+			health.Check{Name: "test", Errors: []string{"bad"}},
 		}
 		assert.False(t, rep.OK())
 	})

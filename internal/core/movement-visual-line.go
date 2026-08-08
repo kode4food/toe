@@ -16,7 +16,7 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 	}
 	maxWrap := max(vf.MaxWrap, 0)
 	tabW := vf.TabWidth
-	wrapInd := vf.WrapIndicatorLen
+	wrapInd := vf.WrapIndicatorWidth
 
 	var starts []int
 	col := 0
@@ -60,7 +60,10 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 			if indent < 0 && !CharIsWhitespace(ch) {
 				indent = col
 			}
-			lastW = visualRuneW(ch, col+wordWidth, tabW)
+			lastW = visualRuneW(ch, TabStop{
+				Column:   col + wordWidth,
+				TabWidth: tabW,
+			})
 			wordWidth += lastW
 			i++
 			if !charIsWord(ch) {
@@ -76,10 +79,7 @@ func newVisualLine(doc Rope, line int, format *VisualMoveFormat) visualLine {
 	runes := visualLineRunes(doc, line)
 	v := visualLine{runes: runes, format: format}
 	if format != nil {
-		v.prefixW = visualPrefixWidth(
-			runes, format.TabWidth, format.MaxIndentRetain,
-			format.WrapIndicatorLen,
-		)
+		v.prefixWidth = visualPrefixWidth(runes, format)
 		v.rowStarts = format.VisualRowStarts(runes)
 	}
 	return v
@@ -99,7 +99,7 @@ func (v visualLine) rowStartCol(row int) int {
 	if row <= 0 {
 		return 0
 	}
-	return v.prefixW
+	return v.prefixWidth
 }
 
 func (v visualLine) rowCount() int {
@@ -116,7 +116,10 @@ func (v visualLine) posOf(charOff int) geom.Point {
 	at.X = v.rowStartCol(at.Y)
 	tabW := v.format.TabWidth
 	for i := v.rowStartOffset(at.Y); i < charOff && i < len(v.runes); i++ {
-		at.X += visualRuneW(v.runes[i], at.X, tabW)
+		at.X += visualRuneW(v.runes[i], TabStop{
+			Column:   at.X,
+			TabWidth: tabW,
+		})
 	}
 	return at
 }
@@ -132,7 +135,10 @@ func (v visualLine) charAtPos(at geom.Point) int {
 			break
 		}
 		best = i
-		col += visualRuneW(v.runes[i], col, tabW)
+		col += visualRuneW(v.runes[i], TabStop{
+			Column:   col,
+			TabWidth: tabW,
+		})
 	}
 	return best
 }
@@ -149,20 +155,18 @@ func visualLineRunes(doc Rope, lineIdx int) []rune {
 	if lineEnd <= lineStart {
 		return nil
 	}
-	if sl, err := doc.Slice(lineStart, lineEnd); err == nil {
+	if sl, err := doc.Slice(Span{From: lineStart, To: lineEnd}); err == nil {
 		return []rune(sl.String())
 	}
 	return nil
 }
 
-func visualPrefixWidth(
-	runes []rune, tabW, maxIndentRetain, wrapIndLen int,
-) int {
-	indent := visualLineIndentW(runes, tabW)
-	if indent > maxIndentRetain {
+func visualPrefixWidth(runes []rune, vf *VisualMoveFormat) int {
+	indent := visualLineIndentW(runes, vf.TabWidth)
+	if indent > vf.MaxIndentRetain {
 		indent = 0
 	}
-	return indent + wrapIndLen
+	return indent + vf.WrapIndicatorWidth
 }
 
 func visualLineIndentW(runes []rune, tabW int) int {
@@ -170,7 +174,7 @@ func visualLineIndentW(runes []rune, tabW int) int {
 	for _, ch := range runes {
 		switch ch {
 		case '\t':
-			col += TabWidthAt(col, tabW)
+			col += TabWidthAt(TabStop{Column: col, TabWidth: tabW})
 		case ' ':
 			col++
 		default:
@@ -186,9 +190,9 @@ func charIsWord(ch rune) bool {
 	return ch == '_' || unicode.IsLetter(ch) || unicode.IsNumber(ch)
 }
 
-func visualRuneW(ch rune, col, tabW int) int {
+func visualRuneW(ch rune, at TabStop) int {
 	if ch == '\t' {
-		return TabWidthAt(col, tabW)
+		return TabWidthAt(at)
 	}
 	return graphemeWidth(string(ch))
 }

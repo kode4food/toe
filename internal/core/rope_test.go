@@ -22,18 +22,18 @@ func TestRopeSliceString(t *testing.T) {
 	}
 	for _, rg := range ranges {
 		from, to := rg[0], rg[1]
-		want, err := r.Slice(from, to)
+		want, err := r.Slice(core.Span{From: from, To: to})
 		assert.NoError(t, err)
-		got, err := r.SliceString(from, to)
+		got, err := r.SliceString(core.Span{From: from, To: to})
 		assert.NoError(t, err)
 		assert.Equal(t, want.String(), got, "range [%d, %d)", from, to)
 	}
 
-	_, err := r.SliceString(-1, 3)
+	_, err := r.SliceString(core.Span{From: -1, To: 3})
 	assert.Error(t, err)
-	_, err = r.SliceString(5, 3)
+	_, err = r.SliceString(core.Span{From: 5, To: 3})
 	assert.Error(t, err)
-	_, err = r.SliceString(0, n+1)
+	_, err = r.SliceString(core.Span{From: 0, To: n + 1})
 	assert.Error(t, err)
 }
 
@@ -67,7 +67,7 @@ func TestRope(t *testing.T) {
 		assert.NoError(t, err)
 		next, err = next.Insert(next.LenChars()-1, "R")
 		assert.NoError(t, err)
-		next, err = next.Delete(1190, 1210)
+		next, err = next.Delete(core.Span{From: 1190, To: 1210})
 
 		assert.NoError(t, err)
 		assert.Equal(t, 2382, next.LenChars())
@@ -78,7 +78,7 @@ func TestRope(t *testing.T) {
 	t.Run("slices by character offsets", func(t *testing.T) {
 		r := core.NewRope("a世b界c")
 
-		s, err := r.Slice(1, 4)
+		s, err := r.Slice(core.Span{From: 1, To: 4})
 
 		assert.NoError(t, err)
 		assert.Equal(t, "世b界", s.String())
@@ -89,7 +89,7 @@ func TestRope(t *testing.T) {
 		text := strings.Repeat("a", 1100) + "世界" + strings.Repeat("b", 1100)
 		r := core.NewRope(text)
 
-		s, err := r.Slice(1099, 1103)
+		s, err := r.Slice(core.Span{From: 1099, To: 1103})
 
 		assert.NoError(t, err)
 		assert.Equal(t, "a世界b", s.String())
@@ -98,10 +98,10 @@ func TestRope(t *testing.T) {
 	t.Run("rejects invalid slices", func(t *testing.T) {
 		r := core.NewRope("abc")
 
-		_, err := r.Slice(2, 1)
+		_, err := r.Slice(core.Span{From: 2, To: 1})
 		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
 
-		_, err = r.Slice(0, 4)
+		_, err = r.Slice(core.Span{From: 0, To: 4})
 		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
 	})
 
@@ -118,7 +118,7 @@ func TestRope(t *testing.T) {
 	t.Run("deletes text without changing original", func(t *testing.T) {
 		r := core.NewRope("ab世界cd")
 
-		next, err := r.Delete(2, 4)
+		next, err := r.Delete(core.Span{From: 2, To: 4})
 
 		assert.NoError(t, err)
 		assert.Equal(t, "ab世界cd", r.String())
@@ -131,7 +131,7 @@ func TestRope(t *testing.T) {
 		_, err := r.Insert(4, "x")
 		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
 
-		_, err = r.Delete(-1, 1)
+		_, err = r.Delete(core.Span{From: -1, To: 1})
 		assert.True(t, errors.Is(err, core.ErrRopeIndexOutOfRange))
 	})
 
@@ -262,21 +262,30 @@ func TestRope(t *testing.T) {
 	t.Run("ForEachSegment clamps negative from", func(t *testing.T) {
 		r := core.NewRope("abcde")
 		var got string
-		r.ForEachSegment(-5, 3, func(s string) { got += s })
+		r.ForEachSegment(core.Span{
+			From: -5,
+			To:   3,
+		}, func(s string) { got += s })
 		assert.Equal(t, "abc", got)
 	})
 
 	t.Run("ForEachSegment clamps to past end", func(t *testing.T) {
 		r := core.NewRope("abcde")
 		var got string
-		r.ForEachSegment(2, 999, func(s string) { got += s })
+		r.ForEachSegment(core.Span{
+			From: 2,
+			To:   999,
+		}, func(s string) { got += s })
 		assert.Equal(t, "cde", got)
 	})
 
 	t.Run("ForEachSegment empty range calls nothing", func(t *testing.T) {
 		r := core.NewRope("abcde")
 		var called bool
-		r.ForEachSegment(3, 3, func(s string) { called = true })
+		r.ForEachSegment(core.Span{
+			From: 3,
+			To:   3,
+		}, func(s string) { called = true })
 		assert.False(t, called)
 	})
 

@@ -54,7 +54,7 @@ func SupportModule() command.Module {
 			{
 				Name:      actRedraw,
 				DocString: "Clear and re-render the whole UI",
-				Run: func(_ *view.Editor, _ *command.Args) command.Result {
+				Run: func(*view.Editor, *command.Args) command.Result {
 					return command.Result{Signal: command.SignalClearScreen}
 				},
 				Modes:     command.PaneModes,
@@ -106,7 +106,7 @@ func parseGotoLocation(s string) (string, core.Position) {
 	case 1:
 		return path, core.Position{Line: nums[0]}
 	case 2:
-		return path, core.Position{Line: nums[1], Col: nums[0]}
+		return path, core.Position{Line: nums[1], Column: nums[0]}
 	}
 	return path, core.Position{}
 }

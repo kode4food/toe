@@ -30,7 +30,8 @@ func largeGoSource(funcs int) string {
 func BenchmarkRenderLargeFileSteady(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "big.go")
-	if err := os.WriteFile(path, []byte(largeGoSource(2000)), 0o644); err != nil {
+	err := os.WriteFile(path, []byte(largeGoSource(2000)), 0o644)
+	if err != nil {
 		b.Fatal(err)
 	}
 	e := view.NewEditor(root)

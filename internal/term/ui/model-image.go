@@ -205,7 +205,10 @@ func (m Model) imageDisplayCmd() tea.Cmd {
 		if cells.Empty() {
 			return true
 		}
-		id := kittyImageID(img.ContentID(), uint32(pane.ID()), false)
+		id := kittyImageID(kittyImageIDArgs{
+			content: img.ContentID(),
+			surface: uint32(pane.ID()),
+		})
 		cmds = append(cmds, m.context.images.display(displayArgs{
 			img:   img,
 			path:  pane.Path(),
@@ -290,12 +293,18 @@ func deleteImageSeq(id uint32) string {
 	return ansi.KittyGraphics(nil, opts.Options()...)
 }
 
-func kittyImageID(content, surface uint32, preview bool) uint32 {
-	id := (content ^ surface*imageViewSalt) & imageIDMask
+type kittyImageIDArgs struct {
+	content uint32
+	surface uint32
+	preview bool
+}
+
+func kittyImageID(args kittyImageIDArgs) uint32 {
+	id := (args.content ^ args.surface*imageViewSalt) & imageIDMask
 	if id == 0 {
 		id = 1
 	}
-	if preview {
+	if args.preview {
 		id |= previewImageMask
 	}
 	return id

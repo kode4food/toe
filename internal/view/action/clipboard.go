@@ -99,7 +99,10 @@ func ClipboardReplace(e *view.Editor) {
 	ranges := sel.Ranges()
 	changes := make([]core.Change, 0, len(ranges))
 	for _, r := range ranges {
-		changes = append(changes, core.TextChange(r.From(), r.To(), val))
+		changes = append(changes, core.TextChange(core.Span{
+			From: r.From(),
+			To:   r.To(),
+		}, val))
 	}
 	cs, err := core.NewChangeSetFromChanges(text, changes)
 	if err != nil {

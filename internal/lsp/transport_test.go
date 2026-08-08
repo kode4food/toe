@@ -106,9 +106,9 @@ func TestTransport(t *testing.T) {
 			},
 		}
 		_, client, err := lsp.Start(&lsp.TransportConfig{
-			Ctx:    t.Context(),
-			Name:   "test",
-			Server: cfg,
+			Context: t.Context(),
+			Name:    "test",
+			Server:  cfg,
 		})
 		assert.NoError(t, err)
 
@@ -126,8 +126,8 @@ func TestTransport(t *testing.T) {
 
 	t.Run("requires command", func(t *testing.T) {
 		_, _, err := lsp.Start(&lsp.TransportConfig{
-			Ctx:  t.Context(),
-			Name: "test",
+			Context: t.Context(),
+			Name:    "test",
 		})
 
 		assert.True(t, errors.Is(err, lsp.ErrCommandRequired))
@@ -1335,8 +1335,8 @@ func (s *processServer) CodeAction(
 				Title:   "Run formatter",
 				Command: "session.afterCompletion",
 			},
-			&protocol.Command{Title: ""},
-			&protocol.CodeAction{Title: ""},
+			&protocol.Command{},
+			&protocol.CodeAction{},
 			&protocol.CodeAction{
 				Title: "Edit and command",
 				Kind:  new(protocol.CodeActionKindQuickFix),
@@ -1352,7 +1352,6 @@ func (s *processServer) CodeAction(
 										Line: 0, Character: 0,
 									},
 								},
-								NewText: "",
 							},
 						},
 					},

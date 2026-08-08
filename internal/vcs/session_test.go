@@ -205,7 +205,7 @@ func mustChangeSet(
 ) core.ChangeSet {
 	t.Helper()
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
-		core.TextChange(0, text.LenChars(), replacement),
+		core.TextChange(core.Span{From: 0, To: text.LenChars()}, replacement),
 	})
 	assert.NoError(t, err)
 	return cs

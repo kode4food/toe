@@ -20,7 +20,7 @@ func (r *renderPass) renderImagePane(
 	}
 	a := pane.Area()
 	contentH := max(a.Height-1, 0)
-	th := r.cx.ThemeFor(focused)
+	th := r.context.ThemeFor(focused)
 	r.paintImage(buf, pane, geom.Area{
 		Point: geom.Point{X: a.X, Y: y0 + a.Y},
 		Size:  geom.Size{Width: a.Width, Height: contentH},
@@ -43,31 +43,33 @@ type renderImageStatusArgs struct {
 }
 
 func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
-	pane := args.pane
-	th := r.cx.Theme()
+	th := r.context.Theme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if args.focused {
 		baseTUI = th.Get("ui.statusline")
-		modeSt = th.Get("ui.statusline." + pane.Mode().Scope())
+		modeSt = th.Get("ui.statusline." + args.pane.Mode().Scope())
 	}
 
-	pixels := pane.Image().Size()
+	pixels := args.pane.Image().Size()
 	right := []statusElem{{
 		text: fmt.Sprintf("%d%s%d %d%%",
-			pixels.Width, imageSizeTimes, pixels.Height, pane.Zoom(),
+			pixels.Width, imageSizeTimes, pixels.Height, args.pane.Zoom(),
 		),
 		style: baseTUI,
 	}}
 	right = r.withMaximizedStatus(right)
-	name := view.DocumentRelativeName(pane.Path(), r.cx.Editor.Cwd())
+	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+		Path:    args.pane.Path(),
+		BaseDir: r.context.Editor.Cwd(),
+	})
 	renderStatusElems(renderStatusElemsArgs{
 		buf:       args.buf,
 		at:        args.at,
 		width:     args.width,
 		baseStyle: baseTUI,
 		left: []statusElem{
-			statusBadge(pane.Mode().String(), modeSt),
+			statusBadge(args.pane.Mode().String(), modeSt),
 			{text: name, style: baseTUI},
 		},
 		right: right,
@@ -80,15 +82,18 @@ func (r *renderPass) paintImage(
 	buf *tui.Buffer, pane *ImagePane, area geom.Area, th *theme.Theme,
 ) {
 	bg := th.Get("ui.background").BgColor()
-	if !r.cx.images.graphics {
+	if !r.context.images.graphics {
 		r.renderImageMessage(buf, area, i18n.StatusImageUnsupported, th)
 		return
 	}
 	img := pane.Image()
-	id := kittyImageID(img.ContentID(), uint32(pane.ID()), false)
+	id := kittyImageID(kittyImageIDArgs{
+		content: img.ContentID(),
+		surface: uint32(pane.ID()),
+	})
 	// Draw at the put size, not the live zoom, so the grid, the placement's
 	// c=/r=, and the centering box cannot drift apart while a zoom settles
-	cells, ok := r.cx.images.readySize(id)
+	cells, ok := r.context.images.readySize(id)
 	if !ok {
 		r.renderImageLoading(buf, area, th)
 		return
@@ -112,7 +117,7 @@ func (r *renderPass) paintImage(
 	}
 	for row := range visH {
 		for col := range visW {
-			sym := r.cx.images.placeholder(
+			sym := r.context.images.placeholder(
 				cells, geom.Point{X: grid.X + col, Y: grid.Y + row},
 			)
 			buf.Set(geom.Point{X: screen.X + col, Y: screen.Y + row},

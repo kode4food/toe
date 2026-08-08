@@ -24,9 +24,15 @@ func TestChangeSetCompose(t *testing.T) {
 
 	t.Run("delete covers previously inserted region", func(t *testing.T) {
 		doc := core.NewRope("abc")
-		mid, csA := apply(t, doc, []core.Change{core.TextChange(1, 1, "XY")})
+		mid, csA := apply(t, doc, []core.Change{core.TextChange(core.Span{
+			From: 1,
+			To:   1,
+		}, "XY")})
 		// mid = "aXYbc"
-		final, csB := apply(t, mid, []core.Change{core.DeleteChange(1, 3)})
+		final, csB := apply(t, mid, []core.Change{core.DeleteChange(core.Span{
+			From: 1,
+			To:   3,
+		})})
 		// final = "abc"
 
 		result, err := csA.Compose(csB).Apply(doc)
@@ -37,9 +43,15 @@ func TestChangeSetCompose(t *testing.T) {
 
 	t.Run("two sequential replacements", func(t *testing.T) {
 		doc := core.NewRope("hello world")
-		mid, csA := apply(t, doc, []core.Change{core.TextChange(6, 11, "Go")})
+		mid, csA := apply(t, doc, []core.Change{core.TextChange(core.Span{
+			From: 6,
+			To:   11,
+		}, "Go")})
 		// mid = "hello Go"
-		final, csB := apply(t, mid, []core.Change{core.TextChange(0, 5, "hi")})
+		final, csB := apply(t, mid, []core.Change{core.TextChange(core.Span{
+			From: 0,
+			To:   5,
+		}, "hi")})
 		// final = "hi Go"
 
 		result, err := csA.Compose(csB).Apply(doc)
@@ -50,9 +62,15 @@ func TestChangeSetCompose(t *testing.T) {
 
 	t.Run("delete then insert at same position", func(t *testing.T) {
 		doc := core.NewRope("abcde")
-		mid, csA := apply(t, doc, []core.Change{core.DeleteChange(1, 3)})
+		mid, csA := apply(t, doc, []core.Change{core.DeleteChange(core.Span{
+			From: 1,
+			To:   3,
+		})})
 		// mid = "ade"
-		final, csB := apply(t, mid, []core.Change{core.TextChange(1, 1, "XY")})
+		final, csB := apply(t, mid, []core.Change{core.TextChange(core.Span{
+			From: 1,
+			To:   1,
+		}, "XY")})
 		// final = "aXYde"
 
 		result, err := csA.Compose(csB).Apply(doc)
@@ -65,12 +83,12 @@ func TestChangeSetCompose(t *testing.T) {
 		doc := core.NewRope("hello xz")
 		// A: replace " xz" with " test!" then retain nothing
 		mid, csA := apply(t, doc, []core.Change{
-			core.TextChange(5, 8, " test!"),
+			core.TextChange(core.Span{From: 5, To: 8}, " test!"),
 		})
 		// mid = "hello test!"
 		final, csB := apply(t, mid, []core.Change{
-			core.DeleteChange(0, 5),
-			core.TextChange(6, 11, "世orld"),
+			core.DeleteChange(core.Span{From: 0, To: 5}),
+			core.TextChange(core.Span{From: 6, To: 11}, "世orld"),
 		})
 		// final = " 世orld"
 
@@ -86,13 +104,13 @@ func TestChangeSetComposeCoverage(t *testing.T) {
 		// A inserts "XYZ" at pos 1; B deletes only 1 of those 3 chars
 		doc := core.NewRope("ab")
 		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(1, 1, "XYZ"),
+			core.TextChange(core.Span{From: 1, To: 1}, "XYZ"),
 		})
 		assert.NoError(t, err)
 		mid, err := csA.Apply(doc) // "aXYZb"
 		assert.NoError(t, err)
 		csB, err := core.NewChangeSetFromChanges(mid, []core.Change{
-			core.DeleteChange(1, 2),
+			core.DeleteChange(core.Span{From: 1, To: 2}),
 		})
 		assert.NoError(t, err)
 		final, err := csB.Apply(mid) // "aYZb"
@@ -108,13 +126,13 @@ func TestChangeSetComposeCoverage(t *testing.T) {
 		// A inserts "X"; B deletes "Xb" (2 chars, more than A inserted)
 		doc := core.NewRope("ab")
 		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(1, 1, "X"),
+			core.TextChange(core.Span{From: 1, To: 1}, "X"),
 		})
 		assert.NoError(t, err)
 		mid, err := csA.Apply(doc) // "aXb"
 		assert.NoError(t, err)
 		csB, err := core.NewChangeSetFromChanges(mid, []core.Change{
-			core.DeleteChange(1, 3),
+			core.DeleteChange(core.Span{From: 1, To: 3}),
 		})
 		assert.NoError(t, err)
 		final, err := csB.Apply(mid) // "a"
@@ -132,7 +150,7 @@ func TestChangeSetComposeEmpty(t *testing.T) {
 		doc := core.NewRope("hello")
 		empty := core.NewChangeSet(doc)
 		csB, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(0, 5, "world"),
+			core.TextChange(core.Span{From: 0, To: 5}, "world"),
 		})
 		assert.NoError(t, err)
 
@@ -145,7 +163,7 @@ func TestChangeSetComposeEmpty(t *testing.T) {
 	t.Run("empty rhs returns lhs", func(t *testing.T) {
 		doc := core.NewRope("hello")
 		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(0, 5, "world"),
+			core.TextChange(core.Span{From: 0, To: 5}, "world"),
 		})
 		assert.NoError(t, err)
 		mid, err := csA.Apply(doc)

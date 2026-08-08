@@ -86,7 +86,10 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 			continue
 		}
 		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, val))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, val))
 	}
 	if len(changes) == 0 {
 		return

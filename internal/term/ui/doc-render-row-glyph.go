@@ -6,6 +6,7 @@ import (
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -20,64 +21,107 @@ const (
 	runeLastPrintableASCII  rune = 0x7e // '~' - last printable ASCII
 )
 
-func (r *rowRender) isGuideAt(col, indentCol, startGuide, endGuide int) bool {
-	if !r.ig.Render || col >= indentCol {
+// indentGuides describes where indent guides are drawn on a row: guides run
+// from level Start up to (not including) End, within the indent columns
+type indentGuides struct {
+	indentCol int
+	start     int
+	end       int
+}
+
+func (r *rowRender) isGuideAt(col int, guides indentGuides) bool {
+	if !r.indents.Render || col >= guides.indentCol {
 		return false
 	}
 	tabW := r.format.TabWidth
 	level := col / tabW
-	return col%tabW == 0 && level >= startGuide && level < endGuide
+	return col%tabW == 0 && level >= guides.start && level < guides.end
 }
 
-type rowGraphemeArgs struct {
-	char       rune
-	col        int
-	indentCol  int
-	startGuide int
-	endGuide   int
+type renderGraphemeRes struct {
+	text  string
+	width int
+	glyph documentGlyph
 }
 
 func (r *rowRender) renderGrapheme(
-	args rowGraphemeArgs,
-) (string, int, documentGlyph) {
-	ch := args.char
-	col := args.col
+	ch rune, col int, guides indentGuides,
+) renderGraphemeRes {
 	if ch >= runeFirstPrintableASCII && ch <= runeLastPrintableASCII {
-		return asciiTable[ch : ch+1], 1, documentGlyphNone
+		return renderGraphemeRes{
+			text:  tui.ASCIIString(ch),
+			width: 1,
+			glyph: documentGlyphNone,
+		}
 	}
 	tabW := r.format.TabWidth
-	wsRender := r.ws.Render
-	wsChars := r.ws.Characters
-	guide := r.isGuideAt(col, args.indentCol, args.startGuide, args.endGuide)
+	wsRender := r.whitespace.Render
+	wsChars := r.whitespace.Characters
+	guide := r.isGuideAt(col, guides)
 	switch ch {
 	case runeTab:
 		width := tabW - col%tabW
 		if guide {
-			rendered := string(r.ig.CharRune()) +
+			rendered := string(r.indents.CharRune()) +
 				strings.Repeat(string(wsChars.TabpadRune()), width-1)
-			return rendered, width, documentGlyphGuide
+			return renderGraphemeRes{
+				text:  rendered,
+				width: width,
+				glyph: documentGlyphGuide,
+			}
 		}
 		if wsRender.TabRender() == view.WhitespaceRenderAll {
 			tabpad := strings.Repeat(string(wsChars.TabpadRune()), width-1)
-			return string(wsChars.TabRune()) + tabpad,
-				width, documentGlyphWhitespace
+			return renderGraphemeRes{
+				text:  string(wsChars.TabRune()) + tabpad,
+				width: width,
+				glyph: documentGlyphWhitespace,
+			}
 		}
-		return strings.Repeat(" ", width), width, documentGlyphNone
+		return renderGraphemeRes{
+			text:  strings.Repeat(" ", width),
+			width: width,
+			glyph: documentGlyphNone,
+		}
 	case runeSpace:
 		if guide {
-			return string(r.ig.CharRune()), 1, documentGlyphGuide
+			return renderGraphemeRes{
+				text:  string(r.indents.CharRune()),
+				width: 1,
+				glyph: documentGlyphGuide,
+			}
 		}
 		if wsRender.SpaceRender() == view.WhitespaceRenderAll {
-			return string(wsChars.SpaceRune()), 1, documentGlyphWhitespace
+			return renderGraphemeRes{
+				text:  string(wsChars.SpaceRune()),
+				width: 1,
+				glyph: documentGlyphWhitespace,
+			}
 		}
-		return " ", 1, documentGlyphNone
+		return renderGraphemeRes{
+			text:  " ",
+			width: 1,
+			glyph: documentGlyphNone,
+		}
 	case runeNbsp, runeNnbsp:
 		if wsRender.NbspRender() == view.WhitespaceRenderAll {
-			return string(wsChars.NbspRune()), 1, documentGlyphWhitespace
+			return renderGraphemeRes{
+				text:  string(wsChars.NbspRune()),
+				width: 1,
+				glyph: documentGlyphWhitespace,
+			}
 		}
-		return string(ch), 1, documentGlyphNone
+		return renderGraphemeRes{
+			text:  string(ch),
+			width: 1,
+			glyph: documentGlyphNone,
+		}
 	default:
-		return string(ch), runewidth.RuneWidth(ch), documentGlyphNone
+		return renderGraphemeRes{
+			text:  string(ch),
+			width: runewidth.RuneWidth(ch),
+			glyph: documentGlyphNone,
+		}
 	}
 }
 
@@ -86,20 +130,22 @@ func (r *rowRender) softWrapBreaks(tabW int) []int {
 		return nil
 	}
 	w := 0
-	for _, ch := range r.lineStr {
-		w += view.RuneWidth(ch, w, tabW)
+	for _, ch := range r.lineText {
+		w += view.RuneWidth(ch, core.TabStop{Column: w, TabWidth: tabW})
 	}
 	if w <= r.format.ViewportWidth {
 		return nil
 	}
 	vf := &core.VisualMoveFormat{
-		ViewportWidth:    r.format.ViewportWidth,
-		TabWidth:         r.format.TabWidth,
-		MaxWrap:          r.format.MaxWrap,
-		MaxIndentRetain:  r.format.MaxIndentRetain,
-		WrapIndicatorLen: runewidth.StringWidth(r.format.WrapIndicatorPrefix()),
+		ViewportWidth:   r.format.ViewportWidth,
+		TabWidth:        r.format.TabWidth,
+		MaxWrap:         r.format.MaxWrap,
+		MaxIndentRetain: r.format.MaxIndentRetain,
+		WrapIndicatorWidth: runewidth.StringWidth(
+			r.format.WrapIndicatorPrefix(),
+		),
 	}
-	return vf.VisualRowStarts([]rune(r.lineStr))
+	return vf.VisualRowStarts([]rune(r.lineText))
 }
 
 func softWrapPrefix(format *language.TextFormat, indent int) string {
@@ -110,7 +156,7 @@ func softWrapPrefix(format *language.TextFormat, indent int) string {
 }
 
 func softWrapContinuationRow(
-	format *language.TextFormat, indent int, styles *tuiStyles,
+	format *language.TextFormat, indent int, styles *styles,
 ) renderedRow {
 	prefix := softWrapPrefix(format, indent)
 	wrap := format.WrapIndicatorPrefix()

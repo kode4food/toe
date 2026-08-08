@@ -24,11 +24,11 @@ type Options struct {
 	AutoSaveAfterDelay   bool
 	AutoSaveDelayTimeout int
 
-	AtomicSave         bool
-	InsertFinalNewline bool
-	TrimFinalNewlines  bool
-	TrimTrailingWS     bool
-	EditorConfig       bool
+	AtomicSave             bool
+	InsertFinalNewline     bool
+	TrimFinalNewlines      bool
+	TrimTrailingWhitespace bool
+	EditorConfig           bool
 
 	AutoSession      bool
 	FileWatch        bool

@@ -67,12 +67,23 @@ func resolveInherits(
 	if err != nil {
 		return nil, err
 	}
-	return mergeThemes(parentTheme, theme), nil
+	return mergeThemes(Overlay[map[string]any]{
+		Base: parentTheme,
+		Over: theme,
+	}), nil
 }
 
-func mergeThemes(parent, theme map[string]any) map[string]any {
-	palette := mergeThemePalette(parent["palette"], theme["palette"])
-	merged, ok := MergeTOMLValues(parent, theme, 1).(map[string]any)
+func mergeThemes(themes Overlay[map[string]any]) map[string]any {
+	parent := themes.Base
+	theme := themes.Over
+	palette := mergeThemePalette(Overlay[any]{
+		Base: parent["palette"],
+		Over: theme["palette"],
+	})
+	merged, ok := MergeTOMLValues(Overlay[any]{
+		Base: parent,
+		Over: theme,
+	}, 1).(map[string]any)
 	if !ok {
 		return theme
 	}
@@ -80,10 +91,12 @@ func mergeThemes(parent, theme map[string]any) map[string]any {
 	return merged
 }
 
-func mergeThemePalette(parent, theme any) any {
+func mergeThemePalette(palettes Overlay[any]) any {
+	parent := palettes.Base
+	theme := palettes.Over
 	switch {
 	case parent != nil && theme != nil:
-		return MergeTOMLValues(parent, theme, 2)
+		return MergeTOMLValues(palettes, 2)
 	case parent != nil:
 		return parent
 	case theme != nil:

@@ -217,10 +217,10 @@ func GotoPosition(e *view.Editor, at core.Position) {
 		if err != nil {
 			return r
 		}
-		if at.Col > 1 {
+		if at.Column > 1 {
 			end, err := doc.LineEndCharIndex(target)
 			if err == nil {
-				pos = min(pos+at.Col-1, end)
+				pos = min(pos+at.Column-1, end)
 			}
 		}
 		return r.PutCursor(doc, pos, extend)
@@ -321,10 +321,10 @@ func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
 		return nil
 	}
 	return &core.VisualMoveFormat{
-		ViewportWidth:    format.ViewportWidth,
-		TabWidth:         format.TabWidth,
-		MaxWrap:          format.MaxWrap,
-		MaxIndentRetain:  format.MaxIndentRetain,
-		WrapIndicatorLen: runewidth.StringWidth(format.WrapIndicatorPrefix()),
+		ViewportWidth:      format.ViewportWidth,
+		TabWidth:           format.TabWidth,
+		MaxWrap:            format.MaxWrap,
+		MaxIndentRetain:    format.MaxIndentRetain,
+		WrapIndicatorWidth: runewidth.StringWidth(format.WrapIndicatorPrefix()),
 	}
 }

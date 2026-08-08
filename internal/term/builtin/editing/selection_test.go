@@ -14,7 +14,10 @@ import (
 func TestSelectionSurround(t *testing.T) {
 	t.Run("add wraps selection", func(t *testing.T) {
 		e, km := test.Env(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 4)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   4,
+		}}, 0)
 		res := test.RunCmd(t, km, e, "surround_add")
 		assert.NotNil(t, res.Continuation)
 		res.Continuation(e, test.Char('('))
@@ -222,7 +225,10 @@ func TestSelectionSyntax(t *testing.T) {
 		test.RunCmdArgs(t, km, e, "set_language", "go")
 		from := strings.Index(src, "func main")
 		to := strings.Index(src, "}\n") + 1
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(from, to)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: from,
+			Head:   to,
+		}}, 0)
 		test.RunCmd(t, km, e, "shrink_selection")
 		v := e.FocusedView()
 		assert.NotNil(t, v)

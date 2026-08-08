@@ -8,6 +8,12 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// styleOverlay is a base style and the style being layered onto it
+type styleOverlay struct {
+	base    tui.Style
+	overlay tui.Style
+}
+
 type selectionAtRes struct {
 	cursor   bool
 	primary  bool
@@ -16,7 +22,7 @@ type selectionAtRes struct {
 
 func (r *rowRender) selectionAt(pos int) selectionAtRes {
 	for _, sp := range r.selSpans {
-		if pos == sp.cur {
+		if pos == sp.cursor {
 			return selectionAtRes{cursor: true, primary: sp.primary}
 		}
 		if pos >= sp.from && pos < sp.to {
@@ -65,9 +71,9 @@ func (r *rowRender) diagnosticAt(pos int) (diagnosticSpan, bool) {
 func (r *rowRender) baseStyleAt(pos int, glyph documentGlyph) tui.Style {
 	switch {
 	case glyph == documentGlyphGuide:
-		return r.tuiStyles.indentGuide
+		return r.styles.indentGuide
 	case glyph == documentGlyphWhitespace:
-		return r.tuiStyles.whitespace
+		return r.styles.whitespace
 	case r.hlSpans != nil:
 		scope, ok := r.hlScopeAt(pos)
 		if !ok {
@@ -78,11 +84,11 @@ func (r *rowRender) baseStyleAt(pos int, glyph documentGlyph) tui.Style {
 		}
 		if diag, dOk := r.diagnosticAt(pos); dOk &&
 			diag.severity >= view.DiagnosticSeverityError {
-			return r.tuiStyles.text
+			return r.styles.text
 		}
 		return r.hlStyle(scope)
 	}
-	return r.tuiStyles.text
+	return r.styles.text
 }
 
 // hlScopeAt resolves the highlight scope at pos by advancing hlIdx; callers
@@ -133,37 +139,40 @@ func spanLowerBound(spans []highlight.Span, pos int) int {
 
 // overlaySelStyle overlays the bg (and explicit fg) of sel onto base,
 // preserving the syntax foreground and attributes when sel has none
-func overlaySelStyle(base, sel tui.Style) tui.Style {
-	if !sel.BgColor().IsReset() {
-		base = base.Bg(sel.BgColor())
+func overlaySelStyle(args styleOverlay) tui.Style {
+	base := args.base
+	if !args.overlay.BgColor().IsReset() {
+		base = base.Bg(args.overlay.BgColor())
 	}
-	if !sel.FgColor().IsReset() {
-		base = base.Fg(sel.FgColor())
-	}
-	return base
-}
-
-func overlayBgStyle(base, overlay tui.Style) tui.Style {
-	if !overlay.BgColor().IsReset() {
-		base = base.Bg(overlay.BgColor())
+	if !args.overlay.FgColor().IsReset() {
+		base = base.Fg(args.overlay.FgColor())
 	}
 	return base
 }
 
-func overlayDiagnosticStyle(base, diag tui.Style) tui.Style {
-	if !diag.FgColor().IsReset() {
-		base = base.Fg(diag.FgColor())
+func overlayBgStyle(args styleOverlay) tui.Style {
+	base := args.base
+	if !args.overlay.BgColor().IsReset() {
+		base = base.Bg(args.overlay.BgColor())
 	}
-	if !diag.BgColor().IsReset() {
-		base = base.Bg(diag.BgColor())
+	return base
+}
+
+func overlayDiagnosticStyle(args styleOverlay) tui.Style {
+	base := args.base
+	if !args.overlay.FgColor().IsReset() {
+		base = base.Fg(args.overlay.FgColor())
 	}
-	if !diag.UnderlineColor().IsReset() {
-		base = base.UlColor(diag.UnderlineColor())
+	if !args.overlay.BgColor().IsReset() {
+		base = base.Bg(args.overlay.BgColor())
 	}
-	if diag.UnderlineStyle() != tui.UnderlineReset {
-		base = base.UlStyle(diag.UnderlineStyle())
+	if !args.overlay.UnderlineColor().IsReset() {
+		base = base.UlColor(args.overlay.UnderlineColor())
 	}
-	if mod := diag.Modifier(); mod != 0 {
+	if args.overlay.UnderlineStyle() != tui.UnderlineReset {
+		base = base.UlStyle(args.overlay.UnderlineStyle())
+	}
+	if mod := args.overlay.Modifier(); mod != 0 {
 		base = base.Mod(mod)
 	}
 	return base

@@ -54,13 +54,16 @@ func TrimSelections(e *view.Editor) {
 			}
 			to--
 		}
-		out = append(out, core.NewRange(from, to).WithDirection(r.Direction()))
+		out = append(out, core.Range{
+			Anchor: from,
+			Head:   to,
+		}.WithDirection(r.Direction()))
 	}
 	if len(out) == 0 {
 		// all ranges were empty/whitespace: collapse to primary cursor
 		cursor := oldPrimary.Cursor(text)
 		newSel, err := core.NewSelection(
-			[]core.Range{core.NewRange(cursor, cursor)}, 0)
+			[]core.Range{{Anchor: cursor, Head: cursor}}, 0)
 		if err != nil {
 			return
 		}

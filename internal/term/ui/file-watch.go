@@ -79,12 +79,6 @@ func (w *fileWatcher) sync(e *view.Editor) {
 	w.reconcileTree()
 }
 
-func addWatchDir(dirs map[string]int, path string) {
-	if path != "" {
-		dirs[filepath.Dir(path)]++
-	}
-}
-
 func (w *fileWatcher) reconcileDirs() {
 	for dir := range w.dirs {
 		if !w.enabled.Load() || w.wantedDirs[dir] == 0 {
@@ -127,7 +121,8 @@ func (w *fileWatcher) setTreeWanted(e *view.Editor, want bool) {
 	w.wantedTreeRoot = ""
 	if want {
 		w.wantedTreeRoot = e.Cwd()
-		if resolved, err := filepath.EvalSymlinks(w.wantedTreeRoot); err == nil {
+		resolved, err := filepath.EvalSymlinks(w.wantedTreeRoot)
+		if err == nil {
 			w.wantedTreeRoot = resolved
 		}
 	}
@@ -243,6 +238,12 @@ func (w *fileWatcher) drain(reg *watchRegistration) {
 		case <-w.done:
 			return
 		}
+	}
+}
+
+func addWatchDir(dirs map[string]int, path string) {
+	if path != "" {
+		dirs[filepath.Dir(path)]++
 	}
 }
 

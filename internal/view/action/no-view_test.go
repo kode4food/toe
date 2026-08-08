@@ -168,7 +168,11 @@ func TestNoViewActions(t *testing.T) {
 			action.SurroundDelete(e, '(')
 		}},
 		{"surround replace", func(e *view.Editor) {
-			action.SurroundReplace(e, '(', '[')
+			action.SurroundReplace(action.SurroundReplaceArgs{
+				Editor:  e,
+				Current: '(',
+				Wanted:  '[',
+			})
 		}},
 		{"switch case", action.SwitchCase},
 		{"text object around", func(e *view.Editor) {
@@ -212,7 +216,9 @@ func TestNoViewSetLineEnding(t *testing.T) {
 
 func TestNoViewReturnActions(t *testing.T) {
 	t.Run("sort returns nil", func(t *testing.T) {
-		err := action.SortSelections(editorWithNoView(t), false, false)
+		err := action.SortSelections(
+			editorWithNoView(t), action.SortSelectionsArgs{},
+		)
 		assert.NoError(t, err)
 	})
 

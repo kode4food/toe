@@ -52,7 +52,7 @@ func TestToggleLineComments(t *testing.T) {
 	t.Run("comment adds token to non-blank lines", func(t *testing.T) {
 		doc := core.NewRope("  1\n\n  2\n  3")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars() - 1}}, 0,
 		)
 		tx, err := core.ToggleLineComments(doc, sel, "")
 		assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestToggleLineComments(t *testing.T) {
 	t.Run("uncomment removes token from lines", func(t *testing.T) {
 		doc := core.NewRope("  # 1\n\n  # 2\n  # 3")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars() - 1}}, 0,
 		)
 		tx, err := core.ToggleLineComments(doc, sel, "")
 		assert.NoError(t, err)
@@ -74,7 +74,7 @@ func TestToggleLineComments(t *testing.T) {
 	t.Run("uncomment zero-margin comments", func(t *testing.T) {
 		doc := core.NewRope("  #1\n\n  #2\n  #3")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars() - 1}}, 0,
 		)
 		tx, err := core.ToggleLineComments(doc, sel, "")
 		assert.NoError(t, err)
@@ -85,7 +85,7 @@ func TestToggleLineComments(t *testing.T) {
 	t.Run("lone token uncomments without space", func(t *testing.T) {
 		doc := core.NewRope("#")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars() - 1}}, 0,
 		)
 		tx, err := core.ToggleLineComments(doc, sel, "")
 		assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestToggleLineComments(t *testing.T) {
 	t.Run("explicit token overrides default", func(t *testing.T) {
 		doc := core.NewRope("hello")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars()-1)}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars() - 1}}, 0,
 		)
 		tx, err := core.ToggleLineComments(doc, sel, "//")
 		assert.NoError(t, err)
@@ -107,7 +107,7 @@ func TestToggleLineComments(t *testing.T) {
 	t.Run("all-blank selection is no-op", func(t *testing.T) {
 		doc := core.NewRope("\n\n")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		tx, err := core.ToggleLineComments(doc, sel, "")
 		assert.NoError(t, err)
@@ -120,7 +120,7 @@ func TestSplitLinesOfSelection(t *testing.T) {
 	t.Run("multi-line range into per-line ranges", func(t *testing.T) {
 		doc := core.NewRope("abc\ndef\nghi")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		split, err := core.SplitLinesOfSelection(doc, sel)
 		assert.NoError(t, err)
@@ -136,7 +136,10 @@ func TestSplitLinesOfSelection(t *testing.T) {
 
 	t.Run("single-line range produces one sub-range", func(t *testing.T) {
 		doc := core.NewRope("hello\nworld")
-		sel, _ := core.NewSelection([]core.Range{core.NewRange(0, 5)}, 0)
+		sel, _ := core.NewSelection([]core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 		split, err := core.SplitLinesOfSelection(doc, sel)
 		assert.NoError(t, err)
 		assert.Len(t, split.Ranges(), 1)
@@ -144,7 +147,10 @@ func TestSplitLinesOfSelection(t *testing.T) {
 
 	t.Run("final unterminated line ends at document", func(t *testing.T) {
 		doc := core.NewRope("hello\nworld")
-		sel, _ := core.NewSelection([]core.Range{core.NewRange(6, 11)}, 0)
+		sel, _ := core.NewSelection([]core.Range{{
+			Anchor: 6,
+			Head:   11,
+		}}, 0)
 
 		split, err := core.SplitLinesOfSelection(doc, sel)
 

@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+// WorkspaceFiles names a global settings file and the workspace file merged
+// over it, alongside the directory whose trust governs that merge
+type WorkspaceFiles struct {
+	Global    string
+	Workspace string
+	Dir       string
+}
+
 var ErrPathUnavailable = errors.New("path unavailable")
 
 const (
@@ -158,7 +166,11 @@ func FindWorkspace(dir string) (string, bool) {
 func TrustWorkspace(dir string) error {
 	if path, ok := WorkspaceTrustFile(); ok {
 		root, _ := FindWorkspace(dir)
-		return updateWorkspaceSet(path, root, true)
+		return updateWorkspaceSet(updateWorkspaceSetArgs{
+			path:      path,
+			workspace: root,
+			add:       true,
+		})
 	}
 	return ErrPathUnavailable
 }
@@ -167,12 +179,22 @@ func TrustWorkspace(dir string) error {
 func UntrustWorkspace(dir string) error {
 	if path, ok := WorkspaceTrustFile(); ok {
 		root, _ := FindWorkspace(dir)
-		return updateWorkspaceSet(path, root, false)
+		return updateWorkspaceSet(updateWorkspaceSetArgs{
+			path:      path,
+			workspace: root,
+		})
 	}
 	return ErrPathUnavailable
 }
 
-func updateWorkspaceSet(path, workspace string, add bool) error {
+type updateWorkspaceSetArgs struct {
+	path      string
+	workspace string
+	add       bool
+}
+
+func updateWorkspaceSet(args updateWorkspaceSetArgs) error {
+	path := args.path
 	set := map[string]bool{}
 	if data, err := os.ReadFile(path); err == nil {
 		for line := range strings.SplitSeq(string(data), "\n") {
@@ -181,10 +203,10 @@ func updateWorkspaceSet(path, workspace string, add bool) error {
 			}
 		}
 	}
-	if add {
-		set[workspace] = true
+	if args.add {
+		set[args.workspace] = true
 	} else {
-		delete(set, workspace)
+		delete(set, args.workspace)
 	}
 	lines := slices.Sorted(maps.Keys(set))
 	text := ""

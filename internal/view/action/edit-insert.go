@@ -45,7 +45,10 @@ func InsertChar(e *view.Editor, ch rune) {
 				continue
 			}
 		}
-		changes = append(changes, core.TextChange(pos, pos, string(ch)))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, string(ch)))
 	}
 
 	cs, err := core.NewChangeSetFromChanges(text, changes)

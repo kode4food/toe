@@ -89,7 +89,7 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 	steps := min(count, n)
 	texts := make([]string, n)
 	for i, r := range ranges {
-		if slice, err := text.Slice(r.From(), r.To()); err == nil {
+		if slice, err := text.Slice(r.Span()); err == nil {
 			texts[i] = slice.String()
 			continue
 		}
@@ -111,7 +111,10 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 	}
 	changes := make([]core.Change, n)
 	for i, r := range ranges {
-		changes[i] = core.TextChange(r.From(), r.To(), rotated[i])
+		changes[i] = core.TextChange(core.Span{
+			From: r.From(),
+			To:   r.To(),
+		}, rotated[i])
 	}
 	cs, err := core.NewChangeSetFromChanges(text, changes)
 	if err != nil {
@@ -133,7 +136,7 @@ func rangesAfterReplace(
 	for i, r := range ranges {
 		newFrom := r.From() + delta
 		newLen := utf8.RuneCountInString(replacements[i])
-		out[i] = core.NewRange(newFrom, newFrom+newLen)
+		out[i] = core.Range{Anchor: newFrom, Head: newFrom + newLen}
 		delta += newLen - (r.To() - r.From())
 	}
 	return out

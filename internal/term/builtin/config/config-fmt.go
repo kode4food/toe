@@ -50,7 +50,7 @@ func formatCmds() []command.Command {
 					lang = ""
 				}
 				doc.SetLang(lang)
-				return command.Result{Message: ""}
+				return command.Result{}
 			},
 			Modes:     command.DocModes,
 			Aliases:   []string{"lang"},
@@ -87,7 +87,7 @@ func formatCmds() []command.Command {
 				if err := action.SetLineEnding(e, le); err != nil {
 					return command.Result{Error: err}
 				}
-				return command.Result{Message: ""}
+				return command.Result{}
 			},
 			Modes:   command.DocModes,
 			Aliases: []string{"line-ending"},
@@ -132,7 +132,7 @@ func formatCmds() []command.Command {
 		{
 			Name:      actEncoding,
 			DocString: "Set encoding",
-			Run: func(_ *view.Editor, _ *command.Args) command.Result {
+			Run: func(*view.Editor, *command.Args) command.Result {
 				return command.Result{Message: view.EncodingUTF8}
 			},
 			Modes:     command.DocModes,

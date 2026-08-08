@@ -15,15 +15,15 @@ const (
 	grayRampStep       = 10
 )
 
-func buildTUIStyles(th *theme.Theme, mode view.Mode) *tuiStyles {
-	return buildTUIStylesWithBackground(
+func buildStyles(th *theme.Theme, mode view.Mode) *styles {
+	return buildStylesWithBackground(
 		th, mode, th.Get("ui.background").BgColor(),
 	)
 }
 
-func buildTUIStylesWithBackground(
+func buildStylesWithBackground(
 	th *theme.Theme, mode view.Mode, bg tui.Color,
-) *tuiStyles {
+) *styles {
 	sel := th.Get("ui.selection")
 	cur, _ := modeCursorStyleFor(th, mode, false)
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
@@ -31,7 +31,7 @@ func buildTUIStylesWithBackground(
 	ruler := deriveBackground(bg, rulerBackgroundPct, light)
 	cursorHighlight := deriveBackground(bg, cursorHighlightPct, light)
 	cl := tui.Style{}.Bg(cursorHighlight)
-	st := &tuiStyles{
+	st := &styles{
 		text:              th.Get("ui.text"),
 		line:              th.Get("ui.linenr"),
 		lineSelected:      th.Get("ui.linenr.selected"),
@@ -137,7 +137,7 @@ func inheritStyleBackground(st tui.Style, bg tui.Color) tui.Style {
 
 // Resolved styles render transparently over lower layers unless the theme
 // gives the scope an explicit background
-func hlStyleFnFor(th *theme.Theme) func(string) tui.Style {
+func highlighterFor(th *theme.Theme) func(string) tui.Style {
 	return func(scope string) tui.Style {
 		if s, ok := th.TryGet(scope); ok {
 			return s

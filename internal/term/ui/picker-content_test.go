@@ -281,13 +281,14 @@ func (noPreviewPickerSource) ColumnProportions() []int {
 	return []int{1}
 }
 
-func (noPreviewPickerSource) Load(
-	*view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
-	return []*ui.PickerItem{{
-		Display: "plain",
-		Columns: []string{"plain"},
-	}}, nil, func() {}
+func (noPreviewPickerSource) Load(*view.Editor) ui.PickerLoad {
+	return ui.PickerLoad{
+		Items: []*ui.PickerItem{{
+			Display: "plain",
+			Columns: []string{"plain"},
+		}},
+		Stop: func() {},
+	}
 }
 
 func (noPreviewPickerSource) Accept(
@@ -317,7 +318,7 @@ func (columnPickerSource) ColumnProportions() []int {
 
 func (c columnPickerSource) Load(
 	*view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+) ui.PickerLoad {
 	items := []*ui.PickerItem{{
 		Display: "first",
 		Columns: []string{
@@ -348,7 +349,7 @@ func (c columnPickerSource) Load(
 			})
 		}
 	}
-	return items, nil, func() {}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
 func (columnPickerSource) PrepareMatcher(string) ui.PickerMatcher {

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"go.lsp.dev/protocol"
+
+	"github.com/kode4food/toe/internal/view"
 )
 
 func (s *Session) applyCreateFile(op *protocol.CreateFile) error {
@@ -55,7 +57,10 @@ func (s *Session) applyRenameFile(op *protocol.RenameFile) error {
 	if err := os.Rename(oldPath, newPath); err != nil {
 		return fmt.Errorf("%w: %v", ErrWorkspaceEditFile, err)
 	}
-	s.renameOpenDocument(oldPath, newPath)
+	s.renameOpenDocument(view.FileRename{
+		OldPath: oldPath,
+		NewPath: newPath,
+	})
 	s.didChangeWatchedFile(oldPath)
 	s.didChangeWatchedFile(newPath)
 	return nil
@@ -90,6 +95,22 @@ func (s *Session) applyDeleteFile(op *protocol.DeleteFile) error {
 	return nil
 }
 
+func (s *Session) renameOpenDocument(rename view.FileRename) {
+	oldAbs, err := filepath.Abs(rename.OldPath)
+	if err != nil {
+		return
+	}
+	newAbs, err := filepath.Abs(rename.NewPath)
+	if err != nil {
+		return
+	}
+	for _, doc := range s.editor.AllDocuments() {
+		if doc.Path() == oldAbs {
+			doc.SetPath(newAbs)
+		}
+	}
+}
+
 func prepareRenameTarget(
 	newPath string, opts *protocol.RenameFileOptions,
 ) (bool, error) {
@@ -111,22 +132,6 @@ func prepareRenameTarget(
 		}
 	}
 	return false, nil
-}
-
-func (s *Session) renameOpenDocument(oldPath, newPath string) {
-	oldAbs, err := filepath.Abs(oldPath)
-	if err != nil {
-		return
-	}
-	newAbs, err := filepath.Abs(newPath)
-	if err != nil {
-		return
-	}
-	for _, doc := range s.editor.AllDocuments() {
-		if doc.Path() == oldAbs {
-			doc.SetPath(newAbs)
-		}
-	}
 }
 
 func pathExists(path string) (bool, error) {

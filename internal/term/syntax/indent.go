@@ -17,28 +17,40 @@ var (
 	defaultOutdents = []string{"else", "elseif", "end"}
 )
 
-// IndentForNewline returns syntax-aware indentation for a newline after pos
-func IndentForNewline(
-	text core.Rope, lang string, line, pos int, style core.IndentStyle,
-) (string, bool) {
-	language := languageFor(lang)
+// IndentForNewlineArgs carries the document position and style used to compute
+// indentation for a new line
+type IndentForNewlineArgs struct {
+	Text  core.Rope
+	Lang  string
+	Line  int
+	Pos   int
+	Style core.IndentStyle
+}
+
+// IndentForNewline returns syntax-aware indentation for a newline after Pos
+func IndentForNewline(args IndentForNewlineArgs) (string, bool) {
+	language := languageFor(args.Lang)
 	if language == nil {
 		return "", false
 	}
-	src := text.String()
-	indent := leadingIndent(src, text, line)
-	body := strings.TrimSpace(linePrefix(src, text, line, pos))
-	if outdentLine(lang, body) {
-		indent = dropIndent(indent, style.AsStr())
+	src := args.Text.String()
+	at := core.LinePos{Line: args.Line, Pos: args.Pos}
+	indent := leadingIndent(src, args.Text, args.Line)
+	body := strings.TrimSpace(linePrefix(src, args.Text, at))
+	if outdentLine(outdentLineArgs{lang: args.Lang, body: body}) {
+		indent = dropIndent(dropIndentArgs{
+			indent: indent,
+			unit:   args.Style.AsStr(),
+		})
 	}
-	ch, chPos, ok := lastCodeChar(src, text, line, pos)
+	ch, chPos, ok := lastCodeChar(src, args.Text, at)
 	if !ok || !indentAfter(ch) || matchingCloseAt(src, chPos+1, ch) {
 		return indent, true
 	}
 	if stringOrComment(src, language, chPos) {
 		return indent, true
 	}
-	return indent + style.AsStr(), true
+	return indent + args.Style.AsStr(), true
 }
 
 func leadingIndent(src string, text core.Rope, line int) string {
@@ -56,25 +68,25 @@ func leadingIndent(src string, text core.Rope, line int) string {
 	return b.String()
 }
 
-func linePrefix(src string, text core.Rope, line, pos int) string {
-	start, err := text.LineToChar(line)
-	if err != nil || pos < start {
+func linePrefix(src string, text core.Rope, at core.LinePos) string {
+	start, err := text.LineToChar(at.Line)
+	if err != nil || at.Pos < start {
 		return ""
 	}
 	runes := []rune(src)
-	pos = min(pos, len(runes))
+	pos := min(at.Pos, len(runes))
 	return string(runes[start:pos])
 }
 
 func lastCodeChar(
-	src string, text core.Rope, line, pos int,
+	src string, text core.Rope, at core.LinePos,
 ) (rune, int, bool) {
-	start, err := text.LineToChar(line)
+	start, err := text.LineToChar(at.Line)
 	if err != nil {
 		return 0, 0, false
 	}
 	runes := []rune(src)
-	pos = min(pos, len(runes))
+	pos := min(at.Pos, len(runes))
 	for i := pos - 1; i >= start; i-- {
 		ch := runes[i]
 		if ch != ' ' && ch != '\t' {
@@ -111,9 +123,7 @@ func matchingCloseAt(src string, pos int, open rune) bool {
 	}
 }
 
-func stringOrComment(
-	src string, language *sitter.Language, pos int,
-) bool {
+func stringOrComment(src string, language *sitter.Language, pos int) bool {
 	p := sitter.NewParser()
 	defer p.Close()
 	if err := p.SetLanguage(language); err != nil {
@@ -142,9 +152,14 @@ func stringOrComment(
 	return false
 }
 
-func outdentLine(lang, body string) bool {
-	word := firstWord(body)
-	switch lang {
+type outdentLineArgs struct {
+	lang string
+	body string
+}
+
+func outdentLine(args outdentLineArgs) bool {
+	word := firstWord(args.body)
+	switch args.lang {
 	case "python":
 		return slices.Contains(pythonOutdents, word)
 	case "javascript", "typescript", "tsx":
@@ -165,7 +180,14 @@ func firstWord(s string) string {
 	return s
 }
 
-func dropIndent(indent, unit string) string {
+type dropIndentArgs struct {
+	indent string
+	unit   string
+}
+
+func dropIndent(args dropIndentArgs) string {
+	indent := args.indent
+	unit := args.unit
 	if unit == "" || indent == "" {
 		return indent
 	}

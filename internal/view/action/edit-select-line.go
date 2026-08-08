@@ -24,9 +24,9 @@ func ExtendLineBelow(e *view.Editor) {
 					return r
 				}
 			}
-			return core.NewRange(b.start, nextEnd)
+			return core.Range{Anchor: b.start, Head: nextEnd}
 		}
-		return core.NewRange(b.start, b.end)
+		return core.Range{Anchor: b.start, Head: b.end}
 	})
 }
 
@@ -50,7 +50,7 @@ type resolveLineBoundsRes struct {
 func resolveLineBounds(
 	doc core.Rope, r core.Range,
 ) (resolveLineBoundsRes, bool) {
-	lr, err := r.LineRange(doc)
+	lr, err := r.LineSpan(doc)
 	if err != nil {
 		return resolveLineBoundsRes{}, false
 	}
@@ -96,7 +96,7 @@ func selectLineImpl(e *view.Editor, above bool) {
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
 	for i, r := range ranges {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			continue
 		}
@@ -149,7 +149,7 @@ func selectLineImpl(e *view.Editor, above bool) {
 			anchor = lineChar(sat(anchorLine + 1))
 			head = lineChar(headLine)
 		}
-		ranges[i] = core.NewRange(anchor, head)
+		ranges[i] = core.Range{Anchor: anchor, Head: head}
 	}
 	e.ResetCount()
 	if newSel, err := core.NewSelection(

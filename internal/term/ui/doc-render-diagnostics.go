@@ -21,11 +21,11 @@ var diagnosticPopupScopes = [...]string{
 }
 
 func (r *renderPass) renderDiagnosticPopup(buf *tui.Buffer) {
-	doc := r.cx.Editor.FocusedDocument()
+	doc := r.context.Editor.FocusedDocument()
 	if doc == nil {
 		return
 	}
-	v := r.cx.Editor.FocusedView()
+	v := r.context.Editor.FocusedView()
 	if v == nil {
 		return
 	}
@@ -44,7 +44,11 @@ func (r *renderPass) drawDiagnosticPopup(
 	buf *tui.Buffer, text string, severity view.DiagnosticSeverity,
 ) {
 	maxW := min(buf.Width, 60)
-	lines := diagnosticPopupLines(text, max(maxW-4, 1), 4)
+	lines := diagnosticPopupLines(diagnosticPopupLinesArgs{
+		text:     text,
+		width:    max(maxW-4, 1),
+		maxLines: 4,
+	})
 	if len(lines) == 0 {
 		return
 	}
@@ -52,7 +56,7 @@ func (r *renderPass) drawDiagnosticPopup(
 	for _, line := range lines {
 		bodyW = max(bodyW, runewidth.StringWidth(line))
 	}
-	st := diagnosticPopupStyle(r.cx, severity)
+	st := diagnosticPopupStyle(r.context, severity)
 	pop := popup{
 		borderStyle:  st,
 		contentStyle: st,
@@ -62,7 +66,7 @@ func (r *renderPass) drawDiagnosticPopup(
 	h := len(lines) + 2
 	x := max(buf.Width-w, 0)
 	y := 0
-	if bufferlineVisible(r.cx) {
+	if bufferlineVisible(r.context) {
 		y = 1
 	}
 	if y+h > buf.Height {
@@ -144,7 +148,7 @@ func diagnosticRangeBounds(diag view.Diagnostic) core.Range {
 	if from == to {
 		to++
 	}
-	return core.NewRange(from, to)
+	return core.Range{Anchor: from, Head: to}
 }
 
 func diagnosticPopupText(diag view.Diagnostic) string {
@@ -163,7 +167,7 @@ func diagnosticMessageText(message string) string {
 }
 
 func diagnosticSpans(
-	diags []view.Diagnostic, styles *tuiStyles,
+	diags []view.Diagnostic, styles *styles,
 ) []diagnosticSpan {
 	if len(diags) == 0 {
 		return nil
@@ -195,16 +199,16 @@ func diagnosticSpans(
 }
 
 func lineDiagnosticSpans(
-	diags []diagnosticSpan, from, to int,
+	diags []diagnosticSpan, s core.Span,
 ) []diagnosticSpan {
-	return filterLineItems(diags,
-		func(d diagnosticSpan) bool { return d.to <= from },
-		func(d diagnosticSpan) bool { return d.from > to },
-	)
+	return filterLineItems(diags, lineItemBounds[diagnosticSpan]{
+		before: func(d diagnosticSpan) bool { return d.to <= s.From },
+		after:  func(d diagnosticSpan) bool { return d.from > s.To },
+	})
 }
 
 func diagnosticStyle(
-	severity view.DiagnosticSeverity, styles *tuiStyles,
+	severity view.DiagnosticSeverity, styles *styles,
 ) tui.Style {
 	switch severity {
 	case view.DiagnosticSeverityError:
@@ -220,20 +224,26 @@ func diagnosticStyle(
 	}
 }
 
-func diagnosticPopupLines(text string, width, maxLines int) []string {
-	text = strings.TrimSpace(text)
-	if text == "" || width <= 0 || maxLines <= 0 {
+type diagnosticPopupLinesArgs struct {
+	text     string
+	width    int
+	maxLines int
+}
+
+func diagnosticPopupLines(args diagnosticPopupLinesArgs) []string {
+	text := strings.TrimSpace(args.text)
+	if text == "" || args.width <= 0 || args.maxLines <= 0 {
 		return nil
 	}
 	var lines []string
-	wrapped := core.ReflowHardWrap(text, width)
+	wrapped := core.ReflowHardWrap(text, args.width)
 	for line := range strings.SplitSeq(wrapped, "\n") {
 		line = strings.TrimRight(line, " \t")
 		if line == "" {
 			continue
 		}
 		lines = append(lines, line)
-		if len(lines) == maxLines {
+		if len(lines) == args.maxLines {
 			break
 		}
 	}

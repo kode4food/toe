@@ -18,9 +18,9 @@ import (
 // renderPass bundles the state needed for a single render pass so every render
 // helper receives it without passing cx and ec separately
 type renderPass struct {
-	ec   *EditorComponent
-	cx   *Context
-	size geom.Size
+	editor  *EditorComponent
+	context *Context
+	size    geom.Size
 }
 
 var splitSepIntersectionChars = [...]string{
@@ -31,15 +31,15 @@ var splitSepIntersectionChars = [...]string{
 }
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
-	th := r.cx.Theme()
+	th := r.context.Theme()
 	bgTUI := th.Get("ui.bufferline.background")
 	activeTUI := th.Get("ui.bufferline.active")
 	inactiveTUI := th.Get("ui.bufferline")
 
 	buf.SetString(geom.Point{Y: y}, strings.Repeat(" ", r.size.Width), bgTUI)
 
-	focusedDoc := r.cx.Editor.FocusedDocument()
-	docs := r.cx.Editor.AllDocuments()
+	focusedDoc := r.context.Editor.FocusedDocument()
+	docs := r.context.Editor.AllDocuments()
 	slices.SortFunc(docs, func(a, b *view.Document) int {
 		return int(a.ID() - b.ID())
 	})
@@ -65,28 +65,27 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 }
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
-	p := r.cx.Editor.Tree().Get(r.cx.Editor.Tree().Focus())
+	p := r.context.Editor.Tree().Get(r.context.Editor.Tree().Focus())
 	if pc, ok := p.(PaneCursor); ok {
-		return pc.Cursor(r.cx)
+		return pc.Cursor(r.context)
 	}
-	opts := r.cx.Editor.Options()
-	kind := opts.CursorShapeForMode(r.cx.Editor.Mode())
+	opts := r.context.Editor.Options()
+	kind := opts.CursorShapeForMode(r.context.Editor.Mode())
 	switch kind {
 	case view.CursorKindHidden:
 		return tea.Cursor{}, false
 	case view.CursorKindBlock:
-		if r.ec.focused {
+		if r.editor.focused {
 			// block cursor drawn manually in content; terminal cursor hidden
 			return tea.Cursor{}, false
 		}
 		// terminal lost focus: use underline so position is still visible
 		kind = view.CursorKindUnderline
 	}
-	if at, ok := r.ec.caretScreenPos(r.cx); ok {
+	if at, ok := r.editor.caretScreenPos(r.context); ok {
 		return tea.Cursor{
 			Position: tea.Position{X: at.X, Y: at.Y},
 			Shape:    cursorKindToShape(kind),
-			Blink:    false,
 		}, true
 	}
 	return tea.Cursor{}, false
@@ -96,7 +95,7 @@ type renderPaneArgs struct {
 	doc     *view.Document
 	view    *view.View
 	buf     *tui.Buffer
-	yOffset int
+	yOff    int
 	focused bool
 }
 
@@ -104,7 +103,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	doc := args.doc
 	v := args.view
 	a := v.Area()
-	opts := r.cx.Editor.Options()
+	opts := r.context.Editor.Options()
 	scrolloff := opts.ScrollOff
 	contentH := max(a.Height-1, 0)
 	editorX := a.X
@@ -115,7 +114,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, opts.Gutters)
 	format := doc.TextFormatForConfig(
-		max(editorW-gutterW, 0), r.cx.Editor.Options(),
+		max(editorW-gutterW, 0), r.context.Editor.Options(),
 	)
 	var vf *core.VisualMoveFormat
 	if format.SoftWrap && gutterW < editorW {
@@ -124,21 +123,27 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			TabWidth:        format.TabWidth,
 			MaxWrap:         format.MaxWrap,
 			MaxIndentRetain: format.MaxIndentRetain,
-			WrapIndicatorLen: runewidth.StringWidth(
+			WrapIndicatorWidth: runewidth.StringWidth(
 				format.WrapIndicatorPrefix(),
 			),
 		}
 	}
 	sel := doc.SelectionFor(v.ID())
 	if !v.SyncFreeScroll(doc.Revision(), sel) {
-		v.EnsureCursorVisible(text, sel, contentH, scrolloff, vf)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       text,
+			Selection: sel,
+			Height:    contentH,
+			ScrollOff: scrolloff,
+			Visual:    vf,
+		})
 	}
 	r.renderContent(renderContentArgs{
 		doc:  doc,
 		view: v,
 		buf:  args.buf,
 		area: geom.Area{
-			Point: geom.Point{X: editorX, Y: args.yOffset + a.Y},
+			Point: geom.Point{X: editorX, Y: args.yOff + a.Y},
 			Size:  geom.Size{Width: editorW, Height: contentH},
 		},
 		focused: args.focused,
@@ -147,7 +152,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		doc:     doc,
 		view:    v,
 		buf:     args.buf,
-		at:      geom.Point{X: a.X, Y: args.yOffset + a.Y + contentH},
+		at:      geom.Point{X: a.X, Y: args.yOff + a.Y + contentH},
 		width:   a.Width,
 		focused: args.focused,
 	})
@@ -156,24 +161,24 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	var force bool
 
-	key := styleKey{theme: th.Name(), mode: r.cx.Editor.Mode()}
+	key := styleKey{theme: th.Name(), mode: r.context.Editor.Mode()}
 	if cache.stylesKey != key {
 		force = true
 	}
 
-	if gen := r.cx.Editor.Options().Gen; cache.lastOptionsGen != gen {
+	if gen := r.context.Editor.Options().Gen; cache.lastOptionsGen != gen {
 		cache.lastOptionsGen = gen
 		force = true
 	}
 
-	if r.cx.composition.changed {
+	if r.context.composition.changed {
 		force = true
 	}
 
-	if cache.lastInfoTitle != r.ec.keys.infoTitle ||
-		!slices.Equal(cache.lastInfoItems, r.ec.keys.infoItems) {
-		cache.lastInfoTitle = r.ec.keys.infoTitle
-		cache.lastInfoItems = r.ec.keys.infoItems
+	if cache.lastInfoTitle != r.editor.keys.infoTitle ||
+		!slices.Equal(cache.lastInfoItems, r.editor.keys.infoItems) {
+		cache.lastInfoTitle = r.editor.keys.infoTitle
+		cache.lastInfoItems = r.editor.keys.infoItems
 		force = true
 	}
 
@@ -182,13 +187,13 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 		force = true
 	}
 
-	if key := currentDiagnosticPopupKey(r.cx); cache.lastDiagKey != key {
+	if key := currentDiagnosticPopupKey(r.context); cache.lastDiagKey != key {
 		cache.lastDiagKey = key
 		force = true
 	}
 
-	if cache.lastSpinner != r.ec.spinner {
-		cache.lastSpinner = r.ec.spinner
+	if cache.lastSpinner != r.editor.spinner {
+		cache.lastSpinner = r.editor.spinner
 		force = true
 	}
 
@@ -198,7 +203,7 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 type beginPaneRedrawArgs struct {
 	buf        *tui.Buffer
 	pane       view.Pane
-	yOffset    int
+	yOff       int
 	dirty      bool
 	redrawAll  bool
 	focused    bool
@@ -210,22 +215,22 @@ type beginPaneRedrawArgs struct {
 func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
 	redraw := args.redrawAll
 	if !redraw {
-		forced := !r.cx.composition.singleLayer &&
-			paneUnderOverlay(r.cx, args.pane.Area(), args.yOffset)
+		forced := !r.context.composition.singleLayer &&
+			paneUnderOverlay(r.context, args.pane.Area(), args.yOff)
 		redraw = forced || args.dirty
 	}
 	if !redraw {
 		return false
 	}
 	if !args.redrawAll || !args.focused {
-		clearPaneRect(args.buf, args.pane.Area(), args.yOffset, args.background)
+		clearPaneRect(args.buf, args.pane.Area(), args.yOff, args.background)
 	}
 	return true
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
-	th := r.cx.Theme()
-	cache := r.ec.cache
+	th := r.context.Theme()
+	cache := r.editor.cache
 
 	redrawAll := r.forceFullRedraw(cache, th)
 	bgTUI := th.Get("ui.background")
@@ -234,18 +239,18 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 
 	y0 := 0
-	if bufferlineVisible(r.cx) {
+	if bufferlineVisible(r.context) {
 		r.renderBufferline(buf, 0)
 		y0 = 1
 	}
 
-	focus := r.cx.Editor.Tree().Focus()
-	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
+	focus := r.context.Editor.Tree().Focus()
+	r.context.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		focused := p.ID() == focus
-		paneBg := r.cx.ThemeFor(focused).Get("ui.background")
+		paneBg := r.context.ThemeFor(focused).Get("ui.background")
 		switch pane := p.(type) {
 		case *view.View:
-			doc := r.cx.Editor.Document(pane.DocID())
+			doc := r.context.Editor.Document(pane.DocID())
 			if doc == nil {
 				return true
 			}
@@ -254,7 +259,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOffset:    y0,
+				yOff:       y0,
 				dirty:      dirty,
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -264,7 +269,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 					doc:     doc,
 					view:    pane,
 					buf:     buf,
-					yOffset: y0,
+					yOff:    y0,
 					focused: focused,
 				})
 			}
@@ -272,7 +277,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOffset:    y0,
+				yOff:       y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -284,7 +289,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOffset:    y0,
+				yOff:       y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -296,7 +301,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOffset:    y0,
+				yOff:       y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -311,7 +316,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	sepTUI := th.Get("ui.border")
 	vertCells := make(map[[2]int]bool)
 	horizCells := make(map[[2]int]bool)
-	r.cx.Editor.Tree().WalkSeparators(func(s view.Separator) {
+	r.context.Editor.Tree().WalkSeparators(func(s view.Separator) {
 		if s.Layout == view.LayoutVertical {
 			for row := s.Y; row < s.Y+s.Height; row++ {
 				vertCells[[2]int{s.X, row}] = true
@@ -328,10 +333,12 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		right := horizCells[[2]int{x + 1, y}]
 		ch := borderV
 		if left || right {
-			ch = splitSepIntersectionChar(
-				vertCells[[2]int{x, y - 1}], vertCells[[2]int{x, y + 1}],
-				left, right,
-			)
+			ch = splitSepIntersectionChar(splitSepIntersectionArgs{
+				above: vertCells[[2]int{x, y - 1}],
+				below: vertCells[[2]int{x, y + 1}],
+				left:  left,
+				right: right,
+			})
 		}
 		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
@@ -344,11 +351,12 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		below := vertCells[[2]int{x, y + 1}]
 		ch := borderH
 		if above || below {
-			ch = splitSepIntersectionChar(
-				above, below,
-				horizCells[[2]int{x - 1, y}],
-				horizCells[[2]int{x + 1, y}],
-			)
+			ch = splitSepIntersectionChar(splitSepIntersectionArgs{
+				above: above,
+				below: below,
+				left:  horizCells[[2]int{x - 1, y}],
+				right: horizCells[[2]int{x + 1, y}],
+			})
 		}
 		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
@@ -357,31 +365,15 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 
 	r.renderDiagnosticPopup(buf)
 
-	if r.ec.keys.infoTitle != "" || len(r.ec.keys.infoItems) > 0 {
+	if r.editor.keys.infoTitle != "" || len(r.editor.keys.infoItems) > 0 {
 		r.renderInfoOverlay(buf)
 	}
 }
 
-func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
-	if !cx.composition.precise {
-		return true
-	}
-	pane := a.Translate(geom.Point{Y: y0})
-	return slices.ContainsFunc(cx.composition.regions, pane.Intersects)
-}
-
-func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
-	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
-	top := y0 + a.Y
-	for y := top; y < top+a.Height; y++ {
-		buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, style)
-	}
-}
-
 func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
-	items := r.ec.keys.infoItems
-	title := r.ec.keys.infoTitle
-	th := r.cx.Theme()
+	items := r.editor.keys.infoItems
+	title := r.editor.keys.infoTitle
+	th := r.context.Theme()
 
 	popupSt := th.Get("ui.popup")
 	popupTUI := popupSt
@@ -427,18 +419,41 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	}
 }
 
-func splitSepIntersectionChar(above, below, left, right bool) string {
+func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
+	if !cx.composition.precise {
+		return true
+	}
+	pane := a.Translate(geom.Point{Y: y0})
+	return slices.ContainsFunc(cx.composition.regions, pane.Intersects)
+}
+
+func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
+	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
+	top := y0 + a.Y
+	for y := top; y < top+a.Height; y++ {
+		buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, style)
+	}
+}
+
+type splitSepIntersectionArgs struct {
+	above bool
+	below bool
+	left  bool
+	right bool
+}
+
+func splitSepIntersectionChar(at splitSepIntersectionArgs) string {
 	idx := 0
-	if above {
+	if at.above {
 		idx |= 1
 	}
-	if below {
+	if at.below {
 		idx |= 2
 	}
-	if left {
+	if at.left {
 		idx |= 4
 	}
-	if right {
+	if at.right {
 		idx |= 8
 	}
 	return splitSepIntersectionChars[idx]

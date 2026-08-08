@@ -18,6 +18,13 @@ type (
 		Text  string
 	}
 
+	// Line is an input line split into the command name and the argument text
+	// that follows it
+	Line struct {
+		Name string
+		Rest string
+	}
+
 	// Token is a token from command-line input
 	Token struct {
 		Kind         TokenKind
@@ -126,7 +133,6 @@ func (t *Tokenizer) Rest() (Token, bool) {
 		Kind:         TokenExpand,
 		ContentStart: start,
 		Content:      t.input[start:],
-		Terminated:   false,
 	}, true
 }
 
@@ -160,7 +166,6 @@ func (t *Tokenizer) Next() (Token, bool, error) {
 			Kind:         TokenUnquoted,
 			ContentStart: start,
 			Content:      t.parseUnquoted(),
-			Terminated:   false,
 		}, true, nil
 	}
 }
@@ -291,16 +296,17 @@ func (t *Tokenizer) peekEscapedToken() bool {
 	}
 }
 
-// SplitCommandLine separates the command name from its argument text
-func SplitCommandLine(input string) (string, string, bool) {
+// SplitCommandLine separates the command name from its argument text. The
+// bool reports whether the name is still being typed
+func SplitCommandLine(input string) (Line, bool) {
 	i := strings.IndexAny(input, " \t")
 	if i < 0 {
-		return input, "", true
+		return Line{Name: input}, true
 	}
 	name := input[:i]
 	rest := input[i+1:]
 	complete := name == "" ||
 		(strings.TrimSpace(rest) == "" && !strings.HasSuffix(input, " ") &&
 			!strings.HasSuffix(input, "\t"))
-	return name, rest, complete
+	return Line{Name: name, Rest: rest}, complete
 }

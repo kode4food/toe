@@ -63,7 +63,7 @@ func TestVCSModule(t *testing.T) {
 		assert.NotNil(t, doc)
 		// select all lines to cover both hunks
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, doc.Text().LenChars()),
+			{Anchor: 0, Head: doc.Text().LenChars()},
 		}, 0)
 		res := test.RunCmd(t, km, e, "reset_diff_change")
 		assert.Equal(t, "Reset 2 changes", res.Message)

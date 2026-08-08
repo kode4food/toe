@@ -154,26 +154,25 @@ func (s *Session) ensureServer(target *workspaceServer) (*Client, bool, error) {
 }
 
 func (s *Session) startClient(target *workspaceServer) (*Client, error) {
-	name, root := target.name, target.root
-	options, err := constructInitOptions(name, root)
+	options, err := constructInitOptions(target)
 	if err != nil {
 		return nil, err
 	}
-	handler := &clientHandler{session: s, name: name}
-	client, err := s.servers.startRegistry(s.ctx, name, root, handler)
+	handler := &clientHandler{session: s, name: target.name}
+	client, err := s.servers.startRegistry(s.ctx, target, handler)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", name, err)
+		return nil, fmt.Errorf("%s: %w", target.name, err)
 	}
-	s.servers.setRoot(name, root)
+	s.servers.setRoot(target)
 	params := NewInitializeParams(InitializeConfig{
-		WorkspaceRoot:         root,
+		WorkspaceRoot:         target.root,
 		InitializationOptions: options,
 	})
 	if _, err := client.Initialize(s.ctx, params); err != nil {
 		_ = client.Close()
-		return nil, fmt.Errorf("%s: %w", name, err)
+		return nil, fmt.Errorf("%s: %w", target.name, err)
 	}
-	s.servers.setClient(name, client)
+	s.servers.setClient(target.name, client)
 	return client, nil
 }
 
@@ -264,18 +263,22 @@ func (s *serverState) setClient(name string, client *Client) {
 	s.clients[name] = client
 }
 
-func (s *serverState) setRoot(name, root string) {
+func (s *serverState) setRoot(target *workspaceServer) {
 	s.Lock()
 	defer s.Unlock()
-	s.roots[name] = root
+	s.roots[target.name] = target.root
 }
 
 func (s *serverState) startRegistry(
-	ctx context.Context, name, root string, handler *clientHandler,
+	ctx context.Context, target *workspaceServer, handler *clientHandler,
 ) (*Client, error) {
 	s.RLock()
 	defer s.RUnlock()
-	return s.registry.Start(ctx, name, root, handler)
+	return s.registry.Start(ctx, RegistryStartArgs{
+		Name:    target.name,
+		Dir:     target.root,
+		Handler: handler,
+	})
 }
 
 func (s *serverState) language(name string) *language.Language {
@@ -348,7 +351,11 @@ func loadLanguages(cwd string) language.Languages {
 		global = path
 	}
 	workspace := loader.WorkspaceLanguagesFile(cwd)
-	langs, ok := language.LoadLanguagesForWorkspace(global, workspace, cwd)
+	langs, ok := language.LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+		Global:    global,
+		Workspace: workspace,
+		Dir:       cwd,
+	})
 	if !ok {
 		return language.Languages{}
 	}
@@ -415,9 +422,9 @@ func stringsToLSPAny(args []string) ([]protocol.LSPAny, error) {
 	return out, nil
 }
 
-func constructInitOptions(name, root string) (protocol.LSPAny, error) {
-	if init, ok := langInitOptions[name]; ok {
-		return init(root)
+func constructInitOptions(target *workspaceServer) (protocol.LSPAny, error) {
+	if init, ok := langInitOptions[target.name]; ok {
+		return init(target.root)
 	}
 	return nil, nil
 }

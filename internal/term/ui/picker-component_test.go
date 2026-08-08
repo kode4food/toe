@@ -243,10 +243,8 @@ func (fixedPickerSource) Accept(
 ) {
 }
 
-func (s fixedPickerSource) Load(
-	*view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
-	return s.items, nil, func() {}
+func (s fixedPickerSource) Load(*view.Editor) ui.PickerLoad {
+	return ui.PickerLoad{Items: s.items, Stop: func() {}}
 }
 
 func fixedPicker(t *testing.T, n, w, h int) ui.Model {

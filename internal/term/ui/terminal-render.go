@@ -66,7 +66,7 @@ func (r *renderPass) renderTerminalPane(
 	a := tp.Area()
 	contentH := max(a.Height-1, 0)
 	emu := tp.Emulator()
-	bg := r.cx.ThemeFor(focused).Get("ui.background").BgColor()
+	bg := r.context.ThemeFor(focused).Get("ui.background").BgColor()
 	if emu.BackgroundColor() != bg {
 		emu.SetBackgroundColor(bg)
 	}
@@ -83,7 +83,7 @@ func (r *renderPass) renderTerminalPane(
 		})
 		highlightSelection(scr, tp)
 	} else {
-		style := r.cx.ThemeFor(focused).Get("ui.text")
+		style := r.context.ThemeFor(focused).Get("ui.text")
 		renderCenteredMessage(
 			buf, scr.area, i18n.Text(i18n.StatusTerminalStarting), style,
 		)
@@ -95,7 +95,7 @@ func (r *renderPass) renderTerminalStatus(
 	buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool,
 ) {
 	a := tp.Area()
-	th := r.cx.Theme()
+	th := r.context.Theme()
 	statusKey := "ui.statusline.inactive"
 	if focused {
 		statusKey = "ui.statusline"

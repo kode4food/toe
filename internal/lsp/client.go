@@ -72,18 +72,6 @@ func NewClient(
 	}
 }
 
-func (c *Client) requestContext(
-	ctx context.Context,
-) (context.Context, context.CancelFunc) {
-	c.mu.RLock()
-	timeout := c.timeout
-	c.mu.RUnlock()
-	if timeout <= 0 {
-		return ctx, func() {}
-	}
-	return context.WithTimeout(ctx, timeout)
-}
-
 // State returns the current lifecycle state of the client
 func (c *Client) State() ClientState {
 	c.mu.RLock()
@@ -129,28 +117,6 @@ func (c *Client) ExecuteCommand(
 	defer cancel()
 	_, err := c.server.ExecuteCommand(ctx, params)
 	return err
-}
-
-func (c *Client) processExitStatus() (bool, string, error) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.processExited, c.stderrText(), c.processErr
-}
-
-func (c *Client) processExitedAfter(
-	timeout time.Duration,
-) (bool, string, error) {
-	done := c.processDone
-	if done == nil {
-		return c.processExitStatus()
-	}
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-	select {
-	case <-done:
-	case <-timer.C:
-	}
-	return c.processExitStatus()
 }
 
 // Initialize performs the LSP initialization handshake with the server
@@ -208,6 +174,40 @@ func (c *Client) Close() error {
 		<-done
 	}
 	return err
+}
+
+func (c *Client) requestContext(
+	ctx context.Context,
+) (context.Context, context.CancelFunc) {
+	c.mu.RLock()
+	timeout := c.timeout
+	c.mu.RUnlock()
+	if timeout <= 0 {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, timeout)
+}
+
+func (c *Client) processExitStatus() (bool, string, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.processExited, c.stderrText(), c.processErr
+}
+
+func (c *Client) processExitedAfter(
+	timeout time.Duration,
+) (bool, string, error) {
+	done := c.processDone
+	if done == nil {
+		return c.processExitStatus()
+	}
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case <-done:
+	case <-timer.C:
+	}
+	return c.processExitStatus()
 }
 
 func (c *Client) markProcessDone(err error) {

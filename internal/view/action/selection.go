@@ -183,7 +183,7 @@ func selectionLines(text core.Rope, sel core.Selection) []int {
 	seen := map[int]bool{}
 	var lines []int
 	for _, r := range sel.Ranges() {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			continue
 		}
@@ -211,7 +211,7 @@ func isBlankLine(s string) bool {
 func selectionIsLinewise(text core.Rope, sel core.Selection) bool {
 	nLines := text.LenLines()
 	for _, r := range sel.Ranges() {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			return false
 		}

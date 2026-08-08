@@ -55,9 +55,7 @@ func TestGotoFileTarget(t *testing.T) {
 		e := testutil.EditorWithText(t, "some text\n")
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		doc.SetDocumentLinks([]view.DocumentLink{
-			{From: 0, To: 4, Target: ""},
-		})
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4}})
 		testutil.SetCursor(t, e, 2)
 		_, err := action.GotoFileTarget(e)
 		assert.ErrorIs(t, err, action.ErrDocumentLinkTarget)
@@ -97,7 +95,10 @@ func TestGotoFileTarget(t *testing.T) {
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 4, To: 8, Target: "file://" + path},
 		})
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(3, 7)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 3,
+			Head:   7,
+		}}, 0)
 		target, err := action.GotoFileTarget(e)
 		assert.NoError(t, err)
 		assert.Equal(t, path, target.Path)
@@ -110,7 +111,7 @@ func TestGotoFileTarget(t *testing.T) {
 		e := testutil.EditorWithText(t, "link\n")
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4}})
 		e.SetLanguageServerController(&stubLSP{
 			resolveLink: func(
 				_ *view.Document, lnk view.DocumentLink,
@@ -129,7 +130,7 @@ func TestGotoFileTarget(t *testing.T) {
 		e := testutil.EditorWithText(t, "link\n")
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4}})
 		e.SetLanguageServerController(&stubLSP{
 			resolveLink: func(
 				_ *view.Document, lnk view.DocumentLink,
@@ -146,7 +147,7 @@ func TestGotoFileTarget(t *testing.T) {
 		e := testutil.EditorWithText(t, "link\n")
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4, Target: ""}})
+		doc.SetDocumentLinks([]view.DocumentLink{{From: 0, To: 4}})
 		e.SetLanguageServerController(&stubLSP{
 			resolveLink: func(
 				_ *view.Document, lnk view.DocumentLink,

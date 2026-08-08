@@ -43,9 +43,9 @@ type (
 	// docStyleSet bundles a theme's derived style tables so a focused and a
 	// dimmed variant are always selected as one unit, never field by field
 	docStyleSet struct {
-		tuiStyles  *tuiStyles
-		hlFn       func(string) tui.Style
-		hlTUICache map[string]tui.Style
+		styles    *styles
+		highlight func(string) tui.Style
+		hlCache   map[string]tui.Style
 	}
 
 	// diagPopupKey identifies the diagnostic popup's rendered content, so a
@@ -56,10 +56,10 @@ type (
 	}
 
 	viewRowEntry struct {
-		logLine int
-		offset  int
-		prefixW int
-		filler  bool
+		logLine     int
+		offset      int
+		prefixWidth int
+		filler      bool
 	}
 
 	// docRenderCache memoizes a single document's derived render state, keyed
@@ -72,13 +72,13 @@ type (
 		hlLang  string
 		hlSpans []highlight.Span
 
-		smRev   int
-		smPat   string
-		smSpans []matchSpan
+		searchRev     int
+		searchPattern string
+		searchSpans   []matchSpan
 
-		prefixRev  int
-		prefixHOff int
-		prefixTabW int
+		prefixRev      int
+		prefixHOff     int
+		prefixTabWidth int
 
 		linePrefix map[int]linePrefixScan
 
@@ -91,9 +91,9 @@ type (
 	}
 
 	lineIndexEntry struct {
-		charStart int
-		byteStart int
-		endingLen int
+		charStart   int
+		byteStart   int
+		endingWidth int
 	}
 
 	matchSpan struct{ from, to int }
@@ -118,9 +118,9 @@ type (
 
 func newDocStyleSet(th *theme.Theme, mode view.Mode) docStyleSet {
 	return docStyleSet{
-		tuiStyles:  buildTUIStyles(th, mode),
-		hlFn:       hlStyleFnFor(th),
-		hlTUICache: make(map[string]tui.Style, 64),
+		styles:    buildStyles(th, mode),
+		highlight: highlighterFor(th),
+		hlCache:   make(map[string]tui.Style, 64),
 	}
 }
 
@@ -168,15 +168,26 @@ func (dc *docRenderCache) ensureRawText(rev int, text core.Rope) string {
 	return dc.rawTextCached
 }
 
-func (dc *docRenderCache) ensureHL(
-	sc *syntax.Cache, rev int, lang, rawText string,
+type ensureHighlightArgs struct {
+	cache   *syntax.Cache
+	rev     int
+	lang    string
+	rawText string
+}
+
+func (dc *docRenderCache) ensureHightlight(
+	args ensureHighlightArgs,
 ) []highlight.Span {
+	lang := args.lang
+	rev := args.rev
 	if lang != view.DefaultLanguage && (dc.hlRev != rev || dc.hlLang != lang) {
 		dc.hlRev = rev
 		dc.hlLang = lang
-		dc.hlSpans = sc.Tokenize(
-			highlight.NormalizeNewlines(rawText), lang,
-		)
+		dc.hlSpans = args.cache.Tokenize(core.Source{
+			Text: highlight.NormalizeNewlines(args.rawText),
+			Lang: lang,
+		})
+
 	}
 	if lang == view.DefaultLanguage {
 		return nil
@@ -184,35 +195,41 @@ func (dc *docRenderCache) ensureHL(
 	return dc.hlSpans
 }
 
-func (dc *docRenderCache) ensureSearchSpans(rev int, pat, rawText string) {
-	if dc.smRev == rev && dc.smPat == pat {
+type ensureSearchSpansArgs struct {
+	rev     int
+	pattern string
+	rawText string
+}
+
+func (dc *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
+	if dc.searchRev == args.rev && dc.searchPattern == args.pattern {
 		return
 	}
-	dc.smRev = rev
-	dc.smPat = pat
-	dc.smSpans = nil
-	if pat == "" {
+	dc.searchRev = args.rev
+	dc.searchPattern = args.pattern
+	dc.searchSpans = nil
+	if args.pattern == "" {
 		return
 	}
-	re, err := regexp.Compile(pat)
+	re, err := regexp.Compile(args.pattern)
 	if err != nil {
 		return
 	}
-	locs := re.FindAllStringIndex(rawText, -1)
+	locs := re.FindAllStringIndex(args.rawText, -1)
 	if len(locs) == 0 {
 		return
 	}
-	b2r := make([]int, len(rawText)+1)
+	b2r := make([]int, len(args.rawText)+1)
 	ri := 0
-	for bi := range rawText {
+	for bi := range args.rawText {
 		b2r[bi] = ri
 		ri++
 	}
-	b2r[len(rawText)] = ri
+	b2r[len(args.rawText)] = ri
 	for _, loc := range locs {
 		from, to := b2r[loc[0]], b2r[loc[1]]
 		if to > from {
-			dc.smSpans = append(dc.smSpans, matchSpan{from, to})
+			dc.searchSpans = append(dc.searchSpans, matchSpan{from, to})
 		}
 	}
 }
@@ -234,7 +251,7 @@ func (dc *docRenderCache) ensureLineIndex(
 		if bytePos > 0 && rawText[bytePos-1] == '\r' {
 			endingLen = 2
 		}
-		idx[len(idx)-1].endingLen = endingLen
+		idx[len(idx)-1].endingWidth = endingLen
 		idx = append(idx, lineIndexEntry{
 			charStart: charPos, byteStart: bytePos + 1,
 		})
@@ -248,11 +265,11 @@ func (dc *docRenderCache) ensureLineIndex(
 }
 
 func (dc *docRenderCache) ensureLinePrefix(args linePrefixArgs) linePrefixScan {
-	if dc.prefixRev != args.rev || dc.prefixHOff != args.horizontalOffset ||
-		dc.prefixTabW != args.tabWidth {
+	if dc.prefixRev != args.rev || dc.prefixHOff != args.horzOff ||
+		dc.prefixTabWidth != args.tabWidth {
 		dc.prefixRev = args.rev
-		dc.prefixHOff = args.horizontalOffset
-		dc.prefixTabW = args.tabWidth
+		dc.prefixHOff = args.horzOff
+		dc.prefixTabWidth = args.tabWidth
 		dc.linePrefix = make(map[int]linePrefixScan, len(dc.linePrefix))
 	}
 	if r, ok := dc.linePrefix[args.lineNum]; ok {

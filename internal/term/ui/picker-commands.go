@@ -9,7 +9,7 @@ import (
 
 type commandPaletteSource struct {
 	PickerBase
-	km *command.Keymaps
+	keymaps *command.Keymaps
 }
 
 // CommandPalettePicker opens a picker listing all registered commands
@@ -21,16 +21,14 @@ func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
 			Cols:        []string{"name", "bindings", "doc"},
 			Proportions: []int{0, 1, 2},
 		},
-		km: km,
+		keymaps: km,
 	})
 }
 
 // Load lists every command available in the current mode
-func (c *commandPaletteSource) Load(
-	e *view.Editor,
-) ([]*PickerItem, <-chan *PickerItem, StopFunc) {
+func (c *commandPaletteSource) Load(e *view.Editor) PickerLoad {
 	mode := e.Mode()
-	cmds := c.km.CommandsIn(mode)
+	cmds := c.keymaps.CommandsIn(mode)
 	items := make([]*PickerItem, 0, len(cmds))
 	var slab PickerItemSlab
 	for _, cmd := range cmds {
@@ -41,14 +39,14 @@ func (c *commandPaletteSource) Load(
 		items = append(items, slab.Add(PickerItem{
 			Display: name,
 			Columns: []string{
-				name, commandKeyString(c.km, mode, cmd.Name),
+				name, commandKeyString(c.keymaps, mode, cmd.Name),
 				cmd.DocString,
 			},
 			SortKey: name,
 			Payload: cmd,
 		}))
 	}
-	return items, nil, func() {}
+	return PickerLoad{Items: items, Stop: func() {}}
 }
 
 // Accept runs the chosen command
@@ -59,7 +57,7 @@ func (c *commandPaletteSource) Accept(
 	if !ok || cmd.Run == nil || len(cmd.Aliases) == 0 {
 		return
 	}
-	if c.km.ResolveCommandIn(e.Mode(), cmd.Aliases[0]) == nil {
+	if c.keymaps.ResolveCommandIn(e.Mode(), cmd.Aliases[0]) == nil {
 		return
 	}
 	cmd.Run(e, nil)

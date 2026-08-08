@@ -21,7 +21,10 @@ func (w fileWatch) match(path string) bool {
 		}
 		candidate = rel
 	}
-	return matchWatchPattern(w.pattern, candidate)
+	return matchWatchPattern(matchWatchPatternArgs{
+		pattern: w.pattern,
+		path:    candidate,
+	})
 }
 
 func fileWatches(
@@ -81,25 +84,30 @@ func watchRegistrationsMatch(regs map[string][]fileWatch, path string) bool {
 	return false
 }
 
-func matchWatchPattern(pattern, path string) bool {
-	if pattern == "" {
+type matchWatchPatternArgs struct {
+	pattern string
+	path    string
+}
+
+func matchWatchPattern(args matchWatchPatternArgs) bool {
+	if args.pattern == "" {
 		return false
 	}
-	if ok, _ := filepath.Match(pattern, path); ok {
+	if ok, _ := filepath.Match(args.pattern, args.path); ok {
 		return true
 	}
-	if ok, _ := filepath.Match(pattern, filepath.Base(path)); ok {
+	if ok, _ := filepath.Match(args.pattern, filepath.Base(args.path)); ok {
 		return true
 	}
-	if after, ok := strings.CutPrefix(pattern, recursiveWatchPrefix); ok {
-		if ok, _ := filepath.Match(after, path); ok {
+	if after, ok := strings.CutPrefix(args.pattern, recursiveWatchPrefix); ok {
+		if ok, _ := filepath.Match(after, args.path); ok {
 			return true
 		}
-		if ok, _ := filepath.Match(after, filepath.Base(path)); ok {
+		if ok, _ := filepath.Match(after, filepath.Base(args.path)); ok {
 			return true
 		}
-		return strings.HasSuffix(path, after) ||
-			strings.HasSuffix(filepath.Base(path), after)
+		return strings.HasSuffix(args.path, after) ||
+			strings.HasSuffix(filepath.Base(args.path), after)
 	}
 	return false
 }

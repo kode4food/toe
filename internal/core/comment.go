@@ -21,7 +21,7 @@ func GetCommentToken(text Rope, tokens []string, lineNum int) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	sub, err := line.Slice(start, line.LenChars())
+	sub, err := line.Slice(Span{From: start, To: line.LenChars()})
 	if err != nil {
 		return "", false
 	}
@@ -70,12 +70,18 @@ func ToggleLineComments(
 		if err != nil {
 			return Transaction{}, err
 		}
-		pos := lineStart + found.minCol
+		pos := lineStart + found.minColumn
 		if !found.commented {
-			changes = append(changes, TextChange(pos, pos, comment))
+			changes = append(changes, TextChange(Span{
+				From: pos,
+				To:   pos,
+			}, comment))
 		} else {
 			changes = append(changes,
-				DeleteChange(pos, pos+tokenLen+found.margin),
+				DeleteChange(Span{
+					From: pos,
+					To:   pos + tokenLen + found.margin,
+				}),
 			)
 		}
 	}
@@ -92,7 +98,7 @@ func ToggleLineComments(
 func SplitLinesOfSelection(text Rope, sel Selection) (Selection, error) {
 	var ranges []Range
 	for _, r := range sel.Ranges() {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			return Selection{}, err
 		}
@@ -102,7 +108,7 @@ func SplitLinesOfSelection(text Rope, sel Selection) (Selection, error) {
 				return Selection{}, err
 			}
 			end := commentLineEndChar(text, lineNum)
-			ranges = append(ranges, NewRange(start, end))
+			ranges = append(ranges, Range{Anchor: start, Head: end})
 		}
 	}
 	if len(ranges) == 0 {
@@ -114,14 +120,14 @@ func SplitLinesOfSelection(text Rope, sel Selection) (Selection, error) {
 type lineCommentRes struct {
 	commented bool
 	lines     []int
-	minCol    int
+	minColumn int
 	margin    int
 }
 
 func findLineComment(token string, text Rope, lines []int) lineCommentRes {
 	res := lineCommentRes{
 		commented: true,
-		minCol:    math.MaxInt,
+		minColumn: math.MaxInt,
 		margin:    1,
 	}
 	tokenLen := utf8.RuneCountInString(token)
@@ -136,11 +142,11 @@ func findLineComment(token string, text Rope, lines []int) lineCommentRes {
 			continue
 		}
 		lineLen := line.LenChars()
-		if pos < res.minCol {
-			res.minCol = pos
+		if pos < res.minColumn {
+			res.minColumn = pos
 		}
 		fragEnd := min(pos+tokenLen, lineLen)
-		frag, err := line.Slice(pos, fragEnd)
+		frag, err := line.Slice(Span{From: pos, To: fragEnd})
 		if err != nil || frag.String() != token {
 			res.commented = false
 		}
@@ -150,8 +156,8 @@ func findLineComment(token string, text Rope, lines []int) lineCommentRes {
 		res.lines = append(res.lines, lineNum)
 	}
 
-	if res.minCol == math.MaxInt {
-		res.minCol = 0
+	if res.minColumn == math.MaxInt {
+		res.minColumn = 0
 	}
 	return res
 }

@@ -157,7 +157,10 @@ func (p *ImagePane) HandleEvent(
 		p.wheel.at, p.wheel.zooming = time.Now(), zooming
 		// drop input while the last change is still transmitting, so a fast
 		// burst is paced to the pipeline instead of queuing a laggy tail
-		id := kittyImageID(p.image.ContentID(), uint32(p.id), false)
+		id := kittyImageID(kittyImageIDArgs{
+			content: p.image.ContentID(),
+			surface: uint32(p.id),
+		})
 		if cx.images.inFlight(id) {
 			return consumed(), true
 		}

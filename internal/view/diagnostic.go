@@ -1,21 +1,19 @@
 package view
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/kode4food/toe/internal/core"
+)
 
 type (
 	// Diagnostic is a document diagnostic reported by an external provider
 	Diagnostic struct {
-		Range    DiagnosticRange
+		Range    core.Span
 		Severity DiagnosticSeverity
 		Message  string
 		Source   string
 		Provider string
-	}
-
-	// DiagnosticRange is a character range in a document
-	DiagnosticRange struct {
-		From int
-		To   int
 	}
 
 	// DiagnosticCounts groups diagnostics by severity

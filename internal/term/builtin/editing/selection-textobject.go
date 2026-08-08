@@ -46,13 +46,17 @@ func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) bool {
 	ranges := sel.Ranges()
 	changed := false
 	for i, r := range ranges {
-		res, ok := syntax.FindTextObject(
-			text.String(), doc.Lang(), r.Cursor(text), ch, inside,
-		)
+		res, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   text.String(),
+			Lang:   doc.Lang(),
+			Cursor: r.Cursor(text),
+			Char:   ch,
+			Inside: inside,
+		})
 		if !ok {
 			continue
 		}
-		nr := core.NewRange(res.From, res.To)
+		nr := core.Range{Anchor: res.From, Head: res.To}
 		if nr == r {
 			continue
 		}

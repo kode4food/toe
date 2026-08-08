@@ -12,7 +12,7 @@ func TestFindBlockComments(t *testing.T) {
 	t.Run("uncommented returns Uncommented", func(t *testing.T) {
 		doc := core.NewRope("1\n2\n3")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		toks := []core.BlockCommentToken{{Start: "/*", End: "*/"}}
 		ok, changes, err := core.FindBlockComments(toks, doc, sel)
@@ -29,7 +29,7 @@ func TestFindBlockComments(t *testing.T) {
 	t.Run("already-commented returns Commented", func(t *testing.T) {
 		doc := core.NewRope("/* 1\n2\n3 */")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		toks := []core.BlockCommentToken{{Start: "/*", End: "*/"}}
 		ok, changes, err := core.FindBlockComments(toks, doc, sel)
@@ -42,7 +42,7 @@ func TestFindBlockComments(t *testing.T) {
 	t.Run("whitespace-only returns Whitespace", func(t *testing.T) {
 		doc := core.NewRope("   ")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		toks := []core.BlockCommentToken{{Start: "/*", End: "*/"}}
 		ok, changes, err := core.FindBlockComments(toks, doc, sel)
@@ -54,7 +54,10 @@ func TestFindBlockComments(t *testing.T) {
 
 	t.Run("uses default token when none provided", func(t *testing.T) {
 		doc := core.NewRope("hello")
-		sel, _ := core.NewSelection([]core.Range{core.NewRange(0, 5)}, 0)
+		sel, _ := core.NewSelection([]core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 		ok, changes, err := core.FindBlockComments(nil, doc, sel)
 		assert.NoError(t, err)
 		assert.False(t, ok)
@@ -65,7 +68,7 @@ func TestFindBlockComments(t *testing.T) {
 	t.Run("longest token wins when multiple match", func(t *testing.T) {
 		doc := core.NewRope("/** text **/")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		toks := []core.BlockCommentToken{
 			{Start: "/*", End: "*/"},
@@ -80,7 +83,7 @@ func TestFindBlockComments(t *testing.T) {
 	t.Run("invalid range returns error", func(t *testing.T) {
 		doc := core.NewRope("hello")
 		sel, _ := core.NewSelection([]core.Range{
-			core.NewRange(0, doc.LenChars()+1),
+			{Anchor: 0, Head: doc.LenChars() + 1},
 		}, 0)
 		toks := []core.BlockCommentToken{{Start: "/*", End: "*/"}}
 
@@ -102,7 +105,7 @@ func TestToggleBlockComments(t *testing.T) {
 	t.Run("wraps uncommented in block comment", func(t *testing.T) {
 		doc := core.NewRope("1\n2\n3")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		tx, err := core.ToggleBlockComments(doc, sel, toks)
 		assert.NoError(t, err)
@@ -113,7 +116,7 @@ func TestToggleBlockComments(t *testing.T) {
 	t.Run("removes block comment delimiters", func(t *testing.T) {
 		doc := core.NewRope("/* 1\n2\n3 */")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		tx, err := core.ToggleBlockComments(doc, sel, toks)
 		assert.NoError(t, err)
@@ -124,7 +127,7 @@ func TestToggleBlockComments(t *testing.T) {
 	t.Run("comment-only content", func(t *testing.T) {
 		doc := core.NewRope("/* */")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		tx, err := core.ToggleBlockComments(doc, sel, toks)
 		assert.NoError(t, err)
@@ -135,7 +138,7 @@ func TestToggleBlockComments(t *testing.T) {
 	t.Run("whitespace-only is no-op", func(t *testing.T) {
 		doc := core.NewRope("   ")
 		sel, _ := core.NewSelection(
-			[]core.Range{core.NewRange(0, doc.LenChars())}, 0,
+			[]core.Range{{Anchor: 0, Head: doc.LenChars()}}, 0,
 		)
 		tx, err := core.ToggleBlockComments(doc, sel, toks)
 		assert.NoError(t, err)
@@ -147,7 +150,7 @@ func TestToggleBlockComments(t *testing.T) {
 	t.Run("invalid range returns error", func(t *testing.T) {
 		doc := core.NewRope("hello")
 		sel, _ := core.NewSelection([]core.Range{
-			core.NewRange(0, doc.LenChars()+1),
+			{Anchor: 0, Head: doc.LenChars() + 1},
 		}, 0)
 
 		_, err := core.ToggleBlockComments(doc, sel, toks)

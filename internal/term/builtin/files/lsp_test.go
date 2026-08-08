@@ -126,9 +126,7 @@ func TestLSPCommands(t *testing.T) {
 
 	t.Run("code action is registered", func(t *testing.T) {
 		e, km, _ := test.EnvWithRegistry(t, "")
-		ctl := &fakeLanguageServerController{
-			symbols: nil,
-		}
+		ctl := &fakeLanguageServerController{}
 		e.SetLanguageServerController(ctl)
 
 		res := test.RunCmdArgs(t, km, e, "code_action", "")

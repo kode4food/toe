@@ -78,7 +78,7 @@ func TestLocationAction(t *testing.T) {
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 3, sel.Primary().Cursor(doc.Text()))
-		assert.Equal(t, core.NewRange(3, 3), sel.Primary())
+		assert.Equal(t, core.Range{Anchor: 3, Head: 3}, sel.Primary())
 	})
 
 	t.Run("opens picker for multiple targets", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestLocationAction(t *testing.T) {
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, sel.Primary().Cursor(doc.Text()))
-		assert.Equal(t, core.NewRange(5, 2), sel.Primary())
+		assert.Equal(t, core.Range{Anchor: 5, Head: 2}, sel.Primary())
 	})
 }
 
@@ -185,7 +185,10 @@ func TestSymbolPickerAction(t *testing.T) {
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t,
-			core.NewRange(len(prefix)+len(body), len(prefix)), sel.Primary(),
+			core.Range{
+				Anchor: len(prefix) + len(body),
+				Head:   len(prefix),
+			}, sel.Primary(),
 		)
 		line, err := doc.Text().CharToLine(v.Offset().Anchor)
 		assert.NoError(t, err)
@@ -268,7 +271,10 @@ func TestSymbolPickerAction(t *testing.T) {
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t,
-			core.NewRange(len(prefix)+len(body), len(prefix)), sel.Primary(),
+			core.Range{
+				Anchor: len(prefix) + len(body),
+				Head:   len(prefix),
+			}, sel.Primary(),
 		)
 		line, err := doc.Text().CharToLine(v.Offset().Anchor)
 		assert.NoError(t, err)
@@ -388,7 +394,9 @@ func TestSelectReferencesAction(t *testing.T) {
 	t.Run("selects ranges at offset", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "source.go")
-		assert.NoError(t, os.WriteFile(path, []byte("hello world hello\n"), 0o600))
+		assert.NoError(t,
+			os.WriteFile(path, []byte("hello world hello\n"), 0o600),
+		)
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)

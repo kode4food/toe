@@ -78,7 +78,10 @@ func FormatModule() command.Module {
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					reverse := args != nil && args.HasFlag("reverse")
 					insensitive := args != nil && args.HasFlag("insensitive")
-					err := action.SortSelections(e, reverse, insensitive)
+					err := action.SortSelections(e, action.SortSelectionsArgs{
+						Reverse:     reverse,
+						Insensitive: insensitive,
+					})
 					if err != nil {
 						return command.Result{Error: err}
 					}

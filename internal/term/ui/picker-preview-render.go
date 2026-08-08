@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view/language"
@@ -8,30 +9,43 @@ import (
 
 type previewLineCtx struct {
 	format   *language.TextFormat
-	styles   *tuiStyles
+	styles   *styles
 	softWrap bool
 
-	fillTUI tui.Style
-	popupBg tui.Color
-	hlBg    tui.Color
+	fillStyle   tui.Style
+	popupBg     tui.Color
+	highlightBg tui.Color
 
-	w       int
-	maxH    int
-	rowSkip int
+	width     int
+	maxHeight int
+	rowSkip   int
+	hOff      int
 
-	lStr        string
+	lineText    string
 	highlighted bool
 
 	marker      string
-	markerW     int
+	markerWidth int
 	markerStyle tui.Style
 }
 
+func (c previewLineCtx) emitMarker(buf *tui.Buffer, at geom.Point, first bool) {
+	if c.markerWidth == 0 {
+		return
+	}
+	mAt := at.Sub(geom.Point{X: c.markerWidth})
+	buf.FillRange(mAt, c.markerWidth, c.fillStyle)
+	buf.PatchBgRange(mAt, c.markerWidth, c.popupBg)
+	if c.marker != "" && first {
+		st := c.markerStyle.Bg(c.popupBg)
+		buf.SetString(mAt, c.marker, st)
+	}
+}
+
 func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
-	tuiStyles := args.styles
-	hlStyle := previewHlStyleFn(hlStyleFnFor(args.th))
+	hlStyle := previewHighlighter(highlighterFor(args.theme))
 	hlCache := make(map[string]tui.Style, 32)
-	hlStyleFn := func(scope string) tui.Style {
+	highlight := func(scope string) tui.Style {
 		if st, ok := hlCache[scope]; ok {
 			return st
 		}
@@ -43,7 +57,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	ig := args.opts.IndentGuides
 	// syntax spans have stripped backgrounds; patch popup bg onto every row
 	// so the pane provides it uniformly rather than showing terminal default
-	fillTUI := tui.Style{}.Bg(args.th.Get("ui.popup").BgColor())
+	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
 
 	markerW := 0
@@ -66,17 +80,30 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	nLines := args.text.LenLines()
 	// clamp scroll to keep the last line pinned to the pane bottom, then
 	// write the applied delta back so stored scroll stays bounded
-	if args.scroll != 0 {
+	if args.vScroll != 0 {
 		base := anchorLine
 		anchorLine = max(0, min(
-			base+args.scroll, max(0, nLines-args.area.Height),
+			base+args.vScroll, max(0, nLines-args.area.Height),
 		))
-		args.scroll = anchorLine - base
+		args.vScroll = anchorLine - base
 		vOff = 0 // moving off the anchor line starts at its first visual row
 	}
+	hOff := 0
+	if !softWrap {
+		hOff = clampPreviewHScroll(clampPreviewHScrollArgs{
+			hScroll: args.hScroll,
+			text:    args.text,
+			lines: core.Span{
+				From: anchorLine,
+				To:   min(anchorLine+args.area.Height-1, nLines-1),
+			},
+			contentWidth: contentW,
+		})
+	}
+	args.hScroll = hOff
 	var hlBg tui.Color
 	if args.hlFrom >= 0 {
-		hlBg = args.th.Get("ui.highlight").BgColor()
+		hlBg = args.theme.Get("ui.highlight").BgColor()
 	}
 
 	bufRow := 0
@@ -92,18 +119,18 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 		if err != nil {
 			continue
 		}
-		lStr := lineString(args.text, start, end)
+		lStr := lineString(args.text, core.Span{From: start, To: end})
 		rowSkip := 0
 		if softWrap && lineNum == anchorLine {
 			rowSkip = vOff
 		}
 		rr := rowRender{
-			lineStr:    lStr,
-			tuiStyles:  tuiStyles,
-			hlStyle:    hlStyleFn,
+			lineText:   lStr,
+			styles:     args.styles,
+			hlStyle:    highlight,
 			format:     args.format,
-			ws:         ws,
-			ig:         ig,
+			whitespace: ws,
+			indents:    ig,
 			hlSpans:    args.spans,
 			cursor:     -1,
 			cursorLine: -1,
@@ -111,7 +138,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 			lineStart:  start,
 			lineEnd:    end,
 			softWrap:   softWrap,
-			hStart:     0,
+			hStart:     hOff,
 			hWidth:     contentW,
 			maxRows:    args.area.Height - bufRow + rowSkip,
 		}
@@ -121,21 +148,22 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 
 		lineCtx := previewLineCtx{
 			format:      args.format,
-			styles:      tuiStyles,
-			fillTUI:     fillTUI,
+			styles:      args.styles,
+			fillStyle:   fillTUI,
 			popupBg:     popupBg,
-			hlBg:        hlBg,
-			w:           contentW,
+			highlightBg: hlBg,
+			width:       contentW,
 			rowSkip:     rowSkip,
-			maxH:        args.area.Height - bufRow,
+			hOff:        hOff,
+			maxHeight:   args.area.Height - bufRow,
 			softWrap:    softWrap,
-			lStr:        lStr,
+			lineText:    lStr,
 			highlighted: highlighted,
-			markerW:     markerW,
+			markerWidth: markerW,
 		}
 		if kind, ok := args.diffLines[lineNum]; ok {
 			lineCtx.marker, lineCtx.markerStyle =
-				previewDiffMarker(kind, tuiStyles)
+				previewDiffMarker(kind, args.styles)
 		}
 		bufRow += emitPreviewLine(
 			buf, geom.Point{X: contentX, Y: args.area.Y + bufRow}, rendered,
@@ -145,7 +173,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
 		Point: geom.Point{X: contentX, Y: args.area.Y},
 		Size:  geom.Size{Width: contentW, Height: bufRow},
-	}, tuiStyles.rulerBg)
+	}, args.styles.rulerBg)
 }
 
 // applyPreviewRulers draws vertical rulers across a preview content area,
@@ -157,11 +185,11 @@ func applyPreviewRulers(
 		return
 	}
 	applyRulers(applyRulersArgs{
-		buf:             buf,
-		at:              content.Point,
-		size:            content.Size,
-		rulers:          rulers,
-		rulerBackground: rulerBg,
+		buf:     buf,
+		at:      content.Point,
+		size:    content.Size,
+		rulers:  rulers,
+		rulerBg: rulerBg,
 	})
 }
 
@@ -170,13 +198,13 @@ func emitPreviewLine(
 ) int {
 	n := 0
 	if ctx.softWrap {
-		indent := indentWidth(ctx.lStr, ctx.format.TabWidth)
+		indent := indentWidth(ctx.lineText, ctx.format.TabWidth)
 		prefixRow := softWrapContinuationRow(ctx.format, indent, ctx.styles)
 		for i, cr := range rendered {
 			if i < ctx.rowSkip {
 				continue
 			}
-			if n >= ctx.maxH {
+			if n >= ctx.maxHeight {
 				break
 			}
 			row := cr
@@ -188,12 +216,13 @@ func emitPreviewLine(
 			row.writeToBuffer(rowWriteArgs{
 				buf:       buf,
 				at:        rowAt,
-				fillStyle: ctx.fillTUI,
-				width:     ctx.w,
+				fillStyle: ctx.fillStyle,
+				width:     ctx.width,
+				startCol:  ctx.hOff,
 			})
-			buf.PatchBgRange(rowAt, ctx.w, ctx.popupBg)
+			buf.PatchBgRange(rowAt, ctx.width, ctx.popupBg)
 			if ctx.highlighted {
-				buf.PatchBgRange(rowAt, ctx.w, ctx.hlBg)
+				buf.PatchBgRange(rowAt, ctx.width, ctx.highlightBg)
 			}
 			ctx.emitMarker(buf, rowAt, n == 0)
 			n++
@@ -202,12 +231,13 @@ func emitPreviewLine(
 		rendered[0].writeToBuffer(rowWriteArgs{
 			buf:       buf,
 			at:        at,
-			fillStyle: ctx.fillTUI,
-			width:     ctx.w,
+			fillStyle: ctx.fillStyle,
+			width:     ctx.width,
+			startCol:  ctx.hOff,
 		})
-		buf.PatchBgRange(at, ctx.w, ctx.popupBg)
+		buf.PatchBgRange(at, ctx.width, ctx.popupBg)
 		if ctx.highlighted {
-			buf.PatchBgRange(at, ctx.w, ctx.hlBg)
+			buf.PatchBgRange(at, ctx.width, ctx.highlightBg)
 		}
 		ctx.emitMarker(buf, at, true)
 		n = 1
@@ -215,21 +245,8 @@ func emitPreviewLine(
 	return n
 }
 
-func (c previewLineCtx) emitMarker(buf *tui.Buffer, at geom.Point, first bool) {
-	if c.markerW == 0 {
-		return
-	}
-	mAt := at.Sub(geom.Point{X: c.markerW})
-	buf.FillRange(mAt, c.markerW, c.fillTUI)
-	buf.PatchBgRange(mAt, c.markerW, c.popupBg)
-	if c.marker != "" && first {
-		st := c.markerStyle.Bg(c.popupBg)
-		buf.SetString(mAt, c.marker, st)
-	}
-}
-
 func previewDiffMarker(
-	kind diffGutterKind, styles *tuiStyles,
+	kind diffGutterKind, styles *styles,
 ) (string, tui.Style) {
 	switch kind {
 	case diffGutterAdded:

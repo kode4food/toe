@@ -11,6 +11,12 @@ import (
 )
 
 type (
+	// queryMatch is the text being matched and the query it is matched against
+	queryMatch struct {
+		text  string
+		query string
+	}
+
 	completionMatch struct {
 		item  *view.CompletionItem
 		score int
@@ -64,7 +70,7 @@ func completionMatchScore(
 	if text == "" {
 		text = item.Label
 	}
-	return fuzzyCompletionScore(text, query)
+	return fuzzyCompletionScore(queryMatch{text: text, query: query})
 }
 
 func keyOfCompletionItem(item *view.CompletionItem) completionItemKey {
@@ -76,12 +82,12 @@ func keyOfCompletionItem(item *view.CompletionItem) completionItemKey {
 	}
 }
 
-func fuzzyCompletionScore(text, query string) (int, bool) {
-	text = strings.TrimLeftFunc(text, unicode.IsSpace)
-	if query == "" {
+func fuzzyCompletionScore(at queryMatch) (int, bool) {
+	text := strings.TrimLeftFunc(at.text, unicode.IsSpace)
+	if at.query == "" {
 		return 0, true
 	}
-	if strings.HasPrefix(strings.ToLower(text), strings.ToLower(query)) {
+	if strings.HasPrefix(strings.ToLower(text), strings.ToLower(at.query)) {
 		return 100000 - runewidth.StringWidth(text), true
 	}
 	rs := []rune(text)
@@ -89,7 +95,7 @@ func fuzzyCompletionScore(text, query string) (int, bool) {
 	gaps := 0
 	last := -1
 	from := 0
-	for _, q := range query {
+	for _, q := range at.query {
 		found := -1
 		q = unicode.ToLower(q)
 		for i := from; i < len(rs); i++ {

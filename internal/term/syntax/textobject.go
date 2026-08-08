@@ -10,20 +10,28 @@ var textObjectNames = map[rune]string{
 	'e': "entry",
 }
 
-// FindTextObject finds the innermost textobject at cursor for lang. inside
+// FindTextObjectArgs identifies the textobject to find: the kind selected by
+// Char at Cursor, taken inner (Inside) or whole
+type FindTextObjectArgs struct {
+	Text   string
+	Lang   string
+	Cursor int
+	Char   rune
+	Inside bool
+}
+
+// FindTextObject finds the innermost textobject at Cursor for Lang. Inside
 // returns the node's inner content (delimiters stripped) vs its full range
-func FindTextObject(
-	text, lang string, cursor int, ch rune, inside bool,
-) (Range, bool) {
-	name, ok := textObjectNames[ch]
+func FindTextObject(args FindTextObjectArgs) (Range, bool) {
+	name, ok := textObjectNames[args.Char]
 	if !ok {
 		return Range{}, false
 	}
-	language := languageFor(lang)
+	language := languageFor(args.Lang)
 	if language == nil {
 		return Range{}, false
 	}
-	qb, ok := embeddedTextobjectQuery(lang)
+	qb, ok := embeddedTextobjectQuery(args.Lang)
 	if !ok {
 		return Range{}, false
 	}
@@ -33,7 +41,7 @@ func FindTextObject(
 	}
 	defer q.Close()
 
-	src := []byte(text)
+	src := []byte(args.Text)
 	p := sitter.NewParser()
 	defer p.Close()
 	if err := p.SetLanguage(language); err != nil {
@@ -45,16 +53,16 @@ func FindTextObject(
 	}
 	defer tree.Close()
 
-	runes := []rune(text)
-	if cursor < 0 || cursor >= len(runes) {
+	runes := []rune(args.Text)
+	if args.Cursor < 0 || args.Cursor >= len(runes) {
 		return Range{}, false
 	}
-	c2b := buildCharToByte(text)
-	b2c := buildByteToChar(text)
-	cursorByte := uint(c2b[cursor])
+	c2b := buildCharToByte(args.Text)
+	b2c := buildByteToChar(args.Text)
+	cursorByte := uint(c2b[args.Cursor])
 
 	suffix := name + ".around"
-	if inside {
+	if args.Inside {
 		suffix = name + ".inside"
 	}
 	capNames := q.CaptureNames()
@@ -78,7 +86,7 @@ func FindTextObject(
 			}
 			from := b2c[n.StartByte()]
 			to := b2c[n.EndByte()]
-			if inside && isBracketNodeAny(&n) {
+			if args.Inside && isBracketNodeAny(&n) {
 				from++
 				to--
 			}

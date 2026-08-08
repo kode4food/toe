@@ -50,7 +50,7 @@ func (e *Editor) documentClosed(doc *Document) {
 
 func wholeDocumentChange(before core.Rope, text string) DocumentChange {
 	cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-		core.TextChange(0, before.LenChars(), text),
+		core.TextChange(core.Span{From: 0, To: before.LenChars()}, text),
 	})
 	if err != nil {
 		return DocumentChange{Before: before}

@@ -101,7 +101,12 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("line1\nline2\nline3\nline4\nline5\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(24)}, 0)
-		v.EnsureCursorVisible(doc, sel, 2, 0, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    2,
+			ScrollOff: 0,
+		})
 		assert.Greater(t, v.Offset().Anchor, 0)
 	})
 
@@ -110,7 +115,12 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("line1\nline2\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-		v.EnsureCursorVisible(doc, sel, 10, 5, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    10,
+			ScrollOff: 5,
+		})
 		assert.Equal(t, 0, v.Offset().Anchor)
 	})
 
@@ -119,7 +129,12 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("abc")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-		v.EnsureCursorVisible(doc, sel, 0, 5, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    0,
+			ScrollOff: 5,
+		})
 		assert.Equal(t, 0, v.Offset().Anchor)
 	})
 
@@ -142,7 +157,13 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		}
 		// the text-line fallback would wrongly scroll up here; the visual path
 		// recognizes the cursor is already in range and leaves the anchor put
-		v.EnsureCursorVisible(doc, sel, 12, 3, vf)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    12,
+			ScrollOff: 3,
+			Visual:    vf,
+		})
 		assert.Equal(t, line1Start, v.Offset().Anchor)
 	})
 
@@ -157,7 +178,13 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
 		}
-		v.EnsureCursorVisible(doc, sel, 4, 0, vf)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    4,
+			ScrollOff: 0,
+			Visual:    vf,
+		})
 		// anchor stays at the line start, but the view scrolls 4 visual rows
 		// into the line so the cursor sits on the bottom viewport row
 		assert.Equal(t, 0, v.Offset().Anchor)
@@ -174,7 +201,13 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
 		}
-		v.EnsureCursorVisible(doc, sel, 4, 1, vf)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    4,
+			ScrollOff: 1,
+			Visual:    vf,
+		})
 		assert.Equal(t, 0, v.Offset().Anchor)
 	})
 
@@ -188,7 +221,13 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
 		}
-		v.EnsureCursorVisible(doc, sel, 3, 0, vf)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    3,
+			ScrollOff: 0,
+			Visual:    vf,
+		})
 		assert.Greater(t, v.Offset().Anchor, 0)
 	})
 }
@@ -200,7 +239,13 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(15)}, 0)
-		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 0)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Width:     10,
+			TabWidth:  4,
+			ScrollOff: 0,
+		})
 		// cursor at column 15, width 10 -> offset = 15 - 10 + 1 = 6
 		assert.Equal(t, 6, v.Offset().HorizontalOffset)
 	})
@@ -211,7 +256,13 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		doc := core.NewRope("0123456789abcdefghij")
 		v.SetOffset(view.Position{HorizontalOffset: 6})
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 0)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Width:     10,
+			TabWidth:  4,
+			ScrollOff: 0,
+		})
 		assert.Equal(t, 0, v.Offset().HorizontalOffset)
 	})
 
@@ -220,7 +271,13 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(5)}, 0)
-		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 0)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Width:     10,
+			TabWidth:  4,
+			ScrollOff: 0,
+		})
 		assert.Equal(t, 0, v.Offset().HorizontalOffset)
 	})
 
@@ -230,7 +287,13 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		doc := core.NewRope("0123456789abcdefghij")
 		v.SetOffset(view.Position{HorizontalOffset: 6})
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(15)}, 0)
-		v.EnsureCursorVisibleHorizontal(doc, sel, 0, 4, 0)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Width:     0,
+			TabWidth:  4,
+			ScrollOff: 0,
+		})
 		assert.Equal(t, 0, v.Offset().HorizontalOffset)
 	})
 
@@ -240,7 +303,13 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		// three tabs (tab width 4) -> visual column 12 at char offset 3
 		doc := core.NewRope("\t\t\tx")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(3)}, 0)
-		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 0)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Width:     10,
+			TabWidth:  4,
+			ScrollOff: 0,
+		})
 		// visual col 12, width 10 -> offset = 12 - 10 + 1 = 3
 		assert.Equal(t, 3, v.Offset().HorizontalOffset)
 	})
@@ -250,7 +319,13 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("0123456789abcdefghij")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(15)}, 0)
-		v.EnsureCursorVisibleHorizontal(doc, sel, 10, 4, 2)
+		v.EnsureCursorVisibleHorizontal(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Width:     10,
+			TabWidth:  4,
+			ScrollOff: 2,
+		})
 		// scrolloff 2: offset = 15 - 10 + 1 + 2 = 8
 		assert.Equal(t, 8, v.Offset().HorizontalOffset)
 	})
@@ -391,7 +466,12 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 			"line1\nline2\nline3\nline4\nline5\nline6\nline7\nline8\n",
 		)
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(36)}, 0)
-		v.EnsureCursorVisible(doc, sel, 3, 10, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    3,
+			ScrollOff: 10,
+		})
 		assert.Greater(t, v.Offset().Anchor, 0)
 	})
 
@@ -400,10 +480,20 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 		v := e.FocusedView()
 		doc := core.NewRope("line1\nline2\nline3\nline4\nline5\n")
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(24)}, 0)
-		v.EnsureCursorVisible(doc, sel, 2, 0, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    2,
+			ScrollOff: 0,
+		})
 		offset := v.Offset().Anchor
 		sel2, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
-		v.EnsureCursorVisible(doc, sel2, 10, 0, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel2,
+			Height:    10,
+			ScrollOff: 0,
+		})
 		assert.LessOrEqual(t, v.Offset().Anchor, offset)
 	})
 
@@ -414,7 +504,12 @@ func TestViewEnsureCursorVisibleScrollOff(t *testing.T) {
 		doc := core.NewRope(strings.Repeat("x\n", 30))
 		last, _ := doc.LineToChar(29)
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(last)}, 0)
-		v.EnsureCursorVisible(doc, sel, 10, 5, nil)
+		v.EnsureCursorVisible(&view.CursorScroll{
+			Doc:       doc,
+			Selection: sel,
+			Height:    10,
+			ScrollOff: 5,
+		})
 		// Anchor puts the cursor at height-soBottom-1=4, leaving the full
 		// bottom margin of blank rows below EOF (anchor = 29-4 = line 25)
 		anchorLine, _ := doc.CharToLine(v.Offset().Anchor)

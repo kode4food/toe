@@ -17,6 +17,14 @@ type (
 		byName   map[string]int
 	}
 
+	// KeyMatch is a binding matched by traversing the key trie
+	KeyMatch struct {
+		Action KeyResultAction
+		When   func(*view.Editor) bool
+		Name   string
+		Prefix bool
+	}
+
 	keyTrieNode struct {
 		children  map[KeyEvent]*keyTrieNode
 		order     []KeyEvent
@@ -174,29 +182,21 @@ func (k *Keymaps) BindResultAction(args BindActionArgs) error {
 	return nil
 }
 
-// LookupRes is the result of traversing the key trie
-type LookupRes struct {
-	Action KeyResultAction
-	When   func(*view.Editor) bool
-	Name   string
-	Prefix bool
-}
-
 // Enabled reports whether a matched binding's :when predicate allows it
-func (r LookupRes) Enabled(e *view.Editor) bool {
-	return r.When == nil || r.When(e)
+func (k KeyMatch) Enabled(e *view.Editor) bool {
+	return k.When == nil || k.When(e)
 }
 
 // Lookup traverses the key trie. The bool reports a complete match
-func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (LookupRes, bool) {
+func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (KeyMatch, bool) {
 	node := k.lookup(mode, seq)
 	if node == nil {
-		return LookupRes{}, false
+		return KeyMatch{}, false
 	}
 	if node.isPrefix() {
-		return LookupRes{Prefix: true}, false
+		return KeyMatch{Prefix: true}, false
 	}
-	return LookupRes{
+	return KeyMatch{
 		Action: node.action,
 		When:   node.available,
 		Name:   node.name,

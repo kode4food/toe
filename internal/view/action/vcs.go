@@ -77,7 +77,10 @@ func ResetDiffChange(e *view.Editor) (int, error) {
 		bt := min(h.BaseTo, len(baseLines))
 		replacement := strings.Join(baseLines[bf:bt], "")
 		changes = append(
-			changes, core.TextChange(hr.From(), hr.To(), replacement),
+			changes, core.TextChange(core.Span{
+				From: hr.From(),
+				To:   hr.To(),
+			}, replacement),
 		)
 	}
 	if len(changes) == 0 {
@@ -95,13 +98,15 @@ func ResetDiffChange(e *view.Editor) (int, error) {
 
 func gotoChange(e *view.Editor, dir core.Direction) {
 	count := countOrOne(e) - 1
-	doc, v, hunks, ok := focusedDiffHunks(e)
-	if !ok || len(hunks) == 0 {
+	res, ok := focusedDiffHunks(e)
+	if !ok || len(res.hunks) == 0 {
 		return
 	}
+	doc := res.doc
+	hunks := res.hunks
 	text := doc.Text()
 	extend := e.Mode() == view.ModeSelect
-	sel := doc.SelectionFor(v.ID())
+	sel := doc.SelectionFor(res.view.ID())
 	newSel := sel.Transform(func(r core.Range) core.Range {
 		line, err := r.CursorLine(text)
 		if err != nil {
@@ -130,19 +135,21 @@ func gotoChange(e *view.Editor, dir core.Direction) {
 			if nr.Head < r.Anchor {
 				head = nr.Anchor
 			}
-			return core.NewRange(r.Anchor, head)
+			return core.Range{Anchor: r.Anchor, Head: head}
 		}
 		return nr.WithDirection(dir)
 	})
 	SaveSelection(e)
-	doc.SetSelectionFor(v.ID(), newSel)
+	doc.SetSelectionFor(res.view.ID(), newSel)
 }
 
 func gotoEdgeChange(e *view.Editor, last bool) {
-	doc, v, hunks, ok := focusedDiffHunks(e)
-	if !ok || len(hunks) == 0 {
+	res, ok := focusedDiffHunks(e)
+	if !ok || len(res.hunks) == 0 {
 		return
 	}
+	doc := res.doc
+	hunks := res.hunks
 	h := hunks[0]
 	if last {
 		h = hunks[len(hunks)-1]
@@ -153,27 +160,35 @@ func gotoEdgeChange(e *view.Editor, last bool) {
 	}
 	if newSel, err := core.NewSelection([]core.Range{r}, 0); err == nil {
 		SaveSelection(e)
-		doc.SetSelectionFor(v.ID(), newSel)
+		doc.SetSelectionFor(res.view.ID(), newSel)
 	}
 }
 
-func focusedDiffHunks(
-	e *view.Editor,
-) (*view.Document, *view.View, []view.DiffHunk, bool) {
+type focusedDiffHunksRes struct {
+	doc   *view.Document
+	view  *view.View
+	hunks []view.DiffHunk
+}
+
+func focusedDiffHunks(e *view.Editor) (focusedDiffHunksRes, bool) {
 	v := e.FocusedView()
 	if v == nil {
-		return nil, nil, nil, false
+		return focusedDiffHunksRes{}, false
 	}
 	doc := e.FocusedDocument()
 	if doc == nil {
-		return nil, nil, nil, false
+		return focusedDiffHunksRes{}, false
 	}
 	vc := e.VersionControl()
 	if vc == nil {
 		e.SetStatusMsg(i18n.Text(i18n.StatusDiffUnavailable))
-		return nil, nil, nil, false
+		return focusedDiffHunksRes{}, false
 	}
-	return doc, v, vc.DiffHunks(doc), true
+	return focusedDiffHunksRes{
+		doc:   doc,
+		view:  v,
+		hunks: vc.DiffHunks(doc),
+	}, true
 }
 
 // hunkRange covers added or modified lines; a pure removal becomes a point at
@@ -184,7 +199,10 @@ func hunkRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
 		return core.Range{}, false
 	}
 	if h.PureRemoval() {
-		return core.NewRange(r.From(), min(r.From()+1, text.LenChars())), true
+		return core.Range{
+			Anchor: r.From(),
+			Head:   min(r.From()+1, text.LenChars()),
+		}, true
 	}
 	return r, true
 }
@@ -200,7 +218,7 @@ func hunkCharRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
 			return core.Range{}, false
 		}
 	}
-	return core.NewRange(from, to), true
+	return core.Range{Anchor: from, Head: to}, true
 }
 
 func nextHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {
@@ -230,7 +248,7 @@ func prevHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {
 	return 0, false
 }
 
-func hunkIntersects(h view.DiffHunk, lineRanges []core.LineRange) bool {
+func hunkIntersects(h view.DiffHunk, lineRanges []core.Span) bool {
 	start := h.From
 	end := max(h.To, h.From+1)
 	for _, lr := range lineRanges {

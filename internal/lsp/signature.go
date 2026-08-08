@@ -9,6 +9,7 @@ import (
 
 	"go.lsp.dev/protocol"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -96,7 +97,7 @@ func (s *Session) signatureTrigger(
 ) (string, bool) {
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(0, pos)
+	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
 	if err != nil {
 		return "", false
 	}
@@ -129,7 +130,9 @@ func normalizeSignatureHelp(help *protocol.SignatureHelp) view.SignatureHelp {
 		if param >= 0 && param < len(sig.Parameters) {
 			p := sig.Parameters[param]
 			info.ParamDocs = markupText(p.Documentation)
-			info.ActiveStart, info.ActiveEnd = activeParameterRange(sig, p)
+			active := activeParameterRange(sig, p)
+			info.ActiveStart = active.From
+			info.ActiveEnd = active.To
 		}
 		out.Signatures = append(out.Signatures, info)
 	}
@@ -164,21 +167,25 @@ func activeParameter(
 
 func activeParameterRange(
 	sig protocol.SignatureInformation, param protocol.ParameterInformation,
-) (int, int) {
+) core.Span {
 	switch label := param.Label.(type) {
 	case protocol.String:
 		start := strings.Index(sig.Label, string(label))
 		if start < 0 {
-			return 0, 0
+			return core.Span{}
 		}
 		end := start + len(label)
-		return runeIndex(sig.Label, start), runeIndex(sig.Label, end)
+		return core.Span{
+			From: runeIndex(sig.Label, start),
+			To:   runeIndex(sig.Label, end),
+		}
 	case protocol.ParameterInformationLabelTuple:
-		start := utf16Index(sig.Label, int(label[0]))
-		end := utf16Index(sig.Label, int(label[1]))
-		return start, end
+		return core.Span{
+			From: utf16Index(sig.Label, int(label[0])),
+			To:   utf16Index(sig.Label, int(label[1])),
+		}
 	default:
-		return 0, 0
+		return core.Span{}
 	}
 }
 
@@ -189,8 +196,8 @@ func signatureTriggerCharacters(
 	return slices.Concat(opts.TriggerCharacters, opts.RetriggerCharacters)
 }
 
-func runeIndex(s string, byteOffset int) int {
-	return utf8.RuneCountInString(s[:byteOffset])
+func runeIndex(s string, byteOff int) int {
+	return utf8.RuneCountInString(s[:byteOff])
 }
 
 func utf16Index(s string, target int) int {

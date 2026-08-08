@@ -100,8 +100,9 @@ name = "mode"
 [language.debugger.quirks]
 absolute-paths = true
 `)
-		name, ok := language.DetectLanguage("main.dbg", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "main.dbg",
+		})
 		assert.Equal(t, "debuglang", name)
 	})
 }
@@ -113,7 +114,9 @@ func TestDecodeCommentTokens(t *testing.T) {
 name = "cmtlang"
 comment-token = "//"
 `)
-		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+		_ = language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "nope.xyz99qwerty",
+		})
 	})
 
 	t.Run("comment-tokens plural list", func(t *testing.T) {
@@ -122,7 +125,9 @@ comment-token = "//"
 name = "cmtlang2"
 comment-tokens = ["//", "#"]
 `)
-		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+		_ = language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "nope.xyz99qwerty",
+		})
 	})
 
 	t.Run("block-comment token table", func(t *testing.T) {
@@ -180,8 +185,9 @@ file-types = ["prl"]
 "(" = ")"
 "[" = "]"
 `)
-		name, ok := language.DetectLanguage("test.prl", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "test.prl",
+		})
 		assert.Equal(t, "pairlang", name)
 	})
 }
@@ -221,7 +227,9 @@ BAZ = "qux"
 [[language]]
 name = "envlang"
 `)
-		_, _ = language.DetectLanguage("nope.xyz99qwerty", "")
+		_ = language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "nope.xyz99qwerty",
+		})
 	})
 }
 
@@ -261,8 +269,9 @@ name = "boolpairlang"
 file-types = ["bpl"]
 auto-pairs = false
 `)
-		name, ok := language.DetectLanguage("test.bpl", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "test.bpl",
+		})
 		assert.Equal(t, "boolpairlang", name)
 	})
 }
@@ -284,8 +293,9 @@ name = "Run"
 request = "launch"
 completion = ["program"]
 `)
-		name, ok := language.DetectLanguage("test.strc", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "test.strc",
+		})
 		assert.Equal(t, "strcompl", name)
 	})
 }
@@ -301,8 +311,9 @@ file-types = ["swl"]
 enable = true
 wrap-at-text-width = true
 `)
-		name, ok := language.DetectLanguage("test.swl", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "test.swl",
+		})
 		assert.Equal(t, "swlang", name)
 	})
 
@@ -318,8 +329,9 @@ max-wrap = 80
 max-indent-retain = 20
 wrap-indicator = "↩"
 `)
-		name, ok := language.DetectLanguage("test.swl2", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "test.swl2",
+		})
 		assert.Equal(t, "swlang2", name)
 	})
 }
@@ -346,8 +358,9 @@ name = "intservlang"
 file-types = ["iss"]
 language-servers = [42]
 `)
-		name, ok := language.DetectLanguage("test.iss", "")
-		assert.True(t, ok)
+		name := language.DetectLanguage(language.DetectLanguageArgs{
+			Path: "test.iss",
+		})
 		assert.Equal(t, "intservlang", name)
 	})
 }
@@ -395,7 +408,9 @@ func TestLoadLanguagesForWorkspace(t *testing.T) {
 		wsRoot := t.TempDir()
 		assert.NoError(t, os.MkdirAll(filepath.Join(wsRoot, ".git"), 0o755))
 		assert.NoError(t, loader.TrustWorkspace(wsRoot))
-		langs, ok := language.LoadLanguagesForWorkspace("", "", wsRoot)
+		langs, ok := language.LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+			Dir: wsRoot,
+		})
 		assert.True(t, ok)
 		_ = langs
 	})

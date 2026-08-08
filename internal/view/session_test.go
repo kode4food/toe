@@ -54,7 +54,7 @@ func TestSession(t *testing.T) {
 		firstDoc := e.Document(first.DocID())
 		assert.NotNil(t, firstDoc)
 		firstSel, err := core.NewSelection(
-			[]core.Range{core.NewRange(1, 4)}, 0,
+			[]core.Range{{Anchor: 1, Head: 4}}, 0,
 		)
 		assert.NoError(t, err)
 		firstDoc.SetSelectionFor(first.ID(), firstSel)
@@ -290,7 +290,10 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, err)
 		aDoc := e.Document(va.DocID())
 		assert.NotNil(t, aDoc)
-		sel, err := core.NewSelection([]core.Range{core.NewRange(3, 7)}, 0)
+		sel, err := core.NewSelection([]core.Range{{
+			Anchor: 3,
+			Head:   7,
+		}}, 0)
 		assert.NoError(t, err)
 		aDoc.SetSelectionFor(va.ID(), sel)
 		_, err = e.OpenFile(bPath) // hide a.go
@@ -329,7 +332,10 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, err)
 		aDoc := e.Document(va.DocID())
 		assert.NotNil(t, aDoc)
-		sel, err := core.NewSelection([]core.Range{core.NewRange(8, 11)}, 0)
+		sel, err := core.NewSelection([]core.Range{{
+			Anchor: 8,
+			Head:   11,
+		}}, 0)
 		assert.NoError(t, err)
 		aDoc.SetSelectionFor(va.ID(), sel)
 		_, err = e.OpenFile(bPath)

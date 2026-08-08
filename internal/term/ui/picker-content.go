@@ -12,11 +12,11 @@ import (
 )
 
 type pickerItemRender struct {
-	p        *Picker
+	picker   *Picker
 	match    pickerMatch
-	w        int
+	width    int
 	selected bool
-	cx       *Context
+	context  *Context
 }
 
 const (
@@ -55,7 +55,7 @@ func writePickerPromptRow(
 	promptSt := th.Get("ui.prompt")
 
 	bgTUI := popupBg
-	queryTUI := applyAccentStyle(popupBg, promptSt)
+	queryTUI := applyAccentStyle(styleOverlay{base: popupBg, overlay: promptSt})
 	cursorTUI := tui.Style{}.
 		Fg(popupBg.BgColor()).
 		Bg(promptSt.FgColor())
@@ -101,10 +101,12 @@ func writePickerHeader(
 func writePickerSection(
 	buf *tui.Buffer, at geom.Point, args *pickerItemRender,
 ) {
-	base := pickerSectionStyle(args.cx)
-	buf.FillRange(at, args.w, base)
+	m := args.match
+	cx := args.context
+	base := pickerSectionStyle(cx)
+	buf.FillRange(at, args.width, base)
 	label := runewidth.Truncate(
-		args.match.item.Display, max(args.w-pickerPadX-1, 0), "",
+		m.item.Display, max(args.width-pickerPadX-1, 0), "",
 	)
 	buf.SetString(geom.Point{X: at.X + pickerPadX, Y: at.Y}, label, base)
 }
@@ -112,9 +114,9 @@ func writePickerSection(
 func writePickerItem(
 	buf *tui.Buffer, at geom.Point, args *pickerItemRender,
 ) {
-	p := args.p
+	p := args.picker
 	m := args.match
-	cx := args.cx
+	cx := args.context
 	if m.item.Section {
 		writePickerSection(buf, at, args)
 		return
@@ -131,12 +133,12 @@ func writePickerItem(
 		match = pickerMatchStyle(cx)
 	}
 
-	buf.FillRange(at, args.w, base)
+	buf.FillRange(at, args.width, base)
 	buf.SetString(at, marker, base)
 
 	// Reserve 1 trailing cell for the right margin (matching the original
 	// base.Width(w) right-padding that kept the highlight flush to the border)
-	cellW := max(args.w-pickerMarkerW-1, 0)
+	cellW := max(args.width-pickerMarkerW-1, 0)
 	cx2 := at.X + pickerMarkerW
 	cols := p.source.Columns()
 	matchColumn := p.source.MatchColumn()
@@ -144,12 +146,12 @@ func writePickerItem(
 	if len(cols) <= 1 {
 		itemBase := pickerColumnBase(cx, base, m.item.StyleScopes, 0)
 		writePickerMatched(buf, writePickerMatchedArgs{
-			at:      geom.Point{X: cx2, Y: at.Y},
-			maxW:    cellW,
-			text:    m.item.Display,
-			indices: m.result.Indices,
-			base:    itemBase,
-			match:   match,
+			at:       geom.Point{X: cx2, Y: at.Y},
+			maxWidth: cellW,
+			text:     m.item.Display,
+			indices:  m.result.Indices,
+			base:     itemBase,
+			match:    match,
 		})
 	} else {
 		widths := pickerColumnWidths(p, cellW)
@@ -165,12 +167,12 @@ func writePickerItem(
 			colBase := pickerColumnBase(cx, base, m.item.StyleScopes, i)
 			if i == matchColumn {
 				writePickerMatched(buf, writePickerMatchedArgs{
-					at:      geom.Point{X: cur, Y: at.Y},
-					maxW:    widths[i],
-					text:    val,
-					indices: m.result.Indices,
-					base:    colBase,
-					match:   match,
+					at:       geom.Point{X: cur, Y: at.Y},
+					maxWidth: widths[i],
+					text:     val,
+					indices:  m.result.Indices,
+					base:     colBase,
+					match:    match,
 				})
 			} else {
 				text := runewidth.Truncate(val, widths[i], "")

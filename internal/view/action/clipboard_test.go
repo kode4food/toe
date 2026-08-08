@@ -14,7 +14,10 @@ func TestClipboardNoProvider(t *testing.T) {
 	// the default editor clipboard is a no-op; actions must not panic
 	t.Run("yank", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		assert.NotPanics(t, func() { action.YankToClipboard(e) })
 	})
@@ -28,7 +31,10 @@ func TestClipboardNoProvider(t *testing.T) {
 
 	t.Run("yank primary", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		assert.NotPanics(t, func() { action.YankToPrimaryClipboard(e) })
 	})
@@ -42,7 +48,10 @@ func TestClipboardNoProvider(t *testing.T) {
 
 	t.Run("replace", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		assert.NotPanics(t, func() { action.ClipboardReplace(e) })
 	})
@@ -73,7 +82,10 @@ func TestClipboard(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		action.YankToClipboard(e)
 
@@ -87,14 +99,20 @@ func TestClipboard(t *testing.T) {
 
 		e := testutil.EditorWithText(t, "x")
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   1,
+		}}, 0)
 		action.PasteClipboardAfter(e)
 		doc := e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 
 		e = testutil.EditorWithText(t, "x")
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   1,
+		}}, 0)
 		action.PasteClipboardBefore(e)
 		doc = e.FocusedDocument()
 		assert.Equal(t, "hellox", doc.Text().String())
@@ -106,8 +124,8 @@ func TestClipboard(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
 		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 1),
-			core.NewRange(2, 3),
+			{Anchor: 0, Head: 1},
+			{Anchor: 2, Head: 3},
 		}, 0)
 		action.YankToClipboard(e)
 
@@ -130,8 +148,8 @@ func TestClipboard(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 5),
-			core.NewRange(6, 11),
+			{Anchor: 0, Head: 5},
+			{Anchor: 6, Head: 11},
 		}, 0)
 
 		action.YankMainToClipboard(e)
@@ -144,7 +162,10 @@ func TestClipboard(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		clip.System = "XY"
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0)
 
 		action.ClipboardReplace(e)
 
@@ -156,7 +177,10 @@ func TestClipboard(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 5)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   5,
+		}}, 0)
 
 		action.YankToPrimaryClipboard(e)
 
@@ -168,7 +192,10 @@ func TestClipboard(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		clip.Primary = "hi"
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   1,
+		}}, 0)
 
 		action.PastePrimaryClipboardAfter(e)
 
@@ -181,7 +208,10 @@ func TestClipboard(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		clip.Primary = "hi"
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 1)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   1,
+		}}, 0)
 
 		action.PastePrimaryClipboardBefore(e)
 
@@ -194,7 +224,10 @@ func TestClipboard(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		clip.Primary = "Z"
 		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(1, 2)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 1,
+			Head:   2,
+		}}, 0)
 
 		action.PrimaryClipboardReplace(e)
 

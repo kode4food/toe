@@ -44,7 +44,7 @@ func RunFormatter(a RunFormatterArgs) error {
 	rope := a.Doc.Text()
 	n := rope.LenChars()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, n, formatted),
+		core.TextChange(core.Span{From: 0, To: n}, formatted),
 	})
 	if err != nil {
 		return err

@@ -112,7 +112,10 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 		return nil
 	}
 	if ops, ok := e.fileOperationController(); ok {
-		_ = ops.WillRenameFile(oldAbs, newPath, false)
+		_ = ops.WillRenameFile(FileRename{
+			OldPath: oldAbs,
+			NewPath: newPath,
+		}, false)
 	}
 	if err := os.MkdirAll(filepath.Dir(newPath), 0o755); err != nil {
 		return err
@@ -122,7 +125,10 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 	}
 	doc.SetPath(newPath)
 	if ops, ok := e.fileOperationController(); ok {
-		_ = ops.DidRenameFile(oldAbs, newPath, false)
+		_ = ops.DidRenameFile(FileRename{
+			OldPath: oldAbs,
+			NewPath: newPath,
+		}, false)
 	}
 	if doc.Modified() {
 		return e.Save(force)

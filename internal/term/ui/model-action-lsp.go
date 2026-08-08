@@ -30,11 +30,11 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 	}
 	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 		return newPromptComponent(cx, promptComponentArgs{
-			ec:      ec,
+			editor:  ec,
 			kind:    promptRegex,
 			prompt:  i18n.Text(i18n.PromptRename),
 			prefill: prefill,
-			fn: func(e *view.Editor, name string) error {
+			handler: func(e *view.Editor, name string) error {
 				return renameSymbol(e, name)
 			},
 		}), nil
@@ -85,7 +85,7 @@ func (m Model) HoverAction(e *view.Editor) {
 		return
 	}
 	anchor := newHoverAnchor(doc, v)
-	ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+	ec.keys.nextLayer = func(*Context) (Component, tea.Cmd) {
 		return newHoverComponent(ec, anchor, text), nil
 	}
 }
@@ -119,7 +119,7 @@ func (m Model) SignatureHelpAction(e *view.Editor) {
 	if len(help.Signatures) == 0 {
 		return
 	}
-	ec.keys.nextLayer = func(_ *Context) (Component, tea.Cmd) {
+	ec.keys.nextLayer = func(*Context) (Component, tea.Cmd) {
 		return newSignatureHelpComponent(ec, call, help), nil
 	}
 }

@@ -18,24 +18,27 @@ func charAtRopeNode(n *ropeNode, pos int) rune {
 	return charAtRopeNode(n.right, pos-leftChars)
 }
 
-func forEachSegmentNode(n *ropeNode, from, to int, fn func(string)) {
-	if n == nil || from >= to {
+func forEachSegmentNode(n *ropeNode, s Span, fn func(string)) {
+	if n == nil || s.From >= s.To {
 		return
 	}
 	if n.left == nil && n.right == nil {
-		if from <= 0 && to >= n.chars {
+		if s.From <= 0 && s.To >= n.chars {
 			fn(n.text)
 			return
 		}
-		fn(charSubstring(n.text, from, to))
+		fn(charSubstring(n.text, s))
 		return
 	}
 	lc := ropeChars(n.left)
-	if from < lc {
-		forEachSegmentNode(n.left, from, min(to, lc), fn)
+	if s.From < lc {
+		forEachSegmentNode(n.left, Span{From: s.From, To: min(s.To, lc)}, fn)
 	}
-	if to > lc {
-		forEachSegmentNode(n.right, max(from-lc, 0), to-lc, fn)
+	if s.To > lc {
+		forEachSegmentNode(n.right, Span{
+			From: max(s.From-lc, 0),
+			To:   s.To - lc,
+		}, fn)
 	}
 }
 

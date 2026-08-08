@@ -17,6 +17,12 @@ type (
 	// status by shelling out to the git binary found on PATH
 	Git struct{}
 
+	// statusCode is a porcelain entry's staged (X) and unstaged (Y) codes
+	statusCode struct {
+		staged   byte
+		unstaged byte
+	}
+
 	gitStatus struct {
 		staged      view.FileChangeKind
 		unstaged    view.FileChangeKind
@@ -119,7 +125,10 @@ func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parseGitStatus(root, string(out))
+	return parseGitStatus(parseGitStatusArgs{
+		root:   root,
+		output: string(out),
+	})
 }
 
 // go-git reports the same X/Y status codes as porcelain but does not detect
@@ -146,7 +155,7 @@ func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
 		if x == ' ' && y == ' ' {
 			continue
 		}
-		status := splitChangeKind(x, y)
+		status := splitChangeKind(statusCode{staged: x, unstaged: y})
 		fc := view.FileChange{
 			Path: filepath.Join(root, filepath.FromSlash(p)),
 		}
@@ -158,11 +167,17 @@ func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
 	return changes, nil
 }
 
+type parseGitStatusArgs struct {
+	root   string
+	output string
+}
+
 // parseGitStatus decodes NUL-terminated porcelain entries; rename entries
 // carry the original path in an extra field
-func parseGitStatus(root, out string) ([]view.FileChange, error) {
+func parseGitStatus(args parseGitStatusArgs) ([]view.FileChange, error) {
+	root := args.root
 	var changes []view.FileChange
-	fields := strings.Split(out, "\x00")
+	fields := strings.Split(args.output, "\x00")
 	for i := 0; i < len(fields); i++ {
 		entry := fields[i]
 		if entry == "" {
@@ -172,7 +187,7 @@ func parseGitStatus(root, out string) ([]view.FileChange, error) {
 			return nil, fmt.Errorf("%w: %q", ErrGitBadStatus, entry)
 		}
 		x, y := entry[0], entry[1]
-		st := splitChangeKind(x, y)
+		st := splitChangeKind(statusCode{staged: x, unstaged: y})
 		fc := view.FileChange{
 			Path: filepath.Join(root, filepath.FromSlash(entry[3:])),
 		}
@@ -188,13 +203,15 @@ func parseGitStatus(root, out string) ([]view.FileChange, error) {
 	return changes, nil
 }
 
-func splitChangeKind(x, y byte) gitStatus {
+func splitChangeKind(code statusCode) gitStatus {
+	x := code.staged
+	y := code.unstaged
 	switch {
 	case x == '?' && y == '?':
 		return gitStatus{
 			unstaged: view.FileChangeUntracked, hasUnstaged: true,
 		}
-	case gitConflict(x, y):
+	case gitConflict(statusCode{staged: x, unstaged: y}):
 		return gitStatus{
 			unstaged: view.FileChangeConflict, hasUnstaged: true,
 		}
@@ -243,7 +260,9 @@ func appendChanges(
 	return changes
 }
 
-func gitConflict(x, y byte) bool {
+func gitConflict(code statusCode) bool {
+	x := code.staged
+	y := code.unstaged
 	return x == 'U' || y == 'U' || (x == 'D' && y == 'D') ||
 		(x == 'A' && y == 'A')
 }

@@ -6,7 +6,7 @@ import "github.com/kode4food/toe/internal/core"
 // current insert-mode session
 type insertAccum struct {
 	oldState core.State
-	cs       core.ChangeSet
+	changes  core.ChangeSet
 }
 
 // BeginInsertGroup starts insert-mode change accumulation for vid if not
@@ -21,7 +21,7 @@ func (d *Document) BeginInsertGroup(vid Id) {
 			Doc:       d.content.text,
 			Selection: d.SelectionFor(vid),
 		},
-		cs: core.NewChangeSet(d.content.text),
+		changes: core.NewChangeSet(d.content.text),
 	}
 }
 
@@ -30,11 +30,11 @@ func (d *Document) BeginInsertGroup(vid Id) {
 func (d *Document) CommitInsertHistory(vid Id) {
 	acc := d.edits.insertAcc
 	d.edits.insertAcc = nil
-	if acc == nil || acc.cs.Empty() {
+	if acc == nil || acc.changes.Empty() {
 		return
 	}
 	tx := core.NewTransaction(acc.oldState.Doc).
-		WithChanges(acc.cs).
+		WithChanges(acc.changes).
 		WithSelection(d.SelectionFor(vid))
 	_ = d.edits.history.CommitRevision(tx, acc.oldState)
 }
@@ -61,7 +61,7 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		d.content.Unlock()
 		d.views.selections[vid] = newSel
 		if !cs.Empty() {
-			d.edits.insertAcc.cs = d.edits.insertAcc.cs.Compose(cs)
+			d.edits.insertAcc.changes = d.edits.insertAcc.changes.Compose(cs)
 			d.edits.changedSinceAccess = true
 			d.mapOtherSelections(vid, cs)
 			d.remapOverlays(cs)

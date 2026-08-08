@@ -12,6 +12,14 @@ const (
 	MaxPickerSplitRatio     = 0.8
 )
 
+// SplitRatioFor returns the saved split ratio for a picker key
+func (o PickerLayoutOptions) SplitRatioFor(key string) float64 {
+	if ratio, ok := o.SplitRatios[key]; ok {
+		return clampPickerSplitRatio(ratio)
+	}
+	return DefaultPickerSplitRatio
+}
+
 func (o PickerLayoutOptions) clone() PickerLayoutOptions {
 	if len(o.SplitRatios) > 0 {
 		ratios := make(map[string]float64, len(o.SplitRatios))
@@ -19,14 +27,6 @@ func (o PickerLayoutOptions) clone() PickerLayoutOptions {
 		o.SplitRatios = ratios
 	}
 	return o
-}
-
-// SplitRatioFor returns the saved split ratio for a picker key
-func (o PickerLayoutOptions) SplitRatioFor(key string) float64 {
-	if ratio, ok := o.SplitRatios[key]; ok {
-		return clampPickerSplitRatio(ratio)
-	}
-	return DefaultPickerSplitRatio
 }
 
 func clampPickerSplitRatio(ratio float64) float64 {

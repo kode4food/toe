@@ -24,50 +24,59 @@ func TestSelection(t *testing.T) {
 
 	t.Run("normalizes and tracks primary range", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(10, 12),
-			core.NewRange(2, 6),
-			core.NewRange(5, 9),
+			{Anchor: 10, Head: 12},
+			{Anchor: 2, Head: 6},
+			{Anchor: 5, Head: 9},
 		}, 1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, []core.Range{
-			core.NewRange(2, 9),
-			core.NewRange(10, 12),
+			{Anchor: 2, Head: 9},
+			{Anchor: 10, Head: 12},
 		}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
-		assert.Equal(t, core.NewRange(2, 9), s.Primary())
+		assert.Equal(t, core.Range{Anchor: 2, Head: 9}, s.Primary())
 	})
 
 	t.Run("makes a single primary selection", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 2),
-			core.NewRange(4, 6),
+			{Anchor: 1, Head: 2},
+			{Anchor: 4, Head: 6},
 		}, 1)
 		assert.NoError(t, err)
 
 		s = s.IntoSingle()
 
-		assert.Equal(t, []core.Range{core.NewRange(4, 6)}, s.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 4,
+			Head:   6,
+		}}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
 	t.Run("into single is no-op when already single", func(t *testing.T) {
-		s := core.SingleSelection(2, 5)
+		s := core.SingleSelection(core.Range{Anchor: 2, Head: 5})
 		assert.Equal(t, s.Ranges(), s.IntoSingle().Ranges())
 	})
 
 	t.Run("pushes range as primary and normalizes", func(t *testing.T) {
-		s := core.SingleSelection(1, 3).Push(core.NewRange(2, 5))
+		s := core.SingleSelection(core.Range{
+			Anchor: 1,
+			Head:   3,
+		}).Push(core.Range{Anchor: 2, Head: 5})
 
-		assert.Equal(t, []core.Range{core.NewRange(1, 5)}, s.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 1,
+			Head:   5,
+		}}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
 	t.Run("removes range and adjusts primary", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 2),
-			core.NewRange(4, 6),
-			core.NewRange(8, 9),
+			{Anchor: 1, Head: 2},
+			{Anchor: 4, Head: 6},
+			{Anchor: 8, Head: 9},
 		}, 2)
 		assert.NoError(t, err)
 
@@ -75,8 +84,8 @@ func TestSelection(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []core.Range{
-			core.NewRange(1, 2),
-			core.NewRange(8, 9),
+			{Anchor: 1, Head: 2},
+			{Anchor: 8, Head: 9},
 		}, s.Ranges())
 		assert.Equal(t, 1, s.PrimaryIndex())
 	})
@@ -103,15 +112,18 @@ func TestSelection(t *testing.T) {
 
 	t.Run("replaces and normalizes ranges", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 2),
-			core.NewRange(5, 8),
+			{Anchor: 1, Head: 2},
+			{Anchor: 5, Head: 8},
 		}, 0)
 		assert.NoError(t, err)
 
-		s, err = s.Replace(0, core.NewRange(4, 6))
+		s, err = s.Replace(0, core.Range{Anchor: 4, Head: 6})
 
 		assert.NoError(t, err)
-		assert.Equal(t, []core.Range{core.NewRange(4, 8)}, s.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 4,
+			Head:   8,
+		}}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
@@ -136,15 +148,18 @@ func TestSelection(t *testing.T) {
 
 	t.Run("merges all ranges from first to last", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 2),
-			core.NewRange(4, 6),
-			core.NewRange(8, 9),
+			{Anchor: 1, Head: 2},
+			{Anchor: 4, Head: 6},
+			{Anchor: 8, Head: 9},
 		}, 0)
 		assert.NoError(t, err)
 
 		s = s.MergeRanges()
 
-		assert.Equal(t, []core.Range{core.NewRange(1, 9)}, s.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 1,
+			Head:   9,
+		}}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
@@ -156,48 +171,51 @@ func TestSelection(t *testing.T) {
 
 	t.Run("merges consecutive ranges", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 3),
-			core.NewRange(3, 5),
-			core.NewRange(8, 9),
+			{Anchor: 1, Head: 3},
+			{Anchor: 3, Head: 5},
+			{Anchor: 8, Head: 9},
 		}, 1)
 		assert.NoError(t, err)
 
 		s = s.MergeConsecutiveRanges()
 
 		assert.Equal(t, []core.Range{
-			core.NewRange(1, 5),
-			core.NewRange(8, 9),
+			{Anchor: 1, Head: 5},
+			{Anchor: 8, Head: 9},
 		}, s.Ranges())
 		assert.Equal(t, 0, s.PrimaryIndex())
 	})
 
 	t.Run("transforms and normalizes", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 2),
-			core.NewRange(5, 6),
+			{Anchor: 1, Head: 2},
+			{Anchor: 5, Head: 6},
 		}, 0)
 		assert.NoError(t, err)
 
 		s = s.Transform(func(r core.Range) core.Range {
-			return core.NewRange(r.Anchor, r.Head+4)
+			return core.Range{Anchor: r.Anchor, Head: r.Head + 4}
 		})
 
-		assert.Equal(t, []core.Range{core.NewRange(1, 10)}, s.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 1,
+			Head:   10,
+		}}, s.Ranges())
 	})
 
 	t.Run("merges adjacent line ranges", func(t *testing.T) {
 		text := core.NewRope("one\ntwo\nthree\nfour")
 		s, err := core.NewSelection([]core.Range{
-			core.NewRange(0, 3),
-			core.NewRange(4, 7),
-			core.NewRange(14, 18),
+			{Anchor: 0, Head: 3},
+			{Anchor: 4, Head: 7},
+			{Anchor: 14, Head: 18},
 		}, 0)
 		assert.NoError(t, err)
 
 		lines, err := s.LineRanges(text)
 
 		assert.NoError(t, err)
-		assert.Equal(t, []core.LineRange{
+		assert.Equal(t, []core.Span{
 			{From: 0, To: 1},
 			{From: 3, To: 3},
 		}, lines)
@@ -205,7 +223,7 @@ func TestSelection(t *testing.T) {
 
 	t.Run("returns line range errors", func(t *testing.T) {
 		text := core.NewRope("one")
-		s := core.SingleSelection(0, 5)
+		s := core.SingleSelection(core.Range{Anchor: 0, Head: 5})
 
 		_, err := s.LineRanges(text)
 
@@ -214,7 +232,10 @@ func TestSelection(t *testing.T) {
 }
 
 func TestSelectionEqual(t *testing.T) {
-	ranges := []core.Range{core.NewRange(1, 3), core.NewRange(5, 7)}
+	ranges := []core.Range{
+		{Anchor: 1, Head: 3},
+		{Anchor: 5, Head: 7},
+	}
 
 	t.Run("identical selections are equal", func(t *testing.T) {
 		a, err := core.NewSelection(ranges, 1)
@@ -229,8 +250,8 @@ func TestSelectionEqual(t *testing.T) {
 		a, err := core.NewSelection(ranges, 1)
 		assert.NoError(t, err)
 		b, err := core.NewSelection([]core.Range{
-			core.NewRange(1, 3),
-			core.NewRange(5, 8),
+			{Anchor: 1, Head: 3},
+			{Anchor: 5, Head: 8},
 		}, 1)
 		assert.NoError(t, err)
 

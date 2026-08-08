@@ -10,7 +10,7 @@ import (
 
 type PickerComponent struct {
 	overlayBuf
-	styles        *tuiStyles
+	styles        *styles
 	state         *Picker
 	bounds        geom.Area
 	listBounds    geom.Area
@@ -30,7 +30,7 @@ func newPickerComponent(cx *Context, p *Picker) *PickerComponent {
 	th := cx.Theme()
 	cx.fileWatcher.setTreeWanted(cx.Editor, wantsFileWatchTree(p.source))
 	return &PickerComponent{
-		styles: buildTUIStylesWithBackground(
+		styles: buildStylesWithBackground(
 			th, view.ModeNormal, th.Get("ui.popup").BgColor(),
 		),
 		state: p,
@@ -93,6 +93,13 @@ func (p *PickerComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	})
 }
 
+// Cursor returns the caret position within the filter input
+func (p *PickerComponent) Cursor(
+	*Context, geom.Size,
+) (cur tea.Cursor, ok bool) {
+	return tea.Cursor{}, false
+}
+
 func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	ps := p.state
 	areaW, areaH := pl.Width, pl.Height
@@ -136,13 +143,6 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	p.listBounds = p.listBounds.Translate(pl.Point)
 }
 
-// Cursor returns the caret position within the filter input
-func (p *PickerComponent) Cursor(
-	*Context, geom.Size,
-) (cur tea.Cursor, ok bool) {
-	return tea.Cursor{}, false
-}
-
 func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 	p.markDirty()
 	p.state.addItems(msg.items)
@@ -166,15 +166,16 @@ func (p *PickerComponent) handleDynamicTrigger(
 	}
 	p.markDirty()
 	src.Search(msg.query)
-	items, ch, stop := src.Load(cx.Editor)
-	ps.load.dynamicStop = stop
+	load := src.Load(cx.Editor)
+	items := load.Items
+	ps.load.dynamicStop = load.Stop
 	ps.list.items = items
 	ps.list.matched = make([]pickerMatch, len(items))
 	for i, item := range items {
 		ps.list.matched[i] = pickerMatch{item: item}
 	}
-	if ch != nil {
-		return consumed(), drainDynamicFeed(msg.gen, ch)
+	if load.Feed != nil {
+		return consumed(), drainDynamicFeed(msg.gen, load.Feed)
 	}
 	ps.load.loading = false
 	return consumed(), nil
@@ -299,12 +300,16 @@ func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {
 func (p *PickerComponent) scrollPreviewByWheel(
 	button tea.MouseButton, step int,
 ) {
-	// clamped by the renderer, which knows the document length
+	// clamped by the renderer, which knows the document extents
 	switch button {
 	case tea.MouseWheelUp:
-		p.state.preview.scroll -= step
+		p.state.preview.vScroll -= step
 	case tea.MouseWheelDown:
-		p.state.preview.scroll += step
+		p.state.preview.vScroll += step
+	case tea.MouseWheelLeft:
+		p.state.preview.hScroll -= step
+	case tea.MouseWheelRight:
+		p.state.preview.hScroll += step
 	}
 }
 

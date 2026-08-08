@@ -24,51 +24,6 @@ var defaultRainbow = []tui.Style{
 	tui.Style{}.Fg(tui.ColorANSI(5)),
 }
 
-func decodePalette(value any) (palette, []string) {
-	p := basePalette()
-	m, ok := value.(map[string]any)
-	if !ok {
-		return p, nil
-	}
-	next := basePalette()
-	for name, value := range m {
-		s, ok := value.(string)
-		if !ok {
-			return p, []string{fmt.Sprintf("invalid palette color %q", name)}
-		}
-		c, err := parseRawColor(s)
-		if err != nil {
-			return p, []string{
-				fmt.Sprintf("invalid palette color %q: %v", name, err),
-			}
-		}
-		next[name] = c
-	}
-	return next, nil
-}
-
-func basePalette() palette {
-	return palette{
-		"default":       {color: tui.ColorReset},
-		"black":         {color: tui.ColorANSI(0)},
-		"red":           {color: tui.ColorANSI(1)},
-		"green":         {color: tui.ColorANSI(2)},
-		"yellow":        {color: tui.ColorANSI(3)},
-		"blue":          {color: tui.ColorANSI(4)},
-		"magenta":       {color: tui.ColorANSI(5)},
-		"cyan":          {color: tui.ColorANSI(6)},
-		"gray":          {color: tui.ColorANSI(8)},
-		"light-red":     {color: tui.ColorANSI(9)},
-		"light-green":   {color: tui.ColorANSI(10)},
-		"light-yellow":  {color: tui.ColorANSI(11)},
-		"light-blue":    {color: tui.ColorANSI(12)},
-		"light-magenta": {color: tui.ColorANSI(13)},
-		"light-cyan":    {color: tui.ColorANSI(14)},
-		"light-gray":    {color: tui.ColorANSI(7)},
-		"white":         {color: tui.ColorANSI(15)},
-	}
-}
-
 func (p palette) parseStyle(value any) (tui.Style, bool, error) {
 	style := tui.Style{}
 	m, ok := value.(map[string]any)
@@ -135,4 +90,49 @@ func (p palette) parseStyleArray(value any) ([]tui.Style, bool, error) {
 		styles = append(styles, style)
 	}
 	return styles, rgb, nil
+}
+
+func decodePalette(value any) (palette, []string) {
+	p := basePalette()
+	m, ok := value.(map[string]any)
+	if !ok {
+		return p, nil
+	}
+	next := basePalette()
+	for name, value := range m {
+		s, ok := value.(string)
+		if !ok {
+			return p, []string{fmt.Sprintf("invalid palette color %q", name)}
+		}
+		c, err := parseRawColor(s)
+		if err != nil {
+			return p, []string{
+				fmt.Sprintf("invalid palette color %q: %v", name, err),
+			}
+		}
+		next[name] = c
+	}
+	return next, nil
+}
+
+func basePalette() palette {
+	return palette{
+		"default":       {color: tui.ColorReset},
+		"black":         {color: tui.ColorANSI(0)},
+		"red":           {color: tui.ColorANSI(1)},
+		"green":         {color: tui.ColorANSI(2)},
+		"yellow":        {color: tui.ColorANSI(3)},
+		"blue":          {color: tui.ColorANSI(4)},
+		"magenta":       {color: tui.ColorANSI(5)},
+		"cyan":          {color: tui.ColorANSI(6)},
+		"gray":          {color: tui.ColorANSI(8)},
+		"light-red":     {color: tui.ColorANSI(9)},
+		"light-green":   {color: tui.ColorANSI(10)},
+		"light-yellow":  {color: tui.ColorANSI(11)},
+		"light-blue":    {color: tui.ColorANSI(12)},
+		"light-magenta": {color: tui.ColorANSI(13)},
+		"light-cyan":    {color: tui.ColorANSI(14)},
+		"light-gray":    {color: tui.ColorANSI(7)},
+		"white":         {color: tui.ColorANSI(15)},
+	}
 }

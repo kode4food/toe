@@ -324,7 +324,7 @@ func TestDocumentSave(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "out.txt")
 		e := testutil.EditorWithText(t, "a  \n\n\n")
-		e.Options().TrimTrailingWS = true
+		e.Options().TrimTrailingWhitespace = true
 		e.Options().TrimFinalNewlines = true
 		e.Options().InsertFinalNewline = true
 		doc := e.FocusedDocument()
@@ -375,7 +375,7 @@ trim_trailing_whitespace = true
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, rope.LenChars(), "hello  "),
+			core.TextChange(core.Span{From: 0, To: rope.LenChars()}, "hello  "),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -404,7 +404,8 @@ func TestDocumentSaveSafety(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t, os.WriteFile(path, []byte("externally changed"), 0o644))
+		assert.NoError(t,
+			os.WriteFile(path, []byte("externally changed"), 0o644))
 
 		err = e.Save(false)
 
@@ -421,7 +422,8 @@ func TestDocumentSaveSafety(t *testing.T) {
 		e := view.NewEditor(tmp)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		assert.NoError(t, os.WriteFile(path, []byte("externally changed"), 0o644))
+		assert.NoError(t,
+			os.WriteFile(path, []byte("externally changed"), 0o644))
 
 		err = e.Save(true)
 
@@ -456,7 +458,7 @@ func TestDocumentSaveSafety(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, rope.LenChars(), "changed"),
+			core.TextChange(core.Span{From: 0, To: rope.LenChars()}, "changed"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -523,7 +525,7 @@ func TestDocumentReload(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(3, 3, "!"),
+			core.TextChange(core.Span{From: 3, To: 3}, "!"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -634,7 +636,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
-			core.NewRange(-5, 20),
+			{Anchor: -5, Head: 20},
 		}, 0))
 		err = os.WriteFile(path, []byte("012"), 0o644)
 		assert.NoError(t, err)
@@ -643,7 +645,10 @@ func TestDocumentExternalChange(t *testing.T) {
 
 		assert.True(t, ok)
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, []core.Range{core.NewRange(0, 3)}, sel.Ranges())
+		assert.Equal(t, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, sel.Ranges())
 	})
 
 	t.Run("clean reload maps inserted prefix", func(t *testing.T) {
@@ -745,14 +750,18 @@ func TestDocumentExternalChange(t *testing.T) {
 
 func TestDocumentRelativeName(t *testing.T) {
 	t.Run("relative to basedir", func(t *testing.T) {
-		name := view.DocumentRelativeName("/a/b/c/file.txt", "/a/b")
+		name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+			Path:    "/a/b/c/file.txt",
+			BaseDir: "/a/b",
+		})
 		assert.Equal(t, "c/file.txt", name)
 	})
 
 	t.Run("scratch buffer returns scratch name", func(t *testing.T) {
-		assert.Equal(t,
-			view.ScratchBufferName, view.DocumentRelativeName("", "/any"),
-		)
+		name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+			BaseDir: "/any",
+		})
+		assert.Equal(t, view.ScratchBufferName, name)
 	})
 }
 
@@ -969,7 +978,7 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 
 		rope := d.Text()
 		cs1, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "a"),
+			core.TextChange(core.Span{From: 0, To: 0}, "a"),
 		})
 		assert.NoError(t, err)
 		tx1 := core.NewTransaction(rope).WithChanges(cs1)
@@ -977,7 +986,7 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 
 		rope2 := d.Text()
 		cs2, err := core.NewChangeSetFromChanges(rope2, []core.Change{
-			core.TextChange(1, 1, "b"),
+			core.TextChange(core.Span{From: 1, To: 1}, "b"),
 		})
 		assert.NoError(t, err)
 		tx2 := core.NewTransaction(rope2).WithChanges(cs2)
@@ -1023,7 +1032,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		d := e.FocusedDocument()
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "xyz"),
+			core.TextChange(core.Span{From: 0, To: 0}, "xyz"),
 		})
 		assert.NoError(t, err)
 		sel := core.PointSelection(2)
@@ -1040,7 +1049,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		d.BeginInsertGroup(v.ID())
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "abc"),
+			core.TextChange(core.Span{From: 0, To: 0}, "abc"),
 		})
 		assert.NoError(t, err)
 		sel := core.PointSelection(1)
@@ -1055,7 +1064,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		v := e.FocusedView()
 		d := e.FocusedDocument()
 		cs, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
-			core.TextChange(0, 0, "abc\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "abc\n"),
 		})
 		assert.NoError(t, err)
 		firstTx := core.NewTransaction(d.Text()).WithChanges(cs).
@@ -1064,7 +1073,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 		assert.Equal(t, 4, d.SelectionFor(v.ID()).Primary().Head)
 
 		importCS, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
-			core.TextChange(0, 0, "import \"strings\"\n"),
+			core.TextChange(core.Span{From: 0, To: 0}, "import \"strings\"\n"),
 		})
 		assert.NoError(t, err)
 		importTx := core.NewTransaction(d.Text()).WithChanges(importCS)
@@ -1089,7 +1098,7 @@ func TestDocumentApplyBranches(t *testing.T) {
 
 		rope := doc.Text()
 		cs, csErr := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "X"),
+			core.TextChange(core.Span{From: 0, To: 0}, "X"),
 		})
 		assert.NoError(t, csErr)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1172,7 +1181,7 @@ func TestDocumentTrimTrailingWhitespaceWithCRLF(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "crlf.txt")
 		e := testutil.EditorWithText(t, "line  \r\nend  ")
-		e.Options().TrimTrailingWS = true
+		e.Options().TrimTrailingWhitespace = true
 		e.Options().InsertFinalNewline = false
 		doc := e.FocusedDocument()
 		doc.SetPath(path)
@@ -1311,7 +1320,7 @@ func TestDocumentConsumeDirty(t *testing.T) {
 		d.ConsumeDirty(v.ID())
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(0, 0, "x"),
+			core.TextChange(core.Span{From: 0, To: 0}, "x"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)

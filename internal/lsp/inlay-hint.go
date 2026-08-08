@@ -46,7 +46,7 @@ func (s *Session) InlayHints(
 		doc.ClearInlayHints(viewID)
 		return nil, nil
 	}
-	r := core.NewRange(0, doc.Text().LenChars())
+	r := core.Range{Anchor: 0, Head: doc.Text().LenChars()}
 	var out []view.InlayHint
 	var sent bool
 	var err error
@@ -74,6 +74,21 @@ func (s *Session) InlayHints(
 	})
 	doc.SetInlayHints(viewID, out)
 	return out, err
+}
+
+func (s *Session) inlayHintsAsync(doc *view.Document) {
+	if s.editor == nil {
+		return
+	}
+	for _, v := range s.editor.AllViews() {
+		if v.DocID() != doc.ID() {
+			continue
+		}
+		id := v.ID()
+		go func() {
+			_, _ = s.InlayHints(doc, id)
+		}()
+	}
 }
 
 func viewInlayHints(
@@ -125,20 +140,5 @@ func inlayHintKind(kind protocol.InlayHintKind) string {
 		return "parameter"
 	default:
 		return ""
-	}
-}
-
-func (s *Session) inlayHintsAsync(doc *view.Document) {
-	if s.editor == nil {
-		return
-	}
-	for _, v := range s.editor.AllViews() {
-		if v.DocID() != doc.ID() {
-			continue
-		}
-		id := v.ID()
-		go func() {
-			_, _ = s.InlayHints(doc, id)
-		}()
 	}
 }

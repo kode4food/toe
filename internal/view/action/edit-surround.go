@@ -8,8 +8,8 @@ import (
 )
 
 type posChar struct {
-	pos int
-	ch  rune
+	pos  int
+	char rune
 }
 
 // SelectTextObjectAround selects around the text object identified by ch
@@ -35,7 +35,9 @@ func SurroundAdd(e *view.Editor, ch rune) {
 	if doc == nil {
 		return
 	}
-	openCh, closeCh := core.GetPair(ch)
+	pair := core.GetPair(ch)
+	openCh := pair.Open
+	closeCh := pair.Close
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
@@ -46,10 +48,16 @@ func SurroundAdd(e *view.Editor, ch rune) {
 	for i, r := range ranges {
 		from, to := r.From(), r.To()
 		rawChanges = append(rawChanges,
-			core.TextChange(from+offs, from+offs, string(openCh)),
-			core.TextChange(to+offs+1, to+offs+1, string(closeCh)),
+			core.TextChange(core.Span{
+				From: from + offs,
+				To:   from + offs,
+			}, string(openCh)),
+			core.TextChange(core.Span{
+				From: to + offs + 1,
+				To:   to + offs + 1,
+			}, string(closeCh)),
 		)
-		newRanges[i] = core.NewRange(from+offs, to+offs+2)
+		newRanges[i] = core.Range{Anchor: from + offs, Head: to + offs + 2}
 		offs += 2
 	}
 
@@ -77,7 +85,7 @@ func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 	slices.Sort(positions)
 	rawChanges := make([]core.Change, len(positions))
 	for i, p := range positions {
-		rawChanges[i] = core.DeleteChange(p, p+1)
+		rawChanges[i] = core.DeleteChange(core.Span{From: p, To: p + 1})
 	}
 	cs, err := core.NewChangeSetFromChanges(text, rawChanges)
 	if err != nil {
@@ -87,11 +95,19 @@ func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 	e.SetMode(view.ModeNormal)
 }
 
-// SurroundReplace replaces the surrounding pair identified by from with the
-// pair matching to. Called after two key prompts resolved by the model
-func SurroundReplace(e *view.Editor, from, to rune) {
-	if res, ok := resolveSurroundPos(e, from); ok {
-		SurroundReplaceAt(e, res.text, res.positions, to)
+// SurroundReplaceArgs names the surrounding pair to replace and the pair to
+// replace it with, each identified by either of its brackets
+type SurroundReplaceArgs struct {
+	Editor  *view.Editor
+	Current rune
+	Wanted  rune
+}
+
+// SurroundReplace replaces the surrounding pair identified by Current with the
+// pair matching Wanted. Called after two key prompts resolved by the model
+func SurroundReplace(args SurroundReplaceArgs) {
+	if res, ok := resolveSurroundPos(args.Editor, args.Current); ok {
+		SurroundReplaceAt(args.Editor, res.text, res.positions, args.Wanted)
 	}
 }
 
@@ -100,12 +116,12 @@ func SurroundReplace(e *view.Editor, from, to rune) {
 func SurroundReplaceAt(
 	e *view.Editor, text core.Rope, positions []int, to rune,
 ) {
-	openCh, closeCh := core.GetPair(to)
+	pair := core.GetPair(to)
 	sorted := make([]posChar, 0, len(positions))
 	for i := 0; i < len(positions); i += 2 {
 		sorted = append(sorted,
-			posChar{pos: positions[i], ch: openCh},
-			posChar{pos: positions[i+1], ch: closeCh},
+			posChar{pos: positions[i], char: pair.Open},
+			posChar{pos: positions[i+1], char: pair.Close},
 		)
 	}
 	slices.SortFunc(sorted, func(a, b posChar) int {
@@ -113,7 +129,10 @@ func SurroundReplaceAt(
 	})
 	rawChanges := make([]core.Change, len(sorted))
 	for i, pc := range sorted {
-		rawChanges[i] = core.TextChange(pc.pos, pc.pos+1, string(pc.ch))
+		rawChanges[i] = core.TextChange(core.Span{
+			From: pc.pos,
+			To:   pc.pos + 1,
+		}, string(pc.char))
 	}
 	cs, err := core.NewChangeSetFromChanges(text, rawChanges)
 	if err != nil {

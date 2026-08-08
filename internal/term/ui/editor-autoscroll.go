@@ -18,24 +18,39 @@ type (
 	// axisTicker is the drag-edge-detection and repeating-tick state shared by
 	// every kind of mouse-drag auto-scroll (doc view or terminal pane)
 	axisTicker struct {
-		last, fixed int
-		gen         int
-		on, toLo    bool
-		interval    time.Duration
+		last, fixed   int
+		gen           int
+		active, toLow bool
+		interval      time.Duration
+	}
+
+	// dragBounds is a drag position and the range it is clamped within
+	dragBounds struct {
+		pos               int
+		lowEdge, highEdge int
+		margin            int
+	}
+
+	// edgeState reports which edge a drag is pinned against, and the
+	// position clamped into range
+	edgeState struct {
+		atLow   bool
+		atHigh  bool
+		clamped int
 	}
 
 	mouseAxisScrollMsg struct {
-		gen  int
-		axis *mouseAutoScrollAxis
-		toLo bool
+		gen   int
+		axis  *mouseAutoScrollAxis
+		toLow bool
 	}
 
-	axisTickSchedule func(toLo bool, gen int, interval time.Duration) tea.Cmd
+	axisTickSchedule func(toLow bool, gen int, interval time.Duration) tea.Cmd
 
-	mouseAxisScrollFunc func(e *view.Editor, v *view.View, toLo bool)
+	mouseAxisScrollFunc func(e *view.Editor, v *view.View, toLow bool)
 
 	mouseAxisPosFunc func(
-		r *renderPass, doc *view.Document, v *view.View, fixed int, toLo bool,
+		r *renderPass, doc *view.Document, v *view.View, fixed int, toLow bool,
 	) (int, bool)
 )
 
@@ -45,7 +60,7 @@ const (
 )
 
 func (e *EditorComponent) continueAxisScroll(
-	cx *Context, axis *mouseAutoScrollAxis, toLo bool,
+	cx *Context, axis *mouseAutoScrollAxis, toLow bool,
 ) tea.Cmd {
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
@@ -55,111 +70,105 @@ func (e *EditorComponent) continueAxisScroll(
 	if v == nil {
 		return nil
 	}
-	axis.scroll(cx.Editor, v, toLo)
+	axis.scroll(cx.Editor, v, toLow)
 
-	r := &renderPass{ec: e, cx: cx, size: e.size}
-	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLo); ok {
+	r := &renderPass{editor: e, context: cx, size: e.size}
+	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLow); ok {
 		extendSelectionTo(cx, doc, v, pos)
 	}
-	return axis.tick(toLo, axis.schedule)
+	return axis.tick(toLow, axis.schedule)
 }
 
 func (a *mouseAutoScrollAxis) schedule(
-	toLo bool, gen int, interval time.Duration,
+	toLow bool, gen int, interval time.Duration,
 ) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return mouseAxisScrollMsg{gen: gen, axis: a, toLo: toLo}
+		return mouseAxisScrollMsg{gen: gen, axis: a, toLow: toLow}
 	})
 }
 
-// tick starts ticking toward toLo, scheduling the next tick via schedule
-func (a *axisTicker) tick(toLo bool, schedule axisTickSchedule) tea.Cmd {
+// tick starts ticking toward toLow, scheduling the next tick via schedule
+func (a *axisTicker) tick(toLow bool, schedule axisTickSchedule) tea.Cmd {
 	a.gen++
-	a.on = true
-	a.toLo = toLo
+	a.active = true
+	a.toLow = toLow
 	interval := a.interval
 	if interval <= 0 {
 		interval = mouseAutoScrollMaxInterval
 	}
-	return schedule(toLo, a.gen, interval)
+	return schedule(toLow, a.gen, interval)
 }
 
 func (a *axisTicker) stop() {
-	if !a.on {
+	if !a.active {
 		return
 	}
 	a.gen++
-	a.on = false
+	a.active = false
 }
 
-func (a *axisTicker) update(
-	pos, lo, hi, margin int,
-) (atLo, atHi bool, clamped int) {
-	atLo, atHi, clamped = dragEdge(dragEdgeArgs{
-		pos:    pos,
+func (a *axisTicker) update(bounds dragBounds) edgeState {
+	edge := dragEdge(dragEdgeArgs{
+		bounds: bounds,
 		last:   a.last,
-		lo:     lo,
-		hi:     hi,
-		margin: margin,
-		onLo:   a.on && a.toLo,
-		onHi:   a.on && !a.toLo,
+		onLow:  a.active && a.toLow,
+		onHigh: a.active && !a.toLow,
 	})
-	a.last = pos
-	a.interval = autoScrollInterval(pos, lo, hi, margin, atLo, atHi)
-	return atLo, atHi, clamped
+	a.last = bounds.pos
+	a.interval = autoScrollInterval(bounds, edge)
+	return edge
 }
 
-// trigger starts or continues ticking toward whichever edge atLo/atHi
-// crossed, or stops ticking if neither has
+// trigger starts or continues ticking toward whichever edge was crossed, or
+// stops ticking if neither has
 func (a *axisTicker) trigger(
-	atLo, atHi bool, fixed int, schedule axisTickSchedule,
+	edge edgeState, fixed int, schedule axisTickSchedule,
 ) tea.Cmd {
-	if !atLo && !atHi {
+	if !edge.atLow && !edge.atHigh {
 		a.stop()
 		return nil
 	}
 	a.fixed = fixed
-	if a.on && a.toLo == atLo {
+	if a.active && a.toLow == edge.atLow {
 		return nil
 	}
-	return a.tick(atLo, schedule)
+	return a.tick(edge.atLow, schedule)
 }
 
 type dragEdgeArgs struct {
-	pos, last  int
-	lo, hi     int
-	margin     int
-	onLo, onHi bool
+	bounds        dragBounds
+	last          int
+	onLow, onHigh bool
 }
 
-func dragEdge(a dragEdgeArgs) (atLo, atHi bool, clamped int) {
-	towardLo := a.pos < a.last
-	towardHi := a.pos > a.last
-	stuckLo := a.onLo && a.pos <= a.lo
-	stuckHi := a.onHi && a.pos >= a.hi
-	atLo = a.pos <= a.lo+a.margin && (towardLo || stuckLo)
-	atHi = a.pos >= a.hi-a.margin && (towardHi || stuckHi)
-	clamped = min(max(a.pos, a.lo), a.hi)
-	return atLo, atHi, clamped
+func dragEdge(args dragEdgeArgs) edgeState {
+	b := args.bounds
+	towardLow := b.pos < args.last
+	towardHigh := b.pos > args.last
+	stuckLow := args.onLow && b.pos <= b.lowEdge
+	stuckHigh := args.onHigh && b.pos >= b.highEdge
+	return edgeState{
+		atLow:   b.pos <= b.lowEdge+b.margin && (towardLow || stuckLow),
+		atHigh:  b.pos >= b.highEdge-b.margin && (towardHigh || stuckHigh),
+		clamped: min(max(b.pos, b.lowEdge), b.highEdge),
+	}
 }
 
-func autoScrollInterval(
-	pos, lo, hi, margin int, atLo, atHi bool,
-) time.Duration {
-	if margin <= 0 {
+func autoScrollInterval(b dragBounds, edge edgeState) time.Duration {
+	if b.margin <= 0 {
 		return mouseAutoScrollMinInterval
 	}
 	var depth int
 	switch {
-	case atLo:
-		depth = lo + margin - pos
-	case atHi:
-		depth = pos - (hi - margin)
+	case edge.atLow:
+		depth = b.lowEdge + b.margin - b.pos
+	case edge.atHigh:
+		depth = b.pos - (b.highEdge - b.margin)
 	default:
 		return mouseAutoScrollMaxInterval
 	}
-	depth = min(max(depth, 0), margin)
-	t := float64(depth) / float64(margin)
+	depth = min(max(depth, 0), b.margin)
+	t := float64(depth) / float64(b.margin)
 	t *= t // ease in: stays slow through most of the margin, then drops fast
 	span := mouseAutoScrollMaxInterval - mouseAutoScrollMinInterval
 	return mouseAutoScrollMaxInterval - time.Duration(t*float64(span))

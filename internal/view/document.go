@@ -280,7 +280,10 @@ func (d *Document) DisplayName() string {
 
 // RelativeName returns the path relative to basedir
 func (d *Document) RelativeName(basedir string) string {
-	return DocumentRelativeName(d.Path(), basedir)
+	return DocumentRelativeName(DocumentRelativeNameArgs{
+		Path:    d.Path(),
+		BaseDir: basedir,
+	})
 }
 
 // SelectionFor returns the selection for a given view

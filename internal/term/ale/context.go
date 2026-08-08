@@ -51,10 +51,6 @@ const (
 	keyCursor    data.Keyword = "cursor"
 )
 
-func buildContext(e *view.Editor) contextValue {
-	return contextValue{editor: e}
-}
-
 // Get resolves an editor context field for a script
 func (c contextValue) Get(key ale.Value) (ale.Value, bool) {
 	switch key {
@@ -166,6 +162,10 @@ func (s selectionValue) Get(key ale.Value) (ale.Value, bool) {
 func (s selectionValue) Equal(other ale.Value) bool {
 	o, ok := other.(selectionValue)
 	return ok && o == s
+}
+
+func buildContext(e *view.Editor) contextValue {
+	return contextValue{editor: e}
 }
 
 // rangeObject builds a concrete Ale object for a range; :anchor and :head keep

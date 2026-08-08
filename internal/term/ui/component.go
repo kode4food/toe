@@ -65,7 +65,7 @@ type (
 		ContinueDrag(*Context, geom.Point) tea.Cmd
 		EndDrag(*Context, geom.Point) tea.Cmd
 		CancelDrag()
-		DragTick(cx *Context, gen int, toTop bool) tea.Cmd
+		DragTick(cx *Context, gen int, toLow bool) tea.Cmd
 	}
 
 	// overlayBuf is embedded by BufferOverlayComponent implementers to

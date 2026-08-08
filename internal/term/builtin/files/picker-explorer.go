@@ -48,25 +48,28 @@ func NewFocusedPaneDirExplorer(
 	return ui.NewPicker(e, newFileExplorerSource(focusedPaneDir(e), opts))
 }
 
-func focusedPaneDir(e *view.Editor) string {
-	if p := e.FocusedPane(); p != nil {
-		if path := p.Path(); path != "" {
-			return filepath.Dir(path)
-		}
-	}
-	return e.Cwd()
-}
-
 // DefaultFileExplorerOptions returns the explorer's out-of-the-box behavior
 func DefaultFileExplorerOptions() FileExplorerOptions {
 	return FileExplorerOptions{FlattenDirs: true}
 }
 
+func newFileExplorerSource(
+	root string, opts FileExplorerOptions,
+) *fileExplorerSource {
+	return &fileExplorerSource{
+		PickerBase: ui.PickerBase{
+			Ident: "file-explorer",
+			Label: "File Explorer",
+			Cols:  []string{"name"},
+		},
+		root: root,
+		opts: opts,
+	}
+}
+
 // Load lists the entries of the current directory
-func (f *fileExplorerSource) Load(
-	_ *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
-	return f.readDir(), nil, func() {}
+func (f *fileExplorerSource) Load(*view.Editor) ui.PickerLoad {
+	return ui.PickerLoad{Items: f.readDir(), Stop: func() {}}
 }
 
 // Accept opens the chosen file, or descends into a directory
@@ -94,20 +97,6 @@ func (f *fileExplorerSource) Navigate(
 	}
 }
 
-func newFileExplorerSource(
-	root string, opts FileExplorerOptions,
-) *fileExplorerSource {
-	return &fileExplorerSource{
-		PickerBase: ui.PickerBase{
-			Ident: "file-explorer",
-			Label: "File Explorer",
-			Cols:  []string{"name"},
-		},
-		root: root,
-		opts: opts,
-	}
-}
-
 func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 	entries, err := os.ReadDir(f.root)
 	if err != nil {
@@ -119,11 +108,14 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 		rel := filepath.ToSlash(entry.Name())
 		ignoreOpts := explorerIgnoreOptions(f.opts)
 		if ui.SkipPickerPath(ui.SkipPickerPathArgs{
-			Rel:     rel,
-			Path:    full,
-			Entry:   entry,
-			Ignores: ui.LoadIgnoreFiles(f.root, full, ignoreOpts),
-			Opts:    ignoreOpts,
+			Rel:   rel,
+			Path:  full,
+			Entry: entry,
+			Ignores: ui.LoadIgnoreFiles(ui.IgnoreTarget{
+				Root: f.root,
+				Path: full,
+			}, ignoreOpts),
+			Opts: ignoreOpts,
 		}) {
 			continue
 		}
@@ -136,10 +128,7 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 				isDir: true,
 			})
 		} else {
-			files = append(files, explorerEntry{
-				path:  full,
-				isDir: false,
-			})
+			files = append(files, explorerEntry{path: full})
 		}
 	}
 	slices.SortFunc(dirs, func(a, b explorerEntry) int {
@@ -153,21 +142,68 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 	var slab ui.PickerItemSlab
 	parent, _ := filepath.Abs(filepath.Join(f.root, ".."))
 	if parent != f.root {
-		items = append(items, f.makeDirItem(&slab, "../", parent))
+		items = append(items, f.makeDirItem(makeDirItemArgs{
+			slab:    &slab,
+			display: "../",
+			path:    parent,
+		}))
 	}
 	for _, e := range dirs {
 		rel, err := filepath.Rel(f.root, e.path)
 		if err != nil {
 			rel = filepath.Base(e.path)
 		}
-		items = append(
-			items, f.makeDirItem(&slab, filepath.ToSlash(rel)+"/", e.path),
-		)
+		items = append(items, f.makeDirItem(makeDirItemArgs{
+			slab:    &slab,
+			display: filepath.ToSlash(rel) + "/",
+			path:    e.path,
+		}))
 	}
 	for _, e := range files {
 		items = append(items, f.makeFileItem(&slab, e.path))
 	}
 	return items
+}
+
+type makeDirItemArgs struct {
+	slab    *ui.PickerItemSlab
+	display string
+	path    string
+}
+
+func (f *fileExplorerSource) makeDirItem(args makeDirItemArgs) *ui.PickerItem {
+	slab := args.slab
+	display := args.display
+	path := args.path
+	return slab.Add(ui.PickerItem{
+		Display:     display,
+		SortKey:     display,
+		StyleScopes: []string{explorerDirScope},
+		Payload: explorerEntry{
+			path:  path,
+			isDir: true,
+		},
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+	})
+}
+
+func (f *fileExplorerSource) makeFileItem(
+	slab *ui.PickerItemSlab, path string,
+) *ui.PickerItem {
+	return slab.Add(ui.PickerItem{
+		Display:  filepath.Base(path),
+		SortKey:  filepath.Base(path),
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+	})
+}
+
+func focusedPaneDir(e *view.Editor) string {
+	if p := e.FocusedPane(); p != nil {
+		if path := p.Path(); path != "" {
+			return filepath.Dir(path)
+		}
+	}
+	return e.Cwd()
 }
 
 func explorerIgnoreOptions(cfg FileExplorerOptions) ui.PickerIgnoreOptions {
@@ -189,31 +225,6 @@ func pickerDirEntryIsDir(
 	}
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
-}
-
-func (f *fileExplorerSource) makeDirItem(
-	slab *ui.PickerItemSlab, display, path string,
-) *ui.PickerItem {
-	return slab.Add(ui.PickerItem{
-		Display:     display,
-		SortKey:     display,
-		StyleScopes: []string{explorerDirScope},
-		Payload: explorerEntry{
-			path:  path,
-			isDir: true,
-		},
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
-	})
-}
-
-func (f *fileExplorerSource) makeFileItem(
-	slab *ui.PickerItemSlab, path string,
-) *ui.PickerItem {
-	return slab.Add(ui.PickerItem{
-		Display:  filepath.Base(path),
-		SortKey:  filepath.Base(path),
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
-	})
 }
 
 func flattenExplorerDir(path string, followSymlinks bool) string {

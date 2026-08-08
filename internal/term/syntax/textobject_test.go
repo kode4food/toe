@@ -18,7 +18,12 @@ func TestFindTextObjectFunction(t *testing.T) {
 	runes := []rune(goSrc)
 
 	t.Run("around selects full declaration", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'f', false)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'f',
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "func foo")
@@ -26,7 +31,13 @@ func TestFindTextObjectFunction(t *testing.T) {
 	})
 
 	t.Run("inside selects body without braces", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'f', true)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'f',
+			Inside: true,
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "return x + 1")
@@ -40,7 +51,12 @@ func TestFindTextObjectMethod(t *testing.T) {
 	runes := []rune(goSrc)
 
 	t.Run("around selects method declaration", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'f', false)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'f',
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "func (b Bar) Greet")
@@ -48,7 +64,13 @@ func TestFindTextObjectMethod(t *testing.T) {
 	})
 
 	t.Run("inside selects method body", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'f', true)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'f',
+			Inside: true,
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "Println")
@@ -61,7 +83,12 @@ func TestFindTextObjectType(t *testing.T) {
 	runes := []rune(goSrc)
 
 	t.Run("around selects type declaration", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 't', false)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   't',
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "type Bar struct")
@@ -69,7 +96,13 @@ func TestFindTextObjectType(t *testing.T) {
 	})
 
 	t.Run("inside selects struct body", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 't', true)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   't',
+			Inside: true,
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "Name string")
@@ -82,7 +115,12 @@ func TestFindTextObjectParameter(t *testing.T) {
 	runes := []rune(goSrc)
 
 	t.Run("selects parenthesized parameters", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'a', false)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'a',
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "(")
@@ -91,7 +129,13 @@ func TestFindTextObjectParameter(t *testing.T) {
 	})
 
 	t.Run("inside selects parameters without parens", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(goSrc, "go", cursor, 'a', true)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'a',
+			Inside: true,
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "x int")
@@ -105,7 +149,12 @@ func TestFindTextObjectCall(t *testing.T) {
 	runes := []rune(src)
 
 	t.Run("around selects full call", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(src, "go", cursor, 'c', false)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'c',
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "fmt.Println")
@@ -113,7 +162,13 @@ func TestFindTextObjectCall(t *testing.T) {
 	})
 
 	t.Run("inside selects arguments without parens", func(t *testing.T) {
-		r, ok := syntax.FindTextObject(src, "go", cursor, 'c', true)
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   src,
+			Lang:   "go",
+			Cursor: cursor,
+			Char:   'c',
+			Inside: true,
+		})
 		assert.True(t, ok)
 		got := string(runes[r.From:r.To])
 		assert.Contains(t, got, "alpha")
@@ -122,37 +177,69 @@ func TestFindTextObjectCall(t *testing.T) {
 }
 
 func TestFindTextObjectUnknownLang(t *testing.T) {
-	_, ok := syntax.FindTextObject("func foo() {}", "unknown", 5, 'f', true)
+	_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+		Text:   "func foo() {}",
+		Lang:   "unknown",
+		Cursor: 5,
+		Char:   'f',
+		Inside: true,
+	})
 	assert.False(t, ok)
 }
 
 func TestFindTextObjectUnknownChar(t *testing.T) {
-	_, ok := syntax.FindTextObject(goSrc, "go", 20, 'z', true)
+	_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+		Text:   goSrc,
+		Lang:   "go",
+		Cursor: 20,
+		Char:   'z',
+		Inside: true,
+	})
 	assert.False(t, ok)
 }
 
 func TestFindTextObjectNoMatch(t *testing.T) {
 	src := "package main\n\nvar x = 1\n"
 	cursor := strings.Index(src, "x")
-	_, ok := syntax.FindTextObject(src, "go", cursor, 'f', true)
+	_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+		Text:   src,
+		Lang:   "go",
+		Cursor: cursor,
+		Char:   'f',
+		Inside: true,
+	})
 	assert.False(t, ok)
 }
 
 func TestFindTextObjectOutOfBounds(t *testing.T) {
 	t.Run("negative cursor returns false", func(t *testing.T) {
-		_, ok := syntax.FindTextObject(goSrc, "go", -1, 'f', true)
+		_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: -1,
+			Char:   'f',
+			Inside: true,
+		})
 		assert.False(t, ok)
 	})
 
 	t.Run("cursor past end returns false", func(t *testing.T) {
-		_, ok := syntax.FindTextObject(
-			goSrc, "go", len([]rune(goSrc)), 'f', true,
-		)
+		_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   goSrc,
+			Lang:   "go",
+			Cursor: len([]rune(goSrc)),
+			Char:   'f',
+			Inside: true,
+		})
 		assert.False(t, ok)
 	})
 
 	t.Run("no textobject query returns false", func(t *testing.T) {
-		_, ok := syntax.FindTextObject("body { color: red; }", "css", 0, 'f', false)
+		_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text: "body { color: red; }",
+			Lang: "css",
+			Char: 'f',
+		})
 		assert.False(t, ok)
 	})
 }

@@ -69,8 +69,8 @@ func (m Model) CmdModeAction(_ *view.Editor) {
 	ec := m.component
 	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 		return newPromptComponent(cx, promptComponentArgs{
-			ec:   ec,
-			kind: promptCmd,
+			editor: ec,
+			kind:   promptCmd,
 		}), nil
 	}
 }
@@ -78,10 +78,10 @@ func (m Model) CmdModeAction(_ *view.Editor) {
 // SearchAction returns an action opening the search prompt
 func (m Model) SearchAction(forward bool) command.Action {
 	ec := m.component
-	return func(_ *view.Editor) {
+	return func(*view.Editor) {
 		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
-				ec:      ec,
+				editor:  ec,
 				kind:    promptSearch,
 				forward: forward,
 			}), nil
@@ -92,13 +92,13 @@ func (m Model) SearchAction(forward bool) command.Action {
 // RegexAction returns an action prompting for a pattern, then running fn
 func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
-	return func(_ *view.Editor) {
+	return func(*view.Editor) {
 		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
-				ec:     ec,
-				kind:   promptRegex,
-				prompt: prompt,
-				fn:     fn,
+				editor:  ec,
+				kind:    promptRegex,
+				prompt:  prompt,
+				handler: fn,
 			}), nil
 		}
 	}
@@ -107,13 +107,13 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 // ShellAction returns an action prompting for a command, then running fn
 func (m Model) ShellAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
-	return func(_ *view.Editor) {
+	return func(*view.Editor) {
 		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
-				ec:     ec,
-				kind:   promptShell,
-				prompt: prompt,
-				fn:     fn,
+				editor:  ec,
+				kind:    promptShell,
+				prompt:  prompt,
+				handler: fn,
 			}), nil
 		}
 	}

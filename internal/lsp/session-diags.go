@@ -7,6 +7,7 @@ import (
 
 	"go.lsp.dev/protocol"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -151,7 +152,7 @@ func (s *Session) convertDiagnostics(
 		}
 		source, _ := diag.Source.Get()
 		out = append(out, view.Diagnostic{
-			Range: view.DiagnosticRange{
+			Range: core.Span{
 				From: dr.From(),
 				To:   dr.To(),
 			},

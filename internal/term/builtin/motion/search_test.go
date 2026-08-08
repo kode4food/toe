@@ -70,7 +70,10 @@ func TestSearch(t *testing.T) {
 
 	t.Run("search_selection runs", func(t *testing.T) {
 		e, km := test.Env(t, "a.b")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		test.RunCmd(t, km, e, "search_selection")
 
@@ -80,7 +83,10 @@ func TestSearch(t *testing.T) {
 
 	t.Run("search_selection_word runs", func(t *testing.T) {
 		e, km := test.Env(t, "foo bar")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 
 		test.RunCmd(t, km, e, "search_selection_word")
 

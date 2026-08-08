@@ -24,7 +24,7 @@ func TestCollapseSelection(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(),
-		newSelection(t, []core.Range{core.NewRange(0, 3)}, 0),
+		newSelection(t, []core.Range{{Anchor: 0, Head: 3}}, 0),
 	)
 	action.CollapseSelection(e)
 	a, h := selectionAnchorHead(t, e)
@@ -36,7 +36,7 @@ func TestFlipSelections(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(),
-		newSelection(t, []core.Range{core.NewRange(1, 4)}, 0),
+		newSelection(t, []core.Range{{Anchor: 1, Head: 4}}, 0),
 	)
 	action.FlipSelections(e)
 	a, h := selectionAnchorHead(t, e)
@@ -49,8 +49,8 @@ func TestKeepPrimarySelection(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
-		core.NewRange(0, 2),
-		core.NewRange(3, 5),
+		{Anchor: 0, Head: 2},
+		{Anchor: 3, Head: 5},
 	}, 0))
 	action.KeepPrimarySelection(e)
 	selAfter := doc.SelectionFor(v.ID())
@@ -65,7 +65,7 @@ func TestDeleteSelection(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(),
-			newSelection(t, []core.Range{core.NewRange(0, 5)}, 0),
+			newSelection(t, []core.Range{{Anchor: 0, Head: 5}}, 0),
 		)
 		action.DeleteSelection(e)
 		doc = e.FocusedDocument()
@@ -101,7 +101,7 @@ func TestExtendLineBelow(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		doc.SetSelectionFor(v.ID(),
-			newSelection(t, []core.Range{core.NewRange(0, 4)}, 0),
+			newSelection(t, []core.Range{{Anchor: 0, Head: 4}}, 0),
 		)
 		action.ExtendLineBelow(e)
 		a, h := selectionAnchorHead(t, e)
@@ -131,8 +131,8 @@ func TestRotateSelections(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(v.ID(), newSelection(t, []core.Range{
-		core.NewRange(0, 1),
-		core.NewRange(2, 3),
+		{Anchor: 0, Head: 1},
+		{Anchor: 2, Head: 3},
 	}, 0))
 	action.RotateSelectionsForward(e)
 	action.RotateSelectionsBackward(e)

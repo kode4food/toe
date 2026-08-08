@@ -114,8 +114,8 @@ func TestContext(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		testutil.SetEditorText(t, e, "hello world")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 5),
-			core.NewRange(6, 11),
+			{Anchor: 0, Head: 5},
+			{Anchor: 6, Head: 11},
 		}, 1)
 		rt, km, got := recordingRuntime(t, e)
 		bindContext(t, rt, `

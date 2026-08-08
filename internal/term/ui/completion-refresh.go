@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 )
 
@@ -24,7 +25,7 @@ func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
 		return nil
 	}
-	query, err := doc.Text().SliceString(c.anchor.pos, pos)
+	query, err := doc.Text().SliceString(core.Span{From: c.anchor.pos, To: pos})
 	if err != nil {
 		comp.Pop()
 		return nil
@@ -140,7 +141,10 @@ func (c *completionComponent) query(cx *Context) (string, bool) {
 		return "", false
 	}
 	pos := doc.SelectionFor(v.ID()).Primary().Cursor(doc.Text())
-	if query, err := doc.Text().SliceString(c.anchor.pos, pos); err == nil {
+	if query, err := doc.Text().SliceString(core.Span{
+		From: c.anchor.pos,
+		To:   pos,
+	}); err == nil {
 		return query, true
 	}
 	return "", false

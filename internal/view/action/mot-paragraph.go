@@ -25,7 +25,11 @@ func GotoNextParagraph(e *view.Editor) {
 				break
 			}
 			if isBlankLine(lr.String()) {
-				l = skipConsecutiveBlanks(doc, l, nLines, 1)
+				l = skipConsecutiveBlanks(doc, skipBlanksArgs{
+					line:      l,
+					lineCount: nLines,
+					step:      1,
+				})
 				l++
 				found++
 				if found >= n || l >= nLines {
@@ -64,7 +68,11 @@ func GotoPrevParagraph(e *view.Editor) {
 				break
 			}
 			if isBlankLine(lr.String()) {
-				l = skipConsecutiveBlanks(doc, l, nLines, -1)
+				l = skipConsecutiveBlanks(doc, skipBlanksArgs{
+					line:      l,
+					lineCount: nLines,
+					step:      -1,
+				})
 				found++
 				if found >= n || l <= 0 {
 					target := max(l-1, 0)
@@ -82,10 +90,17 @@ func GotoPrevParagraph(e *view.Editor) {
 	})
 }
 
-func skipConsecutiveBlanks(doc core.Rope, l, nLines, step int) int {
+type skipBlanksArgs struct {
+	line      int
+	lineCount int
+	step      int
+}
+
+func skipConsecutiveBlanks(doc core.Rope, args skipBlanksArgs) int {
+	l := args.line
 	for {
-		next := l + step
-		if next < 0 || next >= nLines {
+		next := l + args.step
+		if next < 0 || next >= args.lineCount {
 			break
 		}
 		lr, err := doc.Line(next)

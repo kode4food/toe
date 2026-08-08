@@ -16,7 +16,10 @@ func SelectAll(e *view.Editor) {
 		return
 	}
 	n := doc.Text().LenChars()
-	sel, err := core.NewSelection([]core.Range{core.NewRange(0, n)}, 0)
+	sel, err := core.NewSelection([]core.Range{{
+		Anchor: 0,
+		Head:   n,
+	}}, 0)
 	if err != nil {
 		return
 	}
@@ -82,7 +85,7 @@ func KeepPrimarySelection(e *view.Editor) {
 	sel := doc.SelectionFor(v.ID())
 	primary := sel.Primary()
 	newSel, err := core.NewSelection(
-		[]core.Range{core.NewRange(primary.Anchor, primary.Head)}, 0,
+		[]core.Range{{Anchor: primary.Anchor, Head: primary.Head}}, 0,
 	)
 	if err != nil {
 		return

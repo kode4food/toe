@@ -9,7 +9,7 @@ import (
 // (from line start to next-line start), preserving direction
 func ExtendToLineBounds(e *view.Editor) {
 	applyMove(e, func(text core.Rope, r core.Range) core.Range {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			return r
 		}
@@ -28,7 +28,10 @@ func ExtendToLineBounds(e *view.Editor) {
 				return r
 			}
 		}
-		return core.NewRange(start, end).WithDirection(r.Direction())
+		return core.Range{
+			Anchor: start,
+			Head:   end,
+		}.WithDirection(r.Direction())
 	})
 }
 
@@ -36,7 +39,7 @@ func ExtendToLineBounds(e *view.Editor) {
 // includes leading/trailing line endings. Single-line selections are unchanged
 func ShrinkToLineBounds(e *view.Editor) {
 	applyMove(e, func(text core.Rope, r core.Range) core.Range {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			return r
 		}
@@ -73,6 +76,9 @@ func ShrinkToLineBounds(e *view.Editor) {
 				return r
 			}
 		}
-		return core.NewRange(start, end).WithDirection(r.Direction())
+		return core.Range{
+			Anchor: start,
+			Head:   end,
+		}.WithDirection(r.Direction())
 	})
 }

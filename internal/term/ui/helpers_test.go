@@ -236,9 +236,7 @@ func special(s command.Special) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Special: s}}
 }
 
-func (s feedPickerSource) Load(
-	*view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (s feedPickerSource) Load(*view.Editor) ui.PickerLoad {
 	ch := make(chan *ui.PickerItem, len(s.paths))
 	var slab ui.PickerItemSlab
 	for _, p := range s.paths {
@@ -249,7 +247,7 @@ func (s feedPickerSource) Load(
 		})
 	}
 	close(ch)
-	return nil, ch, func() {}
+	return ui.PickerLoad{Feed: ch, Stop: func() {}}
 }
 
 func (feedPickerSource) Accept(

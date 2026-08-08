@@ -220,7 +220,7 @@ func (h *clientHandler) LogMessage(
 func (h *clientHandler) ShowDocument(
 	context.Context, *protocol.ShowDocumentParams,
 ) (*protocol.ShowDocumentResult, error) {
-	return &protocol.ShowDocumentResult{Success: false}, nil
+	return &protocol.ShowDocumentResult{}, nil
 }
 
 // Telemetry discards the server's telemetry events
@@ -238,7 +238,6 @@ func (h *clientHandler) ApplyEdit(
 	}
 	if err := h.session.applyWorkspaceEdit(params.Edit, encoding); err != nil {
 		return &protocol.ApplyWorkspaceEditResult{
-			Applied:       false,
 			FailureReason: new(err.Error()),
 		}, nil
 	}

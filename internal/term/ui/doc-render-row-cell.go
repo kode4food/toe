@@ -57,13 +57,13 @@ func (r *renderedRow) writeFillToBuffer(args rowFillArgs) {
 	if args.width <= 0 {
 		return
 	}
-	// fg-only spaces are invisible over the base fill; skip them
 	s := args.style
+	// fg-only spaces are invisible over the base fill; skip them
 	if s.BgColor().IsReset() && s.Modifier() == 0 &&
 		s.UnderlineStyle() == tui.UnderlineReset {
 		return
 	}
-	args.buf.FillRange(args.at, args.width, args.style)
+	args.buf.FillRange(args.at, args.width, s)
 }
 
 func (r *renderedRow) empty() bool {
@@ -124,23 +124,23 @@ func writeCellsWindowed(a writeCellsArgs) int {
 
 // rulers are 1-based content columns
 type applyRulersArgs struct {
-	buf              *tui.Buffer
-	at               geom.Point
-	size             geom.Size
-	horizontalOffset int
-	rulers           []int
-	rulerBackground  tui.Color
+	buf     *tui.Buffer
+	at      geom.Point
+	size    geom.Size
+	horzOff int
+	rulers  []int
+	rulerBg tui.Color
 }
 
 func applyRulers(a applyRulersArgs) {
 	for _, ruler := range a.rulers {
-		rel := ruler - 1 - a.horizontalOffset
+		rel := ruler - 1 - a.horzOff
 		if rel < 0 || rel >= a.size.Width {
 			continue
 		}
 		sx := a.at.X + rel
 		for y := a.at.Y; y < a.at.Y+a.size.Height; y++ {
-			a.buf.PatchBg(geom.Point{X: sx, Y: y}, a.rulerBackground)
+			a.buf.PatchBg(geom.Point{X: sx, Y: y}, a.rulerBg)
 		}
 	}
 }

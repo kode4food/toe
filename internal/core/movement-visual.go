@@ -11,13 +11,20 @@ func (vf *VisualMoveFormat) VisualRows(doc Rope, line int) int {
 	return newVisualLine(doc, line, vf).rowCount()
 }
 
+// VisualRowOfOffsetArgs is a text line and a character offset within it
+type VisualRowOfOffsetArgs struct {
+	Doc     Rope
+	Line    int
+	CharOff int
+}
+
 // VisualRowOfOffset returns the zero-based visual row within its text line on
-// which the character at charOff (relative to line start) is displayed
-func (vf *VisualMoveFormat) VisualRowOfOffset(doc Rope, line, charOff int) int {
+// which the character at CharOff (relative to line start) is displayed
+func (vf *VisualMoveFormat) VisualRowOfOffset(args VisualRowOfOffsetArgs) int {
 	if vf == nil || vf.ViewportWidth <= 0 {
 		return 0
 	}
-	return newVisualLine(doc, line, vf).posOf(charOff).Y
+	return newVisualLine(args.Doc, args.Line, vf).posOf(args.CharOff).Y
 }
 
 type (

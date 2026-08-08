@@ -291,13 +291,16 @@ func (t *Tree) Remove(id Id) {
 	parent := t.nodes[id].parent
 	parentIsRoot := parent == t.root
 
-	t.removeOrReplace(id, 0)
+	t.removeOrReplace(removeOrReplaceArgs{child: id})
 
 	c := t.nodes[parent].container
 	if len(c.children) == 1 && !parentIsRoot {
 		sibling := c.children[0]
 		c.children = nil
-		t.removeOrReplace(parent, sibling)
+		t.removeOrReplace(removeOrReplaceArgs{
+			child:       parent,
+			replacement: sibling,
+		})
 	}
 
 	if t.Count() < 2 {
@@ -502,7 +505,14 @@ func (t *Tree) allocID() Id {
 	return t.nextID
 }
 
-func (t *Tree) removeOrReplace(child Id, replacement Id) {
+type removeOrReplaceArgs struct {
+	child       Id
+	replacement Id
+}
+
+func (t *Tree) removeOrReplace(args removeOrReplaceArgs) {
+	child := args.child
+	replacement := args.replacement
 	for _, p := range t.nodes[child].history {
 		p.Discard()
 	}

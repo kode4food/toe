@@ -44,12 +44,10 @@ func JumplistPicker(e *view.Editor) *ui.Picker {
 }
 
 // Load lists the focused pane's jump history
-func (j *jumplistPickerSource) Load(
-	e *view.Editor,
-) ([]*ui.PickerItem, <-chan *ui.PickerItem, ui.StopFunc) {
+func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
 	v := e.FocusedView()
 	if v == nil {
-		return nil, nil, func() {}
+		return ui.PickerLoad{Stop: func() {}}
 	}
 	jumps := v.Jumps()
 	items := make([]*ui.PickerItem, 0, len(jumps))
@@ -74,7 +72,7 @@ func (j *jumplistPickerSource) Load(
 			Payload: entry,
 		}))
 	}
-	return items, nil, func() {}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
 // Accept jumps to the chosen entry
@@ -101,9 +99,9 @@ func jumpSelection(j view.JumpEntry) core.Selection {
 
 func jumpLineRange(
 	text core.Rope, sel core.Selection,
-) (int, *ui.PickerLineRange) {
+) (int, *core.Span) {
 	if line, err := sel.Primary().CursorLine(text); err == nil {
-		return line, &ui.PickerLineRange{From: line, To: line}
+		return line, &core.Span{From: line, To: line}
 	}
 	return 0, nil
 }

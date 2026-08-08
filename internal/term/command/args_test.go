@@ -21,7 +21,6 @@ func TestParseErrorVariants(t *testing.T) {
 	t.Run("missing expansion delimiter bare", func(t *testing.T) {
 		pe := &command.ParseError{
 			Kind: command.ParseErrorMissingExpansionDelimiter,
-			Text: "",
 		}
 		assert.Contains(t, pe.Error(), "%%")
 	})

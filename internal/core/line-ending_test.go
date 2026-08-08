@@ -48,8 +48,8 @@ func TestLineEnding(t *testing.T) {
 			e    core.LineEnding
 			ok   bool
 		}{
-			{name: "empty", in: "", ok: false},
-			{name: "none", in: "hello", ok: false},
+			{name: "empty"},
+			{name: "none", in: "hello"},
 			{name: "lf", in: "\n", e: core.LineEndingLF, ok: true},
 			{name: "crlf", in: "\r\n", e: core.LineEndingCRLF, ok: true},
 			{
@@ -103,7 +103,6 @@ func TestLineEnding(t *testing.T) {
 			{
 				name: "caps scan",
 				in:   strings.Repeat("x\f", 100) + "\n",
-				ok:   false,
 			},
 		}
 

@@ -22,14 +22,18 @@ func ResolveWorkspace(req WorkspaceRequest) (string, bool) {
 		return "", false
 	}
 	workspace, ok := cleanAbs(req.Workspace)
-	if !ok || !inside(file, workspace) {
+	if !ok || !inside(insideArgs{path: file, root: workspace}) {
 		return "", false
 	}
 	for dir := file; ; dir = filepath.Dir(dir) {
 		if dirHasAny(dir, req.RootMarkers) {
 			return dir, true
 		}
-		if matchesRootDir(workspace, dir, req.RootDirs) {
+		if matchesRootDir(matchesRootDirArgs{
+			workspace: workspace,
+			dir:       dir,
+			roots:     req.RootDirs,
+		}) {
 			return workspace, true
 		}
 		if dir == workspace {
@@ -93,8 +97,13 @@ func cleanAbs(path string) (string, bool) {
 	return "", false
 }
 
-func inside(path, root string) bool {
-	rel, err := filepath.Rel(root, path)
+type insideArgs struct {
+	path string
+	root string
+}
+
+func inside(args insideArgs) bool {
+	rel, err := filepath.Rel(args.root, args.path)
 	if err != nil {
 		return false
 	}
@@ -116,9 +125,15 @@ func dirHasAny(dir string, names []string) bool {
 	return false
 }
 
-func matchesRootDir(workspace, dir string, roots []string) bool {
-	for _, root := range roots {
-		if filepath.Clean(filepath.Join(workspace, root)) == dir {
+type matchesRootDirArgs struct {
+	workspace string
+	dir       string
+	roots     []string
+}
+
+func matchesRootDir(args matchesRootDirArgs) bool {
+	for _, root := range args.roots {
+		if filepath.Clean(filepath.Join(args.workspace, root)) == args.dir {
 			return true
 		}
 	}

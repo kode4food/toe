@@ -11,7 +11,7 @@ import (
 type (
 	hoverComponent struct {
 		overlayBuf
-		ec     *EditorComponent
+		editor *EditorComponent
 		anchor hoverAnchor
 		text   string
 		lines  []popupLine
@@ -29,7 +29,7 @@ var _ BufferOverlayComponent = (*hoverComponent)(nil)
 func newHoverComponent(
 	ec *EditorComponent, anchor hoverAnchor, text string,
 ) *hoverComponent {
-	return &hoverComponent{ec: ec, anchor: anchor, text: text}
+	return &hoverComponent{editor: ec, anchor: anchor, text: text}
 }
 
 // HandleEvent dismisses the popup on any key or click
@@ -61,7 +61,7 @@ func (h *hoverComponent) Layout(
 		return geom.Area{}, false
 	}
 	x, y := 0, 0
-	if cur, ok := h.ec.Cursor(cx, screen); ok {
+	if cur, ok := h.editor.Cursor(cx, screen); ok {
 		x, y = cur.X+1, cur.Y+1
 	}
 	maxW := max(screen.Width-x, 30)

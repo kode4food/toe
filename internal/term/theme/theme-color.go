@@ -28,35 +28,6 @@ func (p palette) parseColor(value any) (colorSpec, error) {
 	return parseRawColor(s)
 }
 
-func parseRawColor(s string) (colorSpec, error) {
-	if strings.HasPrefix(s, "#") {
-		if len(s) == 4 {
-			s = "#" + strings.Repeat(s[1:2], 2) +
-				strings.Repeat(s[2:3], 2) +
-				strings.Repeat(s[3:4], 2)
-		}
-		if len(s) != 7 {
-			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
-				ErrInvalidTheme, s)
-		}
-		n, err := strconv.ParseUint(s[1:], 16, 32)
-		if err != nil {
-			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
-				ErrInvalidTheme, s)
-		}
-		return colorSpec{
-			color: tui.ColorRGB(uint8(n>>16), uint8(n>>8), uint8(n)),
-			rgb:   true,
-		}, nil
-	}
-	n, err := strconv.Atoi(s)
-	if err != nil || n < 0 || n > 255 {
-		return colorSpec{}, fmt.Errorf("%w: malformed ANSI: %s",
-			ErrInvalidTheme, s)
-	}
-	return colorSpec{color: tui.ColorANSI(uint8(n))}, nil
-}
-
 func (p palette) parseUnderline(
 	style tui.Style, value any,
 ) (tui.Style, error) {
@@ -89,6 +60,35 @@ func (p palette) parseUnderline(
 		style = style.UlStyle(tui.UnderlineLine)
 	}
 	return style, nil
+}
+
+func parseRawColor(s string) (colorSpec, error) {
+	if strings.HasPrefix(s, "#") {
+		if len(s) == 4 {
+			s = "#" + strings.Repeat(s[1:2], 2) +
+				strings.Repeat(s[2:3], 2) +
+				strings.Repeat(s[3:4], 2)
+		}
+		if len(s) != 7 {
+			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
+				ErrInvalidTheme, s)
+		}
+		n, err := strconv.ParseUint(s[1:], 16, 32)
+		if err != nil {
+			return colorSpec{}, fmt.Errorf("%w: malformed RGB: %s",
+				ErrInvalidTheme, s)
+		}
+		return colorSpec{
+			color: tui.ColorRGB(uint8(n>>16), uint8(n>>8), uint8(n)),
+			rgb:   true,
+		}, nil
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil || n < 0 || n > 255 {
+		return colorSpec{}, fmt.Errorf("%w: malformed ANSI: %s",
+			ErrInvalidTheme, s)
+	}
+	return colorSpec{color: tui.ColorANSI(uint8(n))}, nil
 }
 
 func parseUnderlineStyle(value any) (tui.UnderlineStyle, error) {

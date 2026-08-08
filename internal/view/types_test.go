@@ -98,7 +98,10 @@ func TestJumpListEntries(t *testing.T) {
 
 func TestDocumentRelativeNameEdgeCases(t *testing.T) {
 	t.Run("path outside basedir returns absolute", func(t *testing.T) {
-		name := view.DocumentRelativeName("/other/file.txt", "/base")
+		name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+			Path:    "/other/file.txt",
+			BaseDir: "/base",
+		})
 		assert.Equal(t, "/other/file.txt", name)
 	})
 }

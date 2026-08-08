@@ -22,14 +22,17 @@ const (
 func TextFormatForConfig(
 	lang *Language, textWidth *int, softWrap SoftWrap, w int,
 ) *TextFormat {
-	tw := intValue(nil, textWidth, DefaultTextWidth)
+	tw := settingValue(settingValueArgs[int]{
+		editor: textWidth,
+	}, DefaultTextWidth)
 	if lang.TextWidth != nil {
 		tw = *lang.TextWidth
 	}
 
-	wrapAt := boolValue(
-		lang.SoftWrap.WrapAtTextWidth, softWrap.WrapAtTextWidth, false,
-	)
+	wrapAt := settingValue(settingValueArgs[bool]{
+		lang:   lang.SoftWrap.WrapAtTextWidth,
+		editor: softWrap.WrapAtTextWidth,
+	}, false)
 	if wrapAt {
 		if tw >= w {
 			wrapAt = false
@@ -38,13 +41,16 @@ func TextFormatForConfig(
 		}
 	}
 
-	enabled := boolValue(lang.SoftWrap.Enable, softWrap.Enable, false)
+	enabled := settingValue(settingValueArgs[bool]{
+		lang:   lang.SoftWrap.Enable,
+		editor: softWrap.Enable,
+	}, false)
 	format := DefaultTextFormat(w)
 	format.SoftWrap = enabled && w > MinSoftWrapWidth
-	format.WrapIndicator = stringValue(
-		lang.SoftWrap.WrapIndicator, softWrap.WrapIndicator,
-		DefaultWrapIndicator,
-	)
+	format.WrapIndicator = settingValue(settingValueArgs[string]{
+		lang:   lang.SoftWrap.WrapIndicator,
+		editor: softWrap.WrapIndicator,
+	}, DefaultWrapIndicator)
 	format.SoftWrapAtTextWidth = wrapAt
 	return format
 }
@@ -54,7 +60,6 @@ func DefaultTextFormat(w int) *TextFormat {
 	return &TextFormat{
 		ViewportWidth:   w,
 		TabWidth:        DefaultTabWidth,
-		SoftWrap:        false,
 		MaxWrap:         min(DefaultMaxWrap, w/4),
 		MaxIndentRetain: min(DefaultMaxIndentRetain, w*2/5),
 		WrapIndicator:   DefaultWrapIndicator,

@@ -10,11 +10,26 @@ import (
 
 func TestTabWidthAt(t *testing.T) {
 	t.Run("aligns to next tab stop", func(t *testing.T) {
-		assert.Equal(t, 4, core.TabWidthAt(0, 4))
-		assert.Equal(t, 3, core.TabWidthAt(1, 4))
-		assert.Equal(t, 2, core.TabWidthAt(2, 4))
-		assert.Equal(t, 1, core.TabWidthAt(3, 4))
-		assert.Equal(t, 4, core.TabWidthAt(4, 4))
+		assert.Equal(t, 4, core.TabWidthAt(core.TabStop{
+			Column:   0,
+			TabWidth: 4,
+		}))
+		assert.Equal(t, 3, core.TabWidthAt(core.TabStop{
+			Column:   1,
+			TabWidth: 4,
+		}))
+		assert.Equal(t, 2, core.TabWidthAt(core.TabStop{
+			Column:   2,
+			TabWidth: 4,
+		}))
+		assert.Equal(t, 1, core.TabWidthAt(core.TabStop{
+			Column:   3,
+			TabWidth: 4,
+		}))
+		assert.Equal(t, 4, core.TabWidthAt(core.TabStop{
+			Column:   4,
+			TabWidth: 4,
+		}))
 	})
 }
 
@@ -42,12 +57,18 @@ func TestGraphemeBoundaries(t *testing.T) {
 
 	t.Run("nth next advances n clusters", func(t *testing.T) {
 		doc := core.NewRope("abcde")
-		assert.Equal(t, 3, core.NthNextGraphemeBoundary(doc, 0, 3))
+		assert.Equal(t, 3, core.NthNextGraphemeBoundary(doc, core.GraphemeStep{
+			From:  0,
+			Count: 3,
+		}))
 	})
 
 	t.Run("nth prev retreats n clusters", func(t *testing.T) {
 		doc := core.NewRope("abcde")
-		assert.Equal(t, 2, core.NthPrevGraphemeBoundary(doc, 5, 3))
+		assert.Equal(t, 2, core.NthPrevGraphemeBoundary(doc, core.GraphemeStep{
+			From:  5,
+			Count: 3,
+		}))
 	})
 
 	t.Run("ensure next snaps to boundary", func(t *testing.T) {
@@ -65,12 +86,18 @@ func TestGraphemeBoundaries(t *testing.T) {
 
 	t.Run("nth next clamps at end", func(t *testing.T) {
 		doc := core.NewRope("abc")
-		assert.Equal(t, 3, core.NthNextGraphemeBoundary(doc, 2, 10))
+		assert.Equal(t, 3, core.NthNextGraphemeBoundary(doc, core.GraphemeStep{
+			From:  2,
+			Count: 10,
+		}))
 	})
 
 	t.Run("nth prev clamps at start", func(t *testing.T) {
 		doc := core.NewRope("abc")
-		assert.Equal(t, 0, core.NthPrevGraphemeBoundary(doc, 1, 10))
+		assert.Equal(t, 0, core.NthPrevGraphemeBoundary(doc, core.GraphemeStep{
+			From:  1,
+			Count: 10,
+		}))
 	})
 
 	t.Run("wide unicode grapheme has width > 1", func(t *testing.T) {

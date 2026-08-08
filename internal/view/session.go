@@ -17,6 +17,13 @@ type (
 	// SessionKind identifies a leaf pane's restorer in a saved session
 	SessionKind string
 
+	// sessionRef is a path recorded in a session, alongside the session's base
+	// directory that relative paths resolve against
+	sessionRef struct {
+		base string
+		path string
+	}
+
 	editorSession struct {
 		Version   int               `toml:"version"`
 		Options   sessionOptions    `toml:"option,omitempty"`
@@ -177,7 +184,10 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				continue
 			}
 			var err error
-			absPath, err = filepath.Abs(sessionAbsPath(base, sd.Path))
+			absPath, err = filepath.Abs(sessionAbsPath(sessionRef{
+				base: base,
+				path: sd.Path,
+			}))
 			if err != nil {
 				return nil, false, err
 			}
@@ -200,7 +210,12 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				sd.Selection.selection(), doc.content.text.LenChars(),
 			)
 		} else {
-			doc = newPendingDocument(id, absPath, sd.Lang, &e.opts)
+			doc = newPendingDocument(newPendingDocumentArgs{
+				id:      id,
+				absPath: absPath,
+				lang:    sd.Lang,
+				opts:    &e.opts,
+			})
 			doc.views.lastSelection = sd.Selection.selection()
 		}
 		nextDocs[doc.ID()] = doc
@@ -287,18 +302,18 @@ func readSession(path string) (editorSession, bool, error) {
 	return s, true, nil
 }
 
-func sessionPath(base, path string) string {
-	if rel, err := filepath.Rel(base, path); err == nil {
+func sessionPath(at sessionRef) string {
+	if rel, err := filepath.Rel(at.base, at.path); err == nil {
 		return rel
 	}
-	return path
+	return at.path
 }
 
-func sessionAbsPath(base, path string) string {
-	if filepath.IsAbs(path) {
-		return path
+func sessionAbsPath(at sessionRef) string {
+	if filepath.IsAbs(at.path) {
+		return at.path
 	}
-	return filepath.Join(base, path)
+	return filepath.Join(at.base, at.path)
 }
 
 func sessionBase(path string) string {

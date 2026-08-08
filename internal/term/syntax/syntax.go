@@ -10,6 +10,7 @@ import (
 
 	sitter "github.com/tree-sitter/go-tree-sitter"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/highlight"
 )
 
@@ -47,16 +48,18 @@ func NewSyntaxCache() *Cache {
 	}
 }
 
-// Tokenize parses text for lang and returns highlight spans with theme
-// scope names. Tree-sitter is tried first; Chroma is the fallback
-func (sc *Cache) Tokenize(text, lang string) []highlight.Span {
-	if spans := sc.treeTokenize(text, lang); spans != nil {
+// Tokenize parses the source and returns highlight spans with theme scope
+// names. Tree-sitter is tried first; Chroma is the fallback
+func (sc *Cache) Tokenize(src core.Source) []highlight.Span {
+	if spans := sc.treeTokenize(src); spans != nil {
 		return spans
 	}
-	return highlight.Tokenize(text, lang)
+	return highlight.Tokenize(src)
 }
 
-func (sc *Cache) treeTokenize(text, lang string) []highlight.Span {
+func (sc *Cache) treeTokenize(source core.Source) []highlight.Span {
+	text := source.Text
+	lang := source.Lang
 	language := languageFor(lang)
 	if language == nil {
 		return nil
@@ -156,7 +159,10 @@ func (sc *Cache) injectionCaptures(
 			}
 			start := b2c[sb]
 			injected := string(src[sb:eb])
-			for _, sp := range sc.Tokenize(injected, lang) {
+			for _, sp := range sc.Tokenize(core.Source{
+				Text: injected,
+				Lang: lang,
+			}) {
 				out = append(out, tsCapture{
 					start: start + sp.Start,
 					end:   start + sp.End,

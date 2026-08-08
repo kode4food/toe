@@ -7,8 +7,8 @@ type (
 		Head   int
 	}
 
-	// LineRange is an inclusive range of document lines
-	LineRange struct {
+	// Span is a half-open interval of character offsets, [From, To)
+	Span struct {
 		From int
 		To   int
 	}
@@ -22,14 +22,9 @@ const (
 	DirectionForward
 )
 
-// NewRange returns the range from anchor to head
-func NewRange(anchor, head int) Range {
-	return Range{Anchor: anchor, Head: head}
-}
-
 // PointRange returns an empty range at head
 func PointRange(head int) Range {
-	return NewRange(head, head)
+	return Range{Anchor: head, Head: head}
 }
 
 // From is the lower of anchor and head
@@ -51,6 +46,21 @@ func (r Range) To() int {
 // Len is the character count the range covers
 func (r Range) Len() int {
 	return r.To() - r.From()
+}
+
+// Span is the character interval the range covers, ignoring direction
+func (r Range) Span() Span {
+	return Span{From: r.From(), To: r.To()}
+}
+
+// Len is the character count the span covers
+func (s Span) Len() int {
+	return s.To - s.From
+}
+
+// Empty reports whether the span covers no characters
+func (s Span) Empty() bool {
+	return s.From == s.To
 }
 
 // Empty reports whether anchor and head coincide
@@ -94,9 +104,9 @@ func (r Range) Contains(pos int) bool {
 	return r.From() <= pos && pos < r.To()
 }
 
-// LineRange returns the inclusive line span the range touches. An empty range
+// LineSpan returns the inclusive line span the range touches. An empty range
 // covers one line; a non-empty one excludes an end on a line start
-func (r Range) LineRange(text Rope) (LineRange, error) {
+func (r Range) LineSpan(text Rope) (Span, error) {
 	from := r.From()
 	to := r.To()
 	if !r.Empty() {
@@ -104,26 +114,26 @@ func (r Range) LineRange(text Rope) (LineRange, error) {
 	}
 	start, err := text.CharToLine(from)
 	if err != nil {
-		return LineRange{}, err
+		return Span{}, err
 	}
 	end, err := text.CharToLine(to)
 	if err != nil {
-		return LineRange{}, err
+		return Span{}, err
 	}
-	return LineRange{From: start, To: end}, nil
+	return Span{From: start, To: end}, nil
 }
 
-// Extend grows the range to also cover from..to, keeping its direction
-func (r Range) Extend(from, to int) Range {
+// Extend grows the range to also cover the span, keeping its direction
+func (r Range) Extend(s Span) Range {
 	if r.Anchor <= r.Head {
-		return Range{Anchor: min(r.Anchor, from), Head: max(r.Head, to)}
+		return Range{Anchor: min(r.Anchor, s.From), Head: max(r.Head, s.To)}
 	}
-	return Range{Anchor: max(r.Anchor, to), Head: min(r.Head, from)}
+	return Range{Anchor: max(r.Anchor, s.To), Head: min(r.Head, s.From)}
 }
 
 // Slice returns the rope sub-range covered by this range
 func (r Range) Slice(doc Rope) (Rope, error) {
-	return doc.Slice(r.From(), r.To())
+	return doc.Slice(r.Span())
 }
 
 // Fragment returns the text covered by this range as a string
@@ -196,9 +206,9 @@ func (r Range) PutCursor(doc Rope, charIdx int, extend bool) Range {
 		anchor = PrevGraphemeBoundary(doc, r.Anchor)
 	}
 	if anchor <= charIdx {
-		return NewRange(anchor, NextGraphemeBoundary(doc, charIdx))
+		return Range{Anchor: anchor, Head: NextGraphemeBoundary(doc, charIdx)}
 	}
-	return NewRange(anchor, charIdx)
+	return Range{Anchor: anchor, Head: charIdx}
 }
 
 // CursorLine returns the line number that the block cursor is on

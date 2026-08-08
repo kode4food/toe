@@ -41,24 +41,27 @@ func LoadRawConfig(path string) (map[string]any, bool) {
 // config
 func LoadRawConfigForDir(dir string) (map[string]any, bool) {
 	if path, ok := loader.ConfigFile(); ok {
-		return LoadRawConfigForWorkspace(
-			path, loader.WorkspaceConfigFile(dir), dir,
-		)
+		return LoadRawConfigForWorkspace(loader.WorkspaceFiles{
+			Global:    path,
+			Workspace: loader.WorkspaceConfigFile(dir),
+			Dir:       dir,
+		})
 	}
 	return nil, false
 }
 
 // LoadRawConfigForWorkspace merges the user and workspace config TOML
 func LoadRawConfigForWorkspace(
-	global, workspace, dir string,
+	args loader.WorkspaceFiles,
 ) (map[string]any, bool) {
+	global := args.Global
 	paths := []string{global}
 	insecure := false
 	if globalRaw, ok := LoadRawConfig(global); ok {
 		insecure = decodeInsecure(globalRaw)
 	}
-	if loader.QueryWorkspaceTrust(dir, insecure) {
-		paths = append(paths, workspace)
+	if loader.QueryWorkspaceTrust(args.Dir, insecure) {
+		paths = append(paths, args.Workspace)
 	}
 	return loader.LoadMergedTOML(paths, 3)
 }

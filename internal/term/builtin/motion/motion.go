@@ -246,29 +246,36 @@ func CursorModule() command.Module {
 			{
 				Name:      actFindNextChar,
 				DocString: "Move to next occurrence of char",
-				Run:       kit.Continuation(findCharAction(true, true, false)),
-				Modes:     view.ModeNormal,
-				Keys:      kit.Keys(kit.Char('f')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					forward:   true,
+					inclusive: true,
+				})),
+				Modes: view.ModeNormal,
+				Keys:  kit.Keys(kit.Char('f')),
 			},
 			{
 				Name:      actFindTillChar,
 				DocString: "Move till next occurrence of char",
-				Run:       kit.Continuation(findCharAction(true, false, false)),
-				Modes:     view.ModeNormal,
-				Keys:      kit.Keys(kit.Char('t')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					forward: true,
+				})),
+				Modes: view.ModeNormal,
+				Keys:  kit.Keys(kit.Char('t')),
 			},
 			{
 				Name:      actFindPrevChar,
 				DocString: "Move to previous occurrence of char",
-				Run:       kit.Continuation(findCharAction(false, true, false)),
-				Modes:     view.ModeNormal,
-				Keys:      kit.Keys(kit.Char('F')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					inclusive: true,
+				})),
+				Modes: view.ModeNormal,
+				Keys:  kit.Keys(kit.Char('F')),
 			},
 			{
 				Name:      actTillPrevChar,
 				DocString: "Move till previous occurrence of char",
 				Run: kit.Continuation(
-					findCharAction(false, false, false),
+					findCharAction(findCharActionArgs{}),
 				),
 				Modes: view.ModeNormal,
 				Keys:  kit.Keys(kit.Char('T')),
@@ -507,30 +514,42 @@ func CursorModule() command.Module {
 			{
 				Name:      actExtendNextChar,
 				DocString: "Extend to next occurrence of char",
-				Run:       kit.Continuation(findCharAction(true, true, true)),
-				Modes:     view.ModeSelect,
-				Keys:      kit.Keys(kit.Char('f')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					forward:   true,
+					inclusive: true,
+					extend:    true,
+				})),
+				Modes: view.ModeSelect,
+				Keys:  kit.Keys(kit.Char('f')),
 			},
 			{
 				Name:      actExtendTillChar,
 				DocString: "Extend till next occurrence of char",
-				Run:       kit.Continuation(findCharAction(true, false, true)),
-				Modes:     view.ModeSelect,
-				Keys:      kit.Keys(kit.Char('t')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					forward: true,
+					extend:  true,
+				})),
+				Modes: view.ModeSelect,
+				Keys:  kit.Keys(kit.Char('t')),
 			},
 			{
 				Name:      actExtendPrevChar,
 				DocString: "Extend to previous occurrence of char",
-				Run:       kit.Continuation(findCharAction(false, true, true)),
-				Modes:     view.ModeSelect,
-				Keys:      kit.Keys(kit.Char('F')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					inclusive: true,
+					extend:    true,
+				})),
+				Modes: view.ModeSelect,
+				Keys:  kit.Keys(kit.Char('F')),
 			},
 			{
 				Name:      actExtendTillPrevChar,
 				DocString: "Extend till previous occurrence of char",
-				Run:       kit.Continuation(findCharAction(false, false, true)),
-				Modes:     view.ModeSelect,
-				Keys:      kit.Keys(kit.Char('T')),
+				Run: kit.Continuation(findCharAction(findCharActionArgs{
+					extend: true,
+				})),
+				Modes: view.ModeSelect,
+				Keys:  kit.Keys(kit.Char('T')),
 			},
 			{
 				Name:      actExtendToLineStart,
@@ -665,12 +684,21 @@ func gotoLineOrExtendFileStartAction(e *view.Editor) {
 	e.ResetCount()
 }
 
-func findCharAction(fwd, inc, ext bool) command.KeyAction {
+type findCharActionArgs struct {
+	forward   bool
+	inclusive bool
+	extend    bool
+}
+
+func findCharAction(args findCharActionArgs) command.KeyAction {
+	fwd := args.forward
+	inc := args.inclusive
+	ext := args.extend
 	h := map[findCharHintKey]string{
-		{forward: true, inclusive: true}:   "f",
-		{forward: true, inclusive: false}:  "t",
-		{forward: false, inclusive: true}:  "F",
-		{forward: false, inclusive: false}: "T",
+		{forward: true, inclusive: true}: "f",
+		{forward: true}:                  "t",
+		{inclusive: true}:                "F",
+		{}:                               "T",
 	}[findCharHintKey{forward: fwd, inclusive: inc}]
 	return func(e *view.Editor) command.Continuation {
 		e.SetHint(h + " ...")
@@ -679,7 +707,7 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 				target := k.Code.Char
 				action.FindChar(action.FindCharArgs{
 					Editor:    e,
-					Ch:        target,
+					Char:      target,
 					Forward:   fwd,
 					Inclusive: inc,
 					Extend:    ext,
@@ -687,7 +715,7 @@ func findCharAction(fwd, inc, ext bool) command.KeyAction {
 				e.SetLastMotion(func(e *view.Editor) {
 					action.FindChar(action.FindCharArgs{
 						Editor:    e,
-						Ch:        target,
+						Char:      target,
 						Forward:   fwd,
 						Inclusive: inc,
 						Extend:    ext,

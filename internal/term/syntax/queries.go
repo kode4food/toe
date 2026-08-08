@@ -23,21 +23,35 @@ func embeddedQuery(lang string) ([]byte, bool) {
 }
 
 func embeddedInjectionQuery(lang string) ([]byte, bool) {
-	return resolveQueryDir("queries/injections", lang, map[string]bool{})
+	return resolveQueryDir(resolveQueryDirArgs{
+		dir:  "queries/injections",
+		lang: lang,
+	}, map[string]bool{})
 }
 
 func embeddedTextobjectQuery(lang string) ([]byte, bool) {
-	return resolveQueryDir("queries/textobjects", lang, map[string]bool{})
+	return resolveQueryDir(resolveQueryDirArgs{
+		dir:  "queries/textobjects",
+		lang: lang,
+	}, map[string]bool{})
+}
+
+// resolveQueryDirArgs names an embedded query directory and the language
+// within it
+type resolveQueryDirArgs struct {
+	dir  string
+	lang string
 }
 
 func resolveQueryDir(
-	dir, lang string, seen map[string]bool,
+	ref resolveQueryDirArgs, seen map[string]bool,
 ) ([]byte, bool) {
+	lang := ref.lang
 	if seen[lang] {
 		return nil, false
 	}
 	seen[lang] = true
-	data, err := embeddedQueryFS.ReadFile(dir + "/" + lang + ".scm")
+	data, err := embeddedQueryFS.ReadFile(ref.dir + "/" + lang + ".scm")
 	if err != nil {
 		return nil, false
 	}
@@ -52,7 +66,11 @@ func resolveQueryDir(
 				if parent == "" {
 					continue
 				}
-				if pb, ok := resolveQueryDir(dir, parent, seen); ok {
+				pb, ok := resolveQueryDir(resolveQueryDirArgs{
+					dir:  ref.dir,
+					lang: parent,
+				}, seen)
+				if ok {
 					out = append(out, pb...)
 					out = append(out, '\n')
 				}

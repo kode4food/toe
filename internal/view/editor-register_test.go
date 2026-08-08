@@ -15,8 +15,8 @@ func TestEditorRegisters(t *testing.T) {
 	t.Run("selection text is computed", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "alpha beta")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 5),
-			core.NewRange(6, 10),
+			{Anchor: 0, Head: 5},
+			{Anchor: 6, Head: 10},
 		}, 0)
 
 		assert.Equal(t, []string{"alpha", "beta"}, e.ReadRegister('.'))
@@ -46,8 +46,8 @@ func TestEditorRegisters(t *testing.T) {
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 1),
-			core.NewRange(2, 3),
+			{Anchor: 0, Head: 1},
+			{Anchor: 2, Head: 3},
 		}, 0)
 		e.SetRegister('+')
 
@@ -60,8 +60,8 @@ func TestEditorRegisters(t *testing.T) {
 	t.Run("first register returns first value", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "alpha beta")
 		testutil.SetSelection(t, e, []core.Range{
-			core.NewRange(0, 5),
-			core.NewRange(6, 10),
+			{Anchor: 0, Head: 5},
+			{Anchor: 6, Head: 10},
 		}, 0)
 
 		val, ok := e.FirstRegister('.')

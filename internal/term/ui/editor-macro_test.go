@@ -75,7 +75,9 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 	// 'g' returns a continuation; followed by 'x' it inserts "X"
 	bindNormalTestKeyAction(km, "g-prefix",
 		func(ed *view.Editor) command.Continuation {
-			return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
+			return func(
+				ed *view.Editor, k command.KeyEvent,
+			) command.Continuation {
 				if k.Code.Char == 'x' {
 					action.InsertMode(ed)
 					action.InsertChar(ed, 'X')

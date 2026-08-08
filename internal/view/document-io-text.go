@@ -3,23 +3,29 @@ package view
 import (
 	"strings"
 
-	"github.com/alecthomas/chroma/v2/lexers"
-
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view/config"
-	"github.com/kode4food/toe/internal/view/language"
 )
+
+// revisedText is a document's text before and after an external change
+type revisedText struct {
+	before []rune
+	after  []rune
+}
 
 func diffChangeSet(oldText core.Rope, newText string) (core.ChangeSet, error) {
 	oldRunes := []rune(oldText.String())
 	newRunes := []rune(newText)
-	pfx := commonPrefix(oldRunes, newRunes)
-	sfx := commonSuffix(oldRunes[pfx:], newRunes[pfx:])
+	pfx := commonPrefix(revisedText{before: oldRunes, after: newRunes})
+	sfx := commonSuffix(revisedText{
+		before: oldRunes[pfx:],
+		after:  newRunes[pfx:],
+	})
 	from := pfx
 	to := len(oldRunes) - sfx
 	repl := string(newRunes[pfx : len(newRunes)-sfx])
 	return core.NewChangeSetFromChanges(oldText, []core.Change{
-		core.TextChange(from, to, repl),
+		core.TextChange(core.Span{From: from, To: to}, repl),
 	})
 }
 
@@ -40,52 +46,40 @@ func mapSelection(sel core.Selection, cs core.ChangeSet, n int) core.Selection {
 	}
 	ranges := sel.Ranges()
 	for i, r := range ranges {
-		ranges[i] = core.NewRange(clipPos(r.Anchor, n), clipPos(r.Head, n))
+		ranges[i] = core.Range{
+			Anchor: min(max(r.Anchor, 0), n),
+			Head:   min(max(r.Head, 0), n),
+		}
 	}
 	out, err = core.NewSelection(ranges, sel.PrimaryIndex())
 	if err != nil {
-		return core.PointSelection(clipPos(sel.Primary().Head, n))
+		return core.PointSelection(min(max(sel.Primary().Head, 0), n))
 	}
 	return out
 }
 
-func commonPrefix(a, b []rune) int {
-	n := min(len(a), len(b))
+func commonPrefix(text revisedText) int {
+	before := text.before
+	after := text.after
+	n := min(len(before), len(after))
 	for i := range n {
-		if a[i] != b[i] {
+		if before[i] != after[i] {
 			return i
 		}
 	}
 	return n
 }
 
-func commonSuffix(a, b []rune) int {
-	n := min(len(a), len(b))
+func commonSuffix(text revisedText) int {
+	before := text.before
+	after := text.after
+	n := min(len(before), len(after))
 	for i := range n {
-		if a[len(a)-1-i] != b[len(b)-1-i] {
+		if before[len(before)-1-i] != after[len(after)-1-i] {
 			return i
 		}
 	}
 	return n
-}
-
-func clipPos(pos, n int) int {
-	return min(max(pos, 0), n)
-}
-
-// detectLang returns a Chroma-compatible language name for the given file path
-// and content. Falls back to "text" if no match is found
-func detectLang(path, content string) string {
-	if lang, ok := language.DetectLanguage(path, content); ok {
-		return lang
-	}
-	if lex := lexers.Match(path); lex != nil {
-		return strings.ToLower(lex.Config().Name)
-	}
-	if lex := lexers.Analyse(content); lex != nil {
-		return strings.ToLower(lex.Config().Name)
-	}
-	return DefaultLanguage
 }
 
 func defaultLineEnding(le core.LineEnding) core.LineEnding {
@@ -98,7 +92,7 @@ func defaultLineEnding(le core.LineEnding) core.LineEnding {
 func prepareSaveText(
 	s string, le core.LineEnding, opts *Options, ec *config.EditorConfig,
 ) string {
-	trim := opts.TrimTrailingWS
+	trim := opts.TrimTrailingWhitespace
 	if ec != nil && ec.TrimTrailingWhitespace != nil {
 		trim = *ec.TrimTrailingWhitespace
 	}

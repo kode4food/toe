@@ -84,7 +84,10 @@ func TestRenamePrefillDefaultBehavior(t *testing.T) {
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		doc.SetSelectionFor(v.ID(), core.SingleSelection(0, 5))
+		doc.SetSelectionFor(v.ID(), core.SingleSelection(core.Range{
+			Anchor: 0,
+			Head:   5,
+		}))
 
 		prefill, err := session.RenameSymbolPrefill(doc, v.ID())
 		assert.NoError(t, err)

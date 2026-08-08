@@ -58,10 +58,12 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 	root := b.TempDir()
 	pathA := filepath.Join(root, "a.go")
 	pathB := filepath.Join(root, "b.go")
-	if err := os.WriteFile(pathA, []byte(largeGoSource(2000)), 0o644); err != nil {
+	err := os.WriteFile(pathA, []byte(largeGoSource(2000)), 0o644)
+	if err != nil {
 		b.Fatal(err)
 	}
-	if err := os.WriteFile(pathB, []byte(largeGoSource(2000)), 0o644); err != nil {
+	err = os.WriteFile(pathB, []byte(largeGoSource(2000)), 0o644)
+	if err != nil {
 		b.Fatal(err)
 	}
 	e := view.NewEditor(root)

@@ -11,9 +11,9 @@ import (
 
 type (
 	gutterSpec struct {
-		layout      []view.GutterType
-		lineNumberW int
-		width       int
+		layout       []view.GutterType
+		lineNumWidth int
+		width        int
 
 		lineStyle    tui.Style
 		lineSelected tui.Style
@@ -52,51 +52,65 @@ func (g gutterSpec) renderBlank(buf *tui.Buffer, at geom.Point) {
 func (g gutterSpec) renderTilde(
 	buf *tui.Buffer, at geom.Point, selected bool,
 ) {
-	col := at.X
 	st := g.lineStyleFor(selected)
 	buf.FillRange(at, g.width, st)
 	for _, gt := range g.layout {
 		w := g.gutterTypeWidth(gt)
-		if gt == view.GutterTypeLineNumbers && g.lineNumberW > 0 {
+		if gt == view.GutterTypeLineNumbers && g.lineNumWidth > 0 {
 			buf.SetString(geom.Point{
-				X: col + g.lineNumberW - 1,
+				X: at.X + g.lineNumWidth - 1,
 				Y: at.Y,
 			}, "~", g.lineStyleFor(selected))
 		}
-		col += w
+		at.X += w
 	}
 }
 
-func (g gutterSpec) renderLine(
-	buf *tui.Buffer, at geom.Point, lineNum, num int, selected bool,
-) {
-	col := at.X
-	st := g.lineStyleFor(selected)
-	buf.FillRange(at, g.width, st)
+type renderLineArgs struct {
+	buffer        *tui.Buffer
+	at            geom.Point
+	docLine       int
+	displayNumber int
+	selected      bool
+}
+
+func (g gutterSpec) renderLine(args renderLineArgs) {
+	col := args.at.X
+	st := g.lineStyleFor(args.selected)
+	args.buffer.FillRange(args.at, g.width, st)
 	for _, gt := range g.layout {
 		w := g.gutterTypeWidth(gt)
 		switch gt {
 		case view.GutterTypeDiagnostics:
-			if sev, ok := g.diagLines[lineNum]; ok {
-				st := overlayDiagnosticStyle(
-					g.lineStyleFor(selected), g.diagnosticStyle(sev),
+			if sev, ok := g.diagLines[args.docLine]; ok {
+				st := overlayDiagnosticStyle(styleOverlay{
+					base:    g.lineStyleFor(args.selected),
+					overlay: g.diagnosticStyle(sev),
+				})
+
+				args.buffer.SetString(
+					geom.Point{X: col, Y: args.at.Y}, diagnosticGutterMark, st,
 				)
-				buf.SetString(geom.Point{X: col, Y: at.Y}, diagnosticGutterMark, st)
 			}
 		case view.GutterTypeLineNumbers:
-			if g.lineNumberW > 0 {
-				buf.SetRightAlignedInt(
-					geom.Point{X: col, Y: at.Y}, g.lineNumberW, num,
-					g.lineStyleFor(selected),
-				)
+			if g.lineNumWidth > 0 {
+				args.buffer.SetRightAlignedInt(tui.RightAlignedIntArgs{
+					At:    geom.Point{X: col, Y: args.at.Y},
+					Width: g.lineNumWidth,
+					Value: args.displayNumber,
+					Style: g.lineStyleFor(args.selected),
+				})
+
 			}
 		case view.GutterTypeDiff:
-			if kind, ok := g.diffLines[lineNum]; ok {
+			if kind, ok := g.diffLines[args.docLine]; ok {
 				icon, st := g.diffMarker(kind)
-				buf.SetString(
-					geom.Point{X: col, Y: at.Y}, icon, overlayDiagnosticStyle(
-						g.lineStyleFor(selected), st,
-					),
+				markStyle := overlayDiagnosticStyle(styleOverlay{
+					base:    g.lineStyleFor(args.selected),
+					overlay: st,
+				})
+				args.buffer.SetString(
+					geom.Point{X: col, Y: args.at.Y}, icon, markStyle,
 				)
 			}
 		}
@@ -113,7 +127,7 @@ func (g gutterSpec) lineStyleFor(selected bool) tui.Style {
 
 func (g gutterSpec) gutterTypeWidth(gt view.GutterType) int {
 	if gt == view.GutterTypeLineNumbers {
-		return g.lineNumberW
+		return g.lineNumWidth
 	}
 	return 1
 }
@@ -157,11 +171,11 @@ func gutterLayoutHas(layout []view.GutterType, gt view.GutterType) bool {
 	return slices.Contains(layout, gt)
 }
 
-func gutterLayoutWidth(layout []view.GutterType, lineNumberW int) int {
+func gutterLayoutWidth(layout []view.GutterType, lineNumW int) int {
 	w := 0
 	for _, gt := range layout {
 		if gt == view.GutterTypeLineNumbers {
-			w += lineNumberW
+			w += lineNumW
 		} else {
 			w++
 		}

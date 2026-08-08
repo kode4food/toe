@@ -10,29 +10,22 @@ import (
 type (
 	// ChangeSet is an ordered set of edits over a document snapshot
 	ChangeSet struct {
-		ops      []Operation
-		len      int
-		lenAfter int
+		ops            []Operation
+		charCount      int
+		charCountAfter int
 	}
 
 	// Operation is one piece of a change set
 	Operation struct {
-		kind OperationKind
-		n    int
-		text string
+		kind      OperationKind
+		charCount int
+		text      string
 	}
 
-	// Change describes a replacement over a character range
+	// Change describes a replacement over a character span
 	Change struct {
-		From int
-		To   int
+		Span
 		text string
-	}
-
-	// Deletion describes a removed character range
-	Deletion struct {
-		From int
-		To   int
 	}
 
 	// OperationKind identifies the operation variant
@@ -66,7 +59,7 @@ var (
 // NewChangeSet returns an empty change set sized for doc
 func NewChangeSet(doc Rope) ChangeSet {
 	n := doc.LenChars()
-	return ChangeSet{len: n, lenAfter: n}
+	return ChangeSet{charCount: n, charCountAfter: n}
 }
 
 // Text returns replacement text, or empty string for a deletion
@@ -74,14 +67,14 @@ func (c Change) Text() string {
 	return c.text
 }
 
-// TextChange replaces the characters in from..to with text
-func TextChange(from, to int, text string) Change {
-	return Change{From: from, To: to, text: text}
+// TextChange replaces the characters the span covers with text
+func TextChange(s Span, text string) Change {
+	return Change{Span: s, text: text}
 }
 
-// DeleteChange removes the characters in from..to
-func DeleteChange(from, to int) Change {
-	return Change{From: from, To: to}
+// DeleteChange removes the characters the span covers
+func DeleteChange(s Span) Change {
+	return Change{Span: s}
 }
 
 // NewChangeSetFromChanges builds a change set from non-overlapping changes,
@@ -120,7 +113,7 @@ func (o Operation) LenChars() int {
 	if o.kind == OperationInsert {
 		return utf8.RuneCountInString(o.text)
 	}
-	return o.n
+	return o.charCount
 }
 
 // Text is the inserted text, empty for retain and delete
@@ -146,19 +139,22 @@ func (c ChangeSet) Changes() []Change {
 		op := c.ops[i]
 		switch op.kind {
 		case OperationRetain:
-			pos += op.n
+			pos += op.charCount
 		case OperationDelete:
-			out = append(out, DeleteChange(pos, pos+op.n))
-			pos += op.n
+			out = append(out, DeleteChange(Span{
+				From: pos,
+				To:   pos + op.charCount,
+			}))
+			pos += op.charCount
 		case OperationInsert:
 			from := pos
 			to := from
 			if i+1 < len(c.ops) && c.ops[i+1].kind == OperationDelete {
-				to = from + c.ops[i+1].n
+				to = from + c.ops[i+1].charCount
 				i++
 				pos = to
 			}
-			out = append(out, TextChange(from, to, op.text))
+			out = append(out, TextChange(Span{From: from, To: to}, op.text))
 		}
 	}
 	return out
@@ -166,19 +162,19 @@ func (c ChangeSet) Changes() []Change {
 
 // Len is the document length the change set expects as input
 func (c ChangeSet) Len() int {
-	return c.len
+	return c.charCount
 }
 
 // LenAfter is the document length the change set produces
 func (c ChangeSet) LenAfter() int {
-	return c.lenAfter
+	return c.charCountAfter
 }
 
 // Empty reports whether the change set would leave a document unaltered
 func (c ChangeSet) Empty() bool {
 	return len(c.ops) == 0 ||
 		(len(c.ops) == 1 && c.ops[0].kind == OperationRetain &&
-			c.ops[0].n == c.len)
+			c.ops[0].charCount == c.charCount)
 }
 
 func (a Assoc) insertOffset(s string) int {
@@ -209,15 +205,15 @@ func (c ChangeSet) appendCountOp(
 	if n == 0 {
 		return c
 	}
-	c.len += n
+	c.charCount += n
 	if updateLenAfter {
-		c.lenAfter += n
+		c.charCountAfter += n
 	}
 	if len(c.ops) > 0 && c.ops[len(c.ops)-1].kind == kind {
-		c.ops[len(c.ops)-1].n += n
+		c.ops[len(c.ops)-1].charCount += n
 		return c
 	}
-	c.ops = append(c.ops, Operation{kind: kind, n: n})
+	c.ops = append(c.ops, Operation{kind: kind, charCount: n})
 	return c
 }
 
@@ -225,7 +221,7 @@ func (c ChangeSet) insert(text string) ChangeSet {
 	if text == "" {
 		return c
 	}
-	c.lenAfter += utf8.RuneCountInString(text)
+	c.charCountAfter += utf8.RuneCountInString(text)
 	if out, ok := c.mergeInsert(text); ok {
 		return out
 	}
@@ -278,16 +274,15 @@ func countWordSuffix(s string) int {
 }
 
 func runeDropPrefix(s string, n int) string {
-	_, after := runeSplitAt(s, n)
-	return after
+	return runeSplitAt(s, n).after
 }
 
-func runeSplitAt(s string, n int) (string, string) {
+func runeSplitAt(s string, n int) stringSplit {
 	for i := range s {
 		if n == 0 {
-			return s[:i], s[i:]
+			return stringSplit{before: s[:i], after: s[i:]}
 		}
 		n--
 	}
-	return s, ""
+	return stringSplit{before: s}
 }

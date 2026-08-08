@@ -8,24 +8,24 @@ import (
 )
 
 type writePickerMatchedArgs struct {
-	at      geom.Point
-	maxW    int
-	text    string
-	indices []int
-	base    tui.Style
-	match   tui.Style
+	at       geom.Point
+	maxWidth int
+	text     string
+	indices  []int
+	base     tui.Style
+	match    tui.Style
 }
 
 func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
-	if args.maxW <= 0 {
+	indices := args.indices
+	budget := args.maxWidth
+	if budget <= 0 {
 		return
 	}
 	runes := []rune(args.text)
-	indices := args.indices
 	ptr := 0
 	col := args.at.X
-	budget := args.maxW
-	for i := 0; i < len(runes) && budget > 0; {
+	for i := 0; i < len(runes) && args.maxWidth > 0; {
 		matched := ptr < len(indices) && indices[ptr] == i
 		j := i + 1
 		if matched {
@@ -42,8 +42,8 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 		}
 		run := string(runes[i:j])
 		rw := runewidth.StringWidth(run)
-		if rw > budget {
-			run = runewidth.Truncate(run, budget, "")
+		if rw > args.maxWidth {
+			run = runewidth.Truncate(run, args.maxWidth, "")
 			rw = runewidth.StringWidth(run)
 		}
 		st := args.base
@@ -52,7 +52,7 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 		}
 		buf.SetString(geom.Point{X: col, Y: args.at.Y}, run, st)
 		col += rw
-		budget -= rw
+		args.maxWidth -= rw
 		i = j
 	}
 }

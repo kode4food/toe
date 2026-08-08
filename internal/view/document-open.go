@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view/config"
+	"github.com/kode4food/toe/internal/view/language"
 )
 
 func newDocument(id DocumentId, opts *Options) *Document {
@@ -35,6 +36,59 @@ func newDocument(id DocumentId, opts *Options) *Document {
 	return d
 }
 
+type newPendingDocumentArgs struct {
+	id      DocumentId
+	absPath string
+	lang    string
+	opts    *Options
+}
+
+func newPendingDocument(args newPendingDocumentArgs) *Document {
+	lang := args.lang
+	opts := args.opts
+	d := newDocument(args.id, opts)
+	d.content.path = args.absPath
+	d.content.pending = &pendingLoad{opts: opts, lang: lang}
+	if lang != "" {
+		d.SetLang(lang)
+	}
+	return d
+}
+
+// ensureLoaded reads the backing file the first time a pending buffer's content
+// is touched, copying the content-derived state onto the placeholder
+func (d *Document) ensureLoaded() {
+	d.content.RLock()
+	pending := d.content.pending != nil
+	d.content.RUnlock()
+	if !pending {
+		return
+	}
+	d.content.Lock()
+	defer d.content.Unlock()
+	p := d.content.pending
+	if p == nil {
+		return
+	}
+	loaded, err := openDocument(d.identity.id, d.content.path, p.opts)
+	if err != nil {
+		return
+	}
+	d.content.pending = nil
+	d.format = loaded.format
+	d.file = loaded.file
+	d.content.text = loaded.content.text
+	d.content.version = loaded.content.version
+	d.edits.history = loaded.edits.history
+	if p.lang == "" {
+		d.content.lang = loaded.content.lang
+		d.format.language = loaded.format.language
+	}
+	d.views.lastSelection = clampSelection(
+		d.views.lastSelection, d.content.text.LenChars(),
+	)
+}
+
 func openDocument(
 	id DocumentId, path string, opts *Options,
 ) (*Document, error) {
@@ -52,7 +106,12 @@ func openDocument(
 			doc := newDocument(id, opts)
 			doc.content.path = absPath
 			doc.format.editorConfig = ec
-			doc.SetLang(detectLang(absPath, ""))
+			doc.SetLang(language.DetectLanguage(
+				language.DetectLanguageArgs{
+					Path:    absPath,
+					Default: DefaultLanguage,
+				},
+			))
 			lang := doc.format.language
 			if ec != nil && ec.LineEnding != nil {
 				doc.format.lineEnding = *ec.LineEnding
@@ -101,7 +160,11 @@ func openDocument(
 			hints:      map[Id][]InlayHint{},
 		},
 	}
-	doc.SetLang(detectLang(absPath, string(data)))
+	doc.SetLang(language.DetectLanguage(language.DetectLanguageArgs{
+		Path:    absPath,
+		Content: string(data),
+		Default: DefaultLanguage,
+	}))
 
 	lang := doc.format.language
 	if ec != nil && ec.IndentStyle != nil {
@@ -128,52 +191,6 @@ func openDocument(
 	return doc, nil
 }
 
-func newPendingDocument(
-	id DocumentId, absPath, lang string, opts *Options,
-) *Document {
-	d := newDocument(id, opts)
-	d.content.path = absPath
-	d.content.pending = &pendingLoad{opts: opts, lang: lang}
-	if lang != "" {
-		d.SetLang(lang)
-	}
-	return d
-}
-
-// ensureLoaded reads the backing file the first time a pending buffer's content
-// is touched, copying the content-derived state onto the placeholder
-func (d *Document) ensureLoaded() {
-	d.content.RLock()
-	pending := d.content.pending != nil
-	d.content.RUnlock()
-	if !pending {
-		return
-	}
-	d.content.Lock()
-	defer d.content.Unlock()
-	p := d.content.pending
-	if p == nil {
-		return
-	}
-	loaded, err := openDocument(d.identity.id, d.content.path, p.opts)
-	if err != nil {
-		return
-	}
-	d.content.pending = nil
-	d.format = loaded.format
-	d.file = loaded.file
-	d.content.text = loaded.content.text
-	d.content.version = loaded.content.version
-	d.edits.history = loaded.edits.history
-	if p.lang == "" {
-		d.content.lang = loaded.content.lang
-		d.format.language = loaded.format.language
-	}
-	d.views.lastSelection = clampSelection(
-		d.views.lastSelection, d.content.text.LenChars(),
-	)
-}
-
 func clampSelection(sel core.Selection, maxChars int) core.Selection {
 	ranges := sel.Ranges()
 	if len(ranges) == 0 {
@@ -181,10 +198,10 @@ func clampSelection(sel core.Selection, maxChars int) core.Selection {
 	}
 	clamped := make([]core.Range, len(ranges))
 	for i, r := range ranges {
-		clamped[i] = core.NewRange(
-			min(max(r.Anchor, 0), maxChars),
-			min(max(r.Head, 0), maxChars),
-		)
+		clamped[i] = core.Range{
+			Anchor: min(max(r.Anchor, 0), maxChars),
+			Head:   min(max(r.Head, 0), maxChars),
+		}
 	}
 	if out, err := core.NewSelection(clamped, sel.PrimaryIndex()); err == nil {
 		return out

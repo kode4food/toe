@@ -1,11 +1,20 @@
 package core
 
-// Position is a 1-based line and column document address, the way a person
-// names a location. Distinct from geom.Point, which is a 0-based screen cell
-type Position struct {
-	Line int
-	Col  int
-}
+type (
+	// Position is a 1-based line and column document address, the way a person
+	// names a location. Distinct from geom.Point, a screen cell
+	Position struct {
+		Line   int
+		Column int
+	}
+
+	// LinePos addresses a point inside a line by 0-based line index and the
+	// absolute character offset of the point, not a column
+	LinePos struct {
+		Line int
+		Pos  int
+	}
+)
 
 // Position returns the 1-based line and column of a character offset
 func (r Rope) Position(char int) (Position, error) {
@@ -17,5 +26,5 @@ func (r Rope) Position(char int) (Position, error) {
 	if err != nil {
 		return Position{}, err
 	}
-	return Position{Line: line + 1, Col: char - start + 1}, nil
+	return Position{Line: line + 1, Column: char - start + 1}, nil
 }

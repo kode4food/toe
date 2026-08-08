@@ -7,18 +7,21 @@ import (
 
 // Apply runs the change set against doc, returning the resulting rope
 func (c ChangeSet) Apply(doc Rope) (Rope, error) {
-	if doc.LenChars() != c.len {
+	if doc.LenChars() != c.charCount {
 		return Rope{}, fmt.Errorf("%w: %d != %d", ErrChangeSetLengthMismatch,
-			doc.LenChars(), c.len)
+			doc.LenChars(), c.charCount)
 	}
 	out := doc
 	pos := 0
 	for _, op := range c.ops {
 		switch op.kind {
 		case OperationRetain:
-			pos += op.n
+			pos += op.charCount
 		case OperationDelete:
-			next, err := out.Delete(pos, pos+op.n)
+			next, err := out.Delete(Span{
+				From: pos,
+				To:   pos + op.charCount,
+			})
 			if err != nil {
 				return Rope{}, err
 			}
@@ -38,24 +41,24 @@ func (c ChangeSet) Apply(doc Rope) (Rope, error) {
 // Invert returns the change set undoing this one, given the document it was
 // built against
 func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
-	if original.LenChars() != c.len {
+	if original.LenChars() != c.charCount {
 		return ChangeSet{}, fmt.Errorf("%w: %d != %d",
-			ErrChangeSetLengthMismatch, original.LenChars(), c.len)
+			ErrChangeSetLengthMismatch, original.LenChars(), c.charCount)
 	}
 	out := ChangeSet{}
 	pos := 0
 	for _, op := range c.ops {
 		switch op.kind {
 		case OperationRetain:
-			out = out.retain(op.n)
-			pos += op.n
+			out = out.retain(op.charCount)
+			pos += op.charCount
 		case OperationDelete:
-			text, err := original.Slice(pos, pos+op.n)
+			text, err := original.Slice(Span{From: pos, To: pos + op.charCount})
 			if err != nil {
 				return ChangeSet{}, err
 			}
 			out = out.insert(text.String())
-			pos += op.n
+			pos += op.charCount
 		case OperationInsert:
 			out = out.delete(utf8.RuneCountInString(op.text))
 		}
@@ -66,7 +69,7 @@ func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 // MapPos rebases a position onto the resulting document; assoc decides which
 // side of an insertion at pos it lands on
 func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
-	if pos < 0 || pos > c.len {
+	if pos < 0 || pos > c.charCount {
 		return 0, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)
 	}
 	oldPos := 0
@@ -74,14 +77,14 @@ func (c ChangeSet) MapPos(pos int, assoc Assoc) (int, error) {
 	for i, op := range c.ops {
 		switch op.kind {
 		case OperationRetain:
-			oldEnd := oldPos + op.n
+			oldEnd := oldPos + op.charCount
 			if pos < oldEnd || (pos == oldEnd && i == len(c.ops)-1) {
 				return newPos + (pos - oldPos), nil
 			}
 			oldPos = oldEnd
-			newPos += op.n
+			newPos += op.charCount
 		case OperationDelete:
-			oldEnd := oldPos + op.n
+			oldEnd := oldPos + op.charCount
 			if pos < oldEnd {
 				return newPos, nil
 			}

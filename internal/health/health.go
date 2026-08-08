@@ -86,7 +86,10 @@ func checkLanguages() Check {
 			Detail: fmt.Sprintf("%d supported", len(langs.Languages)),
 		}
 	}
-	return failed("languages", "bundled languages.toml did not parse")
+	return failed(failedArgs{
+		name:    "languages",
+		message: "bundled languages.toml did not parse",
+	})
 }
 
 func checkThemes() Check {
@@ -130,6 +133,11 @@ func checkSyntaxQueries() Check {
 	}
 }
 
-func failed(name, msg string) Check {
-	return Check{Name: name, OK: false, Errors: []string{msg}}
+type failedArgs struct {
+	name    string
+	message string
+}
+
+func failed(args failedArgs) Check {
+	return Check{Name: args.name, Errors: []string{args.message}}
 }

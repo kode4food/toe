@@ -28,10 +28,10 @@ type (
 	}
 
 	vcolCache struct {
-		doc    core.Rope
-		cursor int
-		tabW   int
-		col    int
+		doc      core.Rope
+		cursor   int
+		tabWidth int
+		col      int
 	}
 
 	freeScrollState struct {
@@ -48,6 +48,19 @@ type (
 
 	// Align describes vertical scroll alignment
 	Align int
+
+	// CursorScroll carries the viewport inputs that keep the cursor visible.
+	// Height and Visual drive vertical scrolling, Width and TabWidth drive
+	// horizontal scrolling
+	CursorScroll struct {
+		Doc       core.Rope
+		Selection core.Selection
+		Height    int
+		Width     int
+		TabWidth  int
+		ScrollOff int
+		Visual    *core.VisualMoveFormat
+	}
 
 	// Position holds the scroll offset for a view
 	Position struct {
@@ -274,55 +287,54 @@ func (v *View) Jumps() []JumpEntry {
 	return v.jumps.Entries()
 }
 
-// EnsureCursorVisible scrolls so the cursor is visible within height rows,
-// respecting scrolloff; measured in visual rows when vf has active soft-wrap
-func (v *View) EnsureCursorVisible(
-	doc core.Rope, sel core.Selection, height, scrolloff int,
-	vf *core.VisualMoveFormat,
-) {
-	if height <= 0 {
+// EnsureCursorVisible scrolls so the cursor is visible within Height rows,
+// respecting ScrollOff; measured in visual rows when Visual has active
+// soft-wrap
+func (v *View) EnsureCursorVisible(cs *CursorScroll) {
+	if cs.Height <= 0 {
 		return
 	}
-	if vf != nil && vf.ViewportWidth > 0 {
-		v.ensureCursorVisibleVisual(doc, sel, height, scrolloff, vf)
+	if cs.Visual != nil && cs.Visual.ViewportWidth > 0 {
+		v.ensureCursorVisibleVisual(cs)
 		return
 	}
-	v.ensureCursorVisibleByLine(doc, sel, height, scrolloff)
+	v.ensureCursorVisibleByLine(cs)
 }
 
 // EnsureCursorVisibleHorizontal scrolls so the cursor's visual column stays
-// within width content columns (gutter excluded). width <= 0 disables
+// within Width content columns (gutter excluded). Width <= 0 disables
 // horizontal scrolling and resets the offset to 0
-func (v *View) EnsureCursorVisibleHorizontal(
-	doc core.Rope, sel core.Selection, width, tabW, scrolloff int,
-) {
+func (v *View) EnsureCursorVisibleHorizontal(cs *CursorScroll) {
 	defer v.trackOffsetChange()()
-	if width <= 0 {
+	if cs.Width <= 0 {
 		v.offset.HorizontalOffset = 0
 		return
 	}
-	cursor := sel.Primary().Cursor(doc)
-	line, err := doc.CharToLine(cursor)
+	cursor := cs.Selection.Primary().Cursor(cs.Doc)
+	line, err := cs.Doc.CharToLine(cursor)
 	if err != nil {
 		return
 	}
-	lineStart, err := doc.LineToChar(line)
+	lineStart, err := cs.Doc.LineToChar(line)
 	if err != nil {
 		return
 	}
-	col := v.cachedVisualColumn(doc, lineStart, cursor, tabW)
+	col := v.cachedVisualColumn(cs.Doc, core.Span{
+		From: lineStart,
+		To:   cursor,
+	}, cs.TabWidth)
 
 	h := v.offset.HorizontalOffset
 	// Clamp scrolloff so there is always at least one column in the middle
-	so := min(scrolloff, max(width-1, 0)/2)
+	so := min(cs.ScrollOff, max(cs.Width-1, 0)/2)
 
 	leftEdge := h + so
-	rightEdge := h + width - 1 - so
+	rightEdge := h + cs.Width - 1 - so
 
 	if col < leftEdge {
 		h = max(col-so, 0)
 	} else if col > rightEdge {
-		h = max(col-width+1+so, 0)
+		h = max(col-cs.Width+1+so, 0)
 	}
 	v.offset.HorizontalOffset = h
 }
@@ -350,14 +362,14 @@ func (v *View) trackOffsetChange() func() {
 	}
 }
 
-// cachedVisualColumn returns VisualColumn(doc, from, to, tabW), reusing the
-// last result when doc, to, and tabW are unchanged since the previous call
-func (v *View) cachedVisualColumn(doc core.Rope, from, to, tabW int) int {
-	if v.vcol.doc == doc && v.vcol.cursor == to && v.vcol.tabW == tabW {
+// cachedVisualColumn returns VisualColumn(doc, s, tabW), reusing the last
+// result when doc, s.To, and tabW are unchanged since the previous call
+func (v *View) cachedVisualColumn(doc core.Rope, s core.Span, tabW int) int {
+	if v.vcol.doc == doc && v.vcol.cursor == s.To && v.vcol.tabWidth == tabW {
 		return v.vcol.col
 	}
-	col := VisualColumn(doc, from, to, tabW)
-	v.vcol = vcolCache{doc: doc, cursor: to, tabW: tabW, col: col}
+	col := VisualColumn(doc, s, tabW)
+	v.vcol = vcolCache{doc: doc, cursor: s.To, tabWidth: tabW, col: col}
 	return col
 }
 
@@ -426,27 +438,6 @@ func (j *JumpList) Push(docID DocumentId, anchor int, sel core.Selection) {
 	})
 }
 
-func (j *JumpList) push(item JumpEntry) {
-	if len(j.items) > 0 && j.head < len(j.items) {
-		j.items = j.items[:j.head]
-	}
-	if len(j.items) > 0 && jumpEntryEqual(j.items[len(j.items)-1], item) {
-		j.head = len(j.items)
-		return
-	}
-	j.items = append(j.items, item)
-	if len(j.items) > jumpListCap {
-		j.items = j.items[len(j.items)-jumpListCap:]
-	}
-	j.head = len(j.items)
-}
-
-func jumpEntryEqual(a, b JumpEntry) bool {
-	return a.DocID == b.DocID &&
-		a.Anchor == b.Anchor &&
-		a.Selection.Equal(b.Selection)
-}
-
 // Backward moves to the previous jump and returns it
 func (j *JumpList) Backward() (DocumentId, int, bool) {
 	if j.head <= 1 {
@@ -467,142 +458,172 @@ func (j *JumpList) Forward() (DocumentId, int, bool) {
 	return it.DocID, it.Anchor, true
 }
 
-// RuneWidth returns the display width of ch at visual column col, expanding
-// tabs to the next tabW boundary. The ASCII fast path avoids a per-rune string
+func (j *JumpList) push(item JumpEntry) {
+	if len(j.items) > 0 && j.head < len(j.items) {
+		j.items = j.items[:j.head]
+	}
+	if len(j.items) > 0 && j.items[len(j.items)-1].equal(item) {
+		j.head = len(j.items)
+		return
+	}
+	j.items = append(j.items, item)
+	if len(j.items) > jumpListCap {
+		j.items = j.items[len(j.items)-jumpListCap:]
+	}
+	j.head = len(j.items)
+}
+
+// RuneWidth returns the display width of ch at the given tab stop, expanding
+// tabs to the next boundary. The ASCII fast path avoids a per-rune string
 // allocation in the render and cursor-positioning hot paths
-func RuneWidth(ch rune, col, tabW int) int {
+func RuneWidth(ch rune, at core.TabStop) int {
 	if uint32(ch)-0x20 < 0x5f {
 		return 1
 	}
-	if ch == '\t' {
-		return tabW - col%tabW
-	}
-	return runeWidthWide(ch)
+	return runeWidthSlow(ch, at)
 }
 
-//go:noinline
-func runeWidthWide(ch rune) int {
-	return runewidth.RuneWidth(ch)
-}
-
-func (v *View) ensureCursorVisibleByLine(
-	doc core.Rope, sel core.Selection, height, scrolloff int,
-) {
+func (v *View) ensureCursorVisibleByLine(cs *CursorScroll) {
 	defer v.trackOffsetChange()()
 	// Text-line scrolling never scrolls within a line
 	v.offset.VerticalOffset = 0
-	cursor := sel.Primary().Cursor(doc)
-	line, err := doc.CharToLine(cursor)
+	cursor := cs.Selection.Primary().Cursor(cs.Doc)
+	line, err := cs.Doc.CharToLine(cursor)
 	if err != nil {
 		return
 	}
-	anchorLine, err := doc.CharToLine(v.offset.Anchor)
+	anchorLine, err := cs.Doc.CharToLine(v.offset.Anchor)
 	if err != nil {
 		anchorLine = 0
 	}
 
 	// asymmetric: bottom margin holds even at EOF, so the view scrolls past
 	// the last line instead of pinning it to the bottom edge
-	soTop := min(scrolloff, max(height-1, 0)/2)
-	soBottom := min(scrolloff, height/2)
+	soTop := min(cs.ScrollOff, max(cs.Height-1, 0)/2)
+	soBottom := min(cs.ScrollOff, cs.Height/2)
 
 	var newFirstLine int
 	switch {
 	case line < anchorLine+soTop:
 		newFirstLine = max(line-soTop, 0)
-	case line > anchorLine+height-1-soBottom:
-		newFirstLine = max(line-(height-1-soBottom), 0)
+	case line > anchorLine+cs.Height-1-soBottom:
+		newFirstLine = max(line-(cs.Height-1-soBottom), 0)
 	default:
 		return
 	}
-	if newAnchor, err := doc.LineToChar(newFirstLine); err == nil {
+	if newAnchor, err := cs.Doc.LineToChar(newFirstLine); err == nil {
 		v.offset.Anchor = newAnchor
 	}
 }
 
-func (v *View) ensureCursorVisibleVisual(
-	doc core.Rope, sel core.Selection, height, scrolloff int,
-	vf *core.VisualMoveFormat,
-) {
+func (v *View) ensureCursorVisibleVisual(cs *CursorScroll) {
 	defer v.trackOffsetChange()()
-	cursor := sel.Primary().Cursor(doc)
-	cursorLine, err := doc.CharToLine(cursor)
+	cursor := cs.Selection.Primary().Cursor(cs.Doc)
+	cursorLine, err := cs.Doc.CharToLine(cursor)
 	if err != nil {
 		return
 	}
-	cursorLineStart, err := doc.LineToChar(cursorLine)
+	cursorLineStart, err := cs.Doc.LineToChar(cursorLine)
 	if err != nil {
 		return
 	}
-	cursorRow := vf.VisualRowOfOffset(doc, cursorLine, cursor-cursorLineStart)
+	cursorRow := cs.Visual.VisualRowOfOffset(core.VisualRowOfOffsetArgs{
+		Doc:     cs.Doc,
+		Line:    cursorLine,
+		CharOff: cursor - cursorLineStart,
+	})
 
-	anchorLine, err := doc.CharToLine(v.offset.Anchor)
+	anchorLine, err := cs.Doc.CharToLine(v.offset.Anchor)
 	if err != nil {
 		anchorLine = 0
 	}
 	vOff := max(v.offset.VerticalOffset, 0)
 
-	soTop := min(scrolloff, max(height-1, 0)/2)
-	soBottom := min(scrolloff, height/2)
+	soTop := min(cs.ScrollOff, max(cs.Height-1, 0)/2)
+	soBottom := min(cs.ScrollOff, cs.Height/2)
 
 	// ok is false when the cursor sits above the anchor line entirely
-	rows, ok := visualRowsToCursor(
-		doc, vf, anchorLine, cursorLine, cursorRow, height+vOff,
-	)
+	rows, ok := visualRowsToCursor(visualRowsArgs{
+		doc:        cs.Doc,
+		visual:     cs.Visual,
+		anchorLine: anchorLine,
+		cursorLine: cursorLine,
+		cursorRow:  cursorRow,
+		limit:      cs.Height + vOff,
+	})
 	fromTop := rows - vOff
 
 	switch {
 	case !ok || fromTop < soTop:
-		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
-			Doc:  doc,
+		res := cs.Visual.VisualScrollUp(core.VisualScrollUpArgs{
+			Doc:  cs.Doc,
 			Line: cursorLine,
 			Row:  cursorRow,
 			Up:   soTop,
 		})
 		anchorLine, vOff = res.Line, res.Row
-	case fromTop > height-1-soBottom:
-		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
-			Doc:  doc,
+	case fromTop > cs.Height-1-soBottom:
+		res := cs.Visual.VisualScrollUp(core.VisualScrollUpArgs{
+			Doc:  cs.Doc,
 			Line: cursorLine,
 			Row:  cursorRow,
-			Up:   height - 1 - soBottom,
+			Up:   cs.Height - 1 - soBottom,
 		})
 		anchorLine, vOff = res.Line, res.Row
 	default:
 		return
 	}
-	if newAnchor, err := doc.LineToChar(anchorLine); err == nil {
+	if newAnchor, err := cs.Doc.LineToChar(anchorLine); err == nil {
 		v.offset.Anchor = newAnchor
 		v.offset.VerticalOffset = vOff
 	}
 }
 
-func visualRowsToCursor(
-	doc core.Rope, vf *core.VisualMoveFormat,
-	anchorLine, cursorLine, cursorRow, limit int,
-) (int, bool) {
-	if cursorLine < anchorLine {
-		return 0, false
-	}
-	rows := cursorRow
-	for l := anchorLine; l < cursorLine; l++ {
-		rows += vf.VisualRows(doc, l)
-		if rows > limit {
-			return rows, true
-		}
-	}
-	return rows, true
-}
-
-// VisualColumn returns the display column of position to, measured from from,
-// expanding tabs to the next tabW boundary. It folds rune widths over the range
-// directly, allocating no intermediate substring
-func VisualColumn(doc core.Rope, from, to, tabW int) int {
+// VisualColumn returns the display column of the span's end, measured from
+// its start, expanding tabs to the next tabW boundary. It folds rune widths
+// over the span directly, allocating no intermediate substring
+func VisualColumn(doc core.Rope, s core.Span, tabW int) int {
 	col := 0
-	doc.ForEachSegment(from, to, func(seg string) {
+	doc.ForEachSegment(s, func(seg string) {
 		for _, ch := range seg {
-			col += RuneWidth(ch, col, tabW)
+			col += RuneWidth(ch, core.TabStop{Column: col, TabWidth: tabW})
 		}
 	})
 	return col
+}
+
+func (e JumpEntry) equal(other JumpEntry) bool {
+	return e.DocID == other.DocID &&
+		e.Anchor == other.Anchor &&
+		e.Selection.Equal(other.Selection)
+}
+
+//go:noinline
+func runeWidthSlow(ch rune, at core.TabStop) int {
+	if ch == '\t' {
+		return core.TabWidthAt(at)
+	}
+	return runewidth.RuneWidth(ch)
+}
+
+type visualRowsArgs struct {
+	doc        core.Rope
+	visual     *core.VisualMoveFormat
+	anchorLine int
+	cursorLine int
+	cursorRow  int
+	limit      int
+}
+
+func visualRowsToCursor(args visualRowsArgs) (int, bool) {
+	if args.cursorLine < args.anchorLine {
+		return 0, false
+	}
+	for l := args.anchorLine; l < args.cursorLine; l++ {
+		args.cursorRow += args.visual.VisualRows(args.doc, l)
+		if args.cursorRow > args.limit {
+			return args.cursorRow, true
+		}
+	}
+	return args.cursorRow, true
 }

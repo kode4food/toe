@@ -20,7 +20,7 @@ func BenchmarkScrollViewColumns(b *testing.B) {
 	}
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(0, 0, line),
+		core.TextChange(core.Span{From: 0, To: 0}, line),
 	})
 	if err != nil {
 		b.Fatal(err)

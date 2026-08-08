@@ -40,7 +40,8 @@ type (
 	}
 
 	previewState struct {
-		scroll        int
+		vScroll       int
+		hScroll       int
 		scrollFor     int
 		cache         previewCache
 		diffBaseCache map[string]core.Rope
@@ -72,6 +73,15 @@ type (
 	// StopFunc cancels an in-progress feed or search
 	StopFunc func()
 
+	// PickerLoad is what a source returns from Load: the rows known up front,
+	// an optional channel of rows discovered asynchronously, and the cancel for
+	// that feed
+	PickerLoad struct {
+		Items []*PickerItem
+		Feed  <-chan *PickerItem
+		Stop  StopFunc
+	}
+
 	// PickerMatcher matches picker items against a prepared query
 	PickerMatcher func(*PickerItem) (MatchResult, bool)
 
@@ -82,7 +92,7 @@ type (
 		Columns() []string
 		MatchColumn() int
 		ColumnProportions() []int
-		Load(*view.Editor) ([]*PickerItem, <-chan *PickerItem, StopFunc)
+		Load(*view.Editor) PickerLoad
 		Accept(*view.Editor, *PickerItem, PickerAcceptAction)
 	}
 
@@ -151,12 +161,7 @@ type (
 	// PickerLocation holds a target and an optional line range
 	PickerLocation struct {
 		Target PickerTarget
-		Lines  *PickerLineRange
-	}
-
-	PickerLineRange struct {
-		From int
-		To   int
+		Lines  *core.Span
 	}
 
 	// PickerTarget identifies a document by path or in-memory ID
@@ -283,11 +288,6 @@ func (p *Picker) MatchCount() int {
 	return len(p.list.matched)
 }
 
-func (p *Picker) awaitingQuery() bool {
-	_, ok := p.source.(DynamicPickerSource)
-	return ok && p.list.query == ""
-}
-
 // SelectIndex moves the cursor to i when it is a valid match index
 func (p *Picker) SelectIndex(i int) {
 	if i >= 0 && i < len(p.list.matched) {
@@ -296,9 +296,16 @@ func (p *Picker) SelectIndex(i int) {
 	}
 }
 
+func (p *Picker) awaitingQuery() bool {
+	_, ok := p.source.(DynamicPickerSource)
+	return ok && p.list.query == ""
+}
+
 func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
-	items, feed, stop := p.source.Load(e)
-	p.load.cancel = stop
+	load := p.source.Load(e)
+	items := load.Items
+	feed := load.Feed
+	p.load.cancel = load.Stop
 	_, static := p.source.(StaticPickerSource)
 	p.list.sections = nil
 	p.list.items = p.takeSections(items)
@@ -526,7 +533,7 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	p.list.matched = nil
 	p.list.cursor = 0
 	p.list.scroll = 0
-	p.preview.scroll = 0
+	p.preview.vScroll = 0
 	p.load.dynamicGen++
 	gen := p.load.dynamicGen
 	q := p.list.query
@@ -610,15 +617,24 @@ func AcceptPath(
 // AlignAcceptedView scrolls the view so the accepted document's cursor is
 // visible after a picker jump
 func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
-	sel := doc.SelectionFor(v.ID())
-	v.EnsureCursorVisible(
-		doc.Text(), sel, max(v.Area().Height, e.ViewHeight()),
-		e.Options().ScrollOff, nil,
-	)
-	v.EnsureCursorVisibleHorizontal(
-		doc.Text(), sel, e.ViewContentWidth(), doc.TabWidth(),
-		e.Options().ScrollOff,
-	)
+	cs := &view.CursorScroll{
+		Doc:       doc.Text(),
+		Selection: doc.SelectionFor(v.ID()),
+		Height:    max(v.Area().Height, e.ViewHeight()),
+		Width:     e.ViewContentWidth(),
+		TabWidth:  doc.TabWidth(),
+		ScrollOff: e.Options().ScrollOff,
+	}
+	v.EnsureCursorVisible(cs)
+	v.EnsureCursorVisibleHorizontal(cs)
+}
+
+// SortPickerItems sorts items by display text, the default ordering for static
+// picker sources
+func SortPickerItems(items []*PickerItem) {
+	slices.SortStableFunc(items, func(a, b *PickerItem) int {
+		return cmp.Compare(a.Display, b.Display)
+	})
 }
 
 func alignAcceptedSelection(
@@ -706,12 +722,4 @@ func wantsFileWatchTree(source PickerSource) bool {
 	}
 	_, ok := source.(DynamicPickerSource)
 	return ok
-}
-
-// SortPickerItems sorts items by display text, the default ordering for static
-// picker sources
-func SortPickerItems(items []*PickerItem) {
-	slices.SortStableFunc(items, func(a, b *PickerItem) int {
-		return cmp.Compare(a.Display, b.Display)
-	})
 }

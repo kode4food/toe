@@ -29,8 +29,14 @@ func TestFileOperations(t *testing.T) {
 
 		assert.NoError(t, session.WillCreateFile(path, false))
 		assert.NoError(t, session.DidCreateFile(path, false))
-		assert.NoError(t, session.WillRenameFile(path, path+"2", false))
-		assert.NoError(t, session.DidRenameFile(path, path+"2", false))
+		assert.NoError(t, session.WillRenameFile(view.FileRename{
+			OldPath: path,
+			NewPath: path + "2",
+		}, false))
+		assert.NoError(t, session.DidRenameFile(view.FileRename{
+			OldPath: path,
+			NewPath: path + "2",
+		}, false))
 		assert.NoError(t, session.WillDeleteFile(path, false))
 		assert.NoError(t, session.DidDeleteFile(path, false))
 	})
@@ -50,8 +56,14 @@ func TestFileOperations(t *testing.T) {
 
 		assert.NoError(t, session.WillCreateFile(path, false))
 		assert.NoError(t, session.DidCreateFile(path, false))
-		assert.NoError(t, session.WillRenameFile(path, newPath, false))
-		assert.NoError(t, session.DidRenameFile(path, newPath, false))
+		assert.NoError(t, session.WillRenameFile(view.FileRename{
+			OldPath: path,
+			NewPath: newPath,
+		}, false))
+		assert.NoError(t, session.DidRenameFile(view.FileRename{
+			OldPath: path,
+			NewPath: newPath,
+		}, false))
 		assert.NoError(t, session.WillDeleteFile(path, false))
 		assert.NoError(t, session.DidDeleteFile(path, false))
 	})
@@ -69,7 +81,10 @@ func TestFileOperations(t *testing.T) {
 		waitForWorkspaceServer(t, session)
 
 		assert.NoError(t, session.WillCreateFile(path, true))
-		assert.NoError(t, session.WillRenameFile(path, path+"2", true))
+		assert.NoError(t, session.WillRenameFile(view.FileRename{
+			OldPath: path,
+			NewPath: path + "2",
+		}, true))
 		assert.NoError(t, session.WillDeleteFile(path, true))
 	})
 }
@@ -92,8 +107,14 @@ func TestFileOperationsFolderKind(t *testing.T) {
 
 		assert.NoError(t, session.WillCreateFile(dir, true))
 		assert.NoError(t, session.DidCreateFile(dir, true))
-		assert.NoError(t, session.WillRenameFile(dir, dir+"2", true))
-		assert.NoError(t, session.DidRenameFile(dir, dir+"2", true))
+		assert.NoError(t, session.WillRenameFile(view.FileRename{
+			OldPath: dir,
+			NewPath: dir + "2",
+		}, true))
+		assert.NoError(t, session.DidRenameFile(view.FileRename{
+			OldPath: dir,
+			NewPath: dir + "2",
+		}, true))
 		assert.NoError(t, session.WillDeleteFile(dir, true))
 		assert.NoError(t, session.DidDeleteFile(dir, true))
 	})
@@ -137,7 +158,10 @@ func TestFileOperationsErrors(t *testing.T) {
 		waitForWorkspaceServer(t, session)
 
 		assert.Error(t, session.WillCreateFile(path, false))
-		assert.Error(t, session.WillRenameFile(path, newPath, false))
+		assert.Error(t, session.WillRenameFile(view.FileRename{
+			OldPath: path,
+			NewPath: newPath,
+		}, false))
 		assert.Error(t, session.WillDeleteFile(path, false))
 	})
 }

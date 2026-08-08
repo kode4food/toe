@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/syntax"
 )
 
@@ -61,10 +62,11 @@ func BenchmarkTokenize(b *testing.B) {
 	for lang, src := range benchSrcs {
 		b.Run(lang, func(b *testing.B) {
 			sc := syntax.NewSyntaxCache()
-			sc.Tokenize(src, lang) // warm up cache
+			// warm up the cache before timing
+			sc.Tokenize(core.Source{Text: src, Lang: lang})
 			b.ResetTimer()
 			for range b.N {
-				sc.Tokenize(src, lang)
+				sc.Tokenize(core.Source{Text: src, Lang: lang})
 			}
 		})
 	}

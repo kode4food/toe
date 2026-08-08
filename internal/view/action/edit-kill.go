@@ -46,10 +46,16 @@ func KillToLineEnd(e *view.Editor) {
 				if err != nil {
 					continue
 				}
-				changes = append(changes, core.DeleteChange(pos, next))
+				changes = append(changes, core.DeleteChange(core.Span{
+					From: pos,
+					To:   next,
+				}))
 			}
 		} else {
-			changes = append(changes, core.DeleteChange(pos, lineEnd))
+			changes = append(changes, core.DeleteChange(core.Span{
+				From: pos,
+				To:   lineEnd,
+			}))
 		}
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
@@ -106,14 +112,20 @@ func KillToLineStart(e *view.Editor) {
 			head = prevEnd
 		} else {
 			lineEnd, _ := text.LineEndCharIndex(line)
-			firstNonWS := skipHorizontalWhitespace(text, lineStart, lineEnd)
+			firstNonWS := skipHorizontalWhitespace(text, core.Span{
+				From: lineStart,
+				To:   lineEnd,
+			})
 			if firstNonWS < pos {
 				head = firstNonWS
 			} else {
 				head = lineStart
 			}
 		}
-		changes = append(changes, core.DeleteChange(head, pos))
+		changes = append(changes, core.DeleteChange(core.Span{
+			From: head,
+			To:   pos,
+		}))
 	}
 	applyDeletesAtCursor(e, applyDeletesAtCursorArgs{
 		text:    text,

@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
+
+	"github.com/alecthomas/chroma/v2/lexers"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
@@ -123,29 +126,25 @@ func LoadLanguage(lang string) *Language {
 	return &Language{}
 }
 
-// DetectLanguage identifies a language from the file name, then its shebang
-func DetectLanguage(path, content string) (string, bool) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		cwd = "."
+// DetectLanguageArgs is a file path and its content, both used to identify the
+// language, plus the name to fall back to when nothing matches
+type DetectLanguageArgs struct {
+	Path    string
+	Content string
+	Default string
+}
+
+// DetectLanguage identifies a language from the file name, then its shebang,
+// then its content, trying Chroma's lexers when no definition matches and
+// returning Default when nothing does
+func DetectLanguage(args DetectLanguageArgs) string {
+	if lang, ok := definedLanguage(args); ok {
+		return lang
 	}
-	global, ok := loader.LanguagesFile()
-	if !ok {
-		global = ""
+	if lang, ok := chromaLanguage(args); ok {
+		return lang
 	}
-	langs, ok := LoadLanguagesForWorkspace(
-		global, loader.WorkspaceLanguagesFile(cwd), cwd,
-	)
-	if !ok {
-		return "", false
-	}
-	if lang := ForFilename(langs, path); lang != nil {
-		return lang.Name, true
-	}
-	if lang, ok := languageForShebang(langs, content); ok {
-		return lang, true
-	}
-	return languageForMatch(langs, content)
+	return args.Default
 }
 
 // LoadBundledLanguages returns the definitions embedded in the binary
@@ -157,16 +156,14 @@ func LoadBundledLanguages() (Languages, bool) {
 }
 
 // LoadLanguagesForWorkspace merges bundled, user, and workspace definitions
-func LoadLanguagesForWorkspace(
-	global, workspace, dir string,
-) (Languages, bool) {
+func LoadLanguagesForWorkspace(args loader.WorkspaceFiles) (Languages, bool) {
 	base, ok := loader.LoadDefaultLanguagesTOML()
 	if !ok {
 		return Languages{}, false
 	}
-	paths := []string{global}
-	if loader.QueryWorkspaceTrust(dir, false) {
-		paths = append(paths, workspace)
+	paths := []string{args.Global}
+	if loader.QueryWorkspaceTrust(args.Dir, false) {
+		paths = append(paths, args.Workspace)
 	}
 	if merged, ok := loader.LoadMergedTOMLWithBase(base, paths, 3); ok {
 		return decodeLanguagesMap(merged)
@@ -183,8 +180,47 @@ func loadUserWorkspaceLanguages() (Languages, bool) {
 	if err != nil {
 		cwd = "."
 	}
-	langs, ok := LoadLanguagesForWorkspace(
-		path, loader.WorkspaceLanguagesFile(cwd), cwd,
-	)
+	langs, ok := LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+		Global:    path,
+		Workspace: loader.WorkspaceLanguagesFile(cwd),
+		Dir:       cwd,
+	})
 	return langs, ok
+}
+
+func definedLanguage(args DetectLanguageArgs) (string, bool) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = "."
+	}
+	global, ok := loader.LanguagesFile()
+	if !ok {
+		global = ""
+	}
+	langs, ok := LoadLanguagesForWorkspace(loader.WorkspaceFiles{
+		Global:    global,
+		Workspace: loader.WorkspaceLanguagesFile(cwd),
+		Dir:       cwd,
+	})
+	if !ok {
+		return "", false
+	}
+	if lang := ForFilename(langs, args.Path); lang != nil {
+		return lang.Name, true
+	}
+	content := args.Content
+	if lang, ok := languageForShebang(langs, content); ok {
+		return lang, true
+	}
+	return languageForMatch(langs, content)
+}
+
+func chromaLanguage(args DetectLanguageArgs) (string, bool) {
+	if lex := lexers.Match(args.Path); lex != nil {
+		return strings.ToLower(lex.Config().Name), true
+	}
+	if lex := lexers.Analyse(args.Content); lex != nil {
+		return strings.ToLower(lex.Config().Name), true
+	}
+	return "", false
 }

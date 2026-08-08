@@ -82,7 +82,7 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 			newAnchor := min(destAnchorStart+anchorCol, destAnchorLineEnd)
 			newHead := min(destHeadStart+headCol, destHeadLineEnd)
 
-			newRange := core.NewRange(newAnchor, newHead)
+			newRange := core.Range{Anchor: newAnchor, Head: newHead}
 			if hasDuplicateHead(out, newRange) {
 				break
 			}

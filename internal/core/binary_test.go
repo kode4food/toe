@@ -61,34 +61,28 @@ func TestLooksBinary(t *testing.T) {
 		{
 			name: "empty file",
 			data: []byte{},
-			want: false,
 		},
 		{
 			name: "utf-8 source code",
 			data: []byte(
 				"package main\n\nfunc main() {\n\tprintln(\"hi\")\n}\n",
 			),
-			want: false,
 		},
 		{
 			name: "utf-8 with BOM",
 			data: append([]byte{0xEF, 0xBB, 0xBF}, []byte("hello world\n")...),
-			want: false,
 		},
 		{
 			name: "utf-16le text",
 			data: utf16leOf("hello world\n"),
-			want: false,
 		},
 		{
 			name: "utf-16le surrogate pair",
 			data: utf16leOf("hi \U0001F600\n"),
-			want: false,
 		},
 		{
 			name: "utf-16be text",
 			data: utf16beOf("hello world\n"),
-			want: false,
 		},
 		{
 			name: "utf-16le unpaired high surrogate",
@@ -103,12 +97,10 @@ func TestLooksBinary(t *testing.T) {
 		{
 			name: "utf-32le text",
 			data: utf32leOf("hello world\n"),
-			want: false,
 		},
 		{
 			name: "utf-32be text",
 			data: utf32beOf("hello world\n"),
-			want: false,
 		},
 		{
 			name: "utf-32le out-of-range code point",
@@ -130,7 +122,6 @@ func TestLooksBinary(t *testing.T) {
 		{
 			name: "legacy non-utf-8 text (latin-1)",
 			data: []byte("caf\xe9 au lait\n"), // "café" in Latin-1
-			want: false,
 		},
 		{
 			name: "PNG signature",
@@ -148,7 +139,6 @@ func TestLooksBinary(t *testing.T) {
 				bytes.Repeat([]byte("a"), 2*core.BinarySampleSize),
 				0x00,
 			),
-			want: false,
 		},
 		{
 			name: "NUL inside sample window",

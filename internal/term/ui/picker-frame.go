@@ -22,46 +22,54 @@ type (
 	}
 )
 
-func (f pickerBoxFrame) drawSplit(
-	buf *tui.Buffer, area geom.Area, lw, cutY int,
-) pickerBoxAreas {
-	rw := max(area.Width-lw-3, 0)
+type drawSplitArgs struct {
+	buffer    *tui.Buffer
+	area      geom.Area
+	leftWidth int
+	cutY      int
+}
+
+func (f pickerBoxFrame) drawSplit(args drawSplitArgs) pickerBoxAreas {
+	area := args.area
+	rw := max(area.Width-args.leftWidth-3, 0)
 	for dy := range area.Height {
-		buf.FillRange(
+		args.buffer.FillRange(
 			area.Point.Add(geom.Point{Y: dy}), area.Width, f.contentStyle,
 		)
 	}
 	if area.Width < 2 || area.Height < 2 {
 		return pickerBoxAreas{}
 	}
-	top := borderTL + strings.Repeat(borderH, lw) + borderMT +
+	top := borderTL + strings.Repeat(borderH, args.leftWidth) + borderMT +
 		strings.Repeat(borderH, rw) + borderTR
-	bot := borderBL + strings.Repeat(borderH, lw) + borderMB +
+	bot := borderBL + strings.Repeat(borderH, args.leftWidth) + borderMB +
 		strings.Repeat(borderH, rw) + borderBR
-	buf.SetString(area.Point, top, f.borderStyle)
-	f.drawTitle(buf, area)
-	buf.SetString(geom.Point{
+	args.buffer.SetString(area.Point, top, f.borderStyle)
+	f.drawTitle(args.buffer, area)
+	args.buffer.SetString(geom.Point{
 		X: area.X,
 		Y: area.Bottom(),
 	}, bot, f.borderStyle)
 	for i := 0; i < area.Height-2; i++ {
 		ry := area.Y + 1 + i
-		if cutY > 0 && i == cutY-1 {
-			cut := borderML + strings.Repeat(borderH, lw) + borderMR
-			buf.SetString(geom.Point{X: area.X, Y: ry}, cut, f.borderStyle)
-			buf.SetString(geom.Point{
+		if args.cutY > 0 && i == args.cutY-1 {
+			cut := borderML + strings.Repeat(borderH, args.leftWidth) + borderMR
+			args.buffer.SetString(
+				geom.Point{X: area.X, Y: ry}, cut, f.borderStyle,
+			)
+			args.buffer.SetString(geom.Point{
 				X: area.Right(),
 				Y: ry,
 			}, borderV, f.borderStyle)
 		} else {
-			buf.SetString(
+			args.buffer.SetString(
 				geom.Point{X: area.X, Y: ry}, borderV, f.borderStyle,
 			)
-			buf.SetString(geom.Point{
-				X: area.X + 1 + lw,
+			args.buffer.SetString(geom.Point{
+				X: area.X + 1 + args.leftWidth,
 				Y: ry,
 			}, borderV, f.borderStyle)
-			buf.SetString(geom.Point{
+			args.buffer.SetString(geom.Point{
 				X: area.Right(),
 				Y: ry,
 			}, borderV, f.borderStyle)
@@ -70,10 +78,10 @@ func (f pickerBoxFrame) drawSplit(
 	return pickerBoxAreas{
 		left: geom.Area{
 			Point: area.Point.Add(geom.Point{X: 1, Y: 1}),
-			Size:  geom.Size{Width: lw, Height: area.Height - 2},
+			Size:  geom.Size{Width: args.leftWidth, Height: area.Height - 2},
 		},
 		right: geom.Area{
-			Point: area.Point.Add(geom.Point{X: 2 + lw, Y: 1}),
+			Point: area.Point.Add(geom.Point{X: 2 + args.leftWidth, Y: 1}),
 			Size:  geom.Size{Width: rw, Height: area.Height - 2},
 		},
 	}

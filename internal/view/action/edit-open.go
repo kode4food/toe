@@ -66,7 +66,10 @@ func OpenAbove(e *view.Editor) {
 			continue
 		}
 		seen[insertPos] = true
-		indent, _ := continuedIndent(e, doc, line, cursor)
+		indent, _ := continuedIndent(e, doc, core.LinePos{
+			Line: line,
+			Pos:  cursor,
+		})
 		var unit string
 		var firstOff int
 		if line == 0 {
@@ -77,7 +80,10 @@ func OpenAbove(e *view.Editor) {
 			firstOff = utf8.RuneCountInString(unit)
 		}
 		changes = append(changes,
-			core.TextChange(insertPos, insertPos, strings.Repeat(unit, count)),
+			core.TextChange(core.Span{
+				From: insertPos,
+				To:   insertPos,
+			}, strings.Repeat(unit, count)),
 		)
 		unitLen := utf8.RuneCountInString(unit)
 		for i := range count {
@@ -147,7 +153,7 @@ func addNewlineImpl(e *view.Editor, above bool) {
 	seen := map[int]bool{}
 	changes := make([]core.Change, 0, len(sel.Ranges()))
 	for _, r := range sel.Ranges() {
-		lr, err := r.LineRange(text)
+		lr, err := r.LineSpan(text)
 		if err != nil {
 			continue
 		}
@@ -165,7 +171,10 @@ func addNewlineImpl(e *view.Editor, above bool) {
 			continue
 		}
 		seen[pos] = true
-		changes = append(changes, core.TextChange(pos, pos, nl))
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, nl))
 	}
 	if len(changes) == 0 {
 		return

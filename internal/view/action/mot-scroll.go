@@ -160,7 +160,7 @@ func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
 	v.SetOffset(offset)
 }
 
-func alignViewImpl(e *view.Editor, relOffset int) {
+func alignViewImpl(e *view.Editor, relOff int) {
 	v := e.FocusedView()
 	if v == nil {
 		return
@@ -177,7 +177,7 @@ func alignViewImpl(e *view.Editor, relOffset int) {
 	if err != nil {
 		return
 	}
-	firstLine := max(0, cursorLine-relOffset)
+	firstLine := max(0, cursorLine-relOff)
 	anchor, err := text.LineToChar(firstLine)
 	if err != nil {
 		return
@@ -235,29 +235,41 @@ func gotoWindowImpl(e *view.Editor, align int) {
 
 func scrollView(e *view.Editor, lines int, up bool) {
 	if v := e.FocusedView(); v != nil {
-		scrollViewBy(e, v, max(e.ViewHeight(), 1), lines, up)
+		scrollViewBy(scrollViewByArgs{
+			editor: e,
+			view:   v,
+			height: max(e.ViewHeight(), 1),
+			lines:  lines,
+			up:     up,
+		})
 	}
 }
 
-func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
-	doc := e.Document(v.DocID())
+type scrollViewByArgs struct {
+	editor *view.Editor
+	view   *view.View
+	height int
+	lines  int
+	up     bool
+}
+
+func scrollViewBy(args scrollViewByArgs) {
+	doc := args.editor.Document(args.view.DocID())
 	if doc == nil {
 		return
 	}
-	if lines < 1 {
-		lines = 1
-	}
+	lines := max(args.lines, 1)
 	text := doc.Text()
-	so := min(e.Options().ScrollOff, max(height-1, 0)/2)
+	so := min(args.editor.Options().ScrollOff, max(args.height-1, 0)/2)
 
-	offset := v.Offset()
+	offset := args.view.Offset()
 	anchorLine, err := text.CharToLine(offset.Anchor)
 	if err != nil {
 		anchorLine = 0
 	}
 	nLines := text.LenLines()
 	var newAnchorLine int
-	if up {
+	if args.up {
 		newAnchorLine = max(anchorLine-lines, 0)
 	} else {
 		newAnchorLine = min(anchorLine+lines, max(nLines-1, 0))
@@ -267,16 +279,16 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 		return
 	}
 	offset.Anchor = newAnchor
-	v.SetOffset(offset)
+	args.view.SetOffset(offset)
 
-	sel := doc.SelectionFor(v.ID())
+	sel := doc.SelectionFor(args.view.ID())
 	cursor := sel.Primary().Cursor(text)
 	cursorLine, err := text.CharToLine(cursor)
 	if err != nil {
 		return
 	}
 
-	if up {
+	if args.up {
 		newCursorLine := max(cursorLine-lines, 0)
 		if newCursorLine == cursorLine {
 			return
@@ -286,9 +298,9 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 			return
 		}
 		newSel := clampSelectionToLine(
-			text, sel, newCursorChar, e.Mode() == view.ModeSelect,
+			text, sel, newCursorChar, args.editor.Mode() == view.ModeSelect,
 		)
-		doc.SetSelectionFor(v.ID(), newSel)
+		doc.SetSelectionFor(args.view.ID(), newSel)
 	} else {
 		topLine := min(newAnchorLine+so, max(nLines-1, 0))
 		if cursorLine >= topLine {
@@ -299,9 +311,9 @@ func scrollViewBy(e *view.Editor, v *view.View, height, lines int, up bool) {
 			return
 		}
 		newSel := clampSelectionToLine(
-			text, sel, topChar, e.Mode() == view.ModeSelect,
+			text, sel, topChar, args.editor.Mode() == view.ModeSelect,
 		)
-		doc.SetSelectionFor(v.ID(), newSel)
+		doc.SetSelectionFor(args.view.ID(), newSel)
 	}
 }
 
@@ -325,7 +337,10 @@ func maxVisibleColumns(doc *view.Document, v *view.View, limit int) int {
 			continue
 		}
 		end = min(end, start+limit)
-		w = max(w, view.VisualColumn(text, start, end, tabW))
+		w = max(w, view.VisualColumn(text, core.Span{
+			From: start,
+			To:   end,
+		}, tabW))
 	}
 	return w
 }

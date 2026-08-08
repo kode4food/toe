@@ -20,11 +20,12 @@ type (
 		format *language.TextFormat
 		opts   *view.Options
 
-		area   geom.Area
-		scroll int
+		area    geom.Area
+		vScroll int
+		hScroll int
 
-		th     *theme.Theme
-		styles *tuiStyles
+		theme  *theme.Theme
+		styles *styles
 	}
 
 	diffPreviewLine struct {
@@ -52,21 +53,35 @@ const (
 	diffTintAmount  = 0.2
 )
 
+func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
+	if rope, ok := p.preview.diffBaseCache[path]; ok {
+		return rope
+	}
+	rope := core.NewRope(vc.DiffBaseForPath(path))
+	p.preview.diffBaseCache[path] = rope
+	return rope
+}
+
+type buildDiffPreviewLinesArgs struct {
+	kind    view.FileChangeKind
+	working core.Rope
+	base    core.Rope
+	hunks   []view.DiffHunk
+}
+
 // buildDiffPreviewLines produces the ordered unified-diff line list (context,
 // removed base, added working) for a change of the given kind
-func buildDiffPreviewLines(
-	kind view.FileChangeKind, working, base core.Rope, hunks []view.DiffHunk,
-) []diffPreviewLine {
-	switch kind {
+func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
+	switch args.kind {
 	case view.FileChangeAdded, view.FileChangeUntracked:
-		return allLines(working, diffLineAdded)
+		return allLines(args.working, diffLineAdded)
 	case view.FileChangeDeleted:
-		return allLines(base, diffLineRemoved)
+		return allLines(args.base, diffLineRemoved)
 	default:
 		var out []diffPreviewLine
-		nWork := working.LenLines()
+		nWork := args.working.LenLines()
 		prev := 0
-		for _, h := range hunks {
+		for _, h := range args.hunks {
 			for l := prev; l < h.From && l < nWork; l++ {
 				out = append(out, diffPreviewLine{
 					kind: diffLineContext, line: l,
@@ -102,21 +117,10 @@ func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
 	return out
 }
 
-// ponytail: shell-out per distinct path, cached; fine for a picker's lifetime
-func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
-	if rope, ok := p.preview.diffBaseCache[path]; ok {
-		return rope
-	}
-	rope := core.NewRope(vc.DiffBaseForPath(path))
-	p.preview.diffBaseCache[path] = rope
-	return rope
-}
-
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
-	tuiStyles := args.styles
-	hlStyle := previewHlStyleFn(hlStyleFnFor(args.th))
+	hlStyle := previewHighlighter(highlighterFor(args.theme))
 	hlCache := make(map[string]tui.Style, 32)
-	hlStyleFn := func(scope string) tui.Style {
+	hl := func(scope string) tui.Style {
 		if st, ok := hlCache[scope]; ok {
 			return st
 		}
@@ -126,15 +130,15 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	}
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
-	fillTUI := tui.Style{}.Bg(args.th.Get("ui.popup").BgColor())
+	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
 	addedBg := tintToward(&tintColors{
 		base:   popupBg,
-		accent: args.th.Get("diff.plus").FgColor(),
+		accent: args.theme.Get("diff.plus").FgColor(),
 	})
 	removedBg := tintToward(&tintColors{
 		base:   popupBg,
-		accent: args.th.Get("diff.minus").FgColor(),
+		accent: args.theme.Get("diff.minus").FgColor(),
 	})
 
 	contentX := args.area.X + diffGutterW
@@ -142,8 +146,14 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 
 	anchor := max(0, firstChangedLine(args.lines)-diffPreviewLead)
 	maxStart := max(0, len(args.lines)-args.area.Height)
-	start := max(0, min(anchor+args.scroll, maxStart))
-	args.scroll = start - anchor
+	start := max(0, min(anchor+args.vScroll, maxStart))
+	args.vScroll = start - anchor
+	hOff := clampDiffHScroll(clampDiffHScrollArgs{
+		render:       args,
+		startRow:     start,
+		contentWidth: contentW,
+	})
+	args.hScroll = hOff
 
 	for row := range args.area.Height {
 		idx := start + row
@@ -168,25 +178,29 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			continue
 		}
 		rr := rowRender{
-			lineStr:    lineString(src, lineStart, lineEnd),
-			tuiStyles:  tuiStyles,
-			hlStyle:    hlStyleFn,
+			lineText: lineString(src, core.Span{
+				From: lineStart,
+				To:   lineEnd,
+			}),
+			styles:     args.styles,
+			hlStyle:    hl,
 			format:     args.format,
-			ws:         ws,
-			ig:         ig,
+			whitespace: ws,
+			indents:    ig,
 			hlSpans:    spans,
 			cursor:     -1,
 			cursorLine: -1,
 			lineNum:    dl.line,
 			lineStart:  lineStart,
 			lineEnd:    lineEnd,
-			hStart:     0,
+			hStart:     hOff,
 			hWidth:     contentW,
 			maxRows:    1,
 		}
 		rendered := rr.rows()
 		rendered[0].writeToBuffer(rowWriteArgs{
 			buf: buf, at: at, fillStyle: fillTUI, width: contentW,
+			startCol: hOff,
 		})
 		buf.PatchBgRange(at, contentW, popupBg)
 
@@ -194,10 +208,10 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		switch dl.kind {
 		case diffLineAdded:
 			buf.PatchBgRange(at, contentW, addedBg)
-			sign, signStyle = "+", tuiStyles.diffAdded.Bg(popupBg)
+			sign, signStyle = "+", args.styles.diffAdded.Bg(popupBg)
 		case diffLineRemoved:
 			buf.PatchBgRange(at, contentW, removedBg)
-			sign, signStyle = "-", tuiStyles.diffRemoved.Bg(popupBg)
+			sign, signStyle = "-", args.styles.diffRemoved.Bg(popupBg)
 		case diffLineContext:
 			// no-op
 		}
@@ -206,7 +220,7 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
 		Point: geom.Point{X: contentX, Y: args.area.Y},
 		Size:  geom.Size{Width: contentW, Height: args.area.Height},
-	}, tuiStyles.rulerBg)
+	}, args.styles.rulerBg)
 }
 
 func tintToward(colors *tintColors) tui.Color {
@@ -244,4 +258,32 @@ func firstChangedLine(lines []diffPreviewLine) int {
 		}
 	}
 	return 0
+}
+
+type clampDiffHScrollArgs struct {
+	render       *diffPreviewRender
+	startRow     int
+	contentWidth int
+}
+
+// clampDiffHScroll bounds a horizontal offset to the widest row on screen,
+// reading removed rows from the base side and the rest from the working side
+func clampDiffHScroll(args clampDiffHScrollArgs) int {
+	if args.render.hScroll <= 0 {
+		return 0
+	}
+	widest := 0
+	for row := range args.render.area.Height {
+		idx := args.startRow + row
+		if idx >= len(args.render.lines) {
+			break
+		}
+		dl := args.render.lines[idx]
+		src := args.render.working
+		if dl.kind == diffLineRemoved {
+			src = args.render.base
+		}
+		widest = max(widest, lineDisplayWidth(src, dl.line))
+	}
+	return min(args.render.hScroll, max(widest-args.contentWidth, 0))
 }

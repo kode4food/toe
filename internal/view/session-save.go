@@ -56,7 +56,7 @@ func (v *View) SaveSession(w *SessionWriter) {
 func (w *SessionWriter) SaveSlot(kind SessionKind, path string) {
 	w.node = sessionNode{Kind: kind}
 	if path != "" {
-		w.node.Path = sessionPath(w.base, path)
+		w.node.Path = sessionPath(sessionRef{base: w.base, path: path})
 	}
 }
 
@@ -78,7 +78,7 @@ func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 		}
 	}
 	return sessionDocument{
-		Path:      sessionPath(base, d.Path()),
+		Path:      sessionPath(sessionRef{base: base, path: d.Path()}),
 		Lang:      d.Lang(),
 		Selection: sessionSelection(d.Selection()),
 	}

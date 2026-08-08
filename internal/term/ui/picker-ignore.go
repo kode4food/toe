@@ -14,15 +14,35 @@ import (
 
 type (
 	PickerIgnore struct {
-		base string
-		dir  string
-		ig   *gitignore.GitIgnore
+		base    string
+		dir     string
+		matcher *gitignore.GitIgnore
 	}
 
 	PickerIgnoreOptions struct {
 		Hidden      bool
 		Parents     bool
 		IgnoreFiles bool
+	}
+
+	// IgnoreTarget is the walk root and the path being tested against the
+	// ignore rules that apply to it
+	IgnoreTarget struct {
+		Root string
+		Path string
+	}
+
+	// ignoreCandidate is a path under test, both workspace-relative and full
+	ignoreCandidate struct {
+		rel  string
+		full string
+	}
+
+	// ignoreFile is a rules file and the directory its patterns are anchored
+	// to
+	ignoreFile struct {
+		dir  string
+		path string
 	}
 )
 
@@ -66,18 +86,62 @@ func SkipPickerPath(args SkipPickerPathArgs) bool {
 		return true
 	}
 	for _, ig := range args.Ignores {
-		if sub, ok := ignorePathForBase(
-			args.Rel, args.Path, ig,
-		); ok && ig.ig.MatchesPath(sub) {
+		at := ignoreCandidate{rel: args.Rel, full: args.Path}
+		if sub, ok := ignorePathForBase(at, ig); ok &&
+			ig.matcher.MatchesPath(sub) {
 			return true
 		}
 	}
 	return false
 }
 
-func ignorePathForBase(rel, path string, ig PickerIgnore) (string, bool) {
+// LoadIgnoreFiles collects .ignore, .toe/ignore, and .gitignore rules that
+// apply to path, nearest directory last
+func LoadIgnoreFiles(
+	target IgnoreTarget, opts PickerIgnoreOptions,
+) []PickerIgnore {
+	if !opts.IgnoreFiles {
+		return nil
+	}
+	var ignores []PickerIgnore
+	for _, dir := range ignoreDirs(target, opts.Parents) {
+		for _, name := range []string{
+			".ignore",
+			filepath.Join(loader.WorkspaceDirName, "ignore"),
+			".gitignore",
+		} {
+			ignores = appendIgnorePath(ignores, ignoreFile{
+				dir:  dir,
+				path: filepath.Join(dir, name),
+			})
+		}
+	}
+	root := target.Root
+	ignores = appendIgnorePath(ignores, ignoreFile{
+		dir:  root,
+		path: filepath.Join(root, ".git", "info", "exclude"),
+	})
+	ignores = appendIgnorePath(ignores, ignoreFile{
+		dir:  root,
+		path: gitGlobalIgnorePath(),
+	})
+	ignores = appendIgnorePath(ignores, ignoreFile{
+		path: loader.ConfigIgnoreFile(),
+	})
+	return ignores
+}
+
+// DefaultPickerIgnoreOptions is the ignore behavior file-walking pickers use
+// when a caller does not need to customize it
+func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
+	return PickerIgnoreOptions{
+		Hidden: true, Parents: true, IgnoreFiles: true,
+	}
+}
+
+func ignorePathForBase(at ignoreCandidate, ig PickerIgnore) (string, bool) {
 	if ig.dir != "" {
-		sub, err := filepath.Rel(ig.dir, path)
+		sub, err := filepath.Rel(ig.dir, at.full)
 		parent := ".." + string(filepath.Separator)
 		if err != nil || strings.HasPrefix(sub, parent) {
 			return "", false
@@ -88,53 +152,27 @@ func ignorePathForBase(rel, path string, ig PickerIgnore) (string, bool) {
 		return filepath.ToSlash(sub), true
 	}
 	if ig.base == "" {
-		return rel, true
+		return at.rel, true
 	}
-	if rel == ig.base {
+	if at.rel == ig.base {
 		return "", true
 	}
-	sub, ok := strings.CutPrefix(rel, ig.base+"/")
+	sub, ok := strings.CutPrefix(at.rel, ig.base+"/")
 	return sub, ok
 }
 
-// LoadIgnoreFiles collects .ignore, .toe/ignore, and .gitignore rules that
-// apply to path, nearest directory last
-func LoadIgnoreFiles(
-	root, path string, opts PickerIgnoreOptions,
+func appendIgnorePath(
+	ignores []PickerIgnore, f ignoreFile,
 ) []PickerIgnore {
-	if !opts.IgnoreFiles {
-		return nil
-	}
-	var ignores []PickerIgnore
-	for _, dir := range ignoreDirs(root, path, opts.Parents) {
-		ignores = appendIgnore(ignores, dir, ".ignore")
-		ignores = appendIgnore(
-			ignores, dir, filepath.Join(loader.WorkspaceDirName, "ignore"),
-		)
-		ignores = appendIgnore(ignores, dir, ".gitignore")
-	}
-	ignores = appendIgnore(
-		ignores, root, filepath.Join(".git", "info", "exclude"),
-	)
-	ignores = appendIgnorePath(ignores, root, gitGlobalIgnorePath())
-	ignores = appendIgnorePath(ignores, "", loader.ConfigIgnoreFile())
-	return ignores
-}
-
-func appendIgnore(ignores []PickerIgnore, dir, name string) []PickerIgnore {
-	return appendIgnorePath(ignores, dir, filepath.Join(dir, name))
-}
-
-func appendIgnorePath(ignores []PickerIgnore, dir, path string) []PickerIgnore {
-	if ig := compileIgnore(path); ig != nil {
-		return append(ignores, PickerIgnore{dir: dir, ig: ig})
+	if ig := compileIgnore(f.path); ig != nil {
+		return append(ignores, PickerIgnore{dir: f.dir, matcher: ig})
 	}
 	return ignores
 }
 
-func ignoreDirs(root, path string, parents bool) []string {
-	root = filepath.Clean(root)
-	dir := filepath.Dir(path)
+func ignoreDirs(target IgnoreTarget, parents bool) []string {
+	root := filepath.Clean(target.Root)
+	dir := filepath.Dir(target.Path)
 	if !parents {
 		return []string{root}
 	}
@@ -147,14 +185,6 @@ func ignoreDirs(root, path string, parents bool) []string {
 	}
 	slices.Reverse(dirs)
 	return dirs
-}
-
-// DefaultPickerIgnoreOptions is the ignore behavior file-walking pickers use
-// when a caller does not need to customize it
-func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
-	return PickerIgnoreOptions{
-		Hidden: true, Parents: true, IgnoreFiles: true,
-	}
 }
 
 func compileIgnore(path string) *gitignore.GitIgnore {

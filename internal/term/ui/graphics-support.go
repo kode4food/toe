@@ -9,10 +9,8 @@ type graphicsTerm struct {
 	value string
 }
 
-// graphicsTerms lists terminals known to support Kitty graphics.
-// Add new terminals here as their support is confirmed.
-// ponytail: env sniff, not a runtime handshake; add a Kitty graphics
-// query (\e_Gi=…,a=q…\e\\) if this misfires under tmux/ssh passthrough
+// graphicsTerms lists terminals known to support Kitty graphics. Add new
+// terminals here as their support is confirmed
 var graphicsTerms = []graphicsTerm{
 	{env: "KITTY_WINDOW_ID"},              // kitty
 	{env: "TERM", value: "xterm-kitty"},   // kitty

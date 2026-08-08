@@ -6,10 +6,19 @@ import (
 	"strings"
 )
 
-// Rope stores text as a balanced binary tree of string leaves
-type Rope struct {
-	root *ropeNode
-}
+type (
+	// Rope stores text as a balanced binary tree of string leaves
+	Rope struct {
+		root *ropeNode
+	}
+
+	// Source is a document's text together with the language it is written
+	// in. Highlighting, parsing, and language detection operate on this pair
+	Source struct {
+		Text string
+		Lang string
+	}
+)
 
 const (
 	DefaultRopeLeafChars = 1024
@@ -49,48 +58,41 @@ func (r Rope) String() string {
 	return b.String()
 }
 
-// Slice returns the characters in from..to as a new rope
-func (r Rope) Slice(from, to int) (Rope, error) {
-	if from < 0 || to < from || to > r.LenChars() {
-		return Rope{}, fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange,
-			from, to)
+// Slice returns the characters the span covers as a new rope
+func (r Rope) Slice(s Span) (Rope, error) {
+	if err := r.checkSpan(s); err != nil {
+		return Rope{}, err
 	}
-	left, rest := splitRopeNode(r.root, from)
-	_ = left
-	mid, _ := splitRopeNode(rest, to-from)
-	return Rope{root: mid}, nil
+	rest := splitRopeNode(r.root, s.From).right
+	return Rope{root: splitRopeNode(rest, s.Len()).left}, nil
 }
 
-// SliceString returns the substring between char offsets [from, to) without
-// constructing a new rope; faster than Slice(from, to).String()
-func (r Rope) SliceString(from, to int) (string, error) {
-	if from < 0 || to < from || to > r.LenChars() {
-		return "", fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange, from, to)
+// SliceString returns the substring the span covers without constructing a
+// new rope; faster than Slice(s).String()
+func (r Rope) SliceString(s Span) (string, error) {
+	if err := r.checkSpan(s); err != nil {
+		return "", err
 	}
-	if from == to {
+	if s.Empty() {
 		return "", nil
 	}
 	var b strings.Builder
-	b.Grow(to - from)
-	r.ForEachSegment(from, to, func(seg string) {
+	b.Grow(s.Len())
+	r.ForEachSegment(s, func(seg string) {
 		b.WriteString(seg)
 	})
 	return b.String(), nil
 }
 
-// ForEachSegment applies fn to each contiguous leaf substring spanning
-// [from, to), without copying
-func (r Rope) ForEachSegment(from, to int, fn func(string)) {
-	if from < 0 {
-		from = 0
-	}
-	if n := r.LenChars(); to > n {
-		to = n
-	}
-	if from >= to {
+// ForEachSegment applies fn to each contiguous leaf substring the span covers,
+// without copying
+func (r Rope) ForEachSegment(s Span, fn func(string)) {
+	s.From = max(s.From, 0)
+	s.To = min(s.To, r.LenChars())
+	if s.Empty() || s.From > s.To {
 		return
 	}
-	forEachSegmentNode(r.root, from, to, fn)
+	forEachSegmentNode(r.root, s, fn)
 }
 
 // Insert returns a rope with text added at pos
@@ -98,20 +100,27 @@ func (r Rope) Insert(pos int, text string) (Rope, error) {
 	if pos < 0 || pos > r.LenChars() {
 		return Rope{}, fmt.Errorf("%w: %d", ErrRopeIndexOutOfRange, pos)
 	}
-	left, right := splitRopeNode(r.root, pos)
-	ins := buildRopeNode(text)
-	return Rope{root: concatRopeNode(concatRopeNode(left, ins), right)}, nil
+	pair := splitRopeNode(r.root, pos)
+	withText := concatRopeNode(ropePair{
+		left:  pair.left,
+		right: buildRopeNode(text),
+	})
+	return Rope{root: concatRopeNode(ropePair{
+		left:  withText,
+		right: pair.right,
+	})}, nil
 }
 
-// Delete returns a rope without the characters in from..to
-func (r Rope) Delete(from, to int) (Rope, error) {
-	if from < 0 || to < from || to > r.LenChars() {
-		return Rope{}, fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange,
-			from, to)
+// Delete returns a rope without the characters the span covers
+func (r Rope) Delete(s Span) (Rope, error) {
+	if err := r.checkSpan(s); err != nil {
+		return Rope{}, err
 	}
-	left, rest := splitRopeNode(r.root, from)
-	_, right := splitRopeNode(rest, to-from)
-	return Rope{root: concatRopeNode(left, right)}, nil
+	pair := splitRopeNode(r.root, s.From)
+	return Rope{root: concatRopeNode(ropePair{
+		left:  pair.left,
+		right: splitRopeNode(pair.right, s.Len()).right,
+	})}, nil
 }
 
 // CharAt returns the character at pos
@@ -138,7 +147,7 @@ func (r Rope) Line(line int) (Rope, error) {
 			return Rope{}, err
 		}
 	}
-	return r.Slice(from, to)
+	return r.Slice(Span{From: from, To: to})
 }
 
 // LineToChar returns the position where the line starts
@@ -179,7 +188,7 @@ func (r Rope) LineEndCharIndex(line int) (int, error) {
 	}
 	// The line ending is at most the final two chars; read only those rather
 	// than the whole line to locate where the content ends
-	tail, err := r.SliceString(max(end-2, start), end)
+	tail, err := r.SliceString(Span{From: max(end-2, start), To: end})
 	if err != nil {
 		return end, nil
 	}
@@ -187,4 +196,11 @@ func (r Rope) LineEndCharIndex(line int) (int, error) {
 		end -= len(e)
 	}
 	return end, nil
+}
+
+func (r Rope) checkSpan(s Span) error {
+	if s.From < 0 || s.To < s.From || s.To > r.LenChars() {
+		return fmt.Errorf("%w: %d..%d", ErrRopeIndexOutOfRange, s.From, s.To)
+	}
+	return nil
 }

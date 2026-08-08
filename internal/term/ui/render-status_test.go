@@ -322,7 +322,7 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			setup: func(t *testing.T) *view.Editor {
 				e := editorWithText(t, "abcd")
 				testutil.SetSelection(t, e,
-					[]core.Range{core.NewRange(0, 2)}, 0,
+					[]core.Range{{Anchor: 0, Head: 2}}, 0,
 				)
 				return e
 			},

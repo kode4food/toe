@@ -1321,8 +1321,8 @@ func TestSessionBareServer(t *testing.T) {
 	})
 	t.Run("format selection multi range", func(t *testing.T) {
 		sel, err := core.NewSelection([]core.Range{
-			core.NewRange(0, 1),
-			core.NewRange(2, 3),
+			{Anchor: 0, Head: 1},
+			{Anchor: 2, Head: 3},
 		}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)

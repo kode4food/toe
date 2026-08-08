@@ -12,7 +12,7 @@ import (
 
 type codeActionMenu struct {
 	overlayBuf
-	ec         *EditorComponent
+	editor     *EditorComponent
 	docID      view.DocumentId
 	viewID     view.Id
 	actions    []view.CodeAction
@@ -41,7 +41,11 @@ func newCodeActionMenu(
 		}
 	}
 	return &codeActionMenu{
-		ec: ec, docID: docID, viewID: viewID, actions: actions, cursor: cursor,
+		editor:  ec,
+		docID:   docID,
+		viewID:  viewID,
+		actions: actions,
+		cursor:  cursor,
 	}
 }
 
@@ -104,16 +108,20 @@ func (m *codeActionMenu) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	w := pl.Width
 	m.bounds = pl
-	menu, selected := promptCompletionStyles(cx)
+	styles := promptCompletionStyles(cx)
 	pop := popup{
-		borderStyle:  menu.Fg(pickerFrameStyle(cx).FgColor()),
-		contentStyle: menu,
+		borderStyle:  styles.item.Fg(pickerFrameStyle(cx).FgColor()),
+		contentStyle: styles.item,
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
 	m.listBounds = area.Translate(pl.Point)
-	base := menu
-	sel := selected
-	m.scroll = listClampScroll(m.scroll, len(m.actions), area.Height)
+	base := styles.item
+	sel := styles.selected
+	m.scroll = listScroll{
+		scroll: m.scroll,
+		count:  len(m.actions),
+		rows:   area.Height,
+	}.clamped()
 	overflow := len(m.actions) > area.Height
 	listW := area.Width
 	if overflow {
@@ -149,15 +157,21 @@ func (m *codeActionMenu) width() int {
 func (m *codeActionMenu) popupPos(
 	cx *Context, screenH int,
 ) geom.Point {
-	return m.ec.popupAnchorBelowCaret(cx, screenH, codeActionMaxRows)
+	return m.editor.popupAnchorBelowCaret(cx, popupAnchorArgs{
+		screenHeight: screenH,
+		fallbackRows: codeActionMaxRows,
+	})
 }
 
 func (m *codeActionMenu) moveBy(n int) {
 	m.markDirty()
 	m.cursor = (m.cursor + n + len(m.actions)) % len(m.actions)
-	m.scroll = listEnsureCursorVisible(
-		m.scroll, m.cursor, len(m.actions), m.visibleRows(),
-	)
+	m.scroll = listScroll{
+		scroll: m.scroll,
+		cursor: m.cursor,
+		count:  len(m.actions),
+		rows:   m.visibleRows(),
+	}.ensureCursorVisible()
 }
 
 func (m *codeActionMenu) visibleRows() int {
@@ -222,13 +236,16 @@ func (m *codeActionMenu) handleMouseWheel(
 	}
 	step := cx.Editor.Options().ScrollLines
 	m.markDirty()
+	list := listScroll{
+		scroll: m.scroll,
+		count:  len(m.actions),
+		rows:   m.visibleRows(),
+	}
 	switch msg.Button {
 	case tea.MouseWheelUp:
-		m.scroll = listScrollBy(
-			m.scroll, len(m.actions), m.visibleRows(), -step,
-		)
+		m.scroll = list.scrollBy(-step)
 	case tea.MouseWheelDown:
-		m.scroll = listScrollBy(m.scroll, len(m.actions), m.visibleRows(), step)
+		m.scroll = list.scrollBy(step)
 	}
 	return consumed()
 }

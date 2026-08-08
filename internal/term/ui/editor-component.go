@@ -90,7 +90,7 @@ type (
 		viewID view.Id
 		rev    int
 		pos    int
-		ok     bool
+		valid  bool
 	}
 
 	sepDrag struct {
@@ -130,16 +130,16 @@ func newEditorComponent() *EditorComponent {
 		redraw:     make(chan struct{}, 1),
 		mouse: mouseState{
 			vertical: mouseAutoScrollAxis{
-				scroll: func(e *view.Editor, v *view.View, toLo bool) {
-					action.ScrollViewLines(e, v, 1, toLo)
+				scroll: func(e *view.Editor, v *view.View, toLow bool) {
+					action.ScrollViewLines(e, v, 1, toLow)
 				},
 				pos: func(
 					r *renderPass, doc *view.Document, v *view.View, fixed int,
-					toLo bool,
+					toLow bool,
 				) (int, bool) {
 					area := v.Area()
 					edgeY := area.Y + max(area.Height-1, 0) - 1
-					if toLo {
+					if toLow {
 						edgeY = area.Y
 					}
 					return r.screenCharPos(doc, v, geom.Point{
@@ -148,19 +148,19 @@ func newEditorComponent() *EditorComponent {
 				},
 			},
 			horizontal: mouseAutoScrollAxis{
-				scroll: func(e *view.Editor, v *view.View, toLo bool) {
-					action.ScrollViewColumns(e, v, 1, toLo)
+				scroll: func(e *view.Editor, v *view.View, toLow bool) {
+					action.ScrollViewColumns(e, v, 1, toLow)
 				},
 				pos: func(
 					r *renderPass, doc *view.Document, v *view.View, fixed int,
-					toLo bool,
+					toLow bool,
 				) (int, bool) {
 					area := v.Area()
 					gutterW := gutterWidthFor(
-						doc.Text(), r.cx.Editor.Options().Gutters,
+						doc.Text(), r.context.Editor.Options().Gutters,
 					)
 					edgeX := area.Right()
-					if toLo {
+					if toLow {
 						edgeX = area.X + gutterW
 					}
 					return r.screenCharPos(doc, v, geom.Point{
@@ -222,13 +222,34 @@ func (e *EditorComponent) HandleEvent(
 	case mouseAxisScrollMsg:
 		return e.handleMouseAxisScroll(cx, msg)
 	case terminalDragScrollMsg:
-		return consumed(), msg.dc.DragTick(cx, msg.gen, msg.toTop)
+		return consumed(), msg.draggable.DragTick(cx, msg.gen, msg.toLow)
 	case tea.MouseReleaseMsg:
 		return e.handleMouseRelease(cx, msg)
 	case tea.MouseWheelMsg:
 		return e.handleMouseWheel(cx, msg)
 	}
 	return ignored(), nil
+}
+
+// Render returns the editor's cell buffer for the compositor to blit overlays
+// onto, skipping an ANSI round-trip
+func (e *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
+	if e.buf == nil || e.buf.Size != screen {
+		e.buf = tui.NewBuffer(screen)
+	}
+	e.syncEditorMessages(cx)
+	e.cache.evictClosed(cx.Editor)
+	r := &renderPass{editor: e, context: cx, size: screen}
+	r.renderEditorContent(e.buf)
+	return e.buf
+}
+
+// Cursor returns the focused pane's cursor position and shape
+func (e *EditorComponent) Cursor(
+	cx *Context, screen geom.Size,
+) (tea.Cursor, bool) {
+	r := &renderPass{editor: e, context: cx, size: screen}
+	return r.editorCursor()
 }
 
 func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
@@ -261,27 +282,6 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	}
 }
 
-// Render returns the editor's cell buffer for the compositor to blit overlays
-// onto, skipping an ANSI round-trip
-func (e *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
-	if e.buf == nil || e.buf.Size != screen {
-		e.buf = tui.NewBuffer(screen)
-	}
-	e.syncEditorMessages(cx)
-	e.cache.evictClosed(cx.Editor)
-	r := &renderPass{ec: e, cx: cx, size: screen}
-	r.renderEditorContent(e.buf)
-	return e.buf
-}
-
-// Cursor returns the focused pane's cursor position and shape
-func (e *EditorComponent) Cursor(
-	cx *Context, screen geom.Size,
-) (tea.Cursor, bool) {
-	r := &renderPass{ec: e, cx: cx, size: screen}
-	return r.editorCursor()
-}
-
 // reports the caret position regardless of cursor shape, so caret-anchored
 // overlays still work under the normal-mode block cursor that Cursor hides
 func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
@@ -302,24 +302,29 @@ func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
 		yOff++
 	}
 	visual := cursorScreenPos(cursorScreenPosArgs{
-		text:             text,
-		cursor:           cursor,
-		gutterWidth:      gutterWidthFor(text, opts.Gutters),
-		rowMap:           e.cache.viewRowMaps[v.ID()],
-		tabWidth:         doc.TabWidth(),
-		horizontalOffset: v.Offset().HorizontalOffset,
+		text:        text,
+		cursor:      cursor,
+		gutterWidth: gutterWidthFor(text, opts.Gutters),
+		rowMap:      e.cache.viewRowMaps[v.ID()],
+		tabWidth:    doc.TabWidth(),
+		horzOff:     v.Offset().HorizontalOffset,
 	})
 	return geom.Point{X: area.X + visual.X, Y: yOff + visual.Y}, true
 }
 
+type popupAnchorArgs struct {
+	screenHeight int
+	fallbackRows int
+}
+
 func (e *EditorComponent) popupAnchorBelowCaret(
-	cx *Context, screenH, fallbackRows int,
+	cx *Context, args popupAnchorArgs,
 ) geom.Point {
 	if at, ok := e.caretScreenPos(cx); ok {
 		at.Y++
 		return at
 	}
-	return geom.Point{Y: max(screenH-fallbackRows-2, 0)}
+	return geom.Point{Y: max(args.screenHeight-args.fallbackRows-2, 0)}
 }
 
 func (e *EditorComponent) cancelPending(cx *Context) {
@@ -404,6 +409,6 @@ func documentHighlightPositionFor(
 		viewID: v.ID(),
 		rev:    doc.Revision(),
 		pos:    pos,
-		ok:     true,
+		valid:  true,
 	}
 }

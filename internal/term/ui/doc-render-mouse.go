@@ -11,31 +11,6 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-type (
-	resolveClickPosRes struct {
-		doc  *view.Document
-		view *view.View
-		pos  int
-	}
-
-	cursorScreenPosArgs struct {
-		text             core.Rope
-		cursor           int
-		gutterWidth      int
-		rowMap           []viewRowEntry
-		tabWidth         int
-		horizontalOffset int
-	}
-
-	charPosInLineSegArgs struct {
-		text     core.Rope
-		docLine  int
-		charOff  int
-		targetX  int
-		tabWidth int
-	}
-)
-
 func (r *renderPass) screenCharPos(
 	doc *view.Document, v *view.View, at geom.Point,
 ) (int, bool) {
@@ -44,7 +19,7 @@ func (r *renderPass) screenCharPos(
 	if localY < 0 {
 		return 0, false
 	}
-	rowMap := r.ec.cache.viewRowMaps[v.ID()]
+	rowMap := r.editor.cache.viewRowMaps[v.ID()]
 	if len(rowMap) == 0 {
 		return 0, false
 	}
@@ -54,10 +29,10 @@ func (r *renderPass) screenCharPos(
 	entry := rowMap[localY]
 
 	text := doc.Text()
-	gutterW := gutterWidthFor(text, r.cx.Editor.Options().Gutters)
+	gutterW := gutterWidthFor(text, r.context.Editor.Options().Gutters)
 	// Add the horizontal scroll offset: screen column 0 of the content maps to
 	// content column hOff. The gutter is fixed and excluded from the offset
-	contentX := max(at.X-a.X-gutterW-entry.prefixW, 0) +
+	contentX := max(at.X-a.X-gutterW-entry.prefixWidth, 0) +
 		v.Offset().HorizontalOffset
 	return charPosInLineSeg(charPosInLineSegArgs{
 		text:     text,
@@ -72,7 +47,7 @@ func (r *renderPass) screenCharPos(
 // (x, y); a click on the pane's own status row or the command line misses
 func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 	yOff := 0
-	if bufferlineVisible(r.cx) {
+	if bufferlineVisible(r.context) {
 		yOff = 1
 	}
 	contentY := at.Y - yOff
@@ -80,7 +55,7 @@ func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 		return nil
 	}
 	var found *view.View
-	r.cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
+	r.context.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		v, ok := p.(*view.View)
 		if !ok {
 			return true
@@ -98,17 +73,17 @@ func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 
 func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if p, ok := paneAt(r.cx, at); ok {
-		wasFocused := r.cx.Editor.Tree().Focus() == p.ID()
-		r.cx.Editor.FocusPane(p.ID())
+	if p, ok := paneAt(r.context, at); ok {
+		wasFocused := r.context.Editor.Tree().Focus() == p.ID()
+		r.context.Editor.FocusPane(p.ID())
 		if pi, ok := p.(PaneInput); ok {
-			if _, handled := pi.HandleEvent(r.cx, msg); handled {
+			if _, handled := pi.HandleEvent(r.context, msg); handled {
 				return
 			}
 		}
 		if sp, ok := p.(Draggable); ok && msg.Button == tea.MouseLeft {
-			if wasFocused && sp.BeginDrag(r.cx, at, msg.Mod) {
-				r.ec.mouse.downDrag = sp
+			if wasFocused && sp.BeginDrag(r.context, at, msg.Mod) {
+				r.editor.mouse.downDrag = sp
 			}
 			return
 		}
@@ -118,13 +93,13 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	}
 
 	yOff := 0
-	if bufferlineVisible(r.cx) {
+	if bufferlineVisible(r.context) {
 		yOff = 1
 	}
 	sep, onSep :=
-		r.cx.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
+		r.context.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
 	if onSep {
-		r.ec.mouse.downSep = &sepDrag{
+		r.editor.mouse.downSep = &sepDrag{
 			containerID: sep.ContainerID,
 			childIdx:    sep.ChildIdx,
 			layout:      sep.Layout,
@@ -141,15 +116,15 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 
 	text := res.doc.Text()
 	prevSel := res.doc.SelectionFor(res.view.ID())
-	r.ec.mouse.downRange = new(prevSel.Primary())
-	r.ec.mouse.vertical.last = at.Y - yOff
-	r.ec.mouse.horizontal.last = at.X
+	r.editor.mouse.downRange = new(prevSel.Primary())
+	r.editor.mouse.vertical.last = at.Y - yOff
+	r.editor.mouse.horizontal.last = at.X
 
 	var newSel core.Selection
 	switch {
 	case msg.Mod&tea.ModAlt != 0:
 		newSel = prevSel.Push(core.PointRange(res.pos))
-	case r.cx.Editor.Mode() == view.ModeSelect:
+	case r.context.Editor.Mode() == view.ModeSelect:
 		// In select mode a click extends the primary selection rather than
 		// collapsing it, discarding any secondary selections
 		primary := prevSel.Primary().PutCursor(text, res.pos, true)
@@ -161,37 +136,37 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	default:
 		newSel = core.PointSelection(res.pos)
 	}
-	action.ApplySelection(r.cx.Editor, newSel)
+	action.ApplySelection(r.context.Editor, newSel)
 	res.view.EndFreeScroll()
 }
 
 func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	yOff := 0
-	if bufferlineVisible(r.cx) {
+	if bufferlineVisible(r.context) {
 		yOff = 1
 	}
 
-	if r.ec.mouse.downSep != nil {
-		sep := r.ec.mouse.downSep
+	if r.editor.mouse.downSep != nil {
+		sep := r.editor.mouse.downSep
 		newPos := at.X
 		if sep.layout == view.LayoutHorizontal {
 			newPos = at.Y - yOff
 		}
-		r.cx.Editor.Tree().MoveSeparator(
+		r.context.Editor.Tree().MoveSeparator(
 			sep.containerID, sep.childIdx, sep.layout, newPos,
 		)
 		return nil
 	}
 
-	if r.ec.mouse.downRange == nil {
+	if r.editor.mouse.downRange == nil {
 		return nil
 	}
 
-	doc := r.cx.Editor.FocusedDocument()
+	doc := r.context.Editor.FocusedDocument()
 	if doc == nil {
 		return nil
 	}
-	v := r.cx.Editor.FocusedView()
+	v := r.context.Editor.FocusedView()
 	if v == nil {
 		return nil
 	}
@@ -199,39 +174,50 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	contentY := at.Y - yOff
 	area := v.Area()
 	contentH := max(area.Height-1, 0)
-	scrollOff := r.cx.Editor.Options().ScrollOff
+	scrollOff := r.context.Editor.Options().ScrollOff
 
-	atTop, atBottom, clampedY := r.ec.mouse.vertical.update(
-		contentY, area.Y, area.Y+contentH-1,
-		autoScrollMargin(contentH, scrollOff),
-	)
+	vEdge := r.editor.mouse.vertical.update(dragBounds{
+		pos:      contentY,
+		lowEdge:  area.Y,
+		highEdge: area.Y + contentH - 1,
+		margin: autoScrollMargin(autoScrollMarginArgs{
+			span:      contentH,
+			scrollOff: scrollOff,
+		}),
+	})
 
-	gutterW := gutterWidthFor(doc.Text(), r.cx.Editor.Options().Gutters)
+	gutterW := gutterWidthFor(doc.Text(), r.context.Editor.Options().Gutters)
 	contentX := area.X + gutterW
 	contentW := max(area.Width-gutterW, 0)
-	atLeft, atRight, clampedX := r.ec.mouse.horizontal.update(
-		at.X, contentX, contentX+contentW-1,
-		autoScrollMargin(contentW, scrollOff),
-	)
+	hEdge := r.editor.mouse.horizontal.update(dragBounds{
+		pos:      at.X,
+		lowEdge:  contentX,
+		highEdge: contentX + contentW - 1,
+		margin: autoScrollMargin(autoScrollMarginArgs{
+			span:      contentW,
+			scrollOff: scrollOff,
+		}),
+	})
 
+	clampedX, clampedY := hEdge.clamped, vEdge.clamped
 	pos, ok := r.screenCharPos(doc, v, geom.Point{X: clampedX, Y: clampedY})
 	if !ok {
 		return nil
 	}
-	if !extendSelectionTo(r.cx, doc, v, pos) {
+	if !extendSelectionTo(r.context, doc, v, pos) {
 		return nil
 	}
 
-	vAxis := &r.ec.mouse.vertical
-	hAxis := &r.ec.mouse.horizontal
-	vCmd := vAxis.trigger(atTop, atBottom, clampedX, vAxis.schedule)
-	hCmd := hAxis.trigger(atLeft, atRight, clampedY, hAxis.schedule)
+	vAxis := &r.editor.mouse.vertical
+	hAxis := &r.editor.mouse.horizontal
+	vCmd := vAxis.trigger(vEdge, clampedX, vAxis.schedule)
+	hCmd := hAxis.trigger(hEdge, clampedY, hAxis.schedule)
 	return tea.Batch(vCmd, hCmd)
 }
 
 func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
 	if mod&tea.ModAlt != 0 {
-		action.PrimaryClipboardReplace(r.cx.Editor)
+		action.PrimaryClipboardReplace(r.context.Editor)
 		return
 	}
 
@@ -239,8 +225,14 @@ func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
 	if !ok {
 		return
 	}
-	action.ApplySelection(r.cx.Editor, core.PointSelection(res.pos))
-	action.PastePrimaryClipboardBefore(r.cx.Editor)
+	action.ApplySelection(r.context.Editor, core.PointSelection(res.pos))
+	action.PastePrimaryClipboardBefore(r.context.Editor)
+}
+
+type resolveClickPosRes struct {
+	doc  *view.Document
+	view *view.View
+	pos  int
 }
 
 func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
@@ -248,13 +240,13 @@ func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
 	if v == nil {
 		return resolveClickPosRes{}, false
 	}
-	r.cx.Editor.FocusView(v.ID())
-	doc := r.cx.Editor.Document(v.DocID())
+	r.context.Editor.FocusView(v.ID())
+	doc := r.context.Editor.Document(v.DocID())
 	if doc == nil {
 		return resolveClickPosRes{}, false
 	}
 	contentY := at.Y
-	if bufferlineVisible(r.cx) {
+	if bufferlineVisible(r.context) {
 		contentY--
 	}
 	pos, ok := r.screenCharPos(doc, v, geom.Point{X: at.X, Y: contentY})
@@ -262,6 +254,15 @@ func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
 		return resolveClickPosRes{}, false
 	}
 	return resolveClickPosRes{doc: doc, view: v, pos: pos}, true
+}
+
+type cursorScreenPosArgs struct {
+	text        core.Rope
+	cursor      int
+	gutterWidth int
+	rowMap      []viewRowEntry
+	tabWidth    int
+	horzOff     int
 }
 
 func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
@@ -293,7 +294,7 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 		}
 		segY = i
 		segStart = e.offset
-		segPrefixW = e.prefixW
+		segPrefixW = e.prefixWidth
 	}
 	if segY < 0 {
 		return geom.Point{X: gutterW}
@@ -305,18 +306,32 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 	}
 	col := 0
 	runeIdx := 0
-	for _, ch := range lineString(text, lineStart, lineEnd) {
+	for _, ch := range lineString(text, core.Span{
+		From: lineStart,
+		To:   lineEnd,
+	}) {
 		if runeIdx >= cursorOff {
 			break
 		}
 		if runeIdx >= segStart {
-			col += view.RuneWidth(ch, col, args.tabWidth)
+			col += view.RuneWidth(ch, core.TabStop{
+				Column:   col,
+				TabWidth: args.tabWidth,
+			})
 		}
 		runeIdx++
 	}
 	return geom.Point{
-		X: gutterW + segPrefixW + col - args.horizontalOffset, Y: segY,
+		X: gutterW + segPrefixW + col - args.horzOff, Y: segY,
 	}
+}
+
+type charPosInLineSegArgs struct {
+	text     core.Rope
+	docLine  int
+	charOff  int
+	targetX  int
+	tabWidth int
 }
 
 func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
@@ -334,7 +349,10 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 	col := 0
 	charPos := lineStart + charOff
 	runeIdx := 0
-	for _, ch := range lineString(text, lineStart, lineEnd) {
+	for _, ch := range lineString(text, core.Span{
+		From: lineStart,
+		To:   lineEnd,
+	}) {
 		if runeIdx < charOff {
 			runeIdx++
 			continue
@@ -370,6 +388,11 @@ func extendSelectionTo(
 	return true
 }
 
-func autoScrollMargin(span, scrollOff int) int {
-	return min(scrollOff, max(span/2-1, 0))
+type autoScrollMarginArgs struct {
+	span      int
+	scrollOff int
+}
+
+func autoScrollMargin(args autoScrollMarginArgs) int {
+	return min(args.scrollOff, max(args.span/2-1, 0))
 }

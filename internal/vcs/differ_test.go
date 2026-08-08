@@ -16,7 +16,10 @@ func TestDiffer(t *testing.T) {
 		base := core.NewRope("a\nb\n")
 		doc := core.NewRope("a\nx\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(base, doc, func() { updated <- struct{}{} })
+		d := vcs.NewDiffer(vcs.DiffSides{
+			Base: base,
+			Doc:  doc,
+		}, func() { updated <- struct{}{} })
 		defer d.Close()
 
 		waitUpdate(t, updated)
@@ -29,7 +32,10 @@ func TestDiffer(t *testing.T) {
 	t.Run("recomputes after document update", func(t *testing.T) {
 		base := core.NewRope("a\nb\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(base, base, func() { updated <- struct{}{} })
+		d := vcs.NewDiffer(vcs.DiffSides{
+			Base: base,
+			Doc:  base,
+		}, func() { updated <- struct{}{} })
 		defer d.Close()
 
 		waitUpdate(t, updated)
@@ -45,7 +51,10 @@ func TestDiffer(t *testing.T) {
 	t.Run("recomputes after base update", func(t *testing.T) {
 		doc := core.NewRope("a\nb\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(doc, doc, func() { updated <- struct{}{} })
+		d := vcs.NewDiffer(vcs.DiffSides{
+			Base: doc,
+			Doc:  doc,
+		}, func() { updated <- struct{}{} })
 		defer d.Close()
 
 		waitUpdate(t, updated)
@@ -57,7 +66,10 @@ func TestDiffer(t *testing.T) {
 	t.Run("close stops updates", func(t *testing.T) {
 		doc := core.NewRope("a\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(doc, doc, func() { updated <- struct{}{} })
+		d := vcs.NewDiffer(vcs.DiffSides{
+			Base: doc,
+			Doc:  doc,
+		}, func() { updated <- struct{}{} })
 		waitUpdate(t, updated)
 		d.Close()
 		// sends after close must not block or panic

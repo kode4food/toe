@@ -1,6 +1,6 @@
 package core
 
-func handleDeletePair(doc Rope, r Range) (Deletion, Range, bool) {
+func handleDeletePair(doc Rope, r Range) (Span, Range, bool) {
 	cursor := r.Cursor(doc)
 	endNext := NextGraphemeBoundary(doc, cursor)
 	endPrev := PrevGraphemeBoundary(doc, cursor)
@@ -21,8 +21,8 @@ func handleDeletePair(doc Rope, r Range) (Deletion, Range, bool) {
 		nextAnchor = r.Anchor - sizeDelete
 	}
 
-	del := Deletion{From: endPrev, To: endNext}
-	return del, NewRange(nextAnchor, nextHead), true
+	del := Span{From: endPrev, To: endNext}
+	return del, Range{Anchor: nextAnchor, Head: nextHead}, true
 }
 
 func handleInsertOpen(doc Rope, r Range, pair Pair) (Change, Range, bool) {
@@ -33,14 +33,17 @@ func handleInsertOpen(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 		}
 	}
 	text := string([]rune{pair.Open, pair.Close})
-	change := TextChange(cursor, cursor, text)
+	change := TextChange(Span{From: cursor, To: cursor}, text)
 	return change, autoPairNextRange(doc, r, 2), true
 }
 
 func handleInsertClose(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	cursor := r.Cursor(doc)
 	if ch, ok := autoPairCharAt(doc, cursor); ok && ch == pair.Close {
-		return TextChange(cursor, cursor, ""), skipOverRange(doc, r, cursor), true
+		return TextChange(Span{
+			From: cursor,
+			To:   cursor,
+		}, ""), skipOverRange(doc, r, cursor), true
 	}
 	return Change{}, Range{}, false
 }
@@ -48,7 +51,7 @@ func handleInsertClose(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	cursor := r.Cursor(doc)
 	if ch, ok := autoPairCharAt(doc, cursor); ok && ch == pair.Open {
-		return TextChange(cursor, cursor, ""),
+		return TextChange(Span{From: cursor, To: cursor}, ""),
 			skipOverRange(doc, r, cursor),
 			true
 	}
@@ -56,7 +59,10 @@ func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 		return Change{}, Range{}, false
 	}
 	text := string([]rune{pair.Open, pair.Close})
-	return TextChange(cursor, cursor, text), autoPairNextRange(doc, r, 2), true
+	return TextChange(Span{
+		From: cursor,
+		To:   cursor,
+	}, text), autoPairNextRange(doc, r, 2), true
 }
 
 // skipOverRange computes the range after a close-char jump-over. Point cursors
@@ -71,7 +77,7 @@ func skipOverRange(doc Rope, r Range, cursor int) Range {
 func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 	n := doc.LenChars()
 	if start.Head == n && start.Anchor == n {
-		return NewRange(start.Anchor+1, start.Head+1)
+		return Range{Anchor: start.Anchor + 1, Head: start.Head + 1}
 	}
 
 	single := start.IsSingleGrapheme(doc)
@@ -83,9 +89,11 @@ func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 		} else {
 			endAnchor = start.Anchor
 		}
-		return NewRange(
-			endAnchor, NextGraphemeBoundary(doc, start.Head),
-		)
+		return Range{
+			Anchor: endAnchor,
+			Head:   NextGraphemeBoundary(doc, start.Head),
+		}
+
 	}
 
 	if lenInserted == 1 {
@@ -95,7 +103,7 @@ func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 		} else {
 			endAnchor = start.Anchor
 		}
-		return NewRange(endAnchor, start.Head+1)
+		return Range{Anchor: endAnchor, Head: start.Head + 1}
 	}
 
 	var endHead int
@@ -129,7 +137,7 @@ func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 		}
 	}
 
-	return NewRange(endAnchor, endHead)
+	return Range{Anchor: endAnchor, Head: endHead}
 }
 
 func nextIsNotAlphaPair(doc Rope, r Range) bool {

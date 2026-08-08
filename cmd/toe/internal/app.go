@@ -294,15 +294,25 @@ func (a *App) MaybeSaveSession(base map[string]string) error {
 	}
 	return a.Editor.SaveSession(
 		view.WorkspaceSessionFile(a.Root),
-		ChangedOptionValues(base, values),
+		ChangedOptionValues(ChangedOptionValuesArgs{
+			Base:   base,
+			Values: values,
+		}),
 	)
 }
 
-// ChangedOptionValues returns only the entries in values that differ from base
-func ChangedOptionValues(base, values map[string]string) map[string]string {
+// ChangedOptionValuesArgs is a set of option values and the baseline they are
+// compared against
+type ChangedOptionValuesArgs struct {
+	Base   map[string]string
+	Values map[string]string
+}
+
+// ChangedOptionValues returns only the entries in Values that differ from Base
+func ChangedOptionValues(args ChangedOptionValuesArgs) map[string]string {
 	out := map[string]string{}
-	for key, value := range values {
-		if base[key] != value {
+	for key, value := range args.Values {
+		if args.Base[key] != value {
 			out[key] = value
 		}
 	}

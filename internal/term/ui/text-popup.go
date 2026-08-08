@@ -29,11 +29,11 @@ type (
 	}
 
 	popupTextRenderer struct {
-		buf  *tui.Buffer
-		cx   *Context
-		area geom.Area
-		base tui.Style
-		padX int
+		buf     *tui.Buffer
+		context *Context
+		area    geom.Area
+		base    tui.Style
+		padX    int
 	}
 )
 
@@ -142,7 +142,7 @@ func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 
 func (r *popupTextRenderer) renderCode(line popupLine, y int) {
 	text := runewidth.Truncate(line.text, r.area.Width, "")
-	spans := highlight.Tokenize(text, line.lang)
+	spans := highlight.Tokenize(core.Source{Text: text, Lang: line.lang})
 	if len(spans) == 0 {
 		r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, r.base)
 		return
@@ -178,8 +178,8 @@ func (r *popupTextRenderer) writeRun(
 }
 
 func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
-	bg := r.cx.Theme().Get("ui.popup").BgColor()
-	if st, ok := r.cx.Theme().TryGet(scope); ok {
+	bg := r.context.Theme().Get("ui.popup").BgColor()
+	if st, ok := r.context.Theme().TryGet(scope); ok {
 		return inheritStyleBackground(st, bg)
 	}
 	st := inheritStyleBackground(highlight.DefaultStyle(scope), bg)
@@ -223,7 +223,7 @@ func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
 	}
 	area := pop.drawInto(buf, geom.Area{Size: buf.Size})
 	r := popupTextRenderer{
-		buf: buf, cx: cx, area: area, base: st, padX: popupPadX,
+		buf: buf, context: cx, area: area, base: st, padX: popupPadX,
 	}
 	r.render(lines)
 }

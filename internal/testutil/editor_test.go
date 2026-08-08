@@ -46,7 +46,7 @@ func TestSetCursor(t *testing.T) {
 func TestSetSelection(t *testing.T) {
 	e := testutil.EditorWithText(t, "hello")
 	testutil.SetSelection(t, e,
-		[]core.Range{core.NewRange(1, 4)}, 0,
+		[]core.Range{{Anchor: 1, Head: 4}}, 0,
 	)
 
 	v := e.FocusedView()

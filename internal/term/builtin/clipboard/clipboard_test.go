@@ -13,7 +13,10 @@ import (
 func TestClipboardYankPaste(t *testing.T) {
 	t.Run("yank then paste after inserts text", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank")
 		testutil.SetCursor(t, e, 3)
 		test.RunCmd(t, km, e, "paste_after")
@@ -22,7 +25,10 @@ func TestClipboardYankPaste(t *testing.T) {
 
 	t.Run("paste before inserts before cursor", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank")
 		testutil.SetCursor(t, e, 4)
 		test.RunCmd(t, km, e, "paste_before")
@@ -31,9 +37,15 @@ func TestClipboardYankPaste(t *testing.T) {
 
 	t.Run("replace with yanked replaces selection", func(t *testing.T) {
 		e, km := test.Env(t, "abc\ndef\n")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(4, 7)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 4,
+			Head:   7,
+		}}, 0)
 		test.RunCmd(t, km, e, "replace_with_yanked")
 		assert.Contains(t, test.DocText(t, e), "abc")
 	})
@@ -47,7 +59,10 @@ func TestClipboardYankPaste(t *testing.T) {
 func TestClipboardSystemClipboard(t *testing.T) {
 	t.Run("yank to clipboard runs without error", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank_to_clipboard")
 		// clipboard operations may fail in CI but must not panic
 	})
@@ -72,25 +87,37 @@ func TestClipboardSystemClipboard(t *testing.T) {
 
 	t.Run("yank main to clipboard runs", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank_main_selection_to_clipboard")
 	})
 
 	t.Run("yank joined to clipboard runs", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank_joined_to_clipboard")
 	})
 
 	t.Run("yank joined uses separator arg", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmdArgs(t, km, e, "yank_joined_to_clipboard", ",")
 	})
 
 	t.Run("yank to primary clipboard runs", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{core.NewRange(0, 3)}, 0)
+		testutil.SetSelection(t, e, []core.Range{{
+			Anchor: 0,
+			Head:   3,
+		}}, 0)
 		test.RunCmd(t, km, e, "yank_to_primary_clipboard")
 	})
 

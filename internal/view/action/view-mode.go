@@ -37,7 +37,7 @@ func NormalMode(e *view.Editor) {
 			if r.Head > r.Anchor {
 				head = core.PrevGraphemeBoundary(text, head)
 			}
-			ranges[i] = core.NewRange(r.From(), head)
+			ranges[i] = core.Range{Anchor: r.From(), Head: head}
 		}
 		if newSel, err := core.NewSelection(
 			ranges, sel.PrimaryIndex(),
@@ -76,7 +76,7 @@ func SelectMode(e *view.Editor) {
 	for i, r := range ranges {
 		if r.Empty() && r.Head == nChars && nChars > 0 {
 			prev := core.PrevGraphemeBoundary(text, r.Anchor)
-			ranges[i] = core.NewRange(prev, r.Head)
+			ranges[i] = core.Range{Anchor: prev, Head: r.Head}
 			changed = true
 		}
 	}
@@ -137,7 +137,7 @@ func AppendMode(e *view.Editor) {
 		if head == ins {
 			ranges[i] = core.PointRange(ins)
 		} else {
-			ranges[i] = core.NewRange(r.From(), head)
+			ranges[i] = core.Range{Anchor: r.From(), Head: head}
 		}
 	}
 	if newSel, err := core.NewSelection(
@@ -196,7 +196,7 @@ func tryRestoreIndent(_ *view.Editor, doc *view.Document, v *view.View) {
 		return
 	}
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
-		core.DeleteChange(lineStart, lineEnd),
+		core.DeleteChange(core.Span{From: lineStart, To: lineEnd}),
 	})
 	if err != nil {
 		return

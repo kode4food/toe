@@ -31,10 +31,10 @@ func (m Model) TerminalSearchAction(e *view.Editor) {
 	}
 	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
 		return newPromptComponent(cx, promptComponentArgs{
-			ec:     ec,
+			editor: ec,
 			kind:   promptTerminalSearch,
 			prompt: i18n.Text(i18n.PromptScrollbackSearch),
-			fn: func(_ *view.Editor, s string) error {
+			handler: func(_ *view.Editor, s string) error {
 				if !tp.SearchScrollback(s) {
 					return ErrScrollbackNoMatch
 				}

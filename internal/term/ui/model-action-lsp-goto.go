@@ -175,7 +175,7 @@ func setSelectionFromHighlights(
 	ranges := make([]core.Range, 0, len(highlights))
 	primary := 0
 	for i, h := range highlights {
-		r := core.NewRange(h.From, h.To)
+		r := core.Range{Anchor: h.From, Head: h.To}
 		if r.Contains(cursor) {
 			primary = i
 		}

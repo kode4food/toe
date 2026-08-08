@@ -44,7 +44,10 @@ func syntaxSelect(
 		if !ok {
 			continue
 		}
-		ranges[i] = core.NewRange(res.From, res.To).WithDirection(r.Direction())
+		ranges[i] = core.Range{
+			Anchor: res.From,
+			Head:   res.To,
+		}.WithDirection(r.Direction())
 		changed = changed || ranges[i] != r
 	}
 	if !changed {
@@ -72,7 +75,9 @@ func syntaxMatchBrackets(e *view.Editor) {
 	changed := false
 	for i, r := range ranges {
 		pos := r.Cursor(text)
-		match, ok := syntax.FindMatchingBracket(src, lang, pos)
+		match, ok := syntax.FindMatchingBracket(
+			core.Source{Text: src, Lang: lang}, pos,
+		)
 		if !ok {
 			match, ok = core.FindMatchingBracket(text, pos)
 		}

@@ -318,7 +318,7 @@ func TestKeyBind(t *testing.T) {
 	called := false
 	km := command.NewKeymaps()
 	_ = km.Register("act", command.Command{
-		Run: func(_ *view.Editor, _ *command.Args) command.Result {
+		Run: func(*view.Editor, *command.Args) command.Result {
 			called = true
 			return command.Result{}
 		},
@@ -599,15 +599,15 @@ func TestKeyModifiers(t *testing.T) {
 
 func TestKeymapsBindAndLookup(t *testing.T) {
 	var called string
-	cmdQuit := func(_ *view.Editor) command.Continuation {
+	cmdQuit := func(*view.Editor) command.Continuation {
 		called = "quit"
 		return nil
 	}
-	cmdSave := func(_ *view.Editor) command.Continuation {
+	cmdSave := func(*view.Editor) command.Continuation {
 		called = "save"
 		return nil
 	}
-	cmdGoTo := func(_ *view.Editor) command.Continuation {
+	cmdGoTo := func(*view.Editor) command.Continuation {
 		called = "goto"
 		return nil
 	}

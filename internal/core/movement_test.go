@@ -20,7 +20,9 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("moves forward by count graphemes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		r := core.PointRange(0)
-		r = r.MoveHorizontally(doc, core.DirectionForward, 3, core.MovementMove)
+		r = r.MoveHorizontally(
+			doc, core.DirectionForward, 3, core.MovementMove,
+		)
 		assert.Equal(t, 3, r.Head)
 		assert.Equal(t, 3, r.Anchor)
 	})
@@ -28,7 +30,9 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("moves backward by count graphemes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		r := core.PointRange(5)
-		r = r.MoveHorizontally(doc, core.DirectionBackward, 2, core.MovementMove)
+		r = r.MoveHorizontally(
+			doc, core.DirectionBackward, 2, core.MovementMove,
+		)
 		assert.Equal(t, 3, r.Head)
 		assert.Equal(t, 3, r.Anchor)
 	})
@@ -36,7 +40,9 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("extend keeps anchor fixed", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		r := core.PointRange(0)
-		r = r.MoveHorizontally(doc, core.DirectionForward, 3, core.MovementExtend)
+		r = r.MoveHorizontally(
+			doc, core.DirectionForward, 3, core.MovementExtend,
+		)
 		assert.Equal(t, 0, r.Anchor)
 		assert.Equal(t, 4, r.Head) // next grapheme boundary after pos 3
 	})
@@ -44,14 +50,18 @@ func TestMoveHorizontally(t *testing.T) {
 	t.Run("clamps at document start", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		r := core.PointRange(0)
-		r = r.MoveHorizontally(doc, core.DirectionBackward, 999, core.MovementMove)
+		r = r.MoveHorizontally(
+			doc, core.DirectionBackward, 999, core.MovementMove,
+		)
 		assert.Equal(t, 0, r.Head)
 	})
 
 	t.Run("clamps at document end", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		r := core.PointRange(3)
-		r = r.MoveHorizontally(doc, core.DirectionForward, 999, core.MovementMove)
+		r = r.MoveHorizontally(
+			doc, core.DirectionForward, 999, core.MovementMove,
+		)
 		assert.Equal(t, 3, r.Head)
 	})
 }
@@ -59,7 +69,7 @@ func TestMoveHorizontally(t *testing.T) {
 func TestRangeSliceAndFragment(t *testing.T) {
 	t.Run("slice returns correct sub-rope", func(t *testing.T) {
 		doc := core.NewRope("hello world")
-		r := core.NewRange(6, 11)
+		r := core.Range{Anchor: 6, Head: 11}
 		s, err := r.Slice(doc)
 		assert.NoError(t, err)
 		assert.Equal(t, "world", s.String())
@@ -67,7 +77,7 @@ func TestRangeSliceAndFragment(t *testing.T) {
 
 	t.Run("fragment returns string", func(t *testing.T) {
 		doc := core.NewRope("hello world")
-		r := core.NewRange(0, 5)
+		r := core.Range{Anchor: 0, Head: 5}
 		f, err := r.Fragment(doc)
 		assert.NoError(t, err)
 		assert.Equal(t, "hello", f)
@@ -75,7 +85,7 @@ func TestRangeSliceAndFragment(t *testing.T) {
 
 	t.Run("grapheme aligned snaps to boundaries", func(t *testing.T) {
 		doc := core.NewRope("abc")
-		r := core.NewRange(1, 2)
+		r := core.Range{Anchor: 1, Head: 2}
 		aligned := r.GraphemeAligned(doc)
 		assert.Equal(t, 1, aligned.Anchor)
 		assert.Equal(t, 2, aligned.Head)
@@ -91,7 +101,7 @@ func TestRangeSliceAndFragment(t *testing.T) {
 
 	t.Run("min_width_1 non-empty range unchanged", func(t *testing.T) {
 		doc := core.NewRope("abc")
-		r := core.NewRange(1, 3)
+		r := core.Range{Anchor: 1, Head: 3}
 		r2 := r.MinWidth1(doc)
 		assert.Equal(t, r, r2)
 	})
@@ -106,13 +116,13 @@ func TestRangeCursorAndPutCursor(t *testing.T) {
 
 	t.Run("forward range cursor before head", func(t *testing.T) {
 		doc := core.NewRope("abcde")
-		r := core.NewRange(1, 3)
+		r := core.Range{Anchor: 1, Head: 3}
 		assert.Equal(t, 2, r.Cursor(doc))
 	})
 
 	t.Run("put_cursor move collapses to point", func(t *testing.T) {
 		doc := core.NewRope("abcde")
-		r := core.NewRange(1, 3)
+		r := core.Range{Anchor: 1, Head: 3}
 		r2 := r.PutCursor(doc, 2, false)
 		assert.Equal(t, 2, r2.Anchor)
 		assert.Equal(t, 2, r2.Head)
@@ -139,43 +149,44 @@ func TestMoveNextWordStart(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic forward motion stops at the first space",
-			1, core.NewRange(0, 0), core.NewRange(0, 6),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 6},
 		},
 		{
 			" Starting from a boundary advances the anchor",
-			1, core.NewRange(0, 0), core.NewRange(1, 10),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 1, Head: 10},
 		},
 		{
 			"Long       whitespace gap is bridged by the head",
-			1, core.NewRange(0, 0), core.NewRange(0, 11),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 11},
 		},
 		{
 			"Previous anchor is irrelevant for forward motions",
-			1, core.NewRange(12, 0), core.NewRange(0, 9),
+			1, core.Range{Anchor: 12, Head: 0}, core.Range{Anchor: 0, Head: 9},
 		},
 		{
 			"    Starting from whitespace moves to last space in sequence",
-			1, core.NewRange(0, 0), core.NewRange(0, 4),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 4},
 		},
 		{
-			"Starting from mid-word leaves anchor at start position and moves head",
-			1, core.NewRange(3, 3), core.NewRange(3, 9),
+			"Starting from mid-word leaves anchor at start " +
+				"position and moves head",
+			1, core.Range{Anchor: 3, Head: 3}, core.Range{Anchor: 3, Head: 9},
 		},
 		{
 			"Identifiers_with_underscores are considered a single word",
-			1, core.NewRange(0, 0), core.NewRange(0, 29),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 29},
 		},
 		{
 			"Multiple motions at once resolve correctly",
-			3, core.NewRange(0, 0), core.NewRange(17, 20),
+			3, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 17, Head: 20},
 		},
 		{
 			"",
-			1, core.NewRange(0, 0), core.NewRange(0, 0),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 0},
 		},
 		{
 			"ヒーリクス multibyte characters behave as normal characters",
-			1, core.NewRange(0, 0), core.NewRange(0, 6),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 6},
 		},
 	}
 
@@ -190,27 +201,27 @@ func TestMovePrevWordStart(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic backward motion from the middle of a word",
-			1, core.NewRange(3, 3), core.NewRange(4, 0),
+			1, core.Range{Anchor: 3, Head: 3}, core.Range{Anchor: 4, Head: 0},
 		},
 		{
 			"    Jump to start of a word preceded by whitespace",
-			1, core.NewRange(5, 5), core.NewRange(6, 4),
+			1, core.Range{Anchor: 5, Head: 5}, core.Range{Anchor: 6, Head: 4},
 		},
 		{
 			"Identifiers_with_underscores are considered a single word",
-			1, core.NewRange(0, 20), core.NewRange(20, 0),
+			1, core.Range{Anchor: 0, Head: 20}, core.Range{Anchor: 20, Head: 0},
 		},
 		{
 			"",
-			1, core.NewRange(0, 0), core.NewRange(0, 0),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 0},
 		},
 		{
 			"\n\n\n\n\n",
-			1, core.NewRange(5, 5), core.NewRange(0, 0),
+			1, core.Range{Anchor: 5, Head: 5}, core.Range{Anchor: 0, Head: 0},
 		},
 		{
 			"Multiple motions at once resolve correctly",
-			3, core.NewRange(18, 18), core.NewRange(9, 0),
+			3, core.Range{Anchor: 18, Head: 18}, core.Range{Anchor: 9, Head: 0},
 		},
 	}
 	for _, tc := range tests {
@@ -224,23 +235,24 @@ func TestMoveNextWordEnd(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic forward motion from the start of a word to the end of it",
-			1, core.NewRange(0, 0), core.NewRange(0, 5),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 5},
 		},
 		{
-			"Basic forward motion from the end of a word to the end of the next",
-			1, core.NewRange(0, 5), core.NewRange(5, 13),
+			"Basic forward motion from the end of a word to " +
+				"the end of the next",
+			1, core.Range{Anchor: 0, Head: 5}, core.Range{Anchor: 5, Head: 13},
 		},
 		{
 			"Identifiers_with_underscores are considered a single word",
-			1, core.NewRange(0, 0), core.NewRange(0, 28),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 28},
 		},
 		{
 			"",
-			1, core.NewRange(0, 0), core.NewRange(0, 0),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 0},
 		},
 		{
 			"Multiple motions at once resolve correctly",
-			3, core.NewRange(0, 0), core.NewRange(16, 19),
+			3, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 16, Head: 19},
 		},
 	}
 	for _, tc := range tests {
@@ -254,16 +266,16 @@ func TestMoveNextLongWordStart(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic forward motion stops at the first space",
-			1, core.NewRange(0, 0), core.NewRange(0, 6),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 6},
 		},
 		{
 			"alphanumeric.!,and.?=punctuation are not treated any " +
 				"differently than alphanumerics",
-			1, core.NewRange(0, 0), core.NewRange(0, 33),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 33},
 		},
 		{
 			"",
-			1, core.NewRange(0, 0), core.NewRange(0, 0),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 0},
 		},
 	}
 	for _, tc := range tests {
@@ -277,11 +289,11 @@ func TestMovePrevLongWordStart(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic backward motion from the middle of a word",
-			1, core.NewRange(3, 3), core.NewRange(4, 0),
+			1, core.Range{Anchor: 3, Head: 3}, core.Range{Anchor: 4, Head: 0},
 		},
 		{
 			"",
-			1, core.NewRange(0, 0), core.NewRange(0, 0),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 0},
 		},
 	}
 	for _, tc := range tests {
@@ -295,15 +307,15 @@ func TestMoveNextSubWordStart(t *testing.T) {
 	tests := []wordTest{
 		{
 			"NextSubwordStart",
-			1, core.NewRange(0, 0), core.NewRange(0, 4),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 4},
 		},
 		{
 			"NextSubwordStart",
-			1, core.NewRange(4, 4), core.NewRange(4, 11),
+			1, core.Range{Anchor: 4, Head: 4}, core.Range{Anchor: 4, Head: 11},
 		},
 		{
 			"next_subword_start",
-			1, core.NewRange(0, 0), core.NewRange(0, 5),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 5},
 		},
 	}
 	for _, tc := range tests {
@@ -317,11 +329,11 @@ func TestMoveNextSubWordEnd(t *testing.T) {
 	tests := []wordTest{
 		{
 			"NextSubwordEnd",
-			1, core.NewRange(0, 0), core.NewRange(0, 4),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 4},
 		},
 		{
 			"NextSubwordEnd",
-			1, core.NewRange(4, 4), core.NewRange(4, 11),
+			1, core.Range{Anchor: 4, Head: 4}, core.Range{Anchor: 4, Head: 11},
 		},
 	}
 	for _, tc := range tests {
@@ -335,11 +347,17 @@ func TestMovePrevSubWordStart(t *testing.T) {
 	tests := []wordTest{
 		{
 			"PrevSubwordEnd",
-			1, core.NewRange(13, 13), core.NewRange(14, 11),
+			1, core.Range{
+				Anchor: 13,
+				Head:   13,
+			}, core.Range{Anchor: 14, Head: 11},
 		},
 		{
 			"PrevSubwordEnd",
-			1, core.NewRange(11, 11), core.NewRange(11, 4),
+			1, core.Range{
+				Anchor: 11,
+				Head:   11,
+			}, core.Range{Anchor: 11, Head: 4},
 		},
 	}
 	for _, tc := range tests {
@@ -353,7 +371,10 @@ func TestMovePrevSubWordEnd(t *testing.T) {
 	tests := []wordTest{
 		{
 			"PrevSubwordEnd",
-			1, core.NewRange(13, 13), core.NewRange(14, 11),
+			1, core.Range{
+				Anchor: 13,
+				Head:   13,
+			}, core.Range{Anchor: 14, Head: 11},
 		},
 	}
 	for _, tc := range tests {
@@ -367,7 +388,7 @@ func TestMovePrevWordEnd(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic backward word end motion",
-			1, core.NewRange(4, 4), core.NewRange(5, 0),
+			1, core.Range{Anchor: 4, Head: 4}, core.Range{Anchor: 5, Head: 0},
 		},
 	}
 	for _, tc := range tests {
@@ -381,7 +402,7 @@ func TestMoveNextLongWordEnd(t *testing.T) {
 	tests := []wordTest{
 		{
 			"Basic forward motion stops at end",
-			1, core.NewRange(0, 0), core.NewRange(0, 5),
+			1, core.Range{Anchor: 0, Head: 0}, core.Range{Anchor: 0, Head: 5},
 		},
 	}
 	for _, tc := range tests {
@@ -397,7 +418,7 @@ func TestMovePrevLongWordEnd(t *testing.T) {
 		// and the boundary anchor is snapped
 		{
 			"Basic backward long word end",
-			1, core.NewRange(5, 5), core.NewRange(5, 0),
+			1, core.Range{Anchor: 5, Head: 5}, core.Range{Anchor: 5, Head: 0},
 		},
 	}
 	for _, tc := range tests {
@@ -412,40 +433,52 @@ func TestMoveVertically(t *testing.T) {
 
 	t.Run("down from first line", func(t *testing.T) {
 		r := core.PointRange(0)
-		got := r.MoveVertically(doc, core.DirectionForward, 1, core.MovementMove)
+		got := r.MoveVertically(
+			doc, core.DirectionForward, 1, core.MovementMove,
+		)
 		assert.Equal(t, 4, got.Head)
 	})
 
 	t.Run("down preserves column", func(t *testing.T) {
 		r := core.PointRange(2) // col 2 of "one"
-		got := r.MoveVertically(doc, core.DirectionForward, 1, core.MovementMove)
+		got := r.MoveVertically(
+			doc, core.DirectionForward, 1, core.MovementMove,
+		)
 		assert.Equal(t, 6, got.Head) // col 2 of "two"
 	})
 
 	t.Run("down clamps to shorter line", func(t *testing.T) {
 		r := core.PointRange(10) // col 2 of "three"
 		// move down to the empty last line
-		got := r.MoveVertically(doc, core.DirectionForward, 1, core.MovementMove)
+		got := r.MoveVertically(
+			doc, core.DirectionForward, 1, core.MovementMove,
+		)
 		// last line after trailing \n is empty, cursor at start
 		assert.Equal(t, doc.LenChars(), got.Head)
 	})
 
 	t.Run("up from second line", func(t *testing.T) {
 		r := core.PointRange(4) // start of "two"
-		got := r.MoveVertically(doc, core.DirectionBackward, 1, core.MovementMove)
+		got := r.MoveVertically(
+			doc, core.DirectionBackward, 1, core.MovementMove,
+		)
 		assert.Equal(t, 0, got.Head)
 	})
 
 	t.Run("up from first line stays", func(t *testing.T) {
 		r := core.PointRange(1)
-		got := r.MoveVertically(doc, core.DirectionBackward, 1, core.MovementMove)
+		got := r.MoveVertically(
+			doc, core.DirectionBackward, 1, core.MovementMove,
+		)
 		// column preserved at col 1 on line 0
 		assert.Equal(t, 1, got.Head)
 	})
 
 	t.Run("down multi count", func(t *testing.T) {
 		r := core.PointRange(0)
-		got := r.MoveVertically(doc, core.DirectionForward, 2, core.MovementMove)
+		got := r.MoveVertically(
+			doc, core.DirectionForward, 2, core.MovementMove,
+		)
 		assert.Equal(t, 8, got.Head) // start of "three"
 	})
 }
@@ -453,10 +486,10 @@ func TestMoveVertically(t *testing.T) {
 func TestMoveVerticallyVisual(t *testing.T) {
 	// viewport 10 wide, tab 4, no wrap indicator, no indent retain
 	vf := &core.VisualMoveFormat{
-		ViewportWidth:    10,
-		TabWidth:         4,
-		MaxIndentRetain:  0,
-		WrapIndicatorLen: 0,
+		ViewportWidth:      10,
+		TabWidth:           4,
+		MaxIndentRetain:    0,
+		WrapIndicatorWidth: 0,
 	}
 	// "0123456789ab\ncd" — first line wraps at col 10, "ab" is row 1
 	// row 0: "0123456789"  (chars 0-9)
@@ -511,7 +544,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 	t.Run("extend movement preserves anchor", func(t *testing.T) {
 		doc := core.NewRope("aaa\nbbb\nccc")
 		vf2 := &core.VisualMoveFormat{ViewportWidth: 80, TabWidth: 4}
-		r := core.NewRange(0, 0)
+		r := core.Range{Anchor: 0, Head: 0}
 		got := vf2.ExtendVerticallyVisual(doc, r, core.DirectionForward, 1)
 		assert.Equal(t, 0, got.Anchor)
 		// PutCursor with extend sets Head=charIdx+1 for forward ranges
@@ -580,7 +613,7 @@ func TestVisualRowStarts(t *testing.T) {
 	t.Run("carries indent onto wrapped rows", func(t *testing.T) {
 		vf := &core.VisualMoveFormat{
 			ViewportWidth: 14, TabWidth: 4, MaxWrap: 5,
-			MaxIndentRetain: 40, WrapIndicatorLen: 0,
+			MaxIndentRetain: 40, WrapIndicatorWidth: 0,
 		}
 		// four-space indent + "alpha bravo gamma"; continuation rows begin at
 		// col 4, so fewer content columns are available per wrapped row
@@ -593,7 +626,11 @@ func TestVisualRowStarts(t *testing.T) {
 	})
 
 	t.Run("single short line does not wrap", func(t *testing.T) {
-		vf := &core.VisualMoveFormat{ViewportWidth: 80, TabWidth: 4, MaxWrap: 20}
+		vf := &core.VisualMoveFormat{
+			ViewportWidth: 80,
+			TabWidth:      4,
+			MaxWrap:       20,
+		}
 		assert.Empty(t, vf.VisualRowStarts([]rune("short line")))
 	})
 
@@ -616,7 +653,7 @@ func TestVisualRowStarts(t *testing.T) {
 func TestMoveVerticallyVisualIndented(t *testing.T) {
 	vf := &core.VisualMoveFormat{
 		ViewportWidth: 14, TabWidth: 4, MaxWrap: 5,
-		MaxIndentRetain: 40, WrapIndicatorLen: 0,
+		MaxIndentRetain: 40, WrapIndicatorWidth: 0,
 	}
 	doc := core.NewRope("    alpha bravo gamma")
 
@@ -675,21 +712,29 @@ func TestVisualRowOfOffset(t *testing.T) {
 	doc := core.NewRope("abcdefghij\nend")
 
 	t.Run("offset 0 is row 0", func(t *testing.T) {
-		assert.Equal(t, 0, vf.VisualRowOfOffset(doc, 0, 0))
+		assert.Equal(t, 0, vf.VisualRowOfOffset(core.VisualRowOfOffsetArgs{
+			Doc: doc, Line: 0, CharOff: 0,
+		}))
 	})
 
 	t.Run("offset past wrap is row 1", func(t *testing.T) {
-		assert.Equal(t, 1, vf.VisualRowOfOffset(doc, 0, 7))
+		assert.Equal(t, 1, vf.VisualRowOfOffset(core.VisualRowOfOffsetArgs{
+			Doc: doc, Line: 0, CharOff: 7,
+		}))
 	})
 
 	t.Run("nil format always returns 0", func(t *testing.T) {
 		var nilvf *core.VisualMoveFormat
-		assert.Equal(t, 0, nilvf.VisualRowOfOffset(doc, 0, 5))
+		assert.Equal(t, 0, nilvf.VisualRowOfOffset(core.VisualRowOfOffsetArgs{
+			Doc: doc, Line: 0, CharOff: 5,
+		}))
 	})
 
 	t.Run("zero width always returns 0", func(t *testing.T) {
 		vf := &core.VisualMoveFormat{}
-		assert.Equal(t, 0, vf.VisualRowOfOffset(doc, 0, 5))
+		assert.Equal(t, 0, vf.VisualRowOfOffset(core.VisualRowOfOffsetArgs{
+			Doc: doc, Line: 0, CharOff: 5,
+		}))
 	})
 }
 

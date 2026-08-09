@@ -23,7 +23,6 @@ import (
 type (
 	processServer struct {
 		protocol.UnimplementedServer
-		client  protocol.Client
 		exit    chan struct{}
 		folders []protocol.WorkspaceFolder
 	}
@@ -149,10 +148,9 @@ func TestLSPServerProcess(t *testing.T) {
 	}
 	ctx := context.Background()
 	server := &processServer{exit: make(chan struct{})}
-	_, conn, client := protocol.NewServer(
+	_, conn, _ := protocol.NewServer(
 		ctx, server, jsonrpc2.NewHeaderStream(stdioConn{}),
 	)
-	server.client = client
 	<-server.exit
 	_ = conn.Close()
 }
@@ -160,6 +158,7 @@ func TestLSPServerProcess(t *testing.T) {
 func (s *processServer) Initialize(
 	ctx context.Context, params *protocol.InitializeParams,
 ) (*protocol.InitializeResult, error) {
+	client, _ := protocol.ClientFromContext(ctx)
 	if ms, err := strconv.Atoi(
 		os.Getenv(testServerInitDelayMsEnv),
 	); err == nil {
@@ -198,41 +197,41 @@ func (s *processServer) Initialize(
 		}
 	}
 	if os.Getenv(testServerWorkspaceFoldersEnv) != "" {
-		folders, err := s.client.WorkspaceFolders(ctx)
+		folders, err := client.WorkspaceFolders(ctx)
 		if err != nil {
 			return nil, err
 		}
 		s.folders = folders
 	}
 	if os.Getenv(testServerCallbacksEnv) == "1" {
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: protocol.String("tok"),
 		})
-		_ = s.client.LogTrace(ctx, &protocol.LogTraceParams{
+		_ = client.LogTrace(ctx, &protocol.LogTraceParams{
 			Message: "trace",
 		})
-		_ = s.client.ShowMessage(ctx, &protocol.ShowMessageParams{
+		_ = client.ShowMessage(ctx, &protocol.ShowMessageParams{
 			Message: "hello",
 		})
-		_ = s.client.LogMessage(ctx, &protocol.LogMessageParams{
+		_ = client.LogMessage(ctx, &protocol.LogMessageParams{
 			Message: "log",
 		})
-		_ = s.client.Telemetry(ctx, protocol.LSPAny(`"event"`))
-		_, _ = s.client.Configuration(ctx, &protocol.ConfigurationParams{
+		_ = client.Telemetry(ctx, protocol.LSPAny(`"event"`))
+		_, _ = client.Configuration(ctx, &protocol.ConfigurationParams{
 			Items: []protocol.ConfigurationItem{{}},
 		})
-		_ = s.client.WorkDoneProgressCreate(ctx,
+		_ = client.WorkDoneProgressCreate(ctx,
 			&protocol.WorkDoneProgressCreateParams{
 				Token: protocol.String("tok"),
 			},
 		)
-		_, _ = s.client.ShowMessageRequest(ctx,
+		_, _ = client.ShowMessageRequest(ctx,
 			&protocol.ShowMessageRequestParams{Message: "question"},
 		)
-		_, _ = s.client.ShowDocument(ctx,
+		_, _ = client.ShowDocument(ctx,
 			&protocol.ShowDocumentParams{URI: "file:///dev/null"},
 		)
-		_, _ = s.client.ApplyEdit(ctx,
+		_, _ = client.ApplyEdit(ctx,
 			&protocol.ApplyWorkspaceEditParams{
 				Edit: protocol.WorkspaceEdit{
 					Changes: map[uri.URI][]protocol.TextEdit{
@@ -241,12 +240,12 @@ func (s *processServer) Initialize(
 				},
 			},
 		)
-		_ = s.client.PublishDiagnostics(ctx,
+		_ = client.PublishDiagnostics(ctx,
 			&protocol.PublishDiagnosticsParams{
 				URI: "file:///dev/null",
 			},
 		)
-		_ = s.client.DiagnosticRefresh(ctx)
+		_ = client.DiagnosticRefresh(ctx)
 	}
 	navigation := protocol.Boolean(os.Getenv(testServerNavigationEnv) == "1")
 	symbols := protocol.Boolean(os.Getenv(testServerSymbolsEnv) == "1")
@@ -383,45 +382,46 @@ func (s *processServer) Initialize(
 func (s *processServer) Initialized(
 	ctx context.Context, _ *protocol.InitializedParams,
 ) error {
+	client, _ := protocol.ClientFromContext(ctx)
 	if os.Getenv(testServerProgressEnv) == "1" {
 		tok := protocol.String("test-progress")
-		_ = s.client.WorkDoneProgressCreate(ctx,
+		_ = client.WorkDoneProgressCreate(ctx,
 			&protocol.WorkDoneProgressCreateParams{
 				Token: tok,
 			},
 		)
 		begin := `{"kind":"begin","title":"Loading","message":"start"}`
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
 			Value: protocol.LSPAny(begin),
 		})
 		report := `{"kind":"report","message":"halfway","percentage":50}`
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
 			Value: protocol.LSPAny(report),
 		})
 		// hold the token open briefly so a black-box test can observe
 		// Session.Busy() returning true before the matching "end" arrives
 		time.Sleep(50 * time.Millisecond)
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: tok,
 			Value: protocol.LSPAny(`{"kind":"end","message":"done"}`),
 		})
 		iTok := protocol.Integer(42)
-		_ = s.client.WorkDoneProgressCreate(ctx,
+		_ = client.WorkDoneProgressCreate(ctx,
 			&protocol.WorkDoneProgressCreateParams{
 				Token: iTok,
 			},
 		)
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: iTok,
 			Value: protocol.LSPAny(`{"kind":"begin","title":"Indexing"}`),
 		})
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: iTok,
 			Value: protocol.LSPAny(`{"kind":"end"}`),
 		})
-		_ = s.client.Progress(ctx, &protocol.ProgressParams{
+		_ = client.Progress(ctx, &protocol.ProgressParams{
 			Token: protocol.String("unknown"),
 			Value: protocol.LSPAny(`{"kind":"report","message":"ghost"}`),
 		})
@@ -434,14 +434,14 @@ func (s *processServer) Initialized(
 			`"baseUri":{"uri":"file:///tmp","name":"myFolder"}}},` +
 			`{"globPattern":""}` +
 			`]}`
-		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
 				ID:              "watch-session",
 				Method:          "workspace/didChangeWatchedFiles",
 				RegisterOptions: protocol.LSPAny(watchers),
 			}},
 		})
-		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
 				ID:     "watch-tmp",
 				Method: "workspace/didChangeWatchedFiles",
@@ -450,7 +450,7 @@ func (s *processServer) Initialized(
 				),
 			}},
 		})
-		_ = s.client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
+		_ = client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
 			Unregisterations: []protocol.Unregistration{{
 				ID:     "watch-tmp",
 				Method: "workspace/didChangeWatchedFiles",
@@ -458,20 +458,20 @@ func (s *processServer) Initialized(
 		})
 	}
 	if os.Getenv(testServerWatchRegEdgeEnv) == "1" {
-		_ = s.client.RegisterCapability(ctx, nil)
-		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+		_ = client.RegisterCapability(ctx, nil)
+		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
 				ID: "other", Method: "textDocument/other",
 			}},
 		})
-		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
 				ID:              "bad-json",
 				Method:          "workspace/didChangeWatchedFiles",
 				RegisterOptions: protocol.LSPAny("not-json"),
 			}},
 		})
-		_ = s.client.RegisterCapability(ctx, &protocol.RegistrationParams{
+		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
 				ID:     "solo",
 				Method: "workspace/didChangeWatchedFiles",
@@ -480,13 +480,13 @@ func (s *processServer) Initialized(
 				),
 			}},
 		})
-		_ = s.client.UnregisterCapability(ctx, nil)
-		_ = s.client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
+		_ = client.UnregisterCapability(ctx, nil)
+		_ = client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
 			Unregisterations: []protocol.Unregistration{{
 				ID: "solo", Method: "textDocument/other",
 			}},
 		})
-		_ = s.client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
+		_ = client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
 			Unregisterations: []protocol.Unregistration{{
 				ID: "solo", Method: "workspace/didChangeWatchedFiles",
 			}},

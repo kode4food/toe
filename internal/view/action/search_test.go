@@ -1328,14 +1328,14 @@ func TestMergeNoView(t *testing.T) {
 	t.Run("MergeSelections noop without view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 		action.MergeSelections(e)
 	})
 
 	t.Run("MergeConsecutive noop without view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 		action.MergeConsecutive(e)
 	})
 }

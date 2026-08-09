@@ -147,7 +147,7 @@ func (m Model) LastPickerAction(e *view.Editor) {
 }
 
 // AboutAction opens the about popup
-func (m Model) AboutAction(*view.Editor) {
+func (m Model) AboutAction(_ *view.Editor) {
 	m.component.queueNextLayer(func(*Context) (Component, tea.Cmd) {
 		return &aboutComponent{}, nil
 	})

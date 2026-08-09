@@ -348,11 +348,7 @@ func (e *Editor) VisibleDocuments() []*Document {
 
 // CloseCurrentView closes the focused pane
 func (e *Editor) CloseCurrentView() {
-	p := e.panes.tree.Get(e.panes.tree.Focus())
-	if p == nil {
-		return
-	}
-	p.Close()
+	e.ClosePane(e.panes.tree.Focus())
 }
 
 // CloseAllOtherViews closes all views except the focused one

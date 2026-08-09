@@ -26,13 +26,15 @@ func TestCloseCurrentView(t *testing.T) {
 		assert.Equal(t, before, viewCount(t, e))
 	})
 
-	t.Run("closes the only modified view", func(t *testing.T) {
+	t.Run("keeps one pane", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
+		doc := e.FocusedDocument()
 		action.InsertMode(e)
 		action.InsertChar(e, 'x')
 
 		action.CloseCurrentView(e)
 
-		assert.Equal(t, 0, viewCount(t, e))
+		assert.Equal(t, 1, viewCount(t, e))
+		assert.NotSame(t, doc, e.FocusedDocument())
 	})
 }

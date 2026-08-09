@@ -60,8 +60,6 @@ const (
 	ErrorNoRangeFormatting      Key = "error.noRangeFormatting"
 	ErrorFormatSelectionSingle  Key = "error.formatSelectionSingle"
 	ErrorUnsavedQuit            Key = "error.unsavedQuit"
-	ErrorUnsavedQuitAll         Key = "error.unsavedQuitAll"
-	ErrorUnsavedCquit           Key = "error.unsavedCquit"
 	ErrorUnsavedMove            Key = "error.unsavedMove"
 	ErrorUnsavedBufferClose     Key = "error.unsavedBufferClose"
 	ErrorUnsavedBufferCloseAll  Key = "error.unsavedBufferCloseAll"

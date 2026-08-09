@@ -160,15 +160,6 @@ func (t *TerminalPane) Split() (view.Pane, error) {
 	)
 }
 
-// Close terminates this terminal and closes its pane. The tree discards any
-// panes stashed behind it when the node is removed
-func (t *TerminalPane) Close() {
-	_ = t.Stop()
-	if t.editor != nil {
-		t.editor.RemovePane(t.id)
-	}
-}
-
 // Discard terminates this terminal when its slot is vacated without reverting
 func (t *TerminalPane) Discard() {
 	_ = t.Stop()

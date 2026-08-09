@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -17,8 +18,10 @@ func TestLifecycleQuit(t *testing.T) {
 			command.SignalQuit, test.RunCmd(t, km, e, "quit").Signal)
 	})
 
-	t.Run("quit on dirty doc warns", func(t *testing.T) {
-		e, km := test.Env(t, "x")
+	t.Run("quit warns on any dirty doc", func(t *testing.T) {
+		e, km := test.TwoBufferEnv(t)
+		testutil.SetEditorText(t, e, "dirty")
+		e.NewDocument()
 		assert.Contains(t, test.RunCmd(t, km, e, "quit").Message, "unsaved")
 	})
 
@@ -37,25 +40,4 @@ func TestLifecycleQuit(t *testing.T) {
 		}
 	})
 
-	t.Run("quit_all on clean signals quit", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		assert.Equal(t,
-			command.SignalQuit, test.RunCmd(t, km, e, "quit_all").Signal)
-	})
-
-	t.Run("quit_all on dirty warns", func(t *testing.T) {
-		e, km := test.Env(t, "x")
-		assert.Contains(t, test.RunCmd(t, km, e, "quit_all").Message, "unsaved")
-	})
-
-	t.Run("quit-all! always signals quit", func(t *testing.T) {
-		e, km := test.Env(t, "x")
-		assert.Equal(t,
-			command.SignalQuit, test.RunCmd(t, km, e, "quit-all!").Signal)
-	})
-
-	t.Run("cquit on dirty warns", func(t *testing.T) {
-		e, km := test.Env(t, "x")
-		assert.Contains(t, test.RunCmd(t, km, e, "cquit").Message, "unsaved")
-	})
 }

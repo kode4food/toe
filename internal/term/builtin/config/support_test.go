@@ -26,13 +26,6 @@ func TestSupportQuit(t *testing.T) {
 		assert.Contains(t, test.RunCmd(t, km, e, "quit").Message, "unsaved")
 	})
 
-	t.Run("quit all clean signals quit", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		assert.Equal(t,
-			command.SignalQuit, test.RunCmd(t, km, e, "quit_all").Signal,
-		)
-	})
-
 	t.Run("redraw signals clear screen", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		assert.Equal(t,

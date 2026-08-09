@@ -1028,11 +1028,6 @@ func (p *fakePane) SetID(id view.Id) { p.id = id }
 func (p *fakePane) Split() (view.Pane, error) {
 	return &fakePane{editor: p.editor}, nil
 }
-func (p *fakePane) Close() {
-	if p.editor != nil {
-		p.editor.RemovePane(p.id)
-	}
-}
 func (p *fakePane) Discard()            {}
 func (p *fakePane) Shutdown()           {}
 func (p *fakePane) Area() geom.Area     { return p.area }

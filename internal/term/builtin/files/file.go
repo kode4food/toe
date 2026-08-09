@@ -1,6 +1,8 @@
 package files
 
 import (
+	"errors"
+
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -24,8 +26,6 @@ const (
 	actWriteAllForce         = "write-all!"
 	actWriteQuit             = "write_quit"
 	actWriteQuitForce        = "write-quit!"
-	actWriteQuitAll          = "write_quit_all"
-	actWriteQuitAllForce     = "write-quit-all!"
 	actWriteBufferClose      = "write_buffer_close"
 	actWriteBufferCloseForce = "write-buffer-close!"
 	actUpdate                = "update"
@@ -177,39 +177,8 @@ func fileWriteCmds() []command.Command {
 			Signature: command.DefaultSignature(),
 		},
 		{
-			Name: actWriteQuit,
-			DocString: "Write changes to disk and close the current " +
-				"view. Accepts an optional path (:wq some/path.txt)",
-			Run: func(e *view.Editor, args *command.Args) command.Result {
-				setPathFromArgs(e, args)
-				autoFormat(e)
-				if err := e.Save(false); err != nil {
-					return command.Result{Error: err}
-				}
-				return command.Result{Signal: command.SignalQuit}
-			},
-			Modes:     command.DocModes,
-			Aliases:   []string{"wq", "exit", "x", "xit"},
-			Signature: kit.FileSig(command.DefaultSignature()),
-		},
-		{
-			Name: actWriteQuitForce,
-			DocString: "Write changes to disk and close the current view " +
-				"forcefully. Accepts an optional path (:wq! some/path.txt)",
-			Run: func(e *view.Editor, args *command.Args) command.Result {
-				setPathFromArgs(e, args)
-				autoFormat(e)
-				_ = e.Save(true)
-				return command.Result{Signal: command.SignalQuit}
-			},
-			Modes:     command.DocModes,
-			Aliases:   []string{"wq!", "exit!", "x!", "xit!"},
-			Signature: kit.FileSig(command.DefaultSignature()),
-		},
-		{
-			Name: actWriteQuitAll,
-			DocString: "Write changes from all buffers to disk and close " +
-				"all views",
+			Name:      actWriteQuit,
+			DocString: "Write all documents and quit",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if errs := e.SaveAll(false); len(errs) > 0 {
 					return command.Result{Error: errs[0]}
@@ -217,22 +186,23 @@ func fileWriteCmds() []command.Command {
 				return command.Result{Signal: command.SignalQuit}
 			},
 			Modes:     command.PaneModes,
-			Aliases:   []string{"wqa", "xa"},
+			Aliases:   []string{"wq"},
 			Signature: command.DefaultSignature(),
 		},
 		{
-			Name: actWriteQuitAllForce,
-			DocString: "Forcefully write changes from all buffers to " +
-				"disk, creating necessary subdirectories, and close all " +
-				"views (ignoring unsaved changes)",
+			Name: actWriteQuitForce,
+			DocString: "Write all documents and quit, discarding " +
+				"scratch buffers",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
-				for _, doc := range e.AllDocuments() {
-					_ = doc.Save(e.Options(), true)
+				for _, err := range e.SaveAll(true) {
+					if !errors.Is(err, view.ErrDocumentNoPath) {
+						return command.Result{Error: err}
+					}
 				}
 				return command.Result{Signal: command.SignalQuit}
 			},
 			Modes:     command.PaneModes,
-			Aliases:   []string{"wqa!", "xa!"},
+			Aliases:   []string{"wq!"},
 			Signature: command.DefaultSignature(),
 		},
 		{

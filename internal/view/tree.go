@@ -31,7 +31,6 @@ type (
 		Mode() Mode
 		SaveSession(*SessionWriter)
 		Split() (Pane, error)
-		Close()
 		Discard()
 		Shutdown()
 	}

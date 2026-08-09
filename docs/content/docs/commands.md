@@ -15,10 +15,8 @@ Enter command mode with `:`. Any command below can be run by name; the Aliases c
 | `write!` | `w!` | Force write changes to disk creating necessary subdirectories. Accepts an optional path (:write! some/path.txt) |
 | `write-all` | `wa` | Write changes from all buffers to disk |
 | `write-all!` | `wa!` | Forcefully write changes from all buffers to disk creating necessary subdirectories |
-| `write-quit` | `wq`, `exit`, `x`, `xit` | Write changes to disk and close the current view. Accepts an optional path (:wq some/path.txt) |
-| `write-quit!` | `wq!`, `exit!`, `x!`, `xit!` | Write changes to disk and close the current view forcefully. Accepts an optional path (:wq! some/path.txt) |
-| `write-quit-all` | `wqa`, `xa` | Write changes from all buffers to disk and close all views |
-| `write-quit-all!` | `wqa!`, `xa!` | Forcefully write changes from all buffers to disk, creating necessary subdirectories, and close all views (ignoring unsaved changes) |
+| `write-quit` | `wq` | Write all documents and quit |
+| `write-quit!` | `wq!` | Write all documents and quit, discarding scratch buffers |
 | `write-buffer-close` | `wbc` | Write changes to disk and closes the buffer. Accepts an optional path (:write-buffer-close some/path.txt) |
 | `write-buffer-close!` | `wbc!` | Force write changes to disk creating necessary subdirectories and closes the buffer. Accepts an optional path (:write-buffer-close! some/path.txt) |
 | `update` | `u` | Write changes only if the file has been modified |
@@ -451,12 +449,8 @@ Splitting a document or image pane creates another view of the same document or 
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `quit` | `q` | Close the current view |
-| `quit!` | `q!` | Force close the current view, ignoring unsaved changes |
-| `quit-all` | `qa` | Close all views |
-| `quit-all!` | `qa!` | Force close all views ignoring unsaved changes |
-| `cquit` | `cq` | Quit with exit code (default 1) |
-| `cquit!` | `cq!` | Force quit with exit code (default 1) ignoring unsaved changes |
+| `quit` | `q` | Quit if all documents are saved |
+| `quit!` | `q!` | Quit, ignoring unsaved changes |
 
 ## Support
 

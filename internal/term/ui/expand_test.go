@@ -161,7 +161,7 @@ func TestTokenExpander(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 		expand := ui.NewTokenExpander(e)
 		tok := command.Token{
 			Kind:      command.TokenExpansion,

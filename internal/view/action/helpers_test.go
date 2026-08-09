@@ -31,7 +31,7 @@ func editorWithNoView(t *testing.T) *view.Editor {
 	e := view.NewEditor("/tmp")
 	v := e.FocusedView()
 	assert.NotNil(t, v)
-	e.CloseView(v.ID())
+	e.Tree().Remove(v.ID())
 	return e
 }
 

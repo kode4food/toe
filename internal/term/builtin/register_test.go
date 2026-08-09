@@ -302,8 +302,6 @@ func TestDefaults(t *testing.T) {
 			"open",
 			"write-all",
 			"write-all!",
-			"write-quit-all",
-			"write-quit-all!",
 			"reload-all",
 			"workspace-symbol-picker",
 			"changed-file-picker",

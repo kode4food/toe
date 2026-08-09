@@ -157,7 +157,7 @@ func TestSession(t *testing.T) {
 		assert.Len(t, waitHunks(t, s, doc), 1)
 
 		// closing the document tears down its differ
-		e.CloseView(v.ID())
+		e.ClosePane(v.ID())
 		assert.Empty(t, s.DiffHunks(doc))
 	})
 

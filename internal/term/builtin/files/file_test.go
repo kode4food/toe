@@ -127,36 +127,44 @@ func TestFileWriteVariants(t *testing.T) {
 		assert.Contains(t, res.Message, "written")
 	})
 
-	t.Run("write_quit saves and signals quit", func(t *testing.T) {
-		e, km := test.Env(t, "hello")
-		out := filepath.Join(e.Cwd(), "wq.txt")
-		res := test.RunCmdArgs(t, km, e, "write_quit", out)
-		assert.Equal(t, command.SignalQuit, res.Signal)
-	})
-
-	t.Run("write-quit! force-saves and signals quit", func(t *testing.T) {
-		e, km := test.Env(t, "hello")
-		out := filepath.Join(e.Cwd(), "wq2.txt")
-		res := test.RunCmdArgs(t, km, e, "write-quit!", out)
-		assert.Equal(t, command.SignalQuit, res.Signal)
-	})
-
-	t.Run("saves all and signals quit", func(t *testing.T) {
+	t.Run("write-quit saves and quits", func(t *testing.T) {
 		e, km := test.TwoBufferEnv(t)
-		res := test.RunCmd(t, km, e, "write_quit_all")
+		res := test.RunCmd(t, km, e, "wq")
 		assert.Equal(t, command.SignalQuit, res.Signal)
 	})
 
-	t.Run("write_quit_all reports save error", func(t *testing.T) {
+	t.Run("write-quit stops on save error", func(t *testing.T) {
 		e, km := test.Env(t, "dirty")
-		res := test.RunCmd(t, km, e, "write_quit_all")
+		res := test.RunCmd(t, km, e, "wq")
+		assert.Zero(t, res.Signal)
 		assert.Contains(t, res.Message, "error")
 	})
 
-	t.Run("force-saves all and signals quit", func(t *testing.T) {
+	t.Run("force saves what it can", func(t *testing.T) {
 		e, km := test.TwoBufferEnv(t)
-		res := test.RunCmd(t, km, e, "write-quit-all!")
+		path := e.FocusedDocument().Path()
+		testutil.SetEditorText(t, e, "saved")
+		e.NewDocument()
+		testutil.SetEditorText(t, e, "lost")
+
+		res := test.RunCmd(t, km, e, "wq!")
+
 		assert.Equal(t, command.SignalQuit, res.Signal)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Contains(t, string(data), "saved")
+	})
+
+	t.Run("force stops on write error", func(t *testing.T) {
+		e, km := test.Env(t, "dirty")
+		parent := filepath.Join(t.TempDir(), "file")
+		assert.NoError(t, os.WriteFile(parent, []byte("x"), 0o644))
+		e.FocusedDocument().SetPath(filepath.Join(parent, "child"))
+
+		res := test.RunCmd(t, km, e, "wq!")
+
+		assert.Zero(t, res.Signal)
+		assert.Contains(t, res.Message, "error")
 	})
 
 	t.Run("write_buffer_close saves and closes", func(t *testing.T) {
@@ -234,7 +242,7 @@ func TestFileMoveErrors(t *testing.T) {
 		e, km := test.Env(t, "")
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 		res := test.RunCmdArgs(t, km, e, "move", "/tmp/dest.txt")
 		assert.Contains(t, res.Message, "error")
 	})
@@ -252,7 +260,7 @@ func TestFileMoveErrors(t *testing.T) {
 		e, km := test.Env(t, "")
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 		res := test.RunCmdArgs(t, km, e, "move!", "/tmp/dest.txt")
 		assert.Contains(t, res.Message, "error")
 	})

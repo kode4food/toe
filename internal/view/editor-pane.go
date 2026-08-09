@@ -102,33 +102,6 @@ func (e *Editor) HSplitNew() *View {
 	return v
 }
 
-// CloseView closes a view and, if no other view references the same document,
-// also closes the document
-func (e *Editor) CloseView(vid Id) {
-	v, ok := e.panes.tree.Get(vid).(*View)
-	if !ok {
-		return
-	}
-	focused := e.panes.tree.Focus() == vid
-	docID := v.docID
-
-	if doc, ok := e.documents.byID[docID]; ok {
-		doc.RemoveView(vid)
-	}
-
-	e.panes.tree.Remove(vid)
-
-	if !e.hasView(func(ov *View) bool { return ov.docID == docID }) {
-		if doc, ok := e.documents.byID[docID]; ok {
-			e.documentClosed(doc)
-		}
-		delete(e.documents.byID, docID)
-	}
-	if focused {
-		e.markDocAccessed()
-	}
-}
-
 // ReplacePane swaps the pane at id for p in place, discarding any panes stashed
 // behind id, and returns the evicted pane for the caller to dispose of
 func (e *Editor) ReplacePane(id Id, p Pane) Pane {
@@ -173,22 +146,12 @@ func (e *Editor) ClosePane(id Id) {
 		e.markDocAccessed()
 		return
 	}
-	p.Close()
-}
-
-// RemovePane removes a non-document pane from the layout. If it is the only
-// pane, it is replaced with a fresh scratch document
-func (e *Editor) RemovePane(id Id) {
-	if e.panes.tree.Count() <= 1 {
-		doc := e.newDocument()
-		e.documents.byID[doc.ID()] = doc
-		v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
-		e.panes.tree.DiscardHistory(id)
-		e.panes.tree.ReplacePane(id, v)
-		e.markDocAccessed()
-		return
-	}
+	focused := e.panes.tree.Focus() == id
 	e.panes.tree.Remove(id)
+	p.Discard()
+	if _, ok := p.(*View); focused && ok {
+		e.markDocAccessed()
+	}
 }
 
 // RegisterPaneRestorer registers how to rebuild a leaf pane of the given

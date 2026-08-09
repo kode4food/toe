@@ -146,13 +146,6 @@ func (v *View) Split() (Pane, error) {
 	}, nil
 }
 
-// Close closes this view
-func (v *View) Close() {
-	if v.editor != nil {
-		v.editor.CloseView(v.id)
-	}
-}
-
 // Discard closes this displaced view if no other view uses its document
 func (v *View) Discard() {
 	if v.editor != nil {

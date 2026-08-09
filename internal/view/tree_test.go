@@ -302,7 +302,7 @@ func TestCanSplit(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 
 		assert.True(t, e.Tree().CanSplit(view.LayoutVertical))
 	})
@@ -378,7 +378,7 @@ func TestTreeSplitEdges(t *testing.T) {
 		bottom := e.HSplit(right.DocID())
 		assert.NotNil(t, bottom)
 
-		e.CloseView(bottom.ID())
+		e.Tree().Remove(bottom.ID())
 
 		views := e.Views()
 		assert.Equal(t, 2, len(views))

@@ -155,13 +155,6 @@ func (p *BinaryPane) Split() (view.Pane, error) {
 	}, nil
 }
 
-// Close closes this binary pane
-func (p *BinaryPane) Close() {
-	if p.editor != nil {
-		p.editor.RemovePane(p.id)
-	}
-}
-
 // Discard releases this displaced binary pane
 func (p *BinaryPane) Discard() {
 }

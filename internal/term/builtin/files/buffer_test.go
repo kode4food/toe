@@ -37,12 +37,13 @@ func TestBufferNavigation(t *testing.T) {
 }
 
 func TestBufferClose(t *testing.T) {
-	t.Run("close clean buffer drops a view", func(t *testing.T) {
+	t.Run("close clean shows scratch", func(t *testing.T) {
 		e, km := test.TwoBufferEnv(t)
-		before := len(e.AllViews())
+		doc := e.FocusedDocument()
 		res := test.RunCmd(t, km, e, "buffer_close")
 		assert.Contains(t, res.Message, "closed")
-		assert.Less(t, len(e.AllViews()), before)
+		assert.Equal(t, 1, len(e.AllViews()))
+		assert.NotSame(t, doc, e.FocusedDocument())
 	})
 
 	t.Run("close warns on unsaved changes", func(t *testing.T) {
@@ -52,12 +53,13 @@ func TestBufferClose(t *testing.T) {
 		assert.Contains(t, res.Message, "unsaved")
 	})
 
-	t.Run("close force ignores unsaved changes", func(t *testing.T) {
+	t.Run("close force shows scratch", func(t *testing.T) {
 		e, km := test.TwoBufferEnv(t)
+		doc := e.FocusedDocument()
 		testutil.SetEditorText(t, e, "dirty")
-		before := len(e.AllViews())
 		test.RunCmd(t, km, e, "buffer_close_force")
-		assert.Less(t, len(e.AllViews()), before)
+		assert.Equal(t, 1, len(e.AllViews()))
+		assert.NotSame(t, doc, e.FocusedDocument())
 	})
 
 	t.Run("close others leaves one view", func(t *testing.T) {
@@ -66,11 +68,11 @@ func TestBufferClose(t *testing.T) {
 		assert.Equal(t, 1, len(e.AllViews()))
 	})
 
-	t.Run("close all clean closes everything", func(t *testing.T) {
+	t.Run("close all clean leaves one pane", func(t *testing.T) {
 		e, km := test.TwoBufferEnv(t)
 		res := test.RunCmd(t, km, e, "buffer_close_all")
 		assert.Contains(t, res.Message, "all buffers closed")
-		assert.Equal(t, 0, len(e.AllViews()))
+		assert.Equal(t, 1, len(e.AllViews()))
 	})
 
 	t.Run("close all warns on unsaved changes", func(t *testing.T) {

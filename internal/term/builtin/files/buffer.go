@@ -61,7 +61,7 @@ func BufferModule() command.Module {
 					focused := e.FocusedView()
 					for _, v := range e.AllViews() {
 						if focused == nil || v.ID() != focused.ID() {
-							e.CloseView(v.ID())
+							e.ClosePane(v.ID())
 						}
 					}
 					return command.Result{Message: "other buffers closed"}
@@ -84,7 +84,7 @@ func BufferModule() command.Module {
 						}
 					}
 					for _, v := range e.AllViews() {
-						e.CloseView(v.ID())
+						e.ClosePane(v.ID())
 					}
 					return command.Result{Message: "all buffers closed"}
 				},

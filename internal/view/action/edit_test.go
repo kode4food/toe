@@ -1305,7 +1305,7 @@ func TestSelectAllNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 
 		action.SelectAll(e)
 	})
@@ -1315,7 +1315,7 @@ func TestInsertTabNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 
 		action.InsertTab(e)
 	})
@@ -1325,7 +1325,7 @@ func TestDeleteSelectionNoYankNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 
 		action.DeleteSelectionNoYank(e)
 	})
@@ -1335,7 +1335,7 @@ func TestChangeSelectionNoYankNoView(t *testing.T) {
 	t.Run("no focused view is noop", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		e.CloseView(v.ID())
+		e.Tree().Remove(v.ID())
 
 		action.ChangeSelectionNoYank(e)
 	})

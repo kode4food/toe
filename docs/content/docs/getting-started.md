@@ -80,11 +80,11 @@ Use `Space` or `Ctrl+\` to open the leader menu. In terminal panes, use `Ctrl+\`
 ### Saving and Quitting
 
 ```
-:w            save (write)
-:q            quit
-:wq           save and quit
+:w            write current document
+:q            quit if all documents are saved
+:wq           write all documents and quit
 :q!           quit without saving
-:wq!          force save and quit
+:wq!          write all documents and quit, discarding scratch buffers
 ```
 
 ### Finding Files

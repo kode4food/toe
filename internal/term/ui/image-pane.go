@@ -316,13 +316,6 @@ func (p *ImagePane) Split() (view.Pane, error) {
 	}, nil
 }
 
-// Close closes this image pane
-func (p *ImagePane) Close() {
-	if p.editor != nil {
-		p.editor.RemovePane(p.id)
-	}
-}
-
 // Discard releases this displaced image pane
 func (p *ImagePane) Discard() {
 }

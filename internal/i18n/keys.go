@@ -119,4 +119,8 @@ const (
 	StatusFileWatchUnavailable Key = "status.fileWatchUnavailable"
 
 	HintResize Key = "hint.resize"
+
+	AboutCommandDoc  Key = "about.commandDoc"
+	AboutVersion     Key = "about.version"
+	AboutDevelopment Key = "about.development"
 )

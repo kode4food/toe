@@ -19,7 +19,7 @@ type previewLineCtx struct {
 	width     int
 	maxHeight int
 	rowSkip   int
-	hOff      int
+	horzOff   int
 
 	lineText    string
 	highlighted bool
@@ -138,8 +138,8 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 			lineStart:  start,
 			lineEnd:    end,
 			softWrap:   softWrap,
-			hStart:     hOff,
-			hWidth:     contentW,
+			colStart:   hOff,
+			colWidth:   contentW,
 			maxRows:    args.area.Height - bufRow + rowSkip,
 		}
 		rendered := rr.rows()
@@ -154,7 +154,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 			highlightBg: hlBg,
 			width:       contentW,
 			rowSkip:     rowSkip,
-			hOff:        hOff,
+			horzOff:     hOff,
 			maxHeight:   args.area.Height - bufRow,
 			softWrap:    softWrap,
 			lineText:    lStr,
@@ -218,7 +218,7 @@ func emitPreviewLine(
 				at:        rowAt,
 				fillStyle: ctx.fillStyle,
 				width:     ctx.width,
-				startCol:  ctx.hOff,
+				startCol:  ctx.horzOff,
 			})
 			buf.PatchBgRange(rowAt, ctx.width, ctx.popupBg)
 			if ctx.highlighted {
@@ -233,7 +233,7 @@ func emitPreviewLine(
 			at:        at,
 			fillStyle: ctx.fillStyle,
 			width:     ctx.width,
-			startCol:  ctx.hOff,
+			startCol:  ctx.horzOff,
 		})
 		buf.PatchBgRange(at, ctx.width, ctx.popupBg)
 		if ctx.highlighted {

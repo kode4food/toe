@@ -8,6 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -17,6 +18,7 @@ const (
 	actEcho          = "echo"
 	actRedraw        = "redraw"
 	actGoto          = "goto"
+	actAbout         = "about"
 )
 
 var (
@@ -24,10 +26,17 @@ var (
 	errInvalidLineNumber = i18n.NewError(i18n.ErrorInvalidLineNumber)
 )
 
-// SupportModule returns the help, echo, and misc support commands
-func SupportModule() command.Module {
+// SupportModule returns miscellaneous support commands
+func SupportModule(model ui.Model) command.Module {
 	return command.Module{
 		Commands: []command.Command{
+			{
+				Name:      actAbout,
+				DocString: i18n.Text(i18n.AboutCommandDoc),
+				Run:       kit.Runner(model.AboutAction),
+				Modes:     command.PaneModes,
+				Signature: command.DefaultSignature(),
+			},
 			{
 				Name: actCharacterInfo,
 				DocString: "Get info about the character under the primary " +

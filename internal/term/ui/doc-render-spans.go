@@ -235,8 +235,8 @@ func (r *renderPass) prepareContentRender(
 		softWrap:      softWrap,
 		cursorIsBlock: cursorIsBlock,
 		mode:          r.context.Editor.Mode(),
-		hStart:        hOff,
-		hWidth:        format.ViewportWidth,
+		colStart:      hOff,
+		colWidth:      format.ViewportWidth,
 	}
 
 	return &contentRenderState{
@@ -273,7 +273,7 @@ func (r *renderPass) prepareContentRender(
 		format:   format,
 		softWrap: softWrap,
 
-		hOff: hOff,
+		horzOff: hOff,
 
 		fillTUI:         fillTUI,
 		cursorLinePriBg: cursorLinePriBg,

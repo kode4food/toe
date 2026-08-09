@@ -22,12 +22,12 @@ type (
 		jumps      JumpList
 		freeScroll freeScrollState
 
-		area  geom.Area
-		vcol  vcolCache
-		dirty bool
+		area      geom.Area
+		visualCol visualColumnCache
+		dirty     bool
 	}
 
-	vcolCache struct {
+	visualColumnCache struct {
 		doc      core.Rope
 		cursor   int
 		tabWidth int
@@ -365,11 +365,17 @@ func (v *View) trackOffsetChange() func() {
 // cachedVisualColumn returns VisualColumn(doc, s, tabW), reusing the last
 // result when doc, s.To, and tabW are unchanged since the previous call
 func (v *View) cachedVisualColumn(doc core.Rope, s core.Span, tabW int) int {
-	if v.vcol.doc == doc && v.vcol.cursor == s.To && v.vcol.tabWidth == tabW {
-		return v.vcol.col
+	c := v.visualCol
+	if c.doc == doc && c.cursor == s.To && c.tabWidth == tabW {
+		return c.col
 	}
 	col := VisualColumn(doc, s, tabW)
-	v.vcol = vcolCache{doc: doc, cursor: s.To, tabWidth: tabW, col: col}
+	v.visualCol = visualColumnCache{
+		doc:      doc,
+		cursor:   s.To,
+		tabWidth: tabW,
+		col:      col,
+	}
 	return col
 }
 

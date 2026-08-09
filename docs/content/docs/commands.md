@@ -462,6 +462,7 @@ Splitting a document or image pane creates another view of the same document or 
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
+| `about` |  | Show version and license information |
 | `character-info` | `char` | Get info about the character under the primary cursor |
 | `echo` |  | Prints the given arguments to the status line |
 | `redraw` |  | Clear and re-render the whole UI |

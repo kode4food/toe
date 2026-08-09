@@ -30,7 +30,7 @@ type (
 		prompt  string
 		buf     string
 		caret   int
-		hOff    int
+		horzOff int
 
 		handler promptHandler
 		builder pickerBuilder
@@ -179,10 +179,10 @@ func (p *PromptComponent) syncScroll() {
 	w := p.textWidth()
 	switch {
 	case runewidth.StringWidth(p.buf) < w:
-		p.hOff = 0
-	case p.caret <= p.hOff:
-		p.hOff = max(p.caret-1, 0)
-	case runewidth.StringWidth(string(runes[p.hOff:p.caret])) > w:
+		p.horzOff = 0
+	case p.caret <= p.horzOff:
+		p.horzOff = max(p.caret-1, 0)
+	case runewidth.StringWidth(string(runes[p.horzOff:p.caret])) > w:
 		width, i := 0, p.caret
 		for i > 0 {
 			width += runewidth.RuneWidth(runes[i-1])
@@ -191,19 +191,19 @@ func (p *PromptComponent) syncScroll() {
 			}
 			i--
 		}
-		p.hOff = i
+		p.horzOff = i
 	}
-	tail := runewidth.StringWidth(string(runes[p.hOff:]))
-	caretCol := runewidth.StringWidth(string(runes[p.hOff:p.caret]))
+	tail := runewidth.StringWidth(string(runes[p.horzOff:]))
+	caretCol := runewidth.StringWidth(string(runes[p.horzOff:p.caret]))
 	if tail > w && caretCol >= w {
-		p.hOff++
+		p.horzOff++
 	}
 }
 
 func (p *PromptComponent) caretDisplayX() int {
 	p.syncScroll()
 	label := runewidth.StringWidth(p.promptLabel())
-	shown := []rune(p.buf)[p.hOff:p.caret]
+	shown := []rune(p.buf)[p.horzOff:p.caret]
 	return label + runewidth.StringWidth(string(shown))
 }
 
@@ -408,14 +408,14 @@ func (p *PromptComponent) paintLine(
 	p.syncScroll()
 	runes := []rune(p.buf)
 	avail := p.textWidth()
-	tailWidth := runewidth.StringWidth(string(runes[p.hOff:]))
+	tailWidth := runewidth.StringWidth(string(runes[p.horzOff:]))
 	truncEnd := tailWidth > avail
 
 	limit := avail
 	if truncEnd {
 		limit--
 	}
-	col, i := 0, p.hOff
+	col, i := 0, p.horzOff
 	for i < len(runes) && col+runewidth.RuneWidth(runes[i]) <= limit {
 		buf.SetString(geom.Point{
 			X: area.X + x + col,
@@ -424,7 +424,7 @@ func (p *PromptComponent) paintLine(
 		col += runewidth.RuneWidth(runes[i])
 		i++
 	}
-	if p.hOff > 0 {
+	if p.horzOff > 0 {
 		buf.SetString(geom.Point{
 			X: area.X + x,
 			Y: area.Y,

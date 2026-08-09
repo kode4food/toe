@@ -106,5 +106,8 @@
   "error.unsavedBufferClose": "modifiche non salvate (:buffer-close! per forzare)",
   "error.unsavedBufferCloseAll": "modifiche non salvate (:buffer-close-all! per forzare)",
   "error.workspaceUntrustedHint": "Area di lavoro non attendibile; abilita la configurazione con :workspace_trust",
-  "error.logUnavailable": "percorso del log non disponibile"
+  "error.logUnavailable": "percorso del log non disponibile",
+  "about.commandDoc": "Mostra informazioni su versione e licenza",
+  "about.version": "Versione",
+  "about.development": "Versione di sviluppo"
 }

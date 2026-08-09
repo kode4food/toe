@@ -252,6 +252,16 @@ func (e *EditorComponent) Cursor(
 	return r.editorCursor()
 }
 
+func (e *EditorComponent) queueNextLayer(next layerFunc) {
+	e.keys.nextLayer = next
+}
+
+func (e *EditorComponent) takeNextLayer() layerFunc {
+	next := e.keys.nextLayer
+	e.keys.nextLayer = nil
+	return next
+}
+
 func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	if e.mouse.downRange != nil {
 		return nil

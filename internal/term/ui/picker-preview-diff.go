@@ -193,8 +193,8 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			lineNum:    dl.line,
 			lineStart:  lineStart,
 			lineEnd:    lineEnd,
-			hStart:     hOff,
-			hWidth:     contentW,
+			colStart:   hOff,
+			colWidth:   contentW,
 			maxRows:    1,
 		}
 		rendered := rr.rows()

@@ -44,7 +44,7 @@ type (
 		format   *language.TextFormat
 		softWrap bool
 
-		hOff int
+		horzOff int
 
 		fillTUI         tui.Style
 		cursorLinePriBg tui.Color
@@ -93,7 +93,7 @@ func (r *renderPass) paintContentOverlays(st *contentRenderState) {
 			charOff:  col,
 			tabWidth: format.TabWidth,
 		})
-		rel := vcol - st.hOff
+		rel := vcol - st.horzOff
 		if rel >= 0 && rel < format.ViewportWidth {
 			sx := contentX + rel
 			for row := args.area.Y; row < args.area.Y+args.area.Height; row++ {
@@ -109,7 +109,7 @@ func (r *renderPass) paintContentOverlays(st *contentRenderState) {
 				Width:  format.ViewportWidth,
 				Height: args.area.Height,
 			},
-			horzOff: st.hOff,
+			horzOff: st.horzOff,
 			rulers:  st.rulers,
 			rulerBg: st.rulerBg,
 		})
@@ -127,7 +127,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 	format := st.format
 	styles := st.styles
 	fillTUI := st.fillTUI
-	hOff := st.hOff
+	hOff := st.horzOff
 	contentX := st.contentX
 	text := st.text
 	rawText := st.rawText

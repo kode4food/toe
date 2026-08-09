@@ -106,5 +106,8 @@
   "error.unsavedBufferClose": "modifications non enregistrées (:buffer-close! pour forcer)",
   "error.unsavedBufferCloseAll": "modifications non enregistrées (:buffer-close-all! pour forcer)",
   "error.workspaceUntrustedHint": "Espace de travail non approuvé ; activer la configuration avec :workspace_trust",
-  "error.logUnavailable": "chemin du journal indisponible"
+  "error.logUnavailable": "chemin du journal indisponible",
+  "about.commandDoc": "Afficher les informations de version et de licence",
+  "about.version": "Version",
+  "about.development": "Version de développement"
 }

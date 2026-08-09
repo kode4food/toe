@@ -106,5 +106,8 @@
   "error.unsavedBufferClose": "document has unsaved changes (use :buffer-close! to force)",
   "error.unsavedBufferCloseAll": "documents have unsaved changes (use :buffer-close-all! to force)",
   "error.workspaceUntrustedHint": "Workspace untrusted; run :workspace_trust to enable config",
-  "error.logUnavailable": "log path unavailable"
+  "error.logUnavailable": "log path unavailable",
+  "about.commandDoc": "Show version and license information",
+  "about.version": "Version",
+  "about.development": "Development Build"
 }

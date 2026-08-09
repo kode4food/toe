@@ -60,32 +60,32 @@ func (m Model) PickerAction(fn PickerFunc) command.Action {
 			return
 		}
 		cx.lastLayer = opener
-		ec.keys.nextLayer = layer
+		ec.queueNextLayer(layer)
 	}
 }
 
 // CmdModeAction opens the command prompt
 func (m Model) CmdModeAction(_ *view.Editor) {
 	ec := m.component
-	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 		return newPromptComponent(cx, promptComponentArgs{
 			editor: ec,
 			kind:   promptCmd,
 		}), nil
-	}
+	})
 }
 
 // SearchAction returns an action opening the search prompt
 func (m Model) SearchAction(forward bool) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
-		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				editor:  ec,
 				kind:    promptSearch,
 				forward: forward,
 			}), nil
-		}
+		})
 	}
 }
 
@@ -93,14 +93,14 @@ func (m Model) SearchAction(forward bool) command.Action {
 func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
-		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				editor:  ec,
 				kind:    promptRegex,
 				prompt:  prompt,
 				handler: fn,
 			}), nil
-		}
+		})
 	}
 }
 
@@ -108,14 +108,14 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 func (m Model) ShellAction(prompt string, fn promptHandler) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
-		ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				editor:  ec,
 				kind:    promptShell,
 				prompt:  prompt,
 				handler: fn,
 			}), nil
-		}
+		})
 	}
 }
 
@@ -133,7 +133,7 @@ func (m Model) CommandPaletteAction(e *view.Editor) {
 	}
 
 	cx.lastLayer = opener
-	ec.keys.nextLayer = opener(e)
+	ec.queueNextLayer(opener(e))
 }
 
 // LastPickerAction reopens the picker used most recently
@@ -143,7 +143,14 @@ func (m Model) LastPickerAction(e *view.Editor) {
 	if cx.lastLayer == nil {
 		return
 	}
-	ec.keys.nextLayer = cx.lastLayer(e)
+	ec.queueNextLayer(cx.lastLayer(e))
+}
+
+// AboutAction opens the about popup
+func (m Model) AboutAction(*view.Editor) {
+	m.component.queueNextLayer(func(*Context) (Component, tea.Cmd) {
+		return &aboutComponent{}, nil
+	})
 }
 
 // MacroRecordAction starts or stops recording a macro

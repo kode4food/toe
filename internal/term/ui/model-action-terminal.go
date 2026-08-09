@@ -29,7 +29,7 @@ func (m Model) TerminalSearchAction(e *view.Editor) {
 	if !ok {
 		return
 	}
-	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 		return newPromptComponent(cx, promptComponentArgs{
 			editor: ec,
 			kind:   promptTerminalSearch,
@@ -41,5 +41,5 @@ func (m Model) TerminalSearchAction(e *view.Editor) {
 				return nil
 			},
 		}), nil
-	}
+	})
 }

@@ -48,7 +48,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		files.PickerModule(model),
 		motion.JumplistModule(model),
 		files.DiagnosticsModule(model),
-		config.SupportModule(),
+		config.SupportModule(model),
 		picker.Module(model),
 		editing.CommentModule(),
 		config.MacroModule(model),

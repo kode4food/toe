@@ -111,6 +111,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		m.component.cancelAutoSizeFor(msg)
 		cmd := m.compositor.HandleEvent(m.context, msg)
+		if next := m.component.takeNextLayer(); next != nil {
+			layer, nextCmd := next(m.context)
+			if layer != nil {
+				m.compositor.Push(layer)
+			}
+			cmd = tea.Batch(cmd, nextCmd)
+		}
 		m.context.fileWatcher.sync(m.context.Editor)
 		return m, tea.Batch(
 			cmd, m.component.autoSizeCmd(m.context), m.imageDisplayFrameCmd(),

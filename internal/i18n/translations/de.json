@@ -106,5 +106,8 @@
   "error.unsavedBufferClose": "Ungespeicherte Änderungen (:buffer-close! erzwingt)",
   "error.unsavedBufferCloseAll": "Ungespeicherte Änderungen (:buffer-close-all! erzwingt)",
   "error.workspaceUntrustedHint": "Arbeitsbereich nicht vertrauenswürdig; Konfiguration mit :workspace_trust aktivieren",
-  "error.logUnavailable": "Protokollpfad nicht verfügbar"
+  "error.logUnavailable": "Protokollpfad nicht verfügbar",
+  "about.commandDoc": "Versions- und Lizenzinformationen anzeigen",
+  "about.version": "Version",
+  "about.development": "Entwicklungsversion"
 }

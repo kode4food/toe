@@ -28,7 +28,7 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 		e.SetStatusMsg(i18n.ErrorText(err))
 		return
 	}
-	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 		return newPromptComponent(cx, promptComponentArgs{
 			editor:  ec,
 			kind:    promptRegex,
@@ -38,7 +38,7 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 				return renameSymbol(e, name)
 			},
 		}), nil
-	}
+	})
 }
 
 // CompletionAction requests completions at the cursor
@@ -54,9 +54,9 @@ func (m Model) CompletionAction(e *view.Editor) {
 	if ls == nil {
 		return
 	}
-	ec.keys.nextLayer = func(cx *Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 		return nil, ec.completionCmd(cx, false)
-	}
+	})
 }
 
 // HoverAction requests documentation for the symbol at the cursor
@@ -85,9 +85,9 @@ func (m Model) HoverAction(e *view.Editor) {
 		return
 	}
 	anchor := newHoverAnchor(doc, v)
-	ec.keys.nextLayer = func(*Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(*Context) (Component, tea.Cmd) {
 		return newHoverComponent(ec, anchor, text), nil
-	}
+	})
 }
 
 // SignatureHelpAction requests parameter hints for the call at the cursor
@@ -119,9 +119,9 @@ func (m Model) SignatureHelpAction(e *view.Editor) {
 	if len(help.Signatures) == 0 {
 		return
 	}
-	ec.keys.nextLayer = func(*Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(*Context) (Component, tea.Cmd) {
 		return newSignatureHelpComponent(ec, call, help), nil
-	}
+	})
 }
 
 func renameSymbol(e *view.Editor, name string) error {

@@ -86,16 +86,6 @@ func (e *EditorComponent) handleKeyPress(
 		e.syncEditorMessages(cx)
 		e.handleReplay(cx)
 
-		if ov := e.keys.nextLayer; ov != nil {
-			e.keys.nextLayer = nil
-			return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
-				layer, cmd := ov(cx)
-				if layer != nil {
-					comp.Push(layer)
-				}
-				return cmd
-			}), signalToCmd(res.Signal)
-		}
 		return consumed(), signalToCmd(res.Signal)
 
 	case lookup.Prefix:

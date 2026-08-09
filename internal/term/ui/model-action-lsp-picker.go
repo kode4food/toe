@@ -32,7 +32,7 @@ func (m Model) SymbolPickerAction(e *view.Editor) {
 	}
 	opener := symbolPickerLayer(symbols)
 	cx.lastLayer = opener
-	ec.keys.nextLayer = opener(e)
+	ec.queueNextLayer(opener(e))
 }
 
 // WorkspaceSymbolPickerAction opens a picker over workspace symbols
@@ -47,7 +47,7 @@ func (m Model) WorkspaceSymbolPickerAction(e *view.Editor) {
 	}
 	opener := workspaceSymbolPickerLayer()
 	cx.lastLayer = opener
-	ec.keys.nextLayer = opener(e)
+	ec.queueNextLayer(opener(e))
 }
 
 // CodeActionPickerAction opens a menu of code actions at the cursor
@@ -77,9 +77,9 @@ func (m Model) CodeActionPickerAction(e *view.Editor) {
 	}
 	docID := doc.ID()
 	viewID := v.ID()
-	ec.keys.nextLayer = func(*Context) (Component, tea.Cmd) {
+	ec.queueNextLayer(func(*Context) (Component, tea.Cmd) {
 		return newCodeActionMenu(ec, docID, viewID, actions), nil
-	}
+	})
 }
 
 func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {

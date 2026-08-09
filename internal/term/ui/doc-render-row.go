@@ -39,9 +39,9 @@ type (
 		cursorIsBlock bool
 		mode          view.Mode
 
-		hStart  int
-		hWidth  int
-		maxRows int
+		colStart int
+		colWidth int
+		maxRows  int
 
 		cellScratch []renderedCell
 		rowScratch  []renderedRow
@@ -112,8 +112,8 @@ func (r *rowRender) rows() []renderedRow {
 		row.write(rendered, width, style)
 	}
 
-	windowed := !r.softWrap && r.hWidth > 0
-	hEnd := r.hStart + r.hWidth
+	windowed := !r.softWrap && r.colWidth > 0
+	hEnd := r.colStart + r.colWidth
 	if windowed {
 		row.colStart = r.colOff
 	}

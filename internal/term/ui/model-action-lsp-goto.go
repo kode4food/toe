@@ -110,7 +110,7 @@ func (m Model) gotoLocation(
 			return locations, nil
 		})
 		cx.lastLayer = opener
-		ec.keys.nextLayer = opener(e)
+		ec.queueNextLayer(opener(e))
 	}
 }
 
@@ -135,7 +135,7 @@ func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {
 		return get(ls, doc, viewID)
 	})
 	cx.lastLayer = opener
-	ec.keys.nextLayer = opener(e)
+	ec.queueNextLayer(opener(e))
 }
 
 func locationPickerLayer(

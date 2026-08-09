@@ -39,8 +39,7 @@ func (e *Editor) NewDocument() *View {
 	e.documentOpened(doc)
 	v := e.FocusedView()
 	if v != nil {
-		v.docID = doc.ID()
-		v.offset = Position{}
+		v.switchDoc(doc.ID())
 		e.markDocAccessed()
 		return v
 	}
@@ -204,8 +203,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 		if d.Path() == absPath {
 			e.recordPrevDoc()
 			if v := e.FocusedView(); v != nil {
-				v.docID = d.ID()
-				v.offset = Position{}
+				v.switchDoc(d.ID())
 				e.markDocAccessed()
 				return v, nil
 			}
@@ -221,8 +219,7 @@ func (e *Editor) OpenFile(path string) (*View, error) {
 	e.documents.byID[doc.ID()] = doc
 	e.documentOpened(doc)
 	if v := e.FocusedView(); v != nil {
-		v.docID = doc.ID()
-		v.offset = Position{}
+		v.switchDoc(doc.ID())
 		e.markDocAccessed()
 		return v, nil
 	}
@@ -238,8 +235,7 @@ func (e *Editor) SwitchBuffer(did DocumentId) bool {
 	}
 	e.recordPrevDoc()
 	if v := e.FocusedView(); v != nil {
-		v.docID = did
-		v.offset = Position{}
+		v.switchDoc(did)
 		e.markDocAccessed()
 		return true
 	}

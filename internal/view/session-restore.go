@@ -3,13 +3,13 @@ package view
 import "github.com/kode4food/toe/internal/core"
 
 type sessionRestore struct {
-	base      string
-	docs      map[int]DocumentId
-	documents map[DocumentId]*Document
+	base     string
+	docIDs   map[int]DocumentId
+	docIndex map[DocumentId]*Document
 }
 
 func (e *Editor) restoreSessionRoot(
-	t *Tree, root Id, sn *sessionNode, rs *sessionRestore,
+	t *Tree, root Id, sn *sessNode, rs *sessionRestore,
 ) error {
 	if sn.Kind == SessionKindView || sn.Kind == SessionKindImage ||
 		sn.Kind == SessionKindTerminal || sn.Kind == SessionKindBinary {
@@ -38,7 +38,7 @@ func (e *Editor) restoreSessionRoot(
 }
 
 func (e *Editor) restoreSessionNode(
-	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
+	t *Tree, parent Id, sn *sessNode, rs *sessionRestore,
 ) (Id, error) {
 	id, err := e.restoreSessionKind(t, parent, sn, rs)
 	if err != nil {
@@ -49,7 +49,7 @@ func (e *Editor) restoreSessionNode(
 }
 
 func (e *Editor) restoreSessionKind(
-	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
+	t *Tree, parent Id, sn *sessNode, rs *sessionRestore,
 ) (Id, error) {
 	switch sn.Kind {
 	case SessionKindSplit:
@@ -71,7 +71,7 @@ func (e *Editor) restoreSessionKind(
 		}
 		return id, nil
 	case SessionKindView:
-		docID, ok := rs.docs[sn.Document]
+		docID, ok := rs.docIDs[sn.Document]
 		if !ok {
 			return 0, ErrSessionInvalid
 		}
@@ -88,7 +88,7 @@ func (e *Editor) restoreSessionKind(
 		pane, err := e.restorePane(restorePaneArgs{
 			kind: sn.Kind,
 			session: &PaneSession{
-				path: sessionAbsPath(sessionRef{
+				path: sessionAbsPath(sessRef{
 					base: rs.base,
 					path: sn.Path,
 				}),
@@ -116,7 +116,7 @@ type restoreSessionViewArgs struct {
 	parent  Id
 	viewID  Id
 	docID   DocumentId
-	session *sessionNode
+	session *sessNode
 	restore *sessionRestore
 }
 
@@ -136,14 +136,28 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 		mode:   ParseMode(args.session.Mode),
 		offset: sessionPosition(args.session),
 	}
-	for _, idx := range args.session.DocumentHistory {
-		if did, ok := args.restore.docs[idx]; ok {
+	for _, idx := range args.session.DocHistory {
+		if did, ok := args.restore.docIDs[idx]; ok {
 			v.docHistory = append(v.docHistory, did)
+		}
+	}
+	for _, so := range args.session.DocOffs {
+		did, ok := args.restore.docIDs[so.Document]
+		if !ok {
+			continue
+		}
+		if v.docOffsets == nil {
+			v.docOffsets = map[DocumentId]Position{}
+		}
+		v.docOffsets[did] = Position{
+			Anchor:           so.Anchor,
+			HorizontalOffset: so.HorizontalOffset,
+			VerticalOffset:   so.VerticalOffset,
 		}
 	}
 	entries := make([]JumpEntry, 0, len(args.session.Jumps))
 	for _, j := range args.session.Jumps {
-		jDocID, ok := args.restore.docs[j.Document]
+		jDocID, ok := args.restore.docIDs[j.Document]
 		if !ok {
 			continue
 		}
@@ -158,7 +172,7 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 		head = len(entries)
 	}
 	v.jumps.Restore(entries, head)
-	if doc, ok := args.restore.documents[args.docID]; ok {
+	if doc, ok := args.restore.docIndex[args.docID]; ok {
 		doc.SetSelectionFor(args.viewID, args.session.Selection.selection())
 	}
 	return v
@@ -167,13 +181,13 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 // restoreDisplacedPane rebuilds a stashed pane detached from the tree, or nil
 // when its document or kind cannot be resolved
 func (e *Editor) restoreDisplacedPane(
-	t *Tree, parent Id, sn *sessionNode, rs *sessionRestore,
+	t *Tree, parent Id, sn *sessNode, rs *sessionRestore,
 ) Pane {
 	if sn == nil {
 		return nil
 	}
 	if sn.Kind == SessionKindView {
-		docID, ok := rs.docs[sn.Document]
+		docID, ok := rs.docIDs[sn.Document]
 		if !ok {
 			return nil
 		}
@@ -189,7 +203,7 @@ func (e *Editor) restoreDisplacedPane(
 	pane, err := e.restorePane(restorePaneArgs{
 		kind: sn.Kind,
 		session: &PaneSession{
-			path:   sessionAbsPath(sessionRef{base: rs.base, path: sn.Path}),
+			path:   sessionAbsPath(sessRef{base: rs.base, path: sn.Path}),
 			values: sn.Values,
 		},
 	})
@@ -201,7 +215,7 @@ func (e *Editor) restoreDisplacedPane(
 	return pane
 }
 
-func (s sessionSelect) selection() core.Selection {
+func (s sessSelect) selection() core.Selection {
 	if len(s.Ranges) == 0 {
 		return core.PointSelection(0)
 	}
@@ -222,10 +236,10 @@ func sessionLayout(name string) Layout {
 	return LayoutVertical
 }
 
-func sessionPosition(sn *sessionNode) Position {
+func sessionPosition(sn *sessNode) Position {
 	return Position{
 		Anchor:           sn.Anchor,
-		HorizontalOffset: sn.HorizontalOffset,
-		VerticalOffset:   sn.VerticalOffset,
+		HorizontalOffset: sn.HorzOff,
+		VerticalOffset:   sn.VertOff,
 	}
 }

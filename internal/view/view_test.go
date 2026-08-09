@@ -539,3 +539,51 @@ func TestSelectionPerView(t *testing.T) {
 	assert.Equal(t, 1, doc.SelectionFor(v1.ID()).Primary().Head)
 	assert.Equal(t, 4, doc.SelectionFor(v2.ID()).Primary().Head)
 }
+
+func TestScrollOffsetPerDocument(t *testing.T) {
+	tmp := t.TempDir()
+	a := filepath.Join(tmp, "a.txt")
+	b := filepath.Join(tmp, "b.txt")
+	assert.NoError(t, os.WriteFile(a, []byte("aaa\nbbb\nccc\n"), 0o644))
+	assert.NoError(t, os.WriteFile(b, []byte("xxx\nyyy\n"), 0o644))
+	revisited := view.Position{Anchor: 4, VerticalOffset: 2}
+	current := view.Position{Anchor: 4, VerticalOffset: 1}
+	tests := []struct {
+		name        string
+		initialPath string
+		position    view.Position
+		openPaths   []string
+		wantOffsets []view.Position
+	}{
+		{
+			name:        "restores revisited offset",
+			initialPath: a,
+			position:    revisited,
+			openPaths:   []string{b, a},
+			wantOffsets: []view.Position{{}, revisited},
+		},
+		{
+			name:        "keeps current offset",
+			initialPath: b,
+			position:    current,
+			openPaths:   []string{b},
+			wantOffsets: []view.Position{current},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := view.NewEditor(tmp)
+			e.ResizeTree(geom.Size{Width: 80, Height: 24})
+			v, err := e.OpenFile(tt.initialPath)
+			assert.NoError(t, err)
+			v.SetOffset(tt.position)
+			for i, path := range tt.openPaths {
+				_, err = e.OpenFile(path)
+				assert.NoError(t, err)
+				assert.Equal(t,
+					tt.wantOffsets[i], e.FocusedView().Offset(),
+				)
+			}
+		})
+	}
+}

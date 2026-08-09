@@ -1,10 +1,14 @@
 package view
 
-import "github.com/kode4food/toe/internal/core"
+import (
+	"slices"
+
+	"github.com/kode4food/toe/internal/core"
+)
 
 // SessionWriter is the opaque target a pane writes session state into
 type SessionWriter struct {
-	node     sessionNode
+	node     sessNode
 	docIndex map[DocumentId]int
 	base     string
 }
@@ -13,12 +17,12 @@ type SessionWriter struct {
 func (v *View) SaveSession(w *SessionWriter) {
 	doc, ok := v.editor.documents.byID[v.docID]
 	if !ok {
-		w.node = sessionNode{Kind: SessionKindView}
+		w.node = sessNode{Kind: SessionKindView}
 		return
 	}
 	entries := v.jumps.Entries()
 	savedHead := v.jumps.Head()
-	jumps := make([]sessionJump, 0, len(entries))
+	jumps := make([]sessJump, 0, len(entries))
 	newHead := 0
 	for i, j := range entries {
 		idx, ok := w.docIndex[j.DocID]
@@ -28,35 +32,36 @@ func (v *View) SaveSession(w *SessionWriter) {
 		if i < savedHead {
 			newHead++
 		}
-		jumps = append(jumps, sessionJump{
+		jumps = append(jumps, sessJump{
 			Document:  idx,
 			Anchor:    j.Anchor,
 			Selection: sessionSelection(j.Selection),
 		})
 	}
-	w.node = sessionNode{
-		Kind:             SessionKindView,
-		Document:         w.docIndex[doc.ID()],
-		Mode:             v.Mode().String(),
-		Anchor:           v.offset.Anchor,
-		HorizontalOffset: v.offset.HorizontalOffset,
-		VerticalOffset:   v.offset.VerticalOffset,
-		Selection:        sessionSelection(doc.SelectionFor(v.id)),
-		JumpHead:         newHead,
-		Jumps:            jumps,
+	w.node = sessNode{
+		Kind:      SessionKindView,
+		Document:  w.docIndex[doc.ID()],
+		Mode:      v.Mode().String(),
+		Anchor:    v.offset.Anchor,
+		HorzOff:   v.offset.HorizontalOffset,
+		VertOff:   v.offset.VerticalOffset,
+		Selection: sessionSelection(doc.SelectionFor(v.id)),
+		JumpHead:  newHead,
+		Jumps:     jumps,
 	}
 	for _, did := range v.docHistory {
 		if idx, ok := w.docIndex[did]; ok {
-			w.node.DocumentHistory = append(w.node.DocumentHistory, idx)
+			w.node.DocHistory = append(w.node.DocHistory, idx)
 		}
 	}
+	w.node.DocOffs = v.sessionDocOffsets(w.docIndex)
 }
 
 // SaveSlot stores a reopenable pane slot in the session
 func (w *SessionWriter) SaveSlot(kind SessionKind, path string) {
-	w.node = sessionNode{Kind: kind}
+	w.node = sessNode{Kind: kind}
 	if path != "" {
-		w.node.Path = sessionPath(sessionRef{base: w.base, path: path})
+		w.node.Path = sessionPath(sessRef{base: w.base, path: path})
 	}
 }
 
@@ -68,17 +73,17 @@ func (w *SessionWriter) SaveValue(key string, value any) {
 	w.node.Values[key] = value
 }
 
-func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
+func (e *Editor) sessionDocument(d *Document, base string) sessDocument {
 	if d.Path() == "" {
-		return sessionDocument{
+		return sessDocument{
 			Scratch:   true,
 			Text:      d.Text().String(),
 			Lang:      d.Lang(),
 			Selection: sessionSelection(d.Selection()),
 		}
 	}
-	return sessionDocument{
-		Path:      sessionPath(sessionRef{base: base, path: d.Path()}),
+	return sessDocument{
+		Path:      sessionPath(sessRef{base: base, path: d.Path()}),
 		Lang:      d.Lang(),
 		Selection: sessionSelection(d.Selection()),
 	}
@@ -86,7 +91,7 @@ func (e *Editor) sessionDocument(d *Document, base string) sessionDocument {
 
 func (e *Editor) sessionNodeFor(
 	id Id, docIndex map[DocumentId]int, base string,
-) sessionNode {
+) sessNode {
 	n := e.panes.tree.nodes[id]
 	if n.pane != nil {
 		w := &SessionWriter{docIndex: docIndex, base: base}
@@ -101,12 +106,12 @@ func (e *Editor) sessionNodeFor(
 		return node
 	}
 	c := n.container
-	out := sessionNode{
+	out := sessNode{
 		Kind:     SessionKindSplit,
 		Layout:   sessionLayoutName(c.layout),
 		Ratios:   c.ratios,
 		FocusSeq: n.focusSeq,
-		Children: make([]sessionNode, 0, len(c.children)),
+		Children: make([]sessNode, 0, len(c.children)),
 	}
 	for _, child := range c.children {
 		out.Children = append(
@@ -116,14 +121,36 @@ func (e *Editor) sessionNodeFor(
 	return out
 }
 
-func sessionSelection(sel core.Selection) sessionSelect {
+// sessionDocOffsets returns the pane's remembered offsets for the documents
+// it is not displaying, ordered by document index for a stable session file
+func (v *View) sessionDocOffsets(docIndex map[DocumentId]int) []sessDocOffset {
+	out := make([]sessDocOffset, 0, len(v.docOffsets))
+	for did, p := range v.docOffsets {
+		idx, ok := docIndex[did]
+		if !ok || did == v.docID || p == (Position{}) {
+			continue
+		}
+		out = append(out, sessDocOffset{
+			Document:         idx,
+			Anchor:           p.Anchor,
+			HorizontalOffset: p.HorizontalOffset,
+			VerticalOffset:   p.VerticalOffset,
+		})
+	}
+	slices.SortFunc(out, func(a, b sessDocOffset) int {
+		return a.Document - b.Document
+	})
+	return out
+}
+
+func sessionSelection(sel core.Selection) sessSelect {
 	ranges := sel.Ranges()
-	out := sessionSelect{
+	out := sessSelect{
 		Primary: sel.PrimaryIndex(),
-		Ranges:  make([]sessionRange, 0, len(ranges)),
+		Ranges:  make([]sessRange, 0, len(ranges)),
 	}
 	for _, r := range ranges {
-		out.Ranges = append(out.Ranges, sessionRange{
+		out.Ranges = append(out.Ranges, sessRange{
 			Anchor: r.Anchor,
 			Head:   r.Head,
 		})

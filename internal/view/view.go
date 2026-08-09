@@ -1,6 +1,7 @@
 package view
 
 import (
+	"maps"
 	"slices"
 
 	"github.com/mattn/go-runewidth"
@@ -16,6 +17,7 @@ type (
 		editor     *Editor
 		docID      DocumentId
 		docHistory []DocumentId
+		docOffsets map[DocumentId]Position
 
 		offset     Position
 		mode       Mode
@@ -139,10 +141,11 @@ func (v *View) SetID(id Id) {
 // Split returns another view of the same document
 func (v *View) Split() (Pane, error) {
 	return &View{
-		editor: v.editor,
-		docID:  v.docID,
-		mode:   ModeNormal,
-		jumps:  v.jumps.Clone(),
+		editor:     v.editor,
+		docID:      v.docID,
+		docOffsets: maps.Clone(v.docOffsets),
+		mode:       ModeNormal,
+		jumps:      v.jumps.Clone(),
 	}, nil
 }
 
@@ -330,6 +333,24 @@ func (v *View) EnsureCursorVisibleHorizontal(cs *CursorScroll) {
 		h = max(col-cs.Width+1+so, 0)
 	}
 	v.offset.HorizontalOffset = h
+}
+
+func (v *View) switchDoc(did DocumentId) {
+	if did == v.docID {
+		return
+	}
+	if v.docOffsets == nil {
+		v.docOffsets = map[DocumentId]Position{}
+	}
+	v.docOffsets[v.docID] = v.offset
+	p := v.docOffsets[did]
+	doc := v.editor.Document(did)
+	if doc == nil || p.Anchor > doc.Text().LenChars() {
+		p = Position{}
+	}
+	v.docID = did
+	v.offset = p
+	v.dirty = true
 }
 
 func (v *View) addDocHistory(did DocumentId) {

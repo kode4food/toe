@@ -1023,17 +1023,67 @@ kind = "bogus"
 	})
 }
 
-func (p *fakePane) ID() view.Id      { return p.id }
-func (p *fakePane) SetID(id view.Id) { p.id = id }
+func TestSessionDocumentOffsets(t *testing.T) {
+	dir := t.TempDir()
+	a := filepath.Join(dir, "a.txt")
+	b := filepath.Join(dir, "b.txt")
+	assert.NoError(t, os.WriteFile(a, []byte("aaa\nbbb\nccc\n"), 0o644))
+	assert.NoError(t, os.WriteFile(b, []byte("xxx\nyyy\n"), 0o644))
+	sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
+
+	e := view.NewEditor(dir)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
+	v, err := e.OpenFile(a)
+	assert.NoError(t, err)
+	want := view.Position{Anchor: 4, VerticalOffset: 2}
+	v.SetOffset(want)
+	_, err = e.OpenFile(b)
+	assert.NoError(t, err)
+	assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+	next := view.NewEditor(dir)
+	next.ResizeTree(geom.Size{Width: 80, Height: 24})
+	_, restored, err := next.RestoreSession(sessionPath)
+	assert.NoError(t, err)
+	assert.True(t, restored)
+	_, err = next.OpenFile(a)
+	assert.NoError(t, err)
+	assert.Equal(t, want, next.FocusedView().Offset())
+}
+
+func (p *fakePane) ID() view.Id {
+	return p.id
+}
+
+func (p *fakePane) SetID(id view.Id) {
+	p.id = id
+}
+
 func (p *fakePane) Split() (view.Pane, error) {
 	return &fakePane{editor: p.editor}, nil
 }
-func (p *fakePane) Discard()            {}
-func (p *fakePane) Shutdown()           {}
-func (p *fakePane) Area() geom.Area     { return p.area }
-func (p *fakePane) SetArea(a geom.Area) { p.area = a }
-func (p *fakePane) MarkDirty()          { p.dirty = true }
-func (p *fakePane) SetRedraw(fn func()) { p.redraw = fn }
+
+func (p *fakePane) Discard() {
+}
+
+func (p *fakePane) Shutdown() {
+}
+
+func (p *fakePane) Area() geom.Area {
+	return p.area
+}
+
+func (p *fakePane) SetArea(a geom.Area) {
+	p.area = a
+}
+
+func (p *fakePane) MarkDirty() {
+	p.dirty = true
+}
+
+func (p *fakePane) SetRedraw(fn func()) {
+	p.redraw = fn
+}
 
 // ConsumeDirty reports whether MarkDirty was called since the last check
 func (p *fakePane) ConsumeDirty() bool {
@@ -1045,5 +1095,10 @@ func (p *fakePane) ConsumeDirty() bool {
 func (p *fakePane) SaveSession(w *view.SessionWriter) {
 	w.SaveSlot(view.SessionKindTerminal, "")
 }
-func (p *fakePane) Path() string    { return "" }
-func (p *fakePane) Mode() view.Mode { return view.ModeTerminal }
+func (p *fakePane) Path() string {
+	return ""
+}
+
+func (p *fakePane) Mode() view.Mode {
+	return view.ModeTerminal
+}

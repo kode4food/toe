@@ -17,35 +17,35 @@ type (
 	// SessionKind identifies a leaf pane's restorer in a saved session
 	SessionKind string
 
-	// sessionRef is a path recorded in a session, alongside the session's base
+	// sessRef is a path recorded in a session, alongside the session's base
 	// directory that relative paths resolve against
-	sessionRef struct {
+	sessRef struct {
 		base string
 		path string
 	}
 
-	editorSession struct {
-		Version   int               `toml:"version"`
-		Options   sessionOptions    `toml:"option,omitempty"`
-		Registers sessionRegisters  `toml:"register,omitempty"`
-		Maximized bool              `toml:"maximized,omitempty"`
-		Documents []sessionDocument `toml:"document"`
-		Layout    sessionNode       `toml:"layout"`
+	sessEditor struct {
+		Version   int            `toml:"version"`
+		Options   sessOptions    `toml:"option,omitempty"`
+		Registers sessRegisters  `toml:"register,omitempty"`
+		Maximized bool           `toml:"maximized,omitempty"`
+		Documents []sessDocument `toml:"document"`
+		Layout    sessNode       `toml:"layout"`
 	}
 
-	sessionOptions map[string]string
+	sessOptions map[string]string
 
-	sessionRegisters map[string][]string
+	sessRegisters map[string][]string
 
-	sessionDocument struct {
-		Path      string        `toml:"path,omitempty"`
-		Scratch   bool          `toml:"scratch,omitempty"`
-		Text      string        `toml:"text,omitempty"`
-		Lang      string        `toml:"language,omitempty"`
-		Selection sessionSelect `toml:"selection"`
+	sessDocument struct {
+		Path      string     `toml:"path,omitempty"`
+		Scratch   bool       `toml:"scratch,omitempty"`
+		Text      string     `toml:"text,omitempty"`
+		Lang      string     `toml:"language,omitempty"`
+		Selection sessSelect `toml:"selection"`
 	}
 
-	sessionNode struct {
+	sessNode struct {
 		Kind   SessionKind    `toml:"kind"`
 		Path   string         `toml:"path,omitempty"`
 		Values map[string]any `toml:"value,omitempty"`
@@ -53,49 +53,60 @@ type (
 		Layout string    `toml:"layout,omitempty"`
 		Ratios []float64 `toml:"ratios,omitempty"`
 
-		Document        int    `toml:"document,omitempty"`
-		DocumentHistory []int  `toml:"document-history,omitempty"`
-		Mode            string `toml:"mode,omitempty"`
+		Document   int             `toml:"document,omitempty"`
+		DocHistory []int           `toml:"document-history,omitempty"`
+		DocOffs    []sessDocOffset `toml:"document-offset,omitempty"`
+		Mode       string          `toml:"mode,omitempty"`
 
+		Anchor   int `toml:"anchor,omitempty"`
+		HorzOff  int `toml:"horizontal-offset,omitempty"`
+		VertOff  int `toml:"vertical-offset,omitempty"`
+		FocusSeq int `toml:"focus-seq,omitempty"`
+
+		Selection sessSelect `toml:"selection"`
+		JumpHead  int        `toml:"jump-head,omitempty"`
+		Jumps     []sessJump `toml:"jump,omitempty"`
+
+		Children []sessNode `toml:"child"`
+		History  []sessNode `toml:"history,omitempty"`
+	}
+
+	// sessDocOffset is a pane's remembered scroll position for a document
+	// it is not currently displaying
+	sessDocOffset struct {
+		Document         int `toml:"document"`
 		Anchor           int `toml:"anchor,omitempty"`
 		HorizontalOffset int `toml:"horizontal-offset,omitempty"`
 		VerticalOffset   int `toml:"vertical-offset,omitempty"`
-		FocusSeq         int `toml:"focus-seq,omitempty"`
-
-		Selection sessionSelect `toml:"selection"`
-		JumpHead  int           `toml:"jump-head,omitempty"`
-		Jumps     []sessionJump `toml:"jump,omitempty"`
-
-		Children []sessionNode `toml:"child"`
-		History  []sessionNode `toml:"history,omitempty"`
 	}
 
-	sessionSelect struct {
-		Primary int            `toml:"primary"`
-		Ranges  []sessionRange `toml:"range"`
+	sessSelect struct {
+		Primary int         `toml:"primary"`
+		Ranges  []sessRange `toml:"range"`
 	}
 
-	sessionJump struct {
-		Document  int           `toml:"document"`
-		Anchor    int           `toml:"anchor"`
-		Selection sessionSelect `toml:"selection"`
+	sessJump struct {
+		Document  int        `toml:"document"`
+		Anchor    int        `toml:"anchor"`
+		Selection sessSelect `toml:"selection"`
 	}
 
-	sessionRange struct {
+	sessRange struct {
 		Anchor int `toml:"anchor"`
 		Head   int `toml:"head"`
 	}
 )
 
 const (
-	sessionVersion = 1
-	SessionFile    = "session.toml"
+	SessionFile = "session.toml"
 
 	SessionKindSplit    SessionKind = "split"
 	SessionKindView     SessionKind = "view"
 	SessionKindImage    SessionKind = "image"
 	SessionKindTerminal SessionKind = "terminal"
 	SessionKindBinary   SessionKind = "binary"
+
+	sessionVersion = 1
 )
 
 var (
@@ -110,20 +121,20 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 	docIndex := map[DocumentId]int{}
 	base := sessionBase(path)
 	e.panes.tree.compactFocusSeq()
-	s := editorSession{
+	s := sessEditor{
 		Version:   sessionVersion,
 		Maximized: e.panes.tree.Maximized(),
 	}
 	keys := slices.Sorted(maps.Keys(opts))
 	if len(keys) > 0 {
-		s.Options = sessionOptions{}
+		s.Options = sessOptions{}
 	}
 	for _, key := range keys {
 		s.Options[key] = opts[key]
 	}
 	regKeys := slices.Sorted(maps.Keys(e.registers.values))
 	if len(regKeys) > 0 {
-		s.Registers = sessionRegisters{}
+		s.Registers = sessRegisters{}
 	}
 	for _, k := range regKeys {
 		if vals := e.registers.values.Read(k); len(vals) > 0 {
@@ -175,8 +186,8 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	reopenable := layoutHasReopenablePane(&s.Layout)
 	base := sessionBase(path)
 
-	docs := map[int]DocumentId{}
-	nextDocs := map[DocumentId]*Document{}
+	docIDs := map[int]DocumentId{}
+	docIndex := map[DocumentId]*Document{}
 	for i, sd := range s.Documents {
 		var absPath string
 		if !sd.Scratch {
@@ -184,7 +195,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				continue
 			}
 			var err error
-			absPath, err = filepath.Abs(sessionAbsPath(sessionRef{
+			absPath, err = filepath.Abs(sessionAbsPath(sessRef{
 				base: base,
 				path: sd.Path,
 			}))
@@ -218,10 +229,10 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 			})
 			doc.views.lastSelection = sd.Selection.selection()
 		}
-		nextDocs[doc.ID()] = doc
-		docs[i+1] = doc.ID()
+		docIndex[doc.ID()] = doc
+		docIDs[i+1] = doc.ID()
 	}
-	if len(nextDocs) == 0 && !reopenable {
+	if len(docIndex) == 0 && !reopenable {
 		return nil, false, ErrSessionEmpty
 	}
 
@@ -238,7 +249,11 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 			layout: LayoutVertical,
 		},
 	}
-	rs := sessionRestore{base: base, docs: docs, documents: nextDocs}
+	rs := sessionRestore{
+		base:     base,
+		docIDs:   docIDs,
+		docIndex: docIndex,
+	}
 	if err := e.restoreSessionRoot(t, rootID, &s.Layout, &rs); err != nil {
 		return nil, false, err
 	}
@@ -258,7 +273,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 	}
 	t.recalculate()
 
-	e.documents.byID = nextDocs
+	e.documents.byID = docIndex
 	e.panes.tree = t
 	e.documents.lastModifiedIDs = [2]DocumentId{}
 	e.markDocAccessed()
@@ -285,8 +300,8 @@ func WorkspaceSessionFile(dir string) string {
 	return filepath.Join(root, loader.WorkspaceDirName, SessionFile)
 }
 
-func readSession(path string) (editorSession, bool, error) {
-	var s editorSession
+func readSession(path string) (sessEditor, bool, error) {
+	var s sessEditor
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return s, false, nil
 	}
@@ -302,14 +317,14 @@ func readSession(path string) (editorSession, bool, error) {
 	return s, true, nil
 }
 
-func sessionPath(at sessionRef) string {
+func sessionPath(at sessRef) string {
 	if rel, err := filepath.Rel(at.base, at.path); err == nil {
 		return rel
 	}
 	return at.path
 }
 
-func sessionAbsPath(at sessionRef) string {
+func sessionAbsPath(at sessRef) string {
 	if filepath.IsAbs(at.path) {
 		return at.path
 	}
@@ -324,7 +339,7 @@ func sessionBase(path string) string {
 	return dir
 }
 
-func layoutHasReopenablePane(n *sessionNode) bool {
+func layoutHasReopenablePane(n *sessNode) bool {
 	switch n.Kind {
 	case SessionKindImage, SessionKindTerminal, SessionKindBinary:
 		return true

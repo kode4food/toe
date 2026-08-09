@@ -1,43 +1,40 @@
-package files
+package ui
 
 import (
+	"embed"
 	"strconv"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/config"
 )
 
 type completionSection struct {
 	Editor struct {
-		Completion ui.CompletionOptions `toml:"completion"`
+		Completion CompletionOptions `toml:"completion"`
 	} `toml:"editor"`
 }
 
-const (
-	actCompletion         = "completion"
-	actCompletionAccept   = ui.CompletionAcceptAction
-	actCompletionCancel   = ui.CompletionCancelAction
-	actCompletionPrevious = ui.CompletionPreviousAction
-	actCompletionNext     = ui.CompletionNextAction
-	actCompletionPageUp   = ui.CompletionPageUpAction
-	actCompletionPageDown = ui.CompletionPageDownAction
-	actCompletionFirst    = ui.CompletionFirstAction
-	actCompletionLast     = ui.CompletionLastAction
-)
+const actCompletion = "completion"
 
-// CompletionModule returns the completion-popup navigation commands
-func CompletionModule(model ui.Model) command.Module {
+//go:embed i18n/completion.*.json
+var completionFS embed.FS
+
+// CompletionModule returns the completion-popup navigation commands. It lives
+// beside completionComponent because the popup implements every action here by
+// intercepting the resolved command name
+func CompletionModule(model Model) command.Module {
 	cfg := new(completionSection)
 	reset := func() {
 		*cfg = completionSection{}
-		cfg.Editor.Completion = ui.DefaultCompletionOptions()
+		cfg.Editor.Completion = DefaultCompletionOptions()
 	}
 	reset()
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(completionFS),
 		Commands: []command.Command{
 			{
 				Name:      actCompletion,
@@ -47,58 +44,50 @@ func CompletionModule(model ui.Model) command.Module {
 				Keys:      kit.Keys(kit.Ctrl('x')),
 			},
 			{
-				Name:      actCompletionAccept,
+				Name:      CompletionAcceptAction,
 				DocString: "Accept completion",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.Ret, kit.Tab),
 			},
 			{
-				Name:      actCompletionCancel,
+				Name:      CompletionCancelAction,
 				DocString: "Cancel completion",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.Esc),
 			},
 			{
-				Name:      actCompletionPrevious,
+				Name:      CompletionPreviousAction,
 				DocString: "Previous completion",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.Up, kit.Ctrl('p')),
 			},
 			{
-				Name:      actCompletionNext,
+				Name:      CompletionNextAction,
 				DocString: "Next completion",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.Down, kit.Ctrl('n')),
 			},
 			{
-				Name:      actCompletionPageUp,
+				Name:      CompletionPageUpAction,
 				DocString: "Previous completion page",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.PgUp),
 			},
 			{
-				Name:      actCompletionPageDown,
+				Name:      CompletionPageDownAction,
 				DocString: "Next completion page",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.PgDn),
 			},
 			{
-				Name:      actCompletionFirst,
+				Name:      CompletionFirstAction,
 				DocString: "First completion",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.Home),
 			},
 			{
-				Name:      actCompletionLast,
+				Name:      CompletionLastAction,
 				DocString: "Last completion",
-				Run:       kit.Runner(noopAction),
 				Modes:     view.ModeCompletion,
 				Keys:      kit.Keys(kit.End),
 			},
@@ -122,21 +111,21 @@ func CompletionModule(model ui.Model) command.Module {
 				},
 			),
 			completionIntOption(model, "completion.delay",
-				func(o ui.CompletionOptions) int { return o.Delay },
-				func(o *ui.CompletionOptions, v int) { o.Delay = v },
+				func(o CompletionOptions) int { return o.Delay },
+				func(o *CompletionOptions, v int) { o.Delay = v },
 			),
 			completionIntOption(model, "completion.trigger-len",
-				func(o ui.CompletionOptions) int { return o.TriggerLen },
-				func(o *ui.CompletionOptions, v int) { o.TriggerLen = v },
+				func(o CompletionOptions) int { return o.TriggerLen },
+				func(o *CompletionOptions, v int) { o.TriggerLen = v },
 			),
 		},
 	}
 }
 
 func completionIntOption(
-	model ui.Model, key string,
-	get func(ui.CompletionOptions) int,
-	set func(*ui.CompletionOptions, int),
+	model Model, key string,
+	get func(CompletionOptions) int,
+	set func(*CompletionOptions, int),
 ) command.Option {
 	return command.Option{
 		Key: key,
@@ -155,5 +144,3 @@ func completionIntOption(
 		},
 	}
 }
-
-func noopAction(*view.Editor) {}

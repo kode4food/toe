@@ -2,10 +2,12 @@ package config
 
 import (
 	"cmp"
+	"embed"
 	"fmt"
 	"strconv"
 	"unicode/utf8"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -77,6 +79,9 @@ const (
 	actResizeView             = "resize_view"
 )
 
+//go:embed i18n/view.*.json
+var viewFS embed.FS
+
 // ViewModule returns the split, scroll, and view-option commands
 func ViewModule(model ui.Model) command.Module {
 	cfg := new(viewSection)
@@ -86,6 +91,7 @@ func ViewModule(model ui.Model) command.Module {
 	Cw := kit.Prefixed(kit.Ctrl('w'))
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(viewFS),
 		Commands: []command.Command{
 			{
 				Name:      actImageZoomIn,

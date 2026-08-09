@@ -62,6 +62,11 @@ const (
 	promptTerminalSearch
 )
 
+const (
+	promptSearchForwardKey  i18n.Key = "prompt.searchForward"
+	promptSearchBackwardKey i18n.Key = "prompt.searchBackward"
+)
+
 const promptEllipsis = "\u2026" // '…' - horizontal ellipsis
 
 // one column so the end-of-buffer caret cell stays on screen
@@ -213,9 +218,9 @@ func (p *PromptComponent) promptLabel() string {
 		return i18n.Text(i18n.PromptCommand) + " "
 	case promptSearch:
 		if p.forward {
-			return i18n.Text(i18n.PromptSearchForward) + ": "
+			return i18n.Text(promptSearchForwardKey) + ": "
 		}
-		return i18n.Text(i18n.PromptSearchBackward) + ": "
+		return i18n.Text(promptSearchBackwardKey) + ": "
 	default:
 		return p.prompt + ": "
 	}

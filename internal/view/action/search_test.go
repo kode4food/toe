@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -204,7 +205,9 @@ func TestSearchFeedback(t *testing.T) {
 		err := action.SearchForward(e, "foo")
 
 		assert.NoError(t, err)
-		assert.Equal(t, "Wrapped around document", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusSearchWrapped), e.TakeStatusMsg(),
+		)
 	})
 
 	t.Run("reports no forward match", func(t *testing.T) {
@@ -215,7 +218,9 @@ func TestSearchFeedback(t *testing.T) {
 		err := action.SearchForward(e, "bar")
 
 		assert.NoError(t, err)
-		assert.Equal(t, "No more matches", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusNoMoreMatches), e.TakeStatusMsg(),
+		)
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
 
@@ -226,7 +231,9 @@ func TestSearchFeedback(t *testing.T) {
 		err := action.SearchBackward(e, "foo")
 
 		assert.NoError(t, err)
-		assert.Equal(t, "Wrapped around document", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusSearchWrapped), e.TakeStatusMsg(),
+		)
 		assert.Equal(t, 8, testutil.CursorPos(t, e))
 	})
 }
@@ -257,7 +264,9 @@ func TestSearchPatterns(t *testing.T) {
 		err := action.SearchForward(e, "a*")
 
 		assert.NoError(t, err)
-		assert.Equal(t, "No more matches", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusNoMoreMatches), e.TakeStatusMsg(),
+		)
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
 }
@@ -923,7 +932,12 @@ func TestSearchSelection(t *testing.T) {
 		val, ok := e.Registers().First('/')
 		assert.True(t, ok)
 		assert.Equal(t, "foo", val)
-		assert.Equal(t, "register '/' set to 'foo'", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusRegisterSet, i18n.Vars{
+				"register": "/",
+				"value":    "foo",
+			}), e.TakeStatusMsg(),
+		)
 	})
 }
 
@@ -940,7 +954,12 @@ func TestSearchSelectionWord(t *testing.T) {
 		val, ok := e.Registers().First('/')
 		assert.True(t, ok)
 		assert.True(t, len(val) > 0)
-		assert.Contains(t, e.TakeStatusMsg(), "register '/' set to '")
+		assert.Equal(t,
+			i18n.Text(action.StatusRegisterSet, i18n.Vars{
+				"register": "/",
+				"value":    val,
+			}), e.TakeStatusMsg(),
+		)
 	})
 }
 
@@ -954,7 +973,12 @@ func TestMakeSearchWordBounded(t *testing.T) {
 		val, ok := e.Registers().First('/')
 		assert.True(t, ok)
 		assert.Contains(t, val, `\b`)
-		assert.Equal(t, "register '/' set to '\\bfoo\\b'", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusRegisterSet, i18n.Vars{
+				"register": "/",
+				"value":    `\bfoo\b`,
+			}), e.TakeStatusMsg(),
+		)
 	})
 
 	t.Run("noop when already bounded", func(t *testing.T) {

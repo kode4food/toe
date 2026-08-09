@@ -8,6 +8,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const promptScrollbackSearchKey i18n.Key = "prompt.scrollbackSearch"
+
 // TerminalAction opens the user's shell in the focused pane
 func (m Model) TerminalAction(e *view.Editor) {
 	if _, ok := e.Tree().Get(e.Tree().Focus()).(view.Displaceable); !ok {
@@ -33,7 +35,7 @@ func (m Model) TerminalSearchAction(e *view.Editor) {
 		return newPromptComponent(cx, promptComponentArgs{
 			editor: ec,
 			kind:   promptTerminalSearch,
-			prompt: i18n.Text(i18n.PromptScrollbackSearch),
+			prompt: i18n.Text(promptScrollbackSearchKey),
 			handler: func(_ *view.Editor, s string) error {
 				if !tp.SearchScrollback(s) {
 					return ErrScrollbackNoMatch

@@ -1,0 +1,4 @@
+{
+  "status.yankedSelection": "yanked {count} selection to register {register}",
+  "status.yankedSelections": "yanked {count} selections to register {register}"
+}

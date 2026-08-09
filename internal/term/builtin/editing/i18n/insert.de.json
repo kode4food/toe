@@ -1,0 +1,14 @@
+{
+  "commit-undo-checkpoint.docstring": "Einen neuen Rückgängig-Prüfpunkt erstellen",
+  "delete-char-backward.docstring": "Vorheriges Zeichen löschen",
+  "delete-char-forward.docstring": "Nächstes Zeichen löschen",
+  "delete-word-backward.docstring": "Vorheriges Wort löschen",
+  "delete-word-forward.docstring": "Nächstes Wort löschen",
+  "goto-line-end-newline.docstring": "Zum Zeilenumbruch am Zeilenende springen",
+  "insert-newline.docstring": "Zeilenumbruch einfügen",
+  "insert-register.docstring": "Register einfügen",
+  "insert-tab.docstring": "Tabulator an jedem Cursor einfügen",
+  "kill-to-line-end.docstring": "Bis zum Zeilenende löschen",
+  "kill-to-line-start.docstring": "Bis zum Zeilenanfang löschen",
+  "smart-tab.docstring": "In führendem Leerraum einen Tabulator einfügen, sonst hinter den umschließenden Syntaxknoten springen"
+}

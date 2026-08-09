@@ -1,0 +1,23 @@
+{
+  "move!.docstring": "Sposta il buffer corrente e il relativo file in un altro percorso creando le sottodirectory necessarie",
+  "move.docstring": "Sposta il buffer corrente e il relativo file in un altro percorso",
+  "new.docstring": "Crea un nuovo buffer scratch",
+  "open.docstring": "Apri un file dal disco nella vista corrente",
+  "read.docstring": "Carica un file in un buffer",
+  "reload-all.docstring": "Scarta le modifiche e ricarica tutti i documenti dai file sorgente",
+  "reload.docstring": "Scarta le modifiche e ricarica dal file sorgente",
+  "update.docstring": "Scrivi le modifiche solo se il file è stato modificato",
+  "write!.docstring": "Scrivi le modifiche su disco creando le sottodirectory necessarie. Percorso facoltativo: :write! some/path.txt",
+  "write-all!.docstring": "Scrivi le modifiche di tutti i buffer creando le sottodirectory necessarie",
+  "write-all.docstring": "Scrivi su disco le modifiche di tutti i buffer",
+  "write-buffer-close!.docstring": "Scrivi le modifiche, crea le sottodirectory necessarie e chiudi il buffer. Percorso facoltativo: :write-buffer-close! some/path.txt",
+  "write-buffer-close.docstring": "Scrivi le modifiche e chiudi il buffer. Percorso facoltativo: :write-buffer-close some/path.txt",
+  "write-quit!.docstring": "Scrivi tutti i documenti ed esci scartando i buffer scratch",
+  "write-quit.docstring": "Scrivi tutti i documenti ed esci",
+  "write.docstring": "Scrivi le modifiche su disco. Percorso facoltativo: :write some/path.txt",
+  "error.noFilename": "nome file mancante",
+  "error.unsavedMove": "modifiche non salvate (move! per forzare)",
+  "status.written": "salvato",
+  "status.allWritten": "tutti i documenti salvati",
+  "status.writtenAndClosed": "salvato e chiuso"
+}

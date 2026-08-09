@@ -1,6 +1,8 @@
 package editing
 
 import (
+	"embed"
+
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -42,34 +44,46 @@ const (
 	actSelectRegister             = "select_register"
 )
 
+const (
+	promptSelectKey i18n.Key = "prompt.select"
+	promptSplitKey  i18n.Key = "prompt.split"
+	promptKeepKey   i18n.Key = "prompt.keep"
+	promptRemoveKey i18n.Key = "prompt.remove"
+)
+
 type textObjectEntry struct {
 	char  rune
 	label string
 }
 
-var textObjectEntries = []textObjectEntry{
-	{char: 'f', label: "function"},
-	{char: 't', label: "type definition"},
-	{char: 'a', label: "argument/parameter"},
-	{char: 'c', label: "call"},
-	{char: 'e', label: "data structure entry"},
-	{char: 'w', label: "word"},
-	{char: 'W', label: "WORD"},
-	{char: 'p', label: "paragraph"},
-	{char: 'm', label: "closest surrounding pair"},
-	{char: '(', label: "parentheses"},
-	{char: ')', label: "parentheses"},
-	{char: '{', label: "curly braces"},
-	{char: '}', label: "curly braces"},
-	{char: '[', label: "square brackets"},
-	{char: ']', label: "square brackets"},
-	{char: '<', label: "angled brackets"},
-	{char: '>', label: "angled brackets"},
-	{char: '"', label: "double quotes"},
-	{char: '\'', label: "single quotes"},
-	{char: '`', label: "backticks"},
-	{char: '|', label: "pipes"},
-}
+var (
+	//go:embed i18n/selection.*.json
+	selectionFS embed.FS
+
+	textObjectEntries = []textObjectEntry{
+		{char: 'f', label: "function"},
+		{char: 't', label: "type definition"},
+		{char: 'a', label: "argument/parameter"},
+		{char: 'c', label: "call"},
+		{char: 'e', label: "data structure entry"},
+		{char: 'w', label: "word"},
+		{char: 'W', label: "WORD"},
+		{char: 'p', label: "paragraph"},
+		{char: 'm', label: "closest surrounding pair"},
+		{char: '(', label: "parentheses"},
+		{char: ')', label: "parentheses"},
+		{char: '{', label: "curly braces"},
+		{char: '}', label: "curly braces"},
+		{char: '[', label: "square brackets"},
+		{char: ']', label: "square brackets"},
+		{char: '<', label: "angled brackets"},
+		{char: '>', label: "angled brackets"},
+		{char: '"', label: "double quotes"},
+		{char: '\'', label: "single quotes"},
+		{char: '`', label: "backticks"},
+		{char: '|', label: "pipes"},
+	}
+)
 
 // SelectionModule returns the selection, surround, and text-object commands
 func SelectionModule(model ui.Model) command.Module {
@@ -78,6 +92,7 @@ func SelectionModule(model ui.Model) command.Module {
 	next := kit.Prefixed(kit.Char(']'))
 
 	mod := command.Module{
+		Translations: i18n.LoadTranslations(selectionFS),
 		Commands: []command.Command{
 			{
 				Name:      actCopyOnNextLine,
@@ -97,7 +112,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSelectWithinRegex,
 				DocString: "Select all regex matches inside selections",
 				Run: kit.Runner(model.RegexAction(
-					i18n.Text(i18n.PromptSelect),
+					promptSelectKey,
 					action.SelectWithinRegex,
 				)),
 				Modes: command.DocNormalModes,
@@ -107,7 +122,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSplitSelectionByRegex,
 				DocString: "Split selections on regex matches",
 				Run: kit.Runner(model.RegexAction(
-					i18n.Text(i18n.PromptSplit),
+					promptSplitKey,
 					action.SplitSelectionByRegex,
 				)),
 				Modes: command.DocNormalModes,
@@ -117,7 +132,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actKeepSelectionsMatching,
 				DocString: "Keep selections matching regex",
 				Run: kit.Runner(model.RegexAction(
-					i18n.Text(i18n.PromptKeep),
+					promptKeepKey,
 					action.KeepSelectionsMatching,
 				)),
 				Modes: command.DocNormalModes,
@@ -127,7 +142,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actRemoveSelectionsMatching,
 				DocString: "Remove selections matching regex",
 				Run: kit.Runner(model.RegexAction(
-					i18n.Text(i18n.PromptRemove),
+					promptRemoveKey,
 					action.RemoveSelectionsMatching,
 				)),
 				Modes: command.DocNormalModes,

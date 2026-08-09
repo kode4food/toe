@@ -7,6 +7,14 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	promptRenameKey             i18n.Key = "prompt.rename"
+	statusNoHoverResultsKey     i18n.Key = "status.noHoverResults"
+	statusLSPNoRenameKey        i18n.Key = "status.lspNoRename"
+	statusLSPNoHoverKey         i18n.Key = "status.lspNoHover"
+	statusLSPNoSignatureHelpKey i18n.Key = "status.lspNoSignatureHelp"
+)
+
 // RenameSymbolAction prompts for a new name and applies the server's edits
 func (m Model) RenameSymbolAction(e *view.Editor) {
 	ec := m.component
@@ -20,7 +28,7 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoRename))
+		e.SetStatusMsg(i18n.Text(statusLSPNoRenameKey))
 		return
 	}
 	prefill, err := ls.RenameSymbolPrefill(doc, v.ID())
@@ -32,7 +40,7 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 		return newPromptComponent(cx, promptComponentArgs{
 			editor:  ec,
 			kind:    promptRegex,
-			prompt:  i18n.Text(i18n.PromptRename),
+			prompt:  i18n.Text(promptRenameKey),
 			prefill: prefill,
 			handler: func(e *view.Editor, name string) error {
 				return renameSymbol(e, name)
@@ -72,7 +80,7 @@ func (m Model) HoverAction(e *view.Editor) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHover))
+		e.SetStatusMsg(i18n.Text(statusLSPNoHoverKey))
 		return
 	}
 	text, err := ls.Hover(doc, v.ID())
@@ -81,7 +89,7 @@ func (m Model) HoverAction(e *view.Editor) {
 		return
 	}
 	if text == "" {
-		e.SetStatusMsg(i18n.Text(i18n.StatusNoHoverResults))
+		e.SetStatusMsg(i18n.Text(statusNoHoverResultsKey))
 		return
 	}
 	anchor := newHoverAnchor(doc, v)
@@ -103,7 +111,7 @@ func (m Model) SignatureHelpAction(e *view.Editor) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoSignatureHelp))
+		e.SetStatusMsg(i18n.Text(statusLSPNoSignatureHelpKey))
 		return
 	}
 	call, ok := currentSignatureCall(m.context)

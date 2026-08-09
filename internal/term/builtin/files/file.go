@@ -1,6 +1,7 @@
 package files
 
 import (
+	"embed"
 	"errors"
 
 	"github.com/kode4food/toe/internal/i18n"
@@ -38,10 +39,21 @@ const (
 	actRead                  = "read"
 )
 
+const (
+	errorNoFilenameKey        i18n.Key = "error.noFilename"
+	errorUnsavedMoveKey       i18n.Key = "error.unsavedMove"
+	statusWrittenKey          i18n.Key = "status.written"
+	statusAllWrittenKey       i18n.Key = "status.allWritten"
+	statusWrittenAndClosedKey i18n.Key = "status.writtenAndClosed"
+)
+
 var (
-	errNoFilename  = i18n.NewError(i18n.ErrorNoFilename)
+	//go:embed i18n/file.*.json
+	fileFS embed.FS
+
+	errNoFilename  = i18n.NewError(errorNoFilenameKey)
 	errNoDocument  = i18n.NewError(i18n.ErrorNoDocument)
-	errUnsavedMove = i18n.NewError(i18n.ErrorUnsavedMove)
+	errUnsavedMove = i18n.NewError(errorUnsavedMoveKey)
 )
 
 // FileModule returns the file open, write, and manage commands
@@ -50,7 +62,8 @@ func FileModule() command.Module {
 	cmds := fileWriteCmds()
 	cmds = append(cmds, fileManageCmds()...)
 	return command.Module{
-		Commands: cmds,
+		Translations: i18n.LoadTranslations(fileFS),
+		Commands:     cmds,
 		Options: []command.Option{
 			kit.EditorBoolOption("insert-final-newline",
 				func(e *view.Editor) bool {
@@ -115,7 +128,7 @@ func fileWriteCmds() []command.Command {
 					}
 				}
 				return command.Result{
-					Message: i18n.Text(i18n.StatusWritten),
+					Message: i18n.Text(statusWrittenKey),
 				}
 			},
 			Modes:     command.DocModes,
@@ -138,7 +151,7 @@ func fileWriteCmds() []command.Command {
 					}
 				}
 				return command.Result{
-					Message: i18n.Text(i18n.StatusWritten),
+					Message: i18n.Text(statusWrittenKey),
 				}
 			},
 			Modes:     command.DocModes,
@@ -153,7 +166,7 @@ func fileWriteCmds() []command.Command {
 					return command.Result{Error: errs[0]}
 				}
 				return command.Result{
-					Message: i18n.Text(i18n.StatusAllWritten),
+					Message: i18n.Text(statusAllWrittenKey),
 				}
 			},
 			Modes:     command.PaneModes,
@@ -169,7 +182,7 @@ func fileWriteCmds() []command.Command {
 					_ = doc.Save(e.Options(), true)
 				}
 				return command.Result{
-					Message: i18n.Text(i18n.StatusAllWritten),
+					Message: i18n.Text(statusAllWrittenKey),
 				}
 			},
 			Modes:     command.PaneModes,
@@ -218,7 +231,7 @@ func fileWriteCmds() []command.Command {
 				}
 				e.CloseCurrentView()
 				return command.Result{
-					Message: i18n.Text(i18n.StatusWrittenAndClosed),
+					Message: i18n.Text(statusWrittenAndClosedKey),
 				}
 			},
 			Modes:     command.DocModes,
@@ -236,7 +249,7 @@ func fileWriteCmds() []command.Command {
 				_ = e.Save(true)
 				e.CloseCurrentView()
 				return command.Result{
-					Message: i18n.Text(i18n.StatusWrittenAndClosed),
+					Message: i18n.Text(statusWrittenAndClosedKey),
 				}
 			},
 			Modes:     command.DocModes,

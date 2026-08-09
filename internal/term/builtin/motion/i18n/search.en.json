@@ -1,0 +1,7 @@
+{
+  "prompt.searchForward": "search-forward",
+  "prompt.searchBackward": "search-backward",
+  "status.noMoreMatches": "No more matches",
+  "status.searchWrapped": "Wrapped around document",
+  "status.registerSet": "register '{register}' set to '{value}'"
+}

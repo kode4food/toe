@@ -1,0 +1,14 @@
+{
+  "commit-undo-checkpoint.docstring": "Créer un nouveau point d’annulation",
+  "delete-char-backward.docstring": "Supprimer le caractère précédent",
+  "delete-char-forward.docstring": "Supprimer le caractère suivant",
+  "delete-word-backward.docstring": "Supprimer le mot précédent",
+  "delete-word-forward.docstring": "Supprimer le mot suivant",
+  "goto-line-end-newline.docstring": "Aller au saut de ligne en fin de ligne",
+  "insert-newline.docstring": "Insérer un saut de ligne",
+  "insert-register.docstring": "Insérer un registre",
+  "insert-tab.docstring": "Insérer une tabulation à chaque curseur",
+  "kill-to-line-end.docstring": "Supprimer jusqu’à la fin de la ligne",
+  "kill-to-line-start.docstring": "Supprimer jusqu’au début de la ligne",
+  "smart-tab.docstring": "Insérer une tabulation dans l’indentation, sinon dépasser le nœud syntaxique englobant"
+}

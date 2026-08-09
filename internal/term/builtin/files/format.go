@@ -1,6 +1,7 @@
 package files
 
 import (
+	"embed"
 	"errors"
 	"strconv"
 
@@ -19,17 +20,29 @@ const (
 	actReindentSelections = "format_selections"
 )
 
+const (
+	errorInvalidWidthKey          i18n.Key = "error.invalidWidth"
+	errorBufferReadOnlyKey        i18n.Key = "error.bufferReadOnly"
+	statusNoFormatterKey          i18n.Key = "status.noFormatter"
+	errorNoRangeFormattingKey     i18n.Key = "error.noRangeFormatting"
+	errorFormatSelectionSingleKey i18n.Key = "error.formatSelectionSingle"
+)
+
 var (
-	errInvalidWidth          = i18n.NewError(i18n.ErrorInvalidWidth)
-	errBufferReadOnly        = i18n.NewError(i18n.ErrorBufferReadOnly)
-	errNoFormatter           = i18n.NewError(i18n.StatusNoFormatter)
-	errNoRangeFormatting     = i18n.NewError(i18n.ErrorNoRangeFormatting)
-	errFormatSelectionSingle = i18n.NewError(i18n.ErrorFormatSelectionSingle)
+	//go:embed i18n/format.*.json
+	formatFS embed.FS
+
+	errInvalidWidth          = i18n.NewError(errorInvalidWidthKey)
+	errBufferReadOnly        = i18n.NewError(errorBufferReadOnlyKey)
+	errNoFormatter           = i18n.NewError(statusNoFormatterKey)
+	errNoRangeFormatting     = i18n.NewError(errorNoRangeFormattingKey)
+	errFormatSelectionSingle = i18n.NewError(errorFormatSelectionSingleKey)
 )
 
 // FormatModule returns the document and selection format commands
 func FormatModule() command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(formatFS),
 		Commands: []command.Command{
 			{
 				Name: actFormat,

@@ -1,11 +1,13 @@
 package picker
 
 import (
+	"embed"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -25,12 +27,16 @@ const (
 	splitRatiosPrefix = "picker.split-ratios."
 )
 
+//go:embed i18n/picker.*.json
+var pickerFS embed.FS
+
 // Module returns the generic, concern-independent pickers: the command
 // palette and reopen-last-picker
 func Module(model ui.Model) command.Module {
 	cfg := new(section)
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(pickerFS),
 		Commands: []command.Command{
 			{
 				Name:      actCommandPalette,

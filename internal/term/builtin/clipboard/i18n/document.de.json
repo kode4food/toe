@@ -1,0 +1,19 @@
+{
+  "clear-register.docstring": "Das angegebene Register leeren. Ohne Argument alle Register leeren",
+  "clipboard-paste-replace.docstring": "Auswahlen durch den Inhalt der Zwischenablage ersetzen",
+  "paste-after.docstring": "Nach der Auswahl einfügen",
+  "paste-before.docstring": "Vor der Auswahl einfügen",
+  "paste-clipboard-after.docstring": "Die Zwischenablage nach den Auswahlen einfügen",
+  "paste-clipboard-before.docstring": "Die Zwischenablage vor den Auswahlen einfügen",
+  "paste-primary-clipboard-after.docstring": "Die primäre Zwischenablage nach den Auswahlen einfügen",
+  "paste-primary-clipboard-before.docstring": "Die primäre Zwischenablage vor den Auswahlen einfügen",
+  "primary-clipboard-paste-replace.docstring": "Auswahlen durch die primäre Zwischenablage ersetzen",
+  "replace-with-yanked.docstring": "Durch kopierten Text ersetzen",
+  "yank-joined-to-clipboard.docstring": "Zusammengefügte Auswahlen in die Zwischenablage kopieren. Ein Trennzeichen kann als erstes Argument angegeben werden. Standardwert ist ein Zeilenumbruch",
+  "yank-main-selection-to-clipboard.docstring": "Hauptauswahl in die Zwischenablage kopieren",
+  "yank-to-clipboard.docstring": "Auswahlen in die Zwischenablage kopieren",
+  "yank-to-primary-clipboard.docstring": "Auswahlen in die primäre Zwischenablage kopieren",
+  "yank.docstring": "Auswahl kopieren",
+  "status.yankedSelection": "{count} Auswahl in Register {register} kopiert",
+  "status.yankedSelections": "{count} Auswahlen in Register {register} kopiert"
+}

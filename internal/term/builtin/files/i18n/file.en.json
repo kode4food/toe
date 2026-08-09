@@ -1,0 +1,7 @@
+{
+  "error.noFilename": "no filename given",
+  "error.unsavedMove": "unsaved changes (use move! to force)",
+  "status.written": "written",
+  "status.allWritten": "all documents written",
+  "status.writtenAndClosed": "written and closed"
+}

@@ -18,6 +18,11 @@ type aboutComponent struct {
 }
 
 const (
+	AboutVersion     i18n.Key = "about.version"
+	AboutDevelopment i18n.Key = "about.development"
+)
+
+const (
 	// The popup is bounded so it stays readable on a large screen
 	aboutMaxWidth  = 52
 	aboutMaxHeight = 16
@@ -83,9 +88,9 @@ func (a *aboutComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 }
 
 func aboutText() string {
-	version := i18n.Text(i18n.AboutDevelopment)
+	version := i18n.Text(AboutDevelopment)
 	if v := buildVersion(); v != "" {
-		version = i18n.Text(i18n.AboutVersion) + " " + v
+		version = i18n.Text(AboutVersion) + " " + v
 	}
 	platform := runtime.Version() + " " + runtime.GOOS + "/" + runtime.GOARCH
 	return strings.Join([]string{

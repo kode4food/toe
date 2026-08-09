@@ -1,0 +1,5 @@
+{
+  "quit!.docstring": "Esci ignorando le modifiche non salvate",
+  "quit.docstring": "Esci se tutti i documenti sono salvati",
+  "error.unsavedQuit": "modifiche non salvate (:q! per forzare)"
+}

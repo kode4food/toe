@@ -1,8 +1,10 @@
 package vcs
 
 import (
+	"embed"
 	"fmt"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -19,11 +21,15 @@ const (
 	actChangedFilePicker = "changed_file_picker"
 )
 
+//go:embed i18n/vcs.*.json
+var vcsFS embed.FS
+
 // Module returns the version-control commands
 func Module(model ui.Model) command.Module {
 	prev := kit.Prefixed(kit.Char('['))
 	next := kit.Prefixed(kit.Char(']'))
 	return command.Module{
+		Translations: i18n.LoadTranslations(vcsFS),
 		Commands: []command.Command{
 			{
 				Name:      actChangedFilePicker,

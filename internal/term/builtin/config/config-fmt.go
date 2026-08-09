@@ -21,10 +21,15 @@ type (
 	wsRenderSetter func(*view.WhitespaceRender, *view.WhitespaceRenderValue)
 )
 
+const (
+	errorUnknownLineEndingKey i18n.Key = "error.unknownLineEnding"
+	errorExpectedIndentKey    i18n.Key = "error.expectedIndent"
+)
+
 var (
 	errNoDocument        = i18n.NewError(i18n.ErrorNoDocument)
-	errUnknownLineEnding = i18n.NewError(i18n.ErrorUnknownLineEnding)
-	errExpectedIndent    = i18n.NewError(i18n.ErrorExpectedIndent)
+	errUnknownLineEnding = i18n.NewError(errorUnknownLineEndingKey)
+	errExpectedIndent    = i18n.NewError(errorExpectedIndentKey)
 )
 
 func formatCmds() []command.Command {

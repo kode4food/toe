@@ -1,0 +1,7 @@
+{
+  "error.invalidWidth": "invalid width",
+  "error.bufferReadOnly": "buffer is read-only",
+  "status.noFormatter": "no formatter configured for {lang}",
+  "error.noRangeFormatting": "No configured language server supports range formatting",
+  "error.formatSelectionSingle": "format-selections only supports a single selection for now"
+}

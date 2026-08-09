@@ -1,6 +1,7 @@
 package motion
 
 import (
+	"embed"
 	"strconv"
 
 	"github.com/kode4food/toe/internal/i18n"
@@ -96,6 +97,9 @@ const (
 	actExtendToFileEnd           = "extend_to_file_end"
 )
 
+//go:embed i18n/cursor.*.json
+var cursorFS embed.FS
+
 // CursorModule returns the cursor-motion and goto commands
 func CursorModule() command.Module {
 	cfg := new(motionSection)
@@ -104,6 +108,7 @@ func CursorModule() command.Module {
 	next := kit.Prefixed(kit.Char(']'))
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(cursorFS),
 		Commands: []command.Command{
 			{
 				Name:      actMoveLeft,
@@ -567,7 +572,7 @@ func CursorModule() command.Module {
 			},
 			{
 				Name:      actExtendToLineEndNewline,
-				DocString: "Extend to line end",
+				DocString: "Extend to line end including newline",
 				Run:       kit.Runner(action.ExtendToLineEndNewline),
 				Modes:     view.ModeSelect,
 				Signature: command.DefaultSignature(),

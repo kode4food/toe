@@ -1,0 +1,11 @@
+{
+  "changed-file-picker.docstring": "Ouvrir le sélecteur de fichiers modifiés",
+  "goto-first-change.docstring": "Aller à la première modification",
+  "goto-last-change.docstring": "Aller à la dernière modification",
+  "goto-next-change.docstring": "Aller à la modification suivante",
+  "goto-prev-change.docstring": "Aller à la modification précédente",
+  "reset-diff-change.docstring": "Réinitialiser les modifications du diff sous les sélections",
+  "status.diffUnavailable": "Le diff n’est pas disponible dans le buffer actuel",
+  "status.pickerStaged": "Modifications indexées",
+  "status.pickerUnstaged": "Modifications"
+}

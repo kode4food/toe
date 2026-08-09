@@ -1,6 +1,7 @@
 package config
 
 import (
+	"embed"
 	"strconv"
 	"strings"
 
@@ -21,18 +22,27 @@ const (
 	actAbout         = "about"
 )
 
+const (
+	errorNoLineNumberKey      i18n.Key = "error.noLineNumber"
+	errorInvalidLineNumberKey i18n.Key = "error.invalidLineNumber"
+)
+
 var (
-	errNoLineNumber      = i18n.NewError(i18n.ErrorNoLineNumber)
-	errInvalidLineNumber = i18n.NewError(i18n.ErrorInvalidLineNumber)
+	//go:embed i18n/support.*.json
+	supportFS embed.FS
+
+	errNoLineNumber      = i18n.NewError(errorNoLineNumberKey)
+	errInvalidLineNumber = i18n.NewError(errorInvalidLineNumberKey)
 )
 
 // SupportModule returns miscellaneous support commands
 func SupportModule(model ui.Model) command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(supportFS),
 		Commands: []command.Command{
 			{
 				Name:      actAbout,
-				DocString: i18n.Text(i18n.AboutCommandDoc),
+				DocString: "Show version and license information",
 				Run:       kit.Runner(model.AboutAction),
 				Modes:     command.PaneModes,
 				Signature: command.DefaultSignature(),

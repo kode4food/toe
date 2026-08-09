@@ -1,0 +1,12 @@
+{
+  "shell-append-output.docstring": "Die Ausgabe des Shell-Befehls nach den Auswahlen einfügen",
+  "shell-insert-output.docstring": "Die Ausgabe des Shell-Befehls vor den Auswahlen einfügen",
+  "shell-keep-pipe.docstring": "Auswahlen mit einem Shell-Prädikat filtern",
+  "shell-pipe-to.docstring": "Auswahlen an einen Shell-Befehl übergeben und die Ausgabe ignorieren",
+  "shell-pipe.docstring": "Auswahlen durch einen Shell-Befehl leiten",
+  "prompt.pipe": "Pipe",
+  "prompt.insertOutput": "Ausgabe einfügen",
+  "prompt.filter": "filtern",
+  "prompt.pipeTo": "Pipe an",
+  "prompt.appendOutput": "Ausgabe anhängen"
+}

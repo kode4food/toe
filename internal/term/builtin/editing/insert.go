@@ -1,6 +1,9 @@
 package editing
 
 import (
+	"embed"
+
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -22,9 +25,13 @@ const (
 	actGotoLineEndNewline   = "goto_line_end_newline"
 )
 
+//go:embed i18n/insert.*.json
+var insertFS embed.FS
+
 // InsertModule returns the insert-mode entry and text-insertion commands
 func InsertModule() command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(insertFS),
 		Commands: []command.Command{
 			{
 				Name:      actInsertRegister,

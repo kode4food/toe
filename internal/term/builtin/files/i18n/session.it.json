@@ -1,0 +1,4 @@
+{
+  "restore-session.docstring": "Ripristina la sessione dal file di sessione dell'area di lavoro",
+  "save-session.docstring": "Salva la sessione nel file di sessione dell'area di lavoro"
+}

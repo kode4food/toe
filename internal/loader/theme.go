@@ -16,11 +16,11 @@ var (
 )
 
 //go:embed assets/themes
-var embeddedThemes embed.FS
+var themeFS embed.FS
 
 // ThemeNames lists the embedded themes, sorted
 func ThemeNames() []string {
-	entries, err := embeddedThemes.ReadDir("assets/themes")
+	entries, err := themeFS.ReadDir("assets/themes")
 	if err != nil {
 		return nil
 	}
@@ -45,7 +45,7 @@ func loadThemeTOML(name string, seen map[string]bool) (map[string]any, error) {
 		return nil, fmt.Errorf("%w: %s", ErrThemeCycle, name)
 	}
 	seen[name] = true
-	data, err := embeddedThemes.ReadFile("assets/themes/" + name + ".toml")
+	data, err := themeFS.ReadFile("assets/themes/" + name + ".toml")
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrThemeNotFound, name)
 	}

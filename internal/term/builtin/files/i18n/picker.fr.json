@@ -1,0 +1,7 @@
+{
+  "buffer-picker.docstring": "Ouvrir le sélecteur de buffers",
+  "file-explorer-in-current-pane-dir.docstring": "Ouvrir l’explorateur de fichiers dans le répertoire du panneau courant",
+  "file-explorer.docstring": "Ouvrir l’explorateur de fichiers à la racine de l’espace de travail",
+  "file-picker-in-current-dir.docstring": "Ouvrir le sélecteur de fichiers dans le répertoire de travail courant",
+  "file-picker.docstring": "Ouvrir le sélecteur de fichiers"
+}

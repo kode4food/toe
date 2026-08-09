@@ -1,0 +1,11 @@
+{
+  "completion-accept.docstring": "Accepter la complétion",
+  "completion-cancel.docstring": "Annuler la complétion",
+  "completion-first.docstring": "Sélectionner la première complétion",
+  "completion-last.docstring": "Sélectionner la dernière complétion",
+  "completion-next.docstring": "Sélectionner la complétion suivante",
+  "completion-page-down.docstring": "Afficher la page de complétions suivante",
+  "completion-page-up.docstring": "Afficher la page de complétions précédente",
+  "completion-previous.docstring": "Sélectionner la complétion précédente",
+  "completion.docstring": "Compléter le mot courant"
+}

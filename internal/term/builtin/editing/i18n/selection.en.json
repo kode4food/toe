@@ -1,0 +1,7 @@
+{
+  "prompt.select": "select",
+  "prompt.split": "split",
+  "prompt.keep": "keep",
+  "prompt.remove": "remove",
+  "status.noSelections": "no selections remaining"
+}

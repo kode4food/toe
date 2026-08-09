@@ -36,11 +36,10 @@ func TestAbout(t *testing.T) {
 		assert.Contains(t, out, "MIT License")
 		assert.Contains(t, out, "https://github.com/kode4food/toe")
 		assert.Contains(t, out, "A modal text editor for Go development")
-		assert.Contains(t, out, i18n.Text(i18n.AboutDevelopment))
-		assert.NotContains(t,
-			out,
-			i18n.Text(i18n.AboutVersion)+" "+i18n.Text(i18n.AboutDevelopment),
-		)
+		development := i18n.Text(ui.AboutDevelopment)
+		version := i18n.Text(ui.AboutVersion)
+		assert.Contains(t, out, development)
+		assert.NotContains(t, out, version+" "+development)
 		assert.Contains(t, out, "go1.")
 	})
 

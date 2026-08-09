@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
@@ -417,7 +418,12 @@ func TestYank(t *testing.T) {
 		action.Yank(e)
 
 		assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
-		assert.Equal(t, "yanked 1 selection to register \"", e.TakeStatusMsg())
+		assert.Equal(t,
+			i18n.Text(action.StatusYankedSelection, i18n.Vars{
+				"count":    1,
+				"register": `"`,
+			}), e.TakeStatusMsg(),
+		)
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})
 

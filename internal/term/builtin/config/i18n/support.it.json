@@ -1,0 +1,11 @@
+{
+  "about.docstring": "Mostra informazioni su versione e licenza",
+  "character-info.docstring": "Mostra informazioni sul carattere sotto il cursore principale",
+  "echo.docstring": "Stampa gli argomenti forniti nella barra di stato",
+  "redraw.docstring": "Cancella e ridisegna l'intera interfaccia",
+  "goto.docstring": "Vai a una posizione path:line:col",
+  "about.version": "Versione",
+  "about.development": "Versione di sviluppo",
+  "error.noLineNumber": "numero di riga mancante",
+  "error.invalidLineNumber": "numero di riga non valido"
+}

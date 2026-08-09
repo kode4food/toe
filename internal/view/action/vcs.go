@@ -9,6 +9,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const StatusDiffUnavailable i18n.Key = "status.diffUnavailable"
+
 var (
 	ErrDiffUnavailable      = errors.New("diff unavailable in this buffer")
 	ErrNoChangesInSelection = errors.New("no changes under any selection")
@@ -181,7 +183,7 @@ func focusedDiffHunks(e *view.Editor) (focusedDiffHunksRes, bool) {
 	}
 	vc := e.VersionControl()
 	if vc == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusDiffUnavailable))
+		e.SetStatusMsg(i18n.Text(StatusDiffUnavailable))
 		return focusedDiffHunksRes{}, false
 	}
 	return focusedDiffHunksRes{

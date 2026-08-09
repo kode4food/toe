@@ -72,24 +72,22 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 			return fmt.Errorf("%w: %s in %s", ErrUnknownMode, mode, name)
 		}
 	}
-	if cmd.Run != nil {
-		label := cmd.DocString
-		action := func(e *view.Editor) Result {
-			return k.commands[idx].Run(e, nil)
+	label := cmd.DocString
+	action := func(e *view.Editor) Result {
+		return k.commands[idx].run(e)
+	}
+	for _, mode := range cmd.Modes.Split() {
+		bindings, ok := cmd.Keys[mode]
+		if !ok {
+			bindings = cmd.Keys[view.ModeAny]
 		}
-		for _, mode := range cmd.Modes.Split() {
-			bindings, ok := cmd.Keys[mode]
-			if !ok {
-				bindings = cmd.Keys[view.ModeAny]
-			}
-			k.bindCommand(bindCommandArgs{
-				mode:   mode,
-				name:   name,
-				action: action,
-				label:  label,
-				seqs:   bindings,
-			})
-		}
+		k.bindCommand(bindCommandArgs{
+			mode:   mode,
+			name:   name,
+			action: action,
+			label:  label,
+			seqs:   bindings,
+		})
 	}
 	for _, alias := range cmd.Aliases {
 		k.byName[alias] = idx
@@ -138,11 +136,11 @@ func (k *Keymaps) Bindings(mode view.Mode, name string) KeyBinding {
 // Bind adds extra key sequences to an already-registered command
 func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
 	cmd := k.ResolveCommand(name)
-	if cmd == nil || cmd.Run == nil {
+	if cmd == nil {
 		return
 	}
 	action := func(e *view.Editor) Result {
-		return cmd.Run(e, nil)
+		return cmd.run(e)
 	}
 	k.bindCommand(bindCommandArgs{
 		mode:   mode,

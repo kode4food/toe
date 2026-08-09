@@ -1,6 +1,7 @@
 package files
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"strings"
@@ -30,12 +31,20 @@ const (
 	actLSPWorkspaceCommand = "lsp-workspace-command"
 )
 
-var errLSPUndefined = i18n.NewError(i18n.ErrorLSPUndefined)
+const errorLSPUndefinedKey i18n.Key = "error.lspUndefined"
+
+var (
+	//go:embed i18n/lsp.*.json
+	lspFS embed.FS
+
+	errLSPUndefined = i18n.NewError(errorLSPUndefinedKey)
+)
 
 // LspModule returns the language-server navigation and action commands
 func LspModule(model ui.Model) command.Module {
 	g := kit.Prefixed(kit.Char('g'))
 	return command.Module{
+		Translations: i18n.LoadTranslations(lspFS),
 		Commands: []command.Command{
 			{
 				Name:      actGotoDeclaration,

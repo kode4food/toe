@@ -9,6 +9,12 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	StatusNoMoreMatches i18n.Key = "status.noMoreMatches"
+	StatusSearchWrapped i18n.Key = "status.searchWrapped"
+	StatusRegisterSet   i18n.Key = "status.registerSet"
+)
+
 // SearchSelection stores the joined selection text as the search pattern (no
 // word-boundary detection) and sets it in the '/' register
 func SearchSelection(e *view.Editor) {
@@ -237,16 +243,16 @@ type setSearchStatusArgs struct {
 
 func setSearchStatus(e *view.Editor, status setSearchStatusArgs) {
 	if !status.matched {
-		e.SetStatusMsg(i18n.Text(i18n.StatusNoMoreMatches))
+		e.SetStatusMsg(i18n.Text(StatusNoMoreMatches))
 		return
 	}
 	if status.wrapped {
-		e.SetStatusMsg(i18n.Text(i18n.StatusSearchWrapped))
+		e.SetStatusMsg(i18n.Text(StatusSearchWrapped))
 	}
 }
 
 func setRegisterStatus(e *view.Editor, reg rune, value string) {
-	e.SetStatusMsg(i18n.Text(i18n.StatusRegisterSet, i18n.Vars{
+	e.SetStatusMsg(i18n.Text(StatusRegisterSet, i18n.Vars{
 		"register": string(reg),
 		"value":    value,
 	}))

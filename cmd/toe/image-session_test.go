@@ -29,12 +29,12 @@ func TestImageSession(t *testing.T) {
 	) {
 		return
 	}
-	first.send(":save_session\r")
+	first.send(":save-session\r")
 	first.quit()
 
 	next := startTUI(t, dir)
 	next.waitFor("NOR")
-	next.send(":restore_session\r")
+	next.send(":restore-session\r")
 	assert.Eventually(t,
 		next.transmittedImage, waitTimeout, pollPause,
 	)

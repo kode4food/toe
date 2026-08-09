@@ -1,17 +1,22 @@
 // Package command defines the command registry types for the editor
 package command
 
-import "github.com/kode4food/toe/internal/view"
+import (
+	"strings"
+
+	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/view"
+)
 
 type (
-	// Module groups a set of commands, runtime options, and an optional
-	// config section. Options are registered into the editor option registry
-	// when the module is installed
+	// Module groups commands, translations, runtime options, and an optional
+	// config section for installation together
 	Module struct {
-		Commands []Command
-		Options  []Option
-		Section  *Section
-		Labels   []PrefixLabel
+		Commands     []Command
+		Translations i18n.Translations
+		Options      []Option
+		Section      *Section
+		Labels       []PrefixLabel
 	}
 
 	// PrefixLabel names an intermediate key-sequence node for the pending-key
@@ -71,7 +76,9 @@ type (
 		Label string
 	}
 
-	// Run executes a registered command, optionally with parsed arguments
+	// Run executes a registered command, optionally with parsed arguments. A
+	// nil Run declares the name, docs, and bindings of a command whose behavior
+	// a UI component implements by intercepting the resolved name
 	Run func(*view.Editor, *Args) Result
 
 	// Result is returned by a Run function
@@ -127,3 +134,24 @@ const (
 		view.ModeImage |
 		view.ModeBinary
 )
+
+func (c *Command) run(e *view.Editor) Result {
+	if c.Run == nil {
+		return Result{}
+	}
+	return c.Run(e, nil)
+}
+
+func (c *Command) localizeDocString(alias string) {
+	key := docStringKey(alias)
+	i18n.Register(i18n.Translations{key: c.DocString})
+	c.DocString = i18n.Text(key)
+}
+
+func kebabName(name string) string {
+	return strings.ReplaceAll(name, "_", "-")
+}
+
+func docStringKey(alias string) i18n.Key {
+	return i18n.Key(alias + ".docstring")
+}

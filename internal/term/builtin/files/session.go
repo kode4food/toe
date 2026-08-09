@@ -1,6 +1,9 @@
 package files
 
 import (
+	"embed"
+
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -10,10 +13,14 @@ const (
 	actRestoreSession = "restore_session"
 )
 
+//go:embed i18n/session.*.json
+var sessionFS embed.FS
+
 // SessionModule provides explicit commands for saving and restoring sessions
 // with the registry's current runtime options
 func SessionModule(r *command.Registry) command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(sessionFS),
 		Commands: []command.Command{
 			{
 				Name:      actSaveSession,

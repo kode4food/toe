@@ -1,0 +1,9 @@
+{
+  "diagnostic-picker.docstring": "Apri il selettore della diagnostica",
+  "global-search.docstring": "Cerca globalmente nell'area di lavoro",
+  "workspace-diagnostics-picker.docstring": "Apri il selettore della diagnostica dell'area di lavoro",
+  "status.pickerErrors": "Errori",
+  "status.pickerWarnings": "Avvisi",
+  "status.pickerInfo": "Informazioni",
+  "status.pickerHints": "Suggerimenti"
+}

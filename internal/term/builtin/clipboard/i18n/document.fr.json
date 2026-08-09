@@ -1,0 +1,19 @@
+{
+  "clear-register.docstring": "Effacer le registre indiqué. Sans argument, effacer tous les registres",
+  "clipboard-paste-replace.docstring": "Remplacer les sélections par le contenu du presse-papiers",
+  "paste-after.docstring": "Coller après la sélection",
+  "paste-before.docstring": "Coller avant la sélection",
+  "paste-clipboard-after.docstring": "Coller le presse-papiers après les sélections",
+  "paste-clipboard-before.docstring": "Coller le presse-papiers avant les sélections",
+  "paste-primary-clipboard-after.docstring": "Coller le presse-papiers principal après les sélections",
+  "paste-primary-clipboard-before.docstring": "Coller le presse-papiers principal avant les sélections",
+  "primary-clipboard-paste-replace.docstring": "Remplacer les sélections par le presse-papiers principal",
+  "replace-with-yanked.docstring": "Remplacer par le texte copié",
+  "yank-joined-to-clipboard.docstring": "Copier les sélections réunies dans le presse-papiers. Un séparateur peut être fourni comme premier argument. La valeur par défaut est un saut de ligne",
+  "yank-main-selection-to-clipboard.docstring": "Copier la sélection principale dans le presse-papiers",
+  "yank-to-clipboard.docstring": "Copier les sélections dans le presse-papiers",
+  "yank-to-primary-clipboard.docstring": "Copier les sélections dans le presse-papiers principal",
+  "yank.docstring": "Copier la sélection",
+  "status.yankedSelection": "{count} sélection copiée dans le registre {register}",
+  "status.yankedSelections": "{count} sélections copiées dans le registre {register}"
+}

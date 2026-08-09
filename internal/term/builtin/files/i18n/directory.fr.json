@@ -1,0 +1,8 @@
+{
+  "change-directory.docstring": "Changer le répertoire de travail courant",
+  "pop-directory.docstring": "Retirer l’entrée supérieure de la pile de répertoires et accéder au nouveau sommet",
+  "push-directory.docstring": "Enregistrer puis changer le répertoire courant",
+  "show-directory-stack.docstring": "Afficher la pile de répertoires séparée par des espaces",
+  "show-directory.docstring": "Afficher le répertoire de travail courant",
+  "error.noDirectory": "aucun répertoire fourni"
+}

@@ -1,6 +1,8 @@
 package files
 
 import (
+	"embed"
+
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -16,9 +18,17 @@ const (
 	actBufferPrevious    = "buffer_previous"
 )
 
+const (
+	errorUnsavedBufferCloseKey    i18n.Key = "error.unsavedBufferClose"
+	errorUnsavedBufferCloseAllKey i18n.Key = "error.unsavedBufferCloseAll"
+)
+
 var (
-	errUnsavedBufferClose    = i18n.NewError(i18n.ErrorUnsavedBufferClose)
-	errUnsavedBufferCloseAll = i18n.NewError(i18n.ErrorUnsavedBufferCloseAll)
+	//go:embed i18n/buffer.*.json
+	bufferFS embed.FS
+
+	errUnsavedBufferClose    = i18n.NewError(errorUnsavedBufferCloseKey)
+	errUnsavedBufferCloseAll = i18n.NewError(errorUnsavedBufferCloseAllKey)
 )
 
 // BufferModule returns the buffer navigation and close commands
@@ -26,6 +36,7 @@ func BufferModule() command.Module {
 	g := kit.Prefixed(kit.Char('g'))
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(bufferFS),
 		Commands: []command.Command{
 			{
 				Name:      actBufferClose,

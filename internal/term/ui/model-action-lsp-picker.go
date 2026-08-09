@@ -7,6 +7,14 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	statusNoDocumentSymbolsKey i18n.Key = "status.noDocumentSymbols"
+	statusNoCodeActionsKey     i18n.Key = "status.noCodeActions"
+	statusLSPNoDocSymbolsKey   i18n.Key = "status.lspNoDocSymbols"
+	statusLSPNoWorkSymbolsKey  i18n.Key = "status.lspNoWorkSymbols"
+	statusLSPNoCodeActionsKey  i18n.Key = "status.lspNoCodeActions"
+)
+
 // SymbolPickerAction opens a picker over the focused document's symbols
 func (m Model) SymbolPickerAction(e *view.Editor) {
 	ec := m.component
@@ -18,7 +26,7 @@ func (m Model) SymbolPickerAction(e *view.Editor) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoDocSymbols))
+		e.SetStatusMsg(i18n.Text(statusLSPNoDocSymbolsKey))
 		return
 	}
 	symbols, err := ls.DocumentSymbols(doc)
@@ -27,7 +35,7 @@ func (m Model) SymbolPickerAction(e *view.Editor) {
 		return
 	}
 	if len(symbols) == 0 {
-		e.SetStatusMsg(i18n.Text(i18n.StatusNoDocumentSymbols))
+		e.SetStatusMsg(i18n.Text(statusNoDocumentSymbolsKey))
 		return
 	}
 	opener := symbolPickerLayer(symbols)
@@ -42,7 +50,7 @@ func (m Model) WorkspaceSymbolPickerAction(e *view.Editor) {
 
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoWorkSymbols))
+		e.SetStatusMsg(i18n.Text(statusLSPNoWorkSymbolsKey))
 		return
 	}
 	opener := workspaceSymbolPickerLayer()
@@ -63,7 +71,7 @@ func (m Model) CodeActionPickerAction(e *view.Editor) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoCodeActions))
+		e.SetStatusMsg(i18n.Text(statusLSPNoCodeActionsKey))
 		return
 	}
 	actions, err := ls.CodeActions(doc, v.ID())
@@ -72,7 +80,7 @@ func (m Model) CodeActionPickerAction(e *view.Editor) {
 		return
 	}
 	if len(actions) == 0 {
-		e.SetStatusMsg(i18n.Text(i18n.StatusNoCodeActions))
+		e.SetStatusMsg(i18n.Text(statusNoCodeActionsKey))
 		return
 	}
 	docID := doc.ID()

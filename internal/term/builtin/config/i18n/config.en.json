@@ -1,0 +1,12 @@
+{
+  "error.configUnavailable": "config path unavailable",
+  "error.unknownOptionKey": "unknown option: {key}",
+  "error.invalidOptionKey": "invalid option: {key}",
+  "error.usageGet": "usage: get <key>",
+  "error.usageSet": "usage: set <key> <value>",
+  "error.usageToggle": "usage: toggle <key>",
+  "error.unknownLineEnding": "unknown line ending: {name}",
+  "error.expectedIndent": "expected 'tab' or spaces count (1-16)",
+  "error.themeLoad": "could not load theme: {message}",
+  "error.logUnavailable": "log path unavailable"
+}

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"embed"
+
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -11,11 +13,19 @@ const (
 	actQuitForce = "quit!"
 )
 
-var errUnsavedQuit = i18n.NewError(i18n.ErrorUnsavedQuit)
+const errorUnsavedQuitKey i18n.Key = "error.unsavedQuit"
+
+var (
+	//go:embed i18n/lifecycle.*.json
+	lifecycleFS embed.FS
+
+	errUnsavedQuit = i18n.NewError(errorUnsavedQuitKey)
+)
 
 // LifecycleModule returns the quit and force-quit commands
 func LifecycleModule() command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(lifecycleFS),
 		Commands: []command.Command{
 			{
 				Name:      actQuit,

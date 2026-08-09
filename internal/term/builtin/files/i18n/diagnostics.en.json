@@ -1,0 +1,6 @@
+{
+  "status.pickerErrors": "Errors",
+  "status.pickerWarnings": "Warnings",
+  "status.pickerInfo": "Information",
+  "status.pickerHints": "Hints"
+}

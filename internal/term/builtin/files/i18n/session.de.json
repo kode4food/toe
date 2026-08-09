@@ -1,0 +1,4 @@
+{
+  "restore-session.docstring": "Sitzung aus der Sitzungsdatei des Arbeitsbereichs wiederherstellen",
+  "save-session.docstring": "Sitzung in der Sitzungsdatei des Arbeitsbereichs speichern"
+}

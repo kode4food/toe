@@ -1,6 +1,9 @@
 package files
 
 import (
+	"embed"
+
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -35,6 +38,14 @@ const (
 	actGlobalSearch         = "global_search"
 )
 
+var (
+	//go:embed i18n/picker.*.json
+	pickerFS embed.FS
+
+	//go:embed i18n/diagnostics.*.json
+	diagnosticsFS embed.FS
+)
+
 // PickerModule returns the file, buffer, and explorer picker commands
 func PickerModule(model ui.Model) command.Module {
 	cfg := new(pickerSection)
@@ -47,6 +58,7 @@ func PickerModule(model ui.Model) command.Module {
 	reset()
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(pickerFS),
 		Commands: []command.Command{
 			{
 				Name:      actFilePicker,
@@ -139,6 +151,7 @@ func PickerModule(model ui.Model) command.Module {
 // space-leader menu
 func DiagnosticsModule(model ui.Model) command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(diagnosticsFS),
 		Commands: []command.Command{
 			{
 				Name:      actDiagnosticPicker,

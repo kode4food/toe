@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -90,14 +91,14 @@ func (m Model) SearchAction(forward bool) command.Action {
 }
 
 // RegexAction returns an action prompting for a pattern, then running fn
-func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
+func (m Model) RegexAction(prompt i18n.Key, fn promptHandler) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
 		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				editor:  ec,
 				kind:    promptRegex,
-				prompt:  prompt,
+				prompt:  i18n.Text(prompt),
 				handler: fn,
 			}), nil
 		})
@@ -105,14 +106,14 @@ func (m Model) RegexAction(prompt string, fn promptHandler) command.Action {
 }
 
 // ShellAction returns an action prompting for a command, then running fn
-func (m Model) ShellAction(prompt string, fn promptHandler) command.Action {
+func (m Model) ShellAction(prompt i18n.Key, fn promptHandler) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
 		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
 			return newPromptComponent(cx, promptComponentArgs{
 				editor:  ec,
 				kind:    promptShell,
-				prompt:  prompt,
+				prompt:  i18n.Text(prompt),
 				handler: fn,
 			}), nil
 		})

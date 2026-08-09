@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -52,14 +53,40 @@ func TestRegistry(t *testing.T) {
 		assert.NoError(t, reg.RegisterModule(command.Module{
 			Commands: []command.Command{
 				{
-					Name:  "noop",
-					Modes: view.ModeNormal,
-					Run:   registryCommand().Run,
+					Name:      "noop",
+					DocString: "Fallback",
+					Modes:     view.ModeNormal,
+					Run:       registryCommand().Run,
 				},
 			},
 		}))
 
-		assert.NotNil(t, km.ResolveCommand("noop"))
+		cmd := km.ResolveCommand("noop")
+		assert.NotNil(t, cmd)
+		assert.Equal(t, "Fallback", cmd.DocString)
+		assert.Equal(t, "Fallback", i18n.Text("noop.docstring"))
+	})
+
+	t.Run("RegisterModule localizes docs", func(t *testing.T) {
+		km := command.NewKeymaps()
+		reg := command.NewRegistry(km)
+		key := i18n.Key("localized-command.docstring")
+		err := reg.RegisterModule(command.Module{
+			Commands: []command.Command{
+				{
+					Name:      "localized_command",
+					DocString: "Fallback",
+					Modes:     view.ModeNormal,
+					Run:       registryCommand().Run,
+				},
+			},
+			Translations: i18n.Translations{key: "Translated"},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t,
+			"Translated", km.ResolveCommand("localized_command").DocString,
+		)
 	})
 
 	t.Run("Bindings returns registered sequences", func(t *testing.T) {

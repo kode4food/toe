@@ -1,6 +1,8 @@
 package shell
 
 import (
+	"embed"
+
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -24,16 +26,28 @@ const (
 	actShellAppendOutput = "shell_append_output"
 )
 
+const (
+	promptPipeKey         i18n.Key = "prompt.pipe"
+	promptInsertOutputKey i18n.Key = "prompt.insertOutput"
+	promptFilterKey       i18n.Key = "prompt.filter"
+	promptPipeToKey       i18n.Key = "prompt.pipeTo"
+	promptAppendOutputKey i18n.Key = "prompt.appendOutput"
+)
+
+//go:embed i18n/shell.*.json
+var shellFS embed.FS
+
 // Module returns the shell-pipe and shell command bindings
 func Module(model ui.Model) command.Module {
 	cfg := new(section)
 	return command.Module{
+		Translations: i18n.LoadTranslations(shellFS),
 		Commands: []command.Command{
 			{
 				Name:      actShellPipe,
 				DocString: "Pipe selections through shell command",
 				Run: kit.Runner(model.ShellAction(
-					i18n.Text(i18n.PromptPipe), action.ShellPipe,
+					promptPipeKey, action.ShellPipe,
 				)),
 				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('|')),
@@ -42,7 +56,7 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellInsertOutput,
 				DocString: "Insert shell command output before selections",
 				Run: kit.Runner(model.ShellAction(
-					i18n.Text(i18n.PromptInsertOutput),
+					promptInsertOutputKey,
 					action.ShellInsertOutput,
 				)),
 				Modes: command.DocNormalModes,
@@ -52,7 +66,7 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellKeepPipe,
 				DocString: "Filter selections with shell predicate",
 				Run: kit.Runner(model.ShellAction(
-					i18n.Text(i18n.PromptFilter),
+					promptFilterKey,
 					action.ShellKeepPipe,
 				)),
 				Modes: command.DocNormalModes,
@@ -62,7 +76,7 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellPipeTo,
 				DocString: "Pipe selections into shell command ignoring output",
 				Run: kit.Runner(model.ShellAction(
-					i18n.Text(i18n.PromptPipeTo), action.ShellPipeTo,
+					promptPipeToKey, action.ShellPipeTo,
 				)),
 				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Alt('|')),
@@ -71,7 +85,7 @@ func Module(model ui.Model) command.Module {
 				Name:      actShellAppendOutput,
 				DocString: "Append shell command output after selections",
 				Run: kit.Runner(model.ShellAction(
-					i18n.Text(i18n.PromptAppendOutput),
+					promptAppendOutputKey,
 					action.ShellAppendOutput,
 				)),
 				Modes: command.DocNormalModes,

@@ -1,0 +1,19 @@
+{
+  "clear-register.docstring": "Cancella il registro indicato. Senza argomenti, cancella tutti i registri",
+  "clipboard-paste-replace.docstring": "Sostituisci le selezioni con il contenuto degli appunti",
+  "paste-after.docstring": "Incolla dopo la selezione",
+  "paste-before.docstring": "Incolla prima della selezione",
+  "paste-clipboard-after.docstring": "Incolla gli appunti dopo le selezioni",
+  "paste-clipboard-before.docstring": "Incolla gli appunti prima delle selezioni",
+  "paste-primary-clipboard-after.docstring": "Incolla gli appunti primari dopo le selezioni",
+  "paste-primary-clipboard-before.docstring": "Incolla gli appunti primari prima delle selezioni",
+  "primary-clipboard-paste-replace.docstring": "Sostituisci le selezioni con gli appunti primari",
+  "replace-with-yanked.docstring": "Sostituisci con il testo copiato",
+  "yank-joined-to-clipboard.docstring": "Copia negli appunti le selezioni unite. Il primo argomento può specificare un separatore. Il valore predefinito è un ritorno a capo",
+  "yank-main-selection-to-clipboard.docstring": "Copia la selezione principale negli appunti",
+  "yank-to-clipboard.docstring": "Copia le selezioni negli appunti",
+  "yank-to-primary-clipboard.docstring": "Copia le selezioni negli appunti primari",
+  "yank.docstring": "Copia la selezione",
+  "status.yankedSelection": "{count} selezione copiata nel registro {register}",
+  "status.yankedSelections": "{count} selezioni copiate nel registro {register}"
+}

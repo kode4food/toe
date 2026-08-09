@@ -1,9 +1,11 @@
 package motion
 
 import (
+	"embed"
 	"fmt"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -14,11 +16,15 @@ type jumplistPickerSource struct {
 	ui.PickerBase
 }
 
+//go:embed i18n/jumplist.*.json
+var jumplistFS embed.FS
+
 // JumplistModule returns the jumplist picker command. It is registered
 // separately from CursorModule so its position in the space-leader menu can
 // be controlled independently of the cursor-motion commands
 func JumplistModule(model ui.Model) command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(jumplistFS),
 		Commands: []command.Command{
 			{
 				Name:      actJumplistPicker,

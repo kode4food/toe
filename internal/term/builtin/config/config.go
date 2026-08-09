@@ -2,6 +2,7 @@ package config
 
 import (
 	"cmp"
+	"embed"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
@@ -45,23 +46,35 @@ const (
 	actEncoding            = "encoding"
 )
 
-var (
-	errUsageGet      = i18n.NewError(i18n.ErrorUsageGet)
-	errUsageSet      = i18n.NewError(i18n.ErrorUsageSet)
-	errUsageToggle   = i18n.NewError(i18n.ErrorUsageToggle)
-	errUnknownOption = i18n.NewError(i18n.ErrorUnknownOptionKey)
-	errInvalidOption = i18n.NewError(i18n.ErrorInvalidOptionKey)
+const (
+	errorUsageGetKey      i18n.Key = "error.usageGet"
+	errorUsageSetKey      i18n.Key = "error.usageSet"
+	errorUsageToggleKey   i18n.Key = "error.usageToggle"
+	errorUnknownOptionKey i18n.Key = "error.unknownOptionKey"
+	errorInvalidOptionKey i18n.Key = "error.invalidOptionKey"
 )
 
-// ConfigurationModule returns the option and config commands
-func ConfigurationModule(r *command.Registry) command.Module {
+var (
+	//go:embed i18n/config.*.json
+	configFS embed.FS
+
+	errUsageGet      = i18n.NewError(errorUsageGetKey)
+	errUsageSet      = i18n.NewError(errorUsageSetKey)
+	errUsageToggle   = i18n.NewError(errorUsageToggleKey)
+	errUnknownOption = i18n.NewError(errorUnknownOptionKey)
+	errInvalidOption = i18n.NewError(errorInvalidOptionKey)
+)
+
+// ConfigModule returns the option and config commands
+func ConfigModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
 	cmds := optionCmds(r)
 	cmds = append(cmds, systemCmds()...)
 	cmds = append(cmds, themeCmds()...)
 	cmds = append(cmds, formatCmds()...)
 	return command.Module{
-		Commands: cmds,
+		Translations: i18n.LoadTranslations(configFS),
+		Commands:     cmds,
 		Options: []command.Option{
 			{
 				Key: "theme",

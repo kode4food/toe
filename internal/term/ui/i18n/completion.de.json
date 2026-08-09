@@ -1,0 +1,11 @@
+{
+  "completion-accept.docstring": "Vervollständigung übernehmen",
+  "completion-cancel.docstring": "Vervollständigung abbrechen",
+  "completion-first.docstring": "Erste Vervollständigung auswählen",
+  "completion-last.docstring": "Letzte Vervollständigung auswählen",
+  "completion-next.docstring": "Nächste Vervollständigung auswählen",
+  "completion-page-down.docstring": "Nächste Vervollständigungsseite anzeigen",
+  "completion-page-up.docstring": "Vorherige Vervollständigungsseite anzeigen",
+  "completion-previous.docstring": "Vorherige Vervollständigung auswählen",
+  "completion.docstring": "Aktuelles Wort vervollständigen"
+}

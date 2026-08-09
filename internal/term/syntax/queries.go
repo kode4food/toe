@@ -6,7 +6,7 @@ import (
 )
 
 //go:embed queries
-var embeddedQueryFS embed.FS
+var queryFS embed.FS
 
 // HasHighlightQuery reports whether a highlight query ships for lang
 func HasHighlightQuery(lang string) bool {
@@ -15,7 +15,7 @@ func HasHighlightQuery(lang string) bool {
 }
 
 func embeddedQuery(lang string) ([]byte, bool) {
-	data, err := embeddedQueryFS.ReadFile("queries/" + lang + ".scm")
+	data, err := queryFS.ReadFile("queries/" + lang + ".scm")
 	if err != nil {
 		return nil, false
 	}
@@ -51,7 +51,7 @@ func resolveQueryDir(
 		return nil, false
 	}
 	seen[lang] = true
-	data, err := embeddedQueryFS.ReadFile(ref.dir + "/" + lang + ".scm")
+	data, err := queryFS.ReadFile(ref.dir + "/" + lang + ".scm")
 	if err != nil {
 		return nil, false
 	}

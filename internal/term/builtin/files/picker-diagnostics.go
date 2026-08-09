@@ -23,6 +23,13 @@ type (
 	}
 )
 
+const (
+	statusPickerHintsKey    i18n.Key = "status.pickerHints"
+	statusPickerInfoKey     i18n.Key = "status.pickerInfo"
+	statusPickerWarningsKey i18n.Key = "status.pickerWarnings"
+	statusPickerErrorsKey   i18n.Key = "status.pickerErrors"
+)
+
 var (
 	diagnosticSeverityIcons = [...]string{
 		view.DiagnosticSeverityHint:    "\uea61", // '' - cod-lightbulb
@@ -46,10 +53,10 @@ var (
 	}
 
 	diagnosticSeverityLabels = [...]i18n.Key{
-		view.DiagnosticSeverityHint:    i18n.StatusPickerHints,
-		view.DiagnosticSeverityInfo:    i18n.StatusPickerInfo,
-		view.DiagnosticSeverityWarning: i18n.StatusPickerWarnings,
-		view.DiagnosticSeverityError:   i18n.StatusPickerErrors,
+		view.DiagnosticSeverityHint:    statusPickerHintsKey,
+		view.DiagnosticSeverityInfo:    statusPickerInfoKey,
+		view.DiagnosticSeverityWarning: statusPickerWarningsKey,
+		view.DiagnosticSeverityError:   statusPickerErrorsKey,
 	}
 )
 

@@ -349,7 +349,7 @@ func TestKeyBind(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("Bind command without Run is no-op", func(t *testing.T) {
+	t.Run("command without Run still binds", func(t *testing.T) {
 		km2 := command.NewKeymaps()
 		_ = km2.Register("norun", command.Command{
 			Modes: view.ModeNormal,
@@ -360,10 +360,14 @@ func TestKeyBind(t *testing.T) {
 		km2.Bind(view.ModeNormal, "norun",
 			[]command.KeyEvent{char('y')},
 		)
-		_, ok := km2.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('y'),
-		})
-		assert.False(t, ok)
+		for _, k := range []command.KeyEvent{char('x'), char('y')} {
+			lookup, ok := km2.Lookup(view.ModeNormal,
+				[]command.KeyEvent{k},
+			)
+			assert.True(t, ok)
+			assert.Equal(t, "norun", lookup.Name)
+			assert.Equal(t, command.Result{}, lookup.Action(nil))
+		}
 	})
 
 	t.Run("BindResultAction adds sequence", func(t *testing.T) {

@@ -2,6 +2,9 @@
 package clipboard
 
 import (
+	"embed"
+
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -28,9 +31,18 @@ const (
 	actPasteClipboardIntoPane      = "paste_clipboard_into_pane"
 )
 
+var (
+	//go:embed i18n/document.*.json
+	documentFS embed.FS
+
+	//go:embed i18n/terminal.*.json
+	terminalFS embed.FS
+)
+
 // DocumentModule returns clipboard commands for document panes
 func DocumentModule() command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(documentFS),
 		Commands: []command.Command{
 			{
 				Name:      actYank,
@@ -167,6 +179,7 @@ func DocumentModule() command.Module {
 // TerminalModule returns clipboard commands used by terminal panes
 func TerminalModule() command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(terminalFS),
 		Commands: []command.Command{{
 			Name:      actPasteClipboardIntoPane,
 			DocString: "Paste clipboard into terminal",

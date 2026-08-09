@@ -28,7 +28,7 @@ func Register(model ui.Model, km *command.Keymaps) (*command.Registry, error) {
 func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 	modules := []command.Module{
 		editing.InsertModule(),
-		files.CompletionModule(model),
+		ui.CompletionModule(model),
 		motion.CursorModule(),
 		editing.EditModule(),
 		editing.SelectionModule(model),
@@ -36,7 +36,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		files.FileModule(),
 		files.BufferModule(),
 		files.DirectoryModule(),
-		config.ConfigurationModule(r),
+		config.ConfigModule(r),
 		clipboard.TerminalModule(),
 		config.ViewModule(model),
 		clipboard.DocumentModule(),

@@ -1,6 +1,9 @@
 package motion
 
 import (
+	"embed"
+
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -30,6 +33,9 @@ const (
 	actExtendSearchPrev      = "extend_search_prev"
 )
 
+//go:embed i18n/search.*.json
+var searchFS embed.FS
+
 // SearchModule returns the search and search-navigation commands
 func SearchModule(model ui.Model) command.Module {
 	cfg := new(searchSection)
@@ -37,6 +43,7 @@ func SearchModule(model ui.Model) command.Module {
 	Z := kit.Prefixed(kit.Char('Z'))
 
 	return command.Module{
+		Translations: i18n.LoadTranslations(searchFS),
 		Commands: []command.Command{
 			{
 				Name:      actCommandMode,

@@ -116,7 +116,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `extend-till-prev-char` |  | Extend till previous occurrence of char |
 | `extend-to-line-start` |  | Extend to line start |
 | `extend-to-line-end` |  | Extend to line end |
-| `extend-to-line-end-newline` |  | Extend to line end |
+| `extend-to-line-end-newline` |  | Extend to line end including newline |
 | `extend-to-first-nonwhitespace` |  | Extend to first non-blank in line |
 | `extend-to-column` |  | Extend to column |
 | `extend-to-last-line` |  | Extend to last line |

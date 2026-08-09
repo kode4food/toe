@@ -7,12 +7,14 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
+const hintResizeKey i18n.Key = "hint.resize"
+
 // ResizeViewAction enters an interactive resize mode: h/l (or left/right) and
 // j/k (or up/down) push the focused split's border in that literal screen
 // direction, one cell per keypress, until Escape or Enter exits
 func (m Model) ResizeViewAction(e *view.Editor) command.Continuation {
 	e.Tree().Unmaximize()
-	e.SetHint(i18n.Text(i18n.HintResize))
+	e.SetHint(i18n.Text(hintResizeKey))
 	var cont command.Continuation
 	cont = func(e *view.Editor, k command.KeyEvent) command.Continuation {
 		if k.Mods != command.ModNone {
@@ -30,7 +32,7 @@ func (m Model) ResizeViewAction(e *view.Editor) command.Continuation {
 		case k.Code.Char == 'k', k.Code.Special == command.Up:
 			action.ResizeViewUp(e)
 		}
-		e.SetHint(i18n.Text(i18n.HintResize))
+		e.SetHint(i18n.Text(hintResizeKey))
 		return cont
 	}
 	return cont

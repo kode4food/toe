@@ -1,6 +1,7 @@
 package editing
 
 import (
+	"embed"
 	"fmt"
 	"maps"
 	"slices"
@@ -10,6 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -64,10 +66,14 @@ const (
 	actNormalMode               = "normal_mode"
 )
 
+//go:embed i18n/edit.*.json
+var editFS embed.FS
+
 // EditModule returns the text-editing commands
 func EditModule() command.Module {
 	cfg := new(editSection)
 	return command.Module{
+		Translations: i18n.LoadTranslations(editFS),
 		Commands: []command.Command{
 			{
 				Name:      actSelectMode,

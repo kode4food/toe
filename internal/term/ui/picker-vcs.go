@@ -24,6 +24,11 @@ const (
 	renamedArrow = "\u2192" // '→' - rightwards arrow
 )
 
+const (
+	statusPickerStagedKey   i18n.Key = "status.pickerStaged"
+	statusPickerUnstagedKey i18n.Key = "status.pickerUnstaged"
+)
+
 // git reports the index first, so staged rows lead the list
 const (
 	changedFileStaged = iota
@@ -199,12 +204,12 @@ func changedFileRows(
 func changedFileSections() []*PickerItem {
 	return []*PickerItem{
 		{
-			Display: i18n.Text(i18n.StatusPickerStaged),
+			Display: i18n.Text(statusPickerStagedKey),
 			Group:   changedFileStaged,
 			Section: true,
 		},
 		{
-			Display: i18n.Text(i18n.StatusPickerUnstaged),
+			Display: i18n.Text(statusPickerUnstagedKey),
 			Group:   changedFileUnstaged,
 			Section: true,
 		},

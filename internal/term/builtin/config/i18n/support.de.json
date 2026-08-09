@@ -1,0 +1,11 @@
+{
+  "about.docstring": "Versions- und Lizenzinformationen anzeigen",
+  "character-info.docstring": "Informationen zum Zeichen unter dem primären Cursor anzeigen",
+  "echo.docstring": "Die angegebenen Argumente in der Statuszeile ausgeben",
+  "redraw.docstring": "Die gesamte Benutzeroberfläche leeren und neu zeichnen",
+  "goto.docstring": "Zu einer path:line:col-Position springen",
+  "about.version": "Version",
+  "about.development": "Entwicklungsversion",
+  "error.noLineNumber": "Zeilennummer fehlt",
+  "error.invalidLineNumber": "ungültige Zeilennummer"
+}

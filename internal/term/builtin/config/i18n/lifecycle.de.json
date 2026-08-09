@@ -1,0 +1,5 @@
+{
+  "quit!.docstring": "Beenden und ungespeicherte Änderungen verwerfen",
+  "quit.docstring": "Beenden, wenn alle Dokumente gespeichert sind",
+  "error.unsavedQuit": "Ungespeicherte Änderungen (:q! erzwingt)"
+}

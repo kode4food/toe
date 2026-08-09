@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -24,23 +25,16 @@ func NewRegistry(km *Keymaps) *Registry {
 	return &Registry{keymaps: km}
 }
 
-// RegisterCommand registers a command with its kebab-cased name as the first
-// alias
-func (r *Registry) RegisterCommand(name string, c Command) error {
-	if c.Run == nil {
-		return nil
-	}
-	alias := strings.ReplaceAll(name, "_", "-")
-	c.Aliases = append([]string{alias}, c.Aliases...)
-	if err := r.keymaps.Register(name, c); err != nil {
-		return err
-	}
-	return nil
-}
-
 // RegisterModule adds a module's commands, options, and bindings
 func (r *Registry) RegisterModule(m Module) error {
+	tr := make(i18n.Translations, len(m.Commands)+len(m.Translations))
 	for _, c := range m.Commands {
+		tr[docStringKey(kebabName(c.Name))] = c.DocString
+	}
+	maps.Copy(tr, m.Translations)
+	i18n.Register(tr)
+	for _, c := range m.Commands {
+		c.DocString = i18n.Text(docStringKey(kebabName(c.Name)))
 		if err := r.RegisterCommand(c.Name, c); err != nil {
 			return err
 		}
@@ -62,6 +56,17 @@ func (r *Registry) RegisterModule(m Module) error {
 			continue
 		}
 		r.options[normalizeOptionKey(o.Key)] = &m.Options[i]
+	}
+	return nil
+}
+
+// RegisterCommand registers a command with kebab-cased name as the first alias
+func (r *Registry) RegisterCommand(name string, c Command) error {
+	alias := kebabName(name)
+	c.localizeDocString(alias)
+	c.Aliases = append([]string{alias}, c.Aliases...)
+	if err := r.keymaps.Register(name, c); err != nil {
+		return err
 	}
 	return nil
 }

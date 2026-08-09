@@ -11,6 +11,8 @@ type (
 	rangeMover   func(core.Rope, core.Range) core.Range
 )
 
+const statusNoSelectionsKey i18n.Key = "status.noSelections"
+
 // GotoLineEndNewline moves each cursor to the end of its current line,
 // landing on the newline character (for use in insert mode)
 func GotoLineEndNewline(e *view.Editor) {
@@ -81,7 +83,7 @@ func RemovePrimarySelection(e *view.Editor) {
 	}
 	sel := doc.SelectionFor(v.ID())
 	if len(sel.Ranges()) == 1 {
-		e.SetStatusMsg(i18n.Text(i18n.StatusNoSelections))
+		e.SetStatusMsg(i18n.Text(statusNoSelectionsKey))
 		return
 	}
 	if newSel, err := sel.Remove(sel.PrimaryIndex()); err == nil {

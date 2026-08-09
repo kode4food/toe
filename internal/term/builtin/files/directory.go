@@ -1,6 +1,7 @@
 package files
 
 import (
+	"embed"
 	"strings"
 
 	"github.com/kode4food/toe/internal/i18n"
@@ -17,11 +18,19 @@ const (
 	actPopDirectory       = "pop_directory"
 )
 
-var errNoDirectory = i18n.NewError(i18n.ErrorNoDirectory)
+const errorNoDirectoryKey i18n.Key = "error.noDirectory"
+
+var (
+	//go:embed i18n/directory.*.json
+	directoryFS embed.FS
+
+	errNoDirectory = i18n.NewError(errorNoDirectoryKey)
+)
 
 // DirectoryModule returns the working-directory commands
 func DirectoryModule() command.Module {
 	return command.Module{
+		Translations: i18n.LoadTranslations(directoryFS),
 		Commands: []command.Command{
 			{
 				Name:      actChangeDirectory,

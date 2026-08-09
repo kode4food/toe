@@ -13,10 +13,20 @@ type locationGetter func(
 	view.LanguageServerController, *view.Document, view.Id,
 ) ([]view.Location, error)
 
+const (
+	statusNoDeclarationKey    i18n.Key = "status.noDeclaration"
+	statusNoDefinitionKey     i18n.Key = "status.noDefinition"
+	statusNoTypeDefinitionKey i18n.Key = "status.noTypeDefinition"
+	statusNoImplementationKey i18n.Key = "status.noImplementation"
+	statusNoSymbolRefsKey     i18n.Key = "status.noSymbolReferences"
+	statusLSPNoNavigationKey  i18n.Key = "status.lspNoNavigation"
+	statusLSPNoHighlightsKey  i18n.Key = "status.lspNoHighlights"
+)
+
 // GotoDeclarationAction jumps to the declaration of the symbol at the cursor
 func (m Model) GotoDeclarationAction(e *view.Editor) {
 	m.gotoLocation(e,
-		i18n.Text(i18n.StatusNoDeclaration),
+		i18n.Text(statusNoDeclarationKey),
 		view.LanguageServerController.GotoDeclaration,
 	)
 }
@@ -24,7 +34,7 @@ func (m Model) GotoDeclarationAction(e *view.Editor) {
 // GotoDefinitionAction jumps to the definition of the symbol at the cursor
 func (m Model) GotoDefinitionAction(e *view.Editor) {
 	m.gotoLocation(e,
-		i18n.Text(i18n.StatusNoDefinition),
+		i18n.Text(statusNoDefinitionKey),
 		view.LanguageServerController.GotoDefinition,
 	)
 }
@@ -32,7 +42,7 @@ func (m Model) GotoDefinitionAction(e *view.Editor) {
 // GotoTypeDefinitionAction jumps to the type of the symbol at the cursor
 func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
 	m.gotoLocation(e,
-		i18n.Text(i18n.StatusNoTypeDefinition),
+		i18n.Text(statusNoTypeDefinitionKey),
 		view.LanguageServerController.GotoTypeDefinition,
 	)
 }
@@ -40,7 +50,7 @@ func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
 // GotoImplementationAction jumps to implementations of the symbol at the cursor
 func (m Model) GotoImplementationAction(e *view.Editor) {
 	m.gotoLocation(e,
-		i18n.Text(i18n.StatusNoImplementation),
+		i18n.Text(statusNoImplementationKey),
 		view.LanguageServerController.GotoImplementation,
 	)
 }
@@ -62,7 +72,7 @@ func (m Model) SelectReferencesAction(e *view.Editor) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoHighlights))
+		e.SetStatusMsg(i18n.Text(statusLSPNoHighlightsKey))
 		return
 	}
 	highlights, err := ls.DocumentHighlights(doc, v.ID())
@@ -71,7 +81,7 @@ func (m Model) SelectReferencesAction(e *view.Editor) {
 		return
 	}
 	if len(highlights) == 0 {
-		e.SetStatusMsg(i18n.Text(i18n.StatusNoSymbolReferences))
+		e.SetStatusMsg(i18n.Text(statusNoSymbolRefsKey))
 		return
 	}
 	setSelectionFromHighlights(doc, v.ID(), highlights)
@@ -92,7 +102,7 @@ func (m Model) gotoLocation(
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoNavigation))
+		e.SetStatusMsg(i18n.Text(statusLSPNoNavigationKey))
 		return
 	}
 	locations, err := get(ls, doc, v.ID())
@@ -127,7 +137,7 @@ func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
-		e.SetStatusMsg(i18n.Text(i18n.StatusLSPNoNavigation))
+		e.SetStatusMsg(i18n.Text(statusLSPNoNavigationKey))
 		return
 	}
 	viewID := v.ID()

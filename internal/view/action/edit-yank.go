@@ -8,6 +8,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	StatusYankedSelection  i18n.Key = "status.yankedSelection"
+	StatusYankedSelections i18n.Key = "status.yankedSelections"
+)
+
 // Yank copies the text of every selection range to the active register
 // (defaulting to '"') and exits select mode
 func Yank(e *view.Editor) {
@@ -209,9 +214,9 @@ func setYankStatus(e *view.Editor, reg rune, n int) {
 	if n == 0 {
 		return
 	}
-	key := i18n.StatusYankedSelection
+	key := StatusYankedSelection
 	if n != 1 {
-		key = i18n.StatusYankedSelections
+		key = StatusYankedSelections
 	}
 	e.SetStatusMsg(i18n.Text(key, i18n.Vars{
 		"count":    n,

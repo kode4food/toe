@@ -1,0 +1,4 @@
+{
+  "error.unsavedBufferClose": "document has unsaved changes (use :buffer-close! to force)",
+  "error.unsavedBufferCloseAll": "documents have unsaved changes (use :buffer-close-all! to force)"
+}

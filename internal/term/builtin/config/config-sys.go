@@ -12,11 +12,17 @@ import (
 
 type pathProvider func() (string, bool)
 
+const (
+	errorThemeLoadKey         i18n.Key = "error.themeLoad"
+	errorConfigUnavailableKey i18n.Key = "error.configUnavailable"
+	errorLogUnavailableKey    i18n.Key = "error.logUnavailable"
+)
+
 var (
-	errThemeLoad          = i18n.NewError(i18n.ErrorThemeLoad)
-	errConfigUnavailable  = i18n.NewError(i18n.ErrorConfigUnavailable)
+	errThemeLoad          = i18n.NewError(errorThemeLoadKey)
+	errConfigUnavailable  = i18n.NewError(errorConfigUnavailableKey)
 	errWorkspaceUntrusted = i18n.NewError(i18n.ErrorWorkspaceUntrustedHint)
-	errLogUnavailable     = i18n.NewError(i18n.ErrorLogUnavailable)
+	errLogUnavailable     = i18n.NewError(errorLogUnavailableKey)
 )
 
 func systemCmds() []command.Command {

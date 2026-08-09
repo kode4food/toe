@@ -1,0 +1,23 @@
+{
+  "move!.docstring": "Aktuellen Buffer und die zugehörige Datei an einen anderen Pfad verschieben und nötige Unterverzeichnisse erstellen",
+  "move.docstring": "Aktuellen Buffer und die zugehörige Datei an einen anderen Pfad verschieben",
+  "new.docstring": "Neuen Scratch-Buffer erstellen",
+  "open.docstring": "Datei vom Datenträger in der aktuellen Ansicht öffnen",
+  "read.docstring": "Datei in einen Buffer laden",
+  "reload-all.docstring": "Änderungen verwerfen und alle Dokumente aus ihren Quelldateien neu laden",
+  "reload.docstring": "Änderungen verwerfen und aus der Quelldatei neu laden",
+  "update.docstring": "Änderungen nur schreiben, wenn die Datei geändert wurde",
+  "write!.docstring": "Änderungen auf den Datenträger schreiben und nötige Unterverzeichnisse erstellen. Optionaler Pfad: :write! some/path.txt",
+  "write-all!.docstring": "Änderungen aller Buffer schreiben und nötige Unterverzeichnisse erstellen",
+  "write-all.docstring": "Änderungen aller Buffer auf den Datenträger schreiben",
+  "write-buffer-close!.docstring": "Änderungen schreiben, nötige Unterverzeichnisse erstellen und den Buffer schließen. Optionaler Pfad: :write-buffer-close! some/path.txt",
+  "write-buffer-close.docstring": "Änderungen schreiben und den Buffer schließen. Optionaler Pfad: :write-buffer-close some/path.txt",
+  "write-quit!.docstring": "Alle Dokumente schreiben und beenden; Scratch-Buffer verwerfen",
+  "write-quit.docstring": "Alle Dokumente schreiben und beenden",
+  "write.docstring": "Änderungen auf den Datenträger schreiben. Optionaler Pfad: :write some/path.txt",
+  "error.noFilename": "Dateiname fehlt",
+  "error.unsavedMove": "Ungespeicherte Änderungen (move! erzwingt)",
+  "status.written": "gespeichert",
+  "status.allWritten": "alle Dokumente gespeichert",
+  "status.writtenAndClosed": "gespeichert und geschlossen"
+}

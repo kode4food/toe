@@ -1,0 +1,23 @@
+{
+  "move!.docstring": "Déplacer le buffer courant et son fichier vers un autre chemin en créant les sous-répertoires nécessaires",
+  "move.docstring": "Déplacer le buffer courant et son fichier vers un autre chemin",
+  "new.docstring": "Créer un nouveau buffer scratch",
+  "open.docstring": "Ouvrir un fichier du disque dans la vue courante",
+  "read.docstring": "Charger un fichier dans un buffer",
+  "reload-all.docstring": "Abandonner les modifications et recharger tous les documents depuis leurs fichiers sources",
+  "reload.docstring": "Abandonner les modifications et recharger depuis le fichier source",
+  "update.docstring": "Écrire les modifications uniquement si le fichier a été modifié",
+  "write!.docstring": "Écrire les modifications sur le disque en créant les sous-répertoires nécessaires. Chemin facultatif : :write! some/path.txt",
+  "write-all!.docstring": "Écrire les modifications de tous les buffers en créant les sous-répertoires nécessaires",
+  "write-all.docstring": "Écrire les modifications de tous les buffers sur le disque",
+  "write-buffer-close!.docstring": "Écrire les modifications, créer les sous-répertoires nécessaires et fermer le buffer. Chemin facultatif : :write-buffer-close! some/path.txt",
+  "write-buffer-close.docstring": "Écrire les modifications et fermer le buffer. Chemin facultatif : :write-buffer-close some/path.txt",
+  "write-quit!.docstring": "Écrire tous les documents et quitter en abandonnant les buffers scratch",
+  "write-quit.docstring": "Écrire tous les documents et quitter",
+  "write.docstring": "Écrire les modifications sur le disque. Chemin facultatif : :write some/path.txt",
+  "error.noFilename": "nom de fichier manquant",
+  "error.unsavedMove": "modifications non enregistrées (move! pour forcer)",
+  "status.written": "enregistré",
+  "status.allWritten": "tous les documents enregistrés",
+  "status.writtenAndClosed": "enregistré et fermé"
+}

@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"maps"
+	"regexp"
 	"strings"
 
 	"github.com/kode4food/toe/internal/locale"
@@ -17,25 +20,25 @@ type (
 	// Vars supplies named values for message interpolation
 	Vars map[string]any
 
+	// Translations contains messages resolved for the current locale
+	Translations map[Key]string
+
 	// Error identifies a localizable error and its interpolation variables
 	Error struct {
 		key  Key
 		vars Vars
 	}
-
-	catalog      []translations
-	translations map[Key]string
 )
 
-//go:embed translations/*.json
-var translationFiles embed.FS
-
-// Catalog data is loaded once from embedded files and never mutated
 var (
-	defaultCatalog = resolve(locale.Environment()...)
+	//go:embed translations/*.json
+	translationFS embed.FS
 
-	commonTranslations = loadTranslation("translations/common.json")
-	localeTranslations = loadTranslations()
+	// localeRE extracts the locale from a translation file's basename, as in
+	// the "de" of "i18n/config.de.json"
+	localeRE = regexp.MustCompile(`(?:^|[/.])([^./]+)\.json$`)
+
+	messages = LoadTranslations(translationFS)
 )
 
 // NewError returns an error backed by a localized message
@@ -43,24 +46,59 @@ func NewError[S ~string](key S) *Error {
 	return &Error{key: Key(key)}
 }
 
+// LoadTranslations loads and resolves every locale file in files. Each embedded
+// set holds exactly one module's translations, so the whole tree is taken
+// rather than a caller-supplied glob
+func LoadTranslations(files fs.FS) Translations {
+	names, err := jsonFiles(files)
+	if err != nil {
+		panic(err)
+	}
+	if len(names) == 0 {
+		panic(errors.New("no translations found"))
+	}
+	res := Translations{}
+	loaded := map[locale.Locale]Translations{}
+	for _, name := range names {
+		data, err := fs.ReadFile(files, name)
+		if err != nil {
+			panic(err)
+		}
+		tr := Translations{}
+		if err := json.Unmarshal(data, &tr); err != nil {
+			panic(fmt.Errorf("load translation %q: %w", name, err))
+		}
+		name = localeRE.FindStringSubmatch(name)[1]
+		if name == "common" {
+			maps.Copy(res, tr)
+			continue
+		}
+		loaded[locale.Locale(name)] = tr
+	}
+	locales := locale.Environment()
+	for i := len(locales) - 1; i >= 0; i-- {
+		maps.Copy(res, loaded[locales[i]])
+	}
+	return res
+}
+
+// Register adds startup module translations
+func Register(values Translations) {
+	maps.Copy(messages, values)
+}
+
 // Text returns a localized message with optional named interpolation
 func Text(key Key, vars ...Vars) string {
-	return defaultCatalog.text(key, vars...)
+	text, _ := messages.text(key, vars...)
+	return text
 }
 
 // ErrorText returns a localized error message
 func ErrorText(err error) string {
-	key := Key(err.Error())
 	message := err.Error()
-	var vars Vars
 	if localized, ok := errors.AsType[*Error](err); ok {
-		key = localized.key
-		vars = localized.vars
-	}
-	for _, tr := range defaultCatalog {
-		if _, ok := tr[key]; ok {
-			message = Text(key, vars)
-			break
+		if text, ok := messages.text(localized.key, localized.vars); ok {
+			message = text
 		}
 	}
 	return Text(ErrorMessage, Vars{"message": message})
@@ -76,65 +114,33 @@ func (e *Error) Error() string {
 	return string(e.key)
 }
 
-func (c catalog) text(key Key, vars ...Vars) string {
-	var text string
-	found := false
-	for _, tr := range c {
-		if next, ok := tr[key]; ok {
-			text = next
-			found = true
-			break
-		}
-	}
-	if !found {
-		return string(key)
+func (t Translations) text(key Key, vars ...Vars) (string, bool) {
+	text, ok := t[key]
+	if !ok {
+		return string(key), false
 	}
 	if len(vars) == 0 || len(vars[0]) == 0 {
-		return text
+		return text, true
 	}
 	pairs := make([]string, 0, 2*len(vars[0]))
 	for k, v := range vars[0] {
 		pairs = append(pairs, "{"+k+"}", fmt.Sprint(v))
 	}
-	return strings.NewReplacer(pairs...).Replace(text)
+	return strings.NewReplacer(pairs...).Replace(text), true
 }
 
-func resolve(locales ...locale.Locale) catalog {
-	res := make(catalog, 0, len(locales)+1)
-	for _, loc := range locales {
-		if tr, ok := localeTranslations[loc]; ok {
-			res = append(res, tr)
+func jsonFiles(files fs.FS) ([]string, error) {
+	var res []string
+	err := fs.WalkDir(files, ".", func(
+		name string, d fs.DirEntry, err error,
+	) error {
+		if err != nil {
+			return err
 		}
-	}
-	return append(res, commonTranslations)
-}
-
-func loadTranslations() map[locale.Locale]translations {
-	res := map[locale.Locale]translations{}
-	entries, err := translationFiles.ReadDir("translations")
-	if err != nil {
-		return res
-	}
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || name == "common.json" ||
-			!strings.HasSuffix(name, ".json") {
-			continue
+		if !d.IsDir() && strings.HasSuffix(name, ".json") {
+			res = append(res, name)
 		}
-		loc := locale.Locale(strings.TrimSuffix(name, ".json"))
-		res[loc] = loadTranslation("translations/" + name)
-	}
-	return res
-}
-
-func loadTranslation(name string) translations {
-	res := translations{}
-	data, err := translationFiles.ReadFile(name)
-	if err != nil {
-		return res
-	}
-	if err := json.Unmarshal(data, &res); err != nil {
-		return translations{}
-	}
-	return res
+		return nil
+	})
+	return res, err
 }

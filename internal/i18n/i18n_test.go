@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 
@@ -51,9 +52,25 @@ func TestText(t *testing.T) {
 	})
 }
 
+func TestModuleTranslations(t *testing.T) {
+	key := i18n.Key("test-module.docstring")
+	files := fstest.MapFS{
+		"i18n/common.json": {
+			Data: []byte(`{"test-module.docstring":"common"}`),
+		},
+		"i18n/test.en.json": {
+			Data: []byte(`{"test-module.docstring":"translated"}`),
+		},
+	}
+	tr := i18n.LoadTranslations(files)
+
+	i18n.Register(tr)
+	assert.Equal(t, "translated", i18n.Text(key))
+}
+
 func TestLocales(t *testing.T) {
 	if expected := os.Getenv(testLocaleExpected); expected != "" {
-		assert.Equal(t, expected, i18n.Text(i18n.StatusWritten))
+		assert.Equal(t, expected, i18n.Text(i18n.ErrorNoDocument))
 		assert.Equal(t, ":", i18n.Text(i18n.PromptCommand))
 		return
 	}
@@ -66,42 +83,42 @@ func TestLocales(t *testing.T) {
 		{
 			name:     "German in Switzerland",
 			locale:   "de_CH.UTF-8",
-			expected: "gespeichert",
+			expected: "kein Dokument",
 		},
 		{
 			name:     "German in Germany",
 			locale:   "de_DE.UTF-8",
-			expected: "gespeichert",
+			expected: "kein Dokument",
 		},
 		{
 			name:     "French in Switzerland",
 			locale:   "fr_CH.UTF-8",
-			expected: "enregistré",
+			expected: "aucun document",
 		},
 		{
 			name:     "French in France",
 			locale:   "fr_FR.UTF-8",
-			expected: "enregistré",
+			expected: "aucun document",
 		},
 		{
 			name:     "Italian in Switzerland",
 			locale:   "it_CH.UTF-8",
-			expected: "salvato",
+			expected: "nessun documento",
 		},
 		{
 			name:     "Italian in Italy",
 			locale:   "it_IT.UTF-8",
-			expected: "salvato",
+			expected: "nessun documento",
 		},
 		{
 			name:     "English in Britain",
 			locale:   "en_GB.UTF-8",
-			expected: "written",
+			expected: "no document",
 		},
 		{
 			name:     "English in the US",
 			locale:   "en_US.UTF-8",
-			expected: "written",
+			expected: "no document",
 		},
 	}
 	for _, tc := range tests {

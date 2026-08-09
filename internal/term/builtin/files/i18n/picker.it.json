@@ -1,0 +1,7 @@
+{
+  "buffer-picker.docstring": "Apri il selettore dei buffer",
+  "file-explorer-in-current-pane-dir.docstring": "Apri Esplora file nella directory del riquadro corrente",
+  "file-explorer.docstring": "Apri Esplora file nella radice dell'area di lavoro",
+  "file-picker-in-current-dir.docstring": "Apri il selettore dei file nella directory di lavoro corrente",
+  "file-picker.docstring": "Apri il selettore dei file"
+}

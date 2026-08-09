@@ -1,0 +1,5 @@
+{
+  "quit!.docstring": "Quitter en ignorant les modifications non enregistrées",
+  "quit.docstring": "Quitter si tous les documents sont enregistrés",
+  "error.unsavedQuit": "modifications non enregistrées (:q! pour forcer)"
+}

@@ -388,15 +388,9 @@ func (p *ImagePane) panBound() geom.Point {
 }
 
 func (p *ImagePane) restoreZoom(session *view.PaneSession) {
-	raw, ok := session.Value(imageSessionZoomKey)
-	if !ok {
-		return
+	if zoom, ok := sessionInt(session, imageSessionZoomKey); ok {
+		p.setZoom(zoom)
 	}
-	var zoom int
-	if json.Unmarshal(raw, &zoom) != nil {
-		return
-	}
-	p.setZoom(zoom)
 }
 
 // restorePan sets the saved offset directly, not via setPan: panMax is zero

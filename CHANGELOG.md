@@ -2,6 +2,22 @@
 
 Notable changes to toe.
 
+## 0.2.2
+
+### Sessions
+
+- Switched workspace session storage from `.toe/session.toml` to `.toe/session.json`; existing TOML sessions are not migrated
+- Remembered each document's scroll position per pane and restored it when switching back, including across sessions
+
+## 0.2.1
+
+### Localization
+
+- Added German, French, and Italian translations for command descriptions throughout the command palette and keybinding help
+- Colocated translations with their owning modules, with automatic English fallback for untranslated command descriptions
+- Improved editor-specific terminology across existing translations
+- Standardized user-facing command names on kebab-case and clarified `extend-to-line-end-newline`
+
 ## 0.2
 
 First public release.

@@ -271,6 +271,23 @@ func TestRegistry(t *testing.T) {
 		assert.Contains(t, texts, "scrolloff")
 	})
 
+	t.Run("marks current option value", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().CursorLine = true
+		reg := registryWithLiveOptions(t)
+		args, err := command.ParseArgs(
+			"cursorline", command.DefaultSignature(), false, nil,
+		)
+		assert.NoError(t, err)
+
+		results := reg.OptionValueCompleter()(e, args, "")
+
+		assert.Equal(t, []command.Completion{
+			{Text: "true", Display: "true \uf42e", Indices: []int{5}},
+			{Text: "false"},
+		}, results)
+	})
+
 	t.Run("ApplyTOML decodes sections", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		reg := registryWithSection(t)
@@ -368,6 +385,7 @@ func registryWithLiveOptions(t *testing.T) *command.Registry {
 					e.Options().CursorLine = !e.Options().CursorLine
 					return strconv.FormatBool(e.Options().CursorLine), nil
 				},
+				Complete: command.StaticCompleter("true", "false"),
 			},
 		},
 	})

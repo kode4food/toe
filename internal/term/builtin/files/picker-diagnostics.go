@@ -38,7 +38,7 @@ var (
 		view.DiagnosticSeverityError:   "\uea87", // '' - cod-error
 	}
 
-	diagnosticSeverityASCII = [...]string{
+	diagnosticSeverityAscii = [...]string{
 		view.DiagnosticSeverityHint:    "H",
 		view.DiagnosticSeverityInfo:    "I",
 		view.DiagnosticSeverityWarning: "W",
@@ -200,7 +200,7 @@ func diagnosticSelection(diag view.Diagnostic) (core.Selection, error) {
 func diagnosticSeverityIcon(sev view.DiagnosticSeverity, nerd bool) string {
 	icons := diagnosticSeverityIcons
 	if !nerd {
-		icons = diagnosticSeverityASCII
+		icons = diagnosticSeverityAscii
 	}
 	if sev <= 0 || int(sev) >= len(icons) {
 		return icons[view.DiagnosticSeverityHint]

@@ -106,7 +106,11 @@ func systemCmds() []command.Command {
 	}
 }
 
-func themeCmds() []command.Command {
+func themeCmds(r *command.Registry) []command.Command {
+	sig := kit.OptionalArg()
+	sig.Completer = command.PositionalCompleter(
+		r.OptionValueCompleterFor("theme"),
+	)
 	return []command.Command{
 		{
 			Name: actTheme,
@@ -136,7 +140,7 @@ func themeCmds() []command.Command {
 				return command.Result{}
 			},
 			Modes:     command.PaneModes,
-			Signature: kit.StaticSig(kit.OptionalArg(), loader.ThemeNames()...),
+			Signature: sig,
 		},
 	}
 }

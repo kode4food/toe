@@ -28,8 +28,8 @@ const (
 )
 
 const (
-	bufferPickerModifiedIcon      = "\uf448" // '' - pencil icon
-	bufferPickerModifiedIconAscii = "*"
+	bufferPickerModifiedIcon  = "\uf448" // '' - pencil icon
+	bufferPickerModifiedAscii = "*"
 )
 
 var ErrInvalidPickerStart = errors.New("invalid picker start position")
@@ -83,7 +83,7 @@ func (b *bufferPickerSource) Load(e *view.Editor) ui.PickerLoad {
 
 	modifiedIcon := bufferPickerModifiedIcon
 	if !e.Options().NerdFonts {
-		modifiedIcon = bufferPickerModifiedIconAscii
+		modifiedIcon = bufferPickerModifiedAscii
 	}
 	items := make([]*ui.PickerItem, 0, len(docs))
 	var slab ui.PickerItemSlab

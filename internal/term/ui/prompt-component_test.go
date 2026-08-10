@@ -283,6 +283,32 @@ func TestPromptCompletion(t *testing.T) {
 
 		assert.Contains(t, m.View().Content, "main.go")
 	})
+
+	t.Run("marks current option value", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			nerd   bool
+			marker string
+		}{
+			{name: "nerd font", nerd: true, marker: "\uf42e"},
+			{name: "ascii", nerd: false, marker: "*"},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+				t.Setenv("COLORTERM", "truecolor")
+				e := view.NewEditor(t.TempDir())
+				e.Options().Theme = "mocha"
+				e.Options().NerdFonts = tc.nerd
+				m := resize(newTestModel(t, e), 60, 12)
+				m = sendKey(m, ':')
+				m = typeString(m, "set line-number ")
+
+				out := stripANSI(m.View().Content)
+				assert.Contains(t, out, "absolute "+tc.marker)
+			})
+		}
+	})
 }
 
 func TestPromptCmdAccept(t *testing.T) {

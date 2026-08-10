@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/BurntSushi/toml"
 
@@ -19,6 +20,11 @@ type Registry struct {
 	options  map[string]*Option
 	prefixes []*Option
 }
+
+const (
+	currentOptionMarkerIcon  = "\uf42e" // '' - oct-check
+	currentOptionMarkerAscii = "*"
+)
 
 // NewRegistry returns an empty command registry bound to keymaps
 func NewRegistry(km *Keymaps) *Registry {
@@ -211,20 +217,14 @@ func (r *Registry) OptionValueCompleter() CompletionFunc {
 		if !ok {
 			return nil
 		}
-		o := r.LookupOption(key)
-		if o == nil {
-			return nil
-		}
-		if o.Complete != nil {
-			return o.Complete(e, args, input)
-		}
-		if o.Get == nil {
-			return nil
-		}
-		if value, err := o.Get(e); err == nil {
-			return matchFuzzy([]string{value}, input)
-		}
-		return nil
+		return completeOptionValue(e, args, input, r.LookupOption(key))
+	}
+}
+
+// OptionValueCompleterFor completes values for a fixed option key
+func (r *Registry) OptionValueCompleterFor(key string) CompletionFunc {
+	return func(e *view.Editor, args *Args, input string) []Completion {
+		return completeOptionValue(e, args, input, r.LookupOption(key))
 	}
 }
 
@@ -240,4 +240,48 @@ func (r *Registry) lookupPrefixOption(key string) *Option {
 
 func normalizeOptionKey(key string) string {
 	return strings.ToLower(strings.TrimSpace(key))
+}
+
+func completeOptionValue(
+	e *view.Editor, args *Args, input string, o *Option,
+) []Completion {
+	if o == nil {
+		return nil
+	}
+	var current string
+	if o.Get != nil {
+		current, _ = o.Get(e)
+	}
+	nerd := e.Options().NerdFonts
+	if o.Complete != nil {
+		return markCurrentOption(o.Complete(e, args, input), current, nerd)
+	}
+	if current == "" {
+		return nil
+	}
+	items := matchFuzzy([]string{current}, input)
+	return markCurrentOption(items, current, nerd)
+}
+
+func markCurrentOption(
+	items []Completion, current string, nerd bool,
+) []Completion {
+	marker := currentOptionMarkerAscii
+	if nerd {
+		marker = currentOptionMarkerIcon
+	}
+	for i := range items {
+		if items[i].Text != current {
+			continue
+		}
+		display := items[i].Display
+		if display == "" {
+			display = items[i].Text
+		}
+		items[i].Display = display + " " + marker
+		items[i].Indices = append(
+			items[i].Indices, utf8.RuneCountInString(display)+1,
+		)
+	}
+	return items
 }

@@ -70,7 +70,7 @@ func ConfigModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
 	cmds := optionCmds(r)
 	cmds = append(cmds, systemCmds()...)
-	cmds = append(cmds, themeCmds()...)
+	cmds = append(cmds, themeCmds(r)...)
 	cmds = append(cmds, formatCmds()...)
 	return command.Module{
 		Translations: i18n.LoadTranslations(configFS),

@@ -53,6 +53,24 @@ func TestConfigTheme(t *testing.T) {
 		assert.NotContains(t, res.Message, "error")
 		assert.Equal(t, "mocha", e.Options().Theme)
 	})
+
+	t.Run("completion marks current theme", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		e.Options().Theme = "mocha"
+		e.Options().NerdFonts = true
+		cmd := km.ResolveCommand("theme")
+		assert.NotNil(t, cmd)
+
+		comps := cmd.Signature.Completer.Complete(e, cmd.Signature, "")
+		var display string
+		for _, c := range comps {
+			if c.Text == "mocha" {
+				display = c.Display
+				break
+			}
+		}
+		assert.Equal(t, "mocha \uf42e", display)
+	})
 }
 
 func TestConfigDocumentOptions(t *testing.T) {

@@ -181,7 +181,7 @@ func TestTerminalPane(t *testing.T) {
 			[]byte("\x1b]7;file://localhost" + termDir + "\x07"),
 		)
 
-		sessionPath := filepath.Join(dir, "session.toml")
+		sessionPath := filepath.Join(dir, "session.json")
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
 		next := view.NewEditor(dir)

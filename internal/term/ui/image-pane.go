@@ -2,6 +2,7 @@ package ui
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -387,17 +388,15 @@ func (p *ImagePane) panBound() geom.Point {
 }
 
 func (p *ImagePane) restoreZoom(session *view.PaneSession) {
-	value, ok := session.Value(imageSessionZoomKey)
+	raw, ok := session.Value(imageSessionZoomKey)
 	if !ok {
 		return
 	}
-	switch zoom := value.(type) {
-	case int:
-		p.setZoom(zoom)
-	case int64:
-		zoom = min(max(zoom, int64(minImageZoom)), int64(maxImageZoom))
-		p.setZoom(int(zoom))
+	var zoom int
+	if json.Unmarshal(raw, &zoom) != nil {
+		return
 	}
+	p.setZoom(zoom)
 }
 
 // restorePan sets the saved offset directly, not via setPan: panMax is zero
@@ -412,20 +411,16 @@ func (p *ImagePane) restorePan(session *view.PaneSession) {
 	p.dirty = true
 }
 
-// sessionInt reads an int session value, tolerating the int64 that a
-// round-tripped session yields
 func sessionInt(session *view.PaneSession, key string) (int, bool) {
-	value, ok := session.Value(key)
+	raw, ok := session.Value(key)
 	if !ok {
 		return 0, false
 	}
-	switch v := value.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
+	var value int
+	if json.Unmarshal(raw, &value) != nil {
+		return 0, false
 	}
-	return 0, false
+	return value, true
 }
 
 func registerImagePane(e *view.Editor) {

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -211,15 +212,14 @@ func registerBinaryPane(e *view.Editor) {
 			if err != nil {
 				return nil, err
 			}
-			if offset, ok := session.Value(binarySessionOffsetKey); ok {
-				switch value := offset.(type) {
-				case int:
-					pane.offset = int64(value)
-				case int64:
-					pane.offset = value
-				}
-				pane.setOffset(pane.offset)
+			raw, ok := session.Value(binarySessionOffsetKey)
+			if !ok {
+				return pane, nil
 			}
+			if err := json.Unmarshal(raw, &pane.offset); err != nil {
+				return pane, nil
+			}
+			pane.setOffset(pane.offset)
 			return pane, nil
 		})
 }

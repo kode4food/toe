@@ -1,6 +1,7 @@
 package view
 
 import (
+	"encoding/json"
 	"errors"
 	"sync"
 
@@ -119,10 +120,14 @@ func (s *PaneSession) Path() string {
 	return s.path
 }
 
-// Value returns module-owned pane state by key
-func (s *PaneSession) Value(key string) (any, bool) {
+// Value returns module-owned pane state as raw JSON by key
+func (s *PaneSession) Value(key string) (json.RawMessage, bool) {
 	value, ok := s.values[key]
-	return value, ok
+	if !ok {
+		return nil, false
+	}
+	raw, err := json.Marshal(value)
+	return raw, err == nil
 }
 
 // Tree returns the layout tree

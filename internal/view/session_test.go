@@ -72,8 +72,7 @@ func TestSession(t *testing.T) {
 		))
 		data, err := os.ReadFile(sessionPath)
 		assert.NoError(t, err)
-		assert.Contains(t, string(data), "[option]")
-		assert.NotContains(t, string(data), "[[option]]")
+		assert.Contains(t, string(data), `"options": {`)
 
 		next := view.NewEditor(dir)
 		values, restored, err := next.RestoreSession(sessionPath)
@@ -451,17 +450,19 @@ func TestSession(t *testing.T) {
 		_, err := e.OpenFile(filePath)
 		assert.NoError(t, err)
 		// write a single-view root (kind="view") that SaveSession never emits
-		content := fmt.Sprintf(`version = 1
-
-[[document]]
-path = %q
-
-[layout]
-kind = "view"
-document = 1
-focused = true
-mode = "NRM"
-`, filePath)
+		content := fmt.Sprintf(`{
+  "version": 1,
+  "documents": [
+    {
+      "path": %q
+    }
+  ],
+  "layout": {
+    "kind": "view",
+    "document": 1,
+    "mode": "NRM"
+  }
+}`, filePath)
 		assert.NoError(t, os.MkdirAll(filepath.Dir(sessionPath), 0o755))
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
@@ -499,7 +500,7 @@ mode = "NRM"
 		dir := t.TempDir()
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte("{{{not toml"), 0o644),
+			os.WriteFile(sessionPath, []byte("{{{not json"), 0o644),
 		)
 		e := view.NewEditor(dir)
 		_, _, err := e.RestoreSession(sessionPath)
@@ -510,7 +511,7 @@ mode = "NRM"
 		dir := t.TempDir()
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte("version = 999\n"), 0o644),
+			os.WriteFile(sessionPath, []byte(`{"version":999}`), 0o644),
 		)
 		e := view.NewEditor(dir)
 		_, _, err := e.RestoreSession(sessionPath)
@@ -521,7 +522,7 @@ mode = "NRM"
 		dir := t.TempDir()
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		assert.NoError(t,
-			os.WriteFile(sessionPath, []byte("version = 1\n"), 0o644),
+			os.WriteFile(sessionPath, []byte(`{"version":1}`), 0o644),
 		)
 		e := view.NewEditor(dir)
 		_, _, err := e.RestoreSession(sessionPath)
@@ -535,14 +536,17 @@ mode = "NRM"
 			os.WriteFile(filePath, []byte("package main\n"), 0o644),
 		)
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		content := fmt.Sprintf(`version = 1
-
-[[document]]
-path = %q
-
-[layout]
-kind = "bogus"
-`, filePath)
+		content := fmt.Sprintf(`{
+  "version": 1,
+  "documents": [
+    {
+      "path": %q
+    }
+  ],
+  "layout": {
+    "kind": "bogus"
+  }
+}`, filePath)
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
 		)
@@ -558,16 +562,18 @@ kind = "bogus"
 			os.WriteFile(filePath, []byte("package main\n"), 0o644),
 		)
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		content := fmt.Sprintf(`version = 1
-
-[[document]]
-path = %q
-
-[layout]
-kind = "view"
-document = 99
-focused = true
-`, filePath)
+		content := fmt.Sprintf(`{
+  "version": 1,
+  "documents": [
+    {
+      "path": %q
+    }
+  ],
+  "layout": {
+    "kind": "view",
+    "document": 99
+  }
+}`, filePath)
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
 		)
@@ -586,23 +592,27 @@ focused = true
 		sessionPath := filepath.Join(dir, view.SessionFile)
 		// primary=5 with one range: NewSelection fails,
 		// falls back to PointSelection(0)
-		content := fmt.Sprintf(`version = 1
-
-[[document]]
-path = %q
-
-[layout]
-kind = "view"
-document = 1
-focused = true
-
-[layout.selection]
-primary = 5
-
-[[layout.selection.range]]
-anchor = 0
-head = 1
-`, filePath)
+		content := fmt.Sprintf(`{
+  "version": 1,
+  "documents": [
+    {
+      "path": %q
+    }
+  ],
+  "layout": {
+    "kind": "view",
+    "document": 1,
+    "selection": {
+      "primary": 5,
+      "ranges": [
+        {
+          "anchor": 0,
+          "head": 1
+        }
+      ]
+    }
+  }
+}`, filePath)
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
 		)
@@ -616,18 +626,20 @@ head = 1
 	t.Run("restores scratch document", func(t *testing.T) {
 		dir := t.TempDir()
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		content := `version = 1
-
-[[document]]
-scratch = true
-text = "scratch text\n"
-language = "go"
-
-[layout]
-kind = "view"
-document = 1
-focused = true
-`
+		content := `{
+  "version": 1,
+  "documents": [
+    {
+      "scratch": true,
+      "text": "scratch text\n",
+      "language": "go"
+    }
+  ],
+  "layout": {
+    "kind": "view",
+    "document": 1
+  }
+}`
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
 		)
@@ -649,15 +661,18 @@ focused = true
 			os.WriteFile(filePath, []byte("package main\n"), 0o644),
 		)
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		content := fmt.Sprintf(`version = 1
-
-[[document]]
-path = %q
-
-[layout]
-kind = "view"
-document = 1
-`, filePath)
+		content := fmt.Sprintf(`{
+  "version": 1,
+  "documents": [
+    {
+      "path": %q
+    }
+  ],
+  "layout": {
+    "kind": "view",
+    "document": 1
+  }
+}`, filePath)
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
 		)
@@ -782,10 +797,10 @@ document = 1
 		// poison the saved sequence with values that would overflow a counter
 		raw, err := os.ReadFile(sessionPath)
 		assert.NoError(t, err)
-		pattern := regexp.MustCompile(`focus-seq = \d+`)
+		pattern := regexp.MustCompile(`"focus-seq": \d+`)
 		assert.Len(t, pattern.FindAllString(string(raw), -1), 4)
 		poisoned := pattern.ReplaceAllString(
-			string(raw), "focus-seq = 9223372036854775807",
+			string(raw), `"focus-seq": 9223372036854775807`,
 		)
 		assert.NoError(t, os.WriteFile(sessionPath, []byte(poisoned), 0o644))
 
@@ -849,8 +864,7 @@ document = 1
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 		data, err := os.ReadFile(sessionPath)
 		assert.NoError(t, err)
-		assert.Contains(t, string(data), "[register]")
-		assert.NotContains(t, string(data), "[[register]]")
+		assert.Contains(t, string(data), `"registers": {`)
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(geom.Size{Width: 80, Height: 24})
@@ -903,18 +917,23 @@ document = 1
 			os.WriteFile(filePath, []byte("package main\n"), 0o644),
 		)
 		sessionPath := filepath.Join(dir, view.SessionFile)
-		content := fmt.Sprintf(`version = 1
-
-[[document]]
-path = %q
-
-[layout]
-kind = "split"
-layout = "vertical"
-
-[[layout.child]]
-kind = "bogus"
-`, filePath)
+		content := fmt.Sprintf(`{
+  "version": 1,
+  "documents": [
+    {
+      "path": %q
+    }
+  ],
+  "layout": {
+    "kind": "split",
+    "layout": "vertical",
+    "children": [
+      {
+        "kind": "bogus"
+      }
+    ]
+  }
+}`, filePath)
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte(content), 0o644),
 		)

@@ -9,7 +9,7 @@ toe can restore open panes, layout, cursor state, and editor options between run
 
 ## Session File
 
-Sessions are stored in `.toe/session.toml` at your project root (the workspace directory). Each project has its own independent session.
+Sessions are stored in `.toe/session.json` at your project root (the workspace directory). Each project has its own independent session.
 
 Auto-session only saves and restores session files for trusted workspaces. Run `:workspace-trust` in the project before relying on automatic session restore/save.
 

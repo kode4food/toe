@@ -151,8 +151,8 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 		}
 		v.docOffsets[did] = Position{
 			Anchor:           so.Anchor,
-			HorizontalOffset: so.HorizontalOffset,
-			VerticalOffset:   so.VerticalOffset,
+			HorizontalOffset: so.HorzOff,
+			VerticalOffset:   so.VertOff,
 		}
 	}
 	entries := make([]JumpEntry, 0, len(args.session.Jumps))

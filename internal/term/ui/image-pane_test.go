@@ -96,7 +96,7 @@ func TestImagePane(t *testing.T) {
 		pane.ZoomIn()
 		pane.ZoomIn()
 		e.ReplacePane(e.Tree().Focus(), pane)
-		session := filepath.Join(dir, "session.toml")
+		session := filepath.Join(dir, "session.json")
 		assert.NoError(t, e.SaveSession(session, nil))
 
 		next := view.NewEditor(dir)

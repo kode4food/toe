@@ -99,7 +99,7 @@ func TestBinaryPane(t *testing.T) {
 	t.Run("restores path and offset", func(t *testing.T) {
 		root := t.TempDir()
 		path := writeBinaryFile(t, filepath.Join(root, "tool"), 512)
-		session := filepath.Join(root, "session.toml")
+		session := filepath.Join(root, "session.json")
 		e := view.NewEditor(root)
 		_, _, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
 		assert.NoError(t, err)

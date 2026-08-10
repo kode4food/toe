@@ -382,7 +382,7 @@ func TestImagePanRestore(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
 	path := writeRenderImage(t, root, 40, 20, nil)
-	session := filepath.Join(root, "session.toml")
+	session := filepath.Join(root, "session.json")
 
 	// session 1: zoom and pan through the model, then save
 	e := view.NewEditor(root)
@@ -674,7 +674,7 @@ func TestImageRestore(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
 	path := writeRenderImage(t, root, 40, 20, nil)
-	session := filepath.Join(root, "session.toml")
+	session := filepath.Join(root, "session.json")
 	e := view.NewEditor(root)
 	e.ResizeTree(geom.Size{Width: 80, Height: 24})
 	openRenderImagePane(t, e, path)

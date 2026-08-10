@@ -131,10 +131,10 @@ func (v *View) sessionDocOffsets(docIndex map[DocumentId]int) []sessDocOffset {
 			continue
 		}
 		out = append(out, sessDocOffset{
-			Document:         idx,
-			Anchor:           p.Anchor,
-			HorizontalOffset: p.HorizontalOffset,
-			VerticalOffset:   p.VerticalOffset,
+			Document: idx,
+			Anchor:   p.Anchor,
+			HorzOff:  p.HorizontalOffset,
+			VertOff:  p.VerticalOffset,
 		})
 	}
 	slices.SortFunc(out, func(a, b sessDocOffset) int {

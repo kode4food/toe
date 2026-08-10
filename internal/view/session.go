@@ -1,13 +1,12 @@
 package view
 
 import (
+	"encoding/json"
 	"errors"
 	"maps"
 	"os"
 	"path/filepath"
 	"slices"
-
-	"github.com/BurntSushi/toml"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/loader"
@@ -25,12 +24,12 @@ type (
 	}
 
 	sessEditor struct {
-		Version   int            `toml:"version"`
-		Options   sessOptions    `toml:"option,omitempty"`
-		Registers sessRegisters  `toml:"register,omitempty"`
-		Maximized bool           `toml:"maximized,omitempty"`
-		Documents []sessDocument `toml:"document"`
-		Layout    sessNode       `toml:"layout"`
+		Version   int            `json:"version"`
+		Options   sessOptions    `json:"options,omitempty"`
+		Registers sessRegisters  `json:"registers,omitempty"`
+		Maximized bool           `json:"maximized,omitempty"`
+		Documents []sessDocument `json:"documents"`
+		Layout    sessNode       `json:"layout"`
 	}
 
 	sessOptions map[string]string
@@ -38,67 +37,65 @@ type (
 	sessRegisters map[string][]string
 
 	sessDocument struct {
-		Path      string     `toml:"path,omitempty"`
-		Scratch   bool       `toml:"scratch,omitempty"`
-		Text      string     `toml:"text,omitempty"`
-		Lang      string     `toml:"language,omitempty"`
-		Selection sessSelect `toml:"selection"`
+		Path      string     `json:"path,omitempty"`
+		Scratch   bool       `json:"scratch,omitempty"`
+		Text      string     `json:"text,omitempty"`
+		Lang      string     `json:"language,omitempty"`
+		Selection sessSelect `json:"selection"`
 	}
 
 	sessNode struct {
-		Kind   SessionKind    `toml:"kind"`
-		Path   string         `toml:"path,omitempty"`
-		Values map[string]any `toml:"value,omitempty"`
+		Kind   SessionKind    `json:"kind"`
+		Path   string         `json:"path,omitempty"`
+		Values map[string]any `json:"values,omitempty"`
 
-		Layout string    `toml:"layout,omitempty"`
-		Ratios []float64 `toml:"ratios,omitempty"`
+		Layout string    `json:"layout,omitempty"`
+		Ratios []float64 `json:"ratios,omitempty"`
 
-		Document   int             `toml:"document,omitempty"`
-		DocHistory []int           `toml:"document-history,omitempty"`
-		DocOffs    []sessDocOffset `toml:"document-offset,omitempty"`
-		Mode       string          `toml:"mode,omitempty"`
+		Document   int             `json:"document,omitempty"`
+		DocHistory []int           `json:"document-history,omitempty"`
+		DocOffs    []sessDocOffset `json:"document-offsets,omitempty"`
+		Mode       string          `json:"mode,omitempty"`
 
-		Anchor   int `toml:"anchor,omitempty"`
-		HorzOff  int `toml:"horizontal-offset,omitempty"`
-		VertOff  int `toml:"vertical-offset,omitempty"`
-		FocusSeq int `toml:"focus-seq,omitempty"`
+		Anchor   int `json:"anchor,omitempty"`
+		HorzOff  int `json:"horizontal-offset,omitempty"`
+		VertOff  int `json:"vertical-offset,omitempty"`
+		FocusSeq int `json:"focus-seq,omitempty"`
 
-		Selection sessSelect `toml:"selection"`
-		JumpHead  int        `toml:"jump-head,omitempty"`
-		Jumps     []sessJump `toml:"jump,omitempty"`
+		Selection sessSelect `json:"selection"`
+		JumpHead  int        `json:"jump-head,omitempty"`
+		Jumps     []sessJump `json:"jumps,omitempty"`
 
-		Children []sessNode `toml:"child"`
-		History  []sessNode `toml:"history,omitempty"`
+		Children []sessNode `json:"children"`
+		History  []sessNode `json:"history,omitempty"`
 	}
 
-	// sessDocOffset is a pane's remembered scroll position for a document
-	// it is not currently displaying
 	sessDocOffset struct {
-		Document         int `toml:"document"`
-		Anchor           int `toml:"anchor,omitempty"`
-		HorizontalOffset int `toml:"horizontal-offset,omitempty"`
-		VerticalOffset   int `toml:"vertical-offset,omitempty"`
+		Document int `json:"document"`
+		Anchor   int `json:"anchor,omitempty"`
+		HorzOff  int `json:"horizontal-offset,omitempty"`
+		VertOff  int `json:"vertical-offset,omitempty"`
 	}
 
 	sessSelect struct {
-		Primary int         `toml:"primary"`
-		Ranges  []sessRange `toml:"range"`
+		Primary int         `json:"primary"`
+		Ranges  []sessRange `json:"ranges"`
 	}
 
 	sessJump struct {
-		Document  int        `toml:"document"`
-		Anchor    int        `toml:"anchor"`
-		Selection sessSelect `toml:"selection"`
+		Document  int        `json:"document"`
+		Anchor    int        `json:"anchor"`
+		Selection sessSelect `json:"selection"`
 	}
 
 	sessRange struct {
-		Anchor int `toml:"anchor"`
-		Head   int `toml:"head"`
+		Anchor int `json:"anchor"`
+		Head   int `json:"head"`
 	}
 )
 
 const (
-	SessionFile = "session.toml"
+	SessionFile = "session.json"
 
 	SessionKindSplit    SessionKind = "split"
 	SessionKindView     SessionKind = "view"
@@ -172,7 +169,9 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		return err
 	}
 	defer func() { _ = f.Close() }()
-	return toml.NewEncoder(f).Encode(s)
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+	return enc.Encode(s)
 }
 
 // RestoreSession restores file-backed documents and view state from path. It
@@ -302,10 +301,17 @@ func WorkspaceSessionFile(dir string) string {
 
 func readSession(path string) (sessEditor, bool, error) {
 	var s sessEditor
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+	f, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
 		return s, false, nil
 	}
-	if _, err := toml.DecodeFile(path, &s); err != nil {
+	if err != nil {
+		return s, false, err
+	}
+	defer func() { _ = f.Close() }()
+	dec := json.NewDecoder(f)
+	dec.UseNumber()
+	if err := dec.Decode(&s); err != nil {
 		return s, false, err
 	}
 	if s.Version != sessionVersion {

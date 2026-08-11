@@ -40,7 +40,7 @@ func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 		PickerBase: ui.PickerBase{
 			Ident: "global-search",
 			Label: "Search Workspace",
-			Cols:  []string{"path"},
+			Cols:  []string{""},
 		},
 	})
 }
@@ -121,10 +121,13 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 			continue
 		}
 		ln := lineNum
+		lbl, sec := ui.PickerNamePath(fmt.Sprintf("%s:%d", rel, ln))
 		select {
 		case gs.results <- gs.slab.Add(ui.PickerItem{
-			Display: fmt.Sprintf("%s:%d", rel, ln),
-			SortKey: fmt.Sprintf("%s:%06d", rel, ln),
+			Display:       lbl,
+			Columns:       []string{lbl},
+			SortKey:       fmt.Sprintf("%s:%06d", rel, ln),
+			SecondaryFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{Path: path},
 				Lines:  &core.Span{From: ln - 1, To: ln - 1},

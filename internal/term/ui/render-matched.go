@@ -7,19 +7,21 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-type writePickerMatchedArgs struct {
-	at       geom.Point
-	maxWidth int
-	text     string
-	indices  []int
-	base     tui.Style
-	match    tui.Style
+type writeMatchedItemArgs struct {
+	buf           *tui.Buffer
+	at            geom.Point
+	maxWidth      int
+	text          string
+	indices       []int
+	base          tui.Style
+	match         tui.Style
+	secondary     tui.Style
+	secondaryFrom int
 }
 
-func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
+func writeMatchedItem(args writeMatchedItemArgs) {
 	indices := args.indices
-	budget := args.maxWidth
-	if budget <= 0 {
+	if args.maxWidth <= 0 {
 		return
 	}
 	runes := []rune(args.text)
@@ -36,7 +38,8 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 			}
 		} else {
 			for j < len(runes) &&
-				!(ptr < len(indices) && indices[ptr] == j) {
+				!(ptr < len(indices) && indices[ptr] == j) &&
+				j != args.secondaryFrom {
 				j++
 			}
 		}
@@ -47,10 +50,13 @@ func writePickerMatched(buf *tui.Buffer, args writePickerMatchedArgs) {
 			rw = runewidth.StringWidth(run)
 		}
 		st := args.base
-		if matched {
+		switch {
+		case matched:
 			st = args.match
+		case args.secondaryFrom > 0 && i >= args.secondaryFrom:
+			st = args.secondary
 		}
-		buf.SetString(geom.Point{X: col, Y: args.at.Y}, run, st)
+		args.buf.SetString(geom.Point{X: col, Y: args.at.Y}, run, st)
 		col += rw
 		args.maxWidth -= rw
 		i = j

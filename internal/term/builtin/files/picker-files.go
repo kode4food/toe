@@ -73,7 +73,7 @@ func newFilePickerSource(dir string) *filePickerSource {
 		PickerBase: ui.PickerBase{
 			Ident: "open-file",
 			Label: "Open File",
-			Cols:  []string{"path"},
+			Cols:  []string{""},
 		},
 		dir: dir,
 	}
@@ -115,9 +115,13 @@ func (f *filePickerSource) ItemForPath(
 	}) {
 		return nil, false
 	}
+	lbl, sec := ui.PickerNamePath(rel)
 	return &ui.PickerItem{
-		Display:  rel,
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+		Display:       lbl,
+		Columns:       []string{lbl},
+		SortKey:       rel,
+		SecondaryFrom: sec,
+		Location:      ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	}, true
 }
 
@@ -201,9 +205,13 @@ func startFilePickerFeed(root string, count int) ui.PickerLoad {
 		defer close(ch)
 		var slab ui.PickerItemSlab
 		walkPickerFiles(root, done, func(file walkedFile) bool {
+			lbl, sec := ui.PickerNamePath(file.rel)
 			select {
 			case ch <- slab.Add(ui.PickerItem{
-				Display: file.rel,
+				Display:       lbl,
+				Columns:       []string{lbl},
+				SortKey:       file.rel,
+				SecondaryFrom: sec,
 				Location: ui.PickerLocation{
 					Target: ui.PickerTarget{Path: file.path},
 				},

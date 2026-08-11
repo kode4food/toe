@@ -209,7 +209,8 @@ func TestChangedFilePicker(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "\uf458 deleted.txt")
-		assert.Contains(t, out, "\uf45a old.txt \u2192 new.txt")
+		assert.Contains(t, out, "\uf45a new.txt")
+		assert.NotContains(t, out, "old.txt")
 	})
 
 	t.Run("accept opens changed file", func(t *testing.T) {

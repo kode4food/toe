@@ -170,7 +170,8 @@ func TestGlobalSearch(t *testing.T) {
 		m := openGlobalSearch(t, view.NewEditor(root), "findme")
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "linked/needle.txt")
+		assert.Contains(t, out, "needle.txt:1")
+		assert.Contains(t, out, "linked")
 	})
 
 	t.Run("searches open document text", func(t *testing.T) {

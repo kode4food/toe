@@ -117,7 +117,8 @@ func (p *PromptComponent) paintCompletions(
 				match = selMatchStyle
 			}
 			buf.FillRange(at, colW, style)
-			writePickerMatched(buf, writePickerMatchedArgs{
+			writeMatchedItem(writeMatchedItemArgs{
+				buf:      buf,
 				at:       at,
 				maxWidth: colW,
 				text:     item.completionText(),

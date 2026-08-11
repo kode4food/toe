@@ -143,15 +143,19 @@ func writePickerItem(
 	cols := p.source.Columns()
 	matchColumn := p.source.MatchColumn()
 
+	sec, secFrom := pickerSecondary(cx, base, m.item)
 	if len(cols) <= 1 {
 		itemBase := pickerColumnBase(cx, base, m.item.StyleScopes, 0)
-		writePickerMatched(buf, writePickerMatchedArgs{
-			at:       geom.Point{X: cx2, Y: at.Y},
-			maxWidth: cellW,
-			text:     m.item.Display,
-			indices:  m.result.Indices,
-			base:     itemBase,
-			match:    match,
+		writeMatchedItem(writeMatchedItemArgs{
+			buf:           buf,
+			at:            geom.Point{X: cx2, Y: at.Y},
+			maxWidth:      cellW,
+			text:          m.item.Display,
+			indices:       m.result.Indices,
+			base:          itemBase,
+			match:         match,
+			secondary:     sec,
+			secondaryFrom: secFrom,
 		})
 	} else {
 		widths := pickerColumnWidths(p, cellW)
@@ -166,13 +170,16 @@ func writePickerItem(
 			}
 			colBase := pickerColumnBase(cx, base, m.item.StyleScopes, i)
 			if i == matchColumn {
-				writePickerMatched(buf, writePickerMatchedArgs{
-					at:       geom.Point{X: cur, Y: at.Y},
-					maxWidth: widths[i],
-					text:     val,
-					indices:  m.result.Indices,
-					base:     colBase,
-					match:    match,
+				writeMatchedItem(writeMatchedItemArgs{
+					buf:           buf,
+					at:            geom.Point{X: cur, Y: at.Y},
+					maxWidth:      widths[i],
+					text:          val,
+					indices:       m.result.Indices,
+					base:          colBase,
+					match:         match,
+					secondary:     sec,
+					secondaryFrom: secFrom,
 				})
 			} else {
 				text := runewidth.Truncate(val, widths[i], "")
@@ -181,6 +188,19 @@ func writePickerItem(
 			cur += widths[i]
 		}
 	}
+}
+
+func pickerSecondary(
+	cx *Context, base tui.Style, item *PickerItem,
+) (tui.Style, int) {
+	if item.SecondaryFrom <= 0 {
+		return base, 0
+	}
+	fg := cx.Theme().Get("ui.picker.secondary").FgColor()
+	if fg.IsReset() {
+		return base, 0
+	}
+	return base.Fg(fg), item.SecondaryFrom
 }
 
 func pickerColumnBase(

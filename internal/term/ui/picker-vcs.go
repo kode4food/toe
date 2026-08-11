@@ -20,8 +20,6 @@ const (
 	fileRenamedIcon   = "\uf45a" // '' - nf-oct-diff_renamed
 	fileUntrackedIcon = "\uf420" // '' - nf-oct-question
 	fileConflictIcon  = "\uf421" // '' - nf-oct-alert
-
-	renamedArrow = "\u2192" // '→' - rightwards arrow
 )
 
 const (
@@ -230,13 +228,8 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 		Path:    fc.Path,
 		BaseDir: args.cwd,
 	})
-	if fc.Kind == view.FileChangeRenamed {
-		from := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
-			Path:    fc.FromPath,
-			BaseDir: args.cwd,
-		})
-		display = from + " " + renamedArrow + " " + display
-	}
+	// a rename shows only its destination; the source is in the diff preview
+	lbl, sec := PickerNamePath(display)
 	hunks := changedFileHunks(args.vcs, fc)
 	basePath := fc.Path
 	if fc.Kind == view.FileChangeRenamed {
@@ -247,15 +240,16 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 		group = changedFileStaged
 	}
 	item := PickerItem{
-		Display:     display,
-		Group:       group,
-		Columns:     []string{changedFileIcon(fc.Kind, args.nerd), display},
-		StyleScopes: []string{changedFileScope(fc.Kind), ""},
-		SortKey:     display,
-		DiffHunks:   hunks,
-		DiffPreview: fc.Kind != view.FileChangeConflict,
-		DiffKind:    fc.Kind,
-		BasePath:    basePath,
+		Display:       display,
+		Group:         group,
+		Columns:       []string{changedFileIcon(fc.Kind, args.nerd), lbl},
+		StyleScopes:   []string{changedFileScope(fc.Kind), ""},
+		SortKey:       display,
+		SecondaryFrom: sec,
+		DiffHunks:     hunks,
+		DiffPreview:   fc.Kind != view.FileChangeConflict,
+		DiffKind:      fc.Kind,
+		BasePath:      basePath,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: fc.Path},
 			Lines:  firstChangeLines(hunks),

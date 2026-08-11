@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 	"time"
@@ -138,6 +139,9 @@ type (
 		Columns     []string
 		StyleScopes []string
 		SortKey     string
+
+		// SecondaryFrom dims the matched column from this rune offset; 0 is off
+		SecondaryFrom int
 
 		Group   int
 		Section bool
@@ -663,12 +667,30 @@ func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
 	v.EnsureCursorVisibleHorizontal(cs)
 }
 
-// SortPickerItems sorts items by display text, the default ordering for static
-// picker sources
+// SortPickerItems sorts items by sort key, falling back to display text, the
+// default ordering for static picker sources
 func SortPickerItems(items []*PickerItem) {
 	slices.SortStableFunc(items, func(a, b *PickerItem) int {
-		return cmp.Compare(a.Display, b.Display)
+		return cmp.Compare(pickerSortText(a), pickerSortText(b))
 	})
+}
+
+// PickerNamePath renders a path name-first, trailing the directory holding it,
+// and returns the rune offset where that directory begins
+func PickerNamePath(rel string) (string, int) {
+	dir := filepath.Dir(rel)
+	if dir == "" || dir == "." {
+		return rel, 0
+	}
+	name := filepath.Base(rel)
+	return name + " " + dir, len([]rune(name)) + 1
+}
+
+func pickerSortText(item *PickerItem) string {
+	if item.SortKey != "" {
+		return item.SortKey
+	}
+	return item.Display
 }
 
 func alignAcceptedSelection(

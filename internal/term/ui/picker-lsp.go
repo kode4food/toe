@@ -39,7 +39,7 @@ func newLSPLocationPicker(e *view.Editor, request locationRequest) *Picker {
 		PickerBase: PickerBase{
 			Ident: "lsp-locations",
 			Label: "Locations",
-			Cols:  []string{"location"},
+			Cols:  []string{""},
 		},
 		request: request,
 	})
@@ -252,16 +252,17 @@ func locationItem(
 	slab *PickerItemSlab, loc view.Location, cwd string,
 ) *PickerItem {
 	line, lines := locationLineRange(loc)
-	display := fmt.Sprintf(
-		"%s:%d", view.DocumentRelativeName(view.DocumentRelativeNameArgs{
-			Path:    loc.Path,
-			BaseDir: cwd,
-		}), line+1,
-	)
+	rel := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+		Path:    loc.Path,
+		BaseDir: cwd,
+	})
+	display := fmt.Sprintf("%s:%d", rel, line+1)
+	lbl, sec := PickerNamePath(display)
 	return slab.Add(PickerItem{
-		Display: display,
-		Columns: []string{display},
-		SortKey: display,
+		Display:       lbl,
+		Columns:       []string{lbl},
+		SortKey:       display,
+		SecondaryFrom: sec,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},
 			Lines:  lines,

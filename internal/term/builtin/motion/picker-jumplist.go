@@ -41,10 +41,9 @@ func JumplistModule(model ui.Model) command.Module {
 func JumplistPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &jumplistPickerSource{
 		PickerBase: ui.PickerBase{
-			Ident:       "jumplist",
-			Label:       "Jump List",
-			Cols:        []string{"path"},
-			Proportions: []int{1},
+			Ident: "jumplist",
+			Label: "Jump List",
+			Cols:  []string{""},
 		},
 	})
 }
@@ -64,13 +63,14 @@ func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
 		if doc == nil {
 			continue
 		}
-		name := doc.RelativeName(e.Cwd())
+		rel := doc.RelativeName(e.Cwd())
 		text := doc.Text()
 		line, lines := jumpLineRange(text, entry.Selection)
-		display := fmt.Sprintf("%s:%d", name, line+1)
+		lbl, sec := ui.PickerNamePath(fmt.Sprintf("%s:%d", rel, line+1))
 		items = append(items, slab.Add(ui.PickerItem{
-			Display: display,
-			Columns: []string{display},
+			Display:       lbl,
+			Columns:       []string{lbl},
+			SecondaryFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{ID: entry.DocID},
 				Lines:  lines,

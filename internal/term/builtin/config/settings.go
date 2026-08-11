@@ -55,8 +55,8 @@ const (
 )
 
 var (
-	//go:embed i18n/config.*.json
-	configFS embed.FS
+	//go:embed i18n/settings.*.json
+	settingsFS embed.FS
 
 	errUsageGet      = i18n.NewError(errorUsageGetKey)
 	errUsageSet      = i18n.NewError(errorUsageSetKey)
@@ -65,15 +65,15 @@ var (
 	errInvalidOption = i18n.NewError(errorInvalidOptionKey)
 )
 
-// Module returns the option and config commands
-func Module(r *command.Registry) command.Module {
+// SettingsModule returns the option and config commands
+func SettingsModule(r *command.Registry) command.Module {
 	cfg := new(uiSection)
 	cmds := optionCmds(r)
 	cmds = append(cmds, systemCmds()...)
 	cmds = append(cmds, themeCmds(r)...)
 	cmds = append(cmds, formatCmds()...)
 	return command.Module{
-		Translations: i18n.LoadTranslations(configFS),
+		Translations: i18n.LoadTranslations(settingsFS),
 		Commands:     cmds,
 		Options: []command.Option{
 			{

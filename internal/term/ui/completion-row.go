@@ -79,7 +79,8 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	if budget <= 0 {
 		return
 	}
-	writePickerMatched(buf, writePickerMatchedArgs{
+	writeMatchedItem(writeMatchedItemArgs{
+		buf:      buf,
 		at:       geom.Point{X: labelX, Y: at.Y},
 		maxWidth: budget,
 		text:     parts.label,

@@ -120,7 +120,7 @@
 "ui.menu" = { fg = "overlay2", bg = "surface0" }
 "ui.menu.selected" = { fg = "text", bg = "surface1", modifiers = ["bold"] }
 "ui.picker.match" = "blue"
-"ui.picker.secondary" = "overlay0"
+"ui.picker.secondary" = "surface2"
 
 "diagnostic.error" = { underline = { color = "red", style = "curl" } }
 "diagnostic.warning" = { underline = { color = "yellow", style = "curl" } }

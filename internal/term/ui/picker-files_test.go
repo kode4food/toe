@@ -237,7 +237,7 @@ func TestPickerFiles(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "root.go")
-		assert.Contains(t, out, "src/child.go")
+		assert.Contains(t, out, "child.go src")
 	})
 
 	t.Run("cwd picker stays in current directory", func(t *testing.T) {
@@ -462,7 +462,7 @@ func TestPickerFiles(t *testing.T) {
 		m = resize(m, 100, 30)
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "linked/outside.go")
+		assert.Contains(t, out, "outside.go linked")
 	})
 
 	t.Run("deduplicates internal directory symlink", func(t *testing.T) {
@@ -485,8 +485,8 @@ func TestPickerFiles(t *testing.T) {
 		m = resize(m, 100, 30)
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "target/inside.go")
-		assert.NotContains(t, out, "linked/inside.go")
+		assert.Contains(t, out, "inside.go target")
+		assert.NotContains(t, out, "inside.go linked")
 	})
 
 	t.Run("broken symlink root falls back", func(t *testing.T) {

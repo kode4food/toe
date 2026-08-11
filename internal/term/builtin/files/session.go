@@ -26,7 +26,7 @@ func SessionModule(r *command.Registry) command.Module {
 				Name:      actSaveSession,
 				DocString: "Save session to the workspace session file",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					values, err := r.OptionValues(e)
+					values, err := r.ChangedOptionValues(e)
 					if err != nil {
 						return command.Result{Error: err}
 					}

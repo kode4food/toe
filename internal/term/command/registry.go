@@ -160,6 +160,25 @@ func (r *Registry) OptionValues(e *view.Editor) (map[string]string, error) {
 	return out, nil
 }
 
+// ChangedOptionValues returns the option values that differ from the editor's
+// base options. With no base recorded, every option counts as changed
+func (r *Registry) ChangedOptionValues(
+	e *view.Editor,
+) (map[string]string, error) {
+	values, err := r.OptionValues(e)
+	if err != nil {
+		return nil, err
+	}
+	base := e.BaseOptions()
+	out := map[string]string{}
+	for key, value := range values {
+		if base[key] != value {
+			out[key] = value
+		}
+	}
+	return out, nil
+}
+
 // ApplyOptionValues applies a set of runtime option strings through the same
 // handlers used by :set
 func (r *Registry) ApplyOptionValues(

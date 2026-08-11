@@ -1,6 +1,7 @@
 package files_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -58,6 +59,24 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, "false", res.Message)
 	})
 
+	t.Run("save stores only options off the base", func(t *testing.T) {
+		dir := t.TempDir()
+		e, km := sessionEnv(t, dir, "file.go")
+		base := baseOptions(t, e)
+		e.SetBaseOptions(func() map[string]string { return base })
+		test.RunCmdArgs(t, km, e, "set_option", "scrolloff 12")
+		res := test.RunCmd(t, km, e, "save_session")
+		assert.Equal(t, "session saved", res.Message)
+
+		data, err := os.ReadFile(view.WorkspaceSessionFile(dir))
+		assert.NoError(t, err)
+		var sess struct {
+			Options map[string]string `json:"options"`
+		}
+		assert.NoError(t, json.Unmarshal(data, &sess))
+		assert.Equal(t, map[string]string{"scrolloff": "12"}, sess.Options)
+	})
+
 	t.Run("restore invalid session errors", func(t *testing.T) {
 		dir := t.TempDir()
 		sessionDir := filepath.Join(dir, ".toe")
@@ -82,6 +101,18 @@ func sessionEnv(
 	_, err := e.OpenFile(p)
 	assert.NoError(t, err)
 	return e, km
+}
+
+// baseOptions reads e's current option values through a registry of its own,
+// standing in for the baseline the app records once config files are applied
+func baseOptions(t *testing.T, e *view.Editor) map[string]string {
+	t.Helper()
+	km := command.NewKeymaps()
+	reg, err := builtin.Register(ui.New(e, km), km)
+	assert.NoError(t, err)
+	values, err := reg.OptionValues(e)
+	assert.NoError(t, err)
+	return values
 }
 
 func sessionEditorInDir(

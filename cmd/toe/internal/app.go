@@ -26,51 +26,38 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
+// App is one editor process: the paths resolved from the command line, the
+// editor and its command registry, and the services attached to them. Build it
+// with New, bring it up with Start, take it down with Stop
 type App struct {
 	ConfigPath string
 	Root       string
-	PickerDir  string
+	ShowPicker bool
 	Files      []string
-	Editor     *view.Editor
-	Model      ui.Model
-	Reg        *command.Registry
-	keymaps    *command.Keymaps
+
+	Editor *view.Editor
+	Model  ui.Model
+	Reg    *command.Registry
+
+	keymaps  *command.Keymaps
+	baseOpts map[string]string
+	lsp      *lsp.Session
+	vcs      *vcs.Session
 }
 
 var ErrDirectoryArgument = errors.New(
 	"expected a path to file, but found a directory",
 )
 
-// New builds an app from command-line arguments, resolving the workspace root
-// and registering commands
+// New resolves the command line into the workspace root, the config path, and
+// the files to open. It touches no editor state; call Start for that
 func New(args []string, cwd string) (*App, error) {
-	a := &App{keymaps: command.NewKeymaps()}
-	args = a.ParseConfigFlag(args)
-	if err := a.ResolveSession(args, cwd); err != nil {
-		return nil, err
-	}
-	a.Editor = view.NewEditor(a.Root)
-	if err := a.Editor.Chdir(a.Root); err != nil {
-		return nil, err
-	}
-	a.Editor.SetClipboard(
-		action.NewOSC52Clipboard(action.NewSystemClipboard()),
-	)
-	if err := a.InitReg(); err != nil {
+	a := &App{}
+	args = a.parseConfigFlag(args)
+	if err := a.resolvePaths(args, cwd); err != nil {
 		return nil, err
 	}
 	return a, nil
-}
-
-// InitReg builds the model and registers the builtin command modules
-func (a *App) InitReg() error {
-	if a.keymaps == nil {
-		a.keymaps = command.NewKeymaps()
-	}
-	a.Model = ui.New(a.Editor, a.keymaps)
-	var err error
-	a.Reg, err = builtin.Register(a.Model, a.keymaps)
-	return err
 }
 
 // Run starts the editor, or writes the health report when --health is the only
@@ -87,37 +74,64 @@ func Run(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := a.OpenEditorFiles(); err != nil {
-		return err
+	if err := a.Start(context.Background()); err != nil {
+		return errors.Join(err, a.Stop())
 	}
-	defer vcs.Attach(a.Editor).Close()
-	if err := a.ApplyConfigFiles(); err != nil {
-		return err
-	}
-	if err := a.ApplyInitFile(); err != nil {
-		return err
-	}
-	baseValues, err := a.Reg.OptionValues(a.Editor)
-	if err != nil {
-		return err
-	}
-	if err := a.MaybeRestoreSession(a.WorkspaceTrusted); err != nil {
-		return err
-	}
-	defer a.InitLSP(context.Background())()
-	if err := a.ConfigureModel(); err != nil {
-		return err
-	}
-	defer ui.CloseAllTerminalPanes(a.Editor)
-	defer a.Model.Close()
-	if _, err := tea.NewProgram(a.Model, teaOptions()...).Run(); err != nil {
-		return err
-	}
-	return a.MaybeSaveSession(baseValues)
+	_, err = tea.NewProgram(a.Model, teaOptions()...).Run()
+	return errors.Join(err, a.Stop())
 }
 
-// ParseConfigFlag strips --config and its value from args into ConfigPath
-func (a *App) ParseConfigFlag(args []string) []string {
+// Start brings the app up in order: editor and commands, named files, config
+// and init files, the base options those establish, a saved session, then the
+// attached services and the model
+func (a *App) Start(ctx context.Context) error {
+	if err := a.initEditor(); err != nil {
+		return err
+	}
+	if err := a.openFiles(); err != nil {
+		return err
+	}
+	if err := a.applyConfigFiles(); err != nil {
+		return err
+	}
+	if err := a.applyInitFile(); err != nil {
+		return err
+	}
+	if err := a.resolveBaseOptions(); err != nil {
+		return err
+	}
+	if err := a.restoreSession(); err != nil {
+		return err
+	}
+	a.vcs = vcs.Attach(a.Editor)
+	a.lsp = lsp.Attach(ctx, a.Editor)
+	a.configureModel()
+	return nil
+}
+
+// Stop saves the session and releases everything Start attached
+func (a *App) Stop() error {
+	err := a.saveSession()
+	if a.Editor == nil {
+		return err
+	}
+	ui.CloseAllTerminalPanes(a.Editor)
+	a.Model.Close()
+	if a.lsp != nil {
+		err = errors.Join(err, a.lsp.Close())
+	}
+	if a.vcs != nil {
+		a.vcs.Close()
+	}
+	return err
+}
+
+// WorkspaceTrusted reports whether the current workspace is trusted
+func (a *App) WorkspaceTrusted() bool {
+	return loader.QueryWorkspaceTrust(a.Root, a.Editor.Options().Insecure)
+}
+
+func (a *App) parseConfigFlag(args []string) []string {
 	out := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -133,44 +147,58 @@ func (a *App) ParseConfigFlag(args []string) []string {
 	return out
 }
 
-// ResolveSession populates Root, PickerDir, and Files from args
-func (a *App) ResolveSession(args []string, cwd string) error {
+// resolvePaths populates Root, ShowPicker, and Files from args. A leading
+// directory argument becomes the root, and opens the file picker there
+func (a *App) resolvePaths(args []string, cwd string) error {
 	a.Root = cwd
 	a.Files = args
-	if len(args) > 0 {
-		if fi, err := os.Stat(args[0]); err == nil && fi.IsDir() {
-			a.PickerDir = args[0]
-			a.Files = args[1:]
-		}
+	if len(args) == 0 {
+		return nil
 	}
-	if a.PickerDir != "" {
-		abs, err := filepath.Abs(a.PickerDir)
+	if fi, err := os.Stat(args[0]); err == nil && fi.IsDir() {
+		abs, err := filepath.Abs(args[0])
 		if err != nil {
 			return err
 		}
 		a.Root = abs
+		a.ShowPicker = true
+		a.Files = args[1:]
 		return nil
 	}
-	if len(a.Files) > 0 {
-		path := a.Files[0]
-		if !filepath.IsAbs(path) {
-			path = filepath.Join(cwd, path)
-		}
-		abs, err := filepath.Abs(path)
-		if err != nil {
-			return err
-		}
-		root, _ := loader.FindWorkspace(cwd)
-		rel, err := filepath.Rel(root, abs)
-		if err != nil || !filepath.IsLocal(rel) {
-			a.Root = filepath.Dir(abs)
-		}
+	path := args[0]
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(cwd, path)
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	root, _ := loader.FindWorkspace(cwd)
+	rel, err := filepath.Rel(root, abs)
+	if err != nil || !filepath.IsLocal(rel) {
+		a.Root = filepath.Dir(abs)
 	}
 	return nil
 }
 
-// OpenEditorFiles opens each path in Files into the editor
-func (a *App) OpenEditorFiles() error {
+func (a *App) initEditor() error {
+	a.keymaps = command.NewKeymaps()
+	a.Editor = view.NewEditor(a.Root)
+	a.Model = ui.New(a.Editor, a.keymaps)
+	reg, err := builtin.Register(a.Model, a.keymaps)
+	if err != nil {
+		return err
+	}
+	a.Reg = reg
+	a.Editor.SetClipboard(
+		action.NewOSC52Clipboard(action.NewSystemClipboard()),
+	)
+	a.Editor.SetBaseOptions(a.baseOptions)
+	a.Editor.SetConfigReload(a.reloadConfig)
+	return a.Editor.Chdir(a.Root)
+}
+
+func (a *App) openFiles() error {
 	for _, path := range a.Files {
 		if fi, err := os.Stat(path); err == nil && fi.IsDir() {
 			return fmt.Errorf(
@@ -186,8 +214,25 @@ func (a *App) OpenEditorFiles() error {
 	return nil
 }
 
-// ApplyInitFile evaluates user and trusted workspace init.ale files
-func (a *App) ApplyInitFile() error {
+func (a *App) applyConfigFiles() error {
+	raw, _ := config.LoadRawConfigForDir(a.Root)
+	if raw == nil {
+		raw = map[string]any{}
+	}
+	if err := a.Reg.ApplyTOML(a.Editor, raw); err != nil {
+		return err
+	}
+	if a.ConfigPath == "" {
+		return nil
+	}
+	raw, ok := config.LoadRawConfig(a.ConfigPath)
+	if !ok {
+		return nil
+	}
+	return a.Reg.ApplyTOML(a.Editor, raw)
+}
+
+func (a *App) applyInitFile() error {
 	rt, err := ale.NewRuntime(a.Editor, a.keymaps)
 	if err != nil {
 		return err
@@ -203,34 +248,41 @@ func (a *App) ApplyInitFile() error {
 	return evalInitFile(rt, loader.WorkspaceInitFile(a.Root))
 }
 
-// ApplyConfigFiles merges workspace and explicit config TOML into the editor
-func (a *App) ApplyConfigFiles() error {
-	raw, _ := config.LoadRawConfigForDir(a.Root)
-	if raw == nil {
-		raw = map[string]any{}
-	}
-	if err := a.Reg.ApplyTOML(a.Editor, raw); err != nil {
+// resolveBaseOptions re-reads the option values a saved session is compared
+// against, so a session records only what changed after startup
+func (a *App) resolveBaseOptions() error {
+	values, err := a.Reg.OptionValues(a.Editor)
+	if err != nil {
 		return err
 	}
-	if a.ConfigPath != "" {
-		if raw, ok := config.LoadRawConfig(a.ConfigPath); ok {
-			if err := a.Reg.ApplyTOML(a.Editor, raw); err != nil {
-				return err
-			}
-		}
-	}
+	a.baseOpts = values
 	return nil
 }
 
-// WorkspaceTrusted reports whether the current workspace is trusted
-func (a *App) WorkspaceTrusted() bool {
-	return loader.QueryWorkspaceTrust(a.Root, a.Editor.Options().Insecure)
+func (a *App) baseOptions() map[string]string {
+	return a.baseOpts
 }
 
-// MaybeRestoreSession restores a saved session when no files were given and
-// the workspace is trusted; clears PickerDir when a session is restored
-func (a *App) MaybeRestoreSession(trusted func() bool) error {
-	if !a.Editor.Options().AutoSession || len(a.Files) != 0 || !trusted() {
+// reloadConfig re-applies the config files, re-resolves the base options they
+// establish, and reloads language-server config when a session is attached
+func (a *App) reloadConfig() error {
+	if err := a.applyConfigFiles(); err != nil {
+		return err
+	}
+	if err := a.resolveBaseOptions(); err != nil {
+		return err
+	}
+	if a.lsp == nil {
+		return nil
+	}
+	return a.lsp.ReloadConfig()
+}
+
+// restoreSession restores a saved session when no files were given and the
+// workspace is trusted; a restored session replaces the file picker
+func (a *App) restoreSession() error {
+	if !a.Editor.Options().AutoSession ||
+		len(a.Files) != 0 || !a.WorkspaceTrusted() {
 		return nil
 	}
 	sessionPath := view.WorkspaceSessionFile(a.Root)
@@ -244,79 +296,38 @@ func (a *App) MaybeRestoreSession(trusted func() bool) error {
 	if err := a.Reg.ApplyOptionValues(a.Editor, values); err != nil {
 		return err
 	}
-	a.PickerDir = ""
+	a.ShowPicker = false
 	return nil
 }
 
-// InitLSP attaches the LSP session and wires the config-reload callback
-func (a *App) InitLSP(ctx context.Context) func() {
-	session := lsp.Attach(ctx, a.Editor)
-	a.Editor.SetConfigReload(func() error {
-		raw, _ := config.LoadRawConfigForDir(a.Editor.Cwd())
-		if raw == nil {
-			raw = map[string]any{}
-		}
-		if err := a.Reg.ApplyTOML(a.Editor, raw); err != nil {
-			return err
-		}
-		return session.ReloadConfig()
-	})
-	return func() { _ = session.Close() }
-}
-
-// ConfigureModel sets the initial picker and any startup message on the model
-func (a *App) ConfigureModel() error {
-	if a.PickerDir != "" {
-		abs, err := filepath.Abs(a.PickerDir)
-		if err != nil {
-			return err
-		}
-		a.Model = a.Model.WithInitialPicker(files.NewFilePickerInDir(abs))
+func (a *App) saveSession() error {
+	if a.Editor == nil || a.Reg == nil {
+		return nil
 	}
-	_, workspaceFallback := loader.FindWorkspace(a.Root)
-	trusted := loader.QueryWorkspaceTrust(a.Root, a.Editor.Options().Insecure)
-	if !a.Editor.Options().Insecure && !workspaceFallback && !trusted {
-		a.Model = a.Model.WithStartupMessage(
-			i18n.Text(i18n.ErrorWorkspaceUntrustedHint),
-		)
-	}
-	return nil
-}
-
-// MaybeSaveSession saves the session if AutoSession is enabled and trusted
-func (a *App) MaybeSaveSession(base map[string]string) error {
 	if !a.Editor.Options().AutoSession || !a.WorkspaceTrusted() {
 		return nil
 	}
-	values, err := a.Reg.OptionValues(a.Editor)
+	values, err := a.Reg.ChangedOptionValues(a.Editor)
 	if err != nil {
 		return err
 	}
-	return a.Editor.SaveSession(
-		view.WorkspaceSessionFile(a.Root),
-		ChangedOptionValues(ChangedOptionValuesArgs{
-			Base:   base,
-			Values: values,
-		}),
-	)
+	return a.Editor.SaveSession(view.WorkspaceSessionFile(a.Root), values)
 }
 
-// ChangedOptionValuesArgs is a set of option values and the baseline they are
-// compared against
-type ChangedOptionValuesArgs struct {
-	Base   map[string]string
-	Values map[string]string
-}
-
-// ChangedOptionValues returns only the entries in Values that differ from Base
-func ChangedOptionValues(args ChangedOptionValuesArgs) map[string]string {
-	out := map[string]string{}
-	for key, value := range args.Values {
-		if args.Base[key] != value {
-			out[key] = value
-		}
+func (a *App) configureModel() {
+	if a.ShowPicker {
+		a.Model = a.Model.WithInitialPicker(
+			files.NewFilePickerInDir(a.Root),
+		)
 	}
-	return out
+	_, workspaceFallback := loader.FindWorkspace(a.Root)
+	if a.Editor.Options().Insecure ||
+		workspaceFallback || a.WorkspaceTrusted() {
+		return
+	}
+	a.Model = a.Model.WithStartupMessage(
+		i18n.Text(i18n.ErrorWorkspaceUntrustedHint),
+	)
 }
 
 func teaOptions() []tea.ProgramOption {

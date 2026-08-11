@@ -208,6 +208,30 @@ func TestRegistry(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("ChangedOptionValues reports changes", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		reg := registryWithLiveOptions(t)
+		base, err := reg.OptionValues(e)
+		assert.NoError(t, err)
+		e.SetBaseOptions(func() map[string]string { return base })
+		e.Options().ScrollOff = 12
+
+		values, err := reg.ChangedOptionValues(e)
+
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{"scrolloff": "12"}, values)
+	})
+
+	t.Run("ChangedOptionValues no base reports all", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		reg := registryWithLiveOptions(t)
+
+		values, err := reg.ChangedOptionValues(e)
+
+		assert.NoError(t, err)
+		assert.Len(t, values, 2)
+	})
+
 	t.Run("LookupOption is case-insensitive", func(t *testing.T) {
 		reg := registryWithOptions(t)
 		assert.NotNil(t, reg.LookupOption(" ScrollOff "))

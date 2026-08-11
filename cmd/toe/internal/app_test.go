@@ -3,6 +3,7 @@ package app_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -13,89 +14,58 @@ import (
 	app "github.com/kode4food/toe/cmd/toe/internal"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
-	"github.com/kode4food/toe/internal/term/command"
-	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
 
-func newTestApp(t *testing.T) *app.App {
-	t.Helper()
-	dir := chTemp(t)
-	t.Setenv("XDG_DATA_HOME", t.TempDir())
-	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
-	a, err := app.New(nil, dir)
-	assert.NoError(t, err)
-	return a
-}
-
-func TestParseConfigFlag(t *testing.T) {
-	t.Run("strips --config and path", func(t *testing.T) {
-		a := &app.App{}
-		args := a.ParseConfigFlag([]string{
-			"--config", "/etc/toe.toml", "file.go",
-		})
-		assert.Equal(t, "/etc/toe.toml", a.ConfigPath)
-		assert.Equal(t, []string{"file.go"}, args)
-	})
-
-	t.Run("passes through non-config args", func(t *testing.T) {
-		a := &app.App{}
-		args := a.ParseConfigFlag([]string{"a.go", "b.go"})
-		assert.Equal(t, "", a.ConfigPath)
-		assert.Equal(t, []string{"a.go", "b.go"}, args)
-	})
-
-	t.Run("--config at end without value", func(t *testing.T) {
-		a := &app.App{}
-		args := a.ParseConfigFlag([]string{"--config"})
-		assert.Equal(t, "", a.ConfigPath)
-		assert.Empty(t, args)
-	})
-
-	t.Run("empty args", func(t *testing.T) {
-		a := &app.App{}
-		args := a.ParseConfigFlag(nil)
-		assert.Equal(t, "", a.ConfigPath)
-		assert.Empty(t, args)
-	})
-}
-
-func TestResolveSession(t *testing.T) {
+func TestNew(t *testing.T) {
 	cwd := t.TempDir()
 
 	t.Run("no args uses cwd", func(t *testing.T) {
-		a := &app.App{}
-		assert.NoError(t, a.ResolveSession(nil, cwd))
+		a, err := app.New(nil, cwd)
+		assert.NoError(t, err)
 		assert.Equal(t, cwd, a.Root)
-		assert.Equal(t, "", a.PickerDir)
+		assert.False(t, a.ShowPicker)
+		assert.Empty(t, a.Files)
+	})
+
+	t.Run("strips --config and path", func(t *testing.T) {
+		a, err := app.New([]string{"--config", "/etc/toe.toml"}, cwd)
+		assert.NoError(t, err)
+		assert.Equal(t, "/etc/toe.toml", a.ConfigPath)
+		assert.Empty(t, a.Files)
+	})
+
+	t.Run("--config at end without value", func(t *testing.T) {
+		a, err := app.New([]string{"--config"}, cwd)
+		assert.NoError(t, err)
+		assert.Equal(t, "", a.ConfigPath)
 		assert.Empty(t, a.Files)
 	})
 
 	t.Run("first arg as dir becomes session root", func(t *testing.T) {
 		dir := t.TempDir()
-		a := &app.App{}
-		assert.NoError(t, a.ResolveSession([]string{dir}, cwd))
+		a, err := app.New([]string{dir}, cwd)
+		assert.NoError(t, err)
 		abs, _ := filepath.Abs(dir)
 		assert.Equal(t, abs, a.Root)
-		assert.Equal(t, dir, a.PickerDir)
+		assert.True(t, a.ShowPicker)
 		assert.Empty(t, a.Files)
 	})
 
 	t.Run("dir with trailing file args", func(t *testing.T) {
 		dir := t.TempDir()
-		a := &app.App{}
-		assert.NoError(t, a.ResolveSession([]string{dir, "a.go", "b.go"}, cwd))
+		a, err := app.New([]string{dir, "a.go", "b.go"}, cwd)
+		assert.NoError(t, err)
 		abs, _ := filepath.Abs(dir)
 		assert.Equal(t, abs, a.Root)
 		assert.Equal(t, []string{"a.go", "b.go"}, a.Files)
 	})
 
 	t.Run("non-dir first arg stays in files", func(t *testing.T) {
-		a := &app.App{}
-		assert.NoError(t,
-			a.ResolveSession([]string{"main.go", "other.go"}, cwd))
+		a, err := app.New([]string{"main.go", "other.go"}, cwd)
+		assert.NoError(t, err)
 		assert.Equal(t, cwd, a.Root)
-		assert.Equal(t, "", a.PickerDir)
+		assert.False(t, a.ShowPicker)
 		assert.Equal(t, []string{"main.go", "other.go"}, a.Files)
 	})
 
@@ -104,375 +74,303 @@ func TestResolveSession(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "outside.txt")
 		assert.NoError(t, os.WriteFile(path, []byte("outside"), 0o644))
-		a := &app.App{}
 
-		assert.NoError(t, a.ResolveSession([]string{path}, cwd))
+		a, err := app.New([]string{path}, cwd)
 
+		assert.NoError(t, err)
 		assert.Equal(t, dir, a.Root)
 		assert.Equal(t, []string{path}, a.Files)
 	})
 }
 
-func TestOpenEditorFiles(t *testing.T) {
-	t.Run("empty files is ok", func(t *testing.T) {
-		a := newTestApp(t)
-		assert.NoError(t, a.OpenEditorFiles())
-	})
+func TestStart(t *testing.T) {
+	binding := `(toe/bind :modes :normal :keys "C-A-x" (toe/write))`
 
-	t.Run("directory arg returns error", func(t *testing.T) {
-		a := newTestApp(t)
-		a.Files = []string{a.Root}
-		err := a.OpenEditorFiles()
-		assert.True(t, errors.Is(err, app.ErrDirectoryArgument))
-	})
-
-	t.Run("opens existing file", func(t *testing.T) {
-		a := newTestApp(t)
-		path := filepath.Join(a.Root, "main.go")
+	t.Run("opens the named file", func(t *testing.T) {
+		dir := workspace(t)
+		path := filepath.Join(dir, "main.go")
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
-		a.Files = []string{path}
-		assert.NoError(t, a.OpenEditorFiles())
+
+		a := start(t, dir, path)
+
 		doc := a.Editor.FocusedDocument()
 		assert.NotNil(t, doc)
 		assert.Equal(t, path, doc.Path())
 	})
-}
 
-func TestNew(t *testing.T) {
-	dir := chTemp(t)
-	a, err := app.New(nil, dir)
-	assert.NoError(t, err)
-	assert.NotNil(t, a.Editor)
-	assert.NotNil(t, a.Model)
-	assert.NotNil(t, a.Reg)
-}
+	t.Run("directory as non-first arg errors", func(t *testing.T) {
+		dir := workspace(t)
+		a, err := app.New([]string{"main.go", t.TempDir()}, dir)
+		assert.NoError(t, err)
+		defer func() { _ = a.Stop() }()
 
-func TestApplyConfigFiles(t *testing.T) {
-	t.Run("no config files is ok", func(t *testing.T) {
-		a := newTestApp(t)
-		assert.NoError(t, a.ApplyConfigFiles())
+		err = a.Start(context.Background())
+
+		assert.True(t, errors.Is(err, app.ErrDirectoryArgument))
 	})
 
-	t.Run("missing config is silently skipped", func(t *testing.T) {
-		a := newTestApp(t)
-		a.ConfigPath = filepath.Join(t.TempDir(), "none.toml")
-		assert.NoError(t, a.ApplyConfigFiles())
+	t.Run("workspace config is applied", func(t *testing.T) {
+		dir := workspace(t)
+		writeWorkspaceFile(t, dir, "config.toml", "[editor]\nmouse = false\n")
+		assert.NoError(t, loader.TrustWorkspace(dir))
+
+		a := start(t, dir)
+
+		assert.False(t, a.Editor.Options().Mouse)
 	})
 
 	t.Run("explicit config file is applied", func(t *testing.T) {
-		a := newTestApp(t)
+		dir := workspace(t)
 		cfg := filepath.Join(t.TempDir(), "custom.toml")
 		assert.NoError(t, os.WriteFile(
 			cfg, []byte("[editor]\nmouse = false\n"), 0o644,
 		))
-		a.ConfigPath = cfg
-		assert.NoError(t, a.ApplyConfigFiles())
+
+		a := start(t, dir, "--config", cfg)
+
 		assert.False(t, a.Editor.Options().Mouse)
 	})
 
-	t.Run("workspace config is applied", func(t *testing.T) {
-		a := newTestApp(t)
-		wdir := filepath.Join(a.Root, loader.WorkspaceDirName)
-		assert.NoError(t, os.MkdirAll(wdir, 0o755))
-		cfg := filepath.Join(wdir, "config.toml")
-		assert.NoError(t, os.WriteFile(
-			cfg, []byte("[editor]\nmouse = false\n"), 0o644,
-		))
-		assert.NoError(t, loader.TrustWorkspace(a.Root))
-		assert.NoError(t, a.ApplyConfigFiles())
+	t.Run("missing config is silently skipped", func(t *testing.T) {
+		dir := workspace(t)
+		cfg := filepath.Join(t.TempDir(), "none.toml")
+
+		a := start(t, dir, "--config", cfg)
+
+		assert.True(t, a.Editor.Options().Mouse)
+	})
+
+	t.Run("reload re-applies workspace config", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		a := start(t, dir)
+		writeWorkspaceFile(t, dir, "config.toml", "[editor]\nmouse = false\n")
+
+		assert.NoError(t, a.Editor.ReloadConfig())
+
 		assert.False(t, a.Editor.Options().Mouse)
 	})
-}
 
-func TestApplyInitFile(t *testing.T) {
 	t.Run("missing file is ok", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		root := chTemp(t)
-		a, err := app.New(nil, root)
-		assert.NoError(t, err)
-		assert.NoError(t, a.ApplyInitFile())
+		start(t, workspace(t))
 	})
 
 	t.Run("evaluates Ale", func(t *testing.T) {
-		dir := t.TempDir()
-		t.Setenv("XDG_CONFIG_HOME", dir)
-		cfg := filepath.Join(dir, loader.DirName)
-		assert.NoError(t, os.MkdirAll(cfg, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(cfg, "init.ale"),
-			[]byte(
-				`(toe/bind :modes :normal :keys "C-A-x" (toe/write))`,
-			),
-			0o644,
-		))
-		root := chTemp(t)
-		a, err := app.New(nil, root)
-		assert.NoError(t, err)
-		assert.NoError(t, a.ApplyInitFile())
+		writeUserInitFile(t, binding)
+		start(t, workspace(t))
 	})
 
 	t.Run("returns script error", func(t *testing.T) {
-		dir := t.TempDir()
-		t.Setenv("XDG_CONFIG_HOME", dir)
-		cfg := filepath.Join(dir, loader.DirName)
-		assert.NoError(t, os.MkdirAll(cfg, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(cfg, "init.ale"), []byte(`(`), 0o644,
-		))
-		root := chTemp(t)
-		a, err := app.New(nil, root)
+		path := writeUserInitFile(t, `(`)
+		dir := workspace(t)
+		a, err := app.New(nil, dir)
 		assert.NoError(t, err)
-		err = a.ApplyInitFile()
+		defer func() { _ = a.Stop() }()
+
+		err = a.Start(context.Background())
+
 		assert.Error(t, err)
-		assert.Contains(t,
-			err.Error(),
-			filepath.Join(cfg, "init.ale")+":\n",
-		)
+		assert.Contains(t, err.Error(), path+":\n")
 	})
 
 	t.Run("user binding blocks workspace", func(t *testing.T) {
-		t.Setenv("XDG_DATA_HOME", t.TempDir())
-		dir := t.TempDir()
-		t.Setenv("XDG_CONFIG_HOME", dir)
-		cfg := filepath.Join(dir, loader.DirName)
-		assert.NoError(t, os.MkdirAll(cfg, 0o755))
-		src := []byte(
-			`(toe/bind :modes :normal :keys "C-A-x" (toe/write))`,
-		)
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(cfg, "init.ale"), src, 0o644,
-		))
-
-		root := chTemp(t)
-		assert.NoError(t, os.Mkdir(filepath.Join(root, ".git"), 0o755))
-		wdir := filepath.Join(root, loader.WorkspaceDirName)
-		assert.NoError(t, os.Mkdir(wdir, 0o755))
-		path := filepath.Join(wdir, "init.ale")
-		assert.NoError(t, os.WriteFile(path, src, 0o644))
-
-		a, err := app.New(nil, root)
+		writeUserInitFile(t, binding)
+		dir := workspace(t)
+		path := writeWorkspaceFile(t, dir, "init.ale", binding)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		a, err := app.New(nil, dir)
 		assert.NoError(t, err)
-		assert.NoError(t, loader.TrustWorkspace(root))
-		err = a.ApplyInitFile()
-		assert.Contains(t,
-			err.Error(), i18n.Text(i18n.ErrorBindingExists),
-		)
+		defer func() { _ = a.Stop() }()
+
+		err = a.Start(context.Background())
+
+		assert.Contains(t, err.Error(), i18n.Text(i18n.ErrorBindingExists))
 		assert.Contains(t, err.Error(), path+":\n")
 	})
 
 	t.Run("skips untrusted workspace", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		root := chTemp(t)
-		assert.NoError(t, os.Mkdir(filepath.Join(root, ".git"), 0o755))
-		wdir := filepath.Join(root, loader.WorkspaceDirName)
-		assert.NoError(t, os.Mkdir(wdir, 0o755))
-		assert.NoError(t, os.WriteFile(
-			filepath.Join(wdir, "init.ale"), []byte(`(`), 0o644,
-		))
-		a, err := app.New(nil, root)
+		dir := workspace(t)
+		writeWorkspaceFile(t, dir, "init.ale", `(`)
+		start(t, dir)
+	})
+
+	t.Run("trusted workspace restores the session", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		saveSessionFor(t, dir, path)
+
+		a := start(t, dir)
+
+		doc := a.Editor.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, path, doc.Path())
+	})
+
+	t.Run("untrusted workspace ignores the session", func(t *testing.T) {
+		dir := workspace(t)
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		saveSessionFor(t, dir, path)
+
+		a := start(t, dir)
+
+		doc := a.Editor.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, "", doc.Path())
+	})
+
+	t.Run("directory argument clears the picker", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		saveSessionFor(t, dir)
+		a, err := app.New([]string{dir}, t.TempDir())
 		assert.NoError(t, err)
-		assert.NoError(t, a.ApplyInitFile())
-	})
-}
+		defer func() { _ = a.Stop() }()
 
-func TestWorkspaceTrusted(t *testing.T) {
-	t.Run("untrusted workspace returns false", func(t *testing.T) {
-		a := newTestApp(t)
-		assert.False(t, a.WorkspaceTrusted())
-	})
-
-	t.Run("trusted workspace returns true", func(t *testing.T) {
-		a := newTestApp(t)
-		assert.NoError(t, loader.TrustWorkspace(a.Root))
-		assert.True(t, a.WorkspaceTrusted())
-	})
-}
-
-func TestMaybeRestoreSession(t *testing.T) {
-	t.Run("skipped when files were given", func(t *testing.T) {
-		a := newTestApp(t)
-		a.Files = []string{"file.go"}
-		a.PickerDir = "some/dir"
-		assert.NoError(t, a.MaybeRestoreSession(func() bool { return true }))
-		assert.Equal(t, "some/dir", a.PickerDir)
-	})
-
-	t.Run("skipped when workspace not trusted", func(t *testing.T) {
-		a := newTestApp(t)
-		a.PickerDir = "some/dir"
-		assert.NoError(t, a.MaybeRestoreSession(func() bool { return false }))
-		assert.Equal(t, "some/dir", a.PickerDir)
-	})
-
-	t.Run("skipped when no session exists", func(t *testing.T) {
-		a := newTestApp(t)
-		a.PickerDir = "some/dir"
-		assert.NoError(t, a.MaybeRestoreSession(func() bool { return true }))
-		assert.Equal(t, "some/dir", a.PickerDir)
-	})
-
-	t.Run("session is restored", func(t *testing.T) {
-		a := newTestApp(t)
-		// Save a session with the default scratch document
-		sessionPath := view.WorkspaceSessionFile(a.Root)
-		assert.NoError(t,
-			a.Editor.SaveSession(sessionPath, map[string]string{}))
-		// Fresh editor; PickerDir should be cleared after restore
-		a.Editor = view.NewEditor(a.Root)
-		a.PickerDir = "some/dir"
-		assert.NoError(t, a.MaybeRestoreSession(func() bool { return true }))
-		assert.Equal(t, "", a.PickerDir)
-	})
-
-	t.Run("directory argument restores session", func(t *testing.T) {
-		dir := t.TempDir()
-		assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
-		first := view.NewEditor(dir)
-		assert.NoError(t,
-			first.SaveSession(view.WorkspaceSessionFile(dir), nil))
-		a := &app.App{}
-		assert.NoError(t, a.ResolveSession([]string{dir}, t.TempDir()))
-		a.Editor = view.NewEditor(a.Root)
-		assert.NoError(t, a.InitReg())
-
-		assert.NoError(t,
-			a.MaybeRestoreSession(func() bool { return true }))
+		assert.NoError(t, a.Start(context.Background()))
 
 		assert.Equal(t, dir, a.Root)
-		assert.Empty(t, a.Files)
-		assert.Equal(t, "", a.PickerDir)
+		assert.False(t, a.ShowPicker)
 	})
 }
 
-func TestInitLSP(t *testing.T) {
-	t.Run("attaches LSP and returns cleanup", func(t *testing.T) {
-		a := newTestApp(t)
-		cleanup := a.InitLSP(context.Background())
-		assert.NotNil(t, cleanup)
-		cleanup()
+func TestStop(t *testing.T) {
+	t.Run("session holds only options off the base", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		a := start(t, dir)
+		a.Editor.Options().ScrollOff = 12
+
+		assert.NoError(t, a.Stop())
+
+		opts := savedSessionOptions(t, view.WorkspaceSessionFile(dir))
+		assert.Equal(t, map[string]string{"scrolloff": "12"}, opts)
 	})
 
-	t.Run("config reload applies workspace config", func(t *testing.T) {
-		a := newTestApp(t)
-		cleanup := a.InitLSP(context.Background())
-		defer cleanup()
-		assert.NoError(t, a.Editor.ReloadConfig())
-	})
-}
+	t.Run("unchanged options save nothing", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		a := start(t, dir)
 
-func TestMaybeSaveSession(t *testing.T) {
-	t.Run("skipped when workspace not trusted", func(t *testing.T) {
-		a := newTestApp(t)
-		assert.NoError(t, a.MaybeSaveSession(map[string]string{}))
+		assert.NoError(t, a.Stop())
+
+		opts := savedSessionOptions(t, view.WorkspaceSessionFile(dir))
+		assert.Empty(t, opts)
 	})
 
-	t.Run("external file keeps current session", func(t *testing.T) {
-		current := t.TempDir()
-		t.Setenv("XDG_DATA_HOME", t.TempDir())
-		assert.NoError(t,
-			os.Mkdir(filepath.Join(current, ".git"), 0o755))
-		assert.NoError(t, loader.TrustWorkspace(current))
-		sessionPath := view.WorkspaceSessionFile(current)
+	t.Run("untrusted keeps existing session file", func(t *testing.T) {
+		dir := workspace(t)
+		sessionPath := view.WorkspaceSessionFile(dir)
 		assert.NoError(t, os.MkdirAll(filepath.Dir(sessionPath), 0o755))
 		assert.NoError(t,
 			os.WriteFile(sessionPath, []byte("original"), 0o644))
-		outside := filepath.Join(t.TempDir(), "outside.txt")
-		assert.NoError(t, os.WriteFile(outside, []byte("outside"), 0o644))
-		a := &app.App{}
-		assert.NoError(t, a.ResolveSession([]string{outside}, current))
-		a.Editor = view.NewEditor(a.Root)
-		assert.NoError(t, a.InitReg())
+		a := start(t, dir)
 
-		assert.NoError(t, a.MaybeSaveSession(map[string]string{}))
+		assert.NoError(t, a.Stop())
 
 		data, err := os.ReadFile(sessionPath)
 		assert.NoError(t, err)
 		assert.Equal(t, "original", string(data))
 	})
+}
 
-	t.Run("saves when workspace trusted", func(t *testing.T) {
-		a := newTestApp(t)
-		assert.NoError(t, loader.TrustWorkspace(a.Root))
-		assert.NoError(t, a.MaybeSaveSession(map[string]string{}))
+func TestWorkspaceTrusted(t *testing.T) {
+	t.Run("untrusted workspace returns false", func(t *testing.T) {
+		a := start(t, workspace(t))
+		assert.False(t, a.WorkspaceTrusted())
+	})
+
+	t.Run("trusted workspace returns true", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		a := start(t, dir)
+		assert.True(t, a.WorkspaceTrusted())
 	})
 }
 
-func TestConfigureModel(t *testing.T) {
-	t.Run("no picker dir leaves model unchanged", func(t *testing.T) {
-		a := newTestApp(t)
-		km := command.NewKeymaps()
-		a.Model = ui.New(a.Editor, km)
-		assert.NoError(t, a.ConfigureModel())
-	})
-
-	t.Run("picker dir sets initial picker", func(t *testing.T) {
-		a := newTestApp(t)
-		km := command.NewKeymaps()
-		a.Model = ui.New(a.Editor, km)
-		a.PickerDir = a.Root
-		assert.NoError(t, a.ConfigureModel())
-	})
-
-	t.Run("untrusted workspace startup message", func(t *testing.T) {
-		dir := t.TempDir()
-		assert.NoError(t, os.MkdirAll(filepath.Join(dir, ".git"), 0o755))
-		e := view.NewEditor(dir)
-		km := command.NewKeymaps()
-		a := &app.App{Root: dir, Editor: e, Model: ui.New(e, km)}
-		assert.NoError(t, a.ConfigureModel())
-	})
-}
-
-func TestChangedOptionValues(t *testing.T) {
-	t.Run("returns only changed keys", func(t *testing.T) {
-		base := map[string]string{"a": "1", "b": "2", "c": "3"}
-		values := map[string]string{"a": "1", "b": "99", "c": "3"}
-		got := app.ChangedOptionValues(app.ChangedOptionValuesArgs{
-			Base:   base,
-			Values: values,
-		})
-		assert.Equal(t, map[string]string{"b": "99"}, got)
-	})
-
-	t.Run("returns all when base empty", func(t *testing.T) {
-		values := map[string]string{"x": "1", "y": "2"}
-		got := app.ChangedOptionValues(app.ChangedOptionValuesArgs{
-			Base:   map[string]string{},
-			Values: values,
-		})
-		assert.Equal(t, values, got)
-	})
-
-	t.Run("returns empty when nothing changed", func(t *testing.T) {
-		base := map[string]string{"a": "1"}
-		got := app.ChangedOptionValues(app.ChangedOptionValuesArgs{
-			Base:   base,
-			Values: map[string]string{"a": "1"},
-		})
-		assert.Empty(t, got)
-	})
-}
-
-func TestRunHealth(t *testing.T) {
+func TestRun(t *testing.T) {
 	t.Run("--health flag runs health check", func(t *testing.T) {
 		var b bytes.Buffer
 		err := app.Run([]string{"--health"}, &b)
 		assert.NoError(t, err)
 		assert.Contains(t, b.String(), "toe health: ok")
 	})
-}
 
-func TestRunErrors(t *testing.T) {
 	t.Run("directory as non-first arg errors", func(t *testing.T) {
-		dir1, dir2 := chTemp(t), t.TempDir()
-		err := app.Run([]string{dir1, dir2}, nil)
+		dir := workspace(t)
+		outer := t.TempDir()
+		err := app.Run([]string{dir, outer}, nil)
 		assert.True(t, errors.Is(err, app.ErrDirectoryArgument))
 	})
 }
 
-func chTemp(t *testing.T) string {
+// workspace returns a temp directory that is the current directory, holds a
+// git marker so it reads as a workspace root, and has private trust and config
+// stores
+func workspace(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Chdir(dir)
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, ".git"), 0o755))
 	return dir
+}
+
+// start builds an app over dir and brings it up, stopping it on cleanup
+func start(t *testing.T, dir string, args ...string) *app.App {
+	t.Helper()
+	a, err := app.New(args, dir)
+	assert.NoError(t, err)
+	assert.NoError(t, a.Start(context.Background()))
+	t.Cleanup(func() { _ = a.Stop() })
+	return a
+}
+
+// writeWorkspaceFile writes a file into dir's workspace directory
+func writeWorkspaceFile(t *testing.T, dir, name, src string) string {
+	t.Helper()
+	wdir := filepath.Join(dir, loader.WorkspaceDirName)
+	assert.NoError(t, os.MkdirAll(wdir, 0o755))
+	path := filepath.Join(wdir, name)
+	assert.NoError(t, os.WriteFile(path, []byte(src), 0o644))
+	return path
+}
+
+// writeUserInitFile writes init.ale into a private user config directory
+func writeUserInitFile(t *testing.T, src string) string {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+	cfg := filepath.Join(dir, loader.DirName)
+	assert.NoError(t, os.MkdirAll(cfg, 0o755))
+	path := filepath.Join(cfg, "init.ale")
+	assert.NoError(t, os.WriteFile(path, []byte(src), 0o644))
+	return path
+}
+
+// saveSessionFor writes a session for dir holding the given paths
+func saveSessionFor(t *testing.T, dir string, paths ...string) {
+	t.Helper()
+	e := view.NewEditor(dir)
+	for _, path := range paths {
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+	}
+	assert.NoError(t,
+		e.SaveSession(view.WorkspaceSessionFile(dir), nil))
+}
+
+func savedSessionOptions(t *testing.T, path string) map[string]string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	var sess struct {
+		Options map[string]string `json:"options"`
+	}
+	assert.NoError(t, json.Unmarshal(data, &sess))
+	return sess.Options
 }

@@ -21,6 +21,7 @@ type (
 		messages  messageState
 
 		opts           Options
+		baseOpts       BaseOptionsLoader
 		configReload   func() error
 		docObservers   []DocumentObserver
 		langServers    LanguageServerController
@@ -66,6 +67,10 @@ type (
 	// PaneRestorer rebuilds a leaf pane of a given session kind from its
 	// persisted state
 	PaneRestorer func(*Editor, *PaneSession) (Pane, error)
+
+	// BaseOptionsLoader resolves the option values in effect once config and
+	// init files have been applied
+	BaseOptionsLoader func() map[string]string
 
 	// PaneSession exposes module-owned state for a restored pane
 	PaneSession struct {
@@ -153,6 +158,21 @@ func (e *Editor) LastMotion() func(*Editor) {
 // Options returns the typed runtime config values for the editor session
 func (e *Editor) Options() *Options {
 	return &e.opts
+}
+
+// SetBaseOptions registers the loader that resolves the option values a saved
+// session is compared against, so a session carries only what changed since
+func (e *Editor) SetBaseOptions(fn BaseOptionsLoader) {
+	e.baseOpts = fn
+}
+
+// BaseOptions resolves the base option values, returning nil when no loader
+// is registered
+func (e *Editor) BaseOptions() map[string]string {
+	if e.baseOpts == nil {
+		return nil
+	}
+	return e.baseOpts()
 }
 
 // SetConfigReload registers the function called by ReloadConfig to reset

@@ -149,7 +149,7 @@ func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 	if msg.feed != nil {
 		return consumed(), drainPickerFeed(msg.feed, msg.done)
 	}
-	p.state.load.loading = false
+	p.state.finishLoad()
 	return consumed(), nil
 }
 

@@ -461,10 +461,44 @@ func (p *Picker) addItems(items []*PickerItem) {
 	if len(items) == 0 {
 		return
 	}
-	target, hadSelection := p.selectedTarget()
+	if len(p.list.sections) > 0 {
+		target, hadSelection := p.selectedTarget()
+		p.list.items = append(p.list.items, items...)
+		SortPickerItems(p.list.items)
+		p.rematchPreservingSelection(target, hadSelection)
+		return
+	}
+	start := len(p.list.items)
 	p.list.items = append(p.list.items, items...)
+	p.appendMatches(items, start)
+}
+
+// appendMatches scores only the new batch and appends matches to the end,
+// so a long walk isn't rescanning everything loaded so far on every batch
+func (p *Picker) appendMatches(items []*PickerItem, startIndex int) {
+	src, _ := p.source.(StaticPickerSource)
+	if src == nil {
+		p.list.matched = unscoredItems(items, startIndex, p.list.matched)
+	} else {
+		match := p.prepareMatcher(src)
+		p.list.matched = p.scoreItems(match, items, startIndex, p.list.matched)
+	}
+	p.applyWantedSelection()
+	p.ensureSelectable()
+	p.clampScroll()
+}
+
+// finishLoad restores full sort/score order once a static feed drains,
+// since appendMatches only appended during streaming
+func (p *Picker) finishLoad() {
+	p.load.loading = false
+	if _, ok := p.source.(StaticPickerSource); !ok {
+		return
+	}
+	// cursor 0 is the append-order default, not a row anyone picked
+	target, hadSelection := p.selectedTarget()
 	SortPickerItems(p.list.items)
-	p.rematchPreservingSelection(target, hadSelection)
+	p.rematchPreservingSelection(target, hadSelection && p.list.cursor != 0)
 }
 
 func (p *Picker) rematchPreservingSelection(

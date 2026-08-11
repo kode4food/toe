@@ -65,8 +65,8 @@ var (
 	errInvalidOption = i18n.NewError(errorInvalidOptionKey)
 )
 
-// ConfigModule returns the option and config commands
-func ConfigModule(r *command.Registry) command.Module {
+// Module returns the option and config commands
+func Module(r *command.Registry) command.Module {
 	cfg := new(uiSection)
 	cmds := optionCmds(r)
 	cmds = append(cmds, systemCmds()...)

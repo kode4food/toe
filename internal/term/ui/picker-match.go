@@ -48,20 +48,26 @@ func (p *Picker) resetCursor() {
 
 func (p *Picker) rebuildMatches() {
 	src, _ := p.source.(StaticPickerSource)
-	match := p.prepareMatcher(src)
 	out := p.list.matched[:0]
-	for i, item := range p.list.items {
-		if src == nil {
-			out = append(out, pickerMatch{item: item, itemIndex: i})
-			continue
-		}
-		if m, ok := p.scoreItem(match, item, i); ok {
+	if src == nil {
+		p.list.matched = unscoredItems(p.list.items, 0, out)
+	} else {
+		match := p.prepareMatcher(src)
+		p.list.matched = p.scoreItems(match, p.list.items, 0, out)
+	}
+	p.sortMatches()
+	p.insertSections()
+}
+
+func (p *Picker) scoreItems(
+	match PickerMatcher, items []*PickerItem, startIndex int, out []pickerMatch,
+) []pickerMatch {
+	for i, item := range items {
+		if m, ok := p.scoreItem(match, item, startIndex+i); ok {
 			out = append(out, m)
 		}
 	}
-	p.list.matched = out
-	p.sortMatches()
-	p.insertSections()
+	return out
 }
 
 func (p *Picker) narrowMatches() {
@@ -131,11 +137,7 @@ func (p *Picker) scoreItem(
 	if cached == nil {
 		return pickerMatch{}, false
 	}
-	return pickerMatch{
-		item:      item,
-		itemIndex: index,
-		result:    *cached,
-	}, true
+	return pickerMatch{item: item, itemIndex: index, result: *cached}, true
 }
 
 func (p *Picker) prepareMatcher(src StaticPickerSource) PickerMatcher {
@@ -284,4 +286,13 @@ func canNarrowQuery(args canNarrowQueryArgs) bool {
 	prev := args.prev
 	next := args.next
 	return prev != "" && strings.HasPrefix(next, prev) && canCacheQuery(next)
+}
+
+func unscoredItems(
+	items []*PickerItem, startIndex int, out []pickerMatch,
+) []pickerMatch {
+	for i, item := range items {
+		out = append(out, pickerMatch{item: item, itemIndex: startIndex + i})
+	}
+	return out
 }

@@ -36,7 +36,7 @@ func registerDefaultCommands(r *command.Registry, model ui.Model) error {
 		files.FileModule(),
 		files.BufferModule(),
 		files.DirectoryModule(),
-		config.ConfigModule(r),
+		config.Module(r),
 		clipboard.TerminalModule(),
 		config.ViewModule(model),
 		clipboard.DocumentModule(),

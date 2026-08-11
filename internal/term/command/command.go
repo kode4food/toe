@@ -142,6 +142,10 @@ func (c *Command) run(e *view.Editor) Result {
 	return c.Run(e, nil)
 }
 
+func (c *Command) availableIn(mode view.Mode) bool {
+	return c.Modes&mode != 0
+}
+
 func (c *Command) localizeDocString(alias string) {
 	key := docStringKey(alias)
 	i18n.Register(i18n.Translations{key: c.DocString})

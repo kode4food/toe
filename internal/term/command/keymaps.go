@@ -234,10 +234,6 @@ func (k *Keymaps) lookup(mode view.Mode, seq []KeyEvent) *keyTrieNode {
 	return node
 }
 
-func (c Command) availableIn(mode view.Mode) bool {
-	return c.Modes&mode != 0
-}
-
 type bindCommandArgs struct {
 	mode      view.Mode
 	name      string

@@ -2,6 +2,16 @@
 
 Notable changes to toe.
 
+## 0.2.3
+
+### Options
+
+- Marked the current value when completing `:set` and `:theme` arguments, using a check icon with Nerd Fonts enabled and `*` otherwise
+
+### Sessions
+
+- Saved only the options that differ from the startup configuration with `:save-session`, matching what automatic session saving already wrote
+
 ## 0.2.2
 
 ### Sessions

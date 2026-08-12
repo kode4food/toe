@@ -131,6 +131,16 @@ func updateAndFeed(m ui.Model, msg tea.Msg) ui.Model {
 	return feedCmds(m, cmd)
 }
 
+// firstMsg runs cmd and reports its message, unwrapping a batch to the message
+// its first command produces
+func firstMsg(cmd tea.Cmd) tea.Msg {
+	msg := cmd()
+	if batch, ok := msg.(tea.BatchMsg); ok && len(batch) > 0 {
+		return firstMsg(batch[0])
+	}
+	return msg
+}
+
 func feedCmds(m ui.Model, cmd tea.Cmd) ui.Model {
 	for cmd != nil {
 		msg := cmd()

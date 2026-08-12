@@ -16,11 +16,12 @@ import (
 
 type (
 	EditorComponent struct {
-		keys     keyState
-		mouse    mouseState
-		language languageState
-		spinner  spinnerState
-		autoSize autoSizeState
+		keys       keyState
+		mouse      mouseState
+		language   languageState
+		spinner    spinnerState
+		autoSize   autoSizeState
+		resizeHold resizeHoldState
 
 		size  geom.Size
 		buf   *tui.Buffer
@@ -215,6 +216,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleSpinnerTick(cx, msg)
 	case autoSizeTickMsg:
 		return e.handleAutoSizeTick(cx, msg)
+	case resizeSettleMsg:
+		return e.handleResizeSettle(msg)
 	case tea.MouseClickMsg:
 		return e.handleMouseClick(cx, msg)
 	case tea.MouseMotionMsg:

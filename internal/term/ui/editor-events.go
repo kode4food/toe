@@ -15,9 +15,12 @@ import (
 func (e *EditorComponent) handleWindowSize(
 	cx *Context, msg tea.WindowSizeMsg,
 ) (EventResult, tea.Cmd) {
+	// hold before resizing, so a drag of the window edge reaches the live panes
+	// once, with the size it settles on
+	cmd := e.settlePaneResizeCmd(cx)
 	e.size = geom.Size{Width: msg.Width, Height: msg.Height}
 	e.resize(cx)
-	return consumed(), nil
+	return consumed(), cmd
 }
 
 func (e *EditorComponent) handleKeyPressEvent(

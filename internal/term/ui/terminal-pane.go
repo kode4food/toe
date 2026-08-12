@@ -39,6 +39,7 @@ type (
 		emu   *vt.SafeEmulator
 
 		area      geom.Area
+		resize    resizeState
 		dirty     bool
 		scrollOff int
 
@@ -55,6 +56,13 @@ type (
 		path     string
 		title    string
 		bellRung bool
+	}
+
+	// resizeState tracks a deferred PTY resize; held is set while the layout is
+	// in motion, pending records that a size arrived while it was
+	resizeState struct {
+		held    bool
+		pending bool
 	}
 
 	selectionState struct {
@@ -75,6 +83,7 @@ var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
 var (
 	_ view.Pane          = (*TerminalPane)(nil)
 	_ view.AsyncRenderer = (*TerminalPane)(nil)
+	_ view.ResizeHolder  = (*TerminalPane)(nil)
 	_ PaneInput          = (*TerminalPane)(nil)
 	_ PaneCursor         = (*TerminalPane)(nil)
 	_ Pasteable          = (*TerminalPane)(nil)
@@ -205,17 +214,35 @@ func (t *TerminalPane) SaveSession(w *view.SessionWriter) {
 }
 
 // SetArea updates the pane's screen rectangle and resizes the PTY and
-// emulator to match, reflowing the shell
+// emulator to match, reflowing the shell, unless resizing is held
 func (t *TerminalPane) SetArea(a geom.Area) {
 	if a == t.area {
 		return
 	}
 	t.area = a
 	t.dirty = true
-	// reserve the bottom row for the status line, matching renderTerminalPane
-	w, h := max(a.Width, 1), max(a.Height-1, 1)
-	t.emu.Resize(w, h)
-	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
+	if t.resize.held {
+		t.resize.pending = true
+		return
+	}
+	t.applyResize()
+}
+
+// HoldResize defers PTY resizing until [TerminalPane.ResumeResize], since a
+// shell redraws its prompt on every SIGWINCH, and a storm of them leaves
+// multi-line prompts stacked up the scrollback
+func (t *TerminalPane) HoldResize() {
+	t.resize.held = true
+}
+
+// ResumeResize re-enables PTY resizing, pushing the size the pane reached
+// while held
+func (t *TerminalPane) ResumeResize() {
+	t.resize.held = false
+	if t.resize.pending {
+		t.resize.pending = false
+		t.applyResize()
+	}
 }
 
 // ConsumeDirty reports whether the pane has changed since the last call,
@@ -525,6 +552,14 @@ func (t *TerminalPane) cellAtAbsolute(at geom.Point) *uv.Cell {
 		return t.emu.Scrollback().CellAt(at.X, at.Y)
 	}
 	return t.emu.CellAt(at.X, at.Y-sbLen)
+}
+
+func (t *TerminalPane) applyResize() {
+	// reserve the bottom row for the status line, matching renderTerminalPane
+	w := max(t.area.Width, 1)
+	h := max(t.area.Height-1, 1)
+	t.emu.Resize(w, h)
+	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
 }
 
 func normalizeSelection(s selSpan) selSpan {

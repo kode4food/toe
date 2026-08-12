@@ -155,7 +155,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		r.context.Editor.Tree().MoveSeparator(
 			sep.containerID, sep.childIdx, sep.layout, newPos,
 		)
-		return nil
+		return r.editor.settlePaneResizeCmd(r.context)
 	}
 
 	if r.editor.mouse.downRange == nil {

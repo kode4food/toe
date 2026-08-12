@@ -61,7 +61,9 @@ func (e *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
 		return nil
 	}
 	e.autoSize.generation++
-	return autoSizeTickCmd(e.autoSize.generation)
+	return tea.Batch(
+		autoSizeTickCmd(e.autoSize.generation), e.settlePaneResizeCmd(cx),
+	)
 }
 
 // image panes scale to whatever width they are given, so no case grows them
@@ -124,10 +126,12 @@ func (e *EditorComponent) handleAutoSizeTick(
 	grew := cx.Editor.Tree().GrowFocusedWidth(step)
 	if !grew || pane.Area().Width <= before ||
 		pane.Area().Width >= e.autoSize.targetWidth {
-		e.autoSize.targetWidth = 0
+		e.cancelAutoSize()
 		return consumed(), nil
 	}
-	return consumed(), autoSizeTickCmd(msg.generation)
+	return consumed(), tea.Batch(
+		autoSizeTickCmd(msg.generation), e.settlePaneResizeCmd(cx),
+	)
 }
 
 func autoSizeTickCmd(generation int) tea.Cmd {

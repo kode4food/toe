@@ -41,6 +41,13 @@ type (
 		SetRedraw(func())
 	}
 
+	// ResizeHolder marks a pane that would rather not see every step of a
+	// resize, so a run of them is held until the layout settles
+	ResizeHolder interface {
+		HoldResize()
+		ResumeResize()
+	}
+
 	// Displaceable marks a pane that frees heavy resources while stashed behind
 	// another pane and reacquires them when reverted back into view
 	Displaceable interface {

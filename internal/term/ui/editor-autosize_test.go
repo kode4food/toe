@@ -26,7 +26,7 @@ func TestAutoSize(t *testing.T) {
 	m2, cmd := m.Update(tea.FocusMsg{})
 	m = m2.(ui.Model)
 	assert.Equal(t, before, e.FocusedView().Area().Width)
-	m2, next := m.Update(cmd())
+	m2, next := m.Update(firstMsg(cmd))
 	m = m2.(ui.Model)
 	assert.Greater(t, e.FocusedView().Area().Width, before)
 	assert.Less(t, e.FocusedView().Area().Width, 88)
@@ -137,4 +137,28 @@ func TestAutoSizeScrolled(t *testing.T) {
 	m.Update(tea.FocusMsg{})
 
 	assert.Equal(t, 88, v.Area().Width)
+}
+
+func TestAutoSizeResizeHold(t *testing.T) {
+	e := view.NewEditor(t.TempDir())
+	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
+	e.VSplitNew()
+	m.TerminalAction(e)
+	t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
+	tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+	assert.True(t, ok)
+	m.SetAutoSize(true)
+	before := tp.Area().Width
+
+	m2, cmd := m.Update(tea.FocusMsg{})
+	m = m2.(ui.Model)
+	m2, next := m.Update(firstMsg(cmd))
+	m = m2.(ui.Model)
+
+	// pane widens, but the shell is not told until the animation settles
+	assert.Greater(t, tp.Area().Width, before)
+	assert.Equal(t, before, tp.Emulator().Width())
+	feedCmds(m, next)
+	assert.Equal(t, 80, tp.Area().Width)
+	assert.Equal(t, 80, tp.Emulator().Width())
 }

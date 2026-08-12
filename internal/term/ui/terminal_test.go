@@ -814,8 +814,9 @@ func TestTerminalPane(t *testing.T) {
 			X: sepX, Y: 5, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
+		var cmd tea.Cmd
 		for x := sepX; x <= 65; x += 3 {
-			m2, _ = m.Update(tea.MouseMotionMsg{
+			m2, cmd = m.Update(tea.MouseMotionMsg{
 				X: x, Y: 5, Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
@@ -824,6 +825,7 @@ func TestTerminalPane(t *testing.T) {
 			X: 65, Y: 5, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
+		m = feedCmds(m, cmd)
 		waitForResize(t, tp)
 
 		// content must remain visible without any further shell output
@@ -874,6 +876,72 @@ func TestTerminalResize(t *testing.T) {
 		// the bottom row for the status line
 		assert.Equal(t, 30, tp.Emulator().Width())
 		assert.Equal(t, 11, tp.Emulator().Height())
+	})
+
+	t.Run("holds the shell during a drag", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.NotNil(t, e.VSplit(doc.ID()))
+		m.TerminalAction(e)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+		waitForResize(t, tp)
+		before := tp.Emulator().Width()
+
+		var sepX int
+		e.Tree().WalkSeparators(func(s view.Separator) {
+			if s.Layout == view.LayoutVertical {
+				sepX = s.X
+			}
+		})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: sepX, Y: 5, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		var cmd tea.Cmd
+		for x := sepX; x <= 60; x += 3 {
+			m2, cmd = m.Update(tea.MouseMotionMsg{
+				X: x, Y: 5, Button: tea.MouseLeft,
+			})
+			m = m2.(ui.Model)
+		}
+
+		// the pane narrows, but the shell keeps its size until the drag
+		// settles
+		assert.Less(t, tp.Area().Width, before)
+		assert.Equal(t, before, tp.Emulator().Width())
+		m2, _ = m.Update(tea.MouseReleaseMsg{
+			X: 60, Y: 5, Button: tea.MouseLeft,
+		})
+		m = m2.(ui.Model)
+		feedCmds(m, cmd)
+		waitForResize(t, tp)
+	})
+
+	t.Run("holds the shell until resize settles", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m.TerminalAction(e)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+		waitForResize(t, tp)
+		before := tp.Emulator().Width()
+
+		var cmd tea.Cmd
+		for w := 78; w >= 60; w -= 2 {
+			var m2 tea.Model
+			m2, cmd = m.Update(tea.WindowSizeMsg{Width: w, Height: 24})
+			m = m2.(ui.Model)
+		}
+
+		assert.Equal(t, before, tp.Emulator().Width())
+		feedCmds(m, cmd)
+		waitForResize(t, tp)
+		assert.Equal(t, 60, tp.Emulator().Width())
 	})
 }
 

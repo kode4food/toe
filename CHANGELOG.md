@@ -2,6 +2,19 @@
 
 Notable changes to toe.
 
+## 0.2.4
+
+### Pickers
+
+- Showed picker rows name-first, with the location trailing in a dimmed style, across the file, buffer, search, jump list, symbol, diagnostic, and changed-file pickers
+- Scored only the newly streamed rows while a picker is still loading, so a large workspace walk no longer rescores everything already loaded on each batch
+- Shortened package-qualified type names in diagnostic messages, in the diagnostics pickers and in hover popups
+- Brightened the dimmed secondary text in the mocha theme
+
+### Terminal
+
+- Held terminal pane resizes until the layout settles before telling the shell its new size, so dragging a split no longer floods the shell with intermediate sizes
+
 ## 0.2.3
 
 ### Options

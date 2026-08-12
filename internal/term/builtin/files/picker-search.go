@@ -124,10 +124,10 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 		lbl, sec := ui.PickerNamePath(fmt.Sprintf("%s:%d", rel, ln))
 		select {
 		case gs.results <- gs.slab.Add(ui.PickerItem{
-			Display:       lbl,
-			Columns:       []string{lbl},
-			SortKey:       fmt.Sprintf("%s:%06d", rel, ln),
-			SecondaryFrom: sec,
+			Display: lbl,
+			Columns: []string{lbl},
+			SortKey: fmt.Sprintf("%s:%06d", rel, ln),
+			SecFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{Path: path},
 				Lines:  &core.Span{From: ln - 1, To: ln - 1},

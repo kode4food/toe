@@ -93,10 +93,11 @@ func (b *bufferPickerSource) Load(e *view.Editor) ui.PickerLoad {
 			flags = modifiedIcon
 		}
 		name := doc.RelativeName(e.Cwd())
+		lbl, sec := ui.PickerNamePath(name)
 		items = append(items, slab.Add(ui.PickerItem{
-			Display: name,
-			Columns: []string{flags, name},
+			Columns: []string{flags, lbl},
 			SortKey: name,
+			SecFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{ID: doc.ID()},
 			},

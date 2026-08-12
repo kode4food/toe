@@ -68,9 +68,9 @@ func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
 		line, lines := jumpLineRange(text, entry.Selection)
 		lbl, sec := ui.PickerNamePath(fmt.Sprintf("%s:%d", rel, line+1))
 		items = append(items, slab.Add(ui.PickerItem{
-			Display:       lbl,
-			Columns:       []string{lbl},
-			SecondaryFrom: sec,
+			Display: lbl,
+			Columns: []string{lbl},
+			SecFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{ID: entry.DocID},
 				Lines:  lines,

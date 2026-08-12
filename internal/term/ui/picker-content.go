@@ -193,14 +193,14 @@ func writePickerItem(
 func pickerSecondary(
 	cx *Context, base tui.Style, item *PickerItem,
 ) (tui.Style, int) {
-	if item.SecondaryFrom <= 0 {
+	if item.SecFrom <= 0 {
 		return base, 0
 	}
 	fg := cx.Theme().Get("ui.picker.secondary").FgColor()
 	if fg.IsReset() {
 		return base, 0
 	}
-	return base.Fg(fg), item.SecondaryFrom
+	return base.Fg(fg), item.SecFrom
 }
 
 func pickerColumnBase(

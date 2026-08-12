@@ -260,6 +260,10 @@ func TestSymbolPickerAction(t *testing.T) {
 
 		assert.Contains(t, out, "WorkspaceMain")
 		assert.Contains(t, out, "target.go")
+		// the path trails the symbol on its row rather than holding a column
+		row := rowContaining(out, "WorkspaceMain")
+		assert.GreaterOrEqual(t, row, 0)
+		assert.Equal(t, row, rowContaining(out, "target.go"))
 		assert.Len(t, e.AllDocuments(), before)
 
 		_ = sendSpecial(m, tea.KeyEnter)

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"cmp"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -11,6 +12,11 @@ import (
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
+)
+
+// a path ending in an exported identifier, how servers name a foreign type
+var qualifiedNamePattern = regexp.MustCompile(
+	`[\w.\-]+(?:/[\w.\-]+)+\.[A-Z]\w*`,
 )
 
 var diagnosticPopupScopes = [...]string{
@@ -152,18 +158,28 @@ func diagnosticRangeBounds(diag view.Diagnostic) core.Range {
 }
 
 func diagnosticPopupText(diag view.Diagnostic) string {
-	msg := diagnosticMessageText(diag.Message)
+	msg := DiagnosticMessageText(diag.Message)
 	if diag.Source == "" {
 		return msg
 	}
 	return diag.Source + ": " + msg
 }
 
-func diagnosticMessageText(message string) string {
+// DiagnosticMessageText flattens a server's message onto one line and
+// shortens the qualified names in it
+func DiagnosticMessageText(message string) string {
 	lines := strings.FieldsFunc(message, func(r rune) bool {
 		return r == '\n' || r == '\r'
 	})
-	return strings.Join(lines, "  ")
+	return shortenQualifiedNames(strings.Join(lines, "  "))
+}
+
+func shortenQualifiedNames(message string) string {
+	return qualifiedNamePattern.ReplaceAllStringFunc(message,
+		func(name string) string {
+			return name[strings.LastIndexByte(name, '/')+1:]
+		},
+	)
 }
 
 func diagnosticSpans(

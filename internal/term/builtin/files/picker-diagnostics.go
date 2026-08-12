@@ -79,9 +79,9 @@ func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 		PickerBase: ui.PickerBase{
 			Ident:       "workspace-diagnostics",
 			Label:       "Workspace Diagnostics",
-			Cols:        []string{"", "", ""},
+			Cols:        []string{"", ""},
 			MatchCol:    1,
-			Proportions: []int{0, 2, 1},
+			Proportions: []int{0, 1},
 		},
 		workspace: true,
 	})
@@ -134,22 +134,19 @@ func (d *diagnosticPickerSource) item(
 ) *ui.PickerItem {
 	name := doc.RelativeName(e.Cwd())
 	line, lines := diagnosticLineRange(doc.Text(), diag)
-	display := fmt.Sprintf("%s:%d %s", name, line+1, diag.Message)
-	columns := []string{
-		diagnosticSeverityIcon(diag.Severity, e.Options().NerdFonts),
-		diag.Message,
-	}
-	scopes := []string{diagnosticSeverityScope(diag.Severity), ""}
+	msg := ui.DiagnosticMessageText(diag.Message)
+	lbl, sec := msg, 0
 	if d.workspace {
-		columns = append(columns, name)
-		scopes = append(scopes, "ui.picker.secondary")
+		lbl, sec = ui.PickerTrailingPath(msg, fmt.Sprintf("%s:%d", name, line+1))
 	}
 	return slab.Add(ui.PickerItem{
-		Display:     display,
-		Group:       diagnosticSeverityGroup(diag.Severity),
-		Columns:     columns,
-		StyleScopes: scopes,
-		SortKey:     display,
+		Group: diagnosticSeverityGroup(diag.Severity),
+		Columns: []string{
+			diagnosticSeverityIcon(diag.Severity, e.Options().NerdFonts), lbl,
+		},
+		StyleScopes: []string{diagnosticSeverityScope(diag.Severity), ""},
+		SecFrom:     sec,
+		SortKey:     fmt.Sprintf("%s:%06d", name, line+1),
 		Location: ui.PickerLocation{
 			Target: ui.PickerTarget{ID: doc.ID()},
 			Lines:  lines,

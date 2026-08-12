@@ -63,9 +63,9 @@ func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 		PickerBase: PickerBase{
 			Ident:       "lsp-workspace-symbols",
 			Label:       "Workspace Symbols",
-			Cols:        []string{"", "", ""},
+			Cols:        []string{"", ""},
 			MatchCol:    1,
-			Proportions: []int{0, 0, 1},
+			Proportions: []int{0, 1},
 		},
 	})
 }
@@ -216,13 +216,12 @@ func (l *lspWorkspaceSymbolSource) item(
 	})
 	kind := symbolKind(sym.Kind)
 	icon := completionKindIcon(kind, e.Options().NerdFonts)
+	lbl, sec := PickerTrailingPath(sym.Name, fmt.Sprintf("%s:%d", path, line+1))
 	return slab.Add(PickerItem{
-		Display: fmt.Sprintf("%s:%d %s", path, line+1, sym.Name),
-		Columns: []string{icon, sym.Name, path},
-		StyleScopes: []string{
-			completionKindStyleScope(kind), "", "ui.picker.secondary",
-		},
-		SortKey: sym.Name,
+		Columns:     []string{icon, lbl},
+		StyleScopes: []string{completionKindStyleScope(kind), ""},
+		SecFrom:     sec,
+		SortKey:     sym.Name,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},
 			Lines:  lines,
@@ -259,10 +258,10 @@ func locationItem(
 	display := fmt.Sprintf("%s:%d", rel, line+1)
 	lbl, sec := PickerNamePath(display)
 	return slab.Add(PickerItem{
-		Display:       lbl,
-		Columns:       []string{lbl},
-		SortKey:       display,
-		SecondaryFrom: sec,
+		Display: lbl,
+		Columns: []string{lbl},
+		SortKey: display,
+		SecFrom: sec,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},
 			Lines:  lines,

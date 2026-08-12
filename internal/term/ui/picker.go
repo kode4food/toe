@@ -138,10 +138,8 @@ type (
 		Display     string
 		Columns     []string
 		StyleScopes []string
+		SecFrom     int
 		SortKey     string
-
-		// SecondaryFrom dims the matched column from this rune offset; 0 is off
-		SecondaryFrom int
 
 		Group   int
 		Section bool
@@ -684,6 +682,15 @@ func PickerNamePath(rel string) (string, int) {
 	}
 	name := filepath.Base(rel)
 	return name + " " + dir, len([]rune(name)) + 1
+}
+
+// PickerTrailingPath trails a path behind a row's own text, and returns the
+// rune offset where that path begins
+func PickerTrailingPath(text, rel string) (string, int) {
+	if text == "" {
+		return rel, 0
+	}
+	return text + " " + rel, len([]rune(text)) + 1
 }
 
 func pickerSortText(item *PickerItem) string {

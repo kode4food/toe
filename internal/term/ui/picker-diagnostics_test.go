@@ -90,12 +90,81 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.NotContains(t, out, "source")
 		assert.Contains(t, out, "b.go")
 		assert.Less(t, strings.Index(out, "bad b"), strings.Index(out, "b.go"))
+		// the path trails the message on its row rather than holding a column
+		row := rowContaining(out, "bad b")
+		assert.GreaterOrEqual(t, row, 0)
+		assert.Equal(t, row, rowContaining(out, "b.go"))
 		assert.Equal(t, -1, sectionRow(out, "path"))
 		// grouping is shared with the current-file picker
 		assert.Greater(t,
 			sectionRow(out, "Warnings"), sectionRow(out, "Errors"),
 		)
 	})
+
+	t.Run("flattens multi-line messages onto one row", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "a.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package a\n"), 0o644))
+
+		e := view.NewEditor(dir)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.Document(v.DocID())
+		assert.NotNil(t, doc)
+		doc.ReplaceDiagnostics("test", []view.Diagnostic{
+			{
+				Severity: view.DiagnosticSeverityError,
+				Message:  "expected type\r\n   found other\n   in this call",
+				Source:   "test",
+				Provider: "test",
+			},
+		})
+
+		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
+		out := stripANSI(m.View().Content)
+
+		rows := map[int]bool{}
+		for _, want := range []string{
+			"expected type", "found other", "in this call",
+		} {
+			row := rowContaining(out, want)
+			assert.GreaterOrEqual(t, row, 0, want)
+			rows[row] = true
+		}
+		assert.Len(t, rows, 1)
+	})
+
+	for _, tc := range []struct {
+		name string
+		msg  string
+		want string
+	}{
+		{
+			"qualified type",
+			"unknown field Foo in struct literal of type " +
+				"github.com/kode4food/toe/internal/term/command.Command",
+			"unknown field Foo in struct literal of type command.Command",
+		},
+		{
+			"pointer and slice forms",
+			"cannot use []net/http.Client as *net/url.URL",
+			"cannot use []http.Client as *url.URL",
+		},
+		{
+			"bare import path kept",
+			"could not import foo/bar/baz (no required module)",
+			"could not import foo/bar/baz (no required module)",
+		},
+		{
+			"file name kept",
+			"declared at internal/term/ui/picker.go:12",
+			"declared at internal/term/ui/picker.go:12",
+		},
+	} {
+		t.Run("shortens "+tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, ui.DiagnosticMessageText(tc.msg))
+		})
+	}
 
 	t.Run("groups by severity", func(t *testing.T) {
 		dir := t.TempDir()
@@ -166,6 +235,15 @@ func TestDiagnosticPicker(t *testing.T) {
 			assert.NotContains(t, out, "message")
 		})
 	}
+}
+
+func rowContaining(out, want string) int {
+	for i, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, want) {
+			return i
+		}
+	}
+	return -1
 }
 
 func openDiagnosticPicker(

@@ -240,16 +240,16 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 		group = changedFileStaged
 	}
 	item := PickerItem{
-		Display:       display,
-		Group:         group,
-		Columns:       []string{changedFileIcon(fc.Kind, args.nerd), lbl},
-		StyleScopes:   []string{changedFileScope(fc.Kind), ""},
-		SortKey:       display,
-		SecondaryFrom: sec,
-		DiffHunks:     hunks,
-		DiffPreview:   fc.Kind != view.FileChangeConflict,
-		DiffKind:      fc.Kind,
-		BasePath:      basePath,
+		Display:     display,
+		Group:       group,
+		Columns:     []string{changedFileIcon(fc.Kind, args.nerd), lbl},
+		StyleScopes: []string{changedFileScope(fc.Kind), ""},
+		SortKey:     display,
+		SecFrom:     sec,
+		DiffHunks:   hunks,
+		DiffPreview: fc.Kind != view.FileChangeConflict,
+		DiffKind:    fc.Kind,
+		BasePath:    basePath,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: fc.Path},
 			Lines:  firstChangeLines(hunks),

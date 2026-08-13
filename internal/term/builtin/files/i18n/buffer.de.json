@@ -1,10 +1,11 @@
 {
   "buffer-close-all.docstring": "Alle Buffer schließen, ohne das Programm zu beenden",
-  "buffer-close-force.docstring": "Aktuellen Buffer schließen und ungespeicherte Änderungen verwerfen",
+  "buffer-close-force.docstring": "Aktuellen Buffer erzwungen schließen und ungespeicherte Änderungen verwerfen",
   "buffer-close-others.docstring": "Alle Buffer außer dem aktuell fokussierten schließen",
   "buffer-close.docstring": "Aktuellen Buffer schließen",
   "buffer-next.docstring": "Zum nächsten Buffer springen",
   "buffer-previous.docstring": "Zum vorherigen Buffer springen",
   "error.unsavedBufferClose": "Ungespeicherte Änderungen (:buffer-close! erzwingt)",
-  "error.unsavedBufferCloseAll": "Ungespeicherte Änderungen (:buffer-close-all! erzwingt)"
+  "error.unsavedBufferCloseAll": "Ungespeicherte Änderungen (:buffer-close-all! erzwingt)",
+  "error.noSuchBuffer": "kein solcher Puffer: {name}"
 }

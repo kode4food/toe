@@ -270,4 +270,30 @@ func TestEditUndoRedo(t *testing.T) {
 		e.SetCount(2)
 		assert.Nil(t, test.RunCmd(t, km, e, "earlier").Continuation)
 	})
+
+	t.Run("earlier steps back by argument", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		for _, text := range []string{"a", "b", "c"} {
+			testutil.SetEditorText(t, e, text)
+		}
+		before := test.DocText(t, e)
+
+		test.RunCmdArgs(t, km, e, "earlier", "2")
+
+		assert.NotEqual(t, before, test.DocText(t, e))
+		test.RunCmdArgs(t, km, e, "later", "2")
+		assert.Equal(t, before, test.DocText(t, e))
+	})
+
+	t.Run("earlier rejects a non-numeric step", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		res := test.RunCmdArgs(t, km, e, "earlier", "soon")
+		assert.Contains(t, res.Message, "positive")
+	})
+
+	t.Run("later rejects a zero step", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		res := test.RunCmdArgs(t, km, e, "later", "0")
+		assert.Contains(t, res.Message, "positive")
+	})
 }

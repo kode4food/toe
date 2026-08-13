@@ -17,18 +17,20 @@ const (
 	actPasteAfter                  = "paste_after"
 	actPasteBefore                 = "paste_before"
 	actReplaceWithYanked           = "replace_with_yanked"
-	actYankToClipboard             = "yank_to_clipboard"
-	actYankMainToClipboard         = "yank_main_selection_to_clipboard"
-	actPasteClipboardAfter         = "paste_clipboard_after"
-	actPasteClipboardBefore        = "paste_clipboard_before"
-	actClipboardReplace            = "clipboard_paste_replace"
-	actYankJoin                    = "yank_joined_to_clipboard"
+	actYankMain                    = "yank_main_selection"
+	actYankJoin                    = "yank_join"
 	actYankPrimaryClipboard        = "yank_to_primary_clipboard"
 	actPastePrimaryClipboardAfter  = "paste_primary_clipboard_after"
 	actPastePrimaryClipboardBefore = "paste_primary_clipboard_before"
 	actPrimaryClipboardReplace     = "primary_clipboard_paste_replace"
 	actClearRegister               = "clear_register"
 	actPasteClipboardIntoPane      = "paste_clipboard_into_pane"
+)
+
+const (
+	errorRegisterNameKey  i18n.Key = "error.registerName"
+	statusRegisterCleared i18n.Key = "status.registerCleared"
+	statusRegistersClear  i18n.Key = "status.registersCleared"
 )
 
 var (
@@ -39,6 +41,10 @@ var (
 	terminalFS embed.FS
 )
 
+var (
+	errRegisterName = i18n.NewError(errorRegisterNameKey)
+)
+
 // DocumentModule returns clipboard commands for document panes
 func DocumentModule() command.Module {
 	return command.Module{
@@ -46,76 +52,55 @@ func DocumentModule() command.Module {
 		Commands: []command.Command{
 			{
 				Name:      actYank,
-				DocString: "Yank selection",
+				DocString: "Yank selection to clipboard or register",
 				Run:       kit.Runner(action.Yank),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"clipboard-yank"},
-				Keys:      kit.Keys(kit.Char('y')),
+				Keys: kit.Keys(
+					kit.Char('y'), kit.LeaderPrefix(kit.Char('y')),
+				),
 			},
 			{
-				Name:      actPasteAfter,
-				DocString: "Paste after selection",
-				Run:       kit.Runner(action.PasteAfter),
-				Modes:     command.DocNormalModes,
-				Keys:      kit.Keys(kit.Char('p')),
-			},
-			{
-				Name:      actPasteBefore,
-				DocString: "Paste before selection",
-				Run:       kit.Runner(action.PasteBefore),
-				Modes:     command.DocNormalModes,
-				Keys:      kit.Keys(kit.Char('P')),
-			},
-			{
-				Name:      actReplaceWithYanked,
-				DocString: "Replace with yanked text",
-				Run:       kit.Runner(action.ReplaceWithYanked),
-				Modes:     command.DocNormalModes,
-				Keys:      kit.Keys(kit.Char('R')),
-			},
-			{
-				Name:      actYankToClipboard,
-				DocString: "Yank selections to clipboard",
-				Run:       kit.Runner(action.YankToClipboard),
-				Modes:     command.DocNormalModes,
-				Keys:      kit.Leader('y'),
-			},
-			{
-				Name:      actYankMainToClipboard,
-				DocString: "Yank main selection to clipboard",
-				Run:       kit.Runner(action.YankMainToClipboard),
+				Name:      actYankMain,
+				DocString: "Yank main selection to clipboard or register",
+				Run:       kit.Runner(action.YankMain),
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Leader('Y'),
 			},
 			{
-				Name:      actPasteClipboardAfter,
-				DocString: "Paste clipboard after selections",
-				Run:       kit.Runner(action.PasteClipboardAfter),
+				Name:      actPasteAfter,
+				DocString: "Paste clipboard or register after selection",
+				Run:       kit.Runner(action.PasteAfter),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"clipboard-paste-after"},
-				Keys:      kit.Leader('p'),
+				Keys: kit.Keys(
+					kit.Char('p'), kit.LeaderPrefix(kit.Char('p')),
+				),
 			},
 			{
-				Name:      actPasteClipboardBefore,
-				DocString: "Paste clipboard before selections",
-				Run:       kit.Runner(action.PasteClipboardBefore),
+				Name:      actPasteBefore,
+				DocString: "Paste clipboard or register before selection",
+				Run:       kit.Runner(action.PasteBefore),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"clipboard-paste-before"},
-				Keys:      kit.Leader('P'),
+				Keys: kit.Keys(
+					kit.Char('P'), kit.LeaderPrefix(kit.Char('P')),
+				),
 			},
 			{
-				Name:      actClipboardReplace,
-				DocString: "Replace selections by clipboard content",
-				Run:       kit.Runner(action.ClipboardReplace),
+				Name:      actReplaceWithYanked,
+				DocString: "Replace selection with clipboard or register",
+				Run:       kit.Runner(action.ReplaceWithYanked),
 				Modes:     command.DocNormalModes,
-				Keys:      kit.Leader('R'),
-				Signature: command.DefaultSignature(),
+				Keys: kit.Keys(
+					kit.Char('R'), kit.LeaderPrefix(kit.Char('R')),
+				),
 			},
 			{
 				Name: actYankJoin,
-				DocString: "Yank joined selections. A separator can " +
-					"be provided as first argument. Default value is " +
-					"newline",
+				DocString: "Yank joined selections to clipboard or " +
+					"register. First argument sets the separator, a " +
+					"newline by default",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					sep := "\n"
 					if args != nil {
@@ -127,8 +112,7 @@ func DocumentModule() command.Module {
 					return command.Result{}
 				},
 				Modes:     command.DocNormalModes,
-				Aliases:   []string{"yank-join"},
-				Signature: command.DefaultSignature(),
+				Signature: kit.OptionalArg(),
 			},
 			{
 				Name:      actYankPrimaryClipboard,
@@ -136,7 +120,6 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.YankToPrimaryClipboard),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"primary-clipboard-yank"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actPastePrimaryClipboardAfter,
@@ -144,7 +127,6 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.PastePrimaryClipboardAfter),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"primary-clipboard-paste-after"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actPastePrimaryClipboardBefore,
@@ -152,25 +134,20 @@ func DocumentModule() command.Module {
 				Run:       kit.Runner(action.PastePrimaryClipboardBefore),
 				Modes:     command.DocNormalModes,
 				Aliases:   []string{"primary-clipboard-paste-before"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actPrimaryClipboardReplace,
 				DocString: "Replace selections by primary clipboard",
 				Run:       kit.Runner(action.PrimaryClipboardReplace),
 				Modes:     command.DocNormalModes,
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name: actClearRegister,
 				DocString: "Clear given register. If no argument is " +
 					"provided, clear all registers",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					e.ResetRegister()
-					return command.Result{Message: "register cleared"}
-				},
+				Run:       clearRegister,
 				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
+				Signature: kit.OptionalArg(),
 			},
 		},
 	}
@@ -186,8 +163,26 @@ func TerminalModule() command.Module {
 			Run:       pasteClipboardIntoPane,
 			Modes:     view.ModeTerminal,
 			Keys:      kit.Leader('p'),
-			Signature: command.DefaultSignature(),
 		}},
+	}
+}
+
+func clearRegister(e *view.Editor, args *command.Args) command.Result {
+	if args == nil || args.Empty() {
+		e.Registers().ClearAll()
+		e.ResetRegister()
+		return command.Result{Message: i18n.Text(statusRegistersClear)}
+	}
+	name, _ := args.First()
+	runes := []rune(name)
+	if len(runes) != 1 {
+		return command.Result{Error: errRegisterName}
+	}
+	e.Registers().Clear(runes[0])
+	return command.Result{
+		Message: i18n.Text(statusRegisterCleared, i18n.Vars{
+			"register": name,
+		}),
 	}
 }
 

@@ -30,7 +30,7 @@ type (
 
 		lastW, lastH int
 		lastDiagKey  diagPopupKey
-		lastSpinner  spinnerState
+		lastSpinner  animationState
 	}
 
 	// styleKey identifies the theme+mode combination for cached styles

@@ -36,8 +36,7 @@ func SessionModule(r *command.Registry) command.Module {
 					}
 					return command.Result{Message: "session saved"}
 				},
-				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
+				Modes: command.PaneModes,
 			},
 			{
 				Name:      actRestoreSession,
@@ -56,8 +55,7 @@ func SessionModule(r *command.Registry) command.Module {
 					}
 					return command.Result{}
 				},
-				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
+				Modes: command.PaneModes,
 			},
 		},
 	}

@@ -57,7 +57,7 @@ const (
 	actImagePanUp             = "image_pan_up"
 	actImagePanRight          = "image_pan_right"
 	actVSplitView             = "vsplit"
-	actHSplitView             = "split"
+	actHSplitView             = "hsplit"
 	actVSplitNew              = "vsplit_new"
 	actHSplitNew              = "hsplit_new"
 	actTransposeView          = "transpose_view"
@@ -100,7 +100,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('+'), kit.Char('=')),
 				Aliases:   []string{"zoom-in"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actImageZoomOut,
@@ -109,7 +108,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('-')),
 				Aliases:   []string{"zoom-out"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actImageZoomReset,
@@ -118,7 +116,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('0')),
 				Aliases:   []string{"zoom-reset"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actImagePanLeft,
@@ -127,7 +124,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('h'), kit.Left),
 				Aliases:   []string{"pan-left"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actImagePanDown,
@@ -136,7 +132,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('j'), kit.Down),
 				Aliases:   []string{"pan-down"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actImagePanUp,
@@ -145,7 +140,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('k'), kit.Up),
 				Aliases:   []string{"pan-up"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actImagePanRight,
@@ -154,7 +148,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     view.ModeImage,
 				Keys:      kit.Keys(kit.Char('l'), kit.Right),
 				Aliases:   []string{"pan-right"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actPageUp,
@@ -205,14 +198,12 @@ func ViewModule(model ui.Model) command.Module {
 				DocString: "Move half page up",
 				Run:       kit.Runner(action.HalfPageUp),
 				Modes:     command.DocModes,
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actHalfPageDown,
 				DocString: "Move half page down",
 				Run:       kit.Runner(action.HalfPageDown),
 				Modes:     command.DocModes,
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actPageCursorUp,
@@ -285,7 +276,6 @@ func ViewModule(model ui.Model) command.Module {
 					kit.Or(Cw(kit.Char('x'))),
 					kit.Or(Spcw(kit.Char('x'))),
 				)},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actTerminalSearch,
@@ -293,25 +283,26 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner(model.TerminalSearchAction),
 				Modes:     view.ModeTerminal,
 				Keys:      kit.Window(kit.Char('/')),
-				Signature: command.DefaultSignature(),
 			},
 			{
-				Name:      actVSplitView,
-				DocString: "Vertical right split",
-				Run:       kit.Runner(action.VSplit),
+				Name: actVSplitView,
+				DocString: "Vertical right split. Opens the given files in " +
+					"the split",
+				Run:       splitRun(view.LayoutVertical),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('v'), kit.Ctrl('v')),
 				Aliases:   []string{"vs"},
-				Signature: command.DefaultSignature(),
+				Signature: kit.FileSig(kit.MinArgs(0)),
 			},
 			{
-				Name:      actHSplitView,
-				DocString: "Horizontal bottom split",
-				Run:       kit.Runner(action.HSplit),
+				Name: actHSplitView,
+				DocString: "Horizontal bottom split. Opens the given files " +
+					"in the split",
+				Run:       splitRun(view.LayoutHorizontal),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('s'), kit.Ctrl('s')),
-				Aliases:   []string{"hs", "sp"},
-				Signature: command.DefaultSignature(),
+				Aliases:   []string{"split", "hs", "sp"},
+				Signature: kit.FileSig(kit.MinArgs(0)),
 			},
 			{
 				Name:      actVSplitNew,
@@ -320,9 +311,8 @@ func ViewModule(model ui.Model) command.Module {
 					e.VSplitNew()
 					return command.Result{}
 				},
-				Modes:     command.PaneModes,
-				Aliases:   []string{"vnew"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.PaneModes,
+				Aliases: []string{"vnew"},
 			},
 			{
 				Name:      actHSplitNew,
@@ -331,9 +321,8 @@ func ViewModule(model ui.Model) command.Module {
 					e.HSplitNew()
 					return command.Result{}
 				},
-				Modes:     command.PaneModes,
-				Aliases:   []string{"hnew"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.PaneModes,
+				Aliases: []string{"hnew"},
 			},
 			{
 				Name:      actTransposeView,
@@ -349,7 +338,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('q'), kit.Ctrl('q')),
 				Aliases:   []string{"wc"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actCloseCurrentViewForce,
@@ -357,7 +345,6 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner((*view.Editor).CloseCurrentView),
 				Modes:     command.PaneModes,
 				Aliases:   []string{"wc!"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actCloseOtherViews,
@@ -366,7 +353,6 @@ func ViewModule(model ui.Model) command.Module {
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('o'), kit.Ctrl('o')),
 				Aliases:   []string{"wo"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actRotateView,
@@ -381,7 +367,6 @@ func ViewModule(model ui.Model) command.Module {
 				Run:       kit.Runner((*view.Editor).TogglePaneMaximized),
 				Modes:     command.PaneModes,
 				Keys:      kit.Window(kit.Char('z')),
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actJumpViewLeft,
@@ -894,4 +879,24 @@ func runDirAction(
 	fn func(*view.Editor, view.Direction), dir view.Direction,
 ) command.Action {
 	return func(e *view.Editor) { fn(e, dir) }
+}
+
+func splitRun(layout view.Layout) command.Run {
+	return func(e *view.Editor, args *command.Args) command.Result {
+		if args == nil || args.Empty() {
+			if err := e.SplitFocused(layout); err != nil {
+				return command.Result{Error: err}
+			}
+			return command.Result{}
+		}
+		for _, path := range args.Positionals() {
+			if err := e.SplitFocused(layout); err != nil {
+				return command.Result{Error: err}
+			}
+			if _, err := e.OpenFile(path); err != nil {
+				return command.Result{Error: err}
+			}
+		}
+		return command.Result{}
+	}
 }

@@ -300,7 +300,7 @@ func TestRegistry(t *testing.T) {
 		e.Options().CursorLine = true
 		reg := registryWithLiveOptions(t)
 		args, err := command.ParseArgs(
-			"cursorline", command.DefaultSignature(), false, nil,
+			"cursorline", command.Signature{}, false, nil,
 		)
 		assert.NoError(t, err)
 

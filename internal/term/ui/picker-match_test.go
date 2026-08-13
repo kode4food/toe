@@ -123,3 +123,106 @@ func typeQuery(m ui.Model, query string) ui.Model {
 	}
 	return m
 }
+
+type sectionPickerSource struct {
+	ui.PickerBase
+	rows int
+}
+
+func (s sectionPickerSource) Load(*view.Editor) ui.PickerLoad {
+	var slab ui.PickerItemSlab
+	items := []*ui.PickerItem{
+		slab.Add(ui.PickerItem{Display: "First Group", Section: true}),
+		slab.Add(ui.PickerItem{
+			Display: "Second Group", Group: 1, Section: true,
+		}),
+	}
+	for i := range s.rows {
+		name := fmt.Sprintf("row-%02d", i)
+		items = append(items, slab.Add(ui.PickerItem{
+			Display: name,
+			SortKey: name,
+			Group:   i / (s.rows / 2),
+		}))
+	}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
+}
+
+func (sectionPickerSource) Accept(
+	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
+) {
+}
+
+func (sectionPickerSource) SkipPreview() {}
+
+func sectionPickerModel(t testing.TB, rows int) ui.Model {
+	t.Helper()
+	src := sectionPickerSource{
+		PickerBase: ui.PickerBase{
+			Ident: "sections",
+			Label: "Sections",
+			Cols:  []string{"name"},
+		},
+		rows: rows,
+	}
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "section_picker",
+		m.PickerAction(func(*view.Editor) *ui.Picker {
+			return ui.NewPicker(e, src)
+		}),
+		[]command.KeyEvent{char('p')},
+	)
+	return sendKeyAndFeed(resize(m, 70, 20), 'p')
+}
+
+func TestPickerSectionScroll(t *testing.T) {
+	t.Run("paging back up reveals the first header", func(t *testing.T) {
+		m := sectionPickerModel(t, 40)
+		assert.Contains(t, stripANSI(m.View().Content), "First Group")
+
+		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
+		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
+		assert.NotContains(t, stripANSI(m.View().Content), "First Group")
+
+		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
+		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "First Group")
+		assert.Contains(t, out, "> row-00")
+	})
+
+	t.Run("arrowing up reveals the first header", func(t *testing.T) {
+		m := sectionPickerModel(t, 40)
+		assert.Contains(t, stripANSI(m.View().Content), "First Group")
+		for range 25 {
+			m = sendSpecialText(m, tea.KeyDown, "down")
+		}
+		assert.NotContains(t, stripANSI(m.View().Content), "First Group")
+
+		for range 25 {
+			m = sendSpecialText(m, tea.KeyUp, "up")
+		}
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "First Group")
+		assert.Contains(t, out, "> row-00")
+	})
+
+	t.Run("group header scrolls in with its row", func(t *testing.T) {
+		m := sectionPickerModel(t, 40)
+		assert.Contains(t, stripANSI(m.View().Content), "First Group")
+		for range 25 {
+			m = sendSpecialText(m, tea.KeyDown, "down")
+		}
+		for range 6 {
+			m = sendSpecialText(m, tea.KeyUp, "up")
+		}
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "Second Group")
+	})
+}

@@ -63,8 +63,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		Path:    args.pane.Path(),
 		BaseDir: r.context.Editor.Cwd(),
 	})
-	renderStatusElems(renderStatusElemsArgs{
-		buf:       args.buf,
+	statusRow{
 		at:        args.at,
 		width:     args.width,
 		baseStyle: baseTUI,
@@ -73,7 +72,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 			{text: name, style: baseTUI},
 		},
 		right: right,
-	})
+	}.paint(args.buf)
 }
 
 // paintImage fills a width by height cell region with centered kitty Unicode

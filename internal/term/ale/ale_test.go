@@ -19,8 +19,10 @@ func TestRuntime(t *testing.T) {
 		reg := command.NewRegistry(km)
 		var got []string
 		err := reg.RegisterCommand("record", command.Command{
-			Modes:     command.DocModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.DocModes,
+			Signature: command.Signature{
+				Positionals: command.Positionals{Max: -1},
+			},
 			Run: func(
 				_ *view.Editor, args *command.Args,
 			) command.Result {
@@ -51,8 +53,7 @@ func TestRuntime(t *testing.T) {
 		reg := command.NewRegistry(km)
 		want := errors.New("failed")
 		err := reg.RegisterCommand("fail", command.Command{
-			Modes:     command.DocModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.DocModes,
 			Run: func(
 				*view.Editor, *command.Args,
 			) command.Result {
@@ -145,8 +146,7 @@ func TestRuntime(t *testing.T) {
 		km := command.NewKeymaps()
 		reg := command.NewRegistry(km)
 		err := reg.RegisterCommand("quit", command.Command{
-			Modes:     command.DocModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.DocModes,
 			Run: func(
 				*view.Editor, *command.Args,
 			) command.Result {

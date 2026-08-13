@@ -166,3 +166,9 @@ func cursorKindToShape(kind view.CursorKind) tea.CursorShape {
 		return tea.CursorBlock
 	}
 }
+
+func promptBackground(th *theme.Theme) tui.Color {
+	return deriveBackground(
+		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
+	)
+}

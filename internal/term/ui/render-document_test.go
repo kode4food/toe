@@ -1670,12 +1670,12 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 
 		m = sendKey(m, ' ')
 		wide := stripANSI(m.View().Content)
-		assert.Contains(t, wide, "Yank selections to clipboard")
+		assert.Contains(t, wide, "Yank selection to clipboard")
 
 		m = sendKey(m, 'w')
 		narrow := stripANSI(m.View().Content)
 
-		assert.NotContains(t, narrow, "Yank selections to clipboard")
+		assert.NotContains(t, narrow, "Yank selection to clipboard")
 		assert.Contains(t, narrow, "Vertical right split")
 	})
 }

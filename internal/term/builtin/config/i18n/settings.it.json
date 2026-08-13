@@ -2,7 +2,6 @@
   "config-open-workspace.docstring": "Apri il file config.toml dell'area di lavoro",
   "config-open.docstring": "Apri il file config.toml dell'utente",
   "config-reload.docstring": "Ricarica la configurazione utente",
-  "encoding.docstring": "Imposta la codifica",
   "get-option.docstring": "Ottieni il valore corrente di un'opzione di configurazione",
   "indent-style.docstring": "Imposta lo stile di rientro: 't' per le tabulazioni o da 1 a 16 spazi",
   "log-open.docstring": "Apri il file di log dell'editor",

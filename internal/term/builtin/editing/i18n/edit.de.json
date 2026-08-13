@@ -7,7 +7,7 @@
   "decrement.docstring": "Element unter dem Cursor verringern",
   "delete-selection-noyank.docstring": "Auswahl löschen, ohne sie zu kopieren",
   "delete-selection.docstring": "Auswahl löschen",
-  "earlier.docstring": "Im Verlauf rückwärts gehen",
+  "earlier.docstring": "Im Verlauf rückwärts gehen. Akzeptiert eine Anzahl von Schritten",
   "ensure-forward.docstring": "Alle Auswahlen vorwärts ausrichten",
   "increment.docstring": "Element unter dem Cursor erhöhen",
   "indent.docstring": "Auswahl einrücken",
@@ -15,7 +15,7 @@
   "insert-mode.docstring": "Vor der Auswahl einfügen",
   "join-selections-space.docstring": "Zeilen in der Auswahl verbinden und Leerzeichen auswählen",
   "join-selections.docstring": "Zeilen in der Auswahl verbinden",
-  "later.docstring": "Im Verlauf vorwärts gehen",
+  "later.docstring": "Im Verlauf vorwärts gehen. Akzeptiert eine Anzahl von Schritten",
   "normal-mode.docstring": "Normalmodus aktivieren",
   "open-above.docstring": "Neue Zeile über der Auswahl öffnen",
   "open-below.docstring": "Neue Zeile unter der Auswahl öffnen",
@@ -32,5 +32,6 @@
   "switch-to-uppercase.docstring": "In Großbuchstaben umwandeln",
   "trim-selections.docstring": "Leerraum an den Auswahlen entfernen",
   "undo.docstring": "Änderung rückgängig machen",
-  "unindent.docstring": "Einrückung der Auswahl verringern"
+  "unindent.docstring": "Einrückung der Auswahl verringern",
+  "error.historySteps": "Anzahl der Schritte muss eine positive Zahl sein"
 }

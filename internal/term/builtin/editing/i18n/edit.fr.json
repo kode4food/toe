@@ -7,7 +7,7 @@
   "decrement.docstring": "Décrémenter l’élément sous le curseur",
   "delete-selection-noyank.docstring": "Supprimer la sélection sans la copier",
   "delete-selection.docstring": "Supprimer la sélection",
-  "earlier.docstring": "Reculer dans l’historique",
+  "earlier.docstring": "Reculer dans l'historique. Accepte un nombre d'étapes",
   "ensure-forward.docstring": "Orienter toutes les sélections vers l’avant",
   "increment.docstring": "Incrémenter l’élément sous le curseur",
   "indent.docstring": "Indenter la sélection",
@@ -15,7 +15,7 @@
   "insert-mode.docstring": "Insérer avant la sélection",
   "join-selections-space.docstring": "Joindre les lignes dans la sélection et sélectionner les espaces",
   "join-selections.docstring": "Joindre les lignes dans la sélection",
-  "later.docstring": "Avancer dans l’historique",
+  "later.docstring": "Avancer dans l'historique. Accepte un nombre d'étapes",
   "normal-mode.docstring": "Passer en mode normal",
   "open-above.docstring": "Ouvrir une nouvelle ligne au-dessus de la sélection",
   "open-below.docstring": "Ouvrir une nouvelle ligne sous la sélection",
@@ -32,5 +32,6 @@
   "switch-to-uppercase.docstring": "Convertir en majuscules",
   "trim-selections.docstring": "Supprimer les espaces autour des sélections",
   "undo.docstring": "Annuler la modification",
-  "unindent.docstring": "Désindenter la sélection"
+  "unindent.docstring": "Désindenter la sélection",
+  "error.historySteps": "le nombre d'étapes doit être un entier positif"
 }

@@ -2,6 +2,26 @@
 
 Notable changes to toe.
 
+## 0.3.x
+
+### Clipboard
+
+- Made yank and paste use the system clipboard by default, while explicit registers and deletions retain their existing behavior
+
+### Commands
+
+- Added consistent argument validation and completion across commands, including split targets, history steps, language servers, and option cycling
+- Renamed `split` to `hsplit`, retaining `split` as an alias, and removed the obsolete `encoding` command
+
+### Command Line
+
+- Reworked command-line feedback with left-aligned pending keys and keybinding help, active-state highlighting, and a blinking macro-recording badge
+- Made the command palette prompt for required arguments before running a command
+
+### Localization
+
+- Added locale-aware plural forms for counted messages
+
 ## 0.2.4
 
 ### Pickers

@@ -39,6 +39,7 @@ const (
 	StatusImageUnsupported   Key = "status.imageUnsupported"
 	StatusTerminalStarting   Key = "status.terminalStarting"
 	StatusPaneMaximized      Key = "status.paneMaximized"
+	StatusMacroRecording     Key = "status.macroRecording"
 
 	StatusFileDeleted          Key = "status.fileDeleted"
 	StatusFileChanged          Key = "status.fileChanged"

@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -33,8 +32,8 @@ func YankToClipboard(e *view.Editor) {
 	e.SetMode(view.ModeNormal)
 }
 
-// YankMainToClipboard copies only the primary selection to clipboard
-func YankMainToClipboard(e *view.Editor) {
+// YankMain copies only the primary selection to the active register
+func YankMain(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
 		return
@@ -43,79 +42,12 @@ func YankMainToClipboard(e *view.Editor) {
 	if doc == nil {
 		return
 	}
-	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	frag, err := sel.Primary().Fragment(text)
+	frag, err := sel.Primary().Fragment(doc.Text())
 	if err != nil {
 		return
 	}
-	e.WriteRegister(clipboardRegister, []string{frag})
-	e.SetMode(view.ModeNormal)
-}
-
-// PasteClipboardAfter reads the clipboard and pastes after each selection
-func PasteClipboardAfter(e *view.Editor) {
-	if len(e.ReadRegister(clipboardRegister)) == 0 {
-		return
-	}
-	old := e.ActiveRegister()
-	e.SetRegister(clipboardRegister)
-	pasteImpl(e, false)
-	e.SetRegister(old)
-	e.SetMode(view.ModeNormal)
-}
-
-// PasteClipboardBefore reads the clipboard and pastes before each selection
-func PasteClipboardBefore(e *view.Editor) {
-	if len(e.ReadRegister(clipboardRegister)) == 0 {
-		return
-	}
-	old := e.ActiveRegister()
-	e.SetRegister(clipboardRegister)
-	pasteImpl(e, true)
-	e.SetRegister(old)
-	e.SetMode(view.ModeNormal)
-}
-
-// ClipboardReplace replaces each selection with the clipboard
-func ClipboardReplace(e *view.Editor) {
-	val, err := e.Clipboard().Read()
-	if err != nil || val == "" {
-		return
-	}
-	v := e.FocusedView()
-	if v == nil {
-		return
-	}
-	doc := e.FocusedDocument()
-	if doc == nil {
-		return
-	}
-	if doc.ReadOnly() {
-		return
-	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	changes := make([]core.Change, 0, len(ranges))
-	for _, r := range ranges {
-		changes = append(changes, core.TextChange(core.Span{
-			From: r.From(),
-			To:   r.To(),
-		}, val))
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	newSel, err := sel.Map(cs)
-	if err != nil {
-		return
-	}
-	_ = e.Apply(
-		core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-	)
-	e.SetMode(view.ModeNormal)
+	writeYank(e, []string{frag})
 }
 
 // YankToPrimaryClipboard copies all selections to the primary clipboard

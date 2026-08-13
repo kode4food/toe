@@ -499,7 +499,7 @@ func TestReplaceWithYanked(t *testing.T) {
 			Anchor: 1,
 			Head:   2,
 		}}, 0)
-		e.Registers().Write('"', []string{"XY"})
+		e.Registers().Write('+', []string{"XY"})
 
 		action.ReplaceWithYanked(e)
 
@@ -513,7 +513,7 @@ func TestReplaceWithYanked(t *testing.T) {
 			Anchor: 1,
 			Head:   2,
 		}}, 0)
-		e.Registers().Clear('"')
+		e.Registers().Clear('+')
 
 		action.ReplaceWithYanked(e)
 
@@ -530,7 +530,7 @@ func TestReplaceWithYanked(t *testing.T) {
 			}, {Anchor: 2, Head: 3}},
 			0,
 		)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 		e.SetCount(2)
 
 		action.ReplaceWithYanked(e)
@@ -542,7 +542,7 @@ func TestReplaceWithYanked(t *testing.T) {
 	t.Run("empty ranges are ignored", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		testutil.SetSelection(t, e, []core.Range{core.PointRange(1)}, 0)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 
 		action.ReplaceWithYanked(e)
 
@@ -552,7 +552,7 @@ func TestReplaceWithYanked(t *testing.T) {
 
 	t.Run("noop with no view", func(t *testing.T) {
 		e := editorWithNoView(t)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 
 		assert.NotPanics(t, func() {
 			action.ReplaceWithYanked(e)

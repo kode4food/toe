@@ -129,19 +129,10 @@ func formatCmds() []command.Command {
 			},
 			Modes: command.DocModes,
 			Signature: kit.StaticSig(
-				command.DefaultSignature(),
+				kit.OptionalArg(),
 				"tabs", "tab", "t", "1", "2", "3", "4", "5", "6", "7", "8",
 				"9", "10", "11", "12", "13", "14", "15", "16",
 			),
-		},
-		{
-			Name:      actEncoding,
-			DocString: "Set encoding",
-			Run: func(*view.Editor, *command.Args) command.Result {
-				return command.Result{Message: view.EncodingUTF8}
-			},
-			Modes:     command.DocModes,
-			Signature: command.DefaultSignature(),
 		},
 	}
 }

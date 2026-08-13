@@ -22,18 +22,41 @@ func TestCommandPalettePicker(t *testing.T) {
 		m = resize(m, 60, 30)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "bindings")
-		assert.Contains(t, out, "doc")
+		assert.Contains(t, out, "description")
 		assert.Contains(t, out, "gp")
 		assert.Contains(t, out, "A command palette row")
 	})
 
-	t.Run("accepts and runs the command", func(t *testing.T) {
+	t.Run("runs an argument-free command", func(t *testing.T) {
 		m, e := paletteModel(t)
 		for _, ch := range "palette_probe" {
 			m = sendKey(m, ch)
 		}
 		_ = sendSpecial(m, tea.KeyEnter)
 		assert.Equal(t, view.ModeInsert, e.Mode())
+	})
+
+	t.Run("prompts for a command taking args", func(t *testing.T) {
+		m, e := paletteModel(t)
+		for _, ch := range "arg_probe" {
+			m = sendKey(m, ch)
+		}
+		m = sendSpecial(m, tea.KeyEnter)
+		assert.Equal(t, view.ModeNormal, e.Mode())
+		assert.Contains(t, stripANSI(m.View().Content), ": arg_probe")
+	})
+
+	t.Run("runs the prompted command with its args", func(t *testing.T) {
+		m, e := paletteModel(t)
+		for _, ch := range "arg_probe" {
+			m = sendKey(m, ch)
+		}
+		m = sendSpecial(m, tea.KeyEnter)
+		for _, ch := range "hello" {
+			m = sendKey(m, ch)
+		}
+		_ = sendSpecial(m, tea.KeyEnter)
+		assert.Equal(t, view.ModeSelect, e.Mode())
 	})
 
 	t.Run("filters by mode", func(t *testing.T) {
@@ -57,9 +80,8 @@ func TestCommandPalettePicker(t *testing.T) {
 			Aliases: []string{"document_probe"},
 			Modes:   view.ModeNormal,
 		})
-		m := ui.New(e, km).WithInitialPicker(func(e *view.Editor) *ui.Picker {
-			return ui.CommandPalettePicker(e, km)
-		})
+		m := ui.New(e, km)
+		m = m.WithInitialPicker(m.CommandPalettePicker)
 		m = resize(m, 80, 24)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "image_probe")
@@ -86,15 +108,26 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 			view.ModeAny: {{char('g'), char('p')}},
 		},
 	})
+	_ = km.Register("arg_probe", command.Command{
+		DocString: "A command palette row taking an optional argument",
+		Run: func(e *view.Editor, args *command.Args) command.Result {
+			if arg, ok := args.First(); ok && arg == "hello" {
+				e.SetMode(view.ModeSelect)
+			}
+			return command.Result{}
+		},
+		Aliases: []string{"arg_probe"},
+		Modes:   view.ModeNormal,
+		Signature: command.Signature{
+			Positionals: command.Positionals{Min: 0, Max: 1},
+		},
+	})
 	km.Bind(view.ModeNormal, "palette_probe", []command.KeyEvent{
 		char('a'), char('b'), char('c'), char('d'), char('e'), char('f'),
 		char('g'), char('h'), char('i'), char('j'), char('k'), char('l'),
 	})
 	bindNormalTestAction(
-		km, "open_palette",
-		m.PickerAction(func(ed *view.Editor) *ui.Picker {
-			return ui.CommandPalettePicker(ed, km)
-		}),
+		km, "open_palette", m.PickerAction(m.CommandPalettePicker),
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 100, 30)

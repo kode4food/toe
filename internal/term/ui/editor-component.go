@@ -19,7 +19,8 @@ type (
 		keys       keyState
 		mouse      mouseState
 		language   languageState
-		spinner    spinnerState
+		spinner    animationState
+		macroBlink animationState
 		autoSize   autoSizeState
 		resizeHold resizeHoldState
 
@@ -65,8 +66,8 @@ type (
 		autoGen         int
 	}
 
-	spinnerState struct {
-		frame  int
+	animationState struct {
+		phase  int
 		gen    int
 		active bool
 	}
@@ -110,10 +111,15 @@ type (
 
 	spinnerTickMsg struct{ gen int }
 
+	macroBlinkTickMsg struct{ gen int }
+
 	redrawMsg struct{}
 )
 
-const spinnerTickInterval = 80 * time.Millisecond
+const (
+	spinnerTickInterval    = 80 * time.Millisecond
+	macroBlinkTickInterval = 600 * time.Millisecond
+)
 
 var (
 	_ BufferRenderer     = (*EditorComponent)(nil)
@@ -214,6 +220,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleVCSUpdated(cx)
 	case spinnerTickMsg:
 		return e.handleSpinnerTick(cx, msg)
+	case macroBlinkTickMsg:
+		return e.handleMacroBlinkTick(msg)
 	case autoSizeTickMsg:
 		return e.handleAutoSizeTick(cx, msg)
 	case resizeSettleMsg:
@@ -410,6 +418,20 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	return tea.Tick(d, func(time.Time) tea.Msg {
 		return autoSaveMsg{gen: gen}
 	})
+}
+
+// start restarts the animation, returning the generation its ticks must carry
+func (a *animationState) start() int {
+	a.phase = 0
+	a.active = true
+	a.gen++
+	return a.gen
+}
+
+func (a *animationState) stop() {
+	a.phase = 0
+	a.active = false
+	a.gen++
 }
 
 func documentHighlightPositionFor(

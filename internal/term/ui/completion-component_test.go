@@ -1308,6 +1308,10 @@ func (c *completionController) WorkspaceCommands(*view.Document) []string {
 	return nil
 }
 
+func (c *completionController) LanguageServerNames(*view.Document) []string {
+	return nil
+}
+
 func (c *completionController) Completions(
 	doc *view.Document, _ view.Id,
 ) (view.CompletionResult, error) {

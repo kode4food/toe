@@ -118,10 +118,7 @@ func YankJoin(e *view.Editor, sep string) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	reg := e.ActiveRegister()
-	if reg == 0 {
-		reg = view.RegisterDefaultYank
-	}
+	reg := e.YankRegister()
 	parts := yankFragments(text, sel)
 	if len(parts) == 0 {
 		return

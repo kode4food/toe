@@ -109,7 +109,6 @@ func SearchModule(model ui.Model) command.Module {
 				DocString: "Modify current search to make it word bounded",
 				Run:       kit.Runner(action.MakeSearchWordBounded),
 				Modes:     command.DocNormalModes,
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actSearchSelection,

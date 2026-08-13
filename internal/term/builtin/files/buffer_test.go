@@ -81,4 +81,26 @@ func TestBufferClose(t *testing.T) {
 		res := test.RunCmd(t, km, e, "buffer_close_all")
 		assert.Contains(t, res.Message, "unsaved")
 	})
+
+	t.Run("closes the named buffer", func(t *testing.T) {
+		e, km := test.TwoBufferEnv(t)
+		_ = e.SplitFocused(view.LayoutVertical)
+		target := e.FocusedDocument().RelativeName(e.Cwd())
+		before := len(e.AllViews())
+
+		res := test.RunCmdArgs(t, km, e, "buffer_close", target)
+
+		assert.Contains(t, res.Message, "buffer closed")
+		assert.Less(t, len(e.AllViews()), before)
+	})
+
+	t.Run("unknown buffer name errors", func(t *testing.T) {
+		e, km := test.TwoBufferEnv(t)
+		before := len(e.AllViews())
+
+		res := test.RunCmdArgs(t, km, e, "buffer_close", "nope.txt")
+
+		assert.Contains(t, res.Message, "no such buffer")
+		assert.Equal(t, before, len(e.AllViews()))
+	})
 }

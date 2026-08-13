@@ -263,12 +263,24 @@ func (p *Picker) scrollBy(delta int) {
 // ensureCursorVisible scrolls the list the minimum amount needed to bring the
 // selected row into view, used after keyboard navigation
 func (p *Picker) ensureCursorVisible() {
-	p.list.scroll = listScroll{
+	l := listScroll{
 		scroll: p.list.scroll,
 		cursor: p.list.cursor,
 		count:  len(p.list.matched),
 		rows:   p.list.height,
-	}.ensureCursorVisible()
+	}
+	if top := p.sectionTop(l.cursor); top < l.scroll {
+		l.cursor = top
+	}
+	p.list.scroll = l.ensureCursorVisible()
+}
+
+func (p *Picker) sectionTop(cursor int) int {
+	top := cursor
+	for i := cursor - 1; i >= 0 && p.list.matched[i].item.Section; i-- {
+		top = i
+	}
+	return top
 }
 
 func canCacheQuery(query string) bool {

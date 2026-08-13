@@ -1,7 +1,14 @@
 package ui
 
 import (
+	"fmt"
 	"slices"
+	"strings"
+
+	"github.com/mattn/go-runewidth"
+
+	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/tui"
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
@@ -109,6 +116,24 @@ func (e *EditorComponent) replayMacro(
 			}
 		}
 	}
+}
+
+func (e *EditorComponent) macroElems(
+	cx *Context, base tui.Style,
+) []statusElem {
+	ms := e.macroSlot
+	if !ms.recording {
+		return nil
+	}
+	text := fmt.Sprintf("%s %c", i18n.Text(i18n.StatusMacroRecording), ms.reg)
+	if e.macroBlink.phase%2 == 1 {
+		return []statusElem{statusBadge(
+			strings.Repeat(" ", runewidth.StringWidth(text)), base,
+		)}
+	}
+	return []statusElem{statusBadge(
+		text, cx.Theme().Get("ui.statusline.macro"),
+	)}
 }
 
 func replaySkip(k command.KeyEvent, mode view.Mode) bool {

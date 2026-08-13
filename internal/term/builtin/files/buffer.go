@@ -21,15 +21,17 @@ const (
 const (
 	errorUnsavedBufferCloseKey    i18n.Key = "error.unsavedBufferClose"
 	errorUnsavedBufferCloseAllKey i18n.Key = "error.unsavedBufferCloseAll"
+	errorNoSuchBufferKey          i18n.Key = "error.noSuchBuffer"
 )
 
 var (
-	//go:embed i18n/buffer.*.json
-	bufferFS embed.FS
-
 	errUnsavedBufferClose    = i18n.NewError(errorUnsavedBufferCloseKey)
 	errUnsavedBufferCloseAll = i18n.NewError(errorUnsavedBufferCloseAllKey)
+	errNoSuchBuffer          = i18n.NewError(errorNoSuchBufferKey)
 )
+
+//go:embed i18n/buffer.*.json
+var bufferFS embed.FS
 
 // BufferModule returns the buffer navigation and close commands
 func BufferModule() command.Module {
@@ -41,29 +43,23 @@ func BufferModule() command.Module {
 			{
 				Name:      actBufferClose,
 				DocString: "Close the current buffer",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					doc := e.FocusedDocument()
-					if doc != nil && doc.Modified() {
-						return command.Result{Error: errUnsavedBufferClose}
-					}
-					e.CloseCurrentView()
-					return command.Result{Message: "buffer closed"}
+				Run: func(e *view.Editor, args *command.Args) command.Result {
+					return closeBuffers(e, args, false)
 				},
 				Modes:     command.PaneModes,
 				Aliases:   []string{"bc", "bclose"},
-				Signature: command.DefaultSignature(),
+				Signature: kit.FileSig(kit.MinArgs(0)),
 			},
 			{
 				Name: actBufferCloseForce,
 				DocString: "Close the current buffer forcefully, ignoring " +
 					"unsaved changes",
-				Run: func(e *view.Editor, _ *command.Args) command.Result {
-					e.CloseCurrentView()
-					return command.Result{Message: "buffer closed"}
+				Run: func(e *view.Editor, args *command.Args) command.Result {
+					return closeBuffers(e, args, true)
 				},
 				Modes:     command.PaneModes,
 				Aliases:   []string{"buffer-close!", "bc!", "bclose!"},
-				Signature: command.DefaultSignature(),
+				Signature: kit.FileSig(kit.MinArgs(0)),
 			},
 			{
 				Name:      actBufferCloseOthers,
@@ -81,7 +77,6 @@ func BufferModule() command.Module {
 				Aliases: []string{
 					"bco", "bcloseother",
 				},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actBufferCloseAll,
@@ -99,9 +94,8 @@ func BufferModule() command.Module {
 					}
 					return command.Result{Message: "all buffers closed"}
 				},
-				Modes:     command.PaneModes,
-				Aliases:   []string{"bca", "bcloseall"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.PaneModes,
+				Aliases: []string{"bca", "bcloseall"},
 			},
 			{
 				Name:      actBufferNext,
@@ -110,7 +104,6 @@ func BufferModule() command.Module {
 				Modes:     command.PaneModes,
 				Keys:      kit.Keys(g(kit.Char('n'))),
 				Aliases:   []string{"bn", "bnext"},
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name:      actBufferPrevious,
@@ -119,8 +112,53 @@ func BufferModule() command.Module {
 				Modes:     command.PaneModes,
 				Keys:      kit.Keys(g(kit.Char('p'))),
 				Aliases:   []string{"bp", "bprev"},
-				Signature: command.DefaultSignature(),
 			},
 		},
 	}
+}
+
+func closeBuffers(
+	e *view.Editor, args *command.Args, force bool,
+) command.Result {
+	views, err := buffersToClose(e, args)
+	if err != nil {
+		return command.Result{Error: err}
+	}
+	if !force {
+		for _, v := range views {
+			if doc := e.Document(v.DocID()); doc != nil && doc.Modified() {
+				return command.Result{Error: errUnsavedBufferClose}
+			}
+		}
+	}
+	for _, v := range views {
+		e.ClosePane(v.ID())
+	}
+	return command.Result{Message: "buffer closed"}
+}
+
+func buffersToClose(e *view.Editor, args *command.Args) ([]*view.View, error) {
+	if args == nil || args.Empty() {
+		if v := e.FocusedView(); v != nil {
+			return []*view.View{v}, nil
+		}
+		return nil, nil
+	}
+	var out []*view.View
+	for _, name := range args.Positionals() {
+		found := false
+		for _, v := range e.AllViews() {
+			doc := e.Document(v.DocID())
+			if doc == nil ||
+				(doc.Path() != name && doc.RelativeName(e.Cwd()) != name) {
+				continue
+			}
+			out = append(out, v)
+			found = true
+		}
+		if !found {
+			return nil, errNoSuchBuffer.WithVars(i18n.Vars{"name": name})
+		}
+	}
+	return out, nil
 }

@@ -68,7 +68,8 @@ func (c Completer) Complete(
 	if sig.RawAfter > 0 && idx >= sig.RawAfter && c.Raw != nil {
 		return offsetCompletions(c.Raw(e, args, input[start:]), start)
 	}
-	if idx >= len(c.Positionals) || c.Positionals[idx] == nil {
+	idx = min(idx, len(c.Positionals)-1)
+	if idx < 0 || c.Positionals[idx] == nil {
 		return nil
 	}
 	return offsetCompletions(c.Positionals[idx](e, args, token), start)

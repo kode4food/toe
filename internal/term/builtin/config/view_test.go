@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,6 +46,33 @@ func TestViewSplit(t *testing.T) {
 		before := len(e.AllViews())
 		test.RunCmd(t, km, e, "split")
 		assert.Equal(t, before+1, len(e.AllViews()))
+	})
+
+	t.Run("vsplit opens the given file", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		path := filepath.Join(e.Cwd(), "split.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("split me\n"), 0o644))
+		before := len(e.AllViews())
+
+		test.RunCmdArgs(t, km, e, "vsplit", path)
+
+		assert.Equal(t, before+1, len(e.AllViews()))
+		assert.Contains(t, test.DocText(t, e), "split me")
+	})
+
+	t.Run("vsplit opens one split per file", func(t *testing.T) {
+		e, km := test.Env(t, "abc")
+		var paths []string
+		for _, name := range []string{"one.txt", "two.txt"} {
+			path := filepath.Join(e.Cwd(), name)
+			assert.NoError(t, os.WriteFile(path, []byte(name), 0o644))
+			paths = append(paths, path)
+		}
+		before := len(e.AllViews())
+
+		test.RunCmdArgs(t, km, e, "vsplit", strings.Join(paths, " "))
+
+		assert.Equal(t, before+2, len(e.AllViews()))
 	})
 
 	t.Run("vsplit_new opens a new empty view", func(t *testing.T) {

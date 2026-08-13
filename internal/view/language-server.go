@@ -125,6 +125,7 @@ type (
 		StopLanguageServers(*Document, []string) ([]string, error)
 		ExecuteWorkspaceCommand(*Document, string, []string) error
 		WorkspaceCommands(*Document) []string
+		LanguageServerNames(*Document) []string
 		Completions(*Document, Id) (CompletionResult, error)
 		TriggerCompletions(*Document, Id) (CompletionResult, error)
 		ResolveCompletion(

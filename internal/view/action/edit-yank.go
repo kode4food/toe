@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	StatusYankedSelection  i18n.Key = "status.yankedSelection"
-	StatusYankedSelections i18n.Key = "status.yankedSelections"
+	StatusYanked            i18n.Key = "status.yanked"
+	StatusYankedToClipboard i18n.Key = "status.yankedToClipboard"
 )
 
 // Yank copies the text of every selection range to the active register
@@ -26,14 +26,7 @@ func Yank(e *view.Editor) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	reg := e.ActiveRegister()
-	if reg == 0 {
-		reg = view.RegisterDefaultYank
-	}
-	values := yankFragments(text, sel)
-	e.WriteRegister(reg, values)
-	setYankStatus(e, reg, len(values))
-	e.SetMode(view.ModeNormal)
+	writeYank(e, yankFragments(text, sel))
 }
 
 // PasteAfter pastes the active register's contents after each selection
@@ -62,10 +55,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	if doc.ReadOnly() {
 		return
 	}
-	reg := e.ActiveRegister()
-	if reg == 0 {
-		reg = view.RegisterDefaultYank
-	}
+	reg := e.YankRegister()
 	values := e.ReadRegister(reg)
 	if len(values) == 0 {
 		return
@@ -131,10 +121,7 @@ func pasteImpl(e *view.Editor, before bool) {
 	if doc.ReadOnly() {
 		return
 	}
-	reg := e.ActiveRegister()
-	if reg == 0 {
-		reg = view.RegisterDefaultYank
-	}
+	reg := e.YankRegister()
 	values := e.ReadRegister(reg)
 	if len(values) == 0 {
 		return
@@ -210,15 +197,24 @@ func pasteImpl(e *view.Editor, before bool) {
 	_ = e.Apply(tx)
 }
 
+func writeYank(e *view.Editor, values []string) {
+	reg := e.YankRegister()
+	e.WriteRegister(reg, values)
+	setYankStatus(e, reg, len(values))
+	e.SetMode(view.ModeNormal)
+}
+
 func setYankStatus(e *view.Editor, reg rune, n int) {
 	if n == 0 {
 		return
 	}
-	key := StatusYankedSelection
-	if n != 1 {
-		key = StatusYankedSelections
+	if reg == view.RegisterClipboard {
+		e.SetStatusMsg(i18n.Text(StatusYankedToClipboard, i18n.Vars{
+			"count": n,
+		}))
+		return
 	}
-	e.SetStatusMsg(i18n.Text(key, i18n.Vars{
+	e.SetStatusMsg(i18n.Text(StatusYanked, i18n.Vars{
 		"count":    n,
 		"register": string(reg),
 	}))

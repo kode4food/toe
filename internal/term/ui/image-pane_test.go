@@ -121,7 +121,7 @@ func TestImagePane(t *testing.T) {
 		pane.ZoomIn()
 		assert.Equal(t, 125, pane.Zoom())
 
-		action.VSplit(e)
+		_ = e.SplitFocused(view.LayoutVertical)
 		assert.Equal(t, 2, e.Tree().Count())
 		split, ok := e.FocusedPane().(*ui.ImagePane)
 		assert.True(t, ok)

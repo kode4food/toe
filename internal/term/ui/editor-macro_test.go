@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -18,9 +19,44 @@ func TestMacroRecordingStatus(t *testing.T) {
 		m = sendKey(m, 'z')
 		m = sendKey(m, 'a')
 
-		out := stripANSI(m.View().Content)
+		cmdline := stripANSI(lastLine(m.View().Content))
 
-		assert.Contains(t, out, "[a]")
+		assert.Contains(t, cmdline, "REC a")
+		assert.True(t, strings.HasSuffix(cmdline, " REC a "))
+		assert.NotContains(t, lastLine(m.View().Content), "\x1b[5m")
+	})
+
+	t.Run("badge survives the command prompt", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), 'Q'), 'a')
+
+		m = sendKey(m, ':')
+		prompt := stripANSI(lastLine(m.View().Content))
+		m = sendKey(m, 'w')
+		typing := stripANSI(lastLine(m.View().Content))
+
+		assert.True(t, strings.HasSuffix(prompt, " REC a "))
+		assert.True(t, strings.HasSuffix(typing, " REC a "))
+		assert.Contains(t, typing, "w")
+	})
+
+	t.Run("badge blinks off and back on", func(t *testing.T) {
+		m, _ := macroModel(t)
+		m = sendKey(m, 'z')
+		next, cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
+		m = next.(ui.Model)
+		lit := stripANSI(lastLine(m.View().Content))
+
+		next, cmd = m.Update(firstMsg(cmd))
+		m = next.(ui.Model)
+		dark := stripANSI(lastLine(m.View().Content))
+		next, _ = m.Update(firstMsg(cmd))
+		m = next.(ui.Model)
+		relit := stripANSI(lastLine(m.View().Content))
+
+		assert.Contains(t, lit, "REC a")
+		assert.NotContains(t, dark, "REC a")
+		assert.Equal(t, len(lit), len(dark))
+		assert.Contains(t, relit, "REC a")
 	})
 }
 

@@ -1,10 +1,6 @@
 package ui
 
 import (
-	"fmt"
-	"slices"
-	"strings"
-
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/core"
@@ -55,15 +51,6 @@ type (
 		diffRemoved  tui.Style
 	}
 
-	// statusElem is a single rendered piece of a status bar
-	statusElem struct {
-		text    string
-		style   tui.Style
-		kind    view.StatusLineElement
-		pinned  bool
-		compact bool
-	}
-
 	statusElemCtx struct {
 		doc  *view.Document
 		mode view.Mode
@@ -89,38 +76,50 @@ type (
 	}
 )
 
+// one column keeps the caret visible without wrapping the terminal
+const commandLineRightPad = 1
+
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
-	w := r.size.Width
-	errorMsg := r.editor.keys.message != nil && r.editor.keys.message.error
-	st := r.cmdlineStyle(errorMsg)
-	tuiSt := st
+	msg := r.editor.keys.message
+	st := r.cmdlineStyle(msg != nil && msg.error)
+	badge := r.editor.macroElems(r.context, st)
+	row := statusRow{
+		at:        geom.Point{X: 0, Y: y},
+		width:     r.size.Width,
+		baseStyle: st,
+		right:     badge,
+	}
+	width := max(row.contentWidth()-commandLineRightPad, 0)
+	text := runewidth.Truncate(r.cmdlineText(), width, "")
+	if text != "" {
+		row.left = []statusElem{{text: text, style: st, compact: true}}
+	}
+	row.paint(buf)
+}
 
-	left := ""
-	if r.editor.keys.message != nil {
-		left = r.editor.keys.message.value
+func (r *renderPass) cmdlineText() string {
+	if hint := r.editor.keys.hint; hint != "" {
+		return hint
 	}
-	right := r.editor.keys.hint
-	if right == "" {
-		right = r.editor.keys.status
+	if status := r.editor.keys.status; status != "" {
+		return status
 	}
-	if r.editor.macroSlot.recording {
-		right += fmt.Sprintf("[%c]", r.editor.macroSlot.reg)
+	if msg := r.editor.keys.message; msg != nil {
+		return msg.value
 	}
+	return ""
+}
 
-	buf.SetString(geom.Point{X: 0, Y: y}, strings.Repeat(" ", w), tuiSt)
-	if left == "" && right == "" {
-		return
+func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
+	th := r.context.Theme()
+	if errorMsg {
+		return th.Get("error")
 	}
-
-	avail := max(w-1, 0)
-	right = runewidth.Truncate(right, avail, "")
-	rightW := runewidth.StringWidth(right)
-	leftW := max(avail-rightW, 0)
-	leftStr := runewidth.Truncate(left, leftW, "")
-	buf.SetString(geom.Point{X: 0, Y: y}, leftStr, tuiSt)
-	if rightW > 0 {
-		buf.SetString(geom.Point{X: avail - rightW, Y: y}, right, tuiSt)
+	if r.editor.keys.hint != "" || r.editor.keys.status != "" ||
+		r.editor.macroSlot.recording {
+		return th.Get("ui.statusline").Bg(promptBackground(th))
 	}
+	return th.Get("ui.statusline")
 }
 
 type renderStatusArgs struct {
@@ -196,7 +195,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		cursor:    at,
 		vcsHead:   vcsHead,
 		busy:      busy,
-		spinFrame: r.editor.spinner.frame,
+		spinFrame: r.editor.spinner.phase,
 	}
 
 	collectElems := func(items []view.StatusLineItem) []statusElem {
@@ -212,14 +211,13 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	left := collectElems(opts.StatusLineLeft())
 	right := collectElems(opts.StatusLineRight())
 	right = r.withMaximizedStatus(right)
-	renderStatusElems(renderStatusElemsArgs{
-		buf:       buf,
+	statusRow{
 		at:        args.at,
 		width:     width,
 		baseStyle: baseTUI,
 		left:      left,
 		right:     right,
-	})
+	}.paint(buf)
 }
 
 func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
@@ -235,94 +233,11 @@ func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
 	)
 }
 
-func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
-	th := r.context.Theme()
-	if errorMsg {
-		return th.Get("error")
-	}
-	return th.Get("ui.statusline")
-}
-
 func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {
 	if fn, ok := statusElemFns[e.Element]; ok {
 		se := fn(s)
-		se.kind = e.Element
 		se.pinned = se.pinned || e.Pinned
 		return se
 	}
 	return statusElem{}
-}
-
-type renderStatusElemsArgs struct {
-	buf       *tui.Buffer
-	at        geom.Point
-	width     int
-	baseStyle tui.Style
-	left      []statusElem
-	right     []statusElem
-}
-
-func renderStatusElems(args renderStatusElemsArgs) {
-	elemsWidth := func(elems []statusElem) int {
-		w := 0
-		for _, e := range elems {
-			w += runewidth.StringWidth(e.text)
-			if !e.compact {
-				w += 2
-			}
-		}
-		return w
-	}
-
-	// sheds pinned-excluded elements from each section's inner edge; right
-	// section first, then left
-	dropOne := func(elems []statusElem, fromEnd bool) ([]statusElem, bool) {
-		for n, i := len(elems), 0; i < n; i++ {
-			idx := i
-			if fromEnd {
-				idx = n - 1 - i
-			}
-			if !elems[idx].pinned {
-				return slices.Delete(elems, idx, idx+1), true
-			}
-		}
-		return elems, false
-	}
-	left, right := args.left, args.right
-	for elemsWidth(left)+elemsWidth(right) > args.width {
-		var ok bool
-		if right, ok = dropOne(right, false); ok {
-			continue
-		}
-		if left, ok = dropOne(left, true); !ok {
-			break
-		}
-	}
-
-	writeElems := func(elems []statusElem, x int) {
-		for _, e := range elems {
-			if !e.compact {
-				args.buf.SetString(
-					geom.Point{X: x, Y: args.at.Y}, " ", args.baseStyle,
-				)
-				x++
-			}
-			args.buf.SetString(
-				geom.Point{X: x, Y: args.at.Y}, e.text, e.style,
-			)
-			x += runewidth.StringWidth(e.text)
-			if !e.compact {
-				args.buf.SetString(
-					geom.Point{X: x, Y: args.at.Y}, " ", args.baseStyle,
-				)
-				x++
-			}
-		}
-	}
-
-	args.buf.SetString(
-		args.at, strings.Repeat(" ", args.width), args.baseStyle,
-	)
-	writeElems(left, args.at.X)
-	writeElems(right, args.at.X+args.width-elemsWidth(right))
 }

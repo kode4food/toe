@@ -21,12 +21,16 @@ func TestSystemClipboardDarwin(t *testing.T) {
 		assert.Equal(t, "hello from toe", got)
 	})
 
-	t.Run("roundtrips primary through pasteboard", func(t *testing.T) {
+	t.Run("has no primary selection", func(t *testing.T) {
 		clip := action.NewSystemClipboard()
 
+		assert.NoError(t, clip.Write("clipboard from toe"))
 		assert.NoError(t, clip.WritePrimary("primary from toe"))
-		got, err := clip.ReadPrimary()
+		got, err := clip.Read()
 		assert.NoError(t, err)
-		assert.Equal(t, "primary from toe", got)
+		assert.Equal(t, "clipboard from toe", got)
+		prim, err := clip.ReadPrimary()
+		assert.NoError(t, err)
+		assert.Empty(t, prim)
 	})
 }

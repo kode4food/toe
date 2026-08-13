@@ -16,11 +16,11 @@ const (
 const errorUnsavedQuitKey i18n.Key = "error.unsavedQuit"
 
 var (
-	//go:embed i18n/lifecycle.*.json
-	lifecycleFS embed.FS
-
 	errUnsavedQuit = i18n.NewError(errorUnsavedQuitKey)
 )
+
+//go:embed i18n/lifecycle.*.json
+var lifecycleFS embed.FS
 
 // LifecycleModule returns the quit and force-quit commands
 func LifecycleModule() command.Module {
@@ -38,9 +38,8 @@ func LifecycleModule() command.Module {
 					}
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes,
-				Aliases:   []string{"q"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.AllModes,
+				Aliases: []string{"q"},
 			},
 			{
 				Name:      actQuitForce,
@@ -48,9 +47,8 @@ func LifecycleModule() command.Module {
 				Run: func(*view.Editor, *command.Args) command.Result {
 					return command.Result{Signal: command.SignalQuit}
 				},
-				Modes:     command.AllModes,
-				Aliases:   []string{"q!"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.AllModes,
+				Aliases: []string{"q!"},
 			},
 		},
 	}

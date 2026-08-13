@@ -33,6 +33,7 @@ func (e *EditorComponent) handleKeyPressEvent(
 	}
 	return result, tea.Batch(
 		cmd, e.autoSaveCmd(cx), e.documentHighlightCmd(cx),
+		e.macroBlinkCmd(),
 	)
 }
 
@@ -126,15 +127,10 @@ func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
 	cmd := e.redrawCmd()
 	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
 		if !e.spinner.active {
-			e.spinner.active = true
-			e.spinner.frame = 0
-			e.spinner.gen++
-			cmd = tea.Batch(cmd, spinnerTickCmd(e.spinner.gen))
+			cmd = tea.Batch(cmd, spinnerTickCmd(e.spinner.start()))
 		}
 	} else if e.spinner.active {
-		e.spinner.frame = 0
-		e.spinner.active = false
-		e.spinner.gen++
+		e.spinner.stop()
 	}
 	return consumed(), cmd
 }
@@ -169,13 +165,36 @@ func (e *EditorComponent) handleSpinnerTick(
 		return consumed(), nil
 	}
 	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
-		e.spinner.frame++
+		e.spinner.phase++
 		return consumed(), spinnerTickCmd(msg.gen)
 	}
-	e.spinner.frame = 0
-	e.spinner.active = false
-	e.spinner.gen++
+	e.spinner.stop()
 	return consumed(), nil
+}
+
+func (e *EditorComponent) handleMacroBlinkTick(
+	msg macroBlinkTickMsg,
+) (EventResult, tea.Cmd) {
+	if msg.gen != e.macroBlink.gen || !e.macroBlink.active {
+		return consumed(), nil
+	}
+	if !e.macroSlot.recording || !e.animation {
+		e.macroBlink.stop()
+		return consumed(), nil
+	}
+	e.macroBlink.phase++
+	return consumed(), macroBlinkTickCmd(msg.gen)
+}
+
+func (e *EditorComponent) macroBlinkCmd() tea.Cmd {
+	active := e.macroSlot.recording && e.animation
+	if active && !e.macroBlink.active {
+		return macroBlinkTickCmd(e.macroBlink.start())
+	}
+	if !active && e.macroBlink.active {
+		e.macroBlink.stop()
+	}
+	return nil
 }
 
 func (e *EditorComponent) handleMouseClick(
@@ -308,6 +327,7 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 	}
 	cur := doc.SelectionFor(v.ID()).Primary()
 	if cur.Anchor != down.Anchor || cur.Head != down.Head {
+		action.YankToClipboard(cx.Editor)
 		action.YankToPrimaryClipboard(cx.Editor)
 	}
 }
@@ -346,6 +366,12 @@ func refreshVCS(cx *Context) {
 func spinnerTickCmd(gen int) tea.Cmd {
 	return tea.Tick(spinnerTickInterval, func(time.Time) tea.Msg {
 		return spinnerTickMsg{gen: gen}
+	})
+}
+
+func macroBlinkTickCmd(gen int) tea.Cmd {
+	return tea.Tick(macroBlinkTickInterval, func(time.Time) tea.Msg {
+		return macroBlinkTickMsg{gen: gen}
 	})
 }
 

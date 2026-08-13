@@ -136,10 +136,7 @@ func deleteOrChange(e *view.Editor, args deleteOrChangeArgs) {
 }
 
 func yankSelectionRanges(e *view.Editor, text core.Rope, ranges []core.Range) {
-	reg := e.ActiveRegister()
-	if reg == 0 {
-		reg = view.RegisterDefaultYank
-	}
+	reg := e.DeleteRegister()
 	values := make([]string, 0, len(ranges))
 	for _, r := range ranges {
 		frag, err := r.MinWidth1(text).Slice(text)

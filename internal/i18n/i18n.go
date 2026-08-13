@@ -30,6 +30,17 @@ type (
 	}
 )
 
+const (
+	pluralSeparator = "#"
+	pluralZero      = "zero"
+	pluralOne       = "one"
+	pluralOther     = "other"
+)
+
+var (
+	ErrMissingPluralForm = errors.New(`plural message has no "other" form`)
+)
+
 var (
 	//go:embed translations/*.json
 	translationFS embed.FS
@@ -64,8 +75,8 @@ func LoadTranslations(files fs.FS) Translations {
 		if err != nil {
 			panic(err)
 		}
-		tr := Translations{}
-		if err := json.Unmarshal(data, &tr); err != nil {
+		tr, err := parseTranslations(data)
+		if err != nil {
 			panic(fmt.Errorf("load translation %q: %w", name, err))
 		}
 		name = localeRE.FindStringSubmatch(name)[1]
@@ -115,7 +126,7 @@ func (e *Error) Error() string {
 }
 
 func (t Translations) text(key Key, vars ...Vars) (string, bool) {
-	text, ok := t[key]
+	text, ok := t.lookup(key, vars...)
 	if !ok {
 		return string(key), false
 	}
@@ -127,6 +138,37 @@ func (t Translations) text(key Key, vars ...Vars) (string, bool) {
 		pairs = append(pairs, "{"+k+"}", fmt.Sprint(v))
 	}
 	return strings.NewReplacer(pairs...).Replace(text), true
+}
+
+func (t Translations) lookup(key Key, vars ...Vars) (string, bool) {
+	if count, ok := pluralCount(vars); ok {
+		if text, ok := t[pluralKey(key, pluralCategory(count))]; ok {
+			return text, true
+		}
+		if text, ok := t[pluralKey(key, pluralOther)]; ok {
+			return text, true
+		}
+	}
+	text, ok := t[key]
+	return text, ok
+}
+
+func pluralCategory(n int) string {
+	switch n {
+	case 0:
+		return pluralZero
+	case 1:
+		return pluralOne
+	}
+	return pluralOther
+}
+
+func pluralCount(vars []Vars) (int, bool) {
+	if len(vars) == 0 {
+		return 0, false
+	}
+	count, ok := vars[0]["count"].(int)
+	return count, ok
 }
 
 func jsonFiles(files fs.FS) ([]string, error) {
@@ -143,4 +185,34 @@ func jsonFiles(files fs.FS) ([]string, error) {
 		return nil
 	})
 	return res, err
+}
+
+func parseTranslations(data []byte) (Translations, error) {
+	raw := map[Key]json.RawMessage{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+	out := Translations{}
+	for key, value := range raw {
+		var text string
+		if err := json.Unmarshal(value, &text); err == nil {
+			out[key] = text
+			continue
+		}
+		forms := map[string]string{}
+		if err := json.Unmarshal(value, &forms); err != nil {
+			return nil, err
+		}
+		if _, ok := forms[pluralOther]; !ok {
+			return nil, fmt.Errorf("%w: %s", ErrMissingPluralForm, key)
+		}
+		for category, text := range forms {
+			out[pluralKey(key, category)] = text
+		}
+	}
+	return out, nil
+}
+
+func pluralKey(key Key, category string) Key {
+	return key + pluralSeparator + Key(category)
 }

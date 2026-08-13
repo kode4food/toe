@@ -125,7 +125,7 @@ func (m Model) CommandPaletteAction(e *view.Editor) {
 	ec := m.component
 	cx := m.context
 	opener := func(e *view.Editor) layerFunc {
-		p := CommandPalettePicker(e, cx.Keymaps)
+		p := m.CommandPalettePicker(e)
 		cmd := p.load.feedCmd
 		p.load.feedCmd = nil
 		return func(cx *Context) (Component, tea.Cmd) {

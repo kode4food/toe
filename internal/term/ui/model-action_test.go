@@ -675,6 +675,10 @@ func (c *locationController) WorkspaceCommands(*view.Document) []string {
 	return c.commands
 }
 
+func (c *locationController) LanguageServerNames(*view.Document) []string {
+	return nil
+}
+
 func (c *locationController) Completions(
 	*view.Document, view.Id,
 ) (view.CompletionResult, error) {

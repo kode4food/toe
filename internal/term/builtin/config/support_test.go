@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -150,6 +151,22 @@ func TestSupportSelectionOps(t *testing.T) {
 			Head:   3,
 		}}, 0)
 		assert.Empty(t, test.RunCmd(t, km, e, "toggle_comments").Message)
+	})
+}
+
+func TestSupportCommandArity(t *testing.T) {
+	t.Run("echo requires an argument", func(t *testing.T) {
+		_, km := test.Env(t, "")
+		cmd := km.ResolveCommand("echo")
+		_, err := command.ParseArgs("", cmd.Signature, true, nil)
+		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
+	})
+
+	t.Run("goto takes exactly one argument", func(t *testing.T) {
+		_, km := test.Env(t, "")
+		cmd := km.ResolveCommand("goto")
+		_, err := command.ParseArgs("1 2", cmd.Signature, true, nil)
+		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 	})
 }
 

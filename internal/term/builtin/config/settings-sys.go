@@ -35,8 +35,7 @@ func systemCmds() []command.Command {
 					e, loader.ConfigFile, errConfigUnavailable,
 				)
 			},
-			Modes:     command.PaneModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.PaneModes,
 		},
 		{
 			Name:      actConfigOpenWorkspace,
@@ -53,8 +52,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{}
 			},
-			Modes:     command.PaneModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.PaneModes,
 		},
 		{
 			Name:      actConfigReload,
@@ -65,8 +63,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "config reloaded"}
 			},
-			Modes:     command.PaneModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.PaneModes,
 		},
 		{
 			Name:      actLogOpen,
@@ -74,8 +71,7 @@ func systemCmds() []command.Command {
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				return openFromPath(e, loader.LogFile, errLogUnavailable)
 			},
-			Modes:     command.PaneModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.PaneModes,
 		},
 		{
 			Name: actWorkspaceTrust,
@@ -87,8 +83,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace trusted"}
 			},
-			Modes:     command.PaneModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.PaneModes,
 		},
 		{
 			Name: actWorkspaceUntrust,
@@ -100,8 +95,7 @@ func systemCmds() []command.Command {
 				}
 				return command.Result{Message: "workspace untrusted"}
 			},
-			Modes:     command.PaneModes,
-			Signature: command.DefaultSignature(),
+			Modes: command.PaneModes,
 		},
 	}
 }

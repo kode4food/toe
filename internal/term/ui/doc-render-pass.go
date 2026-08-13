@@ -403,16 +403,15 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	}
 	boxW := bodyW + 2 + 2*pop.padX
 	boxH := len(rawLines) + 2
-	x := max(r.size.Width-boxW, 0)
 	y := max(r.size.Height-boxH-1, 0)
 
 	area := pop.drawInto(buf, geom.Area{
-		Point: geom.Point{X: x, Y: y},
+		Point: geom.Point{X: 0, Y: y},
 		Size:  geom.Size{Width: boxW, Height: boxH},
 	})
 
 	if title != "" {
-		buf.SetString(geom.Point{X: x + 1, Y: y}, " "+title+" ", popupTUI)
+		buf.SetString(geom.Point{X: 1, Y: y}, " "+title+" ", popupTUI)
 	}
 	for i, raw := range rawLines {
 		buf.SetString(area.Point.Add(geom.Point{Y: i}), raw, popupTUI)

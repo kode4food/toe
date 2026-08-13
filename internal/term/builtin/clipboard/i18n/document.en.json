@@ -1,4 +1,15 @@
 {
-  "status.yankedSelection": "yanked {count} selection to register {register}",
-  "status.yankedSelections": "yanked {count} selections to register {register}"
+  "error.registerName": "register name must be a single character",
+  "status.registerCleared": "register {register} cleared",
+  "status.registersCleared": "registers cleared",
+  "status.yanked": {
+    "zero": "yanked no selections to register {register}",
+    "one": "yanked {count} selection to register {register}",
+    "other": "yanked {count} selections to register {register}"
+  },
+  "status.yankedToClipboard": {
+    "zero": "yanked no selections to clipboard",
+    "one": "yanked {count} selection to clipboard",
+    "other": "yanked {count} selections to clipboard"
+  }
 }

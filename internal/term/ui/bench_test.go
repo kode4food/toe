@@ -105,9 +105,7 @@ func BenchmarkRenderEmptyPicker(b *testing.B) {
 	m := ui.New(e, km)
 	bindNormalTestAction(
 		km, "command_picker",
-		m.PickerAction(func(e *view.Editor) *ui.Picker {
-			return ui.CommandPalettePicker(e, km)
-		}),
+		m.PickerAction(m.CommandPalettePicker),
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 80, 24)

@@ -127,7 +127,10 @@ func (e *EditorComponent) handleKeyPress(
 
 func (e *EditorComponent) pendingStatus(cx *Context) string {
 	var sb strings.Builder
-	for _, pk := range e.keys.pending {
+	for i, pk := range e.keys.pending {
+		if i > 0 {
+			sb.WriteString(" ")
+		}
 		sb.WriteString(pk.String())
 	}
 	if c := cx.Editor.Count(); c > 0 {
@@ -136,7 +139,10 @@ func (e *EditorComponent) pendingStatus(cx *Context) string {
 		}
 		_, _ = fmt.Fprintf(&sb, "%d", c)
 	}
-	return sb.String()
+	if sb.Len() == 0 {
+		return ""
+	}
+	return sb.String() + " ..."
 }
 
 // keymapClaims reports whether k continues or completes a binding in the

@@ -7,7 +7,7 @@
   "decrement.docstring": "Decrementa l'elemento sotto il cursore",
   "delete-selection-noyank.docstring": "Elimina la selezione senza copiarla",
   "delete-selection.docstring": "Elimina la selezione",
-  "earlier.docstring": "Vai indietro nella cronologia",
+  "earlier.docstring": "Torna indietro nella cronologia. Accetta un numero di passi",
   "ensure-forward.docstring": "Orienta tutte le selezioni in avanti",
   "increment.docstring": "Incrementa l'elemento sotto il cursore",
   "indent.docstring": "Indenta la selezione",
@@ -15,7 +15,7 @@
   "insert-mode.docstring": "Inserisci prima della selezione",
   "join-selections-space.docstring": "Unisci le righe nella selezione e seleziona gli spazi",
   "join-selections.docstring": "Unisci le righe nella selezione",
-  "later.docstring": "Vai avanti nella cronologia",
+  "later.docstring": "Vai avanti nella cronologia. Accetta un numero di passi",
   "normal-mode.docstring": "Passa alla modalità normale",
   "open-above.docstring": "Apri una nuova riga sopra la selezione",
   "open-below.docstring": "Apri una nuova riga sotto la selezione",
@@ -32,5 +32,6 @@
   "switch-to-uppercase.docstring": "Converti in maiuscolo",
   "trim-selections.docstring": "Rimuovi gli spazi dalle selezioni",
   "undo.docstring": "Annulla la modifica",
-  "unindent.docstring": "Riduci il rientro della selezione"
+  "unindent.docstring": "Riduci il rientro della selezione",
+  "error.historySteps": "il numero di passi deve essere un intero positivo"
 }

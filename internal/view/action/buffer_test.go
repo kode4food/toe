@@ -54,7 +54,7 @@ func TestBuffer(t *testing.T) {
 
 		action.YankJoin(e, ",")
 
-		assert.Equal(t, "a,b", testutil.RegisteredValue(t, e, '"'))
+		assert.Equal(t, "a,b", testutil.RegisteredValue(t, e, '+'))
 	})
 }
 
@@ -752,7 +752,7 @@ func TestYankJoinSingleRange(t *testing.T) {
 
 		action.YankJoin(e, ",")
 
-		assert.Equal(t, "abc", testutil.RegisteredValue(t, e, '"'))
+		assert.Equal(t, "abc", testutil.RegisteredValue(t, e, '+'))
 	})
 }
 

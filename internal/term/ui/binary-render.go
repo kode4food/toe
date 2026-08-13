@@ -85,8 +85,7 @@ func (r *renderPass) renderBinaryStatus(
 		style: baseTUI,
 	}}
 	right = r.withMaximizedStatus(right)
-	renderStatusElems(renderStatusElemsArgs{
-		buf:       buf,
+	statusRow{
 		at:        geom.Point{X: a.X, Y: y0 + a.Bottom()},
 		width:     a.Width,
 		baseStyle: baseTUI,
@@ -95,7 +94,7 @@ func (r *renderPass) renderBinaryStatus(
 			{text: name, style: baseTUI},
 		},
 		right: right,
-	})
+	}.paint(buf)
 }
 
 type renderBinaryRowArgs struct {

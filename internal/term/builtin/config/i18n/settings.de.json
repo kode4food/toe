@@ -2,7 +2,6 @@
   "config-open-workspace.docstring": "Die config.toml des Arbeitsbereichs öffnen",
   "config-open.docstring": "Die config.toml des Benutzers öffnen",
   "config-reload.docstring": "Benutzerkonfiguration neu laden",
-  "encoding.docstring": "Codierung festlegen",
   "get-option.docstring": "Aktuellen Wert einer Konfigurationsoption abrufen",
   "indent-style.docstring": "Einrückungsstil festlegen: 't' für Tabulatoren oder 1–16 für die Anzahl der Leerzeichen",
   "log-open.docstring": "Protokolldatei des Editors öffnen",

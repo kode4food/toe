@@ -81,6 +81,7 @@
 "ui.statusline.image" = { fg = "base", bg = "yellow", modifiers = ["bold"] }
 "ui.statusline.binary" = { fg = "base", bg = "teal", modifiers = ["bold"] }
 "ui.statusline.maximized" = { fg = "base", bg = "blue", modifiers = ["bold"] }
+"ui.statusline.macro" = { fg = "base", bg = "red", modifiers = ["bold"] }
 
 "ui.popup" = { fg = "text", bg = "surface0" }
 "ui.window" = { fg = "crust" }

@@ -3,6 +3,8 @@ package ui
 import (
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -10,18 +12,20 @@ import (
 type commandPaletteSource struct {
 	PickerBase
 	keymaps *command.Keymaps
+	editor  *EditorComponent
 }
 
 // CommandPalettePicker opens a picker listing all registered commands
-func CommandPalettePicker(e *view.Editor, km *command.Keymaps) *Picker {
+func (m Model) CommandPalettePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &commandPaletteSource{
 		PickerBase: PickerBase{
 			Ident:       "command-palette",
 			Label:       "Command Palette",
-			Cols:        []string{"name", "bindings", "doc"},
+			Cols:        []string{"name", "bindings", "description"},
 			Proportions: []int{0, 1, 2},
 		},
-		keymaps: km,
+		keymaps: m.context.Keymaps,
+		editor:  m.component,
 	})
 }
 
@@ -49,7 +53,7 @@ func (c *commandPaletteSource) Load(e *view.Editor) PickerLoad {
 	return PickerLoad{Items: items, Stop: func() {}}
 }
 
-// Accept runs the chosen command
+// Accept runs the chosen command, prompting first when it takes arguments
 func (c *commandPaletteSource) Accept(
 	e *view.Editor, item *PickerItem, _ PickerAcceptAction,
 ) {
@@ -57,14 +61,30 @@ func (c *commandPaletteSource) Accept(
 	if !ok || cmd.Run == nil || len(cmd.Aliases) == 0 {
 		return
 	}
-	if c.keymaps.ResolveCommandIn(e.Mode(), cmd.Aliases[0]) == nil {
+	name := cmd.Aliases[0]
+	if c.keymaps.ResolveCommandIn(e.Mode(), name) == nil {
 		return
 	}
-	cmd.Run(e, nil)
+	if !commandTakesArgs(cmd.Signature) {
+		cmd.Run(e, nil)
+		return
+	}
+	ec := c.editor
+	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
+		return newPromptComponent(cx, promptComponentArgs{
+			editor:  ec,
+			kind:    promptCmd,
+			prefill: name + " ",
+		}), nil
+	})
 }
 
 // SkipPreview leaves the palette without a preview pane
 func (c *commandPaletteSource) SkipPreview() {}
+
+func commandTakesArgs(sig command.Signature) bool {
+	return sig.Positionals.Max != 0 || sig.RawAfter > 0 || len(sig.Flags) > 0
+}
 
 func commandKeyString(km *command.Keymaps, mode view.Mode, name string) string {
 	return commandModeKeyString(km.Bindings(mode, name))

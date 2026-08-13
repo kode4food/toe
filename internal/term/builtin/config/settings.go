@@ -3,6 +3,7 @@ package config
 import (
 	"cmp"
 	"embed"
+	"slices"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
@@ -43,7 +44,6 @@ const (
 	actSetLanguage         = "set_language"
 	actSetLineEnding       = "set_line_ending"
 	actIndentStyle         = "indent_style"
-	actEncoding            = "encoding"
 )
 
 const (
@@ -55,15 +55,15 @@ const (
 )
 
 var (
-	//go:embed i18n/settings.*.json
-	settingsFS embed.FS
-
 	errUsageGet      = i18n.NewError(errorUsageGetKey)
 	errUsageSet      = i18n.NewError(errorUsageSetKey)
 	errUsageToggle   = i18n.NewError(errorUsageToggleKey)
 	errUnknownOption = i18n.NewError(errorUnknownOptionKey)
 	errInvalidOption = i18n.NewError(errorInvalidOptionKey)
 )
+
+//go:embed i18n/settings.*.json
+var settingsFS embed.FS
 
 // SettingsModule returns the option and config commands
 func SettingsModule(r *command.Registry) command.Module {
@@ -318,34 +318,64 @@ func optionCmds(r *command.Registry) []command.Command {
 			Name:      actToggleOption,
 			DocString: "Toggle a config option at runtime",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
-					return command.Result{Error: errUsageToggle}
-				}
-				key, _ := args.First()
-				o := r.LookupOption(key)
-				if o == nil || o.Toggle == nil {
-					return command.Result{
-						Error: errInvalidOption.WithVars(i18n.Vars{
-							"key": key,
-						}),
-					}
-				}
-				value, err := o.Toggle(e)
-				if err != nil {
-					return command.Result{Error: err}
-				}
-				return command.Result{
-					Message: "'" + key + "' is now set to " + value,
-				}
+				return toggleOption(e, r, args)
 			},
 			Modes:   command.PaneModes,
 			Aliases: []string{"toggle"},
 			Signature: command.Signature{
-				Positionals: command.Positionals{Min: 1, Max: 1},
+				Positionals: command.Positionals{Min: 1, Max: -1},
 				Completer: command.PositionalCompleter(
-					r.BoolOptionCompleter(),
+					r.BoolOptionCompleter(), nil,
 				),
 			},
 		},
 	}
+}
+
+func toggleOption(
+	e *view.Editor, r *command.Registry, args *command.Args,
+) command.Result {
+	if args == nil || args.Empty() {
+		return command.Result{Error: errUsageToggle}
+	}
+	key, _ := args.First()
+	o := r.LookupOption(key)
+	if o == nil {
+		return command.Result{
+			Error: errInvalidOption.WithVars(i18n.Vars{"key": key}),
+		}
+	}
+	if values := args.Positionals()[1:]; len(values) > 0 {
+		return cycleOption(e, o, key, values)
+	}
+	if o.Toggle == nil {
+		return command.Result{Error: errUsageToggle}
+	}
+	value, err := o.Toggle(e)
+	if err != nil {
+		return command.Result{Error: err}
+	}
+	return command.Result{Message: "'" + key + "' is now set to " + value}
+}
+
+func cycleOption(
+	e *view.Editor, o *command.Option, key string, values []string,
+) command.Result {
+	if o.Get == nil || o.Set == nil {
+		return command.Result{
+			Error: errInvalidOption.WithVars(i18n.Vars{"key": key}),
+		}
+	}
+	current, err := o.Get(e)
+	if err != nil {
+		return command.Result{Error: err}
+	}
+	next := values[0]
+	if i := slices.Index(values, current); i >= 0 {
+		next = values[(i+1)%len(values)]
+	}
+	if err := o.Set(e, next); err != nil {
+		return command.Result{Error: err}
+	}
+	return command.Result{Message: "'" + key + "' is now set to " + next}
 }

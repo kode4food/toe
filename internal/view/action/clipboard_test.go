@@ -26,7 +26,7 @@ func TestClipboardNoProvider(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetCursor(t, e, 0)
 
-		assert.NotPanics(t, func() { action.PasteClipboardAfter(e) })
+		assert.NotPanics(t, func() { action.PasteAfter(e) })
 	})
 
 	t.Run("yank primary", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestClipboardNoProvider(t *testing.T) {
 			Head:   3,
 		}}, 0)
 
-		assert.NotPanics(t, func() { action.ClipboardReplace(e) })
+		assert.NotPanics(t, func() { action.ReplaceWithYanked(e) })
 	})
 }
 
@@ -103,7 +103,7 @@ func TestClipboard(t *testing.T) {
 			Anchor: 0,
 			Head:   1,
 		}}, 0)
-		action.PasteClipboardAfter(e)
+		action.PasteAfter(e)
 		doc := e.FocusedDocument()
 		assert.Equal(t, "xhello", doc.Text().String())
 
@@ -113,7 +113,7 @@ func TestClipboard(t *testing.T) {
 			Anchor: 0,
 			Head:   1,
 		}}, 0)
-		action.PasteClipboardBefore(e)
+		action.PasteBefore(e)
 		doc = e.FocusedDocument()
 		assert.Equal(t, "hellox", doc.Text().String())
 	})
@@ -137,7 +137,7 @@ func TestClipboard(t *testing.T) {
 			core.PointRange(3),
 		}, 0)
 
-		action.PasteClipboardAfter(e)
+		action.PasteAfter(e)
 
 		doc := e.FocusedDocument()
 		assert.Equal(t, "waxycz", doc.Text().String())
@@ -152,12 +152,12 @@ func TestClipboard(t *testing.T) {
 			{Anchor: 6, Head: 11},
 		}, 0)
 
-		action.YankMainToClipboard(e)
+		action.YankMain(e)
 
 		assert.Equal(t, "hello", clip.System)
 	})
 
-	t.Run("clipboard replace", func(t *testing.T) {
+	t.Run("replace with clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		clip := testutil.NewFakeClipboard()
 		clip.System = "XY"
@@ -167,7 +167,7 @@ func TestClipboard(t *testing.T) {
 			Head:   2,
 		}}, 0)
 
-		action.ClipboardReplace(e)
+		action.ReplaceWithYanked(e)
 
 		doc := e.FocusedDocument()
 		assert.Equal(t, "aXYc", doc.Text().String())

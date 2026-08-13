@@ -145,13 +145,22 @@ func Label(
 
 // MinArgs is a signature requiring at least n positional arguments
 func MinArgs(n int) command.Signature {
-	return command.Signature{Positionals: command.Positionals{Min: n}}
+	return command.Signature{
+		Positionals: command.Positionals{Min: n, Max: -1},
+	}
 }
 
 // OptionalArg is a signature accepting zero or one positional argument
 func OptionalArg() command.Signature {
 	return command.Signature{
 		Positionals: command.Positionals{Min: 0, Max: 1},
+	}
+}
+
+// RequiredArg is a signature accepting exactly one positional argument
+func RequiredArg() command.Signature {
+	return command.Signature{
+		Positionals: command.Positionals{Min: 1, Max: 1},
 	}
 }
 

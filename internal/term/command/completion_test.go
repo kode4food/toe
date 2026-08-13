@@ -75,8 +75,12 @@ func TestCompletePositional(t *testing.T) {
 	})
 
 	t.Run("no completer for index returns nil", func(t *testing.T) {
-		got := c.Complete(nil, sig, "one two ")
-		assert.Nil(t, got)
+		stop := command.PositionalCompleter(fn, nil)
+		sig := command.Signature{
+			Positionals: command.Positionals{Min: 0},
+			Completer:   stop,
+		}
+		assert.Nil(t, stop.Complete(nil, sig, "one two "))
 	})
 }
 
@@ -187,5 +191,36 @@ func TestCompleteNilPositional(t *testing.T) {
 	t.Run("nil completer slot returns nil", func(t *testing.T) {
 		got := c.Complete(nil, sig, "x")
 		assert.Nil(t, got)
+	})
+}
+
+func TestCompleteTrailingPositionals(t *testing.T) {
+	c := command.PositionalCompleter(command.StaticCompleter("one", "two"))
+	sig := command.Signature{
+		Positionals: command.Positionals{Min: 0, Max: -1},
+		Completer:   c,
+	}
+
+	t.Run("first positional uses its completer", func(t *testing.T) {
+		got := c.Complete(nil, sig, "on")
+		assert.Equal(t, 1, len(got))
+		assert.Equal(t, "one", got[0].Text)
+	})
+
+	t.Run("later args reuse the last completer", func(t *testing.T) {
+		got := c.Complete(nil, sig, "one tw")
+		assert.Equal(t, 1, len(got))
+		assert.Equal(t, "two", got[0].Text)
+	})
+
+	t.Run("a nil last slot stops completion", func(t *testing.T) {
+		stop := command.PositionalCompleter(
+			command.StaticCompleter("one", "two"), nil,
+		)
+		sig := command.Signature{
+			Positionals: command.Positionals{Min: 0, Max: -1},
+			Completer:   stop,
+		}
+		assert.Nil(t, stop.Complete(nil, sig, "one tw"))
 	})
 }

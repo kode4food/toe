@@ -14,20 +14,6 @@ func CloseCurrentView(e *view.Editor) {
 	e.CloseCurrentView()
 }
 
-// HSplit opens the current pane in a new horizontal split (stacked)
-func HSplit(e *view.Editor) {
-	if err := e.SplitFocused(view.LayoutHorizontal); err != nil {
-		e.SetStatusMsg(err.Error())
-	}
-}
-
-// VSplit opens the current pane in a new vertical split (side by side)
-func VSplit(e *view.Editor) {
-	if err := e.SplitFocused(view.LayoutVertical); err != nil {
-		e.SetStatusMsg(err.Error())
-	}
-}
-
 // ResizeViewLeft pushes the focused split's border in the left direction by
 // count cells (see [view.Editor.ResizeFocusedSplit])
 func ResizeViewLeft(e *view.Editor) {

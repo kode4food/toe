@@ -29,15 +29,15 @@ const (
 )
 
 var (
-	//go:embed i18n/format.*.json
-	formatFS embed.FS
-
 	errInvalidWidth          = i18n.NewError(errorInvalidWidthKey)
 	errBufferReadOnly        = i18n.NewError(errorBufferReadOnlyKey)
 	errNoFormatter           = i18n.NewError(statusNoFormatterKey)
 	errNoRangeFormatting     = i18n.NewError(errorNoRangeFormattingKey)
 	errFormatSelectionSingle = i18n.NewError(errorFormatSelectionSingleKey)
 )
+
+//go:embed i18n/format.*.json
+var formatFS embed.FS
 
 // FormatModule returns the document and selection format commands
 func FormatModule() command.Module {
@@ -51,9 +51,8 @@ func FormatModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return runFormatter(e)
 				},
-				Modes:     command.DocModes,
-				Aliases:   []string{"fmt"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.DocModes,
+				Aliases: []string{"fmt"},
 			},
 			{
 				Name:      actReindentSelections,

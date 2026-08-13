@@ -262,7 +262,10 @@ func TestDefaults(t *testing.T) {
 		assert.Equal(t, "Search focused terminal's scrollback", labels["/"])
 		// pane-management commands shared with every other pane
 		assert.Equal(t, "Create a new scratch buffer", labels["n"])
-		assert.Equal(t, "Vertical right split", labels["v, C-v"])
+		assert.Equal(t,
+			"Vertical right split. Opens the given files in the split",
+			labels["v, C-v"],
+		)
 	})
 
 	t.Run("terminal space menu is filtered", func(t *testing.T) {
@@ -326,7 +329,7 @@ func TestDefaults(t *testing.T) {
 		assert.Equal(t, "Window", title)
 		assert.Contains(t, hints, command.KeyHint{
 			Key:   "v, C-v",
-			Label: "Vertical right split",
+			Label: "Vertical right split. Opens the given files in the split",
 		})
 		assert.Contains(t, hints, command.KeyHint{
 			Key:   "q, C-q",

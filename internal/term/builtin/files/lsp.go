@@ -34,11 +34,11 @@ const (
 const errorLSPUndefinedKey i18n.Key = "error.lspUndefined"
 
 var (
-	//go:embed i18n/lsp.*.json
-	lspFS embed.FS
-
 	errLSPUndefined = i18n.NewError(errorLSPUndefinedKey)
 )
+
+//go:embed i18n/lsp.*.json
+var lspFS embed.FS
 
 // LspModule returns the language-server navigation and action commands
 func LspModule(model ui.Model) command.Module {
@@ -132,18 +132,22 @@ func LspModule(model ui.Model) command.Module {
 				Keys:  kit.Leader('S'),
 			},
 			{
-				Name:      actLSPRestart,
-				DocString: "Restart language servers for the current document",
+				Name: actLSPRestart,
+				DocString: "Restarts the given language servers, or all " +
+					"language servers used by the current document if no " +
+					"arguments are supplied",
 				Run:       runLSPRestart,
 				Modes:     command.DocModes,
-				Signature: command.Signature{},
+				Signature: lspServerSig(),
 			},
 			{
-				Name:      actLSPStop,
-				DocString: "Stop language servers for the current document",
+				Name: actLSPStop,
+				DocString: "Stops the given language servers, or all " +
+					"language servers used by the current document if no " +
+					"arguments are supplied",
 				Run:       runLSPStop,
 				Modes:     command.DocModes,
-				Signature: command.Signature{},
+				Signature: lspServerSig(),
 			},
 			{
 				Name:      actLSPWorkspaceCommand,
@@ -151,7 +155,8 @@ func LspModule(model ui.Model) command.Module {
 				Run:       runLSPWorkspaceCommand(model),
 				Modes:     command.DocModes,
 				Signature: command.Signature{
-					RawAfter: 1,
+					Positionals: command.Positionals{Max: -1},
+					RawAfter:    1,
 				},
 			},
 		},
@@ -248,4 +253,21 @@ func lspCommandArgs(args *command.Args) []string {
 		return nil
 	}
 	return pos[1:]
+}
+
+func lspServerSig() command.Signature {
+	sig := kit.MinArgs(0)
+	sig.Completer = command.PositionalCompleter(lspServerCompleter)
+	return sig
+}
+
+func lspServerCompleter(
+	e *view.Editor, args *command.Args, input string,
+) []command.Completion {
+	doc, ctl, ok := lspCommandContext(e)
+	if !ok {
+		return nil
+	}
+	names := ctl.LanguageServerNames(doc)
+	return command.StaticCompleter(names...)(e, args, input)
 }

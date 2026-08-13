@@ -24,7 +24,7 @@ func TestYank(t *testing.T) {
 
 	action.Yank(e)
 
-	assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
+	assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '+'))
 }
 
 func TestPasteAfter(t *testing.T) {
@@ -95,7 +95,7 @@ func TestPasteAfterLinewise(t *testing.T) {
 	e := testutil.EditorWithText(t, "foo\nbar")
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
-	e.Registers().Write('"', []string{"baz\n"})
+	e.Registers().Write('+', []string{"baz\n"})
 
 	doc.SetSelectionFor(v.ID(), core.PointSelection(0))
 	action.PasteAfter(e)

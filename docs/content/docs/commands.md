@@ -192,8 +192,8 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 |---------|---------|-------------|
 | `undo` |  | Undo change |
 | `redo` |  | Redo change |
-| `earlier` |  | Move backward in history |
-| `later` |  | Move forward in history |
+| `earlier` |  | Move backward in history. Accepts a number of steps |
+| `later` |  | Move forward in history. Accepts a number of steps |
 
 ## Modes
 
@@ -264,16 +264,12 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `yank` | `clipboard-yank` | Yank selection |
-| `paste-after` |  | Paste after selection |
-| `paste-before` |  | Paste before selection |
-| `replace-with-yanked` |  | Replace with yanked text |
-| `yank-to-clipboard` |  | Yank selections to clipboard |
-| `yank-main-selection-to-clipboard` |  | Yank main selection to clipboard |
-| `paste-clipboard-after` | `clipboard-paste-after` | Paste clipboard after selections |
-| `paste-clipboard-before` | `clipboard-paste-before` | Paste clipboard before selections |
-| `clipboard-paste-replace` |  | Replace selections by clipboard content |
-| `yank-joined-to-clipboard` | `yank-join` | Yank joined selections. A separator can be provided as first argument. Default value is newline |
+| `yank` | `clipboard-yank` | Yank selection to clipboard or register |
+| `yank-main-selection` |  | Yank main selection to clipboard or register |
+| `paste-after` | `clipboard-paste-after` | Paste clipboard or register after selection |
+| `paste-before` | `clipboard-paste-before` | Paste clipboard or register before selection |
+| `replace-with-yanked` |  | Replace selection with clipboard or register |
+| `yank-join` |  | Yank joined selections to clipboard or register. First argument sets the separator, a newline by default |
 | `yank-to-primary-clipboard` | `primary-clipboard-yank` | Yank selections to primary clipboard |
 | `paste-primary-clipboard-after` | `primary-clipboard-paste-after` | Paste primary clipboard after selections |
 | `paste-primary-clipboard-before` | `primary-clipboard-paste-before` | Paste primary clipboard before selections |
@@ -302,8 +298,8 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `vsplit` | `vs` | Vertical right split |
-| `split` | `hs`, `sp` | Horizontal bottom split |
+| `vsplit` | `vs` | Vertical right split. Opens the given files in the split |
+| `hsplit` | `split`, `hs`, `sp` | Horizontal bottom split. Opens the given files in the split |
 | `vsplit-new` | `vnew` | Vertical right split scratch buffer |
 | `hsplit-new` | `hnew` | Horizontal bottom split scratch buffer |
 | `transpose-view` |  | Transpose splits |
@@ -395,8 +391,8 @@ Splitting a document or image pane creates another view of the same document or 
 | `hover` |  | Show docs for item under cursor |
 | `rename-symbol` |  | Rename symbol |
 | `signature-help` |  | Show signature help |
-| `lsp-restart` |  | Restart language servers for the current document |
-| `lsp-stop` |  | Stop language servers for the current document |
+| `lsp-restart` |  | Restarts the given language servers, or all language servers used by the current document if no arguments are supplied |
+| `lsp-stop` |  | Stops the given language servers, or all language servers used by the current document if no arguments are supplied |
 | `lsp-workspace-command` |  | Execute a language server workspace command |
 
 ## Version Control
@@ -436,7 +432,6 @@ Splitting a document or image pane creates another view of the same document or 
 | `set-language` | `lang` | Set the language of current buffer (show current language if no value specified) |
 | `set-line-ending` | `line-ending` | Set the document's default line ending. Options: crlf, lf, native |
 | `indent-style` |  | Set the indentation style for editing. ('t' for tabs or 1-16 for number of spaces) |
-| `encoding` |  | Set encoding |
 
 ## Session
 

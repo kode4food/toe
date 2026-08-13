@@ -836,8 +836,7 @@ func testCommand(name string) command.Command {
 		) command.Result {
 			return command.Result{}
 		},
-		Aliases:   []string{name},
-		Modes:     command.PaneModes,
-		Signature: command.DefaultSignature(),
+		Aliases: []string{name},
+		Modes:   command.PaneModes,
 	}
 }

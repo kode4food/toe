@@ -66,8 +66,14 @@ const (
 	actNormalMode               = "normal_mode"
 )
 
+const errorHistoryStepsKey i18n.Key = "error.historySteps"
+
 //go:embed i18n/edit.*.json
 var editFS embed.FS
+
+var (
+	errHistorySteps = i18n.NewError(errorHistoryStepsKey)
+)
 
 // EditModule returns the text-editing commands
 func EditModule() command.Module {
@@ -181,18 +187,21 @@ func EditModule() command.Module {
 				Keys:      kit.Keys(kit.Char('U')),
 			},
 			{
-				Name:      actEarlier,
-				DocString: "Move backward in history",
-				Run:       kit.Runner(earlierAction),
+				Name: actEarlier,
+				DocString: "Move backward in history. Accepts a number of " +
+					"steps",
+				Run:       earlierAction,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('u')),
+				Signature: kit.OptionalArg(),
 			},
 			{
 				Name:      actLater,
-				DocString: "Move forward in history",
-				Run:       kit.Runner(laterAction),
+				DocString: "Move forward in history. Accepts a number of steps",
+				Run:       laterAction,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('U')),
+				Signature: kit.OptionalArg(),
 			},
 			{
 				Name:      actSwitchCase,
@@ -484,18 +493,32 @@ func redoAction(e *view.Editor) {
 	e.Redo()
 }
 
-func earlierAction(e *view.Editor) {
-	n := e.Count()
-	if n == 0 {
-		n = 1
+func earlierAction(e *view.Editor, args *command.Args) command.Result {
+	n, err := historySteps(e, args)
+	if err != nil {
+		return command.Result{Error: err}
 	}
 	e.Earlier(core.UndoSteps(n))
+	return command.Result{}
 }
 
-func laterAction(e *view.Editor) {
-	n := e.Count()
-	if n == 0 {
-		n = 1
+func laterAction(e *view.Editor, args *command.Args) command.Result {
+	n, err := historySteps(e, args)
+	if err != nil {
+		return command.Result{Error: err}
 	}
 	e.Later(core.UndoSteps(n))
+	return command.Result{}
+}
+
+func historySteps(e *view.Editor, args *command.Args) (int, error) {
+	if args == nil || args.Empty() {
+		return max(e.Count(), 1), nil
+	}
+	arg, _ := args.First()
+	n, err := strconv.Atoi(arg)
+	if err != nil || n < 1 {
+		return 0, errHistorySteps
+	}
+	return n, nil
 }

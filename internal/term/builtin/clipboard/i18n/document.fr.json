@@ -1,19 +1,26 @@
 {
   "clear-register.docstring": "Effacer le registre indiqué. Sans argument, effacer tous les registres",
-  "clipboard-paste-replace.docstring": "Remplacer les sélections par le contenu du presse-papiers",
-  "paste-after.docstring": "Coller après la sélection",
-  "paste-before.docstring": "Coller avant la sélection",
-  "paste-clipboard-after.docstring": "Coller le presse-papiers après les sélections",
-  "paste-clipboard-before.docstring": "Coller le presse-papiers avant les sélections",
+  "paste-after.docstring": "Coller le presse-papiers ou un registre après la sélection",
+  "paste-before.docstring": "Coller le presse-papiers ou un registre avant la sélection",
   "paste-primary-clipboard-after.docstring": "Coller le presse-papiers principal après les sélections",
   "paste-primary-clipboard-before.docstring": "Coller le presse-papiers principal avant les sélections",
   "primary-clipboard-paste-replace.docstring": "Remplacer les sélections par le presse-papiers principal",
-  "replace-with-yanked.docstring": "Remplacer par le texte copié",
-  "yank-joined-to-clipboard.docstring": "Copier les sélections réunies dans le presse-papiers. Un séparateur peut être fourni comme premier argument. La valeur par défaut est un saut de ligne",
-  "yank-main-selection-to-clipboard.docstring": "Copier la sélection principale dans le presse-papiers",
-  "yank-to-clipboard.docstring": "Copier les sélections dans le presse-papiers",
+  "replace-with-yanked.docstring": "Remplacer la sélection par le presse-papiers ou un registre",
+  "yank-join.docstring": "Copier les sélections réunies. Un séparateur peut être fourni comme premier argument. La valeur par défaut est un saut de ligne",
   "yank-to-primary-clipboard.docstring": "Copier les sélections dans le presse-papiers principal",
-  "yank.docstring": "Copier la sélection",
-  "status.yankedSelection": "{count} sélection copiée dans le registre {register}",
-  "status.yankedSelections": "{count} sélections copiées dans le registre {register}"
+  "yank.docstring": "Copier la sélection dans le presse-papiers ou un registre",
+  "error.registerName": "le nom de registre doit être un seul caractère",
+  "status.registerCleared": "registre {register} effacé",
+  "status.registersCleared": "registres effacés",
+  "yank-main-selection.docstring": "Copier la sélection principale dans le presse-papiers ou un registre",
+  "status.yanked": {
+    "zero": "Aucune sélection copiée dans le registre {register}",
+    "one": "{count} sélection copiée dans le registre {register}",
+    "other": "{count} sélections copiées dans le registre {register}"
+  },
+  "status.yankedToClipboard": {
+    "zero": "Aucune sélection copiée dans le presse-papiers",
+    "one": "{count} sélection copiée dans le presse-papiers",
+    "other": "{count} sélections copiées dans le presse-papiers"
+  }
 }

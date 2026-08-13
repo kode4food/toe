@@ -337,20 +337,20 @@ func TestScrollUpDown(t *testing.T) {
 }
 
 func TestHSplitVSplit(t *testing.T) {
-	t.Run("HSplit adds view", func(t *testing.T) {
+	t.Run("horizontal split adds view", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		before := viewCount(t, e)
 
-		action.HSplit(e)
+		assert.NoError(t, e.SplitFocused(view.LayoutHorizontal))
 
 		assert.Equal(t, before+1, viewCount(t, e))
 	})
 
-	t.Run("VSplit adds view", func(t *testing.T) {
+	t.Run("vertical split adds view", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
 		before := viewCount(t, e)
 
-		action.VSplit(e)
+		assert.NoError(t, e.SplitFocused(view.LayoutVertical))
 
 		assert.Equal(t, before+1, viewCount(t, e))
 	})

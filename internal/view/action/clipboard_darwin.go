@@ -7,11 +7,9 @@ func detectClipboardProvider() clipboardProvider {
 	copyBin, okCopy := lookPath("pbcopy")
 	if okPaste && okCopy {
 		return clipboardProvider{
-			name:      "pasteboard",
-			read:      []string{paste},
-			write:     []string{copyBin},
-			readPrim:  []string{paste},
-			writePrim: []string{copyBin},
+			name:  "pasteboard",
+			read:  []string{paste},
+			write: []string{copyBin},
 		}
 	}
 	return clipboardProvider{name: "none"}

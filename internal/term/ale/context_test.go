@@ -160,8 +160,10 @@ func recordingRuntime(
 	reg := command.NewRegistry(km)
 	got := &[]string{}
 	err := reg.RegisterCommand("record", command.Command{
-		Modes:     command.AllModes,
-		Signature: command.DefaultSignature(),
+		Modes: command.AllModes,
+		Signature: command.Signature{
+			Positionals: command.Positionals{Max: -1},
+		},
 		Run: func(_ *view.Editor, args *command.Args) command.Result {
 			*got = append(*got, args.Positionals()...)
 			return command.Result{}

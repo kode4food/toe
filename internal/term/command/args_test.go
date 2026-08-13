@@ -47,14 +47,24 @@ func TestParseErrorVariants(t *testing.T) {
 	})
 }
 
-func TestDefaultSignature(t *testing.T) {
-	sig := command.DefaultSignature()
-	assert.Equal(t, 0, sig.Positionals.Min)
-	assert.Equal(t, 0, sig.Positionals.Max)
+func TestZeroSignature(t *testing.T) {
+	t.Run("accepts nothing", func(t *testing.T) {
+		_, err := command.ParseArgs("nope", command.Signature{}, true, nil)
+		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
+		assert.Contains(t, err.Error(), "expected no arguments")
+	})
+
+	t.Run("negative maximum accepts anything", func(t *testing.T) {
+		args, err := command.ParseArgs("one two three", command.Signature{
+			Positionals: command.Positionals{Max: -1},
+		}, true, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, args.Len())
+	})
 }
 
 func TestArgsAccessors(t *testing.T) {
-	sig := command.DefaultSignature()
+	sig := command.Signature{Positionals: command.Positionals{Max: -1}}
 
 	t.Run("empty with no positionals", func(t *testing.T) {
 		args := command.NewArgs(sig, false)
@@ -117,7 +127,9 @@ func TestArgsAccessors(t *testing.T) {
 
 func TestArgsCompletionState(t *testing.T) {
 	t.Run("positional state after push", func(t *testing.T) {
-		sig := command.DefaultSignature()
+		sig := command.Signature{
+			Positionals: command.Positionals{Max: -1},
+		}
 		args := command.NewArgs(sig, false)
 		_ = args.Push("foo")
 		cs := args.CompletionState()
@@ -166,7 +178,7 @@ func TestParseErrorMessages(t *testing.T) {
 
 	t.Run("wrong count too few", func(t *testing.T) {
 		_, err := command.ParseArgs("", command.Signature{
-			Positionals: command.Positionals{Min: 3},
+			Positionals: command.Positionals{Min: 3, Max: -1},
 		}, true, nil)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "at least 3 arguments")
@@ -190,7 +202,7 @@ func TestParseErrorMessages(t *testing.T) {
 
 	t.Run("unknown flag message", func(t *testing.T) {
 		_, err := command.ParseArgs("--nope",
-			command.DefaultSignature(), true, nil,
+			command.Signature{}, true, nil,
 		)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "unknown flag")

@@ -68,6 +68,125 @@ func TestModuleTranslations(t *testing.T) {
 	assert.Equal(t, "translated", i18n.Text(key))
 }
 
+func TestPlurals(t *testing.T) {
+	key := i18n.Key("plural.selections")
+	files := fstest.MapFS{
+		"i18n/plural.en.json": {
+			Data: []byte(`{"plural.selections":{` +
+				`"zero":"no selections",` +
+				`"one":"{count} selection","other":"{count} selections"},` +
+				`"plural.other-only":{"other":"{count} rows"}}`),
+		},
+	}
+	i18n.Register(i18n.LoadTranslations(files))
+
+	t.Run("one for a single item", func(t *testing.T) {
+		assert.Equal(t, "1 selection",
+			i18n.Text(key, i18n.Vars{"count": 1}),
+		)
+	})
+
+	t.Run("other for several", func(t *testing.T) {
+		assert.Equal(t, "3 selections",
+			i18n.Text(key, i18n.Vars{"count": 3}),
+		)
+	})
+
+	t.Run("zero for none", func(t *testing.T) {
+		assert.Equal(t, "no selections",
+			i18n.Text(key, i18n.Vars{"count": 0}),
+		)
+	})
+
+	t.Run("falls back to other without a zero", func(t *testing.T) {
+		assert.Equal(t, "0 rows",
+			i18n.Text("plural.other-only", i18n.Vars{"count": 0}),
+		)
+	})
+
+	t.Run("falls back to other", func(t *testing.T) {
+		assert.Equal(t, "1 rows",
+			i18n.Text("plural.other-only", i18n.Vars{"count": 1}),
+		)
+	})
+
+	t.Run("plural key without a count is missing", func(t *testing.T) {
+		assert.Equal(t, "plural.selections", i18n.Text(key))
+	})
+
+	t.Run("rejects a malformed message", func(t *testing.T) {
+		bad := fstest.MapFS{
+			"i18n/bad.en.json": {Data: []byte(`{"plural.bad":[1,2]}`)},
+		}
+		assert.Panics(t, func() { i18n.LoadTranslations(bad) })
+	})
+
+	t.Run("rejects plural forms without other", func(t *testing.T) {
+		bad := fstest.MapFS{
+			"i18n/bad.en.json": {
+				Data: []byte(`{"plural.bad":{"one":"{count} row"}}`),
+			},
+		}
+		assert.PanicsWithError(t,
+			`load translation "i18n/bad.en.json": `+
+				`plural message has no "other" form: plural.bad`,
+			func() { i18n.LoadTranslations(bad) },
+		)
+	})
+}
+
+func TestPluralLocales(t *testing.T) {
+	key := i18n.Key("plural.copied")
+	files := fstest.MapFS{
+		"i18n/plural.en.json": {
+			Data: []byte(`{"plural.copied":{` +
+				`"one":"copied {count} line","other":"copied {count} lines"}}`),
+		},
+		"i18n/plural.fr.json": {
+			Data: []byte(`{"plural.copied":{` +
+				`"zero":"{count} ligne copiée",` +
+				`"one":"{count} ligne copiée",` +
+				`"other":"{count} lignes copiées"}}`),
+		},
+	}
+	if expected := os.Getenv(testLocaleExpected); expected != "" {
+		i18n.Register(i18n.LoadTranslations(files))
+		assert.Equal(t, expected, i18n.Text(key, i18n.Vars{"count": 0}))
+		return
+	}
+
+	tests := []struct {
+		name     string
+		locale   string
+		expected string
+	}{
+		{
+			name:     "a zero form for the locale",
+			locale:   "fr_FR.UTF-8",
+			expected: "0 ligne copiée",
+		},
+		{
+			name:     "no zero form falls back",
+			locale:   "en_US.UTF-8",
+			expected: "copied 0 lines",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := exec.Command(os.Args[0], "-test.run=^TestPluralLocales$")
+			cmd.Env = append(os.Environ(),
+				"LC_ALL="+tc.locale,
+				testLocaleExpected+"="+tc.expected,
+			)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Log(string(out))
+			}
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestLocales(t *testing.T) {
 	if expected := os.Getenv(testLocaleExpected); expected != "" {
 		assert.Equal(t, expected, i18n.Text(i18n.ErrorNoDocument))

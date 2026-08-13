@@ -1067,6 +1067,22 @@ entry in each locale file (`en.json`, `de.json`, `fr.json`, `it.json`) under
 identically across all locales (e.g. the `:` command prompt) — not a catch-all
 or a place to skip translating a new message into the other languages.
 
+A message whose wording depends on a count takes plural forms instead of one
+key per form: give the message an object value keyed by `zero`, `one`, or
+`other`, and pass the number as the `count` variable.
+
+```json
+"status.yanked": {
+  "one": "yanked {count} selection to register {register}",
+  "other": "yanked {count} selections to register {register}"
+}
+```
+
+A missing category falls back to `other`, so a language only writes the forms
+it needs — French supplies `zero` where English does not. `other` is required:
+a plural message without it fails to load. A message without a `count` variable
+stays a plain string.
+
 The one exception is a hint that echoes a literal keystroke sequence back at
 the user (`"ms ..."`, `"r ..."`, `"^r ..."`) — that's not language, so it
 stays a plain Go string. A hint that also contains descriptive prose (e.g.

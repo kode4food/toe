@@ -3,6 +3,8 @@ package ui_test
 import (
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
@@ -609,4 +612,120 @@ func fileEditor(t *testing.T) *view.Editor {
 	_, err := e.OpenFile(path)
 	assert.NoError(t, err)
 	return e
+}
+
+var bgRE = regexp.MustCompile(`48;2;(\d+;\d+;\d+)`)
+
+func TestCmdlineHintHighlight(t *testing.T) {
+	t.Run("hint line shares the prompt background", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
+		idle := lastLine(m.View().Content)
+
+		e.SetHint("r ...")
+		m = resize(m, 40, 10)
+		hinted := lastLine(m.View().Content)
+
+		prompt := lastLine(sendKey(m, ':').View().Content)
+
+		assert.NotEqual(t, backgrounds(idle), backgrounds(hinted))
+		assert.Equal(t, backgrounds(prompt), backgrounds(hinted))
+		assert.Contains(t, stripANSI(hinted), "r ...")
+	})
+
+	t.Run("macro recording shares the prompt background", func(t *testing.T) {
+		idle := lastLine(builtinModel(t).View().Content)
+		prompt := lastLine(sendKey(builtinModel(t), ':').View().Content)
+
+		m := sendKey(sendKey(builtinModel(t), 'Q'), 'q')
+		recording := lastLine(m.View().Content)
+
+		assert.NotEqual(t, backgrounds(idle), backgrounds(recording))
+		assert.Contains(t, backgrounds(recording), backgrounds(prompt)[0])
+		assert.Contains(t, stripANSI(recording), "REC q")
+	})
+
+	t.Run("pending keys share the prompt background", func(t *testing.T) {
+		idle := lastLine(builtinModel(t).View().Content)
+		prompt := lastLine(sendKey(builtinModel(t), ':').View().Content)
+		pending := lastLine(sendKey(builtinModel(t), ' ').View().Content)
+
+		assert.NotEqual(t, backgrounds(idle), backgrounds(pending))
+		assert.Equal(t, backgrounds(prompt), backgrounds(pending))
+	})
+}
+
+func TestCmdlineInteractionSlot(t *testing.T) {
+	t.Run("pending keys read from the left", func(t *testing.T) {
+		m := sendKey(builtinModel(t), ' ')
+		assert.True(t, strings.HasPrefix(
+			stripANSI(lastLine(m.View().Content)), "spc ...",
+		))
+	})
+
+	t.Run("deeper sequences space the keys", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
+		assert.True(t, strings.HasPrefix(
+			stripANSI(lastLine(m.View().Content)), "spc w ...",
+		))
+	})
+
+	t.Run("the menu is left aligned above them", func(t *testing.T) {
+		m := sendKey(builtinModel(t), ' ')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		var menu string
+		for _, line := range lines {
+			if strings.Contains(line, "Leader") {
+				menu = line
+				break
+			}
+		}
+		assert.NotEmpty(t, menu)
+		assert.True(t, strings.HasPrefix(menu, "\u256d"))
+	})
+
+	t.Run("an interaction outranks a stale message", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 100, 30)
+		e.SetStatusMsg("older news")
+		m = resize(m, 100, 30)
+		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "older news")
+
+		m = sendKey(m, ' ')
+
+		out := stripANSI(lastLine(m.View().Content))
+		assert.True(t, strings.HasPrefix(out, "spc ..."))
+		assert.NotContains(t, out, "older news")
+	})
+}
+
+func builtinModel(t *testing.T) ui.Model {
+	t.Helper()
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	return resize(m, 100, 30)
+}
+
+func lastLine(content string) string {
+	lines := strings.Split(strings.TrimRight(content, "\n"), "\n")
+	return lines[len(lines)-1]
+}
+
+func backgrounds(line string) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, m := range bgRE.FindAllStringSubmatch(line, -1) {
+		if !seen[m[1]] {
+			seen[m[1]] = true
+			out = append(out, m[1])
+		}
+	}
+	return out
 }

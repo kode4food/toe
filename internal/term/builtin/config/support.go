@@ -28,12 +28,12 @@ const (
 )
 
 var (
-	//go:embed i18n/support.*.json
-	supportFS embed.FS
-
 	errNoLineNumber      = i18n.NewError(errorNoLineNumberKey)
 	errInvalidLineNumber = i18n.NewError(errorInvalidLineNumberKey)
 )
+
+//go:embed i18n/support.*.json
+var supportFS embed.FS
 
 // SupportModule returns miscellaneous support commands
 func SupportModule(model ui.Model) command.Module {
@@ -45,7 +45,6 @@ func SupportModule(model ui.Model) command.Module {
 				DocString: "Show version and license information",
 				Run:       kit.Runner(model.AboutAction),
 				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
 			},
 			{
 				Name: actCharacterInfo,
@@ -54,9 +53,8 @@ func SupportModule(model ui.Model) command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: action.CharInfo(e)}
 				},
-				Modes:     command.DocModes,
-				Aliases:   []string{"char"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.DocModes,
+				Aliases: []string{"char"},
 			},
 			{
 				Name:      actEcho,
@@ -67,8 +65,10 @@ func SupportModule(model ui.Model) command.Module {
 					}
 					return command.Result{Message: args.Join(" ")}
 				},
-				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
+				Modes: command.PaneModes,
+				Signature: command.Signature{
+					Positionals: command.Positionals{Min: 1, Max: -1},
+				},
 			},
 			{
 				Name:      actRedraw,
@@ -76,8 +76,7 @@ func SupportModule(model ui.Model) command.Module {
 				Run: func(*view.Editor, *command.Args) command.Result {
 					return command.Result{Signal: command.SignalClearScreen}
 				},
-				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
+				Modes: command.PaneModes,
 			},
 			{
 				Name:      actGoto,
@@ -101,7 +100,7 @@ func SupportModule(model ui.Model) command.Module {
 				},
 				Modes:     command.DocModes,
 				Aliases:   []string{"g"},
-				Signature: kit.MinArgs(1),
+				Signature: kit.RequiredArg(),
 			},
 		},
 	}

@@ -120,8 +120,7 @@ func (r *renderPass) renderTerminalStatus(
 	if n := tp.ScrollOffset(); n > 0 {
 		title = fmt.Sprintf("%s [scrollback -%d]", title, n)
 	}
-	renderStatusElems(renderStatusElemsArgs{
-		buf:       buf,
+	statusRow{
 		at:        geom.Point{X: a.X, Y: y},
 		width:     a.Width,
 		baseStyle: st,
@@ -130,7 +129,7 @@ func (r *renderPass) renderTerminalStatus(
 			{text: title, style: st},
 		},
 		right: r.withMaximizedStatus(nil),
-	})
+	}.paint(buf)
 }
 
 func highlightSelection(scr *tuiScreen, tp *TerminalPane) {

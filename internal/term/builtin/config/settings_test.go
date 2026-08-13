@@ -319,17 +319,35 @@ func TestConfigCommands(t *testing.T) {
 		assert.Contains(t, res.Message, "error")
 	})
 
+	t.Run("toggle cycles through given values", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(
+			t, km, e, "toggle_option", "default-line-ending crlf lf",
+		)
+		assert.Contains(t, res.Message, "crlf")
+
+		res = test.RunCmdArgs(
+			t, km, e, "toggle_option", "default-line-ending crlf lf",
+		)
+		assert.Contains(t, res.Message, "lf")
+	})
+
+	t.Run("toggle wraps past the last value", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		test.RunCmdArgs(t, km, e, "set_option", "default-line-ending lf")
+
+		res := test.RunCmdArgs(
+			t, km, e, "toggle_option", "default-line-ending lf crlf",
+		)
+
+		assert.Contains(t, res.Message, "crlf")
+	})
+
 	t.Run("no args shows CRLF", func(t *testing.T) {
 		e, km := test.Env(t, "abc\r\n")
 		test.RunCmdArgs(t, km, e, "set_line_ending", "crlf")
 		res := test.RunCmd(t, km, e, "set_line_ending")
 		assert.Equal(t, "crlf", res.Message)
-	})
-
-	t.Run("encoding always returns utf-8", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		res := test.RunCmd(t, km, e, "encoding")
-		assert.Equal(t, "utf-8", res.Message)
 	})
 
 	t.Run("config_reload no fn errors", func(t *testing.T) {

@@ -408,7 +408,7 @@ func TestDeleteCharForward(t *testing.T) {
 }
 
 func TestYank(t *testing.T) {
-	t.Run("copies selection to default register", func(t *testing.T) {
+	t.Run("copies selection to the clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetSelection(t, e, []core.Range{{
 			Anchor: 0,
@@ -417,11 +417,10 @@ func TestYank(t *testing.T) {
 
 		action.Yank(e)
 
-		assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '"'))
+		assert.Equal(t, "hello", testutil.RegisteredValue(t, e, '+'))
 		assert.Equal(t,
-			i18n.Text(action.StatusYankedSelection, i18n.Vars{
-				"count":    1,
-				"register": `"`,
+			i18n.Text(action.StatusYankedToClipboard, i18n.Vars{
+				"count": 1,
 			}), e.TakeStatusMsg(),
 		)
 		assert.Equal(t, view.ModeNormal, e.Mode())
@@ -436,7 +435,7 @@ func TestYank(t *testing.T) {
 
 		action.Yank(e)
 
-		assert.Equal(t, "ab", testutil.RegisteredValue(t, e, '"'))
+		assert.Equal(t, "ab", testutil.RegisteredValue(t, e, '+'))
 	})
 
 	t.Run("noop with no view", func(t *testing.T) {
@@ -454,7 +453,7 @@ func TestYank(t *testing.T) {
 
 		action.Yank(e)
 
-		assert.Empty(t, e.Registers().Read('"'))
+		assert.Empty(t, e.Registers().Read('+'))
 	})
 }
 
@@ -465,7 +464,7 @@ func TestPasteAfter(t *testing.T) {
 			Anchor: 0,
 			Head:   1,
 		}}, 0)
-		e.Registers().Write('"', []string{"b"})
+		e.Registers().Write('+', []string{"b"})
 
 		action.PasteAfter(e)
 
@@ -486,7 +485,7 @@ func TestPasteAfter(t *testing.T) {
 	t.Run("linewise paste after last line", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\ndef")
 		testutil.SetCursor(t, e, 4)
-		e.Registers().Write('"', []string{"ghi\n"})
+		e.Registers().Write('+', []string{"ghi\n"})
 
 		action.PasteAfter(e)
 
@@ -500,7 +499,7 @@ func TestPasteAfter(t *testing.T) {
 			[]core.Range{core.PointRange(1), core.PointRange(3)},
 			0,
 		)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 
 		action.PasteAfter(e)
 
@@ -514,7 +513,7 @@ func TestPasteAfter(t *testing.T) {
 			Anchor: -2,
 			Head:   -1,
 		}}, 0)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 
 		action.PasteAfter(e)
 
@@ -524,7 +523,7 @@ func TestPasteAfter(t *testing.T) {
 
 	t.Run("noop with no view", func(t *testing.T) {
 		e := editorWithNoView(t)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 
 		assert.NotPanics(t, func() { action.PasteAfter(e) })
 	})
@@ -534,7 +533,7 @@ func TestPasteBefore(t *testing.T) {
 	t.Run("pastes before cursor position", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "xz")
 		testutil.SetCursor(t, e, 1)
-		e.Registers().Write('"', []string{"y"})
+		e.Registers().Write('+', []string{"y"})
 
 		action.PasteBefore(e)
 
@@ -549,7 +548,7 @@ func TestPasteBefore(t *testing.T) {
 			Anchor: -2,
 			Head:   -1,
 		}}, 0)
-		e.Registers().Write('"', []string{"x\n"})
+		e.Registers().Write('+', []string{"x\n"})
 
 		action.PasteBefore(e)
 
@@ -559,7 +558,7 @@ func TestPasteBefore(t *testing.T) {
 
 	t.Run("noop with no view", func(t *testing.T) {
 		e := editorWithNoView(t)
-		e.Registers().Write('"', []string{"x"})
+		e.Registers().Write('+', []string{"x"})
 
 		assert.NotPanics(t, func() { action.PasteBefore(e) })
 	})
@@ -767,7 +766,7 @@ func TestLinewisePaste(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\ndef")
 		testutil.SetCursor(t, e, 0)
 		// Yank full first line (with newline = linewise)
-		e.Registers().Write('"', []string{"abc\n"})
+		e.Registers().Write('+', []string{"abc\n"})
 
 		action.PasteAfter(e)
 
@@ -779,7 +778,7 @@ func TestLinewisePaste(t *testing.T) {
 	t.Run("PasteBefore linewise pastes above", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "def")
 		testutil.SetCursor(t, e, 0)
-		e.Registers().Write('"', []string{"abc\n"})
+		e.Registers().Write('+', []string{"abc\n"})
 
 		action.PasteBefore(e)
 

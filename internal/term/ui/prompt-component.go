@@ -25,6 +25,7 @@ type (
 
 		editor  *EditorComponent
 		bounds  geom.Area
+		right   []statusElem
 		kind    promptKind
 		forward bool
 		prompt  string
@@ -69,9 +70,6 @@ const (
 
 const promptEllipsis = "\u2026" // '…' - horizontal ellipsis
 
-// one column so the end-of-buffer caret cell stays on screen
-const promptRightPad = 1
-
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
 type promptComponentArgs struct {
@@ -88,11 +86,8 @@ func newPromptComponent(
 	cx *Context, args promptComponentArgs,
 ) *PromptComponent {
 	th := cx.Theme()
-	bg := deriveBackground(
-		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
-	)
 	return &PromptComponent{
-		bg:      bg,
+		bg:      promptBackground(th),
 		editor:  args.editor,
 		kind:    args.kind,
 		forward: args.forward,
@@ -132,6 +127,7 @@ func (p *PromptComponent) Layout(
 		Point: geom.Point{X: 0, Y: y},
 		Size:  geom.Size{Width: screen.Width, Height: screen.Height - y},
 	}
+	p.right = p.editor.macroElems(cx, p.rowStyle(cx))
 	return p.bounds, true
 }
 
@@ -176,7 +172,25 @@ func (p *PromptComponent) Cursor(
 
 func (p *PromptComponent) textWidth() int {
 	label := runewidth.StringWidth(p.promptLabel())
-	return max(p.bounds.Width-label-promptRightPad, 1)
+	width := p.contentWidth() - label - commandLineRightPad
+	return max(width, 1)
+}
+
+func (p *PromptComponent) contentWidth() int {
+	return statusRow{width: p.bounds.Width, right: p.right}.contentWidth()
+}
+
+func (p *PromptComponent) row(at geom.Point, base tui.Style) statusRow {
+	return statusRow{
+		at:        at,
+		width:     p.bounds.Width,
+		baseStyle: base,
+		right:     p.right,
+	}
+}
+
+func (p *PromptComponent) rowStyle(cx *Context) tui.Style {
+	return tui.Style{}.Bg(p.bg).Fg(cx.Theme().Get("ui.text").FgColor())
 }
 
 func (p *PromptComponent) syncScroll() {
@@ -403,10 +417,10 @@ func (p *PromptComponent) paintLine(
 		base:    rowBg,
 		overlay: th.Get("ui.prompt"),
 	})
-	textSt := rowBg.Fg(th.Get("ui.text").FgColor())
+	textSt := p.rowStyle(cx)
 
 	label := p.promptLabel()
-	buf.FillRange(area.Point, area.Width, textSt)
+	p.row(area.Point, textSt).paint(buf)
 	buf.SetString(area.Point, label, labelSt)
 	x := runewidth.StringWidth(label)
 

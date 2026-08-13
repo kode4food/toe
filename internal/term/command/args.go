@@ -37,7 +37,7 @@ type (
 	// Positionals constrains the accepted positional argument count
 	Positionals struct {
 		Min int
-		Max int // 0 = no maximum
+		Max int // negative = no maximum
 		Map func(string) (string, error)
 	}
 
@@ -93,11 +93,6 @@ const (
 		argsCompletionFlagArgument,
 	)
 )
-
-// DefaultSignature returns a signature that accepts any number of positionals
-func DefaultSignature() Signature {
-	return Signature{Positionals: Positionals{Min: 0}}
-}
 
 // ParseArgs parses command input using the supplied signature;
 // expand may be nil, in which case raw token content is used as-is
@@ -282,6 +277,8 @@ func (p *ParseError) wrongPositionalCountError() string {
 			"expected at least %d argument%s, got %d",
 			p.Min, plural(p.Min), p.Actual,
 		)
+	case p.Max == 0:
+		return fmt.Sprintf("expected no arguments, got %d", p.Actual)
 	default:
 		return fmt.Sprintf(
 			"expected at most %d argument%s, got %d",
@@ -292,7 +289,7 @@ func (p *ParseError) wrongPositionalCountError() string {
 
 func (s Signature) checkPositionalCount(n int) error {
 	lo, hi := s.Positionals.Min, s.Positionals.Max
-	if n >= lo && (hi == 0 || n <= hi) {
+	if n >= lo && (hi < 0 || n <= hi) {
 		return nil
 	}
 	return &ParseError{

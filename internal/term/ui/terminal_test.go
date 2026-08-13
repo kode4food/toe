@@ -19,7 +19,6 @@ import (
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestTerminalPane(t *testing.T) {
@@ -30,7 +29,7 @@ func TestTerminalPane(t *testing.T) {
 		m.TerminalAction(e)
 		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
 
-		action.VSplit(e)
+		_ = e.SplitFocused(view.LayoutVertical)
 
 		assert.Equal(t, 2, e.Tree().Count())
 		_, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
@@ -42,7 +41,7 @@ func TestTerminalPane(t *testing.T) {
 		e.Options().InactiveDim = 50
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		docID := e.Tree().Focus()
-		action.VSplit(e)
+		_ = e.SplitFocused(view.LayoutVertical)
 		m.TerminalAction(e)
 		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
 		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
@@ -487,7 +486,7 @@ func TestTerminalPane(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		leftID := e.Tree().Focus()
-		action.VSplit(e)
+		_ = e.SplitFocused(view.LayoutVertical)
 		e.Tree().SetFocus(leftID)
 
 		m.TerminalAction(e)

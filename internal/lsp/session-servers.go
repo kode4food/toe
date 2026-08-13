@@ -108,6 +108,15 @@ func (s *Session) ExecuteWorkspaceCommand(
 	}
 }
 
+// LanguageServerNames returns the servers configured for the document
+func (s *Session) LanguageServerNames(doc *view.Document) []string {
+	lang := s.languageForDocument(doc)
+	if lang == nil {
+		return nil
+	}
+	return serverNames(lang.LanguageServers)
+}
+
 // WorkspaceCommands returns commands advertised by attached servers
 func (s *Session) WorkspaceCommands(doc *view.Document) []string {
 	clients := s.clientsForDocument(doc)

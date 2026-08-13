@@ -16,6 +16,22 @@ const (
 	RegisterBlackHole        = '_'
 )
 
+// YankRegister returns the register a yank or paste uses
+func (e *Editor) YankRegister() rune {
+	if reg := e.ActiveRegister(); reg != 0 {
+		return reg
+	}
+	return RegisterClipboard
+}
+
+// DeleteRegister returns the register a destructive edit yanks into
+func (e *Editor) DeleteRegister() rune {
+	if reg := e.ActiveRegister(); reg != 0 {
+		return reg
+	}
+	return RegisterDefaultYank
+}
+
 // ReadRegister returns regular and computed register contents for the current
 // editor state
 func (e *Editor) ReadRegister(name rune) []string {

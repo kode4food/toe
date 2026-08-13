@@ -63,8 +63,6 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"goto next paragraph", action.GotoNextParagraph},
 		{"goto prev change", action.GotoPrevChange},
 		{"goto prev paragraph", action.GotoPrevParagraph},
-		{"hsplit", action.HSplit},
-		{"vsplit", action.VSplit},
 		{"indent", action.Indent},
 		{"insert char", func(e *view.Editor) { action.InsertChar(e, 'x') }},
 		{"insert mode", action.InsertMode},
@@ -93,7 +91,6 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"paste register", func(e *view.Editor) {
 			action.PasteRegisterAtCursor(e, '"')
 		}},
-		{"clipboard replace", action.ClipboardReplace},
 		{"remove primary", action.RemovePrimarySelection},
 		{"repeat last motion", action.RepeatLastMotion},
 		{"replace char", func(e *view.Editor) { action.ReplaceChar(e, 'x') }},
@@ -141,7 +138,7 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"decrement", action.Decrement},
 		{"yank", action.Yank},
 		{"yank clipboard", action.YankToClipboard},
-		{"yank main clipboard", action.YankMainToClipboard},
+		{"yank main", action.YankMain},
 		{"yank primary", action.YankToPrimaryClipboard},
 		{"yank join", func(e *view.Editor) { action.YankJoin(e, ",") }},
 		{"reflow", func(e *view.Editor) { action.ReflowSelections(e, 80) }},

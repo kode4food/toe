@@ -69,7 +69,7 @@ insecure = true
 
 ## Editor Configuration
 
-Except for the top-level `theme` key, the settings below belong under `[editor]` in `config.toml`. They can also be changed for the current session with `:set <key> <value>`, `:get <key>`, and `:toggle <key>` for booleans. Lists and tables use TOML syntax. Completion after `:set ` shows the available keys.
+Except for the top-level `theme` key, the settings below belong under `[editor]` in `config.toml`. They can also be changed for the current session with `:set <key> <value>`, `:get <key>`, and `:toggle <key>` for booleans, or `:toggle <key> <value>...` to cycle a key through the given values. Lists and tables use TOML syntax. Completion after `:set ` shows the available keys.
 
 Examples:
 
@@ -81,6 +81,7 @@ Examples:
 :set auto-pairs {"(" = ")", "[" = "]"}
 :set buffer-picker.start-position previous
 :toggle file-explorer.hidden
+:toggle default-line-ending lf crlf
 ```
 
 ### Theme

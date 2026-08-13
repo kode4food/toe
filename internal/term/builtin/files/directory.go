@@ -21,11 +21,11 @@ const (
 const errorNoDirectoryKey i18n.Key = "error.noDirectory"
 
 var (
-	//go:embed i18n/directory.*.json
-	directoryFS embed.FS
-
 	errNoDirectory = i18n.NewError(errorNoDirectoryKey)
 )
+
+//go:embed i18n/directory.*.json
+var directoryFS embed.FS
 
 // DirectoryModule returns the working-directory commands
 func DirectoryModule() command.Module {
@@ -40,7 +40,7 @@ func DirectoryModule() command.Module {
 				},
 				Modes:     command.PaneModes,
 				Aliases:   []string{"change-current-directory", "cd"},
-				Signature: kit.FileSig(kit.MinArgs(1)),
+				Signature: kit.FileSig(kit.RequiredArg()),
 			},
 			{
 				Name:      actShowDirectory,
@@ -48,9 +48,8 @@ func DirectoryModule() command.Module {
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return command.Result{Message: e.Cwd()}
 				},
-				Modes:     command.PaneModes,
-				Aliases:   []string{"pwd"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.PaneModes,
+				Aliases: []string{"pwd"},
 			},
 			{
 				Name: actShowDirectoryStack,
@@ -61,8 +60,7 @@ func DirectoryModule() command.Module {
 						Message: strings.Join(e.DirStack(), "\n"),
 					}
 				},
-				Modes:     command.PaneModes,
-				Signature: command.DefaultSignature(),
+				Modes: command.PaneModes,
 			},
 			{
 				Name:      actPushDirectory,
@@ -72,7 +70,7 @@ func DirectoryModule() command.Module {
 				},
 				Modes:     command.PaneModes,
 				Aliases:   []string{"pushd"},
-				Signature: kit.FileSig(kit.MinArgs(1)),
+				Signature: kit.FileSig(kit.RequiredArg()),
 			},
 			{
 				Name: actPopDirectory,
@@ -84,9 +82,8 @@ func DirectoryModule() command.Module {
 					}
 					return command.Result{Message: "directory: " + e.Cwd()}
 				},
-				Modes:     command.PaneModes,
-				Aliases:   []string{"popd"},
-				Signature: command.DefaultSignature(),
+				Modes:   command.PaneModes,
+				Aliases: []string{"popd"},
 			},
 		},
 	}

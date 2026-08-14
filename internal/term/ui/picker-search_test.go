@@ -18,6 +18,9 @@ import (
 )
 
 func TestGlobalSearch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: shells out to a real search per subtest")
+	}
 	t.Run("finds matching lines across files", func(t *testing.T) {
 		m, _ := globalSearchModel(t, "findme")
 		out := stripANSI(m.View().Content)

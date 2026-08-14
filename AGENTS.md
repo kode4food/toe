@@ -847,6 +847,27 @@ If the source is grouped by concern, the tests should mirror that grouping:
 
 Do not keep broad mixed test files once the source has been split cleanly.
 
+### Running Tests
+
+Run the fast suite while working, the full suite once at the end:
+
+```sh
+go test ./... -short   # while iterating
+go test ./...          # before declaring the work done
+```
+
+Tests that spawn a pty, watch the real filesystem, shell out per subtest, or
+wait on a real timer skip under `-short`:
+
+```go
+if testing.Short() {
+    t.Skip("slow: spawns a real pty per subtest")
+}
+```
+
+Put the skip on the slow subtest, not the whole parent, when only one subtest
+is expensive. Never report work as passing on a `-short` run alone.
+
 ## Comments
 
 ### Godoc

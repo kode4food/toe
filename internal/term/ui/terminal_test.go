@@ -22,6 +22,9 @@ import (
 )
 
 func TestTerminalPane(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: spawns a real pty per subtest")
+	}
 	t.Run("supports pane split", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})

@@ -65,6 +65,9 @@ func TestDiffGutter(t *testing.T) {
 }
 
 func TestVersionControlFileWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: real filesystem watch with a multi-second timeout")
+	}
 	testutil.RequireGit(t)
 
 	t.Run("refreshes on an external commit", func(t *testing.T) {
@@ -99,6 +102,9 @@ func TestVersionControlFileWatch(t *testing.T) {
 }
 
 func TestChangedFilePicker(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: many subtests each shell out to a real git repo")
+	}
 	testutil.RequireGit(t)
 
 	t.Run("lists changed files with kinds", func(t *testing.T) {

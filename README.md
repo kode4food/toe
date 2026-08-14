@@ -44,6 +44,12 @@ Install the latest stable release with Homebrew (recommended):
 brew install kode4food/tap/toe
 ```
 
+Odd minor versions (e.g. 0.3.x) are unstable previews, available separately:
+
+```sh
+brew install kode4food/tap/toe@next
+```
+
 To build the current source:
 
 ```sh

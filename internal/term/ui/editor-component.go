@@ -131,7 +131,7 @@ func newEditorComponent() *EditorComponent {
 		saveSlot:   &saveGenSlot{},
 		completion: DefaultCompletionOptions(),
 		cache:      newRenderCache(),
-		macroSlot:  &macroSlot{macros: map[rune][]command.KeyEvent{}},
+		macroSlot:  &macroSlot{},
 		focused:    true,
 		animation:  true,
 		redraw:     make(chan struct{}, 1),

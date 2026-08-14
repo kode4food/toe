@@ -785,6 +785,9 @@ func TestImageZoomPending(t *testing.T) {
 }
 
 func TestImageEviction(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: writes and decodes many images to exercise cache eviction")
+	}
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	t.Setenv("SSH_CONNECTION", "")
 	t.Setenv("SSH_TTY", "")

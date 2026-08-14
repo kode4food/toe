@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/mattn/go-runewidth"
@@ -19,7 +18,6 @@ type macroSlot struct {
 	recording   bool
 	reg         rune
 	keys        []command.KeyEvent
-	macros      map[rune][]command.KeyEvent
 	replayReg   rune
 	replayCount int
 	hasReplay   bool
@@ -36,7 +34,7 @@ func (e *EditorComponent) MacroRecordAction(
 		if len(ms.keys) > 0 {
 			ms.keys = ms.keys[:len(ms.keys)-1]
 		}
-		ms.macros[ms.reg] = slices.Clone(ms.keys)
+		ed.Registers().Set(ms.reg, macroText(ms.keys))
 		ms.recording = false
 		ms.keys = nil
 		ms.reg = 0
@@ -87,23 +85,40 @@ func (e *EditorComponent) handleReplay(cx *Context) {
 		return
 	}
 	ms.hasReplay = false
-	e.replayMacro(cx, ms.macros[ms.replayReg], ms.replayCount)
+	e.replayMacro(cx, macroKeys(cx.Editor, ms.replayReg), ms.replayCount)
+	cx.Editor.ResetCount()
 }
 
 func (e *EditorComponent) replayMacro(
 	cx *Context, keys []command.KeyEvent, n int,
 ) {
 	for range n {
+		var pending []command.KeyEvent
 		i := 0
 		for i < len(keys) {
 			k := keys[i]
 			i++
 			mode := cx.Editor.Mode()
 			if replaySkip(k, mode) {
+				pending = nil
 				continue
 			}
-			lookup, ok := cx.Keymaps.Lookup(mode, []command.KeyEvent{k})
-			if ok && lookup.Enabled(cx.Editor) {
+			if countable(mode, k) {
+				ch := k.Code.Char
+				cur := cx.Editor.Count()
+				if ch >= '1' && ch <= '9' || (ch == '0' && cur > 0) {
+					cx.Editor.SetCount(cur*10 + int(ch-'0'))
+					continue
+				}
+			}
+			pending = append(pending, k)
+			lookup, ok := cx.Keymaps.Lookup(mode, pending)
+			if ok && !lookup.Enabled(cx.Editor) {
+				ok = false
+			}
+			switch {
+			case ok:
+				pending = nil
 				cont := lookup.Action(cx.Editor).Continuation
 				for cont != nil && i < len(keys) {
 					k = keys[i]
@@ -111,8 +126,20 @@ func (e *EditorComponent) replayMacro(
 					cont = cont(cx.Editor, k)
 				}
 				cx.Editor.ResetCount()
-			} else if mode == view.ModeInsert && k.IsTypable() {
-				action.InsertChar(cx.Editor, k.Code.Char)
+			case lookup.Prefix:
+				if mode == view.ModeInsert && len(pending) == 1 &&
+					pending[0].IsTypable() {
+					action.InsertChar(cx.Editor, pending[0].Code.Char)
+					pending = nil
+					cx.Editor.ResetCount()
+				}
+			default:
+				if mode == view.ModeInsert && len(pending) == 1 &&
+					pending[0].IsTypable() {
+					action.InsertChar(cx.Editor, pending[0].Code.Char)
+				}
+				pending = nil
+				cx.Editor.ResetCount()
 			}
 		}
 	}
@@ -134,6 +161,26 @@ func (e *EditorComponent) macroElems(
 	return []statusElem{statusBadge(
 		text, cx.Theme().Get("ui.statusline.macro"),
 	)}
+}
+
+func macroText(keys []command.KeyEvent) string {
+	parts := make([]string, len(keys))
+	for i, k := range keys {
+		parts[i] = k.String()
+	}
+	return strings.Join(parts, " ")
+}
+
+func macroKeys(ed *view.Editor, reg rune) []command.KeyEvent {
+	text, ok := ed.Registers().First(reg)
+	if !ok {
+		return nil
+	}
+	keys, err := command.ParseKeySequence(text)
+	if err != nil {
+		return nil
+	}
+	return keys
 }
 
 func replaySkip(k command.KeyEvent, mode view.Mode) bool {

@@ -25,6 +25,9 @@ type countingPathSource struct {
 const fileWatchTestTimeout = 2 * time.Second
 
 func TestPickerFileWatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: real filesystem watches with multi-second timeouts")
+	}
 	t.Run("preview reflects file change", func(t *testing.T) {
 		tmp := resolvedTempDir(t)
 		alpha := filepath.Join(tmp, "alpha.go")

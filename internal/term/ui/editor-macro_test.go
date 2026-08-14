@@ -40,6 +40,9 @@ func TestMacroRecordingStatus(t *testing.T) {
 	})
 
 	t.Run("badge blinks off and back on", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: waits on a real blink timer")
+		}
 		m, _ := macroModel(t)
 		m = sendKey(m, 'z')
 		next, cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
@@ -94,6 +97,111 @@ func TestEditorMacro(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		assert.Equal(t, "xx", doc.Text().String())
+	})
+
+	t.Run("replays a two-key normal-mode binding", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
+			[]command.KeyEvent{char('z')})
+		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
+			[]command.KeyEvent{char('v')})
+		bindNormalTestAction(km, "dd",
+			func(e *view.Editor) {
+				action.InsertMode(e)
+				action.InsertChar(e, 'D')
+				action.NormalMode(e)
+			}, []command.KeyEvent{char('d'), char('d')})
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'a')
+		m = sendKey(m, 'd')
+		m = sendKey(m, 'd')
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'v')
+		_ = sendKey(m, 'a')
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, "DD", doc.Text().String())
+	})
+
+	t.Run("replays a recorded count prefix", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
+			[]command.KeyEvent{char('z')})
+		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
+			[]command.KeyEvent{char('v')})
+		bindNormalTestAction(km, "insert_x",
+			func(e *view.Editor) {
+				n := e.Count()
+				if n == 0 {
+					n = 1
+				}
+				action.InsertMode(e)
+				for range n {
+					action.InsertChar(e, 'x')
+				}
+				action.NormalMode(e)
+			}, []command.KeyEvent{char('x')})
+		m = resize(m, 80, 24)
+
+		// record into 'a': count 3, then the single-key insert binding
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'a')
+		m = sendKey(m, '3')
+		m = sendKey(m, 'x')
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'v')
+		_ = sendKey(m, 'a')
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		// the count-prefixed insert runs once live while recording, then
+		// again on replay: 3 x's each time
+		assert.Equal(t, "xxxxxx", doc.Text().String())
+	})
+
+	t.Run("recording writes the macro to its register", func(t *testing.T) {
+		m, e := macroModel(t)
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'a')
+		m = sendKey(m, 'i')
+		m = sendKey(m, 'x')
+		m = sendSpecial(m, tea.KeyEscape)
+		_ = sendKey(m, 'z')
+
+		text, ok := e.Registers().First('a')
+		assert.True(t, ok)
+		assert.Equal(t, "i x esc", text)
+	})
+
+	t.Run("replays a macro written straight to a register", func(t *testing.T) {
+		// registers are what the session persists, so a macro restored from
+		// one replays without any separate macro state being installed
+		m, e := macroModel(t)
+		e.Registers().Set('a', "i x esc")
+
+		m = sendKey(m, 'v')
+		_ = sendKey(m, 'a')
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, "x", doc.Text().String())
+	})
+
+	t.Run("dangling count does not leak past replay", func(t *testing.T) {
+		m, e := macroModel(t)
+		e.Registers().Set('a', "3")
+
+		m = sendKey(m, 'v')
+		_ = sendKey(m, 'a')
+
+		assert.Equal(t, 0, e.Count())
 	})
 }
 

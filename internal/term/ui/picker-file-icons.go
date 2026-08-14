@@ -16,19 +16,20 @@ type (
 		color pickerFileColor
 	}
 
-	pickerFileColor uint8
+	// pickerFileColor is the theme scope an icon draws its foreground from
+	pickerFileColor string
 )
 
 const (
-	pickerFileAzure pickerFileColor = iota
-	pickerFileBlue
-	pickerFileCyan
-	pickerFileGreen
-	pickerFileGrey
-	pickerFileOrange
-	pickerFilePurple
-	pickerFileRed
-	pickerFileYellow
+	pickerFileAzure  pickerFileColor = "ui.file-icon.azure"
+	pickerFileBlue   pickerFileColor = "ui.file-icon.blue"
+	pickerFileCyan   pickerFileColor = "ui.file-icon.cyan"
+	pickerFileGreen  pickerFileColor = "ui.file-icon.green"
+	pickerFileGrey   pickerFileColor = "ui.file-icon.grey"
+	pickerFileOrange pickerFileColor = "ui.file-icon.orange"
+	pickerFilePurple pickerFileColor = "ui.file-icon.purple"
+	pickerFileRed    pickerFileColor = "ui.file-icon.red"
+	pickerFileYellow pickerFileColor = "ui.file-icon.yellow"
 )
 
 var (
@@ -41,34 +42,20 @@ var (
 		glyph: "\U000f0214",
 		color: pickerFileGrey,
 	}
-
-	pickerFileColorScopes = [...]string{
-		"ui.file-icon.azure",
-		"ui.file-icon.blue",
-		"ui.file-icon.cyan",
-		"ui.file-icon.green",
-		"ui.file-icon.grey",
-		"ui.file-icon.orange",
-		"ui.file-icon.purple",
-		"ui.file-icon.red",
-		"ui.file-icon.yellow",
-	}
 )
 
 func pickerItemFileIcon(
 	e *view.Editor, p *Picker, item *PickerItem,
-) pickerFileMarker {
-	if !e.Options().NerdFonts || item.Section {
-		return pickerFileMarker{}
-	}
-	if pickerFileIconColumn(p, item) < 0 {
-		return pickerFileMarker{}
+) (pickerFileMarker, int) {
+	column := pickerFileIconColumn(p, item)
+	if !e.Options().NerdFonts || item.Section || column < 0 {
+		return pickerFileMarker{}, column
 	}
 	if item.Directory {
-		return pickerDefaultDirectoryIcon
+		return pickerDefaultDirectoryIcon, column
 	}
 	path := item.Location.Target.Path
-	return p.fileIcon(path, e.Document(item.Location.Target.ID))
+	return p.fileIcon(path, e.Document(item.Location.Target.ID)), column
 }
 
 func (p *Picker) fileIcon(path string, doc *view.Document) pickerFileMarker {
@@ -113,7 +100,7 @@ func (p *Picker) fileIcon(path string, doc *view.Document) pickerFileMarker {
 }
 
 func pickerFileIconColumn(p *Picker, item *PickerItem) int {
-	if len(item.Columns) <= 1 {
+	if len(p.source.Columns()) <= 1 {
 		return 0
 	}
 	for i := min(p.source.MatchColumn(), len(item.Columns)) - 1; i >= 0; i-- {
@@ -127,8 +114,7 @@ func pickerFileIconColumn(p *Picker, item *PickerItem) int {
 func pickerFileIconStyle(
 	th *theme.Theme, base tui.Style, color pickerFileColor,
 ) tui.Style {
-	scope := pickerFileColorScopes[color]
-	if style, ok := th.TryGet(scope); ok {
+	if style, ok := th.TryGet(string(color)); ok {
 		return applyAccentStyle(styleOverlay{base: base, overlay: style})
 	}
 	return base

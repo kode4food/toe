@@ -142,8 +142,7 @@ func writePickerItem(
 	cx2 := at.X + pickerMarkerW
 	cols := p.source.Columns()
 	matchColumn := p.source.MatchColumn()
-	fileIcon := pickerItemFileIcon(cx.Editor, p, m.item)
-	iconColumn := pickerFileIconColumn(p, m.item)
+	fileIcon, iconColumn := pickerItemFileIcon(cx.Editor, p, m.item)
 
 	sec, secFrom := pickerSecondary(cx, base, m.item)
 	if len(cols) <= 1 {
@@ -179,11 +178,9 @@ func writePickerItem(
 			if i < len(m.item.Columns) {
 				val = m.item.Columns[i]
 			}
-			if i == iconColumn {
-				val = fileIcon.glyph
-			}
 			colBase := pickerColumnBase(cx, base, m.item.StyleScopes, i)
 			if i == iconColumn {
+				val = fileIcon.glyph
 				colBase = pickerFileIconStyle(cx.Theme(), base, fileIcon.color)
 			}
 			if i == matchColumn {

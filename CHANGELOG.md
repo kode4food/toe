@@ -22,6 +22,10 @@ Notable changes to toe.
 
 - Added locale-aware plural forms for counted messages
 
+### Pickers
+
+- Added colored Nerd Font file and directory icons to pickers and previews
+
 ## 0.2.4
 
 ### Pickers

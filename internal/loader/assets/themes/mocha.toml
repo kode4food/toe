@@ -97,6 +97,16 @@
 "ui.text.inactive" = { fg = "overlay1" }
 "ui.text.directory" = { fg = "blue" }
 
+"ui.file-icon.azure" = "sapphire"
+"ui.file-icon.blue" = "blue"
+"ui.file-icon.cyan" = "teal"
+"ui.file-icon.green" = "green"
+"ui.file-icon.grey" = "text"
+"ui.file-icon.orange" = "peach"
+"ui.file-icon.purple" = "mauve"
+"ui.file-icon.red" = "red"
+"ui.file-icon.yellow" = "yellow"
+
 "ui.virtual" = "overlay0"
 "ui.virtual.indent-guide" = "surface0"
 "ui.virtual.inlay-hint" = { fg = "surface1", bg = "mantle" }

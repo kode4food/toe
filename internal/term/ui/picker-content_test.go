@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 
@@ -44,15 +45,53 @@ func TestPickerRender(t *testing.T) {
 
 		m = resize(m, 100, 30)
 		m = sendKey(m, 'p')
-		out := stripANSI(m.View().Content)
+		content := m.View().Content
+		out := stripANSI(content)
 
 		assert.Contains(t, out, "┬")
 		assert.Contains(t, out, "┤")
 		assert.NotContains(t, out, "┼")
-		assert.Contains(t, out, " > main.go")
+		assert.Contains(t, out, " > \U000f07d3 main.go")
+		row := rawLineContaining(t, content, "main.go")
+		assert.Contains(t, row, "\x1b[38;2;116;199;236m")
 		assert.NotContains(t, out, "►")
 		assert.Contains(t, out, "main.go")
 		assertPromptCountRightPadding(t, out)
+	})
+
+	t.Run("file icons need Nerd Fonts", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+
+		e := view.NewEditor(tmp)
+		e.Options().NerdFonts = false
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker",
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, " > main.go")
+		assert.NotContains(t, out, "\U000f07d3")
+	})
+
+	t.Run("uses Mini icon catalog", func(t *testing.T) {
+		m := feedPickerModel(t, []string{
+			"README.md", "image.png", "component.tsx",
+		})
+		m = sendKeyAndFeed(m, 'p')
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "\uf4ed README.md")
+		assert.Contains(t, out, "\U000f0e2d image.png")
+		assert.Contains(t, out, "\ue7ba component.tsx")
 	})
 
 	t.Run("file picker empty preview pane", func(t *testing.T) {
@@ -90,7 +129,31 @@ func TestPickerRender(t *testing.T) {
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "┬")
-		assert.Contains(t, out, "[scratch]")
+		assert.Contains(t, out, "\U000f0214 [scratch]")
+	})
+
+	t.Run("buffer status stays separate", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		rope := doc.Text()
+		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(core.Span{From: 0, To: 0}, "// changed\n"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t,
+			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
+		)
+
+		m := openBufferPicker(t, e)
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "\uf448 \U000f07d3 main.go")
 	})
 
 	t.Run("preview follows live cursor", func(t *testing.T) {

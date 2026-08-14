@@ -23,9 +23,10 @@ type (
 	Picker struct {
 		source PickerSource
 
-		list    listState
-		preview previewState
-		load    loadState
+		list      listState
+		preview   previewState
+		load      loadState
+		fileIcons map[string]pickerFileMarker
 	}
 
 	listState struct {
@@ -141,8 +142,9 @@ type (
 		SecFrom     int
 		SortKey     string
 
-		Group   int
-		Section bool
+		Group     int
+		Section   bool
+		Directory bool
 
 		Preview  PreviewRenderer
 		Location PickerLocation

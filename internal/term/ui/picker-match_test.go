@@ -42,11 +42,11 @@ func TestPickerMatch(t *testing.T) {
 
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, " > file-12.go")
+		assert.Contains(t, out, " > \U000f07d3 file-12.go")
 
 		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
 		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, " > file-00.go")
+		assert.Contains(t, out, " > \U000f07d3 file-00.go")
 	})
 
 	t.Run("buffer picker filters by field", func(t *testing.T) {

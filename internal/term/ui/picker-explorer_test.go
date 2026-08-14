@@ -23,8 +23,8 @@ func TestFileExplorer(t *testing.T) {
 		))
 		out := stripANSI(explorerModel(t, dir).View().Content)
 		assert.Contains(t, out, "alpha.txt")
-		assert.Contains(t, out, "sub/")
-		assert.Contains(t, out, "../")
+		assert.Contains(t, out, "\U000f024b sub/")
+		assert.Contains(t, out, "\U000f024b ../")
 	})
 
 	t.Run("accepts a file and opens it", func(t *testing.T) {
@@ -58,15 +58,52 @@ func TestFileExplorer(t *testing.T) {
 	t.Run("dir preview lists contents", func(t *testing.T) {
 		dir := t.TempDir()
 		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
+		assert.NoError(t, os.Mkdir(
+			filepath.Join(dir, "sub", "nested"), 0o755,
+		))
 		assert.NoError(t, os.WriteFile(
-			filepath.Join(dir, "sub", "inner.txt"), []byte("y"), 0o644,
+			filepath.Join(dir, "sub", "inner.go"), []byte("package p\n"), 0o644,
 		))
 		m := explorerModel(t, dir)
 		for _, ch := range "sub" {
 			m = sendKey(m, ch)
 		}
 		// "sub/" is now selected; its preview pane lists the directory contents
-		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+		assert.Contains(t, stripANSI(m.View().Content), "\U000f07d3 inner.go")
+		assert.Contains(t, stripANSI(m.View().Content), "\U000f024b nested/")
+	})
+
+	t.Run("latte dir preview colors files", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
+		dir := t.TempDir()
+		sub := filepath.Join(dir, "sub")
+		assert.NoError(t, os.Mkdir(sub, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(sub, "inner.go"), []byte("package p\n"), 0o644,
+		))
+		e := view.NewEditor(dir)
+		e.Options().Theme = "latte"
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "explorer",
+			m.PickerAction(func(e *view.Editor) *ui.Picker {
+				return files.NewFileExplorer(
+					e, files.DefaultFileExplorerOptions(),
+				)
+			}),
+			[]command.KeyEvent{char('e')},
+		)
+		m = resize(m, 100, 30)
+		m = sendKey(m, 'e')
+		for _, ch := range "sub" {
+			m = sendKey(m, ch)
+		}
+
+		row := rawLineContaining(t, m.View().Content, "inner.go")
+		assert.Contains(t, stripANSI(row), "\U000f07d3 inner.go")
+		assert.Equal(t, "38;2;32;159;181", styledRuneStyles(row)['󰟓'].fg)
+		assert.Equal(t, "38;2;76;79;105", styledRuneStyles(row)['i'].fg)
 	})
 
 	t.Run("navigates into a directory", func(t *testing.T) {

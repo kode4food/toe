@@ -37,6 +37,7 @@ type (
 	}
 
 	previewDirEntry struct {
+		path string
 		rows []previewDirRow
 	}
 
@@ -115,7 +116,7 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 		return noPreviewEntry("<File not found>")
 	}
 	if info.IsDir() {
-		return &previewDirEntry{rows: previewDirRows(path)}
+		return &previewDirEntry{path: path, rows: previewDirRows(path)}
 	}
 	if info.Size() > PickerMaxPreview {
 		if !isImagePath(path) && pathLooksBinary(path) {

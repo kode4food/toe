@@ -50,6 +50,9 @@ func (s *pickerColumnSizing) measure(p *Picker, cols []string) {
 				continue
 			}
 			width := runewidth.StringWidth(m.item.Columns[i])
+			if i == pickerFileIconColumn(p, m.item) {
+				width = max(width, 1)
+			}
 			s.maximum[i] = max(s.maximum[i], width)
 			measured = append(measured, width)
 		}

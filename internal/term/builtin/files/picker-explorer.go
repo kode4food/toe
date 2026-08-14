@@ -1,7 +1,6 @@
 package files
 
 import (
-	"cmp"
 	"os"
 	"path/filepath"
 	"slices"
@@ -24,11 +23,6 @@ type (
 		ui.PickerBase
 		root string
 		opts FileExplorerOptions
-	}
-
-	explorerEntry struct {
-		path  string
-		isDir bool
 	}
 )
 
@@ -87,11 +81,11 @@ func (f *fileExplorerSource) Accept(
 func (f *fileExplorerSource) Navigate(
 	_ *view.Editor, item *ui.PickerItem,
 ) ui.PickerFunc {
-	entry, ok := item.Payload.(explorerEntry)
-	if !ok || !entry.isDir {
+	path := item.Location.Target.Path
+	if !item.Directory || path == "" {
 		return nil
 	}
-	dir, _ := filepath.Abs(entry.path)
+	dir, _ := filepath.Abs(path)
 	return func(e *view.Editor) *ui.Picker {
 		return ui.NewPicker(e, newFileExplorerSource(dir, f.opts))
 	}
@@ -102,7 +96,7 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 	if err != nil {
 		return nil
 	}
-	var dirs, files []explorerEntry
+	var dirs, files []string
 	for _, entry := range entries {
 		full := filepath.Join(f.root, entry.Name())
 		rel := filepath.ToSlash(entry.Name())
@@ -123,20 +117,13 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 			if f.opts.FlattenDirs {
 				full = flattenExplorerDir(full, f.opts.FollowSymlinks)
 			}
-			dirs = append(dirs, explorerEntry{
-				path:  full,
-				isDir: true,
-			})
+			dirs = append(dirs, full)
 		} else {
-			files = append(files, explorerEntry{path: full})
+			files = append(files, full)
 		}
 	}
-	slices.SortFunc(dirs, func(a, b explorerEntry) int {
-		return cmp.Compare(a.path, b.path)
-	})
-	slices.SortFunc(files, func(a, b explorerEntry) int {
-		return cmp.Compare(a.path, b.path)
-	})
+	slices.Sort(dirs)
+	slices.Sort(files)
 
 	var items []*ui.PickerItem
 	var slab ui.PickerItemSlab
@@ -148,19 +135,19 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 			path:    parent,
 		}))
 	}
-	for _, e := range dirs {
-		rel, err := filepath.Rel(f.root, e.path)
+	for _, path := range dirs {
+		rel, err := filepath.Rel(f.root, path)
 		if err != nil {
-			rel = filepath.Base(e.path)
+			rel = filepath.Base(path)
 		}
 		items = append(items, f.makeDirItem(makeDirItemArgs{
 			slab:    &slab,
 			display: filepath.ToSlash(rel) + "/",
-			path:    e.path,
+			path:    path,
 		}))
 	}
-	for _, e := range files {
-		items = append(items, f.makeFileItem(&slab, e.path))
+	for _, path := range files {
+		items = append(items, f.makeFileItem(&slab, path))
 	}
 	return items
 }
@@ -179,11 +166,8 @@ func (f *fileExplorerSource) makeDirItem(args makeDirItemArgs) *ui.PickerItem {
 		Display:     display,
 		SortKey:     display,
 		StyleScopes: []string{explorerDirScope},
-		Payload: explorerEntry{
-			path:  path,
-			isDir: true,
-		},
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+		Directory:   true,
+		Location:    ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	})
 }
 

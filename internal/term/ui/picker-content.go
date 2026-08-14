@@ -142,10 +142,21 @@ func writePickerItem(
 	cx2 := at.X + pickerMarkerW
 	cols := p.source.Columns()
 	matchColumn := p.source.MatchColumn()
+	fileIcon := pickerItemFileIcon(cx.Editor, p, m.item)
+	iconColumn := pickerFileIconColumn(p, m.item)
 
 	sec, secFrom := pickerSecondary(cx, base, m.item)
 	if len(cols) <= 1 {
 		itemBase := pickerColumnBase(cx, base, m.item.StyleScopes, 0)
+		if fileIcon.glyph != "" {
+			iconStyle := pickerFileIconStyle(cx.Theme(), base, fileIcon.color)
+			buf.SetString(
+				geom.Point{X: cx2, Y: at.Y}, fileIcon.glyph, iconStyle,
+			)
+			iconWidth := runewidth.StringWidth(fileIcon.glyph) + 1
+			cx2 += iconWidth
+			cellW = max(cellW-iconWidth, 0)
+		}
 		writeMatchedItem(writeMatchedItemArgs{
 			buf:           buf,
 			at:            geom.Point{X: cx2, Y: at.Y},
@@ -168,7 +179,13 @@ func writePickerItem(
 			if i < len(m.item.Columns) {
 				val = m.item.Columns[i]
 			}
+			if i == iconColumn {
+				val = fileIcon.glyph
+			}
 			colBase := pickerColumnBase(cx, base, m.item.StyleScopes, i)
+			if i == iconColumn {
+				colBase = pickerFileIconStyle(cx.Theme(), base, fileIcon.color)
+			}
 			if i == matchColumn {
 				writeMatchedItem(writeMatchedItemArgs{
 					buf:           buf,

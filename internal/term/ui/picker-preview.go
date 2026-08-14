@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
@@ -201,7 +202,7 @@ func (p *previewDirEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
 	popupBg := ctx.theme.Get("ui.popup").BgColor()
-	fillTUI := tui.Style{}.Bg(popupBg)
+	fillTUI := ctx.theme.Get("ui.popup")
 	dirTUI := tui.Style{}.
 		Fg(ctx.theme.Get("ui.text.directory").FgColor()).
 		Bg(popupBg)
@@ -215,9 +216,23 @@ func (p *previewDirEntry) renderInto(
 		}
 		rowAt := at.Add(geom.Point{Y: i})
 		buf.FillRange(rowAt, ctx.size.Width, fillTUI)
+		textAt := rowAt
+		width := ctx.size.Width
+		if ctx.editor.Options().NerdFonts {
+			icon := pickerDefaultDirectoryIcon
+			if !entry.dir {
+				path := filepath.Join(p.path, entry.name)
+				icon = ctx.picker.fileIcon(path, nil)
+			}
+			iconTUI := pickerFileIconStyle(ctx.theme, fillTUI, icon.color)
+			buf.SetString(rowAt, icon.glyph, iconTUI)
+			iconWidth := runewidth.StringWidth(icon.glyph) + 1
+			textAt.X += iconWidth
+			width = max(width-iconWidth, 0)
+		}
 		buf.SetString(
-			rowAt,
-			runewidth.Truncate(entry.name, ctx.size.Width, ""),
+			textAt,
+			runewidth.Truncate(entry.name, width, ""),
 			st,
 		)
 	}

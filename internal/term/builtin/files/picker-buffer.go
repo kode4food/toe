@@ -40,9 +40,9 @@ func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
 		PickerBase: ui.PickerBase{
 			Ident:       "open-buffer",
 			Label:       "Buffers",
-			Cols:        []string{"", ""},
-			MatchCol:    1,
-			Proportions: []int{0, 1},
+			Cols:        []string{"", "", ""},
+			MatchCol:    2,
+			Proportions: []int{0, 0, 1},
 		},
 	})
 	if opts.StartPosition == PickerStartPrevious && p.MatchCount() > 1 {
@@ -95,7 +95,7 @@ func (b *bufferPickerSource) Load(e *view.Editor) ui.PickerLoad {
 		name := doc.RelativeName(e.Cwd())
 		lbl, sec := ui.PickerNamePath(name)
 		items = append(items, slab.Add(ui.PickerItem{
-			Columns: []string{flags, lbl},
+			Columns: []string{flags, "", lbl},
 			SortKey: name,
 			SecFrom: sec,
 			Location: ui.PickerLocation{

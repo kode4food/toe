@@ -170,15 +170,22 @@ func RequiredArg() command.Signature {
 // RegisterHints offers the registers currently holding a value
 func RegisterHints(e *view.Editor) []command.KeyHint {
 	regs := e.Registers()
-	names := make([]rune, 0, len(regs))
+	names := make([]rune, 0, len(regs)+1)
 	for name := range regs {
 		names = append(names, name)
 	}
+	if _, ok := regs[view.RegisterPrimaryClipboard]; !ok {
+		names = append(names, view.RegisterPrimaryClipboard)
+	}
 	slices.Sort(names)
+	clip, _ := e.FirstRegister(view.RegisterClipboard)
 	out := make([]command.KeyHint, 0, len(names))
 	for _, name := range names {
-		value, ok := regs.First(name)
-		if !ok {
+		value, ok := e.FirstRegister(name)
+		if !ok || value == "" {
+			continue
+		}
+		if name == view.RegisterPrimaryClipboard && value == clip {
 			continue
 		}
 		out = append(out, command.KeyHint{

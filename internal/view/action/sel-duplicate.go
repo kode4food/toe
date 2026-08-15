@@ -28,7 +28,7 @@ func copySelectionOnLine(e *view.Editor, forward bool) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	n := max(e.Count(), 1)
+	n := e.CountOr(1)
 	nLines := text.LenLines()
 
 	primary := sel.PrimaryIndex()

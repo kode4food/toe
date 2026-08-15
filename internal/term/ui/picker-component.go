@@ -16,6 +16,7 @@ type PickerComponent struct {
 	listBounds    geom.Area
 	previewBounds geom.Area
 	splitBounds   geom.Area
+	caret         geom.Point
 	dragSplit     bool
 }
 
@@ -95,9 +96,12 @@ func (p *PickerComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 
 // Cursor returns the caret position within the filter input
 func (p *PickerComponent) Cursor(
-	*Context, geom.Size,
+	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
-	return tea.Cursor{}, false
+	if p.bounds.Empty() {
+		return tea.Cursor{}, false
+	}
+	return insertCursorAt(cx, p.caret.Add(p.bounds.Point))
 }
 
 func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {

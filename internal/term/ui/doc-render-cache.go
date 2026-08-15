@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
@@ -23,8 +24,9 @@ type (
 
 		viewRowMaps map[view.Id][]viewRowEntry
 
-		lastInfoTitle string
-		lastInfoItems []command.KeyHint
+		lastInfoKey infoPopupKey
+		inputCaret  geom.Point
+		infoBounds  geom.Area
 
 		lastOptionsGen int
 
@@ -53,6 +55,14 @@ type (
 	diagPopupKey struct {
 		severity view.DiagnosticSeverity
 		text     string
+	}
+
+	// infoPopupKey identifies the pending-key popup's rendered content, so a
+	// change (including disappearing) can be detected across frames
+	infoPopupKey struct {
+		head  string
+		title string
+		items []command.KeyHint
 	}
 
 	viewRowEntry struct {

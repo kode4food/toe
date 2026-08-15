@@ -314,6 +314,104 @@ func TestIsTypable(t *testing.T) {
 	})
 }
 
+func TestPopOnBackspace(t *testing.T) {
+	t.Run("pops plain backspace", func(t *testing.T) {
+		called := false
+		run := command.PopOnBackspace(func(
+			*view.Editor, command.KeyEvent,
+		) (command.Continuation, command.Transition) {
+			called = true
+			return nil, command.ContinuationDone
+		})
+
+		next, got := run(nil, special(command.Backspace))
+
+		assert.Nil(t, next)
+		assert.Equal(t, command.ContinuationPop, got)
+		assert.False(t, called)
+	})
+
+	t.Run("passes modified backspace", func(t *testing.T) {
+		called := false
+		run := command.PopOnBackspace(func(
+			*view.Editor, command.KeyEvent,
+		) (command.Continuation, command.Transition) {
+			called = true
+			return nil, command.ContinuationDone
+		})
+
+		_, got := run(
+			nil, special(command.Backspace).WithMods(command.ModCtrl),
+		)
+
+		assert.Equal(t, command.ContinuationDone, got)
+		assert.True(t, called)
+	})
+}
+
+func TestReadChar(t *testing.T) {
+	t.Run("pops on backspace", func(t *testing.T) {
+		run := command.ReadChar(func(
+			*view.Editor, rune,
+		) command.Continuation {
+			return nil
+		})
+
+		_, got := run(nil, special(command.Backspace))
+
+		assert.Equal(t, command.ContinuationPop, got)
+	})
+
+	t.Run("waits for plain character", func(t *testing.T) {
+		called := false
+		run := command.ReadChar(func(
+			*view.Editor, rune,
+		) command.Continuation {
+			called = true
+			return nil
+		})
+
+		_, got := run(nil, char('x').WithMods(command.ModCtrl))
+
+		assert.Equal(t, command.ContinuationStay, got)
+		assert.False(t, called)
+	})
+
+	t.Run("finishes on plain character", func(t *testing.T) {
+		var gotChar rune
+		run := command.ReadChar(func(
+			_ *view.Editor, ch rune,
+		) command.Continuation {
+			gotChar = ch
+			return nil
+		})
+
+		next, got := run(nil, char('x'))
+
+		assert.Nil(t, next)
+		assert.Equal(t, command.ContinuationDone, got)
+		assert.Equal(t, 'x', gotChar)
+	})
+
+	t.Run("pushes returned continuation", func(t *testing.T) {
+		want := command.Continuation(func(
+			*view.Editor, command.KeyEvent,
+		) (command.Continuation, command.Transition) {
+			return nil, command.ContinuationDone
+		})
+		run := command.ReadChar(func(
+			*view.Editor, rune,
+		) command.Continuation {
+			return want
+		})
+
+		next, got := run(nil, char('x'))
+
+		assert.NotNil(t, next)
+		assert.Equal(t, command.ContinuationPush, got)
+	})
+}
+
 func TestKeyBind(t *testing.T) {
 	called := false
 	km := command.NewKeymaps()
@@ -453,7 +551,7 @@ func TestConditionalBinding(t *testing.T) {
 			Seqs:   [][]command.KeyEvent{{char(' '), char('b')}},
 		}))
 		_, hints := km.PendingHints(
-			nil, view.ModeNormal, []command.KeyEvent{char(' ')},
+			nil, view.ModeNormal, []command.KeyEvent{char(' ')}, false,
 		)
 		labels := make([]string, len(hints))
 		for i, h := range hints {
@@ -480,10 +578,9 @@ func TestLabelNode(t *testing.T) {
 	t.Run("sets label on prefix node", func(t *testing.T) {
 		km.LabelNode(view.ModeNormal, command.KeyBinding{{char('g')}}, "Goto")
 		title, hints := km.PendingHints(
-			nil, view.ModeNormal, []command.KeyEvent{
-				char('g'),
-			},
+			nil, view.ModeNormal, []command.KeyEvent{char('g')}, false,
 		)
+
 		assert.Equal(t, "Goto", title)
 		assert.Equal(t, 1, len(hints))
 	})
@@ -491,10 +588,9 @@ func TestLabelNode(t *testing.T) {
 	t.Run("LabelNode on unknown mode is no-op", func(t *testing.T) {
 		km.LabelNode(view.ModeBinary, command.KeyBinding{{char('g')}}, "X")
 		title, hints := km.PendingHints(
-			nil, view.ModeBinary, []command.KeyEvent{
-				char('g'),
-			},
+			nil, view.ModeBinary, []command.KeyEvent{char('g')}, false,
 		)
+
 		assert.Equal(t, "", title)
 		assert.Nil(t, hints)
 	})
@@ -503,7 +599,8 @@ func TestLabelNode(t *testing.T) {
 		km.LabelNode(view.ModeNormal, command.KeyBinding{{char('z')}}, "Z")
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('z'),
-		})
+		}, false)
+
 		assert.Nil(t, hints)
 	})
 }
@@ -548,45 +645,49 @@ func TestPendingHints(t *testing.T) {
 	t.Run("returns hints for prefix", func(t *testing.T) {
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'),
-		})
+		}, false)
+
 		assert.Equal(t, 3, len(hints))
 	})
 
 	t.Run("displays shifted uppercase char", func(t *testing.T) {
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'),
-		})
+		}, false)
+
 		assert.Contains(t, hints, command.KeyHint{Key: "F", Label: "F"})
 	})
 
 	t.Run("omits undocumented commands", func(t *testing.T) {
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'),
-		})
+		}, false)
+
 		assert.NotContains(t, hints, command.KeyHint{Key: "c"})
 	})
 
 	t.Run("returns empty for unknown mode", func(t *testing.T) {
 		title, hints := km.PendingHints(
-			nil, view.ModeBinary, []command.KeyEvent{
-				char('g'),
-			},
+			nil, view.ModeBinary, []command.KeyEvent{char('g')}, false,
 		)
+
 		assert.Equal(t, "", title)
 		assert.Nil(t, hints)
 	})
 
-	t.Run("returns empty at leaf node", func(t *testing.T) {
+	t.Run("returns no child hints at leaf", func(t *testing.T) {
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('g'), char('a'),
-		})
+		}, false)
+
 		assert.Nil(t, hints)
 	})
 
 	t.Run("returns empty for unknown key in mode", func(t *testing.T) {
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{
 			char('z'),
-		})
+		}, false)
+
 		assert.Nil(t, hints)
 	})
 }

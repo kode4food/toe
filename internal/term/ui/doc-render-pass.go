@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -22,6 +22,19 @@ type renderPass struct {
 	context *Context
 	size    geom.Size
 }
+
+const countArrow = "\u2192" // '→' - rightwards arrow
+
+const (
+	infoPopupChrome    = 3 // top border, breadcrumb, bottom border
+	infoPopupRule      = 1 // divider between the breadcrumb and the hints
+	infoPopupTitlePad  = 2 // spaces flanking the title on the top border
+	infoPopupKeepClear = 2 // statusline and cmdline the popup centers above
+	inputCaretGap      = 1 // space between the breadcrumb and its caret
+)
+
+// marks a hint that opens another menu; a command's row is blank here
+const hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
 
 var splitSepIntersectionChars = [...]string{
 	borderH, borderH, borderH, borderV,
@@ -65,11 +78,15 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 }
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
+	opts := r.context.Editor.Options()
+	// the popup is taking input, so the caret belongs at its breadcrumb
+	if r.overlayHead() != "" {
+		return insertCursorAt(r.context, r.editor.cache.inputCaret)
+	}
 	p := r.context.Editor.Tree().Get(r.context.Editor.Tree().Focus())
 	if pc, ok := p.(PaneCursor); ok {
 		return pc.Cursor(r.context)
 	}
-	opts := r.context.Editor.Options()
 	kind := opts.CursorShapeForMode(r.context.Editor.Mode())
 	switch kind {
 	case view.CursorKindHidden:
@@ -105,7 +122,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	a := v.Area()
 	opts := r.context.Editor.Options()
 	scrolloff := opts.ScrollOff
-	contentH := max(a.Height-1, 0)
+	contentH := v.ContentHeight()
 	editorX := a.X
 	editorW := a.Width
 
@@ -175,10 +192,8 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 		force = true
 	}
 
-	if cache.lastInfoTitle != r.editor.keys.infoTitle ||
-		!slices.Equal(cache.lastInfoItems, r.editor.keys.infoItems) {
-		cache.lastInfoTitle = r.editor.keys.infoTitle
-		cache.lastInfoItems = r.editor.keys.infoItems
+	if info := r.currentInfoPopupKey(); !cache.lastInfoKey.equals(info) {
+		cache.lastInfoKey = info
 		force = true
 	}
 
@@ -365,18 +380,22 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 
 	r.renderDiagnosticPopup(buf)
 
-	if r.editor.keys.infoTitle != "" || len(r.editor.keys.infoItems) > 0 {
-		r.renderInfoOverlay(buf)
+	if r.overlayHead() == "" {
+		r.editor.cache.infoBounds = geom.Area{}
+		return
 	}
+	r.renderInfoOverlay(buf)
 }
 
 func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	items := r.editor.keys.infoItems
-	title := r.editor.keys.infoTitle
 	th := r.context.Theme()
 
 	popupSt := th.Get("ui.popup")
 	popupTUI := popupSt
+
+	title := r.editor.keys.infoTitle
+	head := r.overlayHead()
 
 	keyW := 0
 	for _, item := range items {
@@ -385,14 +404,21 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 		}
 	}
 	rawLines := make([]string, len(items))
-	bodyW := 0
+	caretX := runewidth.StringWidth(head) + inputCaretGap
+	bodyW := caretX + 1
 	for i, item := range items {
-		rawLines[i] = fmt.Sprintf("%-*s  %s", keyW, item.Key, item.Label)
+		lead := " "
+		if item.Prefix {
+			lead = hintPrefixMark
+		}
+		// pad by display width; a wide glyph is one rune but two columns
+		pad := strings.Repeat(" ", keyW-runewidth.StringWidth(item.Key))
+		rawLines[i] = item.Key + pad + " " + lead + " " + item.Label
 		if w := runewidth.StringWidth(rawLines[i]); w > bodyW {
 			bodyW = w
 		}
 	}
-	if tw := runewidth.StringWidth(title); tw > bodyW {
+	if tw := runewidth.StringWidth(title) + infoPopupTitlePad; tw > bodyW {
 		bodyW = tw
 	}
 
@@ -402,20 +428,83 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 		padX:         1,
 	}
 	boxW := bodyW + 2 + 2*pop.padX
-	boxH := len(rawLines) + 2
-	y := max(r.size.Height-boxH-1, 0)
+	within := geom.Size{
+		Width:  r.size.Width,
+		Height: max(r.size.Height-infoPopupKeepClear, 0),
+	}
+	rows := max(within.Height-infoPopupChrome-infoPopupRule, 0)
+	if len(rawLines) > rows {
+		rawLines = rawLines[:rows]
+	}
+	boxH := infoPopupChrome
+	if len(rawLines) > 0 {
+		boxH += len(rawLines) + infoPopupRule
+	}
 
-	area := pop.drawInto(buf, geom.Area{
-		Point: geom.Point{X: 0, Y: y},
-		Size:  geom.Size{Width: boxW, Height: boxH},
-	})
+	size := geom.Size{Width: boxW, Height: boxH}
+	origin := geom.Area{Size: within}.Center(size)
+	box := geom.Area{Point: origin, Size: size}
+	r.editor.cache.infoBounds = box
+	area := pop.drawInto(buf, box)
 
 	if title != "" {
-		buf.SetString(geom.Point{X: 1, Y: y}, " "+title+" ", popupTUI)
+		buf.SetString(
+			geom.Point{X: origin.X + 1, Y: origin.Y}, " "+title+" ", popupTUI,
+		)
 	}
+	buf.SetString(area.Point, head, popupTUI)
+	r.editor.cache.inputCaret = area.Point.Add(geom.Point{X: caretX})
+
+	if len(rawLines) == 0 {
+		return
+	}
+	rule := borderML + strings.Repeat(borderH, area.Width+2*pop.padX) + borderMR
+	buf.SetString(geom.Point{
+		X: area.X - 1 - pop.padX,
+		Y: area.Y + 1,
+	}, rule, popupSt)
 	for i, raw := range rawLines {
-		buf.SetString(area.Point.Add(geom.Point{Y: i}), raw, popupTUI)
+		buf.SetString(area.Point.Add(geom.Point{Y: i + 2}), raw, popupTUI)
 	}
+}
+
+func (r *renderPass) currentInfoPopupKey() infoPopupKey {
+	return infoPopupKey{
+		head:  r.overlayHead(),
+		title: r.editor.keys.infoTitle,
+		items: r.editor.keys.infoItems,
+	}
+}
+
+func (k infoPopupKey) equals(o infoPopupKey) bool {
+	return k.head == o.head && k.title == o.title &&
+		slices.Equal(k.items, o.items)
+}
+
+// overlayHead is the popup's top row; empty means no popup
+func (r *renderPass) overlayHead() string {
+	keys := r.editor.keys.path
+	if len(keys) == 0 && r.editor.keys.count == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for i, k := range keys {
+		if i > 0 {
+			sb.WriteString(" ")
+		}
+		sb.WriteString(k.String())
+	}
+	return withCount(sb.String(), r.editor.keys.count)
+}
+
+func withCount(keys string, count int) string {
+	if count == 0 {
+		return keys
+	}
+	if keys == "" {
+		return strconv.Itoa(count)
+	}
+	return keys + " " + countArrow + " " + strconv.Itoa(count)
 }
 
 func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {

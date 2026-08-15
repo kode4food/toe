@@ -7,12 +7,12 @@ import (
 
 // ScrollUp scrolls the view up by count lines without moving the cursor
 func ScrollUp(e *view.Editor) {
-	scrollView(e, max(e.Count(), 1), true)
+	scrollView(e, e.CountOr(1), true)
 }
 
 // ScrollDown scrolls the view down by count lines without moving the cursor
 func ScrollDown(e *view.Editor) {
-	scrollView(e, max(e.Count(), 1), false)
+	scrollView(e, e.CountOr(1), false)
 }
 
 // PageUp moves the cursor and scrolls the view up by one page
@@ -203,25 +203,21 @@ func gotoWindowImpl(e *view.Editor, align int) {
 	if err != nil {
 		anchorLine = 0
 	}
-	height := e.ViewHeight()
+	height := v.ContentHeight()
 	if height <= 0 {
-		height = 1
+		height = max(e.ViewHeight(), 1)
 	}
-	scrolloff := e.Options().ScrollOff
-	offset := max(e.Count()-1, 0)
-	e.ResetCount()
 	lastLine := min(anchorLine+height-1, text.LenLines()-1)
 	var targetLine int
 	switch align {
 	case 0: // top
-		targetLine = anchorLine + scrolloff + offset
+		targetLine = anchorLine + e.CountOr(1) - 1
 	case 1: // center
 		targetLine = anchorLine + height/2
 	default: // bottom
-		targetLine = lastLine - scrolloff - offset
+		targetLine = lastLine - e.CountOr(1) + 1
 	}
-	targetLine = max(targetLine, anchorLine+scrolloff)
-	targetLine = min(targetLine, lastLine-scrolloff)
+	targetLine = max(anchorLine, min(targetLine, lastLine))
 	targetLine = max(0, min(targetLine, text.LenLines()-1))
 	pos, err := text.LineToChar(targetLine)
 	if err != nil {

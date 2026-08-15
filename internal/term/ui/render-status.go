@@ -82,12 +82,20 @@ const commandLineRightPad = 1
 func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 	msg := r.editor.keys.message
 	st := r.cmdlineStyle(msg != nil && msg.error)
-	badge := r.editor.macroElems(r.context, st)
+	src := statusElemCtx{
+		baseTUI: st,
+		reg:     r.context.Editor.ActiveRegister(),
+	}
+	var right []statusElem
+	if reg := statusElemRegister(&src); reg.text != "" {
+		right = append(right, reg)
+	}
+	right = append(right, r.editor.macroElems(r.context, st)...)
 	row := statusRow{
 		at:        geom.Point{X: 0, Y: y},
 		width:     r.size.Width,
 		baseStyle: st,
-		right:     badge,
+		right:     right,
 	}
 	width := max(row.contentWidth()-commandLineRightPad, 0)
 	text := runewidth.Truncate(r.cmdlineText(), width, "")
@@ -98,12 +106,6 @@ func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
 }
 
 func (r *renderPass) cmdlineText() string {
-	if hint := r.editor.keys.hint; hint != "" {
-		return hint
-	}
-	if status := r.editor.keys.status; status != "" {
-		return status
-	}
 	if msg := r.editor.keys.message; msg != nil {
 		return msg.value
 	}
@@ -115,8 +117,7 @@ func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
 	if errorMsg {
 		return th.Get("error")
 	}
-	if r.editor.keys.hint != "" || r.editor.keys.status != "" ||
-		r.editor.macroSlot.recording {
+	if r.editor.macroSlot.recording {
 		return th.Get("ui.statusline").Bg(promptBackground(th))
 	}
 	return th.Get("ui.statusline")
@@ -198,18 +199,8 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		spinFrame: r.editor.spinner.phase,
 	}
 
-	collectElems := func(items []view.StatusLineItem) []statusElem {
-		out := make([]statusElem, 0, len(items))
-		for _, e := range items {
-			if se := src.elem(e); se.text != "" {
-				out = append(out, se)
-			}
-		}
-		return out
-	}
-
-	left := collectElems(opts.StatusLineLeft())
-	right := collectElems(opts.StatusLineRight())
+	left := src.collect(opts.StatusLineLeft())
+	right := src.collect(opts.StatusLineRight())
 	right = r.withMaximizedStatus(right)
 	statusRow{
 		at:        args.at,
@@ -231,6 +222,21 @@ func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
 			r.context.Theme().Get("ui.statusline.maximized"),
 		),
 	)
+}
+
+func (s *statusElemCtx) collect(items []view.StatusLineItem) []statusElem {
+	var out []statusElem
+	for _, item := range items {
+		se := s.elem(item)
+		if se.text == "" {
+			continue
+		}
+		if out == nil {
+			out = make([]statusElem, 0, len(items))
+		}
+		out = append(out, se)
+	}
+	return out
 }
 
 func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {

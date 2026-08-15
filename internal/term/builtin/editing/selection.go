@@ -3,6 +3,8 @@ package editing
 import (
 	"embed"
 
+	"github.com/kode4food/toe/internal/core"
+
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin/kit"
 	"github.com/kode4food/toe/internal/term/command"
@@ -82,6 +84,11 @@ var (
 		{char: '\'', label: "single quotes"},
 		{char: '`', label: "backticks"},
 		{char: '|', label: "pipes"},
+		{char: '\u2018', label: "single curly quotes"},   // '‘'
+		{char: '\u201c', label: "double curly quotes"},   // '“'
+		{char: '\u00ab', label: "guillemets"},            // '«'
+		{char: '\u300c', label: "corner brackets"},       // '「'
+		{char: '\uff08', label: "fullwidth parentheses"}, // '（'
 	}
 )
 
@@ -98,6 +105,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actCopyOnNextLine,
 				DocString: "Copy selection on next line",
 				Run:       kit.Runner(action.CopyOnNextLine),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('C')),
 			},
@@ -105,6 +113,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actCopyOnPrevLine,
 				DocString: "Copy selection on previous line",
 				Run:       kit.Runner(action.CopyOnPrevLine),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('C')),
 			},
@@ -194,12 +203,14 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSelectLineAbove,
 				DocString: "Select line above",
 				Run:       kit.Runner(action.SelectLineAbove),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 			},
 			{
 				Name:      actSelectLineBelow,
 				DocString: "Select line below",
 				Run:       kit.Runner(action.SelectLineBelow),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 			},
 			{
@@ -271,6 +282,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSurroundReplace,
 				DocString: "Surround replace",
 				Run:       kit.Continuation(surroundReplaceAction),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(m(kit.Char('r'))),
 			},
@@ -278,6 +290,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSurroundDelete,
 				DocString: "Surround delete",
 				Run:       kit.Continuation(surroundDeleteAction),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(m(kit.Char('d'))),
 			},
@@ -299,6 +312,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actAddNewlineAbove,
 				DocString: "Add newline above",
 				Run:       kit.Runner(action.AddNewlineAbove),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(prev(kit.Char(' '))),
 			},
@@ -306,6 +320,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actAddNewlineBelow,
 				DocString: "Add newline below",
 				Run:       kit.Runner(action.AddNewlineBelow),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(next(kit.Char(' '))),
 			},
@@ -313,6 +328,7 @@ func SelectionModule(model ui.Model) command.Module {
 				Name:      actSelectRegister,
 				DocString: "Select register",
 				Run:       kit.Continuation(selectRegisterAction),
+				Hints:     kit.RegisterHints,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('"')),
 			},
@@ -332,23 +348,47 @@ func SelectionModule(model ui.Model) command.Module {
 	for _, e := range textObjectEntries {
 		mod.Labels = append(mod.Labels,
 			kit.Label(e.label,
-				m(append(kit.Char('a'), kit.Char(e.char)...)),
+				kit.Seq(m(kit.Char('a')), kit.Char(e.char)),
 				command.DocNormalModes),
 			kit.Label(e.label,
-				m(append(kit.Char('i'), kit.Char(e.char)...)),
+				kit.Seq(m(kit.Char('i')), kit.Char(e.char)),
 				command.DocNormalModes),
 		)
+	}
+	for _, e := range pairLabels() {
+		for _, verb := range []rune{'s', 'r', 'd'} {
+			mod.Labels = append(mod.Labels, kit.Label(e.label,
+				kit.Seq(m(kit.Char(verb)), kit.Char(e.char)),
+				command.DocNormalModes))
+		}
 	}
 	return mod
 }
 
-func selectRegisterAction(e *view.Editor) command.Continuation {
-	e.SetHint(`" ...`)
-	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char != 0 && k.Mods == command.ModNone {
-			e.SetRegister(k.Code.Char)
-		}
-		e.SetHint("")
-		return nil
+// pairLabels names every pair core recognizes, giving both halves the same
+// label so the menu merges them into one row
+func pairLabels() []textObjectEntry {
+	labels := map[rune]string{}
+	for _, e := range textObjectEntries {
+		labels[e.char] = e.label
 	}
+	var out []textObjectEntry
+	for _, p := range core.BracketPairs() {
+		label := labels[p[0]]
+		if label == "" {
+			label = string(p[0]) + string(p[1])
+		}
+		out = append(out, textObjectEntry{char: p[0], label: label})
+		if p[1] != p[0] {
+			out = append(out, textObjectEntry{char: p[1], label: label})
+		}
+	}
+	return append(out, textObjectEntry{char: 'm', label: labels['m']})
+}
+
+func selectRegisterAction(_ *view.Editor) command.Continuation {
+	return command.ReadChar(func(e *view.Editor, ch rune) command.Continuation {
+		e.SetRegister(ch)
+		return nil
+	})
 }

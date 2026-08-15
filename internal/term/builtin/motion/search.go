@@ -78,6 +78,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actSearchNext,
 				DocString: "Select next search match",
 				Run:       kit.Runner(action.SearchNext),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny: kit.Or(
@@ -89,6 +90,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actSearchPrev,
 				DocString: "Select previous search match",
 				Run:       kit.Runner(action.SearchPrev),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny: kit.Or(
@@ -121,6 +123,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actExtendSearchNext,
 				DocString: "Add next search match to selection",
 				Run:       kit.Runner(action.ExtendSearchNext),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny: kit.Or(
@@ -132,6 +135,7 @@ func SearchModule(model ui.Model) command.Module {
 				Name:      actExtendSearchPrev,
 				DocString: "Add previous search match to selection",
 				Run:       kit.Runner(action.ExtendSearchPrev),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny: kit.Or(

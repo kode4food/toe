@@ -32,6 +32,8 @@ type (
 		available func(*view.Editor) bool
 		name      string
 		label     string
+		counted   bool
+		hints     HintProvider
 	}
 )
 
@@ -82,11 +84,13 @@ func (k *Keymaps) Register(name string, cmd Command) error {
 			bindings = cmd.Keys[view.ModeAny]
 		}
 		k.bindCommand(bindCommandArgs{
-			mode:   mode,
-			name:   name,
-			action: action,
-			label:  label,
-			seqs:   bindings,
+			mode:    mode,
+			name:    name,
+			action:  action,
+			label:   label,
+			counted: cmd.Counted,
+			hints:   cmd.Hints,
+			seqs:    bindings,
 		})
 	}
 	for _, alias := range cmd.Aliases {
@@ -201,6 +205,12 @@ func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (KeyMatch, bool) {
 	}, true
 }
 
+// AcceptsCount reports whether seq reaches a node with a counted command
+func (k *Keymaps) AcceptsCount(mode view.Mode, seq []KeyEvent) bool {
+	node := k.lookup(mode, seq)
+	return node != nil && node.countable()
+}
+
 func (k *Keymaps) bindingConflict(mode view.Mode, seq []KeyEvent) bool {
 	node, ok := k.modes[mode]
 	if !ok {
@@ -216,6 +226,26 @@ func (k *Keymaps) bindingConflict(mode view.Mode, seq []KeyEvent) bool {
 		}
 	}
 	return node.action != nil || len(node.children) > 0
+}
+
+// declare returns the node at seq, creating the path when it is missing, so a
+// label or hint provider can name a menu entry no command occupies
+func (k *Keymaps) declare(mode view.Mode, seq []KeyEvent) *keyTrieNode {
+	root, ok := k.modes[mode]
+	if !ok {
+		root = &keyTrieNode{children: map[KeyEvent]*keyTrieNode{}}
+		k.modes[mode] = root
+	}
+	node := root
+	for _, ev := range seq {
+		child, ok := node.children[ev]
+		if !ok {
+			child = &keyTrieNode{children: map[KeyEvent]*keyTrieNode{}}
+			node.set(ev, child)
+		}
+		node = child
+	}
+	return node
 }
 
 func (k *Keymaps) lookup(mode view.Mode, seq []KeyEvent) *keyTrieNode {
@@ -240,30 +270,19 @@ type bindCommandArgs struct {
 	action    KeyResultAction
 	available func(*view.Editor) bool
 	label     string
+	counted   bool
+	hints     HintProvider
 	seqs      [][]KeyEvent
 }
 
 func (k *Keymaps) bindCommand(args bindCommandArgs) {
-	root, ok := k.modes[args.mode]
-	if !ok {
-		root = &keyTrieNode{children: map[KeyEvent]*keyTrieNode{}}
-		k.modes[args.mode] = root
-	}
 	for _, seq := range args.seqs {
-		node := root
-		for _, ev := range seq {
-			child, ok := node.children[ev]
-			if !ok {
-				child = &keyTrieNode{
-					children: map[KeyEvent]*keyTrieNode{},
-				}
-				node.set(ev, child)
-			}
-			node = child
-		}
+		node := k.declare(args.mode, seq)
 		node.action = args.action
 		node.available = args.available
 		node.name = args.name
+		node.counted = args.counted
+		node.hints = args.hints
 		if args.label != "" {
 			node.label = args.label
 		}
@@ -279,6 +298,19 @@ func (k *keyTrieNode) set(ev KeyEvent, child *keyTrieNode) {
 
 func (k *keyTrieNode) isPrefix() bool {
 	return k.action == nil && len(k.children) > 0
+}
+
+// countable reports whether the node reaches a command that takes a count
+func (k *keyTrieNode) countable() bool {
+	if k.counted {
+		return true
+	}
+	for _, child := range k.children {
+		if child.countable() {
+			return true
+		}
+	}
+	return false
 }
 
 func (k *keyTrieNode) collectBindings(

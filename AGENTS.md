@@ -1105,7 +1105,7 @@ a plural message without it fails to load. A message without a `count` variable
 stays a plain string.
 
 The one exception is a hint that echoes a literal keystroke sequence back at
-the user (`"ms ..."`, `"r ..."`, `"^r ..."`) — that's not language, so it
+the user (`"ms"`, `"r"`, `"^r"`) — that's not language, so it
 stays a plain Go string. A hint that also contains descriptive prose (e.g.
 `"h/j/k/l or ←/↓/↑/→ resize, esc/enter exits"`) is not exempt and must be
 translated.

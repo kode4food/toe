@@ -27,9 +27,10 @@ const (
 	pickerMinSplitPaneWidth  = 20
 )
 
+// writePickerPromptRow paints the query row and reports where its caret sits
 func writePickerPromptRow(
 	cx *Context, buf *tui.Buffer, area geom.Area, p *Picker,
-) {
+) geom.Point {
 	th := cx.Theme()
 	count := fmt.Sprintf(
 		"%d/%d", p.matchedCount(), len(p.list.items),
@@ -56,9 +57,6 @@ func writePickerPromptRow(
 
 	bgTUI := popupBg
 	queryTUI := applyAccentStyle(styleOverlay{base: popupBg, overlay: promptSt})
-	cursorTUI := tui.Style{}.
-		Fg(popupBg.BgColor()).
-		Bg(promptSt.FgColor())
 	countTUI := pickerCountStyle(cx)
 
 	buf.FillRange(area.Point, area.Width, bgTUI)
@@ -67,13 +65,10 @@ func writePickerPromptRow(
 		Y: area.Y,
 	}, displayQuery, queryTUI)
 	buf.SetString(geom.Point{
-		X: area.X + pickerPadX + ql,
-		Y: area.Y,
-	}, " ", cursorTUI)
-	buf.SetString(geom.Point{
 		X: area.X + pickerPadX + ql + 1 + gap,
 		Y: area.Y,
 	}, count, countTUI)
+	return geom.Point{X: area.X + pickerPadX + ql, Y: area.Y}
 }
 
 func writePickerHeader(

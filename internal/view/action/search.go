@@ -82,7 +82,7 @@ func SearchNext(e *view.Editor) {
 	_ = searchImpl(searchArgs{
 		editor:  e,
 		pattern: pat,
-		count:   countOrOne(e),
+		count:   e.CountOr(1),
 		forward: true,
 		wrap:    e.Options().SearchWrapAround,
 	})
@@ -97,7 +97,7 @@ func SearchPrev(e *view.Editor) {
 	_ = searchImpl(searchArgs{
 		editor:  e,
 		pattern: pat,
-		count:   countOrOne(e),
+		count:   e.CountOr(1),
 		wrap:    e.Options().SearchWrapAround,
 	})
 }
@@ -111,7 +111,7 @@ func ExtendSearchNext(e *view.Editor) {
 	_ = searchImpl(searchArgs{
 		editor:  e,
 		pattern: pat,
-		count:   countOrOne(e),
+		count:   e.CountOr(1),
 		forward: true,
 		wrap:    e.Options().SearchWrapAround,
 		extend:  true,
@@ -127,7 +127,7 @@ func ExtendSearchPrev(e *view.Editor) {
 	_ = searchImpl(searchArgs{
 		editor:  e,
 		pattern: pat,
-		count:   countOrOne(e),
+		count:   e.CountOr(1),
 		wrap:    e.Options().SearchWrapAround,
 		extend:  true,
 	})

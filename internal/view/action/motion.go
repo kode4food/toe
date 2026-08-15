@@ -9,7 +9,7 @@ import (
 
 // MoveLeft moves all cursors one grapheme to the left
 func MoveLeft(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.MoveHorizontally(
 			doc, core.DirectionBackward, n, core.MovementMove,
@@ -19,7 +19,7 @@ func MoveLeft(e *view.Editor) {
 
 // MoveRight moves all cursors one grapheme to the right
 func MoveRight(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.MoveHorizontally(
 			doc, core.DirectionForward, n, core.MovementMove,
@@ -29,7 +29,7 @@ func MoveRight(e *view.Editor) {
 
 // MoveUp moves all cursors up one visual line, respecting soft-wrap
 func MoveUp(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	vf := visualMoveFormat(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, n)
@@ -38,7 +38,7 @@ func MoveUp(e *view.Editor) {
 
 // MoveDown moves all cursors down one visual line, respecting soft-wrap
 func MoveDown(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	vf := visualMoveFormat(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return vf.MoveVerticallyVisual(doc, r, core.DirectionForward, n)
@@ -47,7 +47,7 @@ func MoveDown(e *view.Editor) {
 
 // MoveWordForward moves all cursors to the start of the next word
 func MoveWordForward(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MoveNextWordStart(doc, r, n)
 	})
@@ -55,7 +55,7 @@ func MoveWordForward(e *view.Editor) {
 
 // MoveWordBackward moves all cursors to the start of the previous word
 func MoveWordBackward(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MovePrevWordStart(doc, r, n)
 	})
@@ -63,7 +63,7 @@ func MoveWordBackward(e *view.Editor) {
 
 // MoveWordEnd moves all cursors to the end of the current or next word
 func MoveWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MoveNextWordEnd(doc, r, n)
 	})
@@ -71,7 +71,7 @@ func MoveWordEnd(e *view.Editor) {
 
 // MoveLongWordForward moves all cursors to the start of the next WORD
 func MoveLongWordForward(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MoveNextLongWordStart(doc, r, n)
 	})
@@ -79,7 +79,7 @@ func MoveLongWordForward(e *view.Editor) {
 
 // MoveLongWordBackward moves all cursors to the start of the previous WORD
 func MoveLongWordBackward(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MovePrevLongWordStart(doc, r, n)
 	})
@@ -87,7 +87,7 @@ func MoveLongWordBackward(e *view.Editor) {
 
 // MoveLongWordEnd moves all cursors to the end of the current or next WORD
 func MoveLongWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MoveNextLongWordEnd(doc, r, n)
 	})
@@ -95,7 +95,7 @@ func MoveLongWordEnd(e *view.Editor) {
 
 // MovePrevWordEnd moves all cursors to the end of the previous word
 func MovePrevWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MovePrevWordEnd(doc, r, n)
 	})
@@ -103,7 +103,7 @@ func MovePrevWordEnd(e *view.Editor) {
 
 // MovePrevLongWordEnd moves all cursors to the end of the previous WORD
 func MovePrevLongWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MovePrevLongWordEnd(doc, r, n)
 	})
@@ -111,7 +111,7 @@ func MovePrevLongWordEnd(e *view.Editor) {
 
 // MoveNextSubWordStart moves to the start of the next sub-word
 func MoveNextSubWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MoveNextSubWordStart(doc, r, n)
 	})
@@ -119,7 +119,7 @@ func MoveNextSubWordStart(e *view.Editor) {
 
 // MovePrevSubWordStart moves to the start of the previous sub-word
 func MovePrevSubWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MovePrevSubWordStart(doc, r, n)
 	})
@@ -127,7 +127,7 @@ func MovePrevSubWordStart(e *view.Editor) {
 
 // MoveNextSubWordEnd moves to the end of the next sub-word
 func MoveNextSubWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MoveNextSubWordEnd(doc, r, n)
 	})
@@ -135,7 +135,7 @@ func MoveNextSubWordEnd(e *view.Editor) {
 
 // MovePrevSubWordEnd moves to the end of the previous sub-word
 func MovePrevSubWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return core.MovePrevSubWordEnd(doc, r, n)
 	})
@@ -296,13 +296,6 @@ func moveFileEnd(e *view.Editor, extend bool) {
 		}
 		return r
 	})
-}
-
-func countOrOne(e *view.Editor) int {
-	if n := e.Count(); n > 0 {
-		return n
-	}
-	return 1
 }
 
 // visualMoveFormat builds a VisualMoveFormat for the focused document if

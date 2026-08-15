@@ -127,13 +127,9 @@ func InsertModule() command.Module {
 		},
 	}
 }
-func insertRegisterAction(e *view.Editor) command.Continuation {
-	e.SetHint("^r ...")
-	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char != 0 && k.Mods == command.ModNone {
-			action.PasteRegisterAtCursor(e, k.Code.Char)
-		}
-		e.SetHint("")
+func insertRegisterAction(_ *view.Editor) command.Continuation {
+	return command.ReadChar(func(e *view.Editor, ch rune) command.Continuation {
+		action.PasteRegisterAtCursor(e, ch)
 		return nil
-	}
+	})
 }

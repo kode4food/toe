@@ -201,7 +201,13 @@ func (e *EditorComponent) handleMouseClick(
 	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
 	e.language.completionGen++
-	e.cancelPending(cx)
+	at := geom.Point{X: msg.X, Y: msg.Y}
+	if len(e.keys.input) > 0 {
+		if e.cache.infoBounds.Contains(at) {
+			return consumed(), nil
+		}
+		e.cancelPending(cx)
+	}
 	e.mouse.vertical.stop()
 	e.mouse.horizontal.stop()
 	if dc := e.mouse.downDrag; dc != nil {
@@ -277,7 +283,9 @@ func (e *EditorComponent) handleMouseWheel(
 	cx *Context, msg tea.MouseWheelMsg,
 ) (EventResult, tea.Cmd) {
 	e.language.completionGen++
-	e.cancelPending(cx)
+	if len(e.keys.input) > 0 {
+		return consumed(), nil
+	}
 	if !cx.Editor.Options().Mouse {
 		return consumed(), nil
 	}

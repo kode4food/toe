@@ -9,7 +9,7 @@ import (
 // of the next paragraph. A paragraph boundary is a blank line
 func GotoNextParagraph(e *view.Editor) {
 	e.SetLastMotion(GotoNextParagraph)
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	extend := e.Mode() == view.ModeSelect
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		cursor := r.Cursor(doc)
@@ -52,7 +52,7 @@ func GotoNextParagraph(e *view.Editor) {
 // of the previous paragraph
 func GotoPrevParagraph(e *view.Editor) {
 	e.SetLastMotion(GotoPrevParagraph)
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	extend := e.Mode() == view.ModeSelect
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		cursor := r.Cursor(doc)

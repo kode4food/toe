@@ -61,7 +61,6 @@ type (
 	messageState struct {
 		status   string
 		statusMu sync.Mutex
-		hint     string
 	}
 
 	// PaneRestorer rebuilds a leaf pane of a given session kind from its
@@ -238,19 +237,24 @@ func (e *Editor) SetMode(m Mode) {
 	}
 }
 
-// Count returns the pending numeric count argument (0 = none)
+// Count takes the pending numeric count argument, clearing it (0 = none)
 func (e *Editor) Count() int {
-	return e.command.count
+	return e.CountOr(0)
+}
+
+// CountOr takes the pending count, clearing it, answering def when unset
+func (e *Editor) CountOr(def int) int {
+	n := e.command.count
+	e.command.count = 0
+	if n == 0 {
+		return def
+	}
+	return n
 }
 
 // SetCount sets the pending numeric count
 func (e *Editor) SetCount(n int) {
 	e.command.count = n
-}
-
-// ResetCount clears the pending count
-func (e *Editor) ResetCount() {
-	e.command.count = 0
 }
 
 // ActiveRegister returns the pending register rune (0 = default)
@@ -401,16 +405,4 @@ func (e *Editor) TakeStatusMsg() string {
 	e.messages.status = ""
 	e.messages.statusMu.Unlock()
 	return msg
-}
-
-// SetHint stores a transient hint shown during an active continuation
-func (e *Editor) SetHint(h string) {
-	e.messages.hint = h
-}
-
-// TakeHint returns the pending hint and clears it
-func (e *Editor) TakeHint() string {
-	h := e.messages.hint
-	e.messages.hint = ""
-	return h
 }

@@ -98,8 +98,6 @@ func (o *Options) StatusLineRight() []StatusLineItem {
 	return []StatusLineItem{
 		{Element: StatusLineDiagnostics},
 		{Element: StatusLineSelections},
-		{Element: StatusLineRegister},
-		{Element: StatusLineFileEncoding},
 		{Element: StatusLinePosition, Pinned: true},
 	}
 }

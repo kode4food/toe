@@ -127,7 +127,7 @@ func deleteOrChange(e *view.Editor, args deleteOrChangeArgs) {
 	}
 	switch {
 	case linewise:
-		OpenAbove(e)
+		openImpl(openArgs{editor: e, count: 1})
 	case args.enterInsert:
 		e.SetMode(view.ModeInsert)
 	default:

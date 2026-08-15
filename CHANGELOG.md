@@ -15,8 +15,14 @@ Notable changes to toe.
 
 ### Command Line
 
-- Reworked command-line feedback with left-aligned pending keys and keybinding help, active-state highlighting, and a blinking macro-recording badge
+- Reworked command-line feedback with active-state highlighting and a blinking macro-recording badge
 - Made the command palette prompt for required arguments before running a command
+
+### Key Entry
+
+- Moved pending keys and interaction hints into a centered popup listing the keys available next
+- Added backspace to undo the last key or count digit typed toward a command
+- Gave the popup and picker input the editor's insert cursor
 
 ### Localization
 

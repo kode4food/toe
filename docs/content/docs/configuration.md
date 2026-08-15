@@ -229,15 +229,17 @@ Automatic completion is in addition to `Ctrl+x`, which requests completions at a
 | `statusline.right` | string[] | built-in | Right-aligned statusline elements |
 | `statusline.separator` | string | `"│"` | Separator between status items |
 
-Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spacer`, `spinner`, `register`, and `version-control`.
+Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spacer`, `spinner`, and `version-control`.
 
 When the pane is too narrow, toe drops unpinned status items from the right section and then the left. Suffix an element with `!` (for example `"mode!"` or `"position!"`) to keep it visible.
 
 ```toml
 [editor.statusline]
 left = ["mode!", "file-name", "read-only-indicator", "file-modified-indicator"]
-right = ["diagnostics", "selections", "register", "position!"]
+right = ["diagnostics", "selections", "position!"]
 ```
+
+The selected register appears on the command line.
 
 Example:
 

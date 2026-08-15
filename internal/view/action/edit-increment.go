@@ -38,7 +38,7 @@ func incrementImpl(e *view.Editor, sign int) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	count := max(e.Count(), 1)
+	count := e.CountOr(1)
 	amount := sign * count
 	increaseBy := 0
 	if e.ActiveRegister() == '#' {

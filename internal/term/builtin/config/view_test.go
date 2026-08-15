@@ -325,10 +325,10 @@ func TestResizeView(t *testing.T) {
 		test.RunCmd(t, km, e, "vsplit")
 
 		res := test.RunCmd(t, km, e, "resize_view")
-		cont := res.Continuation(e, command.KeyEvent{
+		_, got := res.Continuation(e, command.KeyEvent{
 			Code: command.KeyCode{Special: command.Escape},
 		})
 
-		assert.Nil(t, cont)
+		assert.Equal(t, command.ContinuationDone, got)
 	})
 }

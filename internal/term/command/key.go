@@ -31,9 +31,12 @@ type (
 	}
 
 	// Continuation is called with subsequent keys while an action is in
-	// progress. Returns nil to signal completion, or another Continuation to
-	// consume more keys
-	Continuation func(*view.Editor, KeyEvent) Continuation
+	// progress. Its result tells the key-entry UI how the interaction moved.
+	// ContinuationStay with nil retains the current callback
+	Continuation func(*view.Editor, KeyEvent) (Continuation, Transition)
+
+	// Transition describes how an interaction handled a key
+	Transition uint8
 
 	// KeyAction handles a key sequence and may return a continuation
 	KeyAction func(*view.Editor) Continuation
@@ -43,6 +46,13 @@ type (
 
 	// KeyBinding describes default key sequences for a command
 	KeyBinding [][]KeyEvent
+)
+
+const (
+	ContinuationDone Transition = iota
+	ContinuationStay
+	ContinuationPush
+	ContinuationPop
 )
 
 const (
@@ -92,6 +102,31 @@ var specialNames = []string{
 	End:            "end",
 	PageUp:         "pgup",
 	PageDown:       "pgdn",
+}
+
+// PopOnBackspace makes unmodified Backspace pop a continuation
+func PopOnBackspace(handle Continuation) Continuation {
+	return func(e *view.Editor, k KeyEvent) (Continuation, Transition) {
+		if k.Code.Special == Backspace && k.Mods == ModNone {
+			return nil, ContinuationPop
+		}
+		return handle(e, k)
+	}
+}
+
+// ReadChar handles an unmodified character, or pops on Backspace
+func ReadChar(handle func(*view.Editor, rune) Continuation) Continuation {
+	return PopOnBackspace(func(
+		e *view.Editor, k KeyEvent,
+	) (Continuation, Transition) {
+		if k.Code.Char == 0 || k.Mods != ModNone {
+			return nil, ContinuationStay
+		}
+		if next := handle(e, k.Code.Char); next != nil {
+			return next, ContinuationPush
+		}
+		return nil, ContinuationDone
+	})
 }
 
 // String returns the binding name of a special key

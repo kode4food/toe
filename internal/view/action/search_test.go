@@ -1,6 +1,8 @@
 package action_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -363,75 +365,6 @@ func TestKillToLine(t *testing.T) {
 
 		doc := e.FocusedDocument()
 		assert.Equal(t, "helloworld", doc.Text().String())
-	})
-}
-
-func TestOpenAbove(t *testing.T) {
-	t.Run("inserts blank line above", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "hello")
-		testutil.SetCursor(t, e, 0)
-
-		action.OpenAbove(e)
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "\nhello", doc.Text().String())
-		assert.Equal(t, view.ModeInsert, e.Mode())
-	})
-
-	t.Run("inserts above second line", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "a\nb")
-		testutil.SetCursor(t, e, 2)
-
-		action.OpenAbove(e)
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "a\n\nb", doc.Text().String())
-		assert.Equal(t, 2, testutil.CursorPos(t, e))
-	})
-
-	t.Run("count repeats new lines", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "hello")
-		testutil.SetCursor(t, e, 0)
-		e.SetCount(2)
-
-		action.OpenAbove(e)
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "\n\nhello", doc.Text().String())
-		assert.Equal(t, view.ModeInsert, e.Mode())
-	})
-
-	t.Run("duplicate target inserts once", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e,
-			[]core.Range{core.PointRange(0), core.PointRange(1)},
-			0,
-		)
-
-		action.OpenAbove(e)
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "\nabc", doc.Text().String())
-	})
-
-	t.Run("negative range inserts at top", func(t *testing.T) {
-		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
-
-		action.OpenAbove(e)
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "\nabc", doc.Text().String())
-		assert.Equal(t, view.ModeInsert, e.Mode())
-	})
-
-	t.Run("no view is noop", func(t *testing.T) {
-		e := editorWithNoView(t)
-
-		assert.NotPanics(t, func() { action.OpenAbove(e) })
 	})
 }
 
@@ -1184,6 +1117,76 @@ func TestGotoWindowTopBottomCenter(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc\nd\ne")
 		assert.NotPanics(t, func() { action.GotoWindowCenter(e) })
 	})
+
+	t.Run("a count counts from the top", func(t *testing.T) {
+		e := windowLines(t, 40)
+
+		e.SetCount(3)
+		action.GotoWindowTop(e)
+
+		assert.Equal(t, 3, cursorLine(t, e))
+	})
+
+	t.Run("no scrolloff hold at the document top", func(t *testing.T) {
+		e := windowLines(t, 40)
+
+		e.SetCount(1)
+		action.GotoWindowTop(e)
+
+		assert.Equal(t, 1, cursorLine(t, e))
+	})
+
+	t.Run("a count lands on the visible line", func(t *testing.T) {
+		e := windowLines(t, 400)
+		scrollTo(t, e, 235)
+
+		e.SetCount(1)
+		action.GotoWindowTop(e)
+
+		assert.Equal(t, 235, cursorLine(t, e))
+	})
+
+	t.Run("center ignores a count", func(t *testing.T) {
+		e := windowLines(t, 40)
+		action.GotoWindowCenter(e)
+		want := cursorLine(t, e)
+
+		e.SetCount(4)
+		action.GotoWindowCenter(e)
+
+		assert.Equal(t, want, cursorLine(t, e))
+	})
+}
+
+func windowLines(t *testing.T, n int) *view.Editor {
+	t.Helper()
+	var sb strings.Builder
+	for i := 1; i <= n; i++ {
+		_, _ = fmt.Fprintf(&sb, "line %d\n", i)
+	}
+	e := testutil.EditorWithText(t, sb.String())
+	e.SetViewHeight(20)
+	return e
+}
+
+func scrollTo(t *testing.T, e *view.Editor, line int) {
+	t.Helper()
+	v := e.FocusedView()
+	anchor, err := e.FocusedDocument().Text().LineToChar(line - 1)
+	assert.NoError(t, err)
+	offset := v.Offset()
+	offset.Anchor = anchor
+	v.SetOffset(offset)
+}
+
+func cursorLine(t *testing.T, e *view.Editor) int {
+	t.Helper()
+	doc := e.FocusedDocument()
+	text := doc.Text()
+	cursor := doc.SelectionFor(e.FocusedView().ID()).Primary().Cursor(text)
+	pos, err := text.Position(cursor)
+	assert.NoError(t, err)
+	return pos.Line
 }
 
 func TestFindChar(t *testing.T) {

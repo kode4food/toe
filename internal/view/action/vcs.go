@@ -99,7 +99,7 @@ func ResetDiffChange(e *view.Editor) (int, error) {
 }
 
 func gotoChange(e *view.Editor, dir core.Direction) {
-	count := countOrOne(e) - 1
+	count := e.CountOr(1) - 1
 	res, ok := focusedDiffHunks(e)
 	if !ok || len(res.hunks) == 0 {
 		return

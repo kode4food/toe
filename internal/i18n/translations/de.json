@@ -23,6 +23,7 @@
   "error.aleBindingKeysMissing": "`:keys` ist erforderlich",
   "error.aleBindingKeysEmpty": "`:keys` darf nicht leer sein",
   "status.clipboardCopied": "Auswahl in die Zwischenablage kopiert",
+  "status.counted": "Gezählt",
   "status.pickerTypeToSearch": "Zum Suchen tippen…",
   "status.pickerSearching": "Wird gesucht…",
   "status.pickerNoResults": "Keine Ergebnisse",

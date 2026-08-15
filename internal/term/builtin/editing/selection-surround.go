@@ -8,65 +8,49 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-func surroundAddAction(e *view.Editor) command.Continuation {
-	e.SetHint("ms ...")
-	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char != 0 && k.Mods == command.ModNone {
-			action.SurroundAdd(e, k.Code.Char)
-		}
-		e.SetHint("")
+func surroundAddAction(_ *view.Editor) command.Continuation {
+	return command.ReadChar(func(e *view.Editor, ch rune) command.Continuation {
+		action.SurroundAdd(e, ch)
 		return nil
-	}
+	})
 }
 
-func surroundReplaceAction(e *view.Editor) command.Continuation {
-	e.SetHint("mr ...")
-	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			e.SetHint("")
-			return nil
-		}
-		from := k.Code.Char
-		e.SetHint("mr " + string(from) + " ...")
-		return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-			if k.Code.Char != 0 && k.Mods == command.ModNone {
-				to := k.Code.Char
-				if positions, ok := syntaxSurroundPos(e, from); ok {
-					if doc := e.FocusedDocument(); doc != nil {
-						action.SurroundReplaceAt(e, doc.Text(), positions, to)
-						e.SetHint("")
-						return nil
-					}
-				}
-				action.SurroundReplace(action.SurroundReplaceArgs{
-					Editor:  e,
-					Current: from,
-					Wanted:  to,
-				})
-			}
-			e.SetHint("")
-			return nil
-		}
-	}
-}
-
-func surroundDeleteAction(e *view.Editor) command.Continuation {
-	e.SetHint("md ...")
-	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char != 0 && k.Mods == command.ModNone {
-			ch := k.Code.Char
-			if positions, ok := syntaxSurroundPos(e, ch); ok {
+func surroundReplaceAction(_ *view.Editor) command.Continuation {
+	return command.ReadChar(func(
+		_ *view.Editor, from rune,
+	) command.Continuation {
+		return command.ReadChar(func(
+			e *view.Editor, to rune,
+		) command.Continuation {
+			if positions, ok := syntaxSurroundPos(e, from); ok {
 				if doc := e.FocusedDocument(); doc != nil {
-					action.SurroundDeleteAt(e, doc.Text(), positions)
-					e.SetHint("")
+					action.SurroundReplaceAt(
+						e, doc.Text(), positions, to,
+					)
 					return nil
 				}
 			}
-			action.SurroundDelete(e, ch)
+			action.SurroundReplace(action.SurroundReplaceArgs{
+				Editor:  e,
+				Current: from,
+				Wanted:  to,
+			})
+			return nil
+		})
+	})
+}
+
+func surroundDeleteAction(_ *view.Editor) command.Continuation {
+	return command.ReadChar(func(e *view.Editor, ch rune) command.Continuation {
+		if positions, ok := syntaxSurroundPos(e, ch); ok {
+			if doc := e.FocusedDocument(); doc != nil {
+				action.SurroundDeleteAt(e, doc.Text(), positions)
+				return nil
+			}
 		}
-		e.SetHint("")
+		action.SurroundDelete(e, ch)
 		return nil
-	}
+	})
 }
 
 // syntaxSurroundPos uses Tree-sitter for surrounding brackets, falling back
@@ -84,7 +68,7 @@ func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 	src := text.String()
 	lang := doc.Lang()
 	sel := doc.SelectionFor(v.ID())
-	skip := max(e.Count(), 1)
+	skip := e.CountOr(1)
 
 	var positions []int
 	for _, r := range sel.Ranges() {

@@ -100,6 +100,11 @@ func GetPair(ch rune) BracketPair {
 	return BracketPair{Open: ch, Close: ch}
 }
 
+// BracketPairs returns every pair GetPair recognizes, open then close
+func BracketPairs() [][2]rune {
+	return bracketPairTable
+}
+
 // IsOpenBracket reports whether ch is an opening bracket
 func IsOpenBracket(ch rune) bool {
 	for _, p := range bracketTable {

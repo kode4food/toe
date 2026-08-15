@@ -18,7 +18,7 @@ type FindCharArgs struct {
 // given direction. inclusive=true lands on the char (f/F), false stops before/
 // after it (t/T). extend=true keeps the anchor (select mode)
 func FindChar(args FindCharArgs) {
-	n := countOrOne(args.Editor)
+	n := args.Editor.CountOr(1)
 	applyMove(args.Editor, func(doc core.Rope, r core.Range) core.Range {
 		cursor := r.Cursor(doc)
 		cursorHead := core.NextGraphemeBoundary(doc, cursor)

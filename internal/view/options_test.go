@@ -50,9 +50,9 @@ func TestOptionsStatusLine(t *testing.T) {
 			view.StatusLineItem{Element: view.StatusLineSpinner})
 	})
 
-	t.Run("right default includes file encoding", func(t *testing.T) {
+	t.Run("right default omits file encoding", func(t *testing.T) {
 		o := view.Options{}
-		assert.Contains(t, o.StatusLineRight(),
+		assert.NotContains(t, o.StatusLineRight(),
 			view.StatusLineItem{Element: view.StatusLineFileEncoding})
 	})
 

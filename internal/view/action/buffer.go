@@ -46,10 +46,15 @@ func RepeatLastMotion(e *view.Editor) {
 	if fn == nil {
 		return
 	}
-	n := max(e.Count(), 1)
+	n := e.CountOr(1)
 	for range n {
 		fn(e)
 	}
+}
+
+// GotoColumn moves each cursor to the Nth character column
+func GotoColumn(e *view.Editor) {
+	gotoColumn(e, false)
 }
 
 // ExtendToColumn extends each selection to the Nth character column
@@ -129,7 +134,7 @@ func YankJoin(e *view.Editor, sep string) {
 }
 
 func gotoColumn(e *view.Editor, extend bool) {
-	col := max(e.Count(), 1)
+	col := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		cursor := r.Cursor(doc)
 		line, err := doc.CharToLine(cursor)

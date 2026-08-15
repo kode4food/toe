@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
@@ -154,6 +155,17 @@ func modeCursorStyleFor(
 		scope = "ui.cursor.primary." + mode.Scope()
 	}
 	return th.TryGetExact(scope)
+}
+
+func insertCursorAt(cx *Context, at geom.Point) (tea.Cursor, bool) {
+	kind := cx.Editor.Options().CursorShapeForMode(view.ModeInsert)
+	if kind == view.CursorKindHidden {
+		return tea.Cursor{}, false
+	}
+	return tea.Cursor{
+		Position: tea.Position{X: at.X, Y: at.Y},
+		Shape:    cursorKindToShape(kind),
+	}, true
 }
 
 func cursorKindToShape(kind view.CursorKind) tea.CursorShape {

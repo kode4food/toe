@@ -6,21 +6,28 @@ import "github.com/kode4food/toe/internal/view"
 // menu (e.g. the Space and Ctrl-\ leaders) is labelled everywhere it is reached
 func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 	for _, seq := range prefix {
-		if node := k.lookup(mode, seq); node != nil {
-			node.label = name
-		}
+		k.declare(mode, seq).label = name
 	}
 }
 
-// PendingHints returns the title and (key, label) pairs for the node reached by
-// seq in mode, used to populate the pending-key info popup. A binding whose
-// :when predicate rejects the editor is omitted
+// PendingHints returns the title and (key, label) pairs offered after seq in
+// mode, from the node's children or its hint provider. A binding rejected by
+// :when, or unusable with the count typed, is omitted
 func (k *Keymaps) PendingHints(
-	e *view.Editor, mode view.Mode, seq []KeyEvent,
+	e *view.Editor, mode view.Mode, seq []KeyEvent, counting bool,
 ) (string, []KeyHint) {
 	node := k.lookup(mode, seq)
-	if node == nil || len(node.children) == 0 {
+	if node == nil {
 		return "", nil
+	}
+	if node.hints != nil {
+		return node.label, node.hints(e)
+	}
+	if len(node.children) == 0 {
+		if node.action == nil {
+			return "", nil
+		}
+		return node.label, nil
 	}
 	// Iterate in insertion order so hints remain stable across renders
 	hints := make([]KeyHint, 0, len(node.order))
@@ -31,6 +38,9 @@ func (k *Keymaps) PendingHints(
 		if lbl == "" {
 			continue
 		}
+		if counting && !child.countable() {
+			continue
+		}
 		if child.available != nil && !child.available(e) {
 			continue
 		}
@@ -38,7 +48,11 @@ func (k *Keymaps) PendingHints(
 			hints[idx].Key += ", " + ev.String()
 		} else {
 			seen[lbl] = len(hints)
-			hints = append(hints, KeyHint{Key: ev.String(), Label: lbl})
+			hints = append(hints, KeyHint{
+				Key:    ev.String(),
+				Label:  lbl,
+				Prefix: child.isPrefix(),
+			})
 		}
 	}
 	return node.label, hints

@@ -194,11 +194,12 @@ func mouse(m ui.Model, msg tea.Msg) ui.Model {
 }
 
 type bindTestActionArgs struct {
-	km   *command.Keymaps
-	mode view.Mode
-	name string
-	fn   command.KeyAction
-	seqs [][]command.KeyEvent
+	km      *command.Keymaps
+	mode    view.Mode
+	name    string
+	fn      command.KeyAction
+	counted bool
+	seqs    [][]command.KeyEvent
 }
 
 func bindTestAction(args bindTestActionArgs) {
@@ -206,8 +207,9 @@ func bindTestAction(args bindTestActionArgs) {
 		Run: func(e *view.Editor, _ *command.Args) command.Result {
 			return command.Result{Continuation: args.fn(e)}
 		},
-		Modes: args.mode,
-		Keys:  map[view.Mode]command.KeyBinding{view.ModeAny: args.seqs},
+		Modes:   args.mode,
+		Keys:    map[view.Mode]command.KeyBinding{view.ModeAny: args.seqs},
+		Counted: args.counted,
 	})
 }
 

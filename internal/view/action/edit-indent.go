@@ -23,7 +23,7 @@ func Indent(e *view.Editor) {
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	unit := doc.IndentStyle().AsStr()
-	n := max(e.Count(), 1)
+	n := e.CountOr(1)
 	indent := strings.Repeat(unit, n)
 
 	style := doc.IndentStyle()
@@ -81,7 +81,7 @@ func Unindent(e *view.Editor) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	n := max(e.Count(), 1)
+	n := e.CountOr(1)
 	tabWidth := doc.TabWidth()
 	indentWidth := n * doc.IndentStyle().IndentWidth(tabWidth)
 

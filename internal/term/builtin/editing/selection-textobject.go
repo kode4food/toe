@@ -9,26 +9,20 @@ import (
 )
 
 func textObjectAction(around bool) command.KeyAction {
-	h, inside := "ma", false
-	if !around {
-		h, inside = "mi", true
-	}
-	return func(e *view.Editor) command.Continuation {
-		e.SetHint(h + " ...")
-		return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-			if k.Code.Char != 0 && k.Mods == command.ModNone {
-				ch := k.Code.Char
-				if !syntaxTextObjectSelect(e, ch, inside) {
-					if inside {
-						action.SelectTextObjectInside(e, ch)
-					} else {
-						action.SelectTextObjectAround(e, ch)
-					}
+	inside := !around
+	return func(_ *view.Editor) command.Continuation {
+		return command.ReadChar(func(
+			e *view.Editor, ch rune,
+		) command.Continuation {
+			if !syntaxTextObjectSelect(e, ch, inside) {
+				if inside {
+					action.SelectTextObjectInside(e, ch)
+				} else {
+					action.SelectTextObjectAround(e, ch)
 				}
 			}
-			e.SetHint("")
 			return nil
-		}
+		})
 	}
 }
 

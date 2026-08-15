@@ -60,7 +60,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	if len(values) == 0 {
 		return
 	}
-	n := max(e.Count(), 1)
+	n := e.CountOr(1)
 	valueFor := func(i int) string {
 		v := values[len(values)-1]
 		if i < len(values) {

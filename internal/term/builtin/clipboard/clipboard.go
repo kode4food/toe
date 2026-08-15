@@ -91,6 +91,7 @@ func DocumentModule() command.Module {
 				Name:      actReplaceWithYanked,
 				DocString: "Replace selection with clipboard or register",
 				Run:       kit.Runner(action.ReplaceWithYanked),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys: kit.Keys(
 					kit.Char('R'), kit.LeaderPrefix(kit.Char('R')),

@@ -23,7 +23,7 @@ func RotateSelectionsForward(e *view.Editor) {
 	if n == 0 {
 		return
 	}
-	count := max(e.Count(), 1)
+	count := e.CountOr(1)
 	newSel, err := core.NewSelection(sel.Ranges(), (sel.PrimaryIndex()+count)%n)
 	if err != nil {
 		return
@@ -47,7 +47,7 @@ func RotateSelectionsBackward(e *view.Editor) {
 	if n == 0 {
 		return
 	}
-	count := max(e.Count(), 1)
+	count := e.CountOr(1)
 	prev := (sel.PrimaryIndex() + n - count%n) % n
 	if newSel, err := core.NewSelection(sel.Ranges(), prev); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)
@@ -85,7 +85,7 @@ func rotateSelectionContents(e *view.Editor, forward bool) {
 	if n == 0 {
 		return
 	}
-	count := max(e.Count(), 1)
+	count := e.CountOr(1)
 	steps := min(count, n)
 	texts := make([]string, n)
 	for i, r := range ranges {

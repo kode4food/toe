@@ -13,11 +13,6 @@ import (
 )
 
 type (
-	findCharHintKey struct {
-		forward   bool
-		inclusive bool
-	}
-
 	motionSection struct {
 		Editor struct {
 			ScrollOff   *int `toml:"scrolloff"`
@@ -114,6 +109,7 @@ func CursorModule() command.Module {
 				Name:      actMoveLeft,
 				DocString: "Move left",
 				Run:       kit.Runner(action.MoveLeft),
+				Counted:   true,
 				Modes:     view.ModeNormal | view.ModeInsert,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny:    kit.Or(kit.Char('h'), kit.Left),
@@ -124,6 +120,7 @@ func CursorModule() command.Module {
 				Name:      actMoveDown,
 				DocString: "Move down",
 				Run:       kit.Runner(action.MoveDown),
+				Counted:   true,
 				Modes:     view.ModeNormal | view.ModeInsert,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny:    kit.Or(kit.Char('j'), kit.Down),
@@ -134,6 +131,7 @@ func CursorModule() command.Module {
 				Name:      actMoveUp,
 				DocString: "Move up",
 				Run:       kit.Runner(action.MoveUp),
+				Counted:   true,
 				Modes:     view.ModeNormal | view.ModeInsert,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny:    kit.Or(kit.Char('k'), kit.Up),
@@ -144,6 +142,7 @@ func CursorModule() command.Module {
 				Name:      actMoveRight,
 				DocString: "Move right",
 				Run:       kit.Runner(action.MoveRight),
+				Counted:   true,
 				Modes:     view.ModeNormal | view.ModeInsert,
 				Keys: map[view.Mode]command.KeyBinding{
 					view.ModeAny:    kit.Or(kit.Char('l'), kit.Right),
@@ -154,6 +153,7 @@ func CursorModule() command.Module {
 				Name:      actMoveNextWordStart,
 				DocString: "Move to start of next word",
 				Run:       kit.Runner(action.MoveWordForward),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('w')),
 			},
@@ -161,6 +161,7 @@ func CursorModule() command.Module {
 				Name:      actMovePrevWordStart,
 				DocString: "Move to start of previous word",
 				Run:       kit.Runner(action.MoveWordBackward),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('b')),
 			},
@@ -168,6 +169,7 @@ func CursorModule() command.Module {
 				Name:      actMoveNextWordEnd,
 				DocString: "Move to end of next word",
 				Run:       kit.Runner(action.MoveWordEnd),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('e')),
 			},
@@ -175,12 +177,14 @@ func CursorModule() command.Module {
 				Name:      actMovePrevWordEnd,
 				DocString: "Move to end of previous word",
 				Run:       kit.Runner(action.MovePrevWordEnd),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 			},
 			{
 				Name:      actMoveNextLongWordStart,
 				DocString: "Move to start of next long word",
 				Run:       kit.Runner(action.MoveLongWordForward),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('W')),
 			},
@@ -188,6 +192,7 @@ func CursorModule() command.Module {
 				Name:      actMovePrevLongWordStart,
 				DocString: "Move to start of previous long word",
 				Run:       kit.Runner(action.MoveLongWordBackward),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('B')),
 			},
@@ -195,6 +200,7 @@ func CursorModule() command.Module {
 				Name:      actMoveNextLongWordEnd,
 				DocString: "Move to end of next long word",
 				Run:       kit.Runner(action.MoveLongWordEnd),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(kit.Char('E')),
 			},
@@ -202,30 +208,35 @@ func CursorModule() command.Module {
 				Name:      actMovePrevLongWordEnd,
 				DocString: "Move to end of previous long word",
 				Run:       kit.Runner(action.MovePrevLongWordEnd),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 			},
 			{
 				Name:      actMoveNextSubWordStart,
 				DocString: "Move to start of next sub-word",
 				Run:       kit.Runner(action.MoveNextSubWordStart),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 			},
 			{
 				Name:      actMovePrevSubWordStart,
 				DocString: "Move to start of previous sub-word",
 				Run:       kit.Runner(action.MovePrevSubWordStart),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 			},
 			{
 				Name:      actMoveNextSubWordEnd,
 				DocString: "Move to end of next sub-word",
 				Run:       kit.Runner(action.MoveNextSubWordEnd),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 			},
 			{
 				Name:      actMovePrevSubWordEnd,
 				DocString: "Move to end of previous sub-word",
 				Run:       kit.Runner(action.MovePrevSubWordEnd),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 			},
 			{
@@ -283,6 +294,7 @@ func CursorModule() command.Module {
 				Name:      actGotoLine,
 				DocString: "Goto line",
 				Run:       kit.Runner(gotoLineAction),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('G')),
 			},
@@ -290,6 +302,7 @@ func CursorModule() command.Module {
 				Name:      actGotoLineOrFileStart,
 				DocString: "Goto line number `<n>` else file start",
 				Run:       kit.Runner(gotoLineOrFileStartAction),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(g(kit.Char('g'))),
 			},
@@ -303,7 +316,8 @@ func CursorModule() command.Module {
 			{
 				Name:      actGotoColumn,
 				DocString: "Goto column",
-				Run:       kit.Runner(action.ExtendToColumn),
+				Run:       kit.Runner(action.GotoColumn),
+				Counted:   true,
 				Modes:     view.ModeNormal,
 				Keys:      kit.Keys(g(kit.Char('|'))),
 			},
@@ -311,6 +325,7 @@ func CursorModule() command.Module {
 				Name:      actGotoWindowTop,
 				DocString: "Goto window top",
 				Run:       kit.Runner(action.GotoWindowTop),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('t'))),
 			},
@@ -325,6 +340,7 @@ func CursorModule() command.Module {
 				Name:      actGotoWindowBottom,
 				DocString: "Goto window bottom",
 				Run:       kit.Runner(action.GotoWindowBottom),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(g(kit.Char('b'))),
 			},
@@ -388,6 +404,7 @@ func CursorModule() command.Module {
 				Name:      actGotoNextParagraph,
 				DocString: "Goto next paragraph",
 				Run:       kit.Runner(action.GotoNextParagraph),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(next(kit.Char('p'))),
 			},
@@ -395,6 +412,7 @@ func CursorModule() command.Module {
 				Name:      actGotoPrevParagraph,
 				DocString: "Goto previous paragraph",
 				Run:       kit.Runner(action.GotoPrevParagraph),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(prev(kit.Char('p'))),
 			},
@@ -402,6 +420,7 @@ func CursorModule() command.Module {
 				Name:      actExtendCharLeft,
 				DocString: "Extend left",
 				Run:       kit.Runner(action.ExtendCharLeft),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('h'), kit.Left),
 			},
@@ -409,6 +428,7 @@ func CursorModule() command.Module {
 				Name:      actExtendVisualLineDown,
 				DocString: "Extend down",
 				Run:       kit.Runner(action.ExtendLineDown),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('j'), kit.Down),
 			},
@@ -416,6 +436,7 @@ func CursorModule() command.Module {
 				Name:      actExtendVisualLineUp,
 				DocString: "Extend up",
 				Run:       kit.Runner(action.ExtendLineUp),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('k'), kit.Up),
 			},
@@ -423,6 +444,7 @@ func CursorModule() command.Module {
 				Name:      actExtendCharRight,
 				DocString: "Extend right",
 				Run:       kit.Runner(action.ExtendCharRight),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('l'), kit.Right),
 			},
@@ -430,6 +452,7 @@ func CursorModule() command.Module {
 				Name:      actExtendNextWordStart,
 				DocString: "Extend to start of next word",
 				Run:       kit.Runner(action.ExtendNextWordStart),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('w')),
 			},
@@ -437,6 +460,7 @@ func CursorModule() command.Module {
 				Name:      actExtendPrevWordStart,
 				DocString: "Extend to start of previous word",
 				Run:       kit.Runner(action.ExtendPrevWordStart),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('b')),
 			},
@@ -444,6 +468,7 @@ func CursorModule() command.Module {
 				Name:      actExtendNextWordEnd,
 				DocString: "Extend to end of next word",
 				Run:       kit.Runner(action.ExtendNextWordEnd),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('e')),
 			},
@@ -451,12 +476,14 @@ func CursorModule() command.Module {
 				Name:      actExtendPrevWordEnd,
 				DocString: "Extend to end of previous word",
 				Run:       kit.Runner(action.ExtendPrevWordEnd),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 			},
 			{
 				Name:      actExtendNextLongWordStart,
 				DocString: "Extend to start of next long word",
 				Run:       kit.Runner(action.ExtendNextLongWordStart),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('W')),
 			},
@@ -464,6 +491,7 @@ func CursorModule() command.Module {
 				Name:      actExtendPrevLongWordStart,
 				DocString: "Extend to start of previous long word",
 				Run:       kit.Runner(action.ExtendPrevLongWordStart),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('B')),
 			},
@@ -471,6 +499,7 @@ func CursorModule() command.Module {
 				Name:      actExtendNextLongWordEnd,
 				DocString: "Extend to end of next long word",
 				Run:       kit.Runner(action.ExtendNextLongWordEnd),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(kit.Char('E')),
 			},
@@ -478,30 +507,35 @@ func CursorModule() command.Module {
 				Name:      actExtendPrevLongWordEnd,
 				DocString: "Extend to end of previous long word",
 				Run:       kit.Runner(action.ExtendPrevLongWordEnd),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 			},
 			{
 				Name:      actExtendNextSubWordStart,
 				DocString: "Extend to start of next sub-word",
 				Run:       kit.Runner(action.ExtendNextSubWordStart),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 			},
 			{
 				Name:      actExtendPrevSubWordStart,
 				DocString: "Extend to start of previous sub-word",
 				Run:       kit.Runner(action.ExtendPrevSubWordStart),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 			},
 			{
 				Name:      actExtendNextSubWordEnd,
 				DocString: "Extend to end of next sub-word",
 				Run:       kit.Runner(action.ExtendNextSubWordEnd),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 			},
 			{
 				Name:      actExtendPrevSubWordEnd,
 				DocString: "Extend to end of previous sub-word",
 				Run:       kit.Runner(action.ExtendPrevSubWordEnd),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 			},
 			{
@@ -574,6 +608,7 @@ func CursorModule() command.Module {
 				Name:      actGotoLineOrExtendFileStart,
 				DocString: "Extend to line number `<n>` else file start",
 				Run:       kit.Runner(gotoLineOrExtendFileStartAction),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(g(kit.Char('g'))),
 			},
@@ -581,6 +616,7 @@ func CursorModule() command.Module {
 				Name:      actExtendToColumn,
 				DocString: "Extend to column",
 				Run:       kit.Runner(action.ExtendToColumn),
+				Counted:   true,
 				Modes:     view.ModeSelect,
 				Keys:      kit.Keys(g(kit.Char('|'))),
 			},
@@ -653,25 +689,22 @@ func gotoLineAction(e *view.Editor) {
 	if n := e.Count(); n > 0 {
 		action.GotoLine(e, n)
 	}
-	e.ResetCount()
 }
 
 func gotoLineOrFileStartAction(e *view.Editor) {
 	if n := e.Count(); n > 0 {
 		action.GotoLine(e, n)
-	} else {
-		action.MoveFileStart(e)
+		return
 	}
-	e.ResetCount()
+	action.MoveFileStart(e)
 }
 
 func gotoLineOrExtendFileStartAction(e *view.Editor) {
 	if n := e.Count(); n > 0 {
 		action.GotoLine(e, n)
-	} else {
-		action.ExtendToFileStart(e)
+		return
 	}
-	e.ResetCount()
+	action.ExtendToFileStart(e)
 }
 
 type findCharActionArgs struct {
@@ -684,17 +717,18 @@ func findCharAction(args findCharActionArgs) command.KeyAction {
 	fwd := args.forward
 	inc := args.inclusive
 	ext := args.extend
-	h := map[findCharHintKey]string{
-		{forward: true, inclusive: true}: "f",
-		{forward: true}:                  "t",
-		{inclusive: true}:                "F",
-		{}:                               "T",
-	}[findCharHintKey{forward: fwd, inclusive: inc}]
-	return func(e *view.Editor) command.Continuation {
-		e.SetHint(h + " ...")
-		return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-			if k.Code.Char != 0 && k.Mods == command.ModNone {
-				target := k.Code.Char
+	return func(_ *view.Editor) command.Continuation {
+		return command.ReadChar(func(
+			e *view.Editor, target rune,
+		) command.Continuation {
+			action.FindChar(action.FindCharArgs{
+				Editor:    e,
+				Char:      target,
+				Forward:   fwd,
+				Inclusive: inc,
+				Extend:    ext,
+			})
+			e.SetLastMotion(func(e *view.Editor) {
 				action.FindChar(action.FindCharArgs{
 					Editor:    e,
 					Char:      target,
@@ -702,19 +736,9 @@ func findCharAction(args findCharActionArgs) command.KeyAction {
 					Inclusive: inc,
 					Extend:    ext,
 				})
-				e.SetLastMotion(func(e *view.Editor) {
-					action.FindChar(action.FindCharArgs{
-						Editor:    e,
-						Char:      target,
-						Forward:   fwd,
-						Inclusive: inc,
-						Extend:    ext,
-					})
-				})
-			}
-			e.SetHint("")
+			})
 			return nil
-		}
+		})
 	}
 }
 

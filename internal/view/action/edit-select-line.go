@@ -92,7 +92,7 @@ func selectLineImpl(e *view.Editor, above bool) {
 		pos, _ := text.LineToChar(line)
 		return pos
 	}
-	count := countOrOne(e)
+	count := e.CountOr(1)
 	sel := doc.SelectionFor(v.ID())
 	ranges := sel.Ranges()
 	for i, r := range ranges {
@@ -151,7 +151,6 @@ func selectLineImpl(e *view.Editor, above bool) {
 		}
 		ranges[i] = core.Range{Anchor: anchor, Head: head}
 	}
-	e.ResetCount()
 	if newSel, err := core.NewSelection(
 		ranges, sel.PrimaryIndex(),
 	); err == nil {

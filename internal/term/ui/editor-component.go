@@ -40,14 +40,19 @@ type (
 	}
 
 	keyState struct {
-		pending      []command.KeyEvent
-		status       string
-		hint         string
+		path         []command.KeyEvent
+		input        []keyInput
+		frames       []command.Continuation
+		count        int
 		continuation command.Continuation
 		message      *commandMessage
 		nextLayer    layerFunc
 		infoTitle    string
 		infoItems    []command.KeyHint
+	}
+
+	keyInput struct {
+		countDigit bool
 	}
 
 	mouseState struct {
@@ -349,19 +354,14 @@ func (e *EditorComponent) popupAnchorBelowCaret(
 }
 
 func (e *EditorComponent) cancelPending(cx *Context) {
-	e.keys.pending = nil
-	e.keys.status = ""
-	e.keys.infoTitle = ""
-	e.keys.infoItems = nil
+	e.keys.path = nil
+	e.clearHints()
 	e.keys.continuation = nil
-	e.keys.hint = ""
-	cx.Editor.ResetCount()
+	e.keys.frames = nil
+	e.clearInput(cx)
 }
 
 func (e *EditorComponent) syncEditorMessages(cx *Context) {
-	if h := cx.Editor.TakeHint(); h != "" {
-		e.keys.hint = h
-	}
 	if m := cx.Editor.TakeStatusMsg(); m != "" {
 		e.setCommandMessage(m)
 	}

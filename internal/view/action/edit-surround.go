@@ -151,7 +151,7 @@ func textObjectSelect(e *view.Editor, ch rune, kind core.TextObjectKind) {
 	if doc == nil {
 		return
 	}
-	n := max(countOrOne(e), 1)
+	n := max(e.CountOr(1), 1)
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	newRanges := make([]core.Range, len(sel.Ranges()))
@@ -196,7 +196,7 @@ func resolveSurroundPos(e *view.Editor, ch rune) (resolveSurroundPosRes, bool) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	skip := max(countOrOne(e), 1)
+	skip := max(e.CountOr(1), 1)
 	var positions []int
 	var err error
 	if ch != 'm' {

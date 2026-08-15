@@ -113,7 +113,6 @@ const (
 	StatusLineTotalLines       StatusLineElement = "total-line-numbers"
 	StatusLineSpacer           StatusLineElement = "spacer"
 	StatusLineVersionControl   StatusLineElement = "version-control"
-	StatusLineRegister         StatusLineElement = "register"
 	StatusLineModified         StatusLineElement = "file-modified-indicator"
 	StatusLineSpinner          StatusLineElement = "spinner"
 
@@ -179,7 +178,6 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineTotalLines,
 	StatusLineSpacer,
 	StatusLineVersionControl,
-	StatusLineRegister,
 	StatusLineModified,
 	StatusLineSpinner,
 }

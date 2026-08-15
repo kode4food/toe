@@ -5,6 +5,7 @@ package kit
 
 import (
 	"slices"
+	"strings"
 	"unicode"
 
 	"github.com/kode4food/toe/internal/term/command"
@@ -17,6 +18,8 @@ var (
 	// LeaderPrefix enters the shared leader menu, reachable by Space or Ctrl-\
 	LeaderPrefix = Prefixed(LeaderBinding)
 )
+
+const registerPreviewLen = 40
 
 // Terse bindings for the plain special keys, named by their keycap form
 var (
@@ -164,9 +167,42 @@ func RequiredArg() command.Signature {
 	}
 }
 
+// RegisterHints offers the registers currently holding a value
+func RegisterHints(e *view.Editor) []command.KeyHint {
+	regs := e.Registers()
+	names := make([]rune, 0, len(regs))
+	for name := range regs {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	out := make([]command.KeyHint, 0, len(names))
+	for _, name := range names {
+		value, ok := regs.First(name)
+		if !ok {
+			continue
+		}
+		out = append(out, command.KeyHint{
+			Key:   string(name),
+			Label: registerPreview(value),
+		})
+	}
+	return out
+}
+
 // single wraps one key event into a binding of a one-key sequence
 func single(
 	code command.KeyCode, mods command.KeyModifiers,
 ) command.KeyBinding {
 	return command.KeyBinding{{{Code: code, Mods: mods}}}
+}
+
+// registerPreview renders a register's value on one line, short enough to sit
+// beside its name
+func registerPreview(value string) string {
+	flat := strings.Join(strings.Fields(value), " ")
+	runes := []rune(flat)
+	if len(runes) <= registerPreviewLen {
+		return flat
+	}
+	return string(runes[:registerPreviewLen]) + "\u2026" // '…'
 }

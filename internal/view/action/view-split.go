@@ -39,7 +39,5 @@ func ResizeViewDown(e *view.Editor) {
 }
 
 func resizeFocusedSplit(e *view.Editor, dir view.Direction) {
-	delta := max(e.Count(), 1)
-	e.ResetCount()
-	e.ResizeFocusedSplit(dir, delta)
+	e.ResizeFocusedSplit(dir, e.CountOr(1))
 }

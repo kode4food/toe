@@ -61,7 +61,11 @@ func TestEditorKeys(t *testing.T) {
 	t.Run("accepts count in select mode", func(t *testing.T) {
 		e := editorWithText(t, "abcdefgh")
 		e.SetMode(view.ModeSelect)
-		m := renderedModel(e)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 40, 8)
 
 		_ = sendKey(m, '3')
 
@@ -873,6 +877,72 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 	return e
 }
 
+func TestGotoWindowEdges(t *testing.T) {
+	newScrolled := func(t *testing.T) (ui.Model, *view.Editor) {
+		t.Helper()
+		e := view.NewEditor(t.TempDir())
+		var sb strings.Builder
+		for i := 1; i <= 400; i++ {
+			_, _ = fmt.Fprintf(&sb, "line %d\n", i)
+		}
+		testutil.SetEditorText(t, e, sb.String())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 60, 24)
+		for range 250 {
+			m = sendKey(m, 'j')
+			_ = m.View()
+		}
+		return m, e
+	}
+
+	edgeLines := func(m ui.Model) (string, string) {
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		var first, last string
+		for _, ln := range lines {
+			if strings.Contains(ln, "line ") {
+				if first == "" {
+					first = strings.TrimSpace(ln)
+				}
+				last = strings.TrimSpace(ln)
+			}
+		}
+		return first, last
+	}
+
+	t.Run("a count lands on the top visible line", func(t *testing.T) {
+		m, e := newScrolled(t)
+		first, _ := edgeLines(m)
+
+		m = sendKey(sendKey(sendKey(m, '1'), 'g'), 't')
+		_ = m.View()
+
+		assert.Contains(t, first, fmt.Sprintf("line %d", cursorLineOf(t, e)))
+	})
+
+	t.Run("a count lands on the bottom visible line", func(t *testing.T) {
+		m, e := newScrolled(t)
+		_, last := edgeLines(m)
+
+		m = sendKey(sendKey(sendKey(m, '1'), 'g'), 'b')
+		_ = m.View()
+
+		assert.Contains(t, last, fmt.Sprintf("line %d", cursorLineOf(t, e)))
+	})
+}
+
+func cursorLineOf(t *testing.T, e *view.Editor) int {
+	t.Helper()
+	doc := e.FocusedDocument()
+	text := doc.Text()
+	cursor := doc.SelectionFor(e.FocusedView().ID()).Primary().Cursor(text)
+	pos, err := text.Position(cursor)
+	assert.NoError(t, err)
+	return pos.Line
+}
+
 func TestGotoLineKeySequence(t *testing.T) {
 	newModel := func(t *testing.T) (ui.Model, *view.Editor) {
 		var b strings.Builder
@@ -931,13 +1001,12 @@ func TestGotoLineKeySequence(t *testing.T) {
 	})
 
 	t.Run("right status leaves bottom-right cell blank", func(t *testing.T) {
-		m, _ := newModel(t)
+		m, e := newModel(t)
 		m = resize(m, 8, 6)
-		// a bare count (no pending key) renders right-aligned on the cmdline
-		// with no popup; width 7 would fill the final column without the guard
-		for _, ch := range "1234567" {
-			m = sendKey(m, ch)
-		}
+		// a message of exactly the cmdline width would fill the final column
+		// without the guard
+		e.SetStatusMsg("1234567")
+		m = resize(m, 8, 6)
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
 		cmdline := []rune(lines[len(lines)-1])
 		// writing the final column auto-wraps the terminal; it must stay blank

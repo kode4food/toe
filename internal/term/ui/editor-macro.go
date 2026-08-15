@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/mattn/go-runewidth"
@@ -40,43 +41,31 @@ func (e *EditorComponent) MacroRecordAction(
 		ms.reg = 0
 		return nil
 	}
-	ed.SetHint("Q ...")
-	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			ed.SetHint("")
-			return nil
-		}
+	return command.ReadChar(func(_ *view.Editor, ch rune) command.Continuation {
 		ms.recording = true
-		ms.reg = k.Code.Char
+		ms.reg = ch
 		ms.keys = nil
 		return nil
-	}
+	})
 }
 
 // MacroReplayAction prompts for a register key and replays the macro stored
 // there count times
 func (e *EditorComponent) MacroReplayAction(
-	ed *view.Editor,
+	_ *view.Editor,
 ) command.Continuation {
 	ms := e.macroSlot
 	if ms.recording {
 		return nil
 	}
-	ed.SetHint("q ...")
-	return func(ed *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char == 0 || k.Mods != command.ModNone {
-			ed.SetHint("")
-			return nil
-		}
-		n := ed.Count()
-		if n == 0 {
-			n = 1
-		}
-		ms.replayReg = k.Code.Char
-		ms.replayCount = n
+	return command.ReadChar(func(
+		ed *view.Editor, ch rune,
+	) command.Continuation {
+		ms.replayReg = ch
+		ms.replayCount = ed.CountOr(1)
 		ms.hasReplay = true
 		return nil
-	}
+	})
 }
 
 func (e *EditorComponent) handleReplay(cx *Context) {
@@ -86,7 +75,7 @@ func (e *EditorComponent) handleReplay(cx *Context) {
 	}
 	ms.hasReplay = false
 	e.replayMacro(cx, macroKeys(cx.Editor, ms.replayReg), ms.replayCount)
-	cx.Editor.ResetCount()
+	cx.Editor.SetCount(0)
 }
 
 func (e *EditorComponent) replayMacro(
@@ -94,6 +83,7 @@ func (e *EditorComponent) replayMacro(
 ) {
 	for range n {
 		var pending []command.KeyEvent
+		count := 0
 		i := 0
 		for i < len(keys) {
 			k := keys[i]
@@ -103,11 +93,12 @@ func (e *EditorComponent) replayMacro(
 				pending = nil
 				continue
 			}
-			if countable(mode, k) {
+			if countable(mode, k) && cx.Keymaps.AcceptsCount(mode, pending) {
 				ch := k.Code.Char
-				cur := cx.Editor.Count()
+				cur := count
 				if ch >= '1' && ch <= '9' || (ch == '0' && cur > 0) {
-					cx.Editor.SetCount(cur*10 + int(ch-'0'))
+					count = cur*10 + int(ch-'0')
+					cx.Editor.SetCount(count)
 					continue
 				}
 			}
@@ -118,20 +109,49 @@ func (e *EditorComponent) replayMacro(
 			}
 			switch {
 			case ok:
+				seq := pending
 				pending = nil
 				cont := lookup.Action(cx.Editor).Continuation
+				var frames []command.Continuation
+				popped := false
 				for cont != nil && i < len(keys) {
 					k = keys[i]
 					i++
-					cont = cont(cx.Editor, k)
+					next, step := cont(cx.Editor, k)
+					switch step {
+					case command.ContinuationStay:
+						if next != nil {
+							cont = next
+						}
+					case command.ContinuationPush:
+						frames = append(frames, cont)
+						seq = append(seq, k)
+						cont = next
+					case command.ContinuationPop:
+						if n := len(frames); n > 0 {
+							cont = frames[n-1]
+							frames = frames[:n-1]
+							seq = seq[:len(seq)-1]
+							continue
+						}
+						pending = slices.Clone(seq[:len(seq)-1])
+						popped = true
+						cont = nil
+					default:
+						cont = nil
+					}
 				}
-				cx.Editor.ResetCount()
+				if !popped {
+					count = 0
+					cx.Editor.SetCount(0)
+				}
 			case lookup.Prefix:
 				if mode == view.ModeInsert && len(pending) == 1 &&
 					pending[0].IsTypable() {
 					action.InsertChar(cx.Editor, pending[0].Code.Char)
 					pending = nil
-					cx.Editor.ResetCount()
+					count = 0
+					cx.Editor.SetCount(0)
 				}
 			default:
 				if mode == view.ModeInsert && len(pending) == 1 &&
@@ -139,7 +159,8 @@ func (e *EditorComponent) replayMacro(
 					action.InsertChar(cx.Editor, pending[0].Code.Char)
 				}
 				pending = nil
-				cx.Editor.ResetCount()
+				count = 0
+				cx.Editor.SetCount(0)
 			}
 		}
 	}

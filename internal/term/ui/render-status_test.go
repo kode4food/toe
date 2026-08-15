@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -40,7 +42,6 @@ func TestStatuslineAllElements(t *testing.T) {
 		opts.StatusLine.Right = []view.StatusLineItem{
 			{Element: view.StatusLineFileIndentStyle},
 			{Element: view.StatusLineFileType},
-			{Element: view.StatusLineRegister},
 		}
 		m := resize(ui.New(e, command.NewKeymaps()), 200, 24)
 
@@ -362,15 +363,6 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			},
 			want: "⠋",
 		},
-		{
-			element: view.StatusLineRegister,
-			setup: func(t *testing.T) *view.Editor {
-				e := view.NewEditor(t.TempDir())
-				e.SetRegister('a')
-				return e
-			},
-			want: "reg=a",
-		},
 	}
 
 	for _, tc := range cases {
@@ -616,21 +608,19 @@ func fileEditor(t *testing.T) *view.Editor {
 
 var bgRE = regexp.MustCompile(`48;2;(\d+;\d+;\d+)`)
 
-func TestCmdlineHintHighlight(t *testing.T) {
-	t.Run("hint line shares the prompt background", func(t *testing.T) {
-		e := editorWithText(t, "abc")
-		m := resize(ui.New(e, command.NewKeymaps()), 40, 10)
+func TestCmdlineHighlight(t *testing.T) {
+	t.Run("an interaction uses the popup", func(t *testing.T) {
+		m := builtinModel(t)
 		idle := lastLine(m.View().Content)
 
-		e.SetHint("r ...")
-		m = resize(m, 40, 10)
-		hinted := lastLine(m.View().Content)
+		m = sendKey(m, '"')
 
-		prompt := lastLine(sendKey(m, ':').View().Content)
+		assert.Equal(t,
+			backgrounds(idle), backgrounds(lastLine(m.View().Content)))
+		assert.Equal(t, `"`, popupHead(m))
 
-		assert.NotEqual(t, backgrounds(idle), backgrounds(hinted))
-		assert.Equal(t, backgrounds(prompt), backgrounds(hinted))
-		assert.Contains(t, stripANSI(hinted), "r ...")
+		m = sendKey(m, 'a')
+		assert.Empty(t, popupHead(m))
 	})
 
 	t.Run("macro recording shares the prompt background", func(t *testing.T) {
@@ -645,46 +635,351 @@ func TestCmdlineHintHighlight(t *testing.T) {
 		assert.Contains(t, stripANSI(recording), "REC q")
 	})
 
-	t.Run("pending keys share the prompt background", func(t *testing.T) {
+	t.Run("pending keys leave the cmdline idle", func(t *testing.T) {
 		idle := lastLine(builtinModel(t).View().Content)
-		prompt := lastLine(sendKey(builtinModel(t), ':').View().Content)
 		pending := lastLine(sendKey(builtinModel(t), ' ').View().Content)
 
-		assert.NotEqual(t, backgrounds(idle), backgrounds(pending))
-		assert.Equal(t, backgrounds(prompt), backgrounds(pending))
+		assert.Equal(t, backgrounds(idle), backgrounds(pending))
+		assert.NotContains(t, stripANSI(pending), "spc")
+	})
+
+	t.Run("a count leaves the cmdline idle", func(t *testing.T) {
+		idle := lastLine(builtinModel(t).View().Content)
+		counted := lastLine(sendKey(builtinModel(t), '3').View().Content)
+
+		assert.Equal(t, backgrounds(idle), backgrounds(counted))
+		assert.NotContains(t, stripANSI(counted), "3")
 	})
 }
 
-func TestCmdlineInteractionSlot(t *testing.T) {
-	t.Run("pending keys read from the left", func(t *testing.T) {
+func TestStatuslineRegisterFeedback(t *testing.T) {
+	t.Run("selecting a register shows it at once", func(t *testing.T) {
+		m := builtinModel(t)
+		assert.NotContains(t, stripANSI(m.View().Content), "reg=")
+
+		m = sendKey(sendKey(m, '"'), '5')
+
+		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "reg=5")
+	})
+
+	t.Run("one register badge, not one per pane", func(t *testing.T) {
+		m := builtinModel(t)
+		m = sendKey(sendKey(m, '"'), '5')
+		m = sendKey(sendKey(m, ' '), 'w')
+		m = sendKey(m, 'v') // vertical split
+
+		out := stripANSI(m.View().Content)
+
+		assert.Equal(t, 1, strings.Count(out, "reg=5"))
+		assert.Contains(t, stripANSI(lastLine(out)), "reg=5")
+	})
+}
+
+func TestPendingKeyPopup(t *testing.T) {
+	t.Run("continuation leaves keep their labels", func(t *testing.T) {
+		m := sendKey(builtinModel(t), 'r')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top], "Replace with new char")
+
+		m = sendKey(builtinModel(t), 'i')
+		m = sendModified(m, 'r', tea.ModCtrl)
+		lines = strings.Split(stripANSI(m.View().Content), "\n")
+		top = lineIndexWith(lines, "╭")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top], "Insert register")
+	})
+
+	t.Run("the title rides the top border", func(t *testing.T) {
 		m := sendKey(builtinModel(t), ' ')
-		assert.True(t, strings.HasPrefix(
-			stripANSI(lastLine(m.View().Content)), "spc ...",
-		))
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "\u256d")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top], "Leader")
+		assert.Equal(t, "spc", popupHead(m))
+		assert.NotContains(t, lines[top+1], "Leader")
+	})
+
+	t.Run("an interaction wears its command's label", func(t *testing.T) {
+		m := sendKey(builtinModel(t), '"')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top], "Select register")
+		assert.Equal(t, `"`, popupHead(m))
+	})
+
+	t.Run("an interaction keeps its count and choices", func(t *testing.T) {
+		m := sendKey(sendKey(sendKey(builtinModel(t), '5'), 'm'), 'r')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top], "Surround replace")
+		assert.Equal(t, "m r → 5", popupHead(m))
+		assert.Contains(t, lines[top+3], "parentheses")
+	})
+
+	t.Run("a register prompt previews what is stored", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+		e.Registers().Set('a', "hello\nthere")
+
+		m = sendKey(m, '"')
+
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top+3], "a")
+		assert.Contains(t, lines[top+3], "hello there")
+	})
+
+	t.Run("static interaction help comes from trie", func(t *testing.T) {
+		m := sendKey(sendKey(sendKey(builtinModel(t), ' '), 'w'), 'r')
+		out := stripANSI(m.View().Content)
+
+		assert.Equal(t, "spc w r", popupHead(m))
+		assert.Contains(t, out, "Resize split")
+		assert.Contains(t, out, "resize, esc/enter exits")
+
+		m = sendKey(m, 'h')
+		assert.Equal(t, "spc w r", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyEscape)
+		assert.Empty(t, popupHead(m))
 	})
 
 	t.Run("deeper sequences space the keys", func(t *testing.T) {
 		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
-		assert.True(t, strings.HasPrefix(
-			stripANSI(lastLine(m.View().Content)), "spc w ...",
-		))
+		assert.Equal(t, "spc w", popupHead(m))
 	})
 
-	t.Run("the menu is left aligned above them", func(t *testing.T) {
+	t.Run("uncounted menus reject counts", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
+		m = sendKey(m, '9')
+
+		assert.Equal(t, "spc w", popupHead(m))
+		assert.Contains(t, stripANSI(m.View().Content), "Close window")
+	})
+
+	t.Run("wheel belongs to the menu", func(t *testing.T) {
+		e := editorWithText(t, strings.Repeat("line\n", 40))
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 100, 30)
+		m = sendKey(sendKey(m, ' '), 'w')
+
+		before := stripANSI(m.View().Content)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		off := v.Offset()
+		m = mouse(m, tea.MouseWheelMsg{Button: tea.MouseWheelDown})
+		after := stripANSI(m.View().Content)
+
+		assert.Equal(t, before, after)
+		assert.Equal(t, off, v.Offset())
+	})
+
+	t.Run("click follows picker dismissal", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+
+		m = mouse(m, tea.MouseClickMsg{
+			X:      50,
+			Y:      top + 3,
+			Button: tea.MouseLeft,
+		})
+		assert.Equal(t, "spc w", popupHead(m))
+
+		m = mouse(m, tea.MouseClickMsg{Button: tea.MouseLeft})
+		assert.Empty(t, popupHead(m))
+	})
+
+	t.Run("escape closes the menu", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
+		m = sendSpecial(m, tea.KeyEscape)
+
+		assert.Empty(t, popupHead(m))
+	})
+
+	t.Run("errant prompt keys keep it open", func(t *testing.T) {
+		m := sendKey(builtinModel(t), 'r')
+		m = sendSpecial(m, tea.KeyUp)
+
+		assert.Equal(t, "r", popupHead(m))
+	})
+
+	t.Run("hints sit under a rule", func(t *testing.T) {
 		m := sendKey(builtinModel(t), ' ')
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
-		var menu string
-		for _, line := range lines {
-			if strings.Contains(line, "Leader") {
-				menu = line
-				break
-			}
-		}
-		assert.NotEmpty(t, menu)
-		assert.True(t, strings.HasPrefix(menu, "\u256d"))
+		top := lineIndexWith(lines, "\u256d")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Contains(t, lines[top+2], "\u251c")
+		assert.Contains(t, lines[top+3], "Window")
 	})
 
-	t.Run("an interaction outranks a stale message", func(t *testing.T) {
+	t.Run("a hintless node is breadcrumb only", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(km, "dd", func(*view.Editor) {},
+			[]command.KeyEvent{char('d'), char('d')})
+		m = resize(m, 100, 30)
+
+		m = sendKey(m, 'd')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "\u256d")
+		assert.Equal(t, "d", popupHead(m))
+		assert.Contains(t, lines[top+2], "\u2570")
+	})
+
+	t.Run("backspace pops the last key", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), ' '), 'w')
+		assert.Equal(t, "spc w", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+
+		assert.Equal(t, "spc", popupHead(m))
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+		assert.Contains(t, lines[top], "Leader")
+		assert.Contains(t, lines[top+3], "Window")
+	})
+
+	t.Run("continuation may keep backspace", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestKeyAction(km, "keep",
+			func(*view.Editor) command.Continuation {
+				var cont command.Continuation
+				cont = func(
+					*view.Editor, command.KeyEvent,
+				) (command.Continuation, command.Transition) {
+					return cont, command.ContinuationStay
+				}
+				return cont
+			},
+			[]command.KeyEvent{char('x')},
+		)
+		m = resize(m, 100, 30)
+
+		m = sendKey(m, 'x')
+		m = sendSpecial(m, tea.KeyBackspace)
+
+		assert.Equal(t, "x", popupHead(m))
+	})
+
+	t.Run("continuation pops to its parent", func(t *testing.T) {
+		m := sendKey(sendKey(sendKey(builtinModel(t), ' '), 'w'), 'r')
+		assert.Equal(t, "spc w r", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+
+		assert.Equal(t, "spc w", popupHead(m))
+	})
+
+	t.Run("nested continuation backtracks", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), 'm'), 'r')
+		m = sendKey(m, '(')
+		assert.Equal(t, "m r (", popupHead(m))
+		assert.Contains(t, stripANSI(m.View().Content), "Surround replace")
+		assert.NotContains(t, stripANSI(m.View().Content), "parentheses")
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Equal(t, "m r", popupHead(m))
+		assert.Contains(t, stripANSI(m.View().Content), "parentheses")
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Equal(t, "m", popupHead(m))
+	})
+
+	t.Run("backspace pops count digits before keys", func(t *testing.T) {
+		m := sendKey(sendKey(sendKey(builtinModel(t), 'g'), '6'), '2')
+		assert.Equal(t, "g → 62", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Equal(t, "g → 6", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Equal(t, "g", popupHead(m))
+	})
+
+	t.Run("backspace follows input order", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), '2'), 'g')
+		assert.Equal(t, "g → 2", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Equal(t, "2", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Empty(t, popupHead(m))
+	})
+
+	t.Run("a bare count opens the popup", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), '4'), '2')
+		assert.Equal(t, "42", popupHead(m))
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "╭")
+		assert.Contains(t, lines[top], i18n.Text(i18n.StatusCounted))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Equal(t, "4", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+		assert.Empty(t, popupHead(m))
+	})
+
+	t.Run("popping the last key closes the popup", func(t *testing.T) {
+		m := sendKey(builtinModel(t), ' ')
+		assert.Equal(t, "spc", popupHead(m))
+
+		m = sendSpecial(m, tea.KeyBackspace)
+
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		assert.Equal(t, -1, lineIndexWith(lines, "╭"))
+		assert.Equal(t, -1, lineIndexWith(lines, "Leader"))
+	})
+
+	t.Run("backspace stays bound when idle", func(t *testing.T) {
+		e := editorWithText(t, "abc")
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(km, "del", func(e *view.Editor) {
+			e.SetStatusMsg("deleted")
+		}, []command.KeyEvent{{Code: command.KeyCode{
+			Special: command.Backspace,
+		}}})
+		m = resize(m, 100, 30)
+
+		m = sendSpecial(m, tea.KeyBackspace)
+
+		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "deleted")
+	})
+
+	t.Run("a long menu clears the status rows", func(t *testing.T) {
+		m := sendKey(builtinModel(t), ' ')
+		lines := strings.Split(stripANSI(m.View().Content), "\n")
+		top := lineIndexWith(lines, "\u256d")
+		bottom := lineIndexWith(lines, "\u2570")
+		assert.GreaterOrEqual(t, top, 0)
+		assert.Less(t, bottom, len(lines)-2)
+		assert.Contains(t, lines[len(lines)-2], "1 sel")
+
+		box := []rune(lines[top])
+		left := slices.Index(box, '\u256d')
+		right := len(box) - slices.Index(box, '\u256e') - 1
+		assert.InDelta(t, left, right, 1)
+	})
+
+	t.Run("an interaction spares a stale message", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -697,10 +992,28 @@ func TestCmdlineInteractionSlot(t *testing.T) {
 
 		m = sendKey(m, ' ')
 
-		out := stripANSI(lastLine(m.View().Content))
-		assert.True(t, strings.HasPrefix(out, "spc ..."))
-		assert.NotContains(t, out, "older news")
+		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "older news")
+		assert.Equal(t, "spc", popupHead(m))
 	})
+}
+
+func lineIndexWith(lines []string, want string) int {
+	for i, line := range lines {
+		if strings.Contains(line, want) {
+			return i
+		}
+	}
+	return -1
+}
+
+// popupHead returns the popup's breadcrumb, the row under the top border
+func popupHead(m ui.Model) string {
+	lines := strings.Split(stripANSI(m.View().Content), "\n")
+	top := lineIndexWith(lines, "╭")
+	if top < 0 || top+1 >= len(lines) {
+		return ""
+	}
+	return strings.TrimSpace(strings.Trim(lines[top+1], "│ "))
 }
 
 func builtinModel(t *testing.T) ui.Model {

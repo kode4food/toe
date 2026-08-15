@@ -8,6 +8,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/builtin/test"
+	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/testutil"
 )
 
@@ -39,8 +40,8 @@ func TestSelectionSurround(t *testing.T) {
 		e, km := test.Env(t, "(abc)")
 		testutil.SetCursor(t, e, 2)
 		res := test.RunCmd(t, km, e, "surround_replace")
-		next := res.Continuation(e, test.Char('('))
-		assert.NotNil(t, next)
+		next, got := res.Continuation(e, test.Char('('))
+		assert.Equal(t, command.ContinuationPush, got)
 		next(e, test.Char('['))
 		assert.Equal(t, "[abc]", test.DocText(t, e))
 	})
@@ -63,8 +64,8 @@ func TestSelectionSurround(t *testing.T) {
 		cursor := strings.Index(src, "alpha") + 2
 		testutil.SetCursor(t, e, cursor)
 		res := test.RunCmd(t, km, e, "surround_replace")
-		next := res.Continuation(e, test.Char('('))
-		assert.NotNil(t, next)
+		next, got := res.Continuation(e, test.Char('('))
+		assert.Equal(t, command.ContinuationPush, got)
 		next(e, test.Char('['))
 		assert.Contains(t, test.DocText(t, e), "println[alpha]")
 	})
@@ -245,6 +246,7 @@ func TestSelectionRegister(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		res := test.RunCmd(t, km, e, "select_register")
 		assert.NotNil(t, res.Continuation)
-		assert.Nil(t, res.Continuation(e, test.Char('a')))
+		_, got := res.Continuation(e, test.Char('a'))
+		assert.Equal(t, command.ContinuationDone, got)
 	})
 }

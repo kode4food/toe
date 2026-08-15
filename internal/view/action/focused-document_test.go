@@ -85,7 +85,8 @@ func TestFocusedDocumentGuardActions(t *testing.T) {
 		{"move file end", action.MoveFileEnd},
 		{"normal mode", action.NormalMode},
 		{"open above", action.OpenAbove},
-		{"open below", action.AddNewlineBelow},
+		{"add newline below", action.AddNewlineBelow},
+		{"open below", action.OpenBelow},
 		{"paste after", action.PasteAfter},
 		{"paste before", action.PasteBefore},
 		{"paste register", func(e *view.Editor) {

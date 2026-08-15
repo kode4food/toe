@@ -202,8 +202,8 @@ func TestDefaults(t *testing.T) {
 	t.Run("capital hints omit shift", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(nil,
-			view.ModeNormal, []command.KeyEvent{test.Char(' ')},
+		_, hints := km.PendingHints(
+			nil, view.ModeNormal, []command.KeyEvent{test.Char(' ')}, false,
 		)
 
 		assert.Contains(t, hints, command.KeyHint{
@@ -215,9 +215,10 @@ func TestDefaults(t *testing.T) {
 	t.Run("space hints are ordered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(nil,
-			view.ModeNormal, []command.KeyEvent{test.Char(' ')},
+		_, hints := km.PendingHints(
+			nil, view.ModeNormal, []command.KeyEvent{test.Char(' ')}, false,
 		)
+
 		keys := make([]string, 0, len(hints))
 		for _, h := range hints {
 			keys = append(keys, h.Key)
@@ -236,12 +237,14 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		for _, mode := range command.PaneModes.Split() {
-			spaceTitle, spaceHints := km.PendingHints(nil,
-				mode, []command.KeyEvent{test.Char(' ')},
+			spaceTitle, spaceHints := km.PendingHints(
+				nil, mode, []command.KeyEvent{test.Char(' ')}, false,
 			)
-			aliasTitle, aliasHints := km.PendingHints(nil,
-				mode, []command.KeyEvent{ctrl('\\')},
+
+			aliasTitle, aliasHints := km.PendingHints(
+				nil, mode, []command.KeyEvent{ctrl('\\')}, false,
 			)
+
 			assert.Equal(t, spaceTitle, aliasTitle)
 			assert.Equal(t, spaceHints, aliasHints)
 		}
@@ -250,9 +253,10 @@ func TestDefaults(t *testing.T) {
 	t.Run("terminal window menu mirrors other panes", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		_, hints := km.PendingHints(nil,
-			view.ModeTerminal, []command.KeyEvent{ctrl('w')},
+		_, hints := km.PendingHints(
+			nil, view.ModeTerminal, []command.KeyEvent{ctrl('w')}, false,
 		)
+
 		labels := make(map[string]string, len(hints))
 		for _, h := range hints {
 			labels[h.Key] = h.Label
@@ -272,8 +276,9 @@ func TestDefaults(t *testing.T) {
 		km := defaultKeymaps(t)
 
 		title, hints := km.PendingHints(
-			nil, view.ModeTerminal, []command.KeyEvent{test.Char(' ')},
+			nil, view.ModeTerminal, []command.KeyEvent{test.Char(' ')}, false,
 		)
+
 		labels := make(map[string]string, len(hints))
 		for _, h := range hints {
 			labels[h.Key] = h.Label
@@ -322,8 +327,8 @@ func TestDefaults(t *testing.T) {
 	t.Run("image window hints are filtered", func(t *testing.T) {
 		km := defaultKeymaps(t)
 
-		title, hints := km.PendingHints(nil,
-			view.ModeImage, []command.KeyEvent{ctrl('w')},
+		title, hints := km.PendingHints(
+			nil, view.ModeImage, []command.KeyEvent{ctrl('w')}, false,
 		)
 
 		assert.Equal(t, "Window", title)
@@ -346,7 +351,7 @@ func TestDefaults(t *testing.T) {
 
 		title, hints := km.PendingHints(nil, view.ModeImage, []command.KeyEvent{
 			test.Char(' '),
-		})
+		}, false)
 
 		assert.Equal(t, "Leader", title)
 		assert.Contains(t, hints, command.KeyHint{
@@ -354,8 +359,9 @@ func TestDefaults(t *testing.T) {
 			Label: "Open command palette",
 		})
 		assert.Contains(t, hints, command.KeyHint{
-			Key:   "w",
-			Label: "Window",
+			Key:    "w",
+			Label:  "Window",
+			Prefix: true,
 		})
 		assert.NotContains(t, hints, command.KeyHint{
 			Key:   "y",
@@ -369,6 +375,7 @@ func TestDefaults(t *testing.T) {
 		title, hints := km.PendingHints(
 			nil, view.ModeNormal,
 			[]command.KeyEvent{test.Char('Z').WithMods(command.ModShift)},
+			false,
 		)
 
 		assert.Equal(t, "View", title)

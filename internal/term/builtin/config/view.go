@@ -77,6 +77,8 @@ const (
 	actRotateView             = "rotate_view"
 	actTogglePaneMaximized    = "toggle_pane_maximized"
 	actResizeView             = "resize_view"
+
+	hintResizeKey = i18n.Key("hint.resize")
 )
 
 //go:embed i18n/view.*.json
@@ -251,6 +253,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actScrollUp,
 				DocString: "Scroll view up",
 				Run:       kit.Runner(action.ScrollUp),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('k')), z(kit.Up)),
@@ -261,6 +264,7 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actScrollDown,
 				DocString: "Scroll view down",
 				Run:       kit.Runner(action.ScrollDown),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys: map[view.Mode]command.KeyBinding{view.ModeAny: kit.Or(
 					kit.Or(z(kit.Char('j')), z(kit.Down)),
@@ -452,8 +456,11 @@ func ViewModule(model ui.Model) command.Module {
 				Name:      actResizeView,
 				DocString: "Resize split",
 				Run:       kit.Continuation(model.ResizeViewAction),
-				Modes:     command.PaneModes,
-				Keys:      kit.Window(kit.Char('r')),
+				Hints: func(*view.Editor) []command.KeyHint {
+					return []command.KeyHint{{Label: i18n.Text(hintResizeKey)}}
+				},
+				Modes: command.PaneModes,
+				Keys:  kit.Window(kit.Char('r')),
 			},
 		},
 		Options: []command.Option{

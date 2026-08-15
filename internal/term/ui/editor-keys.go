@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
-
-const countArrow = "\u2192" // '→' - rightwards arrow
 
 func (e *EditorComponent) handleKeyPress(
 	cx *Context, msg tea.KeyPressMsg,
@@ -31,7 +28,7 @@ func (e *EditorComponent) handleKeyPress(
 
 	e.language.completionGen++
 
-	if len(e.keys.pending) == 0 &&
+	if len(e.keys.path) == 0 &&
 		k.Code.Char == 'z' && k.Mods == command.ModCtrl {
 		return consumed(), tea.Suspend
 	}
@@ -40,13 +37,14 @@ func (e *EditorComponent) handleKeyPress(
 		e.macroSlot.keys = append(e.macroSlot.keys, k)
 	}
 
+	if len(e.keys.input) > 0 &&
+		k.Code.Special == command.Escape && k.Mods == command.ModNone {
+		e.cancelPending(cx)
+		return consumed(), nil
+	}
+
 	if e.keys.continuation != nil {
-		cont := e.keys.continuation(cx.Editor, k)
-		e.keys.continuation = cont
-		if cont == nil {
-			e.keys.hint = ""
-			cx.Editor.ResetCount()
-		}
+		e.handleContinuation(cx, cx.Editor.Mode(), k)
 		e.syncEditorMessages(cx)
 		e.handleReplay(cx)
 		return consumed(), nil
@@ -54,33 +52,41 @@ func (e *EditorComponent) handleKeyPress(
 
 	mode := cx.Editor.Mode()
 
-	if countable(mode, k) {
+	if countable(mode, k) && cx.Keymaps.AcceptsCount(mode, e.keys.path) {
 		ch := k.Code.Char
-		cur := cx.Editor.Count()
+		cur := e.keys.count
 		if ch >= '1' && ch <= '9' || (ch == '0' && cur > 0) {
-			cx.Editor.SetCount(cur*10 + int(ch-'0'))
-			e.keys.status = e.pendingStatus(cx)
+			e.keys.input = append(e.keys.input, keyInput{countDigit: true})
+			e.setCount(cx, cur*10+int(ch-'0'))
+			e.setHints(cx, mode)
 			return consumed(), nil
 		}
 	}
 
-	e.keys.pending = append(e.keys.pending, k)
-	lookup, ok := cx.Keymaps.Lookup(mode, e.keys.pending)
+	if len(e.keys.input) > 0 &&
+		k.Code.Special == command.Backspace && k.Mods == command.ModNone {
+		e.popPending(cx, mode)
+		return consumed(), nil
+	}
+
+	e.keys.path = append(e.keys.path, k)
+	e.keys.input = append(e.keys.input, keyInput{})
+	lookup, ok := cx.Keymaps.Lookup(mode, e.keys.path)
 	if ok && !lookup.Enabled(cx.Editor) {
 		ok = false
 	}
 	switch {
 	case ok:
-		e.keys.pending = nil
-		e.keys.status = ""
 		e.clearCommandMessage()
-		e.keys.infoTitle = ""
-		e.keys.infoItems = nil
+		e.clearHints()
 		res := lookup.Action(cx.Editor)
 		e.keys.continuation = res.Continuation
 		if res.Continuation == nil {
-			e.keys.hint = ""
-			cx.Editor.ResetCount()
+			e.keys.path = nil
+			e.clearInput(cx)
+		} else {
+			e.keys.frames = nil
+			e.setHints(cx, mode)
 		}
 		e.setCommandResult(res)
 		e.syncEditorMessages(cx)
@@ -89,66 +95,40 @@ func (e *EditorComponent) handleKeyPress(
 		return consumed(), signalToCmd(res.Signal)
 
 	case lookup.Prefix:
-		if mode == view.ModeInsert && len(e.keys.pending) == 1 {
-			if e.keys.pending[0].IsTypable() {
+		if mode == view.ModeInsert && len(e.keys.path) == 1 {
+			if e.keys.path[0].IsTypable() {
 				if layer := e.insertTypable(
-					cx, e.keys.pending[0],
+					cx, e.keys.path[0],
 				); layer != nil {
 					return consumedWith(layer), nil
 				}
 				return consumed(), nil
 			}
 		}
-		e.keys.status = e.pendingStatus(cx)
-		title, items := cx.Keymaps.PendingHints(cx.Editor, mode, e.keys.pending)
-		e.keys.infoTitle = title
-		e.keys.infoItems = items
+		e.setHints(cx, mode)
 		return consumed(), nil
 
 	default:
-		if mode == view.ModeInsert && len(e.keys.pending) == 1 {
-			if e.keys.pending[0].IsTypable() {
+		if mode == view.ModeInsert && len(e.keys.path) == 1 {
+			if e.keys.path[0].IsTypable() {
 				if layer := e.insertTypable(
-					cx, e.keys.pending[0],
+					cx, e.keys.path[0],
 				); layer != nil {
 					return consumedWith(layer), nil
 				}
 				return consumed(), nil
 			}
 		}
-		e.keys.pending = nil
-		e.keys.status = ""
-		e.keys.infoTitle = ""
-		e.keys.infoItems = nil
-		cx.Editor.ResetCount()
+		e.keys.path = e.keys.path[:len(e.keys.path)-1]
+		e.keys.input = e.keys.input[:len(e.keys.input)-1]
 		return consumed(), nil
 	}
-}
-
-func (e *EditorComponent) pendingStatus(cx *Context) string {
-	var sb strings.Builder
-	for i, pk := range e.keys.pending {
-		if i > 0 {
-			sb.WriteString(" ")
-		}
-		sb.WriteString(pk.String())
-	}
-	if c := cx.Editor.Count(); c > 0 {
-		if sb.Len() > 0 {
-			_, _ = fmt.Fprintf(&sb, " %s ", countArrow)
-		}
-		_, _ = fmt.Fprintf(&sb, "%d", c)
-	}
-	if sb.Len() == 0 {
-		return ""
-	}
-	return sb.String() + " ..."
 }
 
 // keymapClaims reports whether k continues or completes a binding in the
 // focused pane's mode, so a raw-input pane must not swallow it first
 func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
-	if len(e.keys.pending) > 0 || e.keys.continuation != nil {
+	if len(e.keys.path) > 0 || e.keys.continuation != nil {
 		return true
 	}
 	if cx.Editor.Mode() == view.ModeTerminal && k.Mods == command.ModNone {
@@ -167,11 +147,9 @@ func (e *EditorComponent) insertTypable(
 	cx *Context, k command.KeyEvent,
 ) Callback {
 	action.InsertChar(cx.Editor, k.Code.Char)
-	e.keys.pending = nil
-	e.keys.status = ""
-	e.keys.infoTitle = ""
-	e.keys.infoItems = nil
-	cx.Editor.ResetCount()
+	e.keys.path = nil
+	e.clearHints()
+	e.clearInput(cx)
 	tick := e.autoCompletionTick(cx)
 	if layer := e.triggerSignatureHelpLayer(cx); layer != nil {
 		return layerWithCmd(layer, tick)
@@ -278,6 +256,101 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 	return func(_ *Context, comp *Compositor) tea.Cmd {
 		pushSignatureHelpLayer(comp, newSignatureHelpComponent(e, call, help))
 		return nil
+	}
+}
+
+// popPending drops the last thing typed toward a command
+func (e *EditorComponent) popPending(cx *Context, mode view.Mode) {
+	last := e.keys.input[len(e.keys.input)-1]
+	e.keys.input = e.keys.input[:len(e.keys.input)-1]
+	if last.countDigit {
+		e.setCount(cx, e.keys.count/10)
+	} else {
+		e.keys.path = e.keys.path[:len(e.keys.path)-1]
+	}
+	if len(e.keys.path) == 0 && e.keys.count == 0 {
+		e.clearHints()
+		return
+	}
+	e.setHints(cx, mode)
+}
+
+// setCount mirrors the count for the renderer, which cannot take it
+func (e *EditorComponent) setCount(cx *Context, n int) {
+	e.keys.count = n
+	cx.Editor.SetCount(n)
+}
+
+func (e *EditorComponent) clearInput(cx *Context) {
+	e.keys.input = nil
+	e.setCount(cx, 0)
+}
+
+func (e *EditorComponent) handleContinuation(
+	cx *Context, mode view.Mode, k command.KeyEvent,
+) {
+	next, step := e.keys.continuation(cx.Editor, k)
+	switch step {
+	case command.ContinuationStay:
+		if next != nil {
+			e.keys.continuation = next
+		}
+	case command.ContinuationPush:
+		e.pushContinuation(cx, mode, k, next)
+	case command.ContinuationPop:
+		e.popContinuation(cx, mode)
+	default:
+		e.keys.continuation = nil
+		e.keys.frames = nil
+		e.keys.path = nil
+		e.clearHints()
+		e.clearInput(cx)
+	}
+}
+
+func (e *EditorComponent) pushContinuation(
+	cx *Context, mode view.Mode, k command.KeyEvent,
+	next command.Continuation,
+) {
+	e.keys.frames = append(e.keys.frames, e.keys.continuation)
+	e.keys.input = append(e.keys.input, keyInput{})
+	e.keys.continuation = next
+	e.keys.path = append(e.keys.path, k)
+	e.setHints(cx, mode)
+}
+
+func (e *EditorComponent) popContinuation(cx *Context, mode view.Mode) {
+	if n := len(e.keys.frames); n > 0 {
+		frame := e.keys.frames[n-1]
+		e.keys.frames = e.keys.frames[:n-1]
+		e.keys.input = e.keys.input[:len(e.keys.input)-1]
+		e.keys.path = e.keys.path[:len(e.keys.path)-1]
+		e.keys.continuation = frame
+		e.setHints(cx, mode)
+		return
+	}
+	e.keys.continuation = nil
+	e.clearHints()
+	e.popPending(cx, mode)
+}
+
+func (e *EditorComponent) clearHints() {
+	e.keys.infoTitle = ""
+	e.keys.infoItems = nil
+}
+
+// setHints loads the hints for the node reached by the current key path
+func (e *EditorComponent) setHints(cx *Context, mode view.Mode) {
+	counting := e.keys.count > 0 && e.keys.continuation == nil
+	title := e.keys.infoTitle
+	e.keys.infoTitle, e.keys.infoItems = cx.Keymaps.PendingHints(
+		cx.Editor, mode, e.keys.path, counting,
+	)
+	switch {
+	case counting && len(e.keys.path) == 0:
+		e.keys.infoTitle = i18n.Text(i18n.StatusCounted)
+	case e.keys.infoTitle == "" && e.keys.continuation != nil:
+		e.keys.infoTitle = title
 	}
 }
 

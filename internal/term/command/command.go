@@ -68,18 +68,26 @@ type (
 		Keys      map[view.Mode]KeyBinding
 		Aliases   []string
 		Signature Signature
+		Counted   bool
+		Hints     HintProvider
 	}
 
-	// KeyHint is a (key-string, label) pair used by the pending-key info popup
+	// KeyHint is a (key-string, label) pair used by the pending-key info popup.
+	// Prefix marks a key that opens another menu rather than running a command
 	KeyHint struct {
-		Key   string
-		Label string
+		Key    string
+		Label  string
+		Prefix bool
 	}
 
 	// Run executes a registered command, optionally with parsed arguments. A
 	// nil Run declares the name, docs, and bindings of a command whose behavior
 	// a UI component implements by intercepting the resolved name
 	Run func(*view.Editor, *Args) Result
+
+	// HintProvider answers the keys a command accepts next when they are not
+	// bindings in the trie, such as the registers currently holding a value
+	HintProvider func(*view.Editor) []KeyHint
 
 	// Result is returned by a Run function
 	Result struct {

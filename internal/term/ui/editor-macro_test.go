@@ -81,6 +81,45 @@ func TestEditorMacro(t *testing.T) {
 		assert.Equal(t, "XX", doc.Text().String())
 	})
 
+	t.Run("replays continuation backtracking", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestKeyAction(km, "rec", m.MacroRecordAction,
+			[]command.KeyEvent{char('z')})
+		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
+			[]command.KeyEvent{char('v')})
+		bindNormalTestKeyAction(km, "pop",
+			func(*view.Editor) command.Continuation {
+				return func(
+					*view.Editor, command.KeyEvent,
+				) (command.Continuation, command.Transition) {
+					return nil, command.ContinuationPop
+				}
+			}, []command.KeyEvent{char('g'), char('a')})
+		bindNormalTestAction(km, "insert",
+			func(e *view.Editor) {
+				action.InsertMode(e)
+				action.InsertChar(e, 'B')
+				action.NormalMode(e)
+			}, []command.KeyEvent{char('g'), char('b')})
+		m = resize(m, 80, 24)
+
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'a')
+		m = sendKey(m, 'g')
+		m = sendKey(m, 'a')
+		m = sendSpecial(m, tea.KeyBackspace)
+		m = sendKey(m, 'b')
+		m = sendKey(m, 'z')
+		m = sendKey(m, 'v')
+		_ = sendKey(m, 'a')
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, "BB", doc.Text().String())
+	})
+
 	t.Run("records and replays an insertion", func(t *testing.T) {
 		m, e := macroModel(t)
 		// record into register 'a': enter insert, type x, escape
@@ -136,8 +175,12 @@ func TestEditorMacro(t *testing.T) {
 			[]command.KeyEvent{char('z')})
 		bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
 			[]command.KeyEvent{char('v')})
-		bindNormalTestAction(km, "insert_x",
-			func(e *view.Editor) {
+		bindTestAction(bindTestActionArgs{
+			km:      km,
+			mode:    view.ModeNormal,
+			name:    "insert_x",
+			counted: true,
+			fn: func(e *view.Editor) command.Continuation {
 				n := e.Count()
 				if n == 0 {
 					n = 1
@@ -147,7 +190,10 @@ func TestEditorMacro(t *testing.T) {
 					action.InsertChar(e, 'x')
 				}
 				action.NormalMode(e)
-			}, []command.KeyEvent{char('x')})
+				return nil
+			},
+			seqs: [][]command.KeyEvent{{char('x')}},
+		})
 		m = resize(m, 80, 24)
 
 		// record into 'a': count 3, then the single-key insert binding
@@ -221,13 +267,13 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 		func(ed *view.Editor) command.Continuation {
 			return func(
 				ed *view.Editor, k command.KeyEvent,
-			) command.Continuation {
+			) (command.Continuation, command.Transition) {
 				if k.Code.Char == 'x' {
 					action.InsertMode(ed)
 					action.InsertChar(ed, 'X')
 					action.NormalMode(ed)
 				}
-				return nil
+				return nil, command.ContinuationDone
 			}
 		}, []command.KeyEvent{char('g')})
 	m = resize(m, 80, 24)

@@ -135,7 +135,7 @@ func TestRuntime(t *testing.T) {
 		}
 		seq, err := command.ParseKeySequence("g")
 		assert.NoError(t, err)
-		_, hints := km.PendingHints(nil, view.ModeNormal, seq)
+		_, hints := km.PendingHints(nil, view.ModeNormal, seq, false)
 		assert.Contains(t, hints, command.KeyHint{
 			Key: "x, y", Label: "Record",
 		})

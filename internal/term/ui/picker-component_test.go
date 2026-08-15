@@ -212,7 +212,14 @@ func TestPickerScroll(t *testing.T) {
 		m2, _ := m.Update(tea.BlurMsg{})
 		m = m2.(ui.Model)
 
-		assert.Nil(t, m.View().Cursor)
+		// the overlay takes the caret off the document and onto its query
+		cur := m.View().Cursor
+		if !assert.NotNil(t, cur) {
+			return
+		}
+		assert.Equal(t, tea.CursorBar, cur.Shape)
+		row := strings.Split(stripANSI(m.View().Content), "\n")[cur.Y]
+		assert.Contains(t, row, "1/1") // the query row, which carries the count
 	})
 }
 

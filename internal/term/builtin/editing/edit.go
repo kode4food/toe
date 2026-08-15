@@ -126,14 +126,16 @@ func EditModule() command.Module {
 			{
 				Name:      actOpenBelow,
 				DocString: "Open new line below selection",
-				Run:       kit.Runner(openBelowAction),
+				Run:       kit.Runner(action.OpenBelow),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('o')),
 			},
 			{
 				Name:      actOpenAbove,
 				DocString: "Open new line above selection",
-				Run:       kit.Runner(openAboveAction),
+				Run:       kit.Runner(action.OpenAbove),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('O')),
 			},
@@ -191,6 +193,7 @@ func EditModule() command.Module {
 				DocString: "Move backward in history. Accepts a number of " +
 					"steps",
 				Run:       earlierAction,
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('u')),
 				Signature: kit.OptionalArg(),
@@ -199,6 +202,7 @@ func EditModule() command.Module {
 				Name:      actLater,
 				DocString: "Move forward in history. Accepts a number of steps",
 				Run:       laterAction,
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('U')),
 				Signature: kit.OptionalArg(),
@@ -228,6 +232,7 @@ func EditModule() command.Module {
 				Name:      actRepeatLastMotion,
 				DocString: "Repeat last motion",
 				Run:       kit.Runner(action.RepeatLastMotion),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('.')),
 			},
@@ -235,6 +240,7 @@ func EditModule() command.Module {
 				Name:      actIndent,
 				DocString: "Indent selection",
 				Run:       kit.Runner(action.Indent),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('>')),
 			},
@@ -242,6 +248,7 @@ func EditModule() command.Module {
 				Name:      actUnindent,
 				DocString: "Unindent selection",
 				Run:       kit.Runner(action.Unindent),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('<')),
 			},
@@ -277,6 +284,7 @@ func EditModule() command.Module {
 				Name:      actRotateSelectionsBackward,
 				DocString: "Rotate selections backward",
 				Run:       kit.Runner(action.RotateSelectionsBackward),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char('(')),
 			},
@@ -284,6 +292,7 @@ func EditModule() command.Module {
 				Name:      actRotateSelectionsForward,
 				DocString: "Rotate selections forward",
 				Run:       kit.Runner(action.RotateSelectionsForward),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Char(')')),
 			},
@@ -291,6 +300,7 @@ func EditModule() command.Module {
 				Name:      actRotateContentsBackward,
 				DocString: "Rotate selections contents backward",
 				Run:       kit.Runner(action.RotateContentsBackward),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt('(')),
 			},
@@ -298,6 +308,7 @@ func EditModule() command.Module {
 				Name:      actRotateContentsForward,
 				DocString: "Rotate selection contents forward",
 				Run:       kit.Runner(action.RotateContentsForward),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Alt(')')),
 			},
@@ -312,6 +323,7 @@ func EditModule() command.Module {
 				Name:      actIncrement,
 				DocString: "Increment item under cursor",
 				Run:       kit.Runner(action.Increment),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Ctrl('a')),
 			},
@@ -319,6 +331,7 @@ func EditModule() command.Module {
 				Name:      actDecrement,
 				DocString: "Decrement item under cursor",
 				Run:       kit.Runner(action.Decrement),
+				Counted:   true,
 				Modes:     command.DocNormalModes,
 				Keys:      kit.Keys(kit.Ctrl('x')),
 			},
@@ -461,28 +474,11 @@ func setAutoPairs(opts *view.Options, value string) error {
 	return nil
 }
 
-func openBelowAction(e *view.Editor) {
-	action.MoveLineEnd(e)
-	action.InsertNewline(e)
-	e.SetMode(view.ModeInsert)
-}
-
-func openAboveAction(e *view.Editor) {
-	action.MoveLineStart(e)
-	action.InsertNewline(e)
-	action.MoveUp(e)
-	e.SetMode(view.ModeInsert)
-}
-
-func replaceCharAction(e *view.Editor) command.Continuation {
-	e.SetHint("r ...")
-	return func(e *view.Editor, k command.KeyEvent) command.Continuation {
-		if k.Code.Char != 0 && k.Mods == command.ModNone {
-			action.ReplaceChar(e, k.Code.Char)
-		}
-		e.SetHint("")
+func replaceCharAction(_ *view.Editor) command.Continuation {
+	return command.ReadChar(func(e *view.Editor, ch rune) command.Continuation {
+		action.ReplaceChar(e, ch)
 		return nil
-	}
+	})
 }
 
 func undoAction(e *view.Editor) {
@@ -513,7 +509,7 @@ func laterAction(e *view.Editor, args *command.Args) command.Result {
 
 func historySteps(e *view.Editor, args *command.Args) (int, error) {
 	if args == nil || args.Empty() {
-		return max(e.Count(), 1), nil
+		return e.CountOr(1), nil
 	}
 	arg, _ := args.First()
 	n, err := strconv.Atoi(arg)

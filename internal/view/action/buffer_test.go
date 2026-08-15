@@ -88,6 +88,20 @@ func TestExtendToColumn(t *testing.T) {
 	})
 }
 
+func TestGotoColumn(t *testing.T) {
+	t.Run("moves the cursor without selecting", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abcdef")
+		testutil.SetCursor(t, e, 0)
+		e.SetCount(4)
+
+		action.GotoColumn(e)
+
+		sel := e.FocusedDocument().SelectionFor(e.FocusedView().ID())
+		assert.Equal(t, 3, sel.Primary().Cursor(e.FocusedDocument().Text()))
+		assert.Equal(t, 0, sel.Primary().Len())
+	})
+}
+
 func TestSelectWithinRegex(t *testing.T) {
 	t.Run("keeps only matching subranges", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar baz")

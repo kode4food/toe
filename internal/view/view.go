@@ -90,6 +90,9 @@ type (
 // supports unless a specific mode overrides it
 const ModeAny Mode = 0
 
+// the bottom row of a view's area draws its status line, not text
+const viewStatusRows = 1
+
 //go:generate go tool stringer -type=Mode -linecomment
 const (
 	ModeNormal   Mode = 1 << iota // NOR
@@ -166,6 +169,11 @@ func (v *View) OnDisplace() {}
 
 // OnRevert marks this view as returned to the foreground. Nothing to reacquire
 func (v *View) OnRevert() {}
+
+// ContentHeight returns the view's rows for text, excluding its status line
+func (v *View) ContentHeight() int {
+	return max(v.area.Height-viewStatusRows, 0)
+}
 
 // Area returns the screen rectangle assigned by the layout engine
 func (v *View) Area() geom.Area {

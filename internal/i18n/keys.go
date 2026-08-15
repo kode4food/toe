@@ -31,6 +31,7 @@ const (
 	ErrorWorkspaceUntrustedHint Key = "error.workspaceUntrustedHint"
 
 	StatusClipboardCopied Key = "status.clipboardCopied"
+	StatusCounted         Key = "status.counted"
 
 	StatusPickerTypeToSearch Key = "status.pickerTypeToSearch"
 	StatusPickerSearching    Key = "status.pickerSearching"

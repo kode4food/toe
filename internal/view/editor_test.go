@@ -58,12 +58,20 @@ func TestEditorCount(t *testing.T) {
 		assert.Equal(t, 0, e.Count())
 	})
 
-	t.Run("set and reset", func(t *testing.T) {
+	t.Run("taking it clears it", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.SetCount(5)
 		assert.Equal(t, 5, e.Count())
-		e.ResetCount()
 		assert.Equal(t, 0, e.Count())
+	})
+
+	t.Run("answers the default when unset", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		assert.Equal(t, 1, e.CountOr(1))
+
+		e.SetCount(5)
+		assert.Equal(t, 5, e.CountOr(1))
+		assert.Equal(t, 1, e.CountOr(1))
 	})
 }
 
@@ -504,15 +512,6 @@ func TestEditorStatusMsg(t *testing.T) {
 		e.SetStatusMsg("hello")
 		assert.Equal(t, "hello", e.TakeStatusMsg())
 		assert.Equal(t, "", e.TakeStatusMsg())
-	})
-}
-
-func TestEditorHint(t *testing.T) {
-	t.Run("set and take", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		e.SetHint("press f")
-		assert.Equal(t, "press f", e.TakeHint())
-		assert.Equal(t, "", e.TakeHint())
 	})
 }
 

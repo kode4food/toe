@@ -31,7 +31,7 @@ func (p *PickerComponent) drawPickerBox(
 		cutY:      2,
 	})
 
-	writePickerPromptRow(cx, buf, areas.left, ps)
+	p.caret = writePickerPromptRow(cx, buf, areas.left, ps)
 	itemY := areas.left.Y + 2 // row 1 is the cut-separator, skip it
 	if showHeader {
 		writePickerHeader(cx, buf, geom.Area{
@@ -89,7 +89,7 @@ func (p *PickerComponent) drawPickerPane(
 	}
 	area = frame.drawSingle(buf, area, 2)
 
-	writePickerPromptRow(cx, buf, area, ps)
+	p.caret = writePickerPromptRow(cx, buf, area, ps)
 	itemY := area.Y + 2 // row 1 is the cut-separator, skip it
 	if showHeader {
 		writePickerHeader(cx, buf, geom.Area{

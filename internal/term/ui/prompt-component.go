@@ -157,17 +157,10 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 func (p *PromptComponent) Cursor(
 	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
-	kind := cx.Editor.Options().CursorShapeForMode(view.ModeInsert)
-	if kind == view.CursorKindHidden {
-		return tea.Cursor{}, false
-	}
-	return tea.Cursor{
-		Position: tea.Position{
-			X: p.bounds.X + p.caretDisplayX(),
-			Y: p.bounds.Bottom(),
-		},
-		Shape: cursorKindToShape(kind),
-	}, true
+	return insertCursorAt(cx, geom.Point{
+		X: p.bounds.X + p.caretDisplayX(),
+		Y: p.bounds.Bottom(),
+	})
 }
 
 func (p *PromptComponent) textWidth() int {

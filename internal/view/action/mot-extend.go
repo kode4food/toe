@@ -7,7 +7,7 @@ import (
 
 // ExtendCharLeft extends the selection one grapheme to the left
 func ExtendCharLeft(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.MoveHorizontally(
 			doc, core.DirectionBackward, n, core.MovementExtend,
@@ -17,7 +17,7 @@ func ExtendCharLeft(e *view.Editor) {
 
 // ExtendCharRight extends the selection one grapheme to the right
 func ExtendCharRight(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return r.MoveHorizontally(
 			doc, core.DirectionForward, n, core.MovementExtend,
@@ -27,7 +27,7 @@ func ExtendCharRight(e *view.Editor) {
 
 // ExtendLineUp extends the selection up one visual line, respecting soft-wrap
 func ExtendLineUp(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	vf := visualMoveFormat(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return vf.ExtendVerticallyVisual(doc, r, core.DirectionBackward, n)
@@ -37,7 +37,7 @@ func ExtendLineUp(e *view.Editor) {
 // ExtendLineDown extends the selection down one visual line, respecting
 // soft-wrap
 func ExtendLineDown(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	vf := visualMoveFormat(e)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		return vf.ExtendVerticallyVisual(doc, r, core.DirectionForward, n)
@@ -46,7 +46,7 @@ func ExtendLineDown(e *view.Editor) {
 
 // ExtendNextWordStart extends the selection to the start of the next word
 func ExtendNextWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MoveNextWordStart(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -55,7 +55,7 @@ func ExtendNextWordStart(e *view.Editor) {
 
 // ExtendPrevWordStart extends the selection to the start of the previous word
 func ExtendPrevWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MovePrevWordStart(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -64,7 +64,7 @@ func ExtendPrevWordStart(e *view.Editor) {
 
 // ExtendNextWordEnd extends the selection to the end of the next word
 func ExtendNextWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MoveNextWordEnd(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -73,7 +73,7 @@ func ExtendNextWordEnd(e *view.Editor) {
 
 // ExtendNextLongWordStart extends the selection to the start of the next WORD
 func ExtendNextLongWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MoveNextLongWordStart(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -82,7 +82,7 @@ func ExtendNextLongWordStart(e *view.Editor) {
 
 // ExtendPrevLongWordStart extends to the start of the previous WORD
 func ExtendPrevLongWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MovePrevLongWordStart(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -91,7 +91,7 @@ func ExtendPrevLongWordStart(e *view.Editor) {
 
 // ExtendNextLongWordEnd extends the selection to the end of the next WORD
 func ExtendNextLongWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MoveNextLongWordEnd(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -100,7 +100,7 @@ func ExtendNextLongWordEnd(e *view.Editor) {
 
 // ExtendPrevWordEnd extends the selection to the end of the previous word
 func ExtendPrevWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MovePrevWordEnd(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -109,7 +109,7 @@ func ExtendPrevWordEnd(e *view.Editor) {
 
 // ExtendPrevLongWordEnd extends the selection to the end of the previous WORD
 func ExtendPrevLongWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MovePrevLongWordEnd(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -118,7 +118,7 @@ func ExtendPrevLongWordEnd(e *view.Editor) {
 
 // ExtendNextSubWordStart extends to the start of the next sub-word
 func ExtendNextSubWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MoveNextSubWordStart(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -127,7 +127,7 @@ func ExtendNextSubWordStart(e *view.Editor) {
 
 // ExtendPrevSubWordStart extends to the start of the previous sub-word
 func ExtendPrevSubWordStart(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MovePrevSubWordStart(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -136,7 +136,7 @@ func ExtendPrevSubWordStart(e *view.Editor) {
 
 // ExtendNextSubWordEnd extends to the end of the next sub-word
 func ExtendNextSubWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MoveNextSubWordEnd(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)
@@ -145,7 +145,7 @@ func ExtendNextSubWordEnd(e *view.Editor) {
 
 // ExtendPrevSubWordEnd extends to the end of the previous sub-word
 func ExtendPrevSubWordEnd(e *view.Editor) {
-	n := countOrOne(e)
+	n := e.CountOr(1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
 		word := core.MovePrevSubWordEnd(doc, r, n)
 		return r.PutCursor(doc, word.Cursor(doc), true)

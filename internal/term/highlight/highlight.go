@@ -146,8 +146,6 @@ func NormalizeNewlines(s string) string {
 	return strings.ReplaceAll(s, "\r\n", "\n")
 }
 
-// scopeFor maps a Chroma token type to a theme scope name. Only token types
-// that differ from plain text are returned
 func scopeFor(t chroma.TokenType) (string, bool) {
 	for ; t > 0; t = t.Parent() {
 		if scope, ok := chromaScopes[t]; ok {

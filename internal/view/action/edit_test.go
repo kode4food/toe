@@ -1199,7 +1199,7 @@ func TestDeleteCharForwardDuplicate(t *testing.T) {
 
 func TestInsertNewlineTrailingWhitespace(t *testing.T) {
 	t.Run("trims trailing whitespace", func(t *testing.T) {
-		// "hello  " — cursor at 7 (pos after 'o'), chars 5,6 are spaces
+		// "hello  ", cursor at 7 (pos after 'o'), chars 5,6 are spaces
 		// firstTrailingWS=5, pos=7 → 5 < 7 hits the elif branch
 		e := testutil.EditorWithText(t, "hello  ")
 		testutil.SetCursor(t, e, 7)

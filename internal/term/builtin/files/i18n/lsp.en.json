@@ -1,20 +1,3 @@
 {
-  "prompt.rename": "rename-to",
-  "error.lspUndefined": "LSP not defined for document",
-  "status.noDeclaration": "No declaration found.",
-  "status.noDefinition": "No definition found.",
-  "status.noTypeDefinition": "No type definition found.",
-  "status.noImplementation": "No implementation found.",
-  "status.noSymbolReferences": "No symbol references found.",
-  "status.noDocumentSymbols": "No document symbols found.",
-  "status.noCodeActions": "No code actions available.",
-  "status.noHoverResults": "No hover results available.",
-  "status.lspNoNavigation": "No configured language server supports navigation",
-  "status.lspNoHighlights": "No configured language server supports document highlights",
-  "status.lspNoDocSymbols": "No configured language server supports document symbols",
-  "status.lspNoWorkSymbols": "No configured language server supports workspace symbols",
-  "status.lspNoCodeActions": "No configured language server supports code actions",
-  "status.lspNoRename": "No configured language server supports symbol renaming",
-  "status.lspNoHover": "No configured language server supports hover",
-  "status.lspNoSignatureHelp": "No configured language server supports signature help"
+  "error.lspUndefined": "LSP not defined for document"
 }

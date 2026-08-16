@@ -968,7 +968,7 @@ func TestSession(t *testing.T) {
 		redrawn := false
 		next.Tree().SetRedraw(func() { redrawn = true })
 		// the pane rebuilds itself through its registered restorer, keyed by
-		// the kind it persisted — no switch on pane type
+		// the kind it persisted, no switch on pane type
 		next.RegisterPaneRestorer(view.SessionKindTerminal,
 			func(e *view.Editor, _ *view.PaneSession) (view.Pane, error) {
 				return &fakePane{editor: e}, nil
@@ -991,7 +991,7 @@ func TestSession(t *testing.T) {
 		assert.True(t, redrawn)
 	})
 
-	t.Run("restores a reopenable pane's displaced pane", func(t *testing.T) {
+	t.Run("restores a displaced pane", func(t *testing.T) {
 		dir := t.TempDir()
 		filePath := filepath.Join(dir, "main.go")
 		assert.NoError(t,

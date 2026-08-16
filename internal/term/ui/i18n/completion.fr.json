@@ -7,5 +7,8 @@
   "completion-page-down.docstring": "Afficher la page de complétions suivante",
   "completion-page-up.docstring": "Afficher la page de complétions précédente",
   "completion-previous.docstring": "Sélectionner la complétion précédente",
-  "completion.docstring": "Compléter le mot courant"
+  "completion.docstring": "Compléter le mot courant",
+  "option.completion.auto.docstring": "Afficher les complétions automatiquement",
+  "option.completion.delay.docstring": "Délai en ms avant les complétions",
+  "option.completion.trigger-len.docstring": "Longueur de mot déclenchant la complétion"
 }

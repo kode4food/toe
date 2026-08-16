@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -13,15 +14,13 @@ import (
 )
 
 const (
-	compWidthPct = 90
-	compMaxRows  = 10
-	compPadX     = 1
-	compGap      = 2
+	compNamePct = 40
+	compGap     = 2
 )
 
 func (p *PromptComponent) recalculateCompletion(cx *Context) {
 	p.completion.done = true
-	p.completion.selected = nil
+	p.completion.list = listScroll{cursor: -1}
 	if p.kind != promptCmd {
 		p.completion.items = nil
 		return
@@ -33,101 +32,121 @@ func (p *PromptComponent) changeCompletion(dir int) {
 	if len(p.completion.items) == 0 {
 		return
 	}
-	idx := 0
-	if p.completion.selected != nil {
-		idx = *p.completion.selected + dir
+	idx := p.completion.list.cursor
+	if idx < 0 && dir < 0 {
+		idx = 0
 	}
+	idx += dir
 	n := len(p.completion.items)
 	idx = ((idx % n) + n) % n
-	p.completion.selected = &idx
+	p.selectCompletion(idx)
+}
+
+func (p *PromptComponent) selectCompletion(idx int) {
+	if idx < 0 || idx >= len(p.completion.items) {
+		return
+	}
+	p.completion.list.cursor = idx
 
 	c := p.completion.items[idx]
 	start := min(max(c.Start, 0), len(p.buf))
 	p.buf = p.buf[:start] + c.Text
 	p.caret = len([]rune(p.buf))
+	p.ensureCompletionVisible()
 }
 
-func (p *PromptComponent) completionMenuHeight(screen geom.Size) int {
+func (p *PromptComponent) syncCompletionRows(frame geom.Size) {
 	items := p.completion.items
-	if len(items) == 0 || screen.Width <= 4 || screen.Height <= 3 {
-		p.completion.size = geom.Size{}
-		return 0
+	innerW := frame.Width - 2 - 2*promptPadX
+	fit := frame.Height - promptChrome - promptRule
+	rows := min(len(items), max(fit, 0))
+	if rows <= 0 || innerW < 1 {
+		p.completion.list.resize(len(items), 0)
+		return
 	}
-	innerW := screen.Width - 2 - 2*compPadX
-	maxRows := min(compMaxRows, screen.Height-3)
-	widths := make([]int, len(items))
-	for i, c := range items {
-		widths[i] = runewidth.StringWidth(c.completionText())
+	nameW := 0
+	detailed := false
+	for _, c := range items {
+		nameW = max(nameW, runewidth.StringWidth(c.completionText()))
+		detailed = detailed || c.Detail != ""
 	}
-	slices.Sort(widths)
-	colW := max(widths[len(widths)-1], 1)
-	fullCols := max(1, (innerW+compGap)/(colW+compGap))
-	if len(items) > fullCols*maxRows {
-		idx := (len(widths) - 1) * compWidthPct / 100
-		colW = max(widths[idx], 1)
+	limit := innerW
+	if detailed {
+		limit = max(innerW*compNamePct/100, 1)
 	}
-	cols := min(len(items), max(1,
-		(innerW+compGap)/(colW+compGap),
-	))
-	rowCount := (len(items) + cols - 1) / cols
-	rowCount = min(rowCount, maxRows)
-	if rowCount <= 0 {
-		p.completion.size = geom.Size{}
-		return 0
+	oldRows := p.completion.list.rows
+	p.completion.nameWidth = min(nameW, limit)
+	p.completion.list.resize(len(p.completion.items), rows)
+	if oldRows != rows {
+		p.ensureCompletionVisible()
 	}
-	cols = min(cols, (len(items)+rowCount-1)/rowCount)
-	p.completion.size = geom.Size{Width: cols, Height: rowCount}
-	return rowCount + 2
 }
 
 func (p *PromptComponent) paintCompletions(
 	cx *Context, buf *tui.Buffer, bounds geom.Area,
 ) {
 	styles := promptCompletionStyles(cx)
-	menuStyle := styles.item
-	pop := popup{
-		borderStyle:  menuStyle.Fg(pickerFrameStyle(cx).FgColor()),
-		contentStyle: menuStyle,
-		padX:         compPadX,
-	}
-	innerW := bounds.Width - 2 - 2*compPadX
-	size := p.completion.size
-	colW := max(
-		(innerW-compGap*(size.Width-1))/size.Width, 1,
-	)
-	matchStyle := pickerMatchStyle(cx)
-	selMatchStyle := pickerSelMatchStyle(cx)
-	area := pop.drawInto(buf, bounds)
-	for row := range size.Height {
-		for col := range size.Width {
-			i := col*size.Height + row
-			if i >= len(p.completion.items) {
-				continue
-			}
-			item := p.completion.items[i]
-			at := area.Point.Add(geom.Point{
-				X: col * (colW + compGap),
-				Y: row,
-			})
-			style := menuStyle
-			match := matchStyle
-			if p.completion.selected != nil &&
-				*p.completion.selected == i {
-				style = styles.selected
-				match = selMatchStyle
-			}
-			buf.FillRange(at, colW, style)
-			writeMatchedItem(writeMatchedItemArgs{
-				buf:      buf,
-				at:       at,
-				maxWidth: colW,
-				text:     item.completionText(),
-				indices:  item.Indices,
-				base:     style,
-				match:    match,
-			})
+	styles.item = p.rowStyle(cx)
+	detail := cx.Theme().Get("ui.text.inactive").FgColor()
+	for row := range bounds.Height {
+		i := p.completion.list.scroll + row
+		if i >= len(p.completion.items) {
+			return
 		}
+		item := p.completion.items[i]
+		at := bounds.Add(geom.Point{Y: row})
+		style := styles.item
+		match := pickerMatchStyle(cx).Bg(p.bg)
+		if p.completion.list.cursor == i {
+			style = styles.selected
+			match = pickerSelMatchStyle(cx)
+		}
+		buf.FillRange(at, bounds.Width, style)
+		writeMatchedItem(writeMatchedItemArgs{
+			buf:      buf,
+			at:       at,
+			maxWidth: p.completion.nameWidth,
+			text:     item.completionText(),
+			indices:  item.Indices,
+			base:     style,
+			match:    match,
+		})
+		if item.Detail == "" {
+			continue
+		}
+		x := p.completion.nameWidth + compGap
+		buf.SetString(
+			at.Add(geom.Point{X: x}),
+			runewidth.Truncate(item.Detail, bounds.Width-x, promptEllipsis),
+			style.Fg(detail),
+		)
 	}
+}
+
+func (p *PromptComponent) ensureCompletionVisible() {
+	if p.completion.list.cursor < 0 {
+		return
+	}
+	p.completion.list.rows = max(p.completion.list.rows, 1)
+	p.completion.list.scroll = p.completion.list.ensureCursorVisible()
+}
+
+func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
+	at := geom.Point{X: msg.X, Y: msg.Y}
+	if idx, ok := p.completion.list.indexAt(p.completion.bounds, at); ok {
+		p.selectCompletion(idx)
+	}
+	return consumed()
+}
+
+func (p *PromptComponent) handleMouseWheel(
+	cx *Context, msg tea.MouseWheelMsg,
+) EventResult {
+	if !p.completion.bounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
+		return consumed()
+	}
+	p.completion.list.wheel(msg.Button, cx.Editor.Options().ScrollLines)
+	return consumed()
 }
 
 func (p promptCompletion) completionText() string {
@@ -186,7 +205,9 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 			}
 			out = append(out, promptCompletion{
 				Completion: command.Completion{
-					Text: name, Indices: res.Indices,
+					Text:    name,
+					Detail:  cmd.DocString,
+					Indices: res.Indices,
 				},
 				score: res.Score,
 			})

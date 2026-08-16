@@ -135,8 +135,6 @@ func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
 	return consumed(), cmd
 }
 
-// the hook handed to panes that mutate off the event loop; a pane calls it to
-// signal a change, leaving the frame policy to the render loop
 func (e *EditorComponent) requestRedraw() {
 	select {
 	case e.redraw <- struct{}{}:
@@ -343,7 +341,6 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 	}
 }
 
-// reloadChangedImages re-decodes any image pane whose file matches path
 func reloadChangedImages(e *view.Editor, path string) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
@@ -386,8 +383,6 @@ func macroBlinkTickCmd(gen int) tea.Cmd {
 	})
 }
 
-// flattens the pane-lookup + type-assert + dispatch chain shared by the
-// mouse motion/release/wheel handlers
 func dispatchToPaneInput(cx *Context, at geom.Point, msg tea.Msg) bool {
 	p, ok := paneAt(cx, at)
 	if !ok {

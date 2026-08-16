@@ -7,5 +7,8 @@
   "completion-page-down.docstring": "Nächste Vervollständigungsseite anzeigen",
   "completion-page-up.docstring": "Vorherige Vervollständigungsseite anzeigen",
   "completion-previous.docstring": "Vorherige Vervollständigung auswählen",
-  "completion.docstring": "Aktuelles Wort vervollständigen"
+  "completion.docstring": "Aktuelles Wort vervollständigen",
+  "option.completion.auto.docstring": "Vervollständigungen automatisch einblenden",
+  "option.completion.delay.docstring": "Verzögerung in ms bis zur Vervollständigung",
+  "option.completion.trigger-len.docstring": "Wortlänge, ab der vervollständigt wird"
 }

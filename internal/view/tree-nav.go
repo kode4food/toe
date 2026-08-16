@@ -77,11 +77,11 @@ func (t *Tree) FindSplitInDirection(id Id, dir Direction) (Id, bool) {
 		c.layout == LayoutVertical,
 		(dir == DirectionLeft || dir == DirectionRight) &&
 			c.layout == LayoutHorizontal:
-		// direction is perpendicular to container layout — search up
+		// direction is perpendicular to container layout, search up
 		return t.FindSplitInDirection(parent, dir)
 
 	default:
-		// direction is parallel to container layout — search within children
+		// direction is parallel to container layout, search within children
 		if child, ok := t.findChild(id, c.children, dir); ok {
 			return child, true
 		}

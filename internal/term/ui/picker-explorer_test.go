@@ -303,8 +303,6 @@ func TestFileExplorerInPaneDir(t *testing.T) {
 	})
 }
 
-// explorerModel opens a FileExplorer rooted at dir (the editor's cwd) and
-// returns the mounted model after one render-sized resize
 func explorerModel(
 	t *testing.T, dir string, opts ...files.FileExplorerOptions,
 ) ui.Model {

@@ -1,26 +1,26 @@
 {
-  "clear-register.docstring": "Cancella il registro indicato. Senza argomenti, cancella tutti i registri",
+  "clear-register.docstring": "Cancella il registro indicato, altrimenti tutti",
+  "error.registerName": "il nome del registro deve essere un solo carattere",
   "paste-after.docstring": "Incolla appunti o registro dopo la selezione",
   "paste-before.docstring": "Incolla appunti o registro prima della selezione",
   "paste-primary-clipboard-after.docstring": "Incolla gli appunti primari dopo le selezioni",
   "paste-primary-clipboard-before.docstring": "Incolla gli appunti primari prima delle selezioni",
   "primary-clipboard-paste-replace.docstring": "Sostituisci le selezioni con gli appunti primari",
   "replace-with-yanked.docstring": "Sostituisci la selezione con appunti o registro",
-  "yank-join.docstring": "Copia le selezioni unite. Il primo argomento può specificare un separatore. Il valore predefinito è un ritorno a capo",
-  "yank-to-primary-clipboard.docstring": "Copia le selezioni negli appunti primari",
-  "yank.docstring": "Copia la selezione negli appunti o in un registro",
-  "error.registerName": "il nome del registro deve essere un solo carattere",
   "status.registerCleared": "registro {register} cancellato",
   "status.registersCleared": "registri cancellati",
-  "yank-main-selection.docstring": "Copia la selezione principale negli appunti o in un registro",
   "status.yanked": {
-    "zero": "Nessuna selezione copiata nel registro {register}",
     "one": "{count} selezione copiata nel registro {register}",
-    "other": "{count} selezioni copiate nel registro {register}"
+    "other": "{count} selezioni copiate nel registro {register}",
+    "zero": "Nessuna selezione copiata nel registro {register}"
   },
   "status.yankedToClipboard": {
-    "zero": "Nessuna selezione copiata negli appunti",
     "one": "{count} selezione copiata negli appunti",
-    "other": "{count} selezioni copiate negli appunti"
-  }
+    "other": "{count} selezioni copiate negli appunti",
+    "zero": "Nessuna selezione copiata negli appunti"
+  },
+  "yank-join.docstring": "Copia le selezioni unite; primo argomento come separatore",
+  "yank-main-selection.docstring": "Copia la selezione principale negli appunti o in un registro",
+  "yank-to-primary-clipboard.docstring": "Copia le selezioni negli appunti primari",
+  "yank.docstring": "Copia la selezione negli appunti o in un registro"
 }

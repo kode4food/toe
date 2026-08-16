@@ -636,7 +636,8 @@ func CursorModule() command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "scrolloff",
+				Key:       "scrolloff",
+				DocString: "Lines of context kept above and below the cursor",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().ScrollOff), nil
 				},
@@ -650,7 +651,8 @@ func CursorModule() command.Module {
 				},
 			},
 			{
-				Key: "scroll-lines",
+				Key:       "scroll-lines",
+				DocString: "Lines moved per scroll step",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().ScrollLines), nil
 				},

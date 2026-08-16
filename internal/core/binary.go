@@ -112,8 +112,6 @@ func hasBinarySignature(sample []byte) bool {
 	return false
 }
 
-// detectBOM matches the longest prefix first, since the 2-byte UTF-16LE BOM
-// (FF FE) is itself a prefix of the 4-byte UTF-32LE BOM
 func detectBOM(sample []byte) (enc textEncoding, prefixLen int, ok bool) {
 	switch {
 	case bytes.HasPrefix(sample, []byte{0xFF, 0xFE, 0x00, 0x00}):
@@ -142,8 +140,6 @@ func validEncodedText(rest []byte, enc textEncoding) bool {
 	}
 }
 
-// validUTF16 structurally validates surrogate pairing, ignoring a trailing odd
-// byte left by sample truncation
 func validUTF16(rest []byte, bigEndian bool) bool {
 	pendingHighSurrogate := false
 	for i := 0; i+1 < len(rest); i += 2 {
@@ -169,8 +165,6 @@ func validUTF16(rest []byte, bigEndian bool) bool {
 	return !pendingHighSurrogate
 }
 
-// validUTF32 checks each code point is in range and not a surrogate, ignoring a
-// trailing partial unit left by sample truncation
 func validUTF32(rest []byte, bigEndian bool) bool {
 	for i := 0; i+3 < len(rest); i += 4 {
 		var cp uint32

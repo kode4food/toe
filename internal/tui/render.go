@@ -91,7 +91,7 @@ var (
 )
 
 // RenderToANSI serializes the buffer as rows joined by '\n', emitting style
-// escapes only on changes — used to bridge into the string-based render path
+// escapes only on changes, used to bridge into the string-based render path
 func (b *Buffer) RenderToANSI() string {
 	if b.Empty() {
 		return ""
@@ -274,7 +274,6 @@ func writeUint8(w *strings.Builder, n uint8) {
 	w.WriteByte('0' + n)
 }
 
-// offset 10 shifts the whole foreground set to its background counterpart
 func buildNamedEsc(offset int) namedEsc {
 	codes := [colorWhite + 1]ansi.Attr{
 		colorReset:        ansi.AttrDefaultForegroundColor,

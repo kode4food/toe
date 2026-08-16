@@ -55,8 +55,6 @@ func newPendingDocument(args newPendingDocumentArgs) *Document {
 	return d
 }
 
-// ensureLoaded reads the backing file the first time a pending buffer's content
-// is touched, copying the content-derived state onto the placeholder
 func (d *Document) ensureLoaded() {
 	d.content.RLock()
 	pending := d.content.pending != nil

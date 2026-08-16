@@ -192,7 +192,6 @@ func (s *Session) Close() {
 	}
 }
 
-// ensureDiffBase loads the diff base once per document, off the main goroutine
 func (s *Session) ensureDiffBase(doc *view.Document) {
 	path := doc.Path()
 	if path == "" {
@@ -233,8 +232,6 @@ func (s *Session) headMoved(doc *view.Document, path string) bool {
 	return ok && old != head
 }
 
-// loadDiffBase resolves the base and head off the main goroutine because
-// providers may shell out, then creates or updates the differ
 func (s *Session) loadDiffBase(
 	doc *view.Document, path string, text core.Rope,
 ) {
@@ -262,8 +259,6 @@ func (s *Session) loadDiffBase(
 	s.notifyUpdate()
 }
 
-// notifyUpdate coalesces update tokens; a full channel already implies a
-// pending redraw
 func (s *Session) notifyUpdate() {
 	select {
 	case s.updates <- struct{}{}:

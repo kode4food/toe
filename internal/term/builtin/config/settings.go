@@ -77,7 +77,8 @@ func SettingsModule(r *command.Registry) command.Module {
 		Commands:     cmds,
 		Options: []command.Option{
 			{
-				Key: "theme",
+				Key:       "theme",
+				DocString: "Color theme applied to the editor",
 				Get: func(e *view.Editor) (string, error) {
 					return e.Options().Theme, nil
 				},
@@ -94,7 +95,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().Mouse = v
 				},
-			),
+			).WithDoc("Enable mouse mode"),
 			kit.EditorBoolOption("middle-click-paste",
 				func(e *view.Editor) bool {
 					return e.Options().MiddleClickPaste
@@ -102,7 +103,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().MiddleClickPaste = v
 				},
-			),
+			).WithDoc("Middle click paste support"),
 			kit.EditorBoolOption("nerd-fonts",
 				func(e *view.Editor) bool {
 					return e.Options().NerdFonts
@@ -110,7 +111,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().NerdFonts = v
 				},
-			),
+			).WithDoc("Use Nerd Font glyphs for icons"),
 			kit.EditorBoolOption("insecure",
 				func(e *view.Editor) bool {
 					return e.Options().Insecure
@@ -118,7 +119,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().Insecure = v
 				},
-			),
+			).WithDoc("Disable workspace trust checks"),
 			kit.EditorBoolOption("editor-config",
 				func(e *view.Editor) bool {
 					return e.Options().EditorConfig
@@ -126,7 +127,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().EditorConfig = v
 				},
-			),
+			).WithDoc("Read settings from EditorConfig files"),
 			kit.EditorBoolOption("auto-session",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSession
@@ -134,7 +135,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().AutoSession = v
 				},
-			),
+			).WithDoc("Save and restore sessions automatically"),
 			kit.EditorBoolOption("file-watch",
 				func(e *view.Editor) bool {
 					return e.Options().FileWatch
@@ -142,9 +143,10 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().FileWatch = v
 				},
-			),
+			).WithDoc("Detect external file changes"),
 			{
-				Key: "default-line-ending",
+				Key:       "default-line-ending",
+				DocString: "Line ending for new documents",
 				Get: func(e *view.Editor) (string, error) {
 					switch e.Options().DefaultLineEnding {
 					case core.LineEndingLF:
@@ -169,17 +171,17 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Normal = v
 				},
-			),
+			).WithDoc("Cursor shape in normal mode"),
 			cursorShapeOption("cursor-shape.select", view.ModeSelect,
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Select = v
 				},
-			),
+			).WithDoc("Cursor shape in select mode"),
 			cursorShapeOption("cursor-shape.insert", view.ModeInsert,
 				func(o *view.Options, v view.CursorKind) {
 					o.CursorShape.Insert = v
 				},
-			),
+			).WithDoc("Cursor shape in insert mode"),
 			statuslineItemsOption("statusline.left",
 				func(o *view.Options) []view.StatusLineItem {
 					return o.StatusLineLeft()
@@ -187,7 +189,7 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(o *view.Options, v []view.StatusLineItem) {
 					o.StatusLine.Left = v
 				},
-			),
+			).WithDoc("Elements aligned left on the statusline"),
 			statuslineItemsOption("statusline.right",
 				func(o *view.Options) []view.StatusLineItem {
 					return o.StatusLineRight()
@@ -195,9 +197,10 @@ func SettingsModule(r *command.Registry) command.Module {
 				func(o *view.Options, v []view.StatusLineItem) {
 					o.StatusLine.Right = v
 				},
-			),
+			).WithDoc("Elements aligned right on the statusline"),
 			{
-				Key: "statusline.separator",
+				Key:       "statusline.separator",
+				DocString: "Character separating statusline elements",
 				Get: func(e *view.Editor) (string, error) {
 					return e.Options().StatusLineSeparator(), nil
 				},

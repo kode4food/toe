@@ -21,17 +21,15 @@ type (
 	}
 
 	completionComponent struct {
-		overlayBuf
+		dismissibleOverlay
 		editor *EditorComponent
 
 		all   []*view.CompletionItem
 		items []*view.CompletionItem
 
 		anchor completionAnchor
-		cursor int
-		scroll int
+		list   listScroll
 
-		bounds     geom.Area
 		listBounds geom.Area
 
 		refreshGen int
@@ -88,6 +86,7 @@ const (
 	// long enough that a fast typist does not queue one per keystroke
 	DefaultCompletionDelay = 250
 
+	// DefaultCompletionTriggerLen is the automatic completion threshold
 	DefaultCompletionTriggerLen = 2
 )
 
@@ -204,7 +203,6 @@ func (c *completionComponent) paint(
 	c.nerd = cx.Editor.Options().NerdFonts
 	query, _ := c.query(cx)
 	w := pl.Width
-	c.bounds = pl
 	styles := promptCompletionStyles(cx)
 	pop := popup{
 		borderStyle:  styles.item.Fg(pickerFrameStyle(cx).FgColor()),
@@ -218,19 +216,19 @@ func (c *completionComponent) paint(
 	selMatch := pickerSelMatchStyle(cx)
 	info := completionInfoStyle(cx, false)
 	selInfo := completionInfoStyle(cx, true)
-	c.clampScroll(area.Height)
+	c.list.resize(len(c.items), area.Height)
 	overflow := len(c.items) > area.Height
 	listW := area.Width
 	if overflow {
 		listW = max(area.Width-completionScrollGap, 0)
 	}
-	for i := 0; i < area.Height && c.scroll+i < len(c.items); i++ {
-		idx := c.scroll + i
+	for i := 0; i < area.Height && c.list.scroll+i < len(c.items); i++ {
+		idx := c.list.scroll + i
 		item := c.items[idx]
 		style := base
 		matchStyle := match
 		infoStyle := info
-		selected := idx == c.cursor
+		selected := idx == c.list.cursor
 		iconStyle := completionIconStyle(cx, item.Kind, selected)
 		if selected {
 			style = sel
@@ -239,7 +237,7 @@ func (c *completionComponent) paint(
 		}
 		c.renderRow(renderCompletionRowArgs{
 			buf:       buf,
-			at:        area.Point.Add(geom.Point{Y: i}),
+			at:        area.Add(geom.Point{Y: i}),
 			width:     area.Width,
 			listWidth: listW,
 			item:      item,
@@ -291,14 +289,10 @@ func (c *completionComponent) handleKeyPress(
 func (c *completionComponent) handleMouseClick(
 	_ *Context, msg tea.MouseClickMsg,
 ) EventResult {
-	if !c.bounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
-		return ignoredWith(popLayer)
-	}
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if idx, ok := listIndexAt(c.listBounds, c.scroll, at); ok {
-		if idx >= 0 && idx < len(c.items) {
-			c.moveTo(idx)
-		}
+	list := listScroll{scroll: c.list.scroll, count: len(c.items)}
+	if idx, ok := list.indexAt(c.listBounds, at); ok {
+		c.moveTo(idx)
 	}
 	return consumed()
 }
@@ -309,21 +303,17 @@ func (c *completionComponent) handleMouseWheel(
 	if !c.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return ignoredWith(popLayer)
 	}
-	step := cx.Editor.Options().ScrollLines
-	switch msg.Button {
-	case tea.MouseWheelUp:
-		c.scrollBy(-step)
-	case tea.MouseWheelDown:
-		c.scrollBy(step)
-	}
+	c.markDirty()
+	c.syncList()
+	c.list.wheel(msg.Button, cx.Editor.Options().ScrollLines)
 	return consumed()
 }
 
 func (c *completionComponent) accept(cx *Context) {
-	if c.cursor < 0 || c.cursor >= len(c.items) {
+	if c.list.cursor < 0 || c.list.cursor >= len(c.items) {
 		return
 	}
-	item := c.items[c.cursor]
+	item := c.items[c.list.cursor]
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return
@@ -341,9 +331,7 @@ func (c *completionComponent) accept(cx *Context) {
 	}
 }
 
-func (c *completionComponent) popupPos(
-	cx *Context, screenH int,
-) geom.Point {
+func (c *completionComponent) popupPos(cx *Context, screenH int) geom.Point {
 	return c.editor.popupAnchorBelowCaret(cx, popupAnchorArgs{
 		screenHeight: screenH,
 		fallbackRows: completionMaxRows,

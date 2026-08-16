@@ -1,11 +1,11 @@
 {
   "buffer-close-all.docstring": "Chiudi tutti i buffer senza uscire",
-  "buffer-close-force.docstring": "Chiudi forzatamente il buffer corrente ignorando le modifiche non salvate",
+  "buffer-close-force.docstring": "Chiudi il buffer ignorando le modifiche non salvate",
   "buffer-close-others.docstring": "Chiudi tutti i buffer tranne quello attivo",
   "buffer-close.docstring": "Chiudi il buffer corrente",
   "buffer-next.docstring": "Vai al buffer successivo",
   "buffer-previous.docstring": "Vai al buffer precedente",
+  "error.noSuchBuffer": "nessun buffer con nome: {name}",
   "error.unsavedBufferClose": "modifiche non salvate (:buffer-close! per forzare)",
-  "error.unsavedBufferCloseAll": "modifiche non salvate (:buffer-close-all! per forzare)",
-  "error.noSuchBuffer": "nessun buffer con nome: {name}"
+  "error.unsavedBufferCloseAll": "modifiche non salvate (:buffer-close-all! per forzare)"
 }

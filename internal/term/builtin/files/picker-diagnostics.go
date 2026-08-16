@@ -135,9 +135,11 @@ func (d *diagnosticPickerSource) item(
 	name := doc.RelativeName(e.Cwd())
 	line, lines := diagnosticLineRange(doc.Text(), diag)
 	msg := ui.DiagnosticMessageText(diag.Message)
-	lbl, sec := msg, 0
+	lbl := msg
+	sec := 0
 	if d.workspace {
-		lbl, sec = ui.PickerTrailingPath(msg, fmt.Sprintf("%s:%d", name, line+1))
+		at := fmt.Sprintf("%s:%d", name, line+1)
+		lbl, sec = ui.PickerTrailingPath(msg, at)
 	}
 	return slab.Add(ui.PickerItem{
 		Group: diagnosticSeverityGroup(diag.Severity),

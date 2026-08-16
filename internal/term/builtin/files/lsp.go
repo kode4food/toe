@@ -133,18 +133,16 @@ func LspModule(model ui.Model) command.Module {
 			},
 			{
 				Name: actLSPRestart,
-				DocString: "Restarts the given language servers, or all " +
-					"language servers used by the current document if no " +
-					"arguments are supplied",
+				DocString: "Restart the given language servers, or all for " +
+					"this document",
 				Run:       runLSPRestart,
 				Modes:     command.DocModes,
 				Signature: lspServerSig(),
 			},
 			{
 				Name: actLSPStop,
-				DocString: "Stops the given language servers, or all " +
-					"language servers used by the current document if no " +
-					"arguments are supplied",
+				DocString: "Stop the given language servers, or all for this " +
+					"document",
 				Run:       runLSPStop,
 				Modes:     command.DocModes,
 				Signature: lspServerSig(),

@@ -97,8 +97,6 @@ func buildByteToChar(text string) []int {
 	return table
 }
 
-// buildSpans converts a sorted capture list into non-overlapping Spans,
-// keeping the highest-priority (lowest index) capture at each position
 func buildSpans(cs []tsCapture) []highlight.Span {
 	spans := make([]highlight.Span, 0, len(cs))
 	pos := 0

@@ -64,8 +64,6 @@ func (c *Context) ThemeFor(focused bool) *theme.Theme {
 	return c.theme.dimmed
 }
 
-// reloads on theme-name change (falling back to the default), rebuilds
-// dimmed on either a theme or dim-percent change
 func (c *Context) ensureTheme() {
 	name := c.Editor.Options().Theme
 	dim := min(max(c.Editor.Options().InactiveDim, 0), 90)

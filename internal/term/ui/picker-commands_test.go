@@ -43,7 +43,8 @@ func TestCommandPalettePicker(t *testing.T) {
 		}
 		m = sendSpecial(m, tea.KeyEnter)
 		assert.Equal(t, view.ModeNormal, e.Mode())
-		assert.Contains(t, stripANSI(m.View().Content), ": arg_probe")
+		assert.Contains(t, stripANSI(m.View().Content), " Command ")
+		assert.Equal(t, "arg_probe", promptText(m))
 	})
 
 	t.Run("runs the prompted command with its args", func(t *testing.T) {
@@ -89,8 +90,6 @@ func TestCommandPalettePicker(t *testing.T) {
 	})
 }
 
-// paletteModel binds a probe command and opens the palette with 'p', returning
-// the editor so the test can observe the accepted command
 func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 	t.Helper()
 	e := view.NewEditor(t.TempDir())

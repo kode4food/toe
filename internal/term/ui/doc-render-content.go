@@ -75,7 +75,6 @@ func (r *renderPass) renderContent(args renderContentArgs) {
 	r.editor.cache.viewRowMaps[args.view.ID()] = st.rowMap
 }
 
-// cursor column paints first so rulers render over it
 func (r *renderPass) paintContentOverlays(st *contentRenderState) {
 	args := st.args
 	buf := args.buf

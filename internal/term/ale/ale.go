@@ -186,8 +186,6 @@ func (r *Runtime) action(proc data.Procedure) command.KeyResultAction {
 	}
 }
 
-// availability turns a :when predicate into an editor availability check; a
-// predicate that errors makes the binding unavailable
 func (r *Runtime) availability(pred data.Procedure) func(*view.Editor) bool {
 	return func(e *view.Editor) (ok bool) {
 		defer func() {
@@ -199,8 +197,6 @@ func (r *Runtime) availability(pred data.Procedure) func(*view.Editor) bool {
 	}
 }
 
-// bindMacro wraps a binding's action body and its :when expression in
-// (lambda (ctx) ...) and calls bind*, so both read state via ctx directly
 func bindMacro(_ env.Namespace, args ...ale.Value) ale.Value {
 	split := 0
 	for split+1 < len(args) {

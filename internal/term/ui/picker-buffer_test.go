@@ -59,7 +59,7 @@ func TestBufferPicker(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = e.OpenFile(b)
 		assert.NoError(t, err)
-		// make both views show A — leaves B orphaned in AllDocuments
+		// make both views show A, leaves B orphaned in AllDocuments
 		e.SwitchBuffer(vA.DocID())
 
 		km := command.NewKeymaps()

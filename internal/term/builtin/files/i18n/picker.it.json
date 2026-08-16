@@ -3,5 +3,11 @@
   "file-explorer-in-current-pane-dir.docstring": "Apri Esplora file nella directory del riquadro corrente",
   "file-explorer.docstring": "Apri Esplora file nella radice dell'area di lavoro",
   "file-picker-in-current-dir.docstring": "Apri il selettore dei file nella directory di lavoro corrente",
-  "file-picker.docstring": "Apri il selettore dei file"
+  "file-picker.docstring": "Apri il selettore dei file",
+  "option.buffer-picker.start-position.docstring": "Posizione iniziale del selettore dei buffer",
+  "option.file-explorer.flatten-dirs.docstring": "Unire le directory a figlio unico",
+  "option.file-explorer.follow-symlinks.docstring": "Seguire i collegamenti simbolici",
+  "option.file-explorer.hidden.docstring": "Mostrare le voci nascoste",
+  "option.file-explorer.ignore-files.docstring": "Rispettare i file di esclusione",
+  "option.file-explorer.parents.docstring": "Mostrare le directory superiori"
 }

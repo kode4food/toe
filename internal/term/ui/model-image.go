@@ -74,8 +74,6 @@ func (r *imageRegistry) inFlight(id uint32) bool {
 	return ok && r.ready[id] != placed
 }
 
-// evict removes stale images, excluding keep and this frame's images, and
-// returns their terminal deletion sequences
 func (r *imageRegistry) evict(keep uint32) string {
 	var buf bytes.Buffer
 	for len(r.placed) > maxResidentImages {
@@ -236,8 +234,6 @@ type transmitArgs struct {
 	remote bool
 }
 
-// transmit sends full-resolution pixels through the cheapest medium; Kitty
-// handles scaling
 func transmit(args transmitArgs) error {
 	opts := &kitty.Options{
 		Action:           kitty.TransmitAndPut,
@@ -262,7 +258,6 @@ func transmit(args transmitArgs) error {
 	}
 }
 
-// putSeq places a resident image on a new cell grid without sending pixels
 func putSeq(id uint32, cells geom.Size) string {
 	opts := &kitty.Options{
 		Action:           kitty.Put,
@@ -276,8 +271,6 @@ func putSeq(id uint32, cells geom.Size) string {
 	return ansi.KittyGraphics(nil, opts.Options()...)
 }
 
-// imagePlacementID is stable for an image id's life, so a resize PUT moves
-// the existing placement instead of leaking a new one per size
 func imagePlacementID(id uint32) uint32 {
 	return max((id+1)&0xFFFFFF, 1)
 }

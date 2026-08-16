@@ -100,8 +100,8 @@ func SearchModule(model ui.Model) command.Module {
 			},
 			{
 				Name: actSearchSelectionWord,
-				DocString: "Use current selection as the search pattern," +
-					" automatically wrapping with `\\b` on word boundaries",
+				DocString: "Search for the selection, wrapped on word " +
+					"boundaries",
 				Run:   kit.Runner(action.SearchSelectionWord),
 				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('*')),
@@ -152,7 +152,7 @@ func SearchModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().SearchSmartCase = v
 				},
-			),
+			).WithDoc("Smart case regex searching"),
 			kit.EditorBoolOption("search.wrap-around",
 				func(e *view.Editor) bool {
 					return e.Options().SearchWrapAround
@@ -160,7 +160,7 @@ func SearchModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().SearchWrapAround = v
 				},
-			),
+			).WithDoc("Wrap search after the last match"),
 		},
 		Section: &command.Section{
 			Config: cfg,

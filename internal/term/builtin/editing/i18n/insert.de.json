@@ -10,5 +10,5 @@
   "insert-tab.docstring": "Tabulator an jedem Cursor einfügen",
   "kill-to-line-end.docstring": "Bis zum Zeilenende löschen",
   "kill-to-line-start.docstring": "Bis zum Zeilenanfang löschen",
-  "smart-tab.docstring": "In führendem Leerraum einen Tabulator einfügen, sonst hinter den umschließenden Syntaxknoten springen"
+  "smart-tab.docstring": "Einrückung: Tabulator; sonst Syntaxknoten überspringen"
 }

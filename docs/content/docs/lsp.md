@@ -51,7 +51,7 @@ Language server config in `.toe/languages.toml` is merged on top of user config,
 
 Workspace symbol searches query every running language server, not only the server for the focused document.
 
-Completion is requested three ways: `Ctrl+x` at any time, automatically after a trigger character the language server advertises (`.` for most servers), and automatically once typing pauses — see [Completion]({{< relref "/docs/configuration" >}}#completion) for the delay and trigger length.
+Completion is requested three ways: `Ctrl+x` at any time, automatically after a trigger character the language server advertises (`.` for most servers), and automatically once typing pauses, see [Completion]({{< relref "/docs/configuration" >}}#completion) for the delay and trigger length.
 
 Diagnostics (errors and warnings) appear as underlines in the document, markers in the gutter, counts in the status bar, and a popup when the cursor rests on a diagnostic.
 

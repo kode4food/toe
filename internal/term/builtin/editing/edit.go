@@ -338,7 +338,8 @@ func EditModule() command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "auto-pairs",
+				Key:       "auto-pairs",
+				DocString: "Auto-insert closing brackets and quotes",
 				Get: func(e *view.Editor) (string, error) {
 					return formatAutoPairs(e.Options()), nil
 				},
@@ -362,7 +363,7 @@ func EditModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().ContinueComments = v
 				},
-			),
+			).WithDoc("Continue the comment leader on a new line"),
 			kit.EditorBoolOption("auto-save.focus-lost",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSaveFocusLost
@@ -370,7 +371,7 @@ func EditModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().AutoSaveFocusLost = v
 				},
-			),
+			).WithDoc("Save automatically when the editor loses focus"),
 			kit.EditorBoolOption("auto-save.after-delay.enable",
 				func(e *view.Editor) bool {
 					return e.Options().AutoSaveAfterDelay
@@ -378,9 +379,10 @@ func EditModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().AutoSaveAfterDelay = v
 				},
-			),
+			).WithDoc("Save automatically after an idle delay"),
 			{
-				Key: "auto-save.after-delay.timeout",
+				Key:       "auto-save.after-delay.timeout",
+				DocString: "Idle time in ms before an automatic save",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().AutoSaveDelayTimeout), nil
 				},
@@ -400,7 +402,7 @@ func EditModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().AtomicSave = v
 				},
-			),
+			).WithDoc("Write documents to disk atomically"),
 		},
 		Section: &command.Section{
 			Config: cfg,

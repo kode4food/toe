@@ -28,15 +28,18 @@ type (
 	}
 
 	// Option describes a runtime editor option owned by a module. Toggle is
-	// nil for options that are not boolean-toggleable
+	// nil when it is not boolean-toggleable, and Private keeps editor-managed
+	// state out of :set and its completions
 	Option struct {
-		Key      string
-		Get      OptionGetter
-		Set      OptionSetter
-		KeyGet   OptionKeyGetter
-		KeySet   OptionKeySetter
-		Toggle   OptionGetter
-		Complete CompletionFunc
+		Key       string
+		DocString string
+		Private   bool
+		Get       OptionGetter
+		Set       OptionSetter
+		KeyGet    OptionKeyGetter
+		KeySet    OptionKeySetter
+		Toggle    OptionGetter
+		Complete  CompletionFunc
 	}
 
 	// OptionGetter reads an option's current value from the editor
@@ -143,6 +146,13 @@ const (
 		view.ModeBinary
 )
 
+// WithDoc returns a copy of the option described by doc, for options built by
+// a helper rather than declared as a literal
+func (o Option) WithDoc(doc string) Option {
+	o.DocString = doc
+	return o
+}
+
 func (c *Command) run(e *view.Editor) Result {
 	if c.Run == nil {
 		return Result{}
@@ -160,10 +170,21 @@ func (c *Command) localizeDocString(alias string) {
 	c.DocString = i18n.Text(key)
 }
 
+func (o *Option) localizeDocString() {
+	if o.DocString == "" {
+		return
+	}
+	o.DocString = i18n.Text(optionDocStringKey(o.Key))
+}
+
 func kebabName(name string) string {
 	return strings.ReplaceAll(name, "_", "-")
 }
 
 func docStringKey(alias string) i18n.Key {
 	return i18n.Key(alias + ".docstring")
+}
+
+func optionDocStringKey(key string) i18n.Key {
+	return i18n.Key("option." + key + ".docstring")
 }

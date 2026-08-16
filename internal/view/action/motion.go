@@ -298,8 +298,6 @@ func moveFileEnd(e *view.Editor, extend bool) {
 	})
 }
 
-// visualMoveFormat builds a VisualMoveFormat for the focused document if
-// soft-wrap is active, returning a zero value otherwise
 func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
 	w := e.ViewContentWidth()
 	if w <= 0 {

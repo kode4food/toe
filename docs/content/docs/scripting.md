@@ -20,7 +20,7 @@ Bind keys with `toe/bind`. Every command in the command reference is available i
   (toe/write))
 ```
 
-A binding takes zero or more `:keyword value` options followed by the action — one or more expressions that run when the key is pressed. The action needs no `lambda` wrapper and need not return anything; call commands in list form, `(toe/write)`.
+A binding takes zero or more `:keyword value` options followed by the action, one or more expressions that run when the key is pressed. The action needs no `lambda` wrapper and need not return anything; call commands in list form, `(toe/write)`.
 
 `:modes` accepts one mode or a vector, such as `[:normal :select]`. `:keys` accepts one key sequence or a vector, such as `["C-s" "spc w"]`. The supported modes are `:normal`, `:insert`, `:select`, `:terminal`, and `:image`. The optional `:doc` text appears in pending-key menus; bindings without it remain hidden.
 
@@ -92,7 +92,7 @@ Each range has zero-based character offsets. `:anchor` and `:head` preserve dire
 
 ## Conditional Bindings
 
-An optional `:when` expression makes a binding available only when it evaluates to true. Unlike branching inside the action, `:when` also hides the key from the pending-key menu while it is unavailable. The expression is wrapped like the action body, so `ctx` is in scope — no `lambda` needed:
+An optional `:when` expression makes a binding available only when it evaluates to true. Unlike branching inside the action, `:when` also hides the key from the pending-key menu while it is unavailable. The expression is wrapped like the action body, so `ctx` is in scope, no `lambda` needed:
 
 ```clojure
 (toe/bind :modes :normal :keys "spc F" :doc "Format Go"
@@ -108,4 +108,4 @@ Negate it to bind a key only when the current document is *not* already Go:
   (toe/set-language "go"))
 ```
 
-When the expression evaluates to false — or raises an error — the key is treated as unbound. `:when` does not permit two bindings to share a key sequence; conflicts remain an error.
+When the expression evaluates to false, or raises an error, the key is treated as unbound. `:when` does not permit two bindings to share a key sequence; conflicts remain an error.

@@ -1,37 +1,38 @@
 package ui
 
 func (c *completionComponent) moveBy(n int) {
-	c.cursor = (c.cursor + n + len(c.items)) % len(c.items)
+	c.syncList()
+	c.list.moveBy(n)
 	c.manual = true
-	c.ensureCursorVisible(c.visibleRows())
 	c.markDirty()
 }
 
 func (c *completionComponent) moveTo(idx int) {
-	c.cursor = min(max(idx, 0), len(c.items)-1)
+	c.syncList()
+	c.list.moveTo(idx)
 	c.manual = true
-	c.ensureCursorVisible(c.visibleRows())
 	c.markDirty()
 }
 
 func (c *completionComponent) resetCursor() {
-	c.cursor = 0
+	cursor := 0
 	for i, item := range c.items {
 		if item.Preselect {
-			c.cursor = i
+			cursor = i
 			break
 		}
 	}
-	c.scroll = 0
-	c.ensureCursorVisible(c.visibleRows())
+	c.list.scroll = 0
+	c.syncList()
+	c.list.moveTo(cursor)
 }
 
 func (c *completionComponent) restoreCursor(selected completionItemKey) {
 	if selected != (completionItemKey{}) {
 		for i := range c.items {
 			if keyOfCompletionItem(c.items[i]) == selected {
-				c.cursor = i
-				c.ensureCursorVisible(c.visibleRows())
+				c.syncList()
+				c.list.moveTo(i)
 				return
 			}
 		}
@@ -40,41 +41,14 @@ func (c *completionComponent) restoreCursor(selected completionItemKey) {
 }
 
 func (c *completionComponent) selectedKey() completionItemKey {
-	if c.cursor < 0 || c.cursor >= len(c.items) {
+	if c.list.cursor < 0 || c.list.cursor >= len(c.items) {
 		return completionItemKey{}
 	}
-	return keyOfCompletionItem(c.items[c.cursor])
+	return keyOfCompletionItem(c.items[c.list.cursor])
 }
 
-func (c *completionComponent) clampScroll(rows int) {
-	c.scroll = listScroll{
-		scroll: c.scroll,
-		count:  len(c.items),
-		rows:   rows,
-	}.clamped()
-}
-
-func (c *completionComponent) scrollBy(delta int) {
-	c.markDirty()
-	c.scroll = listScroll{
-		scroll: c.scroll,
-		count:  len(c.items),
-		rows:   c.visibleRows(),
-	}.scrollBy(delta)
-}
-
-func (c *completionComponent) ensureCursorVisible(rows int) {
-	c.scroll = listScroll{
-		scroll: c.scroll,
-		cursor: c.cursor,
-		count:  len(c.items),
-		rows:   rows,
-	}.ensureCursorVisible()
-}
-
-func (c *completionComponent) visibleRows() int {
-	if c.listBounds.Height > 0 {
-		return c.listBounds.Height
-	}
-	return completionMaxRows
+func (c *completionComponent) syncList() {
+	c.list.resize(
+		len(c.items), visibleRows(c.listBounds, completionMaxRows),
+	)
 }

@@ -1,11 +1,11 @@
 {
+  "error.bufferReadOnly": "Buffer schreibgeschützt",
+  "error.formatSelectionSingle": "format-selections unterstützt derzeit nur eine Auswahl",
+  "error.invalidWidth": "ungültige Breite",
+  "error.noRangeFormatting": "Kein Sprachserver unterstützt Bereichsformatierung",
   "format-selections.docstring": "Auswahl formatieren",
-  "format.docstring": "Datei mit einem externen Formatierer oder Sprachserver formatieren",
+  "format.docstring": "Datei mit externem Formatierer oder Sprachserver formatieren",
   "reflow.docstring": "Aktuell ausgewählte Zeilen auf eine angegebene Breite umbrechen",
   "sort.docstring": "Bereiche in der Auswahl sortieren",
-  "error.invalidWidth": "ungültige Breite",
-  "error.bufferReadOnly": "Buffer schreibgeschützt",
-  "status.noFormatter": "Kein Formatierer für {lang}",
-  "error.noRangeFormatting": "Kein Sprachserver unterstützt Bereichsformatierung",
-  "error.formatSelectionSingle": "format-selections unterstützt derzeit nur eine Auswahl"
+  "status.noFormatter": "Kein Formatierer für {lang}"
 }

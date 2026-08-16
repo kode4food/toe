@@ -27,7 +27,7 @@ func TestSlab(t *testing.T) {
 		}
 	})
 
-	t.Run("later segments grow instead of staying fixed", func(t *testing.T) {
+	t.Run("later segments grow", func(t *testing.T) {
 		n := core.SlabInitSize * 20
 		fixedSegments := n / core.SlabInitSize
 

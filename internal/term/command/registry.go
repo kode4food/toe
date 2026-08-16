@@ -33,9 +33,16 @@ func NewRegistry(km *Keymaps) *Registry {
 
 // RegisterModule adds a module's commands, options, and bindings
 func (r *Registry) RegisterModule(m Module) error {
-	tr := make(i18n.Translations, len(m.Commands)+len(m.Translations))
+	tr := make(i18n.Translations,
+		len(m.Commands)+len(m.Options)+len(m.Translations),
+	)
 	for _, c := range m.Commands {
 		tr[docStringKey(kebabName(c.Name))] = c.DocString
+	}
+	for _, o := range m.Options {
+		if o.DocString != "" {
+			tr[optionDocStringKey(o.Key)] = o.DocString
+		}
 	}
 	maps.Copy(tr, m.Translations)
 	i18n.Register(tr)
@@ -57,6 +64,7 @@ func (r *Registry) RegisterModule(m Module) error {
 		if r.options == nil {
 			r.options = make(map[string]*Option)
 		}
+		m.Options[i].localizeDocString()
 		if o.KeyGet != nil || o.KeySet != nil {
 			r.prefixes = append(r.prefixes, &m.Options[i])
 			continue
@@ -196,11 +204,11 @@ func (r *Registry) ApplyOptionValues(
 	return nil
 }
 
-// BoolOptionKeys returns registered option keys that support toggle
+// BoolOptionKeys returns settable option keys that support toggle
 func (r *Registry) BoolOptionKeys() []string {
 	var keys []string
 	for k, o := range r.options {
-		if o.Toggle != nil {
+		if o.Toggle != nil && !o.Private {
 			keys = append(keys, k)
 		}
 	}
@@ -208,22 +216,29 @@ func (r *Registry) BoolOptionKeys() []string {
 	return keys
 }
 
-// OptionCompleter completes every registered option key
+// OptionCompleter completes every option a user may set
 func (r *Registry) OptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
-		keys := r.OptionKeys()
+		var keys []string
+		for key, o := range r.options {
+			if !o.Private {
+				keys = append(keys, key)
+			}
+		}
 		for _, o := range r.prefixes {
-			keys = append(keys, o.Key)
+			if !o.Private {
+				keys = append(keys, o.Key)
+			}
 		}
 		slices.Sort(keys)
-		return matchFuzzy(keys, input)
+		return r.describeOptions(matchFuzzy(keys, input))
 	}
 }
 
 // BoolOptionCompleter completes only the boolean option keys
 func (r *Registry) BoolOptionCompleter() CompletionFunc {
 	return func(_ *view.Editor, _ *Args, input string) []Completion {
-		return matchFuzzy(r.BoolOptionKeys(), input)
+		return r.describeOptions(matchFuzzy(r.BoolOptionKeys(), input))
 	}
 }
 
@@ -245,6 +260,19 @@ func (r *Registry) OptionValueCompleterFor(key string) CompletionFunc {
 	return func(e *view.Editor, args *Args, input string) []Completion {
 		return completeOptionValue(e, args, input, r.LookupOption(key))
 	}
+}
+
+func (r *Registry) describeOptions(items []Completion) []Completion {
+	for i, item := range items {
+		if o, ok := r.options[normalizeOptionKey(item.Text)]; ok {
+			items[i].Detail = o.DocString
+			continue
+		}
+		if o := r.lookupPrefixOption(item.Text); o != nil {
+			items[i].Detail = o.DocString
+		}
+	}
+	return items
 }
 
 func (r *Registry) lookupPrefixOption(key string) *Option {

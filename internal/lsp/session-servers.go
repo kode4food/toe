@@ -338,8 +338,6 @@ func (s *serverState) removeIfCurrent(name string, client *Client) {
 	}
 }
 
-// reset replaces the server fleet for a config reload and returns the clients
-// that were running, so the caller can close them outside the lock
 func (s *serverState) reset(langs language.Languages) []*Client {
 	s.Lock()
 	defer s.Unlock()

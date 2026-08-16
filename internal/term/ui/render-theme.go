@@ -136,8 +136,6 @@ func inheritStyleBackground(st tui.Style, bg tui.Color) tui.Style {
 	return st.Bg(bg)
 }
 
-// Resolved styles render transparently over lower layers unless the theme
-// gives the scope an explicit background
 func highlighterFor(th *theme.Theme) func(string) tui.Style {
 	return func(scope string) tui.Style {
 		if s, ok := th.TryGet(scope); ok {

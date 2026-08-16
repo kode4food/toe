@@ -132,8 +132,6 @@ func TestContext(t *testing.T) {
 	})
 }
 
-// bindContext binds the given body to "x" across the editing modes so a test
-// can dispatch it and observe the injected ctx
 func bindContext(t *testing.T, rt *ale.Runtime, body string) {
 	t.Helper()
 	assert.NoError(t, execute(t, rt, fmt.Sprintf(
@@ -142,7 +140,6 @@ func bindContext(t *testing.T, rt *ale.Runtime, body string) {
 	)))
 }
 
-// press dispatches the "x" binding in the given mode, running its action
 func press(t *testing.T, km *command.Keymaps, e *view.Editor, mode view.Mode) {
 	t.Helper()
 	seq, err := command.ParseKeySequence("x")

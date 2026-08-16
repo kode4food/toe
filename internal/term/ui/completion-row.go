@@ -134,7 +134,7 @@ func (c *completionComponent) renderScroll(
 	scrollH := min((rows*rows+len(c.items)-1)/len(c.items), rows)
 	scrollY := 0
 	if len(c.items) > rows {
-		scrollY = (rows - scrollH) * c.scroll / (len(c.items) - rows)
+		scrollY = (rows - scrollH) * c.list.scroll / (len(c.items) - rows)
 	}
 	for i := range scrollH {
 		buf.SetString(

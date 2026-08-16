@@ -1,8 +1,8 @@
 {
   "change-directory.docstring": "Cambia la directory di lavoro corrente",
-  "pop-directory.docstring": "Rimuovi la prima voce dalla pila delle directory e passa alla nuova directory in cima",
+  "error.noDirectory": "nessuna directory fornita",
+  "pop-directory.docstring": "Rimuovi la cima della pila di directory; passa alla nuova",
   "push-directory.docstring": "Salva e poi cambia la directory corrente",
   "show-directory-stack.docstring": "Mostra la pila delle directory separata da spazi",
-  "show-directory.docstring": "Mostra la directory di lavoro corrente",
-  "error.noDirectory": "nessuna directory fornita"
+  "show-directory.docstring": "Mostra la directory di lavoro corrente"
 }

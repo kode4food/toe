@@ -303,8 +303,6 @@ func (e *Editor) fileOperationController() (FileOperationController, bool) {
 	return ops, ok
 }
 
-// reloadDocument reloads from disk and notifies observers so the language
-// server re-syncs and republishes diagnostics, else stale ones linger
 func (e *Editor) reloadDocument(doc *Document) error {
 	before := doc.Text()
 	rev := doc.Revision()

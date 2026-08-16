@@ -384,8 +384,6 @@ func (v *View) trackOffsetChange() func() {
 	}
 }
 
-// cachedVisualColumn returns VisualColumn(doc, s, tabW), reusing the last
-// result when doc, s.To, and tabW are unchanged since the previous call
 func (v *View) cachedVisualColumn(doc core.Rope, s core.Span, tabW int) int {
 	c := v.visualCol
 	if c.doc == doc && c.cursor == s.To && c.tabWidth == tabW {

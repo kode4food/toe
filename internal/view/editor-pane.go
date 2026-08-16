@@ -124,7 +124,7 @@ func (e *Editor) RevertPane(id Id) bool {
 }
 
 // DiscardPane closes p's document, if p is a view and this was its last
-// reference — for a displaced pane the caller has decided not to keep
+// reference, for a displaced pane the caller has decided not to keep
 func (e *Editor) DiscardPane(p Pane) {
 	p.Discard()
 }

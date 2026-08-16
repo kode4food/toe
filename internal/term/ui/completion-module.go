@@ -109,15 +109,15 @@ func CompletionModule(model Model) command.Module {
 					opts.Auto = next
 					model.SetCompletionOptions(opts)
 				},
-			),
+			).WithDoc("Pop up completions automatically"),
 			completionIntOption(model, "completion.delay",
 				func(o CompletionOptions) int { return o.Delay },
 				func(o *CompletionOptions, v int) { o.Delay = v },
-			),
+			).WithDoc("Delay in ms before completions appear"),
 			completionIntOption(model, "completion.trigger-len",
 				func(o CompletionOptions) int { return o.TriggerLen },
 				func(o *CompletionOptions, v int) { o.TriggerLen = v },
-			),
+			).WithDoc("Word length before completion triggers"),
 		},
 	}
 }

@@ -74,7 +74,6 @@ func (e *Editor) TogglePaneMaximized() {
 	e.panes.tree.ToggleMaximized()
 }
 
-// hasView reports whether any view in the tree satisfies pred
 func (e *Editor) hasView(pred func(*View) bool) bool {
 	return e.panes.tree.Any(func(p Pane) bool {
 		v, ok := p.(*View)

@@ -9,6 +9,7 @@
   "delete-selection.docstring": "Auswahl löschen",
   "earlier.docstring": "Im Verlauf rückwärts gehen. Akzeptiert eine Anzahl von Schritten",
   "ensure-forward.docstring": "Alle Auswahlen vorwärts ausrichten",
+  "error.historySteps": "Anzahl der Schritte muss eine positive Zahl sein",
   "increment.docstring": "Element unter dem Cursor erhöhen",
   "indent.docstring": "Auswahl einrücken",
   "insert-at-line-start.docstring": "Am Zeilenanfang einfügen",
@@ -19,6 +20,12 @@
   "normal-mode.docstring": "Normalmodus aktivieren",
   "open-above.docstring": "Neue Zeile über der Auswahl öffnen",
   "open-below.docstring": "Neue Zeile unter der Auswahl öffnen",
+  "option.atomic-save.docstring": "Dokumente atomar auf den Datenträger schreiben",
+  "option.auto-pairs.docstring": "Klammern und Anführungszeichen automatisch schließen",
+  "option.auto-save.after-delay.enable.docstring": "Nach einer Wartezeit automatisch speichern",
+  "option.auto-save.after-delay.timeout.docstring": "Wartezeit in ms bis zum Speichern",
+  "option.auto-save.focus-lost.docstring": "Speichern, wenn der Editor den Fokus verliert",
+  "option.continue-comments.docstring": "Kommentarzeichen in neuer Zeile fortführen",
   "redo.docstring": "Änderung wiederholen",
   "repeat-last-motion.docstring": "Letzte Bewegung wiederholen",
   "replace.docstring": "Durch ein neues Zeichen ersetzen",
@@ -32,6 +39,5 @@
   "switch-to-uppercase.docstring": "In Großbuchstaben umwandeln",
   "trim-selections.docstring": "Leerraum an den Auswahlen entfernen",
   "undo.docstring": "Änderung rückgängig machen",
-  "unindent.docstring": "Einrückung der Auswahl verringern",
-  "error.historySteps": "Anzahl der Schritte muss eine positive Zahl sein"
+  "unindent.docstring": "Einrückung der Auswahl verringern"
 }

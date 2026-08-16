@@ -472,8 +472,6 @@ func (t *TerminalPane) pump() {
 	}
 }
 
-// viewStart returns the top visible absolute row using drawViewport's window
-// calculation
 func (t *TerminalPane) viewStart(h int) int {
 	total := t.emu.ScrollbackLen() + t.emu.Height()
 	return max(total-h-t.scrollOff, 0)

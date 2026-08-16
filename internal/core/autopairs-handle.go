@@ -65,8 +65,6 @@ func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	}, text), autoPairNextRange(doc, r, 2), true
 }
 
-// skipOverRange computes the range after a close-char jump-over. Point cursors
-// become a point past the char; selections preserve their shape
 func skipOverRange(doc Rope, r Range, cursor int) Range {
 	if r.Len() == 0 {
 		return PointRange(NextGraphemeBoundary(doc, cursor))

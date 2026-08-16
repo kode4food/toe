@@ -1,8 +1,8 @@
 {
   "change-directory.docstring": "Aktuelles Arbeitsverzeichnis wechseln",
-  "pop-directory.docstring": "Obersten Eintrag vom Verzeichnisstapel entfernen und in das neue oberste Verzeichnis wechseln",
+  "error.noDirectory": "kein Verzeichnis angegeben",
+  "pop-directory.docstring": "Stapeleintrag entfernen; zum neuen Verzeichnis wechseln",
   "push-directory.docstring": "Aktuelles Verzeichnis speichern und dann wechseln",
   "show-directory-stack.docstring": "Verzeichnisstapel als durch Leerzeichen getrennte Liste anzeigen",
-  "show-directory.docstring": "Aktuelles Arbeitsverzeichnis anzeigen",
-  "error.noDirectory": "kein Verzeichnis angegeben"
+  "show-directory.docstring": "Aktuelles Arbeitsverzeichnis anzeigen"
 }

@@ -59,8 +59,6 @@ func diffLines(lines diffLinesArgs) []view.DiffHunk {
 	return hunks
 }
 
-// splitLines splits text into lines that keep their terminators, so a missing
-// final newline is a real difference
 func splitLines(s string) []string {
 	return strings.SplitAfter(s, "\n")
 }

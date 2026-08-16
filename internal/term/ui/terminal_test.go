@@ -512,7 +512,7 @@ func TestTerminalPane(t *testing.T) {
 		assert.Equal(t, before+1, tp.Area().Width)
 	})
 
-	t.Run("Ctrl-backslash p pastes the clipboard register", func(t *testing.T) {
+	t.Run("Ctrl-backslash p pastes clipboard", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		clip := testutil.NewFakeClipboard()
 		e.SetClipboard(clip)
@@ -852,6 +852,7 @@ func TestTerminalPane(t *testing.T) {
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
 		m = m2.(ui.Model)
 		m = sendKey(m, '/')
+		assert.Contains(t, stripANSI(m.View().Content), " Search scrollback ")
 		for _, ch := range "line 3" {
 			m = sendKey(m, ch)
 		}
@@ -947,8 +948,6 @@ func TestTerminalResize(t *testing.T) {
 	})
 }
 
-// runWithTimeout runs cmd and reports its message, or ok=false if it hasn't
-// fired within d — used to skip Init's long-lived, event-driven commands
 func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {
 	if cmd == nil {
 		return nil, false
@@ -963,8 +962,6 @@ func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {
 	}
 }
 
-// waitForShellOutput blocks until the shell produces any output, seen as the
-// cursor advancing or a visible cell on the first row
 func waitForShellOutput(t *testing.T, tp *ui.TerminalPane) {
 	t.Helper()
 	emu := tp.Emulator()
@@ -982,8 +979,6 @@ func waitForShellOutput(t *testing.T, tp *ui.TerminalPane) {
 	}, 5*time.Second, 5*time.Millisecond)
 }
 
-// waitForResize confirms writes use the pane's real dimensions; synchronous
-// resizing normally passes on the first check
 func waitForResize(t *testing.T, tp *ui.TerminalPane) {
 	t.Helper()
 	area := tp.Area()

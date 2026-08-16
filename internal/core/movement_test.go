@@ -491,7 +491,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		MaxIndentRetain:    0,
 		WrapIndicatorWidth: 0,
 	}
-	// "0123456789ab\ncd" — first line wraps at col 10, "ab" is row 1
+	// "0123456789ab\ncd": first line wraps at col 10, "ab" is row 1
 	// row 0: "0123456789"  (chars 0-9)
 	// row 1: "ab"           (chars 10-11), \n at 12
 	// line 1: "cd"          (chars 13-14)

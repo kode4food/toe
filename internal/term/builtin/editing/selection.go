@@ -215,9 +215,8 @@ func SelectionModule(model ui.Model) command.Module {
 			},
 			{
 				Name: actExtendLineBelow,
-				DocString: "Select current line, if already " +
-					"selected, extend" +
-					" to next line",
+				DocString: "Select the current line, or extend to the next " +
+					"line",
 				Run:   kit.Runner(action.ExtendLineBelow),
 				Modes: command.DocNormalModes,
 				Keys:  kit.Keys(kit.Char('x')),
@@ -365,8 +364,6 @@ func SelectionModule(model ui.Model) command.Module {
 	return mod
 }
 
-// pairLabels names every pair core recognizes, giving both halves the same
-// label so the menu merges them into one row
 func pairLabels() []textObjectEntry {
 	labels := map[rune]string{}
 	for _, e := range textObjectEntries {

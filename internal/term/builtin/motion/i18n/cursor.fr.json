@@ -64,6 +64,8 @@
   "move-prev-word-start.docstring": "Aller au début du mot précédent",
   "move-visual-line-down.docstring": "Se déplacer vers le bas",
   "move-visual-line-up.docstring": "Se déplacer vers le haut",
+  "option.scroll-lines.docstring": "Lignes par cran de défilement",
+  "option.scrolloff.docstring": "Lignes de marge autour du curseur",
   "save-selection.docstring": "Enregistrer la sélection courante dans la liste de sauts",
   "till-prev-char.docstring": "Aller jusqu’après l’occurrence précédente d’un caractère"
 }

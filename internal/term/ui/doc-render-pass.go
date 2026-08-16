@@ -36,6 +36,7 @@ const (
 // marks a hint that opens another menu; a command's row is blank here
 const hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
 
+// splitSepIntersectionChars is an immutable separator glyph lookup
 var splitSepIntersectionChars = [...]string{
 	borderH, borderH, borderH, borderV,
 	borderH, borderH, borderH, borderMR,
@@ -80,7 +81,7 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 	opts := r.context.Editor.Options()
 	// the popup is taking input, so the caret belongs at its breadcrumb
-	if r.overlayHead() != "" {
+	if r.editor.overlayHead() != "" {
 		return insertCursorAt(r.context, r.editor.cache.inputCaret)
 	}
 	p := r.context.Editor.Tree().Get(r.context.Editor.Tree().Focus())
@@ -112,7 +113,7 @@ type renderPaneArgs struct {
 	doc     *view.Document
 	view    *view.View
 	buf     *tui.Buffer
-	yOff    int
+	yOffset int
 	focused bool
 }
 
@@ -160,7 +161,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		view: v,
 		buf:  args.buf,
 		area: geom.Area{
-			Point: geom.Point{X: editorX, Y: args.yOff + a.Y},
+			Point: geom.Point{X: editorX, Y: args.yOffset + a.Y},
 			Size:  geom.Size{Width: editorW, Height: contentH},
 		},
 		focused: args.focused,
@@ -169,7 +170,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		doc:     doc,
 		view:    v,
 		buf:     args.buf,
-		at:      geom.Point{X: a.X, Y: args.yOff + a.Y + contentH},
+		at:      geom.Point{X: a.X, Y: args.yOffset + a.Y + contentH},
 		width:   a.Width,
 		focused: args.focused,
 	})
@@ -218,27 +219,25 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 type beginPaneRedrawArgs struct {
 	buf        *tui.Buffer
 	pane       view.Pane
-	yOff       int
+	yOffset    int
 	dirty      bool
 	redrawAll  bool
 	focused    bool
 	background tui.Style
 }
 
-// a focused pane's background already matches the frame's base fill, so a
-// full redraw re-clears only an unfocused (dimmed) one
 func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
 	redraw := args.redrawAll
 	if !redraw {
 		forced := !r.context.composition.singleLayer &&
-			paneUnderOverlay(r.context, args.pane.Area(), args.yOff)
+			paneUnderOverlay(r.context, args.pane.Area(), args.yOffset)
 		redraw = forced || args.dirty
 	}
 	if !redraw {
 		return false
 	}
 	if !args.redrawAll || !args.focused {
-		clearPaneRect(args.buf, args.pane.Area(), args.yOff, args.background)
+		clearPaneRect(args.buf, args.pane.Area(), args.yOffset, args.background)
 	}
 	return true
 }
@@ -274,7 +273,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOff:       y0,
+				yOffset:    y0,
 				dirty:      dirty,
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -284,7 +283,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 					doc:     doc,
 					view:    pane,
 					buf:     buf,
-					yOff:    y0,
+					yOffset: y0,
 					focused: focused,
 				})
 			}
@@ -292,7 +291,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOff:       y0,
+				yOffset:    y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -304,7 +303,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOff:       y0,
+				yOffset:    y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -316,7 +315,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			if r.beginPaneRedraw(beginPaneRedrawArgs{
 				buf:        buf,
 				pane:       pane,
-				yOff:       y0,
+				yOffset:    y0,
 				dirty:      pane.ConsumeDirty(),
 				redrawAll:  redrawAll,
 				focused:    focused,
@@ -343,7 +342,8 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		}
 	})
 	for cell := range vertCells {
-		x, y := cell[0], cell[1]
+		x := cell[0]
+		y := cell[1]
 		left := horizCells[[2]int{x - 1, y}]
 		right := horizCells[[2]int{x + 1, y}]
 		ch := borderV
@@ -358,7 +358,8 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
 	for cell := range horizCells {
-		x, y := cell[0], cell[1]
+		x := cell[0]
+		y := cell[1]
 		if vertCells[[2]int{x, y}] {
 			continue
 		}
@@ -380,7 +381,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 
 	r.renderDiagnosticPopup(buf)
 
-	if r.overlayHead() == "" {
+	if r.editor.overlayHead() == "" {
 		r.editor.cache.infoBounds = geom.Area{}
 		return
 	}
@@ -395,7 +396,7 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	popupTUI := popupSt
 
 	title := r.editor.keys.infoTitle
-	head := r.overlayHead()
+	head := r.editor.overlayHead()
 
 	keyW := 0
 	for _, item := range items {
@@ -453,24 +454,25 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 		)
 	}
 	buf.SetString(area.Point, head, popupTUI)
-	r.editor.cache.inputCaret = area.Point.Add(geom.Point{X: caretX})
+	r.editor.cache.inputCaret = area.Add(geom.Point{X: caretX})
 
 	if len(rawLines) == 0 {
 		return
 	}
-	rule := borderML + strings.Repeat(borderH, area.Width+2*pop.padX) + borderMR
-	buf.SetString(geom.Point{
-		X: area.X - 1 - pop.padX,
-		Y: area.Y + 1,
-	}, rule, popupSt)
+	drawPopupRule(drawPopupRuleArgs{
+		buf:   buf,
+		at:    geom.Point{X: area.X - 1 - pop.padX, Y: area.Y + 1},
+		width: area.Width + 2*pop.padX + 2,
+		style: popupSt,
+	})
 	for i, raw := range rawLines {
-		buf.SetString(area.Point.Add(geom.Point{Y: i + 2}), raw, popupTUI)
+		buf.SetString(area.Add(geom.Point{Y: i + 2}), raw, popupTUI)
 	}
 }
 
 func (r *renderPass) currentInfoPopupKey() infoPopupKey {
 	return infoPopupKey{
-		head:  r.overlayHead(),
+		head:  r.editor.overlayHead(),
 		title: r.editor.keys.infoTitle,
 		items: r.editor.keys.infoItems,
 	}
@@ -481,10 +483,9 @@ func (k infoPopupKey) equals(o infoPopupKey) bool {
 		slices.Equal(k.items, o.items)
 }
 
-// overlayHead is the popup's top row; empty means no popup
-func (r *renderPass) overlayHead() string {
-	keys := r.editor.keys.path
-	if len(keys) == 0 && r.editor.keys.count == 0 {
+func (e *EditorComponent) overlayHead() string {
+	keys := e.keys.path
+	if len(keys) == 0 && e.keys.count == 0 {
 		return ""
 	}
 	var sb strings.Builder
@@ -494,7 +495,7 @@ func (r *renderPass) overlayHead() string {
 		}
 		sb.WriteString(k.String())
 	}
-	return withCount(sb.String(), r.editor.keys.count)
+	return withCount(sb.String(), e.keys.count)
 }
 
 func withCount(keys string, count int) string {

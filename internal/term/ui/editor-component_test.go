@@ -540,7 +540,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		before := v.Offset().Anchor
 
 		// row 1 is inside the visible pane, not off-screen, but within the
-		// top scrolloff margin — a pane at the screen's top edge has no row
+		// top scrolloff margin, a pane at the screen's top edge has no row
 		// above it to drag into, so the trigger zone must live inside it
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: 0, Y: 1, Button: tea.MouseLeft,
@@ -618,7 +618,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		}
 
 		// each one-row mouse move must change the cursor by at most one
-		// line — snapping straight to the clamped edge on entering the
+		// line, snapping straight to the clamped edge on entering the
 		// margin zone used to jump several lines in a single step
 		for i := 1; i < len(lines); i++ {
 			assert.LessOrEqual(t, lines[i-1]-lines[i], 1)
@@ -643,7 +643,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		assert.NotNil(t, cmd)
 
 		// a second motion event still inside the same edge zone must not
-		// reschedule the tick — otherwise a fast mouse-motion stream never
+		// reschedule the tick, otherwise a fast mouse-motion stream never
 		// lets the timer fire
 		m2, cmd2 := m.Update(tea.MouseMotionMsg{
 			X: 1, Y: 100, Button: tea.MouseLeft,
@@ -705,7 +705,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m = m2.(ui.Model)
 
 		// column area.X+minWidth is the first column of text, right after
-		// the gutter — the trigger zone must reach that far, not require
+		// the gutter, the trigger zone must reach that far, not require
 		// the drag to be over the gutter itself
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: area.X + minWidth, Y: 0, Button: tea.MouseLeft,
@@ -1000,7 +1000,7 @@ func TestGotoLineKeySequence(t *testing.T) {
 		assert.NotContains(t, out, "5g")
 	})
 
-	t.Run("right status leaves bottom-right cell blank", func(t *testing.T) {
+	t.Run("right status leaves last cell blank", func(t *testing.T) {
 		m, e := newModel(t)
 		m = resize(m, 8, 6)
 		// a message of exactly the cmdline width would fill the final column

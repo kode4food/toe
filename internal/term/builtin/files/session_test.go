@@ -103,8 +103,6 @@ func sessionEnv(
 	return e, km
 }
 
-// baseOptions reads e's current option values through a registry of its own,
-// standing in for the baseline the app records once config files are applied
 func baseOptions(t *testing.T, e *view.Editor) map[string]string {
 	t.Helper()
 	km := command.NewKeymaps()

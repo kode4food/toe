@@ -22,7 +22,7 @@ func TestTokenizeUnknown(t *testing.T) {
 		Text: "hello world",
 		Lang: "totally-unknown-lang-xyzzy",
 	})
-	// We don't assert a specific result — just that it doesn't panic
+	// We don't assert a specific result; just that it doesn't panic
 	_ = spans
 }
 
@@ -116,7 +116,7 @@ function greet(name) {
 				Text: tc.src,
 				Lang: tc.lang,
 			})
-			// Some langs may produce no highlights — just verify no panic
+			// Some langs may produce no highlights; just verify no panic
 			for _, sp := range spans {
 				assert.Less(t, sp.Start, sp.End)
 			}

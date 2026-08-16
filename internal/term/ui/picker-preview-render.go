@@ -176,8 +176,6 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	}, args.styles.rulerBg)
 }
 
-// applyPreviewRulers draws vertical rulers across a preview content area,
-// tinted off the pane background so they stay visible in any theme
 func applyPreviewRulers(
 	buf *tui.Buffer, rulers []int, content geom.Area, rulerBg tui.Color,
 ) {

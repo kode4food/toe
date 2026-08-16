@@ -17,6 +17,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+var previewCellBgRE = regexp.MustCompile(`48;2;\d+;\d+;\d+`)
+
 func TestGlobalSearch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow: shells out to a real search per subtest")
@@ -206,8 +208,6 @@ func TestGlobalSearch(t *testing.T) {
 	})
 }
 
-// globalSearchModel writes two files, opens the global-search picker, and types
-// the query. sendKeyAndFeed drains the dynamic source's async feed per key
 func globalSearchModel(
 	t *testing.T, query string, files ...map[string]string,
 ) (ui.Model, *view.Editor) {
@@ -248,10 +248,6 @@ func openGlobalSearch(t *testing.T, e *view.Editor, query string) ui.Model {
 	return feedCmds(m, cmd)
 }
 
-var previewCellBgRE = regexp.MustCompile(`48;2;\d+;\d+;\d+`)
-
-// bgAt returns the true-color background escape in effect at the first
-// occurrence of needle in line, tracking SGR state left to right
 func bgAt(line, needle string) string {
 	idx := strings.Index(stripANSI(line), needle)
 	bg, seen := "", 0

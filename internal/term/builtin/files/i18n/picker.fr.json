@@ -3,5 +3,11 @@
   "file-explorer-in-current-pane-dir.docstring": "Ouvrir l’explorateur de fichiers dans le répertoire du panneau courant",
   "file-explorer.docstring": "Ouvrir l’explorateur de fichiers à la racine de l’espace de travail",
   "file-picker-in-current-dir.docstring": "Ouvrir le sélecteur de fichiers dans le répertoire de travail courant",
-  "file-picker.docstring": "Ouvrir le sélecteur de fichiers"
+  "file-picker.docstring": "Ouvrir le sélecteur de fichiers",
+  "option.buffer-picker.start-position.docstring": "Position initiale du sélecteur de buffers",
+  "option.file-explorer.flatten-dirs.docstring": "Fusionner les répertoires à enfant unique",
+  "option.file-explorer.follow-symlinks.docstring": "Suivre les liens symboliques",
+  "option.file-explorer.hidden.docstring": "Afficher les entrées cachées",
+  "option.file-explorer.ignore-files.docstring": "Respecter les fichiers d’exclusion",
+  "option.file-explorer.parents.docstring": "Afficher les répertoires parents"
 }

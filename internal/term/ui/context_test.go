@@ -10,7 +10,7 @@ import (
 )
 
 func TestContext(t *testing.T) {
-	t.Run("dimmed theme updates when InactiveDim changes", func(t *testing.T) {
+	t.Run("dimmed theme follows InactiveDim", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		e.Options().InactiveDim = 10
 		cx := &ui.Context{Editor: e}

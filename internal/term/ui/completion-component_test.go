@@ -1618,8 +1618,6 @@ func autoCompletionModel(
 	return resize(m, 80, 24), e
 }
 
-// fgCols returns the SGR foreground token in effect at each visible column of a
-// rendered line, so a test can assert which columns share a highlight style
 func fgCols(line string) []string {
 	var cols []string
 	fg := ""

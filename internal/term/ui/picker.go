@@ -30,15 +30,13 @@ type (
 	}
 
 	listState struct {
+		listScroll
 		items           []*PickerItem
 		sections        []*PickerItem
 		matched         []pickerMatch
 		matchedSections int
 		scores          map[pickerScoreKey]*MatchResult
 		query           string
-		cursor          int
-		scroll          int
-		height          int
 	}
 
 	previewState struct {
@@ -446,8 +444,6 @@ func (p *Picker) findItemIndexByPath(path string) int {
 	})
 }
 
-// takeSections moves section rows into their own list, so matching, sorting and
-// path lookup only ever see real rows
 func (p *Picker) takeSections(items []*PickerItem) []*PickerItem {
 	out := items[:0]
 	for _, item := range items {
@@ -477,8 +473,6 @@ func (p *Picker) addItems(items []*PickerItem) {
 	p.appendMatches(items, start)
 }
 
-// appendMatches scores only the new batch and appends matches to the end,
-// so a long walk isn't rescanning everything loaded so far on every batch
 func (p *Picker) appendMatches(items []*PickerItem, startIndex int) {
 	src, _ := p.source.(StaticPickerSource)
 	if src == nil {
@@ -492,8 +486,6 @@ func (p *Picker) appendMatches(items []*PickerItem, startIndex int) {
 	p.clampScroll()
 }
 
-// finishLoad restores full sort/score order once a static feed drains,
-// since appendMatches only appended during streaming
 func (p *Picker) finishLoad() {
 	p.load.loading = false
 	if _, ok := p.source.(StaticPickerSource); !ok {

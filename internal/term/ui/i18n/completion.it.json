@@ -7,5 +7,8 @@
   "completion-page-down.docstring": "Mostra la pagina di completamenti successiva",
   "completion-page-up.docstring": "Mostra la pagina di completamenti precedente",
   "completion-previous.docstring": "Seleziona il completamento precedente",
-  "completion.docstring": "Completa la parola corrente"
+  "completion.docstring": "Completa la parola corrente",
+  "option.completion.auto.docstring": "Mostrare i completamenti automaticamente",
+  "option.completion.delay.docstring": "Attesa in ms prima dei completamenti",
+  "option.completion.trigger-len.docstring": "Lunghezza parola che avvia il completamento"
 }

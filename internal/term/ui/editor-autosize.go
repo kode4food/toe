@@ -66,7 +66,6 @@ func (e *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
 	)
 }
 
-// image panes scale to whatever width they are given, so no case grows them
 func (e *EditorComponent) autoSizeWidthTarget(
 	cx *Context, pane view.Pane,
 ) int {

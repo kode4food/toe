@@ -150,8 +150,6 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 	p.picker.preview.hScroll = r.hScroll
 }
 
-// workingPreview returns the working-copy rope, syntax spans, and language for
-// the diff's right side; empty for a deleted or unreadable file
 func (p *previewCtx) workingPreview() previewDocEntry {
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
 		if doc := p.editor.Document(p.item.Location.Target.ID); doc != nil {
@@ -247,8 +245,6 @@ func (p noPreviewEntry) renderInto(
 	)
 }
 
-// ANSI codes in callback preview strings are stripped so the popup style
-// applies
 func (p *previewCtx) blitPlaceholderInto(
 	buf *tui.Buffer, at geom.Point, text string,
 ) {
@@ -296,7 +292,6 @@ func previewSpans(args previewSpansArgs) []highlight.Span {
 	return args.cache.Tokenize(core.Source{Text: args.text, Lang: args.lang})
 }
 
-// span backgrounds are stripped so the pane provides the background uniformly
 func previewHighlighter(fn func(string) tui.Style) func(string) tui.Style {
 	return func(scope string) tui.Style {
 		return clearStyleBackground(fn(scope))
@@ -310,8 +305,6 @@ type clampPreviewHScrollArgs struct {
 	contentWidth int
 }
 
-// clampPreviewHScroll bounds a horizontal offset to the widest of the lines in
-// the range, so panning stops at the longest visible line
 func clampPreviewHScroll(args clampPreviewHScrollArgs) int {
 	if args.hScroll <= 0 {
 		return 0

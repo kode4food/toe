@@ -183,8 +183,6 @@ func gutterLayoutWidth(layout []view.GutterType, lineNumW int) int {
 	return w
 }
 
-// diffGutterLines maps lines to markers; pure removals mark the line where
-// they sit, clamped at end of file
 func diffGutterLines(
 	hunks []view.DiffHunk, nLines int,
 ) map[int]diffGutterKind {

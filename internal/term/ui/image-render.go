@@ -75,8 +75,6 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	}.paint(args.buf)
 }
 
-// paintImage fills a width by height cell region with centered kitty Unicode
-// placeholder cells; the terminal paints the transmitted image over them
 func (r *renderPass) paintImage(
 	buf *tui.Buffer, pane *ImagePane, area geom.Area, th *theme.Theme,
 ) {

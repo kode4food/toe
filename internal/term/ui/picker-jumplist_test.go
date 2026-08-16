@@ -79,8 +79,6 @@ func TestJumplistPicker(t *testing.T) {
 	})
 }
 
-// jumplistModel opens a file, records a jump to the TARGET line, and returns a
-// model with the jumplist picker open plus the editor and recorded anchor
 func jumplistModel(t *testing.T) (ui.Model, *view.Editor, int) {
 	t.Helper()
 	dir := t.TempDir()

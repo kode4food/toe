@@ -27,7 +27,6 @@ const (
 	pickerMinSplitPaneWidth  = 20
 )
 
-// writePickerPromptRow paints the query row and reports where its caret sits
 func writePickerPromptRow(
 	cx *Context, buf *tui.Buffer, area geom.Area, p *Picker,
 ) geom.Point {

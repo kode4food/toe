@@ -74,8 +74,8 @@ func DirectoryModule() command.Module {
 			},
 			{
 				Name: actPopDirectory,
-				DocString: "Remove the top entry from the directory stack " +
-					"and cd to the new top directory",
+				DocString: "Remove the top directory stack entry and cd to " +
+					"the new top",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					if err := e.PopDirectory(); err != nil {
 						return command.Result{Error: err}

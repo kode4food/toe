@@ -12,11 +12,104 @@ import (
 	"github.com/mattn/go-runewidth"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
 )
+
+type promptRow struct {
+	raw  string
+	text string
+}
+
+const promptBorderV = "\u2502" // '│' - box drawings light vertical
+
+func TestPromptFrame(t *testing.T) {
+	t.Run("command title and breadcrumb", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+
+		assert.Contains(t, stripANSI(m.View().Content), " Command ")
+		assert.Equal(t, ":", promptText(m))
+	})
+
+	t.Run("multi-key search breadcrumb", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), 'z'), '/')
+
+		assert.Contains(t, stripANSI(m.View().Content), " Search forward ")
+		assert.Equal(t, "z /", promptText(m))
+	})
+
+	t.Run("outside click dismisses", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = mouse(m, tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+
+		assert.NotContains(t, stripANSI(m.View().Content), " Command ")
+	})
+
+	tests := []struct {
+		name  string
+		key   i18n.Key
+		shell bool
+		title string
+	}{
+		{name: "regex select", key: "prompt.select", title: "Select"},
+		{name: "regex split", key: "prompt.split", title: "Split"},
+		{name: "regex keep", key: "prompt.keep", title: "Keep"},
+		{name: "regex remove", key: "prompt.remove", title: "Remove"},
+		{
+			name:  "shell pipe",
+			key:   "prompt.pipe",
+			shell: true,
+			title: "Pipe",
+		},
+		{
+			name:  "shell insert",
+			key:   "prompt.insertOutput",
+			shell: true,
+			title: "Insert output",
+		},
+		{
+			name:  "shell filter",
+			key:   "prompt.filter",
+			shell: true,
+			title: "Filter",
+		},
+		{
+			name:  "shell pipe to",
+			key:   "prompt.pipeTo",
+			shell: true,
+			title: "Pipe to",
+		},
+		{
+			name:  "shell append",
+			key:   "prompt.appendOutput",
+			shell: true,
+			title: "Append output",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			e := view.NewEditor(t.TempDir())
+			km := command.NewKeymaps()
+			m := ui.New(e, km)
+			_, err := builtin.Register(m, km)
+			assert.NoError(t, err)
+			m = resize(m, 60, 12)
+			fn := func(*view.Editor, string) error { return nil }
+			if tc.shell {
+				m.ShellAction(tc.key, fn)(e)
+			} else {
+				m.RegexAction(tc.key, fn)(e)
+			}
+			m2, _ := m.Update(struct{}{})
+			m = m2.(ui.Model)
+
+			assert.Contains(t, stripANSI(m.View().Content), " "+tc.title+" ")
+		})
+	}
+}
 
 func TestPromptCompletion(t *testing.T) {
 	t.Run("completions update as input changes", func(t *testing.T) {
@@ -92,7 +185,7 @@ func TestPromptCompletion(t *testing.T) {
 		assert.NotContains(t, out, "document-only")
 	})
 
-	t.Run("adapts width to item count", func(t *testing.T) {
+	t.Run("lists what the frame fits", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -113,7 +206,7 @@ func TestPromptCompletion(t *testing.T) {
 		} {
 			_ = km.Register(name, testCommand(name))
 		}
-		m = resize(m, 60, 6)
+		m = resize(m, 60, 14)
 		m = sendKey(m, ':')
 
 		content := stripANSI(m.View().Content)
@@ -124,7 +217,7 @@ func TestPromptCompletion(t *testing.T) {
 				rows++
 			}
 		}
-		assert.Equal(t, 2, rows)
+		assert.Equal(t, 4, rows)
 		assert.NotContains(t, content, "few-command-with-long-name")
 		assert.NotContains(t, content, "┬")
 		assert.NotContains(t, content, "┴")
@@ -136,7 +229,7 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Contains(t, filtered, "few-command-with-long-name")
 	})
 
-	t.Run("tab inserts selected command completion", func(t *testing.T) {
+	t.Run("down inserts selected completion", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -155,13 +248,12 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
-		m = m2.(ui.Model)
+		m = sendSpecial(m, tea.KeyDown)
 
-		assert.Contains(t, stripANSI(m.View().Content), ": alpha")
+		assert.Equal(t, ": alpha", promptText(m))
 	})
 
-	t.Run("tab advances the caret", func(t *testing.T) {
+	t.Run("down advances the caret", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -180,12 +272,76 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyTab})
-		m = m2.(ui.Model)
+		m = sendSpecial(m, tea.KeyDown)
 
-		// typing after tab lands at the end, not mid-word where the caret was
+		// typing after selection lands at the end, not inside the old input
 		m = sendKey(m, 'X')
-		assert.Contains(t, stripANSI(m.View().Content), ": alphaX")
+		assert.Equal(t, ": alphaX", promptText(m))
+	})
+
+	t.Run("keyboard and mouse navigate", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
+		})
+		for _, name := range []string{
+			"match-a", "match-b", "match-c", "match-d",
+			"match-e", "match-f", "match-g", "match-h",
+		} {
+			_ = km.Register(name, testCommand(name))
+		}
+		m = resize(m, 60, 14)
+		m = sendKey(m, ':')
+		m = typeString(m, "match")
+		_ = m.View()
+
+		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
+		assert.Equal(t, ": match-c", promptText(m))
+		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
+		assert.Equal(t, ": match-f", promptText(m))
+		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
+		assert.Equal(t, ": match-c", promptText(m))
+		m = sendSpecial(m, tea.KeyUp)
+		assert.Equal(t, ": match-b", promptText(m))
+		m = sendSpecial(m, tea.KeyDown)
+		assert.Equal(t, ": match-c", promptText(m))
+
+		x, y := completionTextPoint(t, m, "match-d")
+		m = mouse(m, tea.MouseClickMsg{
+			X: x, Y: y, Button: tea.MouseLeft,
+		})
+		assert.Equal(t, ": match-d", promptText(m))
+
+		m = mouse(m, tea.MouseWheelMsg{
+			X: x, Y: y, Button: tea.MouseWheelDown,
+		})
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "match-h")
+		assert.NotContains(t, out, "match-a")
+		assert.Equal(t, ": match-d", promptText(m))
+
+		x, y = completionTextPoint(t, m, "match-g")
+		m = mouse(m, tea.MouseClickMsg{
+			X: x, Y: y, Button: tea.MouseLeft,
+		})
+		assert.Equal(t, ": match-g", promptText(m))
+
+		m = mouse(m, tea.MouseWheelMsg{
+			X: x, Y: y, Button: tea.MouseWheelUp,
+		})
+		out = stripANSI(m.View().Content)
+		assert.Contains(t, out, "match-b")
+		assert.NotContains(t, out, "match-h")
+		assert.Equal(t, ": match-g", promptText(m))
 	})
 
 	t.Run("ignores command args without completer", func(t *testing.T) {
@@ -213,7 +369,88 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), ": alpha ")
 	})
 
-	t.Run("renders completion box background", func(t *testing.T) {
+	t.Run("lists the command description", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
+		})
+		alpha := testCommand("alpha")
+		alpha.DocString = "does an alpha thing"
+		_ = km.Register("alpha", alpha)
+		m = resize(m, 60, 14)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'a')
+
+		var item string
+		for _, row := range promptRows(m) {
+			if strings.Contains(row.text, "alpha") &&
+				!strings.Contains(row.text, ": ") {
+				item = row.text
+			}
+		}
+		assert.Regexp(t, `^alpha\s+does an alpha thing$`, item)
+	})
+
+	t.Run("lists the option description", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 90, 20)
+
+		m = sendKey(m, ':')
+		for _, ch := range "set scrolloff" {
+			m = sendKey(m, ch)
+		}
+
+		var item string
+		for _, row := range promptRows(m) {
+			if strings.HasPrefix(row.text, "scrolloff") {
+				item = row.text
+			}
+		}
+		assert.Contains(t, item, "Lines of context kept")
+	})
+
+	t.Run("matches the name, not the description", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
+		})
+		alpha := testCommand("alpha")
+		alpha.DocString = "zzzz unique words"
+		_ = km.Register("alpha", alpha)
+		m = resize(m, 60, 14)
+
+		m = sendKey(m, ':')
+		for _, ch := range "zzzz" {
+			m = sendKey(m, ch)
+		}
+
+		assert.NotContains(t, stripANSI(m.View().Content), "unique words")
+	})
+
+	t.Run("completions share the input background", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())
@@ -231,36 +468,27 @@ func TestPromptCompletion(t *testing.T) {
 			},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
-		m = resize(m, 60, 12)
+		m = resize(m, 60, 14)
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
 
-		content := m.View().Content
-		assert.Regexp(t,
-			regexp.MustCompile(`\x1b\[[0-9;]*48;2;49;50;68[0-9;]*m╭`),
-			content,
-		)
-		// ANSI style carries across lines when unchanged, so the menu bg escape
-		// before "alpha" must be found over the whole stream, not re-split per
-		// line. The matched "a" is styled separately from the rest, so allow
-		// ANSI escapes between each rune.
-		re := regexp.MustCompile(`a(?:\x1b\[[0-9;]*m)*l(?:\x1b\[[0-9;]*m)*` +
-			`p(?:\x1b\[[0-9;]*m)*h(?:\x1b\[[0-9;]*m)*a`)
-		loc := re.FindStringIndex(content)
-		if !assert.NotNil(t, loc) {
-			return
-		}
-		idx := loc[0]
-		before := content[:idx]
-		bgIdx := strings.LastIndex(before, "48;2;49;50;68m")
-		if assert.GreaterOrEqual(t, bgIdx, 0) {
-			after := before[bgIdx+len("48;2;49;50;68m"):]
-			for _, m := range regexp.MustCompile(`48;2;\d+;\d+;\d+m`).
-				FindAllString(after, -1) {
-				assert.Equal(t, "48;2;49;50;68m", m)
+		var border, input, item string
+		for line := range strings.SplitSeq(m.View().Content, "\n") {
+			plain := stripANSI(line)
+			switch {
+			case strings.Contains(plain, "╭"):
+				border = line
+			case strings.Contains(plain, ": a"):
+				input = line
+			case strings.Contains(plain, "alpha"):
+				item = line
 			}
 		}
+
+		assert.NotEmpty(t, backgrounds(input))
+		assert.Equal(t, backgrounds(input), backgrounds(item))
+		assert.Equal(t, backgrounds(input), backgrounds(border))
 	})
 
 	t.Run("completes file args", func(t *testing.T) {
@@ -387,7 +615,7 @@ func TestPromptKeyEditing(t *testing.T) {
 		assert.NotContains(t, out, ": x")
 	})
 
-	t.Run("shift tab wraps completions", func(t *testing.T) {
+	t.Run("tab does not navigate completions", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -397,13 +625,9 @@ func TestPromptKeyEditing(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'o')
-		m2, _ := m.Update(tea.KeyPressMsg{
-			Code: tea.KeyTab,
-			Mod:  tea.ModShift,
-		})
-		m = m2.(ui.Model)
+		m = sendSpecial(m, tea.KeyTab)
 
-		assert.Contains(t, stripANSI(m.View().Content), ":")
+		assert.Equal(t, ": o", promptText(m))
 	})
 
 	t.Run("long input scrolls instead of wrapping", func(t *testing.T) {
@@ -419,8 +643,7 @@ func TestPromptKeyEditing(t *testing.T) {
 			m = sendKey(m, ch)
 		}
 
-		lines := strings.Split(stripANSI(m.View().Content), "\n")
-		promptLine := lines[len(lines)-1]
+		promptLine := promptText(m)
 		assert.LessOrEqual(t, runewidth.StringWidth(promptLine), 20)
 		assert.Contains(t, promptLine, "…")
 		assert.NotContains(t, promptLine, "abc")
@@ -535,15 +758,16 @@ func TestPromptEditing(t *testing.T) {
 func TestPromptCursor(t *testing.T) {
 	t.Run("tracks the caret with configured shape", func(t *testing.T) {
 		m, _ := cmdPrompt(t)
+		empty := m.View().Cursor.Position.X // after the ": " label
 		m = typeString(m, "ab")
 
 		cur := m.View().Cursor
 		assert.NotNil(t, cur)
 		assert.Equal(t, tea.CursorBar, cur.Shape)
-		assert.Equal(t, 4, cur.Position.X) // ": " + "ab"
+		assert.Equal(t, empty+2, cur.Position.X)
 
 		m = sendSpecial(m, tea.KeyLeft)
-		assert.Equal(t, 3, m.View().Cursor.Position.X)
+		assert.Equal(t, empty+1, m.View().Cursor.Position.X)
 	})
 
 	t.Run("honors a block insert cursor", func(t *testing.T) {
@@ -611,8 +835,8 @@ func TestSearchPromptAccept(t *testing.T) {
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, '/')
-		assert.Contains(t, stripANSI(m.View().Content),
-			"search-forward: ")
+		assert.Contains(t, stripANSI(m.View().Content), " Search forward ")
+		assert.Equal(t, "/", promptText(m))
 		for _, ch := range "hello" {
 			m = sendKey(m, ch)
 		}
@@ -634,7 +858,8 @@ func TestSearchPromptAccept(t *testing.T) {
 		m = sendKey(m, '?')
 		m = sendKey(m, 'x')
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "search-backward: x")
+		assert.Contains(t, out, " Search backward ")
+		assert.Equal(t, "? x", promptText(m))
 	})
 
 	t.Run("backward search enter submits", func(t *testing.T) {
@@ -824,9 +1049,30 @@ func typeString(m ui.Model, s string) ui.Model {
 }
 
 func promptText(m ui.Model) string {
-	content := strings.TrimRight(stripANSI(m.View().Content), "\n")
-	lines := strings.Split(content, "\n")
-	return strings.TrimRight(lines[len(lines)-1], " ")
+	rows := promptRows(m)
+	if len(rows) == 0 {
+		return ""
+	}
+	return rows[0].text
+}
+
+func promptRows(m ui.Model) []promptRow {
+	var out []promptRow
+	content := strings.TrimRight(m.View().Content, "\n")
+	for raw := range strings.SplitSeq(content, "\n") {
+		line := stripANSI(raw)
+		from := strings.Index(line, promptBorderV)
+		to := strings.LastIndex(line, promptBorderV)
+		if from < 0 || to <= from {
+			continue
+		}
+		inner := line[from+len(promptBorderV) : to]
+		out = append(out, promptRow{
+			raw:  raw,
+			text: strings.TrimRight(strings.TrimLeft(inner, " "), " "),
+		})
+	}
+	return out
 }
 
 func testCommand(name string) command.Command {

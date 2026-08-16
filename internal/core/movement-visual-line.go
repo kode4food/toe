@@ -106,8 +106,6 @@ func (v visualLine) rowCount() int {
 	return len(v.rowStarts) + 1
 }
 
-// posOf returns charOff's row and absolute visual column, including the
-// continuation prefix on wrapped rows
 func (v visualLine) posOf(charOff int) geom.Point {
 	var at geom.Point
 	for at.Y < len(v.rowStarts) && v.rowStarts[at.Y] <= charOff {
@@ -184,8 +182,6 @@ func visualLineIndentW(runes []rune, tabW int) int {
 	return col
 }
 
-// charIsWord reports whether ch counts as part of a word when deciding
-// soft-wrap break points. Wrapping prefers to break between words
 func charIsWord(ch rune) bool {
 	return ch == '_' || unicode.IsLetter(ch) || unicode.IsNumber(ch)
 }

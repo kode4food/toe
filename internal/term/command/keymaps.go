@@ -228,8 +228,6 @@ func (k *Keymaps) bindingConflict(mode view.Mode, seq []KeyEvent) bool {
 	return node.action != nil || len(node.children) > 0
 }
 
-// declare returns the node at seq, creating the path when it is missing, so a
-// label or hint provider can name a menu entry no command occupies
 func (k *Keymaps) declare(mode view.Mode, seq []KeyEvent) *keyTrieNode {
 	root, ok := k.modes[mode]
 	if !ok {
@@ -300,7 +298,6 @@ func (k *keyTrieNode) isPrefix() bool {
 	return k.action == nil && len(k.children) > 0
 }
 
-// countable reports whether the node reaches a command that takes a count
 func (k *keyTrieNode) countable() bool {
 	if k.counted {
 		return true

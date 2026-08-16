@@ -17,18 +17,19 @@ import (
 )
 
 type (
+	// PromptComponent renders and handles an interactive prompt
 	PromptComponent struct {
-		overlayBuf
+		dismissibleOverlay
 
 		completion completionState
 		bg         tui.Color
 
 		editor  *EditorComponent
 		bounds  geom.Area
-		right   []statusElem
 		kind    promptKind
 		forward bool
-		prompt  string
+		title   string
+		head    string
 		buf     string
 		caret   int
 		horzOff int
@@ -38,10 +39,11 @@ type (
 	}
 
 	completionState struct {
-		items    []promptCompletion
-		selected *int
-		done     bool
-		size     geom.Size
+		items     []promptCompletion
+		list      listScroll
+		bounds    geom.Area
+		done      bool
+		nameWidth int
 	}
 
 	promptCompletion struct {
@@ -68,30 +70,58 @@ const (
 	promptSearchBackwardKey i18n.Key = "prompt.searchBackward"
 )
 
+const (
+	promptWidthPct  = 55
+	promptHeightPct = 70
+	promptChrome    = 3 // top border, input row, bottom border
+	promptRule      = 1 // divider between the input and its completions
+	promptKeepClear = 2 // statusline and cmdline the prompt centers above
+	promptPadX      = 1
+)
+
 const promptEllipsis = "\u2026" // '…' - horizontal ellipsis
 
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
 type promptComponentArgs struct {
-	editor  *EditorComponent
-	kind    promptKind
-	forward bool
-	prompt  string
-	prefill string
-	handler promptHandler
-	builder pickerBuilder
+	cx       *Context
+	editor   *EditorComponent
+	kind     promptKind
+	forward  bool
+	titleKey i18n.Key
+	head     string
+	prefill  string
+	handler  promptHandler
+	builder  pickerBuilder
 }
 
-func newPromptComponent(
-	cx *Context, args promptComponentArgs,
-) *PromptComponent {
-	th := cx.Theme()
+func newPromptComponent(args promptComponentArgs) *PromptComponent {
+	th := args.cx.Theme()
+	titleKey := args.titleKey
+	switch args.kind {
+	case promptCmd:
+		titleKey = i18n.PromptCommand
+	case promptSearch:
+		if args.forward {
+			titleKey = promptSearchForwardKey
+		} else {
+			titleKey = promptSearchBackwardKey
+		}
+	}
+	title := i18n.Text(titleKey)
+	if title == "" {
+		title = i18n.Text(i18n.PromptCommand)
+	}
 	return &PromptComponent{
 		bg:      promptBackground(th),
 		editor:  args.editor,
 		kind:    args.kind,
 		forward: args.forward,
-		prompt:  args.prompt,
+		title:   title,
+		head:    args.head,
+		completion: completionState{
+			list: listScroll{cursor: -1},
+		},
 		buf:     args.prefill,
 		caret:   len([]rune(args.prefill)),
 		handler: args.handler,
@@ -106,8 +136,11 @@ func (p *PromptComponent) HandleEvent(
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return p.handleKey(cx, msg), nil
-
-	case tea.MouseMsg, tea.MouseClickMsg:
+	case tea.MouseClickMsg:
+		return p.handleMouseClick(msg), nil
+	case tea.MouseWheelMsg:
+		return p.handleMouseWheel(cx, msg), nil
+	case tea.MouseMsg:
 		return consumed(), nil
 	}
 	return ignored(), nil
@@ -121,35 +154,45 @@ func (p *PromptComponent) Layout(
 	if !p.completion.done {
 		p.recalculateCompletion(cx)
 	}
-	menuH := p.completionMenuHeight(screen)
-	y := max(screen.Height-1-menuH, 0)
-	p.bounds = geom.Area{
-		Point: geom.Point{X: 0, Y: y},
-		Size:  geom.Size{Width: screen.Width, Height: screen.Height - y},
+	frame := promptOverlayFrame(screen)
+	p.syncCompletionRows(frame.Size)
+	rows := p.completion.list.rows
+	height := promptChrome
+	if rows > 0 {
+		height += rows + promptRule
 	}
-	p.right = p.editor.macroElems(cx, p.rowStyle(cx))
+	p.bounds = geom.Area{
+		Point: frame.Point,
+		Size:  geom.Size{Width: frame.Width, Height: height},
+	}
 	return p.bounds, true
 }
 
-// PaintBuffer draws the prompt and its input line
+// PaintBuffer draws the prompt popup, its input line and its completions
 func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
-		if p.completion.size.Height > 0 {
-			p.paintCompletions(cx, buf, geom.Area{
-				Size: geom.Size{
-					Width:  pl.Width,
-					Height: p.completion.size.Height + 2,
-				},
-			})
+		pop := p.popup(cx)
+		box := geom.Area{Size: pl.Size}
+		area := pop.drawInto(buf, box)
+		drawPopupTitle(buf, box, p.title, pop.borderStyle)
+		p.paintLine(cx, buf, area)
+		rows := p.completion.list.rows
+		if rows == 0 {
+			p.completion.bounds = geom.Area{}
+			return
 		}
-		p.paintLine(cx, buf, geom.Area{
-			Point: geom.Point{
-				Y: pl.Height - 1,
-			},
-			Size: geom.Size{
-				Width:  pl.Width,
-				Height: 1},
+		drawPopupRule(drawPopupRuleArgs{
+			buf:   buf,
+			at:    geom.Point{X: area.X - 1 - pop.padX, Y: area.Y + 1},
+			width: area.Width + 2*pop.padX + 2,
+			style: pop.borderStyle,
 		})
+		list := geom.Area{
+			Point: geom.Point{X: area.X, Y: area.Y + promptChrome - 1},
+			Size:  geom.Size{Width: area.Width, Height: rows},
+		}
+		p.completion.bounds = list.Translate(pl.Point)
+		p.paintCompletions(cx, buf, list)
 	})
 }
 
@@ -158,28 +201,24 @@ func (p *PromptComponent) Cursor(
 	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
 	return insertCursorAt(cx, geom.Point{
-		X: p.bounds.X + p.caretDisplayX(),
-		Y: p.bounds.Bottom(),
+		X: p.bounds.X + 1 + promptPadX + p.caretDisplayX(),
+		Y: p.bounds.Y + 1,
 	})
 }
 
-func (p *PromptComponent) textWidth() int {
-	label := runewidth.StringWidth(p.promptLabel())
-	width := p.contentWidth() - label - commandLineRightPad
-	return max(width, 1)
-}
-
-func (p *PromptComponent) contentWidth() int {
-	return statusRow{width: p.bounds.Width, right: p.right}.contentWidth()
-}
-
-func (p *PromptComponent) row(at geom.Point, base tui.Style) statusRow {
-	return statusRow{
-		at:        at,
-		width:     p.bounds.Width,
-		baseStyle: base,
-		right:     p.right,
+func (p *PromptComponent) popup(cx *Context) popup {
+	st := p.rowStyle(cx)
+	return popup{
+		borderStyle:  st.Fg(pickerFrameStyle(cx).FgColor()),
+		contentStyle: st,
+		padX:         promptPadX,
 	}
+}
+
+func (p *PromptComponent) textWidth() int {
+	label := runewidth.StringWidth(p.inputLabel())
+	inner := p.bounds.Width - 2 - 2*promptPadX
+	return max(inner-label, 1)
 }
 
 func (p *PromptComponent) rowStyle(cx *Context) tui.Style {
@@ -195,7 +234,8 @@ func (p *PromptComponent) syncScroll() {
 	case p.caret <= p.horzOff:
 		p.horzOff = max(p.caret-1, 0)
 	case runewidth.StringWidth(string(runes[p.horzOff:p.caret])) > w:
-		width, i := 0, p.caret
+		width := 0
+		i := p.caret
 		for i > 0 {
 			width += runewidth.RuneWidth(runes[i-1])
 			if width > w {
@@ -214,23 +254,16 @@ func (p *PromptComponent) syncScroll() {
 
 func (p *PromptComponent) caretDisplayX() int {
 	p.syncScroll()
-	label := runewidth.StringWidth(p.promptLabel())
+	label := runewidth.StringWidth(p.inputLabel())
 	shown := []rune(p.buf)[p.horzOff:p.caret]
 	return label + runewidth.StringWidth(string(shown))
 }
 
-func (p *PromptComponent) promptLabel() string {
-	switch p.kind {
-	case promptCmd:
-		return i18n.Text(i18n.PromptCommand) + " "
-	case promptSearch:
-		if p.forward {
-			return i18n.Text(promptSearchForwardKey) + ": "
-		}
-		return i18n.Text(promptSearchBackwardKey) + ": "
-	default:
-		return p.prompt + ": "
+func (p *PromptComponent) inputLabel() string {
+	if p.head == "" {
+		return ""
 	}
+	return p.head + " "
 }
 
 func (p *PromptComponent) handleKey(
@@ -250,11 +283,17 @@ func (p *PromptComponent) handleKey(
 	case k.Code.Special == command.Enter:
 		return p.accept(cx, pop)
 
-	case k.Code.Special == command.Tab && k.Mods.Has(command.ModShift):
+	case k.Code.Special == command.Up:
 		p.changeCompletion(-1)
 
-	case k.Code.Special == command.Tab:
+	case k.Code.Special == command.Down:
 		p.changeCompletion(1)
+
+	case k.Code.Special == command.PageUp:
+		p.changeCompletion(-max(p.completion.list.rows-1, 1))
+
+	case k.Code.Special == command.PageDown:
+		p.changeCompletion(max(p.completion.list.rows-1, 1))
 
 	// word deletions come before char deletions so a modified backspace or
 	// delete is not swallowed by the plain case
@@ -412,8 +451,8 @@ func (p *PromptComponent) paintLine(
 	})
 	textSt := p.rowStyle(cx)
 
-	label := p.promptLabel()
-	p.row(area.Point, textSt).paint(buf)
+	label := p.inputLabel()
+	buf.FillRange(area.Point, area.Width, textSt)
 	buf.SetString(area.Point, label, labelSt)
 	x := runewidth.StringWidth(label)
 
@@ -427,7 +466,8 @@ func (p *PromptComponent) paintLine(
 	if truncEnd {
 		limit--
 	}
-	col, i := 0, p.horzOff
+	col := 0
+	i := p.horzOff
 	for i < len(runes) && col+runewidth.RuneWidth(runes[i]) <= limit {
 		buf.SetString(geom.Point{
 			X: area.X + x + col,
@@ -447,6 +487,21 @@ func (p *PromptComponent) paintLine(
 			X: area.X + x + col,
 			Y: area.Y,
 		}, promptEllipsis, textSt)
+	}
+}
+
+func promptOverlayFrame(screen geom.Size) geom.Area {
+	within := geom.Size{
+		Width:  screen.Width,
+		Height: max(screen.Height-promptKeepClear, 0),
+	}
+	size := geom.Size{
+		Width:  max(within.Width*promptWidthPct/100, 1),
+		Height: max(within.Height*promptHeightPct/100, promptChrome),
+	}
+	return geom.Area{
+		Point: geom.Area{Size: within}.Center(size),
+		Size:  size,
 	}
 }
 

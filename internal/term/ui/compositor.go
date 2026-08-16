@@ -9,6 +9,7 @@ import (
 )
 
 type (
+	// Compositor manages the editor's layered components
 	Compositor struct {
 		layers       []Component
 		size         geom.Size
@@ -58,7 +59,7 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	var callbacks []Callback
 
 	for i := len(c.layers) - 1; i >= 0; i-- {
-		result, cmd := c.layers[i].HandleEvent(cx, msg)
+		result, cmd := c.handleLayerEvent(cx, c.layers[i], msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
@@ -76,20 +77,22 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 		}
 	}
 
-	// After all layers have processed the resize (viewHeight is now set),
-	// create and mount any deferred initial component
-	if _, ok := msg.(tea.WindowSizeMsg); ok && !c.size.Empty() {
-		if fn := c.startup; fn != nil {
-			c.startup = nil
-			if layer, cmd := fn(cx); layer != nil {
-				c.Push(layer)
-				if cmd != nil {
-					cmds = append(cmds, cmd)
-				}
-			}
-		}
+	if _, ok := msg.(tea.WindowSizeMsg); !ok {
+		return tea.Batch(cmds...)
 	}
-
+	if c.size.Empty() || c.startup == nil {
+		return tea.Batch(cmds...)
+	}
+	fn := c.startup
+	c.startup = nil
+	layer, cmd := fn(cx)
+	if layer == nil {
+		return tea.Batch(cmds...)
+	}
+	c.Push(layer)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
 	return tea.Batch(cmds...)
 }
 
@@ -115,6 +118,24 @@ func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
 		}
 	}
 	return tea.Cursor{}, false
+}
+
+func (c *Compositor) handleLayerEvent(
+	cx *Context, layer Component, msg tea.Msg,
+) (EventResult, tea.Cmd) {
+	click, ok := msg.(tea.MouseClickMsg)
+	if !ok {
+		return layer.HandleEvent(cx, msg)
+	}
+	dismisser, ok := layer.(overlayDismisser)
+	if !ok {
+		return layer.HandleEvent(cx, msg)
+	}
+	bounds, active := dismisser.Layout(cx, c.size)
+	if active && bounds.Contains(geom.Point{X: click.X, Y: click.Y}) {
+		return layer.HandleEvent(cx, msg)
+	}
+	return dismisser.dismissOverlay()
 }
 
 func (c *Compositor) cursorCovered(cx *Context, from int, cur tea.Cursor) bool {

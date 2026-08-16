@@ -119,13 +119,12 @@ func (r *popupTextRenderer) render(lines []popupLine) {
 
 func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 	if line.rule {
-		// span the full box, tying into border like the picker cut-separator
-		w := r.area.Width + 2*r.padX
-		rule := borderML + strings.Repeat(borderH, w) + borderMR
-		r.buf.SetString(geom.Point{
-			X: r.area.X - 1 - r.padX,
-			Y: y,
-		}, rule, r.base)
+		drawPopupRule(drawPopupRuleArgs{
+			buf:   r.buf,
+			at:    geom.Point{X: r.area.X - 1 - r.padX, Y: y},
+			width: r.area.Width + 2*r.padX + 2,
+			style: r.base,
+		})
 		return
 	}
 	if line.code {

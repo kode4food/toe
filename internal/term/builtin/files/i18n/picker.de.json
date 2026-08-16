@@ -3,5 +3,11 @@
   "file-explorer-in-current-pane-dir.docstring": "Dateiexplorer im Verzeichnis des aktuellen Bereichs öffnen",
   "file-explorer.docstring": "Dateiexplorer im Stammverzeichnis des Arbeitsbereichs öffnen",
   "file-picker-in-current-dir.docstring": "Datei-Picker im aktuellen Arbeitsverzeichnis öffnen",
-  "file-picker.docstring": "Datei-Picker öffnen"
+  "file-picker.docstring": "Datei-Picker öffnen",
+  "option.buffer-picker.start-position.docstring": "Startposition des Buffer-Pickers",
+  "option.file-explorer.flatten-dirs.docstring": "Einzelne Unterverzeichnisse zusammenfassen",
+  "option.file-explorer.follow-symlinks.docstring": "Symlinks folgen",
+  "option.file-explorer.hidden.docstring": "Versteckte Einträge anzeigen",
+  "option.file-explorer.ignore-files.docstring": "Ignore-Dateien beachten",
+  "option.file-explorer.parents.docstring": "Übergeordnete Verzeichnisse anzeigen"
 }

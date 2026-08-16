@@ -104,8 +104,8 @@ func InsertModule() command.Module {
 			},
 			{
 				Name: actSmartTab,
-				DocString: "Insert tab in leading whitespace; otherwise " +
-					"move past the enclosing syntax node",
+				DocString: "Insert tab in leading whitespace; else move past " +
+					"the node",
 				Run:   kit.Runner(smartTab),
 				Modes: view.ModeInsert,
 				Keys:  kit.Keys(kit.Tab),

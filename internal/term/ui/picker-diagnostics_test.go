@@ -101,7 +101,7 @@ func TestDiagnosticPicker(t *testing.T) {
 		)
 	})
 
-	t.Run("flattens multi-line messages onto one row", func(t *testing.T) {
+	t.Run("flattens messages onto one row", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "a.go")
 		assert.NoError(t, os.WriteFile(path, []byte("package a\n"), 0o644))

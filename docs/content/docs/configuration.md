@@ -239,7 +239,7 @@ left = ["mode!", "file-name", "read-only-indicator", "file-modified-indicator"]
 right = ["diagnostics", "selections", "position!"]
 ```
 
-The selected register appears on the command line.
+The selected register and the macro-recording indicator appear on the command line, below the statusline.
 
 Example:
 
@@ -251,11 +251,10 @@ right = ["version-control", "diagnostics", "position"]
 
 ### Pickers
 
-Picker split ratios can be changed at runtime with commands such as `:set picker.split-ratios.diagnostics 0.65` and are saved by auto-session.
+Dragging a picker's split divider adjusts its list/preview ratio. Those ratios are remembered per picker by auto-session rather than set in config.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|
-| `picker.split-ratios` | table | `{}` | Picker list/preview split ratios by picker id, from `0.2` to `0.8`; missing pickers use `0.5` |
 | `buffer-picker.start-position` | string | `"top"` | `top` or `previous` |
 | `file-explorer.hidden` | bool | `false` | Show hidden files |
 | `file-explorer.follow-symlinks` | bool | `false` | Follow symlinks |

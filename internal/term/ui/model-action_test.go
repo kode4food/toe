@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -436,6 +438,7 @@ func TestRenameSymbolAction(t *testing.T) {
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
+		i18n.Register(files.LspModule(m).Translations)
 		bindNormalTestAction(
 			km, "rename_symbol", m.RenameSymbolAction,
 			[]command.KeyEvent{char('r')},
@@ -444,7 +447,8 @@ func TestRenameSymbolAction(t *testing.T) {
 
 		m = sendKey(m, 'r')
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "rename-to: old")
+		assert.Contains(t, out, " Rename symbol ")
+		assert.Equal(t, "r old", promptText(m))
 
 		m = sendSpecial(m, tea.KeyBackspace)
 		m = sendSpecial(m, tea.KeyBackspace)
@@ -928,7 +932,7 @@ func TestGotoActions(t *testing.T) {
 		})
 	}
 
-	t.Run("references list a single hit in the picker", func(t *testing.T) {
+	t.Run("references list one picker hit", func(t *testing.T) {
 		dir := t.TempDir()
 		source := filepath.Join(dir, "source.go")
 		target := filepath.Join(dir, "target.go")

@@ -191,7 +191,8 @@ func (p *Picker) moveBy(n int) {
 	}
 	step := 1
 	if n < 0 {
-		step, n = -1, -n
+		step = -1
+		n = -n
 	}
 	cur := p.list.cursor
 	for ; n > 0; n-- {
@@ -237,38 +238,21 @@ func (p *Picker) nextSelectable(args nextSelectableArgs) int {
 }
 
 func (p *Picker) pageDown() {
-	p.moveBy(max(p.list.height, 1))
+	p.moveBy(max(p.list.rows, 1))
 }
 
 func (p *Picker) pageUp() {
-	p.moveBy(-max(p.list.height, 1))
+	p.moveBy(-max(p.list.rows, 1))
 }
 
 func (p *Picker) clampScroll() {
-	p.list.scroll = listScroll{
-		scroll: p.list.scroll,
-		count:  len(p.list.matched),
-		rows:   p.list.height,
-	}.clamped()
+	p.list.resize(len(p.list.matched), p.list.rows)
 }
 
-func (p *Picker) scrollBy(delta int) {
-	p.list.scroll = listScroll{
-		scroll: p.list.scroll,
-		count:  len(p.list.matched),
-		rows:   p.list.height,
-	}.scrollBy(delta)
-}
-
-// ensureCursorVisible scrolls the list the minimum amount needed to bring the
-// selected row into view, used after keyboard navigation
 func (p *Picker) ensureCursorVisible() {
-	l := listScroll{
-		scroll: p.list.scroll,
-		cursor: p.list.cursor,
-		count:  len(p.list.matched),
-		rows:   p.list.height,
-	}
+	p.list.count = len(p.list.matched)
+	l := p.list.listScroll
+	// a section header scrolls in with the first item under it
 	if top := p.sectionTop(l.cursor); top < l.scroll {
 		l.cursor = top
 	}

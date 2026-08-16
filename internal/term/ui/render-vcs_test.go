@@ -296,8 +296,6 @@ func TestChangedFilePicker(t *testing.T) {
 	})
 }
 
-// changedFilePicker opens the changed-file picker over repo and drains its item
-// feed so the rendered frame is complete
 func changedFilePicker(t *testing.T, repo string) ui.Model {
 	t.Helper()
 	e := view.NewEditor(repo)
@@ -308,8 +306,6 @@ func changedFilePicker(t *testing.T, repo string) ui.Model {
 	return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
 }
 
-// repoEditor opens an editor on a repo file whose work-tree content
-// differs from HEAD, waiting until diff hunks are available
 func repoEditor(
 	t *testing.T, committed, current string,
 ) (*view.Editor, *vcs.Session) {

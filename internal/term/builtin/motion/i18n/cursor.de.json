@@ -64,6 +64,8 @@
   "move-prev-word-start.docstring": "Zum Anfang des vorherigen Worts bewegen",
   "move-visual-line-down.docstring": "Nach unten bewegen",
   "move-visual-line-up.docstring": "Nach oben bewegen",
+  "option.scroll-lines.docstring": "Zeilen pro Scrollschritt",
+  "option.scrolloff.docstring": "Sichtbare Zeilen ober- und unterhalb des Cursors",
   "save-selection.docstring": "Aktuelle Auswahl in der Sprungliste speichern",
   "till-prev-char.docstring": "Bis hinter das vorherige Vorkommen eines Zeichens bewegen"
 }

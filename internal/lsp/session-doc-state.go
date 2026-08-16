@@ -55,8 +55,6 @@ func (d *docState) setServerNames(id view.DocumentId, names []string) {
 	d.serverNames[id] = names
 }
 
-// claimOpen reports whether the caller is the first to open id, marking it
-// opened as a side effect
 func (d *docState) claimOpen(id view.DocumentId) bool {
 	d.Lock()
 	defer d.Unlock()
@@ -75,8 +73,6 @@ func (d *docState) markPendingOpen(docs []*view.Document) {
 	}
 }
 
-// consumePendingOpen reports whether id still needs its startup open; false
-// means the document was closed before this call ran
 func (d *docState) consumePendingOpen(id view.DocumentId) bool {
 	d.Lock()
 	defer d.Unlock()
@@ -85,8 +81,6 @@ func (d *docState) consumePendingOpen(id view.DocumentId) bool {
 	return want
 }
 
-// cancelPendingOpen cancels any in-flight startup open for id and reports
-// whether didOpen was already sent for it
 func (d *docState) cancelPendingOpen(id view.DocumentId) bool {
 	d.Lock()
 	defer d.Unlock()
@@ -95,7 +89,6 @@ func (d *docState) cancelPendingOpen(id view.DocumentId) bool {
 	return opened
 }
 
-// forget drops all bookkeeping for a closed document
 func (d *docState) forget(id view.DocumentId) {
 	d.Lock()
 	defer d.Unlock()

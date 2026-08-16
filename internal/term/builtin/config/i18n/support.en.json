@@ -1,6 +1,4 @@
 {
-  "about.version": "Version",
-  "about.development": "Development Build",
-  "error.noLineNumber": "no line number given",
-  "error.invalidLineNumber": "invalid line number"
+  "error.invalidLineNumber": "invalid line number",
+  "error.noLineNumber": "no line number given"
 }

@@ -71,8 +71,6 @@ type visualColOfArgs struct {
 	tabWidth int
 }
 
-// visualColOf returns the visual column of the character at CharOffset within
-// the line, expanding tabs to TabWidth-wide stops
 func visualColOf(args visualColOfArgs) int {
 	col, charIdx := 0, 0
 	for _, ch := range args.line {

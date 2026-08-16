@@ -393,8 +393,6 @@ func (p *ImagePane) restoreZoom(session *view.PaneSession) {
 	}
 }
 
-// restorePan sets the saved offset directly, not via setPan: panMax is zero
-// until the first render, which would clamp it to center; render reclamps later
 func (p *ImagePane) restorePan(session *view.PaneSession) {
 	x, okX := sessionInt(session, imageSessionPanXKey)
 	y, okY := sessionInt(session, imageSessionPanYKey)
@@ -435,7 +433,6 @@ func isImagePath(path string) bool {
 	return strings.HasPrefix(mime.TypeByExtension(ext), "image/")
 }
 
-// rangeImagePanes calls fn for each image pane in the editor's pane tree
 func rangeImagePanes(e *view.Editor, fn func(*ImagePane)) {
 	e.Tree().Range(func(p view.Pane) bool {
 		if img, ok := p.(*ImagePane); ok {

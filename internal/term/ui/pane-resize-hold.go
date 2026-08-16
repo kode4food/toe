@@ -21,8 +21,6 @@ type (
 // are told their new size
 const resizeSettleDelay = 120 * time.Millisecond
 
-// callers arm this per resize; the generation check means only the last one
-// resumes, so a run of resizes collapses into the size it settles on
 func (e *EditorComponent) settlePaneResizeCmd(cx *Context) tea.Cmd {
 	if len(e.resizeHold.held) == 0 {
 		cx.Editor.Tree().Range(func(p view.Pane) bool {

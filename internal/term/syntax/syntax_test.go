@@ -127,7 +127,7 @@ func TestTokenizeGoScopes(t *testing.T) {
 	for _, sp := range spans {
 		scopes[sp.Scope] = true
 	}
-	// "package" and "func" are keywords — expect a keyword scope
+	// "package" and "func" are keywords; expect a keyword scope
 	assert.True(t, scopes["keyword"] || scopes["keyword.function"],
 		"expected keyword scope in go source")
 }

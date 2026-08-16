@@ -29,8 +29,6 @@ type (
 	}
 )
 
-// contentWidth is the space the left section may occupy after the right
-// section has taken its own
 func (r statusRow) contentWidth() int {
 	return max(r.width-statusElemsWidth(r.right), 0)
 }
@@ -86,7 +84,6 @@ func statusElemsWidth(elems []statusElem) int {
 	return w
 }
 
-// dropUnpinned sheds one unpinned element from a section's inner edge
 func dropUnpinned(elems []statusElem, fromEnd bool) ([]statusElem, bool) {
 	for n, i := len(elems), 0; i < n; i++ {
 		idx := i

@@ -1,11 +1,11 @@
 {
+  "error.bufferReadOnly": "buffer en lecture seule",
+  "error.formatSelectionSingle": "format-selections ne prend actuellement en charge qu’une seule sélection",
+  "error.invalidWidth": "largeur invalide",
+  "error.noRangeFormatting": "aucun serveur LSP ne gère le formatage de plage",
   "format-selections.docstring": "Formater la sélection",
-  "format.docstring": "Formater le fichier avec un formateur externe ou un serveur de langage",
+  "format.docstring": "Formater avec un formateur externe ou un serveur de langage",
   "reflow.docstring": "Réajuster les lignes sélectionnées à une largeur donnée",
   "sort.docstring": "Trier les plages de la sélection",
-  "error.invalidWidth": "largeur invalide",
-  "error.bufferReadOnly": "buffer en lecture seule",
-  "status.noFormatter": "aucun formateur pour {lang}",
-  "error.noRangeFormatting": "aucun serveur LSP ne gère le formatage de plage",
-  "error.formatSelectionSingle": "format-selections ne prend actuellement en charge qu’une seule sélection"
+  "status.noFormatter": "aucun formateur pour {lang}"
 }

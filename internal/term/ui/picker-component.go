@@ -8,8 +8,9 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+// PickerComponent renders and handles an interactive picker
 type PickerComponent struct {
-	overlayBuf
+	dismissibleOverlay
 	styles        *styles
 	state         *Picker
 	bounds        geom.Area
@@ -106,7 +107,8 @@ func (p *PickerComponent) Cursor(
 
 func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	ps := p.state
-	areaW, areaH := pl.Width, pl.Height
+	areaW := pl.Width
+	areaH := pl.Height
 	p.bounds = pl
 	p.previewBounds = geom.Area{}
 	p.splitBounds = geom.Area{}
@@ -139,7 +141,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	}
 	p.listBounds = geom.Area{
 		Point: geom.Point{X: 1, Y: 3 + headerH},
-		Size:  geom.Size{Width: listW, Height: ps.list.height},
+		Size:  geom.Size{Width: listW, Height: ps.list.rows},
 	}
 
 	p.splitBounds = p.splitBounds.Translate(pl.Point)
@@ -224,9 +226,6 @@ func (p *PickerComponent) handleExternalFileChange(
 func (p *PickerComponent) handleMouseClick(
 	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
-	if p.mouseOutside(geom.Point{X: msg.X, Y: msg.Y}) {
-		return p.dismiss(ignored())
-	}
 	p.markDirty()
 	clickPt := geom.Point{X: msg.X, Y: msg.Y}
 	if msg.Button == tea.MouseLeft && p.splitBounds.Contains(clickPt) {
@@ -234,10 +233,12 @@ func (p *PickerComponent) handleMouseClick(
 		p.updateSplitRatio(cx, msg.X)
 		return consumed(), nil
 	}
-	if idx, ok := listIndexAt(p.listBounds, p.state.list.scroll, clickPt); ok {
-		if idx >= 0 && idx < len(p.state.list.matched) {
-			p.state.list.cursor = idx
-		}
+	list := listScroll{
+		scroll: p.state.list.scroll,
+		count:  len(p.state.list.matched),
+	}
+	if idx, ok := list.indexAt(p.listBounds, clickPt); ok {
+		p.state.list.cursor = idx
 	}
 	return consumed(), nil
 }
@@ -293,12 +294,8 @@ func (p *PickerComponent) handleMouseWheel(
 }
 
 func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {
-	switch button {
-	case tea.MouseWheelUp:
-		p.state.scrollBy(-step)
-	case tea.MouseWheelDown:
-		p.state.scrollBy(step)
-	}
+	p.state.list.count = len(p.state.list.matched)
+	p.state.list.wheel(button, step)
 }
 
 func (p *PickerComponent) scrollPreviewByWheel(
@@ -317,10 +314,6 @@ func (p *PickerComponent) scrollPreviewByWheel(
 	}
 }
 
-func (p *PickerComponent) mouseOutside(at geom.Point) bool {
-	return !p.bounds.Contains(at)
-}
-
 func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 	ps := p.state
 	p.dragSplit = false
@@ -334,4 +327,8 @@ func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 		return comp.refreshEditorHighlight(cx)
 	}
 	return result, nil
+}
+
+func (p *PickerComponent) dismissOverlay() (EventResult, tea.Cmd) {
+	return p.dismiss(ignored())
 }

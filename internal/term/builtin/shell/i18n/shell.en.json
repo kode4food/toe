@@ -1,7 +1,7 @@
 {
-  "prompt.pipe": "pipe",
-  "prompt.insertOutput": "insert-output",
-  "prompt.filter": "filter",
-  "prompt.pipeTo": "pipe-to",
-  "prompt.appendOutput": "append-output"
+  "prompt.pipe": "Pipe",
+  "prompt.insertOutput": "Insert output",
+  "prompt.filter": "Filter",
+  "prompt.pipeTo": "Pipe to",
+  "prompt.appendOutput": "Append output"
 }

@@ -99,8 +99,6 @@ func (d *Differ) run() {
 	}
 }
 
-// settle drains further events until the debounce window passes without a new
-// one. It reports false when the differ was closed
 func (d *Differ) settle() bool {
 	timer := time.NewTimer(diffDebounce)
 	defer timer.Stop()

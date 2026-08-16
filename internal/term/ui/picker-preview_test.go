@@ -317,7 +317,7 @@ wrap-indicator = "↪ "
 		// syntax foreground (mauve 203;166;247) with the highlight background
 		// (surface1 69;71;90) overlaid behind it. The old strip-and-restyle
 		// path could not produce a syntax foreground under the highlight. The
-		// two SGR codes may be separate escapes or combined — check both are
+		// two SGR codes may be separate escapes or combined, check both are
 		// present on a single line containing "package"
 		found := false
 		for line := range strings.SplitSeq(out, "\n") {

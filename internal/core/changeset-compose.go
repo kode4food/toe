@@ -56,8 +56,6 @@ func (c *composeCtx) loadB() {
 	}
 }
 
-// advancePair consumes min(aRem,bRem) chars, emitting a retain or delete op,
-// and advances whichever iterator(s) are exhausted
 func (c *composeCtx) advancePair(kind OperationKind) {
 	if c.aRem < c.bRem {
 		c.emitN(c.aRem, kind)
@@ -82,8 +80,6 @@ func (c *composeCtx) emitN(n int, kind OperationKind) {
 	}
 }
 
-// stepInsertDelete handles (Insert-A, Delete-B): the inserted text is consumed
-// by the deletion; no output is emitted
 func (c *composeCtx) stepInsertDelete() {
 	aLen := utf8.RuneCountInString(c.aStr)
 	if aLen < c.bRem {
@@ -98,8 +94,6 @@ func (c *composeCtx) stepInsertDelete() {
 	}
 }
 
-// stepInsertRetain handles (Insert-A, Retain-B): emit the prefix of the insert
-// that fits within the retain window
 func (c *composeCtx) stepInsertRetain() {
 	aLen := utf8.RuneCountInString(c.aStr)
 	if aLen < c.bRem {

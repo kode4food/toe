@@ -28,9 +28,12 @@ type styledRuneStyle struct {
 
 const (
 	cursorColumnLongLine = "abcdefghijabcdefghijabcdefghijabcdefghij\n"
-	horizontalLongLine   = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+
+	horizontalLongLine = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
 		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
 		"xxxxxxxxxxxxxxx\n"
+
+	borkGoSrc = "package main\n\nvar x Bork\n"
 )
 
 func TestBufferlineRender(t *testing.T) {
@@ -1070,8 +1073,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 func TestErroredIdentifierGating(t *testing.T) {
 	// "Bork" is a type_identifier; Tree-sitter tags it @type purely from
 	// parse-tree shape, with no idea whether Bork actually exists
-	const goSrc = "package main\n\nvar x Bork\n"
-	bork := strings.Index(goSrc, "Bork")
+	bork := strings.Index(borkGoSrc, "Bork")
 	typeColoredBork := "\x1b[38;2;249;226;175mBork" // type yellow
 
 	newGoDoc := func(t *testing.T) (*view.Editor, *view.Document) {
@@ -1080,7 +1082,7 @@ func TestErroredIdentifierGating(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		path := filepath.Join(root, "main.go")
-		err := os.WriteFile(path, []byte(goSrc), 0o644)
+		err := os.WriteFile(path, []byte(borkGoSrc), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(root)
 		_, err = e.OpenFile(path)

@@ -99,9 +99,8 @@ func DocumentModule() command.Module {
 			},
 			{
 				Name: actYankJoin,
-				DocString: "Yank joined selections to clipboard or " +
-					"register. First argument sets the separator, a " +
-					"newline by default",
+				DocString: "Yank joined selections. First argument sets the " +
+					"separator",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					sep := "\n"
 					if args != nil {
@@ -144,8 +143,8 @@ func DocumentModule() command.Module {
 			},
 			{
 				Name: actClearRegister,
-				DocString: "Clear given register. If no argument is " +
-					"provided, clear all registers",
+				DocString: "Clear the given register, or all registers if " +
+					"none is given",
 				Run:       clearRegister,
 				Modes:     command.PaneModes,
 				Signature: kit.OptionalArg(),

@@ -15,7 +15,10 @@ import (
 	"github.com/kode4food/toe/internal/i18n"
 )
 
-const testLocaleExpected = "TOE_TEST_LOCALE_EXPECTED"
+const (
+	testLocaleExpected = "TOE_TEST_LOCALE_EXPECTED"
+	testPromptExpected = "TOE_TEST_PROMPT_EXPECTED"
+)
 
 func TestText(t *testing.T) {
 	t.Run("interpolates named values", func(t *testing.T) {
@@ -190,7 +193,9 @@ func TestPluralLocales(t *testing.T) {
 func TestLocales(t *testing.T) {
 	if expected := os.Getenv(testLocaleExpected); expected != "" {
 		assert.Equal(t, expected, i18n.Text(i18n.ErrorNoDocument))
-		assert.Equal(t, ":", i18n.Text(i18n.PromptCommand))
+		assert.Equal(t, os.Getenv(testPromptExpected),
+			i18n.Text(i18n.PromptCommand),
+		)
 		return
 	}
 
@@ -198,46 +203,55 @@ func TestLocales(t *testing.T) {
 		name     string
 		locale   string
 		expected string
+		prompt   string
 	}{
 		{
 			name:     "German in Switzerland",
 			locale:   "de_CH.UTF-8",
 			expected: "kein Dokument",
+			prompt:   "Befehl",
 		},
 		{
 			name:     "German in Germany",
 			locale:   "de_DE.UTF-8",
 			expected: "kein Dokument",
+			prompt:   "Befehl",
 		},
 		{
 			name:     "French in Switzerland",
 			locale:   "fr_CH.UTF-8",
 			expected: "aucun document",
+			prompt:   "Commande",
 		},
 		{
 			name:     "French in France",
 			locale:   "fr_FR.UTF-8",
 			expected: "aucun document",
+			prompt:   "Commande",
 		},
 		{
 			name:     "Italian in Switzerland",
 			locale:   "it_CH.UTF-8",
 			expected: "nessun documento",
+			prompt:   "Comando",
 		},
 		{
 			name:     "Italian in Italy",
 			locale:   "it_IT.UTF-8",
 			expected: "nessun documento",
+			prompt:   "Comando",
 		},
 		{
 			name:     "English in Britain",
 			locale:   "en_GB.UTF-8",
 			expected: "no document",
+			prompt:   "Command",
 		},
 		{
 			name:     "English in the US",
 			locale:   "en_US.UTF-8",
 			expected: "no document",
+			prompt:   "Command",
 		},
 	}
 	for _, tc := range tests {
@@ -246,6 +260,7 @@ func TestLocales(t *testing.T) {
 			cmd.Env = append(os.Environ(),
 				"LC_ALL="+tc.locale,
 				testLocaleExpected+"="+tc.expected,
+				testPromptExpected+"="+tc.prompt,
 			)
 			out, err := cmd.CombinedOutput()
 			if err != nil {

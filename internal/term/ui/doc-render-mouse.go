@@ -43,8 +43,6 @@ func (r *renderPass) screenCharPos(
 	})
 }
 
-// contentViewAt returns the view whose content area contains screen point
-// (x, y); a click on the pane's own status row or the command line misses
 func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 	yOff := 0
 	if bufferlineVisible(r.context) {

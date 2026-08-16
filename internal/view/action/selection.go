@@ -208,8 +208,6 @@ func isBlankLine(s string) bool {
 	return true
 }
 
-// selectionIsLinewise reports whether every range covers whole lines, including
-// their newlines
 func selectionIsLinewise(text core.Rope, sel core.Selection) bool {
 	nLines := text.LenLines()
 	for _, r := range sel.Ranges() {

@@ -31,11 +31,14 @@ func (m Model) TerminalSearchAction(e *view.Editor) {
 	if !ok {
 		return
 	}
+	head := ec.overlayHead()
 	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-		return newPromptComponent(cx, promptComponentArgs{
-			editor: ec,
-			kind:   promptTerminalSearch,
-			prompt: i18n.Text(promptScrollbackSearchKey),
+		return newPromptComponent(promptComponentArgs{
+			cx:       cx,
+			editor:   ec,
+			kind:     promptTerminalSearch,
+			titleKey: promptScrollbackSearchKey,
+			head:     head,
 			handler: func(_ *view.Editor, s string) error {
 				if !tp.SearchScrollback(s) {
 					return ErrScrollbackNoMatch

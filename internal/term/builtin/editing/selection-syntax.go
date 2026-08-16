@@ -100,8 +100,6 @@ func syntaxMatchBrackets(e *view.Editor) {
 	}
 }
 
-// smartTab indents inside leading whitespace, and otherwise moves each cursor
-// past the enclosing syntax node; a literal tab is Shift+Tab
 func smartTab(e *view.Editor) {
 	if action.InLeadingWhitespace(e) {
 		action.InsertTab(e)

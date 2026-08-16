@@ -3,15 +3,15 @@
   "extend-search-next.docstring": "Aggiungi alla selezione la corrispondenza successiva",
   "extend-search-prev.docstring": "Aggiungi alla selezione la corrispondenza precedente",
   "make-search-word-bounded.docstring": "Limita la ricerca corrente ai limiti di parola",
+  "option.search.smart-case.docstring": "Espressioni regolari: maiuscole solo se necessarie",
+  "option.search.wrap-around.docstring": "Riprendi la ricerca dall’inizio dopo l’ultima corrispondenza",
   "search-backward.docstring": "Cerca all'indietro un'espressione regolare",
   "search-forward.docstring": "Cerca un'espressione regolare",
   "search-next.docstring": "Seleziona la corrispondenza successiva",
   "search-prev.docstring": "Seleziona la corrispondenza precedente",
-  "search-selection-word.docstring": "Usa la selezione corrente come pattern e racchiudila automaticamente con `\\b` ai limiti di parola",
+  "search-selection-word.docstring": "Cerca la selezione ai limiti di parola",
   "search-selection.docstring": "Usa la selezione corrente come pattern di ricerca",
-  "prompt.searchForward": "cerca in avanti",
-  "prompt.searchBackward": "cerca all’indietro",
   "status.noMoreMatches": "Nessun’altra corrispondenza",
-  "status.searchWrapped": "Ricerca ripresa dall’inizio del documento",
-  "status.registerSet": "registro '{register}' impostato su '{value}'"
+  "status.registerSet": "registro '{register}' impostato su '{value}'",
+  "status.searchWrapped": "Ricerca ripresa dall’inizio del documento"
 }

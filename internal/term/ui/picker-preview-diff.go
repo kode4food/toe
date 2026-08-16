@@ -69,8 +69,6 @@ type buildDiffPreviewLinesArgs struct {
 	hunks   []view.DiffHunk
 }
 
-// buildDiffPreviewLines produces the ordered unified-diff line list (context,
-// removed base, added working) for a change of the given kind
 func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 	switch args.kind {
 	case view.FileChangeAdded, view.FileChangeUntracked:
@@ -266,8 +264,6 @@ type clampDiffHScrollArgs struct {
 	contentWidth int
 }
 
-// clampDiffHScroll bounds a horizontal offset to the widest row on screen,
-// reading removed rows from the base side and the rest from the working side
 func clampDiffHScroll(args clampDiffHScrollArgs) int {
 	if args.render.hScroll <= 0 {
 		return 0

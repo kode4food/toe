@@ -126,8 +126,6 @@ func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	return args.viewID
 }
 
-// newSessionView rebuilds a view from its session node without attaching it to
-// the tree or touching focus, so it can serve as a detached restore pane
 func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 	v := &View{
 		id:     args.viewID,
@@ -178,8 +176,6 @@ func (e *Editor) newSessionView(args restoreSessionViewArgs) *View {
 	return v
 }
 
-// restoreDisplacedPane rebuilds a stashed pane detached from the tree, or nil
-// when its document or kind cannot be resolved
 func (e *Editor) restoreDisplacedPane(
 	t *Tree, parent Id, sn *sessNode, rs *sessionRestore,
 ) Pane {

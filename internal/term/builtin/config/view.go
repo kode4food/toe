@@ -465,7 +465,8 @@ func ViewModule(model ui.Model) command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "line-number",
+				Key:       "line-number",
+				DocString: "Line numbers: absolute or relative",
 				Get: func(e *view.Editor) (string, error) {
 					return string(e.Options().LineNumber), nil
 				},
@@ -489,7 +490,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().CursorLine = v
 				},
-			),
+			).WithDoc("Highlight the cursor's line"),
 			kit.EditorBoolOption("cursorcolumn",
 				func(e *view.Editor) bool {
 					return e.Options().CursorColumn
@@ -497,7 +498,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().CursorColumn = v
 				},
-			),
+			).WithDoc("Highlight the cursor's column"),
 			kit.EditorBoolOption("animation",
 				func(*view.Editor) bool {
 					return model.Animation()
@@ -505,7 +506,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(_ *view.Editor, v bool) {
 					model.SetAnimation(v)
 				},
-			),
+			).WithDoc("Animate UI transitions"),
 			kit.EditorBoolOption("auto-size",
 				func(*view.Editor) bool {
 					return model.AutoSize()
@@ -513,7 +514,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(_ *view.Editor, v bool) {
 					model.SetAutoSize(v)
 				},
-			),
+			).WithDoc("Widen a focused pane to fit its content"),
 			kit.EditorNullableIntOption("text-width",
 				language.DefaultTextWidth,
 				func(e *view.Editor) *int {
@@ -522,7 +523,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(e *view.Editor, v *int) {
 					e.Options().TextWidth = v
 				},
-			),
+			).WithDoc("Maximum line length for reflow and wrapping"),
 			kit.EditorBoolOption("soft-wrap.enable",
 				func(e *view.Editor) bool {
 					sw := e.Options().SoftWrap.Enable
@@ -531,9 +532,10 @@ func ViewModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().SoftWrap.Enable = &v
 				},
-			),
+			).WithDoc("Enable soft wrapping"),
 			{
-				Key: "soft-wrap.wrap-indicator",
+				Key:       "soft-wrap.wrap-indicator",
+				DocString: "Text shown before soft wrapped lines",
 				Get: func(e *view.Editor) (string, error) {
 					wi := language.DefaultWrapIndicator
 					if e.Options().SoftWrap.WrapIndicator != nil {
@@ -558,9 +560,10 @@ func ViewModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().SoftWrap.WrapAtTextWidth = &v
 				},
-			),
+			).WithDoc("Soft wrap at text-width, not the viewport"),
 			{
-				Key: "inactive-dim",
+				Key:       "inactive-dim",
+				DocString: "Percent to darken unfocused panes; 0 disables",
 				Get: func(e *view.Editor) (string, error) {
 					return strconv.Itoa(e.Options().InactiveDim), nil
 				},
@@ -574,7 +577,8 @@ func ViewModule(model ui.Model) command.Module {
 				},
 			},
 			{
-				Key: "rulers",
+				Key:       "rulers",
+				DocString: "Columns at which to draw rulers",
 				Get: func(e *view.Editor) (string, error) {
 					return config.FormatIntSlice(e.Options().Rulers), nil
 				},
@@ -588,7 +592,8 @@ func ViewModule(model ui.Model) command.Module {
 				},
 			},
 			{
-				Key: "bufferline",
+				Key:       "bufferline",
+				DocString: "Show buffer tabs: always, never, or multiple",
 				Get: func(e *view.Editor) (string, error) {
 					return string(e.Options().BufferLine), nil
 				},
@@ -607,7 +612,8 @@ func ViewModule(model ui.Model) command.Module {
 				),
 			},
 			{
-				Key: "whitespace.render",
+				Key:       "whitespace.render",
+				DocString: "Render whitespace: all, none, or per type",
 				Get: func(e *view.Editor) (string, error) {
 					rv := view.WhitespaceRenderNone
 					if e.Options().Whitespace.Render.Default != nil {
@@ -640,7 +646,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
 					w.Space = v
 				},
-			),
+			).WithDoc("Render spaces"),
 			whitespaceRenderOption("whitespace.render.nbsp",
 				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
 					return w.NbspRender()
@@ -648,7 +654,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
 					w.Nbsp = v
 				},
-			),
+			).WithDoc("Render non-breaking spaces"),
 			whitespaceRenderOption("whitespace.render.tab",
 				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
 					return w.TabRender()
@@ -656,7 +662,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
 					w.Tab = v
 				},
-			),
+			).WithDoc("Render tabs"),
 			whitespaceRenderOption("whitespace.render.newline",
 				func(w *view.WhitespaceRender) view.WhitespaceRenderValue {
 					return w.NewlineRender()
@@ -664,7 +670,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(w *view.WhitespaceRender, v *view.WhitespaceRenderValue) {
 					w.Newline = v
 				},
-			),
+			).WithDoc("Render newlines"),
 			runeOption("whitespace.characters.space",
 				func(o *view.Options) rune {
 					return o.Whitespace.Characters.SpaceRune()
@@ -672,7 +678,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(o *view.Options, s string) {
 					o.Whitespace.Characters.Space = s
 				},
-			),
+			).WithDoc("Character rendered for a space"),
 			runeOption("whitespace.characters.nbsp",
 				func(o *view.Options) rune {
 					return o.Whitespace.Characters.NbspRune()
@@ -680,7 +686,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(o *view.Options, s string) {
 					o.Whitespace.Characters.Nbsp = s
 				},
-			),
+			).WithDoc("Character rendered for a non-breaking space"),
 			runeOption("whitespace.characters.tab",
 				func(o *view.Options) rune {
 					return o.Whitespace.Characters.TabRune()
@@ -688,7 +694,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(o *view.Options, s string) {
 					o.Whitespace.Characters.Tab = s
 				},
-			),
+			).WithDoc("Character rendered for a tab"),
 			runeOption("whitespace.characters.tabpad",
 				func(o *view.Options) rune {
 					return o.Whitespace.Characters.TabpadRune()
@@ -696,7 +702,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(o *view.Options, s string) {
 					o.Whitespace.Characters.Tabpad = s
 				},
-			),
+			).WithDoc("Character padding a rendered tab"),
 			runeOption("whitespace.characters.newline",
 				func(o *view.Options) rune {
 					return o.Whitespace.Characters.NewlineRune()
@@ -704,7 +710,7 @@ func ViewModule(model ui.Model) command.Module {
 				func(o *view.Options, s string) {
 					o.Whitespace.Characters.Newline = s
 				},
-			),
+			).WithDoc("Character rendered for a newline"),
 			kit.EditorBoolOption("indent-guides.render",
 				func(e *view.Editor) bool {
 					return e.Options().IndentGuides.Render
@@ -712,9 +718,10 @@ func ViewModule(model ui.Model) command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().IndentGuides.Render = v
 				},
-			),
+			).WithDoc("Render indent guides"),
 			{
-				Key: "indent-guides.skip-levels",
+				Key:       "indent-guides.skip-levels",
+				DocString: "Indent levels to skip",
 				Get: func(e *view.Editor) (string, error) {
 					n := e.Options().IndentGuides.GetSkipLevels()
 					return strconv.Itoa(n), nil
@@ -735,9 +742,10 @@ func ViewModule(model ui.Model) command.Module {
 				func(o *view.Options, s string) {
 					o.IndentGuides.Character = s
 				},
-			),
+			).WithDoc("Character used to draw indent guides"),
 			{
-				Key: "gutters.layout",
+				Key:       "gutters.layout",
+				DocString: "Gutters to display, in order",
 				Get: func(e *view.Editor) (string, error) {
 					layout := e.Options().Gutters.GutterLayout()
 					values := make([]string, len(layout))
@@ -771,7 +779,8 @@ func ViewModule(model ui.Model) command.Module {
 				),
 			},
 			{
-				Key: "gutters.line-numbers.min-width",
+				Key:       "gutters.line-numbers.min-width",
+				DocString: "Minimum line number gutter width",
 				Get: func(e *view.Editor) (string, error) {
 					n := e.Options().Gutters.LineNumberMinWidth()
 					return strconv.Itoa(n), nil

@@ -1,26 +1,26 @@
 {
-  "clear-register.docstring": "Das angegebene Register leeren. Ohne Argument alle Register leeren",
+  "clear-register.docstring": "Register leeren; ohne Argument alle Register",
+  "error.registerName": "Registername muss ein einzelnes Zeichen sein",
   "paste-after.docstring": "Zwischenablage oder Register nach der Auswahl einfügen",
   "paste-before.docstring": "Zwischenablage oder Register vor der Auswahl einfügen",
   "paste-primary-clipboard-after.docstring": "Die primäre Zwischenablage nach den Auswahlen einfügen",
   "paste-primary-clipboard-before.docstring": "Die primäre Zwischenablage vor den Auswahlen einfügen",
   "primary-clipboard-paste-replace.docstring": "Auswahlen durch die primäre Zwischenablage ersetzen",
   "replace-with-yanked.docstring": "Auswahl durch Zwischenablage oder Register ersetzen",
-  "yank-join.docstring": "Zusammengefügte Auswahlen kopieren. Ein Trennzeichen kann als erstes Argument angegeben werden. Standardwert ist ein Zeilenumbruch",
-  "yank-to-primary-clipboard.docstring": "Auswahlen in die primäre Zwischenablage kopieren",
-  "yank.docstring": "Auswahl in Zwischenablage oder Register kopieren",
-  "error.registerName": "Registername muss ein einzelnes Zeichen sein",
   "status.registerCleared": "Register {register} geleert",
   "status.registersCleared": "Register geleert",
-  "yank-main-selection.docstring": "Hauptauswahl in Zwischenablage oder Register kopieren",
   "status.yanked": {
-    "zero": "Keine Auswahl in Register {register} kopiert",
     "one": "{count} Auswahl in Register {register} kopiert",
-    "other": "{count} Auswahlen in Register {register} kopiert"
+    "other": "{count} Auswahlen in Register {register} kopiert",
+    "zero": "Keine Auswahl in Register {register} kopiert"
   },
   "status.yankedToClipboard": {
-    "zero": "Keine Auswahl in die Zwischenablage kopiert",
     "one": "{count} Auswahl in die Zwischenablage kopiert",
-    "other": "{count} Auswahlen in die Zwischenablage kopiert"
-  }
+    "other": "{count} Auswahlen in die Zwischenablage kopiert",
+    "zero": "Keine Auswahl in die Zwischenablage kopiert"
+  },
+  "yank-join.docstring": "Auswahlen kopieren; erstes Argument als Trennzeichen",
+  "yank-main-selection.docstring": "Hauptauswahl in Zwischenablage oder Register kopieren",
+  "yank-to-primary-clipboard.docstring": "Auswahlen in die primäre Zwischenablage kopieren",
+  "yank.docstring": "Auswahl in Zwischenablage oder Register kopieren"
 }

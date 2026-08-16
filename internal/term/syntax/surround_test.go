@@ -12,7 +12,7 @@ import (
 
 func TestFindSurroundPair(t *testing.T) {
 	src := "package main\n\nfunc main() {\n\tprintln(alpha)\n}\n"
-	// cursor inside "alpha" — innermost pair is argument_list ()
+	// cursor inside "alpha": innermost pair is argument_list ()
 	cursor := strings.Index(src, "alpha") + 2
 	parenOpen := strings.Index(src, "(alpha)")
 	parenClose := parenOpen + len("(alpha)") - 1

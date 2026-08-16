@@ -131,8 +131,6 @@ func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 	})
 }
 
-// go-git reports the same X/Y status codes as porcelain but does not detect
-// renames, so a moved file shows as add + delete
 func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
 	repo, err := git.PlainOpenWithOptions(
 		cwd, &git.PlainOpenOptions{DetectDotGit: true},
@@ -172,8 +170,6 @@ type parseGitStatusArgs struct {
 	output string
 }
 
-// parseGitStatus decodes NUL-terminated porcelain entries; rename entries
-// carry the original path in an extra field
 func parseGitStatus(args parseGitStatusArgs) ([]view.FileChange, error) {
 	root := args.root
 	var changes []view.FileChange
@@ -267,8 +263,6 @@ func gitConflict(code statusCode) bool {
 		(x == 'A' && y == 'A')
 }
 
-// realPath resolves symlinks so paths compare cleanly against the repo root git
-// reports (macOS /var vs /private/var, for example)
 func realPath(path string) string {
 	if resolved, err := filepath.EvalSymlinks(path); err == nil {
 		return resolved

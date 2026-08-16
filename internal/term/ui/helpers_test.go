@@ -131,8 +131,6 @@ func updateAndFeed(m ui.Model, msg tea.Msg) ui.Model {
 	return feedCmds(m, cmd)
 }
 
-// firstMsg runs cmd and reports its message, unwrapping a batch to the message
-// its first command produces
 func firstMsg(cmd tea.Cmd) tea.Msg {
 	msg := cmd()
 	if batch, ok := msg.(tea.BatchMsg); ok && len(batch) > 0 {
@@ -229,8 +227,6 @@ func bindNormalTestAction(
 	})
 }
 
-// bindNormalTestKeyAction binds a continuation-returning action, for the
-// multi-key cases bindNormalTestAction's plain Action cannot express
 func bindNormalTestKeyAction(
 	km *command.Keymaps, name string, fn command.KeyAction,
 	seqs ...[]command.KeyEvent,

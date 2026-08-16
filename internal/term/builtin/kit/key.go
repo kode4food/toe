@@ -196,15 +196,12 @@ func RegisterHints(e *view.Editor) []command.KeyHint {
 	return out
 }
 
-// single wraps one key event into a binding of a one-key sequence
 func single(
 	code command.KeyCode, mods command.KeyModifiers,
 ) command.KeyBinding {
 	return command.KeyBinding{{{Code: code, Mods: mods}}}
 }
 
-// registerPreview renders a register's value on one line, short enough to sit
-// beside its name
 func registerPreview(value string) string {
 	flat := strings.Join(strings.Fields(value), " ")
 	runes := []rune(flat)

@@ -121,23 +121,23 @@ func PickerModule(model ui.Model) command.Module {
 			fileExplorerBoolOption(
 				"file-explorer.hidden",
 				&cfg.Editor.FileExplorer.Hidden,
-			),
+			).WithDoc("Show hidden entries"),
 			fileExplorerBoolOption(
 				"file-explorer.follow-symlinks",
 				&cfg.Editor.FileExplorer.FollowSymlinks,
-			),
+			).WithDoc("Follow symlinks"),
 			fileExplorerBoolOption(
 				"file-explorer.parents",
 				&cfg.Editor.FileExplorer.Parents,
-			),
+			).WithDoc("Show parent directories"),
 			fileExplorerBoolOption(
 				"file-explorer.ignore-files",
 				&cfg.Editor.FileExplorer.IgnoreFiles,
-			),
+			).WithDoc("Honour ignore files"),
 			fileExplorerBoolOption(
 				"file-explorer.flatten-dirs",
 				&cfg.Editor.FileExplorer.FlattenDirs,
-			),
+			).WithDoc("Collapse single-child directories"),
 		},
 		Section: &command.Section{
 			Config: cfg,
@@ -184,7 +184,8 @@ func DiagnosticsModule(model ui.Model) command.Module {
 
 func bufferPickerStartOption(value *PickerStartPosition) command.Option {
 	return command.Option{
-		Key: "buffer-picker.start-position",
+		Key:       "buffer-picker.start-position",
+		DocString: "Where the buffer picker starts",
 		Get: func(*view.Editor) (string, error) {
 			if *value == "" {
 				return string(PickerStartTop), nil

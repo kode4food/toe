@@ -72,7 +72,7 @@ func FileModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().InsertFinalNewline = v
 				},
-			),
+			).WithDoc("Add a trailing line ending on write if missing"),
 			kit.EditorBoolOption("trim-final-newlines",
 				func(e *view.Editor) bool {
 					return e.Options().TrimFinalNewlines
@@ -80,7 +80,7 @@ func FileModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().TrimFinalNewlines = v
 				},
-			),
+			).WithDoc("Remove extra trailing line endings on write"),
 			kit.EditorBoolOption("trim-trailing-whitespace",
 				func(e *view.Editor) bool {
 					return e.Options().TrimTrailingWhitespace
@@ -88,7 +88,7 @@ func FileModule() command.Module {
 				func(e *view.Editor, v bool) {
 					e.Options().TrimTrailingWhitespace = v
 				},
-			),
+			).WithDoc("Remove trailing whitespace on write"),
 		},
 		Section: &command.Section{
 			Config: cfg,
@@ -112,9 +112,8 @@ func FileModule() command.Module {
 func fileWriteCmds() []command.Command {
 	return []command.Command{
 		{
-			Name: actWrite,
-			DocString: "Write changes to disk. Accepts an optional path " +
-				"(:write some/path.txt)",
+			Name:      actWrite,
+			DocString: "Write changes to disk. Accepts an optional path",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
@@ -136,10 +135,8 @@ func fileWriteCmds() []command.Command {
 			Signature: kit.FileSig(kit.OptionalArg()),
 		},
 		{
-			Name: actWriteForce,
-			DocString: "Force write changes to disk creating necessary " +
-				"subdirectories. Accepts an optional path (:write! " +
-				"some/path.txt)",
+			Name:      actWriteForce,
+			DocString: "Force write changes to disk, creating subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
@@ -173,9 +170,8 @@ func fileWriteCmds() []command.Command {
 			Aliases: []string{"wa"},
 		},
 		{
-			Name: actWriteAllForce,
-			DocString: "Forcefully write changes from all buffers to disk " +
-				"creating necessary subdirectories",
+			Name:      actWriteAllForce,
+			DocString: "Force write all buffers, creating subdirectories",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				for _, doc := range e.AllDocuments() {
 					_ = doc.Save(e.Options(), true)
@@ -215,10 +211,8 @@ func fileWriteCmds() []command.Command {
 			Aliases: []string{"wq!"},
 		},
 		{
-			Name: actWriteBufferClose,
-			DocString: "Write changes to disk and closes the buffer. " +
-				"Accepts an optional path (:write-buffer-close " +
-				"some/path.txt)",
+			Name:      actWriteBufferClose,
+			DocString: "Write changes to disk and close the buffer",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
@@ -236,9 +230,8 @@ func fileWriteCmds() []command.Command {
 		},
 		{
 			Name: actWriteBufferCloseForce,
-			DocString: "Force write changes to disk creating necessary " +
-				"subdirectories and closes the buffer. Accepts an " +
-				"optional path (:write-buffer-close! some/path.txt)",
+			DocString: "Force write and close the buffer, creating " +
+				"subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				setPathFromArgs(e, args)
 				autoFormat(e)
@@ -330,9 +323,8 @@ func fileManageCmds() []command.Command {
 			Aliases: []string{"rl"},
 		},
 		{
-			Name: actReloadAll,
-			DocString: "Discard changes and reload all documents from " +
-				"the source files",
+			Name:      actReloadAll,
+			DocString: "Discard changes and reload all documents from disk",
 			Run: func(e *view.Editor, _ *command.Args) command.Result {
 				if errs := e.ReloadAll(); len(errs) > 0 {
 					return command.Result{Error: errs[0]}
@@ -344,8 +336,8 @@ func fileManageCmds() []command.Command {
 		},
 		{
 			Name: actMove,
-			DocString: "Move the current buffer and its corresponding " +
-				"file to a different path",
+			DocString: "Move the current buffer and its file to a different " +
+				"path",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					return command.Result{Error: errNoFilename}
@@ -368,10 +360,8 @@ func fileManageCmds() []command.Command {
 			Signature: kit.FileSig(kit.RequiredArg()),
 		},
 		{
-			Name: actMoveForce,
-			DocString: "Move the current buffer and its corresponding " +
-				"file to a different path creating necessary " +
-				"subdirectories",
+			Name:      actMoveForce,
+			DocString: "Move the buffer and its file, creating subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					return command.Result{Error: errNoFilename}

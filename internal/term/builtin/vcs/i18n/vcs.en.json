@@ -1,5 +1,3 @@
 {
-  "status.diffUnavailable": "Diff is not available in current buffer",
-  "status.pickerStaged": "Staged Changes",
-  "status.pickerUnstaged": "Changes"
+  "status.diffUnavailable": "Diff is not available in current buffer"
 }

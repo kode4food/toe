@@ -125,8 +125,6 @@ func (e *EditorComponent) handleKeyPress(
 	}
 }
 
-// keymapClaims reports whether k continues or completes a binding in the
-// focused pane's mode, so a raw-input pane must not swallow it first
 func (e *EditorComponent) keymapClaims(cx *Context, k command.KeyEvent) bool {
 	if len(e.keys.path) > 0 || e.keys.continuation != nil {
 		return true
@@ -259,7 +257,6 @@ func (e *EditorComponent) triggerSignatureHelpLayer(cx *Context) Callback {
 	}
 }
 
-// popPending drops the last thing typed toward a command
 func (e *EditorComponent) popPending(cx *Context, mode view.Mode) {
 	last := e.keys.input[len(e.keys.input)-1]
 	e.keys.input = e.keys.input[:len(e.keys.input)-1]
@@ -275,7 +272,6 @@ func (e *EditorComponent) popPending(cx *Context, mode view.Mode) {
 	e.setHints(cx, mode)
 }
 
-// setCount mirrors the count for the renderer, which cannot take it
 func (e *EditorComponent) setCount(cx *Context, n int) {
 	e.keys.count = n
 	cx.Editor.SetCount(n)
@@ -339,7 +335,6 @@ func (e *EditorComponent) clearHints() {
 	e.keys.infoItems = nil
 }
 
-// setHints loads the hints for the node reached by the current key path
 func (e *EditorComponent) setHints(cx *Context, mode view.Mode) {
 	counting := e.keys.count > 0 && e.keys.continuation == nil
 	title := e.keys.infoTitle
@@ -399,8 +394,6 @@ func completionRequestValid(cx *Context, anchor completionAnchor) bool {
 	return pos >= anchor.pos
 }
 
-// wordPrefixReady reports whether the limit characters before the cursor are
-// all word characters, reading only those so a long line costs no more
 func wordPrefixReady(cx *Context, limit int) bool {
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {

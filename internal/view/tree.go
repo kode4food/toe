@@ -536,8 +536,6 @@ func (t *Tree) removeOrReplace(args removeOrReplaceArgs) {
 	}
 }
 
-// rangePane visits id in DFS order, returning false as soon as fn does, so
-// the caller stops walking sibling subtrees too
 func (t *Tree) rangePane(id Id, fn func(Pane) bool) bool {
 	n := t.nodes[id]
 	if n.pane != nil {
@@ -551,7 +549,6 @@ func (t *Tree) rangePane(id Id, fn func(Pane) bool) bool {
 	return true
 }
 
-// wires the pane id and, for async panes, its redraw hook on insertion
 func (t *Tree) attach(p Pane, id Id) {
 	p.SetID(id)
 	if t.redraw == nil {
@@ -562,7 +559,6 @@ func (t *Tree) attach(p Pane, id Id) {
 	}
 }
 
-// stashPane lets a pane release heavy resources once it is hidden in history
 func stashPane(p Pane) {
 	if d, ok := p.(Displaceable); ok {
 		d.OnDisplace()

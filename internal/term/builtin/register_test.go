@@ -30,6 +30,8 @@ type (
 )
 
 func TestDefaults(t *testing.T) {
+	names, descs := documentedCommands(t)
+
 	t.Run("registers command-line actions", func(t *testing.T) {
 		km := defaultKeymaps(t)
 		for _, name := range []string{
@@ -62,7 +64,7 @@ func TestDefaults(t *testing.T) {
 
 	t.Run("documented commands resolve", func(t *testing.T) {
 		km := defaultKeymaps(t)
-		for _, name := range documentedCommandNames(t) {
+		for _, name := range names {
 			t.Run(name, func(t *testing.T) {
 				assert.NotContains(t, name, "_")
 				assert.NotNil(t, km.ResolveCommand(name))
@@ -73,13 +75,25 @@ func TestDefaults(t *testing.T) {
 	t.Run("every command is documented", func(t *testing.T) {
 		km := defaultKeymaps(t)
 		documented := map[string]bool{}
-		for _, name := range documentedCommandNames(t) {
+		for _, name := range names {
 			documented[name] = true
 		}
 		for _, cmd := range allCommands(km) {
 			name := commandName(cmd)
 			t.Run(name, func(t *testing.T) {
 				assert.True(t, documented[name])
+			})
+		}
+	})
+
+	t.Run("documented descriptions match", func(t *testing.T) {
+		km := defaultKeymaps(t)
+		for name, desc := range descs {
+			t.Run(name, func(t *testing.T) {
+				cmd := km.ResolveCommand(name)
+				if assert.NotNil(t, cmd) {
+					assert.Equal(t, cmd.DocString, desc)
+				}
 			})
 		}
 	})
@@ -614,7 +628,7 @@ func allowedDuplicateKey(key keySeqKey, names []string) bool {
 		slices.Contains(names, "exit-select-mode")
 }
 
-func documentedCommandNames(t *testing.T) []string {
+func documentedCommands(t *testing.T) ([]string, map[string]string) {
 	t.Helper()
 	_, file, _, ok := runtime.Caller(0)
 	assert.True(t, ok)
@@ -624,7 +638,8 @@ func documentedCommandNames(t *testing.T) []string {
 	)
 	assert.NoError(t, err)
 	seen := map[string]bool{}
-	var out []string
+	var names []string
+	descs := map[string]string{}
 	for line := range strings.SplitSeq(string(data), "\n") {
 		if !strings.HasPrefix(line, "| `") {
 			continue
@@ -633,10 +648,18 @@ func documentedCommandNames(t *testing.T) []string {
 		if len(cells) < 4 {
 			continue
 		}
-		out = appendDocumentedCommandNames(out, seen, cells[1])
-		out = appendDocumentedCommandNames(out, seen, cells[2])
+		names = appendDocumentedCommandNames(names, seen, cells[1])
+		names = appendDocumentedCommandNames(names, seen, cells[2])
+		if len(cells) < 5 {
+			continue
+		}
+		name := strings.Trim(strings.TrimSpace(cells[1]), "`")
+		desc := strings.TrimSpace(cells[3])
+		if name != "" && desc != "" {
+			descs[name] = desc
+		}
 	}
-	return out
+	return names, descs
 }
 
 func appendDocumentedCommandNames(

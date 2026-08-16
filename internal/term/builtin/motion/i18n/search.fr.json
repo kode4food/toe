@@ -3,15 +3,15 @@
   "extend-search-next.docstring": "Ajouter la correspondance suivante à la sélection",
   "extend-search-prev.docstring": "Ajouter la correspondance précédente à la sélection",
   "make-search-word-bounded.docstring": "Limiter la recherche courante aux limites de mot",
+  "option.search.smart-case.docstring": "Expressions régulières : casse intelligente",
+  "option.search.wrap-around.docstring": "Boucler la recherche après la dernière correspondance",
   "search-backward.docstring": "Rechercher une expression régulière vers l’arrière",
   "search-forward.docstring": "Rechercher une expression régulière",
   "search-next.docstring": "Sélectionner la correspondance suivante",
   "search-prev.docstring": "Sélectionner la correspondance précédente",
-  "search-selection-word.docstring": "Utiliser la sélection courante comme motif et l’entourer automatiquement de `\\b` aux limites de mot",
+  "search-selection-word.docstring": "Rechercher la sélection aux limites de mot",
   "search-selection.docstring": "Utiliser la sélection courante comme motif de recherche",
-  "prompt.searchForward": "rechercher vers l’avant",
-  "prompt.searchBackward": "rechercher vers l’arrière",
   "status.noMoreMatches": "Aucune autre correspondance",
-  "status.searchWrapped": "Recherche reprise au début du document",
-  "status.registerSet": "registre '{register}' défini sur '{value}'"
+  "status.registerSet": "registre '{register}' défini sur '{value}'",
+  "status.searchWrapped": "Recherche reprise au début du document"
 }

@@ -7,27 +7,27 @@ weight: 30
 
 ## How Keys Work
 
-Every key press is dispatched through the keymap for the **current mode**. Normal, Select, and Insert are the editing modes; terminal panes, image panes, binary panes, the command line, and pickers each have their own bindings. The same physical key can do different things in different contexts, which is why this page is grouped by mode and context rather than by key.
+Every key press is dispatched through the keymap for the **current mode**. Normal, Select, and Insert are the editing modes; terminal panes, image panes, binary panes, prompts, and pickers each have their own bindings. The same physical key can do different things in different contexts, which is why this page is grouped by mode and context rather than by key.
 
-**Key sequences and prefixes.** Many commands are bound to a sequence of keys, not a single press — `g` then `d`, or `Ctrl+w` then `v`. The first key of a sequence is a *prefix*; pressing it opens a popup listing the keys that can follow. The main prefixes are `g` (goto), `m` (match and surround), `z` and `Z` (view — the two are interchangeable), `[` and `]` (previous/next), `Ctrl+w` (windows), and the leader.
+**Key sequences and prefixes.** Many commands are bound to a sequence of keys, not a single press, `g` then `d`, or `Ctrl+w` then `v`. The first key of a sequence is a *prefix*; pressing it opens a popup listing the keys that can follow. The main prefixes are `g` (goto), `m` (match and surround), `z` and `Z` (view, the two are interchangeable), `[` and `]` (previous/next), `Ctrl+w` (windows), and the leader.
 
 **Leader.** `Space` opens the leader menu. `Ctrl+\` is equivalent and also works in terminal and image panes, where `Space` is passed through instead. See [Leader Menu](#leader-menu).
 
-**Counts.** In Normal and Select mode, typing digits before a command repeats it that many times: `5j` moves down five lines, `10G` goes to line 10. A leading `0` is a command (line start), not a count. The pending count shows in the status line and clears once the command runs.
+**Counts.** In Normal and Select mode, typing digits before a command repeats it that many times: `5j` moves down five lines, `10G` goes to line 10. A leading `0` is a command (line start), not a count. The pending count appears in the key popup and clears once the command runs. A count is only accepted before a command that takes one, and `Backspace` removes the last digit or key typed toward a command.
 
 **Placeholders.** Some commands capture the next key(s) directly. In the tables these appear as:
 
-- `<char>` — a literal character to act on, e.g. `f<char>`, `r<char>`, `ms<char>`.
-- `<reg>` — a register letter, e.g. `"<reg>` before a yank or paste, `Ctrl+r <reg>` in insert mode.
-- `<n>` — a count typed before the key.
+- `<char>`: a literal character to act on, e.g. `f<char>`, `r<char>`, `ms<char>`.
+- `<reg>`: a register letter, e.g. `"<reg>` before a yank or paste, `Ctrl+r <reg>` in insert mode.
+- `<n>`: a count typed before the key.
 
-**Registers.** `"<reg>` chooses the register the next yank or paste uses; without it they use the default register. Yanks and pastes that go through the system clipboard live under the leader (`Space+y`, `Space+p`).
+**Registers.** `"<reg>` chooses the register the next yank or paste uses; without it they use the default register. The popup lists the registers currently holding a value, with a preview of each. Yanks and pastes that go through the system clipboard live under the leader (`Space+y`, `Space+p`).
 
 **Insert mode.** Any printable key with no binding is inserted as text; the Insert Mode bindings below are the exceptions that edit or move instead.
 
-The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal, image, and binary panes, the command line, and picker navigation.
+The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal, image, and binary panes, prompts, and picker navigation.
 
-Keys can be rebound and new actions scripted in Ale — see [Scripting]({{< relref "/docs/scripting" >}}).
+Keys can be rebound and new actions scripted in Ale, see [Scripting]({{< relref "/docs/scripting" >}}).
 
 <a href="../../downloads/toe-cheatsheet.pdf" download>Download the printable Toe cheatsheet (PDF)</a>.
 
@@ -423,9 +423,9 @@ leader.
 | Mouse wheel | Scroll |
 | `Ctrl+w` / `Space+w` | Window menu |
 
-## Command Line
+## Prompts
 
-These keys apply to the command line (`:`), search (`/`, `?`), and other text prompts.
+Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the centre of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does; `Tab` cycles them. The command line below the statusline is left for messages and the register and macro-recording indicators.
 
 | Key | Action |
 |-----|--------|

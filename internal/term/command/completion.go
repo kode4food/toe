@@ -10,11 +10,13 @@ import (
 )
 
 type (
-	// Completion replaces prompt input from Start to the end of the line
+	// Completion replaces prompt input from Start to the end of the line.
+	// Detail describes the entry beside it, and is never matched against
 	Completion struct {
 		Start   int
 		Text    string
 		Display string
+		Detail  string
 		Indices []int
 	}
 
@@ -27,6 +29,12 @@ type (
 	// CompletionFunc returns completions for command-line input, given the
 	// arguments already parsed for the current command
 	CompletionFunc func(*view.Editor, *Args, string) []Completion
+
+	scoredCompletion struct {
+		Completion
+		score int
+		order int
+	}
 )
 
 // PositionalCompleter completes positionals by argument index
@@ -124,26 +132,21 @@ func offsetCompletions(items []Completion, offset int) []Completion {
 }
 
 func matchFuzzy[T ~string](items []T, input string) []Completion {
-	type scored struct {
-		Completion
-		score int
-		order int
-	}
 	m := fuzzy.NewMatcher(input)
-	matches := make([]scored, 0, len(items))
+	matches := make([]scoredCompletion, 0, len(items))
 	for i, item := range items {
 		text := string(item)
 		res, ok := m.Match(text)
 		if !ok {
 			continue
 		}
-		matches = append(matches, scored{
+		matches = append(matches, scoredCompletion{
 			Completion: Completion{Text: text, Indices: res.Indices},
 			score:      res.Score,
 			order:      i,
 		})
 	}
-	slices.SortStableFunc(matches, func(a, b scored) int {
+	slices.SortStableFunc(matches, func(a, b scoredCompletion) int {
 		return cmp.Or(
 			cmp.Compare(b.score, a.score), cmp.Compare(a.order, b.order),
 		)

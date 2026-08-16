@@ -5,7 +5,5 @@
   "goto-next-change.docstring": "Zur nächsten Änderung springen",
   "goto-prev-change.docstring": "Zur vorherigen Änderung springen",
   "reset-diff-change.docstring": "Diff-Änderungen unter den Auswahlen zurücksetzen",
-  "status.diffUnavailable": "Diff ist im aktuellen Buffer nicht verfügbar",
-  "status.pickerStaged": "Gestagete Änderungen",
-  "status.pickerUnstaged": "Änderungen"
+  "status.diffUnavailable": "Diff ist im aktuellen Buffer nicht verfügbar"
 }

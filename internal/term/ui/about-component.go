@@ -108,7 +108,6 @@ func aboutText() string {
 	}, "\n")
 }
 
-// Pseudo-versions are hidden because they resemble a release tag
 func buildVersion() string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {

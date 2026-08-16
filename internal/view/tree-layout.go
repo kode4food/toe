@@ -89,8 +89,6 @@ func (t *Tree) recalculate() {
 	}
 }
 
-// rounds rather than truncates: incremental resizes round-trip through ratios
-// repeatedly, and truncation would silently lose a cell each time
 func ratioCells(usable int, ratio float64) int {
 	return int(math.Round(float64(usable) * ratio))
 }

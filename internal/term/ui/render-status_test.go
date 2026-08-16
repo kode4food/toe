@@ -21,6 +21,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+var bgRE = regexp.MustCompile(`48;2;(\d+;\d+;\d+)`)
+
 func TestStatuslineAllElements(t *testing.T) {
 	t.Run("renders file-based status elements", func(t *testing.T) {
 		root := t.TempDir()
@@ -606,8 +608,6 @@ func fileEditor(t *testing.T) *view.Editor {
 	return e
 }
 
-var bgRE = regexp.MustCompile(`48;2;(\d+;\d+;\d+)`)
-
 func TestCmdlineHighlight(t *testing.T) {
 	t.Run("an interaction uses the popup", func(t *testing.T) {
 		m := builtinModel(t)
@@ -623,9 +623,11 @@ func TestCmdlineHighlight(t *testing.T) {
 		assert.Empty(t, popupHead(m))
 	})
 
-	t.Run("macro recording shares the prompt background", func(t *testing.T) {
+	t.Run("recording shares prompt background", func(t *testing.T) {
 		idle := lastLine(builtinModel(t).View().Content)
-		prompt := lastLine(sendKey(builtinModel(t), ':').View().Content)
+		rows := promptRows(sendKey(builtinModel(t), ':'))
+		assert.NotEmpty(t, rows)
+		prompt := rows[0].raw
 
 		m := sendKey(sendKey(builtinModel(t), 'Q'), 'q')
 		recording := lastLine(m.View().Content)
@@ -710,7 +712,7 @@ func TestPendingKeyPopup(t *testing.T) {
 		assert.Equal(t, `"`, popupHead(m))
 	})
 
-	t.Run("an interaction keeps its count and choices", func(t *testing.T) {
+	t.Run("interaction keeps count and choices", func(t *testing.T) {
 		m := sendKey(sendKey(sendKey(builtinModel(t), '5'), 'm'), 'r')
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
 		top := lineIndexWith(lines, "╭")
@@ -720,7 +722,7 @@ func TestPendingKeyPopup(t *testing.T) {
 		assert.Contains(t, lines[top+3], "parentheses")
 	})
 
-	t.Run("a register prompt previews what is stored", func(t *testing.T) {
+	t.Run("register prompt previews values", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -1006,7 +1008,6 @@ func lineIndexWith(lines []string, want string) int {
 	return -1
 }
 
-// popupHead returns the popup's breadcrumb, the row under the top border
 func popupHead(m ui.Model) string {
 	lines := strings.Split(stripANSI(m.View().Content), "\n")
 	top := lineIndexWith(lines, "╭")

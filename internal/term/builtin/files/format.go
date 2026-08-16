@@ -45,9 +45,8 @@ func FormatModule() command.Module {
 		Translations: i18n.LoadTranslations(formatFS),
 		Commands: []command.Command{
 			{
-				Name: actFormat,
-				DocString: "Format the file using an external formatter or " +
-					"language server",
+				Name:      actFormat,
+				DocString: "Format the file with an external formatter or LSP",
 				Run: func(e *view.Editor, _ *command.Args) command.Result {
 					return runFormatter(e)
 				},

@@ -260,7 +260,6 @@ func (e *Editor) LanguageServerController() LanguageServerController {
 	return e.langServers
 }
 
-// charsToOffset converts an in-line encoded offset into a rune count
 func (e PositionEncoding) charsToOffset(line string, target int) (int, bool) {
 	units := 0
 	chars := 0

@@ -115,7 +115,7 @@ func writeCellsWindowed(a writeCellsArgs) int {
 			a.buf.FillRange(a.at, visW, c.style)
 			cx = a.at.X + visW
 		}
-		// else: fully off-screen, or straddles the right edge — drawn as
+		// else: fully off-screen, or straddles the right edge, drawn as
 		// nothing, leaving the column for the trailing fill
 		col += c.width
 	}

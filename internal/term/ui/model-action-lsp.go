@@ -36,15 +36,16 @@ func (m Model) RenameSymbolAction(e *view.Editor) {
 		e.SetStatusMsg(i18n.ErrorText(err))
 		return
 	}
+	head := ec.overlayHead()
 	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-		return newPromptComponent(cx, promptComponentArgs{
-			editor:  ec,
-			kind:    promptRegex,
-			prompt:  i18n.Text(promptRenameKey),
-			prefill: prefill,
-			handler: func(e *view.Editor, name string) error {
-				return renameSymbol(e, name)
-			},
+		return newPromptComponent(promptComponentArgs{
+			cx:       cx,
+			editor:   ec,
+			kind:     promptRegex,
+			titleKey: promptRenameKey,
+			head:     head,
+			prefill:  prefill,
+			handler:  renameSymbol,
 		}), nil
 	})
 }

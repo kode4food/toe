@@ -17,7 +17,7 @@ func (p *PickerComponent) drawPickerBox(
 	if showHeader {
 		headerH = 1
 	}
-	ps.list.height = max(innerH-2-headerH, 1)
+	ps.list.rows = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
 		borderStyle:  pickerFrameStyle(cx),
@@ -41,7 +41,7 @@ func (p *PickerComponent) drawPickerBox(
 		itemY++
 	}
 	ps.clampScroll()
-	for i := range ps.list.height {
+	for i := range ps.list.rows {
 		idx := ps.list.scroll + i
 		if idx >= len(ps.list.matched) {
 			break
@@ -60,7 +60,7 @@ func (p *PickerComponent) drawPickerBox(
 			Point: geom.Point{X: areas.left.X, Y: itemY},
 			Size: geom.Size{
 				Width:  areas.left.Width,
-				Height: ps.list.height,
+				Height: ps.list.rows,
 			},
 		}, pickerEmptyHint(ps))
 	}
@@ -80,7 +80,7 @@ func (p *PickerComponent) drawPickerPane(
 	if showHeader {
 		headerH = 1
 	}
-	ps.list.height = max(innerH-2-headerH, 1)
+	ps.list.rows = max(innerH-2-headerH, 1)
 
 	frame := pickerBoxFrame{
 		borderStyle:  pickerFrameStyle(cx),
@@ -100,7 +100,7 @@ func (p *PickerComponent) drawPickerPane(
 	}
 	ps.clampScroll()
 	for i := 0; ps.list.scroll+i < len(ps.list.matched) &&
-		i < ps.list.height; i++ {
+		i < ps.list.rows; i++ {
 		idx := ps.list.scroll + i
 		writePickerItem(buf,
 			geom.Point{X: area.X, Y: itemY + i},
@@ -116,7 +116,7 @@ func (p *PickerComponent) drawPickerPane(
 			Point: geom.Point{X: area.X, Y: itemY},
 			Size: geom.Size{
 				Width:  area.Width,
-				Height: ps.list.height,
+				Height: ps.list.rows,
 			},
 		}, pickerEmptyHint(ps))
 	}

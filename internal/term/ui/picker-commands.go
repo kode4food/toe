@@ -71,7 +71,8 @@ func (c *commandPaletteSource) Accept(
 	}
 	ec := c.editor
 	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-		return newPromptComponent(cx, promptComponentArgs{
+		return newPromptComponent(promptComponentArgs{
+			cx:      cx,
 			editor:  ec,
 			kind:    promptCmd,
 			prefill: name + " ",

@@ -335,7 +335,6 @@ func TestWhenBinding(t *testing.T) {
 	})
 }
 
-// fireWhen dispatches "x" the way the UI does, honoring the :when gate
 func fireWhen(t *testing.T, km *command.Keymaps, e *view.Editor) {
 	t.Helper()
 	seq, err := command.ParseKeySequence("x")

@@ -53,8 +53,6 @@ func surroundDeleteAction(_ *view.Editor) command.Continuation {
 	})
 }
 
-// syntaxSurroundPos uses Tree-sitter for surrounding brackets, falling back
-// to plaintext for each range it cannot handle
 func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 	v := e.FocusedView()
 	if v == nil {

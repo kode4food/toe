@@ -3,6 +3,8 @@ package ui
 import (
 	"strings"
 
+	"github.com/mattn/go-runewidth"
+
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -15,12 +17,10 @@ type (
 	}
 )
 
-// drawInto fills and borders the popup rectangle, returning its inner bounds
-// in buffer coordinates
 func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 	for dy := range area.Height {
 		buf.FillRange(
-			area.Point.Add(geom.Point{Y: dy}), area.Width, p.contentStyle,
+			area.Add(geom.Point{Y: dy}), area.Width, p.contentStyle,
 		)
 	}
 	if area.Width >= 2 && area.Height >= 2 {
@@ -33,7 +33,7 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		}, bot, p.borderStyle)
 		for y := 1; y < area.Height-1; y++ {
 			buf.SetString(
-				area.Point.Add(geom.Point{Y: y}), borderV, p.borderStyle,
+				area.Add(geom.Point{Y: y}), borderV, p.borderStyle,
 			)
 
 			buf.SetString(geom.Point{
@@ -43,6 +43,42 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		}
 	}
 	return area.Inset(geom.Size{Width: 1 + p.padX, Height: 1})
+}
+
+func (p popup) divider(buf *tui.Buffer, area geom.Area, dx int) {
+	x := area.X + dx
+	buf.SetString(geom.Point{X: x, Y: area.Y}, borderMT, p.borderStyle)
+	buf.SetString(geom.Point{X: x, Y: area.Bottom()}, borderMB, p.borderStyle)
+	for y := area.Y + 1; y < area.Bottom(); y++ {
+		buf.SetString(geom.Point{X: x, Y: y}, borderV, p.borderStyle)
+	}
+}
+
+func drawPopupTitle(
+	buf *tui.Buffer, area geom.Area, title string, style tui.Style,
+) {
+	if title == "" {
+		return
+	}
+	maxW := area.Width - 2
+	if maxW < 2 {
+		return
+	}
+	text := " " + runewidth.Truncate(title, maxW-2, "") + " "
+	buf.SetString(area.Add(geom.Point{X: 1}), text, style)
+}
+
+type drawPopupRuleArgs struct {
+	buf   *tui.Buffer
+	at    geom.Point
+	width int
+	style tui.Style
+}
+
+func drawPopupRule(args drawPopupRuleArgs) {
+	inner := max(args.width-2, 0)
+	line := borderML + strings.Repeat(borderH, inner) + borderMR
+	args.buf.SetString(args.at, line, args.style)
 }
 
 func fitPopup(area geom.Area, screen geom.Size) geom.Area {

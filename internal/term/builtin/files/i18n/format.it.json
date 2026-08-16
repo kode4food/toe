@@ -1,11 +1,11 @@
 {
+  "error.bufferReadOnly": "buffer in sola lettura",
+  "error.formatSelectionSingle": "format-selections supporta attualmente una sola selezione",
+  "error.invalidWidth": "larghezza non valida",
+  "error.noRangeFormatting": "nessun server LSP supporta la formattazione dell'intervallo",
   "format-selections.docstring": "Formatta la selezione",
-  "format.docstring": "Formatta il file con un formattatore esterno o un server di linguaggio",
+  "format.docstring": "Formatta con un formattatore esterno o server di linguaggio",
   "reflow.docstring": "Manda a capo le righe selezionate alla larghezza indicata",
   "sort.docstring": "Ordina gli intervalli nella selezione",
-  "error.invalidWidth": "larghezza non valida",
-  "error.bufferReadOnly": "buffer in sola lettura",
-  "status.noFormatter": "nessun formattatore per {lang}",
-  "error.noRangeFormatting": "nessun server LSP supporta la formattazione dell'intervallo",
-  "error.formatSelectionSingle": "format-selections supporta attualmente una sola selezione"
+  "status.noFormatter": "nessun formattatore per {lang}"
 }

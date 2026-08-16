@@ -1,11 +1,11 @@
 {
   "buffer-close-all.docstring": "Fermer tous les buffers sans quitter",
-  "buffer-close-force.docstring": "Fermer de force le buffer courant en ignorant les modifications non enregistrées",
+  "buffer-close-force.docstring": "Fermer le buffer, ignorer les modifications non enregistrées",
   "buffer-close-others.docstring": "Fermer tous les buffers sauf celui qui est actif",
   "buffer-close.docstring": "Fermer le buffer courant",
   "buffer-next.docstring": "Aller au buffer suivant",
   "buffer-previous.docstring": "Aller au buffer précédent",
+  "error.noSuchBuffer": "aucun buffer nommé : {name}",
   "error.unsavedBufferClose": "modifications non enregistrées (:buffer-close! pour forcer)",
-  "error.unsavedBufferCloseAll": "modifications non enregistrées (:buffer-close-all! pour forcer)",
-  "error.noSuchBuffer": "aucun tampon nommé : {name}"
+  "error.unsavedBufferCloseAll": "modifications non enregistrées (:buffer-close-all! pour forcer)"
 }

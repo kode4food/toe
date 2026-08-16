@@ -108,8 +108,8 @@ func themeCmds(r *command.Registry) []command.Command {
 	return []command.Command{
 		{
 			Name: actTheme,
-			DocString: "Change the editor theme (show current theme if no " +
-				"name specified)",
+			DocString: "Change the editor theme (show current if no name " +
+				"specified)",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
 				if args == nil || args.Empty() {
 					name := e.Options().Theme

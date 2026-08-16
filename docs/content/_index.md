@@ -2,7 +2,7 @@
 title: "toe"
 ---
 
-# toe — Thom's Own Editor
+# toe: Thom's Own Editor
 
 **toe** is a modal terminal editor for Go development. toe edits Go projects, not the universe.
 

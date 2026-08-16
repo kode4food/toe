@@ -66,8 +66,6 @@ func (r *rowRender) diagnosticAt(pos int) (diagnosticSpan, bool) {
 	return best, ok
 }
 
-// baseStyleAt returns the syntax/glyph style that would apply to pos absent any
-// selection or cursor overlay
 func (r *rowRender) baseStyleAt(pos int, glyph documentGlyph) tui.Style {
 	switch {
 	case glyph == documentGlyphGuide:
@@ -91,8 +89,6 @@ func (r *rowRender) baseStyleAt(pos int, glyph documentGlyph) tui.Style {
 	return r.styles.text
 }
 
-// hlScopeAt resolves the highlight scope at pos by advancing hlIdx; callers
-// must present non-decreasing positions, which rows() guarantees
 func (r *rowRender) hlScopeAt(pos int) (string, bool) {
 	spans := r.hlSpans
 	for r.hlIdx < len(spans) && pos >= spans[r.hlIdx].End {
@@ -137,8 +133,6 @@ func spanLowerBound(spans []highlight.Span, pos int) int {
 	})
 }
 
-// overlaySelStyle overlays the bg (and explicit fg) of sel onto base,
-// preserving the syntax foreground and attributes when sel has none
 func overlaySelStyle(args styleOverlay) tui.Style {
 	base := args.base
 	if !args.overlay.BgColor().IsReset() {

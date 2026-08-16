@@ -184,7 +184,7 @@ func (k KeyEvent) WithMods(m KeyModifiers) KeyEvent {
 }
 
 // IsTypable reports whether k is a printable character that should be accepted
-// as literal text input — Char is set and neither Ctrl nor Alt is held;
+// as literal text input: Char is set and neither Ctrl nor Alt is held;
 // ModShift alone is fine; it is already reflected in the Char value
 func (k KeyEvent) IsTypable() bool {
 	return k.Code.Char != 0 && !k.Mods.Has(ModCtrl) && !k.Mods.Has(ModAlt)

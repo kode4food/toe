@@ -1,4 +1,4 @@
-# toe — Thom's Own Editor
+# toe: Thom's Own Editor
 
 ## Project
 
@@ -7,6 +7,14 @@ Thom's Own Editor: a Go-native modal terminal editor. Module: `github.com/kode4f
 ## CRITICAL: Do Exactly What Is Asked
 
 When the user asks for a specific thing, do that thing and nothing else. Do not take liberties rewriting, refactoring, or "improving" code that wasn't part of the request. The risk of breaking something or introducing unwanted changes is not worth it, and unilateral decisions like that are not mine to make.
+
+## CRITICAL: Do Not Reframe What I Asked For
+
+Answer the request I actually made, not a narrower one you would rather do. Do not tell me what I meant, do not restate my request as smaller than it was, and do not hand back a partial job described as a complete one.
+
+Every line in this repository is your own output from some session, so "pre-existing", "not mine", "not part of this diff", and "out of scope" are never true and never a reason to leave something unfixed. When I ask you to fix violations, fix all of them, however old. Never sort findings by who wrote them.
+
+If something genuinely blocks the work (a generated file a tool rewrites, a decision only I can make), say exactly that, say what is left undone, and stop. Never dress a refusal up as scope, authorship, or a summary of my intent.
 
 ---
 
@@ -29,18 +37,18 @@ Do not add picker, explorer, LSP, VCS, DAP, or other pluggable capability settin
 Structs with an `Args` suffix are parameter bundles for a single function. Structs with a `Res` suffix are result bundles returned by a single function. Both have strict rules:
 
 - **Threshold (hard rule)**: a function taking **5 or more arguments** must bundle them into an `Args` struct; a function returning **3 or more results** must bundle them into a `Res` struct. Below those counts, pass/return values directly.
-- **Success indicators are exempt from the result count**: a trailing `bool` (the `ok` idiom) or `error` signals success/failure, not data, so it never counts toward the 3-result threshold. `(previewImageRes, bool)` and `(Foo, Bar, error)` are fine — count only the data values. So the correct shape here is a `Res` struct **plus** the bool: `func previewImage(...) (previewImageRes, bool)`, not an `ok` field stuffed inside the struct.
-- **Same-type adjacency**: the hazard is exactly *two values of the same type next to each other* — nothing else. Distinct types self-disambiguate: `(int, bool)` is fine, `(*Foo, int)` is fine, because the type tells you which value is which. Two of the same type do not: `(bool, bool)` — which bool is which? `(int, int)` — width then height, or height then width? That order is a cultural convention (reversed in other cultures), not a fact the types enforce, so `f(w, h)` and `f(h, w)` are equally legal and a swap compiles silently — the same hazard as positional struct literals. When two adjacent params or results share a type, give them names: a `Res`/`Args` struct with named fields, or distinct named types (`type Width int`), so the meaning lives in the code, not in an assumed convention. `(*previewImageEntry, int, int, bool)` is the worst case: long *and* two nameless same-type `int`s stranded in the middle.
+- **Success indicators are exempt from the result count**: a trailing `bool` (the `ok` idiom) or `error` signals success/failure, not data, so it never counts toward the 3-result threshold. `(previewImageRes, bool)` and `(Foo, Bar, error)` are fine: count only the data values. So the correct shape here is a `Res` struct **plus** the bool: `func previewImage(...) (previewImageRes, bool)`, not an `ok` field stuffed inside the struct.
+- **Same-type adjacency**: the hazard is exactly *two values of the same type next to each other*, and nothing else. Distinct types self-disambiguate: `(int, bool)` is fine, `(*Foo, int)` is fine, because the type tells you which value is which. Two of the same type do not. `(bool, bool)`: which bool is which? `(int, int)`: width then height, or height then width? That order is a cultural convention (reversed in other cultures), not a fact the types enforce, so `f(w, h)` and `f(h, w)` are equally legal and a swap compiles silently; the same hazard as positional struct literals. When two adjacent params or results share a type, give them names: a `Res`/`Args` struct with named fields, or distinct named types (`type Width int`), so the meaning lives in the code, not in an assumed convention. `(*previewImageEntry, int, int, bool)` is the worst case: long *and* two nameless same-type `int`s stranded in the middle.
 - **Lifetime**: an `Args` struct must not outlive the call site where it is passed; a `Res` struct must not outlive the call site where it is received. Neither may be stored, forwarded to another function, or returned further up the call chain.
-- **If a struct crosses more than one call site** it is not an Args/Res struct — rename it to a plain descriptive name (no suffix) and use pointer currency (`*T`) when passing it.
+- **If a struct crosses more than one call site** it is not an Args/Res struct, rename it to a plain descriptive name (no suffix) and use pointer currency (`*T`) when passing it.
 - **Placement**: each Args/Res struct must be declared immediately before the function that accepts or returns it. If one function has both an Args and a Res struct, declare them together in a single `type (...)` block immediately before that function. Never group them with unrelated types at the top of the file.
 - **Value passing**: at their single call site, Args/Res structs are passed and returned by value (no `*`), whatever their size. They are short-lived and stack-allocated by design.
-- **Pointer threshold (plain-named structs)**: a struct that crosses call sites is passed by value or by pointer according to its size, not by habit. Up to **32 bytes** (4 machine words) always by value. **33–64 bytes**: by value, unless it is read by three or more functions in a chain. Over **64 bytes** (one cache line): by pointer — `hardWrapUnfilled` (72 bytes) and `view.CursorScroll` (~80 bytes) are pointers for this reason, while `edgeState` (16 bytes) is a value. Regardless of size, use a pointer when the callee mutates the struct or its identity matters. Remember that a `&x` that never escapes stays on the stack: the cost of a pointer there is the indirection, not an allocation.
-- **Field names must stand alone**: a name that worked as a positional function parameter (short, disambiguated by position and the surrounding call) does not automatically work as a named struct field read on its own at a call site. Spell out abbreviations that aren't immediately decodable without reading the function body: `st` → `style`, `w` → `width`, `e` → `editor`, `v` → `view`. Two fields of the same type still need names that disambiguate them beyond position — `parent Id` next to `id Id` is exactly the same-type-adjacency hazard above; use `parent Id` / `viewID Id`.
-- **Literal formatting**: if a struct literal fits on one line, leave it on one line. If it wraps, use exactly one field per line — never pack two or more fields onto a wrapped line.
+- **Pointer threshold (plain-named structs)**: a struct that crosses call sites is passed by value or by pointer according to its size, not by habit. Up to **32 bytes** (4 machine words) always by value. **33–64 bytes**: by value, unless it is read by three or more functions in a chain. Over **64 bytes** (one cache line): by pointer; `hardWrapUnfilled` (72 bytes) and `view.CursorScroll` (~80 bytes) are pointers for this reason, while `edgeState` (16 bytes) is a value. Regardless of size, use a pointer when the callee mutates the struct or its identity matters. Remember that a `&x` that never escapes stays on the stack: the cost of a pointer there is the indirection, not an allocation.
+- **Field names must stand alone**: a name that worked as a positional function parameter (short, disambiguated by position and the surrounding call) does not automatically work as a named struct field read on its own at a call site. Spell out abbreviations that aren't immediately decodable without reading the function body: `st` → `style`, `w` → `width`, `e` → `editor`, `v` → `view`. Two fields of the same type still need names that disambiguate them beyond position; `parent Id` next to `id Id` is exactly the same-type-adjacency hazard above; use `parent Id` / `viewID Id`.
+- **Literal formatting**: if a struct literal fits on one line, leave it on one line. If it wraps, use exactly one field per line, never pack two or more fields onto a wrapped line.
 
 ```go
-// Good — declared immediately before its function, used only at one call site
+// Good, declared immediately before its function, used only at one call site
 type renderPaneArgs struct {
     doc     *view.Document
     view    *view.View
@@ -51,10 +59,10 @@ type renderPaneArgs struct {
 
 func (r *renderPass) renderPane(args renderPaneArgs) { ... }
 
-// Good — fits on one line, stays on one line
+// Good, fits on one line, stays on one line
 r.renderStatus(renderStatusArgs{doc: doc, view: v, buf: buf})
 
-// Good — wraps, so one field per line
+// Good, wraps, so one field per line
 r.renderStatus(renderStatusArgs{
     doc:     doc,
     view:    v,
@@ -64,23 +72,23 @@ r.renderStatus(renderStatusArgs{
     focused: focused,
 })
 
-// Bad — wrapped but multiple fields share a line
+// Bad, wrapped but multiple fields share a line
 r.renderStatus(renderStatusArgs{
     doc: doc, view: v, buf: buf,
     at: geom.Point{X: a.X, Y: yOffset + a.Y + contentH},
     width: a.Width, focused: focused,
 })
 
-// Bad — declared in a top-level type block far from its function
+// Bad, declared in a top-level type block far from its function
 type (
     renderPaneArgs struct { ... }  // ← wrong place
     someOtherType  struct { ... }
 )
 
-// Bad — forwarded to a second function (no longer a single call site)
+// Bad, forwarded to a second function (no longer a single call site)
 func outer(args myArgs) {
     args.x = 0        // mutates
-    inner(args)       // forwarded — rename and use *myType instead
+    inner(args)       // forwarded, rename and use *myType instead
 }
 ```
 
@@ -88,12 +96,12 @@ func outer(args myArgs) {
 
 ## Persistent Data Structures
 
-All core data structures — `Rope`, `ChangeSet`, `Transaction`, `Selection`, `Range`, `History` — are **persistent (immutable)**. Every operation must return a new value; the original must never be modified.
+All core data structures (`Rope`, `ChangeSet`, `Transaction`, `Selection`, `Range`, `History`) are **persistent (immutable)**. Every operation must return a new value; the original must never be modified.
 
-**In-place node mutation is absolutely forbidden.** This applies even inside helper functions. Rotation, rebalancing, and any structural change must allocate and return new nodes — never mutate fields on existing ones. Shared nodes are the norm (structural sharing is how persistence stays efficient), so a mutated node corrupts every data structure that references it.
+**In-place node mutation is absolutely forbidden.** This applies even inside helper functions. Rotation, rebalancing, and any structural change must allocate and return new nodes, and never mutate fields on existing ones. Shared nodes are the norm (structural sharing is how persistence stays efficient), so a mutated node corrupts every data structure that references it.
 
 ```go
-// Bad — mutates a shared node
+// Bad, mutates a shared node
 func rotateRight(n *node) *node {
     p := n.left
     n.left = p.right  // mutates n (may be shared)
@@ -102,7 +110,7 @@ func rotateRight(n *node) *node {
     return p
 }
 
-// Good — allocates new nodes, originals untouched
+// Good, allocates new nodes, originals untouched
 func rotateRight(n *node) *node {
     p := n.left
     newN := &node{left: p.right, right: n.right}
@@ -122,7 +130,7 @@ toe's package layers, top to bottom: `internal/core` → `internal/view`
 `internal/term/command` → `internal/term/builtin` → `internal/term/ui`, with
 `internal/lsp` and `internal/vcs` as services plugged in through `view`-owned
 interfaces, and `cmd/toe/internal/app.go` as the composition root. Dependencies
-point downward, toward more stable semantics — `core`'s editing semantics
+point downward, toward more stable semantics, `core`'s editing semantics
 change far less often than `term/ui`'s rendering details.
 
 **Rules:**
@@ -136,7 +144,7 @@ change far less often than `term/ui`'s rendering details.
    `view`, never the reverse.
 3. **Boundaries follow authority and reasons to change, not file/line count.**
    Split a package because two parts change for different reasons and are
-   owned by different concerns — not because a file got long (see "Do not
+   owned by different concerns, not because a file got long (see "Do not
    split packages solely because they are large" below).
 4. **State stays with the module that preserves its invariants.** See
    Configuration Boundaries above for the config-specific version of this
@@ -171,7 +179,7 @@ change far less often than `term/ui`'s rendering details.
     together is `app.go`'s job. Packages below it should not know about each
     other's concrete constructors.
 11. **Commands orchestrate; they don't implement.** A `term/builtin` command
-    handler calls `view/action`, `view`, `lsp`, or `vcs` APIs — it must not
+    handler calls `view/action`, `view`, `lsp`, or `vcs` APIs, it must not
     contain substantial editing, rendering, LSP protocol, VCS diffing, or
     persistence logic inline. If a handler is doing real work, that work
     belongs in the owning package.
@@ -181,7 +189,7 @@ change far less often than `term/ui`'s rendering details.
     and UI belongs in `view/action`, not duplicated per command module.
 13. **Calls request; observers/events announce.** `view.DocumentObserver`
     methods (`DocumentOpened`, `DocumentChanged`, `DocumentSaved`,
-    `DocumentClosed`) report facts that already happened — implementations
+    `DocumentClosed`) report facts that already happened, implementations
     must not treat them as a place to request further mutation of the same
     document mid-notification. A direct method call (`SetVersionControl`,
     `DiffHunks`) requests behavior and expects a synchronous answer.
@@ -219,7 +227,7 @@ change far less often than `term/ui`'s rendering details.
 - `internal/term/command` must not import `term/builtin` or concrete service
   packages (`lsp`, `vcs`); it is the generic command mechanism.
 - `internal/term/builtin` may import `term/command`, `term/ui`, `view`,
-  `view/action`, `lsp`, and `vcs` — it is where commands bridge to services.
+  `view/action`, `lsp`, and `vcs`, it is where commands bridge to services.
 - `cmd/toe/internal/app.go` may import any concrete module; it is the only
   place allowed to wire everything together.
 
@@ -573,7 +581,7 @@ Run `goimports` on all files. It handles grouping and sorting automatically.
 **Never declare `type` or `const` inside a function body.** All type and constant declarations must be at package level, in the appropriate block with the rest of the package's types and constants.
 
 ```go
-// Bad — type declared inside a function
+// Bad, type declared inside a function
 func process() {
     type work struct{ id int }   // FORBIDDEN
     const limit = 100            // FORBIDDEN
@@ -583,7 +591,7 @@ func process() {
     )
 }
 
-// Good — all at package level
+// Good, all at package level
 type work struct{ id int }
 
 const limit = 100
@@ -646,10 +654,10 @@ Related methods stay together. Within each group, order by call chain or first u
 
 Within a package, organize files around real concerns, not arbitrary helper categories. Prefer concern-oriented grouping when that matches the code's behavior:
 
-- `picker.go`, `picker-component.go`, `picker-render.go`
-- `picker-files.go`, `picker-search.go`, `picker-commands.go`
-- `render-document.go`, `render-status.go`
-- `model-action.go`, `model-types.go`
+- `picker.go`: `picker-component.go`, `picker-render.go`
+- `picker-files.go`: `picker-search.go`, `picker-commands.go`
+- `render-document.go`: `render-status.go`
+- `model-action.go`: `model-types.go`
 
 Do not introduce wrapper files that just forward calls to another package or rename errors.
 
@@ -661,7 +669,7 @@ Do not introduce wrapper files that just forward calls to another package or ren
 // Good
 Separator{Layout: LayoutVertical, X: a.X + a.Width, Y: c.area.Y, W: 1, H: c.area.Height}
 
-// Bad — positional, breaks silently on field reorder
+// Bad, positional, breaks silently on field reorder
 Separator{LayoutVertical, a.X + a.Width, c.area.Y, 1, c.area.Height}
 ```
 
@@ -712,7 +720,7 @@ func lookup(name string) (Value, bool) {
 	return Value{}, false
 }
 
-// Bad — value and ok escape the only branch that uses them
+// Bad, value and ok escape the only branch that uses them
 func lookup(name string) (Value, bool) {
 	value, ok := values[name]
 	if !ok || !value.Available() {
@@ -724,17 +732,17 @@ func lookup(name string) (Value, bool) {
 
 ### Multi-Assignment
 
-Never assign multiple variables in one statement from independent sources — `a, b := x, y` where `x` and `y` are separate expressions. This is unreadable: the reader must visually pair each name on the left with its value on the right instead of reading top to bottom. The only exception is routing a single call's multiple return values, where the pairing is already fixed by the function's signature.
+Never assign multiple variables in one statement from independent sources, `a, b := x, y` where `x` and `y` are separate expressions. This is unreadable: the reader must visually pair each name on the left with its value on the right instead of reading top to bottom. The only exception is routing a single call's multiple return values, where the pairing is already fixed by the function's signature.
 
 ```go
-// Good — routing one call's multi-return
+// Good, routing one call's multi-return
 value, ok := lookup(name)
 
-// Good — independent sources, one per line
+// Good, independent sources, one per line
 style := menuStyle
 match := matchStyle
 
-// Bad — independent sources crammed into one statement
+// Bad, independent sources crammed into one statement
 style, match := menuStyle, matchStyle
 ```
 
@@ -775,16 +783,16 @@ package engine       // Bad
 
 Function names must be short labels for the unit under test. They should hold the related subtests and identify the subject, not describe every scenario. Put scenario detail in `t.Run()` names, not in the function name.
 
-**`t.Run()` descriptions must be short and concise — never more than ~40 characters.** They label the scenario, not document it. Drop the subject (it's in the function name), drop "with", drop "without", drop the function name itself. Think: what's different here?
+**`t.Run()` descriptions must be short and concise, never more than ~40 characters.** They label the scenario, not document it. Drop the subject (it's in the function name), drop "with", drop "without", drop the function name itself. Think: what's different here?
 
 ```go
-// Good — concise, fits in one glance
+// Good, concise, fits in one glance
 t.Run("undoes and redoes edits", ...)
 t.Run("navigates by steps", ...)
 t.Run("empty selection returns error", ...)
 t.Run("clips long lines", ...)
 
-// Bad — too long, restates the subject
+// Bad, too long, restates the subject
 t.Run("History undoes and redoes edits correctly", ...)
 t.Run("MoveRight with empty selection returns error", ...)
 t.Run("PickerPreview clips long lines to width", ...)
@@ -872,7 +880,7 @@ is expensive. Never report work as passing on a `-short` run alone.
 
 ### Godoc
 
-**Exported** funcs, methods, types, consts, and vars always need godoc — but no more than 3 lines. Describe what it does, not how. If it takes more than 3 lines to say what something does, it isn't coded well:
+**Exported** funcs, methods, types, consts, and vars always need godoc, but no more than 3 lines. Describe what it does, not how. If it takes more than 3 lines to say what something does, it isn't coded well:
 
 ```go
 // History stores committed document revisions and supports undo/redo
@@ -885,13 +893,13 @@ func NewHistory() History {
 
 Sentinel error vars are the one exception: the message is the documentation.
 
-**Unexported** funcs and methods get no godoc by default. Only add one — capped at 2 lines — when the behavior is genuinely non-trivial and needs explanation:
+**Unexported** funcs and methods get no godoc by default. Only add one, capped at 2 lines, when the behavior is genuinely non-trivial and needs explanation:
 
 ```go
-// unexported, self-explanatory — no comment
+// unexported, self-explanatory, no comment
 func clampSelection(sel core.Selection, maxChars int) core.Selection {
 
-// unexported, but the "why" isn't obvious from the signature — 2 lines max
+// unexported, but the "why" isn't obvious from the signature, 2 lines max
 // diffDebounce: single async debounce; the gutter trails a keystroke by this
 const diffDebounce = 50 * time.Millisecond
 ```
@@ -921,10 +929,10 @@ if gcerrors.Code(err) == gcerrors.NotFound {
 **Mutable package-level variables are absolutely forbidden.** This includes counters, caches, registries, or any other state that can be mutated after initialization.
 
 ```go
-// Bad — mutable global state
+// Bad, mutable global state
 var idCounter atomic.Int64
 
-// Good — state lives on the owning struct
+// Good, state lives on the owning struct
 type Editor struct {
     nextID int
 }
@@ -948,21 +956,21 @@ identifier under a local name.** Go's `var x = y` exists for local
 refactoring inside a package, not as a general-purpose re-export or
 aliasing mechanism between packages. If a package needs a value another
 package already owns, import that package and reference the value directly
-— `view.ErrNoLanguageServer`, not a same-named local copy that happens to
+, `view.ErrNoLanguageServer`, not a same-named local copy that happens to
 equal it.
 
 ```go
-// Bad — lsp package re-exports view's sentinel under its own name
+// Bad, lsp package re-exports view's sentinel under its own name
 var ErrNoLanguageServer = view.ErrNoLanguageServer
 ...
 return ErrNoLanguageServer
 
-// Good — call sites use the owning package's identifier directly
+// Good, call sites use the owning package's identifier directly
 return view.ErrNoLanguageServer
 ```
 
 This applies to sentinel errors, constants, and any other exported value:
-if `view` owns it (see Modularity and Package Boundaries above — interfaces
+if `view` owns it (see Modularity and Package Boundaries above, interfaces
 and their errors are consumer-owned), every package that needs it imports
 `view` and writes `view.X`. Don't introduce a second name for the same
 value just because a package boundary is in the way.
@@ -979,7 +987,7 @@ var _ CharMatcher = (*RuneMatcher)(nil)
 
 - **Never panic** - always return errors
 - **Typed errors only** - All production code must use package-level vars with `Err` prefix
-- **Pattern: `%w: context`** — wrapped error first, then context variable
+- **Pattern: `%w: context`**: wrapped error first, then context variable
 - Plain error messages acceptable only in examples/documentation
 - Handle errors immediately, early return
 
@@ -1065,11 +1073,11 @@ const (
 
 **Prefer Bubbletea and the `tui` buffer layer over home-grown alternatives.** Before writing custom terminal UI code, check whether an existing primitive already handles it:
 
-- Use `tui.Style` for color and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing — not manual ANSI or ad-hoc `strings.Repeat` frames.
-- Use `wrapText` (`internal/term/ui/wrap.go`) for word wrapping. Always wrap plain text first, then apply styling per cell — never feed styled/ANSI text to the wrapper; by then it is too late to wrap well.
-- Use `runewidth.StringWidth` / `runewidth.Truncate` for cell widths and single-row clipping. `runewidth` is a direct dependency for exactly this: it walks runes and slices the input, so it allocates nothing, while the `ansi` equivalents scan for escape sequences and build through a `strings.Builder` (measured: 2–3 allocations and ~28% slower per call). Reach for `ansi.StringWidth` / `ansi.Truncate` only when the string genuinely carries escape sequences, which in practice means terminal-pane content — everywhere else toe styles per cell, so the text is plain by the time it is measured or clipped.
+- Use `tui.Style` for color and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing, not manual ANSI or ad-hoc `strings.Repeat` frames.
+- Use `wrapText` (`internal/term/ui/wrap.go`) for word wrapping. Always wrap plain text first, then apply styling per cell, never feed styled/ANSI text to the wrapper; by then it is too late to wrap well.
+- Use `runewidth.StringWidth` / `runewidth.Truncate` for cell widths and single-row clipping. `runewidth` is a direct dependency for exactly this: it walks runes and slices the input, so it allocates nothing, while the `ansi` equivalents scan for escape sequences and build through a `strings.Builder` (measured: 2–3 allocations and ~28% slower per call). Reach for `ansi.StringWidth` / `ansi.Truncate` only when the string genuinely carries escape sequences, which in practice means terminal-pane content, everywhere else toe styles per cell, so the text is plain by the time it is measured or clipped.
 - For overlay panels, implement `BufferOverlayComponent` and draw into the `tui.Buffer` directly. The buffer-native path skips the ANSI round-trip and is fast for complex overlays.
-- Use the `popup` struct (`internal/term/ui/popup.go`) for any bordered popup window — it fills the box with the content style and draws the border in one pass, so callers write per-cell content without worrying about ANSI background resets.
+- Use the `popup` struct (`internal/term/ui/popup.go`) for any bordered popup window, it fills the box with the content style and draws the border in one pass, so callers write per-cell content without worrying about ANSI background resets.
 - Use `tea.View.Cursor` for cursor shape and position instead of raw DECSCUSR escapes in content strings.
 
 The only valid reason to roll your own is when the library genuinely has no equivalent (e.g. tab expansion, custom fuzzy-match highlight, per-character cursor/selection coloring in the editor viewport).
@@ -1078,14 +1086,14 @@ The only valid reason to roll your own is when the library genuinely has no equi
 
 # i18n Policy
 
-Any user-facing English prose — status messages, prompts, hints shown during
-an interactive mode — must go through `internal/i18n`, not a hardcoded Go
+Any user-facing English prose, status messages, prompts, hints shown during
+an interactive mode, must go through `internal/i18n`, not a hardcoded Go
 string constant. Add a `Key` in `internal/i18n/keys.go` and a translation
 entry in each locale file (`en.json`, `de.json`, `fr.json`, `it.json`) under
 `internal/i18n/translations/`, then reference it with `i18n.Text(key, ...)`.
 
 `internal/i18n/translations/common.json` is reserved for values shared
-identically across all locales (e.g. the `:` command prompt) — not a catch-all
+identically across all locales (e.g. the `:` command prompt), not a catch-all
 or a place to skip translating a new message into the other languages.
 
 A message whose wording depends on a count takes plural forms instead of one
@@ -1100,12 +1108,12 @@ key per form: give the message an object value keyed by `zero`, `one`, or
 ```
 
 A missing category falls back to `other`, so a language only writes the forms
-it needs — French supplies `zero` where English does not. `other` is required:
+it needs, French supplies `zero` where English does not. `other` is required:
 a plural message without it fails to load. A message without a `count` variable
 stays a plain string.
 
 The one exception is a hint that echoes a literal keystroke sequence back at
-the user (`"ms"`, `"r"`, `"^r"`) — that's not language, so it
+the user (`"ms"`, `"r"`, `"^r"`), that's not language, so it
 stays a plain Go string. A hint that also contains descriptive prose (e.g.
 `"h/j/k/l or ←/↓/↑/→ resize, esc/enter exits"`) is not exempt and must be
 translated.
@@ -1120,11 +1128,11 @@ Use the **Serena MCP** for all code navigation and editing tasks: symbol lookup,
 
 # CRITICAL: Rendering Performance
 
-**ALWAYS benchmark when changing editor or preview rendering.** The render path runs on every keystroke and every frame; a per-render regression (re-parsing config, re-allocating per character, building off-screen content) makes the editor lag and back up input events. Do not reason about performance from first principles — measure.
+**ALWAYS benchmark when changing editor or preview rendering.** The render path runs on every keystroke and every frame; a per-render regression (re-parsing config, re-allocating per character, building off-screen content) makes the editor lag and back up input events. Do not reason about performance from first principles, measure.
 
 - Before and after any change to the editor content renderer or the picker preview renderer, run a Go benchmark with `-benchmem` and compare `ns/op`, `B/op`, and `allocs/op`. Profile with `-cpuprofile` / `-memprofile` and `go tool pprof` to locate the actual hotspot.
 - Benchmark the realistic worst case: a long single line, the cursor scrolled far right, a split layout. See `BenchmarkRenderLongLine` (`internal/term/ui/bench_test.go`) and `BenchmarkVisualColumn` (`internal/view/bench_internal_test.go`).
-- Rendering must do work **once** and re-do it only when its inputs change. Anything parsed, decoded, or loaded (config TOML, language definitions, themes, syntax) must be cached and invalidated on change — never re-parsed per render. Per-character work in the row loop must avoid allocation (use the ASCII fast paths) and must not be performed for off-screen columns.
+- Rendering must do work **once** and re-do it only when its inputs change. Anything parsed, decoded, or loaded (config TOML, language definitions, themes, syntax) must be cached and invalidated on change, never re-parsed per render. Per-character work in the row loop must avoid allocation (use the ASCII fast paths) and must not be performed for off-screen columns.
 
 ---
 
@@ -1136,4 +1144,4 @@ The only exception is if the user explicitly says "commit" or "create a commit" 
 
 **NEVER STAGE OR UNSTAGE.** Do not use `git add`, `git reset`, `git restore --staged`, or `git stash` unless explicitly and directly instructed in that exact session. The staged set is the user's own record of what he has reviewed; git keeps no index history, so unstaging destroys it permanently.
 
-When told to stage a specific set, stage exactly that set and touch nothing else — an instruction to stage some files never implies unstaging others.
+When told to stage a specific set, stage exactly that set and touch nothing else, an instruction to stage some files never implies unstaging others.

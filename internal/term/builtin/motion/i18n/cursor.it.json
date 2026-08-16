@@ -64,6 +64,8 @@
   "move-prev-word-start.docstring": "Vai all'inizio della parola precedente",
   "move-visual-line-down.docstring": "Spostati in basso",
   "move-visual-line-up.docstring": "Spostati in alto",
+  "option.scroll-lines.docstring": "Righe per scatto di scorrimento",
+  "option.scrolloff.docstring": "Righe di margine attorno al cursore",
   "save-selection.docstring": "Salva la selezione corrente nell'elenco dei salti",
   "till-prev-char.docstring": "Vai fino a dopo l'occorrenza precedente di un carattere"
 }

@@ -193,8 +193,6 @@ func focusedDiffHunks(e *view.Editor) (focusedDiffHunksRes, bool) {
 	}, true
 }
 
-// hunkRange covers added or modified lines; a pure removal becomes a point at
-// the removal start
 func hunkRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
 	r, ok := hunkCharRange(h, text)
 	if !ok {
@@ -232,8 +230,6 @@ func nextHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {
 	return 0, false
 }
 
-// prevHunkIdx returns the last hunk that ends at or before line. A pure removal
-// sitting exactly on line does not count; the cursor is inside it
 func prevHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {
 	for i := len(hunks) - 1; i >= 0; i-- {
 		h := hunks[i]

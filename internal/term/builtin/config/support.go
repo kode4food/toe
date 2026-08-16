@@ -106,8 +106,6 @@ func SupportModule(model ui.Model) command.Module {
 	}
 }
 
-// parseGotoLocation peels up to two trailing positive-int segments of a
-// "path:line:col" string as line then col; the rest is the path
 func parseGotoLocation(s string) (string, core.Position) {
 	parts := strings.Split(s, ":")
 	var nums []int

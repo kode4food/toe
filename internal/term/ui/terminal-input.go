@@ -116,8 +116,6 @@ func (t *TerminalPane) DragTick(_ *Context, gen int, toLow bool) tea.Cmd {
 	return t.selection.drag.tick(toLow, t.scheduleDragTick)
 }
 
-// handleKey forwards msg to the shell; keys bound in terminal mode (the
-// Ctrl-w window chord, the Ctrl-\ leader) are claimed by the keymap upstream
 func (t *TerminalPane) handleKey(
 	_ *Context, msg tea.KeyPressMsg,
 ) (EventResult, bool) {
@@ -129,8 +127,6 @@ func (t *TerminalPane) handleKey(
 	return consumed(), true
 }
 
-// handleMouse scrolls into scrollback on wheel when the shell hasn't
-// requested mouse tracking, or otherwise forwards the event to it
 func (t *TerminalPane) handleMouse(
 	cx *Context, msg tea.Msg,
 ) (EventResult, bool) {

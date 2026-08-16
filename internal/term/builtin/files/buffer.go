@@ -51,9 +51,8 @@ func BufferModule() command.Module {
 				Signature: kit.FileSig(kit.MinArgs(0)),
 			},
 			{
-				Name: actBufferCloseForce,
-				DocString: "Close the current buffer forcefully, ignoring " +
-					"unsaved changes",
+				Name:      actBufferCloseForce,
+				DocString: "Close the current buffer, ignoring unsaved changes",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
 					return closeBuffers(e, args, true)
 				},

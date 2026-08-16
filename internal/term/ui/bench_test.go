@@ -122,7 +122,7 @@ func BenchmarkRenderEmptyPicker(b *testing.B) {
 }
 
 // BenchmarkRenderLongLineCursorStart renders a long line with the cursor at the
-// start (no horizontal scroll) — the common case where only the first columns
+// start (no horizontal scroll), the common case where only the first columns
 // are visible yet the whole line is otherwise processed
 func BenchmarkRenderLongLineCursorStart(b *testing.B) {
 	root := b.TempDir()

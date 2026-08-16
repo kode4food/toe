@@ -99,8 +99,6 @@ func (p paneValue) Equal(other ale.Value) bool {
 	return ok && o == p
 }
 
-// document resolves the focused view's document, reporting absence for non-view
-// panes and views without a backing document
 func (p paneValue) document() (*view.Document, view.Id, bool) {
 	v, ok := p.pane.(*view.View)
 	if !ok {
@@ -168,8 +166,6 @@ func buildContext(e *view.Editor) contextValue {
 	return contextValue{editor: e}
 }
 
-// rangeObject builds a concrete Ale object for a range; :anchor and :head keep
-// direction, :from/:to/:cursor are derived zero-based offsets
 func rangeObject(r core.Range, text core.Rope) *data.Object {
 	return data.NewObject(
 		data.NewCons(keyAnchor, data.Integer(r.Anchor)),

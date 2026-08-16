@@ -87,7 +87,6 @@ func (a *mouseAutoScrollAxis) schedule(
 	})
 }
 
-// tick starts ticking toward toLow, scheduling the next tick via schedule
 func (a *axisTicker) tick(toLow bool, schedule axisTickSchedule) tea.Cmd {
 	a.gen++
 	a.active = true
@@ -119,8 +118,6 @@ func (a *axisTicker) update(bounds dragBounds) edgeState {
 	return edge
 }
 
-// trigger starts or continues ticking toward whichever edge was crossed, or
-// stops ticking if neither has
 func (a *axisTicker) trigger(
 	edge edgeState, fixed int, schedule axisTickSchedule,
 ) tea.Cmd {

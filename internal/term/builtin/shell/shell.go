@@ -94,7 +94,8 @@ func Module(model ui.Model) command.Module {
 		},
 		Options: []command.Option{
 			{
-				Key: "shell",
+				Key:       "shell",
+				DocString: "Shell used to run external commands",
 				Get: func(e *view.Editor) (string, error) {
 					return config.FormatStringSlice(e.Options().Shell), nil
 				},

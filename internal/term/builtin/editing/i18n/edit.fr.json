@@ -9,6 +9,7 @@
   "delete-selection.docstring": "Supprimer la sélection",
   "earlier.docstring": "Reculer dans l'historique. Accepte un nombre d'étapes",
   "ensure-forward.docstring": "Orienter toutes les sélections vers l’avant",
+  "error.historySteps": "le nombre d'étapes doit être un entier positif",
   "increment.docstring": "Incrémenter l’élément sous le curseur",
   "indent.docstring": "Indenter la sélection",
   "insert-at-line-start.docstring": "Insérer au début de la ligne",
@@ -19,6 +20,12 @@
   "normal-mode.docstring": "Passer en mode normal",
   "open-above.docstring": "Ouvrir une nouvelle ligne au-dessus de la sélection",
   "open-below.docstring": "Ouvrir une nouvelle ligne sous la sélection",
+  "option.atomic-save.docstring": "Écrire les documents de façon atomique",
+  "option.auto-pairs.docstring": "Fermer automatiquement parenthèses et guillemets",
+  "option.auto-save.after-delay.enable.docstring": "Enregistrer après un délai d’inactivité",
+  "option.auto-save.after-delay.timeout.docstring": "Délai en ms avant l’enregistrement",
+  "option.auto-save.focus-lost.docstring": "Enregistrer quand l’éditeur devient inactif",
+  "option.continue-comments.docstring": "Continuer le préfixe de commentaire à la ligne suivante",
   "redo.docstring": "Rétablir la modification",
   "repeat-last-motion.docstring": "Répéter le dernier déplacement",
   "replace.docstring": "Remplacer par un nouveau caractère",
@@ -32,6 +39,5 @@
   "switch-to-uppercase.docstring": "Convertir en majuscules",
   "trim-selections.docstring": "Supprimer les espaces autour des sélections",
   "undo.docstring": "Annuler la modification",
-  "unindent.docstring": "Désindenter la sélection",
-  "error.historySteps": "le nombre d'étapes doit être un entier positif"
+  "unindent.docstring": "Désindenter la sélection"
 }

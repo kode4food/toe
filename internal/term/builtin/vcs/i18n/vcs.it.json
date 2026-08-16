@@ -5,7 +5,5 @@
   "goto-next-change.docstring": "Vai alla modifica successiva",
   "goto-prev-change.docstring": "Vai alla modifica precedente",
   "reset-diff-change.docstring": "Ripristina le modifiche del diff sotto le selezioni",
-  "status.diffUnavailable": "Il diff non è disponibile nel buffer corrente",
-  "status.pickerStaged": "Modifiche preparate per il commit",
-  "status.pickerUnstaged": "Modifiche"
+  "status.diffUnavailable": "Il diff non è disponibile nel buffer corrente"
 }

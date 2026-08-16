@@ -18,8 +18,6 @@ var graphicsTerms = []graphicsTerm{
 	{env: "TERM_PROGRAM", value: "ghostty"},
 }
 
-// graphicsSupported reports whether the terminal can display images via the
-// Kitty graphics protocol, based on well-known environment variables
 func graphicsSupported() bool {
 	for _, t := range graphicsTerms {
 		v := os.Getenv(t.env)

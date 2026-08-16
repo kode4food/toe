@@ -17,8 +17,6 @@ func digitCount(n int) int {
 	return d
 }
 
-// lineNumberDigits returns the largest drawn line-number width, excluding a
-// trailing empty line produced by a final newline
 func lineNumberDigits(text core.Rope) int {
 	nLines := text.LenLines()
 	lastDrawn := nLines

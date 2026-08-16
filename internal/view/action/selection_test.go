@@ -358,7 +358,7 @@ func TestHSplitVSplit(t *testing.T) {
 
 func TestSelectionIsLinewise(t *testing.T) {
 	t.Run("linewise selection via ChangeSelection", func(t *testing.T) {
-		// "hello\nworld\n" — Range(0,12) covers both complete lines exactly
+		// "hello\nworld\n", Range(0,12) covers both complete lines exactly
 		e := testutil.EditorWithText(t, "hello\nworld\n")
 		testutil.SetSelection(t, e, []core.Range{{
 			Anchor: 0,

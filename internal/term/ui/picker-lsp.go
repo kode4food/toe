@@ -317,8 +317,6 @@ func symbolName(sym view.Symbol) string {
 	return sym.Container + "." + sym.Name
 }
 
-// symbolKind normalizes language-server symbol kind aliases to the kind
-// keys shared with completion items
 func symbolKind(kind string) string {
 	switch kind {
 	case "construct":

@@ -13,8 +13,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// benchmarkScroll measures wheel handling and rendering while alternating
-// direction so the anchor moves every frame
 func benchmarkScroll(b *testing.B, source string) {
 	root := b.TempDir()
 	path := filepath.Join(root, "f.go")
@@ -53,7 +51,7 @@ func BenchmarkScrollSmallFile(b *testing.B) {
 }
 
 // BenchmarkScrollTwoPanes scrolls with two panes showing two different
-// documents — exercises the per-document render caches under split layout
+// documents, exercises the per-document render caches under split layout
 func BenchmarkScrollTwoPanes(b *testing.B) {
 	root := b.TempDir()
 	pathA := filepath.Join(root, "a.go")

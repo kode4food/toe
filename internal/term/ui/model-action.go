@@ -68,10 +68,13 @@ func (m Model) PickerAction(fn PickerFunc) command.Action {
 // CmdModeAction opens the command prompt
 func (m Model) CmdModeAction(_ *view.Editor) {
 	ec := m.component
+	head := ec.overlayHead()
 	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-		return newPromptComponent(cx, promptComponentArgs{
+		return newPromptComponent(promptComponentArgs{
+			cx:     cx,
 			editor: ec,
 			kind:   promptCmd,
+			head:   head,
 		}), nil
 	})
 }
@@ -80,11 +83,14 @@ func (m Model) CmdModeAction(_ *view.Editor) {
 func (m Model) SearchAction(forward bool) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
+		head := ec.overlayHead()
 		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-			return newPromptComponent(cx, promptComponentArgs{
+			return newPromptComponent(promptComponentArgs{
+				cx:      cx,
 				editor:  ec,
 				kind:    promptSearch,
 				forward: forward,
+				head:    head,
 			}), nil
 		})
 	}
@@ -94,12 +100,15 @@ func (m Model) SearchAction(forward bool) command.Action {
 func (m Model) RegexAction(prompt i18n.Key, fn promptHandler) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
+		head := ec.overlayHead()
 		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-			return newPromptComponent(cx, promptComponentArgs{
-				editor:  ec,
-				kind:    promptRegex,
-				prompt:  i18n.Text(prompt),
-				handler: fn,
+			return newPromptComponent(promptComponentArgs{
+				cx:       cx,
+				editor:   ec,
+				kind:     promptRegex,
+				titleKey: prompt,
+				head:     head,
+				handler:  fn,
 			}), nil
 		})
 	}
@@ -109,12 +118,15 @@ func (m Model) RegexAction(prompt i18n.Key, fn promptHandler) command.Action {
 func (m Model) ShellAction(prompt i18n.Key, fn promptHandler) command.Action {
 	ec := m.component
 	return func(*view.Editor) {
+		head := ec.overlayHead()
 		ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-			return newPromptComponent(cx, promptComponentArgs{
-				editor:  ec,
-				kind:    promptShell,
-				prompt:  i18n.Text(prompt),
-				handler: fn,
+			return newPromptComponent(promptComponentArgs{
+				cx:       cx,
+				editor:   ec,
+				kind:     promptShell,
+				titleKey: prompt,
+				head:     head,
+				handler:  fn,
 			}), nil
 		})
 	}

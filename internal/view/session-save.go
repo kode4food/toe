@@ -121,8 +121,6 @@ func (e *Editor) sessionNodeFor(
 	return out
 }
 
-// sessionDocOffsets returns the pane's remembered offsets for the documents
-// it is not displaying, ordered by document index for a stable session file
 func (v *View) sessionDocOffsets(docIndex map[DocumentId]int) []sessDocOffset {
 	out := make([]sessDocOffset, 0, len(v.docOffsets))
 	for did, p := range v.docOffsets {

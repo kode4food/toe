@@ -9,7 +9,7 @@ import (
 
 type (
 	// Callback lets a component push, pop, or mutate compositor layers
-	// without direct coupling — the compositor executes it after event
+	// without direct coupling, the compositor executes it after event
 	// propagation completes
 	Callback func(*Context, *Compositor) tea.Cmd
 
@@ -68,6 +68,17 @@ type (
 		DragTick(cx *Context, gen int, toLow bool) tea.Cmd
 	}
 
+	overlayDismisser interface {
+		BufferOverlayComponent
+		dismissOverlay() (EventResult, tea.Cmd)
+	}
+
+	// dismissibleOverlay is embedded by BufferOverlayComponent implementers
+	// to reuse the default overlay dismissal behavior
+	dismissibleOverlay struct {
+		overlayBuf
+	}
+
 	// overlayBuf is embedded by BufferOverlayComponent implementers to
 	// reuse their paint buffer across frames instead of reallocating it
 	overlayBuf struct {
@@ -100,6 +111,10 @@ func (o *overlayBuf) maybePaint(
 
 func (o *overlayBuf) markDirty() {
 	o.dirty = true
+}
+
+func (o *dismissibleOverlay) dismissOverlay() (EventResult, tea.Cmd) {
+	return ignoredWith(popLayer), nil
 }
 
 func consumed() EventResult {

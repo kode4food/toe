@@ -3,15 +3,15 @@
   "extend-search-next.docstring": "Nächsten Suchtreffer zur Auswahl hinzufügen",
   "extend-search-prev.docstring": "Vorherigen Suchtreffer zur Auswahl hinzufügen",
   "make-search-word-bounded.docstring": "Aktuelle Suche auf Wortgrenzen beschränken",
+  "option.search.smart-case.docstring": "Reguläre Ausdrücke: Groß-/Kleinschreibung nach Bedarf",
+  "option.search.wrap-around.docstring": "Suche nach letztem Treffer von vorn beginnen",
   "search-backward.docstring": "Rückwärts nach einem regulären Ausdruck suchen",
   "search-forward.docstring": "Nach einem regulären Ausdruck suchen",
   "search-next.docstring": "Nächsten Suchtreffer auswählen",
   "search-prev.docstring": "Vorherigen Suchtreffer auswählen",
-  "search-selection-word.docstring": "Aktuelle Auswahl als Suchmuster verwenden und automatisch an Wortgrenzen mit `\\b` umschließen",
+  "search-selection-word.docstring": "Auswahl suchen, an Wortgrenzen begrenzt",
   "search-selection.docstring": "Aktuelle Auswahl als Suchmuster verwenden",
-  "prompt.searchForward": "vorwärts suchen",
-  "prompt.searchBackward": "rückwärts suchen",
   "status.noMoreMatches": "Keine weiteren Treffer",
-  "status.searchWrapped": "Suche am Dokumentanfang fortgesetzt",
-  "status.registerSet": "Register '{register}' auf '{value}' gesetzt"
+  "status.registerSet": "Register '{register}' auf '{value}' gesetzt",
+  "status.searchWrapped": "Suche am Dokumentanfang fortgesetzt"
 }

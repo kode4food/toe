@@ -21,7 +21,7 @@ func TestImageDisplayNoStarvation(t *testing.T) {
 	cmd1 := r.display(displayArgs{img: img, path: "x", id: 7, cells: small})
 	assert.NotNil(t, cmd1, "first request must transmit")
 
-	// a second, different size arrives before the first is confirmed sent —
+	// a second, different size arrives before the first is confirmed sent,
 	// must be held, not turned into a premature put
 	cmd2 := r.display(displayArgs{img: img, path: "x", id: 7, cells: size})
 	assert.Nil(t, cmd2, "must not put before the initial transmit is sent")

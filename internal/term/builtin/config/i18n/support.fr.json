@@ -2,10 +2,8 @@
   "about.docstring": "Afficher les informations de version et de licence",
   "character-info.docstring": "Afficher les informations sur le caractère sous le curseur principal",
   "echo.docstring": "Afficher les arguments fournis dans la barre d’état",
-  "redraw.docstring": "Effacer et redessiner toute l’interface",
-  "goto.docstring": "Aller à un emplacement path:line:col",
-  "about.version": "Version",
-  "about.development": "Version de développement",
+  "error.invalidLineNumber": "numéro de ligne invalide",
   "error.noLineNumber": "numéro de ligne manquant",
-  "error.invalidLineNumber": "numéro de ligne invalide"
+  "goto.docstring": "Aller à un emplacement path:line:col",
+  "redraw.docstring": "Effacer et redessiner toute l’interface"
 }

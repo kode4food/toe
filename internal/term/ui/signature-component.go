@@ -3,7 +3,6 @@ package ui
 import (
 	"slices"
 	"strconv"
-	"strings"
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
@@ -146,7 +145,7 @@ func (s *signatureHelpComponent) paint(
 	if len(s.lines) == 0 || area.Height < 3 {
 		return
 	}
-	renderSignatureSeparator(renderSignatureSeparatorArgs{
+	drawPopupRule(drawPopupRuleArgs{
 		buf:   buf,
 		at:    geom.Point{Y: area.Y + 1},
 		width: pl.Width,
@@ -264,18 +263,6 @@ func (s *signatureHelpComponent) renderSignature(
 	bg := cx.Theme().Get("ui.popup").BgColor()
 	st := inheritStyleBackground(cx.Theme().Get("ui.selection"), bg)
 	buf.SetString(geom.Point{X: x, Y: area.Y}, text, st)
-}
-
-type renderSignatureSeparatorArgs struct {
-	buf   *tui.Buffer
-	at    geom.Point
-	width int
-	style tui.Style
-}
-
-func renderSignatureSeparator(args renderSignatureSeparatorArgs) {
-	line := borderML + strings.Repeat(borderH, max(args.width-2, 0)) + borderMR
-	args.buf.SetString(args.at, line, args.style)
 }
 
 func pushSignatureHelpLayer(comp *Compositor, layer *signatureHelpComponent) {

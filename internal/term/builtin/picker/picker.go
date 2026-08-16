@@ -68,7 +68,8 @@ func Module(model ui.Model) command.Module {
 
 func splitRatiosOption(model ui.Model) command.Option {
 	return command.Option{
-		Key: splitRatiosPrefix,
+		Key:     splitRatiosPrefix,
+		Private: true,
 		KeyGet: func(*view.Editor) (map[string]string, error) {
 			ratios := model.PickerLayoutOptions().SplitRatios
 			out := make(map[string]string, len(ratios))

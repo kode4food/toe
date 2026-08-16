@@ -9,7 +9,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Model is the root Bubbletea model — a thin wrapper around Compositor
+// Model is the root Bubbletea model, a thin wrapper around Compositor
 type Model struct {
 	compositor *Compositor
 	context    *Context

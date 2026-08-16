@@ -11,21 +11,21 @@ Enter command mode with `:`. Any command below can be run by name; the Aliases c
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `write` | `w` | Write changes to disk. Accepts an optional path (:write some/path.txt) |
-| `write!` | `w!` | Force write changes to disk creating necessary subdirectories. Accepts an optional path (:write! some/path.txt) |
+| `write` | `w` | Write changes to disk. Accepts an optional path |
+| `write!` | `w!` | Force write changes to disk, creating subdirectories |
 | `write-all` | `wa` | Write changes from all buffers to disk |
-| `write-all!` | `wa!` | Forcefully write changes from all buffers to disk creating necessary subdirectories |
+| `write-all!` | `wa!` | Force write all buffers, creating subdirectories |
 | `write-quit` | `wq` | Write all documents and quit |
 | `write-quit!` | `wq!` | Write all documents and quit, discarding scratch buffers |
-| `write-buffer-close` | `wbc` | Write changes to disk and closes the buffer. Accepts an optional path (:write-buffer-close some/path.txt) |
-| `write-buffer-close!` | `wbc!` | Force write changes to disk creating necessary subdirectories and closes the buffer. Accepts an optional path (:write-buffer-close! some/path.txt) |
+| `write-buffer-close` | `wbc` | Write changes to disk and close the buffer |
+| `write-buffer-close!` | `wbc!` | Force write and close the buffer, creating subdirectories |
 | `update` | `u` | Write changes only if the file has been modified |
 | `open` | `o`, `edit`, `e` | Open a file from disk into the current view |
 | `new` | `n` | Create a new scratch buffer |
 | `reload` | `rl` | Discard changes and reload from the source file |
-| `reload-all` | `rla` | Discard changes and reload all documents from the source files |
-| `move` | `mv` | Move the current buffer and its corresponding file to a different path |
-| `move!` | `mv!` | Move the current buffer and its corresponding file to a different path creating necessary subdirectories |
+| `reload-all` | `rla` | Discard changes and reload all documents from disk |
+| `move` | `mv` | Move the current buffer and its file to a different path |
+| `move!` | `mv!` | Move the buffer and its file, creating subdirectories |
 | `read` | `r` | Load a file into buffer |
 
 Clean buffers reload automatically after external changes. Dirty buffers remain untouched; use `reload`, `reload-all`, or `write` to resolve them.
@@ -35,7 +35,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | Command | Aliases | Description |
 |---------|---------|-------------|
 | `buffer-close` | `bc`, `bclose` | Close the current buffer |
-| `buffer-close-force` | `buffer-close!`, `bc!`, `bclose!` | Close the current buffer forcefully, ignoring unsaved changes |
+| `buffer-close-force` | `buffer-close!`, `bc!`, `bclose!` | Close the current buffer, ignoring unsaved changes |
 | `buffer-close-others` | `bco`, `bcloseother` | Close all buffers but the currently focused one |
 | `buffer-close-all` | `bca`, `bcloseall` | Close all buffers without quitting |
 | `buffer-next` | `bn`, `bnext` | Goto next buffer |
@@ -135,7 +135,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `select-all` |  | Select whole document |
 | `select-line-above` |  | Select line above |
 | `select-line-below` |  | Select line below |
-| `extend-line-below` |  | Select current line, if already selected, extend to next line |
+| `extend-line-below` |  | Select the current line, or extend to the next line |
 | `extend-to-line-bounds` |  | Extend selection to line bounds |
 | `shrink-to-line-bounds` |  | Shrink selection to line bounds |
 | `expand-selection` |  | Expand selection to syntax node |
@@ -160,7 +160,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `delete-char-backward` |  | Delete previous char |
 | `delete-char-forward` |  | Delete next char |
 | `insert-newline` |  | Insert newline char |
-| `smart-tab` |  | Insert tab in leading whitespace; otherwise move past the enclosing syntax node |
+| `smart-tab` |  | Insert tab in leading whitespace; else move past the node |
 | `insert-tab` |  | Insert tab at each cursor |
 | `replace` |  | Replace with new char |
 | `delete-selection` |  | Delete selection |
@@ -225,7 +225,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `search-backward` |  | Reverse search for regex pattern |
 | `search-next` |  | Select next search match |
 | `search-prev` |  | Select previous search match |
-| `search-selection-word` |  | Use current selection as the search pattern, automatically wrapping with `\b` on word boundaries |
+| `search-selection-word` |  | Search for the selection, wrapped on word boundaries |
 | `make-search-word-bounded` |  | Modify current search to make it word bounded |
 | `search-selection` |  | Use current selection as search pattern |
 | `extend-search-next` |  | Add next search match to selection |
@@ -251,7 +251,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 |---------|---------|-------------|
 | `insert-register` |  | Insert register |
 | `select-register` |  | Select register |
-| `clear-register` |  | Clear given register. If no argument is provided, clear all registers |
+| `clear-register` |  | Clear the given register, or all registers if none is given |
 
 ## Macros
 
@@ -269,7 +269,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `paste-after` | `clipboard-paste-after` | Paste clipboard or register after selection |
 | `paste-before` | `clipboard-paste-before` | Paste clipboard or register before selection |
 | `replace-with-yanked` |  | Replace selection with clipboard or register |
-| `yank-join` |  | Yank joined selections to clipboard or register. First argument sets the separator, a newline by default |
+| `yank-join` |  | Yank joined selections. First argument sets the separator |
 | `yank-to-primary-clipboard` | `primary-clipboard-yank` | Yank selections to primary clipboard |
 | `paste-primary-clipboard-after` | `primary-clipboard-paste-after` | Paste primary clipboard after selections |
 | `paste-primary-clipboard-before` | `primary-clipboard-paste-before` | Paste primary clipboard before selections |
@@ -289,7 +289,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `format` | `fmt` | Format the file using an external formatter or language server |
+| `format` | `fmt` | Format the file with an external formatter or LSP |
 | `format-selections` |  | Format selection |
 | `reflow` |  | Hard-wrap the current selection of lines to a given width |
 | `sort` |  | Sort ranges in selection |
@@ -391,8 +391,8 @@ Splitting a document or image pane creates another view of the same document or 
 | `hover` |  | Show docs for item under cursor |
 | `rename-symbol` |  | Rename symbol |
 | `signature-help` |  | Show signature help |
-| `lsp-restart` |  | Restarts the given language servers, or all language servers used by the current document if no arguments are supplied |
-| `lsp-stop` |  | Stops the given language servers, or all language servers used by the current document if no arguments are supplied |
+| `lsp-restart` |  | Restart the given language servers, or all for this document |
+| `lsp-stop` |  | Stop the given language servers, or all for this document |
 | `lsp-workspace-command` |  | Execute a language server workspace command |
 
 ## Version Control
@@ -413,7 +413,7 @@ Splitting a document or image pane creates another view of the same document or 
 | `show-directory` | `pwd` | Show the current working directory |
 | `show-directory-stack` |  | Show the directory stack as a space delimited string |
 | `push-directory` | `pushd` | Save and then change the current directory |
-| `pop-directory` | `popd` | Remove the top entry from the directory stack and cd to the new top directory |
+| `pop-directory` | `popd` | Remove the top directory stack entry and cd to the new top |
 
 ## Config
 
@@ -428,10 +428,10 @@ Splitting a document or image pane creates another view of the same document or 
 | `log-open` |  | Open the editor log file |
 | `workspace-trust` |  | Add current workspace to the list of trusted workspaces |
 | `workspace-untrust` |  | Remove current workspace from the list of trusted workspaces |
-| `theme` |  | Change the editor theme (show current theme if no name specified) |
-| `set-language` | `lang` | Set the language of current buffer (show current language if no value specified) |
-| `set-line-ending` | `line-ending` | Set the document's default line ending. Options: crlf, lf, native |
-| `indent-style` |  | Set the indentation style for editing. ('t' for tabs or 1-16 for number of spaces) |
+| `theme` |  | Change the editor theme (show current if no name specified) |
+| `set-language` | `lang` | Set the buffer's language (show current if not specified) |
+| `set-line-ending` | `line-ending` | Set the document's line ending: crlf, lf, or native |
+| `indent-style` |  | Set the indentation style ('t' for tabs, or 1-16 spaces) |
 
 ## Session
 

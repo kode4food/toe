@@ -220,8 +220,6 @@ func TestImageInput(t *testing.T) {
 	assert.Equal(t, 100, pane.Zoom())
 }
 
-// readyImage drives a transmit/ready cycle at the current zoom, then renders so
-// the pan bounds are established for the panning tests
 func readyImage(m ui.Model) ui.Model {
 	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
@@ -406,7 +404,7 @@ func TestImagePanRestore(t *testing.T) {
 	assert.NotEqual(t, geom.Point{}, want)
 	assert.NoError(t, e.SaveSession(session, nil))
 
-	// session 2: faithful startup — restore before the first WindowSize
+	// session 2: faithful startup, restore before the first WindowSize
 	next := view.NewEditor(root)
 	next.Options().Mouse = true
 	nm := ui.New(next, command.NewKeymaps())
@@ -545,8 +543,6 @@ func collectModelRawMsgs(m ui.Model, cmd tea.Cmd) (ui.Model, []string) {
 	return m, out
 }
 
-// feedImageMsgs feeds every message a cmd produces back through Update, which
-// delivers the imageReadyMsg that ungates placeholder rendering
 func feedImageMsgs(m ui.Model, cmd tea.Cmd) ui.Model {
 	m, _ = collectModelRawMsgs(m, cmd)
 	return m
@@ -786,7 +782,7 @@ func TestImageZoomPending(t *testing.T) {
 
 func TestImageEviction(t *testing.T) {
 	if testing.Short() {
-		t.Skip("slow: writes and decodes many images to exercise cache eviction")
+		t.Skip("slow: decodes many images to exercise cache eviction")
 	}
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	t.Setenv("SSH_CONNECTION", "")

@@ -308,8 +308,6 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	}
 }
 
-// reports the caret position regardless of cursor shape, so caret-anchored
-// overlays still work under the normal-mode block cursor that Cursor hides
 func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
@@ -420,7 +418,6 @@ func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	})
 }
 
-// start restarts the animation, returning the generation its ticks must carry
 func (a *animationState) start() int {
 	a.phase = 0
 	a.active = true

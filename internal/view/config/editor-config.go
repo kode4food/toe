@@ -124,8 +124,6 @@ func editorConfigSectionMatches(c glob.Candidate) bool {
 	return glob.Match(glob.Candidate{Pattern: pattern, Path: c.Path})
 }
 
-// isEditorConfigGlobRelative reports whether a glob pattern contains '/'
-// outside of bracket expressions, making it relative to the config file
 func isEditorConfigGlobRelative(pattern string) bool {
 	inBracket := false
 	for _, ch := range pattern {

@@ -274,7 +274,7 @@ injection-regex = "injlang|il"
 		assert.Equal(t, "injlang", name)
 	})
 
-	t.Run("injection regex no match uses the default", func(t *testing.T) {
+	t.Run("unmatched injection uses default", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
 name = "injlang2"

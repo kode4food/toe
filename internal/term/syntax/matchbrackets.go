@@ -87,8 +87,6 @@ func bracketPairFor(ch rune) (core.BracketPair, bool) {
 	return core.BracketPair{}, false
 }
 
-// anonymous first/last children confirm real bracket delimiters, not nodes
-// whose content merely starts/ends with a bracket character
 func isBracketNode(n *sitter.Node, pair core.BracketPair) bool {
 	count := n.ChildCount()
 	if count == 0 {

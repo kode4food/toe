@@ -36,7 +36,7 @@ func TestMacroRecordingStatus(t *testing.T) {
 
 		assert.True(t, strings.HasSuffix(prompt, " REC a "))
 		assert.True(t, strings.HasSuffix(typing, " REC a "))
-		assert.Contains(t, typing, "w")
+		assert.Contains(t, promptText(m), "w")
 	})
 
 	t.Run("badge blinks off and back on", func(t *testing.T) {
@@ -212,7 +212,7 @@ func TestEditorMacro(t *testing.T) {
 		assert.Equal(t, "xxxxxx", doc.Text().String())
 	})
 
-	t.Run("recording writes the macro to its register", func(t *testing.T) {
+	t.Run("recording writes to its register", func(t *testing.T) {
 		m, e := macroModel(t)
 		m = sendKey(m, 'z')
 		m = sendKey(m, 'a')
@@ -226,7 +226,7 @@ func TestEditorMacro(t *testing.T) {
 		assert.Equal(t, "i x esc", text)
 	})
 
-	t.Run("replays a macro written straight to a register", func(t *testing.T) {
+	t.Run("replays a register-written macro", func(t *testing.T) {
 		// registers are what the session persists, so a macro restored from
 		// one replays without any separate macro state being installed
 		m, e := macroModel(t)
@@ -251,8 +251,6 @@ func TestEditorMacro(t *testing.T) {
 	})
 }
 
-// macroModelWithContinuation extends macroModel with a two-key command
-// ('g' then any key) so that macro replay exercises the continuation loop
 func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 	t.Helper()
 	e := view.NewEditor(t.TempDir())
@@ -280,8 +278,6 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 	return m, e
 }
 
-// macroModel wires lowercase keys that avoid default bindings while exercising
-// insert recording and replay end to end
 func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 	t.Helper()
 	e := view.NewEditor(t.TempDir())

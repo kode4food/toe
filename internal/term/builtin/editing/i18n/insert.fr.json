@@ -10,5 +10,5 @@
   "insert-tab.docstring": "Insérer une tabulation à chaque curseur",
   "kill-to-line-end.docstring": "Supprimer jusqu’à la fin de la ligne",
   "kill-to-line-start.docstring": "Supprimer jusqu’au début de la ligne",
-  "smart-tab.docstring": "Insérer une tabulation dans l’indentation, sinon dépasser le nœud syntaxique englobant"
+  "smart-tab.docstring": "Tabulation initiale, sinon dépasser le nœud syntaxique"
 }

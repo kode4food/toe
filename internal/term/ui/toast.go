@@ -40,7 +40,8 @@ const (
 	toastTickEvery = 250 * time.Millisecond
 	toastMaxRows   = 5
 	toastPadX      = 1
-	toastGap       = 1
+	toastGapX      = 2 // columns kept clear to the right of the popup
+	toastGapY      = 2 // rows kept clear below it, statusline included
 	toastChrome    = 2 // top and bottom border
 )
 
@@ -164,13 +165,14 @@ func (r *renderPass) renderToasts(buf *tui.Buffer, bottom int) {
 	for _, item := range items {
 		textW = max(textW, runewidth.StringWidth(item.text))
 	}
-	boxW := min(textW+2*toastPadX+2, max(r.size.Width-toastGap, 1))
+	boxW := min(textW+2*toastPadX+2, max(r.size.Width-toastGapX, 1))
+	boxH := len(items) + toastChrome
 	box := geom.Area{
 		Point: geom.Point{
-			X: max(r.size.Width-boxW-toastGap, 0),
-			Y: max(bottom-len(items)-toastChrome, 0),
+			X: max(r.size.Width-boxW-toastGapX, 0),
+			Y: max(bottom-toastGapY-boxH+1, 0),
 		},
-		Size: geom.Size{Width: boxW, Height: len(items) + toastChrome},
+		Size: geom.Size{Width: boxW, Height: boxH},
 	}
 	r.editor.toasts.bounds = box
 	area := pop.drawInto(buf, box)

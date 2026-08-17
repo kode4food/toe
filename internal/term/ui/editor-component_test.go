@@ -962,10 +962,10 @@ func TestGotoLineKeySequence(t *testing.T) {
 		e.SetStatusMsg("1234567")
 		m = resize(m, 8, 6)
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
-		row := []rune(toastRow(m, "\u2026"))
-		// the gap keeps the popup off the final column, which auto-wraps
+		row := []rune(toastRow(m, "\u2570"))
+		// the gap keeps the popup off the final columns, which auto-wrap
 		assert.NotEmpty(t, row)
-		assert.Equal(t, '\u2502', row[6])
+		assert.Equal(t, '\u256f', row[5])
 		for _, ln := range lines {
 			assert.LessOrEqual(t, len([]rune(ln)), 8)
 		}

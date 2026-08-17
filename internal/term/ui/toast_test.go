@@ -52,7 +52,7 @@ func TestToasts(t *testing.T) {
 		assert.Empty(t, toastRow(m, "hello there"))
 	})
 
-	t.Run("stays clear of the statusline", func(t *testing.T) {
+	t.Run("insets from the bottom-right corner", func(t *testing.T) {
 		m := toastModel(t)
 
 		m = m.ExecTypable("say")
@@ -60,7 +60,18 @@ func TestToasts(t *testing.T) {
 		lines := strings.Split(
 			strings.TrimRight(stripANSI(m.View().Content), "\n"), "\n",
 		)
-		assert.NotContains(t, lines[len(lines)-1], "hello there")
+		// two rows below the popup, the statusline among them
+		bottom := len(lines) - 1
+		for _, line := range lines[bottom-1:] {
+			assert.NotContains(t, line, "hello there")
+		}
+		assert.Contains(t, lines[bottom-2], "╰")
+
+		// two columns clear to the right of every popup row
+		for _, y := range []int{bottom - 4, bottom - 3, bottom - 2} {
+			assert.Equal(t, "  ", lines[y][len(lines[y])-2:])
+			assert.NotEqual(t, ' ', rune(lines[y][len(lines[y])-3]))
+		}
 	})
 
 	t.Run("a click dismisses just that message", func(t *testing.T) {

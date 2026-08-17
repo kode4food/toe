@@ -2,37 +2,21 @@
 
 Notable changes to toe.
 
-## 0.3.x
+## 0.3.0
 
-### Clipboard
+### Interface
 
-- Made yank and paste use the system clipboard by default, while explicit registers and deletions retain their existing behavior
+- Removed the command line. Messages appear as a toast in the bottom-right corner, colored by severity and dismissed by a click or a timer
+- Moved commands, search, and the other prompts into a centered popup. Completions list beside the input with the first one selected, so `Tab` or `Enter` accepts it and a second `Enter` runs the line
+- Moved pending keys and their hints into a centered popup listing what can follow, with backspace to undo the last key or count digit
+- Added a read-only `[messages]` buffer holding every message, reachable from the buffer picker or the `messages` command
+- Added colored Nerd Font file and directory icons to pickers and previews
 
 ### Commands
 
-- Added consistent argument validation and completion across commands, including split targets, history steps, language servers, and option cycling
-- Renamed `split` to `hsplit`, retaining `split` as an alias, and removed the obsolete `encoding` command
-
-### Command Line
-
-- Reworked command-line feedback with active-state highlighting and a blinking macro-recording badge
-- Made the command palette prompt for required arguments before running a command
-- Removed the command line, moving messages into a dismissable toast popup in the bottom-right corner and the register and recording badges onto the statusline
-- Logged every message to a read-only `[messages]` buffer, reachable from the buffer picker or the `messages` command
-
-### Key Entry
-
-- Moved pending keys and interaction hints into a centered popup listing the keys available next
-- Added backspace to undo the last key or count digit typed toward a command
-- Gave the popup and picker input the editor's insert cursor
-
-### Localization
-
-- Added locale-aware plural forms for counted messages
-
-### Pickers
-
-- Added colored Nerd Font file and directory icons to pickers and previews
+- Made yank and paste use the system clipboard by default
+- Added argument validation and completion across commands
+- Documented every command and option
 
 ## 0.2.4
 

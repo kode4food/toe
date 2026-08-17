@@ -18,6 +18,9 @@ type PickerComponent struct {
 	previewBounds geom.Area
 	splitBounds   geom.Area
 	caret         geom.Point
+	screen        geom.Size
+	dragEdge      overlayDrag
+	dragWrap      int
 	dragSplit     bool
 }
 
@@ -74,14 +77,15 @@ func (p *PickerComponent) HandleEvent(
 
 // Layout centres the picker, sizing the preview to the space left
 func (p *PickerComponent) Layout(
-	_ *Context, screen geom.Size,
+	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
-	size := pickerOverlaySize(screen)
+	p.screen = screen
+	size := pickerOverlaySize(cx, screen, p.state.source.ID())
 	if size.Width < 4 || size.Height < 4 {
 		return geom.Area{}, false
 	}
 	left := (screen.Width - size.Width) / 2
-	top := max((screen.Height-2-size.Height)/2, 0)
+	top := max((pickerAvailHeight(screen)-size.Height)/2, 0)
 	return geom.Area{
 		Point: geom.Point{X: left, Y: top},
 		Size:  size,
@@ -228,9 +232,15 @@ func (p *PickerComponent) handleMouseClick(
 ) (EventResult, tea.Cmd) {
 	p.markDirty()
 	clickPt := geom.Point{X: msg.X, Y: msg.Y}
-	if msg.Button == tea.MouseLeft && p.splitBounds.Contains(clickPt) {
+	primary := msg.Button == tea.MouseLeft
+	// the divider's ends sit on the frame border, and dragging the split is
+	// the more likely intent there
+	if primary && p.splitBounds.Contains(clickPt) {
 		p.dragSplit = true
 		p.updateSplitRatio(cx, msg.X)
+		return consumed(), nil
+	}
+	if primary && p.beginEdgeDrag(cx, clickPt) {
 		return consumed(), nil
 	}
 	list := listScroll{
@@ -246,21 +256,65 @@ func (p *PickerComponent) handleMouseClick(
 func (p *PickerComponent) handleMouseMotion(
 	cx *Context, msg tea.MouseMotionMsg,
 ) (EventResult, tea.Cmd) {
-	if !p.dragSplit || msg.Button != tea.MouseLeft {
+	if msg.Button != tea.MouseLeft {
 		return consumed(), nil
 	}
-	p.markDirty()
-	p.updateSplitRatio(cx, msg.X)
+	switch {
+	case p.dragEdge.active():
+		p.resizeToEdge(cx, geom.Point{X: msg.X, Y: msg.Y})
+	case p.dragSplit:
+		p.markDirty()
+		p.updateSplitRatio(cx, msg.X)
+	}
 	return consumed(), nil
 }
 
 func (p *PickerComponent) handleMouseRelease(
 	msg tea.MouseReleaseMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.Button == tea.MouseLeft {
-		p.dragSplit = false
+	if msg.Button != tea.MouseLeft {
+		return consumed(), nil
+	}
+	p.dragSplit = false
+	if p.dragEdge.active() {
+		p.dragEdge = overlayDrag{}
+		// the frozen wrap width is stale now, so reflow at the final size
+		p.markDirty()
 	}
 	return consumed(), nil
+}
+
+// held still for the duration of a border drag, so the preview reflows once
+// on release instead of on every cell crossed
+func (p *PickerComponent) previewWrapWidth(innerW int) int {
+	if p.dragEdge.active() && p.dragWrap > 0 {
+		return p.dragWrap
+	}
+	return innerW
+}
+
+func (p *PickerComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
+	id := p.state.source.ID()
+	drag := overlayDrag{
+		startWidth:  cx.pickerLayout.widthScale(id, defaultPickerScale),
+		startHeight: cx.pickerLayout.heightScale(id, defaultPickerScale),
+	}
+	if !drag.begin(p.bounds, at) {
+		return false
+	}
+	p.dragEdge = drag
+	p.dragWrap = max(p.previewBounds.Width-2*overlayPadX, 1)
+	return true
+}
+
+func (p *PickerComponent) resizeToEdge(cx *Context, at geom.Point) {
+	cx.pickerLayout = p.dragEdge.applyTo(
+		cx.pickerLayout, p.state.source.ID(), at, geom.Size{
+			Width:  p.screen.Width,
+			Height: pickerAvailHeight(p.screen),
+		},
+	)
+	p.markDirty()
 }
 
 func (p *PickerComponent) updateSplitRatio(cx *Context, x int) {
@@ -317,6 +371,7 @@ func (p *PickerComponent) scrollPreviewByWheel(
 func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 	ps := p.state
 	p.dragSplit = false
+	p.dragEdge = overlayDrag{}
 	if ps.load.dynamicStop != nil {
 		ps.load.dynamicStop()
 	}

@@ -24,15 +24,17 @@ type (
 		completion completionState
 		bg         tui.Color
 
-		editor  *EditorComponent
-		bounds  geom.Area
-		kind    promptKind
-		forward bool
-		title   string
-		head    string
-		buf     string
-		caret   int
-		horzOff int
+		editor   *EditorComponent
+		bounds   geom.Area
+		screen   geom.Size
+		dragEdge overlayDrag
+		kind     promptKind
+		forward  bool
+		title    string
+		head     string
+		buf      string
+		caret    int
+		horzOff  int
 
 		handler promptHandler
 		builder pickerBuilder
@@ -71,15 +73,23 @@ const (
 )
 
 const (
-	promptWidthPct  = 55
-	promptHeightPct = 70
-	promptChrome    = 3 // top border, input row, bottom border
-	promptRule      = 1 // divider between the input and its completions
-	promptKeepClear = 1 // the statusline the prompt centers above
-	promptPadX      = 1
+	defaultPromptWidthScale = 0.55
+	promptHeightScale       = 0.70
+
+	promptChrome = 3 // top border, input row, bottom border
+	promptRule   = 1 // divider between input and its completions
 )
 
 const promptEllipsis = "\u2026" // '…' - horizontal ellipsis
+
+// layout ids keep each prompt's saved size separate from the pickers'
+var promptLayoutIDs = [...]string{
+	promptCmd:            "prompt.command",
+	promptSearch:         "prompt.search",
+	promptRegex:          "prompt.regex",
+	promptShell:          "prompt.shell",
+	promptTerminalSearch: "prompt.terminal-search",
+}
 
 var _ BufferOverlayComponent = (*PromptComponent)(nil)
 
@@ -131,7 +141,11 @@ func (p *PromptComponent) HandleEvent(
 	case tea.KeyPressMsg:
 		return p.handleKey(cx, msg), nil
 	case tea.MouseClickMsg:
-		return p.handleMouseClick(msg), nil
+		return p.handleMouseClick(cx, msg), nil
+	case tea.MouseMotionMsg:
+		return p.handleMouseMotion(cx, msg), nil
+	case tea.MouseReleaseMsg:
+		return p.handleMouseRelease(msg), nil
 	case tea.MouseWheelMsg:
 		return p.handleMouseWheel(cx, msg), nil
 	case tea.MouseMsg:
@@ -145,20 +159,22 @@ func (p *PromptComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
 	p.markDirty()
+	p.screen = screen
 	if !p.completion.done {
 		p.recalculateCompletion(cx)
 	}
-	frame := promptOverlayFrame(screen)
+	within := geom.Size{
+		Width:  screen.Width,
+		Height: max(screen.Height-overlayKeepClear, 0),
+	}
+	frame := p.overlayFrame(cx, within)
 	p.syncCompletionRows(frame.Size)
 	rows := p.completion.list.rows
-	height := promptChrome
+	size := geom.Size{Width: frame.Width, Height: promptChrome}
 	if rows > 0 {
-		height += rows + promptRule
+		size.Height += rows + promptRule
 	}
-	p.bounds = geom.Area{
-		Point: frame.Point,
-		Size:  geom.Size{Width: frame.Width, Height: height},
-	}
+	p.bounds = geom.Area{Point: frame.Point, Size: size}
 	return p.bounds, true
 }
 
@@ -195,7 +211,7 @@ func (p *PromptComponent) Cursor(
 	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
 	return insertCursorAt(cx, geom.Point{
-		X: p.bounds.X + 1 + promptPadX + p.caretDisplayX(),
+		X: p.bounds.X + 1 + overlayPadX + p.caretDisplayX(),
 		Y: p.bounds.Y + 1,
 	})
 }
@@ -205,13 +221,13 @@ func (p *PromptComponent) popup(cx *Context) popup {
 	return popup{
 		borderStyle:  st.Fg(pickerFrameStyle(cx).FgColor()),
 		contentStyle: st,
-		padX:         promptPadX,
+		padX:         overlayPadX,
 	}
 }
 
 func (p *PromptComponent) textWidth() int {
 	label := runewidth.StringWidth(p.inputLabel())
-	inner := p.bounds.Width - 2 - 2*promptPadX
+	inner := p.bounds.Width - 2 - 2*overlayPadX
 	return max(inner-label, 1)
 }
 
@@ -495,19 +511,72 @@ func (p *PromptComponent) paintLine(
 	}
 }
 
-func promptOverlayFrame(screen geom.Size) geom.Area {
-	within := geom.Size{
-		Width:  screen.Width,
-		Height: max(screen.Height-promptKeepClear, 0),
-	}
+func (p *PromptComponent) overlayFrame(
+	cx *Context, within geom.Size,
+) geom.Area {
+	width := cx.pickerLayout.widthScale(p.layoutID(), defaultPromptWidthScale)
 	size := geom.Size{
-		Width:  max(within.Width*promptWidthPct/100, 1),
-		Height: max(within.Height*promptHeightPct/100, promptChrome),
+		Width: max(scaleExtent(within.Width, width), 1),
+		Height: max(
+			scaleExtent(within.Height, promptHeightScale), promptChrome,
+		),
 	}
 	return geom.Area{
 		Point: geom.Area{Size: within}.Center(size),
 		Size:  size,
 	}
+}
+
+func (p *PromptComponent) handleMouseMotion(
+	cx *Context, msg tea.MouseMotionMsg,
+) EventResult {
+	if msg.Button == tea.MouseLeft && p.dragEdge.active() {
+		p.resizeToEdge(cx, geom.Point{X: msg.X, Y: msg.Y})
+	}
+	return consumed()
+}
+
+func (p *PromptComponent) handleMouseRelease(
+	msg tea.MouseReleaseMsg,
+) EventResult {
+	if msg.Button == tea.MouseLeft {
+		p.dragEdge = overlayDrag{}
+	}
+	return consumed()
+}
+
+func (p *PromptComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
+	drag := overlayDrag{
+		startWidth: cx.pickerLayout.widthScale(
+			p.layoutID(), defaultPromptWidthScale,
+		),
+	}
+	if !drag.begin(p.bounds, at) {
+		return false
+	}
+	// the box grows downward from a fixed input row, so a vertical drag would
+	// move it rather than resize it
+	drag.signY = 0
+	if !drag.active() {
+		return false
+	}
+	p.dragEdge = drag
+	return true
+}
+
+func (p *PromptComponent) resizeToEdge(cx *Context, at geom.Point) {
+	cx.pickerLayout = p.dragEdge.applyTo(
+		cx.pickerLayout, p.layoutID(), at,
+		geom.Size{Width: p.screen.Width},
+	)
+	p.markDirty()
+}
+
+func (p *PromptComponent) layoutID() string {
+	if int(p.kind) >= len(promptLayoutIDs) || promptLayoutIDs[p.kind] == "" {
+		return "prompt"
+	}
+	return promptLayoutIDs[p.kind]
 }
 
 func promptWordLeft(runes []rune, caret int) int {

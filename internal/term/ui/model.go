@@ -73,6 +73,9 @@ func (m Model) SetPickerLayoutOptions(opts PickerLayoutOptions) {
 	for key, ratio := range opts.SplitRatios {
 		opts.SplitRatios[key] = clampPickerSplitRatio(ratio)
 	}
+	for key, scale := range opts.Scales {
+		opts.Scales[key] = clampOverlayScale(scale)
+	}
 	m.context.pickerLayout = opts
 }
 

@@ -51,7 +51,6 @@ const (
 	toastWidthPct = 40
 	toastMinWidth = 40
 	toastMaxWidth = 80
-	toastPadX     = 1
 	toastGapX     = 2 // columns kept clear to the right of the popup
 	toastGapY     = 2 // rows kept clear below it, statusline included
 	toastChrome   = 2 // top and bottom border
@@ -298,7 +297,7 @@ func (r *renderPass) renderToasts(buf *tui.Buffer, bottom int) {
 	pop := popup{
 		borderStyle:  th.Get("ui.popup"),
 		contentStyle: th.Get("ui.popup"),
-		padX:         toastPadX,
+		padX:         overlayPadX,
 	}
 	title := i18n.Text(i18n.ToastTitle)
 	boxW := toastBoxWidth(r.size.Width)

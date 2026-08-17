@@ -65,7 +65,7 @@ func (p *PromptComponent) acceptCompletion() bool {
 
 func (p *PromptComponent) syncCompletionRows(frame geom.Size) {
 	items := p.completion.items
-	innerW := frame.Width - 2 - 2*promptPadX
+	innerW := frame.Width - 2 - 2*overlayPadX
 	fit := frame.Height - promptChrome - promptRule
 	rows := min(len(items), max(fit, 0))
 	if rows <= 0 || innerW < 1 {
@@ -139,8 +139,13 @@ func (p *PromptComponent) ensureCompletionVisible() {
 	p.completion.list.scroll = p.completion.list.ensureCursorVisible()
 }
 
-func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
+func (p *PromptComponent) handleMouseClick(
+	cx *Context, msg tea.MouseClickMsg,
+) EventResult {
 	at := geom.Point{X: msg.X, Y: msg.Y}
+	if msg.Button == tea.MouseLeft && p.beginEdgeDrag(cx, at) {
+		return consumed()
+	}
 	if idx, ok := p.completion.list.indexAt(p.completion.bounds, at); ok {
 		p.completion.list.moveTo(idx)
 		p.acceptCompletion()

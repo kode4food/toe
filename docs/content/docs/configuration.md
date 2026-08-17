@@ -253,7 +253,7 @@ right = ["version-control", "diagnostics", "position"]
 
 ### Pickers
 
-Dragging a picker's split divider adjusts its list/preview ratio. Those ratios are remembered per picker by auto-session rather than set in config.
+Dragging a picker's split divider adjusts its list/preview ratio, and dragging its border resizes it. Both are remembered per picker by auto-session rather than set in config.
 
 | TOML key | Type | Default | Description |
 |----------|------|---------|-------------|

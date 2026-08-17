@@ -15,6 +15,15 @@ type popup struct {
 	padX         int
 }
 
+const (
+	// one column of content padding inside every popup border
+	overlayPadX = 1
+
+	// the bottom row a centered overlay stays clear of: the bottom rigtht
+	// pane's statusline, which carries maximized, register, and macro state
+	overlayKeepClear = 1
+)
+
 func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 	for dy := range area.Height {
 		buf.FillRange(

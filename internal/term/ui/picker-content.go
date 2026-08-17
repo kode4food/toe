@@ -21,10 +21,11 @@ type pickerItemRender struct {
 
 const (
 	pickerMarkerW = 3
-	pickerPadX    = 1
 
 	pickerSplitFrameOverhead = 3
 	pickerMinSplitPaneWidth  = 20
+
+	defaultPickerScale = 0.9
 )
 
 func writePickerPromptRow(
@@ -36,7 +37,7 @@ func writePickerPromptRow(
 	)
 	cl := runewidth.StringWidth(count)
 
-	queryArea := max(area.Width-2*pickerPadX-1-cl, 0)
+	queryArea := max(area.Width-2*overlayPadX-1-cl, 0)
 
 	displayQuery := p.list.query
 	ql := runewidth.StringWidth(p.list.query)
@@ -60,14 +61,14 @@ func writePickerPromptRow(
 
 	buf.FillRange(area.Point, area.Width, bgTUI)
 	buf.SetString(geom.Point{
-		X: area.X + pickerPadX,
+		X: area.X + overlayPadX,
 		Y: area.Y,
 	}, displayQuery, queryTUI)
 	buf.SetString(geom.Point{
-		X: area.X + pickerPadX + ql + 1 + gap,
+		X: area.X + overlayPadX + ql + 1 + gap,
 		Y: area.Y,
 	}, count, countTUI)
-	return geom.Point{X: area.X + pickerPadX + ql, Y: area.Y}
+	return geom.Point{X: area.X + overlayPadX + ql, Y: area.Y}
 }
 
 func writePickerHeader(
@@ -100,9 +101,9 @@ func writePickerSection(
 	base := pickerSectionStyle(cx)
 	buf.FillRange(at, args.width, base)
 	label := runewidth.Truncate(
-		m.item.Display, max(args.width-pickerPadX-1, 0), "",
+		m.item.Display, max(args.width-overlayPadX-1, 0), "",
 	)
-	buf.SetString(geom.Point{X: at.X + pickerPadX, Y: at.Y}, label, base)
+	buf.SetString(geom.Point{X: at.X + overlayPadX, Y: at.Y}, label, base)
 }
 
 func writePickerItem(
@@ -246,11 +247,20 @@ func writePickerCenteredHint(
 	renderCenteredMessage(buf, area, text, pickerCountStyle(cx))
 }
 
-func pickerOverlaySize(screen geom.Size) geom.Size {
+func pickerOverlaySize(cx *Context, screen geom.Size, id string) geom.Size {
+	opts := cx.pickerLayout
 	return geom.Size{
-		Width:  screen.Width * 90 / 100,
-		Height: max((screen.Height-2)*90/100, 0),
+		Width: scaleExtent(
+			screen.Width, opts.widthScale(id, defaultPickerScale),
+		),
+		Height: scaleExtent(
+			pickerAvailHeight(screen), opts.heightScale(id, defaultPickerScale),
+		),
 	}
+}
+
+func pickerAvailHeight(screen geom.Size) int {
+	return max(screen.Height-overlayKeepClear, 0)
 }
 
 func pickerSplitLeftWidth(w int, ratio float64) int {

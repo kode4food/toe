@@ -37,9 +37,6 @@ type (
 	}
 )
 
-// popupPadX is the left/right content padding, matching the doc/prompt popups
-const popupPadX = 1
-
 // markdownLink matches inline links and images: [text](url) and ![alt](url),
 // capturing the visible text so the URL and brackets can be dropped
 var markdownLink = regexp.MustCompile(`!?\[([^\]]*)\]\([^)]*\)`)
@@ -204,9 +201,9 @@ func trimPopupLines(lines []popupLine, maxVisible int) []popupLine {
 }
 
 func measureTextPopup(maxSize geom.Size, text string) ([]popupLine, geom.Size) {
-	lines := popupTextLines(text, maxSize.Width-2-2*popupPadX)
+	lines := popupTextLines(text, maxSize.Width-2-2*overlayPadX)
 	lines = trimPopupLines(lines, maxSize.Height-2)
-	w := popupTextWidth(lines) + 2 + 2*popupPadX
+	w := popupTextWidth(lines) + 2 + 2*overlayPadX
 	h := len(lines) + 2
 	w = min(max(w, 2), maxSize.Width)
 	h = min(max(h, 2), maxSize.Height)
@@ -218,11 +215,11 @@ func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
 	pop := popup{
 		borderStyle:  st,
 		contentStyle: st,
-		padX:         popupPadX,
+		padX:         overlayPadX,
 	}
 	area := pop.drawInto(buf, geom.Area{Size: buf.Size})
 	r := popupTextRenderer{
-		buf: buf, context: cx, area: area, base: st, padX: popupPadX,
+		buf: buf, context: cx, area: area, base: st, padX: overlayPadX,
 	}
 	r.render(lines)
 }

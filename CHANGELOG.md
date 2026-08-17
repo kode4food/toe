@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.3.1
+
+### Interface
+
+- Added border dragging to resize pickers and prompt popups, from 30% to 100% of the screen per axis, always centered and remembered per picker and prompt by auto-session
+
 ## 0.3.0
 
 ### Interface

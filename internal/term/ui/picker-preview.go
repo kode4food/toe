@@ -27,6 +27,7 @@ type (
 		images *imageRegistry
 
 		size   geom.Size
+		wrap   int
 		hlFrom int
 		hlTo   int
 
@@ -98,7 +99,7 @@ func (p *previewCtx) renderDocInto(
 	buf *tui.Buffer, at geom.Point, doc *view.Document,
 ) {
 	entry := p.picker.preview.cache.doc(p.syntax, doc)
-	format := doc.TextFormatForConfig(p.size.Width, p.editor.Options())
+	format := doc.TextFormatForConfig(p.wrap, p.editor.Options())
 	r := &previewDocRender{
 		text: entry.rope, spans: entry.spans,
 		format: format, opts: p.editor.Options(),
@@ -137,7 +138,7 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		}),
 		format: language.TextFormatForConfig(
 			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,
-			p.size.Width,
+			p.wrap,
 		),
 		opts: opts, theme: p.theme,
 		area:    geom.Area{Point: at, Size: p.size},
@@ -179,7 +180,7 @@ func (p *previewDocEntry) renderInto(
 	opts := ctx.editor.Options()
 	format := language.TextFormatForConfig(
 		language.LoadLanguage(p.lang), opts.TextWidth, opts.SoftWrap,
-		ctx.size.Width,
+		ctx.wrap,
 	)
 	r := &previewDocRender{
 		text: p.rope, spans: p.spans,

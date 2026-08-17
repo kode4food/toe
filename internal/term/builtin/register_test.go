@@ -152,7 +152,7 @@ func TestDefaults(t *testing.T) {
 			"statusline.left",
 			"statusline.right",
 			"statusline.separator",
-			"picker.split-ratios.diagnostics",
+			"picker.split.diagnostics",
 			"buffer-picker.start-position",
 			"file-explorer.hidden",
 			"file-explorer.follow-symlinks",

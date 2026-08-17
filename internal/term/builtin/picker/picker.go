@@ -24,7 +24,8 @@ type section struct {
 const (
 	actCommandPalette = "command_palette"
 	actLastPicker     = "last_picker"
-	splitRatiosPrefix = "picker.split-ratios."
+	splitPrefix       = "picker.split."
+	scalesPrefix      = "picker.scales."
 )
 
 //go:embed i18n/picker.*.json
@@ -62,40 +63,70 @@ func Module(model ui.Model) command.Module {
 		},
 		Options: []command.Option{
 			splitRatiosOption(model),
+			scalesOption(model),
 		},
 	}
 }
 
 func splitRatiosOption(model ui.Model) command.Option {
+	return floatMapOption(splitPrefix,
+		func() map[string]float64 {
+			return model.PickerLayoutOptions().SplitRatios
+		},
+		func(name string, value float64) {
+			opts := model.PickerLayoutOptions()
+			if opts.SplitRatios == nil {
+				opts.SplitRatios = map[string]float64{}
+			}
+			opts.SplitRatios[name] = value
+			model.SetPickerLayoutOptions(opts)
+		},
+	)
+}
+
+func scalesOption(model ui.Model) command.Option {
+	return floatMapOption(scalesPrefix,
+		func() map[string]float64 {
+			return model.PickerLayoutOptions().Scales
+		},
+		func(name string, value float64) {
+			opts := model.PickerLayoutOptions()
+			if opts.Scales == nil {
+				opts.Scales = map[string]float64{}
+			}
+			opts.Scales[name] = value
+			model.SetPickerLayoutOptions(opts)
+		},
+	)
+}
+
+// a keyed map of floats behind a private option prefix, so each entry saves
+// and restores with the session
+func floatMapOption(
+	prefix string, get func() map[string]float64, set func(string, float64),
+) command.Option {
 	return command.Option{
-		Key:     splitRatiosPrefix,
+		Key:     prefix,
 		Private: true,
 		KeyGet: func(*view.Editor) (map[string]string, error) {
-			ratios := model.PickerLayoutOptions().SplitRatios
-			out := make(map[string]string, len(ratios))
-			for key, ratio := range ratios {
-				out[splitRatiosPrefix+key] = strconv.FormatFloat(
-					ratio, 'f', -1, 64,
-				)
+			values := get()
+			out := make(map[string]string, len(values))
+			for key, value := range values {
+				out[prefix+key] = strconv.FormatFloat(value, 'f', -1, 64)
 			}
 			return out, nil
 		},
 		KeySet: func(_ *view.Editor, key, s string) error {
 			name := strings.TrimSpace(key)
-			if len(name) <= len(splitRatiosPrefix) {
+			if len(name) <= len(prefix) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, key)
 			}
-			name = name[len(splitRatiosPrefix):]
-			ratio, err := strconv.ParseFloat(s, 64)
-			if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) {
+			name = name[len(prefix):]
+			value, err := strconv.ParseFloat(s, 64)
+			if err != nil || math.IsNaN(value) || math.IsInf(value, 0) {
 				return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
 			}
-			opts := model.PickerLayoutOptions()
-			if opts.SplitRatios == nil {
-				opts.SplitRatios = map[string]float64{}
-			}
-			opts.SplitRatios[name] = ratio
-			model.SetPickerLayoutOptions(opts)
+			set(name, value)
 			return nil
 		},
 	}

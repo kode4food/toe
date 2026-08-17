@@ -26,11 +26,10 @@ type renderPass struct {
 const countArrow = "\u2192" // '→' - rightwards arrow
 
 const (
-	infoPopupChrome    = 3 // top border, breadcrumb, bottom border
-	infoPopupRule      = 1 // divider between the breadcrumb and the hints
-	infoPopupTitlePad  = 2 // spaces flanking the title on the top border
-	infoPopupKeepClear = 1 // the statusline the popup centers above
-	inputCaretGap      = 1 // space between the breadcrumb and its caret
+	infoPopupChrome   = 3 // top border, breadcrumb, bottom border
+	infoPopupRule     = 1 // divider between the breadcrumb and the hints
+	infoPopupTitlePad = 2 // spaces flanking the title on the top border
+	inputCaretGap     = 1 // space between the breadcrumb and its caret
 )
 
 // marks a hint that opens another menu; a command's row is blank here
@@ -446,7 +445,7 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 	boxW := bodyW + 2 + 2*pop.padX
 	within := geom.Size{
 		Width:  r.size.Width,
-		Height: max(r.size.Height-infoPopupKeepClear, 0),
+		Height: max(r.size.Height-overlayKeepClear, 0),
 	}
 	rows := max(within.Height-infoPopupChrome-infoPopupRule, 0)
 	if len(rawLines) > rows {

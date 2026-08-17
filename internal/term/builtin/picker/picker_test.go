@@ -89,7 +89,7 @@ func TestPickerConfig(t *testing.T) {
 		err = reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
 				"picker": map[string]any{
-					"split-ratios": map[string]any{
+					"split": map[string]any{
 						"Diagnostics": 0.65,
 					},
 				},
@@ -111,7 +111,7 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = reg.ApplyOptionValues(e, map[string]string{
-			"picker.split-ratios.Diagnostics": "0.65",
+			"picker.split.Diagnostics": "0.65",
 		})
 		values, valueErr := reg.OptionValues(e)
 
@@ -123,7 +123,7 @@ func TestPickerConfig(t *testing.T) {
 		)
 		assert.Equal(
 			t, "0.65",
-			values["picker.split-ratios.Diagnostics"],
+			values["picker.split.Diagnostics"],
 		)
 	})
 
@@ -135,7 +135,7 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = reg.ApplyOptionValues(e, map[string]string{
-			"picker.split-ratios.Diagnostics": "0.95",
+			"picker.split.Diagnostics": "0.95",
 		})
 
 		assert.NoError(t, err)
@@ -153,7 +153,7 @@ func TestPickerConfig(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = reg.ApplyOptionValues(e, map[string]string{
-			"picker.split-ratios.Diagnostics": "nope",
+			"picker.split.Diagnostics": "nope",
 		})
 
 		assert.ErrorIs(t, err, config.ErrInvalidOption)

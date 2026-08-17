@@ -136,7 +136,7 @@ func (p *PickerComponent) drawPreviewInto(
 	if item == nil {
 		return
 	}
-	innerW := max(area.Width-2*pickerPadX, 1)
+	innerW := max(area.Width-2*overlayPadX, 1)
 	ctx := previewCtx{
 		picker: ps,
 		item:   item,
@@ -144,6 +144,7 @@ func (p *PickerComponent) drawPreviewInto(
 		syntax: cx.Syntax,
 		images: cx.images,
 		size:   geom.Size{Width: innerW, Height: area.Height},
+		wrap:   p.previewWrapWidth(innerW),
 		theme:  cx.Theme(),
 		styles: p.styles,
 		hlFrom: -1,
@@ -152,5 +153,5 @@ func (p *PickerComponent) drawPreviewInto(
 		ctx.hlFrom = lr.From
 		ctx.hlTo = lr.To
 	}
-	ctx.renderInto(buf, area.Point.Add(geom.Point{X: pickerPadX}))
+	ctx.renderInto(buf, area.Point.Add(geom.Point{X: overlayPadX}))
 }

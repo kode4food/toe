@@ -12,6 +12,7 @@ import (
 	"github.com/mattn/go-runewidth"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
@@ -1033,6 +1034,30 @@ func TestPromptHandlesMouse(t *testing.T) {
 
 		out := m.View().Content
 		assert.Contains(t, out, ":")
+	})
+}
+
+func TestPromptBorderResize(t *testing.T) {
+	// At 100x30 the search prompt box is 55x3 at (22,4), the top of a frame
+	// centered on its full height, so its right border is x=76
+
+	t.Run("side drag widens", func(t *testing.T) {
+		m := sendKey(builtinModel(t), '/')
+		m = dragOverlayBorder(m, geom.Point{X: 76, Y: 5}, geom.Point{
+			X: 82, Y: 5,
+		})
+		// both sides grow, so a 6 cell drag adds 12 of 100 columns
+		scales := m.PickerLayoutOptions().Scales
+		assert.InDelta(t, 0.67, scales["prompt.search.width"], 0.001)
+	})
+
+	t.Run("bottom drag is ignored", func(t *testing.T) {
+		m := sendKey(builtinModel(t), '/')
+		m = dragOverlayBorder(m, geom.Point{X: 50, Y: 6}, geom.Point{
+			X: 50, Y: 2,
+		})
+		// the height follows the completion rows, so there is nothing to drag
+		assert.Empty(t, m.PickerLayoutOptions().Scales)
 	})
 }
 

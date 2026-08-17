@@ -97,7 +97,7 @@ func (p *PickerComponent) previewImage(
 func (p *PickerComponent) previewImageSize(
 	cx *Context, screen geom.Size,
 ) geom.Size {
-	size := pickerOverlaySize(screen)
+	size := pickerOverlaySize(cx, screen, p.state.source.ID())
 	if size.Width <= pickerMinPreviewArea || !previewEnabled(p.state.source) {
 		return geom.Size{}
 	}
@@ -105,7 +105,7 @@ func (p *PickerComponent) previewImageSize(
 		size.Width, cx.pickerLayout.SplitRatioFor(p.state.source.ID()),
 	)
 	return geom.Size{
-		Width:  max(size.Width-lw-3-2*pickerPadX, 1),
+		Width:  max(size.Width-lw-3-2*overlayPadX, 1),
 		Height: max(size.Height-2, 0),
 	}
 }

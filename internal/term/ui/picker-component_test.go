@@ -223,6 +223,63 @@ func TestPickerScroll(t *testing.T) {
 	})
 }
 
+func TestPickerBorderResize(t *testing.T) {
+	// At 120x20 the picker is 108x17 at (6,1), so its right border is x=113
+	// and its bottom border is y=17
+
+	t.Run("drag widens and is per picker", func(t *testing.T) {
+		m := fixedPickers(t, 120, 20)
+		m = sendKey(m, 'a')
+		m = dragOverlayBorder(m, geom.Point{X: 113, Y: 8}, geom.Point{
+			X: 118, Y: 8,
+		})
+		opts := m.PickerLayoutOptions()
+		// both sides grow, so a 5 cell drag adds 10 of 120 columns
+		assert.InDelta(t, 0.9833, opts.Scales["alpha.width"], 0.001)
+		_, ok := opts.Scales["beta.width"]
+		assert.False(t, ok)
+
+		m = sendSpecial(m, tea.KeyEscape)
+		m = sendKey(m, 'b')
+		m = dragOverlayBorder(m, geom.Point{X: 113, Y: 17}, geom.Point{
+			X: 113, Y: 15,
+		})
+		opts = m.PickerLayoutOptions()
+		// the corner drags both axes: narrower and shorter
+		assert.InDelta(t, 0.9, opts.Scales["beta.width"], 0.001)
+		assert.InDelta(t, 0.6895, opts.Scales["beta.height"], 0.001)
+		assert.InDelta(t, 0.9833, opts.Scales["alpha.width"], 0.001)
+	})
+
+	t.Run("drag clamps to the screen", func(t *testing.T) {
+		m := fixedPickers(t, 120, 20)
+		m = sendKey(m, 'a')
+		m = dragOverlayBorder(m, geom.Point{X: 6, Y: 8}, geom.Point{
+			X: -40, Y: 8,
+		})
+		opts := m.PickerLayoutOptions()
+		assert.InDelta(t, 1.0, opts.Scales["alpha.width"], 0.001)
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "item00")
+		assert.Contains(t, out, "CONTENT-00")
+	})
+}
+
+func dragOverlayBorder(m ui.Model, from, to geom.Point) ui.Model {
+	_ = m.View()
+	m2, _ := m.Update(tea.MouseClickMsg{
+		X: from.X, Y: from.Y, Button: tea.MouseLeft,
+	})
+	m = m2.(ui.Model)
+	m2, _ = m.Update(tea.MouseMotionMsg{
+		X: to.X, Y: to.Y, Button: tea.MouseLeft,
+	})
+	m = m2.(ui.Model)
+	m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
+	return m2.(ui.Model)
+}
+
 func (s fixedPickerSource) ID() string {
 	if s.title != "" {
 		return s.title

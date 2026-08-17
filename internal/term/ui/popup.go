@@ -24,8 +24,9 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		)
 	}
 	if area.Width >= 2 && area.Height >= 2 {
-		top := borderTL + strings.Repeat(borderH, area.Width-2) + borderTR
-		bot := borderBL + strings.Repeat(borderH, area.Width-2) + borderBR
+		rule := strings.Repeat(tui.BorderH, area.Width-2)
+		top := tui.BorderTL + rule + tui.BorderTR
+		bot := tui.BorderBL + rule + tui.BorderBR
 		buf.SetString(area.Point, top, p.borderStyle)
 		buf.SetString(geom.Point{
 			X: area.X,
@@ -33,13 +34,13 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 		}, bot, p.borderStyle)
 		for y := 1; y < area.Height-1; y++ {
 			buf.SetString(
-				area.Add(geom.Point{Y: y}), borderV, p.borderStyle,
+				area.Add(geom.Point{Y: y}), tui.BorderV, p.borderStyle,
 			)
 
 			buf.SetString(geom.Point{
 				X: area.Right(),
 				Y: area.Y + y,
-			}, borderV, p.borderStyle)
+			}, tui.BorderV, p.borderStyle)
 		}
 	}
 	return area.Inset(geom.Size{Width: 1 + p.padX, Height: 1})
@@ -47,10 +48,12 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 
 func (p popup) divider(buf *tui.Buffer, area geom.Area, dx int) {
 	x := area.X + dx
-	buf.SetString(geom.Point{X: x, Y: area.Y}, borderMT, p.borderStyle)
-	buf.SetString(geom.Point{X: x, Y: area.Bottom()}, borderMB, p.borderStyle)
+	buf.SetString(geom.Point{X: x, Y: area.Y}, tui.BorderMT, p.borderStyle)
+	buf.SetString(
+		geom.Point{X: x, Y: area.Bottom()}, tui.BorderMB, p.borderStyle,
+	)
 	for y := area.Y + 1; y < area.Bottom(); y++ {
-		buf.SetString(geom.Point{X: x, Y: y}, borderV, p.borderStyle)
+		buf.SetString(geom.Point{X: x, Y: y}, tui.BorderV, p.borderStyle)
 	}
 }
 
@@ -77,7 +80,7 @@ type drawPopupRuleArgs struct {
 
 func drawPopupRule(args drawPopupRuleArgs) {
 	inner := max(args.width-2, 0)
-	line := borderML + strings.Repeat(borderH, inner) + borderMR
+	line := tui.BorderML + strings.Repeat(tui.BorderH, inner) + tui.BorderMR
 	args.buf.SetString(args.at, line, args.style)
 }
 

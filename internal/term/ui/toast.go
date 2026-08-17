@@ -8,6 +8,7 @@ import (
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
+	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 )
@@ -61,7 +62,7 @@ func (t *toastState) push(text string, level toastLevel) {
 	if over := len(t.items) - toastMaxRows; over > 0 {
 		t.items = t.items[over:]
 	}
-	t.log = append(t.log, text)
+	t.log = append(t.log, logTag(level)+highlight.LogSeparator+text)
 	t.rev++
 }
 
@@ -201,6 +202,17 @@ func toastTimeout(level toastLevel) time.Duration {
 		return toastWarningTimeout
 	default:
 		return toastInfoTimeout
+	}
+}
+
+func logTag(level toastLevel) string {
+	switch level {
+	case toastError:
+		return highlight.LogError
+	case toastWarning:
+		return highlight.LogWarning
+	default:
+		return highlight.LogInfo
 	}
 }
 

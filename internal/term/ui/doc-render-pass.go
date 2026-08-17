@@ -38,10 +38,10 @@ const hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
 
 // splitSepIntersectionChars is an immutable separator glyph lookup
 var splitSepIntersectionChars = [...]string{
-	borderH, borderH, borderH, borderV,
-	borderH, borderH, borderH, borderMR,
-	borderH, borderH, borderH, borderML,
-	borderH, borderMB, borderMT, borderX,
+	tui.BorderH, tui.BorderH, tui.BorderH, tui.BorderV,
+	tui.BorderH, tui.BorderH, tui.BorderH, tui.BorderMR,
+	tui.BorderH, tui.BorderH, tui.BorderH, tui.BorderML,
+	tui.BorderH, tui.BorderMB, tui.BorderMT, tui.BorderX,
 }
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
@@ -361,7 +361,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		y := cell[1]
 		left := horizCells[[2]int{x - 1, y}]
 		right := horizCells[[2]int{x + 1, y}]
-		ch := borderV
+		ch := tui.BorderV
 		if left || right {
 			ch = splitSepIntersectionChar(splitSepIntersectionArgs{
 				above: vertCells[[2]int{x, y - 1}],
@@ -380,7 +380,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		}
 		above := vertCells[[2]int{x, y - 1}]
 		below := vertCells[[2]int{x, y + 1}]
-		ch := borderH
+		ch := tui.BorderH
 		if above || below {
 			ch = splitSepIntersectionChar(splitSepIntersectionArgs{
 				above: above,

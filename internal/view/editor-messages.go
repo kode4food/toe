@@ -43,6 +43,7 @@ func (e *Editor) newMessagesDocument() *Document {
 	doc := e.newDocument()
 	doc.identity.docType = DocTypeLog
 	doc.SetDisplayName(MessagesBufferName)
+	doc.SetLang(MessagesLanguage)
 	doc.SetReadOnly(true)
 	e.documents.messagesID = doc.ID()
 	return doc

@@ -9,7 +9,9 @@ import (
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -23,9 +25,9 @@ func TestToasts(t *testing.T) {
 		assert.NotEmpty(t, row)
 		assert.Greater(t, strings.Index(row, "hello there"), 40)
 		// the message sits inside a popup frame
-		assert.Contains(t, row, promptBorderV)
-		assert.NotEmpty(t, toastRow(m, "\u256d"))
-		assert.NotEmpty(t, toastRow(m, "\u2570"))
+		assert.Contains(t, row, tui.BorderV)
+		assert.NotEmpty(t, toastRow(m, tui.BorderTL))
+		assert.NotEmpty(t, toastRow(m, tui.BorderBL))
 	})
 
 	t.Run("every queued message is kept", func(t *testing.T) {
@@ -65,7 +67,7 @@ func TestToasts(t *testing.T) {
 		for _, line := range lines[bottom-1:] {
 			assert.NotContains(t, line, "hello there")
 		}
-		assert.Contains(t, lines[bottom-2], "╰")
+		assert.Contains(t, lines[bottom-2], tui.BorderBL)
 
 		// two columns clear to the right of every popup row
 		for _, y := range []int{bottom - 4, bottom - 3, bottom - 2} {
@@ -102,7 +104,8 @@ func TestToasts(t *testing.T) {
 
 		assert.NotEmpty(t, toastRow(m, "Messages"))
 		assert.Equal(t,
-			"logged news\n", e.MessagesDocument().Text().String(),
+			highlight.LogInfo+highlight.LogSeparator+"logged news\n",
+			e.MessagesDocument().Text().String(),
 		)
 	})
 

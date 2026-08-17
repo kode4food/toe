@@ -135,7 +135,7 @@ func renderBinaryRow(args renderBinaryRowArgs) {
 		}
 	}
 	write(hex.String()+" ", args.styles.hex)
-	write(borderV, args.styles.border)
+	write(tui.BorderV, args.styles.border)
 	var chars strings.Builder
 	for _, b := range args.data {
 		if b >= 0x20 && b <= 0x7e {
@@ -145,7 +145,7 @@ func renderBinaryRow(args renderBinaryRowArgs) {
 		}
 	}
 	write(chars.String(), args.styles.chars)
-	write(borderV, args.styles.border)
+	write(tui.BorderV, args.styles.border)
 }
 
 func binaryStyles(th *theme.Theme, base tui.Style) binaryRowStyles {

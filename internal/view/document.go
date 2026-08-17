@@ -119,7 +119,10 @@ const (
 	ScratchBufferName = "[scratch]"
 	// MessagesBufferName is the display name of the message log document
 	MessagesBufferName = "[messages]"
-	scratchBufferFmt   = "[scratch %d]"
+	// MessagesLanguage is the language identifier of the message log
+	MessagesLanguage = "toe-log"
+
+	scratchBufferFmt = "[scratch %d]"
 
 	// EncodingUTF8 and EncodingUTF8BOM are the text-encoding display names
 	// used in config and status display

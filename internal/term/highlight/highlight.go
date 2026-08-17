@@ -11,6 +11,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 // Span represents a highlighted region in the document
@@ -98,9 +99,12 @@ var (
 )
 
 // Tokenize parses text using Chroma and returns highlight spans with theme
-// scope names. Prefer calling syntax.Tokenize which tries Tree-sitter
-// first and uses this as a fallback
+// scope names. Prefer calling syntax.Tokenize which tries Tree-sitter first
+// and uses this as a fallback
 func Tokenize(src core.Source) []Span {
+	if src.Lang == view.MessagesLanguage {
+		return tokenizeLog(src.Text)
+	}
 	lex := lexers.Get(src.Lang)
 	if lex == nil {
 		lex = lexers.Fallback

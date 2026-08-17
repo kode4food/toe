@@ -1076,7 +1076,7 @@ const (
 
 **Prefer Bubbletea and the `tui` buffer layer over home-grown alternatives.** Before writing custom terminal UI code, check whether an existing primitive already handles it:
 
-- Use `tui.Style` for color and text modifiers, and the `border*` glyphs (`internal/term/ui/border.go`) for box drawing, not manual ANSI or ad-hoc `strings.Repeat` frames.
+- Use `tui.Style` for color and text modifiers, and the `tui.Border*` glyphs (`internal/tui/border.go`) for box drawing, not manual ANSI or ad-hoc `strings.Repeat` frames.
 - Use `wrapText` (`internal/term/ui/wrap.go`) for word wrapping. Always wrap plain text first, then apply styling per cell, never feed styled/ANSI text to the wrapper; by then it is too late to wrap well.
 - Use `runewidth.StringWidth` / `runewidth.Truncate` for cell widths and single-row clipping. `runewidth` is a direct dependency for exactly this: it walks runes and slices the input, so it allocates nothing, while the `ansi` equivalents scan for escape sequences and build through a `strings.Builder` (measured: 2–3 allocations and ~28% slower per call). Reach for `ansi.StringWidth` / `ansi.Truncate` only when the string genuinely carries escape sequences, which in practice means terminal-pane content, everywhere else toe styles per cell, so the text is plain by the time it is measured or clipped.
 - For overlay panels, implement `BufferOverlayComponent` and draw into the `tui.Buffer` directly. The buffer-native path skips the ANSI round-trip and is fast for complex overlays.

@@ -16,6 +16,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -23,8 +24,6 @@ type promptRow struct {
 	raw  string
 	text string
 }
-
-const promptBorderV = "\u2502" // '│' - box drawings light vertical
 
 func TestPromptFrame(t *testing.T) {
 	t.Run("command title and breadcrumb", func(t *testing.T) {
@@ -1089,12 +1088,12 @@ func promptRows(m ui.Model) []promptRow {
 	content := strings.TrimRight(m.View().Content, "\n")
 	for raw := range strings.SplitSeq(content, "\n") {
 		line := stripANSI(raw)
-		from := strings.Index(line, promptBorderV)
-		to := strings.LastIndex(line, promptBorderV)
+		from := strings.Index(line, tui.BorderV)
+		to := strings.LastIndex(line, tui.BorderV)
 		if from < 0 || to <= from {
 			continue
 		}
-		inner := line[from+len(promptBorderV) : to]
+		inner := line[from+len(tui.BorderV) : to]
 		out = append(out, promptRow{
 			raw:  raw,
 			text: strings.TrimRight(strings.TrimLeft(inner, " "), " "),

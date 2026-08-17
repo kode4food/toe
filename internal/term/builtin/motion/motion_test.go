@@ -87,7 +87,7 @@ func TestMotionGotoFile(t *testing.T) {
 
 		assert.Nil(t, test.RunCmd(t, km, e, "goto_file").Continuation)
 
-		assert.Contains(t, e.TakeStatusMsg(), "error:")
+		assert.Contains(t, testutil.StatusMsg(e), "error:")
 	})
 }
 
@@ -112,14 +112,14 @@ func TestMotionOptions(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "scrolloff 5")
 		res := test.RunCmdArgs(t, km, e, "get_option", "scrolloff")
-		assert.Equal(t, "5", res.Message)
+		assert.Equal(t, "scrolloff: 5", res.Message)
 	})
 
 	t.Run("get/set scroll-lines", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "scroll-lines 3")
 		res := test.RunCmdArgs(t, km, e, "get_option", "scroll-lines")
-		assert.Equal(t, "3", res.Message)
+		assert.Equal(t, "scroll-lines: 3", res.Message)
 	})
 }
 

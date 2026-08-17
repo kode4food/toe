@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"path/filepath"
 	"sync"
 
 	"github.com/kode4food/toe/internal/core"
@@ -25,12 +26,14 @@ type (
 
 	identityState struct {
 		id         DocumentId
+		docType    DocType
 		accessedAt int64
 	}
 
 	contentState struct {
 		sync.RWMutex
 		path    string
+		name    string
 		lang    string
 		text    core.Rope
 		version int
@@ -103,6 +106,10 @@ type (
 	// ExternalState describes whether a file-backed document has diverged from
 	// the last disk snapshot toe loaded or wrote
 	ExternalState int
+
+	// DocType is what a document is for: text the user owns, or a log the
+	// editor writes and the user only reads
+	DocType uint8
 )
 
 const (
@@ -110,11 +117,19 @@ const (
 	InvalidDocumentId DocumentId = 0
 	// ScratchBufferName is the display name used for unnamed scratch documents
 	ScratchBufferName = "[scratch]"
+	// MessagesBufferName is the display name of the message log document
+	MessagesBufferName = "[messages]"
+	scratchBufferFmt   = "[scratch %d]"
 
 	// EncodingUTF8 and EncodingUTF8BOM are the text-encoding display names
 	// used in config and status display
 	EncodingUTF8    = "utf-8"
 	EncodingUTF8BOM = "utf-8-bom"
+)
+
+const (
+	DocTypeFile DocType = iota // a file or scratch buffer, saved and renamed
+	DocTypeLog                 // editor output: read-only, never saved
 )
 
 const (
@@ -140,6 +155,11 @@ func (d *Document) ID() DocumentId {
 	return d.identity.id
 }
 
+// Type returns what the document is for
+func (d *Document) Type() DocType {
+	return d.identity.docType
+}
+
 // AccessedAt returns the monotonic focus/access sequence for MRU ordering
 func (d *Document) AccessedAt() int64 {
 	return d.identity.accessedAt
@@ -160,10 +180,19 @@ func (d *Document) Path() string {
 	return d.content.path
 }
 
-// SetPath sets the file path for this document
+// SetPath sets the file path for this document, renaming it to match. A log
+// is the editor's own, so it keeps the name the editor gave it
 func (d *Document) SetPath(path string) {
+	if d.identity.docType == DocTypeLog {
+		return
+	}
+	name := ScratchBufferName
+	if path != "" {
+		name = filepath.Base(path)
+	}
 	d.content.Lock()
 	d.content.path = path
+	d.content.name = name
 	d.content.Unlock()
 }
 
@@ -275,13 +304,27 @@ func (d *Document) SetLineEnding(le core.LineEnding) {
 
 // DisplayName returns the short display name for the document
 func (d *Document) DisplayName() string {
-	return DocumentDisplayName(d.Path())
+	d.content.RLock()
+	defer d.content.RUnlock()
+	return d.content.name
 }
 
-// RelativeName returns the path relative to basedir
+// SetDisplayName renames a document that has no file backing it
+func (d *Document) SetDisplayName(name string) {
+	d.content.Lock()
+	d.content.name = name
+	d.content.Unlock()
+}
+
+// RelativeName returns the path relative to basedir, or the display name when
+// no file backs the document
 func (d *Document) RelativeName(basedir string) string {
+	path := d.Path()
+	if path == "" {
+		return d.DisplayName()
+	}
 	return DocumentRelativeName(DocumentRelativeNameArgs{
-		Path:    d.Path(),
+		Path:    path,
 		BaseDir: basedir,
 	})
 }

@@ -52,6 +52,9 @@ const (
 	errorUsageToggleKey   i18n.Key = "error.usageToggle"
 	errorUnknownOptionKey i18n.Key = "error.unknownOptionKey"
 	errorInvalidOptionKey i18n.Key = "error.invalidOptionKey"
+
+	statusOptionValueKey i18n.Key = "status.optionValue"
+	statusOptionSetKey   i18n.Key = "status.optionSet"
 )
 
 var (
@@ -271,7 +274,11 @@ func optionCmds(r *command.Registry) []command.Command {
 				if err != nil {
 					return command.Result{Error: err}
 				}
-				return command.Result{Message: value}
+				return command.Result{
+					Message: i18n.Text(statusOptionValueKey, i18n.Vars{
+						"key": key, "value": value,
+					}),
+				}
 			},
 			Modes:   command.PaneModes,
 			Aliases: []string{"get"},
@@ -358,7 +365,11 @@ func toggleOption(
 	if err != nil {
 		return command.Result{Error: err}
 	}
-	return command.Result{Message: "'" + key + "' is now set to " + value}
+	return command.Result{
+		Message: i18n.Text(statusOptionSetKey, i18n.Vars{
+			"key": key, "value": value,
+		}),
+	}
 }
 
 func cycleOption(

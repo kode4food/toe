@@ -8,5 +8,7 @@
   "error.unknownLineEnding": "unknown line ending: {name}",
   "error.expectedIndent": "expected 'tab' or spaces count (1-16)",
   "error.themeLoad": "could not load theme: {message}",
-  "error.logUnavailable": "log path unavailable"
+  "error.logUnavailable": "log path unavailable",
+  "status.optionValue": "{key}: {value}",
+  "status.optionSet": "{key} is now {value}"
 }

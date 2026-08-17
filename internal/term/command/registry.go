@@ -64,7 +64,7 @@ func (r *Registry) RegisterModule(m Module) error {
 		if r.options == nil {
 			r.options = make(map[string]*Option)
 		}
-		m.Options[i].localizeDocString()
+		localizeOptionDoc(&m.Options[i])
 		if o.KeyGet != nil || o.KeySet != nil {
 			r.prefixes = append(r.prefixes, &m.Options[i])
 			continue
@@ -76,9 +76,11 @@ func (r *Registry) RegisterModule(m Module) error {
 
 // RegisterCommand registers a command with kebab-cased name as the first alias
 func (r *Registry) RegisterCommand(name string, c Command) error {
-	alias := kebabName(name)
-	c.localizeDocString(alias)
-	c.Aliases = append([]string{alias}, c.Aliases...)
+	if c.Name == "" {
+		c.Name = name
+	}
+	localizeCommandDoc(&c)
+	c.Aliases = append([]string{kebabName(c.Name)}, c.Aliases...)
 	if err := r.keymaps.Register(name, c); err != nil {
 		return err
 	}

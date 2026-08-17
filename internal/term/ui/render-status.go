@@ -1,11 +1,8 @@
 package ui
 
 import (
-	"github.com/mattn/go-runewidth"
-
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
-	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -71,57 +68,17 @@ type (
 		cwd     string
 		vcsHead string
 
+		macroReg   rune
+		macroSt    tui.Style
+		maximizeSt tui.Style
+		blinkFrame int
+
 		busy      bool
+		recording bool
+		maximized bool
 		spinFrame int
 	}
 )
-
-// one column keeps the caret visible without wrapping the terminal
-const commandLineRightPad = 1
-
-func (r *renderPass) renderCmdline(buf *tui.Buffer, y int) {
-	msg := r.editor.keys.message
-	st := r.cmdlineStyle(msg != nil && msg.error)
-	src := statusElemCtx{
-		baseTUI: st,
-		reg:     r.context.Editor.ActiveRegister(),
-	}
-	var right []statusElem
-	if reg := statusElemRegister(&src); reg.text != "" {
-		right = append(right, reg)
-	}
-	right = append(right, r.editor.macroElems(r.context, st)...)
-	row := statusRow{
-		at:        geom.Point{X: 0, Y: y},
-		width:     r.size.Width,
-		baseStyle: st,
-		right:     right,
-	}
-	width := max(row.contentWidth()-commandLineRightPad, 0)
-	text := runewidth.Truncate(r.cmdlineText(), width, "")
-	if text != "" {
-		row.left = []statusElem{{text: text, style: st, compact: true}}
-	}
-	row.paint(buf)
-}
-
-func (r *renderPass) cmdlineText() string {
-	if msg := r.editor.keys.message; msg != nil {
-		return msg.value
-	}
-	return ""
-}
-
-func (r *renderPass) cmdlineStyle(errorMsg bool) tui.Style {
-	th := r.context.Theme()
-	if errorMsg {
-		return th.Get("error")
-	}
-	if r.editor.macroSlot.recording {
-		return th.Get("ui.statusline").Bg(promptBackground(th))
-	}
-	return th.Get("ui.statusline")
-}
 
 type renderStatusArgs struct {
 	doc     *view.Document
@@ -184,6 +141,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	}
 
 	baseTUI := st
+	ms := r.editor.macroSlot
 	src := &statusElemCtx{
 		doc:     doc,
 		mode:    v.Mode(),
@@ -193,35 +151,59 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		spinSt:  spinSt,
 		sep:     sep, selCount: nSel, primIdx: primIdx, primLen: primLen,
 		totalLines: totalLines, reg: reg, cwd: cwd,
-		cursor:    at,
-		vcsHead:   vcsHead,
-		busy:      busy,
-		spinFrame: r.editor.spinner.phase,
+		cursor:     at,
+		vcsHead:    vcsHead,
+		macroReg:   ms.reg,
+		macroSt:    th.Get("ui.statusline.macro"),
+		maximizeSt: th.Get("ui.statusline.maximized"),
+		blinkFrame: r.editor.macroBlink.phase,
+		busy:       busy,
+		recording:  ms.recording,
+		maximized:  r.context.Editor.Tree().Maximized(),
+		spinFrame:  r.editor.spinner.phase,
 	}
 
-	left := src.collect(opts.StatusLineLeft())
-	right := src.collect(opts.StatusLineRight())
-	right = r.withMaximizedStatus(right)
-	statusRow{
+	r.paintStatus(buf, statusRow{
 		at:        args.at,
 		width:     width,
 		baseStyle: baseTUI,
-		left:      left,
-		right:     right,
-	}.paint(buf)
+		left:      src.collect(opts.StatusLineLeft()),
+		right:     src.collect(opts.StatusLineRight()),
+	})
 }
 
-func (r *renderPass) withMaximizedStatus(elems []statusElem) []statusElem {
-	if !r.context.Editor.Tree().Maximized() {
-		return elems
+// paintStatus is the only way a status row reaches the buffer, so the badges
+// for editor-wide state land on the corner row whatever pane owns it
+func (r *renderPass) paintStatus(buf *tui.Buffer, row statusRow) {
+	if row.at.Y == r.size.Height-1 && row.at.X+row.width == r.size.Width {
+		row.right = append(row.right, r.cornerBadges(row.baseStyle)...)
 	}
-	return append(
-		elems,
-		statusBadge(
-			i18n.Text(i18n.StatusPaneMaximized),
-			r.context.Theme().Get("ui.statusline.maximized"),
-		),
-	)
+	row.paint(buf)
+}
+
+func (r *renderPass) cornerBadges(base tui.Style) []statusElem {
+	th := r.context.Theme()
+	ms := r.editor.macroSlot
+	src := &statusElemCtx{
+		baseTUI:    base,
+		macroReg:   ms.reg,
+		macroSt:    th.Get("ui.statusline.macro"),
+		maximizeSt: th.Get("ui.statusline.maximized"),
+		blinkFrame: r.editor.macroBlink.phase,
+		reg:        r.context.Editor.ActiveRegister(),
+		recording:  ms.recording,
+		maximized:  r.context.Editor.Tree().Maximized(),
+	}
+	var out []statusElem
+	for _, fn := range []statusElemFn{
+		statusElemRegister, statusElemPaneMaximized, statusElemMacroRecording,
+	} {
+		if se := fn(src); se.text != "" {
+			se.pinned = true
+			out = append(out, se)
+		}
+	}
+	return out
 }
 
 func (s *statusElemCtx) collect(items []view.StatusLineItem) []statusElem {

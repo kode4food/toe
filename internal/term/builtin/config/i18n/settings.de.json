@@ -36,5 +36,7 @@
   "theme.docstring": "Theme wechseln, ohne Namen das aktuelle anzeigen",
   "toggle-option.docstring": "Konfigurationsoption zur Laufzeit umschalten",
   "workspace-trust.docstring": "Aktuellen Arbeitsbereich als vertrauenswürdig hinzufügen",
-  "workspace-untrust.docstring": "Aktuellen Arbeitsbereich aus der Liste vertrauenswürdiger Arbeitsbereiche entfernen"
+  "workspace-untrust.docstring": "Aktuellen Arbeitsbereich aus der Liste vertrauenswürdiger Arbeitsbereiche entfernen",
+  "status.optionValue": "{key}: {value}",
+  "status.optionSet": "{key} ist jetzt {value}"
 }

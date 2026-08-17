@@ -217,7 +217,7 @@ func TestPromptCompletion(t *testing.T) {
 				rows++
 			}
 		}
-		assert.Equal(t, 4, rows)
+		assert.Equal(t, 5, rows)
 		assert.NotContains(t, content, "few-command-with-long-name")
 		assert.NotContains(t, content, "┬")
 		assert.NotContains(t, content, "┴")
@@ -229,7 +229,7 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Contains(t, filtered, "few-command-with-long-name")
 	})
 
-	t.Run("down inserts selected completion", func(t *testing.T) {
+	t.Run("tab accepts the first completion", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -248,12 +248,12 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		m = sendSpecial(m, tea.KeyDown)
+		m = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, ": alpha", promptText(m))
 	})
 
-	t.Run("down advances the caret", func(t *testing.T) {
+	t.Run("accepting advances the caret", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -272,9 +272,9 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		m = sendSpecial(m, tea.KeyDown)
+		m = sendSpecial(m, tea.KeyTab)
 
-		// typing after selection lands at the end, not inside the old input
+		// typing after acceptance lands at the end, not inside the old input
 		m = sendKey(m, 'X')
 		assert.Equal(t, ": alphaX", promptText(m))
 	})
@@ -304,44 +304,70 @@ func TestPromptCompletion(t *testing.T) {
 		m = typeString(m, "match")
 		_ = m.View()
 
-		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
-		assert.Equal(t, ": match-c", promptText(m))
-		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
-		assert.Equal(t, ": match-f", promptText(m))
-		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
-		assert.Equal(t, ": match-c", promptText(m))
-		m = sendSpecial(m, tea.KeyUp)
-		assert.Equal(t, ": match-b", promptText(m))
+		// moving the selection leaves the input alone until it is accepted
 		m = sendSpecial(m, tea.KeyDown)
-		assert.Equal(t, ": match-c", promptText(m))
+		m = sendSpecial(m, tea.KeyDown)
+		assert.Equal(t, ": match", promptText(m))
+		m = sendSpecial(m, tea.KeyUp)
+		m = sendSpecial(m, tea.KeyTab)
+		assert.Equal(t, ": match-b", promptText(m))
 
-		x, y := completionTextPoint(t, m, "match-d")
-		m = mouse(m, tea.MouseClickMsg{
-			X: x, Y: y, Button: tea.MouseLeft,
-		})
-		assert.Equal(t, ": match-d", promptText(m))
+		m = sendSpecial(m, tea.KeyEscape)
+		m = sendKey(m, ':')
+		m = typeString(m, "match")
+		_ = m.View()
 
+		at := completionTextPoint(t, m, "match-b")
 		m = mouse(m, tea.MouseWheelMsg{
-			X: x, Y: y, Button: tea.MouseWheelDown,
+			X: at.X, Y: at.Y, Button: tea.MouseWheelDown,
 		})
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "match-h")
 		assert.NotContains(t, out, "match-a")
-		assert.Equal(t, ": match-d", promptText(m))
+		assert.Equal(t, ": match", promptText(m))
 
-		x, y = completionTextPoint(t, m, "match-g")
+		at = completionTextPoint(t, m, "match-g")
 		m = mouse(m, tea.MouseClickMsg{
-			X: x, Y: y, Button: tea.MouseLeft,
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
 		assert.Equal(t, ": match-g", promptText(m))
+	})
 
-		m = mouse(m, tea.MouseWheelMsg{
-			X: x, Y: y, Button: tea.MouseWheelUp,
+	t.Run("enter accepts, then submits", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
 		})
-		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "match-b")
-		assert.NotContains(t, out, "match-h")
-		assert.Equal(t, ": match-g", promptText(m))
+		var ran bool
+		_ = km.Register("alpha", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				ran = true
+				return command.Result{}
+			},
+			Modes:   view.ModeNormal,
+			Aliases: []string{"alpha"},
+		})
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = sendKey(m, 'a')
+		m = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, ": alpha", promptText(m))
+		assert.False(t, ran)
+
+		m = sendSpecial(m, tea.KeyEnter)
+
+		assert.True(t, ran)
 	})
 
 	t.Run("ignores command args without completer", func(t *testing.T) {
@@ -468,11 +494,13 @@ func TestPromptCompletion(t *testing.T) {
 			},
 		})
 		_ = km.Register("alpha", testCommand("alpha"))
+		_ = km.Register("alpine", testCommand("alpine"))
 		m = resize(m, 60, 14)
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
 
+		// the first row is selected, so compare against an unselected one
 		var border, input, item string
 		for line := range strings.SplitSeq(m.View().Content, "\n") {
 			plain := stripANSI(line)
@@ -481,7 +509,7 @@ func TestPromptCompletion(t *testing.T) {
 				border = line
 			case strings.Contains(plain, ": a"):
 				input = line
-			case strings.Contains(plain, "alpha"):
+			case strings.Contains(plain, "alpine"):
 				item = line
 			}
 		}

@@ -24,7 +24,7 @@ func TestPickerOptions(t *testing.T) {
 				km, e, "set-option", tc.key+" "+tc.value,
 			)
 			res := test.RunCmdArgs(t, km, e, "get-option", tc.key)
-			assert.Equal(t, tc.value, res.Message)
+			assert.Equal(t, tc.key+": "+tc.value, res.Message)
 		})
 	}
 
@@ -33,7 +33,7 @@ func TestPickerOptions(t *testing.T) {
 		res := test.RunCmdArgs(t,
 			km, e, "get-option", "buffer-picker.start-position",
 		)
-		assert.Equal(t, "top", res.Message)
+		assert.Equal(t, "buffer-picker.start-position: top", res.Message)
 	})
 
 	t.Run("defaults directory flattening", func(t *testing.T) {
@@ -41,7 +41,7 @@ func TestPickerOptions(t *testing.T) {
 		res := test.RunCmdArgs(t,
 			km, e, "get-option", "file-explorer.flatten-dirs",
 		)
-		assert.Equal(t, "true", res.Message)
+		assert.Equal(t, "file-explorer.flatten-dirs: true", res.Message)
 	})
 
 	t.Run("resets directory flattening", func(t *testing.T) {
@@ -54,12 +54,12 @@ func TestPickerOptions(t *testing.T) {
 		assert.NoError(t, reg.ApplyTOML(e, raw))
 		res := test.RunCmdArgs(t,
 			km, e, "get-option", "file-explorer.flatten-dirs")
-		assert.Equal(t, "false", res.Message)
+		assert.Equal(t, "file-explorer.flatten-dirs: false", res.Message)
 
 		assert.NoError(t, reg.ApplyTOML(e, map[string]any{}))
 		res = test.RunCmdArgs(t,
 			km, e, "get-option", "file-explorer.flatten-dirs")
-		assert.Equal(t, "true", res.Message)
+		assert.Equal(t, "file-explorer.flatten-dirs: true", res.Message)
 	})
 
 	t.Run("rejects invalid start position", func(t *testing.T) {

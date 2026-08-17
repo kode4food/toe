@@ -5,7 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mattn/go-runewidth"
+
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -208,6 +211,28 @@ func statusElemSpinner(s *statusElemCtx) statusElem {
 	}
 	frame := spinFrames[s.spinFrame%len(spinFrames)]
 	return statusElem{text: frame, style: s.spinSt}
+}
+
+func statusElemMacroRecording(s *statusElemCtx) statusElem {
+	if !s.recording {
+		return statusElem{}
+	}
+	text := fmt.Sprintf(
+		"%s %c", i18n.Text(i18n.StatusMacroRecording), s.macroReg,
+	)
+	if s.blinkFrame%2 == 1 {
+		return statusBadge(
+			strings.Repeat(" ", runewidth.StringWidth(text)), s.baseTUI,
+		)
+	}
+	return statusBadge(text, s.macroSt)
+}
+
+func statusElemPaneMaximized(s *statusElemCtx) statusElem {
+	if !s.maximized {
+		return statusElem{}
+	}
+	return statusBadge(i18n.Text(i18n.StatusPaneMaximized), s.maximizeSt)
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {

@@ -84,6 +84,17 @@ func (e *Editor) restoreSessionKind(
 			session: sn,
 			restore: rs,
 		}), nil
+	case SessionKindMessages:
+		doc := e.MessagesDocument()
+		rs.docIndex[doc.ID()] = doc
+		return e.restoreSessionView(restoreSessionViewArgs{
+			tree:    t,
+			parent:  parent,
+			viewID:  t.allocID(),
+			docID:   doc.ID(),
+			session: sn,
+			restore: rs,
+		}), nil
 	default:
 		pane, err := e.restorePane(restorePaneArgs{
 			kind: sn.Kind,

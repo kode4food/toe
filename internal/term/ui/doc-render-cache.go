@@ -33,6 +33,9 @@ type (
 		lastW, lastH int
 		lastDiagKey  diagPopupKey
 		lastSpinner  animationState
+		lastBlink    animationState
+		lastToastRev int
+		lastReg      rune
 	}
 
 	// styleKey identifies the theme+mode combination for cached styles

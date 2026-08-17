@@ -243,23 +243,15 @@ func isSubWordBoundary(step charStep, dir Direction) bool {
 			return true
 		}
 		if dir == DirectionForward {
-			return isLower(a) && isUpper(b)
+			return unicode.IsLower(a) && unicode.IsUpper(b)
 		}
-		return isUpper(a) && isLower(b)
+		return unicode.IsUpper(a) && unicode.IsLower(b)
 	}
 	return ca != cb
 }
 
 func isWhitespaceChar(ch rune) bool {
 	return CharIsWhitespace(ch) || CharIsLineEnding(ch)
-}
-
-func isUpper(ch rune) bool {
-	return unicode.IsUpper(ch)
-}
-
-func isLower(ch rune) bool {
-	return unicode.IsLower(ch)
 }
 
 func isPrevWordMotion(t WordMotionTarget) bool {

@@ -32,6 +32,7 @@ type (
 	documentState struct {
 		byID            map[DocumentId]*Document
 		nextID          DocumentId
+		messagesID      DocumentId
 		nextAccess      int64
 		lastModifiedIDs [2]DocumentId
 	}
@@ -59,7 +60,7 @@ type (
 	}
 
 	messageState struct {
-		status   string
+		status   []string
 		statusMu sync.Mutex
 	}
 
@@ -390,19 +391,19 @@ func (e *Editor) CloseAllOtherViews() {
 	}
 }
 
-// SetStatusMsg stores a transient status message to be displayed after the
-// current keypress. The UI clears it via TakeStatusMsg
+// SetStatusMsg queues a status message for display. Producers may be off the
+// UI goroutine, so the queue holds every message until the UI drains it
 func (e *Editor) SetStatusMsg(msg string) {
 	e.messages.statusMu.Lock()
-	e.messages.status = msg
+	e.messages.status = append(e.messages.status, msg)
 	e.messages.statusMu.Unlock()
 }
 
-// TakeStatusMsg returns the pending status message and clears it
-func (e *Editor) TakeStatusMsg() string {
+// TakeStatusMsgs returns the queued status messages and clears the queue
+func (e *Editor) TakeStatusMsgs() []string {
 	e.messages.statusMu.Lock()
-	msg := e.messages.status
-	e.messages.status = ""
+	msgs := e.messages.status
+	e.messages.status = nil
 	e.messages.statusMu.Unlock()
-	return msg
+	return msgs
 }

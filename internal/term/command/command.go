@@ -164,13 +164,13 @@ func (c *Command) availableIn(mode view.Mode) bool {
 	return c.Modes&mode != 0
 }
 
-func (c *Command) localizeDocString(alias string) {
-	key := docStringKey(alias)
+func localizeCommandDoc(c *Command) {
+	key := docStringKey(kebabName(c.Name))
 	i18n.Register(i18n.Translations{key: c.DocString})
 	c.DocString = i18n.Text(key)
 }
 
-func (o *Option) localizeDocString() {
+func localizeOptionDoc(o *Option) {
 	if o.DocString == "" {
 		return
 	}

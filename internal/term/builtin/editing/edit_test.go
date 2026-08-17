@@ -214,14 +214,14 @@ func TestEditOptions(t *testing.T) {
 			e, km := test.Env(t, "")
 			test.RunCmdArgs(t, km, e, "set_option", tc.key+" "+tc.val)
 			res := test.RunCmdArgs(t, km, e, "get_option", tc.key)
-			assert.Equal(t, tc.val, res.Message)
+			assert.Equal(t, tc.key+": "+tc.val, res.Message)
 		})
 	}
 
 	t.Run("toggle auto-pairs", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "toggle_option", "auto-pairs")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("set custom auto-pairs", func(t *testing.T) {
@@ -229,13 +229,15 @@ func TestEditOptions(t *testing.T) {
 		value := `{"(" = ")", "[" = "]"}`
 		test.RunCmdArgs(t, km, e, "set_option", "auto-pairs "+value)
 		res := test.RunCmdArgs(t, km, e, "get_option", "auto-pairs")
-		assert.Equal(t, `{ "(" = ")", "[" = "]" }`, res.Message)
+		assert.Equal(t,
+			`auto-pairs: { "(" = ")", "[" = "]" }`, res.Message,
+		)
 	})
 
 	t.Run("toggle continue-comments", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "toggle_option", "continue-comments")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("toggle auto-save", func(t *testing.T) {
@@ -243,7 +245,7 @@ func TestEditOptions(t *testing.T) {
 		res := test.RunCmdArgs(t,
 			km, e, "toggle_option", "auto-save.focus-lost",
 		)
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 }
 

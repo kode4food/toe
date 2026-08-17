@@ -29,7 +29,7 @@ const (
 	infoPopupChrome    = 3 // top border, breadcrumb, bottom border
 	infoPopupRule      = 1 // divider between the breadcrumb and the hints
 	infoPopupTitlePad  = 2 // spaces flanking the title on the top border
-	infoPopupKeepClear = 2 // statusline and cmdline the popup centers above
+	infoPopupKeepClear = 1 // the statusline the popup centers above
 	inputCaretGap      = 1 // space between the breadcrumb and its caret
 )
 
@@ -208,6 +208,21 @@ func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
 		force = true
 	}
 
+	if reg := r.context.Editor.ActiveRegister(); cache.lastReg != reg {
+		cache.lastReg = reg
+		force = true
+	}
+
+	if cache.lastToastRev != r.editor.toasts.rev {
+		cache.lastToastRev = r.editor.toasts.rev
+		force = true
+	}
+
+	if cache.lastBlink != r.editor.macroBlink {
+		cache.lastBlink = r.editor.macroBlink
+		force = true
+	}
+
 	if cache.lastSpinner != r.editor.spinner {
 		cache.lastSpinner = r.editor.spinner
 		force = true
@@ -377,7 +392,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
 
-	r.renderCmdline(buf, r.size.Height-1)
+	r.renderToasts(buf, r.size.Height-1)
 
 	r.renderDiagnosticPopup(buf)
 

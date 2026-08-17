@@ -58,12 +58,11 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		),
 		style: baseTUI,
 	}}
-	right = r.withMaximizedStatus(right)
 	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    args.pane.Path(),
 		BaseDir: r.context.Editor.Cwd(),
 	})
-	statusRow{
+	r.paintStatus(args.buf, statusRow{
 		at:        args.at,
 		width:     args.width,
 		baseStyle: baseTUI,
@@ -72,7 +71,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 			{text: name, style: baseTUI},
 		},
 		right: right,
-	}.paint(args.buf)
+	})
 }
 
 func (r *renderPass) paintImage(

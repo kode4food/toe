@@ -99,10 +99,6 @@ func editorWithReadOnlyText(t *testing.T, text string) *view.Editor {
 	e := testutil.EditorWithText(t, text)
 	doc := e.FocusedDocument()
 	assert.NotNil(t, doc)
-	setReadOnly(doc)
-	return e
-}
-
-func setReadOnly(doc *view.Document) {
 	doc.SetReadOnly(true)
+	return e
 }

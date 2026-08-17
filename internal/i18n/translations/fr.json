@@ -60,5 +60,6 @@
   "status.pickerTypeToSearch": "Saisissez pour rechercher…",
   "status.pickerUnstaged": "Modifications",
   "status.reloadFailed": "échec du rechargement : {error}",
-  "status.terminalStarting": "Démarrage du terminal…"
+  "status.terminalStarting": "Démarrage du terminal…",
+  "toast.title": "Messages"
 }

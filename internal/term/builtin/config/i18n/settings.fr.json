@@ -36,5 +36,7 @@
   "theme.docstring": "Changer le thème, ou afficher le thème actuel",
   "toggle-option.docstring": "Basculer une option de configuration à l’exécution",
   "workspace-trust.docstring": "Ajouter l’espace de travail courant aux espaces de confiance",
-  "workspace-untrust.docstring": "Retirer l’espace de travail courant des espaces de confiance"
+  "workspace-untrust.docstring": "Retirer l’espace de travail courant des espaces de confiance",
+  "status.optionValue": "{key} : {value}",
+  "status.optionSet": "{key} vaut maintenant {value}"
 }

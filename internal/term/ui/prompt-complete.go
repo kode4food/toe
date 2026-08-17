@@ -18,6 +18,8 @@ const (
 	compGap     = 2
 )
 
+// recalculateCompletion refreshes the list, selecting the first item so it can
+// be accepted straight away, the way the code completion popup behaves
 func (p *PromptComponent) recalculateCompletion(cx *Context) {
 	p.completion.done = true
 	p.completion.list = listScroll{cursor: -1}
@@ -26,33 +28,39 @@ func (p *PromptComponent) recalculateCompletion(cx *Context) {
 		return
 	}
 	p.completion.items = completeCommandLine(cx, p.buf)
+	if len(p.completion.items) > 0 {
+		p.completion.list.count = len(p.completion.items)
+		p.completion.list.cursor = 0
+	}
 }
 
 func (p *PromptComponent) changeCompletion(dir int) {
 	if len(p.completion.items) == 0 {
 		return
 	}
-	idx := p.completion.list.cursor
-	if idx < 0 && dir < 0 {
-		idx = 0
-	}
-	idx += dir
-	n := len(p.completion.items)
-	idx = ((idx % n) + n) % n
-	p.selectCompletion(idx)
+	p.completion.list.count = len(p.completion.items)
+	p.completion.list.moveBy(dir)
+	p.ensureCompletionVisible()
 }
 
-func (p *PromptComponent) selectCompletion(idx int) {
+// acceptCompletion reports whether it changed the input, so Enter submits what
+// is already typed in full rather than accepting it again
+func (p *PromptComponent) acceptCompletion() bool {
+	idx := p.completion.list.cursor
 	if idx < 0 || idx >= len(p.completion.items) {
-		return
+		return false
 	}
-	p.completion.list.cursor = idx
-
 	c := p.completion.items[idx]
 	start := min(max(c.Start, 0), len(p.buf))
-	p.buf = p.buf[:start] + c.Text
+	completed := p.buf[:start] + c.Text
+	if completed == p.buf {
+		return false
+	}
+	p.buf = completed
 	p.caret = len([]rune(p.buf))
-	p.ensureCompletionVisible()
+	p.completion.items = nil
+	p.completion.list = listScroll{cursor: -1}
+	return true
 }
 
 func (p *PromptComponent) syncCompletionRows(frame geom.Size) {
@@ -134,7 +142,8 @@ func (p *PromptComponent) ensureCompletionVisible() {
 func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 	at := geom.Point{X: msg.X, Y: msg.Y}
 	if idx, ok := p.completion.list.indexAt(p.completion.bounds, at); ok {
-		p.selectCompletion(idx)
+		p.completion.list.moveTo(idx)
+		p.acceptCompletion()
 	}
 	return consumed()
 }

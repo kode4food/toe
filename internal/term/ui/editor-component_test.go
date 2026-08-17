@@ -24,6 +24,13 @@ type highlightRefreshController struct {
 	locationController
 }
 
+func (c *highlightRefreshController) DocumentHighlights(
+	doc *view.Document, id view.Id,
+) ([]view.DocumentHighlight, error) {
+	doc.SetDocumentHighlights(id, c.highlights)
+	return c.highlights, nil
+}
+
 func TestModelView(t *testing.T) {
 	t.Run("returns empty before resize", func(t *testing.T) {
 		e := editorWithText(t, "")
@@ -146,8 +153,8 @@ func TestMouseMiddlePaste(t *testing.T) {
 }
 
 func TestMouseWheelScroll(t *testing.T) {
-	// renderedModel gives a 40×8 window; row 7 is the status/command line,
-	// which is outside all editor panes
+	// renderedModel gives a 40×8 window; row 7 is the pane statusline, which
+	// is outside the content area
 
 	t.Run("wheel over pane scrolls that pane", func(t *testing.T) {
 		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
@@ -175,10 +182,10 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 
-		// 40×8 window, no bufferline: ResizeTree gives the pane height=7,
-		// so Y=6 is the pane's own status bar row (not content)
+		// 40×8 window, no bufferline: the pane fills the frame, so Y=7 is
+		// its own status bar row (not content)
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 5, Y: 6, Button: tea.MouseWheelDown,
+			X: 5, Y: 7, Button: tea.MouseWheelDown,
 		})
 		_ = m2
 
@@ -204,23 +211,6 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.Equal(t, hOff, v.Offset().HorizontalOffset)
 	})
 
-	t.Run("wheel outside all panes does not scroll", func(t *testing.T) {
-		e := editorWithText(t, "a\nb\nc\nd\ne\nf\ng\nh\ni\nj")
-		e.SetViewHeight(6)
-		m := renderedModel(e)
-
-		v := e.FocusedView()
-		assert.NotNil(t, v)
-		before := v.Offset().Anchor
-
-		// Y=7 is the command line, outside any editor pane in this window
-		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 5, Y: 7, Button: tea.MouseWheelDown,
-		})
-		_ = m2
-
-		assert.Equal(t, before, v.Offset().Anchor)
-	})
 }
 
 func TestMouseClickPositioning(t *testing.T) {
@@ -239,10 +229,10 @@ func TestMouseClickPositioning(t *testing.T) {
 	t.Run("clicks rendered character cell", func(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := renderedModel(e)
-		x, y := renderedTextPoint(t, m, "abcdef", 3)
+		at := renderedTextPoint(t, m, "abcdef", 3)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: x, Y: y, Button: tea.MouseLeft,
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -260,7 +250,7 @@ func TestMouseClickPositioning(t *testing.T) {
 		m = m2.(ui.Model)
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
 
-		// the bottom row of the 8-high window is the status/command line, never
+		// the bottom row of the 8-high window is the pane statusline, never
 		// editor content, so a click there must leave the cursor put
 		m3, _ := m.Update(tea.MouseClickMsg{
 			X: 1, Y: 7, Button: tea.MouseLeft,
@@ -851,32 +841,6 @@ func TestFreeScroll(t *testing.T) {
 	})
 }
 
-func renderedModel(e *view.Editor) ui.Model {
-	m := ui.New(e, command.NewKeymaps())
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 8})
-	m = m2.(ui.Model)
-	_ = m.View()
-	return m
-}
-
-func editorWithText(t *testing.T, text string) *view.Editor {
-	t.Helper()
-	e := view.NewEditor("/tmp")
-	e.Options().Theme = view.DefaultTheme
-	doc := e.FocusedDocument()
-	assert.NotNil(t, doc)
-	rope := doc.Text()
-	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(core.Span{From: 0, To: 0}, text),
-	})
-	assert.NoError(t, err)
-	tx := core.NewTransaction(rope).
-		WithChanges(cs).
-		WithSelection(core.PointSelection(0))
-	assert.NoError(t, e.Apply(tx))
-	return e
-}
-
 func TestGotoWindowEdges(t *testing.T) {
 	newScrolled := func(t *testing.T) (ui.Model, *view.Editor) {
 		t.Helper()
@@ -931,16 +895,6 @@ func TestGotoWindowEdges(t *testing.T) {
 
 		assert.Contains(t, last, fmt.Sprintf("line %d", cursorLineOf(t, e)))
 	})
-}
-
-func cursorLineOf(t *testing.T, e *view.Editor) int {
-	t.Helper()
-	doc := e.FocusedDocument()
-	text := doc.Text()
-	cursor := doc.SelectionFor(e.FocusedView().ID()).Primary().Cursor(text)
-	pos, err := text.Position(cursor)
-	assert.NoError(t, err)
-	return pos.Line
 }
 
 func TestGotoLineKeySequence(t *testing.T) {
@@ -1000,18 +954,18 @@ func TestGotoLineKeySequence(t *testing.T) {
 		assert.NotContains(t, out, "5g")
 	})
 
-	t.Run("right status leaves last cell blank", func(t *testing.T) {
+	t.Run("a wide toast leaves the last cell blank", func(t *testing.T) {
 		m, e := newModel(t)
 		m = resize(m, 8, 6)
-		// a message of exactly the cmdline width would fill the final column
-		// without the guard
+		// a toast as wide as the frame would fill the final column without
+		// the guard, and writing it auto-wraps the terminal
 		e.SetStatusMsg("1234567")
 		m = resize(m, 8, 6)
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
-		cmdline := []rune(lines[len(lines)-1])
-		// writing the final column auto-wraps the terminal; it must stay blank
-		assert.Equal(t, ' ', cmdline[len(cmdline)-1])
-		assert.Contains(t, string(cmdline), "123456")
+		row := []rune(toastRow(m, "\u2026"))
+		// the gap keeps the popup off the final column, which auto-wraps
+		assert.NotEmpty(t, row)
+		assert.Equal(t, '\u2502', row[6])
 		for _, ln := range lines {
 			assert.LessOrEqual(t, len([]rune(ln)), 8)
 		}
@@ -1210,25 +1164,18 @@ func TestAutoSaveCmd(t *testing.T) {
 	})
 }
 
-func (c *highlightRefreshController) DocumentHighlights(
-	doc *view.Document, id view.Id,
-) ([]view.DocumentHighlight, error) {
-	doc.SetDocumentHighlights(id, c.highlights)
-	return c.highlights, nil
-}
-
 func renderedTextPoint(
 	t *testing.T, m ui.Model, text string, off int,
-) (int, int) {
+) geom.Point {
 	t.Helper()
 	lines := strings.Split(stripANSI(m.View().Content), "\n")
 	for y, line := range lines {
 		if x := strings.Index(line, text); x >= 0 {
-			return x + off, y
+			return geom.Point{X: x + off, Y: y}
 		}
 	}
 	t.Fatalf("rendered text %q not found", text)
-	return 0, 0
+	return geom.Point{}
 }
 
 func drainCmd(m ui.Model, cmd tea.Cmd) ui.Model {
@@ -1248,4 +1195,50 @@ func drainCmd(m ui.Model, cmd tea.Cmd) ui.Model {
 		cmd = next
 	}
 	return m
+}
+
+func userDocuments(e *view.Editor) []*view.Document {
+	var out []*view.Document
+	for _, d := range e.AllDocuments() {
+		if d.DisplayName() != view.MessagesBufferName {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+func renderedModel(e *view.Editor) ui.Model {
+	m := ui.New(e, command.NewKeymaps())
+	m2, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 8})
+	m = m2.(ui.Model)
+	_ = m.View()
+	return m
+}
+
+func editorWithText(t *testing.T, text string) *view.Editor {
+	t.Helper()
+	e := view.NewEditor("/tmp")
+	e.Options().Theme = view.DefaultTheme
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	rope := doc.Text()
+	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+		core.TextChange(core.Span{From: 0, To: 0}, text),
+	})
+	assert.NoError(t, err)
+	tx := core.NewTransaction(rope).
+		WithChanges(cs).
+		WithSelection(core.PointSelection(0))
+	assert.NoError(t, e.Apply(tx))
+	return e
+}
+
+func cursorLineOf(t *testing.T, e *view.Editor) int {
+	t.Helper()
+	doc := e.FocusedDocument()
+	text := doc.Text()
+	cursor := doc.SelectionFor(e.FocusedView().ID()).Primary().Cursor(text)
+	pos, err := text.Position(cursor)
+	assert.NoError(t, err)
+	return pos.Line
 }

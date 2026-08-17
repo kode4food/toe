@@ -1,6 +1,7 @@
 package view
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -35,6 +36,7 @@ func (e *Editor) Save(force bool) error {
 // view
 func (e *Editor) NewDocument() *View {
 	doc := e.newDocument()
+	doc.SetDisplayName(e.nextScratchName())
 	e.documents.byID[doc.ID()] = doc
 	e.documentOpened(doc)
 	v := e.FocusedView()
@@ -313,6 +315,20 @@ func (e *Editor) reloadDocument(doc *Document) error {
 		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
 	}
 	return nil
+}
+
+// nextScratchName names a scratch buffer after the lowest number not already
+// taken, so closing one frees its name for the next
+func (e *Editor) nextScratchName() string {
+	taken := map[string]bool{}
+	for _, d := range e.documents.byID {
+		taken[d.DisplayName()] = true
+	}
+	name := ScratchBufferName
+	for n := 2; taken[name]; n++ {
+		name = fmt.Sprintf(scratchBufferFmt, n)
+	}
+	return name
 }
 
 func fileMissing(path string) bool {

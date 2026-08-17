@@ -105,8 +105,8 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 		return
 	}
 
-	// A click outside any editor content area (status line, command line, or a
-	// gap) must not move the cursor
+	// A click outside any editor content area (a status line or a gap) must
+	// not move the cursor
 	res, ok := r.resolveClickPos(at)
 	if !ok {
 		return

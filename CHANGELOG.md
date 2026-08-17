@@ -17,6 +17,8 @@ Notable changes to toe.
 
 - Reworked command-line feedback with active-state highlighting and a blinking macro-recording badge
 - Made the command palette prompt for required arguments before running a command
+- Removed the command line, moving messages into a dismissable toast popup in the bottom-right corner and the register and recording badges onto the statusline
+- Logged every message to a read-only `[messages]` buffer, reachable from the buffer picker or the `messages` command
 
 ### Key Entry
 

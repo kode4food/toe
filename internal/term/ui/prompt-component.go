@@ -75,7 +75,7 @@ const (
 	promptHeightPct = 70
 	promptChrome    = 3 // top border, input row, bottom border
 	promptRule      = 1 // divider between the input and its completions
-	promptKeepClear = 2 // statusline and cmdline the prompt centers above
+	promptKeepClear = 1 // the statusline the prompt centers above
 	promptPadX      = 1
 )
 
@@ -97,27 +97,21 @@ type promptComponentArgs struct {
 
 func newPromptComponent(args promptComponentArgs) *PromptComponent {
 	th := args.cx.Theme()
-	titleKey := args.titleKey
-	switch args.kind {
-	case promptCmd:
-		titleKey = i18n.PromptCommand
-	case promptSearch:
-		if args.forward {
-			titleKey = promptSearchForwardKey
-		} else {
-			titleKey = promptSearchBackwardKey
-		}
-	}
-	title := i18n.Text(titleKey)
-	if title == "" {
-		title = i18n.Text(i18n.PromptCommand)
+	key := args.titleKey
+	switch {
+	case args.kind == promptSearch && args.forward:
+		key = promptSearchForwardKey
+	case args.kind == promptSearch:
+		key = promptSearchBackwardKey
+	case args.kind == promptCmd, key == "":
+		key = i18n.PromptCommand
 	}
 	return &PromptComponent{
 		bg:      promptBackground(th),
 		editor:  args.editor,
 		kind:    args.kind,
 		forward: args.forward,
-		title:   title,
+		title:   i18n.Text(key),
 		head:    args.head,
 		completion: completionState{
 			list: listScroll{cursor: -1},
@@ -146,7 +140,7 @@ func (p *PromptComponent) HandleEvent(
 	return ignored(), nil
 }
 
-// Layout claims the command line at the foot of the frame
+// Layout claims a centered popup over the frame
 func (p *PromptComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
@@ -280,13 +274,24 @@ func (p *PromptComponent) handleKey(
 	case k.Code.Special == command.Escape:
 		return pop(nil)
 
-	case k.Code.Special == command.Enter:
+	// an open completion takes Enter first, so the same key accepts a
+	// suggestion and then submits the line it produced
+	case k.Code.Special == command.Enter,
+		k.Code.Special == command.Tab:
+		if p.acceptCompletion() {
+			return consumed()
+		}
+		if k.Code.Special == command.Tab {
+			return consumed()
+		}
 		return p.accept(cx, pop)
 
-	case k.Code.Special == command.Up:
+	case k.Code.Special == command.Up,
+		k.Code.Char == 'p' && k.Mods == command.ModCtrl:
 		p.changeCompletion(-1)
 
-	case k.Code.Special == command.Down:
+	case k.Code.Special == command.Down,
+		k.Code.Char == 'n' && k.Mods == command.ModCtrl:
 		p.changeCompletion(1)
 
 	case k.Code.Special == command.PageUp:

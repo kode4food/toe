@@ -611,10 +611,11 @@ This applies to test files as well.
 1. `type` declarations (must use a block when declaring multiple types). Ordering rule: if a type uses another type, the using type goes first.
 2. `const` declarations (must use a block when declaring multiple constants)
 3. `var` declarations (must use a block when declaring multiple vars; exception: errors always use a `var` block)
-4. Exported functions (including constructors like `New...`)
+4. Exported constructors (`New...`)
 5. Exported methods
-6. Unexported methods
-7. Unexported helper functions
+6. Exported functions
+7. Unexported methods
+8. Unexported functions
 
 ```go
 package core
@@ -632,12 +633,14 @@ var (
 	ErrPrimaryIndexNotFound = errors.New("primary index not found")
 )
 
-func NewHistory() History { ... }
+func NewHistory() History { ... }                        // constructor
 
-func (h *History) CurrentRevision() int { ... }          // exported
-func (h *History) CommitRevision(...) error { ... }      // exported
+func (h *History) CurrentRevision() int { ... }          // exported method
+func (h *History) CommitRevision(...) error { ... }      // exported method
 
-func (h *History) jumpTo(to int) []Transaction { ... }   // unexported
+func UndoSteps(n int) UndoKind { ... }                   // exported function
+
+func (h *History) jumpTo(to int) []Transaction { ... }   // unexported method
 func indentWidth(s string, tabWidth int) int { ... }     // unexported helper
 ```
 

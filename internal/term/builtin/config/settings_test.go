@@ -17,13 +17,13 @@ func TestConfigOption(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", configOptionBoolKey+" true")
 		res := test.RunCmdArgs(t, km, e, "get_option", configOptionBoolKey)
-		assert.Equal(t, "true", res.Message)
+		assert.Equal(t, configOptionBoolKey+": true", res.Message)
 	})
 
 	t.Run("toggle reports new value", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "toggle_option", configOptionBoolKey)
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("get without args is a usage error", func(t *testing.T) {
@@ -164,7 +164,7 @@ func TestConfigOptions(t *testing.T) {
 		t.Run("toggle "+key, func(t *testing.T) {
 			e, km := test.Env(t, "")
 			res := test.RunCmdArgs(t, km, e, "toggle_option", key)
-			assert.Contains(t, res.Message, "is now set to")
+			assert.Contains(t, res.Message, "is now")
 		})
 	}
 
@@ -172,14 +172,14 @@ func TestConfigOptions(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "default-line-ending lf")
 		res := test.RunCmdArgs(t, km, e, "get_option", "default-line-ending")
-		assert.Equal(t, "lf", res.Message)
+		assert.Equal(t, "default-line-ending: lf", res.Message)
 	})
 
 	t.Run("get/set statusline separator", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "statusline.separator |")
 		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.separator")
-		assert.Equal(t, "|", res.Message)
+		assert.Equal(t, "statusline.separator: |", res.Message)
 	})
 
 	t.Run("get/set statusline items", func(t *testing.T) {
@@ -187,7 +187,7 @@ func TestConfigOptions(t *testing.T) {
 		value := `["mode!", "file-name"]`
 		test.RunCmdArgs(t, km, e, "set_option", "statusline.left "+value)
 		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.left")
-		assert.Equal(t, value, res.Message)
+		assert.Equal(t, "statusline.left: "+value, res.Message)
 	})
 
 	t.Run("rejects invalid statusline items", func(t *testing.T) {
@@ -210,7 +210,7 @@ func TestConfigOptions(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "cursor-shape.normal bar")
 		res := test.RunCmdArgs(t, km, e, "get_option", "cursor-shape.normal")
-		assert.Equal(t, "bar", res.Message)
+		assert.Equal(t, "cursor-shape.normal: bar", res.Message)
 	})
 
 	t.Run("get/set cursor-shape select", func(t *testing.T) {
@@ -218,28 +218,30 @@ func TestConfigOptions(t *testing.T) {
 		test.RunCmdArgs(t,
 			km, e, "set_option", "cursor-shape.select underline")
 		res := test.RunCmdArgs(t, km, e, "get_option", "cursor-shape.select")
-		assert.Equal(t, "underline", res.Message)
+		assert.Equal(t,
+			"cursor-shape.select: underline", res.Message,
+		)
 	})
 
 	t.Run("get/set cursor-shape insert", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "cursor-shape.insert bar")
 		res := test.RunCmdArgs(t, km, e, "get_option", "cursor-shape.insert")
-		assert.Equal(t, "bar", res.Message)
+		assert.Equal(t, "cursor-shape.insert: bar", res.Message)
 	})
 
 	t.Run("get/set theme option", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "theme mocha")
 		res := test.RunCmdArgs(t, km, e, "get_option", "theme")
-		assert.Equal(t, "mocha", res.Message)
+		assert.Equal(t, "theme: mocha", res.Message)
 	})
 
 	t.Run("get/set default-line-ending crlf", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "default-line-ending crlf")
 		res := test.RunCmdArgs(t, km, e, "get_option", "default-line-ending")
-		assert.Equal(t, "crlf", res.Message)
+		assert.Equal(t, "default-line-ending: crlf", res.Message)
 	})
 }
 

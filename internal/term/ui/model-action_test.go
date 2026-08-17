@@ -17,6 +17,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -43,6 +44,201 @@ var gotoActionCases = []gotoActionCase{
 	{"GotoDeclarationAction", ui.Model.GotoDeclarationAction},
 	{"GotoTypeDefinitionAction", ui.Model.GotoTypeDefinitionAction},
 	{"GotoImplementationAction", ui.Model.GotoImplementationAction},
+}
+
+func (c *locationController) RestartLanguageServers(
+	*view.Document, []string,
+) ([]string, error) {
+	return nil, nil
+}
+
+func (c *locationController) StopLanguageServers(
+	*view.Document, []string,
+) ([]string, error) {
+	return nil, nil
+}
+
+func (c *locationController) ExecuteWorkspaceCommand(
+	*view.Document, string, []string,
+) error {
+	return nil
+}
+
+func (c *locationController) WorkspaceCommands(*view.Document) []string {
+	return c.commands
+}
+
+func (c *locationController) LanguageServerNames(*view.Document) []string {
+	return nil
+}
+
+func (c *locationController) Completions(
+	*view.Document, view.Id,
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, nil
+}
+
+func (c *locationController) TriggerCompletions(
+	*view.Document, view.Id,
+) (view.CompletionResult, error) {
+	return view.CompletionResult{}, nil
+}
+
+func (c *locationController) ResolveCompletion(
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
+) (*view.CompletionItem, error) {
+	return item, nil
+}
+
+func (c *locationController) ApplyCompletion(
+	*view.Document, view.Id, *view.CompletionItem,
+) error {
+	return nil
+}
+
+func (c *locationController) Hover(*view.Document, view.Id) (string, error) {
+	return "", nil
+}
+
+func (c *locationController) SignatureHelp(
+	*view.Document, view.Id,
+) (view.SignatureHelp, error) {
+	return c.signatureHelp, nil
+}
+
+func (c *locationController) TriggerSignatureHelp(
+	*view.Document, view.Id,
+) (view.SignatureHelp, error) {
+	return view.SignatureHelp{}, nil
+}
+
+func (c *locationController) GotoDeclaration(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.locations, nil
+}
+
+func (c *locationController) GotoDefinition(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.locations, nil
+}
+
+func (c *locationController) GotoTypeDefinition(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.locations, nil
+}
+
+func (c *locationController) GotoImplementation(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.locations, nil
+}
+
+func (c *locationController) GotoReference(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.locations, nil
+}
+
+func (c *locationController) RenameSymbolPrefill(
+	doc *view.Document, viewID view.Id,
+) (string, error) {
+	sel := doc.SelectionFor(viewID)
+	r := core.TextObjectWord(
+		doc.Text(), sel.Primary(), core.TextObjectInside, false,
+	)
+	return r.Fragment(doc.Text())
+}
+
+func (c *locationController) RenameSymbol(
+	_ *view.Document, _ view.Id, name string,
+) error {
+	c.renamed = name
+	return nil
+}
+
+func (c *locationController) CodeActions(
+	*view.Document, view.Id,
+) ([]view.CodeAction, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.actions, nil
+}
+
+func (c *locationController) ApplyCodeAction(
+	_ *view.Document, _ view.Id, action view.CodeAction,
+) error {
+	c.applied = action.ID
+	return nil
+}
+
+func (c *locationController) DocumentHighlights(
+	*view.Document, view.Id,
+) ([]view.DocumentHighlight, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.highlights, nil
+}
+
+func (c *locationController) DocumentLinks(
+	*view.Document,
+) ([]view.DocumentLink, error) {
+	return nil, nil
+}
+
+func (c *locationController) ResolveDocumentLink(
+	_ *view.Document, link view.DocumentLink,
+) (view.DocumentLink, error) {
+	return link, nil
+}
+
+func (c *locationController) FormatDocument(*view.Document, view.Id) error {
+	return nil
+}
+
+func (c *locationController) FormatSelection(*view.Document, view.Id) error {
+	return nil
+}
+
+func (c *locationController) DocumentSymbols(
+	*view.Document,
+) ([]view.Symbol, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.symbols, nil
+}
+
+func (c *locationController) WorkspaceSymbols(
+	*view.Document, string,
+) ([]view.Symbol, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.symbols, nil
+}
+
+func (c *locationController) Busy() bool {
+	return false
 }
 
 func TestLocationAction(t *testing.T) {
@@ -303,7 +499,7 @@ func TestSymbolPickerAction(t *testing.T) {
 
 		m.SymbolPickerAction(e)
 
-		assert.Equal(t, "error: symbols failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: symbols failed", testutil.StatusMsg(e))
 	})
 
 	for _, tc := range []struct {
@@ -381,7 +577,7 @@ func TestSelectReferencesAction(t *testing.T) {
 
 		m.SelectReferencesAction(e)
 
-		assert.Equal(t, "error: highlights failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: highlights failed", testutil.StatusMsg(e))
 	})
 
 	t.Run("no results returns nil", func(t *testing.T) {
@@ -537,7 +733,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 		m.CodeActionPickerAction(e)
 
-		assert.Contains(t, e.TakeStatusMsg(), "No code actions")
+		assert.Contains(t, testutil.StatusMsg(e), "No code actions")
 	})
 
 	t.Run("code action error sets status", func(t *testing.T) {
@@ -554,11 +750,13 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 		m.CodeActionPickerAction(e)
 
-		assert.Equal(t, "error: code actions failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: code actions failed", testutil.StatusMsg(e))
 	})
 
 	t.Run("selects preferred action", func(t *testing.T) {
-		m, ctl := codeActionModel(t, codeActions(12, 7))
+		m, ctl := codeActionModel(t, codeActions(
+			codeActionsArgs{count: 12, preferred: 7},
+		))
 
 		m = sendKey(m, 'a')
 		out := stripANSI(m.View().Content)
@@ -572,7 +770,9 @@ func TestCodeActionPickerAction(t *testing.T) {
 	})
 
 	t.Run("wraps upward", func(t *testing.T) {
-		m, ctl := codeActionModel(t, codeActions(2, -1))
+		m, ctl := codeActionModel(t, codeActions(
+			codeActionsArgs{count: 2, preferred: -1},
+		))
 
 		m = sendKey(m, 'a')
 		m = sendSpecial(m, tea.KeyUp)
@@ -582,7 +782,9 @@ func TestCodeActionPickerAction(t *testing.T) {
 	})
 
 	t.Run("typing dismisses menu", func(t *testing.T) {
-		m, ctl := codeActionModel(t, codeActions(1, -1))
+		m, ctl := codeActionModel(t, codeActions(
+			codeActionsArgs{count: 1, preferred: -1},
+		))
 
 		m = sendKey(m, 'a')
 		m = sendKey(m, 'x')
@@ -592,7 +794,9 @@ func TestCodeActionPickerAction(t *testing.T) {
 	})
 
 	t.Run("click applies action", func(t *testing.T) {
-		m, ctl := codeActionModel(t, codeActions(4, -1))
+		m, ctl := codeActionModel(t, codeActions(
+			codeActionsArgs{count: 4, preferred: -1},
+		))
 
 		m = sendKey(m, 'a')
 		m.View()
@@ -604,7 +808,9 @@ func TestCodeActionPickerAction(t *testing.T) {
 	})
 
 	t.Run("wheel scrolls menu", func(t *testing.T) {
-		m, ctl := codeActionModel(t, codeActions(14, -1))
+		m, ctl := codeActionModel(t, codeActions(
+			codeActionsArgs{count: 14, preferred: -1},
+		))
 
 		m = sendKey(m, 'a')
 		m.View()
@@ -622,236 +828,6 @@ func TestCodeActionPickerAction(t *testing.T) {
 	})
 }
 
-func codeActionModel(
-	t *testing.T, actions []view.CodeAction,
-) (ui.Model, *locationController) {
-	t.Helper()
-	dir := t.TempDir()
-	path := filepath.Join(dir, "main.go")
-	assert.NoError(t, os.WriteFile(path, []byte("old\n"), 0o600))
-	e := view.NewEditor(dir)
-	_, err := e.OpenFile(path)
-	assert.NoError(t, err)
-	ctl := &locationController{actions: actions}
-	e.SetLanguageServerController(ctl)
-	km := command.NewKeymaps()
-	m := ui.New(e, km)
-	bindNormalTestAction(
-		km, "code_action", m.CodeActionPickerAction,
-		[]command.KeyEvent{char('a')},
-	)
-	return resize(m, 80, 24), ctl
-}
-
-func codeActions(n, preferred int) []view.CodeAction {
-	actions := make([]view.CodeAction, n)
-	for i := range actions {
-		actions[i] = view.CodeAction{
-			ID:        fmt.Sprintf("session:%d", i),
-			Title:     fmt.Sprintf("Action %d", i),
-			Kind:      "quickfix",
-			Server:    "session",
-			Preferred: i == preferred,
-		}
-	}
-	return actions
-}
-
-func (c *locationController) RestartLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
-	return nil, nil
-}
-
-func (c *locationController) StopLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
-	return nil, nil
-}
-
-func (c *locationController) ExecuteWorkspaceCommand(
-	*view.Document, string, []string,
-) error {
-	return nil
-}
-
-func (c *locationController) WorkspaceCommands(*view.Document) []string {
-	return c.commands
-}
-
-func (c *locationController) LanguageServerNames(*view.Document) []string {
-	return nil
-}
-
-func (c *locationController) Completions(
-	*view.Document, view.Id,
-) (view.CompletionResult, error) {
-	return view.CompletionResult{}, nil
-}
-
-func (c *locationController) TriggerCompletions(
-	*view.Document, view.Id,
-) (view.CompletionResult, error) {
-	return view.CompletionResult{}, nil
-}
-
-func (c *locationController) ResolveCompletion(
-	_ *view.Document, _ view.Id, item *view.CompletionItem,
-) (*view.CompletionItem, error) {
-	return item, nil
-}
-
-func (c *locationController) ApplyCompletion(
-	*view.Document, view.Id, *view.CompletionItem,
-) error {
-	return nil
-}
-
-func (c *locationController) Hover(*view.Document, view.Id) (string, error) {
-	return "", nil
-}
-
-func (c *locationController) SignatureHelp(
-	*view.Document, view.Id,
-) (view.SignatureHelp, error) {
-	return c.signatureHelp, nil
-}
-
-func (c *locationController) TriggerSignatureHelp(
-	*view.Document, view.Id,
-) (view.SignatureHelp, error) {
-	return view.SignatureHelp{}, nil
-}
-
-func (c *locationController) GotoDeclaration(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.locations, nil
-}
-
-func (c *locationController) GotoDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.locations, nil
-}
-
-func (c *locationController) GotoTypeDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.locations, nil
-}
-
-func (c *locationController) GotoImplementation(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.locations, nil
-}
-
-func (c *locationController) GotoReference(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.locations, nil
-}
-
-func (c *locationController) RenameSymbolPrefill(
-	doc *view.Document, viewID view.Id,
-) (string, error) {
-	sel := doc.SelectionFor(viewID)
-	r := core.TextObjectWord(
-		doc.Text(), sel.Primary(), core.TextObjectInside, false,
-	)
-	return r.Fragment(doc.Text())
-}
-
-func (c *locationController) RenameSymbol(
-	_ *view.Document, _ view.Id, name string,
-) error {
-	c.renamed = name
-	return nil
-}
-
-func (c *locationController) CodeActions(
-	*view.Document, view.Id,
-) ([]view.CodeAction, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.actions, nil
-}
-
-func (c *locationController) ApplyCodeAction(
-	_ *view.Document, _ view.Id, action view.CodeAction,
-) error {
-	c.applied = action.ID
-	return nil
-}
-
-func (c *locationController) DocumentHighlights(
-	*view.Document, view.Id,
-) ([]view.DocumentHighlight, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.highlights, nil
-}
-
-func (c *locationController) DocumentLinks(
-	*view.Document,
-) ([]view.DocumentLink, error) {
-	return nil, nil
-}
-
-func (c *locationController) ResolveDocumentLink(
-	_ *view.Document, link view.DocumentLink,
-) (view.DocumentLink, error) {
-	return link, nil
-}
-
-func (c *locationController) FormatDocument(*view.Document, view.Id) error {
-	return nil
-}
-
-func (c *locationController) FormatSelection(*view.Document, view.Id) error {
-	return nil
-}
-
-func (c *locationController) DocumentSymbols(
-	*view.Document,
-) ([]view.Symbol, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.symbols, nil
-}
-
-func (c *locationController) WorkspaceSymbols(
-	*view.Document, string,
-) ([]view.Symbol, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-	return c.symbols, nil
-}
-
-func (c *locationController) Busy() bool {
-	return false
-}
-
 func TestGotoActions(t *testing.T) {
 	t.Run("no language server sets status", func(t *testing.T) {
 		dir := t.TempDir()
@@ -864,7 +840,9 @@ func TestGotoActions(t *testing.T) {
 
 		m.GotoDeclarationAction(e)
 
-		assert.Contains(t, e.TakeStatusMsg(), "No configured language server")
+		assert.Contains(t,
+			testutil.StatusMsg(e), "No configured language server",
+		)
 	})
 
 	t.Run("not found sets status", func(t *testing.T) {
@@ -879,7 +857,7 @@ func TestGotoActions(t *testing.T) {
 
 		m.GotoDeclarationAction(e)
 
-		assert.Contains(t, e.TakeStatusMsg(), "No declaration")
+		assert.Contains(t, testutil.StatusMsg(e), "No declaration")
 	})
 
 	t.Run("location error sets status", func(t *testing.T) {
@@ -896,7 +874,7 @@ func TestGotoActions(t *testing.T) {
 
 		m.GotoDeclarationAction(e)
 
-		assert.Equal(t, "error: location failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: location failed", testutil.StatusMsg(e))
 	})
 
 	for _, tc := range gotoActionCases {
@@ -1016,7 +994,7 @@ func TestSignatureHelpAction(t *testing.T) {
 		m := ui.New(e, command.NewKeymaps())
 
 		m.SignatureHelpAction(e)
-		assert.Contains(t, e.TakeStatusMsg(), "signature help")
+		assert.Contains(t, testutil.StatusMsg(e), "signature help")
 	})
 
 	t.Run("cursor not in call returns nil", func(t *testing.T) {
@@ -1159,4 +1137,44 @@ func TestLSPWorkspaceCommandPicker(t *testing.T) {
 		m = sendKeyAndFeed(m, 'w')
 		sendSpecial(m, tea.KeyEnter)
 	})
+}
+
+func codeActionModel(
+	t *testing.T, actions []view.CodeAction,
+) (ui.Model, *locationController) {
+	t.Helper()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "main.go")
+	assert.NoError(t, os.WriteFile(path, []byte("old\n"), 0o600))
+	e := view.NewEditor(dir)
+	_, err := e.OpenFile(path)
+	assert.NoError(t, err)
+	ctl := &locationController{actions: actions}
+	e.SetLanguageServerController(ctl)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "code_action", m.CodeActionPickerAction,
+		[]command.KeyEvent{char('a')},
+	)
+	return resize(m, 80, 24), ctl
+}
+
+type codeActionsArgs struct {
+	count     int
+	preferred int
+}
+
+func codeActions(args codeActionsArgs) []view.CodeAction {
+	actions := make([]view.CodeAction, args.count)
+	for i := range actions {
+		actions[i] = view.CodeAction{
+			ID:        fmt.Sprintf("session:%d", i),
+			Title:     fmt.Sprintf("Action %d", i),
+			Kind:      "quickfix",
+			Server:    "session",
+			Preferred: i == args.preferred,
+		}
+	}
+	return actions
 }

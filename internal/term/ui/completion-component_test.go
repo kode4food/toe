@@ -11,9 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/action"
 )
@@ -35,6 +37,238 @@ type completionController struct {
 	refreshIncomplete   bool
 	busy                bool
 	triggerEmpty        bool
+}
+
+func (c *completionController) RestartLanguageServers(
+	*view.Document, []string,
+) ([]string, error) {
+	return nil, nil
+}
+
+func (c *completionController) StopLanguageServers(
+	*view.Document, []string,
+) ([]string, error) {
+	return nil, nil
+}
+
+func (c *completionController) ExecuteWorkspaceCommand(
+	*view.Document, string, []string,
+) error {
+	return nil
+}
+
+func (c *completionController) WorkspaceCommands(*view.Document) []string {
+	return nil
+}
+
+func (c *completionController) LanguageServerNames(*view.Document) []string {
+	return nil
+}
+
+func (c *completionController) Completions(
+	doc *view.Document, _ view.Id,
+) (view.CompletionResult, error) {
+	if c.completionErr != nil {
+		return view.CompletionResult{}, c.completionErr
+	}
+	items := c.items
+	incomplete := c.incomplete
+	if doc != nil && len(c.refreshItems) > 0 &&
+		strings.Contains(doc.Text().String(), "P") {
+		items = c.refreshItems
+		incomplete = c.refreshIncomplete
+	}
+	return view.CompletionResult{
+		Items:      items,
+		Incomplete: incomplete,
+	}, nil
+}
+
+func (c *completionController) TriggerCompletions(
+	doc *view.Document, viewID view.Id,
+) (view.CompletionResult, error) {
+	if c.triggerEmpty {
+		return view.CompletionResult{}, nil
+	}
+	return c.Completions(doc, viewID)
+}
+
+func (c *completionController) ResolveCompletion(
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
+) (*view.CompletionItem, error) {
+	out := *item
+	out.Docs = c.docs
+	if out.Docs == "" {
+		out.Docs = "resolved docs"
+	}
+	return &out, nil
+}
+
+func (c *completionController) ApplyCompletion(
+	_ *view.Document, _ view.Id, item *view.CompletionItem,
+) error {
+	if c.applyErr != nil {
+		return c.applyErr
+	}
+	c.item = *item
+	text := item.Insert
+	if text == "" {
+		text = item.Label
+	}
+	for _, ch := range text {
+		action.InsertChar(c.editor, ch)
+	}
+	return nil
+}
+
+func (c *completionController) Hover(*view.Document, view.Id) (string, error) {
+	if c.hoverText != "" {
+		return c.hoverText, nil
+	}
+	return "hover docs", nil
+}
+
+func (c *completionController) SignatureHelp(
+	doc *view.Document, viewID view.Id,
+) (view.SignatureHelp, error) {
+	if c.signatureErr != nil {
+		return view.SignatureHelp{}, c.signatureErr
+	}
+	if c.signatureEmpty {
+		return view.SignatureHelp{}, nil
+	}
+	if doc != nil && len(c.signatureAfterComma.Signatures) > 0 {
+		sel := doc.SelectionFor(viewID)
+		pos := sel.Primary().Cursor(doc.Text())
+		before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+		if err == nil && strings.Contains(before, ",") {
+			return c.signatureAfterComma, nil
+		}
+	}
+	if len(c.signature.Signatures) > 0 {
+		return c.signature, nil
+	}
+	return view.SignatureHelp{
+		Signatures: []view.SignatureInformation{
+			{
+				Label:       "Println(a ...any)",
+				Docs:        "signature docs",
+				ActiveStart: 8,
+				ActiveEnd:   9,
+			},
+		},
+	}, nil
+}
+
+func (c *completionController) TriggerSignatureHelp(
+	doc *view.Document, viewID view.Id,
+) (view.SignatureHelp, error) {
+	if doc == nil {
+		return c.SignatureHelp(nil, 0)
+	}
+	sel := doc.SelectionFor(viewID)
+	pos := sel.Primary().Cursor(doc.Text())
+	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+	if err != nil || !strings.HasSuffix(before, "(") {
+		return view.SignatureHelp{}, nil
+	}
+	return c.SignatureHelp(doc, viewID)
+}
+
+func (c *completionController) GotoDeclaration(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	return nil, nil
+}
+
+func (c *completionController) GotoDefinition(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	return nil, nil
+}
+
+func (c *completionController) GotoTypeDefinition(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	return nil, nil
+}
+
+func (c *completionController) GotoImplementation(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	return nil, nil
+}
+
+func (c *completionController) GotoReference(
+	*view.Document, view.Id,
+) ([]view.Location, error) {
+	return nil, nil
+}
+
+func (c *completionController) RenameSymbolPrefill(
+	*view.Document, view.Id,
+) (string, error) {
+	return "", nil
+}
+
+func (c *completionController) RenameSymbol(
+	*view.Document, view.Id, string,
+) error {
+	return nil
+}
+
+func (c *completionController) CodeActions(
+	*view.Document, view.Id,
+) ([]view.CodeAction, error) {
+	return nil, nil
+}
+
+func (c *completionController) ApplyCodeAction(
+	*view.Document, view.Id, view.CodeAction,
+) error {
+	return nil
+}
+
+func (c *completionController) DocumentHighlights(
+	*view.Document, view.Id,
+) ([]view.DocumentHighlight, error) {
+	return nil, nil
+}
+
+func (c *completionController) DocumentLinks(
+	*view.Document,
+) ([]view.DocumentLink, error) {
+	return nil, nil
+}
+
+func (c *completionController) ResolveDocumentLink(
+	_ *view.Document, link view.DocumentLink,
+) (view.DocumentLink, error) {
+	return link, nil
+}
+
+func (c *completionController) FormatDocument(*view.Document, view.Id) error {
+	return nil
+}
+
+func (c *completionController) FormatSelection(*view.Document, view.Id) error {
+	return nil
+}
+
+func (c *completionController) DocumentSymbols(
+	*view.Document,
+) ([]view.Symbol, error) {
+	return nil, nil
+}
+
+func (c *completionController) WorkspaceSymbols(
+	*view.Document, string,
+) ([]view.Symbol, error) {
+	return nil, nil
+}
+
+func (c *completionController) Busy() bool {
+	return c.busy
 }
 
 //goland:noinspection GoRedundantConversion
@@ -909,9 +1143,9 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		x, y := completionTextPoint(t, m, "Beta")
+		at := completionTextPoint(t, m, "Beta")
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: x, Y: y, Button: tea.MouseLeft,
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		doc := e.FocusedDocument()
@@ -943,9 +1177,9 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		x, y := completionTextPoint(t, m, "itemF")
+		at := completionTextPoint(t, m, "itemF")
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: x, Y: y, Button: tea.MouseWheelDown,
+			X: at.X, Y: at.Y, Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
 		out := stripANSI(m.View().Content)
@@ -1259,7 +1493,7 @@ func TestCompletionComponent(t *testing.T) {
 		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
 		_ = feedCmds(m2.(ui.Model), cmd)
 
-		assert.Equal(t, "error: completion failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: completion failed", testutil.StatusMsg(e))
 	})
 
 	t.Run("apply error sets status", func(t *testing.T) {
@@ -1282,284 +1516,8 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		_ = sendSpecial(m, tea.KeyEnter)
 
-		assert.Equal(t, "error: apply failed", e.TakeStatusMsg())
+		assert.Equal(t, "error: apply failed", testutil.StatusMsg(e))
 	})
-}
-
-func (c *completionController) RestartLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
-	return nil, nil
-}
-
-func (c *completionController) StopLanguageServers(
-	*view.Document, []string,
-) ([]string, error) {
-	return nil, nil
-}
-
-func (c *completionController) ExecuteWorkspaceCommand(
-	*view.Document, string, []string,
-) error {
-	return nil
-}
-
-func (c *completionController) WorkspaceCommands(*view.Document) []string {
-	return nil
-}
-
-func (c *completionController) LanguageServerNames(*view.Document) []string {
-	return nil
-}
-
-func (c *completionController) Completions(
-	doc *view.Document, _ view.Id,
-) (view.CompletionResult, error) {
-	if c.completionErr != nil {
-		return view.CompletionResult{}, c.completionErr
-	}
-	items := c.items
-	incomplete := c.incomplete
-	if doc != nil && len(c.refreshItems) > 0 &&
-		strings.Contains(doc.Text().String(), "P") {
-		items = c.refreshItems
-		incomplete = c.refreshIncomplete
-	}
-	return view.CompletionResult{
-		Items:      items,
-		Incomplete: incomplete,
-	}, nil
-}
-
-func (c *completionController) TriggerCompletions(
-	doc *view.Document, viewID view.Id,
-) (view.CompletionResult, error) {
-	if c.triggerEmpty {
-		return view.CompletionResult{}, nil
-	}
-	return c.Completions(doc, viewID)
-}
-
-func (c *completionController) ResolveCompletion(
-	_ *view.Document, _ view.Id, item *view.CompletionItem,
-) (*view.CompletionItem, error) {
-	out := *item
-	out.Docs = c.docs
-	if out.Docs == "" {
-		out.Docs = "resolved docs"
-	}
-	return &out, nil
-}
-
-func (c *completionController) ApplyCompletion(
-	_ *view.Document, _ view.Id, item *view.CompletionItem,
-) error {
-	if c.applyErr != nil {
-		return c.applyErr
-	}
-	c.item = *item
-	text := item.Insert
-	if text == "" {
-		text = item.Label
-	}
-	for _, ch := range text {
-		action.InsertChar(c.editor, ch)
-	}
-	return nil
-}
-
-func (c *completionController) Hover(*view.Document, view.Id) (string, error) {
-	if c.hoverText != "" {
-		return c.hoverText, nil
-	}
-	return "hover docs", nil
-}
-
-func (c *completionController) SignatureHelp(
-	doc *view.Document, viewID view.Id,
-) (view.SignatureHelp, error) {
-	if c.signatureErr != nil {
-		return view.SignatureHelp{}, c.signatureErr
-	}
-	if c.signatureEmpty {
-		return view.SignatureHelp{}, nil
-	}
-	if doc != nil && len(c.signatureAfterComma.Signatures) > 0 {
-		sel := doc.SelectionFor(viewID)
-		pos := sel.Primary().Cursor(doc.Text())
-		before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
-		if err == nil && strings.Contains(before, ",") {
-			return c.signatureAfterComma, nil
-		}
-	}
-	if len(c.signature.Signatures) > 0 {
-		return c.signature, nil
-	}
-	return view.SignatureHelp{
-		Signatures: []view.SignatureInformation{
-			{
-				Label:       "Println(a ...any)",
-				Docs:        "signature docs",
-				ActiveStart: 8,
-				ActiveEnd:   9,
-			},
-		},
-	}, nil
-}
-
-func (c *completionController) TriggerSignatureHelp(
-	doc *view.Document, viewID view.Id,
-) (view.SignatureHelp, error) {
-	if doc == nil {
-		return c.SignatureHelp(nil, 0)
-	}
-	sel := doc.SelectionFor(viewID)
-	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
-	if err != nil || !strings.HasSuffix(before, "(") {
-		return view.SignatureHelp{}, nil
-	}
-	return c.SignatureHelp(doc, viewID)
-}
-
-func (c *completionController) GotoDeclaration(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	return nil, nil
-}
-
-func (c *completionController) GotoDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	return nil, nil
-}
-
-func (c *completionController) GotoTypeDefinition(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	return nil, nil
-}
-
-func (c *completionController) GotoImplementation(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	return nil, nil
-}
-
-func (c *completionController) GotoReference(
-	*view.Document, view.Id,
-) ([]view.Location, error) {
-	return nil, nil
-}
-
-func (c *completionController) RenameSymbolPrefill(
-	*view.Document, view.Id,
-) (string, error) {
-	return "", nil
-}
-
-func (c *completionController) RenameSymbol(
-	*view.Document, view.Id, string,
-) error {
-	return nil
-}
-
-func (c *completionController) CodeActions(
-	*view.Document, view.Id,
-) ([]view.CodeAction, error) {
-	return nil, nil
-}
-
-func (c *completionController) ApplyCodeAction(
-	*view.Document, view.Id, view.CodeAction,
-) error {
-	return nil
-}
-
-func (c *completionController) DocumentHighlights(
-	*view.Document, view.Id,
-) ([]view.DocumentHighlight, error) {
-	return nil, nil
-}
-
-func (c *completionController) DocumentLinks(
-	*view.Document,
-) ([]view.DocumentLink, error) {
-	return nil, nil
-}
-
-func (c *completionController) ResolveDocumentLink(
-	_ *view.Document, link view.DocumentLink,
-) (view.DocumentLink, error) {
-	return link, nil
-}
-
-func (c *completionController) FormatDocument(*view.Document, view.Id) error {
-	return nil
-}
-
-func (c *completionController) FormatSelection(*view.Document, view.Id) error {
-	return nil
-}
-
-func (c *completionController) DocumentSymbols(
-	*view.Document,
-) ([]view.Symbol, error) {
-	return nil, nil
-}
-
-func (c *completionController) WorkspaceSymbols(
-	*view.Document, string,
-) ([]view.Symbol, error) {
-	return nil, nil
-}
-
-func (c *completionController) Busy() bool {
-	return c.busy
-}
-
-func hasRightEdgeThumb(out string) bool {
-	for line := range strings.SplitSeq(out, "\n") {
-		trimmed := strings.TrimRight(line, " ")
-		if strings.HasSuffix(trimmed, "▌") {
-			return true
-		}
-	}
-	return false
-}
-
-func rawCompletionLine(t *testing.T, m ui.Model, text string) string {
-	t.Helper()
-	for line := range strings.SplitSeq(m.View().Content, "\n") {
-		if strings.Contains(stripANSI(line), text) {
-			return line
-		}
-	}
-	t.Fatalf("completion text %q not found", text)
-	return ""
-}
-
-func completionTextPoint(t *testing.T, m ui.Model, text string) (int, int) {
-	t.Helper()
-	lines := strings.Split(stripANSI(m.View().Content), "\n")
-	for y, line := range lines {
-		if x := strings.Index(line, text); x >= 0 {
-			return x, y
-		}
-	}
-	t.Fatalf("completion text %q not found", text)
-	return 0, 0
-}
-
-func completionPopupWidth(t *testing.T, out string) int {
-	t.Helper()
-	for line := range strings.SplitSeq(out, "\n") {
-		if strings.Contains(line, "╭") {
-			return runewidth.StringWidth(strings.TrimRight(line, " "))
-		}
-	}
-	t.Fatal("completion popup border not found")
-	return 0
 }
 
 func TestAutoCompletion(t *testing.T) {
@@ -1654,4 +1612,50 @@ func updateFg(fg string, parts []string) string {
 		}
 	}
 	return fg
+}
+
+func hasRightEdgeThumb(out string) bool {
+	for line := range strings.SplitSeq(out, "\n") {
+		trimmed := strings.TrimRight(line, " ")
+		if strings.HasSuffix(trimmed, "▌") {
+			return true
+		}
+	}
+	return false
+}
+
+func rawCompletionLine(t *testing.T, m ui.Model, text string) string {
+	t.Helper()
+	for line := range strings.SplitSeq(m.View().Content, "\n") {
+		if strings.Contains(stripANSI(line), text) {
+			return line
+		}
+	}
+	t.Fatalf("completion text %q not found", text)
+	return ""
+}
+
+func completionTextPoint(
+	t *testing.T, m ui.Model, text string,
+) geom.Point {
+	t.Helper()
+	lines := strings.Split(stripANSI(m.View().Content), "\n")
+	for y, line := range lines {
+		if x := strings.Index(line, text); x >= 0 {
+			return geom.Point{X: x, Y: y}
+		}
+	}
+	t.Fatalf("completion text %q not found", text)
+	return geom.Point{}
+}
+
+func completionPopupWidth(t *testing.T, out string) int {
+	t.Helper()
+	for line := range strings.SplitSeq(out, "\n") {
+		if strings.Contains(line, "╭") {
+			return runewidth.StringWidth(strings.TrimRight(line, " "))
+		}
+	}
+	t.Fatal("completion popup border not found")
+	return 0
 }

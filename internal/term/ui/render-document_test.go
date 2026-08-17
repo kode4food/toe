@@ -783,14 +783,14 @@ func TestThemeRender(t *testing.T) {
 		e.Options().Theme = "mocha"
 		e.Options().CursorShape.Normal = view.CursorKindUnderline
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
-		x, y := renderedTextPoint(t, m, "abcde", 1)
+		at := renderedTextPoint(t, m, "abcde", 1)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: x, Y: y, Button: tea.MouseLeft,
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: x + 2, Y: y, Button: tea.MouseLeft,
+			X: at.X + 2, Y: at.Y, Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
@@ -802,121 +802,6 @@ func TestThemeRender(t *testing.T) {
 		assert.Equal(t, "48;2;69;71;90", cells['d'])
 		assert.NotEqual(t, "48;2;88;91;112", cells['e'])
 	})
-}
-
-func styledRunes(s string) map[rune]string {
-	out := map[rune]string{}
-	bg := ""
-	for len(s) > 0 {
-		if strings.HasPrefix(s, "\x1b[") {
-			end := strings.IndexByte(s, 'm')
-			if end < 0 {
-				return out
-			}
-			if next, ok := styleBg(s[2:end]); ok {
-				bg = next
-			}
-			s = s[end+1:]
-			continue
-		}
-		r, n := rune(s[0]), 1
-		if r >= 0x80 {
-			r, n = utf8.DecodeRuneInString(s)
-		}
-		if r == '\n' {
-			return out
-		}
-		if r >= 'a' && r <= 'z' {
-			out[r] = bg
-		}
-		s = s[n:]
-	}
-	return out
-}
-
-func styledRuneStyles(s string) map[rune]styledRuneStyle {
-	out := map[rune]styledRuneStyle{}
-	var st styledRuneStyle
-	for len(s) > 0 {
-		if strings.HasPrefix(s, "\x1b[") {
-			end := strings.IndexByte(s, 'm')
-			if end < 0 {
-				return out
-			}
-			st = updateStyle(st, s[2:end])
-			s = s[end+1:]
-			continue
-		}
-		r, n := rune(s[0]), 1
-		if r >= 0x80 {
-			r, n = utf8.DecodeRuneInString(s)
-		}
-		if r == '\n' {
-			return out
-		}
-		out[r] = st
-		s = s[n:]
-	}
-	return out
-}
-
-func updateStyle(st styledRuneStyle, params string) styledRuneStyle {
-	parts := strings.Split(params, ";")
-	for i := 0; i < len(parts); i++ {
-		switch parts[i] {
-		case "0":
-			st = styledRuneStyle{}
-		case "39":
-			st.fg = ""
-		case "49":
-			st.bg = ""
-		case "38", "48":
-			next, n, ok := sgrColor(parts[i:])
-			if !ok {
-				continue
-			}
-			if parts[i] == "38" {
-				st.fg = next
-			} else {
-				st.bg = next
-			}
-			i += n - 1
-		case "30", "31", "32", "33", "34", "35", "36", "37":
-			st.fg = parts[i]
-		case "40", "41", "42", "43", "44", "45", "46", "47":
-			st.bg = parts[i]
-		}
-	}
-	return st
-}
-
-func sgrColor(parts []string) (string, int, bool) {
-	if len(parts) >= 5 && parts[1] == "2" {
-		return strings.Join(parts[:5], ";"), 5, true
-	}
-	if len(parts) >= 3 && parts[1] == "5" {
-		return strings.Join(parts[:3], ";"), 3, true
-	}
-	return "", 0, false
-}
-
-func styleBg(params string) (string, bool) {
-	parts := strings.Split(params, ";")
-	for i := 0; i < len(parts); i++ {
-		switch parts[i] {
-		case "0", "49":
-			return "", true
-		case "48":
-			if i+4 < len(parts) && parts[i+1] == "2" {
-				return strings.Join(parts[i:i+5], ";"), true
-			}
-			if i+2 < len(parts) && parts[i+1] == "5" {
-				i += 2
-				continue
-			}
-		}
-	}
-	return "", false
 }
 
 func TestLineContentRender(t *testing.T) {
@@ -1693,4 +1578,119 @@ func TestSearchInvalidRegex(t *testing.T) {
 
 		assert.NotEmpty(t, out)
 	})
+}
+
+func styledRunes(s string) map[rune]string {
+	out := map[rune]string{}
+	bg := ""
+	for len(s) > 0 {
+		if strings.HasPrefix(s, "\x1b[") {
+			end := strings.IndexByte(s, 'm')
+			if end < 0 {
+				return out
+			}
+			if next, ok := styleBg(s[2:end]); ok {
+				bg = next
+			}
+			s = s[end+1:]
+			continue
+		}
+		r, n := rune(s[0]), 1
+		if r >= 0x80 {
+			r, n = utf8.DecodeRuneInString(s)
+		}
+		if r == '\n' {
+			return out
+		}
+		if r >= 'a' && r <= 'z' {
+			out[r] = bg
+		}
+		s = s[n:]
+	}
+	return out
+}
+
+func styledRuneStyles(s string) map[rune]styledRuneStyle {
+	out := map[rune]styledRuneStyle{}
+	var st styledRuneStyle
+	for len(s) > 0 {
+		if strings.HasPrefix(s, "\x1b[") {
+			end := strings.IndexByte(s, 'm')
+			if end < 0 {
+				return out
+			}
+			st = updateStyle(st, s[2:end])
+			s = s[end+1:]
+			continue
+		}
+		r, n := rune(s[0]), 1
+		if r >= 0x80 {
+			r, n = utf8.DecodeRuneInString(s)
+		}
+		if r == '\n' {
+			return out
+		}
+		out[r] = st
+		s = s[n:]
+	}
+	return out
+}
+
+func updateStyle(st styledRuneStyle, params string) styledRuneStyle {
+	parts := strings.Split(params, ";")
+	for i := 0; i < len(parts); i++ {
+		switch parts[i] {
+		case "0":
+			st = styledRuneStyle{}
+		case "39":
+			st.fg = ""
+		case "49":
+			st.bg = ""
+		case "38", "48":
+			next, n, ok := sgrColor(parts[i:])
+			if !ok {
+				continue
+			}
+			if parts[i] == "38" {
+				st.fg = next
+			} else {
+				st.bg = next
+			}
+			i += n - 1
+		case "30", "31", "32", "33", "34", "35", "36", "37":
+			st.fg = parts[i]
+		case "40", "41", "42", "43", "44", "45", "46", "47":
+			st.bg = parts[i]
+		}
+	}
+	return st
+}
+
+func sgrColor(parts []string) (string, int, bool) {
+	if len(parts) >= 5 && parts[1] == "2" {
+		return strings.Join(parts[:5], ";"), 5, true
+	}
+	if len(parts) >= 3 && parts[1] == "5" {
+		return strings.Join(parts[:3], ";"), 3, true
+	}
+	return "", 0, false
+}
+
+func styleBg(params string) (string, bool) {
+	parts := strings.Split(params, ";")
+	for i := 0; i < len(parts); i++ {
+		switch parts[i] {
+		case "0", "49":
+			return "", true
+		case "48":
+			if i+4 < len(parts) && parts[i+1] == "2" {
+				return strings.Join(parts[i:i+5], ";"), true
+			}
+			if i+2 < len(parts) && parts[i+1] == "5" {
+				i += 2
+				continue
+			}
+		}
+	}
+	return "", false
 }

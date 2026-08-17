@@ -175,20 +175,20 @@ func TestViewOptions(t *testing.T) {
 			e, km := test.Env(t, "")
 			test.RunCmdArgs(t, km, e, "set_option", tc.key+" "+tc.val)
 			res := test.RunCmdArgs(t, km, e, "get_option", tc.key)
-			assert.Equal(t, tc.val, res.Message)
+			assert.Equal(t, tc.key+": "+tc.val, res.Message)
 		})
 	}
 
 	t.Run("toggle cursorline", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "toggle_option", "cursorline")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("toggle soft-wrap.enable", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t, km, e, "toggle_option", "soft-wrap.enable")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 }
 
@@ -241,7 +241,7 @@ func TestViewOptionsExtra(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t,
 			km, e, "toggle_option", "indent-guides.render")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("toggle soft-wrap.wrap-at-text-width", func(t *testing.T) {
@@ -249,7 +249,7 @@ func TestViewOptionsExtra(t *testing.T) {
 		res := test.RunCmdArgs(
 			t, km, e, "toggle_option", "soft-wrap.wrap-at-text-width",
 		)
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("rejects invalid whitespace render", func(t *testing.T) {

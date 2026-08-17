@@ -84,8 +84,7 @@ func (r *renderPass) renderBinaryStatus(
 		text:  fmt.Sprintf("%d / %d bytes", pane.offset, pane.size),
 		style: baseTUI,
 	}}
-	right = r.withMaximizedStatus(right)
-	statusRow{
+	r.paintStatus(buf, statusRow{
 		at:        geom.Point{X: a.X, Y: y0 + a.Bottom()},
 		width:     a.Width,
 		baseStyle: baseTUI,
@@ -94,7 +93,7 @@ func (r *renderPass) renderBinaryStatus(
 			{text: name, style: baseTUI},
 		},
 		right: right,
-	}.paint(buf)
+	})
 }
 
 type renderBinaryRowArgs struct {

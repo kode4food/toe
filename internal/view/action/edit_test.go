@@ -421,7 +421,7 @@ func TestYank(t *testing.T) {
 		assert.Equal(t,
 			i18n.Text(action.StatusYankedToClipboard, i18n.Vars{
 				"count": 1,
-			}), e.TakeStatusMsg(),
+			}), testutil.StatusMsg(e),
 		)
 		assert.Equal(t, view.ModeNormal, e.Mode())
 	})

@@ -60,5 +60,6 @@
   "status.pickerTypeToSearch": "Type to search…",
   "status.pickerUnstaged": "Changes",
   "status.reloadFailed": "reload failed: {error}",
-  "status.terminalStarting": "Starting terminal…"
+  "status.terminalStarting": "Starting terminal…",
+  "toast.title": "Messages"
 }

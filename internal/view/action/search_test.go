@@ -208,7 +208,7 @@ func TestSearchFeedback(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t,
-			i18n.Text(action.StatusSearchWrapped), e.TakeStatusMsg(),
+			i18n.Text(action.StatusSearchWrapped), testutil.StatusMsg(e),
 		)
 	})
 
@@ -221,7 +221,7 @@ func TestSearchFeedback(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t,
-			i18n.Text(action.StatusNoMoreMatches), e.TakeStatusMsg(),
+			i18n.Text(action.StatusNoMoreMatches), testutil.StatusMsg(e),
 		)
 		assert.Equal(t, 2, testutil.CursorPos(t, e))
 	})
@@ -234,7 +234,7 @@ func TestSearchFeedback(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t,
-			i18n.Text(action.StatusSearchWrapped), e.TakeStatusMsg(),
+			i18n.Text(action.StatusSearchWrapped), testutil.StatusMsg(e),
 		)
 		assert.Equal(t, 8, testutil.CursorPos(t, e))
 	})
@@ -267,7 +267,7 @@ func TestSearchPatterns(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t,
-			i18n.Text(action.StatusNoMoreMatches), e.TakeStatusMsg(),
+			i18n.Text(action.StatusNoMoreMatches), testutil.StatusMsg(e),
 		)
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 	})
@@ -869,7 +869,7 @@ func TestSearchSelection(t *testing.T) {
 			i18n.Text(action.StatusRegisterSet, i18n.Vars{
 				"register": "/",
 				"value":    "foo",
-			}), e.TakeStatusMsg(),
+			}), testutil.StatusMsg(e),
 		)
 	})
 }
@@ -891,7 +891,7 @@ func TestSearchSelectionWord(t *testing.T) {
 			i18n.Text(action.StatusRegisterSet, i18n.Vars{
 				"register": "/",
 				"value":    val,
-			}), e.TakeStatusMsg(),
+			}), testutil.StatusMsg(e),
 		)
 	})
 }
@@ -910,7 +910,7 @@ func TestMakeSearchWordBounded(t *testing.T) {
 			i18n.Text(action.StatusRegisterSet, i18n.Vars{
 				"register": "/",
 				"value":    `\bfoo\b`,
-			}), e.TakeStatusMsg(),
+			}), testutil.StatusMsg(e),
 		)
 	})
 
@@ -1158,37 +1158,6 @@ func TestGotoWindowTopBottomCenter(t *testing.T) {
 	})
 }
 
-func windowLines(t *testing.T, n int) *view.Editor {
-	t.Helper()
-	var sb strings.Builder
-	for i := 1; i <= n; i++ {
-		_, _ = fmt.Fprintf(&sb, "line %d\n", i)
-	}
-	e := testutil.EditorWithText(t, sb.String())
-	e.SetViewHeight(20)
-	return e
-}
-
-func scrollTo(t *testing.T, e *view.Editor, line int) {
-	t.Helper()
-	v := e.FocusedView()
-	anchor, err := e.FocusedDocument().Text().LineToChar(line - 1)
-	assert.NoError(t, err)
-	offset := v.Offset()
-	offset.Anchor = anchor
-	v.SetOffset(offset)
-}
-
-func cursorLine(t *testing.T, e *view.Editor) int {
-	t.Helper()
-	doc := e.FocusedDocument()
-	text := doc.Text()
-	cursor := doc.SelectionFor(e.FocusedView().ID()).Primary().Cursor(text)
-	pos, err := text.Position(cursor)
-	assert.NoError(t, err)
-	return pos.Line
-}
-
 func TestFindChar(t *testing.T) {
 	t.Run("finds char forward inclusive", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcde")
@@ -1365,4 +1334,35 @@ func TestMergeNoView(t *testing.T) {
 		e.Tree().Remove(v.ID())
 		action.MergeConsecutive(e)
 	})
+}
+
+func windowLines(t *testing.T, n int) *view.Editor {
+	t.Helper()
+	var sb strings.Builder
+	for i := 1; i <= n; i++ {
+		_, _ = fmt.Fprintf(&sb, "line %d\n", i)
+	}
+	e := testutil.EditorWithText(t, sb.String())
+	e.SetViewHeight(20)
+	return e
+}
+
+func scrollTo(t *testing.T, e *view.Editor, line int) {
+	t.Helper()
+	v := e.FocusedView()
+	anchor, err := e.FocusedDocument().Text().LineToChar(line - 1)
+	assert.NoError(t, err)
+	offset := v.Offset()
+	offset.Anchor = anchor
+	v.SetOffset(offset)
+}
+
+func cursorLine(t *testing.T, e *view.Editor) int {
+	t.Helper()
+	doc := e.FocusedDocument()
+	text := doc.Text()
+	cursor := doc.SelectionFor(e.FocusedView().ID()).Primary().Cursor(text)
+	pos, err := text.Position(cursor)
+	assert.NoError(t, err)
+	return pos.Line
 }

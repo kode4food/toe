@@ -14,11 +14,15 @@ type saveTarget struct {
 	dir  string
 }
 
-// Save writes the document to its current path. Unless force is set, it
-// refuses an unsafe overwrite (changed on disk, or read-only)
+// Save writes the document to its current path. Unless force is set, it refuses
+// an unsafe overwrite (changed on disk, or read-only). A log has no path of its
+// own, so it can only be copied out with WriteCopy
 func (d *Document) Save(opts *Options, force bool) error {
 	if !d.Loaded() {
 		return nil
+	}
+	if d.identity.docType == DocTypeLog {
+		return ErrReadOnly
 	}
 	path := d.Path()
 	if path == "" {
@@ -72,8 +76,21 @@ func (d *Document) Save(opts *Options, force bool) error {
 		return err
 	}
 	d.refreshDiskSnapshot()
-	d.edits.savePoint = d.edits.history.CurrentRevision()
+	d.markSaved()
 	return nil
+}
+
+// WriteCopy writes the document's text to path, leaving the document itself
+// alone: it keeps its own path, name, and modification state
+func (d *Document) WriteCopy(path string, opts *Options) error {
+	d.ensureLoaded()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	text := prepareSaveText(
+		d.Text().String(), d.format.lineEnding, opts, d.format.editorConfig,
+	)
+	return writeFileSynced(path, []byte(text), 0o644)
 }
 
 // Reload replaces the document text with the current file contents on disk
@@ -110,7 +127,7 @@ func (d *Document) reloadPreservingSelections() error {
 	d.content.Unlock()
 	d.views.selections = selections
 	d.MarkDirty()
-	d.edits.savePoint = d.edits.history.CurrentRevision()
+	d.markSaved()
 	d.refreshDiskSnapshot()
 	return nil
 }
@@ -159,13 +176,8 @@ func (d *Document) checkSafeToOverwrite(path string) error {
 	return nil
 }
 
-// DocumentDisplayName returns a short display name for a file path,
-// or ScratchBufferName if path is empty
-func DocumentDisplayName(path string) string {
-	if path == "" {
-		return ScratchBufferName
-	}
-	return filepath.Base(path)
+func (d *Document) markSaved() {
+	d.edits.savePoint = d.edits.history.CurrentRevision()
 }
 
 // DocumentRelativeNameArgs is a document path and the directory to make it

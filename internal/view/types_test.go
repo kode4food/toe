@@ -20,11 +20,6 @@ func TestMode(t *testing.T) {
 	assert.Equal(t, "Mode(99)", view.Mode(99).String())
 }
 
-func TestDocumentDisplayName(t *testing.T) {
-	assert.Equal(t, "file.txt", view.DocumentDisplayName("/a/b/file.txt"))
-	assert.Equal(t, view.ScratchBufferName, view.DocumentDisplayName(""))
-}
-
 func TestJumpList(t *testing.T) {
 	t.Run("empty list backward returns false", func(t *testing.T) {
 		var j view.JumpList

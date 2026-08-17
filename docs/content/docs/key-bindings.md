@@ -425,7 +425,7 @@ leader.
 
 ## Prompts
 
-Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the centre of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does; `Tab` cycles them. The command line below the statusline is left for messages and the register and macro-recording indicators.
+Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the centre of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does; `Tab` cycles them. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
 
 | Key | Action |
 |-----|--------|

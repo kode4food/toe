@@ -144,6 +144,60 @@ func TestSession(t *testing.T) {
 		assert.True(t, redrawn)
 	})
 
+	t.Run("skips the message log", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		e.AppendMessage("session news")
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		saved, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		assert.NotContains(t, string(saved), "session news")
+
+		next := view.NewEditor(dir)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		assert.Equal(t, "", next.MessagesDocument().Text().String())
+
+		next.AppendMessage("fresh news")
+		assert.Equal(t,
+			"fresh news\n", next.MessagesDocument().Text().String(),
+		)
+	})
+
+	t.Run("restores a pane onto a fresh log", func(t *testing.T) {
+		dir := t.TempDir()
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		e.AppendMessage("session news")
+		e.ShowDocument(e.MessagesDocument().ID())
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		saved, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		assert.NotContains(t, string(saved), "session news")
+
+		next := view.NewEditor(dir)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		doc := next.FocusedDocument()
+		assert.Equal(t, view.MessagesBufferName, doc.DisplayName())
+		assert.Equal(t, "", doc.Text().String())
+
+		next.AppendMessage("fresh news")
+		assert.Equal(t, "fresh news\n", doc.Text().String())
+	})
+
 	t.Run("workspace session file path", func(t *testing.T) {
 		dir := t.TempDir()
 		path := view.WorkspaceSessionFile(dir)

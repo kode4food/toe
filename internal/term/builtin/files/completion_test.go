@@ -21,7 +21,7 @@ func TestCompletionOptions(t *testing.T) {
 				km, e, "set-option", tc.key+" "+tc.value,
 			)
 			res := test.RunCmdArgs(t, km, e, "get-option", tc.key)
-			assert.Equal(t, tc.value, res.Message)
+			assert.Equal(t, tc.key+": "+tc.value, res.Message)
 		})
 	}
 
@@ -33,7 +33,7 @@ func TestCompletionOptions(t *testing.T) {
 			"completion.trigger-len": "2",
 		} {
 			res := test.RunCmdArgs(t, km, e, "get-option", key)
-			assert.Equal(t, want, res.Message)
+			assert.Equal(t, key+": "+want, res.Message)
 		}
 	})
 }

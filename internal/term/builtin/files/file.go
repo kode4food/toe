@@ -115,9 +115,7 @@ func fileWriteCmds() []command.Command {
 			Name:      actWrite,
 			DocString: "Write changes to disk. Accepts an optional path",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				setPathFromArgs(e, args)
-				autoFormat(e)
-				if err := e.Save(false); err != nil {
+				if err := writeDocument(e, args, false); err != nil {
 					return command.Result{Error: err}
 				}
 				if doc := e.FocusedDocument(); doc != nil {
@@ -138,9 +136,7 @@ func fileWriteCmds() []command.Command {
 			Name:      actWriteForce,
 			DocString: "Force write changes to disk, creating subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				setPathFromArgs(e, args)
-				autoFormat(e)
-				_ = e.Save(true)
+				_ = writeDocument(e, args, true)
 				if doc := e.FocusedDocument(); doc != nil {
 					return command.Result{
 						Message: "'" + doc.RelativeName(e.Cwd()) +
@@ -214,9 +210,7 @@ func fileWriteCmds() []command.Command {
 			Name:      actWriteBufferClose,
 			DocString: "Write changes to disk and close the buffer",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				setPathFromArgs(e, args)
-				autoFormat(e)
-				if err := e.Save(false); err != nil {
+				if err := writeDocument(e, args, false); err != nil {
 					return command.Result{Error: err}
 				}
 				e.CloseCurrentView()
@@ -233,9 +227,7 @@ func fileWriteCmds() []command.Command {
 			DocString: "Force write and close the buffer, creating " +
 				"subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				setPathFromArgs(e, args)
-				autoFormat(e)
-				_ = e.Save(true)
+				_ = writeDocument(e, args, true)
 				e.CloseCurrentView()
 				return command.Result{
 					Message: i18n.Text(statusWrittenAndClosedKey),
@@ -397,15 +389,26 @@ func fileManageCmds() []command.Command {
 	}
 }
 
-func setPathFromArgs(e *view.Editor, args *command.Args) {
-	if args == nil {
-		return
+// writeDocument writes the focused document, adopting an explicit path as its
+// own. A log is copied to that path instead, so the buffer stays the editor's
+func writeDocument(e *view.Editor, args *command.Args, force bool) error {
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return view.ErrNoDocument
 	}
-	path, ok := args.First()
-	if !ok {
-		return
+	var path string
+	if args != nil {
+		path, _ = args.First()
 	}
-	if doc := e.FocusedDocument(); doc != nil {
+	if doc.Type() == view.DocTypeLog {
+		if path == "" {
+			return view.ErrReadOnly
+		}
+		return doc.WriteCopy(path, e.Options())
+	}
+	if path != "" {
 		doc.SetPath(path)
 	}
+	autoFormat(e)
+	return e.Save(force)
 }

@@ -40,6 +40,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `buffer-close-all` | `bca`, `bcloseall` | Close all buffers without quitting |
 | `buffer-next` | `bn`, `bnext` | Goto next buffer |
 | `buffer-previous` | `bp`, `bprev` | Goto previous buffer |
+| `buffer-messages` | `messages` | Goto the message log buffer |
 
 ## Movement
 

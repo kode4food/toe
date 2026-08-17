@@ -21,7 +21,10 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-var bgRE = regexp.MustCompile(`48;2;(\d+;\d+;\d+)`)
+var (
+	bgRE = regexp.MustCompile(`48;2;(\d+;\d+;\d+)`)
+	fgRE = regexp.MustCompile(`38;2;(\d+;\d+;\d+)`)
+)
 
 func TestStatuslineAllElements(t *testing.T) {
 	t.Run("renders file-based status elements", func(t *testing.T) {
@@ -597,17 +600,6 @@ func TestCommandlineThemeRender(t *testing.T) {
 	})
 }
 
-func fileEditor(t *testing.T) *view.Editor {
-	t.Helper()
-	root := t.TempDir()
-	path := filepath.Join(root, "note.txt")
-	assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
-	e := view.NewEditor(root)
-	_, err := e.OpenFile(path)
-	assert.NoError(t, err)
-	return e
-}
-
 func TestCmdlineHighlight(t *testing.T) {
 	t.Run("an interaction uses the popup", func(t *testing.T) {
 		m := builtinModel(t)
@@ -623,17 +615,13 @@ func TestCmdlineHighlight(t *testing.T) {
 		assert.Empty(t, popupHead(m))
 	})
 
-	t.Run("recording shares prompt background", func(t *testing.T) {
+	t.Run("recording badges the statusline", func(t *testing.T) {
 		idle := lastLine(builtinModel(t).View().Content)
-		rows := promptRows(sendKey(builtinModel(t), ':'))
-		assert.NotEmpty(t, rows)
-		prompt := rows[0].raw
 
 		m := sendKey(sendKey(builtinModel(t), 'Q'), 'q')
 		recording := lastLine(m.View().Content)
 
 		assert.NotEqual(t, backgrounds(idle), backgrounds(recording))
-		assert.Contains(t, backgrounds(recording), backgrounds(prompt)[0])
 		assert.Contains(t, stripANSI(recording), "REC q")
 	})
 
@@ -963,7 +951,7 @@ func TestPendingKeyPopup(t *testing.T) {
 
 		m = sendSpecial(m, tea.KeyBackspace)
 
-		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "deleted")
+		assert.NotEmpty(t, toastRow(m, "deleted"))
 	})
 
 	t.Run("a long menu clears the status rows", func(t *testing.T) {
@@ -972,8 +960,8 @@ func TestPendingKeyPopup(t *testing.T) {
 		top := lineIndexWith(lines, "\u256d")
 		bottom := lineIndexWith(lines, "\u2570")
 		assert.GreaterOrEqual(t, top, 0)
-		assert.Less(t, bottom, len(lines)-2)
-		assert.Contains(t, lines[len(lines)-2], "1 sel")
+		assert.Less(t, bottom, len(lines)-1)
+		assert.Contains(t, lines[len(lines)-1], "1 sel")
 
 		box := []rune(lines[top])
 		left := slices.Index(box, '\u256d')
@@ -990,13 +978,60 @@ func TestPendingKeyPopup(t *testing.T) {
 		m = resize(m, 100, 30)
 		e.SetStatusMsg("older news")
 		m = resize(m, 100, 30)
-		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "older news")
+		assert.NotEmpty(t, toastRow(m, "older news"))
 
 		m = sendKey(m, ' ')
 
-		assert.Contains(t, stripANSI(lastLine(m.View().Content)), "older news")
+		assert.NotEmpty(t, toastRow(m, "older news"))
 		assert.Equal(t, "spc", popupHead(m))
 	})
+}
+
+func TestEditorWideBadges(t *testing.T) {
+	t.Run("recording rides the corner only", func(t *testing.T) {
+		m := sendKey(sendKey(builtinModel(t), 'Q'), 'q')
+
+		m = m.ExecTypable("vsplit")
+
+		lines := strings.Split(
+			strings.TrimRight(stripANSI(m.View().Content), "\n"), "\n",
+		)
+		var rows int
+		for _, line := range lines {
+			if strings.Contains(line, "REC q") {
+				rows++
+			}
+		}
+		assert.Equal(t, 1, rows)
+		assert.Contains(t, lines[len(lines)-1], "REC q")
+	})
+
+	t.Run("survives a pared-down statusline", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().StatusLine.Right = []view.StatusLineItem{
+			{Element: view.StatusLinePosition},
+		}
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendKey(sendKey(m, 'Q'), 'q')
+
+		assert.Contains(t, stripANSI(m.View().Content), "REC q")
+	})
+}
+
+func fileEditor(t *testing.T) *view.Editor {
+	t.Helper()
+	root := t.TempDir()
+	path := filepath.Join(root, "note.txt")
+	assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+	e := view.NewEditor(root)
+	_, err := e.OpenFile(path)
+	assert.NoError(t, err)
+	return e
 }
 
 func lineIndexWith(lines []string, want string) int {
@@ -1032,10 +1067,18 @@ func lastLine(content string) string {
 	return lines[len(lines)-1]
 }
 
+func foregrounds(line string) []string {
+	return colorsIn(fgRE, line)
+}
+
 func backgrounds(line string) []string {
+	return colorsIn(bgRE, line)
+}
+
+func colorsIn(re *regexp.Regexp, line string) []string {
 	var out []string
 	seen := map[string]bool{}
-	for _, m := range bgRE.FindAllStringSubmatch(line, -1) {
+	for _, m := range re.FindAllStringSubmatch(line, -1) {
 		if !seen[m[1]] {
 			seen[m[1]] = true
 			out = append(out, m[1])

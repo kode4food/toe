@@ -29,10 +29,6 @@ type (
 	}
 )
 
-func (r statusRow) contentWidth() int {
-	return max(r.width-statusElemsWidth(r.right), 0)
-}
-
 func (r statusRow) paint(buf *tui.Buffer) {
 	left, right := r.left, r.right
 	for statusElemsWidth(left)+statusElemsWidth(right) > r.width {

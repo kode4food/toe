@@ -132,7 +132,8 @@ func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
 	} else if e.spinner.active {
 		e.spinner.stop()
 	}
-	return consumed(), cmd
+	// a toast pushed off the UI goroutine arrives here, not through a key
+	return consumed(), tea.Batch(cmd, e.toastTickCmd())
 }
 
 func (e *EditorComponent) requestRedraw() {
@@ -200,6 +201,10 @@ func (e *EditorComponent) handleMouseClick(
 ) (EventResult, tea.Cmd) {
 	e.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
+	if e.toasts.dismissAt(at) {
+		e.requestRedraw()
+		return consumed(), nil
+	}
 	if len(e.keys.input) > 0 {
 		if e.cache.infoBounds.Contains(at) {
 			return consumed(), nil

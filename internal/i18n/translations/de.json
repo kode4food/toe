@@ -60,5 +60,6 @@
   "status.pickerTypeToSearch": "Zum Suchen tippen…",
   "status.pickerUnstaged": "Änderungen",
   "status.reloadFailed": "Neu laden fehlgeschlagen: {error}",
-  "status.terminalStarting": "Terminal wird gestartet…"
+  "status.terminalStarting": "Terminal wird gestartet…",
+  "toast.title": "Meldungen"
 }

@@ -16,6 +16,7 @@ const (
 	actBufferCloseAll    = "buffer_close_all"
 	actBufferNext        = "buffer_next"
 	actBufferPrevious    = "buffer_previous"
+	actBufferMessages    = "buffer_messages"
 )
 
 const (
@@ -111,6 +112,16 @@ func BufferModule() command.Module {
 				Modes:     command.PaneModes,
 				Keys:      kit.Keys(g(kit.Char('p'))),
 				Aliases:   []string{"bp", "bprev"},
+			},
+			{
+				Name:      actBufferMessages,
+				DocString: "Goto the message log buffer",
+				Run: func(e *view.Editor, _ *command.Args) command.Result {
+					e.ShowDocument(e.MessagesDocument().ID())
+					return command.Result{}
+				},
+				Modes:   command.PaneModes,
+				Aliases: []string{"messages"},
 			},
 		},
 	}

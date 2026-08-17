@@ -13,11 +13,18 @@ type SessionWriter struct {
 	base     string
 }
 
-// SaveSession stores this view's document state in w
+// SaveSession stores this view's document state in w. A view onto a buffer
+// the editor generates records only that it was showing it
 func (v *View) SaveSession(w *SessionWriter) {
 	doc, ok := v.editor.documents.byID[v.docID]
 	if !ok {
-		w.node = sessNode{Kind: SessionKindView}
+		return
+	}
+	if doc.Type() == DocTypeLog {
+		w.node = sessNode{Kind: SessionKindMessages}
+		return
+	}
+	if _, ok := w.docIndex[doc.ID()]; !ok {
 		return
 	}
 	entries := v.jumps.Entries()
@@ -114,9 +121,11 @@ func (e *Editor) sessionNodeFor(
 		Children: make([]sessNode, 0, len(c.children)),
 	}
 	for _, child := range c.children {
-		out.Children = append(
-			out.Children, e.sessionNodeFor(child, docIndex, base),
-		)
+		node := e.sessionNodeFor(child, docIndex, base)
+		if node.Kind == "" {
+			continue
+		}
+		out.Children = append(out.Children, node)
 	}
 	return out
 }

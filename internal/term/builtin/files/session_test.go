@@ -16,10 +16,12 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const sessionTestFile = "file.go"
+
 func TestSession(t *testing.T) {
 	t.Run("save reports success", func(t *testing.T) {
 		dir := t.TempDir()
-		e, km := sessionEnv(t, dir, "file.go")
+		e, km := sessionEnv(t, dir)
 		res := test.RunCmd(t, km, e, "save_session")
 		assert.Equal(t, "session saved", res.Message)
 	})
@@ -32,7 +34,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("restore restores documents", func(t *testing.T) {
 		dir := t.TempDir()
-		e, km := sessionEnv(t, dir, "file.go")
+		e, km := sessionEnv(t, dir)
 		res := test.RunCmd(t, km, e, "save_session")
 		assert.Equal(t, "session saved", res.Message)
 
@@ -44,7 +46,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("restore restores options", func(t *testing.T) {
 		dir := t.TempDir()
-		e, km := sessionEnv(t, dir, "file.go")
+		e, km := sessionEnv(t, dir)
 		test.RunCmdArgs(t, km, e, "set_option", "auto-size true")
 		test.RunCmdArgs(t, km, e, "set_option", "file-watch false")
 		res := test.RunCmd(t, km, e, "save_session")
@@ -54,14 +56,14 @@ func TestSession(t *testing.T) {
 		res = test.RunCmd(t, km2, e2, "restore_session")
 		assert.Empty(t, res.Message)
 		res = test.RunCmdArgs(t, km2, e2, "get_option", "auto-size")
-		assert.Equal(t, "true", res.Message)
+		assert.Equal(t, "auto-size: true", res.Message)
 		res = test.RunCmdArgs(t, km2, e2, "get_option", "file-watch")
-		assert.Equal(t, "false", res.Message)
+		assert.Equal(t, "file-watch: false", res.Message)
 	})
 
 	t.Run("save stores only options off the base", func(t *testing.T) {
 		dir := t.TempDir()
-		e, km := sessionEnv(t, dir, "file.go")
+		e, km := sessionEnv(t, dir)
 		base := baseOptions(t, e)
 		e.SetBaseOptions(func() map[string]string { return base })
 		test.RunCmdArgs(t, km, e, "set_option", "scrolloff 12")
@@ -91,11 +93,9 @@ func TestSession(t *testing.T) {
 	})
 }
 
-func sessionEnv(
-	t *testing.T, dir, filename string,
-) (*view.Editor, *command.Keymaps) {
+func sessionEnv(t *testing.T, dir string) (*view.Editor, *command.Keymaps) {
 	t.Helper()
-	p := filepath.Join(dir, filename)
+	p := filepath.Join(dir, sessionTestFile)
 	assert.NoError(t, os.WriteFile(p, []byte("package main\n"), 0o644))
 	e, km := sessionEditorInDir(t, dir)
 	_, err := e.OpenFile(p)

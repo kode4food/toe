@@ -28,6 +28,32 @@ func TestNewDocument(t *testing.T) {
 		_ = d2
 	})
 
+	t.Run("numbers later scratch buffers", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		first := e.FocusedDocument()
+
+		e.NewDocument()
+		second := e.FocusedDocument()
+		e.NewDocument()
+		third := e.FocusedDocument()
+
+		assert.Equal(t, view.ScratchBufferName, first.DisplayName())
+		assert.Equal(t, "[scratch 2]", second.DisplayName())
+		assert.Equal(t, "[scratch 3]", third.DisplayName())
+	})
+
+	t.Run("reuses a freed scratch number", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.NewDocument()
+		second := e.FocusedDocument()
+		e.NewDocument()
+
+		e.DeleteDocument(second.ID())
+		e.NewDocument()
+
+		assert.Equal(t, "[scratch 2]", e.FocusedDocument().DisplayName())
+	})
+
 	t.Run("text is empty rope", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		d := e.FocusedDocument()
@@ -140,12 +166,12 @@ end_of_line = crlf
 
 	t.Run("uses language indent fallback on open", func(t *testing.T) {
 		root := t.TempDir()
-		writeViewLanguages(t, root, `
+		writeViewLanguages(t, viewLanguagesArgs{root: root, toml: `
 [[language]]
 name = "custom"
 file-types = ["foo"]
 indent = { tab-width = 8, unit = "  " }
-`)
+`})
 		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "main.foo")
@@ -164,12 +190,12 @@ indent = { tab-width = 8, unit = "  " }
 
 	t.Run("missing file language indent", func(t *testing.T) {
 		root := t.TempDir()
-		writeViewLanguages(t, root, `
+		writeViewLanguages(t, viewLanguagesArgs{root: root, toml: `
 [[language]]
 name = "custom"
 file-types = ["foo"]
 indent = { tab-width = 8, unit = "  " }
-`)
+`})
 		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "new.foo")
@@ -559,7 +585,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.Equal(t, "new content", doc.Text().String())
 		assert.False(t, doc.Modified())
 		assert.Equal(t, view.ExternalStateClean, doc.ExternalState())
-		assert.Contains(t, e.TakeStatusMsg(), "reloaded")
+		assert.Contains(t, testutil.StatusMsg(e), "reloaded")
 	})
 
 	t.Run("canonical event path reloads", func(t *testing.T) {
@@ -708,7 +734,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.Equal(t, "local", doc.Text().String())
 		assert.True(t, doc.Modified())
 		assert.Equal(t, view.ExternalStateChanged, doc.ExternalState())
-		assert.Contains(t, e.TakeStatusMsg(), ":reload or :write")
+		assert.Contains(t, testutil.StatusMsg(e), ":reload or :write")
 	})
 
 	t.Run("deleted file marks conflict", func(t *testing.T) {
@@ -728,7 +754,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "old", doc.Text().String())
 		assert.Equal(t, view.ExternalStateDeleted, doc.ExternalState())
-		assert.Contains(t, e.TakeStatusMsg(), "deleted")
+		assert.Contains(t, testutil.StatusMsg(e), "deleted")
 	})
 
 	t.Run("save refreshes snapshot", func(t *testing.T) {
@@ -1350,13 +1376,18 @@ func TestDocumentConsumeDirty(t *testing.T) {
 	})
 }
 
-func writeViewLanguages(t *testing.T, root, text string) {
+type viewLanguagesArgs struct {
+	root string
+	toml string
+}
+
+func writeViewLanguages(t *testing.T, args viewLanguagesArgs) {
 	t.Helper()
-	dir := filepath.Join(root, loader.DirName)
+	dir := filepath.Join(args.root, loader.DirName)
 	err := os.MkdirAll(dir, 0o755)
 	assert.NoError(t, err)
 	err = os.WriteFile(
-		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+		filepath.Join(dir, "languages.toml"), []byte(args.toml), 0o644,
 	)
 	assert.NoError(t, err)
 }

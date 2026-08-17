@@ -2,6 +2,7 @@ package i18n
 
 const (
 	PromptCommand Key = "prompt.command"
+	ToastTitle    Key = "toast.title"
 
 	ErrorMessage        Key = "error.message"
 	ErrorNoDocument     Key = "error.noDocument"

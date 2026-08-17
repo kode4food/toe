@@ -125,7 +125,7 @@ func TestSearchOptions(t *testing.T) {
 			e, km := test.Env(t, "")
 			test.RunCmdArgs(t, km, e, "set_option", tc.key+" "+tc.val)
 			res := test.RunCmdArgs(t, km, e, "get_option", tc.key)
-			assert.Equal(t, tc.val, res.Message)
+			assert.Equal(t, tc.key+": "+tc.val, res.Message)
 		})
 	}
 
@@ -133,13 +133,13 @@ func TestSearchOptions(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t,
 			km, e, "toggle_option", "search.smart-case")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 
 	t.Run("toggle wrap-around", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmdArgs(t,
 			km, e, "toggle_option", "search.wrap-around")
-		assert.Contains(t, res.Message, "is now set to")
+		assert.Contains(t, res.Message, "is now")
 	})
 }

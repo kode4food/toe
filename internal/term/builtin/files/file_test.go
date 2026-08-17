@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestFileWrite(t *testing.T) {
@@ -22,6 +23,33 @@ func TestFileWrite(t *testing.T) {
 		assert.NoError(t, err)
 		// the editor ensures a trailing newline on save
 		assert.Equal(t, "hello\n", string(data))
+	})
+
+	t.Run("write copies the log, keeping it", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		e.AppendMessage("news")
+		log := e.MessagesDocument()
+		e.ShowDocument(log.ID())
+		out := filepath.Join(e.Cwd(), "log.txt")
+
+		test.RunCmdArgs(t, km, e, "write", out)
+
+		data, err := os.ReadFile(out)
+		assert.NoError(t, err)
+		assert.Equal(t, "news\n", string(data))
+		assert.Equal(t, "", log.Path())
+		assert.Equal(t, view.MessagesBufferName, log.DisplayName())
+		assert.Equal(t, log.ID(), e.MessagesDocument().ID())
+	})
+
+	t.Run("write without a path errors on the log", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		e.AppendMessage("news")
+		e.ShowDocument(e.MessagesDocument().ID())
+
+		res := test.RunCmd(t, km, e, "write")
+
+		assert.ErrorIs(t, res.Error, view.ErrReadOnly)
 	})
 
 	t.Run("no diff reports nothing to write", func(t *testing.T) {
@@ -287,7 +315,7 @@ func TestFileOptions(t *testing.T) {
 		t.Run("toggle "+tc.key, func(t *testing.T) {
 			e, km := test.Env(t, "")
 			res := test.RunCmdArgs(t, km, e, "toggle_option", tc.key)
-			assert.Contains(t, res.Message, "is now set to")
+			assert.Contains(t, res.Message, "is now")
 		})
 	}
 }

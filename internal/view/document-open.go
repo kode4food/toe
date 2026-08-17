@@ -14,6 +14,7 @@ func newDocument(id DocumentId, opts *Options) *Document {
 	d := &Document{
 		identity: identityState{id: id},
 		content: contentState{
+			name: ScratchBufferName,
 			text: core.NewRope(""),
 		},
 		edits: editState{
@@ -47,7 +48,7 @@ func newPendingDocument(args newPendingDocumentArgs) *Document {
 	lang := args.lang
 	opts := args.opts
 	d := newDocument(args.id, opts)
-	d.content.path = args.absPath
+	d.SetPath(args.absPath)
 	d.content.pending = &pendingLoad{opts: opts, lang: lang}
 	if lang != "" {
 		d.SetLang(lang)
@@ -102,7 +103,7 @@ func openDocument(
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			doc := newDocument(id, opts)
-			doc.content.path = absPath
+			doc.SetPath(absPath)
 			doc.format.editorConfig = ec
 			doc.SetLang(language.DetectLanguage(
 				language.DetectLanguageArgs{
@@ -139,6 +140,7 @@ func openDocument(
 		identity: identityState{id: id},
 		content: contentState{
 			path: absPath,
+			name: filepath.Base(absPath),
 			text: rope,
 		},
 		edits: editState{

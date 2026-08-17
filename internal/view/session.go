@@ -102,6 +102,7 @@ const (
 	SessionKindImage    SessionKind = "image"
 	SessionKindTerminal SessionKind = "terminal"
 	SessionKindBinary   SessionKind = "binary"
+	SessionKindMessages SessionKind = "messages"
 
 	sessionVersion = 1
 )
@@ -147,11 +148,17 @@ func (e *Editor) SaveSession(path string, opts map[string]string) error {
 		if _, ok := docIndex[d.ID()]; ok {
 			continue
 		}
+		if d.Type() == DocTypeLog {
+			continue
+		}
 		docIndex[d.ID()] = len(s.Documents) + 1
 		s.Documents = append(s.Documents, e.sessionDocument(d, base))
 	}
 	for _, d := range e.AllDocuments() {
 		if _, ok := docIndex[d.ID()]; ok {
+			continue
+		}
+		if d.Type() == DocTypeLog {
 			continue
 		}
 		docIndex[d.ID()] = len(s.Documents) + 1
@@ -347,7 +354,8 @@ func sessionBase(path string) string {
 
 func layoutHasReopenablePane(n *sessNode) bool {
 	switch n.Kind {
-	case SessionKindImage, SessionKindTerminal, SessionKindBinary:
+	case SessionKindImage, SessionKindTerminal, SessionKindBinary,
+		SessionKindMessages:
 		return true
 	case SessionKindSplit:
 		for i := range n.Children {

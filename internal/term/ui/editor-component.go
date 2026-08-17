@@ -23,6 +23,7 @@ type (
 		macroBlink animationState
 		autoSize   autoSizeState
 		resizeHold resizeHoldState
+		toasts     toastState
 
 		size  geom.Size
 		buf   *tui.Buffer
@@ -45,7 +46,6 @@ type (
 		frames       []command.Continuation
 		count        int
 		continuation command.Continuation
-		message      *commandMessage
 		nextLayer    layerFunc
 		infoTitle    string
 		infoItems    []command.KeyHint
@@ -75,11 +75,6 @@ type (
 		phase  int
 		gen    int
 		active bool
-	}
-
-	commandMessage struct {
-		value string
-		error bool
 	}
 
 	saveGenSlot struct{ gen int }
@@ -117,6 +112,8 @@ type (
 	spinnerTickMsg struct{ gen int }
 
 	macroBlinkTickMsg struct{ gen int }
+
+	toastTickMsg struct{ gen int }
 
 	redrawMsg struct{}
 )
@@ -227,6 +224,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleSpinnerTick(cx, msg)
 	case macroBlinkTickMsg:
 		return e.handleMacroBlinkTick(msg)
+	case toastTickMsg:
+		return e.handleToastTick(msg)
 	case autoSizeTickMsg:
 		return e.handleAutoSizeTick(cx, msg)
 	case resizeSettleMsg:
@@ -360,8 +359,13 @@ func (e *EditorComponent) cancelPending(cx *Context) {
 }
 
 func (e *EditorComponent) syncEditorMessages(cx *Context) {
-	if m := cx.Editor.TakeStatusMsg(); m != "" {
-		e.setCommandMessage(m)
+	for _, m := range cx.Editor.TakeStatusMsgs() {
+		if m != "" {
+			e.setCommandMessage(m)
+		}
+	}
+	for _, m := range e.toasts.takeLog() {
+		cx.Editor.AppendMessage(m)
 	}
 }
 
@@ -376,32 +380,27 @@ func (e *EditorComponent) setCommandResult(res command.Result) {
 }
 
 func (e *EditorComponent) setCommandError(err error) {
-	e.keys.message = &commandMessage{
-		value: i18n.ErrorText(err),
-		error: true,
-	}
+	e.pushToast(i18n.ErrorText(err), toastError)
 }
 
 func (e *EditorComponent) setCommandMessage(msg string) {
-	e.keys.message = &commandMessage{value: msg}
+	e.pushToast(msg, toastInfo)
 }
 
 func (e *EditorComponent) clearCommandMessage() {
-	e.keys.message = nil
+	if e.toasts.dismiss() {
+		e.requestRedraw()
+	}
 }
 
 func (e *EditorComponent) resize(cx *Context) {
-	overhead := 1
+	overhead := 0
 	if bufferlineVisible(cx) {
 		overhead++
 	}
 	cx.Editor.SetViewHeight(e.size.Height - overhead)
-	th := e.size.Height - 1
-	if bufferlineVisible(cx) {
-		th--
-	}
 	cx.Editor.ResizeTree(geom.Size{
-		Width: e.size.Width, Height: max(th, 0),
+		Width: e.size.Width, Height: max(e.size.Height-overhead, 0),
 	})
 }
 

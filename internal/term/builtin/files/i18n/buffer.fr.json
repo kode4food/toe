@@ -3,6 +3,7 @@
   "buffer-close-force.docstring": "Fermer le buffer, ignorer les modifications non enregistrées",
   "buffer-close-others.docstring": "Fermer tous les buffers sauf celui qui est actif",
   "buffer-close.docstring": "Fermer le buffer courant",
+  "buffer-messages.docstring": "Aller au buffer des messages",
   "buffer-next.docstring": "Aller au buffer suivant",
   "buffer-previous.docstring": "Aller au buffer précédent",
   "error.noSuchBuffer": "aucun buffer nommé : {name}",

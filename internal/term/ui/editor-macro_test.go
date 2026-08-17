@@ -19,10 +19,10 @@ func TestMacroRecordingStatus(t *testing.T) {
 		m = sendKey(m, 'z')
 		m = sendKey(m, 'a')
 
-		cmdline := stripANSI(lastLine(m.View().Content))
+		status := stripANSI(lastLine(m.View().Content))
 
-		assert.Contains(t, cmdline, "REC a")
-		assert.True(t, strings.HasSuffix(cmdline, " REC a "))
+		assert.Contains(t, status, "REC a")
+		assert.True(t, strings.HasSuffix(status, " REC a "))
 		assert.NotContains(t, lastLine(m.View().Content), "\x1b[5m")
 	})
 

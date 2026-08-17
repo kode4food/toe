@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -68,6 +69,11 @@ func SetSelection(
 	sel, err := core.NewSelection(ranges, primary)
 	assert.NoError(t, err)
 	doc.SetSelectionFor(v.ID(), sel)
+}
+
+// StatusMsg drains the queued status messages as one newline-joined string
+func StatusMsg(e *view.Editor) string {
+	return strings.Join(e.TakeStatusMsgs(), "\n")
 }
 
 // RegisteredValue returns the first value stored in the named register

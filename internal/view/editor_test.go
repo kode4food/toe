@@ -17,6 +17,30 @@ type fileOpController struct {
 	view.LanguageServerController
 }
 
+func (c *fileOpController) WillCreateFile(string, bool) error {
+	return nil
+}
+
+func (c *fileOpController) DidCreateFile(string, bool) error {
+	return nil
+}
+
+func (c *fileOpController) WillRenameFile(view.FileRename, bool) error {
+	return nil
+}
+
+func (c *fileOpController) DidRenameFile(view.FileRename, bool) error {
+	return nil
+}
+
+func (c *fileOpController) WillDeleteFile(string, bool) error {
+	return nil
+}
+
+func (c *fileOpController) DidDeleteFile(string, bool) error {
+	return nil
+}
+
 func TestNewEditor(t *testing.T) {
 	t.Run("has one view and one document initially", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
@@ -510,8 +534,8 @@ func TestEditorStatusMsg(t *testing.T) {
 	t.Run("set and take", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.SetStatusMsg("hello")
-		assert.Equal(t, "hello", e.TakeStatusMsg())
-		assert.Equal(t, "", e.TakeStatusMsg())
+		assert.Equal(t, "hello", testutil.StatusMsg(e))
+		assert.Equal(t, "", testutil.StatusMsg(e))
 	})
 }
 
@@ -1435,30 +1459,6 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "world\n", doc.Text().String())
 	})
-}
-
-func (c *fileOpController) WillCreateFile(string, bool) error {
-	return nil
-}
-
-func (c *fileOpController) DidCreateFile(string, bool) error {
-	return nil
-}
-
-func (c *fileOpController) WillRenameFile(view.FileRename, bool) error {
-	return nil
-}
-
-func (c *fileOpController) DidRenameFile(view.FileRename, bool) error {
-	return nil
-}
-
-func (c *fileOpController) WillDeleteFile(string, bool) error {
-	return nil
-}
-
-func (c *fileOpController) DidDeleteFile(string, bool) error {
-	return nil
 }
 
 func TestEditorSaveWithFileOps(t *testing.T) {

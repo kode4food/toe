@@ -571,13 +571,13 @@ func TestTerminalPane(t *testing.T) {
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 
-		before := len(e.AllDocuments())
+		before := len(userDocuments(e))
 		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
 		m = m2.(ui.Model)
 		m = sendKey(m, 'w')
 		_ = sendKey(m, 'n')
 
-		assert.Len(t, e.AllDocuments(), before+1)
+		assert.Len(t, userDocuments(e), before+1)
 	})
 
 	t.Run("ctrl-backslash opens space menu", func(t *testing.T) {

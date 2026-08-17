@@ -36,5 +36,7 @@
   "theme.docstring": "Cambia tema, o mostra quello attuale",
   "toggle-option.docstring": "Attiva o disattiva un'opzione di configurazione durante l'esecuzione",
   "workspace-trust.docstring": "Aggiungi l'area di lavoro corrente a quelle attendibili",
-  "workspace-untrust.docstring": "Rimuovi l'area di lavoro corrente da quelle attendibili"
+  "workspace-untrust.docstring": "Rimuovi l'area di lavoro corrente da quelle attendibili",
+  "status.optionValue": "{key}: {value}",
+  "status.optionSet": "{key} ora è {value}"
 }

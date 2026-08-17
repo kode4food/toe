@@ -12,6 +12,8 @@ import (
 
 type pathProvider func() (string, bool)
 
+const themeDefaultAlias = "default"
+
 const (
 	errorThemeLoadKey         i18n.Key = "error.themeLoad"
 	errorConfigUnavailableKey i18n.Key = "error.configUnavailable"
@@ -120,23 +122,29 @@ func themeCmds(r *command.Registry) []command.Command {
 					return command.Result{Message: name}
 				}
 				name, _ := args.First()
-				if name == "default" {
-					name = view.DefaultTheme
+				resolved, err := resolveTheme(name)
+				if err != nil {
+					return command.Result{Error: err}
 				}
-				if _, err := theme.Load(name); err != nil {
-					return command.Result{
-						Error: errThemeLoad.WithVars(i18n.Vars{
-							"message": err,
-						}),
-					}
-				}
-				e.Options().Theme = name
+				e.Options().Theme = resolved
 				return command.Result{}
 			},
 			Modes:     command.PaneModes,
 			Signature: sig,
 		},
 	}
+}
+
+// the canonical name of a theme that exists, so a bad name is rejected wherever
+// it is set rather than left to break rendering later
+func resolveTheme(name string) (string, error) {
+	if name == themeDefaultAlias {
+		name = view.DefaultTheme
+	}
+	if _, err := theme.Load(name); err != nil {
+		return "", errThemeLoad.WithVars(i18n.Vars{"message": err})
+	}
+	return name, nil
 }
 
 func languageNames() []string {

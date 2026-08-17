@@ -190,6 +190,9 @@ func (m Model) Animation() bool {
 // their final state
 func (m Model) SetAnimation(enabled bool) {
 	m.component.animation = enabled
+	if !enabled {
+		m.component.toasts.snap()
+	}
 }
 
 // HandleEvent routes keys, mouse, and editor messages to the panes
@@ -388,7 +391,7 @@ func (e *EditorComponent) setCommandMessage(msg string) {
 }
 
 func (e *EditorComponent) clearCommandMessage() {
-	if e.toasts.dismiss() {
+	if e.toasts.close(time.Now(), e.animation) {
 		e.requestRedraw()
 	}
 }

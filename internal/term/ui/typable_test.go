@@ -169,11 +169,15 @@ text-width = 72
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
 
-		m := resize(newTestModel(t, e), 80, 24)
+		m := settled(resize(newTestModel(t, e), 80, 24))
 		m = runTypable(m, "theme bad")
 
 		assert.NotEqual(t, "bad", e.Options().Theme)
-		assert.Contains(t, m.View().Content, "theme not found")
+		// the popup is a fixed width, so a long error shows only its head
+		assert.Contains(t, m.View().Content, "could not load theme")
+		assert.Contains(t,
+			e.MessagesDocument().Text().String(), "theme not found",
+		)
 	})
 
 	t.Run("theme: RGB without true color", func(t *testing.T) {
@@ -200,7 +204,7 @@ text-width = 72
 	t.Run("theme: reports active", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		m := resize(newTestModel(t, e), 80, 24)
+		m := settled(resize(newTestModel(t, e), 80, 24))
 
 		m = runTypable(m, "theme")
 

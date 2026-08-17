@@ -12,14 +12,12 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-type (
-	motionSection struct {
-		Editor struct {
-			ScrollOff   *int `toml:"scrolloff"`
-			ScrollLines *int `toml:"scroll-lines"`
-		} `toml:"editor"`
-	}
-)
+type motionSection struct {
+	Editor struct {
+		ScrollOff   *int `toml:"scrolloff"`
+		ScrollLines *int `toml:"scroll-lines"`
+	} `toml:"editor"`
+}
 
 const (
 	actMoveLeft                  = "move_char_left"

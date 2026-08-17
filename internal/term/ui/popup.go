@@ -9,13 +9,11 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-type (
-	popup struct {
-		borderStyle  tui.Style
-		contentStyle tui.Style
-		padX         int
-	}
-)
+type popup struct {
+	borderStyle  tui.Style
+	contentStyle tui.Style
+	padX         int
+}
 
 func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 	for dy := range area.Height {

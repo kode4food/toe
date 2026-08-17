@@ -573,7 +573,7 @@ func TestPromptCmdAccept(t *testing.T) {
 		m := ui.New(e, km)
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
-		m = resize(m, 60, 12)
+		m = settled(resize(m, 60, 12))
 
 		m = sendKey(m, ':')
 		for _, ch := range "bad_command" {
@@ -967,7 +967,7 @@ func TestSearchPromptError(t *testing.T) {
 		m := ui.New(e, km)
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
-		m = resize(m, 60, 12)
+		m = settled(resize(m, 60, 12))
 
 		m = sendKey(m, '/')
 		for _, ch := range "[invalid" {
@@ -988,7 +988,7 @@ func TestRegexFnError(t *testing.T) {
 		m := ui.New(e, km)
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
-		m = resize(m, 60, 12)
+		m = settled(resize(m, 60, 12))
 
 		m = sendKey(m, 's')
 		for _, ch := range "[invalid" {

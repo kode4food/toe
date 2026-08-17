@@ -3,6 +3,7 @@ package ui_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,9 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
+
+// an info message lives four seconds and fades over its last half second
+const toastFadeWait = 3700 * time.Millisecond
 
 func TestToasts(t *testing.T) {
 	t.Run("a message toasts bottom right", func(t *testing.T) {
@@ -33,7 +37,7 @@ func TestToasts(t *testing.T) {
 	t.Run("every queued message is kept", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
-		m := resize(ui.New(e, km), 80, 24)
+		m := settled(resize(ui.New(e, km), 80, 24))
 		e.SetStatusMsg("first")
 		e.SetStatusMsg("second")
 
@@ -79,7 +83,7 @@ func TestToasts(t *testing.T) {
 	t.Run("a click dismisses just that message", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
-		m := resize(ui.New(e, km), 80, 24)
+		m := settled(resize(ui.New(e, km), 80, 24))
 		e.SetStatusMsg("first")
 		e.SetStatusMsg("second")
 		_ = m.View()
@@ -97,7 +101,7 @@ func TestToasts(t *testing.T) {
 	t.Run("titled and logged to a buffer", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
-		m := resize(ui.New(e, km), 80, 24)
+		m := settled(resize(ui.New(e, km), 80, 24))
 		e.SetStatusMsg("logged news")
 
 		m = sendKey(m, 'x')
@@ -119,7 +123,7 @@ func TestToasts(t *testing.T) {
 			Modes:   view.ModeNormal,
 			Aliases: []string{"boom"},
 		}))
-		m := resize(ui.New(e, km), 80, 24)
+		m := settled(resize(ui.New(e, km), 80, 24))
 
 		m = m.ExecTypable("boom")
 
@@ -139,7 +143,7 @@ func TestToasts(t *testing.T) {
 			Modes:   view.ModeNormal,
 			Aliases: []string{"boom"},
 		}))
-		m := resize(ui.New(e, km), 80, 24)
+		m := settled(resize(ui.New(e, km), 80, 24))
 		e.SetStatusMsg("plain news")
 
 		m = m.ExecTypable("boom")
@@ -151,6 +155,65 @@ func TestToasts(t *testing.T) {
 		)
 		assert.NotEmpty(t, content)
 	})
+
+	t.Run("starts off screen when animating", func(t *testing.T) {
+		m := toastModel(t)
+		m.SetAnimation(true)
+
+		m = m.ExecTypable("say")
+
+		// the first frame is below the screen, the tick loop raises it
+		assert.Equal(t, -1, toastRowIndex(m, "hello there"))
+	})
+
+	t.Run("dismissal starts an exit, not a blank", func(t *testing.T) {
+		m := toastModel(t)
+		m = m.ExecTypable("say")
+		rested := toastRowIndex(m, "hello there")
+		m.SetAnimation(true)
+
+		m = sendKey(m, 'x')
+
+		assert.Equal(t, rested, toastRowIndex(m, "hello there"))
+	})
+
+	t.Run("fades all but the last entry", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: waits for a message to near its timeout")
+		}
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		t.Setenv("COLORTERM", "truecolor")
+		e := view.NewEditor(t.TempDir())
+		e.Options().Theme = "mocha"
+		km := command.NewKeymaps()
+		m := settled(resize(ui.New(e, km), 80, 24))
+		e.SetStatusMsg("first")
+		e.SetStatusMsg("second")
+		m = resize(m, 80, 24)
+		_ = m.View()
+		// animation on only once the popup rests, so no tick loop is needed
+		// to see it in place
+		m.SetAnimation(true)
+		fresh := foregrounds(rawToastRow(m, "first"))
+		assert.NotEmpty(t, fresh)
+
+		time.Sleep(toastFadeWait)
+
+		// a resize forces the frame the tick loop would have drawn
+		m = resize(resize(m, 80, 25), 80, 24)
+		assert.NotEqual(t, fresh, foregrounds(rawToastRow(m, "first")))
+		assert.Equal(t, fresh, foregrounds(rawToastRow(m, "second")))
+	})
+}
+
+// the row the message occupies on screen, or -1 while it is still off it
+func toastRowIndex(m ui.Model, text string) int {
+	for y, line := range strings.Split(stripANSI(m.View().Content), "\n") {
+		if strings.Contains(line, text) {
+			return y
+		}
+	}
+	return -1
 }
 
 func toastPoint(t *testing.T, m ui.Model, text string) geom.Point {
@@ -193,7 +256,14 @@ func toastModel(t *testing.T) ui.Model {
 			view.ModeAny: {{char('x')}},
 		},
 	}))
-	return resize(ui.New(e, km), 80, 24)
+	return settled(resize(ui.New(e, km), 80, 24))
+}
+
+// settled turns animation off, so a toast renders at its resting place
+// without waiting out the rise
+func settled(m ui.Model) ui.Model {
+	m.SetAnimation(false)
+	return m
 }
 
 func toastRow(m ui.Model, text string) string {

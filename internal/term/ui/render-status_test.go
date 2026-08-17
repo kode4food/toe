@@ -581,7 +581,7 @@ func TestCommandlineThemeRender(t *testing.T) {
 				view.ModeAny: {{char('x')}},
 			},
 		}))
-		m := resize(ui.New(e, km), 80, 24)
+		m := settled(resize(ui.New(e, km), 80, 24))
 
 		prompt := sendKey(m, ':').View().Content
 		errOut := m.ExecTypable("failure").View().Content
@@ -941,7 +941,7 @@ func TestPendingKeyPopup(t *testing.T) {
 	t.Run("backspace stays bound when idle", func(t *testing.T) {
 		e := editorWithText(t, "abc")
 		km := command.NewKeymaps()
-		m := ui.New(e, km)
+		m := settled(ui.New(e, km))
 		bindNormalTestAction(km, "del", func(e *view.Editor) {
 			e.SetStatusMsg("deleted")
 		}, []command.KeyEvent{{Code: command.KeyCode{
@@ -972,7 +972,7 @@ func TestPendingKeyPopup(t *testing.T) {
 	t.Run("an interaction spares a stale message", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
-		m := ui.New(e, km)
+		m := settled(ui.New(e, km))
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 		m = resize(m, 100, 30)
@@ -982,8 +982,10 @@ func TestPendingKeyPopup(t *testing.T) {
 
 		m = sendKey(m, ' ')
 
-		assert.NotEmpty(t, toastRow(m, "older news"))
+		// the key menu covers the popup, but does not clear it
 		assert.Equal(t, "spc", popupHead(m))
+		m = sendSpecial(m, tea.KeyEscape)
+		assert.NotEmpty(t, toastRow(m, "older news"))
 	})
 }
 

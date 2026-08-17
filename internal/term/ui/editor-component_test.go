@@ -956,7 +956,7 @@ func TestGotoLineKeySequence(t *testing.T) {
 
 	t.Run("a wide toast leaves the last cell blank", func(t *testing.T) {
 		m, e := newModel(t)
-		m = resize(m, 8, 6)
+		m = settled(resize(m, 8, 6))
 		// a toast as wide as the frame would fill the final column without
 		// the guard, and writing it auto-wraps the terminal
 		e.SetStatusMsg("1234567")
@@ -1087,7 +1087,7 @@ func TestSyncEditorMessages(t *testing.T) {
 			km, "goto_decl", m.GotoDeclarationAction,
 			[]command.KeyEvent{char('g')},
 		)
-		m = resize(m, 80, 24)
+		m = settled(resize(m, 80, 24))
 
 		m = sendKey(m, 'g')
 

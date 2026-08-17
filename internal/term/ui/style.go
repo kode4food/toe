@@ -9,35 +9,33 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-var (
-	completionKindStyleScopes = map[string]string{
-		"function":    "function",
-		"method":      "function",
-		"constructor": "function",
-		"field":       "variable.other.member",
-		"property":    "variable.other.member",
-		"reference":   "variable.other.member",
-		"variable":    "variable.parameter",
-		"class":       "type",
-		"interface":   "type",
-		"struct":      "type",
-		"type_param":  "type",
-		"unit":        "type",
-		"module":      "namespace",
-		"value":       "constant",
-		"enum":        "constant",
-		"enum_member": "constant",
-		"constant":    "constant",
-		"keyword":     "keyword",
-		"operator":    "operator",
-		"snippet":     "string",
-		"text":        "string",
-		"file":        "string",
-		"folder":      "string",
-		"color":       "string",
-		"event":       "string",
-	}
-)
+var completionKindStyleScopes = map[string]string{
+	"function":    "function",
+	"method":      "function",
+	"constructor": "function",
+	"field":       "variable.other.member",
+	"property":    "variable.other.member",
+	"reference":   "variable.other.member",
+	"variable":    "variable.parameter",
+	"class":       "type",
+	"interface":   "type",
+	"struct":      "type",
+	"type_param":  "type",
+	"unit":        "type",
+	"module":      "namespace",
+	"value":       "constant",
+	"enum":        "constant",
+	"enum_member": "constant",
+	"constant":    "constant",
+	"keyword":     "keyword",
+	"operator":    "operator",
+	"snippet":     "string",
+	"text":        "string",
+	"file":        "string",
+	"folder":      "string",
+	"color":       "string",
+	"event":       "string",
+}
 
 func searchMatchStyle(th *theme.Theme) tui.Style {
 	return th.Get("ui.selection")

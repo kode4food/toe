@@ -272,6 +272,13 @@ func TestConfigThemeErrors(t *testing.T) {
 		assert.Contains(t, res.Message, "error")
 	})
 
+	t.Run("set_option rejects unknown name", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option", "theme no-such-xyz")
+		assert.Contains(t, res.Message, "error")
+		assert.NotEqual(t, "no-such-xyz", e.Options().Theme)
+	})
+
 	t.Run("invalid current falls back to default", func(t *testing.T) {
 		t.Setenv("COLORTERM", "truecolor")
 		e, km := test.Env(t, "")

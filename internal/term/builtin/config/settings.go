@@ -86,7 +86,11 @@ func SettingsModule(r *command.Registry) command.Module {
 					return e.Options().Theme, nil
 				},
 				Set: func(e *view.Editor, s string) error {
-					e.Options().Theme = s
+					name, err := resolveTheme(s)
+					if err != nil {
+						return err
+					}
+					e.Options().Theme = name
 					return nil
 				},
 				Complete: command.StaticCompleter(loader.ThemeNames()...),

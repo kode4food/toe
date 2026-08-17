@@ -39,7 +39,7 @@ func TestModelLifecycle(t *testing.T) {
 	})
 
 	t.Run("startup message appears in view", func(t *testing.T) {
-		m := newModel().WithStartupMessage("hello startup")
+		m := settled(newModel().WithStartupMessage("hello startup"))
 		assert.Contains(t, stripANSI(m.View().Content), "hello startup")
 	})
 

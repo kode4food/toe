@@ -208,7 +208,7 @@ func (t *toastState) animating(now time.Time) bool {
 
 // true while an entry other than the last is inside its fade-out window
 func (t *toastState) fading(now time.Time) bool {
-	for _, item := range t.items[:len(t.items)-1] {
+	for _, item := range t.items[:max(len(t.items)-1, 0)] {
 		// a frame early, so the slow tick can't sleep through the fade-out
 		if item.expires.Sub(now) <= toastFade+toastTickEvery {
 			return true

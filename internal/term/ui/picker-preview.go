@@ -293,9 +293,18 @@ func previewSpans(args previewSpansArgs) []highlight.Span {
 	return args.cache.Tokenize(core.Source{Text: args.text, Lang: args.lang})
 }
 
-func previewHighlighter(fn func(string) tui.Style) func(string) tui.Style {
+// previewHighlighter: the background is stripped so the pane can patch its own
+// onto every row
+func previewHighlighter(th *theme.Theme) func(string) tui.Style {
+	fn := highlighterFor(th)
+	cache := make(map[string]tui.Style, 32)
 	return func(scope string) tui.Style {
-		return clearStyleBackground(fn(scope))
+		if st, ok := cache[scope]; ok {
+			return st
+		}
+		st := clearStyleBackground(fn(scope))
+		cache[scope] = st
+		return st
 	}
 }
 

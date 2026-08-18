@@ -39,12 +39,12 @@ func (d *overlayDrag) begin(bounds geom.Area, at geom.Point) bool {
 	return d.active()
 }
 
-func (d overlayDrag) active() bool {
+func (d *overlayDrag) active() bool {
 	return d.signX != 0 || d.signY != 0
 }
 
 // an axis whose border was not grabbed keeps its saved scale
-func (d overlayDrag) applyTo(
+func (d *overlayDrag) applyTo(
 	opts PickerLayoutOptions, id string, at geom.Point, avail geom.Size,
 ) PickerLayoutOptions {
 	if d.signX != 0 {
@@ -56,11 +56,11 @@ func (d overlayDrag) applyTo(
 	return opts
 }
 
-func (d overlayDrag) widthScale(at geom.Point, avail int) float64 {
+func (d *overlayDrag) widthScale(at geom.Point, avail int) float64 {
 	return scaleDelta(d.startWidth, d.signX*(at.X-d.from.X), avail)
 }
 
-func (d overlayDrag) heightScale(at geom.Point, avail int) float64 {
+func (d *overlayDrag) heightScale(at geom.Point, avail int) float64 {
 	return scaleDelta(d.startHeight, d.signY*(at.Y-d.from.Y), avail)
 }
 

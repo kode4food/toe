@@ -46,6 +46,11 @@ func TestReflowHardWrap(t *testing.T) {
 		assert.Equal(t, "", core.ReflowHardWrap("   \n  \n  ", 80))
 	})
 
+	t.Run("counts wide characters as two cells", func(t *testing.T) {
+		got := core.ReflowHardWrap("世界 世界 世界", 5)
+		assert.Equal(t, "世界\n世界\n世界", got)
+	})
+
 	t.Run("preserves list prefixes", func(t *testing.T) {
 		got := core.ReflowHardWrap("* This is my\n  list item.", 20)
 		assert.Equal(t, "* This is my list\n  item.", got)

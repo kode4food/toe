@@ -43,16 +43,7 @@ func (c previewLineCtx) emitMarker(buf *tui.Buffer, at geom.Point, first bool) {
 }
 
 func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
-	hlStyle := previewHighlighter(highlighterFor(args.theme))
-	hlCache := make(map[string]tui.Style, 32)
-	highlight := func(scope string) tui.Style {
-		if st, ok := hlCache[scope]; ok {
-			return st
-		}
-		st := hlStyle(scope)
-		hlCache[scope] = st
-		return st
-	}
+	highlight := previewHighlighter(args.theme)
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
 	// syntax spans have stripped backgrounds; patch popup bg onto every row

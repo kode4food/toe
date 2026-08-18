@@ -41,3 +41,18 @@ func SupportedLanguages() []string {
 func languageFor(name string) *sitter.Language {
 	return langRegistry[name]
 }
+
+// parseTree: the tree outlives the parser that made it, so the caller only has
+// to close the tree
+func parseTree(src []byte, language *sitter.Language) (*sitter.Tree, bool) {
+	p := sitter.NewParser()
+	defer p.Close()
+	if err := p.SetLanguage(language); err != nil {
+		return nil, false
+	}
+	tree := p.Parse(src, nil)
+	if tree == nil {
+		return nil, false
+	}
+	return tree, true
+}

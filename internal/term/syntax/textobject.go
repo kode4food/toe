@@ -42,13 +42,8 @@ func FindTextObject(args FindTextObjectArgs) (Range, bool) {
 	defer q.Close()
 
 	src := []byte(args.Text)
-	p := sitter.NewParser()
-	defer p.Close()
-	if err := p.SetLanguage(language); err != nil {
-		return Range{}, false
-	}
-	tree := p.Parse(src, nil)
-	if tree == nil {
+	tree, ok := parseTree(src, language)
+	if !ok {
 		return Range{}, false
 	}
 	defer tree.Close()

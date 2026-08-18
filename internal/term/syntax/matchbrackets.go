@@ -35,13 +35,8 @@ func FindMatchingBracket(
 		return 0, false
 	}
 	src := []byte(text)
-	p := sitter.NewParser()
-	defer p.Close()
-	if err := p.SetLanguage(language); err != nil {
-		return 0, false
-	}
-	tree := p.Parse(src, nil)
-	if tree == nil {
+	tree, ok := parseTree(src, language)
+	if !ok {
 		return 0, false
 	}
 	defer tree.Close()

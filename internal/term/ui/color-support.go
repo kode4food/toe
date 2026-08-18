@@ -6,17 +6,11 @@ import (
 	"strings"
 )
 
-// an empty value matches any non-empty value for env
-type trueColorTerm struct {
-	env   string
-	value string
-}
-
 // vte 0.36 is the first release with 24-bit color support
 const minTrueColorVTE = 3600
 
 // add new terminals here as their support is confirmed
-var trueColorTerms = []trueColorTerm{
+var trueColorTerms = []termMatch{
 	{env: "COLORTERM", value: "truecolor"},
 	{env: "COLORTERM", value: "24bit"},
 	{env: "WSL_DISTRO_NAME"},
@@ -52,16 +46,7 @@ func TrueColorSupported() bool {
 		strings.Contains(term, "truecolor") {
 		return true
 	}
-	for _, t := range trueColorTerms {
-		v := os.Getenv(t.env)
-		if v == "" {
-			continue
-		}
-		if t.value == "" || t.value == v {
-			return true
-		}
-	}
-	return false
+	return matchesTerm(trueColorTerms)
 }
 
 func trueColorVTE() bool {

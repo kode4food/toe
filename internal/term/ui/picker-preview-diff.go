@@ -116,16 +116,7 @@ func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
 }
 
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
-	hlStyle := previewHighlighter(highlighterFor(args.theme))
-	hlCache := make(map[string]tui.Style, 32)
-	hl := func(scope string) tui.Style {
-		if st, ok := hlCache[scope]; ok {
-			return st
-		}
-		st := hlStyle(scope)
-		hlCache[scope] = st
-		return st
-	}
+	hl := previewHighlighter(args.theme)
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
 	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())

@@ -96,13 +96,8 @@ func nodePathFor(
 		return nil, false
 	}
 	src := []byte(text)
-	p := sitter.NewParser()
-	defer p.Close()
-	if err := p.SetLanguage(language); err != nil {
-		return nil, false
-	}
-	tree := p.Parse(src, nil)
-	if tree == nil {
+	tree, ok := parseTree(src, language)
+	if !ok {
 		return nil, false
 	}
 	defer tree.Close()

@@ -17,49 +17,7 @@ type FindSurroundPairArgs struct {
 // FindSurroundPair returns the Range of the Skip-th bracket pair enclosing
 // Cursor, or (Range{}, false) if none exists at that depth
 func FindSurroundPair(args FindSurroundPairArgs) (Range, bool) {
-	text := args.Source.Text
-	cursor := args.Cursor
-	skip := args.Skip
-	language := languageFor(args.Source.Lang)
-	if language == nil {
-		return Range{}, false
-	}
-	runes := []rune(text)
-	if cursor < 0 || cursor >= len(runes) {
-		return Range{}, false
-	}
-	src := []byte(text)
-	p := sitter.NewParser()
-	defer p.Close()
-	if err := p.SetLanguage(language); err != nil {
-		return Range{}, false
-	}
-	tree := p.Parse(src, nil)
-	if tree == nil {
-		return Range{}, false
-	}
-	defer tree.Close()
-
-	c2b := buildCharToByte(text)
-	b2c := buildByteToChar(text)
-	b := uint(c2b[cursor])
-	root := tree.RootNode()
-
-	n := root.DescendantForByteRange(b, b+1)
-	for n != nil {
-		if isBracketNodeAny(n) {
-			skip--
-			if skip == 0 {
-				f := b2c[n.StartByte()]
-				t := b2c[n.EndByte()] - 1
-				if f >= 0 && t < len(runes) {
-					return Range{From: f, To: t}, true
-				}
-			}
-		}
-		n = n.Parent()
-	}
-	return Range{}, false
+	return findSurroundPair(args, isBracketNodeAny)
 }
 
 // FindSurroundPairForArgs identifies the enclosing bracket pair to find: the
@@ -79,35 +37,42 @@ func FindSurroundPairFor(args FindSurroundPairForArgs) (Range, bool) {
 	if !ok {
 		return Range{}, false
 	}
-	language := languageFor(args.Lang)
+	return findSurroundPair(FindSurroundPairArgs{
+		Source: core.Source{Text: args.Text, Lang: args.Lang},
+		Cursor: args.Cursor,
+		Skip:   args.Skip,
+	}, func(n *sitter.Node) bool {
+		return isBracketNode(n, pair)
+	})
+}
+
+// findSurroundPair: isEnclose decides which nodes count as an enclosing pair
+func findSurroundPair(
+	args FindSurroundPairArgs, isEnclose func(*sitter.Node) bool,
+) (Range, bool) {
+	text := args.Source.Text
+	language := languageFor(args.Source.Lang)
 	if language == nil {
 		return Range{}, false
 	}
-	skip := args.Skip
-	runes := []rune(args.Text)
+	runes := []rune(text)
 	if args.Cursor < 0 || args.Cursor >= len(runes) {
 		return Range{}, false
 	}
-	src := []byte(args.Text)
-	p := sitter.NewParser()
-	defer p.Close()
-	if err := p.SetLanguage(language); err != nil {
-		return Range{}, false
-	}
-	tree := p.Parse(src, nil)
-	if tree == nil {
+	tree, ok := parseTree([]byte(text), language)
+	if !ok {
 		return Range{}, false
 	}
 	defer tree.Close()
 
-	c2b := buildCharToByte(args.Text)
-	b2c := buildByteToChar(args.Text)
+	c2b := buildCharToByte(text)
+	b2c := buildByteToChar(text)
 	b := uint(c2b[args.Cursor])
-	root := tree.RootNode()
+	skip := args.Skip
 
-	n := root.DescendantForByteRange(b, b+1)
+	n := tree.RootNode().DescendantForByteRange(b, b+1)
 	for n != nil {
-		if isBracketNode(n, pair) {
+		if isEnclose(n) {
 			skip--
 			if skip == 0 {
 				f := b2c[n.StartByte()]

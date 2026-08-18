@@ -284,7 +284,7 @@ func incrementalChanges(
 				edited:   edited,
 				oldFrom:  oldPos,
 				oldTo:    oldEnd,
-				newFrom:  newPos - lenRunes(inserted),
+				newFrom:  newPos - utf8.RuneCountInString(inserted),
 				inserted: inserted,
 				encoding: enc,
 			})
@@ -384,8 +384,4 @@ func encodedLen(text string, enc protocol.PositionEncodingKind) int {
 		}
 		return n
 	}
-}
-
-func lenRunes(text string) int {
-	return utf8.RuneCountInString(text)
 }

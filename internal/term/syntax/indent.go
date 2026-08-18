@@ -124,13 +124,8 @@ func matchingCloseAt(src string, pos int, open rune) bool {
 }
 
 func stringOrComment(src string, language *sitter.Language, pos int) bool {
-	p := sitter.NewParser()
-	defer p.Close()
-	if err := p.SetLanguage(language); err != nil {
-		return false
-	}
-	tree := p.Parse([]byte(src), nil)
-	if tree == nil {
+	tree, ok := parseTree([]byte(src), language)
+	if !ok {
 		return false
 	}
 	defer tree.Close()

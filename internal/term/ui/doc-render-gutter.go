@@ -161,14 +161,10 @@ func (g gutterSpec) diffMarker(kind diffGutterKind) (string, tui.Style) {
 func gutterLineNumberWidth(
 	text core.Rope, g view.Gutter, layout []view.GutterType,
 ) int {
-	if !gutterLayoutHas(layout, view.GutterTypeLineNumbers) {
+	if !slices.Contains(layout, view.GutterTypeLineNumbers) {
 		return 0
 	}
 	return max(lineNumberDigits(text), g.LineNumberMinWidth())
-}
-
-func gutterLayoutHas(layout []view.GutterType, gt view.GutterType) bool {
-	return slices.Contains(layout, gt)
 }
 
 func gutterLayoutWidth(layout []view.GutterType, lineNumW int) int {

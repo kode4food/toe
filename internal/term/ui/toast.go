@@ -38,6 +38,8 @@ const (
 	toastInfo toastLevel = iota
 	toastWarning
 	toastError
+	toastCommand
+	toastTerminal
 )
 
 const (
@@ -382,6 +384,10 @@ func logTag(level toastLevel) string {
 		return highlight.LogError
 	case toastWarning:
 		return highlight.LogWarning
+	case toastCommand:
+		return highlight.LogCommand
+	case toastTerminal:
+		return highlight.LogTerminal
 	default:
 		return highlight.LogInfo
 	}
@@ -390,10 +396,14 @@ func logTag(level toastLevel) string {
 func toastColor(th *theme.Theme, level toastLevel) tui.Color {
 	switch level {
 	case toastError:
-		return th.Get("error").FgColor()
+		return th.Get("ui.log.error").FgColor()
 	case toastWarning:
-		return th.Get("warning").FgColor()
+		return th.Get("ui.log.warning").FgColor()
+	case toastCommand:
+		return th.Get("ui.log.command").FgColor()
+	case toastTerminal:
+		return th.Get("ui.log.terminal").FgColor()
 	default:
-		return th.Get("info").FgColor()
+		return th.Get("ui.log.info").FgColor()
 	}
 }

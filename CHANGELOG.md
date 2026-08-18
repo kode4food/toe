@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.3.2
+
+### Interface
+
+- Added desktop notifications from terminal panes
+
 ## 0.3.1
 
 ### Interface

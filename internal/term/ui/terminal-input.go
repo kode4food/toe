@@ -193,6 +193,9 @@ func (e *EditorComponent) pollTerminals(cx *Context) {
 	var closing []*TerminalPane
 	cx.Editor.Tree().Range(func(p view.Pane) bool {
 		if tp, ok := p.(*TerminalPane); ok {
+			for _, note := range tp.ConsumeNotifications() {
+				e.pushToast(note, toastTerminal)
+			}
 			select {
 			case <-tp.Closed():
 				closing = append(closing, tp)

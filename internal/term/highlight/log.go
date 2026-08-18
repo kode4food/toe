@@ -7,19 +7,24 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
-// LogError, LogWarning and LogInfo are the severity tags the message log writes
-// at the start of each line, LogSeparator the rule drawn after them
+// LogError, LogWarning, LogInfo, LogCommand and LogTerminal are the tags the
+// message log writes at the start of each line, naming the severity or the
+// source, LogSeparator the rule drawn after them
 const (
 	LogError     = "ERR"
 	LogWarning   = "WAR"
 	LogInfo      = "INF"
+	LogCommand   = "CMD"
+	LogTerminal  = "TRM"
 	LogSeparator = " " + tui.BorderV + " "
 )
 
 var logScopes = map[string]string{
-	LogError:   "error",
-	LogWarning: "warning",
-	LogInfo:    "info",
+	LogError:    "ui.log.error",
+	LogWarning:  "ui.log.warning",
+	LogInfo:     "ui.log.info",
+	LogCommand:  "ui.log.command",
+	LogTerminal: "ui.log.terminal",
 }
 
 func tokenizeLog(text string) []Span {

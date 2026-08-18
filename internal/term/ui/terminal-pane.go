@@ -55,6 +55,7 @@ type (
 		sync.Mutex
 		path     string
 		title    string
+		notes    []string
 		bellRung bool
 	}
 
@@ -77,6 +78,8 @@ type (
 		end   uv.Position
 	}
 )
+
+const maxPendingNotes = 8
 
 var ErrScrollbackNoMatch = errors.New("pattern not found in scrollback")
 
@@ -146,6 +149,8 @@ func NewTerminalPaneInDir(
 	})
 	tp.emu.RegisterOscHandler(52, tp.handleOSC52)
 	tp.emu.RegisterOscHandler(7, tp.handleOSC7)
+	tp.emu.RegisterOscHandler(9, tp.handleOSC9)
+	tp.emu.RegisterOscHandler(777, tp.handleOSC777)
 	go tp.pump()
 	go func() { _, _ = io.Copy(tp.pty, tp.emu) }()
 	return tp, nil
@@ -389,6 +394,16 @@ func (t *TerminalPane) Paste(text string) {
 	t.emu.Paste(text)
 }
 
+// ConsumeNotifications returns the desktop notifications the shell has
+// requested since the last call, clearing them
+func (t *TerminalPane) ConsumeNotifications() []string {
+	t.metadata.Lock()
+	defer t.metadata.Unlock()
+	notes := t.metadata.notes
+	t.metadata.notes = nil
+	return notes
+}
+
 func (t *TerminalPane) hasOutput() bool {
 	return t.output.Load()
 }
@@ -455,6 +470,44 @@ func (t *TerminalPane) handleOSC7(data []byte) bool {
 	t.metadata.path = u.Path
 	t.metadata.Unlock()
 	return true
+}
+
+func (t *TerminalPane) handleOSC9(data []byte) bool {
+	_, body, ok := strings.Cut(string(data), ";")
+	if !ok || body == "" {
+		return false
+	}
+	// ConEmu reuses OSC 9 for numbered progress and cwd reports, which are
+	// state updates rather than notifications
+	if len(body) > 1 && body[1] == ';' && body[0] >= '0' && body[0] <= '9' {
+		return true
+	}
+	t.pushNote(body)
+	return true
+}
+
+func (t *TerminalPane) handleOSC777(data []byte) bool {
+	parts := strings.SplitN(string(data), ";", 4)
+	if len(parts) < 3 || parts[1] != "notify" {
+		return false
+	}
+	note := parts[2]
+	if len(parts) == 4 && parts[3] != "" {
+		note += ": " + parts[3]
+	}
+	if note == "" {
+		return false
+	}
+	t.pushNote(note)
+	return true
+}
+
+func (t *TerminalPane) pushNote(s string) {
+	t.metadata.Lock()
+	defer t.metadata.Unlock()
+	if len(t.metadata.notes) < maxPendingNotes {
+		t.metadata.notes = append(t.metadata.notes, s)
+	}
 }
 
 func (t *TerminalPane) pump() {

@@ -15,6 +15,7 @@ import (
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/tui"
@@ -256,6 +257,98 @@ func TestTerminalPane(t *testing.T) {
 		tp.IngestOutput([]byte("\x1b]7;file://localhost/tmp/a%20b\x07"))
 
 		assert.Equal(t, "/tmp/a b", tp.Path())
+	})
+
+	t.Run("OSC 9 queues a notification", func(t *testing.T) {
+		tp := terminalPane(t)
+
+		tp.IngestOutput([]byte("\x1b]9;build finished\x07"))
+
+		assert.Equal(t, []string{"build finished"}, tp.ConsumeNotifications())
+		assert.Empty(t, tp.ConsumeNotifications())
+	})
+
+	t.Run("OSC 9 ignores ConEmu progress reports", func(t *testing.T) {
+		tp := terminalPane(t)
+
+		tp.IngestOutput([]byte("\x1b]9;4;1;50\x07"))
+
+		assert.Empty(t, tp.ConsumeNotifications())
+	})
+
+	t.Run("OSC 777 joins title and body", func(t *testing.T) {
+		tp := terminalPane(t)
+
+		tp.IngestOutput([]byte("\x1b]777;notify;tests;all green\x07"))
+
+		assert.Equal(t,
+			[]string{"tests: all green"}, tp.ConsumeNotifications(),
+		)
+	})
+
+	t.Run("OSC 777 accepts a title alone", func(t *testing.T) {
+		tp := terminalPane(t)
+
+		tp.IngestOutput([]byte("\x1b]777;notify;done\x07"))
+
+		assert.Equal(t, []string{"done"}, tp.ConsumeNotifications())
+	})
+
+	t.Run("OSC 777 ignores other subcommands", func(t *testing.T) {
+		tp := terminalPane(t)
+
+		tp.IngestOutput([]byte("\x1b]777;precmd;whatever\x07"))
+
+		assert.Empty(t, tp.ConsumeNotifications())
+	})
+
+	t.Run("pending notifications are capped", func(t *testing.T) {
+		tp := terminalPane(t)
+
+		for i := range 20 {
+			tp.IngestOutput(fmt.Appendf(nil, "\x1b]9;note %d\x07", i))
+		}
+
+		assert.Len(t, tp.ConsumeNotifications(), 8)
+	})
+
+	t.Run("notification becomes a toast", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m.SetAnimation(false)
+		m.TerminalAction(e)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+		_ = m.View()
+
+		batch, ok := m.Init()().(tea.BatchMsg)
+		assert.True(t, ok)
+		var redraw tea.Cmd
+		for _, cmd := range batch {
+			if msg, ok := runWithTimeout(cmd, 20*time.Millisecond); ok {
+				next, cmd := m.Update(msg)
+				m = next.(ui.Model)
+				redraw = cmd
+			}
+		}
+		if !assert.NotNil(t, redraw) {
+			return
+		}
+
+		tp.IngestOutput([]byte("\x1b]9;build finished\x07"))
+		msg, ok := runWithTimeout(redraw, time.Second)
+		if !assert.True(t, ok) {
+			return
+		}
+		next, _ := m.Update(msg)
+		m = next.(ui.Model)
+
+		assert.Contains(t, stripANSI(m.View().Content), "build finished")
+		assert.Equal(t,
+			highlight.LogTerminal+highlight.LogSeparator+"build finished\n",
+			e.MessagesDocument().Text().String(),
+		)
 	})
 
 	t.Run("mouse wheel scrolls into scrollback", func(t *testing.T) {
@@ -946,6 +1039,17 @@ func TestTerminalResize(t *testing.T) {
 		waitForResize(t, tp)
 		assert.Equal(t, 60, tp.Emulator().Width())
 	})
+}
+
+func terminalPane(t *testing.T) *ui.TerminalPane {
+	t.Helper()
+	e := editorWithText(t, "hello toe")
+	m := renderedModel(e)
+	m.TerminalAction(e)
+	tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+	assert.True(t, ok)
+	t.Cleanup(func() { _ = tp.Stop() })
+	return tp
 }
 
 func runWithTimeout(cmd tea.Cmd, d time.Duration) (tea.Msg, bool) {

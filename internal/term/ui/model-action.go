@@ -22,7 +22,7 @@ func (m Model) WithStartupMessage(msg string) Model {
 		m.component.clearCommandMessage()
 		return m
 	}
-	m.component.setCommandMessage(msg)
+	m.component.setStatusMessage(msg)
 	return m
 }
 

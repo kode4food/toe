@@ -17,18 +17,24 @@ func TestTokenizeLog(t *testing.T) {
 			highlight.LogError + highlight.LogSeparator + "bad",
 			highlight.LogWarning + highlight.LogSeparator + "iffy",
 			highlight.LogInfo + highlight.LogSeparator + "\u00f6k",
+			highlight.LogCommand + highlight.LogSeparator + "ran",
+			highlight.LogTerminal + highlight.LogSeparator + "beep",
 		}
 		spans := highlight.Tokenize(core.Source{
 			Text: strings.Join(lines, "\n") + "\n",
 			Lang: view.MessagesLanguage,
 		})
 		assert.Equal(t, []highlight.Span{
-			{Start: 0, End: 3, Scope: "error"},
-			{Start: 6, End: 9, Scope: "error"},
-			{Start: 10, End: 13, Scope: "warning"},
-			{Start: 16, End: 20, Scope: "warning"},
-			{Start: 21, End: 24, Scope: "info"},
-			{Start: 27, End: 29, Scope: "info"},
+			{Start: 0, End: 3, Scope: "ui.log.error"},
+			{Start: 6, End: 9, Scope: "ui.log.error"},
+			{Start: 10, End: 13, Scope: "ui.log.warning"},
+			{Start: 16, End: 20, Scope: "ui.log.warning"},
+			{Start: 21, End: 24, Scope: "ui.log.info"},
+			{Start: 27, End: 29, Scope: "ui.log.info"},
+			{Start: 30, End: 33, Scope: "ui.log.command"},
+			{Start: 36, End: 39, Scope: "ui.log.command"},
+			{Start: 40, End: 43, Scope: "ui.log.terminal"},
+			{Start: 46, End: 50, Scope: "ui.log.terminal"},
 		}, spans)
 	})
 

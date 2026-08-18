@@ -72,6 +72,12 @@
 
 "ui.prompt" = { fg = "blue", modifiers = ["bold"] }
 
+"ui.log.error" = "red"
+"ui.log.warning" = "yellow"
+"ui.log.info" = "sky"
+"ui.log.command" = "blue"
+"ui.log.terminal" = "peach"
+
 "ui.statusline" = { fg = "subtext1", bg = "mantle" }
 "ui.statusline.inactive" = { fg = "surface2", bg = "mantle" }
 "ui.statusline.normal" = { fg = "base", bg = "rosewater", modifiers = ["bold"] }

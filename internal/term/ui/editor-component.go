@@ -364,7 +364,7 @@ func (e *EditorComponent) cancelPending(cx *Context) {
 func (e *EditorComponent) syncEditorMessages(cx *Context) {
 	for _, m := range cx.Editor.TakeStatusMsgs() {
 		if m != "" {
-			e.setCommandMessage(m)
+			e.setStatusMessage(m)
 		}
 	}
 	for _, m := range e.toasts.takeLog() {
@@ -387,6 +387,10 @@ func (e *EditorComponent) setCommandError(err error) {
 }
 
 func (e *EditorComponent) setCommandMessage(msg string) {
+	e.pushToast(msg, toastCommand)
+}
+
+func (e *EditorComponent) setStatusMessage(msg string) {
 	e.pushToast(msg, toastInfo)
 }
 

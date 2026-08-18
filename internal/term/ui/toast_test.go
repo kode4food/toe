@@ -113,6 +113,27 @@ func TestToasts(t *testing.T) {
 		)
 	})
 
+	t.Run("command results are tagged apart", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		assert.NoError(t, km.Register("greet", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				return command.Result{Message: "hello there"}
+			},
+			Modes:   view.ModeNormal,
+			Aliases: []string{"greet"},
+		}))
+		m := settled(resize(ui.New(e, km), 80, 24))
+
+		m = m.ExecTypable("greet")
+		_ = m.View()
+
+		assert.Equal(t,
+			highlight.LogCommand+highlight.LogSeparator+"hello there\n",
+			e.MessagesDocument().Text().String(),
+		)
+	})
+
 	t.Run("errors outlast plain messages", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

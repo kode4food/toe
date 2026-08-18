@@ -337,7 +337,7 @@ func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
 		return
 	}
 	cur := doc.SelectionFor(v.ID()).Primary()
-	if cur.IsSingleGrapheme(doc.Text()) || cur.Empty() {
+	if cur.IsSingleGrapheme(doc.Text()) || cur.IsEmpty() {
 		return
 	}
 	if cur.Anchor != down.Anchor || cur.Head != down.Head {

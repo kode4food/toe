@@ -262,7 +262,7 @@ func optionCmds(r *command.Registry) []command.Command {
 			Name:      actGetOption,
 			DocString: "Get the current value of a config option",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					return command.Result{Error: errUsageGet}
 				}
 				key, _ := args.First()
@@ -349,7 +349,7 @@ func optionCmds(r *command.Registry) []command.Command {
 func toggleOption(
 	e *view.Editor, r *command.Registry, args *command.Args,
 ) command.Result {
-	if args == nil || args.Empty() {
+	if args == nil || args.IsEmpty() {
 		return command.Result{Error: errUsageToggle}
 	}
 	key, _ := args.First()

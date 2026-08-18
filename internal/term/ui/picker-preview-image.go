@@ -88,7 +88,7 @@ func (p *PickerComponent) previewImage(
 		maxCells: size,
 		pixels:   pixels,
 	})
-	if cells.Empty() {
+	if cells.IsEmpty() {
 		return previewImageRes{}, false
 	}
 	return previewImageRes{entry: entry, cells: cells}, true

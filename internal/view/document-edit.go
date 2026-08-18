@@ -30,7 +30,7 @@ func (d *Document) BeginInsertGroup(vid Id) {
 func (d *Document) CommitInsertHistory(vid Id) {
 	acc := d.edits.insertAcc
 	d.edits.insertAcc = nil
-	if acc == nil || acc.changes.Empty() {
+	if acc == nil || acc.changes.IsEmpty() {
 		return
 	}
 	tx := core.NewTransaction(acc.oldState.Doc).
@@ -55,12 +55,12 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		oldSel := d.views.selections[vid]
 		d.content.Lock()
 		d.content.text = newText
-		if !cs.Empty() {
+		if !cs.IsEmpty() {
 			d.content.version++
 		}
 		d.content.Unlock()
 		d.views.selections[vid] = newSel
-		if !cs.Empty() {
+		if !cs.IsEmpty() {
 			d.edits.insertAcc.changes = d.edits.insertAcc.changes.Compose(cs)
 			d.edits.changedSinceAccess = true
 			d.mapOtherSelections(vid, cs)
@@ -75,7 +75,7 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	cs := tx.Changes()
 	newSel := d.resolveAppliedSelection(vid, tx, cs)
 	oldSel := d.views.selections[vid]
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		// Commit the FORWARD tx with the BEFORE state so Undo can restore it
 		beforeSt := core.State{
 			Doc:       d.content.text,
@@ -87,12 +87,12 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 	}
 	d.content.Lock()
 	d.content.text = newText
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		d.content.version++
 	}
 	d.content.Unlock()
 	d.views.selections[vid] = newSel
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		d.edits.changedSinceAccess = true
 		d.mapOtherSelections(vid, cs)
 		d.remapOverlays(cs)
@@ -114,7 +114,7 @@ func (d *Document) Undo(vid Id) bool {
 		return false
 	}
 	cs := tx.Changes()
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		d.mapOtherSelections(vid, cs)
 	}
 	d.content.Lock()
@@ -126,7 +126,7 @@ func (d *Document) Undo(vid Id) bool {
 	}
 	d.edits.changedSinceAccess = true
 	d.MarkDirty()
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		d.remapOverlays(cs)
 	}
 	return true
@@ -143,7 +143,7 @@ func (d *Document) Redo(vid Id) bool {
 		return false
 	}
 	cs := tx.Changes()
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		d.mapOtherSelections(vid, cs)
 	}
 	d.content.Lock()
@@ -155,7 +155,7 @@ func (d *Document) Redo(vid Id) bool {
 	}
 	d.edits.changedSinceAccess = true
 	d.MarkDirty()
-	if !cs.Empty() {
+	if !cs.IsEmpty() {
 		d.remapOverlays(cs)
 	}
 	return true

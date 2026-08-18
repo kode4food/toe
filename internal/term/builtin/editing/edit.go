@@ -510,7 +510,7 @@ func laterAction(e *view.Editor, args *command.Args) command.Result {
 }
 
 func historySteps(e *view.Editor, args *command.Args) (int, error) {
-	if args == nil || args.Empty() {
+	if args == nil || args.IsEmpty() {
 		return e.CountOr(1), nil
 	}
 	arg, _ := args.First()

@@ -43,7 +43,7 @@ func formatCmds() []command.Command {
 				if doc == nil {
 					return command.Result{Error: errNoDocument}
 				}
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					lang := doc.Lang()
 					if lang == "" {
 						lang = view.DefaultLanguage
@@ -65,7 +65,7 @@ func formatCmds() []command.Command {
 			Name:      actSetLineEnding,
 			DocString: "Set the document's line ending: crlf, lf, or native",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					doc := e.FocusedDocument()
 					if doc == nil {
 						return command.Result{Error: errNoDocument}
@@ -108,7 +108,7 @@ func formatCmds() []command.Command {
 				if doc == nil {
 					return command.Result{Error: errNoDocument}
 				}
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					return command.Result{
 						Message: doc.IndentStyle().AsStr(),
 					}

@@ -191,7 +191,7 @@ func runLSPWorkspaceCommand(model ui.Model) command.Run {
 		if !ok {
 			return command.Result{Error: errLSPUndefined}
 		}
-		if args == nil || args.Empty() {
+		if args == nil || args.IsEmpty() {
 			return kit.Runner(model.PickerAction(
 				ui.LSPWorkspaceCommandPicker,
 			))(e, args)

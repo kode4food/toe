@@ -74,7 +74,7 @@ func SelectMode(e *view.Editor) {
 	ranges := sel.Ranges()
 	changed := false
 	for i, r := range ranges {
-		if r.Empty() && r.Head == nChars && nChars > 0 {
+		if r.IsEmpty() && r.Head == nChars && nChars > 0 {
 			prev := core.PrevGraphemeBoundary(text, r.Anchor)
 			ranges[i] = core.Range{Anchor: prev, Head: r.Head}
 			changed = true
@@ -130,7 +130,7 @@ func AppendMode(e *view.Editor) {
 	ranges := sel.Ranges()
 	for i, r := range ranges {
 		ins := r.To()
-		if r.Empty() {
+		if r.IsEmpty() {
 			ins = core.NextGraphemeBoundary(text, ins)
 		}
 		head := core.NextGraphemeBoundary(text, ins)

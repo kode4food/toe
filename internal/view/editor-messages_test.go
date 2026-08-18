@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -54,6 +55,21 @@ func TestMessagesDocument(t *testing.T) {
 
 		e.AppendMessage("more news")
 		assert.Equal(t, "news\nmore news\n", doc.Text().String())
+	})
+
+	t.Run("survives closing its pane", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.AppendMessage("first")
+		did := e.MessagesDocument().ID()
+		e.ShowDocument(did)
+
+		e.ClosePane(e.Tree().Focus())
+
+		e.AppendMessage("second")
+		doc := e.MessagesDocument()
+		assert.Equal(t, did, doc.ID())
+		assert.Equal(t, "first\nsecond\n", doc.Text().String())
 	})
 
 	t.Run("listed as a buffer", func(t *testing.T) {

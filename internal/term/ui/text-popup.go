@@ -76,7 +76,7 @@ func (p *popupMarkdown) parseLine(line string) {
 		p.lines = append(p.lines, popupLine{})
 		return
 	}
-	if popupRule(line) {
+	if isPopupRule(line) {
 		// drop the blank (or prior) before it so it sits flush against text
 		if n := len(p.lines); n > 0 && p.lines[n-1].text == "" {
 			p.lines = p.lines[:n-1]
@@ -253,7 +253,7 @@ func popupFence(line string) (string, bool) {
 	return lang, true
 }
 
-func popupRule(line string) bool {
+func isPopupRule(line string) bool {
 	s := strings.TrimSpace(line)
 	if len(s) < 3 {
 		return false

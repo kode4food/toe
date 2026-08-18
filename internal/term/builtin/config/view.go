@@ -899,7 +899,7 @@ func runDirAction(
 
 func splitRun(layout view.Layout) command.Run {
 	return func(e *view.Editor, args *command.Args) command.Result {
-		if args == nil || args.Empty() {
+		if args == nil || args.IsEmpty() {
 			if err := e.SplitFocused(layout); err != nil {
 				return command.Result{Error: err}
 			}

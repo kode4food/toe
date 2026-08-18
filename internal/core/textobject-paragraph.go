@@ -22,9 +22,9 @@ func TextObjectParagraph(
 		count = 1
 	}
 
-	prevEmpty := lines.blank(line - 1)
-	currEmpty := lines.blank(line)
-	nextEmpty := line+1 >= lines.lineCount || lines.blank(line+1)
+	prevEmpty := lines.isBlank(line - 1)
+	currEmpty := lines.isBlank(line)
+	nextEmpty := line+1 >= lines.lineCount || lines.isBlank(line+1)
 	nextStart := paragraphLineToChar(doc, line+1)
 	lastChar := PrevGraphemeBoundary(doc, nextStart) == cursor
 	prevEmptyToLine := prevEmpty && !currEmpty
@@ -35,10 +35,10 @@ func TextObjectParagraph(
 		lineBack++
 	}
 	if !(currEmptyToLine && lastChar) {
-		for lineBack > 0 && lines.blank(lineBack-1) {
+		for lineBack > 0 && lines.isBlank(lineBack-1) {
 			lineBack--
 		}
-		for lineBack > 0 && !lines.blank(lineBack-1) {
+		for lineBack > 0 && !lines.isBlank(lineBack-1) {
 			lineBack--
 		}
 	}
@@ -49,11 +49,11 @@ func TextObjectParagraph(
 	countDone := 0
 	for range count {
 		done := false
-		for line < lines.lineCount && !lines.blank(line) {
+		for line < lines.lineCount && !lines.isBlank(line) {
 			line++
 			done = true
 		}
-		for line < lines.lineCount && lines.blank(line) {
+		for line < lines.lineCount && lines.isBlank(line) {
 			line++
 		}
 		if done {
@@ -61,15 +61,15 @@ func TextObjectParagraph(
 		}
 	}
 	if countDone != count && line >= lines.lineCount {
-		for lineBack > 0 && lines.blank(lineBack-1) {
+		for lineBack > 0 && lines.isBlank(lineBack-1) {
 			lineBack--
 		}
-		for lineBack > 0 && !lines.blank(lineBack-1) {
+		for lineBack > 0 && !lines.isBlank(lineBack-1) {
 			lineBack--
 		}
 	}
 	if kind == TextObjectInside {
-		for line > lineBack && lines.blank(line-1) {
+		for line > lineBack && lines.isBlank(line-1) {
 			line--
 		}
 	}
@@ -112,7 +112,7 @@ func (r Range) TextObjectPairSurround(
 	return Range{Anchor: head, Head: anchor}
 }
 
-func (p paragraphLines) blank(line int) bool {
+func (p paragraphLines) isBlank(line int) bool {
 	if line < 0 || line >= p.lineCount {
 		return true
 	}

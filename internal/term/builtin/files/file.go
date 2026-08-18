@@ -265,7 +265,7 @@ func fileManageCmds() []command.Command {
 			Name:      actOpen,
 			DocString: "Open a file from disk into the current view",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					return command.Result{Error: errNoFilename}
 				}
 				path, _ := args.First()
@@ -331,7 +331,7 @@ func fileManageCmds() []command.Command {
 			DocString: "Move the current buffer and its file to a different " +
 				"path",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					return command.Result{Error: errNoFilename}
 				}
 				doc := e.FocusedDocument()
@@ -355,7 +355,7 @@ func fileManageCmds() []command.Command {
 			Name:      actMoveForce,
 			DocString: "Move the buffer and its file, creating subdirectories",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					return command.Result{Error: errNoFilename}
 				}
 				if e.FocusedDocument() == nil {
@@ -373,7 +373,7 @@ func fileManageCmds() []command.Command {
 			Name:      actRead,
 			DocString: "Load a file into buffer",
 			Run: func(e *view.Editor, args *command.Args) command.Result {
-				if args == nil || args.Empty() {
+				if args == nil || args.IsEmpty() {
 					return command.Result{Error: errNoFilename}
 				}
 				path, _ := args.First()

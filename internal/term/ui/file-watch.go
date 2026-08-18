@@ -225,7 +225,7 @@ func (w *fileWatcher) drain(reg *watchRegistration) {
 		if !w.enabled.Load() {
 			continue
 		}
-		if !fileWatchOp(ev.Event()) || isFileWatchPathExcluded(ev.Path()) {
+		if !isFileWatchOp(ev.Event()) || isFileWatchPathExcluded(ev.Path()) {
 			continue
 		}
 		select {
@@ -253,7 +253,7 @@ func stopWatch(reg *watchRegistration) {
 	close(reg.done)
 }
 
-func fileWatchOp(ev notify.Event) bool {
+func isFileWatchOp(ev notify.Event) bool {
 	return ev&(notify.Create|notify.Write|notify.Remove|notify.Rename) != 0
 }
 

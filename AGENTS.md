@@ -483,24 +483,16 @@ var (
 
 ### Boolean Names
 
-Avoid `is`/`has` prefix (redundant in Go):
+Name the condition. Never add `Is`/`Has` just because the type is `bool`.
 
-```go
-// Good
-if atRoot { ... }
-if doc.Modified() { ... }
-if hasOpenDocuments(e) { ... }  // Functions can use has/is
+- Fields and locals: plain state name. `open`, `ready`, `enabled`, `ok`. Prefix only when the bare word reads as a value (`hasBOM`, `isBase`) or collides with a sibling (`hasStaged` beside `staged core.FileChangeKind`).
+- `IsX` for a state, adjective, or classification: `IsDir`, `IsAbs`, `IsZero`, `IsEmpty`.
+- Verb alone when the verb is the predicate: `HasPrefix`, `Contains`, `Exists`, `Equal`. Never `IsContains`.
+- Bare property name only when it reads as neither command nor getter. `fileWatchOp(ev)` is a getter, so `isFileWatchOp`; `ignoreCase(opts)` is an order, so `ignoresCase`.
+- Imperatives stay operations. `Open`/`Close`/`Start`/`Stop`/`Read`/`Write` act; `IsOpen()` asks. A command may return a bool saying whether it acted.
+- Standard library names keep their signature and meaning: `Read`, `Write`, `Close`, `Flush`, `String`.
 
-// Acceptable in struct fields when clarity needed
-type Config struct {
-    Enabled bool
-    Ready   bool
-}
-
-// Bad - redundant prefix
-if isAtRoot { ... }
-if doc.IsModified() { ... }
-```
+Unsure? Copy the analogous stdlib API.
 
 ### Acronyms
 

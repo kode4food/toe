@@ -148,7 +148,7 @@ func closeBuffers(
 }
 
 func buffersToClose(e *view.Editor, args *command.Args) ([]*view.View, error) {
-	if args == nil || args.Empty() {
+	if args == nil || args.IsEmpty() {
 		if v := e.FocusedView(); v != nil {
 			return []*view.View{v}, nil
 		}

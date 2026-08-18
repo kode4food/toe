@@ -23,7 +23,7 @@ func (t Transaction) Selection() *Selection {
 
 // Apply runs the transaction's changes against doc
 func (t Transaction) Apply(doc Rope) (Rope, error) {
-	if t.changes.Empty() {
+	if t.changes.IsEmpty() {
 		return doc, nil
 	}
 	return t.changes.Apply(doc)

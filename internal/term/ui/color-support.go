@@ -37,7 +37,7 @@ var trueColorTerms = []termMatch{
 // TrueColorSupported reports whether the terminal can render 24-bit color,
 // based on well-known environment variables
 func TrueColorSupported() bool {
-	if trueColorVTE() {
+	if hasTrueColorVTE() {
 		return true
 	}
 	// terminfo names its 24-bit entries with a -direct suffix
@@ -49,7 +49,7 @@ func TrueColorSupported() bool {
 	return matchesTerm(trueColorTerms)
 }
 
-func trueColorVTE() bool {
+func hasTrueColorVTE() bool {
 	v, err := strconv.Atoi(os.Getenv("VTE_VERSION"))
 	return err == nil && v >= minTrueColorVTE
 }

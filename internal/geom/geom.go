@@ -19,8 +19,8 @@ type (
 	}
 )
 
-// Empty reports whether Size has no usable cells
-func (s Size) Empty() bool {
+// IsEmpty reports whether Size has no usable cells
+func (s Size) IsEmpty() bool {
 	return s.Width <= 0 || s.Height <= 0
 }
 
@@ -72,7 +72,7 @@ func (a Area) Translate(d Point) Area {
 
 // Intersects reports whether a and b overlap in at least one cell
 func (a Area) Intersects(b Area) bool {
-	if a.Empty() || b.Empty() {
+	if a.IsEmpty() || b.IsEmpty() {
 		return false
 	}
 	return a.X < b.X+b.Width && b.X < a.X+a.Width &&

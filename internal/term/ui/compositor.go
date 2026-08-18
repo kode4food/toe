@@ -80,7 +80,7 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	if _, ok := msg.(tea.WindowSizeMsg); !ok {
 		return tea.Batch(cmds...)
 	}
-	if c.size.Empty() || c.startup == nil {
+	if c.size.IsEmpty() || c.startup == nil {
 		return tea.Batch(cmds...)
 	}
 	fn := c.startup

@@ -207,7 +207,7 @@ func splitChangeKind(code statusCode) gitStatus {
 		return gitStatus{
 			unstaged: view.FileChangeUntracked, hasUnstaged: true,
 		}
-	case gitConflict(statusCode{staged: x, unstaged: y}):
+	case isGitConflict(statusCode{staged: x, unstaged: y}):
 		return gitStatus{
 			unstaged: view.FileChangeConflict, hasUnstaged: true,
 		}
@@ -256,7 +256,7 @@ func appendChanges(
 	return changes
 }
 
-func gitConflict(code statusCode) bool {
+func isGitConflict(code statusCode) bool {
 	x := code.staged
 	y := code.unstaged
 	return x == 'U' || y == 'U' || (x == 'D' && y == 'D') ||

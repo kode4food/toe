@@ -168,7 +168,7 @@ func TerminalModule() command.Module {
 }
 
 func clearRegister(e *view.Editor, args *command.Args) command.Result {
-	if args == nil || args.Empty() {
+	if args == nil || args.IsEmpty() {
 		e.Registers().ClearAll()
 		e.ResetRegister()
 		return command.Result{Message: i18n.Text(statusRegistersClear)}

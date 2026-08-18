@@ -30,7 +30,7 @@ var (
 func (t *Tokenizer) parsePercentToken() (Token, error) {
 	t.pos++
 	kindStart := t.pos
-	for t.pos < len(t.input) && lowerASCII(t.input[t.pos]) {
+	for t.pos < len(t.input) && isLowerASCII(t.input[t.pos]) {
 		t.pos++
 	}
 	kindText := t.input[kindStart:t.pos]
@@ -113,7 +113,7 @@ func expansionKind(name string) (ExpansionKind, bool) {
 	return k, ok
 }
 
-func lowerASCII(ch byte) bool {
+func isLowerASCII(ch byte) bool {
 	return ch >= 'a' && ch <= 'z'
 }
 

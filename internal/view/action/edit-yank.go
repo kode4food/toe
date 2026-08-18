@@ -78,7 +78,7 @@ func ReplaceWithYanked(e *view.Editor) {
 	valueIdx := 0
 	changes := make([]core.Change, 0, len(ranges))
 	for _, r := range ranges {
-		if r.Empty() {
+		if r.IsEmpty() {
 			continue
 		}
 		changes = append(changes,

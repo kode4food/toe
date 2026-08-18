@@ -69,7 +69,7 @@ func FormatModule() command.Module {
 					if tw := e.Options().TextWidth; tw != nil {
 						width = *tw
 					}
-					if args != nil && !args.Empty() {
+					if args != nil && !args.IsEmpty() {
 						s, _ := args.First()
 						n, err := strconv.Atoi(s)
 						if err != nil || n < 1 {

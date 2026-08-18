@@ -111,7 +111,7 @@ func isIdentifierScope(scope string) bool {
 	}
 }
 
-func rangeMatch(ranges []matchSpan, pos int) bool {
+func inMatchSpan(ranges []matchSpan, pos int) bool {
 	lo, hi := 0, len(ranges)-1
 	for lo <= hi {
 		mid := (lo + hi) / 2

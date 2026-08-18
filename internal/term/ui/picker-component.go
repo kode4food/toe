@@ -103,7 +103,7 @@ func (p *PickerComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 func (p *PickerComponent) Cursor(
 	cx *Context, _ geom.Size,
 ) (cur tea.Cursor, ok bool) {
-	if p.bounds.Empty() {
+	if p.bounds.IsEmpty() {
 		return tea.Cursor{}, false
 	}
 	return insertCursorAt(cx, p.caret.Add(p.bounds.Point))

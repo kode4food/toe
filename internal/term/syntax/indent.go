@@ -37,17 +37,17 @@ func IndentForNewline(args IndentForNewlineArgs) (string, bool) {
 	at := core.LinePos{Line: args.Line, Pos: args.Pos}
 	indent := leadingIndent(src, args.Text, args.Line)
 	body := strings.TrimSpace(linePrefix(src, args.Text, at))
-	if outdentLine(outdentLineArgs{lang: args.Lang, body: body}) {
+	if outdentsLine(outdentLineArgs{lang: args.Lang, body: body}) {
 		indent = dropIndent(dropIndentArgs{
 			indent: indent,
 			unit:   args.Style.AsStr(),
 		})
 	}
 	ch, chPos, ok := lastCodeChar(src, args.Text, at)
-	if !ok || !indentAfter(ch) || matchingCloseAt(src, chPos+1, ch) {
+	if !ok || !indentsAfter(ch) || hasMatchingCloseAt(src, chPos+1, ch) {
 		return indent, true
 	}
-	if stringOrComment(src, language, chPos) {
+	if inStringOrComment(src, language, chPos) {
 		return indent, true
 	}
 	return indent + args.Style.AsStr(), true
@@ -96,7 +96,7 @@ func lastCodeChar(
 	return 0, 0, false
 }
 
-func indentAfter(ch rune) bool {
+func indentsAfter(ch rune) bool {
 	switch ch {
 	case '(', '[', '{', ',', '.', ':', '+', '-', '*', '/', '%', '&', '|',
 		'^', '=', '<', '>', '?', '\\':
@@ -106,7 +106,7 @@ func indentAfter(ch rune) bool {
 	}
 }
 
-func matchingCloseAt(src string, pos int, open rune) bool {
+func hasMatchingCloseAt(src string, pos int, open rune) bool {
 	runes := []rune(src)
 	if pos < 0 || pos >= len(runes) {
 		return false
@@ -123,7 +123,7 @@ func matchingCloseAt(src string, pos int, open rune) bool {
 	}
 }
 
-func stringOrComment(src string, language *sitter.Language, pos int) bool {
+func inStringOrComment(src string, language *sitter.Language, pos int) bool {
 	tree, ok := parseTree([]byte(src), language)
 	if !ok {
 		return false
@@ -152,7 +152,7 @@ type outdentLineArgs struct {
 	body string
 }
 
-func outdentLine(args outdentLineArgs) bool {
+func outdentsLine(args outdentLineArgs) bool {
 	word := firstWord(args.body)
 	switch args.lang {
 	case "python":

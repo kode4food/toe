@@ -167,7 +167,7 @@ type BindActionArgs struct {
 func (k *Keymaps) BindResultAction(args BindActionArgs) error {
 	for _, mode := range args.Modes {
 		for _, seq := range args.Seqs {
-			if k.bindingConflict(mode, seq) {
+			if k.hasBindingConflict(mode, seq) {
 				return fmt.Errorf("%w in mode %s", ErrBindingExists, mode)
 			}
 		}
@@ -211,7 +211,7 @@ func (k *Keymaps) AcceptsCount(mode view.Mode, seq []KeyEvent) bool {
 	return node != nil && node.countable()
 }
 
-func (k *Keymaps) bindingConflict(mode view.Mode, seq []KeyEvent) bool {
+func (k *Keymaps) hasBindingConflict(mode view.Mode, seq []KeyEvent) bool {
 	node, ok := k.modes[mode]
 	if !ok {
 		return false

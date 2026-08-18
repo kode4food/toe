@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"testing"
 	"testing/fstest"
 
@@ -69,6 +70,28 @@ func TestModuleTranslations(t *testing.T) {
 
 	i18n.Register(tr)
 	assert.Equal(t, "translated", i18n.Text(key))
+}
+
+func TestConcurrentRegister(t *testing.T) {
+	var wg sync.WaitGroup
+	for i := range 8 {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			i18n.Register(i18n.Translations{
+				i18n.Key(fmt.Sprintf("test-concurrent.%d", i)): "registered",
+			})
+		}()
+		go func() {
+			defer wg.Done()
+			assert.NotEmpty(t, i18n.Text(i18n.ErrorMessage, i18n.Vars{
+				"message": "boom",
+			}))
+		}()
+	}
+	wg.Wait()
+
+	assert.Equal(t, "registered", i18n.Text("test-concurrent.0"))
 }
 
 func TestPlurals(t *testing.T) {

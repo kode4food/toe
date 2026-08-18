@@ -10,7 +10,7 @@ import (
 func renderCenteredMessage(
 	buf *tui.Buffer, area geom.Area, msg string, style tui.Style,
 ) {
-	if area.Empty() {
+	if area.IsEmpty() {
 		return
 	}
 	width := runewidth.StringWidth(msg)

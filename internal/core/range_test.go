@@ -16,13 +16,13 @@ func TestRange(t *testing.T) {
 		assert.Equal(t, 4, r.From())
 		assert.Equal(t, 9, r.To())
 		assert.Equal(t, 5, r.Len())
-		assert.False(t, r.Empty())
+		assert.False(t, r.IsEmpty())
 	})
 
 	t.Run("reports empty point", func(t *testing.T) {
 		r := core.PointRange(3)
 
-		assert.True(t, r.Empty())
+		assert.True(t, r.IsEmpty())
 		assert.Equal(t, 3, r.From())
 		assert.Equal(t, 3, r.To())
 	})

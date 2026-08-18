@@ -224,10 +224,10 @@ func structuralIndent(args structuralIndentArgs) string {
 		Line: args.line,
 		Pos:  args.pos,
 	})
-	if !ok || !indentAfter(ch) {
+	if !ok || !indentsAfter(ch) {
 		return args.indent
 	}
-	if matchingCloseAt(args.text, args.pos, ch) {
+	if hasMatchingCloseAt(args.text, args.pos, ch) {
 		return args.indent
 	}
 	return args.indent + args.doc.IndentStyle().AsStr()
@@ -250,7 +250,7 @@ func lastCodeChar(text core.Rope, at core.LinePos) (rune, bool) {
 	return 0, false
 }
 
-func indentAfter(ch rune) bool {
+func indentsAfter(ch rune) bool {
 	switch ch {
 	case '(', '[', '{', ',', '.', ':', '+', '-', '*', '/', '%', '&', '|',
 		'^', '=', '<', '>', '?', '\\':
@@ -260,7 +260,7 @@ func indentAfter(ch rune) bool {
 	}
 }
 
-func matchingCloseAt(text core.Rope, pos int, open rune) bool {
+func hasMatchingCloseAt(text core.Rope, pos int, open rune) bool {
 	var cl rune
 	switch open {
 	case '(':

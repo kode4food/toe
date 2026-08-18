@@ -68,7 +68,7 @@ func TestArgsAccessors(t *testing.T) {
 
 	t.Run("empty with no positionals", func(t *testing.T) {
 		args := command.NewArgs(sig, false)
-		assert.True(t, args.Empty())
+		assert.True(t, args.IsEmpty())
 		assert.Equal(t, 0, args.Len())
 	})
 
@@ -76,7 +76,7 @@ func TestArgsAccessors(t *testing.T) {
 		args := command.NewArgs(sig, false)
 		err := args.Push("hello")
 		assert.NoError(t, err)
-		assert.False(t, args.Empty())
+		assert.False(t, args.IsEmpty())
 		assert.Equal(t, 1, args.Len())
 	})
 

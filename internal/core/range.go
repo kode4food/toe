@@ -58,13 +58,13 @@ func (s Span) Len() int {
 	return s.To - s.From
 }
 
-// Empty reports whether the span covers no characters
-func (s Span) Empty() bool {
+// IsEmpty reports whether the span covers no characters
+func (s Span) IsEmpty() bool {
 	return s.From == s.To
 }
 
-// Empty reports whether anchor and head coincide
-func (r Range) Empty() bool {
+// IsEmpty reports whether anchor and head coincide
+func (r Range) IsEmpty() bool {
 	return r.Anchor == r.Head
 }
 
@@ -109,7 +109,7 @@ func (r Range) Contains(pos int) bool {
 func (r Range) LineSpan(text Rope) (Span, error) {
 	from := r.From()
 	to := r.To()
-	if !r.Empty() {
+	if !r.IsEmpty() {
 		to--
 	}
 	start, err := text.CharToLine(from)

@@ -69,7 +69,7 @@ func TestTransaction(t *testing.T) {
 		tx := core.NewTransaction(doc).WithSelection(s)
 
 		assert.Equal(t, &s, tx.Selection())
-		assert.True(t, tx.Changes().Empty())
+		assert.True(t, tx.Changes().IsEmpty())
 	})
 
 	t.Run("returns invert errors", func(t *testing.T) {

@@ -117,7 +117,7 @@ func detectHardWrapPrefixes(lines []string) hardWrapPrefixes {
 
 func hardWrapPrefix(line string) string {
 	for i, ch := range line {
-		if !hardWrapPrefixChar(ch) {
+		if !isHardWrapPrefixChar(ch) {
 			return line[:i]
 		}
 	}
@@ -137,7 +137,7 @@ func commonHardWrapPrefix(pair stringPair) string {
 	return pair.left[:i]
 }
 
-func hardWrapPrefixChar(ch rune) bool {
+func isHardWrapPrefixChar(ch rune) bool {
 	switch ch {
 	case ' ', '-', '+', '*', '>', '#', '/':
 		return true

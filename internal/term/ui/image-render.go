@@ -146,7 +146,7 @@ func imagePaneCellSize(args imagePaneCellSizeArgs) geom.Size {
 		maxCells: args.maxCells,
 		pixels:   args.pixels,
 	})
-	if cells.Empty() {
+	if cells.IsEmpty() {
 		return geom.Size{}
 	}
 	zoom := args.pane.Zoom()

@@ -176,7 +176,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	})
 }
 
-func (r *renderPass) forceFullRedraw(cache *renderCache, th *theme.Theme) bool {
+func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	var force bool
 
 	key := styleKey{theme: th.Name(), mode: r.context.Editor.Mode()}
@@ -245,7 +245,7 @@ func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
 	redraw := args.redrawAll
 	if !redraw {
 		forced := !r.context.composition.singleLayer &&
-			paneUnderOverlay(r.context, args.pane.Area(), args.yOffset)
+			isPaneUnderOverlay(r.context, args.pane.Area(), args.yOffset)
 		redraw = forced || args.dirty
 	}
 	if !redraw {
@@ -261,7 +261,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	th := r.context.Theme()
 	cache := r.editor.cache
 
-	redrawAll := r.forceFullRedraw(cache, th)
+	redrawAll := r.needsFullRedraw(cache, th)
 	bgTUI := th.Get("ui.background")
 	if redrawAll {
 		buf.Fill(bgTUI)
@@ -523,7 +523,7 @@ func withCount(keys string, count int) string {
 	return keys + " " + countArrow + " " + strconv.Itoa(count)
 }
 
-func paneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
+func isPaneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
 	if !cx.composition.precise {
 		return true
 	}

@@ -28,7 +28,7 @@ func FindMatchingBracket(
 	if !ok {
 		return 0, false
 	}
-	isOpen := ch == pair.Open
+	open := ch == pair.Open
 
 	language := languageFor(source.Lang)
 	if language == nil {
@@ -46,7 +46,7 @@ func FindMatchingBracket(
 	b := uint(c2b[cursorPos])
 	root := tree.RootNode()
 
-	if isOpen {
+	if open {
 		n := root.DescendantForByteRange(b, b+1)
 		for n != nil {
 			if n.StartByte() == b && isBracketNode(n, pair) {

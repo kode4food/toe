@@ -82,7 +82,7 @@ func SkipPickerPath(args SkipPickerPathArgs) bool {
 	if args.Opts.Hidden && strings.HasPrefix(name, ".") {
 		return true
 	}
-	if excludedPickerType(name) {
+	if isExcludedPickerType(name) {
 		return true
 	}
 	for _, ig := range args.Ignores {
@@ -251,7 +251,7 @@ func readGitExcludesFile(path string) string {
 	return ""
 }
 
-func excludedPickerType(name string) bool {
+func isExcludedPickerType(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
 	_, ok := excludedPickerTypes[ext]
 	return ok

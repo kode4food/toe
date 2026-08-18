@@ -407,3 +407,7 @@ func (e *Editor) TakeStatusMsgs() []string {
 	e.messages.statusMu.Unlock()
 	return msgs
 }
+
+func (d *documentState) isPinned(did DocumentId) bool {
+	return did == d.messagesID
+}

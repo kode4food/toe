@@ -170,8 +170,8 @@ func (c ChangeSet) LenAfter() int {
 	return c.charCountAfter
 }
 
-// Empty reports whether the change set would leave a document unaltered
-func (c ChangeSet) Empty() bool {
+// IsEmpty reports whether the change set would leave a document unaltered
+func (c ChangeSet) IsEmpty() bool {
 	return len(c.ops) == 0 ||
 		(len(c.ops) == 1 && c.ops[0].kind == OperationRetain &&
 			c.ops[0].charCount == c.charCount)

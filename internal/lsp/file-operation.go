@@ -272,7 +272,7 @@ func fileOperationMatches(
 		}
 		pattern := filepath.FromSlash(filter.Pattern.Glob)
 		candidate := path
-		if ignoreCase(filter.Pattern.Options) {
+		if ignoresCase(filter.Pattern.Options) {
 			pattern = strings.ToLower(pattern)
 			candidate = strings.ToLower(candidate)
 		}
@@ -303,7 +303,7 @@ func fileOperationKindOK(
 	}
 }
 
-func ignoreCase(opts *protocol.FileOperationPatternOptions) bool {
+func ignoresCase(opts *protocol.FileOperationPatternOptions) bool {
 	return opts != nil && opts.IgnoreCase != nil && *opts.IgnoreCase
 }
 

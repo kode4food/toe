@@ -77,7 +77,7 @@ func (c *Client) DidChangeDocument(
 			},
 		}
 	case protocol.TextDocumentSyncKindIncremental:
-		if change.Changes.Empty() {
+		if change.Changes.IsEmpty() {
 			return false, nil
 		}
 		next := core.NewRope(doc.Text)

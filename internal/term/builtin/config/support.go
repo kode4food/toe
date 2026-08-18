@@ -82,7 +82,7 @@ func SupportModule(model ui.Model) command.Module {
 				Name:      actGoto,
 				DocString: "Goto a path:line:col location",
 				Run: func(e *view.Editor, args *command.Args) command.Result {
-					if args == nil || args.Empty() {
+					if args == nil || args.IsEmpty() {
 						return command.Result{Error: errNoLineNumber}
 					}
 					loc, _ := args.First()

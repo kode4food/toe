@@ -169,6 +169,9 @@ func (e *Editor) discardView(v *View) {
 		return
 	}
 	doc.RemoveView(v.id)
+	if e.documents.isPinned(v.docID) {
+		return
+	}
 	if e.hasView(func(ov *View) bool { return ov.docID == v.docID }) {
 		return
 	}

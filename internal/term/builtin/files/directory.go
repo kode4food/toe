@@ -92,7 +92,7 @@ func DirectoryModule() command.Module {
 func cdResult(
 	e *view.Editor, args *command.Args, fn func(string) error,
 ) command.Result {
-	if args == nil || args.Empty() {
+	if args == nil || args.IsEmpty() {
 		return command.Result{Error: errNoDirectory}
 	}
 	path, _ := args.First()

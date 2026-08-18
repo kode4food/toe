@@ -113,7 +113,7 @@ func fuzzyCompletionScore(at queryMatch) (int, bool) {
 				score += 3
 			}
 		}
-		if completionBoundary(rs, found) {
+		if atCompletionBoundary(rs, found) {
 			score += 5
 		}
 		score += 10
@@ -125,7 +125,7 @@ func fuzzyCompletionScore(at queryMatch) (int, bool) {
 	return score, true
 }
 
-func completionBoundary(rs []rune, idx int) bool {
+func atCompletionBoundary(rs []rune, idx int) bool {
 	if idx == 0 {
 		return true
 	}

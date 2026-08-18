@@ -179,20 +179,20 @@ func (r *rowRender) rows() []renderedRow {
 			})
 		case r.mode == view.ModeSelect:
 			style = r.baseStyleAt(pos, glyph)
-		case rangeMatch(r.docHighlights, pos):
+		case inMatchSpan(r.docHighlights, pos):
 			style = overlaySelStyle(styleOverlay{
 				base:    r.baseStyleAt(pos, glyph),
 				overlay: ts.documentHighlight,
 			})
 
-		case rangeMatch(r.docLinks, pos):
+		case inMatchSpan(r.docLinks, pos):
 			style = overlaySelStyle(styleOverlay{
 				base:    r.baseStyleAt(pos, glyph),
 				overlay: ts.documentLink,
 			})
 		case colorOK:
 			style = colorStyle
-		case rangeMatch(r.searchMatches, pos):
+		case inMatchSpan(r.searchMatches, pos):
 			style = overlayBgStyle(styleOverlay{
 				base:    r.baseStyleAt(pos, glyph),
 				overlay: ts.searchMatch,
@@ -246,7 +246,7 @@ func (r *rowRender) rows() []renderedRow {
 		}
 	}
 	if r.softWrap {
-		if (!row.empty() || len(rows) == 0) && len(rows) < maxRows {
+		if (!row.isEmpty() || len(rows) == 0) && len(rows) < maxRows {
 			flushRow(0)
 		}
 		return rows

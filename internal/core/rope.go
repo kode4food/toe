@@ -73,7 +73,7 @@ func (r Rope) SliceString(s Span) (string, error) {
 	if err := r.checkSpan(s); err != nil {
 		return "", err
 	}
-	if s.Empty() {
+	if s.IsEmpty() {
 		return "", nil
 	}
 	var b strings.Builder
@@ -89,7 +89,7 @@ func (r Rope) SliceString(s Span) (string, error) {
 func (r Rope) ForEachSegment(s Span, fn func(string)) {
 	s.From = max(s.From, 0)
 	s.To = min(s.To, r.LenChars())
-	if s.Empty() || s.From > s.To {
+	if s.IsEmpty() || s.From > s.To {
 		return
 	}
 	forEachSegmentNode(r.root, s, fn)

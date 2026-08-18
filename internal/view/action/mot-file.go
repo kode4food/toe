@@ -138,7 +138,7 @@ func resolveDocumentLink(
 func selectionOverlapsDocumentLink(
 	sel core.Range, link view.DocumentLink,
 ) bool {
-	if sel.Empty() {
+	if sel.IsEmpty() {
 		pos := sel.From()
 		return link.From <= pos && pos < link.To
 	}

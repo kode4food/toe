@@ -183,8 +183,8 @@ func (a *Args) Len() int {
 	return len(a.positionals)
 }
 
-// Empty reports whether there are no positional arguments
-func (a *Args) Empty() bool {
+// IsEmpty reports whether there are no positional arguments
+func (a *Args) IsEmpty() bool {
 	return len(a.positionals) == 0
 }
 

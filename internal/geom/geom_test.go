@@ -17,8 +17,8 @@ func TestPoint(t *testing.T) {
 
 func TestSize(t *testing.T) {
 	s := geom.Size{Width: 4, Height: 3}
-	assert.False(t, s.Empty())
-	assert.True(t, geom.Size{Width: 0, Height: 3}.Empty())
+	assert.False(t, s.IsEmpty())
+	assert.True(t, geom.Size{Width: 0, Height: 3}.IsEmpty())
 	assert.True(t, s.Contains(geom.Point{X: 3, Y: 2}))
 	assert.False(t, s.Contains(geom.Point{X: 4, Y: 2}))
 	assert.Equal(t,
@@ -55,5 +55,5 @@ func TestArea(t *testing.T) {
 		a.Center(geom.Size{Width: 2, Height: 2}),
 	)
 	inset := a.Inset(geom.Size{Width: 4, Height: 3})
-	assert.True(t, inset.Empty())
+	assert.True(t, inset.IsEmpty())
 }

@@ -9,6 +9,7 @@ import (
 	"maps"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/kode4food/toe/internal/locale"
 )
@@ -27,6 +28,11 @@ type (
 	Error struct {
 		key  Key
 		vars Vars
+	}
+
+	store struct {
+		sync.RWMutex
+		texts Translations
 	}
 )
 
@@ -49,7 +55,9 @@ var (
 	// the "de" of "i18n/config.de.json"
 	localeRE = regexp.MustCompile(`(?:^|[/.])([^./]+)\.json$`)
 
-	messages = LoadTranslations(translationFS)
+	messages = store{
+		texts: LoadTranslations(translationFS),
+	}
 )
 
 // NewError returns an error backed by a localized message
@@ -95,7 +103,7 @@ func LoadTranslations(files fs.FS) Translations {
 
 // Register adds startup module translations
 func Register(values Translations) {
-	maps.Copy(messages, values)
+	messages.register(values)
 }
 
 // Text returns a localized message with optional named interpolation
@@ -125,21 +133,6 @@ func (e *Error) Error() string {
 	return string(e.key)
 }
 
-func (t Translations) text(key Key, vars ...Vars) (string, bool) {
-	text, ok := t.lookup(key, vars...)
-	if !ok {
-		return string(key), false
-	}
-	if len(vars) == 0 || len(vars[0]) == 0 {
-		return text, true
-	}
-	pairs := make([]string, 0, 2*len(vars[0]))
-	for k, v := range vars[0] {
-		pairs = append(pairs, "{"+k+"}", fmt.Sprint(v))
-	}
-	return strings.NewReplacer(pairs...).Replace(text), true
-}
-
 func (t Translations) lookup(key Key, vars ...Vars) (string, bool) {
 	if count, ok := pluralCount(vars); ok {
 		if text, ok := t[pluralKey(key, pluralCategory(count))]; ok {
@@ -151,6 +144,29 @@ func (t Translations) lookup(key Key, vars ...Vars) (string, bool) {
 	}
 	text, ok := t[key]
 	return text, ok
+}
+
+func (m *store) register(values Translations) {
+	m.Lock()
+	defer m.Unlock()
+	maps.Copy(m.texts, values)
+}
+
+func (m *store) text(key Key, vars ...Vars) (string, bool) {
+	m.RLock()
+	text, ok := m.texts.lookup(key, vars...)
+	m.RUnlock()
+	if !ok {
+		return string(key), false
+	}
+	if len(vars) == 0 || len(vars[0]) == 0 {
+		return text, true
+	}
+	pairs := make([]string, 0, 2*len(vars[0]))
+	for k, v := range vars[0] {
+		pairs = append(pairs, "{"+k+"}", fmt.Sprint(v))
+	}
+	return strings.NewReplacer(pairs...).Replace(text), true
 }
 
 func pluralCategory(n int) string {

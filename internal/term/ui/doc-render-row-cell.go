@@ -66,7 +66,7 @@ func (r *renderedRow) writeFillToBuffer(args rowFillArgs) {
 	args.buf.FillRange(args.at, args.width, s)
 }
 
-func (r *renderedRow) empty() bool {
+func (r *renderedRow) isEmpty() bool {
 	return len(r.cells) == 0
 }
 

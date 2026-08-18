@@ -37,7 +37,7 @@ func TestDocumentObserver(t *testing.T) {
 			o.events,
 		)
 		assert.Equal(t, "package main\n", o.changed.Before.String())
-		assert.False(t, o.changed.Changes.Empty())
+		assert.False(t, o.changed.Changes.IsEmpty())
 	})
 }
 

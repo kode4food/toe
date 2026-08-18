@@ -135,7 +135,7 @@ func (d *Document) reloadPreservingSelections() error {
 func (d *Document) applySaveText(text string) error {
 	oldText := d.content.text
 	cs, err := diffChangeSet(oldText, text)
-	if err != nil || cs.Empty() {
+	if err != nil || cs.IsEmpty() {
 		return err
 	}
 	sel := d.Selection()

@@ -276,7 +276,7 @@ func parseBinding(args []ale.Value) (*bindingOptions, error) {
 		)
 	}
 	actionValue := args[len(args)-1]
-	if !procedureValue(actionValue) {
+	if !isProcedure(actionValue) {
 		return nil, bindingError(
 			i18n.ErrorAleBindingAction, arguments, nil,
 		)
@@ -333,7 +333,7 @@ func parseBinding(args []ale.Value) (*bindingOptions, error) {
 			}
 			opts.doc = string(doc)
 		case optWhen:
-			if !procedureValue(value) {
+			if !isProcedure(value) {
 				return nil, bindingError(
 					i18n.ErrorAleBindingWhenType, arguments, nil,
 				)
@@ -369,7 +369,7 @@ func parseBinding(args []ale.Value) (*bindingOptions, error) {
 	return opts, nil
 }
 
-func procedureValue(value ale.Value) bool {
+func isProcedure(value ale.Value) bool {
 	pred := builtin.IsA.Call(builtin.ProcedureKey).(data.Procedure)
 	return pred.Call(value) != data.False
 }

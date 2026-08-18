@@ -46,13 +46,13 @@ func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 	}
 	pair := GetPair(bracket)
 	matching := pair.Close
-	isOpen := pair.Open == bracket
-	if !isOpen {
+	open := pair.Open == bracket
+	if !open {
 		matching = pair.Open
 	}
 
 	count := 1
-	if isOpen {
+	if open {
 		end := min(doc.LenChars(), cursorPos+MaxPlaintextScan+1)
 		for i := cursorPos + 1; i < end; i++ {
 			ch, err := doc.CharAt(i)

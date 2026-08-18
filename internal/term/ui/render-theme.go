@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"image/color"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/geom"
@@ -163,6 +165,7 @@ func insertCursorAt(cx *Context, at geom.Point) (tea.Cursor, bool) {
 	return tea.Cursor{
 		Position: tea.Position{X: at.X, Y: at.Y},
 		Shape:    cursorKindToShape(kind),
+		Color:    cursorColor(cx, view.ModeInsert),
 	}, true
 }
 
@@ -181,4 +184,17 @@ func promptBackground(th *theme.Theme) tui.Color {
 	return deriveBackground(
 		th.Get("ui.popup").BgColor(), cursorHighlightPct, isLightTheme(th),
 	)
+}
+
+// the terminal's own cursor color suits its configured background, so a bar or
+// underline can vanish under a theme that inverts it
+func cursorColor(cx *Context, mode view.Mode) color.Color {
+	st, ok := modeCursorStyleFor(cx.Theme(), mode, true)
+	if !ok {
+		return nil
+	}
+	if bg := st.BgColor(); !bg.IsReset() {
+		return bg
+	}
+	return nil
 }

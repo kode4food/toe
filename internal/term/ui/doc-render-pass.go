@@ -103,6 +103,7 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		return tea.Cursor{
 			Position: tea.Position{X: at.X, Y: at.Y},
 			Shape:    cursorKindToShape(kind),
+			Color:    cursorColor(r.context, r.context.Editor.Mode()),
 		}, true
 	}
 	return tea.Cursor{}, false

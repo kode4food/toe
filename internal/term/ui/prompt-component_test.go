@@ -808,6 +808,17 @@ func TestPromptCursor(t *testing.T) {
 		assert.Equal(t, tea.CursorBlock, cur.Shape)
 	})
 
+	t.Run("carries a theme color", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "ab")
+
+		cur := m.View().Cursor
+		assert.NotNil(t, cur)
+		assert.NotNil(t, cur.Color)
+		_, _, _, a := cur.Color.RGBA()
+		assert.NotEqual(t, uint32(0), a)
+	})
+
 	t.Run("hidden insert cursor shows none", func(t *testing.T) {
 		m, e := cmdPrompt(t)
 		e.Options().CursorShape.Insert = view.CursorKindHidden

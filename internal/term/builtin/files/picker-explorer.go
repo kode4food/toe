@@ -74,7 +74,7 @@ func (f *fileExplorerSource) Accept(
 	if path == "" {
 		return
 	}
-	ui.AcceptPath(e, path, action)
+	ui.GotoPath(e, path, nil, action)
 }
 
 // Navigate moves the explorer to another directory

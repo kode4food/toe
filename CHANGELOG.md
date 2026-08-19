@@ -7,6 +7,11 @@ Notable changes to toe.
 ### Interface
 
 - Added desktop notifications from terminal panes
+- Fixed jumplist navigation across documents: `Ctrl+o` now returns to the file a jump came from and `Ctrl+i` returns to where it went
+- Accepting a destination from any picker (files, buffers, search, diagnostics, LSP locations and symbols, diff hunks) records the departed position on the jump list
+- Every navigation now scrolls its destination into view, including global search matches and single-result LSP jumps, which previously left the cursor unaligned horizontally
+- Picking an entry from the jumplist picker moves through the history instead of rewriting it, so the jumps either side of the chosen entry survive
+- `Shift+Tab` jumps backward on the jumplist, alongside `Ctrl+o`
 
 ## 0.3.1
 

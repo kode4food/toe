@@ -12,6 +12,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 func TestBufferPicker(t *testing.T) {
@@ -45,6 +46,39 @@ func TestBufferPicker(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		assert.Contains(t, doc.Text().String(), "AAA")
+	})
+
+	t.Run("accept records a jump back", func(t *testing.T) {
+		dir := t.TempDir()
+		a := filepath.Join(dir, "a.txt")
+		b := filepath.Join(dir, "b.txt")
+		assert.NoError(t, os.WriteFile(a, []byte("AAA"), 0o644))
+		assert.NoError(t, os.WriteFile(b, []byte("BBB"), 0o644))
+
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(a)
+		assert.NoError(t, err)
+		_, err = e.OpenFile(b)
+		assert.NoError(t, err)
+
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "buffer_picker", m.PickerAction(bufferPicker),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+		for _, ch := range "a.txt" {
+			m = sendKey(m, ch)
+		}
+		_ = sendSpecial(m, tea.KeyEnter)
+
+		action.JumpBackward(e)
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Contains(t, doc.Text().String(), "BBB")
 	})
 
 	t.Run("accepts orphaned document", func(t *testing.T) {

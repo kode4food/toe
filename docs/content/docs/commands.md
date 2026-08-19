@@ -83,7 +83,7 @@ Clean buffers reload automatically after external changes. Dirty buffers remain 
 | `goto-last-modification` |  | Goto last modification |
 | `jump-forward` |  | Jump forward on jumplist |
 | `jump-backward` |  | Jump backward on jumplist |
-| `save-selection` |  | Save current selection to jumplist |
+| `save-selection` |  | Push current selection onto jumplist |
 | `goto-next-paragraph` |  | Goto next paragraph |
 | `goto-prev-paragraph` |  | Goto previous paragraph |
 | `goto-line-or-extend-file-start` |  | Extend to line number `<n>` else file start |

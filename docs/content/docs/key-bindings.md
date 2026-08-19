@@ -101,9 +101,9 @@ The `[` and `]` prefixes step backward and forward through the same kind of targ
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+o` | Jump backward on jumplist |
-| `Ctrl+i` / `Tab` | Jump forward on jumplist |
-| `Ctrl+s` | Save current selection to jumplist |
+| `Shift+Tab` / `Ctrl+o` | Jump backward on jumplist |
+| `Tab` / `Ctrl+i` | Jump forward on jumplist |
+| `Ctrl+s` | Push current selection onto jumplist |
 
 ### Switching Modes
 

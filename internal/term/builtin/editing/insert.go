@@ -52,18 +52,14 @@ func InsertModule() command.Module {
 				DocString: "Delete previous word",
 				Run:       kit.Runner(action.DeleteWordBackward),
 				Modes:     view.ModeInsert,
-				Keys: kit.Keys(
-					kit.Ctrl('w'), kit.AltSpecial(command.Backspace),
-				),
+				Keys:      kit.Keys(kit.Ctrl('w'), kit.AltKey(kit.Bksp)),
 			},
 			{
 				Name:      actDeleteWordForward,
 				DocString: "Delete next word",
 				Run:       kit.Runner(action.DeleteWordForward),
 				Modes:     view.ModeInsert,
-				Keys: kit.Keys(
-					kit.Alt('d'), kit.AltSpecial(command.Delete),
-				),
+				Keys:      kit.Keys(kit.Alt('d'), kit.AltKey(kit.Del)),
 			},
 			{
 				Name:      actKillToLineStart,
@@ -85,7 +81,7 @@ func InsertModule() command.Module {
 				Run:       kit.Runner(action.DeleteCharBackward),
 				Modes:     view.ModeInsert,
 				Keys: kit.Keys(
-					kit.Ctrl('h'), kit.Bksp, kit.Shift(command.Backspace),
+					kit.Ctrl('h'), kit.Bksp, kit.Shift(kit.Bksp),
 				),
 			},
 			{
@@ -115,7 +111,7 @@ func InsertModule() command.Module {
 				DocString: "Insert tab at each cursor",
 				Run:       kit.Runner(action.InsertTab),
 				Modes:     view.ModeInsert,
-				Keys:      kit.Keys(kit.Shift(command.Tab)),
+				Keys:      kit.Keys(kit.Shift(kit.Tab)),
 			},
 			{
 				Name:      actGotoLineEndNewline,

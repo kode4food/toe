@@ -77,14 +77,14 @@ func Alt(r rune) command.KeyBinding {
 	return single(command.KeyCode{Char: r}, command.ModAlt)
 }
 
-// Shift is the binding for Shift held with a special key
-func Shift(s command.Special) command.KeyBinding {
-	return single(command.KeyCode{Special: s}, command.ModShift)
+// Shift is the binding for Shift held with the keys of another binding
+func Shift(b command.KeyBinding) command.KeyBinding {
+	return modified(b, command.ModShift)
 }
 
-// AltSpecial is the binding for Alt held with a special key
-func AltSpecial(s command.Special) command.KeyBinding {
-	return single(command.KeyCode{Special: s}, command.ModAlt)
+// AltKey is the binding for Alt held with the keys of another binding
+func AltKey(b command.KeyBinding) command.KeyBinding {
+	return modified(b, command.ModAlt)
 }
 
 // Or unions its arguments into a single binding of alternative sequences, so
@@ -200,6 +200,20 @@ func single(
 	code command.KeyCode, mods command.KeyModifiers,
 ) command.KeyBinding {
 	return command.KeyBinding{{{Code: code, Mods: mods}}}
+}
+
+func modified(
+	b command.KeyBinding, mods command.KeyModifiers,
+) command.KeyBinding {
+	out := make(command.KeyBinding, 0, len(b))
+	for _, seq := range b {
+		next := slices.Clone(seq)
+		for i := range next {
+			next[i].Mods |= mods
+		}
+		out = append(out, next)
+	}
+	return out
 }
 
 func registerPreview(value string) string {

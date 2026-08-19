@@ -312,6 +312,69 @@ func TestJumpBackwardForward(t *testing.T) {
 		posAfter := testutil.CursorPos(t, e)
 		assert.True(t, posAfter >= 0)
 	})
+
+	t.Run("saved marks survive a round trip", func(t *testing.T) {
+		e := testutil.EditorWithText(t, "abc\ndef\nghi\njkl")
+		testutil.SetCursor(t, e, 0)
+		action.SaveSelection(e)
+		testutil.SetCursor(t, e, 5)
+		action.SaveSelection(e)
+		testutil.SetCursor(t, e, 10)
+
+		action.JumpBackward(e)
+		assert.Equal(t, 5, testutil.CursorPos(t, e))
+		action.JumpBackward(e)
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
+		action.JumpForward(e)
+		action.JumpForward(e)
+		assert.Equal(t, 10, testutil.CursorPos(t, e))
+
+		anchors := make([]int, 0, 3)
+		for _, entry := range e.FocusedView().Jumps() {
+			anchors = append(anchors, entry.Anchor)
+		}
+		assert.Equal(t, []int{0, 5, 10}, anchors)
+	})
+
+	t.Run("backward returns to the other document", func(t *testing.T) {
+		dir := t.TempDir()
+		pathA := filepath.Join(dir, "a.txt")
+		pathB := filepath.Join(dir, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("alpha\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("beta\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		docA := e.FocusedDocument().ID()
+		action.SaveSelection(e)
+		_, err = e.OpenFile(pathB)
+		assert.NoError(t, err)
+		assert.NotEqual(t, docA, e.FocusedDocument().ID())
+
+		action.JumpBackward(e)
+
+		assert.Equal(t, docA, e.FocusedDocument().ID())
+	})
+
+	t.Run("forward returns to the jumped-to document", func(t *testing.T) {
+		dir := t.TempDir()
+		pathA := filepath.Join(dir, "a.txt")
+		pathB := filepath.Join(dir, "b.txt")
+		assert.NoError(t, os.WriteFile(pathA, []byte("alpha\n"), 0o644))
+		assert.NoError(t, os.WriteFile(pathB, []byte("beta\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		action.SaveSelection(e)
+		_, err = e.OpenFile(pathB)
+		assert.NoError(t, err)
+		docB := e.FocusedDocument().ID()
+		action.JumpBackward(e)
+
+		action.JumpForward(e)
+
+		assert.Equal(t, docB, e.FocusedDocument().ID())
+	})
 }
 
 func TestScrollUpDown(t *testing.T) {

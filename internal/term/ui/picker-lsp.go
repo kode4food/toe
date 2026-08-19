@@ -271,26 +271,19 @@ func locationItem(
 }
 
 func acceptLocation(
-	e *view.Editor, item *PickerItem, action PickerAcceptAction,
+	e *view.Editor, item *PickerItem, accept PickerAcceptAction,
 ) {
 	loc, ok := item.Payload.(view.Location)
 	if !ok {
 		return
 	}
-	v, ok := AcceptPath(e, loc.Path, action)
-	if !ok {
-		return
+	GotoPath(e, loc.Path, locationSelector(loc), accept)
+}
+
+func locationSelector(loc view.Location) GotoSelector {
+	return func(text core.Rope) (core.Selection, bool) {
+		return locationSelection(text, loc)
 	}
-	doc := e.Document(v.DocID())
-	if doc == nil {
-		return
-	}
-	sel, ok := locationSelection(doc.Text(), loc)
-	if !ok {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), sel)
-	AlignAcceptedView(e, v, doc)
 }
 
 func locationLineRange(loc view.Location) (int, *core.Span) {

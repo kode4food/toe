@@ -75,37 +75,22 @@ func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
 				Target: ui.PickerTarget{ID: entry.DocID},
 				Lines:  lines,
 			},
-			Payload: entry,
+			Payload: i,
 		}))
 	}
 	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
-// Accept jumps to the chosen entry
+// Accept jumps to the chosen entry, moving the jump list head onto it
 func (j *jumplistPickerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
-	entry, ok := item.Payload.(view.JumpEntry)
-	if !ok {
-		return
-	}
-	v := ui.AcceptDocumentID(e, entry.DocID, action)
-	if v == nil {
-		return
-	}
-	if doc := e.Document(v.DocID()); doc != nil {
-		doc.SetSelectionFor(v.ID(), jumpSelection(entry))
-		ui.AlignAcceptedView(e, v, doc)
+	if index, ok := item.Payload.(int); ok {
+		ui.GotoJump(e, index, action)
 	}
 }
 
-func jumpSelection(j view.JumpEntry) core.Selection {
-	return j.Selection
-}
-
-func jumpLineRange(
-	text core.Rope, sel core.Selection,
-) (int, *core.Span) {
+func jumpLineRange(text core.Rope, sel core.Selection) (int, *core.Span) {
 	if line, err := sel.Primary().CursorLine(text); err == nil {
 		return line, &core.Span{From: line, To: line}
 	}

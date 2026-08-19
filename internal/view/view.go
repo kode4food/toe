@@ -276,14 +276,24 @@ func (v *View) PushJump(docID DocumentId, anchor int, sel core.Selection) {
 	v.jumps.Push(docID, anchor, sel)
 }
 
-// JumpBackward moves to the previous position in the jump list
+// JumpBackward moves to the previous position in the jump list, recording
+// the current position first when there is nothing ahead of it, so a
+// following JumpForward returns to where the jump started
 func (v *View) JumpBackward() (DocumentId, int, bool) {
+	if v.jumps.head == len(v.jumps.items) {
+		v.pushCurrentJump()
+	}
 	return v.jumps.Backward()
 }
 
 // JumpForward moves to the next position in the jump list
 func (v *View) JumpForward() (DocumentId, int, bool) {
 	return v.jumps.Forward()
+}
+
+// JumpTo moves the jump list head to the entry at i and returns it
+func (v *View) JumpTo(i int) (JumpEntry, bool) {
+	return v.jumps.GoTo(i)
 }
 
 // Jumps returns all entries in the jump history, oldest first
@@ -384,6 +394,15 @@ func (v *View) trackOffsetChange() func() {
 	}
 }
 
+func (v *View) pushCurrentJump() {
+	doc := v.editor.Document(v.docID)
+	if doc == nil {
+		return
+	}
+	sel := doc.SelectionFor(v.id)
+	v.jumps.Push(v.docID, sel.Primary().Cursor(doc.Text()), sel)
+}
+
 func (v *View) cachedVisualColumn(doc core.Rope, s core.Span, tabW int) int {
 	c := v.visualCol
 	if c.doc == doc && c.cursor == s.To && c.tabWidth == tabW {
@@ -462,6 +481,16 @@ func (j *JumpList) Push(docID DocumentId, anchor int, sel core.Selection) {
 		Anchor:    anchor,
 		Selection: sel,
 	})
+}
+
+// GoTo moves the head to the entry at i and returns it, so navigating to a
+// listed entry keeps the history either side of it
+func (j *JumpList) GoTo(i int) (JumpEntry, bool) {
+	if i < 0 || i >= len(j.items) {
+		return JumpEntry{}, false
+	}
+	j.head = i + 1
+	return j.items[i], true
 }
 
 // Backward moves to the previous jump and returns it

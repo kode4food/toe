@@ -62,7 +62,7 @@ func TestViewJumpList(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	t.Run("push and backward retrieves previous", func(t *testing.T) {
+	t.Run("push and backward retrieves latest", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
 		d := e.FocusedDocument()
@@ -71,20 +71,48 @@ func TestViewJumpList(t *testing.T) {
 		docID, anchor, ok := v.JumpBackward()
 		assert.True(t, ok)
 		assert.Equal(t, d.ID(), docID)
-		assert.Equal(t, 0, anchor)
+		assert.Equal(t, 10, anchor)
 	})
 
-	t.Run("forward after backward returns next", func(t *testing.T) {
+	t.Run("backward twice walks the history", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
 		d := e.FocusedDocument()
 		v.PushJump(d.ID(), 0, core.PointSelection(0))
 		v.PushJump(d.ID(), 10, core.PointSelection(10))
 		v.JumpBackward()
+		_, anchor, ok := v.JumpBackward()
+		assert.True(t, ok)
+		assert.Equal(t, 0, anchor)
+	})
+
+	t.Run("forward after backward returns start", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v := e.FocusedView()
+		d := e.FocusedDocument()
+		v.PushJump(d.ID(), 0, core.PointSelection(0))
+		v.PushJump(d.ID(), 10, core.PointSelection(10))
+		_, back, ok := v.JumpBackward()
+		assert.True(t, ok)
+		assert.Equal(t, 10, back)
 		docID, anchor, ok := v.JumpForward()
 		assert.True(t, ok)
 		assert.Equal(t, d.ID(), docID)
-		assert.Equal(t, 10, anchor)
+		// the position held when JumpBackward ran, recorded automatically
+		assert.Equal(t, 0, anchor)
+	})
+
+	t.Run("new jump truncates forward history", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v := e.FocusedView()
+		d := e.FocusedDocument()
+		v.PushJump(d.ID(), 0, core.PointSelection(0))
+		v.PushJump(d.ID(), 10, core.PointSelection(10))
+		v.JumpBackward()
+		v.JumpBackward()
+		v.PushJump(d.ID(), 20, core.PointSelection(20))
+		_, _, ok := v.JumpForward()
+		assert.False(t, ok)
 	})
 
 	t.Run("forward on empty returns false", func(t *testing.T) {

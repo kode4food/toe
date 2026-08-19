@@ -128,6 +128,6 @@ func alignAcceptedItem(e *view.Editor, item *PickerItem) {
 	if target.Path != "" && target.Path != doc.Path() {
 		return
 	}
-	AlignAcceptedView(e, v, doc)
+	alignAcceptedView(e, v, doc)
 	alignAcceptedSelection(e, v, doc)
 }

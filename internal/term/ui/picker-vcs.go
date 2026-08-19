@@ -168,18 +168,9 @@ func (c *changedFilePickerSource) ItemForPath(
 func (c *changedFilePickerSource) Accept(
 	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
-	v, ok := AcceptPath(e, item.Location.Target.Path, action)
-	if !ok {
-		return
-	}
-	doc := e.Document(v.DocID())
-	if doc == nil {
-		return
-	}
-	if sel, ok := lineRangeSelection(doc.Text(), item.Location.Lines); ok {
-		doc.SetSelectionFor(v.ID(), sel)
-	}
-	AlignAcceptedView(e, v, doc)
+	GotoPath(
+		e, item.Location.Target.Path, GotoLines(item.Location.Lines), action,
+	)
 }
 
 func changedFileRows(
@@ -302,9 +293,7 @@ func changedFileScope(kind view.FileChangeKind) string {
 	return changedFileScopes[kind]
 }
 
-func lineRangeSelection(
-	text core.Rope, lr *core.Span,
-) (core.Selection, bool) {
+func lineRangeSelection(text core.Rope, lr *core.Span) (core.Selection, bool) {
 	if lr == nil {
 		return core.Selection{}, false
 	}

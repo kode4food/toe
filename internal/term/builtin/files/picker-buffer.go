@@ -114,13 +114,7 @@ func (b *bufferPickerSource) Accept(
 	if id == view.InvalidDocumentId {
 		return
 	}
-	v := ui.AcceptDocumentID(e, id, action)
-	if v == nil {
-		return
-	}
-	if doc := e.Document(v.DocID()); doc != nil {
-		ui.AlignAcceptedView(e, v, doc)
-	}
+	ui.GotoDocument(e, id, nil, action)
 }
 
 func bufferPickerRank(doc *view.Document, focusedID view.DocumentId) int {

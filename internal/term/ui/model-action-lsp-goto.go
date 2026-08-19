@@ -6,7 +6,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/action"
 )
 
 type locationGetter func(
@@ -114,7 +113,8 @@ func (m Model) gotoLocation(
 	case 0:
 		e.SetStatusMsg(notFound)
 	case 1:
-		jumpToLocation(e, locations[0])
+		loc := locations[0]
+		GotoPath(e, loc.Path, locationSelector(loc), PickerAcceptReplace)
 	default:
 		opener := locationPickerLayer(func() ([]view.Location, error) {
 			return locations, nil
@@ -158,22 +158,6 @@ func locationPickerLayer(
 		return func(cx *Context) (Component, tea.Cmd) {
 			return newPickerComponent(cx, p), cmd
 		}
-	}
-}
-
-func jumpToLocation(e *view.Editor, loc view.Location) {
-	action.SaveSelection(e)
-	v, err := e.OpenFile(loc.Path)
-	if err != nil {
-		e.SetStatusMsg(i18n.ErrorText(err))
-		return
-	}
-	doc := e.FocusedDocument()
-	if doc == nil {
-		return
-	}
-	if sel, ok := locationSelection(doc.Text(), loc); ok {
-		doc.SetSelectionFor(v.ID(), sel)
 	}
 }
 

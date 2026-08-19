@@ -166,8 +166,11 @@ func jumpTo(e *view.Editor, fn jumpResolver) {
 	if v == nil {
 		return
 	}
-	_, pos, ok := fn(v)
+	docID, pos, ok := fn(v)
 	if !ok {
+		return
+	}
+	if docID != v.DocID() && !e.SwitchBuffer(docID) {
 		return
 	}
 	doc := e.FocusedDocument()

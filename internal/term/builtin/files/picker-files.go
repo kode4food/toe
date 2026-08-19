@@ -129,8 +129,7 @@ func (f *filePickerSource) ItemForPath(
 func (f *filePickerSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
-	path := item.Location.Target.Path
-	ui.AcceptPath(e, path, action)
+	ui.GotoPath(e, item.Location.Target.Path, nil, action)
 }
 
 func (w *pickerWalker) walkDir(dir string) bool {

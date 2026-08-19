@@ -73,41 +73,11 @@ func (g *globalSearchSource) Load(e *view.Editor) ui.PickerLoad {
 func (g *globalSearchSource) Accept(
 	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
-	path := item.Location.Target.Path
-	lr := item.Location.Lines
-	if lr == nil {
+	lines := item.Location.Lines
+	if lines == nil {
 		return
 	}
-	lineIdx := lr.From
-	v, ok := ui.AcceptPath(e, path, action)
-	if !ok {
-		return
-	}
-	doc := e.Document(v.DocID())
-	if doc == nil {
-		return
-	}
-	text := doc.Text()
-	lineStart, err := text.LineToChar(lineIdx)
-	if err != nil {
-		return
-	}
-	var lineEnd int
-	if lineIdx+1 < text.LenLines() {
-		lineEnd, err = text.LineToChar(lineIdx + 1)
-		if err != nil {
-			lineEnd = text.LenChars()
-		}
-	} else {
-		lineEnd = text.LenChars()
-	}
-	sel, err := core.NewSelection(
-		[]core.Range{{Anchor: lineStart, Head: lineEnd}}, 0,
-	)
-	if err != nil {
-		return
-	}
-	doc.SetSelectionFor(v.ID(), sel)
+	ui.GotoPath(e, item.Location.Target.Path, ui.GotoLines(lines), action)
 }
 
 func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {

@@ -78,3 +78,38 @@ func TestRegisterHints(t *testing.T) {
 		}, kit.RegisterHints(e))
 	})
 }
+
+func TestKeyModifiers(t *testing.T) {
+	t.Run("shift adds to a special binding", func(t *testing.T) {
+		assert.Equal(t, command.KeyBinding{{{
+			Code: command.KeyCode{Special: command.Tab},
+			Mods: command.ModShift,
+		}}}, kit.Shift(kit.Tab))
+	})
+
+	t.Run("alt adds to a special binding", func(t *testing.T) {
+		assert.Equal(t, command.KeyBinding{{{
+			Code: command.KeyCode{Special: command.Backspace},
+			Mods: command.ModAlt,
+		}}}, kit.AltKey(kit.Bksp))
+	})
+
+	t.Run("modifiers stack and leave the source alone", func(t *testing.T) {
+		base := kit.Tab
+		both := kit.AltKey(kit.Shift(base))
+
+		assert.Equal(t,
+			command.ModShift|command.ModAlt, both[0][0].Mods,
+		)
+		assert.Equal(t, command.ModNone, base[0][0].Mods)
+	})
+
+	t.Run("every alternative of an or is modified", func(t *testing.T) {
+		shifted := kit.Shift(kit.Or(kit.Tab, kit.Bksp))
+
+		assert.Len(t, shifted, 2)
+		for _, seq := range shifted {
+			assert.Equal(t, command.ModShift, seq[0].Mods)
+		}
+	})
+}

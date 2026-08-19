@@ -13,7 +13,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
-	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -583,21 +582,6 @@ func (p *Picker) clearPreviewCache() {
 	clear(p.preview.diffBaseCache)
 }
 
-// AcceptDocumentID opens the document by id, splitting per action, and
-// returns the view now showing it
-func AcceptDocumentID(
-	e *view.Editor, id view.DocumentId, action PickerAcceptAction,
-) *view.View {
-	switch action {
-	case PickerAcceptHorizontalSplit:
-		return e.HSplit(id)
-	case PickerAcceptVerticalSplit:
-		return e.VSplit(id)
-	default:
-		return e.ShowDocument(id)
-	}
-}
-
 // OpenPath opens a text document, image pane, or binary dump at path
 func OpenPath(
 	e *view.Editor, path string, action PickerAcceptAction,
@@ -607,7 +591,7 @@ func OpenPath(
 	}
 	doc, err := e.SwitchOrOpenDoc(path)
 	if err == nil {
-		v := AcceptDocumentID(e, doc.ID(), action)
+		v := acceptDocumentID(e, doc.ID(), action)
 		return v, v != nil, nil
 	}
 	if !errors.Is(err, core.ErrBinaryFile) {
@@ -626,37 +610,6 @@ func OpenPath(
 		return nil, false, view.ErrNoView
 	}
 	return nil, true, nil
-}
-
-// AcceptPath opens the file at path (switching to it if already open),
-// splitting per action, and returns the view now showing it
-func AcceptPath(
-	e *view.Editor, path string, action PickerAcceptAction,
-) (*view.View, bool) {
-	if path == "" {
-		return nil, false
-	}
-	v, ok, err := OpenPath(e, path, action)
-	if err != nil {
-		e.SetStatusMsg(i18n.ErrorText(err))
-		return nil, false
-	}
-	return v, ok
-}
-
-// AlignAcceptedView scrolls the view so the accepted document's cursor is
-// visible after a picker jump
-func AlignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
-	cs := &view.CursorScroll{
-		Doc:       doc.Text(),
-		Selection: doc.SelectionFor(v.ID()),
-		Height:    max(v.Area().Height, e.ViewHeight()),
-		Width:     e.ViewContentWidth(),
-		TabWidth:  doc.TabWidth(),
-		ScrollOff: e.Options().ScrollOff,
-	}
-	v.EnsureCursorVisible(cs)
-	v.EnsureCursorVisibleHorizontal(cs)
 }
 
 // SortPickerItems sorts items by sort key, falling back to display text, the

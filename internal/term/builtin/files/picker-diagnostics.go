@@ -112,20 +112,11 @@ func (d *diagnosticPickerSource) Accept(
 	if !ok {
 		return
 	}
-	v := ui.AcceptDocumentID(e, payload.id, action)
-	if v == nil {
-		return
-	}
-	doc := e.Document(v.DocID())
-	if doc == nil {
-		return
-	}
 	sel, err := diagnosticSelection(payload.diag)
 	if err != nil {
 		return
 	}
-	doc.SetSelectionFor(v.ID(), sel)
-	ui.AlignAcceptedView(e, v, doc)
+	ui.GotoDocument(e, payload.id, ui.GotoSelection(sel), action)
 }
 
 func (d *diagnosticPickerSource) item(

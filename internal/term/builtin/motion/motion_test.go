@@ -10,6 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/test"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/view"
 )
 
 func TestMotionGotoLine(t *testing.T) {
@@ -136,5 +137,26 @@ func TestMotionGotoLineWithCount(t *testing.T) {
 		e.SetCount(2)
 		test.RunCmd(t, km, e, "goto_line_or_extend_file_start")
 		assert.Equal(t, 1, test.CursorLine(t, e))
+	})
+}
+
+func TestMotionJumpKeys(t *testing.T) {
+	t.Run("shift-tab and ctrl-o both jump backward", func(t *testing.T) {
+		_, km := test.Env(t, "a\nb\n")
+		shiftTab := command.KeyEvent{
+			Code: command.KeyCode{Special: command.Tab},
+			Mods: command.ModShift,
+		}
+		ctrlO := command.KeyEvent{
+			Code: command.KeyCode{Char: 'o'},
+			Mods: command.ModCtrl,
+		}
+		for _, key := range []command.KeyEvent{shiftTab, ctrlO} {
+			match, ok := km.Lookup(
+				view.ModeNormal, []command.KeyEvent{key},
+			)
+			assert.True(t, ok)
+			assert.Equal(t, "jump_backward", match.Name)
+		}
 	})
 }

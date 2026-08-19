@@ -45,7 +45,7 @@ SECTIONS = [
             ("Home / End", "line start / line end"),
             ("Ctrl+f / Ctrl+b", "page down / up"),
             ("Ctrl+d / Ctrl+u", "half-page down / up"),
-            ("Ctrl+o / Ctrl+i", "jumplist back / forward"),
+            ("Shift+Tab / Tab", "jumplist back / forward"),
             ("gn / gp", "next / previous buffer"),
             ("[p / ]p", "previous / next paragraph"),
         ],

@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -232,4 +233,20 @@ func TestTokenizeNonOverlapping(t *testing.T) {
 		assert.LessOrEqual(t,
 			spans[i-1].End, spans[i].Start, "spans must not overlap")
 	}
+}
+
+func TestTokenizeLongDocComment(t *testing.T) {
+	var sb strings.Builder
+	for range 400 {
+		sb.WriteString("// a documentation line\n")
+	}
+	sb.WriteString("package main\n\nfunc main() { println(1) }\n")
+
+	start := time.Now()
+	spans := syntax.NewSyntaxCache().Tokenize(
+		core.Source{Text: sb.String(), Lang: "go"},
+	)
+
+	assert.NotEmpty(t, spans)
+	assert.Less(t, time.Since(start), 2*time.Second)
 }

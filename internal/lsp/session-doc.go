@@ -10,10 +10,7 @@ import (
 // DocumentOpened starts matching servers and sends didOpen notifications
 func (s *Session) DocumentOpened(doc *view.Document) {
 	s.clientsForDocument(doc)
-	s.pullDiagnosticsAsync(doc)
-	s.documentLinksAsync(doc)
-	s.documentColorsAsync(doc)
-	s.inlayHintsAsync(doc)
+	s.pullDocumentState(doc)
 }
 
 // DocumentChanged sends didChange notifications to attached servers
@@ -21,19 +18,13 @@ func (s *Session) DocumentChanged(
 	doc *view.Document, change view.DocumentChange,
 ) {
 	s.notifyChange(doc, change)
-	s.pullDiagnosticsAsync(doc)
-	s.documentLinksAsync(doc)
-	s.documentColorsAsync(doc)
-	s.inlayHintsAsync(doc)
+	s.pullDocumentState(doc)
 }
 
 // DocumentSaved sends didSave notifications to attached servers
 func (s *Session) DocumentSaved(doc *view.Document) {
 	s.notify(doc, (*Client).DidSave)
-	s.pullDiagnosticsAsync(doc)
-	s.documentLinksAsync(doc)
-	s.documentColorsAsync(doc)
-	s.inlayHintsAsync(doc)
+	s.pullDocumentState(doc)
 	s.didChangeWatchedFile(doc.Path())
 }
 
@@ -185,4 +176,32 @@ func (s *Session) clearDocumentHighlightsForServers(names []string) {
 			}
 		}
 	}
+}
+
+// a server rooted at the workspace cannot resolve documents outside it, so
+// pulling their state only costs time
+func (s *Session) pullDocumentState(doc *view.Document) {
+	if !s.inWorkspace(doc.Path()) {
+		return
+	}
+	s.pullDiagnosticsAsync(doc)
+	s.documentLinksAsync(doc)
+	s.documentColorsAsync(doc)
+	s.inlayHintsAsync(doc)
+}
+
+func (s *Session) inWorkspace(path string) bool {
+	file, ok := workspaceFile(path)
+	if !ok {
+		return false
+	}
+	if inside(insideArgs{path: file, root: s.cwd}) {
+		return true
+	}
+	for _, root := range s.servers.allRoots() {
+		if inside(insideArgs{path: file, root: root}) {
+			return true
+		}
+	}
+	return false
 }

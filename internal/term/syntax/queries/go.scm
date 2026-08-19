@@ -211,7 +211,7 @@
 
 ; Doc Comments
 (source_file
-  (comment) @comment.block.documentation . (comment)* . [
+  (comment) @comment.block.documentation . [
     (package_clause) ; `package`
     (type_declaration) ; `type`
     (function_declaration) ; `func`

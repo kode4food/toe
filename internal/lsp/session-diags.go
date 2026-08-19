@@ -133,7 +133,7 @@ func (s *Session) pullAllDiagnosticsAsync() {
 		return
 	}
 	for _, doc := range s.editor.AllDocuments() {
-		if !doc.Loaded() {
+		if !doc.Loaded() || !s.inWorkspace(doc.Path()) {
 			continue
 		}
 		s.pullDiagnosticsAsync(doc)

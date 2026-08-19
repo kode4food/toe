@@ -101,6 +101,65 @@ func TestVersionControlFileWatch(t *testing.T) {
 	})
 }
 
+func TestVersionControlFocusRefresh(t *testing.T) {
+	testutil.RequireGit(t)
+
+	t.Run("refreshes on focus after external commit", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "a.txt")
+		e := view.NewEditor(repo)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		s := vcs.Attach(e)
+		defer s.Close()
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Eventually(t, func() bool {
+			base, ok := s.DiffBase(doc)
+			return ok && base == "one\n"
+		}, time.Second, 5*time.Millisecond)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		testutil.RunGit(t, repo, "commit", "-m", "external")
+		_, _ = m.Update(tea.FocusMsg{})
+
+		assert.Eventually(t, func() bool {
+			base, ok := s.DiffBase(doc)
+			return ok && base == "two\n"
+		}, time.Second, 5*time.Millisecond)
+	})
+
+	t.Run("repaints panes attached after the model", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: waits on a real diff debounce and file watch")
+		}
+		repo := testutil.GitRepo(t)
+		pathA := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		pathB := testutil.GitCommitFile(t, repo, "b.txt", "uno\n")
+		testutil.WriteFile(t, pathA, "AAA\n")
+		testutil.WriteFile(t, pathB, "BBB\n")
+		e := view.NewEditor(repo)
+		_, err := e.OpenFile(pathA)
+		assert.NoError(t, err)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		_ = m.View()
+		assert.NotNil(t, e.VSplit(e.FocusedView().DocID()))
+		_, err = e.OpenFile(pathB)
+		assert.NoError(t, err)
+		_ = m.View()
+
+		s := vcs.Attach(e)
+		defer s.Close()
+		m = drainFileWatch(t, m)
+
+		assert.Eventually(t, func() bool {
+			return strings.Count(stripANSI(m.View().Content), "▍") == 2
+		}, 2*time.Second, 10*time.Millisecond)
+	})
+}
+
 func TestChangedFilePicker(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow: many subtests each shell out to a real git repo")

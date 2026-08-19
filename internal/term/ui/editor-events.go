@@ -39,6 +39,7 @@ func (e *EditorComponent) handleKeyPressEvent(
 
 func (e *EditorComponent) handleFocus(cx *Context) (EventResult, tea.Cmd) {
 	e.focused = true
+	refreshVCS(cx)
 	return ignored(), e.documentHighlightCmd(cx)
 }
 
@@ -359,13 +360,12 @@ func reloadChangedImages(e *view.Editor, path string) {
 }
 
 func vcsUpdateCmd(cx *Context) tea.Cmd {
-	vc := cx.Editor.VersionControl()
-	if vc == nil {
-		return nil
-	}
-	updates := vc.Updates()
 	return func() tea.Msg {
-		<-updates
+		vc := cx.Editor.VersionControl()
+		if vc == nil {
+			return nil
+		}
+		<-vc.Updates()
 		return vcsUpdatedMsg{}
 	}
 }

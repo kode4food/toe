@@ -289,7 +289,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 			rowIndentCol = indentWidth(lStr, tabW)
 		}
 
-		// The anchor line is scrolled by vOff visual rows; skip those rows when
+		// The anchor line is scrolled by vOff visual rows, so skip those when
 		// drawing so a wrapped line taller than the viewport scrolls within
 		rowSkip := 0
 		if softWrap && lineNum == anchorLine {

@@ -136,7 +136,7 @@ func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
 	if !ok {
 		return
 	}
-	// span is in absolute (scrollback+screen) rows; translate to the rows
+	// span is in absolute (scrollback+screen) rows, so translate to the rows
 	// currently visible in this viewport
 	start := tp.viewStart(scr.area.Height)
 	y0, y1 := sp.start.Y-start, sp.end.Y-start

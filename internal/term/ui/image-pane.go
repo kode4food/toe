@@ -248,7 +248,7 @@ func (p *ImagePane) OnRevert() {
 	_ = p.Reload()
 }
 
-// Reload re-decodes the backing file after an external change; the new bytes
+// Reload re-decodes the backing file after an external change. The new bytes
 // yield a new ContentID, so the display path retransmits automatically
 func (p *ImagePane) Reload() error {
 	img, err := LoadImage(p.path)

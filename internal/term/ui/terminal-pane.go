@@ -59,7 +59,7 @@ type (
 		bellRung bool
 	}
 
-	// resizeState tracks a deferred PTY resize; held is set while the layout is
+	// resizeState tracks a deferred PTY resize. held is set while the layout is
 	// in motion, pending records that a size arrived while it was
 	resizeState struct {
 		held    bool
@@ -195,7 +195,7 @@ func (t *TerminalPane) MarkDirty() {
 }
 
 // SetRedraw installs the hook the shell calls to wake the render loop when it
-// mutates the pane off the event loop; the tree wires it on insertion
+// mutates the pane off the event loop. The tree wires it on insertion
 func (t *TerminalPane) SetRedraw(fn func()) {
 	t.notify = fn
 }
@@ -319,7 +319,7 @@ func (t *TerminalPane) ScrollOffset() int {
 }
 
 // ScrollLines moves the view n lines back into scrollback (n < 0 moves toward
-// live output); a no-op while the alt screen is active
+// live output). A no-op while the alt screen is active
 func (t *TerminalPane) ScrollLines(n int) {
 	if t.emu.IsAltScreen() {
 		return

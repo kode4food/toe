@@ -660,7 +660,7 @@ func TestSessionCallbacks(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 
-		// triggers initialization; server fires all callbacks during init
+		// triggers initialization, server fires all callbacks during init
 		_, err = session.Completions(doc, v.ID())
 		assert.NoError(t, err)
 
@@ -966,7 +966,7 @@ func TestFileWatching(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 
-		// Trigger initialization; server registers file watcher
+		// Trigger initialization, server registers file watcher
 		_, _ = session.Completions(doc, v.ID())
 
 		// Saving resends didChangeWatchedFiles each attempt, so the poll

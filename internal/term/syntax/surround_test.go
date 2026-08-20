@@ -84,7 +84,7 @@ func TestFindSurroundPair(t *testing.T) {
 			Skip:   1,
 		})
 		assert.True(t, ok)
-		// must not match the parens inside the string; first real pair is {}
+		// must not match the parens inside the string, first real pair is {}
 		brOpen := strings.Index(strSrc, "{")
 		brClose := strings.LastIndex(strSrc, "}")
 		assert.Equal(t, brOpen, r.From)

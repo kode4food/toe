@@ -194,7 +194,7 @@ func GotoLine(e *view.Editor, n int) {
 }
 
 // GotoPosition moves (or extends in select mode) the cursor to a 1-based line
-// and column. A Col <= 1 lands on the line start; otherwise the cursor is
+// and column. A Col <= 1 lands on the line start, otherwise the cursor is
 // clamped to the line end. A Line <= 0 is a no-op
 func GotoPosition(e *view.Editor, at core.Position) {
 	if at.Line <= 0 {

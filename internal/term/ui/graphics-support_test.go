@@ -22,7 +22,7 @@ func TestOpenPathImage(t *testing.T) {
 		return e, ok, err
 	}
 
-	// The pane is created regardless of terminal support; the pane itself
+	// The pane is created regardless of terminal support. The pane itself
 	// presents the unsupported message and skips transmission
 	t.Run("unsupported terminal opens pane", func(t *testing.T) {
 		for _, k := range []string{

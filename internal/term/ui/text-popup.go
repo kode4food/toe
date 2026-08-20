@@ -68,7 +68,7 @@ func (p *popupMarkdown) parseLine(line string) {
 	}
 	line = strings.TrimRight(line, " \t")
 	if strings.TrimSpace(line) == "" {
-		// collapse a run of blanks to one break and drop leading blanks; a
+		// collapse a run of blanks to one break and drop leading blanks. A
 		// preceding rule counts as blank here, so it swallows the blank after
 		if len(p.lines) == 0 || p.lines[len(p.lines)-1].text == "" {
 			return

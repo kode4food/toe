@@ -85,9 +85,9 @@ type (
 	}
 )
 
-// ModeAny is the zero value; it is not a pane mode. It is the wildcard key
-// in a Command's per-mode Keys map, applying to every mode the command
-// supports unless a specific mode overrides it
+// ModeAny is the zero value and not a pane mode. It is the wildcard key in a
+// Command's per-mode Keys map, applying to every mode the command supports
+// unless a specific mode overrides it
 const ModeAny Mode = 0
 
 // the bottom row of a view's area draws its status line, not text
@@ -102,8 +102,8 @@ const (
 	ModeImage                     // IMG
 	ModeBinary                    // BIN
 
-	// ModeCompletion is not a pane mode; it is the keymap dispatch bucket
-	// used only while the completion popup owns key handling
+	// ModeCompletion is not a pane mode. It is the keymap dispatch bucket used
+	// only while the completion popup owns key handling
 	ModeCompletion // COM
 )
 
@@ -243,7 +243,7 @@ func (v *View) FreeScroll() bool {
 }
 
 // BeginFreeScroll decouples the viewport from the cursor. The revision and
-// selection snapshot the document state at this moment; free scroll ends
+// selection snapshot the document state at this moment. Free scroll ends
 // automatically when either changes
 func (v *View) BeginFreeScroll(rev int, sel core.Selection) {
 	v.freeScroll = freeScrollState{active: true, rev: rev, sel: sel}
@@ -302,7 +302,7 @@ func (v *View) Jumps() []JumpEntry {
 }
 
 // EnsureCursorVisible scrolls so the cursor is visible within Height rows,
-// respecting ScrollOff; measured in visual rows when Visual has active
+// respecting ScrollOff. Measured in visual rows when Visual has active
 // soft-wrap
 func (v *View) EnsureCursorVisible(cs *CursorScroll) {
 	if cs.Height <= 0 {

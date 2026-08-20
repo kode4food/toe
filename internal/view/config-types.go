@@ -42,7 +42,7 @@ type (
 	}
 
 	// WhitespaceRender holds per-kind whitespace rendering settings. A
-	// plain-string TOML value sets Default only; a table sets fields
+	// plain-string TOML value sets Default only. A table sets fields
 	// independently, each falling back to Default then "none"
 	WhitespaceRender struct {
 		Default *WhitespaceRenderValue
@@ -182,7 +182,7 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineSpinner,
 }
 
-// cursorKinds is the single source of truth for valid CursorKind values;
+// cursorKinds is the single source of truth for valid CursorKind values.
 // UnmarshalText and CursorKindNames both derive from it
 var cursorKinds = []CursorKind{
 	CursorKindBlock, CursorKindBar, CursorKindUnderline, CursorKindHidden,

@@ -94,7 +94,7 @@ func TestTokenize(t *testing.T) {
 }
 
 func TestTokenizeChromaFallback(t *testing.T) {
-	// "json" has no Tree-sitter grammar in langRegistry; falls back to Chroma
+	// "json" has no Tree-sitter grammar in langRegistry, so Chroma handles it
 	sc := syntax.NewSyntaxCache()
 	spans := sc.Tokenize(core.Source{
 		Text: `{"key": "value", "n": 42}`,
@@ -128,7 +128,7 @@ func TestTokenizeGoScopes(t *testing.T) {
 	for _, sp := range spans {
 		scopes[sp.Scope] = true
 	}
-	// "package" and "func" are keywords; expect a keyword scope
+	// "package" and "func" are keywords, so expect a keyword scope
 	assert.True(t, scopes["keyword"] || scopes["keyword.function"],
 		"expected keyword scope in go source")
 }

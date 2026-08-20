@@ -26,13 +26,13 @@ var defaultLanguages = sync.OnceValues(func() (map[string]any, bool) {
 	return out, true
 })
 
-// LoadDefaultLanguagesTOML returns the cached bundled defaults; do not mutate
+// LoadDefaultLanguagesTOML returns the cached bundled defaults. Do not mutate
 func LoadDefaultLanguagesTOML() (map[string]any, bool) {
 	return defaultLanguages()
 }
 
 // MergeTOMLValues overlays Over onto Base, merging maps only while depth
-// remains; below that Over replaces Base outright
+// remains. Below that Over replaces Base outright
 func MergeTOMLValues(values Overlay[any], depth int) any {
 	right := values.Over
 	switch l := values.Base.(type) {

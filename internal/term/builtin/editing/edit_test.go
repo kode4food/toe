@@ -258,7 +258,7 @@ func TestEditUndoRedo(t *testing.T) {
 		assert.Equal(t, "abc", test.DocText(t, e))
 	})
 
-	// Earlier/Later navigate the history timeline; the revert semantics are
+	// Earlier/Later navigate the history timeline. The revert semantics are
 	// covered in core/history_test. Here we exercise the command wrappers and
 	// their count branch, asserting they complete without a continuation
 	t.Run("earlier and later take no continuation", func(t *testing.T) {

@@ -36,7 +36,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NoError(t, os.WriteFile(beta, []byte("beta\n"), 0o644))
 
 		e := view.NewEditor(tmp)
-		// open beta first; the watcher registers tmp when the model builds
+		// open beta first, the watcher registers tmp when the model builds
 		_, err := e.OpenFile(beta)
 		assert.NoError(t, err)
 

@@ -39,7 +39,7 @@ var (
 var _ Provider = Git{}
 
 // DiffBase returns the HEAD contents of path. No eol/ident smudge filtering
-// is applied; .gitattributes eol conversion may cause phantom diffs
+// is applied. A .gitattributes eol conversion may cause phantom diffs
 func (Git) DiffBase(path string) ([]byte, error) {
 	path = realPath(path)
 	repo, err := openRepo(path)

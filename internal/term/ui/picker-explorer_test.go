@@ -68,7 +68,7 @@ func TestFileExplorer(t *testing.T) {
 		for _, ch := range "sub" {
 			m = sendKey(m, ch)
 		}
-		// "sub/" is now selected; its preview pane lists the directory contents
+		// "sub/" is now selected, its preview pane lists the directory contents
 		assert.Contains(t, stripANSI(m.View().Content), "\U000f07d3 inner.go")
 		assert.Contains(t, stripANSI(m.View().Content), "\U000f024b nested/")
 	})

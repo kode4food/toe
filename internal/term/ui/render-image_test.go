@@ -291,7 +291,7 @@ func TestImageWheelDefault(t *testing.T) {
 	m = readyImage(m)
 	a := pane.Area()
 
-	// a bare wheel pans; a modified wheel zooms
+	// a bare wheel pans, a modified wheel zooms
 	m = mouse(m, tea.MouseWheelMsg{
 		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelRight,
 	})
@@ -459,9 +459,9 @@ func TestImagePanSurvivesResize(t *testing.T) {
 	assert.Equal(t, want, pane.Pan())
 }
 
-// Zooming out shrinks the overflow, so the pan converges to center; once fitted
-// there is no pan left, and zooming back in starts from center, not the old
-// offset
+// Zooming out shrinks the overflow, so the pan converges to center. Once
+// fitted there is no pan left, and zooming back in starts from center, not
+// the old offset
 func TestImagePanForgottenOnZoomOut(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()

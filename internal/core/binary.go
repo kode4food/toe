@@ -24,13 +24,12 @@ const (
 )
 
 const (
-	// BinarySampleSize is how much of a file LooksBinary inspects; callers can
+	// BinarySampleSize is how much of a file LooksBinary inspects. Callers can
 	// read just this much before deciding whether to load the rest
 	BinarySampleSize = 1024
 
-	// maxControlRatio applies once the sample is confirmed valid UTF-8, a
-	// strong text signal on its own; legacyControlRatio is stricter since
-	// invalid UTF-8 (a legacy 8-bit encoding, or binary) gets no such signal
+	// valid UTF-8 is a strong text signal, so maxControlRatio stays loose.
+	// Invalid UTF-8 (legacy 8-bit or binary) gets the stricter legacy ratio
 	maxControlRatio    = 0.30
 	legacyControlRatio = 0.10
 )

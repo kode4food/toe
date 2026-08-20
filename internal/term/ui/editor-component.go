@@ -186,7 +186,7 @@ func (m Model) Animation() bool {
 	return m.component.animation
 }
 
-// SetAnimation controls whether UI animations play; when off they snap to
+// SetAnimation controls whether UI animations play. When off they snap to
 // their final state
 func (m Model) SetAnimation(enabled bool) {
 	m.component.animation = enabled

@@ -6,7 +6,7 @@ import (
 )
 
 // DeleteCharBackward deletes the character before each cursor in insert mode
-// Dedents when the cursor is at the end of leading whitespace; otherwise
+// Dedents when the cursor is at the end of leading whitespace, otherwise
 // deletes an auto-pair if applicable, or one grapheme backward
 func DeleteCharBackward(e *view.Editor) {
 	v := e.FocusedView()

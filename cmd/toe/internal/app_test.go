@@ -262,6 +262,25 @@ func TestStop(t *testing.T) {
 		assert.Empty(t, opts)
 	})
 
+	t.Run("file arguments keep existing session file", func(t *testing.T) {
+		dir := workspace(t)
+		assert.NoError(t, loader.TrustWorkspace(dir))
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
+		saveSessionFor(t, dir, path)
+		sessionPath := view.WorkspaceSessionFile(dir)
+		before, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		a := start(t, dir, path)
+		a.Editor.Options().ScrollOff = 12
+
+		assert.NoError(t, a.Stop())
+
+		after, err := os.ReadFile(sessionPath)
+		assert.NoError(t, err)
+		assert.Equal(t, string(before), string(after))
+	})
+
 	t.Run("untrusted keeps existing session file", func(t *testing.T) {
 		dir := workspace(t)
 		sessionPath := view.WorkspaceSessionFile(dir)

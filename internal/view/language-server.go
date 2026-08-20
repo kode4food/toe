@@ -49,7 +49,7 @@ type (
 	}
 
 	// Location is a normalized language-server target location, holding the
-	// server's own positions so listing never reads the files; ResolveRange
+	// server's own positions so listing never reads the files. ResolveRange
 	// converts them against a document at jump time
 	Location struct {
 		Path     string
@@ -172,7 +172,7 @@ type (
 	}
 )
 
-// Position encodings a language server may count line characters in; UTF-16 is
+// Position encodings a language server may count line characters in. UTF-16 is
 // the protocol default
 const (
 	PositionEncodingUTF16 PositionEncoding = iota

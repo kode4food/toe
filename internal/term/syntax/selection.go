@@ -64,7 +64,7 @@ func ShrinkSelection(args SelectionArgs) (Range, bool) {
 }
 
 // ParentNodeEnd returns the end of the innermost named node at the cursor,
-// which is where a syntax-aware tab jumps to; false means no node was found,
+// which is where a syntax-aware tab jumps to. False means no node was found,
 // which is not the same as a node whose end the cursor already sits on
 func ParentNodeEnd(args SelectionArgs) (int, bool) {
 	nodes, ok := nodePathFor(core.Source{Text: args.Text, Lang: args.Lang},

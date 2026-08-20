@@ -35,7 +35,7 @@ type (
 		Shutdown()
 	}
 
-	// AsyncRenderer marks a pane that mutates outside the event loop; the tree
+	// AsyncRenderer marks a pane that mutates outside the event loop. The tree
 	// hands it a redraw hook on insertion so it can wake the render loop
 	AsyncRenderer interface {
 		SetRedraw(func())
@@ -229,7 +229,7 @@ func (t *Tree) CanSplit(layout Layout) bool {
 	focus := t.focus
 	c := t.nodes[t.nodes[focus].parent].container
 	if c.layout == layout {
-		// one sibling is added to the existing container; gains one more gap
+		// one sibling is added to the existing container, gaining one more gap
 		ln := len(c.children)
 		switch layout {
 		case LayoutVertical:
@@ -480,7 +480,7 @@ func (t *Tree) leafWithLatestFocus() (Id, bool) {
 		if n.pane == nil {
 			continue
 		}
-		// only a corrupt session ties; lowest id keeps the pick deterministic
+		// only a corrupt session ties, so lowest id keeps it deterministic
 		tie := n.focusSeq == seq && (best == 0 || id < best)
 		if n.focusSeq > seq || tie {
 			best, seq = id, n.focusSeq

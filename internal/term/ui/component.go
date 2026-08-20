@@ -41,7 +41,7 @@ type (
 	}
 
 	// PaneInput is a pane that handles bubbletea key and mouse events itself.
-	// It receives the event first; an unconsumed event (handled=false) falls
+	// It receives the event first. An unconsumed event (handled=false) falls
 	// through to the editor's default keymap/document handling
 	PaneInput interface {
 		HandleEvent(*Context, tea.Msg) (EventResult, bool)

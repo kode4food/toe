@@ -204,7 +204,7 @@ func (d *Document) Modified() bool {
 	return d.edits.history.CurrentRevision() != d.edits.savePoint
 }
 
-// Loaded reports whether the backing file has been read; a restored session
+// Loaded reports whether the backing file has been read. A restored session
 // buffer stays unloaded until its content is first accessed
 func (d *Document) Loaded() bool {
 	d.content.RLock()

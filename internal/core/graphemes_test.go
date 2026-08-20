@@ -101,7 +101,7 @@ func TestGraphemeBoundaries(t *testing.T) {
 	})
 
 	t.Run("wide unicode grapheme has width > 1", func(t *testing.T) {
-		// 世 is a wide CJK char; its display width is 2
+		// 世 is a wide CJK char with a display width of 2
 		doc := core.NewRope("世b")
 		// NthNextGraphemeBoundary steps over 世 (1 grapheme) to pos 1
 		assert.Equal(t, 1, core.NextGraphemeBoundary(doc, 0))

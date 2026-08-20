@@ -221,7 +221,7 @@ func TestMoveLongWordForward(t *testing.T) {
 
 		action.MoveLongWordForward(e)
 
-		// WORD = non-whitespace; lands at space boundary
+		// WORD = non-whitespace, lands at space boundary
 		assert.Equal(t, 7, testutil.CursorPos(t, e))
 	})
 }
@@ -825,8 +825,8 @@ func TestAlignSelections(t *testing.T) {
 	t.Run("pads shorter cursors to match longest", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "x\nyyy")
 		// line 0: cursor at pos 1 (col 1)
-		// line 1: "yyy" starts at pos 2; cursor at pos 4 (col 2)
-		// maxCol = 2; pad line 0 col 1 by 1 space
+		// line 1: "yyy" starts at pos 2, cursor at pos 4 (col 2)
+		// maxCol = 2, pad line 0 col 1 by 1 space
 		testutil.SetSelection(t, e,
 			[]core.Range{
 				core.PointRange(1),

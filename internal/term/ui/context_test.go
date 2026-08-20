@@ -19,7 +19,7 @@ func TestContext(t *testing.T) {
 		e.Options().InactiveDim = 50
 		dimmed := cx.ThemeFor(false)
 
-		// mocha ui.background (30,30,46) darkened 50%; a theme-name change is
+		// mocha ui.background (30,30,46) darkened 50%. A theme-name change is
 		// not required for a changed InactiveDim to take effect
 		assert.Equal(t,
 			tui.ColorRGB(15, 15, 23), dimmed.Get("ui.background").BgColor(),

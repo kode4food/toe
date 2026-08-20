@@ -11,7 +11,7 @@ import (
 )
 
 func TestClipboardNoProvider(t *testing.T) {
-	// the default editor clipboard is a no-op; actions must not panic
+	// the default editor clipboard is a no-op, actions must not panic
 	t.Run("yank", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
 		testutil.SetSelection(t, e, []core.Range{{

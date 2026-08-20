@@ -40,7 +40,7 @@ func TestTerminalPaneTitleUTF8(t *testing.T) {
 
 	t.Run("OSC 0 title with dangerous glyph", func(t *testing.T) {
 		m, tp := newTerminalPane(t)
-		// ✳ = E2 9C B3; 0x9C is also the 8-bit ST control code
+		// ✳ = E2 9C B3, and 0x9C is also the 8-bit ST control code
 		tp.IngestOutput(
 			[]byte("\x1b]0;\xe2\x9c\xb3 Pick a choice\x07hello\r\n"),
 		)

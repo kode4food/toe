@@ -2,7 +2,7 @@ package view
 
 type (
 	// VersionControl exposes version-control state to commands, pickers, and
-	// rendering. Implementations live outside the view package; the editor only
+	// rendering. Implementations live outside the view package. The editor only
 	// holds the seam
 	VersionControl interface {
 		// DiffHunks returns the current hunks between the document and its
@@ -35,8 +35,8 @@ type (
 		Updates() <-chan struct{}
 	}
 
-	// DiffHunk is a change as half-open ranges [BaseFrom,BaseTo) and [From,To);
-	// an empty base range is a pure insertion, empty doc range a pure removal
+	// DiffHunk is a change as half-open ranges [BaseFrom,BaseTo) and [From,To).
+	// An empty base range is a pure insertion, empty doc range a pure removal
 	DiffHunk struct {
 		BaseFrom int
 		BaseTo   int

@@ -13,13 +13,13 @@ type (
 	// KeyModifiers is a bitmask of modifier keys
 	KeyModifiers uint8
 
-	// Special enumerates the non-printable keys; SpecialNone means the key is
+	// Special enumerates the non-printable keys. SpecialNone means the key is
 	// a printable [KeyCode.Char] instead
 	Special uint8
 
 	// KeyCode represents a single keyboard key
 	KeyCode struct {
-		// Char holds the rune for printable characters; 0 for special keys
+		// Char holds the rune for printable characters, 0 for special keys
 		Char    rune
 		Special Special
 	}
@@ -184,8 +184,8 @@ func (k KeyEvent) WithMods(m KeyModifiers) KeyEvent {
 }
 
 // IsTypable reports whether k is a printable character that should be accepted
-// as literal text input: Char is set and neither Ctrl nor Alt is held;
-// ModShift alone is fine; it is already reflected in the Char value
+// as literal text input: Char is set and neither Ctrl nor Alt is held.
+// ModShift alone is fine, already reflected in the Char value
 func (k KeyEvent) IsTypable() bool {
 	return k.Code.Char != 0 && !k.Mods.Has(ModCtrl) && !k.Mods.Has(ModAlt)
 }

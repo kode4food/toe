@@ -153,7 +153,7 @@ func TestMouseMiddlePaste(t *testing.T) {
 }
 
 func TestMouseWheelScroll(t *testing.T) {
-	// renderedModel gives a 40×8 window; row 7 is the pane statusline, which
+	// renderedModel gives a 40×8 window, row 7 is the pane statusline, which
 	// is outside the content area
 
 	t.Run("wheel over pane scrolls that pane", func(t *testing.T) {
@@ -205,7 +205,7 @@ func TestMouseWheelScroll(t *testing.T) {
 		hOff := v.Offset().HorizontalOffset
 		assert.Greater(t, hOff, 0)
 
-		// The cursor is at column 0; without free scroll the next render
+		// The cursor is at column 0, so without free scroll the next render
 		// would snap the offset back to it
 		_ = m2.(ui.Model).View()
 		assert.Equal(t, hOff, v.Offset().HorizontalOffset)
@@ -463,7 +463,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
 
-		// fire exactly one tick; it reschedules itself, but we only need to
+		// fire exactly one tick. It reschedules itself, but we only need to
 		// prove a single step scrolls forward, not drive it to completion
 		msg := cmd()
 		m2, _ = m.Update(msg)
@@ -568,7 +568,7 @@ func TestMouseDragAutoScroll(t *testing.T) {
 			return time.Since(start)
 		}
 
-		// row 1 is barely inside the top margin; far off-screen is pinned
+		// row 1 is barely inside the top margin, far off-screen is pinned
 		// against the pane's edge, where ticks should fire faster
 		nearMargin := tickDelay(1)
 		atEdge := tickDelay(-100)
@@ -1004,7 +1004,7 @@ func TestCountMotionKeySequence(t *testing.T) {
 		m = sendKey(m, '3')
 		_ = sendKey(m, 'w')
 
-		// count 3 advances past aa/bb/cc into the run before "dd"; a plain w
+		// count 3 advances past aa/bb/cc into the run before "dd". A plain w
 		// stops one word short, so this asserts the count took effect
 		assert.Equal(t, 8, testutil.CursorPos(t, e))
 	})

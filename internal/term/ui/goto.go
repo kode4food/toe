@@ -7,8 +7,8 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-// GotoSelector resolves the selection to place once the destination document is
-// open; a nil selector leaves the document's selection alone
+// GotoSelector resolves the selection to place once the destination document
+// is open. A nil selector leaves the document's selection alone
 type GotoSelector func(core.Rope) (core.Selection, bool)
 
 // GotoDocument navigates the pane to an open document, placing the selection
@@ -38,7 +38,7 @@ func GotoPath(
 		e.SetStatusMsg(i18n.ErrorText(err))
 		return nil, false
 	}
-	// an image or binary file opened as its own pane; no cursor to place
+	// an image or binary file opened as its own pane has no cursor to place
 	if !ok || v == nil {
 		return nil, ok
 	}

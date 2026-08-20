@@ -49,7 +49,7 @@ func NewSyntaxCache() *Cache {
 }
 
 // Tokenize parses the source and returns highlight spans with theme scope
-// names. Tree-sitter is tried first; Chroma is the fallback
+// names. Tree-sitter is tried first, with Chroma as the fallback
 func (sc *Cache) Tokenize(src core.Source) []highlight.Span {
 	if spans := sc.treeTokenize(src); spans != nil {
 		return spans

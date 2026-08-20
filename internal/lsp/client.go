@@ -46,8 +46,8 @@ type (
 
 const maxStderrTail = 4096
 
-// ClientNew is the initial state; ClientInitialized means handshake complete;
-// ClientShutdown means closed
+// ClientNew is the initial state, ClientInitialized means the handshake is
+// complete, and ClientShutdown means closed
 const (
 	ClientNew ClientState = iota
 	ClientInitialized

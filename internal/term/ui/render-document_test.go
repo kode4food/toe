@@ -469,7 +469,7 @@ func TestThemeRender(t *testing.T) {
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
-		// vA (docA) sits on the left; the diagnostic popup always renders
+		// vA (docA) sits on the left, the diagnostic popup always renders
 		// in the screen's top-right corner, over the OTHER (docB) pane
 		e.FocusView(vA.ID())
 		docA := e.Document(vA.DocID())
@@ -550,7 +550,7 @@ func TestThemeRender(t *testing.T) {
 		assert.Contains(t, m.View().Content, "\x1b[48;5;253m")
 	})
 
-	// per-channel rounding sent this one to navy; nearest-match keeps it gray
+	// per-channel rounding sent this one to navy, nearest-match keeps it gray
 	t.Run("dark theme stays neutral", func(t *testing.T) {
 		root := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -829,7 +829,7 @@ func TestLineContentRender(t *testing.T) {
 		rows := strings.Split(m.View().Content, "\n")
 
 		// with the \r correctly outside the line, the cursor sits at line
-		// end and draws a cursor-styled cell; on the \r it renders nothing
+		// end and draws a cursor-styled cell, on the \r it renders nothing
 		assert.Contains(t, rows[0], "\x1b[48;2;245;224;220m")
 	})
 
@@ -956,7 +956,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 }
 
 func TestErroredIdentifierGating(t *testing.T) {
-	// "Bork" is a type_identifier; Tree-sitter tags it @type purely from
+	// "Bork" is a type_identifier, so Tree-sitter tags it @type purely from
 	// parse-tree shape, with no idea whether Bork actually exists
 	bork := strings.Index(borkGoSrc, "Bork")
 	typeColoredBork := "\x1b[38;2;249;226;175mBork" // type yellow

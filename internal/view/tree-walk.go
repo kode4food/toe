@@ -14,7 +14,7 @@ type (
 )
 
 // WalkSeparators calls fn for each separator between adjacent panes. Vertical
-// seps have W=1 and span the container height; horizontal seps have H=1 and
+// seps have W=1 and span the container height. Horizontal seps have H=1 and
 // span the container width
 func (t *Tree) WalkSeparators(fn func(Separator)) {
 	if !t.IsEmpty() && !t.Maximized() {
@@ -118,7 +118,7 @@ func (t *Tree) leftOf(id Id) int {
 	if n.pane != nil {
 		return n.pane.Area().X
 	}
-	// container: area is not tracked separately; use first child
+	// container: area is not tracked separately, so use the first child
 	if len(n.container.children) > 0 {
 		return t.leftOf(n.container.children[0])
 	}
@@ -158,7 +158,7 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 		}
 		switch c.layout {
 		case LayoutVertical:
-			// 1-column gap between panes; separator is that gap column
+			// the separator is the 1-column gap between panes
 			s := Separator{
 				Layout: LayoutVertical,
 				Area: geom.Area{
@@ -170,7 +170,7 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 				return false
 			}
 		case LayoutHorizontal:
-			// 1-row gap after child[i]; separator is that gap row
+			// the separator is the 1-row gap after child[i]
 			s := Separator{
 				Layout: LayoutHorizontal,
 				Area: geom.Area{

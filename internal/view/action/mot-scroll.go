@@ -108,7 +108,7 @@ func GotoWindowCenter(e *view.Editor) {
 }
 
 // ScrollViewLines scrolls a specific view by n lines, not moving the cursor.
-// Used for mouse-wheel events; the view remains free-scrolled until that view
+// Used for mouse-wheel events. The view remains free-scrolled until that view
 // receives cursor-moving keyboard input
 func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	doc := e.Document(v.DocID())
@@ -140,7 +140,7 @@ func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 }
 
 // ScrollViewColumns scrolls a view horizontally by n columns without moving
-// the cursor; scrolling right is clamped to keep one column of content visible
+// the cursor. Scrolling right is clamped to keep one column of content visible
 func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {
 	doc := e.Document(v.DocID())
 	if doc == nil {

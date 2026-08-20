@@ -3,7 +3,7 @@ package register
 
 // Registers is the key-value store that maps register names to value lists
 // Special registers:
-//   - '_' (black hole): all reads return empty; writes are discarded
+//   - '_' (black hole): all reads return empty and writes are discarded
 //   - '"' (default): the default yank register
 type Registers map[rune][]string
 

@@ -290,7 +290,7 @@ func TestRope(t *testing.T) {
 	})
 
 	t.Run("left-rotate rebalances right-heavy tree", func(t *testing.T) {
-		// 4097 chars builds a depth-4 rope; inserting at 0 creates a
+		// 4097 chars builds a depth-4 rope, inserting at 0 creates a
 		// depth-2 vs depth-4 imbalance (diff=2 > maxRopeDepthSkew=1)
 		// which triggers rotateRopeLeft
 		base := strings.Repeat("a", 4097)

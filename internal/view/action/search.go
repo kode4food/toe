@@ -194,7 +194,7 @@ func searchImpl(args searchArgs) error {
 	if doc == nil {
 		return nil
 	}
-	// text and its string form are stable across repeats; only the selection
+	// text and its string form are stable across repeats, only the selection
 	// advances, so compile the regex and materialize the text once
 	text := doc.Text()
 	fullStr := text.String()

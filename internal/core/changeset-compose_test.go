@@ -101,7 +101,7 @@ func TestChangeSetCompose(t *testing.T) {
 
 func TestChangeSetComposeCoverage(t *testing.T) {
 	t.Run("partial insert consumed by delete", func(t *testing.T) {
-		// A inserts "XYZ" at pos 1; B deletes only 1 of those 3 chars
+		// A inserts "XYZ" at pos 1. B deletes only 1 of those 3 chars
 		doc := core.NewRope("ab")
 		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
 			core.TextChange(core.Span{From: 1, To: 1}, "XYZ"),
@@ -123,7 +123,7 @@ func TestChangeSetComposeCoverage(t *testing.T) {
 	})
 
 	t.Run("small insert consumed by larger delete", func(t *testing.T) {
-		// A inserts "X"; B deletes "Xb" (2 chars, more than A inserted)
+		// A inserts "X". B deletes "Xb" (2 chars, more than A inserted)
 		doc := core.NewRope("ab")
 		csA, err := core.NewChangeSetFromChanges(doc, []core.Change{
 			core.TextChange(core.Span{From: 1, To: 1}, "X"),

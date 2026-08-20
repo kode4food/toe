@@ -166,7 +166,7 @@ func TestCanonicalPath(t *testing.T) {
 		dir := t.TempDir()
 		gone := filepath.Join(dir, "gone.txt")
 
-		// the directory resolves though the file is absent; its base
+		// the directory resolves though the file is absent, and its base
 		// carries through to the returned key
 		got := loader.CanonicalPath(gone)
 

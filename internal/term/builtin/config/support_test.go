@@ -78,7 +78,7 @@ func TestSupportGoto(t *testing.T) {
 	})
 
 	t.Run("goto line:col moves to column", func(t *testing.T) {
-		// line 1 ("abcdef") starts at char 3; col 3 -> char 5
+		// line 1 ("abcdef") starts at char 3, so col 3 -> char 5
 		e, km := test.Env(t, "l0\nabcdef\n")
 		res := test.RunCmdArgs(t, km, e, "goto", "2:3")
 		assert.NotContains(t, res.Message, "error")

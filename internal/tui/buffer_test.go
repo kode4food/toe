@@ -74,7 +74,7 @@ func TestBuffer(t *testing.T) {
 		b := tui.NewBuffer(geom.Size{Width: 2, Height: 1})
 		st := tui.Style{}.Bg(tui.ColorBlue)
 		b.SetString(geom.Point{X: 0, Y: 0}, "コ", st)
-		// first cell has the grapheme; second is space with same style
+		// first cell has the grapheme, second is space with same style
 		assert.Equal(t, "コ", b.Get(geom.Point{X: 0, Y: 0}).Symbol)
 		assert.True(t, b.Get(geom.Point{X: 1, Y: 0}).Skip)
 		assert.Equal(t, st, b.Get(geom.Point{X: 1, Y: 0}).Style)

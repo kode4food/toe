@@ -79,8 +79,8 @@ func TextObjectParagraph(
 	return Range{Anchor: from, Head: to}
 }
 
-// TextObjectPairSurround selects the pair surrounding the cursor. ch,
-// if non-zero, specifies which pair; zero uses the nearest pair. kind controls
+// TextObjectPairSurround selects the pair surrounding the cursor. ch, if
+// non-zero, specifies which pair. Zero uses the nearest pair. kind controls
 // whether the delimiters themselves are included
 func (r Range) TextObjectPairSurround(
 	doc Rope, kind TextObjectKind, ch rune, count int,

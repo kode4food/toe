@@ -66,7 +66,7 @@ func SplitSelectionOnNewline(e *view.Editor) {
 				}
 				break
 			}
-			// lineEnd = newline char pos; lineTotal = start of next line
+			// lineEnd = newline char pos, lineTotal = start of next line
 			end := min(lineEnd, to)
 			if pos < end {
 				newRanges = append(newRanges, core.Range{

@@ -203,7 +203,7 @@ func (e *Editor) Document(did DocumentId) *Document {
 	return e.documents.byID[did]
 }
 
-// DeleteDocument removes a document without closing its views; affected views
+// DeleteDocument removes a document without closing its views. Affected views
 // will report no focused document
 func (e *Editor) DeleteDocument(did DocumentId) {
 	delete(e.documents.byID, did)

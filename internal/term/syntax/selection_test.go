@@ -77,7 +77,7 @@ func TestSelection(t *testing.T) {
 	})
 
 	t.Run("expand at root returns false", func(t *testing.T) {
-		// range already covers the whole file; no larger parent exists
+		// range already covers the whole file, so no larger parent exists
 		_, ok := syntax.ExpandSelection(syntax.SelectionArgs{
 			Text:   src,
 			Lang:   "go",

@@ -98,7 +98,7 @@ func (r *renderPass) paintImage(
 		Fg(tui.ImageColor(id)).
 		UlColor(tui.ImageColor(imagePlacementID(id))).
 		Bg(bg)
-	// show a centered window into the grid; pan scrolls it so a zoomed-in image
+	// show a centered window into the grid. Pan scrolls it so a zoomed-in image
 	// exposes its clipped edges instead of pinning to the top-left
 	visW := min(cells.Width, area.Width)
 	visH := min(cells.Height, area.Height)

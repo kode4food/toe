@@ -600,7 +600,7 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.NoError(t, err)
 
 		// a file watcher may canonicalize the reported path (notify does on
-		// macOS: /var -> /private/var); the stored document path is not
+		// macOS: /var -> /private/var), the stored document path is not
 		resolved, err := filepath.EvalSymlinks(path)
 		assert.NoError(t, err)
 		ok := e.ProcessExternalFileChange(resolved)

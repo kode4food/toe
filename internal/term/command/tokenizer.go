@@ -7,8 +7,8 @@ import (
 )
 
 type (
-	// TokenExpander maps a raw token to its expanded string value;
-	// a nil expander uses the token content verbatim
+	// TokenExpander maps a raw token to its expanded string value. A nil
+	// expander uses the token content verbatim
 	TokenExpander func(Token) (string, error)
 
 	// SyntaxError is a tokenizer-level parse error

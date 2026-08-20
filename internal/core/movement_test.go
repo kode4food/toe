@@ -595,7 +595,7 @@ func TestVisualRowStarts(t *testing.T) {
 			ViewportWidth: 20, TabWidth: 4, MaxWrap: 5,
 		}
 		// "alpha bravo charlie delta": row 0 holds through the trailing space
-		// at col 20; "delta" moves to row 1 whole rather than breaking
+		// at col 20, so "delta" moves to row 1 whole rather than breaking
 		got := vf.VisualRowStarts([]rune("alpha bravo charlie delta"))
 		assert.Equal(t, []int{20}, got)
 	})
@@ -615,7 +615,7 @@ func TestVisualRowStarts(t *testing.T) {
 			ViewportWidth: 14, TabWidth: 4, MaxWrap: 5,
 			MaxIndentRetain: 40, WrapIndicatorWidth: 0,
 		}
-		// four-space indent + "alpha bravo gamma"; continuation rows begin at
+		// four-space indent + "alpha bravo gamma", continuation rows begin at
 		// col 4, so fewer content columns are available per wrapped row
 		runes := []rune("    alpha bravo gamma")
 		got := vf.VisualRowStarts(runes)

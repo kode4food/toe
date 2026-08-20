@@ -83,7 +83,7 @@ func TestExtendToColumn(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
-		// col 4 = pos 3; PutCursor with extend advances one grapheme -> pos 4
+		// col 4 = pos 3, PutCursor with extend advances one grapheme -> pos 4
 		assert.Equal(t, 4, sel.Primary().To())
 	})
 }

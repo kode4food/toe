@@ -293,7 +293,7 @@ func TestAltCompletion(t *testing.T) {
 		if len(items) != 4 {
 			return
 		}
-		// preselected items sort first; among preselected, sort by Sort key
+		// preselected items sort first, and among them by Sort key
 		assert.True(t, items[0].Preselect)
 		assert.Equal(t, "Println", items[0].Label)
 		assert.Equal(t, "(n int, format string)", items[0].LabelDetail)
@@ -331,10 +331,10 @@ func TestAltCompletion(t *testing.T) {
 		if len(items) != 4 {
 			return
 		}
-		// non-preselected items sort last; among them, sort by Sort then Label
+		// non-preselected items sort last, and among them by Sort then Label
 		assert.False(t, items[2].Preselect)
 		assert.False(t, items[3].Preselect)
-		// Printf and Puts both have Sort="zzz"; Printf < Puts alphabetically
+		// Printf and Puts both have Sort="zzz", Printf < Puts alphabetically
 		assert.Equal(t, "Printf", items[2].Label)
 		assert.Equal(t, "Puts", items[3].Label)
 		err = session.ApplyCompletion(doc, v.ID(), items[2])

@@ -130,7 +130,7 @@ type (
 	}
 
 	// PickerItem is a single row shown in the picker list. A Section row
-	// labels the group its Group ordinal names; it never matches a query and
+	// labels the group its Group ordinal names. It never matches a query and
 	// the cursor skips it
 	PickerItem struct {
 		Display     string
@@ -181,7 +181,7 @@ type (
 	}
 
 	// PickerBase is an optional starting point a source can embed for default
-	// id, title, column, and fuzzy-match behavior; a source is free to
+	// id, title, column, and fuzzy-match behavior. A source is free to
 	// implement those methods itself instead
 	PickerBase struct {
 		Ident       string
@@ -383,7 +383,7 @@ func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
 	}
 	for path := range pending {
 		// a directory event carries coalesced changes with unknown members,
-		// and an index write restages rows; either way reload the batch
+		// and an index write restages rows, so either way reload the batch
 		if isGitIndexPath(path) {
 			p.refreshItems(e)
 			continue

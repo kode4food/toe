@@ -46,8 +46,8 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	highlight := previewHighlighter(args.theme)
 	ws := args.opts.Whitespace
 	ig := args.opts.IndentGuides
-	// syntax spans have stripped backgrounds; patch popup bg onto every row
-	// so the pane provides it uniformly rather than showing terminal default
+	// syntax spans have stripped backgrounds, so patch popup bg onto every
+	// row rather than letting the terminal default show through
 	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
 

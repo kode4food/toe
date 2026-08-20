@@ -1059,7 +1059,7 @@ func TestSession(t *testing.T) {
 		v, err := e.OpenFile(filePath)
 		assert.NoError(t, err)
 
-		// displace the editor view with a fake terminal; the tree stashes the
+		// displace the editor view with a fake terminal, the tree stashes the
 		// view so RevertPane can bring it back
 		e.DisplacePane(v.ID(), &fakePane{editor: e})
 

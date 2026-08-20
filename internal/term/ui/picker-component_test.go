@@ -25,7 +25,7 @@ type fixedPickerSource struct {
 
 func TestPickerScroll(t *testing.T) {
 	// At 120x20: areaW=108, areaH=16, left=6, top=1, preview layout active.
-	// listBounds: x=7, y=4, w=53, h=12; valid x [7,59], y [4,15]. Preview pane
+	// listBounds: x=7, y=4, w=53, h=12, valid x [7,59], y [4,15]. Preview pane
 	// occupies x >= 60 inside the picker
 
 	t.Run("wheel list keeps selection", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestPickerScroll(t *testing.T) {
 			m = m2.(ui.Model)
 		}
 		out = stripANSI(m.View().Content)
-		// list scrolled to reveal the far item; selection (and preview)
+		// list scrolled to reveal the far item, selection (and preview)
 		// unchanged
 		assert.Contains(t, out, "item29")
 		assert.Contains(t, out, "CONTENT-00")
@@ -70,7 +70,7 @@ func TestPickerScroll(t *testing.T) {
 	t.Run("click selects the item under the cursor", func(t *testing.T) {
 		m := fixedPicker(t, 30, 120, 20)
 
-		// locate the rendered row of item05 and click it; the preview should
+		// locate the rendered row of item05 and click it, the preview should
 		// then show that item's body
 		lines := strings.Split(m.View().Content, "\n")
 		clickX, clickY := -1, -1
@@ -143,7 +143,7 @@ func TestPickerScroll(t *testing.T) {
 			r := m.PickerLayoutOptions().SplitRatios["fixed"]
 			assert.GreaterOrEqual(t, r, ui.MinPickerSplitRatio)
 			assert.LessOrEqual(t, r, ui.MaxPickerSplitRatio)
-			// dragging rightward must never step the ratio back; the
+			// dragging rightward must never step the ratio back. The
 			// zero-width edge once snapped to the default and broke this
 			assert.GreaterOrEqual(t, r, prev)
 			prev = r

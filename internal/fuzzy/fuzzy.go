@@ -87,9 +87,8 @@ func (m *Matcher) Match(text string) (Result, bool) {
 }
 
 func (m *Matcher) align() (float64, []int) {
-	// end[i][j] scores the best alignment of pattern[:i+1] ending with
-	// pattern[i] on text[j]; best[i][j] the best alignment of pattern[:i+1]
-	// within text[:j+1]
+	// end[i][j] scores the best alignment of pattern[:i+1] ending on text[j].
+	// best[i][j] scores the best alignment of pattern[:i+1] within text[:j+1]
 	n, width := len(m.pattern), len(m.text)
 	m.fillBonuses()
 	m.best = growScores(m.best, n*width)

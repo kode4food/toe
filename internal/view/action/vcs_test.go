@@ -69,7 +69,7 @@ func TestGotoChange(t *testing.T) {
 		e := setup(t)
 		testutil.SetCursor(t, e, 0)
 		action.GotoNextChange(e)
-		// hunk 1 covers chars [4,12); forward cursor sits before head
+		// hunk 1 covers chars [4,12), forward cursor sits before head
 		assert.Equal(t, 11, testutil.CursorPos(t, e))
 	})
 

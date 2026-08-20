@@ -260,7 +260,7 @@ func macroModelWithContinuation(t *testing.T) (ui.Model, *view.Editor) {
 		[]command.KeyEvent{char('z')})
 	bindNormalTestKeyAction(km, "play", m.MacroReplayAction,
 		[]command.KeyEvent{char('v')})
-	// 'g' returns a continuation; followed by 'x' it inserts "X"
+	// 'g' returns a continuation, followed by 'x' it inserts "X"
 	bindNormalTestKeyAction(km, "g-prefix",
 		func(ed *view.Editor) command.Continuation {
 			return func(

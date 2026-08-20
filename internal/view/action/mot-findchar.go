@@ -69,7 +69,7 @@ func FindChar(args FindCharArgs) {
 }
 
 // charSearchRes is where a character was found and where the next search
-// resumes; found is -1 when the character is not present
+// resumes. found is -1 when the character is not present
 type charSearchRes struct {
 	found int
 	next  int

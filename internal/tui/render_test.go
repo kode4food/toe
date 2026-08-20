@@ -284,7 +284,7 @@ func TestEmitModifiers(t *testing.T) {
 	})
 
 	t.Run("remove bold then add dim emits dim", func(t *testing.T) {
-		// Removing bold emits 22m (normal intensity); dim must be re-added
+		// Removing bold emits 22m (normal intensity), so dim must be re-added
 		// because 22m also clears dim
 		out := renderTwo(
 			tui.Style{}.Mod(tui.ModifierBold),

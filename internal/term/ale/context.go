@@ -8,7 +8,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// contextValue is a live, read-only view of editor state for Ale; each lookup
+// contextValue is a live, read-only view of editor state for Ale. Each lookup
 // reads current state and builds only the requested branch
 type (
 	contextValue struct {

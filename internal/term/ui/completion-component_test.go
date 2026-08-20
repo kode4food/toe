@@ -1434,7 +1434,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		// cursor inside "alpha"; the anchor backs up to the word start (1)
+		// cursor inside "alpha", the anchor backs up to the word start (1)
 		doc.SetSelectionFor(v.ID(), core.PointSelection(3))
 		km := command.NewKeymaps()
 		m := ui.New(e, km)

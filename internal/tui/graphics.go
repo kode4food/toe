@@ -151,7 +151,7 @@ func (c Color) RGBA() (uint32, uint32, uint32, uint32) {
 }
 
 // Darkened scales the color toward black by pct/100 (pct<100 darkens). Reset
-// stays reset; named and indexed colors resolve to rgb first
+// stays reset. Named and indexed colors resolve to rgb first
 func (c Color) Darkened(pct int) Color {
 	if c.IsReset() {
 		return c

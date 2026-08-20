@@ -105,7 +105,7 @@ func (r Range) Contains(pos int) bool {
 }
 
 // LineSpan returns the inclusive line span the range touches. An empty range
-// covers one line; a non-empty one excludes an end on a line start
+// covers one line. A non-empty one excludes an end on a line start
 func (r Range) LineSpan(text Rope) (Span, error) {
 	from := r.From()
 	to := r.To()
@@ -184,7 +184,7 @@ func (r Range) IsSingleGrapheme(doc Rope) bool {
 }
 
 // Cursor returns the char index of the block-cursor position. For a forward
-// range the cursor sits one grapheme before the head; for backward or empty
+// range the cursor sits one grapheme before the head. For backward or empty
 // ranges it is the head itself
 func (r Range) Cursor(doc Rope) int {
 	if r.Head > r.Anchor {

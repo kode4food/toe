@@ -6,7 +6,7 @@ import (
 )
 
 // QueryWorkspaceTrust reports whether dir's workspace may run its own config
-// and init files; insecure trusts everything
+// and init files. Insecure trusts everything
 func QueryWorkspaceTrust(dir string, insecure bool) bool {
 	if insecure {
 		return true

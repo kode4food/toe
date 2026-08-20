@@ -320,14 +320,14 @@ func TestCanSplit(t *testing.T) {
 	})
 
 	t.Run("too narrow rejects vertical", func(t *testing.T) {
-		// 2*minPaneWidth+1 = 21; width of 20 can't fit two minimum-width panes
+		// 2*minPaneWidth+1 = 21, width 20 can't fit two minimum-width panes
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 20, Height: 24})
 		assert.False(t, e.Tree().CanSplit(view.LayoutVertical))
 	})
 
 	t.Run("too short rejects horizontal", func(t *testing.T) {
-		// 2*minPaneHeight+1 = 9; height of 8 can't fit two minimum-height panes
+		// 2*minPaneHeight+1 = 9, height 8 can't fit two minimum-height panes
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 8})
 		assert.False(t, e.Tree().CanSplit(view.LayoutHorizontal))

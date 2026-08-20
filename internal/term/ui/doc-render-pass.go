@@ -32,7 +32,7 @@ const (
 	inputCaretGap     = 1 // space between the breadcrumb and its caret
 )
 
-// marks a hint that opens another menu; a command's row is blank here
+// marks a hint that opens another menu, a command's row is blank here
 const hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
 
 // splitSepIntersectionChars is an immutable separator glyph lookup
@@ -93,7 +93,7 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		return tea.Cursor{}, false
 	case view.CursorKindBlock:
 		if r.editor.focused {
-			// block cursor drawn manually in content; terminal cursor hidden
+			// block cursor drawn manually in content, terminal cursor hidden
 			return tea.Cursor{}, false
 		}
 		// terminal lost focus: use underline so position is still visible
@@ -128,7 +128,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	editorW := a.Width
 
 	// Build the soft-wrap layout so vertical visibility is measured in visual
-	// rows; nil keeps the text-line fallback when soft-wrap is off
+	// rows. A nil layout keeps the text-line fallback when soft-wrap is off
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, opts.Gutters)
 	format := doc.TextFormatForConfig(
@@ -427,7 +427,7 @@ func (r *renderPass) renderInfoOverlay(buf *tui.Buffer) {
 		if item.Prefix {
 			lead = hintPrefixMark
 		}
-		// pad by display width; a wide glyph is one rune but two columns
+		// pad by display width, a wide glyph is one rune but two columns
 		pad := strings.Repeat(" ", keyW-runewidth.StringWidth(item.Key))
 		rawLines[i] = item.Key + pad + " " + lead + " " + item.Label
 		if w := runewidth.StringWidth(rawLines[i]); w > bodyW {

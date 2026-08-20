@@ -34,7 +34,7 @@ func TestFindNthClosestPairsPos(t *testing.T) {
 	})
 
 	t.Run("skips pair whose open is after pos", func(t *testing.T) {
-		// "a(x)y)z": cursor at 0; the `)` at 5 has its `(` at 1 > pos=0
+		// "a(x)y)z": cursor at 0, the `)` at 5 has its `(` at 1 > pos=0
 		doc := core.NewRope("a(x)y)z")
 		r := core.PointRange(0)
 		_, err := core.FindNthClosestPairsPos(doc, r, 1)

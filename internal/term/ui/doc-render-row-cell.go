@@ -58,7 +58,7 @@ func (r *renderedRow) writeFillToBuffer(args rowFillArgs) {
 		return
 	}
 	s := args.style
-	// fg-only spaces are invisible over the base fill; skip them
+	// fg-only spaces are invisible over the base fill, so skip them
 	if s.BgColor().IsReset() && s.Modifier() == 0 &&
 		s.UnderlineStyle() == tui.UnderlineReset {
 		return

@@ -22,7 +22,7 @@ func TestTokenizeUnknown(t *testing.T) {
 		Text: "hello world",
 		Lang: "totally-unknown-lang-xyzzy",
 	})
-	// We don't assert a specific result; just that it doesn't panic
+	// We don't assert a specific result, just that it doesn't panic
 	_ = spans
 }
 
@@ -52,7 +52,7 @@ func main() {
 
 func TestTokenizeEmpty(t *testing.T) {
 	spans := highlight.Tokenize(core.Source{Lang: "go"})
-	// Should return without panicking; empty text has no tokens
+	// Should return without panicking, empty text has no tokens
 	assert.Empty(t, spans)
 }
 
@@ -116,7 +116,7 @@ function greet(name) {
 				Text: tc.src,
 				Lang: tc.lang,
 			})
-			// Some langs may produce no highlights; just verify no panic
+			// Some langs may produce no highlights, just verify no panic
 			for _, sp := range spans {
 				assert.Less(t, sp.Start, sp.End)
 			}
@@ -135,7 +135,7 @@ func TestDefaultStyle(t *testing.T) {
 	})
 
 	t.Run("parent scope fallback", func(t *testing.T) {
-		// "keyword.function" has its own entry; "keyword.unknown" should
+		// "keyword.function" has its own entry, "keyword.unknown" should
 		// fall back to "keyword"
 		full := highlight.DefaultStyle("keyword.function")
 		fallback := highlight.DefaultStyle("keyword.unknown")

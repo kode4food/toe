@@ -7,8 +7,8 @@ import (
 )
 
 // VisualRowStarts returns the char offsets at which each soft-wrapped visual
-// row after the first begins; empty if the line fits on one row. Wraps at
-// word boundaries, breaking mid-word only past MaxWrap
+// row after the first begins. Empty if the line fits on one row. Wraps at word
+// boundaries, breaking mid-word only past MaxWrap
 func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 	viewport := vf.ViewportWidth
 	if viewport <= 0 || len(runes) == 0 {

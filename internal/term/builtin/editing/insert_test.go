@@ -18,7 +18,7 @@ func TestInsertRegister(t *testing.T) {
 		testutil.SetCursor(t, e, 0)
 		res := test.RunCmd(t, km, e, "insert_register")
 		assert.NotNil(t, res.Continuation)
-		// empty register pastes nothing; the continuation still completes
+		// empty register pastes nothing, the continuation still completes
 		_, got := res.Continuation(e, test.Char('a'))
 		assert.Equal(t, command.ContinuationDone, got)
 	})

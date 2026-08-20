@@ -31,13 +31,13 @@ func ExtendLineBelow(e *view.Editor) {
 }
 
 // SelectLineBelow selects current line(s) extending downward, direction-aware:
-// forward selections grow at the head; backward selections shrink at the head
+// forward selections grow at the head, backward selections shrink at it
 func SelectLineBelow(e *view.Editor) {
 	selectLineImpl(e, false)
 }
 
 // SelectLineAbove selects current line(s) extending upward, direction-aware:
-// backward selections grow at the head; forward selections shrink at the head
+// backward selections grow at the head, forward selections shrink at it
 func SelectLineAbove(e *view.Editor) {
 	selectLineImpl(e, true)
 }

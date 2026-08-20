@@ -87,7 +87,7 @@ func (c *changedFilePickerSource) Load(e *view.Editor) PickerLoad {
 		e.SetStatusMsg(i18n.ErrorText(err))
 		return PickerLoad{Stop: func() {}}
 	}
-	// providers report symlink-resolved paths; resolve the workspace root
+	// providers report symlink-resolved paths, so resolve the workspace root
 	// the same way so names relativize cleanly
 	cwd := e.Cwd()
 	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
@@ -219,7 +219,7 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 		Path:    fc.Path,
 		BaseDir: args.cwd,
 	})
-	// a rename shows only its destination; the source is in the diff preview
+	// a rename shows only its destination, the source is in the diff preview
 	lbl, sec := PickerNamePath(display)
 	hunks := changedFileHunks(args.vcs, fc)
 	basePath := fc.Path
@@ -258,7 +258,7 @@ func changedFileHunks(
 	switch fc.Kind {
 	case view.FileChangeUntracked, view.FileChangeAdded,
 		view.FileChangeDeleted:
-		// the whole file is new or gone; there is no base to diff against
+		// the whole file is new or gone, so there is no base to diff against
 		return nil
 	default:
 		return vc.DiffHunksForPath(fc.Path)

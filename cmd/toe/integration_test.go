@@ -131,7 +131,7 @@ func TestIntegration(t *testing.T) {
 			)
 		}
 		// the shell prints a fresh prompt on its own row right after the
-		// marker; if the PTY thinks it has one row more than we draw, that
+		// marker. If the PTY thinks it has one row more than we draw, that
 		// prompt row goes missing instead of appearing between them
 		if statusRow-markerRow < 2 {
 			t.Fatalf(
@@ -409,7 +409,7 @@ func TestIntegration(t *testing.T) {
 		tt.waitFor("before")
 		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
 
-		// spc-f enters tree-watch mode; select the already-open README
+		// spc-f enters tree-watch mode, so select the already-open README
 		tt.send(" f")
 		tt.send("README")
 		tt.waitFor("before")

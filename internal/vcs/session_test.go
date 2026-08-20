@@ -143,7 +143,7 @@ func TestSession(t *testing.T) {
 			{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
 		}, waitHunks(t, s, doc))
 
-		// saving refreshes the diff base from HEAD; hunks remain
+		// saving refreshes the diff base from HEAD, hunks remain
 		select {
 		case <-s.Updates():
 		default:

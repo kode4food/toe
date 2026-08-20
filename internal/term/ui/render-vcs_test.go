@@ -228,7 +228,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		// line 50 is far below the preview fold; it only shows when the diff
+		// line 50 is far below the preview fold, so it only shows when the diff
 		// preview anchors on the first hunk. The inline diff shows the removed
 		// base line and the added working line with sign-column markers
 		out := stripANSI(m.View().Content)
@@ -292,7 +292,7 @@ func TestChangedFilePicker(t *testing.T) {
 
 	t.Run("click selects the clicked file", func(t *testing.T) {
 		// the changed-file picker uses empty-label columns, so it renders no
-		// header row; a click must resolve to the row actually under it
+		// header row, so a click must resolve to the row actually under it
 		repo := testutil.GitRepo(t)
 		for _, f := range []struct{ name, body string }{
 			{"a.txt", "AAA\n"}, {"b.txt", "BBB\n"}, {"c.txt", "CCC\n"},

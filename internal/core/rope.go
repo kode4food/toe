@@ -67,8 +67,8 @@ func (r Rope) Slice(s Span) (Rope, error) {
 	return Rope{root: splitRopeNode(rest, s.Len()).left}, nil
 }
 
-// SliceString returns the substring the span covers without constructing a
-// new rope; faster than Slice(s).String()
+// SliceString returns the substring the span covers without constructing a new
+// rope. Faster than Slice(s).String()
 func (r Rope) SliceString(s Span) (string, error) {
 	if err := r.checkSpan(s); err != nil {
 		return "", err
@@ -186,7 +186,7 @@ func (r Rope) LineEndCharIndex(line int) (int, error) {
 	if end <= start {
 		return end, nil
 	}
-	// The line ending is at most the final two chars; read only those rather
+	// The line ending is at most the final two chars. Read only those rather
 	// than the whole line to locate where the content ends
 	tail, err := r.SliceString(Span{From: max(end-2, start), To: end})
 	if err != nil {

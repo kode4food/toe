@@ -85,7 +85,7 @@ func (f *filePickerSource) Load(e *view.Editor) ui.PickerLoad {
 }
 
 // ItemForPath returns the row for a regular file at path and whether the walk
-// includes it; symlinks resolve on a full reload
+// includes it. Symlinks resolve on a full reload
 func (f *filePickerSource) ItemForPath(
 	_ *view.Editor, path string,
 ) (*ui.PickerItem, bool) {

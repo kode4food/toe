@@ -281,12 +281,12 @@ func TestJumpBackwardForward(t *testing.T) {
 	t.Run("backward jump restores earlier position", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\ndef\nghi")
 		testutil.SetCursor(t, e, 1)
-		// SaveSelection pushes cursor pos 1; then move to end
+		// SaveSelection pushes cursor pos 1, then move to end
 		action.SaveSelection(e)
 		action.MoveFileEnd(e)
 		// SaveSelection pushes cursor at end
 		action.SaveSelection(e)
-		// Now head=2; Backward() will succeed
+		// Now head=2, so Backward() will succeed
 		posEnd := testutil.CursorPos(t, e)
 
 		action.JumpBackward(e)

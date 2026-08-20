@@ -50,7 +50,7 @@ var ErrDirectoryArgument = errors.New(
 )
 
 // New resolves the command line into the workspace root, the config path, and
-// the files to open. It touches no editor state; call Start for that
+// the files to open. It touches no editor state. Call Start for that
 func New(args []string, cwd string) (*App, error) {
 	a := &App{}
 	args = a.parseConfigFlag(args)
@@ -278,11 +278,8 @@ func (a *App) reloadConfig() error {
 	return a.lsp.ReloadConfig()
 }
 
-// restoreSession restores a saved session when no files were given and the
-// workspace is trusted; a restored session replaces the file picker
 func (a *App) restoreSession() error {
-	if !a.Editor.Options().AutoSession ||
-		len(a.Files) != 0 || !a.WorkspaceTrusted() {
+	if !a.isSessionEnabled() {
 		return nil
 	}
 	sessionPath := view.WorkspaceSessionFile(a.Root)
@@ -304,7 +301,7 @@ func (a *App) saveSession() error {
 	if a.Editor == nil || a.Reg == nil {
 		return nil
 	}
-	if !a.Editor.Options().AutoSession || !a.WorkspaceTrusted() {
+	if !a.isSessionEnabled() {
 		return nil
 	}
 	values, err := a.Reg.ChangedOptionValues(a.Editor)
@@ -328,6 +325,11 @@ func (a *App) configureModel() {
 	a.Model = a.Model.WithStartupMessage(
 		i18n.Text(i18n.ErrorWorkspaceUntrustedHint),
 	)
+}
+
+func (a *App) isSessionEnabled() bool {
+	return len(a.Files) == 0 && a.Editor.Options().AutoSession &&
+		a.WorkspaceTrusted()
 }
 
 func teaOptions() []tea.ProgramOption {

@@ -94,8 +94,8 @@ const (
 	)
 )
 
-// ParseArgs parses command input using the supplied signature;
-// expand may be nil, in which case raw token content is used as-is
+// ParseArgs parses command input using the supplied signature. expand may be
+// nil, in which case raw token content is used as-is
 func ParseArgs(
 	input string, sig Signature, validate bool, expand TokenExpander,
 ) (*Args, error) {

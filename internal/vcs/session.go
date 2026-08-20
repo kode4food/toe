@@ -1,6 +1,6 @@
 // Package vcs integrates version-control systems with the editor: diff bases
 // for gutter hunks, changed-file listings, and head names. Git is the only
-// provider today; the Provider interface keeps the API explicit and pluggable
+// provider today. The Provider interface keeps the API explicit and pluggable
 package vcs
 
 import (
@@ -159,7 +159,7 @@ func (s *Session) DocumentChanged(doc *view.Document, _ view.DocumentChange) {
 	}
 }
 
-// DocumentSaved refreshes the diff base; the head may have moved since the
+// DocumentSaved refreshes the diff base. The head may have moved since the
 // document was opened
 func (s *Session) DocumentSaved(doc *view.Document) {
 	path := doc.Path()

@@ -873,7 +873,7 @@ func altCompletionItems() protocol.CompletionItemSlice {
 	sortB := "bbb"
 	sortZ := "zzz"
 	return protocol.CompletionItemSlice{
-		// Preselect=true, Sort="aaa" (should be first); has a Command
+		// Preselect=true, Sort="aaa" (should be first), has a Command
 		{
 			Label:     "Println",
 			Kind:      protocol.CompletionItemKindFunction,

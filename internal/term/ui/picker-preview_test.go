@@ -50,7 +50,7 @@ func TestPickerPreview(t *testing.T) {
 		m = sendKey(m, 'p')
 		out := m.View().Content
 
-		// mocha ui.background = base = rgb(30,30,46); ui.popup = surface0 =
+		// mocha ui.background = base = rgb(30,30,46), ui.popup = surface0 =
 		// rgb(49,50,68). Content cells must carry the popup bg, not the editor
 		// bg or terminal default (\x1b[49m)
 		assert.NotContains(t, out, "48;2;30;30;46mplain")
@@ -85,7 +85,7 @@ func TestPickerPreview(t *testing.T) {
 		m = sendKey(m, 'p')
 		out := m.View().Content
 
-		// "package" is syntax-colored (mauve fg); its cells must still carry
+		// "package" is syntax-colored (mauve fg), its cells must still carry
 		// the popup bg (49;50;68), not terminal default from a bg reset
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "package") {
@@ -127,7 +127,7 @@ func TestPickerPreview(t *testing.T) {
 			border := strings.LastIndex(raw, "│")
 			assert.NotEqual(t, -1, border)
 			tail := raw[max(0, border-80):]
-			// right padding must not carry the editor document background;
+			// right padding must not carry the editor document background,
 			// the pane provides the background via its outer render
 			assert.NotRegexp(t,
 				regexp.MustCompile(`48;2;30;30;46[0-9;]*m +\x1b\[[0-9;]*m│`),
@@ -336,7 +336,7 @@ wrap-indicator = "↪ "
 	t.Run("re-renders to new width after resize", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		// a long in-memory line whose preview is wider than the narrow window;
+		// a long in-memory line whose preview is wider than the narrow window.
 		// after a resize the cached spans must lay out at the new width, so no
 		// frame line may exceed it
 		path := filepath.Join(tmp, "long.go")

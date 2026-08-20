@@ -115,11 +115,11 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 		return nil
 	}
 	if r.placed[a.id] == size {
-		// already requested this exact size; wait for its response rather
+		// already requested this exact size, so wait for its response rather
 		// than queuing a duplicate
 		return nil
 	}
-	// an unsent initial transmit is still in flight; a put now would
+	// an unsent initial transmit is still in flight, so a put now would
 	// reference an id the terminal doesn't have yet and get dropped
 	_, everEmitted := r.placed[a.id]
 	if everEmitted && !r.sent[a.id] {

@@ -123,7 +123,7 @@ func (e *EditorComponent) handleExternalFileChanged(
 }
 
 func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
-	// the frame repaints on its own; we only reap closed terminals, then re-arm
+	// the frame repaints on its own, so only reap closed terminals and re-arm
 	e.pollTerminals(cx)
 	cmd := e.redrawCmd()
 	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {

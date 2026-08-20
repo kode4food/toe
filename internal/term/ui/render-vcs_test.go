@@ -228,9 +228,8 @@ func TestChangedFilePicker(t *testing.T) {
 
 		m := changedFilePicker(t, repo)
 
-		// line 50 is far below the preview fold, so it only shows when the diff
-		// preview anchors on the first hunk. The inline diff shows the removed
-		// base line and the added working line with sign-column markers
+		// line 50 sits below the preview fold, showing only when the preview
+		// anchors on the first hunk, removed and added lines sign-marked
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "+ CHANGED-DEEP")
 		assert.Contains(t, out, "- line")

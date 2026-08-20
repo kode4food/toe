@@ -172,9 +172,8 @@ func (r *renderPass) prepareContentRender(
 	contentW := args.area.Width - gutterW
 	r.context.Editor.SetViewContentWidth(contentW)
 
-	// Horizontal scrolling keeps the cursor visible when lines run past the
-	// content area. Disabled (offset reset to 0) under soft-wrap by passing a
-	// non-positive width. The gutter is fixed and never shifts
+	// a non-positive width disables horizontal scrolling and resets the offset
+	// to 0, which is what soft-wrap wants. The gutter never shifts either way
 	hWidth := 0
 	if !softWrap {
 		hWidth = contentW

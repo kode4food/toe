@@ -93,9 +93,8 @@ func TestWatchRegistrationEdgeCases(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 
-		// Trigger initialization. The fake server registers, then fully
-		// unregisters, a "*.watched" watcher via a mix of nil, mismatched,
-		// and malformed registrations before the real one is removed
+		// the fake server registers then fully unregisters a "*.watched"
+		// watcher, via nil, mismatched, and malformed ones before the real
 		_, _ = session.Completions(doc, v.ID())
 		time.Sleep(100 * time.Millisecond)
 

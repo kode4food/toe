@@ -529,9 +529,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m = m2.(ui.Model)
 		before := v.Offset().Anchor
 
-		// row 1 is inside the visible pane, not off-screen, but within the
-		// top scrolloff margin, a pane at the screen's top edge has no row
-		// above it to drag into, so the trigger zone must live inside it
+		// a pane at the screen's top edge has no row above to drag into, so the
+		// trigger zone must live inside its own top scrolloff margin
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: 0, Y: 1, Button: tea.MouseLeft,
 		})
@@ -607,9 +606,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 			lines = append(lines, line)
 		}
 
-		// each one-row mouse move must change the cursor by at most one
-		// line, snapping straight to the clamped edge on entering the
-		// margin zone used to jump several lines in a single step
+		// each one-row mouse move must shift the cursor at most one line,
+		// where entering the margin zone used to jump several at once
 		for i := 1; i < len(lines); i++ {
 			assert.LessOrEqual(t, lines[i-1]-lines[i], 1)
 		}
@@ -632,9 +630,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
 
-		// a second motion event still inside the same edge zone must not
-		// reschedule the tick, otherwise a fast mouse-motion stream never
-		// lets the timer fire
+		// a second motion inside the same edge zone must not reschedule the
+		// tick, or a fast mouse-motion stream never lets the timer fire
 		m2, cmd2 := m.Update(tea.MouseMotionMsg{
 			X: 1, Y: 100, Button: tea.MouseLeft,
 		})
@@ -694,9 +691,8 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		})
 		m = m2.(ui.Model)
 
-		// column area.X+minWidth is the first column of text, right after
-		// the gutter, the trigger zone must reach that far, not require
-		// the drag to be over the gutter itself
+		// the trigger zone must reach area.X+minWidth, the first text column,
+		// rather than require the drag to be over the gutter itself
 		m2, cmd := m.Update(tea.MouseMotionMsg{
 			X: area.X + minWidth, Y: 0, Button: tea.MouseLeft,
 		})
@@ -819,9 +815,8 @@ func TestFreeScroll(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
-		// row 1 holds "short", scrolled entirely off to the left, so clicking
-		// it resolves to a cursor outside the window. The second pass repeats
-		// the click verbatim, leaving the selection unchanged
+		// row 1 holds "short" scrolled fully off left, so the click resolves
+		// outside the window and a verbatim repeat changes no selection
 		for range 2 {
 			off := v.Offset()
 			off.HorizontalOffset = 100

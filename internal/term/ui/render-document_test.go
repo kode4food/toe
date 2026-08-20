@@ -1518,9 +1518,8 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.Contains(t, before, "hello world")
 		assert.Contains(t, before, "second file")
 
-		// left pane's width stays 50 going from 101 to 102 columns (the
-		// vsplit remainder is absorbed by the right pane), but the frame
-		// buffer is still reallocated since overall width changed
+		// the left pane stays 50 wide from 101 to 102 columns (the right pane
+		// absorbs the vsplit remainder), yet the frame buffer reallocates
 		m = resize(m, 102, 30)
 		after := stripANSI(m.View().Content)
 

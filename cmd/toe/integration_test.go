@@ -128,9 +128,8 @@ func TestIntegration(t *testing.T) {
 				tt.screen(),
 			)
 		}
-		// the shell prints a fresh prompt on its own row right after the
-		// marker. If the PTY thinks it has one row more than we draw, that
-		// prompt row goes missing instead of appearing between them
+		// the shell prints a fresh prompt right after the marker, so a PTY one
+		// row taller than we draw loses that row instead of showing it
 		if statusRow-markerRow < 2 {
 			t.Fatalf(
 				"expected a prompt row between the marker and the pane's "+

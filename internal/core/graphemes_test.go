@@ -105,9 +105,8 @@ func TestGraphemeBoundaries(t *testing.T) {
 		doc := core.NewRope("世b")
 		// NthNextGraphemeBoundary steps over 世 (1 grapheme) to pos 1
 		assert.Equal(t, 1, core.NextGraphemeBoundary(doc, 0))
-		// and the char at 0 is '世', which graphemeWidth reports as 2
-		// we verify indirectly: the rope contains 2 chars, prev from 1 lands
-		// at 0
+		// graphemeWidth reports '世' at 0 as 2, verified indirectly: the rope
+		// holds 2 chars and prev from 1 lands at 0
 		assert.Equal(t, 0, core.PrevGraphemeBoundary(doc, 1))
 	})
 

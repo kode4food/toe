@@ -59,10 +59,10 @@ func (c Completer) Complete(
 		return nil
 	}
 	state := args.CompletionState()
-	if state.Kind == CompletionStateFlagArgument && state.Flag != nil {
+	if state.Kind == CompletingFlagValue && state.Flag != nil {
 		return completeStaticAt(start, token, state.Flag.Completions)
 	}
-	if state.Kind == CompletionStateFlag {
+	if state.Kind == CompletingFlag {
 		return completeFlagsAt(start, token, sig.Flags)
 	}
 	idx := args.Len()

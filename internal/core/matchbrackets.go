@@ -8,6 +8,8 @@ type BracketPair struct {
 	Close rune
 }
 
+// MaxPlaintextScan bounds how far a bracket search runs in either direction,
+// so an unmatched bracket cannot walk the whole of a large file
 const MaxPlaintextScan = 10000
 
 var (

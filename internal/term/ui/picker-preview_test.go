@@ -48,9 +48,8 @@ func TestPickerPreview(t *testing.T) {
 		m = sendKey(m, 'p')
 		out := m.View().Content
 
-		// mocha ui.background = base = rgb(30,30,46), ui.popup = surface0 =
-		// rgb(49,50,68). Content cells must carry the popup bg, not the editor
-		// bg or terminal default (\x1b[49m)
+		// mocha base is rgb(30,30,46) and popup surface0 is rgb(49,50,68).
+		// Cells carry the popup bg, not the editor bg or terminal default
 		assert.NotContains(t, out, "48;2;30;30;46mplain")
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "plain") {
@@ -260,9 +259,8 @@ max-indent-retain = 40
 enable = true
 wrap-indicator = "↪ "
 `)
-		// A single very long line wraps into many visual rows. The preview must
-		// not render more rows than fit its area, so the count of wrap markers
-		// stays bounded by the preview height rather than the line length
+		// the preview must not render more rows than fit its area, so wrap
+		// markers stay bounded by preview height rather than line length
 		path := filepath.Join(tmp, "notes.md")
 		err := os.WriteFile(path, []byte(strings.Repeat("word ", 200)), 0o644)
 		assert.NoError(t, err)
@@ -311,12 +309,8 @@ wrap-indicator = "↪ "
 		}
 		out := m.View().Content
 
-		// On the highlighted preview row the "package" keyword keeps its mocha
-		// syntax foreground (mauve 203;166;247) with the highlight background
-		// (surface1 69;71;90) overlaid behind it. The old strip-and-restyle
-		// path could not produce a syntax foreground under the highlight. The
-		// two SGR codes may be separate escapes or combined, check both are
-		// present on a single line containing "package"
+		// "package" keeps its mauve syntax fg (203;166;247) over the surface1
+		// highlight bg (69;71;90), in separate or combined SGR form
 		found := false
 		for line := range strings.SplitSeq(out, "\n") {
 			if strings.Contains(line, "package") &&
@@ -334,9 +328,8 @@ wrap-indicator = "↪ "
 	t.Run("re-renders to new width after resize", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		// a long in-memory line whose preview is wider than the narrow window.
 		// after a resize the cached spans must lay out at the new width, so no
-		// frame line may exceed it
+		// frame line may exceed the narrow window
 		path := filepath.Join(tmp, "long.go")
 		long := "package main // " + strings.Repeat("x", 300)
 		assert.NoError(t, os.WriteFile(path, []byte(long+"\n"), 0o644))

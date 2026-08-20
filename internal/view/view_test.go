@@ -169,9 +169,8 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 	t.Run("mid-viewport cursor does not scroll", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		// line 1 is a long unbreakable run that wraps to 8 visual rows. The
-		// cursor sits on line 2, well within the viewport in visual rows even
-		// though its text-line index is adjacent to the anchor line
+		// line 1 wraps to 8 visual rows, so the cursor on line 2 stays well
+		// within the viewport though adjacent by text-line index
 		long := strings.Repeat("x", 80)
 		doc := core.NewRope("a\n" + long + "\nb\nc\nd\ne\nf\ng")
 		line1Start, _ := doc.LineToChar(1)
@@ -198,9 +197,8 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 	t.Run("scrolls within a tall line", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		// a single line of 80 cells wraps to 8 visual rows at width 10. With a
-		// 4-row viewport cannot show the cursor near the end by anchoring at
-		// the line start, so the view must scroll into the line itself
+		// 80 cells wrap to 8 visual rows at width 10, so a 4-row viewport must
+		// scroll into the line rather than anchor at its start
 		doc := core.NewRope(strings.Repeat("x", 80))
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(79)}, 0)
 		vf := &core.VisualMoveFormat{

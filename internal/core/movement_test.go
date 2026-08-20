@@ -657,9 +657,8 @@ func TestMoveVerticallyVisualIndented(t *testing.T) {
 	doc := core.NewRope("    alpha bravo gamma")
 
 	t.Run("down keeps visual column", func(t *testing.T) {
-		// cursor on "a" of "alpha" at offset 4 (visual col 4). Moving down to
-		// row 1 (which begins at col 4 after the carried indent) should land on
-		// the first content char of row 1, "bravo" at offset 10 (also col 4)
+		// from offset 4 (visual col 4), moving down must land on row 1's first
+		// content char, "bravo" at offset 10, also col 4 after the indent
 		r := core.PointRange(4)
 		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 1)
 		assert.Equal(t, 10, got.Head)

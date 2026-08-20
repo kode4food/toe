@@ -71,9 +71,8 @@ func (r *rowRender) rows() []renderedRow {
 		end:       indentCol / tabW,
 	}
 
-	// A visual row holds at most ViewportWidth cells (one per column), capped
-	// by the line's byte length. Pre-sizing cells avoids the geometric regrowth
-	// of appending grapheme-by-grapheme from nil, the dominant per-frame alloc
+	// pre-sizing avoids the geometric regrowth of appending grapheme by
+	// grapheme from nil, the dominant per-frame alloc
 	cellCap := min(len(r.lineText)+1, r.format.ViewportWidth+1)
 
 	var row renderedRow

@@ -133,7 +133,7 @@ func TestArgsCompletionState(t *testing.T) {
 		args := command.NewArgs(sig, false)
 		_ = args.Push("foo")
 		cs := args.CompletionState()
-		assert.Equal(t, command.CompletionStateKind(0), cs.Kind)
+		assert.Equal(t, command.CompletingPositional, cs.Kind)
 		assert.Nil(t, cs.Flag)
 	})
 
@@ -147,7 +147,7 @@ func TestArgsCompletionState(t *testing.T) {
 		args := command.NewArgs(sig, false)
 		_ = args.Push("--verbose")
 		cs := args.CompletionState()
-		assert.Equal(t, command.CompletionStateFlag, cs.Kind)
+		assert.Equal(t, command.CompletingFlag, cs.Kind)
 	})
 
 	t.Run("completion state after flag with arg", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestArgsCompletionState(t *testing.T) {
 		_ = args.Push("--fmt")
 		_ = args.Push("json")
 		cs := args.CompletionState()
-		assert.Equal(t, command.CompletionStateFlagArgument, cs.Kind)
+		assert.Equal(t, command.CompletingFlagValue, cs.Kind)
 		assert.NotNil(t, cs.Flag)
 		assert.Equal(t, "fmt", cs.Flag.Name)
 	})

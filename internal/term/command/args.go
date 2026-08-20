@@ -64,11 +64,9 @@ type (
 	}
 
 	argsCompletionState struct {
-		kind argsCompletionKind
+		kind CompletionStateKind
 		flag *Flag
 	}
-
-	argsCompletionKind int
 )
 
 const (
@@ -82,16 +80,14 @@ const (
 )
 
 const (
-	argsCompletionPositional argsCompletionKind = iota
-	argsCompletionFlag
-	argsCompletionFlagArgument
-)
+	// CompletingPositional means a positional argument is being completed
+	CompletingPositional CompletionStateKind = iota
 
-const (
-	CompletionStateFlag         = CompletionStateKind(argsCompletionFlag)
-	CompletionStateFlagArgument = CompletionStateKind(
-		argsCompletionFlagArgument,
-	)
+	// CompletingFlag means the flag name itself is being completed
+	CompletingFlag
+
+	// CompletingFlagValue means the value following a flag is being completed
+	CompletingFlagValue
 )
 
 // ParseArgs parses command input using the supplied signature. expand may be
@@ -130,7 +126,7 @@ func NewArgs(sig Signature, validate bool) *Args {
 	return &Args{
 		signature:   sig,
 		validate:    validate,
-		state:       argsCompletionState{kind: argsCompletionPositional},
+		state:       argsCompletionState{kind: CompletingPositional},
 		positionals: []string{},
 		flags:       map[string]string{},
 	}
@@ -140,13 +136,13 @@ func NewArgs(sig Signature, validate bool) *Args {
 func (a *Args) Push(arg string) error {
 	if !a.onlyPositionals && arg == "--" {
 		a.onlyPositionals = true
-		a.state = argsCompletionState{kind: argsCompletionFlag}
+		a.state = argsCompletionState{kind: CompletingFlag}
 		return nil
 	}
 	if flag := a.flagAwaitingArgument(); flag != nil {
 		a.flags[flag.Name] = arg
 		a.state = argsCompletionState{
-			kind: argsCompletionFlagArgument, flag: flag,
+			kind: CompletingFlagValue, flag: flag,
 		}
 		return nil
 	}
@@ -161,7 +157,7 @@ func (a *Args) Push(arg string) error {
 		arg = next
 	}
 	a.positionals = append(a.positionals, arg)
-	a.state = argsCompletionState{kind: argsCompletionPositional}
+	a.state = argsCompletionState{kind: CompletingPositional}
 	return nil
 }
 
@@ -226,7 +222,7 @@ func (a *Args) HasFlag(name string) bool {
 // CompletionState returns what kind of argument the last token was
 func (a *Args) CompletionState() CompletionState {
 	return CompletionState{
-		Kind: CompletionStateKind(a.state.kind),
+		Kind: a.state.kind,
 		Flag: a.state.flag,
 	}
 }
@@ -316,7 +312,7 @@ func (a *Args) pushFlag(arg string) error {
 			return &ParseError{Kind: ParseErrorUnknownFlag, Text: arg}
 		}
 		a.positionals = append(a.positionals, arg)
-		a.state = argsCompletionState{kind: argsCompletionFlag}
+		a.state = argsCompletionState{kind: CompletingFlag}
 		return nil
 	}
 	if a.validate {
@@ -327,7 +323,7 @@ func (a *Args) pushFlag(arg string) error {
 		}
 	}
 	a.flags[flag.Name] = ""
-	a.state = argsCompletionState{kind: argsCompletionFlag, flag: flag}
+	a.state = argsCompletionState{kind: CompletingFlag, flag: flag}
 	return nil
 }
 
@@ -354,7 +350,7 @@ func (a *Args) findFlag(arg string) *Flag {
 }
 
 func (a *Args) flagAwaitingArgument() *Flag {
-	if a.state.kind != argsCompletionFlag || a.state.flag == nil {
+	if a.state.kind != CompletingFlag || a.state.flag == nil {
 		return nil
 	}
 	if a.state.flag.Completions == nil {

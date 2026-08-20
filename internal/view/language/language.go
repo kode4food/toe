@@ -94,6 +94,8 @@ type (
 
 var ErrInvalidAutoPairConfig = errors.New("invalid auto-pair config")
 
+// MinSoftWrapWidth is the width soft-wrap must exceed to engage, below which
+// the wrapped rows are too narrow to read
 const MinSoftWrapWidth = 10
 
 // OrDefault returns the configured pairs, or the built-in set when unset

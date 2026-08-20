@@ -21,8 +21,11 @@ type (
 )
 
 const (
+	// DefaultRopeLeafChars is the most characters one leaf holds, so text this
+	// short builds no tree at all
 	DefaultRopeLeafChars = 1024
-	maxRopeDepthSkew     = 1
+
+	maxRopeDepthSkew = 1
 )
 
 var (

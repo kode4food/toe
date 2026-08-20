@@ -404,9 +404,8 @@ func (d *Document) MarkDirty() {
 	if d.render.dirty == nil {
 		d.render.dirty = map[Id]bool{}
 	}
-	// render.dirty (not views.selections, empty until a view's own cursor
-	// first moves) is the reliable registry: ConsumeDirty runs for every
-	// visible view on every render regardless of selection state
+	// render.dirty is the reliable registry of visible views, where
+	// views.selections stays empty until a view's own cursor first moves
 	for vid := range d.render.dirty {
 		d.render.dirty[vid] = true
 	}

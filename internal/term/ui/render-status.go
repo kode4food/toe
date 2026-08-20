@@ -182,17 +182,22 @@ func (r *renderPass) paintStatus(buf *tui.Buffer, row statusRow) {
 }
 
 func (r *renderPass) cornerBadges(base tui.Style) []statusElem {
-	th := r.context.Theme()
 	ms := r.editor.macroSlot
+	reg := r.context.Editor.ActiveRegister()
+	maximized := r.context.Editor.Tree().Maximized()
+	if !ms.recording && !maximized && reg == 0 {
+		return nil
+	}
+	th := r.context.Theme()
 	src := &statusElemCtx{
 		baseTUI:    base,
 		macroReg:   ms.reg,
 		macroSt:    th.Get("ui.statusline.macro"),
 		maximizeSt: th.Get("ui.statusline.maximized"),
 		blinkFrame: r.editor.macroBlink.phase,
-		reg:        r.context.Editor.ActiveRegister(),
+		reg:        reg,
 		recording:  ms.recording,
-		maximized:  r.context.Editor.Tree().Maximized(),
+		maximized:  maximized,
 	}
 	var out []statusElem
 	for _, fn := range []statusElemFn{

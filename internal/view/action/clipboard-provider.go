@@ -5,9 +5,8 @@ import (
 	"strings"
 )
 
-// clipboardProvider names the external commands used to read and write the
-// system clipboard and, where supported, the X11 PRIMARY selection. A nil
-// command means that operation is unavailable
+// commands for the system clipboard and, where supported, the X11 PRIMARY
+// selection. A nil command means that operation is unavailable
 type clipboardProvider struct {
 	name      string
 	read      []string

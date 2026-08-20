@@ -15,8 +15,6 @@ type (
 		pos    mouseAxisPosFunc
 	}
 
-	// axisTicker is the drag-edge-detection and repeating-tick state shared by
-	// every kind of mouse-drag auto-scroll (doc view or terminal pane)
 	axisTicker struct {
 		last, fixed   int
 		gen           int
@@ -24,15 +22,12 @@ type (
 		interval      time.Duration
 	}
 
-	// dragBounds is a drag position and the range it is clamped within
 	dragBounds struct {
 		pos               int
 		lowEdge, highEdge int
 		margin            int
 	}
 
-	// edgeState reports which edge a drag is pinned against, and the
-	// position clamped into range
 	edgeState struct {
 		atLow   bool
 		atHigh  bool

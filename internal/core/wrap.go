@@ -21,7 +21,6 @@ type (
 		subsequent string
 	}
 
-	// stringPair is two strings compared against each other
 	stringPair struct {
 		left  string
 		right string

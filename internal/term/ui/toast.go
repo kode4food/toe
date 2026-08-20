@@ -88,14 +88,12 @@ func (t *toastState) push(text string, level toastLevel) {
 	t.rev++
 }
 
-// the messages not yet written to the log document
 func (t *toastState) takeLog() []string {
 	out := t.log
 	t.log = nil
 	return out
 }
 
-// drops the timed-out entries, reporting whether any were dropped
 func (t *toastState) expire(now time.Time) bool {
 	kept := t.items[:0]
 	for _, item := range t.items {
@@ -115,7 +113,6 @@ func (t *toastState) pending() bool {
 	return len(t.items) > 0
 }
 
-// advances expiry, the slide, and any fade, reporting whether the popup changed
 func (t *toastState) step(now time.Time, animate bool) bool {
 	if !t.leaving.IsZero() && now.Sub(t.leaving) >= toastRise {
 		return t.dismiss()
@@ -171,7 +168,6 @@ func (t *toastState) slideTo(pct int) bool {
 	return true
 }
 
-// closes the popup, sinking it off screen first when animating
 func (t *toastState) close(now time.Time, animate bool) bool {
 	if animate {
 		return t.leave(now)
@@ -179,7 +175,6 @@ func (t *toastState) close(now time.Time, animate bool) bool {
 	return t.dismiss()
 }
 
-// starts the slide back off screen, the entries staying drawn until it lands
 func (t *toastState) leave(now time.Time) bool {
 	if len(t.items) == 0 || !t.leaving.IsZero() {
 		return false
@@ -189,7 +184,6 @@ func (t *toastState) leave(now time.Time) bool {
 	return true
 }
 
-// true once nothing is left worth reading, so the popup can slide away whole
 func (t *toastState) spent(now time.Time) bool {
 	for _, item := range t.items {
 		if item.expires.After(now) {
@@ -208,7 +202,6 @@ func (t *toastState) animating(now time.Time) bool {
 	return t.slide != 0 || !t.leaving.IsZero() || t.fading(now)
 }
 
-// true while an entry other than the last is inside its fade-out window
 func (t *toastState) fading(now time.Time) bool {
 	for _, item := range t.items[:max(len(t.items)-1, 0)] {
 		// a frame early, so the slow tick can't sleep through the fade-out
@@ -231,7 +224,6 @@ func (t *toastState) dismiss() bool {
 	return true
 }
 
-// drops the entry drawn at a point inside the popup
 func (t *toastState) dismissAt(at geom.Point) bool {
 	if !t.bounds.Contains(at) {
 		return false
@@ -330,22 +322,16 @@ func (r *renderPass) renderToasts(buf *tui.Buffer, bottom int) {
 	}
 }
 
-// the rows the popup sits below its resting place, rising from off the bottom
-// of the screen when it appears and sinking back down as it leaves
 func (r *renderPass) toastSlideOffset(restY int) int {
 	travel := max(r.size.Height-restY, 0)
 	return travel * r.editor.toasts.slide / 100
 }
 
-// a share of the screen, held between the two bounds and whatever width the
-// screen can spare
 func toastBoxWidth(screenW int) int {
 	want := min(max(screenW*toastWidthPct/100, toastMinWidth), toastMaxWidth)
 	return min(want, max(screenW-toastGapX, 1))
 }
 
-// sinks the text toward the popup background over the entry's last moments, or
-// dims it when the popup has no background of its own
 func fadedStyle(style tui.Style, left time.Duration) tui.Style {
 	if left >= toastFade {
 		return style

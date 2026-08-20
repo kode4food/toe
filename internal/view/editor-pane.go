@@ -179,8 +179,6 @@ func (e *Editor) discardView(v *View) {
 	delete(e.documents.byID, v.docID)
 }
 
-// restorePane rebuilds a leaf pane of the given kind via its registered
-// restorer
 type restorePaneArgs struct {
 	kind    SessionKind
 	session *PaneSession

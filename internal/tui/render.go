@@ -7,7 +7,6 @@ import (
 )
 
 type (
-	// colorPair is a foreground and background color emitted together
 	colorPair struct {
 		fg Color
 		bg Color

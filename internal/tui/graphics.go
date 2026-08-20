@@ -10,20 +10,28 @@ import (
 )
 
 type (
+	// Style is the full appearance of a cell: its colors, underline treatment,
+	// and modifier bits. The zero value renders as the terminal default
 	Style struct {
 		fg, bg, underlineColor Color
 		underlineStyle         UnderlineStyle
 		modifier               Modifier
 	}
 
+	// Color is a terminal color, either reset, one of the named or indexed
+	// palette entries, or a direct rgb triple
 	Color struct {
 		kind    colorKind
 		r, g, b uint8
 	}
 
+	// UnderlineStyle is which underline a cell draws, if any
 	UnderlineStyle uint8
-	Modifier       uint16
-	colorKind      uint8
+
+	// Modifier is the set of attribute bits a cell carries, such as bold
+	Modifier uint16
+
+	colorKind uint8
 )
 
 const (

@@ -8,14 +8,15 @@ import (
 )
 
 type (
+	// CursorShape is the cursor rendering chosen per editing mode
 	CursorShape struct {
 		Normal CursorKind `toml:"normal"`
 		Select CursorKind `toml:"select"`
 		Insert CursorKind `toml:"insert"`
 	}
 
-	CursorKind string
-
+	// StatusLine is the configured status bar: the elements on each side and
+	// the separator drawn between them
 	StatusLine struct {
 		Left      []StatusLineItem `toml:"left"`
 		Right     []StatusLineItem `toml:"right"`
@@ -30,12 +31,20 @@ type (
 		Pinned  bool
 	}
 
+	// CursorKind names one cursor rendering, such as block or bar
+	CursorKind string
+
+	// StatusLineElement names one thing the status bar can show
 	StatusLineElement string
 
+	// LineNumber is the line-number style, absolute or relative
 	LineNumber string
 
+	// BufferLine is when the buffer line is shown
 	BufferLine string
 
+	// Whitespace is how invisible characters are drawn: which kinds render, and
+	// the glyph each one uses
 	Whitespace struct {
 		Render     WhitespaceRender     `toml:"render"`
 		Characters WhitespaceCharacters `toml:"characters"`
@@ -52,8 +61,10 @@ type (
 		Newline *WhitespaceRenderValue
 	}
 
+	// WhitespaceRenderValue is when one kind of whitespace renders
 	WhitespaceRenderValue string
 
+	// WhitespaceCharacters is the glyph drawn for each kind of whitespace
 	WhitespaceCharacters struct {
 		Space   string `toml:"space"`
 		Nbsp    string `toml:"nbsp"`
@@ -62,6 +73,8 @@ type (
 		Newline string `toml:"newline"`
 	}
 
+	// IndentGuides is how indent guides are drawn, and how many leading levels
+	// are left unmarked
 	IndentGuides struct {
 		Render     bool   `toml:"render"`
 		Character  string `toml:"character"`
@@ -77,8 +90,10 @@ type (
 		LineNumbers GutterLineNumbers `toml:"line-numbers"`
 	}
 
+	// GutterType names one gutter column, such as diagnostics or line numbers
 	GutterType string
 
+	// GutterLineNumbers is the line-number gutter's own configuration
 	GutterLineNumbers struct {
 		MinWidth *int `toml:"min-width"`
 	}
@@ -500,8 +515,6 @@ func decodeGutterLayout(items []any) ([]GutterType, error) {
 	return layout, nil
 }
 
-// whitespaceRenderArgs is a per-kind whitespace setting and the whitespace
-// default it falls back to
 type whitespaceRenderArgs struct {
 	specific *WhitespaceRenderValue
 	fallback *WhitespaceRenderValue

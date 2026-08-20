@@ -1,10 +1,9 @@
 // Package register implements the editor register store
 package register
 
-// Registers is the key-value store that maps register names to value lists
-// Special registers:
-//   - '_' (black hole): all reads return empty and writes are discarded
-//   - '"' (default): the default yank register
+// Registers maps register names to value lists. '_' is the black hole, whose
+// reads return empty and whose writes are discarded, and '"' is the default
+// yank register
 type Registers map[rune][]string
 
 // New returns an empty Registers

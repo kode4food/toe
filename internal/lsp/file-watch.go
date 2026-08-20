@@ -10,8 +10,6 @@ import (
 )
 
 type (
-	// watchState owns the notify watcher and each server's registered
-	// file-watch patterns
 	watchState struct {
 		sync.RWMutex
 		registrations map[string]map[string][]fileWatch

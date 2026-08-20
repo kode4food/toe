@@ -13,11 +13,15 @@ import (
 )
 
 type (
+	// Languages is the loaded language configuration: every known language and
+	// the language servers they refer to by name
 	Languages struct {
 		Languages       []Language
 		LanguageServers map[string]Server
 	}
 
+	// Language describes one language: how files are recognized as it, and the
+	// comment, indent, wrap, and server behavior that follows
 	Language struct {
 		Name           string `toml:"name"`
 		LanguageID     string `toml:"language-id"`
@@ -42,16 +46,20 @@ type (
 		Formatter       *Formatter
 	}
 
+	// Indent is a language's indentation style, with a nil TabWidth deferring
+	// to the editor default
 	Indent struct {
 		TabWidth *int
 		Unit     string
 	}
 
+	// FileType matches files to a language, by extension or by glob
 	FileType struct {
 		Extension string
 		Glob      string
 	}
 
+	// Server is how to launch and configure one language server
 	Server struct {
 		Command      string
 		Args         []string
@@ -61,17 +69,22 @@ type (
 		RootPatterns []string
 	}
 
+	// Formatter is the external command that formats a language's documents
 	Formatter struct {
 		Command string
 		Args    []string
 	}
 
+	// AutoPairConfig is a language's bracket-pairing behavior. Present marks
+	// the section as configured, separating an explicit disable from silence
 	AutoPairConfig struct {
 		Present bool
 		Enable  *bool
 		Pairs   [][2]rune
 	}
 
+	// SoftWrap is a language's wrapping behavior, each nil field deferring to
+	// the editor setting
 	SoftWrap struct {
 		Enable          *bool   `toml:"enable"`
 		WrapIndicator   *string `toml:"wrap-indicator"`

@@ -72,7 +72,6 @@ type (
 		drag   axisTicker
 	}
 
-	// selSpan is a terminal selection's start and end positions
 	selSpan struct {
 		start uv.Position
 		end   uv.Position

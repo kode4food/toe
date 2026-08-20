@@ -227,7 +227,6 @@ func TestToasts(t *testing.T) {
 	})
 }
 
-// the row the message occupies on screen, or -1 while it is still off it
 func toastRowIndex(m ui.Model, text string) int {
 	for y, line := range strings.Split(stripANSI(m.View().Content), "\n") {
 		if strings.Contains(line, text) {

@@ -60,8 +60,6 @@ type (
 		row    rowRender
 	}
 
-	// lineItemBounds reports whether an item falls before the line's start or
-	// after its end
 	lineItemBounds[T any] struct {
 		before func(T) bool
 		after  func(T) bool

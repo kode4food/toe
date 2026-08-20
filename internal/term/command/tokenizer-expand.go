@@ -2,7 +2,6 @@ package command
 
 import "strings"
 
-// delimiterPair is the opening and closing byte of an expansion's delimiters
 type delimiterPair struct {
 	open  byte
 	close byte

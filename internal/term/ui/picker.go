@@ -171,6 +171,8 @@ type (
 		ID   view.DocumentId
 	}
 
+	// PickerAcceptAction is what accepting an item does with the pane it
+	// opens into, such as replacing it or splitting
 	PickerAcceptAction int
 
 	// MatchResult is a source's verdict on one item: its rank against the

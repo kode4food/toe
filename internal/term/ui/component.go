@@ -73,14 +73,10 @@ type (
 		dismissOverlay() (EventResult, tea.Cmd)
 	}
 
-	// dismissibleOverlay is embedded by BufferOverlayComponent implementers
-	// to reuse the default overlay dismissal behavior
 	dismissibleOverlay struct {
 		overlayBuf
 	}
 
-	// overlayBuf is embedded by BufferOverlayComponent implementers to
-	// reuse their paint buffer across frames instead of reallocating it
 	overlayBuf struct {
 		buf      *tui.Buffer
 		dirty    bool

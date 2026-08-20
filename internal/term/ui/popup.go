@@ -16,11 +16,10 @@ type popup struct {
 }
 
 const (
-	// one column of content padding inside every popup border
 	overlayPadX = 1
 
-	// the bottom row a centered overlay stays clear of: the bottom rigtht
-	// pane's statusline, which carries maximized, register, and macro state
+	// the bottom row a centered overlay stays clear of: the bottom right pane's
+	// statusline, which carries maximized, register, and macro state
 	overlayKeepClear = 1
 )
 

@@ -6,9 +6,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// docState tracks, per document, which servers are attached, whether didOpen
-// has been sent (or is still pending an in-flight open), and the last
-// pull-diagnostics result ID per provider
 type docState struct {
 	sync.RWMutex
 	serverNames map[view.DocumentId][]string

@@ -2,8 +2,6 @@ package core
 
 import "unicode/utf8"
 
-// stringSplit is a string divided at a position, into the part before the split
-// and the part from the split onward
 type stringSplit struct {
 	before string
 	after  string

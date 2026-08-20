@@ -3,12 +3,16 @@ package tui
 import "github.com/kode4food/toe/internal/geom"
 
 type (
+	// Cell is one screen position: its grapheme and how to draw it. Skip marks
+	// the trailing half of a wide grapheme, which the renderer passes over
 	Cell struct {
 		Symbol string
 		Style  Style
 		Skip   bool
 	}
 
+	// Buffer is a fixed-size grid of cells the renderer draws into and diffs
+	// against the previous frame
 	Buffer struct {
 		cells       []Cell
 		lastANSILen int
@@ -16,9 +20,8 @@ type (
 	}
 )
 
-// asciiPrintable holds the printable ASCII bytes in order, starting at space.
-// Slicing one byte out of it yields a string that shares this backing array,
-// so cell symbols for ASCII content are produced without allocation
+// slicing one byte out of asciiPrintable yields a string sharing this backing
+// array, so ASCII cell symbols are produced without allocation
 const asciiPrintable = "" +
 	` !"#$%&'()*+,-./0123456789:;<=>?` +
 	`@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_` +

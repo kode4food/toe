@@ -2,8 +2,6 @@ package view
 
 import "github.com/kode4food/toe/internal/core"
 
-// insertAccum holds the pre-insert state and the composed changeset for the
-// current insert-mode session
 type insertAccum struct {
 	oldState core.State
 	changes  core.ChangeSet

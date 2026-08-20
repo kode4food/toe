@@ -1,6 +1,5 @@
 package core
 
-// paragraphLines is a document and its line count, for blank-line tests
 type paragraphLines struct {
 	doc       Rope
 	lineCount int

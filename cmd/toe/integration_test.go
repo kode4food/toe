@@ -19,9 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// tui drives a toe process running inside a pseudo-terminal. Output is fed into
-// a virtual terminal emulator so tests assert against the rendered screen
-// rather than the raw escape stream, which only carries cell deltas
+// tui drives a toe process in a pseudo-terminal, feeding its output through an
+// emulator so tests assert on the rendered screen, not the raw cell deltas
 type tui struct {
 	t    *testing.T
 	cmd  *exec.Cmd
@@ -41,9 +40,8 @@ const (
 	termCols = 80
 	termRows = 24
 
-	// escPause must comfortably exceed the terminal reader's 50ms escape
-	// timeout, or keys sent after a bare escape are read as part of an
-	// alt-modified sequence
+	// must comfortably exceed the terminal reader's 50ms escape timeout, or a
+	// key sent after a bare escape is read as an alt-modified sequence
 	escPause = 200 * time.Millisecond
 )
 
@@ -467,15 +465,12 @@ func (tt *tui) resize(size pty.Winsize) {
 	time.Sleep(escPause)
 }
 
-// escape sends a bare escape key and waits out the escape timeout
 func (tt *tui) escape() {
 	tt.t.Helper()
 	tt.send("\x1b")
 	time.Sleep(escPause)
 }
 
-// waitFor polls the emulated screen until it contains the wanted substring or
-// the timeout expires
 func (tt *tui) waitFor(want string) {
 	tt.t.Helper()
 	deadline := time.Now().Add(waitTimeout)
@@ -488,9 +483,8 @@ func (tt *tui) waitFor(want string) {
 	tt.t.Fatalf("timed out waiting for %q; screen:\n%s", want, tt.screen())
 }
 
-// waitForCount polls until want appears on screen exactly n times, needed
-// when the wanted text already exists and the action changes its count
-// (e.g. closing a split that duplicated a document)
+// waitForCount polls until want appears exactly n times, for actions that
+// change a count rather than introduce text (closing a duplicating split)
 func (tt *tui) waitForCount(want string, n int) {
 	tt.t.Helper()
 	deadline := time.Now().Add(waitTimeout)
@@ -508,8 +502,6 @@ func (tt *tui) waitForCount(want string, n int) {
 	)
 }
 
-// waitFileContent polls a file on disk until it holds the wanted content
-// or the timeout expires
 func (tt *tui) waitFileContent(path, want string) {
 	tt.t.Helper()
 	deadline := time.Now().Add(waitTimeout)
@@ -529,8 +521,6 @@ func (tt *tui) waitFileContent(path, want string) {
 	)
 }
 
-// quit exits the editor from normal mode and waits for a clean process
-// exit
 func (tt *tui) quit() {
 	tt.t.Helper()
 	tt.send(":quit!\r")

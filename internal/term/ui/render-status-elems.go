@@ -12,7 +12,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// statusElemFn renders one indicator from the row's context
 type statusElemFn func(*statusElemCtx) statusElem
 
 var (

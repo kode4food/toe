@@ -263,8 +263,6 @@ func (a *App) baseOptions() map[string]string {
 	return a.baseOpts
 }
 
-// reloadConfig re-applies the config files, re-resolves the base options they
-// establish, and reloads language-server config when a session is attached
 func (a *App) reloadConfig() error {
 	if err := a.applyConfigFiles(); err != nil {
 		return err

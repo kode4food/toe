@@ -10,8 +10,6 @@ import (
 )
 
 type (
-	// statusRow lays out a single row of widgets, filling from both edges and
-	// shedding unpinned ones from the middle when the row runs out of space
 	statusRow struct {
 		at        geom.Point
 		width     int
@@ -20,7 +18,6 @@ type (
 		right     []statusElem
 	}
 
-	// statusElem is a single rendered piece of a status row
 	statusElem struct {
 		text    string
 		style   tui.Style

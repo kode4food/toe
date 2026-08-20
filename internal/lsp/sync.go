@@ -20,7 +20,6 @@ type (
 		Text       string
 	}
 
-	// editedText is a document's text on both sides of an edit
 	editedText struct {
 		before core.Rope
 		after  core.Rope

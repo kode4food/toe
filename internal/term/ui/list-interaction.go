@@ -6,8 +6,6 @@ import (
 	"github.com/kode4food/toe/internal/geom"
 )
 
-// listScroll is the scroll state of a fixed-height list viewport: a cursor and
-// a scroll offset over count items, rows of which are visible
 type listScroll struct {
 	scroll int
 	cursor int

@@ -28,8 +28,6 @@ var completionKindIcons = map[string]string{
 	"enum_member": "\ueb5e", // '' - symbol-enum-member: enum-member icon
 }
 
-// completionKindAscii maps completion kinds to short labels for terminals
-// without Nerd Font glyphs
 var completionKindAscii = map[string]string{
 	"text":        "Txt",
 	"function":    "Fun",

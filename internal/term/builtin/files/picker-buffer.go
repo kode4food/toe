@@ -11,10 +11,12 @@ import (
 )
 
 type (
+	// BufferPickerOptions is the buffer picker's own configuration
 	BufferPickerOptions struct {
 		StartPosition PickerStartPosition `toml:"start-position"`
 	}
 
+	// PickerStartPosition is where the cursor lands when a picker opens
 	PickerStartPosition string
 
 	bufferPickerSource struct {

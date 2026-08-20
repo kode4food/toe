@@ -38,8 +38,6 @@ type (
 		lastReg      rune
 	}
 
-	// styleKey identifies the theme+mode combination for cached styles
-	// styles were built for
 	styleKey struct {
 		theme string
 		mode  view.Mode

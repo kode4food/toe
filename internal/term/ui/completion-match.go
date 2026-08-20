@@ -11,7 +11,6 @@ import (
 )
 
 type (
-	// queryMatch is the text being matched and the query it is matched against
 	queryMatch struct {
 		text  string
 		query string

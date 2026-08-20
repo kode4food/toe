@@ -13,7 +13,6 @@ type (
 		colStart int
 	}
 
-	// renderedCell stores plain text and style for deferred ANSI rendering
 	renderedCell struct {
 		text  string
 		width int

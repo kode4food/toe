@@ -12,7 +12,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// shellRun is a command line and the text piped to it on stdin
 type shellRun struct {
 	command string
 	input   string

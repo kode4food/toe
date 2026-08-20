@@ -7,16 +7,20 @@ import (
 )
 
 type (
+	// AutoSave is which events save a modified document without being asked
 	AutoSave struct {
 		FocusLost  *bool              `toml:"focus-lost"`
 		AfterDelay AutoSaveAfterDelay `toml:"after-delay"`
 	}
 
+	// AutoSaveAfterDelay is the idle-timeout save trigger and its timeout in
+	// milliseconds
 	AutoSaveAfterDelay struct {
 		Enable  *bool `toml:"enable"`
 		Timeout *int  `toml:"timeout"`
 	}
 
+	// Search is how document searches treat case and end-of-document
 	Search struct {
 		SmartCase  *bool `toml:"smart-case"`
 		WrapAround *bool `toml:"wrap-around"`

@@ -15,8 +15,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// renderPass bundles the state needed for a single render pass so every render
-// helper receives it without passing cx and ec separately
 type renderPass struct {
 	editor  *EditorComponent
 	context *Context
@@ -35,7 +33,6 @@ const (
 // marks a hint that opens another menu, a command's row is blank here
 const hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
 
-// splitSepIntersectionChars is an immutable separator glyph lookup
 var splitSepIntersectionChars = [...]string{
 	tui.BorderH, tui.BorderH, tui.BorderH, tui.BorderV,
 	tui.BorderH, tui.BorderH, tui.BorderH, tui.BorderMR,

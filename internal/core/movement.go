@@ -38,7 +38,6 @@ type (
 		prefixWidth int
 	}
 
-	// charIter is a bidirectional rune iterator over a Rope's characters
 	charIter struct {
 		runes []rune
 		pos   int

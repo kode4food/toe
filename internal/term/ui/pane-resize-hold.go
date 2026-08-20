@@ -17,8 +17,6 @@ type (
 	resizeSettleMsg struct{ generation int }
 )
 
-// resizeSettleDelay is how long the layout must be still before the held panes
-// are told their new size
 const resizeSettleDelay = 120 * time.Millisecond
 
 func (e *EditorComponent) settlePaneResizeCmd(cx *Context) tea.Cmd {

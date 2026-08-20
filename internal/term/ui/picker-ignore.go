@@ -13,12 +13,15 @@ import (
 )
 
 type (
+	// PickerIgnore decides whether a walked path is hidden from a picker,
+	// applying the ignore rules that govern one directory
 	PickerIgnore struct {
 		base    string
 		dir     string
 		matcher *gitignore.GitIgnore
 	}
 
+	// PickerIgnoreOptions is which classes of path a picker walk includes
 	PickerIgnoreOptions struct {
 		Hidden      bool
 		Parents     bool
@@ -32,14 +35,11 @@ type (
 		Path string
 	}
 
-	// ignoreCandidate is a path under test, both workspace-relative and full
 	ignoreCandidate struct {
 		rel  string
 		full string
 	}
 
-	// ignoreFile is a rules file and the directory its patterns are anchored
-	// to
 	ignoreFile struct {
 		dir  string
 		path string

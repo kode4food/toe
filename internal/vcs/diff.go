@@ -39,7 +39,6 @@ func Diff(sides DiffSides) []view.DiffHunk {
 	})
 }
 
-// diffLinesArgs is the same two sides, already split into lines
 type diffLinesArgs struct {
 	base []string
 	doc  []string

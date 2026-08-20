@@ -13,7 +13,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// stubController is a minimal LanguageServerController for format tests
 type stubController struct {
 	view.LanguageServerController
 	formatDocErr error

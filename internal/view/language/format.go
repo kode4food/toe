@@ -1,5 +1,7 @@
 package language
 
+// TextFormat is the resolved layout of a document's text: the width to wrap at,
+// how tabs measure, and how wrapped rows are indicated
 type TextFormat struct {
 	ViewportWidth       int
 	TabWidth            int

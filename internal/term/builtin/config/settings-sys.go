@@ -135,8 +135,6 @@ func themeCmds(r *command.Registry) []command.Command {
 	}
 }
 
-// the canonical name of a theme that exists, so a bad name is rejected wherever
-// it is set rather than left to break rendering later
 func resolveTheme(name string) (string, error) {
 	if name == themeDefaultAlias {
 		name = view.DefaultTheme

@@ -327,9 +327,6 @@ func TestRun(t *testing.T) {
 	})
 }
 
-// workspace returns a temp directory that is the current directory, holds a
-// git marker so it reads as a workspace root, and has private trust and config
-// stores
 func workspace(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -339,7 +336,6 @@ func workspace(t *testing.T) string {
 	return dir
 }
 
-// start builds an app over dir and brings it up, stopping it on cleanup
 func start(t *testing.T, dir string, args ...string) *app.App {
 	t.Helper()
 	a, err := app.New(args, dir)
@@ -349,7 +345,6 @@ func start(t *testing.T, dir string, args ...string) *app.App {
 	return a
 }
 
-// writeWorkspaceFile writes a file into dir's workspace directory
 func writeWorkspaceFile(t *testing.T, dir, name, src string) string {
 	t.Helper()
 	wdir := filepath.Join(dir, loader.WorkspaceDirName)
@@ -359,7 +354,6 @@ func writeWorkspaceFile(t *testing.T, dir, name, src string) string {
 	return path
 }
 
-// writeUserInitFile writes init.ale into a private user config directory
 func writeUserInitFile(t *testing.T, src string) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -371,7 +365,6 @@ func writeUserInitFile(t *testing.T, src string) string {
 	return path
 }
 
-// saveSessionFor writes a session for dir holding the given paths
 func saveSessionFor(t *testing.T, dir string, paths ...string) {
 	t.Helper()
 	e := view.NewEditor(dir)

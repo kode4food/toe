@@ -7,7 +7,6 @@ import (
 	"github.com/kode4food/toe/internal/view/config"
 )
 
-// revisedText is a document's text before and after an external change
 type revisedText struct {
 	before []rune
 	after  []rune

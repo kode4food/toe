@@ -33,14 +33,11 @@ type (
 		file bool
 	}
 
-	// walkedFile is a file the walk reached, named both absolutely and
-	// relative to the walk root
 	walkedFile struct {
 		path string
 		rel  string
 	}
 
-	// rootedPath is a path together with the root it is resolved against
 	rootedPath struct {
 		path string
 		root string

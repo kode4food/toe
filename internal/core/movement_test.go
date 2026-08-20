@@ -8,7 +8,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-// wordTest encodes one word-motion test case
 type wordTest struct {
 	text     string
 	count    int

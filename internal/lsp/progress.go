@@ -9,8 +9,6 @@ import (
 )
 
 type (
-	// progressState tracks in-flight work-done progress notifications, keyed
-	// by server name and then by progress token
 	progressState struct {
 		sync.RWMutex
 		byServer map[string]map[string]progressEntry

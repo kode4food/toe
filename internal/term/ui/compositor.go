@@ -22,12 +22,10 @@ type (
 		bounds  geom.Area
 	}
 
-	// highlightRefresher re-issues its LSP symbol highlight on demand
 	highlightRefresher interface {
 		documentHighlightCmd(*Context) tea.Cmd
 	}
 
-	// previewImager renders an image preview and can redraw it each frame
 	previewImager interface {
 		previewImageCmd(*Context, geom.Size) tea.Cmd
 		hasPreviewImage(*Context, geom.Size) bool

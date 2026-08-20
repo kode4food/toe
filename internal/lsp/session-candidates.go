@@ -6,8 +6,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// candidateState holds id-keyed results from completion, code-action, and
-// document-link requests, kept around for a matching resolve/apply call
 type candidateState struct {
 	sync.RWMutex
 	completions map[string]completionCandidate

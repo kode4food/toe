@@ -10,6 +10,8 @@ import (
 	"github.com/kode4food/toe/internal/tui"
 )
 
+// Theme maps highlight and UI scope names to the styles that render them,
+// falling back to parent scopes when an exact name is absent
 type Theme struct {
 	name          string
 	styles        map[string]tui.Style

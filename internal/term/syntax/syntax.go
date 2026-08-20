@@ -23,7 +23,6 @@ type (
 		rawInject map[string][]byte
 	}
 
-	// langEntry holds the compiled parser and query for a single language
 	langEntry struct {
 		parser         *sitter.Parser
 		query          *sitter.Query

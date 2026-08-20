@@ -19,8 +19,6 @@ import (
 )
 
 type (
-	// serverState owns the attached language-server clients, the language
-	// config they were started from, and each server's workspace root
 	serverState struct {
 		sync.RWMutex
 		starting  sync.Mutex

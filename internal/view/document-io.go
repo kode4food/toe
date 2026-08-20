@@ -8,7 +8,6 @@ import (
 	"github.com/kode4food/toe/internal/core"
 )
 
-// saveTarget is a file being written and the directory its temporaries go in
 type saveTarget struct {
 	path string
 	dir  string

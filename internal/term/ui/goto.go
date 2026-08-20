@@ -83,8 +83,6 @@ func GotoLines(lines *core.Span) GotoSelector {
 	}
 }
 
-// acceptDocumentID shows the document by id, splitting per accept, and
-// records the departed position on the jump list
 func acceptDocumentID(
 	e *view.Editor, id view.DocumentId, accept PickerAcceptAction,
 ) *view.View {

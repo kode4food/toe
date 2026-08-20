@@ -53,7 +53,6 @@ type (
 		score int
 	}
 
-	// pickerBuilder constructs a sub-picker from the submitted prompt text
 	pickerBuilder func(*view.Editor, string) (*Picker, error)
 
 	promptKind uint8

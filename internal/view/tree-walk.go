@@ -22,6 +22,7 @@ func (t *Tree) WalkSeparators(fn func(Separator)) {
 	}
 }
 
+// SeparatorAtRes identifies a separator and its owning child
 type SeparatorAtRes struct {
 	ContainerID Id
 	ChildIdx    int
@@ -30,7 +31,6 @@ type SeparatorAtRes struct {
 
 // SeparatorAt returns the container ID, left-child index, and layout of the
 // separator hit by the click at tree column x, tree row y (bufferline excluded)
-// SeparatorAtRes identifies a separator and its owning child
 func (t *Tree) SeparatorAt(at geom.Point) (SeparatorAtRes, bool) {
 	if t.IsEmpty() || t.Maximized() {
 		return SeparatorAtRes{}, false

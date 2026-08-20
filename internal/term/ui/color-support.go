@@ -9,7 +9,6 @@ import (
 // vte 0.36 is the first release with 24-bit color support
 const minTrueColorVTE = 3600
 
-// add new terminals here as their support is confirmed
 var trueColorTerms = []termMatch{
 	{env: "COLORTERM", value: "truecolor"},
 	{env: "COLORTERM", value: "24bit"},

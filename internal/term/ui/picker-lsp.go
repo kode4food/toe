@@ -20,7 +20,6 @@ type (
 		request locationRequest
 	}
 
-	// locationRequest fetches the locations a location picker lists
 	locationRequest func() ([]view.Location, error)
 
 	lspSymbolSource struct {

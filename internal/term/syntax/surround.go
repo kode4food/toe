@@ -46,7 +46,6 @@ func FindSurroundPairFor(args FindSurroundPairForArgs) (Range, bool) {
 	})
 }
 
-// findSurroundPair: isEnclose decides which nodes count as an enclosing pair
 func findSurroundPair(
 	args FindSurroundPairArgs, isEnclose func(*sitter.Node) bool,
 ) (Range, bool) {

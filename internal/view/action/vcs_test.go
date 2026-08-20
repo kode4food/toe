@@ -13,7 +13,6 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-// stubVC serves canned diff state for one document
 type stubVC struct {
 	hunks []view.DiffHunk
 	base  string

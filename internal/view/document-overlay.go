@@ -135,7 +135,6 @@ func (d *Document) remapOverlays(cs core.ChangeSet) {
 	}
 }
 
-// setOverlaySlice reports whether field's content actually changed
 func setOverlaySlice[T comparable](
 	state *overlayState, field *[]T, items []T,
 ) bool {
@@ -153,7 +152,6 @@ func setOverlaySlice[T comparable](
 	return true
 }
 
-// clearOverlaySlice reports whether field held anything to clear
 func clearOverlaySlice[T any](state *overlayState, field *[]T) bool {
 	state.Lock()
 	defer state.Unlock()
@@ -168,7 +166,6 @@ func getOverlaySlice[T any](state *overlayState, field *[]T) []T {
 	return slices.Clone(*field)
 }
 
-// setOverlayMap reports whether vid's entry actually changed
 func setOverlayMap[T comparable](
 	state *overlayState, m map[Id][]T, vid Id, items []T,
 ) bool {
@@ -186,7 +183,6 @@ func setOverlayMap[T comparable](
 	return true
 }
 
-// clearOverlayMap reports whether vid had an entry to clear
 func clearOverlayMap[T any](state *overlayState, m map[Id][]T, vid Id) bool {
 	state.Lock()
 	defer state.Unlock()
@@ -195,7 +191,6 @@ func clearOverlayMap[T any](state *overlayState, m map[Id][]T, vid Id) bool {
 	return ok
 }
 
-// clearAllOverlayMap reports whether m held any entries to clear
 func clearAllOverlayMap[T any](state *overlayState, m map[Id][]T) bool {
 	state.Lock()
 	defer state.Unlock()

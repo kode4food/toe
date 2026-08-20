@@ -36,8 +36,6 @@ func embeddedTextobjectQuery(lang string) ([]byte, bool) {
 	}, map[string]bool{})
 }
 
-// resolveQueryDirArgs names an embedded query directory and the language
-// within it
 type resolveQueryDirArgs struct {
 	dir  string
 	lang string

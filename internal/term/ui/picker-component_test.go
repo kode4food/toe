@@ -15,9 +15,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// fixedPickerSource is a deterministic, synchronous picker source: a fixed list
-// of items in a known order, each previewing distinct content. The preview of
-// the selected item reveals the selection, independent of the scroll position
 type fixedPickerSource struct {
 	items []*ui.PickerItem
 	title string

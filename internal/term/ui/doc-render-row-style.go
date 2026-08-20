@@ -8,7 +8,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// styleOverlay is a base style and the style being layered onto it
 type styleOverlay struct {
 	base    tui.Style
 	overlay tui.Style

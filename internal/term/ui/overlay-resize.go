@@ -2,9 +2,8 @@ package ui
 
 import "github.com/kode4food/toe/internal/geom"
 
-// a border drag that rescales a centered overlay, measured as a delta from the
-// scales in effect when the drag began, so the grabbed border tracks the
-// pointer whatever the overlay is anchored to
+// scales are a delta from those in effect when the drag began, so the grabbed
+// border tracks the pointer whatever the overlay is anchored to
 type overlayDrag struct {
 	from        geom.Point
 	startWidth  float64
@@ -18,7 +17,6 @@ const (
 	maxOverlayScale = 1.0
 )
 
-// arms the drag only when the point lands on a border
 func (d *overlayDrag) begin(bounds geom.Area, at geom.Point) bool {
 	if !bounds.Contains(at) {
 		return false

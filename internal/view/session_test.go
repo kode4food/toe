@@ -16,8 +16,6 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// fakePane stands in for a non-View pane (like a terminal) that persists
-// itself as a reopenable session slot
 type fakePane struct {
 	id     view.Id
 	editor *view.Editor

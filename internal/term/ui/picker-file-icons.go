@@ -16,7 +16,6 @@ type (
 		color pickerFileColor
 	}
 
-	// pickerFileColor is the theme scope an icon draws its foreground from
 	pickerFileColor string
 )
 

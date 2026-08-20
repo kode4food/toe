@@ -80,8 +80,6 @@ type (
 		diagnostics []Diagnostic
 	}
 
-	// renderState tracks, per view, whether anything render-relevant has
-	// changed since ConsumeDirty last checked
 	renderState struct {
 		sync.Mutex
 		dirty map[Id]bool

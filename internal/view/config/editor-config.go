@@ -12,6 +12,8 @@ import (
 )
 
 type (
+	// EditorConfig is the settings an .editorconfig file contributes, each nil
+	// field left to the editor's own configuration
 	EditorConfig struct {
 		IndentStyle            *core.IndentStyle
 		TabWidth               *int

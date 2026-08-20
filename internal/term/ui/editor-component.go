@@ -15,6 +15,8 @@ import (
 )
 
 type (
+	// EditorComponent renders the pane tree and drives the editor's key, mouse,
+	// and animation handling for one frame at a time
 	EditorComponent struct {
 		keys       keyState
 		mouse      mouseState

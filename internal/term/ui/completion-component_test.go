@@ -300,12 +300,41 @@ func TestCompletionComponent(t *testing.T) {
 
 		assert.Contains(t, out, "Println")
 
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
 		assert.Equal(t, "Println", doc.Text().String())
 		assert.Equal(t, "Println", ctl.item.Label)
+	})
+
+	t.Run("enter inserts a newline instead", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		ctl := &completionController{
+			editor: e,
+			items: []*view.CompletionItem{
+				{Label: "Printf", Insert: "Printf", Kind: "function"},
+				{Label: "Println", Insert: "Println", Kind: "function"},
+			},
+		}
+		e.SetLanguageServerController(ctl)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_, err := builtin.Register(m, km)
+		assert.NoError(t, err)
+		m = resize(m, 80, 24)
+
+		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
+		assert.Contains(t, stripANSI(m.View().Content), "Println")
+
+		m = sendSpecial(m, tea.KeyEnter)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+
+		assert.Equal(t, "\n", doc.Text().String())
+		assert.Empty(t, ctl.item.Label)
+		assert.NotContains(t, stripANSI(m.View().Content), "Println")
 	})
 
 	t.Run("accepts through keymap action", func(t *testing.T) {
@@ -929,7 +958,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "item_j", ctl.item.Label)
 	})
@@ -956,7 +985,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendSpecialText(m, tea.KeyPgDown, "pgdown")
 		m = sendSpecialText(m, tea.KeyPgUp, "pgup")
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "item_a", ctl.item.Label)
 	})
@@ -1006,7 +1035,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendSpecialText(m, tea.KeyEnd, "end")
 		m = sendSpecialText(m, tea.KeyHome, "home")
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "Alpha", ctl.item.Label)
 	})
@@ -1031,7 +1060,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendModifiedAndFeed(m, 'n', tea.ModCtrl)
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "Beta", ctl.item.Label)
 	})
@@ -1056,7 +1085,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendModifiedAndFeed(m, 'p', tea.ModCtrl)
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "Gamma", ctl.item.Label)
 	})
@@ -1153,7 +1182,7 @@ func TestCompletionComponent(t *testing.T) {
 		assert.Equal(t, "", doc.Text().String())
 		assert.Empty(t, ctl.item.Label)
 
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "Beta", doc.Text().String())
 		assert.Equal(t, "Beta", ctl.item.Label)
@@ -1186,7 +1215,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		assert.Contains(t, out, "itemM")
 
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 		assert.Equal(t, "itemA", ctl.item.Label)
 	})
 
@@ -1364,7 +1393,7 @@ func TestCompletionComponent(t *testing.T) {
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendKey(m, 'P')
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "Println", ctl.item.Label)
 	})
@@ -1390,7 +1419,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		m = sendSpecial(m, tea.KeyDown)
 		m = sendKey(m, 'C')
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "Clear", ctl.item.Label)
 	})
@@ -1514,7 +1543,7 @@ func TestCompletionComponent(t *testing.T) {
 		m = resize(m, 80, 24)
 
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		_ = sendSpecial(m, tea.KeyEnter)
+		_ = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, "error: apply failed", testutil.StatusMsg(e))
 	})

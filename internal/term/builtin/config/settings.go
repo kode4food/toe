@@ -18,7 +18,6 @@ type uiSection struct {
 	Theme  string `toml:"theme"`
 	Editor struct {
 		Mouse             *bool            `toml:"mouse"`
-		MiddleClickPaste  *bool            `toml:"middle-click-paste"`
 		NerdFonts         *bool            `toml:"nerd-fonts"`
 		Insecure          *bool            `toml:"insecure"`
 		EditorConfig      *bool            `toml:"editor-config"`
@@ -103,14 +102,6 @@ func SettingsModule(r *command.Registry) command.Module {
 					e.Options().Mouse = v
 				},
 			).WithDoc("Enable mouse mode"),
-			kit.EditorBoolOption("middle-click-paste",
-				func(e *view.Editor) bool {
-					return e.Options().MiddleClickPaste
-				},
-				func(e *view.Editor, v bool) {
-					e.Options().MiddleClickPaste = v
-				},
-			).WithDoc("Middle click paste support"),
 			kit.EditorBoolOption("nerd-fonts",
 				func(e *view.Editor) bool {
 					return e.Options().NerdFonts
@@ -228,9 +219,6 @@ func SettingsModule(r *command.Registry) command.Module {
 				opts := e.Options()
 				opts.Theme = cmp.Or(cfg.Theme, view.DefaultTheme)
 				opts.Mouse = kit.BoolOr(cfg.Editor.Mouse, true)
-				opts.MiddleClickPaste = kit.BoolOr(
-					cfg.Editor.MiddleClickPaste, true,
-				)
 				opts.NerdFonts = kit.BoolOr(cfg.Editor.NerdFonts, true)
 				opts.Insecure = kit.BoolOr(cfg.Editor.Insecure, false)
 				opts.EditorConfig = kit.BoolOr(cfg.Editor.EditorConfig, true)

@@ -23,7 +23,6 @@
   "option.editor-config.docstring": "Lire la configuration des fichiers EditorConfig",
   "option.file-watch.docstring": "Détecter les modifications externes",
   "option.insecure.docstring": "Désactiver le contrôle de confiance de l’espace de travail",
-  "option.middle-click-paste.docstring": "Coller au clic du milieu",
   "option.mouse.docstring": "Activer la souris",
   "option.nerd-fonts.docstring": "Utiliser les glyphes Nerd Font",
   "option.statusline.left.docstring": "Éléments de barre d’état alignés à gauche",

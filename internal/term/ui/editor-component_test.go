@@ -80,8 +80,8 @@ func TestEditorKeys(t *testing.T) {
 	})
 }
 
-func TestMouseMiddlePaste(t *testing.T) {
-	t.Run("pastes at clicked position", func(t *testing.T) {
+func TestMouseMiddleClick(t *testing.T) {
+	t.Run("leaves the document alone", func(t *testing.T) {
 		e := editorWithText(t, "abcd")
 		clip := testutil.NewFakeClipboard()
 		clip.Primary = "XY"
@@ -90,60 +90,6 @@ func TestMouseMiddlePaste(t *testing.T) {
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
 			X: 9, Y: 0, Button: tea.MouseMiddle,
-		})
-		_ = m2
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "abXYcd", doc.Text().String())
-		assert.Equal(t, 2, testutil.CursorPos(t, e))
-	})
-
-	t.Run("disabled leaves document unchanged", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		clip := testutil.NewFakeClipboard()
-		clip.Primary = "XY"
-		e.SetClipboard(clip)
-		e.Options().MiddleClickPaste = false
-		m := renderedModel(e)
-
-		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: 9, Y: 0, Button: tea.MouseMiddle,
-		})
-		_ = m2
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "abcd", doc.Text().String())
-	})
-
-	t.Run("alt replaces selection", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		clip := testutil.NewFakeClipboard()
-		clip.Primary = "XY"
-		e.SetClipboard(clip)
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 1,
-			Head:   3,
-		}}, 0)
-		m := renderedModel(e)
-
-		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: 0, Y: 0, Button: tea.MouseMiddle, Mod: tea.ModAlt,
-		})
-		_ = m2
-
-		doc := e.FocusedDocument()
-		assert.Equal(t, "aXYd", doc.Text().String())
-	})
-
-	t.Run("outside content is ignored", func(t *testing.T) {
-		e := editorWithText(t, "abcd")
-		clip := testutil.NewFakeClipboard()
-		clip.Primary = "XY"
-		e.SetClipboard(clip)
-		m := renderedModel(e)
-
-		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: 2, Y: 7, Button: tea.MouseMiddle,
 		})
 		_ = m2
 

@@ -15,10 +15,9 @@ type Options struct {
 	ScrollLines int
 	InactiveDim int
 
-	Mouse            bool
-	MiddleClickPaste bool
-	NerdFonts        bool
-	Shell            []string
+	Mouse     bool
+	NerdFonts bool
+	Shell     []string
 
 	AutoSaveFocusLost    bool
 	AutoSaveAfterDelay   bool
@@ -136,7 +135,6 @@ func defaultOptions() Options {
 		ScrollLines:          DefaultScrollLines,
 		InactiveDim:          DefaultInactiveDim,
 		Mouse:                true,
-		MiddleClickPaste:     true,
 		NerdFonts:            true,
 		Shell:                DefaultShell(),
 		AtomicSave:           true,

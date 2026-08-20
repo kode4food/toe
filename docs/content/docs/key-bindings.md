@@ -293,7 +293,8 @@ While the completion popup is open:
 
 | Key | Action |
 |-----|--------|
-| `Return` / `Tab` | Accept completion |
+| `Tab` | Accept completion |
+| `Return` | Insert a newline and close the popup |
 | `Escape` | Cancel completion |
 | `↑` / `Ctrl+p` | Previous completion |
 | `↓` / `Ctrl+n` | Next completion |
@@ -301,6 +302,17 @@ While the completion popup is open:
 | `PageDown` | Next completion page |
 | `Home` | First completion |
 | `End` | Last completion |
+
+## Mouse
+
+In a document pane, with `mouse` enabled:
+
+| Action | Result |
+|--------|--------|
+| Click | Focus the pane and move the cursor |
+| Drag | Select text; dragging past an edge scrolls |
+| `Alt` + click | Add a cursor at the click |
+| `Ctrl` + click | Goto definition of the symbol under the click |
 
 ## Windows and Splits
 
@@ -425,7 +437,7 @@ leader.
 
 ## Prompts
 
-Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the centre of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does; `Tab` cycles them. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
+Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the centre of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does. Nothing is selected until you reach for it: `Tab` takes the top match into the input, the arrow keys highlight another one for `Tab` to take, and `Return` always submits the line as typed. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
 
 | Key | Action |
 |-----|--------|
@@ -439,8 +451,9 @@ Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the ce
 | `Alt+d` / `Ctrl+Delete` | Delete word after caret |
 | `Ctrl+u` | Delete to start |
 | `Ctrl+k` | Delete to end |
-| `Tab` / `Shift+Tab` | Next/previous completion |
-| `Return` | Submit |
+| `Tab` | Accept the highlighted completion, else the top match |
+| `↑` / `↓` / `Ctrl+p` / `Ctrl+n` | Highlight a completion |
+| `Return` | Submit the line as typed |
 | `Escape` | Cancel |
 
 ## Picker Navigation

@@ -122,6 +122,10 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	switch {
 	case msg.Mod&tea.ModAlt != 0:
 		newSel = prevSel.Push(core.PointRange(res.pos))
+	case msg.Mod&tea.ModCtrl != 0:
+		// a ctrl-click jumps from the clicked symbol, so it lands on it rather
+		// than extending a selection over it
+		newSel = core.PointSelection(res.pos)
 	case r.context.Editor.Mode() == view.ModeSelect:
 		// In select mode a click extends the primary selection rather than
 		// collapsing it, discarding any secondary selections
@@ -136,6 +140,10 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	}
 	action.ApplySelection(r.context.Editor, newSel)
 	res.view.EndFreeScroll()
+
+	if msg.Mod&tea.ModCtrl != 0 {
+		r.editor.gotoDefinition(r.context, r.context.Editor)
+	}
 }
 
 func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
@@ -211,20 +219,6 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	vCmd := vAxis.trigger(vEdge, clampedX, vAxis.schedule)
 	hCmd := hAxis.trigger(hEdge, clampedY, hAxis.schedule)
 	return tea.Batch(vCmd, hCmd)
-}
-
-func (r *renderPass) handleMouseMiddleRelease(at geom.Point, mod tea.KeyMod) {
-	if mod&tea.ModAlt != 0 {
-		action.PrimaryClipboardReplace(r.context.Editor)
-		return
-	}
-
-	res, ok := r.resolveClickPos(at)
-	if !ok {
-		return
-	}
-	action.ApplySelection(r.context.Editor, core.PointSelection(res.pos))
-	action.PastePrimaryClipboardBefore(r.context.Editor)
 }
 
 type resolveClickPosRes struct {

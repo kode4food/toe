@@ -47,7 +47,7 @@ func CompletionModule(model Model) command.Module {
 				Name:      CompletionAcceptAction,
 				DocString: "Accept completion",
 				Modes:     view.ModeCompletion,
-				Keys:      kit.Keys(kit.Ret, kit.Tab),
+				Keys:      kit.Keys(kit.Tab),
 			},
 			{
 				Name:      CompletionCancelAction,

@@ -23,7 +23,6 @@
   "option.editor-config.docstring": "Konfiguration aus EditorConfig-Dateien lesen",
   "option.file-watch.docstring": "Externe Dateiänderungen erkennen",
   "option.insecure.docstring": "Vertrauensprüfung des Arbeitsbereichs deaktivieren",
-  "option.middle-click-paste.docstring": "Einfügen per mittlerer Maustaste",
   "option.mouse.docstring": "Mausunterstützung aktivieren",
   "option.nerd-fonts.docstring": "Nerd-Font-Glyphen für Symbole nutzen",
   "option.statusline.left.docstring": "Links ausgerichtete Statusleistenelemente",

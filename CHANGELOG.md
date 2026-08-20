@@ -2,6 +2,14 @@
 
 Notable changes to toe.
 
+## 0.3.3
+
+### Interface
+
+- Added `Ctrl` + click to jump to the definition of the symbol under the pointer
+- Completions no longer start selected: `Tab` takes the top match or the highlighted one, and `Return` submits the prompt or inserts a newline instead of accepting
+- Removed middle-click paste and its `middle-click-paste` option
+
 ## 0.3.2
 
 ### Interface

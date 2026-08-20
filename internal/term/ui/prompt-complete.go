@@ -18,8 +18,8 @@ const (
 	compGap     = 2
 )
 
-// recalculateCompletion refreshes the list, selecting the first item so it can
-// be accepted straight away, the way the code completion popup behaves
+// recalculateCompletion refreshes the list, leaving it unselected so the typed
+// line stands on its own until Tab or an arrow reaches for a suggestion
 func (p *PromptComponent) recalculateCompletion(cx *Context) {
 	p.completion.done = true
 	p.completion.list = listScroll{cursor: -1}
@@ -28,10 +28,7 @@ func (p *PromptComponent) recalculateCompletion(cx *Context) {
 		return
 	}
 	p.completion.items = completeCommandLine(cx, p.buf)
-	if len(p.completion.items) > 0 {
-		p.completion.list.count = len(p.completion.items)
-		p.completion.list.cursor = 0
-	}
+	p.completion.list.count = len(p.completion.items)
 }
 
 func (p *PromptComponent) changeCompletion(dir int) {
@@ -39,15 +36,20 @@ func (p *PromptComponent) changeCompletion(dir int) {
 		return
 	}
 	p.completion.list.count = len(p.completion.items)
+	// from an unselected list, stepping back wraps to the last item rather than
+	// to the one before it
+	if p.completion.list.cursor < 0 && dir < 0 {
+		p.completion.list.cursor = 0
+	}
 	p.completion.list.moveBy(dir)
 	p.ensureCompletionVisible()
 }
 
-// acceptCompletion reports whether it changed the input, so Enter submits what
-// is already typed in full rather than accepting it again
+// acceptCompletion takes the highlighted item, or the top match when nothing is
+// highlighted, and reports whether that changed the input
 func (p *PromptComponent) acceptCompletion() bool {
-	idx := p.completion.list.cursor
-	if idx < 0 || idx >= len(p.completion.items) {
+	idx := max(p.completion.list.cursor, 0)
+	if idx >= len(p.completion.items) {
 		return false
 	}
 	c := p.completion.items[idx]

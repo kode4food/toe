@@ -289,16 +289,13 @@ func (p *PromptComponent) handleKey(
 	case k.Code.Special == command.Escape:
 		return pop(nil)
 
-	// an open completion takes Enter first, so the same key accepts a
-	// suggestion and then submits the line it produced
-	case k.Code.Special == command.Enter,
-		k.Code.Special == command.Tab:
-		if p.acceptCompletion() {
-			return consumed()
-		}
-		if k.Code.Special == command.Tab {
-			return consumed()
-		}
+	case k.Code.Special == command.Tab:
+		p.acceptCompletion()
+		return consumed()
+
+	// Enter submits what is typed; only Tab reaches into the completions, so a
+	// line the user finished themselves is never completed over
+	case k.Code.Special == command.Enter:
 		return p.accept(cx, pop)
 
 	case k.Code.Special == command.Up,

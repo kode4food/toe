@@ -103,7 +103,6 @@ func TestDefaults(t *testing.T) {
 		for _, key := range []string{
 			"theme",
 			"mouse",
-			"middle-click-paste",
 			"nerd-fonts",
 			"insecure",
 			"editor-config",

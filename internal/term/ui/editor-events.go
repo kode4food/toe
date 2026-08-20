@@ -271,14 +271,8 @@ func (e *EditorComponent) handleMouseRelease(
 	if dispatchToPaneInput(cx, at, msg) {
 		return consumed(), e.documentHighlightCmd(cx)
 	}
-	switch msg.Button {
-	case tea.MouseLeft:
+	if msg.Button == tea.MouseLeft {
 		e.handleMouseLeftRelease(cx)
-	case tea.MouseMiddle:
-		if cx.Editor.Options().MiddleClickPaste {
-			r := &renderPass{editor: e, context: cx, size: e.size}
-			r.handleMouseMiddleRelease(at, msg.Mod)
-		}
 	}
 	return consumed(), e.documentHighlightCmd(cx)
 }

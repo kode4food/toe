@@ -310,7 +310,7 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Equal(t, ": match", promptText(m))
 		m = sendSpecial(m, tea.KeyUp)
 		m = sendSpecial(m, tea.KeyTab)
-		assert.Equal(t, ": match-b", promptText(m))
+		assert.Equal(t, ": match-a", promptText(m))
 
 		m = sendSpecial(m, tea.KeyEscape)
 		m = sendKey(m, ':')
@@ -333,7 +333,7 @@ func TestPromptCompletion(t *testing.T) {
 		assert.Equal(t, ": match-g", promptText(m))
 	})
 
-	t.Run("enter accepts, then submits", func(t *testing.T) {
+	t.Run("tab accepts, then enter submits", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -360,7 +360,7 @@ func TestPromptCompletion(t *testing.T) {
 
 		m = sendKey(m, ':')
 		m = sendKey(m, 'a')
-		m = sendSpecial(m, tea.KeyEnter)
+		m = sendSpecial(m, tea.KeyTab)
 
 		assert.Equal(t, ": alpha", promptText(m))
 		assert.False(t, ran)
@@ -368,6 +368,47 @@ func TestPromptCompletion(t *testing.T) {
 		m = sendSpecial(m, tea.KeyEnter)
 
 		assert.True(t, ran)
+	})
+
+	t.Run("enter submits the typed line", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
+		})
+		var got string
+		_ = km.Register("alpha", command.Command{
+			Run: func(_ *view.Editor, args *command.Args) command.Result {
+				got = args.Join(" ")
+				return command.Result{}
+			},
+			Modes:   view.ModeNormal,
+			Aliases: []string{"alpha"},
+			Signature: command.Signature{
+				Positionals: command.Positionals{Max: -1},
+				Completer: command.PositionalCompleter(
+					command.StaticCompleter("beta-long", "betamax"),
+				),
+			},
+		})
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = typeString(m, "alpha beta")
+		_ = m.View()
+		assert.Contains(t, stripANSI(m.View().Content), "beta-long")
+		m = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, "beta", got)
+		assert.Equal(t, "", promptText(m))
 	})
 
 	t.Run("ignores command args without completer", func(t *testing.T) {

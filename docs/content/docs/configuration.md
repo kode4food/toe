@@ -95,7 +95,6 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | Config key | Type | Default | Description |
 |--------|------|---------|-------------|
 | `mouse` | bool | `true` | Enable mouse support |
-| `middle-click-paste` | bool | `true` | Paste on middle-click |
 | `insecure` | bool | `false` | Disable workspace trust checks |
 | `editor-config` | bool | `true` | Respect `.editorconfig` files |
 | `auto-session` | bool | `true` | Save/restore session automatically |

@@ -155,7 +155,6 @@ func TestConfigDocumentOptions(t *testing.T) {
 func TestConfigOptions(t *testing.T) {
 	boolCases := []string{
 		"mouse",
-		"middle-click-paste",
 		"insecure",
 		"editor-config",
 		"auto-session",

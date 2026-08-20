@@ -24,7 +24,7 @@ const (
 
 // GotoDeclarationAction jumps to the declaration of the symbol at the cursor
 func (m Model) GotoDeclarationAction(e *view.Editor) {
-	m.gotoLocation(e,
+	m.component.gotoLocation(m.context, e,
 		i18n.Text(statusNoDeclarationKey),
 		view.LanguageServerController.GotoDeclaration,
 	)
@@ -32,15 +32,12 @@ func (m Model) GotoDeclarationAction(e *view.Editor) {
 
 // GotoDefinitionAction jumps to the definition of the symbol at the cursor
 func (m Model) GotoDefinitionAction(e *view.Editor) {
-	m.gotoLocation(e,
-		i18n.Text(statusNoDefinitionKey),
-		view.LanguageServerController.GotoDefinition,
-	)
+	m.component.gotoDefinition(m.context, e)
 }
 
 // GotoTypeDefinitionAction jumps to the type of the symbol at the cursor
 func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
-	m.gotoLocation(e,
+	m.component.gotoLocation(m.context, e,
 		i18n.Text(statusNoTypeDefinitionKey),
 		view.LanguageServerController.GotoTypeDefinition,
 	)
@@ -48,7 +45,7 @@ func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
 
 // GotoImplementationAction jumps to implementations of the symbol at the cursor
 func (m Model) GotoImplementationAction(e *view.Editor) {
-	m.gotoLocation(e,
+	m.component.gotoLocation(m.context, e,
 		i18n.Text(statusNoImplementationKey),
 		view.LanguageServerController.GotoImplementation,
 	)
@@ -86,11 +83,16 @@ func (m Model) SelectReferencesAction(e *view.Editor) {
 	setSelectionFromHighlights(doc, v.ID(), highlights)
 }
 
-func (m Model) gotoLocation(
-	e *view.Editor, notFound string, get locationGetter,
+func (ec *EditorComponent) gotoDefinition(cx *Context, e *view.Editor) {
+	ec.gotoLocation(cx, e,
+		i18n.Text(statusNoDefinitionKey),
+		view.LanguageServerController.GotoDefinition,
+	)
+}
+
+func (ec *EditorComponent) gotoLocation(
+	cx *Context, e *view.Editor, notFound string, get locationGetter,
 ) {
-	ec := m.component
-	cx := m.context
 	doc := e.FocusedDocument()
 	if doc == nil {
 		return

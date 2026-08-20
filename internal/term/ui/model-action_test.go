@@ -279,6 +279,40 @@ func TestLocationAction(t *testing.T) {
 		assert.Equal(t, core.Range{Anchor: 3, Head: 3}, sel.Primary())
 	})
 
+	t.Run("ctrl click jumps to definition", func(t *testing.T) {
+		dir := t.TempDir()
+		source := filepath.Join(dir, "source.go")
+		target := filepath.Join(dir, "target.go")
+		assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
+		assert.NoError(t, os.WriteFile(target, []byte("target\n"), 0o600))
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(source)
+		assert.NoError(t, err)
+		e.SetLanguageServerController(&locationController{
+			locations: []view.Location{
+				{
+					Path: target,
+					From: view.ServerPosition{Line: 0, Character: 3},
+					To:   view.ServerPosition{Line: 0, Character: 3},
+				},
+			},
+		})
+		m := renderedModel(e)
+
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X: 10, Y: 0, Button: tea.MouseLeft, Mod: tea.ModCtrl,
+		})
+		_ = m2
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, target, doc.Path())
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		sel := doc.SelectionFor(v.ID())
+		assert.Equal(t, 3, sel.Primary().Cursor(doc.Text()))
+	})
+
 	t.Run("opens picker for multiple targets", func(t *testing.T) {
 		dir := t.TempDir()
 		source := filepath.Join(dir, "source.go")

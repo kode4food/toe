@@ -23,7 +23,6 @@
   "option.editor-config.docstring": "Leggere la configurazione dai file EditorConfig",
   "option.file-watch.docstring": "Rilevare modifiche esterne ai file",
   "option.insecure.docstring": "Disattivare i controlli di attendibilità dell’area di lavoro",
-  "option.middle-click-paste.docstring": "Incollare col tasto centrale",
   "option.mouse.docstring": "Attivare il mouse",
   "option.nerd-fonts.docstring": "Usare i glifi Nerd Font",
   "option.statusline.left.docstring": "Elementi della barra di stato allineati a sinistra",

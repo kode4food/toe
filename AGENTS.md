@@ -6,21 +6,21 @@ Thom's Own Editor: a Go-native modal terminal editor. Module: `github.com/kode4f
 
 ## CRITICAL: Do Exactly What Is Asked
 
-When the user asks for a specific thing, do that thing and nothing else. Do not take liberties rewriting, refactoring, or "improving" code that wasn't part of the request. The risk of breaking something or introducing unwanted changes is not worth it, and unilateral decisions like that are not mine to make.
+When the user asks for a specific thing, do that thing and nothing else. Leave the rest of the code exactly as you found it: rewriting, refactoring, or "improving" code outside the request risks breaking something, and that call belongs to the user.
 
 ## CRITICAL: Do Not Reframe What I Asked For
 
-Answer the request I actually made, not a narrower one you would rather do. Do not tell me what I meant, do not restate my request as smaller than it was, and do not hand back a partial job described as a complete one.
+Answer the request I actually made, at its full size. Take my words as written rather than telling me what I meant, and describe what you hand back exactly as it is: a partial job is reported as partial.
 
-Every line in this repository is your own output from some session, so "pre-existing", "not mine", "not part of this diff", and "out of scope" are never true and never a reason to leave something unfixed. When I ask you to fix violations, fix all of them, however old. Never sort findings by who wrote them.
+Every line in this repository is your own output from some session, so "pre-existing", "not mine", "not part of this diff", and "out of scope" are never true and never a reason to leave something unfixed. When I ask you to fix violations, fix all of them, however old, in one list regardless of who wrote them.
 
-If something genuinely blocks the work (a generated file a tool rewrites, a decision only I can make), say exactly that, say what is left undone, and stop. Never dress a refusal up as scope, authorship, or a summary of my intent.
+If something genuinely blocks the work (a generated file a tool rewrites, a decision only I can make), say exactly that, say what is left undone, and stop. Name the blocker itself: scope, authorship, and summaries of my intent are not blockers.
 
 ---
 
 ## Configuration Boundaries
 
-`view.Options` is only for innate editor behavior that the core editor, documents, actions, or renderer must consult directly at runtime. It must not be used as a dumping ground for configuration owned by optional or decoupled modules.
+`view.Options` is only for innate editor behavior that the core editor, documents, actions, or renderer must consult directly at runtime. Configuration owned by optional or decoupled modules lives with those modules.
 
 Module-owned configuration must be colocated with the module that owns the behavior:
 
@@ -28,7 +28,7 @@ Module-owned configuration must be colocated with the module that owns the behav
 - UI component behavior options live with the UI component in `internal/term/ui`.
 - A module command passes its parsed options into the module/component factory explicitly.
 
-Do not add picker, explorer, LSP, VCS, DAP, or other pluggable capability settings to `view.Options` unless the core editor itself must own that behavior to function correctly.
+Picker, explorer, LSP, VCS, DAP, and other pluggable capability settings stay with their own modules; they reach `view.Options` only when the core editor itself must own that behavior to function correctly.
 
 ---
 
@@ -37,15 +37,15 @@ Do not add picker, explorer, LSP, VCS, DAP, or other pluggable capability settin
 Structs with an `Args` suffix are parameter bundles for a single function. Structs with a `Res` suffix are result bundles returned by a single function. Both have strict rules:
 
 - **Threshold (hard rule)**: a function taking **5 or more arguments** must bundle them into an `Args` struct; a function returning **3 or more results** must bundle them into a `Res` struct. Below those counts, pass/return values directly.
-- **Success indicators are exempt from the result count**: a trailing `bool` (the `ok` idiom) or `error` signals success/failure, not data, so it never counts toward the 3-result threshold. `(previewImageRes, bool)` and `(Foo, Bar, error)` are fine: count only the data values. So the correct shape here is a `Res` struct **plus** the bool: `func previewImage(...) (previewImageRes, bool)`, not an `ok` field stuffed inside the struct.
+- **Success indicators are exempt from the result count**: a trailing `bool` (the `ok` idiom) or `error` signals success/failure, not data, so it never counts toward the 3-result threshold. `(previewImageRes, bool)` and `(Foo, Bar, error)` are fine: count only the data values. So the correct shape here is a `Res` struct **plus** the bool: `func previewImage(...) (previewImageRes, bool)`, with `ok` staying outside the struct.
 - **Same-type adjacency**: the hazard is exactly *two values of the same type next to each other*, and nothing else. Distinct types self-disambiguate: `(int, bool)` is fine, `(*Foo, int)` is fine, because the type tells you which value is which. Two of the same type do not. `(bool, bool)`: which bool is which? `(int, int)`: width then height, or height then width? That order is a cultural convention (reversed in other cultures), not a fact the types enforce, so `f(w, h)` and `f(h, w)` are equally legal and a swap compiles silently; the same hazard as positional struct literals. When two adjacent params or results share a type, give them names: a `Res`/`Args` struct with named fields, or distinct named types (`type Width int`), so the meaning lives in the code, not in an assumed convention. `(*previewImageEntry, int, int, bool)` is the worst case: long *and* two nameless same-type `int`s stranded in the middle.
-- **Lifetime**: an `Args` struct must not outlive the call site where it is passed; a `Res` struct must not outlive the call site where it is received. Neither may be stored, forwarded to another function, or returned further up the call chain.
+- **Lifetime**: an `Args` struct lives only as long as the call site it is passed at; a `Res` struct only as long as the call site that received it. Both stay local: storing, forwarding to another function, or returning one further up the call chain is out.
 - **If a struct crosses more than one call site** it is not an Args/Res struct, rename it to a plain descriptive name (no suffix) and use pointer currency (`*T`) when passing it.
-- **Placement**: each Args/Res struct must be declared immediately before the function that accepts or returns it. If one function has both an Args and a Res struct, declare them together in a single `type (...)` block immediately before that function. Never group them with unrelated types at the top of the file.
+- **Placement**: each Args/Res struct must be declared immediately before the function that accepts or returns it. If one function has both an Args and a Res struct, declare them together in a single `type (...)` block immediately before that function. The top-of-file type block is for unrelated types.
 - **Value passing**: at their single call site, Args/Res structs are passed and returned by value (no `*`), whatever their size. They are short-lived and stack-allocated by design.
 - **Pointer threshold (plain-named structs)**: a struct that crosses call sites is passed by value or by pointer according to its size, not by habit. Up to **32 bytes** (4 machine words) always by value. **33–64 bytes**: by value, unless it is read by three or more functions in a chain. Over **64 bytes** (one cache line): by pointer; `hardWrapUnfilled` (72 bytes) and `view.CursorScroll` (~80 bytes) are pointers for this reason, while `edgeState` (16 bytes) is a value. Regardless of size, use a pointer when the callee mutates the struct or its identity matters. Remember that a `&x` that never escapes stays on the stack: the cost of a pointer there is the indirection, not an allocation.
 - **Field names must stand alone**: a name that worked as a positional function parameter (short, disambiguated by position and the surrounding call) does not automatically work as a named struct field read on its own at a call site. Spell out abbreviations that aren't immediately decodable without reading the function body: `st` → `style`, `w` → `width`, `e` → `editor`, `v` → `view`. Two fields of the same type still need names that disambiguate them beyond position; `parent Id` next to `id Id` is exactly the same-type-adjacency hazard above; use `parent Id` / `viewID Id`.
-- **Literal formatting**: if a struct literal fits on one line, leave it on one line. If it wraps, use exactly one field per line, never pack two or more fields onto a wrapped line.
+- **Literal formatting**: if a struct literal fits on one line, leave it on one line. If it wraps, use exactly one field per line.
 
 ```go
 // Good, declared immediately before its function, used only at one call site
@@ -96,9 +96,9 @@ func outer(args myArgs) {
 
 ## Persistent Data Structures
 
-All core data structures (`Rope`, `ChangeSet`, `Transaction`, `Selection`, `Range`, `History`) are **persistent (immutable)**. Every operation must return a new value; the original must never be modified.
+All core data structures (`Rope`, `ChangeSet`, `Transaction`, `Selection`, `Range`, `History`) are **persistent (immutable)**. Every operation returns a new value and leaves the original intact.
 
-**In-place node mutation is absolutely forbidden.** This applies even inside helper functions. Rotation, rebalancing, and any structural change must allocate and return new nodes, and never mutate fields on existing ones. Shared nodes are the norm (structural sharing is how persistence stays efficient), so a mutated node corrupts every data structure that references it.
+**In-place node mutation is absolutely forbidden.** This applies even inside helper functions. Rotation, rebalancing, and any structural change allocates and returns new nodes, leaving fields on existing ones untouched. Shared nodes are the norm (structural sharing is how persistence stays efficient), so a mutated node corrupts every data structure that references it.
 
 ```go
 // Bad, mutates a shared node
@@ -137,36 +137,35 @@ change far less often than `term/ui`'s rendering details.
 
 1. **One authoritative owner per concept.** Every concept (selections,
    diagnostics, diffs, completions) has exactly one package that owns its
-   state and invariants. Other packages consume it through that owner, never
-   reimplement or shadow it.
+   state and invariants. Other packages consume it through that owner rather
+   than reimplementing or shadowing it.
 2. **Dependencies point toward stability.** `core` depends on nothing else in
    the editor. `view` depends only on `core`. Commands and UI depend on
    `view`, never the reverse.
 3. **Boundaries follow authority and reasons to change, not file/line count.**
    Split a package because two parts change for different reasons and are
-   owned by different concerns, not because a file got long (see "Do not
-   split packages solely because they are large" below).
+   owned by different concerns, not because a file got long (see rule 16).
 4. **State stays with the module that preserves its invariants.** See
    Configuration Boundaries above for the config-specific version of this
    rule; it applies equally to runtime state, caches, and lifecycle state.
 5. **`view.Editor` holds capability seams, not module implementation state.**
    `Editor` may hold a `VersionControl`, `LanguageServerController`, or
    similar interface value (see `SetVersionControl`/`SetLanguageServerController`
-   in `internal/view`). It must not grow fields that belong to `lsp` or `vcs`
-   internals (client transports, provider state, differs).
+   in `internal/view`). Fields belonging to `lsp` or `vcs` internals (client
+   transports, provider state, differs) stay in those packages.
 6. **Interfaces are consumer-defined and minimal.** `view.VersionControl` and
    `view.LanguageServerController` are declared in `view` because `view` is
    the consumer; they expose only what `view`/commands/UI need, not the full
    surface of `vcs.Provider` or the LSP protocol.
-7. **Don't add an interface just because a package boundary is crossed.**
-   A concrete type passed and used directly is fine. Introduce an interface
-   only when there is a real substitutable implementation or the consumer
-   needs to decouple from a concrete lifecycle.
+7. **Interfaces earn their place; a package boundary alone doesn't call for
+   one.** A concrete type passed and used directly is fine. Introduce an
+   interface only when there is a real substitutable implementation or the
+   consumer needs to decouple from a concrete lifecycle.
 8. **Boundary values speak the receiving package's language.** `vcs.Session`
    returns `view.DiffHunk`/`view.FileChange`; `lsp` results are normalized
    into `view.CompletionItem`, `view.Location`, `view.Symbol`, etc. before
    crossing into `view`. Provider/protocol-shaped types (raw LSP structs, git
-   plumbing types) never leak past their owning package.
+   plumbing types) stay inside their owning package.
 9. **Generic mechanisms don't import concrete registrations.** `term/command`
    (signatures, tokenizer, registry, keymaps) must not import `term/builtin`
    or any specific command module. `vcs.NewRegistry` installing `Git` directly
@@ -179,19 +178,19 @@ change far less often than `term/ui`'s rendering details.
     together is `app.go`'s job. Packages below it should not know about each
     other's concrete constructors.
 11. **Commands orchestrate; they don't implement.** A `term/builtin` command
-    handler calls `view/action`, `view`, `lsp`, or `vcs` APIs, it must not
-    contain substantial editing, rendering, LSP protocol, VCS diffing, or
-    persistence logic inline. If a handler is doing real work, that work
-    belongs in the owning package.
+    handler calls `view/action`, `view`, `lsp`, or `vcs` APIs; substantial
+    editing, rendering, LSP protocol, VCS diffing, and persistence logic live
+    in the owning package. If a handler is doing real work, move that work
+    where it belongs.
 12. **Reusable editing lives in `view/action`; pure text semantics live in
     `core`.** `core` never depends on `view` or terminal packages. Anything
     that needs a `Document`/`Editor`/`View` but is reusable across commands
     and UI belongs in `view/action`, not duplicated per command module.
 13. **Calls request; observers/events announce.** `view.DocumentObserver`
     methods (`DocumentOpened`, `DocumentChanged`, `DocumentSaved`,
-    `DocumentClosed`) report facts that already happened, implementations
-    must not treat them as a place to request further mutation of the same
-    document mid-notification. A direct method call (`SetVersionControl`,
+    `DocumentClosed`) report facts that already happened; implementations
+    react to the fact and leave further mutation of that document to a later
+    call. A direct method call (`SetVersionControl`,
     `DiffHunks`) requests behavior and expects a synchronous answer.
 14. **No dumping-ground packages.** Do not create `util`, `common`, `helpers`,
     `models`, or similarly named packages. A shared helper needs a name that
@@ -205,16 +204,11 @@ change far less often than `term/ui`'s rendering details.
     `internal/lsp` are both large because they own a large, cohesive concept
     (reusable editing operations; the LSP client surface). Split only per
     rule 3.
-17. **Don't move code to satisfy a layering ideal.** Preserve cohesion.
+17. **Move code to fix an actual dependency problem, not to satisfy a
+    layering ideal.** Preserve cohesion.
     Moving a function to a "more correct" layer that adds indirection
     (forwarding wrappers, an interface with one implementation) without
     changing an actual dependency problem is a net loss.
-18. **Proposing a new package requires stating:**
-    - what concept it owns;
-    - which invariants it preserves;
-    - what it may import;
-    - what may import it;
-    - why the existing owner is incorrect.
 
 **Dependency guide:**
 
@@ -231,20 +225,17 @@ change far less often than `term/ui`'s rendering details.
 - `cmd/toe/internal/app.go` may import any concrete module; it is the only
   place allowed to wire everything together.
 
-**Before moving code, answer:**
+**Before moving code or proposing a package, answer:**
 
-- Who owns this concept today?
-- What independent reason to change justifies moving it?
+- Who owns this concept today, and why is that owner wrong?
+- What concept does the new home own, and which invariants does it preserve?
+- What may it import, and what may import it?
+- What independent reason to change justifies the move?
 - Does the move reduce the number of packages a caller must understand?
-- Does the proposed package have a coherent name and responsibility?
 - Will the move introduce forwarding wrappers, dependency inversion with no
   substitutable implementation, or a generic helper package?
 - Can the boundary be enforced through imports alone or a narrow
   consumer-owned interface, without new indirection?
-
-See also Configuration Boundaries and Args/Res Structs above, and Interface
-Names / Interface Compliance below, for the naming and shape rules that apply
-within these boundaries.
 
 ---
 
@@ -290,10 +281,6 @@ if entry, ok := spanCache[id]; ok {
     return entry.spans
 }
 
-if doc, ok := e.docs[id]; ok {
-    return doc.Path()
-}
-
 // Bad - verbose names for tight scope
 for rangeIndex, currentRange := range ranges {
     if exists := currentRange.Valid(); !exists {  // Use 'ok', not 'exists'
@@ -302,47 +289,27 @@ for rangeIndex, currentRange := range ranges {
 }
 ```
 
-Avoid local names that merely restate the type. Prefer the semantic subject, not the full noun phrase:
+Name a local for its semantic subject rather than restating its type:
 
 ```go
 // Good
-for id := range e.docs {
-    doc := e.docs[id]
-    if doc.Lang() == "go" {
-        return openFile(id, doc)
-    }
-}
-
 rope := doc.Text()
 sel := doc.Selection(vid)
 tx := core.NewTransaction(rope)
 entry, ok := p.spanCache[id]
 
 // Bad
-for documentID := range editor.docs {
-    documentValue := editor.docs[documentID]
-    if documentValue.Lang() == "go" {
-        return openFile(documentID, documentValue)
-    }
-}
-
 ropeValue := doc.Text()
 selectionValue := doc.Selection(vid)
 transactionValue := core.NewTransaction(ropeValue)
 spanCacheEntry, ok := pickerState.spanCache[documentID]
 ```
 
-Use longer names only when the broader scope really needs them, such as struct fields, exported APIs, or tests where the variable itself is the subject under test.
-
-**Longer names for wider scope** (exported functions, struct fields):
+**Longer names for wider scope**: struct fields, exported APIs, and tests where the variable itself is the subject under test.
 
 ```go
 // Good - clear at API boundaries
 func (e *Editor) OpenFile(path string) (*View, error)
-
-func NewChangeSetFromChanges(
-    doc Rope, changes []Change,
-) (ChangeSet, error)
 
 // Good - descriptive struct fields
 type previewDocRender struct {
@@ -374,35 +341,6 @@ type previewDocRender struct {
 | `pfx`, `sfx`           | Prefix, suffix                              |
 | `cfg`                  | Config struct                               |
 | `opts`                 | Options struct                              |
-
-Examples:
-
-```go
-h := core.NewHistory()
-st := core.State{Doc: core.NewRope("hello"), Selection: core.PointSelection(0)}
-tx := core.NewTransaction(st.Doc)
-sel, err := core.NewSelection(ranges, 0)
-entry, ok := p.spanCache[id]
-rope, spans := entry.rope, entry.spans
-lang := doc.Lang()
-rev := doc.Revision()
-```
-
-### Function Signature Wrapping
-
-When a function signature is too long for one line, keep as many parameters as fit on the first line and wrap the remainder on the next line(s). Do not put one parameter per line unless the line would still exceed the limit.
-
-Example with more parameters:
-
-```go
-func NewChangeSetFromChanges(
-	doc Rope, changes []Change,
-) (ChangeSet, error) {
-
-func renderPreviewDocInto(
-	buf *tui.Buffer, x0, y0 int, args *previewDocRender,
-) {
-```
 
 ### Function Names
 
@@ -455,7 +393,7 @@ type ICharMatcher interface { ... }
 
 ### Constant Names
 
-`Default` prefix for defaults. `Max`/`Min` for limits:
+`Default` prefix for defaults. `Max`/`Min` for limits. Name every magic number, group related constants in one block, and use typed constants when the type carries meaning:
 
 ```go
 // Good
@@ -483,12 +421,12 @@ var (
 
 ### Boolean Names
 
-Name the condition. Never add `Is`/`Has` just because the type is `bool`.
+Name the condition. Reach for `Is`/`Has` when the name needs it, not because the type is `bool`.
 
 - Fields and locals: plain state name. `open`, `ready`, `enabled`, `ok`. Prefix only when the bare word reads as a value (`hasBOM`, `isBase`) or collides with a sibling (`hasStaged` beside `staged core.FileChangeKind`).
 - `IsX` for a state, adjective, or classification: `IsDir`, `IsAbs`, `IsZero`, `IsEmpty`.
 - Verb alone when the verb is the predicate: `HasPrefix`, `Contains`, `Exists`, `Equal`. Never `IsContains`.
-- Bare property name only when it reads as neither command nor getter. `fileWatchOp(ev)` is a getter, so `isFileWatchOp`; `ignoreCase(opts)` is an order, so `ignoresCase`.
+- Bare property name when it reads as neither command nor getter. `fileWatchOp(ev)` is a getter, so `isFileWatchOp`; `ignoreCase(opts)` is an order, so `ignoresCase`.
 - Imperatives stay operations. `Open`/`Close`/`Start`/`Stop`/`Read`/`Write` act; `IsOpen()` asks. A command may return a bool saying whether it acted.
 - Standard library names keep their signature and meaning: `Read`, `Write`, `Close`, `Flush`, `String`.
 
@@ -515,7 +453,7 @@ type DocumentId string
 
 ### Markdown
 
-Markdown files should expect to be soft-wrapped. Do not hard-wrap prose to the code line-width limit; keep paragraphs as readable logical lines and let the editor wrap them. Preserve deliberate line breaks in lists, tables, code fences, quoted text, and other Markdown structures where the newline carries meaning.
+Markdown files expect to be soft-wrapped: keep paragraphs as readable logical lines and let the editor wrap them, since the code line-width limit applies to code, not prose. Preserve deliberate line breaks in lists, tables, code fences, quoted text, and other Markdown structures where the newline carries meaning.
 
 ### User Documentation
 
@@ -526,20 +464,24 @@ Markdown files should expect to be soft-wrapped. Do not hard-wrap prose to the c
 - Keep command, keybinding, and configuration references complete and accurate.
 - Use kebab-case command names in user documentation; underscore names are internal identifiers.
 - Omit implementation details, internal mechanics, incidental behavior, tuning constants, and obvious facts.
-- Do not document a change merely because it is observable; include it only when knowing it materially helps someone use toe.
-- Avoid patronizing explanations and negative-space descriptions that force readers to infer the main behavior.
-- Keep prose concise and avoid repeating information already clear from a table or another appropriate page.
+- Document a change when knowing it materially helps someone use toe; observability alone is not the bar.
+- State the main behavior outright, in plain terms readers can act on.
+- Keep prose concise, and let a table or another appropriate page carry what it already states.
 
-The architecture page is developer-facing and may describe internals, but its details must serve architectural understanding rather than catalog implementation trivia.
+The architecture page is developer-facing and may describe internals, as long as its details serve architectural understanding rather than catalog implementation trivia.
 
 ### Line Width
 
-Maximum 80 characters per line (tabs count as 4 spaces). This applies to code _and_ comments, not Markdown prose. Keep short argument lists on a single line when they fit; only break lines when the 80-character limit would be exceeded. When wrapping function signatures or call arguments, pack as many arguments per line as will fit under the limit before wrapping again. When you must wrap, break after the opening paren:
+Maximum 80 characters per line (tabs count as 4 spaces). This applies to code _and_ comments, not Markdown prose. Keep short argument lists on a single line when they fit; only break lines when the 80-character limit would be exceeded. When wrapping function signatures or call arguments, pack as many arguments per line as will fit under the limit before wrapping again, one per line only when a line would still exceed the limit. When you must wrap, break after the opening paren:
 
 ```go
 func NewChangeSetFromChanges(
 	doc Rope, changes []Change,
 ) (ChangeSet, error) {
+
+func renderPreviewDocInto(
+	buf *tui.Buffer, x0, y0 int, args *previewDocRender,
+) {
 ```
 
 ```go
@@ -548,7 +490,7 @@ c, err := client.NewClient("embedded://", client.WithEmbedded(tr))
 
 ### Multi-line Calls with \*testing.T
 
-When a function call wraps and the first argument is the test instance (`t`), keep `t` on the first line and break immediately after it. Do not place `t` alone on the next line.
+When a function call wraps and the first argument is the test instance (`t`), keep `t` on the first line and break immediately after it, so `t` always shares a line with the call.
 
 ```go
 applyAll(t,
@@ -638,12 +580,7 @@ func indentWidth(s string, tabWidth int) int { ... }     // unexported helper
 
 ### Method Ordering
 
-1. Constructor (`New...`)
-2. Exported methods grouped by functionality
-3. Unexported methods that support the exported ones
-4. Pure helper functions (non-methods) at the bottom
-
-Related methods stay together. Within each group, order by call chain or first use. Unexported helpers appear after the exported methods that use them.
+Within the order above, group exported methods by functionality and keep related methods together, ordered by call chain or first use. Unexported methods follow the exported ones they support, and pure helper functions (non-methods) sit at the bottom of the file.
 
 ### Concern Grouping
 
@@ -654,7 +591,7 @@ Within a package, organize files around real concerns, not arbitrary helper cate
 - `render-document.go`: `render-status.go`
 - `model-action.go`: `model-types.go`
 
-Do not introduce wrapper files that just forward calls to another package or rename errors.
+Every file owns real behavior; forwarding calls to another package or renaming errors is not enough to earn one.
 
 ## Struct Literals
 
@@ -704,7 +641,7 @@ func processStep(step *StepInfo) error {
 }
 ```
 
-Do not mechanically use guard clauses in simple or linear functions. When a value and success indicator are used only by a short success path, always declare them in the `if` initializer, keep the value scoped to that branch, and put the fallback afterward. Use this form when the condition is only the success indicator, or the success indicator plus one simple boolean, nil, equality, or predicate check. If the condition needs more than two checks, becomes multi-line, or the success branch contains substantial logic, use guard clauses instead.
+Reserve guard clauses for real preconditions; simple linear functions read fine without them. When a value and success indicator are used only by a short success path, always declare them in the `if` initializer, keep the value scoped to that branch, and put the fallback afterward. Use this form when the condition is only the success indicator, or the success indicator plus one simple boolean, nil, equality, or predicate check. If the condition needs more than two checks, becomes multi-line, or the success branch contains substantial logic, use guard clauses instead.
 
 ```go
 // Good
@@ -794,15 +731,8 @@ t.Run("PickerPreview clips long lines to width", ...)
 ```
 
 ```go
-// Good - short function name
-func TestHistory(t *testing.T) {
-    t.Run("undoes and redoes edits", func(t *testing.T) {
-        // ...
-    })
-    t.Run("navigates by steps", func(t *testing.T) {
-        // ...
-    })
-}
+// Good - short function name holding the subtests above
+func TestHistory(t *testing.T) { ... }
 
 // Bad - underscores are extraneous
 func TestHistory_Undo(t *testing.T) { ... }
@@ -826,9 +756,8 @@ assert.True(t, ok)
 // Bad - require stops test early
 require.NoError(t, err)
 
-// Bad - no message arguments
+// Bad - message arguments
 assert.NoError(t, err, "should not error")
-assert.Equal(t, expected, actual, "values should match")
 ```
 
 ### Test Organization
@@ -848,7 +777,7 @@ If the source is grouped by concern, the tests should mirror that grouping:
 - `selection_test.go`
 - `history_test.go`
 
-Do not keep broad mixed test files once the source has been split cleanly.
+Once the source has been split cleanly, split the test files to match.
 
 ### Running Tests
 
@@ -899,13 +828,12 @@ func clampSelection(sel core.Selection, maxChars int) core.Selection {
 const diffDebounce = 50 * time.Millisecond
 ```
 
-Godoc rule: the last sentence of a comment should not end with a period.
+Godoc rule: end the last sentence of a comment without a period.
 
 ### Inline Comments
 
-Avoid comments that restate the code. Never comment code that's already
-self-describing. When a comment is warranted, it explains WHY, capped at 2
-lines:
+Comment what the code cannot say for itself: a warranted comment explains
+WHY, capped at 2 lines. Self-describing code stands on its own:
 
 ```go
 // Bad
@@ -965,10 +893,8 @@ return view.ErrNoLanguageServer
 ```
 
 This applies to sentinel errors, constants, and any other exported value:
-if `view` owns it (see Modularity and Package Boundaries above, interfaces
-and their errors are consumer-owned), every package that needs it imports
-`view` and writes `view.X`. Don't introduce a second name for the same
-value just because a package boundary is in the way.
+if `view` owns it, every package that needs it imports `view` and writes
+`view.X`, under the one name the owner gave it.
 
 ## Interface Compliance
 
@@ -980,7 +906,7 @@ var _ CharMatcher = (*RuneMatcher)(nil)
 
 ## Error Handling
 
-- **Never panic** - always return errors
+- **Always return errors** - never panic
 - **Typed errors only** - All production code must use package-level vars with `Err` prefix
 - **Pattern: `%w: context`**: wrapped error first, then context variable
 - Plain error messages acceptable only in examples/documentation
@@ -992,17 +918,11 @@ var _ CharMatcher = (*RuneMatcher)(nil)
 var (
 	ErrEmptySelection       = errors.New("empty selection")
 	ErrPrimaryIndexNotFound = errors.New("primary index not found")
-	ErrChangeOrder          = errors.New("change order invalid")
 )
 
 // Good - %w: %d pattern with typed error
 if primaryIndex >= len(ranges) {
     return fmt.Errorf("%w: %d", ErrPrimaryIndexNotFound, primaryIndex)
-}
-
-// Good - typed error with multiple context values
-if from > to {
-    return fmt.Errorf("%w: %d -> %d", ErrChangeOrder, from, to)
 }
 
 // Good - return typed error directly
@@ -1019,16 +939,11 @@ if len(ranges) == 0 {
 if err := doSomething(); err != nil {
     return fmt.Errorf("failed to apply: %w", err)  // Wrong order
 }
-
-// Bad - never panic
-if doc == nil {
-    panic("doc is nil")  // NO!
-}
 ```
 
 **Testing - Use errors.Is() to Check Typed Errors:**
 
-Tests should use `errors.Is()` to check for specific error types, not `strings.Contains()`:
+Tests check for specific error types with `errors.Is()`, which keeps the check robust where `strings.Contains()` stays brittle:
 
 ```go
 // Good - use errors.Is for typed errors
@@ -1039,27 +954,11 @@ assert.True(t, errors.Is(err, core.ErrEmptySelection))
 assert.True(t, strings.Contains(err.Error(), "empty selection"))
 ```
 
-This enables robust error checking without brittle string comparisons. Typed errors are also easier to handle programmatically.
-
 **Examples/Documentation Only - Plain Messages OK:**
 
 ```go
 // Only acceptable in README examples, not in engine code
 return fmt.Errorf("invalid configuration: %s", reason)
-```
-
-## Constants
-
-- No magic numbers
-- Group related constants
-- Use typed constants when meaningful
-
-```go
-const (
-	DefaultTabWidth    = 4
-	DefaultScrollLines = 3
-	MaxIndent          = 16
-)
 ```
 
 ---
@@ -1123,11 +1022,11 @@ Use the **Serena MCP** for all code navigation and editing tasks: symbol lookup,
 
 # CRITICAL: Rendering Performance
 
-**ALWAYS benchmark when changing editor or preview rendering.** The render path runs on every keystroke and every frame; a per-render regression (re-parsing config, re-allocating per character, building off-screen content) makes the editor lag and back up input events. Do not reason about performance from first principles, measure.
+**ALWAYS benchmark when changing editor or preview rendering.** The render path runs on every keystroke and every frame; a per-render regression (re-parsing config, re-allocating per character, building off-screen content) makes the editor lag and back up input events. Measure, rather than reasoning about performance from first principles.
 
 - Before and after any change to the editor content renderer or the picker preview renderer, run a Go benchmark with `-benchmem` and compare `ns/op`, `B/op`, and `allocs/op`. Profile with `-cpuprofile` / `-memprofile` and `go tool pprof` to locate the actual hotspot.
 - Benchmark the realistic worst case: a long single line, the cursor scrolled far right, a split layout. See `BenchmarkRenderLongLine` (`internal/term/ui/bench_test.go`) and `BenchmarkVisualColumn` (`internal/view/bench_internal_test.go`).
-- Rendering must do work **once** and re-do it only when its inputs change. Anything parsed, decoded, or loaded (config TOML, language definitions, themes, syntax) must be cached and invalidated on change, never re-parsed per render. Per-character work in the row loop must avoid allocation (use the ASCII fast paths) and must not be performed for off-screen columns.
+- Rendering must do work **once** and re-do it only when its inputs change. Anything parsed, decoded, or loaded (config TOML, language definitions, themes, syntax) is cached once and invalidated on change, never re-parsed per render. Per-character work in the row loop stays allocation-free (use the ASCII fast paths) and runs only for on-screen columns.
 
 ---
 

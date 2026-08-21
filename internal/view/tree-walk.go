@@ -1,6 +1,10 @@
 package view
 
-import "github.com/kode4food/toe/internal/geom"
+import (
+	"slices"
+
+	"github.com/kode4food/toe/internal/geom"
+)
 
 type (
 	// Separator describes the position and extent of the gap between two
@@ -58,8 +62,8 @@ func (t *Tree) findChild(id Id, children []Id, dir Direction) (Id, bool) {
 	var childID Id
 	switch dir {
 	case DirectionUp, DirectionLeft:
-		for i := len(children) - 1; i >= 0; i-- {
-			if children[i] == id && i > 0 {
+		for i, c := range slices.Backward(children) {
+			if c == id && i > 0 {
 				childID = children[i-1]
 				goto found
 			}
@@ -161,10 +165,10 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 			// the separator is the 1-column gap between panes
 			s := Separator{
 				Layout: LayoutVertical,
-				Area: geom.Area{
-					Point: geom.Point{X: a.X + a.Width, Y: c.area.Y},
-					Size:  geom.Size{Width: 1, Height: c.area.Height},
-				},
+				X:      a.X + a.Width,
+				Y:      c.area.Y,
+				Width:  1,
+				Height: c.area.Height,
 			}
 			if !fn(id, i, s) {
 				return false
@@ -173,10 +177,10 @@ func (t *Tree) walkSepWithID(id Id, fn sepVisitor) bool {
 			// the separator is the 1-row gap after child[i]
 			s := Separator{
 				Layout: LayoutHorizontal,
-				Area: geom.Area{
-					Point: geom.Point{X: c.area.X, Y: a.Y + a.Height},
-					Size:  geom.Size{Width: c.area.Width, Height: 1},
-				},
+				X:      c.area.X,
+				Y:      a.Y + a.Height,
+				Width:  c.area.Width,
+				Height: 1,
 			}
 			if !fn(id, i, s) {
 				return false

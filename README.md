@@ -30,7 +30,7 @@ toe is opinionated because it is built for one tight workflow: editing Go projec
 
 ## Requirements
 
-- Go 1.26 when building from source
+- Go 1.27 when building from source
 - A terminal with ANSI color support
 - `gopls` on `PATH` for Go language features
 - A Kitty graphics capable terminal

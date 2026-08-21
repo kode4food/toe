@@ -266,8 +266,9 @@ func (t *TerminalPane) Cursor(cx *Context) (tea.Cursor, bool) {
 	}
 	pos := t.emu.CursorPosition()
 	return tea.Cursor{
-		Position: tea.Position{X: a.X + pos.X, Y: yOff + pos.Y},
-		Shape:    tea.CursorBlock,
+		X:     a.X + pos.X,
+		Y:     yOff + pos.Y,
+		Shape: tea.CursorBlock,
 	}, true
 }
 

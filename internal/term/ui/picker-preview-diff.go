@@ -207,8 +207,10 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		buf.SetString(signAt, sign, signStyle)
 	}
 	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
-		Point: geom.Point{X: contentX, Y: args.area.Y},
-		Size:  geom.Size{Width: contentW, Height: args.area.Height},
+		X:      contentX,
+		Y:      args.area.Y,
+		Width:  contentW,
+		Height: args.area.Height,
 	}, args.styles.rulerBg)
 }
 

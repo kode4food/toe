@@ -264,8 +264,8 @@ func countWordPrefix(s string) int {
 func countWordSuffix(s string) int {
 	r := []rune(s)
 	n := 0
-	for i := len(r) - 1; i >= 0; i-- {
-		if !CharIsWord(r[i]) {
+	for _, v := range slices.Backward(r) {
+		if !CharIsWord(v) {
 			return n
 		}
 		n++

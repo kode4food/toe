@@ -91,8 +91,7 @@ func (m *codeActionMenu) Layout(
 	w := m.width()
 	h := min(len(m.actions), codeActionMaxRows) + 2
 	return fitPopup(geom.Area{
-		Point: at,
-		Size:  geom.Size{Width: w, Height: h},
+		Point: at, Width: w, Height: h,
 	}, screen), true
 }
 

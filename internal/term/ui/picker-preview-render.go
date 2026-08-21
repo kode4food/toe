@@ -162,8 +162,10 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 		)
 	}
 	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
-		Point: geom.Point{X: contentX, Y: args.area.Y},
-		Size:  geom.Size{Width: contentW, Height: bufRow},
+		X:      contentX,
+		Y:      args.area.Y,
+		Width:  contentW,
+		Height: bufRow,
 	}, args.styles.rulerBg)
 }
 

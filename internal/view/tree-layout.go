@@ -55,8 +55,7 @@ func (t *Tree) recalculate() {
 					childH = h
 				}
 				area := geom.Area{
-					Point: geom.Point{X: a.X, Y: childY},
-					Size:  geom.Size{Width: a.Width, Height: childH},
+					X: a.X, Y: childY, Width: a.Width, Height: childH,
 				}
 				stack = append(stack, treeWork{id: child, area: area})
 				childY += childH + innerGap
@@ -79,8 +78,7 @@ func (t *Tree) recalculate() {
 					childW = w
 				}
 				area := geom.Area{
-					Point: geom.Point{X: childX, Y: a.Y},
-					Size:  geom.Size{Width: childW, Height: a.Height},
+					X: childX, Y: a.Y, Width: childW, Height: a.Height,
 				}
 				stack = append(stack, treeWork{id: child, area: area})
 				childX += childW + innerGap

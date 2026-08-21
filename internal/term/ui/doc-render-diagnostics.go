@@ -79,8 +79,7 @@ func (r *renderPass) drawDiagnosticPopup(
 		y = max(buf.Height-h, 0)
 	}
 	area := pop.drawInto(buf, geom.Area{
-		Point: geom.Point{X: x, Y: y},
-		Size:  geom.Size{Width: w, Height: h},
+		X: x, Y: y, Width: w, Height: h,
 	})
 	for i, line := range lines {
 		buf.SetString(area.Point.Add(geom.Point{Y: i}), line, st)

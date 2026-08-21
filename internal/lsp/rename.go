@@ -17,7 +17,7 @@ func (c *Client) PrepareRename(
 	if !c.supportsPrepareRename() {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[protocol.PrepareRenameResult]{
+	return c.posRequest(posRequestArgs[protocol.PrepareRenameResult]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,
@@ -44,7 +44,7 @@ func (c *Client) RenameSymbol(
 	if !c.SupportsFeature(FeatureRename) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[*protocol.WorkspaceEdit]{
+	return c.posRequest(posRequestArgs[*protocol.WorkspaceEdit]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,

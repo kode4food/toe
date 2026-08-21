@@ -35,37 +35,31 @@ type (
 
 func newLSPLocationPicker(e *view.Editor, request locationRequest) *Picker {
 	return NewPicker(e, &lspLocationSource{
-		PickerBase: PickerBase{
-			Ident: "lsp-locations",
-			Label: "Locations",
-			Cols:  []string{""},
-		},
+		Ident:   "lsp-locations",
+		Label:   "Locations",
+		Cols:    []string{""},
 		request: request,
 	})
 }
 
 func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 	return NewPicker(e, &lspSymbolSource{
-		PickerBase: PickerBase{
-			Ident:       "lsp-symbols",
-			Label:       "Document Symbols",
-			Cols:        []string{"", ""},
-			MatchCol:    1,
-			Proportions: []int{0, 1},
-		},
-		symbols: symbols,
+		Ident:       "lsp-symbols",
+		Label:       "Document Symbols",
+		Cols:        []string{"", ""},
+		MatchCol:    1,
+		Proportions: []int{0, 1},
+		symbols:     symbols,
 	})
 }
 
 func newLSPWorkspaceSymbolPicker(e *view.Editor) *Picker {
 	return NewPicker(e, &lspWorkspaceSymbolSource{
-		PickerBase: PickerBase{
-			Ident:       "lsp-workspace-symbols",
-			Label:       "Workspace Symbols",
-			Cols:        []string{"", ""},
-			MatchCol:    1,
-			Proportions: []int{0, 1},
-		},
+		Ident:       "lsp-workspace-symbols",
+		Label:       "Workspace Symbols",
+		Cols:        []string{"", ""},
+		MatchCol:    1,
+		Proportions: []int{0, 1},
 	})
 }
 
@@ -237,11 +231,9 @@ func LSPWorkspaceCommandPicker(e *view.Editor) *Picker {
 		commands = ctl.WorkspaceCommands(doc)
 	}
 	return NewPicker(e, &lspWorkspaceCommandSource{
-		PickerBase: PickerBase{
-			Ident: "lsp-workspace-command",
-			Label: "Language Server Commands",
-			Cols:  []string{"command"},
-		},
+		Ident:    "lsp-workspace-command",
+		Label:    "Language Server Commands",
+		Cols:     []string{"command"},
 		commands: commands,
 	})
 }

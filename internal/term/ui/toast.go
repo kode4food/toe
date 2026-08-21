@@ -299,11 +299,10 @@ func (r *renderPass) renderToasts(buf *tui.Buffer, bottom int) {
 	restY := max(bottom-toastGapY-boxH+1, 0)
 	now := time.Now()
 	box := geom.Area{
-		Point: geom.Point{
-			X: max(r.size.Width-boxW-toastGapX, 0),
-			Y: restY + r.toastSlideOffset(restY),
-		},
-		Size: geom.Size{Width: boxW, Height: boxH},
+		X:      max(r.size.Width-boxW-toastGapX, 0),
+		Y:      restY + r.toastSlideOffset(restY),
+		Width:  boxW,
+		Height: boxH,
 	}
 	r.editor.toasts.bounds = box
 	area := pop.drawInto(buf, box)

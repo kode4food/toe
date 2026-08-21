@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
@@ -231,8 +232,8 @@ func nextHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {
 }
 
 func prevHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {
-	for i := len(hunks) - 1; i >= 0; i-- {
-		h := hunks[i]
+	for i, h := range slices.Backward(hunks) {
+
 		if h.PureRemoval() {
 			if h.From < line {
 				return i, true

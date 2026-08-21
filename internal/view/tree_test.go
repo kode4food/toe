@@ -75,7 +75,7 @@ func TestTreeMaximized(t *testing.T) {
 
 		assert.True(t, tree.Maximized())
 		assert.Equal(t,
-			geom.Area{Size: geom.Size{Width: 80, Height: 24}},
+			geom.Area{Width: 80, Height: 24},
 			e.FocusedPane().Area(),
 		)
 		visible := 0

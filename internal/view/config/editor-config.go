@@ -4,6 +4,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -56,8 +57,8 @@ func FindEditorConfig(file string) *EditorConfig {
 		}
 	}
 	pairs := map[string]string{}
-	for i := len(configs) - 1; i >= 0; i-- {
-		cfg := configs[i]
+	for _, cfg := range slices.Backward(configs) {
+
 		rel, err := filepath.Rel(cfg.dir, file)
 		if err != nil {
 			continue

@@ -77,8 +77,7 @@ func (h *hoverComponent) Layout(
 	}
 	h.lines = lines
 	return geom.Area{
-		Point: geom.Point{X: x, Y: y},
-		Size:  size,
+		X: x, Y: y, Size: size,
 	}, true
 }
 

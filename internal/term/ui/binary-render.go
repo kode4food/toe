@@ -33,8 +33,10 @@ func (r *renderPass) renderBinaryPane(
 ) {
 	a := pane.Area()
 	content := geom.Area{
-		Point: geom.Point{X: a.X, Y: y0 + a.Y},
-		Size:  geom.Size{Width: a.Width, Height: max(a.Height-1, 0)},
+		X:      a.X,
+		Y:      y0 + a.Y,
+		Width:  a.Width,
+		Height: max(a.Height-1, 0),
 	}
 	th := r.context.ThemeFor(focused)
 	style := th.Get("ui.text")

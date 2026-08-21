@@ -19,7 +19,7 @@ func (c *Client) DocumentHighlights(
 	if !c.SupportsFeature(FeatureDocumentHighlight) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[[]protocol.DocumentHighlight]{
+	return c.posRequest(posRequestArgs[[]protocol.DocumentHighlight]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,

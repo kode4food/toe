@@ -35,8 +35,10 @@ func (p *PickerComponent) drawPickerBox(
 	itemY := areas.left.Y + 2 // row 1 is the cut-separator, skip it
 	if showHeader {
 		writePickerHeader(cx, buf, geom.Area{
-			Point: geom.Point{X: areas.left.X, Y: itemY},
-			Size:  geom.Size{Width: areas.left.Width, Height: 1},
+			X:      areas.left.X,
+			Y:      itemY,
+			Width:  areas.left.Width,
+			Height: 1,
 		}, ps)
 		itemY++
 	}
@@ -57,11 +59,10 @@ func (p *PickerComponent) drawPickerBox(
 	}
 	if len(ps.list.matched) == 0 {
 		writePickerCenteredHint(cx, buf, geom.Area{
-			Point: geom.Point{X: areas.left.X, Y: itemY},
-			Size: geom.Size{
-				Width:  areas.left.Width,
-				Height: ps.list.rows,
-			},
+			X:      areas.left.X,
+			Y:      itemY,
+			Width:  areas.left.Width,
+			Height: ps.list.rows,
 		}, pickerEmptyHint(ps))
 	}
 
@@ -93,8 +94,8 @@ func (p *PickerComponent) drawPickerPane(
 	itemY := area.Y + 2 // row 1 is the cut-separator, skip it
 	if showHeader {
 		writePickerHeader(cx, buf, geom.Area{
-			Point: geom.Point{X: area.X, Y: itemY},
-			Size:  geom.Size{Width: area.Width, Height: 1},
+			X: area.X, Y: itemY,
+			Width: area.Width, Height: 1,
 		}, ps)
 		itemY++
 	}
@@ -113,11 +114,9 @@ func (p *PickerComponent) drawPickerPane(
 	}
 	if len(ps.list.matched) == 0 {
 		writePickerCenteredHint(cx, buf, geom.Area{
-			Point: geom.Point{X: area.X, Y: itemY},
-			Size: geom.Size{
-				Width:  area.Width,
-				Height: ps.list.rows,
-			},
+			X: area.X, Y: itemY,
+			Width:  area.Width,
+			Height: ps.list.rows,
 		}, pickerEmptyHint(ps))
 	}
 }

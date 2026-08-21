@@ -109,8 +109,7 @@ func (s *signatureHelpComponent) Layout(
 	}
 	s.lines = lines
 	return geom.Area{
-		Point: geom.Point{X: x, Y: y},
-		Size:  geom.Size{Width: w, Height: h},
+		X: x, Y: y, Width: w, Height: h,
 	}, true
 }
 

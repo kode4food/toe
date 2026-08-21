@@ -87,8 +87,10 @@ func (p *PickerComponent) Layout(
 	left := (screen.Width - size.Width) / 2
 	top := max((pickerAvailHeight(screen)-size.Height)/2, 0)
 	return geom.Area{
-		Point: geom.Point{X: left, Y: top},
-		Size:  size,
+		X:      left,
+		Y:      top,
+		Width:  size.Width,
+		Height: size.Height,
 	}, true
 }
 
@@ -123,15 +125,17 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 		ratio := cx.pickerLayout.SplitRatioFor(ps.source.ID())
 		splitW = pickerSplitLeftWidth(areaW, ratio)
 		p.splitBounds = geom.Area{
-			Point: geom.Point{X: 1 + splitW, Y: 0},
-			Size:  geom.Size{Width: 1, Height: areaH},
+			X:      1 + splitW,
+			Y:      0,
+			Width:  1,
+			Height: areaH,
 		}
 		p.drawPickerBox(cx, buf, geom.Area{
-			Size: geom.Size{Width: areaW, Height: areaH},
+			Width: areaW, Height: areaH,
 		}, splitW)
 	} else {
 		p.drawPickerPane(cx, buf, geom.Area{
-			Size: geom.Size{Width: areaW, Height: areaH},
+			Width: areaW, Height: areaH,
 		})
 	}
 
@@ -144,8 +148,10 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 		listW = splitW
 	}
 	p.listBounds = geom.Area{
-		Point: geom.Point{X: 1, Y: 3 + headerH},
-		Size:  geom.Size{Width: listW, Height: ps.list.rows},
+		X:      1,
+		Y:      3 + headerH,
+		Width:  listW,
+		Height: ps.list.rows,
 	}
 
 	p.splitBounds = p.splitBounds.Translate(pl.Point)

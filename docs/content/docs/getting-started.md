@@ -9,7 +9,7 @@ toe is a modal terminal editor built for Go development. toe edits Go projects, 
 
 ## Requirements
 
-- Go 1.26 or later when building from source
+- Go 1.27 or later when building from source
 - A terminal with ANSI color support
 - `gopls` on `PATH` for Go language features
 - A Kitty graphics capable terminal

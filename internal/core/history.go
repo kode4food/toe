@@ -1,5 +1,7 @@
 package core
 
+import "slices"
+
 type (
 	// State is the document and selection at a point before a transaction
 	State struct {
@@ -146,8 +148,8 @@ func (h *History) jumpTo(to int) []Transaction {
 	for _, n := range up {
 		txns = append(txns, h.revisions[n].inversion)
 	}
-	for i := len(down) - 1; i >= 0; i-- {
-		txns = append(txns, h.revisions[down[i]].transaction)
+	for _, d := range slices.Backward(down) {
+		txns = append(txns, h.revisions[d].transaction)
 	}
 	return txns
 }

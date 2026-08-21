@@ -22,8 +22,10 @@ func (r *renderPass) renderImagePane(
 	contentH := max(a.Height-1, 0)
 	th := r.context.ThemeFor(focused)
 	r.paintImage(buf, pane, geom.Area{
-		Point: geom.Point{X: a.X, Y: y0 + a.Y},
-		Size:  geom.Size{Width: a.Width, Height: contentH},
+		X:      a.X,
+		Y:      y0 + a.Y,
+		Width:  a.Width,
+		Height: contentH,
 	}, th)
 	r.renderImageStatus(renderImageStatusArgs{
 		buf:     buf,

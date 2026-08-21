@@ -66,13 +66,11 @@ var (
 // reports as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
-		PickerBase: PickerBase{
-			Ident:       "changed-files",
-			Label:       "Changed Files",
-			Cols:        []string{"", ""},
-			MatchCol:    1,
-			Proportions: []int{0, 1},
-		},
+		Ident:       "changed-files",
+		Label:       "Changed Files",
+		Cols:        []string{"", ""},
+		MatchCol:    1,
+		Proportions: []int{0, 1},
 	})
 }
 

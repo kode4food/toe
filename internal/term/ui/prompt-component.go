@@ -197,8 +197,10 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 			style: pop.borderStyle,
 		})
 		list := geom.Area{
-			Point: geom.Point{X: area.X, Y: area.Y + promptChrome - 1},
-			Size:  geom.Size{Width: area.Width, Height: rows},
+			X:      area.X,
+			Y:      area.Y + promptChrome - 1,
+			Width:  area.Width,
+			Height: rows,
 		}
 		p.completion.bounds = list.Translate(pl.Point)
 		p.paintCompletions(cx, buf, list)

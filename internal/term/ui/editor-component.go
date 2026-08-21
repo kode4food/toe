@@ -409,7 +409,8 @@ func (e *EditorComponent) resize(cx *Context) {
 	}
 	cx.Editor.SetViewHeight(e.size.Height - overhead)
 	cx.Editor.ResizeTree(geom.Size{
-		Width: e.size.Width, Height: max(e.size.Height-overhead, 0),
+		Width:  e.size.Width,
+		Height: max(e.size.Height-overhead, 0),
 	})
 }
 

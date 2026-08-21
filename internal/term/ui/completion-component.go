@@ -142,8 +142,7 @@ func (c *completionComponent) Layout(
 	rows := min(len(c.items), completionMaxRows)
 	h := rows + 2
 	return fitPopup(geom.Area{
-		Point: at,
-		Size:  geom.Size{Width: w, Height: h},
+		Point: at, Width: w, Height: h,
 	}, screen), true
 }
 

@@ -28,28 +28,19 @@ func TestSize(t *testing.T) {
 }
 
 func TestArea(t *testing.T) {
-	a := geom.Area{
-		Point: geom.Point{X: 2, Y: 3},
-		Size:  geom.Size{Width: 6, Height: 4},
-	}
+	a := geom.Area{X: 2, Y: 3, Width: 6, Height: 4}
 	assert.True(t, a.Contains(geom.Point{X: 7, Y: 6}))
 	assert.False(t, a.Contains(geom.Point{X: 8, Y: 6}))
 	assert.Equal(t, 7, a.Right())
 	assert.Equal(t, 6, a.Bottom())
 	assert.Equal(t,
-		geom.Area{
-			Point: geom.Point{X: 3, Y: 5},
-			Size:  a.Size,
-		},
+		geom.Area{X: 3, Y: 5, Size: a.Size},
 		a.Translate(geom.Point{X: 1, Y: 2}),
 	)
 	assert.True(t, a.Intersects(geom.Area{
-		Point: geom.Point{X: 7, Y: 6},
-		Size:  geom.Size{Width: 2, Height: 2},
+		X: 7, Y: 6, Width: 2, Height: 2,
 	}))
-	assert.False(t, a.Intersects(geom.Area{
-		Point: geom.Point{X: 3, Y: 4},
-	}))
+	assert.False(t, a.Intersects(geom.Area{X: 3, Y: 4}))
 	assert.Equal(t,
 		geom.Point{X: 4, Y: 4},
 		a.Center(geom.Size{Width: 2, Height: 2}),

@@ -263,7 +263,7 @@ func (s *processServer) Initialize(
 		id := "test"
 		if os.Getenv(testServerDiagRegOptionsEnv) == "1" {
 			diagnosticProvider = &protocol.DiagnosticRegistrationOptions{
-				DiagnosticOptions: protocol.DiagnosticOptions{Identifier: &id},
+				Identifier: &id,
 			}
 		} else {
 			diagnosticProvider = &protocol.DiagnosticOptions{Identifier: &id}
@@ -999,22 +999,18 @@ func (s *processServer) Symbols(
 	if os.Getenv(testServerSymbolSliceEnv) == "1" {
 		return protocol.WorkspaceSymbolSlice{
 			{
-				BaseSymbolInformation: protocol.BaseSymbolInformation{
-					Name: "WorkspaceMain", Kind: protocol.SymbolKindFunction,
-					ContainerName: &container,
-				},
-				Location: loc,
-				Data:     protocol.LSPAny("null"),
+				Name: "WorkspaceMain", Kind: protocol.SymbolKindFunction,
+				ContainerName: &container,
+				Location:      loc,
+				Data:          protocol.LSPAny("null"),
 			},
 		}, nil
 	}
 	return protocol.SymbolInformationSlice{
 		{
-			BaseSymbolInformation: protocol.BaseSymbolInformation{
-				Name: "WorkspaceMain", Kind: protocol.SymbolKindFunction,
-				ContainerName: &container,
-			},
-			Location: *loc,
+			Name: "WorkspaceMain", Kind: protocol.SymbolKindFunction,
+			ContainerName: &container,
+			Location:      *loc,
 		},
 	}, nil
 }
@@ -1185,29 +1181,27 @@ func (s *processServer) Diagnostic(
 		}, nil
 	}
 	return &protocol.RelatedFullDocumentDiagnosticReport{
-		FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
-			Kind:     string(protocol.DocumentDiagnosticReportKindFull),
-			ResultID: new("full-result-1"),
-			Items: []protocol.Diagnostic{
-				{
-					Range: protocol.Range{
-						Start: protocol.Position{Line: 0, Character: 0},
-						End:   protocol.Position{Line: 0, Character: 3},
-					},
-					Message:  protocol.String("test diagnostic"),
-					Severity: protocol.DiagnosticSeverityError,
+		Kind:     string(protocol.DocumentDiagnosticReportKindFull),
+		ResultID: new("full-result-1"),
+		Items: []protocol.Diagnostic{
+			{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 0},
+					End:   protocol.Position{Line: 0, Character: 3},
 				},
-				{
-					Range: protocol.Range{
-						Start: protocol.Position{Line: 0, Character: 0},
-						End:   protocol.Position{Line: 0, Character: 3},
-					},
-					Message: &protocol.MarkupContent{
-						Kind:  protocol.MarkupKindMarkdown,
-						Value: "**warning**: test",
-					},
-					Severity: protocol.DiagnosticSeverityWarning,
+				Message:  protocol.String("test diagnostic"),
+				Severity: protocol.DiagnosticSeverityError,
+			},
+			{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 0},
+					End:   protocol.Position{Line: 0, Character: 3},
 				},
+				Message: &protocol.MarkupContent{
+					Kind:  protocol.MarkupKindMarkdown,
+					Value: "**warning**: test",
+				},
+				Severity: protocol.DiagnosticSeverityWarning,
 			},
 		},
 	}, nil

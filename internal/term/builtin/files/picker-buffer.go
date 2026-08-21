@@ -39,13 +39,11 @@ var ErrInvalidPickerStart = errors.New("invalid picker start position")
 // NewBufferPicker returns a picker over the open buffers
 func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
 	p := ui.NewPicker(e, &bufferPickerSource{
-		PickerBase: ui.PickerBase{
-			Ident:       "open-buffer",
-			Label:       "Buffers",
-			Cols:        []string{"", "", ""},
-			MatchCol:    2,
-			Proportions: []int{0, 0, 1},
-		},
+		Ident:       "open-buffer",
+		Label:       "Buffers",
+		Cols:        []string{"", "", ""},
+		MatchCol:    2,
+		Proportions: []int{0, 0, 1},
 	})
 	if opts.StartPosition == PickerStartPrevious && p.MatchCount() > 1 {
 		p.SelectIndex(1)

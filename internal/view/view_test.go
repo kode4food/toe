@@ -394,7 +394,7 @@ func TestViewConsumeDirty(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
 		v.ConsumeDirty()
-		v.SetArea(geom.Area{Size: geom.Size{Width: 10, Height: 5}})
+		v.SetArea(geom.Area{Width: 10, Height: 5})
 		assert.True(t, v.ConsumeDirty())
 	})
 

@@ -105,13 +105,11 @@ func TestWorkspaceEditDocumentChangesErrors(t *testing.T) {
 						TextDocument: versionedTextDocumentID(uri.File(path)),
 						Edits: []protocol.TextDocumentEditElement{
 							&protocol.AnnotatedTextEdit{
-								TextEdit: protocol.TextEdit{
-									Range: protocol.Range{
-										Start: protocol.Position{Character: 0},
-										End:   protocol.Position{Character: 1},
-									},
-									NewText: "z",
+								Range: protocol.Range{
+									Start: protocol.Position{Character: 0},
+									End:   protocol.Position{Character: 1},
 								},
+								NewText: "z",
 							},
 						},
 					},
@@ -382,7 +380,5 @@ func hugeRangeEdit() protocol.TextEdit {
 func versionedTextDocumentID(
 	u uri.URI,
 ) protocol.OptionalVersionedTextDocumentIdentifier {
-	return protocol.OptionalVersionedTextDocumentIdentifier{
-		TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: u},
-	}
+	return protocol.OptionalVersionedTextDocumentIdentifier{URI: u}
 }

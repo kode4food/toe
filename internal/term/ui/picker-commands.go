@@ -18,14 +18,12 @@ type commandPaletteSource struct {
 // CommandPalettePicker opens a picker listing all registered commands
 func (m Model) CommandPalettePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &commandPaletteSource{
-		PickerBase: PickerBase{
-			Ident:       "command-palette",
-			Label:       "Command Palette",
-			Cols:        []string{"name", "bindings", "description"},
-			Proportions: []int{0, 1, 2},
-		},
-		keymaps: m.context.Keymaps,
-		editor:  m.component,
+		Ident:       "command-palette",
+		Label:       "Command Palette",
+		Cols:        []string{"name", "bindings", "description"},
+		Proportions: []int{0, 1, 2},
+		keymaps:     m.context.Keymaps,
+		editor:      m.component,
 	})
 }
 

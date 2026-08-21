@@ -92,10 +92,9 @@ func (a Area) Center(inner Size) Point {
 // and by.Height on the top and bottom, with the Size clamped to zero
 func (a Area) Inset(by Size) Area {
 	return Area{
-		Point: Point{X: a.X + by.Width, Y: a.Y + by.Height},
-		Size: Size{
-			Width:  max(a.Width-2*by.Width, 0),
-			Height: max(a.Height-2*by.Height, 0),
-		},
+		X:      a.X + by.Width,
+		Y:      a.Y + by.Height,
+		Width:  max(a.Width-2*by.Width, 0),
+		Height: max(a.Height-2*by.Height, 0),
 	}
 }

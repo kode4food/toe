@@ -270,11 +270,9 @@ func feedPickerModel(t testing.TB, paths []string) ui.Model {
 	// the open and its feed themselves
 	t.Helper()
 	src := feedPickerSource{
-		PickerBase: ui.PickerBase{
-			Ident: "feed",
-			Label: "Feed",
-			Cols:  []string{"path"},
-		},
+		Ident: "feed",
+		Label: "Feed",
+		Cols:  []string{"path"},
 		paths: paths,
 	}
 	e := view.NewEditor(t.TempDir())

@@ -158,12 +158,10 @@ func (sectionPickerSource) SkipPreview() {}
 func sectionPickerModel(t testing.TB, rows int) ui.Model {
 	t.Helper()
 	src := sectionPickerSource{
-		PickerBase: ui.PickerBase{
-			Ident: "sections",
-			Label: "Sections",
-			Cols:  []string{"name"},
-		},
-		rows: rows,
+		Ident: "sections",
+		Label: "Sections",
+		Cols:  []string{"name"},
+		rows:  rows,
 	}
 	e := view.NewEditor(t.TempDir())
 	km := command.NewKeymaps()

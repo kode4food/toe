@@ -403,9 +403,7 @@ func TestWorkspaceEdit(t *testing.T) {
 		defer func() { _ = session.Close() }()
 		waitForWorkspaceServer(t, session)
 		textDoc := protocol.OptionalVersionedTextDocumentIdentifier{
-			TextDocumentIdentifier: protocol.TextDocumentIdentifier{
-				URI: uri.File(path),
-			},
+			URI: uri.File(path),
 		}
 
 		err = session.ApplyWorkspaceEdit("session-test", protocol.WorkspaceEdit{

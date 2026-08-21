@@ -67,12 +67,10 @@ func NewFilePickerInDir(dir string) ui.PickerFunc {
 
 func newFilePickerSource(dir string) *filePickerSource {
 	return &filePickerSource{
-		PickerBase: ui.PickerBase{
-			Ident: "open-file",
-			Label: "Open File",
-			Cols:  []string{""},
-		},
-		dir: dir,
+		Ident: "open-file",
+		Label: "Open File",
+		Cols:  []string{""},
+		dir:   dir,
 	}
 }
 

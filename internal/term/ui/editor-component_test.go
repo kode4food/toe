@@ -1041,9 +1041,7 @@ func TestDocumentHighlightRefresh(t *testing.T) {
 	t.Run("refreshes after cursor move", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
 		ctl := &highlightRefreshController{
-			locationController: locationController{
-				highlights: []view.DocumentHighlight{{From: 1, To: 3}},
-			},
+			highlights: []view.DocumentHighlight{{From: 1, To: 3}},
 		}
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()

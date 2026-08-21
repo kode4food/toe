@@ -15,7 +15,7 @@ import (
 func (c *Client) DocumentColors(
 	ctx context.Context, doc DocumentSnapshot,
 ) ([]protocol.ColorInformation, bool, error) {
-	return clientDocRequest(c, ctx, doc,
+	return c.docRequest(ctx, doc,
 		func(
 			ctx context.Context, c *Client,
 			tdid protocol.TextDocumentIdentifier,

@@ -22,7 +22,7 @@ type documentLinkCandidate struct {
 func (c *Client) DocumentLinks(
 	ctx context.Context, doc DocumentSnapshot,
 ) ([]protocol.DocumentLink, bool, error) {
-	return clientDocRequest(c, ctx, doc,
+	return c.docRequest(ctx, doc,
 		func(
 			ctx context.Context, c *Client,
 			tdid protocol.TextDocumentIdentifier,

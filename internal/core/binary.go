@@ -36,17 +36,17 @@ const (
 
 var binarySignatures = [][]byte{
 	{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'}, // PNG
-	{0xFF, 0xD8, 0xFF},                            // JPEG
-	{'G', 'I', 'F', '8', '7', 'a'},                // GIF87a
-	{'G', 'I', 'F', '8', '9', 'a'},                // GIF89a
-	{'%', 'P', 'D', 'F', '-'},                     // PDF
-	{'P', 'K', 0x03, 0x04},                        // ZIP/JAR/DOCX/...
-	{0x1f, 0x8b, 0x08},                            // GZIP
-	{0x7f, 'E', 'L', 'F'},                         // ELF
-	{0xFE, 0xED, 0xFA, 0xCE},                      // Mach-O 32 BE
-	{0xFE, 0xED, 0xFA, 0xCF},                      // Mach-O 64 BE
-	{0xCE, 0xFA, 0xED, 0xFE},                      // Mach-O 32 LE
-	{0xCF, 0xFA, 0xED, 0xFE},                      // Mach-O 64 LE
+	{0xFF, 0xD8, 0xFF},             // JPEG
+	{'G', 'I', 'F', '8', '7', 'a'}, // GIF87a
+	{'G', 'I', 'F', '8', '9', 'a'}, // GIF89a
+	{'%', 'P', 'D', 'F', '-'},      // PDF
+	{'P', 'K', 0x03, 0x04},         // ZIP/JAR/DOCX/...
+	{0x1f, 0x8b, 0x08},             // GZIP
+	{0x7f, 'E', 'L', 'F'},          // ELF
+	{0xFE, 0xED, 0xFA, 0xCE},       // Mach-O 32 BE
+	{0xFE, 0xED, 0xFA, 0xCF},       // Mach-O 64 BE
+	{0xCE, 0xFA, 0xED, 0xFE},       // Mach-O 32 LE
+	{0xCF, 0xFA, 0xED, 0xFE},       // Mach-O 64 LE
 }
 
 // LoadText reads path, returning ErrBinaryFile without reading past the leading

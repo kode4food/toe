@@ -8,96 +8,94 @@ import (
 
 // SetDocumentColors stores document-wide LSP colors
 func (d *Document) SetDocumentColors(colors []DocumentColor) {
-	if setOverlaySlice(&d.overlays, &d.overlays.colors, colors) {
+	if d.overlays.setSlice(&d.overlays.colors, colors) {
 		d.MarkDirty()
 	}
 }
 
 // ClearDocumentColors removes document-wide LSP colors
 func (d *Document) ClearDocumentColors() {
-	if clearOverlaySlice(&d.overlays, &d.overlays.colors) {
+	if d.overlays.clearSlice(&d.overlays.colors) {
 		d.MarkDirty()
 	}
 }
 
 // DocumentColors returns document-wide LSP colors
 func (d *Document) DocumentColors() []DocumentColor {
-	return getOverlaySlice(&d.overlays, &d.overlays.colors)
+	return d.overlays.getSlice(&d.overlays.colors)
 }
 
 // SetDocumentLinks stores document-wide LSP links
 func (d *Document) SetDocumentLinks(links []DocumentLink) {
-	if setOverlaySlice(&d.overlays, &d.overlays.links, links) {
+	if d.overlays.setSlice(&d.overlays.links, links) {
 		d.MarkDirty()
 	}
 }
 
 // ClearDocumentLinks removes document-wide LSP links
 func (d *Document) ClearDocumentLinks() {
-	if clearOverlaySlice(&d.overlays, &d.overlays.links) {
+	if d.overlays.clearSlice(&d.overlays.links) {
 		d.MarkDirty()
 	}
 }
 
 // DocumentLinks returns document-wide LSP links
 func (d *Document) DocumentLinks() []DocumentLink {
-	return getOverlaySlice(&d.overlays, &d.overlays.links)
+	return d.overlays.getSlice(&d.overlays.links)
 }
 
 // SetDocumentHighlights stores the same-document highlight ranges for a view
 func (d *Document) SetDocumentHighlights(
 	vid Id, highlights []DocumentHighlight,
 ) {
-	if setOverlayMap(
-		&d.overlays, d.overlays.highlights, vid, highlights,
-	) {
+	if d.overlays.setMap(d.overlays.highlights, vid, highlights) {
 		d.markViewDirty(vid)
 	}
 }
 
 // ClearDocumentHighlights removes highlight ranges for a view
 func (d *Document) ClearDocumentHighlights(vid Id) {
-	if clearOverlayMap(&d.overlays, d.overlays.highlights, vid) {
+	if d.overlays.clearMap(d.overlays.highlights, vid) {
 		d.markViewDirty(vid)
 	}
 }
 
 // ClearAllDocumentHighlights removes highlight ranges for every view
 func (d *Document) ClearAllDocumentHighlights() {
-	if clearAllOverlayMap(&d.overlays, d.overlays.highlights) {
+	if d.overlays.clearAllMap(d.overlays.highlights) {
 		d.MarkDirty()
 	}
 }
 
 // DocumentHighlights returns same-document highlight ranges for a view
 func (d *Document) DocumentHighlights(vid Id) []DocumentHighlight {
-	return getOverlayMap(&d.overlays, d.overlays.highlights, vid)
+	return d.overlays.getMap(d.overlays.highlights, vid)
 }
 
 // SetInlayHints stores language-server inlay hints for a view
 func (d *Document) SetInlayHints(vid Id, hints []InlayHint) {
-	if setOverlayMap(&d.overlays, d.overlays.hints, vid, hints) {
+	if d.overlays.setMap(d.overlays.hints, vid, hints) {
 		d.markViewDirty(vid)
 	}
 }
 
 // ClearInlayHints removes language-server inlay hints for a view
 func (d *Document) ClearInlayHints(vid Id) {
-	if clearOverlayMap(&d.overlays, d.overlays.hints, vid) {
+	if d.overlays.clearMap(d.overlays.hints, vid) {
 		d.markViewDirty(vid)
 	}
 }
 
 // ClearAllInlayHints removes language-server inlay hints for every view
 func (d *Document) ClearAllInlayHints() {
-	if clearAllOverlayMap(&d.overlays, d.overlays.hints) {
+	if d.overlays.clearAllMap(d.overlays.hints) {
 		d.MarkDirty()
 	}
 }
 
 // InlayHints returns language-server inlay hints for a view
 func (d *Document) InlayHints(vid Id) []InlayHint {
-	return getOverlayMap(&d.overlays, d.overlays.hints, vid)
+	return d.overlays.getMap(d.overlays.hints, vid)
 }
 
 func (d *Document) remapOverlays(cs core.ChangeSet) {
@@ -135,11 +133,9 @@ func (d *Document) remapOverlays(cs core.ChangeSet) {
 	}
 }
 
-func setOverlaySlice[T comparable](
-	state *overlayState, field *[]T, items []T,
-) bool {
-	state.Lock()
-	defer state.Unlock()
+func (s *overlayState) setSlice[T comparable](field *[]T, items []T) bool {
+	s.Lock()
+	defer s.Unlock()
 	if len(items) == 0 {
 		changed := len(*field) != 0
 		*field = nil
@@ -152,25 +148,25 @@ func setOverlaySlice[T comparable](
 	return true
 }
 
-func clearOverlaySlice[T any](state *overlayState, field *[]T) bool {
-	state.Lock()
-	defer state.Unlock()
+func (s *overlayState) clearSlice[T any](field *[]T) bool {
+	s.Lock()
+	defer s.Unlock()
 	changed := len(*field) != 0
 	*field = nil
 	return changed
 }
 
-func getOverlaySlice[T any](state *overlayState, field *[]T) []T {
-	state.RLock()
-	defer state.RUnlock()
+func (s *overlayState) getSlice[T any](field *[]T) []T {
+	s.RLock()
+	defer s.RUnlock()
 	return slices.Clone(*field)
 }
 
-func setOverlayMap[T comparable](
-	state *overlayState, m map[Id][]T, vid Id, items []T,
+func (s *overlayState) setMap[T comparable](
+	m map[Id][]T, vid Id, items []T,
 ) bool {
-	state.Lock()
-	defer state.Unlock()
+	s.Lock()
+	defer s.Unlock()
 	if len(items) == 0 {
 		_, ok := m[vid]
 		delete(m, vid)
@@ -183,25 +179,25 @@ func setOverlayMap[T comparable](
 	return true
 }
 
-func clearOverlayMap[T any](state *overlayState, m map[Id][]T, vid Id) bool {
-	state.Lock()
-	defer state.Unlock()
+func (s *overlayState) clearMap[T any](m map[Id][]T, vid Id) bool {
+	s.Lock()
+	defer s.Unlock()
 	_, ok := m[vid]
 	delete(m, vid)
 	return ok
 }
 
-func clearAllOverlayMap[T any](state *overlayState, m map[Id][]T) bool {
-	state.Lock()
-	defer state.Unlock()
+func (s *overlayState) clearAllMap[T any](m map[Id][]T) bool {
+	s.Lock()
+	defer s.Unlock()
 	changed := len(m) != 0
 	clear(m)
 	return changed
 }
 
-func getOverlayMap[T any](state *overlayState, m map[Id][]T, vid Id) []T {
-	state.RLock()
-	defer state.RUnlock()
+func (s *overlayState) getMap[T any](m map[Id][]T, vid Id) []T {
+	s.RLock()
+	defer s.RUnlock()
 	return slices.Clone(m[vid])
 }
 

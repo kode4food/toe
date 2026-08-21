@@ -966,7 +966,7 @@ func TestTerminalResize(t *testing.T) {
 		}
 		t.Cleanup(func() { _ = tp.Stop() })
 
-		tp.SetArea(geom.Area{Size: geom.Size{Width: 30, Height: 12}})
+		tp.SetArea(geom.Area{Width: 30, Height: 12})
 
 		// no debounce: the emulator matches the new area at once, reserving
 		// the bottom row for the status line

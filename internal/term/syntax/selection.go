@@ -1,6 +1,8 @@
 package syntax
 
 import (
+	"slices"
+
 	sitter "github.com/tree-sitter/go-tree-sitter"
 
 	"github.com/kode4food/toe/internal/core"
@@ -54,8 +56,8 @@ func ShrinkSelection(args SelectionArgs) (Range, bool) {
 		return Range{}, false
 	}
 	bounds := args.Range.bounds()
-	for i := len(nodes) - 1; i >= 0; i-- {
-		n := nodes[i]
+	for _, n := range slices.Backward(nodes) {
+
 		if n.From > bounds.From && n.To < bounds.To {
 			return n, true
 		}

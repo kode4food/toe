@@ -163,9 +163,10 @@ func insertCursorAt(cx *Context, at geom.Point) (tea.Cursor, bool) {
 		return tea.Cursor{}, false
 	}
 	return tea.Cursor{
-		Position: tea.Position{X: at.X, Y: at.Y},
-		Shape:    cursorKindToShape(kind),
-		Color:    cursorColor(cx, view.ModeInsert),
+		X:     at.X,
+		Y:     at.Y,
+		Shape: cursorKindToShape(kind),
+		Color: cursorColor(cx, view.ModeInsert),
 	}, true
 }
 

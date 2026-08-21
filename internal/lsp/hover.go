@@ -17,7 +17,7 @@ func (c *Client) Hover(
 	if !c.SupportsFeature(FeatureHover) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[*protocol.Hover]{
+	return c.posRequest(posRequestArgs[*protocol.Hover]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,

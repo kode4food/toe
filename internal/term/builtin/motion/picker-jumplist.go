@@ -3,6 +3,7 @@ package motion
 import (
 	"embed"
 	"fmt"
+	"slices"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
@@ -40,11 +41,9 @@ func JumplistModule(model ui.Model) command.Module {
 // JumplistPicker opens a picker listing the jump history for the focused view
 func JumplistPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &jumplistPickerSource{
-		PickerBase: ui.PickerBase{
-			Ident: "jumplist",
-			Label: "Jump List",
-			Cols:  []string{""},
-		},
+		Ident: "jumplist",
+		Label: "Jump List",
+		Cols:  []string{""},
 	})
 }
 
@@ -57,8 +56,8 @@ func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
 	jumps := v.Jumps()
 	items := make([]*ui.PickerItem, 0, len(jumps))
 	var slab ui.PickerItemSlab
-	for i := len(jumps) - 1; i >= 0; i-- {
-		entry := jumps[i]
+	for i, entry := range slices.Backward(jumps) {
+
 		doc := e.Document(entry.DocID)
 		if doc == nil {
 			continue

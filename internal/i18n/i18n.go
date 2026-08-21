@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"maps"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -95,8 +96,8 @@ func LoadTranslations(files fs.FS) Translations {
 		loaded[locale.Locale(name)] = tr
 	}
 	locales := locale.Environment()
-	for i := len(locales) - 1; i >= 0; i-- {
-		maps.Copy(res, loaded[locales[i]])
+	for _, locale := range slices.Backward(locales) {
+		maps.Copy(res, loaded[locale])
 	}
 	return res
 }

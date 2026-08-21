@@ -21,20 +21,19 @@ type (
 	) (R, bool, error)
 )
 
-func clientRunRequest[R any](
-	c *Client, ctx context.Context, call clientCallFn[R],
+func (c *Client) runRequest[R any](
+	ctx context.Context, call clientCallFn[R],
 ) (R, bool, error) {
 	ctx, cancel := c.requestContext(ctx)
 	defer cancel()
 	return call(ctx)
 }
 
-func clientDocRequest[R any](
-	c *Client, ctx context.Context, doc DocumentSnapshot,
-	call docCallFn[R],
+func (c *Client) docRequest[R any](
+	ctx context.Context, doc DocumentSnapshot, call docCallFn[R],
 ) (R, bool, error) {
 	tdid := protocol.TextDocumentIdentifier{URI: doc.URI}
-	return clientRunRequest(c, ctx, func(ctx context.Context) (R, bool, error) {
+	return c.runRequest(ctx, func(ctx context.Context) (R, bool, error) {
 		return call(ctx, c, tdid)
 	})
 }
@@ -46,9 +45,7 @@ type posRequestArgs[R any] struct {
 	call posCallFn[R]
 }
 
-func clientPosRequest[R any](
-	c *Client, args posRequestArgs[R],
-) (R, bool, error) {
+func (c *Client) posRequest[R any](args posRequestArgs[R]) (R, bool, error) {
 	lspPos, err := lspPosition(
 		core.NewRope(args.doc.Text), args.pos, c.OffsetEncoding(),
 	)
@@ -60,7 +57,7 @@ func clientPosRequest[R any](
 		TextDocument: protocol.TextDocumentIdentifier{URI: args.doc.URI},
 		Position:     lspPos,
 	}
-	return clientRunRequest(c, args.ctx,
+	return c.runRequest(args.ctx,
 		func(ctx context.Context) (R, bool, error) {
 			return args.call(ctx, tdp)
 		},

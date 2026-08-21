@@ -389,9 +389,9 @@ func TestWorkspaceTrust(t *testing.T) {
 
 func TestTextFormat(t *testing.T) {
 	t.Run("uses soft wrap config", func(t *testing.T) {
-		sw := language.SoftWrap{}
-		sw.Enable = new(true)
-		sw.WrapIndicator = new("» ")
+		sw := language.SoftWrap{
+			Enable:        new(true),
+			WrapIndicator: new("» ")}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(
@@ -403,9 +403,9 @@ func TestTextFormat(t *testing.T) {
 	})
 
 	t.Run("wraps at configured width", func(t *testing.T) {
-		sw := language.SoftWrap{}
-		sw.Enable = new(true)
-		sw.WrapAtTextWidth = new(true)
+		sw := language.SoftWrap{
+			Enable:          new(true),
+			WrapAtTextWidth: new(true)}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(
@@ -419,9 +419,9 @@ func TestTextFormat(t *testing.T) {
 	})
 
 	t.Run("ignores wide text width", func(t *testing.T) {
-		sw := language.SoftWrap{}
-		sw.Enable = new(true)
-		sw.WrapAtTextWidth = new(true)
+		sw := language.SoftWrap{
+			Enable:          new(true),
+			WrapAtTextWidth: new(true)}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(

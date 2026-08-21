@@ -72,10 +72,8 @@ func (a *aboutComponent) Layout(
 	}, aboutText())
 	a.lines = lines
 	return geom.Area{
-		Point: geom.Point{
-			X: max((screen.Width-size.Width)/2, 0),
-			Y: max((screen.Height-size.Height)/2, 0),
-		},
+		X:    max((screen.Width-size.Width)/2, 0),
+		Y:    max((screen.Height-size.Height)/2, 0),
 		Size: size,
 	}, true
 }

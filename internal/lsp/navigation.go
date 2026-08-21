@@ -79,7 +79,7 @@ func (c *Client) GotoReference(
 	if !c.SupportsFeature(FeatureGotoReference) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[[]protocol.Location]{
+	return c.posRequest(posRequestArgs[[]protocol.Location]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,
@@ -152,7 +152,7 @@ func (c *Client) gotoLocationRequest(
 	if !c.SupportsFeature(args.feature) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[[]protocol.Location]{
+	return c.posRequest(posRequestArgs[[]protocol.Location]{
 		ctx: args.ctx,
 		doc: args.doc,
 		pos: args.pos,

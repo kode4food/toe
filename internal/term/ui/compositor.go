@@ -56,8 +56,8 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 	var callbacks []Callback
 
-	for i := len(c.layers) - 1; i >= 0; i-- {
-		result, cmd := c.handleLayerEvent(cx, c.layers[i], msg)
+	for _, v := range slices.Backward(c.layers) {
+		result, cmd := c.handleLayerEvent(cx, v, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
@@ -107,8 +107,8 @@ func (c *Compositor) Render(cx *Context) string {
 
 // Cursor returns the cursor of the topmost layer that wants one
 func (c *Compositor) Cursor(cx *Context) (cur tea.Cursor, ok bool) {
-	for i := len(c.layers) - 1; i >= 0; i-- {
-		if cur, ok = c.layers[i].Cursor(cx, c.size); ok {
+	for i, v := range slices.Backward(c.layers) {
+		if cur, ok = v.Cursor(cx, c.size); ok {
 			if c.cursorCovered(cx, i+1, cur) {
 				return tea.Cursor{}, false
 			}
@@ -159,8 +159,8 @@ func (c *Compositor) refreshEditorHighlight(cx *Context) tea.Cmd {
 }
 
 func (c *Compositor) activePreviewImager() (previewImager, bool) {
-	for i := len(c.layers) - 1; i >= 0; i-- {
-		if p, ok := c.layers[i].(previewImager); ok {
+	for _, v := range slices.Backward(c.layers) {
+		if p, ok := v.(previewImager); ok {
 			return p, true
 		}
 	}

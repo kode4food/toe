@@ -39,7 +39,7 @@ func (c *Client) Completion(
 	if !c.SupportsFeature(FeatureCompletion) {
 		return CompletionList{}, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[CompletionList]{
+	return c.posRequest(posRequestArgs[CompletionList]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,

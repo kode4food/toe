@@ -332,17 +332,17 @@ func SelectionModule(model ui.Model) command.Module {
 				Keys:      kit.Keys(kit.Char('"')),
 			},
 		},
-	}
-	mod.Labels = []command.PrefixLabel{
-		kit.Label(
-			"Match", kit.Char('m'), command.DocNormalModes,
-		),
-		kit.Label(
-			"Match around", m(kit.Char('a')), command.DocNormalModes,
-		),
-		kit.Label(
-			"Match inside", m(kit.Char('i')), command.DocNormalModes,
-		),
+		Labels: []command.PrefixLabel{
+			kit.Label(
+				"Match", kit.Char('m'), command.DocNormalModes,
+			),
+			kit.Label(
+				"Match around", m(kit.Char('a')), command.DocNormalModes,
+			),
+			kit.Label(
+				"Match inside", m(kit.Char('i')), command.DocNormalModes,
+			),
+		},
 	}
 	for _, e := range textObjectEntries {
 		mod.Labels = append(mod.Labels,

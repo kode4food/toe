@@ -141,9 +141,9 @@ func matchFuzzy[T ~string](items []T, input string) []Completion {
 			continue
 		}
 		matches = append(matches, scoredCompletion{
-			Completion: Completion{Text: text, Indices: res.Indices},
-			score:      res.Score,
-			order:      i,
+			Text: text, Indices: res.Indices,
+			score: res.Score,
+			order: i,
 		})
 	}
 	slices.SortStableFunc(matches, func(a, b scoredCompletion) int {

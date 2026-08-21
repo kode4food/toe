@@ -63,27 +63,23 @@ var (
 // NewDiagnosticPicker lists diagnostics for the focused document
 func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &diagnosticPickerSource{
-		PickerBase: ui.PickerBase{
-			Ident:       "diagnostics",
-			Label:       "Diagnostics",
-			Cols:        []string{"", ""},
-			MatchCol:    1,
-			Proportions: []int{0, 1},
-		},
+		Ident:       "diagnostics",
+		Label:       "Diagnostics",
+		Cols:        []string{"", ""},
+		MatchCol:    1,
+		Proportions: []int{0, 1},
 	})
 }
 
 // NewWorkspaceDiagnosticPicker lists diagnostics for all open documents
 func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &diagnosticPickerSource{
-		PickerBase: ui.PickerBase{
-			Ident:       "workspace-diagnostics",
-			Label:       "Workspace Diagnostics",
-			Cols:        []string{"", ""},
-			MatchCol:    1,
-			Proportions: []int{0, 1},
-		},
-		workspace: true,
+		Ident:       "workspace-diagnostics",
+		Label:       "Workspace Diagnostics",
+		Cols:        []string{"", ""},
+		MatchCol:    1,
+		Proportions: []int{0, 1},
+		workspace:   true,
 	})
 }
 

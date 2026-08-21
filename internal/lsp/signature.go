@@ -21,7 +21,7 @@ func (c *Client) SignatureHelp(
 	if !c.SupportsFeature(FeatureSignatureHelp) {
 		return nil, false, nil
 	}
-	return clientPosRequest(c, posRequestArgs[*protocol.SignatureHelp]{
+	return c.posRequest(posRequestArgs[*protocol.SignatureHelp]{
 		ctx: ctx,
 		doc: doc,
 		pos: pos,

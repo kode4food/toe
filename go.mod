@@ -1,8 +1,8 @@
 module github.com/kode4food/toe
 
-go 1.26
+go 1.27
 
-toolchain go1.26.4
+toolchain go1.27.0
 
 require (
 	charm.land/bubbletea/v2 v2.0.8

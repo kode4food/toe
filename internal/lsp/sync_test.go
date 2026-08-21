@@ -592,18 +592,16 @@ func (s *syncServer) Diagnostic(
 ) (protocol.DocumentDiagnosticReport, error) {
 	s.diagnostic <- p
 	return &protocol.RelatedFullDocumentDiagnosticReport{
-		FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
-			Kind:     string(protocol.DocumentDiagnosticReportKindFull),
-			ResultID: new("diag-1"),
-			Items: []protocol.Diagnostic{
-				{
-					Range: protocol.Range{
-						Start: protocol.Position{Line: 0, Character: 0},
-						End:   protocol.Position{Line: 0, Character: 4},
-					},
-					Severity: protocol.DiagnosticSeverityWarning,
-					Message:  protocol.String("pulled diagnostic"),
+		Kind:     string(protocol.DocumentDiagnosticReportKindFull),
+		ResultID: new("diag-1"),
+		Items: []protocol.Diagnostic{
+			{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 0},
+					End:   protocol.Position{Line: 0, Character: 4},
 				},
+				Severity: protocol.DiagnosticSeverityWarning,
+				Message:  protocol.String("pulled diagnostic"),
 			},
 		},
 	}, nil

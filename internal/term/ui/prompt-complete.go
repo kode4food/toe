@@ -220,12 +220,10 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 				continue
 			}
 			out = append(out, promptCompletion{
-				Completion: command.Completion{
-					Text:    name,
-					Detail:  cmd.DocString,
-					Indices: res.Indices,
-				},
-				score: res.Score,
+				Text:    name,
+				Detail:  cmd.DocString,
+				Indices: res.Indices,
+				score:   res.Score,
 			})
 		}
 	}

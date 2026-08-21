@@ -2,6 +2,7 @@ package action
 
 import (
 	"regexp"
+	"slices"
 	"unicode"
 	"unicode/utf8"
 )
@@ -90,8 +91,8 @@ func findPrevMatch(
 }
 
 func lastNonEmptyMatch(matches [][]int) ([]int, bool) {
-	for i := len(matches) - 1; i >= 0; i-- {
-		m := matches[i]
+	for _, m := range slices.Backward(matches) {
+
 		if m[0] != m[1] {
 			return m, true
 		}

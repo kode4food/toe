@@ -895,7 +895,7 @@ func TestSession(t *testing.T) {
 		assert.True(t, next.Tree().Maximized())
 		assert.Len(t, next.Tree().Traverse(), 2)
 		assert.Equal(t,
-			geom.Area{Size: geom.Size{Width: 80, Height: 24}},
+			geom.Area{Width: 80, Height: 24},
 			next.FocusedPane().Area(),
 		)
 	})

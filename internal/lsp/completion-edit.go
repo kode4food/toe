@@ -1,6 +1,8 @@
 package lsp
 
 import (
+	"slices"
+
 	"go.lsp.dev/protocol"
 
 	"github.com/kode4food/toe/internal/core"
@@ -217,8 +219,8 @@ func findCompletionRange(text core.Rope, cursor int) core.Range {
 func countWordSuffix(s string) int {
 	runes := []rune(s)
 	n := 0
-	for i := len(runes) - 1; i >= 0; i-- {
-		if !core.CharIsWord(runes[i]) {
+	for _, rune := range slices.Backward(runes) {
+		if !core.CharIsWord(rune) {
 			return n
 		}
 		n++

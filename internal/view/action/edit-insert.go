@@ -76,6 +76,49 @@ func InsertChar(e *view.Editor, ch rune) {
 	_ = e.Apply(tx)
 }
 
+// InsertText inserts literal text at every cursor position in insert mode
+func InsertText(e *view.Editor, value string) {
+	if value == "" {
+		return
+	}
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	doc := e.FocusedDocument()
+	if doc == nil || doc.ReadOnly() {
+		return
+	}
+	text := doc.Text()
+	sel := doc.SelectionFor(v.ID())
+	ranges := sel.Ranges()
+	changes := make([]core.Change, 0, len(ranges))
+	seen := map[int]bool{}
+	for _, r := range ranges {
+		pos := r.Cursor(text)
+		if seen[pos] {
+			continue
+		}
+		seen[pos] = true
+		changes = append(changes, core.TextChange(core.Span{
+			From: pos,
+			To:   pos,
+		}, value))
+	}
+	if len(changes) == 0 {
+		return
+	}
+	cs, err := core.NewChangeSetFromChanges(text, changes)
+	if err != nil {
+		return
+	}
+	if newSel, err := sel.Map(cs); err == nil {
+		_ = e.Apply(
+			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
+		)
+	}
+}
+
 func autoPairsForDocument(
 	e *view.Editor, doc *view.Document,
 ) (core.AutoPairs, bool) {

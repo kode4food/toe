@@ -62,6 +62,18 @@ func TestInsertMode(t *testing.T) {
 
 		assert.Equal(t, "a b", doc.Text().String())
 	})
+
+	t.Run("inserts bracketed paste", func(t *testing.T) {
+		e := editorWithText(t, "")
+		e.SetMode(view.ModeInsert)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		_, _ = m.Update(tea.PasteMsg{Content: "(pasted)\ntext"})
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		assert.Equal(t, "(pasted)\ntext", doc.Text().String())
+	})
 }
 
 func TestEditorKeys(t *testing.T) {

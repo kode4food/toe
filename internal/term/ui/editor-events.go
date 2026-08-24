@@ -37,6 +37,21 @@ func (e *EditorComponent) handleKeyPressEvent(
 	)
 }
 
+func (e *EditorComponent) handlePaste(
+	cx *Context, msg tea.PasteMsg,
+) (EventResult, tea.Cmd) {
+	p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
+	if pp, ok := p.(Pasteable); ok {
+		pp.Paste(msg.Content)
+		return consumed(), nil
+	}
+	if cx.Editor.Mode() == view.ModeInsert {
+		action.InsertText(cx.Editor, msg.Content)
+		return consumed(), nil
+	}
+	return ignored(), nil
+}
+
 func (e *EditorComponent) handleFocus(cx *Context) (EventResult, tea.Cmd) {
 	e.focused = true
 	refreshVCS(cx)

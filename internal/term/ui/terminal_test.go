@@ -633,6 +633,22 @@ func TestTerminalPane(t *testing.T) {
 		}, time.Second, 5*time.Millisecond)
 	})
 
+	t.Run("bracketed paste reaches shell", func(t *testing.T) {
+		e := editorWithText(t, "hello toe")
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m.TerminalAction(e)
+		tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+		assert.True(t, ok)
+		t.Cleanup(func() { _ = tp.Stop() })
+		waitForResize(t, tp)
+
+		_, _ = m.Update(tea.PasteMsg{Content: "pasted-text"})
+
+		assert.Eventually(t, func() bool {
+			return strings.Contains(tp.Emulator().String(), "pasted-text")
+		}, time.Second, 5*time.Millisecond)
+	})
+
 	t.Run("terminal menu uses space trie", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		km := command.NewKeymaps()

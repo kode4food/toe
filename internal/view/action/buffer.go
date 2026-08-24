@@ -65,49 +65,11 @@ func ExtendToColumn(e *view.Editor) {
 // PasteRegisterAtCursor inserts the contents of the given register at each
 // cursor position (for use in insert mode)
 func PasteRegisterAtCursor(e *view.Editor, reg rune) {
-	v := e.FocusedView()
-	if v == nil {
-		return
-	}
-	doc := e.FocusedDocument()
-	if doc == nil {
-		return
-	}
-	if doc.ReadOnly() {
-		return
-	}
 	val, ok := e.FirstRegister(reg)
 	if !ok {
 		return
 	}
-	text := doc.Text()
-	sel := doc.SelectionFor(v.ID())
-	ranges := sel.Ranges()
-	changes := make([]core.Change, 0, len(ranges))
-	seen := map[int]bool{}
-	for _, r := range ranges {
-		pos := r.Cursor(text)
-		if seen[pos] {
-			continue
-		}
-		seen[pos] = true
-		changes = append(changes, core.TextChange(core.Span{
-			From: pos,
-			To:   pos,
-		}, val))
-	}
-	if len(changes) == 0 {
-		return
-	}
-	cs, err := core.NewChangeSetFromChanges(text, changes)
-	if err != nil {
-		return
-	}
-	if newSel, err := sel.Map(cs); err == nil {
-		_ = e.Apply(
-			core.NewTransaction(text).WithChanges(cs).WithSelection(newSel),
-		)
-	}
+	InsertText(e, val)
 }
 
 // YankJoin yanks all selection text joined by a separator to the active

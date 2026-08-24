@@ -207,6 +207,8 @@ func (e *EditorComponent) HandleEvent(
 		return e.handleWindowSize(cx, msg)
 	case tea.KeyPressMsg:
 		return e.handleKeyPressEvent(cx, msg)
+	case tea.PasteMsg:
+		return e.handlePaste(cx, msg)
 	case tea.FocusMsg:
 		return e.handleFocus(cx)
 	case tea.BlurMsg:

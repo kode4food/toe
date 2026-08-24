@@ -12,32 +12,32 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-func (e *EditorComponent) handleWindowSize(
+func (ec *EditorComponent) handleWindowSize(
 	cx *Context, msg tea.WindowSizeMsg,
 ) (EventResult, tea.Cmd) {
 	// hold before resizing, so a drag of the window edge reaches the live panes
 	// once, with the size it settles on
-	cmd := e.settlePaneResizeCmd(cx)
-	e.size = geom.Size{Width: msg.Width, Height: msg.Height}
-	e.resize(cx)
+	cmd := ec.settlePaneResizeCmd(cx)
+	ec.size = geom.Size{Width: msg.Width, Height: msg.Height}
+	ec.resize(cx)
 	return consumed(), cmd
 }
 
-func (e *EditorComponent) handleKeyPressEvent(
+func (ec *EditorComponent) handleKeyPressEvent(
 	cx *Context, msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
-	result, cmd := e.handleKeyPress(cx, msg)
-	if shown := bufferlineVisible(cx); shown != e.bufferlineShown {
-		e.bufferlineShown = shown
-		e.resize(cx)
+	result, cmd := ec.handleKeyPress(cx, msg)
+	if shown := bufferlineVisible(cx); shown != ec.bufferlineShown {
+		ec.bufferlineShown = shown
+		ec.resize(cx)
 	}
 	return result, tea.Batch(
-		cmd, e.autoSaveCmd(cx), e.documentHighlightCmd(cx),
-		e.macroBlinkCmd(),
+		cmd, ec.autoSaveCmd(cx), ec.documentHighlightCmd(cx),
+		ec.macroBlinkCmd(),
 	)
 }
 
-func (e *EditorComponent) handlePaste(
+func (ec *EditorComponent) handlePaste(
 	cx *Context, msg tea.PasteMsg,
 ) (EventResult, tea.Cmd) {
 	p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
@@ -52,55 +52,55 @@ func (e *EditorComponent) handlePaste(
 	return ignored(), nil
 }
 
-func (e *EditorComponent) handleFocus(cx *Context) (EventResult, tea.Cmd) {
-	e.focused = true
+func (ec *EditorComponent) handleFocus(cx *Context) (EventResult, tea.Cmd) {
+	ec.focused = true
 	refreshVCS(cx)
-	return ignored(), e.documentHighlightCmd(cx)
+	return ignored(), ec.documentHighlightCmd(cx)
 }
 
-func (e *EditorComponent) handleBlur(cx *Context) (EventResult, tea.Cmd) {
-	e.focused = false
+func (ec *EditorComponent) handleBlur(cx *Context) (EventResult, tea.Cmd) {
+	ec.focused = false
 	if cx.Editor.Options().AutoSaveFocusLost {
 		cx.Editor.SaveAll(false)
 	}
 	return ignored(), nil
 }
 
-func (e *EditorComponent) handleAutoSaveMsg(
+func (ec *EditorComponent) handleAutoSaveMsg(
 	cx *Context, msg autoSaveMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen == e.saveSlot.gen {
+	if msg.gen == ec.saveSlot.gen {
 		cx.Editor.SaveAll(false)
 	}
 	return consumed(), nil
 }
 
-func (e *EditorComponent) handleAutoCompletionMsg(
+func (ec *EditorComponent) handleAutoCompletionMsg(
 	cx *Context, msg autoCompletionMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.language.autoGen {
+	if msg.gen != ec.language.autoGen {
 		return consumed(), nil
 	}
 	if cx.Editor.Mode() != view.ModeInsert {
 		return consumed(), nil
 	}
-	return consumed(), e.completionCmd(cx, false)
+	return consumed(), ec.completionCmd(cx, false)
 }
 
-func (e *EditorComponent) handleDocHighlightMsg(
+func (ec *EditorComponent) handleDocHighlightMsg(
 	cx *Context, msg docHighlightMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.language.highlightGen {
-		e.language.highlightPos = docHighlightPosition{}
-		return consumed(), e.documentHighlightCmd(cx)
+	if msg.gen != ec.language.highlightGen {
+		ec.language.highlightPos = docHighlightPosition{}
+		return consumed(), ec.documentHighlightCmd(cx)
 	}
 	return consumed(), nil
 }
 
-func (e *EditorComponent) handleCompletionMsg(
+func (ec *EditorComponent) handleCompletionMsg(
 	cx *Context, msg completionMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.language.completionGen {
+	if msg.gen != ec.language.completionGen {
 		return consumed(), nil
 	}
 	if !completionRequestValid(cx, msg.anchor) {
@@ -115,7 +115,7 @@ func (e *EditorComponent) handleCompletionMsg(
 	}
 	return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 		c := &completionComponent{
-			editor:     e,
+			editor:     ec,
 			all:        msg.items,
 			items:      msg.items,
 			anchor:     msg.anchor,
@@ -127,125 +127,125 @@ func (e *EditorComponent) handleCompletionMsg(
 	}), nil
 }
 
-func (e *EditorComponent) handleExternalFileChanged(
+func (ec *EditorComponent) handleExternalFileChanged(
 	cx *Context, msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
 	cx.Editor.ProcessExternalFileChange(msg.path)
 	reloadChangedImages(cx.Editor, msg.path)
 	refreshVCS(cx)
-	e.syncEditorMessages(cx)
+	ec.syncEditorMessages(cx)
 	return consumed(), cx.fileWatcher.nextCmd(cx.Editor)
 }
 
-func (e *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleRedraw(cx *Context) (EventResult, tea.Cmd) {
 	// the frame repaints on its own, so only reap closed terminals and re-arm
-	e.pollTerminals(cx)
-	cmd := e.redrawCmd()
+	ec.pollTerminals(cx)
+	cmd := ec.redrawCmd()
 	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
-		if !e.spinner.active {
-			cmd = tea.Batch(cmd, spinnerTickCmd(e.spinner.start()))
+		if !ec.spinner.active {
+			cmd = tea.Batch(cmd, spinnerTickCmd(ec.spinner.start()))
 		}
-	} else if e.spinner.active {
-		e.spinner.stop()
+	} else if ec.spinner.active {
+		ec.spinner.stop()
 	}
 	// a toast pushed off the UI goroutine arrives here, not through a key
-	return consumed(), tea.Batch(cmd, e.toastTickCmd())
+	return consumed(), tea.Batch(cmd, ec.toastTickCmd())
 }
 
-func (e *EditorComponent) requestRedraw() {
+func (ec *EditorComponent) requestRedraw() {
 	select {
-	case e.redraw <- struct{}{}:
+	case ec.redraw <- struct{}{}:
 	default:
 	}
 }
 
-func (e *EditorComponent) redrawCmd() tea.Cmd {
+func (ec *EditorComponent) redrawCmd() tea.Cmd {
 	return func() tea.Msg {
-		<-e.redraw
+		<-ec.redraw
 		return redrawMsg{}
 	}
 }
 
-func (e *EditorComponent) handleVCSUpdated(cx *Context) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleVCSUpdated(cx *Context) (EventResult, tea.Cmd) {
 	for _, doc := range cx.Editor.AllDocuments() {
 		doc.MarkDirty()
 	}
 	return consumed(), vcsUpdateCmd(cx)
 }
 
-func (e *EditorComponent) handleSpinnerTick(
+func (ec *EditorComponent) handleSpinnerTick(
 	cx *Context, msg spinnerTickMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.spinner.gen || !e.spinner.active {
+	if msg.gen != ec.spinner.gen || !ec.spinner.active {
 		return consumed(), nil
 	}
 	if ls := cx.Editor.LanguageServerController(); ls != nil && ls.Busy() {
-		e.spinner.phase++
+		ec.spinner.phase++
 		return consumed(), spinnerTickCmd(msg.gen)
 	}
-	e.spinner.stop()
+	ec.spinner.stop()
 	return consumed(), nil
 }
 
-func (e *EditorComponent) handleMacroBlinkTick(
+func (ec *EditorComponent) handleMacroBlinkTick(
 	msg macroBlinkTickMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.macroBlink.gen || !e.macroBlink.active {
+	if msg.gen != ec.macroBlink.gen || !ec.macroBlink.active {
 		return consumed(), nil
 	}
-	if !e.macroSlot.recording || !e.animation {
-		e.macroBlink.stop()
+	if !ec.macroSlot.recording || !ec.animation {
+		ec.macroBlink.stop()
 		return consumed(), nil
 	}
-	e.macroBlink.phase++
+	ec.macroBlink.phase++
 	return consumed(), macroBlinkTickCmd(msg.gen)
 }
 
-func (e *EditorComponent) macroBlinkCmd() tea.Cmd {
-	active := e.macroSlot.recording && e.animation
-	if active && !e.macroBlink.active {
-		return macroBlinkTickCmd(e.macroBlink.start())
+func (ec *EditorComponent) macroBlinkCmd() tea.Cmd {
+	active := ec.macroSlot.recording && ec.animation
+	if active && !ec.macroBlink.active {
+		return macroBlinkTickCmd(ec.macroBlink.start())
 	}
-	if !active && e.macroBlink.active {
-		e.macroBlink.stop()
+	if !active && ec.macroBlink.active {
+		ec.macroBlink.stop()
 	}
 	return nil
 }
 
-func (e *EditorComponent) handleMouseClick(
+func (ec *EditorComponent) handleMouseClick(
 	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
-	e.language.completionGen++
+	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if e.toasts.dismissAt(at) {
-		e.requestRedraw()
+	if ec.toasts.dismissAt(at) {
+		ec.requestRedraw()
 		return consumed(), nil
 	}
-	if len(e.keys.input) > 0 {
-		if e.cache.infoBounds.Contains(at) {
+	if len(ec.keys.input) > 0 {
+		if ec.cache.infoBounds.Contains(at) {
 			return consumed(), nil
 		}
-		e.cancelPending(cx)
+		ec.cancelPending(cx)
 	}
-	e.mouse.vertical.stop()
-	e.mouse.horizontal.stop()
-	if dc := e.mouse.downDrag; dc != nil {
+	ec.mouse.vertical.stop()
+	ec.mouse.horizontal.stop()
+	if dc := ec.mouse.downDrag; dc != nil {
 		dc.CancelDrag()
 	}
-	e.mouse.downDrag = nil
+	ec.mouse.downDrag = nil
 	if cx.Editor.Options().Mouse {
-		r := &renderPass{editor: e, context: cx, size: e.size}
+		r := &renderPass{editor: ec, context: cx, size: ec.size}
 		r.handleMouseClick(msg)
 	}
-	return consumed(), e.documentHighlightCmd(cx)
+	return consumed(), ec.documentHighlightCmd(cx)
 }
 
-func (e *EditorComponent) handleMouseMotion(
+func (ec *EditorComponent) handleMouseMotion(
 	cx *Context, msg tea.MouseMotionMsg,
 ) (EventResult, tea.Cmd) {
-	e.language.completionGen++
+	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if dc := e.mouse.downDrag; dc != nil &&
+	if dc := ec.mouse.downDrag; dc != nil &&
 		cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 		return consumed(), dc.ContinueDrag(cx, at)
 	}
@@ -254,49 +254,49 @@ func (e *EditorComponent) handleMouseMotion(
 		if dispatchToPaneInput(cx, at, msg) {
 			return consumed(), nil
 		}
-		r := &renderPass{editor: e, context: cx, size: e.size}
+		r := &renderPass{editor: ec, context: cx, size: ec.size}
 		dragCmd = r.handleMouseDrag(at)
 	}
-	return consumed(), tea.Batch(dragCmd, e.documentHighlightCmd(cx))
+	return consumed(), tea.Batch(dragCmd, ec.documentHighlightCmd(cx))
 }
 
-func (e *EditorComponent) handleMouseAxisScroll(
+func (ec *EditorComponent) handleMouseAxisScroll(
 	cx *Context, msg mouseAxisScrollMsg,
 ) (EventResult, tea.Cmd) {
 	if msg.gen != msg.axis.gen {
 		return consumed(), nil
 	}
-	return consumed(), e.continueAxisScroll(cx, msg.axis, msg.toLow)
+	return consumed(), ec.continueAxisScroll(cx, msg.axis, msg.toLow)
 }
 
-func (e *EditorComponent) handleMouseRelease(
+func (ec *EditorComponent) handleMouseRelease(
 	cx *Context, msg tea.MouseReleaseMsg,
 ) (EventResult, tea.Cmd) {
-	e.language.completionGen++
+	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if dc := e.mouse.downDrag; dc != nil {
-		e.mouse.downDrag = nil
+	if dc := ec.mouse.downDrag; dc != nil {
+		ec.mouse.downDrag = nil
 		cmd := dc.EndDrag(cx, at)
-		e.syncEditorMessages(cx)
-		return consumed(), tea.Batch(cmd, e.documentHighlightCmd(cx))
+		ec.syncEditorMessages(cx)
+		return consumed(), tea.Batch(cmd, ec.documentHighlightCmd(cx))
 	}
 	if !cx.Editor.Options().Mouse {
 		return consumed(), nil
 	}
 	if dispatchToPaneInput(cx, at, msg) {
-		return consumed(), e.documentHighlightCmd(cx)
+		return consumed(), ec.documentHighlightCmd(cx)
 	}
 	if msg.Button == tea.MouseLeft {
-		e.handleMouseLeftRelease(cx)
+		ec.handleMouseLeftRelease(cx)
 	}
-	return consumed(), e.documentHighlightCmd(cx)
+	return consumed(), ec.documentHighlightCmd(cx)
 }
 
-func (e *EditorComponent) handleMouseWheel(
+func (ec *EditorComponent) handleMouseWheel(
 	cx *Context, msg tea.MouseWheelMsg,
 ) (EventResult, tea.Cmd) {
-	e.language.completionGen++
-	if len(e.keys.input) > 0 {
+	ec.language.completionGen++
+	if len(ec.keys.input) > 0 {
 		return consumed(), nil
 	}
 	if !cx.Editor.Options().Mouse {
@@ -306,7 +306,7 @@ func (e *EditorComponent) handleMouseWheel(
 	if dispatchToPaneInput(cx, at, msg) {
 		return consumed(), nil
 	}
-	r := &renderPass{editor: e, context: cx, size: e.size}
+	r := &renderPass{editor: ec, context: cx, size: ec.size}
 	v := r.contentViewAt(at)
 	if v == nil {
 		return consumed(), nil
@@ -326,18 +326,18 @@ func (e *EditorComponent) handleMouseWheel(
 	return consumed(), nil
 }
 
-func (e *EditorComponent) handleMouseLeftRelease(cx *Context) {
-	e.mouse.vertical.stop()
-	e.mouse.horizontal.stop()
-	if e.mouse.downSep != nil {
-		e.mouse.downSep = nil
+func (ec *EditorComponent) handleMouseLeftRelease(cx *Context) {
+	ec.mouse.vertical.stop()
+	ec.mouse.horizontal.stop()
+	if ec.mouse.downSep != nil {
+		ec.mouse.downSep = nil
 		return
 	}
-	if e.mouse.downRange == nil {
+	if ec.mouse.downRange == nil {
 		return
 	}
-	down := *e.mouse.downRange
-	e.mouse.downRange = nil
+	down := *ec.mouse.downRange
+	ec.mouse.downRange = nil
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return

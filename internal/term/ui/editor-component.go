@@ -198,94 +198,94 @@ func (m Model) SetAnimation(enabled bool) {
 }
 
 // HandleEvent routes keys, mouse, and editor messages to the panes
-func (e *EditorComponent) HandleEvent(
+func (ec *EditorComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	cx.fileWatcher.sync(cx.Editor)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		return e.handleWindowSize(cx, msg)
+		return ec.handleWindowSize(cx, msg)
 	case tea.KeyPressMsg:
-		return e.handleKeyPressEvent(cx, msg)
+		return ec.handleKeyPressEvent(cx, msg)
 	case tea.PasteMsg:
-		return e.handlePaste(cx, msg)
+		return ec.handlePaste(cx, msg)
 	case tea.FocusMsg:
-		return e.handleFocus(cx)
+		return ec.handleFocus(cx)
 	case tea.BlurMsg:
-		return e.handleBlur(cx)
+		return ec.handleBlur(cx)
 	case autoSaveMsg:
-		return e.handleAutoSaveMsg(cx, msg)
+		return ec.handleAutoSaveMsg(cx, msg)
 	case autoCompletionMsg:
-		return e.handleAutoCompletionMsg(cx, msg)
+		return ec.handleAutoCompletionMsg(cx, msg)
 	case docHighlightMsg:
-		return e.handleDocHighlightMsg(cx, msg)
+		return ec.handleDocHighlightMsg(cx, msg)
 	case completionMsg:
-		return e.handleCompletionMsg(cx, msg)
+		return ec.handleCompletionMsg(cx, msg)
 	case externalFileChangedMsg:
-		return e.handleExternalFileChanged(cx, msg)
+		return ec.handleExternalFileChanged(cx, msg)
 	case redrawMsg:
-		return e.handleRedraw(cx)
+		return ec.handleRedraw(cx)
 	case vcsUpdatedMsg:
-		return e.handleVCSUpdated(cx)
+		return ec.handleVCSUpdated(cx)
 	case spinnerTickMsg:
-		return e.handleSpinnerTick(cx, msg)
+		return ec.handleSpinnerTick(cx, msg)
 	case macroBlinkTickMsg:
-		return e.handleMacroBlinkTick(msg)
+		return ec.handleMacroBlinkTick(msg)
 	case toastTickMsg:
-		return e.handleToastTick(msg)
+		return ec.handleToastTick(msg)
 	case autoSizeTickMsg:
-		return e.handleAutoSizeTick(cx, msg)
+		return ec.handleAutoSizeTick(cx, msg)
 	case resizeSettleMsg:
-		return e.handleResizeSettle(msg)
+		return ec.handleResizeSettle(msg)
 	case tea.MouseClickMsg:
-		return e.handleMouseClick(cx, msg)
+		return ec.handleMouseClick(cx, msg)
 	case tea.MouseMotionMsg:
-		return e.handleMouseMotion(cx, msg)
+		return ec.handleMouseMotion(cx, msg)
 	case mouseAxisScrollMsg:
-		return e.handleMouseAxisScroll(cx, msg)
+		return ec.handleMouseAxisScroll(cx, msg)
 	case terminalDragScrollMsg:
 		return consumed(), msg.draggable.DragTick(cx, msg.gen, msg.toLow)
 	case tea.MouseReleaseMsg:
-		return e.handleMouseRelease(cx, msg)
+		return ec.handleMouseRelease(cx, msg)
 	case tea.MouseWheelMsg:
-		return e.handleMouseWheel(cx, msg)
+		return ec.handleMouseWheel(cx, msg)
 	}
 	return ignored(), nil
 }
 
 // Render returns the editor's cell buffer for the compositor to blit overlays
 // onto, skipping an ANSI round-trip
-func (e *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
-	if e.buf == nil || e.buf.Size != screen {
-		e.buf = tui.NewBuffer(screen)
+func (ec *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
+	if ec.buf == nil || ec.buf.Size != screen {
+		ec.buf = tui.NewBuffer(screen)
 	}
-	e.syncEditorMessages(cx)
-	e.cache.evictClosed(cx.Editor)
-	r := &renderPass{editor: e, context: cx, size: screen}
-	r.renderEditorContent(e.buf)
-	return e.buf
+	ec.syncEditorMessages(cx)
+	ec.cache.evictClosed(cx.Editor)
+	r := &renderPass{editor: ec, context: cx, size: screen}
+	r.renderEditorContent(ec.buf)
+	return ec.buf
 }
 
 // Cursor returns the focused pane's cursor position and shape
-func (e *EditorComponent) Cursor(
+func (ec *EditorComponent) Cursor(
 	cx *Context, screen geom.Size,
 ) (tea.Cursor, bool) {
-	r := &renderPass{editor: e, context: cx, size: screen}
+	r := &renderPass{editor: ec, context: cx, size: screen}
 	return r.editorCursor()
 }
 
-func (e *EditorComponent) queueNextLayer(next layerFunc) {
-	e.keys.nextLayer = next
+func (ec *EditorComponent) queueNextLayer(next layerFunc) {
+	ec.keys.nextLayer = next
 }
 
-func (e *EditorComponent) takeNextLayer() layerFunc {
-	next := e.keys.nextLayer
-	e.keys.nextLayer = nil
+func (ec *EditorComponent) takeNextLayer() layerFunc {
+	next := ec.keys.nextLayer
+	ec.keys.nextLayer = nil
 	return next
 }
 
-func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
-	if e.mouse.downRange != nil {
+func (ec *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
+	if ec.mouse.downRange != nil {
 		return nil
 	}
 	doc := cx.Editor.FocusedDocument()
@@ -302,19 +302,19 @@ func (e *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 		return nil
 	}
 	pos := documentHighlightPositionFor(doc, v)
-	if e.language.highlightPos == pos {
+	if ec.language.highlightPos == pos {
 		return nil
 	}
-	e.language.highlightPos = pos
-	e.language.highlightGen++
-	gen := e.language.highlightGen
+	ec.language.highlightPos = pos
+	ec.language.highlightGen++
+	gen := ec.language.highlightGen
 	return func() tea.Msg {
 		_, _ = ls.DocumentHighlights(doc, v.ID())
 		return docHighlightMsg{gen: gen}
 	}
 }
 
-func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
+func (ec *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return geom.Point{}, false
@@ -335,7 +335,7 @@ func (e *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
 		text:        text,
 		cursor:      cursor,
 		gutterWidth: gutterWidthFor(text, opts.Gutters),
-		rowMap:      e.cache.viewRowMaps[v.ID()],
+		rowMap:      ec.cache.viewRowMaps[v.ID()],
 		tabWidth:    doc.TabWidth(),
 		horzOff:     v.Offset().HorizontalOffset,
 	})
@@ -347,82 +347,82 @@ type popupAnchorArgs struct {
 	fallbackRows int
 }
 
-func (e *EditorComponent) popupAnchorBelowCaret(
+func (ec *EditorComponent) popupAnchorBelowCaret(
 	cx *Context, args popupAnchorArgs,
 ) geom.Point {
-	if at, ok := e.caretScreenPos(cx); ok {
+	if at, ok := ec.caretScreenPos(cx); ok {
 		at.Y++
 		return at
 	}
 	return geom.Point{Y: max(args.screenHeight-args.fallbackRows-2, 0)}
 }
 
-func (e *EditorComponent) cancelPending(cx *Context) {
-	e.keys.path = nil
-	e.clearHints()
-	e.keys.continuation = nil
-	e.keys.frames = nil
-	e.clearInput(cx)
+func (ec *EditorComponent) cancelPending(cx *Context) {
+	ec.keys.path = nil
+	ec.clearHints()
+	ec.keys.continuation = nil
+	ec.keys.frames = nil
+	ec.clearInput(cx)
 }
 
-func (e *EditorComponent) syncEditorMessages(cx *Context) {
+func (ec *EditorComponent) syncEditorMessages(cx *Context) {
 	for _, m := range cx.Editor.TakeStatusMsgs() {
 		if m != "" {
-			e.setStatusMessage(m)
+			ec.setStatusMessage(m)
 		}
 	}
-	for _, m := range e.toasts.takeLog() {
+	for _, m := range ec.toasts.takeLog() {
 		cx.Editor.AppendMessage(m)
 	}
 }
 
-func (e *EditorComponent) setCommandResult(res command.Result) {
+func (ec *EditorComponent) setCommandResult(res command.Result) {
 	if res.Error != nil {
-		e.setCommandError(res.Error)
+		ec.setCommandError(res.Error)
 		return
 	}
 	if res.Message != "" {
-		e.setCommandMessage(res.Message)
+		ec.setCommandMessage(res.Message)
 	}
 }
 
-func (e *EditorComponent) setCommandError(err error) {
-	e.pushToast(i18n.ErrorText(err), toastError)
+func (ec *EditorComponent) setCommandError(err error) {
+	ec.pushToast(i18n.ErrorText(err), toastError)
 }
 
-func (e *EditorComponent) setCommandMessage(msg string) {
-	e.pushToast(msg, toastCommand)
+func (ec *EditorComponent) setCommandMessage(msg string) {
+	ec.pushToast(msg, toastCommand)
 }
 
-func (e *EditorComponent) setStatusMessage(msg string) {
-	e.pushToast(msg, toastInfo)
+func (ec *EditorComponent) setStatusMessage(msg string) {
+	ec.pushToast(msg, toastInfo)
 }
 
-func (e *EditorComponent) clearCommandMessage() {
-	if e.toasts.close(time.Now(), e.animation) {
-		e.requestRedraw()
+func (ec *EditorComponent) clearCommandMessage() {
+	if ec.toasts.close(time.Now(), ec.animation) {
+		ec.requestRedraw()
 	}
 }
 
-func (e *EditorComponent) resize(cx *Context) {
+func (ec *EditorComponent) resize(cx *Context) {
 	overhead := 0
 	if bufferlineVisible(cx) {
 		overhead++
 	}
-	cx.Editor.SetViewHeight(e.size.Height - overhead)
+	cx.Editor.SetViewHeight(ec.size.Height - overhead)
 	cx.Editor.ResizeTree(geom.Size{
-		Width:  e.size.Width,
-		Height: max(e.size.Height-overhead, 0),
+		Width:  ec.size.Width,
+		Height: max(ec.size.Height-overhead, 0),
 	})
 }
 
-func (e *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
+func (ec *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
 	opts := cx.Editor.Options()
 	if !opts.AutoSaveAfterDelay {
 		return nil
 	}
-	e.saveSlot.gen++
-	gen := e.saveSlot.gen
+	ec.saveSlot.gen++
+	gen := ec.saveSlot.gen
 	d := time.Duration(opts.AutoSaveDelayTimeout) * time.Millisecond
 	return tea.Tick(d, func(time.Time) tea.Msg {
 		return autoSaveMsg{gen: gen}

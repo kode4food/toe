@@ -54,7 +54,7 @@ const (
 	mouseAutoScrollMinInterval = 50 * time.Millisecond
 )
 
-func (e *EditorComponent) continueAxisScroll(
+func (ec *EditorComponent) continueAxisScroll(
 	cx *Context, axis *mouseAutoScrollAxis, toLow bool,
 ) tea.Cmd {
 	doc := cx.Editor.FocusedDocument()
@@ -67,7 +67,7 @@ func (e *EditorComponent) continueAxisScroll(
 	}
 	axis.scroll(cx.Editor, v, toLow)
 
-	r := &renderPass{editor: e, context: cx, size: e.size}
+	r := &renderPass{editor: ec, context: cx, size: ec.size}
 	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLow); ok {
 		extendSelectionTo(cx, doc, v, pos)
 	}

@@ -219,8 +219,8 @@ func findCompletionRange(text core.Rope, cursor int) core.Range {
 func countWordSuffix(s string) int {
 	runes := []rune(s)
 	n := 0
-	for _, rune := range slices.Backward(runes) {
-		if !core.CharIsWord(rune) {
+	for _, r := range slices.Backward(runes) {
+		if !core.CharIsWord(r) {
 			return n
 		}
 		n++

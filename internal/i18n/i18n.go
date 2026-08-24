@@ -96,8 +96,8 @@ func LoadTranslations(files fs.FS) Translations {
 		loaded[locale.Locale(name)] = tr
 	}
 	locales := locale.Environment()
-	for _, locale := range slices.Backward(locales) {
-		maps.Copy(res, loaded[locale])
+	for _, l := range slices.Backward(locales) {
+		maps.Copy(res, loaded[l])
 	}
 	return res
 }

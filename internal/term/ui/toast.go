@@ -237,26 +237,26 @@ func (t *toastState) dismissAt(at geom.Point) bool {
 	return true
 }
 
-func (e *EditorComponent) pushToast(text string, level toastLevel) {
-	e.toasts.push(text, level)
-	e.toasts.slideTo(e.toasts.slidePct(time.Now(), e.animation))
-	e.requestRedraw()
+func (ec *EditorComponent) pushToast(text string, level toastLevel) {
+	ec.toasts.push(text, level)
+	ec.toasts.slideTo(ec.toasts.slidePct(time.Now(), ec.animation))
+	ec.requestRedraw()
 }
 
 // started when a toast is queued, so a tick is only pending while something is
 // waiting to expire
-func (e *EditorComponent) toastTickCmd() tea.Cmd {
-	if !e.toasts.pending() {
+func (ec *EditorComponent) toastTickCmd() tea.Cmd {
+	if !ec.toasts.pending() {
 		return nil
 	}
-	e.toasts.gen++
-	return e.toastNextCmd(e.toasts.gen)
+	ec.toasts.gen++
+	return ec.toastNextCmd(ec.toasts.gen)
 }
 
 // frame rate while something is moving or fading, slow the rest of the time
-func (e *EditorComponent) toastNextCmd(gen int) tea.Cmd {
+func (ec *EditorComponent) toastNextCmd(gen int) tea.Cmd {
 	every := toastTickEvery
-	if e.animation && e.toasts.animating(time.Now()) {
+	if ec.animation && ec.toasts.animating(time.Now()) {
 		every = toastFrameEvery
 	}
 	return tea.Tick(every, func(time.Time) tea.Msg {
@@ -264,19 +264,19 @@ func (e *EditorComponent) toastNextCmd(gen int) tea.Cmd {
 	})
 }
 
-func (e *EditorComponent) handleToastTick(
+func (ec *EditorComponent) handleToastTick(
 	msg toastTickMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.gen != e.toasts.gen {
+	if msg.gen != ec.toasts.gen {
 		return consumed(), nil
 	}
-	if e.toasts.step(time.Now(), e.animation) {
-		e.requestRedraw()
+	if ec.toasts.step(time.Now(), ec.animation) {
+		ec.requestRedraw()
 	}
-	if !e.toasts.pending() {
+	if !ec.toasts.pending() {
 		return consumed(), nil
 	}
-	return consumed(), e.toastNextCmd(msg.gen)
+	return consumed(), ec.toastNextCmd(msg.gen)
 }
 
 // draws the queued messages as one popup in the bottom-right corner, its last

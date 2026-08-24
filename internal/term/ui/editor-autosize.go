@@ -37,42 +37,42 @@ func (m Model) SetAutoSize(enabled bool) {
 	m.component.autoSize.viewID = view.InvalidViewId
 }
 
-func (e *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
+func (ec *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
 	id := cx.Editor.Tree().Focus()
-	if id == e.autoSize.viewID {
+	if id == ec.autoSize.viewID {
 		return nil
 	}
-	e.cancelAutoSize()
-	e.autoSize.viewID = id
-	if !e.autoSize.enabled {
+	ec.cancelAutoSize()
+	ec.autoSize.viewID = id
+	if !ec.autoSize.enabled {
 		return nil
 	}
 	pane := cx.Editor.FocusedPane()
 	if pane == nil {
 		return nil
 	}
-	e.autoSize.targetWidth = e.autoSizeWidthTarget(cx, pane)
-	if e.autoSize.targetWidth == 0 {
+	ec.autoSize.targetWidth = ec.autoSizeWidthTarget(cx, pane)
+	if ec.autoSize.targetWidth == 0 {
 		return nil
 	}
-	if !e.animation {
-		grow := e.autoSize.targetWidth - pane.Area().Width
+	if !ec.animation {
+		grow := ec.autoSize.targetWidth - pane.Area().Width
 		cx.Editor.Tree().GrowFocusedWidth(grow)
 		return nil
 	}
-	e.autoSize.generation++
+	ec.autoSize.generation++
 	return tea.Batch(
-		autoSizeTickCmd(e.autoSize.generation), e.settlePaneResizeCmd(cx),
+		autoSizeTickCmd(ec.autoSize.generation), ec.settlePaneResizeCmd(cx),
 	)
 }
 
-func (e *EditorComponent) autoSizeWidthTarget(
+func (ec *EditorComponent) autoSizeWidthTarget(
 	cx *Context, pane view.Pane,
 ) int {
 	var want int
 	switch p := pane.(type) {
 	case *view.View:
-		want = e.autoSizeRulerWidth(cx, p)
+		want = ec.autoSizeRulerWidth(cx, p)
 	case *BinaryPane:
 		want = binaryTargetWidth(p.offsetWidth())
 	case *TerminalPane:
@@ -84,7 +84,7 @@ func (e *EditorComponent) autoSizeWidthTarget(
 	return want
 }
 
-func (e *EditorComponent) autoSizeRulerWidth(
+func (ec *EditorComponent) autoSizeRulerWidth(
 	cx *Context, v *view.View,
 ) int {
 	rulers := cx.Editor.Options().Rulers
@@ -96,40 +96,40 @@ func (e *EditorComponent) autoSizeRulerWidth(
 		rulers[0] + 1
 }
 
-func (e *EditorComponent) cancelAutoSize() {
-	e.autoSize.targetWidth = 0
-	e.autoSize.generation++
+func (ec *EditorComponent) cancelAutoSize() {
+	ec.autoSize.targetWidth = 0
+	ec.autoSize.generation++
 }
 
-func (e *EditorComponent) cancelAutoSizeFor(msg tea.Msg) {
+func (ec *EditorComponent) cancelAutoSizeFor(msg tea.Msg) {
 	switch msg.(type) {
 	case tea.KeyPressMsg, tea.MouseClickMsg, tea.WindowSizeMsg:
-		e.cancelAutoSize()
+		ec.cancelAutoSize()
 	}
 }
 
-func (e *EditorComponent) handleAutoSizeTick(
+func (ec *EditorComponent) handleAutoSizeTick(
 	cx *Context, msg autoSizeTickMsg,
 ) (EventResult, tea.Cmd) {
-	if msg.generation != e.autoSize.generation ||
-		e.autoSize.targetWidth == 0 {
+	if msg.generation != ec.autoSize.generation ||
+		ec.autoSize.targetWidth == 0 {
 		return consumed(), nil
 	}
 	pane := cx.Editor.FocusedPane()
-	if pane == nil || pane.ID() != e.autoSize.viewID {
-		e.cancelAutoSize()
+	if pane == nil || pane.ID() != ec.autoSize.viewID {
+		ec.cancelAutoSize()
 		return consumed(), nil
 	}
 	before := pane.Area().Width
-	step := min(autoSizeStep, e.autoSize.targetWidth-before)
+	step := min(autoSizeStep, ec.autoSize.targetWidth-before)
 	grew := cx.Editor.Tree().GrowFocusedWidth(step)
 	if !grew || pane.Area().Width <= before ||
-		pane.Area().Width >= e.autoSize.targetWidth {
-		e.cancelAutoSize()
+		pane.Area().Width >= ec.autoSize.targetWidth {
+		ec.cancelAutoSize()
 		return consumed(), nil
 	}
 	return consumed(), tea.Batch(
-		autoSizeTickCmd(msg.generation), e.settlePaneResizeCmd(cx),
+		autoSizeTickCmd(msg.generation), ec.settlePaneResizeCmd(cx),
 	)
 }
 

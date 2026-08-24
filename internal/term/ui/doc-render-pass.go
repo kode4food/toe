@@ -495,9 +495,9 @@ func (k infoPopupKey) equals(o infoPopupKey) bool {
 		slices.Equal(k.items, o.items)
 }
 
-func (e *EditorComponent) overlayHead() string {
-	keys := e.keys.path
-	if len(keys) == 0 && e.keys.count == 0 {
+func (ec *EditorComponent) overlayHead() string {
+	keys := ec.keys.path
+	if len(keys) == 0 && ec.keys.count == 0 {
 		return ""
 	}
 	var sb strings.Builder
@@ -507,7 +507,7 @@ func (e *EditorComponent) overlayHead() string {
 		}
 		sb.WriteString(k.String())
 	}
-	return withCount(sb.String(), e.keys.count)
+	return withCount(sb.String(), ec.keys.count)
 }
 
 func withCount(keys string, count int) string {

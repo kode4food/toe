@@ -7,8 +7,22 @@ Notable changes to toe.
 ### Interface
 
 - Added `Ctrl` + click to jump to the definition of the symbol under the pointer
+- Added bracketed paste in insert mode and terminal panes
 - Completions no longer start selected: `Tab` takes the top match or the highlighted one, and `Return` submits the prompt or inserts a newline instead of accepting
 - Removed middle-click paste and its `middle-click-paste` option
+
+### Language tooling
+
+- Fixed Go syntax highlighting stalling on files with long documentation comment blocks
+- Stopped requesting diagnostics, links, colors, and inlay hints for documents outside the workspace and configured language server roots
+
+### Sessions
+
+- Opening explicit file arguments no longer overwrites the workspace's saved automatic session on exit
+
+### Requirements
+
+- Building from source now requires Go 1.27 or later
 
 ## 0.3.2
 

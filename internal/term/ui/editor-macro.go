@@ -21,10 +21,10 @@ type macroSlot struct {
 // MacroRecordAction starts or stops macro recording. When not recording,
 // prompts for a register key and begins recording. When already recording,
 // stops and saves the macro to the chosen register
-func (e *EditorComponent) MacroRecordAction(
+func (ec *EditorComponent) MacroRecordAction(
 	ed *view.Editor,
 ) command.Continuation {
-	ms := e.macroSlot
+	ms := ec.macroSlot
 	if ms.recording {
 		if len(ms.keys) > 0 {
 			ms.keys = ms.keys[:len(ms.keys)-1]
@@ -45,10 +45,10 @@ func (e *EditorComponent) MacroRecordAction(
 
 // MacroReplayAction prompts for a register key and replays the macro stored
 // there count times
-func (e *EditorComponent) MacroReplayAction(
+func (ec *EditorComponent) MacroReplayAction(
 	_ *view.Editor,
 ) command.Continuation {
-	ms := e.macroSlot
+	ms := ec.macroSlot
 	if ms.recording {
 		return nil
 	}
@@ -62,17 +62,17 @@ func (e *EditorComponent) MacroReplayAction(
 	})
 }
 
-func (e *EditorComponent) handleReplay(cx *Context) {
-	ms := e.macroSlot
+func (ec *EditorComponent) handleReplay(cx *Context) {
+	ms := ec.macroSlot
 	if !ms.hasReplay {
 		return
 	}
 	ms.hasReplay = false
-	e.replayMacro(cx, macroKeys(cx.Editor, ms.replayReg), ms.replayCount)
+	ec.replayMacro(cx, macroKeys(cx.Editor, ms.replayReg), ms.replayCount)
 	cx.Editor.SetCount(0)
 }
 
-func (e *EditorComponent) replayMacro(
+func (ec *EditorComponent) replayMacro(
 	cx *Context, keys []command.KeyEvent, n int,
 ) {
 	for range n {

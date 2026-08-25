@@ -15,9 +15,9 @@ Auto-session only saves and restores session files for trusted workspaces. Run `
 
 ## Auto-Session
 
-When `auto-session` is enabled (the default), toe automatically:
+When `auto-session` is enabled (the default) and toe is launched with no file arguments, toe automatically:
 
-- **Restores** the previous session when launched with no file arguments
+- **Restores** the previous session
 - **Saves** the current session when you quit
 
 ```toml

@@ -294,6 +294,5 @@ func isGitStatePath(path string) bool {
 		return false
 	}
 	return rel == "index" || rel == "HEAD" || rel == "packed-refs" ||
-		strings.HasPrefix(rel, "refs"+sep) &&
-			!strings.HasSuffix(rel, ".lock")
+		strings.HasPrefix(rel, "refs"+sep)
 }

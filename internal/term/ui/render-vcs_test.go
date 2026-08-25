@@ -76,9 +76,6 @@ func TestVersionControlFileWatch(t *testing.T) {
 		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
 		testutil.WriteFile(t, path, "two\n")
 		testutil.RunGit(t, repo, "add", "a.txt")
-		testutil.RunGit(t, repo, "commit", "-m", "external")
-		testutil.RunGit(t, repo, "branch", "next")
-		testutil.RunGit(t, repo, "reset", "--soft", "HEAD^")
 		e := view.NewEditor(repo)
 		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
@@ -94,9 +91,10 @@ func TestVersionControlFileWatch(t *testing.T) {
 		// the watcher must already be registered before the external
 		// change happens, exactly as it would in a running editor
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		m2, _ := m.Update(tea.BlurMsg{})
+		m = m2.(ui.Model)
 
-		testutil.RunGit(t, repo, "update-ref", "refs/heads/main",
-			"refs/heads/next")
+		testutil.RunGit(t, repo, "commit", "-m", "external")
 		drainFileWatch(t, m)
 
 		assert.Eventually(t, func() bool {

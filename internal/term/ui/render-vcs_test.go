@@ -71,10 +71,16 @@ func TestVersionControlFileWatch(t *testing.T) {
 	testutil.RequireGit(t)
 
 	t.Run("refreshes on an external commit", func(t *testing.T) {
-		repo := testutil.GitRepo(t)
+		repo, err := filepath.EvalSymlinks(testutil.GitRepo(t))
+		assert.NoError(t, err)
 		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "a.txt")
+		testutil.RunGit(t, repo, "commit", "-m", "external")
+		testutil.RunGit(t, repo, "branch", "next")
+		testutil.RunGit(t, repo, "reset", "--soft", "HEAD^")
 		e := view.NewEditor(repo)
-		_, err := e.OpenFile(path)
+		_, err = e.OpenFile(path)
 		assert.NoError(t, err)
 		s := vcs.Attach(e)
 		defer s.Close()
@@ -89,9 +95,8 @@ func TestVersionControlFileWatch(t *testing.T) {
 		// change happens, exactly as it would in a running editor
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		testutil.WriteFile(t, path, "two\n")
-		testutil.RunGit(t, repo, "add", "a.txt")
-		testutil.RunGit(t, repo, "commit", "-m", "external")
+		testutil.RunGit(t, repo, "update-ref", "refs/heads/main",
+			"refs/heads/next")
 		drainFileWatch(t, m)
 
 		assert.Eventually(t, func() bool {

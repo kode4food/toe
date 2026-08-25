@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.3.4
+
+### Version control
+
+- Git gutters and changed-file pickers now refresh after commits without requiring toe to lose and regain focus
+
 ## 0.3.3
 
 ### Interface

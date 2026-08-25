@@ -384,9 +384,10 @@ func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
 		return nil
 	}
 	for path := range pending {
-		// a directory event carries coalesced changes with unknown members,
-		// and an index write restages rows, so either way reload the batch
-		if isGitIndexPath(path) {
+		// a directory event carries coalesced changes with unknown members, and
+		// Git state changes can regroup or remove rows
+		if isGitStatePath(path) {
+			p.clearPreviewCache()
 			p.refreshItems(e)
 			continue
 		}

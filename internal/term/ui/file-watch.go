@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"maps"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -73,10 +75,29 @@ func (w *fileWatcher) sync(e *view.Editor) {
 	rangeImagePanes(e, func(img *ImagePane) {
 		addWatchDir(wanted, img.Path())
 	})
+	enabled := e.Options().FileWatch
+	w.enabled.Store(enabled)
+	if enabled {
+		maps.Copy(wanted, w.gitWatchDirs(e.Cwd()))
+	}
 	w.wantedDirs = wanted
-	w.enabled.Store(e.Options().FileWatch)
 	w.reconcileDirs()
 	w.reconcileTree()
+}
+
+func (w *fileWatcher) gitWatchDirs(cwd string) map[string]int {
+	gitDir := filepath.Join(cwd, ".git")
+	info, err := os.Stat(gitDir)
+	if err != nil || !info.IsDir() {
+		return nil
+	}
+	refs := filepath.Join(gitDir, "refs", "...")
+	for _, dir := range []string{refs, gitDir} {
+		if _, ok := w.dirs[dir]; !ok {
+			w.watchDir(dir)
+		}
+	}
+	return map[string]int{refs: 1, gitDir: 1}
 }
 
 func (w *fileWatcher) reconcileDirs() {
@@ -258,7 +279,7 @@ func isFileWatchOp(ev notify.Event) bool {
 }
 
 func isFileWatchPathExcluded(path string) bool {
-	if isGitIndexPath(path) {
+	if isGitStatePath(path) {
 		return false
 	}
 	sep := string(filepath.Separator)
@@ -266,7 +287,13 @@ func isFileWatchPathExcluded(path string) bool {
 		strings.HasSuffix(path, sep+".git")
 }
 
-func isGitIndexPath(path string) bool {
+func isGitStatePath(path string) bool {
 	sep := string(filepath.Separator)
-	return strings.HasSuffix(path, sep+".git"+sep+"index")
+	_, rel, ok := strings.Cut(path, sep+".git"+sep)
+	if !ok {
+		return false
+	}
+	return rel == "index" || rel == "HEAD" || rel == "packed-refs" ||
+		strings.HasPrefix(rel, "refs"+sep) &&
+			!strings.HasSuffix(rel, ".lock")
 }

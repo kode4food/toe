@@ -228,8 +228,10 @@ func (p *PickerComponent) handleExternalFileChange(
 	msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
-	ps.preview.cache.invalidatePath(msg.path)
-	p.markDirty()
+	if !isGitStatePath(msg.path) {
+		ps.preview.cache.invalidatePath(msg.path)
+		p.markDirty()
+	}
 	return ignored(), ps.scheduleFileRefresh(msg.path)
 }
 

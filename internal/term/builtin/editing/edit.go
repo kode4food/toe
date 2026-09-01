@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/kode4food/toe/internal/toml"
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
@@ -467,7 +467,7 @@ func setAutoPairs(opts *view.Options, value string) error {
 	var raw struct {
 		Value language.AutoPairConfig `toml:"value"`
 	}
-	if _, err := toml.Decode("value = "+value, &raw); err != nil {
+	if err := toml.Decode("value = "+value, &raw); err != nil {
 		return fmt.Errorf("%w: %s", config.ErrInvalidOption, value)
 	}
 	pairs, ok := raw.Value.AutoPairs()

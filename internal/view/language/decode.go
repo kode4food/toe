@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/toml"
 )
 
 func decodeLanguagesMap(m map[string]any) (Languages, bool) {
@@ -56,12 +56,12 @@ func decodeLanguage(m map[string]any) (Language, bool) {
 	if injection, ok := m["injection-regex"].(string); ok {
 		l.InjectionRegex = injection
 	}
-	if n := loader.IntPtr(m["text-width"]); n != nil {
+	if n := toml.IntPtr(m["text-width"]); n != nil {
 		l.TextWidth = n
 	}
 	l.FileTypes = decodeFileTypes(m["file-types"])
-	l.Shebangs = decodeStringSlice(m["shebangs"])
-	l.Roots = decodeStringSlice(m["roots"])
+	l.Shebangs = toml.StringSlice(m["shebangs"])
+	l.Roots = toml.StringSlice(m["roots"])
 	l.LanguageServers = decodeLanguageServerNames(m["language-servers"])
 	l.CommentTokens = decodeCommentTokens(m)
 	l.BlockCommentTokens = decodeBlockCommentTokens(m["block-comment-tokens"])
@@ -119,20 +119,20 @@ func decodeAutoPairMap(m map[string]any) (AutoPairConfig, bool) {
 
 func decodeIndent(m map[string]any) Indent {
 	return Indent{
-		TabWidth: loader.IntPtr(m["tab-width"]),
-		Unit:     stringValueFromMap(m, "unit"),
+		TabWidth: toml.IntPtr(m["tab-width"]),
+		Unit:     toml.StringValue(m, "unit"),
 	}
 }
 
 func decodeCommentTokens(m map[string]any) []string {
-	if tokens := decodeStringOrSlice(m["comment-tokens"]); len(tokens) > 0 {
+	if tokens := toml.StringOrSlice(m["comment-tokens"]); len(tokens) > 0 {
 		return tokens
 	}
-	return decodeStringOrSlice(m["comment-token"])
+	return toml.StringOrSlice(m["comment-token"])
 }
 
 func decodeFileTypes(value any) []FileType {
-	values, ok := loader.AnySlice(value)
+	values, ok := toml.AnySlice(value)
 	if !ok {
 		return nil
 	}
@@ -152,9 +152,9 @@ func decodeFileTypes(value any) []FileType {
 
 func decodeSoftWrap(m map[string]any) SoftWrap {
 	return SoftWrap{
-		Enable:          loader.BoolPtr(m["enable"]),
-		WrapIndicator:   loader.StringPtr(m["wrap-indicator"]),
-		WrapAtTextWidth: loader.BoolPtr(m["wrap-at-text-width"]),
+		Enable:          toml.BoolPtr(m["enable"]),
+		WrapIndicator:   toml.StringPtr(m["wrap-indicator"]),
+		WrapAtTextWidth: toml.BoolPtr(m["wrap-at-text-width"]),
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/kode4food/toe/internal/glob"
 )
 
 // WorkspaceRequest carries parameters for resolving a project workspace root
@@ -61,11 +63,10 @@ func RootFound(root string, patterns []string) (bool, error) {
 	}
 	for _, entry := range entries {
 		for _, pattern := range patterns {
-			ok, err := filepath.Match(pattern, entry.Name())
-			if err != nil {
-				return false, err
-			}
-			if ok {
+			if glob.Match(glob.Candidate{
+				Pattern: pattern,
+				Path:    entry.Name(),
+			}) {
 				return true, nil
 			}
 		}

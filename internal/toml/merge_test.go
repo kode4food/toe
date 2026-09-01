@@ -1,4 +1,4 @@
-package loader_test
+package toml_test
 
 import (
 	"os"
@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/toml"
 )
 
-func TestMergeTOMLValues(t *testing.T) {
+func TestMergeValues(t *testing.T) {
 	t.Run("merges named array entries", func(t *testing.T) {
 		left := []any{
 			map[string]any{
@@ -30,7 +30,7 @@ func TestMergeTOMLValues(t *testing.T) {
 			},
 		}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -50,7 +50,7 @@ func TestMergeTOMLValues(t *testing.T) {
 		left := map[string]any{"a": map[string]any{"b": 1}}
 		right := map[string]any{"a": map[string]any{"c": 2}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 1)
@@ -61,12 +61,12 @@ func TestMergeTOMLValues(t *testing.T) {
 	})
 }
 
-func TestMergeTOMLValuesEdgeCases(t *testing.T) {
+func TestMergeValuesEdgeCases(t *testing.T) {
 	t.Run("map merged with non-map returns right", func(t *testing.T) {
 		left := map[string]any{"a": 1}
 		right := "string"
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -78,7 +78,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := "not-a-slice"
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -90,7 +90,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []map[string]any{{"name": "x", "val": "left"}}
 		right := []any{map[string]any{"name": "x", "val": "right"}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -104,7 +104,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []map[string]any{{"name": "x", "val": "left"}}
 		right := []map[string]any{{"name": "x", "val": "right"}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -117,7 +117,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 	t.Run("map slice with scalar right", func(t *testing.T) {
 		left := []map[string]any{{"name": "x"}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: "not-a-slice",
 		}, 3)
@@ -129,7 +129,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{map[string]any{"val": "no-name"}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -143,7 +143,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "a"}}
 		right := []any{map[string]any{"name": "b"}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -157,7 +157,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{"string-element"}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 3)
@@ -171,7 +171,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 		left := []any{map[string]any{"name": "x"}}
 		right := []any{map[string]any{"name": "y"}}
 
-		merged := loader.MergeTOMLValues(loader.Overlay[any]{
+		merged := toml.MergeValues(toml.Overlay[any]{
 			Base: left,
 			Over: right,
 		}, 0)
@@ -180,7 +180,7 @@ func TestMergeTOMLValuesEdgeCases(t *testing.T) {
 	})
 }
 
-func TestLoadMergedTOML(t *testing.T) {
+func TestLoadMerged(t *testing.T) {
 	dir := t.TempDir()
 	global := filepath.Join(dir, "global.toml")
 	local := filepath.Join(dir, "local.toml")
@@ -202,7 +202,7 @@ wrap-indicator = "» "
 `), 0o644)
 	assert.NoError(t, err)
 
-	merged, ok := loader.LoadMergedTOML([]string{global, local}, 3)
+	merged, ok := toml.LoadMerged([]string{global, local}, 3)
 
 	assert.True(t, ok)
 	editor := merged["editor"].(map[string]any)
@@ -212,7 +212,7 @@ wrap-indicator = "» "
 	assert.Equal(t, "» ", soft["wrap-indicator"])
 }
 
-func TestLoadMergedTOMLWithBase(t *testing.T) {
+func TestLoadMergedWithBase(t *testing.T) {
 	dir := t.TempDir()
 	local := filepath.Join(dir, "local.toml")
 	base := map[string]any{
@@ -233,7 +233,7 @@ text-width = 80
 `), 0o644)
 	assert.NoError(t, err)
 
-	merged, ok := loader.LoadMergedTOMLWithBase(base, []string{local}, 3)
+	merged, ok := toml.LoadMergedWithBase(base, []string{local}, 3)
 
 	assert.True(t, ok)
 	lang, ok := namedTOMLValue(merged["language"], "markdown")
@@ -243,14 +243,7 @@ text-width = 80
 	assert.Equal(t, "↪ ", soft["wrap-indicator"])
 }
 
-func TestDefaultLanguagesTOML(t *testing.T) {
-	langs, ok := loader.LoadDefaultLanguagesTOML()
-
-	assert.True(t, ok)
-	assert.NotEmpty(t, langs["language"])
-}
-
-func TestLoadMergedTOMLLanguageDepth(t *testing.T) {
+func TestLoadMergedLanguageDepth(t *testing.T) {
 	dir := t.TempDir()
 	global := filepath.Join(dir, "global.toml")
 	local := filepath.Join(dir, "local.toml")
@@ -268,7 +261,7 @@ soft-wrap.wrap-indicator = "» "
 `), 0o644)
 	assert.NoError(t, err)
 
-	merged, ok := loader.LoadMergedTOML([]string{global, local}, 3)
+	merged, ok := toml.LoadMerged([]string{global, local}, 3)
 
 	assert.True(t, ok)
 	lang, ok := namedTOMLValue(merged["language"], "markdown")
@@ -278,43 +271,11 @@ soft-wrap.wrap-indicator = "» "
 	assert.Equal(t, "» ", soft["wrap-indicator"])
 }
 
-func TestLoadMergedTOMLMissing(t *testing.T) {
-	merged, ok := loader.LoadMergedTOML([]string{"missing.toml"}, 3)
+func TestLoadMergedMissing(t *testing.T) {
+	merged, ok := toml.LoadMerged([]string{"missing.toml"}, 3)
 
 	assert.False(t, ok)
 	assert.Nil(t, merged)
-}
-
-func TestTOMLValuePointers(t *testing.T) {
-	t.Run("bool", func(t *testing.T) {
-		v := loader.BoolPtr(true)
-
-		assert.NotNil(t, v)
-		assert.Equal(t, true, *v)
-		assert.Nil(t, loader.BoolPtr("true"))
-	})
-
-	t.Run("int", func(t *testing.T) {
-		v := loader.IntPtr(3)
-
-		assert.NotNil(t, v)
-		assert.Equal(t, 3, *v)
-
-		v = loader.IntPtr(int64(4))
-
-		assert.NotNil(t, v)
-		assert.Equal(t, 4, *v)
-
-		assert.Nil(t, loader.IntPtr("4"))
-	})
-
-	t.Run("string", func(t *testing.T) {
-		v := loader.StringPtr("go")
-
-		assert.NotNil(t, v)
-		assert.Equal(t, "go", *v)
-		assert.Nil(t, loader.StringPtr(1))
-	})
 }
 
 func namedTOMLValue(value any, name string) (map[string]any, bool) {
@@ -334,34 +295,4 @@ func namedTOMLValue(value any, name string) (map[string]any, bool) {
 		}
 	}
 	return nil, false
-}
-
-func TestAnySlice(t *testing.T) {
-	t.Run("[]any passthrough", func(t *testing.T) {
-		in := []any{1, 2, 3}
-		out, ok := loader.AnySlice(in)
-		assert.True(t, ok)
-		assert.Equal(t, in, out)
-	})
-
-	t.Run("[]map[string]any converts", func(t *testing.T) {
-		in := []map[string]any{{"a": 1}, {"b": 2}}
-		out, ok := loader.AnySlice(in)
-		assert.True(t, ok)
-		assert.Equal(t, []any{
-			map[string]any{"a": 1}, map[string]any{"b": 2},
-		}, out)
-	})
-
-	t.Run("[]string converts", func(t *testing.T) {
-		in := []string{"x", "y"}
-		out, ok := loader.AnySlice(in)
-		assert.True(t, ok)
-		assert.Equal(t, []any{"x", "y"}, out)
-	})
-
-	t.Run("unknown type returns false", func(t *testing.T) {
-		_, ok := loader.AnySlice(42)
-		assert.False(t, ok)
-	})
 }

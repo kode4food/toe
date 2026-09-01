@@ -65,6 +65,7 @@ const testServerSignatureOffsetEnv = "TOE_LSP_SIGNATURE_OFFSET"
 const testServerProgressEnv = "TOE_LSP_PROGRESS"
 const testServerFileWatchEnv = "TOE_LSP_FILE_WATCH"
 const testServerFileWatchNotifyEnv = "TOE_LSP_FILE_WATCH_NOTIFY"
+const testServerFileWatchNestedEnv = "TOE_LSP_FILE_WATCH_NESTED"
 const testServerInlayHintsEnv = "TOE_LSP_INLAY_HINTS"
 const testServerDocumentColorEnv = "TOE_LSP_DOCUMENT_COLOR"
 const testServerWsEditCodeActionEnv = "TOE_LSP_WS_EDIT_CODE_ACTION"
@@ -428,7 +429,7 @@ func (s *processServer) Initialized(
 	}
 	if os.Getenv(testServerFileWatchEnv) == "1" {
 		watchers := `{"watchers":[` +
-			`{"globPattern":"*.session"},` +
+			`{"globPattern":"*.{session,toml}"},` +
 			`{"globPattern":{"pattern":"*.session","baseUri":"file:///tmp"}},` +
 			`{"globPattern":{"pattern":"**/*.session",` +
 			`"baseUri":{"uri":"file:///tmp","name":"myFolder"}}},` +
@@ -454,6 +455,22 @@ func (s *processServer) Initialized(
 			Unregisterations: []protocol.Unregistration{{
 				ID:     "watch-tmp",
 				Method: "workspace/didChangeWatchedFiles",
+			}},
+		})
+	}
+	if os.Getenv(testServerFileWatchNestedEnv) == "1" {
+		// the shape gopls registers: workspace-relative, recursive, with
+		// brace alternatives
+		cwd, _ := os.Getwd()
+		watchers := fmt.Sprintf(
+			`{"watchers":[{"globPattern":{"pattern":"**/*.{session,go}",`+
+				`"baseUri":%q}}]}`, uri.File(cwd),
+		)
+		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
+			Registrations: []protocol.Registration{{
+				ID:              "watch-nested",
+				Method:          "workspace/didChangeWatchedFiles",
+				RegisterOptions: protocol.LSPAny(watchers),
 			}},
 		})
 	}

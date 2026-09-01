@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/kode4food/toe/internal/toml"
 )
 
 var (
@@ -67,20 +67,20 @@ func resolveInherits(
 	if err != nil {
 		return nil, err
 	}
-	return mergeThemes(Overlay[map[string]any]{
+	return mergeThemes(toml.Overlay[map[string]any]{
 		Base: parentTheme,
 		Over: theme,
 	}), nil
 }
 
-func mergeThemes(themes Overlay[map[string]any]) map[string]any {
+func mergeThemes(themes toml.Overlay[map[string]any]) map[string]any {
 	parent := themes.Base
 	theme := themes.Over
-	palette := mergeThemePalette(Overlay[any]{
+	palette := mergeThemePalette(toml.Overlay[any]{
 		Base: parent["palette"],
 		Over: theme["palette"],
 	})
-	merged, ok := MergeTOMLValues(Overlay[any]{
+	merged, ok := toml.MergeValues(toml.Overlay[any]{
 		Base: parent,
 		Over: theme,
 	}, 1).(map[string]any)
@@ -91,12 +91,12 @@ func mergeThemes(themes Overlay[map[string]any]) map[string]any {
 	return merged
 }
 
-func mergeThemePalette(palettes Overlay[any]) any {
+func mergeThemePalette(palettes toml.Overlay[any]) any {
 	parent := palettes.Base
 	theme := palettes.Over
 	switch {
 	case parent != nil && theme != nil:
-		return MergeTOMLValues(palettes, 2)
+		return toml.MergeValues(palettes, 2)
 	case parent != nil:
 		return parent
 	case theme != nil:
@@ -108,7 +108,7 @@ func mergeThemePalette(palettes Overlay[any]) any {
 
 func decodeThemeTOML(text string) (map[string]any, error) {
 	var theme map[string]any
-	if _, err := toml.Decode(text, &theme); err != nil {
+	if err := toml.Decode(text, &theme); err != nil {
 		return nil, err
 	}
 	return theme, nil

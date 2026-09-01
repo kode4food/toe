@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kode4food/toe/internal/toml"
+
 	"github.com/alecthomas/chroma/v2/lexers"
 
 	"github.com/kode4food/toe/internal/core"
@@ -164,7 +166,7 @@ func DetectLanguage(args DetectLanguageArgs) string {
 
 // LoadBundledLanguages returns the definitions embedded in the binary
 func LoadBundledLanguages() (Languages, bool) {
-	if base, ok := loader.LoadDefaultLanguagesTOML(); ok {
+	if base, ok := loader.DefaultLanguages(); ok {
 		return decodeLanguagesMap(base)
 	}
 	return Languages{}, false
@@ -172,7 +174,7 @@ func LoadBundledLanguages() (Languages, bool) {
 
 // LoadLanguagesForWorkspace merges bundled, user, and workspace definitions
 func LoadLanguagesForWorkspace(args loader.WorkspaceFiles) (Languages, bool) {
-	base, ok := loader.LoadDefaultLanguagesTOML()
+	base, ok := loader.DefaultLanguages()
 	if !ok {
 		return Languages{}, false
 	}
@@ -180,7 +182,7 @@ func LoadLanguagesForWorkspace(args loader.WorkspaceFiles) (Languages, bool) {
 	if loader.QueryWorkspaceTrust(args.Dir, false) {
 		paths = append(paths, args.Workspace)
 	}
-	if merged, ok := loader.LoadMergedTOMLWithBase(base, paths, 3); ok {
+	if merged, ok := toml.LoadMergedWithBase(base, paths, 3); ok {
 		return decodeLanguagesMap(merged)
 	}
 	return Languages{}, false

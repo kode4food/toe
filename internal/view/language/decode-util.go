@@ -2,21 +2,21 @@ package language
 
 import (
 	"github.com/kode4food/toe/internal/core"
-	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/toml"
 )
 
-func decodeStringOrSlice(value any) []string {
-	if s, ok := value.(string); ok {
-		return []string{s}
-	}
-	return decodeStringSlice(value)
+// settingValueArgs is a value that a language definition may override, falling
+// back to the editor-wide settingValueArgs when the language leaves it unset
+type settingValueArgs[T any] struct {
+	lang   *T
+	editor *T
 }
 
 func decodeBlockCommentTokens(value any) []core.BlockCommentToken {
 	if token, ok := decodeBlockCommentToken(value); ok {
 		return []core.BlockCommentToken{token}
 	}
-	values, ok := loader.AnySlice(value)
+	values, ok := toml.AnySlice(value)
 	if !ok {
 		return nil
 	}
@@ -44,68 +44,12 @@ func decodeBlockCommentToken(value any) (core.BlockCommentToken, bool) {
 	return core.BlockCommentToken{}, false
 }
 
-func decodeStringSlice(value any) []string {
-	values, ok := loader.AnySlice(value)
-	if !ok {
-		return nil
-	}
-	out := make([]string, 0, len(values))
-	for _, value := range values {
-		if s, ok := value.(string); ok {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-func decodeStringMap(value any) map[string]string {
-	m, ok := value.(map[string]any)
-	if !ok {
-		return nil
-	}
-	out := make(map[string]string, len(m))
-	for k, value := range m {
-		if s, ok := value.(string); ok {
-			out[k] = s
-		}
-	}
-	return out
-}
-
-func decodeAnyMap(value any) map[string]any {
-	if m, ok := value.(map[string]any); ok {
-		return m
-	}
-	return nil
-}
-
-// Low-level helpers
-
-// settingValueArgs is a value that a language definition may override, falling
-// back to the editor-wide settingValueArgs when the language leaves it unset
-type settingValueArgs[T any] struct {
-	lang   *T
-	editor *T
-}
-
 func settingValue[T any](s settingValueArgs[T], fallback T) T {
 	if s.lang != nil {
 		return *s.lang
 	}
 	if s.editor != nil {
 		return *s.editor
-	}
-	return fallback
-}
-
-func stringValueFromMap(m map[string]any, key string) string {
-	v, _ := m[key].(string)
-	return v
-}
-
-func intValueFromMap(m map[string]any, key string, fallback int) int {
-	if n := loader.IntPtr(m[key]); n != nil {
-		return *n
 	}
 	return fallback
 }

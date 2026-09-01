@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/kode4food/toe/internal/toml"
 )
 
 var (
@@ -44,7 +44,7 @@ func ParseIntSlice(value string) ([]int, error) {
 	var raw struct {
 		Value []int `toml:"value"`
 	}
-	if _, err := toml.Decode("value = "+value, &raw); err != nil {
+	if err := toml.Decode("value = "+value, &raw); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrInvalidOption, value)
 	}
 	return raw.Value, nil
@@ -55,7 +55,7 @@ func ParseStringSlice(value string) ([]string, error) {
 	var raw struct {
 		Value []string `toml:"value"`
 	}
-	if _, err := toml.Decode("value = "+value, &raw); err != nil {
+	if err := toml.Decode("value = "+value, &raw); err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrInvalidOption, value)
 	}
 	return raw.Value, nil
@@ -72,7 +72,7 @@ func ParseStringLiteral(value string) (string, error) {
 		var raw struct {
 			Value string `toml:"value"`
 		}
-		if _, err := toml.Decode("value = "+value, &raw); err != nil {
+		if err := toml.Decode("value = "+value, &raw); err != nil {
 			return "", fmt.Errorf("%w: %s", ErrInvalidOption, value)
 		}
 		return raw.Value, nil

@@ -977,6 +977,39 @@ func TestFileWatching(t *testing.T) {
 		}, 5*time.Second, 25*time.Millisecond)
 	})
 
+	t.Run("notifies server on nested create", func(t *testing.T) {
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		notifyFile := filepath.Join(t.TempDir(), "watched")
+		writeFileWatchNestedLanguages(t, exe, notifyFile)
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		nested := filepath.Join(dir, "internal", "pkg")
+		assert.NoError(t, os.MkdirAll(nested, 0o755))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+
+		_, _ = session.Completions(doc, v.ID())
+
+		// the server watches the gopls shape, "**/*.{session,go}" relative to
+		// the workspace root, so a file created in a new subdirectory has to
+		// reach it
+		created := filepath.Join(nested, "extracted.session")
+		assert.Eventually(t, func() bool {
+			assert.NoError(t, os.WriteFile(created, []byte("new\n"), 0o644))
+			_, err := os.Stat(notifyFile)
+			return err == nil
+		}, 5*time.Second, 25*time.Millisecond)
+	})
+
 	t.Run("notifies server on external create", func(t *testing.T) {
 		exe, err := os.Executable()
 		assert.NoError(t, err)
@@ -1616,6 +1649,30 @@ language-id = "session"
 file-types = ["session"]
 language-servers = ["session-test"]
 `, exe, testServerEnv, testServerCompletionEnv, testServerFileWatchEnv,
+		testServerFileWatchNotifyEnv, notifyFile)
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,
+	))
+	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeFileWatchNestedLanguages(t *testing.T, exe, notifyFile string) {
+	t.Helper()
+	root := t.TempDir()
+	dir := filepath.Join(root, "toe")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	text := fmt.Sprintf(`[language-server.session-test]
+command = %q
+args = ["-test.run=TestLSPServerProcess"]
+timeout = 1
+environment = { %s = "1", %s = "1", %s = "1", %s = %q }
+
+[[language]]
+name = "session"
+language-id = "session"
+file-types = ["session"]
+language-servers = ["session-test"]
+`, exe, testServerEnv, testServerCompletionEnv, testServerFileWatchNestedEnv,
 		testServerFileWatchNotifyEnv, notifyFile)
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(dir, "languages.toml"), []byte(text), 0o644,

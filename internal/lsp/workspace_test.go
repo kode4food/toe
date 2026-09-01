@@ -111,6 +111,16 @@ func TestWorkspace(t *testing.T) {
 		assert.True(t, ok)
 	})
 
+	t.Run("brace root pattern", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, "go.work"))
+
+		ok, err := lsp.RootFound(root, []string{"{go.mod,go.work}"})
+
+		assert.NoError(t, err)
+		assert.True(t, ok)
+	})
+
 	t.Run("missing required root", func(t *testing.T) {
 		root := t.TempDir()
 		_, _, err := lsp.Start(&lsp.TransportConfig{

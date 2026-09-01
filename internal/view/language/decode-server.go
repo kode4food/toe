@@ -1,6 +1,6 @@
 package language
 
-import "github.com/kode4food/toe/internal/loader"
+import "github.com/kode4food/toe/internal/toml"
 
 func decodeLanguageServers(value any) map[string]Server {
 	m, ok := value.(map[string]any)
@@ -24,18 +24,18 @@ func decodeLanguageServer(value any) (Server, bool) {
 	if cmd, ok := m["command"].(string); ok {
 		return Server{
 			Command:      cmd,
-			Args:         decodeStringSlice(m["args"]),
-			Environment:  decodeStringMap(m["environment"]),
-			Config:       decodeAnyMap(m["config"]),
-			Timeout:      intValueFromMap(m, "timeout", 20),
-			RootPatterns: decodeStringSlice(m["required-root-patterns"]),
+			Args:         toml.StringSlice(m["args"]),
+			Environment:  toml.StringMap(m["environment"]),
+			Config:       toml.AnyMap(m["config"]),
+			Timeout:      toml.IntValue(m, "timeout", 20),
+			RootPatterns: toml.StringSlice(m["required-root-patterns"]),
 		}, true
 	}
 	return Server{}, false
 }
 
 func decodeLanguageServerNames(value any) []string {
-	values, ok := loader.AnySlice(value)
+	values, ok := toml.AnySlice(value)
 	if !ok {
 		return nil
 	}
@@ -61,7 +61,7 @@ func decodeFormatter(value any) (Formatter, bool) {
 	if cmd, ok := m["command"].(string); ok {
 		return Formatter{
 			Command: cmd,
-			Args:    decodeStringSlice(m["args"]),
+			Args:    toml.StringSlice(m["args"]),
 		}, true
 	}
 	return Formatter{}, false

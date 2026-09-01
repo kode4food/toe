@@ -7,9 +7,9 @@ import (
 	"github.com/rjeczalik/notify"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
-)
 
-const recursiveWatchPrefix = "**" + string(filepath.Separator)
+	"github.com/kode4food/toe/internal/glob"
+)
 
 func (w fileWatch) match(path string) bool {
 	candidate := path
@@ -42,14 +42,14 @@ func fileWatches(
 func fileWatchFor(pattern protocol.GlobPattern) (fileWatch, bool) {
 	switch p := pattern.(type) {
 	case protocol.Pattern:
-		return fileWatch{pattern: filepath.FromSlash(string(p))}, true
+		return fileWatch{pattern: string(p)}, true
 	case *protocol.RelativePattern:
 		if p == nil {
 			return fileWatch{}, false
 		}
 		if base, ok := relativePatternBase(p.BaseURI); ok {
 			return fileWatch{
-				pattern: filepath.FromSlash(string(p.Pattern)),
+				pattern: string(p.Pattern),
 				base:    base,
 			}, true
 		}
@@ -93,23 +93,16 @@ func matchWatchPattern(args matchWatchPatternArgs) bool {
 	if args.pattern == "" {
 		return false
 	}
-	if ok, _ := filepath.Match(args.pattern, args.path); ok {
+	if glob.Match(glob.Candidate{
+		Pattern: args.pattern,
+		Path:    args.path,
+	}) {
 		return true
 	}
-	if ok, _ := filepath.Match(args.pattern, filepath.Base(args.path)); ok {
-		return true
-	}
-	if after, ok := strings.CutPrefix(args.pattern, recursiveWatchPrefix); ok {
-		if ok, _ := filepath.Match(after, args.path); ok {
-			return true
-		}
-		if ok, _ := filepath.Match(after, filepath.Base(args.path)); ok {
-			return true
-		}
-		return strings.HasSuffix(args.path, after) ||
-			strings.HasSuffix(filepath.Base(args.path), after)
-	}
-	return false
+	return glob.Match(glob.Candidate{
+		Pattern: args.pattern,
+		Path:    filepath.Base(args.path),
+	})
 }
 
 func fileWatchChangeType(ev notify.Event) (protocol.FileChangeType, bool) {

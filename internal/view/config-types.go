@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/kode4food/toe/internal/toml"
 )
 
 type (
@@ -356,7 +358,7 @@ func (g *Gutter) UnmarshalTOML(value any) error {
 			g.Layout = layout
 		}
 		if raw, ok := v["line-numbers"].(map[string]any); ok {
-			g.LineNumbers.MinWidth = intPtr(raw["min-width"])
+			g.LineNumbers.MinWidth = toml.IntPtr(raw["min-width"])
 		}
 	case nil:
 	default:
@@ -486,17 +488,6 @@ func intOr(p *int, fallback int) int {
 		return *p
 	}
 	return fallback
-}
-
-func intPtr(value any) *int {
-	switch v := value.(type) {
-	case int:
-		return &v
-	case int64:
-		return new(int(v))
-	default:
-		return nil
-	}
 }
 
 func decodeGutterLayout(items []any) ([]GutterType, error) {

@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 
+	"github.com/kode4food/toe/internal/toml"
+
 	"github.com/kode4food/toe/internal/loader"
 )
 
@@ -38,7 +40,7 @@ func (a *AutoSave) UnmarshalTOML(value any) error {
 
 // LoadRawConfig returns the raw merged TOML map for the given config file path
 func LoadRawConfig(path string) (map[string]any, bool) {
-	return loader.LoadMergedTOML([]string{path}, 3)
+	return toml.LoadMerged([]string{path}, 3)
 }
 
 // LoadRawConfigForDir returns user config merged with dir's trusted workspace
@@ -67,7 +69,7 @@ func LoadRawConfigForWorkspace(
 	if loader.QueryWorkspaceTrust(args.Dir, insecure) {
 		paths = append(paths, args.Workspace)
 	}
-	return loader.LoadMergedTOML(paths, 3)
+	return toml.LoadMerged(paths, 3)
 }
 
 func decodeInsecure(m map[string]any) bool {
@@ -86,7 +88,7 @@ func decodeAutoSave(value any) (AutoSave, bool) {
 		return AutoSave{FocusLost: &v}, true
 	case map[string]any:
 		return AutoSave{
-			FocusLost:  loader.BoolPtr(v["focus-lost"]),
+			FocusLost:  toml.BoolPtr(v["focus-lost"]),
 			AfterDelay: decodeAutoSaveAfterDelay(v["after-delay"]),
 		}, true
 	default:
@@ -97,8 +99,8 @@ func decodeAutoSave(value any) (AutoSave, bool) {
 func decodeAutoSaveAfterDelay(value any) AutoSaveAfterDelay {
 	if m, ok := value.(map[string]any); ok {
 		return AutoSaveAfterDelay{
-			Enable:  loader.BoolPtr(m["enable"]),
-			Timeout: loader.IntPtr(m["timeout"]),
+			Enable:  toml.BoolPtr(m["enable"]),
+			Timeout: toml.IntPtr(m["timeout"]),
 		}
 	}
 	return AutoSaveAfterDelay{}

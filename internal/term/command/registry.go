@@ -1,13 +1,12 @@
 package command
 
 import (
-	"bytes"
 	"maps"
 	"slices"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/BurntSushi/toml"
+	"github.com/kode4food/toe/internal/toml"
 
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
@@ -94,13 +93,12 @@ func (r *Registry) ApplyTOML(e *view.Editor, raw map[string]any) error {
 	for _, s := range r.sections {
 		s.Reset()
 	}
-	var buf bytes.Buffer
-	if err := toml.NewEncoder(&buf).Encode(raw); err != nil {
+	text, err := toml.Encode(raw)
+	if err != nil {
 		return err
 	}
-	tomlStr := buf.String()
 	for _, s := range r.sections {
-		if _, err := toml.Decode(tomlStr, s.Config); err != nil {
+		if err := toml.Decode(text, s.Config); err != nil {
 			return err
 		}
 		if s.Apply != nil {

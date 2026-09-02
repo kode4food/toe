@@ -247,6 +247,31 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.Contains(t, out, "alpha.txt")
 	})
 
+	t.Run("a write keeps both stages of a file", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "both.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "both.txt")
+		testutil.WriteFile(t, path, "three\n")
+
+		m := changedFilePicker(t, repo)
+		assert.Equal(
+			t, 2, strings.Count(stripANSI(m.View().Content), "both.txt"),
+		)
+
+		testutil.WriteFile(t, path, "four\n")
+		m = drainFileWatch(t, m)
+
+		out := stripANSI(m.View().Content)
+		assert.Equal(t, 2, strings.Count(out, "both.txt"))
+		// the staged row holds the selection, so its preview is unmoved
+		assert.Contains(t, out, "+ two")
+
+		out = stripANSI(sendSpecial(m, tea.KeyDown).View().Content)
+		assert.Contains(t, out, "+ four")
+	})
+
 	t.Run("staging another file keeps selection", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
@@ -361,17 +386,17 @@ func (s *countingPathSource) Load(*view.Editor) ui.PickerLoad {
 	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
-func (*countingPathSource) ItemForPath(
+func (*countingPathSource) ItemsForPath(
 	_ *view.Editor, path string,
-) (*ui.PickerItem, bool) {
+) []*ui.PickerItem {
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() {
-		return nil, false
+		return nil
 	}
-	return &ui.PickerItem{
+	return []*ui.PickerItem{{
 		Display:  filepath.Base(path),
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
-	}, true
+	}}
 }
 
 func selectedPickerLine(m ui.Model) string {

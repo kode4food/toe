@@ -21,8 +21,9 @@ type (
 	previewCache map[previewCacheKey]previewCacheEntry
 
 	previewCacheKey struct {
-		id   view.DocumentId
-		path string
+		id     view.DocumentId
+		path   string
+		staged bool
 	}
 
 	previewCacheEntry interface {
@@ -98,8 +99,37 @@ func (p previewCache) path(sc *syntax.Cache, path string) previewCacheEntry {
 	return entry
 }
 
+// the index text is read through version control rather than off disk, so it is
+// highlighted and cached apart from the working file
+func (p previewCache) indexText(
+	sc *syntax.Cache, vc view.VersionControl, path string,
+) *previewDocEntry {
+	key := previewIndexKey(path)
+	if entry, ok := p[key].(*previewDocEntry); ok {
+		return entry
+	}
+	text := highlight.NormalizeNewlines(vc.IndexText(path))
+	lang := language.DetectLanguage(language.DetectLanguageArgs{
+		Path:    path,
+		Content: text,
+		Default: view.DefaultLanguage,
+	})
+	entry := &previewDocEntry{
+		rope: core.NewRope(text),
+		spans: previewSpans(previewSpansArgs{
+			cache: sc,
+			text:  text,
+			lang:  lang,
+		}),
+		lang: lang,
+	}
+	p[key] = entry
+	return entry
+}
+
 func (p previewCache) invalidatePath(path string) {
 	delete(p, previewPathKey(path))
+	delete(p, previewIndexKey(path))
 }
 
 func previewDocKey(id view.DocumentId) previewCacheKey {
@@ -108,6 +138,10 @@ func previewDocKey(id view.DocumentId) previewCacheKey {
 
 func previewPathKey(path string) previewCacheKey {
 	return previewCacheKey{path: path}
+}
+
+func previewIndexKey(path string) previewCacheKey {
+	return previewCacheKey{path: path, staged: true}
 }
 
 func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {

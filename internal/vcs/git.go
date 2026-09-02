@@ -131,6 +131,39 @@ func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 	})
 }
 
+// Stage adds the working-tree state of path to the staging area, recording an
+// added, modified, or deleted file alike
+func (Git) Stage(cwd, path string) error {
+	_, err := runGit(cwd, "add", "--", path)
+	return err
+}
+
+// Unstage drops path from the staging area, leaving the working tree alone
+func (Git) Unstage(cwd, path string) error {
+	if _, err := runGit(cwd, "restore", "--staged", "--", path); err == nil {
+		return nil
+	}
+	// a repository without a first commit has no HEAD to restore from, so the
+	// index entry itself is dropped
+	_, err := runGit(cwd, "rm", "--cached", "-q", "--", path)
+	return err
+}
+
+// IndexText returns the staged blob for path, erroring when the file has no
+// entry in the index
+func (Git) IndexText(cwd, path string) ([]byte, error) {
+	path = realPath(path)
+	root, err := gitRoot(cwd)
+	if err != nil {
+		return nil, err
+	}
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return nil, err
+	}
+	return runGit(root, "show", ":"+filepath.ToSlash(rel))
+}
+
 func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
 	repo, err := git.PlainOpenWithOptions(
 		cwd, &git.PlainOpenOptions{DetectDotGit: true},

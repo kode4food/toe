@@ -166,7 +166,9 @@ func (ec *EditorComponent) redrawCmd() tea.Cmd {
 	}
 }
 
-func (ec *EditorComponent) handleVCSUpdated(cx *Context) (EventResult, tea.Cmd) {
+func (ec *EditorComponent) handleVCSUpdated(
+	cx *Context,
+) (EventResult, tea.Cmd) {
 	for _, doc := range cx.Editor.AllDocuments() {
 		doc.MarkDirty()
 	}

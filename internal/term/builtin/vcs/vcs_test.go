@@ -20,10 +20,14 @@ type vcsStub struct {
 var _ view.VersionControl = (*vcsStub)(nil)
 
 func (s *vcsStub) DiffHunks(*view.Document) []view.DiffHunk { return s.hunks }
-func (s *vcsStub) DiffHunksForPath(string) []view.DiffHunk  { return s.hunks }
-func (s *vcsStub) DiffBaseForPath(string) string            { return "" }
+func (s *vcsStub) StagedDiffHunks(string) []view.DiffHunk   { return s.hunks }
+func (s *vcsStub) UnstagedDiffHunks(string) []view.DiffHunk { return s.hunks }
+func (s *vcsStub) HeadText(string) string                   { return "" }
+func (s *vcsStub) IndexText(string) string                  { return "" }
 func (s *vcsStub) HeadName(*view.Document) (string, bool)   { return "", false }
 func (s *vcsStub) ChangedFiles() ([]view.FileChange, error) { return nil, nil }
+func (s *vcsStub) Stage(string) error                       { return nil }
+func (s *vcsStub) Unstage(string) error                     { return nil }
 func (s *vcsStub) Refresh()                                 {}
 func (s *vcsStub) Updates() <-chan struct{}                 { return nil }
 func (s *vcsStub) DiffBase(*view.Document) (string, bool) {

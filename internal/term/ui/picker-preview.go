@@ -125,8 +125,9 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		p.blitPlaceholderInto(buf, at, "<No version control>")
 		return
 	}
-	base := p.picker.diffBaseFor(vc, p.item.BasePath)
-	work := p.workingPreview()
+	staged := p.item.Location.Target.Variant == changedFileStaged
+	base := p.picker.diffBaseFor(vc, p.item.BasePath, staged)
+	work := p.workingPreview(vc, staged)
 	opts := p.editor.Options()
 	r := &diffPreviewRender{
 		working: work.rope, base: base, spans: work.spans,
@@ -151,7 +152,16 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 	p.picker.preview.hScroll = r.hScroll
 }
 
-func (p *previewCtx) workingPreview() previewDocEntry {
+// a staged row shows what a commit would record, so its working side is the
+// index text rather than the file on disk
+func (p *previewCtx) workingPreview(
+	vc view.VersionControl, staged bool,
+) previewDocEntry {
+	if staged {
+		return *p.picker.preview.cache.indexText(
+			p.syntax, vc, p.item.Location.Target.Path,
+		)
+	}
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
 		if doc := p.editor.Document(p.item.Location.Target.ID); doc != nil {
 			return *p.picker.preview.cache.doc(p.syntax, doc)

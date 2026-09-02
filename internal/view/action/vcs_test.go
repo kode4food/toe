@@ -28,11 +28,19 @@ func (s *stubVC) DiffBase(*view.Document) (string, bool) {
 	return s.base, s.base != ""
 }
 
-func (s *stubVC) DiffHunksForPath(string) []view.DiffHunk {
+func (s *stubVC) StagedDiffHunks(string) []view.DiffHunk {
 	return s.hunks
 }
 
-func (s *stubVC) DiffBaseForPath(string) string {
+func (s *stubVC) UnstagedDiffHunks(string) []view.DiffHunk {
+	return s.hunks
+}
+
+func (s *stubVC) HeadText(string) string {
+	return s.base
+}
+
+func (s *stubVC) IndexText(string) string {
 	return s.base
 }
 
@@ -42,6 +50,14 @@ func (s *stubVC) HeadName(*view.Document) (string, bool) {
 
 func (s *stubVC) ChangedFiles() ([]view.FileChange, error) {
 	return nil, nil
+}
+
+func (s *stubVC) Stage(string) error {
+	return nil
+}
+
+func (s *stubVC) Unstage(string) error {
+	return nil
 }
 
 func (s *stubVC) Refresh() {}

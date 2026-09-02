@@ -999,9 +999,8 @@ func TestFileWatching(t *testing.T) {
 
 		_, _ = session.Completions(doc, v.ID())
 
-		// the server watches the gopls shape, "**/*.{session,go}" relative to
-		// the workspace root, so a file created in a new subdirectory has to
-		// reach it
+		// the server watches the gopls shape "**/*.{session,go}" from the
+		// workspace root, so a file in a new subdirectory has to reach it
 		created := filepath.Join(nested, "extracted.session")
 		assert.Eventually(t, func() bool {
 			assert.NoError(t, os.WriteFile(created, []byte("new\n"), 0o644))

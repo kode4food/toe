@@ -858,9 +858,8 @@ func TestNormalModeRestoreCursor(t *testing.T) {
 
 func TestTryRestoreIndent(t *testing.T) {
 	t.Run("normal clears whitespace line", func(t *testing.T) {
-		// "a\n    \nb": a=0, \n=1, ' '=2..5, \n=6, b=7
-		// lineEnd for line 1 = lineStart(2) +
-		// LineEndCharIndex("    \n") = 2+4=6
+		// in "a\n    \nb" line 1 spans 2..6, so its lineEnd is lineStart(2) +
+		// LineEndCharIndex("    \n") = 6
 		e := testutil.EditorWithText(t, "a\n    \nb")
 		testutil.SetCursor(t, e, 6)
 		e.SetMode(view.ModeInsert)

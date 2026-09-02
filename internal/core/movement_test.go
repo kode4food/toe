@@ -490,10 +490,8 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		MaxIndentRetain:    0,
 		WrapIndicatorWidth: 0,
 	}
-	// "0123456789ab\ncd": first line wraps at col 10, "ab" is row 1
-	// row 0: "0123456789"  (chars 0-9)
-	// row 1: "ab"           (chars 10-11), \n at 12
-	// line 1: "cd"          (chars 13-14)
+	// "0123456789ab\ncd" wraps at col 10: chars 0-9, then "ab" 10-11 with
+	// \n at 12, then line 1 "cd" at 13-14
 	t.Run("text-line fallback when SoftWrap off", func(t *testing.T) {
 		doc := core.NewRope("aaa\nbbb\nccc")
 		r := core.PointRange(0)
@@ -618,9 +616,8 @@ func TestVisualRowStarts(t *testing.T) {
 		// col 4, so fewer content columns are available per wrapped row
 		runes := []rune("    alpha bravo gamma")
 		got := vf.VisualRowStarts(runes)
-		// row 0: "    alpha " (cols 0-9, offsets 0-9)
-		// row 1: indent(4) + "bravo " (offsets 10-15)
-		// row 2: indent(4) + "gamma" (offsets 16-20)
+		// rows are "    alpha " at offsets 0-9, then the 4-column indent plus
+		// "bravo " at 10-15 and "gamma" at 16-20
 		assert.Equal(t, []int{10, 16}, got)
 	})
 

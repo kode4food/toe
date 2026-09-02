@@ -54,6 +54,7 @@ func (p *PickerComponent) handleKey(
 		if len(runes) > 0 {
 			return consumed(), ps.setQuery(string(runes[:len(runes)-1]))
 		}
+	case p.handleSourceKey(cx, ps, k):
 	default:
 		if k.IsTypable() {
 			return consumed(), ps.setQuery(ps.list.query + string(k.Code.Char))
@@ -107,6 +108,18 @@ func (p *PickerComponent) navigateItem(
 		comp.Push(newPickerComponent(cx, next))
 		return feedCmd
 	}), nil, true
+}
+
+func (p *PickerComponent) handleSourceKey(
+	cx *Context, ps *Picker, k command.KeyEvent,
+) bool {
+	src, ok := ps.source.(PickerKeySource)
+	if !ok || !src.HandleKey(cx.Editor, ps.selection(), k) {
+		return false
+	}
+	ps.clearPreviewCache()
+	ps.refreshItems(cx.Editor)
+	return true
 }
 
 func alignAcceptedItem(e *view.Editor, item *PickerItem) {

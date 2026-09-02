@@ -12,13 +12,21 @@ type (
 		// DiffBase returns the version-control base text of the document
 		DiffBase(*Document) (string, bool)
 
-		// DiffHunksForPath computes hunks between the checked-in base and the
-		// on-disk contents of an arbitrary workspace file
-		DiffHunksForPath(path string) []DiffHunk
+		// StagedDiffHunks computes hunks between the head and the staged
+		// contents of an arbitrary workspace file
+		StagedDiffHunks(path string) []DiffHunk
 
-		// DiffBaseForPath returns the version-control base text of an arbitrary
-		// workspace file, empty when it has none
-		DiffBaseForPath(path string) string
+		// UnstagedDiffHunks computes hunks between the staged and the on-disk
+		// contents of an arbitrary workspace file
+		UnstagedDiffHunks(path string) []DiffHunk
+
+		// HeadText returns the head text of an arbitrary workspace file, empty
+		// when it has none
+		HeadText(path string) string
+
+		// IndexText returns the staged text of an arbitrary workspace file,
+		// falling back to its head text when it has no entry in the index
+		IndexText(path string) string
 
 		// HeadName returns a short display name for the current head of the
 		// repository containing the document
@@ -26,6 +34,12 @@ type (
 
 		// ChangedFiles lists workspace files that differ from the head
 		ChangedFiles() ([]FileChange, error)
+
+		// Stage adds the working-tree state of path to the staging area
+		Stage(path string) error
+
+		// Unstage drops path from the staging area, leaving the working tree
+		Unstage(path string) error
 
 		// Refresh picks up external version-control state changes
 		Refresh()

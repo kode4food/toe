@@ -172,10 +172,10 @@ func TestSession(t *testing.T) {
 
 		assert.Equal(t, []view.DiffHunk{
 			{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
-		}, s.DiffHunksForPath(path))
+		}, s.UnstagedDiffHunks(path))
 		assert.NoError(t, os.Remove(path))
-		assert.Nil(t, s.DiffHunksForPath(path))
-		assert.Nil(t, s.DiffHunksForPath(filepath.Join(repo, "nope.txt")))
+		assert.Nil(t, s.UnstagedDiffHunks(path))
+		assert.Nil(t, s.UnstagedDiffHunks(filepath.Join(repo, "nope.txt")))
 	})
 
 	t.Run("serves base text for unopened paths", func(t *testing.T) {
@@ -187,8 +187,8 @@ func TestSession(t *testing.T) {
 		s := vcs.Attach(e)
 		defer s.Close()
 
-		assert.Equal(t, "one\ntwo\nthree\n", s.DiffBaseForPath(path))
-		assert.Empty(t, s.DiffBaseForPath(filepath.Join(repo, "untracked.txt")))
+		assert.Equal(t, "one\ntwo\nthree\n", s.HeadText(path))
+		assert.Empty(t, s.HeadText(filepath.Join(repo, "untracked.txt")))
 	})
 
 	t.Run("changed files fails outside a repo", func(t *testing.T) {

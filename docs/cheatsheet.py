@@ -101,6 +101,7 @@ SECTIONS = [
             ("Space+e", "workspace file explorer"),
             ("Picker: Tab / Shift+Tab", "next / previous item"),
             ("Picker: Ctrl+s / Ctrl+v", "open in horizontal / vertical split"),
+            ("Git picker: Ctrl+a / Ctrl+r", "stage / unstage selected file"),
             ("Insert: Ctrl+h / Ctrl+d", "delete previous / next char"),
             ("Insert: Ctrl+w", "delete previous word"),
             ("Terminal: Ctrl+\\", "leader (Space goes to shell)"),

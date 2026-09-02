@@ -824,9 +824,8 @@ func TestGotoFile(t *testing.T) {
 func TestAlignSelections(t *testing.T) {
 	t.Run("pads shorter cursors to match longest", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "x\nyyy")
-		// line 0: cursor at pos 1 (col 1)
-		// line 1: "yyy" starts at pos 2, cursor at pos 4 (col 2)
-		// maxCol = 2, pad line 0 col 1 by 1 space
+		// cursors sit at pos 1 (col 1) and pos 4 (col 2), so maxCol is 2 and
+		// line 0 gains one pad space
 		testutil.SetSelection(t, e,
 			[]core.Range{
 				core.PointRange(1),

@@ -42,6 +42,16 @@ type (
 
 		// ChangedFiles lists workspace files that differ from the head
 		ChangedFiles(cwd string) ([]view.FileChange, error)
+
+		// IndexText returns the staged contents of path
+		IndexText(cwd, path string) ([]byte, error)
+
+		// Stage adds the working-tree state of path to the staging area of the
+		// repository containing cwd
+		Stage(cwd, path string) error
+
+		// Unstage drops path from that staging area, leaving the working tree
+		Unstage(cwd, path string) error
 	}
 )
 
@@ -88,29 +98,46 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 	return "", false
 }
 
-// DiffHunksForPath computes hunks between the checked-in base and the on-disk
-// contents of an arbitrary workspace file. It shells out to the provider and is
-// intended for on-demand use such as picker previews
-func (s *Session) DiffHunksForPath(path string) []view.DiffHunk {
-	if base, err := s.provider.DiffBase(path); err == nil {
-		if data, err := os.ReadFile(path); err == nil {
-			return Diff(DiffSides{
-				Base: baseRope(base),
-				Doc:  baseRope(data),
-			})
-		}
-	}
-	return nil
+// StagedDiffHunks computes hunks between the head and the staged contents of an
+// arbitrary workspace file. It shells out to the provider, so it is intended
+// for on-demand use such as picker previews
+func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
+	return Diff(DiffSides{
+		Base: core.NewRope(s.HeadText(path)),
+		Doc:  core.NewRope(s.IndexText(path)),
+	})
 }
 
-// DiffBaseForPath returns the checked-in base text of an arbitrary workspace
-// file. It shells out to the provider, so it is intended for on-demand use such
-// as picker diff previews
-func (s *Session) DiffBaseForPath(path string) string {
+// UnstagedDiffHunks computes hunks between the staged and the on-disk contents
+// of an arbitrary workspace file. It shells out to the provider
+func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	return Diff(DiffSides{
+		Base: core.NewRope(s.IndexText(path)),
+		Doc:  baseRope(data),
+	})
+}
+
+// HeadText returns the head text of an arbitrary workspace file. It shells out
+// to the provider, so it is intended for on-demand use such as picker previews
+func (s *Session) HeadText(path string) string {
 	if base, err := s.provider.DiffBase(path); err == nil {
 		return baseRope(base).String()
 	}
 	return ""
+}
+
+// IndexText returns the staged text of an arbitrary workspace file, falling
+// back to its head text when the file has no entry in the index
+func (s *Session) IndexText(path string) string {
+	data, err := s.provider.IndexText(s.editor.Cwd(), path)
+	if err != nil {
+		return s.HeadText(path)
+	}
+	return baseRope(data).String()
 }
 
 // HeadName returns the head display name for the document's repository
@@ -124,6 +151,16 @@ func (s *Session) HeadName(doc *view.Document) (string, bool) {
 // ChangedFiles lists workspace files that differ from the head
 func (s *Session) ChangedFiles() ([]view.FileChange, error) {
 	return s.provider.ChangedFiles(s.editor.Cwd())
+}
+
+// Stage adds the working-tree state of path to the staging area
+func (s *Session) Stage(path string) error {
+	return s.provider.Stage(s.editor.Cwd(), path)
+}
+
+// Unstage drops path from the staging area, leaving the working tree
+func (s *Session) Unstage(path string) error {
+	return s.provider.Unstage(s.editor.Cwd(), path)
 }
 
 // Refresh reloads open document diff bases when their repository head moves

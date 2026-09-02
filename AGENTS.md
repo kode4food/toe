@@ -815,7 +815,7 @@ type History struct {
 func NewHistory() History {
 ```
 
-Sentinel error vars are the one exception: the message is the documentation.
+Two exceptions need no godoc: sentinel error vars, where the message is the documentation, and the members of an enum const block, which their type and block name already document. Document the block itself when the set needs explaining, not each member.
 
 **Unexported** funcs and methods get no godoc by default. Only add one, capped at 2 lines, when the behavior is genuinely non-trivial and needs explanation:
 

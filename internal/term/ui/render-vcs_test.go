@@ -2,6 +2,7 @@ package ui_test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -355,6 +356,95 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 49, line)
 	})
+
+	t.Run("previews each stage against its own base", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "both.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+		testutil.RunGit(t, repo, "add", "both.txt")
+		testutil.WriteFile(t, path, "three\n")
+
+		m := changedFilePicker(t, repo)
+
+		// the staged row leads, so it holds the selection on open
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "- one")
+		assert.Contains(t, out, "+ two")
+		assert.NotContains(t, out, "+ three")
+
+		m = sendSpecial(m, tea.KeyDown)
+
+		out = stripANSI(m.View().Content)
+		assert.Contains(t, out, "- two")
+		assert.Contains(t, out, "+ three")
+		assert.NotContains(t, out, "- one")
+	})
+
+	t.Run("ctrl+a stages the selected file", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "keep.txt", "base\n")
+		testutil.WriteFile(t, filepath.Join(repo, "solo.txt"), "new\n")
+
+		m := changedFilePicker(t, repo)
+		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
+
+		m = sendCtrl(m, 'a')
+
+		out := stripANSI(m.View().Content)
+		assert.GreaterOrEqual(t, sectionRow(out, "Staged Changes"), 0)
+		assert.Contains(t, out, "solo.txt")
+		assert.Equal(t, "A  solo.txt", gitStatus(t, repo))
+	})
+
+	t.Run("ctrl+r unstages the selected file", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, filepath.Join(repo, "mod.txt"), "two\n")
+		testutil.RunGit(t, repo, "add", "mod.txt")
+
+		m := changedFilePicker(t, repo)
+		assert.Contains(t, stripANSI(m.View().Content), "Staged Changes")
+
+		m = sendCtrl(m, 'r')
+
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "Staged Changes")
+		assert.Contains(t, out, "mod.txt")
+		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
+	})
+
+	t.Run("unstaging a rename drops both halves", func(t *testing.T) {
+		// a rename is one row naming its destination, so unstaging it has to
+		// reach the staged deletion of the source too
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "old.txt", "moved\n")
+		testutil.RunGit(t, repo, "mv", "old.txt", "new.txt")
+
+		m := changedFilePicker(t, repo)
+		m = sendCtrl(m, 'r')
+
+		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
+		assert.Equal(t, " D old.txt\n?? new.txt", gitStatus(t, repo))
+	})
+
+	t.Run("inert when version control is gone", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.WriteFile(t, filepath.Join(repo, "solo.txt"), "new\n")
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(ui.NewChangedFilePicker)
+		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		e.SetVersionControl(nil)
+
+		m = sendCtrl(m, 'a')
+
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "Staged Changes")
+		assert.Equal(t, "?? solo.txt", gitStatus(t, repo))
+	})
+
 }
 
 func changedFilePicker(t *testing.T, repo string) ui.Model {
@@ -365,6 +455,19 @@ func changedFilePicker(t *testing.T, repo string) ui.Model {
 	m := ui.New(e, command.NewKeymaps()).
 		WithInitialPicker(ui.NewChangedFilePicker)
 	return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+}
+
+func sendCtrl(m ui.Model, ch rune) ui.Model {
+	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Mod: tea.ModCtrl})
+}
+
+func gitStatus(t *testing.T, repo string) string {
+	t.Helper()
+	out, err := exec.Command(
+		"git", "-C", repo, "status", "--porcelain", "--find-renames",
+	).Output()
+	assert.NoError(t, err)
+	return strings.Trim(string(out), "\n")
 }
 
 func repoEditor(

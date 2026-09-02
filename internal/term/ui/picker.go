@@ -14,6 +14,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -43,7 +44,7 @@ type (
 		hScroll       int
 		scrollFor     int
 		cache         previewCache
-		diffBaseCache map[string]core.Rope
+		diffBaseCache map[diffBaseKey]core.Rope
 	}
 
 	loadState struct {
@@ -104,9 +105,9 @@ type (
 	// reconciled one changed path at a time
 	FileBackedPickerSource interface {
 		PickerSource
-		// ItemForPath returns the current row for path and whether the source
-		// contains it
-		ItemForPath(e *view.Editor, path string) (*PickerItem, bool)
+		// ItemsForPath returns the current rows for path, empty when the source
+		// no longer contains it
+		ItemsForPath(e *view.Editor, path string) []*PickerItem
 	}
 
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
@@ -119,6 +120,16 @@ type (
 	DynamicPickerSource interface {
 		PickerSource
 		Search(query string)
+	}
+
+	// PickerKeySource extends PickerSource with source-specific bindings,
+	// consulted after the picker's own keys and before a typable key extends
+	// the query
+	PickerKeySource interface {
+		PickerSource
+		// HandleKey acts on a key, reporting whether it did. The item is nil
+		// when nothing is selected
+		HandleKey(*view.Editor, *PickerItem, command.KeyEvent) bool
 	}
 
 	// NavigablePickerSource extends PickerSource for pickers that can drill
@@ -165,10 +176,13 @@ type (
 		Lines  *core.Span
 	}
 
-	// PickerTarget identifies a document by path or in-memory ID
+	// PickerTarget identifies a document by path or in-memory ID. Variant
+	// separates two rows naming the same document, as the changed-file
+	// picker's staged and unstaged rows do
 	PickerTarget struct {
-		Path string
-		ID   view.DocumentId
+		Path    string
+		ID      view.DocumentId
+		Variant int
 	}
 
 	// PickerAcceptAction is what accepting an item does with the pane it
@@ -233,7 +247,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 		},
 		preview: previewState{
 			cache:         previewCache{},
-			diffBaseCache: map[string]core.Rope{},
+			diffBaseCache: map[diffBaseKey]core.Rope{},
 		},
 		load: loadState{
 			cancel: func() {},
@@ -394,8 +408,7 @@ func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
 		if info, err := os.Lstat(path); err == nil && info.IsDir() {
 			return p.reload(e)
 		}
-		item, exists := src.ItemForPath(e, path)
-		p.reconcilePath(path, item, exists)
+		p.reconcilePath(path, src.ItemsForPath(e, path))
 	}
 	return nil
 }
@@ -416,34 +429,18 @@ func (p *Picker) refreshItems(e *view.Editor) {
 	p.rematchPreservingSelection(target, hadSelection)
 }
 
-func (p *Picker) reconcilePath(path string, item *PickerItem, exists bool) {
-	target, hadSelection := p.selectedTarget()
-	idx := p.findItemIndexByPath(path)
-	switch {
-	case exists && idx >= 0:
-		p.list.items[idx] = item
-	case exists:
-		p.list.items = append(p.list.items, item)
-		SortPickerItems(p.list.items)
-	case idx >= 0:
-		p.list.items = slices.Delete(p.list.items, idx, idx+1)
-	default:
+// a path holds as many rows as the source reports for it, so the whole set is
+// replaced at once rather than matched up row by row
+func (p *Picker) reconcilePath(path string, items []*PickerItem) {
+	atPath := itemsAtPath(path)
+	if len(items) == 0 && !slices.ContainsFunc(p.list.items, atPath) {
 		return
 	}
+	target, hadSelection := p.selectedTarget()
+	kept := slices.DeleteFunc(p.list.items, atPath)
+	p.list.items = append(kept, items...)
+	SortPickerItems(p.list.items)
 	p.rematchPreservingSelection(target, hadSelection)
-}
-
-func (p *Picker) findItemIndexByPath(path string) int {
-	exact := slices.IndexFunc(p.list.items, func(it *PickerItem) bool {
-		return it.Location.Target.Path == path
-	})
-	if exact >= 0 {
-		return exact
-	}
-	key := loader.CanonicalPath(path)
-	return slices.IndexFunc(p.list.items, func(it *PickerItem) bool {
-		return loader.CanonicalPath(it.Location.Target.Path) == key
-	})
 }
 
 func (p *Picker) takeSections(items []*PickerItem) []*PickerItem {
@@ -722,6 +719,14 @@ func defaultColumnProportions(n int) []int {
 		proportions[0] = 1
 	}
 	return proportions
+}
+
+func itemsAtPath(path string) func(*PickerItem) bool {
+	key := loader.CanonicalPath(path)
+	return func(it *PickerItem) bool {
+		target := it.Location.Target.Path
+		return target == path || loader.CanonicalPath(target) == key
+	}
 }
 
 func previewEnabled(source PickerSource) bool {

@@ -39,6 +39,13 @@ type (
 	}
 
 	diffLineKind uint8
+
+	// diffBaseKey identifies a row's base text, the head for a staged row and
+	// the index for an unstaged one, so a path caches both apart
+	diffBaseKey struct {
+		path   string
+		staged bool
+	}
 )
 
 const (
@@ -53,12 +60,21 @@ const (
 	diffTintAmount  = 0.2
 )
 
-func (p *Picker) diffBaseFor(vc view.VersionControl, path string) core.Rope {
-	if rope, ok := p.preview.diffBaseCache[path]; ok {
+// the base of a staged row is the head, of an unstaged row the index, so both
+// rows of a file edited in both places diff against the right side
+func (p *Picker) diffBaseFor(
+	vc view.VersionControl, path string, staged bool,
+) core.Rope {
+	key := diffBaseKey{path: path, staged: staged}
+	if rope, ok := p.preview.diffBaseCache[key]; ok {
 		return rope
 	}
-	rope := core.NewRope(vc.DiffBaseForPath(path))
-	p.preview.diffBaseCache[path] = rope
+	text := vc.IndexText(path)
+	if staged {
+		text = vc.HeadText(path)
+	}
+	rope := core.NewRope(text)
+	p.preview.diffBaseCache[key] = rope
 	return rope
 }
 

@@ -18,7 +18,7 @@ type codeActionCandidate struct {
 	item   protocol.CommandOrCodeAction
 }
 
-// Sort priority constants for code action ordering (lower = listed first).
+// Sort priority constants for code action ordering, lower listed first
 const (
 	codeActionQuickfix = iota
 	codeActionRefactorExtract

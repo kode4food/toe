@@ -6,6 +6,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
+	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -133,18 +134,18 @@ func (c *changedFilePickerSource) Items(e *view.Editor) []*PickerItem {
 	return changedFileRows(vc, changes, cwd, e.Options().NerdFonts)
 }
 
-// ItemForPath returns the current VCS row for path and whether it is still a
-// changed file
-func (c *changedFilePickerSource) ItemForPath(
+// ItemsForPath returns the current VCS rows for path, one per stage, empty
+// when it is no longer a changed file
+func (c *changedFilePickerSource) ItemsForPath(
 	e *view.Editor, path string,
-) (*PickerItem, bool) {
+) []*PickerItem {
 	vc := e.VersionControl()
 	if vc == nil {
-		return nil, false
+		return nil
 	}
 	changes, err := vc.ChangedFiles()
 	if err != nil {
-		return nil, false
+		return nil
 	}
 	cwd := e.Cwd()
 	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
@@ -152,14 +153,15 @@ func (c *changedFilePickerSource) ItemForPath(
 	}
 	key := loader.CanonicalPath(path)
 	nerd := e.Options().NerdFonts
+	var out []*PickerItem
 	for _, fc := range changes {
 		if loader.CanonicalPath(fc.Path) == key {
-			return changedFileItem(changedFileItemArgs{
+			out = append(out, changedFileItem(changedFileItemArgs{
 				vcs: vc, change: fc, cwd: cwd, nerd: nerd,
-			}), true
+			}))
 		}
 	}
-	return nil, false
+	return out
 }
 
 // Accept opens the chosen file
@@ -169,6 +171,38 @@ func (c *changedFilePickerSource) Accept(
 	GotoPath(
 		e, item.Location.Target.Path, GotoLines(item.Location.Lines), action,
 	)
+}
+
+// HandleKey stages the selected file with ctrl+a and unstages it with ctrl+r,
+// mirroring git's own add and reset
+func (c *changedFilePickerSource) HandleKey(
+	e *view.Editor, item *PickerItem, k command.KeyEvent,
+) bool {
+	vc := e.VersionControl()
+	if item == nil || vc == nil || k.Mods != command.ModCtrl {
+		return false
+	}
+	var apply func(string) error
+	switch k.Code.Char {
+	case 'a':
+		apply = vc.Stage
+	case 'r':
+		apply = vc.Unstage
+	default:
+		return false
+	}
+	// a rename is one row over two paths, so both halves move together
+	paths := []string{item.Location.Target.Path}
+	if item.BasePath != "" && item.BasePath != paths[0] {
+		paths = append(paths, item.BasePath)
+	}
+	for _, path := range paths {
+		if err := apply(path); err != nil {
+			e.SetStatusMsg(i18n.ErrorText(err))
+			break
+		}
+	}
+	return true
 }
 
 func changedFileRows(
@@ -240,7 +274,7 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 		DiffKind:    fc.Kind,
 		BasePath:    basePath,
 		Location: PickerLocation{
-			Target: PickerTarget{Path: fc.Path},
+			Target: PickerTarget{Path: fc.Path, Variant: group},
 			Lines:  firstChangeLines(hunks),
 		},
 	}
@@ -259,7 +293,10 @@ func changedFileHunks(
 		// the whole file is new or gone, so there is no base to diff against
 		return nil
 	default:
-		return vc.DiffHunksForPath(fc.Path)
+		if fc.Staged {
+			return vc.StagedDiffHunks(fc.Path)
+		}
+		return vc.UnstagedDiffHunks(fc.Path)
 	}
 }
 

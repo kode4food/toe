@@ -472,3 +472,10 @@ When any picker is open (file picker, buffer picker, global search, etc.):
 | `Ctrl+s` | Open in horizontal split |
 | `Ctrl+v` | Open in vertical split |
 | `Escape` | Close picker |
+
+The changed-file picker adds:
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+a` | Stage the selected file |
+| `Ctrl+r` | Unstage the selected file |

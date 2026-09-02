@@ -143,6 +143,41 @@ func TestGit(t *testing.T) {
 		assert.Equal(t, view.FileChangeConflict, changes[0].Kind)
 	})
 
+	t.Run("unstage keeps the working file", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+		assert.NoError(t, vcs.Git{}.Stage(repo, path))
+
+		assert.NoError(t, vcs.Git{}.Unstage(repo, path))
+
+		changes, err := vcs.Git{}.ChangedFiles(repo)
+		assert.NoError(t, err)
+		assert.Len(t, changes, 1)
+		assert.False(t, changes[0].Staged)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "two\n", string(data))
+	})
+
+	t.Run("unstage before the first commit", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := filepath.Join(repo, "a.txt")
+		testutil.WriteFile(t, path, "one\n")
+		assert.NoError(t, vcs.Git{}.Stage(repo, path))
+
+		// no HEAD to restore from, so the index entry is dropped instead
+		assert.NoError(t, vcs.Git{}.Unstage(repo, path))
+
+		changes, err := vcs.Git{}.ChangedFiles(repo)
+		assert.NoError(t, err)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, view.FileChangeUntracked, changes[0].Kind)
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "one\n", string(data))
+	})
+
 	t.Run("errors outside a repository", func(t *testing.T) {
 		dir := t.TempDir()
 		_, err := vcs.Git{}.DiffBase(filepath.Join(dir, "nope.txt"))

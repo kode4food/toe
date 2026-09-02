@@ -2,6 +2,17 @@
 
 Notable changes to toe.
 
+## 0.4.0
+
+### Interface
+
+- Pickers no longer redraw their preview on every Git state change, waiting for the debounced refresh instead
+
+### Language tooling
+
+- Fixed language server file watching to match `**` and character-class patterns instead of falling back to prefix and suffix guesses
+- Fixed workspace root detection silently failing on a malformed root pattern instead of skipping it
+
 ## 0.3.4
 
 ### Version control

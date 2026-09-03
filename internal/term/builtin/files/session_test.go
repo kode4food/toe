@@ -1,7 +1,9 @@
 package files_test
 
 import (
+	"compress/gzip"
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,7 +72,13 @@ func TestSession(t *testing.T) {
 		res := test.RunCmd(t, km, e, "save_session")
 		assert.Equal(t, "session saved", res.Message)
 
-		data, err := os.ReadFile(view.WorkspaceSessionFile(dir))
+		f, err := os.Open(view.WorkspaceSessionFile(dir) + ".gz")
+		assert.NoError(t, err)
+		defer func() { _ = f.Close() }()
+		gz, err := gzip.NewReader(f)
+		assert.NoError(t, err)
+		defer func() { _ = gz.Close() }()
+		data, err := io.ReadAll(gz)
 		assert.NoError(t, err)
 		var sess struct {
 			Options map[string]string `json:"options"`

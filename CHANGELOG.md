@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.4.2
+
+### Sessions
+
+- Workspace sessions are now stored as `.toe/session.json.gz`. An existing `.toe/session.json` is still restored and removed on the next save
+
 ## 0.4.1
 
 ### Version control

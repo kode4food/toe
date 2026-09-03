@@ -2,9 +2,11 @@ package app_test
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -268,7 +270,7 @@ func TestStop(t *testing.T) {
 		path := filepath.Join(dir, "main.go")
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
 		saveSessionFor(t, dir, path)
-		sessionPath := view.WorkspaceSessionFile(dir)
+		sessionPath := view.WorkspaceSessionFile(dir) + ".gz"
 		before, err := os.ReadFile(sessionPath)
 		assert.NoError(t, err)
 		a := start(t, dir, path)
@@ -378,7 +380,13 @@ func saveSessionFor(t *testing.T, dir string, paths ...string) {
 
 func savedSessionOptions(t *testing.T, path string) map[string]string {
 	t.Helper()
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path + ".gz")
+	assert.NoError(t, err)
+	defer func() { _ = f.Close() }()
+	gz, err := gzip.NewReader(f)
+	assert.NoError(t, err)
+	defer func() { _ = gz.Close() }()
+	data, err := io.ReadAll(gz)
 	assert.NoError(t, err)
 	var sess struct {
 		Options map[string]string `json:"options"`

@@ -1,8 +1,10 @@
 package view_test
 
 import (
+	"compress/gzip"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -68,9 +70,8 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, e.SaveSession(
 			sessionPath, map[string]string{"editor.cursorline": "true"},
 		))
-		data, err := os.ReadFile(sessionPath)
-		assert.NoError(t, err)
-		assert.Contains(t, string(data), `"options": {`)
+		data := readSavedSession(t, sessionPath)
+		assert.Contains(t, string(data), `"options":{`)
 
 		next := view.NewEditor(dir)
 		values, restored, err := next.RestoreSession(sessionPath)
@@ -154,8 +155,7 @@ func TestSession(t *testing.T) {
 		e.AppendMessage("session news")
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
-		saved, err := os.ReadFile(sessionPath)
-		assert.NoError(t, err)
+		saved := readSavedSession(t, sessionPath)
 		assert.NotContains(t, string(saved), "session news")
 
 		next := view.NewEditor(dir)
@@ -179,8 +179,7 @@ func TestSession(t *testing.T) {
 		e.ShowDocument(e.MessagesDocument().ID())
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
-		saved, err := os.ReadFile(sessionPath)
-		assert.NoError(t, err)
+		saved := readSavedSession(t, sessionPath)
 		assert.NotContains(t, string(saved), "session news")
 
 		next := view.NewEditor(dir)
@@ -194,6 +193,32 @@ func TestSession(t *testing.T) {
 
 		next.AppendMessage("fresh news")
 		assert.Equal(t, "fresh news\n", doc.Text().String())
+	})
+
+	t.Run("replaces an uncompressed session", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.go")
+		assert.NoError(t, os.WriteFile(path, []byte("hello"), 0o644))
+		sessionPath := filepath.Join(dir, view.SessionFile)
+
+		e := view.NewEditor(dir)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+		assert.NoError(t, os.WriteFile(
+			sessionPath, readSavedSession(t, sessionPath), 0o644,
+		))
+		assert.NoError(t, os.Remove(sessionPath+".gz"))
+
+		next := view.NewEditor(dir)
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+		assert.NoError(t, next.SaveSession(sessionPath, nil))
+
+		assert.NotEmpty(t, readSavedSession(t, sessionPath))
+		_, err = os.Stat(sessionPath)
+		assert.True(t, errors.Is(err, os.ErrNotExist))
 	})
 
 	t.Run("workspace session file path", func(t *testing.T) {
@@ -847,14 +872,13 @@ func TestSession(t *testing.T) {
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
 		// poison the saved sequence with values that would overflow a counter
-		raw, err := os.ReadFile(sessionPath)
-		assert.NoError(t, err)
-		pattern := regexp.MustCompile(`"focus-seq": \d+`)
+		raw := readSavedSession(t, sessionPath)
+		pattern := regexp.MustCompile(`"focus-seq":\d+`)
 		assert.Len(t, pattern.FindAllString(string(raw), -1), 4)
 		poisoned := pattern.ReplaceAllString(
-			string(raw), `"focus-seq": 9223372036854775807`,
+			string(raw), `"focus-seq":9223372036854775807`,
 		)
-		assert.NoError(t, os.WriteFile(sessionPath, []byte(poisoned), 0o644))
+		writeSavedSession(t, sessionPath, []byte(poisoned))
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(geom.Size{Width: 160, Height: 24})
@@ -914,9 +938,8 @@ func TestSession(t *testing.T) {
 		e.Registers().Write('"', []string{"hello", "world"})
 		e.Registers().Write('a', []string{"foo"})
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
-		data, err := os.ReadFile(sessionPath)
-		assert.NoError(t, err)
-		assert.Contains(t, string(data), `"registers": {`)
+		data := readSavedSession(t, sessionPath)
+		assert.Contains(t, string(data), `"registers":{`)
 
 		next := view.NewEditor(dir)
 		next.ResizeTree(geom.Size{Width: 80, Height: 24})
@@ -1172,4 +1195,28 @@ func (p *fakePane) Path() string {
 
 func (p *fakePane) Mode() view.Mode {
 	return view.ModeTerminal
+}
+
+func readSavedSession(t *testing.T, path string) []byte {
+	t.Helper()
+	f, err := os.Open(path + ".gz")
+	assert.NoError(t, err)
+	defer func() { _ = f.Close() }()
+	gz, err := gzip.NewReader(f)
+	assert.NoError(t, err)
+	defer func() { _ = gz.Close() }()
+	data, err := io.ReadAll(gz)
+	assert.NoError(t, err)
+	return data
+}
+
+func writeSavedSession(t *testing.T, path string, data []byte) {
+	t.Helper()
+	f, err := os.Create(path + ".gz")
+	assert.NoError(t, err)
+	defer func() { _ = f.Close() }()
+	gz := gzip.NewWriter(f)
+	_, err = gz.Write(data)
+	assert.NoError(t, err)
+	assert.NoError(t, gz.Close())
 }

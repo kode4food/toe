@@ -1,8 +1,10 @@
 package view
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
+	"io"
 	"maps"
 	"os"
 	"path/filepath"
@@ -105,6 +107,8 @@ const (
 	SessionKindMessages SessionKind = "messages"
 
 	sessionVersion = 1
+
+	gzipExt = ".gz"
 )
 
 var (
@@ -116,78 +120,20 @@ var (
 // SaveSession stores restorable workspace state in path. Runtime option
 // strings are supplied by the command registry that owns the option handlers
 func (e *Editor) SaveSession(path string, opts map[string]string) error {
-	docIndex := map[DocumentId]int{}
-	base := sessionBase(path)
-	e.panes.tree.compactFocusSeq()
-	s := sessEditor{
-		Version:   sessionVersion,
-		Maximized: e.panes.tree.Maximized(),
-	}
-	keys := slices.Sorted(maps.Keys(opts))
-	if len(keys) > 0 {
-		s.Options = sessOptions{}
-	}
-	for _, key := range keys {
-		s.Options[key] = opts[key]
-	}
-	regKeys := slices.Sorted(maps.Keys(e.registers.values))
-	if len(regKeys) > 0 {
-		s.Registers = sessRegisters{}
-	}
-	for _, k := range regKeys {
-		if vals := e.registers.values.Read(k); len(vals) > 0 {
-			s.Registers[string(k)] = vals
-		}
-	}
-	for _, v := range e.AllViews() {
-		d, ok := e.documents.byID[v.docID]
-		if !ok {
-			continue
-		}
-		d.rememberSelection(v.id)
-		if _, ok := docIndex[d.ID()]; ok {
-			continue
-		}
-		if d.Type() == DocTypeLog {
-			continue
-		}
-		docIndex[d.ID()] = len(s.Documents) + 1
-		s.Documents = append(s.Documents, e.sessionDocument(d, base))
-	}
-	for _, d := range e.AllDocuments() {
-		if _, ok := docIndex[d.ID()]; ok {
-			continue
-		}
-		if d.Type() == DocTypeLog {
-			continue
-		}
-		docIndex[d.ID()] = len(s.Documents) + 1
-		s.Documents = append(s.Documents, e.sessionDocument(d, base))
-	}
-	s.Layout = e.sessionNodeFor(e.panes.tree.root, docIndex, base)
-	if len(s.Documents) == 0 && !layoutHasReopenablePane(&s.Layout) {
+	s := e.prepareSession(sessionBase(path), opts)
+	if s == nil {
 		return nil
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = f.Close() }()
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-	return enc.Encode(s)
+	return writeSession(path, s)
 }
 
 // RestoreSession restores file-backed documents and view state from path. It
 // returns any runtime option strings stored in the session for the caller to
 // apply through the command registry
 func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
-	s, ok, err := readSession(path)
-	if !ok || err != nil {
-		return nil, ok, err
+	s, err := readSession(path)
+	if s == nil {
+		return nil, false, err
 	}
 	reopenable := layoutHasReopenablePane(&s.Layout)
 	base := sessionBase(path)
@@ -306,28 +252,129 @@ func WorkspaceSessionFile(dir string) string {
 	return filepath.Join(root, loader.WorkspaceDirName, SessionFile)
 }
 
-func readSession(path string) (sessEditor, bool, error) {
-	var s sessEditor
-	f, err := os.Open(path)
+// collects restorable state, nil when there is nothing worth saving
+func (e *Editor) prepareSession(
+	base string, opts map[string]string,
+) *sessEditor {
+	docIndex := map[DocumentId]int{}
+	e.panes.tree.compactFocusSeq()
+	s := &sessEditor{
+		Version:   sessionVersion,
+		Maximized: e.panes.tree.Maximized(),
+	}
+	keys := slices.Sorted(maps.Keys(opts))
+	if len(keys) > 0 {
+		s.Options = sessOptions{}
+	}
+	for _, key := range keys {
+		s.Options[key] = opts[key]
+	}
+	regKeys := slices.Sorted(maps.Keys(e.registers.values))
+	if len(regKeys) > 0 {
+		s.Registers = sessRegisters{}
+	}
+	for _, k := range regKeys {
+		if vals := e.registers.values.Read(k); len(vals) > 0 {
+			s.Registers[string(k)] = vals
+		}
+	}
+	for _, v := range e.AllViews() {
+		d, ok := e.documents.byID[v.docID]
+		if !ok {
+			continue
+		}
+		d.rememberSelection(v.id)
+		if _, ok := docIndex[d.ID()]; ok {
+			continue
+		}
+		if d.Type() == DocTypeLog {
+			continue
+		}
+		docIndex[d.ID()] = len(s.Documents) + 1
+		s.Documents = append(s.Documents, e.sessionDocument(d, base))
+	}
+	for _, d := range e.AllDocuments() {
+		if _, ok := docIndex[d.ID()]; ok {
+			continue
+		}
+		if d.Type() == DocTypeLog {
+			continue
+		}
+		docIndex[d.ID()] = len(s.Documents) + 1
+		s.Documents = append(s.Documents, e.sessionDocument(d, base))
+	}
+	s.Layout = e.sessionNodeFor(e.panes.tree.root, docIndex, base)
+	if len(s.Documents) == 0 && !layoutHasReopenablePane(&s.Layout) {
+		return nil
+	}
+	return s
+}
+
+func writeSession(path string, s *sessEditor) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	f, err := os.CreateTemp(dir, filepath.Base(path)+".*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	defer func() {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+	}()
+	gz := gzip.NewWriter(f)
+	if err := json.NewEncoder(gz).Encode(s); err != nil {
+		return err
+	}
+	if err := gz.Close(); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, path+gzipExt); err != nil {
+		return err
+	}
+	// the uncompressed session is stale once the .gz is written
+	_ = os.Remove(path)
+	return nil
+}
+
+func readSession(path string) (*sessEditor, error) {
+	f, err := os.Open(path + gzipExt)
+	compressed := err == nil
 	if errors.Is(err, os.ErrNotExist) {
-		return s, false, nil
+		f, err = os.Open(path)
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
 	}
 	if err != nil {
-		return s, false, err
+		return nil, err
 	}
 	defer func() { _ = f.Close() }()
-	dec := json.NewDecoder(f)
+	r := io.Reader(f)
+	if compressed {
+		r, err = gzip.NewReader(f)
+	}
+	if err != nil {
+		return nil, err
+	}
+	dec := json.NewDecoder(r)
 	dec.UseNumber()
+	var s sessEditor
 	if err := dec.Decode(&s); err != nil {
-		return s, false, err
+		return nil, err
 	}
 	if s.Version != sessionVersion {
-		return s, false, ErrSessionUnsupported
+		return nil, ErrSessionUnsupported
 	}
 	if len(s.Documents) == 0 && !layoutHasReopenablePane(&s.Layout) {
-		return s, false, ErrSessionEmpty
+		return nil, ErrSessionEmpty
 	}
-	return s, true, nil
+	return &s, nil
 }
 
 func sessionPath(at sessRef) string {

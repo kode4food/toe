@@ -52,6 +52,10 @@ type (
 
 		// Unstage drops path from that staging area, leaving the working tree
 		Unstage(cwd, path string) error
+
+		// Discard restores the working-tree state of path from the staging
+		// area, deleting the file when it is untracked
+		Discard(cwd, path string) error
 	}
 )
 
@@ -161,6 +165,12 @@ func (s *Session) Stage(path string) error {
 // Unstage drops path from the staging area, leaving the working tree
 func (s *Session) Unstage(path string) error {
 	return s.provider.Unstage(s.editor.Cwd(), path)
+}
+
+// Discard restores the working-tree state of path from the staging area,
+// deleting the file when version control does not track it
+func (s *Session) Discard(path string) error {
+	return s.provider.Discard(s.editor.Cwd(), path)
 }
 
 // Refresh reloads open document diff bases when their repository head moves

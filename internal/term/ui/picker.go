@@ -127,9 +127,11 @@ type (
 	// the query
 	PickerKeySource interface {
 		PickerSource
-		// HandleKey acts on a key, reporting whether it did. The item is nil
-		// when nothing is selected
-		HandleKey(*view.Editor, *PickerItem, command.KeyEvent) bool
+		// HandleKey acts on a key, reporting whether it did. Any overlay it
+		// returns is pushed above the picker, such as a confirmation
+		HandleKey(
+			*view.Editor, *PickerItem, command.KeyEvent,
+		) (BufferOverlayComponent, bool)
 	}
 
 	// NavigablePickerSource extends PickerSource for pickers that can drill
@@ -140,9 +142,9 @@ type (
 		Navigate(*view.Editor, *PickerItem) PickerFunc
 	}
 
-	// PickerItem is a single row shown in the picker list. A Section row
-	// labels the group its Group ordinal names. It never matches a query and
-	// the cursor skips it
+	// PickerItem is a single row shown in the picker list. A Section row labels
+	// the group its Group ordinal names. It never matches a query and the
+	// cursor skips it
 	PickerItem struct {
 		Display     string
 		Columns     []string
@@ -177,8 +179,8 @@ type (
 	}
 
 	// PickerTarget identifies a document by path or in-memory ID. Variant
-	// separates two rows naming the same document, as the changed-file
-	// picker's staged and unstaged rows do
+	// separates two rows naming the same document, as the changed-file picker's
+	// staged and unstaged rows do
 	PickerTarget struct {
 		Path    string
 		ID      view.DocumentId
@@ -237,8 +239,8 @@ const (
 )
 
 // NewPicker constructs a Picker for the given source, triggering Load
-// immediately. The returned feedCmd (if any) must be dispatched by the
-// caller after mounting the component
+// immediately. The returned feedCmd (if any) must be dispatched by the caller
+// after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
 		source: source,

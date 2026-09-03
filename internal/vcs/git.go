@@ -3,6 +3,7 @@ package vcs
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -146,6 +147,16 @@ func (Git) Unstage(cwd, path string) error {
 	// a repository without a first commit has no HEAD to restore from, so the
 	// index entry itself is dropped
 	_, err := runGit(cwd, "rm", "--cached", "-q", "--", path)
+	return err
+}
+
+// Discard restores the working-tree state of path from the index. An untracked
+// file has no index state to restore, so it is deleted instead
+func (Git) Discard(cwd, path string) error {
+	if !tracked(cwd, path) {
+		return os.Remove(path)
+	}
+	_, err := runGit(cwd, "restore", "--worktree", "--", path)
 	return err
 }
 
@@ -323,6 +334,11 @@ func repoRoot(repo *git.Repository) (string, error) {
 		return "", err
 	}
 	return realPath(wt.Filesystem.Root()), nil
+}
+
+func tracked(cwd, path string) bool {
+	_, err := runGit(cwd, "ls-files", "--error-unmatch", "--", path)
+	return err == nil
 }
 
 func runGit(dir string, args ...string) ([]byte, error) {

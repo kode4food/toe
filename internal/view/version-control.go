@@ -41,6 +41,10 @@ type (
 		// Unstage drops path from the staging area, leaving the working tree
 		Unstage(path string) error
 
+		// Discard restores the working-tree state of path from the staging
+		// area, deleting the file when version control does not track it
+		Discard(path string) error
+
 		// Refresh picks up external version-control state changes
 		Refresh()
 

@@ -427,6 +427,96 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Equal(t, " D old.txt\n?? new.txt", gitStatus(t, repo))
 	})
 
+	t.Run("ctrl+r on an unstaged row asks first", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := sendCtrl(changedFilePicker(t, repo), 'r')
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "Discard changes to mod.txt?")
+		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
+
+		// nothing but the focus separates the two buttons, and it starts on the
+		// answer that changes nothing
+		row := popupRow(m, "y Yes")
+		assert.Contains(t, stripANSI(row), "n No")
+		assert.Contains(t, row, "\x1b[4my")
+		assert.Contains(t, row, "\x1b[4mn")
+		styles := styledRuneStyles(row)
+		assert.Equal(t, "48;2;147;153;178", styles['N'].bg)
+		assert.NotEqual(t, styles['Y'].bg, styles['N'].bg)
+	})
+
+	t.Run("enter takes the focused answer", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := sendCtrl(changedFilePicker(t, repo), 'r')
+		m = updateAndFeed(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+
+		// no holds the focus of a discard, so enter alone changes nothing
+		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
+	})
+
+	t.Run("moving the focus reaches the discard", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := sendCtrl(changedFilePicker(t, repo), 'r')
+		m = sendSpecial(m, tea.KeyLeft)
+
+		// the focus moved, so yes now wears the fill no had
+		row := popupRow(m, "y Yes")
+		assert.Equal(t, "48;2;147;153;178", styledRuneStyles(row)['Y'].bg)
+
+		updateAndFeed(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+		assert.Empty(t, gitStatus(t, repo))
+	})
+
+	t.Run("answering no keeps the changes", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := sendKeyAndFeed(sendCtrl(changedFilePicker(t, repo), 'r'), 'n')
+
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "Discard changes")
+		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
+	})
+
+	t.Run("answering yes discards the changes", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := sendKeyAndFeed(sendCtrl(changedFilePicker(t, repo), 'r'), 'y')
+
+		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		assert.Empty(t, gitStatus(t, repo))
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "one\n", string(data))
+	})
+
+	t.Run("discarding an untracked row deletes it", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "kept.txt", "one\n")
+		path := filepath.Join(repo, "new.txt")
+		testutil.WriteFile(t, path, "new\n")
+
+		m := sendKeyAndFeed(sendCtrl(changedFilePicker(t, repo), 'r'), 'y')
+
+		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
+		_, err := os.Stat(path)
+		assert.True(t, os.IsNotExist(err))
+	})
+
 	t.Run("inert when version control is gone", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.WriteFile(t, filepath.Join(repo, "solo.txt"), "new\n")
@@ -445,6 +535,15 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Equal(t, "?? solo.txt", gitStatus(t, repo))
 	})
 
+}
+
+func popupRow(m ui.Model, text string) string {
+	for row := range strings.SplitSeq(m.View().Content, "\n") {
+		if strings.Contains(stripANSI(row), text) {
+			return row
+		}
+	}
+	return ""
 }
 
 func changedFilePicker(t *testing.T, repo string) ui.Model {

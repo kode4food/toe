@@ -1,6 +1,8 @@
 {
   "about.development": "Entwicklungsversion",
   "about.version": "Version",
+  "capture.no": "Nein",
+  "capture.yes": "Ja",
   "error.aleBindingAction": "Aktion muss eine Ale-Prozedur sein",
   "error.aleBindingDocType": "`:doc` muss eine Zeichenfolge sein",
   "error.aleBindingDuplicate": "doppelte Option {option}",
@@ -54,6 +56,7 @@
   "status.noImplementation": "Keine Implementierung gefunden.",
   "status.noSymbolReferences": "Keine Symbolreferenzen gefunden.",
   "status.noTypeDefinition": "Keine Typdefinition gefunden.",
+  "status.pickerDiscard": "Änderungen an {file} verwerfen?",
   "status.pickerNoResults": "Keine Ergebnisse",
   "status.pickerSearching": "Wird gesucht…",
   "status.pickerStaged": "Gestagete Änderungen",

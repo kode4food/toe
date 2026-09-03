@@ -40,8 +40,8 @@ type (
 
 	diffLineKind uint8
 
-	// diffBaseKey identifies a row's base text, the head for a staged row and
-	// the index for an unstaged one, so a path caches both apart
+	// the base of a staged row is the head and of an unstaged row the index, so
+	// one path caches both
 	diffBaseKey struct {
 		path   string
 		staged bool

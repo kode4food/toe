@@ -1,6 +1,8 @@
 {
   "about.development": "Version de développement",
   "about.version": "Version",
+  "capture.no": "Non",
+  "capture.yes": "Oui",
   "error.aleBindingAction": "l’action doit être une procédure Ale",
   "error.aleBindingDocType": "`:doc` doit être une chaîne",
   "error.aleBindingDuplicate": "option {option} en double",
@@ -54,6 +56,7 @@
   "status.noImplementation": "Aucune implémentation trouvée.",
   "status.noSymbolReferences": "Aucune référence de symbole trouvée.",
   "status.noTypeDefinition": "Aucune définition de type trouvée.",
+  "status.pickerDiscard": "Abandonner les modifications de {file} ?",
   "status.pickerNoResults": "Aucun résultat",
   "status.pickerSearching": "Recherche en cours…",
   "status.pickerStaged": "Modifications indexées",

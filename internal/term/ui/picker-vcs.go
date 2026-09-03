@@ -3,6 +3,8 @@ package ui
 import (
 	"path/filepath"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
@@ -26,6 +28,7 @@ const (
 const (
 	statusPickerStagedKey   i18n.Key = "status.pickerStaged"
 	statusPickerUnstagedKey i18n.Key = "status.pickerUnstaged"
+	statusPickerDiscardKey  i18n.Key = "status.pickerDiscard"
 )
 
 // git reports the index first, so staged rows lead the list
@@ -173,25 +176,45 @@ func (c *changedFilePickerSource) Accept(
 	)
 }
 
-// HandleKey stages the selected file with ctrl+a and unstages it with ctrl+r,
-// mirroring git's own add and reset
+// HandleKey stages the selected file with ctrl+a and reverts it with ctrl+r,
+// which unstages a staged row and discards the changes of an unstaged one
 func (c *changedFilePickerSource) HandleKey(
 	e *view.Editor, item *PickerItem, k command.KeyEvent,
-) bool {
+) (BufferOverlayComponent, bool) {
 	vc := e.VersionControl()
 	if item == nil || vc == nil || k.Mods != command.ModCtrl {
-		return false
+		return nil, false
 	}
-	var apply func(string) error
-	switch k.Code.Char {
-	case 'a':
-		apply = vc.Stage
-	case 'r':
-		apply = vc.Unstage
+	switch {
+	case k.Code.Char == 'a':
+		applyToRow(e, item, vc.Stage)
+	case k.Code.Char != 'r':
+		return nil, false
+	case item.Location.Target.Variant == changedFileStaged:
+		applyToRow(e, item, vc.Unstage)
 	default:
-		return false
+		// discarding a working-tree change cannot be undone
+		return confirmDiscard(item), true
 	}
-	// a rename is one row over two paths, so both halves move together
+	return nil, true
+}
+
+func confirmDiscard(item *PickerItem) BufferOverlayComponent {
+	question := i18n.Text(statusPickerDiscardKey, i18n.Vars{
+		"file": item.Display,
+	})
+	return newConfirmation(question, func(e *view.Editor) tea.Cmd {
+		if vc := e.VersionControl(); vc != nil {
+			applyToRow(e, item, vc.Discard)
+		}
+		return nil
+	}, true)
+}
+
+// a rename is one row over two paths, so both halves move together
+func applyToRow(
+	e *view.Editor, item *PickerItem, apply func(string) error,
+) {
 	paths := []string{item.Location.Target.Path}
 	if item.BasePath != "" && item.BasePath != paths[0] {
 		paths = append(paths, item.BasePath)
@@ -199,10 +222,9 @@ func (c *changedFilePickerSource) HandleKey(
 	for _, path := range paths {
 		if err := apply(path); err != nil {
 			e.SetStatusMsg(i18n.ErrorText(err))
-			break
+			return
 		}
 	}
-	return true
 }
 
 func changedFileRows(

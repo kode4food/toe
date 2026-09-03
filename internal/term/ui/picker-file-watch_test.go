@@ -272,6 +272,20 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.Contains(t, out, "+ four")
 	})
 
+	t.Run("discarding a row drops it from the list", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "alpha.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := changedFilePicker(t, repo)
+		m = sendKeyAndFeed(sendCtrl(m, 'r'), 'y')
+		m = drainFileWatch(t, m)
+
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "alpha.txt")
+	})
+
 	t.Run("staging another file keeps selection", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)

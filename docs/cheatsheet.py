@@ -101,7 +101,7 @@ SECTIONS = [
             ("Space+e", "workspace file explorer"),
             ("Picker: Tab / Shift+Tab", "next / previous item"),
             ("Picker: Ctrl+s / Ctrl+v", "open in horizontal / vertical split"),
-            ("Git picker: Ctrl+a / Ctrl+r", "stage / unstage selected file"),
+            ("Git picker: Ctrl+a / Ctrl+r", "stage / unstage or discard"),
             ("Insert: Ctrl+h / Ctrl+d", "delete previous / next char"),
             ("Insert: Ctrl+w", "delete previous word"),
             ("Terminal: Ctrl+\\", "leader (Space goes to shell)"),
@@ -177,9 +177,12 @@ def draw_section(c, x, y, width, height, title, rows, accent):
 def generate():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     page_width, page_height = landscape(A4)
-    c = canvas.Canvas(str(OUTPUT), pagesize=(page_width, page_height))
+    # invariant, so regenerating the committed PDF is a clean no-op
+    c = canvas.Canvas(
+        str(OUTPUT), pagesize=(page_width, page_height), invariant=1
+    )
     c.setTitle("Toe Cheatsheet")
-    c.setAuthor("Toe contributors")
+    c.setAuthor("Thomas S. Bradford")
     c.setSubject("Thom's Own Editor keyboard reference")
 
     c.setFillColor(PAPER)

@@ -54,8 +54,10 @@ func (p *PickerComponent) handleKey(
 		if len(runes) > 0 {
 			return consumed(), ps.setQuery(string(runes[:len(runes)-1]))
 		}
-	case p.handleSourceKey(cx, ps, k):
 	default:
+		if r, cmd, ok := p.sourceKey(cx, ps, k); ok {
+			return r, cmd
+		}
 		if k.IsTypable() {
 			return consumed(), ps.setQuery(ps.list.query + string(k.Code.Char))
 		}
@@ -110,16 +112,28 @@ func (p *PickerComponent) navigateItem(
 	}), nil, true
 }
 
-func (p *PickerComponent) handleSourceKey(
+// an overlay the source hands back asks a question before it acts, so the rows
+// are left alone until its own answer arrives
+func (p *PickerComponent) sourceKey(
 	cx *Context, ps *Picker, k command.KeyEvent,
-) bool {
+) (EventResult, tea.Cmd, bool) {
 	src, ok := ps.source.(PickerKeySource)
-	if !ok || !src.HandleKey(cx.Editor, ps.selection(), k) {
-		return false
+	if !ok {
+		return EventResult{}, nil, false
+	}
+	overlay, handled := src.HandleKey(cx.Editor, ps.selection(), k)
+	switch {
+	case !handled:
+		return EventResult{}, nil, false
+	case overlay != nil:
+		return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
+			comp.Push(overlay)
+			return nil
+		}), nil, true
 	}
 	ps.clearPreviewCache()
 	ps.refreshItems(cx.Editor)
-	return true
+	return consumed(), nil, true
 }
 
 func alignAcceptedItem(e *view.Editor, item *PickerItem) {

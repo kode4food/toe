@@ -178,6 +178,45 @@ func TestGit(t *testing.T) {
 		assert.Equal(t, "one\n", string(data))
 	})
 
+	t.Run("discard restores a tracked file", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		assert.NoError(t, vcs.Git{}.Discard(repo, path))
+
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "one\n", string(data))
+	})
+
+	t.Run("discard deletes an untracked file", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "kept.txt", "one\n")
+		path := filepath.Join(repo, "new.txt")
+		testutil.WriteFile(t, path, "new\n")
+
+		assert.NoError(t, vcs.Git{}.Discard(repo, path))
+
+		_, err := os.Stat(path)
+		assert.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("discard keeps staged content", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+		assert.NoError(t, vcs.Git{}.Stage(repo, path))
+		testutil.WriteFile(t, path, "three\n")
+
+		assert.NoError(t, vcs.Git{}.Discard(repo, path))
+
+		// the index is the base a discard restores from, not the head
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "two\n", string(data))
+	})
+
 	t.Run("errors outside a repository", func(t *testing.T) {
 		dir := t.TempDir()
 		_, err := vcs.Git{}.DiffBase(filepath.Join(dir, "nope.txt"))

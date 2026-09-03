@@ -478,4 +478,15 @@ The changed-file picker adds:
 | Key | Action |
 |-----|--------|
 | `Ctrl+a` | Stage the selected file |
-| `Ctrl+r` | Unstage the selected file |
+| `Ctrl+r` | Unstage a staged file, or discard the changes of an unstaged one |
+
+Discarding asks for confirmation first. The confirmation focuses **No**:
+
+| Key | Action |
+|-----|--------|
+| `y` / `n` | Answer directly |
+| `←` / `→` or `h` / `l` | Move between the buttons |
+| `Return` | Take the focused answer |
+| any other key | Cancel |
+
+An untracked file is deleted rather than reverted.

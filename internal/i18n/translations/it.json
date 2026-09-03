@@ -1,6 +1,8 @@
 {
   "about.development": "Versione di sviluppo",
   "about.version": "Versione",
+  "capture.no": "No",
+  "capture.yes": "Sì",
   "error.aleBindingAction": "l’azione deve essere una procedura Ale",
   "error.aleBindingDocType": "`:doc` deve essere una stringa",
   "error.aleBindingDuplicate": "opzione {option} duplicata",
@@ -54,6 +56,7 @@
   "status.noImplementation": "Nessuna implementazione trovata.",
   "status.noSymbolReferences": "Nessun riferimento al simbolo trovato.",
   "status.noTypeDefinition": "Nessuna definizione di tipo trovata.",
+  "status.pickerDiscard": "Annullare le modifiche a {file}?",
   "status.pickerNoResults": "Nessun risultato",
   "status.pickerSearching": "Ricerca in corso…",
   "status.pickerStaged": "Modifiche preparate per il commit",

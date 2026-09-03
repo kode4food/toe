@@ -52,6 +52,10 @@ func (s *stubVC) ChangedFiles() ([]view.FileChange, error) {
 	return nil, nil
 }
 
+func (s *stubVC) Discard(string) error {
+	return nil
+}
+
 func (s *stubVC) Stage(string) error {
 	return nil
 }

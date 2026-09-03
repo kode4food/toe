@@ -1,6 +1,8 @@
 {
   "about.development": "Development Build",
   "about.version": "Version",
+  "capture.no": "No",
+  "capture.yes": "Yes",
   "error.aleBindingAction": "action must be an Ale procedure",
   "error.aleBindingDocType": "`:doc` must be a string",
   "error.aleBindingDuplicate": "duplicate option {option}",
@@ -54,6 +56,7 @@
   "status.noImplementation": "No implementation found.",
   "status.noSymbolReferences": "No symbol references found.",
   "status.noTypeDefinition": "No type definition found.",
+  "status.pickerDiscard": "Discard changes to {file}?",
   "status.pickerNoResults": "No results",
   "status.pickerSearching": "Searching…",
   "status.pickerStaged": "Staged Changes",

@@ -26,14 +26,18 @@ check:
 test: check
 	$(GO) test ./...
 
-pre-commit: format test
+pre-commit: format test cheatsheet
 
 coverage:
 	$(GO) test ./... -coverprofile=coverage.out
 	$(GO) tool cover -func=coverage.out
 
 cheatsheet:
-	$(PYTHON) docs/cheatsheet.py
+	@venv=$$(mktemp -d) && \
+		trap 'rm -rf "$$venv"' EXIT && \
+		$(PYTHON) -m venv "$$venv" && \
+		"$$venv"/bin/pip install -q reportlab && \
+		"$$venv"/bin/python docs/cheatsheet.py
 
 clean:
 	@rm -f $(EXE)

@@ -217,6 +217,41 @@ func TestGit(t *testing.T) {
 		assert.Equal(t, "two\n", string(data))
 	})
 
+	t.Run("ignore anchors the path it names", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "kept.txt", "one\n")
+		path := filepath.Join(repo, "sub", "new.txt")
+		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		testutil.WriteFile(t, path, "new\n")
+
+		assert.NoError(t, vcs.Git{}.Ignore(repo, path))
+
+		data, err := os.ReadFile(filepath.Join(repo, ".gitignore"))
+		assert.NoError(t, err)
+		assert.Equal(t, "/sub/new.txt\n", string(data))
+
+		changes, err := vcs.Git{}.ChangedFiles(repo)
+		assert.NoError(t, err)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, ".gitignore", filepath.Base(changes[0].Path))
+	})
+
+	t.Run("ignore appends without repeating", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, ".gitignore", "*.log")
+		path := filepath.Join(repo, "new.txt")
+		testutil.WriteFile(t, path, "new\n")
+
+		assert.NoError(t, vcs.Git{}.Ignore(repo, path))
+		assert.NoError(t, vcs.Git{}.Ignore(repo, path))
+
+		// the existing line had no newline of its own, and the second call
+		// finds its pattern already there
+		data, err := os.ReadFile(filepath.Join(repo, ".gitignore"))
+		assert.NoError(t, err)
+		assert.Equal(t, "*.log\n/new.txt\n", string(data))
+	})
+
 	t.Run("errors outside a repository", func(t *testing.T) {
 		dir := t.TempDir()
 		_, err := vcs.Git{}.DiffBase(filepath.Join(dir, "nope.txt"))

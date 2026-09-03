@@ -517,6 +517,32 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.True(t, os.IsNotExist(err))
 	})
 
+	t.Run("ctrl+g ignores an untracked row", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "kept.txt", "one\n")
+		testutil.WriteFile(t, filepath.Join(repo, "new.txt"), "new\n")
+
+		m := sendCtrl(changedFilePicker(t, repo), 'g')
+
+		// the ignored file leaves the list, and .gitignore takes its place,
+		// naming it in the preview rather than in a row of its own
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "\uf420 new.txt") //  nf-oct-question
+		assert.Contains(t, out, "\uf420 .gitignore")
+		assert.Equal(t, "?? .gitignore", gitStatus(t, repo))
+	})
+
+	t.Run("ctrl+g leaves a tracked row alone", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
+		testutil.WriteFile(t, path, "two\n")
+
+		m := sendCtrl(changedFilePicker(t, repo), 'g')
+
+		assert.Contains(t, stripANSI(m.View().Content), "mod.txt")
+		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
+	})
+
 	t.Run("inert when version control is gone", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.WriteFile(t, filepath.Join(repo, "solo.txt"), "new\n")

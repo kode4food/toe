@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -31,6 +32,8 @@ type (
 		hasUnstaged bool
 	}
 )
+
+const gitIgnoreName = ".gitignore"
 
 var (
 	ErrGitCommand   = errors.New("git command failed")
@@ -158,6 +161,22 @@ func (Git) Discard(cwd, path string) error {
 	}
 	_, err := runGit(cwd, "restore", "--worktree", "--", path)
 	return err
+}
+
+// Ignore appends path to the repository's root .gitignore, anchored so it names
+// that one file rather than every file sharing its name
+func (Git) Ignore(cwd, path string) error {
+	root, err := gitRoot(cwd)
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(root, realPath(path))
+	if err != nil {
+		return err
+	}
+	return appendIgnore(
+		filepath.Join(root, gitIgnoreName), "/"+filepath.ToSlash(rel),
+	)
 }
 
 // IndexText returns the staged blob for path, erroring when the file has no
@@ -334,6 +353,23 @@ func repoRoot(repo *git.Repository) (string, error) {
 		return "", err
 	}
 	return realPath(wt.Filesystem.Root()), nil
+}
+
+// an ignore file that does not end in a newline would swallow the pattern into
+// its last line
+func appendIgnore(file, pattern string) error {
+	data, err := os.ReadFile(file)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if slices.Contains(strings.Split(string(data), "\n"), pattern) {
+		return nil
+	}
+	out := string(data)
+	if out != "" && !strings.HasSuffix(out, "\n") {
+		out += "\n"
+	}
+	return os.WriteFile(file, []byte(out+pattern+"\n"), 0o644)
 }
 
 func tracked(cwd, path string) bool {

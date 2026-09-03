@@ -479,6 +479,7 @@ The changed-file picker adds:
 |-----|--------|
 | `Ctrl+a` | Stage the selected file |
 | `Ctrl+r` | Unstage a staged file, or discard the changes of an unstaged one |
+| `Ctrl+g` | Add an untracked file to `.gitignore` |
 
 Discarding asks for confirmation first. The confirmation focuses **No**:
 

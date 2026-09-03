@@ -19,6 +19,11 @@ except ImportError:
 
 OUTPUT = Path(__file__).parent / "static/downloads/toe-cheatsheet.pdf"
 
+FONT = "Helvetica"
+ROW_SIZE = 7.2
+ESSENTIAL_SIZE = 7.3
+MIN_ACTION_SIZE = 5.6
+
 ESSENTIALS = [
     ("i", "insert"),
     ("Esc", "normal"),
@@ -100,9 +105,10 @@ SECTIONS = [
             ("Space+/", "search the workspace"),
             ("Space+e", "workspace file explorer"),
             ("Picker: Tab / Shift+Tab", "next / previous item"),
-            ("Picker: Ctrl+s / Ctrl+v", "open in horizontal / vertical split"),
-            ("Git picker: Ctrl+a / Ctrl+r", "stage / unstage or discard"),
-            ("Insert: Ctrl+h / Ctrl+d", "delete previous / next char"),
+            ("Picker: Ctrl+s / Ctrl+v", "open in h / v split"),
+            ("Git: Ctrl+a / Ctrl+r", "stage / unstage or discard"),
+            ("Git: Ctrl+g", "ignore untracked file"),
+            ("Insert: Ctrl+h / Ctrl+d", "delete prev / next char"),
             ("Insert: Ctrl+w", "delete previous word"),
             ("Terminal: Ctrl+\\", "leader (Space goes to shell)"),
             ("Image: + / - / 0", "zoom in / out / fit"),
@@ -130,6 +136,14 @@ def draw_key(c, x, y, label, size=7.2):
     return width
 
 
+def draw_action(c, x, y, text, max_width, size):
+    """Draw an action label, shrinking it until it fits its column."""
+    while size > MIN_ACTION_SIZE and stringWidth(text, FONT, size) > max_width:
+        size -= 0.1
+    c.setFont(FONT, size)
+    c.drawString(x, y, text)
+
+
 def draw_essentials(c, x, y, width):
     c.setFillColor(INK)
     c.roundRect(x, y, width, 57, 7, fill=1, stroke=0)
@@ -142,8 +156,11 @@ def draw_essentials(c, x, y, width):
         item_x = x + 14 + i * item_width
         key_width = draw_key(c, item_x, y + 17, key)
         c.setFillColor(CARD)
-        c.setFont("Helvetica", 7.3)
-        c.drawString(item_x + key_width + 5, y + 18, action)
+        text_x = item_x + key_width + 5
+        draw_action(
+            c, text_x, y + 18, action, item_x + item_width - text_x,
+            ESSENTIAL_SIZE,
+        )
 
 
 def draw_section(c, x, y, width, height, title, rows, accent):
@@ -170,8 +187,11 @@ def draw_section(c, x, y, width, height, title, rows, accent):
             row_y = y + height - 43 - row * row_height
             key_width = draw_key(c, column_x, row_y, key)
             c.setFillColor(INK)
-            c.setFont("Helvetica", 7.2)
-            c.drawString(column_x + key_width + 5, row_y + 1, action)
+            text_x = column_x + key_width + 5
+            draw_action(
+                c, text_x, row_y + 1, action,
+                column_x + inner_width - text_x, ROW_SIZE,
+            )
 
 
 def generate():

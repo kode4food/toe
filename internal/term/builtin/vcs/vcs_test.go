@@ -27,6 +27,7 @@ func (s *vcsStub) IndexText(string) string                  { return "" }
 func (s *vcsStub) HeadName(*view.Document) (string, bool)   { return "", false }
 func (s *vcsStub) ChangedFiles() ([]view.FileChange, error) { return nil, nil }
 func (s *vcsStub) Discard(string) error                     { return nil }
+func (s *vcsStub) Ignore(string) error                      { return nil }
 func (s *vcsStub) Stage(string) error                       { return nil }
 func (s *vcsStub) Unstage(string) error                     { return nil }
 func (s *vcsStub) Refresh()                                 {}

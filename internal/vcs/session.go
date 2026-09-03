@@ -56,6 +56,9 @@ type (
 		// Discard restores the working-tree state of path from the staging
 		// area, deleting the file when it is untracked
 		Discard(cwd, path string) error
+
+		// Ignore adds path to the ignore list of its repository
+		Ignore(cwd, path string) error
 	}
 )
 
@@ -171,6 +174,11 @@ func (s *Session) Unstage(path string) error {
 // deleting the file when version control does not track it
 func (s *Session) Discard(path string) error {
 	return s.provider.Discard(s.editor.Cwd(), path)
+}
+
+// Ignore adds path to the ignore list of the repository holding it
+func (s *Session) Ignore(path string) error {
+	return s.provider.Ignore(s.editor.Cwd(), path)
 }
 
 // Refresh reloads open document diff bases when their repository head moves

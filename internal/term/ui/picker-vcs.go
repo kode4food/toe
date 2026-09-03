@@ -176,8 +176,9 @@ func (c *changedFilePickerSource) Accept(
 	)
 }
 
-// HandleKey stages the selected file with ctrl+a and reverts it with ctrl+r,
-// which unstages a staged row and discards the changes of an unstaged one
+// HandleKey stages the selected file with ctrl+a, ignores an untracked one with
+// ctrl+g, and reverts a row with ctrl+r, which unstages a staged row and
+// discards the changes of an unstaged one
 func (c *changedFilePickerSource) HandleKey(
 	e *view.Editor, item *PickerItem, k command.KeyEvent,
 ) (BufferOverlayComponent, bool) {
@@ -188,6 +189,11 @@ func (c *changedFilePickerSource) HandleKey(
 	switch {
 	case k.Code.Char == 'a':
 		applyToRow(e, item, vc.Stage)
+	case k.Code.Char == 'g':
+		if item.DiffKind != view.FileChangeUntracked {
+			return nil, false
+		}
+		applyToRow(e, item, vc.Ignore)
 	case k.Code.Char != 'r':
 		return nil, false
 	case item.Location.Target.Variant == changedFileStaged:

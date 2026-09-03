@@ -45,6 +45,9 @@ type (
 		// area, deleting the file when version control does not track it
 		Discard(path string) error
 
+		// Ignore adds path to the ignore list of the repository holding it
+		Ignore(path string) error
+
 		// Refresh picks up external version-control state changes
 		Refresh()
 

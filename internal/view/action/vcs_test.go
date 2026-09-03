@@ -56,6 +56,10 @@ func (s *stubVC) Discard(string) error {
 	return nil
 }
 
+func (s *stubVC) Ignore(string) error {
+	return nil
+}
+
 func (s *stubVC) Stage(string) error {
 	return nil
 }

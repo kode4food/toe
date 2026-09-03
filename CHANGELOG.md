@@ -2,6 +2,14 @@
 
 Notable changes to toe.
 
+## 0.4.1
+
+### Version control
+
+- Added staging, unstaging, and discarding of changed files from the changed-file picker, with `Ctrl-a` to stage, `Ctrl-r` to unstage or discard, and a confirmation prompt before discarding
+- Added `Ctrl-g` to add an untracked file to `.gitignore` from the changed-file picker
+- Changed-file picker previews now diff a staged row against `HEAD` and an unstaged row against the index, so a file edited in both places previews correctly in each row
+
 ## 0.4.0
 
 ### Interface
@@ -23,7 +31,7 @@ Notable changes to toe.
 
 ### Interface
 
-- Added `Ctrl` + click to jump to the definition of the symbol under the pointer
+- Added `Ctrl-click` to jump to the definition of the symbol under the pointer
 - Added bracketed paste in insert mode and terminal panes
 - Completions no longer start selected: `Tab` takes the top match or the highlighted one, and `Return` submits the prompt or inserts a newline instead of accepting
 
@@ -41,7 +49,7 @@ Notable changes to toe.
 ### Interface
 
 - Added desktop notifications from terminal panes
-- Added `Shift+Tab` as the backward jump, mirroring `Tab` forward
+- Added `Shift-Tab` as the backward jump, mirroring `Tab` forward
 - Jump list now works across documents: jumps follow you between files, pickers record where you jumped from, and the jump list picker walks the history instead of rewriting it
 - Every navigation scrolls its destination into view, horizontally as well as vertically
 

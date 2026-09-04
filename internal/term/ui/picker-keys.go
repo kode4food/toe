@@ -137,7 +137,7 @@ func (p *PickerComponent) sourceKey(
 }
 
 func alignAcceptedItem(e *view.Editor, item *PickerItem) {
-	if item.Location.Lines == nil {
+	if item.TargetLines() == nil {
 		return
 	}
 	v := e.FocusedView()

@@ -116,7 +116,7 @@ func (p *previewCtx) renderDocInto(
 }
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
-	return diffGutterLines(p.item.DiffHunks, text.LenLines())
+	return diffGutterLines(p.item.DiffHunks(), text.LenLines())
 }
 
 func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
@@ -135,7 +135,7 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 			kind:    p.item.DiffKind,
 			working: work.rope,
 			base:    base,
-			hunks:   p.item.DiffHunks,
+			hunks:   p.item.DiffHunks(),
 		}),
 		format: language.TextFormatForConfig(
 			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,

@@ -148,7 +148,7 @@ func (p *PickerComponent) drawPreviewInto(
 		styles: p.styles,
 		hlFrom: -1,
 	}
-	if lr := item.Location.Lines; lr != nil {
+	if lr := item.TargetLines(); lr != nil {
 		ctx.hlFrom = lr.From
 		ctx.hlTo = lr.To
 	}

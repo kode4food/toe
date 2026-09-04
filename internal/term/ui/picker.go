@@ -160,7 +160,7 @@ type (
 		Location PickerLocation
 		Payload  any
 
-		DiffHunks   []view.DiffHunk
+		hunks       func() []view.DiffHunk
 		DiffPreview bool
 		DiffKind    view.FileChangeKind
 		BasePath    string
@@ -257,6 +257,23 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	}
 	p.load.feedCmd = p.loadItems(e)
 	return p
+}
+
+// DiffHunks returns the item's diff hunks, computing them on first use
+func (p *PickerItem) DiffHunks() []view.DiffHunk {
+	if p.hunks == nil {
+		return nil
+	}
+	return p.hunks()
+}
+
+// TargetLines returns the line range the item opens at, taken from its first
+// diff hunk when the source supplies hunks instead
+func (p *PickerItem) TargetLines() *core.Span {
+	if p.Location.Lines == nil && p.hunks != nil {
+		p.Location.Lines = firstChangeLines(p.DiffHunks())
+	}
+	return p.Location.Lines
 }
 
 // Valid reports whether the target refers to a real document or path

@@ -2,6 +2,9 @@ package ui
 
 import (
 	"path/filepath"
+	"slices"
+	"sync"
+	"sync/atomic"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -14,6 +17,7 @@ import (
 
 type changedFilePickerSource struct {
 	PickerBase
+	warmGen atomic.Uint64
 }
 
 const (
@@ -99,17 +103,23 @@ func (c *changedFilePickerSource) Load(e *view.Editor) PickerLoad {
 	nerd := e.Options().NerdFonts
 	feed := make(chan *PickerItem)
 	done := make(chan struct{})
+	gen := c.warmGen.Add(1)
 	go func() {
-		defer close(feed)
-		for _, item := range changedFileRows(vc, changes, cwd, nerd) {
+		rows := changedFileRows(vc, changes, cwd, nerd)
+		for _, item := range rows {
 			select {
 			case feed <- item:
 			case <-done:
+				close(feed)
 				return
 			}
 		}
+		close(feed)
+		c.warmHunks(rows, gen)
 	}()
 	stop := func() {
+		// a closed picker has nothing left to warm for
+		c.warmGen.Add(1)
 		select {
 		case <-done:
 		default:
@@ -134,7 +144,10 @@ func (c *changedFilePickerSource) Items(e *view.Editor) []*PickerItem {
 	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
 		cwd = resolved
 	}
-	return changedFileRows(vc, changes, cwd, e.Options().NerdFonts)
+	rows := changedFileRows(vc, changes, cwd, e.Options().NerdFonts)
+	// the picker compacts the slice it is handed, so the warmer walks its own
+	go c.warmHunks(slices.Clone(rows), c.warmGen.Add(1))
+	return rows
 }
 
 // ItemsForPath returns the current VCS rows for path, one per stage, empty
@@ -172,7 +185,7 @@ func (c *changedFilePickerSource) Accept(
 	e *view.Editor, item *PickerItem, action PickerAcceptAction,
 ) {
 	GotoPath(
-		e, item.Location.Target.Path, GotoLines(item.Location.Lines), action,
+		e, item.Location.Target.Path, GotoLines(item.TargetLines()), action,
 	)
 }
 
@@ -203,6 +216,19 @@ func (c *changedFilePickerSource) HandleKey(
 		return confirmDiscard(item), true
 	}
 	return nil, true
+}
+
+// hunks shell out per row, so they are computed off the UI thread rather than
+// on the keystroke that selects a row, until a newer generation supersedes it
+func (c *changedFilePickerSource) warmHunks(
+	items []*PickerItem, gen uint64,
+) {
+	for _, item := range items {
+		if c.warmGen.Load() != gen {
+			return
+		}
+		item.DiffHunks()
+	}
 }
 
 func confirmDiscard(item *PickerItem) BufferOverlayComponent {
@@ -281,7 +307,9 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 	})
 	// a rename shows only its destination, the source is in the diff preview
 	lbl, sec := PickerNamePath(display)
-	hunks := changedFileHunks(args.vcs, fc)
+	hunks := sync.OnceValue(func() []view.DiffHunk {
+		return changedFileHunks(args.vcs, fc)
+	})
 	basePath := fc.Path
 	if fc.Kind == view.FileChangeRenamed {
 		basePath = fc.FromPath
@@ -297,13 +325,12 @@ func changedFileItem(args changedFileItemArgs) *PickerItem {
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
 		SortKey:     display,
 		SecFrom:     sec,
-		DiffHunks:   hunks,
+		hunks:       hunks,
 		DiffPreview: fc.Kind != view.FileChangeConflict,
 		DiffKind:    fc.Kind,
 		BasePath:    basePath,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: fc.Path, Variant: group},
-			Lines:  firstChangeLines(hunks),
 		},
 	}
 	if args.slab != nil {

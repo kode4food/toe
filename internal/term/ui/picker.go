@@ -391,9 +391,6 @@ func (p *Picker) selectTarget(target PickerTarget) bool {
 }
 
 func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
-	if _, ok := p.source.(DynamicPickerSource); ok {
-		return p.dynamicTriggerCmd()
-	}
 	if _, ok := p.source.(FileBackedPickerSource); !ok {
 		return nil
 	}

@@ -139,6 +139,7 @@ const (
 	StatusLineEdgesArrow StatusLineEdges = "arrow"
 	StatusLineEdgesRound StatusLineEdges = "round"
 	StatusLineEdgesSlant StatusLineEdges = "slant"
+	StatusLineEdgesLine  StatusLineEdges = "line"
 
 	CursorKindBlock     CursorKind = "block"
 	CursorKindBar       CursorKind = "bar"
@@ -210,6 +211,7 @@ var allStatusLineEdges = []StatusLineEdges{
 	StatusLineEdgesArrow,
 	StatusLineEdgesRound,
 	StatusLineEdgesSlant,
+	StatusLineEdgesLine,
 }
 
 // cursorKinds is the single source of truth for valid CursorKind values.

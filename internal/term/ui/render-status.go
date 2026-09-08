@@ -180,8 +180,7 @@ func (r *renderPass) paintStatus(buf *tui.Buffer, row statusRow) {
 		row.right = append(row.right, r.cornerBadges(row.baseStyle)...)
 	}
 	opts := r.context.Editor.Options()
-	row.nerd = opts.NerdFonts
-	row.edge = statusEdges[opts.StatusLineEdges()]
+	row.edge = statusEdges[edgesFor(opts)]
 	row.sectionStyle = r.context.Theme().Get("ui.statusline.section")
 	row.paint(buf)
 }
@@ -238,4 +237,13 @@ func (s *statusElemCtx) elem(e view.StatusLineItem) statusElem {
 		return se
 	}
 	return statusElem{}
+}
+
+// edgesFor is the configured divider shape, or the plain one when the font has
+// no powerline glyphs to draw the others with
+func edgesFor(opts *view.Options) view.StatusLineEdges {
+	if !opts.NerdFonts {
+		return view.StatusLineEdgesLine
+	}
+	return opts.StatusLineEdges()
 }

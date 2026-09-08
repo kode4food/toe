@@ -297,7 +297,8 @@ func TestStatusLineEdges(t *testing.T) {
 
 	t.Run("names cover every shape", func(t *testing.T) {
 		assert.Equal(t,
-			[]string{"arrow", "round", "slant"}, view.StatusLineEdgeNames(),
+			[]string{"arrow", "round", "slant", "line"},
+			view.StatusLineEdgeNames(),
 		)
 	})
 }

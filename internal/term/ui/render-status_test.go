@@ -177,7 +177,7 @@ func TestModeColorRender(t *testing.T) {
 	})
 }
 
-func TestBadgeArrows(t *testing.T) {
+func TestStatusDividers(t *testing.T) {
 	t.Run("arrow takes the badge background color", func(t *testing.T) {
 		e := mochaEditor(t)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -253,6 +253,7 @@ func TestBadgeArrows(t *testing.T) {
 			{view.StatusLineEdgesArrow, "\ue0b0", "\ue0b3"},
 			{view.StatusLineEdgesRound, "\ue0b4", "\ue0b7"},
 			{view.StatusLineEdgesSlant, "\ue0b8", "\ue0bb"},
+			{view.StatusLineEdgesLine, "\u258c", "\u2502"},
 		} {
 			t.Run(string(tc.edges), func(t *testing.T) {
 				e := mochaEditor(t)
@@ -267,14 +268,17 @@ func TestBadgeArrows(t *testing.T) {
 		}
 	})
 
-	t.Run("nerd fonts off drops the glyphs", func(t *testing.T) {
+	t.Run("nerd fonts off falls back to lines", func(t *testing.T) {
 		e := mochaEditor(t)
 		e.Options().NerdFonts = false
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
-		out := m.View().Content
+		out := stripANSI(lastLine(m.View().Content))
 
-		assert.Contains(t, out, " NOR ")
+		// the color step divides the badge, a line divides the fields sharing
+		// the section background
+		assert.Contains(t, out, " NOR \u258c [scratch]")
+		assert.Contains(t, out, "\u2590 1 sel \u2502 1:1 ")
 		assert.NotContains(t, out, "\ue0b0")
 		assert.NotContains(t, out, "\ue0b2")
 	})

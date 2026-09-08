@@ -244,6 +244,29 @@ func TestBadgeArrows(t *testing.T) {
 		assert.NotContains(t, row, "\ue0b2")
 	})
 
+	t.Run("edge shape picks the glyphs", func(t *testing.T) {
+		for _, tc := range []struct {
+			edges view.StatusLineEdges
+			solid string
+			thin  string
+		}{
+			{view.StatusLineEdgesArrow, "\ue0b0", "\ue0b3"},
+			{view.StatusLineEdgesRound, "\ue0b4", "\ue0b7"},
+			{view.StatusLineEdgesSlant, "\ue0b8", "\ue0bb"},
+		} {
+			t.Run(string(tc.edges), func(t *testing.T) {
+				e := mochaEditor(t)
+				e.Options().StatusLine.Edges = tc.edges
+				m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+				out := lastLine(m.View().Content)
+
+				assert.Contains(t, out, tc.solid)
+				assert.Contains(t, out, tc.thin)
+			})
+		}
+	})
+
 	t.Run("nerd fonts off drops the glyphs", func(t *testing.T) {
 		e := mochaEditor(t)
 		e.Options().NerdFonts = false

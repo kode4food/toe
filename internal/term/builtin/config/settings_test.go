@@ -8,6 +8,7 @@ import (
 
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/builtin/test"
+	"github.com/kode4food/toe/internal/view"
 )
 
 const configOptionBoolKey = "atomic-save"
@@ -179,6 +180,22 @@ func TestConfigOptions(t *testing.T) {
 		test.RunCmdArgs(t, km, e, "set_option", "statusline.separator |")
 		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.separator")
 		assert.Equal(t, "statusline.separator: |", res.Message)
+	})
+
+	t.Run("get/set statusline edges", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		test.RunCmdArgs(t, km, e, "set_option", "statusline.edges round")
+		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.edges")
+		assert.Equal(t, "statusline.edges: round", res.Message)
+	})
+
+	t.Run("rejects an unknown statusline edge", func(t *testing.T) {
+		e, km := test.Env(t, "")
+		res := test.RunCmdArgs(t, km, e, "set_option", "statusline.edges bad")
+		assert.NotEmpty(t, res.Message)
+		assert.Equal(t,
+			view.StatusLineEdgesArrow, e.Options().StatusLineEdges(),
+		)
 	})
 
 	t.Run("get/set statusline items", func(t *testing.T) {

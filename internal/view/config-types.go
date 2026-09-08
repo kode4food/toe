@@ -23,7 +23,11 @@ type (
 		Left      []StatusLineItem `toml:"left"`
 		Right     []StatusLineItem `toml:"right"`
 		Separator string           `toml:"separator"`
+		Edges     StatusLineEdges  `toml:"edges"`
 	}
+
+	// StatusLineEdges is the shape the powerline dividers are drawn with
+	StatusLineEdges string
 
 	// StatusLineItem is one configured status bar element. In TOML it is the
 	// element name, optionally suffixed with "!" to pin it so it is never
@@ -132,6 +136,10 @@ const (
 	StatusLineModified         StatusLineElement = "file-modified-indicator"
 	StatusLineSpinner          StatusLineElement = "spinner"
 
+	StatusLineEdgesArrow StatusLineEdges = "arrow"
+	StatusLineEdgesRound StatusLineEdges = "round"
+	StatusLineEdgesSlant StatusLineEdges = "slant"
+
 	CursorKindBlock     CursorKind = "block"
 	CursorKindBar       CursorKind = "bar"
 	CursorKindUnderline CursorKind = "underline"
@@ -170,6 +178,7 @@ var (
 	ErrInvalidCursorKind       = errors.New("invalid cursor kind")
 	ErrInvalidLineNumber       = errors.New("invalid line-number value")
 	ErrInvalidStatusLine       = errors.New("invalid statusline element")
+	ErrInvalidStatusLineEdges  = errors.New("invalid statusline edge shape")
 	ErrInvalidWhitespaceRender = errors.New("invalid whitespace render value")
 	ErrInvalidGutterType       = errors.New("invalid gutter type")
 	ErrInvalidBufferLine       = errors.New("invalid bufferline value")
@@ -197,6 +206,12 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineSpinner,
 }
 
+var allStatusLineEdges = []StatusLineEdges{
+	StatusLineEdgesArrow,
+	StatusLineEdgesRound,
+	StatusLineEdgesSlant,
+}
+
 // cursorKinds is the single source of truth for valid CursorKind values.
 // UnmarshalText and CursorKindNames both derive from it
 var cursorKinds = []CursorKind{
@@ -210,6 +225,15 @@ func ParseCursorKind(value string) (CursorKind, error) {
 		return "", fmt.Errorf("%w: %s", ErrInvalidCursorKind, value)
 	}
 	return c, nil
+}
+
+// ParseStatusLineEdges parses a statusline edge shape name
+func ParseStatusLineEdges(value string) (StatusLineEdges, error) {
+	var e StatusLineEdges
+	if err := e.UnmarshalText([]byte(value)); err != nil {
+		return "", err
+	}
+	return e, nil
 }
 
 // ParseLineNumber parses a line-number mode name
@@ -283,6 +307,15 @@ func (c *CursorKind) UnmarshalText(text []byte) error {
 		return fmt.Errorf("%w: %s", ErrInvalidCursorKind, text)
 	}
 	*c = CursorKind(text)
+	return nil
+}
+
+// UnmarshalText parses a statusline edge shape name
+func (s *StatusLineEdges) UnmarshalText(text []byte) error {
+	if !slices.Contains(allStatusLineEdges, StatusLineEdges(text)) {
+		return fmt.Errorf("%w: %s", ErrInvalidStatusLineEdges, text)
+	}
+	*s = StatusLineEdges(text)
 	return nil
 }
 
@@ -476,6 +509,15 @@ func CursorKindNames() []string {
 func StatusLineElementNames() []string {
 	names := make([]string, len(allStatusLineElements))
 	for i, e := range allStatusLineElements {
+		names[i] = string(e)
+	}
+	return names
+}
+
+// StatusLineEdgeNames returns the recognized statusline edge shapes
+func StatusLineEdgeNames() []string {
+	names := make([]string, len(allStatusLineEdges))
+	for i, e := range allStatusLineEdges {
 		names[i] = string(e)
 	}
 	return names

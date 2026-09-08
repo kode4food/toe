@@ -75,6 +75,14 @@ func (o *Options) StatusLineSeparator() string {
 	return DefaultStatusLineSeparator
 }
 
+// StatusLineEdges returns the configured edge shape, or the default
+func (o *Options) StatusLineEdges() StatusLineEdges {
+	if o.StatusLine.Edges != "" {
+		return o.StatusLine.Edges
+	}
+	return StatusLineEdgesArrow
+}
+
 // StatusLineLeft returns the left status line items with defaults
 func (o *Options) StatusLineLeft() []StatusLineItem {
 	if len(o.StatusLine.Left) > 0 {

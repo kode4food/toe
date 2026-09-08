@@ -7,6 +7,7 @@ import (
 
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type (
@@ -15,6 +16,7 @@ type (
 		width        int
 		baseStyle    tui.Style
 		sectionStyle tui.Style
+		edge         statusEdge
 		nerd         bool
 		focused      bool
 		left         []statusElem
@@ -28,20 +30,43 @@ type (
 		compact bool
 		prose   bool
 	}
-)
 
-// the solid arrows divide two backgrounds, the thin ones divide segments
-// sharing one. All of them need a nerd font
-const (
-	badgeArrowRight = "\ue0b0" // '' - nf-pl-left_hard_divider
-	badgeArrowLeft  = "\ue0b2" // '' - nf-pl-right_hard_divider
-	badgeThinRight  = "\ue0b1" // '' - nf-pl-left_soft_divider
-	badgeThinLeft   = "\ue0b3" // '' - nf-pl-right_soft_divider
+	// statusEdge is one shape's dividers: the solid pair cuts between two
+	// backgrounds, the thin pair divides segments sharing one
+	statusEdge struct {
+		solidRight string
+		solidLeft  string
+		thinRight  string
+		thinLeft   string
+	}
 )
 
 // dividerBlendPct: a thin divider sits this far from its own background toward
 // the text color, so it separates without competing with the text
 const dividerBlendPct = 35
+
+// statusEdges is the glyph set for each configured shape; all of them need a
+// nerd font
+var statusEdges = map[view.StatusLineEdges]statusEdge{
+	view.StatusLineEdgesArrow: {
+		solidRight: "\ue0b0", // nf-pl-left_hard_divider
+		solidLeft:  "\ue0b2", // nf-pl-right_hard_divider
+		thinRight:  "\ue0b1", // nf-pl-left_soft_divider
+		thinLeft:   "\ue0b3", // nf-pl-right_soft_divider
+	},
+	view.StatusLineEdgesRound: {
+		solidRight: "\ue0b4", // nf-ple-right_half_circle_thick
+		solidLeft:  "\ue0b6", // nf-ple-left_half_circle_thick
+		thinRight:  "\ue0b5", // nf-ple-right_half_circle_thin
+		thinLeft:   "\ue0b7", // nf-ple-left_half_circle_thin
+	},
+	view.StatusLineEdgesSlant: {
+		solidRight: "\ue0b8", // nf-ple-lower_left_triangle
+		solidLeft:  "\ue0ba", // nf-ple-lower_right_triangle
+		thinRight:  "\ue0b9", // nf-ple-backslash_separator
+		thinLeft:   "\ue0bb", // nf-ple-forwardslash_separator
+	},
+}
 
 func (r statusRow) paint(buf *tui.Buffer) {
 	left, right := r.left, r.right
@@ -105,9 +130,9 @@ func (r statusRow) neighborStyle(elems []statusElem, idx int) tui.Style {
 func (r statusRow) arrow(
 	e statusElem, into tui.Style, toLeft bool,
 ) (string, tui.Style) {
-	solid, thin := badgeArrowRight, badgeThinRight
+	solid, thin := r.edge.solidRight, r.edge.thinRight
 	if toLeft {
-		solid, thin = badgeArrowLeft, badgeThinLeft
+		solid, thin = r.edge.solidLeft, r.edge.thinLeft
 	}
 	st := r.styleFor(e)
 	bg, intoBg := st.BgColor(), into.BgColor()
@@ -129,7 +154,7 @@ func (r statusRow) elemsWidth(elems []statusElem) int {
 	for _, e := range elems {
 		w += runewidth.StringWidth(e.text)
 		if r.hasArrow(e) {
-			w += runewidth.StringWidth(badgeArrowRight)
+			w += runewidth.StringWidth(r.edge.solidRight)
 		}
 		if !e.compact {
 			w += 2

@@ -283,6 +283,25 @@ func TestStatusLineItem(t *testing.T) {
 	})
 }
 
+func TestStatusLineEdges(t *testing.T) {
+	t.Run("parses a known shape", func(t *testing.T) {
+		v, err := view.ParseStatusLineEdges("round")
+		assert.NoError(t, err)
+		assert.Equal(t, view.StatusLineEdgesRound, v)
+	})
+
+	t.Run("rejects an unknown shape", func(t *testing.T) {
+		_, err := view.ParseStatusLineEdges("wavy")
+		assert.ErrorIs(t, err, view.ErrInvalidStatusLineEdges)
+	})
+
+	t.Run("names cover every shape", func(t *testing.T) {
+		assert.Equal(t,
+			[]string{"arrow", "round", "slant"}, view.StatusLineEdgeNames(),
+		)
+	})
+}
+
 func TestGutterType(t *testing.T) {
 	t.Run("parses valid gutter type", func(t *testing.T) {
 		var g view.GutterType

@@ -3,6 +3,7 @@ package config
 import (
 	"cmp"
 	"embed"
+	"fmt"
 	"slices"
 
 	"github.com/kode4food/toe/internal/core"
@@ -196,6 +197,24 @@ func SettingsModule(r *command.Registry) command.Module {
 					o.StatusLine.Right = v
 				},
 			).WithDoc("Elements aligned right on the statusline"),
+			{
+				Key:       "statusline.edges",
+				DocString: "Shape of the statusline segment dividers",
+				Get: func(e *view.Editor) (string, error) {
+					return string(e.Options().StatusLineEdges()), nil
+				},
+				Set: func(e *view.Editor, s string) error {
+					v, err := view.ParseStatusLineEdges(s)
+					if err != nil {
+						return fmt.Errorf("%w: %s", config.ErrInvalidOption, s)
+					}
+					e.Options().StatusLine.Edges = v
+					return nil
+				},
+				Complete: command.StaticCompleter(
+					view.StatusLineEdgeNames()...,
+				),
+			},
 			{
 				Key:       "statusline.separator",
 				DocString: "Character separating statusline elements",

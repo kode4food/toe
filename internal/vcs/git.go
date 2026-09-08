@@ -9,14 +9,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/go-git/go-git/v5"
-
 	"github.com/kode4food/toe/internal/view"
 )
 
 type (
-	// Git reads HEAD state through go-git in-process and reports working-tree
-	// status by shelling out to the git binary found on PATH
+	// Git reads HEAD state and working-tree status by shelling out to the git
+	// binary found on PATH
 	Git struct{}
 
 	// statusCode is a porcelain entry's staged (X) and unstaged (Y) codes
@@ -33,7 +31,12 @@ type (
 	}
 )
 
-const gitIgnoreName = ".gitignore"
+const (
+	gitIgnoreName = ".gitignore"
+
+	// what rev-parse --abbrev-ref reports when no branch is checked out
+	detachedHead = "HEAD"
+)
 
 var (
 	ErrGitCommand   = errors.New("git command failed")
@@ -46,11 +49,7 @@ var _ Provider = Git{}
 // is applied. A .gitattributes eol conversion may cause phantom diffs
 func (Git) DiffBase(path string) ([]byte, error) {
 	path = realPath(path)
-	repo, err := openRepo(path)
-	if err != nil {
-		return nil, err
-	}
-	root, err := repoRoot(repo)
+	root, err := gitRoot(filepath.Dir(path))
 	if err != nil {
 		return nil, err
 	}
@@ -58,66 +57,39 @@ func (Git) DiffBase(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	ref, err := repo.Head()
-	if err != nil {
-		return nil, err
-	}
-	commit, err := repo.CommitObject(ref.Hash())
-	if err != nil {
-		return nil, err
-	}
-	tree, err := commit.Tree()
-	if err != nil {
-		return nil, err
-	}
-	file, err := tree.File(filepath.ToSlash(rel))
-	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrGitCommand, err)
-	}
-	content, err := file.Contents()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(content), nil
+	return runGit(root, "show", "HEAD:"+filepath.ToSlash(rel))
 }
 
 // HeadName returns the current branch name, or a short commit hash when the
 // head is detached
 func (Git) HeadName(path string) (string, error) {
-	repo, err := openRepo(path)
+	dir := filepath.Dir(path)
+	out, err := runGit(dir, "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		return "", err
 	}
-	ref, err := repo.Head()
+	if name := strings.TrimSpace(string(out)); name != detachedHead {
+		return name, nil
+	}
+	short, err := runGit(dir, "rev-parse", "--short=8", "HEAD")
 	if err != nil {
 		return "", err
 	}
-	if ref.Name().IsBranch() {
-		return ref.Name().Short(), nil
-	}
-	return ref.Hash().String()[:8], nil
+	return strings.TrimSpace(string(short)), nil
 }
 
 // HeadID returns the full current HEAD revision
 func (Git) HeadID(path string) (string, error) {
-	repo, err := openRepo(path)
+	out, err := runGit(filepath.Dir(path), "rev-parse", "HEAD")
 	if err != nil {
 		return "", err
 	}
-	ref, err := repo.Head()
-	if err != nil {
-		return "", err
-	}
-	return ref.Hash().String(), nil
+	return strings.TrimSpace(string(out)), nil
 }
 
 // ChangedFiles reports the working-tree changes for the repository containing
-// cwd, with absolute paths. It prefers the git binary (fast) and falls back to
-// go-git's in-process status walk when git is not on PATH
+// cwd, with absolute paths
 func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
-	if _, err := exec.LookPath("git"); err != nil {
-		return changedFilesGoGit(cwd)
-	}
 	root, err := gitRoot(cwd)
 	if err != nil {
 		return nil, err
@@ -192,40 +164,6 @@ func (Git) IndexText(cwd, path string) ([]byte, error) {
 		return nil, err
 	}
 	return runGit(root, "show", ":"+filepath.ToSlash(rel))
-}
-
-func changedFilesGoGit(cwd string) ([]view.FileChange, error) {
-	repo, err := git.PlainOpenWithOptions(
-		cwd, &git.PlainOpenOptions{DetectDotGit: true},
-	)
-	if err != nil {
-		return nil, err
-	}
-	wt, err := repo.Worktree()
-	if err != nil {
-		return nil, err
-	}
-	root := realPath(wt.Filesystem.Root())
-	st, err := wt.Status()
-	if err != nil {
-		return nil, err
-	}
-	var changes []view.FileChange
-	for p, fs := range st {
-		x, y := byte(fs.Staging), byte(fs.Worktree)
-		if x == ' ' && y == ' ' {
-			continue
-		}
-		status := splitChangeKind(statusCode{staged: x, unstaged: y})
-		fc := view.FileChange{
-			Path: filepath.Join(root, filepath.FromSlash(p)),
-		}
-		if renamed(status) && fs.Extra != "" {
-			fc.FromPath = filepath.Join(root, filepath.FromSlash(fs.Extra))
-		}
-		changes = appendChanges(changes, status, fc)
-	}
-	return changes, nil
 }
 
 type parseGitStatusArgs struct {
@@ -339,20 +277,6 @@ func gitRoot(dir string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
-}
-
-func openRepo(path string) (*git.Repository, error) {
-	return git.PlainOpenWithOptions(
-		filepath.Dir(path), &git.PlainOpenOptions{DetectDotGit: true},
-	)
-}
-
-func repoRoot(repo *git.Repository) (string, error) {
-	wt, err := repo.Worktree()
-	if err != nil {
-		return "", err
-	}
-	return realPath(wt.Filesystem.Root()), nil
 }
 
 // an ignore file that does not end in a newline would swallow the pattern into

@@ -1,6 +1,7 @@
 package vcs_test
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,6 +25,23 @@ func TestGit(t *testing.T) {
 		base, err := vcs.Git{}.DiffBase(path)
 		assert.NoError(t, err)
 		assert.Equal(t, "one\ntwo\n", string(base))
+	})
+
+	t.Run("diff base reads a worktree-config repo", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\n")
+		testutil.WriteFile(t, path, "one\nchanged\n")
+		testutil.RunGit(t,
+			repo, "config", "extensions.worktreeConfig", "true",
+		)
+
+		base, err := vcs.Git{}.DiffBase(path)
+		assert.NoError(t, err)
+		assert.Equal(t, "one\ntwo\n", string(base))
+
+		name, err := vcs.Git{}.HeadName(path)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, name)
 	})
 
 	t.Run("diff base fails outside a repo", func(t *testing.T) {
@@ -99,28 +117,12 @@ func TestGit(t *testing.T) {
 		}
 	})
 
-	t.Run("falls back to go-git", func(t *testing.T) {
+	t.Run("errors when git is off the path", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		modified := testutil.GitCommitFile(t, repo, "modified.txt", "one\n")
-		deleted := testutil.GitCommitFile(t, repo, "deleted.txt", "gone\n")
-		testutil.WriteFile(t, modified, "one\nmore\n")
-		assert.NoError(t, os.Remove(deleted))
-		untracked := filepath.Join(repo, "untracked.txt")
-		testutil.WriteFile(t, untracked, "new\n")
-
-		// hide the git binary so ChangedFiles takes the go-git path
 		t.Setenv("PATH", "")
 
-		changes, err := vcs.Git{}.ChangedFiles(repo)
-		assert.NoError(t, err)
-
-		kinds := map[string]view.FileChangeKind{}
-		for _, c := range changes {
-			kinds[filepath.Base(c.Path)] = c.Kind
-		}
-		assert.Equal(t, view.FileChangeModified, kinds["modified.txt"])
-		assert.Equal(t, view.FileChangeDeleted, kinds["deleted.txt"])
-		assert.Equal(t, view.FileChangeUntracked, kinds["untracked.txt"])
+		_, err := vcs.Git{}.ChangedFiles(repo)
+		assert.True(t, errors.Is(err, vcs.ErrGitCommand))
 	})
 
 	t.Run("changed files reports conflicts", func(t *testing.T) {

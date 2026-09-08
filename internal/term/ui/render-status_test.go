@@ -177,6 +177,86 @@ func TestModeColorRender(t *testing.T) {
 	})
 }
 
+func TestBadgeArrows(t *testing.T) {
+	t.Run("arrow takes the badge background color", func(t *testing.T) {
+		e := mochaEditor(t)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Regexp(t, `38;2;245;224;220m(\x1b\[[^m]*m)*\x{e0b0}`, out)
+	})
+
+	t.Run("corner badges point back at the row", func(t *testing.T) {
+		m, _ := mochaBuiltinModel(t)
+
+		m = sendKey(sendKey(m, 'Q'), 'q')
+
+		// the arrow leads the badge and carries the badge's own background
+		assert.Regexp(t,
+			`38;2;243;139;168m\x{e0b2}(\x1b\[[^m]*m)* REC q `,
+			lastLine(m.View().Content),
+		)
+	})
+
+	t.Run("adjacent badges keep their colors", func(t *testing.T) {
+		m, e := mochaBuiltinModel(t)
+		m = m.ExecTypable("vsplit")
+		e.TogglePaneMaximized()
+
+		m = sendKey(sendKey(m, 'Q'), 'q')
+
+		// no background is emitted for the second arrow, so it keeps the
+		// maximized badge's background under the recording badge's color
+		assert.Regexp(t,
+			` MAX (\x1b\[(1|22)m)*\x1b\[38;2;243;139;168m\x{e0b2}`,
+			lastLine(m.View().Content),
+		)
+	})
+
+	t.Run("right side shares one background", func(t *testing.T) {
+		m := resize(ui.New(mochaEditor(t), command.NewKeymaps()), 80, 24)
+
+		out := lastLine(m.View().Content)
+
+		// surface0 opens the section, and the elements inside it are divided
+		// by the thin separator, blended part way from that background
+		assert.Regexp(t,
+			`38;2;49;50;68m\x{e0b2}(\x1b\[[^m]*m)*\x1b\[48;2;49;50;68m`,
+			out,
+		)
+		assert.Regexp(t, ` 1 sel \x1b\[38;2;96;100;121m\x{e0b3}`, out)
+	})
+
+	t.Run("unfocused row goes flat and thin", func(t *testing.T) {
+		m, _ := mochaBuiltinModel(t)
+
+		m = m.ExecTypable("hsplit")
+
+		rows := strings.Split(m.View().Content, "\n")
+		row := rows[lineIndexWith(rows, " NOR ")]
+		// only the row background remains, and every edge is a thin divider
+		assert.NotContains(t, row, "48;2;245;224;220m")
+		assert.NotContains(t, row, "48;2;49;50;68m")
+		assert.Contains(t, row, "\ue0b1")
+		assert.Contains(t, row, "\ue0b3")
+		assert.NotContains(t, row, "\ue0b0")
+		assert.NotContains(t, row, "\ue0b2")
+	})
+
+	t.Run("nerd fonts off drops the glyphs", func(t *testing.T) {
+		e := mochaEditor(t)
+		e.Options().NerdFonts = false
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := m.View().Content
+
+		assert.Contains(t, out, " NOR ")
+		assert.NotContains(t, out, "\ue0b0")
+		assert.NotContains(t, out, "\ue0b2")
+	})
+}
+
 func TestSpinnerColorRender(t *testing.T) {
 	t.Run("applies spinner color", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -260,7 +340,6 @@ func TestStatuslineElementRegistry(t *testing.T) {
 	cases := []struct {
 		element view.StatusLineElement
 		setup   func(t *testing.T) *view.Editor
-		left    []view.StatusLineItem
 		want    string
 	}{
 		{element: view.StatusLineMode, want: " NOR "},
@@ -341,15 +420,6 @@ func TestStatuslineElementRegistry(t *testing.T) {
 		{element: view.StatusLinePercent, want: "%"},
 		{element: view.StatusLineTotalLines, want: " 1 "},
 		{
-			element: view.StatusLineSpacer,
-			left: []view.StatusLineItem{
-				{Element: view.StatusLineFileType},
-				{Element: view.StatusLineSpacer},
-				{Element: view.StatusLineFileType},
-			},
-			want: "text   text",
-		},
-		{
 			element: view.StatusLineVersionControl,
 			setup: func(t *testing.T) *view.Editor {
 				testutil.RequireGit(t)
@@ -376,14 +446,10 @@ func TestStatuslineElementRegistry(t *testing.T) {
 			if tc.setup != nil {
 				e = tc.setup(t)
 			}
-			left := tc.left
-			if left == nil {
-				left = []view.StatusLineItem{{Element: tc.element}}
+			e.Options().StatusLine.Left = []view.StatusLineItem{
+				{Element: tc.element},
 			}
-			e.Options().StatusLine.Left = left
-			e.Options().StatusLine.Right = []view.StatusLineItem{
-				{Element: view.StatusLineSpacer},
-			}
+			e.Options().StatusLine.Right = emptySide()
 			m := resize(ui.New(e, command.NewKeymaps()), 200, 24)
 
 			out := stripANSI(m.View().Content)
@@ -444,9 +510,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 			{Element: view.StatusLineSelections},
 			{Element: view.StatusLineFileAbsolutePath},
 		}
-		opts.StatusLine.Right = []view.StatusLineItem{
-			{Element: view.StatusLineSpacer},
-		}
+		opts.StatusLine.Right = emptySide()
 		m := resize(ui.New(e, command.NewKeymaps()), 14, 8)
 
 		out := stripANSI(m.View().Content)
@@ -459,9 +523,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 	t.Run("right section drops from its left", func(t *testing.T) {
 		e := editorWithText(t, "hello")
 		opts := e.Options()
-		opts.StatusLine.Left = []view.StatusLineItem{
-			{Element: view.StatusLineSpacer},
-		}
+		opts.StatusLine.Left = emptySide()
 		opts.StatusLine.Right = []view.StatusLineItem{
 			{Element: view.StatusLineFileType},
 			{Element: view.StatusLinePosition},
@@ -1052,6 +1114,31 @@ func popupHead(m ui.Model) string {
 		return ""
 	}
 	return strings.TrimSpace(strings.Trim(lines[top+1], "│ "))
+}
+
+// emptySide configures a side that renders nothing: a writable buffer has no
+// read-only indicator, and a non-empty list keeps the defaults from filling in
+func emptySide() []view.StatusLineItem {
+	return []view.StatusLineItem{{Element: view.StatusLineReadOnly}}
+}
+
+func mochaEditor(t *testing.T) *view.Editor {
+	t.Helper()
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("COLORTERM", "truecolor")
+	e := view.NewEditor(t.TempDir())
+	e.Options().Theme = "mocha"
+	return e
+}
+
+func mochaBuiltinModel(t *testing.T) (ui.Model, *view.Editor) {
+	t.Helper()
+	e := mochaEditor(t)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	_, err := builtin.Register(m, km)
+	assert.NoError(t, err)
+	return resize(m, 100, 30), e
 }
 
 func builtinModel(t *testing.T) ui.Model {

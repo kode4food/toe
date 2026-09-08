@@ -90,9 +90,10 @@ func (r *renderPass) renderBinaryStatus(
 		at:        geom.Point{X: a.X, Y: y0 + a.Bottom()},
 		width:     a.Width,
 		baseStyle: baseTUI,
+		focused:   focused,
 		left: []statusElem{
 			statusBadge(pane.Mode().String(), modeSt),
-			{text: name, style: baseTUI},
+			{text: name, style: baseTUI, prose: true},
 		},
 		right: right,
 	})

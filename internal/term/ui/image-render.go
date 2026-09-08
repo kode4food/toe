@@ -55,9 +55,12 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 
 	pixels := args.pane.Image().Size()
 	right := []statusElem{{
-		text: fmt.Sprintf("%d%s%d %d%%",
-			pixels.Width, imageSizeTimes, pixels.Height, args.pane.Zoom(),
+		text: fmt.Sprintf("%d%s%d",
+			pixels.Width, imageSizeTimes, pixels.Height,
 		),
+		style: baseTUI,
+	}, {
+		text:  fmt.Sprintf("%d%%", args.pane.Zoom()),
 		style: baseTUI,
 	}}
 	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
@@ -68,9 +71,10 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 		at:        args.at,
 		width:     args.width,
 		baseStyle: baseTUI,
+		focused:   args.focused,
 		left: []statusElem{
 			statusBadge(args.pane.Mode().String(), modeSt),
-			{text: name, style: baseTUI},
+			{text: name, style: baseTUI, prose: true},
 		},
 		right: right,
 	})

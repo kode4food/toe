@@ -30,7 +30,6 @@ var (
 		view.StatusLineTotalLines:       statusElemTotalLines,
 		view.StatusLineFileEncoding:     statusElemEncoding,
 		view.StatusLineFileLineEnding:   statusElemLineEnding,
-		view.StatusLineSpacer:           statusElemSpacer,
 		view.StatusLineFileIndentStyle:  statusElemIndentStyle,
 		view.StatusLineFileType:         statusElemFileType,
 		view.StatusLineDiagnostics:      statusElemDiagnostics,
@@ -64,6 +63,7 @@ func statusElemFileName(s *statusElemCtx) statusElem {
 	return statusElem{
 		text:  s.doc.RelativeName(s.cwd),
 		style: s.baseTUI,
+		prose: true,
 	}
 }
 
@@ -71,11 +71,12 @@ func statusElemFileBaseName(s *statusElemCtx) statusElem {
 	return statusElem{
 		text:  filepath.Base(s.doc.Path()),
 		style: s.baseTUI,
+		prose: true,
 	}
 }
 
 func statusElemFileAbsPath(s *statusElemCtx) statusElem {
-	return statusElem{text: s.doc.Path(), style: s.baseTUI}
+	return statusElem{text: s.doc.Path(), style: s.baseTUI, prose: true}
 }
 
 func statusElemReadOnly(s *statusElemCtx) statusElem {
@@ -140,10 +141,6 @@ func statusElemEncoding(s *statusElemCtx) statusElem {
 		label = view.EncodingUTF8BOM
 	}
 	return statusElem{text: label, style: s.baseTUI}
-}
-
-func statusElemSpacer(s *statusElemCtx) statusElem {
-	return statusElem{text: " ", style: s.baseTUI, compact: true}
 }
 
 func statusElemLineEnding(s *statusElemCtx) statusElem {

@@ -228,7 +228,7 @@ Automatic completion is in addition to `Ctrl+x`, which requests completions at a
 | `statusline.right` | string[] | built-in | Right-aligned statusline elements |
 | `statusline.separator` | string | `"│"` | Separator between status items |
 
-Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spacer`, `spinner`, `version-control`, `macro-recording`, and `pane-maximized`.
+Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spinner`, `version-control`, `macro-recording`, and `pane-maximized`.
 
 `macro-recording` and `pane-maximized` report editor-wide state rather than the pane's own. `macro-recording` draws only on the statusline in the bottom-right corner of the frame, so a split shows it once.
 

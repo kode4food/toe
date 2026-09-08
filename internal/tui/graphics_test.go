@@ -60,6 +60,20 @@ func TestColor(t *testing.T) {
 		assert.True(t, tui.ColorReset.Darkened(50).IsReset())
 	})
 
+	t.Run("Blended mixes toward the other color", func(t *testing.T) {
+		from := tui.ColorRGB(100, 200, 40)
+		r, g, b, _ := from.Blended(tui.ColorRGB(200, 100, 40), 25).RGBA()
+		assert.Equal(t, uint32(125), r>>8)
+		assert.Equal(t, uint32(175), g>>8)
+		assert.Equal(t, uint32(40), b>>8)
+	})
+
+	t.Run("Blended leaves reset alone", func(t *testing.T) {
+		assert.True(t, tui.ColorReset.Blended(tui.ColorRed, 50).IsReset())
+		red := tui.ColorRed
+		assert.Equal(t, red, red.Blended(tui.ColorReset, 50))
+	})
+
 	// per-channel rounding sends this one to navy 17
 	t.Run("Quantized picks the nearest entry", func(t *testing.T) {
 		assert.Equal(t,

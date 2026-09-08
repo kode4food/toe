@@ -167,6 +167,7 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		at:        args.at,
 		width:     width,
 		baseStyle: baseTUI,
+		focused:   args.focused,
 		left:      src.collect(opts.StatusLineLeft()),
 		right:     src.collect(opts.StatusLineRight()),
 	})
@@ -178,6 +179,8 @@ func (r *renderPass) paintStatus(buf *tui.Buffer, row statusRow) {
 	if row.at.Y == r.size.Height-1 && row.at.X+row.width == r.size.Width {
 		row.right = append(row.right, r.cornerBadges(row.baseStyle)...)
 	}
+	row.nerd = r.context.Editor.Options().NerdFonts
+	row.sectionStyle = r.context.Theme().Get("ui.statusline.section")
 	row.paint(buf)
 }
 

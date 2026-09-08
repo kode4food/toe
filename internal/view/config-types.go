@@ -128,7 +128,6 @@ const (
 	StatusLineSeparator        StatusLineElement = "separator"
 	StatusLinePercent          StatusLineElement = "position-percentage"
 	StatusLineTotalLines       StatusLineElement = "total-line-numbers"
-	StatusLineSpacer           StatusLineElement = "spacer"
 	StatusLineVersionControl   StatusLineElement = "version-control"
 	StatusLineModified         StatusLineElement = "file-modified-indicator"
 	StatusLineSpinner          StatusLineElement = "spinner"
@@ -193,7 +192,6 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineSeparator,
 	StatusLinePercent,
 	StatusLineTotalLines,
-	StatusLineSpacer,
 	StatusLineVersionControl,
 	StatusLineModified,
 	StatusLineSpinner,

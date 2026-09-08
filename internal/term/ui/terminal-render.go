@@ -124,9 +124,10 @@ func (r *renderPass) renderTerminalStatus(
 		at:        geom.Point{X: a.X, Y: y},
 		width:     a.Width,
 		baseStyle: st,
+		focused:   focused,
 		left: []statusElem{
 			statusBadge(label, modeSt),
-			{text: title, style: st},
+			{text: title, style: st, prose: true},
 		},
 	})
 }

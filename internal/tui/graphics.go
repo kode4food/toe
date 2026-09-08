@@ -171,6 +171,21 @@ func (c Color) Darkened(pct int) Color {
 	return ColorRGB(scale(r), scale(g), scale(b))
 }
 
+// Blended mixes the color pct/100 of the way toward another. A reset color has
+// no channels to mix, so it stays as it is
+func (c Color) Blended(to Color, pct int) Color {
+	if c.IsReset() || to.IsReset() {
+		return c
+	}
+	r, g, b, _ := c.RGBA()
+	tr, tg, tb, _ := to.RGBA()
+	mix := func(from, into uint32) uint8 {
+		f, i := int(from>>8), int(into>>8)
+		return uint8(f + (i-f)*pct/100)
+	}
+	return ColorRGB(mix(r, tr), mix(g, tg), mix(b, tb))
+}
+
 // Quantized returns the nearest 256-color palette entry, by true distance
 // rather than the per-channel rounding a terminal library would apply
 func (c Color) Quantized() Color {

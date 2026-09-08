@@ -59,6 +59,8 @@ func TestImageRender(t *testing.T) {
 	assert.Contains(t, out, "40×20")
 	assert.NotContains(t, out, "UTF-8")
 	assert.Contains(t, content, "\x1b[48;2;249;226;175m IMG ")
+	// size and zoom are their own fields, divided inside one section
+	assert.Regexp(t, ` 40×20 \x1b\[38;2;96;100;121m\x{e0b3}`, content)
 	assert.Contains(t, raw, ",p=")
 	assert.NotContains(t, raw, "d=i")
 	assert.Contains(t, raw, "a=T")

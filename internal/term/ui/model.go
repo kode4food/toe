@@ -2,8 +2,12 @@
 package ui
 
 import (
+	"os"
+	"path/filepath"
+
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/view"
@@ -42,6 +46,7 @@ func New(e *view.Editor, km *command.Keymaps) Model {
 		images:       newImageRegistry(),
 		pickerLayout: PickerLayoutOptions{},
 		fileWatcher:  w,
+		windowTitle:  workspaceTitle(e.Cwd()),
 	}
 	comp := &Compositor{}
 	comp.Push(ec)
@@ -137,6 +142,7 @@ func (m Model) View() tea.View {
 	}
 	v := tea.NewView(m.compositor.Render(m.context))
 	v.AltScreen = true
+	v.WindowTitle = m.context.windowTitle
 	if m.context.Editor.Options().Mouse {
 		v.MouseMode = tea.MouseModeCellMotion
 	}
@@ -186,4 +192,21 @@ func (m Model) markImageDirty() {
 	if p, ok := m.compositor.activePreviewImager(); ok {
 		p.markDirty()
 	}
+}
+
+func workspaceTitle(dir string) string {
+	root, _ := loader.FindWorkspace(dir)
+	return underHome(root) + " - toe"
+}
+
+func underHome(path string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return path
+	}
+	rel, err := filepath.Rel(home, path)
+	if err != nil || !filepath.IsLocal(rel) {
+		return path
+	}
+	return filepath.Join("~", rel)
 }

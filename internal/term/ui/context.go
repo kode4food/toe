@@ -18,6 +18,7 @@ type (
 		composition compositionState
 		theme       themeState
 
+		windowTitle  string
 		lastLayer    func(*view.Editor) layerFunc
 		pickerLayout PickerLayoutOptions
 		images       *imageRegistry

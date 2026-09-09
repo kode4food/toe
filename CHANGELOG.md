@@ -4,9 +4,21 @@ Notable changes to toe.
 
 ## 0.4.2
 
+### Interface
+
+- The statusline is now drawn as powerline segments rather than elements joined by a separator character. `statusline.edges` picks the divider shape: `arrow`, `round`, `slant`, or `line`, and terminals without a nerd font always get `line`. The `separator` and `spacer` elements and the `statusline.separator` setting are gone, since the segments do that work now
+- Themes can style the alternate segment background with `ui.statusline.section`
+- Added a `file-status` statusline element that folds `read-only-indicator` and `file-modified-indicator` into one, showing both marks when a document is read-only and modified. The two separate elements are still there for statuslines that want them apart, and remain the default
+- The window title now shows the workspace directory
+
+### Version control
+
+- The changed-file picker now works out a row's diff hunks when the row is previewed, instead of doing it for every row up front
+- Git history is now read by running `git`, the same way working-tree status already was, which drops the in-process Git library from the build
+
 ### Sessions
 
-- Workspace sessions are now stored as `.toe/session.json.gz`. An existing `.toe/session.json` is still restored and removed on the next save
+- Workspace sessions are now stored as `.toe/session.json.gz`. An existing `.toe/session.json` is still restored, and removed on the next save
 
 ## 0.4.1
 

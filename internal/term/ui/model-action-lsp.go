@@ -64,7 +64,7 @@ func (m Model) CompletionAction(e *view.Editor) {
 		return
 	}
 	ec.queueNextLayer(func(cx *Context) (Component, tea.Cmd) {
-		return nil, ec.completionCmd(cx, false)
+		return nil, ec.completionCmd(false)
 	})
 }
 

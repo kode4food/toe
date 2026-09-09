@@ -22,7 +22,8 @@ type (
 
 	completionComponent struct {
 		dismissibleOverlay
-		editor *EditorComponent
+		context *Context
+		editor  *EditorComponent
 
 		all   []*view.CompletionItem
 		items []*view.CompletionItem
@@ -35,7 +36,6 @@ type (
 		refreshGen int
 		manual     bool
 		incomplete bool
-		nerd       bool
 	}
 
 	completionAnchor struct {
@@ -108,17 +108,17 @@ func DefaultCompletionOptions() CompletionOptions {
 
 // HandleEvent drives selection, filtering, and acceptance
 func (c *completionComponent) HandleEvent(
-	cx *Context, msg tea.Msg,
+	_ *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case completionRefreshMsg:
-		return c.handleRefreshMsg(cx, msg)
+		return c.handleRefreshMsg(msg)
 	case tea.MouseClickMsg:
-		return c.handleMouseClick(cx, msg), nil
+		return c.handleMouseClick(msg), nil
 	case tea.MouseWheelMsg:
-		return c.handleMouseWheel(cx, msg), nil
+		return c.handleMouseWheel(msg), nil
 	case tea.KeyPressMsg:
-		return c.handleKeyPress(cx, msg)
+		return c.handleKeyPress(msg)
 	default:
 		return ignored(), nil
 	}
@@ -131,13 +131,12 @@ func (c *completionComponent) Cursor(*Context, geom.Size) (tea.Cursor, bool) {
 
 // Layout places the list near the cursor, inside the frame
 func (c *completionComponent) Layout(
-	cx *Context, screen geom.Size,
+	_ *Context, screen geom.Size,
 ) (geom.Area, bool) {
-	if !c.valid(cx) || len(c.items) == 0 {
+	if !c.valid() || len(c.items) == 0 {
 		return geom.Area{}, false
 	}
-	c.nerd = cx.Editor.Options().NerdFonts
-	at := c.popupPos(cx, screen.Height)
+	at := c.popupPos(screen.Height)
 	w := c.width()
 	rows := min(len(c.items), completionMaxRows)
 	h := rows + 2
@@ -151,25 +150,21 @@ func (c *completionComponent) PaintBuffer(
 	cx *Context, pl geom.Area,
 ) *tui.Buffer {
 	return c.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
-		c.paint(cx, buf, pl)
+		c.paint(buf, pl)
 	})
 }
 
-func (c *completionComponent) lookupAction(
-	cx *Context, k command.KeyEvent,
-) (string, bool) {
-	lookup, ok := cx.Keymaps.Lookup(
+func (c *completionComponent) lookupAction(k command.KeyEvent) (string, bool) {
+	lookup, ok := c.context.Keymaps.Lookup(
 		view.ModeCompletion, []command.KeyEvent{k},
 	)
 	return lookup.Name, ok
 }
 
-func (c *completionComponent) handleAction(
-	cx *Context, name string,
-) EventResult {
+func (c *completionComponent) handleAction(name string) EventResult {
 	switch name {
 	case CompletionAcceptAction:
-		c.accept(cx)
+		c.accept()
 		return consumedWith(popLayer)
 	case CompletionCancelAction:
 		return consumedWith(popLayer)
@@ -196,11 +191,9 @@ func (c *completionComponent) handleAction(
 	}
 }
 
-func (c *completionComponent) paint(
-	cx *Context, buf *tui.Buffer, pl geom.Area,
-) {
-	c.nerd = cx.Editor.Options().NerdFonts
-	query, _ := c.query(cx)
+func (c *completionComponent) paint(buf *tui.Buffer, pl geom.Area) {
+	cx := c.context
+	query, _ := c.query()
 	w := pl.Width
 	styles := promptCompletionStyles(cx)
 	pop := popup{
@@ -255,7 +248,8 @@ func (c *completionComponent) paint(
 	}
 }
 
-func (c *completionComponent) valid(cx *Context) bool {
+func (c *completionComponent) valid() bool {
+	cx := c.context
 	if cx.Editor.Mode() != view.ModeInsert {
 		return false
 	}
@@ -272,11 +266,12 @@ func (c *completionComponent) valid(cx *Context) bool {
 }
 
 func (c *completionComponent) handleKeyPress(
-	cx *Context, msg tea.KeyPressMsg,
+	msg tea.KeyPressMsg,
 ) (EventResult, tea.Cmd) {
+	cx := c.context
 	k := FromTeaKey(msg)
-	if name, ok := c.lookupAction(cx, k); ok {
-		return c.handleAction(cx, name), nil
+	if name, ok := c.lookupAction(k); ok {
+		return c.handleAction(name), nil
 	}
 	if cx.Editor.Mode() == view.ModeInsert && k.IsTypable() {
 		action.InsertChar(cx.Editor, k.Code.Char)
@@ -286,7 +281,7 @@ func (c *completionComponent) handleKeyPress(
 }
 
 func (c *completionComponent) handleMouseClick(
-	_ *Context, msg tea.MouseClickMsg,
+	msg tea.MouseClickMsg,
 ) EventResult {
 	at := geom.Point{X: msg.X, Y: msg.Y}
 	list := listScroll{scroll: c.list.scroll, count: len(c.items)}
@@ -297,18 +292,19 @@ func (c *completionComponent) handleMouseClick(
 }
 
 func (c *completionComponent) handleMouseWheel(
-	cx *Context, msg tea.MouseWheelMsg,
+	msg tea.MouseWheelMsg,
 ) EventResult {
 	if !c.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return ignoredWith(popLayer)
 	}
 	c.markDirty()
 	c.syncList()
-	c.list.wheel(msg.Button, cx.Editor.Options().ScrollLines)
+	c.list.wheel(msg.Button, c.context.Editor.Options().ScrollLines)
 	return consumed()
 }
 
-func (c *completionComponent) accept(cx *Context) {
+func (c *completionComponent) accept() {
+	cx := c.context
 	if c.list.cursor < 0 || c.list.cursor >= len(c.items) {
 		return
 	}
@@ -330,8 +326,8 @@ func (c *completionComponent) accept(cx *Context) {
 	}
 }
 
-func (c *completionComponent) popupPos(cx *Context, screenH int) geom.Point {
-	return c.editor.popupAnchorBelowCaret(cx, popupAnchorArgs{
+func (c *completionComponent) popupPos(screenH int) geom.Point {
+	return c.editor.popupAnchorBelowCaret(popupAnchorArgs{
 		screenHeight: screenH,
 		fallbackRows: completionMaxRows,
 	})

@@ -18,6 +18,8 @@ type (
 	// EditorComponent renders the pane tree and drives the editor's key, mouse,
 	// and animation handling for one frame at a time
 	EditorComponent struct {
+		context *Context
+
 		keys       keyState
 		mouse      mouseState
 		language   languageState
@@ -130,8 +132,9 @@ var (
 	_ highlightRefresher = (*EditorComponent)(nil)
 )
 
-func newEditorComponent() *EditorComponent {
+func newEditorComponent(cx *Context) *EditorComponent {
 	return &EditorComponent{
+		context:    cx,
 		saveSlot:   &saveGenSlot{},
 		completion: DefaultCompletionOptions(),
 		cache:      newRenderCache(),
@@ -204,51 +207,51 @@ func (ec *EditorComponent) HandleEvent(
 	cx.fileWatcher.sync(cx.Editor)
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		return ec.handleWindowSize(cx, msg)
+		return ec.handleWindowSize(msg)
 	case tea.KeyPressMsg:
-		return ec.handleKeyPressEvent(cx, msg)
+		return ec.handleKeyPressEvent(msg)
 	case tea.PasteMsg:
-		return ec.handlePaste(cx, msg)
+		return ec.handlePaste(msg)
 	case tea.FocusMsg:
-		return ec.handleFocus(cx)
+		return ec.handleFocus()
 	case tea.BlurMsg:
-		return ec.handleBlur(cx)
+		return ec.handleBlur()
 	case autoSaveMsg:
-		return ec.handleAutoSaveMsg(cx, msg)
+		return ec.handleAutoSaveMsg(msg)
 	case autoCompletionMsg:
-		return ec.handleAutoCompletionMsg(cx, msg)
+		return ec.handleAutoCompletionMsg(msg)
 	case docHighlightMsg:
-		return ec.handleDocHighlightMsg(cx, msg)
+		return ec.handleDocHighlightMsg(msg)
 	case completionMsg:
-		return ec.handleCompletionMsg(cx, msg)
+		return ec.handleCompletionMsg(msg)
 	case externalFileChangedMsg:
-		return ec.handleExternalFileChanged(cx, msg)
+		return ec.handleExternalFileChanged(msg)
 	case redrawMsg:
-		return ec.handleRedraw(cx)
+		return ec.handleRedraw()
 	case vcsUpdatedMsg:
-		return ec.handleVCSUpdated(cx)
+		return ec.handleVCSUpdated()
 	case spinnerTickMsg:
-		return ec.handleSpinnerTick(cx, msg)
+		return ec.handleSpinnerTick(msg)
 	case macroBlinkTickMsg:
 		return ec.handleMacroBlinkTick(msg)
 	case toastTickMsg:
 		return ec.handleToastTick(msg)
 	case autoSizeTickMsg:
-		return ec.handleAutoSizeTick(cx, msg)
+		return ec.handleAutoSizeTick(msg)
 	case resizeSettleMsg:
 		return ec.handleResizeSettle(msg)
 	case tea.MouseClickMsg:
-		return ec.handleMouseClick(cx, msg)
+		return ec.handleMouseClick(msg)
 	case tea.MouseMotionMsg:
-		return ec.handleMouseMotion(cx, msg)
+		return ec.handleMouseMotion(msg)
 	case mouseAxisScrollMsg:
-		return ec.handleMouseAxisScroll(cx, msg)
+		return ec.handleMouseAxisScroll(msg)
 	case terminalDragScrollMsg:
 		return consumed(), msg.draggable.DragTick(cx, msg.gen, msg.toLow)
 	case tea.MouseReleaseMsg:
-		return ec.handleMouseRelease(cx, msg)
+		return ec.handleMouseRelease(msg)
 	case tea.MouseWheelMsg:
-		return ec.handleMouseWheel(cx, msg)
+		return ec.handleMouseWheel(msg)
 	}
 	return ignored(), nil
 }
@@ -259,7 +262,7 @@ func (ec *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
 	if ec.buf == nil || ec.buf.Size != screen {
 		ec.buf = tui.NewBuffer(screen)
 	}
-	ec.syncEditorMessages(cx)
+	ec.syncEditorMessages()
 	ec.cache.evictClosed(cx.Editor)
 	r := &renderPass{editor: ec, context: cx, size: screen}
 	r.renderEditorContent(ec.buf)
@@ -284,7 +287,8 @@ func (ec *EditorComponent) takeNextLayer() layerFunc {
 	return next
 }
 
-func (ec *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
+func (ec *EditorComponent) documentHighlightCmd() tea.Cmd {
+	cx := ec.context
 	if ec.mouse.downRange != nil {
 		return nil
 	}
@@ -314,7 +318,8 @@ func (ec *EditorComponent) documentHighlightCmd(cx *Context) tea.Cmd {
 	}
 }
 
-func (ec *EditorComponent) caretScreenPos(cx *Context) (geom.Point, bool) {
+func (ec *EditorComponent) caretScreenPos() (geom.Point, bool) {
+	cx := ec.context
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return geom.Point{}, false
@@ -348,24 +353,25 @@ type popupAnchorArgs struct {
 }
 
 func (ec *EditorComponent) popupAnchorBelowCaret(
-	cx *Context, args popupAnchorArgs,
+	args popupAnchorArgs,
 ) geom.Point {
-	if at, ok := ec.caretScreenPos(cx); ok {
+	if at, ok := ec.caretScreenPos(); ok {
 		at.Y++
 		return at
 	}
 	return geom.Point{Y: max(args.screenHeight-args.fallbackRows-2, 0)}
 }
 
-func (ec *EditorComponent) cancelPending(cx *Context) {
+func (ec *EditorComponent) cancelPending() {
 	ec.keys.path = nil
 	ec.clearHints()
 	ec.keys.continuation = nil
 	ec.keys.frames = nil
-	ec.clearInput(cx)
+	ec.clearInput()
 }
 
-func (ec *EditorComponent) syncEditorMessages(cx *Context) {
+func (ec *EditorComponent) syncEditorMessages() {
+	cx := ec.context
 	for _, m := range cx.Editor.TakeStatusMsgs() {
 		if m != "" {
 			ec.setStatusMessage(m)
@@ -404,7 +410,8 @@ func (ec *EditorComponent) clearCommandMessage() {
 	}
 }
 
-func (ec *EditorComponent) resize(cx *Context) {
+func (ec *EditorComponent) resize() {
+	cx := ec.context
 	overhead := 0
 	if bufferlineVisible(cx) {
 		overhead++
@@ -416,8 +423,8 @@ func (ec *EditorComponent) resize(cx *Context) {
 	})
 }
 
-func (ec *EditorComponent) autoSaveCmd(cx *Context) tea.Cmd {
-	opts := cx.Editor.Options()
+func (ec *EditorComponent) autoSaveCmd() tea.Cmd {
+	opts := ec.context.Editor.Options()
 	if !opts.AutoSaveAfterDelay {
 		return nil
 	}

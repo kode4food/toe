@@ -63,10 +63,11 @@ func (s *tuiScreen) styleFor(st uv.Style) tui.Style {
 func (r *renderPass) renderTerminalPane(
 	buf *tui.Buffer, tp *TerminalPane, y0 int, focused bool,
 ) {
+	cx := r.context
 	a := tp.Area()
 	contentH := max(a.Height-1, 0)
 	emu := tp.Emulator()
-	bg := r.context.ThemeFor(focused).Get("ui.background").BgColor()
+	bg := cx.ThemeFor(focused).Get("ui.background").BgColor()
 	if emu.BackgroundColor() != bg {
 		emu.SetBackgroundColor(bg)
 	}
@@ -83,7 +84,7 @@ func (r *renderPass) renderTerminalPane(
 		})
 		highlightSelection(scr, tp)
 	} else {
-		style := r.context.ThemeFor(focused).Get("ui.text")
+		style := cx.ThemeFor(focused).Get("ui.text")
 		renderCenteredMessage(
 			buf, scr.area, i18n.Text(i18n.StatusTerminalStarting), style,
 		)

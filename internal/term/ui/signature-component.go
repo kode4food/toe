@@ -24,11 +24,12 @@ type (
 
 	signatureHelpComponent struct {
 		overlayBuf
-		editor *EditorComponent
-		call   signatureCall
-		help   view.SignatureHelp
-		cursor int
-		lines  []popupLine
+		context *Context
+		editor  *EditorComponent
+		call    signatureCall
+		help    view.SignatureHelp
+		cursor  int
+		lines   []popupLine
 	}
 )
 
@@ -44,7 +45,11 @@ func newSignatureHelpComponent(
 		cursor = 0
 	}
 	return &signatureHelpComponent{
-		editor: ec, call: call, help: help, cursor: cursor,
+		context: ec.context,
+		editor:  ec,
+		call:    call,
+		help:    help,
+		cursor:  cursor,
 	}
 }
 
@@ -85,7 +90,7 @@ func (s *signatureHelpComponent) Cursor(
 func (s *signatureHelpComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {
-	if len(s.help.Signatures) == 0 || !s.valid(cx) {
+	if len(s.help.Signatures) == 0 || !s.valid() {
 		return geom.Area{}, false
 	}
 	sig := s.help.Signatures[s.cursor]
@@ -98,7 +103,7 @@ func (s *signatureHelpComponent) Layout(
 	h := min(max(len(lines)+4, 3), signaturePopupMaxH)
 	x, y := 0, 0
 	if cur, ok := s.editor.Cursor(cx, screen); ok {
-		x = s.openScreenX(cx)
+		x = s.openScreenX()
 		y = cur.Y + 1
 		if y+h > screen.Height {
 			y = max(cur.Y-h-1, 0)
@@ -118,13 +123,12 @@ func (s *signatureHelpComponent) PaintBuffer(
 	cx *Context, pl geom.Area,
 ) *tui.Buffer {
 	return s.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
-		s.paint(cx, buf, pl)
+		s.paint(buf, pl)
 	})
 }
 
-func (s *signatureHelpComponent) paint(
-	cx *Context, buf *tui.Buffer, pl geom.Area,
-) {
+func (s *signatureHelpComponent) paint(buf *tui.Buffer, pl geom.Area) {
+	cx := s.context
 	sig := s.help.Signatures[s.cursor]
 	st := cx.Theme().Get("ui.popup")
 	pop := popup{
@@ -133,7 +137,7 @@ func (s *signatureHelpComponent) paint(
 		padX:         0,
 	}
 	area := pop.drawInto(buf, geom.Area{Size: pl.Size})
-	s.renderSignature(cx, buf, area, sig)
+	s.renderSignature(buf, area, sig)
 	if len(s.help.Signatures) > 1 {
 		index := s.indexText()
 		buf.SetString(geom.Point{
@@ -153,11 +157,17 @@ func (s *signatureHelpComponent) paint(
 	docArea := area
 	docArea.Y += 2
 	docArea.Height -= 2
-	r := popupTextRenderer{buf: buf, context: cx, area: docArea, base: st}
+	r := popupTextRenderer{
+		buf:     buf,
+		context: cx,
+		area:    docArea,
+		base:    st,
+	}
 	r.render(s.lines)
 }
 
-func (s *signatureHelpComponent) openScreenX(cx *Context) int {
+func (s *signatureHelpComponent) openScreenX() int {
+	cx := s.context
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return 0
@@ -190,7 +200,7 @@ func (s *signatureHelpComponent) moveBy(n int) {
 func (s *signatureHelpComponent) refresh(
 	cx *Context, comp *Compositor,
 ) tea.Cmd {
-	if !s.valid(cx) {
+	if !s.valid() {
 		removeSignatureHelpLayer(comp)
 		return nil
 	}
@@ -231,8 +241,8 @@ func (s *signatureHelpComponent) dismiss(_ *Context, comp *Compositor) tea.Cmd {
 	return nil
 }
 
-func (s *signatureHelpComponent) valid(cx *Context) bool {
-	call, ok := currentSignatureCall(cx)
+func (s *signatureHelpComponent) valid() bool {
+	call, ok := currentSignatureCall(s.context)
 	return ok && call == s.call
 }
 
@@ -242,9 +252,10 @@ func (s *signatureHelpComponent) indexText() string {
 }
 
 func (s *signatureHelpComponent) renderSignature(
-	cx *Context, buf *tui.Buffer, area geom.Area,
+	buf *tui.Buffer, area geom.Area,
 	sig view.SignatureInformation,
 ) {
+	cx := s.context
 	label := runewidth.Truncate(sig.Label, area.Width, "")
 	base := cx.Theme().Get("ui.popup")
 	buf.SetString(area.Point, label, base)

@@ -55,8 +55,9 @@ const (
 )
 
 func (ec *EditorComponent) continueAxisScroll(
-	cx *Context, axis *mouseAutoScrollAxis, toLow bool,
+	axis *mouseAutoScrollAxis, toLow bool,
 ) tea.Cmd {
+	cx := ec.context
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return nil

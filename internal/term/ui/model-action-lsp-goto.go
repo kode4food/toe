@@ -23,29 +23,29 @@ const (
 )
 
 // GotoDeclarationAction jumps to the declaration of the symbol at the cursor
-func (m Model) GotoDeclarationAction(e *view.Editor) {
-	m.component.gotoLocation(m.context, e,
+func (m Model) GotoDeclarationAction(*view.Editor) {
+	m.component.gotoLocation(
 		i18n.Text(statusNoDeclarationKey),
 		view.LanguageServerController.GotoDeclaration,
 	)
 }
 
 // GotoDefinitionAction jumps to the definition of the symbol at the cursor
-func (m Model) GotoDefinitionAction(e *view.Editor) {
-	m.component.gotoDefinition(m.context, e)
+func (m Model) GotoDefinitionAction(*view.Editor) {
+	m.component.gotoDefinition()
 }
 
 // GotoTypeDefinitionAction jumps to the type of the symbol at the cursor
-func (m Model) GotoTypeDefinitionAction(e *view.Editor) {
-	m.component.gotoLocation(m.context, e,
+func (m Model) GotoTypeDefinitionAction(*view.Editor) {
+	m.component.gotoLocation(
 		i18n.Text(statusNoTypeDefinitionKey),
 		view.LanguageServerController.GotoTypeDefinition,
 	)
 }
 
 // GotoImplementationAction jumps to implementations of the symbol at the cursor
-func (m Model) GotoImplementationAction(e *view.Editor) {
-	m.component.gotoLocation(m.context, e,
+func (m Model) GotoImplementationAction(*view.Editor) {
+	m.component.gotoLocation(
 		i18n.Text(statusNoImplementationKey),
 		view.LanguageServerController.GotoImplementation,
 	)
@@ -83,16 +83,16 @@ func (m Model) SelectReferencesAction(e *view.Editor) {
 	setSelectionFromHighlights(doc, v.ID(), highlights)
 }
 
-func (ec *EditorComponent) gotoDefinition(cx *Context, e *view.Editor) {
-	ec.gotoLocation(cx, e,
+func (ec *EditorComponent) gotoDefinition() {
+	ec.gotoLocation(
 		i18n.Text(statusNoDefinitionKey),
 		view.LanguageServerController.GotoDefinition,
 	)
 }
 
-func (ec *EditorComponent) gotoLocation(
-	cx *Context, e *view.Editor, notFound string, get locationGetter,
-) {
+func (ec *EditorComponent) gotoLocation(notFound string, get locationGetter) {
+	cx := ec.context
+	e := cx.Editor
 	doc := e.FocusedDocument()
 	if doc == nil {
 		return
@@ -128,7 +128,7 @@ func (ec *EditorComponent) gotoLocation(
 
 func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {
 	ec := m.component
-	cx := m.context
+
 	doc := e.FocusedDocument()
 	if doc == nil {
 		return
@@ -146,13 +146,11 @@ func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {
 	opener := locationPickerLayer(func() ([]view.Location, error) {
 		return get(ls, doc, viewID)
 	})
-	cx.lastLayer = opener
+	m.context.lastLayer = opener
 	ec.queueNextLayer(opener(e))
 }
 
-func locationPickerLayer(
-	request locationRequest,
-) func(*view.Editor) layerFunc {
+func locationPickerLayer(request locationRequest) func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPLocationPicker(e, request)
 		cmd := p.load.feedCmd

@@ -63,6 +63,7 @@ var (
 // NewDiagnosticPicker lists diagnostics for the focused document
 func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &diagnosticPickerSource{
+		Editor:      e,
 		Ident:       "diagnostics",
 		Label:       "Diagnostics",
 		Cols:        []string{"", ""},
@@ -74,6 +75,7 @@ func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
 // NewWorkspaceDiagnosticPicker lists diagnostics for all open documents
 func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &diagnosticPickerSource{
+		Editor:      e,
 		Ident:       "workspace-diagnostics",
 		Label:       "Workspace Diagnostics",
 		Cols:        []string{"", ""},
@@ -84,7 +86,8 @@ func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 }
 
 // Load lists every diagnostic across open documents
-func (d *diagnosticPickerSource) Load(e *view.Editor) ui.PickerLoad {
+func (d *diagnosticPickerSource) Load() ui.PickerLoad {
+	e := d.Editor
 	docs := diagnosticPickerDocuments(e, d.workspace)
 	items := make([]*ui.PickerItem, 0)
 	var slab ui.PickerItemSlab
@@ -102,7 +105,7 @@ func (d *diagnosticPickerSource) Load(e *view.Editor) ui.PickerLoad {
 
 // Accept jumps to the chosen diagnostic
 func (d *diagnosticPickerSource) Accept(
-	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
+	item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	payload, ok := item.Payload.(diagnosticPickerPayload)
 	if !ok {
@@ -112,7 +115,7 @@ func (d *diagnosticPickerSource) Accept(
 	if err != nil {
 		return
 	}
-	ui.GotoDocument(e, payload.id, ui.GotoSelection(sel), action)
+	ui.GotoDocument(d.Editor, payload.id, ui.GotoSelection(sel), action)
 }
 
 func (d *diagnosticPickerSource) item(

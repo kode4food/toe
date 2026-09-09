@@ -18,12 +18,11 @@ type (
 	}
 
 	// StatusLine is the configured status bar: the elements on each side and
-	// the separator drawn between them
+	// the shape of the dividers between them
 	StatusLine struct {
-		Left      []StatusLineItem `toml:"left"`
-		Right     []StatusLineItem `toml:"right"`
-		Separator string           `toml:"separator"`
-		Edges     StatusLineEdges  `toml:"edges"`
+		Left  []StatusLineItem `toml:"left"`
+		Right []StatusLineItem `toml:"right"`
+		Edges StatusLineEdges  `toml:"edges"`
 	}
 
 	// StatusLineEdges is the shape the powerline dividers are drawn with
@@ -121,6 +120,7 @@ const (
 	StatusLineFileName         StatusLineElement = "file-name"
 	StatusLineFileAbsolutePath StatusLineElement = "file-absolute-path"
 	StatusLineReadOnly         StatusLineElement = "read-only-indicator"
+	StatusLineFileStatus       StatusLineElement = "file-status"
 	StatusLineFileEncoding     StatusLineElement = "file-encoding"
 	StatusLineFileLineEnding   StatusLineElement = "file-line-ending"
 	StatusLineFileIndentStyle  StatusLineElement = "file-indent-style"
@@ -129,7 +129,6 @@ const (
 	StatusLineSelections       StatusLineElement = "selections"
 	StatusLinePrimaryLen       StatusLineElement = "primary-selection-length"
 	StatusLinePosition         StatusLineElement = "position"
-	StatusLineSeparator        StatusLineElement = "separator"
 	StatusLinePercent          StatusLineElement = "position-percentage"
 	StatusLineTotalLines       StatusLineElement = "total-line-numbers"
 	StatusLineVersionControl   StatusLineElement = "version-control"
@@ -165,8 +164,6 @@ const (
 
 	DefaultIndentGuideChar = '\u2502' // U+2502 box drawings light vertical
 
-	DefaultStatusLineSeparator = "\u2502" // '│' box drawings light vertical
-
 	GutterTypeDiagnostics GutterType = "diagnostics"
 	GutterTypeLineNumbers GutterType = "line-numbers"
 	GutterTypeSpacer      GutterType = "spacer"
@@ -191,6 +188,7 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineFileName,
 	StatusLineFileAbsolutePath,
 	StatusLineReadOnly,
+	StatusLineFileStatus,
 	StatusLineFileEncoding,
 	StatusLineFileLineEnding,
 	StatusLineFileIndentStyle,
@@ -199,7 +197,6 @@ var allStatusLineElements = []StatusLineElement{
 	StatusLineSelections,
 	StatusLinePrimaryLen,
 	StatusLinePosition,
-	StatusLineSeparator,
 	StatusLinePercent,
 	StatusLineTotalLines,
 	StatusLineVersionControl,

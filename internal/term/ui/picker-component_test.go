@@ -298,12 +298,10 @@ func (fixedPickerSource) ColumnProportions() []int {
 	return []int{1}
 }
 
-func (fixedPickerSource) Accept(
-	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
-) {
+func (fixedPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 }
 
-func (s fixedPickerSource) Load(*view.Editor) ui.PickerLoad {
+func (s fixedPickerSource) Load() ui.PickerLoad {
 	return ui.PickerLoad{Items: s.items, Stop: func() {}}
 }
 

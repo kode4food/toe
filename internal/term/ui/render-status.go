@@ -49,14 +49,13 @@ type (
 	}
 
 	statusElemCtx struct {
-		doc  *view.Document
-		mode view.Mode
+		editor *view.Editor
+		doc    *view.Document
+		mode   view.Mode
 
 		baseTUI tui.Style
 		modeSt  tui.Style
-		sepSt   tui.Style
 		spinSt  tui.Style
-		sep     string
 
 		cursor     core.Position
 		selCount   int
@@ -64,18 +63,12 @@ type (
 		primLen    int
 		totalLines int
 
-		reg     rune
-		cwd     string
-		vcsHead string
-
 		macroReg   rune
 		macroSt    tui.Style
 		maximizeSt tui.Style
 		blinkFrame int
 
-		busy      bool
 		recording bool
-		maximized bool
 		spinFrame int
 	}
 )
@@ -90,6 +83,7 @@ type renderStatusArgs struct {
 }
 
 func (r *renderPass) renderStatus(args renderStatusArgs) {
+	cx := r.context
 	doc := args.doc
 	v := args.view
 	buf := args.buf
@@ -104,9 +98,8 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		at = p
 	}
 
-	opts := r.context.Editor.Options()
-
-	th := r.context.Theme()
+	opts := cx.Editor.Options()
+	th := cx.Theme()
 
 	st := th.Get("ui.statusline.inactive")
 	modeSt := st
@@ -115,10 +108,6 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 		modeSt = th.Get("ui.statusline." + v.Mode().Scope())
 	}
 
-	sepSt := st
-	if s, ok := th.TryGet("ui.statusline.separator"); ok {
-		sepSt = s
-	}
 	spinSt := applyAccentStyle(styleOverlay{
 		base:    st,
 		overlay: th.Get("ui.prompt"),
@@ -128,38 +117,26 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	primIdx := sel.PrimaryIndex()
 	primLen := prim.Len()
 	totalLines := text.LenLines()
-	reg := r.context.Editor.ActiveRegister()
-	cwd := r.context.Editor.Cwd()
-	sep := opts.StatusLineSeparator()
-	var vcsHead string
-	if vc := r.context.Editor.VersionControl(); vc != nil {
-		vcsHead, _ = vc.HeadName(doc)
-	}
-	var busy bool
-	if ls := r.context.Editor.LanguageServerController(); ls != nil {
-		busy = ls.Busy()
-	}
 
 	baseTUI := st
 	ms := r.editor.macroSlot
 	src := &statusElemCtx{
-		doc:     doc,
-		mode:    v.Mode(),
-		baseTUI: baseTUI,
-		modeSt:  modeSt,
-		sepSt:   sepSt,
-		spinSt:  spinSt,
-		sep:     sep, selCount: nSel, primIdx: primIdx, primLen: primLen,
-		totalLines: totalLines, reg: reg, cwd: cwd,
+		editor:     cx.Editor,
+		doc:        doc,
+		mode:       v.Mode(),
+		baseTUI:    baseTUI,
+		modeSt:     modeSt,
+		spinSt:     spinSt,
+		selCount:   nSel,
+		primIdx:    primIdx,
+		primLen:    primLen,
+		totalLines: totalLines,
 		cursor:     at,
-		vcsHead:    vcsHead,
 		macroReg:   ms.reg,
 		macroSt:    th.Get("ui.statusline.macro"),
 		maximizeSt: th.Get("ui.statusline.maximized"),
 		blinkFrame: r.editor.macroBlink.phase,
-		busy:       busy,
 		recording:  ms.recording,
-		maximized:  r.context.Editor.Tree().Maximized(),
 		spinFrame:  r.editor.spinner.phase,
 	}
 
@@ -179,29 +156,30 @@ func (r *renderPass) paintStatus(buf *tui.Buffer, row statusRow) {
 	if row.at.Y == r.size.Height-1 && row.at.X+row.width == r.size.Width {
 		row.right = append(row.right, r.cornerBadges(row.baseStyle)...)
 	}
-	opts := r.context.Editor.Options()
+	cx := r.context
+	opts := cx.Editor.Options()
 	row.edge = statusEdges[edgesFor(opts)]
-	row.sectionStyle = r.context.Theme().Get("ui.statusline.section")
+	row.sectionStyle = cx.Theme().Get("ui.statusline.section")
 	row.paint(buf)
 }
 
 func (r *renderPass) cornerBadges(base tui.Style) []statusElem {
+	cx := r.context
 	ms := r.editor.macroSlot
-	reg := r.context.Editor.ActiveRegister()
-	maximized := r.context.Editor.Tree().Maximized()
+	reg := cx.Editor.ActiveRegister()
+	maximized := cx.Editor.Tree().Maximized()
 	if !ms.recording && !maximized && reg == 0 {
 		return nil
 	}
-	th := r.context.Theme()
+	th := cx.Theme()
 	src := &statusElemCtx{
+		editor:     cx.Editor,
 		baseTUI:    base,
 		macroReg:   ms.reg,
 		macroSt:    th.Get("ui.statusline.macro"),
 		maximizeSt: th.Get("ui.statusline.maximized"),
 		blinkFrame: r.editor.macroBlink.phase,
-		reg:        reg,
 		recording:  ms.recording,
-		maximized:  maximized,
 	}
 	var out []statusElem
 	for _, fn := range []statusElemFn{

@@ -18,6 +18,7 @@ type commandPaletteSource struct {
 // CommandPalettePicker opens a picker listing all registered commands
 func (m Model) CommandPalettePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &commandPaletteSource{
+		Editor:      e,
 		Ident:       "command-palette",
 		Label:       "Command Palette",
 		Cols:        []string{"name", "bindings", "description"},
@@ -28,8 +29,8 @@ func (m Model) CommandPalettePicker(e *view.Editor) *Picker {
 }
 
 // Load lists every command available in the current mode
-func (c *commandPaletteSource) Load(e *view.Editor) PickerLoad {
-	mode := e.Mode()
+func (c *commandPaletteSource) Load() PickerLoad {
+	mode := c.Editor.Mode()
 	cmds := c.keymaps.CommandsIn(mode)
 	items := make([]*PickerItem, 0, len(cmds))
 	var slab PickerItemSlab
@@ -52,9 +53,8 @@ func (c *commandPaletteSource) Load(e *view.Editor) PickerLoad {
 }
 
 // Accept runs the chosen command, prompting first when it takes arguments
-func (c *commandPaletteSource) Accept(
-	e *view.Editor, item *PickerItem, _ PickerAcceptAction,
-) {
+func (c *commandPaletteSource) Accept(item *PickerItem, _ PickerAcceptAction) {
+	e := c.Editor
 	cmd, ok := item.Payload.(*command.Command)
 	if !ok || cmd.Run == nil || len(cmd.Aliases) == 0 {
 		return

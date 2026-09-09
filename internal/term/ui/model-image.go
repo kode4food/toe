@@ -183,8 +183,9 @@ func (r *imageRegistry) readySize(id uint32) (geom.Size, bool) {
 }
 
 func (m Model) imageDisplayCmd() tea.Cmd {
+	cx := m.context
 	var cmds []tea.Cmd
-	m.context.Editor.Tree().RangeVisible(func(p view.Pane) bool {
+	cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		pane, ok := p.(*ImagePane)
 		if !ok {
 			return true
@@ -207,7 +208,7 @@ func (m Model) imageDisplayCmd() tea.Cmd {
 			content: img.ContentID(),
 			surface: uint32(pane.ID()),
 		})
-		cmds = append(cmds, m.context.images.display(displayArgs{
+		cmds = append(cmds, cx.images.display(displayArgs{
 			img:   img,
 			path:  pane.Path(),
 			id:    id,

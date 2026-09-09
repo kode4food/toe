@@ -23,7 +23,7 @@ type (
 	}
 
 	highlightRefresher interface {
-		documentHighlightCmd(*Context) tea.Cmd
+		documentHighlightCmd() tea.Cmd
 	}
 
 	previewImager interface {
@@ -151,9 +151,9 @@ func (c *Compositor) cursorCovered(cx *Context, from int, cur tea.Cursor) bool {
 	return false
 }
 
-func (c *Compositor) refreshEditorHighlight(cx *Context) tea.Cmd {
+func (c *Compositor) refreshEditorHighlight() tea.Cmd {
 	if root, ok := c.layers[0].(highlightRefresher); ok {
-		return root.documentHighlightCmd(cx)
+		return root.documentHighlightCmd()
 	}
 	return nil
 }

@@ -87,7 +87,7 @@ func (m *codeActionMenu) Layout(
 	if len(m.actions) == 0 || !m.valid(cx) {
 		return geom.Area{}, false
 	}
-	at := m.popupPos(cx, screen.Height)
+	at := m.popupPos(screen.Height)
 	w := m.width()
 	h := min(len(m.actions), codeActionMaxRows) + 2
 	return fitPopup(geom.Area{
@@ -146,8 +146,8 @@ func (m *codeActionMenu) width() int {
 	return w + 2
 }
 
-func (m *codeActionMenu) popupPos(cx *Context, screenH int) geom.Point {
-	return m.editor.popupAnchorBelowCaret(cx, popupAnchorArgs{
+func (m *codeActionMenu) popupPos(screenH int) geom.Point {
+	return m.editor.popupAnchorBelowCaret(popupAnchorArgs{
 		screenHeight: screenH,
 		fallbackRows: codeActionMaxRows,
 	})

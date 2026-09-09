@@ -174,8 +174,9 @@ func (r *popupTextRenderer) writeRun(
 }
 
 func (r *popupTextRenderer) highlightStyle(scope string) tui.Style {
-	bg := r.context.Theme().Get("ui.popup").BgColor()
-	if st, ok := r.context.Theme().TryGet(scope); ok {
+	th := r.context.Theme()
+	bg := th.Get("ui.popup").BgColor()
+	if st, ok := th.TryGet(scope); ok {
 		return inheritStyleBackground(st, bg)
 	}
 	st := inheritStyleBackground(highlight.DefaultStyle(scope), bg)

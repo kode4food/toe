@@ -32,13 +32,7 @@ func New(e *view.Editor, km *command.Keymaps) Model {
 			Style: doc.IndentStyle(),
 		})
 	})
-	ec := newEditorComponent()
 	w := newFileWatcher()
-	e.Tree().SetRedraw(ec.requestRedraw)
-	ec.requestRedraw()
-	registerImagePane(e)
-	registerTerminalPane(e)
-	registerBinaryPane(e)
 	cx := &Context{
 		Editor:       e,
 		Keymaps:      km,
@@ -48,6 +42,12 @@ func New(e *view.Editor, km *command.Keymaps) Model {
 		fileWatcher:  w,
 		windowTitle:  workspaceTitle(e.Cwd()),
 	}
+	ec := newEditorComponent(cx)
+	e.Tree().SetRedraw(ec.requestRedraw)
+	ec.requestRedraw()
+	registerImagePane(e)
+	registerTerminalPane(e)
+	registerBinaryPane(e)
 	comp := &Compositor{}
 	comp.Push(ec)
 	return Model{
@@ -101,6 +101,7 @@ func (m Model) Init() tea.Cmd {
 
 // Update delegates all events to the compositor
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	cx := m.context
 	switch msg := msg.(type) {
 	case imageTransmitMsg:
 		// Mark ready only after the escape reaches Bubble Tea's writer
@@ -108,9 +109,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return imageReadyMsg{id: msg.id, size: msg.size}
 		})
 	case imageReadyMsg:
-		m.context.images.sent[msg.id] = true
-		if m.context.images.placed[msg.id] == msg.size {
-			m.context.images.ready[msg.id] = msg.size
+		cx.images.sent[msg.id] = true
+		if cx.images.placed[msg.id] == msg.size {
+			cx.images.ready[msg.id] = msg.size
 			m.markImageDirty()
 		}
 		// re-query even when a size was requested while this was in flight,
@@ -118,36 +119,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.imageDisplayFrameCmd()
 	default:
 		m.component.cancelAutoSizeFor(msg)
-		cmd := m.compositor.HandleEvent(m.context, msg)
+		cmd := m.compositor.HandleEvent(cx, msg)
 		if next := m.component.takeNextLayer(); next != nil {
-			layer, nextCmd := next(m.context)
+			layer, nextCmd := next(cx)
 			if layer != nil {
 				m.compositor.Push(layer)
 			}
 			cmd = tea.Batch(cmd, nextCmd)
 		}
-		m.context.fileWatcher.sync(m.context.Editor)
+		cx.fileWatcher.sync(cx.Editor)
 		return m, tea.Batch(
-			cmd, m.component.autoSizeCmd(m.context), m.imageDisplayFrameCmd(),
+			cmd, m.component.autoSizeCmd(), m.imageDisplayFrameCmd(),
 		)
 	}
 }
 
 // View renders the current frame via the compositor
 func (m Model) View() tea.View {
+	cx := m.context
 	if m.compositor.size.IsEmpty() {
 		v := tea.NewView("")
 		v.AltScreen = true
 		return v
 	}
-	v := tea.NewView(m.compositor.Render(m.context))
+	v := tea.NewView(m.compositor.Render(cx))
 	v.AltScreen = true
-	v.WindowTitle = m.context.windowTitle
-	if m.context.Editor.Options().Mouse {
+	v.WindowTitle = cx.windowTitle
+	if cx.Editor.Options().Mouse {
 		v.MouseMode = tea.MouseModeCellMotion
 	}
 	v.ReportFocus = true
-	if cur, ok := m.compositor.Cursor(m.context); ok {
+	if cur, ok := m.compositor.Cursor(cx); ok {
 		v.Cursor = &cur
 	}
 	return v
@@ -169,13 +171,14 @@ func (m Model) imageDisplayFrameCmd() tea.Cmd {
 }
 
 func (m Model) hasImageSurface() bool {
+	cx := m.context
 	if p, ok := m.compositor.activePreviewImager(); ok {
-		if p.hasPreviewImage(m.context, m.compositor.size) {
+		if p.hasPreviewImage(cx, m.compositor.size) {
 			return true
 		}
 	}
 	found := false
-	m.context.Editor.Tree().Range(func(p view.Pane) bool {
+	cx.Editor.Tree().Range(func(p view.Pane) bool {
 		_, found = p.(*ImagePane)
 		return !found
 	})

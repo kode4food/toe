@@ -244,7 +244,7 @@ func special(s command.Special) command.KeyEvent {
 	return command.KeyEvent{Code: command.KeyCode{Special: s}}
 }
 
-func (s feedPickerSource) Load(*view.Editor) ui.PickerLoad {
+func (s feedPickerSource) Load() ui.PickerLoad {
 	ch := make(chan *ui.PickerItem, len(s.paths))
 	var slab ui.PickerItemSlab
 	for _, p := range s.paths {
@@ -258,9 +258,7 @@ func (s feedPickerSource) Load(*view.Editor) ui.PickerLoad {
 	return ui.PickerLoad{Feed: ch, Stop: func() {}}
 }
 
-func (feedPickerSource) Accept(
-	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
-) {
+func (feedPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 }
 
 func (feedPickerSource) SkipPreview() {}

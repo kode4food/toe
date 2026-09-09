@@ -48,6 +48,30 @@ func TestBufferPicker(t *testing.T) {
 		assert.Contains(t, doc.Text().String(), "AAA")
 	})
 
+	t.Run("no icon column in ascii", func(t *testing.T) {
+		dir := t.TempDir()
+		a := filepath.Join(dir, "a.txt")
+		assert.NoError(t, os.WriteFile(a, []byte("AAA"), 0o644))
+
+		e := view.NewEditor(dir)
+		e.Options().NerdFonts = false
+		_, err := e.OpenFile(a)
+		assert.NoError(t, err)
+
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "buffer_picker", m.PickerAction(bufferPicker),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 120, 30)
+		m = sendKey(m, 'p')
+
+		row := rawLineContaining(t, m.View().Content, "a.txt")
+
+		assert.NotContains(t, stripANSI(row), "   a.txt")
+	})
+
 	t.Run("accept records a jump back", func(t *testing.T) {
 		dir := t.TempDir()
 		a := filepath.Join(dir, "a.txt")

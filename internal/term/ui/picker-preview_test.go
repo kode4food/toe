@@ -616,12 +616,10 @@ func (p *pathPickerSource) ColumnProportions() []int {
 	return []int{1}
 }
 
-func (p *pathPickerSource) Accept(
-	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
-) {
+func (p *pathPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 }
 
-func (p *pathPickerSource) Load(*view.Editor) ui.PickerLoad {
+func (p *pathPickerSource) Load() ui.PickerLoad {
 	items := []*ui.PickerItem{{
 		Display:  "item",
 		Columns:  []string{"item"},

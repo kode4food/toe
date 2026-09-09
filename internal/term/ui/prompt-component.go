@@ -20,6 +20,7 @@ type (
 	// PromptComponent renders and handles an interactive prompt
 	PromptComponent struct {
 		dismissibleOverlay
+		context *Context
 
 		completion completionState
 		bg         tui.Color
@@ -116,6 +117,7 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 		key = i18n.PromptCommand
 	}
 	return &PromptComponent{
+		context: args.cx,
 		bg:      promptBackground(th),
 		editor:  args.editor,
 		kind:    args.kind,
@@ -134,19 +136,19 @@ func newPromptComponent(args promptComponentArgs) *PromptComponent {
 
 // HandleEvent drives editing, history, and completion of the input line
 func (p *PromptComponent) HandleEvent(
-	cx *Context, msg tea.Msg,
+	_ *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
-		return p.handleKey(cx, msg), nil
+		return p.handleKey(msg), nil
 	case tea.MouseClickMsg:
-		return p.handleMouseClick(cx, msg), nil
+		return p.handleMouseClick(msg), nil
 	case tea.MouseMotionMsg:
-		return p.handleMouseMotion(cx, msg), nil
+		return p.handleMouseMotion(msg), nil
 	case tea.MouseReleaseMsg:
 		return p.handleMouseRelease(msg), nil
 	case tea.MouseWheelMsg:
-		return p.handleMouseWheel(cx, msg), nil
+		return p.handleMouseWheel(msg), nil
 	case tea.MouseMsg:
 		return consumed(), nil
 	}
@@ -155,18 +157,18 @@ func (p *PromptComponent) HandleEvent(
 
 // Layout claims a centered popup over the frame
 func (p *PromptComponent) Layout(
-	cx *Context, screen geom.Size,
+	_ *Context, screen geom.Size,
 ) (geom.Area, bool) {
 	p.markDirty()
 	p.screen = screen
 	if !p.completion.done {
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 	}
 	within := geom.Size{
 		Width:  screen.Width,
 		Height: max(screen.Height-overlayKeepClear, 0),
 	}
-	frame := p.overlayFrame(cx, within)
+	frame := p.overlayFrame(within)
 	p.syncCompletionRows(frame.Size)
 	rows := p.completion.list.rows
 	size := geom.Size{Width: frame.Width, Height: promptChrome}
@@ -180,11 +182,11 @@ func (p *PromptComponent) Layout(
 // PaintBuffer draws the prompt popup, its input line and its completions
 func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 	return p.maybePaint(cx, pl.Size, func(buf *tui.Buffer) {
-		pop := p.popup(cx)
+		pop := p.popup()
 		box := geom.Area{Size: pl.Size}
 		area := pop.drawInto(buf, box)
 		drawPopupTitle(buf, box, p.title, pop.borderStyle)
-		p.paintLine(cx, buf, area)
+		p.paintLine(buf, area)
 		rows := p.completion.list.rows
 		if rows == 0 {
 			p.completion.bounds = geom.Area{}
@@ -203,7 +205,7 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 			Height: rows,
 		}
 		p.completion.bounds = list.Translate(pl.Point)
-		p.paintCompletions(cx, buf, list)
+		p.paintCompletions(buf, list)
 	})
 }
 
@@ -217,10 +219,10 @@ func (p *PromptComponent) Cursor(
 	})
 }
 
-func (p *PromptComponent) popup(cx *Context) popup {
-	st := p.rowStyle(cx)
+func (p *PromptComponent) popup() popup {
+	st := p.rowStyle()
 	return popup{
-		borderStyle:  st.Fg(pickerFrameStyle(cx).FgColor()),
+		borderStyle:  st.Fg(pickerFrameStyle(p.context).FgColor()),
 		contentStyle: st,
 		padX:         overlayPadX,
 	}
@@ -232,8 +234,8 @@ func (p *PromptComponent) textWidth() int {
 	return max(inner-label, 1)
 }
 
-func (p *PromptComponent) rowStyle(cx *Context) tui.Style {
-	return tui.Style{}.Bg(p.bg).Fg(cx.Theme().Get("ui.text").FgColor())
+func (p *PromptComponent) rowStyle() tui.Style {
+	return tui.Style{}.Bg(p.bg).Fg(p.context.Theme().Get("ui.text").FgColor())
 }
 
 func (p *PromptComponent) syncScroll() {
@@ -277,14 +279,12 @@ func (p *PromptComponent) inputLabel() string {
 	return p.head + " "
 }
 
-func (p *PromptComponent) handleKey(
-	cx *Context, msg tea.KeyPressMsg,
-) EventResult {
+func (p *PromptComponent) handleKey(msg tea.KeyPressMsg) EventResult {
 	k := FromTeaKey(msg)
 	pop := func(cmd tea.Cmd) EventResult {
-		return consumedWith(func(cx *Context, comp *Compositor) tea.Cmd {
+		return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
 			comp.Pop()
-			return tea.Batch(cmd, comp.refreshEditorHighlight(cx))
+			return tea.Batch(cmd, comp.refreshEditorHighlight())
 		})
 	}
 	switch {
@@ -298,7 +298,7 @@ func (p *PromptComponent) handleKey(
 	// Enter submits what is typed; only Tab reaches into the completions, so a
 	// line the user finished themselves is never completed over
 	case k.Code.Special == command.Enter:
-		return p.accept(cx, pop)
+		return p.accept(pop)
 
 	case k.Code.Special == command.Up,
 		k.Code.Char == 'p' && k.Mods == command.ModCtrl:
@@ -323,7 +323,7 @@ func (p *PromptComponent) handleKey(
 		start := promptWordLeft(runes, p.caret)
 		p.buf = string(slices.Delete(runes, start, p.caret))
 		p.caret = start
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 
 	case k.Code.Char == 'd' && k.Mods == command.ModAlt,
 		k.Code.Special == command.Delete && k.Mods.Has(command.ModCtrl),
@@ -331,7 +331,7 @@ func (p *PromptComponent) handleKey(
 		runes := []rune(p.buf)
 		end := promptWordRight(runes, p.caret)
 		p.buf = string(slices.Delete(runes, p.caret, end))
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 
 	case k.Code.Special == command.Backspace,
 		k.Code.Char == 'h' && k.Mods == command.ModCtrl:
@@ -340,7 +340,7 @@ func (p *PromptComponent) handleKey(
 			p.buf = string(slices.Delete(runes, p.caret-1, p.caret))
 			p.caret--
 		}
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 
 	case k.Code.Special == command.Delete,
 		k.Code.Char == 'd' && k.Mods == command.ModCtrl:
@@ -348,16 +348,16 @@ func (p *PromptComponent) handleKey(
 		if p.caret < len(runes) {
 			p.buf = string(slices.Delete(runes, p.caret, p.caret+1))
 		}
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 
 	case k.Code.Char == 'k' && k.Mods == command.ModCtrl:
 		p.buf = string([]rune(p.buf)[:p.caret])
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 
 	case k.Code.Char == 'u' && k.Mods == command.ModCtrl:
 		p.buf = string([]rune(p.buf)[p.caret:])
 		p.caret = 0
-		p.recalculateCompletion(cx)
+		p.recalculateCompletion()
 
 	case k.Code.Special == command.Left && k.Mods.Has(command.ModCtrl),
 		k.Code.Char == 'b' && k.Mods == command.ModAlt:
@@ -389,15 +389,16 @@ func (p *PromptComponent) handleKey(
 			runes = slices.Insert(runes, p.caret, k.Code.Char)
 			p.buf = string(runes)
 			p.caret++
-			p.recalculateCompletion(cx)
+			p.recalculateCompletion()
 		}
 	}
 	return consumed()
 }
 
 func (p *PromptComponent) accept(
-	cx *Context, pop func(tea.Cmd) EventResult,
+	pop func(tea.Cmd) EventResult,
 ) EventResult {
+	cx := p.context
 	switch p.kind {
 	case promptCmd:
 		res := execTypable(cx, strings.TrimSpace(p.buf))
@@ -459,16 +460,14 @@ func (p *PromptComponent) accept(
 	}
 }
 
-func (p *PromptComponent) paintLine(
-	cx *Context, buf *tui.Buffer, area geom.Area,
-) {
-	th := cx.Theme()
+func (p *PromptComponent) paintLine(buf *tui.Buffer, area geom.Area) {
+	th := p.context.Theme()
 	rowBg := tui.Style{}.Bg(p.bg)
 	labelSt := applyAccentStyle(styleOverlay{
 		base:    rowBg,
 		overlay: th.Get("ui.prompt"),
 	})
-	textSt := p.rowStyle(cx)
+	textSt := p.rowStyle()
 
 	label := p.inputLabel()
 	buf.FillRange(area.Point, area.Width, textSt)
@@ -509,10 +508,10 @@ func (p *PromptComponent) paintLine(
 	}
 }
 
-func (p *PromptComponent) overlayFrame(
-	cx *Context, within geom.Size,
-) geom.Area {
-	width := cx.pickerLayout.widthScale(p.layoutID(), defaultPromptWidthScale)
+func (p *PromptComponent) overlayFrame(within geom.Size) geom.Area {
+	width := p.context.pickerLayout.widthScale(
+		p.layoutID(), defaultPromptWidthScale,
+	)
 	size := geom.Size{
 		Width: max(scaleExtent(within.Width, width), 1),
 		Height: max(
@@ -526,10 +525,10 @@ func (p *PromptComponent) overlayFrame(
 }
 
 func (p *PromptComponent) handleMouseMotion(
-	cx *Context, msg tea.MouseMotionMsg,
+	msg tea.MouseMotionMsg,
 ) EventResult {
 	if msg.Button == tea.MouseLeft && p.dragEdge.active() {
-		p.resizeToEdge(cx, geom.Point{X: msg.X, Y: msg.Y})
+		p.resizeToEdge(geom.Point{X: msg.X, Y: msg.Y})
 	}
 	return consumed()
 }
@@ -543,9 +542,9 @@ func (p *PromptComponent) handleMouseRelease(
 	return consumed()
 }
 
-func (p *PromptComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
+func (p *PromptComponent) beginEdgeDrag(at geom.Point) bool {
 	drag := overlayDrag{
-		startWidth: cx.pickerLayout.widthScale(
+		startWidth: p.context.pickerLayout.widthScale(
 			p.layoutID(), defaultPromptWidthScale,
 		),
 	}
@@ -562,7 +561,8 @@ func (p *PromptComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
 	return true
 }
 
-func (p *PromptComponent) resizeToEdge(cx *Context, at geom.Point) {
+func (p *PromptComponent) resizeToEdge(at geom.Point) {
+	cx := p.context
 	cx.pickerLayout = p.dragEdge.applyTo(
 		cx.pickerLayout, p.layoutID(), at,
 		geom.Size{Width: p.screen.Width},

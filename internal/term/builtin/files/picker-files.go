@@ -49,41 +49,40 @@ type (
 // NewFilePicker opens a file picker rooted at the workspace directory
 func NewFilePicker(e *view.Editor) *ui.Picker {
 	root, _ := loader.FindWorkspace(e.Cwd())
-	return ui.NewPicker(e, newFilePickerSource(root))
+	return ui.NewPicker(e, newFilePickerSource(e, root))
 }
 
 // NewFilePickerInCWD opens a file picker rooted at the current working
 // directory
 func NewFilePickerInCWD(e *view.Editor) *ui.Picker {
-	return ui.NewPicker(e, newFilePickerSource(e.Cwd()))
+	return ui.NewPicker(e, newFilePickerSource(e, e.Cwd()))
 }
 
 // NewFilePickerInDir opens a file picker rooted at the given directory
 func NewFilePickerInDir(dir string) ui.PickerFunc {
 	return func(e *view.Editor) *ui.Picker {
-		return ui.NewPicker(e, newFilePickerSource(dir))
+		return ui.NewPicker(e, newFilePickerSource(e, dir))
 	}
 }
 
-func newFilePickerSource(dir string) *filePickerSource {
+func newFilePickerSource(e *view.Editor, dir string) *filePickerSource {
 	return &filePickerSource{
-		Ident: "open-file",
-		Label: "Open File",
-		Cols:  []string{""},
-		dir:   dir,
+		Editor: e,
+		Ident:  "open-file",
+		Label:  "Open File",
+		Cols:   []string{""},
+		dir:    dir,
 	}
 }
 
 // Load walks the workspace for files, honouring ignore rules
-func (f *filePickerSource) Load(e *view.Editor) ui.PickerLoad {
-	return startFilePickerFeed(f.dir, pickerListRows(e))
+func (f *filePickerSource) Load() ui.PickerLoad {
+	return startFilePickerFeed(f.dir, pickerListRows(f.Editor))
 }
 
 // ItemsForPath returns the row for a regular file at path, empty when the walk
 // excludes it. Symlinks resolve on a full reload
-func (f *filePickerSource) ItemsForPath(
-	_ *view.Editor, path string,
-) []*ui.PickerItem {
+func (f *filePickerSource) ItemsForPath(path string) []*ui.PickerItem {
 	root := resolvePickerWalkRoot(f.dir)
 	if !pathWithinRoot(rootedPath{path: path, root: root}) {
 		return nil
@@ -122,9 +121,9 @@ func (f *filePickerSource) ItemsForPath(
 
 // Accept opens the chosen file
 func (f *filePickerSource) Accept(
-	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
+	item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
-	ui.GotoPath(e, item.Location.Target.Path, nil, action)
+	ui.GotoPath(f.Editor, item.Location.Target.Path, nil, action)
 }
 
 func (w *pickerWalker) walkDir(dir string) bool {

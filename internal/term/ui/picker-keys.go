@@ -55,7 +55,7 @@ func (p *PickerComponent) handleKey(
 			return consumed(), ps.setQuery(string(runes[:len(runes)-1]))
 		}
 	default:
-		if r, cmd, ok := p.sourceKey(cx, ps, k); ok {
+		if r, cmd, ok := p.sourceKey(k); ok {
 			return r, cmd
 		}
 		if k.IsTypable() {
@@ -79,7 +79,7 @@ func (p *PickerComponent) acceptItem(
 			return r, cmd
 		}
 	}
-	ps.source.Accept(cx.Editor, item, action)
+	ps.source.Accept(item, action)
 	alignAcceptedItem(cx.Editor, item)
 	return dismiss()
 }
@@ -91,7 +91,7 @@ func (p *PickerComponent) navigateItem(
 	if !ok {
 		return EventResult{}, nil, false
 	}
-	fn := nav.Navigate(cx.Editor, item)
+	fn := nav.Navigate(item)
 	if fn == nil {
 		return EventResult{}, nil, false
 	}
@@ -115,13 +115,14 @@ func (p *PickerComponent) navigateItem(
 // an overlay the source hands back asks a question before it acts, so the rows
 // are left alone until its own answer arrives
 func (p *PickerComponent) sourceKey(
-	cx *Context, ps *Picker, k command.KeyEvent,
+	k command.KeyEvent,
 ) (EventResult, tea.Cmd, bool) {
+	ps := p.state
 	src, ok := ps.source.(PickerKeySource)
 	if !ok {
 		return EventResult{}, nil, false
 	}
-	overlay, handled := src.HandleKey(cx.Editor, ps.selection(), k)
+	overlay, handled := src.HandleKey(ps.selection(), k)
 	switch {
 	case !handled:
 		return EventResult{}, nil, false
@@ -132,7 +133,7 @@ func (p *PickerComponent) sourceKey(
 		}), nil, true
 	}
 	ps.clearPreviewCache()
-	ps.refreshItems(cx.Editor)
+	ps.refreshItems()
 	return consumed(), nil, true
 }
 

@@ -19,9 +19,9 @@ type (
 
 const resizeSettleDelay = 120 * time.Millisecond
 
-func (ec *EditorComponent) settlePaneResizeCmd(cx *Context) tea.Cmd {
+func (ec *EditorComponent) settlePaneResizeCmd() tea.Cmd {
 	if len(ec.resizeHold.held) == 0 {
-		cx.Editor.Tree().Range(func(p view.Pane) bool {
+		ec.context.Editor.Tree().Range(func(p view.Pane) bool {
 			if holder, ok := p.(view.ResizeHolder); ok {
 				holder.HoldResize()
 				ec.resizeHold.held = append(ec.resizeHold.held, holder)

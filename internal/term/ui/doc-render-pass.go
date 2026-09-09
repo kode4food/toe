@@ -41,15 +41,16 @@ var splitSepIntersectionChars = [...]string{
 }
 
 func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
-	th := r.context.Theme()
+	cx := r.context
+	th := cx.Theme()
 	bgTUI := th.Get("ui.bufferline.background")
 	activeTUI := th.Get("ui.bufferline.active")
 	inactiveTUI := th.Get("ui.bufferline")
 
 	buf.SetString(geom.Point{Y: y}, strings.Repeat(" ", r.size.Width), bgTUI)
 
-	focusedDoc := r.context.Editor.FocusedDocument()
-	docs := r.context.Editor.AllDocuments()
+	focusedDoc := cx.Editor.FocusedDocument()
+	docs := cx.Editor.AllDocuments()
 	slices.SortFunc(docs, func(a, b *view.Document) int {
 		return int(a.ID() - b.ID())
 	})
@@ -75,16 +76,17 @@ func (r *renderPass) renderBufferline(buf *tui.Buffer, y int) {
 }
 
 func (r *renderPass) editorCursor() (tea.Cursor, bool) {
-	opts := r.context.Editor.Options()
+	cx := r.context
+	opts := cx.Editor.Options()
 	// the popup is taking input, so the caret belongs at its breadcrumb
 	if r.editor.overlayHead() != "" {
-		return insertCursorAt(r.context, r.editor.cache.inputCaret)
+		return insertCursorAt(cx, r.editor.cache.inputCaret)
 	}
-	p := r.context.Editor.Tree().Get(r.context.Editor.Tree().Focus())
+	p := cx.Editor.Tree().Get(cx.Editor.Tree().Focus())
 	if pc, ok := p.(PaneCursor); ok {
-		return pc.Cursor(r.context)
+		return pc.Cursor(cx)
 	}
-	kind := opts.CursorShapeForMode(r.context.Editor.Mode())
+	kind := opts.CursorShapeForMode(cx.Editor.Mode())
 	switch kind {
 	case view.CursorKindHidden:
 		return tea.Cursor{}, false
@@ -96,11 +98,11 @@ func (r *renderPass) editorCursor() (tea.Cursor, bool) {
 		// terminal lost focus: use underline so position is still visible
 		kind = view.CursorKindUnderline
 	}
-	if at, ok := r.editor.caretScreenPos(r.context); ok {
+	if at, ok := r.editor.caretScreenPos(); ok {
 		return tea.Cursor{
 			X: at.X, Y: at.Y,
 			Shape: cursorKindToShape(kind),
-			Color: cursorColor(r.context, r.context.Editor.Mode()),
+			Color: cursorColor(cx, cx.Editor.Mode()),
 		}, true
 	}
 	return tea.Cursor{}, false
@@ -115,10 +117,11 @@ type renderPaneArgs struct {
 }
 
 func (r *renderPass) renderPane(args renderPaneArgs) {
+	cx := r.context
 	doc := args.doc
 	v := args.view
 	a := v.Area()
-	opts := r.context.Editor.Options()
+	opts := cx.Editor.Options()
 	scrolloff := opts.ScrollOff
 	contentH := v.ContentHeight()
 	editorX := a.X
@@ -129,7 +132,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, opts.Gutters)
 	format := doc.TextFormatForConfig(
-		max(editorW-gutterW, 0), r.context.Editor.Options(),
+		max(editorW-gutterW, 0), cx.Editor.Options(),
 	)
 	var vf *core.VisualMoveFormat
 	if format.SoftWrap && gutterW < editorW {
@@ -174,19 +177,20 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 }
 
 func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
+	cx := r.context
 	var force bool
 
-	key := styleKey{theme: th.Name(), mode: r.context.Editor.Mode()}
+	key := styleKey{theme: th.Name(), mode: cx.Editor.Mode()}
 	if cache.stylesKey != key {
 		force = true
 	}
 
-	if gen := r.context.Editor.Options().Gen; cache.lastOptionsGen != gen {
+	if gen := cx.Editor.Options().Gen; cache.lastOptionsGen != gen {
 		cache.lastOptionsGen = gen
 		force = true
 	}
 
-	if r.context.composition.changed {
+	if cx.composition.changed {
 		force = true
 	}
 
@@ -200,12 +204,12 @@ func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
 		force = true
 	}
 
-	if key := currentDiagnosticPopupKey(r.context); cache.lastDiagKey != key {
+	if key := currentDiagnosticPopupKey(cx); cache.lastDiagKey != key {
 		cache.lastDiagKey = key
 		force = true
 	}
 
-	if reg := r.context.Editor.ActiveRegister(); cache.lastReg != reg {
+	if reg := cx.Editor.ActiveRegister(); cache.lastReg != reg {
 		cache.lastReg = reg
 		force = true
 	}
@@ -239,10 +243,11 @@ type beginPaneRedrawArgs struct {
 }
 
 func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
+	cx := r.context
 	redraw := args.redrawAll
 	if !redraw {
-		forced := !r.context.composition.singleLayer &&
-			isPaneUnderOverlay(r.context, args.pane.Area(), args.yOffset)
+		forced := !cx.composition.singleLayer &&
+			isPaneUnderOverlay(cx, args.pane.Area(), args.yOffset)
 		redraw = forced || args.dirty
 	}
 	if !redraw {
@@ -255,7 +260,8 @@ func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
 }
 
 func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
-	th := r.context.Theme()
+	cx := r.context
+	th := cx.Theme()
 	cache := r.editor.cache
 
 	redrawAll := r.needsFullRedraw(cache, th)
@@ -265,18 +271,18 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	}
 
 	y0 := 0
-	if bufferlineVisible(r.context) {
+	if bufferlineVisible(cx) {
 		r.renderBufferline(buf, 0)
 		y0 = 1
 	}
 
-	focus := r.context.Editor.Tree().Focus()
-	r.context.Editor.Tree().RangeVisible(func(p view.Pane) bool {
+	focus := cx.Editor.Tree().Focus()
+	cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		focused := p.ID() == focus
-		paneBg := r.context.ThemeFor(focused).Get("ui.background")
+		paneBg := cx.ThemeFor(focused).Get("ui.background")
 		switch pane := p.(type) {
 		case *view.View:
-			doc := r.context.Editor.Document(pane.DocID())
+			doc := cx.Editor.Document(pane.DocID())
 			if doc == nil {
 				return true
 			}
@@ -342,7 +348,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	sepTUI := th.Get("ui.border")
 	vertCells := make(map[[2]int]bool)
 	horizCells := make(map[[2]int]bool)
-	r.context.Editor.Tree().WalkSeparators(func(s view.Separator) {
+	cx.Editor.Tree().WalkSeparators(func(s view.Separator) {
 		if s.Layout == view.LayoutVertical {
 			for row := s.Y; row < s.Y+s.Height; row++ {
 				vertCells[[2]int{s.X, row}] = true

@@ -150,7 +150,6 @@ func TestDefaults(t *testing.T) {
 			"cursor-shape.select",
 			"statusline.left",
 			"statusline.right",
-			"statusline.separator",
 			"picker.split.diagnostics",
 			"buffer-picker.start-position",
 			"file-explorer.hidden",

@@ -226,10 +226,11 @@ Automatic completion is in addition to `Ctrl+x`, which requests completions at a
 |--------|------|---------|-------------|
 | `statusline.left` | string[] | built-in | Left-aligned statusline elements |
 | `statusline.right` | string[] | built-in | Right-aligned statusline elements |
-| `statusline.separator` | string | `"│"` | Separator between status items |
 | `statusline.edges` | string | `"arrow"` | Divider shape: `arrow`, `round`, `slant`, or `line`. Without nerd fonts, `line` is used whatever the setting |
 
-Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `separator`, `spinner`, `version-control`, `macro-recording`, and `pane-maximized`.
+Valid statusline elements: `mode`, `file-name`, `file-base-name`, `file-absolute-path`, `file-status`, `file-modified-indicator`, `read-only-indicator`, `file-encoding`, `file-line-ending`, `file-indent-style`, `file-type`, `diagnostics`, `selections`, `primary-selection-length`, `position`, `position-percentage`, `total-line-numbers`, `spinner`, `version-control`, `macro-recording`, and `pane-maximized`.
+
+`file-status` marks a read-only or modified document with an icon next to its name, and shows both marks when both apply. `read-only-indicator` and `file-modified-indicator` draw the same marks, one condition each, for a statusline that wants them apart. Without nerd fonts the marks fall back to `ro` and `*`.
 
 `macro-recording` and `pane-maximized` report editor-wide state rather than the pane's own. `macro-recording` draws only on the statusline in the bottom-right corner of the frame, so a split shows it once.
 

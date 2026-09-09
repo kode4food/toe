@@ -215,21 +215,6 @@ func SettingsModule(r *command.Registry) command.Module {
 					view.StatusLineEdgeNames()...,
 				),
 			},
-			{
-				Key:       "statusline.separator",
-				DocString: "Character separating statusline elements",
-				Get: func(e *view.Editor) (string, error) {
-					return e.Options().StatusLineSeparator(), nil
-				},
-				Set: func(e *view.Editor, s string) error {
-					v, err := config.ParseStringLiteral(s)
-					if err != nil {
-						return err
-					}
-					e.Options().StatusLine.Separator = v
-					return nil
-				},
-			},
 		},
 		Section: &command.Section{
 			Config: cfg,

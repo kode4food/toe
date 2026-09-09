@@ -9,16 +9,6 @@ import (
 )
 
 func TestOptionsStatusLine(t *testing.T) {
-	t.Run("separator default", func(t *testing.T) {
-		o := view.Options{}
-		assert.Equal(t, "│", o.StatusLineSeparator())
-	})
-
-	t.Run("separator custom", func(t *testing.T) {
-		o := view.Options{StatusLine: view.StatusLine{Separator: "|"}}
-		assert.Equal(t, "|", o.StatusLineSeparator())
-	})
-
 	t.Run("left default elements returned", func(t *testing.T) {
 		o := view.Options{}
 		left := o.StatusLineLeft()

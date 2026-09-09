@@ -12,15 +12,29 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type statusElemFn func(*statusElemCtx) statusElem
+type (
+	statusElemFn func(*statusElemCtx) statusElem
+
+	statusDocFlags struct {
+		readOnly bool
+		modified bool
+	}
+)
+
+const (
+	statusReadOnlyIcon  = "\uf023" // '' - nf-fa-lock
+	statusModifiedIcon  = "\uf448" // '' - nf-oct-pencil
+	statusReadOnlyAscii = "ro"
+	statusModifiedAscii = "*"
+)
 
 var (
 	statusElemFns = map[view.StatusLineElement]statusElemFn{
 		view.StatusLineMode:             statusElemMode,
-		view.StatusLineSeparator:        statusElemSeparator,
 		view.StatusLineFileName:         statusElemFileName,
 		view.StatusLineFileBaseName:     statusElemFileBaseName,
 		view.StatusLineFileAbsolutePath: statusElemFileAbsPath,
+		view.StatusLineFileStatus:       statusElemFileStatus,
 		view.StatusLineReadOnly:         statusElemReadOnly,
 		view.StatusLineModified:         statusElemModified,
 		view.StatusLineSelections:       statusElemSelections,
@@ -55,13 +69,9 @@ func statusElemMode(s *statusElemCtx) statusElem {
 	return statusBadge(s.mode.String(), s.modeSt)
 }
 
-func statusElemSeparator(s *statusElemCtx) statusElem {
-	return statusElem{text: s.sep, style: s.sepSt, compact: true}
-}
-
 func statusElemFileName(s *statusElemCtx) statusElem {
 	return statusElem{
-		text:  s.doc.RelativeName(s.cwd),
+		text:  s.doc.RelativeName(s.editor.Cwd()),
 		style: s.baseTUI,
 		prose: true,
 	}
@@ -79,18 +89,19 @@ func statusElemFileAbsPath(s *statusElemCtx) statusElem {
 	return statusElem{text: s.doc.Path(), style: s.baseTUI, prose: true}
 }
 
+func statusElemFileStatus(s *statusElemCtx) statusElem {
+	return statusFlags(s, statusDocFlags{
+		readOnly: s.doc.ReadOnly(),
+		modified: s.doc.Modified(),
+	})
+}
+
 func statusElemReadOnly(s *statusElemCtx) statusElem {
-	if !s.doc.ReadOnly() {
-		return statusElem{}
-	}
-	return statusElem{text: "[readonly]", style: s.baseTUI}
+	return statusFlags(s, statusDocFlags{readOnly: s.doc.ReadOnly()})
 }
 
 func statusElemModified(s *statusElemCtx) statusElem {
-	if !s.doc.Modified() {
-		return statusElem{}
-	}
-	return statusElem{text: "[modified]", style: s.baseTUI}
+	return statusFlags(s, statusDocFlags{modified: s.doc.Modified()})
 }
 
 func statusElemSelections(s *statusElemCtx) statusElem {
@@ -195,14 +206,20 @@ func statusElemDiagnostics(s *statusElemCtx) statusElem {
 }
 
 func statusElemVersionControl(s *statusElemCtx) statusElem {
-	if s.vcsHead == "" {
+	vc := s.editor.VersionControl()
+	if vc == nil {
 		return statusElem{}
 	}
-	return statusElem{text: s.vcsHead, style: s.baseTUI}
+	head, _ := vc.HeadName(s.doc)
+	if head == "" {
+		return statusElem{}
+	}
+	return statusElem{text: head, style: s.baseTUI}
 }
 
 func statusElemSpinner(s *statusElemCtx) statusElem {
-	if !s.busy {
+	ls := s.editor.LanguageServerController()
+	if ls == nil || !ls.Busy() {
 		return statusElem{}
 	}
 	frame := spinFrames[s.spinFrame%len(spinFrames)]
@@ -225,18 +242,42 @@ func statusElemMacroRecording(s *statusElemCtx) statusElem {
 }
 
 func statusElemPaneMaximized(s *statusElemCtx) statusElem {
-	if !s.maximized {
+	if !s.editor.Tree().Maximized() {
 		return statusElem{}
 	}
 	return statusBadge(i18n.Text(i18n.StatusPaneMaximized), s.maximizeSt)
 }
 
 func statusElemRegister(s *statusElemCtx) statusElem {
-	if s.reg == 0 {
+	reg := s.editor.ActiveRegister()
+	if reg == 0 {
 		return statusElem{}
 	}
 	return statusElem{
-		text:  fmt.Sprintf("reg=%c", s.reg),
+		text:  fmt.Sprintf("reg=%c", reg),
 		style: s.baseTUI,
+	}
+}
+
+func statusFlags(s *statusElemCtx, flags statusDocFlags) statusElem {
+	ro, mod := statusReadOnlyAscii, statusModifiedAscii
+	if s.editor.Options().NerdFonts {
+		ro, mod = statusReadOnlyIcon, statusModifiedIcon
+	}
+	var marks []string
+	if flags.readOnly {
+		marks = append(marks, ro)
+	}
+	if flags.modified {
+		marks = append(marks, mod)
+	}
+	if len(marks) == 0 {
+		return statusElem{}
+	}
+	return statusElem{
+		text:    strings.Join(marks, " "),
+		style:   s.baseTUI,
+		compact: true,
+		prose:   true,
 	}
 }

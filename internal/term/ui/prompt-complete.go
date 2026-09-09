@@ -20,14 +20,14 @@ const (
 
 // recalculateCompletion refreshes the list, leaving it unselected so the typed
 // line stands on its own until Tab or an arrow reaches for a suggestion
-func (p *PromptComponent) recalculateCompletion(cx *Context) {
+func (p *PromptComponent) recalculateCompletion() {
 	p.completion.done = true
 	p.completion.list = listScroll{cursor: -1}
 	if p.kind != promptCmd {
 		p.completion.items = nil
 		return
 	}
-	p.completion.items = completeCommandLine(cx, p.buf)
+	p.completion.items = completeCommandLine(p.context, p.buf)
 	p.completion.list.count = len(p.completion.items)
 }
 
@@ -92,11 +92,10 @@ func (p *PromptComponent) syncCompletionRows(frame geom.Size) {
 	}
 }
 
-func (p *PromptComponent) paintCompletions(
-	cx *Context, buf *tui.Buffer, bounds geom.Area,
-) {
+func (p *PromptComponent) paintCompletions(buf *tui.Buffer, bounds geom.Area) {
+	cx := p.context
 	styles := promptCompletionStyles(cx)
-	styles.item = p.rowStyle(cx)
+	styles.item = p.rowStyle()
 	detail := cx.Theme().Get("ui.text.inactive").FgColor()
 	for row := range bounds.Height {
 		i := p.completion.list.scroll + row
@@ -141,11 +140,9 @@ func (p *PromptComponent) ensureCompletionVisible() {
 	p.completion.list.scroll = p.completion.list.ensureCursorVisible()
 }
 
-func (p *PromptComponent) handleMouseClick(
-	cx *Context, msg tea.MouseClickMsg,
-) EventResult {
+func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if msg.Button == tea.MouseLeft && p.beginEdgeDrag(cx, at) {
+	if msg.Button == tea.MouseLeft && p.beginEdgeDrag(at) {
 		return consumed()
 	}
 	if idx, ok := p.completion.list.indexAt(p.completion.bounds, at); ok {
@@ -155,13 +152,11 @@ func (p *PromptComponent) handleMouseClick(
 	return consumed()
 }
 
-func (p *PromptComponent) handleMouseWheel(
-	cx *Context, msg tea.MouseWheelMsg,
-) EventResult {
+func (p *PromptComponent) handleMouseWheel(msg tea.MouseWheelMsg) EventResult {
 	if !p.completion.bounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
 		return consumed()
 	}
-	p.completion.list.wheel(msg.Button, cx.Editor.Options().ScrollLines)
+	p.completion.list.wheel(msg.Button, p.context.Editor.Options().ScrollLines)
 	return consumed()
 }
 

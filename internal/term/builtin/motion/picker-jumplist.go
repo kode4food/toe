@@ -41,14 +41,16 @@ func JumplistModule(model ui.Model) command.Module {
 // JumplistPicker opens a picker listing the jump history for the focused view
 func JumplistPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &jumplistPickerSource{
-		Ident: "jumplist",
-		Label: "Jump List",
-		Cols:  []string{""},
+		Editor: e,
+		Ident:  "jumplist",
+		Label:  "Jump List",
+		Cols:   []string{""},
 	})
 }
 
 // Load lists the focused pane's jump history
-func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
+func (j *jumplistPickerSource) Load() ui.PickerLoad {
+	e := j.Editor
 	v := e.FocusedView()
 	if v == nil {
 		return ui.PickerLoad{Stop: func() {}}
@@ -82,10 +84,10 @@ func (j *jumplistPickerSource) Load(e *view.Editor) ui.PickerLoad {
 
 // Accept jumps to the chosen entry, moving the jump list head onto it
 func (j *jumplistPickerSource) Accept(
-	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
+	item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	if index, ok := item.Payload.(int); ok {
-		ui.GotoJump(e, index, action)
+		ui.GotoJump(j.Editor, index, action)
 	}
 }
 

@@ -175,10 +175,9 @@ func (r statusRow) elemsWidth(elems []statusElem, toLeft bool) int {
 
 func statusBadge(text string, style tui.Style) statusElem {
 	return statusElem{
-		text:    " " + text + " ",
-		style:   style,
-		pinned:  true,
-		compact: true,
+		text:   text,
+		style:  style,
+		pinned: true,
 	}
 }
 

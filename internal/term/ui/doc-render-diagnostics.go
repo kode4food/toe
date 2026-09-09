@@ -27,11 +27,12 @@ var diagnosticPopupScopes = [...]string{
 }
 
 func (r *renderPass) renderDiagnosticPopup(buf *tui.Buffer) {
-	doc := r.context.Editor.FocusedDocument()
+	cx := r.context
+	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return
 	}
-	v := r.context.Editor.FocusedView()
+	v := cx.Editor.FocusedView()
 	if v == nil {
 		return
 	}
@@ -49,6 +50,7 @@ func (r *renderPass) renderDiagnosticPopup(buf *tui.Buffer) {
 func (r *renderPass) drawDiagnosticPopup(
 	buf *tui.Buffer, text string, severity view.DiagnosticSeverity,
 ) {
+	cx := r.context
 	maxW := min(buf.Width, 60)
 	lines := diagnosticPopupLines(diagnosticPopupLinesArgs{
 		text:     text,
@@ -62,7 +64,7 @@ func (r *renderPass) drawDiagnosticPopup(
 	for _, line := range lines {
 		bodyW = max(bodyW, runewidth.StringWidth(line))
 	}
-	st := diagnosticPopupStyle(r.context, severity)
+	st := diagnosticPopupStyle(cx, severity)
 	pop := popup{
 		borderStyle:  st,
 		contentStyle: st,
@@ -72,7 +74,7 @@ func (r *renderPass) drawDiagnosticPopup(
 	h := len(lines) + 2
 	x := max(buf.Width-w, 0)
 	y := 0
-	if bufferlineVisible(r.context) {
+	if bufferlineVisible(cx) {
 		y = 1
 	}
 	if y+h > buf.Height {

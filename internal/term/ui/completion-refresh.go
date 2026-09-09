@@ -34,36 +34,36 @@ func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 	c.items = filterCompletionItems(c.all, query)
 	if len(c.items) == 0 {
 		if c.incomplete {
-			return c.refreshCmd(cx)
+			return c.refreshCmd()
 		}
 		comp.Pop()
 		return nil
 	}
 	if c.manual {
 		c.restoreCursor(selected)
-		return c.refreshCmd(cx)
+		return c.refreshCmd()
 	}
 	c.resetCursor()
-	return c.refreshCmd(cx)
+	return c.refreshCmd()
 }
 
 func (c *completionComponent) handleRefreshMsg(
-	cx *Context, msg completionRefreshMsg,
+	msg completionRefreshMsg,
 ) (EventResult, tea.Cmd) {
 	if msg.layer != c {
 		return ignored(), nil
 	}
-	if msg.gen != c.refreshGen || !c.refreshValid(cx, msg) {
+	if msg.gen != c.refreshGen || !c.refreshValid(msg) {
 		return consumed(), nil
 	}
 	if msg.err != nil {
-		cx.Editor.SetStatusMsg(i18n.ErrorText(msg.err))
+		c.context.Editor.SetStatusMsg(i18n.ErrorText(msg.err))
 		return consumed(), nil
 	}
 	c.markDirty()
 	c.all = msg.res.Items
 	c.incomplete = msg.res.Incomplete
-	query, ok := c.query(cx)
+	query, ok := c.query()
 	if !ok {
 		return consumedWith(popLayer), nil
 	}
@@ -80,7 +80,8 @@ func (c *completionComponent) handleRefreshMsg(
 	return consumed(), nil
 }
 
-func (c *completionComponent) refreshCmd(cx *Context) tea.Cmd {
+func (c *completionComponent) refreshCmd() tea.Cmd {
+	cx := c.context
 	if !c.incomplete {
 		return nil
 	}
@@ -113,12 +114,11 @@ func (c *completionComponent) refreshCmd(cx *Context) tea.Cmd {
 	}
 }
 
-func (c *completionComponent) refreshValid(
-	cx *Context, msg completionRefreshMsg,
-) bool {
-	if !c.valid(cx) {
+func (c *completionComponent) refreshValid(msg completionRefreshMsg) bool {
+	if !c.valid() {
 		return false
 	}
+	cx := c.context
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil || doc.Revision() != msg.rev {
 		return false
@@ -131,7 +131,8 @@ func (c *completionComponent) refreshValid(
 	return pos == msg.pos
 }
 
-func (c *completionComponent) query(cx *Context) (string, bool) {
+func (c *completionComponent) query() (string, bool) {
+	cx := c.context
 	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return "", false

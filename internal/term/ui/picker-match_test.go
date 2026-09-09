@@ -129,7 +129,7 @@ type sectionPickerSource struct {
 	rows int
 }
 
-func (s sectionPickerSource) Load(*view.Editor) ui.PickerLoad {
+func (s sectionPickerSource) Load() ui.PickerLoad {
 	var slab ui.PickerItemSlab
 	items := []*ui.PickerItem{
 		slab.Add(ui.PickerItem{Display: "First Group", Section: true}),
@@ -148,9 +148,7 @@ func (s sectionPickerSource) Load(*view.Editor) ui.PickerLoad {
 	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
-func (sectionPickerSource) Accept(
-	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
-) {
+func (sectionPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 }
 
 func (sectionPickerSource) SkipPreview() {}

@@ -175,13 +175,6 @@ func TestConfigOptions(t *testing.T) {
 		assert.Equal(t, "default-line-ending: lf", res.Message)
 	})
 
-	t.Run("get/set statusline separator", func(t *testing.T) {
-		e, km := test.Env(t, "")
-		test.RunCmdArgs(t, km, e, "set_option", "statusline.separator |")
-		res := test.RunCmdArgs(t, km, e, "get_option", "statusline.separator")
-		assert.Equal(t, "statusline.separator: |", res.Message)
-	})
-
 	t.Run("get/set statusline edges", func(t *testing.T) {
 		e, km := test.Env(t, "")
 		test.RunCmdArgs(t, km, e, "set_option", "statusline.edges round")

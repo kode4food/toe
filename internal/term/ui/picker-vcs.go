@@ -15,10 +15,20 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type changedFilePickerSource struct {
-	PickerBase
-	warmGen atomic.Uint64
-}
+type (
+	changedFilePickerSource struct {
+		PickerBase
+		warmGen atomic.Uint64
+	}
+
+	changedFileScan struct {
+		vcs     view.VersionControl
+		changes []view.FileChange
+		cwd     string
+		err     error
+		nerd    bool
+	}
+)
 
 const (
 	fileModifiedIcon  = "\uf459" // '' - nf-oct-diff_modified
@@ -74,6 +84,7 @@ var (
 // reports as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
+		Editor:      e,
 		Ident:       "changed-files",
 		Label:       "Changed Files",
 		Cols:        []string{"", ""},
@@ -83,29 +94,21 @@ func NewChangedFilePicker(e *view.Editor) *Picker {
 }
 
 // Load lists the files changed against version control
-func (c *changedFilePickerSource) Load(e *view.Editor) PickerLoad {
-	vc := e.VersionControl()
-	if vc == nil {
+func (c *changedFilePickerSource) Load() PickerLoad {
+	scan, ok := c.scan()
+	if !ok {
 		return PickerLoad{Stop: func() {}}
 	}
-	changes, err := vc.ChangedFiles()
-	if err != nil {
-		e.SetStatusMsg(i18n.ErrorText(err))
+	if scan.err != nil {
+		c.Editor.SetStatusMsg(i18n.ErrorText(scan.err))
 		return PickerLoad{Stop: func() {}}
-	}
-	// providers report symlink-resolved paths, so resolve the workspace root
-	// the same way so names relativize cleanly
-	cwd := e.Cwd()
-	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
-		cwd = resolved
 	}
 
-	nerd := e.Options().NerdFonts
 	feed := make(chan *PickerItem)
 	done := make(chan struct{})
 	gen := c.warmGen.Add(1)
 	go func() {
-		rows := changedFileRows(vc, changes, cwd, nerd)
+		rows := scan.rows()
 		for _, item := range rows {
 			select {
 			case feed <- item:
@@ -131,20 +134,12 @@ func (c *changedFilePickerSource) Load(e *view.Editor) PickerLoad {
 
 // Items returns the whole row set at once, letting a refresh swap the list
 // in place rather than emptying and re-streaming it
-func (c *changedFilePickerSource) Items(e *view.Editor) []*PickerItem {
-	vc := e.VersionControl()
-	if vc == nil {
+func (c *changedFilePickerSource) Items() []*PickerItem {
+	scan, ok := c.scan()
+	if !ok || scan.err != nil {
 		return nil
 	}
-	changes, err := vc.ChangedFiles()
-	if err != nil {
-		return nil
-	}
-	cwd := e.Cwd()
-	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
-		cwd = resolved
-	}
-	rows := changedFileRows(vc, changes, cwd, e.Options().NerdFonts)
+	rows := scan.rows()
 	// the picker compacts the slice it is handed, so the warmer walks its own
 	go c.warmHunks(slices.Clone(rows), c.warmGen.Add(1))
 	return rows
@@ -152,29 +147,16 @@ func (c *changedFilePickerSource) Items(e *view.Editor) []*PickerItem {
 
 // ItemsForPath returns the current VCS rows for path, one per stage, empty
 // when it is no longer a changed file
-func (c *changedFilePickerSource) ItemsForPath(
-	e *view.Editor, path string,
-) []*PickerItem {
-	vc := e.VersionControl()
-	if vc == nil {
+func (c *changedFilePickerSource) ItemsForPath(path string) []*PickerItem {
+	scan, ok := c.scan()
+	if !ok || scan.err != nil {
 		return nil
-	}
-	changes, err := vc.ChangedFiles()
-	if err != nil {
-		return nil
-	}
-	cwd := e.Cwd()
-	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
-		cwd = resolved
 	}
 	key := loader.CanonicalPath(path)
-	nerd := e.Options().NerdFonts
 	var out []*PickerItem
-	for _, fc := range changes {
+	for _, fc := range scan.changes {
 		if loader.CanonicalPath(fc.Path) == key {
-			out = append(out, changedFileItem(changedFileItemArgs{
-				vcs: vc, change: fc, cwd: cwd, nerd: nerd,
-			}))
+			out = append(out, scan.item(nil, fc))
 		}
 	}
 	return out
@@ -182,10 +164,11 @@ func (c *changedFilePickerSource) ItemsForPath(
 
 // Accept opens the chosen file
 func (c *changedFilePickerSource) Accept(
-	e *view.Editor, item *PickerItem, action PickerAcceptAction,
+	item *PickerItem, action PickerAcceptAction,
 ) {
 	GotoPath(
-		e, item.Location.Target.Path, GotoLines(item.TargetLines()), action,
+		c.Editor, item.Location.Target.Path,
+		GotoLines(item.TargetLines()), action,
 	)
 }
 
@@ -193,8 +176,9 @@ func (c *changedFilePickerSource) Accept(
 // ctrl+g, and reverts a row with ctrl+r, which unstages a staged row and
 // discards the changes of an unstaged one
 func (c *changedFilePickerSource) HandleKey(
-	e *view.Editor, item *PickerItem, k command.KeyEvent,
+	item *PickerItem, k command.KeyEvent,
 ) (BufferOverlayComponent, bool) {
+	e := c.Editor
 	vc := e.VersionControl()
 	if item == nil || vc == nil || k.Mods != command.ModCtrl {
 		return nil, false
@@ -231,6 +215,79 @@ func (c *changedFilePickerSource) warmHunks(
 	}
 }
 
+func (c *changedFileScan) rows() []*PickerItem {
+	out := changedFileSections()
+	var slab PickerItemSlab
+	for _, fc := range c.changes {
+		out = append(out, c.item(&slab, fc))
+	}
+	return out
+}
+
+func (c *changedFileScan) item(
+	slab *PickerItemSlab, fc view.FileChange,
+) *PickerItem {
+	display := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
+		Path:    fc.Path,
+		BaseDir: c.cwd,
+	})
+	// a rename shows only its destination, the source is in the diff preview
+	lbl, sec := PickerNamePath(display)
+	vc := c.vcs
+	hunks := sync.OnceValue(func() []view.DiffHunk {
+		return changedFileHunks(vc, fc)
+	})
+	basePath := fc.Path
+	if fc.Kind == view.FileChangeRenamed {
+		basePath = fc.FromPath
+	}
+	group := changedFileUnstaged
+	if fc.Staged {
+		group = changedFileStaged
+	}
+	item := PickerItem{
+		Display:     display,
+		Group:       group,
+		Columns:     []string{changedFileIcon(fc.Kind, c.nerd), lbl},
+		StyleScopes: []string{changedFileScope(fc.Kind), ""},
+		SortKey:     display,
+		SecFrom:     sec,
+		hunks:       hunks,
+		DiffPreview: fc.Kind != view.FileChangeConflict,
+		DiffKind:    fc.Kind,
+		BasePath:    basePath,
+		Location: PickerLocation{
+			Target: PickerTarget{Path: fc.Path, Variant: group},
+		},
+	}
+	if slab != nil {
+		return slab.Add(item)
+	}
+	return &item
+}
+
+// providers report symlink-resolved paths, so the workspace root resolves the
+// same way and names relativize cleanly
+func (c *changedFilePickerSource) scan() (*changedFileScan, bool) {
+	e := c.Editor
+	vc := e.VersionControl()
+	if vc == nil {
+		return nil, false
+	}
+	cwd := e.Cwd()
+	if resolved, err := filepath.EvalSymlinks(cwd); err == nil {
+		cwd = resolved
+	}
+	changes, err := vc.ChangedFiles()
+	return &changedFileScan{
+		vcs:     vc,
+		changes: changes,
+		cwd:     cwd,
+		nerd:    e.Options().NerdFonts,
+		err:     err,
+	}, true
+}
+
 func confirmDiscard(item *PickerItem) BufferOverlayComponent {
 	question := i18n.Text(statusPickerDiscardKey, i18n.Vars{
 		"file": item.Display,
@@ -259,23 +316,6 @@ func applyToRow(
 	}
 }
 
-func changedFileRows(
-	vc view.VersionControl, changes []view.FileChange, cwd string, nerd bool,
-) []*PickerItem {
-	out := changedFileSections()
-	var slab PickerItemSlab
-	for _, fc := range changes {
-		out = append(out, changedFileItem(changedFileItemArgs{
-			slab:   &slab,
-			vcs:    vc,
-			change: fc,
-			cwd:    cwd,
-			nerd:   nerd,
-		}))
-	}
-	return out
-}
-
 func changedFileSections() []*PickerItem {
 	return []*PickerItem{
 		{
@@ -289,54 +329,6 @@ func changedFileSections() []*PickerItem {
 			Section: true,
 		},
 	}
-}
-
-type changedFileItemArgs struct {
-	slab   *PickerItemSlab
-	vcs    view.VersionControl
-	change view.FileChange
-	cwd    string
-	nerd   bool
-}
-
-func changedFileItem(args changedFileItemArgs) *PickerItem {
-	fc := args.change
-	display := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
-		Path:    fc.Path,
-		BaseDir: args.cwd,
-	})
-	// a rename shows only its destination, the source is in the diff preview
-	lbl, sec := PickerNamePath(display)
-	hunks := sync.OnceValue(func() []view.DiffHunk {
-		return changedFileHunks(args.vcs, fc)
-	})
-	basePath := fc.Path
-	if fc.Kind == view.FileChangeRenamed {
-		basePath = fc.FromPath
-	}
-	group := changedFileUnstaged
-	if fc.Staged {
-		group = changedFileStaged
-	}
-	item := PickerItem{
-		Display:     display,
-		Group:       group,
-		Columns:     []string{changedFileIcon(fc.Kind, args.nerd), lbl},
-		StyleScopes: []string{changedFileScope(fc.Kind), ""},
-		SortKey:     display,
-		SecFrom:     sec,
-		hunks:       hunks,
-		DiffPreview: fc.Kind != view.FileChangeConflict,
-		DiffKind:    fc.Kind,
-		BasePath:    basePath,
-		Location: PickerLocation{
-			Target: PickerTarget{Path: fc.Path, Variant: group},
-		},
-	}
-	if args.slab != nil {
-		return args.slab.Add(item)
-	}
-	return &item
 }
 
 func changedFileHunks(

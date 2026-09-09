@@ -654,7 +654,7 @@ func (c *controlledDynamicSource) ColumnProportions() []int {
 
 func (c *controlledDynamicSource) Search(query string) { c.query = query }
 
-func (c *controlledDynamicSource) Load(*view.Editor) ui.PickerLoad {
+func (c *controlledDynamicSource) Load() ui.PickerLoad {
 	if c.query == "" {
 		return ui.PickerLoad{Stop: func() {}}
 	}
@@ -662,6 +662,6 @@ func (c *controlledDynamicSource) Load(*view.Editor) ui.PickerLoad {
 }
 
 func (c *controlledDynamicSource) Accept(
-	_ *view.Editor, _ *ui.PickerItem, _ ui.PickerAcceptAction,
+	_ *ui.PickerItem, _ ui.PickerAcceptAction,
 ) {
 }

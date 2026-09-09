@@ -2,44 +2,92 @@ package ui
 
 import (
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 )
 
-func (p *PickerComponent) drawPickerBox(
-	cx *Context, buf *tui.Buffer, area geom.Area, lw int,
-) {
+type pickerRender struct {
+	component *PickerComponent
+	context   *Context
+	buffer    *tui.Buffer
+	theme     *theme.Theme
+
+	columns     []string
+	widths      []int
+	width       int
+	matchColumn int
+	header      bool
+	frame       pickerBoxFrame
+	itemStyle   tui.Style
+	matchStyle  tui.Style
+	selectStyle tui.Style
+	selectMatch tui.Style
+	section     tui.Style
+	count       tui.Style
+}
+
+func newPickerRender(
+	p *PickerComponent, cx *Context, buf *tui.Buffer,
+) *pickerRender {
 	ps := p.state
-	innerH := area.Height - 2
-
 	cols := ps.source.Columns()
-	showHeader := pickerHasHeader(cols) && len(ps.list.matched) > 0
-	headerH := 0
-	if showHeader {
-		headerH = 1
+	return &pickerRender{
+		component:   p,
+		context:     cx,
+		buffer:      buf,
+		theme:       cx.Theme(),
+		columns:     cols,
+		matchColumn: ps.source.MatchColumn(),
+		header:      pickerHasHeader(cols) && len(ps.list.matched) > 0,
+		frame: pickerBoxFrame{
+			borderStyle:  pickerFrameStyle(cx),
+			contentStyle: pickerContentStyle(cx),
+			title:        ps.source.Title(),
+		},
+		itemStyle:   pickerItemStyle(cx),
+		matchStyle:  pickerMatchStyle(cx),
+		selectStyle: pickerSelStyle(cx),
+		selectMatch: pickerSelMatchStyle(cx),
+		section:     pickerSectionStyle(cx),
+		count:       pickerCountStyle(cx),
 	}
-	ps.list.rows = max(innerH-2-headerH, 1)
+}
 
-	frame := pickerBoxFrame{
-		borderStyle:  pickerFrameStyle(cx),
-		contentStyle: pickerContentStyle(cx),
-		title:        ps.source.Title(),
-	}
-	areas := frame.drawSplit(drawSplitArgs{
-		buffer:    buf,
+func (p *pickerRender) drawBox(area geom.Area, lw int) {
+	areas := p.frame.drawSplit(drawSplitArgs{
+		buffer:    p.buffer,
 		area:      area,
 		leftWidth: lw,
 		cutY:      2,
 	})
+	p.drawList(areas.left)
+	p.drawPreview(areas.right)
+}
 
-	p.caret = writePickerPromptRow(cx, buf, areas.left, ps)
-	itemY := areas.left.Y + 2 // row 1 is the cut-separator, skip it
-	if showHeader {
-		writePickerHeader(cx, buf, geom.Area{
-			X:      areas.left.X,
+func (p *pickerRender) drawPane(area geom.Area) {
+	p.drawList(p.frame.drawSingle(p.buffer, area, 2))
+}
+
+func (p *pickerRender) drawList(area geom.Area) {
+	ps := p.component.state
+	headerH := 0
+	if p.header {
+		headerH = 1
+	}
+	ps.list.rows = max(area.Height-2-headerH, 1)
+	p.width = area.Width
+	if len(p.columns) > 1 {
+		p.widths = pickerColumnWidths(ps, max(p.width-pickerMarkerW-1, 0))
+	}
+	p.component.caret = p.writePromptRow(area)
+	itemY := area.Y + 2 // row 1 is the cut-separator, skip it
+	if p.header {
+		p.writeHeader(geom.Area{
+			X:      area.X,
 			Y:      itemY,
-			Width:  areas.left.Width,
+			Width:  area.Width,
 			Height: 1,
-		}, ps)
+		})
 		itemY++
 	}
 	ps.clampScroll()
@@ -48,84 +96,27 @@ func (p *PickerComponent) drawPickerBox(
 		if idx >= len(ps.list.matched) {
 			break
 		}
-		writePickerItem(
-			buf, geom.Point{X: areas.left.X, Y: itemY + i},
-			&pickerItemRender{
-				picker: ps, match: ps.list.matched[idx],
-				width:    areas.left.Width,
-				selected: idx == ps.list.cursor, context: cx,
-			},
-		)
-	}
-	if len(ps.list.matched) == 0 {
-		writePickerCenteredHint(cx, buf, geom.Area{
-			X:      areas.left.X,
-			Y:      itemY,
-			Width:  areas.left.Width,
-			Height: ps.list.rows,
-		}, pickerEmptyHint(ps))
-	}
-
-	p.drawPreviewInto(cx, buf, areas.right)
-}
-
-func (p *PickerComponent) drawPickerPane(
-	cx *Context, buf *tui.Buffer, area geom.Area,
-) {
-	ps := p.state
-	innerH := area.Height - 2
-
-	cols := ps.source.Columns()
-	showHeader := pickerHasHeader(cols) && len(ps.list.matched) > 0
-	headerH := 0
-	if showHeader {
-		headerH = 1
-	}
-	ps.list.rows = max(innerH-2-headerH, 1)
-
-	frame := pickerBoxFrame{
-		borderStyle:  pickerFrameStyle(cx),
-		contentStyle: pickerContentStyle(cx),
-		title:        ps.source.Title(),
-	}
-	area = frame.drawSingle(buf, area, 2)
-
-	p.caret = writePickerPromptRow(cx, buf, area, ps)
-	itemY := area.Y + 2 // row 1 is the cut-separator, skip it
-	if showHeader {
-		writePickerHeader(cx, buf, geom.Area{
-			X: area.X, Y: itemY,
-			Width: area.Width, Height: 1,
-		}, ps)
-		itemY++
-	}
-	ps.clampScroll()
-	for i := 0; ps.list.scroll+i < len(ps.list.matched) &&
-		i < ps.list.rows; i++ {
-		idx := ps.list.scroll + i
-		writePickerItem(buf,
+		p.writeItem(
 			geom.Point{X: area.X, Y: itemY + i},
-			&pickerItemRender{
-				picker: ps, match: ps.list.matched[idx],
-				width:    area.Width,
-				selected: idx == ps.list.cursor, context: cx,
-			},
+			ps.list.matched[idx], idx == ps.list.cursor,
 		)
 	}
 	if len(ps.list.matched) == 0 {
-		writePickerCenteredHint(cx, buf, geom.Area{
-			X: area.X, Y: itemY,
+		p.writeCenteredHint(geom.Area{
+			X:      area.X,
+			Y:      itemY,
 			Width:  area.Width,
 			Height: ps.list.rows,
 		}, pickerEmptyHint(ps))
 	}
 }
 
-func (p *PickerComponent) drawPreviewInto(
-	cx *Context, buf *tui.Buffer, area geom.Area,
-) {
-	ps := p.state
-	p.previewBounds = area
+func (p *pickerRender) drawPreview(area geom.Area) {
+	cx := p.context
+	comp := p.component
+	ps := comp.state
+
+	comp.previewBounds = area
 	if ps.list.cursor != ps.preview.scrollFor {
 		ps.preview.vScroll = 0
 		ps.preview.hScroll = 0
@@ -139,18 +130,18 @@ func (p *PickerComponent) drawPreviewInto(
 	ctx := previewCtx{
 		picker: ps,
 		item:   item,
-		editor: cx.Editor,
+		editor: ps.editor,
 		syntax: cx.Syntax,
 		images: cx.images,
 		size:   geom.Size{Width: innerW, Height: area.Height},
-		wrap:   p.previewWrapWidth(innerW),
-		theme:  cx.Theme(),
-		styles: p.styles,
+		wrap:   comp.previewWrapWidth(innerW),
+		theme:  p.theme,
+		styles: comp.styles,
 		hlFrom: -1,
 	}
 	if lr := item.TargetLines(); lr != nil {
 		ctx.hlFrom = lr.From
 		ctx.hlTo = lr.To
 	}
-	ctx.renderInto(buf, area.Point.Add(geom.Point{X: overlayPadX}))
+	ctx.renderInto(p.buffer, area.Point.Add(geom.Point{X: overlayPadX}))
 }

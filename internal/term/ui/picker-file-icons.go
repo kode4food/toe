@@ -43,18 +43,16 @@ var (
 	}
 )
 
-func pickerItemFileIcon(
-	e *view.Editor, p *Picker, item *PickerItem,
-) (pickerFileMarker, int) {
+func pickerItemFileIcon(p *Picker, item *PickerItem) (pickerFileMarker, int) {
 	column := pickerFileIconColumn(p, item)
-	if !e.Options().NerdFonts || item.Section || column < 0 {
+	if !p.editor.Options().NerdFonts || item.Section || column < 0 {
 		return pickerFileMarker{}, column
 	}
 	if item.Directory {
 		return pickerDefaultDirectoryIcon, column
 	}
 	path := item.Location.Target.Path
-	return p.fileIcon(path, e.Document(item.Location.Target.ID)), column
+	return p.fileIcon(path, p.editor.Document(item.Location.Target.ID)), column
 }
 
 func (p *Picker) fileIcon(path string, doc *view.Document) pickerFileMarker {

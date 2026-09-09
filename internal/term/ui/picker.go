@@ -21,6 +21,7 @@ import (
 type (
 	// Picker holds the runtime state for an open picker overlay
 	Picker struct {
+		editor *view.Editor
 		source PickerSource
 
 		list      listState
@@ -64,7 +65,7 @@ type (
 	// refresh can replace the list without a visible rebuild
 	SnapshotPickerSource interface {
 		PickerSource
-		Items(e *view.Editor) []*PickerItem
+		Items() []*PickerItem
 	}
 
 	// PickerFunc constructs a Picker from the editor
@@ -92,8 +93,8 @@ type (
 		Columns() []string
 		MatchColumn() int
 		ColumnProportions() []int
-		Load(*view.Editor) PickerLoad
-		Accept(*view.Editor, *PickerItem, PickerAcceptAction)
+		Load() PickerLoad
+		Accept(*PickerItem, PickerAcceptAction)
 	}
 
 	// PickerPreviewSkipper marks picker sources that never render previews
@@ -107,7 +108,7 @@ type (
 		PickerSource
 		// ItemsForPath returns the current rows for path, empty when the source
 		// no longer contains it
-		ItemsForPath(e *view.Editor, path string) []*PickerItem
+		ItemsForPath(path string) []*PickerItem
 	}
 
 	// StaticPickerSource extends PickerSource with fuzzy-match filtering
@@ -129,9 +130,7 @@ type (
 		PickerSource
 		// HandleKey acts on a key, reporting whether it did. Any overlay it
 		// returns is pushed above the picker, such as a confirmation
-		HandleKey(
-			*view.Editor, *PickerItem, command.KeyEvent,
-		) (BufferOverlayComponent, bool)
+		HandleKey(*PickerItem, command.KeyEvent) (BufferOverlayComponent, bool)
 	}
 
 	// NavigablePickerSource extends PickerSource for pickers that can drill
@@ -139,7 +138,7 @@ type (
 	// picker, or nil to fall through to Accept
 	NavigablePickerSource interface {
 		PickerSource
-		Navigate(*view.Editor, *PickerItem) PickerFunc
+		Navigate(*PickerItem) PickerFunc
 	}
 
 	// PickerItem is a single row shown in the picker list. A Section row labels
@@ -198,10 +197,11 @@ type (
 		Indices []int
 	}
 
-	// PickerBase is an optional starting point a source can embed for default
-	// id, title, column, and fuzzy-match behavior. A source is free to
-	// implement those methods itself instead
+	// PickerBase is embedded by a picker source for the editor it was opened
+	// against, and as an optional starting point for default id, title, column,
+	// and fuzzy-match behavior
 	PickerBase struct {
+		Editor      *view.Editor
 		Ident       string
 		Label       string
 		Cols        []string
@@ -243,6 +243,7 @@ const (
 // after mounting the component
 func NewPicker(e *view.Editor, source PickerSource) *Picker {
 	p := &Picker{
+		editor: e,
 		source: source,
 		list: listState{
 			scores: map[pickerScoreKey]*MatchResult{},
@@ -255,7 +256,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 			cancel: func() {},
 		},
 	}
-	p.load.feedCmd = p.loadItems(e)
+	p.load.feedCmd = p.loadItems()
 	return p
 }
 
@@ -337,8 +338,8 @@ func (p *Picker) awaitingQuery() bool {
 	return ok && p.list.query == ""
 }
 
-func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
-	load := p.source.Load(e)
+func (p *Picker) loadItems() tea.Cmd {
+	load := p.source.Load()
 	items := load.Items
 	feed := load.Feed
 	p.load.cancel = load.Stop
@@ -362,14 +363,14 @@ func (p *Picker) loadItems(e *view.Editor) tea.Cmd {
 	return drainPickerFeed(feed, done)
 }
 
-func (p *Picker) reload(e *view.Editor) tea.Cmd {
+func (p *Picker) reload() tea.Cmd {
 	p.load.cancel()
 	// a reload landing mid-refill would otherwise capture whatever row the
 	// half-filled list is sitting on, losing the row the user chose
 	if !p.load.wantSet {
 		p.load.wantTarget, p.load.wantSet = p.selectedTarget()
 	}
-	cmd := p.loadItems(e)
+	cmd := p.loadItems()
 	p.applyWantedSelection()
 	return cmd
 }
@@ -406,7 +407,7 @@ func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
 	}
 }
 
-func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
+func (p *Picker) flushFileChanges() tea.Cmd {
 	pending := p.load.pending
 	p.load.pending = nil
 	src, ok := p.source.(FileBackedPickerSource)
@@ -418,23 +419,23 @@ func (p *Picker) flushFileChanges(e *view.Editor) tea.Cmd {
 		// Git state changes can regroup or remove rows
 		if isGitStatePath(path) {
 			p.clearPreviewCache()
-			p.refreshItems(e)
+			p.refreshItems()
 			continue
 		}
 		if info, err := os.Lstat(path); err == nil && info.IsDir() {
-			return p.reload(e)
+			return p.reload()
 		}
-		p.reconcilePath(path, src.ItemsForPath(e, path))
+		p.reconcilePath(path, src.ItemsForPath(path))
 	}
 	return nil
 }
 
-func (p *Picker) refreshItems(e *view.Editor) {
+func (p *Picker) refreshItems() {
 	src, ok := p.source.(SnapshotPickerSource)
 	if !ok {
 		return
 	}
-	items := src.Items(e)
+	items := src.Items()
 	if len(items) == 0 {
 		return
 	}

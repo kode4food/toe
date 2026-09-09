@@ -67,14 +67,6 @@ func (o *Options) SetRulers(rulers []int) {
 	o.Rulers = slices.Compact(rulers)
 }
 
-// StatusLineSeparator returns the status line separator string with default
-func (o *Options) StatusLineSeparator() string {
-	if o.StatusLine.Separator != "" {
-		return o.StatusLine.Separator
-	}
-	return DefaultStatusLineSeparator
-}
-
 // StatusLineEdges returns the configured edge shape, or the default
 func (o *Options) StatusLineEdges() StatusLineEdges {
 	if o.StatusLine.Edges != "" {

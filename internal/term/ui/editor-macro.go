@@ -62,19 +62,19 @@ func (ec *EditorComponent) MacroReplayAction(
 	})
 }
 
-func (ec *EditorComponent) handleReplay(cx *Context) {
+func (ec *EditorComponent) handleReplay() {
 	ms := ec.macroSlot
 	if !ms.hasReplay {
 		return
 	}
+	cx := ec.context
 	ms.hasReplay = false
-	ec.replayMacro(cx, macroKeys(cx.Editor, ms.replayReg), ms.replayCount)
+	ec.replayMacro(macroKeys(cx.Editor, ms.replayReg), ms.replayCount)
 	cx.Editor.SetCount(0)
 }
 
-func (ec *EditorComponent) replayMacro(
-	cx *Context, keys []command.KeyEvent, n int,
-) {
+func (ec *EditorComponent) replayMacro(keys []command.KeyEvent, n int) {
+	cx := ec.context
 	for range n {
 		var pending []command.KeyEvent
 		count := 0

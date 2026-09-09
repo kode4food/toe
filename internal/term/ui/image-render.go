@@ -45,7 +45,8 @@ type renderImageStatusArgs struct {
 }
 
 func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
-	th := r.context.Theme()
+	cx := r.context
+	th := cx.Theme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if args.focused {
@@ -65,7 +66,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	}}
 	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    args.pane.Path(),
-		BaseDir: r.context.Editor.Cwd(),
+		BaseDir: cx.Editor.Cwd(),
 	})
 	r.paintStatus(args.buf, statusRow{
 		at:        args.at,
@@ -83,8 +84,9 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 func (r *renderPass) paintImage(
 	buf *tui.Buffer, pane *ImagePane, area geom.Area, th *theme.Theme,
 ) {
+	cx := r.context
 	bg := th.Get("ui.background").BgColor()
-	if !r.context.images.graphics {
+	if !cx.images.graphics {
 		r.renderImageMessage(buf, area, i18n.StatusImageUnsupported, th)
 		return
 	}
@@ -95,7 +97,7 @@ func (r *renderPass) paintImage(
 	})
 	// Draw at the put size, not the live zoom, so the grid, the placement's
 	// c=/r=, and the centering box cannot drift apart while a zoom settles
-	cells, ok := r.context.images.readySize(id)
+	cells, ok := cx.images.readySize(id)
 	if !ok {
 		r.renderImageLoading(buf, area, th)
 		return
@@ -119,7 +121,7 @@ func (r *renderPass) paintImage(
 	}
 	for row := range visH {
 		for col := range visW {
-			sym := r.context.images.placeholder(
+			sym := cx.images.placeholder(
 				cells, geom.Point{X: grid.X + col, Y: grid.Y + row},
 			)
 			buf.Set(geom.Point{X: screen.X + col, Y: screen.Y + row},

@@ -39,6 +39,7 @@ var ErrInvalidPickerStart = errors.New("invalid picker start position")
 // NewBufferPicker returns a picker over the open buffers
 func NewBufferPicker(e *view.Editor, opts BufferPickerOptions) *ui.Picker {
 	p := ui.NewPicker(e, &bufferPickerSource{
+		Editor:      e,
 		Ident:       "open-buffer",
 		Label:       "Buffers",
 		Cols:        []string{"", "", ""},
@@ -63,7 +64,8 @@ func (p *PickerStartPosition) UnmarshalText(text []byte) error {
 }
 
 // Load lists the open buffers, most recently used first
-func (b *bufferPickerSource) Load(e *view.Editor) ui.PickerLoad {
+func (b *bufferPickerSource) Load() ui.PickerLoad {
+	e := b.Editor
 	docs := e.AllDocuments()
 	id := view.InvalidDocumentId
 	if doc := e.FocusedDocument(); doc != nil {
@@ -108,13 +110,13 @@ func (b *bufferPickerSource) Load(e *view.Editor) ui.PickerLoad {
 
 // Accept switches the focused pane to the chosen buffer
 func (b *bufferPickerSource) Accept(
-	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
+	item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	id := item.Location.Target.ID
 	if id == view.InvalidDocumentId {
 		return
 	}
-	ui.GotoDocument(e, id, nil, action)
+	ui.GotoDocument(b.Editor, id, nil, action)
 }
 
 func bufferPickerRank(doc *view.Document, focusedID view.DocumentId) int {

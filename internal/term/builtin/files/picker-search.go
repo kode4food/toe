@@ -37,9 +37,10 @@ type (
 // workspace as the query is typed
 func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 	return ui.NewPicker(e, &globalSearchSource{
-		Ident: "global-search",
-		Label: "Search Workspace",
-		Cols:  []string{""},
+		Editor: e,
+		Ident:  "global-search",
+		Label:  "Search Workspace",
+		Cols:   []string{""},
 	})
 }
 
@@ -49,10 +50,11 @@ func (g *globalSearchSource) Search(query string) {
 }
 
 // Load streams matches for the current query
-func (g *globalSearchSource) Load(e *view.Editor) ui.PickerLoad {
+func (g *globalSearchSource) Load() ui.PickerLoad {
 	if g.query == "" {
 		return ui.PickerLoad{Stop: func() {}}
 	}
+	e := g.Editor
 	g.smartCase = e.Options().SearchSmartCase
 	g.openDocs = nil
 	for _, doc := range e.AllDocuments() {
@@ -69,13 +71,15 @@ func (g *globalSearchSource) Load(e *view.Editor) ui.PickerLoad {
 
 // Accept jumps to the chosen match
 func (g *globalSearchSource) Accept(
-	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
+	item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	lines := item.Location.Lines
 	if lines == nil {
 		return
 	}
-	ui.GotoPath(e, item.Location.Target.Path, ui.GotoLines(lines), action)
+	ui.GotoPath(
+		g.Editor, item.Location.Target.Path, ui.GotoLines(lines), action,
+	)
 }
 
 func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {

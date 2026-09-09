@@ -44,8 +44,9 @@ func (r *renderPass) screenCharPos(
 }
 
 func (r *renderPass) contentViewAt(at geom.Point) *view.View {
+	cx := r.context
 	yOff := 0
-	if bufferlineVisible(r.context) {
+	if bufferlineVisible(cx) {
 		yOff = 1
 	}
 	contentY := at.Y - yOff
@@ -53,7 +54,7 @@ func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 		return nil
 	}
 	var found *view.View
-	r.context.Editor.Tree().RangeVisible(func(p view.Pane) bool {
+	cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
 		v, ok := p.(*view.View)
 		if !ok {
 			return true
@@ -70,17 +71,18 @@ func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 }
 
 func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
+	cx := r.context
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if p, ok := paneAt(r.context, at); ok {
-		wasFocused := r.context.Editor.Tree().Focus() == p.ID()
-		r.context.Editor.FocusPane(p.ID())
+	if p, ok := paneAt(cx, at); ok {
+		wasFocused := cx.Editor.Tree().Focus() == p.ID()
+		cx.Editor.FocusPane(p.ID())
 		if pi, ok := p.(PaneInput); ok {
-			if _, handled := pi.HandleEvent(r.context, msg); handled {
+			if _, handled := pi.HandleEvent(cx, msg); handled {
 				return
 			}
 		}
 		if sp, ok := p.(Draggable); ok && msg.Button == tea.MouseLeft {
-			if wasFocused && sp.BeginDrag(r.context, at, msg.Mod) {
+			if wasFocused && sp.BeginDrag(cx, at, msg.Mod) {
 				r.editor.mouse.downDrag = sp
 			}
 			return
@@ -91,11 +93,11 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	}
 
 	yOff := 0
-	if bufferlineVisible(r.context) {
+	if bufferlineVisible(cx) {
 		yOff = 1
 	}
 	sep, onSep :=
-		r.context.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
+		cx.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
 	if onSep {
 		r.editor.mouse.downSep = &sepDrag{
 			containerID: sep.ContainerID,
@@ -126,7 +128,7 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 		// a ctrl-click jumps from the clicked symbol, so it lands on it rather
 		// than extending a selection over it
 		newSel = core.PointSelection(res.pos)
-	case r.context.Editor.Mode() == view.ModeSelect:
+	case cx.Editor.Mode() == view.ModeSelect:
 		// In select mode a click extends the primary selection rather than
 		// collapsing it, discarding any secondary selections
 		primary := prevSel.Primary().PutCursor(text, res.pos, true)
@@ -138,17 +140,18 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	default:
 		newSel = core.PointSelection(res.pos)
 	}
-	action.ApplySelection(r.context.Editor, newSel)
+	action.ApplySelection(cx.Editor, newSel)
 	res.view.EndFreeScroll()
 
 	if msg.Mod&tea.ModCtrl != 0 {
-		r.editor.gotoDefinition(r.context, r.context.Editor)
+		r.editor.gotoDefinition()
 	}
 }
 
 func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
+	cx := r.context
 	yOff := 0
-	if bufferlineVisible(r.context) {
+	if bufferlineVisible(cx) {
 		yOff = 1
 	}
 
@@ -158,21 +161,21 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		if sep.layout == view.LayoutHorizontal {
 			newPos = at.Y - yOff
 		}
-		r.context.Editor.Tree().MoveSeparator(
+		cx.Editor.Tree().MoveSeparator(
 			sep.containerID, sep.childIdx, sep.layout, newPos,
 		)
-		return r.editor.settlePaneResizeCmd(r.context)
+		return r.editor.settlePaneResizeCmd()
 	}
 
 	if r.editor.mouse.downRange == nil {
 		return nil
 	}
 
-	doc := r.context.Editor.FocusedDocument()
+	doc := cx.Editor.FocusedDocument()
 	if doc == nil {
 		return nil
 	}
-	v := r.context.Editor.FocusedView()
+	v := cx.Editor.FocusedView()
 	if v == nil {
 		return nil
 	}
@@ -180,7 +183,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	contentY := at.Y - yOff
 	area := v.Area()
 	contentH := max(area.Height-1, 0)
-	scrollOff := r.context.Editor.Options().ScrollOff
+	scrollOff := cx.Editor.Options().ScrollOff
 
 	vEdge := r.editor.mouse.vertical.update(dragBounds{
 		pos:      contentY,
@@ -192,7 +195,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 		}),
 	})
 
-	gutterW := gutterWidthFor(doc.Text(), r.context.Editor.Options().Gutters)
+	gutterW := gutterWidthFor(doc.Text(), cx.Editor.Options().Gutters)
 	contentX := area.X + gutterW
 	contentW := max(area.Width-gutterW, 0)
 	hEdge := r.editor.mouse.horizontal.update(dragBounds{
@@ -210,7 +213,7 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	if !ok {
 		return nil
 	}
-	if !extendSelectionTo(r.context, doc, v, pos) {
+	if !extendSelectionTo(cx, doc, v, pos) {
 		return nil
 	}
 
@@ -228,17 +231,18 @@ type resolveClickPosRes struct {
 }
 
 func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
+	cx := r.context
 	v := r.contentViewAt(at)
 	if v == nil {
 		return resolveClickPosRes{}, false
 	}
-	r.context.Editor.FocusView(v.ID())
-	doc := r.context.Editor.Document(v.DocID())
+	cx.Editor.FocusView(v.ID())
+	doc := cx.Editor.Document(v.DocID())
 	if doc == nil {
 		return resolveClickPosRes{}, false
 	}
 	contentY := at.Y
-	if bufferlineVisible(r.context) {
+	if bufferlineVisible(cx) {
 		contentY--
 	}
 	pos, ok := r.screenCharPos(doc, v, geom.Point{X: at.X, Y: contentY})

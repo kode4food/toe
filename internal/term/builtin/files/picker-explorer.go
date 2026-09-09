@@ -31,7 +31,7 @@ const explorerDirScope = "ui.text.directory"
 // NewFileExplorer opens a file explorer rooted at the editor's working
 // directory
 func NewFileExplorer(e *view.Editor, opts FileExplorerOptions) *ui.Picker {
-	return ui.NewPicker(e, newFileExplorerSource(e.Cwd(), opts))
+	return ui.NewPicker(e, newFileExplorerSource(e, e.Cwd(), opts))
 }
 
 // NewFocusedPaneDirExplorer opens a file explorer rooted at the focused pane's
@@ -39,7 +39,7 @@ func NewFileExplorer(e *view.Editor, opts FileExplorerOptions) *ui.Picker {
 func NewFocusedPaneDirExplorer(
 	e *view.Editor, opts FileExplorerOptions,
 ) *ui.Picker {
-	return ui.NewPicker(e, newFileExplorerSource(focusedPaneDir(e), opts))
+	return ui.NewPicker(e, newFileExplorerSource(e, focusedPaneDir(e), opts))
 }
 
 // DefaultFileExplorerOptions returns the explorer's out-of-the-box behavior
@@ -48,44 +48,43 @@ func DefaultFileExplorerOptions() FileExplorerOptions {
 }
 
 func newFileExplorerSource(
-	root string, opts FileExplorerOptions,
+	e *view.Editor, root string, opts FileExplorerOptions,
 ) *fileExplorerSource {
 	return &fileExplorerSource{
-		Ident: "file-explorer",
-		Label: "File Explorer",
-		Cols:  []string{"name"},
-		root:  root,
-		opts:  opts,
+		Editor: e,
+		Ident:  "file-explorer",
+		Label:  "File Explorer",
+		Cols:   []string{"name"},
+		root:   root,
+		opts:   opts,
 	}
 }
 
 // Load lists the entries of the current directory
-func (f *fileExplorerSource) Load(*view.Editor) ui.PickerLoad {
+func (f *fileExplorerSource) Load() ui.PickerLoad {
 	return ui.PickerLoad{Items: f.readDir(), Stop: func() {}}
 }
 
 // Accept opens the chosen file, or descends into a directory
 func (f *fileExplorerSource) Accept(
-	e *view.Editor, item *ui.PickerItem, action ui.PickerAcceptAction,
+	item *ui.PickerItem, action ui.PickerAcceptAction,
 ) {
 	path := item.Location.Target.Path
 	if path == "" {
 		return
 	}
-	ui.GotoPath(e, path, nil, action)
+	ui.GotoPath(f.Editor, path, nil, action)
 }
 
 // Navigate moves the explorer to another directory
-func (f *fileExplorerSource) Navigate(
-	_ *view.Editor, item *ui.PickerItem,
-) ui.PickerFunc {
+func (f *fileExplorerSource) Navigate(item *ui.PickerItem) ui.PickerFunc {
 	path := item.Location.Target.Path
 	if !item.Directory || path == "" {
 		return nil
 	}
 	dir, _ := filepath.Abs(path)
 	return func(e *view.Editor) *ui.Picker {
-		return ui.NewPicker(e, newFileExplorerSource(dir, f.opts))
+		return ui.NewPicker(e, newFileExplorerSource(e, dir, f.opts))
 	}
 }
 

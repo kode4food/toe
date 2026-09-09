@@ -121,7 +121,7 @@ func (c *completionComponent) rowParts(
 	return completionRowPartsFor(completionRowPartsArgs{
 		item:     item,
 		selected: selected,
-		nerd:     c.nerd,
+		nerd:     c.context.Editor.Options().NerdFonts,
 	})
 }
 

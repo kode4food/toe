@@ -50,7 +50,7 @@ func (p *PickerComponent) HandleEvent(
 	case pickerFeedMsg:
 		return p.handleFeed(msg)
 	case pickerDynamicTriggerMsg:
-		return p.handleDynamicTrigger(cx, msg)
+		return p.handleDynamicTrigger(msg)
 	case pickerDynamicFeedMsg:
 		return p.handleDynamicFeed(msg)
 	case pickerRefreshMsg:
@@ -118,6 +118,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	p.bounds = pl
 	p.previewBounds = geom.Area{}
 	p.splitBounds = geom.Area{}
+	r := newPickerRender(p, cx, buf)
 
 	showPreview := areaW > pickerMinPreviewArea && previewEnabled(ps.source)
 	splitW := 0
@@ -130,11 +131,11 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 			Width:  1,
 			Height: areaH,
 		}
-		p.drawPickerBox(cx, buf, geom.Area{
+		r.drawBox(geom.Area{
 			Width: areaW, Height: areaH,
 		}, splitW)
 	} else {
-		p.drawPickerPane(cx, buf, geom.Area{
+		r.drawPane(geom.Area{
 			Width: areaW, Height: areaH,
 		})
 	}
@@ -170,7 +171,7 @@ func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
 }
 
 func (p *PickerComponent) handleDynamicTrigger(
-	cx *Context, msg pickerDynamicTriggerMsg,
+	msg pickerDynamicTriggerMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
 	if msg.gen != ps.load.dynamicGen {
@@ -182,7 +183,7 @@ func (p *PickerComponent) handleDynamicTrigger(
 	}
 	p.markDirty()
 	src.Search(msg.query)
-	load := src.Load(cx.Editor)
+	load := src.Load()
 	items := load.Items
 	ps.load.dynamicStop = load.Stop
 	ps.list.items = items
@@ -214,14 +215,14 @@ func (p *PickerComponent) handleDynamicFeed(
 }
 
 func (p *PickerComponent) handleRefresh(
-	cx *Context, msg pickerRefreshMsg,
+	_ *Context, msg pickerRefreshMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
 	if msg.gen != ps.load.refreshGen {
 		return consumed(), nil
 	}
 	p.markDirty()
-	return consumed(), ps.flushFileChanges(cx.Editor)
+	return consumed(), ps.flushFileChanges()
 }
 
 func (p *PickerComponent) handleExternalFileChange(
@@ -387,7 +388,7 @@ func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 	result.Callback = func(cx *Context, comp *Compositor) tea.Cmd {
 		cx.fileWatcher.setTreeWanted(cx.Editor, false)
 		comp.Pop()
-		return comp.refreshEditorHighlight(cx)
+		return comp.refreshEditorHighlight()
 	}
 	return result, nil
 }

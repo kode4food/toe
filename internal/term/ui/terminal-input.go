@@ -189,7 +189,8 @@ func (t *TerminalPane) mouseArea(cx *Context) geom.Area {
 	return a
 }
 
-func (ec *EditorComponent) pollTerminals(cx *Context) {
+func (ec *EditorComponent) pollTerminals() {
+	cx := ec.context
 	var closing []*TerminalPane
 	cx.Editor.Tree().Range(func(p view.Pane) bool {
 		if tp, ok := p.(*TerminalPane); ok {

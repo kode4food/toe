@@ -20,10 +20,11 @@ type renderContentArgs struct {
 func (r *renderPass) prepareContentRender(
 	args renderContentArgs,
 ) *contentRenderState {
+	cx := r.context
 	doc := args.doc
 	v := args.view
 
-	opts := r.context.Editor.Options()
+	opts := cx.Editor.Options()
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
 	primary := sel.Primary()
@@ -91,14 +92,14 @@ func (r *renderPass) prepareContentRender(
 
 	rawText := dc.ensureRawText(rev, text)
 	hlSpans := dc.ensureHightlight(ensureHighlightArgs{
-		cache:   r.context.Syntax,
+		cache:   cx.Syntax,
 		rev:     rev,
 		lang:    lang,
 		rawText: rawText,
 	})
 	lineIdx := dc.ensureLineIndex(rev, rawText)
 
-	pat, hasPat := r.context.Editor.FirstRegister('/')
+	pat, hasPat := cx.Editor.FirstRegister('/')
 	if !hasPat || !doc.SearchHighlightsActive(v.ID()) {
 		pat = ""
 	}
@@ -110,25 +111,25 @@ func (r *renderPass) prepareContentRender(
 	searchMatches := dc.searchSpans
 	docDiagnostics := doc.Diagnostics()
 	var docHighlights []matchSpan
-	if r.context.Editor.Mode() != view.ModeSelect &&
+	if cx.Editor.Mode() != view.ModeSelect &&
 		r.editor.mouse.downRange == nil {
 		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
 	}
 	var docLinks []matchSpan
 	var docColors []colorSpan
-	if r.context.Editor.Mode() == view.ModeNormal {
+	if cx.Editor.Mode() == view.ModeNormal {
 		docLinks = documentLinkSpans(doc.DocumentLinks())
 		docColors = documentColorSpans(doc.DocumentColors())
 	}
 
 	// styles rebuilt only when theme or mode changes
-	th := r.context.Theme()
-	mode := r.context.Editor.Mode()
+	th := cx.Theme()
+	mode := cx.Editor.Mode()
 	key := styleKey{theme: th.Name(), mode: mode}
 	if c.stylesKey != key {
 		c.stylesKey = key
 		c.styles = newDocStyleSet(th, mode)
-		c.stylesDim = newDocStyleSet(r.context.ThemeFor(false), mode)
+		c.stylesDim = newDocStyleSet(cx.ThemeFor(false), mode)
 	}
 	set := c.styles
 	if !args.focused {
@@ -146,7 +147,7 @@ func (r *renderPass) prepareContentRender(
 
 	diagnostics := diagnosticSpans(docDiagnostics, styles)
 	var annotations []inlineAnnotation
-	if r.context.Editor.Mode() == view.ModeNormal {
+	if cx.Editor.Mode() == view.ModeNormal {
 		annotations = inlayHintAnnotations(doc.InlayHints(v.ID()), styles)
 		annotations = append(
 			annotations, documentColorAnnotations(doc.DocumentColors())...,
@@ -156,21 +157,21 @@ func (r *renderPass) prepareContentRender(
 		})
 	}
 
-	cursorKind := opts.CursorShapeForMode(r.context.Editor.Mode())
+	cursorKind := opts.CursorShapeForMode(cx.Editor.Mode())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.editor.focused &&
 		args.focused
 	cursorLineEnabled := opts.CursorLine
 	ws := opts.Whitespace
 	ig := opts.IndentGuides
 	relativeLineNumbers := opts.LineNumber == view.LineNumberRelative
-	insertMode := r.context.Editor.Mode() == view.ModeInsert
+	insertMode := cx.Editor.Mode() == view.ModeInsert
 
 	format := doc.TextFormatForConfig(
-		args.area.Width-gutterW, r.context.Editor.Options(),
+		args.area.Width-gutterW, cx.Editor.Options(),
 	)
 	softWrap := format.SoftWrap && gutterW < args.area.Width
 	contentW := args.area.Width - gutterW
-	r.context.Editor.SetViewContentWidth(contentW)
+	cx.Editor.SetViewContentWidth(contentW)
 
 	// a non-positive width disables horizontal scrolling and resets the offset
 	// to 0, which is what soft-wrap wants. The gutter never shifts either way
@@ -205,7 +206,7 @@ func (r *renderPass) prepareContentRender(
 		lineSelected: lineSelTUI,
 		diagLines:    diagnosticGutterLines(text, docDiagnostics),
 		diffLines: documentDiffLines(
-			r.context.Editor, doc, text.LenLines(),
+			cx.Editor, doc, text.LenLines(),
 		),
 		severityHint:    styles.severityHint,
 		severityInfo:    styles.severityInfo,
@@ -233,7 +234,7 @@ func (r *renderPass) prepareContentRender(
 		cursorLine:    cursorLine,
 		softWrap:      softWrap,
 		cursorIsBlock: cursorIsBlock,
-		mode:          r.context.Editor.Mode(),
+		mode:          cx.Editor.Mode(),
 		colStart:      hOff,
 		colWidth:      format.ViewportWidth,
 	}

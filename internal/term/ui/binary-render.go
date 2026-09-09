@@ -70,8 +70,9 @@ func (r *renderPass) renderBinaryPane(
 func (r *renderPass) renderBinaryStatus(
 	buf *tui.Buffer, pane *BinaryPane, y0 int, focused bool,
 ) {
+	cx := r.context
 	a := pane.Area()
-	th := r.context.Theme()
+	th := cx.Theme()
 	baseTUI := th.Get("ui.statusline.inactive")
 	modeSt := baseTUI
 	if focused {
@@ -80,7 +81,7 @@ func (r *renderPass) renderBinaryStatus(
 	}
 	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    pane.path,
-		BaseDir: r.context.Editor.Cwd(),
+		BaseDir: cx.Editor.Cwd(),
 	})
 	right := []statusElem{{
 		text:  fmt.Sprintf("%d / %d bytes", pane.offset, pane.size),

@@ -13,17 +13,18 @@ type pickerColumnSizing struct {
 	maximum     []int
 	proportions []int
 	spare       int
+	visible     int
 }
 
 const (
 	pickerColumnMinWidth   = 3
 	pickerColumnPercentile = 90
+	pickerColumnGap        = 1
 )
 
 func newPickerColumnSizing(p *Picker, w int) *pickerColumnSizing {
 	cols := p.source.Columns()
 	n := len(cols)
-	spacing := max(n-1, 0)
 	proportions := p.source.ColumnProportions()
 	if len(proportions) != n {
 		proportions = defaultColumnProportions(n)
@@ -34,7 +35,7 @@ func newPickerColumnSizing(p *Picker, w int) *pickerColumnSizing {
 		preferred:   make([]int, n),
 		maximum:     make([]int, n),
 		proportions: proportions,
-		spare:       max(w-spacing, 0),
+		spare:       max(w, 0),
 	}
 	s.measure(p, cols)
 	return s
@@ -50,7 +51,8 @@ func (s *pickerColumnSizing) measure(p *Picker, cols []string) {
 				continue
 			}
 			width := runewidth.StringWidth(m.item.Columns[i])
-			if i == pickerFileIconColumn(p, m.item) {
+			if p.editor.Options().NerdFonts &&
+				i == pickerFileIconColumn(p, m.item) {
 				width = max(
 					width, runewidth.StringWidth(pickerDefaultFileIcon.glyph),
 				)
@@ -88,6 +90,10 @@ func (s *pickerColumnSizing) grow(target []int, pinned bool) {
 			if (proportion <= 0) != pinned || s.widths[i] >= target[i] {
 				continue
 			}
+			if s.widths[i] == 0 && s.visible > 0 &&
+				s.spare <= pickerColumnGap {
+				continue
+			}
 			weight := max(proportion, 1)
 			if best < 0 ||
 				s.widths[i]*bestWeight < s.widths[best]*weight {
@@ -97,6 +103,10 @@ func (s *pickerColumnSizing) grow(target []int, pinned bool) {
 		}
 		if best < 0 {
 			break
+		}
+		if s.widths[best] == 0 {
+			s.spare -= min(s.visible, 1) * pickerColumnGap
+			s.visible++
 		}
 		s.widths[best]++
 		s.spare--

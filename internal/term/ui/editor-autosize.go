@@ -37,7 +37,8 @@ func (m Model) SetAutoSize(enabled bool) {
 	m.component.autoSize.viewID = view.InvalidViewId
 }
 
-func (ec *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
+func (ec *EditorComponent) autoSizeCmd() tea.Cmd {
+	cx := ec.context
 	id := cx.Editor.Tree().Focus()
 	if id == ec.autoSize.viewID {
 		return nil
@@ -51,7 +52,7 @@ func (ec *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
 	if pane == nil {
 		return nil
 	}
-	ec.autoSize.targetWidth = ec.autoSizeWidthTarget(cx, pane)
+	ec.autoSize.targetWidth = ec.autoSizeWidthTarget(pane)
 	if ec.autoSize.targetWidth == 0 {
 		return nil
 	}
@@ -62,17 +63,15 @@ func (ec *EditorComponent) autoSizeCmd(cx *Context) tea.Cmd {
 	}
 	ec.autoSize.generation++
 	return tea.Batch(
-		autoSizeTickCmd(ec.autoSize.generation), ec.settlePaneResizeCmd(cx),
+		autoSizeTickCmd(ec.autoSize.generation), ec.settlePaneResizeCmd(),
 	)
 }
 
-func (ec *EditorComponent) autoSizeWidthTarget(
-	cx *Context, pane view.Pane,
-) int {
+func (ec *EditorComponent) autoSizeWidthTarget(pane view.Pane) int {
 	var want int
 	switch p := pane.(type) {
 	case *view.View:
-		want = ec.autoSizeRulerWidth(cx, p)
+		want = ec.autoSizeRulerWidth(p)
 	case *BinaryPane:
 		want = binaryTargetWidth(p.offsetWidth())
 	case *TerminalPane:
@@ -84,9 +83,8 @@ func (ec *EditorComponent) autoSizeWidthTarget(
 	return want
 }
 
-func (ec *EditorComponent) autoSizeRulerWidth(
-	cx *Context, v *view.View,
-) int {
+func (ec *EditorComponent) autoSizeRulerWidth(v *view.View) int {
+	cx := ec.context
 	rulers := cx.Editor.Options().Rulers
 	doc := cx.Editor.Document(v.DocID())
 	if len(rulers) == 0 || rulers[0] <= 0 || doc == nil {
@@ -109,12 +107,13 @@ func (ec *EditorComponent) cancelAutoSizeFor(msg tea.Msg) {
 }
 
 func (ec *EditorComponent) handleAutoSizeTick(
-	cx *Context, msg autoSizeTickMsg,
+	msg autoSizeTickMsg,
 ) (EventResult, tea.Cmd) {
 	if msg.generation != ec.autoSize.generation ||
 		ec.autoSize.targetWidth == 0 {
 		return consumed(), nil
 	}
+	cx := ec.context
 	pane := cx.Editor.FocusedPane()
 	if pane == nil || pane.ID() != ec.autoSize.viewID {
 		ec.cancelAutoSize()
@@ -129,7 +128,7 @@ func (ec *EditorComponent) handleAutoSizeTick(
 		return consumed(), nil
 	}
 	return consumed(), tea.Batch(
-		autoSizeTickCmd(msg.generation), ec.settlePaneResizeCmd(cx),
+		autoSizeTickCmd(msg.generation), ec.settlePaneResizeCmd(),
 	)
 }
 

@@ -378,12 +378,10 @@ func (*countingPathSource) ColumnProportions() []int {
 	return []int{1}
 }
 
-func (*countingPathSource) Accept(
-	*view.Editor, *ui.PickerItem, ui.PickerAcceptAction,
-) {
+func (*countingPathSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 }
 
-func (s *countingPathSource) Load(*view.Editor) ui.PickerLoad {
+func (s *countingPathSource) Load() ui.PickerLoad {
 	s.loadCalls++
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
@@ -400,9 +398,7 @@ func (s *countingPathSource) Load(*view.Editor) ui.PickerLoad {
 	return ui.PickerLoad{Items: items, Stop: func() {}}
 }
 
-func (*countingPathSource) ItemsForPath(
-	_ *view.Editor, path string,
-) []*ui.PickerItem {
+func (*countingPathSource) ItemsForPath(path string) []*ui.PickerItem {
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() {
 		return nil

@@ -37,7 +37,6 @@ func TestStatuslineAllElements(t *testing.T) {
 		e.SetRegister('a')
 		opts := e.Options()
 		opts.StatusLine.Left = []view.StatusLineItem{
-			{Element: view.StatusLineSeparator},
 			{Element: view.StatusLineFileBaseName},
 			{Element: view.StatusLineFileAbsolutePath},
 			{Element: view.StatusLinePercent},
@@ -101,7 +100,7 @@ func TestStatuslineReadOnly(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "[readonly]")
+		assert.Contains(t, out, "\uf023")
 	})
 }
 
@@ -370,7 +369,6 @@ func TestStatuslineElementRegistry(t *testing.T) {
 		want    string
 	}{
 		{element: view.StatusLineMode, want: " NOR "},
-		{element: view.StatusLineSeparator, want: "│"},
 		{
 			element: view.StatusLineFileBaseName,
 			setup:   fileEditor,
@@ -395,14 +393,14 @@ func TestStatuslineElementRegistry(t *testing.T) {
 				doc.SetReadOnly(true)
 				return e
 			},
-			want: "[readonly]",
+			want: "\uf023",
 		},
 		{
 			element: view.StatusLineModified,
 			setup: func(t *testing.T) *view.Editor {
 				return editorWithText(t, "changed")
 			},
-			want: "[modified]",
+			want: "\uf448",
 		},
 		{element: view.StatusLineFileEncoding, want: " utf-8 "},
 		{element: view.StatusLineFileLineEnding, want: " lf "},
@@ -596,7 +594,7 @@ func TestStatuslineEdgeElements(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "[modified]")
+		assert.Contains(t, out, "\uf448")
 	})
 
 	t.Run("plural selections include primary", func(t *testing.T) {
@@ -1176,6 +1174,43 @@ func builtinModel(t *testing.T) ui.Model {
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
 	return resize(m, 100, 30)
+}
+
+func TestStatuslineFileStatus(t *testing.T) {
+	t.Run("both marks in ascii", func(t *testing.T) {
+		e := editorWithText(t, "changed")
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		doc.SetReadOnly(true)
+		opts := e.Options()
+		opts.NerdFonts = false
+		opts.StatusLine.Left = []view.StatusLineItem{
+			{Element: view.StatusLineFileName},
+			{Element: view.StatusLineFileStatus},
+		}
+		opts.StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "[scratch] ro *")
+	})
+
+	t.Run("nothing to mark", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		opts := e.Options()
+		opts.NerdFonts = false
+		opts.StatusLine.Left = []view.StatusLineItem{
+			{Element: view.StatusLineFileStatus},
+		}
+		opts.StatusLine.Right = nil
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "ro")
+		assert.NotContains(t, out, "*")
+	})
 }
 
 func lastLine(content string) string {

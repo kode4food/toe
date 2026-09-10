@@ -8,7 +8,6 @@ const (
 	ErrorNoDocument    Key = "error.noDocument"
 	ErrorNoSuchCommand Key = "error.noSuchCommand"
 	ErrorInvalidKey    Key = "error.invalidKey"
-	ErrorBindingExists Key = "error.bindingExists"
 
 	ErrorWorkspaceUntrustedHint Key = "error.workspaceUntrustedHint"
 

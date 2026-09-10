@@ -24,7 +24,6 @@ toe is opinionated because it is built for one tight workflow: editing Go projec
 
 - **Go first.** Other language servers are configurable in `languages.toml`; Go with `gopls` is the workflow toe is designed and tested around.
 - **Version control is Git.** Diff gutters, hunk navigation and reset, and the changed-file picker all run against the git binary.
-- **Extension.** toe is extended through commands, key bindings, and conditional bindings.
 - **Terminal capability.** Image panes need a terminal that speaks the Kitty graphics protocol; other binary files open as a read-only hex dump. Nerd Font glyphs are on by default and fall back to short ASCII labels.
 - **Clipboard.** toe uses `pbcopy`/`pbpaste`, `xclip`, `xsel`, or `wl-copy`/`wl-paste` when present, with an OSC 52 fallback so copies reach the clipboard over SSH.
 

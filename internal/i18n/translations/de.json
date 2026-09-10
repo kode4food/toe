@@ -3,7 +3,6 @@
   "about.version": "Version",
   "capture.no": "Nein",
   "capture.yes": "Ja",
-  "error.bindingExists": "Tastenbelegung existiert bereits",
   "error.invalidKey": "ungültige Tastenfolge",
   "error.message": "Fehler: {message}",
   "error.noDocument": "kein Dokument",

@@ -3,7 +3,6 @@
   "about.version": "Versione",
   "capture.no": "No",
   "capture.yes": "Sì",
-  "error.bindingExists": "la combinazione di tasti esiste già",
   "error.invalidKey": "sequenza di tasti non valida",
   "error.message": "errore: {message}",
   "error.noDocument": "nessun documento",

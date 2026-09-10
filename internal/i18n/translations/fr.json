@@ -3,7 +3,6 @@
   "about.version": "Version",
   "capture.no": "Non",
   "capture.yes": "Oui",
-  "error.bindingExists": "le raccourci clavier existe déjà",
   "error.invalidKey": "séquence de touches invalide",
   "error.message": "erreur : {message}",
   "error.noDocument": "aucun document",

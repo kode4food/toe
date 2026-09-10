@@ -3,7 +3,6 @@
   "about.version": "Version",
   "capture.no": "No",
   "capture.yes": "Yes",
-  "error.bindingExists": "key binding already exists",
   "error.invalidKey": "invalid key sequence",
   "error.message": "error: {message}",
   "error.noDocument": "no document",

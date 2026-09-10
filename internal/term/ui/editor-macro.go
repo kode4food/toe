@@ -98,9 +98,6 @@ func (ec *EditorComponent) replayMacro(keys []command.KeyEvent, n int) {
 			}
 			pending = append(pending, k)
 			lookup, ok := cx.Keymaps.Lookup(mode, pending)
-			if ok && !lookup.Enabled(cx.Editor) {
-				ok = false
-			}
 			switch {
 			case ok:
 				seq := pending

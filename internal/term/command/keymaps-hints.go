@@ -11,8 +11,8 @@ func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 }
 
 // PendingHints returns the title and (key, label) pairs offered after seq in
-// mode, from the node's children or its hint provider. A binding rejected by
-// :when, or unusable with the count typed, is omitted
+// mode, from the node's children or its hint provider. A binding unusable
+// with the count typed is omitted
 func (k *Keymaps) PendingHints(
 	e *view.Editor, mode view.Mode, seq []KeyEvent, counting bool,
 ) (string, []KeyHint) {
@@ -39,9 +39,6 @@ func (k *Keymaps) PendingHints(
 			continue
 		}
 		if counting && !child.countable() {
-			continue
-		}
-		if child.available != nil && !child.available(e) {
 			continue
 		}
 		if idx, ok := seen[lbl]; ok {

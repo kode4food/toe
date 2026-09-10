@@ -73,9 +73,6 @@ func (ec *EditorComponent) handleKeyPress(
 	ec.keys.path = append(ec.keys.path, k)
 	ec.keys.input = append(ec.keys.input, keyInput{})
 	lookup, ok := cx.Keymaps.Lookup(mode, ec.keys.path)
-	if ok && !lookup.Enabled(cx.Editor) {
-		ok = false
-	}
 	switch {
 	case ok:
 		ec.clearCommandMessage()
@@ -133,9 +130,6 @@ func (ec *EditorComponent) keymapClaims(k command.KeyEvent) bool {
 	lookup, ok := cx.Keymaps.Lookup(
 		cx.Editor.Mode(), []command.KeyEvent{k},
 	)
-	if ok && !lookup.Enabled(cx.Editor) {
-		return false
-	}
 	return ok || lookup.Prefix
 }
 

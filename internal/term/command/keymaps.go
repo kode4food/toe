@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -20,20 +19,18 @@ type (
 	// KeyMatch is a binding matched by traversing the key trie
 	KeyMatch struct {
 		Action KeyResultAction
-		When   func(*view.Editor) bool
 		Name   string
 		Prefix bool
 	}
 
 	keyTrieNode struct {
-		children  map[KeyEvent]*keyTrieNode
-		order     []KeyEvent
-		action    KeyResultAction
-		available func(*view.Editor) bool
-		name      string
-		label     string
-		counted   bool
-		hints     HintProvider
+		children map[KeyEvent]*keyTrieNode
+		order    []KeyEvent
+		action   KeyResultAction
+		name     string
+		label    string
+		counted  bool
+		hints    HintProvider
 	}
 )
 
@@ -41,8 +38,6 @@ var (
 	ErrDuplicateCommand = errors.New("duplicate command registration")
 	ErrNoModes          = errors.New("command has no modes")
 	ErrUnknownMode      = errors.New("keys references mode not in modes")
-
-	ErrBindingExists = i18n.NewError(i18n.ErrorBindingExists)
 )
 
 // NewKeymaps creates an empty Keymaps
@@ -154,41 +149,6 @@ func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
 	})
 }
 
-// BindActionArgs bundles the inputs for BindResultAction
-type BindActionArgs struct {
-	Modes  []view.Mode
-	Action KeyResultAction
-	When   func(*view.Editor) bool
-	Label  string
-	Seqs   [][]KeyEvent
-}
-
-// BindResultAction adds key sequences for a result-returning action
-func (k *Keymaps) BindResultAction(args BindActionArgs) error {
-	for _, mode := range args.Modes {
-		for _, seq := range args.Seqs {
-			if k.hasBindingConflict(mode, seq) {
-				return fmt.Errorf("%w in mode %s", ErrBindingExists, mode)
-			}
-		}
-	}
-	for _, mode := range args.Modes {
-		k.bindCommand(bindCommandArgs{
-			mode:      mode,
-			action:    args.Action,
-			available: args.When,
-			label:     args.Label,
-			seqs:      args.Seqs,
-		})
-	}
-	return nil
-}
-
-// Enabled reports whether a matched binding's :when predicate allows it
-func (k KeyMatch) Enabled(e *view.Editor) bool {
-	return k.When == nil || k.When(e)
-}
-
 // Lookup traverses the key trie. The bool reports a complete match
 func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (KeyMatch, bool) {
 	node := k.lookup(mode, seq)
@@ -200,7 +160,6 @@ func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (KeyMatch, bool) {
 	}
 	return KeyMatch{
 		Action: node.action,
-		When:   node.available,
 		Name:   node.name,
 	}, true
 }
@@ -209,23 +168,6 @@ func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (KeyMatch, bool) {
 func (k *Keymaps) AcceptsCount(mode view.Mode, seq []KeyEvent) bool {
 	node := k.lookup(mode, seq)
 	return node != nil && node.countable()
-}
-
-func (k *Keymaps) hasBindingConflict(mode view.Mode, seq []KeyEvent) bool {
-	node, ok := k.modes[mode]
-	if !ok {
-		return false
-	}
-	for _, ev := range seq {
-		if node.action != nil {
-			return true
-		}
-		node, ok = node.children[ev]
-		if !ok {
-			return false
-		}
-	}
-	return node.action != nil || len(node.children) > 0
 }
 
 func (k *Keymaps) declare(mode view.Mode, seq []KeyEvent) *keyTrieNode {
@@ -263,21 +205,19 @@ func (k *Keymaps) lookup(mode view.Mode, seq []KeyEvent) *keyTrieNode {
 }
 
 type bindCommandArgs struct {
-	mode      view.Mode
-	name      string
-	action    KeyResultAction
-	available func(*view.Editor) bool
-	label     string
-	counted   bool
-	hints     HintProvider
-	seqs      [][]KeyEvent
+	mode    view.Mode
+	name    string
+	action  KeyResultAction
+	label   string
+	counted bool
+	hints   HintProvider
+	seqs    [][]KeyEvent
 }
 
 func (k *Keymaps) bindCommand(args bindCommandArgs) {
 	for _, seq := range args.seqs {
 		node := k.declare(args.mode, seq)
 		node.action = args.action
-		node.available = args.available
 		node.name = args.name
 		node.counted = args.counted
 		node.hints = args.hints

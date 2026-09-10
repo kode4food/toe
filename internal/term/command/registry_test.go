@@ -95,14 +95,13 @@ func TestRegistry(t *testing.T) {
 			Run:   registryCommand().Run,
 			Modes: view.ModeNormal,
 			Keys: map[view.Mode]command.KeyBinding{
-				view.ModeAny: {{{Code: command.KeyCode{Char: 'g'}}}},
+				view.ModeAny: {
+					{{Code: command.KeyCode{Char: 'g'}}},
+					{{Code: command.KeyCode{Char: 'x'}}},
+				},
 			},
 		})
 		assert.NoError(t, err)
-
-		km.Bind(view.ModeNormal, "noop", []command.KeyEvent{
-			{Code: command.KeyCode{Char: 'x'}},
-		})
 
 		assert.Equal(t, command.KeyBinding{
 			{{Code: command.KeyCode{Char: 'g'}}},

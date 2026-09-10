@@ -337,34 +337,6 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotContains(t, stripANSI(m.View().Content), "Println")
 	})
 
-	t.Run("accepts through keymap action", func(t *testing.T) {
-		e := editorWithText(t, "")
-		e.SetMode(view.ModeInsert)
-		ctl := &completionController{
-			editor: e,
-			items: []*view.CompletionItem{
-				{Label: "Println", Insert: "Println"},
-			},
-		}
-		e.SetLanguageServerController(ctl)
-		km := command.NewKeymaps()
-		m := ui.New(e, km)
-		_, err := builtin.Register(m, km)
-		assert.NoError(t, err)
-		km.Bind(
-			view.ModeCompletion, ui.CompletionAcceptAction,
-			[]command.KeyEvent{{
-				Code: command.KeyCode{Char: 'j'}, Mods: command.ModCtrl,
-			}},
-		)
-		m = resize(m, 80, 24)
-
-		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
-		_ = sendModifiedAndFeed(m, 'j', tea.ModCtrl)
-
-		assert.Equal(t, "Println", ctl.item.Label)
-	})
-
 	t.Run("accepts completion on tab", func(t *testing.T) {
 		e := editorWithText(t, "")
 		e.SetMode(view.ModeInsert)

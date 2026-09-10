@@ -132,23 +132,6 @@ func (k *Keymaps) Bindings(mode view.Mode, name string) KeyBinding {
 	return bindings
 }
 
-// Bind adds extra key sequences to an already-registered command
-func (k *Keymaps) Bind(mode view.Mode, name string, seqs ...[]KeyEvent) {
-	cmd := k.ResolveCommand(name)
-	if cmd == nil {
-		return
-	}
-	action := func(e *view.Editor) Result {
-		return cmd.run(e)
-	}
-	k.bindCommand(bindCommandArgs{
-		mode:   mode,
-		name:   cmd.Name,
-		action: action,
-		seqs:   seqs,
-	})
-}
-
 // Lookup traverses the key trie. The bool reports a complete match
 func (k *Keymaps) Lookup(mode view.Mode, seq []KeyEvent) (KeyMatch, bool) {
 	node := k.lookup(mode, seq)

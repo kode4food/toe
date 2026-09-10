@@ -104,7 +104,14 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 		Aliases: []string{"palette_probe"},
 		Modes:   view.ModeNormal,
 		Keys: map[view.Mode]command.KeyBinding{
-			view.ModeAny: {{char('g'), char('p')}},
+			view.ModeAny: {
+				{char('g'), char('p')},
+				{
+					char('a'), char('b'), char('c'), char('d'),
+					char('e'), char('f'), char('g'), char('h'),
+					char('i'), char('j'), char('k'), char('l'),
+				},
+			},
 		},
 	})
 	_ = km.Register("arg_probe", command.Command{
@@ -120,10 +127,6 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 		Signature: command.Signature{
 			Positionals: command.Positionals{Min: 0, Max: 1},
 		},
-	})
-	km.Bind(view.ModeNormal, "palette_probe", []command.KeyEvent{
-		char('a'), char('b'), char('c'), char('d'), char('e'), char('f'),
-		char('g'), char('h'), char('i'), char('j'), char('k'), char('l'),
 	})
 	bindNormalTestAction(
 		km, "open_palette", m.PickerAction(m.CommandPalettePicker),

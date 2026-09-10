@@ -412,61 +412,21 @@ func TestReadChar(t *testing.T) {
 	})
 }
 
-func TestKeyBind(t *testing.T) {
-	called := false
+func TestKeyBindingWithoutRun(t *testing.T) {
 	km := command.NewKeymaps()
-	_ = km.Register("act", command.Command{
-		Run: func(*view.Editor, *command.Args) command.Result {
-			called = true
-			return command.Result{}
+	_ = km.Register("norun", command.Command{
+		Modes: view.ModeNormal,
+		Keys: map[view.Mode]command.KeyBinding{
+			view.ModeAny: {{char('x')}, {char('y')}},
 		},
-		Modes:   view.ModeNormal,
-		Keys:    map[view.Mode]command.KeyBinding{view.ModeAny: {{char('a')}}},
-		Aliases: []string{"act"},
 	})
 
-	t.Run("Bind adds extra sequence", func(t *testing.T) {
-		km.Bind(view.ModeNormal, "act", []command.KeyEvent{char('b')})
-		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('b'),
-		})
+	for _, k := range []command.KeyEvent{char('x'), char('y')} {
+		lookup, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{k})
 		assert.True(t, ok)
-		assert.False(t, lookup.Prefix)
-		called = false
-		lookup.Action(nil)
-		assert.True(t, called)
-	})
-
-	t.Run("Bind unknown command is no-op", func(t *testing.T) {
-		km.Bind(view.ModeNormal, "nonexistent",
-			[]command.KeyEvent{char('z')},
-		)
-		_, ok := km.Lookup(view.ModeNormal, []command.KeyEvent{
-			char('z'),
-		})
-		assert.False(t, ok)
-	})
-
-	t.Run("command without Run still binds", func(t *testing.T) {
-		km2 := command.NewKeymaps()
-		_ = km2.Register("norun", command.Command{
-			Modes: view.ModeNormal,
-			Keys: map[view.Mode]command.KeyBinding{
-				view.ModeAny: {{char('x')}},
-			},
-		})
-		km2.Bind(view.ModeNormal, "norun",
-			[]command.KeyEvent{char('y')},
-		)
-		for _, k := range []command.KeyEvent{char('x'), char('y')} {
-			lookup, ok := km2.Lookup(view.ModeNormal,
-				[]command.KeyEvent{k},
-			)
-			assert.True(t, ok)
-			assert.Equal(t, "norun", lookup.Name)
-			assert.Equal(t, command.Result{}, lookup.Action(nil))
-		}
-	})
+		assert.Equal(t, "norun", lookup.Name)
+		assert.Equal(t, command.Result{}, lookup.Action(nil))
+	}
 }
 
 func TestLabelNode(t *testing.T) {

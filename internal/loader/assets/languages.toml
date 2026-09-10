@@ -49,7 +49,7 @@ indent = { tab-width = 2, unit = "  " }
 [[language]]
 name = "scheme"
 injection-regex = "scheme"
-file-types = ["scm", "ss", "ale"]
+file-types = ["scm", "ss"]
 comment-token = ";"
 indent = { tab-width = 2, unit = "  " }
 

@@ -15,7 +15,6 @@ import (
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
-	"github.com/kode4food/toe/internal/term/ale"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
@@ -92,9 +91,6 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 	if err := a.applyConfigFiles(); err != nil {
-		return err
-	}
-	if err := a.applyInitFile(); err != nil {
 		return err
 	}
 	if err := a.resolveBaseOptions(); err != nil {
@@ -232,22 +228,6 @@ func (a *App) applyConfigFiles() error {
 	return a.Reg.ApplyTOML(a.Editor, raw)
 }
 
-func (a *App) applyInitFile() error {
-	rt, err := ale.NewRuntime(a.Editor, a.keymaps)
-	if err != nil {
-		return err
-	}
-	if dir, ok := loader.ConfigDir(); ok {
-		if err := evalInitFile(rt, filepath.Join(dir, "init.ale")); err != nil {
-			return err
-		}
-	}
-	if !a.WorkspaceTrusted() {
-		return nil
-	}
-	return evalInitFile(rt, loader.WorkspaceInitFile(a.Root))
-}
-
 // resolveBaseOptions re-reads the option values a saved session is compared
 // against, so a session records only what changed after startup
 func (a *App) resolveBaseOptions() error {
@@ -335,18 +315,4 @@ func teaOptions() []tea.ProgramOption {
 		return nil
 	}
 	return []tea.ProgramOption{tea.WithColorProfile(colorprofile.TrueColor)}
-}
-
-func evalInitFile(rt *ale.Runtime, path string) error {
-	src, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	if err := rt.Eval(string(src)); err != nil {
-		return fmt.Errorf("%s:\n%s", path, i18n.ErrorText(err))
-	}
-	return nil
 }

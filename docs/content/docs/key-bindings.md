@@ -27,8 +27,6 @@ Every key press is dispatched through the keymap for the **current mode**. Norma
 
 The rest of this page covers the three editing modes (Normal, Select, Insert) first, then the global facilities that apply across them: window management, the leader menu, terminal, image, and binary panes, prompts, and picker navigation.
 
-Keys can be rebound and new actions scripted in Ale, see [Scripting]({{< relref "/docs/scripting" >}}).
-
 <a href="../../downloads/toe-cheatsheet.pdf" download>Download the printable Toe cheatsheet (PDF)</a>.
 
 ## Normal Mode

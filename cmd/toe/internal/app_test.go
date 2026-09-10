@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	app "github.com/kode4food/toe/cmd/toe/internal"
-	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -86,7 +85,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	binding := `(toe/bind :modes :normal :keys "C-A-x" (toe/write))`
 
 	t.Run("opens the named file", func(t *testing.T) {
 		dir := workspace(t)
@@ -156,46 +154,6 @@ func TestStart(t *testing.T) {
 	t.Run("missing file is ok", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		start(t, workspace(t))
-	})
-
-	t.Run("evaluates Ale", func(t *testing.T) {
-		writeUserInitFile(t, binding)
-		start(t, workspace(t))
-	})
-
-	t.Run("returns script error", func(t *testing.T) {
-		path := writeUserInitFile(t, `(`)
-		dir := workspace(t)
-		a, err := app.New(nil, dir)
-		assert.NoError(t, err)
-		defer func() { _ = a.Stop() }()
-
-		err = a.Start(context.Background())
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), path+":\n")
-	})
-
-	t.Run("user binding blocks workspace", func(t *testing.T) {
-		writeUserInitFile(t, binding)
-		dir := workspace(t)
-		path := writeWorkspaceFile(t, dir, "init.ale", binding)
-		assert.NoError(t, loader.TrustWorkspace(dir))
-		a, err := app.New(nil, dir)
-		assert.NoError(t, err)
-		defer func() { _ = a.Stop() }()
-
-		err = a.Start(context.Background())
-
-		assert.Contains(t, err.Error(), i18n.Text(i18n.ErrorBindingExists))
-		assert.Contains(t, err.Error(), path+":\n")
-	})
-
-	t.Run("skips untrusted workspace", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		dir := workspace(t)
-		writeWorkspaceFile(t, dir, "init.ale", `(`)
-		start(t, dir)
 	})
 
 	t.Run("trusted workspace restores the session", func(t *testing.T) {
@@ -352,17 +310,6 @@ func writeWorkspaceFile(t *testing.T, dir, name, src string) string {
 	wdir := filepath.Join(dir, loader.WorkspaceDirName)
 	assert.NoError(t, os.MkdirAll(wdir, 0o755))
 	path := filepath.Join(wdir, name)
-	assert.NoError(t, os.WriteFile(path, []byte(src), 0o644))
-	return path
-}
-
-func writeUserInitFile(t *testing.T, src string) string {
-	t.Helper()
-	dir := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", dir)
-	cfg := filepath.Join(dir, loader.DirName)
-	assert.NoError(t, os.MkdirAll(cfg, 0o755))
-	path := filepath.Join(cfg, "init.ale")
 	assert.NoError(t, os.WriteFile(path, []byte(src), 0o644))
 	return path
 }

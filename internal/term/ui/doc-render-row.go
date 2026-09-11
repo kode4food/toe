@@ -22,7 +22,6 @@ type (
 		searchMatches []matchSpan
 		docHighlights []matchSpan
 		docLinks      []matchSpan
-		docColors     []colorSpan
 		diagnostics   []diagnosticSpan
 		annotations   []inlineAnnotation
 		selSpans      []selectionSpan
@@ -150,11 +149,6 @@ func (r *rowRender) rows() []renderedRow {
 		glyph := res.glyph
 		col += res.width
 		selAt := r.selectionAt(pos)
-		var colorStyle tui.Style
-		colorOK := false
-		if r.docColors != nil {
-			colorStyle, colorOK = r.colorAt(pos)
-		}
 		var diag diagnosticSpan
 		diagOK := false
 		if r.diagnostics != nil {
@@ -189,8 +183,6 @@ func (r *rowRender) rows() []renderedRow {
 				base:    r.baseStyleAt(pos, glyph),
 				overlay: ts.documentLink,
 			})
-		case colorOK:
-			style = colorStyle
 		case inMatchSpan(r.searchMatches, pos):
 			style = overlayBgStyle(styleOverlay{
 				base:    r.baseStyleAt(pos, glyph),

@@ -35,11 +35,12 @@ func (r *renderPass) screenCharPos(
 	contentX := max(at.X-a.X-gutterW-entry.prefixWidth, 0) +
 		v.Offset().HorizontalOffset
 	return charPosInLineSeg(charPosInLineSegArgs{
-		text:     text,
-		docLine:  entry.logLine,
-		charOff:  entry.offset,
-		targetX:  contentX,
-		tabWidth: doc.TabWidth(),
+		text:        text,
+		docLine:     entry.logLine,
+		charOff:     entry.offset,
+		targetX:     contentX,
+		tabWidth:    doc.TabWidth(),
+		annotations: entry.annotations,
 	})
 }
 
@@ -278,6 +279,7 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 	segY := -1
 	segStart := 0
 	segPrefixW := 0
+	var annotations []inlineAnnotation
 	for i, e := range args.rowMap {
 		if e.filler || e.logLine != cursorLine {
 			if segY >= 0 {
@@ -291,6 +293,7 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 		segY = i
 		segStart = e.offset
 		segPrefixW = e.prefixWidth
+		annotations = e.annotations
 	}
 	if segY < 0 {
 		return geom.Point{X: gutterW}
@@ -317,17 +320,22 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 		}
 		runeIdx++
 	}
+	col += annotationWidth(annotations, core.Span{
+		From: lineStart + segStart,
+		To:   cursor,
+	})
 	return geom.Point{
 		X: gutterW + segPrefixW + col - args.horzOff, Y: segY,
 	}
 }
 
 type charPosInLineSegArgs struct {
-	text     core.Rope
-	docLine  int
-	charOff  int
-	targetX  int
-	tabWidth int
+	text        core.Rope
+	docLine     int
+	charOff     int
+	targetX     int
+	tabWidth    int
+	annotations []inlineAnnotation
 }
 
 func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
@@ -343,6 +351,7 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 		return 0, false
 	}
 	col := 0
+	visualCol := 0
 	charPos := lineStart + charOff
 	runeIdx := 0
 	for _, ch := range lineString(text, core.Span{
@@ -353,16 +362,25 @@ func charPosInLineSeg(args charPosInLineSegArgs) (int, bool) {
 			runeIdx++
 			continue
 		}
+		annW := annotationWidth(args.annotations, core.Span{
+			From: charPos,
+			To:   charPos,
+		})
+		if visualCol+annW > args.targetX {
+			return charPos, true
+		}
+		visualCol += annW
 		var w int
 		if ch == '\t' {
 			w = args.tabWidth - col%args.tabWidth
 		} else {
 			w = runewidth.RuneWidth(ch)
 		}
-		if col+w > args.targetX {
+		if visualCol+w > args.targetX {
 			break
 		}
 		col += w
+		visualCol += w
 		charPos++
 		runeIdx++
 	}
@@ -391,4 +409,15 @@ type autoScrollMarginArgs struct {
 
 func autoScrollMargin(args autoScrollMarginArgs) int {
 	return min(args.scrollOff, max(args.span/2-1, 0))
+}
+
+// at is inclusive on both ends: an annotation renders before its anchor
+func annotationWidth(annotations []inlineAnnotation, at core.Span) int {
+	w := 0
+	for _, a := range annotations {
+		if a.pos >= at.From && a.pos <= at.To {
+			w += runewidth.StringWidth(a.text)
+		}
+	}
+	return w
 }

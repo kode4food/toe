@@ -22,7 +22,8 @@ type (
 		styles    docStyleSet
 		stylesDim docStyleSet
 
-		viewRowMaps map[view.Id][]viewRowEntry
+		viewRowMaps     map[view.Id][]viewRowEntry
+		viewAnnotations map[view.Id][]inlineAnnotation
 
 		lastInfoKey infoPopupKey
 		inputCaret  geom.Point
@@ -71,6 +72,7 @@ type (
 		offset      int
 		prefixWidth int
 		filler      bool
+		annotations []inlineAnnotation
 	}
 
 	// docRenderCache memoizes a single document's derived render state, keyed
@@ -78,6 +80,7 @@ type (
 	docRenderCache struct {
 		rawTextRev    int
 		rawTextCached string
+		hexScratch    []view.DocumentColor
 
 		hlRev   int
 		hlLang  string
@@ -109,11 +112,6 @@ type (
 
 	matchSpan struct{ from, to int }
 
-	colorSpan struct {
-		from, to int
-		style    tui.Style
-	}
-
 	diagnosticSpan struct {
 		from, to int
 		severity view.DiagnosticSeverity
@@ -137,8 +135,9 @@ func newDocStyleSet(th *theme.Theme, mode view.Mode) docStyleSet {
 
 func newRenderCache() *renderCache {
 	return &renderCache{
-		docCaches:   map[view.DocumentId]*docRenderCache{},
-		viewRowMaps: map[view.Id][]viewRowEntry{},
+		docCaches:       map[view.DocumentId]*docRenderCache{},
+		viewRowMaps:     map[view.Id][]viewRowEntry{},
+		viewAnnotations: map[view.Id][]inlineAnnotation{},
 	}
 }
 
@@ -164,6 +163,7 @@ func (c *renderCache) evictClosed(e *view.Editor) {
 		for id := range c.viewRowMaps {
 			if _, ok := live[id]; !ok {
 				delete(c.viewRowMaps, id)
+				delete(c.viewAnnotations, id)
 			}
 		}
 	}

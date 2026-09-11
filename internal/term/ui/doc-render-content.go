@@ -349,6 +349,7 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 					logLine:     lineNum,
 					offset:      cr.offset,
 					prefixWidth: rowPrefixW,
+					annotations: rr.annotations,
 				})
 				bufRow++
 			}
@@ -364,7 +365,10 @@ func (r *renderPass) renderContentRows(st *contentRenderState) {
 				width:     format.ViewportWidth,
 				startCol:  hOff,
 			})
-			rowMap = append(rowMap, viewRowEntry{logLine: lineNum})
+			rowMap = append(rowMap, viewRowEntry{
+				logLine:     lineNum,
+				annotations: rr.annotations,
+			})
 			bufRow++
 		}
 	}

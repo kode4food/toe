@@ -172,6 +172,18 @@ func TestMouseWheelScroll(t *testing.T) {
 }
 
 func TestMouseClickPositioning(t *testing.T) {
+	t.Run("color swatch does not shift click", func(t *testing.T) {
+		e := editorWithText(t, "#f00")
+		m := renderedModel(e)
+		at := renderedTextPoint(t, m, "\uf0c8#f00", 2)
+
+		m.Update(tea.MouseClickMsg{
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+		})
+
+		assert.Equal(t, 1, testutil.CursorPos(t, e))
+	})
+
 	t.Run("positions cursor on content click", func(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := renderedModel(e)
@@ -189,10 +201,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 		at := renderedTextPoint(t, m, "abcdef", 3)
 
-		m2, _ := m.Update(tea.MouseClickMsg{
+		m.Update(tea.MouseClickMsg{
 			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
-		_ = m2
 
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
 	})

@@ -103,8 +103,9 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | Config key | Type | Default | Description |
 |--------|------|---------|-------------|
 | `line-number` | string | `"absolute"` | `absolute` or `relative` |
-| `cursorline` | bool | `false` | Highlight cursor line |
+| `cursorline` | bool | `true` | Highlight cursor line |
 | `cursorcolumn` | bool | `false` | Highlight cursor column |
+| `color-swatches` | bool | `true` | Show swatches beside color literals |
 | `animation` | bool | `true` | Animate UI transitions; when off they snap instantly |
 | `auto-size` | bool | `false` | Widen a focused pane to fit its content: the leftmost ruler for text, a full hex row for binary, 80 columns for terminals |
 | `text-width` | int | `80` | Wrap column for `:reflow` and for soft wrap when `wrap-at-text-width` is on |

@@ -31,22 +31,6 @@ func (r *rowRender) selectionAt(pos int) selectionAtRes {
 	return selectionAtRes{}
 }
 
-func (r *rowRender) colorAt(pos int) (tui.Style, bool) {
-	lo, hi := 0, len(r.docColors)-1
-	for lo <= hi {
-		mid := (lo + hi) / 2
-		sp := r.docColors[mid]
-		if pos < sp.from {
-			hi = mid - 1
-		} else if pos >= sp.to {
-			lo = mid + 1
-		} else {
-			return sp.style, true
-		}
-	}
-	return tui.Style{}, false
-}
-
 func (r *rowRender) diagnosticAt(pos int) (diagnosticSpan, bool) {
 	var best diagnosticSpan
 	ok := false

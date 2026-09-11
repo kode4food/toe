@@ -155,6 +155,25 @@ func TestRenderCrash(t *testing.T) {
 }
 
 func TestCursorShapeRender(t *testing.T) {
+	t.Run("caret skips color swatch", func(t *testing.T) {
+		plain := editorWithText(t, "plain\n")
+		plain.Options().CursorShape.Insert = view.CursorKindBar
+		plain.SetMode(view.ModeInsert)
+		plainModel := resize(ui.New(plain, command.NewKeymaps()), 80, 24)
+		plainCursor := plainModel.View().Cursor
+
+		e := editorWithText(t, "#f00\n")
+		e.Options().CursorShape.Insert = view.CursorKindBar
+		e.SetMode(view.ModeInsert)
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		colorCursor := m.View().Cursor
+
+		assert.NotNil(t, plainCursor)
+		assert.NotNil(t, colorCursor)
+		assert.Equal(t, plainCursor.Position.X+1, colorCursor.Position.X)
+		assert.Equal(t, 0, testutil.CursorPos(t, e))
+	})
+
 	t.Run("hides block cursor escape", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
@@ -1373,6 +1392,60 @@ func TestDocumentHighlightAndLinkRender(t *testing.T) {
 }
 
 func TestTextAnnotationRender(t *testing.T) {
+	t.Run("detects hex colors", func(t *testing.T) {
+		e := editorWithText(t,
+			"π #12 #12345 #1234567 #123456789 x#aaa #123 #4567 #89abcd "+
+				"#ef012380\n",
+		)
+		e.Options().NerdFonts = false
+		m := resize(ui.New(e, command.NewKeymaps()), 100, 24)
+
+		raw := m.View().Content
+		out := stripANSI(raw)
+
+		assert.Equal(t, 4, strings.Count(out, "■"))
+		assert.Contains(t, out, "■#123")
+		assert.Contains(t, raw, "\x1b[38;2;17;34;51m")
+		assert.Contains(t, raw, "\x1b[38;2;68;85;102m")
+		assert.Contains(t, raw, "\x1b[38;2;137;171;205m")
+		assert.Contains(t, raw, "\x1b[38;2;239;1;35m")
+		assert.NotContains(t, raw, "\x1b[38;2;170;170;170m")
+		styles := styledRuneStyles(raw)
+		assert.Equal(t, "38;2;239;1;35", styles['■'].fg)
+		assert.NotEqual(t, "48;2;239;1;35", styles['■'].bg)
+		assert.NotEqual(t, "38;2;239;1;35", styles['#'].fg)
+	})
+
+	t.Run("color swatch stays inside the window", func(t *testing.T) {
+		visibleX := func(t *testing.T, line string) int {
+			t.Helper()
+			e := editorWithText(t, line+strings.Repeat("x", 200)+"\n")
+			e.Options().NerdFonts = false
+			m := resize(ui.New(e, command.NewKeymaps()), 40, 6)
+			out := stripANSI(m.View().Content)
+			for row := range strings.SplitSeq(out, "\n") {
+				assert.LessOrEqual(t, utf8.RuneCountInString(row), 40)
+			}
+			return strings.Count(out, "x")
+		}
+
+		plain := visibleX(t, "yf00 ")
+		colored := visibleX(t, "#f00 ")
+
+		assert.Equal(t, plain-1, colored)
+	})
+
+	t.Run("color swatches can be turned off", func(t *testing.T) {
+		e := editorWithText(t, "#f00\n")
+		e.Options().ColorSwatches = false
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "\uf0c8")
+		assert.Contains(t, out, "#f00")
+	})
+
 	t.Run("renders inlay hints and color swatches", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
 		doc := e.FocusedDocument()
@@ -1389,7 +1462,7 @@ func TestTextAnnotationRender(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 
-		assert.Contains(t, out, "\u25a0hello: string")
+		assert.Contains(t, out, "\uf0c8hello: string")
 	})
 
 	t.Run("renders parameter and unknown hint kinds", func(t *testing.T) {
@@ -1409,7 +1482,7 @@ func TestTextAnnotationRender(t *testing.T) {
 		assert.Contains(t, out, ": T")
 	})
 
-	t.Run("hidden outside normal mode", func(t *testing.T) {
+	t.Run("colors remain in insert mode", func(t *testing.T) {
 		e := editorWithText(t, "hello\n")
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
@@ -1429,7 +1502,7 @@ func TestTextAnnotationRender(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 
-		assert.NotContains(t, out, "■")
+		assert.Contains(t, out, "\uf0c8hello")
 		assert.NotContains(t, out, ": string")
 	})
 }

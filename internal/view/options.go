@@ -47,9 +47,10 @@ type Options struct {
 	BufferLine BufferLine
 	StatusLine StatusLine
 
-	CursorLine   bool
-	CursorColumn bool
-	CursorShape  CursorShape
+	CursorLine    bool
+	CursorColumn  bool
+	ColorSwatches bool
+	CursorShape   CursorShape
 
 	Whitespace   Whitespace
 	IndentGuides IndentGuides
@@ -136,6 +137,7 @@ func defaultOptions() Options {
 		InactiveDim:          DefaultInactiveDim,
 		Mouse:                true,
 		NerdFonts:            true,
+		ColorSwatches:        true,
 		Shell:                DefaultShell(),
 		AtomicSave:           true,
 		InsertFinalNewline:   true,

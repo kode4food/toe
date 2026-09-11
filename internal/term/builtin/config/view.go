@@ -19,19 +19,20 @@ import (
 
 type viewSection struct {
 	Editor struct {
-		LineNumber   view.LineNumber   `toml:"line-number"`
-		InactiveDim  *int              `toml:"inactive-dim"`
-		CursorLine   *bool             `toml:"cursorline"`
-		CursorColumn *bool             `toml:"cursorcolumn"`
-		Animation    *bool             `toml:"animation"`
-		AutoSize     *bool             `toml:"auto-size"`
-		TextWidth    *int              `toml:"text-width"`
-		SoftWrap     language.SoftWrap `toml:"soft-wrap"`
-		Rulers       []int             `toml:"rulers"`
-		BufferLine   view.BufferLine   `toml:"bufferline"`
-		Whitespace   view.Whitespace   `toml:"whitespace"`
-		IndentGuides view.IndentGuides `toml:"indent-guides"`
-		Gutters      view.Gutter       `toml:"gutters"`
+		LineNumber    view.LineNumber   `toml:"line-number"`
+		InactiveDim   *int              `toml:"inactive-dim"`
+		CursorLine    *bool             `toml:"cursorline"`
+		CursorColumn  *bool             `toml:"cursorcolumn"`
+		ColorSwatches *bool             `toml:"color-swatches"`
+		Animation     *bool             `toml:"animation"`
+		AutoSize      *bool             `toml:"auto-size"`
+		TextWidth     *int              `toml:"text-width"`
+		SoftWrap      language.SoftWrap `toml:"soft-wrap"`
+		Rulers        []int             `toml:"rulers"`
+		BufferLine    view.BufferLine   `toml:"bufferline"`
+		Whitespace    view.Whitespace   `toml:"whitespace"`
+		IndentGuides  view.IndentGuides `toml:"indent-guides"`
+		Gutters       view.Gutter       `toml:"gutters"`
 	} `toml:"editor"`
 }
 
@@ -499,6 +500,14 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().CursorColumn = v
 				},
 			).WithDoc("Highlight the cursor's column"),
+			kit.EditorBoolOption("color-swatches",
+				func(e *view.Editor) bool {
+					return e.Options().ColorSwatches
+				},
+				func(e *view.Editor, v bool) {
+					e.Options().ColorSwatches = v
+				},
+			).WithDoc("Show swatches beside color literals"),
 			kit.EditorBoolOption("animation",
 				func(*view.Editor) bool {
 					return model.Animation()
@@ -808,6 +817,7 @@ func ViewModule(model ui.Model) command.Module {
 				)
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)
+				opts.ColorSwatches = kit.BoolOr(cfg.Editor.ColorSwatches, true)
 				model.SetAnimation(kit.BoolOr(cfg.Editor.Animation, true))
 				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize, false))
 				opts.TextWidth = cfg.Editor.TextWidth

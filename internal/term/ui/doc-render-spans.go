@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -116,10 +117,18 @@ func (r *renderPass) prepareContentRender(
 		docHighlights = documentHighlightSpans(doc.DocumentHighlights(v.ID()))
 	}
 	var docLinks []matchSpan
-	var docColors []colorSpan
 	if cx.Editor.Mode() == view.ModeNormal {
 		docLinks = documentLinkSpans(doc.DocumentLinks())
-		docColors = documentColorSpans(doc.DocumentColors())
+	}
+	var colors []view.DocumentColor
+	if opts.ColorSwatches {
+		colors = doc.DocumentColors()
+		if len(colors) == 0 {
+			colors = dc.visibleHexColors(rawText, lineIdx, core.Span{
+				From: anchorLine,
+				To:   anchorLine + args.area.Height,
+			})
+		}
 	}
 
 	// styles rebuilt only when theme or mode changes
@@ -146,16 +155,18 @@ func (r *renderPass) prepareContentRender(
 	}
 
 	diagnostics := diagnosticSpans(docDiagnostics, styles)
-	var annotations []inlineAnnotation
+	annotations := c.viewAnnotations[v.ID()][:0]
 	if cx.Editor.Mode() == view.ModeNormal {
-		annotations = inlayHintAnnotations(doc.InlayHints(v.ID()), styles)
 		annotations = append(
-			annotations, documentColorAnnotations(doc.DocumentColors())...,
+			annotations,
+			inlayHintAnnotations(doc.InlayHints(v.ID()), styles)...,
 		)
-		slices.SortStableFunc(annotations, func(a, b inlineAnnotation) int {
-			return cmp.Compare(a.pos, b.pos)
-		})
 	}
+	annotations = appendColorAnnotations(annotations, colors, opts.NerdFonts)
+	slices.SortStableFunc(annotations, func(a, b inlineAnnotation) int {
+		return cmp.Compare(a.pos, b.pos)
+	})
+	c.viewAnnotations[v.ID()] = annotations
 
 	cursorKind := opts.CursorShapeForMode(cx.Editor.Mode())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.editor.focused &&
@@ -227,7 +238,6 @@ func (r *renderPass) prepareContentRender(
 		searchMatches: searchMatches,
 		docHighlights: docHighlights,
 		docLinks:      docLinks,
-		docColors:     docColors,
 		diagnostics:   diagnostics,
 		selSpans:      selSpans,
 		cursor:        cursor,

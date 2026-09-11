@@ -1,8 +1,10 @@
 package ui_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -50,6 +52,12 @@ func BenchmarkScrollSmallFile(b *testing.B) {
 	benchmarkScroll(b, largeGoSource(40))
 }
 
+// BenchmarkScrollColorDense scrolls a file carrying hex color literals on
+// every line, the worst case for the color swatch scan
+func BenchmarkScrollColorDense(b *testing.B) {
+	benchmarkScroll(b, colorDenseSource(2000))
+}
+
 // BenchmarkScrollTwoPanes scrolls with two panes showing two different
 // documents, exercises the per-document render caches under split layout
 func BenchmarkScrollTwoPanes(b *testing.B) {
@@ -93,4 +101,16 @@ func BenchmarkScrollTwoPanes(b *testing.B) {
 		_ = m.(ui.Model).View().Content
 		i++
 	}
+}
+
+func colorDenseSource(lines int) string {
+	var b strings.Builder
+	b.WriteString("package main\n\n")
+	for i := range lines {
+		_, _ = fmt.Fprintf(&b,
+			"var c%d = []string{\"#%06x\", \"#%03x\", \"#%08x\"}\n",
+			i, i*997&0xffffff, i&0xfff, i*7919,
+		)
+	}
+	return b.String()
 }

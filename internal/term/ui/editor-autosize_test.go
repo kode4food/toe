@@ -162,3 +162,24 @@ func TestAutoSizeResizeHold(t *testing.T) {
 	assert.Equal(t, 80, tp.Area().Width)
 	assert.Equal(t, 80, tp.Emulator().Width())
 }
+
+func TestAutoSizeAfterSwap(t *testing.T) {
+	e := view.NewEditor(t.TempDir())
+	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
+	e.VSplitNew()
+	e.Options().SetRulers([]int{80})
+	m.SetAutoSize(true)
+	m.SetAnimation(false)
+
+	m.Update(tea.FocusMsg{})
+	v := e.FocusedView()
+	assert.Equal(t, 88, v.Area().Width)
+
+	e.SwapSplitInDirection(view.DirectionLeft)
+	assert.Less(t, v.Area().Width, 88)
+
+	m.Update(tea.FocusMsg{})
+
+	assert.Equal(t, v.ID(), e.FocusedView().ID())
+	assert.Equal(t, 88, v.Area().Width)
+}

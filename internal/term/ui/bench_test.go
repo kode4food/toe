@@ -57,13 +57,12 @@ func BenchmarkRenderLongLine(b *testing.B) {
 
 	b.ReportAllocs()
 	for b.Loop() {
+		v.MarkDirty()
 		_ = m.View().Content
 	}
 }
 
-// BenchmarkRenderPickerPreview renders a large syntax-highlighted in-memory
-// buffer preview with a highlighted cursor line. This uncached worst case
-// re-renders and re-tokenizes the preview every frame
+// BenchmarkRenderPickerPreview scrolls a large syntax-highlighted preview
 func BenchmarkRenderPickerPreview(b *testing.B) {
 	root := b.TempDir()
 	path := filepath.Join(root, "big.go")
@@ -93,8 +92,15 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 	_ = m.View().Content // prime
 
 	b.ReportAllocs()
+	i := 0
 	for b.Loop() {
+		button := tea.MouseWheelDown
+		if i%20 >= 10 {
+			button = tea.MouseWheelUp
+		}
+		m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
 		_ = m.View().Content
+		i++
 	}
 }
 
@@ -143,6 +149,7 @@ func BenchmarkRenderLongLineCursorStart(b *testing.B) {
 
 	b.ReportAllocs()
 	for b.Loop() {
+		v.MarkDirty()
 		_ = m.View().Content
 	}
 }

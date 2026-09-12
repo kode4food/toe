@@ -3,7 +3,6 @@ package ui
 import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
-	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -12,10 +11,10 @@ import (
 
 type (
 	diffPreviewRender struct {
-		working core.Rope
-		base    core.Rope
-		spans   []highlight.Span
-		lines   []diffPreviewLine
+		highlight func(string) tui.Style
+		working   *previewDocEntry
+		base      *previewDocEntry
+		lines     []diffPreviewLine
 
 		format *language.TextFormat
 		opts   *view.Options
@@ -64,18 +63,18 @@ const (
 // rows of a file edited in both places diff against the right side
 func (p *Picker) diffBaseFor(
 	vc view.VersionControl, path string, staged bool,
-) core.Rope {
+) *previewDocEntry {
 	key := diffBaseKey{path: path, staged: staged}
-	if rope, ok := p.preview.diffBaseCache[key]; ok {
-		return rope
+	if entry, ok := p.preview.diffBaseCache[key]; ok {
+		return entry
 	}
 	text := vc.IndexText(path)
 	if staged {
 		text = vc.HeadText(path)
 	}
-	rope := core.NewRope(text)
-	p.preview.diffBaseCache[key] = rope
-	return rope
+	entry := &previewDocEntry{rope: core.NewRope(text)}
+	p.preview.diffBaseCache[key] = entry
+	return entry
 }
 
 type buildDiffPreviewLinesArgs struct {
@@ -98,24 +97,28 @@ func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 		for _, h := range args.hunks {
 			for l := prev; l < h.From && l < nWork; l++ {
 				out = append(out, diffPreviewLine{
-					kind: diffLineContext, line: l,
+					kind: diffLineContext,
+					line: l,
 				})
 			}
 			for l := h.BaseFrom; l < h.BaseTo; l++ {
 				out = append(out, diffPreviewLine{
-					kind: diffLineRemoved, line: l,
+					kind: diffLineRemoved,
+					line: l,
 				})
 			}
 			for l := h.From; l < h.To && l < nWork; l++ {
 				out = append(out, diffPreviewLine{
-					kind: diffLineAdded, line: l,
+					kind: diffLineAdded,
+					line: l,
 				})
 			}
 			prev = h.To
 		}
 		for l := prev; l < nWork; l++ {
 			out = append(out, diffPreviewLine{
-				kind: diffLineContext, line: l,
+				kind: diffLineContext,
+				line: l,
 			})
 		}
 		return out
@@ -132,9 +135,6 @@ func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
 }
 
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
-	hl := previewHighlighter(args.theme)
-	ws := args.opts.Whitespace
-	ig := args.opts.IndentGuides
 	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
 	addedBg := tintToward(&tintColors{
@@ -160,6 +160,20 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	})
 	args.hScroll = hOff
 
+	working := args.working.ensureRenderCache()
+	base := args.base.ensureRenderCache()
+	rr := rowRender{
+		styles:     args.styles,
+		hlStyle:    args.highlight,
+		format:     args.format,
+		whitespace: args.opts.Whitespace,
+		indents:    args.opts.IndentGuides,
+		cursor:     -1,
+		cursorLine: -1,
+		colStart:   hOff,
+		colWidth:   contentW,
+		maxRows:    1,
+	}
 	for row := range args.area.Height {
 		idx := start + row
 		at := geom.Point{X: contentX, Y: args.area.Y + row}
@@ -170,64 +184,48 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			continue
 		}
 		dl := args.lines[idx]
-		src, spans := args.working, args.spans
+		src := working
+		rr.hlSpans = args.working.spans
 		if dl.kind == diffLineRemoved {
-			src, spans = args.base, nil
+			src = base
+			rr.hlSpans = nil
 		}
-		lineStart, err := src.LineToChar(dl.line)
-		if err != nil {
+		if !rr.prepareLine(src, dl.line) {
 			continue
-		}
-		lineEnd, err := src.LineEndCharIndex(dl.line)
-		if err != nil {
-			continue
-		}
-		rr := rowRender{
-			lineText: lineString(src, core.Span{
-				From: lineStart,
-				To:   lineEnd,
-			}),
-			styles:     args.styles,
-			hlStyle:    hl,
-			format:     args.format,
-			whitespace: ws,
-			indents:    ig,
-			hlSpans:    spans,
-			cursor:     -1,
-			cursorLine: -1,
-			lineNum:    dl.line,
-			lineStart:  lineStart,
-			lineEnd:    lineEnd,
-			colStart:   hOff,
-			colWidth:   contentW,
-			maxRows:    1,
 		}
 		rendered := rr.rows()
 		rendered[0].writeToBuffer(rowWriteArgs{
-			buf: buf, at: at, fillStyle: fillTUI, width: contentW,
-			startCol: hOff,
+			buf:       buf,
+			at:        at,
+			fillStyle: fillTUI,
+			width:     contentW,
+			startCol:  hOff,
 		})
 		buf.PatchBgRange(at, contentW, popupBg)
 
-		sign, signStyle := " ", fillTUI
+		sign := " "
+		signStyle := fillTUI
 		switch dl.kind {
 		case diffLineAdded:
 			buf.PatchBgRange(at, contentW, addedBg)
-			sign, signStyle = "+", args.styles.diffAdded.Bg(popupBg)
+			sign = "+"
+			signStyle = args.styles.diffAdded.Bg(popupBg)
 		case diffLineRemoved:
 			buf.PatchBgRange(at, contentW, removedBg)
-			sign, signStyle = "-", args.styles.diffRemoved.Bg(popupBg)
+			sign = "-"
+			signStyle = args.styles.diffRemoved.Bg(popupBg)
 		case diffLineContext:
 			// no-op
 		}
 		buf.SetString(signAt, sign, signStyle)
 	}
-	applyPreviewRulers(buf, args.opts.Rulers, geom.Area{
-		X:      contentX,
-		Y:      args.area.Y,
-		Width:  contentW,
-		Height: args.area.Height,
-	}, args.styles.rulerBg)
+	applyRulers(applyRulersArgs{
+		buf:     buf,
+		at:      geom.Point{X: contentX, Y: args.area.Y},
+		size:    geom.Size{Width: contentW, Height: args.area.Height},
+		rulers:  args.opts.Rulers,
+		rulerBg: args.styles.rulerBg,
+	})
 }
 
 func tintToward(colors *tintColors) tui.Color {
@@ -288,7 +286,7 @@ func clampDiffHScroll(args clampDiffHScrollArgs) int {
 		if dl.kind == diffLineRemoved {
 			src = args.render.base
 		}
-		widest = max(widest, lineDisplayWidth(src, dl.line))
+		widest = max(widest, lineDisplayWidth(src.rope, dl.line))
 	}
 	return min(args.render.hScroll, max(widest-args.contentWidth, 0))
 }

@@ -45,7 +45,7 @@ type (
 		hScroll       int
 		scrollFor     int
 		cache         previewCache
-		diffBaseCache map[diffBaseKey]core.Rope
+		diffBaseCache map[diffBaseKey]*previewDocEntry
 	}
 
 	loadState struct {
@@ -250,7 +250,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 		},
 		preview: previewState{
 			cache:         previewCache{},
-			diffBaseCache: map[diffBaseKey]core.Rope{},
+			diffBaseCache: map[diffBaseKey]*previewDocEntry{},
 		},
 		load: loadState{
 			cancel: func() {},

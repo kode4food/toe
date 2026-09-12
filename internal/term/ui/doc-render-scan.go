@@ -5,63 +5,55 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type linePrefixArgs struct {
+type linePrefixRequest struct {
 	rev       int
 	lineNum   int
 	lineStart int
-	lineEnd   int
 	tabWidth  int
 	horzOff   int
-	text      core.Rope
+	text      string
 }
 
-func scanLinePrefix(args linePrefixArgs) linePrefixScan {
-	pos := args.lineStart
+func scanLinePrefix(req *linePrefixRequest) linePrefixScan {
+	pos := req.lineStart
 	col := 0
 	indentCol := 0
 	indentDone := false
-	found := false
-	args.text.ForEachSegment(core.Span{
-		From: args.lineStart,
-		To:   args.lineEnd,
-	}, func(seg string) {
-		if found || col >= args.horzOff {
-			return
+	windowByte := len(req.text)
+	for i, ch := range req.text {
+		if !indentDone {
+			switch ch {
+			case runeTab, runeSpace, runeNbsp, runeNnbsp:
+			default:
+				indentDone = true
+				indentCol = col
+			}
 		}
-		for _, ch := range seg {
-			if !indentDone {
-				switch ch {
-				case runeTab, runeSpace, runeNbsp, runeNnbsp:
-				default:
-					indentDone = true
-					indentCol = col
-				}
-			}
-			var w int
-			if uint32(ch)-0x20 < 0x5f {
-				w = 1
-			} else {
-				w = view.RuneWidth(ch, core.TabStop{
-					Column:   col,
-					TabWidth: args.tabWidth,
-				})
-			}
-			if col+w > args.horzOff {
-				found = true
-				return
-			}
-			col += w
-			pos++
+		var w int
+		if uint32(ch)-0x20 < 0x5f {
+			w = 1
+		} else {
+			w = view.RuneWidth(ch, core.TabStop{
+				Column:   col,
+				TabWidth: req.tabWidth,
+			})
 		}
-	})
+		if col+w > req.horzOff {
+			windowByte = i
+			break
+		}
+		col += w
+		pos++
+	}
 
 	if !indentDone {
 		indentCol = col
 	}
 	return linePrefixScan{
-		indentCol: indentCol,
-		windowPos: pos,
-		windowCol: col,
+		indentCol:  indentCol,
+		windowPos:  pos,
+		windowCol:  col,
+		windowByte: windowByte,
 	}
 }
 
@@ -72,7 +64,8 @@ type visualColOfArgs struct {
 }
 
 func visualColOf(args visualColOfArgs) int {
-	col, charIdx := 0, 0
+	col := 0
+	charIdx := 0
 	for _, ch := range args.line {
 		if charIdx >= args.charOff {
 			break
@@ -110,4 +103,14 @@ func lineString(text core.Rope, span core.Span) string {
 		return s
 	}
 	return ""
+}
+
+func runePrefix(text string, count int) string {
+	for i := range text {
+		if count <= 0 {
+			return text[:i]
+		}
+		count--
+	}
+	return text
 }

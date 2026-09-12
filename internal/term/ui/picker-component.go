@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -12,6 +13,8 @@ import (
 type PickerComponent struct {
 	dismissibleOverlay
 	styles        *styles
+	previewTheme  *theme.Theme
+	previewStyle  func(string) tui.Style
 	state         *Picker
 	bounds        geom.Area
 	listBounds    geom.Area

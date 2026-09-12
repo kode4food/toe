@@ -127,17 +127,22 @@ func (p *pickerRender) drawPreview(area geom.Area) {
 		return
 	}
 	innerW := max(area.Width-2*overlayPadX, 1)
+	if comp.previewTheme != p.theme {
+		comp.previewTheme = p.theme
+		comp.previewStyle = previewHighlighter(p.theme)
+	}
 	ctx := previewCtx{
-		picker: ps,
-		item:   item,
-		editor: ps.editor,
-		syntax: cx.Syntax,
-		images: cx.images,
-		size:   geom.Size{Width: innerW, Height: area.Height},
-		wrap:   comp.previewWrapWidth(innerW),
-		theme:  p.theme,
-		styles: comp.styles,
-		hlFrom: -1,
+		highlight: comp.previewStyle,
+		picker:    ps,
+		item:      item,
+		editor:    ps.editor,
+		syntax:    cx.Syntax,
+		images:    cx.images,
+		size:      geom.Size{Width: innerW, Height: area.Height},
+		wrap:      comp.previewWrapWidth(innerW),
+		theme:     p.theme,
+		styles:    comp.styles,
+		hlFrom:    -1,
 	}
 	if lr := item.TargetLines(); lr != nil {
 		ctx.hlFrom = lr.From

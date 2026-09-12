@@ -1324,6 +1324,23 @@ func TestSoftWrapRender(t *testing.T) {
 }
 
 func TestHorizontalScrollRender(t *testing.T) {
+	t.Run("cached Unicode prefix", func(t *testing.T) {
+		for _, prefix := range []string{"é", "界", "\t"} {
+			t.Run(prefix, func(t *testing.T) {
+				e := editorWithText(t, strings.Repeat(prefix, 100)+"TAIL")
+				e.Options().SoftWrap.Enable = new(false)
+				action.MoveLineEnd(e)
+				m := resize(ui.New(e, command.NewKeymaps()), 30, 8)
+				for range 2 {
+					e.FocusedView().MarkDirty()
+					out := stripANSI(m.View().Content)
+					assert.True(t, utf8.ValidString(out))
+					assert.Contains(t, out, "TAIL")
+				}
+			})
+		}
+	})
+
 	t.Run("scan prefix on scrolled long line", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		doc := e.FocusedDocument()

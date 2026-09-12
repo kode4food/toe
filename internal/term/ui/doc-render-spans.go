@@ -10,7 +10,7 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type renderContentArgs struct {
+type contentRenderTarget struct {
 	doc     *view.Document
 	view    *view.View
 	buf     *tui.Buffer
@@ -19,11 +19,11 @@ type renderContentArgs struct {
 }
 
 func (r *renderPass) prepareContentRender(
-	args renderContentArgs,
+	target *contentRenderTarget,
 ) *contentRenderState {
 	cx := r.context
-	doc := args.doc
-	v := args.view
+	doc := target.doc
+	v := target.view
 
 	opts := cx.Editor.Options()
 	text := doc.Text()
@@ -126,7 +126,7 @@ func (r *renderPass) prepareContentRender(
 		if len(colors) == 0 {
 			colors = dc.visibleHexColors(rawText, lineIdx, core.Span{
 				From: anchorLine,
-				To:   anchorLine + args.area.Height,
+				To:   anchorLine + target.area.Height,
 			})
 		}
 	}
@@ -141,7 +141,7 @@ func (r *renderPass) prepareContentRender(
 		c.stylesDim = newDocStyleSet(cx.ThemeFor(false), mode)
 	}
 	set := c.styles
-	if !args.focused {
+	if !target.focused {
 		set = c.stylesDim
 	}
 	styles := set.styles
@@ -170,7 +170,7 @@ func (r *renderPass) prepareContentRender(
 
 	cursorKind := opts.CursorShapeForMode(cx.Editor.Mode())
 	cursorIsBlock := cursorKind == view.CursorKindBlock && r.editor.focused &&
-		args.focused
+		target.focused
 	cursorLineEnabled := opts.CursorLine
 	ws := opts.Whitespace
 	ig := opts.IndentGuides
@@ -178,10 +178,10 @@ func (r *renderPass) prepareContentRender(
 	insertMode := cx.Editor.Mode() == view.ModeInsert
 
 	format := doc.TextFormatForConfig(
-		args.area.Width-gutterW, cx.Editor.Options(),
+		target.area.Width-gutterW, cx.Editor.Options(),
 	)
-	softWrap := format.SoftWrap && gutterW < args.area.Width
-	contentW := args.area.Width - gutterW
+	softWrap := format.SoftWrap && gutterW < target.area.Width
+	contentW := target.area.Width - gutterW
 	cx.Editor.SetViewContentWidth(contentW)
 
 	// a non-positive width disables horizontal scrolling and resets the offset
@@ -208,7 +208,7 @@ func (r *renderPass) prepareContentRender(
 	fillTUI := styles.text
 	cursorLinePriBg := styles.cursorLinePrim.BgColor()
 	cursorLineSecBg := styles.cursorLineSec.BgColor()
-	contentX := args.area.X + gutterW
+	contentX := target.area.X + gutterW
 	gutter := gutterSpec{
 		layout:       gutterLayout,
 		lineNumWidth: gutterLineNumberW,
@@ -250,14 +250,11 @@ func (r *renderPass) prepareContentRender(
 	}
 
 	return &contentRenderState{
-		args: args,
-
-		text:   text,
-		sel:    sel,
-		cursor: cursor,
+		buf:       target.buf,
+		area:      target.area,
+		trackRows: true,
 
 		cursorLines: cursorLines,
-		cursorLine:  cursorLine,
 		anchorLine:  anchorLine,
 		vOff:        vOff,
 
@@ -265,25 +262,16 @@ func (r *renderPass) prepareContentRender(
 		trailingEmpty: trailingEmpty,
 
 		docCache: dc,
-		rev:      rev,
 		rawText:  rawText,
 		lineIdx:  lineIdx,
 		rowMap:   rowMap,
 
-		styles: styles,
-
 		diagnostics: diagnostics,
 		annotations: annotations,
 
-		cursorIsBlock:       cursorIsBlock,
 		cursorLineEnabled:   cursorLineEnabled,
 		relativeLineNumbers: relativeLineNumbers,
 		insertMode:          insertMode,
-
-		format:   format,
-		softWrap: softWrap,
-
-		horzOff: hOff,
 
 		fillTUI:         fillTUI,
 		cursorLinePriBg: cursorLinePriBg,
@@ -340,15 +328,21 @@ func inlayHintAnnotations(
 		st := inlayHintStyle(hint.Kind, styles)
 		if hint.PaddingLeft {
 			out = append(out, inlineAnnotation{
-				pos: hint.Pos, text: " ", style: st,
+				pos:   hint.Pos,
+				text:  " ",
+				style: st,
 			})
 		}
 		out = append(out, inlineAnnotation{
-			pos: hint.Pos, text: hint.Label, style: st,
+			pos:   hint.Pos,
+			text:  hint.Label,
+			style: st,
 		})
 		if hint.PaddingRight {
 			out = append(out, inlineAnnotation{
-				pos: hint.Pos, text: " ", style: st,
+				pos:   hint.Pos,
+				text:  " ",
+				style: st,
 			})
 		}
 	}

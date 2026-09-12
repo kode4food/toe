@@ -15,11 +15,23 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type renderPass struct {
-	editor  *EditorComponent
-	context *Context
-	size    geom.Size
-}
+type (
+	renderPass struct {
+		editor  *EditorComponent
+		context *Context
+		size    geom.Size
+	}
+
+	paneRedrawTarget struct {
+		buf        *tui.Buffer
+		pane       view.Pane
+		yOffset    int
+		dirty      bool
+		redrawAll  bool
+		focused    bool
+		background tui.Style
+	}
+)
 
 const countArrow = "\u2192" // '→' - rightwards arrow
 
@@ -156,7 +168,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			Visual:    vf,
 		})
 	}
-	r.renderContent(renderContentArgs{
+	r.renderContent(&contentRenderTarget{
 		doc:  doc,
 		view: v,
 		buf:  args.buf,
@@ -232,29 +244,22 @@ func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	return force
 }
 
-type beginPaneRedrawArgs struct {
-	buf        *tui.Buffer
-	pane       view.Pane
-	yOffset    int
-	dirty      bool
-	redrawAll  bool
-	focused    bool
-	background tui.Style
-}
-
-func (r *renderPass) beginPaneRedraw(args beginPaneRedrawArgs) bool {
+func (r *renderPass) beginPaneRedraw(target *paneRedrawTarget) bool {
 	cx := r.context
-	redraw := args.redrawAll
+	redraw := target.redrawAll
 	if !redraw {
 		forced := !cx.composition.singleLayer &&
-			isPaneUnderOverlay(cx, args.pane.Area(), args.yOffset)
-		redraw = forced || args.dirty
+			isPaneUnderOverlay(cx, target.pane.Area(), target.yOffset)
+		redraw = forced || target.dirty
 	}
 	if !redraw {
 		return false
 	}
-	if !args.redrawAll || !args.focused {
-		clearPaneRect(args.buf, args.pane.Area(), args.yOffset, args.background)
+	if !target.redrawAll || !target.focused {
+		clearPaneRect(
+			target.buf, target.pane.Area(), target.yOffset,
+			target.background,
+		)
 	}
 	return true
 }
@@ -288,7 +293,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			}
 			dirty := pane.ConsumeDirty()
 			dirty = doc.ConsumeDirty(pane.ID()) || dirty
-			if r.beginPaneRedraw(beginPaneRedrawArgs{
+			if r.beginPaneRedraw(&paneRedrawTarget{
 				buf:        buf,
 				pane:       pane,
 				yOffset:    y0,
@@ -306,7 +311,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				})
 			}
 		case *ImagePane:
-			if r.beginPaneRedraw(beginPaneRedrawArgs{
+			if r.beginPaneRedraw(&paneRedrawTarget{
 				buf:        buf,
 				pane:       pane,
 				yOffset:    y0,
@@ -318,7 +323,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				r.renderImagePane(buf, pane, y0, focused)
 			}
 		case *TerminalPane:
-			if r.beginPaneRedraw(beginPaneRedrawArgs{
+			if r.beginPaneRedraw(&paneRedrawTarget{
 				buf:        buf,
 				pane:       pane,
 				yOffset:    y0,
@@ -330,7 +335,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 				r.renderTerminalPane(buf, pane, y0, focused)
 			}
 		case *BinaryPane:
-			if r.beginPaneRedraw(beginPaneRedrawArgs{
+			if r.beginPaneRedraw(&paneRedrawTarget{
 				buf:        buf,
 				pane:       pane,
 				yOffset:    y0,
@@ -366,7 +371,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		right := horizCells[[2]int{x + 1, y}]
 		ch := tui.BorderV
 		if left || right {
-			ch = splitSepIntersectionChar(splitSepIntersectionArgs{
+			ch = splitSepIntersectionChar(&separatorNeighbors{
 				above: vertCells[[2]int{x, y - 1}],
 				below: vertCells[[2]int{x, y + 1}],
 				left:  left,
@@ -385,7 +390,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		below := vertCells[[2]int{x, y + 1}]
 		ch := tui.BorderH
 		if above || below {
-			ch = splitSepIntersectionChar(splitSepIntersectionArgs{
+			ch = splitSepIntersectionChar(&separatorNeighbors{
 				above: above,
 				below: below,
 				left:  horizCells[[2]int{x - 1, y}],
@@ -542,14 +547,14 @@ func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
 	}
 }
 
-type splitSepIntersectionArgs struct {
+type separatorNeighbors struct {
 	above bool
 	below bool
 	left  bool
 	right bool
 }
 
-func splitSepIntersectionChar(at splitSepIntersectionArgs) string {
+func splitSepIntersectionChar(at *separatorNeighbors) string {
 	idx := 0
 	if at.above {
 		idx |= 1

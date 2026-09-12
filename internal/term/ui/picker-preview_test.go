@@ -26,6 +26,87 @@ const (
 )
 
 func TestPickerPreview(t *testing.T) {
+	t.Run("open buffer keeps tab width", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "indent.txt")
+		assert.NoError(t, os.WriteFile(path, []byte("\t\tneedle"), 0o644))
+		cfg := "root = true\n[*.txt]\ntab_width = 2\n"
+		assert.NoError(t,
+			os.WriteFile(
+				filepath.Join(tmp, ".editorconfig"), []byte(cfg), 0o644,
+			),
+		)
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, e.FocusedDocument().TabWidth())
+		e.Options().IndentGuides = view.IndentGuides{
+			Render:     true,
+			Character:  "┆",
+			SkipLevels: new(0),
+		}
+		src := &pathPickerSource{path: path}
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(func(e *view.Editor) *ui.Picker {
+				return ui.NewPicker(e, src)
+			})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  testPickerPreviewWidth,
+			Height: 18,
+		})
+		assert.Regexp(t,
+			fmt.Sprintf("(?m)^.{%d,}┆ ┆ needle", testPickerPreviewWidth/2),
+			stripANSI(m.View().Content),
+		)
+	})
+
+	t.Run("indent guides", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			open bool
+			wrap bool
+		}{
+			{name: "file"},
+			{name: "buffer", open: true},
+			{name: "wrapped file", wrap: true},
+			{name: "wrapped buffer", open: true, wrap: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				tmp := t.TempDir()
+				path := filepath.Join(tmp, "indent.txt")
+				text := "\t\tneedle " + strings.Repeat("word ", 30)
+				assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
+				e := view.NewEditor(tmp)
+				if tc.open {
+					_, err := e.OpenFile(path)
+					assert.NoError(t, err)
+				}
+				skip := 0
+				e.Options().IndentGuides = view.IndentGuides{
+					Render:     true,
+					Character:  "┆",
+					SkipLevels: &skip,
+				}
+				e.Options().SoftWrap.Enable = &tc.wrap
+				km := command.NewKeymaps()
+				m := ui.New(e, km)
+				bindNormalTestAction(
+					km, "file_picker",
+					m.PickerAction(files.NewFilePickerInDir(tmp)),
+					[]command.KeyEvent{char('p')},
+				)
+				m = resize(m, 100, 18)
+				m = sendKey(m, 'p')
+				out := stripANSI(m.View().Content)
+				assert.Regexp(t,
+					fmt.Sprintf("(?m)^.{%d,}┆   ┆   needle",
+						testPickerPreviewWidth/2,
+					), out,
+				)
+			})
+		}
+	})
+
 	t.Run("keeps themed short rows", func(t *testing.T) {
 		tmp := t.TempDir()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -633,4 +714,52 @@ func (p *pathPickerSource) PrepareMatcher(string) ui.PickerMatcher {
 	return func(*ui.PickerItem) (ui.MatchResult, bool) {
 		return ui.MatchResult{}, true
 	}
+}
+
+func TestPickerPreviewColorSwatches(t *testing.T) {
+	t.Run("hex colors get swatches", func(t *testing.T) {
+		tmp := t.TempDir()
+		t.Setenv("COLORTERM", "truecolor")
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(tmp, "theme.css"), []byte("a #f00 b"), 0o644,
+		))
+		e := view.NewEditor(tmp)
+		e.Options().NerdFonts = false
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 100, 18)
+		m = sendKey(m, 'p')
+
+		raw := m.View().Content
+
+		assert.Contains(t, stripANSI(raw), "■#f00")
+		assert.Contains(t, raw, "\x1b[38;2;255;0;0m")
+	})
+
+	t.Run("swatches follow the option", func(t *testing.T) {
+		tmp := t.TempDir()
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(tmp, "theme.css"), []byte("a #f00 b\n"), 0o644,
+		))
+		e := view.NewEditor(tmp)
+		e.Options().NerdFonts = false
+		e.Options().ColorSwatches = false
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 100, 18)
+		m = sendKey(m, 'p')
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "■")
+		assert.Contains(t, out, "#f00")
+	})
 }

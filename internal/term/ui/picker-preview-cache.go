@@ -31,10 +31,11 @@ type (
 	}
 
 	previewDocEntry struct {
-		rev   int
-		lang  string
-		rope  core.Rope
-		spans []highlight.Span
+		renderCache *docRenderCache
+		rev         int
+		lang        string
+		rope        core.Rope
+		spans       []highlight.Span
 	}
 
 	previewDirEntry struct {
@@ -76,7 +77,8 @@ func (p previewCache) doc(
 	}
 	text := highlight.NormalizeNewlines(doc.Text().String())
 	entry = &previewDocEntry{
-		rev: rev, lang: lang,
+		rev:  rev,
+		lang: lang,
 		rope: core.NewRope(text),
 		spans: previewSpans(previewSpansArgs{
 			cache: sc,
@@ -130,6 +132,15 @@ func (p previewCache) indexText(
 func (p previewCache) invalidatePath(path string) {
 	delete(p, previewPathKey(path))
 	delete(p, previewIndexKey(path))
+}
+
+func (p *previewDocEntry) ensureRenderCache() *docRenderCache {
+	if p.renderCache == nil {
+		p.renderCache = &docRenderCache{}
+	}
+	raw := p.renderCache.ensureRawText(p.rev, p.rope)
+	p.renderCache.ensureLineIndex(p.rev, raw)
+	return p.renderCache
 }
 
 func previewDocKey(id view.DocumentId) previewCacheKey {

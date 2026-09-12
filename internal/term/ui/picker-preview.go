@@ -19,8 +19,9 @@ import (
 
 type (
 	previewCtx struct {
-		picker *Picker
-		item   *PickerItem
+		highlight func(string) tui.Style
+		picker    *Picker
+		item      *PickerItem
 
 		editor *view.Editor
 		syntax *syntax.Cache
@@ -36,6 +37,9 @@ type (
 	}
 
 	previewDocRender struct {
+		highlight func(string) tui.Style
+		cache     *docRenderCache
+
 		text   core.Rope
 		spans  []highlight.Span
 		format *language.TextFormat
@@ -71,7 +75,8 @@ func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 			if l, err := doc.Text().CharToLine(
 				sel.Primary().Cursor(doc.Text()),
 			); err == nil {
-				p.hlFrom, p.hlTo = l, l
+				p.hlFrom = l
+				p.hlTo = l
 			}
 		}
 		p.renderDocInto(buf, at, doc)
@@ -100,19 +105,7 @@ func (p *previewCtx) renderDocInto(
 ) {
 	entry := p.picker.preview.cache.doc(p.syntax, doc)
 	format := doc.TextFormatForConfig(p.wrap, p.editor.Options())
-	r := &previewDocRender{
-		text: entry.rope, spans: entry.spans,
-		format: format, opts: p.editor.Options(),
-		theme: p.theme, area: geom.Area{Point: at, Size: p.size},
-		hlFrom: p.hlFrom, hlTo: p.hlTo,
-		diffLines: p.itemDiffLines(entry.rope),
-		vScroll:   p.picker.preview.vScroll,
-		hScroll:   p.picker.preview.hScroll,
-		styles:    p.styles,
-	}
-	renderPreviewDocInto(buf, r)
-	p.picker.preview.vScroll = r.vScroll
-	p.picker.preview.hScroll = r.hScroll
+	entry.renderText(p, buf, at, format)
 }
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
@@ -130,18 +123,21 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 	work := p.workingPreview(vc, staged)
 	opts := p.editor.Options()
 	r := &diffPreviewRender{
-		working: work.rope, base: base, spans: work.spans,
+		highlight: p.highlight,
+		working:   work,
+		base:      base,
 		lines: buildDiffPreviewLines(buildDiffPreviewLinesArgs{
 			kind:    p.item.DiffKind,
 			working: work.rope,
-			base:    base,
+			base:    base.rope,
 			hunks:   p.item.DiffHunks(),
 		}),
 		format: language.TextFormatForConfig(
 			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,
 			p.wrap,
 		),
-		opts: opts, theme: p.theme,
+		opts:    opts,
+		theme:   p.theme,
 		area:    geom.Area{Point: at, Size: p.size},
 		vScroll: p.picker.preview.vScroll,
 		hScroll: p.picker.preview.hScroll,
@@ -156,26 +152,26 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 // index text rather than the file on disk
 func (p *previewCtx) workingPreview(
 	vc view.VersionControl, staged bool,
-) previewDocEntry {
+) *previewDocEntry {
 	if staged {
-		return *p.picker.preview.cache.indexText(
+		return p.picker.preview.cache.indexText(
 			p.syntax, vc, p.item.Location.Target.Path,
 		)
 	}
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
 		if doc := p.editor.Document(p.item.Location.Target.ID); doc != nil {
-			return *p.picker.preview.cache.doc(p.syntax, doc)
+			return p.picker.preview.cache.doc(p.syntax, doc)
 		}
 	}
 	path := p.item.Location.Target.Path
 	if doc := openDocumentPreview(p.editor, path); doc != nil {
-		return *p.picker.preview.cache.doc(p.syntax, doc)
+		return p.picker.preview.cache.doc(p.syntax, doc)
 	}
 	e, ok := p.picker.preview.cache.path(p.syntax, path).(*previewDocEntry)
 	if ok {
-		return *e
+		return e
 	}
-	return previewDocEntry{rope: core.NewRope(""), lang: view.DefaultLanguage}
+	return &previewDocEntry{rope: core.NewRope(""), lang: view.DefaultLanguage}
 }
 
 func (p *previewCtx) renderFileInto(
@@ -192,11 +188,24 @@ func (p *previewDocEntry) renderInto(
 		language.LoadLanguage(p.lang), opts.TextWidth, opts.SoftWrap,
 		ctx.wrap,
 	)
+	p.renderText(ctx, buf, at, format)
+}
+
+func (p *previewDocEntry) renderText(
+	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
+	format *language.TextFormat,
+) {
 	r := &previewDocRender{
-		text: p.rope, spans: p.spans,
-		format: format, opts: ctx.editor.Options(),
-		theme: ctx.theme, area: geom.Area{Point: at, Size: ctx.size},
-		hlFrom: ctx.hlFrom, hlTo: ctx.hlTo,
+		highlight: ctx.highlight,
+		cache:     p.ensureRenderCache(),
+		text:      p.rope,
+		spans:     p.spans,
+		format:    format,
+		opts:      ctx.editor.Options(),
+		theme:     ctx.theme,
+		area:      geom.Area{Point: at, Size: ctx.size},
+		hlFrom:    ctx.hlFrom,
+		hlTo:      ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
 		vScroll:   ctx.picker.preview.vScroll,
 		hScroll:   ctx.picker.preview.hScroll,

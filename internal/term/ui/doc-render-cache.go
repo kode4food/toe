@@ -102,6 +102,7 @@ type (
 
 	linePrefixScan struct {
 		indentCol, windowPos, windowCol int
+		windowByte                      int
 	}
 
 	lineIndexEntry struct {
@@ -169,12 +170,12 @@ func (c *renderCache) evictClosed(e *view.Editor) {
 	}
 }
 
-func (dc *docRenderCache) ensureRawText(rev int, text core.Rope) string {
-	if dc.rawTextRev != rev || dc.rawTextCached == "" {
-		dc.rawTextRev = rev
-		dc.rawTextCached = text.String()
+func (d *docRenderCache) ensureRawText(rev int, text core.Rope) string {
+	if d.rawTextRev != rev || d.rawTextCached == "" {
+		d.rawTextRev = rev
+		d.rawTextCached = text.String()
 	}
-	return dc.rawTextCached
+	return d.rawTextCached
 }
 
 type ensureHighlightArgs struct {
@@ -184,15 +185,15 @@ type ensureHighlightArgs struct {
 	rawText string
 }
 
-func (dc *docRenderCache) ensureHightlight(
+func (d *docRenderCache) ensureHightlight(
 	args ensureHighlightArgs,
 ) []highlight.Span {
 	lang := args.lang
 	rev := args.rev
-	if lang != view.DefaultLanguage && (dc.hlRev != rev || dc.hlLang != lang) {
-		dc.hlRev = rev
-		dc.hlLang = lang
-		dc.hlSpans = args.cache.Tokenize(core.Source{
+	if lang != view.DefaultLanguage && (d.hlRev != rev || d.hlLang != lang) {
+		d.hlRev = rev
+		d.hlLang = lang
+		d.hlSpans = args.cache.Tokenize(core.Source{
 			Text: highlight.NormalizeNewlines(args.rawText),
 			Lang: lang,
 		})
@@ -201,7 +202,7 @@ func (dc *docRenderCache) ensureHightlight(
 	if lang == view.DefaultLanguage {
 		return nil
 	}
-	return dc.hlSpans
+	return d.hlSpans
 }
 
 type ensureSearchSpansArgs struct {
@@ -210,13 +211,13 @@ type ensureSearchSpansArgs struct {
 	rawText string
 }
 
-func (dc *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
-	if dc.searchRev == args.rev && dc.searchPattern == args.pattern {
+func (d *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
+	if d.searchRev == args.rev && d.searchPattern == args.pattern {
 		return
 	}
-	dc.searchRev = args.rev
-	dc.searchPattern = args.pattern
-	dc.searchSpans = nil
+	d.searchRev = args.rev
+	d.searchPattern = args.pattern
+	d.searchSpans = nil
 	if args.pattern == "" {
 		return
 	}
@@ -236,18 +237,19 @@ func (dc *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
 	}
 	b2r[len(args.rawText)] = ri
 	for _, loc := range locs {
-		from, to := b2r[loc[0]], b2r[loc[1]]
+		from := b2r[loc[0]]
+		to := b2r[loc[1]]
 		if to > from {
-			dc.searchSpans = append(dc.searchSpans, matchSpan{from, to})
+			d.searchSpans = append(d.searchSpans, matchSpan{from, to})
 		}
 	}
 }
 
-func (dc *docRenderCache) ensureLineIndex(
+func (d *docRenderCache) ensureLineIndex(
 	rev int, rawText string,
 ) []lineIndexEntry {
-	if dc.liRev == rev && dc.lineIndex != nil {
-		return dc.lineIndex
+	if d.liRev == rev && d.lineIndex != nil {
+		return d.lineIndex
 	}
 	idx := make([]lineIndexEntry, 1, strings.Count(rawText, "\n")+2)
 	charPos := 0
@@ -262,29 +264,33 @@ func (dc *docRenderCache) ensureLineIndex(
 		}
 		idx[len(idx)-1].endingWidth = endingLen
 		idx = append(idx, lineIndexEntry{
-			charStart: charPos, byteStart: bytePos + 1,
+			charStart: charPos,
+			byteStart: bytePos + 1,
 		})
 	}
 	idx = append(idx, lineIndexEntry{
-		charStart: charPos, byteStart: len(rawText),
+		charStart: charPos,
+		byteStart: len(rawText),
 	})
-	dc.liRev = rev
-	dc.lineIndex = idx
+	d.liRev = rev
+	d.lineIndex = idx
 	return idx
 }
 
-func (dc *docRenderCache) ensureLinePrefix(args linePrefixArgs) linePrefixScan {
-	if dc.prefixRev != args.rev || dc.prefixHOff != args.horzOff ||
-		dc.prefixTabWidth != args.tabWidth {
-		dc.prefixRev = args.rev
-		dc.prefixHOff = args.horzOff
-		dc.prefixTabWidth = args.tabWidth
-		dc.linePrefix = make(map[int]linePrefixScan, len(dc.linePrefix))
+func (d *docRenderCache) ensureLinePrefix(
+	req *linePrefixRequest,
+) linePrefixScan {
+	if d.prefixRev != req.rev || d.prefixHOff != req.horzOff ||
+		d.prefixTabWidth != req.tabWidth {
+		d.prefixRev = req.rev
+		d.prefixHOff = req.horzOff
+		d.prefixTabWidth = req.tabWidth
+		d.linePrefix = make(map[int]linePrefixScan, len(d.linePrefix))
 	}
-	if r, ok := dc.linePrefix[args.lineNum]; ok {
+	if r, ok := d.linePrefix[req.lineNum]; ok {
 		return r
 	}
-	res := scanLinePrefix(args)
-	dc.linePrefix[args.lineNum] = res
+	res := scanLinePrefix(req)
+	d.linePrefix[req.lineNum] = res
 	return res
 }

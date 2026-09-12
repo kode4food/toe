@@ -246,3 +246,52 @@ func (r *rowRender) rows() []renderedRow {
 	r.rowScratch = append(r.rowScratch[:0], row)
 	return r.rowScratch
 }
+
+func (r *rowRender) prepareLine(cache *docRenderCache, lineNum int) bool {
+	if lineNum < 0 || lineNum+1 >= len(cache.lineIndex) {
+		return false
+	}
+	format := r.format
+	softWrap := r.softWrap
+	hOff := r.colStart
+	entry := cache.lineIndex[lineNum]
+	next := cache.lineIndex[lineNum+1]
+	lineStart := entry.charStart
+	lineContentEnd := next.charStart - entry.endingWidth
+
+	tabW := format.TabWidth
+
+	end := next.byteStart - entry.endingWidth
+	lStr := cache.rawTextCached[entry.byteStart:end]
+	var rowIndentCol, rowLineStart, rowColOff int
+	if !softWrap && hOff > 0 {
+		prefix := cache.ensureLinePrefix(&linePrefixRequest{
+			rev:       cache.rawTextRev,
+			lineNum:   lineNum,
+			lineStart: lineStart,
+			tabWidth:  tabW,
+			horzOff:   hOff,
+			text:      lStr,
+		})
+		rowIndentCol = prefix.indentCol
+		rowLineStart = prefix.windowPos
+		rowColOff = prefix.windowCol
+		lStr = lStr[prefix.windowByte:]
+	} else {
+		rowLineStart = lineStart
+	}
+	if !softWrap {
+		lStr = runePrefix(lStr, lineStart+hOff+r.colWidth-rowLineStart)
+	}
+	if softWrap || hOff == 0 {
+		rowIndentCol = indentWidth(lStr, tabW)
+	}
+
+	r.lineText = lStr
+	r.indentCol = rowIndentCol
+	r.colOff = rowColOff
+	r.lineNum = lineNum
+	r.lineStart = rowLineStart
+	r.lineEnd = lineContentEnd
+	return true
+}

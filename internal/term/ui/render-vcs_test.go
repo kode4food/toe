@@ -239,6 +239,26 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "- line")
 	})
 
+	t.Run("diff rows retain indent guides", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "indent.txt", "\t\told\n")
+		testutil.WriteFile(t, filepath.Join(repo, "indent.txt"), "\t\tnew\n")
+		e := view.NewEditor(repo)
+		e.Options().IndentGuides = view.IndentGuides{
+			Render:     true,
+			Character:  "┆",
+			SkipLevels: new(0),
+		}
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(ui.NewChangedFilePicker)
+		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "- ┆   ┆   old")
+		assert.Contains(t, out, "+ ┆   ┆   new")
+	})
+
 	t.Run("added file preview shows all additions", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "tracked.txt", "keep\n")

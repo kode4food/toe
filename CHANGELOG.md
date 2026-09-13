@@ -2,6 +2,22 @@
 
 Notable changes to toe.
 
+## 0.4.3
+
+### Interface
+
+- Added inline color swatches in documents and picker previews. They are enabled by default; set `editor.color-swatches = false` to hide them
+- Auto-sized panes now return to their target width when focused after swapping sides in a split
+- Picker previews now render indent guides consistently, honor an open buffer's EditorConfig tab width, and retain indent guides in changed-file diffs
+
+### Language tooling
+
+- Go-to definition now centers a single destination and places the cursor at the target start without selecting its range
+
+### Configuration
+
+- Removed Ale scripting and `init.ale` loading, including custom and conditional key bindings
+
 ## 0.4.2
 
 ### Interface

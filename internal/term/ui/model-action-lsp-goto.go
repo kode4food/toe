@@ -6,6 +6,7 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/view"
+	"github.com/kode4food/toe/internal/view/action"
 )
 
 type locationGetter func(
@@ -84,39 +85,51 @@ func (m Model) SelectReferencesAction(e *view.Editor) {
 }
 
 func (ec *EditorComponent) gotoDefinition() {
-	ec.gotoLocation(
+	e := ec.context.Editor
+	if v := ec.gotoLocation(
 		i18n.Text(statusNoDefinitionKey),
 		view.LanguageServerController.GotoDefinition,
-	)
+	); v != nil {
+		doc := e.Document(v.DocID())
+		text := doc.Text()
+		at := doc.SelectionFor(v.ID()).Primary().Cursor(text)
+		doc.SetSelectionFor(v.ID(), core.PointSelection(at))
+		action.AlignViewCenter(e)
+	}
 }
 
-func (ec *EditorComponent) gotoLocation(notFound string, get locationGetter) {
+func (ec *EditorComponent) gotoLocation(
+	notFound string, get locationGetter,
+) *view.View {
 	cx := ec.context
 	e := cx.Editor
 	doc := e.FocusedDocument()
 	if doc == nil {
-		return
+		return nil
 	}
 	v := e.FocusedView()
 	if v == nil {
-		return
+		return nil
 	}
 	ls := e.LanguageServerController()
 	if ls == nil {
 		e.SetStatusMsg(i18n.Text(statusLSPNoNavigationKey))
-		return
+		return nil
 	}
 	locations, err := get(ls, doc, v.ID())
 	if err != nil {
 		e.SetStatusMsg(i18n.ErrorText(err))
-		return
+		return nil
 	}
 	switch len(locations) {
 	case 0:
 		e.SetStatusMsg(notFound)
 	case 1:
 		loc := locations[0]
-		GotoPath(e, loc.Path, locationSelector(loc), PickerAcceptReplace)
+		landed, _ := GotoPath(
+			e, loc.Path, locationSelector(loc), PickerAcceptReplace,
+		)
+		return landed
 	default:
 		opener := locationPickerLayer(func() ([]view.Location, error) {
 			return locations, nil
@@ -124,6 +137,7 @@ func (ec *EditorComponent) gotoLocation(notFound string, get locationGetter) {
 		cx.lastLayer = opener
 		ec.queueNextLayer(opener(e))
 	}
+	return nil
 }
 
 func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {

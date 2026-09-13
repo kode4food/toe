@@ -246,8 +246,12 @@ func TestLocationAction(t *testing.T) {
 		dir := t.TempDir()
 		source := filepath.Join(dir, "source.go")
 		target := filepath.Join(dir, "target.go")
+		prefix := strings.Repeat("line\n", 30)
+		targetLine := strings.Count(prefix, "\n")
 		assert.NoError(t, os.WriteFile(source, []byte("source\n"), 0o600))
-		assert.NoError(t, os.WriteFile(target, []byte("target\n"), 0o600))
+		assert.NoError(t, os.WriteFile(
+			target, []byte(prefix+"target\n"), 0o600,
+		))
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(source)
 		assert.NoError(t, err)
@@ -260,12 +264,12 @@ func TestLocationAction(t *testing.T) {
 			locations: []view.Location{
 				{
 					Path: target,
-					From: view.ServerPosition{Line: 0, Character: 3},
-					To:   view.ServerPosition{Line: 0, Character: 3},
+					From: view.ServerPosition{Line: targetLine},
+					To:   view.ServerPosition{Line: targetLine, Character: 6},
 				},
 			},
 		})
-		m := ui.New(e, command.NewKeymaps())
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
 		m.GotoDefinitionAction(e)
 
@@ -275,8 +279,11 @@ func TestLocationAction(t *testing.T) {
 		v = e.FocusedView()
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, 3, sel.Primary().Cursor(doc.Text()))
-		assert.Equal(t, core.Range{Anchor: 3, Head: 3}, sel.Primary())
+		assert.Equal(t, core.PointRange(len(prefix)), sel.Primary())
+		line, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		contentHeight := v.Area().Height - 1
+		assert.Equal(t, targetLine-(contentHeight-1)/2, line)
 	})
 
 	t.Run("ctrl click jumps to definition", func(t *testing.T) {

@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.4.4
+
+### Interface
+
+- Delete (`d`) and change (`c`) now use the system clipboard by default. An explicitly selected register stays active until changed or cleared
+
 ## 0.4.3
 
 ### Interface

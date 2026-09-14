@@ -89,14 +89,14 @@ func TestEditTextOps(t *testing.T) {
 		assert.Equal(t, "def", test.DocText(t, e))
 	})
 
-	t.Run("delete selection yanks to register", func(t *testing.T) {
+	t.Run("delete selection yanks to clipboard", func(t *testing.T) {
 		e, km := test.Env(t, "abcdef")
 		testutil.SetSelection(t, e, []core.Range{{
 			Anchor: 0,
 			Head:   3,
 		}}, 0)
 		test.RunCmd(t, km, e, "delete_selection")
-		got, ok := e.Registers().First('"')
+		got, ok := e.FirstRegister(view.RegisterClipboard)
 		assert.True(t, ok)
 		assert.Equal(t, "abc", got)
 	})

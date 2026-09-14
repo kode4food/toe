@@ -18,10 +18,10 @@ Every key press is dispatched through the keymap for the **current mode**. Norma
 **Placeholders.** Some commands capture the next key(s) directly. In the tables these appear as:
 
 - `<char>`: a literal character to act on, e.g. `f<char>`, `r<char>`, `ms<char>`.
-- `<reg>`: a register letter, e.g. `"<reg>` before a yank or paste, `Ctrl+r <reg>` in insert mode.
+- `<reg>`: a register letter, e.g. `"<reg>` to select a register, `Ctrl+r <reg>` in insert mode.
 - `<n>`: a count typed before the key.
 
-**Registers.** `"<reg>` chooses the register the next yank or paste uses; without it they use the default register. The popup lists the registers currently holding a value, with a preview of each. Yanks and pastes that go through the system clipboard live under the leader (`Space+y`, `Space+p`).
+**Registers.** Yank (`y`), delete (`d`), change (`c`), and paste (`p`/`P`) use the system clipboard by default. `"<reg>` selects an explicit register instead; it stays selected until changed or cleared. `:clear-register` clears all registers and restores the system clipboard default. The popup lists the registers currently holding a value, with a preview of each. `Alt+d` and `Alt+c` delete or change without copying.
 
 **Insert mode.** Any printable key with no binding is inserted as text; the Insert Mode bindings below are the exceptions that edit or move instead.
 
@@ -120,7 +120,7 @@ The `[` and `]` prefixes step backward and forward through the same kind of targ
 
 | Key | Action |
 |-----|--------|
-| `d` | Delete selection |
+| `d` | Cut selection to clipboard or register |
 | `Alt+d` | Delete selection without yanking |
 | `c` | Change selection |
 | `Alt+c` | Change selection without yanking |
@@ -150,9 +150,9 @@ The `[` and `]` prefixes step backward and forward through the same kind of targ
 | `p` | Paste after selection |
 | `P` | Paste before selection |
 | `R` | Replace with yanked text |
-| `"<reg>` | Select register for the next yank or paste |
+| `"<reg>` | Select register for yank, delete, change, and paste |
 
-Clipboard yanks and pastes are under the [Leader Menu](#leader-menu) (`Space+y`, `Space+p`, …).
+Yank and paste are also available under the [Leader Menu](#leader-menu) (`Space+y`, `Space+p`, …).
 
 ### Search
 

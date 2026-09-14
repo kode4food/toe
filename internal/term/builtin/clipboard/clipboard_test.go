@@ -138,56 +138,65 @@ func TestClipboardPrimarySelection(t *testing.T) {
 }
 
 func TestClipboardDefaultRegister(t *testing.T) {
-	t.Run("yank reaches the clipboard", func(t *testing.T) {
-		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+	for _, cmd := range []string{
+		"yank", "delete_selection", "change_selection",
+	} {
+		t.Run(cmd, func(t *testing.T) {
+			for _, reg := range []rune{0, 'a', '"', '_'} {
+				name := string(reg)
+				if reg == 0 {
+					name = "clipboard"
+				}
+				t.Run(name, func(t *testing.T) {
+					e, km := test.Env(t, "abc")
+					clip := testutil.NewFakeClipboard()
+					clip.System = "saved"
+					e.SetClipboard(clip)
+					testutil.SetSelection(t, e, []core.Range{{
+						Anchor: 0,
+						Head:   3,
+					}}, 0)
+					e.SetRegister(reg)
 
-		test.RunCmd(t, km, e, "yank")
+					test.RunCmd(t, km, e, cmd)
 
-		got, ok := e.FirstRegister(view.RegisterClipboard)
-		assert.True(t, ok)
-		assert.Equal(t, "abc", got)
-	})
+					want := "abc"
+					if reg != 0 {
+						want = "saved"
+					}
+					assert.Equal(t, want, clip.System)
+					if reg == '_' {
+						assert.Empty(t, e.ReadRegister(reg))
+						return
+					}
+					assert.NotNil(t, e.VSplitNew())
+					assert.Equal(t, reg, e.ActiveRegister())
+					test.RunCmd(t, km, e, "paste_after")
+					assert.Equal(t, "abc", test.DocText(t, e))
+				})
+			}
+		})
+	}
 
-	t.Run("delete leaves the clipboard alone", func(t *testing.T) {
-		e, km := test.Env(t, "abc def")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
-		test.RunCmd(t, km, e, "yank")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 4,
-			Head:   7,
-		}}, 0)
+	for _, cmd := range []string{
+		"delete_selection_noyank", "change_selection_noyank",
+	} {
+		t.Run(cmd, func(t *testing.T) {
+			e, km := test.Env(t, "abc")
+			clip := testutil.NewFakeClipboard()
+			clip.System = "saved"
+			e.SetClipboard(clip)
+			testutil.SetSelection(t, e, []core.Range{{
+				Anchor: 0,
+				Head:   3,
+			}}, 0)
 
-		test.RunCmd(t, km, e, "delete_selection")
+			test.RunCmd(t, km, e, cmd)
 
-		clip, _ := e.FirstRegister(view.RegisterClipboard)
-		assert.Equal(t, "abc", clip)
-		deleted, _ := e.FirstRegister(view.RegisterDefaultYank)
-		assert.Equal(t, "def", deleted)
-	})
-
-	t.Run("an explicit register wins", func(t *testing.T) {
-		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
-		e.SetRegister('a')
-
-		test.RunCmd(t, km, e, "yank")
-
-		got, ok := e.Registers().First('a')
-		assert.True(t, ok)
-		assert.Equal(t, "abc", got)
-		_, ok = e.FirstRegister(view.RegisterClipboard)
-		assert.False(t, ok)
-	})
+			assert.Empty(t, test.DocText(t, e))
+			assert.Equal(t, "saved", clip.System)
+		})
+	}
 }
 
 func TestClipboardSystemClipboard(t *testing.T) {

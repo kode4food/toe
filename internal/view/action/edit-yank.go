@@ -14,7 +14,7 @@ const (
 )
 
 // Yank copies the text of every selection range to the active register
-// (defaulting to '"') and exits select mode
+// (defaulting to the system clipboard) and exits select mode
 func Yank(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {
@@ -42,7 +42,7 @@ func PasteBefore(e *view.Editor) {
 }
 
 // ReplaceWithYanked replaces each selection with the corresponding value from
-// the active register (default '"'). Exits select mode
+// the active register (default: system clipboard). Exits select mode
 func ReplaceWithYanked(e *view.Editor) {
 	v := e.FocusedView()
 	if v == nil {

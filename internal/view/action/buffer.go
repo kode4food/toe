@@ -73,7 +73,7 @@ func PasteRegisterAtCursor(e *view.Editor, reg rune) {
 }
 
 // YankJoin yanks all selection text joined by a separator to the active
-// register (default '"'). Mirrors :yank-join
+// register (default: system clipboard). Mirrors :yank-join
 func YankJoin(e *view.Editor, sep string) {
 	v := e.FocusedView()
 	if v == nil {

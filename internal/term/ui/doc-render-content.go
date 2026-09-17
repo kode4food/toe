@@ -3,7 +3,9 @@ package ui
 import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
+	"github.com/kode4food/toe/internal/view"
 )
 
 type (
@@ -55,6 +57,15 @@ type (
 )
 
 func (r *renderPass) renderContent(target *contentRenderTarget) {
+	doc := target.doc
+	if doc.ExternalState() == view.ExternalStateMissing && !doc.Modified() {
+		delete(r.editor.cache.viewRowMaps, target.view.ID())
+		th := r.context.ThemeFor(target.focused)
+		renderCenteredMessage(target.buf, target.area,
+			i18n.Text(i18n.StatusFileMissing), th.Get("ui.text"),
+		)
+		return
+	}
 	st := r.prepareContentRender(target)
 	r.paintContentOverlays(st)
 	renderContentRows(st)

@@ -54,3 +54,5 @@ You can save or restore at any time regardless of the auto-session setting:
 | Editor options (from `:set`) | ✓ |
 
 Undo history is **not** saved. Each document starts with a fresh history after restore.
+
+Files deleted since the session was saved are dropped. A pane that was showing one reads "The file was not found." until you edit it or `:write` it.

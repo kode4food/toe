@@ -360,7 +360,8 @@ func (v *View) switchDoc(did DocumentId) {
 	if v.docOffsets == nil {
 		v.docOffsets = map[DocumentId]Position{}
 	}
-	v.docOffsets[v.docID] = v.offset
+	prev := v.docID
+	v.docOffsets[prev] = v.offset
 	p := v.docOffsets[did]
 	doc := v.editor.Document(did)
 	if doc == nil || p.Anchor > doc.Text().LenChars() {
@@ -369,6 +370,7 @@ func (v *View) switchDoc(did DocumentId) {
 	v.docID = did
 	v.offset = p
 	v.dirty = true
+	v.editor.discardMissingDoc(prev)
 }
 
 func (v *View) addDocHistory(did DocumentId) {

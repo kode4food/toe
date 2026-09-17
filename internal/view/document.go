@@ -137,6 +137,7 @@ const (
 	ExternalStateClean   ExternalState = iota // no external disk change pending
 	ExternalStateChanged                      // changed while buffer dirty
 	ExternalStateDeleted                      // backing file removed while open
+	ExternalStateMissing                      // backing file absent on restore
 )
 
 // RestoreCursor reports whether the next exit from insert mode should move the

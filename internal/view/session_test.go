@@ -471,6 +471,73 @@ func TestSession(t *testing.T) {
 		assert.NotNil(t, doc)
 		assert.Equal(t, "", doc.Text().String())
 		assert.True(t, doc.Loaded())
+		assert.Equal(t, view.ExternalStateMissing, doc.ExternalState())
+	})
+
+	t.Run("switching away drops missing file", func(t *testing.T) {
+		dir := t.TempDir()
+		next := restoreShownMissing(t, dir)
+		kept, err := next.SwitchOrOpenDoc(filepath.Join(dir, "kept.go"))
+		assert.NoError(t, err)
+
+		assert.True(t, next.SwitchBuffer(kept.ID()))
+
+		assert.NotContains(t,
+			documentPaths(next), filepath.Join(dir, "gone.go"),
+		)
+	})
+
+	t.Run("switching away keeps edited missing file", func(t *testing.T) {
+		dir := t.TempDir()
+		next := restoreShownMissing(t, dir)
+		rope := next.FocusedDocument().Text()
+		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(core.Span{From: 0, To: 0}, "draft"),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t, next.Apply(core.NewTransaction(rope).WithChanges(cs)))
+		kept, err := next.SwitchOrOpenDoc(filepath.Join(dir, "kept.go"))
+		assert.NoError(t, err)
+
+		assert.True(t, next.SwitchBuffer(kept.ID()))
+
+		assert.Contains(t,
+			documentPaths(next), filepath.Join(dir, "gone.go"),
+		)
+	})
+
+	t.Run("trims hidden missing file", func(t *testing.T) {
+		dir := t.TempDir()
+		gonePath := filepath.Join(dir, "gone.go")
+		keptPath := filepath.Join(dir, "kept.go")
+		assert.NoError(t,
+			os.WriteFile(gonePath, []byte("package gone\n"), 0o644),
+		)
+		assert.NoError(t,
+			os.WriteFile(keptPath, []byte("package kept\n"), 0o644),
+		)
+		sessionPath := filepath.Join(
+			dir, loader.WorkspaceDirName, view.SessionFile,
+		)
+		e := view.NewEditor(dir)
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		_, err := e.OpenFile(gonePath)
+		assert.NoError(t, err)
+		_, err = e.OpenFile(keptPath)
+		assert.NoError(t, err)
+		assert.NoError(t, e.SaveSession(sessionPath, nil))
+
+		assert.NoError(t, os.Remove(gonePath))
+
+		next := view.NewEditor(dir)
+		next.ResizeTree(geom.Size{Width: 80, Height: 24})
+		_, restored, err := next.RestoreSession(sessionPath)
+		assert.NoError(t, err)
+		assert.True(t, restored)
+
+		paths := documentPaths(next)
+		assert.Contains(t, paths, keptPath)
+		assert.NotContains(t, paths, gonePath)
 	})
 
 	t.Run("drops unreadable restored file", func(t *testing.T) {
@@ -1219,4 +1286,36 @@ func writeSavedSession(t *testing.T, path string, data []byte) {
 	_, err = gz.Write(data)
 	assert.NoError(t, err)
 	assert.NoError(t, gz.Close())
+}
+
+func restoreShownMissing(t *testing.T, dir string) *view.Editor {
+	t.Helper()
+	gonePath := filepath.Join(dir, "gone.go")
+	keptPath := filepath.Join(dir, "kept.go")
+	assert.NoError(t, os.WriteFile(gonePath, []byte("package gone\n"), 0o644))
+	assert.NoError(t, os.WriteFile(keptPath, []byte("package kept\n"), 0o644))
+	sessionPath := filepath.Join(dir, loader.WorkspaceDirName, view.SessionFile)
+	e := view.NewEditor(dir)
+	e.ResizeTree(geom.Size{Width: 80, Height: 24})
+	_, err := e.OpenFile(keptPath)
+	assert.NoError(t, err)
+	_, err = e.OpenFile(gonePath)
+	assert.NoError(t, err)
+	assert.NoError(t, e.SaveSession(sessionPath, nil))
+	assert.NoError(t, os.Remove(gonePath))
+
+	next := view.NewEditor(dir)
+	next.ResizeTree(geom.Size{Width: 80, Height: 24})
+	_, restored, err := next.RestoreSession(sessionPath)
+	assert.NoError(t, err)
+	assert.True(t, restored)
+	return next
+}
+
+func documentPaths(e *view.Editor) []string {
+	var paths []string
+	for _, d := range e.AllDocuments() {
+		paths = append(paths, d.Path())
+	}
+	return paths
 }

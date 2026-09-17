@@ -17,6 +17,7 @@
   "status.counted": "Counted",
   "status.fileChanged": "'{file}' changed on disk; use :reload or :write",
   "status.fileDeleted": "'{file}' deleted on disk",
+  "status.fileMissing": "The file was not found.",
   "status.fileReloaded": "'{file}' reloaded",
   "status.fileWatchUnavailable": "file watching unavailable: {error}",
   "status.imageLoading": "Loading image…",

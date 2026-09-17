@@ -17,6 +17,7 @@
   "status.counted": "Gezählt",
   "status.fileChanged": "'{file}' wurde auf dem Datenträger geändert; :reload oder :write verwenden",
   "status.fileDeleted": "'{file}' wurde auf dem Datenträger gelöscht",
+  "status.fileMissing": "Die Datei wurde nicht gefunden.",
   "status.fileReloaded": "'{file}' neu geladen",
   "status.fileWatchUnavailable": "Dateiüberwachung nicht verfügbar: {error}",
   "status.imageLoading": "Bild wird geladen…",

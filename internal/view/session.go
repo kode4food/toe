@@ -136,6 +136,8 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		return nil, false, err
 	}
 	reopenable := layoutHasReopenablePane(&s.Layout)
+	shown := map[int]bool{}
+	layoutShownDocuments(&s.Layout, shown)
 	base := sessionBase(path)
 
 	docIDs := map[int]DocumentId{}
@@ -154,8 +156,9 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 			if err != nil {
 				return nil, false, err
 			}
-			if _, err := os.Stat(absPath); err != nil &&
-				!errors.Is(err, os.ErrNotExist) {
+			_, err = os.Stat(absPath)
+			if err != nil &&
+				(!errors.Is(err, os.ErrNotExist) || !shown[i+1]) {
 				continue
 			}
 		}
@@ -412,4 +415,15 @@ func layoutHasReopenablePane(n *sessNode) bool {
 		}
 	}
 	return false
+}
+
+func layoutShownDocuments(n *sessNode, shown map[int]bool) {
+	switch n.Kind {
+	case SessionKindView:
+		shown[n.Document] = true
+	case SessionKindSplit:
+		for i := range n.Children {
+			layoutShownDocuments(&n.Children[i], shown)
+		}
+	}
 }

@@ -76,6 +76,9 @@ func (d *Document) ensureLoaded() {
 	d.content.pending = nil
 	d.format = loaded.format
 	d.file = loaded.file
+	if !d.file.snapshot.exists {
+		d.file.external = ExternalStateMissing
+	}
 	d.content.text = loaded.content.text
 	d.content.version = loaded.content.version
 	d.edits.history = loaded.edits.history

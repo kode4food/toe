@@ -17,6 +17,7 @@
   "status.counted": "Comptées",
   "status.fileChanged": "'{file}' a été modifié sur le disque ; utilisez :reload ou :write",
   "status.fileDeleted": "'{file}' a été supprimé du disque",
+  "status.fileMissing": "Le fichier est introuvable.",
   "status.fileReloaded": "'{file}' rechargé",
   "status.fileWatchUnavailable": "surveillance des fichiers indisponible : {error}",
   "status.imageLoading": "Chargement de l’image…",

@@ -78,6 +78,27 @@ func TestBufferlineRender(t *testing.T) {
 	})
 }
 
+func TestMissingFileRender(t *testing.T) {
+	t.Run("shows placeholder", func(t *testing.T) {
+		m, _ := restoreMissingFile(t)
+
+		out := stripANSI(m.View().Content)
+
+		assert.Contains(t, out, "The file was not found.")
+		assert.Contains(t, out, "gone.txt")
+	})
+
+	t.Run("edit reveals buffer", func(t *testing.T) {
+		m, e := restoreMissingFile(t)
+		action.InsertText(e, "fresh")
+
+		out := stripANSI(m.View().Content)
+
+		assert.NotContains(t, out, "The file was not found.")
+		assert.Contains(t, out, "fresh")
+	})
+}
+
 func TestPromptAccept(t *testing.T) {
 	t.Run("enter executes command from prompt", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
@@ -1134,7 +1155,9 @@ func TestWhitespaceRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "hello world end\t!\n"),
+			core.TextChange(
+				core.Span{From: 0, To: 0}, "hello world end\t!\n",
+			),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1782,4 +1805,24 @@ func styleBg(params string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func restoreMissingFile(t *testing.T) (ui.Model, *view.Editor) {
+	t.Helper()
+	root := t.TempDir()
+	path := filepath.Join(root, "gone.txt")
+	session := filepath.Join(root, "session.json")
+	assert.NoError(t, os.WriteFile(path, []byte("old\n"), 0o644))
+	e := view.NewEditor(root)
+	_, err := e.OpenFile(path)
+	assert.NoError(t, err)
+	assert.NoError(t, e.SaveSession(session, nil))
+	assert.NoError(t, os.Remove(path))
+
+	next := view.NewEditor(root)
+	m := ui.New(next, command.NewKeymaps())
+	_, restored, err := next.RestoreSession(session)
+	assert.NoError(t, err)
+	assert.True(t, restored)
+	return resize(m, 80, 10), next
 }

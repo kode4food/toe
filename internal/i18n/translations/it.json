@@ -17,6 +17,7 @@
   "status.counted": "Conteggiati",
   "status.fileChanged": "'{file}' è stato modificato sul disco; usa :reload o :write",
   "status.fileDeleted": "'{file}' è stato eliminato dal disco",
+  "status.fileMissing": "Il file non è stato trovato.",
   "status.fileReloaded": "'{file}' ricaricato",
   "status.fileWatchUnavailable": "monitoraggio dei file non disponibile: {error}",
   "status.imageLoading": "Caricamento immagine…",

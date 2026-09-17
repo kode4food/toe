@@ -25,6 +25,7 @@ const (
 
 	StatusFileDeleted          Key = "status.fileDeleted"
 	StatusFileChanged          Key = "status.fileChanged"
+	StatusFileMissing          Key = "status.fileMissing"
 	StatusReloadFailed         Key = "status.reloadFailed"
 	StatusFileReloaded         Key = "status.fileReloaded"
 	StatusFileWatchUnavailable Key = "status.fileWatchUnavailable"

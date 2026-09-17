@@ -21,6 +21,18 @@ func (e *Editor) ProcessExternalFileChange(path string) bool {
 	return handled
 }
 
+func (e *Editor) discardMissingDoc(did DocumentId) {
+	doc, ok := e.documents.byID[did]
+	if !ok || doc.ExternalState() != ExternalStateMissing || doc.Modified() {
+		return
+	}
+	if e.hasView(func(v *View) bool { return v.docID == did }) {
+		return
+	}
+	e.documentClosed(doc)
+	e.DeleteDocument(did)
+}
+
 func (e *Editor) processExternalChange(doc *Document) bool {
 	snap, changed := doc.diskChanged()
 	if !changed {

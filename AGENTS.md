@@ -125,54 +125,19 @@ func rotateRight(n *node) *node {
 
 ## Modularity and Package Boundaries
 
-toe's package layers, top to bottom: `internal/core` → `internal/view`
-(+ `view/action`, `view/config`, `view/language`, `view/register`) →
-`internal/term/command` → `internal/term/builtin` → `internal/term/ui`, with
-`internal/lsp` and `internal/vcs` as services plugged in through `view`-owned
-interfaces, and `cmd/toe/internal/app.go` as the composition root. Dependencies
-point downward, toward more stable semantics, `core`'s editing semantics
-change far less often than `term/ui`'s rendering details.
+toe's package layers, top to bottom: `internal/core` → `internal/view` (+ `view/action`, `view/config`, `view/language`, `view/register`) → `internal/term/command` → `internal/term/builtin` → `internal/term/ui`, with `internal/lsp` and `internal/vcs` as services plugged in through `view`-owned interfaces, and `cmd/toe/internal/app.go` as the composition root. Dependencies point downward, toward more stable semantics, `core`'s editing semantics change far less often than `term/ui`'s rendering details.
 
 **Rules:**
 
-1. **One authoritative owner per concept.** Every concept (selections,
-   diagnostics, diffs, completions) has exactly one package that owns its
-   state and invariants. Other packages consume it through that owner rather
-   than reimplementing or shadowing it.
-2. **Dependencies point toward stability.** `core` depends on nothing else in
-   the editor. `view` depends only on `core`. Commands and UI depend on
-   `view`, never the reverse.
-3. **Boundaries follow authority and reasons to change, not file/line count.**
-   Split a package because two parts change for different reasons and are
-   owned by different concerns, not because a file got long (see rule 16).
-4. **State stays with the module that preserves its invariants.** See
-   Configuration Boundaries above for the config-specific version of this
-   rule; it applies equally to runtime state, caches, and lifecycle state.
-5. **`view.Editor` holds capability seams, not module implementation state.**
-   `Editor` may hold a `VersionControl`, `LanguageServerController`, or
-   similar interface value (see `SetVersionControl`/`SetLanguageServerController`
-   in `internal/view`). Fields belonging to `lsp` or `vcs` internals (client
-   transports, provider state, differs) stay in those packages.
-6. **Interfaces are consumer-defined and minimal.** `view.VersionControl` and
-   `view.LanguageServerController` are declared in `view` because `view` is
-   the consumer; they expose only what `view`/commands/UI need, not the full
-   surface of `vcs.Provider` or the LSP protocol.
-7. **Interfaces earn their place; a package boundary alone doesn't call for
-   one.** A concrete type passed and used directly is fine. Introduce an
-   interface only when there is a real substitutable implementation or the
-   consumer needs to decouple from a concrete lifecycle.
-8. **Boundary values speak the receiving package's language.** `vcs.Session`
-   returns `view.DiffHunk`/`view.FileChange`; `lsp` results are normalized
-   into `view.CompletionItem`, `view.Location`, `view.Symbol`, etc. before
-   crossing into `view`. Provider/protocol-shaped types (raw LSP structs, git
-   plumbing types) stay inside their owning package.
-9. **Generic mechanisms don't import concrete registrations.** `term/command`
-   (signatures, tokenizer, registry, keymaps) must not import `term/builtin`
-   or any specific command module. `vcs.NewRegistry` installing `Git` directly
-   is the one accepted exception today (see Extension Points in
-   `docs/content/docs/architecture.md`); new providers should still register
-   through the app composition root where practical, not by having the
-   mechanism import every provider.
+1. **One authoritative owner per concept.** Every concept (selections, diagnostics, diffs, completions) has exactly one package that owns its state and invariants. Other packages consume it through that owner rather than reimplementing or shadowing it.
+2. **Dependencies point toward stability.** `core` depends on nothing else in the editor. `view` depends only on `core`. Commands and UI depend on `view`, never the reverse.
+3. **Boundaries follow authority and reasons to change, not file/line count.** Split a package because two parts change for different reasons and are owned by different concerns, not because a file got long (see rule 16).
+4. **State stays with the module that preserves its invariants.** See Configuration Boundaries above for the config-specific version of this rule; it applies equally to runtime state, caches, and lifecycle state.
+5. **`view.Editor` holds capability seams, not module implementation state.** `Editor` may hold a `VersionControl`, `LanguageServerController`, or similar interface value (see `SetVersionControl`/`SetLanguageServerController` in `internal/view`). Fields belonging to `lsp` or `vcs` internals (client transports, provider state, differs) stay in those packages.
+6. **Interfaces are consumer-defined and minimal.** `view.VersionControl` and `view.LanguageServerController` are declared in `view` because `view` is the consumer; they expose only what `view`/commands/UI need, not the full surface of `vcs.Provider` or the LSP protocol.
+7. **Interfaces earn their place; a package boundary alone doesn't call for one.** A concrete type passed and used directly is fine. Introduce an interface only when there is a real substitutable implementation or the consumer needs to decouple from a concrete lifecycle.
+8. **Boundary values speak the receiving package's language.** `vcs.Session` returns `view.DiffHunk`/`view.FileChange`; `lsp` results are normalized into `view.CompletionItem`, `view.Location`, `view.Symbol`, etc. before crossing into `view`. Provider/protocol-shaped types (raw LSP structs, git plumbing types) stay inside their owning package.
+9. **Generic mechanisms don't import concrete registrations.** `term/command` (signatures, tokenizer, registry, keymaps) must not import `term/builtin` or any specific command module. `vcs.NewRegistry` installing `Git` directly is the one accepted exception today (see Extension Points in `docs/content/docs/architecture.md`); new providers should still register through the app composition root where practical, not by having the mechanism import every provider.
 10. **Concrete assembly belongs in `cmd/toe/internal/app.go`.** Wiring
     `lsp.Attach`, `vcs.Attach`, `builtin.Register`, and clipboard providers
     together is `app.go`'s job. Packages below it should not know about each
@@ -212,18 +177,12 @@ change far less often than `term/ui`'s rendering details.
 
 **Dependency guide:**
 
-- `internal/core` must not import `view`, any `term/*` package, `lsp`, or
-  `vcs`.
-- `internal/view` (and subpackages) must not import `term/ui`, `term/builtin`,
-  or `cmd/toe/internal`.
-- `internal/lsp` and `internal/vcs` must not import `term/ui` or
-  `term/builtin`; they depend on `core` and `view` only.
-- `internal/term/command` must not import `term/builtin` or concrete service
-  packages (`lsp`, `vcs`); it is the generic command mechanism.
-- `internal/term/builtin` may import `term/command`, `term/ui`, `view`,
-  `view/action`, `lsp`, and `vcs`, it is where commands bridge to services.
-- `cmd/toe/internal/app.go` may import any concrete module; it is the only
-  place allowed to wire everything together.
+- `internal/core` must not import `view`, any `term/*` package, `lsp`, or `vcs`.
+- `internal/view` (and subpackages) must not import `term/ui`, `term/builtin`, or `cmd/toe/internal`.
+- `internal/lsp` and `internal/vcs` must not import `term/ui` or `term/builtin`; they depend on `core` and `view` only.
+- `internal/term/command` must not import `term/builtin` or concrete service packages (`lsp`, `vcs`); it is the generic command mechanism.
+- `internal/term/builtin` may import `term/command`, `term/ui`, `view`, `view/action`, `lsp`, and `vcs`, it is where commands bridge to services.
+- `cmd/toe/internal/app.go` may import any concrete module; it is the only place allowed to wire everything together.
 
 **Before moving code or proposing a package, answer:**
 
@@ -232,10 +191,8 @@ change far less often than `term/ui`'s rendering details.
 - What may it import, and what may import it?
 - What independent reason to change justifies the move?
 - Does the move reduce the number of packages a caller must understand?
-- Will the move introduce forwarding wrappers, dependency inversion with no
-  substitutable implementation, or a generic helper package?
-- Can the boundary be enforced through imports alone or a narrow
-  consumer-owned interface, without new indirection?
+- Will the move introduce forwarding wrappers, dependency inversion with no substitutable implementation, or a generic helper package?
+- Can the boundary be enforced through imports alone or a narrow consumer-owned interface, without new indirection?
 
 ---
 
@@ -788,8 +745,7 @@ go test ./... -short   # while iterating
 go test ./...          # before declaring the work done
 ```
 
-Tests that spawn a pty, watch the real filesystem, shell out per subtest, or
-wait on a real timer skip under `-short`:
+Tests that spawn a pty, watch the real filesystem, shell out per subtest, or wait on a real timer skip under `-short`:
 
 ```go
 if testing.Short() {
@@ -797,8 +753,7 @@ if testing.Short() {
 }
 ```
 
-Put the skip on the slow subtest, not the whole parent, when only one subtest
-is expensive. Never report work as passing on a `-short` run alone.
+Put the skip on the slow subtest, not the whole parent, when only one subtest is expensive. Never report work as passing on a `-short` run alone.
 
 ## Comments
 
@@ -832,8 +787,7 @@ Godoc rule: end the last sentence of a comment without a period.
 
 ### Inline Comments
 
-Comment what the code cannot say for itself: a warranted comment explains
-WHY, capped at 2 lines. Self-describing code stands on its own:
+Comment what the code cannot say for itself: a warranted comment explains WHY, capped at 2 lines. Self-describing code stands on its own:
 
 ```go
 // Bad
@@ -874,13 +828,7 @@ Package-level `var` declarations are permitted only for:
 
 ## No Cross-Package Var Aliasing
 
-**Never declare `var Foo = otherpkg.Foo` to re-export another package's
-identifier under a local name.** Go's `var x = y` exists for local
-refactoring inside a package, not as a general-purpose re-export or
-aliasing mechanism between packages. If a package needs a value another
-package already owns, import that package and reference the value directly
-, `view.ErrNoLanguageServer`, not a same-named local copy that happens to
-equal it.
+**Never declare `var Foo = otherpkg.Foo` to re-export another package's identifier under a local name.** Go's `var x = y` exists for local refactoring inside a package, not as a general-purpose re-export or aliasing mechanism between packages. If a package needs a value another package already owns, import that package and reference the value directly , `view.ErrNoLanguageServer`, not a same-named local copy that happens to equal it.
 
 ```go
 // Bad, lsp package re-exports view's sentinel under its own name
@@ -892,9 +840,7 @@ return ErrNoLanguageServer
 return view.ErrNoLanguageServer
 ```
 
-This applies to sentinel errors, constants, and any other exported value:
-if `view` owns it, every package that needs it imports `view` and writes
-`view.X`, under the one name the owner gave it.
+This applies to sentinel errors, constants, and any other exported value: if `view` owns it, every package that needs it imports `view` and writes `view.X`, under the one name the owner gave it.
 
 ## Interface Compliance
 
@@ -980,19 +926,11 @@ The only valid reason to roll your own is when the library genuinely has no equi
 
 # i18n Policy
 
-Any user-facing English prose, status messages, prompts, hints shown during
-an interactive mode, must go through `internal/i18n`, not a hardcoded Go
-string constant. Add a `Key` in `internal/i18n/keys.go` and a translation
-entry in each locale file (`en.json`, `de.json`, `fr.json`, `it.json`) under
-`internal/i18n/translations/`, then reference it with `i18n.Text(key, ...)`.
+Any user-facing English prose, status messages, prompts, hints shown during an interactive mode, must go through `internal/i18n`, not a hardcoded Go string constant. Add a `Key` in `internal/i18n/keys.go` and a translation entry in each locale file (`en.json`, `de.json`, `fr.json`, `it.json`) under `internal/i18n/translations/`, then reference it with `i18n.Text(key, ...)`.
 
-`internal/i18n/translations/common.json` is reserved for values shared
-identically across all locales (e.g. the `:` command prompt), not a catch-all
-or a place to skip translating a new message into the other languages.
+`internal/i18n/translations/common.json` is reserved for values shared identically across all locales (e.g. the `:` command prompt), not a catch-all or a place to skip translating a new message into the other languages.
 
-A message whose wording depends on a count takes plural forms instead of one
-key per form: give the message an object value keyed by `zero`, `one`, or
-`other`, and pass the number as the `count` variable.
+A message whose wording depends on a count takes plural forms instead of one key per form: give the message an object value keyed by `zero`, `one`, or `other`, and pass the number as the `count` variable.
 
 ```json
 "status.yanked": {
@@ -1001,16 +939,9 @@ key per form: give the message an object value keyed by `zero`, `one`, or
 }
 ```
 
-A missing category falls back to `other`, so a language only writes the forms
-it needs, French supplies `zero` where English does not. `other` is required:
-a plural message without it fails to load. A message without a `count` variable
-stays a plain string.
+A missing category falls back to `other`, so a language only writes the forms it needs, French supplies `zero` where English does not. `other` is required: a plural message without it fails to load. A message without a `count` variable stays a plain string.
 
-The one exception is a hint that echoes a literal keystroke sequence back at
-the user (`"ms"`, `"r"`, `"^r"`), that's not language, so it
-stays a plain Go string. A hint that also contains descriptive prose (e.g.
-`"h/j/k/l or ←/↓/↑/→ resize, esc/enter exits"`) is not exempt and must be
-translated.
+The one exception is a hint that echoes a literal keystroke sequence back at the user (`"ms"`, `"r"`, `"^r"`), that's not language, so it stays a plain Go string. A hint that also contains descriptive prose (e.g. `"h/j/k/l or ←/↓/↑/→ resize, esc/enter exits"`) is not exempt and must be translated.
 
 ---
 

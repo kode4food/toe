@@ -38,6 +38,7 @@ type (
 	tintColors struct {
 		base   tui.Color
 		accent tui.Color
+		amount float64
 	}
 
 	diffLineKind uint8
@@ -59,7 +60,7 @@ const (
 const (
 	diffGutterW     = 2
 	diffPreviewLead = 3
-	diffTintAmount  = 0.2
+	tintAmount      = 0.2
 )
 
 // the base of a staged row is the head, of an unstaged row the index, so both
@@ -143,10 +144,12 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	addedBg := tintToward(&tintColors{
 		base:   popupBg,
 		accent: args.theme.Get("diff.plus").FgColor(),
+		amount: tintAmount,
 	})
 	removedBg := tintToward(&tintColors{
 		base:   popupBg,
 		accent: args.theme.Get("diff.minus").FgColor(),
+		amount: tintAmount,
 	})
 
 	barW := 0
@@ -269,13 +272,17 @@ func tintToward(colors *tintColors) tui.Color {
 	base := rgb8(colors.base)
 	accent := rgb8(colors.accent)
 	mix := func(from, to uint8) uint8 {
-		return uint8(float64(from) + (float64(to)-float64(from))*diffTintAmount)
+		return uint8(float64(from) + (float64(to)-float64(from))*colors.amount)
 	}
-	return tui.ColorRGB(
+	mixed := tui.ColorRGB(
 		mix(base.red, accent.red),
 		mix(base.green, accent.green),
 		mix(base.blue, accent.blue),
 	)
+	if !TrueColorSupported() {
+		return mixed.Quantized()
+	}
+	return mixed
 }
 
 type rgb8Res struct {

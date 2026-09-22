@@ -19,8 +19,7 @@ When a file is tracked by git, toe shows line changes in the gutter:
 
 Colors follow the active theme; the swatches above use the default `mocha`.
 
-The same changes are marked on the scrollbar, including the ones scrolled off
-screen, unless the `scrollbar` option is turned off.
+The same changes are marked on the scrollbar, including the ones scrolled off screen, unless the `scrollbar` option is turned off.
 
 ## Change Navigation
 
@@ -45,6 +44,8 @@ Each entry carries its change status. With `nerd-fonts` disabled, the short labe
 | {{< glyph "diff-renamed-16" "vcs-renamed" >}} | `R` | Renamed file |
 | {{< glyph "question-16" "vcs-untracked" >}} | `?` | Untracked file |
 | {{< glyph "alert-16" "vcs-conflict" >}} | `!` | Conflicted file |
+
+The preview marks added and removed lines with `+` and `-` and a tinted background.
 
 ## Resetting Changes
 

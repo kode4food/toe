@@ -181,6 +181,7 @@ func (o *optionCapture) styles(cx *Context) captureStyles {
 	st.content = content.Bg(tintToward(&tintColors{
 		base:   content.BgColor(),
 		accent: accent,
+		amount: tintAmount,
 	}))
 	st.border = st.content.Fg(accent)
 	st.option = st.option.Bg(st.content.BgColor())

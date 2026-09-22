@@ -63,8 +63,16 @@ type (
 
 func (p *previewCtx) renderInto(buf *tui.Buffer, at geom.Point) {
 	if p.item.DiffPreview {
-		p.renderDiffInto(buf, at)
-		return
+		switch p.item.DiffKind {
+		case view.FileChangeAdded, view.FileChangeUntracked:
+			// no-op
+		case view.FileChangeDeleted:
+			p.renderDeletedInto(buf, at)
+			return
+		default:
+			p.renderDiffInto(buf, at)
+			return
+		}
 	}
 	switch {
 	case p.item.Location.Target.ID != view.InvalidDocumentId:
@@ -113,6 +121,16 @@ func (p *previewCtx) renderDocInto(
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
 	return diffGutterLines(p.item.DiffHunks(), text.LenLines())
+}
+
+func (p *previewCtx) renderDeletedInto(buf *tui.Buffer, at geom.Point) {
+	vc := p.editor.VersionControl()
+	if vc == nil {
+		p.blitPlaceholderInto(buf, at, "<No version control>")
+		return
+	}
+	staged := p.item.Location.Target.Variant == changedFileStaged
+	p.picker.diffBaseFor(vc, p.item.BasePath, staged).renderInto(p, buf, at)
 }
 
 func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {

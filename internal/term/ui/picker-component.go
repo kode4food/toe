@@ -369,7 +369,6 @@ func (p *PickerComponent) handleMouseWheel(
 	return consumed(), nil
 }
 
-// the preview draws its scrollbar in the last column inside the overlay pad
 func (p *PickerComponent) onPreviewScrollbar(at geom.Point) bool {
 	a := p.previewBounds
 	inner := a.Width - 2*overlayPadX

@@ -74,12 +74,14 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), "line 0 ")
 	})
 
-	t.Run("marks the diff preview", func(t *testing.T) {
+	t.Run("a wholly added file drops its markings", func(t *testing.T) {
 		content := diffPreviewModel(t).View().Content
 
-		assert.Contains(t, stripANSI(content), "+ line 0")
-		// every line is added, so the bar is solid with the added color
-		assert.Equal(t, '█', previewBarCell(t, content).glyph)
+		// the picker row already says the file is added
+		assert.NotContains(t, stripANSI(content), "+ line 0")
+		assert.Contains(t, stripANSI(content), "line 0")
+		assert.Equal(t, ' ', previewBarCell(t, content).glyph)
+		assert.Equal(t, scrollbarThumbBg, previewBarCell(t, content).style.bg)
 	})
 }
 

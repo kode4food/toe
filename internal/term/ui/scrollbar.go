@@ -15,21 +15,17 @@ type (
 		topLine int
 	}
 
-	// scrollbarGeom maps between bar rows and document lines
 	scrollbarGeom struct {
 		rows  int
 		lines int
 	}
 
-	// count is how many document lines the half row marks, and line the last
-	// one counted, so a line marked twice still counts once
 	scrollMark struct {
-		kind  scrollMarkKind
-		line  int
-		count int
+		kind     scrollMarkKind
+		lastLine int
+		count    int
 	}
 
-	// ordered by priority, the highest kind on a half row is the one drawn
 	scrollMarkKind uint8
 )
 
@@ -54,13 +50,14 @@ const (
 	scrollbarLowerThin  = "\u2581" // '▁' - lower one eighth block
 )
 
+const scrollbarThumbTint = 0.45
+
 func newScrollbar(
 	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
 ) *scrollbar {
-	// two marks per row, so a half block can place one precisely
 	marks := make([]scrollMark, max(g.rows, 0)*2)
 	for i := range marks {
-		marks[i].line = -1
+		marks[i].lastLine = -1
 	}
 	return &scrollbar{
 		styles:  styles,
@@ -84,8 +81,8 @@ func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
 	if kind > mark.kind {
 		mark.kind = kind
 	}
-	if mark.line != line {
-		mark.line = line
+	if mark.lastLine != line {
+		mark.lastLine = line
 		mark.count++
 	}
 }
@@ -117,18 +114,28 @@ func (s *scrollbar) draw(buf *tui.Buffer) {
 		)
 	}
 	for row := range g.rows {
-		base := s.styles.scrollTrack
+		glyph, st := s.cell(row)
 		if row >= thumbTop && row < thumbTop+thumbLen {
-			base = s.styles.scrollThumb
+			st = s.tint(st)
 		}
-		glyph, st := s.cell(base, row)
 		buf.SetString(s.at.Add(geom.Point{Y: row}), glyph, st)
 	}
 }
 
-// one cell carries both marks of its row, so neighboring changes stay apart
-// and a half standing for a single line draws as a rule, not a block
-func (s *scrollbar) cell(base tui.Style, row int) (string, tui.Style) {
+func (s *scrollbar) tint(st tui.Style) tui.Style {
+	accent := s.styles.scrollThumb.BgColor()
+	shift := func(c tui.Color) tui.Color {
+		return tintToward(&tintColors{
+			base:   c,
+			accent: accent,
+			amount: scrollbarThumbTint,
+		})
+	}
+	return st.Fg(shift(st.FgColor())).Bg(shift(st.BgColor()))
+}
+
+func (s *scrollbar) cell(row int) (string, tui.Style) {
+	base := s.styles.scrollTrack
 	upper := s.marks[row*2]
 	lower := s.marks[row*2+1]
 	switch {

@@ -27,7 +27,7 @@ const (
 	scrollbarRows   = scrollbarHeight - 1 // the status line takes the last row
 
 	scrollbarTrackBg = "48;2;69;71;90"    // mocha surface1
-	scrollbarThumbBg = "48;2;108;112;134" // mocha overlay0
+	scrollbarThumbBg = "48;2;86;89;109"   // track tinted toward overlay0
 	scrollbarErrorFg = "38;2;243;139;168" // mocha red
 )
 

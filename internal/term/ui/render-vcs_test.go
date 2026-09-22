@@ -276,7 +276,7 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "+ ┆   ┆   new")
 	})
 
-	t.Run("added file preview shows all additions", func(t *testing.T) {
+	t.Run("added file previews as plain content", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "tracked.txt", "keep\n")
 		testutil.WriteFile(
@@ -286,11 +286,12 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "+ alpha")
-		assert.Contains(t, out, "+ beta")
+		assert.NotContains(t, out, "+ alpha")
+		assert.Contains(t, out, "alpha")
+		assert.Contains(t, out, "beta")
 	})
 
-	t.Run("deleted file preview shows removed base", func(t *testing.T) {
+	t.Run("deleted file previews its base content", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		gone := testutil.GitCommitFile(t, repo, "gone.txt", "first\nsecond\n")
 		assert.NoError(t, os.Remove(gone))
@@ -298,8 +299,9 @@ func TestChangedFilePicker(t *testing.T) {
 		m := changedFilePicker(t, repo)
 
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "- first")
-		assert.Contains(t, out, "- second")
+		assert.NotContains(t, out, "- first")
+		assert.Contains(t, out, "first")
+		assert.Contains(t, out, "second")
 		assert.NotContains(t, out, "<File not found>")
 	})
 

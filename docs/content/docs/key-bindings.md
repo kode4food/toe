@@ -418,9 +418,7 @@ Image panes support the command prompt, window menu, and leader.
 
 ## Binary Panes
 
-Files that are neither text nor a supported image open as a read-only
-hexadecimal dump. Binary panes support the command prompt, window menu, and
-leader.
+Files that are neither text nor a supported image open as a read-only hexadecimal dump. Binary panes support the command prompt, window menu, and leader.
 
 | Key | Action |
 |-----|--------|

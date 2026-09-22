@@ -238,7 +238,6 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	return tea.Batch(vCmd, hCmd)
 }
 
-// scrollbarAt reports the view whose scrollbar column holds at, and its row
 func (r *renderPass) scrollbarAt(at geom.Point) (*view.View, int, bool) {
 	cx := r.context
 	if !cx.Editor.Options().Scrollbar {

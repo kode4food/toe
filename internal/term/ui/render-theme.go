@@ -65,7 +65,7 @@ func buildStylesWithBackground(
 		diffAdded:         th.Get("diff.plus.gutter"),
 		diffModified:      th.Get("diff.delta.gutter"),
 		diffRemoved:       th.Get("diff.minus.gutter"),
-		scrollTrack:       tui.Style{}.Bg(th.Get("ui.scrollbar").BgColor()),
+		scrollTrack:       tui.Style{}.Bg(bg),
 		scrollThumb: tui.Style{}.Bg(
 			th.Get("ui.scrollbar.thumb").BgColor(),
 		),

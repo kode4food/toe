@@ -127,7 +127,10 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	var bar *scrollbar
 	if barW > 0 {
 		bar = newScrollbar(
-			scrollbarGeom{rows: args.area.Height, lines: nLines},
+			scrollbarGeom{
+				rows:   args.area.Height,
+				maxTop: max(nLines-args.area.Height, 0),
+			},
 			geom.Point{
 				X: args.area.X + args.area.Width - barW,
 				Y: args.area.Y,

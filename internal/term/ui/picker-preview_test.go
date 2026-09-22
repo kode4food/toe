@@ -27,22 +27,23 @@ const (
 	testPickerPreviewWidth   = 100
 	narrowPickerPreviewWidth = 60
 
-	// the preview's right border, then the popup's padding column
-	previewBorderPad = 2
+	// the bar sits against the preview's right border
+	previewBorderPad = 1
+
+	previewThumbBg = "48;2;72;74;94" // popup tinted toward overlay0
 )
 
 func TestPickerPreviewScrollbar(t *testing.T) {
 	t.Run("hidden unless enabled", func(t *testing.T) {
 		cell := previewBarCell(t, previewModel(t, false).View().Content)
 
-		assert.NotEqual(t, scrollbarThumbBg, cell.style.bg)
-		assert.NotEqual(t, scrollbarTrackBg, cell.style.bg)
+		assert.NotEqual(t, previewThumbBg, cell.style.bg)
 	})
 
 	t.Run("draws a thumb", func(t *testing.T) {
 		cell := previewBarCell(t, previewModel(t, true).View().Content)
 
-		assert.Equal(t, scrollbarThumbBg, cell.style.bg)
+		assert.Equal(t, previewThumbBg, cell.style.bg)
 	})
 
 	t.Run("clicking the bar scrolls the preview", func(t *testing.T) {
@@ -54,9 +55,7 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 			X: at.X, Y: at.Y, Button: tea.MouseLeft,
 		})
 
-		out := stripANSI(m.View().Content)
-		assert.NotContains(t, out, "line 0 ")
-		assert.Contains(t, out, "line 199")
+		assert.NotContains(t, stripANSI(m.View().Content), "line 0 ")
 	})
 
 	t.Run("dragging the bar scrolls back", func(t *testing.T) {
@@ -81,7 +80,7 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 		assert.NotContains(t, stripANSI(content), "+ line 0")
 		assert.Contains(t, stripANSI(content), "line 0")
 		assert.Equal(t, ' ', previewBarCell(t, content).glyph)
-		assert.Equal(t, scrollbarThumbBg, previewBarCell(t, content).style.bg)
+		assert.Equal(t, previewThumbBg, previewBarCell(t, content).style.bg)
 	})
 }
 

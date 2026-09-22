@@ -126,7 +126,7 @@ func (p *pickerRender) drawPreview(area geom.Area) {
 	if item == nil {
 		return
 	}
-	innerW := max(area.Width-2*overlayPadX, 1)
+	innerW := previewInnerWidth(area.Width, cx.Editor.Options().Scrollbar)
 	if comp.previewTheme != p.theme {
 		comp.previewTheme = p.theme
 		comp.previewStyle = previewHighlighter(p.theme)

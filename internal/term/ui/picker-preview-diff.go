@@ -248,7 +248,10 @@ func drawDiffPreviewScrollbar(
 	args *diffPreviewRender, buf *tui.Buffer, start int,
 ) {
 	bar := newScrollbar(
-		scrollbarGeom{rows: args.area.Height, lines: len(args.lines)},
+		scrollbarGeom{
+			rows:   args.area.Height,
+			maxTop: max(len(args.lines)-args.area.Height, 0),
+		},
 		geom.Point{
 			X: args.area.X + args.area.Width - 1,
 			Y: args.area.Y,

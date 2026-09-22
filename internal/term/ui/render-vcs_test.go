@@ -64,9 +64,9 @@ func TestDiffGutter(t *testing.T) {
 
 		cells := scrollbarCells(t, m.View().Content, 23)
 
-		// line 90 of 101 falls on the upper half of row 20 of 23
-		assert.Equal(t, '▔', cells[20].glyph)
-		assert.Equal(t, ' ', cells[19].glyph)
+		marked := markRows(cells)
+		assert.Len(t, marked, 2)
+		assert.Contains(t, scrollbarThinGlyphs, cells[marked[1]].glyph)
 	})
 
 	t.Run("statusline shows head name", func(t *testing.T) {

@@ -252,7 +252,10 @@ func (r *renderPass) prepareContentRender(
 
 	var bar *scrollbar
 	if target.scrollbar {
-		barGeom := scrollbarGeom{rows: target.area.Height, lines: nLines}
+		barGeom := scrollbarGeom{
+			rows:   target.area.Height,
+			maxTop: nLines - 1,
+		}
 		bar = newScrollbar(
 			barGeom,
 			geom.Point{

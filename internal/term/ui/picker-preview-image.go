@@ -105,7 +105,9 @@ func (p *PickerComponent) previewImageSize(
 		size.Width, cx.pickerLayout.SplitRatioFor(p.state.source.ID()),
 	)
 	return geom.Size{
-		Width:  max(size.Width-lw-3-2*overlayPadX, 1),
+		Width: max(
+			size.Width-lw-3-previewSidePad(cx.Editor.Options().Scrollbar), 1,
+		),
 		Height: max(size.Height-2, 0),
 	}
 }

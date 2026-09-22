@@ -325,7 +325,9 @@ func (p *PickerComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
 		return false
 	}
 	p.dragEdge = drag
-	p.dragWrap = max(p.previewBounds.Width-2*overlayPadX, 1)
+	p.dragWrap = previewInnerWidth(
+		p.previewBounds.Width, p.state.editor.Options().Scrollbar,
+	)
 	return true
 }
 
@@ -369,11 +371,22 @@ func (p *PickerComponent) handleMouseWheel(
 	return consumed(), nil
 }
 
+// the bar sits on the pane's right edge, so only the left pad is kept
+func previewSidePad(scrollbar bool) int {
+	if scrollbar {
+		return overlayPadX
+	}
+	return 2 * overlayPadX
+}
+
+func previewInnerWidth(width int, scrollbar bool) int {
+	return max(width-previewSidePad(scrollbar), 1)
+}
+
 func (p *PickerComponent) onPreviewScrollbar(at geom.Point) bool {
 	a := p.previewBounds
-	inner := a.Width - 2*overlayPadX
-	return p.state.editor.Options().Scrollbar && inner >= 1 &&
-		at.X == a.X+overlayPadX+inner-1 &&
+	return p.state.editor.Options().Scrollbar &&
+		a.Width > overlayPadX && at.X == a.X+a.Width-1 &&
 		at.Y >= a.Y && at.Y < a.Y+a.Height
 }
 
@@ -382,10 +395,10 @@ func (p *PickerComponent) onPreviewScrollbar(at geom.Point) bool {
 func (p *PickerComponent) scrollPreviewToRow(y int) {
 	preview := &p.state.preview
 	g := scrollbarGeom{
-		rows:  p.previewBounds.Height,
-		lines: preview.lineCount,
+		rows:   p.previewBounds.Height,
+		maxTop: max(preview.lineCount-p.previewBounds.Height, 0),
 	}
-	preview.vScroll = g.topLine(y-p.previewBounds.Y) - preview.anchorLine
+	preview.vScroll = g.topLineAt(y-p.previewBounds.Y) - preview.anchorLine
 }
 
 func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {

@@ -265,10 +265,10 @@ func (r *renderPass) scrollbarJumpTo(v *view.View, row int) {
 		return
 	}
 	g := scrollbarGeom{
-		rows:  max(v.ContentHeight(), 1),
-		lines: doc.Text().LenLines(),
+		rows:   max(v.ContentHeight(), 1),
+		maxTop: doc.Text().LenLines() - 1,
 	}
-	action.ScrollViewToLine(cx.Editor, v, g.topLine(row))
+	action.ScrollViewToLine(cx.Editor, v, g.topLineAt(row))
 	v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
 }
 

@@ -26,9 +26,13 @@ const (
 	scrollbarHeight = 12
 	scrollbarRows   = scrollbarHeight - 1 // the status line takes the last row
 
-	scrollbarTrackBg = "48;2;69;71;90"    // mocha surface1
-	scrollbarThumbBg = "48;2;86;89;109"   // track tinted toward overlay0
+	scrollbarThumbBg = "48;2;61;62;81"    // base tinted toward overlay0
 	scrollbarErrorFg = "38;2;243;139;168" // mocha red
+)
+
+var (
+	scrollbarThinGlyphs  = []rune{'▔', '─', '▁'}
+	scrollbarBlockGlyphs = []rune{'▀', '▄', '█'}
 )
 
 func TestScrollbar(t *testing.T) {
@@ -39,7 +43,6 @@ func TestScrollbar(t *testing.T) {
 
 		for _, cell := range cells {
 			assert.NotEqual(t, scrollbarThumbBg, cell.style.bg)
-			assert.NotEqual(t, scrollbarTrackBg, cell.style.bg)
 		}
 	})
 
@@ -47,16 +50,13 @@ func TestScrollbar(t *testing.T) {
 		cells := scrollbarCells(t, scrollbarEditor(t, 200, true), scrollbarRows)
 
 		assert.Len(t, cells, scrollbarRows)
-		assert.Equal(t, scrollbarThumbBg, cells[0].style.bg)
-		assert.Equal(t, scrollbarTrackBg, cells[scrollbarRows-1].style.bg)
+		assert.Equal(t, []int{0}, thumbRows(cells))
 	})
 
-	t.Run("thumb fills a document that fits", func(t *testing.T) {
-		cells := scrollbarCells(t, scrollbarEditor(t, 3, true), scrollbarRows)
+	t.Run("thumb fills when nothing scrolls", func(t *testing.T) {
+		cells := scrollbarCells(t, scrollbarEditor(t, 0, true), scrollbarRows)
 
-		for _, cell := range cells {
-			assert.Equal(t, scrollbarThumbBg, cell.style.bg)
-		}
+		assert.Len(t, thumbRows(cells), scrollbarRows)
 	})
 
 	t.Run("thumb follows the scroll position", func(t *testing.T) {
@@ -77,8 +77,7 @@ func TestScrollbar(t *testing.T) {
 
 		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
 
-		assert.Equal(t, scrollbarTrackBg, cells[0].style.bg)
-		assert.Equal(t, scrollbarThumbBg, cells[scrollbarRows-1].style.bg)
+		assert.Equal(t, []int{scrollbarRows - 1}, thumbRows(cells))
 	})
 
 	t.Run("marks a single diagnostic with a rule", func(t *testing.T) {
@@ -98,10 +97,11 @@ func TestScrollbar(t *testing.T) {
 
 		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
 
-		// line 180 of 201 falls on the lower half of row 9 of 11
-		assert.Equal(t, '▁', cells[9].glyph)
-		assert.Equal(t, scrollbarErrorFg, cells[9].style.fg)
-		assert.Equal(t, ' ', cells[8].glyph)
+		marked := markRows(cells)
+		assert.Len(t, marked, 2)
+		row := marked[1]
+		assert.Contains(t, scrollbarThinGlyphs, cells[row].glyph)
+		assert.Equal(t, scrollbarErrorFg, cells[row].style.fg)
 	})
 
 	t.Run("a run of lines draws one half block", func(t *testing.T) {
@@ -125,22 +125,18 @@ func TestScrollbar(t *testing.T) {
 
 		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
 
-		// all three lines fall on the upper half of row 8 of 11
-		assert.Equal(t, '▀', cells[8].glyph)
-		assert.Equal(t, scrollbarErrorFg, cells[8].style.fg)
-		// only the cursor mark on row 0 is drawn besides it
-		for i, cell := range cells {
-			if i == 0 || i == 8 {
-				continue
-			}
-			assert.Equal(t, ' ', cell.glyph)
-		}
+		marked := markRows(cells)
+		assert.Len(t, marked, 2)
+		row := marked[1]
+		assert.Contains(t, scrollbarBlockGlyphs, cells[row].glyph)
+		assert.Equal(t, scrollbarErrorFg, cells[row].style.fg)
 	})
 
 	t.Run("marks the cursor line", func(t *testing.T) {
 		cells := scrollbarCells(t, scrollbarEditor(t, 200, true), scrollbarRows)
 
-		assert.Equal(t, '▔', cells[0].glyph)
+		assert.Equal(t, []int{0}, markRows(cells))
+		assert.Contains(t, scrollbarThinGlyphs, cells[0].glyph)
 	})
 
 	t.Run("marks search matches", func(t *testing.T) {
@@ -158,9 +154,9 @@ func TestScrollbar(t *testing.T) {
 
 		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
 
-		// line 150 of 201 falls on the upper half of row 8 of 11
-		assert.Equal(t, '▔', cells[8].glyph)
-		assert.Equal(t, ' ', cells[7].glyph)
+		marked := markRows(cells)
+		assert.Len(t, marked, 2)
+		assert.Contains(t, scrollbarThinGlyphs, cells[marked[1]].glyph)
 	})
 
 	t.Run("clicking the bar scrolls there", func(t *testing.T) {
@@ -176,8 +172,8 @@ func TestScrollbar(t *testing.T) {
 		})
 
 		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
-		assert.Contains(t, firstLine(m.View().Content), "line 190")
-		assert.Equal(t, scrollbarThumbBg, cells[scrollbarRows-1].style.bg)
+		assert.Greater(t, topVisibleLine(t, m.View().Content), 150)
+		assert.Contains(t, thumbRows(cells), scrollbarRows-1)
 	})
 
 	t.Run("dragging the bar keeps scrolling", func(t *testing.T) {
@@ -214,6 +210,51 @@ func TestScrollbar(t *testing.T) {
 		assert.Equal(t, before, cursorLineOf(t, e))
 	})
 
+	t.Run("thumb holds every visible line's mark", func(t *testing.T) {
+		e := editorWithText(t, numberedLines(200))
+		e.Options().Scrollbar = true
+		m := resize(
+			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
+		)
+		_ = m.View().Content
+
+		for _, row := range []int{0, 3, 5, 8, scrollbarRows - 1} {
+			click := tea.MouseClickMsg{
+				X: scrollbarWidth - 1, Y: row, Button: tea.MouseLeft,
+			}
+			m = mouse(m, click)
+			clean := scrollbarCells(t, m.View().Content, scrollbarRows)
+			top := topVisibleLine(t, m.View().Content)
+			putCursorOnLine(t, e, top)
+			markEveryLine(t, e, top, top+scrollbarRows-1)
+			m = mouse(m, click)
+
+			cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+
+			assert.NotEmpty(t, markRows(cells))
+			assert.Subset(t, thumbRows(clean), markRows(cells))
+		}
+	})
+
+	t.Run("clicking centers the thumb on the row", func(t *testing.T) {
+		e := editorWithText(t, numberedLines(200))
+		e.Options().Scrollbar = true
+		m := resize(
+			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
+		)
+		_ = m.View().Content
+
+		for _, row := range []int{0, 3, 5, 8, scrollbarRows - 1} {
+			m = mouse(m, tea.MouseClickMsg{
+				X: scrollbarWidth - 1, Y: row, Button: tea.MouseLeft,
+			})
+
+			cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+
+			assert.Contains(t, thumbRows(cells), row)
+		}
+	})
+
 	t.Run("narrows the text area by one column", func(t *testing.T) {
 		wide := strings.Repeat("x", 200) + "\n"
 		e := editorWithText(t, wide)
@@ -229,6 +270,62 @@ func TestScrollbar(t *testing.T) {
 
 		assert.Equal(t, before-1, after)
 	})
+}
+
+func thumbRows(cells []scrollbarCell) []int {
+	var out []int
+	for i, cell := range cells {
+		if cell.style.bg == scrollbarThumbBg {
+			out = append(out, i)
+		}
+	}
+	return out
+}
+
+func markRows(cells []scrollbarCell) []int {
+	var out []int
+	for i, cell := range cells {
+		if cell.glyph != ' ' {
+			out = append(out, i)
+		}
+	}
+	return out
+}
+
+func topVisibleLine(t *testing.T, content string) int {
+	t.Helper()
+	var line int
+	_, err := fmt.Sscanf(strings.TrimSpace(firstLine(content)), "%d", &line)
+	assert.NoError(t, err)
+	return line - 1
+}
+
+func putCursorOnLine(t *testing.T, e *view.Editor, line int) {
+	t.Helper()
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	at, err := doc.Text().LineToChar(line)
+	assert.NoError(t, err)
+	assert.NoError(t, e.Apply(core.NewTransaction(doc.Text()).
+		WithSelection(core.PointSelection(at)),
+	))
+}
+
+func markEveryLine(t *testing.T, e *view.Editor, from, to int) {
+	t.Helper()
+	doc := e.FocusedDocument()
+	assert.NotNil(t, doc)
+	var diags []view.Diagnostic
+	for line := from; line <= to && line < doc.Text().LenLines(); line++ {
+		at, err := doc.Text().LineToChar(line)
+		assert.NoError(t, err)
+		diags = append(diags, view.Diagnostic{
+			Provider: "test",
+			Range:    core.Span{From: at, To: at + 1},
+			Severity: view.DiagnosticSeverityError,
+		})
+	}
+	doc.ReplaceDiagnostics("test", diags)
 }
 
 func scrollbarEditor(t *testing.T, lines int, bar bool) string {

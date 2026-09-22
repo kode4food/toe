@@ -24,6 +24,8 @@ type (
 		lineCount     int
 		trailingEmpty bool
 
+		scrollbar *scrollbar
+
 		docCache *docRenderCache
 		rawText  string
 		lineIdx  []lineIndexEntry
@@ -69,6 +71,9 @@ func (r *renderPass) renderContent(target *contentRenderTarget) {
 	st := r.prepareContentRender(target)
 	r.paintContentOverlays(st)
 	renderContentRows(st)
+	if st.scrollbar != nil {
+		st.scrollbar.draw(st.buf)
+	}
 	r.editor.cache.viewRowMaps[target.view.ID()] = st.rowMap
 }
 

@@ -90,13 +90,17 @@ func (ec *EditorComponent) autoSizeWidthTarget(pane view.Pane) int {
 
 func (ec *EditorComponent) autoSizeRulerWidth(v *view.View) int {
 	cx := ec.context
-	rulers := cx.Editor.Options().Rulers
+	opts := cx.Editor.Options()
+	rulers := opts.Rulers
 	doc := cx.Editor.Document(v.DocID())
 	if len(rulers) == 0 || rulers[0] <= 0 || doc == nil {
 		return 0
 	}
-	return gutterWidthFor(doc.Text(), cx.Editor.Options().Gutters) +
-		rulers[0] + 1
+	width := gutterWidthFor(doc.Text(), opts.Gutters) + rulers[0] + 1
+	if opts.Scrollbar {
+		width++
+	}
+	return width
 }
 
 func (ec *EditorComponent) cancelAutoSize() {

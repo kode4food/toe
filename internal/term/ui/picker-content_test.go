@@ -167,6 +167,8 @@ func TestPickerRender(t *testing.T) {
 			_, err := e.OpenFile(path)
 			assert.NoError(t, err)
 			testutil.SetCursor(t, e, cursor)
+			// the bar's own cursor mark would differ between the renders
+			e.Options().Scrollbar = false
 
 			km := command.NewKeymaps()
 			m := ui.New(e, km)
@@ -187,12 +189,9 @@ func TestPickerRender(t *testing.T) {
 		fourStart := previewPaneLine(t, atStart, "four")
 		fourFour := previewPaneLine(t, atFour, "four")
 
-		assert.NotEqual(t, oneStart, oneFour,
-			"preview highlight on doc's first line should move"+
-				" once the cursor leaves it")
-		assert.NotEqual(t, fourStart, fourFour,
-			"preview highlight should follow the cursor to its"+
-				" current line")
+		// the highlight moves off the first line and onto the cursor's
+		assert.NotEqual(t, oneStart, oneFour)
+		assert.NotEqual(t, fourStart, fourFour)
 	})
 
 	t.Run("file explorer shows root title", func(t *testing.T) {

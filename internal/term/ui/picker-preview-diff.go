@@ -23,6 +23,9 @@ type (
 		vScroll int
 		hScroll int
 
+		anchorLine int
+		lineCount  int
+
 		theme  *theme.Theme
 		styles *styles
 	}
@@ -146,13 +149,20 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		accent: args.theme.Get("diff.minus").FgColor(),
 	})
 
+	barW := 0
+	if args.opts.Scrollbar {
+		barW = 1
+	}
+	paneW := args.area.Width - barW
 	contentX := args.area.X + diffGutterW
-	contentW := args.area.Width - diffGutterW
+	contentW := paneW - diffGutterW
 
 	anchor := max(0, firstChangedLine(args.lines)-diffPreviewLead)
 	maxStart := max(0, len(args.lines)-args.area.Height)
 	start := max(0, min(anchor+args.vScroll, maxStart))
 	args.vScroll = start - anchor
+	args.anchorLine = anchor
+	args.lineCount = len(args.lines)
 	hOff := clampDiffHScroll(clampDiffHScrollArgs{
 		render:       args,
 		startRow:     start,
@@ -178,8 +188,8 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		idx := start + row
 		at := geom.Point{X: contentX, Y: args.area.Y + row}
 		signAt := geom.Point{X: args.area.X, Y: at.Y}
-		buf.FillRange(signAt, args.area.Width, fillTUI)
-		buf.PatchBgRange(signAt, args.area.Width, popupBg)
+		buf.FillRange(signAt, paneW, fillTUI)
+		buf.PatchBgRange(signAt, paneW, popupBg)
 		if idx >= len(args.lines) {
 			continue
 		}
@@ -219,6 +229,9 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		}
 		buf.SetString(signAt, sign, signStyle)
 	}
+	if barW > 0 {
+		drawDiffPreviewScrollbar(args, buf, start)
+	}
 	applyRulers(applyRulersArgs{
 		buf:     buf,
 		at:      geom.Point{X: contentX, Y: args.area.Y},
@@ -226,6 +239,30 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		rulers:  args.opts.Rulers,
 		rulerBg: args.styles.rulerBg,
 	})
+}
+
+func drawDiffPreviewScrollbar(
+	args *diffPreviewRender, buf *tui.Buffer, start int,
+) {
+	bar := newScrollbar(
+		scrollbarGeom{rows: args.area.Height, lines: len(args.lines)},
+		geom.Point{
+			X: args.area.X + args.area.Width - 1,
+			Y: args.area.Y,
+		},
+		args.styles, start,
+	)
+	for row, dl := range args.lines {
+		switch dl.kind {
+		case diffLineAdded:
+			bar.addMark(row, scrollMarkDiffAdded)
+		case diffLineRemoved:
+			bar.addMark(row, scrollMarkDiffRemoved)
+		case diffLineContext:
+			// unchanged rows leave the track bare
+		}
+	}
+	bar.draw(buf)
 }
 
 func tintToward(colors *tintColors) tui.Color {

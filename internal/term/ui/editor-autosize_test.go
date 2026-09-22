@@ -29,8 +29,23 @@ func TestAutoSize(t *testing.T) {
 	m2, next := m.Update(firstMsg(cmd))
 	m = m2.(ui.Model)
 	assert.Greater(t, e.FocusedView().Area().Width, before)
-	assert.Less(t, e.FocusedView().Area().Width, 88)
+	assert.Less(t, e.FocusedView().Area().Width, 89)
 	feedCmds(m, next)
+
+	// the gutter, the ruler column, and the scrollbar's own column
+	assert.Equal(t, 89, e.FocusedView().Area().Width)
+}
+
+func TestAutoSizeWithoutScrollbar(t *testing.T) {
+	e := view.NewEditor(t.TempDir())
+	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
+	e.VSplitNew()
+	e.Options().SetRulers([]int{80})
+	e.Options().Scrollbar = false
+	m.SetAutoSize(true)
+	m.SetAnimation(false)
+
+	m.Update(tea.FocusMsg{})
 
 	assert.Equal(t, 88, e.FocusedView().Area().Width)
 }
@@ -49,7 +64,7 @@ func TestAutoSizeNoAnimation(t *testing.T) {
 
 	// snaps to target within the single update, no tick loop
 	assert.Greater(t, e.FocusedView().Area().Width, before)
-	assert.Equal(t, 88, e.FocusedView().Area().Width)
+	assert.Equal(t, 89, e.FocusedView().Area().Width)
 }
 
 func TestAutoSizePane(t *testing.T) {
@@ -136,7 +151,7 @@ func TestAutoSizeScrolled(t *testing.T) {
 
 	m.Update(tea.FocusMsg{})
 
-	assert.Equal(t, 88, v.Area().Width)
+	assert.Equal(t, 89, v.Area().Width)
 }
 
 func TestAutoSizeResizeHold(t *testing.T) {
@@ -173,13 +188,13 @@ func TestAutoSizeAfterSwap(t *testing.T) {
 
 	m.Update(tea.FocusMsg{})
 	v := e.FocusedView()
-	assert.Equal(t, 88, v.Area().Width)
+	assert.Equal(t, 89, v.Area().Width)
 
 	e.SwapSplitInDirection(view.DirectionLeft)
-	assert.Less(t, v.Area().Width, 88)
+	assert.Less(t, v.Area().Width, 89)
 
 	m.Update(tea.FocusMsg{})
 
 	assert.Equal(t, v.ID(), e.FocusedView().ID())
-	assert.Equal(t, 88, v.Area().Width)
+	assert.Equal(t, 89, v.Area().Width)
 }

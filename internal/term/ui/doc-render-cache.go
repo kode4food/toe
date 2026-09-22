@@ -90,6 +90,11 @@ type (
 		searchPattern string
 		searchSpans   []matchSpan
 
+		markRev     int
+		markPattern string
+		markGeom    scrollbarGeom
+		searchMarks []scrollMark
+
 		prefixRev      int
 		prefixHOff     int
 		prefixTabWidth int
@@ -142,29 +147,29 @@ func newRenderCache() *renderCache {
 	}
 }
 
-func (c *renderCache) evictClosed(e *view.Editor) {
+func (r *renderCache) evictClosed(e *view.Editor) {
 	docs := e.AllDocuments()
-	if len(c.docCaches) > len(docs) {
+	if len(r.docCaches) > len(docs) {
 		live := make(map[view.DocumentId]struct{}, len(docs))
 		for _, d := range docs {
 			live[d.ID()] = struct{}{}
 		}
-		for id := range c.docCaches {
+		for id := range r.docCaches {
 			if _, ok := live[id]; !ok {
-				delete(c.docCaches, id)
+				delete(r.docCaches, id)
 			}
 		}
 	}
 	views := e.AllViews()
-	if len(c.viewRowMaps) > len(views) {
+	if len(r.viewRowMaps) > len(views) {
 		live := make(map[view.Id]struct{}, len(views))
 		for _, v := range views {
 			live[v.ID()] = struct{}{}
 		}
-		for id := range c.viewRowMaps {
+		for id := range r.viewRowMaps {
 			if _, ok := live[id]; !ok {
-				delete(c.viewRowMaps, id)
-				delete(c.viewAnnotations, id)
+				delete(r.viewRowMaps, id)
+				delete(r.viewAnnotations, id)
 			}
 		}
 	}
@@ -243,6 +248,24 @@ func (d *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
 			d.searchSpans = append(d.searchSpans, matchSpan{from, to})
 		}
 	}
+}
+
+// the match walk is proportional to the document, so its marks are folded
+// down to the bar's own size once and reused until an input changes
+func (d *docRenderCache) ensureSearchMarks(
+	rev int, pattern string, bar scrollbarGeom, lineIdx []lineIndexEntry,
+) []scrollMark {
+	if d.markRev == rev && d.markPattern == pattern && d.markGeom == bar {
+		return d.searchMarks
+	}
+	d.markRev = rev
+	d.markPattern = pattern
+	d.markGeom = bar
+	// collected, never drawn, so it needs no styles or placement
+	collect := newScrollbar(bar, geom.Point{}, nil, 0)
+	collect.addSearchMarks(d.searchSpans, lineIdx)
+	d.searchMarks = collect.marks
+	return d.searchMarks
 }
 
 func (d *docRenderCache) ensureLineIndex(

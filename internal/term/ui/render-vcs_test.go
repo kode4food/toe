@@ -45,11 +45,28 @@ func TestDiffGutter(t *testing.T) {
 		text := "one\ntwo\nthree\n"
 		e, s := repoEditorNoWait(t, text, text)
 		defer s.Close()
+		// the scrollbar draws its own marks in the same glyphs
+		e.Options().Scrollbar = false
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 
 		out := stripANSI(m.View().Content)
 		assert.NotContains(t, out, "▍")
 		assert.NotContains(t, out, "▔")
+	})
+
+	t.Run("scrollbar marks changed lines", func(t *testing.T) {
+		head := numberedLines(100)
+		working := strings.Replace(head, "line 90\n", "CHANGED\n", 1)
+		e, s := repoEditor(t, head, working)
+		defer s.Close()
+		e.Options().Scrollbar = true
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+
+		cells := scrollbarCells(t, m.View().Content, 23)
+
+		// line 90 of 101 falls on the upper half of row 20 of 23
+		assert.Equal(t, '▔', cells[20].glyph)
+		assert.Equal(t, ' ', cells[19].glyph)
 	})
 
 	t.Run("statusline shows head name", func(t *testing.T) {

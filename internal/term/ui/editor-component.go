@@ -63,6 +63,7 @@ type (
 		downRange  *core.Range
 		downSep    *sepDrag
 		downDrag   Draggable
+		downScroll *view.View
 		vertical   mouseAutoScrollAxis
 		horizontal mouseAutoScrollAxis
 	}

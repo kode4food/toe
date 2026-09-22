@@ -19,8 +19,12 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	if len(args.diffLines) > 0 {
 		markerW = 1
 	}
+	barW := 0
+	if args.opts.Scrollbar {
+		barW = 1
+	}
 	contentX := args.area.X + markerW
-	contentW := args.area.Width - markerW
+	contentW := args.area.Width - markerW - barW
 
 	softWrap := args.format.SoftWrap && args.format.ViewportWidth > 0
 	anchor := (&selectionViewport{
@@ -34,6 +38,8 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	anchorLine := anchor.line
 	vOff := anchor.offset
 	nLines := args.text.LenLines()
+	args.anchorLine = anchorLine
+	args.lineCount = nLines
 	// clamp scroll to keep the last line pinned to the pane bottom, then
 	// write the applied delta back so stored scroll stays bounded
 	if args.vScroll != 0 {
@@ -118,7 +124,25 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 			}
 		},
 	}
+	var bar *scrollbar
+	if barW > 0 {
+		bar = newScrollbar(
+			scrollbarGeom{rows: args.area.Height, lines: nLines},
+			geom.Point{
+				X: args.area.X + args.area.Width - barW,
+				Y: args.area.Y,
+			},
+			args.styles, anchorLine,
+		)
+		for line, kind := range args.diffLines {
+			bar.addMark(line, diffMarkKind(kind))
+		}
+		bar.addMark(args.hlFrom, scrollMarkCursor)
+	}
 	bufRow := renderContentRows(st)
+	if bar != nil {
+		bar.draw(buf)
+	}
 	applyRulers(applyRulersArgs{
 		buf:     buf,
 		at:      geom.Point{X: contentX, Y: args.area.Y},

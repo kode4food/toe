@@ -97,6 +97,14 @@ func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	if bufferlineVisible(cx) {
 		yOff = 1
 	}
+
+	if v, row, ok := r.scrollbarAt(at); ok {
+		cx.Editor.FocusView(v.ID())
+		r.editor.mouse.downScroll = v
+		r.scrollbarJumpTo(v, row)
+		return
+	}
+
 	sep, onSep :=
 		cx.Editor.Tree().SeparatorAt(at.Sub(geom.Point{Y: yOff}))
 	if onSep {
@@ -154,6 +162,11 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	yOff := 0
 	if bufferlineVisible(cx) {
 		yOff = 1
+	}
+
+	if v := r.editor.mouse.downScroll; v != nil {
+		r.scrollbarJumpTo(v, at.Y-yOff-v.Area().Y)
+		return nil
 	}
 
 	if r.editor.mouse.downSep != nil {
@@ -223,6 +236,41 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	vCmd := vAxis.trigger(vEdge, clampedX, vAxis.schedule)
 	hCmd := hAxis.trigger(hEdge, clampedY, hAxis.schedule)
 	return tea.Batch(vCmd, hCmd)
+}
+
+// scrollbarAt reports the view whose scrollbar column holds at, and its row
+func (r *renderPass) scrollbarAt(at geom.Point) (*view.View, int, bool) {
+	cx := r.context
+	if !cx.Editor.Options().Scrollbar {
+		return nil, 0, false
+	}
+	v := r.contentViewAt(at)
+	if v == nil {
+		return nil, 0, false
+	}
+	a := v.Area()
+	if at.X != a.X+a.Width-1 {
+		return nil, 0, false
+	}
+	yOff := 0
+	if bufferlineVisible(cx) {
+		yOff = 1
+	}
+	return v, at.Y - yOff - a.Y, true
+}
+
+func (r *renderPass) scrollbarJumpTo(v *view.View, row int) {
+	cx := r.context
+	doc := cx.Editor.Document(v.DocID())
+	if doc == nil {
+		return
+	}
+	g := scrollbarGeom{
+		rows:  max(v.ContentHeight(), 1),
+		lines: doc.Text().LenLines(),
+	}
+	action.ScrollViewToLine(cx.Editor, v, g.topLine(row))
+	v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
 }
 
 type resolveClickPosRes struct {

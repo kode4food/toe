@@ -105,6 +105,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `line-number` | string | `"absolute"` | `absolute` or `relative` |
 | `cursorline` | bool | `true` | Highlight cursor line |
 | `cursorcolumn` | bool | `false` | Highlight cursor column |
+| `scrollbar` | bool | `true` | Show a scrollbar with diff, diagnostic, search, and cursor markers |
 | `color-swatches` | bool | `true` | Show swatches beside color literals |
 | `animation` | bool | `true` | Animate UI transitions; when off they snap instantly |
 | `auto-size` | bool | `false` | Widen a focused pane to fit its content: the leftmost ruler for text, a full hex row for binary, 80 columns for terminals |
@@ -112,6 +113,41 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `rulers` | int[] | `[]` | Column ruler positions, e.g. `[80, 120]` |
 | `bufferline` | string | `"never"` | Show buffer tabs: `never`, `always`, `multiple` |
 | `inactive-dim` | int | `10` | Percent to darken unfocused editor panes; `0` disables |
+
+### Scrollbar
+
+Each editor pane and each file preview reserves its rightmost column for a
+scrollbar. The thumb shows which part of the document is on screen, and markers
+show where the interesting lines are, so changes, problems, and matches stay
+visible while they are scrolled out of sight:
+
+| Marker | Meaning |
+|--------|---------|
+| Cursor | A line holding a cursor |
+| Diagnostic | The most severe diagnostic on the line |
+| Diff | An added, modified, or removed line |
+| Search | A line with a match for the current search |
+
+The track and the thumb are drawn as shading rather than a glyph, and each
+marker takes half a row, so two nearby changes stay apart. A half-row standing
+for a single document line draws a hairline rule, and one standing for several
+draws a half block, so the weight of a marker tells how much it covers.
+
+Where markers collide on one half-row, it shows the most important one, in the
+order above: a cursor beats a diagnostic, a diagnostic beats a diff, and a diff
+beats a search match.
+
+Click the bar to scroll to that part of the document, or drag along it to
+scroll continuously. This works on a preview's bar as well as an editor pane's.
+Neither moves the cursor, so the view stays where it was put until the cursor
+moves again.
+
+Set `scrollbar` to `false` to hide it and give the column back to the text.
+
+Diff markers need version control; search markers appear while search
+highlights are on. Colors follow the active theme's `ui.scrollbar`,
+`ui.scrollbar.thumb`, `ui.scrollbar.cursor`, and `ui.scrollbar.search` scopes,
+with diff and diagnostic markers reusing their gutter colors.
 
 ### Soft Wrap
 

@@ -343,6 +343,10 @@ func (ec *EditorComponent) handleMouseLeftRelease() {
 	cx := ec.context
 	ec.mouse.vertical.stop()
 	ec.mouse.horizontal.stop()
+	if ec.mouse.downScroll != nil {
+		ec.mouse.downScroll = nil
+		return
+	}
 	if ec.mouse.downSep != nil {
 		ec.mouse.downSep = nil
 		return

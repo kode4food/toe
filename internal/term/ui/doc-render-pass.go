@@ -138,6 +138,9 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	contentH := v.ContentHeight()
 	editorX := a.X
 	editorW := a.Width
+	if opts.Scrollbar {
+		editorW = max(editorW-1, 0)
+	}
 
 	// Build the soft-wrap layout so vertical visibility is measured in visual
 	// rows. A nil layout keeps the text-line fallback when soft-wrap is off
@@ -176,7 +179,8 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			Point: geom.Point{X: editorX, Y: args.yOffset + a.Y},
 			Size:  geom.Size{Width: editorW, Height: contentH},
 		},
-		focused: args.focused,
+		focused:   args.focused,
+		scrollbar: opts.Scrollbar,
 	})
 	r.renderStatus(renderStatusArgs{
 		doc:     doc,
@@ -501,9 +505,9 @@ func (r *renderPass) currentInfoPopupKey() infoPopupKey {
 	}
 }
 
-func (k infoPopupKey) equals(o infoPopupKey) bool {
-	return k.head == o.head && k.title == o.title &&
-		slices.Equal(k.items, o.items)
+func (i infoPopupKey) equals(o infoPopupKey) bool {
+	return i.head == o.head && i.title == o.title &&
+		slices.Equal(i.items, o.items)
 }
 
 func (ec *EditorComponent) overlayHead() string {

@@ -11,11 +11,12 @@ import (
 )
 
 type contentRenderTarget struct {
-	doc     *view.Document
-	view    *view.View
-	buf     *tui.Buffer
-	area    geom.Area
-	focused bool
+	doc       *view.Document
+	view      *view.View
+	buf       *tui.Buffer
+	area      geom.Area
+	focused   bool
+	scrollbar bool
 }
 
 func (r *renderPass) prepareContentRender(
@@ -249,8 +250,34 @@ func (r *renderPass) prepareContentRender(
 		colWidth:      format.ViewportWidth,
 	}
 
+	var bar *scrollbar
+	if target.scrollbar {
+		barGeom := scrollbarGeom{rows: target.area.Height, lines: nLines}
+		bar = newScrollbar(
+			barGeom,
+			geom.Point{
+				X: target.area.X + target.area.Width,
+				Y: target.area.Y,
+			},
+			styles, anchorLine,
+		)
+		copy(bar.marks, dc.ensureSearchMarks(
+			rev, pat, barGeom, lineIdx,
+		))
+		for line, kind := range gutter.diffLines {
+			bar.addMark(line, diffMarkKind(kind))
+		}
+		for line, sev := range gutter.diagLines {
+			bar.addMark(line, severityMarkKind(sev))
+		}
+		for line := range cursorLines {
+			bar.addMark(line, scrollMarkCursor)
+		}
+	}
+
 	return &contentRenderState{
 		buf:       target.buf,
+		scrollbar: bar,
 		area:      target.area,
 		trackRows: true,
 

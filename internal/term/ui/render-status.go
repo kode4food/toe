@@ -46,6 +46,11 @@ type (
 		diffAdded    tui.Style
 		diffModified tui.Style
 		diffRemoved  tui.Style
+
+		scrollTrack  tui.Style
+		scrollThumb  tui.Style
+		scrollCursor tui.Color
+		scrollSearch tui.Color
 	}
 
 	statusElemCtx struct {

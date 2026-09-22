@@ -70,6 +70,11 @@
 "ui.linenr" = { fg = "surface1" }
 "ui.linenr.selected" = { fg = "lavender" }
 
+"ui.scrollbar" = { bg = "surface1" }
+"ui.scrollbar.thumb" = { bg = "overlay0" }
+"ui.scrollbar.cursor" = { fg = "lavender" }
+"ui.scrollbar.search" = { fg = "peach" }
+
 "ui.prompt" = { fg = "blue", modifiers = ["bold"] }
 
 "ui.log.error" = "red"

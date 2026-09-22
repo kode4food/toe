@@ -139,6 +139,26 @@ func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	v.SetOffset(offset)
 }
 
+// ScrollViewToLine scrolls a specific view so line is its first visible line,
+// not moving the cursor. Used for scrollbar clicks and drags
+func ScrollViewToLine(e *view.Editor, v *view.View, line int) {
+	doc := e.Document(v.DocID())
+	if doc == nil {
+		return
+	}
+	text := doc.Text()
+	anchor, err := text.LineToChar(
+		min(max(line, 0), max(text.LenLines()-1, 0)),
+	)
+	if err != nil {
+		return
+	}
+	offset := v.Offset()
+	offset.Anchor = anchor
+	offset.VerticalOffset = 0
+	v.SetOffset(offset)
+}
+
 // ScrollViewColumns scrolls a view horizontally by n columns without moving
 // the cursor. Scrolling right is clamped to keep one column of content visible
 func ScrollViewColumns(e *view.Editor, v *view.View, n int, left bool) {

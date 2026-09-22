@@ -65,6 +65,12 @@ func buildStylesWithBackground(
 		diffAdded:         th.Get("diff.plus.gutter"),
 		diffModified:      th.Get("diff.delta.gutter"),
 		diffRemoved:       th.Get("diff.minus.gutter"),
+		scrollTrack:       tui.Style{}.Bg(th.Get("ui.scrollbar").BgColor()),
+		scrollThumb: tui.Style{}.Bg(
+			th.Get("ui.scrollbar.thumb").BgColor(),
+		),
+		scrollCursor: th.Get("ui.scrollbar.cursor").FgColor(),
+		scrollSearch: th.Get("ui.scrollbar.search").FgColor(),
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint"); ok {
 		st.inlayHint = next

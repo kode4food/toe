@@ -164,6 +164,7 @@ func TestViewOptions(t *testing.T) {
 		{"line-number", "absolute"},
 		{"cursorline", "true"},
 		{"cursorcolumn", "true"},
+		{"scrollbar", "true"},
 		{"auto-size", "true"},
 		{"text-width", "72"},
 		{"soft-wrap.enable", "true"},

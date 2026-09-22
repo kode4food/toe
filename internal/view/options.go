@@ -49,6 +49,7 @@ type Options struct {
 
 	CursorLine    bool
 	CursorColumn  bool
+	Scrollbar     bool
 	ColorSwatches bool
 	CursorShape   CursorShape
 
@@ -138,6 +139,7 @@ func defaultOptions() Options {
 		Mouse:                true,
 		NerdFonts:            true,
 		ColorSwatches:        true,
+		Scrollbar:            true,
 		Shell:                DefaultShell(),
 		AtomicSave:           true,
 		InsertFinalNewline:   true,

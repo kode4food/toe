@@ -44,6 +44,8 @@ type (
 		vScroll       int
 		hScroll       int
 		scrollFor     int
+		anchorLine    int
+		lineCount     int
 		cache         previewCache
 		diffBaseCache map[diffBaseKey]*previewDocEntry
 	}

@@ -19,6 +19,9 @@ When a file is tracked by git, toe shows line changes in the gutter:
 
 Colors follow the active theme; the swatches above use the default `mocha`.
 
+The same changes are marked on the scrollbar, including the ones scrolled off
+screen, unless the `scrollbar` option is turned off.
+
 ## Change Navigation
 
 | Key | Command | Action |

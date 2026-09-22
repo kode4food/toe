@@ -111,6 +111,7 @@ func TestDefaults(t *testing.T) {
 			"line-number",
 			"cursorline",
 			"cursorcolumn",
+			"scrollbar",
 			"text-width",
 			"rulers",
 			"bufferline",

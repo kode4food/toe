@@ -1337,7 +1337,7 @@ func TestSoftWrapRender(t *testing.T) {
 		e := editorWithText(t, "alpha bravo charlie delta echo\n")
 		e.Options().SoftWrap.Enable = new(true)
 		e.Options().SoftWrap.WrapIndicator = new(">> ")
-		m := resize(ui.New(e, command.NewKeymaps()), 18, 8)
+		m := resize(ui.New(e, command.NewKeymaps()), 19, 8)
 
 		out := stripANSI(m.View().Content)
 
@@ -1579,9 +1579,9 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		afterLines := strings.Split(after, "\n")
 		assert.Equal(t, len(beforeLines), len(afterLines))
 		for i, line := range beforeLines {
+			// pane B must not change when only pane A's highlight did
 			if strings.Contains(line, "second file") {
-				assert.Equal(t, line, afterLines[i],
-					"pane B's line changed when only pane A's highlight did")
+				assert.Equal(t, line, afterLines[i])
 			}
 		}
 		assert.Contains(t, after, "hello world")

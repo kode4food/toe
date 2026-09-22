@@ -53,6 +53,9 @@ type (
 		hlTo      int
 		diffLines map[int]diffGutterKind
 
+		anchorLine int
+		lineCount  int
+
 		theme  *theme.Theme
 		styles *styles
 	}
@@ -146,6 +149,8 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 	renderDiffPreviewInto(buf, r)
 	p.picker.preview.vScroll = r.vScroll
 	p.picker.preview.hScroll = r.hScroll
+	p.picker.preview.anchorLine = r.anchorLine
+	p.picker.preview.lineCount = r.lineCount
 }
 
 // a staged row shows what a commit would record, so its working side is the
@@ -214,6 +219,8 @@ func (p *previewDocEntry) renderText(
 	renderPreviewDocInto(buf, r)
 	ctx.picker.preview.vScroll = r.vScroll
 	ctx.picker.preview.hScroll = r.hScroll
+	ctx.picker.preview.anchorLine = r.anchorLine
+	ctx.picker.preview.lineCount = r.lineCount
 }
 
 func (p *previewDirEntry) renderInto(
@@ -256,12 +263,12 @@ func (p *previewDirEntry) renderInto(
 	}
 }
 
-func (p noPreviewEntry) renderInto(
+func (n noPreviewEntry) renderInto(
 	ctx *previewCtx, buf *tui.Buffer, at geom.Point,
 ) {
 	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	renderCenteredMessage(
-		buf, geom.Area{Point: at, Size: ctx.size}, string(p), style,
+		buf, geom.Area{Point: at, Size: ctx.size}, string(n), style,
 	)
 }
 

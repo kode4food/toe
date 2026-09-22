@@ -25,6 +25,7 @@ type PickerComponent struct {
 	dragEdge      overlayDrag
 	dragWrap      int
 	dragSplit     bool
+	dragPreview   bool
 }
 
 const pickerMinPreviewArea = 72
@@ -255,6 +256,11 @@ func (p *PickerComponent) handleMouseClick(
 	if primary && p.beginEdgeDrag(cx, clickPt) {
 		return consumed(), nil
 	}
+	if primary && p.onPreviewScrollbar(clickPt) {
+		p.dragPreview = true
+		p.scrollPreviewToRow(clickPt.Y)
+		return consumed(), nil
+	}
 	list := listScroll{
 		scroll: p.state.list.scroll,
 		count:  len(p.state.list.matched),
@@ -277,6 +283,9 @@ func (p *PickerComponent) handleMouseMotion(
 	case p.dragSplit:
 		p.markDirty()
 		p.updateSplitRatio(cx, msg.X)
+	case p.dragPreview:
+		p.markDirty()
+		p.scrollPreviewToRow(msg.Y)
 	}
 	return consumed(), nil
 }
@@ -288,6 +297,7 @@ func (p *PickerComponent) handleMouseRelease(
 		return consumed(), nil
 	}
 	p.dragSplit = false
+	p.dragPreview = false
 	if p.dragEdge.active() {
 		p.dragEdge = overlayDrag{}
 		// the frozen wrap width is stale now, so reflow at the final size
@@ -357,6 +367,26 @@ func (p *PickerComponent) handleMouseWheel(
 		p.scrollPreviewByWheel(msg.Button, step)
 	}
 	return consumed(), nil
+}
+
+// the preview draws its scrollbar in the last column inside the overlay pad
+func (p *PickerComponent) onPreviewScrollbar(at geom.Point) bool {
+	a := p.previewBounds
+	inner := a.Width - 2*overlayPadX
+	return p.state.editor.Options().Scrollbar && inner >= 1 &&
+		at.X == a.X+overlayPadX+inner-1 &&
+		at.Y >= a.Y && at.Y < a.Y+a.Height
+}
+
+// vScroll is relative to the anchor the renderer picks, so the absolute top
+// line the bar row stands for is turned back into an offset from it
+func (p *PickerComponent) scrollPreviewToRow(y int) {
+	preview := &p.state.preview
+	g := scrollbarGeom{
+		rows:  p.previewBounds.Height,
+		lines: preview.lineCount,
+	}
+	preview.vScroll = g.topLine(y-p.previewBounds.Y) - preview.anchorLine
 }
 
 func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {

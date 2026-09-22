@@ -23,6 +23,7 @@ type viewSection struct {
 		InactiveDim   *int              `toml:"inactive-dim"`
 		CursorLine    *bool             `toml:"cursorline"`
 		CursorColumn  *bool             `toml:"cursorcolumn"`
+		Scrollbar     *bool             `toml:"scrollbar"`
 		ColorSwatches *bool             `toml:"color-swatches"`
 		Animation     *bool             `toml:"animation"`
 		AutoSize      *bool             `toml:"auto-size"`
@@ -500,6 +501,14 @@ func ViewModule(model ui.Model) command.Module {
 					e.Options().CursorColumn = v
 				},
 			).WithDoc("Highlight the cursor's column"),
+			kit.EditorBoolOption("scrollbar",
+				func(e *view.Editor) bool {
+					return e.Options().Scrollbar
+				},
+				func(e *view.Editor, v bool) {
+					e.Options().Scrollbar = v
+				},
+			).WithDoc("Show a scrollbar with change markers"),
 			kit.EditorBoolOption("color-swatches",
 				func(e *view.Editor) bool {
 					return e.Options().ColorSwatches
@@ -817,6 +826,7 @@ func ViewModule(model ui.Model) command.Module {
 				)
 				opts.CursorLine = kit.BoolOr(cfg.Editor.CursorLine, true)
 				opts.CursorColumn = kit.BoolOr(cfg.Editor.CursorColumn, false)
+				opts.Scrollbar = kit.BoolOr(cfg.Editor.Scrollbar, true)
 				opts.ColorSwatches = kit.BoolOr(cfg.Editor.ColorSwatches, true)
 				model.SetAnimation(kit.BoolOr(cfg.Editor.Animation, true))
 				model.SetAutoSize(kit.BoolOr(cfg.Editor.AutoSize, false))

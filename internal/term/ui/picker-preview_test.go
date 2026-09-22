@@ -7,14 +7,17 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -23,7 +26,141 @@ type pathPickerSource struct{ path string }
 const (
 	testPickerPreviewWidth   = 100
 	narrowPickerPreviewWidth = 60
+
+	// the preview's right border, then the popup's padding column
+	previewBorderPad = 2
 )
+
+func TestPickerPreviewScrollbar(t *testing.T) {
+	t.Run("hidden unless enabled", func(t *testing.T) {
+		cell := previewBarCell(t, previewModel(t, false).View().Content)
+
+		assert.NotEqual(t, scrollbarThumbBg, cell.style.bg)
+		assert.NotEqual(t, scrollbarTrackBg, cell.style.bg)
+	})
+
+	t.Run("draws a thumb", func(t *testing.T) {
+		cell := previewBarCell(t, previewModel(t, true).View().Content)
+
+		assert.Equal(t, scrollbarThumbBg, cell.style.bg)
+	})
+
+	t.Run("clicking the bar scrolls the preview", func(t *testing.T) {
+		m := previewModel(t, true)
+		assert.Contains(t, stripANSI(m.View().Content), "line 0")
+
+		at := previewBarPoint(t, m.View().Content)
+		m = mouse(m, tea.MouseClickMsg{
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+		})
+
+		out := stripANSI(m.View().Content)
+		assert.NotContains(t, out, "line 0 ")
+		assert.Contains(t, out, "line 199")
+	})
+
+	t.Run("dragging the bar scrolls back", func(t *testing.T) {
+		m := previewModel(t, true)
+
+		at := previewBarPoint(t, m.View().Content)
+		m = mouse(m, tea.MouseClickMsg{
+			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+		})
+		// above the bar's first row, which the drag clamps to the top
+		m = mouse(m, tea.MouseMotionMsg{
+			X: at.X, Y: 0, Button: tea.MouseLeft,
+		})
+
+		assert.Contains(t, stripANSI(m.View().Content), "line 0 ")
+	})
+
+	t.Run("marks the diff preview", func(t *testing.T) {
+		content := diffPreviewModel(t).View().Content
+
+		assert.Contains(t, stripANSI(content), "+ line 0")
+		// every line is added, so the bar is solid with the added color
+		assert.Equal(t, '█', previewBarCell(t, content).glyph)
+	})
+}
+
+func previewModel(t *testing.T, scrollbar bool) ui.Model {
+	t.Helper()
+	e, path := previewEditor(t)
+	e.Options().Scrollbar = scrollbar
+	return previewPicker(e, &pathPickerSource{path: path})
+}
+
+func diffPreviewModel(t *testing.T) ui.Model {
+	t.Helper()
+	e, path := previewEditor(t)
+	s := vcs.Attach(e)
+	t.Cleanup(s.Close)
+	return previewPicker(e, &diffPickerSource{path: path})
+}
+
+func previewEditor(t *testing.T) (*view.Editor, string) {
+	t.Helper()
+	t.Setenv("COLORTERM", "truecolor")
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "long.txt")
+	assert.NoError(t,
+		os.WriteFile(path, []byte(numberedLines(200)), 0o644),
+	)
+	e := view.NewEditor(tmp)
+	e.Options().Theme = "mocha"
+	return e, path
+}
+
+func previewPicker(e *view.Editor, source ui.PickerSource) ui.Model {
+	m := ui.New(e, command.NewKeymaps()).
+		WithInitialPicker(func(e *view.Editor) *ui.Picker {
+			return ui.NewPicker(e, source)
+		})
+	return updateAndFeed(m, tea.WindowSizeMsg{
+		Width:  testPickerPreviewWidth,
+		Height: 18,
+	})
+}
+
+// previewBarPoint returns the bottom of the preview's scrollbar column
+func previewBarPoint(t *testing.T, content string) geom.Point {
+	t.Helper()
+	at := previewBarAt(t, content)
+	rows := strings.Split(content, "\n")
+	for y := at.Y; y < len(rows); y++ {
+		if strings.Contains(stripANSI(rows[y]), "╯") {
+			return geom.Point{X: at.X, Y: y - 1}
+		}
+	}
+	t.Fatal("no preview bottom border found")
+	return geom.Point{}
+}
+
+// previewBarCell returns the scrollbar cell of the preview's first row
+func previewBarCell(t *testing.T, content string) scrollbarCell {
+	t.Helper()
+	at := previewBarAt(t, content)
+	cells := rowCells(strings.Split(content, "\n")[at.Y])
+	assert.Greater(t, len(cells), at.X)
+	return cells[at.X]
+}
+
+func previewBarAt(t *testing.T, content string) geom.Point {
+	t.Helper()
+	rows := strings.Split(content, "\n")
+	for i, raw := range rows {
+		col := strings.Index(stripANSI(raw), "╮")
+		if col < 0 {
+			continue
+		}
+		border := utf8.RuneCountInString(stripANSI(raw)[:col])
+		assert.GreaterOrEqual(t, border, previewBorderPad)
+		assert.Less(t, i+1, len(rows))
+		return geom.Point{X: border - previewBorderPad, Y: i + 1}
+	}
+	t.Fatal("no preview border found")
+	return geom.Point{}
+}
 
 func TestPickerPreview(t *testing.T) {
 	t.Run("open buffer keeps tab width", func(t *testing.T) {
@@ -401,9 +538,8 @@ wrap-indicator = "↪ "
 				break
 			}
 		}
-		assert.True(t, found,
-			"expected a line with 'package' to carry both the syntax fg "+
-				"(203;166;247) and the highlight bg (69;71;90)")
+		// a 'package' line carries both the syntax fg and the highlight bg
+		assert.True(t, found)
 	})
 
 	t.Run("re-renders to new width after resize", func(t *testing.T) {

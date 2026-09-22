@@ -15,9 +15,9 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type benchmarkDiffSource struct{ pathPickerSource }
+type diffPickerSource struct{ pathPickerSource }
 
-const benchmarkWorkingVariant = 1
+const diffWorkingVariant = 1
 
 // BenchmarkBufferPickerRender renders a multi-column picker over many open
 // buffers, the per-frame cost paid on every cursor move
@@ -63,7 +63,7 @@ func BenchmarkDiffPreview(b *testing.B) {
 	e := view.NewEditor(root)
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
-	src := &benchmarkDiffSource{path: path}
+	src := &diffPickerSource{path: path}
 	m := ui.New(e, command.NewKeymaps()).
 		WithInitialPicker(func(e *view.Editor) *ui.Picker {
 			return ui.NewPicker(e, src)
@@ -85,10 +85,10 @@ func BenchmarkDiffPreview(b *testing.B) {
 	}
 }
 
-func (b *benchmarkDiffSource) Load() ui.PickerLoad {
+func (b *diffPickerSource) Load() ui.PickerLoad {
 	load := b.pathPickerSource.Load()
 	load.Items[0].DiffPreview = true
 	load.Items[0].DiffKind = view.FileChangeAdded
-	load.Items[0].Location.Target.Variant = benchmarkWorkingVariant
+	load.Items[0].Location.Target.Variant = diffWorkingVariant
 	return load
 }

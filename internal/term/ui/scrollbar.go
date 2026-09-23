@@ -90,7 +90,7 @@ func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
 	if line < 0 || line >= g.scrollLines() || g.rows <= 0 {
 		return
 	}
-	slot := min(line*len(s.marks)/g.scrollLines(), len(s.marks)-1)
+	slot := g.slotAt(line)
 	mark := &s.marks[slot]
 	if kind > mark.kind {
 		mark.kind = kind
@@ -156,30 +156,41 @@ func (s scrollbarGeom) thumbTop(topLine int) int {
 	if s.maxTop <= 0 {
 		return 0
 	}
-	return min(topLine*s.rows/s.scrollLines(), s.rows-s.thumbLen())
+	return s.thumbEnd(topLine) - s.thumbLen()
 }
 
 func (s scrollbarGeom) thumbEnd(topLine int) int {
 	if s.maxTop <= 0 {
 		return s.rows
 	}
-	return min(s.thumbTop(topLine)+s.thumbLen(), s.rows)
+	end := s.slotAt(topLine+s.rows-1)/scrollbarMarkSlots + 1
+	return min(max(end, s.thumbLen()), s.rows)
 }
 
 func (s scrollbarGeom) topLineAt(row int) int {
 	if s.maxTop <= 0 {
 		return 0
 	}
-	target := max(row-s.thumbLen()/2, 0)
-	top := (target*s.scrollLines() + s.rows - 1) / s.rows
-	return min(top, s.maxTop)
+	wanted := row - s.thumbLen()/2
+	if wanted <= 0 {
+		return 0
+	}
+	end := min(wanted+s.thumbLen(), s.rows)
+	last := ((end-1)*s.scrollLines() + s.rows - 1) / s.rows
+	return min(max(last-s.rows+1, 0), s.maxTop)
 }
 
 func (s scrollbarGeom) thumbLen() int {
 	if s.maxTop <= 0 {
 		return s.rows
 	}
-	return max(s.rows*s.rows/s.scrollLines(), 1)
+	lines := s.scrollLines()
+	return min((s.rows*(s.rows-1)+lines-1)/lines+1, s.rows)
+}
+
+func (s scrollbarGeom) slotAt(line int) int {
+	slots := s.rows * scrollbarMarkSlots
+	return min(line*slots/s.scrollLines(), slots-1)
 }
 
 func (s scrollbarGeom) scrollLines() int {

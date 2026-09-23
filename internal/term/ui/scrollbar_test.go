@@ -198,13 +198,42 @@ func TestScrollbar(t *testing.T) {
 		cells := scrollbarCells(t, scrollbarEditor(t, 200, true), scrollbarRows)
 
 		assert.Len(t, cells, scrollbarRows)
-		assert.Equal(t, []int{0}, thumbRows(cells))
+		assert.Equal(t, []int{0, 1}, thumbRows(cells))
+	})
+
+	t.Run("thumb fits a short document", func(t *testing.T) {
+		cells := scrollbarCells(t, scrollbarEditor(t, 12, true), scrollbarRows)
+
+		assert.Len(t, thumbRows(cells), 6)
 	})
 
 	t.Run("thumb fills when nothing scrolls", func(t *testing.T) {
 		cells := scrollbarCells(t, scrollbarEditor(t, 0, true), scrollbarRows)
 
 		assert.Len(t, thumbRows(cells), scrollbarRows)
+	})
+
+	t.Run("thumb holds the last visible line", func(t *testing.T) {
+		for _, lines := range []int{60, 200} {
+			t.Run(fmt.Sprintf("%d lines", lines), func(t *testing.T) {
+				e := editorWithText(t, numberedLines(lines))
+				e.Options().Scrollbar = true
+				doc := e.FocusedDocument()
+				assert.NotNil(t, doc)
+				at, err := doc.Text().LineToChar(scrollbarRows - 1)
+				assert.NoError(t, err)
+				assert.NoError(t, e.Apply(core.NewTransaction(doc.Text()).
+					WithSelection(core.PointSelection(at)),
+				))
+				m := resize(ui.New(e, command.NewKeymaps()),
+					scrollbarWidth, scrollbarHeight,
+				)
+
+				cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+
+				assert.Subset(t, thumbRows(cells), markRows(cells))
+			})
+		}
 	})
 
 	t.Run("thumb follows the scroll position", func(t *testing.T) {
@@ -225,7 +254,9 @@ func TestScrollbar(t *testing.T) {
 
 		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
 
-		assert.Equal(t, []int{scrollbarRows - 1}, thumbRows(cells))
+		assert.Equal(t,
+			[]int{scrollbarRows - 2, scrollbarRows - 1}, thumbRows(cells),
+		)
 	})
 
 	t.Run("marks a single diagnostic with a rule", func(t *testing.T) {

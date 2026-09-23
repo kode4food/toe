@@ -35,19 +35,24 @@ type (
 		line int
 	}
 
-	tintColors struct {
-		base   tui.Color
-		accent tui.Color
-		amount float64
-	}
-
 	diffLineKind uint8
 
-	// the base of a staged row is the head and of an unstaged row the index, so
-	// one path caches both
 	diffBaseKey struct {
 		path   string
 		staged bool
+	}
+
+	tintColors struct {
+		base      tui.Color
+		accent    tui.Color
+		amount    float64
+		trueColor bool
+	}
+
+	rgbColor struct {
+		red   uint8
+		green uint8
+		blue  uint8
 	}
 )
 
@@ -55,16 +60,12 @@ const (
 	diffLineContext diffLineKind = iota
 	diffLineAdded
 	diffLineRemoved
-)
 
-const (
 	diffGutterW     = 2
 	diffPreviewLead = 3
 	tintAmount      = 0.2
 )
 
-// the base of a staged row is the head, of an unstaged row the index, so both
-// rows of a file edited in both places diff against the right side
 func (p *Picker) diffBaseFor(
 	vc view.VersionControl, path string, staged bool,
 ) *previewDocEntry {
@@ -141,15 +142,17 @@ func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
 func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	fillTUI := tui.Style{}.Bg(args.theme.Get("ui.popup").BgColor())
 	popupBg := fillTUI.BgColor()
-	addedBg := tintToward(&tintColors{
-		base:   popupBg,
-		accent: args.theme.Get("diff.plus").FgColor(),
-		amount: tintAmount,
+	addedBg := tintToward(tintColors{
+		base:      popupBg,
+		accent:    args.theme.Get("diff.plus").FgColor(),
+		amount:    tintAmount,
+		trueColor: args.styles.trueColor,
 	})
-	removedBg := tintToward(&tintColors{
-		base:   popupBg,
-		accent: args.theme.Get("diff.minus").FgColor(),
-		amount: tintAmount,
+	removedBg := tintToward(tintColors{
+		base:      popupBg,
+		accent:    args.theme.Get("diff.minus").FgColor(),
+		amount:    tintAmount,
+		trueColor: args.styles.trueColor,
 	})
 
 	barW := 0
@@ -227,8 +230,6 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			buf.PatchBgRange(at, contentW, removedBg)
 			sign = "-"
 			signStyle = args.styles.diffRemoved.Bg(popupBg)
-		case diffLineContext:
-			// no-op
 		}
 		buf.SetString(signAt, sign, signStyle)
 	}
@@ -264,39 +265,32 @@ func drawDiffPreviewScrollbar(
 			bar.addMark(row, scrollMarkDiffAdded)
 		case diffLineRemoved:
 			bar.addMark(row, scrollMarkDiffRemoved)
-		case diffLineContext:
-			// unchanged rows leave the track bare
 		}
 	}
 	bar.draw(buf)
 }
 
-func tintToward(colors *tintColors) tui.Color {
-	base := rgb8(colors.base)
-	accent := rgb8(colors.accent)
-	mix := func(from, to uint8) uint8 {
-		return uint8(float64(from) + (float64(to)-float64(from))*colors.amount)
-	}
+func tintToward(args tintColors) tui.Color {
+	base := rgb8(args.base)
+	accent := rgb8(args.accent)
+	amount := args.amount
 	mixed := tui.ColorRGB(
-		mix(base.red, accent.red),
-		mix(base.green, accent.green),
-		mix(base.blue, accent.blue),
+		uint8(float64(base.red)+
+			(float64(accent.red)-float64(base.red))*amount),
+		uint8(float64(base.green)+
+			(float64(accent.green)-float64(base.green))*amount),
+		uint8(float64(base.blue)+
+			(float64(accent.blue)-float64(base.blue))*amount),
 	)
-	if !TrueColorSupported() {
+	if !args.trueColor {
 		return mixed.Quantized()
 	}
 	return mixed
 }
 
-type rgb8Res struct {
-	red   uint8
-	green uint8
-	blue  uint8
-}
-
-func rgb8(c tui.Color) rgb8Res {
+func rgb8(c tui.Color) rgbColor {
 	r, g, b, _ := c.RGBA()
-	return rgb8Res{
+	return rgbColor{
 		red:   uint8(r >> 8),
 		green: uint8(g >> 8),
 		blue:  uint8(b >> 8),

@@ -19,8 +19,8 @@ func TestGit(t *testing.T) {
 
 	t.Run("diff base returns committed content", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\n")
-		testutil.WriteFile(t, path, "one\nchanged\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\n"))
+		testutil.WriteFile(t, path, []byte("one\nchanged\n"))
 
 		base, err := vcs.Git{}.DiffBase(path)
 		assert.NoError(t, err)
@@ -29,8 +29,8 @@ func TestGit(t *testing.T) {
 
 	t.Run("diff base reads a worktree-config repo", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\n")
-		testutil.WriteFile(t, path, "one\nchanged\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\ntwo\n"))
+		testutil.WriteFile(t, path, []byte("one\nchanged\n"))
 		testutil.RunGit(t,
 			repo, "config", "extensions.worktreeConfig", "true",
 		)
@@ -47,7 +47,7 @@ func TestGit(t *testing.T) {
 	t.Run("diff base fails outside a repo", func(t *testing.T) {
 		dir := t.TempDir()
 		path := filepath.Join(dir, "a.txt")
-		testutil.WriteFile(t, path, "text\n")
+		testutil.WriteFile(t, path, []byte("text\n"))
 
 		_, err := vcs.Git{}.DiffBase(path)
 		assert.Error(t, err)
@@ -55,9 +55,9 @@ func TestGit(t *testing.T) {
 
 	t.Run("diff base fails for untracked file", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
 		path := filepath.Join(repo, "new.txt")
-		testutil.WriteFile(t, path, "new\n")
+		testutil.WriteFile(t, path, []byte("new\n"))
 
 		_, err := vcs.Git{}.DiffBase(path)
 		assert.Error(t, err)
@@ -65,7 +65,7 @@ func TestGit(t *testing.T) {
 
 	t.Run("head name reports branch", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
 
 		name, err := vcs.Git{}.HeadName(path)
 		assert.NoError(t, err)
@@ -74,7 +74,7 @@ func TestGit(t *testing.T) {
 
 	t.Run("short hash when detached", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
 		testutil.RunGit(t, repo, "checkout", "--detach")
 
 		name, err := vcs.Git{}.HeadName(path)
@@ -85,16 +85,21 @@ func TestGit(t *testing.T) {
 
 	t.Run("changed files reports status", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		modified := testutil.GitCommitFile(t, repo, "modified.txt", "one\n")
-		deleted := testutil.GitCommitFile(t, repo, "deleted.txt", "gone\n")
+		modified := testutil.GitCommitFile(t,
+			repo, "modified.txt", []byte("one\n"),
+		)
+		deleted := testutil.GitCommitFile(t,
+			repo, "deleted.txt", []byte("gone\n"),
+		)
 		renamed := testutil.GitCommitFile(t,
-			repo, "renamed.txt", "stable content\n")
+			repo, "renamed.txt", []byte("stable content\n"),
+		)
 
-		testutil.WriteFile(t, modified, "one\nmore\n")
+		testutil.WriteFile(t, modified, []byte("one\nmore\n"))
 		assert.NoError(t, os.Remove(deleted))
 		testutil.RunGit(t, repo, "mv", "renamed.txt", "moved.txt")
 		untracked := filepath.Join(repo, "untracked.txt")
-		testutil.WriteFile(t, untracked, "new\n")
+		testutil.WriteFile(t, untracked, []byte("new\n"))
 
 		changes, err := vcs.Git{}.ChangedFiles(repo)
 		assert.NoError(t, err)
@@ -110,8 +115,8 @@ func TestGit(t *testing.T) {
 
 		for _, c := range changes {
 			if c.Kind == view.FileChangeRenamed {
-				assert.Equal(t, filepath.Base(renamed),
-					filepath.Base(c.FromPath),
+				assert.Equal(t,
+					filepath.Base(renamed), filepath.Base(c.FromPath),
 				)
 			}
 		}
@@ -127,12 +132,12 @@ func TestGit(t *testing.T) {
 
 	t.Run("changed files reports conflicts", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "base\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("base\n"))
 		testutil.RunGit(t, repo, "checkout", "-b", "other")
-		testutil.WriteFile(t, path, "theirs\n")
+		testutil.WriteFile(t, path, []byte("theirs\n"))
 		testutil.RunGit(t, repo, "commit", "-am", "theirs")
 		testutil.RunGit(t, repo, "checkout", "main")
-		testutil.WriteFile(t, path, "ours\n")
+		testutil.WriteFile(t, path, []byte("ours\n"))
 		testutil.RunGit(t, repo, "commit", "-am", "ours")
 		out, _ := exec.Command(
 			"git", "-C", repo, "merge", "other",
@@ -147,8 +152,8 @@ func TestGit(t *testing.T) {
 
 	t.Run("unstage keeps the working file", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("two\n"))
 		assert.NoError(t, vcs.Git{}.Stage(repo, path))
 
 		assert.NoError(t, vcs.Git{}.Unstage(repo, path))
@@ -165,7 +170,7 @@ func TestGit(t *testing.T) {
 	t.Run("unstage before the first commit", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := filepath.Join(repo, "a.txt")
-		testutil.WriteFile(t, path, "one\n")
+		testutil.WriteFile(t, path, []byte("one\n"))
 		assert.NoError(t, vcs.Git{}.Stage(repo, path))
 
 		// no HEAD to restore from, so the index entry is dropped instead
@@ -182,8 +187,8 @@ func TestGit(t *testing.T) {
 
 	t.Run("discard restores a tracked file", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("two\n"))
 
 		assert.NoError(t, vcs.Git{}.Discard(repo, path))
 
@@ -194,9 +199,9 @@ func TestGit(t *testing.T) {
 
 	t.Run("discard deletes an untracked file", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "kept.txt", "one\n")
+		testutil.GitCommitFile(t, repo, "kept.txt", []byte("one\n"))
 		path := filepath.Join(repo, "new.txt")
-		testutil.WriteFile(t, path, "new\n")
+		testutil.WriteFile(t, path, []byte("new\n"))
 
 		assert.NoError(t, vcs.Git{}.Discard(repo, path))
 
@@ -206,10 +211,10 @@ func TestGit(t *testing.T) {
 
 	t.Run("discard keeps staged content", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("two\n"))
 		assert.NoError(t, vcs.Git{}.Stage(repo, path))
-		testutil.WriteFile(t, path, "three\n")
+		testutil.WriteFile(t, path, []byte("three\n"))
 
 		assert.NoError(t, vcs.Git{}.Discard(repo, path))
 
@@ -221,10 +226,10 @@ func TestGit(t *testing.T) {
 
 	t.Run("ignore anchors the path it names", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "kept.txt", "one\n")
+		testutil.GitCommitFile(t, repo, "kept.txt", []byte("one\n"))
 		path := filepath.Join(repo, "sub", "new.txt")
 		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
-		testutil.WriteFile(t, path, "new\n")
+		testutil.WriteFile(t, path, []byte("new\n"))
 
 		assert.NoError(t, vcs.Git{}.Ignore(repo, path))
 
@@ -240,9 +245,9 @@ func TestGit(t *testing.T) {
 
 	t.Run("ignore appends without repeating", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, ".gitignore", "*.log")
+		testutil.GitCommitFile(t, repo, ".gitignore", []byte("*.log"))
 		path := filepath.Join(repo, "new.txt")
-		testutil.WriteFile(t, path, "new\n")
+		testutil.WriteFile(t, path, []byte("new\n"))
 
 		assert.NoError(t, vcs.Git{}.Ignore(repo, path))
 		assert.NoError(t, vcs.Git{}.Ignore(repo, path))

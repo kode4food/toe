@@ -11,13 +11,10 @@ import (
 
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
-
-type diffPickerSource struct{ pathPickerSource }
-
-const diffWorkingVariant = 1
 
 // BenchmarkBufferPickerRender renders a multi-column picker over many open
 // buffers, the per-frame cost paid on every cursor move
@@ -53,23 +50,21 @@ func BenchmarkBufferPickerRender(b *testing.B) {
 
 // BenchmarkDiffPreview redraws long diff lines while scrolling
 func BenchmarkDiffPreview(b *testing.B) {
+	testutil.RequireGit(b)
 	b.Setenv("XDG_CONFIG_HOME", b.TempDir())
-	root := b.TempDir()
-	path := filepath.Join(root, "long.txt")
-	text := strings.Repeat(strings.Repeat("abcd ", 4000)+"\n", 80)
-	if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
-		b.Fatal(err)
-	}
+	root := testutil.GitRepo(b)
+	committed := strings.Repeat(strings.Repeat("abcd ", 4000)+"\n", 80)
+	edited := strings.Repeat(strings.Repeat("abcd ", 4000)+"z\n", 80)
+	path := testutil.GitCommitFile(b, root, "long.txt", []byte(committed))
+	testutil.WriteFile(b, path, []byte(edited))
+
 	e := view.NewEditor(root)
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
-	src := &diffPickerSource{path: path}
 	m := ui.New(e, command.NewKeymaps()).
-		WithInitialPicker(func(e *view.Editor) *ui.Picker {
-			return ui.NewPicker(e, src)
-		})
+		WithInitialPicker(ui.NewChangedFilePicker)
 	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
-	if !strings.Contains(stripANSI(m.View().Content), "+ abcd") {
+	if !strings.Contains(stripANSI(m.View().Content), "- abcd") {
 		b.Fatal("diff preview not rendered")
 	}
 	i := 0
@@ -83,12 +78,4 @@ func BenchmarkDiffPreview(b *testing.B) {
 		_ = m.View().Content
 		i++
 	}
-}
-
-func (b *diffPickerSource) Load() ui.PickerLoad {
-	load := b.pathPickerSource.Load()
-	load.Items[0].DiffPreview = true
-	load.Items[0].DiffKind = view.FileChangeAdded
-	load.Items[0].Location.Target.Variant = diffWorkingVariant
-	return load
 }

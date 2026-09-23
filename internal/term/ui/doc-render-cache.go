@@ -2,6 +2,7 @@ package ui
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/kode4food/toe/internal/core"
@@ -24,6 +25,7 @@ type (
 
 		viewRowMaps     map[view.Id][]viewRowEntry
 		viewAnnotations map[view.Id][]inlineAnnotation
+		viewScrollbars  map[view.Id]*viewScrollbar
 
 		lastInfoKey infoPopupKey
 		inputCaret  geom.Point
@@ -75,8 +77,15 @@ type (
 		annotations []inlineAnnotation
 	}
 
-	// docRenderCache memoizes a single document's derived render state, keyed
-	// internally by revision so it is recomputed only when the document changes
+	viewScrollbar struct {
+		bar       scrollbar
+		markers   scrollbar
+		doc       *docRenderCache
+		rev       int
+		gutterRev int
+		pattern   string
+	}
+
 	docRenderCache struct {
 		rawTextRev    int
 		rawTextCached string
@@ -90,10 +99,12 @@ type (
 		searchPattern string
 		searchSpans   []matchSpan
 
-		markRev     int
-		markPattern string
-		markGeom    scrollbarGeom
-		searchMarks []scrollMark
+		gutterTextRev int
+		gutterRev     int
+		gutterDiags   []view.Diagnostic
+		gutterHunks   []view.DiffHunk
+		diagLines     map[int]view.DiagnosticSeverity
+		diffLines     map[int]diffGutterKind
 
 		prefixRev      int
 		prefixHOff     int
@@ -144,7 +155,64 @@ func newRenderCache() *renderCache {
 		docCaches:       map[view.DocumentId]*docRenderCache{},
 		viewRowMaps:     map[view.Id][]viewRowEntry{},
 		viewAnnotations: map[view.Id][]inlineAnnotation{},
+		viewScrollbars:  map[view.Id]*viewScrollbar{},
 	}
+}
+
+type ensureScrollbarArgs struct {
+	styles  *styles
+	doc     *docRenderCache
+	geom    scrollbarGeom
+	at      geom.Point
+	id      view.Id
+	topLine int
+}
+
+func (r *renderCache) ensureScrollbar(args ensureScrollbarArgs) *scrollbar {
+	bar := r.viewScrollbars[args.id]
+	if bar == nil {
+		bar = &viewScrollbar{}
+		r.viewScrollbars[args.id] = bar
+	}
+	bar.bar.reset(args.geom, args.at, args.styles, args.topLine)
+	copy(bar.bar.marks, bar.staticMarks(args.doc))
+	return &bar.bar
+}
+
+func (v *viewScrollbar) staticMarks(doc *docRenderCache) []scrollMark {
+	if v.doc == doc && v.rev == doc.searchRev &&
+		v.gutterRev == doc.gutterRev && v.pattern == doc.searchPattern &&
+		v.markers.geom == v.bar.geom {
+		return v.markers.marks
+	}
+	v.doc = doc
+	v.rev = doc.searchRev
+	v.gutterRev = doc.gutterRev
+	v.pattern = doc.searchPattern
+	v.markers.reset(v.bar.geom, geom.Point{}, nil, 0)
+	v.markers.addSearchMarks(doc.searchSpans, doc.lineIndex)
+	for line, kind := range doc.diffLines {
+		v.markers.addMark(line, diffMarkKind(kind))
+	}
+	for line, severity := range doc.diagLines {
+		v.markers.addMark(line, severityMarkKind(severity))
+	}
+	return v.markers.marks
+}
+
+func (d *docRenderCache) ensureGutter(
+	text core.Rope, rev int, diags []view.Diagnostic, hunks []view.DiffHunk,
+) {
+	if d.gutterTextRev == rev && slices.Equal(d.gutterDiags, diags) &&
+		slices.Equal(d.gutterHunks, hunks) {
+		return
+	}
+	d.gutterTextRev = rev
+	d.gutterRev++
+	d.gutterDiags = diags
+	d.gutterHunks = slices.Clone(hunks)
+	d.diagLines = diagnosticGutterLines(text, diags)
+	d.diffLines = diffGutterLines(hunks, text.LenLines())
 }
 
 func (r *renderCache) evictClosed(e *view.Editor) {
@@ -170,6 +238,7 @@ func (r *renderCache) evictClosed(e *view.Editor) {
 			if _, ok := live[id]; !ok {
 				delete(r.viewRowMaps, id)
 				delete(r.viewAnnotations, id)
+				delete(r.viewScrollbars, id)
 			}
 		}
 	}
@@ -245,27 +314,9 @@ func (d *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
 		from := b2r[loc[0]]
 		to := b2r[loc[1]]
 		if to > from {
-			d.searchSpans = append(d.searchSpans, matchSpan{from, to})
+			d.searchSpans = append(d.searchSpans, matchSpan{from: from, to: to})
 		}
 	}
-}
-
-// the match walk is proportional to the document, so its marks are folded
-// down to the bar's own size once and reused until an input changes
-func (d *docRenderCache) ensureSearchMarks(
-	rev int, pattern string, bar scrollbarGeom, lineIdx []lineIndexEntry,
-) []scrollMark {
-	if d.markRev == rev && d.markPattern == pattern && d.markGeom == bar {
-		return d.searchMarks
-	}
-	d.markRev = rev
-	d.markPattern = pattern
-	d.markGeom = bar
-	// collected, never drawn, so it needs no styles or placement
-	collect := newScrollbar(bar, geom.Point{}, nil, 0)
-	collect.addSearchMarks(d.searchSpans, lineIdx)
-	d.searchMarks = collect.marks
-	return d.searchMarks
 }
 
 func (d *docRenderCache) ensureLineIndex(

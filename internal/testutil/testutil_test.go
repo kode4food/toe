@@ -31,8 +31,8 @@ func TestGitHelpers(t *testing.T) {
 	testutil.RequireGit(t)
 	repo := testutil.GitRepo(t)
 
-	path := testutil.GitCommitFile(t, repo, "note.txt", "hello\n")
-	testutil.WriteFile(t, filepath.Join(repo, "other.txt"), "world\n")
+	path := testutil.GitCommitFile(t, repo, "note.txt", []byte("hello\n"))
+	testutil.WriteFile(t, filepath.Join(repo, "other.txt"), []byte("world\n"))
 	testutil.RunGit(t, repo, "add", "other.txt")
 
 	data, err := os.ReadFile(path)

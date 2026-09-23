@@ -26,7 +26,8 @@ func TestOptionCapture(t *testing.T) {
 		assert.Equal(t, "48;2;147;153;178", focusedButtonBg(m, 'Y'))
 
 		m = updateAndFeed(m, tea.KeyPressMsg{
-			Code: tea.KeyTab, Mod: tea.ModShift,
+			Code: tea.KeyTab,
+			Mod:  tea.ModShift,
 		})
 		assert.Equal(t, "48;2;147;153;178", focusedButtonBg(m, 'N'))
 		assert.Equal(t, " M mod.txt", gitStatus(t, repo))
@@ -83,7 +84,9 @@ func TestOptionCapture(t *testing.T) {
 
 		at := popupCell(m, "Discard changes")
 		m = updateAndFeed(m, tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 
 		assert.NotContains(t, stripANSI(m.View().Content), "Discard changes")
@@ -95,7 +98,9 @@ func TestOptionCapture(t *testing.T) {
 		before := m.View().Content
 
 		m = updateAndFeed(m, tea.MouseWheelMsg{
-			X: 60, Y: 10, Button: tea.MouseWheelDown,
+			X:      60,
+			Y:      10,
+			Button: tea.MouseWheelDown,
 		})
 
 		// the wheel is swallowed, so neither the popup nor the picker under
@@ -116,8 +121,10 @@ func TestOptionCapture(t *testing.T) {
 	t.Run("a long question wraps inside the popup", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		name := strings.Repeat("long-name-", 6) + ".txt"
-		path := testutil.GitCommitFile(t, repo, name, "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t,
+			repo, testutil.GitName(name), []byte("one\n"),
+		)
+		testutil.WriteFile(t, path, []byte("two\n"))
 
 		m := sendCtrl(changedFilePicker(t, repo), 'r')
 
@@ -144,8 +151,8 @@ func TestOptionCapture(t *testing.T) {
 func discardCapture(t *testing.T) (string, ui.Model) {
 	t.Helper()
 	repo := testutil.GitRepo(t)
-	path := testutil.GitCommitFile(t, repo, "mod.txt", "one\n")
-	testutil.WriteFile(t, path, "two\n")
+	path := testutil.GitCommitFile(t, repo, "mod.txt", []byte("one\n"))
+	testutil.WriteFile(t, path, []byte("two\n"))
 	m := sendCtrl(changedFilePicker(t, repo), 'r')
 	assert.Contains(t, stripANSI(m.View().Content), "Discard changes")
 	return repo, m

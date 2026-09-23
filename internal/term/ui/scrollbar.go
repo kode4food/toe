@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"slices"
+
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -40,32 +42,47 @@ const (
 	scrollMarkWarning
 	scrollMarkError
 	scrollMarkCursor
-)
 
-const (
 	scrollbarFullGlyph  = "\u2588" // '█' - full block
 	scrollbarUpperGlyph = "\u2580" // '▀' - upper half block
 	scrollbarLowerGlyph = "\u2584" // '▄' - lower half block
 	scrollbarUpperThin  = "\u2594" // '▔' - upper one eighth block
 	scrollbarMidThin    = "\u2500" // '─' - box drawings light horizontal
 	scrollbarLowerThin  = "\u2581" // '▁' - lower one eighth block
-)
 
-const (
 	scrollbarThumbTint = 0.40
 	scrollbarMarkSlots = 3
+	scrollbarStackRows = 64
 )
 
 func newScrollbar(
 	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
 ) *scrollbar {
+	var marks [scrollbarStackRows * scrollbarMarkSlots]scrollMark
+	slots := max(g.rows, 0) * scrollbarMarkSlots
+	buf := marks[:]
+	if slots > len(buf) {
+		buf = make([]scrollMark, slots)
+	}
 	return &scrollbar{
 		styles:  styles,
-		marks:   make([]scrollMark, max(g.rows, 0)*scrollbarMarkSlots),
+		marks:   buf[:slots],
 		at:      at,
 		geom:    g,
 		topLine: topLine,
 	}
+}
+
+func (s *scrollbar) reset(
+	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
+) {
+	n := max(g.rows, 0) * scrollbarMarkSlots
+	s.marks = slices.Grow(s.marks, max(n-len(s.marks), 0))[:n]
+	clear(s.marks)
+	s.styles = styles
+	s.at = at
+	s.geom = g
+	s.topLine = topLine
 }
 
 func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
@@ -73,8 +90,8 @@ func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
 	if line < 0 || line >= g.scrollLines() || g.rows <= 0 {
 		return
 	}
-	half := min(line*len(s.marks)/g.scrollLines(), len(s.marks)-1)
-	mark := &s.marks[half]
+	slot := min(line*len(s.marks)/g.scrollLines(), len(s.marks)-1)
+	mark := &s.marks[slot]
 	if kind > mark.kind {
 		mark.kind = kind
 	}
@@ -104,27 +121,19 @@ func (s *scrollbar) draw(buf *tui.Buffer) {
 	thumbTop := g.thumbTop(s.topLine)
 	thumbEnd := g.thumbEnd(s.topLine)
 	for row := range g.rows {
-		glyph, st := s.cell(row)
+		glyph, kind := s.cell(row)
+		st := s.styles.scrollTrack[kind]
 		if row >= thumbTop && row < thumbEnd {
-			st = s.tint(st)
+			st = s.styles.scrollThumb[kind]
 		}
-		buf.SetString(s.at.Add(geom.Point{Y: row}), glyph, st)
-	}
-}
-
-func (s *scrollbar) tint(st tui.Style) tui.Style {
-	accent := s.styles.scrollThumb.BgColor()
-	shift := func(c tui.Color) tui.Color {
-		return tintToward(&tintColors{
-			base:   c,
-			accent: accent,
-			amount: scrollbarThumbTint,
+		buf.Set(s.at.Add(geom.Point{Y: row}), tui.Cell{
+			Symbol: glyph,
+			Style:  st,
 		})
 	}
-	return st.Fg(shift(st.FgColor())).Bg(shift(st.BgColor()))
 }
 
-func (s *scrollbar) cell(row int) (string, tui.Style) {
+func (s *scrollbar) cell(row int) (string, scrollMarkKind) {
 	slots := s.marks[row*scrollbarMarkSlots:][:scrollbarMarkSlots]
 	kind := scrollMarkNone
 	args := scrollbarGlyphArgs{}
@@ -137,51 +146,24 @@ func (s *scrollbar) cell(row int) (string, tui.Style) {
 		args.lineCount += mark.count
 		args.slot = i
 	}
-	base := s.styles.scrollTrack
 	if args.slotsFilled == 0 {
-		return " ", base
+		return " ", kind
 	}
-	return scrollbarGlyph(args), base.Fg(s.markColor(kind))
-}
-
-func (s *scrollbar) markColor(kind scrollMarkKind) tui.Color {
-	st := s.styles
-	switch kind {
-	case scrollMarkCursor:
-		return st.scrollCursor
-	case scrollMarkError:
-		return st.severityError.FgColor()
-	case scrollMarkWarning:
-		return st.severityWarning.FgColor()
-	case scrollMarkInfo:
-		return st.severityInfo.FgColor()
-	case scrollMarkHint:
-		return st.severityHint.FgColor()
-	case scrollMarkDiffRemoved:
-		return st.diffRemoved.FgColor()
-	case scrollMarkDiffModified:
-		return st.diffModified.FgColor()
-	case scrollMarkDiffAdded:
-		return st.diffAdded.FgColor()
-	default:
-		return st.scrollSearch
-	}
+	return scrollbarGlyph(args), kind
 }
 
 func (s scrollbarGeom) thumbTop(topLine int) int {
 	if s.maxTop <= 0 {
 		return 0
 	}
-	return min(topLine*s.rows/s.scrollLines(), s.rows-1)
+	return min(topLine*s.rows/s.scrollLines(), s.rows-s.thumbLen())
 }
 
 func (s scrollbarGeom) thumbEnd(topLine int) int {
 	if s.maxTop <= 0 {
 		return s.rows
 	}
-	lines := s.scrollLines()
-	end := ((topLine+s.rows)*s.rows + lines - 1) / lines
-	return min(max(end, s.thumbTop(topLine)+1), s.rows)
+	return min(s.thumbTop(topLine)+s.thumbLen(), s.rows)
 }
 
 func (s scrollbarGeom) topLineAt(row int) int {

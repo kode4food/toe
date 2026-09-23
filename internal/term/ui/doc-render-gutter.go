@@ -205,16 +205,6 @@ func diffGutterLines(
 	return out
 }
 
-func documentDiffLines(
-	e *view.Editor, doc *view.Document, nLines int,
-) map[int]diffGutterKind {
-	vc := e.VersionControl()
-	if vc == nil {
-		return nil
-	}
-	return diffGutterLines(vc.DiffHunks(doc), nLines)
-}
-
 func diagnosticGutterLines(
 	text core.Rope, diags []view.Diagnostic,
 ) map[int]view.DiagnosticSeverity {

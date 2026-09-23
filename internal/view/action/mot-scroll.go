@@ -139,8 +139,7 @@ func ScrollViewLines(e *view.Editor, v *view.View, n int, up bool) {
 	v.SetOffset(offset)
 }
 
-// ScrollViewToLine scrolls a specific view so line is its first visible line,
-// not moving the cursor. Used for scrollbar clicks and drags
+// ScrollViewToLine puts line at the top of the view without moving the cursor
 func ScrollViewToLine(e *view.Editor, v *view.View, line int) {
 	doc := e.Document(v.DocID())
 	if doc == nil {

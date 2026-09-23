@@ -21,7 +21,11 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type pathPickerSource struct{ path string }
+type (
+	diffPickerSource struct{ pathPickerSource }
+
+	pathPickerSource struct{ path string }
+)
 
 const (
 	testPickerPreviewWidth   = 100
@@ -31,9 +35,70 @@ const (
 	previewBorderPad = 1
 
 	previewThumbBg = "48;2;72;74;94" // popup tinted toward overlay0
+
+	diffWorkingVariant = 1
 )
 
+func (p *pathPickerSource) ID() string {
+	return "test"
+}
+
+func (p *pathPickerSource) Title() string {
+	return "Test"
+}
+
+func (p *pathPickerSource) Columns() []string {
+	return []string{"name"}
+}
+
+func (p *pathPickerSource) MatchColumn() int {
+	return 0
+}
+
+func (p *pathPickerSource) ColumnProportions() []int {
+	return []int{1}
+}
+
+func (p *pathPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
+}
+
+func (p *pathPickerSource) Load() ui.PickerLoad {
+	items := []*ui.PickerItem{{
+		Display:  "item",
+		Columns:  []string{"item"},
+		SortKey:  "item",
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
+	}}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
+}
+
+func (d *diffPickerSource) Load() ui.PickerLoad {
+	load := d.pathPickerSource.Load()
+	load.Items[0].DiffPreview = true
+	load.Items[0].DiffKind = view.FileChangeAdded
+	load.Items[0].Location.Target.Variant = diffWorkingVariant
+	return load
+}
+
+func (p *pathPickerSource) PrepareMatcher(string) ui.PickerMatcher {
+	return func(*ui.PickerItem) (ui.MatchResult, bool) {
+		return ui.MatchResult{}, true
+	}
+}
+
 func TestPickerPreviewScrollbar(t *testing.T) {
+	t.Run("resizes the scrollbar", func(t *testing.T) {
+		m := previewModel(t, true)
+		for _, height := range []int{18, 12, 200, 18} {
+			m = updateAndFeed(m, tea.WindowSizeMsg{
+				Width:  testPickerPreviewWidth,
+				Height: height,
+			})
+			cell := previewBarCell(t, m.View().Content)
+			assert.Equal(t, previewThumbBg, cell.style.bg)
+		}
+	})
+
 	t.Run("hidden unless enabled", func(t *testing.T) {
 		cell := previewBarCell(t, previewModel(t, false).View().Content)
 
@@ -52,7 +117,9 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 
 		at := previewBarPoint(t, m.View().Content)
 		m = mouse(m, tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 
 		assert.NotContains(t, stripANSI(m.View().Content), "line 0 ")
@@ -63,11 +130,15 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 
 		at := previewBarPoint(t, m.View().Content)
 		m = mouse(m, tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 		// above the bar's first row, which the drag clamps to the top
 		m = mouse(m, tea.MouseMotionMsg{
-			X: at.X, Y: 0, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 
 		assert.Contains(t, stripANSI(m.View().Content), "line 0 ")
@@ -82,85 +153,6 @@ func TestPickerPreviewScrollbar(t *testing.T) {
 		assert.Equal(t, ' ', previewBarCell(t, content).glyph)
 		assert.Equal(t, previewThumbBg, previewBarCell(t, content).style.bg)
 	})
-}
-
-func previewModel(t *testing.T, scrollbar bool) ui.Model {
-	t.Helper()
-	e, path := previewEditor(t)
-	e.Options().Scrollbar = scrollbar
-	return previewPicker(e, &pathPickerSource{path: path})
-}
-
-func diffPreviewModel(t *testing.T) ui.Model {
-	t.Helper()
-	e, path := previewEditor(t)
-	s := vcs.Attach(e)
-	t.Cleanup(s.Close)
-	return previewPicker(e, &diffPickerSource{path: path})
-}
-
-func previewEditor(t *testing.T) (*view.Editor, string) {
-	t.Helper()
-	t.Setenv("COLORTERM", "truecolor")
-	tmp := t.TempDir()
-	path := filepath.Join(tmp, "long.txt")
-	assert.NoError(t,
-		os.WriteFile(path, []byte(numberedLines(200)), 0o644),
-	)
-	e := view.NewEditor(tmp)
-	e.Options().Theme = "mocha"
-	return e, path
-}
-
-func previewPicker(e *view.Editor, source ui.PickerSource) ui.Model {
-	m := ui.New(e, command.NewKeymaps()).
-		WithInitialPicker(func(e *view.Editor) *ui.Picker {
-			return ui.NewPicker(e, source)
-		})
-	return updateAndFeed(m, tea.WindowSizeMsg{
-		Width:  testPickerPreviewWidth,
-		Height: 18,
-	})
-}
-
-// previewBarPoint returns the bottom of the preview's scrollbar column
-func previewBarPoint(t *testing.T, content string) geom.Point {
-	t.Helper()
-	at := previewBarAt(t, content)
-	rows := strings.Split(content, "\n")
-	for y := at.Y; y < len(rows); y++ {
-		if strings.Contains(stripANSI(rows[y]), "╯") {
-			return geom.Point{X: at.X, Y: y - 1}
-		}
-	}
-	t.Fatal("no preview bottom border found")
-	return geom.Point{}
-}
-
-// previewBarCell returns the scrollbar cell of the preview's first row
-func previewBarCell(t *testing.T, content string) scrollbarCell {
-	t.Helper()
-	at := previewBarAt(t, content)
-	cells := rowCells(strings.Split(content, "\n")[at.Y])
-	assert.Greater(t, len(cells), at.X)
-	return cells[at.X]
-}
-
-func previewBarAt(t *testing.T, content string) geom.Point {
-	t.Helper()
-	rows := strings.Split(content, "\n")
-	for i, raw := range rows {
-		col := strings.Index(stripANSI(raw), "╮")
-		if col < 0 {
-			continue
-		}
-		border := utf8.RuneCountInString(stripANSI(raw)[:col])
-		assert.GreaterOrEqual(t, border, previewBorderPad)
-		assert.Less(t, i+1, len(rows))
-		return geom.Point{X: border - previewBorderPad, Y: i + 1}
-	}
-	t.Fatal("no preview border found")
-	return geom.Point{}
 }
 
 func TestPickerPreview(t *testing.T) {
@@ -690,7 +682,9 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 		assert.NotContains(t, out, "<Binary file>")
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 90, Y: 10, Button: tea.MouseWheelDown,
+			X:      90,
+			Y:      10,
+			Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
 		out = stripANSI(m.View().Content)
@@ -814,45 +808,6 @@ func TestPickerPreviewPlaceholders(t *testing.T) {
 
 }
 
-func (p *pathPickerSource) ID() string {
-	return "test"
-}
-
-func (p *pathPickerSource) Title() string {
-	return "Test"
-}
-
-func (p *pathPickerSource) Columns() []string {
-	return []string{"name"}
-}
-
-func (p *pathPickerSource) MatchColumn() int {
-	return 0
-}
-
-func (p *pathPickerSource) ColumnProportions() []int {
-	return []int{1}
-}
-
-func (p *pathPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
-}
-
-func (p *pathPickerSource) Load() ui.PickerLoad {
-	items := []*ui.PickerItem{{
-		Display:  "item",
-		Columns:  []string{"item"},
-		SortKey:  "item",
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
-	}}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
-}
-
-func (p *pathPickerSource) PrepareMatcher(string) ui.PickerMatcher {
-	return func(*ui.PickerItem) (ui.MatchResult, bool) {
-		return ui.MatchResult{}, true
-	}
-}
-
 func TestPickerPreviewColorSwatches(t *testing.T) {
 	t.Run("hex colors get swatches", func(t *testing.T) {
 		tmp := t.TempDir()
@@ -899,4 +854,80 @@ func TestPickerPreviewColorSwatches(t *testing.T) {
 		assert.NotContains(t, out, "■")
 		assert.Contains(t, out, "#f00")
 	})
+}
+func previewModel(t *testing.T, scrollbar bool) ui.Model {
+	t.Helper()
+	e, path := previewEditor(t)
+	e.Options().Scrollbar = scrollbar
+	return previewPicker(e, &pathPickerSource{path: path})
+}
+
+func diffPreviewModel(t *testing.T) ui.Model {
+	t.Helper()
+	e, path := previewEditor(t)
+	s := vcs.Attach(e)
+	t.Cleanup(s.Close)
+	return previewPicker(e, &diffPickerSource{path: path})
+}
+
+func previewEditor(t *testing.T) (*view.Editor, string) {
+	t.Helper()
+	t.Setenv("COLORTERM", "truecolor")
+	tmp := t.TempDir()
+	path := filepath.Join(tmp, "long.txt")
+	assert.NoError(t,
+		os.WriteFile(path, []byte(numberedLines(200)), 0o644),
+	)
+	e := view.NewEditor(tmp)
+	e.Options().Theme = "mocha"
+	return e, path
+}
+
+func previewPicker(e *view.Editor, source ui.PickerSource) ui.Model {
+	m := ui.New(e, command.NewKeymaps()).
+		WithInitialPicker(func(e *view.Editor) *ui.Picker {
+			return ui.NewPicker(e, source)
+		})
+	return updateAndFeed(m, tea.WindowSizeMsg{
+		Width:  testPickerPreviewWidth,
+		Height: 18,
+	})
+}
+
+func previewBarPoint(t *testing.T, content string) geom.Point {
+	t.Helper()
+	at := previewBarAt(t, content)
+	rows := strings.Split(content, "\n")
+	for y := at.Y; y < len(rows); y++ {
+		if strings.Contains(stripANSI(rows[y]), "╯") {
+			return geom.Point{X: at.X, Y: y - 1}
+		}
+	}
+	t.Fatal("no preview bottom border found")
+	return geom.Point{}
+}
+
+func previewBarCell(t *testing.T, content string) scrollbarCell {
+	t.Helper()
+	at := previewBarAt(t, content)
+	cells := rowCells(strings.Split(content, "\n")[at.Y])
+	assert.Greater(t, len(cells), at.X)
+	return cells[at.X]
+}
+
+func previewBarAt(t *testing.T, content string) geom.Point {
+	t.Helper()
+	rows := strings.Split(content, "\n")
+	for i, raw := range rows {
+		col := strings.Index(stripANSI(raw), "╮")
+		if col < 0 {
+			continue
+		}
+		border := utf8.RuneCountInString(stripANSI(raw)[:col])
+		assert.GreaterOrEqual(t, border, previewBorderPad)
+		assert.Less(t, i+1, len(rows))
+		return geom.Point{X: border - previewBorderPad, Y: i + 1}
+	}
+	t.Fatal("no preview border found")
+	return geom.Point{}
 }

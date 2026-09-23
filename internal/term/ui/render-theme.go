@@ -31,6 +31,7 @@ func buildStylesWithBackground(
 	cur, _ := modeCursorStyleFor(th, mode, false)
 	curPrim, _ := modeCursorStyleFor(th, mode, true)
 	light := isLightTheme(th)
+	trueColor := TrueColorSupported()
 	ruler := deriveBackground(bg, rulerBackgroundPct, light)
 	cursorHighlight := deriveBackground(bg, cursorHighlightPct, light)
 	cl := tui.Style{}.Bg(cursorHighlight)
@@ -65,12 +66,7 @@ func buildStylesWithBackground(
 		diffAdded:         th.Get("diff.plus.gutter"),
 		diffModified:      th.Get("diff.delta.gutter"),
 		diffRemoved:       th.Get("diff.minus.gutter"),
-		scrollTrack:       tui.Style{}.Bg(bg),
-		scrollThumb: tui.Style{}.Bg(
-			th.Get("ui.scrollbar.thumb").BgColor(),
-		),
-		scrollCursor: th.Get("ui.scrollbar.cursor").FgColor(),
-		scrollSearch: th.Get("ui.scrollbar.search").FgColor(),
+		trueColor:         trueColor,
 	}
 	if next, ok := th.TryGet("ui.virtual.inlay-hint"); ok {
 		st.inlayHint = next
@@ -95,6 +91,31 @@ func buildStylesWithBackground(
 	if next, ok := th.TryGet("ui.search.match"); ok {
 		st.searchMatch = next
 	}
+	colors := [...]tui.Color{
+		scrollMarkNone:         tui.ColorReset,
+		scrollMarkSearch:       th.Get("ui.scrollbar.search").FgColor(),
+		scrollMarkDiffAdded:    st.diffAdded.FgColor(),
+		scrollMarkDiffModified: st.diffModified.FgColor(),
+		scrollMarkDiffRemoved:  st.diffRemoved.FgColor(),
+		scrollMarkHint:         st.severityHint.FgColor(),
+		scrollMarkInfo:         st.severityInfo.FgColor(),
+		scrollMarkWarning:      st.severityWarning.FgColor(),
+		scrollMarkError:        st.severityError.FgColor(),
+		scrollMarkCursor:       th.Get("ui.scrollbar.cursor").FgColor(),
+	}
+	tint := func(base tui.Color) tui.Color {
+		return tintToward(tintColors{
+			base:      base,
+			accent:    th.Get("ui.scrollbar.thumb").BgColor(),
+			amount:    scrollbarThumbTint,
+			trueColor: trueColor,
+		})
+	}
+	thumbBg := tint(bg)
+	for kind, fg := range colors {
+		st.scrollTrack[kind] = tui.Style{}.Fg(fg).Bg(bg)
+		st.scrollThumb[kind] = tui.Style{}.Fg(tint(fg)).Bg(thumbBg)
+	}
 	return st
 }
 
@@ -107,7 +128,9 @@ func deriveBackground(bg tui.Color, pct float64, light bool) tui.Color {
 		return rampBackground(bg, pct, light)
 	}
 	r, g, b, _ := bg.RGBA()
-	red, green, blue := uint8(r>>8), uint8(g>>8), uint8(b>>8)
+	red := uint8(r >> 8)
+	green := uint8(g >> 8)
+	blue := uint8(b >> 8)
 	toward := 255.0
 	if light {
 		toward = 0

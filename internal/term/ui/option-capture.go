@@ -14,7 +14,6 @@ import (
 )
 
 type (
-	// a danger capture tints its ground toward the accent theme scope
 	optionCapture struct {
 		dismissibleOverlay
 
@@ -26,7 +25,6 @@ type (
 		danger   bool
 	}
 
-	// a nil choose answers the question without doing anything
 	captureOption struct {
 		label  string
 		choose func(*view.Editor) tea.Cmd
@@ -56,6 +54,42 @@ const (
 )
 
 var _ BufferOverlayComponent = (*optionCapture)(nil)
+
+type optionCaptureArgs struct {
+	question string
+	accent   string
+	options  []captureOption
+	focus    int
+	danger   bool
+}
+
+func newOptionCapture(args optionCaptureArgs) *optionCapture {
+	return &optionCapture{
+		question: args.question,
+		accent:   args.accent,
+		options:  args.options,
+		cursor:   max(min(args.focus, len(args.options)-1), 0),
+		danger:   args.danger,
+	}
+}
+
+func newConfirmation(
+	question string, choose func(*view.Editor) tea.Cmd, danger bool,
+) *optionCapture {
+	focus := 0
+	if danger {
+		focus = 1
+	}
+	return newOptionCapture(optionCaptureArgs{
+		question: question,
+		focus:    focus,
+		danger:   danger,
+		options: []captureOption{
+			{key: 'y', label: i18n.Text(captureYesKey), choose: choose},
+			{key: 'n', label: i18n.Text(captureNoKey)},
+		},
+	})
+}
 
 // HandleEvent picks an answer, moves between the buttons, or dismisses the
 // popup unanswered
@@ -113,7 +147,7 @@ func (o *optionCapture) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 		for i, line := range o.lines {
 			width := runewidth.StringWidth(line.text)
 			buf.SetString(geom.Point{
-				X: area.X + centerOffset(area.Width, width),
+				X: area.X + max((area.Width-width)/2, 0),
 				Y: area.Y + i,
 			}, line.text, st.content)
 		}
@@ -149,7 +183,6 @@ func (o *optionCapture) handleKey(
 	return consumed(), nil
 }
 
-// every answer closes the popup, whether or not it does anything
 func (o *optionCapture) answer(
 	cx *Context, opt captureOption,
 ) (EventResult, tea.Cmd) {
@@ -164,8 +197,6 @@ func (o *optionCapture) moveBy(n int) {
 	o.markDirty()
 }
 
-// an offered danger tints the whole popup, so the ground itself says that
-// something here cannot be undone
 func (o *optionCapture) styles(cx *Context) captureStyles {
 	th := cx.Theme()
 	content := th.Get("ui.popup")
@@ -178,22 +209,21 @@ func (o *optionCapture) styles(cx *Context) captureStyles {
 	if !o.danger {
 		return st
 	}
-	st.content = content.Bg(tintToward(&tintColors{
-		base:   content.BgColor(),
-		accent: accent,
-		amount: tintAmount,
+	st.content = content.Bg(tintToward(tintColors{
+		base:      content.BgColor(),
+		accent:    accent,
+		amount:    tintAmount,
+		trueColor: TrueColorSupported(),
 	}))
 	st.border = st.content.Fg(accent)
 	st.option = st.option.Bg(st.content.BgColor())
 	return st
 }
 
-// the focused button wears its own colors inverted, which stands out against
-// any theme's ground, and every button underlines the key that picks it
 func (o *optionCapture) paintButtons(
 	buf *tui.Buffer, at geom.Point, width int, st captureStyles,
 ) {
-	at.X += centerOffset(width, o.buttonsWidth())
+	at.X += max((width-o.buttonsWidth())/2, 0)
 	for i, opt := range o.options {
 		if i > 0 {
 			at.X += captureButtonGap
@@ -222,51 +252,10 @@ func (o *optionCapture) buttonsWidth() int {
 	return w
 }
 
-type optionCaptureArgs struct {
-	question string
-	accent   string
-	options  []captureOption
-	focus    int
-	danger   bool
-}
-
-func newOptionCapture(args optionCaptureArgs) *optionCapture {
-	return &optionCapture{
-		question: args.question,
-		accent:   args.accent,
-		options:  args.options,
-		cursor:   max(min(args.focus, len(args.options)-1), 0),
-		danger:   args.danger,
-	}
-}
-
-// a danger confirmation focuses no, the answer that changes nothing
-func newConfirmation(
-	question string, choose func(*view.Editor) tea.Cmd, danger bool,
-) *optionCapture {
-	focus := 0
-	if danger {
-		focus = 1
-	}
-	return newOptionCapture(optionCaptureArgs{
-		question: question,
-		focus:    focus,
-		danger:   danger,
-		options: []captureOption{
-			{key: 'y', label: i18n.Text(captureYesKey), choose: choose},
-			{key: 'n', label: i18n.Text(captureNoKey)},
-		},
-	})
-}
-
 func captureButtonText(opt captureOption) string {
 	return " " + string(opt.key) + " " + opt.label + " "
 }
 
 func captureButtonWidth(opt captureOption) int {
 	return runewidth.StringWidth(captureButtonText(opt))
-}
-
-func centerOffset(width, content int) int {
-	return max((width-content)/2, 0)
 }

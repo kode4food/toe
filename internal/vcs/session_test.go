@@ -19,8 +19,10 @@ func TestSession(t *testing.T) {
 
 	t.Run("serves hunks for an edited document", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
-		testutil.WriteFile(t, path, "one\nchanged\nthree\n")
+		path := testutil.GitCommitFile(t,
+			repo, "a.txt", []byte("one\ntwo\nthree\n"),
+		)
+		testutil.WriteFile(t, path, []byte("one\nchanged\nthree\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -48,8 +50,8 @@ func TestSession(t *testing.T) {
 
 	t.Run("tracks documents open before attach", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
-		testutil.WriteFile(t, path, "changed\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("changed\n"))
 
 		e := view.NewEditor(repo)
 		_, err := e.OpenFile(path)
@@ -78,8 +80,8 @@ func TestSession(t *testing.T) {
 
 	t.Run("changed files uses editor cwd", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "a.txt", "one\n")
-		testutil.WriteFile(t, filepath.Join(repo, "new.txt"), "new\n")
+		testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "new.txt"), []byte("new\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -93,7 +95,7 @@ func TestSession(t *testing.T) {
 
 	t.Run("refreshes after external head movement", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -104,7 +106,7 @@ func TestSession(t *testing.T) {
 		assert.NotNil(t, doc)
 		waitBase(t, s, doc, "one\n")
 
-		testutil.WriteFile(t, path, "two\n")
+		testutil.WriteFile(t, path, []byte("two\n"))
 		testutil.RunGit(t, repo, "add", "a.txt")
 		testutil.RunGit(t, repo, "commit", "-m", "external")
 
@@ -118,7 +120,9 @@ func TestSession(t *testing.T) {
 
 	t.Run("lifecycle flows through differ", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
+		path := testutil.GitCommitFile(t,
+			repo, "a.txt", []byte("one\ntwo\nthree\n"),
+		)
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -163,8 +167,10 @@ func TestSession(t *testing.T) {
 
 	t.Run("computes hunks for unopened paths", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
-		testutil.WriteFile(t, path, "one\nCHANGED\nthree\n")
+		path := testutil.GitCommitFile(t,
+			repo, "a.txt", []byte("one\ntwo\nthree\n"),
+		)
+		testutil.WriteFile(t, path, []byte("one\nCHANGED\nthree\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)
@@ -180,8 +186,10 @@ func TestSession(t *testing.T) {
 
 	t.Run("serves base text for unopened paths", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\ntwo\nthree\n")
-		testutil.WriteFile(t, path, "one\nCHANGED\nthree\n")
+		path := testutil.GitCommitFile(t,
+			repo, "a.txt", []byte("one\ntwo\nthree\n"),
+		)
+		testutil.WriteFile(t, path, []byte("one\nCHANGED\nthree\n"))
 
 		e := view.NewEditor(repo)
 		s := vcs.Attach(e)

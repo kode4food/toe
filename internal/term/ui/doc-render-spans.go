@@ -210,16 +210,19 @@ func (r *renderPass) prepareContentRender(
 	cursorLinePriBg := styles.cursorLinePrim.BgColor()
 	cursorLineSecBg := styles.cursorLineSec.BgColor()
 	contentX := target.area.X + gutterW
+	var hunks []view.DiffHunk
+	if vc := cx.Editor.VersionControl(); vc != nil {
+		hunks = vc.DiffHunks(doc)
+	}
+	dc.ensureGutter(text, rev, docDiagnostics, hunks)
 	gutter := gutterSpec{
-		layout:       gutterLayout,
-		lineNumWidth: gutterLineNumberW,
-		width:        gutterLayoutWidth(gutterLayout, gutterLineNumberW),
-		lineStyle:    lineTUI,
-		lineSelected: lineSelTUI,
-		diagLines:    diagnosticGutterLines(text, docDiagnostics),
-		diffLines: documentDiffLines(
-			cx.Editor, doc, text.LenLines(),
-		),
+		layout:          gutterLayout,
+		lineNumWidth:    gutterLineNumberW,
+		width:           gutterLayoutWidth(gutterLayout, gutterLineNumberW),
+		lineStyle:       lineTUI,
+		lineSelected:    lineSelTUI,
+		diagLines:       dc.diagLines,
+		diffLines:       dc.diffLines,
 		severityHint:    styles.severityHint,
 		severityInfo:    styles.severityInfo,
 		severityWarning: styles.severityWarning,
@@ -256,23 +259,17 @@ func (r *renderPass) prepareContentRender(
 			rows:   target.area.Height,
 			maxTop: nLines - 1,
 		}
-		bar = newScrollbar(
-			barGeom,
-			geom.Point{
+		bar = c.ensureScrollbar(ensureScrollbarArgs{
+			styles: styles,
+			doc:    dc,
+			geom:   barGeom,
+			at: geom.Point{
 				X: target.area.X + target.area.Width,
 				Y: target.area.Y,
 			},
-			styles, anchorLine,
-		)
-		copy(bar.marks, dc.ensureSearchMarks(
-			rev, pat, barGeom, lineIdx,
-		))
-		for line, kind := range gutter.diffLines {
-			bar.addMark(line, diffMarkKind(kind))
-		}
-		for line, sev := range gutter.diagLines {
-			bar.addMark(line, severityMarkKind(sev))
-		}
+			id:      v.ID(),
+			topLine: anchorLine,
+		})
 		for line := range cursorLines {
 			bar.addMark(line, scrollMarkCursor)
 		}

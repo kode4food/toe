@@ -24,6 +24,57 @@ type countingPathSource struct {
 
 const fileWatchTestTimeout = 2 * time.Second
 
+func (c *countingPathSource) ID() string {
+	return "counting"
+}
+
+func (*countingPathSource) Title() string {
+	return "Counting"
+}
+
+func (*countingPathSource) Columns() []string {
+	return []string{"name"}
+}
+
+func (*countingPathSource) MatchColumn() int {
+	return 0
+}
+
+func (*countingPathSource) ColumnProportions() []int {
+	return []int{1}
+}
+
+func (*countingPathSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
+}
+
+func (c *countingPathSource) Load() ui.PickerLoad {
+	c.loadCalls++
+	entries, err := os.ReadDir(c.dir)
+	if err != nil {
+		return ui.PickerLoad{Stop: func() {}}
+	}
+	items := make([]*ui.PickerItem, 0, len(entries))
+	for _, entry := range entries {
+		path := filepath.Join(c.dir, entry.Name())
+		items = append(items, &ui.PickerItem{
+			Display:  entry.Name(),
+			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+		})
+	}
+	return ui.PickerLoad{Items: items, Stop: func() {}}
+}
+
+func (*countingPathSource) ItemsForPath(path string) []*ui.PickerItem {
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return nil
+	}
+	return []*ui.PickerItem{{
+		Display:  filepath.Base(path),
+		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+	}}
+}
+
 func TestPickerFileWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow: real filesystem watches with multi-second timeouts")
@@ -192,13 +243,15 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("changed-files adds new file", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "committed.txt", "one\n")
+		testutil.GitCommitFile(t, repo, "committed.txt", []byte("one\n"))
 
 		m := changedFilePicker(t, repo)
 		out := stripANSI(m.View().Content)
 		assert.NotContains(t, out, "untracked.txt")
 
-		testutil.WriteFile(t, filepath.Join(repo, "untracked.txt"), "new\n")
+		testutil.WriteFile(t,
+			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
+		)
 		m = drainFileWatch(t, m)
 
 		out = stripANSI(m.View().Content)
@@ -208,19 +261,23 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("selection survives changed-files update", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "alpha.txt", "one\n")
-		testutil.GitCommitFile(t, repo, "beta.txt", "one\n")
-		testutil.GitCommitFile(t, repo, "charlie.txt", "one\n")
-		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), "two\n")
-		testutil.WriteFile(t, filepath.Join(repo, "beta.txt"), "two\n")
-		testutil.WriteFile(t, filepath.Join(repo, "charlie.txt"), "two\n")
+		testutil.GitCommitFile(t, repo, "alpha.txt", []byte("one\n"))
+		testutil.GitCommitFile(t, repo, "beta.txt", []byte("one\n"))
+		testutil.GitCommitFile(t, repo, "charlie.txt", []byte("one\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), []byte("two\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "beta.txt"), []byte("two\n"))
+		testutil.WriteFile(t,
+			filepath.Join(repo, "charlie.txt"), []byte("two\n"),
+		)
 
 		m := changedFilePicker(t, repo)
 		m = sendSpecial(m, tea.KeyDown)
 		before := selectedPickerLine(m)
 		assert.Contains(t, before, "beta.txt")
 
-		testutil.WriteFile(t, filepath.Join(repo, "aardvark.txt"), "new\n")
+		testutil.WriteFile(t,
+			filepath.Join(repo, "aardvark.txt"), []byte("new\n"),
+		)
 		m = drainFileWatch(t, m)
 
 		out := stripANSI(m.View().Content)
@@ -231,8 +288,8 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("staging externally regroups the row", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		testutil.GitCommitFile(t, repo, "alpha.txt", "one\n")
-		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), "two\n")
+		testutil.GitCommitFile(t, repo, "alpha.txt", []byte("one\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), []byte("two\n"))
 
 		m := changedFilePicker(t, repo)
 		out := stripANSI(m.View().Content)
@@ -250,17 +307,17 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("a write keeps both stages of a file", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "both.txt", "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t, repo, "both.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("two\n"))
 		testutil.RunGit(t, repo, "add", "both.txt")
-		testutil.WriteFile(t, path, "three\n")
+		testutil.WriteFile(t, path, []byte("three\n"))
 
 		m := changedFilePicker(t, repo)
-		assert.Equal(
-			t, 2, strings.Count(stripANSI(m.View().Content), "both.txt"),
+		assert.Equal(t,
+			2, strings.Count(stripANSI(m.View().Content), "both.txt"),
 		)
 
-		testutil.WriteFile(t, path, "four\n")
+		testutil.WriteFile(t, path, []byte("four\n"))
 		m = drainFileWatch(t, m)
 
 		out := stripANSI(m.View().Content)
@@ -275,8 +332,8 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("discarding a row drops it from the list", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "alpha.txt", "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t, repo, "alpha.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("two\n"))
 
 		m := changedFilePicker(t, repo)
 		m = sendKeyAndFeed(sendCtrl(m, 'r'), 'y')
@@ -290,8 +347,10 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
 		for _, name := range []string{"alpha.txt", "beta.txt", "gamma.txt"} {
-			testutil.GitCommitFile(t, repo, name, "one\n")
-			testutil.WriteFile(t, filepath.Join(repo, name), "two\n")
+			testutil.GitCommitFile(t,
+				repo, testutil.GitName(name), []byte("one\n"),
+			)
+			testutil.WriteFile(t, filepath.Join(repo, name), []byte("two\n"))
 		}
 
 		m := changedFilePicker(t, repo)
@@ -308,14 +367,14 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("diff preview updates live", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", "one\n")
-		testutil.WriteFile(t, path, "two\n")
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("two\n"))
 
 		m := changedFilePicker(t, repo)
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "two")
 
-		testutil.WriteFile(t, path, "three\n")
+		testutil.WriteFile(t, path, []byte("three\n"))
 		m = drainFileWatch(t, m)
 
 		out = stripANSI(m.View().Content)
@@ -356,57 +415,6 @@ func TestPickerFileWatch(t *testing.T) {
 		// recursive watch registers, forcing one harmless fallback reload
 		assert.LessOrEqual(t, src.loadCalls, 2)
 	})
-}
-
-func (s *countingPathSource) ID() string {
-	return "counting"
-}
-
-func (*countingPathSource) Title() string {
-	return "Counting"
-}
-
-func (*countingPathSource) Columns() []string {
-	return []string{"name"}
-}
-
-func (*countingPathSource) MatchColumn() int {
-	return 0
-}
-
-func (*countingPathSource) ColumnProportions() []int {
-	return []int{1}
-}
-
-func (*countingPathSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
-}
-
-func (s *countingPathSource) Load() ui.PickerLoad {
-	s.loadCalls++
-	entries, err := os.ReadDir(s.dir)
-	if err != nil {
-		return ui.PickerLoad{Stop: func() {}}
-	}
-	items := make([]*ui.PickerItem, 0, len(entries))
-	for _, entry := range entries {
-		path := filepath.Join(s.dir, entry.Name())
-		items = append(items, &ui.PickerItem{
-			Display:  entry.Name(),
-			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
-		})
-	}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
-}
-
-func (*countingPathSource) ItemsForPath(path string) []*ui.PickerItem {
-	info, err := os.Lstat(path)
-	if err != nil || !info.Mode().IsRegular() {
-		return nil
-	}
-	return []*ui.PickerItem{{
-		Display:  filepath.Base(path),
-		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
-	}}
 }
 
 func selectedPickerLine(m ui.Model) string {

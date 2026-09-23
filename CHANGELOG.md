@@ -2,6 +2,17 @@
 
 Notable changes to toe.
 
+## 0.4.5
+
+### Interface
+
+- Draggable scrollbars show your position, search matches, diagnostics, and changes at a glance
+- Clearer changed-file previews highlight added and removed lines
+
+### Sessions
+
+- Restoring a session preserves your pane layout even when a file is missing
+
 ## 0.4.4
 
 ### Interface

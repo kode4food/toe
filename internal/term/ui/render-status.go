@@ -47,10 +47,9 @@ type (
 		diffModified tui.Style
 		diffRemoved  tui.Style
 
-		scrollTrack  tui.Style
-		scrollThumb  tui.Style
-		scrollCursor tui.Color
-		scrollSearch tui.Color
+		scrollTrack [scrollMarkCursor + 1]tui.Style
+		scrollThumb [scrollMarkCursor + 1]tui.Style
+		trueColor   bool
 	}
 
 	statusElemCtx struct {

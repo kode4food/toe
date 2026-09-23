@@ -43,6 +43,24 @@ func TestDiagnostics(t *testing.T) {
 		assert.Equal(t, "new", diags[1].Message)
 	})
 
+	t.Run("stamps the provider on what it stores", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+
+		for _, msg := range []string{"first", "second"} {
+			doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
+				{Severity: view.DiagnosticSeverityError, Message: msg},
+			})
+		}
+
+		diags := doc.Diagnostics()
+
+		assert.Len(t, diags, 1)
+		assert.Equal(t, "second", diags[0].Message)
+		assert.Equal(t, "gopls", diags[0].Provider)
+	})
+
 	t.Run("counts severities", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		doc := e.FocusedDocument()

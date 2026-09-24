@@ -2,6 +2,17 @@
 
 Notable changes to toe.
 
+## 0.4.6
+
+### Interface
+
+- Scrollbars draw at sub-cell precision on terminals with graphics support, so the thumb and its marks sit where the line falls rather than snapping to the nearest row. Other terminals keep the character scrollbar
+- Picker previews use the same scrollbar
+
+### Editing
+
+- External changes are applied in a batch, so a file another tool writes a line at a time no longer causes a burst of reloads
+
 ## 0.4.5
 
 ### Interface

@@ -42,8 +42,8 @@ type (
 	}
 
 	styleKey struct {
-		theme string
-		mode  view.Mode
+		gen  int
+		mode view.Mode
 	}
 
 	// docStyleSet bundles a theme's derived style tables so a focused and a

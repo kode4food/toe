@@ -135,7 +135,7 @@ func (r *renderPass) prepareContentRender(
 	// styles rebuilt only when theme or mode changes
 	th := cx.Theme()
 	mode := cx.Editor.Mode()
-	key := styleKey{theme: th.Name(), mode: mode}
+	key := styleKey{gen: cx.StyleGen(), mode: mode}
 	if c.stylesKey != key {
 		c.stylesKey = key
 		c.styles = newDocStyleSet(th, mode)

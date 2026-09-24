@@ -196,7 +196,7 @@ func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	cx := r.context
 	var force bool
 
-	key := styleKey{theme: th.Name(), mode: cx.Editor.Mode()}
+	key := styleKey{gen: cx.StyleGen(), mode: cx.Editor.Mode()}
 	if cache.stylesKey != key {
 		force = true
 	}

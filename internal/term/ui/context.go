@@ -68,23 +68,26 @@ func (c *Context) ThemeFor(focused bool) *theme.Theme {
 func (c *Context) ensureTheme() {
 	name := c.Editor.Options().Theme
 	dim := min(max(c.Editor.Options().InactiveDim, 0), 90)
-	reload := name != c.theme.name
-	if reload {
+	if name == c.theme.name && dim == c.theme.dim {
+		return
+	}
+	if name != c.theme.name {
 		c.theme.name = name
-		c.theme.generation++
-		th, err := theme.Load(name)
-		if err != nil {
-			th, err = theme.Default()
-			if err != nil {
-				th = fallbackTheme()
-			}
-		}
-		c.theme.active = paletteFor(th)
+		c.theme.active = paletteFor(loadTheme(name))
 	}
-	if reload || dim != c.theme.dim {
-		c.theme.dim = dim
-		c.theme.dimmed = paletteFor(c.theme.active.Dimmed(100 - dim))
+	c.theme.dim = dim
+	c.theme.dimmed = paletteFor(c.theme.active.Dimmed(100 - dim))
+	c.theme.generation++
+}
+
+func loadTheme(name string) *theme.Theme {
+	if th, err := theme.Load(name); err == nil {
+		return th
 	}
+	if th, err := theme.Default(); err == nil {
+		return th
+	}
+	return fallbackTheme()
 }
 
 func paletteFor(th *theme.Theme) *theme.Theme {

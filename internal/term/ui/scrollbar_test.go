@@ -362,6 +362,23 @@ func TestScrollbar(t *testing.T) {
 		}, glyphs)
 	})
 
+	t.Run("follows a change to the inactive dim", func(t *testing.T) {
+		e := editorWithText(t, numberedLines(200))
+		e.Options().Scrollbar = true
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 12)
+		assert.NoError(t, e.SplitFocused(view.LayoutVertical))
+		m = resize(m, 80, 12)
+		before := unfocusedScrollbarCell(t, m)
+
+		e.Options().InactiveDim = e.Options().InactiveDim + 30
+		e.Tree().Range(func(p view.Pane) bool {
+			p.MarkDirty()
+			return true
+		})
+
+		assert.NotEqual(t, before, unfocusedScrollbarCell(t, m))
+	})
+
 	t.Run("a mark low in a cell draws low", func(t *testing.T) {
 		assert.Equal(t, "\u2594", scrollbarMarkGlyph(t, 61))
 		assert.Equal(t, "\u2581", scrollbarMarkGlyph(t, 76))
@@ -672,4 +689,19 @@ func scrollbarMarkGlyph(t *testing.T, line int) string {
 	marked := markRows(cells)
 	assert.Len(t, marked, 2)
 	return string(cells[marked[1]].glyph)
+}
+
+func unfocusedScrollbarCell(t *testing.T, m ui.Model) scrollbarCell {
+	t.Helper()
+	rows := strings.Split(m.View().Content, "\n")
+	assert.NotEmpty(t, rows)
+	cells := rowCells(rows[0])
+	// the left pane's bar sits just before the split divider
+	for i, c := range cells {
+		if c.glyph == '\u2502' && i > 0 {
+			return cells[i-1]
+		}
+	}
+	t.Fatal("no split divider found")
+	return scrollbarCell{}
 }

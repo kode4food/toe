@@ -233,11 +233,16 @@ func (p *PickerComponent) handleExternalFileChange(
 	msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
-	if !isGitStatePath(msg.path) {
-		ps.preview.cache.invalidatePath(msg.path)
-		p.markDirty()
+	var cmd tea.Cmd
+	for _, path := range msg.paths {
+		if !isGitStatePath(path) {
+			ps.preview.cache.invalidatePath(path)
+			p.markDirty()
+		}
+		// each schedule bumps the generation, so only the last cmd survives
+		cmd = ps.scheduleFileRefresh(path)
 	}
-	return ignored(), ps.scheduleFileRefresh(msg.path)
+	return ignored(), cmd
 }
 
 func (p *PickerComponent) handleMouseClick(

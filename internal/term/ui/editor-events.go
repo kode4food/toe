@@ -135,8 +135,10 @@ func (ec *EditorComponent) handleExternalFileChanged(
 	msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
 	cx := ec.context
-	cx.Editor.ProcessExternalFileChange(msg.path)
-	reloadChangedImages(cx.Editor, msg.path)
+	for _, path := range msg.paths {
+		cx.Editor.ProcessExternalFileChange(path)
+		reloadChangedImages(cx.Editor, path)
+	}
 	refreshVCS(cx)
 	ec.syncEditorMessages()
 	return consumed(), cx.fileWatcher.nextCmd(cx.Editor)

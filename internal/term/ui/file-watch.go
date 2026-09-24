@@ -4,9 +4,11 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/rjeczalik/notify"
@@ -44,8 +46,15 @@ type (
 	}
 
 	externalFileChangedMsg struct {
-		path string
+		paths []string
 	}
+)
+
+// external tools write a file in bursts of small edits, so a quiet gap
+// collapses the burst into one reload and one VCS refresh
+const (
+	fileWatchQuiet    = 120 * time.Millisecond
+	fileWatchMaxDelay = 750 * time.Millisecond
 )
 
 func newFileWatcher() *fileWatcher {
@@ -206,17 +215,46 @@ func (w *fileWatcher) nextCmd(e *view.Editor) tea.Cmd {
 	}
 	w.sync(e)
 	return func() tea.Msg {
-		for {
-			select {
-			case ev := <-w.events:
-				if w.enabled.Load() &&
-					ev.registration.active.Load() {
-					return externalFileChangedMsg{path: ev.path}
-				}
-			case <-w.done:
-				return nil
-			}
+		path, ok := w.nextPath()
+		if !ok {
+			return nil
 		}
+		return externalFileChangedMsg{paths: w.coalesce(path)}
+	}
+}
+
+func (w *fileWatcher) nextPath() (string, bool) {
+	for {
+		select {
+		case ev := <-w.events:
+			if w.enabled.Load() && ev.registration.active.Load() {
+				return ev.path, true
+			}
+		case <-w.done:
+			return "", false
+		}
+	}
+}
+
+func (w *fileWatcher) coalesce(first string) []string {
+	paths := map[string]struct{}{first: {}}
+	quiet := time.NewTimer(fileWatchQuiet)
+	defer quiet.Stop()
+	limit := time.NewTimer(fileWatchMaxDelay)
+	defer limit.Stop()
+	for {
+		select {
+		case ev := <-w.events:
+			if w.enabled.Load() && ev.registration.active.Load() {
+				paths[ev.path] = struct{}{}
+				quiet.Reset(fileWatchQuiet)
+			}
+			continue
+		case <-quiet.C:
+		case <-limit.C:
+		case <-w.done:
+		}
+		return slices.Collect(maps.Keys(paths))
 	}
 }
 

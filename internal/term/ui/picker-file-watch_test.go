@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,7 +23,11 @@ type countingPathSource struct {
 	loadCalls int
 }
 
-const fileWatchTestTimeout = 2 * time.Second
+const (
+	fileWatchTestTimeout = 2 * time.Second
+	fileWatchBurstWrites = 8
+	fileWatchBurstPause  = 5 * time.Millisecond
+)
 
 func (c *countingPathSource) ID() string {
 	return "counting"
@@ -111,6 +116,41 @@ func TestPickerFileWatch(t *testing.T) {
 		out = stripANSI(m.View().Content)
 		assert.Contains(t, out, "changed")
 		assert.NotContains(t, out, "original")
+	})
+
+	t.Run("burst of writes settles", func(t *testing.T) {
+		tmp := resolvedTempDir(t)
+		alpha := filepath.Join(tmp, "alpha.go")
+		assert.NoError(t, os.WriteFile(alpha, []byte("line 0\n"), 0o644))
+
+		e := view.NewEditor(tmp)
+		_, err := e.OpenFile(alpha)
+		assert.NoError(t, err)
+
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInCWD),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 100, 20)
+		m = sendKey(m, 'p')
+		for _, ch := range "alpha" {
+			m = sendKey(m, ch)
+		}
+
+		var body strings.Builder
+		for i := range fileWatchBurstWrites {
+			fmt.Fprintf(&body, "line %d\n", i)
+			assert.NoError(t,
+				os.WriteFile(alpha, []byte(body.String()), 0o644),
+			)
+			time.Sleep(fileWatchBurstPause)
+		}
+		m = drainFileWatch(t, m)
+
+		last := fmt.Sprintf("line %d", fileWatchBurstWrites-1)
+		assert.Contains(t, stripANSI(m.View().Content), last)
 	})
 
 	t.Run("new file appears", func(t *testing.T) {

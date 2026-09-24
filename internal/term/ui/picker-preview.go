@@ -58,6 +58,7 @@ type (
 
 		theme  *theme.Theme
 		styles *styles
+		bar    *scrollbar
 	}
 )
 
@@ -119,6 +120,29 @@ func (p *previewCtx) renderDocInto(
 	entry.renderText(p, buf, at, format)
 }
 
+type diffPreviewLinesArgs struct {
+	base    *previewDocEntry
+	working *previewDocEntry
+}
+
+func (p *previewCtx) diffPreviewLines(
+	args diffPreviewLinesArgs,
+) []diffPreviewLine {
+	c := &p.picker.preview.diffLines
+	if c.base == args.base && c.working == args.working {
+		return c.lines
+	}
+	c.base = args.base
+	c.working = args.working
+	c.lines = buildDiffPreviewLines(buildDiffPreviewLinesArgs{
+		kind:    p.item.DiffKind,
+		working: args.working.rope,
+		base:    args.base.rope,
+		hunks:   p.item.DiffHunks(),
+	})
+	return c.lines
+}
+
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
 	return diffGutterLines(p.item.DiffHunks(), text.LenLines())
 }
@@ -147,11 +171,9 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		highlight: p.highlight,
 		working:   work,
 		base:      base,
-		lines: buildDiffPreviewLines(buildDiffPreviewLinesArgs{
-			kind:    p.item.DiffKind,
-			working: work.rope,
-			base:    base.rope,
-			hunks:   p.item.DiffHunks(),
+		bar:       &p.picker.preview.bar,
+		lines: p.diffPreviewLines(diffPreviewLinesArgs{
+			base: base, working: work,
 		}),
 		format: language.TextFormatForConfig(
 			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,
@@ -233,6 +255,7 @@ func (p *previewDocEntry) renderText(
 		vScroll:   ctx.picker.preview.vScroll,
 		hScroll:   ctx.picker.preview.hScroll,
 		styles:    ctx.styles,
+		bar:       &ctx.picker.preview.bar,
 	}
 	renderPreviewDocInto(buf, r)
 	ctx.picker.preview.vScroll = r.vScroll

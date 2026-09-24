@@ -209,7 +209,10 @@ func (l *lspWorkspaceSymbolSource) item(
 	})
 	kind := symbolKind(sym.Kind)
 	icon := completionKindIcon(kind, e.Options().NerdFonts)
-	lbl, sec := PickerTrailingPath(sym.Name, fmt.Sprintf("%s:%d", path, line+1))
+	lbl, sec := PickerTrailingPath(PickerTrailingPathArgs{
+		Text: sym.Name,
+		Path: fmt.Sprintf("%s:%d", path, line+1),
+	})
 	return slab.Add(PickerItem{
 		Columns:     []string{icon, lbl},
 		StyleScopes: []string{completionKindStyleScope(kind), ""},

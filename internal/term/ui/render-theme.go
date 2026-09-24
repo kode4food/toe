@@ -114,7 +114,11 @@ func buildStylesWithBackground(
 	thumbBg := tint(bg)
 	for kind, fg := range colors {
 		st.scrollTrack[kind] = tui.Style{}.Fg(fg).Bg(bg)
-		st.scrollThumb[kind] = tui.Style{}.Fg(tint(fg)).Bg(thumbBg)
+		thumbFg := tint(fg)
+		if scrollMarkKind(kind).isDiff() {
+			thumbFg = fg
+		}
+		st.scrollThumb[kind] = tui.Style{}.Fg(thumbFg).Bg(thumbBg)
 	}
 	return st
 }

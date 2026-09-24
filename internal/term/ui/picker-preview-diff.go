@@ -14,6 +14,7 @@ type (
 		highlight func(string) tui.Style
 		working   *previewDocEntry
 		base      *previewDocEntry
+		bar       *scrollbar
 		lines     []diffPreviewLine
 
 		format *language.TextFormat
@@ -32,10 +33,17 @@ type (
 
 	diffPreviewLine struct {
 		kind diffLineKind
+		mark scrollMarkKind
 		line int
 	}
 
 	diffLineKind uint8
+
+	diffLineCache struct {
+		base    *previewDocEntry
+		working *previewDocEntry
+		lines   []diffPreviewLine
+	}
 
 	diffBaseKey struct {
 		path   string
@@ -92,9 +100,9 @@ type buildDiffPreviewLinesArgs struct {
 func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 	switch args.kind {
 	case view.FileChangeAdded, view.FileChangeUntracked:
-		return allLines(args.working, diffLineAdded)
+		return allLines(args.working, diffLineAdded, scrollMarkDiffAdded)
 	case view.FileChangeDeleted:
-		return allLines(args.base, diffLineRemoved)
+		return allLines(args.base, diffLineRemoved, scrollMarkDiffRemoved)
 	default:
 		var out []diffPreviewLine
 		nWork := args.working.LenLines()
@@ -106,15 +114,20 @@ func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 					line: l,
 				})
 			}
+			// a replacement marks its removed and added lines alike, so the
+			// scrollbar paints one run rather than two
+			mark := diffMarkKind(hunkGutterKind(h))
 			for l := h.BaseFrom; l < h.BaseTo; l++ {
 				out = append(out, diffPreviewLine{
 					kind: diffLineRemoved,
+					mark: mark,
 					line: l,
 				})
 			}
 			for l := h.From; l < h.To && l < nWork; l++ {
 				out = append(out, diffPreviewLine{
 					kind: diffLineAdded,
+					mark: mark,
 					line: l,
 				})
 			}
@@ -130,11 +143,13 @@ func buildDiffPreviewLines(args buildDiffPreviewLinesArgs) []diffPreviewLine {
 	}
 }
 
-func allLines(text core.Rope, kind diffLineKind) []diffPreviewLine {
+func allLines(
+	text core.Rope, kind diffLineKind, mark scrollMarkKind,
+) []diffPreviewLine {
 	n := text.LenLines()
 	out := make([]diffPreviewLine, 0, n)
 	for l := range n {
-		out = append(out, diffPreviewLine{kind: kind, line: l})
+		out = append(out, diffPreviewLine{kind: kind, mark: mark, line: l})
 	}
 	return out
 }
@@ -248,7 +263,8 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 func drawDiffPreviewScrollbar(
 	args *diffPreviewRender, buf *tui.Buffer, start int,
 ) {
-	bar := newScrollbar(
+	bar := args.bar
+	bar.reset(
 		scrollbarGeom{
 			rows:   args.area.Height,
 			maxTop: max(len(args.lines)-args.area.Height, 0),
@@ -260,11 +276,8 @@ func drawDiffPreviewScrollbar(
 		args.styles, start,
 	)
 	for row, dl := range args.lines {
-		switch dl.kind {
-		case diffLineAdded:
-			bar.addMark(row, scrollMarkDiffAdded)
-		case diffLineRemoved:
-			bar.addMark(row, scrollMarkDiffRemoved)
+		if dl.mark != scrollMarkNone {
+			bar.addMark(row, dl.mark)
 		}
 	}
 	bar.draw(buf)

@@ -269,6 +269,58 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "- line")
 	})
 
+	t.Run("contiguous preview marks", func(t *testing.T) {
+		t.Setenv("COLORTERM", "truecolor")
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		for _, tc := range []struct {
+			name    string
+			base    string
+			working string
+			fg      string
+		}{
+			{
+				name: "replacement",
+				base: strings.Repeat("line\n", 12),
+				working: strings.Repeat("changed\n", 4) +
+					strings.Repeat("line\n", 8),
+				fg: "38;2;137;180;250",
+			},
+			{
+				name: "addition",
+				base: strings.Repeat("line\n", 12),
+				working: strings.Repeat("added\n", 4) +
+					strings.Repeat("line\n", 12),
+				fg: "38;2;166;227;161",
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				repo := testutil.GitRepo(t)
+				path := testutil.GitCommitFile(t, repo, "mixed.txt",
+					[]byte(tc.base),
+				)
+				testutil.WriteFile(t, path, []byte(tc.working))
+				content := changedFilePicker(t, repo).View().Content
+				at := previewBarAt(t, content)
+				bottom := previewBarPoint(t, content)
+				rows := strings.Split(content, "\n")
+				last := -1
+				for y := at.Y; y <= bottom.Y; y++ {
+					cell := rowCells(rows[y])[at.X]
+					if cell.glyph == ' ' {
+						continue
+					}
+					assert.Equal(t, tc.fg, cell.style.fg)
+					assert.Equal(t, previewThumbBg, cell.style.bg)
+					if last >= 0 {
+						assert.Equal(t, last+1, y)
+					}
+					last = y
+				}
+				assert.Greater(t, last, at.Y)
+			})
+		}
+	})
+
 	t.Run("diff rows retain indent guides", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "indent.txt", []byte("\t\told\n"))

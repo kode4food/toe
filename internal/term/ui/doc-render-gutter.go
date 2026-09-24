@@ -187,16 +187,13 @@ func diffGutterLines(
 	}
 	out := map[int]diffGutterKind{}
 	for _, h := range hunks {
-		if h.PureRemoval() {
+		kind := hunkGutterKind(h)
+		if kind == diffGutterRemoved {
 			line := min(h.From, nLines-1)
 			if _, ok := out[line]; !ok {
-				out[line] = diffGutterRemoved
+				out[line] = kind
 			}
 			continue
-		}
-		kind := diffGutterModified
-		if h.PureInsertion() {
-			kind = diffGutterAdded
 		}
 		for line := h.From; line < h.To && line < nLines; line++ {
 			out[line] = kind
@@ -223,4 +220,15 @@ func diagnosticGutterLines(
 		}
 	}
 	return out
+}
+
+func hunkGutterKind(h view.DiffHunk) diffGutterKind {
+	switch {
+	case h.PureRemoval():
+		return diffGutterRemoved
+	case h.PureInsertion():
+		return diffGutterAdded
+	default:
+		return diffGutterModified
+	}
 }

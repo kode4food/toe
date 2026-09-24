@@ -48,6 +48,8 @@ type (
 		lineCount     int
 		cache         previewCache
 		diffBaseCache map[diffBaseKey]*previewDocEntry
+		diffLines     diffLineCache
+		bar           scrollbar
 	}
 
 	loadState struct {
@@ -650,13 +652,19 @@ func PickerNamePath(rel string) (string, int) {
 	return name + " " + dir, len([]rune(name)) + 1
 }
 
+// PickerTrailingPathArgs bundles a row's own text with the path trailing it
+type PickerTrailingPathArgs struct {
+	Text string
+	Path string
+}
+
 // PickerTrailingPath trails a path behind a row's own text, and returns the
 // rune offset where that path begins
-func PickerTrailingPath(text, rel string) (string, int) {
-	if text == "" {
-		return rel, 0
+func PickerTrailingPath(args PickerTrailingPathArgs) (string, int) {
+	if args.Text == "" {
+		return args.Path, 0
 	}
-	return text + " " + rel, len([]rune(text)) + 1
+	return args.Text + " " + args.Path, len([]rune(args.Text)) + 1
 }
 
 func pickerSortText(item *PickerItem) string {

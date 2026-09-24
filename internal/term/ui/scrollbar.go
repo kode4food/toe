@@ -52,26 +52,7 @@ const (
 
 	scrollbarThumbTint = 0.40
 	scrollbarMarkSlots = 3
-	scrollbarStackRows = 64
 )
-
-func newScrollbar(
-	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
-) *scrollbar {
-	var marks [scrollbarStackRows * scrollbarMarkSlots]scrollMark
-	slots := max(g.rows, 0) * scrollbarMarkSlots
-	buf := marks[:]
-	if slots > len(buf) {
-		buf = make([]scrollMark, slots)
-	}
-	return &scrollbar{
-		styles:  styles,
-		marks:   buf[:slots],
-		at:      at,
-		geom:    g,
-		topLine: topLine,
-	}
-}
 
 func (s *scrollbar) reset(
 	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
@@ -90,14 +71,20 @@ func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
 	if line < 0 || line >= g.scrollLines() || g.rows <= 0 {
 		return
 	}
-	slot := g.slotAt(line)
-	mark := &s.marks[slot]
-	if kind > mark.kind {
-		mark.kind = kind
+	from := g.slotAt(line)
+	to := from + 1
+	if kind.isDiff() {
+		to = max(to, g.slotEnd(line))
 	}
-	if mark.count == 0 || mark.lastLine != line {
-		mark.lastLine = line
-		mark.count++
+	for slot := from; slot < to; slot++ {
+		mark := &s.marks[slot]
+		if kind > mark.kind {
+			mark.kind = kind
+		}
+		if mark.count == 0 || mark.lastLine != line {
+			mark.lastLine = line
+			mark.count++
+		}
 	}
 }
 
@@ -193,8 +180,17 @@ func (s scrollbarGeom) slotAt(line int) int {
 	return min(line*slots/s.scrollLines(), slots-1)
 }
 
+func (s scrollbarGeom) slotEnd(line int) int {
+	slots := s.rows * scrollbarMarkSlots
+	return min((line+1)*slots/s.scrollLines(), slots)
+}
+
 func (s scrollbarGeom) scrollLines() int {
 	return s.maxTop + s.rows
+}
+
+func (k scrollMarkKind) isDiff() bool {
+	return k >= scrollMarkDiffAdded && k <= scrollMarkDiffRemoved
 }
 
 type scrollbarGlyphArgs struct {

@@ -7,7 +7,6 @@ import (
 
 const (
 	RegisterSearch           = '/'
-	RegisterDefaultYank      = '"'
 	RegisterSelectionIndices = '#'
 	RegisterSelectionText    = '.'
 	RegisterDocumentPath     = '%'

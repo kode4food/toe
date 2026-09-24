@@ -6,7 +6,10 @@ import (
 	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
+	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/charmbracelet/x/ansi"
 
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/syntax"
@@ -20,6 +23,9 @@ type Model struct {
 	component  *EditorComponent
 	initCmd    tea.Cmd
 }
+
+// answered with CSI 6 ; height ; width t
+const requestCellSizeOp = 16
 
 // New creates an initialized Model for the given editor and keymaps
 func New(e *view.Editor, km *command.Keymaps) Model {
@@ -106,16 +112,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case imageTransmitMsg:
 		// Mark ready only after the escape reaches Bubble Tea's writer
 		return m, tea.Sequence(tea.Raw(msg.raw), func() tea.Msg {
-			return imageReadyMsg{id: msg.id, size: msg.size}
+			return imageReadyMsg{id: msg.id, state: msg.state}
 		})
-	case imageReadyMsg:
-		cx.images.sent[msg.id] = true
-		if cx.images.placed[msg.id] == msg.size {
-			cx.images.ready[msg.id] = msg.size
+	case uv.CellSizeEvent:
+		if cx.images.setCell(geom.Size{Width: msg.Width, Height: msg.Height}) {
 			m.markImageDirty()
 		}
-		// re-query even when a size was requested while this was in flight,
-		// so a starved request is retried now that the id is confirmed sent
+		return m, m.imageDisplayFrameCmd()
+	case imageReadyMsg:
+		cx.images.sent[msg.id] = true
+		if cx.images.placed[msg.id] == msg.state {
+			// only taking up the placement rearranges cells
+			placing := cx.images.ready[msg.id].cells != msg.state.cells
+			cx.images.ready[msg.id] = msg.state
+			if placing {
+				m.markImageDirty()
+			}
+		}
+		// re-query even when a size was requested while this was in flight, so
+		// a starved request is retried now that the id is confirmed sent
 		return m, m.imageDisplayFrameCmd()
 	default:
 		m.component.cancelAutoSizeFor(msg)
@@ -130,6 +145,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cx.fileWatcher.sync(cx.Editor)
 		return m, tea.Batch(
 			cmd, m.component.autoSizeCmd(), m.imageDisplayFrameCmd(),
+			cellSizeQueryCmd(msg),
 		)
 	}
 }
@@ -167,13 +183,18 @@ func (m Model) imageDisplayFrameCmd() tea.Cmd {
 		return nil
 	}
 	m.context.images.beginFrame()
-	return tea.Batch(m.imageDisplayCmd(), m.pickerImageCmd())
+	return tea.Batch(
+		m.imageDisplayCmd(), m.pickerImageCmd(), m.scrollbarImageCmd(),
+	)
 }
 
 func (m Model) hasImageSurface() bool {
 	cx := m.context
+	if cx.images.graphics && cx.Editor.Options().Scrollbar {
+		return true
+	}
 	if p, ok := m.compositor.activePreviewImager(); ok {
-		if p.hasPreviewImage(cx, m.compositor.size) {
+		if cx.images.graphics || p.hasPreviewImage(cx, m.compositor.size) {
 			return true
 		}
 	}
@@ -186,8 +207,10 @@ func (m Model) hasImageSurface() bool {
 }
 
 func (m Model) markImageDirty() {
-	m.context.Editor.Tree().Range(func(p view.Pane) bool {
-		if _, ok := p.(*ImagePane); ok {
+	cx := m.context
+	bars := cx.images.graphics && cx.Editor.Options().Scrollbar
+	cx.Editor.Tree().Range(func(p view.Pane) bool {
+		if _, ok := p.(*ImagePane); ok || bars {
 			p.MarkDirty()
 		}
 		return true
@@ -212,4 +235,12 @@ func underHome(path string) string {
 		return path
 	}
 	return filepath.Join("~", rel)
+}
+
+// a font size change arrives as a resize, so the answer is re-asked for
+func cellSizeQueryCmd(msg tea.Msg) tea.Cmd {
+	if _, ok := msg.(tea.WindowSizeMsg); !ok {
+		return nil
+	}
+	return tea.Raw(ansi.WindowOp(requestCellSizeOp))
 }

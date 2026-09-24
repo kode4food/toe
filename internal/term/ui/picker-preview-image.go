@@ -46,15 +46,19 @@ func (p *previewImageEntry) renderInto(
 func (p *PickerComponent) previewImageCmd(
 	cx *Context, screen geom.Size,
 ) tea.Cmd {
+	var cmd tea.Cmd
 	if res, ok := p.previewImage(cx, screen); ok {
-		return cx.images.display(displayArgs{
+		cmd = cx.images.display(displayArgs{
 			img:   res.entry.image,
 			path:  res.entry.path,
 			id:    res.entry.id,
 			cells: res.cells,
 		})
 	}
-	return nil
+	preview := &p.state.preview
+	return tea.Batch(cmd, preview.barImg.displayCmd(
+		cx.images, &preview.bar, scrollbarImageID(previewScrollbarSurface),
+	))
 }
 
 func (p *PickerComponent) hasPreviewImage(

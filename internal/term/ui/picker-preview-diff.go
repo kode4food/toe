@@ -15,6 +15,8 @@ type (
 		working   *previewDocEntry
 		base      *previewDocEntry
 		bar       *scrollbar
+		barImg    *scrollbarImageState
+		barPlace  scrollbarPlacement
 		lines     []diffPreviewLine
 
 		format *language.TextFormat
@@ -280,7 +282,7 @@ func drawDiffPreviewScrollbar(
 			bar.addMark(row, dl.mark)
 		}
 	}
-	bar.draw(buf)
+	args.barPlace.draw(bar, args.barImg, buf)
 }
 
 func tintToward(args tintColors) tui.Color {

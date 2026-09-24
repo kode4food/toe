@@ -16,25 +16,31 @@ import (
 
 type (
 	imageRegistry struct {
-		placed       map[uint32]geom.Size
-		ready        map[uint32]geom.Size
+		placed       map[uint32]imageState
+		ready        map[uint32]imageState
 		sent         map[uint32]bool
 		used         map[uint32]int
 		placeholders map[geom.Size][]string
+		cell         geom.Size
 		frame        int
 		graphics     bool
 		remote       bool
 	}
 
 	imageReadyMsg struct {
-		id   uint32
-		size geom.Size
+		id    uint32
+		state imageState
 	}
 
 	imageTransmitMsg struct {
-		raw  string
-		id   uint32
-		size geom.Size
+		raw   string
+		id    uint32
+		state imageState
+	}
+
+	imageState struct {
+		cells geom.Size
+		rev   uint64
 	}
 )
 
@@ -55,14 +61,22 @@ const (
 
 func newImageRegistry() *imageRegistry {
 	return &imageRegistry{
-		placed:       map[uint32]geom.Size{},
-		ready:        map[uint32]geom.Size{},
+		placed:       map[uint32]imageState{},
+		ready:        map[uint32]imageState{},
 		sent:         map[uint32]bool{},
 		used:         map[uint32]int{},
 		placeholders: map[geom.Size][]string{},
 		graphics:     graphicsSupported(),
 		remote:       isRemoteSession(),
 	}
+}
+
+func (r *imageRegistry) setCell(size geom.Size) bool {
+	if r.cell == size || size.IsEmpty() {
+		return false
+	}
+	r.cell = size
+	return true
 }
 
 func (r *imageRegistry) beginFrame() {
@@ -102,20 +116,21 @@ type displayArgs struct {
 	path  string
 	id    uint32
 	cells geom.Size
+	rev   uint64
 }
 
 func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	if !r.graphics {
 		return nil
 	}
-	size := a.cells
+	state := imageState{cells: a.cells, rev: a.rev}
 	r.used[a.id] = r.frame
-	if r.ready[a.id] == size {
-		r.placed[a.id] = size
+	if r.ready[a.id] == state {
+		r.placed[a.id] = state
 		return nil
 	}
-	if r.placed[a.id] == size {
-		// already requested this exact size, so wait for its response rather
+	if r.placed[a.id] == state {
+		// already requested this exact state, so wait for its response rather
 		// than queuing a duplicate
 		return nil
 	}
@@ -125,20 +140,25 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	if everEmitted && !r.sent[a.id] {
 		return nil
 	}
-	r.preparePlaceholders(size)
-	r.placed[a.id] = size
-	if r.sent[a.id] {
-		put := putSeq(a.id, size)
+	r.preparePlaceholders(state.cells)
+	resize := r.placed[a.id].cells != state.cells
+	r.placed[a.id] = state
+	// a put re-places pixels the terminal holds, never new ones
+	if r.sent[a.id] && resize {
+		put := putSeq(a.id, state.cells)
 		return func() tea.Msg {
-			return imageTransmitMsg{raw: put, id: a.id, size: size}
+			return imageTransmitMsg{raw: put, id: a.id, state: state}
 		}
 	}
 	evict := r.evict(a.id)
 	remote := r.remote
+	first := !r.sent[a.id]
 	return func() tea.Msg {
 		// Let Bubble Tea enter the alternate screen before Kitty receives image
 		// data that the screen transition can discard
-		time.Sleep(imageTransmitDelay)
+		if first {
+			time.Sleep(imageTransmitDelay)
+		}
 		var buf bytes.Buffer
 		buf.WriteString(evict)
 		if err := transmit(transmitArgs{
@@ -146,12 +166,12 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 			img:    a.img,
 			path:   a.path,
 			id:     a.id,
-			cells:  size,
+			cells:  state.cells,
 			remote: remote,
 		}); err != nil {
 			return nil
 		}
-		return imageTransmitMsg{raw: buf.String(), id: a.id, size: size}
+		return imageTransmitMsg{raw: buf.String(), id: a.id, state: state}
 	}
 }
 
@@ -174,12 +194,12 @@ func (r *imageRegistry) preparePlaceholders(cells geom.Size) {
 }
 
 func (r *imageRegistry) isReady(id uint32, cells geom.Size) bool {
-	return r.ready[id] == cells
+	return r.ready[id].cells == cells
 }
 
 func (r *imageRegistry) readySize(id uint32) (geom.Size, bool) {
-	cells, ok := r.ready[id]
-	return cells, ok
+	state, ok := r.ready[id]
+	return state.cells, ok
 }
 
 func (m Model) imageDisplayCmd() tea.Cmd {
@@ -247,7 +267,7 @@ func transmit(args transmitArgs) error {
 		VirtualPlacement: true,
 	}
 	switch {
-	case args.remote:
+	case args.remote || args.path == "":
 		opts.Transmission, opts.Chunk = kitty.Direct, true
 		return kitty.EncodeGraphics(args.buf, args.img, opts)
 	case args.img.format == "png":

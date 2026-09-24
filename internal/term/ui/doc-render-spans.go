@@ -267,12 +267,10 @@ func (r *renderPass) prepareContentRender(
 				X: target.area.X + target.area.Width,
 				Y: target.area.Y,
 			},
+			cursors: cursorLines,
 			id:      v.ID(),
 			topLine: anchorLine,
 		})
-		for line := range cursorLines {
-			bar.addMark(line, scrollMarkCursor)
-		}
 	}
 
 	return &contentRenderState{

@@ -80,6 +80,7 @@ type (
 	viewScrollbar struct {
 		bar       scrollbar
 		markers   scrollbar
+		img       scrollbarImageState
 		doc       *docRenderCache
 		rev       int
 		gutterRev int
@@ -164,6 +165,7 @@ type ensureScrollbarArgs struct {
 	doc     *docRenderCache
 	geom    scrollbarGeom
 	at      geom.Point
+	cursors map[int]struct{}
 	id      view.Id
 	topLine int
 }
@@ -176,10 +178,13 @@ func (r *renderCache) ensureScrollbar(args ensureScrollbarArgs) *scrollbar {
 	}
 	bar.bar.reset(args.geom, args.at, args.styles, args.topLine)
 	copy(bar.bar.marks, bar.staticMarks(args.doc))
+	for line := range args.cursors {
+		bar.bar.addMark(line, scrollMarkCursor)
+	}
 	return &bar.bar
 }
 
-func (v *viewScrollbar) staticMarks(doc *docRenderCache) []scrollMark {
+func (v *viewScrollbar) staticMarks(doc *docRenderCache) []scrollMarkKind {
 	if v.doc == doc && v.rev == doc.searchRev &&
 		v.gutterRev == doc.gutterRev && v.pattern == doc.searchPattern &&
 		v.markers.geom == v.bar.geom {
@@ -190,13 +195,7 @@ func (v *viewScrollbar) staticMarks(doc *docRenderCache) []scrollMark {
 	v.gutterRev = doc.gutterRev
 	v.pattern = doc.searchPattern
 	v.markers.reset(v.bar.geom, geom.Point{}, nil, 0)
-	v.markers.addSearchMarks(doc.searchSpans, doc.lineIndex)
-	for line, kind := range doc.diffLines {
-		v.markers.addMark(line, diffMarkKind(kind))
-	}
-	for line, severity := range doc.diagLines {
-		v.markers.addMark(line, severityMarkKind(severity))
-	}
+	v.markers.addDocumentMarks(doc)
 	return v.markers.marks
 }
 

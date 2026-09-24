@@ -50,6 +50,7 @@ type (
 		diffBaseCache map[diffBaseKey]*previewDocEntry
 		diffLines     diffLineCache
 		bar           scrollbar
+		barImg        scrollbarImageState
 	}
 
 	loadState struct {

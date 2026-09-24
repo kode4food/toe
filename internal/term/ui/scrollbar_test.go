@@ -42,8 +42,10 @@ const (
 
 	benchmarkScrollbarLines = 100000
 	benchmarkDiagnosticStep = 50
-	scrollbarThinGlyphs     = "▔─▁"
-	scrollbarBlockGlyphs    = "▀▄█"
+	scrollbarThinGlyphs     = "▔▁"
+	scrollbarFullGlyph      = "█"
+	scrollbarUpperGlyph     = "▀"
+	scrollbarLowerGlyph     = "▄"
 )
 
 // DiffHunks returns the test's current changes
@@ -283,7 +285,7 @@ func TestScrollbar(t *testing.T) {
 		assert.Equal(t, scrollbarErrorFg, cells[row].style.fg)
 	})
 
-	t.Run("a run of lines draws one half block", func(t *testing.T) {
+	t.Run("a run of lines keeps one weight", func(t *testing.T) {
 		e := editorWithText(t, numberedLines(200))
 		e.Options().Scrollbar = true
 		doc := e.FocusedDocument()
@@ -307,8 +309,62 @@ func TestScrollbar(t *testing.T) {
 		marked := markRows(cells)
 		assert.Len(t, marked, 2)
 		row := marked[1]
-		assert.Contains(t, scrollbarBlockGlyphs, string(cells[row].glyph))
+		assert.Contains(t, scrollbarThinGlyphs, string(cells[row].glyph))
 		assert.Equal(t, scrollbarErrorFg, cells[row].style.fg)
+	})
+
+	t.Run("a hunk spanning a cell draws full", func(t *testing.T) {
+		e := editorWithText(t, numberedLines(200))
+		e.Options().Scrollbar = true
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		e.SetVersionControl(&scrollbarVersionControl{
+			VersionControl: s,
+			hunks:          []view.DiffHunk{{From: 0, To: 60}},
+		})
+		m := resize(
+			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
+		)
+
+		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+
+		glyphs := map[string]bool{}
+		for _, row := range markRows(cells) {
+			glyphs[string(cells[row].glyph)] = true
+		}
+		assert.True(t, glyphs[scrollbarFullGlyph])
+	})
+
+	t.Run("a hunk reads as one continuous span", func(t *testing.T) {
+		e := editorWithText(t, numberedLines(200))
+		e.Options().Scrollbar = true
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		// a cell is worth about 19 lines: into one, over one, into a third
+		e.SetVersionControl(&scrollbarVersionControl{
+			VersionControl: s,
+			hunks:          []view.DiffHunk{{From: 102, To: 145}},
+		})
+		m := resize(
+			ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
+		)
+
+		cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+
+		marked := markRows(cells)
+		assert.Len(t, marked, 4)
+		var glyphs []string
+		for _, row := range marked[1:] {
+			glyphs = append(glyphs, string(cells[row].glyph))
+		}
+		assert.Equal(t, []string{
+			scrollbarLowerGlyph, scrollbarFullGlyph, scrollbarUpperGlyph,
+		}, glyphs)
+	})
+
+	t.Run("a mark low in a cell draws low", func(t *testing.T) {
+		assert.Equal(t, "\u2594", scrollbarMarkGlyph(t, 61))
+		assert.Equal(t, "\u2581", scrollbarMarkGlyph(t, 76))
 	})
 
 	t.Run("marks the cursor line", func(t *testing.T) {
@@ -557,7 +613,7 @@ func scrollbarEditor(t *testing.T, lines int, bar bool) string {
 func numberedLines(n int) string {
 	var sb strings.Builder
 	for i := range n {
-		fmt.Fprintf(&sb, "line %d\n", i)
+		_, _ = fmt.Fprintf(&sb, "line %d\n", i)
 	}
 	return sb.String()
 }
@@ -596,4 +652,24 @@ func rowCells(row string) []scrollbarCell {
 		row = row[n:]
 	}
 	return out
+}
+
+func scrollbarMarkGlyph(t *testing.T, line int) string {
+	t.Helper()
+	e := editorWithText(t, numberedLines(200))
+	e.Options().Scrollbar = true
+	doc := e.FocusedDocument()
+	at, err := doc.Text().LineToChar(line)
+	assert.NoError(t, err)
+	doc.ReplaceDiagnostics("test", []view.Diagnostic{{
+		Range:    core.Span{From: at, To: at + 1},
+		Severity: view.DiagnosticSeverityError,
+	}})
+	m := resize(
+		ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight,
+	)
+	cells := scrollbarCells(t, m.View().Content, scrollbarRows)
+	marked := markRows(cells)
+	assert.Len(t, marked, 2)
+	return string(cells[marked[1]].glyph)
 }

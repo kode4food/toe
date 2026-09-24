@@ -1,38 +1,51 @@
-package ui
+package ui_test
 
 import (
+	"image/color"
+	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	tea "charm.land/bubbletea/v2"
 
-	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/term/command"
+	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/view"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestImageDisplayNoStarvation guards a resize held during an in-flight
 // initial transmit against being dropped instead of retried once sent
 func TestImageDisplayNoStarvation(t *testing.T) {
-	r := newImageRegistry()
-	r.graphics = true
-	img := &Image{id: 1, format: "png"}
-	small := geom.Size{Width: 2, Height: 2}
-	size := geom.Size{Width: 100, Height: 50}
+	t.Setenv("KITTY_WINDOW_ID", "1")
+	root := t.TempDir()
+	path := writeRenderImage(t, root, 40, 20, color.RGBA{G: 255, A: 255})
+	e := view.NewEditor(root)
+	openRenderImagePane(t, e, path)
+	m := ui.New(e, command.NewKeymaps())
 
-	// first request (pre-layout, degenerate size) is in flight, unconfirmed
-	cmd1 := r.display(displayArgs{img: img, path: "x", id: 7, cells: small})
-	assert.NotNil(t, cmd1, "first request must transmit")
+	m2, inFlight := m.Update(tea.WindowSizeMsg{Width: 20, Height: 10})
+	m = m2.(ui.Model)
 
-	// a second, different size arrives before the first is confirmed sent,
-	// must be held, not turned into a premature put
-	cmd2 := r.display(displayArgs{img: img, path: "x", id: 7, cells: size})
-	assert.Nil(t, cmd2, "must not put before the initial transmit is sent")
-	assert.Equal(t, small, r.placed[7],
-		"the unconfirmed size must not be overwritten while suppressed")
+	// held: a put now would name an id the terminal lacks
+	m2, held := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = m2.(ui.Model)
+	m, raws := collectModelRawMsgs(m, held)
+	assert.Empty(t, imagePlacementSizes(raws))
 
-	// the initial transmit lands
-	r.sent[7] = true
+	_, raws = collectModelRawMsgs(m, inFlight)
+	sizes := imagePlacementSizes(raws)
+	assert.NotEmpty(t, sizes)
+	assert.NotEqual(t, sizes[0], sizes[len(sizes)-1])
+}
 
-	// the held request must now go through
-	cmd3 := r.display(displayArgs{img: img, path: "x", id: 7, cells: size})
-	assert.NotNil(t, cmd3, "the suppressed size must be retried, not lost")
-	assert.Equal(t, size, r.placed[7])
+func imagePlacementSizes(raws []string) []string {
+	re := regexp.MustCompile(`\x1b_G[^;]*\bc=(\d+),r=(\d+)`)
+	var out []string
+	for _, raw := range raws {
+		for _, m := range re.FindAllStringSubmatch(raw, -1) {
+			out = append(out, m[1]+"x"+m[2])
+		}
+	}
+	return out
 }

@@ -72,7 +72,7 @@ func (r *renderPass) renderContent(target *contentRenderTarget) {
 	r.paintContentOverlays(st)
 	renderContentRows(st)
 	if st.scrollbar != nil {
-		st.scrollbar.draw(st.buf)
+		r.drawScrollbar(st.scrollbar, st.buf, target.view.ID())
 	}
 	r.editor.cache.viewRowMaps[target.view.ID()] = st.rowMap
 }

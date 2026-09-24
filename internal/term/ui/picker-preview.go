@@ -56,9 +56,11 @@ type (
 		anchorLine int
 		lineCount  int
 
-		theme  *theme.Theme
-		styles *styles
-		bar    *scrollbar
+		theme    *theme.Theme
+		styles   *styles
+		bar      *scrollbar
+		barImg   *scrollbarImageState
+		barPlace scrollbarPlacement
 	}
 )
 
@@ -172,6 +174,8 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		working:   work,
 		base:      base,
 		bar:       &p.picker.preview.bar,
+		barImg:    &p.picker.preview.barImg,
+		barPlace:  p.scrollbarPlacement(),
 		lines: p.diffPreviewLines(diffPreviewLinesArgs{
 			base: base, working: work,
 		}),
@@ -256,6 +260,8 @@ func (p *previewDocEntry) renderText(
 		hScroll:   ctx.picker.preview.hScroll,
 		styles:    ctx.styles,
 		bar:       &ctx.picker.preview.bar,
+		barImg:    &ctx.picker.preview.barImg,
+		barPlace:  ctx.scrollbarPlacement(),
 	}
 	renderPreviewDocInto(buf, r)
 	ctx.picker.preview.vScroll = r.vScroll

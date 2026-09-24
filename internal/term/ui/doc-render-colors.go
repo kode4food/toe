@@ -19,7 +19,7 @@ const (
 	lumaScale = 1000
 )
 
-func (dc *docRenderCache) visibleHexColors(
+func (d *docRenderCache) visibleHexColors(
 	rawText string, lineIdx []lineIndexEntry, lines core.Span,
 ) []view.DocumentColor {
 	if len(lineIdx) == 0 {
@@ -29,11 +29,11 @@ func (dc *docRenderCache) visibleHexColors(
 	from := min(max(lines.From, 0), last)
 	to := min(max(lines.To, from), last)
 	start := lineIdx[from]
-	dc.hexScratch = hexColorSpans(
-		dc.hexScratch[:0],
-		rawText[start.byteStart:lineIdx[to].byteStart], start.charStart,
+	d.hexScratch = hexColorSpans(
+		d.hexScratch[:0], rawText[start.byteStart:lineIdx[to].byteStart],
+		start.charStart,
 	)
-	return dc.hexScratch
+	return d.hexScratch
 }
 
 func appendColorAnnotations(

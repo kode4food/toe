@@ -11,7 +11,7 @@ import (
 type (
 	scrollbar struct {
 		styles  *styles
-		marks   []scrollMark
+		marks   []scrollMarkKind
 		at      geom.Point
 		geom    scrollbarGeom
 		topLine int
@@ -20,12 +20,6 @@ type (
 	scrollbarGeom struct {
 		rows   int
 		maxTop int
-	}
-
-	scrollMark struct {
-		kind     scrollMarkKind
-		lastLine int
-		count    int
 	}
 
 	scrollMarkKind uint8
@@ -47,17 +41,17 @@ const (
 	scrollbarUpperGlyph = "\u2580" // '▀' - upper half block
 	scrollbarLowerGlyph = "\u2584" // '▄' - lower half block
 	scrollbarUpperThin  = "\u2594" // '▔' - upper one eighth block
-	scrollbarMidThin    = "\u2500" // '─' - box drawings light horizontal
 	scrollbarLowerThin  = "\u2581" // '▁' - lower one eighth block
 
 	scrollbarThumbTint = 0.40
-	scrollbarMarkSlots = 3
+	// the image draws a pixel row per slot, the glyph bar quantizes them
+	scrollbarSlotsPerCell = 48
 )
 
 func (s *scrollbar) reset(
 	g scrollbarGeom, at geom.Point, styles *styles, topLine int,
 ) {
-	n := max(g.rows, 0) * scrollbarMarkSlots
+	n := max(g.rows, 0) * scrollbarSlotsPerCell
 	s.marks = slices.Grow(s.marks, max(n-len(s.marks), 0))[:n]
 	clear(s.marks)
 	s.styles = styles
@@ -77,14 +71,7 @@ func (s *scrollbar) addMark(line int, kind scrollMarkKind) {
 		to = max(to, g.slotEnd(line))
 	}
 	for slot := from; slot < to; slot++ {
-		mark := &s.marks[slot]
-		if kind > mark.kind {
-			mark.kind = kind
-		}
-		if mark.count == 0 || mark.lastLine != line {
-			mark.lastLine = line
-			mark.count++
-		}
+		s.marks[slot] = max(s.marks[slot], kind)
 	}
 }
 
@@ -97,6 +84,16 @@ func (s *scrollbar) addSearchMarks(
 			line++
 		}
 		s.addMark(line, scrollMarkSearch)
+	}
+}
+
+func (s *scrollbar) addDocumentMarks(doc *docRenderCache) {
+	s.addSearchMarks(doc.searchSpans, doc.lineIndex)
+	for line, kind := range doc.diffLines {
+		s.addMark(line, diffMarkKind(kind))
+	}
+	for line, severity := range doc.diagLines {
+		s.addMark(line, severityMarkKind(severity))
 	}
 }
 
@@ -121,19 +118,20 @@ func (s *scrollbar) draw(buf *tui.Buffer) {
 }
 
 func (s *scrollbar) cell(row int) (string, scrollMarkKind) {
-	slots := s.marks[row*scrollbarMarkSlots:][:scrollbarMarkSlots]
+	slots := s.marks[row*scrollbarSlotsPerCell:][:scrollbarSlotsPerCell]
 	kind := scrollMarkNone
-	args := scrollbarGlyphArgs{}
+	args := scrollbarGlyphArgs{firstSlot: -1, lastSlot: -1}
 	for i, mark := range slots {
-		if mark.kind == scrollMarkNone {
+		if mark == scrollMarkNone {
 			continue
 		}
-		kind = max(kind, mark.kind)
-		args.slotsFilled++
-		args.lineCount += mark.count
-		args.slot = i
+		kind = max(kind, mark)
+		if args.firstSlot < 0 {
+			args.firstSlot = i
+		}
+		args.lastSlot = i
 	}
-	if args.slotsFilled == 0 {
+	if args.firstSlot < 0 {
 		return " ", kind
 	}
 	return scrollbarGlyph(args), kind
@@ -150,7 +148,7 @@ func (s scrollbarGeom) thumbEnd(topLine int) int {
 	if s.maxTop <= 0 {
 		return s.rows
 	}
-	end := s.slotAt(topLine+s.rows-1)/scrollbarMarkSlots + 1
+	end := s.slotAt(topLine+s.rows-1)/scrollbarSlotsPerCell + 1
 	return min(max(end, s.thumbLen()), s.rows)
 }
 
@@ -176,13 +174,17 @@ func (s scrollbarGeom) thumbLen() int {
 }
 
 func (s scrollbarGeom) slotAt(line int) int {
-	slots := s.rows * scrollbarMarkSlots
+	slots := s.slots()
 	return min(line*slots/s.scrollLines(), slots-1)
 }
 
 func (s scrollbarGeom) slotEnd(line int) int {
-	slots := s.rows * scrollbarMarkSlots
+	slots := s.slots()
 	return min((line+1)*slots/s.scrollLines(), slots)
+}
+
+func (s scrollbarGeom) slots() int {
+	return s.rows * scrollbarSlotsPerCell
 }
 
 func (s scrollbarGeom) scrollLines() int {
@@ -194,30 +196,28 @@ func (k scrollMarkKind) isDiff() bool {
 }
 
 type scrollbarGlyphArgs struct {
-	slotsFilled int
-	lineCount   int
-	slot        int
+	firstSlot int
+	lastSlot  int
 }
 
 func scrollbarGlyph(args scrollbarGlyphArgs) string {
-	if args.slotsFilled > 1 || args.lineCount > 1 {
-		switch {
-		case args.slotsFilled > 1:
-			return scrollbarFullGlyph
-		case args.slot == 0:
-			return scrollbarUpperGlyph
-		case args.slot == scrollbarMarkSlots-1:
-			return scrollbarLowerGlyph
+	last := scrollbarSlotsPerCell - 1
+	// a small mark says only where it is, so its weight must not wander
+	if (args.lastSlot-args.firstSlot+1)*2 < scrollbarSlotsPerCell {
+		if args.firstSlot+args.lastSlot >= last {
+			return scrollbarLowerThin
 		}
-		return scrollbarFullGlyph
-	}
-	switch args.slot {
-	case 0:
 		return scrollbarUpperThin
-	case scrollbarMarkSlots - 1:
-		return scrollbarLowerThin
 	}
-	return scrollbarMidThin
+	switch {
+	case args.firstSlot == 0 && args.lastSlot == last:
+		return scrollbarFullGlyph
+	case args.lastSlot == last:
+		return scrollbarLowerGlyph
+	case args.firstSlot == 0:
+		return scrollbarUpperGlyph
+	}
+	return scrollbarFullGlyph
 }
 
 func diffMarkKind(kind diffGutterKind) scrollMarkKind {

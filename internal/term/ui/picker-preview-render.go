@@ -145,7 +145,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 	}
 	bufRow := renderContentRows(st)
 	if bar != nil {
-		bar.draw(buf)
+		args.barPlace.draw(bar, args.barImg, buf)
 	}
 	applyRulers(applyRulersArgs{
 		buf:     buf,

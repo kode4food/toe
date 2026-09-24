@@ -141,7 +141,7 @@ func TestPickerFileWatch(t *testing.T) {
 
 		var body strings.Builder
 		for i := range fileWatchBurstWrites {
-			fmt.Fprintf(&body, "line %d\n", i)
+			_, _ = fmt.Fprintf(&body, "line %d\n", i)
 			assert.NoError(t,
 				os.WriteFile(alpha, []byte(body.String()), 0o644),
 			)

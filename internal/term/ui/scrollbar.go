@@ -3,6 +3,7 @@ package ui
 import (
 	"slices"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
@@ -163,6 +164,20 @@ func (s scrollbarGeom) topLineAt(row int) int {
 	end := min(wanted+s.thumbLen(), s.rows)
 	last := ((end-1)*s.scrollLines() + s.rows - 1) / s.rows
 	return min(max(last-s.rows+1, 0), s.maxTop)
+}
+
+// grown to the cell bar's length without favoring either end
+func (s scrollbarGeom) thumbSpan(topLine int) core.Span {
+	length := s.thumbLen() * scrollbarSlotsPerCell
+	if s.maxTop <= 0 {
+		return core.Span{From: 0, To: length}
+	}
+	from := s.slotAt(topLine)
+	if grow := length - (s.slotEnd(topLine+s.rows-1) - from); grow > 0 {
+		from -= grow / 2
+	}
+	from = min(max(from, 0), s.slots()-length)
+	return core.Span{From: from, To: from + length}
 }
 
 func (s scrollbarGeom) thumbLen() int {

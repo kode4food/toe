@@ -133,7 +133,7 @@ func PickerModule(model ui.Model) command.Module {
 			fileExplorerBoolOption(
 				"file-explorer.ignore-files",
 				&cfg.Editor.FileExplorer.IgnoreFiles,
-			).WithDoc("Honour ignore files"),
+			).WithDoc("Honor ignore files"),
 			fileExplorerBoolOption(
 				"file-explorer.flatten-dirs",
 				&cfg.Editor.FileExplorer.FlattenDirs,

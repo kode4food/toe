@@ -433,7 +433,7 @@ Files that are neither text nor a supported image open as a read-only hexadecima
 
 ## Prompts
 
-Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the centre of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does. Nothing is selected until you reach for it: `Tab` takes the top match into the input, the arrow keys highlight another one for `Tab` to take, and `Return` always submits the line as typed. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
+Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the center of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does. Nothing is selected until you reach for it: `Tab` takes the top match into the input, the arrow keys highlight another one for `Tab` to take, and `Return` always submits the line as typed. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
 
 | Key | Action |
 |-----|--------|

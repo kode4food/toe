@@ -75,7 +75,7 @@ func newFilePickerSource(e *view.Editor, dir string) *filePickerSource {
 	}
 }
 
-// Load walks the workspace for files, honouring ignore rules
+// Load walks the workspace for files, honoring ignore rules
 func (f *filePickerSource) Load() ui.PickerLoad {
 	return startFilePickerFeed(f.dir, pickerListRows(f.Editor))
 }

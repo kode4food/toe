@@ -31,11 +31,6 @@ type (
 		redraw *view.Tree
 		id     uint32
 	}
-
-	scrollbarRowScale struct {
-		height int
-		slots  int
-	}
 )
 
 const (
@@ -88,13 +83,6 @@ func (p *previewCtx) scrollbarPlacement() scrollbarPlacement {
 	}
 }
 
-func (s scrollbarRowScale) slotsAt(y int) core.Span {
-	return core.Span{
-		From: y * s.slots / s.height,
-		To:   max((y+1)*s.slots/s.height, y*s.slots/s.height+1),
-	}
-}
-
 func (s *scrollbar) rowKind(at core.Span) scrollMarkKind {
 	kind := scrollMarkNone
 	for slot := at.From; slot < min(at.To, len(s.marks)); slot++ {
@@ -103,26 +91,27 @@ func (s *scrollbar) rowKind(at core.Span) scrollMarkKind {
 	return kind
 }
 
-func (s scrollbarPlacement) active() bool {
-	return s.images != nil && s.images.graphics
-}
-
 func (s scrollbarPlacement) draw(
 	bar *scrollbar, st *scrollbarImageState, buf *tui.Buffer,
 ) {
-	if s.active() {
-		cell := s.images.cell
-		size := geom.Size{
-			Width: cell.Width, Height: bar.geom.rows * cell.Height,
-		}
-		if st.seal(bar, size); st.rev != st.imageRev && s.redraw != nil {
-			// this pass's transmit was built before it drew
-			s.redraw.Redraw()
-		}
+	if !s.images.graphics {
+		bar.draw(buf)
+		return
+	}
+	cell := s.images.cell
+	size := geom.Size{
+		Width: cell.Width, Height: bar.geom.rows * cell.Height,
+	}
+	// sealed even when nothing is painted, since the transmit that ends the
+	// wait is built from it
+	if st.seal(bar, size); st.rev != st.imageRev && s.redraw != nil {
+		s.redraw.Redraw()
 	}
 	cells := geom.Size{Width: 1, Height: bar.geom.rows}
-	if !s.active() || !s.images.isReady(s.id, cells) {
-		bar.draw(buf)
+	if !s.images.isReady(s.id, cells) {
+		if !s.images.settling() {
+			bar.draw(buf)
+		}
 		return
 	}
 	style := scrollbarImageStyle(s.id, bar.styles.scrollTrack[0].BgColor())
@@ -137,10 +126,7 @@ func (s scrollbarPlacement) draw(
 func (s *scrollbarImageState) seal(bar *scrollbar, size geom.Size) {
 	g := bar.geom
 	s.size = size
-	s.thumb = core.Span{
-		From: g.slotAt(bar.topLine),
-		To:   g.slotEnd(bar.topLine + g.rows - 1),
-	}
+	s.thumb = g.thumbSpan(bar.topLine)
 	if s.styles != bar.styles {
 		s.styles = bar.styles
 		s.styleRev++
@@ -194,17 +180,20 @@ func renderScrollbarImage(
 	marks *scrollbar, thumb core.Span, size geom.Size,
 ) *Image {
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
-	scale := scrollbarRowScale{
-		height: size.Height,
-		slots:  marks.geom.slots(),
+	slots := marks.geom.slots()
+	thumbPx := core.Span{
+		From: thumb.From * size.Height / slots,
+		To:   thumb.To * size.Height / slots,
 	}
 	// a lone line must not shrink to a hairline
-	thick := max(size.Height/(marks.geom.rows*8), 1)
+	thick := max(size.Height/marks.geom.rows/8, 1)
 	held := scrollMarkNone
 	pending := 0
 	for y := range size.Height {
-		at := scale.slotsAt(y)
-		kind := marks.rowKind(at)
+		from := y * slots / size.Height
+		kind := marks.rowKind(core.Span{
+			From: from, To: max((y+1)*slots/size.Height, from+1),
+		})
 		switch {
 		case kind != scrollMarkNone:
 			held = kind
@@ -214,7 +203,7 @@ func renderScrollbarImage(
 			pending--
 		}
 		style := marks.styles.scrollTrack[kind]
-		if at.From >= thumb.From && at.From < thumb.To {
+		if y >= thumbPx.From && y < thumbPx.To {
 			style = marks.styles.scrollThumb[kind]
 		}
 		paint := style.FgColor()

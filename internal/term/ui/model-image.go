@@ -22,6 +22,7 @@ type (
 		used         map[uint32]int
 		placeholders map[geom.Size][]string
 		cell         geom.Size
+		settleBy     time.Time
 		frame        int
 		graphics     bool
 		remote       bool
@@ -57,6 +58,8 @@ const (
 	// maxResidentImages caps images kept resident in the terminal. Soft: one
 	// shown this frame is never evicted, so the real ceiling is what fits
 	maxResidentImages = 24
+
+	settleWait = 250 * time.Millisecond
 )
 
 func newImageRegistry() *imageRegistry {
@@ -67,8 +70,13 @@ func newImageRegistry() *imageRegistry {
 		used:         map[uint32]int{},
 		placeholders: map[geom.Size][]string{},
 		graphics:     graphicsSupported(),
+		settleBy:     time.Now().Add(settleWait),
 		remote:       isRemoteSession(),
 	}
+}
+
+func (r *imageRegistry) settling() bool {
+	return r.graphics && time.Now().Before(r.settleBy)
 }
 
 func (r *imageRegistry) setCell(size geom.Size) bool {

@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
@@ -22,6 +23,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+// longer than the wait a quiet terminal is given to answer
+const scrollbarQuietWait = 400 * time.Millisecond
 
 func TestScrollbarImage(t *testing.T) {
 	t.Run("falls back to glyphs without graphics", func(t *testing.T) {
@@ -45,6 +49,37 @@ func TestScrollbarImage(t *testing.T) {
 		content := m.View().Content
 
 		assert.True(t, strings.ContainsRune(content, tui.PlaceholderRune))
+	})
+
+	t.Run("draws nothing until the image is up", func(t *testing.T) {
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		m := resize(
+			ui.New(scrollbarImageEditor(t), command.NewKeymaps()),
+			scrollbarWidth, scrollbarHeight,
+		)
+
+		assertNoScrollbar(t, m.View().Content)
+
+		m2, _ := m.Update(scrollbarTestCell())
+		m = m2.(ui.Model)
+
+		assertNoScrollbar(t, m.View().Content)
+	})
+
+	t.Run("gives up on a terminal that stays quiet", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: waits out the cell size query")
+		}
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		m := resize(
+			ui.New(scrollbarImageEditor(t), command.NewKeymaps()),
+			scrollbarWidth, scrollbarHeight,
+		)
+		time.Sleep(scrollbarQuietWait)
+
+		content := m.View().Content
+
+		assert.True(t, strings.ContainsAny(content, scrollbarThinGlyphs))
 	})
 
 	t.Run("marks land where their line falls", func(t *testing.T) {
@@ -83,6 +118,38 @@ func TestScrollbarImage(t *testing.T) {
 		assert.Equal(t, scrollbarTestCell().Width, img.Bounds().Dx())
 		assert.Equal(t,
 			scrollbarTestCell().Height*scrollbarRows, img.Bounds().Dy(),
+		)
+	})
+
+	t.Run("thumb matches the cell bar", func(t *testing.T) {
+		for _, key := range []string{
+			"KITTY_WINDOW_ID", "TERM", "TERM_PROGRAM",
+		} {
+			t.Setenv(key, "")
+		}
+		glyphs := resize(
+			ui.New(scrollbarImageEditor(t), command.NewKeymaps()),
+			scrollbarWidth, scrollbarHeight,
+		)
+		rows := 0
+		cells := scrollbarCells(t, glyphs.View().Content, scrollbarRows)
+		for _, c := range cells {
+			if c.style.bg == scrollbarThumbBg {
+				rows++
+			}
+		}
+		assert.NotZero(t, rows)
+
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		_, raws := scrollbarImageModelFor(
+			t, scrollbarImageEditor(t), scrollbarTestCell(),
+		)
+		img := decodeScrollbarImage(t, raws)
+
+		// only the cursor marks this document and it sits in the thumb, so the
+		// track color resumes exactly where the thumb ends
+		assert.Equal(t,
+			rows*scrollbarTestCell().Height, scrollbarThumbEnd(img),
 		)
 	})
 
@@ -202,4 +269,21 @@ func scrollbarMarkedRows(img image.Image, want color.RGBA) []int {
 		}
 	}
 	return out
+}
+
+func scrollbarThumbEnd(img image.Image) int {
+	b := img.Bounds()
+	track, _, _, _ := img.At(b.Min.X, b.Max.Y-1).RGBA()
+	for y := b.Max.Y - 1; y >= b.Min.Y; y-- {
+		if r, _, _, _ := img.At(b.Min.X, y).RGBA(); r != track {
+			return y - b.Min.Y + 1
+		}
+	}
+	return 0
+}
+
+func assertNoScrollbar(t *testing.T, content string) {
+	t.Helper()
+	assert.False(t, strings.ContainsRune(content, tui.PlaceholderRune))
+	assert.False(t, strings.ContainsAny(content, scrollbarThinGlyphs))
 }

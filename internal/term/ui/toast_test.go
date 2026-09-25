@@ -151,7 +151,7 @@ func TestToasts(t *testing.T) {
 		assert.NotEmpty(t, toastRow(m, "assert.AnError"))
 	})
 
-	t.Run("severity picks the colour", func(t *testing.T) {
+	t.Run("severity picks the color", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		t.Setenv("COLORTERM", "truecolor")
 		e := view.NewEditor(t.TempDir())

@@ -3,7 +3,7 @@ package command
 import "github.com/kode4food/toe/internal/view"
 
 // LabelNode names the node reached by each alternative in prefix, so a shared
-// menu (e.g. the Space and Ctrl-\ leaders) is labelled everywhere it is reached
+// menu (e.g. the Space and Ctrl-\ leaders) is labeled everywhere it is reached
 func (k *Keymaps) LabelNode(mode view.Mode, prefix KeyBinding, name string) {
 	for _, seq := range prefix {
 		k.declare(mode, seq).label = name

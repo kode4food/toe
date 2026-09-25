@@ -4,6 +4,7 @@ package ui
 import (
 	"os"
 	"path/filepath"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	uv "github.com/charmbracelet/ultraviolet"
@@ -16,13 +17,17 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Model is the root Bubbletea model, a thin wrapper around Compositor
-type Model struct {
-	compositor *Compositor
-	context    *Context
-	component  *EditorComponent
-	initCmd    tea.Cmd
-}
+type (
+	// Model is the root Bubbletea model, a thin wrapper around Compositor
+	Model struct {
+		compositor *Compositor
+		context    *Context
+		component  *EditorComponent
+		initCmd    tea.Cmd
+	}
+
+	settleTimeoutMsg struct{}
+)
 
 // answered with CSI 6 ; height ; width t
 const requestCellSizeOp = 16
@@ -64,6 +69,9 @@ func New(e *view.Editor, km *command.Keymaps) Model {
 			w.nextCmd(e),
 			vcsUpdateCmd(cx),
 			ec.redrawCmd(),
+			tea.Tick(settleWait, func(time.Time) tea.Msg {
+				return settleTimeoutMsg{}
+			}),
 		),
 	}
 }

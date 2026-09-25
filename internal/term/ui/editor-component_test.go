@@ -751,7 +751,7 @@ func TestFreeScroll(t *testing.T) {
 		before := v.Offset()
 
 		// the last content row before the status/command line sits inside the
-		// default 5-line scrolloff margin, so re-coupling scrolls to honour it
+		// default 5-line scrolloff margin, so re-coupling scrolls to honor it
 		lines := strings.Split(stripANSI(m.View().Content), "\n")
 		clickY := -1
 		for y := len(lines) - 2; y >= 0; y-- {

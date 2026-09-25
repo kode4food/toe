@@ -79,7 +79,7 @@ func (p *PickerComponent) HandleEvent(
 	return ignored(), nil
 }
 
-// Layout centres the picker, sizing the preview to the space left
+// Layout centers the picker, sizing the preview to the space left
 func (p *PickerComponent) Layout(
 	cx *Context, screen geom.Size,
 ) (geom.Area, bool) {

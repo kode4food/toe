@@ -1251,7 +1251,7 @@ func TestDocumentDetectLangByContent(t *testing.T) {
 	})
 
 	t.Run("chroma content fallback", func(t *testing.T) {
-		// no extension + unrecognized-path, but chroma can analyse the content
+		// no extension + unrecognized-path, but chroma can analyze the content
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "noext")
 		err := os.WriteFile(path,

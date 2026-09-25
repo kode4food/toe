@@ -15,6 +15,7 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/tui"
@@ -166,9 +167,52 @@ func TestScrollbarImage(t *testing.T) {
 		assert.Equal(t, before, after)
 		assert.NotEmpty(t, raw)
 	})
+
+	t.Run("coalesces in-flight scrolls", func(t *testing.T) {
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		e := scrollbarImageEditor(t)
+		m, _ := scrollbarImageModelFor(t, e, scrollbarTestCell())
+		v := e.FocusedView()
+
+		action.MoveDown(e)
+		v.MarkDirty()
+		_ = m.View().Content
+		m2, pending := m.Update(tea.FocusMsg{})
+		m = m2.(ui.Model)
+
+		action.MoveDown(e)
+		v.MarkDirty()
+		_ = m.View().Content
+		m2, held := m.Update(tea.FocusMsg{})
+		m = m2.(ui.Model)
+		m, raws := collectModelRawMsgs(m, held)
+		assert.Empty(t, raws)
+
+		_, raws = collectModelRawMsgs(m, pending)
+		assert.Len(t, raws, 2)
+	})
+
+	t.Run("skips hidden pane", func(t *testing.T) {
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		e := scrollbarImageEditor(t)
+		e.ResizeTree(geom.Size{Width: scrollbarWidth, Height: scrollbarHeight})
+		shown := e.FocusedView()
+		hidden := e.VSplit(shown.DocID())
+		assert.NotNil(t, hidden)
+		m, _ := scrollbarImageModelFor(t, e, scrollbarTestCell())
+
+		action.MoveDown(e)
+		hidden.MarkDirty()
+		_ = m.View().Content
+		e.Tree().SetFocus(shown.ID())
+		e.Tree().ToggleMaximized()
+		_, cmd := m.Update(tea.FocusMsg{})
+		_, raws := collectModelRawMsgs(m, cmd)
+		assert.Empty(t, raws)
+	})
 }
 
-// a height no whole number of slots divides, exercising the mapping
+// Uneven cell height exercises slot-to-pixel rounding
 func scrollbarTestCell() uv.CellSizeEvent {
 	return uv.CellSizeEvent{Width: 9, Height: 19}
 }
@@ -207,7 +251,7 @@ func scrollbarImageModelFor(
 	// nothing is drawn as an image until a cell size is known
 	m2, _ = m.Update(cell)
 	m = m2.(ui.Model)
-	// the transmit reads the bar this pass caches
+	// View caches the bar used by the next transmit
 	_ = m.View().Content
 	m2, cmd := m.Update(tea.FocusMsg{})
 	m = m2.(ui.Model)

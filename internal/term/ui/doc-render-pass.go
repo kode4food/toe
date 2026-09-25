@@ -10,7 +10,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
-	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -31,19 +30,24 @@ type (
 		focused    bool
 		background tui.Style
 	}
+
+	separatorNeighbors struct {
+		above bool
+		below bool
+		left  bool
+		right bool
+	}
 )
 
-const countArrow = "\u2192" // '→' - rightwards arrow
-
 const (
+	countArrow     = "\u2192" // '→' - rightwards arrow
+	hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
+
 	infoPopupChrome   = 3 // top border, breadcrumb, bottom border
 	infoPopupRule     = 1 // divider between the breadcrumb and the hints
 	infoPopupTitlePad = 2 // spaces flanking the title on the top border
 	inputCaretGap     = 1 // space between the breadcrumb and its caret
 )
-
-// marks a hint that opens another menu, a command's row is blank here
-const hintPrefixMark = "\u25b8" // '▸' - black right-pointing small triangle
 
 var splitSepIntersectionChars = [...]string{
 	tui.BorderH, tui.BorderH, tui.BorderH, tui.BorderV,
@@ -142,8 +146,6 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 		editorW = max(editorW-1, 0)
 	}
 
-	// Build the soft-wrap layout so vertical visibility is measured in visual
-	// rows. A nil layout keeps the text-line fallback when soft-wrap is off
 	text := doc.Text()
 	gutterW := gutterWidthFor(text, opts.Gutters)
 	format := doc.TextFormatForConfig(
@@ -192,7 +194,7 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 	})
 }
 
-func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
+func (r *renderPass) needsFullRedraw(cache *renderCache) bool {
 	cx := r.context
 	var force bool
 
@@ -216,7 +218,8 @@ func (r *renderPass) needsFullRedraw(cache *renderCache, th *theme.Theme) bool {
 	}
 
 	if cache.lastW != r.size.Width || cache.lastH != r.size.Height {
-		cache.lastW, cache.lastH = r.size.Width, r.size.Height
+		cache.lastW = r.size.Width
+		cache.lastH = r.size.Height
 		force = true
 	}
 
@@ -273,7 +276,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 	th := cx.Theme()
 	cache := r.editor.cache
 
-	redrawAll := r.needsFullRedraw(cache, th)
+	redrawAll := r.needsFullRedraw(cache)
 	bgTUI := th.Get("ui.background")
 	if redrawAll {
 		buf.Fill(bgTUI)
@@ -375,7 +378,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		right := horizCells[[2]int{x + 1, y}]
 		ch := tui.BorderV
 		if left || right {
-			ch = splitSepIntersectionChar(&separatorNeighbors{
+			ch = splitSepIntersectionChar(separatorNeighbors{
 				above: vertCells[[2]int{x, y - 1}],
 				below: vertCells[[2]int{x, y + 1}],
 				left:  left,
@@ -394,7 +397,7 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		below := vertCells[[2]int{x, y + 1}]
 		ch := tui.BorderH
 		if above || below {
-			ch = splitSepIntersectionChar(&separatorNeighbors{
+			ch = splitSepIntersectionChar(separatorNeighbors{
 				above: above,
 				below: below,
 				left:  horizCells[[2]int{x - 1, y}],
@@ -510,9 +513,9 @@ func (i infoPopupKey) equals(o infoPopupKey) bool {
 		slices.Equal(i.items, o.items)
 }
 
-func (ec *EditorComponent) overlayHead() string {
-	keys := ec.keys.path
-	if len(keys) == 0 && ec.keys.count == 0 {
+func (e *EditorComponent) overlayHead() string {
+	keys := e.keys.path
+	if len(keys) == 0 && e.keys.count == 0 {
 		return ""
 	}
 	var sb strings.Builder
@@ -522,7 +525,7 @@ func (ec *EditorComponent) overlayHead() string {
 		}
 		sb.WriteString(k.String())
 	}
-	return withCount(sb.String(), ec.keys.count)
+	return withCount(sb.String(), e.keys.count)
 }
 
 func withCount(keys string, count int) string {
@@ -544,21 +547,13 @@ func isPaneUnderOverlay(cx *Context, a geom.Area, y0 int) bool {
 }
 
 func clearPaneRect(buf *tui.Buffer, a geom.Area, y0 int, style tui.Style) {
-	// redo the full-buffer Fill writeFillToBuffer trusts, just this pane
 	top := y0 + a.Y
 	for y := top; y < top+a.Height; y++ {
 		buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, style)
 	}
 }
 
-type separatorNeighbors struct {
-	above bool
-	below bool
-	left  bool
-	right bool
-}
-
-func splitSepIntersectionChar(at *separatorNeighbors) string {
+func splitSepIntersectionChar(at separatorNeighbors) string {
 	idx := 0
 	if at.above {
 		idx |= 1

@@ -46,17 +46,18 @@ type (
 )
 
 const (
-	imageIDMask      = 0x7FFFFF
-	previewImageMask = 0x800000
-	imageViewSalt    = 0x9E3779
-	imageCellAspect  = 2
+	imageIDMask               = 0x7FFFFF
+	previewImageMask          = 0x800000
+	imagePlacementIDMask      = 0xFFFFFF
+	imageViewSalt             = 0x9E3779
+	imageCellAspect           = 2
+	kittyQuietNoResponse byte = 2
 
 	// imageTransmitDelay lets Bubble Tea enter the alternate screen before
 	// Kitty receives image data that the screen transition can discard
 	imageTransmitDelay = 40 * time.Millisecond
 
-	// maxResidentImages caps images kept resident in the terminal. Soft: one
-	// shown this frame is never evicted, so the real ceiling is what fits
+	// Images shown this frame cannot be evicted, so the cap is soft
 	maxResidentImages = 24
 
 	settleWait = 250 * time.Millisecond
@@ -99,13 +100,17 @@ func (r *imageRegistry) inFlight(id uint32) bool {
 func (r *imageRegistry) evict(keep uint32) string {
 	var buf bytes.Buffer
 	for len(r.placed) > maxResidentImages {
-		victim, oldest, found := uint32(0), r.frame, false
+		var victim uint32
+		oldest := r.frame
+		found := false
 		for id, used := range r.used {
 			if id == keep || used >= r.frame {
 				continue
 			}
 			if !found || used < oldest {
-				victim, oldest, found = id, used, true
+				victim = id
+				oldest = used
+				found = true
 			}
 		}
 		if !found {
@@ -162,8 +167,6 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	remote := r.remote
 	first := !r.sent[a.id]
 	return func() tea.Msg {
-		// Let Bubble Tea enter the alternate screen before Kitty receives image
-		// data that the screen transition can discard
 		if first {
 			time.Sleep(imageTransmitDelay)
 		}
@@ -267,7 +270,7 @@ func transmit(args transmitArgs) error {
 	opts := &kitty.Options{
 		Action:           kitty.TransmitAndPut,
 		Format:           kitty.PNG,
-		Quiet:            2,
+		Quiet:            kittyQuietNoResponse,
 		ID:               int(args.id),
 		PlacementID:      int(imagePlacementID(args.id)),
 		Columns:          args.cells.Width,
@@ -276,21 +279,23 @@ func transmit(args transmitArgs) error {
 	}
 	switch {
 	case args.remote || args.path == "":
-		opts.Transmission, opts.Chunk = kitty.Direct, true
-		return kitty.EncodeGraphics(args.buf, args.img, opts)
+		opts.Transmission = kitty.Direct
+		opts.Chunk = true
+		return kitty.EncodeGraphics(args.buf, args.img.Image, opts)
 	case args.img.format == "png":
-		opts.Transmission, opts.File = kitty.File, args.path
+		opts.Transmission = kitty.File
+		opts.File = args.path
 		return kitty.EncodeGraphics(args.buf, nil, opts)
 	default:
 		opts.Transmission = kitty.TempFile
-		return kitty.EncodeGraphics(args.buf, args.img, opts)
+		return kitty.EncodeGraphics(args.buf, args.img.Image, opts)
 	}
 }
 
 func putSeq(id uint32, cells geom.Size) string {
 	opts := &kitty.Options{
 		Action:           kitty.Put,
-		Quiet:            2,
+		Quiet:            kittyQuietNoResponse,
 		ID:               int(id),
 		PlacementID:      int(imagePlacementID(id)),
 		Columns:          cells.Width,
@@ -301,7 +306,7 @@ func putSeq(id uint32, cells geom.Size) string {
 }
 
 func imagePlacementID(id uint32) uint32 {
-	return max((id+1)&0xFFFFFF, 1)
+	return max((id+1)&imagePlacementIDMask, 1)
 }
 
 func deleteImageSeq(id uint32) string {
@@ -310,7 +315,7 @@ func deleteImageSeq(id uint32) string {
 		Delete:          kitty.DeleteID,
 		ID:              int(id),
 		DeleteResources: true,
-		Quiet:           2,
+		Quiet:           kittyQuietNoResponse,
 	}
 	return ansi.KittyGraphics(nil, opts.Options()...)
 }

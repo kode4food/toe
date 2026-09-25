@@ -34,23 +34,33 @@ type (
 )
 
 const (
-	scrollbarImageSalt      = 0x5C401B
-	previewScrollbarSurface = 0xB17E5C
-	scrollbarRevChunk       = 256
+	scrollbarImageSalt            = 0x5C401B
+	previewScrollbarSurface       = 0xB17E5C
+	scrollbarRevChunk             = 256
+	scrollbarMarkThicknessDivisor = 8
+	rgbaPixelBytes                = 4
+	scrollbarRevWordBytes         = 8
 )
 
 func (m Model) scrollbarImageCmd() tea.Cmd {
 	cx := m.context
 	cache := m.component.cache
-	if cache == nil || !cx.images.graphics {
+	if cache == nil || !cx.images.graphics || !cx.Editor.Options().Scrollbar {
 		return nil
 	}
 	var cmds []tea.Cmd
-	for id, bar := range cache.viewScrollbars {
-		cmds = append(cmds, bar.img.displayCmd(
-			cx.images, &bar.bar, scrollbarImageID(uint32(id)),
-		))
-	}
+	cx.Editor.Tree().RangeVisible(func(p view.Pane) bool {
+		bar := cache.viewScrollbars[p.ID()]
+		if bar == nil {
+			return true
+		}
+		if cmd := bar.img.displayCmd(
+			cx.images, &bar.bar, scrollbarImageID(uint32(p.ID())),
+		); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+		return true
+	})
 	if len(cmds) == 0 {
 		return nil
 	}
@@ -102,9 +112,9 @@ func (s scrollbarPlacement) draw(
 	size := geom.Size{
 		Width: cell.Width, Height: bar.geom.rows * cell.Height,
 	}
-	// sealed even when nothing is painted, since the transmit that ends the
-	// wait is built from it
-	if st.seal(bar, size); st.rev != st.imageRev && s.redraw != nil {
+	st.seal(bar, size)
+	if st.rev != st.imageRev && !s.images.inFlight(s.id) &&
+		s.redraw != nil {
 		s.redraw.Redraw()
 	}
 	cells := geom.Size{Width: 1, Height: bar.geom.rows}
@@ -126,17 +136,29 @@ func (s scrollbarPlacement) draw(
 func (s *scrollbarImageState) seal(bar *scrollbar, size geom.Size) {
 	g := bar.geom
 	s.size = size
-	s.thumb = g.thumbSpan(bar.topLine)
+	s.thumb = core.Span{}
+	if slots := g.slots(); slots > 0 {
+		thumb := g.thumbSpan(bar.topLine)
+		s.thumb = core.Span{
+			From: thumb.From * size.Height / slots,
+			To:   thumb.To * size.Height / slots,
+		}
+	}
 	if s.styles != bar.styles {
 		s.styles = bar.styles
 		s.styleRev++
 	}
 	h := fnv.New64a()
 	writeMarksRev(h, bar.marks)
-	writeScrollbarRev(h,
-		s.thumb.From, s.thumb.To, len(bar.marks),
-		size.Width, size.Height, int(s.styleRev),
-	)
+	writeScrollbarRev(scrollbarRevArgs{
+		hash:        h,
+		thumbStart:  s.thumb.From,
+		thumbEnd:    s.thumb.To,
+		markCount:   len(bar.marks),
+		pixelWidth:  s.size.Width,
+		pixelHeight: s.size.Height,
+		styleRev:    int(s.styleRev),
+	})
 	s.rev = h.Sum64()
 }
 
@@ -154,7 +176,7 @@ func (s *scrollbarImageState) ensure(bar *scrollbar) (*Image, uint64, bool) {
 func (s *scrollbarImageState) displayCmd(
 	images *imageRegistry, bar *scrollbar, id uint32,
 ) tea.Cmd {
-	if !images.graphics {
+	if !images.graphics || images.inFlight(id) {
 		return nil
 	}
 	img, rev, ok := s.ensure(bar)
@@ -181,12 +203,8 @@ func renderScrollbarImage(
 ) *Image {
 	img := image.NewRGBA(image.Rect(0, 0, size.Width, size.Height))
 	slots := marks.geom.slots()
-	thumbPx := core.Span{
-		From: thumb.From * size.Height / slots,
-		To:   thumb.To * size.Height / slots,
-	}
 	// a lone line must not shrink to a hairline
-	thick := max(size.Height/marks.geom.rows/8, 1)
+	thick := max(size.Height/marks.geom.rows/scrollbarMarkThicknessDivisor, 1)
 	held := scrollMarkNone
 	pending := 0
 	for y := range size.Height {
@@ -203,7 +221,7 @@ func renderScrollbarImage(
 			pending--
 		}
 		style := marks.styles.scrollTrack[kind]
-		if y >= thumbPx.From && y < thumbPx.To {
+		if y >= thumb.From && y < thumb.To {
 			style = marks.styles.scrollThumb[kind]
 		}
 		paint := style.FgColor()
@@ -218,8 +236,8 @@ func renderScrollbarImage(
 func paintScrollbarRow(img *image.RGBA, y int, c color.Color) {
 	r, g, b, a := c.RGBA()
 	at := img.PixOffset(0, y)
-	row := img.Pix[at : at+img.Bounds().Dx()*4]
-	for x := 0; x < len(row); x += 4 {
+	row := img.Pix[at : at+img.Bounds().Dx()*rgbaPixelBytes]
+	for x := 0; x < len(row); x += rgbaPixelBytes {
 		row[x] = uint8(r >> 8)
 		row[x+1] = uint8(g >> 8)
 		row[x+2] = uint8(b >> 8)
@@ -247,10 +265,23 @@ func writeMarksRev(h hash.Hash64, marks []scrollMarkKind) {
 	_, _ = h.Write(buf[:n])
 }
 
-func writeScrollbarRev(h hash.Hash64, vs ...int) {
-	var b [8]byte
-	for _, n := range vs {
+type scrollbarRevArgs struct {
+	hash        hash.Hash64
+	thumbStart  int
+	thumbEnd    int
+	markCount   int
+	pixelWidth  int
+	pixelHeight int
+	styleRev    int
+}
+
+func writeScrollbarRev(args scrollbarRevArgs) {
+	var b [scrollbarRevWordBytes]byte
+	for _, n := range [...]int{
+		args.thumbStart, args.thumbEnd, args.markCount,
+		args.pixelWidth, args.pixelHeight, args.styleRev,
+	} {
 		binary.LittleEndian.PutUint64(b[:], uint64(n))
-		_, _ = h.Write(b[:])
+		_, _ = args.hash.Write(b[:])
 	}
 }

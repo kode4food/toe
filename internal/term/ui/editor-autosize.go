@@ -13,6 +13,7 @@ type (
 	autoSizeState struct {
 		enabled     bool
 		viewID      view.Id
+		pane        view.Pane
 		area        geom.Area
 		targetWidth int
 		generation  int
@@ -47,11 +48,13 @@ func (ec *EditorComponent) autoSizeCmd() tea.Cmd {
 		return nil
 	}
 	area := pane.Area()
-	if id == ec.autoSize.viewID && area == ec.autoSize.area {
+	if id == ec.autoSize.viewID && pane == ec.autoSize.pane &&
+		area == ec.autoSize.area {
 		return nil
 	}
 	ec.cancelAutoSize()
 	ec.autoSize.viewID = id
+	ec.autoSize.pane = pane
 	ec.autoSize.area = area
 	if !ec.autoSize.enabled {
 		return nil

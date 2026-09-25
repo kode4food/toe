@@ -178,6 +178,30 @@ func TestAutoSizeResizeHold(t *testing.T) {
 	assert.Equal(t, 80, tp.Emulator().Width())
 }
 
+func TestAutoSizeAfterRevert(t *testing.T) {
+	e := view.NewEditor(t.TempDir())
+	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
+	e.VSplitNew()
+	e.Options().SetRulers([]int{80})
+	m.SetAutoSize(true)
+	m.SetAnimation(false)
+
+	m.TerminalAction(e)
+	tp, ok := e.Tree().Get(e.Tree().Focus()).(*ui.TerminalPane)
+	assert.True(t, ok)
+	t.Cleanup(func() { _ = tp.Stop() })
+
+	m.Update(tea.FocusMsg{})
+	assert.Equal(t, 80, tp.Area().Width)
+
+	assert.True(t, e.RevertPane(tp.ID()))
+	assert.Equal(t, 80, e.FocusedView().Area().Width)
+
+	// popping the terminal restores the editor, which must grow to its ruler
+	m.Update(tea.FocusMsg{})
+	assert.Equal(t, 89, e.FocusedView().Area().Width)
+}
+
 func TestAutoSizeAfterSwap(t *testing.T) {
 	e := view.NewEditor(t.TempDir())
 	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)

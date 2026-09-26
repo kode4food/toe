@@ -133,7 +133,7 @@ func (p *PickerComponent) sourceKey(
 		}), nil, true
 	}
 	ps.clearPreviewCache()
-	ps.refreshItems()
+	ps.refreshItems(false)
 	return consumed(), nil, true
 }
 

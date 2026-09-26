@@ -13,6 +13,10 @@ Notable changes to toe.
 
 - External changes are applied in a batch, so a file another tool writes a line at a time no longer causes a burst of reloads
 
+### Version control
+
+- Staging or reverting a row in the changed-file picker moves the selection to the next file in that group, so you can work down the list
+
 ## 0.4.5
 
 ### Interface

@@ -53,6 +53,13 @@ type (
 		barImg        scrollbarImageState
 	}
 
+	selectedTarget struct {
+		PickerTarget
+		group    int
+		ordinal  int
+		keepFile bool
+	}
+
 	loadState struct {
 		feedCmd     tea.Cmd
 		cancel      StopFunc
@@ -373,7 +380,9 @@ func (p *Picker) reload() tea.Cmd {
 	// a reload landing mid-refill would otherwise capture whatever row the
 	// half-filled list is sitting on, losing the row the user chose
 	if !p.load.wantSet {
-		p.load.wantTarget, p.load.wantSet = p.selectedTarget()
+		target := p.selectedTarget()
+		p.load.wantTarget = target.PickerTarget
+		p.load.wantSet = target.Valid()
 	}
 	cmd := p.loadItems()
 	p.applyWantedSelection()
@@ -424,7 +433,7 @@ func (p *Picker) flushFileChanges() tea.Cmd {
 		// Git state changes can regroup or remove rows
 		if isGitStatePath(path) {
 			p.clearPreviewCache()
-			p.refreshItems()
+			p.refreshItems(true)
 			continue
 		}
 		if info, err := os.Lstat(path); err == nil && info.IsDir() {
@@ -435,7 +444,7 @@ func (p *Picker) flushFileChanges() tea.Cmd {
 	return nil
 }
 
-func (p *Picker) refreshItems() {
+func (p *Picker) refreshItems(keepFile bool) {
 	src, ok := p.source.(SnapshotPickerSource)
 	if !ok {
 		return
@@ -444,11 +453,12 @@ func (p *Picker) refreshItems() {
 	if len(items) == 0 {
 		return
 	}
-	target, hadSelection := p.selectedTarget()
+	target := p.selectedTarget()
+	target.keepFile = keepFile
 	p.list.sections = nil
 	p.list.items = p.takeSections(items)
 	SortPickerItems(p.list.items)
-	p.rematchPreservingSelection(target, hadSelection)
+	p.rematchPreservingSelection(target)
 }
 
 // a path holds as many rows as the source reports for it, so the whole set is
@@ -458,11 +468,11 @@ func (p *Picker) reconcilePath(path string, items []*PickerItem) {
 	if len(items) == 0 && !slices.ContainsFunc(p.list.items, atPath) {
 		return
 	}
-	target, hadSelection := p.selectedTarget()
+	target := p.selectedTarget()
 	kept := slices.DeleteFunc(p.list.items, atPath)
 	p.list.items = append(kept, items...)
 	SortPickerItems(p.list.items)
-	p.rematchPreservingSelection(target, hadSelection)
+	p.rematchPreservingSelection(target)
 }
 
 func (p *Picker) takeSections(items []*PickerItem) []*PickerItem {
@@ -483,10 +493,10 @@ func (p *Picker) addItems(items []*PickerItem) {
 		return
 	}
 	if len(p.list.sections) > 0 {
-		target, hadSelection := p.selectedTarget()
+		target := p.selectedTarget()
 		p.list.items = append(p.list.items, items...)
 		SortPickerItems(p.list.items)
-		p.rematchPreservingSelection(target, hadSelection)
+		p.rematchPreservingSelection(target)
 		return
 	}
 	start := len(p.list.items)
@@ -513,40 +523,91 @@ func (p *Picker) finishLoad() {
 		return
 	}
 	// cursor 0 is the append-order default, not a row anyone picked
-	target, hadSelection := p.selectedTarget()
+	target := p.selectedTarget()
+	if p.list.cursor == 0 {
+		target = selectedTarget{}
+	}
 	SortPickerItems(p.list.items)
-	p.rematchPreservingSelection(target, hadSelection && p.list.cursor != 0)
+	p.rematchPreservingSelection(target)
 }
 
-func (p *Picker) rematchPreservingSelection(
-	target PickerTarget, hadSelection bool,
-) {
+func (p *Picker) rematchPreservingSelection(target selectedTarget) {
 	p.rebuildMatches()
-	if hadSelection {
-		p.restoreSelection(target)
-	} else if p.list.cursor >= len(p.list.matched) {
-		p.list.cursor = max(0, len(p.list.matched)-1)
-	}
+	p.restoreSelection(target)
 	p.applyWantedSelection()
 	p.ensureSelectable()
 	p.clampScroll()
 }
 
-func (p *Picker) selectedTarget() (PickerTarget, bool) {
+func (p *Picker) selectedTarget() selectedTarget {
 	if p.list.cursor < 0 || p.list.cursor >= len(p.list.matched) {
-		return PickerTarget{}, false
+		return selectedTarget{}
 	}
-	target := p.list.matched[p.list.cursor].item.Location.Target
-	return target, target.Valid()
+	item := p.list.matched[p.list.cursor].item
+	ordinal := 0
+	for _, m := range p.list.matched[:p.list.cursor] {
+		if !m.item.Section && m.item.Group == item.Group {
+			ordinal++
+		}
+	}
+	return selectedTarget{
+		PickerTarget: item.Location.Target,
+		group:        item.Group,
+		ordinal:      ordinal,
+	}
 }
 
-func (p *Picker) restoreSelection(target PickerTarget) {
-	if p.selectTarget(target) {
+func (p *Picker) restoreSelection(target selectedTarget) {
+	if target.Valid() && p.selectRestored(target) {
 		return
 	}
 	if p.list.cursor >= len(p.list.matched) {
 		p.list.cursor = max(0, len(p.list.matched)-1)
 	}
+}
+
+func (p *Picker) selectRestored(target selectedTarget) bool {
+	if p.selectTarget(target.PickerTarget) {
+		return true
+	}
+	if target.keepFile && p.selectFile(target.Path) {
+		return true
+	}
+	return p.selectInGroup(target)
+}
+
+func (p *Picker) selectFile(path string) bool {
+	if path == "" {
+		return false
+	}
+	atPath := itemsAtPath(path)
+	for i, m := range p.list.matched {
+		if !m.item.Section && atPath(m.item) {
+			p.list.cursor = i
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Picker) selectInGroup(target selectedTarget) bool {
+	found := -1
+	seen := 0
+	for i, m := range p.list.matched {
+		if m.item.Section || m.item.Group != target.group {
+			continue
+		}
+		found = i
+		if seen >= target.ordinal {
+			break
+		}
+		seen++
+	}
+	if found < 0 {
+		return false
+	}
+	p.list.cursor = found
+	return true
 }
 
 func (p *Picker) addDynamicItems(items []*PickerItem) {

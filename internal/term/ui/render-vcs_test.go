@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -516,6 +517,92 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.GreaterOrEqual(t, sectionRow(out, "Staged Changes"), 0)
 		assert.Contains(t, out, "solo.txt")
 		assert.Equal(t, "A  solo.txt", gitStatus(t, repo))
+	})
+
+	t.Run("staging walks the group it empties", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
+			testutil.GitCommitFile(t,
+				repo, testutil.GitName(name), []byte("one\n"),
+			)
+			testutil.WriteFile(t, filepath.Join(repo, name), []byte("two\n"))
+		}
+
+		m := changedFilePicker(t, repo)
+		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 a.txt")
+
+		m = sendCtrl(m, 'a')
+		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 b.txt")
+
+		m = sendCtrl(m, 'a')
+		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 c.txt")
+
+		m = sendCtrl(m, 'a')
+		out := stripANSI(m.View().Content)
+		assert.Equal(t, -1, sectionRow(out, "Changes"))
+		assert.Contains(t, out, "> \uf459 c.txt")
+	})
+
+	t.Run("external staging keeps the file selected", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
+			testutil.GitCommitFile(t,
+				repo, testutil.GitName(name), []byte("one\n"),
+			)
+			testutil.WriteFile(t, filepath.Join(repo, name), []byte("two\n"))
+		}
+
+		m := changedFilePicker(t, repo)
+		assert.Contains(t, stripANSI(m.View().Content), "> \uf459 a.txt")
+
+		testutil.RunGit(t, repo, "add", "a.txt")
+		m = drainFileWatch(t, m)
+
+		out := stripANSI(m.View().Content)
+		assert.GreaterOrEqual(t, sectionRow(out, "Staged Changes"), 0)
+		assert.Contains(t, out, "> \uf459 a.txt")
+	})
+
+	t.Run("staging re-anchors the row taking its place", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		deep := make([]string, 400)
+		for i := range deep {
+			deep[i] = "line\n"
+		}
+		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
+			testutil.GitCommitFile(t, repo, testutil.GitName(name),
+				[]byte(strings.Join(deep, "")),
+			)
+		}
+		testutil.GitCommitFile(t, repo, testutil.GitName("d.txt"),
+			[]byte(strings.Repeat("tall\n", 500)),
+		)
+		changed := slices.Clone(deep)
+		changed[49] = "CHANGED-DEEP\n"
+		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
+			testutil.WriteFile(t,
+				filepath.Join(repo, name), []byte(strings.Join(changed, "")),
+			)
+		}
+		testutil.WriteFile(t, filepath.Join(repo, "d.txt"),
+			[]byte("TOP\n"+strings.Repeat("tall\n", 500)),
+		)
+
+		m := changedFilePicker(t, repo)
+		for range 3 {
+			m = sendSpecialAndFeed(m, tea.KeyDown)
+			_ = m.View().Content
+		}
+		for range 40 {
+			m = updateAndFeed(m, tea.MouseWheelMsg{
+				X: 90, Y: 10, Button: tea.MouseWheelDown,
+			})
+		}
+		assert.NotContains(t, stripANSI(m.View().Content), "+ TOP")
+
+		m = sendCtrl(m, 'a')
+
+		assert.Contains(t, stripANSI(m.View().Content), "+ CHANGED-DEEP")
 	})
 
 	t.Run("ctrl+r unstages the selected file", func(t *testing.T) {

@@ -94,7 +94,7 @@ theme = "mocha"   # frappe | latte | macchiato | mocha
 | `insecure` | bool | `false` | Disable workspace trust checks |
 | `editor-config` | bool | `true` | Respect `.editorconfig` files |
 | `auto-session` | bool | `true` | Save/restore session automatically |
-| `file-watch` | bool | `true` | Detect external file changes |
+| `file-watch` | bool | `true` | Detect external changes to workspace files. Git state is always tracked |
 | `nerd-fonts` | bool | `true` | Enable enhanced UI glyphs |
 | `default-line-ending` | string | (system) | `lf`, `crlf`, or `native` |
 

@@ -3,7 +3,6 @@ package files
 import (
 	"os"
 	"path/filepath"
-	"slices"
 
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -26,7 +25,13 @@ type (
 	}
 )
 
-const explorerDirScope = "ui.text.directory"
+const (
+	explorerDirScope = "ui.text.directory"
+
+	explorerParentRank = "0"
+	explorerDirRank    = "1"
+	explorerFileRank   = "2"
+)
 
 // NewFileExplorer opens a file explorer rooted at the editor's working
 // directory
@@ -63,7 +68,13 @@ func newFileExplorerSource(
 
 // Load lists the entries of the current directory
 func (f *fileExplorerSource) Load() ui.PickerLoad {
-	return ui.PickerLoad{Items: f.readDir(), Stop: func() {}}
+	items, _ := f.readDir()
+	return ui.PickerLoad{Items: items, Stop: func() {}}
+}
+
+// Items returns the current directory entries for an existing picker
+func (f *fileExplorerSource) Items() ([]*ui.PickerItem, bool) {
+	return f.readDir()
 }
 
 // Accept opens the chosen file, or descends into a directory
@@ -89,12 +100,22 @@ func (f *fileExplorerSource) Navigate(item *ui.PickerItem) ui.PickerFunc {
 	}
 }
 
-func (f *fileExplorerSource) readDir() []*ui.PickerItem {
+func (f *fileExplorerSource) readDir() ([]*ui.PickerItem, bool) {
 	entries, err := os.ReadDir(f.root)
 	if err != nil {
-		return nil
+		return nil, false
 	}
-	var dirs, files []string
+	var items []*ui.PickerItem
+	var slab ui.PickerItemSlab
+	parent, _ := filepath.Abs(filepath.Join(f.root, ".."))
+	if parent != f.root {
+		items = append(items, f.makeDirItem(makeDirItemArgs{
+			slab:    &slab,
+			rank:    explorerParentRank,
+			display: "../",
+			path:    parent,
+		}))
+	}
 	for _, entry := range entries {
 		full := filepath.Join(f.root, entry.Name())
 		rel := filepath.ToSlash(entry.Name())
@@ -111,70 +132,56 @@ func (f *fileExplorerSource) readDir() []*ui.PickerItem {
 		}) {
 			continue
 		}
-		if pickerDirEntryIsDir(entry, full, f.opts.FollowSymlinks) {
-			if f.opts.FlattenDirs {
-				full = flattenExplorerDir(full, f.opts.FollowSymlinks)
-			}
-			dirs = append(dirs, full)
-		} else {
-			files = append(files, full)
+		if !pickerDirEntryIsDir(entry, full, f.opts.FollowSymlinks) {
+			items = append(items, f.makeFileItem(&slab, full))
+			continue
 		}
-	}
-	slices.Sort(dirs)
-	slices.Sort(files)
-
-	var items []*ui.PickerItem
-	var slab ui.PickerItemSlab
-	parent, _ := filepath.Abs(filepath.Join(f.root, ".."))
-	if parent != f.root {
-		items = append(items, f.makeDirItem(makeDirItemArgs{
-			slab:    &slab,
-			display: "../",
-			path:    parent,
-		}))
-	}
-	for _, path := range dirs {
-		rel, err := filepath.Rel(f.root, path)
+		if f.opts.FlattenDirs {
+			full = flattenExplorerDir(full, f.opts.FollowSymlinks)
+		}
+		dirRel, err := filepath.Rel(f.root, full)
 		if err != nil {
-			rel = filepath.Base(path)
+			dirRel = filepath.Base(full)
 		}
 		items = append(items, f.makeDirItem(makeDirItemArgs{
 			slab:    &slab,
-			display: filepath.ToSlash(rel) + "/",
-			path:    path,
+			rank:    explorerDirRank,
+			display: filepath.ToSlash(dirRel) + "/",
+			path:    full,
 		}))
 	}
-	for _, path := range files {
-		items = append(items, f.makeFileItem(&slab, path))
-	}
-	return items
+	ui.SortPickerItems(items)
+	return items, true
 }
 
 type makeDirItemArgs struct {
 	slab    *ui.PickerItemSlab
+	rank    string
 	display string
 	path    string
 }
 
 func (f *fileExplorerSource) makeDirItem(args makeDirItemArgs) *ui.PickerItem {
-	slab := args.slab
-	display := args.display
-	path := args.path
-	return slab.Add(ui.PickerItem{
-		Display:     display,
-		SortKey:     display,
+	return args.slab.Add(ui.PickerItem{
+		Display:     args.display,
+		Columns:     []string{args.display},
+		SortKey:     args.rank + args.display,
 		StyleScopes: []string{explorerDirScope},
 		Directory:   true,
-		Location:    ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
+		Location: ui.PickerLocation{
+			Target: ui.PickerTarget{Path: args.path},
+		},
 	})
 }
 
 func (f *fileExplorerSource) makeFileItem(
 	slab *ui.PickerItemSlab, path string,
 ) *ui.PickerItem {
+	name := filepath.Base(path)
 	return slab.Add(ui.PickerItem{
-		Display:  filepath.Base(path),
-		SortKey:  filepath.Base(path),
+		Display:  name,
+		Columns:  []string{name},
+		SortKey:  explorerFileRank + name,
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	})
 }

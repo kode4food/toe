@@ -77,7 +77,7 @@ type (
 	// refresh can replace the list without a visible rebuild
 	SnapshotPickerSource interface {
 		PickerSource
-		Items() []*PickerItem
+		Items() ([]*PickerItem, bool)
 	}
 
 	// PickerFunc constructs a Picker from the editor
@@ -438,7 +438,9 @@ func (p *Picker) selectTarget(target PickerTarget) bool {
 }
 
 func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
-	if _, ok := p.source.(FileBackedPickerSource); !ok {
+	switch p.source.(type) {
+	case FileBackedPickerSource, SnapshotPickerSource:
+	default:
 		return nil
 	}
 	if p.load.pending == nil {
@@ -458,6 +460,7 @@ func (p *Picker) flushFileChanges() tea.Cmd {
 	p.load.pending = nil
 	src, ok := p.source.(FileBackedPickerSource)
 	if !ok {
+		p.refreshItems(true)
 		return nil
 	}
 	for path := range pending {
@@ -481,8 +484,8 @@ func (p *Picker) refreshItems(keepFile bool) {
 	if !ok {
 		return
 	}
-	items := src.Items()
-	if len(items) == 0 {
+	items, ok := src.Items()
+	if !ok {
 		return
 	}
 	target := p.selectedTarget()
@@ -857,11 +860,11 @@ func previewEnabled(source PickerSource) bool {
 }
 
 func wantsFileWatchTree(source PickerSource) bool {
-	if _, ok := source.(FileBackedPickerSource); ok {
+	switch source.(type) {
+	case FileBackedPickerSource, SnapshotPickerSource, DynamicPickerSource:
 		return true
 	}
-	_, ok := source.(DynamicPickerSource)
-	return ok
+	return false
 }
 
 func pickerStateKey(source PickerSource) string {

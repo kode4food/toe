@@ -6,7 +6,7 @@ Notable changes to toe.
 
 ### Interface
 
-- Reopening a picker restores its list, filter, selection, and scroll position during the current session
+- Reopening a picker restores its filter, selection, and scroll position during the current session, with the list kept current as files change
 - Scrollbars draw at sub-cell precision on terminals with graphics support, so the thumb and its marks sit where the line falls rather than snapping to the nearest row
 
 

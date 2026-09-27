@@ -37,7 +37,9 @@ var (
 
 func newPickerComponent(cx *Context, p *Picker) *PickerComponent {
 	th := cx.Theme()
-	cx.fileWatcher.setTreeWanted(cx.Editor, wantsFileWatchTree(p.source))
+	cx.fileWatcher.setTreeWanted(
+		cx.Editor, wantsFileWatchTree(p.source) || cx.hasCachedFilePicker(),
+	)
 	return &PickerComponent{
 		styles: buildStylesWithBackground(
 			th, view.ModeNormal, th.Get("ui.popup").BgColor(),
@@ -109,16 +111,36 @@ func (p *PickerComponent) Cursor(
 
 func (c *Context) mountPicker(p *Picker) (Component, tea.Cmd) {
 	key := pickerStateKey(p.source)
+	var refresh tea.Cmd
 	if saved, ok := c.picker.saved[key]; ok && saved != p {
 		p.stop()
 		p = saved
+		refresh = c.refreshSavedPicker(p)
 	} else if key != "" {
+		if _, ok := p.source.(NavigablePickerSource); ok {
+			c.dropSavedPickers(p.source.ID())
+		}
 		c.picker.saved[key] = p
 	}
 	p.initLoad()
 	cmd := p.load.feedCmd
 	p.load.feedCmd = nil
-	return newPickerComponent(c, p), cmd
+	return newPickerComponent(c, p), tea.Batch(cmd, refresh)
+}
+
+func (c *Context) refreshSavedPicker(p *Picker) tea.Cmd {
+	_, fileBacked := p.source.(FileBackedPickerSource)
+	if fileBacked && c.Editor.Options().FileWatch {
+		return nil
+	}
+	if _, ok := p.source.(SnapshotPickerSource); ok {
+		p.refreshItems(false)
+		return nil
+	}
+	if fileBacked {
+		return p.reload()
+	}
+	return nil
 }
 
 func (c *Context) savePickerState(p *Picker) {
@@ -126,6 +148,24 @@ func (c *Context) savePickerState(p *Picker) {
 	if pickerStateKey(p.source) == "" {
 		p.stop()
 	}
+}
+
+func (c *Context) dropSavedPickers(id string) {
+	for key, p := range c.picker.saved {
+		if p.source.ID() == id {
+			p.stop()
+			delete(c.picker.saved, key)
+		}
+	}
+}
+
+func (c *Context) hasCachedFilePicker() bool {
+	for _, p := range c.picker.saved {
+		if _, ok := p.source.(FileBackedPickerSource); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
@@ -382,7 +422,7 @@ func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 	p.dragEdge = overlayDrag{}
 	result.Callback = func(cx *Context, comp *Compositor) tea.Cmd {
 		cx.savePickerState(ps)
-		cx.fileWatcher.setTreeWanted(cx.Editor, false)
+		cx.fileWatcher.setTreeWanted(cx.Editor, cx.hasCachedFilePicker())
 		comp.Pop()
 		return comp.refreshEditorHighlight()
 	}

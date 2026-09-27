@@ -134,15 +134,15 @@ func (c *changedFilePickerSource) Load() PickerLoad {
 
 // Items returns the whole row set at once, letting a refresh swap the list
 // in place rather than emptying and re-streaming it
-func (c *changedFilePickerSource) Items() []*PickerItem {
+func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 	scan, ok := c.scan()
 	if !ok || scan.err != nil {
-		return nil
+		return nil, false
 	}
 	rows := scan.rows()
 	// the picker compacts the slice it is handed, so the warmer walks its own
 	go c.warmHunks(slices.Clone(rows), c.warmGen.Add(1))
-	return rows
+	return rows, true
 }
 
 // ItemsForPath returns the current VCS rows for path, one per stage, empty

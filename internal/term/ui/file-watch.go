@@ -78,17 +78,17 @@ func (w *fileWatcher) sync(e *view.Editor) {
 		return
 	}
 	wanted := map[string]int{}
-	for _, doc := range e.AllDocuments() {
-		addWatchDir(wanted, doc.Path())
-	}
-	rangeImagePanes(e, func(img *ImagePane) {
-		addWatchDir(wanted, img.Path())
-	})
 	enabled := e.Options().FileWatch
 	w.enabled.Store(enabled)
 	if enabled {
-		maps.Copy(wanted, w.gitWatchDirs(e.Cwd()))
+		for _, doc := range e.AllDocuments() {
+			addWatchDir(wanted, doc.Path())
+		}
+		rangeImagePanes(e, func(img *ImagePane) {
+			addWatchDir(wanted, img.Path())
+		})
 	}
+	maps.Copy(wanted, w.gitWatchDirs(e.Cwd()))
 	w.wantedDirs = wanted
 	w.reconcileDirs()
 	w.reconcileTree()
@@ -111,12 +111,9 @@ func (w *fileWatcher) gitWatchDirs(cwd string) map[string]int {
 
 func (w *fileWatcher) reconcileDirs() {
 	for dir := range w.dirs {
-		if !w.enabled.Load() || w.wantedDirs[dir] == 0 {
+		if w.wantedDirs[dir] == 0 {
 			w.unwatchDir(dir)
 		}
-	}
-	if !w.enabled.Load() {
-		return
 	}
 	for dir := range w.wantedDirs {
 		if _, ok := w.dirs[dir]; !ok {
@@ -227,7 +224,7 @@ func (w *fileWatcher) nextPath() (string, bool) {
 	for {
 		select {
 		case ev := <-w.events:
-			if w.enabled.Load() && ev.registration.active.Load() {
+			if w.wants(ev.path) && ev.registration.active.Load() {
 				return ev.path, true
 			}
 		case <-w.done:
@@ -245,7 +242,7 @@ func (w *fileWatcher) coalesce(first string) []string {
 	for {
 		select {
 		case ev := <-w.events:
-			if w.enabled.Load() && ev.registration.active.Load() {
+			if w.wants(ev.path) && ev.registration.active.Load() {
 				paths[ev.path] = struct{}{}
 				quiet.Reset(fileWatchQuiet)
 			}
@@ -256,6 +253,10 @@ func (w *fileWatcher) coalesce(first string) []string {
 		}
 		return slices.Collect(maps.Keys(paths))
 	}
+}
+
+func (w *fileWatcher) wants(path string) bool {
+	return w.enabled.Load() || isGitStatePath(path)
 }
 
 func (w *fileWatcher) startWatch(path string) (*watchRegistration, bool) {
@@ -281,7 +282,7 @@ func (w *fileWatcher) drain(reg *watchRegistration) {
 		case <-w.done:
 			return
 		}
-		if !w.enabled.Load() {
+		if !w.wants(ev.Path()) {
 			continue
 		}
 		if !isFileWatchOp(ev.Event()) || isFileWatchPathExcluded(ev.Path()) {

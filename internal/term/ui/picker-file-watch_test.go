@@ -15,6 +15,7 @@ import (
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -80,10 +81,92 @@ func (*countingPathSource) ItemsForPath(path string) []*ui.PickerItem {
 	}}
 }
 
+func TestPickerReopen(t *testing.T) {
+	t.Run("file picker rescans unwatched", func(t *testing.T) {
+		tmp := resolvedTempDir(t)
+		testutil.WriteFile(t, filepath.Join(tmp, "alpha.go"), []byte("a\n"))
+
+		e := view.NewEditor(tmp)
+		e.Options().FileWatch = false
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInCWD),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 100, 20)
+		m = sendKeyAndFeed(m, 'p')
+		m = sendSpecial(m, tea.KeyEscape)
+
+		testutil.WriteFile(t, filepath.Join(tmp, "beta.go"), []byte("b\n"))
+		m = sendKeyAndFeed(m, 'p')
+		assert.Contains(t, stripANSI(m.View().Content), "beta.go")
+	})
+
+	t.Run("changed-files rescans unwatched", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: shells out to git")
+		}
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "committed.txt", []byte("one\n"))
+
+		e := view.NewEditor(repo)
+		e.Options().FileWatch = false
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
+			[]command.KeyEvent{char('g')},
+		)
+		m = resize(m, 120, 24)
+		m = sendKeyAndFeed(m, 'g')
+		m = sendSpecial(m, tea.KeyEscape)
+
+		testutil.WriteFile(t,
+			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
+		)
+		m = sendKeyAndFeed(m, 'g')
+		assert.Contains(t, stripANSI(m.View().Content), "untracked.txt")
+	})
+}
+
 func TestPickerFileWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow: real filesystem watches with multi-second timeouts")
 	}
+	t.Run("closed picker catches file changes", func(t *testing.T) {
+		tmp := resolvedTempDir(t)
+		alpha := filepath.Join(tmp, "alpha.go")
+		assert.NoError(t, os.WriteFile(alpha, []byte("alpha\n"), 0o644))
+
+		e := view.NewEditor(tmp)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "file_picker", m.PickerAction(files.NewFilePickerInCWD),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, 100, 20)
+		m = sendKeyAndFeed(m, 'p')
+		assert.Contains(t, stripANSI(m.View().Content), "alpha.go")
+		m = sendSpecial(m, tea.KeyEscape)
+
+		beta := filepath.Join(tmp, "beta.go")
+		assert.NoError(t, os.WriteFile(beta, []byte("beta\n"), 0o644))
+		assert.NoError(t, os.Remove(alpha))
+		m = drainFileWatch(t, m)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "beta.go")
+		assert.NotContains(t, out, "alpha.go")
+	})
+
 	t.Run("preview reflects file change", func(t *testing.T) {
 		tmp := resolvedTempDir(t)
 		alpha := filepath.Join(tmp, "alpha.go")
@@ -298,6 +381,51 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.Contains(t, out, "untracked.txt")
 	})
 
+	t.Run("open explorer shows new file", func(t *testing.T) {
+		tmp := resolvedTempDir(t)
+		assert.NoError(t, os.Mkdir(filepath.Join(tmp, "sub"), 0o755))
+		testutil.WriteFile(t, filepath.Join(tmp, "alpha.txt"), []byte("a"))
+		m := explorerModel(t, tmp)
+		t.Cleanup(m.Close)
+		assert.NotContains(t, stripANSI(m.View().Content), "DELETE.txt")
+
+		testutil.WriteFile(t, filepath.Join(tmp, "DELETE.txt"), []byte("d"))
+		m = drainFileWatch(t, m)
+		out := stripANSI(m.View().Content)
+		sub := strings.Index(out, "sub/")
+		del := strings.Index(out, "DELETE.txt")
+		assert.Less(t, strings.Index(out, "../"), sub)
+		assert.Less(t, sub, del)
+	})
+
+	t.Run("closed changed-files catches edits", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "committed.txt", []byte("one\n"))
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
+			[]command.KeyEvent{char('g')},
+		)
+		m = resize(m, 120, 24)
+		m = sendKeyAndFeed(m, 'g')
+		assert.NotContains(t, stripANSI(m.View().Content), "untracked.txt")
+		m = sendSpecial(m, tea.KeyEscape)
+
+		testutil.WriteFile(t,
+			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
+		)
+		m = drainFileWatch(t, m)
+		m = sendKey(m, 'g')
+		assert.Contains(t, stripANSI(m.View().Content), "untracked.txt")
+	})
+
 	t.Run("selection survives changed-files update", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
@@ -342,6 +470,27 @@ func TestPickerFileWatch(t *testing.T) {
 		out = stripANSI(m.View().Content)
 		assert.Contains(t, out, "Staged Changes")
 		assert.Contains(t, out, "alpha.txt")
+	})
+
+	t.Run("git state watched when disabled", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "alpha.txt", []byte("one\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "alpha.txt"), []byte("two\n"))
+
+		e := view.NewEditor(repo)
+		e.Options().FileWatch = false
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(ui.NewChangedFilePicker)
+		t.Cleanup(m.Close)
+		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
+
+		testutil.RunGit(t, repo, "add", "alpha.txt")
+		m = drainFileWatch(t, m)
+		assert.Contains(t, stripANSI(m.View().Content), "Staged Changes")
 	})
 
 	t.Run("a write keeps both stages of a file", func(t *testing.T) {

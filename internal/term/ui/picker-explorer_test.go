@@ -3,6 +3,7 @@ package ui_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -11,6 +12,7 @@ import (
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -25,6 +27,21 @@ func TestFileExplorer(t *testing.T) {
 		assert.Contains(t, out, "alpha.txt")
 		assert.Contains(t, out, "\U000f024b sub/")
 		assert.Contains(t, out, "\U000f024b ../")
+	})
+
+	t.Run("reopens with current files", func(t *testing.T) {
+		dir := t.TempDir()
+		alpha := filepath.Join(dir, "alpha.txt")
+		assert.NoError(t, os.WriteFile(alpha, []byte("a"), 0o644))
+		m := explorerModel(t, dir)
+		m = sendSpecial(m, tea.KeyEscape)
+
+		assert.NoError(t, os.Remove(alpha))
+		testutil.WriteFile(t, filepath.Join(dir, "beta.txt"), []byte("b"))
+		m = sendKey(m, 'e')
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "beta.txt")
+		assert.NotContains(t, out, "alpha.txt")
 	})
 
 	t.Run("accepts a file and opens it", func(t *testing.T) {
@@ -119,6 +136,46 @@ func TestFileExplorer(t *testing.T) {
 		m = sendSpecial(m, tea.KeyEnter)
 		// the explorer is now rooted in sub, listing its file
 		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+	})
+
+	t.Run("refresh keeps dirs on top", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
+		testutil.WriteFile(t, filepath.Join(dir, "alpha.txt"), []byte("a"))
+		m := explorerModel(t, dir)
+		before := stripANSI(m.View().Content)
+		assert.Less(t,
+			strings.Index(before, "sub/"), strings.Index(before, "alpha.txt"),
+		)
+		m = sendSpecial(m, tea.KeyEscape)
+
+		testutil.WriteFile(t, filepath.Join(dir, "DELETE.txt"), []byte("d"))
+		m = sendKey(m, 'e')
+		out := stripANSI(m.View().Content)
+		up := strings.Index(out, "../")
+		sub := strings.Index(out, "sub/")
+		del := strings.Index(out, "DELETE.txt")
+		assert.Less(t, up, sub)
+		assert.Less(t, sub, del)
+		assert.Less(t, del, strings.Index(out, "alpha.txt"))
+	})
+
+	t.Run("forgets the dir it left", func(t *testing.T) {
+		dir := t.TempDir()
+		assert.NoError(t, os.Mkdir(filepath.Join(dir, "sub"), 0o755))
+		testutil.WriteFile(t,
+			filepath.Join(dir, "sub", "inner.txt"), []byte("y"),
+		)
+		testutil.WriteFile(t, filepath.Join(dir, "other.txt"), []byte("x"))
+		m := explorerModel(t, dir)
+		for _, ch := range "sub" {
+			m = sendKey(m, ch)
+		}
+		m = sendSpecial(m, tea.KeyEnter)
+		assert.Contains(t, stripANSI(m.View().Content), "inner.txt")
+
+		m = sendSpecial(m, tea.KeyEnter)
+		assert.Contains(t, stripANSI(m.View().Content), "other.txt")
 	})
 
 	t.Run("flattens single-child dirs", func(t *testing.T) {

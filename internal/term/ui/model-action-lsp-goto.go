@@ -167,10 +167,8 @@ func (m Model) gotoLocationPicker(e *view.Editor, get locationGetter) {
 func locationPickerLayer(request locationRequest) func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPLocationPicker(e, request)
-		cmd := p.load.feedCmd
-		p.load.feedCmd = nil
 		return func(cx *Context) (Component, tea.Cmd) {
-			return newPickerComponent(cx, p), cmd
+			return cx.mountPicker(p)
 		}
 	}
 }

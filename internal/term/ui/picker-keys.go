@@ -99,16 +99,12 @@ func (p *PickerComponent) navigateItem(
 	if next == nil {
 		return EventResult{}, nil, false
 	}
-	feedCmd := next.load.feedCmd
-	next.load.feedCmd = nil
-	if ps.load.dynamicStop != nil {
-		ps.load.dynamicStop()
-	}
-	ps.load.cancel()
 	return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
+		cx.savePickerState(ps)
+		layer, cmd := cx.mountPicker(next)
 		comp.Pop()
-		comp.Push(newPickerComponent(cx, next))
-		return feedCmd
+		comp.Push(layer)
+		return cmd
 	}), nil, true
 }
 

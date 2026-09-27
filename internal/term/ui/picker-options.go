@@ -2,8 +2,8 @@ package ui
 
 import "maps"
 
-// PickerLayoutOptions holds the per-overlay list/preview split ratios and
-// size scales, keyed by picker or prompt id
+// PickerLayoutOptions holds the per-overlay list/preview split ratios and size
+// scales, keyed by picker or prompt id
 type PickerLayoutOptions struct {
 	SplitRatios map[string]float64 `toml:"split"`
 	Scales      map[string]float64 `toml:"scales"`

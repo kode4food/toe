@@ -51,14 +51,6 @@ func (p *PickerComponent) HandleEvent(
 	cx *Context, msg tea.Msg,
 ) (EventResult, tea.Cmd) {
 	switch msg := msg.(type) {
-	case pickerFeedMsg:
-		return p.handleFeed(msg)
-	case pickerDynamicTriggerMsg:
-		return p.handleDynamicTrigger(msg)
-	case pickerDynamicFeedMsg:
-		return p.handleDynamicFeed(msg)
-	case pickerRefreshMsg:
-		return p.handleRefresh(cx, msg)
 	case externalFileChangedMsg:
 		return p.handleExternalFileChange(msg)
 	case tea.WindowSizeMsg:
@@ -115,6 +107,27 @@ func (p *PickerComponent) Cursor(
 	return insertCursorAt(cx, p.caret.Add(p.bounds.Point))
 }
 
+func (c *Context) mountPicker(p *Picker) (Component, tea.Cmd) {
+	key := pickerStateKey(p.source)
+	if saved, ok := c.picker.saved[key]; ok && saved != p {
+		p.stop()
+		p = saved
+	} else if key != "" {
+		c.picker.saved[key] = p
+	}
+	p.initLoad()
+	cmd := p.load.feedCmd
+	p.load.feedCmd = nil
+	return newPickerComponent(c, p), cmd
+}
+
+func (c *Context) savePickerState(p *Picker) {
+	p.clearPreviewCache()
+	if pickerStateKey(p.source) == "" {
+		p.stop()
+	}
+}
+
 func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	ps := p.state
 	areaW := pl.Width
@@ -127,7 +140,7 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	showPreview := areaW > pickerMinPreviewArea && previewEnabled(ps.source)
 	splitW := 0
 	if showPreview {
-		ratio := cx.pickerLayout.SplitRatioFor(ps.source.ID())
+		ratio := cx.picker.layout.SplitRatioFor(ps.source.ID())
 		splitW = pickerSplitLeftWidth(areaW, ratio)
 		p.splitBounds = geom.Area{
 			X:      1 + splitW,
@@ -164,71 +177,6 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	p.listBounds = p.listBounds.Translate(pl.Point)
 }
 
-func (p *PickerComponent) handleFeed(msg pickerFeedMsg) (EventResult, tea.Cmd) {
-	p.markDirty()
-	p.state.addItems(msg.items)
-	if msg.feed != nil {
-		return consumed(), drainPickerFeed(msg.feed, msg.done)
-	}
-	p.state.finishLoad()
-	return consumed(), nil
-}
-
-func (p *PickerComponent) handleDynamicTrigger(
-	msg pickerDynamicTriggerMsg,
-) (EventResult, tea.Cmd) {
-	ps := p.state
-	if msg.gen != ps.load.dynamicGen {
-		return consumed(), nil
-	}
-	src, ok := ps.source.(DynamicPickerSource)
-	if !ok {
-		return consumed(), nil
-	}
-	p.markDirty()
-	src.Search(msg.query)
-	load := src.Load()
-	items := load.Items
-	ps.load.dynamicStop = load.Stop
-	ps.list.items = items
-	ps.list.matched = make([]pickerMatch, len(items))
-	for i, item := range items {
-		ps.list.matched[i] = pickerMatch{item: item}
-	}
-	if load.Feed != nil {
-		return consumed(), drainDynamicFeed(msg.gen, load.Feed)
-	}
-	ps.load.loading = false
-	return consumed(), nil
-}
-
-func (p *PickerComponent) handleDynamicFeed(
-	msg pickerDynamicFeedMsg,
-) (EventResult, tea.Cmd) {
-	ps := p.state
-	if msg.gen != ps.load.dynamicGen {
-		return consumed(), nil
-	}
-	p.markDirty()
-	ps.addDynamicItems(msg.items)
-	if msg.feed != nil {
-		return consumed(), drainDynamicFeed(msg.gen, msg.feed)
-	}
-	ps.load.loading = false
-	return consumed(), nil
-}
-
-func (p *PickerComponent) handleRefresh(
-	_ *Context, msg pickerRefreshMsg,
-) (EventResult, tea.Cmd) {
-	ps := p.state
-	if msg.gen != ps.load.refreshGen {
-		return consumed(), nil
-	}
-	p.markDirty()
-	return consumed(), ps.flushFileChanges()
-}
-
 func (p *PickerComponent) handleExternalFileChange(
 	msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
@@ -239,8 +187,9 @@ func (p *PickerComponent) handleExternalFileChange(
 			ps.preview.cache.invalidatePath(path)
 			p.markDirty()
 		}
-		// each schedule bumps the generation, so only the last cmd survives
-		cmd = ps.scheduleFileRefresh(path)
+		if pickerStateKey(ps.source) == "" {
+			cmd = ps.scheduleFileRefresh(path)
+		}
 	}
 	return ignored(), cmd
 }
@@ -323,8 +272,8 @@ func (p *PickerComponent) previewWrapWidth(innerW int) int {
 func (p *PickerComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
 	id := p.state.source.ID()
 	drag := overlayDrag{
-		startWidth:  cx.pickerLayout.widthScale(id, defaultPickerScale),
-		startHeight: cx.pickerLayout.heightScale(id, defaultPickerScale),
+		startWidth:  cx.picker.layout.widthScale(id, defaultPickerScale),
+		startHeight: cx.picker.layout.heightScale(id, defaultPickerScale),
 	}
 	if !drag.begin(p.bounds, at) {
 		return false
@@ -337,8 +286,8 @@ func (p *PickerComponent) beginEdgeDrag(cx *Context, at geom.Point) bool {
 }
 
 func (p *PickerComponent) resizeToEdge(cx *Context, at geom.Point) {
-	cx.pickerLayout = p.dragEdge.applyTo(
-		cx.pickerLayout, p.state.source.ID(), at, geom.Size{
+	cx.picker.layout = p.dragEdge.applyTo(
+		cx.picker.layout, p.state.source.ID(), at, geom.Size{
 			Width:  p.screen.Width,
 			Height: pickerAvailHeight(p.screen),
 		},
@@ -354,12 +303,12 @@ func (p *PickerComponent) updateSplitRatio(cx *Context, x int) {
 	left := x - (p.bounds.X + 1)
 	ratio := float64(left) / float64(usable)
 	ratio = clampPickerSplitRatio(ratio)
-	opts := cx.pickerLayout.clone()
+	opts := cx.picker.layout.clone()
 	if opts.SplitRatios == nil {
 		opts.SplitRatios = map[string]float64{}
 	}
 	opts.SplitRatios[p.state.source.ID()] = ratio
-	cx.pickerLayout = opts
+	cx.picker.layout = opts
 }
 
 func (p *PickerComponent) handleMouseWheel(
@@ -431,11 +380,8 @@ func (p *PickerComponent) dismiss(result EventResult) (EventResult, tea.Cmd) {
 	ps := p.state
 	p.dragSplit = false
 	p.dragEdge = overlayDrag{}
-	if ps.load.dynamicStop != nil {
-		ps.load.dynamicStop()
-	}
-	ps.load.cancel()
 	result.Callback = func(cx *Context, comp *Compositor) tea.Cmd {
+		cx.savePickerState(ps)
 		cx.fileWatcher.setTreeWanted(cx.Editor, false)
 		comp.Pop()
 		return comp.refreshEditorHighlight()

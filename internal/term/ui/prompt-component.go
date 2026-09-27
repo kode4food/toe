@@ -141,6 +141,13 @@ func (p *PromptComponent) HandleEvent(
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		return p.handleKey(msg), nil
+	case tea.PasteMsg:
+		runes := []rune(p.buf)
+		paste := []rune(msg.Content)
+		p.buf = string(slices.Insert(runes, p.caret, paste...))
+		p.caret += len(paste)
+		p.recalculateCompletion()
+		return consumed(), nil
 	case tea.MouseClickMsg:
 		return p.handleMouseClick(msg), nil
 	case tea.MouseMotionMsg:
@@ -441,12 +448,11 @@ func (p *PromptComponent) accept(
 			if picker == nil {
 				return pop(nil)
 			}
-			feedCmd := picker.load.feedCmd
-			picker.load.feedCmd = nil
 			return consumedWith(func(_ *Context, comp *Compositor) tea.Cmd {
+				layer, cmd := cx.mountPicker(picker)
 				comp.Pop()
-				comp.Push(newPickerComponent(cx, picker))
-				return feedCmd
+				comp.Push(layer)
+				return cmd
 			})
 		}
 		if p.handler != nil {
@@ -509,7 +515,7 @@ func (p *PromptComponent) paintLine(buf *tui.Buffer, area geom.Area) {
 }
 
 func (p *PromptComponent) overlayFrame(within geom.Size) geom.Area {
-	width := p.context.pickerLayout.widthScale(
+	width := p.context.picker.layout.widthScale(
 		p.layoutID(), defaultPromptWidthScale,
 	)
 	size := geom.Size{
@@ -544,7 +550,7 @@ func (p *PromptComponent) handleMouseRelease(
 
 func (p *PromptComponent) beginEdgeDrag(at geom.Point) bool {
 	drag := overlayDrag{
-		startWidth: p.context.pickerLayout.widthScale(
+		startWidth: p.context.picker.layout.widthScale(
 			p.layoutID(), defaultPromptWidthScale,
 		),
 	}
@@ -563,9 +569,8 @@ func (p *PromptComponent) beginEdgeDrag(at geom.Point) bool {
 
 func (p *PromptComponent) resizeToEdge(at geom.Point) {
 	cx := p.context
-	cx.pickerLayout = p.dragEdge.applyTo(
-		cx.pickerLayout, p.layoutID(), at,
-		geom.Size{Width: p.screen.Width},
+	cx.picker.layout = p.dragEdge.applyTo(
+		cx.picker.layout, p.layoutID(), at, geom.Size{Width: p.screen.Width},
 	)
 	p.markDirty()
 }

@@ -6,8 +6,9 @@ Notable changes to toe.
 
 ### Interface
 
-- Scrollbars draw at sub-cell precision on terminals with graphics support, so the thumb and its marks sit where the line falls rather than snapping to the nearest row. Other terminals keep the character scrollbar
-- Picker previews use the same scrollbar
+- Reopening a picker restores its list, filter, selection, and scroll position during the current session
+- Scrollbars draw at sub-cell precision on terminals with graphics support, so the thumb and its marks sit where the line falls rather than snapping to the nearest row
+
 
 ### Editing
 

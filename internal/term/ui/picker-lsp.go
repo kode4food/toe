@@ -33,6 +33,11 @@ type (
 	}
 )
 
+// PickerStateKey starts each location request with fresh picker state
+func (l *lspLocationSource) PickerStateKey() string {
+	return ""
+}
+
 func newLSPLocationPicker(e *view.Editor, request locationRequest) *Picker {
 	return NewPicker(e, &lspLocationSource{
 		Editor:  e,
@@ -43,7 +48,9 @@ func newLSPLocationPicker(e *view.Editor, request locationRequest) *Picker {
 	})
 }
 
-func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
+func newLSPSymbolPicker(
+	e *view.Editor, docID view.DocumentId, symbols []view.Symbol,
+) *Picker {
 	return NewPicker(e, &lspSymbolSource{
 		Editor:      e,
 		Ident:       "lsp-symbols",
@@ -51,6 +58,7 @@ func newLSPSymbolPicker(e *view.Editor, symbols []view.Symbol) *Picker {
 		Cols:        []string{"", ""},
 		MatchCol:    1,
 		Proportions: []int{0, 1},
+		Scope:       fmt.Sprint(docID),
 		symbols:     symbols,
 	})
 }

@@ -71,6 +71,7 @@ func newFilePickerSource(e *view.Editor, dir string) *filePickerSource {
 		Ident:  "open-file",
 		Label:  "Open File",
 		Cols:   []string{""},
+		Scope:  resolvePickerWalkRoot(dir),
 		dir:    dir,
 	}
 }

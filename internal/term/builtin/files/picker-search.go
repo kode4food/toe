@@ -41,6 +41,7 @@ func NewGlobalSearchPicker(e *view.Editor) *ui.Picker {
 		Ident:  "global-search",
 		Label:  "Search Workspace",
 		Cols:   []string{""},
+		Scope:  filepath.Clean(e.Cwd()),
 	})
 }
 

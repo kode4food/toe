@@ -38,7 +38,7 @@ func (m Model) SymbolPickerAction(e *view.Editor) {
 		e.SetStatusMsg(i18n.Text(statusNoDocumentSymbolsKey))
 		return
 	}
-	opener := symbolPickerLayer(symbols)
+	opener := symbolPickerLayer(doc.ID(), symbols)
 	cx.lastLayer = opener
 	ec.queueNextLayer(opener(e))
 }
@@ -90,13 +90,13 @@ func (m Model) CodeActionPickerAction(e *view.Editor) {
 	})
 }
 
-func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
+func symbolPickerLayer(
+	docID view.DocumentId, symbols []view.Symbol,
+) func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
-		p := newLSPSymbolPicker(e, symbols)
-		cmd := p.load.feedCmd
-		p.load.feedCmd = nil
+		p := newLSPSymbolPicker(e, docID, symbols)
 		return func(cx *Context) (Component, tea.Cmd) {
-			return newPickerComponent(cx, p), cmd
+			return cx.mountPicker(p)
 		}
 	}
 }
@@ -104,10 +104,8 @@ func symbolPickerLayer(symbols []view.Symbol) func(*view.Editor) layerFunc {
 func workspaceSymbolPickerLayer() func(*view.Editor) layerFunc {
 	return func(e *view.Editor) layerFunc {
 		p := newLSPWorkspaceSymbolPicker(e)
-		cmd := p.load.feedCmd
-		p.load.feedCmd = nil
 		return func(cx *Context) (Component, tea.Cmd) {
-			return newPickerComponent(cx, p), cmd
+			return cx.mountPicker(p)
 		}
 	}
 }

@@ -141,7 +141,15 @@ func (ec *EditorComponent) handleExternalFileChanged(
 	}
 	refreshVCS(cx)
 	ec.syncEditorMessages()
-	return consumed(), cx.fileWatcher.nextCmd(cx.Editor)
+	cmds := []tea.Cmd{cx.fileWatcher.nextCmd(cx.Editor)}
+	for _, p := range cx.picker.saved {
+		var cmd tea.Cmd
+		for _, path := range msg.paths {
+			cmd = p.scheduleFileRefresh(path)
+		}
+		cmds = append(cmds, cmd)
+	}
+	return consumed(), tea.Batch(cmds...)
 }
 
 func (ec *EditorComponent) handleRedraw() (EventResult, tea.Cmd) {

@@ -91,6 +91,9 @@ func (p *pickerRender) drawList(area geom.Area) {
 		itemY++
 	}
 	ps.clampScroll()
+	if p.component.listBounds.IsEmpty() {
+		ps.ensureCursorVisible()
+	}
 	for i := range ps.list.rows {
 		idx := ps.list.scroll + i
 		if idx >= len(ps.list.matched) {

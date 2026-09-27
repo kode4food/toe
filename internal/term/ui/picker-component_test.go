@@ -16,8 +16,9 @@ import (
 )
 
 type fixedPickerSource struct {
-	items []*ui.PickerItem
-	title string
+	items    []*ui.PickerItem
+	title    string
+	stateKey string
 }
 
 func TestPickerScroll(t *testing.T) {
@@ -281,6 +282,14 @@ func (s fixedPickerSource) ID() string {
 		return s.title
 	}
 	return "fixed"
+}
+
+// PickerStateKey identifies the test picker's starting point
+func (s fixedPickerSource) PickerStateKey() string {
+	if s.stateKey == "" {
+		return ""
+	}
+	return s.ID() + "\x00" + s.stateKey
 }
 
 func (fixedPickerSource) Title() string {

@@ -45,13 +45,13 @@ func New(e *view.Editor, km *command.Keymaps) Model {
 	})
 	w := newFileWatcher()
 	cx := &Context{
-		Editor:       e,
-		Keymaps:      km,
-		Syntax:       syntax.NewSyntaxCache(),
-		images:       newImageRegistry(),
-		pickerLayout: PickerLayoutOptions{},
-		fileWatcher:  w,
-		windowTitle:  workspaceTitle(e.Cwd()),
+		Editor:      e,
+		Keymaps:     km,
+		Syntax:      syntax.NewSyntaxCache(),
+		images:      newImageRegistry(),
+		picker:      pickerState{saved: map[string]*Picker{}},
+		fileWatcher: w,
+		windowTitle: workspaceTitle(e.Cwd()),
 	}
 	ec := newEditorComponent(cx)
 	e.Tree().SetRedraw(ec.requestRedraw)
@@ -78,12 +78,15 @@ func New(e *view.Editor, km *command.Keymaps) Model {
 
 // Close releases the model's long-lived resources, such as file watches
 func (m Model) Close() {
+	for _, p := range m.context.picker.saved {
+		p.stop()
+	}
 	m.context.fileWatcher.close()
 }
 
 // PickerLayoutOptions returns the UI-owned picker layout settings
 func (m Model) PickerLayoutOptions() PickerLayoutOptions {
-	return m.context.pickerLayout.clone()
+	return m.context.picker.layout.clone()
 }
 
 // SetPickerLayoutOptions applies UI-owned picker layout settings
@@ -95,7 +98,7 @@ func (m Model) SetPickerLayoutOptions(opts PickerLayoutOptions) {
 	for key, scale := range opts.Scales {
 		opts.Scales[key] = clampOverlayScale(scale)
 	}
-	m.context.pickerLayout = opts
+	m.context.picker.layout = opts
 }
 
 // CompletionOptions returns the UI-owned automatic completion settings
@@ -141,8 +144,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// a starved request is retried now that the id is confirmed sent
 		return m, m.imageDisplayFrameCmd()
 	default:
+		picker, feedCmd := handlePickerMessage(msg)
+		for _, layer := range m.compositor.layers {
+			if p, ok := layer.(*PickerComponent); ok && p.state == picker {
+				p.markDirty()
+			}
+		}
 		m.component.cancelAutoSizeFor(msg)
 		cmd := m.compositor.HandleEvent(cx, msg)
+		cmd = tea.Batch(cmd, feedCmd)
 		if next := m.component.takeNextLayer(); next != nil {
 			layer, nextCmd := next(cx)
 			if layer != nil {

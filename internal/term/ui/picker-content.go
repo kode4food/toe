@@ -239,7 +239,7 @@ func pickerEmptyHint(ps *Picker) string {
 }
 
 func pickerOverlaySize(cx *Context, screen geom.Size, id string) geom.Size {
-	opts := cx.pickerLayout
+	opts := cx.picker.layout
 	return geom.Size{
 		Width: scaleExtent(
 			screen.Width, opts.widthScale(id, defaultPickerScale),

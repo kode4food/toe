@@ -250,7 +250,7 @@ func (p *Picker) clampScroll() {
 }
 
 func (p *Picker) ensureCursorVisible() {
-	p.list.count = len(p.list.matched)
+	p.clampScroll()
 	l := p.list.listScroll
 	// a section header scrolls in with the first item under it
 	if top := p.sectionTop(l.cursor); top < l.scroll {

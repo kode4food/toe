@@ -106,7 +106,7 @@ func (p *PickerComponent) previewImageSize(
 		return geom.Size{}
 	}
 	lw := pickerSplitLeftWidth(
-		size.Width, cx.pickerLayout.SplitRatioFor(p.state.source.ID()),
+		size.Width, cx.picker.layout.SplitRatioFor(p.state.source.ID()),
 	)
 	return geom.Size{
 		Width: max(

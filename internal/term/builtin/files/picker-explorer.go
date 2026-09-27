@@ -55,6 +55,7 @@ func newFileExplorerSource(
 		Ident:  "file-explorer",
 		Label:  "File Explorer",
 		Cols:   []string{"name"},
+		Scope:  filepath.Clean(root),
 		root:   root,
 		opts:   opts,
 	}

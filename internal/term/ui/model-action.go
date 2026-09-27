@@ -33,9 +33,7 @@ func (m Model) WithInitialPicker(fn PickerFunc) Model {
 		if p == nil {
 			return nil, nil
 		}
-		cmd := p.load.feedCmd
-		p.load.feedCmd = nil
-		return newPickerComponent(cx, p), cmd
+		return cx.mountPicker(p)
 	}
 	return m
 }
@@ -49,10 +47,8 @@ func (m Model) PickerAction(fn PickerFunc) command.Action {
 		if p == nil {
 			return nil
 		}
-		cmd := p.load.feedCmd
-		p.load.feedCmd = nil
 		return func(cx *Context) (Component, tea.Cmd) {
-			return newPickerComponent(cx, p), cmd
+			return cx.mountPicker(p)
 		}
 	}
 	return func(e *view.Editor) {
@@ -138,10 +134,8 @@ func (m Model) CommandPaletteAction(e *view.Editor) {
 	cx := m.context
 	opener := func(e *view.Editor) layerFunc {
 		p := m.CommandPalettePicker(e)
-		cmd := p.load.feedCmd
-		p.load.feedCmd = nil
 		return func(cx *Context) (Component, tea.Cmd) {
-			return newPickerComponent(cx, p), cmd
+			return cx.mountPicker(p)
 		}
 	}
 

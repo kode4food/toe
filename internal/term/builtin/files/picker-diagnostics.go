@@ -62,6 +62,11 @@ var (
 
 // NewDiagnosticPicker lists diagnostics for the focused document
 func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
+	doc := e.FocusedDocument()
+	docID := view.InvalidDocumentId
+	if doc != nil {
+		docID = doc.ID()
+	}
 	return ui.NewPicker(e, &diagnosticPickerSource{
 		Editor:      e,
 		Ident:       "diagnostics",
@@ -69,6 +74,7 @@ func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
 		Cols:        []string{"", ""},
 		MatchCol:    1,
 		Proportions: []int{0, 1},
+		Scope:       fmt.Sprint(docID),
 	})
 }
 

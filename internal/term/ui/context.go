@@ -16,13 +16,13 @@ type (
 		Syntax  *syntax.Cache
 
 		composition compositionState
+		picker      pickerState
 		theme       themeState
 
-		windowTitle  string
-		lastLayer    func(*view.Editor) layerFunc
-		pickerLayout PickerLayoutOptions
-		images       *imageRegistry
-		fileWatcher  *fileWatcher
+		windowTitle string
+		lastLayer   func(*view.Editor) layerFunc
+		images      *imageRegistry
+		fileWatcher *fileWatcher
 	}
 
 	compositionState struct {
@@ -30,6 +30,11 @@ type (
 		regions     []geom.Area
 		precise     bool
 		changed     bool
+	}
+
+	pickerState struct {
+		saved  map[string]*Picker
+		layout PickerLayoutOptions
 	}
 
 	themeState struct {

@@ -630,6 +630,16 @@ func TestPromptCmdAccept(t *testing.T) {
 }
 
 func TestPromptKeyEditing(t *testing.T) {
+	t.Run("inserts bracketed paste", func(t *testing.T) {
+		m, _ := cmdPrompt(t)
+		m = typeString(m, "ac")
+		m = sendSpecial(m, tea.KeyLeft)
+		m2, _ := m.Update(tea.PasteMsg{Content: "b"})
+		m = m2.(ui.Model)
+
+		assert.Equal(t, ": abc", promptText(m))
+	})
+
 	t.Run("escape closes prompt", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		km := command.NewKeymaps()

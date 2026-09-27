@@ -109,6 +109,12 @@ type (
 		Accept(*PickerItem, PickerAcceptAction)
 	}
 
+	// PickerStateKeyer distinguishes different starting points for one picker
+	// type. An empty key disables state restoration for that source
+	PickerStateKeyer interface {
+		PickerStateKey() string
+	}
+
 	// PickerPreviewSkipper marks picker sources that never render previews
 	PickerPreviewSkipper interface {
 		SkipPreview()
@@ -209,9 +215,7 @@ type (
 		Indices []int
 	}
 
-	// PickerBase is embedded by a picker source for the editor it was opened
-	// against, and as an optional starting point for default id, title, column,
-	// and fuzzy-match behavior
+	// PickerBase supplies common picker metadata, matching, and state scope
 	PickerBase struct {
 		Editor      *view.Editor
 		Ident       string
@@ -219,6 +223,7 @@ type (
 		Cols        []string
 		MatchCol    int
 		Proportions []int
+		Scope       string
 	}
 
 	pickerMatch struct {
@@ -233,12 +238,14 @@ type (
 	}
 
 	pickerDynamicTriggerMsg struct {
-		gen   int
-		query string
+		picker *Picker
+		gen    int
+		query  string
 	}
 
 	pickerRefreshMsg struct {
-		gen int
+		picker *Picker
+		gen    int
 	}
 )
 
@@ -264,11 +271,7 @@ func NewPicker(e *view.Editor, source PickerSource) *Picker {
 			cache:         previewCache{},
 			diffBaseCache: map[diffBaseKey]*previewDocEntry{},
 		},
-		load: loadState{
-			cancel: func() {},
-		},
 	}
-	p.load.feedCmd = p.loadItems()
 	return p
 }
 
@@ -332,16 +335,42 @@ func (p PickerBase) PrepareMatcher(query string) PickerMatcher {
 	return f.match
 }
 
+// PickerStateKey identifies the picker and its starting point
+func (p PickerBase) PickerStateKey() string {
+	if p.Scope == "" {
+		return p.Ident
+	}
+	return p.Ident + "\x00" + p.Scope
+}
+
 // MatchCount reports how many items currently match the query
 func (p *Picker) MatchCount() int {
+	p.initLoad()
 	return len(p.list.matched)
 }
 
 // SelectIndex moves the cursor to i when it is a valid match index
 func (p *Picker) SelectIndex(i int) {
+	p.initLoad()
 	if i >= 0 && i < len(p.list.matched) {
 		p.list.cursor = i
 		p.load.wantSet = false
+	}
+}
+
+func (p *Picker) initLoad() {
+	if p.load.cancel == nil {
+		p.load.feedCmd = p.loadItems()
+	}
+}
+
+func (p *Picker) stop() {
+	p.load.dynamicGen++
+	if p.load.cancel != nil {
+		p.load.cancel()
+	}
+	if p.load.dynamicStop != nil {
+		p.load.dynamicStop()
 	}
 }
 
@@ -355,6 +384,9 @@ func (p *Picker) loadItems() tea.Cmd {
 	items := load.Items
 	feed := load.Feed
 	p.load.cancel = load.Stop
+	if p.load.cancel == nil {
+		p.load.cancel = func() {}
+	}
 	_, static := p.source.(StaticPickerSource)
 	p.list.sections = nil
 	p.list.items = p.takeSections(items)
@@ -372,7 +404,7 @@ func (p *Picker) loadItems() tea.Cmd {
 	closeDone := sync.OnceFunc(func() { close(done) })
 	oldStop := p.load.cancel
 	p.load.cancel = func() { oldStop(); closeDone() }
-	return drainPickerFeed(feed, done)
+	return p.drainFeed(feed, done)
 }
 
 func (p *Picker) reload() tea.Cmd {
@@ -417,7 +449,7 @@ func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
 	gen := p.load.refreshGen
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
-		return pickerRefreshMsg{gen: gen}
+		return pickerRefreshMsg{picker: p, gen: gen}
 	}
 }
 
@@ -656,13 +688,14 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	p.load.loading = true
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
-		return pickerDynamicTriggerMsg{gen: gen, query: q}
+		return pickerDynamicTriggerMsg{picker: p, gen: gen, query: q}
 	}
 }
 
 func (p *Picker) clearPreviewCache() {
 	clear(p.preview.cache)
 	clear(p.preview.diffBaseCache)
+	p.preview.diffLines = diffLineCache{}
 }
 
 // OpenPath opens a text document, image pane, or binary dump at path
@@ -829,4 +862,11 @@ func wantsFileWatchTree(source PickerSource) bool {
 	}
 	_, ok := source.(DynamicPickerSource)
 	return ok
+}
+
+func pickerStateKey(source PickerSource) string {
+	if keyed, ok := source.(PickerStateKeyer); ok {
+		return keyed.PickerStateKey()
+	}
+	return source.ID()
 }

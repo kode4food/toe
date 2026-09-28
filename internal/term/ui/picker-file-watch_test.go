@@ -36,6 +36,7 @@ const (
 	fileWatchTestTimeout    = 2 * time.Second
 	fileWatchBurstWrites    = 8
 	msgQueueSize            = 64
+	gutterPollPause         = 10 * time.Millisecond
 	fileWatchBurstPause     = 5 * time.Millisecond
 	pickerReopenWidth       = 120
 	pickerReopenHeight      = 24
@@ -263,17 +264,7 @@ func TestChangedFileRows(t *testing.T) {
 				testutil.WriteFile(t, path, []byte("disk\n"))
 			}
 
-			e := view.NewEditor(repo)
-			s := vcs.Attach(e)
-			t.Cleanup(s.Close)
-			km := command.NewKeymaps()
-			m := ui.New(e, km)
-			t.Cleanup(m.Close)
-			bindNormalTestAction(km, "changed_file_picker",
-				m.PickerAction(ui.NewChangedFilePicker),
-				[]command.KeyEvent{char('g')},
-			)
-			m = resize(m, pickerReopenWidth, pickerReopenHeight)
+			m, e := changedFilesModel(t, repo)
 			_, err := e.OpenFile(path)
 			assert.NoError(t, err)
 
@@ -565,17 +556,7 @@ func TestPickerFileWatch(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "committed.txt", []byte("one\n"))
 
-		e := view.NewEditor(repo)
-		s := vcs.Attach(e)
-		t.Cleanup(s.Close)
-		km := command.NewKeymaps()
-		m := ui.New(e, km)
-		t.Cleanup(m.Close)
-		bindNormalTestAction(
-			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
-			[]command.KeyEvent{char('g')},
-		)
-		m = resize(m, 120, 24)
+		m, _ := changedFilesModel(t, repo)
 		m = sendKeyAndFeed(m, 'g')
 		assert.NotContains(t, stripANSI(m.View().Content), "untracked.txt")
 		m = sendSpecial(m, tea.KeyEscape)
@@ -687,6 +668,59 @@ func TestPickerFileWatch(t *testing.T) {
 
 		out := stripANSI(m.View().Content)
 		assert.NotContains(t, out, "alpha.txt")
+	})
+
+	t.Run("discarding reverts an unsaved buffer", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "alpha.txt", []byte("one\n"))
+
+		m, e := changedFilesModel(t, repo)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		waitDiffBase(t, e, doc)
+		rope := doc.Text()
+		changes, err := core.NewChangeSetFromChanges(
+			rope, []core.Change{core.TextChange(
+				core.Span{From: 0, To: rope.LenChars()}, "unsaved\n",
+			)},
+		)
+		assert.NoError(t, err)
+		assert.NoError(t,
+			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
+		)
+
+		assert.NotEmpty(t, waitGutterHunks(t, e, doc))
+		m = sendKeyAndFeed(m, 'g')
+		assert.Equal(t, 1, pickerRowCount(m, "alpha.txt"))
+		m = sendKeyAndFeed(sendCtrl(m, 'r'), 'y')
+
+		assert.Equal(t, "one\n", e.FocusedDocument().Text().String())
+		assert.Empty(t, waitGutterCleared(t, e, doc))
+		m = sendKeyAndFeed(m, 'g')
+		assert.Equal(t, 0, pickerRowCount(m, "alpha.txt"))
+	})
+
+	t.Run("discarding an open untracked file", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		testutil.GitCommitFile(t, repo, "committed.txt", []byte("one\n"))
+		path := filepath.Join(repo, "fresh.txt")
+		testutil.WriteFile(t, path, []byte("fresh\n"))
+
+		m, e := changedFilesModel(t, repo)
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+
+		m = sendKeyAndFeed(m, 'g')
+		assert.Equal(t, 1, pickerRowCount(m, "fresh.txt"))
+		sendKeyAndFeed(sendCtrl(m, 'r'), 'y')
+
+		assert.NoFileExists(t, path)
+		assert.Empty(t, e.TakeStatusMsgs())
 	})
 
 	t.Run("staging another file keeps selection", func(t *testing.T) {
@@ -871,4 +905,58 @@ func drainCmdWithTimeout(m ui.Model, cmd tea.Cmd, d time.Duration) ui.Model {
 		cmd = next
 	}
 	return m
+}
+
+func waitGutterHunks(
+	t *testing.T, e *view.Editor, doc *view.Document,
+) []view.DiffHunk {
+	t.Helper()
+	return waitGutter(t, e, doc, func(n int) bool { return n > 0 })
+}
+
+func waitGutterCleared(
+	t *testing.T, e *view.Editor, doc *view.Document,
+) []view.DiffHunk {
+	t.Helper()
+	return waitGutter(t, e, doc, func(n int) bool { return n == 0 })
+}
+
+func waitGutter(
+	t *testing.T, e *view.Editor, doc *view.Document, done func(int) bool,
+) []view.DiffHunk {
+	t.Helper()
+	deadline := time.Now().Add(fileWatchTestTimeout)
+	hunks := e.VersionControl().DiffHunks(doc)
+	for time.Now().Before(deadline) && !done(len(hunks)) {
+		time.Sleep(gutterPollPause)
+		hunks = e.VersionControl().DiffHunks(doc)
+	}
+	return hunks
+}
+
+func waitDiffBase(t *testing.T, e *view.Editor, doc *view.Document) {
+	t.Helper()
+	deadline := time.Now().Add(fileWatchTestTimeout)
+	for time.Now().Before(deadline) {
+		if _, ok := e.VersionControl().DiffBase(doc); ok {
+			return
+		}
+		time.Sleep(gutterPollPause)
+	}
+	t.Fatal("timed out waiting for the diff base")
+}
+
+func changedFilesModel(t *testing.T, repo string) (ui.Model, *view.Editor) {
+	t.Helper()
+	e := view.NewEditor(repo)
+	s := vcs.Attach(e)
+	t.Cleanup(s.Close)
+	km := command.NewKeymaps()
+	m := ui.New(e, km)
+	t.Cleanup(m.Close)
+	bindNormalTestAction(
+		km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
+		[]command.KeyEvent{char('g')},
+	)
+	return resize(m, pickerReopenWidth, pickerReopenHeight), e
 }

@@ -140,9 +140,23 @@ func (e *Editor) MoveFocusedFile(path string, force bool) error {
 // Reload reloads the focused document from disk
 func (e *Editor) Reload() error {
 	if doc := e.FocusedDocument(); doc != nil {
-		return e.reloadDocument(doc)
+		return e.ReloadDocument(doc)
 	}
 	return ErrNoDocument
+}
+
+// ReloadDocument reloads the document from disk, announcing the change so
+// diff state and other observers follow it
+func (e *Editor) ReloadDocument(doc *Document) error {
+	before := doc.Text()
+	rev := doc.Revision()
+	if err := doc.Reload(); err != nil {
+		return err
+	}
+	if doc.Revision() != rev {
+		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
+	}
+	return nil
 }
 
 // ReloadAll reloads all documents that have a file path
@@ -150,7 +164,7 @@ func (e *Editor) ReloadAll() []error {
 	var errs []error
 	for _, doc := range e.documents.byID {
 		if doc.Path() != "" {
-			if err := e.reloadDocument(doc); err != nil {
+			if err := e.ReloadDocument(doc); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -303,18 +317,6 @@ func (e *Editor) openFile(path string) (*Document, error) {
 func (e *Editor) fileOperationController() (FileOperationController, bool) {
 	ops, ok := e.langServers.(FileOperationController)
 	return ops, ok
-}
-
-func (e *Editor) reloadDocument(doc *Document) error {
-	before := doc.Text()
-	rev := doc.Revision()
-	if err := doc.Reload(); err != nil {
-		return err
-	}
-	if doc.Revision() != rev {
-		e.documentChanged(doc, wholeDocumentChange(before, doc.Text().String()))
-	}
-	return nil
 }
 
 // nextScratchName names a scratch buffer after the lowest number not already

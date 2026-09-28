@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"errors"
+	"io/fs"
 	"path/filepath"
 	"slices"
 	"sync"
@@ -293,9 +295,11 @@ func confirmDiscard(item *PickerItem) BufferOverlayComponent {
 		"file": item.Display,
 	})
 	return newConfirmation(question, func(e *view.Editor) tea.Cmd {
-		if vc := e.VersionControl(); vc != nil {
-			applyToRow(e, item, vc.Discard)
+		vc := e.VersionControl()
+		if vc == nil || !applyToRow(e, item, vc.Discard) {
+			return nil
 		}
+		reloadRow(e, item)
 		return nil
 	}, true)
 }
@@ -303,17 +307,36 @@ func confirmDiscard(item *PickerItem) BufferOverlayComponent {
 // a rename is one row over two paths, so both halves move together
 func applyToRow(
 	e *view.Editor, item *PickerItem, apply func(string) error,
-) {
+) bool {
+	for _, path := range rowPaths(item) {
+		if err := apply(path); err != nil {
+			e.SetStatusMsg(i18n.ErrorText(err))
+			return false
+		}
+	}
+	return true
+}
+
+func reloadRow(e *view.Editor, item *PickerItem) {
+	for _, path := range rowPaths(item) {
+		doc := openDocumentPreview(e, path)
+		if doc == nil {
+			continue
+		}
+		// discarding an untracked file deletes it, leaving nothing to read
+		err := e.ReloadDocument(doc)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			e.SetStatusMsg(i18n.ErrorText(err))
+		}
+	}
+}
+
+func rowPaths(item *PickerItem) []string {
 	paths := []string{item.Location.Target.Path}
 	if item.BasePath != "" && item.BasePath != paths[0] {
 		paths = append(paths, item.BasePath)
 	}
-	for _, path := range paths {
-		if err := apply(path); err != nil {
-			e.SetStatusMsg(i18n.ErrorText(err))
-			return
-		}
-	}
+	return paths
 }
 
 func changedFileSections() []*PickerItem {

@@ -199,6 +199,9 @@ func (s *Session) ChangedFiles() ([]view.FileChange, error) {
 		if !s.provider.Tracked(cwd, canon) {
 			continue
 		}
+		if len(s.UnstagedDiffHunks(canon)) == 0 {
+			continue
+		}
 		changes = append(changes, view.FileChange{
 			Kind: view.FileChangeModified, Path: canon,
 		})

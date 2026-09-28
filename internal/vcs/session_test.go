@@ -99,21 +99,29 @@ func TestSession(t *testing.T) {
 		name         string
 		staged       bool
 		onDisk       bool
-		inBuffer     bool
+		buffer       string
 		wantStaged   int
 		wantUnstaged int
 	}{
 		{name: "clean"},
-		{name: "buffer only", inBuffer: true, wantUnstaged: 1},
+		{name: "buffer only", buffer: "buffer\n", wantUnstaged: 1},
+		{name: "edit undone", buffer: "base\n"},
 		{name: "disk only", onDisk: true, wantUnstaged: 1},
 		{
-			name: "disk and buffer", onDisk: true, inBuffer: true,
+			name: "disk and buffer", onDisk: true, buffer: "buffer\n",
+			wantUnstaged: 1,
+		},
+		{name: "disk edit undone", onDisk: true, buffer: "disk\n",
 			wantUnstaged: 1,
 		},
 		{name: "staged only", staged: true, wantStaged: 1},
 		{
-			name: "staged and buffer", staged: true, inBuffer: true,
+			name: "staged and buffer", staged: true, buffer: "buffer\n",
 			wantStaged: 1, wantUnstaged: 1,
+		},
+		{
+			name: "staged edit undone", staged: true, buffer: "staged\n",
+			wantStaged: 1,
 		},
 		{
 			name: "staged and disk", staged: true, onDisk: true,
@@ -123,7 +131,7 @@ func TestSession(t *testing.T) {
 			name:       "staged, disk and buffer",
 			staged:     true,
 			onDisk:     true,
-			inBuffer:   true,
+			buffer:     "buffer\n",
 			wantStaged: 1, wantUnstaged: 1,
 		},
 	} {
@@ -147,13 +155,14 @@ func TestSession(t *testing.T) {
 			doc := e.FocusedDocument()
 			assert.NotNil(t, doc)
 
-			if tc.inBuffer {
+			if tc.buffer != "" {
 				rope := doc.Text()
 				assert.NoError(t,
 					e.Apply(core.NewTransaction(rope).WithChanges(
-						mustChangeSet(t, rope, "buffer\n"),
+						mustChangeSet(t, rope, tc.buffer),
 					)),
 				)
+				assert.True(t, doc.Modified())
 			}
 
 			changes, err := s.ChangedFiles()

@@ -195,6 +195,115 @@ func TestPickerReopen(t *testing.T) {
 	})
 }
 
+// staged, saved-but-unstaged, and unsaved-in-buffer are independent, so every
+// combination of the three is pinned as the picker renders it
+func TestChangedFileRows(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow: shells out to git")
+	}
+	testutil.RequireGit(t)
+	for _, tc := range []struct {
+		name         string
+		staged       bool
+		onDisk       bool
+		inBuffer     bool
+		wantRows     int
+		wantStaged   string
+		wantUnstaged string
+	}{
+		{name: "clean"},
+		{
+			name: "buffer only", inBuffer: true,
+			wantRows: 1, wantUnstaged: "+ buffer",
+		},
+		{
+			name: "disk only", onDisk: true,
+			wantRows: 1, wantUnstaged: "+ disk",
+		},
+		{
+			name: "disk and buffer", onDisk: true, inBuffer: true,
+			wantRows: 1, wantUnstaged: "+ buffer",
+		},
+		{
+			name: "staged only", staged: true,
+			wantRows: 1, wantStaged: "+ staged",
+		},
+		{
+			name: "staged and buffer", staged: true, inBuffer: true,
+			wantRows: 2, wantStaged: "+ staged", wantUnstaged: "+ buffer",
+		},
+		{
+			name: "staged and disk", staged: true, onDisk: true,
+			wantRows: 2, wantStaged: "+ staged", wantUnstaged: "+ disk",
+		},
+		{
+			name:     "staged, disk and buffer",
+			staged:   true,
+			onDisk:   true,
+			inBuffer: true,
+			wantRows: 2, wantStaged: "+ staged", wantUnstaged: "+ buffer",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := testutil.GitRepo(t)
+			path := testutil.GitCommitFile(t, repo, "a.txt", []byte("base\n"))
+			if tc.staged {
+				testutil.WriteFile(t, path, []byte("staged\n"))
+				testutil.RunGit(t, repo, "add", "a.txt")
+			}
+			if tc.onDisk {
+				testutil.WriteFile(t, path, []byte("disk\n"))
+			}
+
+			e := view.NewEditor(repo)
+			s := vcs.Attach(e)
+			t.Cleanup(s.Close)
+			km := command.NewKeymaps()
+			m := ui.New(e, km)
+			t.Cleanup(m.Close)
+			bindNormalTestAction(km, "changed_file_picker",
+				m.PickerAction(ui.NewChangedFilePicker),
+				[]command.KeyEvent{char('g')},
+			)
+			m = resize(m, pickerReopenWidth, pickerReopenHeight)
+			_, err := e.OpenFile(path)
+			assert.NoError(t, err)
+
+			if tc.inBuffer {
+				doc := e.FocusedDocument()
+				assert.NotNil(t, doc)
+				rope := doc.Text()
+				changes, err := core.NewChangeSetFromChanges(
+					rope, []core.Change{core.TextChange(
+						core.Span{From: 0, To: rope.LenChars()}, "buffer\n",
+					)},
+				)
+				assert.NoError(t, err)
+				assert.NoError(t,
+					e.Apply(core.NewTransaction(rope).WithChanges(changes)),
+				)
+			}
+
+			m = sendKeyAndFeed(m, 'g')
+			assert.Equal(t, tc.wantRows, pickerRowCount(m, "a.txt"))
+			if tc.wantStaged != "" {
+				assert.Contains(t, stripANSI(m.View().Content), tc.wantStaged)
+			}
+			if tc.wantUnstaged == "" {
+				return
+			}
+			if tc.wantStaged != "" {
+				m = sendSpecial(m, tea.KeyDown)
+			}
+			out := stripANSI(m.View().Content)
+			assert.Contains(t, out, tc.wantUnstaged)
+			if tc.onDisk && tc.inBuffer {
+				assert.NotContains(t, out, "+ disk")
+			}
+		})
+	}
+}
+
 func TestPickerFileWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow: real filesystem watches with multi-second timeouts")
@@ -576,99 +685,6 @@ func TestPickerFileWatch(t *testing.T) {
 
 		out = stripANSI(sendSpecial(m, tea.KeyDown).View().Content)
 		assert.Contains(t, out, "+ four")
-	})
-
-	t.Run("unsaved edit keeps both stages", func(t *testing.T) {
-		testutil.RequireGit(t)
-		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "both.txt", []byte("one\n"))
-		testutil.WriteFile(t, path, []byte("staged\n"))
-		testutil.RunGit(t, repo, "add", "both.txt")
-
-		e := view.NewEditor(repo)
-		s := vcs.Attach(e)
-		t.Cleanup(s.Close)
-		km := command.NewKeymaps()
-		m := ui.New(e, km)
-		t.Cleanup(m.Close)
-		bindNormalTestAction(
-			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
-			[]command.KeyEvent{char('g')},
-		)
-		m = resize(m, 120, 24)
-		if _, err := e.OpenFile(path); err != nil {
-			t.Fatal(err)
-		}
-		m = sendKeyAndFeed(m, 'g')
-		// staged alone, with nothing unsaved, is one row
-		assert.Equal(t, 1, pickerRowCount(m, "both.txt"))
-		m = sendSpecial(m, tea.KeyEscape)
-
-		doc := e.FocusedDocument()
-		assert.NotNil(t, doc)
-		rope := doc.Text()
-		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(
-				core.Span{From: 0, To: rope.LenChars()}, "unsaved\n",
-			),
-		})
-		assert.NoError(t, err)
-		assert.NoError(t,
-			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
-		)
-
-		m = sendKeyAndFeed(m, 'g')
-		assert.Equal(t, 2, pickerRowCount(m, "both.txt"))
-		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "Staged Changes")
-		assert.Contains(t, out, "+ staged")
-
-		out = stripANSI(sendSpecial(m, tea.KeyDown).View().Content)
-		assert.Contains(t, out, "+ unsaved")
-	})
-
-	t.Run("buffer outranks the copy on disk", func(t *testing.T) {
-		testutil.RequireGit(t)
-		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("base\n"))
-		testutil.WriteFile(t, path, []byte("disk\n"))
-
-		e := view.NewEditor(repo)
-		s := vcs.Attach(e)
-		t.Cleanup(s.Close)
-		km := command.NewKeymaps()
-		m := ui.New(e, km)
-		t.Cleanup(m.Close)
-		bindNormalTestAction(
-			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
-			[]command.KeyEvent{char('g')},
-		)
-		m = resize(m, 120, 24)
-		if _, err := e.OpenFile(path); err != nil {
-			t.Fatal(err)
-		}
-		m = sendKeyAndFeed(m, 'g')
-		assert.Contains(t, stripANSI(m.View().Content), "+ disk")
-		m = sendSpecial(m, tea.KeyEscape)
-
-		doc := e.FocusedDocument()
-		assert.NotNil(t, doc)
-		rope := doc.Text()
-		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(
-				core.Span{From: 0, To: rope.LenChars()}, "buffer\n",
-			),
-		})
-		assert.NoError(t, err)
-		assert.NoError(t,
-			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
-		)
-
-		m = sendKeyAndFeed(m, 'g')
-		assert.Equal(t, 1, pickerRowCount(m, "a.txt"))
-		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "+ buffer")
-		assert.NotContains(t, out, "+ disk")
 	})
 
 	t.Run("discarding a row drops it from the list", func(t *testing.T) {

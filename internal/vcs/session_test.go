@@ -146,7 +146,6 @@ func TestSession(t *testing.T) {
 			assert.NoError(t, err)
 			doc := e.FocusedDocument()
 			assert.NotNil(t, doc)
-			waitDiffer(t, s, doc)
 
 			if tc.inBuffer {
 				rope := doc.Text()

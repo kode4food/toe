@@ -151,6 +151,11 @@ func (Git) Ignore(cwd, path string) error {
 	)
 }
 
+// Tracked reports whether the repository containing cwd has path in its index
+func (Git) Tracked(cwd, path string) bool {
+	return tracked(cwd, path)
+}
+
 // IndexText returns the staged blob for path, erroring when the file has no
 // entry in the index
 func (Git) IndexText(cwd, path string) ([]byte, error) {

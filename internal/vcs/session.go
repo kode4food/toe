@@ -61,6 +61,9 @@ type (
 
 		// Ignore adds path to the ignore list of its repository
 		Ignore(cwd, path string) error
+
+		// Tracked reports whether the repository containing cwd tracks path
+		Tracked(cwd, path string) bool
 	}
 )
 
@@ -193,7 +196,7 @@ func (s *Session) ChangedFiles() ([]view.FileChange, error) {
 		if err != nil || strings.HasPrefix(rel, "..") {
 			continue
 		}
-		if s.differ(doc) == nil {
+		if !s.provider.Tracked(cwd, canon) {
 			continue
 		}
 		changes = append(changes, view.FileChange{

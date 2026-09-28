@@ -20,14 +20,22 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-type countingPathSource struct {
-	dir       string
-	loadCalls int
-}
+type (
+	countingPathSource struct {
+		dir       string
+		loadCalls int
+	}
+
+	watchPump struct {
+		model ui.Model
+		msgs  chan tea.Msg
+	}
+)
 
 const (
 	fileWatchTestTimeout    = 2 * time.Second
 	fileWatchBurstWrites    = 8
+	msgQueueSize            = 64
 	fileWatchBurstPause     = 5 * time.Millisecond
 	pickerReopenWidth       = 120
 	pickerReopenHeight      = 24
@@ -363,10 +371,9 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.Contains(t, out, "original")
 
 		assert.NoError(t, os.WriteFile(alpha, []byte("changed\n"), 0o644))
-		m = drainFileWatch(t, m)
+		m = newWatchPump(m).until(t, "changed")
 
 		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "changed")
 		assert.NotContains(t, out, "original")
 	})
 
@@ -399,10 +406,8 @@ func TestPickerFileWatch(t *testing.T) {
 			)
 			time.Sleep(fileWatchBurstPause)
 		}
-		m = drainFileWatch(t, m)
-
 		last := fmt.Sprintf("line %d", fileWatchBurstWrites-1)
-		assert.Contains(t, stripANSI(m.View().Content), last)
+		newWatchPump(m).until(t, last)
 	})
 
 	t.Run("new file appears", func(t *testing.T) {
@@ -428,10 +433,7 @@ func TestPickerFileWatch(t *testing.T) {
 
 		gamma := filepath.Join(tmp, "gamma.go")
 		assert.NoError(t, os.WriteFile(gamma, []byte("package gamma\n"), 0o644))
-		m = drainFileWatch(t, m)
-
-		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "gamma.go")
+		newWatchPump(m).until(t, "gamma.go")
 	})
 
 	t.Run("toggle preserves interest", func(t *testing.T) {
@@ -452,6 +454,7 @@ func TestPickerFileWatch(t *testing.T) {
 		m = resize(m, 100, 20)
 		m = sendKey(m, 'p')
 
+		pump := newWatchPump(m)
 		for _, name := range []string{"beta.go", "gamma.go"} {
 			e.Options().FileWatch = false
 			m2, _ := m.Update(tea.BlurMsg{})
@@ -463,9 +466,7 @@ func TestPickerFileWatch(t *testing.T) {
 			assert.NoError(t,
 				os.WriteFile(path, []byte("package added\n"), 0o644),
 			)
-			m = drainFileWatch(t, m)
-
-			assert.Contains(t, stripANSI(m.View().Content), name)
+			pump.until(t, name)
 		}
 	})
 
@@ -496,9 +497,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NoError(t,
 			os.WriteFile(path, []byte("package after\n"), 0o644),
 		)
-		m = drainFileWatch(t, m)
-
-		assert.Contains(t, stripANSI(m.View().Content), "package after")
+		newWatchPump(m).until(t, "package after")
 	})
 
 	t.Run("nested file appears", func(t *testing.T) {
@@ -526,10 +525,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NoError(t, os.MkdirAll(nested, 0o755))
 		deep := filepath.Join(nested, "deep.go")
 		assert.NoError(t, os.WriteFile(deep, []byte("package sub\n"), 0o644))
-		m = drainFileWatch(t, m)
-
-		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "deep.go")
+		newWatchPump(m).until(t, "deep.go")
 	})
 
 	t.Run("changed-files adds new file", func(t *testing.T) {
@@ -544,10 +540,7 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.WriteFile(t,
 			filepath.Join(repo, "untracked.txt"), []byte("new\n"),
 		)
-		m = drainFileWatch(t, m)
-
-		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "untracked.txt")
+		newWatchPump(m).until(t, "untracked.txt")
 	})
 
 	t.Run("open explorer shows new file", func(t *testing.T) {
@@ -559,7 +552,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NotContains(t, stripANSI(m.View().Content), "DELETE.txt")
 
 		testutil.WriteFile(t, filepath.Join(tmp, "DELETE.txt"), []byte("d"))
-		m = drainFileWatch(t, m)
+		m = newWatchPump(m).until(t, "DELETE.txt")
 		out := stripANSI(m.View().Content)
 		sub := strings.Index(out, "sub/")
 		del := strings.Index(out, "DELETE.txt")
@@ -615,10 +608,8 @@ func TestPickerFileWatch(t *testing.T) {
 		testutil.WriteFile(t,
 			filepath.Join(repo, "aardvark.txt"), []byte("new\n"),
 		)
-		m = drainFileWatch(t, m)
+		m = newWatchPump(m).until(t, "aardvark.txt")
 
-		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "aardvark.txt")
 		assert.Contains(t, selectedPickerLine(m), "beta.txt")
 	})
 
@@ -634,11 +625,9 @@ func TestPickerFileWatch(t *testing.T) {
 
 		// staging rewrites .git/index and leaves the working file alone
 		testutil.RunGit(t, repo, "add", "alpha.txt")
-		m = drainFileWatch(t, m)
+		newWatchPump(m).until(t, "Staged Changes")
 
-		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "Staged Changes")
-		assert.Contains(t, out, "alpha.txt")
+		assert.Contains(t, stripANSI(m.View().Content), "alpha.txt")
 	})
 
 	t.Run("git state watched when disabled", func(t *testing.T) {
@@ -658,8 +647,7 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.NotContains(t, stripANSI(m.View().Content), "Staged Changes")
 
 		testutil.RunGit(t, repo, "add", "alpha.txt")
-		m = drainFileWatch(t, m)
-		assert.Contains(t, stripANSI(m.View().Content), "Staged Changes")
+		newWatchPump(m).until(t, "Staged Changes")
 	})
 
 	t.Run("a write keeps both stages of a file", func(t *testing.T) {
@@ -734,6 +722,7 @@ func TestPickerFileWatch(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "+ two")
 
+		pump := newWatchPump(m)
 		for _, tc := range []struct {
 			name string
 			text string
@@ -744,9 +733,8 @@ func TestPickerFileWatch(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				testutil.WriteFile(t, path, []byte(tc.text))
-				m = drainFileWatch(t, m)
+				m = pump.until(t, tc.want)
 				assert.Contains(t, selectedPickerLine(m), "a.txt")
-				assert.Contains(t, stripANSI(m.View().Content), tc.want)
 			})
 		}
 	})
@@ -822,6 +810,47 @@ func resolvedTempDir(t *testing.T) string {
 	resolved, err := filepath.EvalSymlinks(dir)
 	assert.NoError(t, err)
 	return resolved
+}
+
+func newWatchPump(m ui.Model) *watchPump {
+	p := &watchPump{model: m, msgs: make(chan tea.Msg, msgQueueSize)}
+	p.run(m.Init())
+	return p
+}
+
+func (p *watchPump) until(t *testing.T, want string) ui.Model {
+	t.Helper()
+	deadline := time.After(fileWatchTestTimeout)
+	for !strings.Contains(stripANSI(p.model.View().Content), want) {
+		select {
+		case msg := <-p.msgs:
+			m, cmd := p.model.Update(msg)
+			p.model = m.(ui.Model)
+			_ = p.model.View()
+			p.run(cmd)
+		case <-deadline:
+			t.Fatalf("timed out waiting for %q", want)
+		}
+	}
+	return p.model
+}
+
+func (p *watchPump) run(cmd tea.Cmd) {
+	if cmd == nil {
+		return
+	}
+	// a batch runs concurrently, so serializing it starves the rest
+	go func() {
+		switch msg := cmd().(type) {
+		case nil:
+		case tea.BatchMsg:
+			for _, next := range msg {
+				p.run(next)
+			}
+		default:
+			p.msgs <- msg
+		}
+	}()
 }
 
 func drainCmdWithTimeout(m ui.Model, cmd tea.Cmd, d time.Duration) ui.Model {

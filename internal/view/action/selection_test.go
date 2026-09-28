@@ -356,7 +356,7 @@ func TestJumpBackwardForward(t *testing.T) {
 		assert.Equal(t, docA, e.FocusedDocument().ID())
 	})
 
-	t.Run("forward returns to the jumped-to document", func(t *testing.T) {
+	t.Run("forward returns to the document", func(t *testing.T) {
 		dir := t.TempDir()
 		pathA := filepath.Join(dir, "a.txt")
 		pathB := filepath.Join(dir, "b.txt")

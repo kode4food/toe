@@ -563,7 +563,7 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "> \uf459 a.txt")
 	})
 
-	t.Run("staging re-anchors the row taking its place", func(t *testing.T) {
+	t.Run("staging re-anchors the row", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		deep := make([]string, 400)
 		for i := range deep {

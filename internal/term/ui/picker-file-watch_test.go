@@ -11,6 +11,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
@@ -25,9 +26,12 @@ type countingPathSource struct {
 }
 
 const (
-	fileWatchTestTimeout = 2 * time.Second
-	fileWatchBurstWrites = 8
-	fileWatchBurstPause  = 5 * time.Millisecond
+	fileWatchTestTimeout    = 2 * time.Second
+	fileWatchBurstWrites    = 8
+	fileWatchBurstPause     = 5 * time.Millisecond
+	pickerReopenWidth       = 120
+	pickerReopenHeight      = 24
+	pickerReopenMiddleLines = 40
 )
 
 func (c *countingPathSource) ID() string {
@@ -132,6 +136,62 @@ func TestPickerReopen(t *testing.T) {
 		)
 		m = sendKeyAndFeed(m, 'g')
 		assert.Contains(t, stripANSI(m.View().Content), "untracked.txt")
+	})
+
+	t.Run("unsaved edit", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: shells out to git")
+		}
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		middle := strings.Repeat("line\n", pickerReopenMiddleLines)
+		base := "line\n" + middle + "line\n"
+		path := testutil.GitCommitFile(t,
+			repo, "changed.txt", []byte(base),
+		)
+		first := "first\n" + middle + "line\n"
+		testutil.WriteFile(t, path, []byte(first))
+		other := testutil.GitCommitFile(t,
+			repo, "alpha.txt", []byte("one\n"),
+		)
+		testutil.WriteFile(t, other, []byte("two\n"))
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
+			[]command.KeyEvent{char('g')},
+		)
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  pickerReopenWidth,
+			Height: pickerReopenHeight,
+		})
+		m = sendKeyAndFeed(m, 'g')
+		m = sendSpecial(m, tea.KeyDown)
+		assert.Contains(t, selectedPickerLine(m), "changed.txt")
+		assert.Contains(t, stripANSI(m.View().Content), "+ first")
+		m = sendSpecial(m, tea.KeyEnter)
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		rope := doc.Text()
+		second := "line\n" + middle + "second\n"
+		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(
+				core.Span{From: 0, To: rope.LenChars()}, second,
+			),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t,
+			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
+		)
+		m = sendKey(m, 'g')
+		assert.Contains(t, selectedPickerLine(m), "changed.txt")
+		assert.Contains(t, stripANSI(m.View().Content), "+ second")
 	})
 }
 
@@ -518,6 +578,99 @@ func TestPickerFileWatch(t *testing.T) {
 		assert.Contains(t, out, "+ four")
 	})
 
+	t.Run("unsaved edit keeps both stages", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "both.txt", []byte("one\n"))
+		testutil.WriteFile(t, path, []byte("staged\n"))
+		testutil.RunGit(t, repo, "add", "both.txt")
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
+			[]command.KeyEvent{char('g')},
+		)
+		m = resize(m, 120, 24)
+		if _, err := e.OpenFile(path); err != nil {
+			t.Fatal(err)
+		}
+		m = sendKeyAndFeed(m, 'g')
+		// staged alone, with nothing unsaved, is one row
+		assert.Equal(t, 1, pickerRowCount(m, "both.txt"))
+		m = sendSpecial(m, tea.KeyEscape)
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		rope := doc.Text()
+		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(
+				core.Span{From: 0, To: rope.LenChars()}, "unsaved\n",
+			),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t,
+			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
+		)
+
+		m = sendKeyAndFeed(m, 'g')
+		assert.Equal(t, 2, pickerRowCount(m, "both.txt"))
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "Staged Changes")
+		assert.Contains(t, out, "+ staged")
+
+		out = stripANSI(sendSpecial(m, tea.KeyDown).View().Content)
+		assert.Contains(t, out, "+ unsaved")
+	})
+
+	t.Run("buffer outranks the copy on disk", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("base\n"))
+		testutil.WriteFile(t, path, []byte("disk\n"))
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		t.Cleanup(m.Close)
+		bindNormalTestAction(
+			km, "changed_file_picker", m.PickerAction(ui.NewChangedFilePicker),
+			[]command.KeyEvent{char('g')},
+		)
+		m = resize(m, 120, 24)
+		if _, err := e.OpenFile(path); err != nil {
+			t.Fatal(err)
+		}
+		m = sendKeyAndFeed(m, 'g')
+		assert.Contains(t, stripANSI(m.View().Content), "+ disk")
+		m = sendSpecial(m, tea.KeyEscape)
+
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		rope := doc.Text()
+		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
+			core.TextChange(
+				core.Span{From: 0, To: rope.LenChars()}, "buffer\n",
+			),
+		})
+		assert.NoError(t, err)
+		assert.NoError(t,
+			e.Apply(core.NewTransaction(rope).WithChanges(changes)),
+		)
+
+		m = sendKeyAndFeed(m, 'g')
+		assert.Equal(t, 1, pickerRowCount(m, "a.txt"))
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "+ buffer")
+		assert.NotContains(t, out, "+ disk")
+	})
+
 	t.Run("discarding a row drops it from the list", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
@@ -556,18 +709,30 @@ func TestPickerFileWatch(t *testing.T) {
 	t.Run("diff preview updates live", func(t *testing.T) {
 		testutil.RequireGit(t)
 		repo := testutil.GitRepo(t)
-		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))
-		testutil.WriteFile(t, path, []byte("two\n"))
+		path := testutil.GitCommitFile(t,
+			repo, "a.txt", []byte("one\nkeep\nend\n"),
+		)
+		testutil.WriteFile(t, path, []byte("two\nkeep\nend\n"))
 
 		m := changedFilePicker(t, repo)
 		out := stripANSI(m.View().Content)
-		assert.Contains(t, out, "two")
+		assert.Contains(t, out, "+ two")
 
-		testutil.WriteFile(t, path, []byte("three\n"))
-		m = drainFileWatch(t, m)
-
-		out = stripANSI(m.View().Content)
-		assert.Contains(t, out, "three")
+		for _, tc := range []struct {
+			name string
+			text string
+			want string
+		}{
+			{name: "moves down", text: "one\nkeep\nthree\n", want: "+ three"},
+			{name: "moves up", text: "four\nkeep\nend\n", want: "+ four"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				testutil.WriteFile(t, path, []byte(tc.text))
+				m = drainFileWatch(t, m)
+				assert.Contains(t, selectedPickerLine(m), "a.txt")
+				assert.Contains(t, stripANSI(m.View().Content), tc.want)
+			})
+		}
 	})
 
 	t.Run("new file avoids source reload", func(t *testing.T) {
@@ -604,6 +769,16 @@ func TestPickerFileWatch(t *testing.T) {
 		// recursive watch registers, forcing one harmless fallback reload
 		assert.LessOrEqual(t, src.loadCalls, 2)
 	})
+}
+
+func pickerRowCount(m ui.Model, name string) int {
+	rows := 0
+	for line := range strings.SplitSeq(stripANSI(m.View().Content), "\n") {
+		if strings.Contains(line, "│") && strings.Contains(line, name) {
+			rows++
+		}
+	}
+	return rows
 }
 
 func selectedPickerLine(m ui.Model) string {
@@ -647,6 +822,7 @@ func drainCmdWithTimeout(m ui.Model, cmd tea.Cmd, d time.Duration) ui.Model {
 		}
 		m2, next := m.Update(msg)
 		m = m2.(ui.Model)
+		_ = m.View()
 		cmd = next
 	}
 	return m

@@ -222,7 +222,7 @@ func TestStop(t *testing.T) {
 		assert.Empty(t, opts)
 	})
 
-	t.Run("file arguments keep existing session file", func(t *testing.T) {
+	t.Run("file args keep the session file", func(t *testing.T) {
 		dir := workspace(t)
 		assert.NoError(t, loader.TrustWorkspace(dir))
 		path := filepath.Join(dir, "main.go")

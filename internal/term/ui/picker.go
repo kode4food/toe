@@ -437,7 +437,7 @@ func (p *Picker) selectTarget(target PickerTarget) bool {
 	return false
 }
 
-func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
+func (p *Picker) scheduleFileRefresh(paths ...string) tea.Cmd {
 	switch p.source.(type) {
 	case FileBackedPickerSource, SnapshotPickerSource:
 	default:
@@ -446,7 +446,9 @@ func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
 	if p.load.pending == nil {
 		p.load.pending = map[string]struct{}{}
 	}
-	p.load.pending[path] = struct{}{}
+	for _, path := range paths {
+		p.load.pending[path] = struct{}{}
+	}
 	p.load.refreshGen++
 	gen := p.load.refreshGen
 	return func() tea.Msg {
@@ -458,6 +460,9 @@ func (p *Picker) scheduleFileRefresh(path string) tea.Cmd {
 func (p *Picker) flushFileChanges() tea.Cmd {
 	pending := p.load.pending
 	p.load.pending = nil
+	for path := range pending {
+		p.preview.cache.invalidatePath(path)
+	}
 	src, ok := p.source.(FileBackedPickerSource)
 	if !ok {
 		p.refreshItems(true)

@@ -94,7 +94,7 @@ func TestKeyModifiers(t *testing.T) {
 		}}}, kit.AltKey(kit.Bksp))
 	})
 
-	t.Run("modifiers stack and leave the source alone", func(t *testing.T) {
+	t.Run("modifiers stack, source untouched", func(t *testing.T) {
 		base := kit.Tab
 		both := kit.AltKey(kit.Shift(base))
 

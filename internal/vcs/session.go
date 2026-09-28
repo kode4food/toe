@@ -5,10 +5,12 @@ package vcs
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -115,9 +117,18 @@ func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
 	})
 }
 
-// UnstagedDiffHunks computes hunks between the staged and the on-disk contents
-// of an arbitrary workspace file. It shells out to the provider
+// UnstagedDiffHunks computes hunks between the staged and current contents of
+// a workspace file, preferring its open document over the copy on disk
 func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
+	target := loader.CanonicalPath(path)
+	for _, doc := range s.editor.AllDocuments() {
+		if p := doc.Path(); p == path || loader.CanonicalPath(p) == target {
+			return Diff(DiffSides{
+				Base: core.NewRope(s.IndexText(path)),
+				Doc:  doc.Text(),
+			})
+		}
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil
@@ -155,9 +166,41 @@ func (s *Session) HeadName(doc *view.Document) (string, bool) {
 	return name, ok
 }
 
-// ChangedFiles lists workspace files that differ from the head
+// ChangedFiles lists workspace files that differ from the head, including an
+// open document with unsaved changes
 func (s *Session) ChangedFiles() ([]view.FileChange, error) {
-	return s.provider.ChangedFiles(s.editor.Cwd())
+	changes, err := s.provider.ChangedFiles(s.editor.Cwd())
+	if err != nil {
+		return nil, err
+	}
+	unstaged := make(map[string]struct{}, len(changes))
+	for _, fc := range changes {
+		if !fc.Staged {
+			unstaged[loader.CanonicalPath(fc.Path)] = struct{}{}
+		}
+	}
+	cwd := loader.CanonicalPath(s.editor.Cwd())
+	for _, doc := range s.editor.AllDocuments() {
+		path := doc.Path()
+		if path == "" || !doc.Modified() {
+			continue
+		}
+		canon := loader.CanonicalPath(path)
+		if _, ok := unstaged[canon]; ok {
+			continue
+		}
+		rel, err := filepath.Rel(cwd, canon)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			continue
+		}
+		if s.differ(doc) == nil {
+			continue
+		}
+		changes = append(changes, view.FileChange{
+			Kind: view.FileChangeModified, Path: canon,
+		})
+	}
+	return changes, nil
 }
 
 // Stage adds the working-tree state of path to the staging area

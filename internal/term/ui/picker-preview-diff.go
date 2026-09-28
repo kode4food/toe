@@ -42,6 +42,7 @@ type (
 	diffLineKind uint8
 
 	diffLineCache struct {
+		item    *PickerItem
 		base    *previewDocEntry
 		working *previewDocEntry
 		lines   []diffPreviewLine

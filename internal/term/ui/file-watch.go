@@ -22,6 +22,8 @@ type (
 
 		dirs       map[string]*watchRegistration
 		wantedDirs map[string]int
+		gitDirs    map[string]int
+		gitCwd     string
 
 		tree           *watchRegistration
 		treeRoot       string
@@ -95,6 +97,9 @@ func (w *fileWatcher) sync(e *view.Editor) {
 }
 
 func (w *fileWatcher) gitWatchDirs(cwd string) map[string]int {
+	if w.gitDirs != nil && w.gitCwd == cwd {
+		return w.gitDirs
+	}
 	gitDir := filepath.Join(cwd, ".git")
 	info, err := os.Stat(gitDir)
 	if err != nil || !info.IsDir() {
@@ -106,7 +111,9 @@ func (w *fileWatcher) gitWatchDirs(cwd string) map[string]int {
 			w.watchDir(dir)
 		}
 	}
-	return map[string]int{refs: 1, gitDir: 1}
+	w.gitCwd = cwd
+	w.gitDirs = map[string]int{refs: 1, gitDir: 1}
+	return w.gitDirs
 }
 
 func (w *fileWatcher) reconcileDirs() {

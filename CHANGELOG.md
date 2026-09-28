@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.4.7
+
+### Version control
+
+- Unsaved edits appear in the changed-file picker
+
 ## 0.4.6
 
 ### Interface

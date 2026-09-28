@@ -12,6 +12,8 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/term/ui"
+	"github.com/kode4food/toe/internal/testutil"
+	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -195,4 +197,29 @@ func BenchmarkRenderTerminalColored(b *testing.B) {
 		sb.WriteString("\x1b[0m\r\n")
 	}
 	benchTerminal(b, sb.String())
+}
+
+// BenchmarkKeystroke moves the cursor in a repository-backed document, the
+// path that reconciles file watches on every message
+func BenchmarkKeystroke(b *testing.B) {
+	testutil.RequireGit(b)
+	repo := testutil.GitRepo(b)
+	path := testutil.GitCommitFile(b,
+		repo, "a.go", []byte(strings.Repeat("line of text\n", 400)),
+	)
+	e := view.NewEditor(repo)
+	s := vcs.Attach(e)
+	b.Cleanup(s.Close)
+	if _, err := e.OpenFile(path); err != nil {
+		b.Fatal(err)
+	}
+	m := ui.New(e, command.NewKeymaps())
+	m2, _ := m.Update(tea.WindowSizeMsg{Width: 160, Height: 50})
+	m = m2.(ui.Model)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		next, _ := m.Update(tea.KeyPressMsg{Code: 'j', Text: "j"})
+		m = next.(ui.Model)
+	}
 }

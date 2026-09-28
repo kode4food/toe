@@ -9,6 +9,7 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/theme"
@@ -131,9 +132,10 @@ func (p *previewCtx) diffPreviewLines(
 	args diffPreviewLinesArgs,
 ) []diffPreviewLine {
 	c := &p.picker.preview.diffLines
-	if c.base == args.base && c.working == args.working {
+	if c.item == p.item && c.base == args.base && c.working == args.working {
 		return c.lines
 	}
+	c.item = p.item
 	c.base = args.base
 	c.working = args.working
 	c.lines = buildDiffPreviewLines(buildDiffPreviewLinesArgs{
@@ -345,8 +347,9 @@ func blitTextInto(
 }
 
 func openDocumentPreview(e *view.Editor, path string) *view.Document {
+	target := loader.CanonicalPath(path)
 	for _, doc := range e.AllDocuments() {
-		if doc.Path() == path {
+		if p := doc.Path(); p == path || loader.CanonicalPath(p) == target {
 			return doc
 		}
 	}

@@ -93,6 +93,142 @@ func TestSession(t *testing.T) {
 		assert.Equal(t, view.FileChangeUntracked, changes[0].Kind)
 	})
 
+	// staged, saved-but-unstaged, and unsaved-in-buffer are independent, so
+	// every combination of the three is pinned here
+	for _, tc := range []struct {
+		name         string
+		staged       bool
+		onDisk       bool
+		inBuffer     bool
+		wantStaged   int
+		wantUnstaged int
+	}{
+		{name: "clean"},
+		{name: "buffer only", inBuffer: true, wantUnstaged: 1},
+		{name: "disk only", onDisk: true, wantUnstaged: 1},
+		{
+			name: "disk and buffer", onDisk: true, inBuffer: true,
+			wantUnstaged: 1,
+		},
+		{name: "staged only", staged: true, wantStaged: 1},
+		{
+			name: "staged and buffer", staged: true, inBuffer: true,
+			wantStaged: 1, wantUnstaged: 1,
+		},
+		{
+			name: "staged and disk", staged: true, onDisk: true,
+			wantStaged: 1, wantUnstaged: 1,
+		},
+		{
+			name:       "staged, disk and buffer",
+			staged:     true,
+			onDisk:     true,
+			inBuffer:   true,
+			wantStaged: 1, wantUnstaged: 1,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo, err := filepath.EvalSymlinks(testutil.GitRepo(t))
+			assert.NoError(t, err)
+			path := testutil.GitCommitFile(t, repo, "a.txt", []byte("base\n"))
+			if tc.staged {
+				testutil.WriteFile(t, path, []byte("staged\n"))
+				testutil.RunGit(t, repo, "add", "a.txt")
+			}
+			if tc.onDisk {
+				testutil.WriteFile(t, path, []byte("disk\n"))
+			}
+
+			e := view.NewEditor(repo)
+			s := vcs.Attach(e)
+			defer s.Close()
+			_, err = e.OpenFile(path)
+			assert.NoError(t, err)
+			doc := e.FocusedDocument()
+			assert.NotNil(t, doc)
+			waitDiffer(t, s, doc)
+
+			if tc.inBuffer {
+				rope := doc.Text()
+				assert.NoError(t,
+					e.Apply(core.NewTransaction(rope).WithChanges(
+						mustChangeSet(t, rope, "buffer\n"),
+					)),
+				)
+			}
+
+			changes, err := s.ChangedFiles()
+			assert.NoError(t, err)
+			staged := 0
+			unstaged := 0
+			for _, fc := range changes {
+				assert.Equal(t, path, fc.Path)
+				assert.Equal(t, view.FileChangeModified, fc.Kind)
+				if fc.Staged {
+					staged++
+				} else {
+					unstaged++
+				}
+			}
+			assert.Equal(t, tc.wantStaged, staged)
+			assert.Equal(t, tc.wantUnstaged, unstaged)
+		})
+	}
+
+	t.Run("ignored file stays out", func(t *testing.T) {
+		repo, err := filepath.EvalSymlinks(testutil.GitRepo(t))
+		assert.NoError(t, err)
+		testutil.GitCommitFile(t, repo, ".gitignore", []byte("skip.txt\n"))
+		path := filepath.Join(repo, "skip.txt")
+		testutil.WriteFile(t, path, []byte("one\n"))
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		defer s.Close()
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+
+		rope := doc.Text()
+		assert.NoError(t,
+			e.Apply(core.NewTransaction(rope).WithChanges(
+				mustChangeSet(t, rope, "two\n"),
+			)),
+		)
+
+		changes, err := s.ChangedFiles()
+		assert.NoError(t, err)
+		assert.Empty(t, changes)
+	})
+
+	t.Run("outside the workspace stays out", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		outside := testutil.GitRepo(t)
+		path := testutil.GitCommitFile(t,
+			outside, "a.txt", []byte("one\ntwo\nthree\n"),
+		)
+
+		e := view.NewEditor(repo)
+		s := vcs.Attach(e)
+		defer s.Close()
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		waitDiffer(t, s, doc)
+
+		tx := core.NewTransaction(doc.Text()).WithChanges(
+			mustChangeSet(t, doc.Text(), "one\nCHANGED\nthree\n"),
+		)
+		assert.NoError(t, e.Apply(tx))
+		waitHunks(t, s, doc)
+
+		changes, err := s.ChangedFiles()
+		assert.NoError(t, err)
+		assert.Empty(t, changes)
+	})
+
 	t.Run("refreshes after external head movement", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		path := testutil.GitCommitFile(t, repo, "a.txt", []byte("one\n"))

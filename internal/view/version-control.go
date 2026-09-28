@@ -16,8 +16,8 @@ type (
 		// contents of an arbitrary workspace file
 		StagedDiffHunks(path string) []DiffHunk
 
-		// UnstagedDiffHunks computes hunks between the staged and the on-disk
-		// contents of an arbitrary workspace file
+		// UnstagedDiffHunks computes hunks between the staged and current
+		// contents of a workspace file
 		UnstagedDiffHunks(path string) []DiffHunk
 
 		// HeadText returns the head text of an arbitrary workspace file, empty

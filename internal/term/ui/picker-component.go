@@ -129,18 +129,15 @@ func (c *Context) mountPicker(p *Picker) (Component, tea.Cmd) {
 }
 
 func (c *Context) refreshSavedPicker(p *Picker) tea.Cmd {
-	_, fileBacked := p.source.(FileBackedPickerSource)
-	if fileBacked && c.Editor.Options().FileWatch {
-		return nil
-	}
 	if _, ok := p.source.(SnapshotPickerSource); ok {
 		p.refreshItems(false)
 		return nil
 	}
-	if fileBacked {
-		return p.reload()
+	_, fileBacked := p.source.(FileBackedPickerSource)
+	if !fileBacked || c.Editor.Options().FileWatch {
+		return nil
 	}
-	return nil
+	return p.reload()
 }
 
 func (c *Context) savePickerState(p *Picker) {
@@ -221,17 +218,10 @@ func (p *PickerComponent) handleExternalFileChange(
 	msg externalFileChangedMsg,
 ) (EventResult, tea.Cmd) {
 	ps := p.state
-	var cmd tea.Cmd
-	for _, path := range msg.paths {
-		if !isGitStatePath(path) {
-			ps.preview.cache.invalidatePath(path)
-			p.markDirty()
-		}
-		if pickerStateKey(ps.source) == "" {
-			cmd = ps.scheduleFileRefresh(path)
-		}
+	if pickerStateKey(ps.source) != "" {
+		return ignored(), nil
 	}
-	return ignored(), cmd
+	return ignored(), ps.scheduleFileRefresh(msg.paths...)
 }
 
 func (p *PickerComponent) handleMouseClick(

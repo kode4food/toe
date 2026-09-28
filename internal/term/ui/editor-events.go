@@ -143,11 +143,7 @@ func (ec *EditorComponent) handleExternalFileChanged(
 	ec.syncEditorMessages()
 	cmds := []tea.Cmd{cx.fileWatcher.nextCmd(cx.Editor)}
 	for _, p := range cx.picker.saved {
-		var cmd tea.Cmd
-		for _, path := range msg.paths {
-			cmd = p.scheduleFileRefresh(path)
-		}
-		cmds = append(cmds, cmd)
+		cmds = append(cmds, p.scheduleFileRefresh(msg.paths...))
 	}
 	return consumed(), tea.Batch(cmds...)
 }

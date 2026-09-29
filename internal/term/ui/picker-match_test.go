@@ -102,6 +102,43 @@ func TestPickerMatch(t *testing.T) {
 		}
 		assert.Equal(t, full, stripANSI(m.View().Content))
 	})
+
+	t.Run("ctrl+w rubs out the last word", func(t *testing.T) {
+		kept := typeQuery(narrowPicker(t), "%path ")
+		oneWord := stripANSI(kept.View().Content)
+		m := typeQuery(narrowPicker(t), "%path ale")
+
+		m = sendModified(m, 'w', tea.ModCtrl)
+
+		assert.Equal(t, oneWord, stripANSI(m.View().Content))
+	})
+
+	t.Run("ctrl+w on one word restores every row", func(t *testing.T) {
+		full := stripANSI(narrowPicker(t).View().Content)
+		m := typeQuery(narrowPicker(t), "ale")
+
+		m = sendModified(m, 'w', tea.ModCtrl)
+
+		assert.Equal(t, full, stripANSI(m.View().Content))
+	})
+
+	t.Run("ctrl+w on empty query is a no-op", func(t *testing.T) {
+		full := stripANSI(narrowPicker(t).View().Content)
+
+		m := sendModified(narrowPicker(t), 'w', tea.ModCtrl)
+
+		assert.Equal(t, full, stripANSI(m.View().Content))
+	})
+
+	t.Run("ctrl+w skips trailing spaces", func(t *testing.T) {
+		kept := typeQuery(narrowPicker(t), "%path ")
+		oneWord := stripANSI(kept.View().Content)
+		m := typeQuery(narrowPicker(t), "%path ale  ")
+
+		m = sendModified(m, 'w', tea.ModCtrl)
+
+		assert.Equal(t, oneWord, stripANSI(m.View().Content))
+	})
 }
 
 func narrowPicker(t *testing.T) ui.Model {

@@ -327,7 +327,7 @@ func (p *PromptComponent) handleKey(msg tea.KeyPressMsg) EventResult {
 		k.Code.Special == command.Backspace && k.Mods.Has(command.ModCtrl),
 		k.Code.Special == command.Backspace && k.Mods.Has(command.ModAlt):
 		runes := []rune(p.buf)
-		start := promptWordLeft(runes, p.caret)
+		start := wordLeft(runes, p.caret)
 		p.buf = string(slices.Delete(runes, start, p.caret))
 		p.caret = start
 		p.recalculateCompletion()
@@ -336,7 +336,7 @@ func (p *PromptComponent) handleKey(msg tea.KeyPressMsg) EventResult {
 		k.Code.Special == command.Delete && k.Mods.Has(command.ModCtrl),
 		k.Code.Special == command.Delete && k.Mods.Has(command.ModAlt):
 		runes := []rune(p.buf)
-		end := promptWordRight(runes, p.caret)
+		end := wordRight(runes, p.caret)
 		p.buf = string(slices.Delete(runes, p.caret, end))
 		p.recalculateCompletion()
 
@@ -368,11 +368,11 @@ func (p *PromptComponent) handleKey(msg tea.KeyPressMsg) EventResult {
 
 	case k.Code.Special == command.Left && k.Mods.Has(command.ModCtrl),
 		k.Code.Char == 'b' && k.Mods == command.ModAlt:
-		p.caret = promptWordLeft([]rune(p.buf), p.caret)
+		p.caret = wordLeft([]rune(p.buf), p.caret)
 
 	case k.Code.Special == command.Right && k.Mods.Has(command.ModCtrl),
 		k.Code.Char == 'f' && k.Mods == command.ModAlt:
-		p.caret = promptWordRight([]rune(p.buf), p.caret)
+		p.caret = wordRight([]rune(p.buf), p.caret)
 
 	case k.Code.Special == command.Left,
 		k.Code.Char == 'b' && k.Mods == command.ModCtrl:
@@ -582,7 +582,7 @@ func (p *PromptComponent) layoutID() string {
 	return promptLayoutIDs[p.kind]
 }
 
-func promptWordLeft(runes []rune, caret int) int {
+func wordLeft(runes []rune, caret int) int {
 	i := caret
 	for i > 0 && unicode.IsSpace(runes[i-1]) {
 		i--
@@ -593,7 +593,7 @@ func promptWordLeft(runes []rune, caret int) int {
 	return i
 }
 
-func promptWordRight(runes []rune, caret int) int {
+func wordRight(runes []rune, caret int) int {
 	i := caret
 	for i < len(runes) && unicode.IsSpace(runes[i]) {
 		i++

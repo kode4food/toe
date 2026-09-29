@@ -464,10 +464,12 @@ When any picker is open (file picker, buffer picker, global search, etc.):
 | `PageDown` / `Ctrl+d` | Move page down |
 | `Home` | Jump to first item |
 | `End` | Jump to last item |
+| `Backspace` / `Ctrl+h` | Delete the last filter character |
+| `Ctrl+w` | Delete the last filter word |
 | `Return` | Open selected item |
 | `Ctrl+s` | Open in horizontal split |
 | `Ctrl+v` | Open in vertical split |
-| `Escape` | Close picker |
+| `Escape` / `Ctrl+c` | Close picker |
 
 The changed-file picker adds:
 

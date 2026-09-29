@@ -4,6 +4,10 @@ Notable changes to toe.
 
 ## 0.4.8
 
+### Interface
+
+- `Ctrl+w` deletes the last word of a picker's filter, so a filter restored with the picker is quicker to cut back
+
 ### Editing
 
 - Vertical motion lands where you would count to on screen: counted moves and selections follow wrapped rows, hold the column you started from across short lines, and stay correct at the top and bottom of a file

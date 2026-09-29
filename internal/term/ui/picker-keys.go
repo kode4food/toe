@@ -54,6 +54,10 @@ func (p *PickerComponent) handleKey(
 		if len(runes) > 0 {
 			return consumed(), ps.setQuery(string(runes[:len(runes)-1]))
 		}
+	case k.Code.Char == 'w' && k.Mods == command.ModCtrl:
+		runes := []rune(ps.list.query)
+		start := wordLeft(runes, len(runes))
+		return consumed(), ps.setQuery(string(runes[:start]))
 	default:
 		if r, cmd, ok := p.sourceKey(k); ok {
 			return r, cmd

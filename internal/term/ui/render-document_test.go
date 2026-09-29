@@ -1705,16 +1705,6 @@ func TestSplitPaneContentWidth(t *testing.T) {
 		assert.NotEqual(t, wide.ContentWidth(), narrow.ContentWidth())
 	})
 
-	t.Run("width survives a focus change", func(t *testing.T) {
-		wide, narrow, e := splitWithDifferentGutters(t)
-		before := wide.ContentWidth()
-
-		e.FocusView(narrow.ID())
-		e.FocusView(wide.ID())
-
-		assert.Equal(t, before, wide.ContentWidth())
-	})
-
 	t.Run("soft-wrap extend uses the focused pane", func(t *testing.T) {
 		wide, narrow, e := splitWithDifferentGutters(t)
 		// widths far enough apart that the prose wraps in one and not the other

@@ -233,7 +233,7 @@ func TestCodeActionUnavailable(t *testing.T) {
 	t.Run("stale action ID returns error", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		session := lsp.NewSession(t.Context(), t.TempDir())
+		session := lsp.NewSession(t.Context(), e)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		v := e.FocusedView()

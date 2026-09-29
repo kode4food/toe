@@ -168,9 +168,6 @@ func (p *progressState) reset() {
 }
 
 func (s *Session) showProgress(server string, entry progressEntry) {
-	if s.editor == nil {
-		return
-	}
 	msg := progressMessage(server, entry)
 	if msg != "" {
 		s.editor.SetStatusMsg(msg)
@@ -178,9 +175,7 @@ func (s *Session) showProgress(server string, entry progressEntry) {
 }
 
 func (s *Session) redraw() {
-	if s.editor != nil {
-		s.editor.Tree().Redraw()
-	}
+	s.editor.Tree().Redraw()
 }
 
 func progressMessage(server string, entry progressEntry) string {

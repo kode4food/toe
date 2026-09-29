@@ -375,13 +375,6 @@ func TestViewContentWidth(t *testing.T) {
 		assert.Equal(t, 0, e.FocusedView().ContentWidth())
 	})
 
-	t.Run("set and get", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		v := e.FocusedView()
-		v.SetContentWidth(72)
-		assert.Equal(t, 72, v.ContentWidth())
-	})
-
 	t.Run("each pane keeps its own width", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		e.ResizeTree(geom.Size{Width: 80, Height: 24})

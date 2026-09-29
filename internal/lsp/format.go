@@ -73,9 +73,6 @@ func (s *Session) FormatSelection(doc *view.Document, viewID view.Id) error {
 }
 
 func (s *Session) formatDocument(doc *view.Document, r *core.Range) error {
-	if s.editor == nil {
-		return view.ErrNoLanguageServer
-	}
 	snap, ok := SnapshotDocument(doc)
 	if !ok {
 		return nil

@@ -162,9 +162,7 @@ func (v *View) Split() (Pane, error) {
 
 // Discard closes this displaced view if no other view uses its document
 func (v *View) Discard() {
-	if v.editor != nil {
-		v.editor.discardView(v)
-	}
+	v.editor.discardView(v)
 }
 
 // Shutdown releases external resources owned by this view

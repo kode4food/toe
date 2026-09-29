@@ -229,18 +229,6 @@ func TestManyCompletionKinds(t *testing.T) {
 }
 
 func TestCompletionUnavailable(t *testing.T) {
-	t.Run("error without editor", func(t *testing.T) {
-		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		e := view.NewEditor(t.TempDir())
-		session := lsp.NewSession(t.Context(), t.TempDir())
-		doc := e.FocusedDocument()
-		assert.NotNil(t, doc)
-		v := e.FocusedView()
-		assert.NotNil(t, v)
-		err := session.ApplyCompletion(doc, v.ID(), &view.CompletionItem{})
-		assert.True(t, errors.Is(err, lsp.ErrCompletionUnavailable))
-	})
-
 	t.Run("unknown completion id", func(t *testing.T) {
 		exe, err := os.Executable()
 		assert.NoError(t, err)

@@ -135,18 +135,12 @@ func (s *Session) ensureDidOpen(
 }
 
 func (s *Session) clearAllDocumentHighlights() {
-	if s.editor == nil {
-		return
-	}
 	for _, doc := range s.editor.AllDocuments() {
 		doc.ClearAllDocumentHighlights()
 	}
 }
 
 func (s *Session) clearDocumentState() {
-	if s.editor == nil {
-		return
-	}
 	for _, doc := range s.editor.AllDocuments() {
 		doc.ClearDiagnostics()
 		doc.ClearAllDocumentHighlights()
@@ -157,7 +151,7 @@ func (s *Session) clearDocumentState() {
 }
 
 func (s *Session) clearDocumentHighlightsForServers(names []string) {
-	if s.editor == nil || len(names) == 0 {
+	if len(names) == 0 {
 		return
 	}
 	selected := make(map[string]bool, len(names))

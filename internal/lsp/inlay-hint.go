@@ -77,9 +77,6 @@ func (s *Session) InlayHints(
 }
 
 func (s *Session) inlayHintsAsync(doc *view.Document) {
-	if s.editor == nil {
-		return
-	}
 	for _, v := range s.editor.AllViews() {
 		if v.DocID() != doc.ID() {
 			continue

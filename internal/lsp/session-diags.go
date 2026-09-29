@@ -76,9 +76,6 @@ func (h *clientHandler) DiagnosticRefresh(context.Context) error {
 func (s *Session) publishDiagnostics(
 	provider string, params *protocol.PublishDiagnosticsParams,
 ) error {
-	if s.editor == nil {
-		return nil
-	}
 	path := params.URI.FsPath()
 	var target *view.Document
 	for _, doc := range s.editor.AllDocuments() {
@@ -129,9 +126,6 @@ func (s *Session) pullDiagnosticsAsync(doc *view.Document) {
 }
 
 func (s *Session) pullAllDiagnosticsAsync() {
-	if s.editor == nil {
-		return
-	}
 	for _, doc := range s.editor.AllDocuments() {
 		if !doc.Loaded() || !s.inWorkspace(doc.Path()) {
 			continue

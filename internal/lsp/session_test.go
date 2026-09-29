@@ -726,7 +726,7 @@ func TestSessionPullDiagnostics(t *testing.T) {
 		e := view.NewEditor(dir)
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
-		session := lsp.NewSession(t.Context(), dir)
+		session := lsp.NewSession(t.Context(), e)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 
@@ -742,7 +742,7 @@ func TestSessionScratchDocument(t *testing.T) {
 		t.Helper()
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 		e := view.NewEditor(t.TempDir())
-		session := lsp.NewSession(t.Context(), t.TempDir())
+		session := lsp.NewSession(t.Context(), e)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
@@ -1210,14 +1210,17 @@ func TestSessionAllOperationsError(t *testing.T) {
 	})
 }
 
-func TestSessionWithoutEditor(t *testing.T) {
+// an unattached session skipped lsp.Attach, so the editor never registered it
+// as a controller or document observer
+func TestSessionUnattached(t *testing.T) {
 	exe, err := os.Executable()
 	assert.NoError(t, err)
 	dir := t.TempDir()
 	path := filepath.Join(dir, "main.session")
 	writeCompletionLanguages(t, exe)
 	assert.NoError(t, os.WriteFile(path, []byte("test\n"), 0o644))
-	session := lsp.NewSession(t.Context(), dir)
+	e := view.NewEditor(dir)
+	session := lsp.NewSession(t.Context(), e)
 	defer func() { _ = session.Close() }()
 
 	t.Run("reload config is a no-op", func(t *testing.T) {
@@ -1236,8 +1239,7 @@ func TestSessionWithoutEditor(t *testing.T) {
 		assert.True(t, errors.Is(err, view.ErrNoLanguageServer))
 	})
 
-	t.Run("no attached editor", func(t *testing.T) {
-		e := view.NewEditor(dir)
+	t.Run("stops servers for a document", func(t *testing.T) {
 		_, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()

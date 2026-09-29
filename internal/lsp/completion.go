@@ -85,9 +85,6 @@ func (s *Session) TriggerCompletions(
 func (s *Session) ApplyCompletion(
 	doc *view.Document, viewID view.Id, item *view.CompletionItem,
 ) error {
-	if s.editor == nil {
-		return ErrCompletionUnavailable
-	}
 	c, ok := s.completion(item.ID)
 	if !ok {
 		return ErrCompletionUnavailable

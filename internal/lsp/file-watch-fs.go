@@ -108,9 +108,7 @@ func (s *Session) addFileWatchRoot(root string) {
 	s.watch.Lock()
 	delete(state.roots, root)
 	s.watch.Unlock()
-	if s.editor != nil {
-		s.editor.SetStatusMsg(i18n.Text(
-			i18n.StatusFileWatchUnavailable, i18n.Vars{"error": err},
-		))
-	}
+	s.editor.SetStatusMsg(i18n.Text(
+		i18n.StatusFileWatchUnavailable, i18n.Vars{"error": err},
+	))
 }

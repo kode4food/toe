@@ -50,12 +50,14 @@ var _ view.FileOperationController = (*Session)(nil)
 var _ view.LanguageServerController = (*Session)(nil)
 var _ protocol.Client = (*clientHandler)(nil)
 
-// NewSession creates an LSP session from language configuration
-func NewSession(ctx context.Context, cwd string) *Session {
+// NewSession creates an LSP session for the editor from language configuration
+func NewSession(ctx context.Context, e *view.Editor) *Session {
+	cwd := e.Cwd()
 	langs := loadLanguages(cwd)
 	return &Session{
-		ctx: ctx,
-		cwd: cwd,
+		ctx:    ctx,
+		cwd:    cwd,
+		editor: e,
 		servers: serverState{
 			registry:  NewRegistry(langs.LanguageServers),
 			languages: langs,
@@ -84,8 +86,7 @@ func NewSession(ctx context.Context, cwd string) *Session {
 
 // Attach starts an LSP session for the editor and observes document changes
 func Attach(ctx context.Context, e *view.Editor) *Session {
-	s := NewSession(ctx, e.Cwd())
-	s.editor = e
+	s := NewSession(ctx, e)
 	e.SetLanguageServerController(s)
 	e.AddDocumentObserver(s)
 	docs := e.VisibleDocuments()
@@ -108,9 +109,6 @@ func (s *Session) ReloadConfig() error {
 	clients := s.resetConfig(langs)
 	s.clearDocumentState()
 	closeClients(clients)
-	if s.editor == nil {
-		return nil
-	}
 	for _, doc := range s.editor.VisibleDocuments() {
 		s.DocumentOpened(doc)
 	}

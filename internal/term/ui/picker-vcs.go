@@ -82,8 +82,8 @@ var (
 	}
 )
 
-// NewChangedFilePicker lists workspace files the version-control system
-// reports as changed
+// NewChangedFilePicker lists workspace files the version-control system reports
+// as changed
 func NewChangedFilePicker(e *view.Editor) *Picker {
 	return NewPicker(e, &changedFilePickerSource{
 		Editor:      e,
@@ -134,8 +134,8 @@ func (c *changedFilePickerSource) Load() PickerLoad {
 	return PickerLoad{Feed: feed, Stop: stop}
 }
 
-// Items returns the whole row set at once, letting a refresh swap the list
-// in place rather than emptying and re-streaming it
+// Items returns the whole row set at once, letting a refresh swap the list in
+// place rather than emptying and re-streaming it
 func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 	scan, ok := c.scan()
 	if !ok || scan.err != nil {

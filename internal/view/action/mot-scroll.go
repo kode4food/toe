@@ -17,64 +17,76 @@ func ScrollDown(e *view.Editor) {
 
 // PageUp moves the cursor and scrolls the view up by one page
 func PageUp(e *view.Editor) {
-	h := max(e.ViewHeight(), 1)
+	h := focusedHeight(e)
 	move := core.MovementMove
 	if e.Mode() == view.ModeSelect {
 		move = core.MovementExtend
 	}
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveVertically(
-			doc, core.DirectionBackward, h, move,
-		)
+		moved, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionBackward,
+			Count:    h,
+			Movement: move,
+		})
+		return moved
 	})
 	scrollView(e, h, true)
 }
 
 // PageDown moves the cursor and scrolls the view down by one page
 func PageDown(e *view.Editor) {
-	h := max(e.ViewHeight(), 1)
+	h := focusedHeight(e)
 	move := core.MovementMove
 	if e.Mode() == view.ModeSelect {
 		move = core.MovementExtend
 	}
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveVertically(
-			doc, core.DirectionForward, h, move,
-		)
+		moved, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    h,
+			Movement: move,
+		})
+		return moved
 	})
 	scrollView(e, h, false)
 }
 
 // PageCursorHalfUp moves the cursor and scrolls the view up by half a page
 func PageCursorHalfUp(e *view.Editor) {
-	half := max(max(e.ViewHeight(), 1)/2, 1)
+	half := max(focusedHeight(e)/2, 1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveVertically(
-			doc, core.DirectionBackward, half, core.MovementMove,
-		)
+		moved, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionBackward,
+			Count:    half,
+			Movement: core.MovementMove,
+		})
+		return moved
 	})
 	scrollView(e, half, true)
 }
 
 // PageCursorHalfDown moves the cursor and scrolls the view down by half a page
 func PageCursorHalfDown(e *view.Editor) {
-	half := max(max(e.ViewHeight(), 1)/2, 1)
+	half := max(focusedHeight(e)/2, 1)
 	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return r.MoveVertically(
-			doc, core.DirectionForward, half, core.MovementMove,
-		)
+		moved, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    half,
+			Movement: core.MovementMove,
+		})
+		return moved
 	})
 	scrollView(e, half, false)
 }
 
 // HalfPageUp scrolls the view up by half a page without moving the cursor
 func HalfPageUp(e *view.Editor) {
-	scrollView(e, max(max(e.ViewHeight(), 1)/2, 1), true)
+	scrollView(e, max(focusedHeight(e)/2, 1), true)
 }
 
 // HalfPageDown scrolls the view down by half a page without moving the cursor
 func HalfPageDown(e *view.Editor) {
-	scrollView(e, max(max(e.ViewHeight(), 1)/2, 1), false)
+	scrollView(e, max(focusedHeight(e)/2, 1), false)
 }
 
 // AlignViewTop scrolls the viewport so the cursor line is at the top
@@ -84,12 +96,12 @@ func AlignViewTop(e *view.Editor) {
 
 // AlignViewCenter scrolls the viewport so the cursor line is at the center
 func AlignViewCenter(e *view.Editor) {
-	alignViewImpl(e, (max(e.ViewHeight(), 1)-1)/2)
+	alignViewImpl(e, (focusedHeight(e)-1)/2)
 }
 
 // AlignViewBottom scrolls the viewport so the cursor line is at the bottom
 func AlignViewBottom(e *view.Editor) {
-	alignViewImpl(e, max(e.ViewHeight(), 1)-1)
+	alignViewImpl(e, focusedHeight(e)-1)
 }
 
 // GotoWindowTop moves the cursor to the top of the viewport
@@ -220,10 +232,7 @@ func gotoWindowImpl(e *view.Editor, align int) {
 	if err != nil {
 		anchorLine = 0
 	}
-	height := v.ContentHeight()
-	if height <= 0 {
-		height = max(e.ViewHeight(), 1)
-	}
+	height := focusedHeight(e)
 	lastLine := min(anchorLine+height-1, text.LenLines()-1)
 	var targetLine int
 	switch align {
@@ -251,7 +260,7 @@ func scrollView(e *view.Editor, lines int, up bool) {
 		scrollViewBy(scrollViewByArgs{
 			editor: e,
 			view:   v,
-			height: max(e.ViewHeight(), 1),
+			height: focusedHeight(e),
 			lines:  lines,
 			up:     up,
 		})
@@ -356,6 +365,15 @@ func maxVisibleColumns(doc *view.Document, v *view.View, limit int) int {
 		}, tabW))
 	}
 	return w
+}
+
+func focusedHeight(e *view.Editor) int {
+	if v := e.FocusedView(); v != nil {
+		if h := v.ContentHeight(); h > 0 {
+			return h
+		}
+	}
+	return max(e.ViewHeight(), 1)
 }
 
 func clampSelectionToLine(

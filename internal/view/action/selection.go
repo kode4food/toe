@@ -243,6 +243,7 @@ func applyMove(e *view.Editor, fn rangeMover) {
 	if v == nil {
 		return
 	}
+	v.ClearGoalColumns()
 	doc := e.FocusedDocument()
 	if doc == nil {
 		return

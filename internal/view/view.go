@@ -24,9 +24,17 @@ type (
 		jumps      JumpList
 		freeScroll freeScrollState
 
-		area      geom.Area
-		visualCol visualColumnCache
-		dirty     bool
+		area         geom.Area
+		contentWidth int
+		visualCol    visualColumnCache
+		goalCols     goalColumnRun
+		dirty        bool
+	}
+
+	goalColumnRun struct {
+		rev    int
+		visual bool
+		cols   []int
 	}
 
 	visualColumnCache struct {
@@ -173,6 +181,40 @@ func (v *View) OnRevert() {}
 // ContentHeight returns the view's rows for text, excluding its status line
 func (v *View) ContentHeight() int {
 	return max(v.area.Height-viewStatusRows, 0)
+}
+
+// ContentWidth returns the view's columns for text, excluding its gutter, as
+// last reported by the renderer
+func (v *View) ContentWidth() int {
+	return v.contentWidth
+}
+
+// SetContentWidth sets the text columns available to this view (called by the
+// renderer once it has measured the gutter)
+func (v *View) SetContentWidth(w int) {
+	v.contentWidth = w
+}
+
+// GoalColumns returns the column each of ranges selections is aiming for, or
+// nil when an edit, a horizontal motion, or a change of wrapping mode broke the
+// run
+func (v *View) GoalColumns(rev int, visual bool, ranges int) []int {
+	g := v.goalCols
+	if g.rev != rev || g.visual != visual || len(g.cols) != ranges {
+		return nil
+	}
+	return g.cols
+}
+
+// SetGoalColumns records the columns a vertical move is aiming for, so the next
+// move in the run can return to them after a short line clamps the cursor
+func (v *View) SetGoalColumns(rev int, visual bool, cols []int) {
+	v.goalCols = goalColumnRun{rev: rev, visual: visual, cols: cols}
+}
+
+// ClearGoalColumns ends the current run of vertical moves
+func (v *View) ClearGoalColumns() {
+	v.goalCols = goalColumnRun{}
 }
 
 // Area returns the screen rectangle assigned by the layout engine

@@ -38,9 +38,9 @@ type (
 	}
 
 	paneState struct {
-		tree        *Tree
-		restorers   map[SessionKind]PaneRestorer
-		contentSize geom.Size
+		tree          *Tree
+		restorers     map[SessionKind]PaneRestorer
+		contentHeight int
 	}
 
 	workspaceState struct {
@@ -288,26 +288,15 @@ func (e *Editor) SetClipboard(c Clipboard) {
 	e.registers.clipboard = c
 }
 
-// ViewHeight returns the last-reported content area height
+// ViewHeight returns the editor-wide content area height, which spans every
+// pane. Per-pane rows come from View.ContentHeight
 func (e *Editor) ViewHeight() int {
-	return e.panes.contentSize.Height
+	return e.panes.contentHeight
 }
 
 // SetViewHeight sets the content area height (called by the UI on resize)
 func (e *Editor) SetViewHeight(h int) {
-	e.panes.contentSize.Height = h
-}
-
-// ViewContentWidth returns the last-reported text content width (viewport minus
-// gutter), used for visual-line movement when soft-wrap is active
-func (e *Editor) ViewContentWidth() int {
-	return e.panes.contentSize.Width
-}
-
-// SetViewContentWidth stores the text content width (called by the renderer
-// after computing the gutter width for the focused document)
-func (e *Editor) SetViewContentWidth(w int) {
-	e.panes.contentSize.Width = w
+	e.panes.contentHeight = h
 }
 
 // Cwd returns the editor working directory

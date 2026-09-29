@@ -27,20 +27,20 @@ func ExtendCharRight(e *view.Editor) {
 
 // ExtendLineUp extends the selection up one visual line, respecting soft-wrap
 func ExtendLineUp(e *view.Editor) {
-	n := e.CountOr(1)
-	vf := visualMoveFormat(e)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return vf.ExtendVerticallyVisual(doc, r, core.DirectionBackward, n)
+	applyVerticalMove(e, core.VerticalMove{
+		Dir:      core.DirectionBackward,
+		Count:    e.CountOr(1),
+		Movement: core.MovementExtend,
 	})
 }
 
 // ExtendLineDown extends the selection down one visual line, respecting
 // soft-wrap
 func ExtendLineDown(e *view.Editor) {
-	n := e.CountOr(1)
-	vf := visualMoveFormat(e)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return vf.ExtendVerticallyVisual(doc, r, core.DirectionForward, n)
+	applyVerticalMove(e, core.VerticalMove{
+		Dir:      core.DirectionForward,
+		Count:    e.CountOr(1),
+		Movement: core.MovementExtend,
 	})
 }
 

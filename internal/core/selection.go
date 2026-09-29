@@ -59,6 +59,11 @@ func (s Selection) Ranges() []Range {
 	return slices.Clone(s.ranges)
 }
 
+// Len is the number of ranges in the selection
+func (s Selection) Len() int {
+	return len(s.ranges)
+}
+
 // PrimaryIndex is the position of the primary range in Ranges
 func (s Selection) PrimaryIndex() int {
 	return s.primaryIndex

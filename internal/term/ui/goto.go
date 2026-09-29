@@ -98,11 +98,21 @@ func acceptDocumentID(
 }
 
 func alignAcceptedView(e *view.Editor, v *view.View, doc *view.Document) {
+	// the view may not have been laid out or measured yet, so fall back to the
+	// editor-wide height and to the full pane width
+	height := v.ContentHeight()
+	if height <= 0 {
+		height = e.ViewHeight()
+	}
+	width := v.ContentWidth()
+	if width <= 0 {
+		width = v.Area().Width
+	}
 	cs := &view.CursorScroll{
 		Doc:       doc.Text(),
 		Selection: doc.SelectionFor(v.ID()),
-		Height:    max(v.Area().Height, e.ViewHeight()),
-		Width:     e.ViewContentWidth(),
+		Height:    height,
+		Width:     width,
 		TabWidth:  doc.TabWidth(),
 		ScrollOff: e.Options().ScrollOff,
 	}

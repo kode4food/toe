@@ -432,52 +432,64 @@ func TestMoveVertically(t *testing.T) {
 
 	t.Run("down from first line", func(t *testing.T) {
 		r := core.PointRange(0)
-		got := r.MoveVertically(
-			doc, core.DirectionForward, 1, core.MovementMove,
-		)
+		got, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    1,
+			Movement: core.MovementMove,
+		})
 		assert.Equal(t, 4, got.Head)
 	})
 
 	t.Run("down preserves column", func(t *testing.T) {
 		r := core.PointRange(2) // col 2 of "one"
-		got := r.MoveVertically(
-			doc, core.DirectionForward, 1, core.MovementMove,
-		)
+		got, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    1,
+			Movement: core.MovementMove,
+		})
 		assert.Equal(t, 6, got.Head) // col 2 of "two"
 	})
 
 	t.Run("down clamps to shorter line", func(t *testing.T) {
 		r := core.PointRange(10) // col 2 of "three"
 		// move down to the empty last line
-		got := r.MoveVertically(
-			doc, core.DirectionForward, 1, core.MovementMove,
-		)
+		got, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    1,
+			Movement: core.MovementMove,
+		})
 		// last line after trailing \n is empty, cursor at start
 		assert.Equal(t, doc.LenChars(), got.Head)
 	})
 
 	t.Run("up from second line", func(t *testing.T) {
 		r := core.PointRange(4) // start of "two"
-		got := r.MoveVertically(
-			doc, core.DirectionBackward, 1, core.MovementMove,
-		)
+		got, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionBackward,
+			Count:    1,
+			Movement: core.MovementMove,
+		})
 		assert.Equal(t, 0, got.Head)
 	})
 
 	t.Run("up from first line stays", func(t *testing.T) {
 		r := core.PointRange(1)
-		got := r.MoveVertically(
-			doc, core.DirectionBackward, 1, core.MovementMove,
-		)
+		got, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionBackward,
+			Count:    1,
+			Movement: core.MovementMove,
+		})
 		// column preserved at col 1 on line 0
 		assert.Equal(t, 1, got.Head)
 	})
 
 	t.Run("down multi count", func(t *testing.T) {
 		r := core.PointRange(0)
-		got := r.MoveVertically(
-			doc, core.DirectionForward, 2, core.MovementMove,
-		)
+		got, _ := r.MoveVertically(doc, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    2,
+			Movement: core.MovementMove,
+		})
 		assert.Equal(t, 8, got.Head) // start of "three"
 	})
 }
@@ -495,37 +507,35 @@ func TestMoveVerticallyVisual(t *testing.T) {
 	t.Run("text-line fallback when SoftWrap off", func(t *testing.T) {
 		doc := core.NewRope("aaa\nbbb\nccc")
 		r := core.PointRange(0)
-		got := (*core.VisualMoveFormat)(nil).MoveVerticallyVisual(
-			doc, r, core.DirectionForward, 1,
-		)
+		got := moveRows((*core.VisualMoveFormat)(nil), doc, r, 1)
 		assert.Equal(t, 4, got.Head) // start of "bbb"
 	})
 
 	t.Run("moves within wrapped line", func(t *testing.T) {
 		doc := core.NewRope("0123456789ab\ncd")
 		r := core.PointRange(0) // col 0, row 0 of line 0
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 1)
+		got := moveRows(vf, doc, r, 1)
 		assert.Equal(t, 10, got.Head) // row 1 of line 0, col 0
 	})
 
 	t.Run("moves from wrapped row to next text line", func(t *testing.T) {
 		doc := core.NewRope("0123456789ab\ncd")
 		r := core.PointRange(10) // row 1 of line 0
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 1)
+		got := moveRows(vf, doc, r, 1)
 		assert.Equal(t, 13, got.Head) // "c" in line 1
 	})
 
 	t.Run("moves up within wrapped line", func(t *testing.T) {
 		doc := core.NewRope("0123456789ab\ncd")
 		r := core.PointRange(10) // row 1 of line 0
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 1)
+		got := moveRows(vf, doc, r, -1)
 		assert.Equal(t, 0, got.Head) // back to row 0 of line 0
 	})
 
 	t.Run("moves up to previous wrapped row", func(t *testing.T) {
 		doc := core.NewRope("0123456789ab\ncd")
 		r := core.PointRange(13) // "c" in line 1
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 1)
+		got := moveRows(vf, doc, r, -1)
 		// line 0 last row is row 1 (chars 10-11), so col 0 → char 10
 		assert.Equal(t, 10, got.Head)
 	})
@@ -534,7 +544,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		doc := core.NewRope("abc\ndef")
 		vf2 := &core.VisualMoveFormat{ViewportWidth: 80, TabWidth: 4}
 		r := core.PointRange(0)
-		got := vf2.MoveVerticallyVisual(doc, r, core.DirectionBackward, 5)
+		got := moveRows(vf2, doc, r, -5)
 		assert.Equal(t, 0, got.Head)
 	})
 
@@ -542,7 +552,11 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		doc := core.NewRope("aaa\nbbb\nccc")
 		vf2 := &core.VisualMoveFormat{ViewportWidth: 80, TabWidth: 4}
 		r := core.Range{Anchor: 0, Head: 0}
-		got := vf2.ExtendVerticallyVisual(doc, r, core.DirectionForward, 1)
+		got, _ := vf2.MoveVerticallyVisual(doc, r, core.VerticalMove{
+			Dir:      core.DirectionForward,
+			Count:    1,
+			Movement: core.MovementExtend,
+		})
 		assert.Equal(t, 0, got.Anchor)
 		// PutCursor with extend sets Head=charIdx+1 for forward ranges
 		assert.Equal(t, 5, got.Head)
@@ -553,7 +567,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
 		r := core.PointRange(0)
 
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 3)
+		got := moveRows(vf, doc, r, 3)
 
 		assert.Equal(t, 23, got.Head)
 	})
@@ -562,7 +576,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
 		r := core.PointRange(0)
 
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 5)
+		got := moveRows(vf, doc, r, 5)
 
 		assert.Equal(t, 26, got.Head)
 	})
@@ -571,7 +585,7 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
 		r := core.PointRange(26)
 
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 2)
+		got := moveRows(vf, doc, r, -2)
 
 		assert.Equal(t, 13, got.Head)
 	})
@@ -580,9 +594,80 @@ func TestMoveVerticallyVisual(t *testing.T) {
 		doc := core.NewRope("0123456789ab\n0123456789ab\nzz")
 		r := core.PointRange(26)
 
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 3)
+		got := moveRows(vf, doc, r, -3)
 
 		assert.Equal(t, 10, got.Head)
+	})
+}
+
+func TestMoveVerticallyVisualEdges(t *testing.T) {
+	// viewport 10 wide, so a 12-char line occupies rows 0-9 and 10-11
+	vf := &core.VisualMoveFormat{ViewportWidth: 10, TabWidth: 4}
+
+	t.Run("up into a wrapped first line", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\ncd")
+		r := core.PointRange(13) // "c", row 0 of line 1
+
+		got := moveRows(vf, doc, r, -2)
+
+		assert.Equal(t, 0, got.Head) // row 0 of line 0, not its last row
+	})
+
+	t.Run("up past the start clamps", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\ncd")
+		r := core.PointRange(13)
+
+		got := moveRows(vf, doc, r, -99)
+
+		assert.Equal(t, 0, got.Head)
+	})
+
+	t.Run("down into the last line picks the row", func(t *testing.T) {
+		// no trailing newline, so line 1 is the last line
+		doc := core.NewRope("0123456789ab\n0123456789ab")
+		r := core.PointRange(0)
+
+		got := moveRows(vf, doc, r, 3)
+
+		assert.Equal(t, 23, got.Head) // row 1 of line 1, not its first row
+	})
+
+	t.Run("down past the end clamps", func(t *testing.T) {
+		doc := core.NewRope("0123456789ab\n0123456789ab")
+		r := core.PointRange(0)
+
+		got := moveRows(vf, doc, r, 99)
+
+		assert.Equal(t, 23, got.Head)
+	})
+
+	t.Run("every count lands on its own visual row", func(t *testing.T) {
+		// three wrapped lines and no trailing newline, so both edges are live
+		doc := core.NewRope(
+			"0123456789ab\n0123456789ab\n0123456789ab",
+		)
+		rows := []int{0, 10, 13, 23, 26, 36}
+		for from := range rows {
+			for to := range rows {
+				dir := core.DirectionForward
+				n := to - from
+				if n < 0 {
+					dir = core.DirectionBackward
+					n = -n
+				}
+				if n == 0 {
+					continue
+				}
+				got, _ := vf.MoveVerticallyVisual(
+					doc, core.PointRange(rows[from]), core.VerticalMove{
+						Dir:      dir,
+						Count:    n,
+						Movement: core.MovementMove,
+					},
+				)
+				assert.Equal(t, rows[to], got.Head)
+			}
+		}
 	})
 }
 
@@ -657,14 +742,14 @@ func TestMoveVerticallyVisualIndented(t *testing.T) {
 		// from offset 4 (visual col 4), moving down must land on row 1's first
 		// content char, "bravo" at offset 10, also col 4 after the indent
 		r := core.PointRange(4)
-		got := vf.MoveVerticallyVisual(doc, r, core.DirectionForward, 1)
+		got := moveRows(vf, doc, r, 1)
 		assert.Equal(t, 10, got.Head)
 	})
 
 	t.Run("down then up round-trips", func(t *testing.T) {
 		r := core.PointRange(12) // "a" in "bravo" on row 1
-		up := vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, 1)
-		down := vf.MoveVerticallyVisual(doc, up, core.DirectionForward, 1)
+		up := moveRows(vf, doc, r, -1)
+		down := moveRows(vf, doc, up, 1)
 		assert.Equal(t, 12, down.Head)
 	})
 }
@@ -758,4 +843,21 @@ func TestVisualScrollUp(t *testing.T) {
 		assert.Equal(t, 0, res.Line)
 		assert.Equal(t, 0, res.Row)
 	})
+}
+
+// moveRows moves r by rows visual rows, negative meaning upward
+func moveRows(
+	vf *core.VisualMoveFormat, doc core.Rope, r core.Range, rows int,
+) core.Range {
+	mv := core.VerticalMove{
+		Dir:      core.DirectionForward,
+		Count:    rows,
+		Movement: core.MovementMove,
+	}
+	if rows < 0 {
+		mv.Dir = core.DirectionBackward
+		mv.Count = -rows
+	}
+	got, _ := vf.MoveVerticallyVisual(doc, r, mv)
+	return got
 }

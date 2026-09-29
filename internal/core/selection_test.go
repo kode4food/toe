@@ -22,6 +22,18 @@ func TestSelection(t *testing.T) {
 		assert.True(t, errors.Is(err, core.ErrPrimaryIndexNotFound))
 	})
 
+	t.Run("counts ranges after merging", func(t *testing.T) {
+		s, err := core.NewSelection([]core.Range{
+			{Anchor: 0, Head: 2},
+			{Anchor: 1, Head: 3},
+			{Anchor: 8, Head: 9},
+		}, 0)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 2, s.Len())
+		assert.Equal(t, len(s.Ranges()), s.Len())
+	})
+
 	t.Run("normalizes and tracks primary range", func(t *testing.T) {
 		s, err := core.NewSelection([]core.Range{
 			{Anchor: 10, Head: 12},

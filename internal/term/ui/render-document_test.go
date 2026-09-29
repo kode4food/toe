@@ -34,6 +34,10 @@ const (
 		"xxxxxxxxxxxxxxx\n"
 
 	borkGoSrc = "package main\n\nvar x Bork\n"
+
+	// long enough to soft-wrap, and enough lines to widen the gutter past a
+	// one-line scratch buffer's
+	splitPaneProse = "some fairly long prose line that has to wrap\n"
 )
 
 func TestBufferlineRender(t *testing.T) {
@@ -1690,6 +1694,100 @@ func TestSearchInvalidRegex(t *testing.T) {
 
 		assert.NotEmpty(t, out)
 	})
+}
+
+func TestSplitPaneContentWidth(t *testing.T) {
+	t.Run("each pane reports its own width", func(t *testing.T) {
+		wide, narrow, _ := splitWithDifferentGutters(t)
+
+		assert.Positive(t, wide.ContentWidth())
+		assert.Positive(t, narrow.ContentWidth())
+		assert.NotEqual(t, wide.ContentWidth(), narrow.ContentWidth())
+	})
+
+	t.Run("width survives a focus change", func(t *testing.T) {
+		wide, narrow, e := splitWithDifferentGutters(t)
+		before := wide.ContentWidth()
+
+		e.FocusView(narrow.ID())
+		e.FocusView(wide.ID())
+
+		assert.Equal(t, before, wide.ContentWidth())
+	})
+
+	t.Run("soft-wrap extend uses the focused pane", func(t *testing.T) {
+		wide, narrow, e := splitWithDifferentGutters(t)
+		// widths far enough apart that the prose wraps in one and not the other
+		wide.SetContentWidth(80)
+		narrow.SetContentWidth(12)
+
+		e.FocusView(wide.ID())
+		split := extendTenVisualLines(t, e)
+
+		assert.Equal(t, soloExtendAtWidth(t, 80), split)
+		assert.NotEqual(t, soloExtendAtWidth(t, 12), split)
+	})
+
+	t.Run("focusing the other pane uses its width", func(t *testing.T) {
+		wide, narrow, e := splitWithDifferentGutters(t)
+		wide.SetContentWidth(80)
+		narrow.SetContentWidth(12)
+
+		e.FocusView(narrow.ID())
+		// the scratch buffer is empty, so give the narrow pane the prose too
+		e.ShowDocument(wide.DocID())
+		narrow.SetContentWidth(12)
+		split := extendTenVisualLines(t, e)
+
+		assert.Equal(t, soloExtendAtWidth(t, 12), split)
+		assert.NotEqual(t, soloExtendAtWidth(t, 80), split)
+	})
+}
+
+func soloExtendAtWidth(t *testing.T, width int) int {
+	t.Helper()
+	e := editorWithText(t, strings.Repeat(splitPaneProse, 1200))
+	enableSoftWrap(e)
+	e.FocusedView().SetContentWidth(width)
+	return extendTenVisualLines(t, e)
+}
+
+func splitWithDifferentGutters(
+	t *testing.T,
+) (*view.View, *view.View, *view.Editor) {
+	t.Helper()
+	e := editorWithText(t, strings.Repeat(splitPaneProse, 1200))
+	enableSoftWrap(e)
+	m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
+	_ = m.View()
+
+	// a one-line scratch buffer needs a much narrower gutter than the prose
+	narrow := e.VSplitNew()
+	assert.NotNil(t, narrow)
+	var wide *view.View
+	e.Tree().RangeVisible(func(p view.Pane) bool {
+		if v, ok := p.(*view.View); ok && v != narrow {
+			wide = v
+		}
+		return true
+	})
+	assert.NotNil(t, wide)
+	_ = resize(m, 100, 30).View()
+	return wide, narrow, e
+}
+
+func extendTenVisualLines(t *testing.T, e *view.Editor) int {
+	t.Helper()
+	e.SetMode(view.ModeSelect)
+	testutil.SetCursor(t, e, 0)
+	e.SetCount(10)
+	action.ExtendLineDown(e)
+	return testutil.CursorPos(t, e)
+}
+
+func enableSoftWrap(e *view.Editor) {
+	on := true
+	e.Options().SoftWrap.Enable = &on
 }
 
 func styledRunes(s string) map[rune]string {

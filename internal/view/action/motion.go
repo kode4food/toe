@@ -29,19 +29,19 @@ func MoveRight(e *view.Editor) {
 
 // MoveUp moves all cursors up one visual line, respecting soft-wrap
 func MoveUp(e *view.Editor) {
-	n := e.CountOr(1)
-	vf := visualMoveFormat(e)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return vf.MoveVerticallyVisual(doc, r, core.DirectionBackward, n)
+	applyVerticalMove(e, core.VerticalMove{
+		Dir:      core.DirectionBackward,
+		Count:    e.CountOr(1),
+		Movement: core.MovementMove,
 	})
 }
 
 // MoveDown moves all cursors down one visual line, respecting soft-wrap
 func MoveDown(e *view.Editor) {
-	n := e.CountOr(1)
-	vf := visualMoveFormat(e)
-	applyMove(e, func(doc core.Rope, r core.Range) core.Range {
-		return vf.MoveVerticallyVisual(doc, r, core.DirectionForward, n)
+	applyVerticalMove(e, core.VerticalMove{
+		Dir:      core.DirectionForward,
+		Count:    e.CountOr(1),
+		Movement: core.MovementMove,
 	})
 }
 
@@ -298,8 +298,39 @@ func moveFileEnd(e *view.Editor, extend bool) {
 	})
 }
 
+func applyVerticalMove(e *view.Editor, mv core.VerticalMove) {
+	v := e.FocusedView()
+	if v == nil {
+		return
+	}
+	doc := e.FocusedDocument()
+	if doc == nil {
+		return
+	}
+	vf := visualMoveFormat(e)
+	rev := doc.Revision()
+	visual := vf != nil
+	ranges := doc.SelectionFor(v.ID()).Len()
+	goals := v.GoalColumns(rev, visual, ranges)
+	next := make([]int, 0, ranges)
+	applyMove(e, func(text core.Rope, r core.Range) core.Range {
+		mv.GoalColumn = 0
+		if i := len(next); i < len(goals) {
+			mv.GoalColumn = goals[i]
+		}
+		moved, goal := vf.MoveVerticallyVisual(text, r, mv)
+		next = append(next, goal)
+		return moved
+	})
+	v.SetGoalColumns(rev, visual, next)
+}
+
 func visualMoveFormat(e *view.Editor) *core.VisualMoveFormat {
-	w := e.ViewContentWidth()
+	v := e.FocusedView()
+	if v == nil {
+		return nil
+	}
+	w := v.ContentWidth()
 	if w <= 0 {
 		return nil
 	}

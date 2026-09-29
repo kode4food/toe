@@ -38,8 +38,8 @@ Normal mode is the default. Keys are commands, not text: you move the cursor, ma
 | Key | Action |
 |-----|--------|
 | `h` / `←` | Move left |
-| `j` / `↓` | Move down |
-| `k` / `↑` | Move up |
+| `j` / `↓` | Move down one visual line |
+| `k` / `↑` | Move up one visual line |
 | `l` / `→` | Move right |
 | `w` | Move to start of next word |
 | `b` | Move to start of previous word |
@@ -267,7 +267,7 @@ Printable keys type text. The bindings below edit or move instead; anything unbo
 |-----|--------|
 | `Escape` | Enter normal mode |
 | `←` / `→` | Move by character |
-| `↑` / `↓` | Move by line |
+| `↑` / `↓` | Move by visual line |
 | `Home` | Goto line start |
 | `End` | Goto newline at line end |
 | `Ctrl+r <reg>` | Insert register |

@@ -547,14 +547,6 @@ func TestEditorViewHeight(t *testing.T) {
 	})
 }
 
-func TestEditorSetViewContentWidth(t *testing.T) {
-	t.Run("set and get", func(t *testing.T) {
-		e := view.NewEditor("/tmp")
-		e.SetViewContentWidth(72)
-		assert.Equal(t, 72, e.ViewContentWidth())
-	})
-}
-
 func TestEditorSwitchBuffer(t *testing.T) {
 	t.Run("switch to existing doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

@@ -14,10 +14,15 @@ import (
 	"github.com/kode4food/toe/internal/view/action"
 )
 
-const scrollViewLinesText = "line\nline\nline\nline\nline\nline\nline\n" +
-	"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
-	"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
-	"line\n"
+const (
+	// a short line between two long ones, so the column has to be remembered
+	goalColumnText = "0123456789\nab\n0123456789\nxy\n0123456789\n"
+
+	scrollViewLinesText = "line\nline\nline\nline\nline\nline\nline\n" +
+		"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
+		"line\nline\nline\nline\nline\nline\nline\nline\nline\nline\n" +
+		"line\nline\nline\n"
+)
 
 func TestMotion(t *testing.T) {
 	t.Run("move line bounds", func(t *testing.T) {
@@ -596,10 +601,79 @@ func TestExtendSubWordMotions(t *testing.T) {
 	}
 }
 
+func TestGoalColumn(t *testing.T) {
+	t.Run("short line clamps without forgetting", func(t *testing.T) {
+		e := testutil.EditorWithText(t, goalColumnText)
+		testutil.SetCursor(t, e, 8) // column 8 of line 0
+
+		action.MoveDown(e)
+		clamped := testutil.CursorPos(t, e)
+		action.MoveDown(e)
+
+		assert.Equal(t, 12, clamped) // "b", the end of the short line
+		assert.Equal(t, 22, testutil.CursorPos(t, e))
+		assert.Equal(t, 8, columnOf(t, e))
+	})
+
+	t.Run("restores across several short lines", func(t *testing.T) {
+		e := testutil.EditorWithText(t, goalColumnText)
+		testutil.SetCursor(t, e, 8)
+
+		for range 4 {
+			action.MoveDown(e)
+		}
+
+		assert.Equal(t, 8, columnOf(t, e))
+	})
+
+	t.Run("moving up restores too", func(t *testing.T) {
+		e := testutil.EditorWithText(t, goalColumnText)
+		testutil.SetCursor(t, e, 36) // column 8 of the last long line
+
+		action.MoveUp(e)
+		action.MoveUp(e)
+
+		assert.Equal(t, 8, columnOf(t, e))
+	})
+
+	t.Run("horizontal motion ends the run", func(t *testing.T) {
+		e := testutil.EditorWithText(t, goalColumnText)
+		testutil.SetCursor(t, e, 8)
+
+		action.MoveDown(e)
+		action.MoveLeft(e)
+		action.MoveDown(e)
+
+		assert.Equal(t, 0, columnOf(t, e))
+	})
+
+	t.Run("extend remembers the column as well", func(t *testing.T) {
+		e := testutil.EditorWithText(t, goalColumnText)
+		testutil.SetCursor(t, e, 8)
+		e.SetMode(view.ModeSelect)
+
+		action.ExtendLineDown(e)
+		action.ExtendLineDown(e)
+
+		assert.Equal(t, 8, columnOf(t, e))
+	})
+
+	t.Run("an edit ends the run", func(t *testing.T) {
+		e := testutil.EditorWithText(t, goalColumnText)
+		testutil.SetCursor(t, e, 8)
+
+		action.MoveDown(e)
+		action.InsertText(e, "!")
+		action.MoveDown(e)
+
+		assert.NotEqual(t, 8, columnOf(t, e))
+	})
+}
+
 func TestVisualMoveFormat(t *testing.T) {
 	t.Run("no viewport width uses logical lines up", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		e.SetViewContentWidth(0)
+		e.FocusedView().SetContentWidth(0)
 		testutil.SetCursor(t, e, 3)
 
 		action.MoveUp(e)
@@ -609,7 +683,7 @@ func TestVisualMoveFormat(t *testing.T) {
 
 	t.Run("no viewport width uses logical down", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		e.SetViewContentWidth(0)
+		e.FocusedView().SetContentWidth(0)
 		testutil.SetCursor(t, e, 0)
 
 		action.MoveDown(e)
@@ -620,7 +694,7 @@ func TestVisualMoveFormat(t *testing.T) {
 	t.Run("soft-wrap width uses visual lines", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdef\nghijkl")
 		e.Options().SoftWrap.Enable = new(true)
-		e.SetViewContentWidth(20)
+		e.FocusedView().SetContentWidth(20)
 		testutil.SetCursor(t, e, 7)
 
 		action.MoveUp(e)
@@ -631,7 +705,7 @@ func TestVisualMoveFormat(t *testing.T) {
 	t.Run("soft-wrap uses visual lines", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcdef\nghijkl")
 		e.Options().SoftWrap.Enable = new(true)
-		e.SetViewContentWidth(20)
+		e.FocusedView().SetContentWidth(20)
 		testutil.SetCursor(t, e, 0)
 
 		action.MoveDown(e)
@@ -926,4 +1000,12 @@ func TestScrollViewColumns(t *testing.T) {
 
 		assert.Equal(t, 1, v.Offset().HorizontalOffset)
 	})
+}
+
+func columnOf(t *testing.T, e *view.Editor) int {
+	t.Helper()
+	doc := e.FocusedDocument()
+	pos, err := doc.Text().Position(testutil.CursorPos(t, e))
+	assert.NoError(t, err)
+	return pos.Column - 1
 }

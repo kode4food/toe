@@ -183,7 +183,7 @@ func (r *renderPass) prepareContentRender(
 	)
 	softWrap := format.SoftWrap && gutterW < target.area.Width
 	contentW := target.area.Width - gutterW
-	cx.Editor.SetViewContentWidth(contentW)
+	v.SetContentWidth(contentW)
 
 	// a non-positive width disables horizontal scrolling and resets the offset
 	// to 0, which is what soft-wrap wants. The gutter never shifts either way

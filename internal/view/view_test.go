@@ -368,6 +368,32 @@ func TestViewArea(t *testing.T) {
 	})
 }
 
+func TestViewContentWidth(t *testing.T) {
+	t.Run("starts unmeasured", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		assert.Equal(t, 0, e.FocusedView().ContentWidth())
+	})
+
+	t.Run("set and get", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		v := e.FocusedView()
+		v.SetContentWidth(72)
+		assert.Equal(t, 72, v.ContentWidth())
+	})
+
+	t.Run("each pane keeps its own width", func(t *testing.T) {
+		e := view.NewEditor("/tmp")
+		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		first := e.FocusedView()
+		second := e.VSplitNew()
+		first.SetContentWidth(30)
+		second.SetContentWidth(44)
+		assert.Equal(t, 30, first.ContentWidth())
+		assert.Equal(t, 44, second.ContentWidth())
+	})
+}
+
 func TestViewConsumeDirty(t *testing.T) {
 	t.Run("new view starts dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")

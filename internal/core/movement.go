@@ -3,6 +3,16 @@ package core
 import "unicode"
 
 type (
+	// VerticalMove describes one vertical cursor motion. GoalColumn is the
+	// column to aim for across a run of moves, in the units of the mover that
+	// produced it; a zero value aims at the cursor's own column
+	VerticalMove struct {
+		Dir        Direction
+		Count      int
+		Movement   Movement
+		GoalColumn int
+	}
+
 	// Movement controls whether a motion extends the selection or moves it
 	Movement int
 
@@ -27,8 +37,7 @@ type (
 	}
 
 	visualMover struct {
-		format   *VisualMoveFormat
-		movement Movement
+		format *VisualMoveFormat
 	}
 
 	visualLine struct {
@@ -153,66 +162,52 @@ func MovePrevSubWordEnd(doc Rope, r Range, count int) Range {
 	return wordMove(doc, r, count, WordMotionPrevSubWordEnd)
 }
 
-// MoveVertically moves the cursor by count lines, keeping the column the caller
-// last moved to horizontally
-func (r Range) MoveVertically(
-	doc Rope, dir Direction, count int, move Movement,
-) Range {
+// MoveVertically moves the cursor by mv.Count lines, keeping the column the
+// caller last moved to horizontally. It answers the goal column to carry into
+// the next move, which a short line clamps the cursor to but does not forget
+func (r Range) MoveVertically(doc Rope, mv VerticalMove) (Range, int) {
 	cursor := r.Cursor(doc)
 	line, err := doc.CharToLine(cursor)
 	if err != nil {
-		return r
+		return r, mv.GoalColumn
 	}
 	lineStart, err := doc.LineToChar(line)
 	if err != nil {
-		return r
+		return r, mv.GoalColumn
 	}
-	col := cursor - lineStart
+	col := max(mv.GoalColumn, cursor-lineStart)
 
 	var target int
-	if dir == DirectionForward {
-		target = min(line+count, doc.LenLines()-1)
+	if mv.Dir == DirectionForward {
+		target = min(line+mv.Count, doc.LenLines()-1)
 	} else {
-		target = max(line-count, 0)
+		target = max(line-mv.Count, 0)
 	}
 
 	targetStart, err := doc.LineToChar(target)
 	if err != nil {
-		return r
+		return r, col
 	}
+	extend := mv.Movement == MovementExtend
 	lineEnd, err := doc.LineEndCharIndex(target)
 	if err != nil {
-		return r.PutCursor(doc, targetStart, move == MovementExtend)
+		return r.PutCursor(doc, targetStart, extend), col
 	}
 	lineLen := lineEnd - targetStart
 	newPos := targetStart + min(col, max(lineLen-1, 0))
 	if lineLen == 0 {
 		newPos = targetStart
 	}
-	return r.PutCursor(doc, newPos, move == MovementExtend)
+	return r.PutCursor(doc, newPos, extend), col
 }
 
-// MoveVerticallyVisual moves r up or down by count visual rows when soft-wrap
-// is active. Falls back to text-line movement when soft-wrap is disabled
+// MoveVerticallyVisual moves r up or down by mv.Count visual rows when
+// soft-wrap is active, falling back to text-line movement when it is not. It
+// answers the goal column to carry into the next move
 func (vf *VisualMoveFormat) MoveVerticallyVisual(
-	doc Rope, r Range, dir Direction, count int,
-) Range {
-	return visualMover{
-		format:   vf,
-		movement: MovementMove,
-	}.moveVertically(doc, r, dir, count)
-}
-
-// ExtendVerticallyVisual extends r up or down by count visual rows when
-// soft-wrap is active. Falls back to text-line movement when soft-wrap is
-// disabled
-func (vf *VisualMoveFormat) ExtendVerticallyVisual(
-	doc Rope, r Range, dir Direction, count int,
-) Range {
-	return visualMover{
-		format:   vf,
-		movement: MovementExtend,
-	}.moveVertically(doc, r, dir, count)
+	doc Rope, r Range, mv VerticalMove,
+) (Range, int) {
+	return visualMover{format: vf}.moveVertically(doc, r, mv)
 }
 
 func isWordBoundary(step charStep) bool {

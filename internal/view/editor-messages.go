@@ -24,6 +24,16 @@ func (e *Editor) AppendMessage(msg string) {
 	doc := e.MessagesDocument()
 	text := doc.Text()
 	at := text.LenChars()
+	// pin views whose cursor sits at the end so new lines scroll into view
+	var tailing []*View
+	for _, v := range e.AllViews() {
+		if v.DocID() != doc.ID() {
+			continue
+		}
+		if doc.SelectionFor(v.ID()).Primary().Head == at {
+			tailing = append(tailing, v)
+		}
+	}
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
 		core.TextChange(
 			core.Span{From: at, To: at}, msg+string(doc.LineEnding()),
@@ -37,6 +47,10 @@ func (e *Editor) AppendMessage(msg string) {
 		return
 	}
 	doc.markSaved()
+	end := doc.Text().LenChars()
+	for _, v := range tailing {
+		doc.SetSelectionFor(v.ID(), core.PointSelection(end))
+	}
 }
 
 func (e *Editor) newMessagesDocument() *Document {

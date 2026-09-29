@@ -371,6 +371,20 @@ func (ec *EditorComponent) cancelPending() {
 	ec.clearInput()
 }
 
+func (ec *EditorComponent) isLogTailing() bool {
+	e := ec.context.Editor
+	for _, v := range e.AllViews() {
+		doc := e.Document(v.DocID())
+		if doc == nil || doc.Type() != view.DocTypeLog {
+			continue
+		}
+		if doc.SelectionFor(v.ID()).Primary().Head == doc.Text().LenChars() {
+			return true
+		}
+	}
+	return false
+}
+
 func (ec *EditorComponent) syncEditorMessages() {
 	cx := ec.context
 	for _, m := range cx.Editor.TakeStatusMsgs() {

@@ -88,6 +88,10 @@ func (t *toastState) push(text string, level toastLevel) {
 	t.rev++
 }
 
+func (t *toastState) logOnly(text string, level toastLevel) {
+	t.log = append(t.log, logTag(level)+highlight.LogSeparator+text)
+}
+
 func (t *toastState) takeLog() []string {
 	out := t.log
 	t.log = nil
@@ -238,6 +242,11 @@ func (t *toastState) dismissAt(at geom.Point) bool {
 }
 
 func (ec *EditorComponent) pushToast(text string, level toastLevel) {
+	if ec.isLogTailing() {
+		ec.toasts.logOnly(text, level)
+		ec.requestRedraw()
+		return
+	}
 	ec.toasts.push(text, level)
 	ec.toasts.slideTo(ec.toasts.slidePct(time.Now(), ec.animation))
 	ec.requestRedraw()

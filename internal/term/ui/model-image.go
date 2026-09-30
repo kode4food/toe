@@ -57,12 +57,8 @@ const (
 	imagePlacementDimensionBits = 12
 	imagePlacementDimensionMask = 1<<imagePlacementDimensionBits - 1
 
-	// imageTransmitDelay lets Bubble Tea enter the alternate screen before
-	// Kitty receives image data that the screen transition can discard
 	imageTransmitDelay = 40 * time.Millisecond
-
-	// Images shown this frame cannot be evicted, so the cap is soft
-	maxResidentImages = 24
+	maxResidentImages  = 24
 
 	settleWait = 250 * time.Millisecond
 )
@@ -91,6 +87,14 @@ func (r *imageRegistry) setCell(size geom.Size) bool {
 	}
 	r.cell = size
 	return true
+}
+
+func (r *imageRegistry) forget() {
+	clear(r.placed)
+	clear(r.ready)
+	clear(r.sent)
+	clear(r.stale)
+	clear(r.used)
 }
 
 func (r *imageRegistry) beginFrame() {
@@ -149,20 +153,15 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 		return nil
 	}
 	if r.placed[a.id] == state {
-		// already requested this exact state, so wait for its response rather
-		// than queuing a duplicate
 		return nil
 	}
-	// an unsent initial transmit is still in flight, so a put now would
-	// reference an id the terminal doesn't have yet and get dropped
-	_, everEmitted := r.placed[a.id]
-	if everEmitted && !r.sent[a.id] {
+	_, requested := r.placed[a.id]
+	if requested && !r.sent[a.id] {
 		return nil
 	}
 	r.preparePlaceholders(state.cells)
 	resize := r.placed[a.id].cells != state.cells
 	r.placed[a.id] = state
-	// a put re-places pixels the terminal holds, never new ones
 	if r.sent[a.id] && resize {
 		put := r.dropStale(a.id, state.cells) + putSeq(a.id, state.cells)
 		return func() tea.Msg {
@@ -178,14 +177,15 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 		}
 		var buf bytes.Buffer
 		buf.WriteString(evict)
-		if err := transmit(transmitArgs{
+		err := transmit(transmitArgs{
 			buf:    &buf,
 			img:    a.img,
 			path:   a.path,
 			id:     a.id,
 			cells:  state.cells,
 			remote: remote,
-		}); err != nil {
+		})
+		if err != nil {
 			return nil
 		}
 		return imageTransmitMsg{raw: buf.String(), id: a.id, state: state}

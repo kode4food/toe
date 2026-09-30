@@ -25,8 +25,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// longer than the wait a quiet terminal is given to answer
-const scrollbarQuietWait = 400 * time.Millisecond
+const (
+	scrollbarQuietWait = 400 * time.Millisecond
+
+	channelShift = 8
+	opaque       = 255
+)
 
 func TestScrollbarImage(t *testing.T) {
 	t.Run("falls back to glyphs without graphics", func(t *testing.T) {
@@ -50,6 +54,25 @@ func TestScrollbarImage(t *testing.T) {
 		content := m.View().Content
 
 		assert.True(t, strings.ContainsRune(content, tui.PlaceholderRune))
+	})
+
+	t.Run("resume retransmits", func(t *testing.T) {
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		m, raws := scrollbarImageModelFor(t,
+			scrollbarImageEditor(t), scrollbarTestCell(),
+		)
+		assert.Contains(t, strings.Join(raws, ""), "a=T")
+
+		m2, cmd := m.Update(tea.ResumeMsg{})
+		m, raws = collectModelRawMsgs(m2.(ui.Model), cmd)
+		_ = m.View().Content
+		m2, cmd = m.Update(scrollbarTestCell())
+		m, more := collectModelRawMsgs(m2.(ui.Model), cmd)
+
+		assert.Contains(t, strings.Join(append(raws, more...), ""), "a=T")
+		assert.True(t,
+			strings.ContainsRune(m.View().Content, tui.PlaceholderRune),
+		)
 	})
 
 	t.Run("draws nothing until the image is up", func(t *testing.T) {
@@ -99,9 +122,9 @@ func TestScrollbarImage(t *testing.T) {
 		var r, g, b uint8
 		_, err = fmt.Sscanf(scrollbarErrorFg, "38;2;%d;%d;%d", &r, &g, &b)
 		assert.NoError(t, err)
-		rows := scrollbarMarkedRows(img, color.RGBA{
-			R: r, G: g, B: b, A: 255,
-		})
+		rows := scrollbarMarkedRows(
+			img, color.RGBA{R: r, G: g, B: b, A: opaque},
+		)
 		assert.NotEmpty(t, rows)
 		height := img.Bounds().Dy()
 		for _, y := range rows {
@@ -142,13 +165,11 @@ func TestScrollbarImage(t *testing.T) {
 		assert.NotZero(t, rows)
 
 		t.Setenv("KITTY_WINDOW_ID", "1")
-		_, raws := scrollbarImageModelFor(
-			t, scrollbarImageEditor(t), scrollbarTestCell(),
+		_, raws := scrollbarImageModelFor(t,
+			scrollbarImageEditor(t), scrollbarTestCell(),
 		)
 		img := decodeScrollbarImage(t, raws)
 
-		// only the cursor marks this document and it sits in the thumb, so the
-		// track color resumes exactly where the thumb ends
 		assert.Equal(t,
 			rows*scrollbarTestCell().Height, scrollbarThumbEnd(img),
 		)
@@ -163,7 +184,6 @@ func TestScrollbarImage(t *testing.T) {
 		m, raw := scrollbarScroll(m, e)
 		after := scrollbarRowOf(t, m.View().Content)
 
-		// the thumb moved less than a cell, so only pixels can carry it
 		assert.Equal(t, before, after)
 		assert.NotEmpty(t, raw)
 	})
@@ -212,14 +232,12 @@ func TestScrollbarImage(t *testing.T) {
 	})
 }
 
-// Uneven cell height exercises slot-to-pixel rounding
 func scrollbarTestCell() uv.CellSizeEvent {
 	return uv.CellSizeEvent{Width: 9, Height: 19}
 }
 
 func scrollbarImageEditor(t *testing.T) *view.Editor {
 	t.Helper()
-	// a line is worth several pixel rows but a fraction of a cell
 	e := editorWithText(t, numberedLines(100))
 	e.Options().Scrollbar = true
 	return e
@@ -227,8 +245,8 @@ func scrollbarImageEditor(t *testing.T) *view.Editor {
 
 func scrollbarImageModel(t *testing.T) ui.Model {
 	t.Helper()
-	m, _ := scrollbarImageModelFor(
-		t, scrollbarImageEditor(t), scrollbarTestCell(),
+	m, _ := scrollbarImageModelFor(t,
+		scrollbarImageEditor(t), scrollbarTestCell(),
 	)
 	return m
 }
@@ -245,7 +263,8 @@ func scrollbarImageModelFor(
 	t.Helper()
 	m := ui.New(e, command.NewKeymaps())
 	m2, _ := m.Update(tea.WindowSizeMsg{
-		Width: scrollbarWidth, Height: scrollbarHeight,
+		Width:  scrollbarWidth,
+		Height: scrollbarHeight,
 	})
 	m = m2.(ui.Model)
 	// nothing is drawn as an image until a cell size is known
@@ -306,7 +325,10 @@ func scrollbarMarkedRows(img image.Image, want color.RGBA) []int {
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		r, g, bl, _ := img.At(b.Min.X, y).RGBA()
 		got := color.RGBA{
-			R: uint8(r >> 8), G: uint8(g >> 8), B: uint8(bl >> 8), A: 255,
+			R: uint8(r >> channelShift),
+			G: uint8(g >> channelShift),
+			B: uint8(bl >> channelShift),
+			A: opaque,
 		}
 		if got == want {
 			out = append(out, y-b.Min.Y)

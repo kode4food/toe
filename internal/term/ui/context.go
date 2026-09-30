@@ -23,6 +23,8 @@ type (
 		lastLayer   func(*view.Editor) layerFunc
 		images      *imageRegistry
 		fileWatcher *fileWatcher
+
+		graphemeClustering bool
 	}
 
 	compositionState struct {
@@ -46,22 +48,23 @@ type (
 	}
 )
 
-// StyleGen returns a counter that increments whenever the active theme changes,
-// letting cached overlay buffers know they must repaint even without their own
-// content changing
+const (
+	maxInactiveDim = 90
+	fullBrightness = 100
+)
+
+// StyleGen returns a counter that increments whenever the active theme changes
 func (c *Context) StyleGen() int {
 	return c.theme.generation
 }
 
-// Theme returns the active theme, reloading it if the configured name
-// changed, falling back to the embedded default on load failure
+// Theme returns the active theme, reloading it when the configured name changes
 func (c *Context) Theme() *theme.Theme {
 	c.ensureTheme()
 	return c.theme.active
 }
 
-// ThemeFor returns the active theme, or its dimmed variant for an unfocused
-// pane
+// ThemeFor returns the active theme, dimmed for an unfocused pane
 func (c *Context) ThemeFor(focused bool) *theme.Theme {
 	c.ensureTheme()
 	if focused {
@@ -72,7 +75,7 @@ func (c *Context) ThemeFor(focused bool) *theme.Theme {
 
 func (c *Context) ensureTheme() {
 	name := c.Editor.Options().Theme
-	dim := min(max(c.Editor.Options().InactiveDim, 0), 90)
+	dim := min(max(c.Editor.Options().InactiveDim, 0), maxInactiveDim)
 	if name == c.theme.name && dim == c.theme.dim {
 		return
 	}
@@ -81,7 +84,7 @@ func (c *Context) ensureTheme() {
 		c.theme.active = paletteFor(loadTheme(name))
 	}
 	c.theme.dim = dim
-	c.theme.dimmed = paletteFor(c.theme.active.Dimmed(100 - dim))
+	c.theme.dimmed = paletteFor(c.theme.active.Dimmed(fullBrightness - dim))
 	c.theme.generation++
 }
 

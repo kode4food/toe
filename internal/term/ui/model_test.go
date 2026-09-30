@@ -2,9 +2,11 @@ package ui_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kode4food/toe/internal/term/builtin/files"
@@ -18,7 +20,9 @@ type retainedPickerSource struct {
 	loads int
 }
 
-// Load counts scans so reopening cannot silently rebuild the list
+const setUnicodeCore = "\x1b[?2027h"
+
+// Load counts each scan of the source
 func (r *retainedPickerSource) Load() ui.PickerLoad {
 	r.loads++
 	return r.feedPickerSource.Load()
@@ -70,6 +74,41 @@ func TestModelLifecycle(t *testing.T) {
 		)
 		m = resize(m, 80, 24)
 		assert.NotEmpty(t, m.View().Content)
+	})
+}
+
+func TestModelResume(t *testing.T) {
+	resume := func(t *testing.T, reports ...tea.Msg) string {
+		t.Helper()
+		e := view.NewEditor(t.TempDir())
+		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
+		for _, r := range reports {
+			m2, _ := m.Update(r)
+			m = m2.(ui.Model)
+		}
+		m2, cmd := m.Update(tea.ResumeMsg{})
+		_, raws := collectModelRawMsgs(m2.(ui.Model), cmd)
+		return strings.Join(raws, "")
+	}
+
+	t.Run("restores grapheme clustering", func(t *testing.T) {
+		raw := resume(t, tea.ModeReportMsg{
+			Mode:  ansi.ModeUnicodeCore,
+			Value: ansi.ModeReset,
+		})
+		assert.Contains(t, raw, setUnicodeCore)
+	})
+
+	t.Run("skips unsupported terminal", func(t *testing.T) {
+		raw := resume(t, tea.ModeReportMsg{
+			Mode:  ansi.ModeUnicodeCore,
+			Value: ansi.ModeNotRecognized,
+		})
+		assert.NotContains(t, raw, setUnicodeCore)
+	})
+
+	t.Run("skips unasked terminal", func(t *testing.T) {
+		assert.NotContains(t, resume(t), setUnicodeCore)
 	})
 }
 
@@ -191,7 +230,8 @@ func TestPickerState(t *testing.T) {
 		t.Cleanup(m.Close)
 		src := &retainedPickerSource{
 			Ident: "retained",
-			paths: make([]string, 1200)}
+			paths: make([]string, 1200),
+		}
 		for i := range src.paths {
 			src.paths[i] = fmt.Sprintf("file-%04d", i)
 		}

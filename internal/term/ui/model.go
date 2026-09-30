@@ -29,7 +29,6 @@ type (
 	settleTimeoutMsg struct{}
 )
 
-// answered with CSI 6 ; height ; width t
 const requestCellSizeOp = 16
 
 // New creates an initialized Model for the given editor and keymaps
@@ -116,7 +115,7 @@ func (m Model) Init() tea.Cmd {
 	return m.initCmd
 }
 
-// Update delegates all events to the compositor
+// Update delegates events to the compositor, except terminal and image ones
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cx := m.context
 	switch msg := msg.(type) {
@@ -125,6 +124,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Sequence(tea.Raw(msg.raw), func() tea.Msg {
 			return imageReadyMsg{id: msg.id, state: msg.state}
 		})
+	case tea.ResumeMsg:
+		return m, m.resume()
+	case tea.ModeReportMsg:
+		if msg.Mode == ansi.ModeUnicodeCore {
+			cx.graphemeClustering = isModeSupported(msg.Value)
+		}
+		return m, nil
 	case uv.CellSizeEvent:
 		if cx.images.setCell(geom.Size{Width: msg.Width, Height: msg.Height}) {
 			m.markImageDirty()
@@ -134,8 +140,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if cx.images.land(msg.id, msg.state) {
 			m.markImageDirty()
 		}
-		// re-query even when a size was requested while this was in flight, so
-		// a starved request is retried now that the id is confirmed sent
 		return m, m.imageDisplayFrameCmd()
 	default:
 		picker, feedCmd := handlePickerMessage(msg)
@@ -146,14 +150,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.component.cancelAutoSizeFor(msg)
 		cmd := m.compositor.HandleEvent(cx, msg)
-		cmd = tea.Batch(cmd, feedCmd)
-		if next := m.component.takeNextLayer(); next != nil {
-			layer, nextCmd := next(cx)
-			if layer != nil {
-				m.compositor.Push(layer)
-			}
-			cmd = tea.Batch(cmd, nextCmd)
-		}
+		cmd = tea.Batch(cmd, feedCmd, m.pushNextLayer())
 		cx.fileWatcher.sync(cx.Editor)
 		return m, tea.Batch(
 			cmd, m.component.autoSizeCmd(), m.imageDisplayFrameCmd(),
@@ -183,6 +180,34 @@ func (m Model) View() tea.View {
 	return v
 }
 
+func (m Model) pushNextLayer() tea.Cmd {
+	next := m.component.takeNextLayer()
+	if next == nil {
+		return nil
+	}
+	layer, cmd := next(m.context)
+	if layer != nil {
+		m.compositor.Push(layer)
+	}
+	return cmd
+}
+
+func (m Model) resume() tea.Cmd {
+	cx := m.context
+	cx.images.forget()
+	cx.Editor.Tree().Range(func(p view.Pane) bool {
+		p.MarkDirty()
+		return true
+	})
+	m.markImageDirty()
+	cmd := tea.Raw(ansi.WindowOp(requestCellSizeOp))
+	if cx.graphemeClustering {
+		// Bubble Tea turns mode 2027 off on suspend but never back on
+		cmd = tea.Batch(cmd, tea.Raw(ansi.SetModeUnicodeCore))
+	}
+	return tea.Batch(cmd, m.imageDisplayFrameCmd())
+}
+
 func (m Model) pickerImageCmd() tea.Cmd {
 	if p, ok := m.compositor.activePreviewImager(); ok {
 		return p.previewImageCmd(m.context, m.compositor.size)
@@ -205,10 +230,8 @@ func (m Model) hasImageSurface() bool {
 	if cx.images.graphics && cx.Editor.Options().Scrollbar {
 		return true
 	}
-	if p, ok := m.compositor.activePreviewImager(); ok {
-		if cx.images.graphics || p.hasPreviewImage(cx, m.compositor.size) {
-			return true
-		}
+	if m.previewHasImage() {
+		return true
 	}
 	found := false
 	cx.Editor.Tree().Range(func(p view.Pane) bool {
@@ -216,6 +239,15 @@ func (m Model) hasImageSurface() bool {
 		return !found
 	})
 	return found
+}
+
+func (m Model) previewHasImage() bool {
+	p, ok := m.compositor.activePreviewImager()
+	if !ok {
+		return false
+	}
+	cx := m.context
+	return cx.images.graphics || p.hasPreviewImage(cx, m.compositor.size)
 }
 
 func (m Model) markImageDirty() {
@@ -249,10 +281,14 @@ func underHome(path string) string {
 	return filepath.Join("~", rel)
 }
 
-// a font size change arrives as a resize, so the answer is re-asked for
 func cellSizeQueryCmd(msg tea.Msg) tea.Cmd {
 	if _, ok := msg.(tea.WindowSizeMsg); !ok {
 		return nil
 	}
 	return tea.Raw(ansi.WindowOp(requestCellSizeOp))
+}
+
+func isModeSupported(v ansi.ModeSetting) bool {
+	return v == ansi.ModeSet || v == ansi.ModeReset ||
+		v == ansi.ModePermanentlySet
 }

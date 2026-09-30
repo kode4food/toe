@@ -5,7 +5,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/view"
 )
 
@@ -14,7 +13,7 @@ type (
 		enabled     bool
 		viewID      view.Id
 		pane        view.Pane
-		area        geom.Area
+		slot        int
 		targetWidth int
 		generation  int
 	}
@@ -47,15 +46,16 @@ func (ec *EditorComponent) autoSizeCmd() tea.Cmd {
 	if pane == nil {
 		return nil
 	}
-	area := pane.Area()
+	// a swap moves the pane to a new slot; resizing it leaves the slot alone
+	slot := paneSlot(cx.Editor.Tree(), pane)
 	if id == ec.autoSize.viewID && pane == ec.autoSize.pane &&
-		area == ec.autoSize.area {
+		slot == ec.autoSize.slot {
 		return nil
 	}
 	ec.cancelAutoSize()
 	ec.autoSize.viewID = id
 	ec.autoSize.pane = pane
-	ec.autoSize.area = area
+	ec.autoSize.slot = slot
 	if !ec.autoSize.enabled {
 		return nil
 	}
@@ -66,7 +66,6 @@ func (ec *EditorComponent) autoSizeCmd() tea.Cmd {
 	if !ec.animation {
 		grow := ec.autoSize.targetWidth - pane.Area().Width
 		cx.Editor.Tree().GrowFocusedWidth(grow)
-		ec.autoSize.area = pane.Area()
 		return nil
 	}
 	ec.autoSize.generation++
@@ -134,7 +133,6 @@ func (ec *EditorComponent) handleAutoSizeTick(
 	before := pane.Area().Width
 	step := min(autoSizeStep, ec.autoSize.targetWidth-before)
 	grew := cx.Editor.Tree().GrowFocusedWidth(step)
-	ec.autoSize.area = pane.Area()
 	if !grew || pane.Area().Width <= before ||
 		pane.Area().Width >= ec.autoSize.targetWidth {
 		ec.cancelAutoSize()
@@ -149,4 +147,16 @@ func autoSizeTickCmd(generation int) tea.Cmd {
 	return tea.Tick(autoSizeTickInterval, func(time.Time) tea.Msg {
 		return autoSizeTickMsg{generation: generation}
 	})
+}
+
+func paneSlot(tree *view.Tree, pane view.Pane) int {
+	slot := 0
+	tree.Range(func(p view.Pane) bool {
+		if p == pane {
+			return false
+		}
+		slot++
+		return true
+	})
+	return slot
 }

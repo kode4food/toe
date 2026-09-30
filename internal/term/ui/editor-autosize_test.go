@@ -135,9 +135,8 @@ func TestAutoSizeScrolled(t *testing.T) {
 	m.SetAutoSize(true)
 	m.SetAnimation(false)
 
-	vs := e.AllViews()
-	sepX := vs[0].Area().X + vs[0].Area().Width
-	res, ok := e.Tree().SeparatorAt(geom.Point{X: sepX})
+	a := e.AllViews()[0].Area()
+	res, ok := e.Tree().SeparatorAt(geom.Point{X: a.X + a.Width})
 	assert.True(t, ok)
 	e.Tree().MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 75)
 
@@ -221,4 +220,28 @@ func TestAutoSizeAfterSwap(t *testing.T) {
 
 	assert.Equal(t, v.ID(), e.FocusedView().ID())
 	assert.Equal(t, 89, v.Area().Width)
+}
+
+func TestAutoSizeAfterDrag(t *testing.T) {
+	e := view.NewEditor(t.TempDir())
+	m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
+	e.VSplitNew()
+	e.Options().SetRulers([]int{80})
+	m.SetAutoSize(true)
+	m.SetAnimation(false)
+
+	m.Update(tea.FocusMsg{})
+	v := e.FocusedView()
+	assert.Equal(t, 89, v.Area().Width)
+
+	res, ok := e.Tree().SeparatorAt(geom.Point{X: v.Area().X - 1})
+	assert.True(t, ok)
+	e.Tree().MoveSeparator(res.ContainerID, res.ChildIdx, res.Layout, 60)
+	width := v.Area().Width
+	assert.Less(t, width, 89)
+
+	// a drag resizes without a focus change, so the pane keeps its width
+	m.Update(tea.FocusMsg{})
+	assert.Equal(t, v.ID(), e.FocusedView().ID())
+	assert.Equal(t, width, v.Area().Width)
 }

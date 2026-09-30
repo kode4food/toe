@@ -574,8 +574,8 @@ func TestChangedFilePicker(t *testing.T) {
 				[]byte(strings.Join(deep, "")),
 			)
 		}
-		testutil.GitCommitFile(t, repo, testutil.GitName("d.txt"),
-			[]byte(strings.Repeat("tall\n", 500)),
+		testutil.GitCommitFile(t,
+			repo, "d.txt", []byte(strings.Repeat("tall\n", 500)),
 		)
 		changed := slices.Clone(deep)
 		changed[49] = "CHANGED-DEEP\n"

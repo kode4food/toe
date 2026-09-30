@@ -2,6 +2,13 @@
 
 Notable changes to toe.
 
+## 0.4.9
+
+### Interface
+
+- Zooming an image pane is smooth again
+- Auto-sized panes keep the width you drag them to instead of snapping back
+
 ## 0.4.8
 
 ### Interface

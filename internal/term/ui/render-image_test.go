@@ -764,22 +764,25 @@ func TestImageZoomPending(t *testing.T) {
 	assert.Empty(t, duplicateRaw)
 	assert.Equal(t, 1, strings.Count(raw, "a=p"))
 
-	// the placement id stays put across the zoom: kitty resizes a placement in
-	// place, so a new id per size would leak a placement on every zoom step
 	re := regexp.MustCompile(`(?:\x1b_G|,)p=(\d+)`)
 	initial := re.FindStringSubmatch(strings.Join(initialRaw, ""))
 	next := re.FindStringSubmatch(raw)
 	if !assert.NotEmpty(t, initial) || !assert.NotEmpty(t, next) {
 		return
 	}
-	assert.Equal(t, initial[1], next[1])
+	assert.NotEqual(t, initial[1], next[1])
+	initialColor := placementColor(t, initial[1])
+	nextColor := placementColor(t, next[1])
+	assert.Contains(t, pending, initialColor)
+	assert.NotContains(t, pending, nextColor)
+	assert.Contains(t, m.View().Content, nextColor)
 
-	// the pending frame still shows the settled size while the resize is in
-	// flight, and the final frame shows the new size once it lands
-	assert.True(t, strings.ContainsRune(pending, tui.PlaceholderRune))
-	assert.True(t,
-		strings.ContainsRune(m.View().Content, tui.PlaceholderRune),
-	)
+	pane.ZoomOut()
+	m2, lastCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	_, lastRaw := collectModelRawMsgs(m2.(ui.Model), lastCmd)
+	last := strings.Join(lastRaw, "")
+	assert.Contains(t, last, "p="+initial[1]+",d=i,a=d")
+	assert.NotContains(t, last, "p="+next[1]+",d=i")
 }
 
 func TestImageEviction(t *testing.T) {
@@ -848,4 +851,11 @@ func openRenderImagePane(t testing.TB, e *view.Editor, path string) {
 	pane, err := ui.NewImagePane(e, path)
 	assert.NoError(t, err)
 	e.ReplacePane(e.Tree().Focus(), pane)
+}
+
+func placementColor(t *testing.T, id string) string {
+	t.Helper()
+	n, err := strconv.ParseUint(id, 10, 32)
+	assert.NoError(t, err)
+	return fmt.Sprintf("\x1b[58:2::%d:%d:%dm", n>>16, n>>8&0xFF, n&0xFF)
 }

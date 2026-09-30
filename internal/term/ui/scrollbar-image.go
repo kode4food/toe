@@ -124,7 +124,9 @@ func (s scrollbarPlacement) draw(
 		}
 		return
 	}
-	style := scrollbarImageStyle(s.id, bar.styles.scrollTrack[0].BgColor())
+	style := scrollbarImageStyle(
+		s.id, cells, bar.styles.scrollTrack[0].BgColor(),
+	)
 	for row := range bar.geom.rows {
 		buf.Set(bar.at.Add(geom.Point{Y: row}), tui.Cell{
 			Symbol: s.images.placeholder(cells, geom.Point{Y: row}),
@@ -245,10 +247,10 @@ func paintScrollbarRow(img *image.RGBA, y int, c color.Color) {
 	}
 }
 
-func scrollbarImageStyle(id uint32, bg tui.Color) tui.Style {
+func scrollbarImageStyle(id uint32, cells geom.Size, bg tui.Color) tui.Style {
 	return tui.Style{}.
 		Fg(tui.ImageColor(id)).
-		UlColor(tui.ImageColor(imagePlacementID(id))).
+		UlColor(tui.ImageColor(imagePlacementID(cells))).
 		Bg(bg)
 }
 

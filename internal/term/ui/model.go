@@ -131,14 +131,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.imageDisplayFrameCmd()
 	case imageReadyMsg:
-		cx.images.sent[msg.id] = true
-		if cx.images.placed[msg.id] == msg.state {
-			// only taking up the placement rearranges cells
-			placing := cx.images.ready[msg.id].cells != msg.state.cells
-			cx.images.ready[msg.id] = msg.state
-			if placing {
-				m.markImageDirty()
-			}
+		if cx.images.land(msg.id, msg.state) {
+			m.markImageDirty()
 		}
 		// re-query even when a size was requested while this was in flight, so
 		// a starved request is retried now that the id is confirmed sent

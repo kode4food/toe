@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"os"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -19,6 +20,7 @@ type (
 		placed       map[uint32]imageState
 		ready        map[uint32]imageState
 		sent         map[uint32]bool
+		stale        map[uint32][]geom.Size
 		used         map[uint32]int
 		placeholders map[geom.Size][]string
 		cell         geom.Size
@@ -48,10 +50,12 @@ type (
 const (
 	imageIDMask               = 0x7FFFFF
 	previewImageMask          = 0x800000
-	imagePlacementIDMask      = 0xFFFFFF
 	imageViewSalt             = 0x9E3779
 	imageCellAspect           = 2
 	kittyQuietNoResponse byte = 2
+
+	imagePlacementDimensionBits = 12
+	imagePlacementDimensionMask = 1<<imagePlacementDimensionBits - 1
 
 	// imageTransmitDelay lets Bubble Tea enter the alternate screen before
 	// Kitty receives image data that the screen transition can discard
@@ -68,6 +72,7 @@ func newImageRegistry() *imageRegistry {
 		placed:       map[uint32]imageState{},
 		ready:        map[uint32]imageState{},
 		sent:         map[uint32]bool{},
+		stale:        map[uint32][]geom.Size{},
 		used:         map[uint32]int{},
 		placeholders: map[geom.Size][]string{},
 		graphics:     graphicsSupported(),
@@ -119,6 +124,7 @@ func (r *imageRegistry) evict(keep uint32) string {
 		buf.WriteString(deleteImageSeq(victim))
 		delete(r.placed, victim)
 		delete(r.ready, victim)
+		delete(r.stale, victim)
 		delete(r.used, victim)
 	}
 	return buf.String()
@@ -158,7 +164,7 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	r.placed[a.id] = state
 	// a put re-places pixels the terminal holds, never new ones
 	if r.sent[a.id] && resize {
-		put := putSeq(a.id, state.cells)
+		put := r.dropStale(a.id, state.cells) + putSeq(a.id, state.cells)
 		return func() tea.Msg {
 			return imageTransmitMsg{raw: put, id: a.id, state: state}
 		}
@@ -184,6 +190,35 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 		}
 		return imageTransmitMsg{raw: buf.String(), id: a.id, state: state}
 	}
+}
+
+func (r *imageRegistry) land(id uint32, state imageState) bool {
+	r.sent[id] = true
+	prev, shown := r.ready[id]
+	placing := !shown || prev.cells != state.cells
+	superseded := r.placed[id] != state
+	if superseded && placing {
+		r.stale[id] = append(r.stale[id], state.cells)
+	}
+	if superseded {
+		return false
+	}
+	if shown && placing {
+		r.stale[id] = append(r.stale[id], prev.cells)
+	}
+	r.ready[id] = state
+	return placing
+}
+
+func (r *imageRegistry) dropStale(id uint32, keep geom.Size) string {
+	var buf strings.Builder
+	for _, cells := range r.stale[id] {
+		if cells != keep {
+			buf.WriteString(deletePlacementSeq(id, cells))
+		}
+	}
+	delete(r.stale, id)
+	return buf.String()
 }
 
 func (r *imageRegistry) placeholder(cells geom.Size, at geom.Point) string {
@@ -272,7 +307,7 @@ func transmit(args transmitArgs) error {
 		Format:           kitty.PNG,
 		Quiet:            kittyQuietNoResponse,
 		ID:               int(args.id),
-		PlacementID:      int(imagePlacementID(args.id)),
+		PlacementID:      int(imagePlacementID(args.cells)),
 		Columns:          args.cells.Width,
 		Rows:             args.cells.Height,
 		VirtualPlacement: true,
@@ -297,7 +332,7 @@ func putSeq(id uint32, cells geom.Size) string {
 		Action:           kitty.Put,
 		Quiet:            kittyQuietNoResponse,
 		ID:               int(id),
-		PlacementID:      int(imagePlacementID(id)),
+		PlacementID:      int(imagePlacementID(cells)),
 		Columns:          cells.Width,
 		Rows:             cells.Height,
 		VirtualPlacement: true,
@@ -305,8 +340,10 @@ func putSeq(id uint32, cells geom.Size) string {
 	return ansi.KittyGraphics(nil, opts.Options()...)
 }
 
-func imagePlacementID(id uint32) uint32 {
-	return max((id+1)&imagePlacementIDMask, 1)
+func imagePlacementID(cells geom.Size) uint32 {
+	width := uint32(cells.Width) & imagePlacementDimensionMask
+	height := uint32(cells.Height) & imagePlacementDimensionMask
+	return max(width<<imagePlacementDimensionBits|height, 1)
 }
 
 func deleteImageSeq(id uint32) string {
@@ -316,6 +353,17 @@ func deleteImageSeq(id uint32) string {
 		ID:              int(id),
 		DeleteResources: true,
 		Quiet:           kittyQuietNoResponse,
+	}
+	return ansi.KittyGraphics(nil, opts.Options()...)
+}
+
+func deletePlacementSeq(id uint32, cells geom.Size) string {
+	opts := &kitty.Options{
+		Action:      kitty.Delete,
+		Delete:      kitty.DeleteID,
+		ID:          int(id),
+		PlacementID: int(imagePlacementID(cells)),
+		Quiet:       kittyQuietNoResponse,
 	}
 	return ansi.KittyGraphics(nil, opts.Options()...)
 }

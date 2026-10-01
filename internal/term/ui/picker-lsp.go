@@ -82,7 +82,7 @@ func (l *lspWorkspaceCommandSource) Load() PickerLoad {
 		items = append(items, slab.Add(PickerItem{
 			Display: command,
 			Columns: []string{command},
-			SortKey: command,
+			Content: command,
 			Payload: command,
 		}))
 	}
@@ -150,7 +150,7 @@ func (l *lspSymbolSource) Load() PickerLoad {
 			Display:     name,
 			Columns:     []string{completionKindIcon(kind, nerd), name},
 			StyleScopes: []string{completionKindStyleScope(kind), ""},
-			SortKey:     sym.Name,
+			Content:     sym.Name,
 			Location: PickerLocation{
 				Target: PickerTarget{Path: loc.Path},
 				Lines:  lines,
@@ -225,7 +225,7 @@ func (l *lspWorkspaceSymbolSource) item(
 		Columns:     []string{icon, lbl},
 		StyleScopes: []string{completionKindStyleScope(kind), ""},
 		SecFrom:     sec,
-		SortKey:     sym.Name,
+		Content:     sym.Name,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},
 			Lines:  lines,
@@ -263,7 +263,7 @@ func locationItem(
 	return slab.Add(PickerItem{
 		Display: lbl,
 		Columns: []string{lbl},
-		SortKey: display,
+		Content: display,
 		SecFrom: sec,
 		Location: PickerLocation{
 			Target: PickerTarget{Path: loc.Path},

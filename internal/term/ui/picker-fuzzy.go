@@ -24,13 +24,16 @@ func (m *matcher) match(item *PickerItem) (MatchResult, bool) {
 	var out MatchResult
 	for col, fm := range m.fields {
 		key := item.columnText(col)
+		if col == m.matchColumn {
+			key = item.matchText(col)
+		}
 		res, ok := fm.Match(key)
 		if !ok {
 			return MatchResult{}, false
 		}
 		out.Score += res.Score
 		if col == m.matchColumn {
-			out.Indices = res.Indices
+			out.Indices = item.labelIndices(col, res.Indices)
 		}
 	}
 	return out, true
@@ -61,8 +64,7 @@ func parsePickerQuery(
 	var text strings.Builder
 	escaped := false
 	inField := false
-	finish := func() {
-		pat := strings.TrimSuffix(text.String(), " ")
+	finish := func(pat string) {
 		if pat != "" {
 			if prev := fields[field]; prev != "" {
 				fields[field] = prev + " " + pat
@@ -84,7 +86,7 @@ func parsePickerQuery(
 			escaped = true
 		case ch == '%':
 			if text.Len() > 0 {
-				finish()
+				finish(strings.TrimSuffix(text.String(), " "))
 			}
 			field = matchColumn
 			fieldText.Reset()
@@ -102,7 +104,7 @@ func parsePickerQuery(
 		}
 	}
 	if !inField && text.Len() > 0 {
-		finish()
+		finish(text.String())
 	}
 	if len(fields) == 0 {
 		fields[matchColumn] = ""

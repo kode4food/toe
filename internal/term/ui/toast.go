@@ -288,24 +288,38 @@ func (ec *EditorComponent) handleToastTick(
 	return consumed(), ec.toastNextCmd(msg.gen)
 }
 
+func (ec *EditorComponent) paintToasts(cx *Context, buf *tui.Buffer) {
+	r := &renderPass{editor: ec, context: cx, size: buf.Size}
+	r.renderToasts(buf)
+}
+
+func (ec *EditorComponent) dismissToastAt(at geom.Point) bool {
+	if !ec.toasts.dismissAt(at) {
+		return false
+	}
+	ec.requestRedraw()
+	return true
+}
+
 // draws the queued messages as one popup in the bottom-right corner, its last
-// row above bottom so the statusline stays clear
-func (r *renderPass) renderToasts(buf *tui.Buffer, bottom int) {
+// row above the statusline
+func (r *renderPass) renderToasts(buf *tui.Buffer) {
 	items := r.editor.toasts.items
 	if len(items) == 0 {
 		r.editor.toasts.bounds = geom.Area{}
 		return
 	}
 	th := r.context.Theme()
+	style := th.Get("ui.popup.toast")
 	pop := popup{
-		borderStyle:  th.Get("ui.popup"),
-		contentStyle: th.Get("ui.popup"),
+		borderStyle:  style,
+		contentStyle: style,
 		padX:         overlayPadX,
 	}
 	title := i18n.Text(i18n.ToastTitle)
 	boxW := toastBoxWidth(r.size.Width)
 	boxH := len(items) + toastChrome
-	restY := max(bottom-toastGapY-boxH+1, 0)
+	restY := max(r.size.Height-toastGapY-boxH, 0)
 	now := time.Now()
 	box := geom.Area{
 		X:      max(r.size.Width-boxW-toastGapX, 0),

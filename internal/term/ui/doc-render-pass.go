@@ -407,8 +407,6 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 		buf.SetString(geom.Point{X: x, Y: y0 + y}, ch, sepTUI)
 	}
 
-	r.renderToasts(buf, r.size.Height-1)
-
 	r.renderDiagnosticPopup(buf)
 
 	if r.editor.overlayHead() == "" {

@@ -1,8 +1,10 @@
 package files
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/kode4food/toe/internal/term/ui"
 	"github.com/kode4food/toe/internal/view"
@@ -27,10 +29,13 @@ type (
 
 const (
 	explorerDirScope = "ui.text.directory"
+	explorerParent   = "../"
+)
 
-	explorerParentRank = "0"
-	explorerDirRank    = "1"
-	explorerFileRank   = "2"
+const (
+	explorerParentRank = iota
+	explorerDirRank
+	explorerFileRank
 )
 
 // NewFileExplorer opens a file explorer rooted at the editor's working
@@ -61,6 +66,7 @@ func newFileExplorerSource(
 		Label:  "File Explorer",
 		Cols:   []string{"name"},
 		Scope:  filepath.Clean(root),
+		Order:  compareExplorerItems,
 		root:   root,
 		opts:   opts,
 	}
@@ -111,8 +117,7 @@ func (f *fileExplorerSource) readDir() ([]*ui.PickerItem, bool) {
 	if parent != f.root {
 		items = append(items, f.makeDirItem(makeDirItemArgs{
 			slab:    &slab,
-			rank:    explorerParentRank,
-			display: "../",
+			display: explorerParent,
 			path:    parent,
 		}))
 	}
@@ -145,18 +150,16 @@ func (f *fileExplorerSource) readDir() ([]*ui.PickerItem, bool) {
 		}
 		items = append(items, f.makeDirItem(makeDirItemArgs{
 			slab:    &slab,
-			rank:    explorerDirRank,
 			display: filepath.ToSlash(dirRel) + "/",
 			path:    full,
 		}))
 	}
-	ui.SortPickerItems(items)
+	slices.SortStableFunc(items, compareExplorerItems)
 	return items, true
 }
 
 type makeDirItemArgs struct {
 	slab    *ui.PickerItemSlab
-	rank    string
 	display string
 	path    string
 }
@@ -165,7 +168,7 @@ func (f *fileExplorerSource) makeDirItem(args makeDirItemArgs) *ui.PickerItem {
 	return args.slab.Add(ui.PickerItem{
 		Display:     args.display,
 		Columns:     []string{args.display},
-		SortKey:     args.rank + args.display,
+		Content:     args.display,
 		StyleScopes: []string{explorerDirScope},
 		Directory:   true,
 		Location: ui.PickerLocation{
@@ -181,7 +184,7 @@ func (f *fileExplorerSource) makeFileItem(
 	return slab.Add(ui.PickerItem{
 		Display:  name,
 		Columns:  []string{name},
-		SortKey:  explorerFileRank + name,
+		Content:  name,
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	})
 }
@@ -236,4 +239,21 @@ func singleChildExplorerDir(path string, followSymlinks bool) (string, bool) {
 		return "", false
 	}
 	return next, true
+}
+
+func compareExplorerItems(a, b *ui.PickerItem) int {
+	if c := cmp.Compare(explorerRank(a), explorerRank(b)); c != 0 {
+		return c
+	}
+	return cmp.Compare(a.Content, b.Content)
+}
+
+func explorerRank(item *ui.PickerItem) int {
+	switch {
+	case item.Content == explorerParent:
+		return explorerParentRank
+	case item.Directory:
+		return explorerDirRank
+	}
+	return explorerFileRank
 }

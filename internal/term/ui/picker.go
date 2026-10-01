@@ -120,6 +120,12 @@ type (
 		SkipPreview()
 	}
 
+	// PickerSorter supplies the order a source's items sort in, nil for the
+	// default content order
+	PickerSorter interface {
+		ItemOrder() func(a, b *PickerItem) int
+	}
+
 	// FileBackedPickerSource is a picker whose rows are workspace files, each
 	// reconciled one changed path at a time
 	FileBackedPickerSource interface {
@@ -167,7 +173,7 @@ type (
 		Columns     []string
 		StyleScopes []string
 		SecFrom     int
-		SortKey     string
+		Content     string
 
 		Group     int
 		Section   bool
@@ -224,6 +230,7 @@ type (
 		MatchCol    int
 		Proportions []int
 		Scope       string
+		Order       func(a, b *PickerItem) int
 	}
 
 	pickerMatch struct {
@@ -341,6 +348,11 @@ func (p PickerBase) PickerStateKey() string {
 		return p.Ident
 	}
 	return p.Ident + "\x00" + p.Scope
+}
+
+// ItemOrder is the order the source's items sort in, nil for content order
+func (p PickerBase) ItemOrder() func(a, b *PickerItem) int {
+	return p.Order
 }
 
 // MatchCount reports how many items currently match the query
@@ -497,7 +509,7 @@ func (p *Picker) refreshItems(keepFile bool) {
 	target.keepFile = keepFile
 	p.list.sections = nil
 	p.list.items = p.takeSections(items)
-	SortPickerItems(p.list.items)
+	p.sortItems()
 	p.rematchPreservingSelection(target)
 }
 
@@ -511,8 +523,16 @@ func (p *Picker) reconcilePath(path string, items []*PickerItem) {
 	target := p.selectedTarget()
 	kept := slices.DeleteFunc(p.list.items, atPath)
 	p.list.items = append(kept, items...)
-	SortPickerItems(p.list.items)
+	p.sortItems()
 	p.rematchPreservingSelection(target)
+}
+
+func (p *Picker) sortItems() {
+	order := comparePickerItems
+	if s, ok := p.source.(PickerSorter); ok && s.ItemOrder() != nil {
+		order = s.ItemOrder()
+	}
+	slices.SortStableFunc(p.list.items, order)
 }
 
 func (p *Picker) takeSections(items []*PickerItem) []*PickerItem {
@@ -535,7 +555,7 @@ func (p *Picker) addItems(items []*PickerItem) {
 	if len(p.list.sections) > 0 {
 		target := p.selectedTarget()
 		p.list.items = append(p.list.items, items...)
-		SortPickerItems(p.list.items)
+		p.sortItems()
 		p.rematchPreservingSelection(target)
 		return
 	}
@@ -567,7 +587,7 @@ func (p *Picker) finishLoad() {
 	if p.list.cursor == 0 {
 		target = selectedTarget{}
 	}
-	SortPickerItems(p.list.items)
+	p.sortItems()
 	p.rematchPreservingSelection(target)
 }
 
@@ -736,12 +756,10 @@ func OpenPath(
 	return nil, true, nil
 }
 
-// SortPickerItems sorts items by sort key, falling back to display text, the
+// SortPickerItems sorts items by content, falling back to display text, the
 // default ordering for static picker sources
 func SortPickerItems(items []*PickerItem) {
-	slices.SortStableFunc(items, func(a, b *PickerItem) int {
-		return cmp.Compare(pickerSortText(a), pickerSortText(b))
-	})
+	slices.SortStableFunc(items, comparePickerItems)
 }
 
 // PickerNamePath renders a path name-first, trailing the directory holding it,
@@ -770,9 +788,13 @@ func PickerTrailingPath(args PickerTrailingPathArgs) (string, int) {
 	return args.Text + " " + args.Path, len([]rune(args.Text)) + 1
 }
 
+func comparePickerItems(a, b *PickerItem) int {
+	return cmp.Compare(pickerSortText(a), pickerSortText(b))
+}
+
 func pickerSortText(item *PickerItem) string {
-	if item.SortKey != "" {
-		return item.SortKey
+	if item.Content != "" {
+		return item.Content
 	}
 	return item.Display
 }

@@ -19,6 +19,7 @@ type (
 
 	diagnosticPickerPayload struct {
 		id   view.DocumentId
+		name string
 		diag view.Diagnostic
 	}
 )
@@ -74,6 +75,7 @@ func NewDiagnosticPicker(e *view.Editor) *ui.Picker {
 		Cols:        []string{"", ""},
 		MatchCol:    1,
 		Proportions: []int{0, 1},
+		Order:       compareDiagnosticItems,
 		Scope:       fmt.Sprint(docID),
 	})
 }
@@ -87,6 +89,7 @@ func NewWorkspaceDiagnosticPicker(e *view.Editor) *ui.Picker {
 		Cols:        []string{"", ""},
 		MatchCol:    1,
 		Proportions: []int{0, 1},
+		Order:       compareDiagnosticItems,
 		workspace:   true,
 	})
 }
@@ -102,7 +105,7 @@ func (d *diagnosticPickerSource) Load() ui.PickerLoad {
 			items = append(items, d.item(&slab, e, doc, diag))
 		}
 	}
-	ui.SortPickerItems(items)
+	slices.SortStableFunc(items, compareDiagnosticItems)
 	return ui.PickerLoad{
 		Items: append(diagnosticSections(), items...),
 		Stop:  func() {},
@@ -147,12 +150,12 @@ func (d *diagnosticPickerSource) item(
 		},
 		StyleScopes: []string{diagnosticSeverityScope(diag.Severity), ""},
 		SecFrom:     sec,
-		SortKey:     fmt.Sprintf("%s:%06d", name, line+1),
+		Content:     msg,
 		Location: ui.PickerLocation{
 			Target: ui.PickerTarget{ID: doc.ID()},
 			Lines:  lines,
 		},
-		Payload: diagnosticPickerPayload{id: doc.ID(), diag: diag},
+		Payload: diagnosticPickerPayload{id: doc.ID(), name: name, diag: diag},
 	})
 }
 
@@ -230,4 +233,13 @@ func diagnosticSeverityScope(sev view.DiagnosticSeverity) string {
 		return "hint"
 	}
 	return diagnosticSeverityScopes[sev]
+}
+
+func compareDiagnosticItems(a, b *ui.PickerItem) int {
+	first, _ := a.Payload.(diagnosticPickerPayload)
+	second, _ := b.Payload.(diagnosticPickerPayload)
+	if c := cmp.Compare(first.name, second.name); c != 0 {
+		return c
+	}
+	return cmp.Compare(first.diag.Range.From, second.diag.Range.From)
 }

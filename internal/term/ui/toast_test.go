@@ -227,6 +227,48 @@ func TestToasts(t *testing.T) {
 	})
 }
 
+func TestToastLogTailing(t *testing.T) {
+	t.Run("tailed log swallows toasts", func(t *testing.T) {
+		m, e := tailingToastModel(t)
+
+		m = m.ExecTypable("say")
+
+		assert.Empty(t, toastRow(m, "Messages"))
+		assert.Contains(t,
+			e.MessagesDocument().Text().String(), "hello there",
+		)
+	})
+
+	t.Run("toasts when an overlay hides the log", func(t *testing.T) {
+		m, _ := tailingToastModel(t)
+		m = sendKey(m, 'p')
+		_ = m.View()
+
+		m = m.ExecTypable("say")
+
+		assert.NotEmpty(t, toastRow(m, "Messages"))
+		assert.Equal(t,
+			2, strings.Count(stripANSI(m.View().Content), "hello there"),
+		)
+	})
+
+	t.Run("click over an overlay dismisses", func(t *testing.T) {
+		m, _ := tailingToastModel(t)
+		m = sendKey(m, 'p')
+		_ = m.View()
+		m = m.ExecTypable("say")
+		_ = m.View()
+
+		at := toastPoint(t, m, "Messages")
+		m = mouse(m, tea.MouseClickMsg{
+			X: at.X, Y: at.Y + 1, Button: tea.MouseLeft,
+		})
+
+		assert.Empty(t, toastRow(m, "Messages"))
+		assert.NotEmpty(t, toastRow(m, "Buffers"))
+	})
+}
+
 func toastRowIndex(m ui.Model, text string) int {
 	for y, line := range strings.Split(stripANSI(m.View().Content), "\n") {
 		if strings.Contains(line, text) {
@@ -293,4 +335,26 @@ func toastRow(m ui.Model, text string) string {
 		}
 	}
 	return ""
+}
+
+func tailingToastModel(t *testing.T) (ui.Model, *view.Editor) {
+	t.Helper()
+	e := view.NewEditor(t.TempDir())
+	km := command.NewKeymaps()
+	assert.NoError(t, km.Register("say", command.Command{
+		Run: func(*view.Editor, *command.Args) command.Result {
+			return command.Result{Message: "hello there"}
+		},
+		Modes:   view.ModeNormal,
+		Aliases: []string{"say"},
+	}))
+	m := ui.New(e, km)
+	bindNormalTestAction(
+		km, "buffer_picker", m.PickerAction(bufferPicker),
+		[]command.KeyEvent{char('p')},
+	)
+	e.ShowDocument(e.MessagesDocument().ID())
+	m = settled(resize(m, 80, 24))
+	_ = m.View()
+	return m, e
 }

@@ -45,7 +45,7 @@ func (c *commandPaletteSource) Load() PickerLoad {
 				name, commandKeyString(c.keymaps, mode, cmd.Name),
 				cmd.DocString,
 			},
-			SortKey: name,
+			Content: name,
 			Payload: cmd,
 		}))
 	}

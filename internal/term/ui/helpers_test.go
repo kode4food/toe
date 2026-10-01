@@ -250,7 +250,7 @@ func (s feedPickerSource) Load() ui.PickerLoad {
 	for _, p := range s.paths {
 		ch <- slab.Add(ui.PickerItem{
 			Display:  p,
-			SortKey:  p,
+			Content:  p,
 			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p}},
 		})
 	}

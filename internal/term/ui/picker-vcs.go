@@ -252,7 +252,7 @@ func (c *changedFileScan) item(
 		Group:       group,
 		Columns:     []string{changedFileIcon(fc.Kind, c.nerd), lbl},
 		StyleScopes: []string{changedFileScope(fc.Kind), ""},
-		SortKey:     display,
+		Content:     display,
 		SecFrom:     sec,
 		hunks:       hunks,
 		DiffPreview: fc.Kind != view.FileChangeConflict,

@@ -43,7 +43,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			},
 		})
 
-		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
+		m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
 		_ = sendSpecial(m, tea.KeyEnter)
 
 		v = e.FocusedView()
@@ -81,7 +81,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			},
 		})
 
-		m := openDiagnosticPicker(e, files.NewWorkspaceDiagnosticPicker, 'D')
+		m := openDiagnosticPicker(t, e, files.NewWorkspaceDiagnosticPicker, 'D')
 		out := stripANSI(m.View().Content)
 
 		assert.Contains(t, out, "bad a")
@@ -99,6 +99,28 @@ func TestDiagnosticPicker(t *testing.T) {
 		assert.Greater(t,
 			sectionRow(out, "Warnings"), sectionRow(out, "Errors"),
 		)
+	})
+
+	t.Run("orders by document, then position", func(t *testing.T) {
+		dir := t.TempDir()
+		e := view.NewEditor(dir)
+		for _, name := range []string{"z", "a"} {
+			path := filepath.Join(dir, name+".go")
+			assert.NoError(t, os.WriteFile(path, []byte("package p\n"), 0o644))
+			doc, err := e.SwitchOrOpenDoc(path)
+			assert.NoError(t, err)
+			doc.ReplaceDiagnostics("test", []view.Diagnostic{
+				diagnosticAt(5, name+"-x"),
+				diagnosticAt(0, name+"-y"),
+			})
+		}
+
+		m := openDiagnosticPicker(t, e, files.NewWorkspaceDiagnosticPicker, 'D')
+		out := stripANSI(m.View().Content)
+
+		assert.Less(t, rowContaining(out, "a-y"), rowContaining(out, "a-x"))
+		assert.Less(t, rowContaining(out, "a-x"), rowContaining(out, "z-y"))
+		assert.Less(t, rowContaining(out, "z-y"), rowContaining(out, "z-x"))
 	})
 
 	t.Run("flattens messages onto one row", func(t *testing.T) {
@@ -120,7 +142,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			},
 		})
 
-		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
+		m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
 		out := stripANSI(m.View().Content)
 
 		rows := map[int]bool{}
@@ -187,7 +209,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			},
 		})
 
-		m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
+		m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
 		out := stripANSI(m.View().Content)
 
 		errors := sectionRow(out, "Errors")
@@ -229,7 +251,7 @@ func TestDiagnosticPicker(t *testing.T) {
 				},
 			})
 
-			m := openDiagnosticPicker(e, files.NewDiagnosticPicker, 'd')
+			m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
 			out := stripANSI(m.View().Content)
 			assert.Contains(t, out, tc.want)
 			assert.NotContains(t, out, "message")
@@ -247,10 +269,13 @@ func rowContaining(out, want string) int {
 }
 
 func openDiagnosticPicker(
-	e *view.Editor, fn ui.PickerFunc, key rune,
+	t *testing.T, e *view.Editor, fn ui.PickerFunc, key rune,
 ) ui.Model {
+	t.Helper()
 	km := command.NewKeymaps()
 	m := ui.New(e, km)
+	reg := command.NewRegistry(command.NewKeymaps())
+	assert.NoError(t, reg.RegisterModule(files.DiagnosticsModule(m)))
 	event := char(key)
 	if key >= 'A' && key <= 'Z' {
 		event = event.WithMods(command.ModShift)
@@ -264,4 +289,14 @@ func openDiagnosticPicker(
 		return sendSpecialText(m, key, string(key))
 	}
 	return sendKey(m, key)
+}
+
+func diagnosticAt(from int, msg string) view.Diagnostic {
+	return view.Diagnostic{
+		Range:    core.Span{From: from, To: from + 1},
+		Severity: view.DiagnosticSeverityError,
+		Message:  msg,
+		Source:   "test",
+		Provider: "test",
+	}
 }

@@ -372,10 +372,18 @@ func (ec *EditorComponent) cancelPending() {
 }
 
 func (ec *EditorComponent) isLogTailing() bool {
-	e := ec.context.Editor
+	cx := ec.context
+	e := cx.Editor
+	y0 := 0
+	if bufferlineVisible(cx) {
+		y0 = 1
+	}
 	for _, v := range e.AllViews() {
 		doc := e.Document(v.DocID())
 		if doc == nil || doc.Type() != view.DocTypeLog {
+			continue
+		}
+		if isPaneUnderOverlay(cx, v.Area(), y0) {
 			continue
 		}
 		if doc.SelectionFor(v.ID()).Primary().Head == doc.Text().LenChars() {

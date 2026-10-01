@@ -232,10 +232,6 @@ func (ec *EditorComponent) handleMouseClick(
 ) (EventResult, tea.Cmd) {
 	ec.language.completionGen++
 	at := geom.Point{X: msg.X, Y: msg.Y}
-	if ec.toasts.dismissAt(at) {
-		ec.requestRedraw()
-		return consumed(), nil
-	}
 	if len(ec.keys.input) > 0 {
 		if ec.cache.infoBounds.Contains(at) {
 			return consumed(), nil

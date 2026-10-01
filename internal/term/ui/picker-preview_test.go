@@ -66,7 +66,7 @@ func (p *pathPickerSource) Load() ui.PickerLoad {
 	items := []*ui.PickerItem{{
 		Display:  "item",
 		Columns:  []string{"item"},
-		SortKey:  "item",
+		Content:  "item",
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
 	}}
 	return ui.PickerLoad{Items: items, Stop: func() {}}

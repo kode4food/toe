@@ -52,6 +52,9 @@ func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	if ws, ok := msg.(tea.WindowSizeMsg); ok {
 		c.size = geom.Size{Width: ws.Width, Height: ws.Height}
 	}
+	if c.dismissToast(msg) {
+		return nil
+	}
 
 	var cmds []tea.Cmd
 	var callbacks []Callback
@@ -151,6 +154,15 @@ func (c *Compositor) cursorCovered(cx *Context, from int, cur tea.Cursor) bool {
 	return false
 }
 
+func (c *Compositor) dismissToast(msg tea.Msg) bool {
+	click, ok := msg.(tea.MouseClickMsg)
+	if !ok || len(c.layers) == 0 {
+		return false
+	}
+	ec, ok := c.layers[0].(*EditorComponent)
+	return ok && ec.dismissToastAt(geom.Point{X: click.X, Y: click.Y})
+}
+
 func (c *Compositor) refreshEditorHighlight() tea.Cmd {
 	if root, ok := c.layers[0].(highlightRefresher); ok {
 		return root.documentHighlightCmd()
@@ -185,6 +197,9 @@ func (c *Compositor) renderViaBuffer(cx *Context) string {
 		buf := p.overlay.PaintBuffer(cx, p.bounds)
 		frame.Blit(buf, p.bounds.Point)
 		regions = append(regions, p.bounds)
+	}
+	if ec, ok := br.(*EditorComponent); ok {
+		ec.paintToasts(cx, frame)
 	}
 	cx.composition.regions = regions
 	cx.composition.precise = true

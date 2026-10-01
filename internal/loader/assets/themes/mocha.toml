@@ -95,6 +95,7 @@
 "ui.statusline.macro" = { fg = "base", bg = "red", modifiers = ["bold"] }
 
 "ui.popup" = { fg = "text", bg = "surface0" }
+"ui.popup.toast" = { fg = "text", bg = "surface2" }
 "ui.window" = { fg = "crust" }
 "ui.border" = { fg = "surface1", bg = "base" }
 "ui.help" = { fg = "overlay2", bg = "surface0" }

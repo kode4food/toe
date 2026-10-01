@@ -72,10 +72,12 @@ func (j *jumplistPickerSource) Load() ui.PickerLoad {
 		rel := doc.RelativeName(e.Cwd())
 		text := doc.Text()
 		line, lines := jumpLineRange(text, entry.Selection)
-		lbl, sec := ui.PickerNamePath(fmt.Sprintf("%s:%d", rel, line+1))
+		display := fmt.Sprintf("%s:%d", rel, line+1)
+		lbl, sec := ui.PickerNamePath(display)
 		items = append(items, slab.Add(ui.PickerItem{
 			Display: lbl,
 			Columns: []string{lbl},
+			Content: display,
 			SecFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{ID: entry.DocID},

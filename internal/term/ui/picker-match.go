@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -80,6 +81,9 @@ func (p *Picker) narrowMatches() {
 	match := p.prepareMatcher(src)
 	out := p.list.matched[:0]
 	for _, prev := range p.list.matched {
+		if prev.item.Section {
+			continue
+		}
 		if m, ok := p.scoreItem(match, prev.item, prev.itemIndex); ok {
 			out = append(out, m)
 		}
@@ -123,7 +127,7 @@ func (p *Picker) scoreItem(
 ) (pickerMatch, bool) {
 	key := pickerScoreKey{
 		query: p.list.query,
-		text:  item.columnText(p.source.MatchColumn()),
+		text:  item.matchText(p.source.MatchColumn()),
 	}
 	cached, ok := p.list.scores[key]
 	if !ok {
@@ -164,12 +168,48 @@ func (p *PickerItem) columnText(col int) string {
 		return p.Columns[col]
 	}
 	if col == 0 {
-		key := p.SortKey
+		key := p.Content
 		if key != "" {
 			return key
 		}
 	}
 	return p.Display
+}
+
+func (p *PickerItem) matchText(col int) string {
+	if p.Content != "" {
+		return p.Content
+	}
+	return p.columnText(col)
+}
+
+func (p *PickerItem) labelIndices(col int, indices []int) []int {
+	if p.Content == "" {
+		return indices
+	}
+	primary := p.columnText(col)
+	secondary := ""
+	if p.SecFrom > 0 {
+		at := runeOffset(primary, p.SecFrom)
+		secondary = primary[at:]
+		primary = primary[:max(at-1, 0)]
+	}
+	primaryAt := runeIndex(p.Content, strings.LastIndex(p.Content, primary))
+	secondaryAt := runeIndex(p.Content, strings.Index(p.Content, secondary))
+	primaryLen := utf8.RuneCountInString(primary)
+	secondaryLen := utf8.RuneCountInString(secondary)
+	out := indices[:0]
+	for _, i := range indices {
+		switch {
+		case primaryAt >= 0 && i >= primaryAt && i < primaryAt+primaryLen:
+			out = append(out, i-primaryAt)
+		case secondaryAt >= 0 && i >= secondaryAt &&
+			i < secondaryAt+secondaryLen:
+			out = append(out, p.SecFrom+i-secondaryAt)
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 func (p *Picker) matchedCount() int {
@@ -291,4 +331,22 @@ func unscoredItems(
 		out = append(out, pickerMatch{item: item, itemIndex: startIndex + i})
 	}
 	return out
+}
+
+func runeOffset(s string, runes int) int {
+	n := 0
+	for i := range s {
+		if n == runes {
+			return i
+		}
+		n++
+	}
+	return len(s)
+}
+
+func runeIndex(s string, byteAt int) int {
+	if byteAt < 0 {
+		return -1
+	}
+	return utf8.RuneCountInString(s[:byteAt])
 }

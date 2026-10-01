@@ -98,7 +98,7 @@ func (b *bufferPickerSource) Load() ui.PickerLoad {
 		lbl, sec := ui.PickerNamePath(name)
 		items = append(items, slab.Add(ui.PickerItem{
 			Columns: []string{flags, "", lbl},
-			SortKey: name,
+			Content: name,
 			SecFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{ID: doc.ID()},

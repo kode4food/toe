@@ -114,7 +114,7 @@ func (f *filePickerSource) ItemsForPath(path string) []*ui.PickerItem {
 	return []*ui.PickerItem{{
 		Display:  lbl,
 		Columns:  []string{lbl},
-		SortKey:  rel,
+		Content:  rel,
 		SecFrom:  sec,
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 	}}
@@ -204,7 +204,7 @@ func startFilePickerFeed(root string, count int) ui.PickerLoad {
 			case ch <- slab.Add(ui.PickerItem{
 				Display: lbl,
 				Columns: []string{lbl},
-				SortKey: file.rel,
+				Content: file.rel,
 				SecFrom: sec,
 				Location: ui.PickerLocation{
 					Target: ui.PickerTarget{Path: file.path},

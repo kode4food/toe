@@ -2,6 +2,14 @@
 
 Notable changes to toe.
 
+## 0.4.10
+
+### Interface
+
+- Message popups always draw above pickers and other overlays
+- A tailed messages pane holds back popups only while nothing covers it
+- Picker filters match a file's path as written, so `cmd/main` finds `cmd/toe/main.go`
+
 ## 0.4.9
 
 ### Interface

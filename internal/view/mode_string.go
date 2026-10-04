@@ -8,6 +8,7 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
+	_ = x[ModeAny-0]
 	_ = x[ModeNormal-1]
 	_ = x[ModeInsert-2]
 	_ = x[ModeSelect-4]
@@ -15,25 +16,26 @@ func _() {
 	_ = x[ModeImage-16]
 	_ = x[ModeBinary-32]
 	_ = x[ModeCompletion-64]
+	_ = x[ModeDiff-128]
 }
 
 const (
-	_Mode_name_0 = "NORINS"
+	_Mode_name_0 = "ModeAnyNORINS"
 	_Mode_name_1 = "SEL"
 	_Mode_name_2 = "TRM"
 	_Mode_name_3 = "IMG"
 	_Mode_name_4 = "BIN"
 	_Mode_name_5 = "COM"
+	_Mode_name_6 = "DIF"
 )
 
 var (
-	_Mode_index_0 = [...]uint8{0, 3, 6}
+	_Mode_index_0 = [...]uint8{0, 7, 10, 13}
 )
 
 func (i Mode) String() string {
 	switch {
-	case 1 <= i && i <= 2:
-		i -= 1
+	case 0 <= i && i <= 2:
 		return _Mode_name_0[_Mode_index_0[i]:_Mode_index_0[i+1]]
 	case i == 4:
 		return _Mode_name_1
@@ -45,6 +47,8 @@ func (i Mode) String() string {
 		return _Mode_name_4
 	case i == 64:
 		return _Mode_name_5
+	case i == 128:
+		return _Mode_name_6
 	default:
 		return "Mode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}

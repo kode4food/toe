@@ -15,6 +15,8 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+type fakeIDE struct{ enabled bool }
+
 func TestViewScrollCommands(t *testing.T) {
 	for _, name := range []string{
 		"page_up", "page_down",
@@ -333,3 +335,27 @@ func TestResizeView(t *testing.T) {
 		assert.Equal(t, command.ContinuationDone, got)
 	})
 }
+
+func TestMCPConfig(t *testing.T) {
+	t.Run("editor.mcp false disables", func(t *testing.T) {
+		e, _, reg := test.EnvWithRegistry(t, "")
+		ide := &fakeIDE{enabled: true}
+		e.SetIDEServer(ide)
+		assert.NoError(t, reg.ApplyTOML(e, map[string]any{
+			"editor": map[string]any{"mcp": false},
+		}))
+		assert.False(t, ide.enabled)
+	})
+
+	t.Run("default leaves it enabled", func(t *testing.T) {
+		e, _, reg := test.EnvWithRegistry(t, "")
+		ide := &fakeIDE{enabled: true}
+		e.SetIDEServer(ide)
+		assert.NoError(t, reg.ApplyTOML(e, map[string]any{}))
+		assert.True(t, ide.enabled)
+	})
+}
+
+func (f *fakeIDE) Enabled() bool     { return f.enabled }
+func (f *fakeIDE) SetEnabled(v bool) { f.enabled = v }
+func (f *fakeIDE) Port() int         { return 0 }

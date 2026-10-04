@@ -36,6 +36,7 @@ type (
 		completion CompletionOptions
 		saveSlot   *saveGenSlot
 		macroSlot  *macroSlot
+		diff       *DiffPane
 
 		bufferlineShown bool
 		focused         bool
@@ -227,6 +228,10 @@ func (ec *EditorComponent) HandleEvent(
 		return ec.handleCompletionMsg(msg)
 	case externalFileChangedMsg:
 		return ec.handleExternalFileChanged(msg)
+	case OpenDiffMsg:
+		return ec.handleOpenDiff(msg)
+	case CloseDiffMsg:
+		return ec.handleCloseDiff(msg.TabName)
 	case redrawMsg:
 		return ec.handleRedraw()
 	case vcsUpdatedMsg:

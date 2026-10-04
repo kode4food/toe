@@ -691,6 +691,9 @@ func TestTerminalPane(t *testing.T) {
 
 	t.Run("ctrl-backslash opens space menu", func(t *testing.T) {
 		tmp := t.TempDir()
+		// a workspace marker roots the picker at tmp, so it never escapes to a
+		// .toe/.git an ancestor of the temp dir happens to carry
+		assert.NoError(t, os.Mkdir(filepath.Join(tmp, ".git"), 0o755))
 		path := filepath.Join(tmp, "main.go")
 		assert.NoError(t, os.WriteFile(path, []byte("package main\n"), 0o644))
 

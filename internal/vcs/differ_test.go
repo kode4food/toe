@@ -16,7 +16,7 @@ func TestDiffer(t *testing.T) {
 		base := core.NewRope("a\nb\n")
 		doc := core.NewRope("a\nx\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(vcs.DiffSides{
+		d := vcs.NewDiffer(view.DiffSides{
 			Base: base,
 			Doc:  doc,
 		}, func() { updated <- struct{}{} })
@@ -32,7 +32,7 @@ func TestDiffer(t *testing.T) {
 	t.Run("recomputes after document update", func(t *testing.T) {
 		base := core.NewRope("a\nb\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(vcs.DiffSides{
+		d := vcs.NewDiffer(view.DiffSides{
 			Base: base,
 			Doc:  base,
 		}, func() { updated <- struct{}{} })
@@ -51,7 +51,7 @@ func TestDiffer(t *testing.T) {
 	t.Run("recomputes after base update", func(t *testing.T) {
 		doc := core.NewRope("a\nb\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(vcs.DiffSides{
+		d := vcs.NewDiffer(view.DiffSides{
 			Base: doc,
 			Doc:  doc,
 		}, func() { updated <- struct{}{} })
@@ -66,7 +66,7 @@ func TestDiffer(t *testing.T) {
 	t.Run("close stops updates", func(t *testing.T) {
 		doc := core.NewRope("a\n")
 		updated := make(chan struct{}, 16)
-		d := vcs.NewDiffer(vcs.DiffSides{
+		d := vcs.NewDiffer(view.DiffSides{
 			Base: doc,
 			Doc:  doc,
 		}, func() { updated <- struct{}{} })

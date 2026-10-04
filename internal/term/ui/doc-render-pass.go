@@ -353,6 +353,18 @@ func (r *renderPass) renderEditorContent(buf *tui.Buffer) {
 			}) {
 				r.renderBinaryPane(buf, pane, y0, focused)
 			}
+		case *DiffPane:
+			if r.beginPaneRedraw(&paneRedrawTarget{
+				buf:        buf,
+				pane:       pane,
+				yOffset:    y0,
+				dirty:      pane.ConsumeDirty(),
+				redrawAll:  redrawAll,
+				focused:    focused,
+				background: paneBg,
+			}) {
+				r.renderDiffPane(buf, pane, y0, focused)
+			}
 		}
 		return true
 	})

@@ -21,6 +21,7 @@ type viewSection struct {
 	Editor struct {
 		LineNumber    view.LineNumber   `toml:"line-number"`
 		InactiveDim   *int              `toml:"inactive-dim"`
+		MCP           *bool             `toml:"mcp"`
 		CursorLine    *bool             `toml:"cursorline"`
 		CursorColumn  *bool             `toml:"cursorcolumn"`
 		Scrollbar     *bool             `toml:"scrollbar"`
@@ -485,6 +486,17 @@ func ViewModule(model ui.Model) command.Module {
 					view.LineNumberRelative,
 				),
 			},
+			kit.EditorBoolOption("mcp",
+				func(e *view.Editor) bool {
+					s := e.IDEServer()
+					return s != nil && s.Enabled()
+				},
+				func(e *view.Editor, v bool) {
+					if s := e.IDEServer(); s != nil {
+						s.SetEnabled(v)
+					}
+				},
+			).WithDoc("Serve the MCP/IDE integration for AI coding CLIs"),
 			kit.EditorBoolOption("cursorline",
 				func(e *view.Editor) bool {
 					return e.Options().CursorLine
@@ -817,6 +829,9 @@ func ViewModule(model ui.Model) command.Module {
 			Config: cfg,
 			Reset:  func() { *cfg = viewSection{} },
 			Apply: func(e *view.Editor) {
+				if s := e.IDEServer(); s != nil {
+					s.SetEnabled(kit.BoolOr(cfg.Editor.MCP, true))
+				}
 				opts := e.Options()
 				opts.LineNumber = cmp.Or(
 					cfg.Editor.LineNumber, view.LineNumberAbsolute,

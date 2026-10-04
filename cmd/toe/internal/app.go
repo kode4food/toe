@@ -15,6 +15,7 @@ import (
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/lsp"
+	"github.com/kode4food/toe/internal/mcp"
 	"github.com/kode4food/toe/internal/term/builtin"
 	"github.com/kode4food/toe/internal/term/builtin/files"
 	"github.com/kode4food/toe/internal/term/command"
@@ -42,6 +43,7 @@ type App struct {
 	baseOpts map[string]string
 	lsp      *lsp.Session
 	vcs      *vcs.Session
+	mcp      *mcp.Session
 }
 
 var ErrDirectoryArgument = errors.New(
@@ -76,7 +78,23 @@ func Run(args []string, out io.Writer) error {
 	if err := a.Start(context.Background()); err != nil {
 		return errors.Join(err, a.Stop())
 	}
-	_, err = tea.NewProgram(a.Model, teaOptions()...).Run()
+	p := tea.NewProgram(a.Model, teaOptions()...)
+	if a.mcp != nil {
+		a.mcp.SetDispatcher(func(fn func()) {
+			p.Send(ui.RunOnUIMsg{Fn: fn})
+		})
+		a.mcp.SetDiffHandlers(
+			func(tab, path, content string) {
+				p.Send(ui.OpenDiffMsg{
+					TabName:     tab,
+					Path:        path,
+					NewContents: content,
+				})
+			},
+			func(tab string) { p.Send(ui.CloseDiffMsg{TabName: tab}) },
+		)
+	}
+	_, err = p.Run()
 	return errors.Join(err, a.Stop())
 }
 
@@ -87,6 +105,9 @@ func (a *App) Start(ctx context.Context) error {
 	if err := a.initEditor(); err != nil {
 		return err
 	}
+	// wired before config/base/session so the mcp option can read and set it
+	a.mcp = mcp.Attach(ctx, a.Editor, fmt.Sprintf("127.0.0.1:%d", mcp.HTTPPort))
+	a.Editor.SetIDEServer(a.mcp)
 	if err := a.openFiles(); err != nil {
 		return err
 	}
@@ -118,6 +139,9 @@ func (a *App) Stop() error {
 	}
 	if a.vcs != nil {
 		a.vcs.Close()
+	}
+	if a.mcp != nil {
+		err = errors.Join(err, a.mcp.Close())
 	}
 	return err
 }

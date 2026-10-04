@@ -27,6 +27,10 @@ type (
 	}
 
 	settleTimeoutMsg struct{}
+
+	// RunOnUIMsg carries a function to run on the Bubble Tea loop, letting
+	// off-loop goroutines (the MCP server) touch editor state safely
+	RunOnUIMsg struct{ Fn func() }
 )
 
 const requestCellSizeOp = 16
@@ -119,6 +123,9 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cx := m.context
 	switch msg := msg.(type) {
+	case RunOnUIMsg:
+		msg.Fn()
+		return m, nil
 	case imageTransmitMsg:
 		// Mark ready only after the escape reaches Bubble Tea's writer
 		return m, tea.Sequence(tea.Raw(msg.raw), func() tea.Msg {

@@ -114,7 +114,7 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 // arbitrary workspace file. It shells out to the provider, so it is intended
 // for on-demand use such as picker previews
 func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
-	return Diff(DiffSides{
+	return view.Diff(view.DiffSides{
 		Base: core.NewRope(s.HeadText(path)),
 		Doc:  core.NewRope(s.IndexText(path)),
 	})
@@ -126,7 +126,7 @@ func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
 	target := loader.CanonicalPath(path)
 	for _, doc := range s.editor.AllDocuments() {
 		if p := doc.Path(); p == path || loader.CanonicalPath(p) == target {
-			return Diff(DiffSides{
+			return view.Diff(view.DiffSides{
 				Base: core.NewRope(s.IndexText(path)),
 				Doc:  doc.Text(),
 			})
@@ -136,7 +136,7 @@ func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
 	if err != nil {
 		return nil
 	}
-	return Diff(DiffSides{
+	return view.Diff(view.DiffSides{
 		Base: core.NewRope(s.IndexText(path)),
 		Doc:  baseRope(data),
 	})
@@ -355,7 +355,7 @@ func (s *Session) loadDiffBase(
 		d.SetBase(rope)
 		return
 	}
-	d := NewDiffer(DiffSides{Base: rope, Doc: text}, s.notifyUpdate)
+	d := NewDiffer(view.DiffSides{Base: rope, Doc: text}, s.notifyUpdate)
 	s.differs[doc.ID()] = d
 	s.heads[doc.ID()] = name
 	s.headIDs[doc.ID()] = head

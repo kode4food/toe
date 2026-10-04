@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -120,6 +121,11 @@ func NewTerminalPaneInDir(
 	cmd := exec.Command(args.Shell)
 	path := terminalPath(e, args.Dir)
 	cmd.Dir = path
+	// CLAUDE_CODE_SSE_PORT is the env var a Claude CLI reads to auto-connect
+	if ide := e.IDEServer(); ide != nil && ide.Enabled() {
+		cmd.Env = append(os.Environ(),
+			"CLAUDE_CODE_SSE_PORT="+strconv.Itoa(ide.Port()))
+	}
 	f, err := pty.StartWithSize(cmd, &pty.Winsize{
 		Rows: uint16(args.Size.Height),
 		Cols: uint16(args.Size.Width),

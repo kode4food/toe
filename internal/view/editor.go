@@ -27,6 +27,7 @@ type (
 		langServers    LanguageServerController
 		indenter       Indenter
 		versionControl VersionControl
+		ide            IDEServer
 	}
 
 	documentState struct {

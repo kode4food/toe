@@ -257,7 +257,7 @@ func (r *renderPass) prepareContentRender(
 	if target.scrollbar {
 		barGeom := scrollbarGeom{
 			rows:   target.area.Height,
-			maxTop: nLines - 1,
+			maxTop: documentMaxTop(doc, target.area.Height),
 		}
 		bar = c.ensureScrollbar(ensureScrollbarArgs{
 			styles: styles,

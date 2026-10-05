@@ -45,13 +45,7 @@ type (
 	}
 )
 
-const (
-	serverName = "toe"
-	// HTTPPort is the fixed loopback port the MCP server binds
-	// ponytail: fixed port. A second toe instance can't bind it and runs
-	// without MCP, so use a per-workspace port if multi-instance matters
-	HTTPPort = 7420
-)
+const serverName = "toe"
 
 var _ view.IDEServer = (*Session)(nil)
 
@@ -164,16 +158,12 @@ func (s *Session) onEditor(fn func(*view.Editor) any) any {
 }
 
 func (s *Session) port() int {
-	addr := s.boundAddr
-	if addr == "" {
-		addr = s.listenAddr
-	}
-	if _, p, err := net.SplitHostPort(addr); err == nil {
+	if _, p, err := net.SplitHostPort(s.boundAddr); err == nil {
 		if n, err := net.LookupPort("tcp", p); err == nil {
 			return n
 		}
 	}
-	return HTTPPort
+	return 0
 }
 
 // awaitDiffClose shows the diff and blocks until the tab closes or ctx is

@@ -114,7 +114,7 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 	// wired before config/base/session so the mcp option can read and set it
-	a.mcp = mcp.Attach(ctx, a.Editor, fmt.Sprintf("127.0.0.1:%d", mcp.HTTPPort))
+	a.mcp = mcp.Attach(ctx, a.Editor, "127.0.0.1:0")
 	a.Editor.SetIDEServer(a.mcp)
 	if err := a.openFiles(); err != nil {
 		return err

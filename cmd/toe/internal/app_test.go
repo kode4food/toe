@@ -98,6 +98,19 @@ func TestStart(t *testing.T) {
 		assert.Equal(t, path, doc.Path())
 	})
 
+	t.Run("instances use distinct MCP ports", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
+		dir := workspace(t)
+		first := start(t, dir)
+		second := start(t, dir)
+
+		firstPort := first.Editor.IDEServer().Port()
+		secondPort := second.Editor.IDEServer().Port()
+		assert.Positive(t, firstPort)
+		assert.Positive(t, secondPort)
+		assert.NotEqual(t, firstPort, secondPort)
+	})
+
 	t.Run("directory as non-first arg errors", func(t *testing.T) {
 		dir := workspace(t)
 		a, err := app.New([]string{"main.go", t.TempDir()}, dir)

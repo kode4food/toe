@@ -173,6 +173,9 @@ func (r *renderPass) renderPane(args renderPaneArgs) {
 			Visual:    vf,
 		})
 	}
+	if doc.Type() == view.DocTypeLog {
+		clampScrollAtEOF(v, doc, contentH)
+	}
 	r.renderContent(&contentRenderTarget{
 		doc:  doc,
 		view: v,
@@ -578,4 +581,32 @@ func splitSepIntersectionChar(at separatorNeighbors) string {
 		idx |= 8
 	}
 	return splitSepIntersectionChars[idx]
+}
+
+func documentMaxTop(doc *view.Document, rows int) int {
+	lines := doc.Text().LenLines()
+	if doc.Type() == view.DocTypeLog {
+		return max(lines-max(rows, 1), 0)
+	}
+	return max(lines-1, 0)
+}
+
+func clampScrollAtEOF(v *view.View, doc *view.Document, rows int) {
+	text := doc.Text()
+	offset := v.Offset()
+	line, err := text.CharToLine(offset.Anchor)
+	if err != nil {
+		return
+	}
+	lastTop := documentMaxTop(doc, rows)
+	if line <= lastTop {
+		return
+	}
+	anchor, err := text.LineToChar(lastTop)
+	if err != nil {
+		return
+	}
+	offset.Anchor = anchor
+	offset.VerticalOffset = 0
+	v.SetOffset(offset)
 }

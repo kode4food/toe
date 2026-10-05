@@ -103,6 +103,52 @@ func TestMissingFileRender(t *testing.T) {
 	})
 }
 
+func TestMessagesRender(t *testing.T) {
+	t.Run("last line reaches pane bottom", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		for range 12 {
+			e.AppendMessage("message")
+		}
+		doc := e.MessagesDocument()
+		v := e.ShowDocument(doc.ID())
+		doc.SetSelectionFor(v.ID(), core.PointSelection(doc.Text().LenChars()))
+		m := resize(ui.New(e, command.NewKeymaps()), 40, 8)
+		last, err := doc.Text().LineToChar(doc.Text().LenLines() - 1)
+		assert.NoError(t, err)
+		v.SetOffset(view.Position{Anchor: last})
+		v.BeginFreeScroll(doc.Revision(), doc.SelectionFor(v.ID()))
+
+		_ = m.View()
+
+		line, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		assert.Equal(t, doc.Text().LenLines()-v.ContentHeight(), line)
+		assert.True(t, v.FreeScroll())
+	})
+
+	t.Run("scrollbar stops at document bottom", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		e.Options().Scrollbar = true
+		for range 12 {
+			e.AppendMessage("message")
+		}
+		doc := e.MessagesDocument()
+		v := e.ShowDocument(doc.ID())
+		m := resize(ui.New(e, command.NewKeymaps()), 40, 8)
+		_ = m.View()
+
+		_ = mouse(m, tea.MouseClickMsg{
+			X:      39,
+			Y:      6,
+			Button: tea.MouseLeft,
+		})
+
+		line, err := doc.Text().CharToLine(v.Offset().Anchor)
+		assert.NoError(t, err)
+		assert.Equal(t, doc.Text().LenLines()-v.ContentHeight(), line)
+	})
+}
+
 func TestPromptAccept(t *testing.T) {
 	t.Run("enter executes command from prompt", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())

@@ -19,22 +19,31 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
-// Session owns the MCP server bound to an editor
-type Session struct {
-	editor     *view.Editor
-	srv        *mcp.Server
-	http       *http.Server
-	listenAddr string
-	boundAddr  string
-	lockfile   string
-	enabled    bool
-	dispatch   func(func())
-	showDiff   func(tabName, path, newContents string)
-	closeDiff  func(tabName string)
+type (
+	// Session owns the MCP server bound to an editor
+	Session struct {
+		editor     *view.Editor
+		srv        *mcp.Server
+		http       *http.Server
+		listenAddr string
+		boundAddr  string
+		lockfile   string
+		enabled    bool
+		dispatch   func(func())
+		showDiff   func(context.Context, DiffRequest) bool
+		closeDiff  func(tabName string)
 
-	mu      sync.Mutex
-	pending map[string]chan struct{}
-}
+		mu      sync.Mutex
+		pending map[string]chan struct{}
+	}
+
+	// DiffRequest describes a proposed file change for editor review
+	DiffRequest struct {
+		TabName     string
+		Path        string
+		NewContents string
+	}
+)
 
 const (
 	serverName = "toe"
@@ -91,7 +100,7 @@ func (s *Session) SetDispatcher(d func(func())) { s.dispatch = d }
 // SetDiffHandlers installs the hooks that show and close a read-only diff
 // review in the editor UI, wired by the app so mcp stays decoupled from the UI
 func (s *Session) SetDiffHandlers(
-	show func(tabName, path, newContents string), close func(string),
+	show func(context.Context, DiffRequest) bool, close func(tabName string),
 ) {
 	s.showDiff = show
 	s.closeDiff = close
@@ -169,19 +178,20 @@ func (s *Session) port() int {
 
 // awaitDiffClose shows the diff and blocks until the tab closes or ctx is
 // cancelled, so Claude gates on its own prompt rather than auto-applying
-func (s *Session) awaitDiffClose(
-	ctx context.Context, tabName, path, newContents string,
-) {
-	if s.showDiff != nil {
-		s.showDiff(tabName, path, newContents)
-	}
+func (s *Session) awaitDiffClose(ctx context.Context, diff DiffRequest) bool {
 	done := make(chan struct{})
 	s.mu.Lock()
 	if s.pending == nil {
 		s.pending = map[string]chan struct{}{}
 	}
-	s.pending[tabName] = done
+	s.pending[diff.TabName] = done
 	s.mu.Unlock()
+	if s.showDiff == nil || !s.showDiff(ctx, diff) {
+		s.mu.Lock()
+		delete(s.pending, diff.TabName)
+		s.mu.Unlock()
+		return false
+	}
 
 	select {
 	case <-done:
@@ -189,11 +199,12 @@ func (s *Session) awaitDiffClose(
 	}
 
 	s.mu.Lock()
-	delete(s.pending, tabName)
+	delete(s.pending, diff.TabName)
 	s.mu.Unlock()
 	if s.closeDiff != nil {
-		s.closeDiff(tabName)
+		s.closeDiff(diff.TabName)
 	}
+	return true
 }
 
 // signalDiffClosed unblocks an awaitDiffClose waiting on tabName

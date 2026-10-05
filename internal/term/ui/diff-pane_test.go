@@ -108,26 +108,63 @@ func TestDiffPane(t *testing.T) {
 		assert.Equal(t, 1, e.Tree().Count())
 	})
 
-	t.Run("displaces and restores", func(t *testing.T) {
+	t.Run("preserves panes and focus", func(t *testing.T) {
 		e := editorWithText(t, "old\n")
-		m := resize(ui.New(e, command.NewKeymaps()), 80, 12)
+		m := ui.New(e, command.NewKeymaps())
+		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 100, Height: 12})
 		assert.NotNil(t, e.VSplitNew())
-		e.TogglePaneMaximized()
-		assert.True(t, e.Tree().Maximized())
+		focus := e.Tree().Focus()
+		shown := make(chan bool, 1)
 
 		m = updateAndFeed(m, ui.OpenDiffMsg{
 			TabName:     "change",
 			Path:        "missing.txt",
 			NewContents: "new\n",
+			Shown:       shown,
 		})
-		assert.False(t, e.Tree().Maximized())
+		assert.True(t, <-shown)
 		assert.NotNil(t, diffPane(e))
-		assert.Equal(t, 2, e.Tree().Count())
+		assert.Equal(t, 3, e.Tree().Count())
+		assert.Equal(t, focus, e.Tree().Focus())
 
 		_, _ = m.Update(ui.CloseDiffMsg{TabName: "change"})
 		assert.Nil(t, diffPane(e))
 		assert.Equal(t, 2, e.Tree().Count())
 	})
+
+	for _, tc := range []struct {
+		name     string
+		width    int
+		maximize bool
+	}{
+		{name: "narrow", width: 20},
+		{name: "maximized", width: 80, maximize: true},
+	} {
+		t.Run("declines "+tc.name, func(t *testing.T) {
+			e := editorWithText(t, "old\n")
+			m := ui.New(e, command.NewKeymaps())
+			m = updateAndFeed(
+				m, tea.WindowSizeMsg{Width: tc.width, Height: 12},
+			)
+			if tc.maximize {
+				assert.NotNil(t, e.VSplitNew())
+				e.TogglePaneMaximized()
+			}
+			count := e.Tree().Count()
+			shown := make(chan bool, 1)
+
+			updateAndFeed(m, ui.OpenDiffMsg{
+				TabName:     "change",
+				Path:        "missing.txt",
+				NewContents: "new\n",
+				Shown:       shown,
+			})
+
+			assert.False(t, <-shown)
+			assert.Nil(t, diffPane(e))
+			assert.Equal(t, count, e.Tree().Count())
+		})
+	}
 
 	t.Run("close absent pane", func(t *testing.T) {
 		e := editorWithText(t, "text")

@@ -24,7 +24,10 @@ func TestServer(t *testing.T) {
 
 	shownc := make(chan string, 1)
 	s.SetDiffHandlers(
-		func(_, _, content string) { shownc <- content },
+		func(_ context.Context, diff mcp.DiffRequest) bool {
+			shownc <- diff.NewContents
+			return true
+		},
 		func(string) {},
 	)
 
@@ -80,6 +83,24 @@ func TestServer(t *testing.T) {
 		}
 		cancel() // Claude cancelling the request unblocks it
 		<-done
+	})
+
+	t.Run("openDiff reports unavailable", func(t *testing.T) {
+		s.SetDiffHandlers(
+			func(context.Context, mcp.DiffRequest) bool {
+				return false
+			},
+			func(string) {},
+		)
+		res := call(t, sess, "openDiff", map[string]any{
+			"old_file_path":     "/x.go",
+			"new_file_path":     "/x.go",
+			"new_file_contents": "hello",
+			"tab_name":          "unavailable",
+		})
+		assert.True(t, res.IsError)
+		assert.Contains(t,
+			res.Content[0].(*sdk.TextContent).Text, "unavailable")
 	})
 
 	t.Run("close_tab", func(t *testing.T) {

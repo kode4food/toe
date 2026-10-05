@@ -84,12 +84,20 @@ func Run(args []string, out io.Writer) error {
 			p.Send(ui.RunOnUIMsg{Fn: fn})
 		})
 		a.mcp.SetDiffHandlers(
-			func(tab, path, content string) {
+			func(ctx context.Context, diff mcp.DiffRequest) bool {
+				shown := make(chan bool, 1)
 				p.Send(ui.OpenDiffMsg{
-					TabName:     tab,
-					Path:        path,
-					NewContents: content,
+					TabName:     diff.TabName,
+					Path:        diff.Path,
+					NewContents: diff.NewContents,
+					Shown:       shown,
 				})
+				select {
+				case ok := <-shown:
+					return ok
+				case <-ctx.Done():
+					return false
+				}
 			},
 			func(tab string) { p.Send(ui.CloseDiffMsg{TabName: tab}) },
 		)

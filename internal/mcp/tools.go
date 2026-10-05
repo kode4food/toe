@@ -35,7 +35,16 @@ func registerTools(s *Session, srv *mcp.Server) {
 		}
 		// Block until the tab closes: this keeps Claude waiting on its own
 		// prompt instead of treating the IDE as having approved the edit
-		s.awaitDiffClose(ctx, in.TabName, path, in.NewContents)
+		diff := DiffRequest{
+			TabName:     in.TabName,
+			Path:        path,
+			NewContents: in.NewContents,
+		}
+		if !s.awaitDiffClose(ctx, diff) {
+			return newErrorResult(
+				"Diff unavailable in the current editor layout",
+			), nil, nil
+		}
 		return textResult("TAB_CLOSED"), nil, nil
 	})
 
@@ -66,6 +75,12 @@ func textResult(texts ...string) *mcp.CallToolResult {
 		content[i] = &mcp.TextContent{Text: t}
 	}
 	return &mcp.CallToolResult{Content: content}
+}
+
+func newErrorResult(text string) *mcp.CallToolResult {
+	res := textResult(text)
+	res.IsError = true
+	return res
 }
 
 func collectDiagnostics(e *view.Editor) any {

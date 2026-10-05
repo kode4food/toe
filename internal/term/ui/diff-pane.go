@@ -21,6 +21,7 @@ type (
 		TabName     string
 		Path        string
 		NewContents string
+		Shown       chan<- bool
 	}
 
 	// CloseDiffMsg asks the UI to close a diff opened by OpenDiffMsg; an empty
@@ -51,14 +52,12 @@ type (
 	// appended into one continuous scroll the git-diff-preview way: each file
 	// gets a header, highlighted in its own language. It never takes focus
 	DiffPane struct {
-		id          view.Id
-		area        geom.Area
-		dirty       bool
-		entries     []*diffEntry
-		rows        []diffRow
-		vScroll     int
-		displacedID view.Id
-		displaced   bool
+		id      view.Id
+		area    geom.Area
+		dirty   bool
+		entries []*diffEntry
+		rows    []diffRow
+		vScroll int
 	}
 )
 
@@ -249,9 +248,10 @@ func (ec *EditorComponent) handleOpenDiff(
 	msg OpenDiffMsg,
 ) (EventResult, tea.Cmd) {
 	e := ec.context.Editor
-	// a maximized pane hides the rest, so the diff would not be visible
-	if e.Tree().Maximized() {
-		e.Tree().Unmaximize()
+	if e.Tree().Maximized() &&
+		(ec.diff == nil || e.Tree().Focus() != ec.diff.ID()) {
+		msg.respond(false)
+		return consumed(), nil
 	}
 	fc := currentContent(e, msg.Path)
 	entry := newDiffEntry(newDiffEntryArgs{
@@ -263,13 +263,18 @@ func (ec *EditorComponent) handleOpenDiff(
 		proposed: msg.NewContents,
 	})
 	if ec.diff == nil {
-		ec.diff = &DiffPane{dirty: true}
-		ec.diff.add(entry)
-		placeDiffPane(e, ec.diff)
+		pane := &DiffPane{dirty: true}
+		pane.add(entry)
+		if !placeDiffPane(e, pane) {
+			msg.respond(false)
+			return consumed(), nil
+		}
+		ec.diff = pane
 	} else {
 		ec.diff.add(entry)
 	}
 	ec.requestRedraw()
+	msg.respond(true)
 	return consumed(), nil
 }
 
@@ -286,11 +291,7 @@ func (ec *EditorComponent) handleCloseDiff(
 	}
 	if len(ec.diff.entries) == 0 {
 		e := ec.context.Editor
-		if ec.diff.displaced {
-			e.RevertPane(ec.diff.displacedID)
-		} else {
-			e.ClosePane(ec.diff.ID())
-		}
+		e.ClosePane(ec.diff.ID())
 		ec.diff = nil
 	} else {
 		ec.diff.rebuild()
@@ -299,47 +300,19 @@ func (ec *EditorComponent) handleCloseDiff(
 	return consumed(), nil
 }
 
-// placeDiffPane hijacks a neighbouring pane (restored on close) without taking
-// focus, so keys keep reaching Claude's prompt in the terminal
-func placeDiffPane(e *view.Editor, pane *DiffPane) {
-	if target, ok := diffTarget(e); ok {
-		pane.displaced = true
-		pane.displacedID = target
-		e.DisplacePane(target, pane)
-		return
-	}
-	_ = e.SplitPane(pane, view.LayoutVertical) // terminal is the only pane
-}
-
-// diffTarget picks a pane to hijack for the diff: the nearest neighbour of the
-// focused pane, preferring right, then left, up, down; failing that the largest
-// other pane. ok is false only when the focused pane is the only one
-func diffTarget(e *view.Editor) (view.Id, bool) {
+func placeDiffPane(e *view.Editor, pane *DiffPane) bool {
 	focus := e.Tree().Focus()
-	for _, dir := range []view.Direction{
-		view.DirectionRight, view.DirectionLeft,
-		view.DirectionUp, view.DirectionDown,
-	} {
-		if id, ok := e.Tree().FindSplitInDirection(focus, dir); ok {
-			return id, true
-		}
+	if !e.SplitPane(pane, view.LayoutVertical) {
+		return false
 	}
-	var best view.Pane
-	e.Tree().Range(func(p view.Pane) bool {
-		if p.ID() != focus && (best == nil || paneArea(p) > paneArea(best)) {
-			best = p
-		}
-		return true
-	})
-	if best != nil {
-		return best.ID(), true
-	}
-	return view.InvalidViewId, false
+	e.FocusPane(focus)
+	return true
 }
 
-func paneArea(p view.Pane) int {
-	a := p.Area()
-	return a.Width * a.Height
+func (m OpenDiffMsg) respond(shown bool) {
+	if m.Shown != nil {
+		m.Shown <- shown
+	}
 }
 
 type currentContentRes struct {

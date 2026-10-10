@@ -11,6 +11,7 @@ buf = { command = "buf", args = ["lsp", "serve", "--timeout", "0"] }
 graphql-language-service = { command = "graphql-lsp", args = ["server", "-m", "stream"] }
 marksman = { command = "marksman", args = ["server"] }
 typescript-language-server = { command = "typescript-language-server", args = ["--stdio"] }
+zls = { command = "zls" }
 
 [[language]]
 name = "go"
@@ -164,6 +165,16 @@ file-types = [
 ]
 comment-token = "#"
 indent = { tab-width = 4, unit = "\t" }
+
+[[language]]
+name = "zig"
+injection-regex = "zig"
+file-types = ["zig", "zon"]
+roots = ["build.zig"]
+comment-token = "//"
+language-servers = ["zls"]
+auto-format = true
+indent = { tab-width = 4, unit = "    " }
 
 [[language]]
 name = "protobuf"

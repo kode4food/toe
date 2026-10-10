@@ -209,6 +209,7 @@ func TestLoadBundledLanguages(t *testing.T) {
 					"package.json", "tsconfig.json", "jsconfig.json",
 				},
 				"markdown": {".marksman.toml"},
+				"zig":      {"build.zig"},
 			},
 			roots,
 		)

@@ -8,6 +8,7 @@ import (
 	makefile "github.com/tree-sitter-grammars/tree-sitter-make/bindings/go"
 	toml "github.com/tree-sitter-grammars/tree-sitter-toml/bindings/go"
 	yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
+	zig "github.com/tree-sitter-grammars/tree-sitter-zig/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
 	css "github.com/tree-sitter/tree-sitter-css/bindings/go"
@@ -31,6 +32,7 @@ var langRegistry = map[string]*sitter.Language{
 	"tsx":        sitter.NewLanguage(typescript.LanguageTSX()),
 	"typescript": sitter.NewLanguage(typescript.LanguageTypescript()),
 	"yaml":       sitter.NewLanguage(yaml.Language()),
+	"zig":        sitter.NewLanguage(zig.Language()),
 }
 
 // SupportedLanguages lists the languages with bundled highlighters

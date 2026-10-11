@@ -7,6 +7,16 @@ Notable changes to toe.
 ### Interface
 
 - Arrowing through prompt completions puts the highlighted one in the input, so `Return` runs what you see
+- The messages pane stops scrolling at its last line, so a tailed pane fills with messages instead of trailing blank rows
+- A maximized terminal that's restored keeps the cursor row visible, pushing the top lines into scrollback
+
+### Language tooling
+
+- Zig syntax highlighting
+
+### Integrations
+
+- Experimental IDE integration for Claude Code and other AI coding CLIs: proposed edits open as a read-only diff pane in the current pane, and diagnostics from open files go to the CLI. The `mcp` option turns it off
 
 ## 0.4.10
 

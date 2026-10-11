@@ -615,8 +615,37 @@ func (t *TerminalPane) applyResize() {
 	// reserve the bottom row for the status line, matching renderTerminalPane
 	w := max(t.area.Width, 1)
 	h := max(t.area.Height-1, 1)
+	t.keepCursorRow(h)
 	t.emu.Resize(w, h)
 	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
+}
+
+// keepCursorRow scrolls the top rows into scrollback before a shrink to height,
+// so the emulator's bottom-row truncation never drops the cursor
+func (t *TerminalPane) keepCursorRow(h int) {
+	drop := t.emu.CursorPosition().Y - (h - 1)
+	if drop <= 0 || t.emu.IsAltScreen() {
+		return
+	}
+	w := t.emu.Width()
+	sb := t.emu.Scrollback()
+	for y := range drop {
+		line := make(uv.Line, w)
+		for x := range w {
+			if c := t.emu.CellAt(x, y); c != nil {
+				line[x] = *c
+			}
+		}
+		sb.Push(line)
+	}
+	for y := drop; y < t.emu.Height(); y++ {
+		for x := range w {
+			// wide-cell placeholders are written by the wide cell itself
+			if c := t.emu.CellAt(x, y); c != nil && !c.IsZero() {
+				t.emu.SetCell(x, y-drop, c)
+			}
+		}
+	}
 }
 
 func normalizeSelection(s selSpan) selSpan {

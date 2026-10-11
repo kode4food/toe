@@ -993,6 +993,36 @@ func TestTerminalResize(t *testing.T) {
 		assert.Equal(t, 11, tp.Emulator().Height())
 	})
 
+	t.Run("shrink keeps the bottom rows", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: spawns a real pty")
+		}
+		e := view.NewEditor(t.TempDir())
+		tp, err := ui.NewTerminalPane(
+			e, "cat", geom.Size{Width: 20, Height: 24},
+		)
+		if !assert.NoError(t, err) {
+			return
+		}
+		t.Cleanup(func() { _ = tp.Stop() })
+		tp.SetArea(geom.Area{Width: 20, Height: 25})
+		lines := make([]string, 24)
+		for i := range lines {
+			lines[i] = fmt.Sprintf("line %d", i)
+		}
+		tp.IngestOutput([]byte(strings.Join(lines, "\r\n")))
+
+		tp.SetArea(geom.Area{Width: 20, Height: 11})
+
+		emu := tp.Emulator()
+		rows := strings.Split(emu.String(), "\n")
+		assert.Equal(t, "line 14", strings.TrimSpace(rows[0]))
+		assert.Equal(t, "line 23", strings.TrimSpace(rows[9]))
+		sb := emu.Scrollback()
+		assert.Equal(t, "line 13", sb.Line(sb.Len()-1).String())
+		assert.Equal(t, 9, emu.CursorPosition().Y)
+	})
+
 	t.Run("holds the shell during a drag", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)

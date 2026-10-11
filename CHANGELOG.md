@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## 0.4.11
+
+### Interface
+
+- Arrowing through prompt completions puts the highlighted one in the input, so `Return` runs what you see
+
 ## 0.4.10
 
 ### Interface

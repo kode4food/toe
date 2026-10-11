@@ -304,13 +304,14 @@ func TestPromptCompletion(t *testing.T) {
 		m = typeString(m, "match")
 		_ = m.View()
 
-		// moving the selection leaves the input alone until it is accepted
 		m = sendSpecial(m, tea.KeyDown)
 		m = sendSpecial(m, tea.KeyDown)
-		assert.Equal(t, ": match", promptText(m))
+		assert.Equal(t, ": match-b", promptText(m))
+		assert.Contains(t, stripANSI(m.View().Content), "match-c")
 		m = sendSpecial(m, tea.KeyUp)
 		m = sendSpecial(m, tea.KeyTab)
 		assert.Equal(t, ": match-a", promptText(m))
+		assert.NotContains(t, stripANSI(m.View().Content), "match-b")
 
 		m = sendSpecial(m, tea.KeyEscape)
 		m = sendKey(m, ':')
@@ -409,6 +410,77 @@ func TestPromptCompletion(t *testing.T) {
 
 		assert.Equal(t, "beta", got)
 		assert.Equal(t, "", promptText(m))
+	})
+
+	t.Run("stepping off the list restores input", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
+		})
+		for _, name := range []string{"match-a", "match-b"} {
+			_ = km.Register(name, testCommand(name))
+		}
+		m = resize(m, 60, 12)
+		m = sendKey(m, ':')
+		m = typeString(m, "match")
+
+		m = sendSpecial(m, tea.KeyDown)
+		m = sendSpecial(m, tea.KeyUp)
+		assert.Equal(t, ": match", promptText(m))
+		m = sendSpecial(m, tea.KeyUp)
+		assert.Equal(t, ": match-b", promptText(m))
+		m = sendSpecial(m, tea.KeyDown)
+		assert.Equal(t, ": match", promptText(m))
+	})
+
+	t.Run("enter submits the selection", func(t *testing.T) {
+		e := view.NewEditor(t.TempDir())
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		_ = km.Register("command_mode", command.Command{
+			Run: func(*view.Editor, *command.Args) command.Result {
+				m.CmdModeAction(e)
+				return command.Result{}
+			},
+			Modes: view.ModeNormal,
+			Keys: map[view.Mode]command.KeyBinding{
+				view.ModeAny: {{char(':')}},
+			},
+		})
+		var got string
+		_ = km.Register("alpha", command.Command{
+			Run: func(_ *view.Editor, args *command.Args) command.Result {
+				got = args.Join(" ")
+				return command.Result{}
+			},
+			Modes:   view.ModeNormal,
+			Aliases: []string{"alpha"},
+			Signature: command.Signature{
+				Positionals: command.Positionals{Max: -1},
+				Completer: command.PositionalCompleter(
+					command.StaticCompleter("beta-long", "betamax"),
+				),
+			},
+		})
+		m = resize(m, 60, 12)
+
+		m = sendKey(m, ':')
+		m = typeString(m, "alpha beta")
+		m = sendSpecial(m, tea.KeyDown)
+		m = sendSpecial(m, tea.KeyDown)
+		assert.Equal(t, ": alpha beta-long", promptText(m))
+		m = sendSpecial(m, tea.KeyEnter)
+
+		assert.Equal(t, "beta-long", got)
 	})
 
 	t.Run("ignores command args without completer", func(t *testing.T) {

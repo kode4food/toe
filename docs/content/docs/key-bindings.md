@@ -433,7 +433,7 @@ Files that are neither text nor a supported image open as a read-only hexadecima
 
 ## Prompts
 
-Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the center of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does. Nothing is selected until you reach for it: `Tab` takes the top match into the input, the arrow keys highlight another one for `Tab` to take, and `Return` always submits the line as typed. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
+Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the center of the frame. Command completions list beside the input as you type, matched on the command name and annotated with what it does. Nothing is selected until you reach for it: the arrow keys step through the completions and put each one in the input as you go, stepping past either end brings back what you typed, and `Return` submits the line as shown. There is no command line: messages appear as notifications in the bottom-right corner, and the selected register and macro-recording indicator sit on the corner statusline.
 
 | Key | Action |
 |-----|--------|
@@ -447,9 +447,8 @@ Commands (`:`), search (`/`, `?`), and other text prompts open a popup in the ce
 | `Alt+d` / `Ctrl+Delete` | Delete word after caret |
 | `Ctrl+u` | Delete to start |
 | `Ctrl+k` | Delete to end |
-| `Tab` | Accept the highlighted completion, else the top match |
-| `↑` / `↓` / `Ctrl+p` / `Ctrl+n` | Highlight a completion |
-| `Return` | Submit the line as typed |
+| `↑` / `↓` / `Ctrl+p` / `Ctrl+n` | Step through completions |
+| `Return` | Submit the line as shown |
 | `Escape` | Cancel |
 
 ## Picker Navigation

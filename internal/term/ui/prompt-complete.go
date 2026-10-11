@@ -32,30 +32,42 @@ func (p *PromptComponent) recalculateCompletion() {
 }
 
 func (p *PromptComponent) changeCompletion(dir int) {
-	if len(p.completion.items) == 0 {
+	n := len(p.completion.items)
+	if n == 0 {
 		return
 	}
-	p.completion.list.count = len(p.completion.items)
-	// from an unselected list, stepping back wraps to the last item rather than
-	// to the one before it
-	if p.completion.list.cursor < 0 && dir < 0 {
-		p.completion.list.cursor = 0
+	p.completion.list.count = n
+	// the typed line is the slot before the first item, so stepping past either
+	// end of the list lands back on it
+	slots := n + 1
+	pos := p.completion.list.cursor + 1 + dir
+	p.selectCompletion((pos%slots+slots)%slots - 1)
+}
+
+func (p *PromptComponent) selectCompletion(idx int) {
+	if p.completion.list.cursor < 0 {
+		p.completion.typed = p.buf
 	}
-	p.completion.list.moveBy(dir)
+	line := p.completion.typed
+	p.completion.list.cursor = -1
+	if idx >= 0 {
+		p.completion.list.moveTo(idx)
+		line = p.completedLine(idx)
+	}
+	p.buf = line
+	p.caret = len([]rune(p.buf))
 	p.ensureCompletionVisible()
 }
 
 // acceptCompletion takes the highlighted item, or the top match when nothing is
-// highlighted, and reports whether that changed the input
+// highlighted, and reports whether it took one
 func (p *PromptComponent) acceptCompletion() bool {
 	idx := max(p.completion.list.cursor, 0)
 	if idx >= len(p.completion.items) {
 		return false
 	}
-	c := p.completion.items[idx]
-	start := min(max(c.Start, 0), len(p.buf))
-	completed := p.buf[:start] + c.Text
-	if completed == p.buf {
+	completed := p.completedLine(idx)
+	if completed == p.buf && p.completion.list.cursor < 0 {
 		return false
 	}
 	p.buf = completed
@@ -63,6 +75,16 @@ func (p *PromptComponent) acceptCompletion() bool {
 	p.completion.items = nil
 	p.completion.list = listScroll{cursor: -1}
 	return true
+}
+
+func (p *PromptComponent) completedLine(idx int) string {
+	base := p.buf
+	if p.completion.list.cursor >= 0 {
+		base = p.completion.typed
+	}
+	c := p.completion.items[idx]
+	start := min(max(c.Start, 0), len(base))
+	return base[:start] + c.Text
 }
 
 func (p *PromptComponent) syncCompletionRows(frame geom.Size) {
@@ -146,7 +168,7 @@ func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 		return consumed()
 	}
 	if idx, ok := p.completion.list.indexAt(p.completion.bounds, at); ok {
-		p.completion.list.moveTo(idx)
+		p.selectCompletion(idx)
 		p.acceptCompletion()
 	}
 	return consumed()

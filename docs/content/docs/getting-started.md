@@ -112,6 +112,6 @@ Ctrl+w h/j/k/l  navigate between splits
 
 ### Command Mode
 
-Press `:` in Normal mode to type a command. Use `Tab` and `Shift+Tab` to cycle completions. `Space+?` opens the command palette.
+Press `:` in Normal mode to type a command. Use the arrow keys to step through completions. `Space+?` opens the command palette.
 
 → See [Key Bindings]({{< relref "/docs/key-bindings" >}}) for the complete reference.

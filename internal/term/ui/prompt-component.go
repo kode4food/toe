@@ -44,6 +44,7 @@ type (
 	completionState struct {
 		items     []promptCompletion
 		list      listScroll
+		typed     string
 		bounds    geom.Area
 		done      bool
 		nameWidth int
@@ -302,8 +303,6 @@ func (p *PromptComponent) handleKey(msg tea.KeyPressMsg) EventResult {
 		p.acceptCompletion()
 		return consumed()
 
-	// Enter submits what is typed; only Tab reaches into the completions, so a
-	// line the user finished themselves is never completed over
 	case k.Code.Special == command.Enter:
 		return p.accept(pop)
 

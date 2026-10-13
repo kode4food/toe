@@ -160,6 +160,11 @@ func handlePickerMessage(msg tea.Msg) (*Picker, tea.Cmd) {
 		if msg.gen == msg.picker.load.refreshGen {
 			return msg.picker, msg.picker.flushFileChanges()
 		}
+	case pickerSnapshotRefreshMsg:
+		if msg.gen == msg.picker.load.refreshGen {
+			msg.picker.replaceItems(msg.items, true)
+			return msg.picker, nil
+		}
 	}
 	return nil, nil
 }

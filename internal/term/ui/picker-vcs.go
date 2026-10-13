@@ -12,7 +12,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/i18n"
-	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/command"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -145,23 +144,6 @@ func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 	// the picker compacts the slice it is handed, so the warmer walks its own
 	go c.warmHunks(slices.Clone(rows), c.warmGen.Add(1))
 	return rows, true
-}
-
-// ItemsForPath returns the current VCS rows for path, one per stage, empty
-// when it is no longer a changed file
-func (c *changedFilePickerSource) ItemsForPath(path string) []*PickerItem {
-	scan, ok := c.scan()
-	if !ok || scan.err != nil {
-		return nil
-	}
-	key := loader.CanonicalPath(path)
-	var out []*PickerItem
-	for _, fc := range scan.changes {
-		if loader.CanonicalPath(fc.Path) == key {
-			out = append(out, scan.item(nil, fc))
-		}
-	}
-	return out
 }
 
 // Accept opens the chosen file

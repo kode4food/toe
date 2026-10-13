@@ -254,6 +254,12 @@ type (
 		picker *Picker
 		gen    int
 	}
+
+	pickerSnapshotRefreshMsg struct {
+		picker *Picker
+		items  []*PickerItem
+		gen    int
+	}
 )
 
 const pickerDynamicDelay = 275 * time.Millisecond
@@ -477,8 +483,7 @@ func (p *Picker) flushFileChanges() tea.Cmd {
 	}
 	src, ok := p.source.(FileBackedPickerSource)
 	if !ok {
-		p.refreshItems(true)
-		return nil
+		return p.refreshItemsCmd()
 	}
 	for path := range pending {
 		// a directory event carries coalesced changes with unknown members, and
@@ -496,7 +501,27 @@ func (p *Picker) flushFileChanges() tea.Cmd {
 	return nil
 }
 
+func (p *Picker) refreshItemsCmd() tea.Cmd {
+	src, ok := p.source.(SnapshotPickerSource)
+	if !ok {
+		return nil
+	}
+	gen := p.load.refreshGen
+	return func() tea.Msg {
+		items, ok := src.Items()
+		if !ok {
+			return nil
+		}
+		return pickerSnapshotRefreshMsg{
+			picker: p,
+			items:  items,
+			gen:    gen,
+		}
+	}
+}
+
 func (p *Picker) refreshItems(keepFile bool) {
+	p.load.refreshGen++
 	src, ok := p.source.(SnapshotPickerSource)
 	if !ok {
 		return
@@ -505,6 +530,10 @@ func (p *Picker) refreshItems(keepFile bool) {
 	if !ok {
 		return
 	}
+	p.replaceItems(items, keepFile)
+}
+
+func (p *Picker) replaceItems(items []*PickerItem, keepFile bool) {
 	target := p.selectedTarget()
 	target.keepFile = keepFile
 	p.list.sections = nil

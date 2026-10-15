@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io/fs"
 	"path/filepath"
-	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -133,17 +132,14 @@ func (c *changedFilePickerSource) Load() PickerLoad {
 	return PickerLoad{Feed: feed, Stop: stop}
 }
 
-// Items returns the whole row set at once, letting a refresh swap the list in
-// place rather than emptying and re-streaming it
+// Items returns the whole row set at once; unlike Load it must not warm hunks,
+// since a file-watch burst would pile up diff shellouts and peg the CPU
 func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 	scan, ok := c.scan()
 	if !ok || scan.err != nil {
 		return nil, false
 	}
-	rows := scan.rows()
-	// the picker compacts the slice it is handed, so the warmer walks its own
-	go c.warmHunks(slices.Clone(rows), c.warmGen.Add(1))
-	return rows, true
+	return scan.rows(), true
 }
 
 // Accept opens the chosen file

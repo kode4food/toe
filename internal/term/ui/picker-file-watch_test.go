@@ -3,6 +3,7 @@ package ui_test
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -41,6 +42,7 @@ const (
 	pickerReopenWidth       = 120
 	pickerReopenHeight      = 24
 	pickerReopenMiddleLines = 40
+	gitShowSettleQuiet      = 150 * time.Millisecond
 )
 
 func (c *countingPathSource) ID() string {
@@ -944,6 +946,86 @@ func waitDiffBase(t *testing.T, e *view.Editor, doc *view.Document) {
 		time.Sleep(gutterPollPause)
 	}
 	t.Fatal("timed out waiting for the diff base")
+}
+
+func TestChangedFilesRefresh(t *testing.T) {
+	t.Run("skips unselected rows", func(t *testing.T) {
+		testutil.RequireGit(t)
+		repo := testutil.GitRepo(t)
+		one := testutil.GitCommitFile(t, repo, "one.txt", []byte("a\n"))
+		testutil.GitCommitFile(t, repo, "two.txt", []byte("a\n"))
+		testutil.GitCommitFile(t, repo, "three.txt", []byte("a\n"))
+		testutil.WriteFile(t, one, []byte("b\n"))
+
+		logFile := filepath.Join(t.TempDir(), "git-show-log")
+		installGitShowLog(t, logFile)
+
+		m := changedFilePicker(t, repo)
+		baseline := settledGitShowLines(t, logFile)
+
+		testutil.WriteFile(t, filepath.Join(repo, "two.txt"), []byte("b\n"))
+		testutil.WriteFile(t, filepath.Join(repo, "three.txt"), []byte("b\n"))
+		m = newWatchPump(m).until(t, "three.txt")
+		_ = m
+
+		lines := settledGitShowLines(t, logFile)
+		added := strings.Join(lines[len(baseline):], "\n")
+		assert.NotContains(t, added, "two.txt")
+		assert.NotContains(t, added, "three.txt")
+	})
+}
+
+// settledGitShowLines waits until the shim's log stops growing, so a warm
+// pass still in flight isn't mistaken for having finished
+func settledGitShowLines(t *testing.T, logFile string) []string {
+	t.Helper()
+	deadline := time.Now().Add(fileWatchTestTimeout)
+	last := gitShowLines(t, logFile)
+	stableSince := time.Now()
+	for time.Now().Before(deadline) {
+		time.Sleep(gutterPollPause)
+		lines := gitShowLines(t, logFile)
+		if len(lines) != len(last) {
+			last = lines
+			stableSince = time.Now()
+			continue
+		}
+		if time.Since(stableSince) >= gitShowSettleQuiet {
+			return last
+		}
+	}
+	t.Fatal("timed out waiting for git show calls to settle")
+	return nil
+}
+
+// installGitShowLog puts a git shim ahead of the real binary on PATH that
+// logs each "git show" invocation's arguments to logFile before delegating
+func installGitShowLog(t *testing.T, logFile string) {
+	t.Helper()
+	real, err := exec.LookPath("git")
+	assert.NoError(t, err)
+	shimDir := t.TempDir()
+	script := "#!/bin/sh\n" +
+		"if [ \"$3\" = \"show\" ]; then\n" +
+		"  echo \"$@\" >> \"$TOE_TEST_GIT_SHOW_LOG\"\n" +
+		"fi\n" +
+		"exec \"$TOE_TEST_REAL_GIT\" \"$@\"\n"
+	assert.NoError(t, os.WriteFile(
+		filepath.Join(shimDir, "git"), []byte(script), 0o755,
+	))
+	t.Setenv("TOE_TEST_REAL_GIT", real)
+	t.Setenv("TOE_TEST_GIT_SHOW_LOG", logFile)
+	t.Setenv("PATH", shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+}
+
+func gitShowLines(t *testing.T, logFile string) []string {
+	t.Helper()
+	data, err := os.ReadFile(logFile)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	assert.NoError(t, err)
+	return strings.Split(strings.TrimRight(string(data), "\n"), "\n")
 }
 
 func changedFilesModel(t *testing.T, repo string) (ui.Model, *view.Editor) {

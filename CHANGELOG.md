@@ -2,6 +2,12 @@
 
 Notable changes to toe.
 
+## Unreleased
+
+### Integrations
+
+- Removed the experimental MCP/IDE integration added in 0.4.11
+
 ## 0.4.11
 
 ### Interface

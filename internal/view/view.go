@@ -113,10 +113,6 @@ const (
 	// ModeCompletion is not a pane mode. It is the keymap dispatch bucket used
 	// only while the completion popup owns key handling
 	ModeCompletion // COM
-
-	// ModeDiff is the mode of a read-only diff review pane. It has no keymap
-	// bindings, so the pane handles its own keys
-	ModeDiff // DIF
 )
 
 const (
@@ -130,7 +126,7 @@ var (
 	// allModes lists every single-bit Mode value, for decomposing an ORed set
 	allModes = []Mode{
 		ModeNormal, ModeInsert, ModeSelect, ModeTerminal, ModeImage, ModeBinary,
-		ModeCompletion, ModeDiff,
+		ModeCompletion,
 	}
 
 	modeScopes = map[Mode]string{

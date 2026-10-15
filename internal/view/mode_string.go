@@ -16,7 +16,6 @@ func _() {
 	_ = x[ModeImage-16]
 	_ = x[ModeBinary-32]
 	_ = x[ModeCompletion-64]
-	_ = x[ModeDiff-128]
 }
 
 const (
@@ -26,7 +25,6 @@ const (
 	_Mode_name_3 = "IMG"
 	_Mode_name_4 = "BIN"
 	_Mode_name_5 = "COM"
-	_Mode_name_6 = "DIF"
 )
 
 var (
@@ -47,8 +45,6 @@ func (i Mode) String() string {
 		return _Mode_name_4
 	case i == 64:
 		return _Mode_name_5
-	case i == 128:
-		return _Mode_name_6
 	default:
 		return "Mode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}

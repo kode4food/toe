@@ -175,6 +175,27 @@ func TestScrollbarImage(t *testing.T) {
 		)
 	})
 
+	t.Run("window resize redraws pixels", func(t *testing.T) {
+		t.Setenv("KITTY_WINDOW_ID", "1")
+		m, _ := scrollbarImageModelFor(t,
+			scrollbarImageEditor(t), scrollbarTestCell(),
+		)
+		height := scrollbarHeight * 2
+
+		m2, _ := m.Update(tea.WindowSizeMsg{
+			Width: scrollbarWidth, Height: height,
+		})
+		m = m2.(ui.Model)
+		_ = m.View().Content
+		m2, cmd := m.Update(tea.FocusMsg{})
+		_, raws := collectModelRawMsgs(m2.(ui.Model), cmd)
+		img := decodeScrollbarImage(t, raws)
+
+		assert.Equal(t,
+			scrollbarTestCell().Height*(height-1), img.Bounds().Dy(),
+		)
+	})
+
 	t.Run("one line scroll retransmits", func(t *testing.T) {
 		t.Setenv("KITTY_WINDOW_ID", "1")
 		e := scrollbarImageEditor(t)

@@ -160,9 +160,9 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 		return nil
 	}
 	r.preparePlaceholders(state.cells)
-	resize := r.placed[a.id].cells != state.cells
+	prev := r.placed[a.id]
 	r.placed[a.id] = state
-	if r.sent[a.id] && resize {
+	if r.sent[a.id] && prev.cells != state.cells && prev.rev == state.rev {
 		put := r.dropStale(a.id, state.cells) + putSeq(a.id, state.cells)
 		return func() tea.Msg {
 			return imageTransmitMsg{raw: put, id: a.id, state: state}

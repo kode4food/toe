@@ -61,6 +61,7 @@ type (
 		lineEnding   core.LineEnding
 		editorConfig *config.EditorConfig
 		language     *language.Language
+		registry     *language.Registry
 	}
 
 	fileState struct {
@@ -227,7 +228,7 @@ func (d *Document) Lang() string {
 // SetLang sets the language identifier and resolves its definition once so
 // the render path reads the cached *language.Language directly
 func (d *Document) SetLang(lang string) {
-	d.format.language = language.LoadLanguage(lang)
+	d.format.language = d.format.registry.Get(lang)
 	d.content.Lock()
 	d.content.lang = lang
 	d.content.Unlock()

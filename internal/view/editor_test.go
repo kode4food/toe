@@ -1697,3 +1697,83 @@ func TestEditorClosePane(t *testing.T) {
 		assert.Equal(t, docCount, len(e.AllDocuments()))
 	})
 }
+
+func TestEditorLanguages(t *testing.T) {
+	comments := func(e *view.Editor) []string {
+		return e.Languages().Get("cached").CommentTokens
+	}
+
+	t.Run("saving languages file reloads", func(t *testing.T) {
+		path := writeCachedLanguages(t)
+		e := view.NewEditor(t.TempDir())
+		assert.Equal(t, []string{"#"}, comments(e))
+
+		_, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		replaceFocusedText(t, e, cachedLanguagesSlash)
+		assert.NoError(t, e.Save(false))
+		assert.Equal(t, []string{"//"}, comments(e))
+	})
+
+	t.Run("external change reloads", func(t *testing.T) {
+		path := writeCachedLanguages(t)
+		e := view.NewEditor(t.TempDir())
+		assert.Equal(t, []string{"#"}, comments(e))
+
+		writeLanguagesFile(t, path, cachedLanguagesSlash)
+		assert.Equal(t, []string{"#"}, comments(e))
+		e.ProcessExternalFileChange(path)
+		assert.Equal(t, []string{"//"}, comments(e))
+	})
+
+	t.Run("config reload reloads", func(t *testing.T) {
+		path := writeCachedLanguages(t)
+		e := view.NewEditor(t.TempDir())
+		e.SetConfigReload(func() error { return nil })
+		assert.Equal(t, []string{"#"}, comments(e))
+
+		writeLanguagesFile(t, path, cachedLanguagesSlash)
+		assert.NoError(t, e.ReloadConfig())
+		assert.Equal(t, []string{"//"}, comments(e))
+	})
+
+	t.Run("chdir reloads", func(t *testing.T) {
+		t.Chdir(t.TempDir())
+		path := writeCachedLanguages(t)
+		e := view.NewEditor(t.TempDir())
+		assert.Equal(t, []string{"#"}, comments(e))
+
+		writeLanguagesFile(t, path, cachedLanguagesSlash)
+		assert.NoError(t, e.Chdir(t.TempDir()))
+		assert.Equal(t, []string{"//"}, comments(e))
+	})
+}
+
+func TestEditorDocumentByPath(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "a.txt")
+	assert.NoError(t, os.WriteFile(path, []byte("a\n"), 0o644))
+	e := view.NewEditor(dir)
+	_, err := e.OpenFile(path)
+	assert.NoError(t, err)
+	opened := e.FocusedDocument()
+
+	t.Run("matches the exact path", func(t *testing.T) {
+		doc, ok := e.DocumentByPath(path)
+		assert.True(t, ok)
+		assert.Equal(t, opened, doc)
+	})
+
+	t.Run("matches through a symlinked dir", func(t *testing.T) {
+		link := filepath.Join(t.TempDir(), "link")
+		assert.NoError(t, os.Symlink(dir, link))
+		doc, ok := e.DocumentByPath(filepath.Join(link, "a.txt"))
+		assert.True(t, ok)
+		assert.Equal(t, opened, doc)
+	})
+
+	t.Run("misses another file", func(t *testing.T) {
+		_, ok := e.DocumentByPath(filepath.Join(dir, "b.txt"))
+		assert.False(t, ok)
+	})
+}

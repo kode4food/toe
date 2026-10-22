@@ -8,14 +8,20 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/kode4food/toe/internal/view"
 )
 
 type (
-	// Git reads HEAD state and working-tree status by shelling out to the git
-	// binary found on PATH
-	Git struct{}
+	// Git reads HEAD and index contents through one long-running cat-file
+	// process per repository, and shells out to git for everything else
+	Git struct {
+		mu       sync.Mutex
+		dirs     map[string]*gitRepo
+		repos    map[string]*gitRepo
+		realDirs map[string]string
+	}
 
 	// statusCode is a porcelain entry's staged (X) and unstaged (Y) codes
 	statusCode struct {
@@ -36,33 +42,37 @@ const (
 
 	// what rev-parse --abbrev-ref reports when no branch is checked out
 	detachedHead = "HEAD"
+
+	gitIndexName = "index"
+	repoDirLines = 2
 )
 
 var (
 	ErrGitCommand   = errors.New("git command failed")
 	ErrGitBadStatus = errors.New("unparsable git status output")
+	ErrGitBadBatch  = errors.New("unparsable git cat-file output")
 )
 
-var _ Provider = Git{}
+var _ Provider = (*Git)(nil)
 
 // DiffBase returns the HEAD contents of path. No eol/ident smudge filtering
 // is applied. A .gitattributes eol conversion may cause phantom diffs
-func (Git) DiffBase(path string) ([]byte, error) {
-	path = realPath(path)
-	root, err := gitRoot(filepath.Dir(path))
+func (g *Git) DiffBase(path string) ([]byte, error) {
+	path = g.realPath(path)
+	repo, err := g.repo(filepath.Dir(path))
 	if err != nil {
 		return nil, err
 	}
-	rel, err := filepath.Rel(root, path)
+	rel, err := filepath.Rel(repo.root, path)
 	if err != nil {
 		return nil, err
 	}
-	return runGit(root, "show", "HEAD:"+filepath.ToSlash(rel))
+	return g.readBlob(repo, "HEAD:"+filepath.ToSlash(rel))
 }
 
 // HeadName returns the current branch name, or a short commit hash when the
 // head is detached
-func (Git) HeadName(path string) (string, error) {
+func (g *Git) HeadName(path string) (string, error) {
 	dir := filepath.Dir(path)
 	out, err := runGit(dir, "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
@@ -79,7 +89,7 @@ func (Git) HeadName(path string) (string, error) {
 }
 
 // HeadID returns the full current HEAD revision
-func (Git) HeadID(path string) (string, error) {
+func (g *Git) HeadID(path string) (string, error) {
 	out, err := runGit(filepath.Dir(path), "rev-parse", "HEAD")
 	if err != nil {
 		return "", err
@@ -89,8 +99,8 @@ func (Git) HeadID(path string) (string, error) {
 
 // ChangedFiles reports the working-tree changes for the repository containing
 // cwd, with absolute paths
-func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
-	root, err := gitRoot(cwd)
+func (g *Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
+	repo, err := g.repo(cwd)
 	if err != nil {
 		return nil, err
 	}
@@ -102,20 +112,20 @@ func (Git) ChangedFiles(cwd string) ([]view.FileChange, error) {
 		return nil, err
 	}
 	return parseGitStatus(parseGitStatusArgs{
-		root:   root,
+		root:   repo.root,
 		output: string(out),
 	})
 }
 
 // Stage adds the working-tree state of path to the staging area, recording an
 // added, modified, or deleted file alike
-func (Git) Stage(cwd, path string) error {
+func (g *Git) Stage(cwd, path string) error {
 	_, err := runGit(cwd, "add", "--", path)
 	return err
 }
 
 // Unstage drops path from the staging area, leaving the working tree alone
-func (Git) Unstage(cwd, path string) error {
+func (g *Git) Unstage(cwd, path string) error {
 	if _, err := runGit(cwd, "restore", "--staged", "--", path); err == nil {
 		return nil
 	}
@@ -127,7 +137,7 @@ func (Git) Unstage(cwd, path string) error {
 
 // Discard restores the working-tree state of path from the index. An untracked
 // file has no index state to restore, so it is deleted instead
-func (Git) Discard(cwd, path string) error {
+func (g *Git) Discard(cwd, path string) error {
 	if !tracked(cwd, path) {
 		return os.Remove(path)
 	}
@@ -137,38 +147,109 @@ func (Git) Discard(cwd, path string) error {
 
 // Ignore appends path to the repository's root .gitignore, anchored so it names
 // that one file rather than every file sharing its name
-func (Git) Ignore(cwd, path string) error {
-	root, err := gitRoot(cwd)
+func (g *Git) Ignore(cwd, path string) error {
+	repo, err := g.repo(cwd)
 	if err != nil {
 		return err
 	}
-	rel, err := filepath.Rel(root, realPath(path))
+	rel, err := filepath.Rel(repo.root, g.realPath(path))
 	if err != nil {
 		return err
 	}
 	return appendIgnore(
-		filepath.Join(root, gitIgnoreName), "/"+filepath.ToSlash(rel),
+		filepath.Join(repo.root, gitIgnoreName), "/"+filepath.ToSlash(rel),
 	)
 }
 
 // Tracked reports whether the repository containing cwd has path in its index
-func (Git) Tracked(cwd, path string) bool {
+func (g *Git) Tracked(cwd, path string) bool {
 	return tracked(cwd, path)
 }
 
 // IndexText returns the staged blob for path, erroring when the file has no
 // entry in the index
-func (Git) IndexText(cwd, path string) ([]byte, error) {
-	path = realPath(path)
-	root, err := gitRoot(cwd)
+func (g *Git) IndexText(cwd, path string) ([]byte, error) {
+	path = g.realPath(path)
+	repo, err := g.repo(cwd)
 	if err != nil {
 		return nil, err
 	}
-	rel, err := filepath.Rel(root, path)
+	rel, err := filepath.Rel(repo.root, path)
 	if err != nil {
 		return nil, err
 	}
-	return runGit(root, "show", ":"+filepath.ToSlash(rel))
+	return g.readBlob(repo, ":"+filepath.ToSlash(rel))
+}
+
+// Close stops the cat-file processes
+func (g *Git) Close() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	for _, r := range g.repos {
+		r.stopBatch()
+	}
+}
+
+// a directory's repository is resolved once; a failed lookup is not cached, so
+// a later git init is picked up
+func (g *Git) repo(dir string) (*gitRepo, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if r, ok := g.dirs[dir]; ok {
+		return r, nil
+	}
+	out, err := runGit(
+		dir, "rev-parse", "--show-toplevel", "--absolute-git-dir",
+	)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	if len(lines) != repoDirLines {
+		return nil, fmt.Errorf("%w: %s", ErrGitCommand, out)
+	}
+	if g.dirs == nil {
+		g.dirs = map[string]*gitRepo{}
+		g.repos = map[string]*gitRepo{}
+	}
+	r, ok := g.repos[lines[0]]
+	if !ok {
+		r = &gitRepo{
+			root:  lines[0],
+			index: filepath.Join(lines[1], gitIndexName),
+			blobs: map[string][]byte{},
+		}
+		g.repos[r.root] = r
+	}
+	g.dirs[dir] = r
+	return r, nil
+}
+
+// a directory's real path is resolved once, like its repository, so only the
+// file itself is checked for a symlink on each call
+func (g *Git) realPath(path string) string {
+	info, err := os.Lstat(path)
+	if err == nil && info.Mode()&os.ModeSymlink != 0 {
+		if resolved, err := filepath.EvalSymlinks(path); err == nil {
+			return resolved
+		}
+		return path
+	}
+	dir := filepath.Dir(path)
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if resolved, ok := g.realDirs[dir]; ok {
+		return filepath.Join(resolved, filepath.Base(path))
+	}
+	resolved, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return path
+	}
+	if g.realDirs == nil {
+		g.realDirs = map[string]string{}
+	}
+	g.realDirs[dir] = resolved
+	return filepath.Join(resolved, filepath.Base(path))
 }
 
 type parseGitStatusArgs struct {
@@ -267,21 +348,6 @@ func isGitConflict(code statusCode) bool {
 	y := code.unstaged
 	return x == 'U' || y == 'U' || (x == 'D' && y == 'D') ||
 		(x == 'A' && y == 'A')
-}
-
-func realPath(path string) string {
-	if resolved, err := filepath.EvalSymlinks(path); err == nil {
-		return resolved
-	}
-	return path
-}
-
-func gitRoot(dir string) (string, error) {
-	out, err := runGit(dir, "rev-parse", "--show-toplevel")
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
 }
 
 // an ignore file that does not end in a newline would swallow the pattern into

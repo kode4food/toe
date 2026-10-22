@@ -9,7 +9,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
-	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/term/highlight"
 	"github.com/kode4food/toe/internal/term/syntax"
 	"github.com/kode4food/toe/internal/term/theme"
@@ -182,7 +181,7 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 			base: base, working: work,
 		}),
 		format: language.TextFormatForConfig(
-			language.LoadLanguage(work.lang), opts.TextWidth, opts.SoftWrap,
+			p.editor.Languages().Get(work.lang), opts.TextWidth, opts.SoftWrap,
 			p.wrap,
 		),
 		opts:    opts,
@@ -206,7 +205,8 @@ func (p *previewCtx) workingPreview(
 ) *previewDocEntry {
 	if staged {
 		return p.picker.preview.cache.indexText(
-			p.syntax, vc, p.item.Location.Target.Path,
+			p.syntax, p.editor.Languages(), vc,
+			p.item.Location.Target.Path,
 		)
 	}
 	if p.item.Location.Target.ID != view.InvalidDocumentId {
@@ -218,7 +218,9 @@ func (p *previewCtx) workingPreview(
 	if doc := openDocumentPreview(p.editor, path); doc != nil {
 		return p.picker.preview.cache.doc(p.syntax, doc)
 	}
-	e, ok := p.picker.preview.cache.path(p.syntax, path).(*previewDocEntry)
+	e, ok := p.picker.preview.cache.path(
+		p.syntax, p.editor.Languages(), path,
+	).(*previewDocEntry)
 	if ok {
 		return e
 	}
@@ -228,7 +230,9 @@ func (p *previewCtx) workingPreview(
 func (p *previewCtx) renderFileInto(
 	buf *tui.Buffer, at geom.Point, path string,
 ) {
-	p.picker.preview.cache.path(p.syntax, path).renderInto(p, buf, at)
+	p.picker.preview.cache.path(
+		p.syntax, p.editor.Languages(), path,
+	).renderInto(p, buf, at)
 }
 
 func (p *previewDocEntry) renderInto(
@@ -236,7 +240,7 @@ func (p *previewDocEntry) renderInto(
 ) {
 	opts := ctx.editor.Options()
 	format := language.TextFormatForConfig(
-		language.LoadLanguage(p.lang), opts.TextWidth, opts.SoftWrap,
+		ctx.editor.Languages().Get(p.lang), opts.TextWidth, opts.SoftWrap,
 		ctx.wrap,
 	)
 	p.renderText(ctx, buf, at, format)
@@ -347,11 +351,8 @@ func blitTextInto(
 }
 
 func openDocumentPreview(e *view.Editor, path string) *view.Document {
-	target := loader.CanonicalPath(path)
-	for _, doc := range e.AllDocuments() {
-		if p := doc.Path(); p == path || loader.CanonicalPath(p) == target {
-			return doc
-		}
+	if doc, ok := e.DocumentByPath(path); ok {
+		return doc
 	}
 	return nil
 }

@@ -120,12 +120,19 @@ func (p *pickerRender) drawPreview(area geom.Area) {
 	ps := comp.state
 
 	comp.previewBounds = area
-	if ps.list.cursor != ps.preview.scrollFor {
+	item := ps.selection()
+	var target PickerTarget
+	if item != nil {
+		target = item.Location.Target
+	}
+	// a refresh can slide another row under an unmoved cursor
+	if ps.list.cursor != ps.preview.scrollFor ||
+		target != ps.preview.scrollTarget {
 		ps.preview.vScroll = 0
 		ps.preview.hScroll = 0
 		ps.preview.scrollFor = ps.list.cursor
+		ps.preview.scrollTarget = target
 	}
-	item := ps.selection()
 	if item == nil {
 		return
 	}

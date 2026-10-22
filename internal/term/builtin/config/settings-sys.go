@@ -83,6 +83,7 @@ func systemCmds() []command.Command {
 				if err := loader.TrustWorkspace(e.Cwd()); err != nil {
 					return command.Result{Error: err}
 				}
+				e.Languages().Invalidate()
 				return command.Result{Message: "workspace trusted"}
 			},
 			Modes: command.PaneModes,
@@ -95,6 +96,7 @@ func systemCmds() []command.Command {
 				if err := loader.UntrustWorkspace(e.Cwd()); err != nil {
 					return command.Result{Error: err}
 				}
+				e.Languages().Invalidate()
 				return command.Result{Message: "workspace untrusted"}
 			},
 			Modes: command.PaneModes,

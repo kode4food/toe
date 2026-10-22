@@ -3,7 +3,6 @@ package action
 import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/language"
 )
 
 // InsertChar inserts a character at every cursor position in insert mode
@@ -126,7 +125,7 @@ func autoPairsForDocument(
 	if !ok {
 		return core.AutoPairs{}, false
 	}
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	if pairs, ok := lang.AutoPairs.AutoPairs(); ok {
 		return pairs, true
 	}

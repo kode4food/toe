@@ -14,7 +14,7 @@ import (
 func TestDetectLanguage(t *testing.T) {
 	t.Run("detects go by extension", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "main.go",
 		})
 		assert.Equal(t, "go", name)
@@ -26,7 +26,7 @@ func TestDetectLanguage(t *testing.T) {
 name = "python"
 shebangs = ["python3"]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path:    "script",
 			Content: "#!/usr/bin/env python3\nprint('hi')\n",
 		})
@@ -35,7 +35,7 @@ shebangs = ["python3"]
 
 	t.Run("unknown falls back to the default", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path:    "unknown.xyz99qwerty",
 			Default: "fallback",
 		})
@@ -44,7 +44,7 @@ shebangs = ["python3"]
 
 	t.Run("detects bash by shebang", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path:    "run",
 			Content: "#!/bin/bash\necho hi\n",
 		})
@@ -53,7 +53,7 @@ shebangs = ["python3"]
 
 	t.Run("empty shebang fields use the default", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Content: "#!",
 			Default: "fallback",
 		})
@@ -235,7 +235,7 @@ func TestExpandGlobBraces(t *testing.T) {
 name = "c"
 file-types = [{ glob = "*.{c,h}" }]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "main.c",
 		})
 		assert.Equal(t, "c", name)
@@ -247,7 +247,7 @@ file-types = [{ glob = "*.{c,h}" }]
 name = "c"
 file-types = [{ glob = "*.{c,h}" }]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "types.h",
 		})
 		assert.Equal(t, "c", name)
@@ -261,7 +261,7 @@ func TestLanguageForMatch(t *testing.T) {
 name = "injlang"
 injection-regex = "injlang|il"
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Content: "il",
 		})
 		assert.Equal(t, "injlang", name)
@@ -273,7 +273,7 @@ injection-regex = "injlang|il"
 name = "injlang2"
 injection-regex = "uniqueinjlang2_abc"
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Content: "ZZZNOMATCH_ABCDEF_123",
 			Default: "fallback",
 		})
@@ -287,7 +287,7 @@ name = "badregexlang"
 injection-regex = "["
 `)
 		// content doesn't match name → 2nd loop tries invalid regex, skips it
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Content: "ZZZNOMATCH_ABCDEF_123",
 			Default: "fallback",
 		})
@@ -304,7 +304,7 @@ func TestGlobMatch(t *testing.T) {
 name = "abslang"
 file-types = [{glob = %q}]
 `, target))
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: target,
 		})
 		assert.Equal(t, "abslang", name)
@@ -316,7 +316,7 @@ file-types = [{glob = %q}]
 name = "starlang"
 file-types = [{ glob = "*/foo.star" }]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "/any/dir/foo.star",
 		})
 		assert.Equal(t, "starlang", name)
@@ -328,7 +328,7 @@ file-types = [{ glob = "*/foo.star" }]
 name = "dblstar"
 file-types = [{ glob = "**" }]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "anything/foo.xyz",
 		})
 		assert.Equal(t, "dblstar", name)
@@ -340,7 +340,7 @@ file-types = [{ glob = "**" }]
 name = "nomatch"
 file-types = [{ glob = "**/nope.nomatch" }]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path:    "some/path/other.xyz99qwerty",
 			Default: "fallback",
 		})

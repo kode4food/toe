@@ -395,7 +395,7 @@ func TestTextFormat(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(
-			language.LoadLanguage("go"), nil, sw, 80,
+			new(language.Registry).Get("go"), nil, sw, 80,
 		)
 
 		assert.True(t, format.SoftWrap)
@@ -409,7 +409,7 @@ func TestTextFormat(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(
-			language.LoadLanguage("go"), new(40), sw, 80,
+			new(language.Registry).Get("go"), new(40), sw, 80,
 		)
 
 		assert.True(t, format.SoftWrapAtTextWidth)
@@ -425,7 +425,7 @@ func TestTextFormat(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(
-			language.LoadLanguage("go"), new(80), sw, 40,
+			new(language.Registry).Get("go"), new(80), sw, 40,
 		)
 
 		assert.False(t, format.SoftWrapAtTextWidth)
@@ -443,7 +443,7 @@ name = "custom"
 file-types = ["foo"]
 `)
 
-		lang := language.DetectLanguage(language.DetectLanguageArgs{
+		lang := new(language.Registry).Detect(language.DetectArgs{
 			Path: filepath.Join(root, "main.foo"),
 		})
 
@@ -462,7 +462,7 @@ name = "glob"
 file-types = [{ glob = "special.conf" }]
 `)
 
-		lang := language.DetectLanguage(language.DetectLanguageArgs{
+		lang := new(language.Registry).Detect(language.DetectArgs{
 			Path: filepath.Join(root, "special.conf"),
 		})
 
@@ -482,7 +482,7 @@ file-types = [{ glob = "project/src/*.conf" }]
 `)
 		path := filepath.Join(root, "project", "src", "special.conf")
 
-		lang := language.DetectLanguage(language.DetectLanguageArgs{
+		lang := new(language.Registry).Detect(language.DetectArgs{
 			Path: path,
 		})
 
@@ -500,12 +500,12 @@ file-types = [
 ]
 `)
 
-		langName := language.DetectLanguage(language.DetectLanguageArgs{
+		langName := new(language.Registry).Detect(language.DetectArgs{
 			Path: filepath.Join(root, "custom-addon", "views", "main.hbs"),
 		})
 		assert.Equal(t, "config", langName)
 
-		langName = language.DetectLanguage(language.DetectLanguageArgs{
+		langName = new(language.Registry).Detect(language.DetectArgs{
 			Path: filepath.Join(root, "myjsconfig.json"),
 		})
 		assert.Equal(t, "config", langName)
@@ -520,7 +520,7 @@ file-types = [{ glob = "myconf/*/*.{inc,conf}" }]
 `)
 		path := filepath.Join(root, "myconf", "machine", "default.inc")
 
-		lang := language.DetectLanguage(language.DetectLanguageArgs{
+		lang := new(language.Registry).Detect(language.DetectArgs{
 			Path: path,
 		})
 
@@ -535,7 +535,7 @@ name = "script"
 shebangs = ["customsh"]
 `)
 
-		lang := language.DetectLanguage(language.DetectLanguageArgs{
+		lang := new(language.Registry).Detect(language.DetectArgs{
 			Path:    "no-language-match",
 			Content: "#!/usr/bin/env customsh\n",
 		})
@@ -555,7 +555,7 @@ name = "long"
 injection-regex = "foo-bar"
 `)
 
-		lang := language.DetectLanguage(language.DetectLanguageArgs{
+		lang := new(language.Registry).Detect(language.DetectArgs{
 			Path:    "no-language-match",
 			Content: "embedded foo-bar marker",
 		})

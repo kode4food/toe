@@ -133,7 +133,7 @@ func (c *changedFilePickerSource) Load() PickerLoad {
 }
 
 // Items returns the whole row set at once; unlike Load it must not warm hunks,
-// since a file-watch burst would pile up diff shellouts and peg the CPU
+// since a file-watch burst would re-diff every row and peg the CPU
 func (c *changedFilePickerSource) Items() ([]*PickerItem, bool) {
 	scan, ok := c.scan()
 	if !ok || scan.err != nil {
@@ -182,8 +182,8 @@ func (c *changedFilePickerSource) HandleKey(
 	return nil, true
 }
 
-// hunks shell out per row, so they are computed off the UI thread rather than
-// on the keystroke that selects a row, until a newer generation supersedes it
+// hunks read version control per row, so they are computed off the UI thread
+// rather than on the selecting keystroke, until a newer generation supersedes
 func (c *changedFilePickerSource) warmHunks(
 	items []*PickerItem, gen uint64,
 ) {

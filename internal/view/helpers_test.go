@@ -12,6 +12,19 @@ import (
 	"github.com/kode4food/toe/internal/view"
 )
 
+const (
+	cachedLanguagesHash = `
+[[language]]
+name = "cached"
+comment-token = "#"
+`
+	cachedLanguagesSlash = `
+[[language]]
+name = "cached"
+comment-token = "//"
+`
+)
+
 func selectionAnchorHead(t *testing.T, e *view.Editor) (anchor, head int) {
 	t.Helper()
 	v := e.FocusedView()
@@ -34,6 +47,19 @@ func writeCommandLanguages(t *testing.T, text string) {
 	)
 	assert.NoError(t, err)
 	t.Setenv("XDG_CONFIG_HOME", root)
+}
+
+func writeCachedLanguages(t *testing.T) string {
+	t.Helper()
+	writeCommandLanguages(t, cachedLanguagesHash)
+	path, ok := loader.LanguagesFile()
+	assert.True(t, ok)
+	return path
+}
+
+func writeLanguagesFile(t *testing.T, path, text string) {
+	t.Helper()
+	assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
 }
 
 func newSelection(

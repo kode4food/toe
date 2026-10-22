@@ -90,13 +90,15 @@ func (p previewCache) doc(
 	return entry
 }
 
-func (p previewCache) path(sc *syntax.Cache, path string) previewCacheEntry {
+func (p previewCache) path(
+	sc *syntax.Cache, registry *language.Registry, path string,
+) previewCacheEntry {
 	key := previewPathKey(path)
 	entry, ok := p[key]
 	if ok {
 		return entry
 	}
-	entry = loadPathPreview(sc, path)
+	entry = loadPathPreview(sc, registry, path)
 	p[key] = entry
 	return entry
 }
@@ -104,14 +106,15 @@ func (p previewCache) path(sc *syntax.Cache, path string) previewCacheEntry {
 // the index text is read through version control rather than off disk, so it is
 // highlighted and cached apart from the working file
 func (p previewCache) indexText(
-	sc *syntax.Cache, vc view.VersionControl, path string,
+	sc *syntax.Cache, registry *language.Registry, vc view.VersionControl,
+	path string,
 ) *previewDocEntry {
 	key := previewIndexKey(path)
 	if entry, ok := p[key].(*previewDocEntry); ok {
 		return entry
 	}
 	text := highlight.NormalizeNewlines(vc.IndexText(path))
-	lang := language.DetectLanguage(language.DetectLanguageArgs{
+	lang := registry.Detect(language.DetectArgs{
 		Path:    path,
 		Content: text,
 		Default: view.DefaultLanguage,
@@ -155,7 +158,9 @@ func previewIndexKey(path string) previewCacheKey {
 	return previewCacheKey{path: path, staged: true}
 }
 
-func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
+func loadPathPreview(
+	sc *syntax.Cache, registry *language.Registry, path string,
+) previewCacheEntry {
 	info, err := os.Stat(path)
 	if err != nil {
 		return noPreviewEntry("<File not found>")
@@ -177,7 +182,7 @@ func loadPathPreview(sc *syntax.Cache, path string) previewCacheEntry {
 		return noPreviewEntry("<File not found>")
 	}
 	text := highlight.NormalizeNewlines(string(data))
-	lang := language.DetectLanguage(language.DetectLanguageArgs{
+	lang := registry.Detect(language.DetectArgs{
 		Path:    path,
 		Content: text,
 		Default: view.DefaultLanguage,

@@ -29,7 +29,7 @@ hints = true
 [[language]]
 name = "lsptest"
 `)
-		l := language.LoadLanguage("lsptest")
+		l := new(language.Registry).Get("lsptest")
 		assert.NotNil(t, l)
 	})
 
@@ -51,7 +51,7 @@ language-servers = [
   "testlsp"
 ]
 `)
-		l := language.LoadLanguage("testlang")
+		l := new(language.Registry).Get("testlang")
 		assert.NotNil(t, l)
 		assert.Equal(t, "testlang", l.Name)
 		assert.Equal(t, []string{"testlsp", "testlsp"}, l.LanguageServers)
@@ -63,7 +63,7 @@ language-servers = [
 name = "nonamelang"
 language-servers = [{ only-features = ["completion"] }]
 `)
-		l := language.LoadLanguage("nonamelang")
+		l := new(language.Registry).Get("nonamelang")
 		assert.Empty(t, l.LanguageServers)
 	})
 }
@@ -100,7 +100,7 @@ name = "mode"
 [language.debugger.quirks]
 absolute-paths = true
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "main.dbg",
 		})
 		assert.Equal(t, "debuglang", name)
@@ -114,7 +114,7 @@ func TestDecodeCommentTokens(t *testing.T) {
 name = "cmtlang"
 comment-token = "//"
 `)
-		_ = language.DetectLanguage(language.DetectLanguageArgs{
+		_ = new(language.Registry).Detect(language.DetectArgs{
 			Path: "nope.xyz99qwerty",
 		})
 	})
@@ -125,7 +125,7 @@ comment-token = "//"
 name = "cmtlang2"
 comment-tokens = ["//", "#"]
 `)
-		_ = language.DetectLanguage(language.DetectLanguageArgs{
+		_ = new(language.Registry).Detect(language.DetectArgs{
 			Path: "nope.xyz99qwerty",
 		})
 	})
@@ -139,7 +139,7 @@ name = "blockcmt"
 start = "/*"
 end = "*/"
 `)
-		l := language.LoadLanguage("blockcmt")
+		l := new(language.Registry).Get("blockcmt")
 		assert.Len(t, l.BlockCommentTokens, 1)
 		assert.Equal(t, "/*", l.BlockCommentTokens[0].Start)
 		assert.Equal(t, "*/", l.BlockCommentTokens[0].End)
@@ -158,7 +158,7 @@ end = "*/"
 start = "<!--"
 end = "-->"
 `)
-		l := language.LoadLanguage("blockcmtlist")
+		l := new(language.Registry).Get("blockcmtlist")
 		assert.Len(t, l.BlockCommentTokens, 2)
 		assert.Equal(t, "<!--", l.BlockCommentTokens[1].Start)
 	})
@@ -169,7 +169,7 @@ end = "-->"
 name = "badblockcmt"
 block-comment-tokens = ["bad"]
 `)
-		l := language.LoadLanguage("badblockcmt")
+		l := new(language.Registry).Get("badblockcmt")
 		assert.Empty(t, l.BlockCommentTokens)
 	})
 }
@@ -185,7 +185,7 @@ file-types = ["prl"]
 "(" = ")"
 "[" = "]"
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "test.prl",
 		})
 		assert.Equal(t, "pairlang", name)
@@ -198,7 +198,7 @@ func TestLoadLanguage(t *testing.T) {
 [[language]]
 name = "knownlang"
 `)
-		l := language.LoadLanguage("knownlang")
+		l := new(language.Registry).Get("knownlang")
 		assert.NotNil(t, l)
 		assert.Equal(t, "knownlang", l.Name)
 	})
@@ -208,7 +208,7 @@ name = "knownlang"
 [[language]]
 name = "somelang"
 `)
-		l := language.LoadLanguage("does-not-exist")
+		l := new(language.Registry).Get("does-not-exist")
 		assert.NotNil(t, l)
 		assert.Equal(t, "", l.Name)
 	})
@@ -227,7 +227,7 @@ BAZ = "qux"
 [[language]]
 name = "envlang"
 `)
-		_ = language.DetectLanguage(language.DetectLanguageArgs{
+		_ = new(language.Registry).Detect(language.DetectArgs{
 			Path: "nope.xyz99qwerty",
 		})
 	})
@@ -243,7 +243,7 @@ rulers = [80, 120]
 text-width = 100
 injection-regex = "idlang"
 `)
-		l := language.LoadLanguage("idlang")
+		l := new(language.Registry).Get("idlang")
 		assert.NotNil(t, l)
 		assert.Equal(t, "idlang", l.Name)
 	})
@@ -255,7 +255,7 @@ name = "rootlang"
 shebangs = ["rootlang"]
 roots = ["root.lang"]
 `)
-		l := language.LoadLanguage("rootlang")
+		l := new(language.Registry).Get("rootlang")
 		assert.Equal(t, []string{"rootlang"}, l.Shebangs)
 		assert.Equal(t, []string{"root.lang"}, l.Roots)
 	})
@@ -269,7 +269,7 @@ name = "boolpairlang"
 file-types = ["bpl"]
 auto-pairs = false
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "test.bpl",
 		})
 		assert.Equal(t, "boolpairlang", name)
@@ -293,7 +293,7 @@ name = "Run"
 request = "launch"
 completion = ["program"]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "test.strc",
 		})
 		assert.Equal(t, "strcompl", name)
@@ -311,7 +311,7 @@ file-types = ["swl"]
 enable = true
 wrap-at-text-width = true
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "test.swl",
 		})
 		assert.Equal(t, "swlang", name)
@@ -329,7 +329,7 @@ max-wrap = 80
 max-indent-retain = 20
 wrap-indicator = "↩"
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "test.swl2",
 		})
 		assert.Equal(t, "swlang2", name)
@@ -345,7 +345,7 @@ args = ["--stdio"]
 [[language]]
 name = "nolsp"
 `)
-		l := language.LoadLanguage("nolsp")
+		l := new(language.Registry).Get("nolsp")
 		assert.NotNil(t, l)
 	})
 }
@@ -358,7 +358,7 @@ name = "intservlang"
 file-types = ["iss"]
 language-servers = [42]
 `)
-		name := language.DetectLanguage(language.DetectLanguageArgs{
+		name := new(language.Registry).Detect(language.DetectArgs{
 			Path: "test.iss",
 		})
 		assert.Equal(t, "intservlang", name)
@@ -373,7 +373,7 @@ name = "fmtlang"
 auto-format = true
 formatter = { command = "gofmt", args = ["-s"] }
 `)
-		l := language.LoadLanguage("fmtlang")
+		l := new(language.Registry).Get("fmtlang")
 		assert.NotNil(t, l.Formatter)
 		assert.Equal(t, "gofmt", l.Formatter.Command)
 		assert.Equal(t, []string{"-s"}, l.Formatter.Args)
@@ -386,7 +386,7 @@ formatter = { command = "gofmt", args = ["-s"] }
 name = "nocmdlang"
 formatter = { args = ["-s"] }
 `)
-		l := language.LoadLanguage("nocmdlang")
+		l := new(language.Registry).Get("nocmdlang")
 		assert.Nil(t, l.Formatter)
 	})
 }
@@ -395,7 +395,7 @@ func TestLoadLanguageNoConfig(t *testing.T) {
 	t.Run("no config path returns empty language", func(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", "")
 		t.Setenv("HOME", "")
-		l := language.LoadLanguage("anything")
+		l := new(language.Registry).Get("anything")
 		assert.NotNil(t, l)
 		assert.Equal(t, "", l.Name)
 	})

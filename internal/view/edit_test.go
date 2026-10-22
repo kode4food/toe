@@ -82,7 +82,7 @@ name = "custom"
 [language.auto-pairs]
 '<' = '>'
 `)
-		lang := language.LoadLanguage("custom")
+		lang := new(language.Registry).Get("custom")
 		pairs, ok := lang.AutoPairs.AutoPairs()
 		assert.True(t, ok)
 		pair, ok := pairs.Get('<')

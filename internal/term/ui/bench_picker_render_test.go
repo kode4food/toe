@@ -79,3 +79,61 @@ func BenchmarkDiffPreview(b *testing.B) {
 		i++
 	}
 }
+
+// BenchmarkChangedFileRowSwitch moves the changed-file picker onto a row it has
+// not previewed yet and renders the frame
+func BenchmarkChangedFileRowSwitch(b *testing.B) {
+	testutil.RequireGit(b)
+	b.Setenv("XDG_CONFIG_HOME", b.TempDir())
+	b.Run("staged", func(b *testing.B) {
+		benchChangedFileRows(b, true)
+	})
+	b.Run("unstaged", func(b *testing.B) {
+		benchChangedFileRows(b, false)
+	})
+}
+
+// the repository holds a changed file per iteration, so no row is revisited and
+// every switch reads its texts and hunks cold
+func benchChangedFileRows(b *testing.B, staged bool) {
+	root := testutil.GitRepo(b)
+	benchChangedFiles(b, root, b.N+1, staged)
+	e := view.NewEditor(root)
+	s := vcs.Attach(e)
+	b.Cleanup(s.Close)
+	m := ui.New(e, command.NewKeymaps()).
+		WithInitialPicker(ui.NewChangedFilePicker)
+	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
+	if !strings.Contains(stripANSI(m.View().Content), "f00000.txt") {
+		b.Fatal("changed-file picker not rendered")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		m = sendSpecial(m, tea.KeyDown)
+		_ = m.View().Content
+	}
+	b.StopTimer()
+	// closing the picker stops its background hunk warming
+	_ = sendSpecial(m, tea.KeyEscape)
+}
+
+func benchChangedFiles(b *testing.B, root string, n int, staged bool) {
+	b.Helper()
+	body := strings.Repeat("line of committed text\n", 200)
+	paths := make([]string, n)
+	for i := range paths {
+		paths[i] = filepath.Join(root, fmt.Sprintf("f%05d.txt", i))
+		testutil.WriteFile(b, paths[i], []byte(body))
+	}
+	testutil.RunGit(b, root, "add", ".")
+	testutil.RunGit(b, root, "commit", "-qm", "files")
+	for i, path := range paths {
+		data := fmt.Sprintf("%sedit %d\n", body, i)
+		testutil.WriteFile(b, path, []byte(data))
+	}
+	if staged {
+		testutil.RunGit(b, root, "add", ".")
+	}
+}

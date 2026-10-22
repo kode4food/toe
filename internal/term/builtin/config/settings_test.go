@@ -1,6 +1,8 @@
 package config_test
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -419,6 +421,28 @@ func TestConfigCommands(t *testing.T) {
 		e, km := test.Env(t, "")
 		res := test.RunCmd(t, km, e, "workspace_untrust")
 		assert.NotContains(t, res.Message, "error")
+	})
+
+	t.Run("workspace trust reloads languages", func(t *testing.T) {
+		t.Setenv("XDG_DATA_HOME", t.TempDir())
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		dir := t.TempDir()
+		wsDir := filepath.Join(dir, loader.WorkspaceDirName)
+		assert.NoError(t, os.MkdirAll(wsDir, 0o755))
+		assert.NoError(t, os.WriteFile(
+			filepath.Join(wsDir, "languages.toml"),
+			[]byte("[[language]]\nname = \"wslang\"\n"), 0o644,
+		))
+		t.Chdir(dir)
+		e, km := test.Env(t, "")
+		assert.NoError(t, e.Chdir(dir))
+		assert.Equal(t, "", e.Languages().Get("wslang").Name)
+
+		test.RunCmd(t, km, e, "workspace_trust")
+		assert.Equal(t, "wslang", e.Languages().Get("wslang").Name)
+
+		test.RunCmd(t, km, e, "workspace_untrust")
+		assert.Equal(t, "", e.Languages().Get("wslang").Name)
 	})
 
 	t.Run("line ending no args shows current", func(t *testing.T) {

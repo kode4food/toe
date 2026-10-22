@@ -77,11 +77,11 @@ func (p *PickerComponent) previewImage(
 	cx *Context, screen geom.Size,
 ) (previewImageRes, bool) {
 	item := p.state.selection()
-	if item == nil || item.Location.Target.Path == "" {
+	if item == nil || !isImagePath(item.Location.Target.Path) {
 		return previewImageRes{}, false
 	}
 	entry, ok := p.state.preview.cache.path(
-		cx.Syntax, item.Location.Target.Path,
+		cx.Syntax, cx.Editor.Languages(), item.Location.Target.Path,
 	).(*previewImageEntry)
 	if !ok {
 		return previewImageRes{}, false

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/kode4food/toe/internal/loader"
 )
 
 // Save saves the focused document to disk. Unless force is set, it refuses
@@ -182,6 +184,7 @@ func (e *Editor) Chdir(path string) error {
 		return err
 	}
 	e.workspace.cwd = abs
+	e.languages.Invalidate()
 	return nil
 }
 
@@ -208,8 +211,32 @@ func (e *Editor) DirStack() []string {
 	return cp
 }
 
-// OpenFile replaces the focused view's document with the given file, reusing
-// an existing document if it is already open
+// DocumentByPath returns the open document backed by path, matching through
+// directory symlinks
+func (e *Editor) DocumentByPath(path string) (*Document, bool) {
+	base := filepath.Base(path)
+	target := ""
+	for _, d := range e.documents.byID {
+		p := d.Path()
+		if p == path {
+			return d, true
+		}
+		// a canonical path resolves only the directory, so the names must match
+		if p == "" || filepath.Base(p) != base {
+			continue
+		}
+		if target == "" {
+			target = loader.CanonicalPath(path)
+		}
+		if loader.CanonicalPath(p) == target {
+			return d, true
+		}
+	}
+	return nil, false
+}
+
+// OpenFile replaces the focused view's document with the given file, reusing an
+// existing document if it is already open
 func (e *Editor) OpenFile(path string) (*View, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -306,12 +333,12 @@ func (e *Editor) PeekDoc(path string) (*Document, error) {
 
 func (e *Editor) newDocument() *Document {
 	e.documents.nextID++
-	return newDocument(e.documents.nextID, &e.opts)
+	return newDocument(e.documents.nextID, &e.opts, e.languages)
 }
 
 func (e *Editor) openFile(path string) (*Document, error) {
 	e.documents.nextID++
-	return openDocument(e.documents.nextID, path, &e.opts)
+	return openDocument(e.documents.nextID, path, &e.opts, e.languages)
 }
 
 func (e *Editor) fileOperationController() (FileOperationController, bool) {

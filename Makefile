@@ -36,7 +36,7 @@ cheatsheet:
 	@venv=$$(mktemp -d) && \
 		trap 'rm -rf "$$venv"' EXIT && \
 		$(PYTHON) -m venv "$$venv" && \
-		"$$venv"/bin/pip install -q reportlab && \
+		"$$venv"/bin/pip install -q 'reportlab<5' && \
 		"$$venv"/bin/python docs/cheatsheet.py
 
 clean:

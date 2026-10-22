@@ -102,7 +102,8 @@ func TestTextFormatForConfig(t *testing.T) {
 	})
 	t.Run("unknown language returns default format", func(t *testing.T) {
 		f := language.TextFormatForConfig(
-			language.LoadLanguage("no-such-lang"), nil, language.SoftWrap{}, 80,
+			new(language.Registry).Get("no-such-lang"), nil,
+			language.SoftWrap{}, 80,
 		)
 		assert.NotNil(t, f)
 		assert.Equal(t, 80, f.ViewportWidth)

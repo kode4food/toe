@@ -8,6 +8,7 @@ import (
 // ProcessExternalFileChange updates any open document whose backing file
 // changed outside the editor
 func (e *Editor) ProcessExternalFileChange(path string) bool {
+	e.languages.FileChanged(path)
 	target := loader.CanonicalPath(path)
 	handled := false
 	for _, doc := range e.documents.byID {

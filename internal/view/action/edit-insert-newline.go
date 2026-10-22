@@ -6,7 +6,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/language"
 )
 
 // InsertNewline inserts a newline at every cursor in insert mode, then
@@ -194,7 +193,7 @@ func continuedIndent(
 	if !e.Options().ContinueComments {
 		return structuralIndent(args), false
 	}
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	token, ok := core.GetCommentToken(text, lang.CommentTokens, at.Line)
 	if ok {
 		return indent + token + " ", true

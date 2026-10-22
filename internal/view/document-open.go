@@ -10,7 +10,9 @@ import (
 	"github.com/kode4food/toe/internal/view/language"
 )
 
-func newDocument(id DocumentId, opts *Options) *Document {
+func newDocument(
+	id DocumentId, opts *Options, registry *language.Registry,
+) *Document {
 	d := &Document{
 		identity: identityState{id: id},
 		content: contentState{
@@ -27,6 +29,7 @@ func newDocument(id DocumentId, opts *Options) *Document {
 			indent:     core.Tabs(),
 			tabWidth:   4,
 			lineEnding: defaultLineEnding(opts.DefaultLineEnding),
+			registry:   registry,
 		},
 		overlays: overlayState{
 			highlights: map[Id][]DocumentHighlight{},
@@ -42,12 +45,13 @@ type newPendingDocumentArgs struct {
 	absPath string
 	lang    string
 	opts    *Options
+	langs   *language.Registry
 }
 
 func newPendingDocument(args newPendingDocumentArgs) *Document {
 	lang := args.lang
 	opts := args.opts
-	d := newDocument(args.id, opts)
+	d := newDocument(args.id, opts, args.langs)
 	d.SetPath(args.absPath)
 	d.content.pending = &pendingLoad{opts: opts, lang: lang}
 	if lang != "" {
@@ -69,7 +73,9 @@ func (d *Document) ensureLoaded() {
 	if p == nil {
 		return
 	}
-	loaded, err := openDocument(d.identity.id, d.content.path, p.opts)
+	loaded, err := openDocument(
+		d.identity.id, d.content.path, p.opts, d.format.registry,
+	)
 	if err != nil {
 		return
 	}
@@ -92,7 +98,7 @@ func (d *Document) ensureLoaded() {
 }
 
 func openDocument(
-	id DocumentId, path string, opts *Options,
+	id DocumentId, path string, opts *Options, registry *language.Registry,
 ) (*Document, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
@@ -105,11 +111,11 @@ func openDocument(
 	data, err := core.LoadText(absPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			doc := newDocument(id, opts)
+			doc := newDocument(id, opts, registry)
 			doc.SetPath(absPath)
 			doc.format.editorConfig = ec
-			doc.SetLang(language.DetectLanguage(
-				language.DetectLanguageArgs{
+			doc.SetLang(registry.Detect(
+				language.DetectArgs{
 					Path:    absPath,
 					Default: DefaultLanguage,
 				},
@@ -157,13 +163,14 @@ func openDocument(
 			lineEnding:   defaultLineEnding(opts.DefaultLineEnding),
 			editorConfig: ec,
 			hasBOM:       hasBOM,
+			registry:     registry,
 		},
 		overlays: overlayState{
 			highlights: map[Id][]DocumentHighlight{},
 			hints:      map[Id][]InlayHint{},
 		},
 	}
-	doc.SetLang(language.DetectLanguage(language.DetectLanguageArgs{
+	doc.SetLang(registry.Detect(language.DetectArgs{
 		Path:    absPath,
 		Content: string(data),
 		Default: DefaultLanguage,

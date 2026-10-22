@@ -37,6 +37,7 @@ func (e *Editor) documentChanged(doc *Document, change DocumentChange) {
 }
 
 func (e *Editor) documentSaved(doc *Document) {
+	e.languages.FileChanged(doc.Path())
 	for _, o := range e.docObservers {
 		o.DocumentSaved(doc)
 	}

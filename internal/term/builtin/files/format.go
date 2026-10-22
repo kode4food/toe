@@ -123,7 +123,7 @@ func runFormatter(e *view.Editor) command.Result {
 		return command.Result{Error: errBufferReadOnly}
 	}
 
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	if lang.Formatter == nil {
 		return runLSPFormatter(e, doc, v.ID())
 	}
@@ -171,7 +171,7 @@ func autoFormat(e *view.Editor) {
 	if doc == nil {
 		return
 	}
-	if language.LoadLanguage(doc.Lang()).AutoFormat {
+	if e.Languages().Get(doc.Lang()).AutoFormat {
 		runFormatter(e)
 	}
 }

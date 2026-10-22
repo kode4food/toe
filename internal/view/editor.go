@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/kode4food/toe/internal/geom"
+	"github.com/kode4food/toe/internal/view/language"
 	"github.com/kode4food/toe/internal/view/register"
 )
 
@@ -21,6 +22,7 @@ type (
 		messages  messageState
 
 		opts           Options
+		languages      *language.Registry
 		baseOpts       BaseOptionsLoader
 		configReload   func() error
 		docObservers   []DocumentObserver
@@ -110,7 +112,8 @@ func NewEditor(cwd string) *Editor {
 			values:    register.New(),
 			clipboard: noopClipboard{},
 		},
-		opts: defaultOptions(),
+		opts:      defaultOptions(),
+		languages: new(language.Registry),
 	}
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
@@ -187,9 +190,16 @@ func (e *Editor) ReloadConfig() error {
 	if e.configReload == nil {
 		return ErrConfigUnavailable
 	}
+	e.languages.Invalidate()
 	err := e.configReload()
 	e.opts.Gen++
 	return err
+}
+
+// Languages returns the registry that documents and editing actions
+// resolve language definitions through
+func (e *Editor) Languages() *language.Registry {
+	return e.languages
 }
 
 // View returns a view by id

@@ -20,7 +20,7 @@ func ToggleComments(e *view.Editor) {
 	if doc.ReadOnly() {
 		return
 	}
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	lineToken, hasLine := firstCommentToken(lang)
 	blockTokens := lang.BlockCommentTokens
 	if hasLine && len(blockTokens) == 0 {
@@ -63,7 +63,7 @@ func ToggleLineComments(e *view.Editor) {
 	if doc == nil {
 		return
 	}
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	lineToken, hasLine := firstCommentToken(lang)
 	if hasLine {
 		toggleLineCommentsWithToken(e, lineToken)
@@ -92,7 +92,7 @@ func ToggleBlockComments(e *view.Editor) {
 	if doc == nil {
 		return
 	}
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	switch {
 	case len(lang.BlockCommentTokens) > 0:
 		toggleBlockCommentsWithTokens(e, lang.BlockCommentTokens)

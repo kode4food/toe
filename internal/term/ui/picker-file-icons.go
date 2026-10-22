@@ -81,7 +81,9 @@ func (p *Picker) fileIcon(path string, doc *view.Document) pickerFileMarker {
 		}
 	}
 	if !ok && lang == "" {
-		lang = language.DetectLanguage(language.DetectLanguageArgs{Path: path})
+		lang = p.editor.Languages().Detect(language.DetectArgs{
+			Path: path,
+		})
 	}
 	if !ok {
 		icon, ok = pickerFileTypeIcons[strings.ToLower(lang)]

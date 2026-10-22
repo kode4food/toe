@@ -64,6 +64,9 @@ type (
 
 		// Tracked reports whether the repository containing cwd tracks path
 		Tracked(cwd, path string) bool
+
+		// Close releases any processes the provider keeps running
+		Close()
 	}
 )
 
@@ -77,7 +80,7 @@ var (
 func Attach(e *view.Editor) *Session {
 	s := &Session{
 		editor:   e,
-		provider: Git{},
+		provider: &Git{},
 		differs:  map[view.DocumentId]*Differ{},
 		heads:    map[view.DocumentId]string{},
 		headIDs:  map[view.DocumentId]string{},
@@ -111,8 +114,8 @@ func (s *Session) DiffBase(doc *view.Document) (string, bool) {
 }
 
 // StagedDiffHunks computes hunks between the head and the staged contents of an
-// arbitrary workspace file. It shells out to the provider, so it is intended
-// for on-demand use such as picker previews
+// arbitrary workspace file. It reads both sides from the provider each call,
+// so it is intended for on-demand use such as picker previews
 func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
 	return view.Diff(view.DiffSides{
 		Base: core.NewRope(s.HeadText(path)),
@@ -123,14 +126,11 @@ func (s *Session) StagedDiffHunks(path string) []view.DiffHunk {
 // UnstagedDiffHunks computes hunks between the staged and current contents of
 // a workspace file, preferring its open document over the copy on disk
 func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
-	target := loader.CanonicalPath(path)
-	for _, doc := range s.editor.AllDocuments() {
-		if p := doc.Path(); p == path || loader.CanonicalPath(p) == target {
-			return view.Diff(view.DiffSides{
-				Base: core.NewRope(s.IndexText(path)),
-				Doc:  doc.Text(),
-			})
-		}
+	if doc, ok := s.editor.DocumentByPath(path); ok {
+		return view.Diff(view.DiffSides{
+			Base: core.NewRope(s.IndexText(path)),
+			Doc:  doc.Text(),
+		})
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -142,8 +142,9 @@ func (s *Session) UnstagedDiffHunks(path string) []view.DiffHunk {
 	})
 }
 
-// HeadText returns the head text of an arbitrary workspace file. It shells out
-// to the provider, so it is intended for on-demand use such as picker previews
+// HeadText returns the head text of an arbitrary workspace file. It reads from
+// the provider on every call, so it is intended for on-demand use such as
+// picker previews
 func (s *Session) HeadText(path string) string {
 	if base, err := s.provider.DiffBase(path); err == nil {
 		return baseRope(base).String()
@@ -286,7 +287,7 @@ func (s *Session) DocumentClosed(doc *view.Document) {
 	delete(s.headIDs, doc.ID())
 }
 
-// Close stops all differs
+// Close stops all differs and the provider's processes
 func (s *Session) Close() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -294,6 +295,7 @@ func (s *Session) Close() {
 		d.Close()
 		delete(s.differs, id)
 	}
+	s.provider.Close()
 }
 
 func (s *Session) ensureDiffBase(doc *view.Document) {

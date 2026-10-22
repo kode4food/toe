@@ -605,6 +605,47 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, stripANSI(m.View().Content), "+ CHANGED-DEEP")
 	})
 
+	t.Run("staging in place re-anchors the row", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		deep := make([]string, 400)
+		for i := range deep {
+			deep[i] = "line\n"
+		}
+		for _, name := range []string{"a.txt", "b.txt"} {
+			testutil.GitCommitFile(t, repo, testutil.GitName(name),
+				[]byte(strings.Join(deep, "")),
+			)
+		}
+		changed := slices.Clone(deep)
+		changed[49] = "CHANGED-DEEP\n"
+		for _, name := range []string{"a.txt", "b.txt"} {
+			testutil.WriteFile(t,
+				filepath.Join(repo, name), []byte(strings.Join(changed, "")),
+			)
+		}
+		testutil.RunGit(t, repo, "add", "a.txt")
+		changed[49] = "CHANGED-AGAIN\n"
+		testutil.WriteFile(t,
+			filepath.Join(repo, "a.txt"), []byte(strings.Join(changed, "")),
+		)
+
+		m := changedFilePicker(t, repo)
+		m = sendSpecialAndFeed(m, tea.KeyDown)
+		assert.Contains(t, stripANSI(m.View().Content), "+ CHANGED-AGAIN")
+		for range 40 {
+			m = updateAndFeed(m, tea.MouseWheelMsg{
+				X: 90, Y: 10, Button: tea.MouseWheelDown,
+			})
+		}
+		assert.NotContains(t, stripANSI(m.View().Content), "+ CHANGED-AGAIN")
+
+		m = sendCtrl(m, 'a')
+
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, ">  b.txt")
+		assert.Contains(t, out, "+ CHANGED-DEEP")
+	})
+
 	t.Run("ctrl+r unstages the selected file", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		testutil.GitCommitFile(t, repo, "mod.txt", []byte("one\n"))

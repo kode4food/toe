@@ -6,7 +6,6 @@ import (
 
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/view"
-	"github.com/kode4food/toe/internal/view/language"
 )
 
 type (
@@ -48,7 +47,7 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 	}
 	text := doc.Text()
 	sel := doc.SelectionFor(v.ID())
-	lang := language.LoadLanguage(doc.Lang())
+	lang := e.Languages().Get(doc.Lang())
 	commentTokens := slices.Clone(lang.CommentTokens)
 	slices.SortFunc(commentTokens, func(a, b string) int {
 		return len(b) - len(a)

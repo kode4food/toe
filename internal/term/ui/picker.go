@@ -44,6 +44,7 @@ type (
 		vScroll       int
 		hScroll       int
 		scrollFor     int
+		scrollTarget  PickerTarget
 		anchorLine    int
 		lineCount     int
 		cache         previewCache

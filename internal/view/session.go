@@ -166,7 +166,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 		id := e.documents.nextID
 		var doc *Document
 		if sd.Scratch {
-			doc = newDocument(id, &e.opts)
+			doc = newDocument(id, &e.opts, e.languages)
 			doc.content.text = core.NewRope(sd.Text)
 			doc.content.version++
 			if sd.Lang != "" {
@@ -181,6 +181,7 @@ func (e *Editor) RestoreSession(path string) (map[string]string, bool, error) {
 				absPath: absPath,
 				lang:    sd.Lang,
 				opts:    &e.opts,
+				langs:   e.languages,
 			})
 			doc.views.lastSelection = sd.Selection.selection()
 		}

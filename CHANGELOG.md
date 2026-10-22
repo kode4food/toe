@@ -2,7 +2,15 @@
 
 Notable changes to toe.
 
-## Unreleased
+## 0.4.12
+
+### Interface
+
+- Graphical scrollbars redraw at the right size after the terminal is resized
+
+### Version control
+
+- The changed-file picker opens and previews faster, and stays responsive while files change on disk
 
 ### Integrations
 

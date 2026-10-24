@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,9 @@ func TestChangeSetCompose(t *testing.T) {
 		})})
 		// final = "abc"
 
-		result, err := csA.Compose(csB).Apply(doc)
+		composed, err := csA.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
@@ -54,7 +57,9 @@ func TestChangeSetCompose(t *testing.T) {
 		}, "hi")})
 		// final = "hi Go"
 
-		result, err := csA.Compose(csB).Apply(doc)
+		composed, err := csA.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
@@ -73,7 +78,9 @@ func TestChangeSetCompose(t *testing.T) {
 		}, "XY")})
 		// final = "aXYde"
 
-		result, err := csA.Compose(csB).Apply(doc)
+		composed, err := csA.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
@@ -92,7 +99,9 @@ func TestChangeSetCompose(t *testing.T) {
 		})
 		// final = " 世orld"
 
-		result, err := csA.Compose(csB).Apply(doc)
+		composed, err := csA.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
@@ -116,7 +125,9 @@ func TestChangeSetComposeCoverage(t *testing.T) {
 		final, err := csB.Apply(mid) // "aYZb"
 		assert.NoError(t, err)
 
-		result, err := csA.Compose(csB).Apply(doc)
+		composed, err := csA.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
@@ -138,7 +149,9 @@ func TestChangeSetComposeCoverage(t *testing.T) {
 		final, err := csB.Apply(mid) // "a"
 		assert.NoError(t, err)
 
-		result, err := csA.Compose(csB).Apply(doc)
+		composed, err := csA.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, final.String(), result.String())
@@ -154,7 +167,9 @@ func TestChangeSetComposeEmpty(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		result, err := empty.Compose(csB).Apply(doc)
+		composed, err := empty.Compose(csB)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "world", result.String())
@@ -170,9 +185,40 @@ func TestChangeSetComposeEmpty(t *testing.T) {
 		assert.NoError(t, err)
 		empty := core.NewChangeSet(mid)
 
-		result, err := csA.Compose(empty).Apply(doc)
+		composed, err := csA.Compose(empty)
+		assert.NoError(t, err)
+		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "world", result.String())
+	})
+}
+
+func TestChangeSetComposeMismatch(t *testing.T) {
+	insert := func(t *testing.T, doc core.Rope) core.ChangeSet {
+		t.Helper()
+		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
+			core.TextChange(core.Span{From: 0, To: 0}, "X"),
+		})
+		assert.NoError(t, err)
+		return cs
+	}
+
+	t.Run("rhs longer", func(t *testing.T) {
+		csA := insert(t, core.NewRope("abc"))
+		csB := insert(t, core.NewRope("abcdefgh"))
+
+		_, err := csA.Compose(csB)
+
+		assert.True(t, errors.Is(err, core.ErrChangeSetLengthMismatch))
+	})
+
+	t.Run("rhs shorter", func(t *testing.T) {
+		csA := insert(t, core.NewRope("abcdefgh"))
+		csB := insert(t, core.NewRope("abc"))
+
+		_, err := csA.Compose(csB)
+
+		assert.True(t, errors.Is(err, core.ErrChangeSetLengthMismatch))
 	})
 }

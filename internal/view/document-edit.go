@@ -47,8 +47,12 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		return err
 	}
 
-	if d.edits.insertAcc != nil {
+	if acc := d.edits.insertAcc; acc != nil {
 		cs := tx.Changes()
+		changes, err := acc.changes.Compose(cs)
+		if err != nil {
+			return err
+		}
 		newSel := d.resolveAppliedSelection(vid, tx, cs)
 		oldSel := d.views.selections[vid]
 		d.content.Lock()
@@ -59,7 +63,7 @@ func (d *Document) Apply(tx core.Transaction, vid Id) error {
 		d.content.Unlock()
 		d.views.selections[vid] = newSel
 		if !cs.IsEmpty() {
-			d.edits.insertAcc.changes = d.edits.insertAcc.changes.Compose(cs)
+			acc.changes = changes
 			d.edits.changedSinceAccess = true
 			d.mapOtherSelections(vid, cs)
 			d.remapOverlays(cs)

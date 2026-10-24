@@ -55,7 +55,8 @@ func TestTransaction(t *testing.T) {
 		sel := core.SingleSelection(core.Range{Anchor: 1, Head: 3})
 		txB := core.NewTransaction(mid).WithChanges(csB).WithSelection(sel)
 
-		composed := txA.Compose(txB)
+		composed, err := txA.Compose(txB)
+		assert.NoError(t, err)
 		result, err := composed.Apply(doc)
 
 		assert.NoError(t, err)

@@ -41,11 +41,12 @@ func (t Transaction) Invert(original Rope) (Transaction, error) {
 
 // Compose returns a transaction equivalent to applying this one then other,
 // keeping other's selection
-func (t Transaction) Compose(other Transaction) Transaction {
-	return Transaction{
-		changes:   t.changes.Compose(other.changes),
-		selection: other.selection,
+func (t Transaction) Compose(other Transaction) (Transaction, error) {
+	cs, err := t.changes.Compose(other.changes)
+	if err != nil {
+		return Transaction{}, err
 	}
+	return Transaction{changes: cs, selection: other.selection}, nil
 }
 
 // WithChanges returns a copy carrying cs

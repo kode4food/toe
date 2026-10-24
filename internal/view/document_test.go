@@ -737,6 +737,30 @@ func TestDocumentExternalChange(t *testing.T) {
 		assert.Contains(t, testutil.StatusMsg(e), ":reload or :write")
 	})
 
+	t.Run("pending insert marks conflict", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "insert.txt")
+		err := os.WriteFile(path, []byte("old"), 0o644)
+		assert.NoError(t, err)
+		e := view.NewEditor(tmp)
+		v, err := e.OpenFile(path)
+		assert.NoError(t, err)
+		doc := e.FocusedDocument()
+		doc.BeginInsertGroup(v.ID())
+		replaceFocusedText(t, e, "local")
+		err = os.WriteFile(path, []byte("external content"), 0o644)
+		assert.NoError(t, err)
+
+		ok := e.ProcessExternalFileChange(path)
+
+		assert.True(t, ok)
+		assert.Equal(t, "local", doc.Text().String())
+		assert.True(t, doc.Modified())
+		assert.Equal(t, view.ExternalStateChanged, doc.ExternalState())
+		replaceFocusedText(t, e, "typed")
+		assert.Equal(t, "typed", doc.Text().String())
+	})
+
 	t.Run("deleted file marks conflict", func(t *testing.T) {
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "delete.txt")

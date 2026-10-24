@@ -1,6 +1,9 @@
 package core
 
-import "unicode/utf8"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 type composeCtx struct {
 	aOp, bOp     []Operation
@@ -12,18 +15,23 @@ type composeCtx struct {
 }
 
 // Compose combines two changesets: if c transforms docA→docB and other
-// transforms docB→docC, the result transforms docA→docC
-func (c ChangeSet) Compose(other ChangeSet) ChangeSet {
+// transforms docB→docC, the result transforms docA→docC. It errors when docB's
+// lengths disagree
+func (c ChangeSet) Compose(other ChangeSet) (ChangeSet, error) {
 	if len(c.ops) == 0 {
-		return other
+		return other, nil
 	}
 	if len(other.ops) == 0 {
-		return c
+		return c, nil
 	}
 	ctx := &composeCtx{aOp: c.ops, bOp: other.ops}
 	ctx.loadA()
 	ctx.loadB()
-	return ctx.run()
+	if out, ok := ctx.run(); ok {
+		return out, nil
+	}
+	return ChangeSet{}, fmt.Errorf("%w: %d != %d",
+		ErrChangeSetLengthMismatch, c.charCountAfter, other.charCount)
 }
 
 func (c *composeCtx) loadA() {
@@ -112,7 +120,7 @@ func (c *composeCtx) stepInsertRetain() {
 	}
 }
 
-func (c *composeCtx) run() ChangeSet {
+func (c *composeCtx) run() (ChangeSet, bool) {
 	for {
 		switch {
 		case c.aKind == OperationDelete:
@@ -122,7 +130,7 @@ func (c *composeCtx) run() ChangeSet {
 			c.out = c.out.insert(c.bStr)
 			c.loadB()
 		case c.aKind == 0 && c.bKind == 0:
-			return c.out
+			return c.out, true
 		case c.aKind == OperationRetain && c.bKind == OperationRetain:
 			c.advancePair(OperationRetain)
 		case c.aKind == OperationInsert && c.bKind == OperationDelete:
@@ -131,6 +139,9 @@ func (c *composeCtx) run() ChangeSet {
 			c.stepInsertRetain()
 		case c.aKind == OperationRetain && c.bKind == OperationDelete:
 			c.advancePair(OperationDelete)
+		default:
+			// one side ran out first: the middle document lengths disagree
+			return ChangeSet{}, false
 		}
 	}
 }

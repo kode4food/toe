@@ -201,6 +201,9 @@ func (d *Document) SetPath(path string) {
 
 // Modified reports whether the document has unsaved changes
 func (d *Document) Modified() bool {
+	if acc := d.edits.insertAcc; acc != nil && !acc.changes.IsEmpty() {
+		return true
+	}
 	return d.edits.history.CurrentRevision() != d.edits.savePoint
 }
 

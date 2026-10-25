@@ -105,15 +105,12 @@ func GetLineEndingOfString(s string) (LineEnding, bool) {
 }
 
 func countLineBreaks(s string) int {
-	runes := []rune(s)
 	n := 0
-	for i := 0; i < len(runes); i++ {
-		if runes[i] == '\r' && i+1 < len(runes) && runes[i+1] == '\n' {
-			n++
-			i++
+	for i, ch := range s {
+		if ch == '\r' && i+1 < len(s) && s[i+1] == '\n' {
 			continue
 		}
-		if _, ok := LineEndingFromChar(runes[i]); ok {
+		if _, ok := LineEndingFromChar(ch); ok {
 			n++
 		}
 	}

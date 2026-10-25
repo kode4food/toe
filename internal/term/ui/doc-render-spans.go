@@ -72,12 +72,7 @@ func (r *renderPass) prepareContentRender(
 	gutterLineNumberW := gutterLineNumberWidth(text, g3, gutterLayout)
 	gutterW := gutterLayoutWidth(gutterLayout, gutterLineNumberW)
 
-	trailingEmpty := false
-	if nLines > 0 {
-		if lastLine, err := text.Line(nLines - 1); err == nil {
-			trailingEmpty = lastLine.LenChars() == 0
-		}
-	}
+	trailingEmpty := hasTrailingEmptyLine(text)
 
 	lang := doc.Lang()
 	docID := doc.ID()

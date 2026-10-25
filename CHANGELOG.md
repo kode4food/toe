@@ -2,6 +2,16 @@
 
 Notable changes to toe.
 
+## 0.4.13
+
+### Editing
+
+- No longer freezes when a file changes on disk while you're typing in insert mode
+
+### Interface
+
+- Scrolling with the mouse wheel or trackpad is lighter on the CPU, which helps on slower machines
+
 ## 0.4.12
 
 ### Interface

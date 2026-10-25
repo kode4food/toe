@@ -49,17 +49,9 @@ func lineToCharRopeNode(n *ropeNode, line int) int {
 	if n.left == nil && n.right == nil {
 		pos := 0
 		seen := 0
-		runes := []rune(n.text)
-		for i := 0; i < len(runes); i++ {
-			ch := runes[i]
+		for i, ch := range n.text {
 			pos++
-			if ch == '\r' && i+1 < len(runes) && runes[i+1] == '\n' {
-				pos++
-				i++
-				seen++
-				if seen == line {
-					return pos
-				}
+			if ch == '\r' && i+1 < len(n.text) && n.text[i+1] == '\n' {
 				continue
 			}
 			if _, ok := LineEndingFromChar(ch); ok {
@@ -85,20 +77,12 @@ func charToLineRopeNode(n *ropeNode, pos int) int {
 	if n.left == nil && n.right == nil {
 		line := 0
 		count := 0
-		runes := []rune(n.text)
-		for i := 0; i < len(runes); i++ {
-			ch := runes[i]
+		for i, ch := range n.text {
 			if count >= pos {
 				break
 			}
 			count++
-			if ch == '\r' && i+1 < len(runes) && runes[i+1] == '\n' {
-				if count >= pos {
-					break
-				}
-				count++
-				i++
-				line++
+			if ch == '\r' && i+1 < len(n.text) && n.text[i+1] == '\n' {
 				continue
 			}
 			if _, ok := LineEndingFromChar(ch); ok {

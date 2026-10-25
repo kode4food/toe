@@ -173,6 +173,23 @@ func TestRope(t *testing.T) {
 		assert.Equal(t, 2, line)
 	})
 
+	t.Run("line maps handle CRLF and multibyte", func(t *testing.T) {
+		r := core.NewRope("é世\r\nx\ry z")
+
+		for line, want := range []int{0, 4, 6, 8} {
+			pos, err := r.LineToChar(line)
+			assert.NoError(t, err)
+			assert.Equal(t, want, pos)
+		}
+		assert.Equal(t, 4, r.LenLines())
+
+		for pos, want := range []int{0, 0, 0, 0, 1, 1, 2, 2, 3} {
+			line, err := r.CharToLine(pos)
+			assert.NoError(t, err)
+			assert.Equal(t, want, line)
+		}
+	})
+
 	t.Run("maps nonstandard line endings", func(t *testing.T) {
 		r := core.NewRope("one\rtwo\u2028three")
 

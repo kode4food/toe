@@ -19,14 +19,10 @@ func digitCount(n int) int {
 
 func lineNumberDigits(text core.Rope) int {
 	nLines := text.LenLines()
-	lastDrawn := nLines
-	if nLines > 0 {
-		if last, err := text.Line(nLines - 1); err == nil &&
-			last.LenChars() == 0 {
-			lastDrawn = nLines - 1
-		}
+	if hasTrailingEmptyLine(text) {
+		nLines--
 	}
-	return digitCount(lastDrawn)
+	return digitCount(nLines)
 }
 
 func gutterWidthFor(text core.Rope, g view.Gutter) int {
@@ -44,4 +40,13 @@ func bufferlineVisible(cx *Context) bool {
 	default:
 		return false
 	}
+}
+
+func hasTrailingEmptyLine(text core.Rope) bool {
+	n := text.LenLines()
+	if n == 0 {
+		return false
+	}
+	from, err := text.LineToChar(n - 1)
+	return err == nil && from == text.LenChars()
 }

@@ -373,7 +373,8 @@ func tracked(cwd, path string) bool {
 }
 
 func runGit(dir string, args ...string) ([]byte, error) {
-	all := append([]string{"-C", dir}, args...)
+	// avoids status's index stat-refresh write re-triggering our watcher
+	all := append([]string{"-C", dir, "--no-optional-locks"}, args...)
 	out, err := exec.Command("git", all...).Output()
 	if err != nil {
 		exitErr, ok := errors.AsType[*exec.ExitError](err)

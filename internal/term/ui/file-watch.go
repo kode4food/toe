@@ -25,7 +25,7 @@ type (
 		gitDirs    map[string]int
 		gitCwd     string
 
-		tree           *watchRegistration
+		tree           []*watchRegistration
 		treeRoot       string
 		wantedTreeRoot string
 
@@ -175,20 +175,34 @@ func (w *fileWatcher) reconcileTree() {
 	if root == "" {
 		return
 	}
-	tree := filepath.Join(root, "...")
-	reg, ok := w.startWatch(tree)
-	if !ok {
-		return
+	for _, dir := range watchableTreeDirs(root) {
+		if reg, ok := w.startWatch(dir); ok {
+			w.tree = append(w.tree, reg)
+		}
 	}
-	w.tree = reg
 	w.treeRoot = root
 }
 
-func (w *fileWatcher) stopTreeWatch() {
-	if w.tree == nil {
-		return
+func watchableTreeDirs(root string) []string {
+	dirs := []string{root}
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return dirs
 	}
-	stopWatch(w.tree)
+	for _, entry := range entries {
+		// .git churn would otherwise re-register watches constantly
+		if !entry.IsDir() || entry.Name() == ".git" {
+			continue
+		}
+		dirs = append(dirs, filepath.Join(root, entry.Name(), "..."))
+	}
+	return dirs
+}
+
+func (w *fileWatcher) stopTreeWatch() {
+	for _, reg := range w.tree {
+		stopWatch(reg)
+	}
 	w.tree = nil
 	w.treeRoot = ""
 }

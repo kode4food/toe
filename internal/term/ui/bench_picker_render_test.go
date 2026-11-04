@@ -50,6 +50,15 @@ func BenchmarkBufferPickerRender(b *testing.B) {
 
 // BenchmarkDiffPreview redraws long diff lines while scrolling
 func BenchmarkDiffPreview(b *testing.B) {
+	benchDiffPreview(b, false)
+}
+
+// BenchmarkDiffPreviewWrapped redraws the same lines soft-wrapped
+func BenchmarkDiffPreviewWrapped(b *testing.B) {
+	benchDiffPreview(b, true)
+}
+
+func benchDiffPreview(b *testing.B, wrap bool) {
 	testutil.RequireGit(b)
 	b.Setenv("XDG_CONFIG_HOME", b.TempDir())
 	root := testutil.GitRepo(b)
@@ -59,6 +68,7 @@ func BenchmarkDiffPreview(b *testing.B) {
 	testutil.WriteFile(b, path, []byte(edited))
 
 	e := view.NewEditor(root)
+	e.Options().SoftWrap.Enable = &wrap
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
 	m := ui.New(e, command.NewKeymaps()).

@@ -42,7 +42,7 @@ func (p *Picker) resetCursor() {
 	}
 	p.ensureSelectable()
 	p.list.scroll = 0
-	p.preview.vScroll = 0
+	p.preview.vScroll = previewScroll{}
 	p.preview.hScroll = 0
 	p.clampScroll()
 }

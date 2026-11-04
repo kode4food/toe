@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -342,6 +343,119 @@ func TestChangedFilePicker(t *testing.T) {
 		out := stripANSI(m.View().Content)
 		assert.Contains(t, out, "- ┆   ┆   old")
 		assert.Contains(t, out, "+ ┆   ┆   new")
+	})
+
+	t.Run("diff rows soft wrap", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			wrap bool
+		}{
+			{name: "unwrapped"},
+			{name: "wrapped", wrap: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				repo := testutil.GitRepo(t)
+				long := strings.Repeat("word ", 40)
+				testutil.GitCommitFile(t,
+					repo, "long.txt", []byte(long+"old\n"),
+				)
+				testutil.WriteFile(t,
+					filepath.Join(repo, "long.txt"), []byte(long+"new\n"),
+				)
+				e := view.NewEditor(repo)
+				e.Options().SoftWrap.Enable = &tc.wrap
+				s := vcs.Attach(e)
+				t.Cleanup(s.Close)
+				m := ui.New(e, command.NewKeymaps()).
+					WithInitialPicker(ui.NewChangedFilePicker)
+				m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+				out := stripANSI(m.View().Content)
+				assert.Equal(t, tc.wrap, strings.Contains(out, "word old"))
+				assert.Equal(t, tc.wrap, strings.Contains(out, "word new"))
+			})
+		}
+	})
+
+	t.Run("wrapped diff scrolls to its end", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		var base strings.Builder
+		var work strings.Builder
+		for i := range 30 {
+			line := fmt.Sprintf("%sTAIL-%02d", strings.Repeat("word ", 40), i)
+			fmt.Fprintln(&base, line)
+			fmt.Fprintln(&work, line+"!")
+		}
+		testutil.GitCommitFile(t, repo, "long.txt", []byte(base.String()))
+		testutil.WriteFile(t,
+			filepath.Join(repo, "long.txt"), []byte(work.String()),
+		)
+		open := func(t *testing.T) ui.Model {
+			e := view.NewEditor(repo)
+			e.Options().SoftWrap.Enable = new(true)
+			e.Options().Scrollbar = true
+			s := vcs.Attach(e)
+			t.Cleanup(s.Close)
+			m := ui.New(e, command.NewKeymaps()).
+				WithInitialPicker(ui.NewChangedFilePicker)
+			return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		}
+
+		t.Run("by wheel", func(t *testing.T) {
+			m := open(t)
+			_ = m.View()
+			for range 200 {
+				m = mouse(m, tea.MouseWheelMsg{
+					X:      100,
+					Y:      10,
+					Button: tea.MouseWheelDown,
+				})
+			}
+			assert.Contains(t, stripANSI(m.View().Content), "TAIL-29!")
+		})
+
+		t.Run("by scrollbar", func(t *testing.T) {
+			m := open(t)
+			at := previewBarPoint(t, m.View().Content)
+			m = mouse(m, tea.MouseClickMsg{
+				X:      at.X,
+				Y:      at.Y,
+				Button: tea.MouseLeft,
+			})
+			// below the bar's last row, which the drag clamps to the bottom
+			m = mouse(m, tea.MouseMotionMsg{
+				X:      at.X,
+				Y:      at.Y + 10,
+				Button: tea.MouseLeft,
+			})
+			assert.Contains(t, stripANSI(m.View().Content), "TAIL-29!")
+		})
+	})
+
+	t.Run("scrolls within a tall diff line", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		tall := strings.Repeat("word ", 400)
+		testutil.GitCommitFile(t, repo, "tall.txt", []byte(tall+"OLDEND\n"))
+		testutil.WriteFile(t,
+			filepath.Join(repo, "tall.txt"), []byte(tall+"NEWEND\n"),
+		)
+		e := view.NewEditor(repo)
+		e.Options().SoftWrap.Enable = new(true)
+		s := vcs.Attach(e)
+		t.Cleanup(s.Close)
+		m := ui.New(e, command.NewKeymaps()).
+			WithInitialPicker(ui.NewChangedFilePicker)
+		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		_ = m.View()
+		for range 60 {
+			m = mouse(m, tea.MouseWheelMsg{
+				X:      100,
+				Y:      10,
+				Button: tea.MouseWheelDown,
+			})
+		}
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "NEWEND")
+		assert.NotContains(t, out, "OLDEND")
 	})
 
 	t.Run("added file previews as plain content", func(t *testing.T) {

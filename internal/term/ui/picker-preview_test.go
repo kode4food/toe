@@ -403,6 +403,56 @@ func TestPickerPreview(t *testing.T) {
 		}
 	})
 
+	t.Run("wraps inside the scrollbar", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "long")
+		text := strings.Repeat("x", 200)
+		assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
+		e := view.NewEditor(tmp)
+		e.Options().SoftWrap.Enable = new(true)
+		e.Options().Scrollbar = true
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker",
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, testPickerPreviewWidth, 24)
+		m = sendKey(m, 'p')
+		out := stripANSI(m.View().Content)
+		assert.Equal(t, 200, strings.Count(out, "x"))
+	})
+
+	t.Run("scrolls within a tall wrapped line", func(t *testing.T) {
+		tmp := t.TempDir()
+		path := filepath.Join(tmp, "tall.txt")
+		text := "first\n" + strings.Repeat("word ", 400) + "TAILEND\n"
+		assert.NoError(t, os.WriteFile(path, []byte(text), 0o644))
+		e := view.NewEditor(tmp)
+		e.Options().SoftWrap.Enable = new(true)
+		km := command.NewKeymaps()
+		m := ui.New(e, km)
+		bindNormalTestAction(
+			km, "file_picker",
+			m.PickerAction(files.NewFilePickerInDir(tmp)),
+			[]command.KeyEvent{char('p')},
+		)
+		m = resize(m, testPickerPreviewWidth, 24)
+		m = sendKey(m, 'p')
+		assert.NotContains(t, stripANSI(m.View().Content), "TAILEND")
+		for range 100 {
+			m = mouse(m, tea.MouseWheelMsg{
+				X:      80,
+				Y:      10,
+				Button: tea.MouseWheelDown,
+			})
+		}
+		out := stripANSI(m.View().Content)
+		assert.Contains(t, out, "TAILEND")
+		assert.NotContains(t, out, "first")
+	})
+
 	t.Run("retains indent on wrap", func(t *testing.T) {
 		tmp := t.TempDir()
 		text := "    " + strings.Repeat("word ", 20)

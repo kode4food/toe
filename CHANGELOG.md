@@ -11,6 +11,8 @@ Notable changes to toe.
 ### Interface
 
 - Scrolling with the mouse wheel or trackpad is lighter on the CPU, which helps on slower machines
+- Diff previews in the changed-files picker soft-wrap like the editor
+- Picker previews scroll all the way through wrapped text
 
 ## 0.4.12
 

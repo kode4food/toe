@@ -128,7 +128,7 @@ func (p *pickerRender) drawPreview(area geom.Area) {
 	// a refresh can slide another row under an unmoved cursor
 	if ps.list.cursor != ps.preview.scrollFor ||
 		target != ps.preview.scrollTarget {
-		ps.preview.vScroll = 0
+		ps.preview.vScroll = previewScroll{}
 		ps.preview.hScroll = 0
 		ps.preview.scrollFor = ps.list.cursor
 		ps.preview.scrollTarget = target

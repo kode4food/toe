@@ -2,6 +2,21 @@ package core
 
 import "github.com/kode4food/toe/internal/geom"
 
+type (
+	// VisualPos is a text line and a visual row within its soft-wrapped rows
+	VisualPos struct {
+		Line int
+		Row  int
+	}
+
+	// VisualRowWalk steps through Lines lines whose visual row counts come from
+	// Rows; a nil Rows makes every line one row
+	VisualRowWalk struct {
+		Rows  func(line int) int
+		Lines int
+	}
+)
+
 // VisualRows returns the number of visual (soft-wrapped) rows the given text
 // line occupies. It returns 1 when soft-wrap is inactive
 func (vf *VisualMoveFormat) VisualRows(doc Rope, line int) int {
@@ -27,41 +42,62 @@ func (vf *VisualMoveFormat) VisualRowOfOffset(args VisualRowOfOffsetArgs) int {
 	return newVisualLine(args.Doc, args.Line, vf).posOf(args.CharOff).Y
 }
 
-type (
-	// VisualScrollUpArgs identifies a visual row and upward distance
-	VisualScrollUpArgs struct {
-		Doc  Rope
-		Line int
-		Row  int
-		Up   int
-	}
-
-	// VisualScrollUpRes identifies the resulting line and visual row
-	VisualScrollUpRes struct {
-		Line int
-		Row  int
-	}
-)
-
-// VisualScrollUp moves upward from a visual row, clamped at the document start
+// VisualScrollUp moves up rows from a visual position, clamped at the document
+// start
 func (vf *VisualMoveFormat) VisualScrollUp(
-	args VisualScrollUpArgs,
-) VisualScrollUpRes {
-	for args.Up > 0 {
-		if args.Row >= args.Up {
-			return VisualScrollUpRes{
-				Line: args.Line,
-				Row:  args.Row - args.Up,
-			}
+	doc Rope, at VisualPos, up int,
+) VisualPos {
+	walk := VisualRowWalk{Lines: doc.LenLines()}
+	if vf != nil && vf.ViewportWidth > 0 {
+		walk.Rows = func(line int) int {
+			return vf.VisualRows(doc, line)
 		}
-		args.Up -= args.Row + 1
-		if args.Line == 0 {
-			return VisualScrollUpRes{}
-		}
-		args.Line--
-		args.Row = vf.VisualRows(args.Doc, args.Line) - 1
 	}
-	return VisualScrollUpRes{Line: args.Line, Row: args.Row}
+	return walk.Up(at, up)
+}
+
+// RowsAt returns the visual rows of line, one when it is out of range
+func (w VisualRowWalk) RowsAt(line int) int {
+	if w.Rows == nil || line < 0 || line >= w.Lines {
+		return 1
+	}
+	return w.Rows(line)
+}
+
+// Up moves n rows toward the first line, clamped at its first row
+func (w VisualRowWalk) Up(at VisualPos, n int) VisualPos {
+	for n > 0 {
+		if at.Row >= n {
+			at.Row -= n
+			return at
+		}
+		n -= at.Row + 1
+		if at.Line == 0 {
+			return VisualPos{}
+		}
+		at.Line--
+		at.Row = w.RowsAt(at.Line) - 1
+	}
+	return at
+}
+
+// Down moves n rows toward the last line, clamped at its last row
+func (w VisualRowWalk) Down(at VisualPos, n int) VisualPos {
+	for n > 0 {
+		rows := w.RowsAt(at.Line)
+		if at.Row+n < rows {
+			at.Row += n
+			return at
+		}
+		if at.Line >= w.Lines-1 {
+			at.Row = rows - 1
+			return at
+		}
+		n -= rows - at.Row
+		at.Line++
+		at.Row = 0
+	}
+	return at
 }
 
 func (v visualMover) moveVertically(

@@ -46,15 +46,12 @@ type (
 		opts   *view.Options
 
 		area    geom.Area
-		vScroll int
+		vScroll *previewScroll
 		hScroll int
 
 		hlFrom    int
 		hlTo      int
 		diffLines map[int]diffGutterKind
-
-		anchorLine int
-		lineCount  int
 
 		theme    *theme.Theme
 		styles   *styles
@@ -118,7 +115,9 @@ func (p *previewCtx) renderDocInto(
 	buf *tui.Buffer, at geom.Point, doc *view.Document,
 ) {
 	entry := p.picker.preview.cache.doc(p.syntax, doc)
-	format := doc.TextFormatForConfig(p.wrap, p.editor.Options())
+	format := doc.TextFormatForConfig(
+		p.textWrap(p.markerWidth()), p.editor.Options(),
+	)
 	entry.renderText(p, buf, at, format)
 }
 
@@ -148,6 +147,23 @@ func (p *previewCtx) diffPreviewLines(
 
 func (p *previewCtx) itemDiffLines(text core.Rope) map[int]diffGutterKind {
 	return diffGutterLines(p.item.DiffHunks(), text.LenLines())
+}
+
+func (p *previewCtx) markerWidth() int {
+	if len(p.item.DiffHunks()) > 0 {
+		return 1
+	}
+	return 0
+}
+
+// text wraps inside the columns the renderer draws beside it, the gutter on the
+// left and the scrollbar on the right
+func (p *previewCtx) textWrap(gutter int) int {
+	width := p.wrap - gutter
+	if p.editor.Options().Scrollbar {
+		width--
+	}
+	return max(width, 1)
 }
 
 func (p *previewCtx) renderDeletedInto(buf *tui.Buffer, at geom.Point) {
@@ -182,20 +198,17 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		}),
 		format: language.TextFormatForConfig(
 			p.editor.Languages().Get(work.lang), opts.TextWidth, opts.SoftWrap,
-			p.wrap,
+			p.textWrap(diffGutterW),
 		),
 		opts:    opts,
 		theme:   p.theme,
 		area:    geom.Area{Point: at, Size: p.size},
-		vScroll: p.picker.preview.vScroll,
+		vScroll: &p.picker.preview.vScroll,
 		hScroll: p.picker.preview.hScroll,
 		styles:  p.styles,
 	}
 	renderDiffPreviewInto(buf, r)
-	p.picker.preview.vScroll = r.vScroll
 	p.picker.preview.hScroll = r.hScroll
-	p.picker.preview.anchorLine = r.anchorLine
-	p.picker.preview.lineCount = r.lineCount
 }
 
 // a staged row shows what a commit would record, so its working side is the
@@ -241,7 +254,7 @@ func (p *previewDocEntry) renderInto(
 	opts := ctx.editor.Options()
 	format := language.TextFormatForConfig(
 		ctx.editor.Languages().Get(p.lang), opts.TextWidth, opts.SoftWrap,
-		ctx.wrap,
+		ctx.textWrap(ctx.markerWidth()),
 	)
 	p.renderText(ctx, buf, at, format)
 }
@@ -262,7 +275,7 @@ func (p *previewDocEntry) renderText(
 		hlFrom:    ctx.hlFrom,
 		hlTo:      ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
-		vScroll:   ctx.picker.preview.vScroll,
+		vScroll:   &ctx.picker.preview.vScroll,
 		hScroll:   ctx.picker.preview.hScroll,
 		styles:    ctx.styles,
 		bar:       &ctx.picker.preview.bar,
@@ -270,10 +283,7 @@ func (p *previewDocEntry) renderText(
 		barPlace:  ctx.scrollbarPlacement(),
 	}
 	renderPreviewDocInto(buf, r)
-	ctx.picker.preview.vScroll = r.vScroll
 	ctx.picker.preview.hScroll = r.hScroll
-	ctx.picker.preview.anchorLine = r.anchorLine
-	ctx.picker.preview.lineCount = r.lineCount
 }
 
 func (p *previewDirEntry) renderInto(

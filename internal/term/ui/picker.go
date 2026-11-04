@@ -41,12 +41,10 @@ type (
 	}
 
 	previewState struct {
-		vScroll       int
+		vScroll       previewScroll
 		hScroll       int
 		scrollFor     int
 		scrollTarget  PickerTarget
-		anchorLine    int
-		lineCount     int
 		cache         previewCache
 		diffBaseCache map[diffBaseKey]*previewDocEntry
 		diffLines     diffLineCache
@@ -735,7 +733,7 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	p.list.matched = nil
 	p.list.cursor = 0
 	p.list.scroll = 0
-	p.preview.vScroll = 0
+	p.preview.vScroll = previewScroll{}
 	p.load.dynamicGen++
 	gen := p.load.dynamicGen
 	q := p.list.query
@@ -862,13 +860,13 @@ func alignAcceptedSelection(
 		height:    height,
 		scrolloff: opts.ScrollOff,
 	}).anchor()
-	at, err := text.LineToChar(anchor.line)
+	at, err := text.LineToChar(anchor.Line)
 	if err != nil {
 		return
 	}
 	offset := v.Offset()
 	offset.Anchor = at
-	offset.VerticalOffset = anchor.offset
+	offset.VerticalOffset = anchor.Row
 	v.SetOffset(offset)
 }
 

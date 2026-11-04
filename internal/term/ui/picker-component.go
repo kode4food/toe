@@ -3,6 +3,7 @@ package ui
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/term/theme"
 	"github.com/kode4food/toe/internal/tui"
@@ -374,15 +375,20 @@ func (p *PickerComponent) onPreviewScrollbar(at geom.Point) bool {
 		at.Y >= a.Y && at.Y < a.Y+a.Height
 }
 
-// vScroll is relative to the anchor the renderer picks, so the absolute top
-// line the bar row stands for is turned back into an offset from it
 func (p *PickerComponent) scrollPreviewToRow(y int) {
 	preview := &p.state.preview
 	g := scrollbarGeom{
 		rows:   p.previewBounds.Height,
-		maxTop: max(preview.lineCount-p.previewBounds.Height, 0),
+		maxTop: preview.vScroll.end.Line,
 	}
-	preview.vScroll = g.topLineAt(y-p.previewBounds.Y) - preview.anchorLine
+	top := core.VisualPos{Line: g.topLineAt(y - p.previewBounds.Y)}
+	// the bar's last row means the end, which its rounding stops short of
+	if y-p.previewBounds.Y >= g.rows-1 {
+		top = preview.vScroll.end
+	}
+	preview.vScroll.top = top
+	preview.vScroll.delta = 0
+	preview.vScroll.scrolled = true
 }
 
 func (p *PickerComponent) scrollListByWheel(button tea.MouseButton, step int) {
@@ -396,9 +402,9 @@ func (p *PickerComponent) scrollPreviewByWheel(
 	// clamped by the renderer, which knows the document extents
 	switch button {
 	case tea.MouseWheelUp:
-		p.state.preview.vScroll -= step
+		p.state.preview.vScroll.delta -= step
 	case tea.MouseWheelDown:
-		p.state.preview.vScroll += step
+		p.state.preview.vScroll.delta += step
 	case tea.MouseWheelLeft:
 		p.state.preview.hScroll -= step
 	case tea.MouseWheelRight:

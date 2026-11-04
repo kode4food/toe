@@ -115,6 +115,10 @@ type (
 
 		lineIndex []lineIndexEntry
 		liRev     int
+
+		rowsRev    int
+		rowsFormat core.VisualMoveFormat
+		lineRows   map[int]int
 	}
 
 	linePrefixScan struct {
@@ -366,4 +370,20 @@ func (d *docRenderCache) ensureLinePrefix(
 	res := scanLinePrefix(req)
 	d.linePrefix[req.lineNum] = res
 	return res
+}
+
+func (d *docRenderCache) visualRows(
+	text core.Rope, vf *core.VisualMoveFormat, line int,
+) int {
+	if d.lineRows == nil || d.rowsRev != d.rawTextRev || d.rowsFormat != *vf {
+		d.rowsRev = d.rawTextRev
+		d.rowsFormat = *vf
+		d.lineRows = map[int]int{}
+	}
+	if n, ok := d.lineRows[line]; ok {
+		return n
+	}
+	n := vf.VisualRows(text, line)
+	d.lineRows[line] = n
+	return n
 }

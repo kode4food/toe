@@ -823,25 +823,61 @@ func TestVisualScrollUp(t *testing.T) {
 	doc := core.NewRope("short\nlonger than ten chars\nend")
 
 	t.Run("scroll up within row stays on same line", func(t *testing.T) {
-		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
-			Doc: doc, Line: 1, Row: 2, Up: 1,
-		})
+		res := vf.VisualScrollUp(doc, core.VisualPos{Line: 1, Row: 2}, 1)
 		assert.Equal(t, 1, res.Line)
 		assert.Equal(t, 1, res.Row)
 	})
 
 	t.Run("scroll up to previous line", func(t *testing.T) {
-		res := vf.VisualScrollUp(core.VisualScrollUpArgs{
-			Doc: doc, Line: 1, Up: 1,
-		})
+		res := vf.VisualScrollUp(doc, core.VisualPos{Line: 1}, 1)
 		assert.Equal(t, 0, res.Line)
 		assert.GreaterOrEqual(t, res.Row, 0)
 	})
 
 	t.Run("clamps at document start", func(t *testing.T) {
-		res := vf.VisualScrollUp(core.VisualScrollUpArgs{Doc: doc, Up: 10})
+		res := vf.VisualScrollUp(doc, core.VisualPos{}, 10)
 		assert.Equal(t, 0, res.Line)
 		assert.Equal(t, 0, res.Row)
+	})
+}
+
+func TestVisualRowWalk(t *testing.T) {
+	rows := []int{1, 3, 2}
+	walk := core.VisualRowWalk{
+		Rows:  func(line int) int { return rows[line] },
+		Lines: len(rows),
+	}
+
+	t.Run("down crosses lines", func(t *testing.T) {
+		got := walk.Down(core.VisualPos{}, 2)
+		assert.Equal(t, core.VisualPos{Line: 1, Row: 1}, got)
+	})
+
+	t.Run("down clamps at last row", func(t *testing.T) {
+		got := walk.Down(core.VisualPos{Line: 1}, 99)
+		assert.Equal(t, core.VisualPos{Line: 2, Row: 1}, got)
+	})
+
+	t.Run("up crosses lines", func(t *testing.T) {
+		got := walk.Up(core.VisualPos{Line: 2, Row: 1}, 3)
+		assert.Equal(t, core.VisualPos{Line: 1, Row: 1}, got)
+	})
+
+	t.Run("up clamps at first row", func(t *testing.T) {
+		got := walk.Up(core.VisualPos{Line: 1, Row: 2}, 99)
+		assert.Equal(t, core.VisualPos{}, got)
+	})
+
+	t.Run("nil rows are one row each", func(t *testing.T) {
+		flat := core.VisualRowWalk{Lines: 5}
+		assert.Equal(t, 1, flat.RowsAt(3))
+		assert.Equal(t,
+			core.VisualPos{Line: 3}, flat.Down(core.VisualPos{Line: 1}, 2),
+		)
+	})
+
+	t.Run("out of range is one row", func(t *testing.T) {
+		assert.Equal(t, 1, walk.RowsAt(7))
 	})
 }
 

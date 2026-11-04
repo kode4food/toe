@@ -652,21 +652,18 @@ func (v *View) ensureCursorVisibleVisual(cs *CursorScroll) {
 
 	switch {
 	case !ok || fromTop < soTop:
-		res := cs.Visual.VisualScrollUp(core.VisualScrollUpArgs{
-			Doc:  cs.Doc,
-			Line: cursorLine,
-			Row:  cursorRow,
-			Up:   soTop,
-		})
-		anchorLine, vOff = res.Line, res.Row
+		res := cs.Visual.VisualScrollUp(
+			cs.Doc, core.VisualPos{Line: cursorLine, Row: cursorRow}, soTop,
+		)
+		anchorLine = res.Line
+		vOff = res.Row
 	case fromTop > cs.Height-1-soBottom:
-		res := cs.Visual.VisualScrollUp(core.VisualScrollUpArgs{
-			Doc:  cs.Doc,
-			Line: cursorLine,
-			Row:  cursorRow,
-			Up:   cs.Height - 1 - soBottom,
-		})
-		anchorLine, vOff = res.Line, res.Row
+		res := cs.Visual.VisualScrollUp(
+			cs.Doc, core.VisualPos{Line: cursorLine, Row: cursorRow},
+			cs.Height-1-soBottom,
+		)
+		anchorLine = res.Line
+		vOff = res.Row
 	default:
 		return
 	}

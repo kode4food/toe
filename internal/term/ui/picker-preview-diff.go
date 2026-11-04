@@ -23,11 +23,8 @@ type (
 		opts   *view.Options
 
 		area    geom.Area
-		vScroll int
+		vScroll *previewScroll
 		hScroll int
-
-		anchorLine int
-		lineCount  int
 
 		theme  *theme.Theme
 		styles *styles
@@ -181,21 +178,9 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	contentX := args.area.X + diffGutterW
 	contentW := paneW - diffGutterW
 
-	anchor := max(0, firstChangedLine(args.lines)-diffPreviewLead)
-	maxStart := max(0, len(args.lines)-args.area.Height)
-	start := max(0, min(anchor+args.vScroll, maxStart))
-	args.vScroll = start - anchor
-	args.anchorLine = anchor
-	args.lineCount = len(args.lines)
-	hOff := clampDiffHScroll(clampDiffHScrollArgs{
-		render:       args,
-		startRow:     start,
-		contentWidth: contentW,
-	})
-	args.hScroll = hOff
-
 	working := args.working.ensureRenderCache()
 	base := args.base.ensureRenderCache()
+	softWrap := args.format.SoftWrap && args.format.ViewportWidth > 0
 	rr := rowRender{
 		styles:     args.styles,
 		hlStyle:    args.highlight,
@@ -204,19 +189,36 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		indents:    args.opts.IndentGuides,
 		cursor:     -1,
 		cursorLine: -1,
-		colStart:   hOff,
+		softWrap:   softWrap,
 		colWidth:   contentW,
 		maxRows:    1,
 	}
+
+	walk := diffPreviewWalk(args, softWrap)
+	anchor := core.VisualPos{
+		Line: max(0, firstChangedLine(args.lines)-diffPreviewLead),
+	}
+	top := args.vScroll.resolve(anchor, walk, args.area.Height)
+	start := top.Line
+	hOff := 0
+	if !softWrap {
+		hOff = clampDiffHScroll(clampDiffHScrollArgs{
+			render:       args,
+			startRow:     start,
+			contentWidth: contentW,
+		})
+	}
+	args.hScroll = hOff
+	rr.colStart = hOff
+
 	for row := range args.area.Height {
-		idx := start + row
-		at := geom.Point{X: contentX, Y: args.area.Y + row}
-		signAt := geom.Point{X: args.area.X, Y: at.Y}
-		buf.FillRange(signAt, paneW, fillTUI)
-		buf.PatchBgRange(signAt, paneW, popupBg)
-		if idx >= len(args.lines) {
-			continue
-		}
+		at := geom.Point{X: args.area.X, Y: args.area.Y + row}
+		buf.FillRange(at, paneW, fillTUI)
+		buf.PatchBgRange(at, paneW, popupBg)
+	}
+	row := 0
+	skip := top.Row
+	for idx := start; idx < len(args.lines) && row < args.area.Height; idx++ {
 		dl := args.lines[idx]
 		src := working
 		rr.hlSpans = args.working.spans
@@ -225,31 +227,55 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			rr.hlSpans = nil
 		}
 		if !rr.prepareLine(src, dl.line) {
+			row++
+			skip = 0
 			continue
 		}
-		rendered := rr.rows()
-		rendered[0].writeToBuffer(rowWriteArgs{
-			buf:       buf,
-			at:        at,
-			fillStyle: fillTUI,
-			width:     contentW,
-			startCol:  hOff,
-		})
-		buf.PatchBgRange(at, contentW, popupBg)
 
 		sign := " "
 		signStyle := fillTUI
+		bg := popupBg
 		switch dl.kind {
 		case diffLineAdded:
-			buf.PatchBgRange(at, contentW, addedBg)
 			sign = "+"
 			signStyle = args.styles.diffAdded.Bg(popupBg)
+			bg = addedBg
 		case diffLineRemoved:
-			buf.PatchBgRange(at, contentW, removedBg)
 			sign = "-"
 			signStyle = args.styles.diffRemoved.Bg(popupBg)
+			bg = removedBg
 		}
-		buf.SetString(signAt, sign, signStyle)
+		buf.SetString(
+			geom.Point{X: args.area.X, Y: args.area.Y + row}, sign, signStyle,
+		)
+
+		rr.maxRows = args.area.Height - row + skip
+		var prefix renderedRow
+		if softWrap {
+			prefix = softWrapContinuationRow(
+				args.format, rr.indentCol, rr.styles,
+			)
+		}
+		rendered := rr.rows()
+		for i := min(skip, len(rendered)); i < len(rendered); i++ {
+			cr := rendered[i]
+			at := geom.Point{X: contentX, Y: args.area.Y + row}
+			line := cr
+			if i > 0 {
+				line = prefix
+				line.append(cr)
+			}
+			line.writeToBuffer(rowWriteArgs{
+				buf:       buf,
+				at:        at,
+				fillStyle: fillTUI,
+				width:     contentW,
+				startCol:  hOff,
+			})
+			buf.PatchBgRange(at, contentW, bg)
+			row++
+		}
+		skip = 0
 	}
 	if barW > 0 {
 		drawDiffPreviewScrollbar(args, buf, start)
@@ -270,7 +296,7 @@ func drawDiffPreviewScrollbar(
 	bar.reset(
 		scrollbarGeom{
 			rows:   args.area.Height,
-			maxTop: max(len(args.lines)-args.area.Height, 0),
+			maxTop: args.vScroll.end.Line,
 		},
 		geom.Point{
 			X: args.area.X + args.area.Width - 1,
@@ -346,4 +372,27 @@ func clampDiffHScroll(args clampDiffHScrollArgs) int {
 		widest = max(widest, lineDisplayWidth(src.rope, dl.line))
 	}
 	return min(args.render.hScroll, max(widest-args.contentWidth, 0))
+}
+
+func diffPreviewWalk(
+	args *diffPreviewRender, softWrap bool,
+) core.VisualRowWalk {
+	walk := core.VisualRowWalk{Lines: len(args.lines)}
+	if !softWrap {
+		return walk
+	}
+	// capturing args would move the whole render onto the heap every frame
+	vf := softWrapMoveFormat(args.format)
+	lines := args.lines
+	base := args.base
+	working := args.working
+	walk.Rows = func(idx int) int {
+		dl := lines[idx]
+		src := working
+		if dl.kind == diffLineRemoved {
+			src = base
+		}
+		return src.ensureRenderCache().visualRows(src.rope, &vf, dl.line)
+	}
+	return walk
 }

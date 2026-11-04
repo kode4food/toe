@@ -35,21 +35,19 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 		height:    args.area.Height,
 		scrolloff: args.opts.ScrollOff,
 	}).anchor()
-	anchorLine := anchor.line
-	vOff := anchor.offset
 	nLines := args.text.LenLines()
-	args.anchorLine = anchorLine
-	args.lineCount = nLines
-	// clamp scroll to keep the last line pinned to the pane bottom, then
-	// write the applied delta back so stored scroll stays bounded
-	if args.vScroll != 0 {
-		base := anchorLine
-		anchorLine = max(0, min(
-			base+args.vScroll, max(0, nLines-args.area.Height),
-		))
-		args.vScroll = anchorLine - base
-		vOff = 0 // moving off the anchor line starts at its first visual row
+	walk := core.VisualRowWalk{Lines: nLines}
+	if softWrap {
+		vf := softWrapMoveFormat(args.format)
+		text := args.text
+		cache := args.cache
+		walk.Rows = func(line int) int {
+			return cache.visualRows(text, &vf, line)
+		}
 	}
+	top := args.vScroll.resolve(anchor, walk, args.area.Height)
+	anchorLine := top.Line
+	vOff := top.Row
 	visible := core.Span{
 		From: anchorLine,
 		To:   min(anchorLine+args.area.Height-1, nLines-1),
@@ -130,7 +128,7 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 		bar.reset(
 			scrollbarGeom{
 				rows:   args.area.Height,
-				maxTop: max(nLines-args.area.Height, 0),
+				maxTop: args.vScroll.end.Line,
 			},
 			geom.Point{
 				X: args.area.X + args.area.Width - barW,

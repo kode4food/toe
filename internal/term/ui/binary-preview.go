@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/geom"
 	"github.com/kode4food/toe/internal/i18n"
 	"github.com/kode4food/toe/internal/tui"
@@ -15,9 +16,10 @@ func (p *previewBinaryEntry) renderInto(
 		offsetWidth: offsetWidth,
 	})
 	rows := (p.size + int64(width) - 1) / int64(width)
-	maxScroll := max(int(rows)-ctx.size.Height, 0)
-	scroll := min(max(ctx.picker.preview.vScroll, 0), maxScroll)
-	ctx.picker.preview.vScroll = scroll
+	scroll := ctx.picker.preview.vScroll.resolve(
+		core.VisualPos{}, core.VisualRowWalk{Lines: int(rows)},
+		ctx.size.Height,
+	).Line
 	offset := int64(scroll * width)
 	data, err := readBinaryRange(
 		p.path, offset, width*ctx.size.Height,

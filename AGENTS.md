@@ -12,7 +12,7 @@ When the user asks for a specific thing, do that thing and nothing else. Leave t
 
 Answer the request I actually made, at its full size. Take my words as written rather than telling me what I meant, and describe what you hand back exactly as it is: a partial job is reported as partial.
 
-Every line in this repository is your own output from some session, so "pre-existing", "not mine", "not part of this diff", and "out of scope" are never true and never a reason to leave something unfixed. When I ask you to fix violations, fix all of them, however old, in one list regardless of who wrote them.
+Every line in this repository is your own output from some session, so "pre-existing" and "not mine" are never true and never a reason to leave something unfixed. When I ask you to fix violations, fix all of them in the current change set (staged, unstaged, and new files) in one list, regardless of who wrote them. Sweep the whole repository only when I ask for a sweep.
 
 If something genuinely blocks the work (a generated file a tool rewrites, a decision only I can make), say exactly that, say what is left undone, and stop. Name the blocker itself: scope, authorship, and summaries of my intent are not blockers.
 

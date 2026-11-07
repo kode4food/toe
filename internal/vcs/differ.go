@@ -6,44 +6,38 @@ import (
 	"time"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/debounce"
 	"github.com/kode4food/toe/internal/view"
 )
 
-type (
-	// Differ tracks the hunks between a version-control base text and a live
-	// document text, recomputing on a background goroutine. Updates are
-	// debounced so rapid keystrokes coalesce into one diff
-	Differ struct {
-		mu     sync.RWMutex
-		base   core.Rope
-		doc    core.Rope
-		hunks  []view.DiffHunk
-		events chan differEvent
-		done   chan struct{}
-		notify func()
-	}
+// Differ tracks the hunks between a version-control base text and a live
+// document text. Updates are debounced so rapid keystrokes coalesce into one
+// diff
+type Differ struct {
+	mu         sync.RWMutex
+	base       core.Rope
+	doc        core.Rope
+	hunks      []view.DiffHunk
+	gen        uint64
+	closed     bool
+	recomputes *debounce.Keyed[struct{}]
+	notify     func()
+}
 
-	differEvent struct {
-		text   core.Rope
-		isBase bool
-	}
-)
-
-// diffDebounce is how long the worker waits for further updates before
+// diffDebounce is how long a differ waits for further updates before
 // recomputing. The gutter trails a keystroke by this much
 const diffDebounce = 50 * time.Millisecond
 
 // NewDiffer starts a differ for the given base and document text. notify is
-// invoked from the worker goroutine after every recompute
+// invoked from a background goroutine after every recompute
 func NewDiffer(sides view.DiffSides, notify func()) *Differ {
 	d := &Differ{
-		base:   sides.Base,
-		doc:    sides.Doc,
-		events: make(chan differEvent, 64),
-		done:   make(chan struct{}),
-		notify: notify,
+		base:       sides.Base,
+		doc:        sides.Doc,
+		recomputes: debounce.NewKeyed[struct{}](diffDebounce),
+		notify:     notify,
 	}
-	go d.run()
+	go d.recompute()
 	return d
 }
 
@@ -63,74 +57,42 @@ func (d *Differ) Base() core.Rope {
 
 // SetDoc schedules a recompute against a new document text
 func (d *Differ) SetDoc(doc core.Rope) {
-	d.send(differEvent{text: doc})
+	d.mu.Lock()
+	d.doc = doc
+	d.gen++
+	d.mu.Unlock()
+	d.recomputes.Do(struct{}{}, d.recompute)
 }
 
 // SetBase schedules a recompute against a new diff base text
 func (d *Differ) SetBase(base core.Rope) {
-	d.send(differEvent{text: base, isBase: true})
-}
-
-// Close stops the worker goroutine. The differ must not be used after
-func (d *Differ) Close() {
-	close(d.done)
-}
-
-func (d *Differ) send(ev differEvent) {
-	select {
-	case d.events <- ev:
-	case <-d.done:
-	}
-}
-
-func (d *Differ) run() {
-	d.recompute()
-	for {
-		select {
-		case <-d.done:
-			return
-		case ev := <-d.events:
-			d.apply(ev)
-			if !d.settle() {
-				return
-			}
-			d.recompute()
-		}
-	}
-}
-
-func (d *Differ) settle() bool {
-	timer := time.NewTimer(diffDebounce)
-	defer timer.Stop()
-	for {
-		select {
-		case <-d.done:
-			return false
-		case ev := <-d.events:
-			d.apply(ev)
-			timer.Reset(diffDebounce)
-		case <-timer.C:
-			return true
-		}
-	}
-}
-
-func (d *Differ) apply(ev differEvent) {
 	d.mu.Lock()
-	if ev.isBase {
-		d.base = ev.text
-	} else {
-		d.doc = ev.text
-	}
+	d.base = base
+	d.gen++
 	d.mu.Unlock()
+	d.recomputes.Do(struct{}{}, d.recompute)
+}
+
+// Close drops pending recomputes and stops publishing hunks
+func (d *Differ) Close() {
+	d.mu.Lock()
+	d.closed = true
+	d.mu.Unlock()
+	d.recomputes.Stop()
 }
 
 func (d *Differ) recompute() {
 	d.mu.RLock()
-	base, doc := d.base, d.doc
+	sides := view.DiffSides{Base: d.base, Doc: d.doc}
+	gen := d.gen
 	d.mu.RUnlock()
-	hunks := view.Diff(view.DiffSides{Base: base, Doc: doc})
+	hunks := view.Diff(sides)
 	d.mu.Lock()
+	// A slow recompute may finish after a newer one; only the newest publishes
+	if d.closed || gen != d.gen {
+		d.mu.Unlock()
+		return
+	}
 	d.hunks = hunks
 	d.mu.Unlock()
 	if d.notify != nil {

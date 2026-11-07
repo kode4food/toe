@@ -1,7 +1,10 @@
 package lsp
 
 import (
+	"cmp"
+	"maps"
 	"path/filepath"
+	"slices"
 
 	"github.com/rjeczalik/notify"
 
@@ -81,9 +84,46 @@ func (s *Session) runFileWatcher(state *fsWatcher) {
 }
 
 func (s *Session) handleFileWatchEvent(ev notify.EventInfo) {
-	path := filepath.Clean(ev.Path())
-	if kind, ok := fileWatchChangeType(ev.Event()); ok {
-		s.didChangeWatchedFileEvent(fileWatchEvent{path: path, kind: kind})
+	kind, ok := fileWatchChangeType(ev.Event())
+	if !ok {
+		return
+	}
+	event := fileWatchEvent{path: filepath.Clean(ev.Path()), kind: kind}
+	if s.queueWatchEvent(event) {
+		key := refreshKey{kind: refreshWatchEvents}
+		s.refresh.Do(key, s.flushWatchEvents)
+	}
+}
+
+// queueWatchEvent reports whether the event opened a new batch; only that event
+// schedules a flush, so a steady stream cannot postpone it
+func (s *Session) queueWatchEvent(event fileWatchEvent) bool {
+	s.watch.Lock()
+	defer s.watch.Unlock()
+	opened := len(s.watch.queued) == 0
+	if s.watch.queued == nil {
+		s.watch.queued = map[string]fileWatchEvent{}
+	}
+	s.watch.queued[event.path] = event
+	return opened
+}
+
+func (s *Session) flushWatchEvents() {
+	s.watch.Lock()
+	batch := slices.Collect(maps.Values(s.watch.queued))
+	clear(s.watch.queued)
+	s.watch.Unlock()
+	slices.SortFunc(batch, func(a, b fileWatchEvent) int {
+		return cmp.Compare(a.path, b.path)
+	})
+	byClient := map[*Client][]fileWatchEvent{}
+	for _, event := range batch {
+		for _, client := range s.clientsWatching(event.path) {
+			byClient[client] = append(byClient[client], event)
+		}
+	}
+	for client, events := range byClient {
+		_ = client.DidChangeWatchedFiles(s.ctx, events)
 	}
 }
 

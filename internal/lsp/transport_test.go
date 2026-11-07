@@ -516,9 +516,15 @@ func (s *processServer) DidChangeWatchedFiles(
 	_ context.Context, _ *protocol.DidChangeWatchedFilesParams,
 ) error {
 	path := os.Getenv(testServerFileWatchNotifyEnv)
-	if path != "" {
-		_ = os.WriteFile(path, []byte("watched"), 0o644)
+	if path == "" {
+		return nil
 	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return nil
+	}
+	_, _ = f.WriteString("watched\n")
+	_ = f.Close()
 	return nil
 }
 

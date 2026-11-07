@@ -14,6 +14,7 @@ type (
 		sync.RWMutex
 		registrations map[string]map[string][]fileWatch
 		watcher       *fsWatcher
+		queued        map[string]fileWatchEvent
 	}
 
 	fsWatcher struct {

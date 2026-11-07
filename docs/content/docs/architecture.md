@@ -82,6 +82,8 @@ toe is a single Bubbletea program. One frame looks like:
 4. For an edit, applying the transaction produces a new `Rope`, increments the document revision, records history unless the edit is being accumulated for insert mode, maps selections through the `ChangeSet`, and notifies observers such as language-server document sync and the version-control differ.
 5. The renderer draws the visible viewport from cached highlight spans and gutter state into the cell buffer, and Bubbletea diffs it onto the screen.
 
+Background responses to repeated events go through `debounce.Keyed` (`internal/debounce`): language-server refreshes, file-watch notifications, and diff-base reloads run once per key after a short quiet period, so a burst of edits, saves, or file changes produces one request instead of one per event.
+
 Because document text is a persistent `Rope`, background workers can keep the text snapshot they were handed. Mutable document snapshot fields are protected by document locks where async language-server goroutines need to read or update them.
 
 ## Extension Points

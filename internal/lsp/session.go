@@ -3,9 +3,11 @@ package lsp
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.lsp.dev/protocol"
 
+	"github.com/kode4food/toe/internal/debounce"
 	"github.com/kode4food/toe/internal/view"
 	"github.com/kode4food/toe/internal/view/language"
 )
@@ -23,6 +25,7 @@ type (
 		candidates candidateState
 		progress   progressState
 		watch      watchState
+		refresh    *debounce.Keyed[refreshKey]
 	}
 
 	clientHandler struct {
@@ -35,6 +38,24 @@ type (
 	documentNotifier func(
 		*Client, context.Context, DocumentSnapshot,
 	) (bool, error)
+
+	refreshKey struct {
+		doc  view.DocumentId
+		view view.Id
+		kind refreshKind
+	}
+
+	refreshKind int
+)
+
+const refreshDelay = 50 * time.Millisecond
+
+const (
+	refreshDiagnostics refreshKind = iota
+	refreshLinks
+	refreshColors
+	refreshHints
+	refreshWatchEvents
 )
 
 var (
@@ -81,6 +102,7 @@ func NewSession(ctx context.Context, e *view.Editor) *Session {
 		watch: watchState{
 			registrations: map[string]map[string][]fileWatch{},
 		},
+		refresh: debounce.NewKeyed[refreshKey](refreshDelay),
 	}
 }
 
@@ -117,6 +139,7 @@ func (s *Session) ReloadConfig() error {
 
 // Close terminates all clients owned by the session
 func (s *Session) Close() error {
+	s.refresh.Stop()
 	s.clearAllDocumentHighlights()
 	s.closeFileWatcher()
 	clients := s.servers.allClients()

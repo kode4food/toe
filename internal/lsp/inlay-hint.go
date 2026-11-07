@@ -82,9 +82,10 @@ func (s *Session) inlayHintsAsync(doc *view.Document) {
 			continue
 		}
 		id := v.ID()
-		go func() {
+		key := refreshKey{doc: doc.ID(), view: id, kind: refreshHints}
+		s.refresh.Do(key, func() {
 			_, _ = s.InlayHints(doc, id)
-		}()
+		})
 	}
 }
 

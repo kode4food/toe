@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +16,12 @@ import (
 	"github.com/kode4food/toe/internal/core"
 	"github.com/kode4food/toe/internal/lsp"
 	"github.com/kode4food/toe/internal/view"
+)
+
+const (
+	watchBurst            = 100
+	watchBurstMaxNotifies = watchBurst / 4
+	watchSettle           = 300 * time.Millisecond
 )
 
 func TestSession(t *testing.T) {
@@ -1007,6 +1014,51 @@ func TestFileWatching(t *testing.T) {
 			_, err := os.Stat(notifyFile)
 			return err == nil
 		}, 5*time.Second, 25*time.Millisecond)
+	})
+
+	t.Run("batches a burst of changes", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("slow: real server process and watcher timers")
+		}
+		exe, err := os.Executable()
+		assert.NoError(t, err)
+		dir := t.TempDir()
+		path := filepath.Join(dir, "main.session")
+		notifyFile := filepath.Join(t.TempDir(), "watched")
+		writeFileWatchLanguages(t, exe, notifyFile)
+		assert.NoError(t, os.WriteFile(path, []byte("hello\n"), 0o644))
+		e := view.NewEditor(dir)
+		_, err = e.OpenFile(path)
+		assert.NoError(t, err)
+		session := lsp.Attach(t.Context(), e)
+		defer func() { _ = session.Close() }()
+		doc := e.FocusedDocument()
+		assert.NotNil(t, doc)
+		v := e.FocusedView()
+		assert.NotNil(t, v)
+		_, _ = session.Completions(doc, v.ID())
+
+		probe := filepath.Join(dir, "probe.session")
+		assert.Eventually(t, func() bool {
+			assert.NoError(t, os.WriteFile(probe, []byte("x\n"), 0o644))
+			_, err := os.Stat(notifyFile)
+			return err == nil
+		}, 5*time.Second, 25*time.Millisecond)
+		time.Sleep(watchSettle)
+		assert.NoError(t, os.Remove(notifyFile))
+
+		for i := range watchBurst {
+			name := filepath.Join(dir, fmt.Sprintf("burst%d.session", i))
+			assert.NoError(t, os.WriteFile(name, []byte("x\n"), 0o644))
+		}
+		assert.Eventually(t, func() bool {
+			_, err := os.Stat(notifyFile)
+			return err == nil
+		}, 5*time.Second, 25*time.Millisecond)
+		time.Sleep(watchSettle)
+		b, err := os.ReadFile(notifyFile)
+		assert.NoError(t, err)
+		assert.Less(t, strings.Count(string(b), "\n"), watchBurstMaxNotifies)
 	})
 
 	t.Run("notifies server on external create", func(t *testing.T) {

@@ -1,7 +1,9 @@
 package vcs_test
 
 import (
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +12,8 @@ import (
 	"github.com/kode4food/toe/internal/vcs"
 	"github.com/kode4food/toe/internal/view"
 )
+
+const differBurst = 100
 
 func TestDiffer(t *testing.T) {
 	t.Run("computes initial hunks", func(t *testing.T) {
@@ -74,6 +78,30 @@ func TestDiffer(t *testing.T) {
 		d.Close()
 		// sends after close must not block or panic
 		d.SetDoc(core.NewRope("b\n"))
+	})
+
+	t.Run("coalesces bursts", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var updates atomic.Int32
+			base := core.NewRope("base\n")
+			d := vcs.NewDiffer(
+				view.DiffSides{Base: base, Doc: base},
+				func() {
+					updates.Add(1)
+				},
+			)
+			defer d.Close()
+			synctest.Wait()
+			assert.EqualValues(t, 1, updates.Load())
+			for range differBurst {
+				d.SetDoc(core.NewRope("changed\n"))
+			}
+			d.SetDoc(base)
+			time.Sleep(time.Second)
+			synctest.Wait()
+			assert.EqualValues(t, 2, updates.Load())
+			assert.Empty(t, d.Hunks())
+		})
 	})
 }
 

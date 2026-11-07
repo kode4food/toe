@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kode4food/toe/internal/core"
+	"github.com/kode4food/toe/internal/debounce"
 	"github.com/kode4food/toe/internal/loader"
 	"github.com/kode4food/toe/internal/view"
 )
@@ -26,6 +28,7 @@ type (
 		headIDs  map[view.DocumentId]string
 		loading  map[view.DocumentId]bool
 		updates  chan struct{}
+		reloads  *debounce.Keyed[view.DocumentId]
 	}
 
 	// Provider supplies diff bases and change information from one
@@ -70,6 +73,8 @@ type (
 	}
 )
 
+const reloadDelay = 50 * time.Millisecond
+
 var (
 	_ view.DocumentObserver = (*Session)(nil)
 	_ view.VersionControl   = (*Session)(nil)
@@ -86,6 +91,7 @@ func Attach(e *view.Editor) *Session {
 		headIDs:  map[view.DocumentId]string{},
 		loading:  map[view.DocumentId]bool{},
 		updates:  make(chan struct{}, 1),
+		reloads:  debounce.NewKeyed[view.DocumentId](reloadDelay),
 	}
 	e.AddDocumentObserver(s)
 	e.SetVersionControl(s)
@@ -241,8 +247,7 @@ func (s *Session) Refresh() {
 		if s.differ(doc) == nil {
 			continue
 		}
-		text := doc.Text()
-		go s.loadDiffBase(doc, path, text)
+		s.reloadDiffBase(doc, path)
 	}
 }
 
@@ -271,12 +276,12 @@ func (s *Session) DocumentSaved(doc *view.Document) {
 	if path == "" {
 		return
 	}
-	text := doc.Text()
-	go s.loadDiffBase(doc, path, text)
+	s.reloadDiffBase(doc, path)
 }
 
 // DocumentClosed stops and forgets the document's differ
 func (s *Session) DocumentClosed(doc *view.Document) {
+	s.reloads.Cancel(doc.ID())
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if d, ok := s.differs[doc.ID()]; ok {
@@ -289,6 +294,7 @@ func (s *Session) DocumentClosed(doc *view.Document) {
 
 // Close stops all differs and the provider's processes
 func (s *Session) Close() {
+	s.reloads.Stop()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for id, d := range s.differs {
@@ -319,6 +325,12 @@ func (s *Session) ensureDiffBase(doc *view.Document) {
 		delete(s.loading, id)
 		s.mu.Unlock()
 	}()
+}
+
+func (s *Session) reloadDiffBase(doc *view.Document, path string) {
+	s.reloads.Do(doc.ID(), func() {
+		s.loadDiffBase(doc, path, doc.Text())
+	})
 }
 
 func (s *Session) differ(doc *view.Document) *Differ {

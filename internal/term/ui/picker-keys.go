@@ -134,6 +134,7 @@ func (p *PickerComponent) sourceKey(
 	}
 	ps.clearPreviewCache()
 	ps.refreshItems(false)
+	ps.ensureCursorVisible()
 	return consumed(), nil, true
 }
 

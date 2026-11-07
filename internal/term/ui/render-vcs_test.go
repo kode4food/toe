@@ -657,6 +657,29 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, out, "> \uf459 c.txt")
 	})
 
+	t.Run("staging the last visible row", func(t *testing.T) {
+		repo := testutil.GitRepo(t)
+		for i := range 40 {
+			testutil.WriteFile(t,
+				filepath.Join(repo, fmt.Sprintf("f%02d.txt", i)),
+				[]byte("new\n"),
+			)
+		}
+
+		m := changedFilePicker(t, repo)
+		for range 40 {
+			if lastPickerFile(m) == selectedPickerFile(m) {
+				break
+			}
+			m = sendSpecialAndFeed(m, tea.KeyDown)
+		}
+		assert.NotEqual(t, "f39.txt", selectedPickerFile(m))
+
+		m = sendCtrl(m, 'a')
+
+		assert.NotEmpty(t, selectedPickerFile(m))
+	})
+
 	t.Run("external staging keeps the file selected", func(t *testing.T) {
 		repo := testutil.GitRepo(t)
 		for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
@@ -944,6 +967,29 @@ func changedFilePicker(t *testing.T, repo string) ui.Model {
 	m := ui.New(e, command.NewKeymaps()).
 		WithInitialPicker(ui.NewChangedFilePicker)
 	return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+}
+
+func selectedPickerFile(m ui.Model) string {
+	return pickerFileName(selectedPickerLine(m))
+}
+
+func lastPickerFile(m ui.Model) string {
+	last := ""
+	for line := range strings.SplitSeq(stripANSI(m.View().Content), "\n") {
+		if name := pickerFileName(line); name != "" {
+			last = name
+		}
+	}
+	return last
+}
+
+func pickerFileName(line string) string {
+	for field := range strings.FieldsSeq(line) {
+		if strings.HasPrefix(field, "f") && strings.HasSuffix(field, ".txt") {
+			return field
+		}
+	}
+	return ""
 }
 
 func sendCtrl(m ui.Model, ch rune) ui.Model {

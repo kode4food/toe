@@ -2,6 +2,16 @@
 
 Notable changes to toe.
 
+## 0.4.15
+
+### Pickers
+
+- Staging the last visible row in the changed-files picker keeps the selection on screen
+
+### Interface
+
+- Bursts of edits, saves, or file changes (a branch switch, a build) send one refresh to language servers and the diff gutter instead of one per event
+
 ## 0.4.14
 
 ### Pickers

@@ -1002,7 +1002,7 @@ func settledGitShowLines(t *testing.T, logFile string) []string {
 // logs each "git show" invocation's arguments to logFile before delegating
 func installGitShowLog(t *testing.T, logFile string) {
 	t.Helper()
-	real, err := exec.LookPath("git")
+	realGit, err := exec.LookPath("git")
 	assert.NoError(t, err)
 	shimDir := t.TempDir()
 	script := "#!/bin/sh\n" +
@@ -1013,7 +1013,7 @@ func installGitShowLog(t *testing.T, logFile string) {
 	assert.NoError(t, os.WriteFile(
 		filepath.Join(shimDir, "git"), []byte(script), 0o755,
 	))
-	t.Setenv("TOE_TEST_REAL_GIT", real)
+	t.Setenv("TOE_TEST_REAL_GIT", realGit)
 	t.Setenv("TOE_TEST_GIT_SHOW_LOG", logFile)
 	t.Setenv("PATH", shimDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }

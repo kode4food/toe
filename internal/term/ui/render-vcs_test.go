@@ -382,8 +382,8 @@ func TestChangedFilePicker(t *testing.T) {
 		var work strings.Builder
 		for i := range 30 {
 			line := fmt.Sprintf("%sTAIL-%02d", strings.Repeat("word ", 40), i)
-			fmt.Fprintln(&base, line)
-			fmt.Fprintln(&work, line+"!")
+			_, _ = fmt.Fprintln(&base, line)
+			_, _ = fmt.Fprintln(&work, line+"!")
 		}
 		testutil.GitCommitFile(t, repo, "long.txt", []byte(base.String()))
 		testutil.WriteFile(t,

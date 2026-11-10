@@ -20,6 +20,17 @@ func TestDetectLanguage(t *testing.T) {
 		assert.Equal(t, "go", name)
 	})
 
+	t.Run("detects clang dotfiles as yaml", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+		r := new(language.Registry)
+		for _, path := range []string{
+			".clang-format", "src/.clang-tidy", ".clangd",
+		} {
+			name := r.Detect(language.DetectArgs{Path: path})
+			assert.Equal(t, "yaml", name)
+		}
+	})
+
 	t.Run("detects language by shebang", func(t *testing.T) {
 		setUserLangs(t, `
 [[language]]
@@ -210,6 +221,9 @@ func TestLoadBundledLanguages(t *testing.T) {
 				},
 				"markdown": {".marksman.toml"},
 				"zig":      {"build.zig"},
+				"c": {
+					"compile_commands.json", "compile_flags.txt", ".clangd",
+				},
 			},
 			roots,
 		)
@@ -278,6 +292,15 @@ injection-regex = "uniqueinjlang2_abc"
 			Default: "fallback",
 		})
 		assert.Equal(t, "fallback", name)
+	})
+
+	t.Run("prose is not detected as c", func(t *testing.T) {
+		setUserLangs(t, "")
+		name := new(language.Registry).Detect(language.DetectArgs{
+			Path:    "NOTES",
+			Content: "notes about a cat",
+		})
+		assert.NotEqual(t, "c", name)
 	})
 
 	t.Run("invalid injection regex skipped", func(t *testing.T) {

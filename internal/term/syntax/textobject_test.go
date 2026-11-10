@@ -176,6 +176,45 @@ func TestFindTextObjectCall(t *testing.T) {
 	})
 }
 
+func TestFindTextObjectC(t *testing.T) {
+	src := "struct point {\n\tint x;\n};\n\n" +
+		"static int add(int a, int b) {\n\treturn sum(a, b);\n}\n"
+	runes := []rune(src)
+	find := func(t *testing.T, needle string, ch rune, inside bool) string {
+		t.Helper()
+		r, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
+			Text:   src,
+			Lang:   "c",
+			Cursor: strings.Index(src, needle),
+			Char:   ch,
+			Inside: inside,
+		})
+		assert.True(t, ok)
+		return string(runes[r.From:r.To])
+	}
+
+	t.Run("function around", func(t *testing.T) {
+		got := find(t, "return", 'f', false)
+		assert.Contains(t, got, "static int add")
+		assert.Contains(t, got, "return sum")
+	})
+
+	t.Run("function inside", func(t *testing.T) {
+		got := find(t, "return", 'f', true)
+		assert.Contains(t, got, "return sum")
+		assert.NotContains(t, got, "add(")
+	})
+
+	t.Run("struct around", func(t *testing.T) {
+		got := find(t, "int x", 't', false)
+		assert.Contains(t, got, "struct point")
+	})
+
+	t.Run("call inside", func(t *testing.T) {
+		assert.Equal(t, "a, b", find(t, "a, b);", 'c', true))
+	})
+}
+
 func TestFindTextObjectUnknownLang(t *testing.T) {
 	_, ok := syntax.FindTextObject(syntax.FindTextObjectArgs{
 		Text:   "func foo() {}",

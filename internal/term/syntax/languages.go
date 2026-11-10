@@ -11,6 +11,7 @@ import (
 	zig "github.com/tree-sitter-grammars/tree-sitter-zig/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
+	c "github.com/tree-sitter/tree-sitter-c/bindings/go"
 	css "github.com/tree-sitter/tree-sitter-css/bindings/go"
 	diff "github.com/tree-sitter/tree-sitter-diff/bindings/go"
 	golang "github.com/tree-sitter/tree-sitter-go/bindings/go"
@@ -21,6 +22,7 @@ import (
 
 var langRegistry = map[string]*sitter.Language{
 	"bash":       sitter.NewLanguage(bash.Language()),
+	"c":          sitter.NewLanguage(c.Language()),
 	"css":        sitter.NewLanguage(css.Language()),
 	"diff":       sitter.NewLanguage(diff.Language()),
 	"go":         sitter.NewLanguage(golang.Language()),

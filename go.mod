@@ -26,6 +26,7 @@ require (
 	github.com/tree-sitter-grammars/tree-sitter-zig v1.1.2
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-bash v0.25.1
+	github.com/tree-sitter/tree-sitter-c v0.24.2
 	github.com/tree-sitter/tree-sitter-css v0.25.0
 	github.com/tree-sitter/tree-sitter-diff v0.1.0
 	github.com/tree-sitter/tree-sitter-go v0.25.0

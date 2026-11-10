@@ -60,6 +60,7 @@ func TestTokenize(t *testing.T) {
 	}{
 		{"go", "package main\n\nfunc main() {}\n"},
 		{"bash", "#!/bin/bash\necho hello\n"},
+		{"c", "int main(void) { return 0; }\n"},
 		{"yaml", "key: value\nlist:\n  - a\n  - b\n"},
 		{"toml", "[section]\nkey = \"value\"\n"},
 		{"hcl", "resource \"x\" \"y\" {\n  name = \"z\"\n}\n"},
@@ -131,6 +132,21 @@ func TestTokenizeGoScopes(t *testing.T) {
 	// "package" and "func" are keywords, so expect a keyword scope
 	assert.True(t, scopes["keyword"] || scopes["keyword.function"],
 		"expected keyword scope in go source")
+}
+
+func TestTokenizeCScopes(t *testing.T) {
+	src := "#include <stdio.h>\n#define SQ(x) ((x) * (x))\n\n" +
+		"static int area(int side) {\n\treturn SQ(side);\n}\n"
+	sc := syntax.NewSyntaxCache()
+	spans := sc.Tokenize(core.Source{Text: src, Lang: "c"})
+
+	assert.Equal(t, "keyword.control.import", scopeAt(spans, src, "#include"))
+	assert.Equal(t, "string", scopeAt(spans, src, "<stdio.h>"))
+	assert.Equal(t, "function.macro", scopeAt(spans, src, "SQ"))
+	assert.Equal(t, "keyword.storage.modifier", scopeAt(spans, src, "static"))
+	assert.Equal(t, "function", scopeAt(spans, src, "area"))
+	assert.Equal(t, "variable.parameter", scopeAt(spans, src, "side"))
+	assert.Equal(t, "keyword.control.return", scopeAt(spans, src, "return"))
 }
 
 func TestTokenizeHTMLInjections(t *testing.T) {

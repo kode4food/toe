@@ -12,6 +12,7 @@ graphql-language-service = { command = "graphql-lsp", args = ["server", "-m", "s
 marksman = { command = "marksman", args = ["server"] }
 typescript-language-server = { command = "typescript-language-server", args = ["--stdio"] }
 zls = { command = "zls" }
+clangd = { command = "clangd" }
 
 [[language]]
 name = "go"
@@ -126,7 +127,13 @@ indent = { tab-width = 2, unit = "  " }
 [[language]]
 name = "yaml"
 injection-regex = "yaml|yml"
-file-types = ["yaml", "yml"]
+file-types = [
+  "yaml",
+  "yml",
+  { glob = ".clang-format" },
+  { glob = ".clang-tidy" },
+  { glob = ".clangd" },
+]
 comment-token = "#"
 language-servers = ["yaml-language-server"]
 indent = { tab-width = 2, unit = "  " }
@@ -174,6 +181,15 @@ roots = ["build.zig"]
 comment-token = "//"
 language-servers = ["zls"]
 auto-format = true
+indent = { tab-width = 4, unit = "    " }
+
+[[language]]
+name = "c"
+file-types = ["c", "h"]
+roots = ["compile_commands.json", "compile_flags.txt", ".clangd"]
+comment-token = "//"
+block-comment-tokens = [{ start = "/*", end = "*/" }]
+language-servers = ["clangd"]
 indent = { tab-width = 4, unit = "    " }
 
 [[language]]

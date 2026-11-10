@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -48,6 +49,35 @@ func TestAutoSizeWithoutScrollbar(t *testing.T) {
 	m.Update(tea.FocusMsg{})
 
 	assert.Equal(t, 88, e.FocusedView().Area().Width)
+}
+
+type autoSizeStepCase struct {
+	width int
+	step  int
+}
+
+func TestAutoSizeStepScalesWithWidth(t *testing.T) {
+	cases := []autoSizeStepCase{
+		{width: 120, step: 3},
+		{width: 240, step: 7},
+	}
+	for _, c := range cases {
+		t.Run(strconv.Itoa(c.width)+" cols", func(t *testing.T) {
+			e := view.NewEditor(t.TempDir())
+			m := resize(ui.New(e, command.NewKeymaps()), c.width, 24)
+			e.VSplitNew()
+			e.VSplitNew()
+			e.Options().SetRulers([]int{200})
+			m.SetAutoSize(true)
+			before := e.FocusedView().Area().Width
+
+			m2, cmd := m.Update(tea.FocusMsg{})
+			m = m2.(ui.Model)
+			m.Update(firstMsg(cmd))
+
+			assert.Equal(t, before+c.step, e.FocusedView().Area().Width)
+		})
+	}
 }
 
 func TestAutoSizeNoAnimation(t *testing.T) {

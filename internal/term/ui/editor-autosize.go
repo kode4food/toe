@@ -23,7 +23,7 @@ type (
 
 const (
 	autoSizeTickInterval = 12 * time.Millisecond
-	autoSizeStep         = 3
+	autoSizeStepPercent  = 3
 	autoSizeTermWidth    = 80
 )
 
@@ -127,7 +127,8 @@ func (ec *EditorComponent) handleAutoSizeTick(msg autoSizeTickMsg) (EventResult,
 		return consumed(), nil
 	}
 	before := pane.Area().Width
-	step := min(autoSizeStep, ec.autoSize.targetWidth-before)
+	stepWidth := max(1, cx.Editor.Tree().Width()*autoSizeStepPercent/100)
+	step := min(stepWidth, ec.autoSize.targetWidth-before)
 	grew := cx.Editor.Tree().GrowFocusedWidth(step)
 	if !grew || pane.Area().Width <= before ||
 		pane.Area().Width >= ec.autoSize.targetWidth {

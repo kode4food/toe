@@ -383,6 +383,11 @@ func (t *Tree) Resize(size geom.Size) bool {
 	return true
 }
 
+// Width reports the total width of the tree area in cells
+func (t *Tree) Width() int {
+	return t.area.Width
+}
+
 // Range calls fn for each leaf pane in DFS order (left-to-right, top-to-bottom), stopping early if
 // fn returns false. It does not allocate
 func (t *Tree) Range(fn func(Pane) bool) {

@@ -377,7 +377,10 @@ func TestIntegration(t *testing.T) {
 
 		tt := startTUI(t, dir, other)
 		tt.waitFor("NOR")
-		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
+		tt.resize(pty.Winsize{
+			Rows: 30,
+			Cols: 120,
+		})
 
 		tt.send(" f")
 		tt.send("target")
@@ -398,7 +401,10 @@ func TestIntegration(t *testing.T) {
 
 		tt := startTUI(t, dir, path)
 		tt.waitFor("before")
-		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
+		tt.resize(pty.Winsize{
+			Rows: 30,
+			Cols: 120,
+		})
 
 		// spc-f enters tree-watch mode, so select the already-open README
 		tt.send(" f")
@@ -418,7 +424,10 @@ func TestIntegration(t *testing.T) {
 
 		tt := startTUI(t, dir, path)
 		tt.waitFor("before")
-		tt.resize(pty.Winsize{Rows: 30, Cols: 120})
+		tt.resize(pty.Winsize{
+			Rows: 30,
+			Cols: 120,
+		})
 
 		assert.NoError(t, os.WriteFile(path, []byte("first\n"), 0o644))
 		tt.waitFor("first")
@@ -568,7 +577,10 @@ func startTUI(t *testing.T, dir string, args ...string) *tui {
 	writeFile(t, dir, ".zshrc", "")
 
 	ptmx, err := pty.StartWithSize(
-		cmd, &pty.Winsize{Rows: termRows, Cols: termCols},
+		cmd, &pty.Winsize{
+			Rows: termRows,
+			Cols: termCols,
+		},
 	)
 	if err != nil {
 		t.Fatalf("start pty: %v", err)

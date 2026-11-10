@@ -93,10 +93,16 @@ func FindMatchingBracket(doc Rope, cursorPos int) (int, bool) {
 func GetPair(ch rune) BracketPair {
 	for _, p := range bracketPairTable {
 		if p[0] == ch || p[1] == ch {
-			return BracketPair{Open: p[0], Close: p[1]}
+			return BracketPair{
+				Open:  p[0],
+				Close: p[1],
+			}
 		}
 	}
-	return BracketPair{Open: ch, Close: ch}
+	return BracketPair{
+		Open:  ch,
+		Close: ch,
+	}
 }
 
 // BracketPairs returns every pair GetPair recognizes, open then close

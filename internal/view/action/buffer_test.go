@@ -105,10 +105,7 @@ func TestGotoColumn(t *testing.T) {
 func TestSelectWithinRegex(t *testing.T) {
 	t.Run("keeps only matching subranges", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar baz")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 11}}, 0)
 
 		err := action.SelectWithinRegex(e, `\b\w+\b`)
 
@@ -132,10 +129,7 @@ func TestSelectWithinRegex(t *testing.T) {
 func TestSplitSelectionByRegex(t *testing.T) {
 	t.Run("splits on separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a,b,c")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		err := action.SplitSelectionByRegex(e, ",")
 
@@ -285,10 +279,7 @@ func TestSortSelections(t *testing.T) {
 func TestReflowSelections(t *testing.T) {
 	t.Run("reflows text to width", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world foo bar")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   19,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 19}}, 0)
 
 		action.ReflowSelections(e, 10)
 
@@ -485,7 +476,10 @@ func TestGotoLastAccessedFileSwitches(t *testing.T) {
 		assert.NoError(t, os.WriteFile(f2, []byte("second"), 0o644))
 
 		e := view.NewEditor(dir)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v1, err := e.OpenFile(f1)
 		assert.NoError(t, err)
 		firstDocID := v1.DocID()
@@ -558,7 +552,10 @@ func TestGotoLastModifiedFileSwitches(t *testing.T) {
 		assert.NoError(t, os.WriteFile(f2, []byte("second"), 0o644))
 
 		e := view.NewEditor(dir)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v1, err := e.OpenFile(f1)
 		assert.NoError(t, err)
 		firstDocID := v1.DocID()
@@ -612,10 +609,7 @@ func TestIncrementWithHashRegister(t *testing.T) {
 func TestJoinSelectionsCommented(t *testing.T) {
 	t.Run("join merges commented lines into one", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "# foo\n# bar")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 11}}, 0)
 
 		action.JoinSelections(e)
 
@@ -628,10 +622,7 @@ func TestJoinSelectionsCommented(t *testing.T) {
 		writeTextLangConfigBuf(t, "//")
 
 		e := testutil.EditorWithText(t, "// foo\n// bar")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   13,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 13}}, 0)
 
 		action.JoinSelections(e)
 
@@ -642,10 +633,7 @@ func TestJoinSelectionsCommented(t *testing.T) {
 
 	t.Run("join with space separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.JoinSelectionsSpace(e)
 
@@ -737,10 +725,7 @@ func TestFilterSelectionsImplEdge(t *testing.T) {
 func TestReflowSelectionsWidth(t *testing.T) {
 	t.Run("reflow with explicit width", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "foo bar baz qux")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   15,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 15}}, 0)
 
 		action.ReflowSelections(e, 5)
 
@@ -753,10 +738,7 @@ func TestReflowSelectionsWidth(t *testing.T) {
 func TestYankJoinSingleRange(t *testing.T) {
 	t.Run("single range joins without separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.YankJoin(e, ",")
 

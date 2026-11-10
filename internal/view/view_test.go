@@ -48,7 +48,10 @@ func TestViewOffset(t *testing.T) {
 	t.Run("set offset", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
-		p := view.Position{Anchor: 5, HorizontalOffset: 2}
+		p := view.Position{
+			Anchor:           5,
+			HorizontalOffset: 2,
+		}
 		v.SetOffset(p)
 		assert.Equal(t, p, v.Offset())
 	})
@@ -178,7 +181,9 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		v.SetOffset(view.Position{Anchor: line1Start})
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(line2Start)}, 0)
 		vf := &core.VisualMoveFormat{
-			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
+			ViewportWidth: 10,
+			TabWidth:      4,
+			MaxWrap:       2,
 		}
 		// the text-line fallback would wrongly scroll up here. The visual path recognizes the
 		// cursor is already in range and leaves the anchor put
@@ -200,7 +205,9 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		doc := core.NewRope(strings.Repeat("x", 80))
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(79)}, 0)
 		vf := &core.VisualMoveFormat{
-			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
+			ViewportWidth: 10,
+			TabWidth:      4,
+			MaxWrap:       2,
 		}
 		v.EnsureCursorVisible(&view.CursorScroll{
 			Doc:       doc,
@@ -223,7 +230,9 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		v.SetOffset(view.Position{Anchor: line2})
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(0)}, 0)
 		vf := &core.VisualMoveFormat{
-			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
+			ViewportWidth: 10,
+			TabWidth:      4,
+			MaxWrap:       2,
 		}
 		v.EnsureCursorVisible(&view.CursorScroll{
 			Doc:       doc,
@@ -243,7 +252,9 @@ func TestViewEnsureCursorVisible(t *testing.T) {
 		last, _ := doc.LineToChar(2)
 		sel, _ := core.NewSelection([]core.Range{core.PointRange(last)}, 0)
 		vf := &core.VisualMoveFormat{
-			ViewportWidth: 10, TabWidth: 4, MaxWrap: 2,
+			ViewportWidth: 10,
+			TabWidth:      4,
+			MaxWrap:       2,
 		}
 		v.EnsureCursorVisible(&view.CursorScroll{
 			Doc:       doc,
@@ -358,7 +369,10 @@ func TestViewEnsureCursorVisibleHorizontal(t *testing.T) {
 func TestViewArea(t *testing.T) {
 	t.Run("area is set by layout engine", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v := e.FocusedView()
 		a := v.Area()
 		assert.Equal(t, 80, a.Width)
@@ -369,13 +383,19 @@ func TestViewArea(t *testing.T) {
 func TestViewContentWidth(t *testing.T) {
 	t.Run("starts unmeasured", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		assert.Equal(t, 0, e.FocusedView().ContentWidth())
 	})
 
 	t.Run("each pane keeps its own width", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		first := e.FocusedView()
 		second := e.VSplitNew()
 		first.SetContentWidth(30)
@@ -411,7 +431,10 @@ func TestViewConsumeDirty(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		v := e.FocusedView()
 		v.ConsumeDirty()
-		v.SetArea(geom.Area{Width: 10, Height: 5})
+		v.SetArea(geom.Area{
+			Width:  10,
+			Height: 5,
+		})
 		assert.True(t, v.ConsumeDirty())
 	})
 
@@ -565,7 +588,10 @@ func TestSelectionPerView(t *testing.T) {
 	assert.NoError(t, err)
 
 	e := view.NewEditor(tmp)
-	e.ResizeTree(geom.Size{Width: 80, Height: 24})
+	e.ResizeTree(geom.Size{
+		Width:  80,
+		Height: 24,
+	})
 	v1, err := e.OpenFile(path)
 	assert.NoError(t, err)
 	// Create a second view into the same document via vertical split
@@ -587,8 +613,14 @@ func TestScrollOffsetPerDocument(t *testing.T) {
 	b := filepath.Join(tmp, "b.txt")
 	assert.NoError(t, os.WriteFile(a, []byte("aaa\nbbb\nccc\n"), 0o644))
 	assert.NoError(t, os.WriteFile(b, []byte("xxx\nyyy\n"), 0o644))
-	revisited := view.Position{Anchor: 4, VerticalOffset: 2}
-	current := view.Position{Anchor: 4, VerticalOffset: 1}
+	revisited := view.Position{
+		Anchor:         4,
+		VerticalOffset: 2,
+	}
+	current := view.Position{
+		Anchor:         4,
+		VerticalOffset: 1,
+	}
 	tests := []struct {
 		name        string
 		initialPath string
@@ -614,7 +646,10 @@ func TestScrollOffsetPerDocument(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := view.NewEditor(tmp)
-			e.ResizeTree(geom.Size{Width: 80, Height: 24})
+			e.ResizeTree(geom.Size{
+				Width:  80,
+				Height: 24,
+			})
 			v, err := e.OpenFile(tt.initialPath)
 			assert.NoError(t, err)
 			v.SetOffset(tt.position)

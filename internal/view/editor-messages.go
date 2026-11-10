@@ -36,7 +36,10 @@ func (e *Editor) AppendMessage(msg string) {
 	}
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
 		core.TextChange(
-			core.Span{From: at, To: at}, msg+string(doc.LineEnding()),
+			core.Span{
+				From: at,
+				To:   at,
+			}, msg+string(doc.LineEnding()),
 		),
 	})
 	if err != nil {

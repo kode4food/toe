@@ -57,7 +57,10 @@ func SurroundAdd(e *view.Editor, ch rune) {
 				To:   to + offs + 1,
 			}, string(closeCh)),
 		)
-		newRanges[i] = core.Range{Anchor: from + offs, Head: to + offs + 2}
+		newRanges[i] = core.Range{
+			Anchor: from + offs,
+			Head:   to + offs + 2,
+		}
 		offs += 2
 	}
 
@@ -85,7 +88,10 @@ func SurroundDeleteAt(e *view.Editor, text core.Rope, positions []int) {
 	slices.Sort(positions)
 	rawChanges := make([]core.Change, len(positions))
 	for i, p := range positions {
-		rawChanges[i] = core.DeleteChange(core.Span{From: p, To: p + 1})
+		rawChanges[i] = core.DeleteChange(core.Span{
+			From: p,
+			To:   p + 1,
+		})
 	}
 	cs, err := core.NewChangeSetFromChanges(text, rawChanges)
 	if err != nil {
@@ -118,8 +124,14 @@ func SurroundReplaceAt(e *view.Editor, text core.Rope, positions []int, to rune)
 	sorted := make([]posChar, 0, len(positions))
 	for i := 0; i < len(positions); i += 2 {
 		sorted = append(sorted,
-			posChar{pos: positions[i], char: pair.Open},
-			posChar{pos: positions[i+1], char: pair.Close},
+			posChar{
+				pos:  positions[i],
+				char: pair.Open,
+			},
+			posChar{
+				pos:  positions[i+1],
+				char: pair.Close,
+			},
 		)
 	}
 	slices.SortFunc(sorted, func(a, b posChar) int {

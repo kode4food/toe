@@ -28,9 +28,7 @@ func TestPickerConfig(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		err := reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
-				"buffer-picker": map[string]any{
-					"start-position": "previous",
-				},
+				"buffer-picker": map[string]any{"start-position": "previous"},
 			},
 		})
 
@@ -41,9 +39,7 @@ func TestPickerConfig(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		err := reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
-				"buffer-picker": map[string]any{
-					"start-position": "middle",
-				},
+				"buffer-picker": map[string]any{"start-position": "middle"},
 			},
 		})
 
@@ -89,9 +85,7 @@ func TestPickerConfig(t *testing.T) {
 		err = reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
 				"picker": map[string]any{
-					"split": map[string]any{
-						"Diagnostics": 0.65,
-					},
+					"split": map[string]any{"Diagnostics": 0.65},
 				},
 			},
 		})

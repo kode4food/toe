@@ -152,7 +152,10 @@ func previewPathKey(path string) previewCacheKey {
 }
 
 func previewIndexKey(path string) previewCacheKey {
-	return previewCacheKey{path: path, staged: true}
+	return previewCacheKey{
+		path:   path,
+		staged: true,
+	}
 }
 
 func loadPathPreview(sc *syntax.Cache, registry *language.Registry, path string) previewCacheEntry {
@@ -161,11 +164,17 @@ func loadPathPreview(sc *syntax.Cache, registry *language.Registry, path string)
 		return noPreviewEntry("<File not found>")
 	}
 	if info.IsDir() {
-		return &previewDirEntry{path: path, rows: previewDirRows(path)}
+		return &previewDirEntry{
+			path: path,
+			rows: previewDirRows(path),
+		}
 	}
 	if info.Size() > PickerMaxPreview {
 		if !isImagePath(path) && pathLooksBinary(path) {
-			return &previewBinaryEntry{path: path, size: info.Size()}
+			return &previewBinaryEntry{
+				path: path,
+				size: info.Size(),
+			}
 		}
 		return noPreviewEntry("<File too large to preview>")
 	}
@@ -215,7 +224,10 @@ func binaryPreview(path string) previewCacheEntry {
 	if err != nil {
 		return noPreviewEntry("<File not found>")
 	}
-	return &previewBinaryEntry{path: path, size: info.Size()}
+	return &previewBinaryEntry{
+		path: path,
+		size: info.Size(),
+	}
 }
 
 func pathLooksBinary(path string) bool {
@@ -241,7 +253,10 @@ func previewDirRows(path string) []previewDirRow {
 	for _, entry := range entries {
 		name := entry.Name()
 		if entry.IsDir() {
-			dirs = append(dirs, previewDirRow{name: name + "/", dir: true})
+			dirs = append(dirs, previewDirRow{
+				name: name + "/",
+				dir:  true,
+			})
 		} else {
 			files = append(files, previewDirRow{name: name})
 		}

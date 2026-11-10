@@ -14,7 +14,10 @@ import (
 )
 
 func TestScreen(t *testing.T) {
-	size := geom.Size{Width: 12, Height: 4}
+	size := geom.Size{
+		Width:  12,
+		Height: 4,
+	}
 
 	t.Run("first frame writes every row", func(t *testing.T) {
 		var s tui.Screen
@@ -31,7 +34,10 @@ func TestScreen(t *testing.T) {
 		var s tui.Screen
 		buf := tui.NewBuffer(size)
 		assert.NoError(t, s.Snapshot(buf).WriteFrame(&strings.Builder{}))
-		buf.SetString(geom.Point{X: 3, Y: 2}, "ab", tui.Style{})
+		buf.SetString(geom.Point{
+			X: 3,
+			Y: 2,
+		}, "ab", tui.Style{})
 		var out strings.Builder
 		assert.NoError(t, s.Snapshot(buf).WriteFrame(&out))
 		assert.Equal(t, "\x1b[3;4Hab", out.String())
@@ -62,7 +68,10 @@ func TestScreen(t *testing.T) {
 		first := s.Snapshot(tui.NewBuffer(size))
 		assert.NoError(t, first.WriteFrame(&strings.Builder{}))
 		var out strings.Builder
-		small := tui.NewBuffer(geom.Size{Width: 3, Height: 2})
+		small := tui.NewBuffer(geom.Size{
+			Width:  3,
+			Height: 2,
+		})
 		assert.NoError(t, s.Snapshot(small).WriteFrame(&out))
 		assert.Equal(t, "\x1b[1;1H   \x1b[2;1H   ", out.String())
 	})
@@ -70,7 +79,10 @@ func TestScreen(t *testing.T) {
 	t.Run("resets style at frame end", func(t *testing.T) {
 		var s tui.Screen
 		buf := tui.NewBuffer(size)
-		last := geom.Point{X: size.Width - 1, Y: size.Height - 1}
+		last := geom.Point{
+			X: size.Width - 1,
+			Y: size.Height - 1,
+		}
 		buf.SetString(last, "b", tui.Style{}.Mod(tui.ModifierBold))
 		var out strings.Builder
 		assert.NoError(t, s.Snapshot(buf).WriteFrame(&out))
@@ -104,7 +116,10 @@ func TestScreen(t *testing.T) {
 }
 
 func TestScreenScroll(t *testing.T) {
-	size := geom.Size{Width: 16, Height: 10}
+	size := geom.Size{
+		Width:  16,
+		Height: 10,
+	}
 
 	t.Run("scrolls up", func(t *testing.T) {
 		out := scrollFrames(t, size, []int{0, 3})
@@ -128,7 +143,10 @@ func TestScreenScroll(t *testing.T) {
 			top += rng.IntN(13) - 6
 			scrollPaint(buf, top)
 			if i%3 == 0 {
-				at := geom.Point{X: rng.IntN(8), Y: rng.IntN(size.Height)}
+				at := geom.Point{
+					X: rng.IntN(8),
+					Y: rng.IntN(size.Height),
+				}
 				st := tui.Style{}.Bg(tui.ColorIndexed(uint8(i)))
 				buf.SetString(at, "日z", st)
 			}
@@ -144,7 +162,10 @@ func TestScreenScroll(t *testing.T) {
 }
 
 func BenchmarkScreen(b *testing.B) {
-	size := geom.Size{Width: 120, Height: 40}
+	size := geom.Size{
+		Width:  120,
+		Height: 40,
+	}
 	b.Run("scroll", func(b *testing.B) {
 		benchmarkScreen(b, size, scrollPaint)
 	})
@@ -189,7 +210,10 @@ func screenPaint(buf *tui.Buffer, i int) {
 			st = hl
 		}
 		buf.SetString(
-			geom.Point{X: i % 3, Y: y}, strings.Repeat("x", y+i%4), st,
+			geom.Point{
+				X: i % 3,
+				Y: y,
+			}, strings.Repeat("x", y+i%4), st,
 		)
 	}
 	wide := "a日本b"

@@ -69,7 +69,10 @@ func FindMatchingBracket(source core.Source, cursorPos int) (int, bool) {
 func bracketPairFor(ch rune) (core.BracketPair, bool) {
 	for _, p := range brackets {
 		if p[0] == ch || p[1] == ch {
-			return core.BracketPair{Open: p[0], Close: p[1]}, true
+			return core.BracketPair{
+				Open:  p[0],
+				Close: p[1],
+			}, true
 		}
 	}
 	return core.BracketPair{}, false

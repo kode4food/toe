@@ -63,7 +63,10 @@ func TestRegistry(t *testing.T) {
 	t.Run("detects from cached config", func(t *testing.T) {
 		path := writeCachedLangs(t)
 		registry := new(language.Registry)
-		args := language.DetectArgs{Path: "a.cached", Default: "x"}
+		args := language.DetectArgs{
+			Path:    "a.cached",
+			Default: "x",
+		}
 		assert.Equal(t, "cached", registry.Detect(args))
 
 		assert.NoError(t, os.Remove(path))

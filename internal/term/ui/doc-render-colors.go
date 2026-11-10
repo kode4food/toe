@@ -98,7 +98,10 @@ func hexColorSpans(out []view.DocumentColor, text string, baseChar int) []view.D
 }
 
 func hexColor(digits string, at core.Span) view.DocumentColor {
-	color := view.DocumentColor{From: at.From, To: at.To}
+	color := view.DocumentColor{
+		From: at.From,
+		To:   at.To,
+	}
 	// 3 and 4 digit forms repeat each nibble, #abc meaning #aabbcc
 	if len(digits) <= 4 {
 		color.Red = uint8(hexDigit(rune(digits[0])) * 17)

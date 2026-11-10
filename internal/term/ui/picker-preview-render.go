@@ -146,9 +146,15 @@ func renderPreviewDocInto(buf *tui.Buffer, args *previewDocRender) {
 		args.barPlace.draw(bar, args.barImg, buf)
 	}
 	applyRulers(applyRulersArgs{
-		buf:     buf,
-		at:      geom.Point{X: contentX, Y: args.area.Y},
-		size:    geom.Size{Width: contentW, Height: bufRow},
+		buf: buf,
+		at: geom.Point{
+			X: contentX,
+			Y: args.area.Y,
+		},
+		size: geom.Size{
+			Width:  contentW,
+			Height: bufRow,
+		},
 		rulers:  args.opts.Rulers,
 		rulerBg: args.styles.rulerBg,
 	})

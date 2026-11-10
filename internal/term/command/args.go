@@ -140,7 +140,8 @@ func (a *Args) Push(arg string) error {
 	if flag := a.flagAwaitingArgument(); flag != nil {
 		a.flags[flag.Name] = arg
 		a.state = argsCompletionState{
-			kind: CompletingFlagValue, flag: flag,
+			kind: CompletingFlagValue,
+			flag: flag,
 		}
 		return nil
 	}
@@ -166,7 +167,8 @@ func (a *Args) Finish() error {
 	}
 	if flag := a.flagAwaitingArgument(); flag != nil {
 		return &ParseError{
-			Kind: ParseErrorFlagMissingArgument, Flag: flag.Name,
+			Kind: ParseErrorFlagMissingArgument,
+			Flag: flag.Name,
 		}
 	}
 	return a.signature.checkPositionalCount(len(a.positionals))
@@ -296,7 +298,10 @@ func (a *Args) pushFlag(arg string) error {
 	flag := a.findFlag(arg)
 	if flag == nil {
 		if a.validate {
-			return &ParseError{Kind: ParseErrorUnknownFlag, Text: arg}
+			return &ParseError{
+				Kind: ParseErrorUnknownFlag,
+				Text: arg,
+			}
 		}
 		a.positionals = append(a.positionals, arg)
 		a.state = argsCompletionState{kind: CompletingFlag}
@@ -305,12 +310,16 @@ func (a *Args) pushFlag(arg string) error {
 	if a.validate {
 		if _, ok := a.flags[flag.Name]; ok {
 			return &ParseError{
-				Kind: ParseErrorDuplicatedFlag, Flag: flag.Name,
+				Kind: ParseErrorDuplicatedFlag,
+				Flag: flag.Name,
 			}
 		}
 	}
 	a.flags[flag.Name] = ""
-	a.state = argsCompletionState{kind: CompletingFlag, flag: flag}
+	a.state = argsCompletionState{
+		kind: CompletingFlag,
+		flag: flag,
+	}
 	return nil
 }
 

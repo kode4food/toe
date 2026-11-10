@@ -41,12 +41,7 @@ func BenchmarkTerminalScrollOutput(b *testing.B) {
 		{name: "single-pane-direct", direct: true},
 		{name: "vertical-split-direct", split: true, direct: true},
 		{name: "vertical-split", split: true, scrollOpt: true},
-		{
-			name:      "vertical-split-relative",
-			split:     true,
-			relative:  true,
-			scrollOpt: true,
-		},
+		{name: "vertical-split-relative", split: true, relative: true, scrollOpt: true},
 	}
 	for _, tc := range cases {
 		b.Run(tc.name, func(b *testing.B) {
@@ -119,7 +114,10 @@ func terminalScrollModel(b *testing.B, tc terminalOutputBench) ui.Model {
 		if err != nil {
 			b.Fatal(err)
 		}
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		if e.VSplit(docB.ID()) == nil {
 			b.Fatal("vsplit failed")
 		}
@@ -128,7 +126,10 @@ func terminalScrollModel(b *testing.B, tc terminalOutputBench) ui.Model {
 }
 
 func newTerminalOutputRenderer(w, h int, scrollOpt bool) *terminalOutputRenderer {
-	tr := &terminalOutputRenderer{w: w, h: h}
+	tr := &terminalOutputRenderer{
+		w: w,
+		h: h,
+	}
 	tr.r = uv.NewTerminalRenderer(&tr.out, []string{"TERM=xterm-256color"})
 	tr.r.SetFullscreen(true)
 	tr.r.SetColorProfile(colorprofile.TrueColor)

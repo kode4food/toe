@@ -134,14 +134,23 @@ func TestEditorTree(t *testing.T) {
 
 	t.Run("resize changes tree area", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		changed := e.Tree().Resize(geom.Size{Width: 100, Height: 40})
+		changed := e.Tree().Resize(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		assert.True(t, changed)
-		assert.False(t, e.Tree().Resize(geom.Size{Width: 100, Height: 40}))
+		assert.False(t, e.Tree().Resize(geom.Size{
+			Width:  100,
+			Height: 40,
+		}))
 	})
 
 	t.Run("ResizeTree delegates to tree", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v := e.FocusedView()
 		a := v.Area()
 		assert.Equal(t, 80, a.Width)
@@ -152,7 +161,10 @@ func TestEditorTree(t *testing.T) {
 func TestEditorSplits(t *testing.T) {
 	t.Run("HSplit creates second view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		d := e.FocusedDocument()
 		v := e.HSplit(d.ID())
 		assert.NotNil(t, v)
@@ -167,7 +179,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("VSplitNew adds new doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v := e.VSplitNew()
 		assert.NotNil(t, v)
 		assert.Equal(t, 2, len(e.AllDocuments()))
@@ -175,7 +190,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("HSplitNew adds new doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v := e.HSplitNew()
 		assert.NotNil(t, v)
 		assert.Equal(t, 2, len(e.AllDocuments()))
@@ -183,7 +201,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("VSplitNew returns nil when too narrow", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 20, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  20,
+			Height: 24,
+		})
 		v := e.VSplitNew()
 		assert.Nil(t, v)
 		assert.Equal(t, 1, len(e.AllDocuments()))
@@ -191,7 +212,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("HSplitNew returns nil when too short", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 8})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 8,
+		})
 		v := e.HSplitNew()
 		assert.Nil(t, v)
 		assert.Equal(t, 1, len(e.AllDocuments()))
@@ -199,7 +223,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("VSplit returns nil when too narrow", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 20, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  20,
+			Height: 24,
+		})
 		d := e.FocusedDocument()
 		v := e.VSplit(d.ID())
 		assert.Nil(t, v)
@@ -207,7 +234,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("HSplit returns nil when too short", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 8})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 8,
+		})
 		d := e.FocusedDocument()
 		v := e.HSplit(d.ID())
 		assert.Nil(t, v)
@@ -215,7 +245,10 @@ func TestEditorSplits(t *testing.T) {
 
 	t.Run("VSplit inherits jump list", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		d := e.FocusedDocument()
 		src := e.FocusedView()
 		src.PushJump(d.ID(), 0, core.PointSelection(0))
@@ -234,7 +267,10 @@ func TestEditorSplits(t *testing.T) {
 func TestEditorFocusNavigation(t *testing.T) {
 	t.Run("FocusNextView wraps around", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		v1 := e.FocusedView()
 		e.FocusNextView()
@@ -244,7 +280,10 @@ func TestEditorFocusNavigation(t *testing.T) {
 
 	t.Run("FocusPrevView wraps around", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		v1 := e.FocusedView()
 		e.FocusPrevView()
@@ -254,7 +293,10 @@ func TestEditorFocusNavigation(t *testing.T) {
 
 	t.Run("FocusDirection moves to adjacent split", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		e.VSplitNew()
 		fv := e.FocusedView()
 		e.FocusDirection(view.DirectionLeft)
@@ -272,7 +314,10 @@ func TestEditorFocusNavigation(t *testing.T) {
 
 	t.Run("descends nested containers", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 40,
+		})
 		e.VSplitNew()
 		e.VSplitNew()
 		e.FocusDirection(view.DirectionLeft)
@@ -297,7 +342,10 @@ func TestEditorFocusNavigation(t *testing.T) {
 func TestEditorSwapAndTranspose(t *testing.T) {
 	t.Run("SwapSplitInDirection swaps views", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		e.VSplitNew()
 		fv := e.FocusedView()
 		e.SwapSplitInDirection(view.DirectionLeft)
@@ -352,7 +400,10 @@ func TestEditorPrevDocID(t *testing.T) {
 
 	t.Run("pops prev after buffer switch", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		first := e.FocusedDocument()
 		e.VSplitNew()
 		second := e.FocusedDocument()
@@ -369,7 +420,10 @@ func TestEditorPrevDocID(t *testing.T) {
 
 	t.Run("focus keeps per-view prev", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		firstView := e.FocusedView()
 		firstDoc := e.FocusedDocument()
 		e.VSplitNew()
@@ -389,7 +443,10 @@ func TestEditorPrevDocID(t *testing.T) {
 
 	t.Run("false when prev doc closed", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		first := e.FocusedDocument()
 		e.VSplitNew()
 		second := e.FocusedDocument()
@@ -448,7 +505,10 @@ func TestEditorSaveAll(t *testing.T) {
 func TestEditorCloseCurrentAndOthers(t *testing.T) {
 	t.Run("CloseCurrentView removes focused", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		assert.Equal(t, 2, len(e.AllViews()))
 		e.CloseCurrentView()
@@ -457,7 +517,10 @@ func TestEditorCloseCurrentAndOthers(t *testing.T) {
 
 	t.Run("CloseAllOtherViews keeps focused", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		e.VSplitNew()
 		assert.Equal(t, 3, len(e.AllViews()))
@@ -550,7 +613,10 @@ func TestEditorViewHeight(t *testing.T) {
 func TestEditorSwitchBuffer(t *testing.T) {
 	t.Run("switch to existing doc", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		all := e.AllDocuments()
 		assert.Equal(t, 2, len(all))
@@ -700,7 +766,10 @@ func TestEditorEarlierLater(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 1}, "b"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   1,
+			}, "b"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -719,7 +788,10 @@ func TestEditorEarlierLater(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 1}, "b"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   1,
+			}, "b"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -753,7 +825,10 @@ func TestEditorApplyInsertMode(t *testing.T) {
 		d := e.FocusedDocument()
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "hi"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "hi"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -788,7 +863,10 @@ func TestTreeViews(t *testing.T) {
 
 	t.Run("two views: one focused", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		views := e.Views()
 		assert.Equal(t, 2, len(views))
@@ -891,7 +969,10 @@ func TestTreeContainerLayoutAt(t *testing.T) {
 func TestTreeWalkSeparators(t *testing.T) {
 	t.Run("no separators for single view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		var count int
 		e.Tree().WalkSeparators(func(view.Separator) {
 			count++
@@ -901,7 +982,10 @@ func TestTreeWalkSeparators(t *testing.T) {
 
 	t.Run("one separator for two vertical splits", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		e.VSplitNew()
 		var count int
 		e.Tree().WalkSeparators(func(view.Separator) {
@@ -912,7 +996,10 @@ func TestTreeWalkSeparators(t *testing.T) {
 
 	t.Run("one separator for two horizontal splits", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		e.HSplitNew()
 		var count int
 		e.Tree().WalkSeparators(func(view.Separator) {
@@ -925,7 +1012,10 @@ func TestTreeWalkSeparators(t *testing.T) {
 func TestTreeFindSplitInDirection(t *testing.T) {
 	t.Run("find right split", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		v1 := e.FocusedView()
 		e.VSplitNew()
 		e.Tree().SetFocus(v1.ID())
@@ -945,7 +1035,10 @@ func TestTreeFindSplitInDirection(t *testing.T) {
 func TestTreeSwapSplitInDirection(t *testing.T) {
 	t.Run("swap in direction when split exists", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 100, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 40,
+		})
 		v1 := e.FocusedView()
 		e.VSplitNew()
 		v2 := e.FocusedView()
@@ -967,20 +1060,32 @@ func TestTreeSwapSplitInDirection(t *testing.T) {
 func TestTreeResize(t *testing.T) {
 	t.Run("same dimensions returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.Tree().Resize(geom.Size{Width: 80, Height: 24})
-		assert.False(t, e.Tree().Resize(geom.Size{Width: 80, Height: 24}))
+		e.Tree().Resize(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
+		assert.False(t, e.Tree().Resize(geom.Size{
+			Width:  80,
+			Height: 24,
+		}))
 	})
 
 	t.Run("different dimensions returns true", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		assert.True(t, e.Tree().Resize(geom.Size{Width: 80, Height: 24}))
+		assert.True(t, e.Tree().Resize(geom.Size{
+			Width:  80,
+			Height: 24,
+		}))
 	})
 }
 
 func TestTreeHorizontalSplitArea(t *testing.T) {
 	t.Run("horizontal split distributes height", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 40,
+		})
 		e.HSplitNew()
 		views := e.Views()
 		assert.Equal(t, 2, len(views))
@@ -991,7 +1096,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("find split in up/down direction", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 40,
+		})
 		e.HSplitNew()
 		fv := e.FocusedView()
 		_, ok := e.Tree().FindSplitInDirection(fv.ID(), view.DirectionUp)
@@ -1000,7 +1108,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("right from vsplit navigates into hsplit", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		views0 := e.Tree().Traverse()
 		v1ID := views0[0].ID()
 		e.VSplitNew()
@@ -1015,7 +1126,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("down from hsplit navigates into vsplit", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		views0 := e.Tree().Traverse()
 		v1ID := views0[0].ID()
 		e.HSplitNew()
@@ -1030,7 +1144,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("vertical container chooses nearest x", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		top := e.Tree().Traverse()[0].ID()
 		e.HSplitNew()
 		e.VSplitNew()
@@ -1044,7 +1161,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("right into horizontal container", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		left := e.Tree().Traverse()[0].ID()
 		e.VSplitNew()
 		e.HSplitNew()
@@ -1058,7 +1178,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("down from right chooses by x", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		top := e.Tree().Traverse()[0].ID()
 		e.HSplitNew()
 		e.VSplitNew()
@@ -1072,7 +1195,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("right from lower chooses by y", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		left := e.Tree().Traverse()[0].ID()
 		e.VSplitNew()
 		e.HSplitNew()
@@ -1086,7 +1212,10 @@ func TestTreeHorizontalSplitArea(t *testing.T) {
 
 	t.Run("swap cross-container swaps views", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		e.VSplitNew()
 		views := e.Tree().Traverse()
 		e.Tree().SetFocus(views[0].ID())
@@ -1201,7 +1330,10 @@ func TestEditorRecordPrevDocModified(t *testing.T) {
 		secondID := d2.ID()
 		rope := d2.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "x"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "x"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1215,7 +1347,10 @@ func TestEditorRecordPrevDocModified(t *testing.T) {
 func TestTreeSwapCrossContainer(t *testing.T) {
 	t.Run("swap across containers", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 40,
+		})
 		e.VSplitNew()
 		e.HSplitNew()
 		views := e.Tree().Traverse()
@@ -1330,7 +1465,10 @@ func TestTreeSeparatorAt(t *testing.T) {
 
 	t.Run("nested layout separator found", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		v1ID := e.Tree().Focus()
 		e.VSplitNew()
 		e.Tree().SetFocus(v1ID)
@@ -1346,7 +1484,10 @@ func TestTreeSeparatorAt(t *testing.T) {
 
 	t.Run("nested layout SeparatorAt finds sep", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		v1ID := e.Tree().Focus()
 		e.VSplitNew()
 		e.Tree().SetFocus(v1ID)
@@ -1388,7 +1529,10 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NoError(t, err)
 		rope := docB.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 3}, "xxx"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   3,
+			}, "xxx"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1408,7 +1552,10 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 5}, "world"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   5,
+			}, "world"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1429,7 +1576,10 @@ func TestApplyToDocument(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 5}, "world"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   5,
+			}, "world"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1493,7 +1643,10 @@ func TestMoveFocusedFileWithOps(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 5}, "world"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   5,
+			}, "world"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1627,7 +1780,10 @@ func TestEditorDiscardPane(t *testing.T) {
 
 	t.Run("keeps the doc if still referenced", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v := e.FocusedView()
 		e.VSplit(v.DocID())
 		old := e.ReplacePane(v.ID(), &fakePane{editor: e})
@@ -1659,7 +1815,10 @@ func TestEditorClosePane(t *testing.T) {
 
 	t.Run("closes a View pane", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		count := e.Tree().Count()
 		v := e.FocusedView()
@@ -1671,7 +1830,10 @@ func TestEditorClosePane(t *testing.T) {
 
 	t.Run("removes a non-View pane, keeps docs", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		id := e.Tree().Split(&fakePane{editor: e}, view.LayoutVertical)
 		count := e.Tree().Count()

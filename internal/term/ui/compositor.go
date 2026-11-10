@@ -52,7 +52,10 @@ func (c *Compositor) Pop() {
 // HandleEvent offers a message to each layer from the top down
 func (c *Compositor) HandleEvent(cx *Context, msg tea.Msg) tea.Cmd {
 	if ws, ok := msg.(tea.WindowSizeMsg); ok {
-		c.size = geom.Size{Width: ws.Width, Height: ws.Height}
+		c.size = geom.Size{
+			Width:  ws.Width,
+			Height: ws.Height,
+		}
 	}
 	if c.dismissToast(msg) {
 		return nil
@@ -135,14 +138,20 @@ func (c *Compositor) handleLayerEvent(
 		return layer.HandleEvent(cx, msg)
 	}
 	bounds, active := dismisser.Layout(cx, c.size)
-	if active && bounds.Contains(geom.Point{X: click.X, Y: click.Y}) {
+	if active && bounds.Contains(geom.Point{
+		X: click.X,
+		Y: click.Y,
+	}) {
 		return layer.HandleEvent(cx, msg)
 	}
 	return dismisser.dismissOverlay()
 }
 
 func (c *Compositor) cursorCovered(cx *Context, from int, cur tea.Cursor) bool {
-	at := geom.Point{X: cur.X, Y: cur.Y}
+	at := geom.Point{
+		X: cur.X,
+		Y: cur.Y,
+	}
 	for _, layer := range c.layers[from:] {
 		ov, ok := layer.(BufferOverlayComponent)
 		if !ok {
@@ -162,7 +171,10 @@ func (c *Compositor) dismissToast(msg tea.Msg) bool {
 		return false
 	}
 	ec, ok := c.layers[0].(*EditorComponent)
-	return ok && ec.dismissToastAt(geom.Point{X: click.X, Y: click.Y})
+	return ok && ec.dismissToastAt(geom.Point{
+		X: click.X,
+		Y: click.Y,
+	})
 }
 
 func (c *Compositor) refreshEditorHighlight() tea.Cmd {

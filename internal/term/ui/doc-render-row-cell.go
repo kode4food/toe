@@ -38,8 +38,11 @@ func (r *renderedRow) writeToBuffer(args rowWriteArgs) {
 		cellsCol: r.colStart,
 	})
 	r.writeFillToBuffer(rowFillArgs{
-		buf:   args.buf,
-		at:    geom.Point{X: cx, Y: args.at.Y},
+		buf: args.buf,
+		at: geom.Point{
+			X: cx,
+			Y: args.at.Y,
+		},
 		width: max(args.at.X+args.width-cx, 0),
 		style: args.fillStyle,
 	})
@@ -74,7 +77,9 @@ func (r *renderedRow) write(text string, width int, style tui.Style) {
 		return
 	}
 	r.cells = append(r.cells, renderedCell{
-		text: text, width: width, style: style,
+		text:  text,
+		width: width,
+		style: style,
 	})
 	r.width += width
 }
@@ -105,7 +110,10 @@ func writeCellsWindowed(a writeCellsArgs) int {
 		switch {
 		case cutOff <= 0 && col+c.width <= end:
 			sx := a.at.X + col - a.startCol
-			a.buf.SetString(geom.Point{X: sx, Y: a.at.Y}, c.text, c.style)
+			a.buf.SetString(geom.Point{
+				X: sx,
+				Y: a.at.Y,
+			}, c.text, c.style)
 			cx = sx + c.width
 		case cutOff > 0 && cutOff < c.width:
 			// straddles the left edge: the visible remainder of a tab or wide rune is drawn as
@@ -139,7 +147,10 @@ func applyRulers(a applyRulersArgs) {
 		}
 		sx := a.at.X + rel
 		for y := a.at.Y; y < a.at.Y+a.size.Height; y++ {
-			a.buf.PatchBg(geom.Point{X: sx, Y: y}, a.rulerBg)
+			a.buf.PatchBg(geom.Point{
+				X: sx,
+				Y: y,
+			}, a.rulerBg)
 		}
 	}
 }

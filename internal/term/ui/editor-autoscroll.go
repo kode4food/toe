@@ -66,7 +66,11 @@ func (ec *EditorComponent) continueAxisScroll(axis *mouseAutoScrollAxis, toLow b
 	}
 	axis.scroll(cx.Editor, v, toLow)
 
-	r := &renderPass{editor: ec, context: cx, size: ec.size}
+	r := &renderPass{
+		editor:  ec,
+		context: cx,
+		size:    ec.size,
+	}
 	if pos, ok := axis.pos(r, doc, v, axis.fixed, toLow); ok {
 		extendSelectionTo(cx, doc, v, pos)
 	}
@@ -75,7 +79,11 @@ func (ec *EditorComponent) continueAxisScroll(axis *mouseAutoScrollAxis, toLow b
 
 func (a *mouseAutoScrollAxis) schedule(toLow bool, gen int, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return mouseAxisScrollMsg{gen: gen, axis: a, toLow: toLow}
+		return mouseAxisScrollMsg{
+			gen:   gen,
+			axis:  a,
+			toLow: toLow,
+		}
 	})
 }
 

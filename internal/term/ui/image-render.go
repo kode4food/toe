@@ -26,9 +26,12 @@ func (r *renderPass) renderImagePane(buf *tui.Buffer, pane *ImagePane, y0 int, f
 		Height: contentH,
 	}, th)
 	r.renderImageStatus(renderImageStatusArgs{
-		buf:     buf,
-		pane:    pane,
-		at:      geom.Point{X: a.X, Y: y0 + a.Y + contentH},
+		buf:  buf,
+		pane: pane,
+		at: geom.Point{
+			X: a.X,
+			Y: y0 + a.Y + contentH,
+		},
 		width:   a.Width,
 		focused: focused,
 	})
@@ -56,10 +59,7 @@ func (r *renderPass) renderImageStatus(args renderImageStatusArgs) {
 	right := []statusElem{{
 		text:  fmt.Sprintf("%d%s%d", pixels.Width, imageSizeTimes, pixels.Height),
 		style: baseTUI,
-	}, {
-		text:  fmt.Sprintf("%d%%", args.pane.Zoom()),
-		style: baseTUI,
-	}}
+	}, {text: fmt.Sprintf("%d%%", args.pane.Zoom()), style: baseTUI}}
 	name := view.DocumentRelativeName(view.DocumentRelativeNameArgs{
 		Path:    args.pane.Path(),
 		BaseDir: cx.Editor.Cwd(),
@@ -114,10 +114,19 @@ func (r *renderPass) paintImage(buf *tui.Buffer, pane *ImagePane, area geom.Area
 	for row := range visH {
 		for col := range visW {
 			sym := cx.images.placeholder(
-				cells, geom.Point{X: grid.X + col, Y: grid.Y + row},
+				cells, geom.Point{
+					X: grid.X + col,
+					Y: grid.Y + row,
+				},
 			)
-			buf.Set(geom.Point{X: screen.X + col, Y: screen.Y + row},
-				tui.Cell{Symbol: sym, Style: style})
+			buf.Set(geom.Point{
+				X: screen.X + col,
+				Y: screen.Y + row,
+			},
+				tui.Cell{
+					Symbol: sym,
+					Style:  style,
+				})
 		}
 	}
 }

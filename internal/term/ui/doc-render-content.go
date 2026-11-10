@@ -97,14 +97,20 @@ func (r *renderPass) paintContentOverlays(st *contentRenderState) {
 		if rel >= 0 && rel < format.ViewportWidth {
 			sx := contentX + rel
 			for row := st.area.Y; row < st.area.Y+st.area.Height; row++ {
-				buf.PatchBg(geom.Point{X: sx, Y: row}, st.cursorColumnBg)
+				buf.PatchBg(geom.Point{
+					X: sx,
+					Y: row,
+				}, st.cursorColumnBg)
 			}
 		}
 	}
 	if len(st.rulers) > 0 {
 		applyRulers(applyRulersArgs{
 			buf: buf,
-			at:  geom.Point{X: contentX, Y: st.area.Y},
+			at: geom.Point{
+				X: contentX,
+				Y: st.area.Y,
+			},
 			size: geom.Size{
 				Width:  format.ViewportWidth,
 				Height: st.area.Height,
@@ -158,12 +164,18 @@ func renderContentRows(st *contentRenderState) int {
 		}
 		if lineNum >= nLines {
 			if gutter.width > 0 {
-				gutter.renderBlank(st.buf, geom.Point{X: x, Y: bufRow})
+				gutter.renderBlank(st.buf, geom.Point{
+					X: x,
+					Y: bufRow,
+				})
 			}
 			var blank renderedRow
 			blank.writeToBuffer(rowWriteArgs{
-				buf:       st.buf,
-				at:        geom.Point{X: contentX, Y: bufRow},
+				buf: st.buf,
+				at: geom.Point{
+					X: contentX,
+					Y: bufRow,
+				},
 				fillStyle: fillTUI,
 				width:     format.ViewportWidth,
 				startCol:  hOff,
@@ -179,7 +191,10 @@ func renderContentRows(st *contentRenderState) int {
 		if lineNum == nLines-1 && trailingEmpty {
 			if gutter.width > 0 {
 				gutter.renderTilde(
-					st.buf, geom.Point{X: x, Y: bufRow}, lineNum == cursorLine,
+					st.buf, geom.Point{
+						X: x,
+						Y: bufRow,
+					}, lineNum == cursorLine,
 				)
 			}
 			var row renderedRow
@@ -189,12 +204,18 @@ func renderContentRows(st *contentRenderState) int {
 			}
 			if cursorLineEnabled && lineNum == cursorLine {
 				st.buf.PatchBgRange(
-					geom.Point{X: contentX, Y: bufRow}, format.ViewportWidth, cursorLinePriBg,
+					geom.Point{
+						X: contentX,
+						Y: bufRow,
+					}, format.ViewportWidth, cursorLinePriBg,
 				)
 			}
 			row.writeToBuffer(rowWriteArgs{
-				buf:       st.buf,
-				at:        geom.Point{X: contentX, Y: bufRow},
+				buf: st.buf,
+				at: geom.Point{
+					X: contentX,
+					Y: bufRow,
+				},
 				fillStyle: fillTUI,
 				width:     format.ViewportWidth,
 				startCol:  hOff,
@@ -222,8 +243,11 @@ func renderContentRows(st *contentRenderState) int {
 				num = lineNum + 1
 			}
 			gutter.renderLine(renderLineArgs{
-				buffer:        st.buf,
-				at:            geom.Point{X: x, Y: bufRow},
+				buffer: st.buf,
+				at: geom.Point{
+					X: x,
+					Y: bufRow,
+				},
 				docLine:       lineNum,
 				displayNumber: num,
 				selected:      isAnyCursorLine,
@@ -239,7 +263,10 @@ func renderContentRows(st *contentRenderState) int {
 			rowSkip = vOff
 		}
 
-		lineSpan := core.Span{From: rr.lineStart, To: rr.lineEnd}
+		lineSpan := core.Span{
+			From: rr.lineStart,
+			To:   rr.lineEnd,
+		}
 		rr.annotations = lineAnnotations(annotations, lineSpan)
 		rr.diagnostics = lineDiagnosticSpans(diagnostics, lineSpan)
 		rr.maxRows = y + height - bufRow + rowSkip
@@ -257,7 +284,10 @@ func renderContentRows(st *contentRenderState) int {
 			if bufRow >= y+height {
 				break
 			}
-			at := geom.Point{X: contentX, Y: bufRow}
+			at := geom.Point{
+				X: contentX,
+				Y: bufRow,
+			}
 			row := cr
 			prefixWidth := 0
 			if i > 0 {
@@ -266,7 +296,10 @@ func renderContentRows(st *contentRenderState) int {
 				prefixWidth = prefix.width
 			}
 			if i > 0 && gutter.width > 0 {
-				gutter.renderBlank(st.buf, geom.Point{X: x, Y: bufRow})
+				gutter.renderBlank(st.buf, geom.Point{
+					X: x,
+					Y: bufRow,
+				})
 			}
 			if paintCursorLine {
 				st.buf.PatchBgRange(at, format.ViewportWidth, cursorLineBg)

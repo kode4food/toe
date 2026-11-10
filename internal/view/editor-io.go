@@ -46,7 +46,11 @@ func (e *Editor) NewDocument() *View {
 		e.markDocAccessed()
 		return v
 	}
-	nv := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	nv := &View{
+		editor: e,
+		docID:  doc.ID(),
+		mode:   ModeNormal,
+	}
 	if e.panes.tree.Get(e.panes.tree.Focus()) == nil {
 		e.panes.tree.Insert(nv)
 		e.markDocAccessed()
@@ -293,7 +297,11 @@ func (e *Editor) ShowDocument(did DocumentId) *View {
 	if e.panes.tree.Get(id) == nil {
 		return nil
 	}
-	v := &View{editor: e, docID: did, mode: ModeNormal}
+	v := &View{
+		editor: e,
+		docID:  did,
+		mode:   ModeNormal,
+	}
 	old := e.ReplacePane(id, v)
 	e.DiscardPane(old)
 	e.markDocAccessed()

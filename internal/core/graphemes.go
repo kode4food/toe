@@ -32,7 +32,10 @@ func NthPrevGraphemeBoundary(doc Rope, step GraphemeStep) int {
 	if charIdx == 0 || n == 0 {
 		return charIdx
 	}
-	s, err := doc.Slice(Span{From: 0, To: charIdx})
+	s, err := doc.Slice(Span{
+		From: 0,
+		To:   charIdx,
+	})
 	if err != nil {
 		return 0
 	}
@@ -66,7 +69,10 @@ func NthNextGraphemeBoundary(doc Rope, step GraphemeStep) int {
 	if charIdx >= total || n == 0 {
 		return charIdx
 	}
-	s, err := doc.Slice(Span{From: charIdx, To: total})
+	s, err := doc.Slice(Span{
+		From: charIdx,
+		To:   total,
+	})
 	if err != nil {
 		return total
 	}
@@ -87,12 +93,18 @@ func NthNextGraphemeBoundary(doc Rope, step GraphemeStep) int {
 
 // PrevGraphemeBoundary returns the char index one grapheme cluster before charIdx
 func PrevGraphemeBoundary(doc Rope, charIdx int) int {
-	return NthPrevGraphemeBoundary(doc, GraphemeStep{From: charIdx, Count: 1})
+	return NthPrevGraphemeBoundary(doc, GraphemeStep{
+		From:  charIdx,
+		Count: 1,
+	})
 }
 
 // NextGraphemeBoundary returns the char index one grapheme cluster after charIdx
 func NextGraphemeBoundary(doc Rope, charIdx int) int {
-	return NthNextGraphemeBoundary(doc, GraphemeStep{From: charIdx, Count: 1})
+	return NthNextGraphemeBoundary(doc, GraphemeStep{
+		From:  charIdx,
+		Count: 1,
+	})
 }
 
 // EnsureGraphemeBoundaryNext snaps charIdx to the next grapheme boundary if it is not already on

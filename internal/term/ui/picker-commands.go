@@ -46,7 +46,10 @@ func (c *commandPaletteSource) Load() PickerLoad {
 			Payload: cmd,
 		}))
 	}
-	return PickerLoad{Items: items, Stop: func() {}}
+	return PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Accept runs the chosen command, prompting first when it takes arguments

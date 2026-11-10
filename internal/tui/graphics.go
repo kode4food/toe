@@ -115,7 +115,10 @@ var (
 
 // ColorIndexed returns a color naming a 256-color palette entry
 func ColorIndexed(idx uint8) Color {
-	return Color{kind: colorIndexed, r: idx}
+	return Color{
+		kind: colorIndexed,
+		r:    idx,
+	}
 }
 
 // ColorANSI returns the terminal color for an ANSI palette index
@@ -128,7 +131,12 @@ func ColorANSI(idx uint8) Color {
 
 // ColorRGB returns a 24-bit color
 func ColorRGB(r, g, b uint8) Color {
-	return Color{kind: colorRGB, r: r, g: g, b: b}
+	return Color{
+		kind: colorRGB,
+		r:    r,
+		g:    g,
+		b:    b,
+	}
 }
 
 // ImageColor encodes a 24-bit image id as a terminal color

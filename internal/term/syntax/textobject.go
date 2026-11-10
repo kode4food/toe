@@ -89,7 +89,10 @@ func FindTextObject(args FindTextObjectArgs) (Range, bool) {
 				continue
 			}
 			if best.From < 0 || (to-from) < (best.To-best.From) {
-				best = Range{From: from, To: to}
+				best = Range{
+					From: from,
+					To:   to,
+				}
 			}
 		}
 	}

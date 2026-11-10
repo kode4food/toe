@@ -93,7 +93,10 @@ func Start(cfg *TransportConfig) (context.Context, *Client, error) {
 		return ctx, nil, err
 	}
 	ctx, client := NewClient(
-		ctx, pipeConn{reader: stdout, writer: stdin}, cfg.Handler,
+		ctx, pipeConn{
+			reader: stdout,
+			writer: stdin,
+		}, cfg.Handler,
 	)
 	client.name = cfg.Name
 	client.cmd = cmd

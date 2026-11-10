@@ -77,7 +77,10 @@ func (vf *VisualMoveFormat) VisualRowStarts(runes []rune) []int {
 
 func newVisualLine(doc Rope, line int, format *VisualMoveFormat) visualLine {
 	runes := visualLineRunes(doc, line)
-	v := visualLine{runes: runes, format: format}
+	v := visualLine{
+		runes:  runes,
+		format: format,
+	}
 	if format != nil {
 		v.prefixWidth = visualPrefixWidth(runes, format)
 		v.rowStarts = format.VisualRowStarts(runes)
@@ -153,7 +156,10 @@ func visualLineRunes(doc Rope, lineIdx int) []rune {
 	if lineEnd <= lineStart {
 		return nil
 	}
-	if sl, err := doc.Slice(Span{From: lineStart, To: lineEnd}); err == nil {
+	if sl, err := doc.Slice(Span{
+		From: lineStart,
+		To:   lineEnd,
+	}); err == nil {
 		return []rune(sl.String())
 	}
 	return nil
@@ -172,7 +178,10 @@ func visualLineIndentW(runes []rune, tabW int) int {
 	for _, ch := range runes {
 		switch ch {
 		case '\t':
-			col += TabWidthAt(TabStop{Column: col, TabWidth: tabW})
+			col += TabWidthAt(TabStop{
+				Column:   col,
+				TabWidth: tabW,
+			})
 		case ' ':
 			col++
 		default:

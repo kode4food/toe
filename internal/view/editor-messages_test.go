@@ -59,7 +59,10 @@ func TestMessagesDocument(t *testing.T) {
 
 	t.Run("survives closing its pane", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.AppendMessage("first")
 		did := e.MessagesDocument().ID()
 		e.ShowDocument(did)

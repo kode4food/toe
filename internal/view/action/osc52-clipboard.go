@@ -10,7 +10,10 @@ type osc52Clipboard struct {
 // NewOSC52Clipboard layers OSC 52 terminal writes over inner, so a copy also reaches the clipboard
 // of a terminal reached over ssh
 func NewOSC52Clipboard(inner view.Clipboard) view.Clipboard {
-	return osc52Clipboard{Clipboard: inner, tty: writeTTY}
+	return osc52Clipboard{
+		Clipboard: inner,
+		tty:       writeTTY,
+	}
 }
 
 // Write copies text via the terminal's OSC 52 escape

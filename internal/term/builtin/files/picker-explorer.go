@@ -72,7 +72,10 @@ func newFileExplorerSource(
 // Load lists the entries of the current directory
 func (f *fileExplorerSource) Load() ui.PickerLoad {
 	items, _ := f.readDir()
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Items returns the current directory entries for an existing picker

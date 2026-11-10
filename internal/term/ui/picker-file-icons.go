@@ -112,7 +112,10 @@ func pickerFileIconColumn(p *Picker, item *PickerItem) int {
 
 func pickerFileIconStyle(th *theme.Theme, base tui.Style, color pickerFileColor) tui.Style {
 	if style, ok := th.TryGet(string(color)); ok {
-		return applyAccentStyle(styleOverlay{base: base, overlay: style})
+		return applyAccentStyle(styleOverlay{
+			base:    base,
+			overlay: style,
+		})
 	}
 	return base
 }

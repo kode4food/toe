@@ -59,7 +59,10 @@ func TestGotoPath(t *testing.T) {
 		assert.NoError(t, os.WriteFile(path, []byte("one\ntwo\n"), 0o644))
 
 		e := view.NewEditor(dir)
-		lines := &core.Span{From: 1, To: 1}
+		lines := &core.Span{
+			From: 1,
+			To:   1,
+		}
 		v, ok := ui.GotoPath(e, path, ui.GotoLines(lines), ui.PickerAcceptReplace)
 
 		assert.True(t, ok)

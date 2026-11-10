@@ -101,7 +101,9 @@ func TestMouseMiddleClick(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: 9, Y: 0, Button: tea.MouseMiddle,
+			X:      9,
+			Y:      0,
+			Button: tea.MouseMiddle,
 		})
 		_ = m2
 
@@ -124,7 +126,9 @@ func TestMouseWheelScroll(t *testing.T) {
 		before := v.Offset().Anchor
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 5, Y: 0, Button: tea.MouseWheelDown,
+			X:      5,
+			Y:      0,
+			Button: tea.MouseWheelDown,
 		})
 		_ = m2
 
@@ -143,7 +147,9 @@ func TestMouseWheelScroll(t *testing.T) {
 		// 40×8 window, no bufferline: the pane fills the frame, so Y=7 is its own status bar row
 		// (not content)
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 5, Y: 7, Button: tea.MouseWheelDown,
+			X:      5,
+			Y:      7,
+			Button: tea.MouseWheelDown,
 		})
 		_ = m2
 
@@ -158,7 +164,9 @@ func TestMouseWheelScroll(t *testing.T) {
 		assert.NotNil(t, v)
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 5, Y: 0, Button: tea.MouseWheelRight,
+			X:      5,
+			Y:      0,
+			Button: tea.MouseWheelRight,
 		})
 		hOff := v.Offset().HorizontalOffset
 		assert.Greater(t, hOff, 0)
@@ -178,7 +186,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		at := renderedTextPoint(t, m, "\uf0c8#f00", 2)
 
 		m.Update(tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 
 		assert.Equal(t, 1, testutil.CursorPos(t, e))
@@ -189,7 +199,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 0, Button: tea.MouseLeft,
+			X:      10,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -202,7 +214,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		at := renderedTextPoint(t, m, "abcdef", 3)
 
 		m.Update(tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
@@ -214,7 +228,9 @@ func TestMouseClickPositioning(t *testing.T) {
 
 		// place the cursor in the content area first
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 0, Button: tea.MouseLeft,
+			X:      10,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
@@ -222,7 +238,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		// the bottom row of the 8-high window is the pane statusline, never editor content, so a
 		// click there must leave the cursor put
 		m3, _ := m.Update(tea.MouseClickMsg{
-			X: 1, Y: 7, Button: tea.MouseLeft,
+			X:      1,
+			Y:      7,
+			Button: tea.MouseLeft,
 		})
 		_ = m3
 
@@ -234,7 +252,10 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 9, Y: 0, Button: tea.MouseLeft, Mod: tea.ModAlt,
+			X:      9,
+			Y:      0,
+			Button: tea.MouseLeft,
+			Mod:    tea.ModAlt,
 		})
 		_ = m2
 
@@ -251,17 +272,16 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 0, Button: tea.MouseLeft,
+			X:      10,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, []core.Range{{
-			Anchor: 0,
-			Head:   4,
-		}}, sel.Ranges())
+		assert.Equal(t, []core.Range{{Anchor: 0, Head: 4}}, sel.Ranges())
 	})
 
 	t.Run("bufferline row is ignored", func(t *testing.T) {
@@ -270,13 +290,17 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 0, Button: tea.MouseLeft,
+			X:      10,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.Equal(t, 0, testutil.CursorPos(t, e))
 
 		m2, _ = m.Update(tea.MouseClickMsg{
-			X: 10, Y: 1, Button: tea.MouseLeft,
+			X:      10,
+			Y:      1,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 		assert.Equal(t, 3, testutil.CursorPos(t, e))
@@ -287,7 +311,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 5, Button: tea.MouseLeft,
+			X:      10,
+			Y:      5,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -299,7 +325,9 @@ func TestMouseClickPositioning(t *testing.T) {
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 11, Y: 0, Button: tea.MouseLeft,
+			X:      11,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -322,11 +350,15 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		before := views[0].View.Area().Width
 		sepX := views[0].View.Area().X + before
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: sepX, Y: 0, Button: tea.MouseLeft,
+			X:      sepX,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: sepX - 5, Y: 0, Button: tea.MouseLeft,
+			X:      sepX - 5,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -348,11 +380,15 @@ func TestMouseSeparatorDrag(t *testing.T) {
 		before := views[0].View.Area().Height
 		sepY := views[0].View.Area().Y + before
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 0, Y: sepY, Button: tea.MouseLeft,
+			X:      0,
+			Y:      sepY,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: 0, Y: sepY - 2, Button: tea.MouseLeft,
+			X:      0,
+			Y:      sepY - 2,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -366,14 +402,18 @@ func TestMouseDragBounds(t *testing.T) {
 		e := editorWithText(t, "abcdef")
 		m := renderedModel(e)
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 8, Y: 0, Button: tea.MouseLeft,
+			X:      8,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
 		// dragging above the pane's top row clamps to it instead of being a no-op, so a drag
 		// started at the top edge still extends
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: 8, Y: -1, Button: tea.MouseLeft,
+			X:      8,
+			Y:      -1,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -390,12 +430,16 @@ func TestMouseDragBounds(t *testing.T) {
 		e.Options().BufferLine = view.BufferLineAlways
 		m := renderedModel(e)
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 8, Y: 1, Button: tea.MouseLeft,
+			X:      8,
+			Y:      1,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: 13, Y: 1, Button: tea.MouseLeft,
+			X:      13,
+			Y:      1,
+			Button: tea.MouseLeft,
 		})
 		_ = m2
 
@@ -417,7 +461,11 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 
 		v := e.FocusedView()
@@ -427,7 +475,9 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		// dragging past the pane's bottom edge starts an auto-scroll tick instead of just clamping
 		// the selection in place
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: 100, Button: tea.MouseLeft,
+			X:      0,
+			Y:      100,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -456,13 +506,19 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		assert.NoError(t, err)
 		v.SetOffset(view.Position{Anchor: anchor})
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 3, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      0,
+			Y:      3,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 		beforeLine, err := doc.Text().CharToLine(v.Offset().Anchor)
 		assert.NoError(t, err)
 
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: -100, Button: tea.MouseLeft,
+			X:      0,
+			Y:      -100,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -494,14 +550,20 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		assert.NoError(t, err)
 		v.SetOffset(view.Position{Anchor: anchor})
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 3, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      0,
+			Y:      3,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 		before := v.Offset().Anchor
 
 		// a pane at the screen's top edge has no row above to drag into, so the trigger zone must
 		// live inside its own top scrolloff margin
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: 1, Button: tea.MouseLeft,
+			X:      0,
+			Y:      1,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -523,12 +585,16 @@ func TestMouseDragAutoScroll(t *testing.T) {
 			m := renderedModel(e)
 
 			m2, _ := m.Update(tea.MouseClickMsg{
-				X: 0, Y: 3, Button: tea.MouseLeft,
+				X:      0,
+				Y:      3,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 
 			_, cmd := m.Update(tea.MouseMotionMsg{
-				X: 0, Y: dragY, Button: tea.MouseLeft,
+				X:      0,
+				Y:      dragY,
+				Button: tea.MouseLeft,
 			})
 			assert.NotNil(t, cmd)
 			start := time.Now()
@@ -562,11 +628,15 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		for row := range 8 {
 			v.SetOffset(view.Position{Anchor: startAnchor})
 			m2, _ := m.Update(tea.MouseClickMsg{
-				X: 0, Y: 4, Button: tea.MouseLeft,
+				X:      0,
+				Y:      4,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 			m2, _ = m.Update(tea.MouseMotionMsg{
-				X: 0, Y: row, Button: tea.MouseLeft,
+				X:      0,
+				Y:      row,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 
@@ -590,11 +660,17 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: 100, Button: tea.MouseLeft,
+			X:      0,
+			Y:      100,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -602,7 +678,9 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		// a second motion inside the same edge zone must not reschedule the tick, or a fast
 		// mouse-motion stream never lets the timer fire
 		m2, cmd2 := m.Update(tea.MouseMotionMsg{
-			X: 1, Y: 100, Button: tea.MouseLeft,
+			X:      1,
+			Y:      100,
+			Button: tea.MouseLeft,
 		})
 		_ = m2.(ui.Model)
 		assert.Nil(t, cmd2)
@@ -616,10 +694,16 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: 100, Button: tea.MouseLeft,
+			X:      0,
+			Y:      100,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -656,14 +740,18 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		area := v.Area()
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X + 20, Y: 0, Button: tea.MouseLeft,
+			X:      area.X + 20,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
 		// the trigger zone must reach area.X+minWidth, the first text column, rather than require
 		// the drag to be over the gutter itself
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: area.X + minWidth, Y: 0, Button: tea.MouseLeft,
+			X:      area.X + minWidth,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		_ = m2.(ui.Model)
 
@@ -678,11 +766,17 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		e := editorWithText(t, b.String())
 		m := renderedModel(e)
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 0, Y: 5, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      0,
+			Y:      5,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 
 		m2, cmd := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: 0, Button: tea.MouseLeft,
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -693,7 +787,9 @@ func TestMouseDragAutoScroll(t *testing.T) {
 		// the terminal clamps out-of-window coordinates, so a drag held outside keeps reporting
 		// this same row with no further movement
 		m2, cmd2 := m.Update(tea.MouseMotionMsg{
-			X: 0, Y: 0, Button: tea.MouseLeft,
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		_ = m2.(ui.Model)
 		if cmd2 != nil {
@@ -707,7 +803,10 @@ func TestMouseDragAutoScroll(t *testing.T) {
 func TestFreeScroll(t *testing.T) {
 	t.Run("keypress keeps other scrolled view", func(t *testing.T) {
 		e := editorWithText(t, strings.Repeat("0123456789abcdef\n", 20))
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v1 := e.FocusedView()
 		assert.NotNil(t, v1)
 		doc := e.FocusedDocument()
@@ -736,7 +835,10 @@ func TestFreeScroll(t *testing.T) {
 			_, _ = fmt.Fprintf(&b, "line%d\n", i)
 		}
 		e := editorWithText(t, b.String())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
 		_, err := builtin.Register(m, km)
@@ -763,7 +865,9 @@ func TestFreeScroll(t *testing.T) {
 		assert.GreaterOrEqual(t, clickY, 0)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 5, Y: clickY, Button: tea.MouseLeft,
+			X:      5,
+			Y:      clickY,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -774,7 +878,10 @@ func TestFreeScroll(t *testing.T) {
 
 	t.Run("repeat click past line end recouples", func(t *testing.T) {
 		e := editorWithText(t, strings.Repeat("x", 200)+"\nshort\n")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
 		_, err := builtin.Register(m, km)
@@ -794,7 +901,9 @@ func TestFreeScroll(t *testing.T) {
 			_ = m.View()
 
 			m2, _ := m.Update(tea.MouseClickMsg{
-				X: 60, Y: 1, Button: tea.MouseLeft,
+				X:      60,
+				Y:      1,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 			_ = m.View()
@@ -1071,7 +1180,10 @@ func TestDocumentHighlightRefresh(t *testing.T) {
 		_, err := builtin.Register(m, km)
 		assert.NoError(t, err)
 
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'l',
+			Text: "l",
+		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
 		drainCmd(m, cmd)
@@ -1091,7 +1203,10 @@ func TestAutoSaveCmd(t *testing.T) {
 		km := command.NewKeymaps()
 		m := resize(ui.New(e, km), 80, 24)
 
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'x',
+			Text: "x",
+		})
 		m = m2.(ui.Model)
 
 		assert.NotEmpty(t, viewContent(m))
@@ -1111,7 +1226,10 @@ func TestAutoSaveCmd(t *testing.T) {
 		m := resize(ui.New(e, km), 80, 24)
 
 		// Execute the autosave command returned by the keypress
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'x',
+			Text: "x",
+		})
 		m = m2.(ui.Model)
 		if cmd != nil {
 			msg := cmd()
@@ -1130,7 +1248,10 @@ func renderedTextPoint(t *testing.T, m ui.Model, text string, off int) geom.Poin
 	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	for y, line := range lines {
 		if x := strings.Index(line, text); x >= 0 {
-			return geom.Point{X: x + off, Y: y}
+			return geom.Point{
+				X: x + off,
+				Y: y,
+			}
 		}
 	}
 	t.Fatalf("rendered text %q not found", text)
@@ -1168,7 +1289,10 @@ func userDocuments(e *view.Editor) []*view.Document {
 
 func renderedModel(e *view.Editor) ui.Model {
 	m := ui.New(e, command.NewKeymaps())
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 8})
+	m2, _ := m.Update(tea.WindowSizeMsg{
+		Width:  40,
+		Height: 8,
+	})
 	m = m2.(ui.Model)
 	_ = m.View()
 	return m
@@ -1182,7 +1306,10 @@ func editorWithText(t *testing.T, text string) *view.Editor {
 	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(core.Span{From: 0, To: 0}, text),
+		core.TextChange(core.Span{
+			From: 0,
+			To:   0,
+		}, text),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))

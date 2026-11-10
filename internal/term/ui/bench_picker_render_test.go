@@ -71,7 +71,10 @@ func benchDiffPreview(b *testing.B, wrap bool) {
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
 	m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = updateAndFeed(m, tea.WindowSizeMsg{
+		Width:  120,
+		Height: 40,
+	})
 	if !strings.Contains(stripANSI(viewContent(m)), "- abcd") {
 		b.Fatal("diff preview not rendered")
 	}
@@ -82,7 +85,11 @@ func benchDiffPreview(b *testing.B, wrap bool) {
 		if i%20 >= 10 {
 			button = tea.MouseWheelUp
 		}
-		m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
+		m = mouse(m, tea.MouseWheelMsg{
+			X:      100,
+			Y:      10,
+			Button: button,
+		})
 		frameSink(m)
 		i++
 	}
@@ -110,7 +117,10 @@ func benchChangedFileRows(b *testing.B, staged bool) {
 	s := vcs.Attach(e)
 	b.Cleanup(s.Close)
 	m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-	m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = updateAndFeed(m, tea.WindowSizeMsg{
+		Width:  120,
+		Height: 40,
+	})
 	if !strings.Contains(stripANSI(viewContent(m)), "f00000.txt") {
 		b.Fatal("changed-file picker not rendered")
 	}

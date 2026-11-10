@@ -137,7 +137,10 @@ func TestPickerRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "// changed\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "// changed\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(changes)))
@@ -328,11 +331,8 @@ func (noPreviewPickerSource) ColumnProportions() []int {
 
 func (noPreviewPickerSource) Load() ui.PickerLoad {
 	return ui.PickerLoad{
-		Items: []*ui.PickerItem{{
-			Display: "plain",
-			Columns: []string{"plain"},
-		}},
-		Stop: func() {},
+		Items: []*ui.PickerItem{{Display: "plain", Columns: []string{"plain"}}},
+		Stop:  func() {},
 	}
 }
 
@@ -367,10 +367,7 @@ func (c columnPickerSource) Load() ui.PickerLoad {
 			"internal/term/ui/picker-render-with-a-very-long-name.go",
 			"non-primary columns clip before the primary one",
 		},
-	}, {
-		Display: "second",
-		Columns: []string{"txt", "README.md", "short"},
-	}}
+	}, {Display: "second", Columns: []string{"txt", "README.md", "short"}}}
 	if c.outlier {
 		items[0].Columns[0] = outlierPickerColumn
 		for range 14 {
@@ -386,7 +383,10 @@ func (c columnPickerSource) Load() ui.PickerLoad {
 			})
 		}
 	}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 func (columnPickerSource) PrepareMatcher(string) ui.PickerMatcher {

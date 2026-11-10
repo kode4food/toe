@@ -26,5 +26,8 @@ func (r Rope) Position(char int) (Position, error) {
 	if err != nil {
 		return Position{}, err
 	}
-	return Position{Line: line + 1, Column: char - start + 1}, nil
+	return Position{
+		Line:   line + 1,
+		Column: char - start + 1,
+	}, nil
 }

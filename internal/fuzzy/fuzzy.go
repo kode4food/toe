@@ -66,22 +66,28 @@ func (m *Matcher) Match(text string) (Result, bool) {
 	for _, ch := range text {
 		m.text = append(m.text, ch)
 	}
-	if !hasMatch(hasMatchArgs{pattern: m.pattern, text: m.text}) {
+	if !hasMatch(hasMatchArgs{
+		pattern: m.pattern,
+		text:    m.text,
+	}) {
 		return Result{}, false
 	}
 	if len(m.pattern) == len(m.text) {
 		return Result{
-			Score: scoreMax, Indices: sequence(len(m.pattern)),
+			Score:   scoreMax,
+			Indices: sequence(len(m.pattern)),
 		}, true
 	}
 	if len(m.text) > maxLen {
 		return Result{
-			Score: -scoreMax, Indices: sequence(len(m.pattern)),
+			Score:   -scoreMax,
+			Indices: sequence(len(m.pattern)),
 		}, true
 	}
 	score, indices := m.align()
 	return Result{
-		Score: int(math.Round(score * scale)), Indices: indices,
+		Score:   int(math.Round(score * scale)),
+		Indices: indices,
 	}, true
 }
 
@@ -121,7 +127,10 @@ func (m *Matcher) align() (float64, []int) {
 		}
 	}
 	return m.best[n*width-1], positions(positionsArgs{
-		best: m.best, end: m.end, patternLength: n, textWidth: width,
+		best:          m.best,
+		end:           m.end,
+		patternLength: n,
+		textWidth:     width,
 	})
 }
 
@@ -129,7 +138,10 @@ func (m *Matcher) fillBonuses() {
 	m.bonus = growScores(m.bonus, len(m.text))
 	prev := '/'
 	for i, c := range m.text {
-		m.bonus[i] = bonusFor(bonusArgs{previous: prev, current: c})
+		m.bonus[i] = bonusFor(bonusArgs{
+			previous: prev,
+			current:  c,
+		})
 		prev = c
 	}
 }

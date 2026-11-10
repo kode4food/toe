@@ -116,7 +116,10 @@ func isLowerASCII(ch byte) bool {
 
 func expansionDelimiters(ch byte) (delimiterPair, bool) {
 	if pair, ok := expansionDelimPairs[ch]; ok {
-		return delimiterPair{open: pair[0], close: pair[1]}, true
+		return delimiterPair{
+			open:  pair[0],
+			close: pair[1],
+		}, true
 	}
 	return delimiterPair{}, false
 }

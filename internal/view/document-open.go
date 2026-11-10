@@ -51,7 +51,10 @@ func newPendingDocument(args newPendingDocumentArgs) *Document {
 	opts := args.opts
 	d := newDocument(args.id, opts, args.langs)
 	d.SetPath(args.absPath)
-	d.content.pending = &pendingLoad{opts: opts, lang: lang}
+	d.content.pending = &pendingLoad{
+		opts: opts,
+		lang: lang,
+	}
 	if lang != "" {
 		d.SetLang(lang)
 	}
@@ -96,7 +99,10 @@ func openDocument(
 ) (*Document, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, &DocumentOpenError{Path: path, Err: err}
+		return nil, &DocumentOpenError{
+			Path: path,
+			Err:  err,
+		}
 	}
 	var ec *config.EditorConfig
 	if opts.EditorConfig {
@@ -131,7 +137,10 @@ func openDocument(
 			doc.refreshDiskSnapshot()
 			return doc, nil
 		}
-		return nil, &DocumentOpenError{Path: path, Err: err}
+		return nil, &DocumentOpenError{
+			Path: path,
+			Err:  err,
+		}
 	}
 
 	hasBOM := hasBOMBytes(data)

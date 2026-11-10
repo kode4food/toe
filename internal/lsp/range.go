@@ -18,7 +18,10 @@ func lspRange(
 	if err != nil {
 		return protocol.Range{}, err
 	}
-	return protocol.Range{Start: start, End: end}, nil
+	return protocol.Range{
+		Start: start,
+		End:   end,
+	}, nil
 }
 
 func lspRangeToChars(
@@ -26,7 +29,10 @@ func lspRangeToChars(
 ) (core.Range, bool) {
 	if from, ok := lspPositionToChar(doc, r.Start, enc); ok {
 		if to, ok := lspPositionToChar(doc, r.End, enc); ok {
-			return core.Range{Anchor: from, Head: to}, true
+			return core.Range{
+				Anchor: from,
+				Head:   to,
+			}, true
 		}
 	}
 	return core.Range{}, false

@@ -334,7 +334,10 @@ func (s *StatusLineItem) UnmarshalText(text []byte) error {
 	if !slices.Contains(allStatusLineElements, e) {
 		return fmt.Errorf("%w: %s", ErrInvalidStatusLine, text)
 	}
-	*s = StatusLineItem{Element: e, Pinned: pinned}
+	*s = StatusLineItem{
+		Element: e,
+		Pinned:  pinned,
+	}
 	return nil
 }
 

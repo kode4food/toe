@@ -50,7 +50,10 @@ func syntaxTextObjectSelect(e *view.Editor, ch rune, inside bool) bool {
 		if !ok {
 			continue
 		}
-		nr := core.Range{Anchor: res.From, Head: res.To}
+		nr := core.Range{
+			Anchor: res.From,
+			Head:   res.To,
+		}
 		if nr == r {
 			continue
 		}

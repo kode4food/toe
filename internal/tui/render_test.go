@@ -12,19 +12,34 @@ import (
 
 func TestRenderEmpty(t *testing.T) {
 	t.Run("zero-width returns empty", func(t *testing.T) {
-		b := tui.NewBuffer(geom.Size{Width: 0, Height: 5})
+		b := tui.NewBuffer(geom.Size{
+			Width:  0,
+			Height: 5,
+		})
 		assert.Equal(t, "", b.RenderToANSI())
 	})
 
 	t.Run("zero-height returns empty", func(t *testing.T) {
-		b := tui.NewBuffer(geom.Size{Width: 5, Height: 0})
+		b := tui.NewBuffer(geom.Size{
+			Width:  5,
+			Height: 0,
+		})
 		assert.Equal(t, "", b.RenderToANSI())
 	})
 
 	t.Run("multi-row separated by newline", func(t *testing.T) {
-		b := tui.NewBuffer(geom.Size{Width: 2, Height: 2})
-		b.SetString(geom.Point{X: 0, Y: 0}, "ab", tui.Style{})
-		b.SetString(geom.Point{X: 0, Y: 1}, "cd", tui.Style{})
+		b := tui.NewBuffer(geom.Size{
+			Width:  2,
+			Height: 2,
+		})
+		b.SetString(geom.Point{
+			X: 0,
+			Y: 0,
+		}, "ab", tui.Style{})
+		b.SetString(geom.Point{
+			X: 0,
+			Y: 1,
+		}, "cd", tui.Style{})
 		out := b.RenderToANSI()
 		rows := strings.Split(out, "\n")
 		assert.Len(t, rows, 2)
@@ -33,8 +48,14 @@ func TestRenderEmpty(t *testing.T) {
 	// guards the emit invariant: unwritten cells carry " ", not "", so a blank buffer renders as
 	// spaces rather than collapsing to empty
 	t.Run("unwritten cells render as spaces", func(t *testing.T) {
-		b := tui.NewBuffer(geom.Size{Width: 3, Height: 1})
-		b.SetString(geom.Point{X: 0, Y: 0}, "x", tui.Style{})
+		b := tui.NewBuffer(geom.Size{
+			Width:  3,
+			Height: 1,
+		})
+		b.SetString(geom.Point{
+			X: 0,
+			Y: 0,
+		}, "x", tui.Style{})
 		assert.Equal(t, "x  ", b.RenderToANSI())
 	})
 }
@@ -260,14 +281,29 @@ func TestEmitModifiers(t *testing.T) {
 }
 
 func render(s tui.Style) string {
-	b := tui.NewBuffer(geom.Size{Width: 1, Height: 1})
-	b.SetString(geom.Point{X: 0, Y: 0}, "x", s)
+	b := tui.NewBuffer(geom.Size{
+		Width:  1,
+		Height: 1,
+	})
+	b.SetString(geom.Point{
+		X: 0,
+		Y: 0,
+	}, "x", s)
 	return b.RenderToANSI()
 }
 
 func renderTwo(s0, s1 tui.Style) string {
-	b := tui.NewBuffer(geom.Size{Width: 2, Height: 1})
-	b.SetString(geom.Point{X: 0, Y: 0}, "a", s0)
-	b.SetString(geom.Point{X: 1, Y: 0}, "b", s1)
+	b := tui.NewBuffer(geom.Size{
+		Width:  2,
+		Height: 1,
+	})
+	b.SetString(geom.Point{
+		X: 0,
+		Y: 0,
+	}, "a", s0)
+	b.SetString(geom.Point{
+		X: 1,
+		Y: 0,
+	}, "b", s1)
 	return b.RenderToANSI()
 }

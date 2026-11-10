@@ -84,7 +84,10 @@ func (r *renderPass) renderBinaryStatus(buf *tui.Buffer, pane *BinaryPane, y0 in
 		style: baseTUI,
 	}}
 	r.paintStatus(buf, statusRow{
-		at:        geom.Point{X: a.X, Y: y0 + a.Bottom()},
+		at: geom.Point{
+			X: a.X,
+			Y: y0 + a.Bottom(),
+		},
 		width:     a.Width,
 		baseStyle: baseTUI,
 		focused:   focused,
@@ -114,7 +117,10 @@ func renderBinaryRow(args renderBinaryRowArgs) {
 			return
 		}
 		text = runewidth.Truncate(text, remaining, "")
-		args.buf.SetString(geom.Point{X: x, Y: args.at.Y}, text, style)
+		args.buf.SetString(geom.Point{
+			X: x,
+			Y: args.at.Y,
+		}, text, style)
 		width := runewidth.StringWidth(text)
 		x += width
 		remaining -= width

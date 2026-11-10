@@ -46,8 +46,14 @@ func CreateBlockCommentTransaction(
 				sp := from + ch.StartPos
 				ep := from + ch.EndPos
 				changes = append(changes,
-					TextChange(Span{From: sp, To: sp}, ch.StartToken+" "),
-					TextChange(Span{From: ep + 1, To: ep + 1}, " "+ch.EndToken),
+					TextChange(Span{
+						From: sp,
+						To:   sp,
+					}, ch.StartToken+" "),
+					TextChange(Span{
+						From: ep + 1,
+						To:   ep + 1,
+					}, " "+ch.EndToken),
 				)
 				offset := startLen + endLen + 2
 				rng := Range{
@@ -59,7 +65,10 @@ func CreateBlockCommentTransaction(
 				offs += offset
 			default:
 				f, t := ch.Range.From()+offs, ch.Range.To()+offs
-				ranges = append(ranges, Range{Anchor: f, Head: t})
+				ranges = append(ranges, Range{
+					Anchor: f,
+					Head:   t,
+				})
 			}
 		}
 	}

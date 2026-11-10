@@ -17,7 +17,10 @@ func newMatcher(query string, columns []string, matchColumn int) *matcher {
 	for col, pat := range fields {
 		patterns[col] = fuzzy.NewMatcher(pat)
 	}
-	return &matcher{fields: patterns, matchColumn: matchColumn}
+	return &matcher{
+		fields:      patterns,
+		matchColumn: matchColumn,
+	}
 }
 
 func (m *matcher) match(item *PickerItem) (MatchResult, bool) {
@@ -46,9 +49,13 @@ type fuzzyMatchArgs struct {
 
 func fuzzyMatch(args fuzzyMatchArgs) (MatchResult, bool) {
 	res, ok := fuzzy.Match(fuzzy.MatchArgs{
-		Pattern: args.pattern, Text: args.text,
+		Pattern: args.pattern,
+		Text:    args.text,
 	})
-	return MatchResult{Score: res.Score, Indices: res.Indices}, ok
+	return MatchResult{
+		Score:   res.Score,
+		Indices: res.Indices,
+	}, ok
 }
 
 func parsePickerQuery(columns []string, matchColumn int, input string) map[int]string {

@@ -37,7 +37,10 @@ func (p *Picker) drainFeed(
 			select {
 			case item, ok := <-ch:
 				if !ok {
-					return pickerFeedMsg{picker: p, items: batch}
+					return pickerFeedMsg{
+						picker: p,
+						items:  batch,
+					}
 				}
 				batch = append(batch, item)
 				if len(batch) == 1 {
@@ -59,7 +62,10 @@ func (p *Picker) drainFeed(
 					done:   done,
 				}
 			case <-done:
-				return pickerFeedMsg{picker: p, items: batch}
+				return pickerFeedMsg{
+					picker: p,
+					items:  batch,
+				}
 			}
 		}
 	}

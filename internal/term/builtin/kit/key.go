@@ -139,27 +139,40 @@ func Window(subs ...command.KeyBinding) map[view.Mode]command.KeyBinding {
 
 // Label names a prefix key sequence for the pending-key hint popup
 func Label(label string, prefix command.KeyBinding, modes view.Mode) command.PrefixLabel {
-	return command.PrefixLabel{Modes: modes, Seq: prefix, Label: label}
+	return command.PrefixLabel{
+		Modes: modes,
+		Seq:   prefix,
+		Label: label,
+	}
 }
 
 // MinArgs is a signature requiring at least n positional arguments
 func MinArgs(n int) command.Signature {
 	return command.Signature{
-		Positionals: command.Positionals{Min: n, Max: -1},
+		Positionals: command.Positionals{
+			Min: n,
+			Max: -1,
+		},
 	}
 }
 
 // OptionalArg is a signature accepting zero or one positional argument
 func OptionalArg() command.Signature {
 	return command.Signature{
-		Positionals: command.Positionals{Min: 0, Max: 1},
+		Positionals: command.Positionals{
+			Min: 0,
+			Max: 1,
+		},
 	}
 }
 
 // RequiredArg is a signature accepting exactly one positional argument
 func RequiredArg() command.Signature {
 	return command.Signature{
-		Positionals: command.Positionals{Min: 1, Max: 1},
+		Positionals: command.Positionals{
+			Min: 1,
+			Max: 1,
+		},
 	}
 }
 
@@ -193,7 +206,10 @@ func RegisterHints(e *view.Editor) []command.KeyHint {
 }
 
 func single(code command.KeyCode, mods command.KeyModifiers) command.KeyBinding {
-	return command.KeyBinding{{{Code: code, Mods: mods}}}
+	return command.KeyBinding{{{
+		Code: code,
+		Mods: mods,
+	}}}
 }
 
 func modified(b command.KeyBinding, mods command.KeyModifiers) command.KeyBinding {

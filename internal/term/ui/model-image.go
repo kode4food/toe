@@ -146,7 +146,10 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	if !r.graphics {
 		return nil
 	}
-	state := imageState{cells: a.cells, rev: a.rev}
+	state := imageState{
+		cells: a.cells,
+		rev:   a.rev,
+	}
 	r.used[a.id] = r.frame
 	if r.ready[a.id] == state {
 		r.placed[a.id] = state
@@ -165,7 +168,11 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 	if r.sent[a.id] && prev.cells != state.cells && prev.rev == state.rev {
 		put := r.dropStale(a.id, state.cells) + putSeq(a.id, state.cells)
 		return func() tea.Msg {
-			return imageTransmitMsg{raw: put, id: a.id, state: state}
+			return imageTransmitMsg{
+				raw:   put,
+				id:    a.id,
+				state: state,
+			}
 		}
 	}
 	evict := r.evict(a.id)
@@ -188,7 +195,11 @@ func (r *imageRegistry) display(a displayArgs) tea.Cmd {
 		if err != nil {
 			return nil
 		}
-		return imageTransmitMsg{raw: buf.String(), id: a.id, state: state}
+		return imageTransmitMsg{
+			raw:   buf.String(),
+			id:    a.id,
+			state: state,
+		}
 	}
 }
 
@@ -232,7 +243,10 @@ func (r *imageRegistry) preparePlaceholders(cells geom.Size) {
 	placeholders := make([]string, cells.Width*cells.Height)
 	for row := range cells.Height {
 		for col := range cells.Width {
-			at := geom.Point{X: col, Y: row}
+			at := geom.Point{
+				X: col,
+				Y: row,
+			}
 			placeholders[row*cells.Width+col] = tui.PlaceholderSymbol(at)
 		}
 	}
@@ -402,5 +416,8 @@ func imageCellSize(args imageCellSizeArgs) geom.Size {
 		rows = args.maxCells.Height
 		cols = max(int(float64(rows)/ratio), 1)
 	}
-	return geom.Size{Width: cols, Height: rows}
+	return geom.Size{
+		Width:  cols,
+		Height: rows,
+	}
 }

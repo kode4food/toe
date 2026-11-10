@@ -67,7 +67,10 @@ func (g *globalSearchSource) Load() ui.PickerLoad {
 		}
 	}
 	ch, cancel := globalSearchQuery(e.Cwd(), g.openDocs, g.query, g.smartCase)
-	return ui.PickerLoad{Feed: ch, Stop: cancel}
+	return ui.PickerLoad{
+		Feed: ch,
+		Stop: cancel,
+	}
 }
 
 // Accept jumps to the chosen match
@@ -100,7 +103,10 @@ func (gs *globalSearcher) scanLines(path string, scanner *bufio.Scanner) bool {
 			SecFrom: sec,
 			Location: ui.PickerLocation{
 				Target: ui.PickerTarget{Path: path},
-				Lines:  &core.Span{From: ln - 1, To: ln - 1},
+				Lines: &core.Span{
+					From: ln - 1,
+					To:   ln - 1,
+				},
 			},
 		}):
 		case <-gs.done:
@@ -156,7 +162,11 @@ func globalSearchQuery(
 	var once sync.Once
 	cancel := func() { once.Do(func() { close(done) }) }
 	gs := &globalSearcher{
-		results: ch, done: done, pattern: re, root: root, openDocs: openDocs,
+		results:  ch,
+		done:     done,
+		pattern:  re,
+		root:     root,
+		openDocs: openDocs,
 	}
 	go gs.walk()
 	return ch, cancel

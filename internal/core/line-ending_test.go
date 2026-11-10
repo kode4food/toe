@@ -74,18 +74,8 @@ func TestLineEnding(t *testing.T) {
 				e:    core.LineEndingCRLF,
 				ok:   true,
 			},
-			{
-				name: "detects lone cr",
-				in:   "a\rb\n",
-				e:    core.LineEndingLF,
-				ok:   true,
-			},
-			{
-				name: "detects next line",
-				in:   "a\u0085b\n",
-				e:    core.LineEndingLF,
-				ok:   true,
-			},
+			{name: "detects lone cr", in: "a\rb\n", e: core.LineEndingLF, ok: true},
+			{name: "detects next line", in: "a\u0085b\n", e: core.LineEndingLF, ok: true},
 			{
 				name: "detects line separator",
 				in:   "a\u2028b\n",
@@ -98,10 +88,7 @@ func TestLineEnding(t *testing.T) {
 				e:    core.LineEndingLF,
 				ok:   true,
 			},
-			{
-				name: "caps scan",
-				in:   strings.Repeat("x\f", 100) + "\n",
-			},
+			{name: "caps scan", in: strings.Repeat("x\f", 100) + "\n"},
 		}
 
 		for _, tt := range tests {

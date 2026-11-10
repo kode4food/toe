@@ -81,7 +81,10 @@ func (r *renderPass) drawDiagnosticPopup(
 		y = max(buf.Height-h, 0)
 	}
 	area := pop.drawInto(buf, geom.Area{
-		X: x, Y: y, Width: w, Height: h,
+		X:      x,
+		Y:      y,
+		Width:  w,
+		Height: h,
 	})
 	for i, line := range lines {
 		buf.SetString(area.Point.Add(geom.Point{Y: i}), line, st)
@@ -105,7 +108,10 @@ func currentDiagnosticPopupKey(cx *Context) diagPopupKey {
 	if text == "" {
 		return diagPopupKey{}
 	}
-	return diagPopupKey{severity: diag.Severity, text: text}
+	return diagPopupKey{
+		severity: diag.Severity,
+		text:     text,
+	}
 }
 
 func diagnosticPopupStyle(cx *Context, severity view.DiagnosticSeverity) tui.Style {
@@ -151,7 +157,10 @@ func diagnosticRangeBounds(diag view.Diagnostic) core.Range {
 	if from == to {
 		to++
 	}
-	return core.Range{Anchor: from, Head: to}
+	return core.Range{
+		Anchor: from,
+		Head:   to,
+	}
 }
 
 func diagnosticPopupText(diag view.Diagnostic) string {

@@ -32,8 +32,14 @@ func TestDiagnostics(t *testing.T) {
 				Diagnostics: []protocol.Diagnostic{
 					{
 						Range: protocol.Range{
-							Start: protocol.Position{Line: 0, Character: 0},
-							End:   protocol.Position{Line: 0, Character: 2},
+							Start: protocol.Position{
+								Line:      0,
+								Character: 0,
+							},
+							End: protocol.Position{
+								Line:      0,
+								Character: 2,
+							},
 						},
 						Severity: protocol.DiagnosticSeverityError,
 						Source:   protocol.NewOptional("gopls"),
@@ -53,7 +59,10 @@ func TestDiagnostics(t *testing.T) {
 		assert.Equal(t, "bad identifier", diags[0].Message)
 		assert.Equal(t, "gopls", diags[0].Source)
 		assert.Equal(t, "lsp", diags[0].Provider)
-		assert.Equal(t, core.Span{From: 0, To: 1}, diags[0].Range)
+		assert.Equal(t, core.Span{
+			From: 0,
+			To:   1,
+		}, diags[0].Range)
 	})
 
 	t.Run("maps all severity levels", func(t *testing.T) {
@@ -115,10 +124,7 @@ func TestDiagnostics(t *testing.T) {
 				URI:     uri.File(path),
 				Version: protocol.NewOptional[int32](999),
 				Diagnostics: []protocol.Diagnostic{
-					{
-						Range:   protocol.Range{},
-						Message: protocol.String("stale"),
-					},
+					{Range: protocol.Range{}, Message: protocol.String("stale")},
 				},
 			},
 		)

@@ -106,8 +106,10 @@ func buildSpans(cs []tsCapture) []highlight.Span {
 		}
 		start := max(c.start, pos)
 		best := tsCapture{
-			start: start, end: c.end,
-			scope: c.scope, idx: c.idx,
+			start: start,
+			end:   c.end,
+			scope: c.scope,
+			idx:   c.idx,
 		}
 		j := i + 1
 		for j < len(cs) && cs[j].start == c.start {

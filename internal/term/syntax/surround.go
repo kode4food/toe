@@ -38,7 +38,10 @@ func FindSurroundPairFor(args FindSurroundPairForArgs) (Range, bool) {
 		return Range{}, false
 	}
 	return findSurroundPair(FindSurroundPairArgs{
-		Source: core.Source{Text: args.Text, Lang: args.Lang},
+		Source: core.Source{
+			Text: args.Text,
+			Lang: args.Lang,
+		},
 		Cursor: args.Cursor,
 		Skip:   args.Skip,
 	}, func(n *sitter.Node) bool {
@@ -77,7 +80,10 @@ func findSurroundPair(
 				f := b2c[n.StartByte()]
 				t := b2c[n.EndByte()] - 1
 				if f >= 0 && t < len(runes) {
-					return Range{From: f, To: t}, true
+					return Range{
+						From: f,
+						To:   t,
+					}, true
 				}
 			}
 		}

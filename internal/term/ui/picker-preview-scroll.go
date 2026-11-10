@@ -43,6 +43,9 @@ func (s *previewScroll) resolve(
 
 func lastPageTop(walk core.VisualRowWalk, height int) core.VisualPos {
 	line := max(walk.Lines-1, 0)
-	last := core.VisualPos{Line: line, Row: walk.RowsAt(line) - 1}
+	last := core.VisualPos{
+		Line: line,
+		Row:  walk.RowsAt(line) - 1,
+	}
 	return walk.Up(last, height-1)
 }

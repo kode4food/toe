@@ -85,7 +85,10 @@ func TestDiffer(t *testing.T) {
 			var updates atomic.Int32
 			base := core.NewRope("base\n")
 			d := vcs.NewDiffer(
-				view.DiffSides{Base: base, Doc: base},
+				view.DiffSides{
+					Base: base,
+					Doc:  base,
+				},
 				func() {
 					updates.Add(1)
 				},

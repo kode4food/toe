@@ -86,7 +86,10 @@ func (j *jumplistPickerSource) Load() ui.PickerLoad {
 			Payload: i,
 		}))
 	}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Accept jumps to the chosen entry, moving the jump list head onto it
@@ -98,7 +101,10 @@ func (j *jumplistPickerSource) Accept(item *ui.PickerItem, action ui.PickerAccep
 
 func jumpLineRange(text core.Rope, sel core.Selection) (int, *core.Span) {
 	if line, err := sel.Primary().CursorLine(text); err == nil {
-		return line, &core.Span{From: line, To: line}
+		return line, &core.Span{
+			From: line,
+			To:   line,
+		}
 	}
 	return 0, nil
 }

@@ -76,7 +76,9 @@ func TestSignatureHelpComponent(t *testing.T) {
 
 		m = sendKeyAndFeed(m, '(')
 		m = updateAndFeed(m, tea.KeyPressMsg{
-			Code: 'n', Text: "n", Mod: tea.ModAlt,
+			Code: 'n',
+			Text: "n",
+			Mod:  tea.ModAlt,
 		})
 		out := stripANSI(viewContent(m))
 
@@ -222,10 +224,14 @@ func TestSignatureHelpComponent(t *testing.T) {
 		m = sendKeyAndFeed(m, '(')
 		// cycle forward then back
 		m = updateAndFeed(m, tea.KeyPressMsg{
-			Code: 'n', Text: "n", Mod: tea.ModAlt,
+			Code: 'n',
+			Text: "n",
+			Mod:  tea.ModAlt,
 		})
 		m = updateAndFeed(m, tea.KeyPressMsg{
-			Code: 'p', Text: "p", Mod: tea.ModAlt,
+			Code: 'p',
+			Text: "p",
+			Mod:  tea.ModAlt,
 		})
 		out := stripANSI(viewContent(m))
 

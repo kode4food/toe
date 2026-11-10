@@ -52,7 +52,8 @@ func (c *Client) RenameSymbol(
 			ctx context.Context, tdp protocol.TextDocumentPositionParams,
 		) (*protocol.WorkspaceEdit, bool, error) {
 			edit, err := c.server.Rename(ctx, &protocol.RenameParams{
-				TextDocumentPositionParams: tdp, NewName: name,
+				TextDocumentPositionParams: tdp,
+				NewName:                    name,
 			})
 			if err != nil {
 				return nil, true, err

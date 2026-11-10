@@ -361,7 +361,10 @@ func hugeRangeEdit() protocol.TextEdit {
 	return protocol.TextEdit{
 		Range: protocol.Range{
 			Start: protocol.Position{Line: 999},
-			End:   protocol.Position{Line: 999, Character: 1},
+			End: protocol.Position{
+				Line:      999,
+				Character: 1,
+			},
 		},
 		NewText: "x",
 	}

@@ -34,7 +34,9 @@ func TestPickerScroll(t *testing.T) {
 
 		for range 10 {
 			m2, _ := m.Update(tea.MouseWheelMsg{
-				X: 30, Y: 10, Button: tea.MouseWheelDown,
+				X:      30,
+				Y:      10,
+				Button: tea.MouseWheelDown,
 			})
 			m = m2.(ui.Model)
 		}
@@ -54,7 +56,9 @@ func TestPickerScroll(t *testing.T) {
 		for range 10 {
 			// X=65 is inside the picker but in the preview pane, outside listBounds
 			m2, _ := m.Update(tea.MouseWheelMsg{
-				X: 65, Y: 10, Button: tea.MouseWheelDown,
+				X:      65,
+				Y:      10,
+				Button: tea.MouseWheelDown,
 			})
 			m = m2.(ui.Model)
 		}
@@ -78,7 +82,9 @@ func TestPickerScroll(t *testing.T) {
 		assert.GreaterOrEqual(t, clickY, 0)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: clickX, Y: clickY, Button: tea.MouseLeft,
+			X:      clickX,
+			Y:      clickY,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
@@ -91,7 +97,9 @@ func TestPickerScroll(t *testing.T) {
 		m := fixedPicker(t, 5, 120, 20)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 0, Y: 0, Button: tea.MouseLeft,
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
@@ -104,11 +112,15 @@ func TestPickerScroll(t *testing.T) {
 		_ = m.View()
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 60, Y: 8, Button: tea.MouseLeft,
+			X:      60,
+			Y:      8,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: 75, Y: 8, Button: tea.MouseLeft,
+			X:      75,
+			Y:      8,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseReleaseMsg{
@@ -125,14 +137,18 @@ func TestPickerScroll(t *testing.T) {
 		_ = m.View()
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 60, Y: 8, Button: tea.MouseLeft,
+			X:      60,
+			Y:      8,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
 		prev := ui.MinPickerSplitRatio
 		for x := 0; x <= 120; x++ {
 			m2, _ = m.Update(tea.MouseMotionMsg{
-				X: x, Y: 8, Button: tea.MouseLeft,
+				X:      x,
+				Y:      8,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 			r := m.PickerLayoutOptions().SplitRatios["fixed"]
@@ -150,13 +166,17 @@ func TestPickerScroll(t *testing.T) {
 		_ = m.View()
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 60, Y: 8, Button: tea.MouseLeft,
+			X:      60,
+			Y:      8,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
 		for _, x := range []int{0, 120} {
 			m2, _ = m.Update(tea.MouseMotionMsg{
-				X: x, Y: 8, Button: tea.MouseLeft,
+				X:      x,
+				Y:      8,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 			out := stripANSI(viewContent(m))
@@ -225,8 +245,12 @@ func TestPickerBorderResize(t *testing.T) {
 	t.Run("drag widens and is per picker", func(t *testing.T) {
 		m := fixedPickers(t, 120, 20)
 		m = sendKey(m, 'a')
-		m = dragOverlayBorder(m, geom.Point{X: 113, Y: 8}, geom.Point{
-			X: 118, Y: 8,
+		m = dragOverlayBorder(m, geom.Point{
+			X: 113,
+			Y: 8,
+		}, geom.Point{
+			X: 118,
+			Y: 8,
 		})
 		opts := m.PickerLayoutOptions()
 		// both sides grow, so a 5 cell drag adds 10 of 120 columns
@@ -236,8 +260,12 @@ func TestPickerBorderResize(t *testing.T) {
 
 		m = sendSpecial(m, tea.KeyEscape)
 		m = sendKey(m, 'b')
-		m = dragOverlayBorder(m, geom.Point{X: 113, Y: 17}, geom.Point{
-			X: 113, Y: 15,
+		m = dragOverlayBorder(m, geom.Point{
+			X: 113,
+			Y: 17,
+		}, geom.Point{
+			X: 113,
+			Y: 15,
 		})
 		opts = m.PickerLayoutOptions()
 		// the corner drags both axes: narrower and shorter
@@ -249,8 +277,12 @@ func TestPickerBorderResize(t *testing.T) {
 	t.Run("drag clamps to the screen", func(t *testing.T) {
 		m := fixedPickers(t, 120, 20)
 		m = sendKey(m, 'a')
-		m = dragOverlayBorder(m, geom.Point{X: 6, Y: 8}, geom.Point{
-			X: -40, Y: 8,
+		m = dragOverlayBorder(m, geom.Point{
+			X: 6,
+			Y: 8,
+		}, geom.Point{
+			X: -40,
+			Y: 8,
 		})
 		opts := m.PickerLayoutOptions()
 		assert.InDelta(t, 1.0, opts.Scales["alpha.width"], 0.001)
@@ -264,11 +296,15 @@ func TestPickerBorderResize(t *testing.T) {
 func dragOverlayBorder(m ui.Model, from, to geom.Point) ui.Model {
 	_ = m.View()
 	m2, _ := m.Update(tea.MouseClickMsg{
-		X: from.X, Y: from.Y, Button: tea.MouseLeft,
+		X:      from.X,
+		Y:      from.Y,
+		Button: tea.MouseLeft,
 	})
 	m = m2.(ui.Model)
 	m2, _ = m.Update(tea.MouseMotionMsg{
-		X: to.X, Y: to.Y, Button: tea.MouseLeft,
+		X:      to.X,
+		Y:      to.Y,
+		Button: tea.MouseLeft,
 	})
 	m = m2.(ui.Model)
 	m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
@@ -309,7 +345,10 @@ func (fixedPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {
 }
 
 func (s fixedPickerSource) Load() ui.PickerLoad {
-	return ui.PickerLoad{Items: s.items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: s.items,
+		Stop:  func() {},
+	}
 }
 
 func fixedPicker(t *testing.T, n, w, h int) ui.Model {
@@ -341,7 +380,10 @@ func fixedPickers(t *testing.T, w, h int) ui.Model {
 		km, "alpha_picker",
 		m.PickerAction(func(*view.Editor) *ui.Picker {
 			return ui.NewPicker(
-				e, fixedPickerSource{items: items, title: "alpha"},
+				e, fixedPickerSource{
+					items: items,
+					title: "alpha",
+				},
 			)
 		}),
 		[]command.KeyEvent{char('a')},
@@ -350,7 +392,10 @@ func fixedPickers(t *testing.T, w, h int) ui.Model {
 		km, "beta_picker",
 		m.PickerAction(func(*view.Editor) *ui.Picker {
 			return ui.NewPicker(
-				e, fixedPickerSource{items: items, title: "beta"},
+				e, fixedPickerSource{
+					items: items,
+					title: "beta",
+				},
 			)
 		}),
 		[]command.KeyEvent{char('b')},
@@ -374,11 +419,15 @@ func fixedPickerItems(n int) []*ui.PickerItem {
 func dragPickerSplit(m ui.Model, from, to int) ui.Model {
 	_ = m.View()
 	m2, _ := m.Update(tea.MouseClickMsg{
-		X: from, Y: 8, Button: tea.MouseLeft,
+		X:      from,
+		Y:      8,
+		Button: tea.MouseLeft,
 	})
 	m = m2.(ui.Model)
 	m2, _ = m.Update(tea.MouseMotionMsg{
-		X: to, Y: 8, Button: tea.MouseLeft,
+		X:      to,
+		Y:      8,
+		Button: tea.MouseLeft,
 	})
 	m = m2.(ui.Model)
 	m2, _ = m.Update(tea.MouseReleaseMsg{

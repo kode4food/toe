@@ -13,7 +13,10 @@ import (
 
 func TestResizeViewAction(t *testing.T) {
 	e := view.NewEditor(t.TempDir())
-	e.ResizeTree(geom.Size{Width: 80, Height: 24})
+	e.ResizeTree(geom.Size{
+		Width:  80,
+		Height: 24,
+	})
 	e.VSplitNew()
 	e.TogglePaneMaximized()
 

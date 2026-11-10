@@ -128,10 +128,7 @@ func TestCompleteFlagArgument(t *testing.T) {
 	sig := command.Signature{
 		Positionals: command.Positionals{Min: 0},
 		Flags: []command.Flag{
-			{
-				Name:        "fmt",
-				Completions: []string{"json", "yaml", "toml"},
-			},
+			{Name: "fmt", Completions: []string{"json", "yaml", "toml"}},
 		},
 	}
 	c := command.Completer{}
@@ -197,8 +194,11 @@ func TestCompleteNilPositional(t *testing.T) {
 func TestCompleteTrailingPositionals(t *testing.T) {
 	c := command.PositionalCompleter(command.StaticCompleter("one", "two"))
 	sig := command.Signature{
-		Positionals: command.Positionals{Min: 0, Max: -1},
-		Completer:   c,
+		Positionals: command.Positionals{
+			Min: 0,
+			Max: -1,
+		},
+		Completer: c,
 	}
 
 	t.Run("first positional uses its completer", func(t *testing.T) {
@@ -216,8 +216,11 @@ func TestCompleteTrailingPositionals(t *testing.T) {
 	t.Run("a nil last slot stops completion", func(t *testing.T) {
 		stop := command.PositionalCompleter(command.StaticCompleter("one", "two"), nil)
 		sig := command.Signature{
-			Positionals: command.Positionals{Min: 0, Max: -1},
-			Completer:   stop,
+			Positionals: command.Positionals{
+				Min: 0,
+				Max: -1,
+			},
+			Completer: stop,
 		}
 		assert.Nil(t, stop.Complete(nil, sig, "one tw"))
 	})

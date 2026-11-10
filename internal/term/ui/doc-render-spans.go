@@ -126,7 +126,10 @@ func (r *renderPass) prepareContentRender(target *contentRenderTarget) *contentR
 		}
 	}
 
-	set := c.styleSet(cx, styleSetKey{mode: mode, focused: target.focused})
+	set := c.styleSet(cx, styleSetKey{
+		mode:    mode,
+		focused: target.focused,
+	})
 	styles := set.styles
 	highlight := func(scope string) tui.Style {
 		if st, ok := set.hlCache[scope]; ok {
@@ -297,7 +300,10 @@ func documentHighlightSpans(highlights []view.DocumentHighlight) []matchSpan {
 	out := make([]matchSpan, 0, len(highlights))
 	for _, h := range highlights {
 		if h.From < h.To {
-			out = append(out, matchSpan{from: h.From, to: h.To})
+			out = append(out, matchSpan{
+				from: h.From,
+				to:   h.To,
+			})
 		}
 	}
 	return out
@@ -310,7 +316,10 @@ func documentLinkSpans(links []view.DocumentLink) []matchSpan {
 	out := make([]matchSpan, 0, len(links))
 	for _, link := range links {
 		if link.From < link.To {
-			out = append(out, matchSpan{from: link.From, to: link.To})
+			out = append(out, matchSpan{
+				from: link.From,
+				to:   link.To,
+			})
 		}
 	}
 	return out

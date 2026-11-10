@@ -116,7 +116,10 @@ func (s *Session) applyFormattingEdits(
 	if err != nil {
 		return err
 	}
-	edit := workspaceDocumentEdit{doc: doc, changes: changes}
+	edit := workspaceDocumentEdit{
+		doc:     doc,
+		changes: changes,
+	}
 	return s.applyWorkspaceDocumentEdit(edit)
 }
 

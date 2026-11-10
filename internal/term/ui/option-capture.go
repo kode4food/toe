@@ -222,7 +222,10 @@ func (o *optionCapture) paintButtons(buf *tui.Buffer, at geom.Point, width int, 
 		text := captureButtonText(opt)
 		buf.SetString(at, text, base)
 		buf.SetString(
-			geom.Point{X: at.X + 1, Y: at.Y}, string(opt.key),
+			geom.Point{
+				X: at.X + 1,
+				Y: at.Y,
+			}, string(opt.key),
 			base.UlStyle(tui.UnderlineLine).UlColor(base.FgColor()),
 		)
 		at.X += runewidth.StringWidth(text)

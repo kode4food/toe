@@ -86,7 +86,10 @@ func SkipPickerPath(args SkipPickerPathArgs) bool {
 		return true
 	}
 	for _, ig := range args.Ignores {
-		at := ignoreCandidate{rel: args.Rel, full: args.Path}
+		at := ignoreCandidate{
+			rel:  args.Rel,
+			full: args.Path,
+		}
 		if sub, ok := ignorePathForBase(at, ig); ok &&
 			ig.matcher.MatchesPath(sub) {
 			return true
@@ -133,7 +136,9 @@ func LoadIgnoreFiles(target IgnoreTarget, opts PickerIgnoreOptions) []PickerIgno
 // need to customize it
 func DefaultPickerIgnoreOptions() PickerIgnoreOptions {
 	return PickerIgnoreOptions{
-		Hidden: true, Parents: true, IgnoreFiles: true,
+		Hidden:      true,
+		Parents:     true,
+		IgnoreFiles: true,
 	}
 }
 
@@ -161,7 +166,10 @@ func ignorePathForBase(at ignoreCandidate, ig PickerIgnore) (string, bool) {
 
 func appendIgnorePath(ignores []PickerIgnore, f ignoreFile) []PickerIgnore {
 	if ig := compileIgnore(f.path); ig != nil {
-		return append(ignores, PickerIgnore{dir: f.dir, matcher: ig})
+		return append(ignores, PickerIgnore{
+			dir:     f.dir,
+			matcher: ig,
+		})
 	}
 	return ignores
 }

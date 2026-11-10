@@ -84,7 +84,9 @@ func (s *Session) DocumentLinks(doc *view.Document) ([]view.DocumentLink, error)
 				continue
 			}
 			raw[item.ID] = documentLinkCandidate{
-				client: client, docID: doc.ID(), link: link,
+				client: client,
+				docID:  doc.ID(),
+				link:   link,
 			}
 			out = append(out, item)
 		}
@@ -168,7 +170,10 @@ func (s *Session) replaceDocumentLink(
 }
 
 func (s *Session) documentLinksAsync(doc *view.Document) {
-	key := refreshKey{doc: doc.ID(), kind: refreshLinks}
+	key := refreshKey{
+		doc:  doc.ID(),
+		kind: refreshLinks,
+	}
 	s.refresh.Do(key, func() {
 		_, _ = s.DocumentLinks(doc)
 	})

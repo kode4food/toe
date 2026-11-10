@@ -223,7 +223,10 @@ func openGlobalSearch(t *testing.T, e *view.Editor, query string) ui.Model {
 	m = sendKeyAndFeed(m, 's')
 	var cmd tea.Cmd
 	for _, ch := range query {
-		m2, next := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+		m2, next := m.Update(tea.KeyPressMsg{
+			Code: ch,
+			Text: string(ch),
+		})
 		m = m2.(ui.Model)
 		cmd = next
 	}

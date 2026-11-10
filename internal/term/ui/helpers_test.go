@@ -121,12 +121,18 @@ func writeConfigIgnore(t *testing.T, root, text string) {
 }
 
 func sendKey(m ui.Model, ch rune) ui.Model {
-	m2, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+	m2, _ := m.Update(tea.KeyPressMsg{
+		Code: ch,
+		Text: string(ch),
+	})
 	return m2.(ui.Model)
 }
 
 func sendKeyAndFeed(m ui.Model, ch rune) ui.Model {
-	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Text: string(ch)})
+	return updateAndFeed(m, tea.KeyPressMsg{
+		Code: ch,
+		Text: string(ch),
+	})
 }
 
 func updateAndFeed(m ui.Model, msg tea.Msg) ui.Model {
@@ -172,21 +178,33 @@ func sendSpecialAndFeed(m ui.Model, k rune) ui.Model {
 }
 
 func sendSpecialText(m ui.Model, k rune, text string) ui.Model {
-	m2, _ := m.Update(tea.KeyPressMsg{Code: k, Text: text})
+	m2, _ := m.Update(tea.KeyPressMsg{
+		Code: k,
+		Text: text,
+	})
 	return m2.(ui.Model)
 }
 
 func sendModified(m ui.Model, ch rune, mod tea.KeyMod) ui.Model {
-	m2, _ := m.Update(tea.KeyPressMsg{Code: ch, Mod: mod})
+	m2, _ := m.Update(tea.KeyPressMsg{
+		Code: ch,
+		Mod:  mod,
+	})
 	return m2.(ui.Model)
 }
 
 func sendModifiedAndFeed(m ui.Model, ch rune, mod tea.KeyMod) ui.Model {
-	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Mod: mod})
+	return updateAndFeed(m, tea.KeyPressMsg{
+		Code: ch,
+		Mod:  mod,
+	})
 }
 
 func resize(m ui.Model, w, h int) ui.Model {
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	m2, _ := m.Update(tea.WindowSizeMsg{
+		Width:  w,
+		Height: h,
+	})
 	return m2.(ui.Model)
 }
 
@@ -234,7 +252,11 @@ func bindNormalTestKeyAction(
 	km *command.Keymaps, name string, fn command.KeyAction, seqs ...[]command.KeyEvent,
 ) {
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: view.ModeNormal, name: name, fn: fn, seqs: seqs,
+		km:   km,
+		mode: view.ModeNormal,
+		name: name,
+		fn:   fn,
+		seqs: seqs,
 	})
 }
 
@@ -257,7 +279,10 @@ func (s feedPickerSource) Load() ui.PickerLoad {
 		})
 	}
 	close(ch)
-	return ui.PickerLoad{Feed: ch, Stop: func() {}}
+	return ui.PickerLoad{
+		Feed: ch,
+		Stop: func() {},
+	}
 }
 
 func (feedPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {

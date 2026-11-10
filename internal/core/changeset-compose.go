@@ -23,7 +23,10 @@ func (c ChangeSet) Compose(other ChangeSet) (ChangeSet, error) {
 	if len(other.ops) == 0 {
 		return c, nil
 	}
-	ctx := &composeCtx{aOp: c.ops, bOp: other.ops}
+	ctx := &composeCtx{
+		aOp: c.ops,
+		bOp: other.ops,
+	}
 	ctx.loadA()
 	ctx.loadB()
 	if out, ok := ctx.run(); ok {

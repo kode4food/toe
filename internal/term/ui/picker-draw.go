@@ -98,7 +98,10 @@ func (p *pickerRender) drawList(area geom.Area) {
 			break
 		}
 		p.writeItem(
-			geom.Point{X: area.X, Y: itemY + i}, ps.list.matched[idx], idx == ps.list.cursor,
+			geom.Point{
+				X: area.X,
+				Y: itemY + i,
+			}, ps.list.matched[idx], idx == ps.list.cursor,
 		)
 	}
 	if len(ps.list.matched) == 0 {
@@ -145,11 +148,14 @@ func (p *pickerRender) drawPreview(area geom.Area) {
 		editor:    ps.editor,
 		syntax:    cx.Syntax,
 		images:    cx.images,
-		size:      geom.Size{Width: innerW, Height: area.Height},
-		wrap:      comp.previewWrapWidth(innerW),
-		theme:     p.theme,
-		styles:    comp.styles,
-		hlFrom:    -1,
+		size: geom.Size{
+			Width:  innerW,
+			Height: area.Height,
+		},
+		wrap:   comp.previewWrapWidth(innerW),
+		theme:  p.theme,
+		styles: comp.styles,
+		hlFrom: -1,
 	}
 	if lr := item.TargetLines(); lr != nil {
 		ctx.hlFrom = lr.From

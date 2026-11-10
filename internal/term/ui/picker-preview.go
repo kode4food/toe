@@ -186,15 +186,19 @@ func (p *previewCtx) renderDiffInto(buf *tui.Buffer, at geom.Point) {
 		barImg:    &p.picker.preview.barImg,
 		barPlace:  p.scrollbarPlacement(),
 		lines: p.diffPreviewLines(diffPreviewLinesArgs{
-			base: base, working: work,
+			base:    base,
+			working: work,
 		}),
 		format: language.TextFormatForConfig(
 			p.editor.Languages().Get(work.lang), opts.TextWidth, opts.SoftWrap,
 			p.textWrap(diffGutterW),
 		),
-		opts:    opts,
-		theme:   p.theme,
-		area:    geom.Area{Point: at, Size: p.size},
+		opts:  opts,
+		theme: p.theme,
+		area: geom.Area{
+			Point: at,
+			Size:  p.size,
+		},
 		vScroll: &p.picker.preview.vScroll,
 		hScroll: p.picker.preview.hScroll,
 		styles:  p.styles,
@@ -224,7 +228,10 @@ func (p *previewCtx) workingPreview(vc view.VersionControl, staged bool) *previe
 	if ok {
 		return e
 	}
-	return &previewDocEntry{rope: core.NewRope(""), lang: view.DefaultLanguage}
+	return &previewDocEntry{
+		rope: core.NewRope(""),
+		lang: view.DefaultLanguage,
+	}
 }
 
 func (p *previewCtx) renderFileInto(buf *tui.Buffer, at geom.Point, path string) {
@@ -251,7 +258,10 @@ func (p *previewDocEntry) renderText(
 		format:    format,
 		opts:      ctx.editor.Options(),
 		theme:     ctx.theme,
-		area:      geom.Area{Point: at, Size: ctx.size},
+		area: geom.Area{
+			Point: at,
+			Size:  ctx.size,
+		},
 		hlFrom:    ctx.hlFrom,
 		hlTo:      ctx.hlTo,
 		diffLines: ctx.itemDiffLines(p.rope),
@@ -301,13 +311,19 @@ func (p *previewDirEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.P
 func (n noPreviewEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.Point) {
 	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	renderCenteredMessage(
-		buf, geom.Area{Point: at, Size: ctx.size}, string(n), style,
+		buf, geom.Area{
+			Point: at,
+			Size:  ctx.size,
+		}, string(n), style,
 	)
 }
 
 func (p *previewCtx) blitPlaceholderInto(buf *tui.Buffer, at geom.Point, text string) {
 	fillTUI := tui.Style{}.Bg(p.theme.Get("ui.popup").BgColor())
-	blitTextInto(buf, geom.Area{Point: at, Size: p.size}, text, fillTUI)
+	blitTextInto(buf, geom.Area{
+		Point: at,
+		Size:  p.size,
+	}, text, fillTUI)
 }
 
 func blitTextInto(buf *tui.Buffer, area geom.Area, text string, fillStyle tui.Style) {
@@ -343,7 +359,10 @@ func previewSpans(args previewSpansArgs) []highlight.Span {
 	if args.lang == view.DefaultLanguage {
 		return nil
 	}
-	return args.cache.Tokenize(core.Source{Text: args.text, Lang: args.lang})
+	return args.cache.Tokenize(core.Source{
+		Text: args.text,
+		Lang: args.lang,
+	})
 }
 
 // previewHighlighter: the background is stripped so the pane can patch its own onto every row

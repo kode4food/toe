@@ -46,7 +46,10 @@ func MergeValues(values Overlay[any], depth int) any {
 		return right
 	case []any:
 		if r, ok := AnySlice(right); ok {
-			return mergeArrays(Overlay[[]any]{Base: l, Over: r}, depth)
+			return mergeArrays(Overlay[[]any]{
+				Base: l,
+				Over: r,
+			}, depth)
 		}
 		return right
 	default:

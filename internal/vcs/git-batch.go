@@ -151,7 +151,11 @@ func (c *catFile) request(line string) (catFileHeader, error) {
 	if err != nil {
 		return catFileHeader{}, fmt.Errorf("%w: %q", ErrGitBadBatch, head)
 	}
-	return catFileHeader{oid: fields[0], kind: fields[1], size: size}, nil
+	return catFileHeader{
+		oid:  fields[0],
+		kind: fields[1],
+		size: size,
+	}, nil
 }
 
 func startCatFile(root string) (*catFile, error) {
@@ -167,5 +171,9 @@ func startCatFile(root string) (*catFile, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	return &catFile{cmd: cmd, in: in, out: bufio.NewReader(out)}, nil
+	return &catFile{
+		cmd: cmd,
+		in:  in,
+		out: bufio.NewReader(out),
+	}, nil
 }

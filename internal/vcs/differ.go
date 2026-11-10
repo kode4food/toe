@@ -82,7 +82,10 @@ func (d *Differ) Close() {
 
 func (d *Differ) recompute() {
 	d.mu.RLock()
-	sides := view.DiffSides{Base: d.base, Doc: d.doc}
+	sides := view.DiffSides{
+		Base: d.base,
+		Doc:  d.doc,
+	}
 	gen := d.gen
 	d.mu.RUnlock()
 	hunks := view.Diff(sides)

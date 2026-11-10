@@ -15,7 +15,10 @@ import (
 func EditorWithText(t *testing.T, text string) *view.Editor {
 	t.Helper()
 	e := view.NewEditor("/tmp")
-	e.ResizeTree(geom.Size{Width: 80, Height: 24})
+	e.ResizeTree(geom.Size{
+		Width:  80,
+		Height: 24,
+	})
 	SetEditorText(t, e, text)
 	return e
 }
@@ -27,7 +30,10 @@ func SetEditorText(t *testing.T, e *view.Editor, text string) {
 	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(core.Span{From: 0, To: 0}, text),
+		core.TextChange(core.Span{
+			From: 0,
+			To:   0,
+		}, text),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))

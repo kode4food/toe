@@ -137,7 +137,10 @@ func gotoChange(e *view.Editor, dir core.Direction) {
 			if nr.Head < r.Anchor {
 				head = nr.Anchor
 			}
-			return core.Range{Anchor: r.Anchor, Head: head}
+			return core.Range{
+				Anchor: r.Anchor,
+				Head:   head,
+			}
 		}
 		return nr.WithDirection(dir)
 	})
@@ -218,7 +221,10 @@ func hunkCharRange(h view.DiffHunk, text core.Rope) (core.Range, bool) {
 			return core.Range{}, false
 		}
 	}
-	return core.Range{Anchor: from, Head: to}, true
+	return core.Range{
+		Anchor: from,
+		Head:   to,
+	}, true
 }
 
 func nextHunkIdx(hunks []view.DiffHunk, line int) (int, bool) {

@@ -16,10 +16,16 @@ type Candidate struct {
 func Match(c Candidate) bool {
 	path := c.Path
 	for _, p := range expandBraces(c.Pattern) {
-		if matchPath(Candidate{Pattern: p, Path: filepath.ToSlash(path)}) {
+		if matchPath(Candidate{
+			Pattern: p,
+			Path:    filepath.ToSlash(path),
+		}) {
 			return true
 		}
-		if matchPath(Candidate{Pattern: p, Path: path}) {
+		if matchPath(Candidate{
+			Pattern: p,
+			Path:    path,
+		}) {
 			return true
 		}
 	}
@@ -59,7 +65,10 @@ func matchPath(c Candidate) bool {
 			}
 		}
 	}
-	return matchParts(matchPartsArgs{pattern: parts, path: pathParts})
+	return matchParts(matchPartsArgs{
+		pattern: parts,
+		path:    pathParts,
+	})
 }
 
 // matchPartsArgs is a Candidate already split on slashes

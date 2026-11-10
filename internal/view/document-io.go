@@ -48,7 +48,10 @@ func (d *Document) Save(opts *Options, force bool) error {
 	} else {
 		data = []byte(text)
 	}
-	target := saveTarget{path: path, dir: dir}
+	target := saveTarget{
+		path: path,
+		dir:  dir,
+	}
 	var backup string
 	if opts.AtomicSave {
 		if _, statErr := os.Stat(path); statErr == nil {
@@ -136,7 +139,10 @@ func (d *Document) applySaveText(text string) error {
 	}
 	sel := d.Selection()
 	tx := core.NewTransaction(oldText).WithChanges(cs).WithSelection(sel)
-	st := core.State{Doc: oldText, Selection: sel}
+	st := core.State{
+		Doc:       oldText,
+		Selection: sel,
+	}
 	if err := d.edits.history.CommitRevision(tx, st); err != nil {
 		return err
 	}

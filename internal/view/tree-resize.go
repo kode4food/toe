@@ -170,7 +170,10 @@ func (t *Tree) focusedParent(layout Layout) (resizeParent, bool) {
 	for {
 		c := t.nodes[parent].container
 		if c.layout == layout && len(c.children) > 1 {
-			return resizeParent{container: parent, branch: branch}, true
+			return resizeParent{
+				container: parent,
+				branch:    branch,
+			}, true
 		}
 		if parent == t.root {
 			return resizeParent{}, false

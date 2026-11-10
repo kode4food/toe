@@ -21,8 +21,14 @@ func handleDeletePair(doc Rope, r Range) (Span, Range, bool) {
 		nextAnchor = r.Anchor - sizeDelete
 	}
 
-	del := Span{From: endPrev, To: endNext}
-	return del, Range{Anchor: nextAnchor, Head: nextHead}, true
+	del := Span{
+		From: endPrev,
+		To:   endNext,
+	}
+	return del, Range{
+		Anchor: nextAnchor,
+		Head:   nextHead,
+	}, true
 }
 
 func handleInsertOpen(doc Rope, r Range, pair Pair) (Change, Range, bool) {
@@ -33,7 +39,10 @@ func handleInsertOpen(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 		}
 	}
 	text := string([]rune{pair.Open, pair.Close})
-	change := TextChange(Span{From: cursor, To: cursor}, text)
+	change := TextChange(Span{
+		From: cursor,
+		To:   cursor,
+	}, text)
 	return change, autoPairNextRange(doc, r, 2), true
 }
 
@@ -51,7 +60,10 @@ func handleInsertClose(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 func handleInsertSame(doc Rope, r Range, pair Pair) (Change, Range, bool) {
 	cursor := r.Cursor(doc)
 	if ch, ok := autoPairCharAt(doc, cursor); ok && ch == pair.Open {
-		return TextChange(Span{From: cursor, To: cursor}, ""),
+		return TextChange(Span{
+				From: cursor,
+				To:   cursor,
+			}, ""),
 			skipOverRange(doc, r, cursor),
 			true
 	}
@@ -75,7 +87,10 @@ func skipOverRange(doc Rope, r Range, cursor int) Range {
 func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 	n := doc.LenChars()
 	if start.Head == n && start.Anchor == n {
-		return Range{Anchor: start.Anchor + 1, Head: start.Head + 1}
+		return Range{
+			Anchor: start.Anchor + 1,
+			Head:   start.Head + 1,
+		}
 	}
 
 	single := start.IsSingleGrapheme(doc)
@@ -101,7 +116,10 @@ func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 		} else {
 			endAnchor = start.Anchor
 		}
-		return Range{Anchor: endAnchor, Head: start.Head + 1}
+		return Range{
+			Anchor: endAnchor,
+			Head:   start.Head + 1,
+		}
 	}
 
 	var endHead int
@@ -135,7 +153,10 @@ func autoPairNextRange(doc Rope, start Range, lenInserted int) Range {
 		}
 	}
 
-	return Range{Anchor: endAnchor, Head: endHead}
+	return Range{
+		Anchor: endAnchor,
+		Head:   endHead,
+	}
 }
 
 func nextIsNotAlphaPair(doc Rope, r Range) bool {

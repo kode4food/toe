@@ -125,7 +125,10 @@ func ErrorText(err error) string {
 
 // WithVars returns a copy with interpolation variables attached
 func (e *Error) WithVars(vars Vars) *Error {
-	return &Error{key: e.key, vars: vars}
+	return &Error{
+		key:  e.key,
+		vars: vars,
+	}
 }
 
 // Error returns the translated message for the current locale

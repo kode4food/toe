@@ -102,14 +102,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 5, To: 5}, "!"),
+			core.TextChange(core.Span{
+				From: 5,
+				To:   5,
+			}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 8,
 			Text:    "hello!\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -135,14 +141,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 5}, ""),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   5,
+			}, ""),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 9,
 			Text:    "\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -168,14 +180,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 5}, "world"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   5,
+			}, "world"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 10,
 			Text:    "world\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -201,14 +219,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\nworld\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 6}, ""),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   6,
+			}, ""),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 11,
 			Text:    "world\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -233,14 +257,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hi\r\nbye\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 4}, ""),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   4,
+			}, ""),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 12,
 			Text:    "bye\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -267,14 +297,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hello\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 5, To: 5}, "!"),
+			core.TextChange(core.Span{
+				From: 5,
+				To:   5,
+			}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 13,
 			Text:    "hello!\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -300,14 +336,20 @@ func TestTextSync(t *testing.T) {
 
 		before := core.NewRope("hi\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 2, To: 2}, "!"),
+			core.TextChange(core.Span{
+				From: 2,
+				To:   2,
+			}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 14,
 			Text:    "hi!\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -332,14 +374,20 @@ func TestTextSync(t *testing.T) {
 		// "😀" is U+1F600, requires a UTF-16 surrogate pair (counts as 2)
 		before := core.NewRope("😀\n")
 		cs, err := core.NewChangeSetFromChanges(before, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 1}, "!"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "!"),
 		})
 		assert.NoError(t, err)
 		ok, err := client.DidChangeDocument(ctx, lsp.DocumentSnapshot{
 			URI:     uri.File("/tmp/main.go"),
 			Version: 15,
 			Text:    "😀!\n",
-		}, view.DocumentChange{Before: before, Changes: cs})
+		}, view.DocumentChange{
+			Before:  before,
+			Changes: cs,
+		})
 
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -435,7 +483,10 @@ func TestTextSync(t *testing.T) {
 		ctx, client, closeClient := newSyncClient(t, server)
 		defer closeClient()
 
-		doc := lsp.DocumentSnapshot{URI: uri.File("/tmp/main.go"), Text: "hi\n"}
+		doc := lsp.DocumentSnapshot{
+			URI:  uri.File("/tmp/main.go"),
+			Text: "hi\n",
+		}
 		ok, err := client.DidSave(ctx, doc)
 		assert.NoError(t, err)
 		assert.True(t, ok)
@@ -587,8 +638,14 @@ func (s *syncServer) Diagnostic(
 		Items: []protocol.Diagnostic{
 			{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 0},
-					End:   protocol.Position{Line: 0, Character: 4},
+					Start: protocol.Position{
+						Line:      0,
+						Character: 0,
+					},
+					End: protocol.Position{
+						Line:      0,
+						Character: 4,
+					},
 				},
 				Severity: protocol.DiagnosticSeverityWarning,
 				Message:  protocol.String("pulled diagnostic"),

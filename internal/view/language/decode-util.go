@@ -39,7 +39,10 @@ func decodeBlockCommentToken(value any) (core.BlockCommentToken, bool) {
 		return core.BlockCommentToken{}, false
 	}
 	if end, ok := m["end"].(string); ok {
-		return core.BlockCommentToken{Start: start, End: end}, true
+		return core.BlockCommentToken{
+			Start: start,
+			End:   end,
+		}, true
 	}
 	return core.BlockCommentToken{}, false
 }

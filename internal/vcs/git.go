@@ -263,7 +263,10 @@ func parseGitStatus(args parseGitStatusArgs) ([]view.FileChange, error) {
 			return nil, fmt.Errorf("%w: %q", ErrGitBadStatus, entry)
 		}
 		x, y := entry[0], entry[1]
-		st := splitChangeKind(statusCode{staged: x, unstaged: y})
+		st := splitChangeKind(statusCode{
+			staged:   x,
+			unstaged: y,
+		})
 		fc := view.FileChange{
 			Path: filepath.Join(root, filepath.FromSlash(entry[3:])),
 		}
@@ -285,11 +288,16 @@ func splitChangeKind(code statusCode) gitStatus {
 	switch {
 	case x == '?' && y == '?':
 		return gitStatus{
-			unstaged: view.FileChangeUntracked, hasUnstaged: true,
+			unstaged:    view.FileChangeUntracked,
+			hasUnstaged: true,
 		}
-	case isGitConflict(statusCode{staged: x, unstaged: y}):
+	case isGitConflict(statusCode{
+		staged:   x,
+		unstaged: y,
+	}):
 		return gitStatus{
-			unstaged: view.FileChangeConflict, hasUnstaged: true,
+			unstaged:    view.FileChangeConflict,
+			hasUnstaged: true,
 		}
 	}
 	var st gitStatus

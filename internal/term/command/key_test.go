@@ -70,11 +70,7 @@ func TestParseKeySequence(t *testing.T) {
 		input string
 		want  []command.KeyEvent
 	}{
-		{
-			name:  "characters",
-			input: "g d",
-			want:  []command.KeyEvent{char('g'), char('d')},
-		},
+		{name: "characters", input: "g d", want: []command.KeyEvent{char('g'), char('d')}},
 		{
 			name:  "modifiers",
 			input: "C-S-f",
@@ -88,10 +84,7 @@ func TestParseKeySequence(t *testing.T) {
 			input: "spc A-left",
 			want: []command.KeyEvent{
 				char(' '),
-				{
-					Code: command.KeyCode{Special: command.Left},
-					Mods: command.ModAlt,
-				},
+				{Code: command.KeyCode{Special: command.Left}, Mods: command.ModAlt},
 			},
 		},
 	}
@@ -492,7 +485,10 @@ func TestPendingHints(t *testing.T) {
 	t.Run("displays shifted uppercase char", func(t *testing.T) {
 		_, hints := km.PendingHints(nil, view.ModeNormal, []command.KeyEvent{char('g')}, false)
 
-		assert.Contains(t, hints, command.KeyHint{Key: "F", Label: "F"})
+		assert.Contains(t, hints, command.KeyHint{
+			Key:   "F",
+			Label: "F",
+		})
 	})
 
 	t.Run("omits undocumented commands", func(t *testing.T) {

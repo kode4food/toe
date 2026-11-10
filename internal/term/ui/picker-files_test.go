@@ -489,7 +489,10 @@ func TestPickerFiles(t *testing.T) {
 
 		m = resize(m, 80, 20)
 		m = sendKey(m, 'p')
-		next, cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
+		next, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'a',
+			Text: "a",
+		})
 		m = next.(ui.Model)
 		assert.NotNil(t, cmd)
 
@@ -586,7 +589,10 @@ func (c *controlledDynamicSource) Load() ui.PickerLoad {
 	if c.query == "" {
 		return ui.PickerLoad{Stop: func() {}}
 	}
-	return ui.PickerLoad{Feed: c.ch, Stop: func() {}}
+	return ui.PickerLoad{
+		Feed: c.ch,
+		Stop: func() {},
+	}
 }
 
 func (c *controlledDynamicSource) Accept(_ *ui.PickerItem, _ ui.PickerAcceptAction) {

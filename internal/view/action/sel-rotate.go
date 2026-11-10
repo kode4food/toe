@@ -130,7 +130,10 @@ func rangesAfterReplace(ranges []core.Range, replacements []string) []core.Range
 	for i, r := range ranges {
 		newFrom := r.From() + delta
 		newLen := utf8.RuneCountInString(replacements[i])
-		out[i] = core.Range{Anchor: newFrom, Head: newFrom + newLen}
+		out[i] = core.Range{
+			Anchor: newFrom,
+			Head:   newFrom + newLen,
+		}
 		delta += newLen - (r.To() - r.From())
 	}
 	return out

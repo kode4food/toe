@@ -110,20 +110,14 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("reflow runs over a selection", func(t *testing.T) {
 		e, km := test.Env(t, "one two three four five\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   20,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 20}}, 0)
 		assert.NotContains(t, test.RunCmdArgs(t, km, e, "reflow", "10").Message, "error")
 	})
 
 	t.Run("reflow uses configured text width", func(t *testing.T) {
 		e, km := test.Env(t, "one two three four five\n")
 		e.Options().TextWidth = new(10)
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   20,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 20}}, 0)
 		assert.Empty(t, test.RunCmd(t, km, e, "reflow").Message)
 	})
 
@@ -134,10 +128,7 @@ func TestSupportSelectionOps(t *testing.T) {
 
 	t.Run("toggle comments runs", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 		assert.Empty(t, test.RunCmd(t, km, e, "toggle_comments").Message)
 	})
 }

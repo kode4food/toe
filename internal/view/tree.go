@@ -142,7 +142,10 @@ func (t *Tree) Insert(p Pane) Id {
 
 	id := t.allocID()
 	t.attach(p, id)
-	t.nodes[id] = &treeNode{parent: parent, pane: p}
+	t.nodes[id] = &treeNode{
+		parent: parent,
+		pane:   p,
+	}
 
 	c := t.nodes[parent].container
 	if len(c.children) == 0 {

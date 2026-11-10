@@ -24,10 +24,7 @@ func TestPickerColumnSpacing(t *testing.T) {
 		t.Run(fmt.Sprintf("hidden=%d", hidden), func(t *testing.T) {
 			cols := make([]string, hidden+1)
 			cols[hidden] = strings.Repeat("x", 100)
-			m := sizingPickerModel(t, []*ui.PickerItem{{
-				Display: cols[hidden],
-				Columns: cols,
-			}})
+			m := sizingPickerModel(t, []*ui.PickerItem{{Display: cols[hidden], Columns: cols}})
 			row := stripANSI(rawLineContaining(t, viewContent(m), " > "))
 			// The name fills the row up to its single trailing margin.
 			assert.Contains(t, row, strings.Repeat("x", 39)+" │")
@@ -56,7 +53,10 @@ func BenchmarkPickerColumns(b *testing.B) {
 }
 
 func (s *sizingPickerSource) Load() ui.PickerLoad {
-	return ui.PickerLoad{Items: s.items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: s.items,
+		Stop:  func() {},
+	}
 }
 
 func (*sizingPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {}

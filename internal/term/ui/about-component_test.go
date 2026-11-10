@@ -30,7 +30,10 @@ func TestAbout(t *testing.T) {
 	}
 
 	t.Run("shows name and license", func(t *testing.T) {
-		m := open(t, geom.Size{Width: 80, Height: 24})
+		m := open(t, geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "Thom's Own Editor")
 		assert.Contains(t, out, "MIT License")
@@ -44,7 +47,10 @@ func TestAbout(t *testing.T) {
 	})
 
 	t.Run("dismissed by a key press", func(t *testing.T) {
-		m := open(t, geom.Size{Width: 80, Height: 24})
+		m := open(t, geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		assert.Contains(t, stripANSI(viewContent(m)), "MIT License")
 
 		m = sendKey(m, 'q')
@@ -52,7 +58,10 @@ func TestAbout(t *testing.T) {
 	})
 
 	t.Run("fits a small screen", func(t *testing.T) {
-		m := open(t, geom.Size{Width: 20, Height: 6})
+		m := open(t, geom.Size{
+			Width:  20,
+			Height: 6,
+		})
 		out := stripANSI(viewContent(m))
 		for line := range strings.SplitSeq(out, "\n") {
 			assert.LessOrEqual(t, len([]rune(line)), 20)
@@ -60,7 +69,10 @@ func TestAbout(t *testing.T) {
 	})
 
 	t.Run("wheel does not scroll behind it", func(t *testing.T) {
-		m := open(t, geom.Size{Width: 80, Height: 24})
+		m := open(t, geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		before := stripANSI(viewContent(m))
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
@@ -73,7 +85,10 @@ func TestAbout(t *testing.T) {
 	})
 
 	t.Run("dismissed by a click", func(t *testing.T) {
-		m := open(t, geom.Size{Width: 80, Height: 24})
+		m := open(t, geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		m2, _ := m.Update(tea.MouseClickMsg{
 			X:      40,
 			Y:      12,

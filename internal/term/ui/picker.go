@@ -463,7 +463,10 @@ func (p *Picker) scheduleFileRefresh(paths ...string) tea.Cmd {
 	gen := p.load.refreshGen
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
-		return pickerRefreshMsg{picker: p, gen: gen}
+		return pickerRefreshMsg{
+			picker: p,
+			gen:    gen,
+		}
 	}
 }
 
@@ -703,7 +706,10 @@ func (p *Picker) resetMatchesFromItems() {
 	p.list.matched = p.list.matched[:0]
 	for i, item := range p.list.items {
 		p.list.matched = append(
-			p.list.matched, pickerMatch{item: item, itemIndex: i},
+			p.list.matched, pickerMatch{
+				item:      item,
+				itemIndex: i,
+			},
 		)
 	}
 	p.insertSections()
@@ -737,7 +743,11 @@ func (p *Picker) dynamicTriggerCmd() tea.Cmd {
 	p.load.loading = true
 	return func() tea.Msg {
 		time.Sleep(pickerDynamicDelay)
-		return pickerDynamicTriggerMsg{picker: p, gen: gen, query: q}
+		return pickerDynamicTriggerMsg{
+			picker: p,
+			gen:    gen,
+			query:  q,
+		}
 	}
 }
 

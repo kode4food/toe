@@ -27,7 +27,10 @@ func SelectWithinRegex(e *view.Editor, pattern string) error {
 	primary := 0
 	for i, r := range sel.Ranges() {
 		from, to := r.From(), r.To()
-		slice, err := text.Slice(core.Span{From: from, To: to})
+		slice, err := text.Slice(core.Span{
+			From: from,
+			To:   to,
+		})
 		if err != nil {
 			continue
 		}
@@ -35,7 +38,10 @@ func SelectWithinRegex(e *view.Editor, pattern string) error {
 		for _, loc := range re.FindAllStringIndex(s, -1) {
 			start := from + byteOffsetToRuneOffset(s, loc[0])
 			end := from + byteOffsetToRuneOffset(s, loc[1])
-			out = append(out, core.Range{Anchor: start, Head: end})
+			out = append(out, core.Range{
+				Anchor: start,
+				Head:   end,
+			})
 		}
 		if i == sel.PrimaryIndex() && len(out) > 0 {
 			primary = len(out) - 1
@@ -72,7 +78,10 @@ func SplitSelectionByRegex(e *view.Editor, pattern string) error {
 	primary := 0
 	for i, r := range sel.Ranges() {
 		from, to := r.From(), r.To()
-		slice, err := text.Slice(core.Span{From: from, To: to})
+		slice, err := text.Slice(core.Span{
+			From: from,
+			To:   to,
+		})
 		if err != nil {
 			continue
 		}

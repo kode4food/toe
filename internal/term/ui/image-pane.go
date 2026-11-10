@@ -100,7 +100,11 @@ func LoadImage(path string) (*Image, error) {
 	}
 	hash := fnv.New32a()
 	_, _ = hash.Write(data)
-	return &Image{Image: img, id: hash.Sum32(), format: format}, nil
+	return &Image{
+		Image:  img,
+		id:     hash.Sum32(),
+		format: format,
+	}, nil
 }
 
 // NewImagePane loads path into an image pane
@@ -114,7 +118,10 @@ func NewImagePane(e *view.Editor, path string) (*ImagePane, error) {
 		return nil, err
 	}
 	return &ImagePane{
-		editor: e, path: abs, image: img, dirty: true,
+		editor:   e,
+		path:     abs,
+		image:    img,
+		dirty:    true,
 		viewport: viewportState{zoom: defaultImageZoom},
 	}, nil
 }
@@ -122,7 +129,10 @@ func NewImagePane(e *view.Editor, path string) (*ImagePane, error) {
 // Size returns the image bounds in pixels
 func (i *Image) Size() geom.Size {
 	b := i.Bounds()
-	return geom.Size{Width: b.Dx(), Height: b.Dy()}
+	return geom.Size{
+		Width:  b.Dx(),
+		Height: b.Dy(),
+	}
 }
 
 // ContentID returns a stable identifier for the decoded image bytes
@@ -375,9 +385,12 @@ func (p *ImagePane) setZoom(zoom int) {
 func (p *ImagePane) panBound() geom.Point {
 	contentH := max(p.area.Height-1, 0)
 	cells := imagePaneCellSize(imagePaneCellSizeArgs{
-		pane:     p,
-		maxCells: geom.Size{Width: p.area.Width, Height: contentH},
-		pixels:   p.image.Size(),
+		pane: p,
+		maxCells: geom.Size{
+			Width:  p.area.Width,
+			Height: contentH,
+		},
+		pixels: p.image.Size(),
 	})
 	visW := min(cells.Width, p.area.Width)
 	visH := min(cells.Height, contentH)
@@ -399,7 +412,10 @@ func (p *ImagePane) restorePan(session *view.PaneSession) {
 	if !okX && !okY {
 		return
 	}
-	p.viewport.pan = geom.Point{X: x, Y: y}
+	p.viewport.pan = geom.Point{
+		X: x,
+		Y: y,
+	}
 	p.dirty = true
 }
 

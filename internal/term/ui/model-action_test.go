@@ -229,7 +229,10 @@ func TestLocationAction(t *testing.T) {
 				{
 					Path: target,
 					From: view.ServerPosition{Line: targetLine},
-					To:   view.ServerPosition{Line: targetLine, Character: 6},
+					To: view.ServerPosition{
+						Line:      targetLine,
+						Character: 6,
+					},
 				},
 			},
 		})
@@ -263,15 +266,24 @@ func TestLocationAction(t *testing.T) {
 			locations: []view.Location{
 				{
 					Path: target,
-					From: view.ServerPosition{Line: 0, Character: 3},
-					To:   view.ServerPosition{Line: 0, Character: 3},
+					From: view.ServerPosition{
+						Line:      0,
+						Character: 3,
+					},
+					To: view.ServerPosition{
+						Line:      0,
+						Character: 3,
+					},
 				},
 			},
 		})
 		m := renderedModel(e)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 0, Button: tea.MouseLeft, Mod: tea.ModCtrl,
+			X:      10,
+			Y:      0,
+			Button: tea.MouseLeft,
+			Mod:    tea.ModCtrl,
 		})
 		_ = m2
 
@@ -299,13 +311,25 @@ func TestLocationAction(t *testing.T) {
 			locations: []view.Location{
 				{
 					Path: first,
-					From: view.ServerPosition{Line: 0, Character: 2},
-					To:   view.ServerPosition{Line: 0, Character: 5},
+					From: view.ServerPosition{
+						Line:      0,
+						Character: 2,
+					},
+					To: view.ServerPosition{
+						Line:      0,
+						Character: 5,
+					},
 				},
 				{
 					Path: second,
-					From: view.ServerPosition{Line: 0, Character: 3},
-					To:   view.ServerPosition{Line: 0, Character: 6},
+					From: view.ServerPosition{
+						Line:      0,
+						Character: 3,
+					},
+					To: view.ServerPosition{
+						Line:      0,
+						Character: 6,
+					},
 				},
 			},
 		})
@@ -333,7 +357,10 @@ func TestLocationAction(t *testing.T) {
 		assert.NotNil(t, v)
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 2, sel.Primary().Cursor(doc.Text()))
-		assert.Equal(t, core.Range{Anchor: 5, Head: 2}, sel.Primary())
+		assert.Equal(t, core.Range{
+			Anchor: 5,
+			Head:   2,
+		}, sel.Primary())
 	})
 }
 
@@ -351,7 +378,9 @@ func TestSymbolPickerAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{
 			symbols: []view.Symbol{
 				{
-					Name: "main", Kind: "function", Container: "package",
+					Name:      "main",
+					Kind:      "function",
+					Container: "package",
 					Location: view.Location{
 						Path: path,
 						From: view.ServerPosition{
@@ -413,7 +442,8 @@ func TestSymbolPickerAction(t *testing.T) {
 		e.SetLanguageServerController(&locationController{
 			symbols: []view.Symbol{
 				{
-					Name: "WorkspaceMain", Kind: "function",
+					Name:      "WorkspaceMain",
+					Kind:      "function",
 					Container: "workspace",
 					Location: view.Location{
 						Path: target,
@@ -520,8 +550,7 @@ func TestSymbolPickerAction(t *testing.T) {
 			assert.NoError(t, err)
 			e.SetLanguageServerController(&locationController{
 				symbols: []view.Symbol{
-					{Name: "MySymbol", Kind: tc.kind,
-						Location: view.Location{Path: path}},
+					{Name: "MySymbol", Kind: tc.kind, Location: view.Location{Path: path}},
 				},
 			})
 			km := command.NewKeymaps()
@@ -679,10 +708,7 @@ func TestCodeActionPickerAction(t *testing.T) {
 		assert.NoError(t, err)
 		ctl := &locationController{
 			actions: []view.CodeAction{
-				{
-					ID: "session:0", Title: "Fix old",
-					Kind: "quickfix", Server: "session",
-				},
+				{ID: "session:0", Title: "Fix old", Kind: "quickfix", Server: "session"},
 			},
 		}
 		e.SetLanguageServerController(ctl)
@@ -749,7 +775,10 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 	t.Run("selects preferred action", func(t *testing.T) {
 		m, ctl := codeActionModel(t, codeActions(
-			codeActionsArgs{count: 12, preferred: 7},
+			codeActionsArgs{
+				count:     12,
+				preferred: 7,
+			},
 		))
 
 		m = sendKey(m, 'a')
@@ -765,7 +794,10 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 	t.Run("wraps upward", func(t *testing.T) {
 		m, ctl := codeActionModel(t, codeActions(
-			codeActionsArgs{count: 2, preferred: -1},
+			codeActionsArgs{
+				count:     2,
+				preferred: -1,
+			},
 		))
 
 		m = sendKey(m, 'a')
@@ -777,7 +809,10 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 	t.Run("typing dismisses menu", func(t *testing.T) {
 		m, ctl := codeActionModel(t, codeActions(
-			codeActionsArgs{count: 1, preferred: -1},
+			codeActionsArgs{
+				count:     1,
+				preferred: -1,
+			},
 		))
 
 		m = sendKey(m, 'a')
@@ -789,13 +824,18 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 	t.Run("click applies action", func(t *testing.T) {
 		m, ctl := codeActionModel(t, codeActions(
-			codeActionsArgs{count: 4, preferred: -1},
+			codeActionsArgs{
+				count:     4,
+				preferred: -1,
+			},
 		))
 
 		m = sendKey(m, 'a')
 		m.View()
 		_, _ = m.Update(tea.MouseClickMsg{
-			X: 9, Y: 4, Button: tea.MouseLeft,
+			X:      9,
+			Y:      4,
+			Button: tea.MouseLeft,
 		})
 
 		assert.Equal(t, "session:2", ctl.applied)
@@ -803,17 +843,24 @@ func TestCodeActionPickerAction(t *testing.T) {
 
 	t.Run("wheel scrolls menu", func(t *testing.T) {
 		m, ctl := codeActionModel(t, codeActions(
-			codeActionsArgs{count: 14, preferred: -1},
+			codeActionsArgs{
+				count:     14,
+				preferred: -1,
+			},
 		))
 
 		m = sendKey(m, 'a')
 		m.View()
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 9, Y: 4, Button: tea.MouseWheelDown,
+			X:      9,
+			Y:      4,
+			Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseClickMsg{
-			X: 9, Y: 10, Button: tea.MouseLeft,
+			X:      9,
+			Y:      10,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
@@ -883,8 +930,14 @@ func TestGotoActions(t *testing.T) {
 				locations: []view.Location{
 					{
 						Path: target,
-						From: view.ServerPosition{Line: 0, Character: 3},
-						To:   view.ServerPosition{Line: 0, Character: 3},
+						From: view.ServerPosition{
+							Line:      0,
+							Character: 3,
+						},
+						To: view.ServerPosition{
+							Line:      0,
+							Character: 3,
+						},
 					},
 				},
 			})
@@ -911,8 +964,14 @@ func TestGotoActions(t *testing.T) {
 			locations: []view.Location{
 				{
 					Path: target,
-					From: view.ServerPosition{Line: 0, Character: 3},
-					To:   view.ServerPosition{Line: 0, Character: 3},
+					From: view.ServerPosition{
+						Line:      0,
+						Character: 3,
+					},
+					To: view.ServerPosition{
+						Line:      0,
+						Character: 3,
+					},
 				},
 			},
 		})

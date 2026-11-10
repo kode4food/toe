@@ -27,7 +27,11 @@ type (
 var _ BufferOverlayComponent = (*hoverComponent)(nil)
 
 func newHoverComponent(ec *EditorComponent, anchor hoverAnchor, text string) *hoverComponent {
-	return &hoverComponent{editor: ec, anchor: anchor, text: text}
+	return &hoverComponent{
+		editor: ec,
+		anchor: anchor,
+		text:   text,
+	}
 }
 
 // HandleEvent dismisses the popup on any key or click
@@ -61,7 +65,10 @@ func (h *hoverComponent) Layout(cx *Context, screen geom.Size) (geom.Area, bool)
 	maxW := max(screen.Width-x, 30)
 	maxH := min(screen.Height-y, 15)
 	lines, size := measureTextPopup(
-		geom.Size{Width: maxW, Height: maxH}, h.text,
+		geom.Size{
+			Width:  maxW,
+			Height: maxH,
+		}, h.text,
 	)
 	if x+size.Width > screen.Width {
 		x = max(screen.Width-size.Width, 0)
@@ -71,7 +78,9 @@ func (h *hoverComponent) Layout(cx *Context, screen geom.Size) (geom.Area, bool)
 	}
 	h.lines = lines
 	return geom.Area{
-		X: x, Y: y, Size: size,
+		X:    x,
+		Y:    y,
+		Size: size,
 	}, true
 }
 

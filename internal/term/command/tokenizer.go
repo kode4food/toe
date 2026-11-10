@@ -87,7 +87,10 @@ var (
 
 // NewTokenizer returns a tokenizer for command-line input
 func NewTokenizer(input string, validate bool) *Tokenizer {
-	return &Tokenizer{input: input, validate: validate}
+	return &Tokenizer{
+		input:    input,
+		validate: validate,
+	}
 }
 
 // Error describes where the command line failed to tokenize
@@ -305,5 +308,8 @@ func SplitCommandLine(input string) (Line, bool) {
 	complete := name == "" ||
 		(strings.TrimSpace(rest) == "" && !strings.HasSuffix(input, " ") &&
 			!strings.HasSuffix(input, "\t"))
-	return Line{Name: name, Rest: rest}, complete
+	return Line{
+		Name: name,
+		Rest: rest,
+	}, complete
 }

@@ -52,7 +52,10 @@ func TestHookInsertOpen(t *testing.T) {
 
 	t.Run("forward single-grapheme after open", func(t *testing.T) {
 		doc := core.NewRope("( ")
-		r := core.Range{Anchor: 0, Head: 1}
+		r := core.Range{
+			Anchor: 0,
+			Head:   1,
+		}
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 2, next.Head)
@@ -61,7 +64,10 @@ func TestHookInsertOpen(t *testing.T) {
 
 	t.Run("backward single-grapheme after open", func(t *testing.T) {
 		doc := core.NewRope("( ")
-		r := core.Range{Anchor: 1, Head: 0}
+		r := core.Range{
+			Anchor: 1,
+			Head:   0,
+		}
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 1, next.Head)
@@ -70,7 +76,10 @@ func TestHookInsertOpen(t *testing.T) {
 
 	t.Run("forward multi-char inserts pair", func(t *testing.T) {
 		doc := core.NewRope("()  ")
-		r := core.Range{Anchor: 0, Head: 3}
+		r := core.Range{
+			Anchor: 0,
+			Head:   3,
+		}
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 0, next.Anchor)
@@ -79,7 +88,10 @@ func TestHookInsertOpen(t *testing.T) {
 
 	t.Run("backward multi-char inserts pair", func(t *testing.T) {
 		doc := core.NewRope("()  ")
-		r := core.Range{Anchor: 3, Head: 0}
+		r := core.Range{
+			Anchor: 3,
+			Head:   0,
+		}
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 1, next.Head)
@@ -89,7 +101,10 @@ func TestHookInsertOpen(t *testing.T) {
 	// 👋🏽 is 2 code points but one grapheme
 	t.Run("fwd multi-rune single grapheme", func(t *testing.T) {
 		doc := core.NewRope("👋🏽 ")
-		r := core.Range{Anchor: 0, Head: 2}
+		r := core.Range{
+			Anchor: 0,
+			Head:   2,
+		}
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.GreaterOrEqual(t, next.Head, next.Anchor)
@@ -97,7 +112,10 @@ func TestHookInsertOpen(t *testing.T) {
 
 	t.Run("bwd multi-rune single grapheme", func(t *testing.T) {
 		doc := core.NewRope("👋🏽 ")
-		r := core.Range{Anchor: 2, Head: 0}
+		r := core.Range{
+			Anchor: 2,
+			Head:   0,
+		}
 		_, next, ok := core.HookInsert(doc, r, '(', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		_ = next
@@ -123,7 +141,10 @@ func TestHookInsertClose(t *testing.T) {
 
 	t.Run("skips with single-grapheme forward sel", func(t *testing.T) {
 		doc := core.NewRope(")x")
-		r := core.Range{Anchor: 0, Head: 1}
+		r := core.Range{
+			Anchor: 0,
+			Head:   1,
+		}
 		change, next, ok := core.HookInsert(doc, r, ')', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 0, change.From)
@@ -134,7 +155,10 @@ func TestHookInsertClose(t *testing.T) {
 
 	t.Run("skips with multi-char forward selection", func(t *testing.T) {
 		doc := core.NewRope("))x")
-		r := core.Range{Anchor: 0, Head: 2}
+		r := core.Range{
+			Anchor: 0,
+			Head:   2,
+		}
 		change, next, ok := core.HookInsert(doc, r, ')', core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 1, change.From)
@@ -237,7 +261,10 @@ func TestHookDelete(t *testing.T) {
 
 	t.Run("pair delete: forward single-grapheme", func(t *testing.T) {
 		doc := core.NewRope("()")
-		r := core.Range{Anchor: 1, Head: 2}
+		r := core.Range{
+			Anchor: 1,
+			Head:   2,
+		}
 		del, next, ok := core.HookDelete(doc, r, core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 0, del.From)
@@ -248,7 +275,10 @@ func TestHookDelete(t *testing.T) {
 
 	t.Run("pair delete: backward single-grapheme", func(t *testing.T) {
 		doc := core.NewRope("()")
-		r := core.Range{Anchor: 2, Head: 1}
+		r := core.Range{
+			Anchor: 2,
+			Head:   1,
+		}
 		del, _, ok := core.HookDelete(doc, r, core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 0, del.From)
@@ -257,7 +287,10 @@ func TestHookDelete(t *testing.T) {
 
 	t.Run("pair delete: multi-char backward", func(t *testing.T) {
 		doc := core.NewRope("()x")
-		r := core.Range{Anchor: 3, Head: 1}
+		r := core.Range{
+			Anchor: 3,
+			Head:   1,
+		}
 		del, _, ok := core.HookDelete(doc, r, core.DefaultAutoPairs())
 		assert.True(t, ok)
 		assert.Equal(t, 0, del.From)

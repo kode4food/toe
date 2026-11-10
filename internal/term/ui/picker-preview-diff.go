@@ -75,7 +75,10 @@ const (
 )
 
 func (p *Picker) diffBaseFor(vc view.VersionControl, path string, staged bool) *previewDocEntry {
-	key := diffBaseKey{path: path, staged: staged}
+	key := diffBaseKey{
+		path:   path,
+		staged: staged,
+	}
 	if entry, ok := p.preview.diffBaseCache[key]; ok {
 		return entry
 	}
@@ -145,7 +148,11 @@ func allLines(text core.Rope, kind diffLineKind, mark scrollMarkKind) []diffPrev
 	n := text.LenLines()
 	out := make([]diffPreviewLine, 0, n)
 	for l := range n {
-		out = append(out, diffPreviewLine{kind: kind, mark: mark, line: l})
+		out = append(out, diffPreviewLine{
+			kind: kind,
+			mark: mark,
+			line: l,
+		})
 	}
 	return out
 }
@@ -208,7 +215,10 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 	rr.colStart = hOff
 
 	for row := range args.area.Height {
-		at := geom.Point{X: args.area.X, Y: args.area.Y + row}
+		at := geom.Point{
+			X: args.area.X,
+			Y: args.area.Y + row,
+		}
 		buf.FillRange(at, paneW, fillTUI)
 		buf.PatchBgRange(at, paneW, popupBg)
 	}
@@ -242,7 +252,10 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 			bg = removedBg
 		}
 		buf.SetString(
-			geom.Point{X: args.area.X, Y: args.area.Y + row}, sign, signStyle,
+			geom.Point{
+				X: args.area.X,
+				Y: args.area.Y + row,
+			}, sign, signStyle,
 		)
 
 		rr.maxRows = args.area.Height - row + skip
@@ -253,7 +266,10 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		rendered := rr.rows()
 		for i := min(skip, len(rendered)); i < len(rendered); i++ {
 			cr := rendered[i]
-			at := geom.Point{X: contentX, Y: args.area.Y + row}
+			at := geom.Point{
+				X: contentX,
+				Y: args.area.Y + row,
+			}
 			line := cr
 			if i > 0 {
 				line = prefix
@@ -275,9 +291,15 @@ func renderDiffPreviewInto(buf *tui.Buffer, args *diffPreviewRender) {
 		drawDiffPreviewScrollbar(args, buf, start)
 	}
 	applyRulers(applyRulersArgs{
-		buf:     buf,
-		at:      geom.Point{X: contentX, Y: args.area.Y},
-		size:    geom.Size{Width: contentW, Height: args.area.Height},
+		buf: buf,
+		at: geom.Point{
+			X: contentX,
+			Y: args.area.Y,
+		},
+		size: geom.Size{
+			Width:  contentW,
+			Height: args.area.Height,
+		},
 		rulers:  args.opts.Rulers,
 		rulerBg: args.styles.rulerBg,
 	})

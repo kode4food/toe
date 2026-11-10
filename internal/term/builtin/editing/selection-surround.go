@@ -73,7 +73,10 @@ func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 		var found bool
 		if ch == 'm' {
 			res, found = syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-				Source: core.Source{Text: src, Lang: lang},
+				Source: core.Source{
+					Text: src,
+					Lang: lang,
+				},
 				Cursor: cursor,
 				Skip:   skip,
 			})
@@ -99,7 +102,10 @@ func syntaxSurroundPos(e *view.Editor, ch rune) ([]int, bool) {
 			if err != nil {
 				return nil, false
 			}
-			res = syntax.Range{From: pair.From(), To: pair.To()}
+			res = syntax.Range{
+				From: pair.From(),
+				To:   pair.To(),
+			}
 		}
 		anchor, head := min(res.From, res.To), max(res.From, res.To)
 		for _, p := range positions {

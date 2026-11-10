@@ -111,7 +111,10 @@ func (b *Buffer) RenderToANSI() string {
 
 func (a *ansiEmitter) emitStyle(s Style) {
 	a.emitModifiers(s.modifier)
-	a.emitColors(colorPair{fg: s.fg, bg: s.bg})
+	a.emitColors(colorPair{
+		fg: s.fg,
+		bg: s.bg,
+	})
 	a.emitUnderline(s.underlineColor, s.underlineStyle)
 }
 

@@ -162,7 +162,10 @@ func (p *PromptComponent) ensureCompletionVisible() {
 }
 
 func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if msg.Button == tea.MouseLeft && p.beginEdgeDrag(at) {
 		return consumed()
 	}
@@ -174,7 +177,10 @@ func (p *PromptComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 }
 
 func (p *PromptComponent) handleMouseWheel(msg tea.MouseWheelMsg) EventResult {
-	if !p.completion.bounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
+	if !p.completion.bounds.Contains(geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}) {
 		return consumed()
 	}
 	p.completion.list.wheel(msg.Button, p.context.Editor.Options().ScrollLines)
@@ -229,7 +235,10 @@ func completeCommandNames(cx *Context, input string) []promptCompletion {
 				continue
 			}
 			seen[name] = true
-			res, ok := fuzzyMatch(fuzzyMatchArgs{pattern: input, text: name})
+			res, ok := fuzzyMatch(fuzzyMatchArgs{
+				pattern: input,
+				text:    name,
+			})
 			if !ok || res.Score < 0 {
 				continue
 			}

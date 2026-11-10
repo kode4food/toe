@@ -78,7 +78,10 @@ func (c *Client) DidChangeDocument(
 		next := core.NewRope(doc.Text)
 		var err error
 		changes, err = incrementalChanges(
-			editedText{before: change.Before, after: next}, change.Changes, c.OffsetEncoding(),
+			editedText{
+				before: change.Before,
+				after:  next,
+			}, change.Changes, c.OffsetEncoding(),
 		)
 		if err != nil {
 			return false, err
@@ -330,7 +333,10 @@ func lspPosition(
 	if err != nil {
 		return protocol.Position{}, err
 	}
-	text, err := doc.SliceString(core.Span{From: lineStart, To: pos})
+	text, err := doc.SliceString(core.Span{
+		From: lineStart,
+		To:   pos,
+	})
 	if err != nil {
 		return protocol.Position{}, err
 	}

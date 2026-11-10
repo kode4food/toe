@@ -15,7 +15,10 @@ type revisedText struct {
 func diffChangeSet(oldText core.Rope, newText string) (core.ChangeSet, error) {
 	oldRunes := []rune(oldText.String())
 	newRunes := []rune(newText)
-	pfx := commonPrefix(revisedText{before: oldRunes, after: newRunes})
+	pfx := commonPrefix(revisedText{
+		before: oldRunes,
+		after:  newRunes,
+	})
 	sfx := commonSuffix(revisedText{
 		before: oldRunes[pfx:],
 		after:  newRunes[pfx:],
@@ -24,7 +27,10 @@ func diffChangeSet(oldText core.Rope, newText string) (core.ChangeSet, error) {
 	to := len(oldRunes) - sfx
 	repl := string(newRunes[pfx : len(newRunes)-sfx])
 	return core.NewChangeSetFromChanges(oldText, []core.Change{
-		core.TextChange(core.Span{From: from, To: to}, repl),
+		core.TextChange(core.Span{
+			From: from,
+			To:   to,
+		}, repl),
 	})
 }
 

@@ -24,7 +24,10 @@ const (
 
 // PointRange returns an empty range at head
 func PointRange(head int) Range {
-	return Range{Anchor: head, Head: head}
+	return Range{
+		Anchor: head,
+		Head:   head,
+	}
 }
 
 // From is the lower of anchor and head
@@ -50,7 +53,10 @@ func (r Range) Len() int {
 
 // Span is the character interval the range covers, ignoring direction
 func (r Range) Span() Span {
-	return Span{From: r.From(), To: r.To()}
+	return Span{
+		From: r.From(),
+		To:   r.To(),
+	}
 }
 
 // Len is the character count the span covers
@@ -78,7 +84,10 @@ func (r Range) Direction() Direction {
 
 // Flip swaps anchor and head, reversing direction
 func (r Range) Flip() Range {
-	return Range{Anchor: r.Head, Head: r.Anchor}
+	return Range{
+		Anchor: r.Head,
+		Head:   r.Anchor,
+	}
 }
 
 // WithDirection flips the range only when it faces the other way
@@ -120,15 +129,24 @@ func (r Range) LineSpan(text Rope) (Span, error) {
 	if err != nil {
 		return Span{}, err
 	}
-	return Span{From: start, To: end}, nil
+	return Span{
+		From: start,
+		To:   end,
+	}, nil
 }
 
 // Extend grows the range to also cover the span, keeping its direction
 func (r Range) Extend(s Span) Range {
 	if r.Anchor <= r.Head {
-		return Range{Anchor: min(r.Anchor, s.From), Head: max(r.Head, s.To)}
+		return Range{
+			Anchor: min(r.Anchor, s.From),
+			Head:   max(r.Head, s.To),
+		}
 	}
-	return Range{Anchor: max(r.Anchor, s.To), Head: min(r.Head, s.From)}
+	return Range{
+		Anchor: max(r.Anchor, s.To),
+		Head:   min(r.Head, s.From),
+	}
 }
 
 // Slice returns the rope sub-range covered by this range
@@ -150,7 +168,10 @@ func (r Range) GraphemeAligned(doc Rope) Range {
 	switch {
 	case r.Anchor == r.Head:
 		pos := EnsureGraphemeBoundaryPrev(doc, r.Anchor)
-		return Range{Anchor: pos, Head: pos}
+		return Range{
+			Anchor: pos,
+			Head:   pos,
+		}
 	case r.Anchor < r.Head:
 		return Range{
 			Anchor: EnsureGraphemeBoundaryPrev(doc, r.Anchor),
@@ -170,7 +191,10 @@ func (r Range) MinWidth1(doc Rope) Range {
 	if r.Anchor != r.Head {
 		return r
 	}
-	return Range{Anchor: r.Anchor, Head: NextGraphemeBoundary(doc, r.Head)}
+	return Range{
+		Anchor: r.Anchor,
+		Head:   NextGraphemeBoundary(doc, r.Head),
+	}
 }
 
 // IsSingleGrapheme reports whether this range covers exactly one grapheme cluster
@@ -204,9 +228,15 @@ func (r Range) PutCursor(doc Rope, charIdx int, extend bool) Range {
 		anchor = PrevGraphemeBoundary(doc, r.Anchor)
 	}
 	if anchor <= charIdx {
-		return Range{Anchor: anchor, Head: NextGraphemeBoundary(doc, charIdx)}
+		return Range{
+			Anchor: anchor,
+			Head:   NextGraphemeBoundary(doc, charIdx),
+		}
 	}
-	return Range{Anchor: anchor, Head: charIdx}
+	return Range{
+		Anchor: anchor,
+		Head:   charIdx,
+	}
 }
 
 // CursorLine returns the line number that the block cursor is on
@@ -217,7 +247,13 @@ func (r Range) CursorLine(doc Rope) (int, error) {
 // Merge returns the range spanning both, backward only when both are
 func (r Range) Merge(q Range) Range {
 	if r.Anchor > r.Head && q.Anchor > q.Head {
-		return Range{Anchor: max(r.Anchor, q.Anchor), Head: min(r.Head, q.Head)}
+		return Range{
+			Anchor: max(r.Anchor, q.Anchor),
+			Head:   min(r.Head, q.Head),
+		}
 	}
-	return Range{Anchor: min(r.From(), q.From()), Head: max(r.To(), q.To())}
+	return Range{
+		Anchor: min(r.From(), q.From()),
+		Head:   max(r.To(), q.To()),
+	}
 }

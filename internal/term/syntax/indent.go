@@ -34,10 +34,16 @@ func IndentForNewline(args IndentForNewlineArgs) (string, bool) {
 		return "", false
 	}
 	src := args.Text.String()
-	at := core.LinePos{Line: args.Line, Pos: args.Pos}
+	at := core.LinePos{
+		Line: args.Line,
+		Pos:  args.Pos,
+	}
 	indent := leadingIndent(src, args.Text, args.Line)
 	body := strings.TrimSpace(linePrefix(src, args.Text, at))
-	if outdentsLine(outdentLineArgs{lang: args.Lang, body: body}) {
+	if outdentsLine(outdentLineArgs{
+		lang: args.Lang,
+		body: body,
+	}) {
 		indent = dropIndent(dropIndentArgs{
 			indent: indent,
 			unit:   args.Style.AsStr(),

@@ -18,8 +18,20 @@ func BenchmarkKittyPNGEncoding(b *testing.B) {
 		name string
 		area geom.Size
 	}{
-		{name: "scrollbar", area: geom.Size{Width: 9, Height: 456}},
-		{name: "large", area: geom.Size{Width: 400, Height: 300}},
+		{
+			name: "scrollbar",
+			area: geom.Size{
+				Width:  9,
+				Height: 456,
+			},
+		},
+		{
+			name: "large",
+			area: geom.Size{
+				Width:  400,
+				Height: 300,
+			},
+		},
 	} {
 		pixels := image.NewRGBA(image.Rect(0, 0, size.area.Width, size.area.Height))
 		for y := range size.area.Height {

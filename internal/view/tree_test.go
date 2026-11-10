@@ -13,7 +13,10 @@ import (
 func TestSeparatorAt(t *testing.T) {
 	t.Run("vertical separator detected", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 
@@ -28,7 +31,10 @@ func TestSeparatorAt(t *testing.T) {
 
 	t.Run("no hit inside pane content", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 
@@ -39,7 +45,10 @@ func TestSeparatorAt(t *testing.T) {
 
 	t.Run("horizontal separator detected", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		tree := e.Tree()
 
@@ -54,7 +63,10 @@ func TestSeparatorAt(t *testing.T) {
 
 	t.Run("no separator when single pane", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		tree := e.Tree()
 
 		_, ok := tree.SeparatorAt(geom.Point{})
@@ -65,7 +77,10 @@ func TestSeparatorAt(t *testing.T) {
 func TestTreeMaximized(t *testing.T) {
 	t.Run("restores split layout", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		panes := tree.Traverse()
@@ -75,7 +90,10 @@ func TestTreeMaximized(t *testing.T) {
 
 		assert.True(t, tree.Maximized())
 		assert.Equal(t,
-			geom.Area{Width: 80, Height: 24},
+			geom.Area{
+				Width:  80,
+				Height: 24,
+			},
 			e.FocusedPane().Area(),
 		)
 		visible := 0
@@ -96,7 +114,10 @@ func TestTreeMaximized(t *testing.T) {
 
 	t.Run("focus change restores layout", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		panes := tree.Traverse()
@@ -114,7 +135,10 @@ func TestTreeMaximized(t *testing.T) {
 
 	t.Run("transpose restores layout", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		tree.ToggleMaximized()
@@ -126,7 +150,10 @@ func TestTreeMaximized(t *testing.T) {
 
 	t.Run("swap restores layout", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		tree.ToggleMaximized()
@@ -138,7 +165,10 @@ func TestTreeMaximized(t *testing.T) {
 
 	t.Run("resize restores layout", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		tree.ToggleMaximized()
@@ -152,7 +182,10 @@ func TestTreeMaximized(t *testing.T) {
 func TestMoveSeparator(t *testing.T) {
 	t.Run("vertical split resizes panes", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 
@@ -174,7 +207,10 @@ func TestMoveSeparator(t *testing.T) {
 
 	t.Run("horizontal split resizes panes", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		tree := e.Tree()
 
@@ -197,7 +233,10 @@ func TestMoveSeparator(t *testing.T) {
 
 	t.Run("enforces minimum pane width", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 
@@ -215,7 +254,10 @@ func TestMoveSeparator(t *testing.T) {
 
 	t.Run("enforces minimum pane height", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		tree := e.Tree()
 
@@ -235,7 +277,10 @@ func TestMoveSeparator(t *testing.T) {
 func TestGrowFocusedWidth(t *testing.T) {
 	t.Run("stalest sibling pays first", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  160,
+			Height: 24,
+		})
 		e.VSplitNew()
 		e.VSplitNew()
 		tree := e.Tree()
@@ -256,7 +301,10 @@ func TestGrowFocusedWidth(t *testing.T) {
 
 	t.Run("spills past a sibling pinned at minimum", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 160, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  160,
+			Height: 24,
+		})
 		e.VSplitNew()
 		e.VSplitNew()
 		tree := e.Tree()
@@ -282,7 +330,10 @@ func TestGrowFocusedWidth(t *testing.T) {
 
 	t.Run("no growth when siblings are at minimum", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 33, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  33,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 
@@ -305,34 +356,49 @@ func TestCanSplit(t *testing.T) {
 
 	t.Run("wide pane allows vertical", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		assert.True(t, e.Tree().CanSplit(view.LayoutVertical))
 	})
 
 	t.Run("tall pane allows horizontal", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		assert.True(t, e.Tree().CanSplit(view.LayoutHorizontal))
 	})
 
 	t.Run("too narrow rejects vertical", func(t *testing.T) {
 		// 2*minPaneWidth+1 = 21, width 20 can't fit two minimum-width panes
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 20, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  20,
+			Height: 24,
+		})
 		assert.False(t, e.Tree().CanSplit(view.LayoutVertical))
 	})
 
 	t.Run("too short rejects horizontal", func(t *testing.T) {
 		// 2*minPaneHeight+1 = 9, height 8 can't fit two minimum-height panes
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 8})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 8,
+		})
 		assert.False(t, e.Tree().CanSplit(view.LayoutHorizontal))
 	})
 
 	t.Run("crowded siblings reject vertical", func(t *testing.T) {
 		// 80 wide with 7 siblings: (80-6)/8 = 9 < 10 (minPaneWidth)
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		for range 6 {
 			e.VSplitNew()
 		}
@@ -341,7 +407,10 @@ func TestCanSplit(t *testing.T) {
 
 	t.Run("crowded siblings reject horizontal", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		for range 5 {
 			e.HSplitNew()
 		}
@@ -352,7 +421,10 @@ func TestCanSplit(t *testing.T) {
 func TestTreeSplitEdges(t *testing.T) {
 	t.Run("same layout inserts sibling", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 24,
+		})
 
 		v2 := e.VSplitNew()
 		assert.NotNil(t, v2)
@@ -366,7 +438,10 @@ func TestTreeSplitEdges(t *testing.T) {
 
 	t.Run("removing nested split collapses parent", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 40,
+		})
 		left := e.FocusedView()
 		assert.NotNil(t, left)
 		right := e.VSplit(left.DocID())
@@ -386,7 +461,10 @@ func TestTreeSplitEdges(t *testing.T) {
 func TestWalkSeparatorsLayouts(t *testing.T) {
 	t.Run("vertical layout and dimensions", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 
 		var seps []view.Separator
@@ -401,7 +479,10 @@ func TestWalkSeparatorsLayouts(t *testing.T) {
 
 	t.Run("horizontal layout and gap row position", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 
 		var seps []view.Separator
@@ -422,7 +503,10 @@ func TestWalkSeparatorsLayouts(t *testing.T) {
 func TestMoveSeparatorEdges(t *testing.T) {
 	t.Run("wrong layout leaves panes unchanged", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		vs := e.Views()
@@ -439,7 +523,10 @@ func TestMoveSeparatorEdges(t *testing.T) {
 
 	t.Run("invalid index leaves panes unchanged", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		tree := e.Tree()
 		vs := e.Views()
@@ -458,7 +545,10 @@ func TestMoveSeparatorEdges(t *testing.T) {
 func TestMoveSeparatorMore(t *testing.T) {
 	t.Run("wrong layout on H container", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		tree := e.Tree()
 		vs := e.Views()
@@ -472,7 +562,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("out of bounds idx vertical", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		vs := e.Views()
@@ -486,9 +579,15 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("usable zero vertical", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
-		e.ResizeTree(geom.Size{Width: 1, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  1,
+			Height: 24,
+		})
 		tree := e.Tree()
 		res, ok := tree.SeparatorAt(geom.Point{})
 		if ok {
@@ -499,9 +598,15 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("usable zero horizontal", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
-		e.ResizeTree(geom.Size{Width: 80, Height: 1})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 1,
+		})
 		tree := e.Tree()
 		res, ok := tree.SeparatorAt(geom.Point{})
 		if ok {
@@ -512,7 +617,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("childIdx=1 runs leftStart loop V", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 24,
+		})
 		e.VSplitNew()
 		e.VSplitNew()
 		tree := e.Tree()
@@ -528,7 +636,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("childIdx=1 runs topStart loop H", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 48})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 48,
+		})
 		e.HSplitNew()
 		e.HSplitNew()
 		tree := e.Tree()
@@ -544,7 +655,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("drag far right clamps right pane V", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		tree := e.Tree()
 		vs := e.Views()
@@ -556,7 +670,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("drag far down clamps bottom pane H", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		tree := e.Tree()
 		vs := e.Views()
@@ -568,7 +685,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("nested V sep init widthOf container", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 40})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 40,
+		})
 		v1ID := e.Tree().Focus()
 		e.VSplitNew()
 		e.Tree().SetFocus(v1ID)
@@ -588,7 +708,10 @@ func TestMoveSeparatorMore(t *testing.T) {
 
 	t.Run("nested H sep init heightOf container", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 60})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 60,
+		})
 		v1ID := e.Tree().Focus()
 		e.HSplitNew()
 		e.Tree().SetFocus(v1ID)
@@ -612,9 +735,18 @@ func TestTreeEdges(t *testing.T) {
 		e := view.NewEditor("/tmp")
 		tree := e.Tree()
 
-		assert.True(t, tree.Resize(geom.Size{Width: 80, Height: 24}))
-		assert.False(t, tree.Resize(geom.Size{Width: 80, Height: 24}))
-		assert.True(t, tree.Resize(geom.Size{Width: 100, Height: 24}))
+		assert.True(t, tree.Resize(geom.Size{
+			Width:  80,
+			Height: 24,
+		}))
+		assert.False(t, tree.Resize(geom.Size{
+			Width:  80,
+			Height: 24,
+		}))
+		assert.True(t, tree.Resize(geom.Size{
+			Width:  100,
+			Height: 24,
+		}))
 	})
 
 	t.Run("invalid ids are ignored", func(t *testing.T) {
@@ -628,7 +760,10 @@ func TestTreeEdges(t *testing.T) {
 
 	t.Run("set focus changes focused view", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		first := e.FocusedView()
 		assert.NotNil(t, first)
 		second := e.VSplitNew()
@@ -645,7 +780,10 @@ func TestTreeEdges(t *testing.T) {
 
 	t.Run("set focus marks old and new view dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		first := e.FocusedView()
 		assert.NotNil(t, first)
 		second := e.VSplitNew()
@@ -685,7 +823,10 @@ func TestTreeEdges(t *testing.T) {
 func TestTreeReplacePane(t *testing.T) {
 	t.Run("keeps position and marks pane dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		id := v.ID()
@@ -701,7 +842,10 @@ func TestTreeReplacePane(t *testing.T) {
 
 	t.Run("does not mark an unfocused pane dirty", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		first := e.FocusedView()
 		assert.NotNil(t, first)
 		e.VSplitNew()
@@ -780,7 +924,10 @@ func TestViewEdges(t *testing.T) {
 func TestResizeFocused(t *testing.T) {
 	t.Run("pushes left pane's right border right", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		leftID := e.Tree().Focus()
 		e.VSplitNew()
 		e.Tree().SetFocus(leftID)
@@ -794,7 +941,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("shrinks left pane via only border", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		leftID := e.Tree().Focus()
 		e.VSplitNew()
 		e.Tree().SetFocus(leftID)
@@ -808,7 +958,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("pushes right pane's left border left", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 		before := e.Views()[1].View.Area().Width
 
@@ -820,7 +973,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("pushes bottom pane's top border up", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		before := e.Views()[1].View.Area().Height
 
@@ -832,7 +988,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("shrinks bottom pane via only border", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.HSplitNew()
 		before := e.Views()[1].View.Area().Height
 
@@ -844,7 +1003,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("resizes against nested sub-container", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 120, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  120,
+			Height: 24,
+		})
 		p0 := e.Tree().Focus()
 		e.VSplitNew() // root(V)[p0, p1], focus p1
 		e.Tree().SetFocus(p0)
@@ -861,7 +1023,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("no matching axis returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 
 		ok := e.Tree().ResizeFocused(view.DirectionDown, 5)
@@ -871,7 +1036,10 @@ func TestResizeFocused(t *testing.T) {
 
 	t.Run("zero delta returns false", func(t *testing.T) {
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		e.VSplitNew()
 
 		ok := e.Tree().ResizeFocused(view.DirectionRight, 0)

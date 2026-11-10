@@ -24,7 +24,10 @@ var defaultAutoPairRunes = [][2]rune{
 func NewAutoPairs(pairs [][2]rune) AutoPairs {
 	m := make(map[rune]Pair, len(pairs)*2)
 	for _, p := range pairs {
-		pair := Pair{Open: p[0], Close: p[1]}
+		pair := Pair{
+			Open:  p[0],
+			Close: p[1],
+		}
 		m[pair.Open] = pair
 		if pair.Open != pair.Close {
 			m[pair.Close] = pair

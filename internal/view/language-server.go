@@ -205,7 +205,10 @@ func (l Location) ResolveRange(text core.Rope) (core.Range, bool) {
 	if !ok {
 		to = from
 	}
-	return core.Range{Anchor: to, Head: from}, true
+	return core.Range{
+		Anchor: to,
+		Head:   from,
+	}, true
 }
 
 // Resolve converts a server position into a character offset in text
@@ -218,7 +221,10 @@ func (p ServerPosition) Resolve(text core.Rope, encoding PositionEncoding) (int,
 	if err != nil {
 		return 0, false
 	}
-	line, err := text.SliceString(core.Span{From: lineStart, To: lineEnd})
+	line, err := text.SliceString(core.Span{
+		From: lineStart,
+		To:   lineEnd,
+	})
 	if err != nil {
 		return 0, false
 	}

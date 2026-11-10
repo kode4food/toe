@@ -117,7 +117,10 @@ func (s *scrollbar) draw(buf *tui.Buffer) {
 func (s *scrollbar) cell(row int) (string, scrollMarkKind) {
 	slots := s.marks[row*scrollbarSlotsPerCell:][:scrollbarSlotsPerCell]
 	kind := scrollMarkNone
-	args := scrollbarGlyphArgs{firstSlot: -1, lastSlot: -1}
+	args := scrollbarGlyphArgs{
+		firstSlot: -1,
+		lastSlot:  -1,
+	}
 	for i, mark := range slots {
 		if mark == scrollMarkNone {
 			continue
@@ -166,14 +169,20 @@ func (s scrollbarGeom) topLineAt(row int) int {
 func (s scrollbarGeom) thumbSpan(topLine int) core.Span {
 	length := s.thumbLen() * scrollbarSlotsPerCell
 	if s.maxTop <= 0 {
-		return core.Span{From: 0, To: length}
+		return core.Span{
+			From: 0,
+			To:   length,
+		}
 	}
 	from := s.slotAt(topLine)
 	if grow := length - (s.slotEnd(topLine+s.rows-1) - from); grow > 0 {
 		from -= grow / 2
 	}
 	from = min(max(from, 0), s.slots()-length)
-	return core.Span{From: from, To: from + length}
+	return core.Span{
+		From: from,
+		To:   from + length,
+	}
 }
 
 func (s scrollbarGeom) thumbLen() int {

@@ -48,10 +48,7 @@ func TestEdit(t *testing.T) {
 
 	t.Run("change selection enters insert", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   2,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 2}}, 0)
 
 		action.ChangeSelection(e)
 
@@ -111,10 +108,7 @@ func TestSelectAll(t *testing.T) {
 func TestCollapseSelection(t *testing.T) {
 	t.Run("range collapses to cursor", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 1,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 1, Head: 3}}, 0)
 
 		action.CollapseSelection(e)
 
@@ -146,10 +140,7 @@ func TestCollapseSelection(t *testing.T) {
 func TestFlipSelections(t *testing.T) {
 	t.Run("forward range becomes backward", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcd")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 1,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 1, Head: 3}}, 0)
 
 		action.FlipSelections(e)
 
@@ -196,10 +187,7 @@ func TestExtendLineBelow(t *testing.T) {
 
 	t.Run("extends again if already full line", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.ExtendLineBelow(e)
 
@@ -242,10 +230,7 @@ func TestSelectLineBelow(t *testing.T) {
 
 	t.Run("backward sel extends downward", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 5,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 5, Head: 3}}, 0)
 
 		action.SelectLineBelow(e)
 
@@ -259,10 +244,7 @@ func TestSelectLineBelow(t *testing.T) {
 		// Start with a line-aligned forward selection (0→3 covers "ab\n"), then extend again so
 		// anchorLine < headLine is reached with cnt > 0
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.SelectLineBelow(e)
 
@@ -290,10 +272,7 @@ func TestSelectLineAbove(t *testing.T) {
 
 	t.Run("backward sel extends upward", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 6,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 6, Head: 3}}, 0)
 
 		action.SelectLineAbove(e)
 
@@ -318,30 +297,21 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 
 	t.Run("splits final line without newline", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		assert.Equal(t,
-			[]core.Range{{
-				Anchor: 0,
-				Head:   2,
-			}, {Anchor: 3, Head: 5}},
+			[]core.Range{{Anchor: 0, Head: 2}, {Anchor: 3, Head: 5}},
 			doc.SelectionFor(v.ID()).Ranges(),
 		)
 	})
 
 	t.Run("invalid range leaves selection", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -357,10 +327,7 @@ func TestSplitSelectionOnNewlineEdges(t *testing.T) {
 func TestDeleteSelection(t *testing.T) {
 	t.Run("deletes selected text", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.DeleteSelection(e)
 
@@ -371,10 +338,7 @@ func TestDeleteSelection(t *testing.T) {
 
 	t.Run("cursor lands at deletion point", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 1,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 1, Head: 3}}, 0)
 
 		action.DeleteSelection(e)
 
@@ -407,10 +371,7 @@ func TestDeleteCharForward(t *testing.T) {
 func TestYank(t *testing.T) {
 	t.Run("copies selection to the clipboard", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.Yank(e)
 
@@ -443,10 +404,7 @@ func TestYank(t *testing.T) {
 
 	t.Run("invalid range is skipped", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 
 		action.Yank(e)
 
@@ -457,10 +415,7 @@ func TestYank(t *testing.T) {
 func TestPasteAfter(t *testing.T) {
 	t.Run("pastes at head of selection", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "xyz")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 1}}, 0)
 		e.Registers().Write('+', []string{"b"})
 
 		action.PasteAfter(e)
@@ -503,10 +458,7 @@ func TestPasteAfter(t *testing.T) {
 
 	t.Run("invalid position leaves text", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 		e.Registers().Write('+', []string{"x"})
 
 		action.PasteAfter(e)
@@ -538,10 +490,7 @@ func TestPasteBefore(t *testing.T) {
 
 	t.Run("linewise invalid range is skipped", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 		e.Registers().Write('+', []string{"x\n"})
 
 		action.PasteBefore(e)
@@ -561,10 +510,7 @@ func TestPasteBefore(t *testing.T) {
 func TestSplitSelectionOnNewline(t *testing.T) {
 	t.Run("splits multiline selection into per-line", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "ab\ncd\nef")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   8,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 8}}, 0)
 
 		action.SplitSelectionOnNewline(e)
 
@@ -627,10 +573,7 @@ func TestNormalMode(t *testing.T) {
 func TestInsertMode(t *testing.T) {
 	t.Run("places cursor at selection start", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abcde")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 2,
-			Head:   4,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 2, Head: 4}}, 0)
 
 		action.InsertMode(e)
 
@@ -725,10 +668,7 @@ func TestAppendToLine(t *testing.T) {
 func TestDeleteSelectionNoYank(t *testing.T) {
 	t.Run("deletes without affecting register", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello world")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 		e.Registers().Write('"', []string{"saved"})
 
 		action.DeleteSelectionNoYank(e)
@@ -744,10 +684,7 @@ func TestChangeSelectionLinewise(t *testing.T) {
 	t.Run("linewise change opens blank line above", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello\nworld")
 		// Select full first line including newline (linewise)
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   6,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 6}}, 0)
 
 		action.ChangeSelection(e)
 
@@ -804,10 +741,7 @@ func TestExitSelectMode(t *testing.T) {
 func TestChangeSelectionNoYank(t *testing.T) {
 	t.Run("skips register on insert", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   2,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 2}}, 0)
 		e.Registers().Write('"', []string{"safe"})
 
 		action.ChangeSelectionNoYank(e)
@@ -996,10 +930,7 @@ func TestInsertNewlineContinuedComment(t *testing.T) {
 
 	t.Run("negative range inserts at top", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 		e.SetMode(view.ModeInsert)
 
 		action.InsertNewline(e)
@@ -1033,10 +964,7 @@ func TestAddNewlineImplNoView(t *testing.T) {
 func TestAddNewlineEdges(t *testing.T) {
 	t.Run("invalid range leaves text", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 
 		action.AddNewlineAbove(e)
 
@@ -1221,10 +1149,7 @@ func TestChangeSelectionLinewiseTrue(t *testing.T) {
 	t.Run("linewise inserts above", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello\nworld\n")
 		// Linewise: covers the full first line including newline
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   6,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 6}}, 0)
 
 		action.ChangeSelection(e)
 
@@ -1273,10 +1198,7 @@ func TestInsertNewlineIndented(t *testing.T) {
 func TestChangeSelectionNoYankLinewise(t *testing.T) {
 	t.Run("linewise opens line above", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   4,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 4}}, 0)
 
 		action.ChangeSelectionNoYank(e)
 

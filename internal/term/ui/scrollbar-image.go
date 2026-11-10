@@ -106,14 +106,18 @@ func (s scrollbarPlacement) draw(bar *scrollbar, st *scrollbarImageState, buf *t
 	}
 	cell := s.images.cell
 	size := geom.Size{
-		Width: cell.Width, Height: bar.geom.rows * cell.Height,
+		Width:  cell.Width,
+		Height: bar.geom.rows * cell.Height,
 	}
 	st.seal(bar, size)
 	if st.rev != st.imageRev && !s.images.inFlight(s.id) &&
 		s.redraw != nil {
 		s.redraw.Redraw()
 	}
-	cells := geom.Size{Width: 1, Height: bar.geom.rows}
+	cells := geom.Size{
+		Width:  1,
+		Height: bar.geom.rows,
+	}
 	if !s.images.isReady(s.id, cells) {
 		if !s.images.settling() {
 			bar.draw(buf)
@@ -178,10 +182,13 @@ func (s *scrollbarImageState) displayCmd(images *imageRegistry, bar *scrollbar, 
 		return nil
 	}
 	return images.display(displayArgs{
-		img:   img,
-		id:    id,
-		cells: geom.Size{Width: 1, Height: bar.geom.rows},
-		rev:   rev,
+		img: img,
+		id:  id,
+		cells: geom.Size{
+			Width:  1,
+			Height: bar.geom.rows,
+		},
+		rev: rev,
 	})
 }
 
@@ -202,7 +209,8 @@ func renderScrollbarImage(marks *scrollbar, thumb core.Span, size geom.Size) *Im
 	for y := range size.Height {
 		from := y * slots / size.Height
 		kind := marks.rowKind(core.Span{
-			From: from, To: max((y+1)*slots/size.Height, from+1),
+			From: from,
+			To:   max((y+1)*slots/size.Height, from+1),
 		})
 		switch {
 		case kind != scrollMarkNone:

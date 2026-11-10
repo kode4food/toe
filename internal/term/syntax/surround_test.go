@@ -21,7 +21,10 @@ func TestFindSurroundPair(t *testing.T) {
 
 	t.Run("skip 1 finds innermost pair", func(t *testing.T) {
 		r, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: src, Lang: "go"},
+			Source: core.Source{
+				Text: src,
+				Lang: "go",
+			},
 			Cursor: cursor,
 			Skip:   1,
 		})
@@ -32,7 +35,10 @@ func TestFindSurroundPair(t *testing.T) {
 
 	t.Run("skip 2 finds next outer pair", func(t *testing.T) {
 		r, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: src, Lang: "go"},
+			Source: core.Source{
+				Text: src,
+				Lang: "go",
+			},
 			Cursor: cursor,
 			Skip:   2,
 		})
@@ -43,7 +49,10 @@ func TestFindSurroundPair(t *testing.T) {
 
 	t.Run("skip beyond depth returns false", func(t *testing.T) {
 		_, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: src, Lang: "go"},
+			Source: core.Source{
+				Text: src,
+				Lang: "go",
+			},
 			Cursor: cursor,
 			Skip:   99,
 		})
@@ -52,7 +61,10 @@ func TestFindSurroundPair(t *testing.T) {
 
 	t.Run("unknown language returns false", func(t *testing.T) {
 		_, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: src, Lang: "nope"},
+			Source: core.Source{
+				Text: src,
+				Lang: "nope",
+			},
 			Cursor: cursor,
 			Skip:   1,
 		})
@@ -61,13 +73,19 @@ func TestFindSurroundPair(t *testing.T) {
 
 	t.Run("out-of-bounds cursor returns false", func(t *testing.T) {
 		_, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: src, Lang: "go"},
+			Source: core.Source{
+				Text: src,
+				Lang: "go",
+			},
 			Cursor: -1,
 			Skip:   1,
 		})
 		assert.False(t, ok)
 		_, ok = syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: src, Lang: "go"},
+			Source: core.Source{
+				Text: src,
+				Lang: "go",
+			},
 			Cursor: len([]rune(src)),
 			Skip:   1,
 		})
@@ -79,7 +97,10 @@ func TestFindSurroundPair(t *testing.T) {
 			"\tx := \"(foo)\"\n\t_ = x\n}\n"
 		inStr := strings.Index(strSrc, "(foo)") + 2
 		r, ok := syntax.FindSurroundPair(syntax.FindSurroundPairArgs{
-			Source: core.Source{Text: strSrc, Lang: "go"},
+			Source: core.Source{
+				Text: strSrc,
+				Lang: "go",
+			},
 			Cursor: inStr,
 			Skip:   1,
 		})

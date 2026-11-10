@@ -29,7 +29,10 @@ func BenchmarkRenderImage(b *testing.B) {
 	}
 	e.ReplacePane(e.Tree().Focus(), pane)
 	m := ui.New(e, command.NewKeymaps())
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 160, Height: 50})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  160,
+		Height: 50,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 
 	b.ReportAllocs()
@@ -100,7 +103,11 @@ func BenchmarkRenderPickerPreview(b *testing.B) {
 		if i%20 >= 10 {
 			button = tea.MouseWheelUp
 		}
-		m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
+		m = mouse(m, tea.MouseWheelMsg{
+			X:      100,
+			Y:      10,
+			Button: button,
+		})
 		frameSink(m)
 		i++
 	}
@@ -208,12 +215,18 @@ func BenchmarkKeystroke(b *testing.B) {
 		b.Fatal(err)
 	}
 	m := ui.New(e, command.NewKeymaps())
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: 160, Height: 50})
+	m2, _ := m.Update(tea.WindowSizeMsg{
+		Width:  160,
+		Height: 50,
+	})
 	m = m2.(ui.Model)
 
 	b.ReportAllocs()
 	for b.Loop() {
-		next, _ := m.Update(tea.KeyPressMsg{Code: 'j', Text: "j"})
+		next, _ := m.Update(tea.KeyPressMsg{
+			Code: 'j',
+			Text: "j",
+		})
 		m = next.(ui.Model)
 	}
 }

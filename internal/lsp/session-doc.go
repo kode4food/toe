@@ -183,11 +183,17 @@ func (s *Session) inWorkspace(path string) bool {
 	if !ok {
 		return false
 	}
-	if inside(insideArgs{path: file, root: s.cwd}) {
+	if inside(insideArgs{
+		path: file,
+		root: s.cwd,
+	}) {
 		return true
 	}
 	for _, root := range s.servers.allRoots() {
-		if inside(insideArgs{path: file, root: root}) {
+		if inside(insideArgs{
+			path: file,
+			root: root,
+		}) {
 			return true
 		}
 	}

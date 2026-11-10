@@ -107,7 +107,10 @@ func (b *bufferPickerSource) Load() ui.PickerLoad {
 			},
 		}))
 	}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Accept switches the focused pane to the chosen buffer

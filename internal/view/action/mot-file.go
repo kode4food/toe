@@ -65,7 +65,10 @@ func GotoFileTarget(e *view.Editor) (GotoTarget, error) {
 	if from >= to {
 		return GotoTarget{}, ErrNoFilePath
 	}
-	slice, err := text.Slice(core.Span{From: from, To: to})
+	slice, err := text.Slice(core.Span{
+		From: from,
+		To:   to,
+	})
 	if err != nil {
 		return GotoTarget{}, err
 	}

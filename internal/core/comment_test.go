@@ -136,10 +136,7 @@ func TestSplitLinesOfSelection(t *testing.T) {
 
 	t.Run("single-line range produces one sub-range", func(t *testing.T) {
 		doc := core.NewRope("hello\nworld")
-		sel, _ := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		sel, _ := core.NewSelection([]core.Range{{Anchor: 0, Head: 5}}, 0)
 		split, err := core.SplitLinesOfSelection(doc, sel)
 		assert.NoError(t, err)
 		assert.Len(t, split.Ranges(), 1)
@@ -147,10 +144,7 @@ func TestSplitLinesOfSelection(t *testing.T) {
 
 	t.Run("final unterminated line ends at document", func(t *testing.T) {
 		doc := core.NewRope("hello\nworld")
-		sel, _ := core.NewSelection([]core.Range{{
-			Anchor: 6,
-			Head:   11,
-		}}, 0)
+		sel, _ := core.NewSelection([]core.Range{{Anchor: 6, Head: 11}}, 0)
 
 		split, err := core.SplitLinesOfSelection(doc, sel)
 

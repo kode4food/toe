@@ -41,9 +41,7 @@ func TestPickerOptions(t *testing.T) {
 	t.Run("resets directory flattening", func(t *testing.T) {
 		e, km, reg := test.EnvWithRegistry(t, "")
 		raw := map[string]any{
-			"editor": map[string]any{
-				"file-explorer": map[string]any{"flatten-dirs": false},
-			},
+			"editor": map[string]any{"file-explorer": map[string]any{"flatten-dirs": false}},
 		}
 		assert.NoError(t, reg.ApplyTOML(e, raw))
 		res := test.RunCmdArgs(t, km, e, "get-option", "file-explorer.flatten-dirs")

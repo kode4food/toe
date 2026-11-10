@@ -61,10 +61,7 @@ func TestOpenAbove(t *testing.T) {
 
 	t.Run("opens above the first selected line", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.OpenAbove(e)
 
@@ -74,10 +71,7 @@ func TestOpenAbove(t *testing.T) {
 
 	t.Run("backward selection opens above too", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 5,
-			Head:   0,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 5, Head: 0}}, 0)
 
 		action.OpenAbove(e)
 
@@ -87,10 +81,7 @@ func TestOpenAbove(t *testing.T) {
 
 	t.Run("negative range is noop", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: -2,
-			Head:   -1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: -2, Head: -1}}, 0)
 
 		action.OpenAbove(e)
 
@@ -157,10 +148,7 @@ func TestOpenBelow(t *testing.T) {
 
 	t.Run("opens below the last selected line", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.OpenBelow(e)
 
@@ -170,10 +158,7 @@ func TestOpenBelow(t *testing.T) {
 
 	t.Run("backward selection opens below too", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb\nc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 3,
-			Head:   0,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 3, Head: 0}}, 0)
 
 		action.OpenBelow(e)
 

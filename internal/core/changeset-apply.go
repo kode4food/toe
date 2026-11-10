@@ -52,7 +52,10 @@ func (c ChangeSet) Invert(original Rope) (ChangeSet, error) {
 			out = out.retain(op.charCount)
 			pos += op.charCount
 		case OperationDelete:
-			text, err := original.Slice(Span{From: pos, To: pos + op.charCount})
+			text, err := original.Slice(Span{
+				From: pos,
+				To:   pos + op.charCount,
+			})
 			if err != nil {
 				return ChangeSet{}, err
 			}
@@ -120,5 +123,8 @@ func (c ChangeSet) MapRange(r Range) (Range, error) {
 	if err != nil {
 		return Range{}, err
 	}
-	return Range{Anchor: anchor, Head: head}, nil
+	return Range{
+		Anchor: anchor,
+		Head:   head,
+	}, nil
 }

@@ -49,17 +49,29 @@ func (p popup) drawInto(buf *tui.Buffer, area geom.Area) geom.Area {
 			}, tui.BorderV, p.borderStyle)
 		}
 	}
-	return area.Inset(geom.Size{Width: 1 + p.padX, Height: 1})
+	return area.Inset(geom.Size{
+		Width:  1 + p.padX,
+		Height: 1,
+	})
 }
 
 func (p popup) divider(buf *tui.Buffer, area geom.Area, dx int) {
 	x := area.X + dx
-	buf.SetString(geom.Point{X: x, Y: area.Y}, tui.BorderMT, p.borderStyle)
+	buf.SetString(geom.Point{
+		X: x,
+		Y: area.Y,
+	}, tui.BorderMT, p.borderStyle)
 	buf.SetString(
-		geom.Point{X: x, Y: area.Bottom()}, tui.BorderMB, p.borderStyle,
+		geom.Point{
+			X: x,
+			Y: area.Bottom(),
+		}, tui.BorderMB, p.borderStyle,
 	)
 	for y := area.Y + 1; y < area.Bottom(); y++ {
-		buf.SetString(geom.Point{X: x, Y: y}, tui.BorderV, p.borderStyle)
+		buf.SetString(geom.Point{
+			X: x,
+			Y: y,
+		}, tui.BorderV, p.borderStyle)
 	}
 }
 

@@ -149,7 +149,10 @@ func (r statusRow) neighborStyle(elems []statusElem, idx int) tui.Style {
 }
 
 func (r statusRow) write(buf *tui.Buffer, x int, text string, style tui.Style) int {
-	buf.SetString(geom.Point{X: x, Y: r.at.Y}, text, style)
+	buf.SetString(geom.Point{
+		X: x,
+		Y: r.at.Y,
+	}, text, style)
 	return x + runewidth.StringWidth(text)
 }
 

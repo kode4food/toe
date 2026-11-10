@@ -84,7 +84,10 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 				continue
 			}
 			currentToken = token
-			key := joinDedupKey{lineEnd: span.from, skip: span.to}
+			key := joinDedupKey{
+				lineEnd: span.from,
+				skip:    span.to,
+			}
 			if dedup[key] {
 				continue
 			}
@@ -101,7 +104,10 @@ func joinSelectionsImpl(e *view.Editor, withSpace bool) {
 
 	changes := make([]core.Change, len(spans))
 	for i, s := range spans {
-		changes[i] = core.TextChange(core.Span{From: s.from, To: s.to}, s.sep)
+		changes[i] = core.TextChange(core.Span{
+			From: s.from,
+			To:   s.to,
+		}, s.sep)
 	}
 	cs, err := core.NewChangeSetFromChanges(text, changes)
 	if err != nil {
@@ -164,7 +170,11 @@ func joinLinePair(
 	if skip == nextLineEnd {
 		sep = ""
 	}
-	return commentSpan{from: lineEnd, to: skip, sep: sep}, currentToken, true
+	return commentSpan{
+		from: lineEnd,
+		to:   skip,
+		sep:  sep,
+	}, currentToken, true
 }
 
 func spaceJoinSelection(spans []commentSpan) (core.Selection, bool) {

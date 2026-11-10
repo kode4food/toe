@@ -72,13 +72,20 @@ func (r *renderPass) renderTerminalPane(buf *tui.Buffer, tp *TerminalPane, y0 in
 	scr := &tuiScreen{
 		buf: buf,
 		area: geom.Area{
-			Point: geom.Point{X: a.X, Y: y0 + a.Y},
-			Size:  geom.Size{Width: a.Width, Height: contentH},
+			Point: geom.Point{
+				X: a.X,
+				Y: y0 + a.Y,
+			},
+			Size: geom.Size{
+				Width:  a.Width,
+				Height: contentH,
+			},
 		},
 	}
 	if tp.hasOutput() {
 		drawViewport(scr, tp, tp.ScrollOffset(), geom.Size{
-			Width: a.Width, Height: contentH,
+			Width:  a.Width,
+			Height: contentH,
 		})
 		highlightSelection(scr, tp)
 	} else {
@@ -97,7 +104,10 @@ func (r *renderPass) renderTerminalStatus(buf *tui.Buffer, tp *TerminalPane, y0 
 	}
 	st := th.Get(statusKey)
 	y := y0 + a.Bottom()
-	buf.FillRange(geom.Point{X: a.X, Y: y}, a.Width, st)
+	buf.FillRange(geom.Point{
+		X: a.X,
+		Y: y,
+	}, a.Width, st)
 
 	modeSt := st
 	if focused {
@@ -116,7 +126,10 @@ func (r *renderPass) renderTerminalStatus(buf *tui.Buffer, tp *TerminalPane, y0 
 		title = fmt.Sprintf("%s [scrollback -%d]", title, n)
 	}
 	r.paintStatus(buf, statusRow{
-		at:        geom.Point{X: a.X, Y: y},
+		at: geom.Point{
+			X: a.X,
+			Y: y,
+		},
 		width:     a.Width,
 		baseStyle: st,
 		focused:   focused,
@@ -145,7 +158,10 @@ func highlightSelection(scr *tuiScreen, tp *TerminalPane) {
 			endX = sp.end.X
 		}
 		for x := max(startX, 0); x <= endX && x < scr.area.Width; x++ {
-			p := scr.area.Point.Add(geom.Point{X: x, Y: y})
+			p := scr.area.Point.Add(geom.Point{
+				X: x,
+				Y: y,
+			})
 			c := scr.buf.Get(p)
 			c.Style = c.Style.Mod(tui.ModifierReversed)
 			scr.buf.Set(p, c)
@@ -213,7 +229,10 @@ func drawViewport(scr *tuiScreen, tp *TerminalPane, n int, size geom.Size) {
 				}
 			}
 			if cell == nil {
-				scr.SetCell(geom.Point{X: x, Y: row}, &blank)
+				scr.SetCell(geom.Point{
+					X: x,
+					Y: row,
+				}, &blank)
 				x++
 				continue
 			}
@@ -221,7 +240,10 @@ func drawViewport(scr *tuiScreen, tp *TerminalPane, n int, size geom.Size) {
 				cell = cell.Clone()
 				cell.Style.Bg = bg
 			}
-			scr.SetCell(geom.Point{X: x, Y: row}, cell)
+			scr.SetCell(geom.Point{
+				X: x,
+				Y: row,
+			}, cell)
 			x += max(cell.Width, 1)
 		}
 	}

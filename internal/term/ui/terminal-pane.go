@@ -164,7 +164,10 @@ func (t *TerminalPane) SetID(id view.Id) {
 // Split starts another terminal using the same shell
 func (t *TerminalPane) Split() (view.Pane, error) {
 	return NewTerminalPane(
-		t.editor, t.shell, geom.Size{Width: t.area.Width, Height: max(t.area.Height-1, 1)},
+		t.editor, t.shell, geom.Size{
+			Width:  t.area.Width,
+			Height: max(t.area.Height-1, 1),
+		},
 	)
 }
 
@@ -525,13 +528,19 @@ func (t *TerminalPane) contentHeight() int {
 }
 
 func (t *TerminalPane) toAbsolute(pos uv.Position) uv.Position {
-	return uv.Position{X: pos.X, Y: t.viewStart(t.contentHeight()) + pos.Y}
+	return uv.Position{
+		X: pos.X,
+		Y: t.viewStart(t.contentHeight()) + pos.Y,
+	}
 }
 
 func (t *TerminalPane) beginSelection(pos uv.Position) {
 	t.selection.active = true
 	abs := t.toAbsolute(pos)
-	t.selection.span = selSpan{start: abs, end: abs}
+	t.selection.span = selSpan{
+		start: abs,
+		end:   abs,
+	}
 	t.dirty = true
 }
 
@@ -574,7 +583,10 @@ func (t *TerminalPane) selectionText() string {
 		}
 		var b strings.Builder
 		for x := startX; x <= endX && x < w; x++ {
-			c := t.cellAtAbsolute(geom.Point{X: x, Y: y})
+			c := t.cellAtAbsolute(geom.Point{
+				X: x,
+				Y: y,
+			})
 			if c != nil && c.Content != "" {
 				b.WriteString(c.Content)
 			} else {
@@ -601,7 +613,10 @@ func (t *TerminalPane) applyResize() {
 	h := max(t.area.Height-1, 1)
 	t.keepCursorRow(h)
 	t.emu.Resize(w, h)
-	_ = pty.Setsize(t.pty, &pty.Winsize{Rows: uint16(h), Cols: uint16(w)})
+	_ = pty.Setsize(t.pty, &pty.Winsize{
+		Rows: uint16(h),
+		Cols: uint16(w),
+	})
 }
 
 // keepCursorRow scrolls the top rows into scrollback before a shrink to height, so the emulator's
@@ -635,7 +650,10 @@ func (t *TerminalPane) keepCursorRow(h int) {
 func normalizeSelection(s selSpan) selSpan {
 	if s.start.Y > s.end.Y ||
 		(s.start.Y == s.end.Y && s.start.X > s.end.X) {
-		return selSpan{start: s.end, end: s.start}
+		return selSpan{
+			start: s.end,
+			end:   s.start,
+		}
 	}
 	return s
 }

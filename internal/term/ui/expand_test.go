@@ -452,7 +452,10 @@ func expandEditorWithText(t *testing.T, text string) *view.Editor {
 	assert.NotNil(t, doc)
 	rope := doc.Text()
 	cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-		core.TextChange(core.Span{From: 0, To: 0}, text),
+		core.TextChange(core.Span{
+			From: 0,
+			To:   0,
+		}, text),
 	})
 	assert.NoError(t, err)
 	tx := core.NewTransaction(rope).WithChanges(cs).WithSelection(core.PointSelection(0))

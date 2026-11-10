@@ -16,7 +16,10 @@ func TestOpenPathImage(t *testing.T) {
 	openImage := func(t *testing.T) (*view.Editor, bool, error) {
 		t.Helper()
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		path := writeRenderImage(t, t.TempDir(), 20, 10, nil)
 		_, ok, err := ui.OpenPath(e, path, ui.PickerAcceptReplace)
 		return e, ok, err

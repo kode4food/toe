@@ -28,7 +28,10 @@ func TestTerminalPane(t *testing.T) {
 	}
 	t.Run("supports pane split", func(t *testing.T) {
 		e := editorWithText(t, "hello toe")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		m := renderedModel(e)
 		m.TerminalAction(e)
 		t.Cleanup(func() { ui.CloseAllTerminalPanes(e) })
@@ -97,7 +100,9 @@ func TestTerminalPane(t *testing.T) {
 		assert.NotEqual(t, termID, e.Tree().Focus())
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -154,7 +159,9 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, tp.MouseEnabled())
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -182,7 +189,10 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, e.SaveSession(sessionPath, nil))
 
 		next := view.NewEditor(dir)
-		next.ResizeTree(geom.Size{Width: 80, Height: 24})
+		next.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		_ = ui.New(next, command.NewKeymaps()) // registers pane restorers
 		_, restored, err := next.RestoreSession(sessionPath)
 		assert.NoError(t, err)
@@ -359,13 +369,18 @@ func TestTerminalPane(t *testing.T) {
 
 		area := tp.Area()
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseWheelUp,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseWheelUp,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
 		assert.Positive(t, tp.ScrollOffset())
 
-		m3, _ := m.Update(tea.KeyPressMsg{Text: "a", Code: 'a'})
+		m3, _ := m.Update(tea.KeyPressMsg{
+			Text: "a",
+			Code: 'a',
+		})
 		_ = m3.(ui.Model)
 		assert.Equal(t, 0, tp.ScrollOffset())
 	})
@@ -422,7 +437,9 @@ func TestTerminalPane(t *testing.T) {
 		assert.Positive(t, before)
 
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseWheelDown,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -445,11 +462,15 @@ func TestTerminalPane(t *testing.T) {
 		assert.True(t, tp.MouseEnabled())
 
 		m2, _ := m.Update(tea.MouseReleaseMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -472,7 +493,9 @@ func TestTerminalPane(t *testing.T) {
 
 		statusRow := area.Y + area.Height - 1
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: statusRow, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      statusRow,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -492,7 +515,9 @@ func TestTerminalPane(t *testing.T) {
 		assert.False(t, tp.MouseEnabled())
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -554,9 +579,15 @@ func TestTerminalPane(t *testing.T) {
 		t.Cleanup(func() { _ = tp.Stop() })
 		waitForResize(t, tp)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Mod:  tea.ModCtrl,
+			Code: 'w',
+		})
 		m = m2.(ui.Model)
-		m2, _ = m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+		m2, _ = m.Update(tea.KeyPressMsg{
+			Code: 'x',
+			Text: "x",
+		})
 		m = m2.(ui.Model)
 		_ = m.View()
 
@@ -586,11 +617,20 @@ func TestTerminalPane(t *testing.T) {
 
 		before := tp.Area().Width
 
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Mod:  tea.ModCtrl,
+			Code: 'w',
+		})
 		m = m2.(ui.Model)
-		m2, _ = m.Update(tea.KeyPressMsg{Code: 'r', Text: "r"})
+		m2, _ = m.Update(tea.KeyPressMsg{
+			Code: 'r',
+			Text: "r",
+		})
 		m = m2.(ui.Model)
-		m2, _ = m.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
+		m2, _ = m.Update(tea.KeyPressMsg{
+			Code: 'l',
+			Text: "l",
+		})
 		m = m2.(ui.Model)
 		_ = m.View()
 
@@ -616,7 +656,10 @@ func TestTerminalPane(t *testing.T) {
 		e.WriteRegister(view.RegisterClipboard, []string{"pasted-text"})
 
 		// the shell owns a bare Space, so the terminal's leader is Ctrl-\
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Mod:  tea.ModCtrl,
+			Code: '\\',
+		})
 		m = m2.(ui.Model)
 		_ = sendKey(m, 'p')
 
@@ -673,7 +716,10 @@ func TestTerminalPane(t *testing.T) {
 		assert.NoError(t, err)
 
 		before := len(userDocuments(e))
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Mod:  tea.ModCtrl,
+			Code: '\\',
+		})
 		m = m2.(ui.Model)
 		m = sendKey(m, 'w')
 		_ = sendKey(m, 'n')
@@ -703,7 +749,10 @@ func TestTerminalPane(t *testing.T) {
 		waitForResize(t, tp)
 
 		// Ctrl-\ is the terminal's Space leader, since the shell needs a Space
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: '\\'})
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Mod:  tea.ModCtrl,
+			Code: '\\',
+		})
 		m = m2.(ui.Model)
 		m = sendKey(m, 'f')
 		m = sendSpecial(m, tea.KeyEnter)
@@ -801,15 +850,21 @@ func TestTerminalPane(t *testing.T) {
 
 		area := tp.Area()
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: area.X + 5, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X + 5,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseReleaseMsg{
-			X: area.X + 5, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X + 5,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -842,11 +897,15 @@ func TestTerminalPane(t *testing.T) {
 		want := strings.TrimRight(sb.Line(target).String(), " ")
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseReleaseMsg{
-			X: area.X + area.Width - 1, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X + area.Width - 1,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		_ = m.View()
@@ -868,13 +927,17 @@ func TestTerminalPane(t *testing.T) {
 
 		area := tp.Area()
 		m2, cmd := m.Update(tea.MouseClickMsg{
-			X: area.X, Y: area.Y, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.Nil(t, cmd)
 
 		m2, cmd = m.Update(tea.MouseMotionMsg{
-			X: area.X, Y: area.Y - 1, Button: tea.MouseLeft,
+			X:      area.X,
+			Y:      area.Y - 1,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		assert.NotNil(t, cmd)
@@ -917,18 +980,24 @@ func TestTerminalPane(t *testing.T) {
 		// drag the separator to resize the terminal pane, then let the debounced emulator resize
 		// apply while the shell stays silent
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: sepX, Y: 5, Button: tea.MouseLeft,
+			X:      sepX,
+			Y:      5,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		var cmd tea.Cmd
 		for x := sepX; x <= 65; x += 3 {
 			m2, cmd = m.Update(tea.MouseMotionMsg{
-				X: x, Y: 5, Button: tea.MouseLeft,
+				X:      x,
+				Y:      5,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 		}
 		m2, _ = m.Update(tea.MouseReleaseMsg{
-			X: 65, Y: 5, Button: tea.MouseLeft,
+			X:      65,
+			Y:      5,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m = feedCmds(m, cmd)
@@ -953,7 +1022,10 @@ func TestTerminalPane(t *testing.T) {
 		waitForResize(t, tp)
 		writeScrollbackLines(t, tp, 50)
 
-		m2, _ := m.Update(tea.KeyPressMsg{Mod: tea.ModCtrl, Code: 'w'})
+		m2, _ := m.Update(tea.KeyPressMsg{
+			Mod:  tea.ModCtrl,
+			Code: 'w',
+		})
 		m = m2.(ui.Model)
 		m = sendKey(m, '/')
 		assert.Contains(t, stripANSI(viewContent(m)), " Search scrollback ")
@@ -970,14 +1042,20 @@ func TestTerminalResize(t *testing.T) {
 	t.Run("reflows the emulator synchronously", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		tp, err := ui.NewTerminalPane(
-			e, "cat", geom.Size{Width: 20, Height: 10},
+			e, "cat", geom.Size{
+				Width:  20,
+				Height: 10,
+			},
 		)
 		if !assert.NoError(t, err) {
 			return
 		}
 		t.Cleanup(func() { _ = tp.Stop() })
 
-		tp.SetArea(geom.Area{Width: 30, Height: 12})
+		tp.SetArea(geom.Area{
+			Width:  30,
+			Height: 12,
+		})
 
 		// no debounce: the emulator matches the new area at once, reserving the bottom row for the
 		// status line
@@ -991,20 +1069,29 @@ func TestTerminalResize(t *testing.T) {
 		}
 		e := view.NewEditor(t.TempDir())
 		tp, err := ui.NewTerminalPane(
-			e, "cat", geom.Size{Width: 20, Height: 24},
+			e, "cat", geom.Size{
+				Width:  20,
+				Height: 24,
+			},
 		)
 		if !assert.NoError(t, err) {
 			return
 		}
 		t.Cleanup(func() { _ = tp.Stop() })
-		tp.SetArea(geom.Area{Width: 20, Height: 25})
+		tp.SetArea(geom.Area{
+			Width:  20,
+			Height: 25,
+		})
 		lines := make([]string, 24)
 		for i := range lines {
 			lines[i] = fmt.Sprintf("line %d", i)
 		}
 		tp.IngestOutput([]byte(strings.Join(lines, "\r\n")))
 
-		tp.SetArea(geom.Area{Width: 20, Height: 11})
+		tp.SetArea(geom.Area{
+			Width:  20,
+			Height: 11,
+		})
 
 		emu := tp.Emulator()
 		rows := strings.Split(emu.String(), "\n")
@@ -1035,13 +1122,17 @@ func TestTerminalResize(t *testing.T) {
 			}
 		})
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: sepX, Y: 5, Button: tea.MouseLeft,
+			X:      sepX,
+			Y:      5,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		var cmd tea.Cmd
 		for x := sepX; x <= 60; x += 3 {
 			m2, cmd = m.Update(tea.MouseMotionMsg{
-				X: x, Y: 5, Button: tea.MouseLeft,
+				X:      x,
+				Y:      5,
+				Button: tea.MouseLeft,
 			})
 			m = m2.(ui.Model)
 		}
@@ -1050,7 +1141,9 @@ func TestTerminalResize(t *testing.T) {
 		assert.Less(t, tp.Area().Width, before)
 		assert.Equal(t, before, tp.Emulator().Width())
 		m2, _ = m.Update(tea.MouseReleaseMsg{
-			X: 60, Y: 5, Button: tea.MouseLeft,
+			X:      60,
+			Y:      5,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		feedCmds(m, cmd)
@@ -1070,7 +1163,10 @@ func TestTerminalResize(t *testing.T) {
 		var cmd tea.Cmd
 		for w := 78; w >= 60; w -= 2 {
 			var m2 tea.Model
-			m2, cmd = m.Update(tea.WindowSizeMsg{Width: w, Height: 24})
+			m2, cmd = m.Update(tea.WindowSizeMsg{
+				Width:  w,
+				Height: 24,
+			})
 			m = m2.(ui.Model)
 		}
 

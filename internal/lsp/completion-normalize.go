@@ -40,7 +40,8 @@ func normalizeCompletionResult(server string, result protocol.CompletionResult) 
 	switch r := result.(type) {
 	case protocol.CompletionItemSlice:
 		return CompletionList{
-			Items: normalizeCompletionItems(server, r), Raw: r,
+			Items: normalizeCompletionItems(server, r),
+			Raw:   r,
 		}
 	case *protocol.CompletionList:
 		return CompletionList{

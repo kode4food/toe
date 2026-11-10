@@ -76,7 +76,10 @@ func syntaxMatchBrackets(e *view.Editor) {
 	for i, r := range ranges {
 		pos := r.Cursor(text)
 		match, ok := syntax.FindMatchingBracket(
-			core.Source{Text: src, Lang: lang}, pos,
+			core.Source{
+				Text: src,
+				Lang: lang,
+			}, pos,
 		)
 		if !ok {
 			match, ok = core.FindMatchingBracket(text, pos)

@@ -125,7 +125,10 @@ func paletteModel(t *testing.T) (ui.Model, *view.Editor) {
 		Aliases: []string{"arg_probe"},
 		Modes:   view.ModeNormal,
 		Signature: command.Signature{
-			Positionals: command.Positionals{Min: 0, Max: 1},
+			Positionals: command.Positionals{
+				Min: 0,
+				Max: 1,
+			},
 		},
 	})
 	bindNormalTestAction(

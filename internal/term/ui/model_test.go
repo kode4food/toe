@@ -198,7 +198,10 @@ func TestPickerState(t *testing.T) {
 		m = sendSpecial(m, tea.KeyEnd)
 		m2, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 		m = m2.(ui.Model)
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'p',
+			Text: "p",
+		})
 		m = m2.(ui.Model)
 		assert.NotPanics(t, func() { m.View() })
 		assert.Contains(t, stripANSI(viewContent(m)), "file-1199")
@@ -237,7 +240,10 @@ func TestPickerState(t *testing.T) {
 			}), []command.KeyEvent{char('o')},
 		)
 		m = resize(m, 120, 24)
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'p',
+			Text: "p",
+		})
 		m = m2.(ui.Model)
 		m2, cmd = m.Update(firstMsg(cmd))
 		m = m2.(ui.Model)

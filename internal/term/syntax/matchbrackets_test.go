@@ -59,7 +59,10 @@ var x = "(not a bracket)"
 
 	t.Run("unknown language returns false", func(t *testing.T) {
 		_, ok := syntax.FindMatchingBracket(
-			core.Source{Text: src, Lang: "nope"}, parenOpen,
+			core.Source{
+				Text: src,
+				Lang: "nope",
+			}, parenOpen,
 		)
 		assert.False(t, ok)
 	})
@@ -71,5 +74,8 @@ var x = "(not a bracket)"
 }
 
 func goSource(text string) core.Source {
-	return core.Source{Text: text, Lang: "go"}
+	return core.Source{
+		Text: text,
+		Lang: "go",
+	}
 }

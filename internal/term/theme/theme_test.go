@@ -27,9 +27,7 @@ func TestTheme(t *testing.T) {
 	t.Run("parses palette alias", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
 			"keyword": "my-color",
-			"palette": map[string]any{
-				"my-color": "#ffffff",
-			},
+			"palette": map[string]any{"my-color": "#ffffff"},
 		})
 
 		style := th.Get("keyword")
@@ -41,10 +39,7 @@ func TestTheme(t *testing.T) {
 	t.Run("invalid palette falls back to default", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
 			"keyword": "my-color",
-			"palette": map[string]any{
-				"my-color": "#ffffff",
-				"bad":      true,
-			},
+			"palette": map[string]any{"my-color": "#ffffff", "bad": true},
 		})
 
 		style := th.Get("keyword")
@@ -55,10 +50,8 @@ func TestTheme(t *testing.T) {
 
 	t.Run("parses short RGB colors", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"keyword": "short",
-			"palette": map[string]any{
-				"short": "#abc",
-			},
+			"keyword":      "short",
+			"palette":      map[string]any{"short": "#abc"},
 			"ui.selection": "#012",
 		})
 
@@ -97,10 +90,7 @@ func TestTheme(t *testing.T) {
 	t.Run("parses underline table", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
 			"diagnostic.error": map[string]any{
-				"underline": map[string]any{
-					"color": "#ff0000",
-					"style": "curl",
-				},
+				"underline": map[string]any{"color": "#ff0000", "style": "curl"},
 			},
 		})
 
@@ -114,9 +104,7 @@ func TestTheme(t *testing.T) {
 	t.Run("underline color implies line", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
 			"diagnostic.warning": map[string]any{
-				"underline": map[string]any{
-					"color": "#ffaa00",
-				},
+				"underline": map[string]any{"color": "#ffaa00"},
 			},
 		})
 
@@ -130,9 +118,7 @@ func TestTheme(t *testing.T) {
 	t.Run("invalid underline warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
 			"diagnostic.info": map[string]any{
-				"underline": map[string]any{
-					"bogus": true,
-				},
+				"underline": map[string]any{"bogus": true},
 			},
 		})
 
@@ -166,10 +152,8 @@ func TestTheme(t *testing.T) {
 
 	t.Run("detects 16 color theme", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"ui.text": "white",
-			"ui.selection": map[string]any{
-				"bg": "1",
-			},
+			"ui.text":      "white",
+			"ui.selection": map[string]any{"bg": "1"},
 		})
 
 		assert.Empty(t, warnings)
@@ -192,10 +176,7 @@ func TestTheme(t *testing.T) {
 
 	t.Run("parses custom rainbow styles", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"rainbow": []any{
-				"#010203",
-				map[string]any{"fg": "yellow"},
-			},
+			"rainbow":      []any{"#010203", map[string]any{"fg": "yellow"}},
 			"ui.selection": "white",
 		})
 
@@ -225,10 +206,8 @@ func TestTheme(t *testing.T) {
 
 	t.Run("detects RGB foreground and background", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"ui.text": "#ffffff",
-			"ui.selection": map[string]any{
-				"bg": "#000000",
-			},
+			"ui.text":      "#ffffff",
+			"ui.selection": map[string]any{"bg": "#000000"},
 		})
 
 		assert.Empty(t, warnings)
@@ -237,12 +216,8 @@ func TestTheme(t *testing.T) {
 
 	t.Run("detects RGB palette aliases", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"palette": map[string]any{
-				"surface": "#000000",
-			},
-			"ui.selection": map[string]any{
-				"bg": "surface",
-			},
+			"palette":      map[string]any{"surface": "#000000"},
+			"ui.selection": map[string]any{"bg": "surface"},
 		})
 
 		assert.Empty(t, warnings)
@@ -252,10 +227,7 @@ func TestTheme(t *testing.T) {
 	t.Run("underline ignored for 16 color", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
 			"ui.selection": map[string]any{
-				"underline": map[string]any{
-					"color": "#ffffff",
-					"style": "line",
-				},
+				"underline": map[string]any{"color": "#ffffff", "style": "line"},
 			},
 		})
 
@@ -364,9 +336,7 @@ func TestUnderlineStyles(t *testing.T) {
 			th, warnings := theme.Decode(map[string]any{
 				"ui.selection": "#ffffff",
 				"keyword": map[string]any{
-					"underline": map[string]any{
-						"style": value,
-					},
+					"underline": map[string]any{"style": value},
 				},
 			})
 			if tc.ok {
@@ -383,9 +353,7 @@ func TestUnderlineStyles(t *testing.T) {
 func TestModifiers(t *testing.T) {
 	t.Run("dim modifier", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": []any{"dim"},
-			},
+			"keyword": map[string]any{"modifiers": []any{"dim"}},
 		})
 		assert.Empty(t, warnings)
 		style := th.Get("keyword")
@@ -394,9 +362,7 @@ func TestModifiers(t *testing.T) {
 
 	t.Run("underlined modifier", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": []any{"underlined"},
-			},
+			"keyword": map[string]any{"modifiers": []any{"underlined"}},
 		})
 		assert.Empty(t, warnings)
 		style := th.Get("keyword")
@@ -405,9 +371,7 @@ func TestModifiers(t *testing.T) {
 
 	t.Run("crossed_out modifier", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": []any{"crossed_out"},
-			},
+			"keyword": map[string]any{"modifiers": []any{"crossed_out"}},
 		})
 		assert.Empty(t, warnings)
 		style := th.Get("keyword")
@@ -416,9 +380,7 @@ func TestModifiers(t *testing.T) {
 
 	t.Run("hidden modifier skipped", func(t *testing.T) {
 		th, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": []any{"hidden"},
-			},
+			"keyword": map[string]any{"modifiers": []any{"hidden"}},
 		})
 		assert.Empty(t, warnings)
 		_ = th.Get("keyword")
@@ -426,27 +388,21 @@ func TestModifiers(t *testing.T) {
 
 	t.Run("invalid modifier name warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": []any{"blinking"},
-			},
+			"keyword": map[string]any{"modifiers": []any{"blinking"}},
 		})
 		assert.NotEmpty(t, warnings)
 	})
 
 	t.Run("non-string modifier warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": []any{42},
-			},
+			"keyword": map[string]any{"modifiers": []any{42}},
 		})
 		assert.NotEmpty(t, warnings)
 	})
 
 	t.Run("non-array modifiers warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
-			"keyword": map[string]any{
-				"modifiers": "bold",
-			},
+			"keyword": map[string]any{"modifiers": "bold"},
 		})
 		assert.NotEmpty(t, warnings)
 	})
@@ -456,9 +412,7 @@ func TestUnderlineInvalidAttr(t *testing.T) {
 	t.Run("unknown underline attribute warns", func(t *testing.T) {
 		_, warnings := theme.Decode(map[string]any{
 			"keyword": map[string]any{
-				"underline": map[string]any{
-					"thickness": "2px",
-				},
+				"underline": map[string]any{"thickness": "2px"},
 			},
 		})
 		assert.NotEmpty(t, warnings)

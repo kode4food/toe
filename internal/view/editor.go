@@ -114,7 +114,11 @@ func NewEditor(cwd string) *Editor {
 	}
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
-	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	v := &View{
+		editor: e,
+		docID:  doc.ID(),
+		mode:   ModeNormal,
+	}
 	e.panes.tree.Insert(v)
 	e.markDocAccessed()
 	return e
@@ -346,7 +350,10 @@ func (e *Editor) Views() []struct {
 			out = append(out, struct {
 				View    *View
 				Focused bool
-			}{View: v, Focused: v.id == focus})
+			}{
+				View:    v,
+				Focused: v.id == focus,
+			})
 		}
 		return true
 	})

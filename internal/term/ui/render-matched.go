@@ -56,7 +56,10 @@ func writeMatchedItem(args writeMatchedItemArgs) {
 		case args.secondaryFrom > 0 && i >= args.secondaryFrom:
 			st = args.secondary
 		}
-		args.buf.SetString(geom.Point{X: col, Y: args.at.Y}, run, st)
+		args.buf.SetString(geom.Point{
+			X: col,
+			Y: args.at.Y,
+		}, run, st)
 		col += rw
 		args.maxWidth -= rw
 		i = j

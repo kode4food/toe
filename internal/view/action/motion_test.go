@@ -838,7 +838,10 @@ func TestGotoFile(t *testing.T) {
 		assert.NoError(t, os.WriteFile(docPath, []byte("rel.txt"), 0o644))
 
 		e := view.NewEditor("/tmp")
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		_, err := e.OpenFile(docPath)
 		assert.NoError(t, err)
 		testutil.SetCursor(t, e, 0)

@@ -149,7 +149,10 @@ func searchSelectionImpl(e *view.Editor, wordBoundaries bool) {
 		if from >= to {
 			continue
 		}
-		slice, err := text.Slice(core.Span{From: from, To: to})
+		slice, err := text.Slice(core.Span{
+			From: from,
+			To:   to,
+		})
 		if err != nil {
 			continue
 		}

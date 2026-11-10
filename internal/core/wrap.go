@@ -69,7 +69,10 @@ func unfillHardWrap(text string) hardWrapUnfilled {
 		lines = lines[:len(lines)-1]
 	}
 	if len(lines) == 0 {
-		return hardWrapUnfilled{ending: ending, trailing: trailing}
+		return hardWrapUnfilled{
+			ending:   ending,
+			trailing: trailing,
+		}
 	}
 
 	prefixes := detectHardWrapPrefixes(lines)
@@ -111,7 +114,10 @@ func detectHardWrapPrefixes(lines []string) hardWrapPrefixes {
 			right: hardWrapPrefix(line),
 		})
 	}
-	return hardWrapPrefixes{initial: initial, subsequent: subsequent}
+	return hardWrapPrefixes{
+		initial:    initial,
+		subsequent: subsequent,
+	}
 }
 
 func hardWrapPrefix(line string) string {

@@ -230,12 +230,16 @@ func parseKey(input string) (KeyEvent, error) {
 
 parseCode:
 	if s == "spc" {
-		return KeyEvent{Code: KeyCode{Char: ' '}, Mods: mods}, nil
+		return KeyEvent{
+			Code: KeyCode{Char: ' '},
+			Mods: mods,
+		}, nil
 	}
 	for special, name := range specialNames {
 		if special != int(SpecialUnknown) && name == s {
 			return KeyEvent{
-				Code: KeyCode{Special: Special(special)}, Mods: mods,
+				Code: KeyCode{Special: Special(special)},
+				Mods: mods,
 			}, nil
 		}
 	}
@@ -249,5 +253,8 @@ parseCode:
 	} else if mods.Has(ModShift) {
 		ch = unicode.ToUpper(ch)
 	}
-	return KeyEvent{Code: KeyCode{Char: ch}, Mods: mods}, nil
+	return KeyEvent{
+		Code: KeyCode{Char: ch},
+		Mods: mods,
+	}, nil
 }

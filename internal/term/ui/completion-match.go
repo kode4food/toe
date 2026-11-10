@@ -65,7 +65,10 @@ func completionMatchScore(item *view.CompletionItem, query string) (int, bool) {
 	if text == "" {
 		text = item.Label
 	}
-	return fuzzyCompletionScore(queryMatch{text: text, query: query})
+	return fuzzyCompletionScore(queryMatch{
+		text:  text,
+		query: query,
+	})
 }
 
 func keyOfCompletionItem(item *view.CompletionItem) completionItemKey {
@@ -73,7 +76,9 @@ func keyOfCompletionItem(item *view.CompletionItem) completionItemKey {
 		return completionItemKey{id: item.ID}
 	}
 	return completionItemKey{
-		label: item.Label, insert: item.Insert, kind: item.Kind,
+		label:  item.Label,
+		insert: item.Insert,
+		kind:   item.Kind,
 	}
 }
 

@@ -122,7 +122,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case imageTransmitMsg:
 		// Mark ready only after the escape reaches Bubble Tea's writer
 		return m, tea.Sequence(tea.Raw(msg.raw), func() tea.Msg {
-			return imageReadyMsg{id: msg.id, state: msg.state}
+			return imageReadyMsg{
+				id:    msg.id,
+				state: msg.state,
+			}
 		})
 	case tea.ResumeMsg:
 		return m, m.resume()
@@ -132,7 +135,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case uv.CellSizeEvent:
-		if cx.images.setCell(geom.Size{Width: msg.Width, Height: msg.Height}) {
+		if cx.images.setCell(geom.Size{
+			Width:  msg.Width,
+			Height: msg.Height,
+		}) {
 			m.markImageDirty()
 		}
 		return m, m.imageDisplayFrameCmd()

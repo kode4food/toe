@@ -61,7 +61,13 @@ func (s *Screen) Snapshot(b *Buffer) *Frame {
 	}
 	cells = cells[:len(b.cells)]
 	copy(cells, b.cells)
-	return &Frame{screen: s, buf: Buffer{cells: cells, Size: b.Size}}
+	return &Frame{
+		screen: s,
+		buf: Buffer{
+			cells: cells,
+			Size:  b.Size,
+		},
+	}
 }
 
 // WriteFrame writes the cells that differ from the last frame written, or every cell when nothing
@@ -85,7 +91,10 @@ func (f *Frame) WriteFrame(w io.Writer) error {
 				continue
 			}
 			if at != x {
-				writeCursorPosition(&sb, geom.Point{X: x, Y: y})
+				writeCursorPosition(&sb, geom.Point{
+					X: x,
+					Y: y,
+				})
 			}
 			if c.Style != style {
 				e.emitStyle(c.Style)
@@ -178,7 +187,10 @@ func (s *Screen) bestScroll(f *Frame, y int) scrollMatch {
 			slices.Equal(bufferRow(&f.buf, top-1), s.base[top-1+shift]) {
 			top--
 		}
-		seed := scrollMatch{top: top, shift: shift}
+		seed := scrollMatch{
+			top:   top,
+			shift: shift,
+		}
 		if m := s.scrollRun(f, seed); m.gain > best.gain {
 			best = m
 		}

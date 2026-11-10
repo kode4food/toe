@@ -49,7 +49,10 @@ func diffLines(lines diffLinesArgs) []DiffHunk {
 			continue
 		}
 		hunks = append(hunks, DiffHunk{
-			BaseFrom: op.I1, BaseTo: op.I2, From: op.J1, To: op.J2,
+			BaseFrom: op.I1,
+			BaseTo:   op.I2,
+			From:     op.J1,
+			To:       op.J2,
 		})
 	}
 	return hunks

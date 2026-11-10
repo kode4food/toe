@@ -9,7 +9,10 @@ import (
 )
 
 func (p *previewImageEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom.Point) {
-	area := geom.Area{Point: at, Size: ctx.size}
+	area := geom.Area{
+		Point: at,
+		Size:  ctx.size,
+	}
 	style := ctx.theme.Get("ui.text")
 	if ctx.images == nil || !ctx.images.graphics {
 		msg := i18n.Text(i18n.StatusImageUnsupported)
@@ -32,9 +35,15 @@ func (p *previewImageEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geom
 		Bg(bg)
 	for row := range cells.Height {
 		for col := range cells.Width {
-			cell := geom.Point{X: col, Y: row}
+			cell := geom.Point{
+				X: col,
+				Y: row,
+			}
 			sym := ctx.images.placeholder(cells, cell)
-			buf.Set(start.Add(cell), tui.Cell{Symbol: sym, Style: style})
+			buf.Set(start.Add(cell), tui.Cell{
+				Symbol: sym,
+				Style:  style,
+			})
 		}
 	}
 }
@@ -85,7 +94,10 @@ func (p *PickerComponent) previewImage(cx *Context, screen geom.Size) (previewIm
 	if cells.IsEmpty() {
 		return previewImageRes{}, false
 	}
-	return previewImageRes{entry: entry, cells: cells}, true
+	return previewImageRes{
+		entry: entry,
+		cells: cells,
+	}, true
 }
 
 func (p *PickerComponent) previewImageSize(cx *Context, screen geom.Size) geom.Size {

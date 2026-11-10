@@ -42,7 +42,10 @@ func newCodeActionMenu(
 		docID:   docID,
 		viewID:  viewID,
 		actions: actions,
-		list:    listScroll{cursor: cursor, count: len(actions)},
+		list: listScroll{
+			cursor: cursor,
+			count:  len(actions),
+		},
 	}
 }
 
@@ -86,7 +89,9 @@ func (m *codeActionMenu) Layout(cx *Context, screen geom.Size) (geom.Area, bool)
 	w := m.width()
 	h := min(len(m.actions), codeActionMaxRows) + 2
 	return fitPopup(geom.Area{
-		Point: at, Width: w, Height: h,
+		Point:  at,
+		Width:  w,
+		Height: h,
 	}, screen), true
 }
 
@@ -125,7 +130,10 @@ func (m *codeActionMenu) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 	}
 	if overflow {
 		m.renderScroll(
-			buf, geom.Point{X: w - 1, Y: area.Y}, area.Height, base,
+			buf, geom.Point{
+				X: w - 1,
+				Y: area.Y,
+			}, area.Height, base,
 		)
 	}
 }
@@ -188,7 +196,10 @@ func (m *codeActionMenu) valid(cx *Context) bool {
 }
 
 func (m *codeActionMenu) handleMouseClick(msg tea.MouseClickMsg) EventResult {
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if idx, ok := m.list.indexAt(m.listBounds, at); ok {
 		m.markDirty()
 		m.list.cursor = idx
@@ -198,7 +209,10 @@ func (m *codeActionMenu) handleMouseClick(msg tea.MouseClickMsg) EventResult {
 }
 
 func (m *codeActionMenu) handleMouseWheel(cx *Context, msg tea.MouseWheelMsg) EventResult {
-	if !m.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
+	if !m.listBounds.Contains(geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}) {
 		return ignoredWith(popLayer)
 	}
 	m.markDirty()

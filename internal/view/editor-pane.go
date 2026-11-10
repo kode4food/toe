@@ -12,7 +12,11 @@ func (e *Editor) VSplit(docID DocumentId) *View {
 		return nil
 	}
 	e.recordLeavingDoc()
-	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	v := &View{
+		editor: e,
+		docID:  doc.ID(),
+		mode:   ModeNormal,
+	}
 	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
@@ -31,7 +35,11 @@ func (e *Editor) HSplit(docID DocumentId) *View {
 		return nil
 	}
 	e.recordLeavingDoc()
-	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	v := &View{
+		editor: e,
+		docID:  doc.ID(),
+		mode:   ModeNormal,
+	}
 	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
@@ -77,7 +85,11 @@ func (e *Editor) VSplitNew() *View {
 	}
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
-	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	v := &View{
+		editor: e,
+		docID:  doc.ID(),
+		mode:   ModeNormal,
+	}
 	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
@@ -93,7 +105,11 @@ func (e *Editor) HSplitNew() *View {
 	}
 	doc := e.newDocument()
 	e.documents.byID[doc.ID()] = doc
-	v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+	v := &View{
+		editor: e,
+		docID:  doc.ID(),
+		mode:   ModeNormal,
+	}
 	if src := e.FocusedView(); src != nil {
 		v.jumps = src.jumps.Clone()
 	}
@@ -138,7 +154,11 @@ func (e *Editor) ClosePane(id Id) {
 	if e.panes.tree.Count() <= 1 {
 		doc := e.newDocument()
 		e.documents.byID[doc.ID()] = doc
-		v := &View{editor: e, docID: doc.ID(), mode: ModeNormal}
+		v := &View{
+			editor: e,
+			docID:  doc.ID(),
+			mode:   ModeNormal,
+		}
 		e.panes.tree.DiscardHistory(id)
 		e.panes.tree.ReplacePane(id, v)
 		p.Discard()

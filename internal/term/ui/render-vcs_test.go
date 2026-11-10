@@ -322,7 +322,10 @@ func TestChangedFilePicker(t *testing.T) {
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  120,
+			Height: 24,
+		})
 		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "- ┆   ┆   old")
 		assert.Contains(t, out, "+ ┆   ┆   new")
@@ -346,7 +349,10 @@ func TestChangedFilePicker(t *testing.T) {
 				s := vcs.Attach(e)
 				t.Cleanup(s.Close)
 				m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-				m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+				m = updateAndFeed(m, tea.WindowSizeMsg{
+					Width:  120,
+					Height: 24,
+				})
 				out := stripANSI(viewContent(m))
 				assert.Equal(t, tc.wrap, strings.Contains(out, "word old"))
 				assert.Equal(t, tc.wrap, strings.Contains(out, "word new"))
@@ -372,7 +378,10 @@ func TestChangedFilePicker(t *testing.T) {
 			s := vcs.Attach(e)
 			t.Cleanup(s.Close)
 			m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-			return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+			return updateAndFeed(m, tea.WindowSizeMsg{
+				Width:  120,
+				Height: 24,
+			})
 		}
 
 		t.Run("by wheel", func(t *testing.T) {
@@ -416,7 +425,10 @@ func TestChangedFilePicker(t *testing.T) {
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  120,
+			Height: 24,
+		})
 		_ = m.View()
 		for range 60 {
 			m = mouse(m, tea.MouseWheelMsg{
@@ -539,7 +551,10 @@ func TestChangedFilePicker(t *testing.T) {
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  120,
+			Height: 24,
+		})
 		_ = sendSpecial(m, tea.KeyEnter)
 
 		v := e.FocusedView()
@@ -676,7 +691,9 @@ func TestChangedFilePicker(t *testing.T) {
 		}
 		for range 40 {
 			m = updateAndFeed(m, tea.MouseWheelMsg{
-				X: 90, Y: 10, Button: tea.MouseWheelDown,
+				X:      90,
+				Y:      10,
+				Button: tea.MouseWheelDown,
 			})
 		}
 		assert.NotContains(t, stripANSI(viewContent(m)), "+ TOP")
@@ -709,7 +726,9 @@ func TestChangedFilePicker(t *testing.T) {
 		assert.Contains(t, stripANSI(viewContent(m)), "+ CHANGED-AGAIN")
 		for range 40 {
 			m = updateAndFeed(m, tea.MouseWheelMsg{
-				X: 90, Y: 10, Button: tea.MouseWheelDown,
+				X:      90,
+				Y:      10,
+				Button: tea.MouseWheelDown,
 			})
 		}
 		assert.NotContains(t, stripANSI(viewContent(m)), "+ CHANGED-AGAIN")
@@ -875,7 +894,10 @@ func TestChangedFilePicker(t *testing.T) {
 		s := vcs.Attach(e)
 		t.Cleanup(s.Close)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  120,
+			Height: 24,
+		})
 		e.SetVersionControl(nil)
 
 		m = sendCtrl(m, 'a')
@@ -902,7 +924,10 @@ func changedFilePicker(t *testing.T, repo string) ui.Model {
 	s := vcs.Attach(e)
 	t.Cleanup(s.Close)
 	m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
-	return updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+	return updateAndFeed(m, tea.WindowSizeMsg{
+		Width:  120,
+		Height: 24,
+	})
 }
 
 func selectedPickerFile(m ui.Model) string {
@@ -929,7 +954,10 @@ func pickerFileName(line string) string {
 }
 
 func sendCtrl(m ui.Model, ch rune) ui.Model {
-	return updateAndFeed(m, tea.KeyPressMsg{Code: ch, Mod: tea.ModCtrl})
+	return updateAndFeed(m, tea.KeyPressMsg{
+		Code: ch,
+		Mod:  tea.ModCtrl,
+	})
 }
 
 func gitStatus(t *testing.T, repo string) string {

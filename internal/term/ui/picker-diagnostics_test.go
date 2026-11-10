@@ -197,11 +197,15 @@ func TestDiagnosticPicker(t *testing.T) {
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
 			{
 				Severity: view.DiagnosticSeverityWarning,
-				Message:  "careful", Source: "test", Provider: "test",
+				Message:  "careful",
+				Source:   "test",
+				Provider: "test",
 			},
 			{
 				Severity: view.DiagnosticSeverityError,
-				Message:  "broken", Source: "test", Provider: "test",
+				Message:  "broken",
+				Source:   "test",
+				Provider: "test",
 			},
 		})
 
@@ -238,12 +242,7 @@ func TestDiagnosticPicker(t *testing.T) {
 			doc := e.Document(v.DocID())
 			assert.NotNil(t, doc)
 			doc.ReplaceDiagnostics("test", []view.Diagnostic{
-				{
-					Severity: tc.sev,
-					Message:  "bad main",
-					Source:   "test",
-					Provider: "test",
-				},
+				{Severity: tc.sev, Message: "bad main", Source: "test", Provider: "test"},
 			})
 
 			m := openDiagnosticPicker(t, e, files.NewDiagnosticPicker, 'd')
@@ -283,7 +282,10 @@ func openDiagnosticPicker(t *testing.T, e *view.Editor, fn ui.PickerFunc, key ru
 
 func diagnosticAt(from int, msg string) view.Diagnostic {
 	return view.Diagnostic{
-		Range:    core.Span{From: from, To: from + 1},
+		Range: core.Span{
+			From: from,
+			To:   from + 1,
+		},
 		Severity: view.DiagnosticSeverityError,
 		Message:  msg,
 		Source:   "test",

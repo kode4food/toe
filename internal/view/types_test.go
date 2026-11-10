@@ -66,7 +66,10 @@ func TestJumpList(t *testing.T) {
 }
 
 func TestDocumentOpenError(t *testing.T) {
-	err := &view.DocumentOpenError{Path: "foo.txt", Err: assert.AnError}
+	err := &view.DocumentOpenError{
+		Path: "foo.txt",
+		Err:  assert.AnError,
+	}
 	assert.Equal(t, "foo.txt", err.Path)
 	assert.Equal(t, assert.AnError, err.Unwrap())
 	assert.Contains(t, err.Error(), "foo.txt")

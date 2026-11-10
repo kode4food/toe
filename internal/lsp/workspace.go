@@ -24,7 +24,10 @@ func ResolveWorkspace(req WorkspaceRequest) (string, bool) {
 		return "", false
 	}
 	workspace, ok := cleanAbs(req.Workspace)
-	if !ok || !inside(insideArgs{path: file, root: workspace}) {
+	if !ok || !inside(insideArgs{
+		path: file,
+		root: workspace,
+	}) {
 		return "", false
 	}
 	for dir := file; ; dir = filepath.Dir(dir) {

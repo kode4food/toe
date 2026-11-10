@@ -27,7 +27,10 @@ type (
 // ExpandSelection returns the smallest Tree-sitter named node that strictly contains the current
 // range, or the smallest named node at the cursor for an empty range
 func ExpandSelection(args SelectionArgs) (Range, bool) {
-	nodes, ok := nodePathAt(core.Source{Text: args.Text, Lang: args.Lang},
+	nodes, ok := nodePathAt(core.Source{
+		Text: args.Text,
+		Lang: args.Lang,
+	},
 
 		args.Cursor)
 	if !ok {
@@ -48,7 +51,10 @@ func ExpandSelection(args SelectionArgs) (Range, bool) {
 // ShrinkSelection returns the largest Tree-sitter named node under the cursor that is strictly
 // contained by the current range
 func ShrinkSelection(args SelectionArgs) (Range, bool) {
-	nodes, ok := nodePathAt(core.Source{Text: args.Text, Lang: args.Lang},
+	nodes, ok := nodePathAt(core.Source{
+		Text: args.Text,
+		Lang: args.Lang,
+	},
 
 		args.Cursor)
 	if !ok {
@@ -68,7 +74,10 @@ func ShrinkSelection(args SelectionArgs) (Range, bool) {
 // syntax-aware tab jumps to. False means no node was found, which is not the same as a node whose
 // end the cursor already sits on
 func ParentNodeEnd(args SelectionArgs) (int, bool) {
-	nodes, ok := nodePathFor(core.Source{Text: args.Text, Lang: args.Lang},
+	nodes, ok := nodePathFor(core.Source{
+		Text: args.Text,
+		Lang: args.Lang,
+	},
 
 		args.Cursor, false)
 	if !ok {
@@ -79,7 +88,10 @@ func ParentNodeEnd(args SelectionArgs) (int, bool) {
 
 func (r Range) bounds() Range {
 	if r.From > r.To {
-		return Range{From: r.To, To: r.From}
+		return Range{
+			From: r.To,
+			To:   r.From,
+		}
 	}
 	return r
 }
@@ -130,7 +142,10 @@ func nodeCharRange(n *sitter.Node, b2c []int) (Range, bool) {
 	if from < 0 || to > len(b2c)-1 || to <= from {
 		return Range{}, false
 	}
-	return Range{From: b2c[from], To: b2c[to]}, true
+	return Range{
+		From: b2c[from],
+		To:   b2c[to],
+	}, true
 }
 
 func buildCharToByte(text string) []int {

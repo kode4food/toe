@@ -355,12 +355,21 @@ func pairLabels() []textObjectEntry {
 		if label == "" {
 			label = string(p[0]) + string(p[1])
 		}
-		out = append(out, textObjectEntry{char: p[0], label: label})
+		out = append(out, textObjectEntry{
+			char:  p[0],
+			label: label,
+		})
 		if p[1] != p[0] {
-			out = append(out, textObjectEntry{char: p[1], label: label})
+			out = append(out, textObjectEntry{
+				char:  p[1],
+				label: label,
+			})
 		}
 	}
-	return append(out, textObjectEntry{char: 'm', label: labels['m']})
+	return append(out, textObjectEntry{
+		char:  'm',
+		label: labels['m'],
+	})
 }
 
 func selectRegisterAction(_ *view.Editor) command.Continuation {

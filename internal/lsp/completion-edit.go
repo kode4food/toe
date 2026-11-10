@@ -97,7 +97,9 @@ func completionTransaction(args completionTransactionArgs) (core.Transaction, er
 		return core.Transaction{}, err
 	}
 	apply := completionApplyOp{
-		offset: editOffset, removed: removed, newText: newText,
+		offset:  editOffset,
+		removed: removed,
+		newText: newText,
 	}
 	changes, err := completionChanges(text, sel, apply)
 	if err != nil {
@@ -192,13 +194,22 @@ func completionRange(text core.Rope, offset *completionEditOffset, cursor int) (
 	if from < 0 || to > text.LenChars() || from > to {
 		return core.Range{}, false
 	}
-	return core.Range{Anchor: from, Head: to}, true
+	return core.Range{
+		Anchor: from,
+		Head:   to,
+	}, true
 }
 
 func findCompletionRange(text core.Rope, cursor int) core.Range {
-	before, _ := text.SliceString(core.Span{From: 0, To: cursor})
+	before, _ := text.SliceString(core.Span{
+		From: 0,
+		To:   cursor,
+	})
 	from := cursor - countWordSuffix(before)
-	return core.Range{Anchor: from, Head: cursor}
+	return core.Range{
+		Anchor: from,
+		Head:   cursor,
+	}
 }
 
 func countWordSuffix(s string) int {

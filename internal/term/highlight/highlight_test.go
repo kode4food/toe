@@ -35,7 +35,10 @@ func main() {
 	fmt.Println("hello")
 }
 `
-	spans := highlight.Tokenize(core.Source{Text: src, Lang: "go"})
+	spans := highlight.Tokenize(core.Source{
+		Text: src,
+		Lang: "go",
+	})
 	assert.NotEmpty(t, spans)
 
 	// Every span must have Start < End
@@ -57,7 +60,10 @@ func TestTokenizeEmpty(t *testing.T) {
 
 func TestTokenizePython(t *testing.T) {
 	src := "def foo(x):\n    return x + 1\n"
-	spans := highlight.Tokenize(core.Source{Text: src, Lang: "python"})
+	spans := highlight.Tokenize(core.Source{
+		Text: src,
+		Lang: "python",
+	})
 	assert.NotEmpty(t, spans)
 	for _, sp := range spans {
 		assert.Less(t, sp.Start, sp.End)
@@ -103,8 +109,7 @@ function greet(name) {
 +new line
  context
 `},
-		{"markdown", "# Heading\n\n**bold** _italic_\n\n" +
-			"```go\npkg main\n```\n"},
+		{"markdown", "# Heading\n\n**bold** _italic_\n\n" + "```go\npkg main\n```\n"},
 		{"yaml", "key: value\nlist:\n  - item1\n  - item2\n"},
 		{"json", `{"name": "toe", "version": 1, "active": true}`},
 	}

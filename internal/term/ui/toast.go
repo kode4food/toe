@@ -284,7 +284,11 @@ func (ec *EditorComponent) handleToastTick(msg toastTickMsg) (EventResult, tea.C
 }
 
 func (ec *EditorComponent) paintToasts(cx *Context, buf *tui.Buffer) {
-	r := &renderPass{editor: ec, context: cx, size: buf.Size}
+	r := &renderPass{
+		editor:  ec,
+		context: cx,
+		size:    buf.Size,
+	}
 	r.renderToasts(buf)
 }
 

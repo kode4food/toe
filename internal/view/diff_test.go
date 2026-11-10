@@ -13,7 +13,10 @@ import (
 func TestDiff(t *testing.T) {
 	t.Run("no changes", func(t *testing.T) {
 		r := core.NewRope("a\nb\nc\n")
-		assert.Empty(t, view.Diff(view.DiffSides{Base: r, Doc: r}))
+		assert.Empty(t, view.Diff(view.DiffSides{
+			Base: r,
+			Doc:  r,
+		}))
 	})
 
 	t.Run("modification", func(t *testing.T) {
@@ -21,13 +24,19 @@ func TestDiff(t *testing.T) {
 		doc := core.NewRope("a\nx\nc\n")
 		assert.Equal(t, []view.DiffHunk{
 			{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
-		}, view.Diff(view.DiffSides{Base: base, Doc: doc}))
+		}, view.Diff(view.DiffSides{
+			Base: base,
+			Doc:  doc,
+		}))
 	})
 
 	t.Run("pure insertion", func(t *testing.T) {
 		base := core.NewRope("a\nc\n")
 		doc := core.NewRope("a\nb\nc\n")
-		hunks := view.Diff(view.DiffSides{Base: base, Doc: doc})
+		hunks := view.Diff(view.DiffSides{
+			Base: base,
+			Doc:  doc,
+		})
 		assert.Equal(t, []view.DiffHunk{
 			{BaseFrom: 1, BaseTo: 1, From: 1, To: 2},
 		}, hunks)
@@ -38,7 +47,10 @@ func TestDiff(t *testing.T) {
 	t.Run("pure removal", func(t *testing.T) {
 		base := core.NewRope("a\nb\nc\n")
 		doc := core.NewRope("a\nc\n")
-		hunks := view.Diff(view.DiffSides{Base: base, Doc: doc})
+		hunks := view.Diff(view.DiffSides{
+			Base: base,
+			Doc:  doc,
+		})
 		assert.Equal(t, []view.DiffHunk{
 			{BaseFrom: 1, BaseTo: 2, From: 1, To: 1},
 		}, hunks)
@@ -48,7 +60,10 @@ func TestDiff(t *testing.T) {
 	t.Run("multiple hunks sorted", func(t *testing.T) {
 		base := core.NewRope("a\nb\nc\nd\ne\n")
 		doc := core.NewRope("a\nx\nc\nd\ny\ne\n")
-		hunks := view.Diff(view.DiffSides{Base: base, Doc: doc})
+		hunks := view.Diff(view.DiffSides{
+			Base: base,
+			Doc:  doc,
+		})
 		assert.Equal(t, []view.DiffHunk{
 			{BaseFrom: 1, BaseTo: 2, From: 1, To: 2},
 			{BaseFrom: 4, BaseTo: 4, From: 4, To: 5},
@@ -58,20 +73,32 @@ func TestDiff(t *testing.T) {
 	t.Run("missing final newline differs", func(t *testing.T) {
 		base := core.NewRope("a\nb\n")
 		doc := core.NewRope("a\nb")
-		assert.NotEmpty(t, view.Diff(view.DiffSides{Base: base, Doc: doc}))
+		assert.NotEmpty(t, view.Diff(view.DiffSides{
+			Base: base,
+			Doc:  doc,
+		}))
 	})
 
 	t.Run("oversized input yields no hunks", func(t *testing.T) {
 		big := core.NewRope(strings.Repeat("a\n", view.MaxDiffLines+1))
 		small := core.NewRope("b\n")
-		assert.Nil(t, view.Diff(view.DiffSides{Base: big, Doc: small}))
-		assert.Nil(t, view.Diff(view.DiffSides{Base: small, Doc: big}))
+		assert.Nil(t, view.Diff(view.DiffSides{
+			Base: big,
+			Doc:  small,
+		}))
+		assert.Nil(t, view.Diff(view.DiffSides{
+			Base: small,
+			Doc:  big,
+		}))
 	})
 
 	t.Run("empty base is one insertion", func(t *testing.T) {
 		base := core.NewRope("")
 		doc := core.NewRope("a\nb\n")
-		hunks := view.Diff(view.DiffSides{Base: base, Doc: doc})
+		hunks := view.Diff(view.DiffSides{
+			Base: base,
+			Doc:  doc,
+		})
 		assert.Len(t, hunks, 1)
 		assert.True(t, hunks[0].PureInsertion())
 	})

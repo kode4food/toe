@@ -32,7 +32,10 @@ func forEachSegmentNode(n *ropeNode, s Span, fn func(string)) {
 	}
 	lc := ropeChars(n.left)
 	if s.From < lc {
-		forEachSegmentNode(n.left, Span{From: s.From, To: min(s.To, lc)}, fn)
+		forEachSegmentNode(n.left, Span{
+			From: s.From,
+			To:   min(s.To, lc),
+		}, fn)
 	}
 	if s.To > lc {
 		forEachSegmentNode(n.right, Span{

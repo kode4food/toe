@@ -40,8 +40,14 @@ func TestNavigation(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -73,8 +79,14 @@ func TestNavigation(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -106,8 +118,14 @@ func TestNavigation(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -139,8 +157,14 @@ func TestNavigation(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -172,8 +196,14 @@ func TestNavigation(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -207,8 +237,14 @@ func TestNavigationLinkSlices(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -240,8 +276,14 @@ func TestNavigationLinkSlices(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})
@@ -274,8 +316,14 @@ func TestNavigationLocationSlice(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 
@@ -284,8 +332,14 @@ func TestNavigationLocationSlice(t *testing.T) {
 		assert.Equal(t, []view.Location{
 			{
 				Path: target,
-				From: view.ServerPosition{Line: 0, Character: 3},
-				To:   view.ServerPosition{Line: 0, Character: 6},
+				From: view.ServerPosition{
+					Line:      0,
+					Character: 3,
+				},
+				To: view.ServerPosition{
+					Line:      0,
+					Character: 6,
+				},
 			},
 		}, locations)
 	})

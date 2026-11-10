@@ -239,7 +239,8 @@ func TestWhitespaceCharacters(t *testing.T) {
 
 	t.Run("rune methods return custom chars", func(t *testing.T) {
 		w := view.WhitespaceCharacters{
-			Space: "·", Tab: "→",
+			Space: "·",
+			Tab:   "→",
 		}
 		assert.Equal(t, '·', w.SpaceRune())
 		assert.Equal(t, '→', w.TabRune())
@@ -264,7 +265,10 @@ func TestStatusLineItem(t *testing.T) {
 		var s view.StatusLineItem
 		assert.NoError(t, s.UnmarshalText([]byte("mode!")))
 		assert.Equal(t,
-			view.StatusLineItem{Element: view.StatusLineMode, Pinned: true}, s,
+			view.StatusLineItem{
+				Element: view.StatusLineMode,
+				Pinned:  true,
+			}, s,
 		)
 	})
 

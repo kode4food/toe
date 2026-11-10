@@ -54,10 +54,7 @@ func TestFormat(t *testing.T) {
 		assert.NotNil(t, doc)
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		sel, err := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		sel, err := core.NewSelection([]core.Range{{Anchor: 0, Head: 3}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 

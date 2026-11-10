@@ -46,7 +46,8 @@ func (c *Client) Completion(
 			ctx context.Context, tdp protocol.TextDocumentPositionParams,
 		) (CompletionList, bool, error) {
 			result, err := c.server.Completion(ctx, &protocol.CompletionParams{
-				TextDocumentPositionParams: tdp, Context: compCtx,
+				TextDocumentPositionParams: tdp,
+				Context:                    compCtx,
 			})
 			if err != nil {
 				return CompletionList{}, true, err
@@ -194,7 +195,10 @@ func (s *Session) completionError(client *Client, err error) error {
 func (s *Session) completionTrigger(doc *view.Document, viewID view.Id) (string, bool) {
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+	before, err := doc.Text().SliceString(core.Span{
+		From: 0,
+		To:   pos,
+	})
 	if err != nil {
 		return "", false
 	}

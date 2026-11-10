@@ -155,8 +155,10 @@ func (s *Session) flatSymbols(client *Client, symbols []protocol.SymbolInformati
 			container = *sym.ContainerName
 		}
 		out = append(out, view.Symbol{
-			Name: sym.Name, Kind: symbolKind(sym.Kind),
-			Container: container, Location: loc,
+			Name:      sym.Name,
+			Kind:      symbolKind(sym.Kind),
+			Container: container,
+			Location:  loc,
 		})
 	}
 	return out
@@ -180,8 +182,10 @@ func (s *Session) workspaceSymbolSlice(
 			container = *sym.ContainerName
 		}
 		out = append(out, view.Symbol{
-			Name: sym.Name, Kind: symbolKind(sym.Kind),
-			Container: container, Location: target,
+			Name:      sym.Name,
+			Kind:      symbolKind(sym.Kind),
+			Container: container,
+			Location:  target,
 		})
 	}
 	return out
@@ -199,8 +203,10 @@ func (s *Session) nestedSymbols(
 		})
 		if ok {
 			out = append(out, view.Symbol{
-				Name: sym.Name, Kind: symbolKind(sym.Kind),
-				Container: container, Location: loc,
+				Name:      sym.Name,
+				Kind:      symbolKind(sym.Kind),
+				Container: container,
+				Location:  loc,
 			})
 		}
 		for _, child := range sym.Children {

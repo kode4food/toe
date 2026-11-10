@@ -63,10 +63,16 @@ func BenchmarkTokenize(b *testing.B) {
 		b.Run(lang, func(b *testing.B) {
 			sc := syntax.NewSyntaxCache()
 			// warm up the cache before timing
-			sc.Tokenize(core.Source{Text: src, Lang: lang})
+			sc.Tokenize(core.Source{
+				Text: src,
+				Lang: lang,
+			})
 			b.ResetTimer()
 			for range b.N {
-				sc.Tokenize(core.Source{Text: src, Lang: lang})
+				sc.Tokenize(core.Source{
+					Text: src,
+					Lang: lang,
+				})
 			}
 		})
 	}

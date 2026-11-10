@@ -207,7 +207,8 @@ func (s *Session) ChangedFiles() ([]view.FileChange, error) {
 			continue
 		}
 		changes = append(changes, view.FileChange{
-			Kind: view.FileChangeModified, Path: canon,
+			Kind: view.FileChangeModified,
+			Path: canon,
 		})
 	}
 	return changes, nil
@@ -362,7 +363,10 @@ func (s *Session) loadDiffBase(doc *view.Document, path string, text core.Rope) 
 		d.SetBase(rope)
 		return
 	}
-	d := NewDiffer(view.DiffSides{Base: rope, Doc: text}, s.notifyUpdate)
+	d := NewDiffer(view.DiffSides{
+		Base: rope,
+		Doc:  text,
+	}, s.notifyUpdate)
 	s.differs[doc.ID()] = d
 	s.heads[doc.ID()] = name
 	s.headIDs[doc.ID()] = head

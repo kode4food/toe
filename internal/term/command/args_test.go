@@ -170,7 +170,10 @@ func TestArgsCompletionState(t *testing.T) {
 func TestParseErrorMessages(t *testing.T) {
 	t.Run("wrong count exact", func(t *testing.T) {
 		_, err := command.ParseArgs("a b c", command.Signature{
-			Positionals: command.Positionals{Min: 2, Max: 2},
+			Positionals: command.Positionals{
+				Min: 2,
+				Max: 2,
+			},
 		}, true, nil)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "exactly 2 arguments")
@@ -178,7 +181,10 @@ func TestParseErrorMessages(t *testing.T) {
 
 	t.Run("wrong count too few", func(t *testing.T) {
 		_, err := command.ParseArgs("", command.Signature{
-			Positionals: command.Positionals{Min: 3, Max: -1},
+			Positionals: command.Positionals{
+				Min: 3,
+				Max: -1,
+			},
 		}, true, nil)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "at least 3 arguments")
@@ -186,7 +192,10 @@ func TestParseErrorMessages(t *testing.T) {
 
 	t.Run("wrong count too many", func(t *testing.T) {
 		_, err := command.ParseArgs("a b c", command.Signature{
-			Positionals: command.Positionals{Min: 0, Max: 1},
+			Positionals: command.Positionals{
+				Min: 0,
+				Max: 1,
+			},
 		}, true, nil)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "at most 1 argument")
@@ -194,7 +203,10 @@ func TestParseErrorMessages(t *testing.T) {
 
 	t.Run("singular plural", func(t *testing.T) {
 		_, err := command.ParseArgs("a b", command.Signature{
-			Positionals: command.Positionals{Min: 1, Max: 1},
+			Positionals: command.Positionals{
+				Min: 1,
+				Max: 1,
+			},
 		}, true, nil)
 		assert.True(t, errors.Is(err, command.ErrCommandLineParse))
 		assert.Contains(t, err.Error(), "1 argument,")
@@ -233,8 +245,11 @@ func TestCommandArgs(t *testing.T) {
 		{Name: "bar", Alias: 'b', Completions: []string{}},
 	}
 	sig := command.Signature{
-		Positionals: command.Positionals{Min: 1, Max: 2},
-		Flags:       flags,
+		Positionals: command.Positionals{
+			Min: 1,
+			Max: 2,
+		},
+		Flags: flags,
 	}
 
 	t.Run("parses flags and positionals", func(t *testing.T) {
@@ -290,8 +305,11 @@ func TestCommandArgs(t *testing.T) {
 
 	t.Run("raw after configured positional count", func(t *testing.T) {
 		sig := command.Signature{
-			Positionals: command.Positionals{Min: 1, Max: 2},
-			RawAfter:    1,
+			Positionals: command.Positionals{
+				Min: 1,
+				Max: 2,
+			},
+			RawAfter: 1,
 		}
 
 		args, err := command.ParseArgs(
@@ -320,8 +338,11 @@ func TestCommandArgs(t *testing.T) {
 
 	t.Run("raw rest can be empty", func(t *testing.T) {
 		sig := command.Signature{
-			Positionals: command.Positionals{Min: 1, Max: 1},
-			RawAfter:    1,
+			Positionals: command.Positionals{
+				Min: 1,
+				Max: 1,
+			},
+			RawAfter: 1,
 		}
 
 		args, err := command.ParseArgs(`echo`, sig, true, nil)

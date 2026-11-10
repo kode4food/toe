@@ -160,13 +160,16 @@ func TestCodeActionDiagnosticFilter(t *testing.T) {
 		v := e.FocusedView()
 		assert.NotNil(t, v)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
-			{Range: core.Span{From: 5, To: 7}},
-			{Range: core.Span{From: 0, To: 9999}},
+			{Range: core.Span{
+				From: 5,
+				To:   7,
+			}},
+			{Range: core.Span{
+				From: 0,
+				To:   9999,
+			}},
 		})
-		sel, err := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		sel, err := core.NewSelection([]core.Range{{Anchor: 0, Head: 3}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 
@@ -197,23 +200,35 @@ func TestCodeActionWithDiagnostics(t *testing.T) {
 		assert.NotNil(t, v)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{
 			{
-				Range:    core.Span{From: 0, To: 3},
+				Range: core.Span{
+					From: 0,
+					To:   3,
+				},
 				Message:  "old is wrong",
 				Severity: view.DiagnosticSeverityError,
 				Source:   "linter",
 			},
 			{
-				Range:    core.Span{From: 0, To: 3},
+				Range: core.Span{
+					From: 0,
+					To:   3,
+				},
 				Message:  "old is warned",
 				Severity: view.DiagnosticSeverityWarning,
 			},
 			{
-				Range:    core.Span{From: 0, To: 3},
+				Range: core.Span{
+					From: 0,
+					To:   3,
+				},
 				Message:  "fyi",
 				Severity: view.DiagnosticSeverityInfo,
 			},
 			{
-				Range:    core.Span{From: 0, To: 3},
+				Range: core.Span{
+					From: 0,
+					To:   3,
+				},
 				Message:  "hint",
 				Severity: view.DiagnosticSeverityHint,
 			},

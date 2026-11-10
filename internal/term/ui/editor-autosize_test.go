@@ -110,7 +110,10 @@ func TestAutoSizePane(t *testing.T) {
 
 	t.Run("image has no width target", func(t *testing.T) {
 		dir := t.TempDir()
-		path := writeRenderImage(t, dir, 40, 20, color.RGBA{G: 255, A: 255})
+		path := writeRenderImage(t, dir, 40, 20, color.RGBA{
+			G: 255,
+			A: 255,
+		})
 		e := view.NewEditor(dir)
 		m := resize(ui.New(e, command.NewKeymaps()), 120, 24)
 		m.SetAutoSize(true)

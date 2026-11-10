@@ -140,7 +140,10 @@ func (v visualMover) moveVertically(doc Rope, r Range, mv VerticalMove) (Range, 
 			tl := newVisualLine(doc, nextLine, vf)
 			tRows := tl.rowCount()
 			if remaining < tRows {
-				off := tl.charAtPos(geom.Point{X: cur.X, Y: remaining})
+				off := tl.charAtPos(geom.Point{
+					X: cur.X,
+					Y: remaining,
+				})
 				return r.PutCursor(doc, tStart+off, extend), goal
 			}
 			remaining -= tRows
@@ -153,7 +156,10 @@ func (v visualMover) moveVertically(doc Rope, r Range, mv VerticalMove) (Range, 
 			return r, goal
 		}
 		tl := newVisualLine(doc, tLine, vf)
-		off := tl.charAtPos(geom.Point{X: cur.X, Y: tl.rowCount() - 1})
+		off := tl.charAtPos(geom.Point{
+			X: cur.X,
+			Y: tl.rowCount() - 1,
+		})
 		return r.PutCursor(doc, tStart+off, extend), goal
 	}
 
@@ -174,7 +180,8 @@ func (v visualMover) moveVertically(doc Rope, r Range, mv VerticalMove) (Range, 
 		tRows := tl.rowCount()
 		if remaining < tRows {
 			off := tl.charAtPos(geom.Point{
-				X: cur.X, Y: tRows - 1 - remaining,
+				X: cur.X,
+				Y: tRows - 1 - remaining,
 			})
 			return r.PutCursor(doc, tStart+off, extend), goal
 		}

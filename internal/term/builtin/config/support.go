@@ -67,7 +67,10 @@ func SupportModule(model ui.Model) command.Module {
 				},
 				Modes: command.PaneModes,
 				Signature: command.Signature{
-					Positionals: command.Positionals{Min: 1, Max: -1},
+					Positionals: command.Positionals{
+						Min: 1,
+						Max: -1,
+					},
 				},
 			},
 			{
@@ -122,7 +125,10 @@ func parseGotoLocation(s string) (string, core.Position) {
 	case 1:
 		return path, core.Position{Line: nums[0]}
 	case 2:
-		return path, core.Position{Line: nums[1], Column: nums[0]}
+		return path, core.Position{
+			Line:   nums[1],
+			Column: nums[0],
+		}
 	}
 	return path, core.Position{}
 }

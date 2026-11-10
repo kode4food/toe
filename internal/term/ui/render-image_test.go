@@ -36,12 +36,18 @@ func TestImageRender(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "images")
 	assert.NoError(t, os.Mkdir(dir, 0o755))
-	path := writeRenderImage(t, dir, 40, 20, color.RGBA{G: 255, A: 255})
+	path := writeRenderImage(t, dir, 40, 20, color.RGBA{
+		G: 255,
+		A: 255,
+	})
 
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = m2.(ui.Model)
 	var rawMsgs []string
 	m, rawMsgs = collectModelRawMsgs(m, cmd)
@@ -82,13 +88,19 @@ func TestImageDim(t *testing.T) {
 		root := t.TempDir()
 		dir := filepath.Join(root, "images")
 		assert.NoError(t, os.Mkdir(dir, 0o755))
-		path := writeRenderImage(t, dir, 40, 20, color.RGBA{G: 255, A: 255})
+		path := writeRenderImage(t, dir, 40, 20, color.RGBA{
+			G: 255,
+			A: 255,
+		})
 
 		e := view.NewEditor(root)
 		e.Options().InactiveDim = 50
 		docID := e.Tree().Focus()
 		m := ui.New(e, command.NewKeymaps())
-		m2, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m2, _ := m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		m = m2.(ui.Model)
 
 		pane, err := ui.NewImagePane(e, path)
@@ -96,7 +108,10 @@ func TestImageDim(t *testing.T) {
 		assert.True(t, e.SplitPane(pane, view.LayoutVertical))
 		e.FocusPane(docID)
 
-		m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m2, cmd := m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		m = m2.(ui.Model)
 		var rawMsgs []string
 		m, rawMsgs = collectModelRawMsgs(m, cmd)
@@ -124,7 +139,10 @@ func TestImageLoading(t *testing.T) {
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, _ := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = m2.(ui.Model)
 
 	out := stripANSI(viewContent(m))
@@ -142,7 +160,10 @@ func TestImageUnsupported(t *testing.T) {
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = m2.(ui.Model)
 
 	out := stripANSI(viewContent(m))
@@ -192,30 +213,51 @@ func TestImageInput(t *testing.T) {
 		m2, cmd := m.Update(msg)
 		m = feedImageMsgs(m2.(ui.Model), cmd)
 	}
-	feed(tea.KeyPressMsg{Code: '=', Text: "="})
+	feed(tea.KeyPressMsg{
+		Code: '=',
+		Text: "=",
+	})
 	assert.Equal(t, 125, pane.Zoom())
-	feed(tea.KeyPressMsg{Code: '-', Text: "-"})
+	feed(tea.KeyPressMsg{
+		Code: '-',
+		Text: "-",
+	})
 	assert.Equal(t, 100, pane.Zoom())
-	feed(tea.KeyPressMsg{Code: '+', Text: "+"})
+	feed(tea.KeyPressMsg{
+		Code: '+',
+		Text: "+",
+	})
 	assert.Equal(t, 125, pane.Zoom())
-	feed(tea.KeyPressMsg{Code: '0', Text: "0"})
+	feed(tea.KeyPressMsg{
+		Code: '0',
+		Text: "0",
+	})
 	assert.Equal(t, 100, pane.Zoom())
 
 	// a modified wheel zooms without stealing focus from the document
 	e.FocusPane(docID)
 	feed(tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelUp, Mod: tea.ModCtrl,
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelUp,
+		Mod:    tea.ModCtrl,
 	})
 	assert.Equal(t, docID, e.Tree().Focus())
 	assert.Equal(t, 110, pane.Zoom())
 	feed(tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown, Mod: tea.ModCtrl,
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelDown,
+		Mod:    tea.ModCtrl,
 	})
 	assert.Equal(t, 100, pane.Zoom())
 }
 
 func readyImage(m ui.Model) ui.Model {
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m2, cmd := m.Update(tea.KeyPressMsg{
+		Code: 'x',
+		Text: "x",
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	_ = m.View()
 	return m
@@ -232,7 +274,10 @@ func TestImagePan(t *testing.T) {
 	m := ui.New(e, km)
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
@@ -275,7 +320,10 @@ func TestImageWheelDefault(t *testing.T) {
 	m := ui.New(e, km)
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
@@ -287,12 +335,17 @@ func TestImageWheelDefault(t *testing.T) {
 
 	// a bare wheel pans, a modified wheel zooms
 	m = mouse(m, tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelRight,
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelRight,
 	})
 	assert.Positive(t, pane.Pan().X)
 	assert.Equal(t, 400, pane.Zoom())
 	mouse(m, tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown, Mod: tea.ModCtrl,
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelDown,
+		Mod:    tea.ModCtrl,
 	})
 	assert.Equal(t, 390, pane.Zoom())
 }
@@ -308,7 +361,10 @@ func TestImageWheelGestureLatch(t *testing.T) {
 	m := ui.New(e, km)
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
@@ -324,18 +380,29 @@ func TestImageWheelGestureLatch(t *testing.T) {
 
 	// a modified wheel starts a zoom gesture
 	feed(tea.MouseWheelMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown, Mod: tea.ModCtrl,
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelDown,
+		Mod:    tea.ModCtrl,
 	})
 	assert.Equal(t, 390, pane.Zoom())
 
 	// a bare wheel in the same stream stays a zoom, not a pan
-	feed(tea.MouseWheelMsg{X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown})
+	feed(tea.MouseWheelMsg{
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelDown,
+	})
 	assert.Equal(t, 380, pane.Zoom())
 	assert.Equal(t, 0, pane.Pan().Y)
 
 	// after the gesture gap a bare wheel pans again
 	time.Sleep(220 * time.Millisecond)
-	feed(tea.MouseWheelMsg{X: a.X + 1, Y: a.Y, Button: tea.MouseWheelDown})
+	feed(tea.MouseWheelMsg{
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseWheelDown,
+	})
 	assert.Equal(t, 380, pane.Zoom())
 	assert.Positive(t, pane.Pan().Y)
 }
@@ -359,13 +426,20 @@ func TestImageClickZoom(t *testing.T) {
 	a := pane.Area()
 
 	// a click zooms in
-	m = mouse(m, tea.MouseClickMsg{X: a.X + 1, Y: a.Y, Button: tea.MouseLeft})
+	m = mouse(m, tea.MouseClickMsg{
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseLeft,
+	})
 	assert.Equal(t, pane.ID(), e.Tree().Focus())
 	assert.Equal(t, 125, pane.Zoom())
 
 	// a modified click zooms out
 	mouse(m, tea.MouseClickMsg{
-		X: a.X + 1, Y: a.Y, Button: tea.MouseLeft, Mod: tea.ModCtrl,
+		X:      a.X + 1,
+		Y:      a.Y,
+		Button: tea.MouseLeft,
+		Mod:    tea.ModCtrl,
 	})
 	assert.Equal(t, 100, pane.Zoom())
 }
@@ -384,7 +458,10 @@ func TestImagePanRestore(t *testing.T) {
 	m := ui.New(e, km)
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
@@ -405,7 +482,10 @@ func TestImagePanRestore(t *testing.T) {
 	_, restored, err := next.RestoreSession(session)
 	assert.NoError(t, err)
 	assert.True(t, restored)
-	nm2, ncmd := nm.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	nm2, ncmd := nm.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	nm = feedImageMsgs(nm2.(ui.Model), ncmd)
 	_ = nm.View()
 	restoredPane, ok := next.FocusedPane().(*ui.ImagePane)
@@ -426,7 +506,10 @@ func TestImagePanSurvivesResize(t *testing.T) {
 	m := ui.New(e, km)
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
@@ -442,10 +525,16 @@ func TestImagePanSurvivesResize(t *testing.T) {
 	assert.NotEqual(t, geom.Point{}, want)
 
 	// shrink the window (bound gets smaller), render, then restore the size
-	m2, cmd = m.Update(tea.WindowSizeMsg{Width: 30, Height: 10})
+	m2, cmd = m.Update(tea.WindowSizeMsg{
+		Width:  30,
+		Height: 10,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	_ = m.View()
-	m2, cmd = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd = m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	_ = m.View()
 
@@ -465,7 +554,10 @@ func TestImagePanForgottenOnZoomOut(t *testing.T) {
 	m := ui.New(e, km)
 	_, err := builtin.Register(m, km)
 	assert.NoError(t, err)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
@@ -543,7 +635,10 @@ func feedImageMsgs(m ui.Model, cmd tea.Cmd) ui.Model {
 func TestImagePickerPreviewTransmit(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	dir := t.TempDir()
-	writeRenderImage(t, dir, 40, 20, color.RGBA{B: 255, A: 255})
+	writeRenderImage(t, dir, 40, 20, color.RGBA{
+		B: 255,
+		A: 255,
+	})
 
 	e := view.NewEditor(dir)
 	km := command.NewKeymaps()
@@ -553,7 +648,10 @@ func TestImagePickerPreviewTransmit(t *testing.T) {
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 120, 30)
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	m2, cmd := m.Update(tea.KeyPressMsg{
+		Code: 'p',
+		Text: "p",
+	})
 	_, rawMsgs := collectModelRawMsgs(m2.(ui.Model), cmd)
 	raw := strings.Join(rawMsgs, "")
 
@@ -566,7 +664,10 @@ func TestImagePickerPreviewTransmit(t *testing.T) {
 func TestImagePickerPreviewLoading(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	dir := t.TempDir()
-	writeRenderImage(t, dir, 40, 20, color.RGBA{B: 255, A: 255})
+	writeRenderImage(t, dir, 40, 20, color.RGBA{
+		B: 255,
+		A: 255,
+	})
 
 	e := view.NewEditor(dir)
 	km := command.NewKeymaps()
@@ -576,7 +677,10 @@ func TestImagePickerPreviewLoading(t *testing.T) {
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 120, 30)
-	m2, _ := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	m2, _ := m.Update(tea.KeyPressMsg{
+		Code: 'p',
+		Text: "p",
+	})
 	m = m2.(ui.Model)
 
 	out := stripANSI(viewContent(m))
@@ -587,7 +691,10 @@ func TestImagePickerPreviewLoading(t *testing.T) {
 func TestImagePickerPreview(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	tmp := t.TempDir()
-	writeRenderImage(t, tmp, 40, 20, color.RGBA{B: 255, A: 255})
+	writeRenderImage(t, tmp, 40, 20, color.RGBA{
+		B: 255,
+		A: 255,
+	})
 
 	e := view.NewEditor(tmp)
 	km := command.NewKeymaps()
@@ -597,7 +704,10 @@ func TestImagePickerPreview(t *testing.T) {
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 120, 30)
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	m2, cmd := m.Update(tea.KeyPressMsg{
+		Code: 'p',
+		Text: "p",
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 
 	assert.True(t, strings.ContainsRune(viewContent(m), tui.PlaceholderRune))
@@ -606,7 +716,10 @@ func TestImagePickerPreview(t *testing.T) {
 func TestImagePickerPreviewResize(t *testing.T) {
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	tmp := t.TempDir()
-	writeRenderImage(t, tmp, 40, 20, color.RGBA{B: 255, A: 255})
+	writeRenderImage(t, tmp, 40, 20, color.RGBA{
+		B: 255,
+		A: 255,
+	})
 
 	e := view.NewEditor(tmp)
 	km := command.NewKeymaps()
@@ -616,17 +729,24 @@ func TestImagePickerPreviewResize(t *testing.T) {
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 120, 30)
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	m2, cmd := m.Update(tea.KeyPressMsg{
+		Code: 'p',
+		Text: "p",
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 
 	assert.NotPanics(t, func() {
 		_ = m.View()
 		m2, _ = m.Update(tea.MouseClickMsg{
-			X: 60, Y: 8, Button: tea.MouseLeft,
+			X:      60,
+			Y:      8,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, cmd = m.Update(tea.MouseMotionMsg{
-			X: 75, Y: 8, Button: tea.MouseLeft,
+			X:      75,
+			Y:      8,
+			Button: tea.MouseLeft,
 		})
 		m, _ = collectModelRawMsgs(m2.(ui.Model), cmd)
 		m2, _ = m.Update(tea.MouseReleaseMsg{
@@ -648,7 +768,10 @@ func TestImageSplit(t *testing.T) {
 	assert.NoError(t, err)
 	e.Tree().Split(pane, view.LayoutVertical)
 	m := ui.New(e, command.NewKeymaps())
-	_, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	_, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	_, rawMsgs := collectModelRawMsgs(m, cmd)
 	raw := strings.Join(rawMsgs, "")
 
@@ -662,7 +785,10 @@ func TestImageRestore(t *testing.T) {
 	path := writeRenderImage(t, root, 40, 20, nil)
 	session := filepath.Join(root, "session.json")
 	e := view.NewEditor(root)
-	e.ResizeTree(geom.Size{Width: 80, Height: 24})
+	e.ResizeTree(geom.Size{
+		Width:  80,
+		Height: 24,
+	})
 	openRenderImagePane(t, e, path)
 	pane, err := ui.NewImagePane(e, path)
 	assert.NoError(t, err)
@@ -674,7 +800,10 @@ func TestImageRestore(t *testing.T) {
 	_, restored, err := next.RestoreSession(session)
 	assert.NoError(t, err)
 	assert.True(t, restored)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m, rawMsgs := collectModelRawMsgs(m2.(ui.Model), cmd)
 	raw := strings.Join(rawMsgs, "")
 
@@ -690,9 +819,15 @@ func TestImageResizeOrder(t *testing.T) {
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, firstCmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, firstCmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = m2.(ui.Model)
-	m2, resizeCmd := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m2, resizeCmd := m.Update(tea.WindowSizeMsg{
+		Width:  100,
+		Height: 30,
+	})
 	m, resizeRaw := collectModelRawMsgs(m2.(ui.Model), resizeCmd)
 	m, firstRaw := collectModelRawMsgs(m, firstCmd)
 	all := strings.Join(resizeRaw, "") + strings.Join(firstRaw, "")
@@ -710,14 +845,20 @@ func TestImageZoomKeepsReadyPlacement(t *testing.T) {
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = feedImageMsgs(m2.(ui.Model), cmd)
 
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
 	pane.ZoomIn()
 	pane.MarkDirty()
-	m2, _ = m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m2, _ = m.Update(tea.KeyPressMsg{
+		Code: 'x',
+		Text: "x",
+	})
 	m = m2.(ui.Model)
 
 	content := viewContent(m)
@@ -733,16 +874,25 @@ func TestImageZoomPending(t *testing.T) {
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m, initialRaw := collectModelRawMsgs(m2.(ui.Model), cmd)
 
 	pane, ok := e.FocusedPane().(*ui.ImagePane)
 	assert.True(t, ok)
 	pane.ZoomOut()
-	m2, firstCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m2, firstCmd := m.Update(tea.KeyPressMsg{
+		Code: 'x',
+		Text: "x",
+	})
 	m = m2.(ui.Model)
 	pending := viewContent(m)
-	m2, duplicateCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m2, duplicateCmd := m.Update(tea.KeyPressMsg{
+		Code: 'x',
+		Text: "x",
+	})
 	m, duplicateRaw := collectModelRawMsgs(m2.(ui.Model), duplicateCmd)
 	m, firstRaw := collectModelRawMsgs(m, firstCmd)
 
@@ -764,7 +914,10 @@ func TestImageZoomPending(t *testing.T) {
 	assert.Contains(t, viewContent(m), nextColor)
 
 	pane.ZoomOut()
-	m2, lastCmd := m.Update(tea.KeyPressMsg{Code: 'x', Text: "x"})
+	m2, lastCmd := m.Update(tea.KeyPressMsg{
+		Code: 'x',
+		Text: "x",
+	})
 	_, lastRaw := collectModelRawMsgs(m2.(ui.Model), lastCmd)
 	last := strings.Join(lastRaw, "")
 	assert.Contains(t, last, "p="+initial[1]+",d=i,a=d")
@@ -791,7 +944,10 @@ func TestImageEviction(t *testing.T) {
 		[]command.KeyEvent{char('p')},
 	)
 	m = resize(m, 120, 30)
-	m2, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	m2, cmd := m.Update(tea.KeyPressMsg{
+		Code: 'p',
+		Text: "p",
+	})
 	m, raw := collectModelRawMsgs(m2.(ui.Model), cmd)
 
 	var all strings.Builder
@@ -810,7 +966,12 @@ func TestImageEviction(t *testing.T) {
 func writeDistinctImage(t testing.TB, dir string, i int) {
 	t.Helper()
 	img := image.NewRGBA(image.Rect(0, 0, 40, 20))
-	img.Set(0, 0, color.RGBA{R: uint8(i), G: uint8(i * 7), B: 255, A: 255})
+	img.Set(0, 0, color.RGBA{
+		R: uint8(i),
+		G: uint8(i * 7),
+		B: 255,
+		A: 255,
+	})
 	var buf bytes.Buffer
 	assert.NoError(t, png.Encode(&buf, img))
 	path := filepath.Join(dir, fmt.Sprintf("pic%02d.png", i))

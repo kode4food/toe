@@ -9,11 +9,21 @@ import (
 )
 
 func TestVersionControl(t *testing.T) {
-	h := view.DiffHunk{BaseFrom: 1, BaseTo: 1, From: 1, To: 2}
+	h := view.DiffHunk{
+		BaseFrom: 1,
+		BaseTo:   1,
+		From:     1,
+		To:       2,
+	}
 	assert.True(t, h.PureInsertion())
 	assert.False(t, h.PureRemoval())
 
-	h = view.DiffHunk{BaseFrom: 1, BaseTo: 2, From: 1, To: 1}
+	h = view.DiffHunk{
+		BaseFrom: 1,
+		BaseTo:   2,
+		From:     1,
+		To:       1,
+	}
 	assert.False(t, h.PureInsertion())
 	assert.True(t, h.PureRemoval())
 

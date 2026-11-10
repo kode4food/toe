@@ -40,7 +40,10 @@ func SortSelections(e *view.Editor, args SortSelectionsArgs) error {
 		if start > end {
 			start, end = end, start
 		}
-		sl, _ := text.Slice(core.Span{From: start, To: end})
+		sl, _ := text.Slice(core.Span{
+			From: start,
+			To:   end,
+		})
 		fragments[i] = sl.String()
 	}
 
@@ -109,7 +112,10 @@ func ReflowSelections(e *view.Editor, width int) {
 		if start > end {
 			start, end = end, start
 		}
-		fragRope, _ := text.Slice(core.Span{From: start, To: end})
+		fragRope, _ := text.Slice(core.Span{
+			From: start,
+			To:   end,
+		})
 		reflowed := core.ReflowHardWrap(fragRope.String(), width)
 		changes = append(changes, core.TextChange(core.Span{
 			From: start,
@@ -145,7 +151,10 @@ func CharInfo(e *view.Editor) string {
 	if start == end {
 		return ""
 	}
-	gr, err := text.Slice(core.Span{From: start, To: end})
+	gr, err := text.Slice(core.Span{
+		From: start,
+		To:   end,
+	})
 	if err != nil {
 		return ""
 	}

@@ -82,7 +82,10 @@ func (c *countingPathSource) Load() ui.PickerLoad {
 			Location: ui.PickerLocation{Target: ui.PickerTarget{Path: path}},
 		})
 	}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 func (*countingPathSource) ItemsForPath(path string) []*ui.PickerItem {
@@ -187,7 +190,10 @@ func TestPickerReopen(t *testing.T) {
 		second := "line\n" + middle + "second\n"
 		changes, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(
-				core.Span{From: 0, To: rope.LenChars()}, second,
+				core.Span{
+					From: 0,
+					To:   rope.LenChars(),
+				}, second,
 			),
 		})
 		assert.NoError(t, err)
@@ -216,35 +222,44 @@ func TestChangedFileRows(t *testing.T) {
 	}{
 		{name: "clean"},
 		{
-			name: "buffer only", inBuffer: true,
-			wantRows: 1, wantUnstaged: "+ buffer",
+			name:         "buffer only",
+			inBuffer:     true,
+			wantRows:     1,
+			wantUnstaged: "+ buffer",
+		},
+		{name: "disk only", onDisk: true, wantRows: 1, wantUnstaged: "+ disk"},
+		{
+			name:         "disk and buffer",
+			onDisk:       true,
+			inBuffer:     true,
+			wantRows:     1,
+			wantUnstaged: "+ buffer",
+		},
+		{name: "staged only", staged: true, wantRows: 1, wantStaged: "+ staged"},
+		{
+			name:         "staged and buffer",
+			staged:       true,
+			inBuffer:     true,
+			wantRows:     2,
+			wantStaged:   "+ staged",
+			wantUnstaged: "+ buffer",
 		},
 		{
-			name: "disk only", onDisk: true,
-			wantRows: 1, wantUnstaged: "+ disk",
+			name:         "staged and disk",
+			staged:       true,
+			onDisk:       true,
+			wantRows:     2,
+			wantStaged:   "+ staged",
+			wantUnstaged: "+ disk",
 		},
 		{
-			name: "disk and buffer", onDisk: true, inBuffer: true,
-			wantRows: 1, wantUnstaged: "+ buffer",
-		},
-		{
-			name: "staged only", staged: true,
-			wantRows: 1, wantStaged: "+ staged",
-		},
-		{
-			name: "staged and buffer", staged: true, inBuffer: true,
-			wantRows: 2, wantStaged: "+ staged", wantUnstaged: "+ buffer",
-		},
-		{
-			name: "staged and disk", staged: true, onDisk: true,
-			wantRows: 2, wantStaged: "+ staged", wantUnstaged: "+ disk",
-		},
-		{
-			name:     "staged, disk and buffer",
-			staged:   true,
-			onDisk:   true,
-			inBuffer: true,
-			wantRows: 2, wantStaged: "+ staged", wantUnstaged: "+ buffer",
+			name:         "staged, disk and buffer",
+			staged:       true,
+			onDisk:       true,
+			inBuffer:     true,
+			wantRows:     2,
+			wantStaged:   "+ staged",
+			wantUnstaged: "+ buffer",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -268,7 +283,10 @@ func TestChangedFileRows(t *testing.T) {
 				rope := doc.Text()
 				changes, err := core.NewChangeSetFromChanges(
 					rope, []core.Change{core.TextChange(
-						core.Span{From: 0, To: rope.LenChars()}, "buffer\n",
+						core.Span{
+							From: 0,
+							To:   rope.LenChars(),
+						}, "buffer\n",
 					)},
 				)
 				assert.NoError(t, err)
@@ -597,7 +615,10 @@ func TestPickerFileWatch(t *testing.T) {
 		t.Cleanup(s.Close)
 		m := ui.New(e, command.NewKeymaps()).WithInitialPicker(ui.NewChangedFilePicker)
 		t.Cleanup(m.Close)
-		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 120, Height: 24})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  120,
+			Height: 24,
+		})
 		assert.NotContains(t, stripANSI(viewContent(m)), "Staged Changes")
 
 		testutil.RunGit(t, repo, "add", "alpha.txt")
@@ -656,7 +677,10 @@ func TestPickerFileWatch(t *testing.T) {
 		rope := doc.Text()
 		changes, err := core.NewChangeSetFromChanges(
 			rope, []core.Change{core.TextChange(
-				core.Span{From: 0, To: rope.LenChars()}, "unsaved\n",
+				core.Span{
+					From: 0,
+					To:   rope.LenChars(),
+				}, "unsaved\n",
 			)},
 		)
 		assert.NoError(t, err)
@@ -812,7 +836,10 @@ func resolvedTempDir(t *testing.T) string {
 }
 
 func newWatchPump(m ui.Model) *watchPump {
-	p := &watchPump{model: m, msgs: make(chan tea.Msg, msgQueueSize)}
+	p := &watchPump{
+		model: m,
+		msgs:  make(chan tea.Msg, msgQueueSize),
+	}
 	p.run(m.Init())
 	return p
 }

@@ -50,10 +50,6 @@ func logLineSpans(line string, pos int) []Span {
 	restAt := tagEnd + utf8.RuneCountInString(LogSeparator)
 	return []Span{
 		{Start: pos, End: tagEnd, Scope: scope},
-		{
-			Start: restAt,
-			End:   restAt + utf8.RuneCountInString(rest),
-			Scope: scope,
-		},
+		{Start: restAt, End: restAt + utf8.RuneCountInString(rest), Scope: scope},
 	}
 }

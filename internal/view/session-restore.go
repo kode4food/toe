@@ -109,7 +109,10 @@ func (e *Editor) restoreSessionKind(
 		}
 		id := t.allocID()
 		t.attach(pane, id)
-		node := &treeNode{parent: parent, pane: pane}
+		node := &treeNode{
+			parent: parent,
+			pane:   pane,
+		}
 		for _, h := range sn.History {
 			if hp := e.restoreDisplacedPane(t, id, &h, rs); hp != nil {
 				node.history = append(node.history, hp)
@@ -131,7 +134,10 @@ type restoreSessionViewArgs struct {
 
 func (e *Editor) restoreSessionView(args restoreSessionViewArgs) Id {
 	v := e.newSessionView(args)
-	args.tree.nodes[args.viewID] = &treeNode{parent: args.parent, pane: v}
+	args.tree.nodes[args.viewID] = &treeNode{
+		parent: args.parent,
+		pane:   v,
+	}
 	return args.viewID
 }
 
@@ -206,7 +212,10 @@ func (e *Editor) restoreDisplacedPane(t *Tree, parent Id, sn *sessNode, rs *sess
 	pane, err := e.restorePane(restorePaneArgs{
 		kind: sn.Kind,
 		session: &PaneSession{
-			path:   sessionAbsPath(sessRef{base: rs.base, path: sn.Path}),
+			path: sessionAbsPath(sessRef{
+				base: rs.base,
+				path: sn.Path,
+			}),
 			values: sn.Values,
 		},
 	})
@@ -224,7 +233,10 @@ func (s sessSelect) selection() core.Selection {
 	}
 	ranges := make([]core.Range, 0, len(s.Ranges))
 	for _, r := range s.Ranges {
-		ranges = append(ranges, core.Range{Anchor: r.Anchor, Head: r.Head})
+		ranges = append(ranges, core.Range{
+			Anchor: r.Anchor,
+			Head:   r.Head,
+		})
 	}
 	if sel, err := core.NewSelection(ranges, s.Primary); err == nil {
 		return sel

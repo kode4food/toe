@@ -166,12 +166,15 @@ end_of_line = crlf
 
 	t.Run("uses language indent fallback on open", func(t *testing.T) {
 		root := t.TempDir()
-		writeViewLanguages(t, viewLanguagesArgs{root: root, toml: `
+		writeViewLanguages(t, viewLanguagesArgs{
+			root: root,
+			toml: `
 [[language]]
 name = "custom"
 file-types = ["foo"]
 indent = { tab-width = 8, unit = "  " }
-`})
+`,
+		})
 		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "main.foo")
@@ -190,12 +193,15 @@ indent = { tab-width = 8, unit = "  " }
 
 	t.Run("missing file language indent", func(t *testing.T) {
 		root := t.TempDir()
-		writeViewLanguages(t, viewLanguagesArgs{root: root, toml: `
+		writeViewLanguages(t, viewLanguagesArgs{
+			root: root,
+			toml: `
 [[language]]
 name = "custom"
 file-types = ["foo"]
 indent = { tab-width = 8, unit = "  " }
-`})
+`,
+		})
 		t.Setenv("XDG_CONFIG_HOME", root)
 		tmp := t.TempDir()
 		path := filepath.Join(tmp, "new.foo")
@@ -401,7 +407,10 @@ trim_trailing_whitespace = true
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: rope.LenChars()}, "hello  "),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   rope.LenChars(),
+			}, "hello  "),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -482,7 +491,10 @@ func TestDocumentSaveSafety(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: rope.LenChars()}, "changed"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   rope.LenChars(),
+			}, "changed"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -549,7 +561,10 @@ func TestDocumentReload(t *testing.T) {
 		doc := e.FocusedDocument()
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 3, To: 3}, "!"),
+			core.TextChange(core.Span{
+				From: 3,
+				To:   3,
+			}, "!"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -613,7 +628,10 @@ func TestDocumentExternalChange(t *testing.T) {
 		err := os.WriteFile(path, []byte("0123456789"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
@@ -669,10 +687,7 @@ func TestDocumentExternalChange(t *testing.T) {
 
 		assert.True(t, ok)
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, sel.Ranges())
+		assert.Equal(t, []core.Range{{Anchor: 0, Head: 3}}, sel.Ranges())
 	})
 
 	t.Run("clean reload maps inserted prefix", func(t *testing.T) {
@@ -1025,7 +1040,10 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 
 		rope := d.Text()
 		cs1, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "a"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "a"),
 		})
 		assert.NoError(t, err)
 		tx1 := core.NewTransaction(rope).WithChanges(cs1)
@@ -1033,7 +1051,10 @@ func TestDocumentBeginAndCommitInsertGroup(t *testing.T) {
 
 		rope2 := d.Text()
 		cs2, err := core.NewChangeSetFromChanges(rope2, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 1}, "b"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "b"),
 		})
 		assert.NoError(t, err)
 		tx2 := core.NewTransaction(rope2).WithChanges(cs2)
@@ -1079,7 +1100,10 @@ func TestDocumentApplyBranches(t *testing.T) {
 		d := e.FocusedDocument()
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "xyz"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "xyz"),
 		})
 		assert.NoError(t, err)
 		sel := core.PointSelection(2)
@@ -1096,7 +1120,10 @@ func TestDocumentApplyBranches(t *testing.T) {
 		d.BeginInsertGroup(v.ID())
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "abc"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "abc"),
 		})
 		assert.NoError(t, err)
 		sel := core.PointSelection(1)
@@ -1111,7 +1138,10 @@ func TestDocumentApplyBranches(t *testing.T) {
 		v := e.FocusedView()
 		d := e.FocusedDocument()
 		cs, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "abc\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "abc\n"),
 		})
 		assert.NoError(t, err)
 		firstTx := core.NewTransaction(d.Text()).WithChanges(cs).
@@ -1120,7 +1150,10 @@ func TestDocumentApplyBranches(t *testing.T) {
 		assert.Equal(t, 4, d.SelectionFor(v.ID()).Primary().Head)
 
 		importCS, err := core.NewChangeSetFromChanges(d.Text(), []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "import \"strings\"\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "import \"strings\"\n"),
 		})
 		assert.NoError(t, err)
 		importTx := core.NewTransaction(d.Text()).WithChanges(importCS)
@@ -1134,7 +1167,10 @@ func TestDocumentApplyBranches(t *testing.T) {
 		err := os.WriteFile(path, []byte("hello"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		v2 := e.VSplit(v1.DocID())
@@ -1144,7 +1180,10 @@ func TestDocumentApplyBranches(t *testing.T) {
 
 		rope := doc.Text()
 		cs, csErr := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "X"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "X"),
 		})
 		assert.NoError(t, csErr)
 		tx := core.NewTransaction(rope).WithChanges(cs)
@@ -1205,7 +1244,10 @@ func TestDocumentReloadPreservesSelections(t *testing.T) {
 		err := os.WriteFile(path, []byte("hello world"), 0o644)
 		assert.NoError(t, err)
 		e := view.NewEditor(tmp)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		v1, err := e.OpenFile(path)
 		assert.NoError(t, err)
 		v2 := e.VSplit(v1.DocID())
@@ -1365,7 +1407,10 @@ func TestDocumentConsumeDirty(t *testing.T) {
 		d.ConsumeDirty(v.ID())
 		rope := d.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "x"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "x"),
 		})
 		assert.NoError(t, err)
 		tx := core.NewTransaction(rope).WithChanges(cs)

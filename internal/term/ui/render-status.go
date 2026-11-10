@@ -97,7 +97,10 @@ func (r *renderPass) renderStatus(args renderStatusArgs) {
 	prim := sel.Primary()
 	cursor := prim.Cursor(text)
 
-	at := core.Position{Line: 1, Column: 1}
+	at := core.Position{
+		Line:   1,
+		Column: 1,
+	}
 	if p, err := text.Position(cursor); err == nil {
 		at = p
 	}

@@ -17,10 +17,7 @@ import (
 func TestShellPipeTo(t *testing.T) {
 	t.Run("pipes selection without changing doc", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		err := action.ShellPipeTo(e, "cat > /dev/null")
 
@@ -31,10 +28,7 @@ func TestShellPipeTo(t *testing.T) {
 
 	t.Run("failing command returns error", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		err := action.ShellPipeTo(e, "false")
 
@@ -45,10 +39,7 @@ func TestShellPipeTo(t *testing.T) {
 func TestShellPipeErrors(t *testing.T) {
 	t.Run("failing command returns error", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		err := action.ShellPipe(e, "false")
 
@@ -57,10 +48,7 @@ func TestShellPipeErrors(t *testing.T) {
 
 	t.Run("failing command returns stderr", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		err := action.ShellPipe(e, "printf nope >&2; exit 1")
 
@@ -147,10 +135,7 @@ func TestShellNoView(t *testing.T) {
 func TestShellEdgeSelections(t *testing.T) {
 	t.Run("pipe skips invalid range", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 10,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 10, Head: 11}}, 0)
 
 		err := action.ShellPipe(e, "cat")
 
@@ -161,10 +146,7 @@ func TestShellEdgeSelections(t *testing.T) {
 
 	t.Run("pipe to skips invalid range", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 10,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 10, Head: 11}}, 0)
 
 		err := action.ShellPipeTo(e, "cat")
 
@@ -175,10 +157,7 @@ func TestShellEdgeSelections(t *testing.T) {
 
 	t.Run("keep pipe skips invalid range", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 10,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 10, Head: 11}}, 0)
 
 		err := action.ShellKeepPipe(e, "cat")
 
@@ -189,10 +168,7 @@ func TestShellEdgeSelections(t *testing.T) {
 
 	t.Run("keep pipe keeps none", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		err := action.ShellKeepPipe(e, "false")
 
@@ -200,10 +176,7 @@ func TestShellEdgeSelections(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, sel.Ranges())
+		assert.Equal(t, []core.Range{{Anchor: 0, Head: 3}}, sel.Ranges())
 	})
 
 	t.Run("append output skips duplicate position", func(t *testing.T) {
@@ -223,10 +196,7 @@ func TestShellEdgeSelections(t *testing.T) {
 func TestShell(t *testing.T) {
 	t.Run("pipe replaces selection", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		err := action.ShellPipe(e, "tr a-z A-Z")
 
@@ -237,10 +207,7 @@ func TestShell(t *testing.T) {
 
 	t.Run("pipe trims synthetic newline", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		err := action.ShellPipe(e, "cat; printf '\\n'")
 
@@ -251,10 +218,7 @@ func TestShell(t *testing.T) {
 
 	t.Run("pipe keeps input newline", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   4,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 4}}, 0)
 
 		err := action.ShellPipe(e, "cat")
 
@@ -265,10 +229,7 @@ func TestShell(t *testing.T) {
 
 	t.Run("insert/append at boundaries", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "x")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 1}}, 0)
 
 		err := action.ShellInsertOutput(e, "printf hello")
 
@@ -277,10 +238,7 @@ func TestShell(t *testing.T) {
 		assert.Equal(t, "hellox", doc.Text().String())
 
 		e = testutil.EditorWithText(t, "x")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 1}}, 0)
 
 		err = action.ShellAppendOutput(e, "printf hello")
 
@@ -307,7 +265,10 @@ func TestShell(t *testing.T) {
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
 		assert.Equal(t, 1, len(sel.Ranges()))
-		assert.Equal(t, core.Range{Anchor: 0, Head: 1}, sel.Ranges()[0])
+		assert.Equal(t, core.Range{
+			Anchor: 0,
+			Head:   1,
+		}, sel.Ranges()[0])
 	})
 
 	t.Run("dropped primary falls to next surviving", func(t *testing.T) {
@@ -328,7 +289,10 @@ func TestShell(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, core.Range{Anchor: 4, Head: 5}, sel.Primary())
+		assert.Equal(t, core.Range{
+			Anchor: 4,
+			Head:   5,
+		}, sel.Primary())
 	})
 
 	t.Run("dropped primary falls to last surviving", func(t *testing.T) {
@@ -350,7 +314,10 @@ func TestShell(t *testing.T) {
 		v := e.FocusedView()
 		doc := e.FocusedDocument()
 		sel := doc.SelectionFor(v.ID())
-		assert.Equal(t, core.Range{Anchor: 2, Head: 3}, sel.Primary())
+		assert.Equal(t, core.Range{
+			Anchor: 2,
+			Head:   3,
+		}, sel.Primary())
 	})
 
 	t.Run("read file inserts contents", func(t *testing.T) {

@@ -71,7 +71,10 @@ func (s *Session) DocumentColors(doc *view.Document) ([]view.DocumentColor, erro
 }
 
 func (s *Session) documentColorsAsync(doc *view.Document) {
-	key := refreshKey{doc: doc.ID(), kind: refreshColors}
+	key := refreshKey{
+		doc:  doc.ID(),
+		kind: refreshColors,
+	}
 	s.refresh.Do(key, func() {
 		_, _ = s.DocumentColors(doc)
 	})

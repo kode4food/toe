@@ -110,7 +110,10 @@ func TestOptionCapture(t *testing.T) {
 	t.Run("a resize leaves the popup up", func(t *testing.T) {
 		_, m := discardCapture(t)
 
-		m = updateAndFeed(m, tea.WindowSizeMsg{Width: 100, Height: 30})
+		m = updateAndFeed(m, tea.WindowSizeMsg{
+			Width:  100,
+			Height: 30,
+		})
 
 		// a message the popup has no answer for falls through to the layers below, which re-lay it
 		// out rather than closing it
@@ -158,10 +161,16 @@ func discardCapture(t *testing.T) (string, ui.Model) {
 func popupCell(m ui.Model, text string) geom.Point {
 	for y, row := range strings.Split(viewContent(m), "\n") {
 		if x := strings.Index(stripANSI(row), text); x >= 0 {
-			return geom.Point{X: x, Y: y}
+			return geom.Point{
+				X: x,
+				Y: y,
+			}
 		}
 	}
-	return geom.Point{X: -1, Y: -1}
+	return geom.Point{
+		X: -1,
+		Y: -1,
+	}
 }
 
 func focusedButtonBg(m ui.Model, label rune) string {

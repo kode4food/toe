@@ -1,7 +1,10 @@
 package core
 
 func newCharIterAt(doc Rope, charIdx int) *charIter {
-	return &charIter{runes: []rune(doc.String()), pos: charIdx}
+	return &charIter{
+		runes: []rune(doc.String()),
+		pos:   charIdx,
+	}
 }
 
 func (c *charIter) next() (rune, bool) {
@@ -143,7 +146,10 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 		if !ok {
 			break
 		}
-		step := charStep{prev: prevCh, next: nextCh}
+		step := charStep{
+			prev: prevCh,
+			next: nextCh,
+		}
 		if !hasPrev || reachedTarget(target, step) {
 			if head == headStart {
 				anchor = head
@@ -156,7 +162,10 @@ func rangeToTarget(doc Rope, origin Range, target WordMotionTarget) Range {
 		head = advance(head)
 	}
 
-	return Range{Anchor: anchor, Head: head}
+	return Range{
+		Anchor: anchor,
+		Head:   head,
+	}
 }
 
 func reachedTarget(target WordMotionTarget, step charStep) bool {

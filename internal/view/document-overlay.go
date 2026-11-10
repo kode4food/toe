@@ -101,25 +101,37 @@ func (d *Document) remapOverlays(cs core.ChangeSet) {
 	defer d.overlays.Unlock()
 	for i := range d.overlays.diagnostics {
 		r := &d.overlays.diagnostics[i].Range
-		s := remapSpan(cs, core.Span{From: r.From, To: r.To})
+		s := remapSpan(cs, core.Span{
+			From: r.From,
+			To:   r.To,
+		})
 		r.From = s.From
 		r.To = s.To
 	}
 	for i := range d.overlays.links {
 		l := &d.overlays.links[i]
-		s := remapSpan(cs, core.Span{From: l.From, To: l.To})
+		s := remapSpan(cs, core.Span{
+			From: l.From,
+			To:   l.To,
+		})
 		l.From = s.From
 		l.To = s.To
 	}
 	for i := range d.overlays.colors {
 		c := &d.overlays.colors[i]
-		s := remapSpan(cs, core.Span{From: c.From, To: c.To})
+		s := remapSpan(cs, core.Span{
+			From: c.From,
+			To:   c.To,
+		})
 		c.From = s.From
 		c.To = s.To
 	}
 	for _, hl := range d.overlays.highlights {
 		for i := range hl {
-			s := remapSpan(cs, core.Span{From: hl[i].From, To: hl[i].To})
+			s := remapSpan(cs, core.Span{
+				From: hl[i].From,
+				To:   hl[i].To,
+			})
 			hl[i].From = s.From
 			hl[i].To = s.To
 		}
@@ -202,7 +214,10 @@ func remapSpan(cs core.ChangeSet, s core.Span) core.Span {
 		Anchor: s.From,
 		Head:   s.To,
 	}); err == nil {
-		return core.Span{From: r.Anchor, To: r.Head}
+		return core.Span{
+			From: r.Anchor,
+			To:   r.Head,
+		}
 	}
 	return s
 }

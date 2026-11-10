@@ -262,15 +262,19 @@ func optionCmds(r *command.Registry) []command.Command {
 				}
 				return command.Result{
 					Message: i18n.Text(statusOptionValueKey, i18n.Vars{
-						"key": key, "value": value,
+						"key":   key,
+						"value": value,
 					}),
 				}
 			},
 			Modes:   command.PaneModes,
 			Aliases: []string{"get"},
 			Signature: command.Signature{
-				Positionals: command.Positionals{Min: 1, Max: 1},
-				Completer:   command.PositionalCompleter(r.OptionCompleter()),
+				Positionals: command.Positionals{
+					Min: 1,
+					Max: 1,
+				},
+				Completer: command.PositionalCompleter(r.OptionCompleter()),
 			},
 		},
 		{
@@ -298,8 +302,11 @@ func optionCmds(r *command.Registry) []command.Command {
 			Modes:   command.PaneModes,
 			Aliases: []string{"set"},
 			Signature: command.Signature{
-				Positionals: command.Positionals{Min: 2, Max: 2},
-				RawAfter:    1,
+				Positionals: command.Positionals{
+					Min: 2,
+					Max: 2,
+				},
+				RawAfter: 1,
 				Completer: command.Completer{
 					Positionals: []command.CompletionFunc{r.OptionCompleter()},
 					Raw:         r.OptionValueCompleter(),
@@ -315,8 +322,11 @@ func optionCmds(r *command.Registry) []command.Command {
 			Modes:   command.PaneModes,
 			Aliases: []string{"toggle"},
 			Signature: command.Signature{
-				Positionals: command.Positionals{Min: 1, Max: -1},
-				Completer:   command.PositionalCompleter(r.BoolOptionCompleter(), nil),
+				Positionals: command.Positionals{
+					Min: 1,
+					Max: -1,
+				},
+				Completer: command.PositionalCompleter(r.BoolOptionCompleter(), nil),
 			},
 		},
 	}
@@ -345,7 +355,8 @@ func toggleOption(e *view.Editor, r *command.Registry, args *command.Args) comma
 	}
 	return command.Result{
 		Message: i18n.Text(statusOptionSetKey, i18n.Vars{
-			"key": key, "value": value,
+			"key":   key,
+			"value": value,
 		}),
 	}
 }

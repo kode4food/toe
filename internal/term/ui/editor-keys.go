@@ -394,7 +394,10 @@ func wordPrefixReady(cx *Context, limit int) bool {
 	if pos < limit {
 		return false
 	}
-	left, err := text.SliceString(core.Span{From: pos - limit, To: pos})
+	left, err := text.SliceString(core.Span{
+		From: pos - limit,
+		To:   pos,
+	})
 	if err != nil {
 		return false
 	}

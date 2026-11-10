@@ -337,7 +337,10 @@ func (d *docRenderCache) ensureSearchSpans(args ensureSearchSpansArgs) {
 		from := b2r[loc[0]]
 		to := b2r[loc[1]]
 		if to > from {
-			d.searchSpans = append(d.searchSpans, matchSpan{from: from, to: to})
+			d.searchSpans = append(d.searchSpans, matchSpan{
+				from: from,
+				to:   to,
+			})
 		}
 	}
 }

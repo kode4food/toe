@@ -22,7 +22,10 @@ type selectionAtRes struct {
 func (r *rowRender) selectionAt(pos int) selectionAtRes {
 	for _, sp := range r.selSpans {
 		if pos == sp.cursor {
-			return selectionAtRes{cursor: true, primary: sp.primary}
+			return selectionAtRes{
+				cursor:  true,
+				primary: sp.primary,
+			}
 		}
 		if pos >= sp.from && pos < sp.to {
 			return selectionAtRes{selected: true}

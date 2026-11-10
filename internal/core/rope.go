@@ -149,7 +149,10 @@ func (r Rope) Line(line int) (Rope, error) {
 			return Rope{}, err
 		}
 	}
-	return r.Slice(Span{From: from, To: to})
+	return r.Slice(Span{
+		From: from,
+		To:   to,
+	})
 }
 
 // LineToChar returns the position where the line starts
@@ -189,7 +192,10 @@ func (r Rope) LineEndCharIndex(line int) (int, error) {
 	}
 	// The line ending is at most the final two chars. Read only those rather than the whole line to
 	// locate where the content ends
-	tail, err := r.SliceString(Span{From: max(end-2, start), To: end})
+	tail, err := r.SliceString(Span{
+		From: max(end-2, start),
+		To:   end,
+	})
 	if err != nil {
 		return end, nil
 	}

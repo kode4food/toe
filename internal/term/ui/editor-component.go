@@ -158,7 +158,8 @@ func newEditorComponent(cx *Context) *EditorComponent {
 						edgeY = area.Y
 					}
 					return r.screenCharPos(doc, v, geom.Point{
-						X: fixed, Y: edgeY,
+						X: fixed,
+						Y: edgeY,
 					})
 				},
 			},
@@ -177,7 +178,8 @@ func newEditorComponent(cx *Context) *EditorComponent {
 						edgeX = area.X + gutterW
 					}
 					return r.screenCharPos(doc, v, geom.Point{
-						X: edgeX, Y: fixed,
+						X: edgeX,
+						Y: fixed,
 					})
 				},
 			},
@@ -260,14 +262,22 @@ func (ec *EditorComponent) Render(cx *Context, screen geom.Size) *tui.Buffer {
 	}
 	ec.syncEditorMessages()
 	ec.cache.evictClosed(cx.Editor)
-	r := &renderPass{editor: ec, context: cx, size: screen}
+	r := &renderPass{
+		editor:  ec,
+		context: cx,
+		size:    screen,
+	}
 	r.renderEditorContent(ec.buf)
 	return ec.buf
 }
 
 // Cursor returns the focused pane's cursor position and shape
 func (ec *EditorComponent) Cursor(cx *Context, screen geom.Size) (tea.Cursor, bool) {
-	r := &renderPass{editor: ec, context: cx, size: screen}
+	r := &renderPass{
+		editor:  ec,
+		context: cx,
+		size:    screen,
+	}
 	return r.editorCursor()
 }
 
@@ -338,7 +348,10 @@ func (ec *EditorComponent) caretScreenPos() (geom.Point, bool) {
 		tabWidth:    doc.TabWidth(),
 		horzOff:     v.Offset().HorizontalOffset,
 	})
-	return geom.Point{X: area.X + visual.X, Y: yOff + visual.Y}, true
+	return geom.Point{
+		X: area.X + visual.X,
+		Y: yOff + visual.Y,
+	}, true
 }
 
 type popupAnchorArgs struct {

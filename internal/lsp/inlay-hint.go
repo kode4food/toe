@@ -44,7 +44,10 @@ func (s *Session) InlayHints(doc *view.Document, viewID view.Id) ([]view.InlayHi
 		doc.ClearInlayHints(viewID)
 		return nil, nil
 	}
-	r := core.Range{Anchor: 0, Head: doc.Text().LenChars()}
+	r := core.Range{
+		Anchor: 0,
+		Head:   doc.Text().LenChars(),
+	}
 	var out []view.InlayHint
 	var sent bool
 	var err error
@@ -80,7 +83,11 @@ func (s *Session) inlayHintsAsync(doc *view.Document) {
 			continue
 		}
 		id := v.ID()
-		key := refreshKey{doc: doc.ID(), view: id, kind: refreshHints}
+		key := refreshKey{
+			doc:  doc.ID(),
+			view: id,
+			kind: refreshHints,
+		}
 		s.refresh.Do(key, func() {
 			_, _ = s.InlayHints(doc, id)
 		})

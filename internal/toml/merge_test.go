@@ -23,10 +23,8 @@ func TestMergeValues(t *testing.T) {
 		}
 		right := []any{
 			map[string]any{
-				"name": "toml",
-				"language-server": map[string]any{
-					"command": "/usr/bin/taplo",
-				},
+				"name":            "toml",
+				"language-server": map[string]any{"command": "/usr/bin/taplo"},
 			},
 		}
 
@@ -220,9 +218,7 @@ func TestLoadMergedWithBase(t *testing.T) {
 			map[string]any{
 				"name":       "markdown",
 				"text-width": int64(100),
-				"soft-wrap": map[string]any{
-					"wrap-indicator": "↪ ",
-				},
+				"soft-wrap":  map[string]any{"wrap-indicator": "↪ "},
 			},
 		},
 	}

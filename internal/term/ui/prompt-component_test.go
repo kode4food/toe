@@ -43,7 +43,11 @@ func TestPromptFrame(t *testing.T) {
 
 	t.Run("outside click dismisses", func(t *testing.T) {
 		m, _ := cmdPrompt(t)
-		m = mouse(m, tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+		m = mouse(m, tea.MouseClickMsg{
+			X:      0,
+			Y:      0,
+			Button: tea.MouseLeft,
+		})
 
 		assert.NotContains(t, stripANSI(viewContent(m)), " Command ")
 	})
@@ -58,36 +62,11 @@ func TestPromptFrame(t *testing.T) {
 		{name: "regex split", key: "prompt.split", title: "Split"},
 		{name: "regex keep", key: "prompt.keep", title: "Keep"},
 		{name: "regex remove", key: "prompt.remove", title: "Remove"},
-		{
-			name:  "shell pipe",
-			key:   "prompt.pipe",
-			shell: true,
-			title: "Pipe",
-		},
-		{
-			name:  "shell insert",
-			key:   "prompt.insertOutput",
-			shell: true,
-			title: "Insert output",
-		},
-		{
-			name:  "shell filter",
-			key:   "prompt.filter",
-			shell: true,
-			title: "Filter",
-		},
-		{
-			name:  "shell pipe to",
-			key:   "prompt.pipeTo",
-			shell: true,
-			title: "Pipe to",
-		},
-		{
-			name:  "shell append",
-			key:   "prompt.appendOutput",
-			shell: true,
-			title: "Append output",
-		},
+		{name: "shell pipe", key: "prompt.pipe", shell: true, title: "Pipe"},
+		{name: "shell insert", key: "prompt.insertOutput", shell: true, title: "Insert output"},
+		{name: "shell filter", key: "prompt.filter", shell: true, title: "Filter"},
+		{name: "shell pipe to", key: "prompt.pipeTo", shell: true, title: "Pipe to"},
+		{name: "shell append", key: "prompt.appendOutput", shell: true, title: "Append output"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -320,7 +299,9 @@ func TestPromptCompletion(t *testing.T) {
 
 		at := completionTextPoint(t, m, "match-b")
 		m = mouse(m, tea.MouseWheelMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseWheelDown,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseWheelDown,
 		})
 		out := stripANSI(viewContent(m))
 		assert.Contains(t, out, "match-h")
@@ -329,7 +310,9 @@ func TestPromptCompletion(t *testing.T) {
 
 		at = completionTextPoint(t, m, "match-g")
 		m = mouse(m, tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 		assert.Equal(t, ": match-g", promptText(m))
 	})
@@ -1144,7 +1127,11 @@ func TestPromptHandlesMouse(t *testing.T) {
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')
-		m2, _ := m.Update(tea.MouseClickMsg{X: 5, Y: 5, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      5,
+			Y:      5,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 
 		out := viewContent(m)
@@ -1160,7 +1147,10 @@ func TestPromptHandlesMouse(t *testing.T) {
 		m = resize(m, 60, 12)
 
 		m = sendKey(m, ':')
-		m2, _ := m.Update(tea.MouseMotionMsg{X: 5, Y: 5})
+		m2, _ := m.Update(tea.MouseMotionMsg{
+			X: 5,
+			Y: 5,
+		})
 		m = m2.(ui.Model)
 
 		out := viewContent(m)
@@ -1174,8 +1164,12 @@ func TestPromptBorderResize(t *testing.T) {
 
 	t.Run("side drag widens", func(t *testing.T) {
 		m := sendKey(builtinModel(t), '/')
-		m = dragOverlayBorder(m, geom.Point{X: 76, Y: 5}, geom.Point{
-			X: 82, Y: 5,
+		m = dragOverlayBorder(m, geom.Point{
+			X: 76,
+			Y: 5,
+		}, geom.Point{
+			X: 82,
+			Y: 5,
 		})
 		// both sides grow, so a 6 cell drag adds 12 of 100 columns
 		scales := m.PickerLayoutOptions().Scales
@@ -1184,8 +1178,12 @@ func TestPromptBorderResize(t *testing.T) {
 
 	t.Run("bottom drag is ignored", func(t *testing.T) {
 		m := sendKey(builtinModel(t), '/')
-		m = dragOverlayBorder(m, geom.Point{X: 50, Y: 6}, geom.Point{
-			X: 50, Y: 2,
+		m = dragOverlayBorder(m, geom.Point{
+			X: 50,
+			Y: 6,
+		}, geom.Point{
+			X: 50,
+			Y: 2,
 		})
 		// the height follows the completion rows, so there is nothing to drag
 		assert.Empty(t, m.PickerLayoutOptions().Scales)

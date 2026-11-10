@@ -87,7 +87,10 @@ name = "custom"
 		assert.True(t, ok)
 		pair, ok := pairs.Get('<')
 		assert.True(t, ok)
-		assert.Equal(t, core.Pair{Open: '<', Close: '>'}, pair)
+		assert.Equal(t, core.Pair{
+			Open:  '<',
+			Close: '>',
+		}, pair)
 		e := testutil.EditorWithText(t, "")
 		doc := e.FocusedDocument()
 		doc.SetLang("custom")
@@ -249,10 +252,7 @@ func TestChangeSelection(t *testing.T) {
 	v := e.FocusedView()
 	doc := e.FocusedDocument()
 	doc.SetSelectionFor(
-		v.ID(), newSelection(t, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0),
+		v.ID(), newSelection(t, []core.Range{{Anchor: 0, Head: 5}}, 0),
 	)
 
 	action.ChangeSelection(e)

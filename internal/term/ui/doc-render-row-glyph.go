@@ -129,7 +129,10 @@ func (r *rowRender) softWrapBreaks(tabW int) []int {
 	}
 	w := 0
 	for _, ch := range r.lineText {
-		w += view.RuneWidth(ch, core.TabStop{Column: w, TabWidth: tabW})
+		w += view.RuneWidth(ch, core.TabStop{
+			Column:   w,
+			TabWidth: tabW,
+		})
 	}
 	if w <= r.format.ViewportWidth {
 		return nil

@@ -86,7 +86,10 @@ func decodeAutoPairConfig(value any) (AutoPairConfig, bool) {
 	case nil:
 		return AutoPairConfig{}, false
 	case bool:
-		return AutoPairConfig{Present: true, Enable: &v}, true
+		return AutoPairConfig{
+			Present: true,
+			Enable:  &v,
+		}, true
 	case map[string]any:
 		return decodeAutoPairMap(v)
 	case map[string]string:
@@ -114,7 +117,10 @@ func decodeAutoPairMap(m map[string]any) (AutoPairConfig, bool) {
 		}
 		pairs = append(pairs, [2]rune{openRunes[0], closeRunes[0]})
 	}
-	return AutoPairConfig{Present: true, Pairs: pairs}, true
+	return AutoPairConfig{
+		Present: true,
+		Pairs:   pairs,
+	}, true
 }
 
 func decodeIndent(m map[string]any) Indent {

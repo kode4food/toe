@@ -15,25 +15,13 @@ func TestDiagnostics(t *testing.T) {
 		assert.NotNil(t, doc)
 
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
-			{
-				Severity: view.DiagnosticSeverityError,
-				Message:  "old",
-				Provider: "gopls",
-			},
+			{Severity: view.DiagnosticSeverityError, Message: "old", Provider: "gopls"},
 		})
 		doc.ReplaceDiagnostics("other", []view.Diagnostic{
-			{
-				Severity: view.DiagnosticSeverityWarning,
-				Message:  "kept",
-				Provider: "other",
-			},
+			{Severity: view.DiagnosticSeverityWarning, Message: "kept", Provider: "other"},
 		})
 		doc.ReplaceDiagnostics("gopls", []view.Diagnostic{
-			{
-				Severity: view.DiagnosticSeverityInfo,
-				Message:  "new",
-				Provider: "gopls",
-			},
+			{Severity: view.DiagnosticSeverityInfo, Message: "new", Provider: "gopls"},
 		})
 
 		diags := doc.Diagnostics()

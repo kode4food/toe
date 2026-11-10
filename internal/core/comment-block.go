@@ -66,7 +66,8 @@ func FindBlockComments(
 		endPos, ok2 := commentLastNonWhitespace(slice)
 		if !ok1 || !ok2 {
 			changes = append(changes, CommentChange{
-				Kind: CommentChangeWhitespace, Range: r,
+				Kind:  CommentChangeWhitespace,
+				Range: r,
 			})
 			continue
 		}
@@ -84,7 +85,10 @@ func FindBlockComments(
 			if contentLen < startLen+endLen {
 				continue
 			}
-			startFrag, err1 := slice.Slice(Span{From: startPos, To: afterStart})
+			startFrag, err1 := slice.Slice(Span{
+				From: startPos,
+				To:   afterStart,
+			})
 			endFrag, err := slice.Slice(Span{
 				From: beforeEnd + 1,
 				To:   endPos + 1,
@@ -142,5 +146,8 @@ func FindBlockComments(
 
 // DefaultBlockCommentToken returns the fallback block comment delimiters
 func DefaultBlockCommentToken() BlockCommentToken {
-	return BlockCommentToken{Start: "/*", End: "*/"}
+	return BlockCommentToken{
+		Start: "/*",
+		End:   "*/",
+	}
 }

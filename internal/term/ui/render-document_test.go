@@ -186,24 +186,33 @@ func TestRenderCrash(t *testing.T) {
 		}
 	}
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: view.ModeNormal, name: "insert_mode",
+		km:   km,
+		mode: view.ModeNormal,
+		name: "insert_mode",
 		fn:   act(action.InsertMode),
 		seqs: [][]command.KeyEvent{{char('i')}},
 	})
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: view.ModeInsert, name: "insert_newline",
+		km:   km,
+		mode: view.ModeInsert,
+		name: "insert_newline",
 		fn:   act(action.InsertNewline),
 		seqs: [][]command.KeyEvent{{special(command.Enter)}},
 	})
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: view.ModeInsert, name: "insert_newline",
+		km:   km,
+		mode: view.ModeInsert,
+		name: "insert_newline",
 		fn:   act(action.InsertNewline),
 		seqs: [][]command.KeyEvent{{char('j').WithMods(command.ModCtrl)}},
 	})
 
 	m := ui.New(e, km)
 
-	m2, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, _ := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m = m2.(ui.Model)
 
 	// Enter insert mode
@@ -374,7 +383,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityError,
 		}})
 		e.Options().Theme = "mocha"
@@ -398,7 +410,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityError,
 		}})
 		e.Options().Theme = "mocha"
@@ -423,7 +438,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityError,
 			Message:  "unused value",
 		}})
@@ -450,7 +468,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityWarning,
 			Source:   "lint",
 			Message:  "warning msg",
@@ -476,7 +497,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityInfo,
 			Message:  "info msg",
 		}})
@@ -501,7 +525,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityHint,
 			Message:  "hint msg",
 		}})
@@ -526,7 +553,10 @@ func TestThemeRender(t *testing.T) {
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "cursor warning",
 		}})
@@ -554,7 +584,10 @@ func TestThemeRender(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		// vA (docA) sits on the left, the diagnostic popup always renders in the screen's top-right
@@ -563,7 +596,10 @@ func TestThemeRender(t *testing.T) {
 		docA := e.Document(vA.DocID())
 		assert.NotNil(t, docA)
 		docA.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: 0, To: 5},
+			Range: core.Span{
+				From: 0,
+				To:   5,
+			},
 			Severity: view.DiagnosticSeverityError,
 			Message:  "unused value",
 		}})
@@ -872,11 +908,15 @@ func TestThemeRender(t *testing.T) {
 		at := renderedTextPoint(t, m, "abcde", 1)
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseMotionMsg{
-			X: at.X + 2, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X + 2,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 
@@ -943,7 +983,10 @@ func TestRenderAfterClose(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(geom.Size{Width: 100, Height: 30})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 30,
+		})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
@@ -972,10 +1015,7 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NoError(t, err)
 		doc := e.FocusedDocument()
 		assert.NotNil(t, doc)
-		sel, err := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   7,
-		}}, 0)
+		sel, err := core.NewSelection([]core.Range{{Anchor: 0, Head: 7}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		e.Options().Theme = "mocha"
@@ -994,16 +1034,16 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "\thello\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "\thello\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		sel, err := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   1,
-		}}, 0)
+		sel, err := core.NewSelection([]core.Range{{Anchor: 0, Head: 1}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -1023,16 +1063,16 @@ func TestBaseStyleAtCases(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "  hello\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "  hello\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		v := e.FocusedView()
 		assert.NotNil(t, v)
-		sel, err := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   2,
-		}}, 0)
+		sel, err := core.NewSelection([]core.Range{{Anchor: 0, Head: 2}}, 0)
 		assert.NoError(t, err)
 		doc.SetSelectionFor(v.ID(), sel)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
@@ -1076,7 +1116,10 @@ func TestErroredIdentifierGating(t *testing.T) {
 	t.Run("error renders plain", func(t *testing.T) {
 		e, doc := newGoDoc(t)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: bork, To: bork + 4},
+			Range: core.Span{
+				From: bork,
+				To:   bork + 4,
+			},
 			Severity: view.DiagnosticSeverityError,
 			Message:  "undefined: Bork",
 		}})
@@ -1093,7 +1136,10 @@ func TestErroredIdentifierGating(t *testing.T) {
 	t.Run("warning keeps color", func(t *testing.T) {
 		e, doc := newGoDoc(t)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: bork, To: bork + 4},
+			Range: core.Span{
+				From: bork,
+				To:   bork + 4,
+			},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "unused",
 		}})
@@ -1114,7 +1160,10 @@ func TestErroredIdentifierGating(t *testing.T) {
 			{From: bork, To: bork + 4},
 		})
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: bork, To: bork + 4},
+			Range: core.Span{
+				From: bork,
+				To:   bork + 4,
+			},
 			Severity: view.DiagnosticSeverityWarning,
 			Message:  "unused",
 		}})
@@ -1179,7 +1228,10 @@ func TestIndentGuideRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "\thello\n\tworld\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "\thello\n\tworld\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1200,7 +1252,10 @@ func TestWhitespaceRender(t *testing.T) {
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
 			core.TextChange(
-				core.Span{From: 0, To: 0}, "hello world end\t!\n",
+				core.Span{
+					From: 0,
+					To:   0,
+				}, "hello world end\t!\n",
 			),
 		})
 		assert.NoError(t, err)
@@ -1216,7 +1271,9 @@ func TestMouseDragNoop(t *testing.T) {
 		e.Options().Mouse = true
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		m2, _ := m.Update(tea.MouseMotionMsg{
-			X: 10, Y: 5, Button: tea.MouseLeft,
+			X:      10,
+			Y:      5,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		out := stripANSI(viewContent(m))
@@ -1230,15 +1287,26 @@ func TestMouseDragNoop(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "hello world\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		_ = m.View() // populate render cache so click can resolve position
-		m2, _ := m.Update(tea.MouseClickMsg{X: 5, Y: 0, Button: tea.MouseLeft})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      5,
+			Y:      0,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
-		m2, _ = m.Update(tea.MouseMotionMsg{X: 8, Y: 0, Button: tea.MouseLeft})
+		m2, _ = m.Update(tea.MouseMotionMsg{
+			X:      8,
+			Y:      0,
+			Button: tea.MouseLeft,
+		})
 		m = m2.(ui.Model)
 		m2, _ = m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft})
 		m = m2.(ui.Model)
@@ -1267,7 +1335,10 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "hello world\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1289,7 +1360,10 @@ func TestCursorColumnRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "hello world\n"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "hello world\n"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1307,7 +1381,10 @@ func TestCursorColumnRender(t *testing.T) {
 func TestSplitSeparatorJunctions(t *testing.T) {
 	junctions := func(build func(e *view.Editor)) string {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		build(e)
 		m := resize(ui.New(e, command.NewKeymaps()), 80, 24)
 		return stripANSI(viewContent(m))
@@ -1411,7 +1488,10 @@ func TestHorizontalScrollRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, horizontalLongLine),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, horizontalLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1431,7 +1511,10 @@ func TestHorizontalScrollRender(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, cursorColumnLongLine),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, cursorColumnLongLine),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))
@@ -1615,7 +1698,10 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(geom.Size{Width: 100, Height: 30})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 30,
+		})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
@@ -1655,7 +1741,10 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(geom.Size{Width: 100, Height: 30})
+		e.ResizeTree(geom.Size{
+			Width:  100,
+			Height: 30,
+		})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 100, 30)
@@ -1679,7 +1768,10 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NoError(t, err)
 		docB, err := e.SwitchOrOpenDoc(pathB)
 		assert.NoError(t, err)
-		e.ResizeTree(geom.Size{Width: 101, Height: 30})
+		e.ResizeTree(geom.Size{
+			Width:  101,
+			Height: 30,
+		})
 		split := e.VSplit(docB.ID())
 		assert.NotNil(t, split)
 		m := resize(ui.New(e, command.NewKeymaps()), 101, 30)
@@ -1705,7 +1797,10 @@ func TestDocumentHighlightDoesNotDisturbOtherPane(t *testing.T) {
 		assert.NotNil(t, doc)
 		rope := doc.Text()
 		cs, err := core.NewChangeSetFromChanges(rope, []core.Change{
-			core.TextChange(core.Span{From: 0, To: 0}, "zzz"),
+			core.TextChange(core.Span{
+				From: 0,
+				To:   0,
+			}, "zzz"),
 		})
 		assert.NoError(t, err)
 		assert.NoError(t, e.Apply(core.NewTransaction(rope).WithChanges(cs)))

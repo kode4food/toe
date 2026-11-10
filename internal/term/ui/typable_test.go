@@ -24,7 +24,10 @@ func TestConfigCommands(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := runTypable(newTestModel(t, e), "config-open")
 
-		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		_, _ = m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		doc := e.FocusedDocument()
 
 		assert.NotNil(t, doc)
@@ -44,7 +47,10 @@ func TestConfigCommands(t *testing.T) {
 		e := view.NewEditor(cwd)
 		m := runTypable(newTestModel(t, e), "config-open-workspace")
 
-		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		_, _ = m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		doc := e.FocusedDocument()
 
 		assert.NotNil(t, doc)
@@ -57,7 +63,10 @@ func TestConfigCommands(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
 		m := runTypable(newTestModel(t, e), "log-open")
 
-		_, _ = m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		_, _ = m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		doc := e.FocusedDocument()
 
 		assert.NotNil(t, doc)

@@ -221,13 +221,25 @@ func TestViewOptionsExtra(t *testing.T) {
 		{key: "rulers", val: "[80, 100]"},
 		{key: "whitespace.render", val: "all"},
 		{key: "whitespace.render.space", val: "all"},
-		{key: "whitespace.characters.space", val: `"·"`},
+		{
+			key: "whitespace.characters.space",
+			val: `"·"`,
+		},
 		{key: "indent-guides.render", val: "true"},
 		{key: "indent-guides.skip-levels", val: "2"},
-		{key: "indent-guides.character", val: `"│"`},
-		{key: "gutters.layout", val: `["line-numbers", "diff"]`},
+		{
+			key: "indent-guides.character",
+			val: `"│"`,
+		},
+		{
+			key: "gutters.layout",
+			val: `["line-numbers", "diff"]`,
+		},
 		{key: "gutters.line-numbers.min-width", val: "3"},
-		{key: "soft-wrap.wrap-indicator", val: `"↩"`},
+		{
+			key: "soft-wrap.wrap-indicator",
+			val: `"↩"`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run("set/get "+tc.key, func(t *testing.T) {

@@ -44,7 +44,10 @@ func findNextMatch(re *regexp.Regexp, text string, from int, wrap bool) searchMa
 			continue
 		}
 		pos := from + byteOffsetToRuneOffset(text[byteFrom:], idx[0])
-		return searchMatch{pos: pos, wrapped: wrapped}
+		return searchMatch{
+			pos:     pos,
+			wrapped: wrapped,
+		}
 	}
 	if wrap {
 		for _, idx := range re.FindAllStringIndex(text[:byteFrom], -1) {
@@ -52,7 +55,10 @@ func findNextMatch(re *regexp.Regexp, text string, from int, wrap bool) searchMa
 				continue
 			}
 			pos := byteOffsetToRuneOffset(text, idx[0])
-			return searchMatch{pos: pos, wrapped: true}
+			return searchMatch{
+				pos:     pos,
+				wrapped: true,
+			}
 		}
 	}
 	return searchMatch{pos: -1}
@@ -72,13 +78,19 @@ func findPrevMatch(re *regexp.Regexp, text string, before int, wrap bool) search
 	all := re.FindAllStringIndex(text[:byteEnd], -1)
 	if last, ok := lastNonEmptyMatch(all); ok {
 		pos := byteOffsetToRuneOffset(text, last[0])
-		return searchMatch{pos: pos, wrapped: wrapped}
+		return searchMatch{
+			pos:     pos,
+			wrapped: wrapped,
+		}
 	}
 	if wrap {
 		all2 := re.FindAllStringIndex(text[byteEnd:], -1)
 		if last, ok := lastNonEmptyMatch(all2); ok {
 			pos := before + byteOffsetToRuneOffset(text[byteEnd:], last[0])
-			return searchMatch{pos: pos, wrapped: true}
+			return searchMatch{
+				pos:     pos,
+				wrapped: true,
+			}
 		}
 	}
 	return searchMatch{pos: -1}

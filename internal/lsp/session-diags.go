@@ -114,7 +114,10 @@ func (s *Session) applyDiagnosticReport(
 }
 
 func (s *Session) pullDiagnosticsAsync(doc *view.Document) {
-	key := refreshKey{doc: doc.ID(), kind: refreshDiagnostics}
+	key := refreshKey{
+		doc:  doc.ID(),
+		kind: refreshDiagnostics,
+	}
 	s.refresh.Do(key, func() {
 		_ = s.PullDiagnostics(doc)
 	})

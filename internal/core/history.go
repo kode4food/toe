@@ -137,9 +137,18 @@ func (h *History) pathUp(pair Span) []int {
 }
 
 func (h *History) jumpTo(to int) []Transaction {
-	lca := h.lowestCommonAncestor(Span{From: h.current, To: to})
-	up := h.pathUp(Span{From: h.current, To: lca})
-	down := h.pathUp(Span{From: to, To: lca})
+	lca := h.lowestCommonAncestor(Span{
+		From: h.current,
+		To:   to,
+	})
+	up := h.pathUp(Span{
+		From: h.current,
+		To:   lca,
+	})
+	down := h.pathUp(Span{
+		From: to,
+		To:   lca,
+	})
 	h.current = to
 
 	txns := make([]Transaction, 0, len(up)+len(down))

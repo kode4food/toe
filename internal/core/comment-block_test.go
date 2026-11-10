@@ -54,10 +54,7 @@ func TestFindBlockComments(t *testing.T) {
 
 	t.Run("uses default token when none provided", func(t *testing.T) {
 		doc := core.NewRope("hello")
-		sel, _ := core.NewSelection([]core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		sel, _ := core.NewSelection([]core.Range{{Anchor: 0, Head: 5}}, 0)
 		ok, changes, err := core.FindBlockComments(nil, doc, sel)
 		assert.NoError(t, err)
 		assert.False(t, ok)

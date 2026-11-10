@@ -60,8 +60,11 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	budget := args.listWidth
 	if parts.icon != "" {
 		next := writeCompletionPart(writeCompletionPartArgs{
-			buf:      buf,
-			at:       geom.Point{X: labelX, Y: at.Y},
+			buf: buf,
+			at: geom.Point{
+				X: labelX,
+				Y: at.Y,
+			},
 			maxWidth: budget,
 			text:     parts.icon,
 			style:    args.icon,
@@ -69,7 +72,10 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 		budget -= next - labelX
 		labelX = next
 		if budget > 0 {
-			buf.SetString(geom.Point{X: labelX, Y: at.Y}, " ", args.base)
+			buf.SetString(geom.Point{
+				X: labelX,
+				Y: at.Y,
+			}, " ", args.base)
 			labelX++
 			budget--
 		}
@@ -78,8 +84,11 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 		return
 	}
 	writeMatchedItem(writeMatchedItemArgs{
-		buf:      buf,
-		at:       geom.Point{X: labelX, Y: at.Y},
+		buf: buf,
+		at: geom.Point{
+			X: labelX,
+			Y: at.Y,
+		},
 		maxWidth: budget,
 		text:     parts.label,
 		indices: completionLabelMatchIndices(queryMatch{
@@ -95,12 +104,18 @@ func (c *completionComponent) renderRow(args renderCompletionRowArgs) {
 	if parts.info == "" || budget <= 1 {
 		return
 	}
-	buf.SetString(geom.Point{X: labelX, Y: at.Y}, " ", args.base)
+	buf.SetString(geom.Point{
+		X: labelX,
+		Y: at.Y,
+	}, " ", args.base)
 	labelX++
 	budget--
 	writeCompletionPart(writeCompletionPartArgs{
-		buf:      buf,
-		at:       geom.Point{X: labelX, Y: at.Y},
+		buf: buf,
+		at: geom.Point{
+			X: labelX,
+			Y: at.Y,
+		},
 		maxWidth: budget,
 		text:     parts.info,
 		style:    args.info,

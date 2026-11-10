@@ -457,9 +457,7 @@ func (s *processServer) Initialized(ctx context.Context, _ *protocol.Initialized
 	if os.Getenv(testServerWatchRegEdgeEnv) == "1" {
 		_ = client.RegisterCapability(ctx, nil)
 		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
-			Registrations: []protocol.Registration{{
-				ID: "other", Method: "textDocument/other",
-			}},
+			Registrations: []protocol.Registration{{ID: "other", Method: "textDocument/other"}},
 		})
 		_ = client.RegisterCapability(ctx, &protocol.RegistrationParams{
 			Registrations: []protocol.Registration{{
@@ -480,12 +478,14 @@ func (s *processServer) Initialized(ctx context.Context, _ *protocol.Initialized
 		_ = client.UnregisterCapability(ctx, nil)
 		_ = client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
 			Unregisterations: []protocol.Unregistration{{
-				ID: "solo", Method: "textDocument/other",
+				ID:     "solo",
+				Method: "textDocument/other",
 			}},
 		})
 		_ = client.UnregisterCapability(ctx, &protocol.UnregistrationParams{
 			Unregisterations: []protocol.Unregistration{{
-				ID: "solo", Method: "workspace/didChangeWatchedFiles",
+				ID:     "solo",
+				Method: "workspace/didChangeWatchedFiles",
 			}},
 		})
 	}
@@ -516,14 +516,20 @@ func (s *processServer) InlayHint(
 	}
 	return []protocol.InlayHint{
 		{
-			Position:     protocol.Position{Line: 0, Character: 0},
+			Position: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
 			Label:        protocol.String("string-label"),
 			Kind:         protocol.InlayHintKindType,
 			PaddingLeft:  new(true),
 			PaddingRight: new(true),
 		},
 		{
-			Position: protocol.Position{Line: 0, Character: 0},
+			Position: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
 			Label: protocol.InlayHintLabelPartSlice{
 				{Value: "part1"},
 				{Value: "-part2"},
@@ -545,10 +551,20 @@ func (s *processServer) DocumentColor(
 	return []protocol.ColorInformation{
 		{
 			Range: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 3},
+				Start: protocol.Position{
+					Line:      0,
+					Character: 0,
+				},
+				End: protocol.Position{
+					Line:      0,
+					Character: 3,
+				},
 			},
-			Color: protocol.Color{Red: 1.0, Green: 0.5, Blue: 0.0},
+			Color: protocol.Color{
+				Red:   1.0,
+				Green: 0.5,
+				Blue:  0.0,
+			},
 		},
 	}, nil
 }
@@ -599,9 +615,15 @@ func (s *processServer) Completion(
 			},
 		}, nil
 	}
-	end := protocol.Position{Line: 0, Character: 2}
+	end := protocol.Position{
+		Line:      0,
+		Character: 2,
+	}
 	if os.Getenv(testServerStaleCompletionEnv) == "1" {
-		end = protocol.Position{Line: 0, Character: 0}
+		end = protocol.Position{
+			Line:      0,
+			Character: 0,
+		}
 	}
 	return protocol.CompletionItemSlice{
 		{
@@ -609,16 +631,25 @@ func (s *processServer) Completion(
 			Kind:  protocol.CompletionItemKindFunction,
 			TextEdit: &protocol.TextEdit{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 0},
-					End:   end,
+					Start: protocol.Position{
+						Line:      0,
+						Character: 0,
+					},
+					End: end,
 				},
 				NewText: "Println",
 			},
 			AdditionalTextEdits: []protocol.TextEdit{
 				{
 					Range: protocol.Range{
-						Start: protocol.Position{Line: 1, Character: 0},
-						End:   protocol.Position{Line: 1, Character: 0},
+						Start: protocol.Position{
+							Line:      1,
+							Character: 0,
+						},
+						End: protocol.Position{
+							Line:      1,
+							Character: 0,
+						},
 					},
 					NewText: "// add\n",
 				},
@@ -837,16 +868,28 @@ func (s *processServer) DocumentSymbol(
 			Name: "outer",
 			Kind: protocol.SymbolKindFunction,
 			SelectionRange: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 5},
-				End:   protocol.Position{Line: 0, Character: 10},
+				Start: protocol.Position{
+					Line:      0,
+					Character: 5,
+				},
+				End: protocol.Position{
+					Line:      0,
+					Character: 10,
+				},
 			},
 			Children: []protocol.DocumentSymbol{
 				{
 					Name: "inner",
 					Kind: protocol.SymbolKindVariable,
 					SelectionRange: protocol.Range{
-						Start: protocol.Position{Line: 1, Character: 4},
-						End:   protocol.Position{Line: 1, Character: 9},
+						Start: protocol.Position{
+							Line:      1,
+							Character: 4,
+						},
+						End: protocol.Position{
+							Line:      1,
+							Character: 9,
+						},
 					},
 				},
 			},
@@ -858,12 +901,24 @@ func altCompletionItems() protocol.CompletionItemSlice {
 	insertReplaceEdit := &protocol.InsertReplaceEdit{
 		NewText: "Println",
 		Insert: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 0},
-			End:   protocol.Position{Line: 0, Character: 2},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 2,
+			},
 		},
 		Replace: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 0},
-			End:   protocol.Position{Line: 0, Character: 2},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 2,
+			},
 		},
 	}
 	sortA := "aaa"
@@ -946,7 +1001,10 @@ func manyCompletionItems() protocol.CompletionItemSlice {
 	out := make(protocol.CompletionItemSlice, 0, len(kinds))
 	for i, k := range kinds {
 		label := fmt.Sprintf("item%d", i)
-		out = append(out, protocol.CompletionItem{Label: label, Kind: k})
+		out = append(out, protocol.CompletionItem{
+			Label: label,
+			Kind:  k,
+		})
 	}
 	return out
 }
@@ -973,7 +1031,9 @@ func manyDocumentSymbols() protocol.DocumentSymbolSlice {
 	for i, k := range kinds {
 		name := fmt.Sprintf("sym%d", i)
 		out = append(out, protocol.DocumentSymbol{
-			Name: name, Kind: k, SelectionRange: zeroRange,
+			Name:           name,
+			Kind:           k,
+			SelectionRange: zeroRange,
 		})
 	}
 	return out
@@ -996,7 +1056,8 @@ func (s *processServer) Symbols(
 	if os.Getenv(testServerSymbolSliceEnv) == "1" {
 		return protocol.WorkspaceSymbolSlice{
 			{
-				Name: "WorkspaceMain", Kind: protocol.SymbolKindFunction,
+				Name:          "WorkspaceMain",
+				Kind:          protocol.SymbolKindFunction,
 				ContainerName: &container,
 				Location:      loc,
 				Data:          protocol.LSPAny("null"),
@@ -1005,7 +1066,8 @@ func (s *processServer) Symbols(
 	}
 	return protocol.SymbolInformationSlice{
 		{
-			Name: "WorkspaceMain", Kind: protocol.SymbolKindFunction,
+			Name:          "WorkspaceMain",
+			Kind:          protocol.SymbolKindFunction,
 			ContainerName: &container,
 			Location:      *loc,
 		},
@@ -1028,15 +1090,27 @@ func (s *processServer) PrepareRename(
 	}
 	if os.Getenv(testServerRenameRangeEnv) == "1" {
 		r := protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 0},
-			End:   protocol.Position{Line: 0, Character: 3},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 3,
+			},
 		}
 		return &r, nil
 	}
 	return &protocol.PrepareRenamePlaceholder{
 		Range: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 0},
-			End:   protocol.Position{Line: 0, Character: 3},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 3,
+			},
 		},
 		Placeholder: "old",
 	}, nil
@@ -1080,22 +1154,40 @@ func (s *processServer) DocumentHighlight(
 		return []protocol.DocumentHighlight{
 			{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: pos.Line, Character: 0},
-					End:   protocol.Position{Line: pos.Line, Character: 3},
+					Start: protocol.Position{
+						Line:      pos.Line,
+						Character: 0,
+					},
+					End: protocol.Position{
+						Line:      pos.Line,
+						Character: 3,
+					},
 				},
 				Kind: protocol.DocumentHighlightKindText,
 			},
 			{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: pos.Line, Character: 0},
-					End:   protocol.Position{Line: pos.Line, Character: 5},
+					Start: protocol.Position{
+						Line:      pos.Line,
+						Character: 0,
+					},
+					End: protocol.Position{
+						Line:      pos.Line,
+						Character: 5,
+					},
 				},
 				Kind: protocol.DocumentHighlightKindText,
 			},
 			{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: pos.Line, Character: 6},
-					End:   protocol.Position{Line: pos.Line, Character: 7},
+					Start: protocol.Position{
+						Line:      pos.Line,
+						Character: 6,
+					},
+					End: protocol.Position{
+						Line:      pos.Line,
+						Character: 7,
+					},
 				},
 				Kind: protocol.DocumentHighlightKindText,
 			},
@@ -1130,8 +1222,14 @@ func (s *processServer) Formatting(
 	return []protocol.TextEdit{
 		{
 			Range: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 3},
+				Start: protocol.Position{
+					Line:      0,
+					Character: 0,
+				},
+				End: protocol.Position{
+					Line:      0,
+					Character: 3,
+				},
 			},
 			NewText: "fmt",
 		},
@@ -1150,8 +1248,14 @@ func (s *processServer) RangeFormatting(
 	return []protocol.TextEdit{
 		{
 			Range: protocol.Range{
-				Start: protocol.Position{Line: 0, Character: 0},
-				End:   protocol.Position{Line: 0, Character: 3},
+				Start: protocol.Position{
+					Line:      0,
+					Character: 0,
+				},
+				End: protocol.Position{
+					Line:      0,
+					Character: 3,
+				},
 			},
 			NewText: "rng",
 		},
@@ -1183,16 +1287,28 @@ func (s *processServer) Diagnostic(
 		Items: []protocol.Diagnostic{
 			{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 0},
-					End:   protocol.Position{Line: 0, Character: 3},
+					Start: protocol.Position{
+						Line:      0,
+						Character: 0,
+					},
+					End: protocol.Position{
+						Line:      0,
+						Character: 3,
+					},
 				},
 				Message:  protocol.String("test diagnostic"),
 				Severity: protocol.DiagnosticSeverityError,
 			},
 			{
 				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 0},
-					End:   protocol.Position{Line: 0, Character: 3},
+					Start: protocol.Position{
+						Line:      0,
+						Character: 0,
+					},
+					End: protocol.Position{
+						Line:      0,
+						Character: 3,
+					},
 				},
 				Message: &protocol.MarkupContent{
 					Kind:  protocol.MarkupKindMarkdown,
@@ -1219,8 +1335,14 @@ func (s *processServer) DocumentLink(
 	resolvable := os.Getenv(testServerDocumentLinkResolveEnv) == "1"
 	link := protocol.DocumentLink{
 		Range: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 0},
-			End:   protocol.Position{Line: 0, Character: 3},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 0,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 3,
+			},
 		},
 	}
 	if resolvable {
@@ -1230,8 +1352,14 @@ func (s *processServer) DocumentLink(
 	}
 	empty := protocol.DocumentLink{
 		Range: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 1},
-			End:   protocol.Position{Line: 0, Character: 1},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 1,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 1,
+			},
 		},
 	}
 	return []protocol.DocumentLink{link, empty}, nil
@@ -1429,8 +1557,14 @@ func (s *processServer) navigationLocation() *protocol.Location {
 	return &protocol.Location{
 		URI: uri.File(path),
 		Range: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 3},
-			End:   protocol.Position{Line: 0, Character: 6},
+			Start: protocol.Position{
+				Line:      0,
+				Character: 3,
+			},
+			End: protocol.Position{
+				Line:      0,
+				Character: 6,
+			},
 		},
 	}
 }
@@ -1449,8 +1583,14 @@ func (s *processServer) navigationLinkSlice() protocol.DeclarationLinkSlice {
 		return nil
 	}
 	rng := protocol.Range{
-		Start: protocol.Position{Line: 0, Character: 3},
-		End:   protocol.Position{Line: 0, Character: 6},
+		Start: protocol.Position{
+			Line:      0,
+			Character: 3,
+		},
+		End: protocol.Position{
+			Line:      0,
+			Character: 6,
+		},
 	}
 	link := protocol.LocationLink{
 		TargetURI:            uri.File(path),
@@ -1466,8 +1606,14 @@ func (s *processServer) navigationDefLinkSlice() protocol.DefinitionLinkSlice {
 		return nil
 	}
 	rng := protocol.Range{
-		Start: protocol.Position{Line: 0, Character: 3},
-		End:   protocol.Position{Line: 0, Character: 6},
+		Start: protocol.Position{
+			Line:      0,
+			Character: 3,
+		},
+		End: protocol.Position{
+			Line:      0,
+			Character: 6,
+		},
 	}
 	link := protocol.LocationLink{
 		TargetURI:            uri.File(path),

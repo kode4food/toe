@@ -43,11 +43,17 @@ func (t *TerminalPane) BeginDrag(cx *Context, at geom.Point, mod tea.KeyMod) boo
 	}
 	if t.MouseEnabled() {
 		t.SendMouse(uv.MouseClickEvent(uv.Mouse{
-			X: m.X, Y: m.Y, Button: tea.MouseLeft, Mod: mod,
+			X:      m.X,
+			Y:      m.Y,
+			Button: tea.MouseLeft,
+			Mod:    mod,
 		}))
 		return false
 	}
-	t.beginSelection(uv.Position{X: m.X, Y: m.Y})
+	t.beginSelection(uv.Position{
+		X: m.X,
+		Y: m.Y,
+	})
 	return true
 }
 
@@ -71,7 +77,10 @@ func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
 		}),
 	})
 	localX := min(max(at.X-a.X, 0), max(a.Width-1, 0))
-	t.extendSelection(uv.Position{X: localX, Y: edge.clamped - a.Y})
+	t.extendSelection(uv.Position{
+		X: localX,
+		Y: edge.clamped - a.Y,
+	})
 	return t.selection.drag.trigger(edge, localX, t.scheduleDragTick)
 }
 
@@ -79,7 +88,10 @@ func (t *TerminalPane) ContinueDrag(cx *Context, at geom.Point) tea.Cmd {
 func (t *TerminalPane) EndDrag(cx *Context, at geom.Point) tea.Cmd {
 	t.selection.drag.stop()
 	m := t.clampedMouse(cx, at)
-	if text := t.endSelection(uv.Position{X: m.X, Y: m.Y}); text != "" {
+	if text := t.endSelection(uv.Position{
+		X: m.X,
+		Y: m.Y,
+	}); text != "" {
 		cx.Editor.WriteRegister(view.RegisterClipboard, []string{text})
 		cx.Editor.SetStatusMsg(i18n.Text(i18n.StatusClipboardCopied))
 	}
@@ -107,15 +119,22 @@ func (t *TerminalPane) DragTick(_ *Context, gen int, toLow bool) tea.Cmd {
 	if toLow {
 		edgeY = 0
 	}
-	t.extendSelection(uv.Position{X: t.selection.drag.fixed, Y: edgeY})
+	t.extendSelection(uv.Position{
+		X: t.selection.drag.fixed,
+		Y: edgeY,
+	})
 	return t.selection.drag.tick(toLow, t.scheduleDragTick)
 }
 
 func (t *TerminalPane) handleKey(_ *Context, msg tea.KeyPressMsg) (EventResult, bool) {
 	k := msg.Key()
 	t.SendKey(uv.KeyPressEvent(uv.Key{
-		Text: k.Text, Mod: k.Mod, Code: k.Code,
-		ShiftedCode: k.ShiftedCode, BaseCode: k.BaseCode, IsRepeat: k.IsRepeat,
+		Text:        k.Text,
+		Mod:         k.Mod,
+		Code:        k.Code,
+		ShiftedCode: k.ShiftedCode,
+		BaseCode:    k.BaseCode,
+		IsRepeat:    k.IsRepeat,
 	}))
 	return consumed(), true
 }
@@ -150,14 +169,21 @@ func (t *TerminalPane) handleMouse(cx *Context, msg tea.Msg) (EventResult, bool)
 
 func (t *TerminalPane) scheduleDragTick(toLow bool, gen int, interval time.Duration) tea.Cmd {
 	return tea.Tick(interval, func(time.Time) tea.Msg {
-		return terminalDragScrollMsg{draggable: t, gen: gen, toLow: toLow}
+		return terminalDragScrollMsg{
+			draggable: t,
+			gen:       gen,
+			toLow:     toLow,
+		}
 	})
 }
 
 func (t *TerminalPane) clampedMouse(cx *Context, at geom.Point) uv.Mouse {
 	a := t.mouseArea(cx)
 	local := a.Size.Clamp(at.Sub(a.Point))
-	return uv.Mouse{X: local.X, Y: local.Y}
+	return uv.Mouse{
+		X: local.X,
+		Y: local.Y,
+	}
 }
 
 func (t *TerminalPane) localMouse(cx *Context, at geom.Point) (uv.Mouse, bool) {
@@ -166,7 +192,10 @@ func (t *TerminalPane) localMouse(cx *Context, at geom.Point) (uv.Mouse, bool) {
 	if !a.Size.Contains(local) {
 		return uv.Mouse{}, false
 	}
-	return uv.Mouse{X: local.X, Y: local.Y}, true
+	return uv.Mouse{
+		X: local.X,
+		Y: local.Y,
+	}, true
 }
 
 func (t *TerminalPane) mouseArea(cx *Context) geom.Area {
@@ -235,25 +264,37 @@ func mouseFields(msg tea.Msg) (mouseFieldsRes, bool) {
 	switch e := msg.(type) {
 	case tea.MouseClickMsg:
 		return mouseFieldsRes{
-			at:  geom.Point{X: e.X, Y: e.Y},
+			at: geom.Point{
+				X: e.X,
+				Y: e.Y,
+			},
 			btn: e.Button,
 			mod: e.Mod,
 		}, true
 	case tea.MouseReleaseMsg:
 		return mouseFieldsRes{
-			at:  geom.Point{X: e.X, Y: e.Y},
+			at: geom.Point{
+				X: e.X,
+				Y: e.Y,
+			},
 			btn: e.Button,
 			mod: e.Mod,
 		}, true
 	case tea.MouseMotionMsg:
 		return mouseFieldsRes{
-			at:  geom.Point{X: e.X, Y: e.Y},
+			at: geom.Point{
+				X: e.X,
+				Y: e.Y,
+			},
 			btn: e.Button,
 			mod: e.Mod,
 		}, true
 	case tea.MouseWheelMsg:
 		return mouseFieldsRes{
-			at:  geom.Point{X: e.X, Y: e.Y},
+			at: geom.Point{
+				X: e.X,
+				Y: e.Y,
+			},
 			btn: e.Button,
 			mod: e.Mod,
 		}, true

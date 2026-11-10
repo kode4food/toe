@@ -120,7 +120,11 @@ func Tokenize(src core.Source) []Span {
 	for tok := iter(); tok != chroma.EOF; tok = iter() {
 		n := utf8.RuneCountInString(tok.Value)
 		if scope, ok := scopeFor(tok.Type); ok {
-			spans = append(spans, Span{Start: pos, End: pos + n, Scope: scope})
+			spans = append(spans, Span{
+				Start: pos,
+				End:   pos + n,
+				Scope: scope,
+			})
 		}
 		pos += n
 	}

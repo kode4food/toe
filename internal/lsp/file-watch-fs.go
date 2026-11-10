@@ -88,7 +88,10 @@ func (s *Session) handleFileWatchEvent(ev notify.EventInfo) {
 	if !ok {
 		return
 	}
-	event := fileWatchEvent{path: filepath.Clean(ev.Path()), kind: kind}
+	event := fileWatchEvent{
+		path: filepath.Clean(ev.Path()),
+		kind: kind,
+	}
 	if s.queueWatchEvent(event) {
 		key := refreshKey{kind: refreshWatchEvents}
 		s.refresh.Do(key, s.flushWatchEvents)

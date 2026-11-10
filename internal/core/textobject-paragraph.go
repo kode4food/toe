@@ -8,7 +8,10 @@ type paragraphLines struct {
 // TextObjectParagraph selects the paragraph containing the cursor. A paragraph is a contiguous
 // sequence of non-empty lines around=TextObjectAround includes the trailing empty lines
 func TextObjectParagraph(doc Rope, r Range, kind TextObjectKind, count int) Range {
-	lines := paragraphLines{doc: doc, lineCount: doc.LenLines()}
+	lines := paragraphLines{
+		doc:       doc,
+		lineCount: doc.LenLines(),
+	}
 	cursor := r.Cursor(doc)
 	line, err := doc.CharToLine(cursor)
 	if err != nil {
@@ -72,7 +75,10 @@ func TextObjectParagraph(doc Rope, r Range, kind TextObjectKind, count int) Rang
 
 	from := paragraphLineToChar(doc, lineBack)
 	to := paragraphLineToChar(doc, line)
-	return Range{Anchor: from, Head: to}
+	return Range{
+		Anchor: from,
+		Head:   to,
+	}
 }
 
 // TextObjectPairSurround selects the pair surrounding the cursor. ch, if non-zero, specifies which
@@ -100,9 +106,15 @@ func (r Range) TextObjectPairSurround(doc Rope, kind TextObjectKind, ch rune, co
 		head = NextGraphemeBoundary(doc, head)
 	}
 	if r.Direction() == DirectionForward {
-		return Range{Anchor: anchor, Head: head}
+		return Range{
+			Anchor: anchor,
+			Head:   head,
+		}
 	}
-	return Range{Anchor: head, Head: anchor}
+	return Range{
+		Anchor: head,
+		Head:   anchor,
+	}
 }
 
 func (p paragraphLines) isBlank(line int) bool {

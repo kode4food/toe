@@ -39,11 +39,15 @@ func FromTeaKey(k tea.KeyPressMsg) command.KeyEvent {
 		mods |= command.ModShift
 	}
 	if k.Code == tea.KeySpace {
-		return command.KeyEvent{Code: command.KeyCode{Char: ' '}, Mods: mods}
+		return command.KeyEvent{
+			Code: command.KeyCode{Char: ' '},
+			Mods: mods,
+		}
 	}
 	if name, ok := teaSpecialKeys[k.Code]; ok {
 		return command.KeyEvent{
-			Code: command.KeyCode{Special: name}, Mods: mods,
+			Code: command.KeyCode{Special: name},
+			Mods: mods,
 		}
 	}
 	if k.Text != "" {
@@ -51,13 +55,20 @@ func FromTeaKey(k tea.KeyPressMsg) command.KeyEvent {
 		if unicode.IsUpper(ch) {
 			mods |= command.ModShift
 		}
-		return command.KeyEvent{Code: command.KeyCode{Char: ch}, Mods: mods}
+		return command.KeyEvent{
+			Code: command.KeyCode{Char: ch},
+			Mods: mods,
+		}
 	}
 	if mods.Has(command.ModCtrl) && isASCIIGraphic(k.Code) {
-		return command.KeyEvent{Code: command.KeyCode{Char: k.Code}, Mods: mods}
+		return command.KeyEvent{
+			Code: command.KeyCode{Char: k.Code},
+			Mods: mods,
+		}
 	}
 	return command.KeyEvent{
-		Code: command.KeyCode{Special: command.SpecialUnknown}, Mods: mods,
+		Code: command.KeyCode{Special: command.SpecialUnknown},
+		Mods: mods,
 	}
 }
 

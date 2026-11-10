@@ -381,7 +381,8 @@ func TestTextFormat(t *testing.T) {
 	t.Run("uses soft wrap config", func(t *testing.T) {
 		sw := language.SoftWrap{
 			Enable:        new(true),
-			WrapIndicator: new("» ")}
+			WrapIndicator: new("» "),
+		}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(new(language.Registry).Get("go"), nil, sw, 80)
@@ -393,7 +394,8 @@ func TestTextFormat(t *testing.T) {
 	t.Run("wraps at configured width", func(t *testing.T) {
 		sw := language.SoftWrap{
 			Enable:          new(true),
-			WrapAtTextWidth: new(true)}
+			WrapAtTextWidth: new(true),
+		}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(new(language.Registry).Get("go"), new(40), sw, 80)
@@ -407,7 +409,8 @@ func TestTextFormat(t *testing.T) {
 	t.Run("ignores wide text width", func(t *testing.T) {
 		sw := language.SoftWrap{
 			Enable:          new(true),
-			WrapAtTextWidth: new(true)}
+			WrapAtTextWidth: new(true),
+		}
 		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 
 		format := language.TextFormatForConfig(new(language.Registry).Get("go"), new(80), sw, 40)
@@ -597,11 +600,8 @@ func TestAutoSaveUnmarshal(t *testing.T) {
 		var a config.AutoSave
 		timeout := int64(2000)
 		err := a.UnmarshalTOML(map[string]any{
-			"focus-lost": true,
-			"after-delay": map[string]any{
-				"enable":  true,
-				"timeout": timeout,
-			},
+			"focus-lost":  true,
+			"after-delay": map[string]any{"enable": true, "timeout": timeout},
 		})
 		assert.NoError(t, err)
 		assert.True(t, *a.FocusLost)

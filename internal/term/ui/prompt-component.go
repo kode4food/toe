@@ -175,11 +175,17 @@ func (p *PromptComponent) Layout(_ *Context, screen geom.Size) (geom.Area, bool)
 	frame := p.overlayFrame(within)
 	p.syncCompletionRows(frame.Size)
 	rows := p.completion.list.rows
-	size := geom.Size{Width: frame.Width, Height: promptChrome}
+	size := geom.Size{
+		Width:  frame.Width,
+		Height: promptChrome,
+	}
 	if rows > 0 {
 		size.Height += rows + promptRule
 	}
-	p.bounds = geom.Area{Point: frame.Point, Size: size}
+	p.bounds = geom.Area{
+		Point: frame.Point,
+		Size:  size,
+	}
 	return p.bounds, true
 }
 
@@ -197,8 +203,11 @@ func (p *PromptComponent) PaintBuffer(cx *Context, pl geom.Area) *tui.Buffer {
 			return
 		}
 		drawPopupRule(drawPopupRuleArgs{
-			buf:   buf,
-			at:    geom.Point{X: area.X - 1 - pop.padX, Y: area.Y + 1},
+			buf: buf,
+			at: geom.Point{
+				X: area.X - 1 - pop.padX,
+				Y: area.Y + 1,
+			},
 			width: area.Width + 2*pop.padX + 2,
 			style: pop.borderStyle,
 		})
@@ -521,7 +530,10 @@ func (p *PromptComponent) overlayFrame(within geom.Size) geom.Area {
 
 func (p *PromptComponent) handleMouseMotion(msg tea.MouseMotionMsg) EventResult {
 	if msg.Button == tea.MouseLeft && p.dragEdge.active() {
-		p.resizeToEdge(geom.Point{X: msg.X, Y: msg.Y})
+		p.resizeToEdge(geom.Point{
+			X: msg.X,
+			Y: msg.Y,
+		})
 	}
 	return consumed()
 }

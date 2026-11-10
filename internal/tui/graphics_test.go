@@ -125,17 +125,29 @@ func TestStyle(t *testing.T) {
 	})
 
 	t.Run("UlColor round-trips via render", func(t *testing.T) {
-		b := tui.NewBuffer(geom.Size{Width: 1, Height: 1})
+		b := tui.NewBuffer(geom.Size{
+			Width:  1,
+			Height: 1,
+		})
 		st := tui.Style{}.UlColor(tui.ColorRGB(10, 20, 30))
-		b.SetString(geom.Point{X: 0, Y: 0}, "x", st)
+		b.SetString(geom.Point{
+			X: 0,
+			Y: 0,
+		}, "x", st)
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "\x1b[58:2::10:20:30m")
 	})
 
 	t.Run("UlStyle round-trips via render", func(t *testing.T) {
-		b := tui.NewBuffer(geom.Size{Width: 1, Height: 1})
+		b := tui.NewBuffer(geom.Size{
+			Width:  1,
+			Height: 1,
+		})
 		st := tui.Style{}.UlStyle(tui.UnderlineLine)
-		b.SetString(geom.Point{X: 0, Y: 0}, "x", st)
+		b.SetString(geom.Point{
+			X: 0,
+			Y: 0,
+		}, "x", st)
 		out := b.RenderToANSI()
 		assert.Contains(t, out, "\x1b[4m")
 	})

@@ -116,7 +116,10 @@ func consumed() EventResult {
 }
 
 func consumedWith(cb Callback) EventResult {
-	return EventResult{Consumed: true, Callback: cb}
+	return EventResult{
+		Consumed: true,
+		Callback: cb,
+	}
 }
 
 func ignored() EventResult {

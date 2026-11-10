@@ -25,7 +25,8 @@ func BenchmarkCompletionTyping(b *testing.B) {
 				b.StartTimer()
 				for _, ch := range "println" {
 					m2, cmd := m.Update(tea.KeyPressMsg{
-						Code: ch, Text: string(ch),
+						Code: ch,
+						Text: string(ch),
 					})
 					m = m2.(ui.Model)
 					m = feedCmds(m, cmd)
@@ -39,7 +40,10 @@ func openCompletionPopup(b testing.TB, items []*view.CompletionItem) ui.Model {
 	b.Helper()
 	e := view.NewEditor(b.TempDir())
 	e.SetMode(view.ModeInsert)
-	ctl := &completionController{editor: e, items: items}
+	ctl := &completionController{
+		editor: e,
+		items:  items,
+	}
 	e.SetLanguageServerController(ctl)
 	km := command.NewKeymaps()
 	m := ui.New(e, km)

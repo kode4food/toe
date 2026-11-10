@@ -13,10 +13,12 @@ import (
 func TestFromTeaKey(t *testing.T) {
 	t.Run("page keys ignore text fallback", func(t *testing.T) {
 		up := ui.FromTeaKey(tea.KeyPressMsg{
-			Code: tea.KeyPgUp, Text: "pgup",
+			Code: tea.KeyPgUp,
+			Text: "pgup",
 		})
 		down := ui.FromTeaKey(tea.KeyPressMsg{
-			Code: tea.KeyPgDown, Text: "pgdown",
+			Code: tea.KeyPgDown,
+			Text: "pgdown",
 		})
 		assert.Equal(t, special(command.PageUp), up)
 		assert.Equal(t, special(command.PageDown), down)
@@ -78,13 +80,19 @@ func TestFromTeaKey(t *testing.T) {
 	})
 
 	t.Run("lowercase text produces char", func(t *testing.T) {
-		got := ui.FromTeaKey(tea.KeyPressMsg{Code: 'a', Text: "a"})
+		got := ui.FromTeaKey(tea.KeyPressMsg{
+			Code: 'a',
+			Text: "a",
+		})
 		assert.Equal(t,
 			command.KeyEvent{Code: command.KeyCode{Char: 'a'}}, got)
 	})
 
 	t.Run("uppercase text adds shift modifier", func(t *testing.T) {
-		got := ui.FromTeaKey(tea.KeyPressMsg{Code: 'A', Text: "A"})
+		got := ui.FromTeaKey(tea.KeyPressMsg{
+			Code: 'A',
+			Text: "A",
+		})
 		assert.Equal(t, command.KeyEvent{
 			Code: command.KeyCode{Char: 'A'},
 			Mods: command.ModShift,
@@ -92,7 +100,10 @@ func TestFromTeaKey(t *testing.T) {
 	})
 
 	t.Run("unicode uppercase text adds shift", func(t *testing.T) {
-		got := ui.FromTeaKey(tea.KeyPressMsg{Code: 'å', Text: "Å"})
+		got := ui.FromTeaKey(tea.KeyPressMsg{
+			Code: 'å',
+			Text: "Å",
+		})
 		assert.Equal(t, command.KeyEvent{
 			Code: command.KeyCode{Char: 'Å'},
 			Mods: command.ModShift,
@@ -100,7 +111,10 @@ func TestFromTeaKey(t *testing.T) {
 	})
 
 	t.Run("ctrl+letter from code when no text", func(t *testing.T) {
-		got := ui.FromTeaKey(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
+		got := ui.FromTeaKey(tea.KeyPressMsg{
+			Code: 'c',
+			Mod:  tea.ModCtrl,
+		})
 		assert.Equal(t, command.KeyEvent{
 			Code: command.KeyCode{Char: 'c'},
 			Mods: command.ModCtrl,
@@ -108,7 +122,10 @@ func TestFromTeaKey(t *testing.T) {
 	})
 
 	t.Run("ctrl+punctuation from code when no text", func(t *testing.T) {
-		got := ui.FromTeaKey(tea.KeyPressMsg{Code: '\\', Mod: tea.ModCtrl})
+		got := ui.FromTeaKey(tea.KeyPressMsg{
+			Code: '\\',
+			Mod:  tea.ModCtrl,
+		})
 		assert.Equal(t, command.KeyEvent{
 			Code: command.KeyCode{Char: '\\'},
 			Mods: command.ModCtrl,

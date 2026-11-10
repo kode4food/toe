@@ -137,7 +137,10 @@ func (s *Session) languageForDocument(doc *view.Document) *language.Language {
 func (s *Session) ensureClient(
 	name string, doc *view.Document, lang *language.Language,
 ) (*Client, error) {
-	target := &workspaceServer{name: name, root: s.workspaceRoot(doc, lang)}
+	target := &workspaceServer{
+		name: name,
+		root: s.workspaceRoot(doc, lang),
+	}
 	client, _, err := s.ensureServer(target)
 	return client, err
 }
@@ -157,7 +160,10 @@ func (s *Session) startClient(target *workspaceServer) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	handler := &clientHandler{session: s, name: target.name}
+	handler := &clientHandler{
+		session: s,
+		name:    target.name,
+	}
 	client, err := s.servers.startRegistry(s.ctx, target, handler)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", target.name, err)

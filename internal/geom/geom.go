@@ -26,12 +26,18 @@ func (s Size) IsEmpty() bool {
 
 // Add returns p offset by d
 func (p Point) Add(d Point) Point {
-	return Point{X: p.X + d.X, Y: p.Y + d.Y}
+	return Point{
+		X: p.X + d.X,
+		Y: p.Y + d.Y,
+	}
 }
 
 // Sub returns p offset by the negation of d
 func (p Point) Sub(d Point) Point {
-	return Point{X: p.X - d.X, Y: p.Y - d.Y}
+	return Point{
+		X: p.X - d.X,
+		Y: p.Y - d.Y,
+	}
 }
 
 // Contains reports whether a Point lies inside the specified Size

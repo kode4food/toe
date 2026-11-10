@@ -81,7 +81,10 @@ func splitPane(t *testing.T, text string) *view.Editor {
 	// scrolloff would pull the cursor further down after the page
 	e.Options().ScrollOff = 0
 	e.SetViewHeight(100)
-	e.ResizeTree(geom.Size{Width: 80, Height: 100})
+	e.ResizeTree(geom.Size{
+		Width:  80,
+		Height: 100,
+	})
 	docID := e.FocusedDocument().ID()
 	assert.NotNil(t, e.HSplitNew())
 	e.ShowDocument(docID)

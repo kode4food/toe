@@ -13,8 +13,14 @@ func TestChangeSet(t *testing.T) {
 	t.Run("builds operations from ordered changes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 3}, "XX"),
-			core.DeleteChange(core.Span{From: 4, To: 5}),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   3,
+			}, "XX"),
+			core.DeleteChange(core.Span{
+				From: 4,
+				To:   5,
+			}),
 		})
 
 		assert.NoError(t, err)
@@ -35,8 +41,14 @@ func TestChangeSet(t *testing.T) {
 	t.Run("merges adjacent operation builders", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 2}, "X"),
-			core.TextChange(core.Span{From: 2, To: 3}, "Y"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   2,
+			}, "X"),
+			core.TextChange(core.Span{
+				From: 2,
+				To:   3,
+			}, "Y"),
 		})
 
 		assert.NoError(t, err)
@@ -53,8 +65,14 @@ func TestChangeSet(t *testing.T) {
 	t.Run("merges consecutive inserts at same pos", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 1}, "X"),
-			core.TextChange(core.Span{From: 1, To: 1}, "Y"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "X"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "Y"),
 		})
 		assert.NoError(t, err)
 
@@ -68,12 +86,18 @@ func TestChangeSet(t *testing.T) {
 		doc := core.NewRope("abc")
 
 		_, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.DeleteChange(core.Span{From: 2, To: 1}),
+			core.DeleteChange(core.Span{
+				From: 2,
+				To:   1,
+			}),
 		})
 		assert.True(t, errors.Is(err, core.ErrChangeOrder))
 
 		_, err = core.NewChangeSetFromChanges(doc, []core.Change{
-			core.DeleteChange(core.Span{From: 1, To: 4}),
+			core.DeleteChange(core.Span{
+				From: 1,
+				To:   4,
+			}),
 		})
 		assert.True(t, errors.Is(err, core.ErrChangeOutOfRange))
 	})
@@ -81,8 +105,14 @@ func TestChangeSet(t *testing.T) {
 	t.Run("applies replacements and deletions", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 3}, "XX"),
-			core.DeleteChange(core.Span{From: 4, To: 5}),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   3,
+			}, "XX"),
+			core.DeleteChange(core.Span{
+				From: 4,
+				To:   5,
+			}),
 		})
 		assert.NoError(t, err)
 
@@ -95,8 +125,14 @@ func TestChangeSet(t *testing.T) {
 	t.Run("iterates changes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 3}, "XX"),
-			core.DeleteChange(core.Span{From: 4, To: 5}),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   3,
+			}, "XX"),
+			core.DeleteChange(core.Span{
+				From: 4,
+				To:   5,
+			}),
 		})
 		assert.NoError(t, err)
 
@@ -115,7 +151,10 @@ func TestChangeSet(t *testing.T) {
 	t.Run("rejects different snapshot length", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.DeleteChange(core.Span{From: 1, To: 2}),
+			core.DeleteChange(core.Span{
+				From: 1,
+				To:   2,
+			}),
 		})
 		assert.NoError(t, err)
 
@@ -127,7 +166,10 @@ func TestChangeSet(t *testing.T) {
 	t.Run("inverts applied changes", func(t *testing.T) {
 		doc := core.NewRope("ab世界cd")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 2, To: 4}, "XY"),
+			core.TextChange(core.Span{
+				From: 2,
+				To:   4,
+			}, "XY"),
 		})
 		assert.NoError(t, err)
 		out, err := cs.Apply(doc)
@@ -144,7 +186,10 @@ func TestChangeSet(t *testing.T) {
 	t.Run("maps positions through changes", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 2, To: 4}, "XYZ"),
+			core.TextChange(core.Span{
+				From: 2,
+				To:   4,
+			}, "XYZ"),
 		})
 		assert.NoError(t, err)
 
@@ -164,7 +209,10 @@ func TestChangeSet(t *testing.T) {
 	t.Run("maps word-associated positions", func(t *testing.T) {
 		doc := core.NewRope("ab")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 1}, "xy-z"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "xy-z"),
 		})
 		assert.NoError(t, err)
 
@@ -180,7 +228,10 @@ func TestChangeSet(t *testing.T) {
 	t.Run("all-word insertion word association", func(t *testing.T) {
 		doc := core.NewRope("ab")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 1}, "xyz"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "xyz"),
 		})
 		assert.NoError(t, err)
 
@@ -202,24 +253,30 @@ func TestChangeSet(t *testing.T) {
 	t.Run("maps ranges and selections", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 1, To: 1}, "XX"),
+			core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "XX"),
 		})
 		assert.NoError(t, err)
-		s := core.SingleSelection(core.Range{Anchor: 2, Head: 4})
+		s := core.SingleSelection(core.Range{
+			Anchor: 2,
+			Head:   4,
+		})
 
 		mapped, err := s.Map(cs)
 
 		assert.NoError(t, err)
-		assert.Equal(t, []core.Range{{
-			Anchor: 4,
-			Head:   6,
-		}}, mapped.Ranges())
+		assert.Equal(t, []core.Range{{Anchor: 4, Head: 6}}, mapped.Ranges())
 	})
 
 	t.Run("maps point and backward ranges", func(t *testing.T) {
 		doc := core.NewRope("abcdef")
 		cs, err := core.NewChangeSetFromChanges(doc, []core.Change{
-			core.TextChange(core.Span{From: 2, To: 2}, "XX"),
+			core.TextChange(core.Span{
+				From: 2,
+				To:   2,
+			}, "XX"),
 		})
 		assert.NoError(t, err)
 
@@ -227,15 +284,24 @@ func TestChangeSet(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, core.PointRange(4), r)
 
-		r, err = cs.MapRange(core.Range{Anchor: 5, Head: 1})
+		r, err = cs.MapRange(core.Range{
+			Anchor: 5,
+			Head:   1,
+		})
 		assert.NoError(t, err)
-		assert.Equal(t, core.Range{Anchor: 7, Head: 1}, r)
+		assert.Equal(t, core.Range{
+			Anchor: 7,
+			Head:   1,
+		}, r)
 	})
 
 	t.Run("returns selection map errors", func(t *testing.T) {
 		doc := core.NewRope("abc")
 		cs := core.NewChangeSet(doc)
-		s := core.SingleSelection(core.Range{Anchor: 1, Head: 4})
+		s := core.SingleSelection(core.Range{
+			Anchor: 1,
+			Head:   4,
+		})
 
 		_, err := s.Map(cs)
 

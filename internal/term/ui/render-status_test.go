@@ -369,21 +369,9 @@ func TestStatuslineElementRegistry(t *testing.T) {
 		want    string
 	}{
 		{element: view.StatusLineMode, want: " NOR "},
-		{
-			element: view.StatusLineFileBaseName,
-			setup:   fileEditor,
-			want:    "note.txt",
-		},
-		{
-			element: view.StatusLineFileName,
-			setup:   fileEditor,
-			want:    "note.txt",
-		},
-		{
-			element: view.StatusLineFileAbsolutePath,
-			setup:   fileEditor,
-			want:    "note.txt",
-		},
+		{element: view.StatusLineFileBaseName, setup: fileEditor, want: "note.txt"},
+		{element: view.StatusLineFileName, setup: fileEditor, want: "note.txt"},
+		{element: view.StatusLineFileAbsolutePath, setup: fileEditor, want: "note.txt"},
 		{
 			element: view.StatusLineReadOnly,
 			setup: func(t *testing.T) *view.Editor {

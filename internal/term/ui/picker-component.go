@@ -179,11 +179,13 @@ func (p *PickerComponent) paint(cx *Context, buf *tui.Buffer, pl geom.Area) {
 			Height: areaH,
 		}
 		r.drawBox(geom.Area{
-			Width: areaW, Height: areaH,
+			Width:  areaW,
+			Height: areaH,
 		}, splitW)
 	} else {
 		r.drawPane(geom.Area{
-			Width: areaW, Height: areaH,
+			Width:  areaW,
+			Height: areaH,
 		})
 	}
 
@@ -221,7 +223,10 @@ func (p *PickerComponent) handleMouseClick(
 	cx *Context, msg tea.MouseClickMsg,
 ) (EventResult, tea.Cmd) {
 	p.markDirty()
-	clickPt := geom.Point{X: msg.X, Y: msg.Y}
+	clickPt := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	primary := msg.Button == tea.MouseLeft
 	// the divider's ends sit on the frame border, and dragging the split is the more likely intent
 	// there
@@ -256,7 +261,10 @@ func (p *PickerComponent) handleMouseMotion(
 	}
 	switch {
 	case p.dragEdge.active():
-		p.resizeToEdge(cx, geom.Point{X: msg.X, Y: msg.Y})
+		p.resizeToEdge(cx, geom.Point{
+			X: msg.X,
+			Y: msg.Y,
+		})
 	case p.dragSplit:
 		p.markDirty()
 		p.updateSplitRatio(cx, msg.X)
@@ -336,9 +344,15 @@ func (p *PickerComponent) handleMouseWheel(
 	step := cx.Editor.Options().ScrollLines
 	p.markDirty()
 	switch {
-	case p.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}):
+	case p.listBounds.Contains(geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}):
 		p.scrollListByWheel(msg.Button, step)
-	case p.previewBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}):
+	case p.previewBounds.Contains(geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}):
 		p.scrollPreviewByWheel(msg.Button, step)
 	}
 	return consumed(), nil

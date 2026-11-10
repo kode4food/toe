@@ -82,10 +82,16 @@ func findCharForward(doc core.Rope, start int, ch rune) charSearchRes {
 			break
 		}
 		if c == ch {
-			return charSearchRes{found: j, next: j + 1}
+			return charSearchRes{
+				found: j,
+				next:  j + 1,
+			}
 		}
 	}
-	return charSearchRes{found: -1, next: start}
+	return charSearchRes{
+		found: -1,
+		next:  start,
+	}
 }
 
 func findCharBackward(doc core.Rope, start int, ch rune) charSearchRes {
@@ -95,8 +101,14 @@ func findCharBackward(doc core.Rope, start int, ch rune) charSearchRes {
 			break
 		}
 		if c == ch {
-			return charSearchRes{found: j, next: j - 1}
+			return charSearchRes{
+				found: j,
+				next:  j - 1,
+			}
 		}
 	}
-	return charSearchRes{found: -1, next: start}
+	return charSearchRes{
+		found: -1,
+		next:  start,
+	}
 }

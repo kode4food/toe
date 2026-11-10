@@ -45,7 +45,10 @@ func TestMacroRecordingStatus(t *testing.T) {
 		}
 		m, _ := macroModel(t)
 		m = sendKey(m, 'z')
-		next, cmd := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
+		next, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'a',
+			Text: "a",
+		})
 		m = next.(ui.Model)
 		lit := stripANSI(lastLine(viewContent(m)))
 
@@ -282,7 +285,9 @@ func macroModel(t *testing.T) (ui.Model, *view.Editor) {
 			action.InsertMode(e)
 		}, []command.KeyEvent{char('i')})
 	bindTestAction(bindTestActionArgs{
-		km: km, mode: view.ModeInsert, name: "to_normal",
+		km:   km,
+		mode: view.ModeInsert,
+		name: "to_normal",
 		fn: func(e *view.Editor) command.Continuation {
 			action.NormalMode(e)
 			return nil

@@ -27,7 +27,10 @@ func splitStringAtChar(s string, pos int) stringSplit {
 					}
 				}
 			}
-			return stringSplit{before: s[:b], after: s[b:]}
+			return stringSplit{
+				before: s[:b],
+				after:  s[b:],
+			}
 		}
 		lastByte = b
 		lastCh, _ = utf8.DecodeRuneInString(s[b:])

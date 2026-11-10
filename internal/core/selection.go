@@ -88,7 +88,10 @@ func (s Selection) IntoSingle() Selection {
 	if len(s.ranges) == 1 {
 		return s
 	}
-	return Selection{ranges: []Range{s.Primary()}, primaryIndex: 0}
+	return Selection{
+		ranges:       []Range{s.Primary()},
+		primaryIndex: 0,
+	}
 }
 
 // Push adds r and makes it primary
@@ -127,7 +130,10 @@ func (s Selection) Replace(idx int, r Range) (Selection, error) {
 func (s Selection) MergeRanges() Selection {
 	first := s.ranges[0]
 	last := s.ranges[len(s.ranges)-1]
-	return Selection{ranges: []Range{first.Merge(last)}, primaryIndex: 0}
+	return Selection{
+		ranges:       []Range{first.Merge(last)},
+		primaryIndex: 0,
+	}
 }
 
 // MergeConsecutiveRanges joins only ranges that touch end to start, leaving separated ranges alone

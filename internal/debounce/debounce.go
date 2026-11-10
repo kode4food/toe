@@ -16,7 +16,10 @@ type Keyed[K comparable] struct {
 
 // NewKeyed creates a Keyed that waits delay after the last call per key
 func NewKeyed[K comparable](delay time.Duration) *Keyed[K] {
-	return &Keyed[K]{delay: delay, timers: map[K]*time.Timer{}}
+	return &Keyed[K]{
+		delay:  delay,
+		timers: map[K]*time.Timer{},
+	}
 }
 
 // Do schedules fn for key, replacing any call for key still waiting

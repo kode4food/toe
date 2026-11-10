@@ -87,13 +87,19 @@ func (g gutterSpec) renderLine(args renderLineArgs) {
 				})
 
 				args.buffer.SetString(
-					geom.Point{X: col, Y: args.at.Y}, diagnosticGutterMark, st,
+					geom.Point{
+						X: col,
+						Y: args.at.Y,
+					}, diagnosticGutterMark, st,
 				)
 			}
 		case view.GutterTypeLineNumbers:
 			if g.lineNumWidth > 0 {
 				args.buffer.SetRightAlignedInt(tui.RightAlignedIntArgs{
-					At:    geom.Point{X: col, Y: args.at.Y},
+					At: geom.Point{
+						X: col,
+						Y: args.at.Y,
+					},
 					Width: g.lineNumWidth,
 					Value: args.displayNumber,
 					Style: g.lineStyleFor(args.selected),
@@ -108,7 +114,10 @@ func (g gutterSpec) renderLine(args renderLineArgs) {
 					overlay: st,
 				})
 				args.buffer.SetString(
-					geom.Point{X: col, Y: args.at.Y}, icon, markStyle,
+					geom.Point{
+						X: col,
+						Y: args.at.Y,
+					}, icon, markStyle,
 				)
 			}
 		}

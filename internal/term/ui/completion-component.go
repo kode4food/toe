@@ -137,7 +137,9 @@ func (c *completionComponent) Layout(_ *Context, screen geom.Size) (geom.Area, b
 	rows := min(len(c.items), completionMaxRows)
 	h := rows + 2
 	return fitPopup(geom.Area{
-		Point: at, Width: w, Height: h,
+		Point:  at,
+		Width:  w,
+		Height: h,
 	}, screen), true
 }
 
@@ -235,7 +237,10 @@ func (c *completionComponent) paint(buf *tui.Buffer, pl geom.Area) {
 	}
 	if overflow {
 		c.renderScroll(
-			buf, geom.Point{X: w - 1, Y: area.Y}, area.Height, base,
+			buf, geom.Point{
+				X: w - 1,
+				Y: area.Y,
+			}, area.Height, base,
 		)
 	}
 }
@@ -271,8 +276,14 @@ func (c *completionComponent) handleKeyPress(msg tea.KeyPressMsg) (EventResult, 
 }
 
 func (c *completionComponent) handleMouseClick(msg tea.MouseClickMsg) EventResult {
-	at := geom.Point{X: msg.X, Y: msg.Y}
-	list := listScroll{scroll: c.list.scroll, count: len(c.items)}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
+	list := listScroll{
+		scroll: c.list.scroll,
+		count:  len(c.items),
+	}
 	if idx, ok := list.indexAt(c.listBounds, at); ok {
 		c.moveTo(idx)
 	}
@@ -280,7 +291,10 @@ func (c *completionComponent) handleMouseClick(msg tea.MouseClickMsg) EventResul
 }
 
 func (c *completionComponent) handleMouseWheel(msg tea.MouseWheelMsg) EventResult {
-	if !c.listBounds.Contains(geom.Point{X: msg.X, Y: msg.Y}) {
+	if !c.listBounds.Contains(geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}) {
 		return ignoredWith(popLayer)
 	}
 	c.markDirty()

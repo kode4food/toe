@@ -101,11 +101,19 @@ func newLexerIndex() *lexerIndex {
 	for _, lex := range lexers.GlobalLexerRegistry.Lexers {
 		cfg := lex.Config()
 		for _, glob := range cfg.Filenames {
-			idx.primary.add(lexerGlob{order: order, lexer: lex, glob: glob})
+			idx.primary.add(lexerGlob{
+				order: order,
+				lexer: lex,
+				glob:  glob,
+			})
 			order++
 		}
 		for _, glob := range cfg.AliasFilenames {
-			idx.alias.add(lexerGlob{order: order, lexer: lex, glob: glob})
+			idx.alias.add(lexerGlob{
+				order: order,
+				lexer: lex,
+				glob:  glob,
+			})
 			order++
 		}
 	}

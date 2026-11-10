@@ -492,8 +492,14 @@ func TestOptionCompleters(t *testing.T) {
 			{input: "line-number r", want: "relative"},
 			{input: "bufferline m", want: "multiple"},
 			{input: "whitespace.render n", want: "none"},
-			{input: "statusline.left [", want: `["mode"]`},
-			{input: "gutters.layout [", want: `["diagnostics"]`},
+			{
+				input: "statusline.left [",
+				want:  `["mode"]`,
+			},
+			{
+				input: "gutters.layout [",
+				want:  `["diagnostics"]`,
+			},
 			{input: "auto-pairs f", want: "false"},
 			{input: "rulers ", want: "[]"},
 		}
@@ -537,7 +543,10 @@ func collectDefaultKeySeqs(km *command.Keymaps) map[keySeqKey]keySeqInfo {
 		name := commandName(cmd)
 		for _, mode := range commandModes(cmd) {
 			for _, seq := range commandBindings(cmd, mode) {
-				key := keySeqKey{mode: mode, seq: keySeqString(seq)}
+				key := keySeqKey{
+					mode: mode,
+					seq:  keySeqString(seq),
+				}
 				info := seqs[key]
 				info.names = append(info.names, name)
 				info.events = seq

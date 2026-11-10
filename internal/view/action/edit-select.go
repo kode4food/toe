@@ -16,10 +16,7 @@ func SelectAll(e *view.Editor) {
 		return
 	}
 	n := doc.Text().LenChars()
-	sel, err := core.NewSelection([]core.Range{{
-		Anchor: 0,
-		Head:   n,
-	}}, 0)
+	sel, err := core.NewSelection([]core.Range{{Anchor: 0, Head: n}}, 0)
 	if err != nil {
 		return
 	}

@@ -24,9 +24,15 @@ func ExtendLineBelow(e *view.Editor) {
 					return r
 				}
 			}
-			return core.Range{Anchor: b.start, Head: nextEnd}
+			return core.Range{
+				Anchor: b.start,
+				Head:   nextEnd,
+			}
 		}
-		return core.Range{Anchor: b.start, Head: b.end}
+		return core.Range{
+			Anchor: b.start,
+			Head:   b.end,
+		}
 	})
 }
 
@@ -147,7 +153,10 @@ func selectLineImpl(e *view.Editor, above bool) {
 			anchor = lineChar(sat(anchorLine + 1))
 			head = lineChar(headLine)
 		}
-		ranges[i] = core.Range{Anchor: anchor, Head: head}
+		ranges[i] = core.Range{
+			Anchor: anchor,
+			Head:   head,
+		}
 	}
 	if newSel, err := core.NewSelection(ranges, sel.PrimaryIndex()); err == nil {
 		doc.SetSelectionFor(v.ID(), newSel)

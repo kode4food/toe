@@ -55,9 +55,15 @@ func (t *Tree) recalculate() {
 					childH = h
 				}
 				area := geom.Area{
-					X: a.X, Y: childY, Width: a.Width, Height: childH,
+					X:      a.X,
+					Y:      childY,
+					Width:  a.Width,
+					Height: childH,
 				}
-				stack = append(stack, treeWork{id: child, area: area})
+				stack = append(stack, treeWork{
+					id:   child,
+					area: area,
+				})
 				childY += childH + innerGap
 			}
 		case LayoutVertical:
@@ -78,9 +84,15 @@ func (t *Tree) recalculate() {
 					childW = w
 				}
 				area := geom.Area{
-					X: childX, Y: a.Y, Width: childW, Height: a.Height,
+					X:      childX,
+					Y:      a.Y,
+					Width:  childW,
+					Height: a.Height,
 				}
-				stack = append(stack, treeWork{id: child, area: area})
+				stack = append(stack, treeWork{
+					id:   child,
+					area: area,
+				})
 				childX += childW + innerGap
 			}
 		}

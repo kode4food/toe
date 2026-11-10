@@ -108,7 +108,10 @@ func (s *signatureHelpComponent) Layout(cx *Context, screen geom.Size) (geom.Are
 	}
 	s.lines = lines
 	return geom.Area{
-		X: x, Y: y, Width: w, Height: h,
+		X:      x,
+		Y:      y,
+		Width:  w,
+		Height: h,
 	}, true
 }
 
@@ -259,7 +262,10 @@ func (s *signatureHelpComponent) renderSignature(
 	text := string(rs[start:end])
 	bg := cx.Theme().Get("ui.popup").BgColor()
 	st := inheritStyleBackground(cx.Theme().Get("ui.selection"), bg)
-	buf.SetString(geom.Point{X: x, Y: area.Y}, text, st)
+	buf.SetString(geom.Point{
+		X: x,
+		Y: area.Y,
+	}, text, st)
 }
 
 func pushSignatureHelpLayer(comp *Compositor, layer *signatureHelpComponent) {
@@ -301,7 +307,10 @@ func currentSignatureCall(cx *Context) (signatureCall, bool) {
 }
 
 func signatureCallOpen(doc *view.Document, pos int) (int, bool) {
-	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+	before, err := doc.Text().SliceString(core.Span{
+		From: 0,
+		To:   pos,
+	})
 	if err != nil {
 		return 0, false
 	}

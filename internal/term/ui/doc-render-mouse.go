@@ -60,7 +60,10 @@ func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 		}
 		content := v.Area()
 		content.Height = max(content.Height-1, 0)
-		if content.Contains(geom.Point{X: at.X, Y: contentY}) {
+		if content.Contains(geom.Point{
+			X: at.X,
+			Y: contentY,
+		}) {
 			found = v
 			return false
 		}
@@ -71,7 +74,10 @@ func (r *renderPass) contentViewAt(at geom.Point) *view.View {
 
 func (r *renderPass) handleMouseClick(msg tea.MouseClickMsg) {
 	cx := r.context
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if p, ok := paneAt(cx, at); ok {
 		wasFocused := cx.Editor.Tree().Focus() == p.ID()
 		cx.Editor.FocusPane(p.ID())
@@ -218,7 +224,10 @@ func (r *renderPass) handleMouseDrag(at geom.Point) tea.Cmd {
 	})
 
 	clampedX, clampedY := hEdge.clamped, vEdge.clamped
-	pos, ok := r.screenCharPos(doc, v, geom.Point{X: clampedX, Y: clampedY})
+	pos, ok := r.screenCharPos(doc, v, geom.Point{
+		X: clampedX,
+		Y: clampedY,
+	})
 	if !ok {
 		return nil
 	}
@@ -288,11 +297,18 @@ func (r *renderPass) resolveClickPos(at geom.Point) (resolveClickPosRes, bool) {
 	if bufferlineVisible(cx) {
 		contentY--
 	}
-	pos, ok := r.screenCharPos(doc, v, geom.Point{X: at.X, Y: contentY})
+	pos, ok := r.screenCharPos(doc, v, geom.Point{
+		X: at.X,
+		Y: contentY,
+	})
 	if !ok {
 		return resolveClickPosRes{}, false
 	}
-	return resolveClickPosRes{doc: doc, view: v, pos: pos}, true
+	return resolveClickPosRes{
+		doc:  doc,
+		view: v,
+		pos:  pos,
+	}, true
 }
 
 type cursorScreenPosArgs struct {
@@ -343,7 +359,10 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 
 	lineEnd, err := text.LineEndCharIndex(cursorLine)
 	if err != nil {
-		return geom.Point{X: gutterW + segPrefixW, Y: segY}
+		return geom.Point{
+			X: gutterW + segPrefixW,
+			Y: segY,
+		}
 	}
 	col := 0
 	runeIdx := 0
@@ -367,7 +386,8 @@ func cursorScreenPos(args cursorScreenPosArgs) geom.Point {
 		To:   cursor,
 	})
 	return geom.Point{
-		X: gutterW + segPrefixW + col - args.horzOff, Y: segY,
+		X: gutterW + segPrefixW + col - args.horzOff,
+		Y: segY,
 	}
 }
 

@@ -46,7 +46,10 @@ func (p *pickerRender) writePromptRow(area geom.Area) geom.Point {
 	promptSt := th.Get("ui.prompt")
 
 	bgTUI := popupBg
-	queryTUI := applyAccentStyle(styleOverlay{base: popupBg, overlay: promptSt})
+	queryTUI := applyAccentStyle(styleOverlay{
+		base:    popupBg,
+		overlay: promptSt,
+	})
 	countTUI := p.count
 
 	buf.FillRange(area.Point, area.Width, bgTUI)
@@ -58,7 +61,10 @@ func (p *pickerRender) writePromptRow(area geom.Area) geom.Point {
 		X: area.X + overlayPadX + ql + 1 + gap,
 		Y: area.Y,
 	}, count, countTUI)
-	return geom.Point{X: area.X + overlayPadX + ql, Y: area.Y}
+	return geom.Point{
+		X: area.X + overlayPadX + ql,
+		Y: area.Y,
+	}
 }
 
 func (p *pickerRender) writeHeader(area geom.Area) {
@@ -78,7 +84,10 @@ func (p *pickerRender) writeHeader(area geom.Area) {
 			cur++
 		}
 		text := runewidth.Truncate(col, widths[i], "")
-		buf.SetString(geom.Point{X: cur, Y: area.Y}, text, colTUI)
+		buf.SetString(geom.Point{
+			X: cur,
+			Y: area.Y,
+		}, text, colTUI)
 		cur += widths[i]
 	}
 }
@@ -88,7 +97,10 @@ func (p *pickerRender) writeSection(at geom.Point, m pickerMatch) {
 	base := p.section
 	buf.FillRange(at, p.width, base)
 	label := runewidth.Truncate(m.item.Display, max(p.width-overlayPadX-1, 0), "")
-	buf.SetString(geom.Point{X: at.X + overlayPadX, Y: at.Y}, label, base)
+	buf.SetString(geom.Point{
+		X: at.X + overlayPadX,
+		Y: at.Y,
+	}, label, base)
 }
 
 func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
@@ -127,15 +139,21 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 		if fileIcon.glyph != "" {
 			iconStyle := pickerFileIconStyle(p.theme, base, fileIcon.color)
 			buf.SetString(
-				geom.Point{X: cx2, Y: at.Y}, fileIcon.glyph, iconStyle,
+				geom.Point{
+					X: cx2,
+					Y: at.Y,
+				}, fileIcon.glyph, iconStyle,
 			)
 			iconWidth := runewidth.StringWidth(fileIcon.glyph) + 1
 			cx2 += iconWidth
 			cellW = max(cellW-iconWidth, 0)
 		}
 		writeMatchedItem(writeMatchedItemArgs{
-			buf:           buf,
-			at:            geom.Point{X: cx2, Y: at.Y},
+			buf: buf,
+			at: geom.Point{
+				X: cx2,
+				Y: at.Y,
+			},
 			maxWidth:      cellW,
 			text:          m.item.Display,
 			indices:       m.result.Indices,
@@ -165,8 +183,11 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 			}
 			if i == matchColumn {
 				writeMatchedItem(writeMatchedItemArgs{
-					buf:           buf,
-					at:            geom.Point{X: cur, Y: at.Y},
+					buf: buf,
+					at: geom.Point{
+						X: cur,
+						Y: at.Y,
+					},
 					maxWidth:      widths[i],
 					text:          val,
 					indices:       m.result.Indices,
@@ -177,7 +198,10 @@ func (p *pickerRender) writeItem(at geom.Point, m pickerMatch, selected bool) {
 				})
 			} else {
 				text := runewidth.Truncate(val, widths[i], "")
-				buf.SetString(geom.Point{X: cur, Y: at.Y}, text, colBase)
+				buf.SetString(geom.Point{
+					X: cur,
+					Y: at.Y,
+				}, text, colBase)
 			}
 			cur += widths[i]
 		}

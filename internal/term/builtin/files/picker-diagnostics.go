@@ -150,7 +150,11 @@ func (d *diagnosticPickerSource) item(
 			Target: ui.PickerTarget{ID: doc.ID()},
 			Lines:  lines,
 		},
-		Payload: diagnosticPickerPayload{id: doc.ID(), name: name, diag: diag},
+		Payload: diagnosticPickerPayload{
+			id:   doc.ID(),
+			name: name,
+			diag: diag,
+		},
 	})
 }
 
@@ -177,15 +181,15 @@ func diagnosticLineRange(text core.Rope, diag view.Diagnostic) (int, *core.Span)
 	if err != nil {
 		to = from
 	}
-	return from, &core.Span{From: from, To: to}
+	return from, &core.Span{
+		From: from,
+		To:   to,
+	}
 }
 
 func diagnosticSelection(diag view.Diagnostic) (core.Selection, error) {
 	return core.NewSelection(
-		[]core.Range{{
-			Anchor: diag.Range.To,
-			Head:   diag.Range.From,
-		}}, 0,
+		[]core.Range{{Anchor: diag.Range.To, Head: diag.Range.From}}, 0,
 	)
 }
 

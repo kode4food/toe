@@ -51,7 +51,10 @@ func concatRopeNode(pair ropePair) *ropeNode {
 	if pair.right == nil {
 		return pair.left
 	}
-	n := &ropeNode{left: pair.left, right: pair.right}
+	n := &ropeNode{
+		left:  pair.left,
+		right: pair.right,
+	}
 	refreshRopeNode(n)
 	return balanceRopeNode(n)
 }
@@ -104,18 +107,30 @@ func balanceRopeNode(n *ropeNode) *ropeNode {
 
 func rotateRopeRight(n *ropeNode) *ropeNode {
 	p := n.left
-	newN := &ropeNode{left: p.right, right: n.right}
+	newN := &ropeNode{
+		left:  p.right,
+		right: n.right,
+	}
 	refreshRopeNode(newN)
-	newP := &ropeNode{left: p.left, right: newN}
+	newP := &ropeNode{
+		left:  p.left,
+		right: newN,
+	}
 	refreshRopeNode(newP)
 	return newP
 }
 
 func rotateRopeLeft(n *ropeNode) *ropeNode {
 	p := n.right
-	newN := &ropeNode{left: n.left, right: p.left}
+	newN := &ropeNode{
+		left:  n.left,
+		right: p.left,
+	}
 	refreshRopeNode(newN)
-	newP := &ropeNode{left: newN, right: p.right}
+	newP := &ropeNode{
+		left:  newN,
+		right: p.right,
+	}
 	refreshRopeNode(newP)
 	return newP
 }

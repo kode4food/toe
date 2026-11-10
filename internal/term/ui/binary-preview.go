@@ -19,7 +19,10 @@ func (p *previewBinaryEntry) renderInto(ctx *previewCtx, buf *tui.Buffer, at geo
 	).Line
 	offset := int64(scroll * width)
 	data, err := readBinaryRange(p.path, offset, width*ctx.size.Height)
-	area := geom.Area{Point: at, Size: ctx.size}
+	area := geom.Area{
+		Point: at,
+		Size:  ctx.size,
+	}
 	style := tui.Style{}.Bg(ctx.theme.Get("ui.popup").BgColor())
 	if err != nil {
 		renderCenteredMessage(buf, area, i18n.ErrorText(err), style)

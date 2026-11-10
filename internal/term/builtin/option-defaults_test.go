@@ -25,10 +25,7 @@ func TestOptionHelperDefaults(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		assert.NoError(t, reg.ApplyTOML(e, map[string]any{
 			"editor": map[string]any{
-				"search": map[string]any{
-					"smart-case":  false,
-					"wrap-around": false,
-				},
+				"search": map[string]any{"smart-case": false, "wrap-around": false},
 			},
 		}))
 		assert.False(t, e.Options().SearchSmartCase)
@@ -49,10 +46,7 @@ func TestOptionHelperDefaults(t *testing.T) {
 	t.Run("non-nil ints applied", func(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		assert.NoError(t, reg.ApplyTOML(e, map[string]any{
-			"editor": map[string]any{
-				"scrolloff":    5,
-				"scroll-lines": 8,
-			},
+			"editor": map[string]any{"scrolloff": 5, "scroll-lines": 8},
 		}))
 		assert.Equal(t, 5, e.Options().ScrollOff)
 		assert.Equal(t, 8, e.Options().ScrollLines)
@@ -85,9 +79,7 @@ func TestOptionHelperDefaults(t *testing.T) {
 	t.Run("shell config applied", func(t *testing.T) {
 		e, _, reg := test.EnvWithRegistry(t, "")
 		assert.NoError(t, reg.ApplyTOML(e, map[string]any{
-			"editor": map[string]any{
-				"shell": []any{"bash", "-c"},
-			},
+			"editor": map[string]any{"shell": []any{"bash", "-c"}},
 		}))
 		assert.Equal(t, []string{"bash", "-c"}, e.Options().Shell)
 	})

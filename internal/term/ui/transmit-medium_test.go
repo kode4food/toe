@@ -25,7 +25,10 @@ func TestTransmit(t *testing.T) {
 	t.Run("local png reads off disk", func(t *testing.T) {
 		t.Setenv("SSH_CONNECTION", "")
 		t.Setenv("SSH_TTY", "")
-		green := color.RGBA{G: 255, A: 255}
+		green := color.RGBA{
+			G: 255,
+			A: 255,
+		}
 		raw := transmitRaw(t, writeRenderImage(t, t.TempDir(), 40, 20, green))
 		assert.Contains(t, raw, "t=f")
 		assert.NotContains(t, raw, "t=t")
@@ -34,7 +37,10 @@ func TestTransmit(t *testing.T) {
 	t.Run("oversized png still reads off disk", func(t *testing.T) {
 		t.Setenv("SSH_CONNECTION", "")
 		t.Setenv("SSH_TTY", "")
-		blue := color.RGBA{B: 255, A: 255}
+		blue := color.RGBA{
+			B: 255,
+			A: 255,
+		}
 		path := writeRenderImage(t, t.TempDir(), 4000, 3000, blue)
 		raw := transmitRaw(t, path)
 		assert.Contains(t, raw, "t=f")
@@ -51,7 +57,10 @@ func TestTransmit(t *testing.T) {
 
 	t.Run("ssh streams inline", func(t *testing.T) {
 		t.Setenv("SSH_CONNECTION", "1.2.3.4 5 6.7.8.9 22")
-		red := color.RGBA{R: 255, A: 255}
+		red := color.RGBA{
+			R: 255,
+			A: 255,
+		}
 		raw := transmitRaw(t, writeRenderImage(t, t.TempDir(), 40, 20, red))
 		assert.NotContains(t, raw, "t=f")
 		assert.NotContains(t, raw, "t=t")
@@ -63,7 +72,10 @@ func transmitRaw(t testing.TB, path string) string {
 	e := view.NewEditor(filepath.Dir(path))
 	openRenderImagePane(t, e, path)
 	m := ui.New(e, command.NewKeymaps())
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	_, raw := collectModelRawMsgs(m2.(ui.Model), cmd)
 	return strings.Join(raw, "")
 }

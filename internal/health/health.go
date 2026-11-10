@@ -138,5 +138,8 @@ type failedArgs struct {
 }
 
 func failed(args failedArgs) Check {
-	return Check{Name: args.name, Errors: []string{args.message}}
+	return Check{
+		Name:   args.name,
+		Errors: []string{args.message},
+	}
 }

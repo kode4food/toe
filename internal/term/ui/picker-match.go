@@ -13,7 +13,10 @@ func (p *Picker) setQuery(q string) tea.Cmd {
 	if q == p.list.query {
 		return nil
 	}
-	narrowed := canNarrowQuery(canNarrowQueryArgs{prev: p.list.query, next: q})
+	narrowed := canNarrowQuery(canNarrowQueryArgs{
+		prev: p.list.query,
+		next: q,
+	})
 	p.list.query = q
 	p.clearPreviewCache()
 	if _, ok := p.source.(DynamicPickerSource); ok {
@@ -139,7 +142,11 @@ func (p *Picker) scoreItem(match PickerMatcher, item *PickerItem, index int) (pi
 	if cached == nil {
 		return pickerMatch{}, false
 	}
-	return pickerMatch{item: item, itemIndex: index, result: *cached}, true
+	return pickerMatch{
+		item:      item,
+		itemIndex: index,
+		result:    *cached,
+	}, true
 }
 
 func (p *Picker) prepareMatcher(src StaticPickerSource) PickerMatcher {
@@ -234,7 +241,10 @@ func (p *Picker) moveBy(n int) {
 	}
 	cur := p.list.cursor
 	for ; n > 0; n-- {
-		next := p.nextSelectable(nextSelectableArgs{from: cur, step: step})
+		next := p.nextSelectable(nextSelectableArgs{
+			from: cur,
+			step: step,
+		})
 		if next == cur {
 			break
 		}
@@ -249,7 +259,10 @@ func (p *Picker) ensureSelectable() {
 	if p.selection() != nil || len(p.list.matched) == 0 {
 		return
 	}
-	next := p.nextSelectable(nextSelectableArgs{from: p.list.cursor, step: 1})
+	next := p.nextSelectable(nextSelectableArgs{
+		from: p.list.cursor,
+		step: 1,
+	})
 	if next != p.list.cursor {
 		p.list.cursor = next
 		return
@@ -324,7 +337,10 @@ func canNarrowQuery(args canNarrowQueryArgs) bool {
 
 func unscoredItems(items []*PickerItem, startIndex int, out []pickerMatch) []pickerMatch {
 	for i, item := range items {
-		out = append(out, pickerMatch{item: item, itemIndex: startIndex + i})
+		out = append(out, pickerMatch{
+			item:      item,
+			itemIndex: startIndex + i,
+		})
 	}
 	return out
 }

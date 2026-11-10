@@ -143,7 +143,10 @@ func hardWrapTake(s string, width int) stringSplit {
 	for i, ch := range s {
 		next := w + graphemeWidth(string(ch))
 		if next > width {
-			return stringSplit{before: s[:i], after: s[i:]}
+			return stringSplit{
+				before: s[:i],
+				after:  s[i:],
+			}
 		}
 		w = next
 	}

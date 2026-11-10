@@ -20,7 +20,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "go",
 			Cursor: cursor,
-			Range:  syntax.Range{From: cursor, To: cursor},
+			Range: syntax.Range{
+				From: cursor,
+				To:   cursor,
+			},
 		})
 		assert.True(t, ok)
 		assert.Equal(t, idFrom, res.From)
@@ -32,7 +35,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "go",
 			Cursor: cursor,
-			Range:  syntax.Range{From: idFrom, To: idTo},
+			Range: syntax.Range{
+				From: idFrom,
+				To:   idTo,
+			},
 		})
 		assert.True(t, ok)
 		assert.Less(t, res.From, idFrom)
@@ -46,7 +52,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "go",
 			Cursor: cursor,
-			Range:  syntax.Range{From: callFrom, To: callTo},
+			Range: syntax.Range{
+				From: callFrom,
+				To:   callTo,
+			},
 		})
 		assert.True(t, ok)
 		assert.GreaterOrEqual(t, res.From, callFrom)
@@ -59,7 +68,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "nope",
 			Cursor: cursor,
-			Range:  syntax.Range{From: cursor, To: cursor},
+			Range: syntax.Range{
+				From: cursor,
+				To:   cursor,
+			},
 		})
 		assert.False(t, ok)
 	})
@@ -70,7 +82,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "go",
 			Cursor: cursor,
-			Range:  syntax.Range{From: idTo, To: idFrom},
+			Range: syntax.Range{
+				From: idTo,
+				To:   idFrom,
+			},
 		})
 		assert.True(t, ok)
 		assert.Less(t, res.From, idFrom)
@@ -82,7 +97,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "go",
 			Cursor: cursor,
-			Range:  syntax.Range{From: 0, To: len(src)},
+			Range: syntax.Range{
+				From: 0,
+				To:   len(src),
+			},
 		})
 		assert.False(t, ok)
 	})
@@ -93,7 +111,10 @@ func TestSelection(t *testing.T) {
 			Text:   src,
 			Lang:   "go",
 			Cursor: cursor,
-			Range:  syntax.Range{From: cursor, To: cursor},
+			Range: syntax.Range{
+				From: cursor,
+				To:   cursor,
+			},
 		})
 		assert.False(t, ok)
 	})

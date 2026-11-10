@@ -29,7 +29,8 @@ func (c *Client) SignatureHelp(
 		) (*protocol.SignatureHelp, bool, error) {
 			help, err := c.server.SignatureHelp(
 				ctx, &protocol.SignatureHelpParams{
-					TextDocumentPositionParams: tdp, Context: shCtx,
+					TextDocumentPositionParams: tdp,
+					Context:                    shCtx,
 				},
 			)
 			if err != nil {
@@ -90,7 +91,10 @@ func (s *Session) signatureHelp(
 func (s *Session) signatureTrigger(doc *view.Document, viewID view.Id) (string, bool) {
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+	before, err := doc.Text().SliceString(core.Span{
+		From: 0,
+		To:   pos,
+	})
 	if err != nil {
 		return "", false
 	}

@@ -17,14 +17,24 @@ func TestHistory(t *testing.T) {
 		}
 
 		commit(commitArgs{
-			t: t, h: &h, st: &st,
-			c: core.TextChange(core.Span{From: 5, To: 5}, " world!"),
+			t:  t,
+			h:  &h,
+			st: &st,
+			c: core.TextChange(core.Span{
+				From: 5,
+				To:   5,
+			}, " world!"),
 		})
 		assert.Equal(t, "hello world!", st.Doc.String())
 
 		commit(commitArgs{
-			t: t, h: &h, st: &st,
-			c: core.TextChange(core.Span{From: 6, To: 11}, "世界"),
+			t:  t,
+			h:  &h,
+			st: &st,
+			c: core.TextChange(core.Span{
+				From: 6,
+				To:   11,
+			}, "世界"),
 		})
 		assert.Equal(t, "hello 世界!", st.Doc.String())
 
@@ -60,8 +70,13 @@ func TestHistory(t *testing.T) {
 		}
 		assert.Equal(t, 0, h.CurrentRevision())
 		commit(commitArgs{
-			t: t, h: &h, st: &st,
-			c: core.TextChange(core.Span{From: 1, To: 1}, "b"),
+			t:  t,
+			h:  &h,
+			st: &st,
+			c: core.TextChange(core.Span{
+				From: 1,
+				To:   1,
+			}, "b"),
 		})
 		assert.Equal(t, 1, h.CurrentRevision())
 	})
@@ -88,8 +103,13 @@ func TestHistory(t *testing.T) {
 			Selection: core.PointSelection(0),
 		}
 		commit(commitArgs{
-			t: t, h: &h, st: &st,
-			c: core.TextChange(core.Span{From: 3, To: 3}, "X"),
+			t:  t,
+			h:  &h,
+			st: &st,
+			c: core.TextChange(core.Span{
+				From: 3,
+				To:   3,
+			}, "X"),
 		})
 		assert.Equal(t, 3, h.LastEditPos())
 	})
@@ -121,14 +141,20 @@ func TestHistory(t *testing.T) {
 			Selection: core.PointSelection(0),
 		}
 		commit(commitArgs{
-			t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+			t:  t,
+			h:  &h,
+			st: &st,
+			c: core.TextChange(core.Span{
 				From: 1,
 				To:   1,
 			}, "b"),
 		})
 		applyUndo(t, &h, &st)
 		commit(commitArgs{
-			t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+			t:  t,
+			h:  &h,
+			st: &st,
+			c: core.TextChange(core.Span{
 				From: 1,
 				To:   1,
 			}, "c"),
@@ -150,26 +176,38 @@ func historyFixture(t *testing.T) (*core.History, core.State) {
 		Selection: core.PointSelection(0),
 	}
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+		t:  t,
+		h:  &h,
+		st: &st,
+		c: core.TextChange(core.Span{
 			From: 1,
 			To:   1,
 		}, " b"),
 	})
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+		t:  t,
+		h:  &h,
+		st: &st,
+		c: core.TextChange(core.Span{
 			From: 3,
 			To:   3,
 		}, " c"),
 	})
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+		t:  t,
+		h:  &h,
+		st: &st,
+		c: core.TextChange(core.Span{
 			From: 5,
 			To:   5,
 		}, " d"),
 	})
 	applyUndo(t, &h, &st)
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+		t:  t,
+		h:  &h,
+		st: &st,
+		c: core.TextChange(core.Span{
 			From: 5,
 			To:   5,
 		}, " e"),
@@ -177,10 +215,19 @@ func historyFixture(t *testing.T) (*core.History, core.State) {
 	applyUndo(t, &h, &st)
 	applyUndo(t, &h, &st)
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.DeleteChange(core.Span{From: 1, To: 3}),
+		t:  t,
+		h:  &h,
+		st: &st,
+		c: core.DeleteChange(core.Span{
+			From: 1,
+			To:   3,
+		}),
 	})
 	commit(commitArgs{
-		t: t, h: &h, st: &st, c: core.TextChange(core.Span{
+		t:  t,
+		h:  &h,
+		st: &st,
+		c: core.TextChange(core.Span{
 			From: 1,
 			To:   1,
 		}, " f"),

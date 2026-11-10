@@ -77,7 +77,10 @@ func BenchmarkScrollbar(b *testing.B) {
 		at, err := doc.Text().LineToChar(line)
 		assert.NoError(b, err)
 		diags = append(diags, view.Diagnostic{
-			Range:    core.Span{From: at, To: at},
+			Range: core.Span{
+				From: at,
+				To:   at,
+			},
 			Severity: view.DiagnosticSeverityWarning,
 		})
 	}
@@ -109,14 +112,8 @@ func TestScrollbar(t *testing.T) {
 			severity view.DiagnosticSeverity
 			hunks    []view.DiffHunk
 		}{
-			{
-				name:     "diagnostic arrives",
-				severity: view.DiagnosticSeverityError,
-			},
-			{
-				name:     "severity changes",
-				severity: view.DiagnosticSeverityWarning,
-			},
+			{name: "diagnostic arrives", severity: view.DiagnosticSeverityError},
+			{name: "severity changes", severity: view.DiagnosticSeverityWarning},
 			{
 				name:  "diff replaces diagnostic",
 				hunks: []view.DiffHunk{{From: 80, To: 100}},
@@ -136,7 +133,10 @@ func TestScrollbar(t *testing.T) {
 				doc.ClearDiagnostics()
 				if tc.severity != 0 {
 					doc.ReplaceDiagnostics("", []view.Diagnostic{{
-						Range:    core.Span{From: at, To: at},
+						Range: core.Span{
+							From: at,
+							To:   at,
+						},
 						Severity: tc.severity,
 					}})
 				}
@@ -259,7 +259,10 @@ func TestScrollbar(t *testing.T) {
 		at, err := doc.Text().LineToChar(180)
 		assert.NoError(t, err)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: at, To: at + 1},
+			Range: core.Span{
+				From: at,
+				To:   at + 1,
+			},
 			Severity: view.DiagnosticSeverityError,
 		}})
 		m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)
@@ -283,7 +286,10 @@ func TestScrollbar(t *testing.T) {
 			at, err := doc.Text().LineToChar(line)
 			assert.NoError(t, err)
 			diags = append(diags, view.Diagnostic{
-				Range:    core.Span{From: at, To: at + 1},
+				Range: core.Span{
+					From: at,
+					To:   at + 1,
+				},
 				Severity: view.DiagnosticSeverityError,
 			})
 		}
@@ -460,7 +466,10 @@ func TestScrollbar(t *testing.T) {
 			clean := scrollbarCells(t, viewContent(m), scrollbarRows)
 			top := topVisibleLine(t, viewContent(m))
 			putCursorOnLine(t, e, top)
-			markEveryLine(t, e, core.Span{From: top, To: top + scrollbarRows})
+			markEveryLine(t, e, core.Span{
+				From: top,
+				To:   top + scrollbarRows,
+			})
 			m = mouse(m, click)
 
 			cells := scrollbarCells(t, viewContent(m), scrollbarRows)
@@ -576,7 +585,10 @@ func markEveryLine(t *testing.T, e *view.Editor, lines core.Span) {
 		assert.NoError(t, err)
 		diags = append(diags, view.Diagnostic{
 			Provider: "test",
-			Range:    core.Span{From: at, To: at + 1},
+			Range: core.Span{
+				From: at,
+				To:   at + 1,
+			},
 			Severity: view.DiagnosticSeverityError,
 		})
 	}
@@ -629,7 +641,10 @@ func rowCells(row string) []scrollbarCell {
 			continue
 		}
 		r, n := utf8.DecodeRuneInString(row)
-		out = append(out, scrollbarCell{glyph: r, style: cur})
+		out = append(out, scrollbarCell{
+			glyph: r,
+			style: cur,
+		})
 		row = row[n:]
 	}
 	return out
@@ -643,7 +658,10 @@ func scrollbarMarkGlyph(t *testing.T, line int) string {
 	at, err := doc.Text().LineToChar(line)
 	assert.NoError(t, err)
 	doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-		Range:    core.Span{From: at, To: at + 1},
+		Range: core.Span{
+			From: at,
+			To:   at + 1,
+		},
 		Severity: view.DiagnosticSeverityError,
 	}})
 	m := resize(ui.New(e, command.NewKeymaps()), scrollbarWidth, scrollbarHeight)

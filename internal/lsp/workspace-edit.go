@@ -105,7 +105,10 @@ func (s *Session) workspaceDocumentEdit(
 	if err != nil {
 		return workspaceDocumentEdit{}, err
 	}
-	return workspaceDocumentEdit{doc: doc, changes: changes}, nil
+	return workspaceDocumentEdit{
+		doc:     doc,
+		changes: changes,
+	}, nil
 }
 
 func (s *Session) textDocumentEdit(
@@ -136,7 +139,10 @@ func (s *Session) textDocumentEdit(
 	if err != nil {
 		return workspaceDocumentEdit{}, err
 	}
-	return workspaceDocumentEdit{doc: doc, changes: changes}, nil
+	return workspaceDocumentEdit{
+		doc:     doc,
+		changes: changes,
+	}, nil
 }
 
 func (s *Session) applyWorkspaceDocumentEdit(edit workspaceDocumentEdit) error {

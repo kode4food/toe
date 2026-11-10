@@ -44,7 +44,10 @@ func ShellPipe(e *view.Editor, cmdStr string) error {
 		if err != nil {
 			continue
 		}
-		out, err := runShell(e, shellRun{command: cmdStr, input: frag})
+		out, err := runShell(e, shellRun{
+			command: cmdStr,
+			input:   frag,
+		})
 		if err != nil {
 			return err
 		}

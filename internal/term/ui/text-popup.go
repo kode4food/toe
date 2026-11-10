@@ -117,8 +117,11 @@ func (r *popupTextRenderer) render(lines []popupLine) {
 func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 	if line.rule {
 		drawPopupRule(drawPopupRuleArgs{
-			buf:   r.buf,
-			at:    geom.Point{X: r.area.X - 1 - r.padX, Y: y},
+			buf: r.buf,
+			at: geom.Point{
+				X: r.area.X - 1 - r.padX,
+				Y: y,
+			},
 			width: r.area.Width + 2*r.padX + 2,
 			style: r.base,
 		})
@@ -133,14 +136,23 @@ func (r *popupTextRenderer) renderLine(line popupLine, y int) {
 		st = st.Mod(tui.ModifierBold)
 	}
 	text := runewidth.Truncate(line.text, r.area.Width, "")
-	r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, st)
+	r.buf.SetString(geom.Point{
+		X: r.area.X,
+		Y: y,
+	}, text, st)
 }
 
 func (r *popupTextRenderer) renderCode(line popupLine, y int) {
 	text := runewidth.Truncate(line.text, r.area.Width, "")
-	spans := highlight.Tokenize(core.Source{Text: text, Lang: line.lang})
+	spans := highlight.Tokenize(core.Source{
+		Text: text,
+		Lang: line.lang,
+	})
 	if len(spans) == 0 {
-		r.buf.SetString(geom.Point{X: r.area.X, Y: y}, text, r.base)
+		r.buf.SetString(geom.Point{
+			X: r.area.X,
+			Y: y,
+		}, text, r.base)
 		return
 	}
 	rs := []rune(text)
@@ -150,7 +162,10 @@ func (r *popupTextRenderer) renderCode(line popupLine, y int) {
 		start := min(s.Start, len(rs))
 		if start > pos {
 			x = r.writeRun(
-				geom.Point{X: x, Y: y}, string(rs[pos:start]), r.base,
+				geom.Point{
+					X: x,
+					Y: y,
+				}, string(rs[pos:start]), r.base,
 			)
 		}
 		end := min(s.End, len(rs))
@@ -158,11 +173,17 @@ func (r *popupTextRenderer) renderCode(line popupLine, y int) {
 			continue
 		}
 		st := r.highlightStyle(s.Scope)
-		x = r.writeRun(geom.Point{X: x, Y: y}, string(rs[start:end]), st)
+		x = r.writeRun(geom.Point{
+			X: x,
+			Y: y,
+		}, string(rs[start:end]), st)
 		pos = end
 	}
 	if pos < len(rs) {
-		r.writeRun(geom.Point{X: x, Y: y}, string(rs[pos:]), r.base)
+		r.writeRun(geom.Point{
+			X: x,
+			Y: y,
+		}, string(rs[pos:]), r.base)
 	}
 }
 
@@ -206,7 +227,10 @@ func measureTextPopup(maxSize geom.Size, text string) ([]popupLine, geom.Size) {
 	h := len(lines) + 2
 	w = min(max(w, 2), maxSize.Width)
 	h = min(max(h, 2), maxSize.Height)
-	return lines, geom.Size{Width: w, Height: h}
+	return lines, geom.Size{
+		Width:  w,
+		Height: h,
+	}
 }
 
 func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
@@ -218,7 +242,11 @@ func paintTextPopup(cx *Context, buf *tui.Buffer, lines []popupLine) {
 	}
 	area := pop.drawInto(buf, geom.Area{Size: buf.Size})
 	r := popupTextRenderer{
-		buf: buf, context: cx, area: area, base: st, padX: overlayPadX,
+		buf:     buf,
+		context: cx,
+		area:    area,
+		base:    st,
+		padX:    overlayPadX,
 	}
 	r.render(lines)
 }

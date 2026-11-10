@@ -46,7 +46,10 @@ func FindEditorConfig(file string) *EditorConfig {
 	for dir := filepath.Dir(file); ; dir = filepath.Dir(dir) {
 		cfg, ok := loadEditorConfigFile(filepath.Join(dir, ".editorconfig"))
 		if ok {
-			configs = append(configs, editorConfigFile{dir: dir, cfg: cfg})
+			configs = append(configs, editorConfigFile{
+				dir: dir,
+				cfg: cfg,
+			})
 			if cfg.root {
 				break
 			}
@@ -124,7 +127,10 @@ func editorConfigSectionMatches(c glob.Candidate) bool {
 	if !isEditorConfigGlobRelative(pattern) {
 		pattern = "**/" + pattern
 	}
-	return glob.Match(glob.Candidate{Pattern: pattern, Path: c.Path})
+	return glob.Match(glob.Candidate{
+		Pattern: pattern,
+		Path:    c.Path,
+	})
 }
 
 func isEditorConfigGlobRelative(pattern string) bool {

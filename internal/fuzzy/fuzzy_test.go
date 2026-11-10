@@ -10,14 +10,18 @@ import (
 
 func TestMatch(t *testing.T) {
 	t.Run("prefix matches", func(t *testing.T) {
-		res, ok := fuzzy.Match(fuzzy.MatchArgs{Pattern: "ba", Text: "baz"})
+		res, ok := fuzzy.Match(fuzzy.MatchArgs{
+			Pattern: "ba",
+			Text:    "baz",
+		})
 		assert.True(t, ok)
 		assert.Equal(t, []int{0, 1}, res.Indices)
 	})
 
 	t.Run("subsequence matches out of order in text", func(t *testing.T) {
 		res, ok := fuzzy.Match(fuzzy.MatchArgs{
-			Pattern: "dim", Text: "inactive-dim",
+			Pattern: "dim",
+			Text:    "inactive-dim",
 		})
 		assert.True(t, ok)
 		assert.Equal(t, []int{9, 10, 11}, res.Indices)
@@ -25,14 +29,16 @@ func TestMatch(t *testing.T) {
 
 	t.Run("case insensitive", func(t *testing.T) {
 		_, ok := fuzzy.Match(fuzzy.MatchArgs{
-			Pattern: "DIM", Text: "inactive-dim",
+			Pattern: "DIM",
+			Text:    "inactive-dim",
 		})
 		assert.True(t, ok)
 	})
 
 	t.Run("no subsequence does not match", func(t *testing.T) {
 		_, ok := fuzzy.Match(fuzzy.MatchArgs{
-			Pattern: "xyz", Text: "inactive-dim",
+			Pattern: "xyz",
+			Text:    "inactive-dim",
 		})
 		assert.False(t, ok)
 	})
@@ -44,9 +50,13 @@ func TestMatch(t *testing.T) {
 	})
 
 	t.Run("exact match scores highest", func(t *testing.T) {
-		exact, _ := fuzzy.Match(fuzzy.MatchArgs{Pattern: "dim", Text: "dim"})
+		exact, _ := fuzzy.Match(fuzzy.MatchArgs{
+			Pattern: "dim",
+			Text:    "dim",
+		})
 		loose, _ := fuzzy.Match(fuzzy.MatchArgs{
-			Pattern: "dim", Text: "inactive-dim",
+			Pattern: "dim",
+			Text:    "inactive-dim",
 		})
 		assert.Greater(t, exact.Score, loose.Score)
 	})

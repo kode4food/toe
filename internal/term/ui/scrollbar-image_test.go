@@ -105,7 +105,10 @@ func TestScrollbarImage(t *testing.T) {
 		at, err := doc.Text().LineToChar(95)
 		assert.NoError(t, err)
 		doc.ReplaceDiagnostics("test", []view.Diagnostic{{
-			Range:    core.Span{From: at, To: at + 1},
+			Range: core.Span{
+				From: at,
+				To:   at + 1,
+			},
 			Severity: view.DiagnosticSeverityError,
 		}})
 
@@ -115,7 +118,12 @@ func TestScrollbarImage(t *testing.T) {
 		_, err = fmt.Sscanf(scrollbarErrorFg, "38;2;%d;%d;%d", &r, &g, &b)
 		assert.NoError(t, err)
 		rows := scrollbarMarkedRows(
-			img, color.RGBA{R: r, G: g, B: b, A: opaque},
+			img, color.RGBA{
+				R: r,
+				G: g,
+				B: b,
+				A: opaque,
+			},
 		)
 		assert.NotEmpty(t, rows)
 		height := img.Bounds().Dy()
@@ -164,7 +172,8 @@ func TestScrollbarImage(t *testing.T) {
 		height := scrollbarHeight * 2
 
 		m2, _ := m.Update(tea.WindowSizeMsg{
-			Width: scrollbarWidth, Height: height,
+			Width:  scrollbarWidth,
+			Height: height,
 		})
 		m = m2.(ui.Model)
 		_ = viewContent(m)
@@ -215,7 +224,10 @@ func TestScrollbarImage(t *testing.T) {
 	t.Run("skips hidden pane", func(t *testing.T) {
 		t.Setenv("KITTY_WINDOW_ID", "1")
 		e := scrollbarImageEditor(t)
-		e.ResizeTree(geom.Size{Width: scrollbarWidth, Height: scrollbarHeight})
+		e.ResizeTree(geom.Size{
+			Width:  scrollbarWidth,
+			Height: scrollbarHeight,
+		})
 		shown := e.FocusedView()
 		hidden := e.VSplit(shown.DocID())
 		assert.NotNil(t, hidden)
@@ -233,7 +245,10 @@ func TestScrollbarImage(t *testing.T) {
 }
 
 func scrollbarTestCell() uv.CellSizeEvent {
-	return uv.CellSizeEvent{Width: 9, Height: 19}
+	return uv.CellSizeEvent{
+		Width:  9,
+		Height: 19,
+	}
 }
 
 func scrollbarImageEditor(t *testing.T) *view.Editor {

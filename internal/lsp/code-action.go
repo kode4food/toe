@@ -106,7 +106,10 @@ func (s *Session) CodeActions(doc *view.Document, viewID view.Id) ([]view.CodeAc
 				continue
 			}
 			out = append(out, item)
-			raw[id] = codeActionCandidate{client: client, item: action}
+			raw[id] = codeActionCandidate{
+				client: client,
+				item:   action,
+			}
 		}
 	}
 	s.storeCodeActions(raw)
@@ -165,7 +168,10 @@ func (s *Session) codeActionDiagnostics(
 ) []protocol.Diagnostic {
 	var out []protocol.Diagnostic
 	for _, diag := range doc.Diagnostics() {
-		dr := core.Range{Anchor: diag.Range.From, Head: diag.Range.To}
+		dr := core.Range{
+			Anchor: diag.Range.From,
+			Head:   diag.Range.To,
+		}
 		if !r.Overlaps(dr) {
 			continue
 		}

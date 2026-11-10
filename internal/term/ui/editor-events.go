@@ -16,7 +16,10 @@ func (ec *EditorComponent) handleWindowSize(msg tea.WindowSizeMsg) (EventResult,
 	// hold before resizing, so a drag of the window edge reaches the live panes once, with the size
 	// it settles on
 	cmd := ec.settlePaneResizeCmd()
-	ec.size = geom.Size{Width: msg.Width, Height: msg.Height}
+	ec.size = geom.Size{
+		Width:  msg.Width,
+		Height: msg.Height,
+	}
 	ec.resize()
 	return consumed(), cmd
 }
@@ -208,7 +211,10 @@ func (ec *EditorComponent) macroBlinkCmd() tea.Cmd {
 
 func (ec *EditorComponent) handleMouseClick(msg tea.MouseClickMsg) (EventResult, tea.Cmd) {
 	ec.language.completionGen++
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if len(ec.keys.input) > 0 {
 		if ec.cache.infoBounds.Contains(at) {
 			return consumed(), nil
@@ -223,7 +229,11 @@ func (ec *EditorComponent) handleMouseClick(msg tea.MouseClickMsg) (EventResult,
 	ec.mouse.downDrag = nil
 	cx := ec.context
 	if cx.Editor.Options().Mouse {
-		r := &renderPass{editor: ec, context: cx, size: ec.size}
+		r := &renderPass{
+			editor:  ec,
+			context: cx,
+			size:    ec.size,
+		}
 		r.handleMouseClick(msg)
 	}
 	return consumed(), ec.documentHighlightCmd()
@@ -232,7 +242,10 @@ func (ec *EditorComponent) handleMouseClick(msg tea.MouseClickMsg) (EventResult,
 func (ec *EditorComponent) handleMouseMotion(msg tea.MouseMotionMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	ec.language.completionGen++
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if dc := ec.mouse.downDrag; dc != nil &&
 		cx.Editor.Options().Mouse && msg.Button == tea.MouseLeft {
 		return consumed(), dc.ContinueDrag(cx, at)
@@ -242,7 +255,11 @@ func (ec *EditorComponent) handleMouseMotion(msg tea.MouseMotionMsg) (EventResul
 		if dispatchToPaneInput(cx, at, msg) {
 			return consumed(), nil
 		}
-		r := &renderPass{editor: ec, context: cx, size: ec.size}
+		r := &renderPass{
+			editor:  ec,
+			context: cx,
+			size:    ec.size,
+		}
 		dragCmd = r.handleMouseDrag(at)
 	}
 	return consumed(), tea.Batch(dragCmd, ec.documentHighlightCmd())
@@ -258,7 +275,10 @@ func (ec *EditorComponent) handleMouseAxisScroll(msg mouseAxisScrollMsg) (EventR
 func (ec *EditorComponent) handleMouseRelease(msg tea.MouseReleaseMsg) (EventResult, tea.Cmd) {
 	cx := ec.context
 	ec.language.completionGen++
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if dc := ec.mouse.downDrag; dc != nil {
 		ec.mouse.downDrag = nil
 		cmd := dc.EndDrag(cx, at)
@@ -286,11 +306,18 @@ func (ec *EditorComponent) handleMouseWheel(msg tea.MouseWheelMsg) (EventResult,
 	if !cx.Editor.Options().Mouse {
 		return consumed(), nil
 	}
-	at := geom.Point{X: msg.X, Y: msg.Y}
+	at := geom.Point{
+		X: msg.X,
+		Y: msg.Y,
+	}
 	if dispatchToPaneInput(cx, at, msg) {
 		return consumed(), nil
 	}
-	r := &renderPass{editor: ec, context: cx, size: ec.size}
+	r := &renderPass{
+		editor:  ec,
+		context: cx,
+		size:    ec.size,
+	}
 	v := r.contentViewAt(at)
 	if v == nil {
 		return consumed(), nil

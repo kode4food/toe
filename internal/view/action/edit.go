@@ -19,7 +19,10 @@ func DeleteSelection(e *view.Editor) {
 // ChangeSelection yanks all selections into the active register, deletes them, and enters insert
 // mode. For linewise selections, opens a blank line above
 func ChangeSelection(e *view.Editor) {
-	deleteOrChange(e, deleteOrChangeArgs{yank: true, enterInsert: true})
+	deleteOrChange(e, deleteOrChangeArgs{
+		yank:        true,
+		enterInsert: true,
+	})
 }
 
 // SplitSelectionOnNewline splits each selection range on line boundaries, producing one sub-range
@@ -126,7 +129,10 @@ func deleteOrChange(e *view.Editor, args deleteOrChangeArgs) {
 	}
 	switch {
 	case linewise:
-		openImpl(openArgs{editor: e, count: 1})
+		openImpl(openArgs{
+			editor: e,
+			count:  1,
+		})
 	case args.enterInsert:
 		e.SetMode(view.ModeInsert)
 	default:

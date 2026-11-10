@@ -39,12 +39,18 @@ func TestImagePane(t *testing.T) {
 		assert.NoError(t, pane.Reload())
 
 		assert.NotEqual(t, before, pane.Image().ContentID())
-		assert.Equal(t, geom.Size{Width: 30, Height: 12}, pane.Image().Size())
+		assert.Equal(t, geom.Size{
+			Width:  30,
+			Height: 12,
+		}, pane.Image().Size())
 	})
 
 	t.Run("drops and reloads bitmap across displace", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		dir := t.TempDir()
 		pane, err := ui.NewImagePane(e, writeRenderImage(t, dir, 20, 10, nil))
 		assert.NoError(t, err)
@@ -58,7 +64,10 @@ func TestImagePane(t *testing.T) {
 
 		assert.True(t, e.RevertPane(id))
 		assert.NotNil(t, pane.Image())
-		assert.Equal(t, geom.Size{Width: 20, Height: 10}, pane.Image().Size())
+		assert.Equal(t, geom.Size{
+			Width:  20,
+			Height: 10,
+		}, pane.Image().Size())
 	})
 
 	t.Run("mouse zooms in and out", func(t *testing.T) {
@@ -68,11 +77,19 @@ func TestImagePane(t *testing.T) {
 		e.ReplacePane(e.Tree().Focus(), pane)
 		m := renderedModel(e)
 
-		m2, _ := m.Update(tea.MouseClickMsg{X: 2, Y: 2, Button: tea.MouseRight})
+		m2, _ := m.Update(tea.MouseClickMsg{
+			X:      2,
+			Y:      2,
+			Button: tea.MouseRight,
+		})
 		m = m2.(ui.Model)
 		assert.Equal(t, 75, pane.Zoom())
 
-		m2, _ = m.Update(tea.MouseClickMsg{X: 2, Y: 2, Button: tea.MouseLeft})
+		m2, _ = m.Update(tea.MouseClickMsg{
+			X:      2,
+			Y:      2,
+			Button: tea.MouseLeft,
+		})
 		_ = m2.(ui.Model)
 		assert.Equal(t, 100, pane.Zoom())
 	})
@@ -107,7 +124,10 @@ func TestImagePane(t *testing.T) {
 
 	t.Run("supports pane commands", func(t *testing.T) {
 		e := view.NewEditor(t.TempDir())
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		path := writeRenderImage(t, t.TempDir(), 20, 10, nil)
 		pane, err := ui.NewImagePane(e, path)
 		assert.NoError(t, err)

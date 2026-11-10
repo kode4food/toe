@@ -86,7 +86,11 @@ func statusElemFileBaseName(s *statusElemCtx) statusElem {
 }
 
 func statusElemFileAbsPath(s *statusElemCtx) statusElem {
-	return statusElem{text: s.doc.Path(), style: s.baseTUI, prose: true}
+	return statusElem{
+		text:  s.doc.Path(),
+		style: s.baseTUI,
+		prose: true,
+	}
 }
 
 func statusElemFileStatus(s *statusElemCtx) statusElem {
@@ -106,7 +110,10 @@ func statusElemModified(s *statusElemCtx) statusElem {
 
 func statusElemSelections(s *statusElemCtx) statusElem {
 	if s.selCount == 1 {
-		return statusElem{text: "1 sel", style: s.baseTUI}
+		return statusElem{
+			text:  "1 sel",
+			style: s.baseTUI,
+		}
 	}
 	return statusElem{
 		text:  fmt.Sprintf("%d/%d sels", s.primIdx+1, s.selCount),
@@ -151,7 +158,10 @@ func statusElemEncoding(s *statusElemCtx) statusElem {
 	if s.doc.HasBOM() {
 		label = view.EncodingUTF8BOM
 	}
-	return statusElem{text: label, style: s.baseTUI}
+	return statusElem{
+		text:  label,
+		style: s.baseTUI,
+	}
 }
 
 func statusElemLineEnding(s *statusElemCtx) statusElem {
@@ -159,7 +169,10 @@ func statusElemLineEnding(s *statusElemCtx) statusElem {
 	if s.doc.LineEnding() == core.LineEndingCRLF {
 		label = core.LineEndingNameCRLF
 	}
-	return statusElem{text: label, style: s.baseTUI}
+	return statusElem{
+		text:  label,
+		style: s.baseTUI,
+	}
 }
 
 func statusElemIndentStyle(s *statusElemCtx) statusElem {
@@ -170,7 +183,10 @@ func statusElemIndentStyle(s *statusElemCtx) statusElem {
 	} else {
 		label = fmt.Sprintf("spaces:%d", indent.Width())
 	}
-	return statusElem{text: label, style: s.baseTUI}
+	return statusElem{
+		text:  label,
+		style: s.baseTUI,
+	}
 }
 
 func statusElemFileType(s *statusElemCtx) statusElem {
@@ -178,7 +194,10 @@ func statusElemFileType(s *statusElemCtx) statusElem {
 	if lang == "" {
 		lang = view.DefaultLanguage
 	}
-	return statusElem{text: lang, style: s.baseTUI}
+	return statusElem{
+		text:  lang,
+		style: s.baseTUI,
+	}
 }
 
 func statusElemDiagnostics(s *statusElemCtx) statusElem {
@@ -214,7 +233,10 @@ func statusElemVersionControl(s *statusElemCtx) statusElem {
 	if head == "" {
 		return statusElem{}
 	}
-	return statusElem{text: head, style: s.baseTUI}
+	return statusElem{
+		text:  head,
+		style: s.baseTUI,
+	}
 }
 
 func statusElemSpinner(s *statusElemCtx) statusElem {
@@ -223,7 +245,10 @@ func statusElemSpinner(s *statusElemCtx) statusElem {
 		return statusElem{}
 	}
 	frame := spinFrames[s.spinFrame%len(spinFrames)]
-	return statusElem{text: frame, style: s.spinSt}
+	return statusElem{
+		text:  frame,
+		style: s.spinSt,
+	}
 }
 
 func statusElemMacroRecording(s *statusElemCtx) statusElem {

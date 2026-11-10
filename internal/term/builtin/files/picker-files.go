@@ -84,7 +84,10 @@ func (f *filePickerSource) Load() ui.PickerLoad {
 // Symlinks resolve on a full reload
 func (f *filePickerSource) ItemsForPath(path string) []*ui.PickerItem {
 	root := resolvePickerWalkRoot(f.dir)
-	if !pathWithinRoot(rootedPath{path: path, root: root}) {
+	if !pathWithinRoot(rootedPath{
+		path: path,
+		root: root,
+	}) {
 		return nil
 	}
 	info, err := os.Lstat(path)
@@ -161,7 +164,10 @@ func (w *pickerWalker) walkDir(dir string) bool {
 		}) {
 			continue
 		}
-		if !w.walkEntry(walkedFile{path: path, rel: rel}, entry) {
+		if !w.walkEntry(walkedFile{
+			path: path,
+			rel:  rel,
+		}, entry) {
 			return false
 		}
 	}
@@ -219,7 +225,10 @@ func startFilePickerFeed(root string, count int) ui.PickerLoad {
 		item, ok := <-ch
 		if !ok {
 			ui.SortPickerItems(initial)
-			return ui.PickerLoad{Items: initial, Stop: cancel}
+			return ui.PickerLoad{
+				Items: initial,
+				Stop:  cancel,
+			}
 		}
 		initial = append(initial, item)
 	}
@@ -228,12 +237,19 @@ func startFilePickerFeed(root string, count int) ui.PickerLoad {
 		case item, ok := <-ch:
 			if !ok {
 				ui.SortPickerItems(initial)
-				return ui.PickerLoad{Items: initial, Stop: cancel}
+				return ui.PickerLoad{
+					Items: initial,
+					Stop:  cancel,
+				}
 			}
 			initial = append(initial, item)
 		default:
 			ui.SortPickerItems(initial)
-			return ui.PickerLoad{Items: initial, Feed: ch, Stop: cancel}
+			return ui.PickerLoad{
+				Items: initial,
+				Feed:  ch,
+				Stop:  cancel,
+			}
 		}
 	}
 }
@@ -265,8 +281,11 @@ func walkPickerFiles(root string, done <-chan struct{}, visit pickerVisitor) {
 		rootReal = rootAbs
 	}
 	w := &pickerWalker{
-		root: root, rootReal: rootReal, seen: map[string]bool{},
-		done: done, visit: visit,
+		root:     root,
+		rootReal: rootReal,
+		seen:     map[string]bool{},
+		done:     done,
+		visit:    visit,
 	}
 	w.walkDir(root)
 }
@@ -281,11 +300,17 @@ func pickerFollowEntry(at rootedPath, entry os.DirEntry) (pickerFollow, error) {
 		if err != nil {
 			return pickerFollow{}, err
 		}
-		if pathWithinRoot(rootedPath{path: realPath, root: at.root}) {
+		if pathWithinRoot(rootedPath{
+			path: realPath,
+			root: at.root,
+		}) {
 			return pickerFollow{}, nil
 		}
 	}
-	return pickerFollow{dir: info.IsDir(), file: info.Mode().IsRegular()}, nil
+	return pickerFollow{
+		dir:  info.IsDir(),
+		file: info.Mode().IsRegular(),
+	}, nil
 }
 
 func pathWithinRoot(at rootedPath) bool {

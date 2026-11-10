@@ -36,7 +36,10 @@ func NewBuffer(size geom.Size) *Buffer {
 	for i := range cells {
 		cells[i] = defaultCell
 	}
-	return &Buffer{cells: cells, Size: size}
+	return &Buffer{
+		cells: cells,
+		Size:  size,
+	}
 }
 
 // Set writes a cell, ignoring points outside the buffer
@@ -82,7 +85,10 @@ func (b *Buffer) Blit(src *Buffer, at geom.Point) {
 			// room for its second column
 			if !c.Skip && dx == b.Width-1 && sx+1 < src.Width &&
 				src.cells[sy*src.Width+sx+1].Skip {
-				c = Cell{Symbol: " ", Style: c.Style}
+				c = Cell{
+					Symbol: " ",
+					Style:  c.Style,
+				}
 			}
 			di := dy*b.Width + dx
 			// reset bg means transparent: keep whatever's already at di

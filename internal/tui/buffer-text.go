@@ -8,7 +8,10 @@ import (
 
 // Fill sets every cell in the buffer to a space with the given style
 func (b *Buffer) Fill(style Style) {
-	c := Cell{Symbol: " ", Style: style}
+	c := Cell{
+		Symbol: " ",
+		Style:  style,
+	}
 	for i := range b.cells {
 		b.cells[i] = c
 	}
@@ -34,7 +37,10 @@ func (b *Buffer) FillRange(p geom.Point, width int, style Style) {
 		if keepBg {
 			st = style.Bg(b.cells[idx].Style.BgColor())
 		}
-		b.cells[idx] = Cell{Symbol: " ", Style: st}
+		b.cells[idx] = Cell{
+			Symbol: " ",
+			Style:  st,
+		}
 	}
 }
 
@@ -70,11 +76,17 @@ func (b *Buffer) SetRightAlignedInt(args RightAlignedIntArgs) {
 	}
 	col := x
 	for pad := width - (len(tmp) - i); pad > 0; pad-- {
-		b.setASCIICell(geom.Point{X: col, Y: y}, ' ', style)
+		b.setASCIICell(geom.Point{
+			X: col,
+			Y: y,
+		}, ' ', style)
 		col++
 	}
 	for ; i < len(tmp); i++ {
-		b.setASCIICell(geom.Point{X: col, Y: y}, tmp[i], style)
+		b.setASCIICell(geom.Point{
+			X: col,
+			Y: y,
+		}, tmp[i], style)
 		col++
 	}
 }
@@ -111,9 +123,21 @@ func (b *Buffer) SetString(p geom.Point, s string, style Style) {
 		if keepBg {
 			st = style.Bg(b.cells[y*b.Width+x].Style.BgColor())
 		}
-		b.Set(geom.Point{X: x, Y: y}, Cell{Symbol: cluster, Style: st})
+		b.Set(geom.Point{
+			X: x,
+			Y: y,
+		}, Cell{
+			Symbol: cluster,
+			Style:  st,
+		})
 		for i := 1; i < w && x+i < b.Width; i++ {
-			b.Set(geom.Point{X: x + i, Y: y}, Cell{Skip: true, Style: st})
+			b.Set(geom.Point{
+				X: x + i,
+				Y: y,
+			}, Cell{
+				Skip:  true,
+				Style: st,
+			})
 		}
 		x += w
 	}
@@ -128,7 +152,10 @@ func (b *Buffer) setASCIICell(p geom.Point, ch byte, style Style) {
 	if style.BgColor().IsReset() {
 		style = style.Bg(b.cells[idx].Style.BgColor())
 	}
-	b.cells[idx] = Cell{Symbol: ASCIIString(rune(ch)), Style: style}
+	b.cells[idx] = Cell{
+		Symbol: ASCIIString(rune(ch)),
+		Style:  style,
+	}
 }
 
 func (b *Buffer) setASCIIString(p geom.Point, s string, style Style, overBg bool) (int, string) {

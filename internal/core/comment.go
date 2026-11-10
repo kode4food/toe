@@ -21,7 +21,10 @@ func GetCommentToken(text Rope, tokens []string, lineNum int) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	sub, err := line.Slice(Span{From: start, To: line.LenChars()})
+	sub, err := line.Slice(Span{
+		From: start,
+		To:   line.LenChars(),
+	})
 	if err != nil {
 		return "", false
 	}
@@ -106,7 +109,10 @@ func SplitLinesOfSelection(text Rope, sel Selection) (Selection, error) {
 				return Selection{}, err
 			}
 			end := commentLineEndChar(text, lineNum)
-			ranges = append(ranges, Range{Anchor: start, Head: end})
+			ranges = append(ranges, Range{
+				Anchor: start,
+				Head:   end,
+			})
 		}
 	}
 	if len(ranges) == 0 {
@@ -144,7 +150,10 @@ func findLineComment(token string, text Rope, lines []int) lineCommentRes {
 			res.minColumn = pos
 		}
 		fragEnd := min(pos+tokenLen, lineLen)
-		frag, err := line.Slice(Span{From: pos, To: fragEnd})
+		frag, err := line.Slice(Span{
+			From: pos,
+			To:   fragEnd,
+		})
 		if err != nil || frag.String() != token {
 			res.commented = false
 		}

@@ -81,7 +81,10 @@ func TestTokenize(t *testing.T) {
 	sc := syntax.NewSyntaxCache()
 	for _, tc := range cases {
 		t.Run(tc.lang, func(t *testing.T) {
-			spans := sc.Tokenize(core.Source{Text: tc.src, Lang: tc.lang})
+			spans := sc.Tokenize(core.Source{
+				Text: tc.src,
+				Lang: tc.lang,
+			})
 			assert.NotEmpty(t, spans)
 			for _, sp := range spans {
 				assert.Less(t, sp.Start, sp.End, "span must have Start < End")
@@ -115,14 +118,20 @@ func TestTokenizeEmpty(t *testing.T) {
 func TestTokenizeUnknown(t *testing.T) {
 	// Unknown lang must not panic and falls back to Chroma's fallback lexer
 	sc := syntax.NewSyntaxCache()
-	spans := sc.Tokenize(core.Source{Text: "hello world", Lang: "__unknown__"})
+	spans := sc.Tokenize(core.Source{
+		Text: "hello world",
+		Lang: "__unknown__",
+	})
 	_ = spans
 }
 
 func TestTokenizeGoScopes(t *testing.T) {
 	src := "package main\n\nfunc main() {}\n"
 	sc := syntax.NewSyntaxCache()
-	spans := sc.Tokenize(core.Source{Text: src, Lang: "go"})
+	spans := sc.Tokenize(core.Source{
+		Text: src,
+		Lang: "go",
+	})
 
 	scopes := make(map[string]bool)
 	for _, sp := range spans {
@@ -137,7 +146,10 @@ func TestTokenizeCScopes(t *testing.T) {
 	src := "#include <stdio.h>\n#define SQ(x) ((x) * (x))\n\n" +
 		"static int area(int side) {\n\treturn SQ(side);\n}\n"
 	sc := syntax.NewSyntaxCache()
-	spans := sc.Tokenize(core.Source{Text: src, Lang: "c"})
+	spans := sc.Tokenize(core.Source{
+		Text: src,
+		Lang: "c",
+	})
 
 	assert.Equal(t, "keyword.control.import", scopeAt(spans, src, "#include"))
 	assert.Equal(t, "string", scopeAt(spans, src, "<stdio.h>"))
@@ -152,7 +164,10 @@ func TestTokenizeHTMLInjections(t *testing.T) {
 	src := `<style>body { color: red; }</style>` + "\n" +
 		`<script>const answer = 42;</script>`
 	sc := syntax.NewSyntaxCache()
-	spans := sc.Tokenize(core.Source{Text: src, Lang: "html"})
+	spans := sc.Tokenize(core.Source{
+		Text: src,
+		Lang: "html",
+	})
 
 	assert.Equal(t, "variable.other.member", scopeAt(spans, src, "color"))
 	assert.Equal(t, "keyword.storage.modifier", scopeAt(spans, src, "const"))
@@ -185,7 +200,10 @@ const DefaultPort = 8080
 var _ = DefaultPort
 `
 	sc := syntax.NewSyntaxCache()
-	spans := sc.Tokenize(core.Source{Text: src, Lang: "go"})
+	spans := sc.Tokenize(core.Source{
+		Text: src,
+		Lang: "go",
+	})
 	assert.NotEmpty(t, spans)
 	for i := 1; i < len(spans); i++ {
 		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start, "spans must not overlap")
@@ -210,8 +228,14 @@ func TestTokenizeCached(t *testing.T) {
 		// Second call hits rawQuery and langCache
 		src := "package main\n"
 		sc := syntax.NewSyntaxCache()
-		spans1 := sc.Tokenize(core.Source{Text: src, Lang: "go"})
-		spans2 := sc.Tokenize(core.Source{Text: src, Lang: "go"})
+		spans1 := sc.Tokenize(core.Source{
+			Text: src,
+			Lang: "go",
+		})
+		spans2 := sc.Tokenize(core.Source{
+			Text: src,
+			Lang: "go",
+		})
 		assert.Equal(t, len(spans1), len(spans2))
 	})
 
@@ -219,8 +243,14 @@ func TestTokenizeCached(t *testing.T) {
 		// Second call hits rawInject cache
 		src := "<script>const x = 1;</script>\n"
 		sc := syntax.NewSyntaxCache()
-		spans1 := sc.Tokenize(core.Source{Text: src, Lang: "html"})
-		spans2 := sc.Tokenize(core.Source{Text: src, Lang: "html"})
+		spans1 := sc.Tokenize(core.Source{
+			Text: src,
+			Lang: "html",
+		})
+		spans2 := sc.Tokenize(core.Source{
+			Text: src,
+			Lang: "html",
+		})
 		assert.Equal(t, len(spans1), len(spans2))
 	})
 }
@@ -229,7 +259,10 @@ func TestTokenizeEscapeOverlap(t *testing.T) {
 	t.Run("escape in string skips nested capture", func(t *testing.T) {
 		src := "package main\nconst s = \"hello\\nworld\"\n"
 		sc := syntax.NewSyntaxCache()
-		spans := sc.Tokenize(core.Source{Text: src, Lang: "go"})
+		spans := sc.Tokenize(core.Source{
+			Text: src,
+			Lang: "go",
+		})
 		assert.NotEmpty(t, spans)
 		for i := 1; i < len(spans); i++ {
 			assert.LessOrEqual(t, spans[i-1].End, spans[i].Start)
@@ -241,7 +274,10 @@ func TestTokenizeNonOverlapping(t *testing.T) {
 	src := "package main\n\nimport \"fmt\"\n\n" +
 		"func main() {\n\tfmt.Println(\"hello\")\n}\n"
 	sc := syntax.NewSyntaxCache()
-	spans := sc.Tokenize(core.Source{Text: src, Lang: "go"})
+	spans := sc.Tokenize(core.Source{
+		Text: src,
+		Lang: "go",
+	})
 
 	for i := 1; i < len(spans); i++ {
 		assert.LessOrEqual(t, spans[i-1].End, spans[i].Start, "spans must not overlap")
@@ -257,7 +293,10 @@ func TestTokenizeLongDocComment(t *testing.T) {
 
 	start := time.Now()
 	spans := syntax.NewSyntaxCache().Tokenize(
-		core.Source{Text: sb.String(), Lang: "go"},
+		core.Source{
+			Text: sb.String(),
+			Lang: "go",
+		},
 	)
 
 	assert.NotEmpty(t, spans)

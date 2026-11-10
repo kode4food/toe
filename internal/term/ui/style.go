@@ -87,7 +87,10 @@ func completionIconStyle(cx *Context, kind string, selected bool) tui.Style {
 	if style, ok := cx.Theme().TryGet(completionKindStyleScope(kind)); ok {
 		icon = style
 	}
-	return applyAccentStyle(styleOverlay{base: base, overlay: icon})
+	return applyAccentStyle(styleOverlay{
+		base:    base,
+		overlay: icon,
+	})
 }
 
 func completionInfoStyle(cx *Context, selected bool) tui.Style {
@@ -96,7 +99,10 @@ func completionInfoStyle(cx *Context, selected bool) tui.Style {
 	if style, ok := cx.Theme().TryGet("comment"); ok {
 		info = style
 	}
-	return applyAccentStyle(styleOverlay{base: base, overlay: info})
+	return applyAccentStyle(styleOverlay{
+		base:    base,
+		overlay: info,
+	})
 }
 
 func completionBaseStyle(cx *Context, selected bool) tui.Style {

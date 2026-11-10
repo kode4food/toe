@@ -18,10 +18,7 @@ const blockCommentedSource = "hello /* world */"
 func TestSelection(t *testing.T) {
 	t.Run("trim removes surrounding whitespace", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "  hi  ")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   6,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 6}}, 0)
 
 		action.TrimSelections(e)
 
@@ -34,10 +31,7 @@ func TestSelection(t *testing.T) {
 
 	t.Run("trim drops all-whitespace range", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "  ")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   2,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 2}}, 0)
 
 		action.TrimSelections(e)
 
@@ -52,10 +46,7 @@ func TestSelection(t *testing.T) {
 
 	t.Run("join selections collapses line breaks", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.JoinSelections(e)
 
@@ -141,10 +132,7 @@ func TestToggleLineComments(t *testing.T) {
 func TestToggleBlockComments(t *testing.T) {
 	t.Run("wraps selection with block tokens", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -173,10 +161,7 @@ func TestToggleCommentsBlockCommented(t *testing.T) {
 func TestJoinSelectionsSpace(t *testing.T) {
 	t.Run("joins lines with space separator", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "a\nb")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		action.JoinSelectionsSpace(e)
 
@@ -417,10 +402,7 @@ func TestSelectionIsLinewise(t *testing.T) {
 	t.Run("linewise selection via ChangeSelection", func(t *testing.T) {
 		// "hello\nworld\n", Range(0,12) covers both complete lines exactly
 		e := testutil.EditorWithText(t, "hello\nworld\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   12,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 12}}, 0)
 
 		action.ChangeSelection(e)
 
@@ -430,10 +412,7 @@ func TestSelectionIsLinewise(t *testing.T) {
 	t.Run("unaligned multi-line is not linewise", func(t *testing.T) {
 		// Range(1, 10) spans lines 0 and 1 but does not start at line 0 start
 		e := testutil.EditorWithText(t, "hello\nworld\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 1,
-			Head:   10,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 1, Head: 10}}, 0)
 
 		action.ChangeSelection(e)
 
@@ -461,10 +440,7 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 		t.Setenv("XDG_CONFIG_HOME", dir)
 
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -476,10 +452,7 @@ func TestToggleLineCommentsBlockOnlyLang(t *testing.T) {
 func TestToggleCommentsMultiLine(t *testing.T) {
 	t.Run("ToggleLineComments on multiple lines", func(t *testing.T) {
 		e := testutil.EditorWithText(t, "hello\nworld")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 11}}, 0)
 
 		action.ToggleLineComments(e)
 
@@ -535,10 +508,7 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.ToggleComments(e)
 
@@ -551,10 +521,7 @@ func TestToggleCommentsBlockPath(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
 		e := testutil.EditorWithText(t, "/* hello */")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 11}}, 0)
 
 		action.ToggleComments(e)
 
@@ -569,10 +536,7 @@ func TestToggleBlockCommentsWithLang(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -586,10 +550,7 @@ func TestToggleBlockCommentsWithLang(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
 		e := testutil.EditorWithText(t, "/* hello */")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   11,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 11}}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -638,10 +599,7 @@ func TestToggleBlockCommentsLineFallback(t *testing.T) {
 		writeTextLangConfig(t, "//")
 
 		e := testutil.EditorWithText(t, "hello")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   5,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 5}}, 0)
 
 		action.ToggleBlockComments(e)
 
@@ -717,10 +675,7 @@ func TestToggleCommentsLineCommentedBranch(t *testing.T) {
 		writeTextBlockCommentConfig(t)
 
 		e := testutil.EditorWithText(t, "/* line one */\n/* line two */\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   30,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 30}}, 0)
 
 		action.ToggleComments(e)
 

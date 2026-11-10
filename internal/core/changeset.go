@@ -59,7 +59,10 @@ var (
 // NewChangeSet returns an empty change set sized for doc
 func NewChangeSet(doc Rope) ChangeSet {
 	n := doc.LenChars()
-	return ChangeSet{charCount: n, charCountAfter: n}
+	return ChangeSet{
+		charCount:      n,
+		charCountAfter: n,
+	}
 }
 
 // Text returns replacement text, or empty string for a deletion
@@ -69,7 +72,10 @@ func (c Change) Text() string {
 
 // TextChange replaces the characters the span covers with text
 func TextChange(s Span, text string) Change {
-	return Change{Span: s, text: text}
+	return Change{
+		Span: s,
+		text: text,
+	}
 }
 
 // DeleteChange removes the characters the span covers
@@ -152,7 +158,10 @@ func (c ChangeSet) Changes() []Change {
 				i++
 				pos = to
 			}
-			out = append(out, TextChange(Span{From: from, To: to}, op.text))
+			out = append(out, TextChange(Span{
+				From: from,
+				To:   to,
+			}, op.text))
 		}
 	}
 	return out
@@ -209,7 +218,10 @@ func (c ChangeSet) appendCountOp(n int, kind OperationKind, updateLenAfter bool)
 		c.ops[len(c.ops)-1].charCount += n
 		return c
 	}
-	c.ops = append(c.ops, Operation{kind: kind, charCount: n})
+	c.ops = append(c.ops, Operation{
+		kind:      kind,
+		charCount: n,
+	})
 	return c
 }
 
@@ -221,7 +233,10 @@ func (c ChangeSet) insert(text string) ChangeSet {
 	if out, ok := c.mergeInsert(text); ok {
 		return out
 	}
-	c.ops = append(c.ops, Operation{kind: OperationInsert, text: text})
+	c.ops = append(c.ops, Operation{
+		kind: OperationInsert,
+		text: text,
+	})
 	return c
 }
 
@@ -241,7 +256,10 @@ func (c ChangeSet) mergeInsert(text string) (ChangeSet, bool) {
 		c.ops[len(c.ops)-2].text += text
 		return c, true
 	}
-	c.ops[len(c.ops)-1] = Operation{kind: OperationInsert, text: text}
+	c.ops[len(c.ops)-1] = Operation{
+		kind: OperationInsert,
+		text: text,
+	}
 	c.ops = append(c.ops, last)
 	return c, true
 }
@@ -276,7 +294,10 @@ func runeDropPrefix(s string, n int) string {
 func runeSplitAt(s string, n int) stringSplit {
 	for i := range s {
 		if n == 0 {
-			return stringSplit{before: s[:i], after: s[i:]}
+			return stringSplit{
+				before: s[:i],
+				after:  s[i:],
+			}
 		}
 		n--
 	}

@@ -68,7 +68,10 @@ func (v *View) SaveSession(w *SessionWriter) {
 func (w *SessionWriter) SaveSlot(kind SessionKind, path string) {
 	w.node = sessNode{Kind: kind}
 	if path != "" {
-		w.node.Path = sessionPath(sessRef{base: w.base, path: path})
+		w.node.Path = sessionPath(sessRef{
+			base: w.base,
+			path: path,
+		})
 	}
 }
 
@@ -90,7 +93,10 @@ func (e *Editor) sessionDocument(d *Document, base string) sessDocument {
 		}
 	}
 	return sessDocument{
-		Path:      sessionPath(sessRef{base: base, path: d.Path()}),
+		Path: sessionPath(sessRef{
+			base: base,
+			path: d.Path(),
+		}),
 		Lang:      d.Lang(),
 		Selection: sessionSelection(d.Selection()),
 	}
@@ -99,12 +105,18 @@ func (e *Editor) sessionDocument(d *Document, base string) sessDocument {
 func (e *Editor) sessionNodeFor(id Id, docIndex map[DocumentId]int, base string) sessNode {
 	n := e.panes.tree.nodes[id]
 	if n.pane != nil {
-		w := &SessionWriter{docIndex: docIndex, base: base}
+		w := &SessionWriter{
+			docIndex: docIndex,
+			base:     base,
+		}
 		n.pane.SaveSession(w)
 		node := w.node
 		node.FocusSeq = n.focusSeq
 		for _, displaced := range n.history {
-			hw := &SessionWriter{docIndex: docIndex, base: base}
+			hw := &SessionWriter{
+				docIndex: docIndex,
+				base:     base,
+			}
 			displaced.SaveSession(hw)
 			node.History = append(node.History, hw.node)
 		}

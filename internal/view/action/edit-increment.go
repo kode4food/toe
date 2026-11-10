@@ -52,12 +52,18 @@ func incrementImpl(e *view.Editor, sign int) {
 			bounds := wordBoundsAt(text, from)
 			from, to = bounds.From(), bounds.To()
 		}
-		key := selectionBoundsKey{from: from, to: to}
+		key := selectionBoundsKey{
+			from: from,
+			to:   to,
+		}
 		if seenKey[key] {
 			continue
 		}
 		seenKey[key] = true
-		slice, err := text.Slice(core.Span{From: from, To: to})
+		slice, err := text.Slice(core.Span{
+			From: from,
+			To:   to,
+		})
 		if err != nil {
 			amount += increaseBy
 			continue
@@ -103,7 +109,10 @@ func wordBoundsAt(text core.Rope, pos int) core.Range {
 		}
 		to++
 	}
-	return core.Range{Anchor: from, Head: to}
+	return core.Range{
+		Anchor: from,
+		Head:   to,
+	}
 }
 
 func isWordChar(ch rune) bool {

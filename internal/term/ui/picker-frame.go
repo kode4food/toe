@@ -37,20 +37,35 @@ func (f pickerBoxFrame) drawSplit(args drawSplitArgs) pickerBoxAreas {
 	pop.divider(args.buffer, area, 1+args.leftWidth)
 	if args.cutY > 0 {
 		drawPopupRule(drawPopupRuleArgs{
-			buf:   args.buffer,
-			at:    geom.Point{X: area.X, Y: area.Y + args.cutY},
+			buf: args.buffer,
+			at: geom.Point{
+				X: area.X,
+				Y: area.Y + args.cutY,
+			},
 			width: args.leftWidth + 2,
 			style: f.borderStyle,
 		})
 	}
 	return pickerBoxAreas{
 		left: geom.Area{
-			Point: area.Add(geom.Point{X: 1, Y: 1}),
-			Size:  geom.Size{Width: args.leftWidth, Height: area.Height - 2},
+			Point: area.Add(geom.Point{
+				X: 1,
+				Y: 1,
+			}),
+			Size: geom.Size{
+				Width:  args.leftWidth,
+				Height: area.Height - 2,
+			},
 		},
 		right: geom.Area{
-			Point: area.Add(geom.Point{X: 2 + args.leftWidth, Y: 1}),
-			Size:  geom.Size{Width: rw, Height: area.Height - 2},
+			Point: area.Add(geom.Point{
+				X: 2 + args.leftWidth,
+				Y: 1,
+			}),
+			Size: geom.Size{
+				Width:  rw,
+				Height: area.Height - 2,
+			},
 		},
 	}
 }
@@ -63,8 +78,11 @@ func (f pickerBoxFrame) drawSingle(buf *tui.Buffer, area geom.Area, cutY int) ge
 	drawPopupTitle(buf, area, f.title, f.borderStyle)
 	if cutY > 0 {
 		drawPopupRule(drawPopupRuleArgs{
-			buf:   buf,
-			at:    geom.Point{X: area.X, Y: area.Y + cutY},
+			buf: buf,
+			at: geom.Point{
+				X: area.X,
+				Y: area.Y + cutY,
+			},
 			width: area.Width,
 			style: f.borderStyle,
 		})
@@ -73,5 +91,8 @@ func (f pickerBoxFrame) drawSingle(buf *tui.Buffer, area geom.Area, cutY int) ge
 }
 
 func (f pickerBoxFrame) popup() popup {
-	return popup{borderStyle: f.borderStyle, contentStyle: f.contentStyle}
+	return popup{
+		borderStyle:  f.borderStyle,
+		contentStyle: f.contentStyle,
+	}
 }

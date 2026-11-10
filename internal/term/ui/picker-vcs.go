@@ -128,7 +128,10 @@ func (c *changedFilePickerSource) Load() PickerLoad {
 			close(done)
 		}
 	}
-	return PickerLoad{Feed: feed, Stop: stop}
+	return PickerLoad{
+		Feed: feed,
+		Stop: stop,
+	}
 }
 
 // Items returns the whole row set at once; unlike Load it must not warm hunks, since a file-watch
@@ -226,7 +229,10 @@ func (c *changedFileScan) item(slab *PickerItemSlab, fc view.FileChange) *Picker
 		DiffKind:    fc.Kind,
 		BasePath:    basePath,
 		Location: PickerLocation{
-			Target: PickerTarget{Path: fc.Path, Variant: group},
+			Target: PickerTarget{
+				Path:    fc.Path,
+				Variant: group,
+			},
 		},
 	}
 	if slab != nil {
@@ -308,16 +314,8 @@ func rowPaths(item *PickerItem) []string {
 
 func changedFileSections() []*PickerItem {
 	return []*PickerItem{
-		{
-			Display: i18n.Text(statusPickerStagedKey),
-			Group:   changedFileStaged,
-			Section: true,
-		},
-		{
-			Display: i18n.Text(statusPickerUnstagedKey),
-			Group:   changedFileUnstaged,
-			Section: true,
-		},
+		{Display: i18n.Text(statusPickerStagedKey), Group: changedFileStaged, Section: true},
+		{Display: i18n.Text(statusPickerUnstagedKey), Group: changedFileUnstaged, Section: true},
 	}
 }
 
@@ -340,7 +338,10 @@ func firstChangeLines(hunks []view.DiffHunk) *core.Span {
 		return nil
 	}
 	h := hunks[0]
-	return &core.Span{From: h.From, To: max(h.From, h.To-1)}
+	return &core.Span{
+		From: h.From,
+		To:   max(h.From, h.To-1),
+	}
 }
 
 func changedFileIcon(kind view.FileChangeKind, nerd bool) string {

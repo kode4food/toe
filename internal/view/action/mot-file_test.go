@@ -95,10 +95,7 @@ func TestGotoFileTarget(t *testing.T) {
 		doc.SetDocumentLinks([]view.DocumentLink{
 			{From: 4, To: 8, Target: "file://" + path},
 		})
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 3,
-			Head:   7,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 3, Head: 7}}, 0)
 		target, err := action.GotoFileTarget(e)
 		assert.NoError(t, err)
 		assert.Equal(t, path, target.Path)

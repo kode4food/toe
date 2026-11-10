@@ -84,7 +84,10 @@ func (l *lspWorkspaceCommandSource) Load() PickerLoad {
 			Payload: command,
 		}))
 	}
-	return PickerLoad{Items: items, Stop: func() {}}
+	return PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Accept executes the chosen server command
@@ -122,7 +125,10 @@ func (l *lspLocationSource) Load() PickerLoad {
 			}
 		}
 	}()
-	return PickerLoad{Feed: ch, Stop: cancel}
+	return PickerLoad{
+		Feed: ch,
+		Stop: cancel,
+	}
 }
 
 // Accept jumps to the chosen location
@@ -152,7 +158,10 @@ func (l *lspSymbolSource) Load() PickerLoad {
 			Payload: loc,
 		}))
 	}
-	return PickerLoad{Items: items, Stop: func() {}}
+	return PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Accept jumps to the chosen symbol
@@ -187,7 +196,10 @@ func (l *lspWorkspaceSymbolSource) Load() PickerLoad {
 			items = append(items, item)
 		}
 	}
-	return PickerLoad{Items: items, Stop: func() {}}
+	return PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 // Accept jumps to the chosen symbol
@@ -276,7 +288,10 @@ func locationSelector(loc view.Location) GotoSelector {
 func locationLineRange(loc view.Location) (int, *core.Span) {
 	from := loc.From.Line
 	to := max(loc.To.Line, from)
-	return from, &core.Span{From: from, To: to}
+	return from, &core.Span{
+		From: from,
+		To:   to,
+	}
 }
 
 func locationSelection(text core.Rope, loc view.Location) (core.Selection, bool) {

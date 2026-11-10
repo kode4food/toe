@@ -25,7 +25,10 @@ func (c *completionComponent) refresh(cx *Context, comp *Compositor) tea.Cmd {
 		comp.Pop()
 		return nil
 	}
-	query, err := doc.Text().SliceString(core.Span{From: c.anchor.pos, To: pos})
+	query, err := doc.Text().SliceString(core.Span{
+		From: c.anchor.pos,
+		To:   pos,
+	})
 	if err != nil {
 		comp.Pop()
 		return nil

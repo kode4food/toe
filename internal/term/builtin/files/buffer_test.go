@@ -21,7 +21,10 @@ func TestBufferNavigation(t *testing.T) {
 		dir := t.TempDir()
 		km := command.NewKeymaps()
 		e := view.NewEditor(dir)
-		e.ResizeTree(geom.Size{Width: 80, Height: 24})
+		e.ResizeTree(geom.Size{
+			Width:  80,
+			Height: 24,
+		})
 		_, _ = builtin.Register(ui.New(e, km), km)
 		v := e.FocusedView()
 		assert.NotNil(t, v)

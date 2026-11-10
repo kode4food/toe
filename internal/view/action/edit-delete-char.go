@@ -63,7 +63,10 @@ func DeleteCharBackward(e *view.Editor) {
 			Count: 1,
 		})
 		entries = append(entries, insertEntry{
-			del: core.Span{From: prev, To: pos},
+			del: core.Span{
+				From: prev,
+				To:   pos,
+			},
 		})
 	}
 
@@ -153,7 +156,10 @@ func dedentDelete(args dedentDeleteArgs) (core.Span, bool) {
 		return core.Span{}, false
 	}
 	if prevCh == '\t' {
-		return core.Span{From: pos - 1, To: pos}, true
+		return core.Span{
+			From: pos - 1,
+			To:   pos,
+		}, true
 	}
 	// Otherwise delete enough spaces to reach the previous indent stop
 	drop := width % indentWidth
@@ -168,5 +174,8 @@ func dedentDelete(args dedentDeleteArgs) (core.Span, bool) {
 		}
 		start--
 	}
-	return core.Span{From: start, To: pos}, true
+	return core.Span{
+		From: start,
+		To:   pos,
+	}, true
 }

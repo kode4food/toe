@@ -134,7 +134,10 @@ func (c *completionController) SignatureHelp(
 	if doc != nil && len(c.signatureAfterComma.Signatures) > 0 {
 		sel := doc.SelectionFor(viewID)
 		pos := sel.Primary().Cursor(doc.Text())
-		before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+		before, err := doc.Text().SliceString(core.Span{
+			From: 0,
+			To:   pos,
+		})
 		if err == nil && strings.Contains(before, ",") {
 			return c.signatureAfterComma, nil
 		}
@@ -162,7 +165,10 @@ func (c *completionController) TriggerSignatureHelp(
 	}
 	sel := doc.SelectionFor(viewID)
 	pos := sel.Primary().Cursor(doc.Text())
-	before, err := doc.Text().SliceString(core.Span{From: 0, To: pos})
+	before, err := doc.Text().SliceString(core.Span{
+		From: 0,
+		To:   pos,
+	})
 	if err != nil || !strings.HasSuffix(before, "(") {
 		return view.SignatureHelp{}, nil
 	}
@@ -367,7 +373,9 @@ func TestCompletionComponent(t *testing.T) {
 
 	t.Run("highlights activation-letter prefix", func(t *testing.T) {
 		m, _ := autoCompletionModel(t, ui.CompletionOptions{
-			Auto: true, Delay: 1, TriggerLen: 2,
+			Auto:       true,
+			Delay:      1,
+			TriggerLen: 2,
 		})
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
@@ -593,90 +601,27 @@ func TestCompletionComponent(t *testing.T) {
 			kind string
 			icon string
 		}{
-			{
-				kind: "text",
-				icon: "",
-			},
-			{
-				kind: "variable",
-				icon: "",
-			},
-			{
-				kind: "class",
-				icon: "",
-			},
-			{
-				kind: "interface",
-				icon: "",
-			},
-			{
-				kind: "module",
-				icon: "",
-			},
-			{
-				kind: "property",
-				icon: "",
-			},
-			{
-				kind: "unit",
-				icon: "",
-			},
-			{
-				kind: "value",
-				icon: "",
-			},
-			{
-				kind: "keyword",
-				icon: "",
-			},
-			{
-				kind: "snippet",
-				icon: "",
-			},
-			{
-				kind: "color",
-				icon: "",
-			},
-			{
-				kind: "file",
-				icon: "",
-			},
-			{
-				kind: "reference",
-				icon: "",
-			},
-			{
-				kind: "folder",
-				icon: "",
-			},
-			{
-				kind: "constant",
-				icon: "",
-			},
-			{
-				kind: "struct",
-				icon: "",
-			},
-			{
-				kind: "event",
-				icon: "",
-			},
-			{
-				kind: "operator",
-				icon: "",
-			},
-			{
-				kind: "type_param",
-				icon: "",
-			},
-			{
-				kind: "enum_member",
-				icon: "",
-			},
-			{
-				kind: "unknown",
-				icon: "?",
-			},
+			{kind: "text", icon: ""},
+			{kind: "variable", icon: ""},
+			{kind: "class", icon: ""},
+			{kind: "interface", icon: ""},
+			{kind: "module", icon: ""},
+			{kind: "property", icon: ""},
+			{kind: "unit", icon: ""},
+			{kind: "value", icon: ""},
+			{kind: "keyword", icon: ""},
+			{kind: "snippet", icon: ""},
+			{kind: "color", icon: ""},
+			{kind: "file", icon: ""},
+			{kind: "reference", icon: ""},
+			{kind: "folder", icon: ""},
+			{kind: "constant", icon: ""},
+			{kind: "struct", icon: ""},
+			{kind: "event", icon: ""},
+			{kind: "operator", icon: ""},
+			{kind: "type_param", icon: ""},
+			{kind: "enum_member", icon: ""},
+			{kind: "unknown", icon: "?"},
 		}
 		for _, tc := range cases {
 			t.Run(tc.kind, func(t *testing.T) {
@@ -741,12 +686,7 @@ func TestCompletionComponent(t *testing.T) {
 			editor: e,
 			docs:   "completion docs should stay hidden",
 			items: []*view.CompletionItem{
-				{
-					ID:     "one",
-					Label:  "Println",
-					Insert: "Println",
-					Kind:   "function",
-				},
+				{ID: "one", Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
 		e.SetLanguageServerController(ctl)
@@ -770,12 +710,7 @@ func TestCompletionComponent(t *testing.T) {
 			editor: e,
 			docs:   "# Println\n\n```unknownlang\nhello\n```",
 			items: []*view.CompletionItem{
-				{
-					ID:     "one",
-					Label:  "Println",
-					Insert: "Println",
-					Kind:   "function",
-				},
+				{ID: "one", Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
 		e.SetLanguageServerController(ctl)
@@ -799,12 +734,7 @@ func TestCompletionComponent(t *testing.T) {
 			editor: e,
 			docs:   "# Println\n\n```go\nfunc main() {}\n```",
 			items: []*view.CompletionItem{
-				{
-					ID:     "one",
-					Label:  "Println",
-					Insert: "Println",
-					Kind:   "function",
-				},
+				{ID: "one", Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
 		e.SetLanguageServerController(ctl)
@@ -829,12 +759,7 @@ func TestCompletionComponent(t *testing.T) {
 			editor: e,
 			docs:   "docs for narrow screen",
 			items: []*view.CompletionItem{
-				{
-					ID:     "one",
-					Label:  "Println",
-					Insert: "Println",
-					Kind:   "function",
-				},
+				{ID: "one", Label: "Println", Insert: "Println", Kind: "function"},
 			},
 		}
 		e.SetLanguageServerController(ctl)
@@ -864,7 +789,10 @@ func TestCompletionComponent(t *testing.T) {
 				Preselect: i == 11,
 			})
 		}
-		ctl := &completionController{editor: e, items: items}
+		ctl := &completionController{
+			editor: e,
+			items:  items,
+		}
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -892,7 +820,10 @@ func TestCompletionComponent(t *testing.T) {
 				Insert: label,
 			})
 		}
-		ctl := &completionController{editor: e, items: items}
+		ctl := &completionController{
+			editor: e,
+			items:  items,
+		}
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -918,7 +849,10 @@ func TestCompletionComponent(t *testing.T) {
 				Insert: label,
 			})
 		}
-		ctl := &completionController{editor: e, items: items}
+		ctl := &completionController{
+			editor: e,
+			items:  items,
+		}
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -1082,7 +1016,9 @@ func TestCompletionComponent(t *testing.T) {
 		assert.Contains(t, out, "Println")
 
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: 10, Y: 0, Button: tea.MouseLeft,
+			X:      10,
+			Y:      0,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		out = stripANSI(viewContent(m))
@@ -1116,7 +1052,9 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		at := completionTextPoint(t, m, "Beta")
 		m2, _ := m.Update(tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 		m = m2.(ui.Model)
 		doc := e.FocusedDocument()
@@ -1137,9 +1075,15 @@ func TestCompletionComponent(t *testing.T) {
 		items := make([]*view.CompletionItem, 15)
 		for i := range items {
 			label := "item" + string(rune('A'+i))
-			items[i] = &view.CompletionItem{Label: label, Insert: label}
+			items[i] = &view.CompletionItem{
+				Label:  label,
+				Insert: label,
+			}
 		}
-		ctl := &completionController{editor: e, items: items}
+		ctl := &completionController{
+			editor: e,
+			items:  items,
+		}
 		e.SetLanguageServerController(ctl)
 		km := command.NewKeymaps()
 		m := ui.New(e, km)
@@ -1150,7 +1094,9 @@ func TestCompletionComponent(t *testing.T) {
 		m = sendModifiedAndFeed(m, 'x', tea.ModCtrl)
 		at := completionTextPoint(t, m, "itemF")
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseWheelDown,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
 		out := stripANSI(viewContent(m))
@@ -1184,7 +1130,9 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NotNil(t, v)
 		before := v.Offset().Anchor
 		m2, _ := m.Update(tea.MouseWheelMsg{
-			X: 30, Y: 0, Button: tea.MouseWheelDown,
+			X:      30,
+			Y:      0,
+			Button: tea.MouseWheelDown,
 		})
 		m = m2.(ui.Model)
 		out := stripANSI(viewContent(m))
@@ -1438,7 +1386,10 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'x',
+			Mod:  tea.ModCtrl,
+		})
 		m = m2.(ui.Model)
 		m = sendKey(m, 'p')
 		m = feedCmds(m, cmd)
@@ -1461,7 +1412,10 @@ func TestCompletionComponent(t *testing.T) {
 		assert.NoError(t, err)
 		m = resize(m, 80, 24)
 
-		m2, cmd := m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+		m2, cmd := m.Update(tea.KeyPressMsg{
+			Code: 'x',
+			Mod:  tea.ModCtrl,
+		})
 		_ = feedCmds(m2.(ui.Model), cmd)
 
 		assert.Equal(t, "error: completion failed", testutil.StatusMsg(e))
@@ -1494,7 +1448,9 @@ func TestCompletionComponent(t *testing.T) {
 func TestAutoCompletion(t *testing.T) {
 	t.Run("opens after typing without a keypress", func(t *testing.T) {
 		m, e := autoCompletionModel(t, ui.CompletionOptions{
-			Auto: true, Delay: 1, TriggerLen: 2,
+			Auto:       true,
+			Delay:      1,
+			TriggerLen: 2,
 		})
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
@@ -1507,7 +1463,9 @@ func TestAutoCompletion(t *testing.T) {
 
 	t.Run("stays closed below the trigger length", func(t *testing.T) {
 		m, _ := autoCompletionModel(t, ui.CompletionOptions{
-			Auto: true, Delay: 1, TriggerLen: 3,
+			Auto:       true,
+			Delay:      1,
+			TriggerLen: 3,
 		})
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
@@ -1517,7 +1475,8 @@ func TestAutoCompletion(t *testing.T) {
 
 	t.Run("stays closed when disabled", func(t *testing.T) {
 		m, _ := autoCompletionModel(t, ui.CompletionOptions{
-			Delay: 1, TriggerLen: 2,
+			Delay:      1,
+			TriggerLen: 2,
 		})
 		m = sendKeyAndFeed(m, 'P')
 		m = sendKeyAndFeed(m, 'r')
@@ -1609,7 +1568,10 @@ func completionTextPoint(t *testing.T, m ui.Model, text string) geom.Point {
 	lines := strings.Split(stripANSI(viewContent(m)), "\n")
 	for y, line := range lines {
 		if x := strings.Index(line, text); x >= 0 {
-			return geom.Point{X: x, Y: y}
+			return geom.Point{
+				X: x,
+				Y: y,
+			}
 		}
 	}
 	t.Fatalf("completion text %q not found", text)

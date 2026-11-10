@@ -241,7 +241,10 @@ func openIndent(e *view.Editor, doc *view.Document, line int, continueComment bo
 	if err != nil {
 		return ""
 	}
-	at := core.LinePos{Line: line, Pos: pos}
+	at := core.LinePos{
+		Line: line,
+		Pos:  pos,
+	}
 	if continueComment {
 		indent, _ := continuedIndent(e, doc, at)
 		return indent

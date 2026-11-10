@@ -80,13 +80,19 @@ func TestAutoPairConfig(t *testing.T) {
 	})
 
 	t.Run("enable false disables", func(t *testing.T) {
-		a := language.AutoPairConfig{Present: true, Enable: new(false)}
+		a := language.AutoPairConfig{
+			Present: true,
+			Enable:  new(false),
+		}
 		_, ok := a.AutoPairs()
 		assert.False(t, ok)
 	})
 
 	t.Run("enable true returns defaults", func(t *testing.T) {
-		a := language.AutoPairConfig{Present: true, Enable: new(true)}
+		a := language.AutoPairConfig{
+			Present: true,
+			Enable:  new(true),
+		}
 		pairs, ok := a.AutoPairs()
 		assert.True(t, ok)
 		_, got := pairs.Get('(')

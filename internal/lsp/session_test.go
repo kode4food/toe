@@ -415,10 +415,12 @@ func TestWorkspaceEdit(t *testing.T) {
 						&protocol.TextEdit{
 							Range: protocol.Range{
 								Start: protocol.Position{
-									Line: 0, Character: 1,
+									Line:      0,
+									Character: 1,
 								},
 								End: protocol.Position{
-									Line: 0, Character: 2,
+									Line:      0,
+									Character: 2,
 								},
 							},
 							NewText: "B",

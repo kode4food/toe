@@ -88,7 +88,9 @@ func TestToasts(t *testing.T) {
 
 		at := toastPoint(t, m, "first")
 		m = mouse(m, tea.MouseClickMsg{
-			X: at.X, Y: at.Y, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y,
+			Button: tea.MouseLeft,
 		})
 
 		content := stripANSI(viewContent(m))
@@ -254,7 +256,9 @@ func TestToastLogTailing(t *testing.T) {
 
 		at := toastPoint(t, m, "Messages")
 		m = mouse(m, tea.MouseClickMsg{
-			X: at.X, Y: at.Y + 1, Button: tea.MouseLeft,
+			X:      at.X,
+			Y:      at.Y + 1,
+			Button: tea.MouseLeft,
 		})
 
 		assert.Empty(t, toastRow(m, "Messages"))
@@ -275,7 +279,10 @@ func toastPoint(t *testing.T, m ui.Model, text string) geom.Point {
 	t.Helper()
 	for y, line := range strings.Split(stripANSI(viewContent(m)), "\n") {
 		if x := strings.Index(line, text); x >= 0 {
-			return geom.Point{X: x, Y: y}
+			return geom.Point{
+				X: x,
+				Y: y,
+			}
 		}
 	}
 	t.Fatalf("toast %q not found", text)

@@ -69,7 +69,10 @@ func (p *pathPickerSource) Load() ui.PickerLoad {
 		Content:  "item",
 		Location: ui.PickerLocation{Target: ui.PickerTarget{Path: p.path}},
 	}}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 func (d *diffPickerSource) Load() ui.PickerLoad {
@@ -624,7 +627,11 @@ wrap-indicator = "↪ "
 		// X=90 is in the preview pane (list is on the left half)
 		wheel := func(dir tea.MouseButton, n int) {
 			for range n {
-				m2, _ := m.Update(tea.MouseWheelMsg{X: 90, Y: 10, Button: dir})
+				m2, _ := m.Update(tea.MouseWheelMsg{
+					X:      90,
+					Y:      10,
+					Button: dir,
+				})
 				m = m2.(ui.Model)
 			}
 		}
@@ -672,7 +679,11 @@ wrap-indicator = "↪ "
 		wheel := func(button tea.MouseButton, times int) {
 			for range times {
 				// X=100 lands in the preview pane rather than the list
-				m = mouse(m, tea.MouseWheelMsg{X: 100, Y: 10, Button: button})
+				m = mouse(m, tea.MouseWheelMsg{
+					X:      100,
+					Y:      10,
+					Button: button,
+				})
 			}
 		}
 
@@ -921,7 +932,10 @@ func previewBarPoint(t *testing.T, content string) geom.Point {
 	rows := strings.Split(content, "\n")
 	for y := at.Y; y < len(rows); y++ {
 		if strings.Contains(stripANSI(rows[y]), "╯") {
-			return geom.Point{X: at.X, Y: y - 1}
+			return geom.Point{
+				X: at.X,
+				Y: y - 1,
+			}
 		}
 	}
 	t.Fatal("no preview bottom border found")
@@ -947,7 +961,10 @@ func previewBarAt(t *testing.T, content string) geom.Point {
 		border := utf8.RuneCountInString(stripANSI(raw)[:col])
 		assert.GreaterOrEqual(t, border, previewBorderPad)
 		assert.Less(t, i+1, len(rows))
-		return geom.Point{X: border - previewBorderPad, Y: i + 1}
+		return geom.Point{
+			X: border - previewBorderPad,
+			Y: i + 1,
+		}
 	}
 	t.Fatal("no preview border found")
 	return geom.Point{}

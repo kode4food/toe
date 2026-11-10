@@ -25,9 +25,14 @@ type sectionPickerSource struct {
 func (s sectionPickerSource) Load() ui.PickerLoad {
 	var slab ui.PickerItemSlab
 	items := []*ui.PickerItem{
-		slab.Add(ui.PickerItem{Display: "First Group", Section: true}),
 		slab.Add(ui.PickerItem{
-			Display: "Second Group", Group: 1, Section: true,
+			Display: "First Group",
+			Section: true,
+		}),
+		slab.Add(ui.PickerItem{
+			Display: "Second Group",
+			Group:   1,
+			Section: true,
 		}),
 	}
 	for i := range s.rows {
@@ -38,7 +43,10 @@ func (s sectionPickerSource) Load() ui.PickerLoad {
 			Group:   i / (s.rows / 2),
 		}))
 	}
-	return ui.PickerLoad{Items: items, Stop: func() {}}
+	return ui.PickerLoad{
+		Items: items,
+		Stop:  func() {},
+	}
 }
 
 func (sectionPickerSource) Accept(*ui.PickerItem, ui.PickerAcceptAction) {

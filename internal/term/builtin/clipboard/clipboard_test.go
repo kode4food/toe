@@ -14,10 +14,7 @@ import (
 func TestClipboardYankPaste(t *testing.T) {
 	t.Run("yank then paste after inserts text", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 		test.RunCmd(t, km, e, "yank")
 		testutil.SetCursor(t, e, 3)
 		test.RunCmd(t, km, e, "paste_after")
@@ -26,10 +23,7 @@ func TestClipboardYankPaste(t *testing.T) {
 
 	t.Run("paste before inserts before cursor", func(t *testing.T) {
 		e, km := test.Env(t, "abc\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 		test.RunCmd(t, km, e, "yank")
 		testutil.SetCursor(t, e, 4)
 		test.RunCmd(t, km, e, "paste_before")
@@ -38,15 +32,9 @@ func TestClipboardYankPaste(t *testing.T) {
 
 	t.Run("replace with yanked replaces selection", func(t *testing.T) {
 		e, km := test.Env(t, "abc\ndef\n")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 		test.RunCmd(t, km, e, "yank")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 4,
-			Head:   7,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 4, Head: 7}}, 0)
 		test.RunCmd(t, km, e, "replace_with_yanked")
 		assert.Contains(t, test.DocText(t, e), "abc")
 	})
@@ -85,10 +73,7 @@ func TestClipboardYankPaste(t *testing.T) {
 func TestClipboardPrimarySelection(t *testing.T) {
 	t.Run("yank writes the primary register", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		test.RunCmd(t, km, e, "yank_to_primary_clipboard")
 
@@ -100,10 +85,7 @@ func TestClipboardPrimarySelection(t *testing.T) {
 	t.Run("paste after reads the primary register", func(t *testing.T) {
 		e, km := test.Env(t, "x")
 		e.WriteRegister(view.RegisterPrimaryClipboard, []string{"yz"})
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 1}}, 0)
 
 		test.RunCmd(t, km, e, "paste_primary_clipboard_after")
 
@@ -113,10 +95,7 @@ func TestClipboardPrimarySelection(t *testing.T) {
 	t.Run("paste before reads the primary register", func(t *testing.T) {
 		e, km := test.Env(t, "z")
 		e.WriteRegister(view.RegisterPrimaryClipboard, []string{"xy"})
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   1,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 1}}, 0)
 
 		test.RunCmd(t, km, e, "paste_primary_clipboard_before")
 
@@ -126,10 +105,7 @@ func TestClipboardPrimarySelection(t *testing.T) {
 	t.Run("replace swaps in the primary register", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
 		e.WriteRegister(view.RegisterPrimaryClipboard, []string{"XY"})
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 1,
-			Head:   2,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 1, Head: 2}}, 0)
 
 		test.RunCmd(t, km, e, "primary_clipboard_paste_replace")
 
@@ -150,10 +126,7 @@ func TestClipboardDefaultRegister(t *testing.T) {
 					clip := testutil.NewFakeClipboard()
 					clip.System = "saved"
 					e.SetClipboard(clip)
-					testutil.SetSelection(t, e, []core.Range{{
-						Anchor: 0,
-						Head:   3,
-					}}, 0)
+					testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 					e.SetRegister(reg)
 
 					test.RunCmd(t, km, e, cmd)
@@ -182,10 +155,7 @@ func TestClipboardDefaultRegister(t *testing.T) {
 			clip := testutil.NewFakeClipboard()
 			clip.System = "saved"
 			e.SetClipboard(clip)
-			testutil.SetSelection(t, e, []core.Range{{
-				Anchor: 0,
-				Head:   3,
-			}}, 0)
+			testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 			test.RunCmd(t, km, e, cmd)
 
@@ -237,10 +207,7 @@ func TestClipboardSystemClipboard(t *testing.T) {
 
 	t.Run("yank join writes the clipboard", func(t *testing.T) {
 		e, km := test.Env(t, "abc")
-		testutil.SetSelection(t, e, []core.Range{{
-			Anchor: 0,
-			Head:   3,
-		}}, 0)
+		testutil.SetSelection(t, e, []core.Range{{Anchor: 0, Head: 3}}, 0)
 
 		test.RunCmd(t, km, e, "yank_join")
 

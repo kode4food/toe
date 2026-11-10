@@ -106,31 +106,40 @@ func TestSession(t *testing.T) {
 		{name: "edit undone", buffer: "base\n"},
 		{name: "disk only", onDisk: true, wantUnstaged: 1},
 		{
-			name: "disk and buffer", onDisk: true, buffer: "buffer\n",
+			name:         "disk and buffer",
+			onDisk:       true,
+			buffer:       "buffer\n",
 			wantUnstaged: 1,
 		},
-		{name: "disk edit undone", onDisk: true, buffer: "disk\n",
+		{
+			name:         "disk edit undone",
+			onDisk:       true,
+			buffer:       "disk\n",
 			wantUnstaged: 1,
 		},
 		{name: "staged only", staged: true, wantStaged: 1},
 		{
-			name: "staged and buffer", staged: true, buffer: "buffer\n",
-			wantStaged: 1, wantUnstaged: 1,
+			name:         "staged and buffer",
+			staged:       true,
+			buffer:       "buffer\n",
+			wantStaged:   1,
+			wantUnstaged: 1,
+		},
+		{name: "staged edit undone", staged: true, buffer: "staged\n", wantStaged: 1},
+		{
+			name:         "staged and disk",
+			staged:       true,
+			onDisk:       true,
+			wantStaged:   1,
+			wantUnstaged: 1,
 		},
 		{
-			name: "staged edit undone", staged: true, buffer: "staged\n",
-			wantStaged: 1,
-		},
-		{
-			name: "staged and disk", staged: true, onDisk: true,
-			wantStaged: 1, wantUnstaged: 1,
-		},
-		{
-			name:       "staged, disk and buffer",
-			staged:     true,
-			onDisk:     true,
-			buffer:     "buffer\n",
-			wantStaged: 1, wantUnstaged: 1,
+			name:         "staged, disk and buffer",
+			staged:       true,
+			onDisk:       true,
+			buffer:       "buffer\n",
+			wantStaged:   1,
+			wantUnstaged: 1,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -343,7 +352,10 @@ func TestSession(t *testing.T) {
 func mustChangeSet(t *testing.T, text core.Rope, replacement string) core.ChangeSet {
 	t.Helper()
 	cs, err := core.NewChangeSetFromChanges(text, []core.Change{
-		core.TextChange(core.Span{From: 0, To: text.LenChars()}, replacement),
+		core.TextChange(core.Span{
+			From: 0,
+			To:   text.LenChars(),
+		}, replacement),
 	})
 	assert.NoError(t, err)
 	return cs

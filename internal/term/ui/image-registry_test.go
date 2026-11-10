@@ -18,10 +18,16 @@ import (
 func TestImageDisplay(t *testing.T) {
 	t.Run("retries starved resize", func(t *testing.T) {
 		m := imagePaneModel(t)
-		m2, inFlight := m.Update(tea.WindowSizeMsg{Width: 20, Height: 10})
+		m2, inFlight := m.Update(tea.WindowSizeMsg{
+			Width:  20,
+			Height: 10,
+		})
 		m = m2.(ui.Model)
 
-		m2, held := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m2, held := m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		m = m2.(ui.Model)
 		m, raws := collectModelRawMsgs(m, held)
 		assert.Empty(t, imagePlacementSizes(raws))
@@ -34,7 +40,10 @@ func TestImageDisplay(t *testing.T) {
 
 	t.Run("steady frame sends nothing", func(t *testing.T) {
 		m := shownImageModel(t)
-		m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+		m2, cmd := m.Update(tea.WindowSizeMsg{
+			Width:  80,
+			Height: 24,
+		})
 		_, raws := collectModelRawMsgs(m2.(ui.Model), cmd)
 		assert.NotContains(t, strings.Join(raws, ""), "a=T")
 	})
@@ -53,7 +62,10 @@ func imagePaneModel(t *testing.T) ui.Model {
 	t.Helper()
 	t.Setenv("KITTY_WINDOW_ID", "1")
 	root := t.TempDir()
-	path := writeRenderImage(t, root, 40, 20, color.RGBA{G: 255, A: 255})
+	path := writeRenderImage(t, root, 40, 20, color.RGBA{
+		G: 255,
+		A: 255,
+	})
 	e := view.NewEditor(root)
 	openRenderImagePane(t, e, path)
 	return ui.New(e, command.NewKeymaps())
@@ -62,7 +74,10 @@ func imagePaneModel(t *testing.T) ui.Model {
 func shownImageModel(t *testing.T) ui.Model {
 	t.Helper()
 	m := imagePaneModel(t)
-	m2, cmd := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m2, cmd := m.Update(tea.WindowSizeMsg{
+		Width:  80,
+		Height: 24,
+	})
 	m, raws := collectModelRawMsgs(m2.(ui.Model), cmd)
 	assert.Contains(t, strings.Join(raws, ""), "a=T")
 	return m

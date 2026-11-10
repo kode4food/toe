@@ -204,7 +204,11 @@ func (v *View) GoalColumns(rev int, visual bool, ranges int) []int {
 // SetGoalColumns records the columns a vertical move is aiming for, so the next move in the run can
 // return to them after a short line clamps the cursor
 func (v *View) SetGoalColumns(rev int, visual bool, cols []int) {
-	v.goalCols = goalColumnRun{rev: rev, visual: visual, cols: cols}
+	v.goalCols = goalColumnRun{
+		rev:    rev,
+		visual: visual,
+		cols:   cols,
+	}
 }
 
 // ClearGoalColumns ends the current run of vertical moves
@@ -281,7 +285,11 @@ func (v *View) FreeScroll() bool {
 // BeginFreeScroll decouples the viewport from the cursor. The revision and selection snapshot the
 // document state at this moment. Free scroll ends automatically when either changes
 func (v *View) BeginFreeScroll(rev int, sel core.Selection) {
-	v.freeScroll = freeScrollState{active: true, rev: rev, sel: sel}
+	v.freeScroll = freeScrollState{
+		active: true,
+		rev:    rev,
+		sel:    sel,
+	}
 }
 
 // EndFreeScroll re-couples the viewport to the cursor
@@ -646,13 +654,19 @@ func (v *View) ensureCursorVisibleVisual(cs *CursorScroll) {
 	switch {
 	case !ok || fromTop < soTop:
 		res := cs.Visual.VisualScrollUp(
-			cs.Doc, core.VisualPos{Line: cursorLine, Row: cursorRow}, soTop,
+			cs.Doc, core.VisualPos{
+				Line: cursorLine,
+				Row:  cursorRow,
+			}, soTop,
 		)
 		anchorLine = res.Line
 		vOff = res.Row
 	case fromTop > cs.Height-1-soBottom:
 		res := cs.Visual.VisualScrollUp(
-			cs.Doc, core.VisualPos{Line: cursorLine, Row: cursorRow}, cs.Height-1-soBottom,
+			cs.Doc, core.VisualPos{
+				Line: cursorLine,
+				Row:  cursorRow,
+			}, cs.Height-1-soBottom,
 		)
 		anchorLine = res.Line
 		vOff = res.Row
@@ -672,7 +686,10 @@ func VisualColumn(doc core.Rope, s core.Span, tabW int) int {
 	col := 0
 	doc.ForEachSegment(s, func(seg string) {
 		for _, ch := range seg {
-			col += RuneWidth(ch, core.TabStop{Column: col, TabWidth: tabW})
+			col += RuneWidth(ch, core.TabStop{
+				Column:   col,
+				TabWidth: tabW,
+			})
 		}
 	})
 	return col

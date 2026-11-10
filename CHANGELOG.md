@@ -2,6 +2,13 @@
 
 Notable changes to toe.
 
+## 0.4.16
+
+### Interface
+
+- Redrawing the screen is several times faster
+- Editor panes keep their link highlighting and inlay hints while a terminal pane has focus
+
 ## 0.4.15
 
 ### Pickers
